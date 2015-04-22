@@ -1,0 +1,5 @@
+#ifndef COFFEEVERTEX
+#define COFFEEVERTEX
+
+#endif // COFFEEVERTEX
+
