@@ -10,3 +10,10 @@ CoffeeScene::~CoffeeScene()
 
 }
 
+QList<QPointer<RenderableObject> > CoffeeScene::getRenderables(){
+    return renderables;
+}
+
+void CoffeeScene::renderAll(){
+
+}

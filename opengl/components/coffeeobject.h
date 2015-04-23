@@ -1,18 +1,41 @@
 #ifndef COFFEEOBJECT_H
 #define COFFEEOBJECT_H
 
-#include <QObject>
+#include "general/physics/physicsobject.h"
+#include "opengl/rendering/renderableobject.h"
 
-class CoffeeObject : public QObject
+class CoffeeObject : public PhysicsObject,RenderableObject
 {
-    Q_OBJECT
 public:
-    explicit CoffeeObject(QObject *parent = 0);
-    ~CoffeeObject();
+    CoffeeObject(){
 
-signals:
+    }
+    ~CoffeeObject(){
 
-public slots:
+    }
+
+    QPointer<Vector3Container> getRotationObject(){
+        return &v_rotation;
+    }
+    QPointer<Vector3Container> getPositionOffsetObject(){
+        return &v_rotation;
+    }
+
+    glm::vec3 getPosition() const{
+        return v_position.getValue();
+    }
+    QPointer<ShaderContainer> getShader(){
+        return &shader;
+    }
+
+private:
+    QPointer<ShaderContainer> shader;
+
+    QString vertShader;
+    QString fragShader;
+
+    Vector3Container v_model_offset;
+    Vector3Container v_rotation;
 };
 
 #endif // COFFEEOBJECT_H
