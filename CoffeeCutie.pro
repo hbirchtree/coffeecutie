@@ -36,7 +36,9 @@ HEADERS += \
     opengl/rendering/coffeemesh.h \
     opengl/coffeescene.h \
     opengl/components/coffeeobject.h \
-    general/physics/physicsobject.h
+    general/physics/physicsobject.h \
+    opengl/components/coffeematerial.h \
+    general/models/wavefrontmodelreader.h
 
 unix:!macx: LIBS += -L$$PWD/../glfw-library/src/ -lGL -lGLEW -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
 

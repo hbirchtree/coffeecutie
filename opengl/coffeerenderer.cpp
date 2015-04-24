@@ -2,20 +2,15 @@
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : QThread(parent)
 {
-    width = w;
-    height = h;
-    clearColor.r = 1.0;
-    clearColor.g = 1.0;
-    clearColor.b = 1.0;
-    clearColor.a = 1.0;
+    CoffeeRenderer(w,h);
 }
 CoffeeRenderer::CoffeeRenderer(int w, int h) : QThread()
 {
     width = w;
     height = h;
-    clearColor.r = 1.0;
-    clearColor.g = 1.0;
-    clearColor.b = 1.0;
+    clearColor.r = 0.0;
+    clearColor.g = 0.0;
+    clearColor.b = 0.0;
     clearColor.a = 1.0;
 }
 
@@ -80,6 +75,7 @@ int CoffeeRenderer::init(){
     glfwShowWindow(window);
 
     glClearColor(clearColor.r,clearColor.g,clearColor.b,clearColor.a);
+    return 0;
 }
 
 int CoffeeRenderer::loop(){
@@ -90,4 +86,5 @@ int CoffeeRenderer::loop(){
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+    return 0;
 }
