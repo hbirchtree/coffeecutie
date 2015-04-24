@@ -8,7 +8,9 @@
 #include "opengl/components/coffeematerial.h"
 class WavefrontModelReader{
     class ModelContainer {
+        QString mdlName;
         QPointer<CoffeeMesh> model;
+        QString mtlName;
         QPointer<CoffeeMaterial> material;
     };
 
@@ -26,7 +28,16 @@ public:
                 parseMtlFile(QFileInfo(file).absoluteDir().absolutePath()+itv.mid(7));
                 continue;
             }else if(itv.startsWith("o ")&&it.hasNext()){
-
+                ModelContainer mdl;
+                mdl.mdlName = itv.mid(2);
+                while(it.hasNext()){
+                    itv = it.next();
+                    if(itv.startsWith("usemtl "))
+                        mdl.mtlName = itv.mid(7);
+                    if(it.peekNext().startsWith("o "))
+                        break;
+                }
+                models.insert(mdl.mdlName,mdl);
             }
         }
     }
@@ -78,14 +89,14 @@ public:
     static QList<int> parseStrVec(QString src,QChar sep){
         QStringList ls = src.split(sep);
         if(ls.size()!=3)
-            return glm::vec3();
+            return QList<int>();
         else
-            return glm::vec3(ls.at(0).toFloat(),ls.at(1).toFloat(),ls.at(2).toFloat());
+            return QList<int>() << ls.at(0).toFloat() << ls.at(1).toFloat() << ls.at(2).toFloat();
     }
 
 private:
     QHash<QString,CoffeeMaterial> materials;
-    QHash<QString,CoffeeMesh> models;
+    QHash<QString,ModelContainer> models;
 };
 
 #endif // WAVEFRONTMODELREADER
