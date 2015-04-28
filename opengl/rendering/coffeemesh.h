@@ -27,7 +27,7 @@ public:
         return copy;
     }
     GLfloat* getData(){
-        GLfloat data[vertices.size()*CoffeeVertex::VERTEX_STRIDE];
+        GLfloat data[getVerticesDataSize()];
         int size = 0;
         for(QPointer<CoffeeVertex> vert : vertices){
             data[size+0] = vert->position.x;
@@ -41,15 +41,18 @@ public:
             data[size+8] = vert->tangent.x;
             data[size+9] = vert->tangent.y;
             data[size+10] = vert->tangent.z;
-            size+=CoffeeVertex::VERTEX_STRIDE;
+            size+=CoffeeVertex::VERTEX_COUNT;
         }
         return data;
     }
-    int getDataSize(){
-        return getVerticesSize()*sizeof(GLfloat);
+    int getVerticesFloatDataSize(){
+        return getVerticesSize()*CoffeeVertex::VERTEX_STRIDE;
+    }
+    int getVerticesDataSize(){
+        return getVerticesSize()*CoffeeVertex::VERTEX_COUNT;
     }
     int getVerticesSize(){
-        return vertices.size()*CoffeeVertex::VERTEX_STRIDE;
+        return vertices.size();
     }
 
     QList<QPointer<CoffeeVertex> > getVertices(){

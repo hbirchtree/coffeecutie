@@ -25,16 +25,16 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER,vbo);
 
         glEnableVertexAttribArray(vertLocation);
-        glVertexAttribPointer(vertLocation,3,GL_FLOAT,false,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*3));
+        glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*3));
 
         glEnableVertexAttribArray(vertTexCoordLocation);
-        glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,false,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));
+        glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));
 
         glEnableVertexAttribArray(vertNormalLocation);
-        glVertexAttribPointer(vertNormalLocation,3,GL_FLOAT,false,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3)));
+        glVertexAttribPointer(vertNormalLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3)));
 
         glEnableVertexAttribArray(vertTangentLocation);
-        glVertexAttribPointer(vertTangentLocation,3,GL_FLOAT,false,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3+3)));
+        glVertexAttribPointer(vertTangentLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3+3)));
 
         glBindBuffer(GL_ARRAY_BUFFER,0);
         glBindVertexArray(0);

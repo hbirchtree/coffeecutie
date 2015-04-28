@@ -4,7 +4,8 @@
 #include "general/common.h"
 class CoffeeVertex : public QObject {
 public:
-    static const int VERTEX_STRIDE = sizeof(float)*(3+2+3+3);
+    static const int VERTEX_COUNT = 3+2+3+3;
+    static const int VERTEX_STRIDE = sizeof(GLfloat)*VERTEX_COUNT;
     CoffeeVertex(QObject* parent) : QObject(parent){}
     CoffeeVertex(QPointer<CoffeeVertex> vertex){
         this->texCoord = vertex->texCoord;

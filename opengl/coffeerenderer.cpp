@@ -95,7 +95,7 @@ static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** 
 //Character writing
 static void _glfw_input_charwrite(GLFWwindow *window, unsigned int character){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->glfwTypingEvent(character);
+    rend->glfwTypingEvent(QString::fromUcs4(&character).at(0)); //If we do not do this, we get garbage along with our input.
 }
 
 //Window resize

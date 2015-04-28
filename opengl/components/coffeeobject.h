@@ -67,7 +67,7 @@ public:
     }
 
     int getVertexDataSize(){
-        return model->getDataSize();
+        return model->getVerticesSize();
     }
     GLfloat* getVertexData(){
         return model->getData();
@@ -117,6 +117,9 @@ public:
     void setModel(QPointer<CoffeeMesh> model){
         this->model = model;
     }
+    int getVerticesCount(){
+        return model->getVertices().size();
+    }
 
 private:
     QPointer<CoffeeMesh> model;
@@ -137,6 +140,9 @@ public slots:
         model->unloadMesh();
         material->unloadData();
     }
+
+    // RenderableObject interface
+public:
 };
 
 #endif // COFFEEOBJECT_H

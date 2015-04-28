@@ -62,7 +62,7 @@ signals:
     void glfwMouseScrollEvent(double xoffset,double yoffset);
     void glfwDropEvent(QStringList paths);
     void glfwMouseEnterEvent(bool entered);
-    void glfwTypingEvent(uint character);
+    void glfwTypingEvent(QChar character);
 
 public slots:
 };

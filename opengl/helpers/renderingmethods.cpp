@@ -45,7 +45,7 @@ void RenderingMethods::rendering_simple(RenderableObject* obj, QPointer<CoffeeWo
     glBindTexture(GL_TEXTURE_2D,obj->getTextureHandle(CoffeeTexture::Texture_Diffusion));
 
     glBindVertexArray(obj->getVaoHandle());
-    glDrawArrays(GL_TRIANGLES,0,obj->getVertexDataSize());
+    glDrawArrays(GL_TRIANGLES,0,obj->getVerticesCount());
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,0);

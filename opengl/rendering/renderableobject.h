@@ -33,6 +33,7 @@ public:
     virtual void setVboHandle(GLint handle) = 0;
 
     virtual int getVertexDataSize() = 0;
+    virtual int getVerticesCount() = 0;
     virtual GLfloat* getVertexData() = 0;
 
     virtual bool isStreamDraw() = 0;
