@@ -1,13 +1,7 @@
 #ifndef COFFEERENDERER_H
 #define COFFEERENDERER_H
 
-#include <QThread>
-#include <QVector>
-#include <QDebug>
-#include "glm/vec3.hpp"
-#include "glm/vec4.hpp"
-#include <GL/glew.h>
-#include "GLFW/glfw3.h"
+#include "general/common.h"
 #include "general/vectors/vector3container.h"
 #include "opengl/coffeescene.h"
 
@@ -20,6 +14,10 @@ public:
     ~CoffeeRenderer();
 
     void setWindowDimensions(int w,int h);
+    void setWindowDimensionsValue(int w,int h);
+    void setWindowTitle(QString title);
+    void setRendererClearColor(glm::vec4 col);
+    void requestWindowClose();
 
     int init();
     int loop();
@@ -27,7 +25,9 @@ public:
     //Callback functions
     void printInput(int btn, int action){
         if(btn==GLFW_KEY_ESCAPE&&action==GLFW_PRESS)
-            glfwSetWindowShouldClose(window,GL_TRUE);
+            requestWindowClose();
+        if(btn==GLFW_MOUSE_BUTTON_1&&action==GLFW_PRESS)
+            setRendererClearColor(glm::vec4(1,1,1,0));
         qDebug() << "INPUT: "+QString::number(btn)+" : "+QString::number(action);
     }
     void printInput(double x,double y){
@@ -36,9 +36,10 @@ public:
 
 private:
     //Settings
+    int samples = 0;
     int width = 1280;
-    int height = 1280;
-    QString windowTitle = "Café";
+    int height = 720;
+    QString windowTitle = "Qt Café";
 
     //OpenGL
     glm::vec4 clearColor;
@@ -48,7 +49,14 @@ private:
 
     //Data source
     QPointer<CoffeeScene> scene;
+
+    void updateWindowTitle(QString value);
+    void updateRendererClearColor(glm::vec4 value);
+    void updateWindowDimensions(int w,int h);
 signals:
+    void windowDimensionsValueUpdated();
+    void windowTitleValueUpdated();
+    void clearColorValueChanged();
 
 public slots:
 };

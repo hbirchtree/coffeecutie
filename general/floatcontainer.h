@@ -1,24 +1,26 @@
 #ifndef FLOATCONTAINER_H
 #define FLOATCONTAINER_H
 
-#include <QObject>
-#include <QPointer>
+#include "general/common.h"
 
 class FloatContainer : public QObject
 {
     Q_OBJECT
 public:
-    FloatContainer();
+    FloatContainer(QObject* parent);
+    FloatContainer(const FloatContainer &floater);
     FloatContainer(QPointer<FloatContainer> floater);
     ~FloatContainer();
 
     float getValue();
     void setValue(float value);
 
-    float getVelocity();
+    void setClamps(float min,float max);
+
+    float getVelocity() const;
     void setVelocity(float value);
 
-    float getAcceleration();
+    float getAcceleration() const;
     void setAcceleration(float value);
 
     void unbindValue(){
@@ -27,6 +29,10 @@ public:
     void bindValue(QPointer<FloatContainer> bound){
         this->bound = bound;
     }
+    void setValueOffsetCallback(std::function<float()> offset);
+
+    std::function<float()> getOffsetCallback() const;
+    float getRawValue() const;
 
 signals:
 
@@ -41,6 +47,9 @@ private:
     float value;
     float velocity;
     float acceleration;
+
+    float minval;
+    float maxval;
 
     float animationVelocity;
     float animationAcceleration;

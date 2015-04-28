@@ -1,15 +1,14 @@
 #ifndef COFFEESCENE_H
 #define COFFEESCENE_H
 
-#include <QObject>
-#include <QList>
+#include "general/common.h"
 #include "opengl/rendering/renderableobject.h"
 
 class CoffeeScene : public QObject
 {
     Q_OBJECT
 public:
-    explicit CoffeeScene(QObject *parent = 0);
+    CoffeeScene(QObject *parent);
     ~CoffeeScene();
 
     QList<QPointer<RenderableObject> > getRenderables();

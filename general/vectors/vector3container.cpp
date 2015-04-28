@@ -23,9 +23,10 @@ glm::vec3 Vector3Container::getValue(){
     res += valueOffsetCallback();
     return res;
 }
-void Vector3Container::setValue(glm::vec3 value){
+void Vector3Container::setValue(const glm::vec3 &value){
     unbindValue();
     this->value = value;
+    valueChanged(value);
 }
 glm::vec3 Vector3Container::getVelocity()
 {
@@ -39,6 +40,7 @@ void Vector3Container::setVelocity(const glm::vec3 &value)
 {
     unbindValue();
     velocity = value;
+    velocityChanged(value);
 }
 glm::vec3 Vector3Container::getAcceleration()
 {
@@ -52,6 +54,23 @@ void Vector3Container::setAcceleration(const glm::vec3 &value)
 {
     unbindValue();
     acceleration = value;
+    accelerationChanged(value);
+}
+
+void Vector3Container::setClamps(glm::vec3 min, glm::vec3 max)
+{
+    valmin = min;
+    valmax = max;
+}
+
+glm::vec3 Vector3Container::getMinClamp()
+{
+    return valmin;
+}
+
+glm::vec3 Vector3Container::getMaxClamp()
+{
+    return valmax;
 }
 
 std::function<glm::vec3()> Vector3Container::getValueOffset(){

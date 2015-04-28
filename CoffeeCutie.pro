@@ -21,7 +21,14 @@ SOURCES += main.cpp \
     general/vectors/vector3container.cpp \
     general/floatcontainer.cpp \
     opengl/helpers/shadercontainer.cpp \
-    opengl/coffeescene.cpp
+    opengl/coffeescene.cpp \
+    general/models/wavefrontmodelreader.cpp \
+    general/models/modelreaderinterface.cpp \
+    opengl/helpers/renderingmethods.cpp \
+    opengl/helpers/texturehelper.cpp \
+    opengl/components/coffeetexture.cpp \
+    opengl/components/coffeecamera.cpp \
+    general/physics/physicsobject.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -38,7 +45,13 @@ HEADERS += \
     opengl/components/coffeeobject.h \
     general/physics/physicsobject.h \
     opengl/components/coffeematerial.h \
-    general/models/wavefrontmodelreader.h
+    general/models/wavefrontmodelreader.h \
+    general/models/modelreaderinterface.h \
+    opengl/helpers/renderingmethods.h \
+    opengl/components/coffeetexture.h \
+    opengl/components/coffeecamera.h \
+    opengl/helpers/coffeegameasset.h \
+    general/common.h
 
 unix:!macx: LIBS += -L$$PWD/../glfw-library/src/ -lGL -lGLEW -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
 

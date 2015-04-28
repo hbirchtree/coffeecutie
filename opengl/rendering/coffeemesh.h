@@ -1,9 +1,12 @@
 #ifndef COFFEEMESH
 #define COFFEEMESH
 
+#include "general/common.h"
 #include "coffeevertex.h"
-#include <QList>
-class CoffeeMesh : public QObject{
+#include "opengl/helpers/coffeegameasset.h"
+class CoffeeMesh : public QObject, public CoffeeGameAsset{
+    Q_OBJECT
+
     Q_PROPERTY(GLint vaoHandle READ vaoHandle WRITE setVaoHandle NOTIFY vaoHandleChanged)
     Q_PROPERTY(GLint vboHandle READ vboHandle WRITE setVboHandle NOTIFY vboHandleChanged)
     Q_PROPERTY(bool streamDraw READ streamDraw WRITE setStreamDraw NOTIFY streamDrawChanged)
@@ -11,7 +14,8 @@ class CoffeeMesh : public QObject{
     Q_PROPERTY(bool baked READ baked WRITE setBaked NOTIFY bakedChanged)
     Q_PROPERTY(bool drawn READ drawn WRITE setDrawn NOTIFY drawnChanged)
 
-    CoffeeMesh(){}
+public:
+    CoffeeMesh(QObject* parent) : QObject(parent){}
     CoffeeMesh(QPointer<CoffeeMesh> mesh){
         this->vertices = mesh->vertices;
     }
@@ -48,8 +52,22 @@ class CoffeeMesh : public QObject{
         return vertices.size()*CoffeeVertex::VERTEX_STRIDE;
     }
 
-    QPointer<QList<QPointer<CoffeeVertex> >> getVertices(){
-        return &vertices;
+    QList<QPointer<CoffeeVertex> > getVertices(){
+        return vertices;
+    }
+    void addVertex(QPointer<CoffeeVertex> vert){
+        vertices.append(vert);
+    }
+
+    void setVertices(QList<QPointer<CoffeeVertex> > vertices){
+        this->vertices.clear();
+        this->vertices.append(vertices);
+    }
+
+    void unloadMesh(){
+        GLuint v[1];
+        v[0] = vaoHandle();
+        glDeleteVertexArrays(1,v);
     }
 
     QList<QPointer<CoffeeVertex> > vertices;
@@ -159,7 +177,7 @@ private:
     bool m_streamDraw;
     bool m_depthTest;
     bool m_baked;
-    bool m_drawn;
+    bool m_drawn = true;
 };
 
 #endif // COFFEEMESH

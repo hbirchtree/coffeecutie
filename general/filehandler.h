@@ -1,11 +1,9 @@
 #ifndef FILEHANDLER
 #define FILEHANDLER
 
+#include "general/common.h"
 #include <QFile>
-#include <QString>
-#include <QStringList>
 #include <QTextStream>
-#include <QDir>
 
 class FileHandler {
 public:
@@ -14,7 +12,7 @@ public:
         if(!data.exists()||!data.open(QIODevice::ReadOnly))
             return QStringList();
         QTextStream cts(&data);
-        return cts.readAll().split(QDir::separator());
+        return cts.readAll().split("\n");
     }
     static QString getStringFromFile(QString file){
         QFile data(file);

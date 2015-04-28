@@ -19,34 +19,37 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
     if(vertShader==-1||fragShader==-1)
         return -1;
 
+    GLint status;
+
     glAttachShader(programId,vertShader);
     glAttachShader(programId,fragShader);
 
     glLinkProgram(programId);
 
-    glDetachShader(programId,vertShader);
-    glDetachShader(programId,fragShader);
-
-    GLint status;
     glGetProgramiv(programId,GL_LINK_STATUS,&status);
     if(status == GL_FALSE){
         GLint loglen;
         glGetProgramiv(programId,1000,&loglen);
         char* log = new char[loglen+1];
         glGetProgramInfoLog(programId,loglen,NULL,log);
-        qDebug() << "Failed to compile shader program: \nLog:"+QString(log);
+        qDebug() << "Failed to link shader program: \nLog:"+QString(log);
         delete log;
         glDeleteProgram(programId);
         return -1;
     }
+
+    glDetachShader(programId,vertShader);
+    glDetachShader(programId,fragShader);
+
     return 0;
 }
 
 int ShaderContainer::compileShader(QString shaderFile,int shaderType){
     int handle = glCreateShader(shaderType);
 
-    const char* code = FileHandler::getStringFromFile(shaderFile).toStdString().c_str();
-    glShaderSource(handle,1,(const GLchar**)&code,NULL);
+    std::string src = FileHandler::getStringFromFile(shaderFile).toStdString();
+    const char* code = src.c_str();
+    glShaderSource(handle,1,&code,NULL);
 
     glCompileShader(handle);
 
@@ -55,13 +58,28 @@ int ShaderContainer::compileShader(QString shaderFile,int shaderType){
     if(status == GL_FALSE){
         GLint loglen;
         glGetShaderiv(handle,1000,&loglen);
+        if(loglen<0){
+            qDebug() << "Catastrophic error when compiling shader: Negative log length";
+            return -1;
+        }
         char* log = new char[loglen+1];
         glGetShaderInfoLog(handle,loglen,NULL,log);
-        qDebug() << "Failed to create shader: "+shaderFile
-                    +"\nLog:"+log;
+        qDebug() << "Failed to compile shader: "+shaderFile
+                    +"\nLog: "+QString::fromLocal8Bit(log);
         delete log;
         glDeleteShader(handle);
         return -1;
     }
     return handle;
+}
+
+int ShaderContainer::getProgramId()
+{
+    return programId;
+}
+
+void ShaderContainer::unload()
+{
+    glDeleteProgram(programId);
+    programId = 0;
 }

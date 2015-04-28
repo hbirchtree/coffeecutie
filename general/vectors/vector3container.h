@@ -1,9 +1,7 @@
 #ifndef VECTOR3CONTAINER_H
 #define VECTOR3CONTAINER_H
 
-#include <QObject>
-#include <QPointer>
-#include <glm/vec3.hpp>
+#include "general/common.h"
 
 class Vector3Container : public QObject
 {
@@ -16,13 +14,17 @@ public:
     ~Vector3Container();
 
     glm::vec3 getValue();
-    void setValue(glm::vec3 value);
+    void setValue(const glm::vec3 &value);
 
     glm::vec3 getVelocity();
     void setVelocity(const glm::vec3 &value);
 
     glm::vec3 getAcceleration();
     void setAcceleration(const glm::vec3 &value);
+
+    void setClamps(glm::vec3 min,glm::vec3 max);
+    glm::vec3 getMinClamp();
+    glm::vec3 getMaxClamp();
 
     glm::vec3 animationVelocity;
     glm::vec3 animationAcceleration;
@@ -31,6 +33,11 @@ public:
     void setValueOffset(std::function<glm::vec3()> func);
 
     void bindValue(QPointer<Vector3Container> value);
+signals:
+    void valueChanged(glm::vec3 newValue);
+    void velocityChanged(glm::vec3 newVelo);
+    void accelerationChanged(glm::vec3 newAccel);
+
 private:
     void unbindValue(){
         bound = 0;
@@ -44,6 +51,9 @@ private:
     glm::vec3 velocity;
     glm::vec3 acceleration;
 
+    //We store these here for convenience. We will not modify the value.
+    glm::vec3 valmin;
+    glm::vec3 valmax;
 };
 
 #endif // VECTOR3CONTAINER_H

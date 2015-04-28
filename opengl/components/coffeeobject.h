@@ -6,74 +6,44 @@
 #include "opengl/components/coffeematerial.h"
 #include "opengl/rendering/coffeemesh.h"
 
-class CoffeeObject : public PhysicsObject,RenderableObject
+class CoffeeObject : public PhysicsObject, public RenderableObject
 {
 public:
+
     //RenderableObject interface
     glm::vec3 getPosition(){
-        return v_position.getValue();
+        return v_position->getValue();
     }
     glm::vec3 getRotation(){
-        return v_rotation.getValue();
+        return v_rotation->getValue();
     }
     glm::vec3 getScale(){
-        return v_scale.getValue();
+        return v_scale->getValue();
     }
 
-    QString getBumpTexture(){
-        return material->bumpTexture();
+    void setTexture(int id,QPointer<CoffeeTexture> texture){
+        material->setTexture(id,texture);
     }
-    QString getDiffuseTexture(){
-        return material->diffuseTexture();
+    QPointer<CoffeeTexture> getTexture(int id){
+        return material->getTexture(id);
     }
-    QString getSpecularTexture(){
-        return material->specularTexture();
-    }
-    QString getHighlightTexture(){
-        return material->highlightTexture();
-    }
-    QString getTransparencyTexture(){
-        return material->transparencyTexture();
-    }
-
-    GLint getBumpTextureHandle(){
-        return material->bumpHandle();
-    }
-    GLint getDiffuseTextureHandle(){
-        return material->diffuseHandle();
-    }
-    GLint getSpecularTextureHandle(){
-        return material->specularHandle();
-    }
-    GLint getHighlightTextureHandle(){
-        return material->highlightHandle();
-    }
-    GLint getTransparencyTextureHandle(){
-        return material->transparencyHandle();
-    }
-    void setBumpTextureHandle(GLint handle){
-        material->setBumpHandle(handle);
-    }
-    void setDiffuseTextureHandle(GLint handle){
-        material->setDiffuseHandle(handle);
-    }
-    void setSpecularTextureHandle(GLint handle){
-        material->setSpecularHandle(handle);
-    }
-    void setHighlightTextureHandle(GLint handle){
-        material->setHighlightHandle(handle);
-    }
-    void setTransparencyTextureHandle(GLint handle){
-        material->setTransparencyHandle(handle);
+    GLint getTextureHandle(int id){
+        return material->getTexture(id)->getHandle();
     }
 
     GLint getVaoHandle(){
-
+        return model->vaoHandle();
     }
 
-    GLint getVboHandle() = 0;
-    void setVaoHandle(GLint handle) = 0;
-    void setVboHandle(GLint handle) = 0;
+    GLint getVboHandle(){
+        return model->vboHandle();
+    }
+    void setVaoHandle(GLint handle){
+        model->setVaoHandle(handle);
+    }
+    void setVboHandle(GLint handle){
+        model->setVboHandle(handle);
+    }
 
     glm::vec3 getSpecularColor(){
         return material->specularColor();
@@ -83,22 +53,19 @@ public:
     }
 
     float getShininess(){
-        return material->shininess()->getValue();
+        return material->shininess().getValue();
     }
     float getTransparency(){
-        return material->transparency()->getValue();
+        return material->transparency().getValue();
     }
 
     QPointer<ShaderContainer> getShader(){
-        return &shader;
+        return shader;
     }
     void setShader(QPointer<ShaderContainer> shader){
         this->shader = shader;
     }
 
-    void render(){
-
-    }
     int getVertexDataSize(){
         return model->getDataSize();
     }
@@ -119,31 +86,50 @@ public:
         return model->baked();
     }
 
+    CoffeeObject(QObject* parent) : PhysicsObject(parent){}
+    ~CoffeeObject(){
 
-    CoffeeObject(){}
-    ~CoffeeObject(){}
+    }
 
     QPointer<Vector3Container> getRotationObject(){
-        return &v_rotation;
+        return v_rotation;
     }
     QPointer<Vector3Container> getPositionOffsetObject(){
-        return &v_rotation;
+        return v_rotation;
     }
     void setMaterial(QPointer<CoffeeMaterial> material){
         this->material = material;
     }
+    QPointer<CoffeeMaterial> getMaterial(){
+        return material;
+    }
+
+    QPointer<CoffeeMesh> getModel(){
+        return model;
+    }
+    void setModel(QPointer<CoffeeMesh> model){
+        this->model = model;
+    }
 
 private:
-    QPointer<CoffeeMesh> model = new CoffeeMesh();
-    QPointer<CoffeeMaterial> material = new CoffeeMaterial();
+    QPointer<CoffeeMesh> model;
+    QPointer<CoffeeMaterial> material;
     QPointer<ShaderContainer> shader;
 
     QString vertShader;
     QString fragShader;
 
-    Vector3Container v_model_offset;
-    Vector3Container v_rotation;
-    Vector3Container v_scale;
+    QPointer<Vector3Container> v_model_offset;
+    QPointer<Vector3Container> v_rotation;
+    QPointer<Vector3Container> v_scale;
+
+    // RenderableObject interface
+public slots:
+    void unloadAssets()
+    {
+        model->unloadMesh();
+        material->unloadData();
+    }
 };
 
 #endif // COFFEEOBJECT_H
