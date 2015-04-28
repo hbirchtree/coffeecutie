@@ -85,8 +85,15 @@ public:
     bool isBaked(){
         return model->baked();
     }
+    void setBaked(bool val){
+        model->setBaked(val);
+    }
 
-    CoffeeObject(QObject* parent) : PhysicsObject(parent){}
+    CoffeeObject(QObject* parent) : PhysicsObject(parent){
+        v_model_offset = new Vector3Container(this);
+        v_rotation = new Vector3Container(this);
+        v_scale = new Vector3Container(this);
+    }
     ~CoffeeObject(){
 
     }

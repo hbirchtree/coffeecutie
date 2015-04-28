@@ -4,7 +4,7 @@
 #include "opengl/components/coffeetexture.h"
 #include "opengl/rendering/coffeevertex.h"
 #include "opengl/helpers/shadercontainer.h"
-class RenderableObject : public QObject{
+class RenderableObject{
 public:
     ~RenderableObject(){
 
@@ -39,6 +39,7 @@ public:
     virtual bool isDepthTest() = 0;
     virtual bool isDrawn() = 0;
     virtual bool isBaked() = 0;
+    virtual void setBaked(bool val) = 0;
 
     //OpenGL
     virtual QPointer<ShaderContainer> getShader() = 0;

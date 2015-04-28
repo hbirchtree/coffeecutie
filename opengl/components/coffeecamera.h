@@ -21,13 +21,17 @@ public:
     void offsetOrientation(float rightAngle,float upAngle);
     void normalizeOrientation();
 
-    glm::mat4 getPMatrix() const;
-    glm::mat4 getOMatrix() const;
+    glm::vec3 getCameraRight() const;
+    glm::vec3 getCameraForward() const;
+    glm::vec3 getCameraUp() const;
 
-    glm::mat4 getOrientation();
-    glm::mat4 getView();
-    glm::mat4 getProjection();
-    glm::mat4 getOrthographic();
+    glm::vec3 getCameraRightNormal() const;
+    glm::vec3 getCameraUpNormal() const;
+    glm::vec3 getCameraForwardNormal() const;
+
+    glm::mat4 getOrientationMatrix() const;
+    glm::mat4 getProjection() const;
+    glm::mat4 getOrthographic(int width,int height) const;
 
 signals:
 

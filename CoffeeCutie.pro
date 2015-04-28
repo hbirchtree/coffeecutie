@@ -28,7 +28,9 @@ SOURCES += main.cpp \
     opengl/helpers/texturehelper.cpp \
     opengl/components/coffeetexture.cpp \
     opengl/components/coffeecamera.cpp \
-    general/physics/physicsobject.cpp
+    general/physics/physicsobject.cpp \
+    opengl/components/coffeeworldopts.cpp \
+    opengl/components/coffeeomnilight.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -51,7 +53,9 @@ HEADERS += \
     opengl/components/coffeetexture.h \
     opengl/components/coffeecamera.h \
     opengl/helpers/coffeegameasset.h \
-    general/common.h
+    general/common.h \
+    opengl/components/coffeeworldopts.h \
+    opengl/components/coffeeomnilight.h
 
 unix:!macx: LIBS += -L$$PWD/../glfw-library/src/ -lGL -lGLEW -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
 

@@ -4,6 +4,7 @@
 #include "general/common.h"
 #include "general/vectors/vector3container.h"
 #include "opengl/coffeescene.h"
+#include "opengl/components/coffeecamera.h"
 
 class CoffeeRenderer : public QThread
 {
@@ -23,16 +24,10 @@ public:
     int loop();
 
     //Callback functions
-    void printInput(int btn, int action){
-        if(btn==GLFW_KEY_ESCAPE&&action==GLFW_PRESS)
-            requestWindowClose();
-        if(btn==GLFW_MOUSE_BUTTON_1&&action==GLFW_PRESS)
-            setRendererClearColor(glm::vec4(1,1,1,0));
-        qDebug() << "INPUT: "+QString::number(btn)+" : "+QString::number(action);
-    }
-    void printInput(double x,double y){
-        qDebug() << "MOVE: "+QString::number(x)+" : "+QString::number(y);
-    }
+    void printInput(int btn, int action);
+    void printInput(double x,double y);
+
+    QPointer<CoffeeCamera> camera;
 
 private:
     //Settings
@@ -53,10 +48,21 @@ private:
     void updateWindowTitle(QString value);
     void updateRendererClearColor(glm::vec4 value);
     void updateWindowDimensions(int w,int h);
+
 signals:
+    //Renderer events
     void windowDimensionsValueUpdated();
     void windowTitleValueUpdated();
     void clearColorValueChanged();
+
+    //Input events
+    void glfwKeyboardEvent(int key,int action,int modifiers);
+    void glfwMouseMoveEvent(double xpos,double ypos);
+    void glfwMouseButtonEvent(int btn,int action,int modifiers);
+    void glfwMouseScrollEvent(double xoffset,double yoffset);
+    void glfwDropEvent(QStringList paths);
+    void glfwMouseEnterEvent(bool entered);
+    void glfwTypingEvent(uint character);
 
 public slots:
 };

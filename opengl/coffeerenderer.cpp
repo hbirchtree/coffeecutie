@@ -59,18 +59,46 @@ static void errorCallback(int error, const char* description){
     QString errorMessage = "ERROR: "+QString::number(error)+" : "+QString::fromLocal8Bit(description);
     printf("%s\n",errorMessage.toStdString().c_str());
 }
+//Mouse buttons
 static void _glfw_input_mouseBtn(GLFWwindow *window,int button,int action,int mods){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->printInput(button,action);
+    rend->glfwMouseButtonEvent(button,action,mods);
 }
+//Keyboard keys
 static void _glfw_input_kbdKey(GLFWwindow *window,int key,int scancode,int action,int mods){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->printInput(key,action);
+    rend->glfwKeyboardEvent(key,action,mods);
 }
+//Scroll event
+static void _glfw_input_scroll(GLFWwindow *window,double xoffset,double yoffset){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwMouseScrollEvent(xoffset,yoffset);
+}
+//Mouse enter event
+static void _glfw_input_mouseenter(GLFWwindow *window,int val){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwMouseEnterEvent((val==GL_TRUE) ? true : false);
+}
+//Mouse movement
 static void _glfw_input_mousemove(GLFWwindow *window, double xpos, double ypos){
-//    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-//    rend->printInput(xpos,ypos);
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwMouseMoveEvent(xpos,ypos);
 }
+//Drag and drop event
+static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** paths){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    QStringList files;
+    for(int i=0;i<numfiles;i++)
+        files << paths[i];
+    rend->glfwDropEvent(files);
+}
+//Character writing
+static void _glfw_input_charwrite(GLFWwindow *window, unsigned int character){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwTypingEvent(character);
+}
+
+//Window resize
 static void _glfw_winevent_resize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
@@ -79,9 +107,10 @@ static void _glfw_winevent_resize(GLFWwindow* window, int width, int height)
 
 /*
  * Exit signals:
- *  1 : failed to init GLFW
+ *  01 : failed to init GLFW
  *  10 : failed to create window
- *
+ *  11 : glewInit() failed
+ *  12 : OpenGL 3.3 not supported
  */
 int CoffeeRenderer::init(){
     if(!glfwInit())
@@ -108,15 +137,23 @@ int CoffeeRenderer::init(){
     glfwSetKeyCallback(window,_glfw_input_kbdKey);
     glfwSetWindowSizeCallback(window,_glfw_winevent_resize);
     glfwSetCursorPosCallback(window,_glfw_input_mousemove);
+    glfwSetCursorEnterCallback(window,_glfw_input_mouseenter);
+    glfwSetDropCallback(window,_glfw_input_dropevent);
+    glfwSetScrollCallback(window,_glfw_input_scroll);
+    glfwSetCharCallback(window,_glfw_input_charwrite);
 
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
-    glewInit();
+    if(glewInit()!=GLEW_OK)
+        return 11;
+    if(!GLEW_VERSION_3_3)
+        return 12;
     glfwSwapInterval(1);
 
     glfwShowWindow(window);
 
     glClearColor(clearColor.r,clearColor.g,clearColor.b,clearColor.a);
+//    glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     glEnable(GL_TEXTURE_2D);
 
@@ -141,13 +178,32 @@ int CoffeeRenderer::loop(){
     QList<QPointer<WavefrontModelReader::ModelContainer> > vals = mdls.values();
     test.setModel(vals.first()->model);
     test.setMaterial(vals.first()->material);
+    CoffeeCamera camera(this,1.6,0.1,100.0,90.0,glm::vec3(5,5,5),glm::vec3(0,0,0));
+    this->camera = &camera;
+    CoffeeWorldOpts world(this);
+    world.setCamera(&camera);
 
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         scene->renderAll();
-        RenderingMethods::rendering_simple(&test);
+        RenderingMethods::rendering_simple(&test,&world);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    test.unloadAssets();
+
     return 0;
+}
+
+void CoffeeRenderer::printInput(int btn, int action){
+    if(btn==GLFW_KEY_ESCAPE&&action==GLFW_PRESS)
+        requestWindowClose();
+    if(btn==GLFW_MOUSE_BUTTON_1&&action==GLFW_PRESS)
+        setRendererClearColor(glm::vec4(1,1,1,0));
+    qDebug() << "INPUT: "+QString::number(btn)+" : "+QString::number(action);
+}
+
+void CoffeeRenderer::printInput(double x, double y){
+    qDebug() << "MOVE: "+QString::number(x)+" : "+QString::number(y);
 }

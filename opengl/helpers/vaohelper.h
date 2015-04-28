@@ -8,7 +8,7 @@
 class VAOHelper
 {
 public:
-    static void genVAO(QPointer<RenderableObject> object,int vertLocation,int vertTexCoordLocation,int vertNormalLocation,int vertTangentLocation){
+    static void genVAO(RenderableObject* object,int vertLocation,int vertTexCoordLocation,int vertNormalLocation,int vertTangentLocation){
         GLuint vbo = 0;
         GLuint vao = 0;
         GLint drawMode = GL_STATIC_DRAW;
