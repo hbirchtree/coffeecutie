@@ -4,10 +4,8 @@
 #include "helpers/texturehelper.h"
 #include "opengl/helpers/renderingmethods.h"
 
-CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : QThread(parent)
+CoffeeRenderer::CoffeeRenderer(QObject *parent) : QThread(parent)
 {
-    setWindowDimensions(w,h);
-
     clearColor.r = 0.0;
     clearColor.g = 0.2;
     clearColor.b = 0.2;
@@ -17,42 +15,128 @@ CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : QThread(parent)
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             requestWindowClose();
     });
+    connect(this,&CoffeeRenderer::glfwWinClose,[=](){
+        requestWindowClose();
+    });
+    connect(this,&CoffeeRenderer::glfwFrameBufferResize,[=](QResizeEvent event){
+        framebufferSize = event.size();
+    });
+}
+
+CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : CoffeeRenderer(parent)
+{
+    setWindowDimensions(QSize(w,h));
+}
+
+CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state) : CoffeeRenderer(parent,w,h)
+{
+    startmode = state;
+}
+
+CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state, QString windowTitle) : CoffeeRenderer(parent,w,h,state)
+{
+    this->windowTitle = windowTitle;
 }
 
 CoffeeRenderer::~CoffeeRenderer()
 {
-    glfwDestroyWindow(window);
+    if(window!=NULL)
+        glfwDestroyWindow(window);
     glfwTerminate();
 }
 
-void CoffeeRenderer::setWindowDimensions(int w, int h){
-    width = w;
-    height = h;
-    updateWindowDimensions(w,h);
-}
-void CoffeeRenderer::setWindowDimensionsValue(int w, int h){
-    width = w;
-    height = h;
-}
-void CoffeeRenderer::setWindowTitle(QString title){
-    windowTitle = title;
-    updateWindowTitle(title);
-}
-void CoffeeRenderer::setRendererClearColor(glm::vec4 col)
-{
-    clearColor = col;
-    updateRendererClearColor(clearColor);
-}
-
 void CoffeeRenderer::updateWindowTitle(QString value){
+    windowTitle = value;
     glfwSetWindowTitle(window,value.toStdString().c_str());
 }
 void CoffeeRenderer::updateRendererClearColor(glm::vec4 value){
+    clearColor = value;
     glClearColor(value.r,value.g,value.b,value.a);
 }
 void CoffeeRenderer::updateWindowDimensions(int w,int h){
+    windowDimensions.setWidth(w);
+    windowDimensions.setHeight(h);
     glfwSetWindowSize(window,w,h);
 }
+
+void CoffeeRenderer::setWindowState(Qt::WindowState state)
+{
+    switch(state){
+    case Qt::WindowMinimized:
+        glfwIconifyWindow(window);
+        break;
+    case Qt::WindowMaximized:
+        glfwRestoreWindow(window);
+        break;
+    default:
+        break;
+    }
+}
+
+GLFWwindow* CoffeeRenderer::setWindowedFullscreen(int monitor)
+{
+    int count;
+    GLFWmonitor** data = glfwGetMonitors(&count);
+    if(monitor>=count)
+        return NULL;
+
+    GLFWmonitor* mon = data[monitor];
+    const GLFWvidmode* current = glfwGetVideoMode(mon);
+
+    glfwWindowHint(GLFW_RED_BITS,current->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS,current->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS,current->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
+
+    return glfwCreateWindow(current->width,current->height,windowTitle.toStdString().c_str(),mon,NULL);
+}
+
+GLFWwindow* CoffeeRenderer::setFullscreen(int monitor)
+{
+    int count;
+    GLFWmonitor** data = glfwGetMonitors(&count);
+    if(monitor>=count)
+        return NULL;
+
+    GLFWmonitor* mon = data[monitor];
+
+    return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),mon,NULL);
+}
+
+GLFWwindow *CoffeeRenderer::setWindowed()
+{
+    return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),NULL,NULL);
+}
+QSize* CoffeeRenderer::getFramebufferSizePt()
+{
+    return &framebufferSize;
+}
+
+QSize CoffeeRenderer::getWindowDimensions() const
+{
+    return windowDimensions;
+}
+
+void CoffeeRenderer::setWindowDimensions(const QSize &value)
+{
+    windowDimensions = value;
+}
+
+int CoffeeRenderer::getStartDisplay() const
+{
+    return startDisplay;
+}
+
+void CoffeeRenderer::setStartDisplay(int value)
+{
+    startDisplay = value;
+}
+
+void CoffeeRenderer::setStartmode(const Qt::WindowState &value)
+{
+    startmode = value;
+}
+
 void CoffeeRenderer::requestWindowClose(){
     glfwSetWindowShouldClose(window,GL_TRUE);
 }
@@ -168,7 +252,35 @@ static void _glfw_input_charwrite(GLFWwindow *window, unsigned int character){
 static void _glfw_winevent_resize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->setWindowDimensionsValue(width,height);
+    rend->glfwWinResize(QResizeEvent(QSize(width,height),QSize()));
+}
+static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
+{
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwFrameBufferResize(QResizeEvent(QSize(width,height),QSize()));
+}
+static void _glfw_winevent_focus(GLFWwindow* window, int val){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    //We might want to elaborate on the focus reason
+    rend->glfwWinFocusChanged((val==GL_TRUE) ? QFocusEvent(QEvent::FocusIn,Qt::MouseFocusReason) : QFocusEvent(QEvent::FocusOut,Qt::MouseFocusReason));
+}
+static void _glfw_winevent_pos(GLFWwindow* window, int x,int y){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwWinPosChanged(QMoveEvent(QPoint(x,y),QPoint()));
+}
+static void _glfw_winevent_refresh(GLFWwindow* window){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    rend->glfwWinRefresh();
+}
+static void _glfw_winevent_close(GLFWwindow* window){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    glfwSetWindowShouldClose(window,GL_FALSE);
+    rend->glfwWinClose();
+}
+static void _glfw_winevent_state(GLFWwindow* window, int val){
+    CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
+    //Not very accurate
+    rend->glfwWinStateChanged((val==GL_TRUE) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
 }
 
 /*
@@ -192,7 +304,17 @@ int CoffeeRenderer::init(){
     glfwWindowHint(GLFW_VISIBLE,GL_FALSE);
     glfwWindowHint(GLFW_RESIZABLE,GL_TRUE);
 
-    window = glfwCreateWindow(width,height,windowTitle.toStdString().c_str(),NULL,NULL);
+    switch(startmode){
+    case Qt::WindowFullScreen:
+        window = setFullscreen(startDisplay);
+        break;
+    case Qt::WindowMaximized:
+        window = setWindowedFullscreen(startDisplay);
+        break;
+    default:
+        window = setWindowed();
+        break;
+    }
     if(window==NULL)
         return 10;
 
@@ -201,12 +323,19 @@ int CoffeeRenderer::init(){
     //Input callbacks
     glfwSetMouseButtonCallback(window,_glfw_input_mouseBtn);
     glfwSetKeyCallback(window,_glfw_input_kbdKey);
-    glfwSetWindowSizeCallback(window,_glfw_winevent_resize);
     glfwSetCursorPosCallback(window,_glfw_input_mousemove);
     glfwSetCursorEnterCallback(window,_glfw_input_mouseenter);
     glfwSetDropCallback(window,_glfw_input_dropevent);
     glfwSetScrollCallback(window,_glfw_input_scroll);
     glfwSetCharCallback(window,_glfw_input_charwrite);
+
+    glfwSetWindowSizeCallback(window,_glfw_winevent_resize);
+    glfwSetWindowCloseCallback(window,_glfw_winevent_close);
+    glfwSetWindowFocusCallback(window,_glfw_winevent_focus);
+    glfwSetWindowIconifyCallback(window,_glfw_winevent_state);
+    glfwSetWindowPosCallback(window,_glfw_winevent_pos);
+    glfwSetWindowRefreshCallback(window,_glfw_winevent_refresh);
+    glfwSetFramebufferSizeCallback(window,_glfw_winevent_fbresize);
 
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
@@ -245,7 +374,6 @@ int CoffeeRenderer::loop(){
     test.setModel(vals.first()->model);
     test.setMaterial(vals.first()->material);
     CoffeeCamera camera(this,1.6,0.1,100.0,90.0,glm::vec3(0,0,5),glm::vec3(0,0,0));
-    this->camera = &camera;
     CoffeeWorldOpts world(this);
     world.setCamera(&camera);
 

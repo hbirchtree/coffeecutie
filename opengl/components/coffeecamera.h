@@ -31,13 +31,16 @@ public:
 
     glm::mat4 getOrientationMatrix() const;
     glm::mat4 getProjection() const;
-    glm::mat4 getOrthographic(int width,int height) const;
+    glm::mat4 getOrthographic() const;
+
+    void setFramebufferSizeObject(QSize* fb);
 
 signals:
 
 public slots:
 
 private:
+    QSize* framebufferSize = NULL;
     QPointer<FloatContainer> aspect;
     float znear = 0.1;
     float zfar = 50;

@@ -114,10 +114,17 @@ glm::mat4 CoffeeCamera::getProjection() const
     return camera;
 }
 
-glm::mat4 CoffeeCamera::getOrthographic(int width,int height) const
+glm::mat4 CoffeeCamera::getOrthographic() const
 {
-    glm::mat4 camera = glm::ortho(0,width,0,height);
+    if(framebufferSize==NULL)
+        return glm::mat4();
+    glm::mat4 camera = glm::ortho(0,framebufferSize->width(),0,framebufferSize->height());
     camera *= getOrientationMatrix();
     camera = glm::translate(camera,-position->getValue());
     return camera;
+}
+
+void CoffeeCamera::setFramebufferSizeObject(QSize *fb)
+{
+    framebufferSize = fb;
 }

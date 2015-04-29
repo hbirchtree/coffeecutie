@@ -15,26 +15,43 @@ class CoffeeRenderer : public QThread
 {
     Q_OBJECT
 public:
-    CoffeeRenderer(QObject *parent, int w, int h);
+    CoffeeRenderer(QObject *parent);
+    CoffeeRenderer(QObject *parent,int w, int h);
+    CoffeeRenderer(QObject *parent,int w, int h, Qt::WindowState state);
+    CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state,QString windowTitle);
     ~CoffeeRenderer();
-
-    void setWindowDimensions(int w,int h);
-    void setWindowDimensionsValue(int w,int h);
-    void setWindowTitle(QString title);
-    void setRendererClearColor(glm::vec4 col);
-    void requestWindowClose();
 
     int init();
     int loop();
 
-    QPointer<CoffeeCamera> camera;
+    int getStartDisplay() const;
+    void setStartDisplay(int value);
+    QSize getWindowDimensions() const;
+    void setWindowDimensions(const QSize &value);
+
+    QSize *getFramebufferSizePt();
+
+public slots:
+    void requestWindowClose();
+    void updateWindowTitle(QString value);
+    void updateRendererClearColor(glm::vec4 value);
+    void updateWindowDimensions(int w,int h);
+    void setWindowState(Qt::WindowState state);
+    void setStartmode(const Qt::WindowState &value);
+
+private slots:
+    GLFWwindow *setWindowedFullscreen(int monitor);
+    GLFWwindow *setFullscreen(int monitor);
+    GLFWwindow *setWindowed();
 
 private:
     //Settings
     int samples = 0;
-    int width = 1280;
-    int height = 720;
+    QSize windowDimensions;
+    QSize framebufferSize;
     QString windowTitle = "Qt Café";
+    Qt::WindowState startmode = Qt::WindowNoState;
+    int startDisplay = 0;
 
     //OpenGL
     glm::vec4 clearColor;
@@ -44,10 +61,6 @@ private:
 
     //Data source
     QPointer<CoffeeScene> scene;
-
-    void updateWindowTitle(QString value);
-    void updateRendererClearColor(glm::vec4 value);
-    void updateWindowDimensions(int w,int h);
 
 signals:
     //Renderer events
@@ -61,6 +74,14 @@ signals:
     void glfwWheelEvent(QWheelEvent event);
     void glfwDropEvent(QPointer<QMimeData> data); //Temporary workaround until QDropEvent decides to work. Delete the QMimeData object!
     void glfwMouseEnterEvent(QEvent event);
+
+    void glfwWinResize(QResizeEvent event);
+    void glfwWinPosChanged(QMoveEvent event);
+    void glfwWinFocusChanged(QFocusEvent event);
+    void glfwWinRefresh();
+    void glfwFrameBufferResize(QResizeEvent event);
+    void glfwWinClose();
+    void glfwWinStateChanged(QWindowStateChangeEvent event);
 
 public slots:
 };
