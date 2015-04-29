@@ -1,0 +1,16 @@
+build*
+*_build
+/install
+/logs/*
+CMakeLists.txt.*
+
+# generated code
+codegeneration/*.h
+codegeneration/*.cpp
+
+#backup files
+*~
+
+# config
+.localconfig
+*.bat
