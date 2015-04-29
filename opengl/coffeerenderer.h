@@ -5,13 +5,17 @@
 #include "general/vectors/vector3container.h"
 #include "opengl/coffeescene.h"
 #include "opengl/components/coffeecamera.h"
+#include "general/coffeejoystick.h"
+#include <QMimeData>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
 
 class CoffeeRenderer : public QThread
 {
     Q_OBJECT
 public:
-    explicit CoffeeRenderer(QObject *parent = 0, int w = 800, int h = 600);
-    CoffeeRenderer(int w = 800, int h = 600);
+    CoffeeRenderer(QObject *parent, int w, int h);
     ~CoffeeRenderer();
 
     void setWindowDimensions(int w,int h);
@@ -22,10 +26,6 @@ public:
 
     int init();
     int loop();
-
-    //Callback functions
-    void printInput(int btn, int action);
-    void printInput(double x,double y);
 
     QPointer<CoffeeCamera> camera;
 
@@ -56,13 +56,11 @@ signals:
     void clearColorValueChanged();
 
     //Input events
-    void glfwKeyboardEvent(int key,int action,int modifiers);
-    void glfwMouseMoveEvent(double xpos,double ypos);
-    void glfwMouseButtonEvent(int btn,int action,int modifiers);
-    void glfwMouseScrollEvent(double xoffset,double yoffset);
-    void glfwDropEvent(QStringList paths);
-    void glfwMouseEnterEvent(bool entered);
-    void glfwTypingEvent(QChar character);
+    void glfwKeyboardEvent(QKeyEvent event);
+    void glfwMouseEvent(QMouseEvent event);
+    void glfwWheelEvent(QWheelEvent event);
+    void glfwDropEvent(QPointer<QMimeData> data); //Temporary workaround until QDropEvent decides to work. Delete the QMimeData object!
+    void glfwMouseEnterEvent(QEvent event);
 
 public slots:
 };

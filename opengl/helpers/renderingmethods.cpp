@@ -29,14 +29,14 @@ void RenderingMethods::rendering_simple(RenderableObject* obj, QPointer<CoffeeWo
     }
 
     shader->setUniform("materialTex",0);
-    shader->setUniform("materialBump", 1);
-    shader->setUniform("materialSpecular", 2);
-    shader->setUniform("materialHighlight", 3);
-    shader->setUniform("materialTransparency", 4);
+//    shader->setUniform("materialBump", 1);
+//    shader->setUniform("materialSpecular", 2);
+//    shader->setUniform("materialHighlight", 3);
+//    shader->setUniform("materialTransparency", 4);
     shader->setUniform("materialShininess", obj->getShininess());
     shader->setUniformRgb("materialSpecularColor", obj->getSpecularColor());
     shader->setUniform("materialTransparencyValue", obj->getTransparency());
-    shader->setUniform("colorMul", obj->getColorMultiplier());
+//    shader->setUniform("colorMul", obj->getColorMultiplier());
 
     shader->setUniform("fogParams.fDensity", world->getFogDensity());
     shader->setUniformRgba("fogParams.fColor", world->getFogColor());
@@ -65,10 +65,10 @@ void RenderingMethods::baking_simple(RenderableObject* obj)
                       obj->getShader()->getAttributeLocation("vertNormal"),
                       obj->getShader()->getAttributeLocation("vertTangent"));
     obj->getShader()->getUniformLocations(QList<QString> {
-                                              "materialBump",
-                                              "materialSpecular",
-                                              "materialHighlight",
-                                              "materialTransparency",
+//                                              "materialBump",
+//                                              "materialSpecular",
+//                                              "materialHighlight",
+//                                              "materialTransparency",
                                               "materialTex",
                                               "camera",
                                               "cameraPosition",
@@ -78,7 +78,7 @@ void RenderingMethods::baking_simple(RenderableObject* obj)
                                               "materialShininess",
                                               "materialTransparencyValue",
                                               "materialSpecularColor",
-                                              "colorMul",
+//                                              "colorMul",
                                               "light.position",
                                               "light.attenuation",
                                               "light.ambientCoefficient",
