@@ -59,8 +59,6 @@ HEADERS += \
     opengl/components/coffeeomnilight.h \
     general/coffeejoystick.h
 
-unix:!macx: LIBS += -L$$PWD/../glfw-library/src/ -lGL -lGLEW -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
-
 INCLUDEPATH += $$PWD/../glfw-library/src/
 DEPENDPATH += $$PWD/../glfw-library/src/
 
@@ -68,3 +66,16 @@ unix:!macx: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
 
 DISTFILES += \
     include/glm/CMakeLists.txt
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/glfw-build/src/release/ -lGL -lGLEW -lglfw3
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/glfw-build/src/debug/ -lGL -lGLEW -lglfw3
+else:unix: LIBS += -L$$PWD/libs/glfw-build/src/ -lGL -lGLEW -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
+
+INCLUDEPATH += $$PWD/libs/glfw/include
+DEPENDPATH += $$PWD/libs/glfw/include
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/release/libglfw3.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/debug/libglfw3.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/release/glfw3.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/debug/glfw3.lib
+else:unix: PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/libglfw3.a
