@@ -59,10 +59,10 @@ HEADERS += \
     opengl/components/coffeeomnilight.h \
     general/coffeejoystick.h
 
-INCLUDEPATH += $$PWD/../glfw-library/src/
-DEPENDPATH += $$PWD/../glfw-library/src/
+#INCLUDEPATH += $$PWD/../glfw-library/src/
+#DEPENDPATH += $$PWD/../glfw-library/src/
 
-unix:!macx: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
+#unix:!macx: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
 
 DISTFILES += \
     include/glm/CMakeLists.txt
