@@ -27,11 +27,10 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
     glLinkProgram(programId);
 
     glGetProgramiv(programId,GL_LINK_STATUS,&status);
-    if(status == GL_FALSE){
+    if(status == 0){
         GLint loglen;
-        glGetProgramiv(programId,1000,&loglen);
-        char* log = new char[loglen+1];
-        glGetProgramInfoLog(programId,loglen,NULL,log);
+        GLchar log[1000];
+        glGetProgramInfoLog(programId,sizeof(log),&loglen,log);
         qDebug() << "Failed to link shader program: \nLog:"+QString(log);
         delete log;
         glDeleteProgram(programId);
@@ -44,7 +43,7 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
     return 0;
 }
 
-int ShaderContainer::compileShader(QString shaderFile,int shaderType){
+int ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType){
     int handle = glCreateShader(shaderType);
 
     std::string src = FileHandler::getStringFromFile(shaderFile).toStdString();
@@ -55,15 +54,10 @@ int ShaderContainer::compileShader(QString shaderFile,int shaderType){
 
     GLint status;
     glGetShaderiv(handle,GL_COMPILE_STATUS,&status);
-    if(status == GL_FALSE){
+    if(status == 0){
         GLint loglen;
-        glGetShaderiv(handle,1000,&loglen);
-        if(loglen<0){
-            qDebug() << "Catastrophic error when compiling shader: Negative log length";
-            return -1;
-        }
-        char* log = new char[loglen+1];
-        glGetShaderInfoLog(handle,loglen,NULL,log);
+        GLchar log[1000];
+        glGetShaderInfoLog(handle,sizeof(log),&loglen,log);
         qDebug() << "Failed to compile shader: "+shaderFile
                     +"\nLog: "+QString::fromLocal8Bit(log);
         delete log;
@@ -82,4 +76,79 @@ void ShaderContainer::unload()
 {
     glDeleteProgram(programId);
     programId = 0;
+}
+
+int ShaderContainer::getUniformLocation(QString name){
+    int handle = glGetUniformLocation(getProgramId(),name.toStdString().c_str());
+    if(handle>=0)
+        uniforms.insert(name,handle);
+    return handle;
+}
+
+void ShaderContainer::getUniformLocations(QList<QString> names){
+    for(QString name : names)
+        getUniformLocation(name);
+}
+
+int ShaderContainer::getAttributeLocation(QString name){
+    int handle = glGetAttribLocation(getProgramId(),name.toStdString().c_str());
+    if(handle>0)
+        attributes.insert(name,handle);
+    return handle;
+}
+
+void ShaderContainer::setUniform(QString name, glm::vec3 val){
+    if(uniforms.keys().contains(name))
+        glUniform3f(uniforms.value(name),val.x,val.y,val.z);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniform(QString name, glm::vec4 val){
+    if(uniforms.keys().contains(name))
+        glUniform4f(uniforms.value(name),val.x,val.y,val.z,val.w);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniformRgb(QString name, glm::vec3 val){
+    if(uniforms.keys().contains(name))
+        glUniform3f(uniforms.value(name),val.r,val.g,val.b);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniformRgba(QString name, glm::vec4 val){
+    if(uniforms.keys().contains(name))
+        glUniform4f(uniforms.value(name),val.r,val.g,val.b,val.a);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniform(QString name, glm::vec2 val){
+    if(uniforms.keys().contains(name))
+        glUniform2f(uniforms.value(name),val.x,val.y);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniform(QString name, GLfloat val){
+    if(uniforms.keys().contains(name))
+        glUniform1f(uniforms.value(name),val);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniform(QString name, int val){
+    if(uniforms.keys().contains(name))
+        glUniform1i(uniforms.value(name),val);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniform(QString name, glm::mat4 val){
+    if(uniforms.keys().contains(name))
+        glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }

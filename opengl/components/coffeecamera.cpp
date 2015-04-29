@@ -128,3 +128,7 @@ void CoffeeCamera::setFramebufferSizeObject(QSize *fb)
 {
     framebufferSize = fb;
 }
+
+void CoffeeCamera::clearFramebufferSizeObject(){
+    framebufferSize = NULL;
+}

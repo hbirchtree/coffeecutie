@@ -7,7 +7,7 @@
 class TextureHelper
 {
 public:
-    static GLuint allocTexture(GLint internalFormat,GLint colorFormat,int w,int h,unsigned char* source);
+    static GLuint allocTexture(GLint internalFormat, GLenum colorFormat, int w, int h, unsigned char *source);
     static GLuint loadTexture(QString filesource);
 };
 

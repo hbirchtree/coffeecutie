@@ -1,8 +1,4 @@
 #include "coffeerenderer.h"
-#include "components/coffeeobject.h"
-#include "general/models/wavefrontmodelreader.h"
-#include "helpers/texturehelper.h"
-#include "opengl/helpers/renderingmethods.h"
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QThread(parent)
 {
@@ -138,7 +134,7 @@ void CoffeeRenderer::setStartmode(const Qt::WindowState &value)
 }
 
 void CoffeeRenderer::requestWindowClose(){
-    glfwSetWindowShouldClose(window,GL_TRUE);
+    glfwSetWindowShouldClose(window,1);
 }
 
 static void errorCallback(int error, const char* description){
@@ -197,7 +193,7 @@ static void _glfw_input_mousemove(GLFWwindow *window, double xpos, double ypos){
 static void _glfw_input_mouseenter(GLFWwindow *window,int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     QEvent::Type t;
-    if(val==GL_TRUE)
+    if(val==1)
         t = QEvent::Enter;
     else
         t = QEvent::Leave;
@@ -262,7 +258,7 @@ static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
 static void _glfw_winevent_focus(GLFWwindow* window, int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     //We might want to elaborate on the focus reason
-    rend->glfwWinFocusChanged((val==GL_TRUE) ? QFocusEvent(QEvent::FocusIn,Qt::MouseFocusReason) : QFocusEvent(QEvent::FocusOut,Qt::MouseFocusReason));
+    rend->glfwWinFocusChanged((val==1) ? QFocusEvent(QEvent::FocusIn,Qt::MouseFocusReason) : QFocusEvent(QEvent::FocusOut,Qt::MouseFocusReason));
 }
 static void _glfw_winevent_pos(GLFWwindow* window, int x,int y){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
@@ -274,13 +270,13 @@ static void _glfw_winevent_refresh(GLFWwindow* window){
 }
 static void _glfw_winevent_close(GLFWwindow* window){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    glfwSetWindowShouldClose(window,GL_FALSE);
+    glfwSetWindowShouldClose(window,0);
     rend->glfwWinClose();
 }
 static void _glfw_winevent_state(GLFWwindow* window, int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     //Not very accurate
-    rend->glfwWinStateChanged((val==GL_TRUE) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
+    rend->glfwWinStateChanged((val==1) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
 }
 
 /*
@@ -297,12 +293,12 @@ int CoffeeRenderer::init(){
     glfwSetErrorCallback(errorCallback);
 
     glfwWindowHint(GLFW_SAMPLES,samples);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,1);
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
-    glfwWindowHint(GLFW_VISIBLE,GL_FALSE);
-    glfwWindowHint(GLFW_RESIZABLE,GL_TRUE);
+    glfwWindowHint(GLFW_VISIBLE,0);
+    glfwWindowHint(GLFW_RESIZABLE,1);
 
     switch(startmode){
     case Qt::WindowFullScreen:
@@ -338,11 +334,14 @@ int CoffeeRenderer::init(){
     glfwSetFramebufferSizeCallback(window,_glfw_winevent_fbresize);
 
     glfwMakeContextCurrent(window);
-    glewExperimental = GL_TRUE;
-    if(glewInit()!=GLEW_OK)
-        return 11;
-    if(!GLEW_VERSION_3_3)
-        return 12;
+    //I was told this GLEW is no good, let's swap it.
+//    glewExperimental = GL_TRUE;
+//    if(glewInit()!=GLEW_OK)
+//        return 11;
+//    if(!GLEW_VERSION_3_3)
+//        return 12;
+    //Whew! What little effort!
+    glbinding::Binding::initialize(false);
     glfwSwapInterval(1);
 
     glfwShowWindow(window);
@@ -376,6 +375,8 @@ int CoffeeRenderer::loop(){
     CoffeeCamera camera(this,1.6,0.1,100.0,90.0,glm::vec3(0,0,5),glm::vec3(0,0,0));
     CoffeeWorldOpts world(this);
     world.setCamera(&camera);
+
+    CoffeeJoystick js(this,GLFW_JOYSTICK_1);
 
     while(!glfwWindowShouldClose(window)){
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);

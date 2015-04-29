@@ -31,7 +31,12 @@ SOURCES += main.cpp \
     general/physics/physicsobject.cpp \
     opengl/components/coffeeworldopts.cpp \
     opengl/components/coffeeomnilight.cpp \
-    general/coffeejoystick.cpp
+    general/coffeejoystick.cpp \
+    opengl/helpers/vaohelper.cpp \
+    opengl/rendering/coffeemesh.cpp \
+    opengl/rendering/coffeevertex.cpp \
+    general/input/coffeesdljoystick.cpp \
+    general/input/coffeejoystick.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -57,25 +62,28 @@ HEADERS += \
     general/common.h \
     opengl/components/coffeeworldopts.h \
     opengl/components/coffeeomnilight.h \
-    general/coffeejoystick.h
+    general/coffeejoystick.h \
+    general/input/coffeesdljoystick.h \
+    general/input/coffeejoystick.h
 
-#INCLUDEPATH += $$PWD/../glfw-library/src/
-#DEPENDPATH += $$PWD/../glfw-library/src/
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
+else:unix: LIBS += -L$$PWD/../glbinding-library/ -lglbinding
 
-#unix:!macx: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
+INCLUDEPATH += $$PWD/libs/glbinding/source/glbinding/include
+DEPENDPATH += $$PWD/libs/glbinding/source/glbinding/include
 
-DISTFILES += \
-    include/glm/CMakeLists.txt
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libs/glfw-build/src/release/ -lGL -lGLEW -lglfw3
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libs/glfw-build/src/debug/ -lGL -lGLEW -lglfw3
-else:unix: LIBS += -L$$PWD/libs/glfw-build/src/ -lGL -lGLEW -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glfw-library/src/release/ -lGL -lGLEW -lglfw3
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glfw-library/src/debug/ -lGL -lGLEW -lglfw3
+else:unix: LIBS += -L$$PWD/../glfw-library/src/ -lGL -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
 
 INCLUDEPATH += $$PWD/libs/glfw/include
 DEPENDPATH += $$PWD/libs/glfw/include
 
-win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/release/libglfw3.a
-else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/debug/libglfw3.a
-else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/release/glfw3.lib
-else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/debug/glfw3.lib
-else:unix: PRE_TARGETDEPS += $$PWD/libs/glfw-build/src/libglfw3.a
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/release/libglfw3.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/debug/libglfw3.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/release/glfw3.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/debug/glfw3.lib
+else:unix: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
+
+DISTFILES +=

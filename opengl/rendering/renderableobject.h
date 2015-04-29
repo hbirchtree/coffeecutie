@@ -6,9 +6,7 @@
 #include "opengl/helpers/shadercontainer.h"
 class RenderableObject{
 public:
-    ~RenderableObject(){
-
-    }
+    ~RenderableObject(){}
 
     //General
     virtual glm::vec3 getPosition() = 0;

@@ -13,7 +13,7 @@ CoffeeJoystick::~CoffeeJoystick()
 
 bool CoffeeJoystick::update()
 {
-    if(glfwJoystickPresent(joystick)==GL_FALSE)
+    if(glfwJoystickPresent(joystick)==0)
         return false;
 
     axes.clear();

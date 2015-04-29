@@ -6,6 +6,10 @@
 #include "opengl/coffeescene.h"
 #include "opengl/components/coffeecamera.h"
 #include "general/coffeejoystick.h"
+#include "components/coffeeobject.h"
+#include "general/models/wavefrontmodelreader.h"
+#include "helpers/texturehelper.h"
+#include "opengl/helpers/renderingmethods.h"
 #include <QMimeData>
 #include <QKeyEvent>
 #include <QMouseEvent>
