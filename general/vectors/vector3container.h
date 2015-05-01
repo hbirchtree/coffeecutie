@@ -33,6 +33,14 @@ public:
     void setValueOffset(std::function<glm::vec3()> func);
 
     void bindValue(QPointer<Vector3Container> value);
+
+    static QString vec3toString(glm::vec3 v){
+        return QString("%1,%2,%3")
+                .arg(v.x)
+                .arg(v.y)
+                .arg(v.z);
+    }
+
 signals:
     void valueChanged(glm::vec3 newValue);
     void velocityChanged(glm::vec3 newVelo);

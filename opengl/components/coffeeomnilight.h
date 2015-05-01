@@ -9,6 +9,7 @@ class CoffeeOmniLight : public QObject
     Q_OBJECT
 public:
     CoffeeOmniLight(QObject *parent);
+    CoffeeOmniLight(QObject *parent,QString id,glm::vec3 pos,glm::vec3 color,float att,float ambco);
     ~CoffeeOmniLight();
 
     QString getLightId() const;

@@ -19,7 +19,6 @@ public:
     CoffeeMesh(QPointer<CoffeeMesh> mesh);
     QList<QPointer<CoffeeVertex> > copy();
     GLfloat* getData();
-    int getVerticesFloatDataSize();
     int getVerticesDataSize();
     int getVerticesSize();
 
@@ -44,7 +43,6 @@ public:
     bool baked() const;
 
     bool drawn() const;
-
 public slots:
     void setVboHandle(GLint arg);
 

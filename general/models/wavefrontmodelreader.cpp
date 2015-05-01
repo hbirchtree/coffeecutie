@@ -57,6 +57,8 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                         switch(i){
                         case 0:{
                             int vrt = pts.at(0).toInt()-1-vertex_c+mdl->vertices.size();
+                            if(vrt<0)
+                                break;
                             vertex->position = mdl->vertices.at(vrt);
                             break;
                         }
@@ -64,6 +66,8 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             if(pts.size()<2)
                                 break;
                             int vrt = pts.at(1).toInt()-1-texcrd_c+mdl->txcoords.size();
+                            if(vrt<0)
+                                break;
                             vertex->texCoord = mdl->txcoords.at(vrt);
                             break;
                         }
@@ -71,6 +75,8 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             if(pts.size()<3)
                                 break;
                             int vrt = pts.at(2).toInt()-1-normal_c+mdl->vnormals.size();
+                            if(vrt<0)
+                                break;
                             vertex->normal = mdl->vnormals.at(vrt);
                             break;
                         }
@@ -85,6 +91,7 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
             mdl->material = materials.value(mdl->mtlName);
         }else
             mdl->material = new CoffeeMaterial(mdl->parent());
+        VAOHelper::genTangents(mdl->model);
     }
     return models;
 }
@@ -102,7 +109,7 @@ glm::vec3 WavefrontModelReader::parseStrVec3f(QString src,QChar sep){
 }
 glm::vec2 WavefrontModelReader::parseStrVec2f(QString src,QChar sep){
     QStringList ls = src.split(sep);
-    if(ls.size()!=3)
+    if(ls.size()!=2)
         return glm::vec2();
     else
         return glm::vec2(ls.at(0).toFloat(),ls.at(1).toFloat());

@@ -7,6 +7,8 @@
 #include <QHash>
 #include <QListIterator>
 
+#include <iostream>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -22,6 +24,3 @@
 #include <glbinding/gl/gl.h>
 
 using namespace gl;
-//#include <GL/glew.h>
-//#include "glext.h"
-//#include "glcorearb.h"

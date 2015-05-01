@@ -19,6 +19,9 @@ public:
     glm::vec4 color;
 
     int getSize();
+
+    QString toString();
+    static QString floatBufferToString(GLfloat* buf, int from, int to);
 };
 
 #endif // COFFEEVERTEX

@@ -9,8 +9,8 @@ class CoffeeMaterial : public QObject, public CoffeeGameAsset{
 public:
     CoffeeMaterial(QObject* parent) : QObject(parent){}
     CoffeeMaterial(const CoffeeMaterial &mtl) : QObject(){
-        m_transparency = new FloatContainer(mtl.transparency());
-        m_shininess = new FloatContainer(mtl.shininess());
+        m_transparency = new FloatContainer(this->parent(),mtl.transparency());
+        m_shininess = new FloatContainer(this->parent(),mtl.shininess());
         m_specularColor = glm::vec3(mtl.specularColor());
         m_colorMultiplier = glm::vec3(mtl.colorMultiplier());
     }
@@ -25,14 +25,14 @@ public:
         return m_shininess;
     }
 
-    FloatContainer transparency() const
+    QPointer<FloatContainer> transparency() const
     {
-        return m_transparency.data();
+        return m_transparency;
     }
 
-    FloatContainer shininess() const
+    QPointer<FloatContainer> shininess() const
     {
-        return m_shininess.data();
+        return m_shininess;
     }
 
     glm::vec3 specularColor() const
@@ -87,8 +87,8 @@ public slots:
 private:
     QHash<int,QPointer<CoffeeTexture> > textures;
 
-    QPointer<FloatContainer> m_transparency = new FloatContainer(this);
-    QPointer<FloatContainer> m_shininess = new FloatContainer(this);
+    QPointer<FloatContainer> m_transparency = new FloatContainer(this,1.0);
+    QPointer<FloatContainer> m_shininess = new FloatContainer(this,50.0);
     glm::vec3 m_specularColor;
     glm::vec3 m_colorMultiplier;
 };

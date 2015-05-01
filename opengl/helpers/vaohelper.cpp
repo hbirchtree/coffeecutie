@@ -4,20 +4,17 @@ void VAOHelper::genVAO(RenderableObject *object, int vertLocation, int vertTexCo
     GLuint vbo = 0;
     GLuint vao = 0;
     GLenum drawMode = GL_STATIC_DRAW;
-    if(object->isStreamDraw())
-        drawMode = GL_STREAM_DRAW;
+//    if(object->isStreamDraw())
+//        drawMode = GL_STREAM_DRAW;
     glGenBuffers(1,&vbo);
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
     glBufferData(GL_ARRAY_BUFFER,object->getVertexDataSize(),object->getVertexData(),drawMode);
-    glBindBuffer(GL_ARRAY_BUFFER,0);
 
     glGenVertexArrays(1,&vao);
     glBindVertexArray(vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER,vbo);
-
     glEnableVertexAttribArray(vertLocation);
-    glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*3));
+    glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3)));
 
     glEnableVertexAttribArray(vertTexCoordLocation);
     glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));

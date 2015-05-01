@@ -16,7 +16,7 @@ CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfa
     this->zfar = zfar;
 }
 
-CoffeeCamera::CoffeeCamera(QObject *pparent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::vec3 rot) : CoffeeCamera(pparent,aspect,znear,zfar,fov)
+CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::vec3 rot) : CoffeeCamera(parent,aspect,znear,zfar,fov)
 {
     this->position->setValue(pos);
     this->rotation->setValue(rot);
@@ -110,6 +110,7 @@ glm::mat4 CoffeeCamera::getProjection() const
 {
     glm::mat4 camera = glm::perspective(fov->getValue(),aspect->getValue(),znear,zfar);
     camera *= getOrientationMatrix();
+//    camera *= glm::lookAt(position->getValue(),glm::vec3(0,0,0),glm::vec3(0,1,0));
     camera = glm::translate(camera,-position->getValue());
     return camera;
 }

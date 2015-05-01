@@ -16,9 +16,10 @@ QList<QPointer<CoffeeVertex> > CoffeeMesh::copy(){
 }
 
 GLfloat *CoffeeMesh::getData(){
-    GLfloat data[getVerticesDataSize()];
+    GLfloat data[getVerticesSize()*CoffeeVertex::VERTEX_COUNT];
     int size = 0;
     for(QPointer<CoffeeVertex> vert : vertices){
+//        qDebug() << vert->toString();
         data[size+0] = vert->position.x;
         data[size+1] = vert->position.y;
         data[size+2] = vert->position.z;
@@ -30,17 +31,14 @@ GLfloat *CoffeeMesh::getData(){
         data[size+8] = vert->tangent.x;
         data[size+9] = vert->tangent.y;
         data[size+10] = vert->tangent.z;
+//        qDebug() << CoffeeVertex::floatBufferToString(data,size,size+11);
         size+=CoffeeVertex::VERTEX_COUNT;
     }
     return data;
 }
 
-int CoffeeMesh::getVerticesFloatDataSize(){
-    return getVerticesSize()*CoffeeVertex::VERTEX_STRIDE;
-}
-
 int CoffeeMesh::getVerticesDataSize(){
-    return getVerticesSize()*CoffeeVertex::VERTEX_COUNT;
+    return getVerticesSize()*CoffeeVertex::VERTEX_STRIDE;
 }
 
 int CoffeeMesh::getVerticesSize(){

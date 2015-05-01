@@ -35,7 +35,7 @@ public slots:
 
 private:
     int programId = 0;
-    int verbosity = 0;
+    int verbosity = 2;
 
     QHash<QString,int> attributes;
     QHash<QString,int> uniforms;

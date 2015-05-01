@@ -82,6 +82,8 @@ int ShaderContainer::getUniformLocation(QString name){
     int handle = glGetUniformLocation(getProgramId(),name.toStdString().c_str());
     if(handle>=0)
         uniforms.insert(name,handle);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to get uniform: " << name;
     return handle;
 }
 
@@ -92,8 +94,10 @@ void ShaderContainer::getUniformLocations(QList<QString> names){
 
 int ShaderContainer::getAttributeLocation(QString name){
     int handle = glGetAttribLocation(getProgramId(),name.toStdString().c_str());
-    if(handle>0)
+    if(handle>=0)
         attributes.insert(name,handle);
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to get attribute: " << name;
     return handle;
 }
 

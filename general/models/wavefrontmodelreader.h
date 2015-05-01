@@ -8,6 +8,7 @@
 #include "modelreaderinterface.h"
 #include "opengl/components/coffeematerial.h"
 #include "opengl/components/coffeetexture.h"
+#include "opengl/helpers/vaohelper.h"
 class WavefrontModelReader : public QObject{
 
 public:

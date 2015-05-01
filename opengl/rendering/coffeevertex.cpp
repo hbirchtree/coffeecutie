@@ -23,3 +23,28 @@ CoffeeVertex::CoffeeVertex(const CoffeeVertex &vert) : QObject(vert.parent()){
 int CoffeeVertex::getSize(){
     return VERTEX_STRIDE;
 }
+
+QString CoffeeVertex::toString()
+{
+    return QString("pt:%1,%2,%3 tx:%4,%5 nl:%6,%7,%8 tn:%9,%10,%11")
+            .arg(position.x)
+            .arg(position.y)
+            .arg(position.z)
+            .arg(texCoord.x)
+            .arg(texCoord.y)
+            .arg(normal.x)
+            .arg(normal.y)
+            .arg(normal.z)
+            .arg(tangent.x)
+            .arg(tangent.y)
+            .arg(tangent.z);
+}
+
+QString CoffeeVertex::floatBufferToString(GLfloat *buf,int from = 0, int to = 0)
+{
+    QString res;
+    for(int i=from;i<to;i++)
+        res.append(QString::number(buf[i])+", ");
+    return res;
+}
+

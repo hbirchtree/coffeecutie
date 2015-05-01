@@ -6,7 +6,12 @@ FloatContainer::FloatContainer(QObject* parent) : QObject(parent)
 
 }
 
-FloatContainer::FloatContainer(const FloatContainer &floater)
+FloatContainer::FloatContainer(QObject *parent, float initial) : FloatContainer(parent)
+{
+    value = initial;
+}
+
+FloatContainer::FloatContainer(QObject*parent, const FloatContainer &floater) : FloatContainer(parent)
 {
     this->value = floater.getRawValue();
     this->velocity = floater.getVelocity();
@@ -14,6 +19,7 @@ FloatContainer::FloatContainer(const FloatContainer &floater)
     this->valueOffsetCallback = floater.getOffsetCallback();
 }
 FloatContainer::FloatContainer(QPointer<FloatContainer> floater){
+    this->setParent(floater->parent());
     bindValue(floater);
 }
 
@@ -37,9 +43,9 @@ float FloatContainer::getValue()
     }else
         unbindValue();
     value+=valueOffsetCallback();
-    if(value>maxval)
+    if(minval<maxval&&value>maxval)
         value=maxval;
-    else if(value<minval)
+    else if(minval<maxval&&value<minval)
         value=minval;
     return value;
 }

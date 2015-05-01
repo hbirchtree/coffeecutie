@@ -8,6 +8,15 @@ CoffeeOmniLight::CoffeeOmniLight(QObject *parent) : QObject(parent)
     ambientCoefficient = new FloatContainer(this);
 }
 
+CoffeeOmniLight::CoffeeOmniLight(QObject *parent, QString id, glm::vec3 pos, glm::vec3 color, float att, float ambco) : CoffeeOmniLight(parent)
+{
+    lightId = id;
+    position->setValue(pos);
+    this->color->setValue(color);
+    attenuation->setValue(att);
+    ambientCoefficient->setValue(ambco);
+}
+
 CoffeeOmniLight::~CoffeeOmniLight()
 {
 

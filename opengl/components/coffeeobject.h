@@ -53,10 +53,10 @@ public:
     }
 
     float getShininess(){
-        return material->shininess().getValue();
+        return material->shininess()->getValue();
     }
     float getTransparency(){
-        return material->transparency().getValue();
+        return material->transparency()->getValue();
     }
 
     QPointer<ShaderContainer> getShader(){
@@ -67,7 +67,7 @@ public:
     }
 
     int getVertexDataSize(){
-        return model->getVerticesSize();
+        return model->getVerticesDataSize();
     }
     GLfloat* getVertexData(){
         return model->getData();
@@ -101,6 +101,10 @@ public:
     QPointer<Vector3Container> getRotationObject(){
         return v_rotation;
     }
+    QPointer<Vector3Container> getScaleObject(){
+        return v_scale;
+    }
+
     QPointer<Vector3Container> getPositionOffsetObject(){
         return v_rotation;
     }

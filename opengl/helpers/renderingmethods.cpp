@@ -10,13 +10,16 @@ void RenderingMethods::rendering_simple(RenderableObject* obj, QPointer<CoffeeWo
 
     if(!obj->isDepthTest())
         glDisable(GL_DEPTH_TEST);
+
     glUseProgram(obj->getShader()->getProgramId());
+    QPointer<ShaderContainer> shader = obj->getShader();
 
     if(!obj->isStreamDraw()){
         //Animate skeleton here
     }
 
-    QPointer<ShaderContainer> shader = obj->getShader();
+//    qDebug() << obj->toString();
+
     shader->setUniform("camera",world->getCamera()->getProjection());
     shader->setUniform("cameraPosition",world->getCamera()->getPosition()->getValue());
     shader->setUniform("model",translateObjectMatrix(obj));
@@ -45,7 +48,7 @@ void RenderingMethods::rendering_simple(RenderableObject* obj, QPointer<CoffeeWo
     glBindTexture(GL_TEXTURE_2D,obj->getTextureHandle(CoffeeTexture::Texture_Diffusion));
 
     glBindVertexArray(obj->getVaoHandle());
-    glDrawArrays(GL_TRIANGLES,0,obj->getVerticesCount());
+    glDrawArrays(GL_TRIANGLES,0,obj->getVerticesCount()/3);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,0);
@@ -57,7 +60,7 @@ void RenderingMethods::rendering_simple(RenderableObject* obj, QPointer<CoffeeWo
 
 void RenderingMethods::baking_simple(RenderableObject* obj)
 {
-
+//    qDebug() << obj->getVerticesCount();
     obj->getTexture(CoffeeTexture::Texture_Diffusion)->loadTexture();
     VAOHelper::genVAO(obj,
                       obj->getShader()->getAttributeLocation("vert"),

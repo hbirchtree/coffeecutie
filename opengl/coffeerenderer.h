@@ -2,18 +2,13 @@
 #define COFFEERENDERER_H
 
 #include "general/common.h"
-#include "general/vectors/vector3container.h"
-#include "opengl/coffeescene.h"
-#include "opengl/components/coffeecamera.h"
-#include "general/coffeejoystick.h"
-#include "components/coffeeobject.h"
-#include "general/models/wavefrontmodelreader.h"
-#include "helpers/texturehelper.h"
-#include "opengl/helpers/renderingmethods.h"
+#include "opengl/rendering/renderloop.h"
 #include <QMimeData>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QResizeEvent>
+#include <QMoveEvent>
 
 class CoffeeRenderer : public QThread
 {
@@ -33,7 +28,14 @@ public:
     QSize getWindowDimensions() const;
     void setWindowDimensions(const QSize &value);
 
+    QSize getCurrentFramebufferSize();
+
     QSize *getFramebufferSizePt();
+
+    void setLoop(RenderLoop *value);
+
+    int getSamples() const;
+    void setSamples(int value);
 
 public slots:
     void requestWindowClose();
@@ -48,7 +50,8 @@ private slots:
     GLFWwindow *setFullscreen(int monitor);
     GLFWwindow *setWindowed();
 
-private:
+protected:
+    QPointer<RenderLoop> loopObject;
     //Settings
     int samples = 0;
     QSize windowDimensions;
@@ -57,37 +60,33 @@ private:
     Qt::WindowState startmode = Qt::WindowNoState;
     int startDisplay = 0;
 
-    //OpenGL
-    glm::vec4 clearColor;
+private:
 
     //GLFW objects
     GLFWwindow* window;
 
-    //Data source
-    QPointer<CoffeeScene> scene;
-
 signals:
     //Renderer events
-    void windowDimensionsValueUpdated();
-    void windowTitleValueUpdated();
-    void clearColorValueChanged();
+    void windowTitleUpdated(QString title);
+    void clearColorChanged(glm::vec4 color);
 
     //Input events
-    void glfwKeyboardEvent(QKeyEvent event);
-    void glfwMouseEvent(QMouseEvent event);
-    void glfwWheelEvent(QWheelEvent event);
-    void glfwDropEvent(QPointer<QMimeData> data); //Temporary workaround until QDropEvent decides to work. Delete the QMimeData object!
-    void glfwMouseEnterEvent(QEvent event);
+    void winKeyboardEvent(QKeyEvent event);
+    void winMouseEvent(QMouseEvent event);
+    void winWheelEvent(QWheelEvent event);
+    void winDropEvent(QPointer<QMimeData> data); //Temporary workaround until QDropEvent decides to work. Delete the QMimeData object!
+    void winMouseEnterEvent(QEvent event);
 
-    void glfwWinResize(QResizeEvent event);
-    void glfwWinPosChanged(QMoveEvent event);
-    void glfwWinFocusChanged(QFocusEvent event);
-    void glfwWinRefresh();
-    void glfwFrameBufferResize(QResizeEvent event);
-    void glfwWinClose();
-    void glfwWinStateChanged(QWindowStateChangeEvent event);
+    void winResize(QResizeEvent event);
+    void winPosChanged(QMoveEvent event);
+    void winFocusChanged(QFocusEvent event);
+    void winRefresh();
+    void winFrameBufferResize(QResizeEvent event);
+    void winClose();
+    void winStateChanged(QWindowStateChangeEvent event);
 
-public slots:
+    void contextReportFramerate(float framerate);
+
 };
 
 #endif // COFFEERENDERER_H

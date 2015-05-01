@@ -2,19 +2,14 @@
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QThread(parent)
 {
-    clearColor.r = 0.0;
-    clearColor.g = 0.2;
-    clearColor.b = 0.2;
-    clearColor.a = 1.0;
-
-    connect(this,&CoffeeRenderer::glfwKeyboardEvent,[=](QKeyEvent event){
+    connect(this,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             requestWindowClose();
     });
-    connect(this,&CoffeeRenderer::glfwWinClose,[=](){
+    connect(this,&CoffeeRenderer::winClose,[=](){
         requestWindowClose();
     });
-    connect(this,&CoffeeRenderer::glfwFrameBufferResize,[=](QResizeEvent event){
+    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
         framebufferSize = event.size();
     });
 }
@@ -46,7 +41,6 @@ void CoffeeRenderer::updateWindowTitle(QString value){
     glfwSetWindowTitle(window,value.toStdString().c_str());
 }
 void CoffeeRenderer::updateRendererClearColor(glm::vec4 value){
-    clearColor = value;
     glClearColor(value.r,value.g,value.b,value.a);
 }
 void CoffeeRenderer::updateWindowDimensions(int w,int h){
@@ -103,6 +97,21 @@ GLFWwindow *CoffeeRenderer::setWindowed()
 {
     return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),NULL,NULL);
 }
+int CoffeeRenderer::getSamples() const
+{
+    return samples;
+}
+
+void CoffeeRenderer::setSamples(int value)
+{
+    samples = value;
+}
+
+void CoffeeRenderer::setLoop(RenderLoop *value)
+{
+    loopObject = value;
+}
+
 QSize* CoffeeRenderer::getFramebufferSizePt()
 {
     return &framebufferSize;
@@ -116,6 +125,13 @@ QSize CoffeeRenderer::getWindowDimensions() const
 void CoffeeRenderer::setWindowDimensions(const QSize &value)
 {
     windowDimensions = value;
+}
+
+QSize CoffeeRenderer::getCurrentFramebufferSize()
+{
+    int width,height;
+    glfwGetFramebufferSize(window, &width, &height);
+    return QSize(width,height);
 }
 
 int CoffeeRenderer::getStartDisplay() const
@@ -180,13 +196,13 @@ static void _glfw_input_mouseBtn(GLFWwindow *window,int button,int action,int mo
         qDebug() << "Unhandled mouse button: " << button;
     }
     QMouseEvent event(type,QPoint(),btn,Qt::NoButton,_glfw_translate_mods(mods));
-    rend->glfwMouseEvent(event);
+    rend->winMouseEvent(event);
 }
 //Mouse movement
 static void _glfw_input_mousemove(GLFWwindow *window, double xpos, double ypos){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     QMouseEvent event(QEvent::MouseMove,QPointF(xpos,ypos),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
-    rend->glfwMouseEvent(event);
+    rend->winMouseEvent(event);
 }
 
 //Mouse enter event
@@ -197,7 +213,7 @@ static void _glfw_input_mouseenter(GLFWwindow *window,int val){
         t = QEvent::Enter;
     else
         t = QEvent::Leave;
-    rend->glfwMouseEnterEvent(QEvent(t));
+    rend->winMouseEnterEvent(QEvent(t));
 }
 
 //Scroll event
@@ -205,7 +221,7 @@ static void _glfw_input_scroll(GLFWwindow *window,double xoffset,double yoffset)
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     //We need to fill in some garbage. RIP memory allocation
     QWheelEvent event(QPointF(),QPointF(),QPoint(),QPoint(-xoffset*120,-yoffset*120),0,Qt::Vertical,Qt::NoButton,Qt::NoModifier);
-    rend->glfwWheelEvent(event);
+    rend->winWheelEvent(event);
 }
 
 //Drag and drop event
@@ -222,7 +238,7 @@ static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** 
         for(int i=0;i<numfiles;i++)
             data->setText(data->text()+paths[i]);
     }
-    rend->glfwDropEvent(data);
+    rend->winDropEvent(data);
 }
 
 //Keyboard keys
@@ -234,49 +250,49 @@ static void _glfw_input_kbdKey(GLFWwindow *window,int key,int scancode,int actio
     //TODO : Translate int key to Qt::Key! We'll just stick the GLFW_KEY in there for now. Translation might be too slow anyway.
 
     QKeyEvent event(type,key,_glfw_translate_mods(mods),QString(),autorep,1);
-    rend->glfwKeyboardEvent(event);
+    rend->winKeyboardEvent(event);
 }
 //Character writing
 static void _glfw_input_charwrite(GLFWwindow *window, unsigned int character){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     QChar ch = QString::fromUcs4(&character).at(0);
     QKeyEvent event(QEvent::InputMethod,0,Qt::NoModifier,ch,false,1);
-    rend->glfwKeyboardEvent(event); //If we do not do this, we get garbage along with our input.
+    rend->winKeyboardEvent(event); //If we do not do this, we get garbage along with our input.
 }
 
 //Window resize
 static void _glfw_winevent_resize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->glfwWinResize(QResizeEvent(QSize(width,height),QSize()));
+    rend->winResize(QResizeEvent(QSize(width,height),QSize()));
 }
 static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->glfwFrameBufferResize(QResizeEvent(QSize(width,height),QSize()));
+    rend->winFrameBufferResize(QResizeEvent(QSize(width,height),QSize()));
 }
 static void _glfw_winevent_focus(GLFWwindow* window, int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     //We might want to elaborate on the focus reason
-    rend->glfwWinFocusChanged((val==1) ? QFocusEvent(QEvent::FocusIn,Qt::MouseFocusReason) : QFocusEvent(QEvent::FocusOut,Qt::MouseFocusReason));
+    rend->winFocusChanged((val==1) ? QFocusEvent(QEvent::FocusIn,Qt::MouseFocusReason) : QFocusEvent(QEvent::FocusOut,Qt::MouseFocusReason));
 }
 static void _glfw_winevent_pos(GLFWwindow* window, int x,int y){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->glfwWinPosChanged(QMoveEvent(QPoint(x,y),QPoint()));
+    rend->winPosChanged(QMoveEvent(QPoint(x,y),QPoint()));
 }
 static void _glfw_winevent_refresh(GLFWwindow* window){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->glfwWinRefresh();
+    rend->winRefresh();
 }
 static void _glfw_winevent_close(GLFWwindow* window){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     glfwSetWindowShouldClose(window,0);
-    rend->glfwWinClose();
+    rend->winClose();
 }
 static void _glfw_winevent_state(GLFWwindow* window, int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     //Not very accurate
-    rend->glfwWinStateChanged((val==1) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
+    rend->winStateChanged((val==1) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
 }
 
 /*
@@ -286,19 +302,24 @@ static void _glfw_winevent_state(GLFWwindow* window, int val){
  *  11 : glewInit() failed
  *  12 : OpenGL 3.3 not supported
  */
+
+
 int CoffeeRenderer::init(){
     if(!glfwInit())
         return 1;
 
     glfwSetErrorCallback(errorCallback);
 
+    glfwDefaultWindowHints();
+
     glfwWindowHint(GLFW_SAMPLES,samples);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,1);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,true);
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
-    glfwWindowHint(GLFW_VISIBLE,0);
-    glfwWindowHint(GLFW_RESIZABLE,1);
+    glfwWindowHint(GLFW_VISIBLE,false);
+    glfwWindowHint(GLFW_RESIZABLE,true);
+
 
     switch(startmode){
     case Qt::WindowFullScreen:
@@ -313,6 +334,8 @@ int CoffeeRenderer::init(){
     }
     if(window==NULL)
         return 10;
+
+    glfwMakeContextCurrent(window);
 
     glfwSetWindowUserPointer(window,this);
 
@@ -333,20 +356,22 @@ int CoffeeRenderer::init(){
     glfwSetWindowRefreshCallback(window,_glfw_winevent_refresh);
     glfwSetFramebufferSizeCallback(window,_glfw_winevent_fbresize);
 
-    glfwMakeContextCurrent(window);
-    //I was told this GLEW is no good, let's swap it.
-//    glewExperimental = GL_TRUE;
-//    if(glewInit()!=GLEW_OK)
-//        return 11;
-//    if(!GLEW_VERSION_3_3)
-//        return 12;
-    //Whew! What little effort!
-    glbinding::Binding::initialize(false);
+    glbinding::Binding::initialize(true);
+    qDebug("%s",QString("OpenGL renderer: %1\nOpenGL vendor  : %2\nOpenGL version : %3")
+           .arg(QString::fromStdString(glbinding::ContextInfo::renderer()))
+           .arg(QString::fromStdString(glbinding::ContextInfo::vendor()))
+           .arg(QString::fromStdString(glbinding::ContextInfo::version().toString())).toStdString().c_str());
     glfwSwapInterval(1);
+
+    glbinding::setAfterCallback([](const glbinding::FunctionCall&){
+        gl::GLenum error = glGetError();
+        if(error!=GL_NO_ERROR)
+            std::cout << "Error:" << error << std::endl;
+    });
 
     glfwShowWindow(window);
 
-    glClearColor(clearColor.r,clearColor.g,clearColor.b,clearColor.a);
+//    glClearColor(clearColor.r,clearColor.g,clearColor.b,clearColor.a);
 //    glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
 
     glEnable(GL_TEXTURE_2D);
@@ -363,30 +388,28 @@ int CoffeeRenderer::init(){
     return 0;
 }
 
+/*
+ * 01 : no rendering process specified
+ */
 int CoffeeRenderer::loop(){
-    WavefrontModelReader rdr(this);
-    QHash<QString,QPointer<WavefrontModelReader::ModelContainer> > mdls = rdr.parseModel("testgame/models/3dbox_bumped.obj");
-    CoffeeObject test(this);
-    test.setShader(new ShaderContainer(this));
-    test.getShader()->buildProgram("testgame/shaders/vsh.txt","testgame/shaders/fsh.txt");
-    QList<QPointer<WavefrontModelReader::ModelContainer> > vals = mdls.values();
-    test.setModel(vals.first()->model);
-    test.setMaterial(vals.first()->material);
-    CoffeeCamera camera(this,1.6,0.1,100.0,90.0,glm::vec3(0,0,5),glm::vec3(0,0,0));
-    CoffeeWorldOpts world(this);
-    world.setCamera(&camera);
+    if(!loopObject)
+        return 1;
 
-    CoffeeJoystick js(this,GLFW_JOYSTICK_1);
+    std::function<void()> _init = loopObject->getInit();
+    std::function<void()> _loop = loopObject->getLoop();
+    std::function<void()> _cleanup = loopObject->getCleanup();
 
+    double framerate = glfwGetTime();
+
+    _init();
     while(!glfwWindowShouldClose(window)){
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        scene->renderAll();
-        RenderingMethods::rendering_simple(&test,&world);
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
 
-    test.unloadAssets();
+        glfwPollEvents();
+//        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        _loop();
+        glfwSwapBuffers(window);
+    }
+    _cleanup();
 
     return 0;
 }

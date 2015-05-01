@@ -5,6 +5,7 @@
 #include "opengl/rendering/renderableobject.h"
 #include "opengl/helpers/vaohelper.h"
 #include "opengl/components/coffeeworldopts.h"
+#include "opengl/components/coffeeobject.h"
 class RenderingMethods
 {
 

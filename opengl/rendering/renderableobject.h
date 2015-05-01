@@ -4,6 +4,7 @@
 #include "opengl/components/coffeetexture.h"
 #include "opengl/rendering/coffeevertex.h"
 #include "opengl/helpers/shadercontainer.h"
+#include "general/vectors/vector3container.h"
 class RenderableObject{
 public:
     ~RenderableObject(){}
@@ -45,6 +46,33 @@ public:
     virtual void setShader(QPointer<ShaderContainer> shader) = 0;
 
     virtual void unloadAssets() = 0;
+
+    QString toString(){
+        return QString("GMY: pos:%1 "
+                       "rot:%2 "
+                       "scl:%3 "
+                       "MAT: aph:%4 "
+                       "shn:%5 "
+                       "tex:%10 "
+                       "col:%12 "
+                       "OGL: str:%6 "
+                       "bkd:%7 "
+                       "drw:%8 "
+                       "dpt:%9 "
+                       "DAT: vao:%11 ")
+                .arg(Vector3Container::vec3toString(getPosition()))
+                .arg(Vector3Container::vec3toString(getRotation()))
+                .arg(Vector3Container::vec3toString(getScale()))
+                .arg(getTransparency())
+                .arg(getShininess())
+                .arg(isStreamDraw())
+                .arg(isBaked())
+                .arg(isDrawn())
+                .arg(isDepthTest())
+                .arg(getTextureHandle(CoffeeTexture::Texture_Diffusion))
+                .arg(getVaoHandle())
+                .arg(Vector3Container::vec3toString(getSpecularColor()));
+    }
 };
 
 #endif // RENDERABLEOBJECT

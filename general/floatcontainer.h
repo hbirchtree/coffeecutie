@@ -8,7 +8,8 @@ class FloatContainer : public QObject
     Q_OBJECT
 public:
     FloatContainer(QObject* parent);
-    FloatContainer(const FloatContainer &floater);
+    FloatContainer(QObject* parent,float initial);
+    FloatContainer(QObject *parent, const FloatContainer &floater);
     FloatContainer(QPointer<FloatContainer> floater);
     ~FloatContainer();
 

@@ -1,15 +1,16 @@
 #include "coffeeworldopts.h"
 
-CoffeeWorldOpts::CoffeeWorldOpts(QObject *parent) : QObject(parent)
+CoffeeWorldOpts::CoffeeWorldOpts(CoffeeRenderer *renderer) : QObject(renderer)
 {
-    fogColor.g=0;
+    fogColor.g=1;
+    this->renderer = renderer;
 }
 
 CoffeeWorldOpts::~CoffeeWorldOpts()
 {
 
 }
-QPointer<CoffeeCamera> CoffeeWorldOpts::getCamera() const
+QPointer<CoffeeCamera> CoffeeWorldOpts::getCamera()
 {
     return camera;
 }
@@ -24,7 +25,7 @@ void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
     lights.append(light);
 }
 
-QList<QPointer<CoffeeOmniLight> > CoffeeWorldOpts::getLights() const
+QList<QPointer<CoffeeOmniLight> > CoffeeWorldOpts::getLights()
 {
     return lights;
 }
@@ -46,5 +47,15 @@ void CoffeeWorldOpts::setFogDensity(float value)
 {
     fogDensity = value;
 }
+QPointer<CoffeeRenderer> CoffeeWorldOpts::getRenderer()
+{
+    return renderer;
+}
+
+void CoffeeWorldOpts::setRenderer(const QPointer<CoffeeRenderer> &value)
+{
+    renderer = value;
+}
+
 
 

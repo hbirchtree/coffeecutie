@@ -4,17 +4,16 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui opengl
 #QtGUI is used for image loading
 
 TARGET = CoffeeCutie
-CONFIG   += console
-CONFIG   -= app_bundle
+CONFIG += console c++11
+CONFIG -= app_bundle
 
 TEMPLATE = app
 
 INCLUDEPATH += $$PWD/include
-CONFIG += c++11
 
 SOURCES += main.cpp \
     opengl/coffeerenderer.cpp \
@@ -31,12 +30,18 @@ SOURCES += main.cpp \
     general/physics/physicsobject.cpp \
     opengl/components/coffeeworldopts.cpp \
     opengl/components/coffeeomnilight.cpp \
-    general/coffeejoystick.cpp \
     opengl/helpers/vaohelper.cpp \
     opengl/rendering/coffeemesh.cpp \
     opengl/rendering/coffeevertex.cpp \
     general/input/coffeesdljoystick.cpp \
-    general/input/coffeejoystick.cpp
+    general/input/coffeejoystick.cpp \
+    opengl/rendering/coffeerenderingloop.cpp \
+    tests/boxtest.cpp \
+    tests/CubeScape.cpp \
+    tests/glutils.cpp \
+    tests/RawFile.cpp \
+    opengl/qcoffeerenderer.cpp \
+    opengl/qcoffeewindow.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -62,9 +67,16 @@ HEADERS += \
     general/common.h \
     opengl/components/coffeeworldopts.h \
     opengl/components/coffeeomnilight.h \
-    general/coffeejoystick.h \
     general/input/coffeesdljoystick.h \
-    general/input/coffeejoystick.h
+    general/input/coffeejoystick.h \
+    opengl/rendering/coffeerenderingloop.h \
+    tests/boxtest.h \
+    tests/CubeScape.h \
+    tests/glutils.h \
+    tests/RawFile.h \
+    opengl/rendering/renderloop.h \
+    opengl/qcoffeerenderer.h \
+    opengl/qcoffeewindow.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -85,5 +97,3 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-lib
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/release/glfw3.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/debug/glfw3.lib
 else:unix: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
-
-DISTFILES +=

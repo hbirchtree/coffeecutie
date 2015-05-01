@@ -4,20 +4,21 @@
 #include "general/common.h"
 #include "coffeecamera.h"
 #include "coffeeomnilight.h"
+#include "opengl/coffeerenderer.h"
 
 class CoffeeWorldOpts : public QObject
 {
     //An OpenGL-level representation of the world or scene, not meant for modification. That will be done elsewhere.
     Q_OBJECT
 public:
-    CoffeeWorldOpts(QObject *parent);
+    CoffeeWorldOpts(CoffeeRenderer* renderer);
     ~CoffeeWorldOpts();
 
-    QPointer<CoffeeCamera> getCamera() const;
+    QPointer<CoffeeCamera> getCamera();
     void setCamera(QPointer<CoffeeCamera> value);
 
     void addLight(QPointer<CoffeeOmniLight> light);
-    QList<QPointer<CoffeeOmniLight> > getLights() const;
+    QList<QPointer<CoffeeOmniLight> > getLights();
 
     glm::vec4 getFogColor() const;
     void setFogColor(const glm::vec4 &value);
@@ -25,12 +26,16 @@ public:
     float getFogDensity() const;
     void setFogDensity(float value);
 
+    QPointer<CoffeeRenderer> getRenderer();
+    void setRenderer(const QPointer<CoffeeRenderer> &value);
+
 private:
     float fogDensity = 0.01;
     glm::vec4 fogColor;
 
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;
+    QPointer<CoffeeRenderer> renderer;
 };
 
 #endif // COFFEEWORLDOPTS_H
