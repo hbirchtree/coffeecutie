@@ -4,6 +4,7 @@
 #include "general/common.h"
 #include "coffeevertex.h"
 #include "opengl/helpers/coffeegameasset.h"
+#include "general/models/floatbuffer.h"
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 
@@ -18,9 +19,13 @@ public:
     CoffeeMesh(QObject* parent);
     CoffeeMesh(QPointer<CoffeeMesh> mesh);
     QList<QPointer<CoffeeVertex> > copy();
-    GLfloat* getData();
+    FloatBuffer* getData();
     int getVerticesDataSize();
     int getVerticesSize();
+
+    QList<int> face_indices;
+    QList<glm::vec3> raw_vertices;
+    QList<glm::vec2> raw_texcoords;
 
     QList<QPointer<CoffeeVertex> > getVertices();
     void addVertex(QPointer<CoffeeVertex> vert);
@@ -31,7 +36,6 @@ public:
 
     QList<QPointer<CoffeeVertex> > vertices;
 
-public:
     GLint vboHandle() const;
 
     GLint vaoHandle() const;

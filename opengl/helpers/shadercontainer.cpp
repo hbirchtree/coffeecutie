@@ -32,7 +32,6 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
         GLchar log[1000];
         glGetProgramInfoLog(programId,sizeof(log),&loglen,log);
         qDebug() << "Failed to link shader program: \nLog:"+QString(log);
-        delete log;
         glDeleteProgram(programId);
         return -1;
     }
@@ -60,7 +59,6 @@ int ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType)
         glGetShaderInfoLog(handle,sizeof(log),&loglen,log);
         qDebug() << "Failed to compile shader: "+shaderFile
                     +"\nLog: "+QString::fromLocal8Bit(log);
-        delete log;
         glDeleteShader(handle);
         return -1;
     }

@@ -1,10 +1,12 @@
 #ifndef RENDERABLEOBJECT
 #define RENDERABLEOBJECT
 #include "general/common.h"
-#include "opengl/components/coffeetexture.h"
-#include "opengl/rendering/coffeevertex.h"
+#include "opengl/components/coffeematerial.h"
 #include "opengl/helpers/shadercontainer.h"
 #include "general/vectors/vector3container.h"
+
+class FloatBuffer;
+
 class RenderableObject{
 public:
     ~RenderableObject(){}
@@ -15,15 +17,7 @@ public:
     virtual glm::vec3 getScale() = 0;
 
     //Material
-    virtual void setTexture(int id,QPointer<CoffeeTexture> texture) = 0;
-    virtual QPointer<CoffeeTexture> getTexture(int id) = 0;
-    virtual GLint getTextureHandle(int id) = 0;
-
-    virtual glm::vec3 getSpecularColor() = 0;
-    virtual glm::vec3 getColorMultiplier() = 0;
-
-    virtual float getShininess() = 0;
-    virtual float getTransparency() = 0;
+    virtual QPointer<CoffeeMaterial> getMaterial() = 0;
 
     //Model
     virtual GLint getVaoHandle() = 0;
@@ -33,7 +27,7 @@ public:
 
     virtual int getVertexDataSize() = 0;
     virtual int getVerticesCount() = 0;
-    virtual GLfloat* getVertexData() = 0;
+    virtual FloatBuffer* getVertexData() = 0;
 
     virtual bool isStreamDraw() = 0;
     virtual bool isDepthTest() = 0;
@@ -63,15 +57,15 @@ public:
                 .arg(Vector3Container::vec3toString(getPosition()))
                 .arg(Vector3Container::vec3toString(getRotation()))
                 .arg(Vector3Container::vec3toString(getScale()))
-                .arg(getTransparency())
-                .arg(getShininess())
+                .arg(getMaterial()->transparency()->getValue())
+                .arg(getMaterial()->shininess()->getValue())
                 .arg(isStreamDraw())
                 .arg(isBaked())
                 .arg(isDrawn())
                 .arg(isDepthTest())
-                .arg(getTextureHandle(CoffeeTexture::Texture_Diffusion))
+                .arg(getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion)->getHandle())
                 .arg(getVaoHandle())
-                .arg(Vector3Container::vec3toString(getSpecularColor()));
+                .arg(Vector3Container::vec3toString(getMaterial()->specularColor()));
     }
 };
 

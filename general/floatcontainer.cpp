@@ -82,7 +82,3 @@ void FloatContainer::setAcceleration(float value)
 {
     acceleration = value;
 }
-
-
-
-

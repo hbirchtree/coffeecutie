@@ -15,16 +15,6 @@ public:
         m_colorMultiplier = glm::vec3(mtl.colorMultiplier());
     }
 
-    QPointer<FloatContainer> transparencyObject()
-    {
-        return m_transparency;
-    }
-
-    QPointer<FloatContainer> shininessObject()
-    {
-        return m_shininess;
-    }
-
     QPointer<FloatContainer> transparency() const
     {
         return m_transparency;
@@ -45,12 +35,22 @@ public:
         return m_colorMultiplier;
     }
 
+    glm::vec3 getDiffuseColor() const{
+        return m_diffuseColor;
+    }
+    void setDiffuseColor(const glm::vec3 &diffuseColor){
+        m_diffuseColor = diffuseColor;
+    }
+
 public slots:
-    void setTexture(int id,QPointer<CoffeeTexture> texture){
+    void setTexture(int id,QSharedPointer<CoffeeTexture> texture){
         textures.insert(id,texture);
     }
-    QPointer<CoffeeTexture> getTexture(int id){
+    QSharedPointer<CoffeeTexture> getTexture(int id){
         return textures.value(id);
+    }
+    QList<int> getTextureKeys(){
+        return textures.keys();
     }
 
     void setTransparency(FloatContainer arg)
@@ -80,18 +80,18 @@ public slots:
     }
 
     void unloadData(){
-        for(QPointer<CoffeeTexture> text : textures)
+        for(QSharedPointer<CoffeeTexture> text : textures)
             text->unloadTexture();
     }
 
 private:
-    QHash<int,QPointer<CoffeeTexture> > textures;
+    QHash<int,QSharedPointer<CoffeeTexture> > textures;
 
     QPointer<FloatContainer> m_transparency = new FloatContainer(this,1.0);
     QPointer<FloatContainer> m_shininess = new FloatContainer(this,50.0);
+    glm::vec3 m_diffuseColor;
     glm::vec3 m_specularColor;
     glm::vec3 m_colorMultiplier;
 };
 
 #endif // COFFEEMATERIAL
-

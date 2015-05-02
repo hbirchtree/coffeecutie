@@ -1,3 +1,4 @@
+//Includes
 #include <QPointer>
 #include <QStringList>
 #include <QDir>
@@ -24,3 +25,6 @@
 #include <glbinding/gl/gl.h>
 
 using namespace gl;
+
+//Constants
+#define MATH_DEFINES_PI 3.141592654

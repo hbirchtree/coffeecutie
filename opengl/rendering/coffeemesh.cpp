@@ -1,6 +1,5 @@
 #include "coffeemesh.h"
 
-
 CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){}
 
 CoffeeMesh::CoffeeMesh(QPointer<CoffeeMesh> mesh){
@@ -15,24 +14,20 @@ QList<QPointer<CoffeeVertex> > CoffeeMesh::copy(){
     return copy;
 }
 
-GLfloat *CoffeeMesh::getData(){
-    GLfloat data[getVerticesSize()*CoffeeVertex::VERTEX_COUNT];
-    int size = 0;
+FloatBuffer* CoffeeMesh::getData(){
+    FloatBuffer* data = FloatBuffer::createArray(getVerticesSize()*CoffeeVertex::VERTEX_COUNT);
     for(QPointer<CoffeeVertex> vert : vertices){
-//        qDebug() << vert->toString();
-        data[size+0] = vert->position.x;
-        data[size+1] = vert->position.y;
-        data[size+2] = vert->position.z;
-        data[size+3] = vert->texCoord.x;
-        data[size+4] = vert->texCoord.y;
-        data[size+5] = vert->normal.x;
-        data[size+6] = vert->normal.y;
-        data[size+7] = vert->normal.z;
-        data[size+8] = vert->tangent.x;
-        data[size+9] = vert->tangent.y;
-        data[size+10] = vert->tangent.z;
-//        qDebug() << CoffeeVertex::floatBufferToString(data,size,size+11);
-        size+=CoffeeVertex::VERTEX_COUNT;
+        data->put(vert->position.x);
+        data->put(vert->position.y);
+        data->put(vert->position.z);
+        data->put(vert->texCoord.x);
+        data->put(vert->texCoord.y);
+        data->put(vert->normal.x);
+        data->put(vert->normal.y);
+        data->put(vert->normal.z);
+        data->put(vert->tangent.x);
+        data->put(vert->tangent.y);
+        data->put(vert->tangent.z);
     }
     return data;
 }

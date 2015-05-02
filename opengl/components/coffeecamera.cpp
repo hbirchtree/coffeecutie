@@ -59,6 +59,11 @@ void CoffeeCamera::offsetOrientation(float rightAngle, float upAngle)
     normalizeOrientation();
 }
 
+void CoffeeCamera::cameraLookAt(glm::vec3 point)
+{
+    glm::lookAt(position->getValue(),point,glm::vec3(0,1,0));
+}
+
 void CoffeeCamera::normalizeOrientation()
 {
     glm::vec3 value = rotation->getValue();
@@ -101,17 +106,17 @@ glm::vec3 CoffeeCamera::getCameraForwardNormal() const{
 glm::mat4 CoffeeCamera::getOrientationMatrix() const
 {
     glm::mat4 ori;
-    ori = glm::rotate(ori,rotation->getValue().x,glm::vec3(1,0,0));
-    ori = glm::rotate(ori,rotation->getValue().y,glm::vec3(0,1,0));
+    ori = glm::rotate(ori,rotation->getValue().x*math_pi/180.f,glm::vec3(1,0,0));
+    ori = glm::rotate(ori,rotation->getValue().y*math_pi/180.f,glm::vec3(0,1,0));
     return ori;
 }
 
 glm::mat4 CoffeeCamera::getProjection() const
 {
-    glm::mat4 camera = glm::perspective(fov->getValue(),aspect->getValue(),znear,zfar);
-    camera *= getOrientationMatrix();
+    glm::mat4 camera = glm::perspective(fov->getValue()*math_pi/180.f,aspect->getValue(),znear,zfar);
 //    camera *= glm::lookAt(position->getValue(),glm::vec3(0,0,0),glm::vec3(0,1,0));
     camera = glm::translate(camera,-position->getValue());
+    camera *= getOrientationMatrix();
     return camera;
 }
 
@@ -125,11 +130,29 @@ glm::mat4 CoffeeCamera::getOrthographic() const
     return camera;
 }
 
+glm::mat4 CoffeeCamera::getMatrix() const
+{
+    if(orthographic)
+        return getOrthographic();
+    else
+        return getProjection();
+}
+
 void CoffeeCamera::setFramebufferSizeObject(QSize *fb)
 {
     framebufferSize = fb;
 }
 
+bool CoffeeCamera::isOrthographic()
+{
+    return orthographic;
+}
+
 void CoffeeCamera::clearFramebufferSizeObject(){
     framebufferSize = NULL;
 }
+void CoffeeCamera::setOrthographic(bool value)
+{
+    orthographic = value;
+}
+

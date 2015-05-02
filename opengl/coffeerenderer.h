@@ -44,6 +44,7 @@ public slots:
     void updateWindowDimensions(int w,int h);
     void setWindowState(Qt::WindowState state);
     void setStartmode(const Qt::WindowState &value);
+    void updateMouseGrabbing(bool state);
 
 private slots:
     GLFWwindow *setWindowedFullscreen(int monitor);
@@ -71,6 +72,7 @@ signals:
     void clearColorChanged(glm::vec4 color);
 
     //Input events
+    void winMouseGrabbed(QEvent event);
     void winKeyboardEvent(QKeyEvent event);
     void winMouseEvent(QMouseEvent event);
     void winWheelEvent(QWheelEvent event);

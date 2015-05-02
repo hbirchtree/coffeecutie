@@ -41,7 +41,10 @@ SOURCES += main.cpp \
     tests/glutils.cpp \
     tests/RawFile.cpp \
     opengl/qcoffeerenderer.cpp \
-    opengl/qcoffeewindow.cpp
+    opengl/qcoffeewindow.cpp \
+    general/models/floatbuffer.cpp \
+    general/numbercontainer.cpp \
+    general/data/coffeedatacontainer.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -76,7 +79,10 @@ HEADERS += \
     tests/RawFile.h \
     opengl/rendering/renderloop.h \
     opengl/qcoffeerenderer.h \
-    opengl/qcoffeewindow.h
+    opengl/qcoffeewindow.h \
+    general/models/floatbuffer.h \
+    general/numbercontainer.h \
+    general/data/coffeedatacontainer.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

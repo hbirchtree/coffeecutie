@@ -4,8 +4,8 @@ GLuint TextureHelper::allocTexture(GLint internalFormat, GLenum colorFormat, int
     GLuint handle;
     glGenTextures(1,&handle);
     glBindTexture(GL_TEXTURE_2D,handle);
+    glTexImage2D(GL_TEXTURE_2D,0,internalFormat,w,h,0,colorFormat,GL_UNSIGNED_BYTE,(GLvoid*)source);
     glGenerateMipmap(GL_TEXTURE_2D);
-    glTexImage2D(GL_TEXTURE_2D,0,internalFormat,w,h,0,colorFormat,GL_UNSIGNED_BYTE,source);
 
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,static_cast<int>(GL_CLAMP_TO_EDGE));
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,static_cast<int>(GL_CLAMP_TO_EDGE));

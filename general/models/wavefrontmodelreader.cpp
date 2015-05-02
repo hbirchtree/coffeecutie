@@ -2,7 +2,6 @@
 
 WavefrontModelReader::WavefrontModelReader(QObject *parent) : QObject(parent)
 {
-
 }
 WavefrontModelReader::~WavefrontModelReader()
 {
@@ -40,7 +39,8 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                     normal_c++;
                 }
                 if(itv.startsWith("vt ")){
-                    mdl->txcoords.append(parseStrVec2f(itv.mid(3),' '));
+                    glm::vec2 tc = parseStrVec2f(itv.mid(3),' ');
+                    mdl->txcoords.append(glm::vec2(tc.x,1-tc.y));
                     texcrd_c++;
                 }
                 if(itv.startsWith("f "))
@@ -59,6 +59,7 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             int vrt = pts.at(0).toInt()-1-vertex_c+mdl->vertices.size();
                             if(vrt<0)
                                 break;
+                            mdl->model->face_indices.append(vrt);
                             vertex->position = mdl->vertices.at(vrt);
                             break;
                         }
@@ -87,6 +88,8 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
         }
     }
     for(QPointer<ModelContainer> mdl : models.values()){
+        mdl->model->raw_vertices = mdl->vertices;
+        mdl->model->raw_texcoords = mdl->txcoords;
         if(!mdl->mtlName.isEmpty()&&materials.contains(mdl->mtlName)){
             mdl->material = materials.value(mdl->mtlName);
         }else
@@ -135,26 +138,47 @@ void WavefrontModelReader::parseMtlFile(QString file){
         if(line.startsWith("newmtl ")){
             QPointer<CoffeeMaterial> mtl = new CoffeeMaterial(this->parent());
             QString name = line.mid(7);
+            QString arg;
+            QString filename;
             while(it.hasNext()){
                 line = it.next();
+                arg = line.mid(line.indexOf(' ')+1);
                 if(line.startsWith("Ns ")){
-                    mtl->shininessObject()->setValue(line.mid(3).toFloat());
+                    mtl->shininess()->setValue(arg.toFloat());
                 }else if(line.startsWith("Ks ")){
-                    mtl->setSpecularColor(parseStrVec3f(line.mid(3),' '));
+                    mtl->setSpecularColor(parseStrVec3f(arg,' '));
                 }else if(line.startsWith("d ")){
-                    mtl->transparencyObject()->setValue(line.mid(2).toFloat());
+                    mtl->transparency()->setValue(arg.toFloat());
                 }else if(line.startsWith("map_Kd ")){
-                    mtl->setTexture(CoffeeTexture::Texture_Diffusion,new CoffeeTexture(mtl->parent(),filePrefix+QDir::separator()+line.mid(7)));
+                    if(!arg.startsWith(QDir::separator()))
+                        arg.prepend(filePrefix+QDir::separator());
+                    mtl->setTexture(CoffeeTexture::Texture_Diffusion,
+                                    QSharedPointer<CoffeeTexture>(new CoffeeTexture(mtl->parent(),arg)));
                 }else if(line.startsWith("map_Ks ")){
-                    mtl->setTexture(CoffeeTexture::Texture_Specular,new CoffeeTexture(mtl->parent(),filePrefix+QDir::separator()+line.mid(7)));
+                    if(!arg.startsWith(QDir::separator()))
+                        arg.prepend(filePrefix+QDir::separator());
+                    mtl->setTexture(CoffeeTexture::Texture_Specular,
+                                    QSharedPointer<CoffeeTexture>(new CoffeeTexture(mtl->parent(),arg)));
                 }else if(line.startsWith("map_Ns ")){
-                    mtl->setTexture(CoffeeTexture::Texture_Highlight,new CoffeeTexture(mtl->parent(),filePrefix+QDir::separator()+line.mid(7)));
+                    if(!arg.startsWith(QDir::separator()))
+                        arg.prepend(filePrefix+QDir::separator());
+                    mtl->setTexture(CoffeeTexture::Texture_Highlight,
+                                    QSharedPointer<CoffeeTexture>(new CoffeeTexture(mtl->parent(),arg)));
                 }else if(line.startsWith("map_d ")){
-                    mtl->setTexture(CoffeeTexture::Texture_Transparency,new CoffeeTexture(mtl->parent(),filePrefix+QDir::separator()+line.mid(6)));
+                    if(!arg.startsWith(QDir::separator()))
+                        arg.prepend(filePrefix+QDir::separator());
+                    mtl->setTexture(CoffeeTexture::Texture_Transparency,
+                                    QSharedPointer<CoffeeTexture>(new CoffeeTexture(mtl->parent(),arg)));
                 }else if(line.startsWith("map_Bump ")){
-                    mtl->setTexture(CoffeeTexture::Texture_Bumpmap,new CoffeeTexture(mtl->parent(),filePrefix+QDir::separator()+line.mid(9)));
+                    if(!arg.startsWith(QDir::separator()))
+                        arg.prepend(filePrefix+QDir::separator());
+                    mtl->setTexture(CoffeeTexture::Texture_Bumpmap,
+                                    QSharedPointer<CoffeeTexture>(new CoffeeTexture(mtl->parent(),arg)));
                 }else if(line.startsWith("bump ")){
-                    mtl->setTexture(CoffeeTexture::Texture_Bumpmap,new CoffeeTexture(mtl->parent(),filePrefix+QDir::separator()+line.mid(5)));
+                    if(!arg.startsWith(QDir::separator()))
+                        arg.prepend(filePrefix+QDir::separator());
+                    mtl->setTexture(CoffeeTexture::Texture_Bumpmap,
+                                    QSharedPointer<CoffeeTexture>(new CoffeeTexture(mtl->parent(),arg)));
                 }
                 if(it.hasNext()&&it.peekNext().startsWith("newmtl "))
                     break;

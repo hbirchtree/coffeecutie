@@ -9,8 +9,6 @@
 class CoffeeObject : public PhysicsObject, public RenderableObject
 {
 public:
-
-    //RenderableObject interface
     glm::vec3 getPosition(){
         return v_position->getValue();
     }
@@ -19,16 +17,6 @@ public:
     }
     glm::vec3 getScale(){
         return v_scale->getValue();
-    }
-
-    void setTexture(int id,QPointer<CoffeeTexture> texture){
-        material->setTexture(id,texture);
-    }
-    QPointer<CoffeeTexture> getTexture(int id){
-        return material->getTexture(id);
-    }
-    GLint getTextureHandle(int id){
-        return material->getTexture(id)->getHandle();
     }
 
     GLint getVaoHandle(){
@@ -45,20 +33,6 @@ public:
         model->setVboHandle(handle);
     }
 
-    glm::vec3 getSpecularColor(){
-        return material->specularColor();
-    }
-    glm::vec3 getColorMultiplier(){
-        return material->colorMultiplier();
-    }
-
-    float getShininess(){
-        return material->shininess()->getValue();
-    }
-    float getTransparency(){
-        return material->transparency()->getValue();
-    }
-
     QPointer<ShaderContainer> getShader(){
         return shader;
     }
@@ -69,7 +43,7 @@ public:
     int getVertexDataSize(){
         return model->getVerticesDataSize();
     }
-    GLfloat* getVertexData(){
+    FloatBuffer* getVertexData(){
         return model->getData();
     }
 
@@ -110,6 +84,8 @@ public:
     }
     void setMaterial(QPointer<CoffeeMaterial> material){
         this->material = material;
+        material->addUser();
+        material->setParent(this);
     }
     QPointer<CoffeeMaterial> getMaterial(){
         return material;
@@ -122,7 +98,7 @@ public:
         this->model = model;
     }
     int getVerticesCount(){
-        return model->getVertices().size();
+        return model->getVertices().size()*CoffeeVertex::VERTEX_COUNT;
     }
 
 private:
@@ -137,7 +113,6 @@ private:
     QPointer<Vector3Container> v_rotation;
     QPointer<Vector3Container> v_scale;
 
-    // RenderableObject interface
 public slots:
     void unloadAssets()
     {
@@ -145,8 +120,6 @@ public slots:
         material->unloadData();
     }
 
-    // RenderableObject interface
-public:
 };
 
 #endif // COFFEEOBJECT_H

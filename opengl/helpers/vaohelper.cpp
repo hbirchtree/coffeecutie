@@ -8,22 +8,23 @@ void VAOHelper::genVAO(RenderableObject *object, int vertLocation, int vertTexCo
 //        drawMode = GL_STREAM_DRAW;
     glGenBuffers(1,&vbo);
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    glBufferData(GL_ARRAY_BUFFER,object->getVertexDataSize(),object->getVertexData(),drawMode);
+    FloatBuffer* data = object->getVertexData();
+    glBufferData(GL_ARRAY_BUFFER,data->getSize()*sizeof(GLfloat),data->get(),drawMode);
 
     glGenVertexArrays(1,&vao);
     glBindVertexArray(vao);
 
     glEnableVertexAttribArray(vertLocation);
-    glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3)));
+    glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,nullptr);
 
     glEnableVertexAttribArray(vertTexCoordLocation);
-    glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));
+    glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,GL_TRUE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3)));
 
     glEnableVertexAttribArray(vertNormalLocation);
-    glVertexAttribPointer(vertNormalLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3)));
+    glVertexAttribPointer(vertNormalLocation,3,GL_FLOAT,GL_TRUE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));
 
     glEnableVertexAttribArray(vertTangentLocation);
-    glVertexAttribPointer(vertTangentLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3+3)));
+    glVertexAttribPointer(vertTangentLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3)));
 
     glBindBuffer(GL_ARRAY_BUFFER,0);
     glBindVertexArray(0);
@@ -67,6 +68,11 @@ void VAOHelper::genTangents(QPointer<CoffeeMesh> mesh){
     }
 }
 
-void VAOHelper::modifyVbo(GLint vboId, QPointer<CoffeeMesh> mesh){
+void VAOHelper::genNormals(QPointer<CoffeeMesh> mesh){
 
+}
+
+void VAOHelper::modifyVbo(GLint vboId, QPointer<CoffeeMesh> mesh){
+    Q_UNUSED(vboId);
+    Q_UNUSED(mesh);
 }

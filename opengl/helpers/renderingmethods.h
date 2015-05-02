@@ -14,6 +14,8 @@ public:
     static void baking_simple(RenderableObject *obj);
 
     static glm::mat4 translateObjectMatrix(RenderableObject* obj);
+    static void rendering_advanced(RenderableObject *obj, QPointer<CoffeeWorldOpts> world);
+    static void baking_advanced(RenderableObject *obj);
 };
 
 #endif // RENDERINGMETHODS_H

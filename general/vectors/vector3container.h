@@ -34,6 +34,8 @@ public:
 
     void bindValue(QPointer<Vector3Container> value);
 
+    QString toString();
+
     static QString vec3toString(glm::vec3 v){
         return QString("%1,%2,%3")
                 .arg(v.x)

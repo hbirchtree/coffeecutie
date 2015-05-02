@@ -149,6 +149,16 @@ void CoffeeRenderer::setStartmode(const Qt::WindowState &value)
     startmode = value;
 }
 
+void CoffeeRenderer::updateMouseGrabbing(bool state)
+{
+    if(state){
+        glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+        emit winMouseGrabbed(QEvent(QEvent::GrabMouse));
+    }else{
+        emit winMouseGrabbed(QEvent(QEvent::UngrabMouse));
+    }
+}
+
 void CoffeeRenderer::requestWindowClose(){
     glfwSetWindowShouldClose(window,1);
 }
@@ -243,6 +253,7 @@ static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** 
 
 //Keyboard keys
 static void _glfw_input_kbdKey(GLFWwindow *window,int key,int scancode,int action,int mods){
+    Q_UNUSED(scancode);
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     bool autorep = ((action==GLFW_REPEAT) ? true : false);
     QEvent::Type type = ((action==GLFW_RELEASE) ? QEvent::KeyRelease : QEvent::KeyPress);
@@ -371,19 +382,7 @@ int CoffeeRenderer::init(){
 
     glfwShowWindow(window);
 
-//    glClearColor(clearColor.r,clearColor.g,clearColor.b,clearColor.a);
-//    glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
-
-    glEnable(GL_TEXTURE_2D);
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
     return 0;
 }
@@ -403,11 +402,12 @@ int CoffeeRenderer::loop(){
 
     _init();
     while(!glfwWindowShouldClose(window)){
-
+        framerate = glfwGetTime();
         glfwPollEvents();
 //        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         _loop();
         glfwSwapBuffers(window);
+        contextReportFramerate(glfwGetTime()-framerate);
     }
     _cleanup();
 

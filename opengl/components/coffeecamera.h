@@ -19,6 +19,8 @@ public:
     QPointer<FloatContainer> getAspect();
 
     void offsetOrientation(float rightAngle,float upAngle);
+    void cameraLookAt(glm::vec3 point);
+
     void normalizeOrientation();
 
     glm::vec3 getCameraRight() const;
@@ -33,7 +35,12 @@ public:
     glm::mat4 getProjection() const;
     glm::mat4 getOrthographic() const;
 
+    glm::mat4 getMatrix() const;
+
     void setFramebufferSizeObject(QSize* fb);
+
+    void setOrthographic(bool value);
+    bool isOrthographic();
 
 signals:
 
@@ -41,6 +48,8 @@ public slots:
     void clearFramebufferSizeObject();
 
 private:
+    bool orthographic = false;
+    const float math_pi = 3.141592654;
     QSize* framebufferSize = NULL;
     QPointer<FloatContainer> aspect;
     float znear = 0.1;

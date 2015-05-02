@@ -7,16 +7,16 @@ CoffeeTexture::CoffeeTexture(QObject *parent, QString filename) : QObject(parent
 
 CoffeeTexture::~CoffeeTexture()
 {
-
 }
 
 void CoffeeTexture::loadTexture()
 {
-    if(texture.isNull())
-        return;
+//    if(texture.isNull())
+//        return;
     texture = imageProcessor(texture);
+    QImage renderable = texture.convertToFormat(QImage::Format_ARGB32);
     textureHandle = TextureHelper::allocTexture(static_cast<int>(GL_RGBA),GL_RGBA,texture.width(),texture.height(),texture.bits());
-    if(textureHandle>0)
+    if(textureHandle>=0)
         validTexture = true;
 }
 

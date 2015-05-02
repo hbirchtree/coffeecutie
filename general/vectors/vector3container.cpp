@@ -16,6 +16,11 @@ void Vector3Container::bindValue(QPointer<Vector3Container> value){
     bound = value;
 }
 
+QString Vector3Container::toString()
+{
+    return vec3toString(value);
+}
+
 glm::vec3 Vector3Container::getValue(){
     glm::vec3 res = value;
     if(bound)
