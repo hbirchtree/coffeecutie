@@ -45,15 +45,15 @@ private:
         return 0.0f;
     };
 
-    float value;
-    float velocity;
-    float acceleration;
+    float value = 0;
+    float velocity = 0;
+    float acceleration = 0;
 
-    float minval;
-    float maxval;
+    float minval = 0;
+    float maxval = 0;
 
-    float animationVelocity;
-    float animationAcceleration;
+    float animationVelocity = 0;
+    float animationAcceleration = 0;
 
 };
 

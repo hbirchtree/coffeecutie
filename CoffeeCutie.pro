@@ -44,7 +44,12 @@ SOURCES += main.cpp \
     opengl/qcoffeewindow.cpp \
     general/models/floatbuffer.cpp \
     general/numbercontainer.cpp \
-    general/data/coffeedatacontainer.cpp
+    general/data/coffeedatacontainer.cpp \
+    opengl/rendering/coffeerenderingmethod.cpp \
+    general/shadervariant.cpp \
+    general/mutabledatacontainer.cpp \
+    coffeeobjectorganizer.cpp \
+    tests/coffeeadvancedloop.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -82,7 +87,12 @@ HEADERS += \
     opengl/qcoffeewindow.h \
     general/models/floatbuffer.h \
     general/numbercontainer.h \
-    general/data/coffeedatacontainer.h
+    general/data/coffeedatacontainer.h \
+    opengl/rendering/coffeerenderingmethod.h \
+    general/shadervariant.h \
+    general/mutabledatacontainer.h \
+    coffeeobjectorganizer.h \
+    tests/coffeeadvancedloop.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -103,3 +113,10 @@ else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-lib
 else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/release/glfw3.lib
 else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../glfw-library/src/debug/glfw3.lib
 else:unix: PRE_TARGETDEPS += $$PWD/../glfw-library/src/libglfw3.a
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../bullet-library/src/release/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../bullet-library/src/debug/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+else:unix: LIBS += -L$$PWD/../bullet-library/src/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+
+INCLUDEPATH += $$PWD/../bullet-library/src
+DEPENDPATH += $$PWD/../bullet-library/src

@@ -2,15 +2,11 @@
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QThread(parent)
 {
-    connect(this,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
-        if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
-            requestWindowClose();
-    });
-    connect(this,&CoffeeRenderer::winClose,[=](){
-        requestWindowClose();
-    });
     connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
         framebufferSize = event.size();
+    });
+    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
+        glViewport(0,0,ev.size().width(),ev.size().height());
     });
 }
 
@@ -157,6 +153,11 @@ void CoffeeRenderer::updateMouseGrabbing(bool state)
     }else{
         emit winMouseGrabbed(QEvent(QEvent::UngrabMouse));
     }
+}
+
+void CoffeeRenderer::setMousePos(int x, int y)
+{
+    glfwSetCursorPos(window,x,y);
 }
 
 void CoffeeRenderer::requestWindowClose(){
@@ -407,7 +408,7 @@ int CoffeeRenderer::loop(){
 //        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         _loop();
         glfwSwapBuffers(window);
-        contextReportFramerate(glfwGetTime()-framerate);
+        contextReportFrametime(glfwGetTime()-framerate);
     }
     _cleanup();
 

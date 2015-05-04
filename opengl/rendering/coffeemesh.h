@@ -19,11 +19,10 @@ public:
     CoffeeMesh(QObject* parent);
     CoffeeMesh(QPointer<CoffeeMesh> mesh);
     QList<QPointer<CoffeeVertex> > copy();
-    FloatBuffer* getData();
+    NumberBuffer<GLfloat>* getData();
     int getVerticesDataSize();
     int getVerticesSize();
 
-    QList<int> face_indices;
     QList<glm::vec3> raw_vertices;
     QList<glm::vec2> raw_texcoords;
 
@@ -74,11 +73,11 @@ signals:
     void drawnChanged(bool arg);
 
 private:
-    GLint m_vboHandle;
-    GLint m_vaoHandle;
-    bool m_streamDraw;
-    bool m_depthTest;
-    bool m_baked;
+    GLint m_vboHandle = 0;
+    GLint m_vaoHandle = 0;
+    bool m_streamDraw = false;
+    bool m_depthTest = true;
+    bool m_baked = false;
     bool m_drawn = true;
 };
 

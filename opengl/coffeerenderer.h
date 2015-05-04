@@ -45,6 +45,7 @@ public slots:
     void setWindowState(Qt::WindowState state);
     void setStartmode(const Qt::WindowState &value);
     void updateMouseGrabbing(bool state);
+    void setMousePos(int x,int y);
 
 private slots:
     GLFWwindow *setWindowedFullscreen(int monitor);
@@ -87,7 +88,7 @@ signals:
     void winClose();
     void winStateChanged(QWindowStateChangeEvent event);
 
-    void contextReportFramerate(float framerate);
+    void contextReportFrametime(float framerate);
 
 };
 

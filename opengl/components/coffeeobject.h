@@ -5,17 +5,19 @@
 #include "opengl/rendering/renderableobject.h"
 #include "opengl/components/coffeematerial.h"
 #include "opengl/rendering/coffeemesh.h"
+#include "opengl/rendering/coffeerenderingmethod.h"
+#include "general/numbercontainer.h"
 
 class CoffeeObject : public PhysicsObject, public RenderableObject
 {
 public:
-    glm::vec3 getPosition(){
+    glm::vec3 getPosition() const{
         return v_position->getValue();
     }
-    glm::vec3 getRotation(){
+    glm::quat getRotation() const{
         return v_rotation->getValue();
     }
-    glm::vec3 getScale(){
+    glm::vec3 getScale() const{
         return v_scale->getValue();
     }
 
@@ -38,12 +40,13 @@ public:
     }
     void setShader(QPointer<ShaderContainer> shader){
         this->shader = shader;
+        this->shader->setObjectName(this->objectName()+".shader");
     }
 
     int getVertexDataSize(){
         return model->getVerticesDataSize();
     }
-    FloatBuffer* getVertexData(){
+    NumberBuffer<GLfloat>* getVertexData(){
         return model->getData();
     }
 
@@ -65,14 +68,14 @@ public:
 
     CoffeeObject(QObject* parent) : PhysicsObject(parent){
         v_model_offset = new Vector3Container(this);
-        v_rotation = new Vector3Container(this);
+        v_rotation = new NumberContainer<glm::quat>(this,glm::quat(0,0,0,0));
         v_scale = new Vector3Container(this);
     }
     ~CoffeeObject(){
 
     }
 
-    QPointer<Vector3Container> getRotationObject(){
+    QPointer<NumberContainer<glm::quat>> getRotationObject(){
         return v_rotation;
     }
     QPointer<Vector3Container> getScaleObject(){
@@ -80,7 +83,7 @@ public:
     }
 
     QPointer<Vector3Container> getPositionOffsetObject(){
-        return v_rotation;
+        return v_model_offset;
     }
     void setMaterial(QPointer<CoffeeMaterial> material){
         this->material = material;
@@ -100,8 +103,26 @@ public:
     int getVerticesCount(){
         return model->getVertices().size()*CoffeeVertex::VERTEX_COUNT;
     }
+    void render(){
+        if(renderer)
+            renderer->render();
+        else
+            qDebug() << "failed to render!";
+    }
+
+    QPointer<CoffeeRenderingMethod> getRenderer()
+    {
+    return renderer;
+    }
+
+    void setRenderer(QPointer<CoffeeRenderingMethod> value)
+    {
+        renderer = value;
+    }
+
 
 private:
+    QPointer<CoffeeRenderingMethod> renderer;
     QPointer<CoffeeMesh> model;
     QPointer<CoffeeMaterial> material;
     QPointer<ShaderContainer> shader;
@@ -110,7 +131,7 @@ private:
     QString fragShader;
 
     QPointer<Vector3Container> v_model_offset;
-    QPointer<Vector3Container> v_rotation;
+    QPointer<NumberContainer<glm::quat> > v_rotation;
     QPointer<Vector3Container> v_scale;
 
 public slots:
@@ -118,6 +139,7 @@ public slots:
     {
         model->unloadMesh();
         material->unloadData();
+        model->setBaked(false);
     }
 
 };

@@ -2,41 +2,97 @@
 #define NUMBERCONTAINER_H
 
 #include <QObject>
-template<class T> class NumberContainer
+template<class T> class NumberContainer : public QObject
 {
 public:
-    NumberContainer(QObject* parent);
-    NumberContainer(QObject* parent,T initial);
-    NumberContainer(QPointer<NumberContainer> floater);
-    ~NumberContainer();
+    NumberContainer(QObject* parent,T initial) : NumberContainer(parent)
+    {
+        value = initial;
+    }
+    NumberContainer(QObject* parent,QPointer<NumberContainer<T> > floater) : NumberContainer(parent){
+        this->setParent(floater->parent());
+        bindValue(floater);
+    }
+    ~NumberContainer()
+    {
+    }
 
-    T getValue();
-    void setValue(T value);
+    std::function<T()> getOffsetCallback() const{
+        return valueOffsetCallback;
+    }
+    T getRawValue() const{
+        return value;
+    }
 
-    void setClamps(T min,T max);
+    T getValue()
+    {
+        T value = this->value;
+        if(bound){
+            value = bound->getValue();
+        }else
+            unbindValue();
+        value+=valueOffsetCallback();
+//        if(minval<maxval&&value>maxval)
+//            value=maxval;
+//        else if(minval<maxval&&value<minval)
+//            value=minval;
+        return value;
+    }
 
-    T getVelocity() const;
-    void setVelocity(T value);
+    void setValueOffsetCallback(std::function<T()> offset){
+        valueOffsetCallback = offset;
+    }
 
-    T getAcceleration() const;
-    void setAcceleration(T value);
+    void setValue(T value)
+    {
+        unbindValue();
+        this->value = value;
+    }
+
+    void setClamps(T min, T max)
+    {
+        minval = min;
+        maxval = max;
+    }
+    T getVelocity() const
+    {
+        return velocity;
+    }
+
+    void setVelocity(T value)
+    {
+        unbindValue();
+        velocity = value;
+    }
+    T getAcceleration() const
+    {
+        return acceleration;
+    }
+
+    void setAcceleration(T value)
+    {
+        unbindValue();
+        acceleration = value;
+    }
 
     void unbindValue(){
         bound = 0;
     }
-    void bindValue(QPointer<NumberContainer> bound){
+    void bindValue(QPointer<NumberContainer<T> > bound){
         this->bound = bound;
     }
-    void setValueOffsetCallback(std::function<T()> offset);
-
-    std::function<T()> getOffsetCallback() const;
-    T getRawValue() const;
 
 private:
-    QPointer<NumberContainer> bound;
+    QPointer<NumberContainer<T> > bound;
+
     std::function<T()> valueOffsetCallback = [](){
-        return 0.0f;
+        return T();
     };
+
+    NumberContainer(QObject* parent) : QObject(parent)
+    {
+        bound = nullptr;
+    }
 
     T value;
     T velocity;

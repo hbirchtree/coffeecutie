@@ -10,18 +10,18 @@ public:
     CoffeeVertex(QPointer<CoffeeVertex> vertex);
     CoffeeVertex(const CoffeeVertex &vert);
 
-    glm::vec2 texCoord;
+    int getSize();
+    QString toString();
+
     glm::vec3 position;
+    glm::vec2 texCoord;
+    glm::vec3 normal;
     glm::vec3 tangent;
     glm::vec3 bitangent;
-    glm::vec3 normal;
 
     glm::vec4 color;
 
-    int getSize();
-
-    QString toString();
-    static QString floatBufferToString(GLfloat* buf, int from, int to);
+    bool hasNormal = false;
 };
 
 #endif // COFFEEVERTEX

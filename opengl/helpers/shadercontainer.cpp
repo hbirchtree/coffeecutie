@@ -27,7 +27,7 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
     glLinkProgram(programId);
 
     glGetProgramiv(programId,GL_LINK_STATUS,&status);
-    if(status == 0){
+    if(status == 0&&verbosity>0){
         GLint loglen;
         GLchar log[1000];
         glGetProgramInfoLog(programId,sizeof(log),&loglen,log);
@@ -53,7 +53,7 @@ int ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType)
 
     GLint status;
     glGetShaderiv(handle,GL_COMPILE_STATUS,&status);
-    if(status == 0){
+    if(status == 0&&verbosity>0){
         GLint loglen;
         GLchar log[1000];
         glGetShaderInfoLog(handle,sizeof(log),&loglen,log);
@@ -77,6 +77,8 @@ void ShaderContainer::unload()
 }
 
 int ShaderContainer::getUniformLocation(QString name){
+    if(uniforms.contains(name))
+        return uniforms.value(name);
     int handle = glGetUniformLocation(getProgramId(),name.toStdString().c_str());
     if(handle>=0)
         uniforms.insert(name,handle);
@@ -91,11 +93,15 @@ void ShaderContainer::getUniformLocations(QList<QString> names){
 }
 
 int ShaderContainer::getAttributeLocation(QString name){
+    if(attributes.contains(name))
+        return attributes.value(name);
     int handle = glGetAttribLocation(getProgramId(),name.toStdString().c_str());
     if(handle>=0)
         attributes.insert(name,handle);
-    else if(verbosity>1)
+    else if(verbosity>1){
         qDebug() << this->objectName() << "Failed to get attribute: " << name;
+        return -1;
+    }
     return handle;
 }
 

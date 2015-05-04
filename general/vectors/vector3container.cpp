@@ -62,6 +62,11 @@ void Vector3Container::setAcceleration(const glm::vec3 &value)
     accelerationChanged(value);
 }
 
+void Vector3Container::addValue(glm::vec3 crement)
+{
+    setValue(getValue()+crement);
+}
+
 void Vector3Container::setClamps(glm::vec3 min, glm::vec3 max)
 {
     valmin = min;

@@ -39,12 +39,3 @@ QString CoffeeVertex::toString()
             .arg(tangent.y)
             .arg(tangent.z);
 }
-
-QString CoffeeVertex::floatBufferToString(GLfloat *buf,int from = 0, int to = 0)
-{
-    QString res;
-    for(int i=from;i<to;i++)
-        res.append(QString::number(buf[i])+", ");
-    return res;
-}
-

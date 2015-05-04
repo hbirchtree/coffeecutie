@@ -123,7 +123,6 @@ void RenderingMethods::rendering_advanced(RenderableObject* obj, QPointer<Coffee
     shader->setUniform("fogParams.fDensity", world->getFogDensity());
     shader->setUniformRgba("fogParams.fColor", world->getFogColor());
 
-    glBindVertexArray(obj->getVaoHandle());
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,obj->getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion)->getHandle());
     glActiveTexture(GL_TEXTURE1);
@@ -135,6 +134,7 @@ void RenderingMethods::rendering_advanced(RenderableObject* obj, QPointer<Coffee
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D,obj->getMaterial()->getTexture(CoffeeTexture::Texture_Transparency)->getHandle());
 
+    glBindVertexArray(obj->getVaoHandle());
     glDrawArrays(GL_TRIANGLES,0,obj->getVerticesCount());
 
     glActiveTexture(GL_TEXTURE0);
@@ -156,7 +156,7 @@ void RenderingMethods::rendering_advanced(RenderableObject* obj, QPointer<Coffee
 void RenderingMethods::baking_advanced(RenderableObject* obj)
 {
     for(int key : obj->getMaterial()->getTextureKeys())
-        obj->getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion)->loadTexture();
+        obj->getMaterial()->getTexture(key)->loadTexture();
 
     VAOHelper::genVAO(obj,
                       obj->getShader()->getAttributeLocation("vert"),
@@ -186,13 +186,13 @@ void RenderingMethods::baking_advanced(RenderableObject* obj)
     obj->setBaked(true);
 }
 
-glm::mat4 RenderingMethods::translateObjectMatrix(RenderableObject *obj)
+glm::mat4 RenderingMethods::translateObjectMatrix(RenderableObject const *obj)
 {
     glm::mat4 modelMatrix;
     modelMatrix = glm::translate(glm::mat4(),obj->getPosition());
     modelMatrix = glm::scale(modelMatrix,obj->getScale());
-    modelMatrix = glm::rotate(modelMatrix,obj->getRotation().x,glm::vec3(1,0,0));
-    modelMatrix = glm::rotate(modelMatrix,obj->getRotation().y,glm::vec3(0,1,0));
-    modelMatrix = glm::rotate(modelMatrix,obj->getRotation().z,glm::vec3(0,0,1));
+    modelMatrix = glm::rotate(modelMatrix,QuickMath::math_degreesToRads(obj->getRotation().x),glm::vec3(1,0,0));
+    modelMatrix = glm::rotate(modelMatrix,QuickMath::math_degreesToRads(obj->getRotation().y),glm::vec3(0,1,0));
+    modelMatrix = glm::rotate(modelMatrix,QuickMath::math_degreesToRads(obj->getRotation().z),glm::vec3(0,0,1));
     return modelMatrix;
 }

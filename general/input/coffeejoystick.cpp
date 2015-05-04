@@ -3,7 +3,15 @@
 CoffeeJoystick::CoffeeJoystick(QObject *parent, int joystick) : QObject(parent)
 {
     this->joystick = joystick;
-    joystickName = QString(glfwGetJoystickName(joystick));
+    j_name = QString(glfwGetJoystickName(joystick));
+    int axes;
+    int buttons;
+    glfwGetJoystickAxes(joystick,&axes);
+    glfwGetJoystickButtons(joystick,&buttons);
+    for(int i=0;i<axes;i++)
+        this->axes.append(0);
+    for(int i=0;i<buttons;i++)
+        this->buttons.append(0);
 }
 
 CoffeeJoystick::~CoffeeJoystick()
@@ -16,31 +24,59 @@ bool CoffeeJoystick::update()
     if(glfwJoystickPresent(joystick)==0)
         return false;
 
-    axes.clear();
-    buttons.clear();
-
     int count;
     const float* c_axes = glfwGetJoystickAxes(joystick,&count);
-    for(int i=0;i<count;i++)
-        axes.append(c_axes[i]);
-    const unsigned char* c_btns = glfwGetJoystickButtons(joystick,&count);
     for(int i=0;i<count;i++){
-        if(c_btns[i]==GLFW_PRESS)
-            buttons.append(true);
-        else
-            buttons.append(false);
+        float value = c_axes[i];
+        if(std::abs(value)<=j_deadzone)
+            value = 0;
+        if(std::abs(axes.at(i)-value)<j_sensitivity)
+            continue;
+        axes.replace(i,value);
+        axisMoved(i,value*j_axisfactor);
     }
+    const unsigned char* c_btns = glfwGetJoystickButtons(joystick,&count);
+    for(int i=0;i<count;i++)
+        if(c_btns[i]!=buttons.at(i)){
+            buttons.insert(i,c_btns[i]);
+            if(c_btns[i]==GLFW_PRESS)
+                buttonPressed(i);
+            else
+                buttonReleased(i);
+        }
     return true;
 }
 QString CoffeeJoystick::getJoystickName() const
 {
-    return joystickName;
+    return j_name;
 }
-QList<float> CoffeeJoystick::getAxes() const
+float CoffeeJoystick::getSensitivity() const
 {
-    return axes;
+    return j_sensitivity;
 }
-QList<bool> CoffeeJoystick::getButtons() const
+
+void CoffeeJoystick::setSensitivity(float value)
 {
-    return buttons;
+    j_sensitivity = value;
 }
+float CoffeeJoystick::getDeadzone() const
+{
+    return j_deadzone;
+}
+
+void CoffeeJoystick::setDeadzone(float value)
+{
+    j_deadzone = value;
+}
+float CoffeeJoystick::getAxisfactor() const
+{
+    return j_axisfactor;
+}
+
+void CoffeeJoystick::setAxisfactor(float value)
+{
+    j_axisfactor = value;
+}
+
+
+

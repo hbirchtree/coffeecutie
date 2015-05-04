@@ -5,16 +5,16 @@
 #include "opengl/helpers/shadercontainer.h"
 #include "general/vectors/vector3container.h"
 
-class FloatBuffer;
+template <class T> class NumberBuffer;
 
 class RenderableObject{
 public:
     ~RenderableObject(){}
 
     //General
-    virtual glm::vec3 getPosition() = 0;
-    virtual glm::vec3 getRotation() = 0;
-    virtual glm::vec3 getScale() = 0;
+    virtual glm::vec3 getPosition() const = 0;
+    virtual glm::quat getRotation() const = 0;
+    virtual glm::vec3 getScale() const = 0;
 
     //Material
     virtual QPointer<CoffeeMaterial> getMaterial() = 0;
@@ -27,7 +27,7 @@ public:
 
     virtual int getVertexDataSize() = 0;
     virtual int getVerticesCount() = 0;
-    virtual FloatBuffer* getVertexData() = 0;
+    virtual NumberBuffer<GLfloat>* getVertexData() = 0;
 
     virtual bool isStreamDraw() = 0;
     virtual bool isDepthTest() = 0;
@@ -55,7 +55,8 @@ public:
                        "dpt:%9 "
                        "DAT: vao:%11 ")
                 .arg(Vector3Container::vec3toString(getPosition()))
-                .arg(Vector3Container::vec3toString(getRotation()))
+                .arg("(undefined tostring)")
+//                .arg(Vector3Container::vec3toString(getRotation()))
                 .arg(Vector3Container::vec3toString(getScale()))
                 .arg(getMaterial()->transparency()->getValue())
                 .arg(getMaterial()->shininess()->getValue())

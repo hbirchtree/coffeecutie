@@ -49,7 +49,6 @@ public slots:
 
 private:
     bool orthographic = false;
-    const float math_pi = 3.141592654;
     QSize* framebufferSize = NULL;
     QPointer<FloatContainer> aspect;
     float znear = 0.1;

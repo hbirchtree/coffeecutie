@@ -33,7 +33,7 @@ private:
     };
     bool validTexture = false;
     QImage texture;
-    GLint textureHandle;
+    GLint textureHandle = -1;
 };
 
 #endif // COFFEETEXTURE_H

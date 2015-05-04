@@ -7,23 +7,34 @@ class CoffeeJoystick : public QObject
 {
     Q_OBJECT
 public:
-    CoffeeJoystick(QObject *parent,int joystick);
+    CoffeeJoystick(QObject *parent, int joystick);
     ~CoffeeJoystick();
 
     bool update();
     QString getJoystickName() const;
 
-    QList<float> getAxes() const;
+    float getSensitivity() const;
+    void setSensitivity(float value);
 
-    QList<bool> getButtons() const;
+    float getDeadzone() const;
+    void setDeadzone(float value);
+
+    float getAxisfactor() const;
+    void setAxisfactor(float value);
 
 signals:
+    void axisMoved(int axis, float value);
+    void buttonPressed(int button);
+    void buttonReleased(int button);
 
 private:
+    float j_axisfactor = 32768;
+    float j_sensitivity = 0.01;
+    float j_deadzone = 0.15;
     int joystick;
-    QString joystickName;
+    QString j_name;
     QList<float> axes;
-    QList<bool> buttons;
+    QList<unsigned char> buttons;
 };
 
 #endif // COFFEEJOYSTICK_H

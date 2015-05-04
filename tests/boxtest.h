@@ -18,7 +18,6 @@ private:
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;
 
-    // RenderLoop interface
 public:
     std::function<void ()> getInit();
     std::function<void ()> getLoop();

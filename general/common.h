@@ -26,5 +26,25 @@
 
 using namespace gl;
 
-//Constants
-#define MATH_DEFINES_PI 3.141592654
+#ifndef QUICK_MATH_HELPER
+#define QUICK_MATH_HELPER
+class QuickMath {
+public:
+    static constexpr float Math_Pi = 3.141592654;
+    static float math_degreesToRads(float deg){
+        return deg*Math_Pi/180;
+    }
+    static float math_radiansToDegs(float rad){
+        return rad/Math_Pi*180;
+    }
+    static glm::vec3 convert_quat_euler(glm::quat q){
+        return glm::vec3(0,0,0);
+    }
+    static glm::quat convert_euler_quat(glm::vec3 e){
+        return glm::quat(0,0,0,0);
+    }
+
+private:
+    QuickMath();
+};
+#endif

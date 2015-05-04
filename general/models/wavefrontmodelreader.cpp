@@ -59,7 +59,6 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             int vrt = pts.at(0).toInt()-1-vertex_c+mdl->vertices.size();
                             if(vrt<0)
                                 break;
-                            mdl->model->face_indices.append(vrt);
                             vertex->position = mdl->vertices.at(vrt);
                             break;
                         }
@@ -79,6 +78,7 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             if(vrt<0)
                                 break;
                             vertex->normal = mdl->vnormals.at(vrt);
+                            vertex->hasNormal = true;
                             break;
                         }
                         }

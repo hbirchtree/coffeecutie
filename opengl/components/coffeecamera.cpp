@@ -6,6 +6,7 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
     this->fov = new FloatContainer(this);
     this->position = new Vector3Container(this);
     this->rotation = new Vector3Container(this);
+    rotation->setClamps(glm::vec3(-90,0,0),glm::vec3(90,0,0));
 }
 
 CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov) : CoffeeCamera(parent)
@@ -106,25 +107,33 @@ glm::vec3 CoffeeCamera::getCameraForwardNormal() const{
 glm::mat4 CoffeeCamera::getOrientationMatrix() const
 {
     glm::mat4 ori;
-    ori = glm::rotate(ori,rotation->getValue().x*math_pi/180.f,glm::vec3(1,0,0));
-    ori = glm::rotate(ori,rotation->getValue().y*math_pi/180.f,glm::vec3(0,1,0));
+    ori = glm::rotate(ori,
+                      QuickMath::math_degreesToRads(rotation->getValue().x),
+                      glm::vec3(1,0,0));
+    ori = glm::rotate(ori,
+                      QuickMath::math_degreesToRads(rotation->getValue().y),
+                      glm::vec3(0,1,0));
+    ori = glm::rotate(ori,
+                      QuickMath::math_degreesToRads(rotation->getValue().z),
+                      glm::vec3(0,0,1));
     return ori;
 }
 
 glm::mat4 CoffeeCamera::getProjection() const
 {
-    glm::mat4 camera = glm::perspective(fov->getValue()*math_pi/180.f,aspect->getValue(),znear,zfar);
+    glm::mat4 camera = glm::perspective(QuickMath::math_degreesToRads(fov->getValue()),aspect->getValue(),znear,zfar);
 //    camera *= glm::lookAt(position->getValue(),glm::vec3(0,0,0),glm::vec3(0,1,0));
-    camera = glm::translate(camera,-position->getValue());
     camera *= getOrientationMatrix();
+    camera = glm::translate(camera,-position->getValue());
     return camera;
 }
 
 glm::mat4 CoffeeCamera::getOrthographic() const
 {
-    if(framebufferSize==NULL)
-        return glm::mat4();
-    glm::mat4 camera = glm::ortho(0,framebufferSize->width(),0,framebufferSize->height());
+    QSize framebufferSize(800,600);
+//    if(framebufferSize==NULL)
+//        framebufferSize
+    glm::mat4 camera = glm::ortho(0,framebufferSize.width(),0,framebufferSize.height());
     camera *= getOrientationMatrix();
     camera = glm::translate(camera,-position->getValue());
     return camera;
