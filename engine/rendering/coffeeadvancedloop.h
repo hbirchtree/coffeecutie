@@ -15,6 +15,7 @@
 #include "general/input/coffeeplayercontroller.h"
 #include "opengl/components/coffeeframebufferobject.h"
 #include "engine/objects/coffeeobjectfactory.h"
+#include "engine/objects/coffeesimpleobject.h"
 
 class CoffeeAdvancedLoop : public RenderLoop
 {
@@ -30,9 +31,10 @@ public:
 
 private:
     CoffeeFrameBufferObject* testfbo;
+    CoffeeSimpleObject* test;
+
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;
-    CoffeeObject *test;
     CoffeeWorldOpts *world;
     CoffeeJoystick* js;
     CoffeeRenderingMethod *defaultRenderingMethod;

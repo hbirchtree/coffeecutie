@@ -45,24 +45,10 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         renderer->updateRendererClearColor(world->getClearColor());
         world->setRenderer(renderer);
 
-        for(CoffeeObject* o : world->getObjects())
+        for(CoffeeObject* o : world->getObjects()){
             setupRenderer(o,defaultRenderingMethod);
-
-//        WavefrontModelReader rdr(world->getRenderer());
-//        QHash<QString,QPointer<WavefrontModelReader::ModelContainer> > mdls = rdr.parseModel("testgame/models/terrain.obj");
-//        QHash<QString,QPointer<WavefrontModelReader::ModelContainer> > q = rdr.parseModel("testgame/models/quad.obj");
-//        QList<QPointer<WavefrontModelReader::ModelContainer> > vals = mdls.values();
-//        test->setModel(vals.first()->model);
-//        *test->getScaleObject()=glm::vec3(1,1,1);
-//        test->setMaterial(vals.first()->material);
-
-//        world->setCamera(new CoffeeCamera(world->getRenderer(),
-//                                          1.6f,.001f,100.f,90.0f,
-//                                          glm::vec3(0,5,0),glm::vec3(0,0,0)));
-//        world->addLight(new CoffeeOmniLight(world->getRenderer(),"sun",glm::vec3(0,10,0),
-//                                            glm::vec3(1,1,1),0.0005f,0.007f));
-//        world->setFogColor(glm::vec4(0.f,0.2f,0.2f,1.f));
-//        world->setFogDensity(0.07f);
+            qDebug() << o->objectName();
+        }
 
         QSize s = world->getRenderer()->getCurrentFramebufferSize();
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
@@ -84,14 +70,20 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         glfwSwapInterval(0);
 
         renderer->updateMouseGrabbing(true);
+
+        testfbo->createFramebuffer();
+
+        test = new CoffeeSimpleObject(this,testfbo);
     };
     _rendering_loop = [=](){
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         js->update();
-//        testfbo->bindFramebuffer();
+        testfbo->bindFramebuffer();
         for(CoffeeObject* o : world->getObjects())
             o->render();
-//        testfbo->unbindFramebuffer();
+        testfbo->unbindFramebuffer();
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        test->render();
     };
     _rendering_loop_cleanup = [=](){
     };
@@ -121,8 +113,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     controller = new CoffeePlayerController(this);
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     testfbo = new CoffeeFrameBufferObject(this);
-
-    testfbo->createFramebuffer();
 
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         *world->getCamera()->getAspect()=(float)ev.size().width()/(float)ev.size().height();

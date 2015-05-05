@@ -11,13 +11,14 @@ void CoffeeFrameBufferObject::createFramebuffer()
     glGenFramebuffers(1,&framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
 
-    GLuint texture = allocTexture(1024,768,GL_RGB,GL_RGB);
-    GLuint depth = allocRenderBuffer(GL_DEPTH_COMPONENT,1024,768);
+    GLuint texture = allocTexture(1280,720,GL_RGB,GL_RGB);
+    GLuint depth = allocRenderBuffer(GL_DEPTH_COMPONENT,1280,720);
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_RENDERBUFFER, depth);
     glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,texture,0);
 
     framebufferHandle = framebuffer;
+    textureHandle = texture;
 
     GLenum drawBufs[1] = {GL_COLOR_ATTACHMENT0};
     glDrawBuffers(1,drawBufs);
@@ -62,4 +63,9 @@ GLuint CoffeeFrameBufferObject::allocRenderBuffer(gl::GLenum component, int w, i
     glBindRenderbuffer(GL_RENDERBUFFER,0);
     return handle;
 }
+GLuint CoffeeFrameBufferObject::getTextureHandle() const
+{
+    return textureHandle;
+}
+
 

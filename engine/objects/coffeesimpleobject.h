@@ -6,12 +6,15 @@
 #include "opengl/components/coffeematerial.h"
 #include "general/data/numberbuffer.h"
 #include "opengl/components/shadercontainer.h"
+#include "engine/rendering/coffeerenderingmethod.h"
+#include "opengl/components/coffeeframebufferobject.h"
 class CoffeeSimpleObject : public QObject, public RenderableObject
 {
     Q_OBJECT
 public:
-    CoffeeSimpleObject(QObject *parent);
+    CoffeeSimpleObject(QObject *parent, CoffeeFrameBufferObject *display);
 
+    void render();
     glm::vec3 getPosition() const;
     glm::quat getRotation() const;
     glm::vec3 getScale() const;
@@ -38,6 +41,8 @@ private:
     bool baked = false;
     GLuint vao;
     GLuint vbo;
+    GLuint texture;
+    QPointer<CoffeeRenderingMethod> renderer;
     QPointer<CoffeeMaterial> mtl;
     QPointer<ShaderContainer> shader;
     QPointer<NumberBuffer<GLfloat>> mdl;
