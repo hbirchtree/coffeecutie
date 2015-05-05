@@ -62,9 +62,12 @@ void VAOHelper::genTangents(QPointer<CoffeeMesh> mesh){
 
         n = glm::normalize(glm::cross(t,bt));
 
-        v0->normal = n;
-        v1->normal = n;
-        v2->normal = n;
+        if(!v0->hasNormal)
+            v0->normal = n;
+        if(!v1->hasNormal)
+            v1->normal = n;
+        if(!v2->hasNormal)
+            v2->normal = n;
 
         v0->tangent += t;
         v0->bitangent += bt;

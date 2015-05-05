@@ -122,12 +122,8 @@ glm::mat4 CoffeeCamera::getProjection() const
 
 glm::mat4 CoffeeCamera::getOrthographic() const
 {
-    QSize framebufferSize(800,600);
-//    if(framebufferSize==NULL)
-//        framebufferSize
-    glm::mat4 camera = glm::ortho(0,framebufferSize.width(),framebufferSize.height(),0);
+    glm::mat4 camera = glm::ortho(0.f,16.f,0.f,10.f,znear,zfar);
     camera *= getOrientationMatrix();
-    camera = glm::translate(camera,-position->getValue());
     return camera;
 }
 

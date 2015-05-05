@@ -14,22 +14,19 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         test->getShader()->buildProgram("testgame/shaders/vsh.txt","testgame/shaders/fsh.txt");
         QList<QPointer<WavefrontModelReader::ModelContainer> > vals = mdls.values();
         test->setModel(vals.first()->model);
-        test->getScaleObject()->setValue(glm::vec3(0.3,0.3,0.3));
-//        test->getRotationObject()->setValue(QuickMath::convert_euler_quat(glm::vec3(QuickMath::Math_Pi/2.f,0,0)));
+        *test->getScaleObject()=glm::vec3(1,1,1);
         test->setMaterial(vals.first()->material);
 
         world->setCamera(new CoffeeCamera(world->getRenderer(),
                                           1.6f,.001f,100.f,90.0f,
                                           glm::vec3(0,5,0),glm::quat(1,0,0,0)));
-        world->getCamera()->setFramebufferSizeObject(renderer->getFramebufferSizePt());
-//        world->getCamera()->setOrthographic(true);
-        world->addLight(new CoffeeOmniLight(world->getRenderer(),"sun",glm::vec3(0,0,5),
-                                            glm::vec3(1,1,1),0.00005f,0.007f));
+        world->addLight(new CoffeeOmniLight(world->getRenderer(),"sun",glm::vec3(0,10,0),
+                                            glm::vec3(1,1,1),0.0005f,0.007f));
         world->setFogColor(glm::vec4(0.f,0.2f,0.2f,1.f));
         world->setFogDensity(0.07f);
 
         QSize s = world->getRenderer()->getCurrentFramebufferSize();
-        world->getCamera()->getAspect()->setValue((float)s.width()/(float)s.height());
+        *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
         glViewport(0,0,s.width(),s.height());
 
         glEnable(GL_TEXTURE_2D);
@@ -135,7 +132,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     defaultRenderingMethod = new CoffeeRenderingMethod(renderer);
 
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
-        world->getCamera()->getAspect()->setValue((float)ev.size().width()/(float)ev.size().height());
+        *world->getCamera()->getAspect()=(float)ev.size().width()/(float)ev.size().height();
     });
     timers = new CoffeeDataContainer<QString,double>(renderer);
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
@@ -168,14 +165,14 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
         float normalized = val/js->getAxisfactor();
         switch(axe){
         case 0:
-            world->getCamera()->getPosition()->addValue(
+            *world->getCamera()->getPosition()+=
                         world->getCamera()->getCameraRightNormal()*
-                        glm::vec3(normalized,normalized,normalized));
+                        glm::vec3(normalized,normalized,normalized);
             break;
         case 1:
-            world->getCamera()->getPosition()->addValue(
+            *world->getCamera()->getPosition()+=
                         world->getCamera()->getCameraForwardNormal()*
-                        glm::vec3(-normalized,-normalized,-normalized));
+                        glm::vec3(-normalized,-normalized,-normalized);
             break;
         case 3:
             world->getCamera()->offsetOrientation(val*0.00008,0);

@@ -36,6 +36,10 @@ public:
         return getValue()*t.getValue();
     }
 
+    T operator()(){
+        return getValue();
+    }
+
     bool operator==(const T& t){
         return t==getValue();
     }
@@ -66,6 +70,9 @@ public:
     }
     void operator=(const NumberContainer<T>& t){
         setValue(t.getValue());
+    }
+    void operator=(NumberContainer<T> *t){
+        bindValue(t);
     }
     void operator+=(const T& t){
         setValue(getValue()+t);
