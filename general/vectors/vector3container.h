@@ -2,6 +2,7 @@
 #define VECTOR3CONTAINER_H
 
 #include "general/common.h"
+#include "general/qstringfunctions.h"
 
 class Vector3Container : public QObject
 {
@@ -37,13 +38,6 @@ public:
     void bindValue(QPointer<Vector3Container> value);
 
     QString toString();
-
-    static QString vec3toString(glm::vec3 v){
-        return QString("%1,%2,%3")
-                .arg(v.x)
-                .arg(v.y)
-                .arg(v.z);
-    }
 
 signals:
     void valueChanged(glm::vec3 newValue);

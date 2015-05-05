@@ -18,7 +18,7 @@ void Vector3Container::bindValue(QPointer<Vector3Container> value){
 
 QString Vector3Container::toString()
 {
-    return vec3toString(value);
+    return QStringFunctions::toString(value);
 }
 
 glm::vec3 Vector3Container::getValue(){

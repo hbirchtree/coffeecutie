@@ -1,6 +1,6 @@
 #include "coffeerenderingmethod.h"
 
-CoffeeRenderingMethod::CoffeeRenderingMethod(QObject *parent)
+CoffeeRenderingMethod::CoffeeRenderingMethod(QObject *parent) : QObject(parent)
 {
     target = nullptr;
     vaoDetails.dataSize = sizeof(GLfloat);
@@ -177,7 +177,7 @@ void CoffeeRenderingMethod::loadAttributes()
     glGenVertexArrays(1,&vao);
     glBindVertexArray(vao);
 
-    int accumulated_stride = 0;
+    GLint accumulated_stride = 0;
     for(VertexAttributeDescriptor* attr : vaoDetails.descriptors){
         glEnableVertexAttribArray(attr->location);
         glVertexAttribPointer(attr->location,attr->size,attr->dataType,attr->normalized,vaoDetails.getStride(),(GLvoid*)(vaoDetails.dataSize*accumulated_stride));

@@ -2,26 +2,24 @@
 #define COFFEECAMERA_H
 
 #include "general/common.h"
-#include "general/vectors/vector3container.h"
-#include "general/floatcontainer.h"
+#include "general/numbercontainer.h"
+#include "general/qstringfunctions.h"
 class CoffeeCamera : public QObject
 {
     Q_OBJECT
 public:
     CoffeeCamera(QObject *parent);
     CoffeeCamera(QObject *parent,float aspect,float znear,float zfar,float fov);
-    CoffeeCamera(QObject *parent,float aspect,float znear,float zfar,float fov,glm::vec3 pos,glm::vec3 rot);
+    CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::quat rot);
     ~CoffeeCamera();
 
-    QPointer<Vector3Container> getPosition();
-    QPointer<Vector3Container> getRotation();
-    QPointer<FloatContainer> getFieldOfView();
-    QPointer<FloatContainer> getAspect();
+    QPointer<NumberContainer<glm::vec3> > getPosition();
+    QPointer<NumberContainer<glm::quat>> getRotation();
+    QPointer<NumberContainer<float>> getFieldOfView();
+    QPointer<NumberContainer<float>> getAspect();
 
     void offsetOrientation(float rightAngle,float upAngle);
     void cameraLookAt(glm::vec3 point);
-
-    void normalizeOrientation();
 
     glm::vec3 getCameraRight() const;
     glm::vec3 getCameraForward() const;
@@ -39,6 +37,8 @@ public:
 
     void setFramebufferSizeObject(QSize* fb);
 
+    static void normalizeEulerAngles(QPointer<NumberContainer<glm::vec3> > e, float x_min, float x_max);
+
     void setOrthographic(bool value);
     bool isOrthographic();
 
@@ -50,12 +50,14 @@ public slots:
 private:
     bool orthographic = false;
     QSize* framebufferSize = NULL;
-    QPointer<FloatContainer> aspect;
+    QPointer<NumberContainer<float>> aspect;
     float znear = 0.1;
     float zfar = 50;
-    QPointer<FloatContainer> fov;
-    QPointer<Vector3Container> position;
-    QPointer<Vector3Container> rotation;
+    glm::mat4 m_view;
+    QPointer<NumberContainer<float>> fov;
+    QPointer<NumberContainer<glm::vec3> > position;
+    QPointer<NumberContainer<glm::quat>> rotation;
+    QPointer<NumberContainer<glm::vec3>> rotation_euler;
 };
 
 #endif // COFFEECAMERA_H

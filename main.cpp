@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     //This demo taken from glbinding tests out general rendering
 //    BoxTest loop(renderer);
 
+
     CoffeeAdvancedLoop loop(renderer);
 
     renderer->setLoop(&loop);

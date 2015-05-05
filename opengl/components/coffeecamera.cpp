@@ -2,11 +2,12 @@
 
 CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 {
-    this->aspect = new FloatContainer(this);
-    this->fov = new FloatContainer(this);
-    this->position = new Vector3Container(this);
-    this->rotation = new Vector3Container(this);
-    rotation->setClamps(glm::vec3(-90,0,0),glm::vec3(90,0,0));
+    this->aspect = new NumberContainer<float>(this,1.f);
+    this->fov = new NumberContainer<float>(this,90.f);
+    this->position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    this->rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
+    this->rotation_euler = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+//    rotation->setClamps(glm::vec3(-90,0,0),glm::vec3(90,0,0));
 }
 
 CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov) : CoffeeCamera(parent)
@@ -17,7 +18,7 @@ CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfa
     this->zfar = zfar;
 }
 
-CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::vec3 rot) : CoffeeCamera(parent,aspect,znear,zfar,fov)
+CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::quat rot) : CoffeeCamera(parent,aspect,znear,zfar,fov)
 {
     this->position->setValue(pos);
     this->rotation->setValue(rot);
@@ -31,54 +32,44 @@ CoffeeCamera::~CoffeeCamera()
     rotation->deleteLater();
 }
 
-QPointer<Vector3Container> CoffeeCamera::getPosition()
+QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getPosition()
 {
     return position;
 }
 
-QPointer<Vector3Container> CoffeeCamera::getRotation()
+QPointer<NumberContainer<glm::quat>> CoffeeCamera::getRotation()
 {
     return rotation;
 }
 
-QPointer<FloatContainer> CoffeeCamera::getFieldOfView()
+QPointer<NumberContainer<float>> CoffeeCamera::getFieldOfView()
 {
     return fov;
 }
 
-QPointer<FloatContainer> CoffeeCamera::getAspect()
+QPointer<NumberContainer<float>> CoffeeCamera::getAspect()
 {
     return aspect;
 }
 
 void CoffeeCamera::offsetOrientation(float rightAngle, float upAngle)
 {
-    glm::vec3 curr = rotation->getValue();
-    curr.y+=rightAngle;
-    curr.x+=upAngle;
-    rotation->setValue(curr);
-    normalizeOrientation();
+//    rotation->setValue(glm::normalize(rotation->getValue()));
+//    glm::vec3 curr = glm::eulerAngles(rotation->getValue());
+//    curr.y+=rightAngle*QuickMath::Math_DegToRadFactor();
+//    curr.x+=upAngle*QuickMath::Math_DegToRadFactor();
+    *rotation_euler += glm::vec3(
+                upAngle*QuickMath::Math_DegToRadFactor(),
+                rightAngle*QuickMath::Math_DegToRadFactor(),
+                0);
+    normalizeEulerAngles(rotation_euler,glm::radians(-70.f),glm::radians(90.f));
+//    glm::quat rot(0.f,rotation_euler->getValue());
+//    *rotation=rot*rotation->getValue();
 }
 
 void CoffeeCamera::cameraLookAt(glm::vec3 point)
 {
     glm::lookAt(position->getValue(),point,glm::vec3(0,1,0));
-}
-
-void CoffeeCamera::normalizeOrientation()
-{
-    glm::vec3 value = rotation->getValue();
-    glm::vec3 valmax = rotation->getMaxClamp();
-    glm::vec3 valmin = rotation->getMinClamp();
-    value.y = std::fmod(value.y,360.0f);
-    if(value.y<0.0f)
-        value.y+=360.0f;
-
-    if(value.x>valmax.x)
-        value.x = valmax.x;
-    if(value.x<valmin.x)
-        value.x = valmin.x;
-    rotation->setValue(value);
 }
 
 glm::vec3 CoffeeCamera::getCameraRight() const
@@ -106,17 +97,18 @@ glm::vec3 CoffeeCamera::getCameraForwardNormal() const{
 
 glm::mat4 CoffeeCamera::getOrientationMatrix() const
 {
-    glm::mat4 ori;
-    ori = glm::rotate(ori,
-                      QuickMath::math_degreesToRads(rotation->getValue().x),
+    glm::mat4 ori = glm::rotate(glm::mat4(),
+                      rotation_euler->getValue().x,
                       glm::vec3(1,0,0));
     ori = glm::rotate(ori,
-                      QuickMath::math_degreesToRads(rotation->getValue().y),
+                      rotation_euler->getValue().y,
                       glm::vec3(0,1,0));
     ori = glm::rotate(ori,
-                      QuickMath::math_degreesToRads(rotation->getValue().z),
+                      rotation_euler->getValue().z,
                       glm::vec3(0,0,1));
+//    qDebug() << QStringFunctions::toString(ori);
     return ori;
+//    return glm::mat4(rotation->getValue());
 }
 
 glm::mat4 CoffeeCamera::getProjection() const
@@ -133,7 +125,7 @@ glm::mat4 CoffeeCamera::getOrthographic() const
     QSize framebufferSize(800,600);
 //    if(framebufferSize==NULL)
 //        framebufferSize
-    glm::mat4 camera = glm::ortho(0,framebufferSize.width(),0,framebufferSize.height());
+    glm::mat4 camera = glm::ortho(0,framebufferSize.width(),framebufferSize.height(),0);
     camera *= getOrientationMatrix();
     camera = glm::translate(camera,-position->getValue());
     return camera;
@@ -150,6 +142,23 @@ glm::mat4 CoffeeCamera::getMatrix() const
 void CoffeeCamera::setFramebufferSizeObject(QSize *fb)
 {
     framebufferSize = fb;
+}
+
+void CoffeeCamera::normalizeEulerAngles(QPointer<NumberContainer<glm::vec3>> e, float x_min, float x_max)
+{
+    glm::vec3 v = e->getValue();
+
+    if(std::abs(v.y)>QuickMath::Math_Pi*2.f)
+        v.y = std::fmod(v.y,QuickMath::Math_Pi*2.f);
+    if(v.y<0.f)
+        v.y += QuickMath::Math_Pi*2.f;
+
+    if(v.x<x_min)
+        v.x = x_min;
+    if(v.x>x_max)
+        v.x = x_max;
+
+    *e=v;
 }
 
 bool CoffeeCamera::isOrthographic()

@@ -17,6 +17,75 @@ public:
     {
     }
 
+    T operator+(const T& t){
+        return getValue()+t;
+    }
+    T operator+(const NumberContainer<T>& t){
+        return getValue()+t.getValue();
+    }
+    T operator-(const T& t){
+        return getValue()-t;
+    }
+    T operator-(const NumberContainer<T>& t){
+        return getValue()-t.getValue();
+    }
+    T operator*(const T& t){
+        return getValue()*t;
+    }
+    T operator*(const NumberContainer<T>& t){
+        return getValue()*t.getValue();
+    }
+
+    bool operator==(const T& t){
+        return t==getValue();
+    }
+    bool operator==(const NumberContainer<T>& t){
+        return t.getValue()==getValue();
+    }
+    bool operator<=(const T& t){
+        return t<=getValue();
+    }
+    bool operator<=(const NumberContainer<T>& t){
+        return t.getValue()<=getValue();
+    }
+    bool operator>=(const T& t){
+        return t>=getValue();
+    }
+    bool operator>=(const NumberContainer<T>& t){
+        return t.getValue()>=getValue();
+    }
+    bool operator!=(const T& t){
+        return t!=getValue();
+    }
+    bool operator!=(const NumberContainer<T>& t){
+        return t.getValue()!=getValue();
+    }
+
+    void operator=(const T& t){
+        setValue(t);
+    }
+    void operator=(const NumberContainer<T>& t){
+        setValue(t.getValue());
+    }
+    void operator+=(const T& t){
+        setValue(getValue()+t);
+    }
+    void operator+=(const NumberContainer<T>& t){
+        setValue(getValue()+t.getValue());
+    }
+    void operator-=(const T& t){
+        setValue(getValue()-t);
+    }
+    void operator-=(const NumberContainer<T>& t){
+        setValue(getValue()-t.getValue());
+    }
+    void operator*=(const T& t){
+        setValue(getValue()*t);
+    }
+    void operator*=(const NumberContainer<T>& t){
+        setValue(getValue()*t.getValue());
+    }
+
     std::function<T()> getOffsetCallback() const{
         return valueOffsetCallback;
     }
@@ -47,6 +116,10 @@ public:
     {
         unbindValue();
         this->value = value;
+    }
+
+    void addValue(T value){
+        setValue(this->value+value);
     }
 
     void setClamps(T min, T max)

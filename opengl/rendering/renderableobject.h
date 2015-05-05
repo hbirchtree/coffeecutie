@@ -3,7 +3,7 @@
 #include "general/common.h"
 #include "opengl/components/coffeematerial.h"
 #include "opengl/helpers/shadercontainer.h"
-#include "general/vectors/vector3container.h"
+#include "general/qstringfunctions.h"
 
 template <class T> class NumberBuffer;
 
@@ -40,34 +40,6 @@ public:
     virtual void setShader(QPointer<ShaderContainer> shader) = 0;
 
     virtual void unloadAssets() = 0;
-
-    QString toString(){
-        return QString("GMY: pos:%1 "
-                       "rot:%2 "
-                       "scl:%3 "
-                       "MAT: aph:%4 "
-                       "shn:%5 "
-                       "tex:%10 "
-                       "col:%12 "
-                       "OGL: str:%6 "
-                       "bkd:%7 "
-                       "drw:%8 "
-                       "dpt:%9 "
-                       "DAT: vao:%11 ")
-                .arg(Vector3Container::vec3toString(getPosition()))
-                .arg("(undefined tostring)")
-//                .arg(Vector3Container::vec3toString(getRotation()))
-                .arg(Vector3Container::vec3toString(getScale()))
-                .arg(getMaterial()->transparency()->getValue())
-                .arg(getMaterial()->shininess()->getValue())
-                .arg(isStreamDraw())
-                .arg(isBaked())
-                .arg(isDrawn())
-                .arg(isDepthTest())
-                .arg(getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion)->getHandle())
-                .arg(getVaoHandle())
-                .arg(Vector3Container::vec3toString(getMaterial()->specularColor()));
-    }
 };
 
 #endif // RENDERABLEOBJECT

@@ -1,21 +1,14 @@
 #include "physicsobject.h"
 
-
-
 PhysicsObject::PhysicsObject(QObject *parent) : QObject(parent){
-    v_position = new Vector3Container(this);
-    v_position = new Vector3Container(this);
-    v_physics_scale = new Vector3Container(this);
-    v_physics_rotation = new Vector3Container(this);
-    v_physics_linear_factor = new Vector3Container(this);
-    v_physics_inertia = new Vector3Container(this);
-    f_physics_mass = new FloatContainer(this);
-    f_physics_restitution = new FloatContainer(this);
-    f_physics_friction = new FloatContainer(this);
-
-    connections.append(connect(v_position.data(),&Vector3Container::valueChanged,[=](glm::vec3 v){
-        phys_positionChanged(v);
-    }));
+    v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    v_physics_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    v_physics_rotation = new NumberContainer<glm::quat>(this,glm::quat(0,0,0,0));
+    v_physics_linear_factor = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    v_physics_inertia = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    f_physics_mass = new NumberContainer<float>(this,0.f);
+    f_physics_restitution = new NumberContainer<float>(this,0.f);
+    f_physics_friction = new NumberContainer<float>(this,0.f);
 }
 
 PhysicsObject::PhysicsObject(QPointer<PhysicsObject> object){
@@ -39,35 +32,35 @@ PhysicsObject::~PhysicsObject(){
         disconnect(cnct);
 }
 
-QPointer<Vector3Container> PhysicsObject::getPositionObject(){
+QPointer<NumberContainer<glm::vec3> > PhysicsObject::getPositionObject(){
     return v_position; //We return the address of the vector's container
 }
 
-QPointer<Vector3Container> PhysicsObject::getPhysicalScale(){
+QPointer<NumberContainer<glm::vec3> > PhysicsObject::getPhysicalScale(){
     return v_physics_scale;
 }
 
-QPointer<Vector3Container> PhysicsObject::getPhysicalRotation(){
+QPointer<NumberContainer<glm::quat> > PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 
-QPointer<Vector3Container> PhysicsObject::getPhysicalLinearFactor(){
+QPointer<NumberContainer<glm::vec3> > PhysicsObject::getPhysicalLinearFactor(){
     return v_physics_linear_factor;
 }
 
-QPointer<Vector3Container> PhysicsObject::getPhysicalInertia(){
+QPointer<NumberContainer<glm::vec3> > PhysicsObject::getPhysicalInertia(){
     return v_physics_inertia;
 }
 
-QPointer<FloatContainer> PhysicsObject::getPhysicalMass(){
+QPointer<NumberContainer<float> > PhysicsObject::getPhysicalMass(){
     return f_physics_mass;
 }
 
-QPointer<FloatContainer> PhysicsObject::getPhysicalRestitution(){
+QPointer<NumberContainer<float> > PhysicsObject::getPhysicalRestitution(){
     return f_physics_restitution;
 }
 
-QPointer<FloatContainer> PhysicsObject::getPhysicalFriction(){
+QPointer<NumberContainer<float>> PhysicsObject::getPhysicalFriction(){
     return f_physics_friction;
 }
 

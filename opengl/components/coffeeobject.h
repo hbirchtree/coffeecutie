@@ -67,9 +67,9 @@ public:
     }
 
     CoffeeObject(QObject* parent) : PhysicsObject(parent){
-        v_model_offset = new Vector3Container(this);
+        v_model_offset = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
         v_rotation = new NumberContainer<glm::quat>(this,glm::quat(0,0,0,0));
-        v_scale = new Vector3Container(this);
+        v_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
     }
     ~CoffeeObject(){
 
@@ -78,11 +78,11 @@ public:
     QPointer<NumberContainer<glm::quat>> getRotationObject(){
         return v_rotation;
     }
-    QPointer<Vector3Container> getScaleObject(){
+    QPointer<NumberContainer<glm::vec3>> getScaleObject(){
         return v_scale;
     }
 
-    QPointer<Vector3Container> getPositionOffsetObject(){
+    QPointer<NumberContainer<glm::vec3>> getPositionOffsetObject(){
         return v_model_offset;
     }
     void setMaterial(QPointer<CoffeeMaterial> material){
@@ -130,9 +130,9 @@ private:
     QString vertShader;
     QString fragShader;
 
-    QPointer<Vector3Container> v_model_offset;
+    QPointer<NumberContainer<glm::vec3>> v_model_offset;
     QPointer<NumberContainer<glm::quat> > v_rotation;
-    QPointer<Vector3Container> v_scale;
+    QPointer<NumberContainer<glm::vec3>> v_scale;
 
 public slots:
     void unloadAssets()

@@ -31,17 +31,17 @@ using namespace gl;
 class QuickMath {
 public:
     static constexpr float Math_Pi = 3.141592654;
+    static constexpr float Math_DegToRadFactor(){
+        return Math_Pi/180;
+    }
+    static constexpr float Math_RadToDegFactor(){
+        return 180/Math_Pi;
+    }
     static float math_degreesToRads(float deg){
-        return deg*Math_Pi/180;
+        return deg*Math_DegToRadFactor();
     }
     static float math_radiansToDegs(float rad){
-        return rad/Math_Pi*180;
-    }
-    static glm::vec3 convert_quat_euler(glm::quat q){
-        return glm::vec3(0,0,0);
-    }
-    static glm::quat convert_euler_quat(glm::vec3 e){
-        return glm::quat(0,0,0,0);
+        return rad*Math_RadToDegFactor();
     }
 
 private:

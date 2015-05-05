@@ -13,6 +13,7 @@
 #include "general/data/coffeedatacontainer.h"
 #include "general/input/coffeejoystick.h"
 #include "opengl/helpers/renderingmethods.h"
+#include "general/qstringfunctions.h"
 class CoffeeAdvancedLoop : public RenderLoop
 {
 public:

@@ -2,10 +2,10 @@
 
 CoffeeOmniLight::CoffeeOmniLight(QObject *parent) : QObject(parent)
 {
-    position = new Vector3Container(this);
-    color = new Vector3Container(this);
-    attenuation = new FloatContainer(this);
-    ambientCoefficient = new FloatContainer(this);
+    position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    color = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    attenuation = new NumberContainer<float>(this,0.01f);
+    ambientCoefficient = new NumberContainer<float>(this,0.01f);
 }
 
 CoffeeOmniLight::CoffeeOmniLight(QObject *parent, QString id, glm::vec3 pos, glm::vec3 color, float att, float ambco) : CoffeeOmniLight(parent)
@@ -30,45 +30,39 @@ void CoffeeOmniLight::setLightId(const QString &value)
 {
     lightId = value;
 }
-QPointer<Vector3Container> CoffeeOmniLight::getPosition()
+QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getPosition()
 {
     return position;
 }
 
-void CoffeeOmniLight::setPosition(QPointer<Vector3Container> value)
+void CoffeeOmniLight::setPosition(QPointer<NumberContainer<glm::vec3>> value)
 {
     position = value;
 }
-QPointer<Vector3Container> CoffeeOmniLight::getColor()
+QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getColor()
 {
     return color;
 }
 
-void CoffeeOmniLight::setColor(QPointer<Vector3Container> value)
+void CoffeeOmniLight::setColor(QPointer<NumberContainer<glm::vec3>> value)
 {
     color = value;
 }
-QPointer<FloatContainer> CoffeeOmniLight::getAttenuation()
+QPointer<NumberContainer<float>> CoffeeOmniLight::getAttenuation()
 {
     return attenuation;
 }
 
-void CoffeeOmniLight::setAttenuation(QPointer<FloatContainer> value)
+void CoffeeOmniLight::setAttenuation(QPointer<NumberContainer<float>> value)
 {
     attenuation = value;
 }
-QPointer<FloatContainer> CoffeeOmniLight::getAmbientCoefficient()
+QPointer<NumberContainer<float> > CoffeeOmniLight::getAmbientCoefficient()
 {
     return ambientCoefficient;
 }
 
-void CoffeeOmniLight::setAmbientCoefficient(QPointer<FloatContainer> value)
+void CoffeeOmniLight::setAmbientCoefficient(QPointer<NumberContainer<float> > value)
 {
     ambientCoefficient = value;
 }
-
-
-
-
-
-

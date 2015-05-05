@@ -2,8 +2,7 @@
 #define COFFEEOMNILIGHT_H
 
 #include "general/common.h"
-#include "general/vectors/vector3container.h"
-#include "general/floatcontainer.h"
+#include "general/numbercontainer.h"
 class CoffeeOmniLight : public QObject
 {
     Q_OBJECT
@@ -15,24 +14,24 @@ public:
     QString getLightId() const;
     void setLightId(const QString &value);
 
-    QPointer<Vector3Container> getPosition();
-    void setPosition(QPointer<Vector3Container> value);
+    QPointer<NumberContainer<glm::vec3>> getPosition();
+    void setPosition(QPointer<NumberContainer<glm::vec3>> value);
 
-    QPointer<Vector3Container> getColor();
-    void setColor(QPointer<Vector3Container> value);
+    QPointer<NumberContainer<glm::vec3>> getColor();
+    void setColor(QPointer<NumberContainer<glm::vec3>> value);
 
-    QPointer<FloatContainer> getAttenuation();
-    void setAttenuation(QPointer<FloatContainer> value);
+    QPointer<NumberContainer<float> > getAttenuation();
+    void setAttenuation(QPointer<NumberContainer<float>> value);
 
-    QPointer<FloatContainer> getAmbientCoefficient();
-    void setAmbientCoefficient(QPointer<FloatContainer> value);
+    QPointer<NumberContainer<float>> getAmbientCoefficient();
+    void setAmbientCoefficient(QPointer<NumberContainer<float>> value);
 
 private:
     QString lightId;
-    QPointer<Vector3Container> position;
-    QPointer<Vector3Container> color;
-    QPointer<FloatContainer> attenuation;
-    QPointer<FloatContainer> ambientCoefficient;
+    QPointer<NumberContainer<glm::vec3>> position;
+    QPointer<NumberContainer<glm::vec3>> color;
+    QPointer<NumberContainer<float>> attenuation;
+    QPointer<NumberContainer<float>> ambientCoefficient;
 };
 
 #endif // COFFEEOMNILIGHT_H

@@ -32,7 +32,7 @@ public:
                 atsize+=a->size;
             return atsize*dataSize;
         }
-        int dataSize = 0;
+        GLint dataSize = 0;
     };
 
     typedef std::map<QSharedPointer<CoffeeTexture>,gl::GLenum> texturemap;

@@ -49,7 +49,8 @@ SOURCES += main.cpp \
     general/shadervariant.cpp \
     general/mutabledatacontainer.cpp \
     coffeeobjectorganizer.cpp \
-    tests/coffeeadvancedloop.cpp
+    tests/coffeeadvancedloop.cpp \
+    general/qstringfunctions.cpp
 
 HEADERS += \
     opengl/coffeerenderer.h \
@@ -92,7 +93,8 @@ HEADERS += \
     general/shadervariant.h \
     general/mutabledatacontainer.h \
     coffeeobjectorganizer.h \
-    tests/coffeeadvancedloop.h
+    tests/coffeeadvancedloop.h \
+    general/qstringfunctions.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

@@ -15,12 +15,16 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         QList<QPointer<WavefrontModelReader::ModelContainer> > vals = mdls.values();
         test->setModel(vals.first()->model);
         test->getScaleObject()->setValue(glm::vec3(0.3,0.3,0.3));
+//        test->getRotationObject()->setValue(QuickMath::convert_euler_quat(glm::vec3(QuickMath::Math_Pi/2.f,0,0)));
         test->setMaterial(vals.first()->material);
 
-        world->setCamera(new CoffeeCamera(world->getRenderer(),1.6f,.001f,100.f,90.0f,glm::vec3(0,5,0),glm::vec3(0,0,0)));
+        world->setCamera(new CoffeeCamera(world->getRenderer(),
+                                          1.6f,.001f,100.f,90.0f,
+                                          glm::vec3(0,5,0),glm::quat(1,0,0,0)));
         world->getCamera()->setFramebufferSizeObject(renderer->getFramebufferSizePt());
 //        world->getCamera()->setOrthographic(true);
-        world->addLight(new CoffeeOmniLight(world->getRenderer(),"sun",glm::vec3(0,0,5),glm::vec3(1,1,1),0.00005f,0.007f));
+        world->addLight(new CoffeeOmniLight(world->getRenderer(),"sun",glm::vec3(0,0,5),
+                                            glm::vec3(1,1,1),0.00005f,0.007f));
         world->setFogColor(glm::vec4(0.f,0.2f,0.2f,1.f));
         world->setFogDensity(0.07f);
 
@@ -139,7 +143,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
         if(glfwGetTime()>=timers->getValue("fps")){
             qDebug("FPS: %.0f",1.f/frametime);
             timers->setValue("fps",glfwGetTime()+1);
-//            world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
         }
     });
     renderer->connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){

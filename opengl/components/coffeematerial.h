@@ -2,25 +2,25 @@
 #define COFFEEMATERIAL
 
 #include "general/common.h"
-#include "general/floatcontainer.h"
+#include "general/numbercontainer.h"
 #include "opengl/components/coffeetexture.h"
 #include "opengl/helpers/coffeegameasset.h"
 class CoffeeMaterial : public QObject, public CoffeeGameAsset{
 public:
     CoffeeMaterial(QObject* parent) : QObject(parent){}
     CoffeeMaterial(const CoffeeMaterial &mtl) : QObject(){
-        m_transparency = new FloatContainer(this->parent(),mtl.transparency());
-        m_shininess = new FloatContainer(this->parent(),mtl.shininess());
+        m_transparency = new NumberContainer<float>(this->parent(),mtl.transparency());
+        m_shininess = new NumberContainer<float>(this->parent(),mtl.shininess());
         m_specularColor = glm::vec3(mtl.specularColor());
         m_colorMultiplier = glm::vec3(mtl.colorMultiplier());
     }
 
-    QPointer<FloatContainer> transparency() const
+    QPointer<NumberContainer<float>> transparency() const
     {
         return m_transparency;
     }
 
-    QPointer<FloatContainer> shininess() const
+    QPointer<NumberContainer<float>> shininess() const
     {
         return m_shininess;
     }
@@ -53,12 +53,12 @@ public slots:
         return textures.keys();
     }
 
-    void setTransparency(FloatContainer arg)
+    void setTransparency(NumberContainer<float> arg)
     {
         m_transparency = &arg;
     }
 
-    void setShininess(FloatContainer arg)
+    void setShininess(NumberContainer<float> arg)
     {
         m_shininess = &arg;
     }
@@ -87,8 +87,8 @@ public slots:
 private:
     QHash<int,QSharedPointer<CoffeeTexture> > textures;
 
-    QPointer<FloatContainer> m_transparency = new FloatContainer(this,1.0);
-    QPointer<FloatContainer> m_shininess = new FloatContainer(this,50.0);
+    QPointer<NumberContainer<float>> m_transparency = new NumberContainer<float>(this,1.f);
+    QPointer<NumberContainer<float>> m_shininess = new NumberContainer<float>(this,50.f);
     glm::vec3 m_diffuseColor;
     glm::vec3 m_specularColor;
     glm::vec3 m_colorMultiplier;
