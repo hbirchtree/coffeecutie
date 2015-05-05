@@ -24,7 +24,7 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
             parseMtlFile(QFileInfo(file).absoluteDir().absolutePath()+QDir::separator()+itv.mid(7));
             continue;
         }else if(itv.startsWith("o ")&&it.hasNext()){
-            QPointer<ModelContainer> mdl = new ModelContainer();
+            QPointer<ModelContainer> mdl = new ModelContainer(this->parent());
             mdl->mdlName = itv.mid(2);
             while(it.hasNext()){
                 itv = it.next();

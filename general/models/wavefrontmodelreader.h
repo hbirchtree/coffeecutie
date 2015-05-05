@@ -3,7 +3,7 @@
 
 #include "general/common.h"
 #include "general/filehandler.h"
-#include "opengl/rendering/coffeemesh.h"
+#include "engine/models/coffeemesh.h"
 #include "opengl/rendering/coffeevertex.h"
 #include "modelreaderinterface.h"
 #include "opengl/components/coffeematerial.h"

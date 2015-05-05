@@ -1,13 +1,13 @@
-#ifndef FLOATBUFFER_H
-#define FLOATBUFFER_H
+#ifndef NUMBERBUFFER_H
+#define NUMBERBUFFER_H
 
 #include "general/common.h"
 #include "opengl/rendering/coffeevertex.h"
-template <class T> class NumberBuffer
+template <class T> class NumberBuffer : public QObject
 {
 public:
-    static NumberBuffer* createArray(int size){
-        return (new NumberBuffer(size));
+    static NumberBuffer* createArray(QObject* parent,int size){
+        return (new NumberBuffer(parent,size));
     }
 
     NumberBuffer* put(T *input)
@@ -62,11 +62,11 @@ public:
     }
 
 private:
-    NumberBuffer(int size){
+    NumberBuffer(QObject* parent,int size):QObject(parent){
         data.reserve(size);
     }
     int pointer = 0;
     std::vector<T> data;
 };
 
-#endif // FLOATBUFFER_H
+#endif // NUMBERBUFFER_H

@@ -3,7 +3,7 @@
 
 #include "general/common.h"
 #include "opengl/helpers/texturehelper.h"
-#include "opengl/helpers/coffeegameasset.h"
+#include "general/data/coffeegameasset.h"
 class CoffeeTexture : public QObject, public CoffeeGameAsset
 {
     Q_OBJECT

@@ -1,12 +1,13 @@
 #ifndef COFFEEOBJECT_H
 #define COFFEEOBJECT_H
 
-#include "general/physics/physicsobject.h"
+#include "engine/physics/physicsobject.h"
 #include "opengl/rendering/renderableobject.h"
 #include "opengl/components/coffeematerial.h"
-#include "opengl/rendering/coffeemesh.h"
-#include "opengl/rendering/coffeerenderingmethod.h"
-#include "general/numbercontainer.h"
+#include "engine/models/coffeemesh.h"
+#include "general/data/numbercontainer.h"
+#include "opengl/components/shadercontainer.h"
+#include "engine/rendering/coffeerenderingmethod.h"
 
 class CoffeeObject : public PhysicsObject, public RenderableObject
 {
@@ -120,6 +121,25 @@ public:
         renderer = value;
     }
 
+
+    QString getVertShader() const
+    {
+        return vertShader;
+    }
+
+    void setVertShader(const QString &value)
+    {
+        vertShader = value;
+    }
+    QString getFragShader() const
+    {
+        return fragShader;
+    }
+
+    void setFragShader(const QString &value)
+    {
+        fragShader = value;
+    }
 
 private:
     QPointer<CoffeeRenderingMethod> renderer;

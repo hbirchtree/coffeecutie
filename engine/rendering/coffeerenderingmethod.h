@@ -3,12 +3,11 @@
 
 #include "general/common.h"
 #include <map>
-#include "opengl/components/coffeeworldopts.h"
 #include "opengl/components/coffeematerial.h"
 #include "opengl/rendering/renderableobject.h"
 #include "opengl/components/coffeeomnilight.h"
-#include "opengl/helpers/shadercontainer.h"
-#include "general/models/floatbuffer.h"
+#include "opengl/components/shadercontainer.h"
+#include "general/data/numberbuffer.h"
 #include "general/shadervariant.h"
 
 class CoffeeRenderingMethod : public QObject

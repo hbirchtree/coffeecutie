@@ -25,6 +25,11 @@ ShaderVariant::ShaderVariant(std::function<glm::mat4 ()> func)
     data = new MutableDataContainer<std::function<glm::mat4 ()>>(this,func);
     type = ShaderMat4;
 }
+
+ShaderVariant::~ShaderVariant()
+{
+    delete data;
+}
 ShaderVariant::ShaderVariant(std::function<double ()> func)
 {
     data = new MutableDataContainer<std::function<double()>>(this,func);

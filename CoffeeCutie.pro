@@ -16,85 +16,86 @@ TEMPLATE = app
 INCLUDEPATH += $$PWD/include
 
 SOURCES += main.cpp \
-    opengl/coffeerenderer.cpp \
-    general/vectors/vector3container.cpp \
-    general/floatcontainer.cpp \
-    opengl/helpers/shadercontainer.cpp \
-    opengl/coffeescene.cpp \
-    general/models/wavefrontmodelreader.cpp \
+    engine/models/coffeemesh.cpp \
+    engine/objects/coffeeobjectfactory.cpp \
+    engine/objects/coffeeobjectorganizer.cpp \
+    engine/objects/coffeesimpleobject.cpp \
+    engine/physics/physicsobject.cpp \
+    engine/rendering/coffeeadvancedloop.cpp \
+    engine/rendering/coffeerenderingmethod.cpp \
+    general/data/coffeedatacontainer.cpp \
+    general/data/mutabledatacontainer.cpp \
+    general/data/numbercontainer.cpp \
+    general/input/coffeejoystick.cpp \
+    general/input/coffeeplayercontroller.cpp \
+    general/input/coffeesdljoystick.cpp \
     general/models/modelreaderinterface.cpp \
+    general/models/wavefrontmodelreader.cpp \
+    general/qstringfunctions.cpp \
+    general/shadervariant.cpp \
+    opengl/components/coffeecamera.cpp \
+    opengl/components/coffeeframebufferobject.cpp \
+    opengl/components/coffeeomnilight.cpp \
+    opengl/components/coffeetexture.cpp \
+    opengl/components/coffeeworldopts.cpp \
+    opengl/components/shadercontainer.cpp \
+    opengl/context/coffeerenderer.cpp \
+    opengl/context/qcoffeerenderer.cpp \
+    opengl/context/qcoffeewindow.cpp \
     opengl/helpers/renderingmethods.cpp \
     opengl/helpers/texturehelper.cpp \
-    opengl/components/coffeetexture.cpp \
-    opengl/components/coffeecamera.cpp \
-    general/physics/physicsobject.cpp \
-    opengl/components/coffeeworldopts.cpp \
-    opengl/components/coffeeomnilight.cpp \
     opengl/helpers/vaohelper.cpp \
-    opengl/rendering/coffeemesh.cpp \
-    opengl/rendering/coffeevertex.cpp \
-    general/input/coffeesdljoystick.cpp \
-    general/input/coffeejoystick.cpp \
     opengl/rendering/coffeerenderingloop.cpp \
+    opengl/rendering/coffeevertex.cpp \
     tests/boxtest.cpp \
     tests/CubeScape.cpp \
     tests/glutils.cpp \
-    tests/RawFile.cpp \
-    opengl/qcoffeerenderer.cpp \
-    opengl/qcoffeewindow.cpp \
-    general/models/floatbuffer.cpp \
-    general/numbercontainer.cpp \
-    general/data/coffeedatacontainer.cpp \
-    opengl/rendering/coffeerenderingmethod.cpp \
-    general/shadervariant.cpp \
-    general/mutabledatacontainer.cpp \
-    coffeeobjectorganizer.cpp \
-    tests/coffeeadvancedloop.cpp \
-    general/qstringfunctions.cpp
+    tests/RawFile.cpp
 
 HEADERS += \
-    opengl/coffeerenderer.h \
-    opengl/rendering/renderableobject.h \
-    general/vectors/vector3container.h \
-    general/floatcontainer.h \
-    opengl/helpers/shadercontainer.h \
+    engine/models/coffeemesh.h \
+    engine/objects/coffeeobjectfactory.h \
+    engine/objects/coffeeobjectorganizer.h \
+    engine/objects/coffeesimpleobject.h \
+    engine/physics/physicsobject.h \
+    engine/rendering/coffeeadvancedloop.h \
+    engine/rendering/coffeerenderingmethod.h \
+    general/data/coffeedatacontainer.h \
+    general/data/coffeegameasset.h \
+    general/data/mutabledatacontainer.h \
+    general/data/numberbuffer.h \
+    general/data/numbercontainer.h \
+    general/input/coffeejoystick.h \
+    general/input/coffeeplayercontroller.h \
+    general/input/coffeesdljoystick.h \
+    general/models/modelreaderinterface.h \
+    general/models/wavefrontmodelreader.h \
+    general/common.h \
+    general/filehandler.h \
+    general/qstringfunctions.h \
+    general/shadervariant.h \
+    opengl/components/coffeecamera.h \
+    opengl/components/coffeeframebufferobject.h \
+    opengl/components/coffeematerial.h \
+    opengl/components/coffeeobject.h \
+    opengl/components/coffeeomnilight.h \
+    opengl/components/coffeetexture.h \
+    opengl/components/coffeeworldopts.h \
+    opengl/components/shadercontainer.h \
+    opengl/context/coffeerenderer.h \
+    opengl/context/qcoffeerenderer.h \
+    opengl/context/qcoffeewindow.h \
+    opengl/helpers/renderingmethods.h \
     opengl/helpers/texturehelper.h \
     opengl/helpers/vaohelper.h \
-    general/filehandler.h \
-    opengl/rendering/coffeevertex.h \
-    opengl/rendering/coffeemesh.h \
-    opengl/coffeescene.h \
-    opengl/components/coffeeobject.h \
-    general/physics/physicsobject.h \
-    opengl/components/coffeematerial.h \
-    general/models/wavefrontmodelreader.h \
-    general/models/modelreaderinterface.h \
-    opengl/helpers/renderingmethods.h \
-    opengl/components/coffeetexture.h \
-    opengl/components/coffeecamera.h \
-    opengl/helpers/coffeegameasset.h \
-    general/common.h \
-    opengl/components/coffeeworldopts.h \
-    opengl/components/coffeeomnilight.h \
-    general/input/coffeesdljoystick.h \
-    general/input/coffeejoystick.h \
     opengl/rendering/coffeerenderingloop.h \
+    opengl/rendering/coffeevertex.h \
+    opengl/rendering/renderableobject.h \
+    opengl/rendering/renderloop.h \
     tests/boxtest.h \
     tests/CubeScape.h \
     tests/glutils.h \
-    tests/RawFile.h \
-    opengl/rendering/renderloop.h \
-    opengl/qcoffeerenderer.h \
-    opengl/qcoffeewindow.h \
-    general/models/floatbuffer.h \
-    general/numbercontainer.h \
-    general/data/coffeedatacontainer.h \
-    opengl/rendering/coffeerenderingmethod.h \
-    general/shadervariant.h \
-    general/mutabledatacontainer.h \
-    coffeeobjectorganizer.h \
-    tests/coffeeadvancedloop.h \
-    general/qstringfunctions.h
+    tests/RawFile.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

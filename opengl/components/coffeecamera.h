@@ -2,19 +2,18 @@
 #define COFFEECAMERA_H
 
 #include "general/common.h"
-#include "general/numbercontainer.h"
-#include "general/qstringfunctions.h"
+#include "general/data/numbercontainer.h"
 class CoffeeCamera : public QObject
 {
     Q_OBJECT
 public:
     CoffeeCamera(QObject *parent);
     CoffeeCamera(QObject *parent,float aspect,float znear,float zfar,float fov);
-    CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::quat rot);
+    CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::vec3 rot);
     ~CoffeeCamera();
 
     QPointer<NumberContainer<glm::vec3> > getPosition();
-    QPointer<NumberContainer<glm::quat>> getRotation();
+    QPointer<NumberContainer<glm::vec3>> getRotation();
     QPointer<NumberContainer<float>> getFieldOfView();
     QPointer<NumberContainer<float>> getAspect();
 
@@ -29,6 +28,8 @@ public:
     glm::vec3 getCameraUpNormal() const;
     glm::vec3 getCameraForwardNormal() const;
 
+    float getCameraForwardDirection() const;
+
     glm::mat4 getOrientationMatrix() const;
     glm::mat4 getProjection() const;
     glm::mat4 getOrthographic() const;
@@ -41,6 +42,12 @@ public:
 
     void setOrthographic(bool value);
     bool isOrthographic();
+
+    float getZnear() const;
+    void setZnear(float value);
+
+    float getZfar() const;
+    void setZfar(float value);
 
 signals:
 
@@ -56,7 +63,7 @@ private:
     glm::mat4 m_view;
     QPointer<NumberContainer<float>> fov;
     QPointer<NumberContainer<glm::vec3> > position;
-    QPointer<NumberContainer<glm::quat>> rotation;
+    QPointer<NumberContainer<glm::quat>> orientation;
     QPointer<NumberContainer<glm::vec3>> rotation_euler;
 };
 

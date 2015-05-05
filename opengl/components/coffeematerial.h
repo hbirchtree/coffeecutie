@@ -2,9 +2,9 @@
 #define COFFEEMATERIAL
 
 #include "general/common.h"
-#include "general/numbercontainer.h"
+#include "general/data/numbercontainer.h"
 #include "opengl/components/coffeetexture.h"
-#include "opengl/helpers/coffeegameasset.h"
+#include "general/data/coffeegameasset.h"
 class CoffeeMaterial : public QObject, public CoffeeGameAsset{
 public:
     CoffeeMaterial(QObject* parent) : QObject(parent){}

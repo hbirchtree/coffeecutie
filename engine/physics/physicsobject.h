@@ -2,7 +2,7 @@
 #define PHYSICSOBJECT_H
 
 #include "general/common.h"
-#include "general/numbercontainer.h"
+#include "general/data/numbercontainer.h"
 
 class PhysicsObject : public QObject
 {

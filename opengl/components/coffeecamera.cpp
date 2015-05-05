@@ -5,7 +5,7 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
     this->aspect = new NumberContainer<float>(this,1.f);
     this->fov = new NumberContainer<float>(this,90.f);
     this->position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-    this->rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
+    this->orientation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
     this->rotation_euler = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
 //    rotation->setClamps(glm::vec3(-90,0,0),glm::vec3(90,0,0));
 }
@@ -18,10 +18,10 @@ CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfa
     this->zfar = zfar;
 }
 
-CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::quat rot) : CoffeeCamera(parent,aspect,znear,zfar,fov)
+CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::vec3 rot) : CoffeeCamera(parent,aspect,znear,zfar,fov)
 {
     this->position->setValue(pos);
-    this->rotation->setValue(rot);
+    this->rotation_euler->setValue(rot);
 }
 
 CoffeeCamera::~CoffeeCamera()
@@ -29,7 +29,7 @@ CoffeeCamera::~CoffeeCamera()
     aspect->deleteLater();
     fov->deleteLater();
     position->deleteLater();
-    rotation->deleteLater();
+    orientation->deleteLater();
 }
 
 QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getPosition()
@@ -37,9 +37,9 @@ QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getPosition()
     return position;
 }
 
-QPointer<NumberContainer<glm::quat>> CoffeeCamera::getRotation()
+QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getRotation()
 {
-    return rotation;
+    return rotation_euler;
 }
 
 QPointer<NumberContainer<float>> CoffeeCamera::getFieldOfView()
@@ -93,6 +93,9 @@ glm::vec3 CoffeeCamera::getCameraUpNormal() const{
 }
 glm::vec3 CoffeeCamera::getCameraForwardNormal() const{
     return glm::normalize(getCameraForward());
+}
+float CoffeeCamera::getCameraForwardDirection() const{
+    return getCameraForwardNormal().y;
 }
 
 glm::mat4 CoffeeCamera::getOrientationMatrix() const
@@ -165,6 +168,26 @@ bool CoffeeCamera::isOrthographic()
 void CoffeeCamera::clearFramebufferSizeObject(){
     framebufferSize = NULL;
 }
+float CoffeeCamera::getZfar() const
+{
+    return zfar;
+}
+
+void CoffeeCamera::setZfar(float value)
+{
+    zfar = value;
+}
+
+float CoffeeCamera::getZnear() const
+{
+    return znear;
+}
+
+void CoffeeCamera::setZnear(float value)
+{
+    znear = value;
+}
+
 void CoffeeCamera::setOrthographic(bool value)
 {
     orthographic = value;

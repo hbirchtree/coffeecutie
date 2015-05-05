@@ -2,7 +2,7 @@
 #define COFFEEOMNILIGHT_H
 
 #include "general/common.h"
-#include "general/numbercontainer.h"
+#include "general/data/numbercontainer.h"
 class CoffeeOmniLight : public QObject
 {
     Q_OBJECT
@@ -27,7 +27,6 @@ public:
     void setAmbientCoefficient(QPointer<NumberContainer<float>> value);
 
 private:
-    QString lightId;
     QPointer<NumberContainer<glm::vec3>> position;
     QPointer<NumberContainer<glm::vec3>> color;
     QPointer<NumberContainer<float>> attenuation;

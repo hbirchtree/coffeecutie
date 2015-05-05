@@ -1,10 +1,9 @@
 #ifndef RENDERABLEOBJECT
 #define RENDERABLEOBJECT
 #include "general/common.h"
-#include "opengl/components/coffeematerial.h"
-#include "opengl/helpers/shadercontainer.h"
-#include "general/qstringfunctions.h"
 
+class CoffeeMaterial;
+class ShaderContainer;
 template <class T> class NumberBuffer;
 
 class RenderableObject{

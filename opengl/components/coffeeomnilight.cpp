@@ -10,7 +10,7 @@ CoffeeOmniLight::CoffeeOmniLight(QObject *parent) : QObject(parent)
 
 CoffeeOmniLight::CoffeeOmniLight(QObject *parent, QString id, glm::vec3 pos, glm::vec3 color, float att, float ambco) : CoffeeOmniLight(parent)
 {
-    lightId = id;
+    this->setObjectName(id);
     position->setValue(pos);
     this->color->setValue(color);
     attenuation->setValue(att);
@@ -20,15 +20,6 @@ CoffeeOmniLight::CoffeeOmniLight(QObject *parent, QString id, glm::vec3 pos, glm
 CoffeeOmniLight::~CoffeeOmniLight()
 {
 
-}
-QString CoffeeOmniLight::getLightId() const
-{
-    return lightId;
-}
-
-void CoffeeOmniLight::setLightId(const QString &value)
-{
-    lightId = value;
 }
 QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getPosition()
 {

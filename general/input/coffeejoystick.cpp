@@ -28,17 +28,18 @@ bool CoffeeJoystick::update()
     const float* c_axes = glfwGetJoystickAxes(joystick,&count);
     for(int i=0;i<count;i++){
         float value = c_axes[i];
+        float oldval = axes.at(i);
         if(std::abs(value)<=j_deadzone)
             value = 0;
-        if(std::abs(axes.at(i)-value)<j_sensitivity)
+        if(std::abs(value-oldval)<j_sensitivity)
             continue;
         axes.replace(i,value);
-        axisMoved(i,value*j_axisfactor);
+        axisMoved(i,(value-oldval)*j_axisfactor);
     }
     const unsigned char* c_btns = glfwGetJoystickButtons(joystick,&count);
     for(int i=0;i<count;i++)
         if(c_btns[i]!=buttons.at(i)){
-            buttons.insert(i,c_btns[i]);
+            buttons.replace(i,c_btns[i]);
             if(c_btns[i]==GLFW_PRESS)
                 buttonPressed(i);
             else

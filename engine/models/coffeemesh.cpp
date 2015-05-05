@@ -15,7 +15,7 @@ QList<QPointer<CoffeeVertex> > CoffeeMesh::copy(){
 }
 
 NumberBuffer<GLfloat> *CoffeeMesh::getData(){
-    NumberBuffer<GLfloat>* data = NumberBuffer<GLfloat>::createArray(getVerticesSize()*CoffeeVertex::VERTEX_COUNT);
+    NumberBuffer<GLfloat>* data = NumberBuffer<GLfloat>::createArray(this,getVerticesSize()*CoffeeVertex::VERTEX_COUNT);
     for(QPointer<CoffeeVertex> vert : vertices){
         data->put(vert->position.x);
         data->put(vert->position.y);

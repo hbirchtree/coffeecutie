@@ -39,6 +39,16 @@ public:
     T operator()(){
         return getValue();
     }
+    T operator()(int i){
+        switch(i){
+        case 1:
+            return getVelocity();
+        case 2:
+            return getAcceleration();
+        default:
+            return getValue();
+        }
+    }
 
     bool operator==(const T& t){
         return t==getValue();
@@ -91,6 +101,20 @@ public:
     }
     void operator*=(const NumberContainer<T>& t){
         setValue(getValue()*t.getValue());
+    }
+
+    T &operator[](int i){
+        if(i>2)
+            return value;
+        else
+            switch(i){
+            case 0:
+                return value;
+            case 1:
+                return velocity;
+            case 2:
+                return acceleration;
+            }
     }
 
     std::function<T()> getOffsetCallback() const{

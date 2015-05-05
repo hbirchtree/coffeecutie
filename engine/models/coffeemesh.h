@@ -2,9 +2,9 @@
 #define COFFEEMESH
 
 #include "general/common.h"
-#include "coffeevertex.h"
-#include "opengl/helpers/coffeegameasset.h"
-#include "general/models/floatbuffer.h"
+#include "opengl/rendering/coffeevertex.h"
+#include "general/data/coffeegameasset.h"
+#include "general/data/numberbuffer.h"
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 

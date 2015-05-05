@@ -15,10 +15,9 @@ int main(int argc, char *argv[])
 
     int initStat = renderer->init();
 
-    NumberContainer<float> t1(0,1.f);
-    NumberContainer<float> t2(0,0.f);
-    t2=&t1;
-    qDebug() << t2();
+    CoffeePlayerController test(0);
+    test.addSpeed(glm::vec3(0.1,0,0));
+    renderer->connect(renderer,SIGNAL(contextReportFrametime(float)),&test,SLOT(tick(float)));
 
     //This demo taken from glbinding tests out general rendering
 //    BoxTest loop(renderer);

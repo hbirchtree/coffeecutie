@@ -1,9 +1,8 @@
 #include "coffeeworldopts.h"
 
-CoffeeWorldOpts::CoffeeWorldOpts(CoffeeRenderer *renderer) : QObject(renderer)
+CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
 {
     fogColor.g=1;
-    this->renderer = renderer;
 }
 
 CoffeeWorldOpts::~CoffeeWorldOpts()
@@ -25,7 +24,7 @@ void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
     lights.append(light);
 }
 
-QList<QPointer<CoffeeOmniLight> > CoffeeWorldOpts::getLights()
+QList<QPointer<CoffeeOmniLight> > &CoffeeWorldOpts::getLights()
 {
     return lights;
 }
@@ -57,5 +56,22 @@ void CoffeeWorldOpts::setRenderer(const QPointer<CoffeeRenderer> &value)
     renderer = value;
 }
 
+void CoffeeWorldOpts::addObject(QPointer<CoffeeObject> object)
+{
+    objects.append(object);
+}
 
+QList<QPointer<CoffeeObject> > &CoffeeWorldOpts::getObjects()
+{
+    return objects;
+}
+glm::vec4 CoffeeWorldOpts::getClearColor() const
+{
+    return clearColor;
+}
+
+void CoffeeWorldOpts::setClearColor(const glm::vec4 &value)
+{
+    clearColor = value;
+}
 

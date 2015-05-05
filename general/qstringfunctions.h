@@ -4,7 +4,7 @@
 #include "general/common.h"
 #include "opengl/rendering/renderableobject.h"
 #include "opengl/rendering/coffeevertex.h"
-#include "general/models/floatbuffer.h"
+#include "general/data/numberbuffer.h"
 class QStringFunctions
 {
 private:

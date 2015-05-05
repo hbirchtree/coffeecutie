@@ -3,7 +3,7 @@
 
 #include "general/common.h"
 #include "opengl/rendering/renderableobject.h"
-#include "opengl/rendering/coffeemesh.h"
+#include "engine/models/coffeemesh.h"
 
 class VAOHelper
 {

@@ -2,7 +2,7 @@
 #define SHADERVARIANT_H
 
 #include "general/common.h"
-#include "general/mutabledatacontainer.h"
+#include "general/data/mutabledatacontainer.h"
 class ShaderVariant : public QObject
 {
 public:
@@ -17,6 +17,8 @@ public:
     ShaderVariant(std::function<glm::vec4()> func);
     ShaderVariant(std::function<glm::mat3()> func);
     ShaderVariant(std::function<glm::mat4()> func);
+
+    ~ShaderVariant();
 
     ShaderVariant(std::function<double()> func);
 

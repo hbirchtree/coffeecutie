@@ -3,12 +3,16 @@
 
 #include "general/common.h"
 #include "opengl/components/coffeematerial.h"
-#include "opengl/rendering/coffeemesh.h"
+#include "engine/models/coffeemesh.h"
 class ModelReaderInterface
 {
 public:
     class ModelContainer : public QObject{
     public:
+        ModelContainer(QObject* parent) : QObject(parent){}
+        ~ModelContainer(){
+
+        }
         QString mdlName;
         QPointer<CoffeeMesh> model;
         QString mtlName;
