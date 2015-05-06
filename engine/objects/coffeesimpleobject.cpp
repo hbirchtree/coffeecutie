@@ -35,6 +35,7 @@ CoffeeSimpleObject::CoffeeSimpleObject(QObject *parent,CoffeeFrameBufferObject* 
 
 void CoffeeSimpleObject::render()
 {
+    glDisable(GL_DEPTH_TEST);
     glUseProgram(shader->getProgramId());
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,texture);
@@ -45,6 +46,7 @@ void CoffeeSimpleObject::render()
     glDrawArrays(GL_TRIANGLES,0,6);
     glBindVertexArray(0);
     glUseProgram(0);
+    glEnable(GL_DEPTH_TEST);
 }
 
 glm::vec3 CoffeeSimpleObject::getPosition() const

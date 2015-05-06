@@ -76,13 +76,12 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         test = new CoffeeSimpleObject(this,testfbo);
     };
     _rendering_loop = [=](){
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         js->update();
         testfbo->bindFramebuffer();
         for(CoffeeObject* o : world->getObjects())
             o->render();
         testfbo->unbindFramebuffer();
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+//        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         test->render();
     };
     _rendering_loop_cleanup = [=](){
