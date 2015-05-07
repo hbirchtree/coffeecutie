@@ -1,0 +1,9 @@
+[submodule "libs/bullet"]
+	path = libs/bullet
+	url = https://github.com/hbirchtree/bullet3
+[submodule "libs/glfw"]
+	path = libs/glfw
+	url = https://github.com/hbirchtree/glfw
+[submodule "libs/glbinding"]
+	path = libs/glbinding
+	url = https://github.com/hbirchtree/glbinding
