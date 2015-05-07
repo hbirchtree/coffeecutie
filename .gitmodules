@@ -7,3 +7,6 @@
 [submodule "libs/glbinding"]
 	path = libs/glbinding
 	url = https://github.com/hbirchtree/glbinding
+[submodule "include/glm"]
+	path = include/glm
+	url = https://github.com/hbirchtree/glm
