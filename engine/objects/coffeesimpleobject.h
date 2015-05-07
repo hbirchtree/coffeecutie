@@ -7,37 +7,35 @@
 #include "general/data/numberbuffer.h"
 #include "opengl/components/shadercontainer.h"
 #include "engine/rendering/coffeerenderingmethod.h"
-#include "opengl/components/coffeeframebufferobject.h"
-class CoffeeSimpleObject : public QObject, public RenderableObject
+class CoffeeSimpleObject : public QObject,public RenderableObject
 {
-    Q_OBJECT
 public:
-    CoffeeSimpleObject(QObject *parent, CoffeeFrameBufferObject *display);
+    virtual void render();
+    virtual glm::vec3 getPosition() const;
+    virtual glm::quat getRotation() const;
+    virtual glm::vec3 getScale() const;
+    virtual QPointer<CoffeeMaterial> getMaterial();
+    virtual GLint getVaoHandle();
+    virtual GLint getVboHandle();
+    virtual void setVaoHandle(GLint handle);
+    virtual void setVboHandle(GLint handle);
+    virtual int getVertexDataSize();
+    virtual int getVerticesCount();
+    virtual NumberBuffer<GLfloat> *getVertexData();
+    virtual bool isStreamDraw();
+    virtual bool isDepthTest();
+    virtual bool isDrawn();
+    virtual bool isBaked();
+    virtual void setBaked(bool val);
+    virtual QPointer<ShaderContainer> getShader();
+    virtual void setShader(QPointer<ShaderContainer> shader);
+    virtual void unloadAssets();
 
-    void render();
-    glm::vec3 getPosition() const;
-    glm::quat getRotation() const;
-    glm::vec3 getScale() const;
-    QPointer<CoffeeMaterial> getMaterial();
-    GLint getVaoHandle();
-    GLint getVboHandle();
-    void setVaoHandle(GLint handle);
-    void setVboHandle(GLint handle);
-    int getVertexDataSize();
-    int getVerticesCount();
-    NumberBuffer<GLfloat> *getVertexData();
-    bool isStreamDraw();
-    bool isDepthTest();
-    bool isDrawn();
-    bool isBaked();
-    void setBaked(bool val);
-    QPointer<ShaderContainer> getShader();
-    void setShader(QPointer<ShaderContainer> shader);
-    void unloadAssets();
+    virtual void setMdl(QPointer<NumberBuffer<GLfloat> > value);
 
-    void setMdl(QPointer<NumberBuffer<GLfloat> > value);
+protected:
+    CoffeeSimpleObject(QObject *parent);
 
-private:
     bool baked = false;
     GLuint vao;
     GLuint vbo;

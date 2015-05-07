@@ -55,7 +55,7 @@ void RenderingMethods::rendering_simple(RenderableObject* obj, QPointer<CoffeeWo
 void RenderingMethods::baking_simple(RenderableObject* obj)
 {
 //    qDebug() << obj->getVerticesCount();
-    QSharedPointer<CoffeeTexture> texture = obj->getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion);
+    QPointer<CoffeeTexture> texture = obj->getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion);
     texture->loadTexture();
     VAOHelper::genVAO(obj,
                       obj->getShader()->getAttributeLocation("vert"),

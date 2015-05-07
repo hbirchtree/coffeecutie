@@ -5,14 +5,14 @@ QStringFunctions::QStringFunctions()
 
 }
 
-QString QStringFunctions::toString(glm::vec2 &v)
+QString QStringFunctions::toString(const glm::vec2 &v)
 {
     return QString("glm::vec2[%1,%2]")
             .arg(v.x)
             .arg(v.y);
 }
 
-QString QStringFunctions::toString(glm::vec3 &v)
+QString QStringFunctions::toString(const glm::vec3 &v)
 {
     return QString("glm::vec3[%1,%2,%3]")
             .arg(v.x)
@@ -20,7 +20,7 @@ QString QStringFunctions::toString(glm::vec3 &v)
             .arg(v.z);
 }
 
-QString QStringFunctions::toString(glm::vec4 &v)
+QString QStringFunctions::toString(const glm::vec4 &v)
 {
     return QString("glm::vec4[%1,%2,%3,%4]")
             .arg(v.x)
@@ -29,7 +29,7 @@ QString QStringFunctions::toString(glm::vec4 &v)
             .arg(v.w);
 }
 
-QString QStringFunctions::toString(glm::quat &q)
+QString QStringFunctions::toString(const glm::quat &q)
 {
     return QString("glm::quat[%1,%2,%3,%4]")
             .arg(q.w)
@@ -38,7 +38,7 @@ QString QStringFunctions::toString(glm::quat &q)
             .arg(q.z);
 }
 
-QString QStringFunctions::toString(glm::mat3 &m)
+QString QStringFunctions::toString(const glm::mat3 &m)
 {
     return QString("glm::mat3\n"
                    "[%1,%2,%3]\n"
@@ -55,7 +55,7 @@ QString QStringFunctions::toString(glm::mat3 &m)
             .arg(m[2][2]);
 }
 
-QString QStringFunctions::toString(glm::mat4 &m)
+QString QStringFunctions::toString(const glm::mat4 &m)
 {
     return QString("glm::mat4\n"
                    "[%1,%2,%3,%4]\n"
@@ -81,7 +81,7 @@ QString QStringFunctions::toString(glm::mat4 &m)
 }
 
 
-QString QStringFunctions::toString(CoffeeVertex &v)
+QString QStringFunctions::toString(const CoffeeVertex &v)
 {
     return QString("CoffeeVertex(pt=%1,tx=%2,nl=%3,tn=%4)")
             .arg(toString(v.position))

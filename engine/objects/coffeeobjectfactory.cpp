@@ -4,13 +4,16 @@ CoffeeObjectFactory::CoffeeObjectFactory(){}
 
 QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject *parent)
 {
+    qint64 t = QDateTime::currentMSecsSinceEpoch();
     QVariantMap source;
     QJsonParseError err;
     source = QJsonDocument::fromJson(FileHandler::getStringFromFile(file).toLocal8Bit(),
                                      &err).object().toVariantMap();
 
-    if(source.isEmpty())
+    if(source.isEmpty()){
+        qDebug("Object file was empty or non-existing!");
         return QList<CoffeeWorldOpts*>();
+    }
 
     QFileInfo f(file);
     filepath = f.path()+QDir::separator();
@@ -21,6 +24,7 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
         }else if(key=="models")
             importModels(source.value(key).toMap(),parent);
     }
+    qDebug("Spent %i milliseconds parsing content from disk",QDateTime::currentMSecsSinceEpoch()-t);
     return worlds;
 }
 
@@ -78,8 +82,10 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
 void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
 {
     WavefrontModelReader rdr(parent);
+    int mcnt = models.size();
     for(QString key : data.keys())
         models.insert(key,rdr.parseModel(filepath+data.value(key).toString()));
+    qDebug("Imported %i model sources from asset index",models.size()-mcnt);
 }
 
 CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QVariantMap &data, QObject *parent)

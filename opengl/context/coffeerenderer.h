@@ -89,7 +89,6 @@ signals:
     void winStateChanged(QWindowStateChangeEvent event);
 
     void contextReportFrametime(float framerate);
-
 };
 
 #endif // COFFEERENDERER_H

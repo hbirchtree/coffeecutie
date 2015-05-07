@@ -7,10 +7,13 @@
 #include "general/data/coffeegameasset.h"
 class CoffeeMaterial : public QObject, public CoffeeGameAsset{
 public:
-    CoffeeMaterial(QObject* parent) : QObject(parent){}
+    CoffeeMaterial(QObject* parent) : QObject(parent){
+        m_transparency = new NumberContainer<float>(this,1.f);
+        m_shininess = new NumberContainer<float>(this,50.f);
+    }
     CoffeeMaterial(const CoffeeMaterial &mtl) : QObject(){
-        m_transparency = new NumberContainer<float>(this->parent(),mtl.transparency());
-        m_shininess = new NumberContainer<float>(this->parent(),mtl.shininess());
+        m_transparency = new NumberContainer<float>(this,mtl.transparency());
+        m_shininess = new NumberContainer<float>(this,mtl.shininess());
         m_specularColor = glm::vec3(mtl.specularColor());
         m_colorMultiplier = glm::vec3(mtl.colorMultiplier());
     }
@@ -43,10 +46,10 @@ public:
     }
 
 public slots:
-    void setTexture(int id,QSharedPointer<CoffeeTexture> texture){
+    void setTexture(int id,QPointer<CoffeeTexture> texture){
         textures.insert(id,texture);
     }
-    QSharedPointer<CoffeeTexture> getTexture(int id){
+    QPointer<CoffeeTexture> getTexture(int id){
         return textures.value(id);
     }
     QList<int> getTextureKeys(){
@@ -80,15 +83,15 @@ public slots:
     }
 
     void unloadData(){
-        for(QSharedPointer<CoffeeTexture> text : textures)
+        for(QPointer<CoffeeTexture> text : textures)
             text->unloadTexture();
     }
 
 private:
-    QHash<int,QSharedPointer<CoffeeTexture> > textures;
+    QHash<int,QPointer<CoffeeTexture> > textures;
 
-    QPointer<NumberContainer<float>> m_transparency = new NumberContainer<float>(this,1.f);
-    QPointer<NumberContainer<float>> m_shininess = new NumberContainer<float>(this,50.f);
+    QPointer<NumberContainer<float>> m_transparency;
+    QPointer<NumberContainer<float>> m_shininess;
     glm::vec3 m_diffuseColor;
     glm::vec3 m_specularColor;
     glm::vec3 m_colorMultiplier;

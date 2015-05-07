@@ -10,16 +10,24 @@ public:
     CoffeeFrameBufferObject(QObject *parent);
 
     void cleanup();
-
-    void createFramebuffer();
+    void createFramebuffer(QSize windowSize, uint sampling);
 
     void bindFramebuffer();
     void unbindFramebuffer();
 
     GLuint getTextureHandle() const;
 
+public slots:
+    void resizeViewport(QSize windowSize);
+    void updateSampling(uint sampling);
+
 private:
-    static GLuint allocTexture(int w, int h, GLenum internal, GLenum format);
+    void resizeFramebuffer();
+    bool framebufferActive = false;
+    QSize renderSize;
+    QSize windowSize;
+    uint sampling = 1;
+    static GLuint allocTexture(int w, int h, GLenum internal, GLenum format,GLenum filtering,GLenum datatype);
     static GLuint allocRenderBuffer(GLenum component, int w, int h);
 
     QList<GLuint> renderbuffers;

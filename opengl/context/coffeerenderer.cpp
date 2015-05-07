@@ -27,6 +27,7 @@ CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState st
 
 CoffeeRenderer::~CoffeeRenderer()
 {
+    qDebug("Destroying GLFW window");
     if(window!=NULL)
         glfwDestroyWindow(window);
     glfwTerminate();
@@ -74,6 +75,8 @@ GLFWwindow* CoffeeRenderer::setWindowedFullscreen(int monitor)
     glfwWindowHint(GLFW_BLUE_BITS,current->blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
 
+    qDebug("Setting windowed fullscreen mode: %ix%i, title: %s, monitor: %i",windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),monitor);
+
     return glfwCreateWindow(current->width,current->height,windowTitle.toStdString().c_str(),mon,NULL);
 }
 
@@ -86,11 +89,14 @@ GLFWwindow* CoffeeRenderer::setFullscreen(int monitor)
 
     GLFWmonitor* mon = data[monitor];
 
+    qDebug("Setting fullscreen mode: %ix%i, title: %s, monitor: %i",windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),monitor);
+
     return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),mon,NULL);
 }
 
 GLFWwindow *CoffeeRenderer::setWindowed()
 {
+    qDebug("Setting windowed mode: %ix%i, title: %s",windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str());
     return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),NULL,NULL);
 }
 int CoffeeRenderer::getSamples() const
@@ -151,6 +157,7 @@ void CoffeeRenderer::updateMouseGrabbing(bool state)
         glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
         emit winMouseGrabbed(QEvent(QEvent::GrabMouse));
     }else{
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
         emit winMouseGrabbed(QEvent(QEvent::UngrabMouse));
     }
 }
@@ -317,8 +324,9 @@ static void _glfw_winevent_state(GLFWwindow* window, int val){
 
 
 int CoffeeRenderer::init(){
-    if(!glfwInit())
-        return 1;
+    if(!glfwInit()){
+        qFatal("Failed to initialize GLFW!");
+    }
 
     glfwSetErrorCallback(errorCallback);
 
@@ -344,8 +352,10 @@ int CoffeeRenderer::init(){
         window = setWindowed();
         break;
     }
-    if(window==NULL)
+    if(window==NULL){
+        qFatal("Failed to create window");
         return 10;
+    }
 
     glfwMakeContextCurrent(window);
 
@@ -369,16 +379,17 @@ int CoffeeRenderer::init(){
     glfwSetFramebufferSizeCallback(window,_glfw_winevent_fbresize);
 
     glbinding::Binding::initialize(true);
-    qDebug("%s",QString("OpenGL renderer: %1\nOpenGL vendor  : %2\nOpenGL version : %3")
+    qDebug("%s",QString("\nOpenGL renderer: %1\nOpenGL vendor  : %2\nOpenGL version : %3")
            .arg(QString::fromStdString(glbinding::ContextInfo::renderer()))
            .arg(QString::fromStdString(glbinding::ContextInfo::vendor()))
            .arg(QString::fromStdString(glbinding::ContextInfo::version().toString())).toStdString().c_str());
+
     glfwSwapInterval(1);
 
     glbinding::setAfterCallback([](const glbinding::FunctionCall&){
         gl::GLenum error = glGetError();
         if(error!=GL_NO_ERROR)
-            std::cout << "Error:" << error << std::endl;
+            fprintf(stderr,"OGLERROR: error code:%i\n",static_cast<int>(error));
     });
 
     glfwShowWindow(window);
@@ -392,8 +403,11 @@ int CoffeeRenderer::init(){
  * 01 : no rendering process specified
  */
 int CoffeeRenderer::loop(){
-    if(!loopObject)
+    if(!loopObject){
+        qDebug("No loop object defined!");
         return 1;
+    }
+    qDebug("Initializing loop");
 
     std::function<void()> _init = loopObject->getInit();
     std::function<void()> _loop = loopObject->getLoop();
@@ -401,7 +415,9 @@ int CoffeeRenderer::loop(){
 
     double framerate = glfwGetTime();
 
+    qDebug("Running initialization function");
     _init();
+    qDebug("Running loop function");
     while(!glfwWindowShouldClose(window)){
         framerate = glfwGetTime();
         glfwPollEvents();
@@ -410,6 +426,7 @@ int CoffeeRenderer::loop(){
         glfwSwapBuffers(window);
         contextReportFrametime(glfwGetTime()-framerate);
     }
+    qDebug("Running cleanup function");
     _cleanup();
 
     return 0;

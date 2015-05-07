@@ -4,6 +4,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
 {
     connectSignals(renderer);
 
+    qDebug("Creating default rendering method");
     defaultRenderingMethod = new CoffeeRenderingMethod(renderer);
     //Here we use a template for all uniform variables as well as attributes. All objects need these.
     defaultRenderingMethod->addShaderUniform("camera",new ShaderVariant([=](){
@@ -35,25 +36,32 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
     defaultRenderingMethod->addVertexAttribute("vertNormal",3);
     defaultRenderingMethod->addVertexAttribute("vertTangent",3);
 
+    qDebug("Importing objects from file");
     CoffeeObjectFactory f;
     QList<CoffeeWorldOpts*> worlds = f.importObjects("testgame/cutie.json",this);
+    if(worlds.isEmpty())
+        qDebug("Failed to load any world information! Brace for impact!");
     world = worlds.first();
 
     _rendering_loop_init = [=](){
 
+        qDebug("Configuring renderer");
         renderer->setSamples(4);
         renderer->updateRendererClearColor(world->getClearColor());
         world->setRenderer(renderer);
 
+        qDebug("Configuring objects for rendering");
         for(CoffeeObject* o : world->getObjects()){
             setupRenderer(o,defaultRenderingMethod);
-            qDebug() << o->objectName();
+            qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
         }
 
+        qDebug("Resizing viewport");
         QSize s = world->getRenderer()->getCurrentFramebufferSize();
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
         glViewport(0,0,s.width(),s.height());
 
+        qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
 
         glEnable(GL_DEPTH_TEST);
@@ -67,24 +75,31 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
+        qDebug("Setting vertical sync mode");
         glfwSwapInterval(0);
 
         renderer->updateMouseGrabbing(true);
 
-        testfbo->createFramebuffer();
+        qDebug("Configuring framebuffer object");
+        testfbo->createFramebuffer(renderer->getWindowDimensions(),2);
+        connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){ //We need to resize the FBO when the window dimensions change
+            testfbo->resizeViewport(e.size());
+        });
 
-        test = new CoffeeSimpleObject(this,testfbo);
+        qDebug("Creating output surface");
+        test = new CoffeeOutputSurface(this,testfbo);
     };
     _rendering_loop = [=](){
         js->update();
         testfbo->bindFramebuffer();
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         for(CoffeeObject* o : world->getObjects())
             o->render();
         testfbo->unbindFramebuffer();
-//        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         test->render();
     };
     _rendering_loop_cleanup = [=](){
+        qDebug("Running the empty cleanup function");
     };
 }
 
@@ -113,6 +128,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     testfbo = new CoffeeFrameBufferObject(this);
 
+    qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         *world->getCamera()->getAspect()=(float)ev.size().width()/(float)ev.size().height();
     });
@@ -124,6 +140,13 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             timers->setValue("fps",glfwGetTime()+1);
         }
     });
+    renderer->connect(renderer,&CoffeeRenderer::winClose,[=](){
+        qDebug("Window closing request received");
+        renderer->requestWindowClose();
+    });
+    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
+
+    qDebug("Configuring input handling");
     renderer->connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
         if(event.type()==QMouseEvent::MouseMove){
             renderer->setMousePos(0,0);
@@ -153,27 +176,18 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             controller->addSpeed(world->getCamera()->getCameraForwardNormal()*-normalized);
             break;
         case 3:
-            if(val<0)
-                break;
             world->getCamera()->offsetOrientation(val*0.00008,0);
             break;
         case 4:
-            if(val<0)
-                break;
             world->getCamera()->offsetOrientation(0,val*0.00008);
             break;
         }
     });
-    renderer->connect(renderer,&CoffeeRenderer::winClose,[=](){
-        renderer->requestWindowClose();
-    });
-
-    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
-    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
-        *world->getCamera()->getPosition()+=glm::vec3(d);
-    });
     connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
         world->getCamera()->offsetOrientation(d.y,d.x);
+    });
+    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
+        *world->getCamera()->getPosition()+=glm::vec3(d);
     });
 }
 

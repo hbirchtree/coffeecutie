@@ -3,10 +3,12 @@
 #include <QStringList>
 #include <QDir>
 #include <QDebug>
+#include <QMessageLogger>
 #include <QImage>
 #include <QThread>
 #include <QHash>
 #include <QListIterator>
+#include <QDateTime>
 
 #include <iostream>
 

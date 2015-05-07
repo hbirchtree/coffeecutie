@@ -108,7 +108,7 @@ public:
         if(renderer)
             renderer->render();
         else
-            qDebug() << "failed to render!";
+            qDebug("%s : Failed to render! RenderingMethod is undefined!",objectName().toStdString().c_str());
     }
 
     QPointer<CoffeeRenderingMethod> getRenderer()

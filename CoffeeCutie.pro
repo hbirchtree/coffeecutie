@@ -50,7 +50,10 @@ SOURCES += main.cpp \
     tests/boxtest.cpp \
     tests/CubeScape.cpp \
     tests/glutils.cpp \
-    tests/RawFile.cpp
+    tests/RawFile.cpp \
+    coffeelogger.cpp \
+    engine/physics/bulletphysics.cpp \
+    engine/objects/coffeeoutputsurface.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -95,7 +98,11 @@ HEADERS += \
     tests/boxtest.h \
     tests/CubeScape.h \
     tests/glutils.h \
-    tests/RawFile.h
+    tests/RawFile.h \
+    coffeelogger.h \
+    engine/physics/genericphysicsinterface.h \
+    engine/physics/bulletphysics.h \
+    engine/objects/coffeeoutputsurface.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -121,5 +128,5 @@ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../bullet-library/src/rele
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../bullet-library/src/debug/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
 else:unix: LIBS += -L$$PWD/../bullet-library/src/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
 
-INCLUDEPATH += $$PWD/../bullet-library/src
-DEPENDPATH += $$PWD/../bullet-library/src
+INCLUDEPATH += $$PWD/libs/bullet/src
+DEPENDPATH += $$PWD/libs/bullet/src

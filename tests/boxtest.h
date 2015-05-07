@@ -2,7 +2,7 @@
 #define BOXTEST_H
 
 #include "opengl/rendering/renderloop.h"
-#include "opengl/coffeerenderer.h"
+#include "opengl/context/coffeerenderer.h"
 #include "general/common.h"
 #include "tests/CubeScape.h"
 

@@ -15,7 +15,7 @@
 #include "general/input/coffeeplayercontroller.h"
 #include "opengl/components/coffeeframebufferobject.h"
 #include "engine/objects/coffeeobjectfactory.h"
-#include "engine/objects/coffeesimpleobject.h"
+#include "engine/objects/coffeeoutputsurface.h"
 
 class CoffeeAdvancedLoop : public RenderLoop
 {

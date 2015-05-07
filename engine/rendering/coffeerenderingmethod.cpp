@@ -66,12 +66,12 @@ void CoffeeRenderingMethod::cleanupData()
     target->unloadAssets();
 }
 
-void CoffeeRenderingMethod::addTextureMapping(QSharedPointer<CoffeeTexture> texture, gl::GLenum textureUnit, QString samplerName){
+void CoffeeRenderingMethod::addTextureMapping(QPointer<CoffeeTexture> texture, gl::GLenum textureUnit, QString samplerName){
     try{
     tunitMapping.at(textureUnit);
     }catch(std::out_of_range err){
         textureMapping.insert(
-                    std::pair< QSharedPointer<CoffeeTexture>,gl::GLenum>(texture,textureUnit));
+                    std::pair< QPointer<CoffeeTexture>,gl::GLenum>(texture,textureUnit));
         tunitMapping.insert(std::pair<gl::GLenum,QString>(textureUnit,samplerName));
         return;
     }

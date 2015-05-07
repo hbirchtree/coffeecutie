@@ -34,7 +34,7 @@ public:
         GLint dataSize = 0;
     };
 
-    typedef std::map<QSharedPointer<CoffeeTexture>,gl::GLenum> texturemap;
+    typedef std::map<QPointer<CoffeeTexture>,gl::GLenum> texturemap;
     typedef std::map<gl::GLenum,QString> textureunitmap;
     typedef QHash<QString,QPointer<ShaderVariant> > uniformmap;
 
@@ -53,7 +53,7 @@ public slots:
     void render();
     void cleanupData();
 
-    void addTextureMapping(QSharedPointer<CoffeeTexture> texture, gl::GLenum textureUnit, QString samplerName);
+    void addTextureMapping(QPointer<CoffeeTexture> texture, gl::GLenum textureUnit, QString samplerName);
     void addShaderUniform(QString uniform, QPointer<ShaderVariant> data);
     void addVertexAttribute(QString name, int size);
 

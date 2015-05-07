@@ -1,8 +1,8 @@
 #ifndef QCOFFEERENDERER_H
 #define QCOFFEERENDERER_H
 
-#include "opengl/coffeerenderer.h"
-#include "opengl/qcoffeewindow.h"
+#include "opengl/context/coffeerenderer.h"
+#include "opengl/context/qcoffeewindow.h"
 
 class QCoffeeRenderer : public CoffeeRenderer
 {
