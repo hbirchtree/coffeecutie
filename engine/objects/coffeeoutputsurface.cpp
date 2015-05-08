@@ -35,7 +35,7 @@ CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject
 
 void CoffeeOutputSurface::render()
 {
-    glDisable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
     glUseProgram(shader->getProgramId());
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,texture);
@@ -46,7 +46,6 @@ void CoffeeOutputSurface::render()
     glDrawArrays(GL_TRIANGLES,0,6);
     glBindVertexArray(0);
     glUseProgram(0);
-    glEnable(GL_DEPTH_TEST);
 }
 
 glm::vec3 CoffeeOutputSurface::getPosition() const

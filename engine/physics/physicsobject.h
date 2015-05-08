@@ -33,6 +33,9 @@ public:
     QString getCollisionFile();
     PhysicsType getPhysicsType();
 
+    void *getPhysicspointer();
+    void setPhysicspointer(void *value);
+
 signals:
     void phys_activationChanged(bool);
     void phys_positionChanged(glm::vec3);
@@ -45,6 +48,7 @@ signals:
     void phys_frictionChanged(float);
 
 protected:
+    void* physicspointer = nullptr;
     QList<QMetaObject::Connection> connections;
 
     PhysicsType e_physics_type;

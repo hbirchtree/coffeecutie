@@ -1,6 +1,6 @@
 #include "boxtest.h"
 
-BoxTest::BoxTest(CoffeeRenderer* renderer){
+BoxTest::BoxTest(CoffeeRenderer* renderer) : RenderLoop(renderer){
     _rendering_loop_init = [this,renderer](){
         renderer->setSamples(4);
         renderer->updateRendererClearColor(glm::vec4(0,0.2,0.2,1));
@@ -18,23 +18,37 @@ BoxTest::BoxTest(CoffeeRenderer* renderer){
         delete cubescape;
         cubescape = nullptr;
     };
+    renderer->connect(renderer,&CoffeeRenderer::winClose,[=](){
+        qDebug("Window closing request received");
+        renderer->requestWindowClose();
+    });
+    renderer->connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
+        if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
+            renderer->requestWindowClose();
+    });
+    renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
+        if(glfwGetTime()>=timer){
+            qDebug("FPS: %.0f",1.f/frametime);
+            timer = glfwGetTime()+1.0;
+        }
+    });
 }
 
 BoxTest::~BoxTest()
 {
 }
 
-std::function<void ()> BoxTest::getInit()
+std::function<void ()> *BoxTest::getInit()
 {
-    return _rendering_loop_init;
+    return &_rendering_loop_init;
 }
 
-std::function<void ()> BoxTest::getLoop()
+std::function<void ()> *BoxTest::getLoop()
 {
-    return _rendering_loop;
+    return &_rendering_loop;
 }
 
-std::function<void ()> BoxTest::getCleanup()
+std::function<void ()> *BoxTest::getCleanup()
 {
-    return _rendering_loop_cleanup;
+    return &_rendering_loop_cleanup;
 }

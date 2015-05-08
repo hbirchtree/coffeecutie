@@ -110,6 +110,9 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
 
     GLuint texture = allocTexture(renderSize.width(),renderSize.height(),
                                   GL_RGBA,GL_RGBA,GL_LINEAR,GL_HALF_FLOAT);
+//    GLuint depthtext = allocTexture(512,512,GL_DEPTH_COMPONENT16,
+//                                    GL_DEPTH_COMPONENT,GL_NEAREST,GL_FLOAT);
+
     GLuint depth = allocRenderBuffer(GL_DEPTH_COMPONENT,renderSize.width(),renderSize.height());
     GLuint color = allocRenderBuffer(GL_RGBA,renderSize.width(),renderSize.height());
 
@@ -117,8 +120,10 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
                                  GL_RENDERBUFFER_EXT,color);
     glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,
                                  GL_RENDERBUFFER_EXT, depth);
+
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,
                               GL_TEXTURE_2D,texture,0);
+//    glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,depthtext,0);
 
     framebufferHandle = framebuffer;
     textureHandle = texture;
@@ -134,7 +139,7 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
     case GL_FRAMEBUFFER_COMPLETE:
         break;
     default:
-        qCritical("Failed to create framebuffer! Bad context, bad!");
+        qWarning("Failed to create framebuffer!");
         break;
     }
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);

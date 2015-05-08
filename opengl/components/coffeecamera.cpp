@@ -117,7 +117,6 @@ glm::mat4 CoffeeCamera::getOrientationMatrix() const
 glm::mat4 CoffeeCamera::getProjection() const
 {
     glm::mat4 camera = glm::perspective(QuickMath::math_degreesToRads(fov->getValue()),aspect->getValue(),znear,zfar);
-//    camera *= glm::lookAt(position->getValue(),glm::vec3(0,0,0),glm::vec3(0,1,0));
     camera *= getOrientationMatrix();
     camera = glm::translate(camera,-position->getValue());
     return camera;

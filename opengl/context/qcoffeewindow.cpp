@@ -24,19 +24,19 @@ void QCoffeeWindow::initialize()
     context->makeCurrent(this);
 
     if(procedure)
-        procedure->getInit()();
+        (*procedure->getInit())();
 }
 
 void QCoffeeWindow::render()
 {
     if(procedure)
-        procedure->getLoop()();
+        (*procedure->getLoop())();
 }
 
 void QCoffeeWindow::cleanup()
 {
     if(procedure)
-        procedure->getCleanup()();
+        (*procedure->getCleanup())();
 }
 
 QPointer<RenderLoop> QCoffeeWindow::getProcedure() const

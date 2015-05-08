@@ -21,8 +21,9 @@ public slots:
     void resizeViewport(QSize windowSize);
     void updateSampling(uint sampling);
 
-private:
-    void resizeFramebuffer();
+protected:
+
+    virtual void resizeFramebuffer();
     bool framebufferActive = false;
     QSize renderSize;
     QSize windowSize;

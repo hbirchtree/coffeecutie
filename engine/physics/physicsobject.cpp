@@ -83,3 +83,13 @@ QString PhysicsObject::getCollisionFile(){
 PhysicsObject::PhysicsType PhysicsObject::getPhysicsType(){
     return e_physics_type;
 }
+void *PhysicsObject::getPhysicspointer()
+{
+    return physicspointer;
+}
+
+void PhysicsObject::setPhysicspointer(void *value)
+{
+    physicspointer = value;
+}
+

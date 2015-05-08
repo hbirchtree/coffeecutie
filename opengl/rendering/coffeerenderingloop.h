@@ -10,9 +10,9 @@ public:
     ~CoffeeRenderingLoop();
 
     // RenderLoop interface
-    std::function<void ()> getInit();
-    std::function<void ()> getLoop();
-    std::function<void ()> getCleanup();
+    std::function<void ()> *getInit();
+    std::function<void ()> *getLoop();
+    std::function<void ()> *getCleanup();
 
 private:
     std::function<void()> _rendering_loop_init;

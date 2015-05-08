@@ -13,15 +13,16 @@ public:
     ~BoxTest();
 
 private:
+    double timer = 0.0;
     CubeScape* cubescape;
     std::function<void()> _rendering_loop_init;
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;
 
 public:
-    std::function<void ()> getInit();
-    std::function<void ()> getLoop();
-    std::function<void ()> getCleanup();
+    std::function<void ()> *getInit();
+    std::function<void ()> *getLoop();
+    std::function<void ()> *getCleanup();
 };
 
 #endif // BOXTEST_H

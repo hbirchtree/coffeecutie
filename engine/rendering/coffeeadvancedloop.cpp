@@ -1,6 +1,6 @@
 #include "coffeeadvancedloop.h"
 
-CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
+CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(renderer)
 {
     connectSignals(renderer);
 
@@ -81,21 +81,21 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer)
         renderer->updateMouseGrabbing(true);
 
         qDebug("Configuring framebuffer object");
-        testfbo->createFramebuffer(renderer->getWindowDimensions(),2);
+        renderFbo->createFramebuffer(renderer->getWindowDimensions(),1);
         connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){ //We need to resize the FBO when the window dimensions change
-            testfbo->resizeViewport(e.size());
+            renderFbo->resizeViewport(e.size());
         });
 
         qDebug("Creating output surface");
-        test = new CoffeeOutputSurface(this,testfbo);
+        test = new CoffeeOutputSurface(this,renderFbo);
     };
     _rendering_loop = [=](){
         js->update();
-        testfbo->bindFramebuffer();
+        renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         for(CoffeeObject* o : world->getObjects())
             o->render();
-        testfbo->unbindFramebuffer();
+        renderFbo->unbindFramebuffer();
         test->render();
     };
     _rendering_loop_cleanup = [=](){
@@ -107,26 +107,26 @@ CoffeeAdvancedLoop::~CoffeeAdvancedLoop()
 {
 }
 
-std::function<void ()> CoffeeAdvancedLoop::getInit()
+std::function<void ()> *CoffeeAdvancedLoop::getInit()
 {
-    return _rendering_loop_init;
+    return &_rendering_loop_init;
 }
 
-std::function<void ()> CoffeeAdvancedLoop::getLoop()
+std::function<void ()> *CoffeeAdvancedLoop::getLoop()
 {
-    return _rendering_loop;
+    return &_rendering_loop;
 }
 
-std::function<void ()> CoffeeAdvancedLoop::getCleanup()
+std::function<void ()> *CoffeeAdvancedLoop::getCleanup()
 {
-    return _rendering_loop_cleanup;
+    return &_rendering_loop_cleanup;
 }
 
 void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 {
     controller = new CoffeePlayerController(this);
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
-    testfbo = new CoffeeFrameBufferObject(this);
+    renderFbo = new CoffeeFrameBufferObject(this);
 
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
@@ -134,7 +134,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     });
     timers = new CoffeeDataContainer<QString,double>(renderer);
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
-//        test->getRotationObject()->setValue(test->getRotationObject()->getValue()+glm::vec3(0,frametime*1,0));
         if(glfwGetTime()>=timers->getValue("fps")){
             qDebug("FPS: %.0f",1.f/frametime);
             timers->setValue("fps",glfwGetTime()+1);

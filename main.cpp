@@ -10,7 +10,9 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.0.4");
+    a.setApplicationVersion("0.0.1.8");
+
+    int mode = 0;
 
     CoffeeLogger logger;
     Q_UNUSED(logger);
@@ -23,12 +25,18 @@ int main(int argc, char *argv[])
     BulletPhysics* phys = new BulletPhysics(renderer,glm::vec3(0.f,-9.81f,0.f));
 
     //This demo taken from glbinding tests out general rendering
-//    BoxTest loop(renderer);
+    RenderLoop* loop;
 
+    switch(mode){
+    case 0:
+        loop = new CoffeeAdvancedLoop(renderer);
+        break;
+    case 1:
+        loop = new BoxTest(renderer);
+        break;
+    }
 
-    CoffeeAdvancedLoop loop(renderer);
-
-    renderer->setLoop(&loop);
+    renderer->setLoop(loop);
     renderer->setSamples(4);
 
     switch(initStat){

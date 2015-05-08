@@ -15,41 +15,41 @@ class CoffeeRenderer : public QThread
     Q_OBJECT
 public:
     CoffeeRenderer(QObject *parent);
-    CoffeeRenderer(QObject *parent,int w, int h);
-    CoffeeRenderer(QObject *parent,int w, int h, Qt::WindowState state);
-    CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state,QString windowTitle);
+    CoffeeRenderer(QObject *parent, int w, int h);
+    CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state);
+    CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state, QString windowTitle);
     ~CoffeeRenderer();
 
     int init();
     int loop();
 
     int getStartDisplay() const;
-    void setStartDisplay(int value);
+    double getLoopTime() const;
     QSize getWindowDimensions() const;
-    void setWindowDimensions(const QSize &value);
-
-    QSize getCurrentFramebufferSize();
-
+    QSize getCurrentFramebufferSize() const;
     QSize *getFramebufferSizePt();
-
-    void setLoop(RenderLoop *value);
+    int getMouseInputMode() const;
 
     int getSamples() const;
-    void setSamples(int value);
 
 public slots:
+    void setSwapInterval(uint interval);
+    void setStartDisplay(uint value);
+    void setWindowDimensions(const QSize &value);
+    void setSamples(uint value);
+    void setLoop(RenderLoop *value);
     void requestWindowClose();
     void updateWindowTitle(QString value);
     void updateRendererClearColor(glm::vec4 value);
-    void updateWindowDimensions(int w,int h);
+    void updateWindowDimensions(QSize dims);
     void setWindowState(Qt::WindowState state);
     void setStartmode(const Qt::WindowState &value);
     void updateMouseGrabbing(bool state);
     void setMousePos(int x,int y);
 
 private slots:
-    GLFWwindow *setWindowedFullscreen(int monitor);
-    GLFWwindow *setFullscreen(int monitor);
+    GLFWwindow *setWindowedFullscreen(uint monitor);
+    GLFWwindow *setFullscreen(uint monitor);
     GLFWwindow *setWindowed();
 
 protected:

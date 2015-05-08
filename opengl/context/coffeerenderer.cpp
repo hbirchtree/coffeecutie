@@ -40,10 +40,10 @@ void CoffeeRenderer::updateWindowTitle(QString value){
 void CoffeeRenderer::updateRendererClearColor(glm::vec4 value){
     glClearColor(value.r,value.g,value.b,value.a);
 }
-void CoffeeRenderer::updateWindowDimensions(int w,int h){
-    windowDimensions.setWidth(w);
-    windowDimensions.setHeight(h);
-    glfwSetWindowSize(window,w,h);
+void CoffeeRenderer::updateWindowDimensions(QSize dims){
+    windowDimensions.setWidth(dims.width());
+    windowDimensions.setHeight(dims.height());
+    glfwSetWindowSize(window,dims.width(),dims.height());
 }
 
 void CoffeeRenderer::setWindowState(Qt::WindowState state)
@@ -60,7 +60,7 @@ void CoffeeRenderer::setWindowState(Qt::WindowState state)
     }
 }
 
-GLFWwindow* CoffeeRenderer::setWindowedFullscreen(int monitor)
+GLFWwindow* CoffeeRenderer::setWindowedFullscreen(uint monitor)
 {
     int count;
     GLFWmonitor** data = glfwGetMonitors(&count);
@@ -75,12 +75,15 @@ GLFWwindow* CoffeeRenderer::setWindowedFullscreen(int monitor)
     glfwWindowHint(GLFW_BLUE_BITS,current->blueBits);
     glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
 
-    qDebug("Setting windowed fullscreen mode: %ix%i, title: %s, monitor: %i",windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),monitor);
+    qDebug("Setting windowed fullscreen mode: %ix%i, title: %s, monitor: %i",
+           windowDimensions.width(),windowDimensions.height(),
+           windowTitle.toStdString().c_str(),monitor);
 
-    return glfwCreateWindow(current->width,current->height,windowTitle.toStdString().c_str(),mon,NULL);
+    return glfwCreateWindow(current->width,current->height,
+                            windowTitle.toStdString().c_str(),mon,NULL);
 }
 
-GLFWwindow* CoffeeRenderer::setFullscreen(int monitor)
+GLFWwindow* CoffeeRenderer::setFullscreen(uint monitor)
 {
     int count;
     GLFWmonitor** data = glfwGetMonitors(&count);
@@ -89,22 +92,33 @@ GLFWwindow* CoffeeRenderer::setFullscreen(int monitor)
 
     GLFWmonitor* mon = data[monitor];
 
-    qDebug("Setting fullscreen mode: %ix%i, title: %s, monitor: %i",windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),monitor);
+    qDebug("Setting fullscreen mode: %ix%i, title: %s, monitor: %i",
+           windowDimensions.width(),windowDimensions.height(),
+           windowTitle.toStdString().c_str(),monitor);
 
-    return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),mon,NULL);
+    return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),
+                            windowTitle.toStdString().c_str(),mon,NULL);
 }
 
 GLFWwindow *CoffeeRenderer::setWindowed()
 {
-    qDebug("Setting windowed mode: %ix%i, title: %s",windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str());
-    return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),windowTitle.toStdString().c_str(),NULL,NULL);
+    qDebug("Setting windowed mode: %ix%i, title: %s",
+           windowDimensions.width(),windowDimensions.height(),
+           windowTitle.toStdString().c_str());
+    return glfwCreateWindow(windowDimensions.width(),windowDimensions.height(),
+                            windowTitle.toStdString().c_str(),NULL,NULL);
 }
 int CoffeeRenderer::getSamples() const
 {
     return samples;
 }
 
-void CoffeeRenderer::setSamples(int value)
+void CoffeeRenderer::setSwapInterval(uint interval)
+{
+    glfwSwapInterval(interval);
+}
+
+void CoffeeRenderer::setSamples(uint value)
 {
     samples = value;
 }
@@ -119,6 +133,11 @@ QSize* CoffeeRenderer::getFramebufferSizePt()
     return &framebufferSize;
 }
 
+int CoffeeRenderer::getMouseInputMode() const
+{
+    return glfwGetInputMode(window,0);
+}
+
 QSize CoffeeRenderer::getWindowDimensions() const
 {
     return windowDimensions;
@@ -129,7 +148,7 @@ void CoffeeRenderer::setWindowDimensions(const QSize &value)
     windowDimensions = value;
 }
 
-QSize CoffeeRenderer::getCurrentFramebufferSize()
+QSize CoffeeRenderer::getCurrentFramebufferSize() const
 {
     int width,height;
     glfwGetFramebufferSize(window, &width, &height);
@@ -141,7 +160,12 @@ int CoffeeRenderer::getStartDisplay() const
     return startDisplay;
 }
 
-void CoffeeRenderer::setStartDisplay(int value)
+double CoffeeRenderer::getLoopTime() const
+{
+    return glfwGetTime();
+}
+
+void CoffeeRenderer::setStartDisplay(uint value)
 {
     startDisplay = value;
 }
@@ -172,8 +196,8 @@ void CoffeeRenderer::requestWindowClose(){
 }
 
 static void errorCallback(int error, const char* description){
-    QString errorMessage = "ERROR: "+QString::number(error)+" : "+QString::fromLocal8Bit(description);
-    printf("%s\n",errorMessage.toStdString().c_str());
+    QString errorMessage = "GLFW:"+QString::number(error)+": "+QString::fromLocal8Bit(description);
+    fprintf(stderr,"%s\n",errorMessage.toStdString().c_str());
 }
 
 static Qt::KeyboardModifiers _glfw_translate_mods(int mods){
@@ -378,13 +402,19 @@ int CoffeeRenderer::init(){
     glfwSetWindowRefreshCallback(window,_glfw_winevent_refresh);
     glfwSetFramebufferSizeCallback(window,_glfw_winevent_fbresize);
 
+    {
+        int maj,min,rev;
+        glfwGetVersion(&maj,&min,&rev);
+        qDebug("GLFW version: %i.%i rev. %i",maj,min,rev);
+    }
+
     glbinding::Binding::initialize(true);
     qDebug("%s",QString("\nOpenGL renderer: %1\nOpenGL vendor  : %2\nOpenGL version : %3")
            .arg(QString::fromStdString(glbinding::ContextInfo::renderer()))
            .arg(QString::fromStdString(glbinding::ContextInfo::vendor()))
            .arg(QString::fromStdString(glbinding::ContextInfo::version().toString())).toStdString().c_str());
 
-    glfwSwapInterval(1);
+    setSwapInterval(1);
 
     glbinding::setAfterCallback([](const glbinding::FunctionCall&){
         gl::GLenum error = glGetError();
@@ -409,25 +439,26 @@ int CoffeeRenderer::loop(){
     }
     qDebug("Initializing loop");
 
-    std::function<void()> _init = loopObject->getInit();
-    std::function<void()> _loop = loopObject->getLoop();
-    std::function<void()> _cleanup = loopObject->getCleanup();
+    std::function<void()> *_init = loopObject->getInit();
+    std::function<void()> *_loop = loopObject->getLoop();
+    std::function<void()> *_cleanup = loopObject->getCleanup();
 
     double framerate = glfwGetTime();
 
     qDebug("Running initialization function");
-    _init();
+    (*_init)();
     qDebug("Running loop function");
     while(!glfwWindowShouldClose(window)){
         framerate = glfwGetTime();
         glfwPollEvents();
 //        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        _loop();
+        (*_loop)();
         glfwSwapBuffers(window);
         contextReportFrametime(glfwGetTime()-framerate);
     }
     qDebug("Running cleanup function");
-    _cleanup();
+    (*_cleanup)();
 
+    qDebug("Estimated uptime: %.1f seconds",glfwGetTime());
     return 0;
 }
