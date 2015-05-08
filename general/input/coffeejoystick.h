@@ -23,14 +23,14 @@ public:
     void setAxisfactor(float value);
 
 signals:
-    void axisMoved(int axis, float value);
+    void axisMoved(int axis, float value, float diff);
     void buttonPressed(int button);
     void buttonReleased(int button);
 
 private:
     float j_axisfactor = 32768;
     float j_sensitivity = 0.01;
-    float j_deadzone = 0.15;
+    float j_deadzone = 0.22;
     int joystick;
     QString j_name;
     QList<float> axes;

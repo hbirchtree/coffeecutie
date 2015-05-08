@@ -78,7 +78,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
         qDebug("Setting vertical sync mode");
         glfwSwapInterval(0);
 
-        renderer->updateMouseGrabbing(true);
+//        renderer->updateMouseGrabbing(true);
 
         qDebug("Configuring framebuffer object");
         renderFbo->createFramebuffer(renderer->getWindowDimensions(),1);
@@ -165,20 +165,26 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
         }
     });
-    renderer->connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val){
-        float normalized = val/js->getAxisfactor();
+    renderer->connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){
         switch(axe){
         case 0:
-            controller->addSpeed(world->getCamera()->getCameraRightNormal()*normalized);
+            controller->addSpeed(world->getCamera()->getCameraRightNormal()*val*5.f);
             break;
         case 1:
-            controller->addSpeed(world->getCamera()->getCameraForwardNormal()*-normalized);
+            controller->addSpeed(world->getCamera()->getCameraForwardNormal()*-val*5.f);
+            break;
+        case 2:
+            world->getCamera()->getFieldOfView()->setValue(120+val*70);
             break;
         case 3:
-            world->getCamera()->offsetOrientation(val*0.00008,0);
+            if((val<0&&diff>0)||(val>0&&diff<0))
+                break;
+            controller->setRotationYaw(val*val*val*80);
             break;
         case 4:
-            world->getCamera()->offsetOrientation(0,val*0.00008);
+            if((val<0&&diff>0)||(val>0&&diff<0))
+                break;
+            controller->setRotationPitch(val*val*val*-80);
             break;
         }
     });

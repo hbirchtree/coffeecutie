@@ -18,6 +18,9 @@ signals:
     void moveCamera(glm::vec4 d);
 
 public slots:
+    void setRotation(glm::vec3 r);
+    void setRotationPitch(float p);
+    void setRotationYaw(float p);
     void addRotation(glm::vec3 d);
     void addSpeed(glm::vec3 d);
     void addAccel(glm::vec3 d);

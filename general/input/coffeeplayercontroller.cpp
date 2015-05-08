@@ -12,6 +12,21 @@ CoffeePlayerController::~CoffeePlayerController()
     delete rotation;
 }
 
+void CoffeePlayerController::setRotation(glm::vec3 r)
+{
+    *rotation = r;
+}
+
+void CoffeePlayerController::setRotationPitch(float p)
+{
+    (*rotation)[0].x = p;
+}
+
+void CoffeePlayerController::setRotationYaw(float p)
+{
+    (*rotation)[0].y = p;
+}
+
 void CoffeePlayerController::addRotation(glm::vec3 d)
 {
     *rotation+=d;
@@ -19,7 +34,7 @@ void CoffeePlayerController::addRotation(glm::vec3 d)
 
 void CoffeePlayerController::addSpeed(glm::vec3 d)
 {
-    position->setVelocity(position->getVelocity()+d);
+    position->setVelocity(d);
 }
 
 void CoffeePlayerController::addAccel(glm::vec3 d)

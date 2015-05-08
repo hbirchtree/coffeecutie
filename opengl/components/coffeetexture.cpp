@@ -19,7 +19,7 @@ void CoffeeTexture::loadTexture()
 //    if(texture.isNull())
 //        return;
     texture = imageProcessor(texture);
-    textureHandle = TextureHelper::allocTexture(static_cast<int>(GL_RGBA),GL_BGRA,texture.width(),texture.height(),texture.bits());
+    textureHandle = TextureHelper::allocTexture(GL_RGBA8,GL_BGRA,texture.width(),texture.height(),texture.bits(),3,GL_UNSIGNED_BYTE);
     if(textureHandle>0)
         validTexture = true;
 }

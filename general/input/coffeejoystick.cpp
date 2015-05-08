@@ -34,7 +34,7 @@ bool CoffeeJoystick::update()
         if(std::abs(value-oldval)<j_sensitivity)
             continue;
         axes.replace(i,value);
-        axisMoved(i,(value-oldval)*j_axisfactor);
+        axisMoved(i,value,value-oldval);
     }
     const unsigned char* c_btns = glfwGetJoystickButtons(joystick,&count);
     for(int i=0;i<count;i++)

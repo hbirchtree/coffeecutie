@@ -18,13 +18,14 @@ public:
     static btVector3 convert_glm(const glm::vec3 &v);
     static glm::vec3 convert_bt(const btVector3 &v);
 signals:
-    void objectCollision();
+    void objectCollision(QPointer<PhysicsObject> o1, QPointer<PhysicsObject> o2);
 
 public slots:
     void addObject(PhysicsObject* object);
     void tickSimulation(float d);
 
 private:
+
     btDynamicsWorld* m_dynamicsWorld;
     btCollisionDispatcher* m_dispatch;
     btBroadphaseInterface* m_broadphase;

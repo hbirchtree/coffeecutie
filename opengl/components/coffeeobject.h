@@ -9,7 +9,7 @@
 #include "opengl/components/shadercontainer.h"
 #include "engine/rendering/coffeerenderingmethod.h"
 
-class CoffeeObject : public PhysicsObject, public RenderableObject
+class CoffeeObject : public QObject, public RenderableObject
 {
 public:
     glm::vec3 getPosition() const{
@@ -67,15 +67,19 @@ public:
         model->setBaked(val);
     }
 
-    CoffeeObject(QObject* parent) : PhysicsObject(parent){
+    CoffeeObject(QObject* parent) : QObject(parent){
+        v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
         v_model_offset = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-        v_rotation = new NumberContainer<glm::quat>(this,glm::quat(0,0,0,0));
+        v_rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
         v_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
     }
     ~CoffeeObject(){
 
     }
 
+    QPointer<NumberContainer<glm::vec3>> getPositionObject(){
+        return v_position;
+    }
     QPointer<NumberContainer<glm::quat>> getRotationObject(){
         return v_rotation;
     }
@@ -142,6 +146,7 @@ public:
     }
 
 private:
+    QPointer<PhysicsObject> physicsObject;
     QPointer<CoffeeRenderingMethod> renderer;
     QPointer<CoffeeMesh> model;
     QPointer<CoffeeMaterial> material;
@@ -150,6 +155,7 @@ private:
     QString vertShader;
     QString fragShader;
 
+    QPointer<NumberContainer<glm::vec3>> v_position;
     QPointer<NumberContainer<glm::vec3>> v_model_offset;
     QPointer<NumberContainer<glm::quat> > v_rotation;
     QPointer<NumberContainer<glm::vec3>> v_scale;
