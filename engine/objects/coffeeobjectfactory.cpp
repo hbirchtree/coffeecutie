@@ -25,7 +25,7 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
 
     for(QString key : source.keys()){
         if(key.startsWith("world."))
-            worlds.append(createWorld(source.value(key).toMap(),parent));
+            worlds.append(createWorld(key,source.value(key).toMap(),parent));
     }
     qDebug("Spent %i milliseconds parsing content from disk",QDateTime::currentMSecsSinceEpoch()-t);
     return worlds;
@@ -148,9 +148,10 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
     qDebug("Imported %i model sources from asset index",models.size()-mcnt);
 }
 
-CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QVariantMap &data, QObject *parent)
+CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, QObject *parent)
 {
     CoffeeWorldOpts* world = new CoffeeWorldOpts(parent);
+    world->setObjectName(key);
     for(QString key : data.keys()){
         if(key=="camera")
             world->setCamera(createCamera(data.value(key).toMap(),parent));

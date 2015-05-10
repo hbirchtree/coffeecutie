@@ -20,7 +20,7 @@ public:
 
     void importModels(const QVariantMap &data, QObject *parent);
 
-    CoffeeWorldOpts* createWorld(const QVariantMap &data, QObject* parent);
+    CoffeeWorldOpts* createWorld(const QString &key, const QVariantMap &data, QObject* parent);
     CoffeeCamera* createCamera(const QVariantMap &data, QObject* parent);
     CoffeeOmniLight* createLight(const QVariantMap &data, QObject* parent);
 

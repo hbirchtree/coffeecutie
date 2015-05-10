@@ -177,7 +177,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             controller->addSpeed(world->getCamera()->getCameraForwardNormal()*-val*5.f);
             break;
         case 2:
-            world->getCamera()->getFieldOfView()->setValue(120+val*70);
+//            world->getCamera()->getFieldOfView()->setValue(120+val*70);
             break;
         case 3:
             if((val<0&&diff>0)||(val>0&&diff<0))

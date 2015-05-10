@@ -26,7 +26,6 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
 
 CoffeeWorldOpts::~CoffeeWorldOpts()
 {
-    physicsClose();
     physicsThread->exit(0);
     physicsThread->wait();
 }
