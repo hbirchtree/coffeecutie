@@ -15,6 +15,7 @@ public:
     };
 
     CoffeeTexture(QObject *parent,QString filename);
+    CoffeeTexture(QObject *parent,QByteArray* img);
     ~CoffeeTexture();
 
     void loadTexture();

@@ -10,7 +10,7 @@
 #include <QResizeEvent>
 #include <QMoveEvent>
 
-class CoffeeRenderer : public QThread
+class CoffeeRenderer : public QObject
 {
     Q_OBJECT
 public:

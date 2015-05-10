@@ -18,11 +18,14 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
     QFileInfo f(file);
     filepath = f.path()+QDir::separator();
 
-    for(QString key : source.keys()){
-        if(key.startsWith("world.")){
-            worlds.append(createWorld(source.value(key).toMap(),parent));
-        }else if(key=="models")
+    //Resources
+    for(QString key : source.keys())
+        if(key=="models")
             importModels(source.value(key).toMap(),parent);
+
+    for(QString key : source.keys()){
+        if(key.startsWith("world."))
+            worlds.append(createWorld(source.value(key).toMap(),parent));
     }
     qDebug("Spent %i milliseconds parsing content from disk",QDateTime::currentMSecsSinceEpoch()-t);
     return worlds;
@@ -53,6 +56,57 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
             obj->getPositionObject()->setValue(listToVec3(data.value(key)));
         else if(key=="model.scale")
             obj->getScaleObject()->setValue(listToVec3(data.value(key)));
+        else if(key=="physics"){
+            PhysicsObject* pobj = new PhysicsObject(obj);
+            QVariantMap pd = data.value(key).toMap();
+            for(QString pkey : pd.keys()){
+                if(pkey=="shape"){
+                    QString t = pd.value(pkey).toString();
+                    PhysicsDescriptor::PhysicalShape s = PhysicsDescriptor::Shape_None;
+                    if(t=="box")
+                        s = PhysicsDescriptor::Shape_Box;
+                    else if(t=="sphere")
+                        s = PhysicsDescriptor::Shape_Sphere;
+                    else if(t=="staticplane")
+                        s = PhysicsDescriptor::Shape_StaticPlane;
+                    else if(t=="capsule")
+                        s = PhysicsDescriptor::Shape_Capsule;
+                    else if(t=="cylinder")
+                        s = PhysicsDescriptor::Shape_Cylinder;
+                    else if(t=="cone")
+                        s = PhysicsDescriptor::Shape_Cone;
+                    else if(t=="staticplane")
+                        s = PhysicsDescriptor::Shape_StaticPlane;
+                    pobj->getDescr()->setShape(s);
+                }else if(pkey=="mass")
+                    pobj->getDescr()->setMass(pd.value(pkey).toFloat());
+                else if(pkey=="friction")
+                    pobj->getDescr()->setFriction(pd.value(pkey).toFloat());
+                else if(pkey=="restitution")
+                    pobj->getDescr()->setRestitution(pd.value(pkey).toFloat());
+                else if(pkey=="inertia")
+                    pobj->getDescr()->setInertia(listToVec3(pd.value(pkey)));
+                else if(pkey=="normal")
+                    pobj->getDescr()->setnormal(listToVec3(pd.value(pkey)));
+                else if(pkey=="linear-factor")
+                    pobj->getDescr()->setLinearFactor(listToVec3(pd.value(pkey)));
+                else if(pkey=="data"){
+                    pobj->getDescr()->setFileSource(
+                                FileHandler::getBytesFromFile(pd.value(pkey).toString()));
+                }else if(pkey=="position")
+                    pobj->getDescr()->setPosition(listToVec3(pd.value(pkey)));
+            }
+            if(pobj->getDescr()->getShape()!=PhysicsDescriptor::Shape_None){
+                pobj->getPositionObject()->setValue(pobj->getDescr()->position());
+                pobj->getPhysicalRotation()->setValue(pobj->getDescr()->orientation());
+                obj->setPhysicsObject(pobj);
+            }else
+                delete pobj;
+        }
+    }
+    if(obj->getPhysicsObject()){
+        obj->getPhysicsObject()->setObjectName(obj->objectName()+".physics-object");
+        obj->getPositionObject()->bindValue(obj->getPhysicsObject()->getPositionObject());
     }
     /*
      * id : object name
@@ -72,8 +126,12 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
      * material.shininess
      * material.color-multiplier
      *
-     * physics.*
-     *
+     * physics.shape (QString)
+     * physics.mass
+     * physics.friction
+     * physics.restitution
+     * physics.inertia
+     * physics.data
     */
 
     return obj;
@@ -83,8 +141,10 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
 {
     WavefrontModelReader rdr(parent);
     int mcnt = models.size();
-    for(QString key : data.keys())
+    for(QString key : data.keys()){
         models.insert(key,rdr.parseModel(filepath+data.value(key).toString()));
+        rdr.clearData();
+    }
     qDebug("Imported %i model sources from asset index",models.size()-mcnt);
 }
 

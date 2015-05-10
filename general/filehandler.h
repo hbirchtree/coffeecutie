@@ -30,6 +30,14 @@ public:
         data.close();
         return outData;
     }
+    static QByteArray* getBytesFromFile(QString file){
+        QFile data(file);
+        if(!data.exists()||data.open(QIODevice::ReadOnly))
+            return 0;
+        QByteArray* ba = new QByteArray(data.readAll());
+        data.close();
+        return ba;
+    }
 };
 
 #endif // FILEHANDLER

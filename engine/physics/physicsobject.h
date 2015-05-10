@@ -3,6 +3,7 @@
 
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
+#include "physicsdescriptor.h"
 
 class PhysicsObject : public QObject
 {
@@ -19,51 +20,31 @@ public:
     ~PhysicsObject();
 
     QPointer<NumberContainer<glm::vec3>> getPositionObject();
-    QPointer<NumberContainer<glm::vec3>> getPhysicalScale();
     QPointer<NumberContainer<glm::quat>> getPhysicalRotation();
-    QPointer<NumberContainer<glm::vec3>> getPhysicalLinearFactor();
-    QPointer<NumberContainer<glm::vec3>> getPhysicalInertia();
-
-    QPointer<NumberContainer<float>> getPhysicalMass();
-    QPointer<NumberContainer<float>> getPhysicalRestitution();
-    QPointer<NumberContainer<float>> getPhysicalFriction();
-    bool isObjectDeactivating();
-    bool isNotifyingForce();
-    bool isUpdatingRotation();
-    QString getCollisionFile();
-    PhysicsType getPhysicsType();
 
     void *getPhysicspointer();
     void setPhysicspointer(void *value);
 
+    PhysicsDescriptor *getDescr();
+    void setDescr(PhysicsDescriptor *value);
+
+public slots:
+    void updatePosition(glm::vec3 p);
+    void updateVelocity(glm::vec3 p);
+    void updateAcceleration(glm::vec3 p);
+
+    void updateRotation(glm::quat r);
+    void updateAngularVelocity(glm::quat r);
+
 signals:
-    void phys_activationChanged(bool);
-    void phys_positionChanged(glm::vec3);
-    void phys_rotationChanged(glm::vec3);
-    void phys_scaleChanged(glm::vec3);
-    void phys_linearFactorChanged(glm::vec3);
-    void phys_inertiaChanged(glm::vec3);
-    void phys_massChanged(float);
-    void phys_restitutionChanged(float);
-    void phys_frictionChanged(float);
+    void deleteObject(void* pt);
 
-protected:
+private:
+    PhysicsDescriptor* descr = nullptr;
     void* physicspointer = nullptr;
-    QList<QMetaObject::Connection> connections;
 
-    PhysicsType e_physics_type;
-    QString s_collisionFile; //For heightmap or triangle mesh
-    bool b_objectDeactivation;
-    bool b_notifyForce;
-    bool b_updateRotation;
-    QPointer<NumberContainer<glm::vec3>> v_position; //Shared between 3D and physics
-    QPointer<NumberContainer<glm::vec3>> v_physics_scale; //Different parameters pulled according to the physics type selected
+    QPointer<NumberContainer<glm::vec3>> v_position;
     QPointer<NumberContainer<glm::quat>> v_physics_rotation;
-    QPointer<NumberContainer<glm::vec3>> v_physics_linear_factor;
-    QPointer<NumberContainer<glm::vec3>> v_physics_inertia;
-    QPointer<NumberContainer<float>> f_physics_mass;
-    QPointer<NumberContainer<float>> f_physics_restitution;
-    QPointer<NumberContainer<float>> f_physics_friction;
 };
 
 #endif // PHYSICSOBJECT_H

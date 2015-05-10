@@ -1,11 +1,11 @@
 #ifndef COFFEEWORLDOPTS_H
 #define COFFEEWORLDOPTS_H
-
 #include "general/common.h"
 #include "coffeecamera.h"
 #include "coffeeomnilight.h"
 #include "opengl/context/coffeerenderer.h"
 #include "opengl/components/coffeeobject.h"
+#include "engine/physics/bulletphysics.h"
 
 class CoffeeWorldOpts : public QObject
 {
@@ -35,8 +35,17 @@ public:
 
     glm::vec4 getClearColor() const;
     void setClearColor(const glm::vec4 &value);
+signals:
+    void tickPhysics(float d);
+    void physicsObjectAdded(PhysicsObject* object);
+    void physicsClose();
+public slots:
+    void tickObjects(float d);
 
 private:
+    QThread* physicsThread;
+    QPointer<BulletPhysics> physics;
+
     float fogDensity = 0.01;
     glm::vec4 fogColor;
 

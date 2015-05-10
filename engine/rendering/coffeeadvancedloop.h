@@ -41,6 +41,8 @@ public:
     void connectSignals(CoffeeRenderer* renderer);
 
 private:
+    QEventLoop* evloop;
+
     CoffeeFrameBufferObject* renderFbo;
     CoffeeSimpleObject* test;
 

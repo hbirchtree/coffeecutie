@@ -1,6 +1,6 @@
 #include "coffeerenderer.h"
 
-CoffeeRenderer::CoffeeRenderer(QObject *parent) : QThread(parent)
+CoffeeRenderer::CoffeeRenderer(QObject *parent) : QObject(parent)
 {
     connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
         framebufferSize = event.size();

@@ -5,6 +5,12 @@ CoffeeTexture::CoffeeTexture(QObject *parent, QString filename) : QObject(parent
     texture = QImage(filename);
 }
 
+CoffeeTexture::CoffeeTexture(QObject *parent, QByteArray *img) : QObject(parent)
+{
+    texture = QImage::fromData(*img);
+    delete img;
+}
+
 CoffeeTexture::~CoffeeTexture()
 {
 }

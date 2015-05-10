@@ -2,6 +2,7 @@
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(renderer)
 {
+    evloop = new QEventLoop(this);
     connectSignals(renderer);
 
     qDebug("Creating default rendering method");
@@ -42,6 +43,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
     if(worlds.isEmpty())
         qDebug("Failed to load any world information! Brace for impact!");
     world = worlds.first();
+    connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
 
     _rendering_loop_init = [=](){
 
@@ -90,6 +92,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
         test = new CoffeeOutputSurface(this,renderFbo);
     };
     _rendering_loop = [=](){
+//        evloop->processEvents();
         js->update();
         renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);

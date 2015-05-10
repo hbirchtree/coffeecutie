@@ -22,6 +22,8 @@ public:
     static glm::vec3 parseStrVec3f(QString src, QChar sep);
     QHash<QString, QPointer<CoffeeMaterial> > getMaterials();
     QHash<QString, QPointer<ModelContainer> > parseModel(QString file);
+
+    void clearData();
 private:
     QHash<QString,QPointer<CoffeeMaterial> > materials;
     QHash<QString,QPointer<ModelContainer> > models;

@@ -99,6 +99,12 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
     return models;
 }
 
+void WavefrontModelReader::clearData()
+{
+    materials.clear();
+    models.clear();
+}
+
 QHash<QString,QPointer<CoffeeMaterial> > WavefrontModelReader::getMaterials(){
     return materials;
 }

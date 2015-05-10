@@ -22,8 +22,6 @@ int main(int argc, char *argv[])
 
     int initStat = renderer->init();
 
-    BulletPhysics* phys = new BulletPhysics(renderer,glm::vec3(0.f,-9.81f,0.f));
-
     //This demo taken from glbinding tests out general rendering
     RenderLoop* loop;
 

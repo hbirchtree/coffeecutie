@@ -12,6 +12,16 @@
 class CoffeeObject : public QObject, public RenderableObject
 {
 public:
+    CoffeeObject(QObject* parent) : QObject(parent){
+        v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+        v_model_offset = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+        v_rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
+        v_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    }
+    ~CoffeeObject(){
+
+    }
+
     glm::vec3 getPosition() const{
         return v_position->getValue();
     }
@@ -65,16 +75,6 @@ public:
     }
     void setBaked(bool val){
         model->setBaked(val);
-    }
-
-    CoffeeObject(QObject* parent) : QObject(parent){
-        v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-        v_model_offset = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-        v_rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
-        v_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
-    }
-    ~CoffeeObject(){
-
     }
 
     QPointer<NumberContainer<glm::vec3>> getPositionObject(){
@@ -145,6 +145,15 @@ public:
         fragShader = value;
     }
 
+    QPointer<PhysicsObject> getPhysicsObject(){
+        return physicsObject;
+    }
+
+    void setPhysicsObject(QPointer<PhysicsObject> value)
+    {
+        physicsObject = value;
+    }
+
 private:
     QPointer<PhysicsObject> physicsObject;
     QPointer<CoffeeRenderingMethod> renderer;
@@ -171,3 +180,4 @@ public slots:
 };
 
 #endif // COFFEEOBJECT_H
+

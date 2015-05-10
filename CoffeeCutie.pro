@@ -54,7 +54,8 @@ SOURCES += main.cpp \
     coffeelogger.cpp \
     engine/physics/bulletphysics.cpp \
     engine/objects/coffeeoutputsurface.cpp \
-    opengl/components/coffeedepthbufferobject.cpp
+    opengl/components/coffeedepthbufferobject.cpp \
+    engine/physics/physicsdescriptor.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -104,7 +105,8 @@ HEADERS += \
     engine/physics/genericphysicsinterface.h \
     engine/physics/bulletphysics.h \
     engine/objects/coffeeoutputsurface.h \
-    opengl/components/coffeedepthbufferobject.h
+    opengl/components/coffeedepthbufferobject.h \
+    engine/physics/physicsdescriptor.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

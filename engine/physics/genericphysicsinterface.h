@@ -3,17 +3,19 @@
 
 #include <QObject>
 
-class GenericPhysicsInterface : public QObject
+class GenericPhysicsInterface
 {
-    Q_OBJECT
 public:
+    enum PhysicsProperty {
+        PhysProp_Pos,PhysProp_Orientation,
+        PhysProp_AngularVelocity,PhysProp_Gravity,
+        PhysProp_Velocity,PhysProp_Force,
+        PhysProp_Activation
+    };
+    virtual QString systemName();
 
 private:
     GenericPhysicsInterface(QObject *parent);
-
-signals:
-
-public slots:
 };
 
 #endif // GENERICPHYSICSINTERFACE_H
