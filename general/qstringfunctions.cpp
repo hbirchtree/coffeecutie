@@ -80,17 +80,7 @@ QString QStringFunctions::toString(const glm::mat4 &m)
             .arg(m[3][3]);
 }
 
-
-QString QStringFunctions::toString(const CoffeeVertex &v)
-{
-    return QString("CoffeeVertex(pt=%1,tx=%2,nl=%3,tn=%4)")
-            .arg(toString(v.position))
-            .arg(toString(v.texCoord))
-            .arg(toString(v.normal))
-            .arg(toString(v.tangent));
-}
-
-//QString QStringFunctions::toString(RenderableObject &o)
+//QString QStringFunctions::toString(const RenderableObject* o)
 //{
 //    return QString("RenderableObject{GMY(pos:%1,"
 //                   "rot=%2,"
@@ -104,16 +94,16 @@ QString QStringFunctions::toString(const CoffeeVertex &v)
 //                   "drw=%8,"
 //                   "dpt=%9),"
 //                   "DAT(vao=%11)}")
-//            .arg(QStringFunctions::toString(o.getPosition()))
-//            .arg(QStringFunctions::toString(o.getRotation()))
-//            .arg(QStringFunctions::toString(o.getScale()))
-//            .arg(o.getMaterial()->transparency()->getValue())
-//            .arg(o.getMaterial()->shininess()->getValue())
-//            .arg(o.isStreamDraw())
-//            .arg(o.isBaked())
-//            .arg(o.isDrawn())
-//            .arg(o.isDepthTest())
-//            .arg(o.getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion)->getHandle())
-//            .arg(o.getVaoHandle())
-//            .arg(QStringFunctions::toString(o.getMaterial()->specularColor()));
+//            .arg(QStringFunctions::toString(o->getPosition()))
+//            .arg(QStringFunctions::toString(o->getRotation()))
+//            .arg(QStringFunctions::toString(o->getScale()))
+//            .arg(o->getMaterial()->transparency()->getValue())
+//            .arg(o->getMaterial()->shininess()->getValue())
+//            .arg(o->isStreamDraw())
+//            .arg(o->isBaked())
+//            .arg(o->isDrawn())
+//            .arg(o->isDepthTest())
+//            .arg(o->getMaterial()->getTexture(CoffeeTexture::Texture_Diffusion)->getHandle())
+//            .arg(o->getVaoHandle())
+//            .arg(QStringFunctions::toString(o->getMaterial()->specularColor()));
 //}

@@ -32,9 +32,18 @@ void CoffeePlayerController::addRotation(glm::vec3 d)
     *rotation+=d;
 }
 
-void CoffeePlayerController::addSpeed(glm::vec3 d)
+void CoffeePlayerController::addSpeedForward(glm::vec3 d)
 {
-    position->setVelocity(d);
+    glm::vec3 velo = position->getVelocity()+d-forwardMove;
+    forwardMove = d;
+    position->setVelocity(velo);
+}
+
+void CoffeePlayerController::addSpeedRight(glm::vec3 d)
+{
+    glm::vec3 velo = position->getVelocity()+d-rightMove;
+    rightMove = d;
+    position->setVelocity(velo);
 }
 
 void CoffeePlayerController::addAccel(glm::vec3 d)

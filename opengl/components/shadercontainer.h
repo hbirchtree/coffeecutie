@@ -6,6 +6,10 @@
 
 class ShaderContainer : public QObject
 {
+    Q_PROPERTY(QString fragmentShader READ fragmentShader)
+    Q_PROPERTY(QString vertexShader READ vertexShader)
+    Q_PROPERTY(int programId READ getProgramId)
+
     Q_OBJECT
 public:
     explicit ShaderContainer(QObject *parent = 0);
@@ -29,11 +33,17 @@ public:
 
     void setUniform(QString name,glm::mat4 val);
 
+    QString fragmentShader() const;
+    QString vertexShader() const;
+
 signals:
 
 public slots:
 
 private:
+    QString fragShaderFile;
+    QString vertShaderFile;
+
     int programId = 0;
     int verbosity = 1;
 

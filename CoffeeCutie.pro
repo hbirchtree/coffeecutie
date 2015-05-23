@@ -18,7 +18,6 @@ INCLUDEPATH += $$PWD/include
 SOURCES += main.cpp \
     engine/models/coffeemesh.cpp \
     engine/objects/coffeeobjectfactory.cpp \
-    engine/objects/coffeeobjectorganizer.cpp \
     engine/objects/coffeesimpleobject.cpp \
     engine/physics/physicsobject.cpp \
     engine/rendering/coffeeadvancedloop.cpp \
@@ -55,12 +54,12 @@ SOURCES += main.cpp \
     engine/physics/bulletphysics.cpp \
     engine/objects/coffeeoutputsurface.cpp \
     opengl/components/coffeedepthbufferobject.cpp \
-    engine/physics/physicsdescriptor.cpp
+    engine/physics/physicsdescriptor.cpp \
+    inspector/coffeeinspector.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
     engine/objects/coffeeobjectfactory.h \
-    engine/objects/coffeeobjectorganizer.h \
     engine/objects/coffeesimpleobject.h \
     engine/physics/physicsobject.h \
     engine/rendering/coffeeadvancedloop.h \
@@ -106,7 +105,8 @@ HEADERS += \
     engine/physics/bulletphysics.h \
     engine/objects/coffeeoutputsurface.h \
     opengl/components/coffeedepthbufferobject.h \
-    engine/physics/physicsdescriptor.h
+    engine/physics/physicsdescriptor.h \
+    inspector/coffeeinspector.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -134,3 +134,6 @@ else:unix: LIBS += -L$$PWD/../bullet-library/src/ -lBulletSoftBody -lBulletDynam
 
 INCLUDEPATH += $$PWD/libs/bullet/src
 DEPENDPATH += $$PWD/libs/bullet/src
+
+FORMS += \
+    inspector/coffeeinspector.ui

@@ -7,6 +7,14 @@
 
 class PhysicsObject : public QObject
 {
+    Q_PROPERTY(QString position READ getStringPosition)
+    Q_PROPERTY(QString rotation READ getStringRotation)
+    Q_PROPERTY(QString scale READ getStringScale)
+    Q_PROPERTY(float mass READ getMass)
+    Q_PROPERTY(float friction READ getFriction)
+    Q_PROPERTY(float restitution READ getRestitution)
+    Q_PROPERTY(PhysicsDescriptor::PhysicalShape shape READ getShape)
+
     Q_OBJECT
 public:
     enum PhysicsType {
@@ -21,6 +29,15 @@ public:
 
     QPointer<NumberContainer<glm::vec3>> getPositionObject();
     QPointer<NumberContainer<glm::quat>> getPhysicalRotation();
+
+    QString getStringPosition() const;
+    QString getStringRotation() const;
+    QString getStringScale() const;
+    float getMass() const;
+    float getFriction() const;
+    float getRestitution() const;
+    bool getActivation() const;
+    PhysicsDescriptor::PhysicalShape getShape() const;
 
     void *getPhysicspointer();
     void setPhysicspointer(void *value);

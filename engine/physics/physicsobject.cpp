@@ -25,6 +25,46 @@ QPointer<NumberContainer<glm::quat> > PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 
+QString PhysicsObject::getStringPosition() const
+{
+    return QStringFunctions::toString(v_position->getValue());
+}
+
+QString PhysicsObject::getStringRotation() const
+{
+    return QStringFunctions::toString(v_physics_rotation->getValue());
+}
+
+QString PhysicsObject::getStringScale() const
+{
+    return QStringFunctions::toString(descr->scale());
+}
+
+float PhysicsObject::getMass() const
+{
+    return descr->mass();
+}
+
+float PhysicsObject::getFriction() const
+{
+    return descr->friction();
+}
+
+float PhysicsObject::getRestitution() const
+{
+    return descr->restitution();
+}
+
+bool PhysicsObject::getActivation() const
+{
+    return descr->activation();
+}
+
+PhysicsDescriptor::PhysicalShape PhysicsObject::getShape() const
+{
+    return descr->getShape();
+}
+
 void *PhysicsObject::getPhysicspointer()
 {
     return physicspointer;

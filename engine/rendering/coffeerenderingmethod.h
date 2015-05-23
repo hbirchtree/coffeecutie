@@ -12,6 +12,9 @@
 
 class CoffeeRenderingMethod : public QObject
 {
+    Q_PROPERTY(int uniformMappings READ uniformMappings)
+    Q_PROPERTY(int textureMappings READ textureMappings)
+
     //Defines a generic process in which an object is processed when being rendered as well as baked
 public:
     class VertexAttributeDescriptor {
@@ -36,7 +39,7 @@ public:
 
     typedef std::map<QPointer<CoffeeTexture>,gl::GLenum> texturemap;
     typedef std::map<gl::GLenum,QString> textureunitmap;
-    typedef QHash<QString,QPointer<ShaderVariant> > uniformmap;
+    typedef QMap<QString,QPointer<ShaderVariant> > uniformmap;
 
     CoffeeRenderingMethod(QObject* parent);
     CoffeeRenderingMethod(QObject* parent,RenderableObject* object);
@@ -46,6 +49,9 @@ public:
     texturemap getTextureMap() const;
     textureunitmap getTextureUnitMap() const;
     uniformmap getUniformMap() const;
+
+    int countUniformMappings() const;
+    int countTextureMappings() const;
 
 public slots:
     //Should only be called with Qt::DirectConnection type!
@@ -59,7 +65,6 @@ public slots:
 
 private:
     CoffeeRenderingMethod(QObject* parent, RenderableObject* target, texturemap tmap, textureunitmap tunit, uniformmap umap, const VAODescriptor *vao);
-    const std::string factoryMessage = "CoffeeRenderingMethod object not renderable : this object is identified as a factory";
 
     void prepareData();
 

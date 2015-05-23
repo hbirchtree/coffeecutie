@@ -5,6 +5,12 @@
 
 class CoffeeJoystick : public QObject
 {
+    Q_PROPERTY(QString deviceName READ getJoystickName)
+    Q_PROPERTY(int axes READ getAxes)
+    Q_PROPERTY(int buttons READ getButtons)
+    Q_PROPERTY(float sensitivity READ getSensitivity)
+    Q_PROPERTY(float deadzone READ getDeadzone)
+
     Q_OBJECT
 public:
     CoffeeJoystick(QObject *parent, int joystick);
@@ -21,6 +27,10 @@ public:
 
     float getAxisfactor() const;
     void setAxisfactor(float value);
+
+    int getAxes() const;
+
+    int getButtons() const;
 
 signals:
     void axisMoved(int axis, float value, float diff);

@@ -55,6 +55,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
         qDebug("Configuring objects for rendering");
         for(CoffeeObject* o : world->getObjects()){
             setupRenderer(o,defaultRenderingMethod);
+            if(o->getPhysicsObject())
+                o->getRotationObject()->bindValue(o->getPhysicsObject()->getPhysicalRotation());
             qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
         }
 
@@ -93,6 +95,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
     };
     _rendering_loop = [=](){
 //        evloop->processEvents();
+        qDebug() << QStringFunctions::toString(world->getCamera()->getOrientationMatrix());
         js->update();
         renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -158,10 +161,22 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     renderer->connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             renderer->requestWindowClose();
-        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
-            controller->addSpeed(world->getCamera()->getCameraForwardNormal()*0.2f);
-        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress)
-            controller->addSpeed(world->getCamera()->getCameraForwardNormal()*-0.2f);
+        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*2.f);
+        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-2.f);
+        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*2.f);
+        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-2.f);
+        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyRelease)
+            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-2.f);
+        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyRelease)
+            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*2.f);
+        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyRelease)
+            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-2.f);
+        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
+            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*2.f);
     });
     renderer->connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
         if(btn==6){
@@ -171,10 +186,10 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     renderer->connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){
         switch(axe){
         case 0:
-            controller->addSpeed(world->getCamera()->getCameraRightNormal()*val*5.f);
+            controller->addSpeedForward(world->getCamera()->getCameraRightNormal()*val*5.f);
             break;
         case 1:
-            controller->addSpeed(world->getCamera()->getCameraForwardNormal()*-val*5.f);
+            controller->addSpeedRight(world->getCamera()->getCameraForwardNormal()*-val*5.f);
             break;
         case 2:
 //            world->getCamera()->getFieldOfView()->setValue(120+val*70);

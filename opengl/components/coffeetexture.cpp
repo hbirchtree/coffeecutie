@@ -2,6 +2,7 @@
 
 CoffeeTexture::CoffeeTexture(QObject *parent, QString filename) : QObject(parent)
 {
+    m_textureFile = filename;
     texture = QImage(filename);
 }
 

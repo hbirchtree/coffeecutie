@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QDateTime>
 #include "coffeelogger.h"
+#include "inspector/coffeeinspector.h"
 #include "opengl/context/coffeerenderer.h"
 #include "engine/rendering/coffeeadvancedloop.h"
 #include "tests/boxtest.h"
@@ -28,6 +29,7 @@ int main(int argc, char *argv[])
     switch(mode){
     case 0:
         loop = new CoffeeAdvancedLoop(renderer);
+        loop->setObjectName("advanced-loop");
         break;
     case 1:
         loop = new BoxTest(renderer);
@@ -44,6 +46,9 @@ int main(int argc, char *argv[])
     default:
         qDebug("init() with abnormal code %i",initStat);
     }
+    CoffeeInspector inspector(0,renderer);
+    inspector.show();
+    a.exec();
     delete renderer;
     return initStat;
 }

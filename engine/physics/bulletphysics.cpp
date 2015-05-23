@@ -39,6 +39,16 @@ QString BulletPhysics::systemName()
     return "Bullet";
 }
 
+btQuaternion BulletPhysics::convert_glm(const glm::quat &v)
+{
+    return btQuaternion(v.w,v.x,v.y,v.z);
+}
+
+glm::quat BulletPhysics::convert_bt(const btQuaternion &v)
+{
+    return glm::quat(v.x(),v.y(),v.z(),v.w());
+}
+
 btVector3 BulletPhysics::convert_glm(const glm::vec3 &v)
 {
     return btVector3(v.x,v.y,v.z);
@@ -87,6 +97,7 @@ void BulletPhysics::addObject(PhysicsObject *object)
     btRigidBody::btRigidBodyConstructionInfo ci(desc->mass(),mstate,shape,convert_glm(desc->inertia()));
     btRigidBody* rb = new btRigidBody(ci);
 
+    rb->setAngularVelocity(convert_glm(desc->inertia()));
     rb->setFriction(desc->friction());
     rb->setRestitution(desc->restitution());
 

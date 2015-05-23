@@ -159,7 +159,7 @@ void CoffeeCamera::normalizeEulerAngles(QPointer<NumberContainer<glm::vec3>> e, 
     *e=v;
 }
 
-bool CoffeeCamera::isOrthographic()
+bool CoffeeCamera::isOrthographic() const
 {
     return orthographic;
 }
@@ -175,6 +175,26 @@ float CoffeeCamera::getZfar() const
 void CoffeeCamera::setZfar(float value)
 {
     zfar = value;
+}
+
+float CoffeeCamera::getAspectValue() const
+{
+    return aspect->getValue();
+}
+
+void CoffeeCamera::setAspect(float value)
+{
+    aspect->setValue(value);
+}
+
+QString CoffeeCamera::getStringPosition() const
+{
+    return QStringFunctions::toString(position->getValue());
+}
+
+QString CoffeeCamera::getStringRotation() const
+{
+    return QStringFunctions::toString(rotation_euler->getValue());
 }
 
 float CoffeeCamera::getZnear() const

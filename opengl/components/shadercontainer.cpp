@@ -13,6 +13,9 @@ ShaderContainer::~ShaderContainer()
 int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile){
     programId = glCreateProgram();
 
+    this->vertShaderFile = vertShaderFile;
+    this->fragShaderFile = fragShaderFile;
+
     int vertShader = compileShader(vertShaderFile,GL_VERTEX_SHADER);
     int fragShader = compileShader(fragShaderFile,GL_FRAGMENT_SHADER);
 
@@ -159,4 +162,14 @@ void ShaderContainer::setUniform(QString name, glm::mat4 val){
         glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+QString ShaderContainer::fragmentShader() const
+{
+    return fragShaderFile;
+}
+
+QString ShaderContainer::vertexShader() const
+{
+    return vertShaderFile;
 }

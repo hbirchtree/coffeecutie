@@ -6,6 +6,7 @@ CoffeeJoystick::CoffeeJoystick(QObject *parent, int joystick) : QObject(parent)
     j_name = QString(glfwGetJoystickName(joystick));
     int axes;
     int buttons;
+    setObjectName("controller::"+getJoystickName());
     glfwGetJoystickAxes(joystick,&axes);
     glfwGetJoystickButtons(joystick,&buttons);
     for(int i=0;i<axes;i++)
@@ -79,5 +80,12 @@ void CoffeeJoystick::setAxisfactor(float value)
     j_axisfactor = value;
 }
 
+int CoffeeJoystick::getAxes() const
+{
+    return axes.size();
+}
 
-
+int CoffeeJoystick::getButtons() const
+{
+    return buttons.size();
+}

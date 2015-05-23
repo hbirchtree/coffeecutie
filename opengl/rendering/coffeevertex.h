@@ -2,6 +2,7 @@
 #define COFFEEVERTEX
 
 #include "general/common.h"
+#include "general/qstringfunctions.h"
 class CoffeeVertex : public QObject {
 public:
     static const int VERTEX_COUNT = 3+2+3+3;
@@ -22,6 +23,7 @@ public:
     glm::vec4 color;
 
     bool hasNormal = false;
+    static QString toString(const CoffeeVertex &v);
 };
 
 #endif // COFFEEVERTEX

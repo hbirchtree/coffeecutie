@@ -11,6 +11,11 @@
 
 class CoffeeObject : public QObject, public RenderableObject
 {
+    Q_PROPERTY(QString position READ getStringPosition)
+    Q_PROPERTY(QString rotation READ getStringRotation)
+    Q_PROPERTY(QString scale READ getStringScale)
+
+    Q_OBJECT
 public:
     CoffeeObject(QObject* parent) : QObject(parent){
         v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
@@ -25,11 +30,20 @@ public:
     glm::vec3 getPosition() const{
         return v_position->getValue();
     }
+    QString getStringPosition() const{
+        return QStringFunctions::toString(v_position->getValue());
+    }
     glm::quat getRotation() const{
         return v_rotation->getValue();
     }
+    QString getStringRotation() const{
+        return QStringFunctions::toString(v_rotation->getValue());
+    }
     glm::vec3 getScale() const{
         return v_scale->getValue();
+    }
+    QString getStringScale() const{
+        return QStringFunctions::toString(v_scale->getValue());
     }
 
     GLint getVaoHandle(){
@@ -117,7 +131,7 @@ public:
 
     QPointer<CoffeeRenderingMethod> getRenderer()
     {
-    return renderer;
+        return renderer;
     }
 
     void setRenderer(QPointer<CoffeeRenderingMethod> value)

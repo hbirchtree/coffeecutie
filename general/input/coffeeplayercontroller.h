@@ -22,11 +22,16 @@ public slots:
     void setRotationPitch(float p);
     void setRotationYaw(float p);
     void addRotation(glm::vec3 d);
-    void addSpeed(glm::vec3 d);
+    void addSpeedForward(glm::vec3 d);
+    void addSpeedRight(glm::vec3 d);
     void addAccel(glm::vec3 d);
     void tick(float time);
 
 private:
+    //Because it's easy
+    glm::vec3 forwardMove;
+    glm::vec3 rightMove;
+
     NumberContainer<glm::vec3> *position;
     NumberContainer<glm::vec3> *rotation;
 };

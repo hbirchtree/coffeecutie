@@ -31,6 +31,16 @@ CoffeeRenderingMethod::uniformmap CoffeeRenderingMethod::getUniformMap() const
     return shaderSettings;
 }
 
+int CoffeeRenderingMethod::countUniformMappings() const
+{
+    return shaderSettings.size();
+}
+
+int CoffeeRenderingMethod::countTextureMappings() const
+{
+    return textureMapping.size();
+}
+
 void CoffeeRenderingMethod::prepareData()
 {
     if(target->isBaked())
@@ -44,7 +54,7 @@ void CoffeeRenderingMethod::prepareData()
 void CoffeeRenderingMethod::render()
 {
     if(!target)
-        throw std::invalid_argument(factoryMessage);
+        throw std::invalid_argument("CoffeeRenderingMethod object not renderable : this object is identified as a factory");
     if(!target->isBaked())
         prepareData();
     glUseProgram(target->getShader()->getProgramId());
@@ -62,7 +72,7 @@ void CoffeeRenderingMethod::render()
 void CoffeeRenderingMethod::cleanupData()
 {
     if(!target)
-        throw std::invalid_argument(factoryMessage);
+        throw std::invalid_argument("CoffeeRenderingMethod object not renderable : this object is identified as a factory");
     target->unloadAssets();
 }
 

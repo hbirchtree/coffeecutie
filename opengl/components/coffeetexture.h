@@ -6,6 +6,8 @@
 #include "general/data/coffeegameasset.h"
 class CoffeeTexture : public QObject, public CoffeeGameAsset
 {
+    Q_PROPERTY(QString textureFile READ textureFile)
+
     Q_OBJECT
 public:
 
@@ -25,6 +27,11 @@ public:
 
     GLint getHandle();
 
+    QString textureFile() const
+    {
+        return m_textureFile;
+    }
+
 signals:
 
 private:
@@ -35,6 +42,7 @@ private:
     bool validTexture = false;
     QImage texture;
     GLint textureHandle = -1;
+    QString m_textureFile;
 };
 
 #endif // COFFEETEXTURE_H

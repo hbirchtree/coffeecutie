@@ -23,3 +23,17 @@ CoffeeVertex::CoffeeVertex(const CoffeeVertex &vert) : QObject(vert.parent()){
 int CoffeeVertex::getSize(){
     return VERTEX_STRIDE;
 }
+
+QString CoffeeVertex::toString()
+{
+    return toString(this);
+}
+
+QString CoffeeVertex::toString(const CoffeeVertex &v)
+{
+    return QString("CoffeeVertex(pt=%1,tx=%2,nl=%3,tn=%4)")
+            .arg(QStringFunctions::toString(v.position))
+            .arg(QStringFunctions::toString(v.texCoord))
+            .arg(QStringFunctions::toString(v.normal))
+            .arg(QStringFunctions::toString(v.tangent));
+}

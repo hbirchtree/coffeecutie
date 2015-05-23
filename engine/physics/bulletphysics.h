@@ -18,6 +18,8 @@ public:
     ~BulletPhysics();
     QString systemName();
 
+    static btQuaternion convert_glm(const glm::quat &v);
+    static glm::quat convert_bt(const btQuaternion &v);
     static btVector3 convert_glm(const glm::vec3 &v);
     static glm::vec3 convert_bt(const btVector3 &v);
     static void internalTickCallback(btDynamicsWorld* wrld,btScalar timestep);

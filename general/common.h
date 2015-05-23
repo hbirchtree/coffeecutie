@@ -26,6 +26,8 @@
 
 #include <glbinding/gl/gl.h>
 
+#include "qstringfunctions.h"
+
 using namespace gl;
 
 #ifndef QUICK_MATH_HELPER

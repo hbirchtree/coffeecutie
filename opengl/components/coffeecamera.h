@@ -5,6 +5,13 @@
 #include "general/data/numbercontainer.h"
 class CoffeeCamera : public QObject
 {
+    Q_PROPERTY(float zNear READ getZnear WRITE setZnear)
+    Q_PROPERTY(float zFar READ getZfar WRITE setZfar)
+    Q_PROPERTY(float aspectRatio READ getAspectValue WRITE setAspect)
+    Q_PROPERTY(bool orthographic READ isOrthographic WRITE setOrthographic)
+    Q_PROPERTY(QString position READ getStringPosition)
+    Q_PROPERTY(QString rotation READ getStringRotation)
+
     Q_OBJECT
 public:
     CoffeeCamera(QObject *parent);
@@ -41,13 +48,19 @@ public:
     static void normalizeEulerAngles(QPointer<NumberContainer<glm::vec3> > e, float x_min, float x_max);
 
     void setOrthographic(bool value);
-    bool isOrthographic();
+    bool isOrthographic() const;
 
     float getZnear() const;
     void setZnear(float value);
 
     float getZfar() const;
     void setZfar(float value);
+
+    float getAspectValue() const;
+    void setAspect(float value);
+
+    QString getStringPosition() const;
+    QString getStringRotation() const;
 
 signals:
 
