@@ -18,6 +18,18 @@ public:
 
     void render(); //This is the part where the visible part is shown
 
+    void setProperties(
+            glm::vec3 sourcePos,
+            glm::vec3 minVelocity,
+            glm::vec3 maxVelocity,
+            glm::vec3 gravity,
+            glm::vec3 color,
+            float minLifetime,
+            float maxLifetime,
+            float size,
+            float renewTime,
+            float particles);
+
     void updateParticles(float timeStep);
 
     void clearParticles();
@@ -25,12 +37,12 @@ public:
 
 protected:
     enum ParticleTypes {
-        ParticleGeneratorType,
-        ParticleEmittedType
+        ParticleEmittedType,
+        ParticleGeneratorType
     };
 
     //Particle transform
-    QPointer<ShaderContainer> tshader;
+    ShaderContainer* tshader;
 
     GLuint transformBuffer = 0;
     GLuint transformQuery = 0;
@@ -48,14 +60,17 @@ protected:
         GLfloat cameraDist;
         GLint type;
     };
-    qint64 parts_max_count = 16384;
-    qint64 parts_gen_count = 100;
+    GLint parts_max_count = 16384;
+    GLint parts_curr_count = 1;
+    GLint parts_gen_count = 100;
 
     glm::vec3 parts_ivel;
     glm::vec3 parts_rvel;
     glm::vec3 parts_gravity;
     glm::vec3 parts_color;
     glm::vec3 parts_src_pos;
+
+    CoffeeTexture* texture;
 
     float parts_time = 0.f;
     float parts_renewtime = 500.f;

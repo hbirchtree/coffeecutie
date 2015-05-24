@@ -3,9 +3,10 @@
 CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeSimpleObject(parent)
 {
     this->camera = camera;
-    pos = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    pos = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
     shader = new ShaderContainer(this);
     tshader = new ShaderContainer(this);
+    texture = new CoffeeTexture(this,"ubw/models/textures/quadtex.png");
 }
 
 glm::vec3 CoffeeParticleSystem::getPosition() const
@@ -26,6 +27,12 @@ void CoffeeParticleSystem::setPosition(const glm::vec3 &pos)
 void CoffeeParticleSystem::setupSystem()
 {
     shader->buildProgram("ubw/shaders/particles/particles_render.vert","ubw/shaders/particles/particles_render.frag","ubw/shaders/particles/particles_render.geom");
+
+    shader->getUniformLocation("matrices.mProj");
+    shader->getUniformLocation("matrices.mView");
+    shader->getUniformLocation("vQuad1");
+    shader->getUniformLocation("vQuad2");
+    shader->getUniformLocation("gSampler");
 
     tshader->createProgram();
 
@@ -91,19 +98,70 @@ void CoffeeParticleSystem::setupSystem()
     tshader->getUniformLocation("fGenSize");
     tshader->getUniformLocation("iNumToGenerate");
 
-    qDebug() << genRandF(-10.f,20.f);
-
     setBaked(true);
 }
 
 void CoffeeParticleSystem::render()
 {
-    if(!isBaked())
+    if(!isBaked()){
         setupSystem();
+        texture->loadTexture();
+    }
+    updateParticles(0.5f);
+
+    glm::vec3 q1(1,1,0);
+    glm::vec3 q2(-1,1,0);
+    q1 = glm::cross(glm::normalize(pos->getValue()-camera->getCameraPos()),camera->getCameraUp());
+//    if(q1.length()!=0)
+//        q1 = glm::normalize(q1);
+    q2 = glm::cross(glm::normalize(pos->getValue()-camera->getCameraPos()),q1);
+//    if(q2.length()!=0)
+//        q2 = glm::normalize(q2);
+
+    glUseProgram(shader->getProgramId());
+//    glDepthMask(GL_FALSE);
+
+    shader->setUniform("matrices.mView",camera->getMatrix());
+    shader->setUniform("vQuad1",q1);
+    shader->setUniform("vQuad2",q2);
+    shader->setUniform("gSampler",texture->getHandle());
+
+    glBindVertexArray(partsArrays[curReadBuffer]);
+    glDisableVertexAttribArray(1);
+
+    glDrawArrays(GL_POINTS,0,parts_curr_count);
+
+//    glDepthMask(GL_TRUE);
+    glUseProgram(0);
+}
+
+void CoffeeParticleSystem::setProperties(glm::vec3 sourcePos,
+                                         glm::vec3 minVelocity,
+                                         glm::vec3 maxVelocity,
+                                         glm::vec3 gravity,
+                                         glm::vec3 color,
+                                         float minLifetime,
+                                         float maxLifetime,
+                                         float size,
+                                         float renewTime,
+                                         float particles)
+{
+    parts_src_pos = sourcePos;
+    parts_ivel = minVelocity;
+    parts_rvel = maxVelocity-minVelocity;
+    parts_gravity = gravity;
+    parts_color = color;
+    part_size = size;
+    part_life_min = minLifetime;
+    part_life_range = maxLifetime-minLifetime;
+    parts_renewtime = renewTime;
+    parts_gen_count = particles;
 }
 
 void CoffeeParticleSystem::updateParticles(float timeStep)
 {
+    glUseProgram(tshader->getProgramId());
+
     tshader->setUniform("fTimePassed",parts_time);
     tshader->setUniform("vGenPosition",parts_src_pos);
     tshader->setUniform("vGenVelocityMin",parts_ivel);
@@ -121,9 +179,32 @@ void CoffeeParticleSystem::updateParticles(float timeStep)
 
     if(parts_time > parts_renewtime){
         parts_time -= parts_renewtime;
-        tshader->setUniform("iNumToGenerate",(int)parts_gen_count);
+        tshader->setUniform("iNumToGenerate",parts_gen_count);
         tshader->setUniform("vRandomSeed",genRandVec3(-10.f,20.f));
     }
+
+    glEnable(GL_RASTERIZER_DISCARD);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,transformBuffer);
+
+    glBindVertexArray(partsArrays[curReadBuffer]);
+    glEnableVertexAttribArray(1);
+
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER,0,partsBuffers[curReadBuffer]);
+
+    glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,transformQuery);
+    glBeginTransformFeedback(GL_POINTS);
+
+    glDrawArrays(GL_POINTS,0,parts_curr_count);
+
+    glEndTransformFeedback();
+
+    glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+    glGetQueryObjectiv(transformQuery,GL_QUERY_RESULT,&parts_curr_count);
+
+    curReadBuffer = 1-curReadBuffer;
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
+    glDisable(GL_RASTERIZER_DISCARD);
+    glUseProgram(0);
 }
 
 float CoffeeParticleSystem::genRandF(float base, float range)

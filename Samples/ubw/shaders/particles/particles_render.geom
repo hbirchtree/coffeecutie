@@ -2,7 +2,6 @@
 
 uniform struct Matrices
 {
-	mat4 mProj;
 	mat4 mView;
 } matrices;
 
@@ -26,7 +25,7 @@ void main()
   {
     vec3 vPosOld = gl_in[0].gl_Position.xyz;
     float fSize = fSizePass[0];
-    mat4 mVP = matrices.mProj*matrices.mView;
+    mat4 mVP = matrices.mView;
     
     vColorPart = vec4(vColorPass[0], fLifeTimePass[0]);
        

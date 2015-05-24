@@ -94,6 +94,11 @@ glm::vec3 CoffeeCamera::getCameraUpNormal() const{
 glm::vec3 CoffeeCamera::getCameraForwardNormal() const{
     return glm::normalize(getCameraForward());
 }
+
+glm::vec3 CoffeeCamera::getCameraPos() const
+{
+    return position->getValue();
+}
 float CoffeeCamera::getCameraForwardDirection() const{
     return getCameraForwardNormal().y;
 }

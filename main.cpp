@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     CoffeeLogger logger;
     Q_UNUSED(logger);
 
-    CoffeeRenderer *renderer = new CoffeeRenderer(0,1280,720,Qt::WindowNoState,"CoffeeCutie");
+    CoffeeRenderer *renderer = new CoffeeRenderer(0,1280,720,Qt::WindowNoState,"Unlimited Frame Works");
     renderer->setObjectName("root.renderer");
 
     int initStat = renderer->init();
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 
     switch(mode){
     case 0:
-        loop = new CoffeeAdvancedLoop(renderer,"testgame/cutie.json");
+        loop = new CoffeeAdvancedLoop(renderer,"ubw/ubw.json");
         loop->setObjectName("advanced-loop");
         break;
     case 1:

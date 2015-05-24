@@ -67,6 +67,16 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
 
         test = new CoffeeParticleSystem(this,world->getCamera());
         test->setupSystem();
+        test->setProperties(glm::vec3(-10.0f, 17.5f, 0.0f), // Where the particles are generated
+                            glm::vec3(-5, 0, -5), // Minimal velocity
+                            glm::vec3(5, 20, 5), // Maximal velocity
+                            glm::vec3(0, -5, 0), // Gravity force applied to particles
+                            glm::vec3(0.0f, 0.5f, 1.0f), // Color (light blue)
+                            1.5f, // Minimum lifetime in seconds
+                            3.0f, // Maximum lifetime in seconds
+                            0.75f, // Rendered size
+                            0.02f, // Spawn every 0.05 seconds
+                            30); // And spawn 30 particles
 
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
@@ -85,8 +95,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         qDebug("Setting vertical sync mode");
         glfwSwapInterval(0);
 
-        renderer->updateMouseGrabbing(true);
-
         qDebug("Configuring framebuffer object");
         renderFbo->createFramebuffer(renderer->getWindowDimensions(),1);
         connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){ //We need to resize the FBO when the window dimensions change
@@ -97,13 +105,13 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         screenSurface = new CoffeeOutputSurface(this,renderFbo);
     };
     _rendering_loop = [=](){
-//        evloop->processEvents();
         js->update();
         renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        test->render();
-        for(CoffeeObject* o : world->getObjects())
+        for(CoffeeObject* o : world->getObjects()){
             o->render();
+        }
+        test->render();
         renderFbo->unbindFramebuffer();
         screenSurface->render();
     };

@@ -40,7 +40,7 @@ void GraphPlotter::drawForeground(QPainter *painter, const QRectF &rect)
 {
     painter->setPen(QPen(Qt::green));
     float xcrd_inc = (float)rect.width()/(float)values.size();
-    float ycrd = values.first();
+    float ycrd = -values.first();
     for(int i=0;i<values.size();i++){
         painter->drawLine(rect.left()+xcrd_inc*(float)i,
                           ycrd,

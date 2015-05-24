@@ -35,6 +35,8 @@ public:
     glm::vec3 getCameraUpNormal() const;
     glm::vec3 getCameraForwardNormal() const;
 
+    glm::vec3 getCameraPos() const;
+
     float getCameraForwardDirection() const;
 
     glm::mat4 getOrientationMatrix() const;
