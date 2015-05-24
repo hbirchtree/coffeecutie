@@ -24,7 +24,10 @@ void CoffeeInspector::updateInformation()
 {
     ui->inspectorWidget->clear();
     if(!engineRoot){
-        qDebug() << "Failed to load object root!";
+        QTreeWidgetItem* it = new QTreeWidgetItem();
+        it->setText(0,"Engine root was deleted!");
+        it->setText(1,"No data to display");
+        ui->inspectorWidget->addTopLevelItem(it);
         return;
     }
 
@@ -60,7 +63,15 @@ QList<QTreeWidgetItem*> CoffeeInspector::getProperties(QObject *object)
         if(object->metaObject()->property(i).isReadable()&&
                 object->metaObject()->property(i).read(object).canConvert(QMetaType::QString))
             prop->setText(1,object->metaObject()->property(i).read(object).toString());
-        else
+        else if(object->metaObject()->property(i).isReadable()&&object->metaObject()->property(i).type()==QVariant::List){
+            QVariantList vars = object->metaObject()->property(i).read(object).toList();
+            for(int i=0;i<vars.size();i++){
+                QTreeWidgetItem* it = new QTreeWidgetItem();
+                it->setText(0,QString::number(i));
+                it->setText(1,vars.at(i).toString());
+                prop->addChild(it);
+            }
+        }else
             prop->setText(1,object->metaObject()->property(i).typeName());
         items.append(prop);
     }

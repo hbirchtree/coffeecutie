@@ -3,6 +3,7 @@
 
 #include "general/common.h"
 #include "opengl/rendering/renderloop.h"
+#include <QCoreApplication>
 #include <QMimeData>
 #include <QKeyEvent>
 #include <QMouseEvent>

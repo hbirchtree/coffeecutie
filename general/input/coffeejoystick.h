@@ -10,6 +10,8 @@ class CoffeeJoystick : public QObject
     Q_PROPERTY(int buttons READ getButtons)
     Q_PROPERTY(float sensitivity READ getSensitivity)
     Q_PROPERTY(float deadzone READ getDeadzone)
+    Q_PROPERTY(QVariantList axesValues READ axesValues)
+    Q_PROPERTY(QVariantList btnValues READ btnValues)
 
     Q_OBJECT
 public:
@@ -31,6 +33,9 @@ public:
     int getAxes() const;
 
     int getButtons() const;
+
+    QVariantList axesValues() const;
+    QVariantList btnValues() const;
 
 signals:
     void axisMoved(int axis, float value, float diff);

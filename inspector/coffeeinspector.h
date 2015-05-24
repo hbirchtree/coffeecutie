@@ -6,6 +6,7 @@
 #include <QTreeWidgetItem>
 #include <QMetaProperty>
 #include <QList>
+#include <QPointer>
 
 namespace Ui {
 class CoffeeInspector;
@@ -24,7 +25,7 @@ private slots:
     void on_updateBtn_clicked();
 
 private:
-    QObject* engineRoot;
+    QPointer<QObject> engineRoot;
     Ui::CoffeeInspector *ui;
     void populateTreeWidgetItem(QObjectList source, QTreeWidgetItem *target);
     QTreeWidgetItem* generateItem(QObject* o);

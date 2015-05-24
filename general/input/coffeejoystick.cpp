@@ -89,3 +89,19 @@ int CoffeeJoystick::getButtons() const
 {
     return buttons.size();
 }
+
+QVariantList CoffeeJoystick::axesValues() const
+{
+    QVariantList vals;
+    for(float v : axes)
+        vals << v;
+    return vals;
+}
+
+QVariantList CoffeeJoystick::btnValues() const
+{
+    QVariantList vals;
+    for(unsigned char v : buttons)
+        vals << v;
+    return vals;
+}

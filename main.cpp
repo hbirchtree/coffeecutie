@@ -11,7 +11,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.1.8");
+    a.setApplicationVersion("0.0.1.12");
+
+    qsrand((rand()%RAND_MAX)/10000.0);
+    qDebug() << qrand();
 
     int mode = 0;
 
@@ -39,6 +42,8 @@ int main(int argc, char *argv[])
     renderer->setLoop(loop);
     renderer->setSamples(4);
 
+    CoffeeInspector inspector(0,renderer);
+    inspector.show();
     switch(initStat){
     case 0:
         initStat = renderer->loop();
@@ -46,9 +51,6 @@ int main(int argc, char *argv[])
     default:
         qDebug("init() with abnormal code %i",initStat);
     }
-//    CoffeeInspector inspector(0,renderer);
-//    inspector.show();
-//    a.exec();
     delete renderer;
-    return initStat;
+    return a.exec();
 }
