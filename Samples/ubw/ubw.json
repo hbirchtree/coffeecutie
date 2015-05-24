@@ -1,0 +1,61 @@
+{
+	"models":{
+		"quad": "models/quad.obj",
+		"gear": "models/gear.obj"
+	},
+	"world.1":{
+		"lights":[
+			{
+				"position": [1,7,1],
+				"color": "#FFFFFF",
+				"attenuation": 0.0005,
+				"ambient-coefficient":0.007
+			}
+		],
+		"camera":{
+			"fov": 90,
+			"znear": 0.01,
+			"zfar": 100,
+			"position": [0,10,20],
+			"rotation": [0,0,0]
+		},
+		"clearcolor": "#002525FF",
+		"world.fog.density": 0.02,
+		"world.fog.color": "#002525FF",
+		"render-script": "scripts/rendering/render-buffered.js",
+		"logic-script": "scripts/logic/gameloop.js",
+		"objects": [
+			{
+				"id": "plane",
+				"shader.vertex": "shaders/vsh.txt",
+				"shader.fragment": "shaders/fsh.txt",
+				"model.position": [0,0,0],
+				"model.idsrc": "quad:",
+				"model.scale": [1,1,1],
+				"physics":{
+					"shape": "staticplane",
+					"normal": [0,1,0],
+					"mass": 0,
+					"friction": 1,
+					"restitution": 1
+				}
+			},
+			{
+				"id": "gear",
+				"shader.vertex": "shaders/vsh.txt",
+				"shader.fragment": "shaders/fsh_nolight.txt",
+				"model.position": [10,7,0],
+				"model.idsrc": "gear:",
+				"model.scale": [1,1,1],
+				"physics":{
+					"position": [10,40,0],
+					"shape": "box",
+					"mass": 1,
+					"friction": 1,
+					"restitution":1,
+					"inertia": [10,10,0]
+				}
+			}
+		]
+	}
+}

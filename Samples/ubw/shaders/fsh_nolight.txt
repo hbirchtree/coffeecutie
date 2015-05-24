@@ -1,0 +1,30 @@
+#version 330
+
+uniform mat4 camera;
+uniform mat4 model;
+uniform vec3 colorMul;
+
+// material settings
+uniform sampler2D materialTex;
+uniform float materialTransparencyValue;
+
+in vec2 fragTexCoord;
+in vec3 fragNormal;
+in vec3 fragVert;
+
+out vec4 finalColor;
+
+void main() {
+    vec4 surfaceColor = texture(materialTex, fragTexCoord);
+
+    //diffuse
+    vec3 diffuse = surfaceColor.rgb*colorMul;
+
+    //linear color (color before gamma correction)
+    vec3 linearColor = diffuse;
+    
+    //final color (after gamma correction)
+    vec3 gamma = vec3(1.0/2.2);
+    float transparencyVal = surfaceColor.a*materialTransparencyValue;
+    finalColor = vec4(pow(linearColor, gamma), transparencyVal);
+}
