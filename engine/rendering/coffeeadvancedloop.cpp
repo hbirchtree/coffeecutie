@@ -1,6 +1,6 @@
 #include "coffeeadvancedloop.h"
 
-CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(renderer)
+CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSource) : RenderLoop(renderer)
 {
     evloop = new QEventLoop(this);
     connectSignals(renderer);
@@ -39,7 +39,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
 
     qDebug("Importing objects from file");
     CoffeeObjectFactory f;
-    QList<CoffeeWorldOpts*> worlds = f.importObjects("testgame/cutie.json",this);
+    QList<CoffeeWorldOpts*> worlds = f.importObjects(fileSource,this);
     if(worlds.isEmpty())
         qDebug("Failed to load any world information! Brace for impact!");
     world = worlds.first();
@@ -82,7 +82,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
         qDebug("Setting vertical sync mode");
         glfwSwapInterval(0);
 
-//        renderer->updateMouseGrabbing(true);
+        renderer->updateMouseGrabbing(true);
 
         qDebug("Configuring framebuffer object");
         renderFbo->createFramebuffer(renderer->getWindowDimensions(),1);
@@ -91,18 +91,17 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer) : RenderLoop(re
         });
 
         qDebug("Creating output surface");
-        test = new CoffeeOutputSurface(this,renderFbo);
+        screenSurface = new CoffeeOutputSurface(this,renderFbo);
     };
     _rendering_loop = [=](){
 //        evloop->processEvents();
-        qDebug() << QStringFunctions::toString(world->getCamera()->getOrientationMatrix());
         js->update();
         renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         for(CoffeeObject* o : world->getObjects())
             o->render();
         renderFbo->unbindFramebuffer();
-        test->render();
+        screenSurface->render();
     };
     _rendering_loop_cleanup = [=](){
         qDebug("Running the empty cleanup function");

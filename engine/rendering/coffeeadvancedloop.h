@@ -31,7 +31,7 @@
 class CoffeeAdvancedLoop : public RenderLoop
 {
 public:
-    CoffeeAdvancedLoop(CoffeeRenderer* renderer);
+    CoffeeAdvancedLoop(CoffeeRenderer* renderer, QString fileSource);
     ~CoffeeAdvancedLoop();
 
     std::function<void ()> *getInit();
@@ -44,7 +44,7 @@ private:
     QEventLoop* evloop;
 
     CoffeeFrameBufferObject* renderFbo;
-    CoffeeSimpleObject* test;
+    CoffeeSimpleObject* screenSurface;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;

@@ -10,25 +10,61 @@ ShaderContainer::~ShaderContainer()
 
 }
 
-int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile){
-    programId = glCreateProgram();
+int ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile)
+{
+    createProgram();
 
     this->vertShaderFile = vertShaderFile;
     this->fragShaderFile = fragShaderFile;
+    this->geomShaderFile = geomShaderFile;
 
-    int vertShader = compileShader(vertShaderFile,GL_VERTEX_SHADER);
-    int fragShader = compileShader(fragShaderFile,GL_FRAGMENT_SHADER);
+    std::string src = FileHandler::getStringFromFile(vertShaderFile).toStdString();
+    const char* code = src.c_str();
+    addShader(code,vertShaderFile,GL_VERTEX_SHADER);
 
-    if(vertShader==-1||fragShader==-1)
+    src = FileHandler::getStringFromFile(fragShaderFile).toStdString();
+    code = src.c_str();
+    addShader(code,fragShaderFile,GL_FRAGMENT_SHADER);
+
+    if(!geomShaderFile.isEmpty()){
+        src = FileHandler::getStringFromFile(geomShaderFile).toStdString();
+        code = src.c_str();
+        addShader(code,geomShaderFile,GL_GEOMETRY_SHADER);
+    }
+
+    if(!linkProgram())
         return -1;
 
-    GLint status;
+    return 0;
+}
 
-    glAttachShader(programId,vertShader);
-    glAttachShader(programId,fragShader);
+int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile){
+    return buildProgram(vertShaderFile,fragShaderFile,QString());
+}
+
+void ShaderContainer::createProgram()
+{
+    programId = glCreateProgram();
+}
+
+bool ShaderContainer::addShader(const char *data, QString id, const GLenum &shaderType)
+{
+    int shader = compileShaderSource(data,id,shaderType);
+    if(shader>0)
+        shaders.append(shader);
+    else
+        return false;
+    return true;
+}
+
+bool ShaderContainer::linkProgram()
+{
+    for(int shader : shaders)
+        glAttachShader(programId,shader);
 
     glLinkProgram(programId);
 
+    GLint status;
     glGetProgramiv(programId,GL_LINK_STATUS,&status);
     if(status == 0&&verbosity>0){
         GLint loglen;
@@ -36,21 +72,25 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
         glGetProgramInfoLog(programId,sizeof(log),&loglen,log);
         qDebug() << "Failed to link shader program: \nLog:"+QString(log);
         glDeleteProgram(programId);
-        return -1;
+        return false;
     }
 
-    glDetachShader(programId,vertShader);
-    glDetachShader(programId,fragShader);
-
-    return 0;
+    for(int shader : shaders)
+        glDetachShader(programId,shader);
+    return true;
 }
 
 int ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType){
-    int handle = glCreateShader(shaderType);
-
     std::string src = FileHandler::getStringFromFile(shaderFile).toStdString();
     const char* code = src.c_str();
-    glShaderSource(handle,1,&code,NULL);
+    return compileShaderSource(code,shaderFile,shaderType);
+}
+
+int ShaderContainer::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
+{
+    int handle = glCreateShader(shaderType);
+
+    glShaderSource(handle,1,&data,NULL);
 
     glCompileShader(handle);
 
@@ -60,7 +100,7 @@ int ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType)
         GLint loglen;
         GLchar log[1000];
         glGetShaderInfoLog(handle,sizeof(log),&loglen,log);
-        qDebug() << "Failed to compile shader: "+shaderFile
+        qDebug() << "Failed to compile shader: "+id
                     +"\nLog: "+QString::fromLocal8Bit(log);
         glDeleteShader(handle);
         return -1;

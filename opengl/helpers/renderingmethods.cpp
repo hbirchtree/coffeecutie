@@ -190,7 +190,6 @@ glm::mat4 RenderingMethods::translateObjectMatrix(RenderableObject const *obj)
 {
     glm::mat4 modelMatrix;
     modelMatrix = glm::scale(modelMatrix,obj->getScale());
-    qDebug() << QStringFunctions::toString(glm::mat4(obj->getRotation()));
     modelMatrix *= glm::mat4(obj->getRotation());
     modelMatrix = glm::translate(glm::mat4(),obj->getPosition());
 //    modelMatrix = glm::rotate(modelMatrix,QuickMath::math_degreesToRads(obj->getRotation().x),glm::vec3(1,0,0));

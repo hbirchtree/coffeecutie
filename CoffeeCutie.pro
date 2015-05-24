@@ -55,7 +55,8 @@ SOURCES += main.cpp \
     engine/objects/coffeeoutputsurface.cpp \
     opengl/components/coffeedepthbufferobject.cpp \
     engine/physics/physicsdescriptor.cpp \
-    inspector/coffeeinspector.cpp
+    inspector/coffeeinspector.cpp \
+    engine/objects/coffeeparticlesystem.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -106,7 +107,8 @@ HEADERS += \
     engine/objects/coffeeoutputsurface.h \
     opengl/components/coffeedepthbufferobject.h \
     engine/physics/physicsdescriptor.h \
-    inspector/coffeeinspector.h
+    inspector/coffeeinspector.h \
+    engine/objects/coffeeparticlesystem.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

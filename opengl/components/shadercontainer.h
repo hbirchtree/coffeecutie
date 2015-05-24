@@ -15,8 +15,17 @@ public:
     explicit ShaderContainer(QObject *parent = 0);
     ~ShaderContainer();
 
-    int buildProgram(QString verShaderFile,QString fragShaderFile);
+    //Full-process functions
+    int buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
+    int buildProgram(QString vertShaderFile,QString fragShaderFile);
+
+    //Partial
+    void createProgram();
+    bool addShader(const char* data, QString id, const GLenum& shaderType);
+    bool linkProgram();
+
     int compileShader(QString shaderFile, const GLenum &shaderType);
+    int compileShaderSource(const char* data, QString id, const GLenum& shaderType);
     int getProgramId();
     void unload();
 
@@ -43,6 +52,9 @@ public slots:
 private:
     QString fragShaderFile;
     QString vertShaderFile;
+    QString geomShaderFile;
+
+    QVector<int> shaders;
 
     int programId = 0;
     int verbosity = 1;

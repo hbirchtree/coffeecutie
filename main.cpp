@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
     switch(mode){
     case 0:
-        loop = new CoffeeAdvancedLoop(renderer);
+        loop = new CoffeeAdvancedLoop(renderer,"ubw/ubw.json");
         loop->setObjectName("advanced-loop");
         break;
     case 1:
@@ -46,9 +46,9 @@ int main(int argc, char *argv[])
     default:
         qDebug("init() with abnormal code %i",initStat);
     }
-    CoffeeInspector inspector(0,renderer);
-    inspector.show();
-    a.exec();
+//    CoffeeInspector inspector(0,renderer);
+//    inspector.show();
+//    a.exec();
     delete renderer;
     return initStat;
 }
