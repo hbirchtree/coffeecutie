@@ -14,7 +14,6 @@ int main(int argc, char *argv[])
     a.setApplicationVersion("0.0.1.12");
 
     qsrand((rand()%RAND_MAX)/10000.0);
-    qDebug() << qrand();
 
     int mode = 0;
 
@@ -31,7 +30,7 @@ int main(int argc, char *argv[])
 
     switch(mode){
     case 0:
-        loop = new CoffeeAdvancedLoop(renderer,"ubw/ubw.json");
+        loop = new CoffeeAdvancedLoop(renderer,"testgame/cutie.json");
         loop->setObjectName("advanced-loop");
         break;
     case 1:
@@ -42,7 +41,7 @@ int main(int argc, char *argv[])
     renderer->setLoop(loop);
     renderer->setSamples(4);
 
-    CoffeeInspector inspector(0,renderer);
+    CoffeeInspector inspector(0,renderer,renderer);
     inspector.show();
     switch(initStat){
     case 0:
@@ -52,5 +51,5 @@ int main(int argc, char *argv[])
         qDebug("init() with abnormal code %i",initStat);
     }
     delete renderer;
-    return a.exec();
+    return initStat;
 }

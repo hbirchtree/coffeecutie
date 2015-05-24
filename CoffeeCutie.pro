@@ -56,7 +56,9 @@ SOURCES += main.cpp \
     opengl/components/coffeedepthbufferobject.cpp \
     engine/physics/physicsdescriptor.cpp \
     inspector/coffeeinspector.cpp \
-    engine/objects/coffeeparticlesystem.cpp
+    engine/objects/coffeeparticlesystem.cpp \
+    inspector/coffeerendererinspector.cpp \
+    inspector/graphplotter.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -108,7 +110,9 @@ HEADERS += \
     opengl/components/coffeedepthbufferobject.h \
     engine/physics/physicsdescriptor.h \
     inspector/coffeeinspector.h \
-    engine/objects/coffeeparticlesystem.h
+    engine/objects/coffeeparticlesystem.h \
+    inspector/coffeerendererinspector.h \
+    inspector/graphplotter.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -138,4 +142,5 @@ INCLUDEPATH += $$PWD/libs/bullet/src
 DEPENDPATH += $$PWD/libs/bullet/src
 
 FORMS += \
-    inspector/coffeeinspector.ui
+    inspector/coffeeinspector.ui \
+    inspector/coffeerendererinspector.ui

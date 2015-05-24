@@ -30,6 +30,7 @@ public:
     QSize getCurrentFramebufferSize() const;
     QSize *getFramebufferSizePt();
     int getMouseInputMode() const;
+    bool isMouseGrabbed() const;
 
     int getSamples() const;
 

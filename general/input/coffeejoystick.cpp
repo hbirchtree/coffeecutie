@@ -32,8 +32,8 @@ bool CoffeeJoystick::update()
         float oldval = axes.at(i);
         if(std::abs(value)<=j_deadzone)
             value = 0;
-        if(std::abs(value-oldval)<j_sensitivity)
-            continue;
+//        if(std::abs(value-oldval)<j_sensitivity)
+//            continue;
         axes.replace(i,value);
         axisMoved(i,value,value-oldval);
     }

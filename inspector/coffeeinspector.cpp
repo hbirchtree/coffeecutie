@@ -1,12 +1,13 @@
 #include "coffeeinspector.h"
 #include "ui_coffeeinspector.h"
 
-CoffeeInspector::CoffeeInspector(QWidget *parent, QObject *engineRoot) :
+CoffeeInspector::CoffeeInspector(QWidget *parent, QObject *engineRoot, CoffeeRenderer *renderer) :
     QWidget(parent),
     ui(new Ui::CoffeeInspector)
 {
     ui->setupUi(this);
     this->engineRoot = engineRoot;
+    this->renderer = renderer;
 
     QStringList labels;
     labels << "Object name" << "Type/Data";
@@ -35,8 +36,11 @@ void CoffeeInspector::updateInformation()
 }
 
 void CoffeeInspector::populateTreeWidgetItem(QObjectList source, QTreeWidgetItem* target){
-    for(QObject* o : source)
+    for(QObject* o : source){
+        if(o->metaObject()->propertyCount()<=1&&o->children().size()==0)
+            continue;
         target->addChild(generateItem(o));
+    }
 }
 
 QTreeWidgetItem *CoffeeInspector::generateItem(QObject *o)
@@ -50,7 +54,9 @@ QTreeWidgetItem *CoffeeInspector::generateItem(QObject *o)
         it->addChild(childItem);
         populateTreeWidgetItem(o->children(),childItem);
     }
-    it->addChildren(getProperties(o));
+    QList<QTreeWidgetItem*> children = getProperties(o);
+    if(children.size()>0)
+        it->addChildren(children);
     return it;
 }
 
@@ -81,4 +87,12 @@ QList<QTreeWidgetItem*> CoffeeInspector::getProperties(QObject *object)
 void CoffeeInspector::on_updateBtn_clicked()
 {
     updateInformation();
+}
+
+void CoffeeInspector::on_rendererBtn_clicked()
+{
+    if(!rendererInspector){
+        rendererInspector = new CoffeeRendererInspector(0,renderer);
+    }
+    rendererInspector->show();
 }

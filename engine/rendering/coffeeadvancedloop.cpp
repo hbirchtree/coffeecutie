@@ -65,6 +65,9 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
         glViewport(0,0,s.width(),s.height());
 
+        test = new CoffeeParticleSystem(this,world->getCamera());
+        test->setupSystem();
+
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
 
@@ -98,6 +101,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         js->update();
         renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        test->render();
         for(CoffeeObject* o : world->getObjects())
             o->render();
         renderFbo->unbindFramebuffer();
@@ -152,30 +156,36 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 
     qDebug("Configuring input handling");
     renderer->connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
-        if(event.type()==QMouseEvent::MouseMove){
+        if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
             renderer->setMousePos(0,0);
             world->getCamera()->offsetOrientation(event.pos().x()*0.1,event.pos().y()*0.1);
+        }
+        if(event.type()==QMouseEvent::MouseButtonPress){
+            if(event.button()==Qt::LeftButton)
+                renderer->updateMouseGrabbing(true);
+            else if(event.button()==Qt::RightButton)
+                renderer->updateMouseGrabbing(false);
         }
     });
     renderer->connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             renderer->requestWindowClose();
-        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
             controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*2.f);
-        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress)
             controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-2.f);
-        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress)
             controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*2.f);
-        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress&&!event.isAutoRepeat())
+        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress)
             controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-2.f);
         else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-2.f);
+            controller->addSpeedForward(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*2.f);
+            controller->addSpeedRight(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-2.f);
+            controller->addSpeedRight(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*2.f);
+            controller->addSpeedForward(glm::vec3(0,0,0));
     });
     renderer->connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
         if(btn==6){

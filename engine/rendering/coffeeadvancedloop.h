@@ -27,6 +27,8 @@
 #include "general/input/coffeejoystick.h"
 #include "general/input/coffeeplayercontroller.h"
 
+#include "engine/objects/coffeeparticlesystem.h"
+
 
 class CoffeeAdvancedLoop : public RenderLoop
 {
@@ -42,6 +44,8 @@ public:
 
 private:
     QEventLoop* evloop;
+
+    CoffeeParticleSystem* test;
 
     CoffeeFrameBufferObject* renderFbo;
     CoffeeSimpleObject* screenSurface;

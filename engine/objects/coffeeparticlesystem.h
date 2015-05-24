@@ -49,7 +49,7 @@ protected:
         GLint type;
     };
     qint64 parts_max_count = 16384;
-    qint64 parts_gen_count = 1;
+    qint64 parts_gen_count = 100;
 
     glm::vec3 parts_ivel;
     glm::vec3 parts_rvel;
@@ -65,6 +65,9 @@ protected:
     float part_size = 16.0f;
 
     int curReadBuffer = 0;
+
+    glm::vec3 genRandVec3(float base, float range);
+    float genRandF(float base, float range);
 
     const CoffeeCamera* camera;
 

@@ -148,35 +148,35 @@ int ShaderContainer::getAttributeLocation(QString name){
     return handle;
 }
 
-void ShaderContainer::setUniform(QString name, glm::vec3 val){
+void ShaderContainer::setUniform(QString name,const glm::vec3& val){
     if(uniforms.keys().contains(name))
         glUniform3f(uniforms.value(name),val.x,val.y,val.z);
     else if(verbosity>1)
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, glm::vec4 val){
+void ShaderContainer::setUniform(QString name, const glm::vec4 &val){
     if(uniforms.keys().contains(name))
         glUniform4f(uniforms.value(name),val.x,val.y,val.z,val.w);
     else if(verbosity>1)
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniformRgb(QString name, glm::vec3 val){
+void ShaderContainer::setUniformRgb(QString name, const glm::vec3& val){
     if(uniforms.keys().contains(name))
         glUniform3f(uniforms.value(name),val.r,val.g,val.b);
     else if(verbosity>1)
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniformRgba(QString name, glm::vec4 val){
+void ShaderContainer::setUniformRgba(QString name, const glm::vec4 &val){
     if(uniforms.keys().contains(name))
         glUniform4f(uniforms.value(name),val.r,val.g,val.b,val.a);
     else if(verbosity>1)
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, glm::vec2 val){
+void ShaderContainer::setUniform(QString name, const glm::vec2 &val){
     if(uniforms.keys().contains(name))
         glUniform2f(uniforms.value(name),val.x,val.y);
     else if(verbosity>1)
@@ -197,7 +197,7 @@ void ShaderContainer::setUniform(QString name, int val){
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, glm::mat4 val){
+void ShaderContainer::setUniform(QString name, const glm::mat4 &val){
     if(uniforms.keys().contains(name))
         glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)

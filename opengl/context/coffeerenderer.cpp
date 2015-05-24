@@ -138,6 +138,12 @@ int CoffeeRenderer::getMouseInputMode() const
     return glfwGetInputMode(window,0);
 }
 
+bool CoffeeRenderer::isMouseGrabbed() const
+{
+    int mode = glfwGetInputMode(window,GLFW_CURSOR);
+    return (mode == GLFW_CURSOR_DISABLED);
+}
+
 QSize CoffeeRenderer::getWindowDimensions() const
 {
     return windowDimensions;

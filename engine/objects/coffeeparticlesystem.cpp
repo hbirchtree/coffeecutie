@@ -83,11 +83,15 @@ void CoffeeParticleSystem::setupSystem()
     tshader->getUniformLocation("vGenColor");
     tshader->getUniformLocation("vGenGravityVector");
 
+    tshader->getUniformLocation("vRandomSeed");
+
     tshader->getUniformLocation("fGenLifeMin");
     tshader->getUniformLocation("fGenLifeRange");
 
     tshader->getUniformLocation("fGenSize");
     tshader->getUniformLocation("iNumToGenerate");
+
+    qDebug() << genRandF(-10.f,20.f);
 
     setBaked(true);
 }
@@ -117,5 +121,17 @@ void CoffeeParticleSystem::updateParticles(float timeStep)
 
     if(parts_time > parts_renewtime){
         parts_time -= parts_renewtime;
+        tshader->setUniform("iNumToGenerate",(int)parts_gen_count);
+        tshader->setUniform("vRandomSeed",genRandVec3(-10.f,20.f));
     }
+}
+
+float CoffeeParticleSystem::genRandF(float base, float range)
+{
+    return base+range*(float)(qrand()%(RAND_MAX+1))/(float)RAND_MAX;
+}
+
+glm::vec3 CoffeeParticleSystem::genRandVec3(float base,float range)
+{
+    return glm::vec3(genRandF(base,range),genRandF(base,range),genRandF(base,range));
 }

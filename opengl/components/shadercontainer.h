@@ -32,15 +32,15 @@ public:
     int getUniformLocation(QString name);
     void getUniformLocations(QList<QString> names);
     int getAttributeLocation(QString name);
-    void setUniform(QString name,glm::vec3 val);
-    void setUniform(QString name,glm::vec4 val);
-    void setUniformRgb(QString name,glm::vec3 val);
-    void setUniformRgba(QString name,glm::vec4 val);
-    void setUniform(QString name,glm::vec2 val);
+    void setUniform(QString name, const glm::vec3 &val);
+    void setUniform(QString name,const glm::vec4& val);
+    void setUniformRgb(QString name,const glm::vec3& val);
+    void setUniformRgba(QString name,const glm::vec4& val);
+    void setUniform(QString name,const glm::vec2& val);
     void setUniform(QString name,GLfloat val);
-    void setUniform(QString name, int val);
+    void setUniform(QString name,int val);
 
-    void setUniform(QString name,glm::mat4 val);
+    void setUniform(QString name,const glm::mat4& val);
 
     QString fragmentShader() const;
     QString vertexShader() const;
