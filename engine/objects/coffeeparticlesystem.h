@@ -14,7 +14,6 @@ public:
     QPointer<NumberContainer<glm::vec3>> getPositionObject();
     void setPosition(const glm::vec3& pos);
 
-    void setupSystem();
 
     void render(); //This is the part where the visible part is shown
 
@@ -77,10 +76,11 @@ protected:
 
     float part_life_min = 10.f;
     float part_life_range = 0.f;
-    float part_size = 16.0f;
+    float part_size = 1.0f;
 
     int curReadBuffer = 0;
 
+    void setupSystem();
     glm::vec3 genRandVec3(float base, float range);
     float genRandF(float base, float range);
 

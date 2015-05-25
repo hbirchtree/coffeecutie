@@ -42,6 +42,8 @@ private:
     Ui::CoffeeInspector *ui;
     void updateProperties(QObject* object);
     void updateTreeWidgetItem(QObject* object, QTreeWidgetItem *parent);
+    void updateProperty(QTreeWidgetItem* it, QVariant value);
+    void clearChildren(QTreeWidgetItem* it);
 };
 
 #endif // COFFEEINSPECTOR_H

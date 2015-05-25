@@ -67,17 +67,16 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
 
         test = new CoffeeParticleSystem(this,world->getCamera());
         test->setObjectName("particle-system");
-        test->setupSystem();
         test->setProperties(glm::vec3(-10.0f, 17.5f, 0.0f), // Where the particles are generated
-                            glm::vec3(-5, 0, -5), // Minimal velocity
-                            glm::vec3(5, 20, 5), // Maximal velocity
+                            glm::vec3(-5, 5, -5), // Minimal velocity
+                            glm::vec3(5, 5, 5), // Maximal velocity
                             glm::vec3(0, -5, 0), // Gravity force applied to particles
                             glm::vec3(0.0f, 0.5f, 1.0f), // Color (light blue)
                             1.5f, // Minimum lifetime in seconds
                             3.0f, // Maximum lifetime in seconds
                             0.75f, // Rendered size
-                            0.02f, // Spawn every 0.05 seconds
-                            30); // And spawn 30 particles
+                            0.01f, // Spawn every 0.05 seconds
+                            10);
 
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
@@ -180,13 +179,13 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             renderer->requestWindowClose();
         else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
-            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*2.f);
+            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*6.f);
         else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress)
-            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-2.f);
+            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-6.f);
         else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress)
-            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*2.f);
+            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*6.f);
         else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress)
-            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-2.f);
+            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-6.f);
         else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyRelease)
             controller->addSpeedForward(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyRelease)
