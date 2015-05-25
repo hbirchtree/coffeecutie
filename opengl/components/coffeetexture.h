@@ -7,6 +7,8 @@
 class CoffeeTexture : public QObject, public CoffeeGameAsset
 {
     Q_PROPERTY(QString textureFile READ textureFile)
+    Q_PROPERTY(int textureHandle READ getHandle)
+    Q_PROPERTY(bool validTexture READ isValidTexture)
 
     Q_OBJECT
 public:
@@ -20,6 +22,7 @@ public:
     CoffeeTexture(QObject *parent,QByteArray* img);
     ~CoffeeTexture();
 
+    bool isValidTexture();
     void loadTexture();
     void unloadTexture();
 
@@ -41,7 +44,7 @@ private:
     };
     bool validTexture = false;
     QImage texture;
-    GLint textureHandle = -1;
+    GLuint textureHandle = 0;
     QString m_textureFile;
 };
 

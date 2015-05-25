@@ -33,17 +33,17 @@ public:
     QString getStringPosition() const{
         return QStringFunctions::toString(v_position->getValue());
     }
-    glm::quat getRotation() const{
-        return v_rotation->getValue();
-    }
     QString getStringRotation() const{
         return QStringFunctions::toString(v_rotation->getValue());
     }
-    glm::vec3 getScale() const{
-        return v_scale->getValue();
-    }
     QString getStringScale() const{
         return QStringFunctions::toString(v_scale->getValue());
+    }
+    glm::quat getRotation() const{
+        return v_rotation->getValue();
+    }
+    glm::vec3 getScale() const{
+        return v_scale->getValue();
     }
 
     GLint getVaoHandle(){

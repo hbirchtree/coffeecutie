@@ -16,6 +16,11 @@ CoffeeTexture::~CoffeeTexture()
 {
 }
 
+bool CoffeeTexture::isValidTexture()
+{
+    return validTexture;
+}
+
 void CoffeeTexture::loadTexture()
 {
     addActiveUser();
@@ -38,9 +43,7 @@ void CoffeeTexture::unloadTexture()
         qDebug() << "resource in use elsewhere; keeping it loaded";
         return;
     }
-    GLuint txt[1];
-    txt[0] = textureHandle;
-    glDeleteTextures(1,txt);
+    glDeleteTextures(1,&textureHandle);
     textureHandle = 0;
     validTexture = false;
     removeActiveUser();

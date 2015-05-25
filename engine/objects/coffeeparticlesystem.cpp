@@ -119,7 +119,7 @@ void CoffeeParticleSystem::render()
         q2 = glm::normalize(q2);
 
     glUseProgram(shader->getProgramId());
-//    glDepthMask(GL_FALSE);
+    glDepthMask(GL_FALSE);
 
     shader->setUniform("matrices.mView",camera->getMatrix());
     shader->setUniform("vQuad1",q1);
@@ -135,7 +135,7 @@ void CoffeeParticleSystem::render()
     glDrawArrays(GL_POINTS,0,parts_curr_count);
 
     glBindTexture(GL_TEXTURE_2D,0);
-//    glDepthMask(GL_TRUE);
+    glDepthMask(GL_TRUE);
     glUseProgram(0);
 }
 

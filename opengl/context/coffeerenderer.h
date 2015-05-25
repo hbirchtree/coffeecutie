@@ -13,6 +13,13 @@
 
 class CoffeeRenderer : public QObject
 {
+    Q_PROPERTY(bool mouseGrabbing READ isMouseGrabbed)
+    Q_PROPERTY(int openGLSamples READ getSamples)
+    Q_PROPERTY(double loopTime READ getLoopTime)
+    Q_PROPERTY(QSize windowSize READ getWindowDimensions)
+    Q_PROPERTY(QSize framebufferSize READ getCurrentFramebufferSize)
+    Q_PROPERTY(QString windowTitle READ getWindowTitle)
+
     Q_OBJECT
 public:
     CoffeeRenderer(QObject *parent);
@@ -26,6 +33,7 @@ public:
 
     int getStartDisplay() const;
     double getLoopTime() const;
+    QString getWindowTitle() const;
     QSize getWindowDimensions() const;
     QSize getCurrentFramebufferSize() const;
     QSize *getFramebufferSizePt();

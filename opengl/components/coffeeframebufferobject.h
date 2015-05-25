@@ -5,12 +5,20 @@
 #include <QList>
 class CoffeeFrameBufferObject : public QObject
 {
+    Q_PROPERTY(QSize renderSize READ getRenderSize)
+    Q_PROPERTY(QSize windowSize READ getWindowSize)
+    Q_PROPERTY(uint sampling READ getSampling)
+
     Q_OBJECT
 public:
     CoffeeFrameBufferObject(QObject *parent);
 
     void cleanup();
     void createFramebuffer(QSize windowSize, uint sampling);
+
+    QSize getRenderSize() const;
+    QSize getWindowSize() const;
+    uint getSampling() const;
 
     void bindFramebuffer();
     void unbindFramebuffer();

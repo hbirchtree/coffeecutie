@@ -171,6 +171,11 @@ double CoffeeRenderer::getLoopTime() const
     return glfwGetTime();
 }
 
+QString CoffeeRenderer::getWindowTitle() const
+{
+    return windowTitle;
+}
+
 void CoffeeRenderer::setStartDisplay(uint value)
 {
     startDisplay = value;

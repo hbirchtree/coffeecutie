@@ -23,6 +23,21 @@ void CoffeeFrameBufferObject::createFramebuffer(QSize windowSize, uint sampling)
     resizeFramebuffer();
 }
 
+QSize CoffeeFrameBufferObject::getRenderSize() const
+{
+    return renderSize;
+}
+
+QSize CoffeeFrameBufferObject::getWindowSize() const
+{
+    return windowSize;
+}
+
+uint CoffeeFrameBufferObject::getSampling() const
+{
+    return sampling;
+}
+
 void CoffeeFrameBufferObject::bindFramebuffer()
 {
     glViewport(0,0,renderSize.width(),renderSize.height());

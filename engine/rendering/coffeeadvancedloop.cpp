@@ -66,6 +66,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         glViewport(0,0,s.width(),s.height());
 
         test = new CoffeeParticleSystem(this,world->getCamera());
+        test->setObjectName("particle-system");
         test->setupSystem();
         test->setProperties(glm::vec3(-10.0f, 17.5f, 0.0f), // Where the particles are generated
                             glm::vec3(-5, 0, -5), // Minimal velocity
@@ -111,7 +112,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         for(CoffeeObject* o : world->getObjects()){
             o->render();
         }
-//        test->render();
+        test->render();
         renderFbo->unbindFramebuffer();
         screenSurface->render();
     };

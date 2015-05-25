@@ -16,7 +16,7 @@ glm::vec3 CoffeeSimpleObject::getPosition() const
 
 glm::quat CoffeeSimpleObject::getRotation() const
 {
-    return glm::quat(1,0,0,0);
+    return rotation;
 }
 
 glm::vec3 CoffeeSimpleObject::getScale() const
