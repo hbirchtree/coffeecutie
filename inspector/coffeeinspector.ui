@@ -61,13 +61,6 @@
         </column>
        </widget>
       </item>
-      <item>
-       <widget class="QPushButton" name="updateBtn">
-        <property name="text">
-         <string>Update information</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
