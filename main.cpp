@@ -17,10 +17,12 @@ int main(int argc, char *argv[])
 
     int mode = 0;
 
+    QObject* root = new QObject();
+
     CoffeeLogger logger;
     Q_UNUSED(logger);
 
-    CoffeeRenderer *renderer = new CoffeeRenderer(0,1280,720,Qt::WindowNoState,"Unlimited Frame Works");
+    CoffeeRenderer *renderer = new CoffeeRenderer(root,1280,720,Qt::WindowNoState,"Unlimited Frame Works");
     renderer->setObjectName("root.renderer");
 
     int initStat = renderer->init();
@@ -50,6 +52,6 @@ int main(int argc, char *argv[])
     default:
         qDebug("init() with abnormal code %i",initStat);
     }
-    delete renderer;
+    delete root;
     return initStat;
 }

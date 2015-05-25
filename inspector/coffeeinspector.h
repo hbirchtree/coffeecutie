@@ -7,6 +7,7 @@
 #include <QTreeWidgetItem>
 #include <QMetaProperty>
 #include <QList>
+#include <QTimer>
 #include <QPointer>
 #include <QHash>
 
@@ -24,11 +25,12 @@ public:
 
 private slots:
     void updateInformation();
-    void on_updateBtn_clicked();
 
     void on_rendererBtn_clicked();
 
 private:
+    QTimer *refreshTimer;
+
     QHash<QObject*,QTreeWidgetItem*> objectsMapping;
     QHash<QObject*,QTreeWidgetItem*> childTrees; //Yup. So far the weirdest name I've come up with. I'm keeping it.
 //    QHash<QMetaProperty,QTreeWidgetItem*> propertyMapping; //One property can only exist in one place. This seems fair enough.

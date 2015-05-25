@@ -13,7 +13,10 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QObject *engineRoot, CoffeeRen
     labels << "Object name" << "Type/Data";
     ui->inspectorWidget->setHeaderLabels(labels);
 
-    updateInformation();
+    refreshTimer = new QTimer(this);
+    connect(refreshTimer,SIGNAL(timeout()),SLOT(updateInformation()));
+    refreshTimer->setInterval(500);
+    refreshTimer->start();
 }
 
 CoffeeInspector::~CoffeeInspector()
@@ -79,11 +82,6 @@ void CoffeeInspector::updateTreeWidgetItem(QObject *object,QTreeWidgetItem* pare
     updateProperties(object);
 }
 
-void CoffeeInspector::on_updateBtn_clicked()
-{
-    updateInformation();
-}
-
 void CoffeeInspector::on_rendererBtn_clicked()
 {
     if(!rendererInspector){
@@ -129,10 +127,11 @@ void CoffeeInspector::updateProperty(QTreeWidgetItem *it, QVariant value)
     }else if(value.type()==QVariant::List){
         it->setText(1,"List-type");
         clearChildren(it);
-        for(QVariant v : value.toList()){
+        for(int i=0;i<value.toList().size();i++){
+            QVariant v = value.toList().at(i);
             QTreeWidgetItem* entry = new QTreeWidgetItem();
-            entry->setText(0,QString::number(value.toList().indexOf(v)));
-            updateProperty(entry,value);
+            entry->setText(0,QString::number(i));
+            updateProperty(entry,v);
             it->addChild(entry);
         }
     }else if(value.type()==QVariant::Map){
@@ -168,8 +167,11 @@ void CoffeeInspector::updateProperty(QTreeWidgetItem *it, QVariant value)
 
 void CoffeeInspector::clearChildren(QTreeWidgetItem *it)
 {
-    for(int i=0;i<it->childCount();i++){
-        QTreeWidgetItem* c = it->child(i);
+    //The size changes, we cannot remove items repeatedly.
+    QList<QTreeWidgetItem*> children;
+    for(int i=0;i<it->childCount();i++)
+        children.append(it->child(i));
+    for(QTreeWidgetItem* c : children){
         it->removeChild(c);
         delete c;
     }
