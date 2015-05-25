@@ -45,3 +45,8 @@ void CoffeeRendererInspector::plotGraph(float frametime)
     scene->addPlot(frametime*1000.0);
     scene->invalidate(QRect(),QGraphicsScene::ForegroundLayer);
 }
+
+void CoffeeRendererInspector::on_plotResizer_valueChanged(int value)
+{
+    scene->setPlotSize(value);
+}

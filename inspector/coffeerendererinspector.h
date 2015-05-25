@@ -21,6 +21,7 @@ public:
 
 private slots:
     void plotGraph(float frametime);
+    void on_plotResizer_valueChanged(int value);
 
 private:
 

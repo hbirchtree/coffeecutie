@@ -112,11 +112,11 @@ void CoffeeParticleSystem::render()
     glm::vec3 q1(1,1,0);
     glm::vec3 q2(-1,1,0);
     q1 = glm::cross(glm::normalize(pos->getValue()-camera->getCameraPos()),camera->getCameraUp());
-//    if(q1.length()!=0)
-//        q1 = glm::normalize(q1);
+    if(q1.length()!=0)
+        q1 = glm::normalize(q1);
     q2 = glm::cross(glm::normalize(pos->getValue()-camera->getCameraPos()),q1);
-//    if(q2.length()!=0)
-//        q2 = glm::normalize(q2);
+    if(q2.length()!=0)
+        q2 = glm::normalize(q2);
 
     glUseProgram(shader->getProgramId());
 //    glDepthMask(GL_FALSE);
@@ -124,13 +124,17 @@ void CoffeeParticleSystem::render()
     shader->setUniform("matrices.mView",camera->getMatrix());
     shader->setUniform("vQuad1",q1);
     shader->setUniform("vQuad2",q2);
-    shader->setUniform("gSampler",texture->getHandle());
+    shader->setUniform("gSampler",0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,texture->getHandle());
 
     glBindVertexArray(partsArrays[curReadBuffer]);
     glDisableVertexAttribArray(1);
 
     glDrawArrays(GL_POINTS,0,parts_curr_count);
 
+    glBindTexture(GL_TEXTURE_2D,0);
 //    glDepthMask(GL_TRUE);
     glUseProgram(0);
 }

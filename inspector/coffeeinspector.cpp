@@ -23,7 +23,6 @@ CoffeeInspector::~CoffeeInspector()
 
 void CoffeeInspector::updateInformation()
 {
-    ui->inspectorWidget->clear();
     if(!engineRoot){
         QTreeWidgetItem* it = new QTreeWidgetItem();
         it->setText(0,"Engine root was deleted!");
@@ -32,56 +31,52 @@ void CoffeeInspector::updateInformation()
         return;
     }
 
-    ui->inspectorWidget->addTopLevelItem(generateItem(engineRoot));
-}
-
-void CoffeeInspector::populateTreeWidgetItem(QObjectList source, QTreeWidgetItem* target){
-    for(QObject* o : source){
-        if(o->metaObject()->propertyCount()<=1&&o->children().size()==0)
-            continue;
-        target->addChild(generateItem(o));
+    if(objectsMapping.contains(engineRoot)){
+        updateTreeWidgetItem(engineRoot,nullptr);
+    }else{
+        updateTreeWidgetItem(engineRoot,nullptr);
+        ui->inspectorWidget->addTopLevelItem(objectsMapping.value(engineRoot));
     }
 }
 
-QTreeWidgetItem *CoffeeInspector::generateItem(QObject *o)
+void CoffeeInspector::updateTreeWidgetItem(QObject *object,QTreeWidgetItem* parent)
 {
-    QTreeWidgetItem* it = new QTreeWidgetItem();
-    it->setText(0,o->objectName());
-    it->setText(1,o->metaObject()->className());
-    if(o->children().size()>0){
-        QTreeWidgetItem* childItem = new QTreeWidgetItem();
-        childItem->setText(0,"[Children]");
-        it->addChild(childItem);
-        populateTreeWidgetItem(o->children(),childItem);
+    QTreeWidgetItem* root;
+    if(objectsMapping.contains(object))
+        root = objectsMapping.value(object);
+    else if(object->children().size()>0||object->metaObject()->propertyCount()>1){
+        root = new QTreeWidgetItem();
+        root->setText(0,object->objectName());
+        root->setText(1,object->metaObject()->className());
+        objectsMapping.insert(object,root);
+        if(parent)
+            parent->addChild(root);
+    }else
+        return;
+    QTreeWidgetItem* childTree = nullptr;
+    if(childTrees.contains(object)){
+        childTree = childTrees.value(object);
     }
-    QList<QTreeWidgetItem*> children = getProperties(o);
-    if(children.size()>0)
-        it->addChildren(children);
-    return it;
-}
-
-QList<QTreeWidgetItem*> CoffeeInspector::getProperties(QObject *object)
-{
-    QList<QTreeWidgetItem*> items;
-    for(int i=0;i<object->metaObject()->propertyCount();i++){
-        QTreeWidgetItem* prop = new QTreeWidgetItem();
-        prop->setText(0,object->metaObject()->property(i).name());
-        if(object->metaObject()->property(i).isReadable()&&
-                object->metaObject()->property(i).read(object).canConvert(QMetaType::QString))
-            prop->setText(1,object->metaObject()->property(i).read(object).toString());
-        else if(object->metaObject()->property(i).isReadable()&&object->metaObject()->property(i).type()==QVariant::List){
-            QVariantList vars = object->metaObject()->property(i).read(object).toList();
-            for(int i=0;i<vars.size();i++){
-                QTreeWidgetItem* it = new QTreeWidgetItem();
-                it->setText(0,QString::number(i));
-                it->setText(1,vars.at(i).toString());
-                prop->addChild(it);
-            }
+    if(childTree){
+        for(QObject* o : object->children()){
+            //check if the child tree contains the object and its item
+            //if it does, update it
+            //if it does not, create it
+            updateTreeWidgetItem(o,childTree); //all hail recursion!
+        }
+    }else if(object->children().size()>0){
+        //no child tree? create it
+        QTreeWidgetItem* target = new QTreeWidgetItem();
+        target->setText(0,"[Children]");
+        for(QObject* o : object->children())
+            updateTreeWidgetItem(o,target);
+        if(target->childCount()>0){
+            childTrees.insert(object,target);
+            root->addChild(target);
         }else
-            prop->setText(1,object->metaObject()->property(i).typeName());
-        items.append(prop);
+            delete target;
     }
-    return items;
+    updateProperties(object);
 }
 
 void CoffeeInspector::on_updateBtn_clicked()
@@ -95,4 +90,39 @@ void CoffeeInspector::on_rendererBtn_clicked()
         rendererInspector = new CoffeeRendererInspector(0,renderer);
     }
     rendererInspector->show();
+}
+
+void CoffeeInspector::updateProperties(QObject *object)
+{
+    QTreeWidgetItem* root = objectsMapping.value(object);
+
+    QHash<int,QTreeWidgetItem*> properties = propertyMapping.value(object);
+
+    for(int i=0;i<object->metaObject()->propertyCount();i++){
+        if(i==0) //we skip on the object name
+            continue;
+        QMetaProperty prop = object->metaObject()->property(i);
+        if(!prop.isReadable()) //unreadable? no go
+            continue;
+        QVariant value = prop.read(object);
+
+        if(properties.contains(i)){
+            QTreeWidgetItem* it = properties.value(i);
+
+            if(value.canConvert(QVariant::String)){
+                it->setText(1,value.toString());
+            }
+
+        }else{
+            QTreeWidgetItem* it = new QTreeWidgetItem();
+            it->setText(0,prop.name());
+
+            if(value.canConvert(QVariant::String)){
+                it->setText(1,value.toString());
+            }
+            root->addChild(it);
+            properties.insert(i,it);
+        }
+    }
+    propertyMapping.insert(object,properties);
 }

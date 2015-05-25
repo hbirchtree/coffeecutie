@@ -111,7 +111,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
         for(CoffeeObject* o : world->getObjects()){
             o->render();
         }
-        test->render();
+//        test->render();
         renderFbo->unbindFramebuffer();
         screenSurface->render();
     };

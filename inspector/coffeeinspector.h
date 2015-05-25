@@ -8,6 +8,7 @@
 #include <QMetaProperty>
 #include <QList>
 #include <QPointer>
+#include <QHash>
 
 namespace Ui {
 class CoffeeInspector;
@@ -28,15 +29,19 @@ private slots:
     void on_rendererBtn_clicked();
 
 private:
+    QHash<QObject*,QTreeWidgetItem*> objectsMapping;
+    QHash<QObject*,QTreeWidgetItem*> childTrees; //Yup. So far the weirdest name I've come up with. I'm keeping it.
+//    QHash<QMetaProperty,QTreeWidgetItem*> propertyMapping; //One property can only exist in one place. This seems fair enough.
+    QHash<QObject*,QHash<int,QTreeWidgetItem*>> propertyMapping; //We assume that properties stay the same, only change value
+
     QPointer<QObject> engineRoot;
 
     QPointer<CoffeeRenderer> renderer;
     QPointer<CoffeeRendererInspector> rendererInspector;
 
     Ui::CoffeeInspector *ui;
-    void populateTreeWidgetItem(QObjectList source, QTreeWidgetItem *target);
-    QTreeWidgetItem* generateItem(QObject* o);
-    QList<QTreeWidgetItem *> getProperties(QObject* object);
+    void updateProperties(QObject* object);
+    void updateTreeWidgetItem(QObject* object, QTreeWidgetItem *parent);
 };
 
 #endif // COFFEEINSPECTOR_H
