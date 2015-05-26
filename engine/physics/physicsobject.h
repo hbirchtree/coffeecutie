@@ -13,7 +13,7 @@ class PhysicsObject : public QObject
     Q_PROPERTY(float mass READ getMass)
     Q_PROPERTY(float friction READ getFriction)
     Q_PROPERTY(float restitution READ getRestitution)
-    Q_PROPERTY(PhysicsDescriptor::PhysicalShape shape READ getShape)
+    Q_PROPERTY(int shape READ getShape)
 
     Q_OBJECT
 public:

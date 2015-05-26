@@ -18,6 +18,10 @@ private:
     std::function<void()> _rendering_loop_init;
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;
+
+    // RenderLoop interface
+public:
+    QList<QObject *> getThreadObjects() const;
 };
 
 #endif // COFFEERENDERINGLOOP_H

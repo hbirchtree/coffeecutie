@@ -8,8 +8,8 @@
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 
-    Q_PROPERTY(GLint vaoHandle READ vaoHandle WRITE setVaoHandle NOTIFY vaoHandleChanged)
-    Q_PROPERTY(GLint vboHandle READ vboHandle WRITE setVboHandle NOTIFY vboHandleChanged)
+    Q_PROPERTY(int vaoHandle READ vaoHandle WRITE setVaoHandle NOTIFY vaoHandleChanged)
+    Q_PROPERTY(int vboHandle READ vboHandle WRITE setVboHandle NOTIFY vboHandleChanged)
     Q_PROPERTY(bool streamDraw READ streamDraw WRITE setStreamDraw NOTIFY streamDrawChanged)
     Q_PROPERTY(bool depthTest READ depthTest WRITE setDepthTest NOTIFY depthTestChanged)
     Q_PROPERTY(bool baked READ baked WRITE setBaked NOTIFY bakedChanged)

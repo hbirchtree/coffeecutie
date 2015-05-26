@@ -23,6 +23,10 @@ public:
     std::function<void ()> *getInit();
     std::function<void ()> *getLoop();
     std::function<void ()> *getCleanup();
+
+    // RenderLoop interface
+public:
+    QList<QObject *> getThreadObjects() const;
 };
 
 #endif // BOXTEST_H

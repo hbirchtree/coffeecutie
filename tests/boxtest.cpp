@@ -52,3 +52,8 @@ std::function<void ()> *BoxTest::getCleanup()
 {
     return &_rendering_loop_cleanup;
 }
+
+QList<QObject *> BoxTest::getThreadObjects() const
+{
+    return QList<QObject*>();
+}

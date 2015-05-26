@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     int mode = 0;
 
     QObject* root = new QObject();
+    root->setObjectName("[main,unlimited-root]");
 
     CoffeeLogger logger;
     Q_UNUSED(logger);
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
 
     switch(mode){
     case 0:
-        loop = new CoffeeAdvancedLoop(renderer,"ubw/ubw.json");
+        loop = new CoffeeAdvancedLoop(root,renderer,"ubw/ubw.json");
         loop->setObjectName("advanced-loop");
         break;
     case 1:
@@ -43,7 +44,7 @@ int main(int argc, char *argv[])
     renderer->setLoop(loop);
     renderer->setSamples(4);
 
-    CoffeeInspector inspector(0,renderer,renderer);
+    CoffeeInspector inspector(0,loop->getThreadObjects() << root,renderer);
     inspector.show();
     switch(initStat){
     case 0:

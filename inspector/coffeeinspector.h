@@ -20,7 +20,7 @@ class CoffeeInspector : public QWidget
     Q_OBJECT
 
 public:
-    CoffeeInspector(QWidget *parent = 0,QObject* engineRoot = nullptr,CoffeeRenderer* renderer = nullptr);
+    CoffeeInspector(QWidget *parent = 0,QList<QObject*> engineRoot = QList<QObject*>(),CoffeeRenderer* renderer = nullptr);
     ~CoffeeInspector();
 
 private slots:
@@ -36,7 +36,7 @@ private:
 //    QHash<QMetaProperty,QTreeWidgetItem*> propertyMapping; //One property can only exist in one place. This seems fair enough.
     QHash<QObject*,QHash<int,QTreeWidgetItem*>> propertyMapping; //We assume that properties stay the same, only change value
 
-    QPointer<QObject> engineRoot;
+    QList<QObject*> engineRoot;
 
     QPointer<CoffeeRenderer> renderer;
     QPointer<CoffeeRendererInspector> rendererInspector;

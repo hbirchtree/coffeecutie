@@ -12,11 +12,17 @@
 #include "LinearMath/btAlignedObjectArray.h"
 class BulletPhysics : public QObject
 {
+    Q_PROPERTY(QString gravity READ getGravity)
+    Q_PROPERTY(int objects READ getObjectsCount)
+
     Q_OBJECT
 public:
     BulletPhysics(QObject *parent, const glm::vec3 &gravity);
     ~BulletPhysics();
     QString systemName();
+
+    QString getGravity() const;
+    int getObjectsCount() const;
 
     static btQuaternion convert_glm(const glm::quat &v);
     static glm::quat convert_bt(const btQuaternion &v);

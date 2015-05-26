@@ -39,6 +39,16 @@ QString BulletPhysics::systemName()
     return "Bullet";
 }
 
+QString BulletPhysics::getGravity() const
+{
+    return QStringFunctions::toString(convert_bt(m_dynamicsWorld->getGravity()));
+}
+
+int BulletPhysics::getObjectsCount() const
+{
+    return m_dynamicsWorld->getCollisionObjectArray().size();
+}
+
 btQuaternion BulletPhysics::convert_glm(const glm::quat &v)
 {
     return btQuaternion(v.w,v.x,v.y,v.z);

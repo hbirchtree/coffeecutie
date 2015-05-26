@@ -25,3 +25,8 @@ std::function<void ()> *CoffeeRenderingLoop::getCleanup()
 {
     return &_rendering_loop_cleanup;
 }
+
+QList<QObject *> CoffeeRenderingLoop::getThreadObjects() const
+{
+    return QList<QObject*>();
+}

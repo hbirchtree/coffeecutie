@@ -33,6 +33,8 @@ public:
     void addObject(QPointer<CoffeeObject> object);
     QList<QPointer<CoffeeObject>> &getObjects();
 
+    QObject* getPhysicsRoot() const;
+
     glm::vec4 getClearColor() const;
     void setClearColor(const glm::vec4 &value);
 signals:
@@ -41,6 +43,7 @@ signals:
     void physicsClose();
 public slots:
     void tickObjects(float d);
+    void renderWorld();
 
 private:
     QThread* physicsThread;

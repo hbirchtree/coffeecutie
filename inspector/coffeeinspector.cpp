@@ -1,7 +1,7 @@
 #include "coffeeinspector.h"
 #include "ui_coffeeinspector.h"
 
-CoffeeInspector::CoffeeInspector(QWidget *parent, QObject *engineRoot, CoffeeRenderer *renderer) :
+CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, CoffeeRenderer *renderer) :
     QWidget(parent),
     ui(new Ui::CoffeeInspector)
 {
@@ -26,19 +26,26 @@ CoffeeInspector::~CoffeeInspector()
 
 void CoffeeInspector::updateInformation()
 {
-    if(!engineRoot){
+//    if(){
+//        QTreeWidgetItem* it = new QTreeWidgetItem();
+//        it->setText(0,"Engine root was deleted!");
+//        it->setText(1,"No data to display");
+//        ui->inspectorWidget->addTopLevelItem(it);
+//        return;
+//    }
+
+    for(QObject* root : engineRoot)
+        if(objectsMapping.contains(root)){
+            updateTreeWidgetItem(root,nullptr);
+        }else{
+            updateTreeWidgetItem(root,nullptr);
+            ui->inspectorWidget->addTopLevelItem(objectsMapping.value(root));
+        }
+    if(objectsMapping.size()==0){
         QTreeWidgetItem* it = new QTreeWidgetItem();
         it->setText(0,"Engine root was deleted!");
         it->setText(1,"No data to display");
         ui->inspectorWidget->addTopLevelItem(it);
-        return;
-    }
-
-    if(objectsMapping.contains(engineRoot)){
-        updateTreeWidgetItem(engineRoot,nullptr);
-    }else{
-        updateTreeWidgetItem(engineRoot,nullptr);
-        ui->inspectorWidget->addTopLevelItem(objectsMapping.value(engineRoot));
     }
 }
 

@@ -5,7 +5,9 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
     qDebug("Creating world object: thread=%p",this->thread());
     fogColor.g=1;
     physicsThread = new QThread(this);
+    physicsThread->setObjectName("physics-thread");
     physics = new BulletPhysics(0,glm::vec3(0,-9.81,0));
+    physics->setObjectName("[thread-1,bullet-physics]");
     connect(this,SIGNAL(tickPhysics(float)),
             physics.data(),SLOT(tickSimulation(float)),
             Qt::QueuedConnection);
@@ -37,11 +39,13 @@ QPointer<CoffeeCamera> CoffeeWorldOpts::getCamera()
 void CoffeeWorldOpts::setCamera(QPointer<CoffeeCamera> value)
 {
     camera = value;
+    value->setParent(this);
 }
 
 void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
 {
     lights.append(light);
+    light->setParent(this);
 }
 
 QList<QPointer<CoffeeOmniLight> > &CoffeeWorldOpts::getLights()
@@ -90,6 +94,11 @@ QList<QPointer<CoffeeObject> > &CoffeeWorldOpts::getObjects()
 {
     return objects;
 }
+
+QObject *CoffeeWorldOpts::getPhysicsRoot() const
+{
+    return physics;
+}
 glm::vec4 CoffeeWorldOpts::getClearColor() const
 {
     return clearColor;
@@ -103,4 +112,12 @@ void CoffeeWorldOpts::setClearColor(const glm::vec4 &value)
 void CoffeeWorldOpts::tickObjects(float d)
 {
     tickPhysics(d);
+}
+
+void CoffeeWorldOpts::renderWorld()
+{
+    //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
+    for(CoffeeObject* o : this->getObjects()){
+        o->render();
+    }
 }

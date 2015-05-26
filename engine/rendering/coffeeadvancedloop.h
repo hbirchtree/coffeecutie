@@ -33,9 +33,10 @@
 class CoffeeAdvancedLoop : public RenderLoop
 {
 public:
-    CoffeeAdvancedLoop(CoffeeRenderer* renderer, QString fileSource);
+    CoffeeAdvancedLoop(QObject* parent,CoffeeRenderer* renderer, QString fileSource);
     ~CoffeeAdvancedLoop();
 
+    QList<QObject *> getThreadObjects() const;
     std::function<void ()> *getInit();
     std::function<void ()> *getLoop();
     std::function<void ()> *getCleanup();
@@ -60,6 +61,7 @@ private:
     std::function<void()> _rendering_loop_cleanup;
 
     void setupRenderer(CoffeeObject *object, CoffeeRenderingMethod *basicMethod);
+
 };
 
 #endif // COFFEEADVANCEDLOOP_H

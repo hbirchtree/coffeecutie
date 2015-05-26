@@ -1,12 +1,12 @@
 #include "coffeeadvancedloop.h"
 
-CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSource) : RenderLoop(renderer)
+CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
 {
     evloop = new QEventLoop(this);
     connectSignals(renderer);
 
     qDebug("Creating default rendering method");
-    defaultRenderingMethod = new CoffeeRenderingMethod(renderer);
+    defaultRenderingMethod = new CoffeeRenderingMethod(this);
     //Here we use a template for all uniform variables as well as attributes. All objects need these.
     defaultRenderingMethod->addShaderUniform("camera",new ShaderVariant([=](){
         return world->getCamera()->getMatrix();
@@ -106,12 +106,16 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
     };
     _rendering_loop = [=](){
         js->update();
+        //bind the framebuffer which we render to
         renderFbo->bindFramebuffer();
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-        for(CoffeeObject* o : world->getObjects()){
-            o->render();
-        }
+        //render the current world
+        world->renderWorld();
+
+        //testing area
         test->render();
+
+        //render for the user
         renderFbo->unbindFramebuffer();
         screenSurface->render();
     };
@@ -121,7 +125,14 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(CoffeeRenderer* renderer,QString fileSour
 }
 
 CoffeeAdvancedLoop::~CoffeeAdvancedLoop()
+{for(CoffeeObject* o : world->getObjects()){
+        o->render();
+    }
+}
+
+QList<QObject *> CoffeeAdvancedLoop::getThreadObjects() const
 {
+    return QList<QObject*>() << world->getPhysicsRoot();
 }
 
 std::function<void ()> *CoffeeAdvancedLoop::getInit()
@@ -149,7 +160,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         *world->getCamera()->getAspect()=(float)ev.size().width()/(float)ev.size().height();
     });
-    timers = new CoffeeDataContainer<QString,double>(renderer);
+    timers = new CoffeeDataContainer<QString,double>(this);
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
         if(glfwGetTime()>=timers->getValue("fps")){
             qDebug("FPS: %.0f",1.f/frametime);
@@ -233,7 +244,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 
 void CoffeeAdvancedLoop::setupRenderer(CoffeeObject *object, CoffeeRenderingMethod* basicMethod)
 {
-    object->setShader(new ShaderContainer(world->getRenderer()));
+    object->setShader(new ShaderContainer(object));
     object->getShader()->setObjectName(object->objectName()+".shader");
     object->getShader()->buildProgram(object->getVertShader(),object->getFragShader());
 
