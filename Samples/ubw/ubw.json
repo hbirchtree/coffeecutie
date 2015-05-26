@@ -1,7 +1,8 @@
 {
 	"models":{
 		"quad": "models/quad.obj",
-		"gear": "models/gear.obj"
+		"gear": "models/gear.obj",
+		"pusheen": "models/pusheenbox.obj"
 	},
 	"world.1":{
 		"lights":[
@@ -56,6 +57,14 @@
 					"restitution":1,
 					"inertia": [0,0,1]
 				}
+			},
+			{
+				"id": "pusheen",
+				"shader.vertex": "shaders/vsh.txt",
+				"shader.fragment": "shaders/fsh.txt",
+				"model.position": [0,0,0],
+				"model.idsrc": "pusheen:",
+				"model.scale": [1,1,1]
 			}
 		]
 	}
