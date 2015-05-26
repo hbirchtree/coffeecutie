@@ -11,7 +11,7 @@
 #include <QResizeEvent>
 #include <QMoveEvent>
 
-class CoffeeRenderer : public QObject
+class CoffeeRenderer : public QObject, public QRunnable
 {
     Q_PROPERTY(bool mouseGrabbing READ isMouseGrabbed)
     Q_PROPERTY(int openGLSamples READ getSamples)
@@ -22,6 +22,13 @@ class CoffeeRenderer : public QObject
 
     Q_OBJECT
 public:
+    enum RendererExitStatus {
+        Undefined,
+        NoLoopObject,
+        FailedToCreateWindow,
+        FailedToInitGLFW
+    };
+
     CoffeeRenderer(QObject *parent);
     CoffeeRenderer(QObject *parent, int w, int h);
     CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state);
@@ -30,6 +37,7 @@ public:
 
     int init();
     int loop();
+
 
     int getStartDisplay() const;
     double getLoopTime() const;
@@ -57,6 +65,8 @@ public slots:
     void updateMouseGrabbing(bool state);
     void setMousePos(int x,int y);
 
+    void run();
+
 private slots:
     GLFWwindow *setWindowedFullscreen(uint monitor);
     GLFWwindow *setFullscreen(uint monitor);
@@ -73,11 +83,12 @@ protected:
     int startDisplay = 0;
 
 private:
-
     //GLFW objects
     GLFWwindow* window;
 
 signals:
+    void rendererFailed(RendererExitStatus status);
+
     //Renderer events
     void windowTitleUpdated(QString title);
     void clearColorChanged(glm::vec4 color);

@@ -13,7 +13,8 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, Co
     labels << "Object name" << "Type/Data";
     ui->inspectorWidget->setHeaderLabels(labels);
 
-    refreshTimer = new QTimer(this);
+    rendererInspector = new CoffeeRendererInspector(0,renderer);
+    refreshTimer = new QTimer();
     connect(refreshTimer,SIGNAL(timeout()),SLOT(updateInformation()));
     refreshTimer->setInterval(500);
     refreshTimer->start();
@@ -21,19 +22,12 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, Co
 
 CoffeeInspector::~CoffeeInspector()
 {
+    delete refreshTimer;
     delete ui;
 }
 
 void CoffeeInspector::updateInformation()
 {
-//    if(){
-//        QTreeWidgetItem* it = new QTreeWidgetItem();
-//        it->setText(0,"Engine root was deleted!");
-//        it->setText(1,"No data to display");
-//        ui->inspectorWidget->addTopLevelItem(it);
-//        return;
-//    }
-
     for(QObject* root : engineRoot)
         if(objectsMapping.contains(root)){
             updateTreeWidgetItem(root,nullptr);
@@ -91,9 +85,6 @@ void CoffeeInspector::updateTreeWidgetItem(QObject *object,QTreeWidgetItem* pare
 
 void CoffeeInspector::on_rendererBtn_clicked()
 {
-    if(!rendererInspector){
-        rendererInspector = new CoffeeRendererInspector(0,renderer);
-    }
     rendererInspector->show();
 }
 

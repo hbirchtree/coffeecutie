@@ -445,7 +445,7 @@ int CoffeeRenderer::init(){
  */
 int CoffeeRenderer::loop(){
     if(!loopObject){
-        qDebug("No loop object defined!");
+        qFatal("No loop object defined!");
         return 1;
     }
     qDebug("Initializing loop");
@@ -473,4 +473,11 @@ int CoffeeRenderer::loop(){
 
     qDebug("Estimated uptime: %.1f seconds",glfwGetTime());
     return 0;
+}
+
+void CoffeeRenderer::run()
+{
+    qDebug() << "Hello!";
+    init();
+    loop();
 }

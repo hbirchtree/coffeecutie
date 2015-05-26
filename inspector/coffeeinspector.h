@@ -31,6 +31,7 @@ private slots:
 private:
     QTimer *refreshTimer;
 
+    QTreeWidgetItem* threadInfoItem = nullptr;
     QHash<QObject*,QTreeWidgetItem*> objectsMapping;
     QHash<QObject*,QTreeWidgetItem*> childTrees; //Yup. So far the weirdest name I've come up with. I'm keeping it.
 //    QHash<QMetaProperty,QTreeWidgetItem*> propertyMapping; //One property can only exist in one place. This seems fair enough.
@@ -46,6 +47,7 @@ private:
     void updateTreeWidgetItem(QObject* object, QTreeWidgetItem *parent);
     void updateProperty(QTreeWidgetItem* it, QVariant value);
     void clearChildren(QTreeWidgetItem* it);
+
 };
 
 #endif // COFFEEINSPECTOR_H

@@ -3,12 +3,14 @@
 #include "general/common.h"
 #include "coffeecamera.h"
 #include "coffeeomnilight.h"
+#include <QtConcurrent/QtConcurrent>
 #include "opengl/context/coffeerenderer.h"
 #include "opengl/components/coffeeobject.h"
 #include "engine/physics/bulletphysics.h"
 
 class CoffeeWorldOpts : public QObject
 {
+    Q_PROPERTY(bool wireframeMode READ wireframeMode WRITE setWireframeMode)
     //An OpenGL-level representation of the world or scene, not meant for modification. That will be done elsewhere.
     Q_OBJECT
 public:
@@ -37,15 +39,19 @@ public:
 
     glm::vec4 getClearColor() const;
     void setClearColor(const glm::vec4 &value);
+    bool wireframeMode() const;
+
 signals:
     void tickPhysics(float d);
     void physicsObjectAdded(PhysicsObject* object);
-    void physicsClose();
 public slots:
     void tickObjects(float d);
     void renderWorld();
 
+    void setWireframeMode(bool wireframeMode);
+
 private:
+
     QThread* physicsThread;
     QPointer<BulletPhysics> physics;
 
@@ -58,6 +64,7 @@ private:
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;
     QPointer<CoffeeRenderer> renderer;
+    bool m_wireframeMode;
 };
 
 #endif // COFFEEWORLDOPTS_H

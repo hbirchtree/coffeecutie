@@ -24,7 +24,6 @@ private slots:
     void on_plotResizer_valueChanged(int value);
 
 private:
-
     QColor clearColor;
     qint64 measureTime = 0;
     QPointF last;

@@ -167,14 +167,8 @@ void BulletPhysics::run()
 
     m_dynamicsWorld->setInternalTickCallback(internalTickCallback);
     m_dynamicsWorld->setWorldUserInfo(this);
-    QEventLoop e;
-    connect(this,SIGNAL(stopping()),&e,SLOT(quit()));
-    e.exec();
-}
-
-void BulletPhysics::stopThread()
-{
-    emit stopping();
+    evloop = new QEventLoop();
+    evloop->exec();
 }
 
 void BulletPhysics::updateObject(PhysicsObject *object, GenericPhysicsInterface::PhysicsProperty prop)

@@ -9,6 +9,9 @@
 #include <QHash>
 #include <QListIterator>
 #include <QDateTime>
+#include <QThreadPool>
+#include <QEventLoop>
+#include <QRunnable>
 
 #include <iostream>
 

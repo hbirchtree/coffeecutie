@@ -1,7 +1,8 @@
 #ifndef BULLETPHYSICS_H
 #define BULLETPHYSICS_H
 
-#include <QEventLoop>
+#include <QMutex>
+#include <QTimer>
 #include "general/common.h"
 #include "engine/physics/genericphysicsinterface.h"
 #include "general/qstringfunctions.h"
@@ -43,9 +44,10 @@ public slots:
     void tickSimulation(float d);
 
     void run();
-    void stopThread();
 
 private:
+    QEventLoop *evloop;
+
     glm::vec3 gravity;
 
     btDynamicsWorld* m_dynamicsWorld;

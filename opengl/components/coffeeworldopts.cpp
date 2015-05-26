@@ -3,26 +3,21 @@
 CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
 {
     qDebug("Creating world object: thread=%p",this->thread());
-    fogColor.g=1;
+    physics = new BulletPhysics(0,glm::vec3(0,-9.81,0));
+    //We reserve one such that it won't allocate too many threads in the future.
+    QThreadPool::globalInstance()->reserveThread();
     physicsThread = new QThread(this);
     physicsThread->setObjectName("physics-thread");
-    physics = new BulletPhysics(0,glm::vec3(0,-9.81,0));
     physics->setObjectName("[thread-1,bullet-physics]");
+    physics->moveToThread(physicsThread);
     connect(this,SIGNAL(tickPhysics(float)),
             physics.data(),SLOT(tickSimulation(float)),
             Qt::QueuedConnection);
     connect(this,SIGNAL(physicsObjectAdded(PhysicsObject*)),
             physics.data(),SLOT(addObject(PhysicsObject*)),
             Qt::QueuedConnection);
-    connect(this,SIGNAL(physicsClose()),
-            physics.data(),SLOT(stopThread()),
-            Qt::QueuedConnection);
-    physics->moveToThread(physicsThread);
     connect(physicsThread,SIGNAL(started()),
-            physics.data(),SLOT(run()),
-            Qt::QueuedConnection);
-    connect(physicsThread,SIGNAL(finished()),
-            physics.data(),SLOT(deleteLater()));
+            physics.data(),SLOT(run()));
     physicsThread->start();
 }
 
@@ -30,7 +25,9 @@ CoffeeWorldOpts::~CoffeeWorldOpts()
 {
     physicsThread->exit(0);
     physicsThread->wait();
+    QThreadPool::globalInstance()->releaseThread();
 }
+
 QPointer<CoffeeCamera> CoffeeWorldOpts::getCamera()
 {
     return camera;
@@ -109,6 +106,11 @@ void CoffeeWorldOpts::setClearColor(const glm::vec4 &value)
     clearColor = value;
 }
 
+bool CoffeeWorldOpts::wireframeMode() const
+{
+    return m_wireframeMode;
+}
+
 void CoffeeWorldOpts::tickObjects(float d)
 {
     tickPhysics(d);
@@ -116,8 +118,18 @@ void CoffeeWorldOpts::tickObjects(float d)
 
 void CoffeeWorldOpts::renderWorld()
 {
+    if(wireframeMode())
+        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
     for(CoffeeObject* o : this->getObjects()){
         o->render();
     }
+    //We need to reset it so that the FBO is rendered
+    if(wireframeMode())
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+}
+
+void CoffeeWorldOpts::setWireframeMode(bool wireframeMode)
+{
+    m_wireframeMode = wireframeMode;
 }
