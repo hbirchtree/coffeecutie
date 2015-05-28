@@ -62,7 +62,7 @@ void main() {
     vec3 linearColor = ambient + attenuation*(diffuse + specular);
     
     //gamme correction
-    vec3 gamma = vec3(1.0/2);
+    vec3 gamma = vec3(1.0/1.3);
     linearColor = pow(linearColor, gamma);
     
     //fog

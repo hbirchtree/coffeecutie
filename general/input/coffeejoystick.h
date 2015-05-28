@@ -48,8 +48,8 @@ private:
     float j_deadzone = 0.22;
     int joystick;
     QString j_name;
-    QList<float> axes;
-    QList<unsigned char> buttons;
+    QVector<float> axes;
+    QVector<unsigned char> buttons;
 };
 
 #endif // COFFEEJOYSTICK_H

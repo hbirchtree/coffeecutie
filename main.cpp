@@ -8,7 +8,7 @@
 #include "tests/boxtest.h"
 #include "engine/physics/bulletphysics.h"
 
-//#define COFFEE_ADVANCED_RUN
+#define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
 //#define RUNNABLE_RENDERER
 

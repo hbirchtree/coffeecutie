@@ -7,7 +7,7 @@
 	"world.1":{
 		"lights":[
 			{
-				"position": [1,7,1],
+				"position": [10,40,10],
 				"color": "#FFFFFF",
 				"attenuation": 0.0005,
 				"ambient-coefficient":0.007
@@ -44,27 +44,19 @@
 			{
 				"id": "gear",
 				"shader.vertex": "shaders/vsh.txt",
-				"shader.fragment": "shaders/fsh_nolight.txt",
+				"shader.fragment": "shaders/fsh.txt",
 				"model.position": [10,32,0],
 				"model.idsrc": "gear:",
 				"model.scale": [1,1,1],
 				"physics":{
 					"position": [10,1,0],
 					"scale": [1,1,1],
-					"shape": "box",
-					"mass": 10000000,
-					"friction": 1,
+					"shape": "sphere",
+					"mass": 1,
+					"friction": 0,
 					"restitution":1,
 					"inertia": [0,0,1]
 				}
-			},
-			{
-				"id": "pusheen",
-				"shader.vertex": "shaders/vsh.txt",
-				"shader.fragment": "shaders/fsh.txt",
-				"model.position": [0,0,0],
-				"model.idsrc": "pusheen:",
-				"model.scale": [1,1,1]
 			}
 		]
 	}

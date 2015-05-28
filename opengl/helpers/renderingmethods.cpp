@@ -189,8 +189,8 @@ void RenderingMethods::baking_advanced(RenderableObject* obj)
 glm::mat4 RenderingMethods::translateObjectMatrix(RenderableObject const *obj)
 {
     glm::mat4 modelMatrix;
-    modelMatrix = glm::translate(glm::mat4(),obj->getPosition());
-    modelMatrix *= glm::mat4_cast(glm::normalize(obj->getRotation()));
-    modelMatrix = glm::scale(modelMatrix,obj->getScale());
+    modelMatrix *= glm::translate(glm::mat4(),obj->getPosition());
+    modelMatrix *= glm::mat4(glm::normalize(obj->getRotation()));
+    modelMatrix *= glm::scale(glm::mat4(),obj->getScale());
     return modelMatrix;
 }

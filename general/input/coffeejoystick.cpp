@@ -9,10 +9,8 @@ CoffeeJoystick::CoffeeJoystick(QObject *parent, int joystick) : QObject(parent)
     setObjectName("controller::"+getJoystickName());
     glfwGetJoystickAxes(joystick,&axes);
     glfwGetJoystickButtons(joystick,&buttons);
-    for(int i=0;i<axes;i++)
-        this->axes.append(0);
-    for(int i=0;i<buttons;i++)
-        this->buttons.append(0);
+    this->axes.resize(axes);
+    this->buttons.resize(buttons);
 }
 
 CoffeeJoystick::~CoffeeJoystick()
@@ -27,17 +25,17 @@ bool CoffeeJoystick::update()
 
     int count;
     const float* c_axes = glfwGetJoystickAxes(joystick,&count);
+    this->axes.resize(count); //Sadly, this is necessary.
     for(int i=0;i<count;i++){
         float value = c_axes[i];
         float oldval = axes.at(i);
         if(std::abs(value)<=j_deadzone)
             value = 0;
-//        if(std::abs(value-oldval)<j_sensitivity)
-//            continue;
         axes.replace(i,value);
         axisMoved(i,value,value-oldval);
     }
     const unsigned char* c_btns = glfwGetJoystickButtons(joystick,&count);
+    this->buttons.resize(count);
     for(int i=0;i<count;i++)
         if(c_btns[i]!=buttons.at(i)){
             buttons.replace(i,c_btns[i]);

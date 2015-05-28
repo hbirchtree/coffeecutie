@@ -64,7 +64,7 @@ private:
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;
     QPointer<CoffeeRenderer> renderer;
-    bool m_wireframeMode;
+    bool m_wireframeMode = false;
 };
 
 #endif // COFFEEWORLDOPTS_H
