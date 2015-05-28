@@ -51,7 +51,8 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
             mdl->model = new CoffeeMesh(this->parent());
             for(QStringList face : mdl->faces) //We will always assume that the object has all the vertices it needs
                 for(QString vert : face){
-                    QPointer<CoffeeVertex> vertex = new CoffeeVertex(this->parent()); //We use the reader's parent as our parent
+                    QPointer<CoffeeVertex> vertex = new CoffeeVertex(this->parent());
+                    //We use the reader's parent as our parent
                     QStringList pts = vert.split('/');
                     for(int i=0;i<3;i++)
                         switch(i){
@@ -59,6 +60,7 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             int vrt = pts.at(0).toInt()-1-vertex_c+mdl->vertices.size();
                             if(vrt<0)
                                 break;
+                            vertex->i_position = vrt;
                             vertex->position = mdl->vertices.at(vrt);
                             break;
                         }
@@ -68,6 +70,7 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             int vrt = pts.at(1).toInt()-1-texcrd_c+mdl->txcoords.size();
                             if(vrt<0)
                                 break;
+                            vertex->i_tex = vrt;
                             vertex->texCoord = mdl->txcoords.at(vrt);
                             break;
                         }
@@ -77,11 +80,14 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             int vrt = pts.at(2).toInt()-1-normal_c+mdl->vnormals.size();
                             if(vrt<0)
                                 break;
+                            vertex->i_normal = vrt;
                             vertex->normal = mdl->vnormals.at(vrt);
                             vertex->hasNormal = true;
                             break;
                         }
                         }
+                    for(QString f : pts)
+                        mdl->model->raw_faces.append(f.toInt());
                     mdl->model->addVertex(vertex);
                 }
             models.insert(mdl->mdlName,mdl);
@@ -89,12 +95,12 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
     }
     for(QPointer<ModelContainer> mdl : models.values()){
         mdl->model->raw_vertices = mdl->vertices;
+        mdl->model->raw_normals = mdl->vnormals;
         mdl->model->raw_texcoords = mdl->txcoords;
         if(!mdl->mtlName.isEmpty()&&materials.contains(mdl->mtlName)){
             mdl->material = materials.value(mdl->mtlName);
         }else
             mdl->material = new CoffeeMaterial(mdl->parent());
-        VAOHelper::genTangents(mdl->model);
     }
     return models;
 }

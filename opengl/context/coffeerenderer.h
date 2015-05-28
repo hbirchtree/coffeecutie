@@ -19,6 +19,7 @@ class CoffeeRenderer : public QObject, public QRunnable
     Q_PROPERTY(QSize windowSize READ getWindowDimensions)
     Q_PROPERTY(QSize framebufferSize READ getCurrentFramebufferSize)
     Q_PROPERTY(QString windowTitle READ getWindowTitle)
+    Q_PROPERTY(double frameTime READ getLatestFrameTime)
 
     Q_OBJECT
 public:
@@ -47,6 +48,7 @@ public:
     QSize *getFramebufferSizePt();
     int getMouseInputMode() const;
     bool isMouseGrabbed() const;
+    double getLatestFrameTime() const;
 
     int getSamples() const;
 
@@ -85,6 +87,8 @@ protected:
 private:
     //GLFW objects
     GLFWwindow* window;
+
+    double frametime;
 
 signals:
     void rendererFailed(RendererExitStatus status);

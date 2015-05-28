@@ -18,10 +18,10 @@ public:
         QString mtlName;
         QPointer<CoffeeMaterial> material;
 
-        QList<glm::vec3> vertices;
-        QList<glm::vec2> txcoords;
-        QList<glm::vec3> vnormals;
-        QList<QStringList> faces;
+        QVector<glm::vec3> vertices;
+        QVector<glm::vec2> txcoords;
+        QVector<glm::vec3> vnormals;
+        QVector<QStringList> faces;
     };
 };
 

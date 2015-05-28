@@ -29,6 +29,8 @@ int main(int argc, char *argv[])
                                                   "Unlimited Frame Works");
     renderer->setObjectName("root.renderer");
 
+    QVector<GLuint> test;
+    qDebug() << test.data();
 
 #ifdef COFFEE_ADVANCED_RUN
     loop = new CoffeeAdvancedLoop(root,renderer,"ubw/ubw.json");

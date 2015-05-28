@@ -55,8 +55,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Configuring objects for rendering");
         for(CoffeeObject* o : world->getObjects()){
             setupRenderer(o,defaultRenderingMethod);
-            if(o->getPhysicsObject())
-                o->getRotationObject()->bindValue(o->getPhysicsObject()->getPhysicalRotation());
+//            if(o->getPhysicsObject())
+//                o->getRotationObject()->bindValue(o->getPhysicsObject()->getPhysicalRotation());
             qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
         }
 
@@ -126,9 +126,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 }
 
 CoffeeAdvancedLoop::~CoffeeAdvancedLoop()
-{for(CoffeeObject* o : world->getObjects()){
-        o->render();
-    }
+{
 }
 
 QList<QObject *> CoffeeAdvancedLoop::getThreadObjects() const
@@ -245,6 +243,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 
 void CoffeeAdvancedLoop::setupRenderer(CoffeeObject *object, CoffeeRenderingMethod* basicMethod)
 {
+    /*
     object->setShader(new ShaderContainer(object));
     object->getShader()->setObjectName(object->objectName()+".shader");
     object->getShader()->buildProgram(object->getVertShader(),object->getFragShader());
@@ -283,4 +282,5 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeObject *object, CoffeeRenderingMeth
     object->getRenderer()->addShaderUniform("model",new ShaderVariant([=](){
         return RenderingMethods::translateObjectMatrix(object);
     }));
+    */
 }

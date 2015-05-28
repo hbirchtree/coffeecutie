@@ -58,7 +58,10 @@ SOURCES += main.cpp \
     inspector/coffeeinspector.cpp \
     engine/objects/coffeeparticlesystem.cpp \
     inspector/coffeerendererinspector.cpp \
-    inspector/graphplotter.cpp
+    inspector/graphplotter.cpp \
+    engine/objects/coffeeinstancedobject.cpp \
+    engine/objects/coffeeobject.cpp \
+    engine/objects/coffeestandardobject.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -84,7 +87,6 @@ HEADERS += \
     opengl/components/coffeecamera.h \
     opengl/components/coffeeframebufferobject.h \
     opengl/components/coffeematerial.h \
-    opengl/components/coffeeobject.h \
     opengl/components/coffeeomnilight.h \
     opengl/components/coffeetexture.h \
     opengl/components/coffeeworldopts.h \
@@ -97,7 +99,6 @@ HEADERS += \
     opengl/helpers/vaohelper.h \
     opengl/rendering/coffeerenderingloop.h \
     opengl/rendering/coffeevertex.h \
-    opengl/rendering/renderableobject.h \
     opengl/rendering/renderloop.h \
     tests/boxtest.h \
     tests/CubeScape.h \
@@ -112,7 +113,10 @@ HEADERS += \
     inspector/coffeeinspector.h \
     engine/objects/coffeeparticlesystem.h \
     inspector/coffeerendererinspector.h \
-    inspector/graphplotter.h
+    inspector/graphplotter.h \
+    engine/objects/coffeeinstancedobject.h \
+    engine/objects/coffeeobject.h \
+    engine/objects/coffeestandardobject.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

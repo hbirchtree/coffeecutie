@@ -2,12 +2,12 @@
 #define COFFEESIMPLEOBJECT_H
 
 #include "general/common.h"
-#include "opengl/rendering/renderableobject.h"
+#include "engine/objects/coffeeobject.h"
 #include "opengl/components/coffeematerial.h"
 #include "general/data/numberbuffer.h"
 #include "opengl/components/shadercontainer.h"
 #include "engine/rendering/coffeerenderingmethod.h"
-class CoffeeSimpleObject : public QObject,public RenderableObject
+class CoffeeSimpleObject : public QObject,public CoffeeObject
 {
     Q_PROPERTY(QString position READ getStringPosition)
     Q_PROPERTY(QString rotation READ getStringRotation)

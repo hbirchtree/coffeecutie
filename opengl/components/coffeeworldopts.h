@@ -5,7 +5,7 @@
 #include "coffeeomnilight.h"
 #include <QtConcurrent/QtConcurrent>
 #include "opengl/context/coffeerenderer.h"
-#include "opengl/components/coffeeobject.h"
+#include "engine/objects/coffeeobject.h"
 #include "engine/physics/bulletphysics.h"
 
 class CoffeeWorldOpts : public QObject

@@ -144,6 +144,11 @@ bool CoffeeRenderer::isMouseGrabbed() const
     return (mode == GLFW_CURSOR_DISABLED);
 }
 
+double CoffeeRenderer::getLatestFrameTime() const
+{
+    return frametime;
+}
+
 QSize CoffeeRenderer::getWindowDimensions() const
 {
     return windowDimensions;
@@ -454,19 +459,20 @@ int CoffeeRenderer::loop(){
     std::function<void()> *_loop = loopObject->getLoop();
     std::function<void()> *_cleanup = loopObject->getCleanup();
 
-    double framerate = glfwGetTime();
+    double frametime = 0.0;
 
     qDebug("Running initialization function");
     (*_init)();
     qDebug("Running loop function");
     while(!glfwWindowShouldClose(window)){
-        framerate = glfwGetTime();
+        frametime = glfwGetTime();
         glfwPollEvents();
 //        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         (*_loop)();
         glfwSwapBuffers(window);
         QCoreApplication::processEvents();
-        contextReportFrametime(glfwGetTime()-framerate);
+        this->frametime = glfwGetTime()-frametime;
+        contextReportFrametime(this->frametime);
     }
     qDebug("Running cleanup function");
     (*_cleanup)();

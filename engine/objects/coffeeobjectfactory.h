@@ -2,7 +2,7 @@
 #define COFFEEOBJECTFACTORY_H
 
 #include "general/common.h"
-#include "opengl/components/coffeeobject.h"
+#include "engine/objects/coffeeobject.h"
 #include "general/models/wavefrontmodelreader.h"
 #include "engine/rendering/coffeerenderingmethod.h"
 #include "opengl/components/coffeeworldopts.h"

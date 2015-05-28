@@ -1,16 +1,13 @@
 #ifndef QSTRINGFUNCTIONS_H
 #define QSTRINGFUNCTIONS_H
 
-#include "opengl/rendering/renderableobject.h"
+#include "general/common.h"
 class QStringFunctions
 {
 private:
     QStringFunctions();
 
 public:
-//    static QString toString(NumberBuffer<float> &b);
-
-//    static QString toString(const RenderableObject* o);
 
     static QString toString(const glm::vec2 &v);
     static QString toString(const glm::vec3 &v);

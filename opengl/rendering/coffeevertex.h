@@ -20,6 +20,12 @@ public:
     glm::vec3 tangent;
     glm::vec3 bitangent;
 
+    int i_position;
+    int i_tex;
+    int i_normal;
+    int i_tangent;
+    int i_bitangent;
+
     glm::vec4 color;
 
     bool hasNormal = false;

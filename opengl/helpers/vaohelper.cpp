@@ -1,44 +1,44 @@
 #include "vaohelper.h"
 
-void VAOHelper::genVAO(RenderableObject *object, int vertLocation, int vertTexCoordLocation, int vertNormalLocation, int vertTangentLocation){
-    GLuint vbo = 0;
-    GLuint vao = 0;
-    GLenum drawMode = GL_STATIC_DRAW;
-//    if(object->isStreamDraw())
-//        drawMode = GL_STREAM_DRAW;
-    glGenBuffers(1,&vbo);
-    glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    NumberBuffer<GLfloat>* data = object->getVertexData();
-    glBufferData(GL_ARRAY_BUFFER,data->getSize()*sizeof(GLfloat),data->get(),drawMode);
+//void VAOHelper::genVAO(RenderableObject *object, int vertLocation, int vertTexCoordLocation, int vertNormalLocation, int vertTangentLocation){
+//    GLuint vbo = 0;
+//    GLuint vao = 0;
+//    GLenum drawMode = GL_STATIC_DRAW;
+////    if(object->isStreamDraw())
+////        drawMode = GL_STREAM_DRAW;
+//    glGenBuffers(1,&vbo);
+//    glBindBuffer(GL_ARRAY_BUFFER,vbo);
+//    NumberBuffer<GLfloat>* data = object->getVertexData();
+//    glBufferData(GL_ARRAY_BUFFER,data->getSize()*sizeof(GLfloat),data->get(),drawMode);
 
-    glGenVertexArrays(1,&vao);
-    glBindVertexArray(vao);
+//    glGenVertexArrays(1,&vao);
+//    glBindVertexArray(vao);
 
-    glEnableVertexAttribArray(vertLocation);
-    glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*0));
+//    glEnableVertexAttribArray(vertLocation);
+//    glVertexAttribPointer(vertLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*0));
 
-    glEnableVertexAttribArray(vertTexCoordLocation);
-    glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,GL_TRUE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*3));
+//    glEnableVertexAttribArray(vertTexCoordLocation);
+//    glVertexAttribPointer(vertTexCoordLocation,2,GL_FLOAT,GL_TRUE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*3));
 
-    glEnableVertexAttribArray(vertNormalLocation);
-    glVertexAttribPointer(vertNormalLocation,3,GL_FLOAT,GL_TRUE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));
+//    glEnableVertexAttribArray(vertNormalLocation);
+//    glVertexAttribPointer(vertNormalLocation,3,GL_FLOAT,GL_TRUE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2)));
 
-    glEnableVertexAttribArray(vertTangentLocation);
-    glVertexAttribPointer(vertTangentLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3)));
+//    glEnableVertexAttribArray(vertTangentLocation);
+//    glVertexAttribPointer(vertTangentLocation,3,GL_FLOAT,GL_FALSE,CoffeeVertex::VERTEX_STRIDE,(GLvoid*)(sizeof(GLfloat)*(3+2+3)));
 
-    glBindBuffer(GL_ARRAY_BUFFER,0);
-    glBindVertexArray(0);
+//    glBindBuffer(GL_ARRAY_BUFFER,0);
+//    glBindVertexArray(0);
 
-    object->setVaoHandle(vao);
-    object->setVboHandle(vbo);
-}
+//    object->setVaoHandle(vao);
+//    object->setVboHandle(vbo);
+//}
 
-void VAOHelper::genTangents(QPointer<CoffeeMesh> mesh){
+void VAOHelper::genTangents(QList<QPointer<CoffeeVertex>> &vertices){
     int pointer = 0;
-    while(pointer<mesh->vertices.size()){
-        QPointer<CoffeeVertex> v0 = mesh->vertices.at(pointer+0);
-        QPointer<CoffeeVertex> v1 = mesh->vertices.at(pointer+1);
-        QPointer<CoffeeVertex> v2 = mesh->vertices.at(pointer+2);
+    while(pointer<vertices.size()){
+        QPointer<CoffeeVertex> v0 = vertices.at(pointer+0);
+        QPointer<CoffeeVertex> v1 = vertices.at(pointer+1);
+        QPointer<CoffeeVertex> v2 = vertices.at(pointer+2);
 
         glm::vec3 edge1 = v1->position - v0->position;
         glm::vec3 edge2 = v2->position - v0->position;

@@ -124,13 +124,12 @@ public:
         return value;
     }
 
-    T getValue()
+    T getValue() const
     {
         T value = this->value;
         if(bound){
             value = bound->getValue();
-        }else
-            unbindValue();
+        }
         value+=valueOffsetCallback();
 //        if(minval<maxval&&value>maxval)
 //            value=maxval;

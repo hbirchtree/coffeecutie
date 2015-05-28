@@ -33,14 +33,14 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
 
 CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject* parent)
 {
-    CoffeeObject* obj = new CoffeeObject(parent);
+    CoffeeStandardObject* obj = new CoffeeStandardObject(parent);
     for(QString key : data.keys()){
         if(key=="id")
             obj->setObjectName("coffeeobject::"+data.value(key).toString());
-        else if(key=="shader.vertex")
-            obj->setVertShader(filepath+data.value(key).toString());
-        else if(key=="shader.fragment")
-            obj->setFragShader(filepath+data.value(key).toString());
+//        else if(key=="shader.vertex")
+//            obj->setVertShader(filepath+data.value(key).toString());
+//        else if(key=="shader.fragment")
+//            obj->setFragShader(filepath+data.value(key).toString());
         else if(key=="model.idsrc"){
             QStringList id = data.value(key).toString().split(":");
             if(id.length()<2)
@@ -104,9 +104,9 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
                 delete pobj;
         }
     }
-    if(obj->getPhysicsObject()){
-        obj->getPhysicsObject()->setObjectName(obj->objectName()+".physics-object");
-        obj->getPositionObject()->bindValue(obj->getPhysicsObject()->getPositionObject());
+    if(obj->physics()){
+        obj->physics()->setObjectName(obj->objectName()+".physics-object");
+        obj->position()->bindValue(obj->physics()->getPositionObject());
     }
     /*
      * id : object name
