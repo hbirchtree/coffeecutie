@@ -1,30 +1,14 @@
 #include "coffeeparticlesystem.h"
 
-CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeSimpleObject(parent)
+CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeObject(parent)
 {
     this->camera = camera;
-    pos = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
     shader = new ShaderContainer(this);
     shader->setObjectName("render-shader");
     tshader = new ShaderContainer(this);
     tshader->setObjectName("transform-feedback-shader");
     texture = new CoffeeTexture(this,"ubw/models/textures/quadtex.png");
     texture->setObjectName("sprite");
-}
-
-glm::vec3 CoffeeParticleSystem::getPosition() const
-{
-    return pos->getValue();
-}
-
-QPointer<NumberContainer<glm::vec3> > CoffeeParticleSystem::getPositionObject()
-{
-    return pos;
-}
-
-void CoffeeParticleSystem::setPosition(const glm::vec3 &pos)
-{
-    this->pos->setValue(pos);
 }
 
 void CoffeeParticleSystem::setupSystem()
@@ -107,17 +91,15 @@ void CoffeeParticleSystem::setupSystem()
 void CoffeeParticleSystem::render()
 {
     if(!isBaked()){
-        qDebug() << "Particle system loading";
-        setupSystem();
-        texture->loadTexture();
+        load();
     }
     updateParticles(0.5f);
 
     glm::vec3 q1(1,1,0);
     glm::vec3 q2(-1,1,0);
-    q1 = glm::cross(glm::normalize(pos->getValue()-camera->getCameraPos()),camera->getCameraUp());
+    q1 = glm::cross(glm::normalize(position()->getValue()-camera->getCameraPos()),camera->getCameraUp());
     q1 = glm::normalize(q1);
-    q2 = glm::cross(glm::normalize(pos->getValue()-camera->getCameraPos()),q1);
+    q2 = glm::cross(glm::normalize(position()->getValue()-camera->getCameraPos()),q1);
     q2 = glm::normalize(q2);
 
     glUseProgram(shader->getProgramId());
@@ -139,6 +121,25 @@ void CoffeeParticleSystem::render()
     glBindTexture(GL_TEXTURE_2D,0);
 //    glDepthMask(GL_TRUE);
     glUseProgram(0);
+}
+
+void CoffeeParticleSystem::unload()
+{
+    qDebug() << "Particle system unloading";
+    glDeleteProgram(tshader->getProgramId());
+    glDeleteProgram(shader->getProgramId());
+    glDeleteQueries(1,&transformQuery);
+    glDeleteTransformFeedbacks(1,&transformBuffer);
+    glDeleteBuffers(2,partsBuffers);
+    glDeleteVertexArrays(2,partsArrays);
+
+    texture->unloadTexture();
+}
+
+void CoffeeParticleSystem::load()
+{
+    setupSystem();
+    texture->loadTexture();
 }
 
 void CoffeeParticleSystem::setProperties(glm::vec3 sourcePos,
@@ -211,6 +212,16 @@ void CoffeeParticleSystem::updateParticles(float timeStep)
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
     glDisable(GL_RASTERIZER_DISCARD);
     glUseProgram(0);
+}
+
+bool CoffeeParticleSystem::isBaked()
+{
+    return baked;
+}
+
+void CoffeeParticleSystem::setBaked(bool val)
+{
+    this->baked = val;
 }
 
 float CoffeeParticleSystem::genRandF(float base, float range)

@@ -17,23 +17,23 @@ public:
     ShaderVariant(std::function<glm::vec4()> func);
     ShaderVariant(std::function<glm::mat3()> func);
     ShaderVariant(std::function<glm::mat4()> func);
+    ShaderVariant(std::function<double()> func);
 
     ~ShaderVariant();
 
-    ShaderVariant(std::function<double()> func);
 
-    ShaderVariantType getType();
+    ShaderVariantType getType() const;
 
-    std::function<glm::vec2()> getVec2();
-    std::function<glm::vec3()> getVec3();
-    std::function<glm::vec4()> getVec4();
+    std::function<glm::vec2()> getVec2() const;
+    std::function<glm::vec3()> getVec3() const;
+    std::function<glm::vec4()> getVec4() const;
 
-    std::function<glm::mat3()> getMat3();
-    std::function<glm::mat4()> getMat4();
+    std::function<glm::mat3()> getMat3() const;
+    std::function<glm::mat4()> getMat4() const;
 
     //std::function for float return values are interpreted as int return values.
     //That is why we go for doubles in this case.
-    std::function<double()> getDouble();
+    std::function<double()> getDouble() const;
 
 private:
     QObject* data;

@@ -77,17 +77,17 @@ void CoffeeWorldOpts::setRenderer(const QPointer<CoffeeRenderer> &value)
     renderer = value;
 }
 
-void CoffeeWorldOpts::addObject(QPointer<CoffeeObject> object)
+void CoffeeWorldOpts::addObject(CoffeeObject *object)
 {
-//    if(object->getPhysicsObject()){
-//        connect(object->getPhysicsObject(),SIGNAL(deleteObject(void*)),
-//                physics,SLOT(removeObject(void*)),Qt::QueuedConnection);
-//        physicsObjectAdded(object->getPhysicsObject());
-//    }
+    if(object->physics()){
+        connect(object->physics(),SIGNAL(deleteObject(void*)),
+                physics,SLOT(removeObject(void*)),Qt::QueuedConnection);
+        physicsObjectAdded(object->physics());
+    }
     objects.append(object);
 }
 
-QList<QPointer<CoffeeObject> > &CoffeeWorldOpts::getObjects()
+QList<CoffeeObject*> &CoffeeWorldOpts::getObjects()
 {
     return objects;
 }

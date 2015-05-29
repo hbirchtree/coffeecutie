@@ -7,6 +7,11 @@ CoffeeObject::CoffeeObject(QObject *parent) : QObject(parent)
     vscale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
 }
 
+CoffeeObject::~CoffeeObject()
+{
+
+}
+
 NumberContainer<glm::vec3> *CoffeeObject::position(){
     return vposition;
 }
@@ -21,6 +26,11 @@ NumberContainer<glm::vec3> *CoffeeObject::scale(){
 
 PhysicsObject *CoffeeObject::physics(){
     return physical;
+}
+
+void CoffeeObject::setPhysicsObject(PhysicsObject *obj)
+{
+    this->physical = obj;
 }
 
 

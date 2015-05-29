@@ -32,8 +32,8 @@ public:
     QPointer<CoffeeRenderer> getRenderer();
     void setRenderer(const QPointer<CoffeeRenderer> &value);
 
-    void addObject(QPointer<CoffeeObject> object);
-    QList<QPointer<CoffeeObject>> &getObjects();
+    void addObject(CoffeeObject* object);
+    QList<CoffeeObject *> &getObjects();
 
     QObject* getPhysicsRoot() const;
 
@@ -60,7 +60,7 @@ private:
 
     glm::vec4 clearColor;
 
-    QList<QPointer<CoffeeObject>> objects;
+    QList<CoffeeObject*> objects;
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;
     QPointer<CoffeeRenderer> renderer;

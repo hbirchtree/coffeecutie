@@ -2,20 +2,22 @@
 #define COFFEEPARTICLESYSTEM_H
 
 #include <QObject>
-#include "engine/objects/coffeesimpleobject.h"
+#include "engine/objects/coffeeobject.h"
+#include "opengl/components/shadercontainer.h"
+#include "opengl/components/coffeetexture.h"
+#include "general/data/numberbuffer.h"
 #include "opengl/components/coffeecamera.h"
 
-class CoffeeParticleSystem : public CoffeeSimpleObject
+class CoffeeParticleSystem : public CoffeeObject
 {
+    Q_INTERFACES(CoffeeObject)
+    Q_PLUGIN_METADATA(IID CoffeeObjectIID)
 public:
     CoffeeParticleSystem(QObject *parent, const CoffeeCamera *camera);
 
-    glm::vec3 getPosition() const;
-    QPointer<NumberContainer<glm::vec3>> getPositionObject();
-    void setPosition(const glm::vec3& pos);
-
-
     void render(); //This is the part where the visible part is shown
+    void unload();
+    void load();
 
     void setProperties(
             glm::vec3 sourcePos,
@@ -31,17 +33,22 @@ public:
 
     void updateParticles(float timeStep);
 
+    bool isBaked();
+    void setBaked(bool val);
+
     void clearParticles();
     qint64 getCountParticles();
 
 protected:
+    bool baked = false;
     enum ParticleTypes {
         ParticleEmittedType,
         ParticleGeneratorType
     };
 
+    QPointer<ShaderContainer> shader;
     //Particle transform
-    ShaderContainer* tshader;
+    QPointer<ShaderContainer> tshader;
 
     GLuint transformBuffer = 0;
     GLuint transformQuery = 0;
@@ -85,8 +92,6 @@ protected:
     float genRandF(float base, float range);
 
     const CoffeeCamera* camera;
-
-    QPointer<NumberContainer<glm::vec3>> pos;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H
