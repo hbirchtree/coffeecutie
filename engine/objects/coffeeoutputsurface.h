@@ -8,11 +8,9 @@
 #include "opengl/components/coffeeframebufferobject.h"
 class CoffeeOutputSurface : public CoffeeObject
 {
-    Q_OBJECT
     Q_INTERFACES(CoffeeObject)
     Q_PLUGIN_METADATA(IID CoffeeObjectIID)
 public:
-    CoffeeOutputSurface();
     CoffeeOutputSurface(QObject *parent, CoffeeFrameBufferObject *display);
 
     void setFramebuffer(CoffeeFrameBufferObject *display);

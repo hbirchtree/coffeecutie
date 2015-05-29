@@ -20,8 +20,10 @@ void CoffeeStandardObject::render()
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
 //    glDrawArrays(GL_TRIANGLES,0,pmesh->getVerticesSize()); //for drawing from arrays
-    glDrawElements(GL_TRIANGLES,pmesh->getIndicesCount(),
-                   GL_UNSIGNED_INT,(GLvoid*)0);
+    glDrawElements(GL_TRIANGLES,
+                   pmesh->getIndicesCount(),
+                   GL_UNSIGNED_INT,
+                   (GLvoid*)0);
 
     for(TextureMapping m : textures){
         glActiveTexture(GL_TEXTURE0+textures.indexOf(m));

@@ -47,7 +47,7 @@ public:
     QVector<glm::vec3> raw_normals;
     QVector<glm::vec3> raw_tangents;
     QVector<uint> raw_faces;
-    QVector<uint> indices;
+    QVector<GLuint> indices;
 
     GLuint getVertexArrayHandle() const;
 

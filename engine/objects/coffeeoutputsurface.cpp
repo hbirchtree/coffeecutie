@@ -1,10 +1,5 @@
 #include "coffeeoutputsurface.h"
 
-CoffeeOutputSurface::CoffeeOutputSurface() : CoffeeObject(0)
-{
-
-}
-
 CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) : CoffeeObject(parent)
 {
     setFramebuffer(display);
