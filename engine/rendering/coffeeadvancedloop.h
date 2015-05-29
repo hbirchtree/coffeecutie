@@ -22,7 +22,7 @@
 
 //Engine
 #include "engine/objects/coffeeobjectfactory.h"
-#include "opengl/components/coffeeobject.h"
+#include "engine/objects/coffeeobject.h"
 #include "opengl/components/coffeeworldopts.h"
 #include "general/input/coffeejoystick.h"
 #include "general/input/coffeeplayercontroller.h"
@@ -49,18 +49,17 @@ private:
     CoffeeParticleSystem* test;
 
     CoffeeFrameBufferObject* renderFbo;
-    CoffeeSimpleObject* screenSurface;
+    CoffeeObject* screenSurface;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;
     CoffeeWorldOpts *world;
     CoffeeJoystick* js;
-    CoffeeRenderingMethod *defaultRenderingMethod;
     std::function<void()> _rendering_loop_init;
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;
 
-    void setupRenderer(CoffeeObject *object, CoffeeRenderingMethod *basicMethod);
+    void setupRenderer(CoffeeStandardObject *object);
 
 };
 

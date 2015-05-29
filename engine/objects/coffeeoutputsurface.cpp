@@ -1,6 +1,21 @@
 #include "coffeeoutputsurface.h"
 
-CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) : CoffeeSimpleObject(parent)
+CoffeeOutputSurface::CoffeeOutputSurface() : CoffeeObject(0)
+{
+
+}
+
+CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) : CoffeeObject(parent)
+{
+    setFramebuffer(display);
+}
+
+void CoffeeOutputSurface::setFramebuffer(CoffeeFrameBufferObject *display)
+{
+    this->framebuffer = display;
+}
+
+void CoffeeOutputSurface::load()
 {
     mdl = NumberBuffer<GLfloat>::createArray(this,18);
     GLfloat g_quad_vertex_buffer_data[] = {
@@ -14,7 +29,6 @@ CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject
     shader = new ShaderContainer(this);
     shader->buildProgram("testgame/shaders/vsh_passthrough.txt","testgame/shaders/fsh_simple.txt");
     mdl->put(g_quad_vertex_buffer_data);
-    texture = display->getTextureHandle();
 
     glGenBuffers(1,&vbo);
     glBindBuffer(GL_ARRAY_BUFFER,vbo);
@@ -31,123 +45,39 @@ CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject
 
     shader->getUniformLocation("screen");
     shader->getUniformLocation("time");
+    setBaked(true);
 }
 
 void CoffeeOutputSurface::render()
 {
+    if(!isBaked())
+        load();
     glClear(GL_DEPTH_BUFFER_BIT);
     glUseProgram(shader->getProgramId());
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,texture);
+    glBindTexture(GL_TEXTURE_2D,framebuffer->getTextureHandle());
     shader->setUniform("screen",0);
     shader->setUniform("time",(float)glfwGetTime());
 
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES,0,6);
+    glBindTexture(GL_TEXTURE_2D,0);
     glBindVertexArray(0);
     glUseProgram(0);
 }
 
-glm::vec3 CoffeeOutputSurface::getPosition() const
+void CoffeeOutputSurface::unload()
 {
-    return pos;
+    glDeleteVertexArrays(1,&vao);
+//    mtl->unloadData();
 }
 
-glm::quat CoffeeOutputSurface::getRotation() const
-{
-    return glm::quat(1,0,0,0);
-}
-
-glm::vec3 CoffeeOutputSurface::getScale() const
-{
-    return scale;
-}
-
-QPointer<CoffeeMaterial> CoffeeOutputSurface::getMaterial()
-{
-    return mtl;
-}
-
-GLint CoffeeOutputSurface::getVaoHandle()
-{
-    return vao;
-}
-
-GLint CoffeeOutputSurface::getVboHandle()
-{
-    return vbo;
-}
-
-void CoffeeOutputSurface::setVaoHandle(GLint handle)
-{
-    vao = handle;
-}
-
-void CoffeeOutputSurface::setVboHandle(GLint handle)
-{
-    vbo = handle;
-}
-
-int CoffeeOutputSurface::getVertexDataSize()
-{
-    return mdl->getSize()*sizeof(GLfloat);
-}
-
-int CoffeeOutputSurface::getVerticesCount()
-{
-    return mdl->getSize();
-}
-
-NumberBuffer<GLfloat> *CoffeeOutputSurface::getVertexData()
-{
-    return mdl;
-}
-
-bool CoffeeOutputSurface::isStreamDraw()
-{
-    return false;
-}
-
-bool CoffeeOutputSurface::isDepthTest()
-{
-    return true;
-}
-
-bool CoffeeOutputSurface::isDrawn()
-{
-    return true;
-}
-
-bool CoffeeOutputSurface::isBaked()
+bool CoffeeOutputSurface::isBaked() const
 {
     return baked;
 }
 
 void CoffeeOutputSurface::setBaked(bool val)
 {
-    baked = val;
+    this->baked = val;
 }
-
-QPointer<ShaderContainer> CoffeeOutputSurface::getShader()
-{
-    return shader;
-}
-
-void CoffeeOutputSurface::setShader(QPointer<ShaderContainer> shader)
-{
-    Q_UNUSED(shader);
-}
-
-void CoffeeOutputSurface::unloadAssets()
-{
-    GLuint v[1];
-    v[0] = getVaoHandle();
-    glDeleteVertexArrays(1,v);
-    mtl->unloadData();
-}
-
-void CoffeeOutputSurface::setMdl(QPointer<NumberBuffer<GLfloat> > value)
-{
-    mdl = value;
-}
-

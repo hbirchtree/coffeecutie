@@ -36,43 +36,43 @@ ShaderVariant::ShaderVariant(std::function<double ()> func)
     type = ShaderDub;
 }
 
-ShaderVariant::ShaderVariantType ShaderVariant::getType()
+ShaderVariant::ShaderVariantType ShaderVariant::getType() const
 {
     return type;
 }
 
-std::function<glm::vec2 ()> ShaderVariant::getVec2()
+std::function<glm::vec2 ()> ShaderVariant::getVec2() const
 {
     //Welcome to an object-oriented hell.
     if(type==ShaderVec2)
         return ((MutableDataContainer<std::function<glm::vec2 ()>>*)data)->getValue();
     return nullptr;
 }
-std::function<glm::vec3 ()> ShaderVariant::getVec3()
+std::function<glm::vec3 ()> ShaderVariant::getVec3() const
 {
     if(type==ShaderVec3)
         return ((MutableDataContainer<std::function<glm::vec3 ()>>*)data)->getValue();
     return nullptr;
 }
-std::function<glm::vec4 ()> ShaderVariant::getVec4()
+std::function<glm::vec4 ()> ShaderVariant::getVec4() const
 {
     if(type==ShaderVec4)
         return ((MutableDataContainer<std::function<glm::vec4 ()>>*)data)->getValue();
     return nullptr;
 }
-std::function<glm::mat3 ()> ShaderVariant::getMat3()
+std::function<glm::mat3 ()> ShaderVariant::getMat3() const
 {
     if(type==ShaderMat3)
         return ((MutableDataContainer<std::function<glm::mat3 ()>>*)data)->getValue();
     return nullptr;
 }
-std::function<glm::mat4 ()> ShaderVariant::getMat4()
+std::function<glm::mat4 ()> ShaderVariant::getMat4() const
 {
     if(type==ShaderMat4)
         return ((MutableDataContainer<std::function<glm::mat4 ()>>*)data)->getValue();
     return nullptr;
 }
-std::function<double ()> ShaderVariant::getDouble()
+std::function<double ()> ShaderVariant::getDouble() const
 {
     if(type==ShaderDub)
         return ((MutableDataContainer<std::function<double()>>*)data)->getValue();

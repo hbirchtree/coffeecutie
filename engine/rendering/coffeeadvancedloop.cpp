@@ -6,36 +6,10 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     connectSignals(renderer);
 
     qDebug("Creating default rendering method");
-    defaultRenderingMethod = new CoffeeRenderingMethod(this);
-    //Here we use a template for all uniform variables as well as attributes. All objects need these.
-    defaultRenderingMethod->addShaderUniform("camera",new ShaderVariant([=](){
-        return world->getCamera()->getMatrix();
-    }));
-    defaultRenderingMethod->addShaderUniform("cameraPosition",new ShaderVariant([=](){
-        return world->getCamera()->getPosition()->getValue();
-    }));
-    defaultRenderingMethod->addShaderUniform("light.position",new ShaderVariant([=](){
-        return world->getLights().first()->getPosition()->getValue();
-    }));
-    defaultRenderingMethod->addShaderUniform("light.intensities",new ShaderVariant([=](){
-        return world->getLights().first()->getColor()->getValue();
-    }));
-    defaultRenderingMethod->addShaderUniform("light.attenuation",new ShaderVariant([=](){
-        return world->getLights().first()->getAttenuation()->getValue();
-    }));
-    defaultRenderingMethod->addShaderUniform("light.ambientCoefficient",new ShaderVariant([=](){
-        return world->getLights().first()->getAmbientCoefficient()->getValue();
-    }));
-    defaultRenderingMethod->addShaderUniform("fogParams.fDensity",new ShaderVariant([=](){
-        return world->getFogDensity();
-    }));
-    defaultRenderingMethod->addShaderUniform("fogParams.fColor",new ShaderVariant([=](){
-        return world->getFogColor();
-    }));
-    defaultRenderingMethod->addVertexAttribute("vert",3);
-    defaultRenderingMethod->addVertexAttribute("vertTexCoord",2);
-    defaultRenderingMethod->addVertexAttribute("vertNormal",3);
-    defaultRenderingMethod->addVertexAttribute("vertTangent",3);
+//    defaultRenderingMethod->addVertexAttribute("vert",3);
+//    defaultRenderingMethod->addVertexAttribute("vertTexCoord",2);
+//    defaultRenderingMethod->addVertexAttribute("vertNormal",3);
+//    defaultRenderingMethod->addVertexAttribute("vertTangent",3);
 
     qDebug("Importing objects from file");
     CoffeeObjectFactory f;
@@ -54,9 +28,11 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         qDebug("Configuring objects for rendering");
         for(CoffeeObject* o : world->getObjects()){
-            setupRenderer(o,defaultRenderingMethod);
-//            if(o->getPhysicsObject())
-//                o->getRotationObject()->bindValue(o->getPhysicsObject()->getPhysicalRotation());
+            CoffeeStandardObject* stdobj = dynamic_cast<CoffeeStandardObject*>(o);
+            if(stdobj)
+                setupRenderer(stdobj);
+            if(o->physics())
+                o->rotation()->bindValue(o->physics()->getPhysicalRotation());
             qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
         }
 
@@ -241,46 +217,96 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     });
 }
 
-void CoffeeAdvancedLoop::setupRenderer(CoffeeObject *object, CoffeeRenderingMethod* basicMethod)
+void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
 {
-    /*
-    object->setShader(new ShaderContainer(object));
-    object->getShader()->setObjectName(object->objectName()+".shader");
-    object->getShader()->buildProgram(object->getVertShader(),object->getFragShader());
+    //    defaultRenderingMethod = new CoffeeRenderingMethod(this);
+    //    //Here we use a template for all uniform variables as well as attributes. All objects need these.
+    //    defaultRenderingMethod->addShaderUniform("camera",new ShaderVariant([=](){
+    //        return world->getCamera()->getMatrix();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("cameraPosition",new ShaderVariant([=](){
+    //        return world->getCamera()->getPosition()->getValue();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("light.position",new ShaderVariant([=](){
+    //        return world->getLights().first()->getPosition()->getValue();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("light.intensities",new ShaderVariant([=](){
+    //        return world->getLights().first()->getColor()->getValue();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("light.attenuation",new ShaderVariant([=](){
+    //        return world->getLights().first()->getAttenuation()->getValue();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("light.ambientCoefficient",new ShaderVariant([=](){
+    //        return world->getLights().first()->getAmbientCoefficient()->getValue();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("fogParams.fDensity",new ShaderVariant([=](){
+    //        return world->getFogDensity();
+    //    }));
+    //    defaultRenderingMethod->addShaderUniform("fogParams.fColor",new ShaderVariant([=](){
+    //        return world->getFogColor();
+    //    }));
+    object->shader()->buildProgram();
 
-    object->setRenderer(basicMethod->createInstance(object));
-    object->getRenderer()->setObjectName(object->objectName()+".renderer");
-    for(int t : object->getMaterial()->getTextureKeys()){
+    for(int t : object->material()->getTextureKeys()){
         switch(t){
         case CoffeeTexture::Texture_Diffusion:
-            object->getRenderer()->addTextureMapping(object->getMaterial()->getTexture(t),GL_TEXTURE0,"materialTex");
+            object->setTexture("materialTex",object->material()->getTexture(t),GL_TEXTURE0);
             break;
         case CoffeeTexture::Texture_Bumpmap:
-            object->getRenderer()->addTextureMapping(object->getMaterial()->getTexture(t),GL_TEXTURE1,"materialBump");
+            object->setTexture("materialBump",object->material()->getTexture(t),GL_TEXTURE1);
             break;
         case CoffeeTexture::Texture_Specular:
-            object->getRenderer()->addTextureMapping(object->getMaterial()->getTexture(t),GL_TEXTURE2,"materialSpecular");
+            object->setTexture("materialSpecular",object->material()->getTexture(t),GL_TEXTURE2);
             break;
         case CoffeeTexture::Texture_Highlight:
-            object->getRenderer()->addTextureMapping(object->getMaterial()->getTexture(t),GL_TEXTURE3,"materialHighlight");
+            object->setTexture("materialHighlight",object->material()->getTexture(t),GL_TEXTURE3);
             break;
         case CoffeeTexture::Texture_Transparency:
-            object->getRenderer()->addTextureMapping(object->getMaterial()->getTexture(t),GL_TEXTURE4,"materialTransparency");
+            object->setTexture("materialTransparency",object->material()->getTexture(t),GL_TEXTURE4);
             break;
         }
     }
 
-    object->getRenderer()->addShaderUniform("materialShininess",new ShaderVariant([=](){
-        return object->getMaterial()->shininess()->getValue();
+    object->setUniform("camera",new ShaderVariant([=](){
+        return world->getCamera()->getMatrix();
     }));
-    object->getRenderer()->addShaderUniform("materialTransparencyValue",new ShaderVariant([=](){
-        return object->getMaterial()->transparency()->getValue();
+    object->setUniform("cameraPosition",new ShaderVariant([=](){
+        return world->getCamera()->getPosition()->getValue();
     }));
-    object->getRenderer()->addShaderUniform("colorMul",new ShaderVariant([=](){
-        return object->getMaterial()->colorMultiplier();
+
+    object->setUniform("fogParams.fDensity",new ShaderVariant([=](){
+        return world->getFogDensity();
     }));
-    object->getRenderer()->addShaderUniform("model",new ShaderVariant([=](){
-        return RenderingMethods::translateObjectMatrix(object);
+    object->setUniform("fogParams.fColor",new ShaderVariant([=](){
+        return world->getFogColor();
     }));
-    */
+
+    object->setUniform("light.position",new ShaderVariant([=](){
+        return world->getLights().first()->getPosition()->getValue();
+    }));
+    object->setUniform("light.intensities",new ShaderVariant([=](){
+        return world->getLights().first()->getColor()->getValue();
+    }));
+    object->setUniform("light.attenuation",new ShaderVariant([=](){
+        return world->getLights().first()->getAttenuation()->getValue();
+    }));
+    object->setUniform("light.ambientCoefficient",new ShaderVariant([=](){
+        return world->getLights().first()->getAmbientCoefficient()->getValue();
+    }));
+
+
+    object->setUniform("materialShininess",new ShaderVariant([=](){
+        return object->material()->shininess()->getValue();
+    }));
+    object->setUniform("materialTransparencyValue",new ShaderVariant([=](){
+        return object->material()->transparency()->getValue();
+    }));
+    object->setUniform("colorMul",new ShaderVariant([=](){
+        return object->material()->colorMultiplier();
+    }));
+    object->setUniform("model",new ShaderVariant([=](){
+        return RenderingMethods::translateObjectMatrix(object->position()->getValue(),
+                                                       object->rotation()->getValue(),
+                                                       object->scale()->getValue());
+    }));
 }

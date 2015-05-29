@@ -37,25 +37,25 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
     for(QString key : data.keys()){
         if(key=="id")
             obj->setObjectName("coffeeobject::"+data.value(key).toString());
-//        else if(key=="shader.vertex")
-//            obj->setVertShader(filepath+data.value(key).toString());
-//        else if(key=="shader.fragment")
-//            obj->setFragShader(filepath+data.value(key).toString());
-        else if(key=="model.idsrc"){
+        else if(key=="shader.vertex"&&data.keys().contains("shader.fragment")){
+            obj->setShader(new ShaderContainer(obj));
+            obj->shader()->setVertexShader(filepath+data.value("shader.vertex").toString());
+            obj->shader()->setFragmentShader(filepath+data.value("shader.fragment").toString());
+        }else if(key=="model.idsrc"){
             QStringList id = data.value(key).toString().split(":");
             if(id.length()<2)
                 continue;
             QRegExp r(id.at(1));
             for(QString m : models.value(id.at(0)).keys())
                 if(m.contains(r)){
-                    obj->setModel(models.value(id.at(0)).value(m)->model);
+                    obj->setMesh(models.value(id.at(0)).value(m)->model);
                     obj->setMaterial(models.value(id.at(0)).value(m)->material);
                 }
         }
         else if(key=="model.position")
-            obj->getPositionObject()->setValue(listToVec3(data.value(key)));
+            obj->position()->setValue(listToVec3(data.value(key)));
         else if(key=="model.scale")
-            obj->getScaleObject()->setValue(listToVec3(data.value(key)));
+            obj->scale()->setValue(listToVec3(data.value(key)));
         else if(key=="physics"){
             PhysicsObject* pobj = new PhysicsObject(obj);
             QVariantMap pd = data.value(key).toMap();

@@ -8,15 +8,14 @@
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 
-    Q_PROPERTY(int vaoHandle READ vaoHandle)
-    Q_PROPERTY(int vboHandle READ vboHandle)
-    Q_PROPERTY(bool streamDraw READ streamDraw)
     Q_PROPERTY(bool baked READ baked WRITE setBaked)
 
 public:
-    struct VertexArrayPointerDescriptor {
+    class VertexArrayPointerDescriptor {
+    public:
         int location = 0;
         int size = 0;
+        int datasize = 0;
         GLenum datatype = GL_FLOAT;
         GLboolean normalized = GL_FALSE;
     };
@@ -31,7 +30,9 @@ public:
     QVector<glm::vec2> raw_texcoords;
     QVector<int> raw_faces;
 
-    QList<QPointer<CoffeeVertex> > getVertices();
+    GLuint getVertexArrayHandle() const;
+
+    int getVerticesSize();
     void addVertex(QPointer<CoffeeVertex> vert);
     void setVertices(QList<QPointer<CoffeeVertex> > vertices);
 
@@ -44,13 +45,13 @@ public slots:
 
 private:
 
+    QList<QPointer<CoffeeVertex> > getVertices();
     NumberBuffer<GLfloat>* getData();
     int getVerticesDataSize();
-    int getVerticesSize();
 
     QList<QPointer<CoffeeVertex> > vertices;
-    std::vector<GLuint> buffers;
-    std::vector<GLuint> arrays;
+    QVector<GLuint> buffers;
+    QVector<GLuint> arrays;
     GLenum drawmode = GL_STATIC_DRAW;
     bool m_baked = false;
 };

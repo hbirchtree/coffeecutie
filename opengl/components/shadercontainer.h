@@ -3,11 +3,11 @@
 
 #include "general/common.h"
 #include "general/filehandler.h"
-
+#include "general/shadervariant.h"
 class ShaderContainer : public QObject
 {
-    Q_PROPERTY(QString fragmentShader READ fragmentShader)
-    Q_PROPERTY(QString vertexShader READ vertexShader)
+    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader)
+    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader)
     Q_PROPERTY(int programId READ getProgramId)
 
     Q_OBJECT
@@ -18,6 +18,7 @@ public:
     //Full-process functions
     int buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
     int buildProgram(QString vertShaderFile,QString fragShaderFile);
+    int buildProgram();
 
     //Partial
     void createProgram();
@@ -40,10 +41,15 @@ public:
     void setUniform(QString name,GLfloat val);
     void setUniform(QString name,int val);
 
-    void setUniform(QString name,const glm::mat4& val);
+    void setUniform(QString name, const glm::mat3 &val);
+    void setUniform(QString name, const glm::mat4 &val);
+
+    void setUniform(QString name, const ShaderVariant *val);
 
     QString fragmentShader() const;
     QString vertexShader() const;
+    void setFragmentShader(const QString& sh);
+    void setVertexShader(const QString& sh);
 
 signals:
 

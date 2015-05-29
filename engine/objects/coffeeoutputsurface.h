@@ -1,36 +1,36 @@
 #ifndef COFFEEOUTPUTSURFACE_H
 #define COFFEEOUTPUTSURFACE_H
 
-#include "engine/objects/coffeesimpleobject.h"
+#include "engine/objects/coffeeobject.h"
+#include "opengl/components/shadercontainer.h"
+#include "opengl/components/coffeetexture.h"
+#include "general/data/numberbuffer.h"
 #include "opengl/components/coffeeframebufferobject.h"
-class CoffeeOutputSurface : public CoffeeSimpleObject
+class CoffeeOutputSurface : public CoffeeObject
 {
     Q_OBJECT
+    Q_INTERFACES(CoffeeObject)
+    Q_PLUGIN_METADATA(IID CoffeeObjectIID)
 public:
+    CoffeeOutputSurface();
     CoffeeOutputSurface(QObject *parent, CoffeeFrameBufferObject *display);
 
-    void render();
-    glm::vec3 getPosition() const;
-    glm::quat getRotation() const;
-    glm::vec3 getScale() const;
-    QPointer<CoffeeMaterial> getMaterial();
-    GLint getVaoHandle();
-    GLint getVboHandle();
-    void setVaoHandle(GLint handle);
-    void setVboHandle(GLint handle);
-    int getVertexDataSize();
-    int getVerticesCount();
-    NumberBuffer<GLfloat> *getVertexData();
-    bool isStreamDraw();
-    bool isDepthTest();
-    bool isDrawn();
-    bool isBaked();
-    void setBaked(bool val);
-    QPointer<ShaderContainer> getShader();
-    void setShader(QPointer<ShaderContainer> shader);
-    void unloadAssets();
+    void setFramebuffer(CoffeeFrameBufferObject *display);
 
-    void setMdl(QPointer<NumberBuffer<GLfloat> > value);
+    void load();
+    void render();
+    void unload();
+
+    bool isBaked() const;
+
+protected:
+    void setBaked(bool val);
+    bool baked = false;
+    QPointer<ShaderContainer> shader;
+    NumberBuffer<GLfloat> *mdl;
+    GLuint vao;
+    GLuint vbo;
+    CoffeeFrameBufferObject* framebuffer;
 };
 
 #endif // COFFEEOUTPUTSURFACE_H

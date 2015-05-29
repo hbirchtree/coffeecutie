@@ -97,31 +97,31 @@ void VAOHelper::generateIndices(QPointer<CoffeeMesh> mesh)
     QList<int> p_tx;
     QList<int> p_t;
 
-    for(QPointer<CoffeeVertex> vert : mesh->getVertices()){
-        if(!positions.contains(vert->position)){
-            positions.append(vert->position);
-            p_i.append(positions.indexOf(vert->position));
-        }else{
-            p_i.append(positions.indexOf(vert->position));
-        }
-        if(!normals.contains(vert->normal)){
-            normals.append(vert->normal);
-            p_n.append(normals.indexOf(vert->normal));
-        }else{
-            p_n.append(normals.indexOf(vert->normal));
-        }
-        if(!texcoords.contains(vert->texCoord)){
-            texcoords.append(vert->texCoord);
-            p_tx.append(texcoords.indexOf(vert->texCoord));
-        }else{
-            p_tx.append(texcoords.indexOf(vert->texCoord));
-        }
-        if(!positions.contains(vert->position)){
-            tangents.append(vert->tangent);
-            p_t.append(tangents.indexOf(vert->tangent));
-        }else{
-            p_t.append(tangents.indexOf(vert->tangent));
-        }
-    }
+//    for(QPointer<CoffeeVertex> vert : mesh->getVertices()){
+//        if(!positions.contains(vert->position)){
+//            positions.append(vert->position);
+//            p_i.append(positions.indexOf(vert->position));
+//        }else{
+//            p_i.append(positions.indexOf(vert->position));
+//        }
+//        if(!normals.contains(vert->normal)){
+//            normals.append(vert->normal);
+//            p_n.append(normals.indexOf(vert->normal));
+//        }else{
+//            p_n.append(normals.indexOf(vert->normal));
+//        }
+//        if(!texcoords.contains(vert->texCoord)){
+//            texcoords.append(vert->texCoord);
+//            p_tx.append(texcoords.indexOf(vert->texCoord));
+//        }else{
+//            p_tx.append(texcoords.indexOf(vert->texCoord));
+//        }
+//        if(!positions.contains(vert->position)){
+//            tangents.append(vert->tangent);
+//            p_t.append(tangents.indexOf(vert->tangent));
+//        }else{
+//            p_t.append(tangents.indexOf(vert->tangent));
+//        }
+//    }
     CoffeeMesh* m;
 }

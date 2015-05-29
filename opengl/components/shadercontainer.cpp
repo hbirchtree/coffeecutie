@@ -42,6 +42,11 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
     return buildProgram(vertShaderFile,fragShaderFile,QString());
 }
 
+int ShaderContainer::buildProgram()
+{
+    return buildProgram(this->vertShaderFile,this->fragShaderFile,this->geomShaderFile);
+}
+
 void ShaderContainer::createProgram()
 {
     programId = glCreateProgram();
@@ -197,11 +202,45 @@ void ShaderContainer::setUniform(QString name, int val){
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
 }
 
+void ShaderContainer::setUniform(QString name, const glm::mat3 &val){
+    if(uniforms.keys().contains(name))
+        glUniformMatrix3fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
+    else if(verbosity>1)
+        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
 void ShaderContainer::setUniform(QString name, const glm::mat4 &val){
     if(uniforms.keys().contains(name))
         glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
         qDebug() << this->objectName() << "Failed to set uniform: " << name;
+}
+
+void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
+    if(uniforms.keys().contains(name)){
+        switch(val->getType()){
+        case ShaderVariant::ShaderVec2:
+            setUniform(name,val->getVec2()());
+            break;
+        case ShaderVariant::ShaderVec3:
+            setUniform(name,val->getVec3()());
+            break;
+        case ShaderVariant::ShaderVec4:
+            setUniform(name,val->getVec4()());
+            break;
+        case ShaderVariant::ShaderMat3:
+            setUniform(name,val->getMat3()());
+            break;
+        case ShaderVariant::ShaderMat4:
+            setUniform(name,val->getMat4()());
+            break;
+        case ShaderVariant::ShaderDub:
+            setUniform(name,(float)val->getDouble()());
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 QString ShaderContainer::fragmentShader() const
@@ -212,4 +251,14 @@ QString ShaderContainer::fragmentShader() const
 QString ShaderContainer::vertexShader() const
 {
     return vertShaderFile;
+}
+
+void ShaderContainer::setFragmentShader(const QString &sh)
+{
+    this->fragShaderFile = sh;
+}
+
+void ShaderContainer::setVertexShader(const QString &sh)
+{
+    this->vertShaderFile = sh;
 }
