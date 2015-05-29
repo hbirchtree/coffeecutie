@@ -5,6 +5,23 @@
 #include "opengl/rendering/coffeevertex.h"
 #include "general/data/coffeegameasset.h"
 #include "general/data/numberbuffer.h"
+
+#define MESH_BUFFER_INDEX 4
+#define MESH_BUFFER_POS 0
+#define MESH_BUFFER_TEX 1
+#define MESH_BUFFER_NORMAL 2
+#define MESH_BUFFER_TANGENT 3
+
+#define MESH_BUFFER_WVP_MAT 5
+#define MESH_BUFFER_WORLD_MAT 6
+
+#define MESH_LOC_POS 0
+#define MESH_LOC_TEX 1
+#define MESH_LOC_NOR 2
+#define MESH_LOC_TAN 3
+#define MESH_LOC_WVP_MAT 4
+#define MESH_LOC_WLD_MAT 7
+
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 
@@ -26,15 +43,20 @@ public:
     QList<QPointer<CoffeeVertex> > copy();
 
     QVector<glm::vec3> raw_vertices;
-    QVector<glm::vec3> raw_normals;
     QVector<glm::vec2> raw_texcoords;
-    QVector<int> raw_faces;
+    QVector<glm::vec3> raw_normals;
+    QVector<glm::vec3> raw_tangents;
+    QVector<uint> raw_faces;
+    QVector<uint> indices;
 
     GLuint getVertexArrayHandle() const;
 
     int getVerticesSize();
     void addVertex(QPointer<CoffeeVertex> vert);
     void setVertices(QList<QPointer<CoffeeVertex> > vertices);
+
+    GLuint getIndicesCount() const;
+    void generateIndices();
 
     void loadMesh();
     void unloadMesh();

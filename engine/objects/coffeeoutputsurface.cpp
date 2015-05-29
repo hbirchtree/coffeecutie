@@ -27,7 +27,8 @@ void CoffeeOutputSurface::load()
         1.0f,  1.0f, 0.0f,
     };
     shader = new ShaderContainer(this);
-    shader->buildProgram("testgame/shaders/vsh_passthrough.txt","testgame/shaders/fsh_simple.txt");
+    shader->buildProgram("ubw/shaders/vsh_passthrough.txt",
+                         "ubw/shaders/fsh_simple.txt");
     mdl->put(g_quad_vertex_buffer_data);
 
     glGenBuffers(1,&vbo);
@@ -68,8 +69,8 @@ void CoffeeOutputSurface::render()
 
 void CoffeeOutputSurface::unload()
 {
+    glDeleteBuffers(1,&vbo);
     glDeleteVertexArrays(1,&vao);
-//    mtl->unloadData();
 }
 
 bool CoffeeOutputSurface::isBaked() const

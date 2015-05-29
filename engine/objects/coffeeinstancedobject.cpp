@@ -19,4 +19,3 @@ void CoffeeInstancedObject::load()
 {
 
 }
-
