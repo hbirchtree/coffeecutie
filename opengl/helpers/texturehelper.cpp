@@ -27,7 +27,7 @@ GLuint TextureHelper::allocTexture(GLenum internalFormat,
 GLuint TextureHelper::allocCubeTexture(GLenum internalFormat,
                                        GLenum colorFormat,
                                        int w, int h,
-                                       QMap<GLenum,unsigned char *> source,
+                                       QMap<GLenum,QImage> source,
                                        uint mipmaps,
                                        GLenum datatype)
 {
@@ -35,16 +35,17 @@ GLuint TextureHelper::allocCubeTexture(GLenum internalFormat,
     glGenTextures(1,&cubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP,cubemap);
 
+    glTexStorage2D(GL_TEXTURE_CUBE_MAP,1,internalFormat,w,h);
     for(GLenum map : source.keys()){
-//        glTexImage2D(map,0,static_cast<int>(internalFormat),w,h,0,colorFormat,datatype,source.value(map));
-        glTexStorage2D(map,mipmaps,internalFormat,w,h);
-        glTexSubImage2D(map,0,0,0,w,h,colorFormat,datatype,source.value(map));
-        glGenerateMipmap(map);
+        glTexSubImage2D(map,0,0,0,w,h,colorFormat,datatype,source.value(map).bits());
+//        glGenerateMipmap(map);
     }
+
+    //mipmap filtering is *bad* for this
     glTexParameteri(GL_TEXTURE_CUBE_MAP,
-                    GL_TEXTURE_MAG_FILTER,static_cast<int>(GL_LINEAR_MIPMAP_LINEAR));
+                    GL_TEXTURE_MAG_FILTER,static_cast<int>(GL_LINEAR));
     glTexParameteri(GL_TEXTURE_CUBE_MAP,
-                    GL_TEXTURE_MIN_FILTER,static_cast<int>(GL_LINEAR_MIPMAP_LINEAR));
+                    GL_TEXTURE_MIN_FILTER,static_cast<int>(GL_LINEAR));
     glTexParameteri(GL_TEXTURE_CUBE_MAP,
                     GL_TEXTURE_WRAP_S,static_cast<int>(GL_CLAMP_TO_EDGE));
     glTexParameteri(GL_TEXTURE_CUBE_MAP,

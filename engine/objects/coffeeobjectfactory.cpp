@@ -46,11 +46,21 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
             if(id.length()<2)
                 continue;
             QRegExp r(id.at(1));
+#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
             for(QString m : models.value(id.at(0)).keys())
                 if(m.contains(r)){
                     obj->setMesh(models.value(id.at(0)).value(m)->model);
                     obj->setMaterial(models.value(id.at(0)).value(m)->material);
                 }
+#else
+            for(QString m : models.value(id.at(0)).keys())
+                if(m.contains(r)){
+                    CoffeeModelStruct s = models.value(id.at(0)).value(m);
+                    obj->setMaterial(s.material);
+                    obj->setMesh(s.mesh);
+                }
+            qDebug() << "Failed to load model";
+#endif
         }
         else if(key=="model.position")
             obj->position()->setValue(listToVec3(data.value(key)));
@@ -139,6 +149,7 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
 
 void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
 {
+#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
     WavefrontModelReader rdr(parent);
     int mcnt = models.size();
     for(QString key : data.keys()){
@@ -146,6 +157,63 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
         rdr.clearData();
     }
     qDebug("Imported %i model sources from asset index",models.size()-mcnt);
+#else
+    Assimp::Importer importer;
+
+
+    for(QString key : data.keys()){
+        QString filename = filepath+data.value(key).toString();
+        QFileInfo fileinfo(filename);
+
+        QHash<QString,CoffeeModelStruct> models;
+        QHash<QString,QPointer<CoffeeMesh>> meshes;
+        QHash<QString,QPointer<CoffeeMaterial>> materials;
+
+        const aiScene* scene = importer.ReadFile(
+                    filename.toStdString().c_str(),
+                    aiProcess_CalcTangentSpace |
+                    aiProcess_Triangulate |
+                    aiProcess_OptimizeMeshes |
+                    aiProcess_SortByPType);
+        if(!scene){
+            qDebug("Failed to read model %s: %s",filename.toStdString().c_str(),importer.GetErrorString());
+        }else{
+            qDebug("Successfully read model: %s:\n"
+                   " %i meshes, %i materials, %i textures,\n"
+                   "%i lights, %i cameras, %i animations",
+                   filename.toStdString().c_str(),
+                   scene->mNumMeshes,scene->mNumMaterials,
+                   scene->mNumTextures,scene->mNumLights,
+                   scene->mNumCameras,scene->mNumAnimations);
+
+            QVector<CoffeeMaterial*> mtllist;
+            for(int i=0;i<scene->mNumMaterials;i++){
+                aiMaterial* mtl = scene->mMaterials[i];
+                CoffeeMaterial* cmtl = new CoffeeMaterial(parent,mtl,fileinfo.path()+QDir::separator());
+                materials.insert(cmtl->objectName(),cmtl);
+                mtllist.append(cmtl);
+            }
+            for(int i=0;i<scene->mNumMeshes;i++){
+                aiMesh* mesh = scene->mMeshes[i];
+                CoffeeMesh* cmesh = new CoffeeMesh(parent,mesh);
+                meshes.insert(cmesh->objectName(),cmesh);
+                CoffeeModelStruct s;
+                s.mesh = cmesh;
+                if(mesh->mMaterialIndex<mtllist.size()){
+                    s.material = mtllist.at(mesh->mMaterialIndex);
+                }else{
+                    qDebug("Could not find material for mesh: %s",cmesh->objectName().toStdString().c_str());
+                }
+                models.insert(cmesh->objectName(),s);
+            }
+        }
+
+        this->models.insert(key,models);
+        this->meshes.insert(key,meshes);
+        this->materials.insert(key,materials);
+    }
+
+#endif
 }
 
 CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, QObject *parent)

@@ -6,95 +6,87 @@
 #include "opengl/components/coffeetexture.h"
 #include "general/data/coffeegameasset.h"
 class CoffeeMaterial : public QObject, public CoffeeGameAsset{
+
+    Q_PROPERTY(bool wireframe READ wireframe WRITE setWireframe)
+    Q_PROPERTY(bool culling READ culling WRITE setCulling)
+    Q_PROPERTY(glm::vec3 transparency READ transparency WRITE setTransparency)
+    Q_PROPERTY(glm::vec3 diffuseColor READ diffuseColor WRITE setDiffuseColor)
+    Q_PROPERTY(glm::vec3 specularColor READ specularColor WRITE setSpecularColor)
+    Q_PROPERTY(glm::vec3 ambientColor READ ambientColor WRITE setAmbientColor)
+    Q_PROPERTY(glm::vec3 emissiveColor READ emissiveColor WRITE setEmissiveColor)
+    Q_PROPERTY(float shininessStrength READ shininessStrength WRITE setShininessStrength)
+    Q_PROPERTY(float refraction READ refraction WRITE setRefraction)
+    Q_PROPERTY(float reflectivity READ reflectivity WRITE setReflectivity)
+    Q_PROPERTY(float shininess READ getShininess WRITE setShininess)
+    Q_PROPERTY(float opacity READ opacity WRITE setOpacity)
+    Q_PROPERTY(GLenum blendMode READ blendMode WRITE setBlendMode)
+    Q_PROPERTY(GLenum shadingMode READ shadingMode WRITE setShadingMode)
+    Q_PROPERTY(glm::vec3 colorMultiplier READ colorMultiplier WRITE setColorMultiplier)
+
 public:
-    CoffeeMaterial(QObject* parent) : QObject(parent){
-        m_transparency = new NumberContainer<float>(this,1.f);
-        m_shininess = new NumberContainer<float>(this,50.f);
-    }
-    CoffeeMaterial(const CoffeeMaterial &mtl) : QObject(){
-        m_transparency = new NumberContainer<float>(this,mtl.transparency());
-        m_shininess = new NumberContainer<float>(this,mtl.shininess());
-        m_specularColor = glm::vec3(mtl.specularColor());
-        m_colorMultiplier = glm::vec3(mtl.colorMultiplier());
-    }
+    CoffeeMaterial(QObject* parent);
+    CoffeeMaterial(CoffeeMaterial &mtl);
+    CoffeeMaterial(QObject *parent, const aiMaterial* materialSource, const QString &filepath);
 
-    QPointer<NumberContainer<float>> transparency() const
-    {
-        return m_transparency;
-    }
+    bool wireframe() const;
+    bool culling() const;
+    float shininess() const;
+    float reflectivity() const;
+    float shininessStrength() const;
+    float refraction() const;
+    float opacity() const;
+    QPointer<NumberContainer<glm::vec3>> getTransparency();
+    QPointer<NumberContainer<float>> getShininess();
+    glm::vec3 ambientColor() const;
+    glm::vec3 specularColor() const;
+    glm::vec3 colorMultiplier() const;
+    glm::vec3 diffuseColor() const;
+    glm::vec3 transparency() const;
+    GLenum blendMode() const;
+    GLenum shadingMode() const;
 
-    QPointer<NumberContainer<float>> shininess() const
-    {
-        return m_shininess;
-    }
 
-    glm::vec3 specularColor() const
-    {
-        return m_specularColor;
-    }
-
-    glm::vec3 colorMultiplier() const
-    {
-        return m_colorMultiplier;
-    }
-
-    glm::vec3 getDiffuseColor() const{
-        return m_diffuseColor;
-    }
-    void setDiffuseColor(const glm::vec3 &diffuseColor){
-        m_diffuseColor = diffuseColor;
-    }
 
 public slots:
-    void setTexture(int id,QPointer<CoffeeTexture> texture){
-        textures.insert(id,texture);
-    }
-    QPointer<CoffeeTexture> getTexture(int id){
-        return textures.value(id);
-    }
-    QList<int> getTextureKeys(){
-        return textures.keys();
-    }
+    void setTexture(CoffeeTexture::CoffeeTextureType id,QPointer<CoffeeTexture> texture);
+    QPointer<CoffeeTexture> getTexture(CoffeeTexture::CoffeeTextureType id);
+    QList<CoffeeTexture::CoffeeTextureType> getTextureKeys();
 
-    void setTransparency(NumberContainer<float> arg)
-    {
-        m_transparency = &arg;
-    }
+    void setWireframe(bool wireframe);
+    void setCulling(bool culling);
+    void setShininess(float arg);
+    void setRefraction(float refraction);
+    void setOpacity(float opacity);
+    void setReflectivity(float reflectivity);
+    void setShininessStrength(float shininessStrength);
+    void setDiffuseColor(const glm::vec3 &diffuseColor);
+    void setTransparency(const glm::vec3& arg);
+    void setAmbientColor(const glm::vec3& ambientColor);
+    void setSpecularColor(const glm::vec3& arg);
+    void setColorMultiplier(const glm::vec3& arg);
+    void setBlendMode(GLenum blendMode);
+    void setShadingMode(GLenum shadingMode);
 
-    void setShininess(NumberContainer<float> arg)
-    {
-        m_shininess = &arg;
-    }
+    void unloadData();
 
-    void setSpecularColor(glm::vec3 arg)
-    {
-        if (m_specularColor == arg)
-            return;
-
-        m_specularColor = arg;
-    }
-
-    void setColorMultiplier(glm::vec3 arg)
-    {
-        if (m_colorMultiplier == arg)
-            return;
-
-        m_colorMultiplier = arg;
-    }
-
-    void unloadData(){
-        for(QPointer<CoffeeTexture> text : textures)
-            text->unloadTexture();
-    }
 
 private:
-    QHash<int,QPointer<CoffeeTexture> > textures;
+    QHash<CoffeeTexture::CoffeeTextureType,QPointer<CoffeeTexture> > textures;
 
-    QPointer<NumberContainer<float>> m_transparency;
+    bool m_wireframe = false;
+    bool m_culling = true;
     QPointer<NumberContainer<float>> m_shininess;
-    glm::vec3 m_diffuseColor;
-    glm::vec3 m_specularColor;
-    glm::vec3 m_colorMultiplier;
+    QPointer<NumberContainer<float>> m_shininessStrength;
+    QPointer<NumberContainer<float>> m_refraction;
+    QPointer<NumberContainer<glm::vec3>> m_transparency;
+    QPointer<NumberContainer<glm::vec3>> m_diffuseColor;
+    QPointer<NumberContainer<glm::vec3>> m_specularColor;
+    QPointer<NumberContainer<glm::vec3>> m_ambientColor;
+    QPointer<NumberContainer<glm::vec3>> m_colorMultiplier;
+    GLenum m_blendMode;
+    GLenum m_shadingMode = GL_FLAT;
+    QPointer<NumberContainer<float>> m_opacity;
+    QPointer<NumberContainer<float>> m_reflectivity;
 };
 
 #endif // COFFEEMATERIAL

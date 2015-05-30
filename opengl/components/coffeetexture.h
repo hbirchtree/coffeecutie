@@ -14,14 +14,21 @@ class CoffeeTexture : public QObject, public CoffeeGameAsset
     Q_OBJECT
 public:
 
-    enum DefaultTextureEnum{
-        Texture_Diffusion,Texture_Specular,Texture_Highlight,Texture_Transparency,
-        Texture_Bumpmap
+    enum CoffeeTextureType{
+        CoffeeTexture_Diffusion,CoffeeTexture_Specular,
+        CoffeeTexture_Highlight/*aka shininess*/,CoffeeTexture_Bumpmap,
+        CoffeeTexture_Transparency,
+
+        CoffeeTexture_Ambient,CoffeeTexture_Heightmap,
+        CoffeeTexture_Emissive,CoffeeTexture_Displacement,
+
+        CoffeeTexture_Lightmap,CoffeeTexture_Reflection
     };
 
     CoffeeTexture(QObject *parent,QMap<GLenum,QString> mapping); //Creates a cubemap
     CoffeeTexture(QObject *parent,QString filename);
     CoffeeTexture(QObject *parent,QByteArray* img);
+    CoffeeTexture(QObject *parent,aiTexture* texture);
     ~CoffeeTexture();
 
     bool isValidTexture();

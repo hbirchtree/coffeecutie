@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QDateTime>
+#include <QCommandLineParser>
 #include <QThreadPool>
 #include "coffeelogger.h"
 #include "inspector/coffeeinspector.h"
@@ -8,7 +9,11 @@
 #include "tests/boxtest.h"
 #include "engine/physics/bulletphysics.h"
 
-//#define COFFEE_ADVANCED_RUN
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+
+#define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
 //#define RUNNABLE_RENDERER
 
@@ -17,6 +22,32 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
     a.setApplicationVersion("0.0.1.16");
+    a.setApplicationDisplayName("Coffee Cutie");
+
+    bool inspect = true;
+
+    QCommandLineParser opts;
+    opts.setApplicationDescription("A scriptable game engine");
+    opts.addVersionOption();
+    opts.addHelpOption();
+    opts.addOption(QCommandLineOption("licenses","Get licensing information"));
+    opts.addOption(QCommandLineOption("inspect"));
+    opts.addPositionalArgument("configuration file","Source .json file","*.json");
+
+    opts.process(a);
+    for(QString key : opts.optionNames()){
+        if(key=="licenses"){
+            //show license information
+            return 0;
+        }else if(key=="inspect"){
+            inspect = true;
+        }
+    }
+
+    QString sourceFile = "ubw/ubw.json";
+    if(opts.positionalArguments().size()>0){
+        sourceFile = opts.positionalArguments().at(0);
+    }
 
     qsrand((rand()%RAND_MAX)/10000.0);
 
@@ -30,7 +61,7 @@ int main(int argc, char *argv[])
     renderer->setObjectName("root.renderer");
 
 #ifdef COFFEE_ADVANCED_RUN
-    loop = new CoffeeAdvancedLoop(root,renderer,"ubw/ubw.json");
+    loop = new CoffeeAdvancedLoop(root,renderer,sourceFile);
     loop->setObjectName("advanced-loop");
 #else
     //This demo taken from glbinding tests out general rendering
@@ -42,19 +73,23 @@ int main(int argc, char *argv[])
 
 #ifdef COFFEE_INSPECTOR_RUN
     QThreadPool::globalInstance()->setObjectName("QThreadPool");
-    CoffeeInspector *inspector = new CoffeeInspector(0,
+    CoffeeInspector *inspector;
+    if(inspect)
+         inspector = new CoffeeInspector(0,
                                                      loop->getThreadObjects()
                                                      << root
                                                      << QThreadPool::globalInstance(),
                                                      renderer);
 #endif //COFFEE_INSPECTOR_RUN
 
+
 #ifndef RUNNABLE_RENDERER
     int initStat = renderer->init();
     switch(initStat){
     case 0:{
 #ifdef COFFEE_INSPECTOR_RUN
-        inspector->show();
+        if(inspect)
+            inspector->show();
 #endif
 
         initStat = renderer->loop();
@@ -69,7 +104,8 @@ int main(int argc, char *argv[])
 
 
 #ifdef COFFEE_INSPECTOR_RUN
-    inspector->deleteLater();
+        if(inspect)
+            inspector->deleteLater();
 #endif
 
     delete root;

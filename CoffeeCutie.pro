@@ -62,7 +62,8 @@ SOURCES += main.cpp \
     engine/objects/coffeeinstancedobject.cpp \
     engine/objects/coffeeobject.cpp \
     engine/objects/coffeestandardobject.cpp \
-    engine/objects/coffeeskybox.cpp
+    engine/objects/coffeeskybox.cpp \
+    opengl/components/coffeematerial.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -150,3 +151,12 @@ DEPENDPATH += $$PWD/libs/bullet/src
 FORMS += \
     inspector/coffeeinspector.ui \
     inspector/coffeerendererinspector.ui
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp
+else:unix: LIBS += -L$$PWD/../assimp-library/code/ -lassimp
+
+INCLUDEPATH += $$PWD/libs/assimp/include
+DEPENDPATH += $$PWD/libs/assimp/include
+
+#DEFINES += COFFEE_USE_HORRIBLE_OBJ_IMPORTER

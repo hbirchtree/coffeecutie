@@ -1,6 +1,8 @@
 #ifndef WAVEFRONTMODELREADER
 #define WAVEFRONTMODELREADER
 
+#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
+
 #include "general/common.h"
 #include "general/filehandler.h"
 #include "engine/models/coffeemesh.h"
@@ -29,6 +31,6 @@ private:
     QHash<QString,QPointer<ModelContainer> > models;
     void parseMtlFile(QString file);
 };
+#endif
 
 #endif // WAVEFRONTMODELREADER
-

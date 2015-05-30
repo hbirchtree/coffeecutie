@@ -26,11 +26,11 @@ void CoffeeSkybox::render()
 
     GLint oldCullMode,oldDepthFunc;
     glGetIntegerv(GL_CULL_FACE_MODE,&oldCullMode);
-    glGetIntegerv(GL_DEPTH_FUNC,&oldDepthFunc);
+//    glGetIntegerv(GL_DEPTH_FUNC,&oldDepthFunc);
 
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
-    glDepthFunc(GL_LEQUAL);
+//    glDepthFunc(GL_LESS);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP,texture->getHandle());
@@ -39,14 +39,14 @@ void CoffeeSkybox::render()
     shader->setUniform("wvp",camera->getMatrix()*
                        RenderingMethods::translateObjectMatrix(camera->getPosition()->getValue(),
                                                                glm::quat(1,0,0,0),
-                                                               glm::vec3(5,5,5)));
+                                                               glm::vec3(1,1,1)));
 
     glBindVertexArray(vao);
     glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,(GLvoid*)0);
 
     glCullFace(static_cast<GLenum>(oldCullMode));
-    glDepthFunc(static_cast<GLenum>(oldDepthFunc));
     glEnable(GL_DEPTH_TEST);
+//    glDepthFunc(static_cast<GLenum>(oldDepthFunc));
 
     glBindTexture(GL_TEXTURE_CUBE_MAP,0);
     glBindVertexArray(0);
@@ -58,6 +58,7 @@ void CoffeeSkybox::unload()
     glDeleteVertexArrays(1,&vao);
     glDeleteBuffers(2,buffs);
     texture->unloadTexture();
+    glDisable(GL_TEXTURE_CUBE_MAP);
 }
 
 void CoffeeSkybox::load()
@@ -65,6 +66,7 @@ void CoffeeSkybox::load()
     if(!texture)
         texture = new CoffeeTexture(this,cubemapping);
 
+    glEnable(GL_TEXTURE_CUBE_MAP);
     qDebug("Skybox initializing");
 
     texture->loadTexture();

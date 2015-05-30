@@ -1,5 +1,7 @@
 #include "wavefrontmodelreader.h"
 
+#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
+
 WavefrontModelReader::WavefrontModelReader(QObject *parent) : QObject(parent)
 {
 }
@@ -196,3 +198,5 @@ void WavefrontModelReader::parseMtlFile(QString file){
         }
     }
 }
+
+#endif

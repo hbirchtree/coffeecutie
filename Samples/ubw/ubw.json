@@ -2,7 +2,8 @@
 	"models":{
 		"quad": "models/quad.obj",
 		"gear": "models/gear.obj",
-		"pusheen": "models/pusheenbox.obj"
+		"pusheen": "models/pusheenbox.obj",
+		"ubw": "models/ubw.fbx"
 	},
 	"world.1":{
 		"lights":[

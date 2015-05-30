@@ -16,7 +16,7 @@ public:
     static GLuint allocCubeTexture(GLenum internalFormat,
                                    GLenum colorFormat,
                                    int w, int h,
-                                   QMap<GLenum, unsigned char *> source,
+                                   QMap<GLenum, QImage> source,
                                    uint mipmaps,
                                    GLenum datatype);
 

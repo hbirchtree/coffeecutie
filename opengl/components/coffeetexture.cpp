@@ -18,6 +18,17 @@ CoffeeTexture::CoffeeTexture(QObject *parent, QByteArray *img) : QObject(parent)
     delete img;
 }
 
+CoffeeTexture::CoffeeTexture(QObject *parent, aiTexture *texture) : QObject(parent)
+{
+    if(texture->mHeight==0){
+        qDebug() << "Creating texture from format:" << texture->achFormatHint;
+        QImage::Format fmt;
+        qDebug() << "Unimplemented function!";
+    }else{
+        qDebug() << "Unimplemented function!";
+    }
+}
+
 CoffeeTexture::~CoffeeTexture()
 {
 }
@@ -42,22 +53,18 @@ void CoffeeTexture::loadTexture()
     if(isCubemap()){
         if(cubemapping.size()!=6)
             qWarning("Invalid size of cube mapping!");
-        QSize dims;
-        QMap<GLenum,unsigned char*> source;
-        for(GLenum map : cubemapping.keys()){
-            QImage img(cubemapping.value(map));
-            dims.setWidth(img.width());
-            dims.setHeight(img.height());
-            source.insert(map,img.bits());
-        }
+        QImage probe(cubemapping.first());
+        QMap<GLenum,QImage> source;
+        for(GLenum map : cubemapping.keys())
+            source.insert(map,QImage(cubemapping.value(map)));
         textureHandle = TextureHelper::allocCubeTexture(GL_RGBA8,GL_BGRA,
-                                                        dims.width(),dims.height(),
+                                                        probe.width(),probe.height(),
                                                         source,3,GL_UNSIGNED_BYTE);
     }else{
         texture = imageProcessor(texture);
         textureHandle = TextureHelper::allocTexture(GL_RGBA8,GL_BGRA,
                                                     texture.width(),texture.height(),
-                                                    texture.bits(),3,GL_UNSIGNED_BYTE);
+                                                    texture.bits(),1,GL_UNSIGNED_BYTE);
     }
     if(textureHandle>0)
         validTexture = true;

@@ -41,14 +41,9 @@ public:
 
     CoffeeMesh(QObject* parent);
     CoffeeMesh(QPointer<CoffeeMesh> mesh);
+    CoffeeMesh(QObject* parent,aiMesh* meshSource);
 
     QList<QPointer<CoffeeVertex> > copy();
-
-    QVector<glm::vec3> raw_vertices;
-    QVector<glm::vec2> raw_texcoords;
-    QVector<glm::vec3> raw_normals;
-    QVector<glm::vec3> raw_tangents;
-    QVector<GLuint> indices;
 
     GLuint getVertexIndexHandle() const;
     GLuint getVertexArrayHandle() const;
@@ -68,6 +63,13 @@ public slots:
     void setBaked(bool arg);
 
 protected:
+    QVector<glm::vec3> positions;
+    QVector<glm::vec2> texcoords;
+    QVector<glm::vec3> normals;
+    QVector<glm::vec3> bitangents;
+    QVector<glm::vec3> tangents;
+    QVector<GLuint> indices;
+
     QList<QPointer<CoffeeVertex> > getVertices();
     NumberBuffer<GLfloat>* getData();
     int getVerticesDataSize();

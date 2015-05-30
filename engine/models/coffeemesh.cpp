@@ -6,6 +6,29 @@ CoffeeMesh::CoffeeMesh(QPointer<CoffeeMesh> mesh){
     this->vertices = mesh->vertices;
 }
 
+CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource) : QObject(parent)
+{
+    for(int i=0;i<meshSource->mNumFaces;i++){
+        aiFace face = meshSource->mFaces[i];
+        for(int j=0;j<face.mNumIndices;j++){
+            indices.append(face.mIndices[j]);
+        }
+    }
+    for(int i=0;i<meshSource->mNumVertices;i++){
+        aiVector3D pos = meshSource->mVertices[i];
+        aiVector3D nor = meshSource->mNormals[i];
+        aiVector3D tan = meshSource->mTangents[i];
+        aiVector3D bit = meshSource->mBitangents[i];
+
+        positions.append(glm::vec3(pos.x,pos.y,pos.z));
+        normals.append(glm::vec3(nor.x,nor.y,nor.z));
+        tangents.append(glm::vec3(tan.x,tan.y,tan.z));
+        bitangents.append(glm::vec3(bit.x,bit.y,bit.z));
+        texcoords.append(glm::vec2(0,0));
+    }
+    this->setObjectName(meshSource->mName.C_Str());
+}
+
 QList<QPointer<CoffeeVertex> > CoffeeMesh::copy(){
     QList<QPointer<CoffeeVertex> > copy;
     for(QPointer<CoffeeVertex> vert : vertices){
@@ -81,12 +104,12 @@ void CoffeeMesh::generateIndices()
         indices.append(v2->i_position);
         indices.append(v3->i_position);
 
-        v1->i_tangent = raw_tangents.size();
-        raw_tangents.append(v1->tangent);
-        v2->i_tangent = raw_tangents.size();
-        raw_tangents.append(v2->tangent);
-        v3->i_tangent = raw_tangents.size();
-        raw_tangents.append(v3->tangent);
+        v1->i_tangent = tangents.size();
+        tangents.append(v1->tangent);
+        v2->i_tangent = tangents.size();
+        tangents.append(v2->tangent);
+        v3->i_tangent = tangents.size();
+        tangents.append(v3->tangent);
 
         i+=3;
     }
@@ -160,6 +183,8 @@ void CoffeeMesh::loadMesh()
                           0,
                           (GLvoid*)0);
 #else
+
+#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
     QVector<glm::vec3> positions;
     QVector<glm::vec2> texcoords;
     QVector<glm::vec3> normals;
@@ -173,6 +198,7 @@ void CoffeeMesh::loadMesh()
         tangents.append(vert->tangent);
         indices.append(i);
     }
+#endif
 
     glBindBuffer(GL_ARRAY_BUFFER,buffers[MESH_BUFFER_POS]);
     glBufferData(GL_ARRAY_BUFFER,

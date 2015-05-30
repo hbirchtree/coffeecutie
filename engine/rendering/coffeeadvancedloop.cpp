@@ -64,8 +64,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
-        glFrontFace(GL_CCW);
-
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
 
@@ -95,7 +93,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         world->renderWorld();
 
         //testing area
-//        test->render();
+        test->render();
 
         //render for the user
         renderFbo->unbindFramebuffer();
@@ -216,12 +214,12 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
         case 3:
             if((val<0&&diff>0)||(val>0&&diff<0))
                 break;
-            controller->setRotationYaw(val*val*val*80);
+            controller->setRotationYaw(std::pow(val,3)*80);
             break;
         case 4:
             if((val<0&&diff>0)||(val>0&&diff<0))
                 break;
-            controller->setRotationPitch(val*val*val*-80);
+            controller->setRotationPitch(std::pow(val,3)*-80);
             break;
         }
     });
@@ -237,21 +235,21 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
 {
     object->shader()->buildProgram();
 
-    for(int t : object->material()->getTextureKeys()){
+    for(CoffeeTexture::CoffeeTextureType t : object->material()->getTextureKeys()){
         switch(t){
-        case CoffeeTexture::Texture_Diffusion:
+        case CoffeeTexture::CoffeeTexture_Diffusion:
             object->setTexture("materialTex",object->material()->getTexture(t),GL_TEXTURE0);
             break;
-        case CoffeeTexture::Texture_Bumpmap:
+        case CoffeeTexture::CoffeeTexture_Bumpmap:
             object->setTexture("materialBump",object->material()->getTexture(t),GL_TEXTURE1);
             break;
-        case CoffeeTexture::Texture_Specular:
+        case CoffeeTexture::CoffeeTexture_Specular:
             object->setTexture("materialSpecular",object->material()->getTexture(t),GL_TEXTURE2);
             break;
-        case CoffeeTexture::Texture_Highlight:
+        case CoffeeTexture::CoffeeTexture_Highlight:
             object->setTexture("materialHighlight",object->material()->getTexture(t),GL_TEXTURE3);
             break;
-        case CoffeeTexture::Texture_Transparency:
+        case CoffeeTexture::CoffeeTexture_Transparency:
             object->setTexture("materialTransparency",object->material()->getTexture(t),GL_TEXTURE4);
             break;
         }
@@ -286,10 +284,10 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
 
 
     object->setUniform("materialShininess",new ShaderVariant([=](){
-        return object->material()->shininess()->getValue();
+        return object->material()->getShininess()->getValue();
     }));
     object->setUniform("materialTransparencyValue",new ShaderVariant([=](){
-        return object->material()->transparency()->getValue();
+        return object->material()->getTransparency()->getValue();
     }));
     object->setUniform("colorMul",new ShaderVariant([=](){
         return object->material()->colorMultiplier();
