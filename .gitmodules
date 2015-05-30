@@ -10,3 +10,6 @@
 [submodule "include/glm"]
 	path = include/glm
 	url = https://github.com/hbirchtree/glm
+[submodule "libs/assimp"]
+	path = libs/assimp
+	url = https://github.com/hbirchtree/assimp.git
