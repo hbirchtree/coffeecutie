@@ -3,6 +3,7 @@
 BoxTest::BoxTest(CoffeeRenderer* renderer) : RenderLoop(renderer){
     _rendering_loop_init = [this,renderer](){
         renderer->setSamples(4);
+        renderer->setSwapInterval(0);
         renderer->updateRendererClearColor(glm::vec4(0,0.2,0.2,1));
         cubescape = new CubeScape();
         QSize s = renderer->getCurrentFramebufferSize();
