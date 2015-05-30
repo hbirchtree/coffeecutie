@@ -36,6 +36,10 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
             qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
         }
 
+        CoffeeSkybox* skb = dynamic_cast<CoffeeSkybox*>(skybox);
+        if(skb)
+            skb->setCamera(world->getCamera());
+
         qDebug("Resizing viewport");
         QSize s = world->getRenderer()->getCurrentFramebufferSize();
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
@@ -87,10 +91,11 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
         //render the current world
+        skybox->render();
         world->renderWorld();
 
         //testing area
-        test->render();
+//        test->render();
 
         //render for the user
         renderFbo->unbindFramebuffer();
@@ -130,6 +135,17 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     controller = new CoffeePlayerController(this);
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     renderFbo = new CoffeeFrameBufferObject(this);
+    skybox = new CoffeeSkybox(this,0);
+
+    CoffeeSkybox* skb = dynamic_cast<CoffeeSkybox*>(skybox);
+    if(skb){
+        skb->addMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_X,"ubw/models/textures/scratchy.png");
+        skb->addMap(GL_TEXTURE_CUBE_MAP_POSITIVE_X,"ubw/models/textures/scratchy.png");
+        skb->addMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,"ubw/models/textures/scratchy.png");
+        skb->addMap(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,"ubw/models/textures/scratchy.png");
+        skb->addMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,"ubw/models/textures/scratchy.png");
+        skb->addMap(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,"ubw/models/textures/scratchy.png");
+    }
 
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
@@ -219,32 +235,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 
 void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
 {
-    //    defaultRenderingMethod = new CoffeeRenderingMethod(this);
-    //    //Here we use a template for all uniform variables as well as attributes. All objects need these.
-    //    defaultRenderingMethod->addShaderUniform("camera",new ShaderVariant([=](){
-    //        return world->getCamera()->getMatrix();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("cameraPosition",new ShaderVariant([=](){
-    //        return world->getCamera()->getPosition()->getValue();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("light.position",new ShaderVariant([=](){
-    //        return world->getLights().first()->getPosition()->getValue();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("light.intensities",new ShaderVariant([=](){
-    //        return world->getLights().first()->getColor()->getValue();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("light.attenuation",new ShaderVariant([=](){
-    //        return world->getLights().first()->getAttenuation()->getValue();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("light.ambientCoefficient",new ShaderVariant([=](){
-    //        return world->getLights().first()->getAmbientCoefficient()->getValue();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("fogParams.fDensity",new ShaderVariant([=](){
-    //        return world->getFogDensity();
-    //    }));
-    //    defaultRenderingMethod->addShaderUniform("fogParams.fColor",new ShaderVariant([=](){
-    //        return world->getFogColor();
-    //    }));
     object->shader()->buildProgram();
 
     for(int t : object->material()->getTextureKeys()){

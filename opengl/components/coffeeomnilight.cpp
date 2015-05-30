@@ -30,6 +30,11 @@ void CoffeeOmniLight::setPosition(QPointer<NumberContainer<glm::vec3>> value)
 {
     position = value;
 }
+
+QString CoffeeOmniLight::getStringPosition() const
+{
+    return QStringFunctions::toString(position->getValue());
+}
 QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getColor()
 {
     return color;
@@ -38,6 +43,11 @@ QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getColor()
 void CoffeeOmniLight::setColor(QPointer<NumberContainer<glm::vec3>> value)
 {
     color = value;
+}
+
+QString CoffeeOmniLight::getStringColor() const
+{
+    return QStringFunctions::toString(color->getValue());
 }
 QPointer<NumberContainer<float>> CoffeeOmniLight::getAttenuation()
 {
@@ -48,6 +58,11 @@ void CoffeeOmniLight::setAttenuation(QPointer<NumberContainer<float>> value)
 {
     attenuation = value;
 }
+
+float CoffeeOmniLight::getAttenuationValue() const
+{
+    return attenuation->getValue();
+}
 QPointer<NumberContainer<float> > CoffeeOmniLight::getAmbientCoefficient()
 {
     return ambientCoefficient;
@@ -56,4 +71,9 @@ QPointer<NumberContainer<float> > CoffeeOmniLight::getAmbientCoefficient()
 void CoffeeOmniLight::setAmbientCoefficient(QPointer<NumberContainer<float> > value)
 {
     ambientCoefficient = value;
+}
+
+float CoffeeOmniLight::getAmbientCoefficientValue() const
+{
+    return ambientCoefficient->getValue();
 }

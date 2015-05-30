@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <QString>
 #include <QMessageLogContext>
+#include <QDateTime>
 class CoffeeLogger
 {
 public:

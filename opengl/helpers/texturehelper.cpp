@@ -1,8 +1,13 @@
 #include "texturehelper.h"
 
-GLuint TextureHelper::allocTexture(GLenum internalFormat, GLenum colorFormat, int w, int h, unsigned char *source,uint mipmaps, GLenum datatype){
+GLuint TextureHelper::allocTexture(GLenum internalFormat,
+                                   GLenum colorFormat,
+                                   int w, int h,
+                                   unsigned char *source,
+                                   uint mipmaps,
+                                   GLenum datatype){
     if(mipmaps<1)
-        qDebug("Texture defined with no mipmaps!");
+        qWarning("Texture defined with no mipmaps!");
     GLuint handle;
     glGenTextures(1,&handle);
     glBindTexture(GL_TEXTURE_2D,handle);
@@ -17,6 +22,38 @@ GLuint TextureHelper::allocTexture(GLenum internalFormat, GLenum colorFormat, in
 
     glBindTexture(GL_TEXTURE_2D,0);
     return handle;
+}
+
+GLuint TextureHelper::allocCubeTexture(GLenum internalFormat,
+                                       GLenum colorFormat,
+                                       int w, int h,
+                                       QMap<GLenum,unsigned char *> source,
+                                       uint mipmaps,
+                                       GLenum datatype)
+{
+    GLuint cubemap;
+    glGenTextures(1,&cubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP,cubemap);
+
+    for(GLenum map : source.keys()){
+//        glTexImage2D(map,0,static_cast<int>(internalFormat),w,h,0,colorFormat,datatype,source.value(map));
+        glTexStorage2D(map,mipmaps,internalFormat,w,h);
+        glTexSubImage2D(map,0,0,0,w,h,colorFormat,datatype,source.value(map));
+        glGenerateMipmap(map);
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_MAG_FILTER,static_cast<int>(GL_LINEAR_MIPMAP_LINEAR));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_MIN_FILTER,static_cast<int>(GL_LINEAR_MIPMAP_LINEAR));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_WRAP_S,static_cast<int>(GL_CLAMP_TO_EDGE));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_WRAP_R,static_cast<int>(GL_CLAMP_TO_EDGE));
+    glTexParameteri(GL_TEXTURE_CUBE_MAP,
+                    GL_TEXTURE_WRAP_T,static_cast<int>(GL_CLAMP_TO_EDGE));
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP,0);
+    return cubemap;
 }
 
 GLuint TextureHelper::loadTexture(QString filesource){

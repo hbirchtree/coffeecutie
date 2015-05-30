@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.1.12");
+    a.setApplicationVersion("0.0.1.16");
 
     qsrand((rand()%RAND_MAX)/10000.0);
 
@@ -28,9 +28,6 @@ int main(int argc, char *argv[])
                                                   1280,720,Qt::WindowNoState,
                                                   "Unlimited Frame Works");
     renderer->setObjectName("root.renderer");
-
-    QVector<GLuint> test;
-    qDebug() << test.data();
 
 #ifdef COFFEE_ADVANCED_RUN
     loop = new CoffeeAdvancedLoop(root,renderer,"ubw/ubw.json");

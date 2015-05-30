@@ -7,8 +7,9 @@
 class CoffeeTexture : public QObject, public CoffeeGameAsset
 {
     Q_PROPERTY(QString textureFile READ textureFile)
-    Q_PROPERTY(int textureHandle READ getHandle)
+    Q_PROPERTY(uint textureHandle READ getHandle)
     Q_PROPERTY(bool validTexture READ isValidTexture)
+    Q_PROPERTY(bool cubemap READ isCubemap)
 
     Q_OBJECT
 public:
@@ -18,22 +19,21 @@ public:
         Texture_Bumpmap
     };
 
+    CoffeeTexture(QObject *parent,QMap<GLenum,QString> mapping); //Creates a cubemap
     CoffeeTexture(QObject *parent,QString filename);
     CoffeeTexture(QObject *parent,QByteArray* img);
     ~CoffeeTexture();
 
     bool isValidTexture();
+    bool isCubemap();
     void loadTexture();
     void unloadTexture();
 
     void setProcessor(std::function<QImage(QImage input)> func);
 
-    GLint getHandle();
+    GLuint getHandle();
 
-    QString textureFile() const
-    {
-        return m_textureFile;
-    }
+    QString textureFile() const;
 
 signals:
 
@@ -42,9 +42,13 @@ private:
         //We can use this to process the image the way we want.
         return input;
     };
+    bool b_cubemap = false;
     bool validTexture = false;
     QImage texture;
     GLuint textureHandle = 0;
+
+    QMap<GLenum,QString> cubemapping;
+
     QString m_textureFile;
 };
 

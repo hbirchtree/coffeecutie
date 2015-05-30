@@ -22,6 +22,8 @@
 #define MESH_LOC_WVP_MAT 4
 #define MESH_LOC_WLD_MAT 7
 
+//#define MESH_INDEXED_RAW
+
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 
@@ -46,9 +48,9 @@ public:
     QVector<glm::vec2> raw_texcoords;
     QVector<glm::vec3> raw_normals;
     QVector<glm::vec3> raw_tangents;
-    QVector<uint> raw_faces;
     QVector<GLuint> indices;
 
+    GLuint getVertexIndexHandle() const;
     GLuint getVertexArrayHandle() const;
 
     int getVerticesSize();
@@ -65,8 +67,7 @@ public:
 public slots:
     void setBaked(bool arg);
 
-private:
-
+protected:
     QList<QPointer<CoffeeVertex> > getVertices();
     NumberBuffer<GLfloat>* getData();
     int getVerticesDataSize();

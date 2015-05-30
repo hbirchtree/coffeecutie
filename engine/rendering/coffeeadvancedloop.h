@@ -19,6 +19,7 @@
 #include "opengl/components/coffeeframebufferobject.h"
 #include "opengl/components/coffeedepthbufferobject.h"
 #include "engine/objects/coffeeoutputsurface.h"
+#include "engine/objects/coffeeskybox.h"
 
 //Engine
 #include "engine/objects/coffeeobjectfactory.h"
@@ -50,6 +51,8 @@ private:
 
     CoffeeFrameBufferObject* renderFbo;
     CoffeeObject* screenSurface;
+
+    CoffeeObject* skybox;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;

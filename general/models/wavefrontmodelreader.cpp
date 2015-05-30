@@ -86,8 +86,6 @@ QHash<QString,QPointer<ModelReaderInterface::ModelContainer> > WavefrontModelRea
                             break;
                         }
                         }
-                    for(QString f : pts)
-                        mdl->model->raw_faces.append(f.toInt());
                     mdl->model->addVertex(vertex);
                 }
             models.insert(mdl->mdlName,mdl);

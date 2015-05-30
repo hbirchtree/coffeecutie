@@ -61,7 +61,8 @@ SOURCES += main.cpp \
     inspector/graphplotter.cpp \
     engine/objects/coffeeinstancedobject.cpp \
     engine/objects/coffeeobject.cpp \
-    engine/objects/coffeestandardobject.cpp
+    engine/objects/coffeestandardobject.cpp \
+    engine/objects/coffeeskybox.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -116,7 +117,8 @@ HEADERS += \
     inspector/graphplotter.h \
     engine/objects/coffeeinstancedobject.h \
     engine/objects/coffeeobject.h \
-    engine/objects/coffeestandardobject.h
+    engine/objects/coffeestandardobject.h \
+    engine/objects/coffeeskybox.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
