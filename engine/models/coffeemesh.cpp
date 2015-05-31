@@ -6,7 +6,7 @@ CoffeeMesh::CoffeeMesh(QPointer<CoffeeMesh> mesh){
     this->vertices = mesh->vertices;
 }
 
-CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource) : QObject(parent)
+CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : QObject(parent)
 {
     for(int i=0;i<meshSource->mNumFaces;i++){
         aiFace face = meshSource->mFaces[i];
@@ -18,19 +18,27 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource) : QObject(parent)
         if(meshSource->HasPositions()){ //I have no idea why.
             aiVector3D pos = meshSource->mVertices[i];
             positions.append(glm::vec3(pos.x,pos.y,pos.z));
-        }else
+        }else{
+            if(success)
+                *success=false;
             positions.append(glm::vec3());
+        }
         if(meshSource->HasNormals()){
             aiVector3D nor = meshSource->mNormals[i];
             normals.append(glm::vec3(nor.x,nor.y,nor.z));
-        }else
+        }else{
+            if(success)
+                *success=false;
             normals.append(glm::vec3());
+        }
         if(meshSource->HasTangentsAndBitangents()){
             aiVector3D tan = meshSource->mTangents[i];
             tangents.append(glm::vec3(tan.x,tan.y,tan.z));
             aiVector3D bit = meshSource->mBitangents[i];
             bitangents.append(glm::vec3(bit.x,bit.y,bit.z));
         }else{
+            if(success)
+                *success=false;
             tangents.append(glm::vec3());
             bitangents.append(glm::vec3());
         }
@@ -40,6 +48,9 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource) : QObject(parent)
         }
     }
     this->setObjectName(meshSource->mName.C_Str());
+
+    if(success)
+        *success = true;
 }
 
 QList<QPointer<CoffeeVertex> > CoffeeMesh::copy(){
@@ -273,6 +284,8 @@ void CoffeeMesh::loadMesh()
                  GL_STATIC_DRAW);
 
     glBindVertexArray(0);
+
+    setBaked(true);
 }
 
 void CoffeeMesh::unloadMesh(){

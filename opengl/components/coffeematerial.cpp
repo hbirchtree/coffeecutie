@@ -89,8 +89,17 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
             }
             aiString textureFile;
             materialSource->GetTexture(type,i,&textureFile);
+            //Problem: We need to know if the path is absolute or relative.
+            //Solution: Use QFileInfo to test
+            QFileInfo fileProbe(QString(textureFile.C_Str()));
+            if(fileProbe.isRelative())
+                fileProbe.setFile(filepath+QString(textureFile.C_Str()));
+            if(!fileProbe.exists()){
+                qWarning("Failed to locate texture: %s",fileProbe.fileName().toStdString().c_str());
+                continue;
+            }
             textures.insert(ctype,new CoffeeTexture(this,
-                                                    filepath+QString(textureFile.C_Str())));
+                                                    fileProbe.filePath()));
         }
 
 

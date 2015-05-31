@@ -41,7 +41,7 @@ public:
 
     CoffeeMesh(QObject* parent);
     CoffeeMesh(QPointer<CoffeeMesh> mesh);
-    CoffeeMesh(QObject* parent,aiMesh* meshSource);
+    CoffeeMesh(QObject* parent, aiMesh* meshSource, bool *success = 0);
 
     QList<QPointer<CoffeeVertex> > copy();
 

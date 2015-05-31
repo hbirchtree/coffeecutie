@@ -30,7 +30,8 @@
 	"models":{
 		"quad": "models/quad.obj",
 		"pusheen": "models/pusheenbox.obj",
-		"ubw": "models/ubw.fbx"
+		"ubw": "models/ubw.fbx",
+		"bumpbox": "models/Zelda 1.fbx"
 	},
 	"world.1":{
 		"lights":[
@@ -89,13 +90,13 @@
 				"id": "blade",
 				"shader.vertex": "shaders/vsh.txt",
 				"shader.fragment": "shaders/fsh.txt",
-				"model.idsrc": "ubw:Me.*",
+				"model.idsrc": "bumpbox:.*",
 				"model.scale": [2,2,2],
 				"physics":{
 					"position": [9,12,12],
 					"scale": [1,1,1],
 					"shape": "sphere",
-					"mass": 50,
+					"mass": 1,
 					"friction": 0,
 					"restitution":0.8,
 					"inertia": [0,0,1]

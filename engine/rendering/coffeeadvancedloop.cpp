@@ -40,6 +40,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         if(skb)
             skb->setCamera(world->getCamera());
 
+        world->getLights().first()->getPosition()->bindValue(world->getCamera()->getPosition());
+
         qDebug("Resizing viewport");
         QSize s = world->getRenderer()->getCurrentFramebufferSize();
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
@@ -194,6 +196,8 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             controller->addSpeedRight(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
             controller->addSpeedForward(glm::vec3(0,0,0));
+        else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress)
+            world->setWireframeMode(!world->wireframeMode());
     });
     renderer->connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
         if(btn==6){
