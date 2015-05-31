@@ -15,16 +15,29 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource) : QObject(parent)
         }
     }
     for(int i=0;i<meshSource->mNumVertices;i++){
-        aiVector3D pos = meshSource->mVertices[i];
-        aiVector3D nor = meshSource->mNormals[i];
-        aiVector3D tan = meshSource->mTangents[i];
-        aiVector3D bit = meshSource->mBitangents[i];
-
-        positions.append(glm::vec3(pos.x,pos.y,pos.z));
-        normals.append(glm::vec3(nor.x,nor.y,nor.z));
-        tangents.append(glm::vec3(tan.x,tan.y,tan.z));
-        bitangents.append(glm::vec3(bit.x,bit.y,bit.z));
-        texcoords.append(glm::vec2(0,0));
+        if(meshSource->HasPositions()){ //I have no idea why.
+            aiVector3D pos = meshSource->mVertices[i];
+            positions.append(glm::vec3(pos.x,pos.y,pos.z));
+        }else
+            positions.append(glm::vec3());
+        if(meshSource->HasNormals()){
+            aiVector3D nor = meshSource->mNormals[i];
+            normals.append(glm::vec3(nor.x,nor.y,nor.z));
+        }else
+            normals.append(glm::vec3());
+        if(meshSource->HasTangentsAndBitangents()){
+            aiVector3D tan = meshSource->mTangents[i];
+            tangents.append(glm::vec3(tan.x,tan.y,tan.z));
+            aiVector3D bit = meshSource->mBitangents[i];
+            bitangents.append(glm::vec3(bit.x,bit.y,bit.z));
+        }else{
+            tangents.append(glm::vec3());
+            bitangents.append(glm::vec3());
+        }
+        if(meshSource->HasTextureCoords(0)){
+            aiVector3D tex = meshSource->mTextureCoords[0][i];
+            texcoords.append(glm::vec2(tex.x,1.f-tex.y));
+        }
     }
     this->setObjectName(meshSource->mName.C_Str());
 }

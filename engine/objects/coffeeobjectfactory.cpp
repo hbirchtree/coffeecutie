@@ -59,7 +59,6 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
                     obj->setMaterial(s.material);
                     obj->setMesh(s.mesh);
                 }
-            qDebug() << "Failed to load model";
 #endif
         }
         else if(key=="model.position")
@@ -176,11 +175,11 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
                     aiProcess_OptimizeMeshes |
                     aiProcess_SortByPType);
         if(!scene){
-            qDebug("Failed to read model %s: %s",filename.toStdString().c_str(),importer.GetErrorString());
+            qDebug("Failed to read model data %s: %s",filename.toStdString().c_str(),importer.GetErrorString());
         }else{
-            qDebug("Successfully read model: %s:\n"
-                   " %i meshes, %i materials, %i textures,\n"
-                   "%i lights, %i cameras, %i animations",
+            qDebug("Successfully read model data: %s:\n"
+                   " %i mesh(es), %i material(s), %i texture(s),\n"
+                   "%i light(s), %i camera(s), %i animation(s)",
                    filename.toStdString().c_str(),
                    scene->mNumMeshes,scene->mNumMaterials,
                    scene->mNumTextures,scene->mNumLights,
@@ -196,6 +195,8 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
             for(int i=0;i<scene->mNumMeshes;i++){
                 aiMesh* mesh = scene->mMeshes[i];
                 CoffeeMesh* cmesh = new CoffeeMesh(parent,mesh);
+                while(meshes.contains(cmesh->objectName()))
+                    cmesh->setObjectName("Mesh."+QString::number(qrand()));
                 meshes.insert(cmesh->objectName(),cmesh);
                 CoffeeModelStruct s;
                 s.mesh = cmesh;
@@ -203,7 +204,10 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
                     s.material = mtllist.at(mesh->mMaterialIndex);
                 }else{
                     qDebug("Could not find material for mesh: %s",cmesh->objectName().toStdString().c_str());
+                    continue;
                 }
+                qDebug("New model: name=%s,material=%s",cmesh->objectName().toStdString().c_str(),
+                       s.material->objectName().toStdString().c_str());
                 models.insert(cmesh->objectName(),s);
             }
         }

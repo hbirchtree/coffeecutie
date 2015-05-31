@@ -59,12 +59,12 @@ void CoffeeTexture::loadTexture()
             source.insert(map,QImage(cubemapping.value(map)));
         textureHandle = TextureHelper::allocCubeTexture(GL_RGBA8,GL_BGRA,
                                                         probe.width(),probe.height(),
-                                                        source,3,GL_UNSIGNED_BYTE);
+                                                        source,1,GL_UNSIGNED_BYTE);
     }else{
         texture = imageProcessor(texture);
         textureHandle = TextureHelper::allocTexture(GL_RGBA8,GL_BGRA,
                                                     texture.width(),texture.height(),
-                                                    texture.bits(),1,GL_UNSIGNED_BYTE);
+                                                    texture.bits(),3,GL_UNSIGNED_BYTE);
     }
     if(textureHandle>0)
         validTexture = true;

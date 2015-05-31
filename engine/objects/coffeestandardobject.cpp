@@ -10,18 +10,18 @@ void CoffeeStandardObject::render()
         load();
     glUseProgram(pshader->getProgramId());
     for(ShaderMapping m : uniforms)
-        pshader->setUniform(m.uniform,m.data);
+        if(!m.constant)
+            pshader->setUniform(m.uniform,m.data);
     for(TextureMapping m : textures){
         //Might want to secure this in the future
         glActiveTexture(static_cast<GLenum>(GL_TEXTURE0+textures.indexOf(m)));
         glBindTexture(GL_TEXTURE_2D,
                       m.texture->getHandle());
-        pshader->setUniform(m.samplerName,
-                            static_cast<GLint>(GL_TEXTURE0)+textures.indexOf(m));
+//        pshader->setUniform(m.samplerName,
+//                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
     }
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
-//    glDrawArrays(GL_TRIANGLES,0,pmesh->getVerticesSize()); //for drawing from arrays
     glDrawElements(GL_TRIANGLES,
                    pmesh->getIndicesCount(),
                    GL_UNSIGNED_INT,
@@ -47,10 +47,15 @@ void CoffeeStandardObject::load()
 {
     if(pmesh)
         pmesh->loadMesh();
-    for(ShaderMapping m : uniforms)
+    for(ShaderMapping m : uniforms){
         pshader->getUniformLocation(m.uniform);
+        if(m.constant)
+            pshader->setUniform(m.uniform,m.data);
+    }
     for(TextureMapping m : textures){
         pshader->getUniformLocation(m.samplerName);
+        pshader->setUniform(m.samplerName,
+                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
         m.texture->loadTexture();
     }
     baked = true;
@@ -98,15 +103,16 @@ void CoffeeStandardObject::setMaterial(CoffeeMaterial *mtl)
     this->pmaterial = mtl;
 }
 
-void CoffeeStandardObject::setUniform(QString uniformName, QPointer<ShaderVariant> data)
+void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)
 {
     ShaderMapping map;
+    map.constant = constant;
     map.uniform = uniformName;
     map.data = data;
     uniforms.append(map);
 }
 
-void CoffeeStandardObject::setTexture(QString samplerName, QPointer<CoffeeTexture> texture, GLenum unit)
+void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture* texture, GLenum unit)
 {
     TextureMapping map;
     map.samplerName = samplerName;

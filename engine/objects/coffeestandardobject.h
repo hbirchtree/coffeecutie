@@ -33,8 +33,8 @@ public:
     CoffeeMaterial* material();
     void setMaterial(CoffeeMaterial *mtl);
 
-    void setUniform(QString uniformName,QPointer<ShaderVariant> data);
-    void setTexture(QString samplerName,QPointer<CoffeeTexture> texture,GLenum unit);
+    void setUniform(QString uniformName,ShaderVariant* data, bool constant);
+    void setTexture(QString samplerName, CoffeeTexture *texture, GLenum unit);
 
 protected:
     bool baked = false;
@@ -43,6 +43,7 @@ protected:
     public:
         QString uniform;
         QPointer<ShaderVariant> data;
+        bool constant = false;
     };
     class TextureMapping {
     public:

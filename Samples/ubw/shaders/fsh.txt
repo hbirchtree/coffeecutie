@@ -4,12 +4,18 @@ uniform mat4 model;
 uniform mat4 camera;
 uniform vec3 cameraPosition;
 
-// material settings
-uniform sampler2D materialTex;
-uniform float materialShininess;
-uniform float materialTransparencyValue;
-uniform vec3 materialSpecularColor;
-//uniform vec3 materialDiffuseColor;
+uniform struct Material {
+	sampler2D diffuseSampler;
+
+	vec3 transparencyValue;
+	float shininess;
+	float shininessStrength;
+	float opacity;
+	vec3 diffuseColor;
+	vec3 specularColor;
+	vec3 ambientColor;
+	vec3 colorMultiplier;
+} mtl;
 
 uniform struct Light {
    vec3 position;
@@ -35,24 +41,22 @@ void main() {
     vec3 normal = normalize(transpose(inverse(mat3(model))) * fragNormal);
     vec3 surfacePos = vec3(model * vec4(fragVert, 1));
     vec4 eyePos = model * vec4(fragVert,1.0);
-    vec4 surfaceColor = texture(materialTex, fragTexCoord);
+    vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
     vec3 surfaceToLight = normalize(light.position - surfacePos);
     vec3 surfaceToCamera = normalize(cameraPosition - surfacePos);
     
     //ambient
-    vec3 ambient = light.ambientCoefficient * surfaceColor.rgb * light.intensities;
+    vec3 ambient = light.ambientCoefficient * mtl.ambientColor * light.intensities;
 
     //diffuse
     float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
     vec3 diffuse = diffuseCoefficient * surfaceColor.rgb * light.intensities;
-//    vec3 diffuse = diffuseCoefficient * vec3(0.5,0.7,0.5) * light.intensities;
 
-    
     //specular
     float specularCoefficient = 0.0;
     if(diffuseCoefficient > 0.0)
-        specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, normal))), materialShininess);
-    vec3 specular = specularCoefficient * materialSpecularColor * light.intensities;
+        specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, normal))), mtl.shininess);
+    vec3 specular = specularCoefficient * mtl.specularColor * light.intensities;
     
     //attenuation
     float distanceToLight = length(light.position - surfacePos);
@@ -71,5 +75,5 @@ void main() {
     linearColor = mix(fogParams.fColor.xyz,linearColor,fogVar);
     
     //final color (after gamma correction)
-    finalColor = vec4(linearColor, surfaceColor.a*materialTransparencyValue);
+    finalColor = vec4(linearColor, surfaceColor.a*mtl.opacity);
 }

@@ -93,7 +93,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         world->renderWorld();
 
         //testing area
-        test->render();
+//        test->render();
 
         //render for the user
         renderFbo->unbindFramebuffer();
@@ -238,63 +238,74 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
     for(CoffeeTexture::CoffeeTextureType t : object->material()->getTextureKeys()){
         switch(t){
         case CoffeeTexture::CoffeeTexture_Diffusion:
-            object->setTexture("materialTex",object->material()->getTexture(t),GL_TEXTURE0);
+            object->setTexture("mtl.diffuseSampler",object->material()->getTexture(t),GL_TEXTURE0);
             break;
         case CoffeeTexture::CoffeeTexture_Bumpmap:
-            object->setTexture("materialBump",object->material()->getTexture(t),GL_TEXTURE1);
+            object->setTexture("mtl.bumpSampler",object->material()->getTexture(t),GL_TEXTURE1);
             break;
         case CoffeeTexture::CoffeeTexture_Specular:
-            object->setTexture("materialSpecular",object->material()->getTexture(t),GL_TEXTURE2);
+            object->setTexture("mtl.specularSampler",object->material()->getTexture(t),GL_TEXTURE2);
             break;
         case CoffeeTexture::CoffeeTexture_Highlight:
-            object->setTexture("materialHighlight",object->material()->getTexture(t),GL_TEXTURE3);
+            object->setTexture("mtl.highlightSampler",object->material()->getTexture(t),GL_TEXTURE3);
             break;
         case CoffeeTexture::CoffeeTexture_Transparency:
-            object->setTexture("materialTransparency",object->material()->getTexture(t),GL_TEXTURE4);
+            object->setTexture("mtl.transparencySampler",object->material()->getTexture(t),GL_TEXTURE4);
             break;
         }
     }
 
     object->setUniform("camera",new ShaderVariant([=](){
         return world->getCamera()->getMatrix();
-    }));
+    }),false);
     object->setUniform("cameraPosition",new ShaderVariant([=](){
         return world->getCamera()->getPosition()->getValue();
-    }));
+    }),false);
 
     object->setUniform("fogParams.fDensity",new ShaderVariant([=](){
         return world->getFogDensity();
-    }));
+    }),false);
     object->setUniform("fogParams.fColor",new ShaderVariant([=](){
         return world->getFogColor();
-    }));
+    }),false);
 
     object->setUniform("light.position",new ShaderVariant([=](){
         return world->getLights().first()->getPosition()->getValue();
-    }));
+    }),false);
     object->setUniform("light.intensities",new ShaderVariant([=](){
         return world->getLights().first()->getColor()->getValue();
-    }));
+    }),false);
     object->setUniform("light.attenuation",new ShaderVariant([=](){
         return world->getLights().first()->getAttenuation()->getValue();
-    }));
+    }),false);
     object->setUniform("light.ambientCoefficient",new ShaderVariant([=](){
         return world->getLights().first()->getAmbientCoefficient()->getValue();
-    }));
+    }),false);
 
-
-    object->setUniform("materialShininess",new ShaderVariant([=](){
-        return object->material()->getShininess()->getValue();
-    }));
-    object->setUniform("materialTransparencyValue",new ShaderVariant([=](){
-        return object->material()->getTransparency()->getValue();
-    }));
-    object->setUniform("colorMul",new ShaderVariant([=](){
+    object->setUniform("mtl.shininess",new ShaderVariant([=](){
+        return object->material()->shininess();
+    }),false);
+    object->setUniform("mtl.opacity",new ShaderVariant([=](){
+        return object->material()->opacity();
+    }),false);
+    object->setUniform("mtl.shininessStrength",new ShaderVariant([=](){
+        return object->material()->shininessStrength();
+    }),false);
+    object->setUniform("mtl.transparencyValue",new ShaderVariant([=](){
+        return object->material()->transparency();
+    }),false);
+    object->setUniform("mtl.colorMultiplier",new ShaderVariant([=](){
         return object->material()->colorMultiplier();
-    }));
+    }),false);
+    object->setUniform("mtl.specularColor",new ShaderVariant([=](){
+        return object->material()->specularColor();
+    }),false);
+    object->setUniform("mtl.ambientColor",new ShaderVariant([=](){
+        return object->material()->ambientColor();
+    }),false);
     object->setUniform("model",new ShaderVariant([=](){
         return RenderingMethods::translateObjectMatrix(object->position()->getValue(),
                                                        object->rotation()->getValue(),
                                                        object->scale()->getValue());
-    }));
+    }),false);
 }

@@ -25,12 +25,16 @@ int main(int argc, char *argv[])
     a.setApplicationDisplayName("Coffee Cutie");
 
     bool inspect = true;
+    bool logStderr = true;
+    bool logFile = false;
 
     QCommandLineParser opts;
     opts.setApplicationDescription("A scriptable game engine");
     opts.addVersionOption();
     opts.addHelpOption();
     opts.addOption(QCommandLineOption("licenses","Get licensing information"));
+    opts.addOption(QCommandLineOption("log-file","Log to file"));
+    opts.addOption(QCommandLineOption("log-stderr","Log to stderr"));
     opts.addOption(QCommandLineOption("inspect"));
     opts.addPositionalArgument("configuration file","Source .json file","*.json");
 
@@ -41,6 +45,10 @@ int main(int argc, char *argv[])
             return 0;
         }else if(key=="inspect"){
             inspect = true;
+        }else if(key=="log-file"){
+            logFile = true;
+        }else if(key=="log-stderr"){
+            logStderr = true;
         }
     }
 
@@ -53,7 +61,7 @@ int main(int argc, char *argv[])
 
     RenderLoop* loop;
     QObject* root = new QObject();
-    CoffeeLogger logger; Q_UNUSED(logger);
+    CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
     root->setObjectName("[main,unlimited-root]");
     CoffeeRenderer *renderer = new CoffeeRenderer(root,
                                                   1280,720,Qt::WindowNoState,

@@ -1,7 +1,34 @@
 {
+	"assets": [
+		{
+			"type": "shader",
+			"name": "standard",
+			"fragment": "shaders/fsh.txt",
+			"vertex": "shaders/vsh.txt"
+		},
+		{
+			"type": "model",
+			"name": "quad",
+			"file": "models/quad.obj"
+		},
+		{
+			"type": "texture",
+			"variant": "cubemap",
+			"north": "",
+			"south": "",
+			"east": "",
+			"west": "",
+			"up": "",
+			"down": ""
+		},
+		{
+			"type": "texture",
+			"variant": "standard",
+			"file": ""
+		}
+	],
 	"models":{
 		"quad": "models/quad.obj",
-		"gear": "models/gear.obj",
 		"pusheen": "models/pusheenbox.obj",
 		"ubw": "models/ubw.fbx"
 	},
@@ -30,7 +57,7 @@
 			{
 				"id": "plane",
 				"shader.vertex": "shaders/vsh.txt",
-				"shader.fragment": "shaders/fsh.txt",
+				"shader.fragment": "shaders/fsh_nolight.txt",
 				"model.position": [0,0,0],
 				"model.idsrc": "quad:",
 				"model.scale": [1,1,1],
@@ -46,16 +73,31 @@
 				"id": "gear",
 				"shader.vertex": "shaders/vsh.txt",
 				"shader.fragment": "shaders/fsh.txt",
-				"model.position": [10,32,0],
-				"model.idsrc": "gear:",
-				"model.scale": [1,1,1],
+				"model.idsrc": "ubw:Cyl.*",
+				"model.scale": [2,2,2],
 				"physics":{
 					"position": [10,1,0],
-					"scale": [1,1,1],
+					"scale": [10,10,10],
 					"shape": "sphere",
 					"mass": 1,
 					"friction": 0,
-					"restitution":1,
+					"restitution":0.8,
+					"inertia": [0,0,0]
+				}
+			},
+			{
+				"id": "blade",
+				"shader.vertex": "shaders/vsh.txt",
+				"shader.fragment": "shaders/fsh.txt",
+				"model.idsrc": "ubw:Me.*",
+				"model.scale": [2,2,2],
+				"physics":{
+					"position": [9,12,12],
+					"scale": [1,1,1],
+					"shape": "sphere",
+					"mass": 50,
+					"friction": 0,
+					"restitution":0.8,
 					"inertia": [0,0,1]
 				}
 			}

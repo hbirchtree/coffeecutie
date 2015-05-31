@@ -24,13 +24,11 @@ void CoffeeSkybox::render()
         load();
     glUseProgram(shader->getProgramId());
 
-    GLint oldCullMode,oldDepthFunc;
+    GLint oldCullMode;
     glGetIntegerv(GL_CULL_FACE_MODE,&oldCullMode);
-//    glGetIntegerv(GL_DEPTH_FUNC,&oldDepthFunc);
 
     glDisable(GL_DEPTH_TEST);
     glCullFace(GL_FRONT);
-//    glDepthFunc(GL_LESS);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP,texture->getHandle());
@@ -46,7 +44,6 @@ void CoffeeSkybox::render()
 
     glCullFace(static_cast<GLenum>(oldCullMode));
     glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(static_cast<GLenum>(oldDepthFunc));
 
     glBindTexture(GL_TEXTURE_CUBE_MAP,0);
     glBindVertexArray(0);

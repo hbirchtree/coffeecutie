@@ -1,28 +1,55 @@
 #include "coffeelogger.h"
 
-CoffeeLogger::CoffeeLogger()
+QFile *CoffeeLogger::outputFile;
+bool CoffeeLogger::logFile;
+bool CoffeeLogger::logStdOut;
+
+CoffeeLogger::CoffeeLogger(bool logStdOut,bool logFile)
 {
+    this->logStdOut = logStdOut;
+    this->logFile = logFile;
+    if(logFile){
+        outputFile = new QFile("coffee.log",this);
+        if(!outputFile->open(QIODevice::Append|QIODevice::WriteOnly|QIODevice::Text)){
+            fprintf(stderr,"Failed to create logfile");
+            this->logFile = false;
+        }
+    }
     qInstallMessageHandler(&defaultMessageHandler);
+}
+
+CoffeeLogger::~CoffeeLogger()
+{
+    if(logFile)
+        outputFile->close();
 }
 
 void CoffeeLogger::defaultMessageHandler(QtMsgType t, const QMessageLogContext &context, const QString &msg)
 {
-    std::string logtime = QDateTime::currentDateTime().toString("hh:mm:ss.zzz").toStdString();
+    QString logmessage = QDateTime::currentDateTime().toString("hh:mm:ss.zzz")+":";
     QByteArray m_msg = msg.toLocal8Bit();
     switch(t){
     case QtDebugMsg:
-        fprintf(stderr, "%s : DEBUG:%s:%u: %s\n",logtime.c_str(),context.function,context.line,m_msg.constData());
+        logmessage.append("DEBUG");
         break;
     case QtWarningMsg:
-        fprintf(stderr, "%s : WARN:%s:%u: %s\n",logtime.c_str(),context.function,context.line,m_msg.constData());
+        logmessage.append("WARN");
         break;
     case QtCriticalMsg:
-        fprintf(stderr, "%s : CRITICAL:%s:%u: %s\n",logtime.c_str(),context.function,context.line,m_msg.constData());
+        logmessage.append("CRITICAL");
         break;
     case QtFatalMsg:
-        fprintf(stderr, "%s : FATAL:%s:%u: %s\n",logtime.c_str(),context.function,context.line,m_msg.constData());
+        logmessage.append("FATAL");
         break;
     default:
-        fprintf(stderr, "%s : ???:%s:%u: %s\n",logtime.c_str(),context.function,context.line,m_msg.constData());
+        logmessage.append("???");
     }
+
+    logmessage.append(QString(":%1:%2: %3\n").arg(context.function).arg(context.line).arg(m_msg.constData()));
+
+    if(logFile)
+        outputFile->write(logmessage.toStdString().c_str(),logmessage.size());
+    if(logStdOut)
+        fprintf(stderr, "%s",
+                logmessage.toStdString().c_str());
 }
