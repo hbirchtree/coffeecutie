@@ -63,6 +63,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
 
+        glEnable(GL_DEBUG_OUTPUT);
+
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 

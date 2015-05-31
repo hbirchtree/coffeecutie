@@ -104,6 +104,8 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
                                 FileHandler::getBytesFromFile(pd.value(pkey).toString()));
                 }else if(pkey=="position")
                     pobj->getDescr()->setPosition(listToVec3(pd.value(pkey)));
+                else if(pkey=="scale")
+                    pobj->getDescr()->setScale(listToVec3(pd.value(pkey)));
             }
             if(pobj->getDescr()->getShape()!=PhysicsDescriptor::Shape_None){
                 pobj->getPositionObject()->setValue(pobj->getDescr()->position());
@@ -177,8 +179,8 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
         if(!scene){
             qDebug("Failed to read model data %s: %s",filename.toStdString().c_str(),importer.GetErrorString());
         }else{
-            qDebug("Successfully read model data: %s:\n"
-                   " %i mesh(es), %i material(s), %i texture(s),\n"
+            qDebug("Successfully read model data: %s:"
+                   " %i mesh(es), %i material(s), %i texture(s), "
                    "%i light(s), %i camera(s), %i animation(s)",
                    filename.toStdString().c_str(),
                    scene->mNumMeshes,scene->mNumMaterials,

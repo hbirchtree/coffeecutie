@@ -81,7 +81,7 @@
 					"scale": [10,10,10],
 					"shape": "sphere",
 					"mass": 1,
-					"friction": 0,
+					"friction": 1,
 					"restitution":0.8,
 					"inertia": [0,0,0]
 				}
@@ -96,8 +96,24 @@
 					"position": [9,12,12],
 					"scale": [1,1,1],
 					"shape": "sphere",
-					"mass": 1,
-					"friction": 0,
+					"mass": 10,
+					"friction": 1,
+					"restitution":0.8,
+					"inertia": [0,0,1]
+				}
+			},
+			{
+				"id": "blade2",
+				"shader.vertex": "shaders/vsh.txt",
+				"shader.fragment": "shaders/fsh.txt",
+				"model.idsrc": "bumpbox:.*",
+				"model.scale": [2,2,2],
+				"physics":{
+					"position": [9,10,12],
+					"scale": [5,5,5],
+					"shape": "sphere",
+					"mass": 100,
+					"friction": 1,
 					"restitution":0.8,
 					"inertia": [0,0,1]
 				}
