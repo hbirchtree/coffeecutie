@@ -244,31 +244,37 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
     for(CoffeeTexture::CoffeeTextureType t : object->material()->getTextureKeys()){
         switch(t){
         case CoffeeTexture::CoffeeTexture_Ambient:
+            object->setTexture("mtl.ambientSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Heightmap:
+            object->setTexture("mtl.heightmapSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Emissive:
+            object->setTexture("mtl.emissiveSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Displacement:
+            object->setTexture("mtl.displacementSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Lightmap:
+            object->setTexture("mtl.lightmapSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Reflection:
+            object->setTexture("mtl.reflectivitySampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Diffusion:
-            object->setTexture("mtl.diffuseSampler",object->material()->getTexture(t),GL_TEXTURE0);
+            object->setTexture("mtl.diffuseSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Bumpmap:
-            object->setTexture("mtl.bumpSampler",object->material()->getTexture(t),GL_TEXTURE1);
+            object->setTexture("mtl.bumpSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Specular:
-            object->setTexture("mtl.specularSampler",object->material()->getTexture(t),GL_TEXTURE2);
+            object->setTexture("mtl.specularSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Highlight:
-            object->setTexture("mtl.highlightSampler",object->material()->getTexture(t),GL_TEXTURE3);
+            object->setTexture("mtl.highlightSampler",object->material()->getTexture(t));
             break;
         case CoffeeTexture::CoffeeTexture_Transparency:
-            object->setTexture("mtl.transparencySampler",object->material()->getTexture(t),GL_TEXTURE4);
+            object->setTexture("mtl.transparencySampler",object->material()->getTexture(t));
             break;
         }
     }
@@ -317,6 +323,18 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
     }),false);
     object->setUniform("mtl.specularColor",new ShaderVariant([=](){
         return object->material()->specularColor();
+    }),false);
+    object->setUniform("mtl.diffuseColor",new ShaderVariant([=](){
+        return object->material()->diffuseColor();
+    }),false);
+    object->setUniform("mtl.emissiveColor",new ShaderVariant([=](){
+        return object->material()->emissiveColor();
+    }),false);
+    object->setUniform("mtl.refraction",new ShaderVariant([=](){
+        return object->material()->refraction();
+    }),false);
+    object->setUniform("mtl.reflectivity",new ShaderVariant([=](){
+        return object->material()->reflectivity();
     }),false);
     object->setUniform("mtl.ambientColor",new ShaderVariant([=](){
         return object->material()->ambientColor();

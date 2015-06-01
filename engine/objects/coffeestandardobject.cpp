@@ -17,8 +17,8 @@ void CoffeeStandardObject::render()
         glActiveTexture(static_cast<GLenum>(GL_TEXTURE0+textures.indexOf(m)));
         glBindTexture(GL_TEXTURE_2D,
                       m.texture->getHandle());
-//        pshader->setUniform(m.samplerName,
-//                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
+        pshader->setUniform(m.samplerName,
+                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
     }
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
@@ -54,8 +54,8 @@ void CoffeeStandardObject::load()
     }
     for(TextureMapping m : textures){
         pshader->getUniformLocation(m.samplerName);
-        pshader->setUniform(m.samplerName,
-                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
+//        pshader->setUniform(m.samplerName,
+//                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
         m.texture->loadTexture();
     }
     baked = true;
@@ -112,12 +112,11 @@ void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, 
     uniforms.append(map);
 }
 
-void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture* texture, GLenum unit)
+void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture* texture)
 {
     TextureMapping map;
     map.samplerName = samplerName;
     map.texture = texture;
-    map.unit = unit;
     textures.append(map);
 }
 

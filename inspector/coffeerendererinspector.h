@@ -25,10 +25,12 @@ private slots:
 
 private:
     QColor clearColor;
+    qint64 checkInterval = 200;
     qint64 measureTime = 0;
     QPointF last;
+    QTreeWidgetItem* fpsItem;
+    QTreeWidgetItem* frameTimeItem;
     qreal readings = 0;
-    QVector<QGraphicsItem*> items;
     GraphPlotter* scene = nullptr;
     Ui::CoffeeRendererInspector *ui;
 };

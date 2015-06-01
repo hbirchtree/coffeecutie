@@ -42,10 +42,9 @@ public:
     glm::vec3 colorMultiplier() const;
     glm::vec3 diffuseColor() const;
     glm::vec3 transparency() const;
+    glm::vec3 emissiveColor() const;
     GLenum blendMode() const;
     GLenum shadingMode() const;
-
-
 
 public slots:
     void setTexture(CoffeeTexture::CoffeeTextureType id,QPointer<CoffeeTexture> texture);
@@ -63,12 +62,12 @@ public slots:
     void setTransparency(const glm::vec3& arg);
     void setAmbientColor(const glm::vec3& ambientColor);
     void setSpecularColor(const glm::vec3& arg);
+    void setEmissiveColor(const glm::vec3& emissiveColor);
     void setColorMultiplier(const glm::vec3& arg);
     void setBlendMode(GLenum blendMode);
     void setShadingMode(GLenum shadingMode);
 
     void unloadData();
-
 
 private:
     QHash<CoffeeTexture::CoffeeTextureType,QPointer<CoffeeTexture> > textures;
@@ -82,6 +81,7 @@ private:
     QPointer<NumberContainer<glm::vec3>> m_diffuseColor;
     QPointer<NumberContainer<glm::vec3>> m_specularColor;
     QPointer<NumberContainer<glm::vec3>> m_ambientColor;
+    QPointer<NumberContainer<glm::vec3>> m_emissiveColor;
     QPointer<NumberContainer<glm::vec3>> m_colorMultiplier;
     GLenum m_blendMode;
     GLenum m_shadingMode = GL_FLAT;

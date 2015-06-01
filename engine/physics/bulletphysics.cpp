@@ -56,7 +56,7 @@ btQuaternion BulletPhysics::convert_glm(const glm::quat &v)
 
 glm::quat BulletPhysics::convert_bt(const btQuaternion &v)
 {
-    return glm::quat(v.x(),v.y(),v.z(),v.w());
+    return glm::quat(v.w(),v.x(),v.y(),v.z());
 }
 
 btVector3 BulletPhysics::convert_glm(const glm::vec3 &v)
@@ -191,7 +191,7 @@ void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timeste
         obj->updateVelocity(convert_bt(rb->getLinearVelocity()));
         obj->updateAcceleration(convert_bt(rb->getTotalForce()));
         btQuaternion r = t.getRotation();
-        obj->updateRotation(glm::quat(r.w(),r.x(),r.y(),r.z()));
+        obj->updateRotation(convert_bt(r));
         glm::quat av = glm::quat(1.f,convert_bt(rb->getAngularVelocity()));
         obj->updateAngularVelocity(av);
     }

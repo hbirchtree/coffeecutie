@@ -21,13 +21,15 @@ CoffeeRendererInspector::CoffeeRendererInspector(QWidget *parent, CoffeeRenderer
     tableHeader << "Value" << "Data";
     ui->infoView->setHeaderLabels(tableHeader);
 
+    fpsItem = new QTreeWidgetItem();
+    fpsItem->setText(0,"Framerate (FPS)");
+    frameTimeItem = new QTreeWidgetItem();
+    frameTimeItem->setText(0,"Frametime");
+
+    ui->infoView->addTopLevelItem(fpsItem);
+    ui->infoView->addTopLevelItem(frameTimeItem);
+
     connect(renderer,SIGNAL(contextReportFrametime(float)),SLOT(plotGraph(float)),Qt::QueuedConnection);
-    connect(renderer,&CoffeeRenderer::winMouseGrabbed,[=](QEvent ev){
-        QTreeWidgetItem* it = new QTreeWidgetItem();
-        it->setText(0,"Mouse grabbing");
-        it->setText(1,ev.type()==QEvent::GrabMouse ? "true" : "false");
-        ui->infoView->addTopLevelItem(it);
-    });
 }
 
 CoffeeRendererInspector::~CoffeeRendererInspector()
@@ -40,7 +42,10 @@ void CoffeeRendererInspector::plotGraph(float frametime)
 {
     if(!this->isVisible()||QDateTime::currentMSecsSinceEpoch()<measureTime)
         return;
-    measureTime=QDateTime::currentMSecsSinceEpoch()+100;
+    measureTime=QDateTime::currentMSecsSinceEpoch()+checkInterval;
+
+    fpsItem->setText(1,QString("%1 FPS").arg(1/frametime));
+    frameTimeItem->setText(1,QString("%1ms").arg(frametime*1000.0));
 
     scene->addPlot(frametime*1000.0);
     scene->invalidate(QRect(),QGraphicsScene::ForegroundLayer);

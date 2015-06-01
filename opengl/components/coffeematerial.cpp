@@ -193,6 +193,11 @@ GLenum CoffeeMaterial::shadingMode() const
     return m_shadingMode;
 }
 
+glm::vec3 CoffeeMaterial::emissiveColor() const
+{
+    return m_emissiveColor->getValue();
+}
+
 float CoffeeMaterial::reflectivity() const
 {
     return m_reflectivity->getValue();
@@ -244,6 +249,11 @@ void CoffeeMaterial::setColorMultiplier(const glm::vec3 &arg)
 void CoffeeMaterial::unloadData(){
     for(QPointer<CoffeeTexture> text : textures)
         text->unloadTexture();
+}
+
+void CoffeeMaterial::setEmissiveColor(const glm::vec3 &emissiveColor)
+{
+    *m_emissiveColor = emissiveColor;
 }
 
 void CoffeeMaterial::setReflectivity(float reflectivity)

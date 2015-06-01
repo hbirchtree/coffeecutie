@@ -34,7 +34,7 @@ public:
     void setMaterial(CoffeeMaterial *mtl);
 
     void setUniform(QString uniformName,ShaderVariant* data, bool constant);
-    void setTexture(QString samplerName, CoffeeTexture *texture, GLenum unit);
+    void setTexture(QString samplerName, CoffeeTexture *texture);
 
 protected:
     bool baked = false;
