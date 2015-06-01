@@ -46,20 +46,12 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
             if(id.length()<2)
                 continue;
             QRegExp r(id.at(1));
-#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
-            for(QString m : models.value(id.at(0)).keys())
-                if(m.contains(r)){
-                    obj->setMesh(models.value(id.at(0)).value(m)->model);
-                    obj->setMaterial(models.value(id.at(0)).value(m)->material);
-                }
-#else
             for(QString m : models.value(id.at(0)).keys())
                 if(m.contains(r)){
                     CoffeeModelStruct s = models.value(id.at(0)).value(m);
                     obj->setMaterial(s.material);
                     obj->setMesh(s.mesh);
                 }
-#endif
         }
         else if(key=="model.position")
             obj->position()->setValue(listToVec3(data.value(key)));
@@ -150,17 +142,7 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, QObject
 
 void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
 {
-#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
-    WavefrontModelReader rdr(parent);
-    int mcnt = models.size();
-    for(QString key : data.keys()){
-        models.insert(key,rdr.parseModel(filepath+data.value(key).toString()));
-        rdr.clearData();
-    }
-    qDebug("Imported %i model sources from asset index",models.size()-mcnt);
-#else
     Assimp::Importer importer;
-
 
     for(QString key : data.keys()){
         QString filename = filepath+data.value(key).toString();
@@ -218,8 +200,6 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
         this->meshes.insert(key,meshes);
         this->materials.insert(key,materials);
     }
-
-#endif
 }
 
 CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, QObject *parent)

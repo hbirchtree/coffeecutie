@@ -166,79 +166,6 @@ void CoffeeMesh::loadMesh()
 
     glBindVertexArray(arrays.at(0));
 
-#ifdef MESH_INDEXED_RAW
-    generateIndices();
-
-    glBindBuffer(GL_ARRAY_BUFFER,buffers[MESH_BUFFER_POS]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 raw_vertices.size()*sizeof(glm::vec3),
-                 raw_vertices.data(),
-                 GL_STATIC_DRAW);
-    glEnableVertexAttribArray(MESH_LOC_POS);
-    glVertexAttribPointer(MESH_LOC_POS,
-                          3,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          0,
-                          (GLvoid*)0);
-
-    glBindBuffer(GL_ARRAY_BUFFER,buffers[MESH_BUFFER_TEX]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 raw_texcoords.size()*sizeof(glm::vec2),
-                 raw_texcoords.data(),
-                 GL_STATIC_DRAW);
-    glEnableVertexAttribArray(MESH_LOC_TEX);
-    glVertexAttribPointer(MESH_LOC_TEX,
-                          2,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          0,
-                          (GLvoid*)0);
-
-    glBindBuffer(GL_ARRAY_BUFFER,buffers[MESH_BUFFER_NORMAL]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 raw_normals.size()*sizeof(glm::vec3),
-                 raw_normals.data(),
-                 GL_STATIC_DRAW);
-    glEnableVertexAttribArray(MESH_LOC_NOR);
-    glVertexAttribPointer(MESH_LOC_NOR,
-                          3,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          0,
-                          (GLvoid*)0);
-
-    //TODO : write tangents to raw_tangents instead of each individual vertex. vertices will now only hold indices. transitioning is hard but necessary.
-    glBindBuffer(GL_ARRAY_BUFFER,buffers[MESH_BUFFER_TANGENT]);
-    glBufferData(GL_ARRAY_BUFFER,
-                 raw_tangents.size()*sizeof(glm::vec3),
-                 raw_tangents.data(),
-                 GL_STATIC_DRAW);
-    glEnableVertexAttribArray(MESH_LOC_TAN);
-    glVertexAttribPointer(MESH_LOC_TAN,
-                          3,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          0,
-                          (GLvoid*)0);
-#else
-
-#ifdef COFFEE_USE_HORRIBLE_OBJ_IMPORTER
-    QVector<glm::vec3> positions;
-    QVector<glm::vec2> texcoords;
-    QVector<glm::vec3> normals;
-    QVector<glm::vec3> tangents;
-
-    for(GLuint i=0;i<vertices.size();i++){
-        CoffeeVertex* vert = vertices.at(i);
-        positions.append(vert->position);
-        texcoords.append(vert->texCoord);
-        normals.append(vert->normal);
-        tangents.append(vert->tangent);
-        indices.append(i);
-    }
-#endif
-
     int free_buffer = 0;
 
     if(usePositions()&&hasPositions()){
@@ -327,8 +254,6 @@ void CoffeeMesh::loadMesh()
                               0,
                               (GLvoid*)0);
     }
-
-#endif
 
     setIndexBufferIndex(free_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,buffers[free_buffer++]);

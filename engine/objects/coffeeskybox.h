@@ -4,7 +4,6 @@
 #include "coffeeobject.h"
 #include "opengl/components/shadercontainer.h"
 #include "opengl/helpers/renderingmethods.h"
-#include "general/models/wavefrontmodelreader.h"
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeecamera.h"
 class CoffeeSkybox : public CoffeeObject

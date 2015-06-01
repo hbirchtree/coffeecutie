@@ -243,6 +243,18 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
 
     for(CoffeeTexture::CoffeeTextureType t : object->material()->getTextureKeys()){
         switch(t){
+        case CoffeeTexture::CoffeeTexture_Ambient:
+            break;
+        case CoffeeTexture::CoffeeTexture_Heightmap:
+            break;
+        case CoffeeTexture::CoffeeTexture_Emissive:
+            break;
+        case CoffeeTexture::CoffeeTexture_Displacement:
+            break;
+        case CoffeeTexture::CoffeeTexture_Lightmap:
+            break;
+        case CoffeeTexture::CoffeeTexture_Reflection:
+            break;
         case CoffeeTexture::CoffeeTexture_Diffusion:
             object->setTexture("mtl.diffuseSampler",object->material()->getTexture(t),GL_TEXTURE0);
             break;

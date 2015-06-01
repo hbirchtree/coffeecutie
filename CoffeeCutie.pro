@@ -29,8 +29,6 @@ SOURCES += main.cpp \
     general/input/coffeejoystick.cpp \
     general/input/coffeeplayercontroller.cpp \
     general/input/coffeesdljoystick.cpp \
-    general/models/modelreaderinterface.cpp \
-    general/models/wavefrontmodelreader.cpp \
     general/qstringfunctions.cpp \
     general/shadervariant.cpp \
     opengl/components/coffeecamera.cpp \
@@ -81,8 +79,6 @@ HEADERS += \
     general/input/coffeejoystick.h \
     general/input/coffeeplayercontroller.h \
     general/input/coffeesdljoystick.h \
-    general/models/modelreaderinterface.h \
-    general/models/wavefrontmodelreader.h \
     general/common.h \
     general/filehandler.h \
     general/qstringfunctions.h \
