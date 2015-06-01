@@ -1,17 +1,16 @@
 #include <QApplication>
-#include <QDateTime>
 #include <QCommandLineParser>
 #include <QThreadPool>
 #include "coffeelogger.h"
 #include "inspector/coffeeinspector.h"
-#include "opengl/context/coffeerenderer.h"
 #include "engine/rendering/coffeeadvancedloop.h"
-#include "tests/boxtest.h"
-#include "engine/physics/bulletphysics.h"
 
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
+#ifndef QOPENGL_CONTEXT_MANAGER
+#include "opengl/context/coffeerenderer.h"
+#include "tests/boxtest.h"
+#else
+#include "opengl/context/qcoffeerenderer.h"
+#endif
 
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
@@ -63,9 +62,15 @@ int main(int argc, char *argv[])
     QObject* root = new QObject();
     CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
     root->setObjectName("[main,unlimited-root]");
+#ifndef QOPENGL_CONTEXT_MANAGER
     CoffeeRenderer *renderer = new CoffeeRenderer(root,
                                                   1280,720,Qt::WindowNoState,
                                                   "Unlimited Frame Works");
+#else
+    QCoffeeRenderer *renderer = new QCoffeeRenderer(root,
+                                                  1280,720,Qt::WindowNoState,
+                                                  "Unlimited Frame Works");
+#endif
     renderer->setObjectName("root.renderer");
 
 #ifdef COFFEE_ADVANCED_RUN

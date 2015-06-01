@@ -1,15 +1,18 @@
 #ifndef COFFEERENDERER_H
 #define COFFEERENDERER_H
 
+#include <QCoreApplication>
 #include "general/common.h"
 #include "opengl/rendering/renderloop.h"
-#include <QCoreApplication>
 #include <QMimeData>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QResizeEvent>
 #include <QMoveEvent>
+
+class GLFWwindow;
+class RenderLoop;
 
 class CoffeeRenderer : public QObject, public QRunnable
 {
@@ -36,38 +39,38 @@ public:
     CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state, QString windowTitle);
     ~CoffeeRenderer();
 
-    int init();
-    int loop();
+    virtual int init();
+    virtual int loop();
 
 
-    int getStartDisplay() const;
-    double getLoopTime() const;
-    QString getWindowTitle() const;
-    QSize getWindowDimensions() const;
-    QSize getCurrentFramebufferSize() const;
-    QSize *getFramebufferSizePt();
-    int getMouseInputMode() const;
-    bool isMouseGrabbed() const;
-    double getLatestFrameTime() const;
+    virtual int getStartDisplay() const;
+    virtual double getLoopTime() const;
+    virtual QString getWindowTitle() const;
+    virtual QSize getWindowDimensions() const;
+    virtual QSize getCurrentFramebufferSize() const;
+    virtual QSize *getFramebufferSizePt();
+    virtual int getMouseInputMode() const;
+    virtual bool isMouseGrabbed() const;
+    virtual double getLatestFrameTime() const;
 
-    int getSamples() const;
+    virtual int getSamples() const;
 
 public slots:
-    void setSwapInterval(uint interval);
-    void setStartDisplay(uint value);
-    void setWindowDimensions(const QSize &value);
-    void setSamples(uint value);
-    void setLoop(RenderLoop *value);
-    void requestWindowClose();
-    void updateWindowTitle(QString value);
-    void updateRendererClearColor(glm::vec4 value);
-    void updateWindowDimensions(QSize dims);
-    void setWindowState(Qt::WindowState state);
-    void setStartmode(const Qt::WindowState &value);
-    void updateMouseGrabbing(bool state);
-    void setMousePos(int x,int y);
+    virtual void setSwapInterval(uint interval);
+    virtual void setStartDisplay(uint value);
+    virtual void setWindowDimensions(const QSize &value);
+    virtual void setSamples(uint value);
+    virtual void setLoop(RenderLoop *value);
+    virtual void requestWindowClose();
+    virtual void updateWindowTitle(QString value);
+    virtual void updateRendererClearColor(glm::vec4 value);
+    virtual void updateWindowDimensions(QSize dims);
+    virtual void setWindowState(Qt::WindowState state);
+    virtual void setStartmode(const Qt::WindowState &value);
+    virtual void updateMouseGrabbing(bool state);
+    virtual void setMousePos(int x,int y);
 
-    void run();
+    virtual void run();
 
 private slots:
     GLFWwindow *setWindowedFullscreen(uint monitor);

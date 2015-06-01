@@ -188,13 +188,13 @@ void CoffeeObjectFactory::importModels(const QVariantMap &data,QObject* parent)
                    scene->mNumCameras,scene->mNumAnimations);
 
             QVector<CoffeeMaterial*> mtllist;
-            for(int i=0;i<scene->mNumMaterials;i++){
+            for(uint i=0;i<scene->mNumMaterials;i++){
                 aiMaterial* mtl = scene->mMaterials[i];
                 CoffeeMaterial* cmtl = new CoffeeMaterial(parent,mtl,fileinfo.path()+QDir::separator());
                 materials.insert(cmtl->objectName(),cmtl);
                 mtllist.append(cmtl);
             }
-            for(int i=0;i<scene->mNumMeshes;i++){
+            for(uint i=0;i<scene->mNumMeshes;i++){
                 aiMesh* mesh = scene->mMeshes[i];
                 CoffeeMesh* cmesh = new CoffeeMesh(parent,mesh);
                 while(meshes.contains(cmesh->objectName()))

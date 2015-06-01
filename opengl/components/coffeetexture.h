@@ -2,6 +2,8 @@
 #define COFFEETEXTURE_H
 
 #include "general/common.h"
+#include <QColor>
+#include <QRgb>
 #include "opengl/helpers/texturehelper.h"
 #include "general/data/coffeegameasset.h"
 class CoffeeTexture : public QObject, public CoffeeGameAsset

@@ -6,12 +6,6 @@
 #include "general/data/coffeegameasset.h"
 #include "general/data/numberbuffer.h"
 
-#define MESH_BUFFER_INDEX 4
-#define MESH_BUFFER_POS 0
-#define MESH_BUFFER_TEX 1
-#define MESH_BUFFER_NORMAL 2
-#define MESH_BUFFER_TANGENT 3
-
 #define MESH_BUFFER_WVP_MAT 5
 #define MESH_BUFFER_WORLD_MAT 6
 
@@ -19,15 +13,30 @@
 #define MESH_LOC_TEX 1
 #define MESH_LOC_NOR 2
 #define MESH_LOC_TAN 3
-#define MESH_LOC_WVP_MAT 4
-#define MESH_LOC_WLD_MAT 7
+#define MESH_LOC_BIT 4
+#define MESH_LOC_WVP_MAT 5
+#define MESH_LOC_WLD_MAT 8
 
 //#define MESH_INDEXED_RAW
 
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
 
+    Q_PROPERTY(bool hasPositions READ hasPositions)
+    Q_PROPERTY(bool hasNormals READ hasNormals)
+    Q_PROPERTY(bool hasTextureCoordinates READ hasTextureCoordinates)
+    Q_PROPERTY(bool hasTangents READ hasTangents)
+    Q_PROPERTY(bool hasBitangents READ hasBitangents)
+
+    Q_PROPERTY(bool usePositions READ usePositions WRITE setUsePositions)
+    Q_PROPERTY(bool useNormals READ useNormals WRITE setUseNormals)
+    Q_PROPERTY(bool useTextureCoordinates READ useTextureCoordinates WRITE setUseTextureCoordinates)
+    Q_PROPERTY(bool useTangents READ useTangents WRITE setUseTangents)
+    Q_PROPERTY(bool useBitangents READ useBitangents WRITE setUseBitangents)
+
     Q_PROPERTY(bool baked READ baked WRITE setBaked)
+
+    Q_PROPERTY(int indexBufferIndex READ indexBufferIndex WRITE setIndexBufferIndex)
 
 public:
     class VertexArrayPointerDescriptor {
@@ -53,16 +62,40 @@ public:
     void setVertices(QList<QPointer<CoffeeVertex> > vertices);
 
     GLuint getIndicesCount() const;
-    void generateIndices();
 
     void loadMesh();
     void unloadMesh();
 
     bool baked() const;
+
+    bool hasPositions() const;
+    bool hasNormals() const;
+    bool hasTextureCoordinates() const;
+    bool hasTangents() const;
+    bool hasBitangents() const;
+
+    bool usePositions() const;
+    bool useNormals() const;
+    bool useTextureCoordinates() const;
+    bool useBitangents() const;
+    bool useTangents() const;
+
+    int indexBufferIndex() const;
+
 public slots:
     void setBaked(bool arg);
 
+    void setUsePositions(bool usePositions);
+    void setUseNormals(bool useNormals);
+    void setUseTextureCoordinates(bool useTextureCoordinates);
+    void setUseBitangents(bool useBitangents);
+    void setUseTangents(bool useTangents);
+
+    void setIndexBufferIndex(int indexBufferIndex);
+
 protected:
+    void generateIndices();
+
     QVector<glm::vec3> positions;
     QVector<glm::vec2> texcoords;
     QVector<glm::vec3> normals;
@@ -70,15 +103,28 @@ protected:
     QVector<glm::vec3> tangents;
     QVector<GLuint> indices;
 
-    QList<QPointer<CoffeeVertex> > getVertices();
     NumberBuffer<GLfloat>* getData();
     int getVerticesDataSize();
 
+
+private:
     QList<QPointer<CoffeeVertex> > vertices;
     QVector<GLuint> buffers;
     QVector<GLuint> arrays;
     GLenum drawmode = GL_STATIC_DRAW;
     bool m_baked = false;
+
+    bool m_hasPositions = false;
+    bool m_hasNormals = false;
+    bool m_hasTextureCoordinates = false;
+    bool m_hasTangents = false;
+    bool m_hasBitangents = false;
+    bool m_usePositions = true;
+    bool m_useNormals = true;
+    bool m_useTextureCoordinates = true;
+    bool m_useBitangents = false;
+    bool m_useTangents = true;
+    int m_indexBufferIndex;
 };
 
 #endif // COFFEEMESH

@@ -23,9 +23,15 @@ CoffeeTexture::CoffeeTexture(QObject *parent, aiTexture *texture) : QObject(pare
     if(texture->mHeight==0){
         qDebug() << "Creating texture from format:" << texture->achFormatHint;
         QImage::Format fmt;
-        qDebug() << "Unimplemented function!";
+        qDebug() << "Unimplemented function: decompressing texture data";
     }else{
-        qDebug() << "Unimplemented function!";
+        this->texture = QImage(QSize(texture->mWidth,texture->mHeight),QImage::Format_RGBA8888);
+        for(int x=0;x<texture->mWidth;x++)
+            for(int y=0;y<texture->mHeight;y++){
+                aiTexel s = texture->pcData[y*texture->mWidth+x];
+                QRgb c = qRgba(s.r,s.g,s.b,s.a);
+                this->texture.setColor(y*texture->mWidth+x,c);
+            }
     }
 }
 

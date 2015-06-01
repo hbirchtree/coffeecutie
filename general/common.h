@@ -19,8 +19,16 @@
 #include <glm/glm/gtc/type_ptr.hpp>
 #include <glm/glm/gtc/matrix_transform.hpp>
 
+#ifndef QOPENGL_CONTEXT_MANAGER
+
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
+
+
+#else
+#include <QOpenGLWindow>
+#include <QOpenGLFunctions>
+#endif
 
 #include <glbinding/ContextInfo.h>
 #include <glbinding/Version.h>
@@ -29,13 +37,14 @@
 
 #include <glbinding/gl/gl.h>
 
+using namespace gl;
+
 #include "qstringfunctions.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-using namespace gl;
 
 #ifndef QUICK_MATH_HELPER
 #define QUICK_MATH_HELPER

@@ -5,11 +5,12 @@
 #-------------------------------------------------
 
 QT       += core gui opengl
-#QtGUI is used for image loading
 
 TARGET = CoffeeCutie
 CONFIG += console c++11
 CONFIG -= app_bundle
+
+#DEFINES += QOPENGL_CONTEXT_MANAGER
 
 TEMPLATE = app
 
@@ -159,4 +160,3 @@ else:unix: LIBS += -L$$PWD/../assimp-library/code/ -lassimp
 INCLUDEPATH += $$PWD/libs/assimp/include
 DEPENDPATH += $$PWD/libs/assimp/include
 
-#DEFINES += COFFEE_USE_HORRIBLE_OBJ_IMPORTER
