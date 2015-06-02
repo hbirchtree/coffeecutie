@@ -1,5 +1,7 @@
 #include "coffeerenderer.h"
 
+#define RENDERER_DO_DEBUG
+
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QObject(parent)
 {
     connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
@@ -375,6 +377,9 @@ int CoffeeRenderer::init(){
     glfwWindowHint(GLFW_SAMPLES,samples);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,true);
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
+#ifdef RENDERER_DO_DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
+#endif
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
     glfwWindowHint(GLFW_VISIBLE,false);
@@ -432,11 +437,32 @@ int CoffeeRenderer::init(){
 
     setSwapInterval(1);
 
-    glbinding::setAfterCallback([](const glbinding::FunctionCall&){
-        gl::GLenum error = glGetError();
-        if(error!=GL_NO_ERROR)
-            fprintf(stderr,"OGLERROR: error code:%i\n",static_cast<int>(error));
-    });
+//    glbinding::setAfterCallback([](const glbinding::FunctionCall&){
+//        gl::GLenum error = glGetError();
+//        if(error!=GL_NO_ERROR)
+//            fprintf(stderr,"OGLERROR: error code:%i\n",static_cast<int>(error));
+//    });
+//    glbinding::setBeforeCallback([](const glbinding::FunctionCall&){
+//        gl::GLenum error = glGetError();
+//        if(error!=GL_NO_ERROR)
+//            fprintf(stderr,"OGLERROR: error code:%i\n",static_cast<int>(error));
+//    });
+
+#ifdef RENDERER_DO_DEBUG
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+    if(glDebugMessageCallback){
+        glDebugMessageCallback(openGLDebugCallback,nullptr);
+        GLuint unusedIds = 0;
+        glDebugMessageControl(GL_DONT_CARE,
+                              GL_DONT_CARE,
+                              GL_DONT_CARE,
+                              0,
+                              &unusedIds,
+                              GL_TRUE);
+    }else
+        qDebug() << "No debug 4 u!";
+#endif
 
     glfwShowWindow(window);
 
@@ -467,7 +493,6 @@ int CoffeeRenderer::loop(){
     while(!glfwWindowShouldClose(window)){
         frametime = glfwGetTime();
         glfwPollEvents();
-//        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         (*_loop)();
         glfwSwapBuffers(window);
         QCoreApplication::processEvents();
@@ -479,6 +504,19 @@ int CoffeeRenderer::loop(){
 
     qDebug("Estimated uptime: %.1f seconds",glfwGetTime());
     return 0;
+}
+
+void CoffeeRenderer::openGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
+{
+    if(severity==GL_DEBUG_SEVERITY_NOTIFICATION)
+        return;
+    QByteArray messageB;
+    messageB.setRawData(message,length);
+    qDebug("OpenGL debug callback:\n%s(%s):%s:\n%s",
+           glbinding::Meta::getString(source).c_str(),
+           glbinding::Meta::getString(type).c_str(),
+           glbinding::Meta::getString(severity).c_str(),
+           messageB.toStdString().c_str());
 }
 
 void CoffeeRenderer::run()

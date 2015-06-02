@@ -3,33 +3,17 @@
 
 #include "general/common.h"
 
-//Data, etc
-#include "general/data/numbercontainer.h"
 #include "general/data/coffeedatacontainer.h"
-#include "general/qstringfunctions.h"
-
-
-//Rendering
 #include "opengl/rendering/renderloop.h"
-#include "opengl/context/coffeerenderer.h"
-#include "opengl/rendering/coffeerenderingloop.h"
-#include "opengl/helpers/renderingmethods.h"
 
-//Display
-#include "opengl/components/coffeeframebufferobject.h"
-#include "opengl/components/coffeedepthbufferobject.h"
-#include "engine/objects/coffeeoutputsurface.h"
-#include "engine/objects/coffeeskybox.h"
-
-//Engine
-#include "engine/objects/coffeeobjectfactory.h"
-#include "engine/objects/coffeeobject.h"
-#include "opengl/components/coffeeworldopts.h"
-#include "general/input/coffeejoystick.h"
-#include "general/input/coffeeplayercontroller.h"
-
-#include "engine/objects/coffeeparticlesystem.h"
-
+class CoffeeJoystick;
+class CoffeeParticleSystem;
+class CoffeeWorldOpts;
+class CoffeeFrameBufferObject;
+class CoffeeObject;
+class CoffeeStandardObject;
+class CoffeePlayerController;
+class CoffeeRenderer;
 
 class CoffeeAdvancedLoop : public RenderLoop
 {
@@ -51,8 +35,6 @@ private:
 
     CoffeeFrameBufferObject* renderFbo;
     CoffeeObject* screenSurface;
-
-    CoffeeObject* skybox;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;

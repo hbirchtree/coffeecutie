@@ -8,6 +8,7 @@ class ShaderContainer : public QObject
 {
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader)
     Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader)
+    Q_PROPERTY(QString geometryShader READ geometryShader WRITE setGeometryShader)
     Q_PROPERTY(int programId READ getProgramId)
 
     Q_OBJECT
@@ -48,12 +49,12 @@ public:
 
     QString fragmentShader() const;
     QString vertexShader() const;
-    void setFragmentShader(const QString& sh);
-    void setVertexShader(const QString& sh);
-
-signals:
+    QString geometryShader() const;
 
 public slots:
+    void setFragmentShader(const QString& sh);
+    void setVertexShader(const QString& sh);
+    void setGeometryShader(const QString &geometryShader);
 
 private:
     QString fragShaderFile;
@@ -67,6 +68,7 @@ private:
 
     QHash<QString,int> attributes;
     QHash<QString,int> uniforms;
+    QString m_geometryShader;
 };
 
 #endif // SHADERCONTAINER_H

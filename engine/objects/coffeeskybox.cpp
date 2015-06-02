@@ -39,8 +39,8 @@ void CoffeeSkybox::render()
                                                                glm::quat(1,0,0,0),
                                                                glm::vec3(1,1,1)));
 
-    glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES,36,GL_UNSIGNED_INT,(GLvoid*)0);
+    glBindVertexArray(skymesh->getVertexArrayHandle());
+    glDrawElements(GL_TRIANGLES,skymesh->getIndicesCount(),GL_UNSIGNED_INT,(GLvoid*)0);
 
     glCullFace(static_cast<GLenum>(oldCullMode));
     glEnable(GL_DEPTH_TEST);
@@ -63,52 +63,13 @@ void CoffeeSkybox::load()
     if(!texture)
         texture = new CoffeeTexture(this,cubemapping);
 
-    glEnable(GL_TEXTURE_CUBE_MAP);
+    if(glIsEnabled(GL_TEXTURE_CUBE_MAP)==GL_FALSE)
+        glEnable(GL_TEXTURE_CUBE_MAP);
     qDebug("Skybox initializing");
 
     texture->loadTexture();
 
-    glGenBuffers(2,buffs);
-    glGenVertexArrays(1,&vao);
-
-    glm::vec3 positiondata[8] = {
-        glm::vec3(1.0,-1.0,-1.0),
-        glm::vec3(1.0,-1.0,1.0),
-        glm::vec3(-1.0,-1.0,1.0),
-        glm::vec3(-1.0,-1.0,-1.0),
-        glm::vec3(1.0,1.0,-1.0),
-        glm::vec3(1.0,1.0,1.0),
-        glm::vec3(-1.0,1.0,1.0),
-        glm::vec3(-1.0,1.0,-1.0)
-    };
-
-    GLuint ibodata[36] = {
-        1, 2, 3,
-        5, 8, 6,
-        1, 5, 2,
-        2, 6, 3,
-        3, 7, 8,
-        5, 1, 8,
-
-        4, 1, 3,
-        5, 6, 2,
-        1, 4, 8,
-        8, 7, 6,
-        4, 3, 8,
-        6, 7, 3,
-    };
-
-    glBindVertexArray(vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER,buffs[0]);
-    glBufferData(GL_ARRAY_BUFFER,8*sizeof(glm::vec3),positiondata,GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(GLvoid*)0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,buffs[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,36*sizeof(GLuint),ibodata,GL_STATIC_DRAW);
-
-    glBindVertexArray(0);
+    skymesh->loadMesh();
 
     shader->buildProgram();
     shader->getUniformLocation("wvp");
@@ -117,4 +78,42 @@ void CoffeeSkybox::load()
     baked = true;
 
     qDebug("Skybox loaded");
+}
+QPointer<ShaderContainer> CoffeeSkybox::getShader() const
+{
+    return shader;
+}
+
+void CoffeeSkybox::setShader(QPointer<ShaderContainer> value)
+{
+    if(value)
+        shader = value;
+    else
+        qDebug("Skybox shader does not exist!");
+}
+
+QPointer<CoffeeMesh> CoffeeSkybox::getSkymesh() const
+{
+    return skymesh;
+}
+
+void CoffeeSkybox::setSkymesh(QPointer<CoffeeMesh> value)
+{
+    if(value&&value->hasPositions())
+        skymesh = value;
+    else
+        qDebug("Could not assign mesh without positions!");
+}
+
+QPointer<CoffeeTexture> CoffeeSkybox::getTexture() const
+{
+    return texture;
+}
+
+void CoffeeSkybox::setTexture(QPointer<CoffeeTexture> value)
+{
+    if(value&&value->isCubemap())
+        this->texture = value;
+    else
+        qDebug("Could not assign 2D texture as cubemap!");
 }

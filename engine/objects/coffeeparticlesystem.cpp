@@ -201,6 +201,7 @@ void CoffeeParticleSystem::updateParticles(float timeStep)
     glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,transformQuery);
     glBeginTransformFeedback(GL_POINTS);
 
+
     glDrawArrays(GL_POINTS,0,parts_curr_count);
 
     glEndTransformFeedback();

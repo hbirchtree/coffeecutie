@@ -11,6 +11,7 @@
 #include <QResizeEvent>
 #include <QMoveEvent>
 
+
 class GLFWwindow;
 class RenderLoop;
 
@@ -42,6 +43,8 @@ public:
     virtual int init();
     virtual int loop();
 
+    static void APIENTRY openGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+                                      GLsizei length, const GLchar* message, const void* userParam);
 
     virtual int getStartDisplay() const;
     virtual double getLoopTime() const;

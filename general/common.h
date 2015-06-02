@@ -34,6 +34,7 @@
 #include <glbinding/Version.h>
 #include <glbinding/callbacks.h>
 #include <glbinding/Binding.h>
+#include <glbinding/Meta.h>
 
 #include <glbinding/gl/gl.h>
 

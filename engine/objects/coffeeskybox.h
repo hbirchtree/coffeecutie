@@ -17,6 +17,15 @@ public:
     void addMap(GLenum side,QString source);
     void setCamera(CoffeeCamera* camera);
 
+    QPointer<CoffeeTexture> getTexture() const;
+    void setTexture(QPointer<CoffeeTexture> value);
+
+    QPointer<CoffeeMesh> getSkymesh() const;
+    void setSkymesh(QPointer<CoffeeMesh> value);
+
+    QPointer<ShaderContainer> getShader() const;
+    void setShader(QPointer<ShaderContainer> value);
+
 public slots:
     void render();
     void unload();
@@ -30,6 +39,7 @@ protected:
     QPointer<CoffeeCamera> camera;
     QPointer<ShaderContainer> shader;
     QPointer<CoffeeTexture> texture;
+    QPointer<CoffeeMesh> skymesh;
 
     GLuint buffs[2];
     GLuint vao;

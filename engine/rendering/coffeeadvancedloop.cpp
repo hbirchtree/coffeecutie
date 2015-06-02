@@ -1,5 +1,31 @@
 #include "coffeeadvancedloop.h"
 
+//Data, etc
+#include "general/data/numbercontainer.h"
+#include "general/qstringfunctions.h"
+
+
+//Rendering
+#include "opengl/context/coffeerenderer.h"
+#include "opengl/rendering/coffeerenderingloop.h"
+#include "opengl/helpers/renderingmethods.h"
+
+//Display
+#include "opengl/components/coffeeframebufferobject.h"
+#include "opengl/components/coffeedepthbufferobject.h"
+#include "engine/objects/coffeeoutputsurface.h"
+
+//Engine
+#include "engine/objects/coffeeobjectfactory.h"
+#include "engine/objects/coffeeobject.h"
+#include "engine/objects/coffeestandardobject.h"
+#include "opengl/components/coffeeomnilight.h"
+#include "opengl/components/coffeeworldopts.h"
+#include "general/input/coffeejoystick.h"
+#include "general/input/coffeeplayercontroller.h"
+
+#include "engine/objects/coffeeparticlesystem.h"
+
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
 {
     evloop = new QEventLoop(this);
@@ -36,10 +62,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
             qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
         }
 
-        CoffeeSkybox* skb = dynamic_cast<CoffeeSkybox*>(skybox);
-        if(skb)
-            skb->setCamera(world->getCamera());
-
         world->getLights().first()->getPosition()->bindValue(world->getCamera()->getPosition());
 
         qDebug("Resizing viewport");
@@ -61,9 +83,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
                             10);
 
         qDebug("Enabling standard OpenGL capabilities");
-        glEnable(GL_TEXTURE_2D);
-
-        glEnable(GL_DEBUG_OUTPUT);
+//        glEnable(GL_TEXTURE_2D);
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -90,14 +110,14 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         js->update();
         //bind the framebuffer which we render to
         renderFbo->bindFramebuffer();
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        //clear the depth buffer, otherwise we won't see sh*t
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         //render the current world
-        skybox->render();
         world->renderWorld();
 
         //testing area
-//        test->render();
+        test->render();
 
         //render for the user
         renderFbo->unbindFramebuffer();
@@ -137,17 +157,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     controller = new CoffeePlayerController(this);
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     renderFbo = new CoffeeFrameBufferObject(this);
-    skybox = new CoffeeSkybox(this,0);
-
-    CoffeeSkybox* skb = dynamic_cast<CoffeeSkybox*>(skybox);
-    if(skb){
-        skb->addMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_X,"ubw/models/textures/scratchy.png");
-        skb->addMap(GL_TEXTURE_CUBE_MAP_POSITIVE_X,"ubw/models/textures/scratchy.png");
-        skb->addMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,"ubw/models/textures/scratchy.png");
-        skb->addMap(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,"ubw/models/textures/scratchy.png");
-        skb->addMap(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,"ubw/models/textures/scratchy.png");
-        skb->addMap(GL_TEXTURE_CUBE_MAP_POSITIVE_Z,"ubw/models/textures/scratchy.png");
-    }
 
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){

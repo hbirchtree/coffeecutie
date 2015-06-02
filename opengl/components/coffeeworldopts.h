@@ -1,12 +1,14 @@
 #ifndef COFFEEWORLDOPTS_H
 #define COFFEEWORLDOPTS_H
 #include "general/common.h"
-#include "coffeecamera.h"
-#include "coffeeomnilight.h"
-#include <QtConcurrent/QtConcurrent>
-#include "opengl/context/coffeerenderer.h"
-#include "engine/objects/coffeeobject.h"
-#include "engine/physics/bulletphysics.h"
+
+class CoffeeCamera;
+class CoffeeSkybox;
+class CoffeeRenderer;
+class BulletPhysics;
+class CoffeeObject;
+class CoffeeOmniLight;
+class PhysicsObject;
 
 class CoffeeWorldOpts : public QObject
 {
@@ -41,6 +43,9 @@ public:
     void setClearColor(const glm::vec4 &value);
     bool wireframeMode() const;
 
+    CoffeeSkybox* getSkybox() const;
+    void setSkybox(CoffeeSkybox *value);
+
 signals:
     void tickPhysics(float d);
     void physicsObjectAdded(PhysicsObject* object);
@@ -60,6 +65,7 @@ private:
 
     glm::vec4 clearColor;
 
+    QPointer<CoffeeSkybox> skybox;
     QList<CoffeeObject*> objects;
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;

@@ -41,12 +41,12 @@ uint CoffeeFrameBufferObject::getSampling() const
 void CoffeeFrameBufferObject::bindFramebuffer()
 {
     glViewport(0,0,renderSize.width(),renderSize.height());
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,framebufferHandle);
+    glBindFramebuffer(GL_FRAMEBUFFER,framebufferHandle);
 }
 
 void CoffeeFrameBufferObject::unbindFramebuffer()
 {
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
     glViewport(0,0,windowSize.width(),windowSize.height());
 }
 
@@ -83,12 +83,12 @@ GLuint CoffeeFrameBufferObject::allocTexture(int w, int h, gl::GLenum internal, 
 GLuint CoffeeFrameBufferObject::allocRenderBuffer(gl::GLenum component, int w, int h)
 {
     GLuint handle = 0;
-    glGenRenderbuffersEXT(1,&handle);
-    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,handle);
+    glGenRenderbuffers(1,&handle);
+    glBindRenderbuffer(GL_RENDERBUFFER,handle);
 
-    glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT,component,w,h);
+    glRenderbufferStorage(GL_RENDERBUFFER,component,w,h);
 
-    glBindRenderbufferEXT(GL_RENDERBUFFER_EXT,0);
+    glBindRenderbuffer(GL_RENDERBUFFER,0);
     return handle;
 }
 GLuint CoffeeFrameBufferObject::getTextureHandle() const
@@ -120,8 +120,8 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
            windowSize.width(),windowSize.height());
 
     GLuint framebuffer = 0;
-    glGenFramebuffersEXT(1,&framebuffer);
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,framebuffer);
+    glGenFramebuffers(1,&framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
 
     GLuint texture = allocTexture(renderSize.width(),renderSize.height(),
                                   GL_RGBA,GL_RGBA,GL_LINEAR,GL_HALF_FLOAT);
@@ -131,12 +131,12 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
     GLuint depth = allocRenderBuffer(GL_DEPTH_COMPONENT,renderSize.width(),renderSize.height());
     GLuint color = allocRenderBuffer(GL_RGBA,renderSize.width(),renderSize.height());
 
-    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,
-                                 GL_RENDERBUFFER_EXT,color);
-    glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,
-                                 GL_RENDERBUFFER_EXT, depth);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
+                                 GL_RENDERBUFFER,color);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,
+                                 GL_RENDERBUFFER, depth);
 
-    glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,
+    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,
                               GL_TEXTURE_2D,texture,0);
 //    glFramebufferTextureEXT(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT_EXT,depthtext,0);
 
@@ -149,7 +149,7 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
     glDrawBuffers(1,drawBufs);
 
     GLenum status;
-    status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     switch(status){
     case GL_FRAMEBUFFER_COMPLETE:
         break;
@@ -157,7 +157,7 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
         qWarning("Failed to create framebuffer!");
         break;
     }
-    glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
 
     framebufferActive = true;
 }

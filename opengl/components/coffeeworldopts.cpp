@@ -1,5 +1,11 @@
 #include "coffeeworldopts.h"
 
+#include "coffeeomnilight.h"
+#include "coffeecamera.h"
+#include "opengl/context/coffeerenderer.h"
+#include "engine/objects/coffeeskybox.h"
+#include "engine/physics/bulletphysics.h"
+
 CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
 {
     qDebug("Creating world object: thread=%p",this->thread());
@@ -121,6 +127,10 @@ void CoffeeWorldOpts::renderWorld()
     if(wireframeMode())
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
+
+    if(skybox)
+        skybox->render();
+
     for(CoffeeObject* o : this->getObjects()){
         o->render();
     }
@@ -133,3 +143,13 @@ void CoffeeWorldOpts::setWireframeMode(bool wireframeMode)
 {
     m_wireframeMode = wireframeMode;
 }
+CoffeeSkybox* CoffeeWorldOpts::getSkybox() const
+{
+    return skybox;
+}
+
+void CoffeeWorldOpts::setSkybox(CoffeeSkybox* value)
+{
+    skybox = value;
+}
+

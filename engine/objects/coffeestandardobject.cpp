@@ -18,7 +18,7 @@ void CoffeeStandardObject::render()
         glBindTexture(GL_TEXTURE_2D,
                       m.texture->getHandle());
         pshader->setUniform(m.samplerName,
-                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
+                            textures.indexOf(m));
     }
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
