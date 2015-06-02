@@ -116,7 +116,7 @@
 					"mass": 1,
 					"friction": 1,
 					"restitution":0.8,
-					"inertia": [0,0,10]
+					"inertia": [0,0,0]
 				}
 			},
 			{
