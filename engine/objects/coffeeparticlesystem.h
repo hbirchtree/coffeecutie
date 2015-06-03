@@ -15,7 +15,7 @@ class CoffeeParticleSystem : public CoffeeObject
 public:
     CoffeeParticleSystem(QObject *parent, const CoffeeCamera *camera);
 
-    void render(); //This is the part where the visible part is shown
+    void render();
     void unload();
     void load();
 
@@ -33,7 +33,6 @@ protected:
     QPointer<ShaderContainer> shader;
     QPointer<ShaderContainer> tshader;
     QPointer<CoffeeTexture> texture;
-    QPointer<CoffeeTexture> randTexture;
     const CoffeeCamera* camera;
 
     enum ParticleType {
@@ -49,18 +48,13 @@ protected:
         float lifetime;
     };
 
-    bool started = false;
-    uint vbIndex = 0;
-    uint tfIndex = 0;
+    GLuint vao;
+    GLuint vbo;
+    GLuint tbo;
+
+    GLuint particleQuery;
 
     float particleSize = 0.01f;
-
-    GLuint vaos_r[2];
-    GLuint vaos_t[2];
-    GLuint vbos[2];
-    GLuint tfbs[2];
-
-    float time = 0;
 
     quint32 max_particles = 2048;
 };

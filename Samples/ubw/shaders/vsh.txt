@@ -1,7 +1,5 @@
 #version 330
 
-precision highp float;
-
 uniform mat4 camera,model;
 
 layout(location = 0) in vec3 vert;
