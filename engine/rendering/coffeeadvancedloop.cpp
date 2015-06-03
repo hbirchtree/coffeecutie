@@ -105,6 +105,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         test->tick(renderer->getLatestFrameTime());
         test->render();
 
+        glFlush();
+
         //render for the user
         renderFbo->unbindFramebuffer();
         screenSurface->render();

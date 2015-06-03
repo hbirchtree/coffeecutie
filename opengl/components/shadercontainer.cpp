@@ -95,15 +95,15 @@ bool ShaderContainer::linkProgram()
     return true;
 }
 
-int ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType){
+GLuint ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType){
     std::string src = FileHandler::getStringFromFile(shaderFile).toStdString();
     const char* code = src.c_str();
     return compileShaderSource(code,shaderFile,shaderType);
 }
 
-int ShaderContainer::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
+GLuint ShaderContainer::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
 {
-    int handle = glCreateShader(shaderType);
+    GLuint handle = glCreateShader(shaderType);
 
     glShaderSource(handle,1,&data,NULL);
 
@@ -118,7 +118,7 @@ int ShaderContainer::compileShaderSource(const char *data, QString id, const GLe
         qDebug() << "Failed to compile shader: "+id
                     +"\nLog: "+QString::fromLocal8Bit(log);
         glDeleteShader(handle);
-        return -1;
+        return 0;
     }
     return handle;
 }

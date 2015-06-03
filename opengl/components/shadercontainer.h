@@ -28,8 +28,8 @@ public:
     bool addShader(const char* data, QString id, const GLenum& shaderType);
     bool linkProgram();
 
-    int compileShader(QString shaderFile, const GLenum &shaderType);
-    int compileShaderSource(const char* data, QString id, const GLenum& shaderType);
+    GLuint compileShader(QString shaderFile, const GLenum &shaderType);
+    GLuint compileShaderSource(const char* data, QString id, const GLenum& shaderType);
     int getProgramId();
     void unload();
 
