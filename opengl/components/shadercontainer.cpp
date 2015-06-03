@@ -17,21 +17,11 @@ int ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile
 
     createProgram();
 
-    std::string src = FileHandler::getStringFromFile(vertShaderFile).toStdString();
-    const char* code = src.c_str();
-    addShader(code,vertShaderFile,GL_VERTEX_SHADER);
+    setVertexShader(vertShaderFile);
+    setFragmentShader(fragShaderFile);
+    setGeometryShader(geomShaderFile);
 
-    if(!fragShaderFile.isEmpty()){
-        src = FileHandler::getStringFromFile(fragShaderFile).toStdString();
-        code = src.c_str();
-        addShader(code,fragShaderFile,GL_FRAGMENT_SHADER);
-    }
-
-    if(!geomShaderFile.isEmpty()){
-        src = FileHandler::getStringFromFile(geomShaderFile).toStdString();
-        code = src.c_str();
-        addShader(code,geomShaderFile,GL_GEOMETRY_SHADER);
-    }
+    compileShaders();
 
     if(!linkProgram())
         return -1;
@@ -46,6 +36,25 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
 int ShaderContainer::buildProgram()
 {
     return buildProgram(vertexShader(),fragmentShader(),geometryShader());
+}
+
+void ShaderContainer::compileShaders()
+{
+    std::string src = FileHandler::getStringFromFile(vertexShader()).toStdString();
+    const char* code = src.c_str();
+    addShader(code,vertexShader(),GL_VERTEX_SHADER);
+
+    if(!fragmentShader().isEmpty()){
+        src = FileHandler::getStringFromFile(fragmentShader()).toStdString();
+        code = src.c_str();
+        addShader(code,fragmentShader(),GL_FRAGMENT_SHADER);
+    }
+
+    if(!geometryShader().isEmpty()){
+        src = FileHandler::getStringFromFile(geometryShader()).toStdString();
+        code = src.c_str();
+        addShader(code,geometryShader(),GL_GEOMETRY_SHADER);
+    }
 }
 
 void ShaderContainer::createProgram()

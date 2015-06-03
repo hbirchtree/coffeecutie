@@ -66,10 +66,10 @@ void CoffeeParticleSystem::updateParticles(float delta)
 
     glEnable(GL_RASTERIZER_DISCARD);
 
-    glBindBuffer(GL_ARRAY_BUFFER,vbos[vbIndex]);
+//    glBindBuffer(GL_ARRAY_BUFFER,vbos[vbIndex]);
+    glBindVertexArray(vaos_t[tfIndex]);
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfIndex]);
 
-    glBindVertexArray(vaos_t[tfIndex]);
 
     glBeginTransformFeedback(GL_POINTS);
 
@@ -100,12 +100,16 @@ void CoffeeParticleSystem::load()
     texture->loadTexture();
     randTexture->loadTexture();
 
-    tshader->buildProgram();
     shader->buildProgram();
+
+    tshader->createProgram();
+    tshader->compileShaders();
 
     const GLchar* transfattributes[5] = {"typeArr","posArr","velArr","accArr","lifeArr"};
 
     glTransformFeedbackVaryings(tshader->getProgramId(),5,transfattributes,GL_INTERLEAVED_ATTRIBS);
+
+    tshader->linkProgram();
 
     QStringList transfuniforms;
     transfuniforms << "deltaTime" << "fullTime" << "randSampler"

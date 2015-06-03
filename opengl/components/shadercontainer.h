@@ -21,6 +21,8 @@ public:
     int buildProgram(QString vertShaderFile,QString fragShaderFile);
     int buildProgram();
 
+    void compileShaders();
+
     //Partial
     void createProgram();
     bool addShader(const char* data, QString id, const GLenum& shaderType);
