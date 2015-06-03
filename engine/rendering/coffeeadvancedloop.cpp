@@ -31,17 +31,11 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     evloop = new QEventLoop(this);
     connectSignals(renderer);
 
-    qDebug("Creating default rendering method");
-//    defaultRenderingMethod->addVertexAttribute("vert",3);
-//    defaultRenderingMethod->addVertexAttribute("vertTexCoord",2);
-//    defaultRenderingMethod->addVertexAttribute("vertNormal",3);
-//    defaultRenderingMethod->addVertexAttribute("vertTangent",3);
-
     qDebug("Importing objects from file");
     CoffeeObjectFactory f;
     QList<CoffeeWorldOpts*> worlds = f.importObjects(fileSource,this);
     if(worlds.isEmpty())
-        qDebug("Failed to load any world information! Brace for impact!");
+        qFatal("Failed to load any world information!");
     world = worlds.first();
     connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
 
@@ -71,16 +65,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         test = new CoffeeParticleSystem(this,world->getCamera());
         test->setObjectName("particle-system");
-        test->setProperties(glm::vec3(-10.0f, 17.5f, 0.0f), // Where the particles are generated
-                            glm::vec3(-5, 5, -5), // Minimal velocity
-                            glm::vec3(5, 5, 5), // Maximal velocity
-                            glm::vec3(0, -5, 0), // Gravity force applied to particles
-                            glm::vec3(0.0f, 0.5f, 1.0f), // Color (light blue)
-                            1.5f, // Minimum lifetime in seconds
-                            3.0f, // Maximum lifetime in seconds
-                            0.75f, // Rendered size
-                            0.01f, // Spawn every 0.05 seconds
-                            10);
 
         qDebug("Enabling standard OpenGL capabilities");
 //        glEnable(GL_TEXTURE_2D);
@@ -101,6 +85,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         renderFbo->createFramebuffer(renderer->getWindowDimensions(),1);
         connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){ //We need to resize the FBO when the window dimensions change
             renderFbo->resizeViewport(e.size());
+            world->getCamera()->setAspect((float)e.size().width()/(float)e.size().height());
         });
 
         qDebug("Creating output surface");
@@ -117,6 +102,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         world->renderWorld();
 
         //testing area
+        test->tick(renderer->getLatestFrameTime());
         test->render();
 
         //render for the user

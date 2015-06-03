@@ -17,10 +17,6 @@ int ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile
 
     createProgram();
 
-    this->vertShaderFile = vertShaderFile;
-    this->fragShaderFile = fragShaderFile;
-    this->geomShaderFile = geomShaderFile;
-
     std::string src = FileHandler::getStringFromFile(vertShaderFile).toStdString();
     const char* code = src.c_str();
     addShader(code,vertShaderFile,GL_VERTEX_SHADER);
@@ -49,7 +45,7 @@ int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile)
 
 int ShaderContainer::buildProgram()
 {
-    return buildProgram(this->vertShaderFile,this->fragShaderFile,this->geomShaderFile);
+    return buildProgram(vertexShader(),fragmentShader(),geometryShader());
 }
 
 void ShaderContainer::createProgram()
@@ -59,7 +55,7 @@ void ShaderContainer::createProgram()
 
 bool ShaderContainer::addShader(const char *data, QString id, const GLenum &shaderType)
 {
-    int shader = compileShaderSource(data,id,shaderType);
+    GLuint shader = compileShaderSource(data,id,shaderType);
     if(shader>0)
         shaders.append(shader);
     else
@@ -69,7 +65,7 @@ bool ShaderContainer::addShader(const char *data, QString id, const GLenum &shad
 
 bool ShaderContainer::linkProgram()
 {
-    for(int shader : shaders)
+    for(GLuint shader : shaders)
         glAttachShader(programId,shader);
 
     glLinkProgram(programId);

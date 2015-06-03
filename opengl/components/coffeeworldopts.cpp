@@ -124,12 +124,13 @@ void CoffeeWorldOpts::tickObjects(float d)
 
 void CoffeeWorldOpts::renderWorld()
 {
+    if(skybox) //rendering the skybox first avoids the color buffer mess with wireframe
+        skybox->render();
+
     if(wireframeMode())
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
 
-    if(skybox)
-        skybox->render();
 
     for(CoffeeObject* o : this->getObjects()){
         o->render();

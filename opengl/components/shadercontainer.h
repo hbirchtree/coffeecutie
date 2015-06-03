@@ -59,9 +59,8 @@ public slots:
 private:
     QString fragShaderFile;
     QString vertShaderFile;
-    QString geomShaderFile;
 
-    QVector<int> shaders;
+    QVector<GLuint> shaders;
 
     int programId = 0;
     int verbosity = 1;

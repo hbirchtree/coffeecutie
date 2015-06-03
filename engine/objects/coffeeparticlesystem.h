@@ -19,79 +19,50 @@ public:
     void unload();
     void load();
 
-    void setProperties(
-            glm::vec3 sourcePos,
-            glm::vec3 minVelocity,
-            glm::vec3 maxVelocity,
-            glm::vec3 gravity,
-            glm::vec3 color,
-            float minLifetime,
-            float maxLifetime,
-            float size,
-            float renewTime,
-            float particles);
-
-    void updateParticles(float timeStep);
-
     bool isBaked();
     void setBaked(bool val);
 
-    void clearParticles();
-    qint64 getCountParticles();
+public slots:
+    void tick(float delta);
 
 protected:
+
+    void updateParticles(float delta);
+
     bool baked = false;
-    enum ParticleTypes {
-        ParticleEmittedType,
-        ParticleGeneratorType
-    };
-
     QPointer<ShaderContainer> shader;
-    //Particle transform
     QPointer<ShaderContainer> tshader;
+    QPointer<CoffeeTexture> texture;
+    QPointer<CoffeeTexture> randTexture;
+    const CoffeeCamera* camera;
 
-    GLuint transformBuffer = 0;
-    GLuint transformQuery = 0;
-
-    GLuint partsBuffers[2];
-    GLuint partsArrays[2];
+    enum ParticleType {
+        EmitterParticleType,
+        EmittedParticleType
+    };
 
     struct Particle {
-        //particle attributes, loaded into GPU memory
+        float type;
         glm::vec3 pos;
         glm::vec3 vel;
-        glm::vec3 col;
-        GLfloat size;
-        GLfloat life;
-        GLfloat cameraDist;
-        GLint type;
+        glm::vec3 acc;
+        float lifetime;
     };
-    GLint parts_max_count = 16384;
-    GLint parts_curr_count = 1;
-    GLint parts_gen_count = 100;
 
-    glm::vec3 parts_ivel;
-    glm::vec3 parts_rvel;
-    glm::vec3 parts_gravity;
-    glm::vec3 parts_color;
-    glm::vec3 parts_src_pos;
+    bool started = false;
+    uint vbIndex = 0;
+    uint tfIndex = 0;
 
-    CoffeeTexture* texture;
+    float particleSize = 0.01f;
 
-    float parts_time = 0.f;
-    float parts_renewtime = 500.f;
+    GLuint vaos_r[2];
+    GLuint vaos_t[2];
+    GLuint vbos[2];
+    GLuint tfbs[2];
 
-    float part_life_min = 10.f;
-    float part_life_range = 0.f;
-    float part_size = 1.0f;
+    float time = 0;
 
-    int curReadBuffer = 0;
-
-    void setupSystem();
-    glm::vec3 genRandVec3(float base, float range);
-    float genRandF(float base, float range);
-
-    const CoffeeCamera* camera;
+    quint32 max_particles = 2048;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

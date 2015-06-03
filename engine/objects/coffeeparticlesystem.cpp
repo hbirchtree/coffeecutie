@@ -3,216 +3,171 @@
 CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeObject(parent)
 {
     this->camera = camera;
-    shader = new ShaderContainer(this);
-    shader->setObjectName("render-shader");
     tshader = new ShaderContainer(this);
-    tshader->setObjectName("transform-feedback-shader");
+    tshader->setFragmentShader("ubw/shaders/particles/ps_update.frag");
+    tshader->setVertexShader("ubw/shaders/particles/ps_update.vert");
+    tshader->setGeometryShader("ubw/shaders/particles/ps_update.geom");
+
+    shader = new ShaderContainer(this);
+    shader->setFragmentShader("ubw/shaders/particles/billboard.fs");
+    shader->setVertexShader("ubw/shaders/particles/billboard.vs");
+    shader->setGeometryShader("ubw/shaders/particles/billboard.gs");
+
     texture = new CoffeeTexture(this,"ubw/models/textures/quadtex.png");
     texture->setObjectName("sprite");
-}
 
-void CoffeeParticleSystem::setupSystem()
-{
-    shader->buildProgram("ubw/shaders/particles/particles_render.vert","ubw/shaders/particles/particles_render.frag","ubw/shaders/particles/particles_render.geom");
-
-    shader->getUniformLocation("matrices.mProj");
-    shader->getUniformLocation("matrices.mView");
-    shader->getUniformLocation("vQuad1");
-    shader->getUniformLocation("vQuad2");
-    shader->getUniformLocation("gSampler");
-
-    tshader->createProgram();
-
-    std::string src = FileHandler::getStringFromFile("ubw/shaders/particles/particles_update.vert").toStdString();
-    const char* code = src.c_str();
-    tshader->addShader(code,QString(),GL_VERTEX_SHADER);
-    src = FileHandler::getStringFromFile("ubw/shaders/particles/particles_update.geom").toStdString();
-    code = src.c_str();
-    tshader->addShader(code,QString(),GL_GEOMETRY_SHADER);
-
-    const char* vars[6] = {
-        "vPositionOut",
-        "vVelocityOut",
-        "vColorOut",
-        "fLifeTimeOut",
-        "fSizeOut",
-        "iTypeOut"
-    };
-
-    glTransformFeedbackVaryings(tshader->getProgramId(),6,vars,GL_INTERLEAVED_ATTRIBS);
-
-    tshader->linkProgram();
-
-    glGenTransformFeedbacks(1,&transformBuffer);
-    glGenQueries(1,&transformQuery);
-
-    glGenBuffers(2,partsBuffers);
-    glGenVertexArrays(2,partsArrays);
-
-    Particle initPart;
-    initPart.type = ParticleGeneratorType;
-
-    for(int i=0;i<2;i++){
-        glBindVertexArray(partsArrays[i]);
-        glBindBuffer(GL_ARRAY_BUFFER,partsBuffers[i]);
-        glBufferData(GL_ARRAY_BUFFER,sizeof(Particle)*parts_max_count,NULL,GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER,0,sizeof(Particle),&initPart);
-
-        for(int i=0;i<6;i++){
-            glEnableVertexAttribArray(i);
-        }
-
-        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(const GLvoid*)0);
-        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(const GLvoid*)(sizeof(GLfloat)*3));
-        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(const GLvoid*)(sizeof(GLfloat)*6));
-        glVertexAttribPointer(3,1,GL_FLOAT,GL_FALSE,sizeof(Particle),(const GLvoid*)(sizeof(GLfloat)*9));
-        glVertexAttribPointer(4,1,GL_FLOAT,GL_FALSE,sizeof(Particle),(const GLvoid*)(sizeof(GLfloat)*10));
-        glVertexAttribPointer(5,1,GL_INT,GL_FALSE,sizeof(Particle),(const GLvoid*)(sizeof(GLfloat)*11));
-    }
-
-    tshader->getUniformLocation("fTimePassed");
-    tshader->getUniformLocation("vGenPosition");
-    tshader->getUniformLocation("vGenVelocityMin");
-    tshader->getUniformLocation("vGenVelocityRange");
-    tshader->getUniformLocation("vGenColor");
-    tshader->getUniformLocation("vGenGravityVector");
-
-    tshader->getUniformLocation("vRandomSeed");
-
-    tshader->getUniformLocation("fGenLifeMin");
-    tshader->getUniformLocation("fGenLifeRange");
-
-    tshader->getUniformLocation("fGenSize");
-    tshader->getUniformLocation("iNumToGenerate");
-
-    setBaked(true);
+    randTexture = new CoffeeTexture(this,"ubw/models/textures/quadtex.png");
+    randTexture->setObjectName("randtexture");
 }
 
 void CoffeeParticleSystem::render()
 {
-    if(!isBaked()){
+    if(!isBaked())
         load();
-    }
-    updateParticles(0.5f);
-
-    glm::vec3 q1(1,1,0);
-    glm::vec3 q2(-1,1,0);
-    q1 = glm::cross(glm::normalize(position()->getValue()-camera->getCameraPos()),camera->getCameraUp());
-    q1 = glm::normalize(q1);
-    q2 = glm::cross(glm::normalize(position()->getValue()-camera->getCameraPos()),q1);
-    q2 = glm::normalize(q2);
 
     glUseProgram(shader->getProgramId());
-//    glDepthMask(GL_FALSE);
-
-    shader->setUniform("matrices.mView",camera->getMatrix());
-    shader->setUniform("vQuad1",q1);
-    shader->setUniform("vQuad2",q2);
-    shader->setUniform("gSampler",0);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,texture->getHandle());
 
-    glBindVertexArray(partsArrays[curReadBuffer]);
-    glDisableVertexAttribArray(1);
+    shader->setUniform("modelview",camera->getMatrix());
+    shader->setUniform("cameraPos",camera->getCameraPos());
+    shader->setUniform("diffuseSampler",0);
+    shader->setUniform("particleSize",particleSize);
 
-    glDrawArrays(GL_POINTS,0,parts_curr_count);
+    glBindVertexArray(vaos_r[tfIndex]);
 
-    glBindTexture(GL_TEXTURE_2D,0);
-//    glDepthMask(GL_TRUE);
+//    glBindBuffer(GL_ARRAY_BUFFER,vbos[tfIndex]);
+
+    glDrawTransformFeedback(GL_POINTS,tfbs[tfIndex]);
+
+    glDisableVertexAttribArray(0);
     glUseProgram(0);
+
+    vbIndex = tfIndex;
+    tfIndex = (tfIndex+1)%2;
+}
+
+void CoffeeParticleSystem::updateParticles(float delta)
+{
+    if(!isBaked())
+        load();
+    glUseProgram(tshader->getProgramId());
+
+    tshader->setUniform("fullTime",time*1000.0f);
+    tshader->setUniform("deltaTime",delta*1000.0f);
+    tshader->setUniform("randSampler",0);
+    tshader->setUniform("emitterLife",100.0f);
+    tshader->setUniform("shellLife",10000.0f);
+    tshader->setUniform("shellSecondLife",2500.0f);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,randTexture->getHandle());
+
+    glEnable(GL_RASTERIZER_DISCARD);
+
+    glBindBuffer(GL_ARRAY_BUFFER,vbos[vbIndex]);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfIndex]);
+
+    glBindVertexArray(vaos_t[tfIndex]);
+
+    glBeginTransformFeedback(GL_POINTS);
+
+    if(!started){
+        glDrawArrays(GL_POINTS,0,1);
+        started = true;
+    }else{
+        glDrawTransformFeedback(GL_POINTS,tfbs[vbIndex]);
+    }
+
+    glEndTransformFeedback();
+
+    glBindBuffer(GL_ARRAY_BUFFER,0);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+    glDisable(GL_RASTERIZER_DISCARD);
 }
 
 void CoffeeParticleSystem::unload()
 {
-    qDebug() << "Particle system unloading";
-    glDeleteProgram(tshader->getProgramId());
-    glDeleteProgram(shader->getProgramId());
-    glDeleteQueries(1,&transformQuery);
-    glDeleteTransformFeedbacks(1,&transformBuffer);
-    glDeleteBuffers(2,partsBuffers);
-    glDeleteVertexArrays(2,partsArrays);
-
     texture->unloadTexture();
 }
 
 void CoffeeParticleSystem::load()
 {
-    setupSystem();
     texture->loadTexture();
-}
+    randTexture->loadTexture();
 
-void CoffeeParticleSystem::setProperties(glm::vec3 sourcePos,
-                                         glm::vec3 minVelocity,
-                                         glm::vec3 maxVelocity,
-                                         glm::vec3 gravity,
-                                         glm::vec3 color,
-                                         float minLifetime,
-                                         float maxLifetime,
-                                         float size,
-                                         float renewTime,
-                                         float particles)
-{
-    parts_src_pos = sourcePos;
-    parts_ivel = minVelocity;
-    parts_rvel = maxVelocity-minVelocity;
-    parts_gravity = gravity;
-    parts_color = color;
-    part_size = size;
-    part_life_min = minLifetime;
-    part_life_range = maxLifetime-minLifetime;
-    parts_renewtime = renewTime;
-    parts_gen_count = particles;
-}
+    tshader->buildProgram();
+    shader->buildProgram();
 
-void CoffeeParticleSystem::updateParticles(float timeStep)
-{
-    glUseProgram(tshader->getProgramId());
+    const GLchar* transfattributes[5] = {"typeArr","posArr","velArr","accArr","lifeArr"};
 
-    tshader->setUniform("fTimePassed",parts_time);
-    tshader->setUniform("vGenPosition",parts_src_pos);
-    tshader->setUniform("vGenVelocityMin",parts_ivel);
-    tshader->setUniform("vGenVelocityRange",parts_rvel);
-    tshader->setUniform("vGenColor",parts_color);
-    tshader->setUniform("vGenGravityVector",parts_gravity);
+    glTransformFeedbackVaryings(tshader->getProgramId(),5,transfattributes,GL_INTERLEAVED_ATTRIBS);
 
-    tshader->setUniform("fGenLifeMin",part_life_min);
-    tshader->setUniform("fGenLifeRange",part_life_range);
+    QStringList transfuniforms;
+    transfuniforms << "deltaTime" << "fullTime" << "randSampler"
+                   << "emitterLife" << "shellLife" << "shellSecondLife";
 
-    tshader->setUniform("fGenSize",part_size);
-    tshader->setUniform("iNumToGenerate",0);
+    tshader->getUniformLocations(transfuniforms);
 
-    parts_time += timeStep;
+    QStringList renduniforms;
+    renduniforms << "modelview" << "cameraPos" << "diffuseSampler" << "particleSize";
 
-    if(parts_time > parts_renewtime){
-        parts_time -= parts_renewtime;
-        tshader->setUniform("iNumToGenerate",parts_gen_count);
-        tshader->setUniform("vRandomSeed",genRandVec3(-10.f,20.f));
+    shader->getUniformLocations(renduniforms);
+
+    if(max_particles<1)
+        qFatal("Particle system cannot have 0 particles!");
+
+    Particle particles[max_particles];
+
+    particles[0].type = EmitterParticleType;
+    particles[0].pos = position()->getValue();
+    particles[0].vel = glm::vec3(0,0.0002f,0);
+    particles[0].acc = glm::vec3(0,0,0);
+    particles[0].lifetime = 0.0f;
+
+    glGenTransformFeedbacks(2,tfbs);
+    glGenBuffers(2,vbos);
+    glGenVertexArrays(2,vaos_r);
+    glGenVertexArrays(2,vaos_t);
+
+    for(int i=0;i<2;i++){
+        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[i]);
+        glBindVertexArray(vaos_t[i]);
+        glBindBuffer(GL_ARRAY_BUFFER,vbos[i]);
+        glBufferData(GL_ARRAY_BUFFER,sizeof(particles),particles,GL_DYNAMIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
+        glEnableVertexAttribArray(4);
+
+        glVertexAttribPointer(0,1,GL_FLOAT,GL_FALSE,sizeof(Particle),(GLvoid*)0);
+        glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(GLvoid*)4);
+        glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(GLvoid*)16);
+        glVertexAttribPointer(3,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(GLvoid*)28);
+        glVertexAttribPointer(4,1,GL_FLOAT,GL_FALSE,sizeof(Particle),(GLvoid*)40);
+
+        glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER,0,vbos[i]);
+
+        glBindVertexArray(vaos_r[(i+1)%2]);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Particle),(GLvoid*)4);
+
+        glBindVertexArray(0);
     }
 
-    glEnable(GL_RASTERIZER_DISCARD);
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,transformBuffer);
+    setBaked(true);
+}
 
-    glBindVertexArray(partsArrays[curReadBuffer]);
-    glEnableVertexAttribArray(1);
-
-    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER,0,partsBuffers[curReadBuffer]);
-
-    glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,transformQuery);
-    glBeginTransformFeedback(GL_POINTS);
-
-
-    glDrawArrays(GL_POINTS,0,parts_curr_count);
-
-    glEndTransformFeedback();
-
-    glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
-    glGetQueryObjectiv(transformQuery,GL_QUERY_RESULT,&parts_curr_count);
-
-    curReadBuffer = 1-curReadBuffer;
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
-    glDisable(GL_RASTERIZER_DISCARD);
-    glUseProgram(0);
+void CoffeeParticleSystem::tick(float delta)
+{
+    time+=delta;
+    updateParticles(delta);
 }
 
 bool CoffeeParticleSystem::isBaked()
@@ -223,14 +178,4 @@ bool CoffeeParticleSystem::isBaked()
 void CoffeeParticleSystem::setBaked(bool val)
 {
     this->baked = val;
-}
-
-float CoffeeParticleSystem::genRandF(float base, float range)
-{
-    return base+range*(float)(qrand()%(RAND_MAX+1))/(float)RAND_MAX;
-}
-
-glm::vec3 CoffeeParticleSystem::genRandVec3(float base,float range)
-{
-    return glm::vec3(genRandF(base,range),genRandF(base,range),genRandF(base,range));
 }
