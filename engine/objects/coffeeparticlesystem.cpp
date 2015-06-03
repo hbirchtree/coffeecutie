@@ -67,7 +67,7 @@ void CoffeeParticleSystem::updateParticles(float delta)
     glEnable(GL_RASTERIZER_DISCARD);
 
 //    glBindBuffer(GL_ARRAY_BUFFER,vbos[vbIndex]);
-    glBindVertexArray(vaos_t[tfIndex]);
+    glBindVertexArray(vaos_t[(tfIndex+1)%2]);
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfIndex]);
 
 
@@ -105,7 +105,7 @@ void CoffeeParticleSystem::load()
     tshader->createProgram();
     tshader->compileShaders();
 
-    const GLchar* transfattributes[5] = {"typeArr","posArr","velArr","accArr","lifeArr"};
+    const GLchar* transfattributes[5] = {"typeOut","posOut","velOut","accOut","lifeOut"};
 
     glTransformFeedbackVaryings(tshader->getProgramId(),5,transfattributes,GL_INTERLEAVED_ATTRIBS);
 
@@ -115,12 +115,15 @@ void CoffeeParticleSystem::load()
     transfuniforms << "deltaTime" << "fullTime" << "randSampler"
                    << "emitterLife" << "shellLife" << "shellSecondLife";
 
+    glUseProgram(tshader->getProgramId());
     tshader->getUniformLocations(transfuniforms);
 
     QStringList renduniforms;
     renduniforms << "modelview" << "cameraPos" << "diffuseSampler" << "particleSize";
 
+    glUseProgram(shader->getProgramId());
     shader->getUniformLocations(renduniforms);
+    glUseProgram(0);
 
     if(max_particles<1)
         qFatal("Particle system cannot have 0 particles!");
