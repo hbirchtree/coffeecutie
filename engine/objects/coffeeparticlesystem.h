@@ -18,7 +18,7 @@ class CoffeeParticleSystem : public CoffeeObject
     Q_PROPERTY(float particleSize READ particleSize WRITE setParticleSize)
     Q_PROPERTY(quint32 max_particles READ maxParticles WRITE setMaxParticles)
     Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
-    Q_PROPERTY(QVector3D gravity READ gravity WRITE setGravity)
+    Q_PROPERTY(glm::vec3 gravity READ gravity WRITE setGravity)
 
     Q_INTERFACES(CoffeeObject)
     Q_PLUGIN_METADATA(IID CoffeeObjectIID)
@@ -40,7 +40,7 @@ public:
     QColor getParticleColor() const;
     quint64 getParticleCount() const;
     quint64 getProcessTime() const;
-    QVector3D gravity() const;
+    glm::vec3 gravity() const;
     float particleMass() const;
 
     void setCamera(const CoffeeCamera *value);
@@ -60,8 +60,7 @@ public slots:
     void setMaxParticles(quint32 max_particles);
     void setParticleSize(float particleSize);
     void setParticleColor(QColor particleColor);
-    void setGravity(QVector3D gravity);
-    void setGravity(glm::vec3 gravity);
+    void setGravity(const glm::vec3 &gravity);
     void setParticleMass(float particleMass);
 
 protected:
@@ -108,7 +107,7 @@ protected:
 
     GLuint64 processtime = 0;
 private:
-    QVector3D m_gravity;
+    glm::vec3 m_gravity;
     float m_particleMass;
 };
 

@@ -147,7 +147,7 @@ void CoffeeParticleSystem::load()
     tshader->getUniformLocation("gravity");
     tshader->getUniformLocation("rand");
     tshader->setUniform("mass",particleMass());
-    tshader->setUniform("gravity",glm::vec3(gravity().x(),gravity().y(),gravity().z()));
+    tshader->setUniform("gravity",gravity());
 
     glGenVertexArrays(2, vaos);
     glGenBuffers(2, vbos);
@@ -254,7 +254,7 @@ quint64 CoffeeParticleSystem::getProcessTime() const
     return processtime;
 }
 
-QVector3D CoffeeParticleSystem::gravity() const
+glm::vec3 CoffeeParticleSystem::gravity() const
 {
     return m_gravity;
 }
@@ -289,16 +289,9 @@ void CoffeeParticleSystem::setParticleColor(QColor particleColor)
                 particleColor.alphaF());
 }
 
-void CoffeeParticleSystem::setGravity(QVector3D gravity)
+void CoffeeParticleSystem::setGravity(const glm::vec3 &gravity)
 {
     m_gravity = gravity;
-}
-
-void CoffeeParticleSystem::setGravity(glm::vec3 gravity)
-{
-    m_gravity.setX(gravity.x);
-    m_gravity.setY(gravity.y);
-    m_gravity.setZ(gravity.z);
 }
 
 void CoffeeParticleSystem::setParticleMass(float particleMass)
