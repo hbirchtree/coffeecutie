@@ -18,6 +18,7 @@
 //Engine
 #include "engine/objects/coffeeobjectfactory.h"
 #include "engine/objects/coffeeobject.h"
+#include "opengl/components/coffeecamera.h"
 #include "engine/objects/coffeestandardobject.h"
 #include "opengl/components/coffeeomnilight.h"
 #include "opengl/components/coffeeworldopts.h"
@@ -102,7 +103,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         world->renderWorld();
 
         //testing area
-        test->tick(renderer->getLatestFrameTime());
+        test->setFrametime(renderer->getLatestFrameTime());
         test->render();
 
         glFlush();

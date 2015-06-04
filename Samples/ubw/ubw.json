@@ -8,6 +8,12 @@
 		},
 		{
 			"type": "shader",
+			"name": "advanced",
+			"fragment": "shaders/fsh_bumpmap.txt",
+			"vertex": "shaders/vsh.txt"
+		},
+		{
+			"type": "shader",
 			"name": "standard-nolight",
 			"fragment": "shaders/fsh_nolight.txt",
 			"vertex": "shaders/vsh.txt"
@@ -21,7 +27,7 @@
 		{
 			"type": "model",
 			"name": "quad",
-			"file": "models/quad.obj"
+			"file": "models/cubetest.obj"
 		},
 		{
 			"type": "model",
@@ -91,7 +97,7 @@
 		"objects": [
 			{
 				"id": "plane",
-				"shader.id": "standard-nolight",
+				"shader.id": "advanced",
 				"model.position": [0,0,0],
 				"model.id": "quad:",
 				"model.scale": [1,1,1],

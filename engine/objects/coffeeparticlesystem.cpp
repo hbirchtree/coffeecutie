@@ -1,14 +1,20 @@
 #include "coffeeparticlesystem.h"
 
+#include "opengl/components/shadercontainer.h"
+#include "opengl/components/coffeetexture.h"
+#include "opengl/components/coffeecamera.h"
+#include "opengl/helpers/renderingmethods.h"
+
 CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeObject(parent)
 {
     this->camera = camera;
 
+    particleColor = glm::vec4(0.5,0.5,0.5,0.9);
 
     tshader = new ShaderContainer(this);
     shader = new ShaderContainer(this);
 
-    texture = new CoffeeTexture(this,"ubw/models/textures/quadtex.png");
+    texture = new CoffeeTexture(this,"ubw/models/textures/particle_fx.png");
     texture->setObjectName("sprite");
 }
 
@@ -24,20 +30,30 @@ void CoffeeParticleSystem::render()
 
     tshader->setUniform("timestep",frametime);
 
-    if(active_particles+spawncount>max_particles)
-        spawncount = std::min((quint32)0,max_particles-active_particles);
-    else
-        spawncount = 20;
+    if(active_particles+spawncount>max_particles-1)
+        spawncount = 0;
+    else if(active_particles+1<max_particles-1)
+        spawncount = 1;
+
+//    qDebug("Spawn count: %u",spawncount);
+
+    tshader->setUniform("rand",(float)(qrand()%1000000-500000)/100000.f);
+
+    qDebug() << (float)(qrand()%1000000-500000)/100000.f;
 
     tshader->setUniform("spawncount",(float)spawncount);
 
     glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
 //    glBeginQuery(GL_TIME_ELAPSED,timeQuery);
 
-    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER,0,vbos[vboIndex]);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfbIndex]);
     glBeginTransformFeedback(GL_POINTS);
 
-    glDrawArrays(GL_POINTS,0,active_particles);
+    if(!started){
+        glDrawArrays(GL_POINTS,0,active_particles);
+        started = true;
+    }else
+        glDrawTransformFeedback(GL_POINTS,tfbs[(tfbIndex+1)%2]);
 
     glEndTransformFeedback();
 
@@ -45,31 +61,42 @@ void CoffeeParticleSystem::render()
 //    glEndQuery(GL_TIME_ELAPSED);
 
     //getting these values tanks performance!
-    glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
+//    glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
 //    glGetQueryObjectui64v(timeQuery,GL_QUERY_RESULT,&processtime);
 
-    qDebug("Particle data: %u written",active_particles);
+//    qDebug("Particle data: %u written",active_particles);
+
+    glDisable(GL_RASTERIZER_DISCARD);
+
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
     glUseProgram(shader->getProgramId());
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,texture->getHandle());
 
+    shader->setUniform("colorMultiplier",particleColor);
+    shader->setUniform("diffuseSampler",0);
+    shader->setUniform("modelview",camera->getMatrix()*RenderingMethods::translateObjectMatrix(
+                           position()->getValue(),
+                           rotation()->getValue(),
+                           scale()->getValue()));
+    shader->setUniform("cameraPos",camera->getCameraPos());
+    shader->setUniform("particleSize",2.f);
 
+    glDrawTransformFeedback(GL_POINTS,tfbs[tfbIndex]);
 
     glBindVertexArray(0);
     glUseProgram(0);
 
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
+
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+    tfbIndex = (tfbIndex+1)%2;
+
     vaoIndex = vboIndex;
     vboIndex = (vboIndex+1)%2;
-
-    glDisable(GL_RASTERIZER_DISCARD);
-}
-
-void CoffeeParticleSystem::updateParticles(float delta)
-{
-    if(!isBaked())
-        load();
 }
 
 void CoffeeParticleSystem::unload()
@@ -81,7 +108,17 @@ void CoffeeParticleSystem::load()
 {
     texture->loadTexture();
 
-    shader->buildProgram();
+    shader->buildProgram("ubw/shaders/particles/billboard.vs",
+                         "ubw/shaders/particles/billboard.fs",
+                         "ubw/shaders/particles/billboard.gs");
+
+    glUseProgram(shader->getProgramId());
+
+    shader->getUniformLocation("colorMultiplier");
+    shader->getUniformLocation("diffuseSampler");
+    shader->getUniformLocation("modelview");
+    shader->getUniformLocation("cameraPos");
+    shader->getUniformLocation("particleSize");
 
     tshader->createProgram();
 
@@ -101,7 +138,8 @@ void CoffeeParticleSystem::load()
     tshader->getUniformLocation("spawncount");
     tshader->getUniformLocation("timestep");
     tshader->getUniformLocation("gravity");
-    tshader->setUniform("mass",0.2f);
+    tshader->getUniformLocation("rand");
+    tshader->setUniform("mass",0.5f);
     tshader->setUniform("gravity",glm::vec3(0,-9.81,0));
 
     glGenVertexArrays(2, vaos);
@@ -112,9 +150,9 @@ void CoffeeParticleSystem::load()
     Particle parts[max_particles];
 
     parts[0].type = 0;
-    parts[0].pos = glm::vec3(9,2,9);
-    parts[0].vel = glm::vec3(1,5,1);
-    parts[0].lifetime = 10.f;
+    parts[0].pos = glm::vec3(0,0,0);
+    parts[0].vel = glm::vec3(0,10,0);
+    parts[0].lifetime = 6.f;
 
     glBindBuffer(GL_ARRAY_BUFFER, vbos[vaoIndex]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Particle)*max_particles, parts, GL_STATIC_DRAW);
@@ -161,15 +199,20 @@ void CoffeeParticleSystem::load()
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER,0);
 
+    glGenTransformFeedbacks(2,tfbs);
+
+    for(int i=0;i<2;i++){
+        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[i]);
+
+        glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER,0,vbos[(i+1)%2]);
+
+        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
+    }
+
     glGenQueries(1,&timeQuery);
     glGenQueries(1,&primitiveQuery);
 
     setBaked(true);
-}
-
-void CoffeeParticleSystem::tick(float delta)
-{
-    updateParticles(delta);
 }
 
 bool CoffeeParticleSystem::isBaked()
@@ -180,4 +223,54 @@ bool CoffeeParticleSystem::isBaked()
 void CoffeeParticleSystem::setBaked(bool val)
 {
     this->baked = val;
+}
+
+quint32 CoffeeParticleSystem::getMaxParticles() const
+{
+    return max_particles;
+}
+
+float CoffeeParticleSystem::getParticleSize() const
+{
+    return particleSize;
+}
+
+QColor CoffeeParticleSystem::getParticleColor() const
+{
+    glm::vec4 c = particleColor*255.f;
+    return QColor(c.x,c.y,c.z,c.w);
+}
+
+quint64 CoffeeParticleSystem::getParticleCount() const
+{
+    return active_particles;
+}
+
+quint64 CoffeeParticleSystem::getProcessTime() const
+{
+    return processtime;
+}
+
+void CoffeeParticleSystem::setFrametime(float time)
+{
+    frametime = time*2;
+}
+
+void CoffeeParticleSystem::setMaxParticles(quint32 max_particles)
+{
+    this->max_particles = max_particles;
+}
+
+void CoffeeParticleSystem::setParticleSize(float particleSize)
+{
+    this->particleSize = particleSize;
+}
+
+void CoffeeParticleSystem::setParticleColor(QColor particleColor)
+{
+    this->particleColor = glm::vec4(
+                particleColor.redF()/255.0,
+                particleColor.greenF()/255.0,
+                particleColor.blueF()/255.0,
+                particleColor.alphaF()/255.0);
 }
