@@ -64,9 +64,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
         glViewport(0,0,s.width(),s.height());
 
-        test = new CoffeeParticleSystem(this,world->getCamera());
-        test->setObjectName("particle-system");
-
         qDebug("Enabling standard OpenGL capabilities");
 //        glEnable(GL_TEXTURE_2D);
 
@@ -103,8 +100,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         world->renderWorld();
 
         //testing area
-        test->setFrametime(renderer->getLatestFrameTime());
-        test->render();
 
         glFlush();
 

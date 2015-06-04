@@ -6,6 +6,7 @@
 #include "engine/objects/coffeeobject.h"
 #include "engine/objects/coffeestandardobject.h"
 #include "engine/objects/coffeeskybox.h"
+#include "engine/objects/coffeeparticlesystem.h"
 #include <QVariantMap>
 #include <QElapsedTimer>
 #include <QJsonDocument>
@@ -298,8 +299,11 @@ void CoffeeObjectFactory::importTexture(const QVariantMap &data, QObject *parent
                 textureMapping.insert(type,file.filePath());
             }
         }
+        CoffeeTexture* t = new CoffeeTexture(parent,textureMapping);
 
-        this->textures.insert(name,new CoffeeTexture(parent,textureMapping));
+        t->setObjectName(name);
+
+        this->textures.insert(name,t);
     }else if(subtype=="standard"){
         QFileInfo texture(data.value("file").toString());
         if(texture.isRelative())
@@ -311,7 +315,11 @@ void CoffeeObjectFactory::importTexture(const QVariantMap &data, QObject *parent
             return;
         }
 
-        this->textures.insert(name,new CoffeeTexture(parent,texture.filePath()));
+        CoffeeTexture* t = new CoffeeTexture(parent,texture.filePath());
+
+        t->setObjectName(name);
+
+        this->textures.insert(name,t);
     }
 }
 
@@ -359,6 +367,8 @@ void CoffeeObjectFactory::importShader(const QVariantMap &data, QObject *parent)
     shader->setFragmentShader(fragshader);
     shader->setGeometryShader(geomshader);
 
+    shader->setObjectName(name);
+
     shaders.insert(name,shader);
 }
 
@@ -385,11 +395,15 @@ CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVar
             world->setClearColor(glm::vec4(c.redF(),c.greenF(),c.blueF(),c.alphaF()));
         }else if(key=="skybox"){
             world->setSkybox(createSkybox(data.value(key).toMap(),world));
-        }
+        }else if(key=="particle-systems")
+            for(const QVariant &obj : data.value(key).toList())
+                world->addParticleSystem(createParticleSystem(obj.toMap(),world));
     }
 
     if(world->getSkybox())
         world->getSkybox()->setCamera(world->getCamera());
+
+    world->prepareParticleSystems(); //sets camera for them
 
     return world;
 }
@@ -456,6 +470,48 @@ CoffeeSkybox *CoffeeObjectFactory::createSkybox(const QVariantMap &data, QObject
     if(!skybox->getShader()||!skybox->getSkymesh()||!skybox->getTexture())
         qFatal("Skybox does not have the required components!");
     return skybox;
+}
+
+CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMap &data, QObject *parent)
+{
+    CoffeeParticleSystem* system = new CoffeeParticleSystem(parent,nullptr);
+
+    for(QString key : data.keys()){
+        if(key=="texture"){
+            system->setTexture(textures.value(data.value(key).toString()));
+            if(!system->getTexture())
+                qFatal("Failed to set particle system sprite!");
+        }else if(key=="render-shader"){
+            system->setShader(shaders.value(data.value(key).toString()));
+            if(!system->getShader())
+                qFatal("Failed to set particle system render shader!");
+        }else if(key=="transform-shader"){
+            system->setTransformShader(shaders.value(data.value(key).toString()));
+            if(!system->getTransformShader())
+                qFatal("Failed to set particle system transform shader!");
+        }else if(key=="color"){
+            system->setParticleColor(stringToColor(data.value(key)));
+        }else if(key=="particle-mass"){
+            system->setParticleMass(data.value(key).toFloat());
+        }else if(key=="particle-size"){
+            system->setParticleSize(data.value(key).toFloat());
+        }else if(key=="gravity"){
+            system->setGravity(listToVec3(data.value(key)));
+        }else if(key=="position"){
+            system->position()->setValue(listToVec3(data.value(key).toString()));
+        }else if(key=="id"){
+            system->setObjectName(data.value(key).toString());
+        }
+    }
+
+    if(!system->getTexture())
+        qFatal("Particle system has no sprite!");
+    if(!system->getShader())
+        qFatal("Particle system has no render shader!");
+    if(!system->getTransformShader())
+        qFatal("Particle system has no transform shader!");
+
+    return system;
 }
 
 CoffeeObjectFactory::CoffeeModelStruct *CoffeeObjectFactory::acquireModel(QString identification)

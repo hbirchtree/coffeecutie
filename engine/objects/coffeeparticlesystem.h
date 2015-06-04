@@ -2,6 +2,7 @@
 #define COFFEEPARTICLESYSTEM_H
 
 #include <QObject>
+#include <QVector3D>
 #include "engine/objects/coffeeobject.h"
 #include "general/data/numberbuffer.h"
 
@@ -16,6 +17,8 @@ class CoffeeParticleSystem : public CoffeeObject
     Q_PROPERTY(QColor particleColor READ particleColor WRITE setParticleColor)
     Q_PROPERTY(float particleSize READ particleSize WRITE setParticleSize)
     Q_PROPERTY(quint32 max_particles READ maxParticles WRITE setMaxParticles)
+    Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
+    Q_PROPERTY(QVector3D gravity READ gravity WRITE setGravity)
 
     Q_INTERFACES(CoffeeObject)
     Q_PLUGIN_METADATA(IID CoffeeObjectIID)
@@ -37,6 +40,19 @@ public:
     QColor getParticleColor() const;
     quint64 getParticleCount() const;
     quint64 getProcessTime() const;
+    QVector3D gravity() const;
+    float particleMass() const;
+
+    void setCamera(const CoffeeCamera *value);
+
+    QPointer<CoffeeTexture> getTexture();
+    void setTexture(QPointer<CoffeeTexture> value);
+
+    QPointer<ShaderContainer> getShader();
+    void setShader(QPointer<ShaderContainer> value);
+
+    QPointer<ShaderContainer> getTransformShader();
+    void setTransformShader(QPointer<ShaderContainer> value);
 
 public slots:
     void setFrametime(float time);
@@ -44,6 +60,9 @@ public slots:
     void setMaxParticles(quint32 max_particles);
     void setParticleSize(float particleSize);
     void setParticleColor(QColor particleColor);
+    void setGravity(QVector3D gravity);
+    void setGravity(glm::vec3 gravity);
+    void setParticleMass(float particleMass);
 
 protected:
     glm::vec4 particleColor;
@@ -80,12 +99,17 @@ protected:
 
     float particleSize = 0.01f;
 
+    QVector<Particle> startParticles;
+
     quint32 active_particles = 1;
     quint32 max_particles = 10240;
 
     quint32 spawncount = 20;
 
     GLuint64 processtime = 0;
+private:
+    QVector3D m_gravity;
+    float m_particleMass;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

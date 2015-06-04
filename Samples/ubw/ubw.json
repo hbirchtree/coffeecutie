@@ -59,14 +59,46 @@
 			"west": "models/textures/sky_west.png",
 			"up": "models/textures/sky_up.png",
 			"down": "models/textures/sky_down.png"
+		},
+		{
+			"type": "texture",
+			"name": "quadtex",
+			"variant": "standard",
+			"file": "models/textures/quadtex.png"
+		},
+		{
+			"type": "texture",
+			"name": "particle-fx",
+			"variant": "standard",
+			"file": "models/textures/particle_fx.png"
+		},
+		{
+			"type": "shader",
+			"name": "particle-render",
+			"fragment": "shaders/particles/billboard.fs",
+			"geometry": "shaders/particles/billboard.gs",
+			"vertex": "shaders/particles/billboard.vs"
+		},
+		{
+			"type": "shader",
+			"name": "particle-transform",
+			"geometry": "shaders/particles/geometry-process.geom",
+			"vertex": "shaders/particles/vertex-process.vert"
+		},
+		{
+			"type": "shader",
+			"name": "particle-render2",
+			"fragment": "shaders/particles/billboard.fs",
+			"geometry": "shaders/particles/billboard.gs",
+			"vertex": "shaders/particles/billboard.vs"
+		},
+		{
+			"type": "shader",
+			"name": "particle-transform2",
+			"geometry": "shaders/particles/geometry-process.geom",
+			"vertex": "shaders/particles/vertex-process.vert"
 		}
 	],
-	"models":{
-		"quad": "models/quad.obj",
-		"pusheen": "models/pusheenbox.obj",
-		"ubw": "models/ubw.fbx",
-		"bumpbox": "models/Zelda 1.fbx"
-	},
 	"world.1":{
 		"lights":[
 			{
@@ -94,6 +126,30 @@
 			"mesh": "cube:.*",
 			"shader": "skyshader"
 		},
+		"particle-systems":[
+			{
+				"id": "test-particles",
+				"texture": "quadtex",
+				"render-shader": "particle-render",
+				"transform-shader": "particle-transform",
+				"color": "#FFFFFF88",
+				"particle-mass": 0.5,
+				"particle-size": 2.0,
+				"gravity": [0,-9.81,0],
+				"position": [5,5,5]
+			},
+			{
+				"id": "test-particles2",
+				"texture": "particle-fx",
+				"render-shader": "particle-render2",
+				"transform-shader": "particle-transform2",
+				"color": "#FFFFFF88",
+				"particle-mass": 0.5,
+				"particle-size": 2.0,
+				"gravity": [0,-9.81,0],
+				"position": [5,5,5]
+			}
+		],
 		"objects": [
 			{
 				"id": "plane",

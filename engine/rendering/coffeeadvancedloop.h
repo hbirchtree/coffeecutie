@@ -31,8 +31,6 @@ public:
 private:
     QEventLoop* evloop;
 
-    CoffeeParticleSystem* test;
-
     CoffeeFrameBufferObject* renderFbo;
     CoffeeObject* screenSurface;
 

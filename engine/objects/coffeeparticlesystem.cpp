@@ -9,13 +9,21 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
 {
     this->camera = camera;
 
-    particleColor = glm::vec4(0.5,0.5,0.5,0.9);
+//    particleColor = glm::vec4(0.5,0.5,0.5,0.9);
 
-    tshader = new ShaderContainer(this);
-    shader = new ShaderContainer(this);
+//    tshader = new ShaderContainer(this);
+//    shader = new ShaderContainer(this);
 
-    texture = new CoffeeTexture(this,"ubw/models/textures/particle_fx.png");
-    texture->setObjectName("sprite");
+//    texture = new CoffeeTexture(this,"ubw/models/textures/particle_fx.png");
+//    texture->setObjectName("sprite");
+
+    Particle first;
+    first.type = 0;
+    first.pos = glm::vec3(0,0,0);
+    first.vel = glm::vec3(0,10,0);
+    first.lifetime = 6.f;
+
+    startParticles.append(first);
 }
 
 void CoffeeParticleSystem::render()
@@ -38,8 +46,6 @@ void CoffeeParticleSystem::render()
 //    qDebug("Spawn count: %u",spawncount);
 
     tshader->setUniform("rand",(float)(qrand()%1000000-500000)/100000.f);
-
-    qDebug() << (float)(qrand()%1000000-500000)/100000.f;
 
     tshader->setUniform("spawncount",(float)spawncount);
 
@@ -82,7 +88,7 @@ void CoffeeParticleSystem::render()
                            rotation()->getValue(),
                            scale()->getValue()));
     shader->setUniform("cameraPos",camera->getCameraPos());
-    shader->setUniform("particleSize",2.f);
+    shader->setUniform("particleSize",particleSize);
 
     glDrawTransformFeedback(GL_POINTS,tfbs[tfbIndex]);
 
@@ -108,9 +114,10 @@ void CoffeeParticleSystem::load()
 {
     texture->loadTexture();
 
-    shader->buildProgram("ubw/shaders/particles/billboard.vs",
-                         "ubw/shaders/particles/billboard.fs",
-                         "ubw/shaders/particles/billboard.gs");
+//    shader->buildProgram("ubw/shaders/particles/billboard.vs",
+//                         "ubw/shaders/particles/billboard.fs",
+//                         "ubw/shaders/particles/billboard.gs");
+    shader->buildProgram();
 
     glUseProgram(shader->getProgramId());
 
@@ -122,8 +129,8 @@ void CoffeeParticleSystem::load()
 
     tshader->createProgram();
 
-    tshader->setVertexShader("ubw/shaders/particles/vertex-process.vert");
-    tshader->setGeometryShader("ubw/shaders/particles/geometry-process.geom");
+//    tshader->setVertexShader("ubw/shaders/particles/vertex-process.vert");
+//    tshader->setGeometryShader("ubw/shaders/particles/geometry-process.geom");
 
     tshader->compileShaders();
 
@@ -139,23 +146,19 @@ void CoffeeParticleSystem::load()
     tshader->getUniformLocation("timestep");
     tshader->getUniformLocation("gravity");
     tshader->getUniformLocation("rand");
-    tshader->setUniform("mass",0.5f);
-    tshader->setUniform("gravity",glm::vec3(0,-9.81,0));
+    tshader->setUniform("mass",particleMass());
+    tshader->setUniform("gravity",glm::vec3(gravity().x(),gravity().y(),gravity().z()));
 
     glGenVertexArrays(2, vaos);
     glGenBuffers(2, vbos);
 
     glBindVertexArray(vaos[vaoIndex]);
 
-    Particle parts[max_particles];
-
-    parts[0].type = 0;
-    parts[0].pos = glm::vec3(0,0,0);
-    parts[0].vel = glm::vec3(0,10,0);
-    parts[0].lifetime = 6.f;
+    QVector<Particle> partsbuffer = QVector<Particle>(startParticles);
+    partsbuffer.resize(max_particles);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbos[vaoIndex]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Particle)*max_particles, parts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Particle)*max_particles, partsbuffer.data(), GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(tshader->getAttributeLocation("inType"));
     glVertexAttribPointer(tshader->getAttributeLocation("inType"),1,GL_FLOAT,
@@ -251,6 +254,16 @@ quint64 CoffeeParticleSystem::getProcessTime() const
     return processtime;
 }
 
+QVector3D CoffeeParticleSystem::gravity() const
+{
+    return m_gravity;
+}
+
+float CoffeeParticleSystem::particleMass() const
+{
+    return m_particleMass;
+}
+
 void CoffeeParticleSystem::setFrametime(float time)
 {
     frametime = time*2;
@@ -268,9 +281,62 @@ void CoffeeParticleSystem::setParticleSize(float particleSize)
 
 void CoffeeParticleSystem::setParticleColor(QColor particleColor)
 {
+    qDebug() << particleColor;
     this->particleColor = glm::vec4(
-                particleColor.redF()/255.0,
-                particleColor.greenF()/255.0,
-                particleColor.blueF()/255.0,
-                particleColor.alphaF()/255.0);
+                particleColor.redF(),
+                particleColor.greenF(),
+                particleColor.blueF(),
+                particleColor.alphaF());
 }
+
+void CoffeeParticleSystem::setGravity(QVector3D gravity)
+{
+    m_gravity = gravity;
+}
+
+void CoffeeParticleSystem::setGravity(glm::vec3 gravity)
+{
+    m_gravity.setX(gravity.x);
+    m_gravity.setY(gravity.y);
+    m_gravity.setZ(gravity.z);
+}
+
+void CoffeeParticleSystem::setParticleMass(float particleMass)
+{
+    m_particleMass = particleMass;
+}
+QPointer<ShaderContainer> CoffeeParticleSystem::getTransformShader()
+{
+    return tshader;
+}
+
+void CoffeeParticleSystem::setTransformShader(QPointer<ShaderContainer> value)
+{
+    tshader = value;
+}
+
+QPointer<ShaderContainer> CoffeeParticleSystem::getShader()
+{
+    return shader;
+}
+
+void CoffeeParticleSystem::setShader(QPointer<ShaderContainer> value)
+{
+    shader = value;
+}
+
+QPointer<CoffeeTexture> CoffeeParticleSystem::getTexture()
+{
+    return texture;
+}
+
+void CoffeeParticleSystem::setTexture(QPointer<CoffeeTexture> value)
+{
+    texture = value;
+}
+
+void CoffeeParticleSystem::setCamera(const CoffeeCamera *value)
+{
+    camera = value;
+}
+

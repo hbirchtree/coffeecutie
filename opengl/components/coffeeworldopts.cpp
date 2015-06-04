@@ -4,6 +4,7 @@
 #include "coffeecamera.h"
 #include "opengl/context/coffeerenderer.h"
 #include "engine/objects/coffeeskybox.h"
+#include "engine/objects/coffeeparticlesystem.h"
 #include "engine/physics/bulletphysics.h"
 
 CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
@@ -98,6 +99,17 @@ QList<CoffeeObject*> &CoffeeWorldOpts::getObjects()
     return objects;
 }
 
+void CoffeeWorldOpts::addParticleSystem(CoffeeParticleSystem *system)
+{
+    particles.append(system);
+}
+
+void CoffeeWorldOpts::prepareParticleSystems()
+{
+    for(CoffeeParticleSystem* s : particles)
+        s->setCamera(this->getCamera());
+}
+
 QObject *CoffeeWorldOpts::getPhysicsRoot() const
 {
     return physics;
@@ -119,6 +131,8 @@ bool CoffeeWorldOpts::wireframeMode() const
 
 void CoffeeWorldOpts::tickObjects(float d)
 {
+    for(CoffeeParticleSystem* s : particles)
+        s->setFrametime(d);
     tickPhysics(d);
 }
 
@@ -135,6 +149,10 @@ void CoffeeWorldOpts::renderWorld()
     for(CoffeeObject* o : this->getObjects()){
         o->render();
     }
+
+    for(CoffeeParticleSystem* s : particles)
+        s->render();
+
     //We need to reset it so that the FBO is rendered
     if(wireframeMode())
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);

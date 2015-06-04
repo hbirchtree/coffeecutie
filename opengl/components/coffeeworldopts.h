@@ -8,6 +8,7 @@ class CoffeeRenderer;
 class BulletPhysics;
 class CoffeeObject;
 class CoffeeOmniLight;
+class CoffeeParticleSystem;
 class PhysicsObject;
 
 class CoffeeWorldOpts : public QObject
@@ -36,6 +37,9 @@ public:
 
     void addObject(CoffeeObject* object);
     QList<CoffeeObject *> &getObjects();
+
+    void addParticleSystem(CoffeeParticleSystem* system);
+    void prepareParticleSystems();
 
     QObject* getPhysicsRoot() const;
 
@@ -69,6 +73,7 @@ private:
     QList<CoffeeObject*> objects;
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;
+    QList<QPointer<CoffeeParticleSystem>> particles;
     QPointer<CoffeeRenderer> renderer;
     bool m_wireframeMode = false;
 };

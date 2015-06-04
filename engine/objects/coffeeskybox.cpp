@@ -3,9 +3,9 @@
 CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) : CoffeeObject(parent)
 {
     setCamera(camera);
-    this->shader = new ShaderContainer(this);
-    shader->setVertexShader("ubw/shaders/skybox/vsh.txt");
-    shader->setFragmentShader("ubw/shaders/skybox/fsh.txt");
+//    this->shader = new ShaderContainer(this);
+//    shader->setVertexShader("ubw/shaders/skybox/vsh.txt");
+//    shader->setFragmentShader("ubw/shaders/skybox/fsh.txt");
 }
 
 void CoffeeSkybox::addMap(GLenum side, QString source)

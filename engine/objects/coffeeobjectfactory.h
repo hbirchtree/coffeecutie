@@ -12,6 +12,7 @@ class CoffeeMaterial;
 class ShaderContainer;
 class CoffeeTexture;
 class CoffeeObject;
+class CoffeeParticleSystem;
 
 class CoffeeObjectFactory
 {
@@ -28,7 +29,7 @@ public:
     CoffeeCamera* createCamera(const QVariantMap &data, QObject* parent);
     CoffeeOmniLight* createLight(const QVariantMap &data, QObject* parent);
     CoffeeSkybox* createSkybox(const QVariantMap &data, QObject* parent);
-
+    CoffeeParticleSystem* createParticleSystem(const QVariantMap &data, QObject* parent);
 
 private:
     class CoffeeModelStruct {
