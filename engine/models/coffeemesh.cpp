@@ -1,12 +1,10 @@
 #include "coffeemesh.h"
 
-CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){}
-
-CoffeeMesh::CoffeeMesh(QPointer<CoffeeMesh> mesh){
-    this->vertices = mesh->vertices;
+CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){
+    instances = new CoffeeInstanceContainer(this);
 }
 
-CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : QObject(parent)
+CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : CoffeeMesh(parent)
 {
     for(uint i=0;i<meshSource->mNumFaces;i++){
         aiFace face = meshSource->mFaces[i];
@@ -61,14 +59,6 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : QOb
         *success = true;
 }
 
-QList<QPointer<CoffeeVertex> > CoffeeMesh::copy(){
-    QList<QPointer<CoffeeVertex> > copy;
-    for(QPointer<CoffeeVertex> vert : vertices){
-        copy.append(new CoffeeVertex(vert));
-    }
-    return copy;
-}
-
 GLuint CoffeeMesh::getVertexIndexHandle() const
 {
     return buffers.at(indexBufferIndex());
@@ -79,68 +69,14 @@ GLuint CoffeeMesh::getVertexArrayHandle() const
     return arrays.at(0);
 }
 
-NumberBuffer<GLfloat> *CoffeeMesh::getData(){
-    NumberBuffer<GLfloat>* data =
-            NumberBuffer<GLfloat>::createArray(this,getVerticesSize()*CoffeeVertex::VERTEX_COUNT);
-    for(QPointer<CoffeeVertex> vert : vertices){
-        data->put(vert->position.x);
-        data->put(vert->position.y);
-        data->put(vert->position.z);
-        data->put(vert->texCoord.x);
-        data->put(vert->texCoord.y);
-        data->put(vert->normal.x);
-        data->put(vert->normal.y);
-        data->put(vert->normal.z);
-        data->put(vert->tangent.x);
-        data->put(vert->tangent.y);
-        data->put(vert->tangent.z);
-    }
-    return data;
-}
-
-int CoffeeMesh::getVerticesDataSize(){
-    return getVerticesSize()*CoffeeVertex::VERTEX_STRIDE;
-}
-
-int CoffeeMesh::getVerticesSize(){
-    return vertices.size();
-}
-
-void CoffeeMesh::addVertex(QPointer<CoffeeVertex> vert){
-    vertices.append(vert);
-}
-
-void CoffeeMesh::setVertices(QList<QPointer<CoffeeVertex> > vertices){
-    this->vertices.clear();
-    this->vertices.append(vertices);
+QPointer<CoffeeInstanceContainer> CoffeeMesh::getInstances()
+{
+    return instances;
 }
 
 GLuint CoffeeMesh::getIndicesCount() const
 {
     return indices.size();
-}
-
-void CoffeeMesh::generateIndices()
-{
-    int i=0;
-    while(i+2<vertices.size()){
-        CoffeeVertex* v1 = vertices.at(i);
-        CoffeeVertex* v2 = vertices.at(i+1);
-        CoffeeVertex* v3 = vertices.at(i+2);
-
-        indices.append(v1->i_position);
-        indices.append(v2->i_position);
-        indices.append(v3->i_position);
-
-        v1->i_tangent = tangents.size();
-        tangents.append(v1->tangent);
-        v2->i_tangent = tangents.size();
-        tangents.append(v2->tangent);
-        v3->i_tangent = tangents.size();
-        tangents.append(v3->tangent);
-
-        i+=3;
-    }
 }
 
 void CoffeeMesh::loadMesh()
@@ -157,6 +93,8 @@ void CoffeeMesh::loadMesh()
     if(hasTangents()&&useTangents())
         vbuff_count++;
     if(hasBitangents()&&useBitangents())
+        vbuff_count++;
+    if(useInstancing())
         vbuff_count++;
 
     buffers.resize(vbuff_count);
@@ -255,6 +193,25 @@ void CoffeeMesh::loadMesh()
                               (GLvoid*)0);
     }
 
+    if(useInstancing()){
+        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        for(int i=0;i<4;i++){
+            glEnableVertexAttribArray(MESH_LOC_MODEL_MAT+i);
+            glVertexAttribPointer(MESH_LOC_MODEL_MAT+i,
+                                  4,
+                                  GL_FLOAT,
+                                  GL_FALSE,
+                                  sizeof(glm::mat4),
+                                  (GLvoid*)(sizeof(glm::vec4)*i));
+            glVertexAttribDivisor(MESH_LOC_MODEL_MAT+i,1);
+        }
+        QVector<glm::mat4> data = instances->getData();
+        glBufferData(GL_ARRAY_BUFFER,
+                     sizeof(glm::mat4)*instances->instanceCount(),
+                     data.data(),
+                     GL_DYNAMIC_DRAW);
+    }
+
     setIndexBufferIndex(free_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,buffers[free_buffer++]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
@@ -335,6 +292,27 @@ int CoffeeMesh::indexBufferIndex() const
     return m_indexBufferIndex;
 }
 
+bool CoffeeMesh::useInstancing() const
+{
+    return m_useInstancing;
+}
+
+bool CoffeeMesh::hasNewMatrices() const
+{
+    return m_newMatrices;
+}
+
+void CoffeeMesh::updateModelMatrices(QVector<glm::mat4> matrices)
+{
+    if(matrices.size()!=instances->instanceCount())
+        qFatal("Invalid amount of model matrices!");
+
+    //TODO : write this
+    //request for the buffers to be updated in the loop, this one can be run from another thread
+    //remember to transpose the matrices here!
+    m_newMatrices = true;
+}
+
 void CoffeeMesh::setBaked(bool arg)
 {
     m_baked = arg;
@@ -368,4 +346,9 @@ void CoffeeMesh::setUseTangents(bool useTangents)
 void CoffeeMesh::setIndexBufferIndex(int indexBufferIndex)
 {
     m_indexBufferIndex = indexBufferIndex;
+}
+
+void CoffeeMesh::setUseInstancing(bool useInstancing)
+{
+    m_useInstancing = useInstancing;
 }

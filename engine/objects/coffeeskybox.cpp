@@ -1,5 +1,7 @@
 #include "coffeeskybox.h"
 
+#include "engine/models/coffeemesh.h"
+
 CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) : CoffeeObject(parent)
 {
     setCamera(camera);

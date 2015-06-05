@@ -22,10 +22,17 @@ void CoffeeStandardObject::render()
     }
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
-    glDrawElements(GL_TRIANGLES,
-                   pmesh->getIndicesCount(),
-                   GL_UNSIGNED_INT,
-                   (GLvoid*)0);
+    if(!this->mesh()->useInstancing())
+        glDrawElements(GL_TRIANGLES,
+                       pmesh->getIndicesCount(),
+                       GL_UNSIGNED_INT,
+                       (GLvoid*)0);
+    else
+        glDrawElementsInstanced(GL_TRIANGLES,
+                                          pmesh->getIndicesCount(),
+                                          GL_UNSIGNED_INT,
+                                          0,
+                                          this->mesh()->getInstances()->instanceCount());
 
     for(TextureMapping m : textures){
         glActiveTexture(GL_TEXTURE0+textures.indexOf(m));
@@ -54,8 +61,6 @@ void CoffeeStandardObject::load()
     }
     for(TextureMapping m : textures){
         pshader->getUniformLocation(m.samplerName);
-//        pshader->setUniform(m.samplerName,
-//                            static_cast<GLint>(m.unit)+textures.indexOf(m)-static_cast<GLint>(GL_TEXTURE0));
         m.texture->loadTexture();
     }
     baked = true;

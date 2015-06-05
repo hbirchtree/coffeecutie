@@ -1,6 +1,5 @@
 #version 330
 
-uniform mat4 model;
 uniform vec3 cameraPosition;
 
 // material settings
@@ -29,17 +28,17 @@ uniform struct Light {
 } light;
 
 in vec2 fragTexCoord;
-in vec3 fragNormal;
-in vec3 fragVert;
-in vec3 fragTangent;
+in vec3 worldNormal;
+in vec3 worldVert;
+in vec3 worldTangent;
+in vec4 surfacePos;
 
 out vec4 finalColor;
 
 vec3 bumpedNormal(){
-    vec4 normalColor = texture(mtl.bumpSampler,fragTexCoord);
-    vec3 normalStatic = normalize(transpose(inverse(mat3(model))) * fragNormal);
-    vec3 normal = 2.0 * normalColor.rgb - 1.0;
-    vec3 tangent = vec3(model * vec4(fragTangent,0));
+    vec3 normalStatic = normalize(worldNormal);
+    vec3 normal = 2.0 * texture(mtl.bumpSampler,fragTexCoord).rgb - 1.0;
+	vec3 tangent = worldTangent;
     vec3 bitang = cross(tangent,normalStatic);
     tangent = normalize(tangent - dot(tangent,normalStatic)*normalStatic);
     mat3 TBN = mat3(tangent,bitang,normalStatic);
@@ -51,11 +50,10 @@ vec3 bumpedNormal(){
 
 void main() {
 	//Stuff
-    vec3 surfacePos = vec3(model * vec4(fragVert, 1));
     vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
-    vec3 surfaceToLight = normalize(light.position - surfacePos);
-    vec3 surfaceToCamera = normalize(cameraPosition - surfacePos);
-    vec3 normal = fragNormal;
+    vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
+    vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
+    vec3 normal = bumpedNormal();
     
     //transparency map
     float pixelTransparency = texture(mtl.transparencySampler,fragTexCoord).a * mtl.opacity;
@@ -80,7 +78,7 @@ void main() {
     vec3 specular = specularCoefficient * mtl.specularColor * pixelSpecularColor * light.intensities;
     
     //attenuation
-    float distanceToLight = length(light.position - surfacePos);
+    float distanceToLight = length(light.position - surfacePos.xyz);
     float attenuation = 1.0 / (1.0 + light.attenuation * pow(distanceToLight, 2));
 
     //linear color (color before gamma correction)

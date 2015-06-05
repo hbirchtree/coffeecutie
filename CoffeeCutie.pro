@@ -62,7 +62,8 @@ SOURCES += main.cpp \
     engine/objects/coffeeobject.cpp \
     engine/objects/coffeestandardobject.cpp \
     engine/objects/coffeeskybox.cpp \
-    opengl/components/coffeematerial.cpp
+    opengl/components/coffeematerial.cpp \
+    engine/models/coffeeinstancecontainer.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -116,7 +117,8 @@ HEADERS += \
     engine/objects/coffeeinstancedobject.h \
     engine/objects/coffeeobject.h \
     engine/objects/coffeestandardobject.h \
-    engine/objects/coffeeskybox.h
+    engine/objects/coffeeskybox.h \
+    engine/models/coffeeinstancecontainer.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

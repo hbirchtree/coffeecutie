@@ -50,8 +50,12 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Configuring objects for rendering");
         for(CoffeeObject* o : world->getObjects()){
             CoffeeStandardObject* stdobj = dynamic_cast<CoffeeStandardObject*>(o);
-            if(stdobj)
+            if(stdobj){
                 setupRenderer(stdobj);
+                if(stdobj->objectName().contains("gear")){
+                    stdobj->mesh()->setUseInstancing(true);
+                }
+            }
             if(o->physics())
                 o->rotation()->bindValue(o->physics()->getPhysicalRotation());
             qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());

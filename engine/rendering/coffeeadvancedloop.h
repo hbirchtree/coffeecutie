@@ -7,7 +7,6 @@
 #include "opengl/rendering/renderloop.h"
 
 class CoffeeJoystick;
-class CoffeeParticleSystem;
 class CoffeeWorldOpts;
 class CoffeeFrameBufferObject;
 class CoffeeObject;

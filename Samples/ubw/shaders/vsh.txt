@@ -7,17 +7,19 @@ layout(location = 1) in vec2 vertTexCoord;
 layout(location = 2) in vec3 vertNormal;
 layout(location = 3) in vec3 vertTangent;
 
-out vec3 fragVert;
+out vec3 worldVert;
 out vec2 fragTexCoord;
-out vec3 fragNormal;
-out vec3 fragTangent;
+out vec3 worldNormal;
+out vec3 worldTangent;
+out vec4 surfacePos;
 
 void main() {
     // Pass some variables to the fragment shader
     fragTexCoord = vertTexCoord;
-    fragNormal = vertNormal;
-    fragVert = vert;
-    fragTangent = (camera * model * vec4(vertTangent,0.0)).xyz;
+    worldNormal = (model * vec4(vertNormal,0)).xyz;
+    worldVert = (camera * model * vec4(vert,1)).xyz;
+    worldTangent = (camera * vec4(vertTangent,0.0)).xyz;
+    surfacePos = model * vec4(vert,1.0);
     
     // Apply all matrix transformations to vert
     gl_Position = camera * model * vec4(vert, 1);

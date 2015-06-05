@@ -1,7 +1,5 @@
 #version 330
 
-uniform mat4 model;
-uniform mat4 camera;
 uniform vec3 cameraPosition;
 
 uniform struct Material {
@@ -30,20 +28,19 @@ uniform struct FogParams {
 } fogParams;
 
 in vec2 fragTexCoord;
-in vec3 fragNormal;
-in vec3 fragVert;
-in vec3 fragTangent;
-in float fogCoord;
+in vec3 worldNormal;
+in vec3 worldVert;
+in vec3 worldTangent;
+in vec4 surfacePos;
 
 layout(location = 0) out vec4 finalColor;
 
 void main() {
-    vec3 normal = normalize(transpose(inverse(mat3(model))) * fragNormal);
-    vec3 surfacePos = vec3(model * vec4(fragVert, 1));
-    vec4 eyePos = model * vec4(fragVert,1.0);
+    vec3 normal = normalize(worldNormal);
+//    vec3 surfacePos = worldVert;
     vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
-    vec3 surfaceToLight = normalize(light.position - surfacePos);
-    vec3 surfaceToCamera = normalize(cameraPosition - surfacePos);
+    vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
+    vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
     
     //ambient
     vec3 ambient = light.ambientCoefficient * mtl.ambientColor * light.intensities;
@@ -59,7 +56,7 @@ void main() {
     vec3 specular = specularCoefficient * mtl.specularColor * light.intensities;
     
     //attenuation
-    float distanceToLight = length(light.position - surfacePos);
+    float distanceToLight = length(light.position - surfacePos.xyz);
     float attenuation = 1.0 / (1.0 + light.attenuation * pow(distanceToLight, 2));
 
     //linear color (color before gamma correction)
@@ -70,7 +67,7 @@ void main() {
     linearColor = pow(linearColor, gamma);
     
     //fog
-    float fogCoord = abs(length(cameraPosition-eyePos.xyz)/eyePos.w);
+    float fogCoord = abs(length(cameraPosition-surfacePos.xyz)/surfacePos.w);
     float fogVar = clamp(exp(-pow(fogParams.fDensity*fogCoord,7)),0.0,1.0);
     linearColor = mix(fogParams.fColor.xyz,linearColor,fogVar);
     

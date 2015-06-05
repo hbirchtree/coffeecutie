@@ -45,7 +45,8 @@ void CoffeeParticleSystem::render()
 
 //    qDebug("Spawn count: %u",spawncount);
 
-    tshader->setUniform("rand",(float)(qrand()%1000000-500000)/100000.f);
+    tshader->setUniform("randX",(float)(qrand()%1000000-500000)/100000.f);
+    tshader->setUniform("randZ",(float)(qrand()%1000000-500000)/100000.f);
 
     tshader->setUniform("spawncount",(float)spawncount);
 
@@ -145,7 +146,8 @@ void CoffeeParticleSystem::load()
     tshader->getUniformLocation("spawncount");
     tshader->getUniformLocation("timestep");
     tshader->getUniformLocation("gravity");
-    tshader->getUniformLocation("rand");
+    tshader->getUniformLocation("randX");
+    tshader->getUniformLocation("randZ");
     tshader->setUniform("mass",particleMass());
     tshader->setUniform("gravity",gravity());
 

@@ -2,22 +2,18 @@
 #define COFFEEMESH
 
 #include "general/common.h"
+#include "coffeeinstancecontainer.h"
 #include "opengl/rendering/coffeevertex.h"
 #include "general/data/coffeegameasset.h"
 #include "general/data/numberbuffer.h"
-
-#define MESH_BUFFER_WVP_MAT 5
-#define MESH_BUFFER_WORLD_MAT 6
 
 #define MESH_LOC_POS 0
 #define MESH_LOC_TEX 1
 #define MESH_LOC_NOR 2
 #define MESH_LOC_TAN 3
 #define MESH_LOC_BIT 4
-#define MESH_LOC_WVP_MAT 5
-#define MESH_LOC_WLD_MAT 8
-
-//#define MESH_INDEXED_RAW
+#define MESH_LOC_MODEL_MAT 5
+#define MESH_LOC_MODEL_MAT 9
 
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT
@@ -34,6 +30,8 @@ class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_PROPERTY(bool useTangents READ useTangents WRITE setUseTangents)
     Q_PROPERTY(bool useBitangents READ useBitangents WRITE setUseBitangents)
 
+    Q_PROPERTY(bool useInstancing READ useInstancing WRITE setUseInstancing)
+
     Q_PROPERTY(bool baked READ baked WRITE setBaked)
 
     Q_PROPERTY(int indexBufferIndex READ indexBufferIndex WRITE setIndexBufferIndex)
@@ -49,17 +47,10 @@ public:
     };
 
     CoffeeMesh(QObject* parent);
-    CoffeeMesh(QPointer<CoffeeMesh> mesh);
     CoffeeMesh(QObject* parent, aiMesh* meshSource, bool *success = 0);
-
-    QList<QPointer<CoffeeVertex> > copy();
 
     GLuint getVertexIndexHandle() const;
     GLuint getVertexArrayHandle() const;
-
-    int getVerticesSize();
-    void addVertex(QPointer<CoffeeVertex> vert);
-    void setVertices(QList<QPointer<CoffeeVertex> > vertices);
 
     GLuint getIndicesCount() const;
 
@@ -82,7 +73,14 @@ public:
 
     int indexBufferIndex() const;
 
+    bool useInstancing() const;
+    bool hasNewMatrices() const;
+
+    QPointer<CoffeeInstanceContainer> getInstances();
+
 public slots:
+    void updateModelMatrices(QVector<glm::mat4> matrices);
+
     void setBaked(bool arg);
 
     void setUsePositions(bool usePositions);
@@ -92,6 +90,8 @@ public slots:
     void setUseTangents(bool useTangents);
 
     void setIndexBufferIndex(int indexBufferIndex);
+
+    void setUseInstancing(bool useInstancing);
 
 protected:
     void generateIndices();
@@ -108,7 +108,8 @@ protected:
 
 
 private:
-    QList<QPointer<CoffeeVertex> > vertices;
+    QPointer<CoffeeInstanceContainer> instances;
+
     QVector<GLuint> buffers;
     QVector<GLuint> arrays;
     GLenum drawmode = GL_STATIC_DRAW;
@@ -125,6 +126,9 @@ private:
     bool m_useBitangents = false;
     bool m_useTangents = true;
     int m_indexBufferIndex;
+
+    bool m_newMatrices = false;
+    bool m_useInstancing = false;
 };
 
 #endif // COFFEEMESH

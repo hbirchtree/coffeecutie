@@ -6,7 +6,8 @@ layout(points, max_vertices=30) out;
 uniform float mass;
 uniform float spawncount;
 uniform float timestep;
-uniform float rand;
+uniform float randX;
+uniform float randZ;
 uniform vec3 gravity;
 
 in float[] geoType;
@@ -24,7 +25,7 @@ void main(){
 	if(geoType[0] == 0.0){
 		for(int i=0;i<spawncount;i++){
 			outType = 1.0;
-			outVel = geoVel[0]+gravity*mass*timestep+vec3(1,0,0)*sin(rand)+vec3(0,0,1)*cos(rand)+vec3(0,1,0)*rand;
+			outVel = geoVel[0]+gravity*mass*timestep+vec3(1,0,0)*randX+vec3(0,0,1)*randZ+vec3(0,1,0)*randX*randZ/25.0;
 			outPos = geoPos[0]+outVel*timestep;
 			outLife = geoLife[0];
 			EmitVertex();

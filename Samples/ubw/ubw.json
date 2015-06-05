@@ -8,6 +8,12 @@
 		},
 		{
 			"type": "shader",
+			"name": "standard-instancing",
+			"fragment": "shaders/fsh.txt",
+			"vertex": "shaders/vsh_instanced.txt"
+		},
+		{
+			"type": "shader",
 			"name": "advanced",
 			"fragment": "shaders/fsh_bumpmap.txt",
 			"vertex": "shaders/vsh.txt"
@@ -112,7 +118,7 @@
 			"fov": 90,
 			"znear": 0.01,
 			"zfar": 100,
-			"position": [0,10,20],
+			"position": [0,20,0],
 			"rotation": [0,0,0]
 		},
 		"clearcolor": "#002525FF",
@@ -126,7 +132,7 @@
 			"mesh": "cube:.*",
 			"shader": "skyshader"
 		},
-		"particle-systems":[
+		"particle-systemd":[
 			{
 				"id": "test-particles",
 				"texture": "quadtex",
@@ -168,7 +174,7 @@
 			},
 			{
 				"id": "gear",
-				"shader.id": "standard",
+				"shader.id": "standard-instancing",
 				"model.id": "ubw:Cyl.*",
 				"model.scale": [2,2,2],
 				"physics":{
