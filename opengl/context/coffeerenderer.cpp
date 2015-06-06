@@ -1,5 +1,14 @@
 #include "coffeerenderer.h"
 
+#include <QCoreApplication>
+#include "opengl/rendering/renderloop.h"
+#include <QMimeData>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
+#include <QResizeEvent>
+#include <QMoveEvent>
+
 #define RENDERER_DO_DEBUG
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QObject(parent)
@@ -62,7 +71,7 @@ void CoffeeRenderer::setWindowState(Qt::WindowState state)
     }
 }
 
-GLFWwindow* CoffeeRenderer::setWindowedFullscreen(uint monitor)
+GLFWwindow* CoffeeRenderer::setWindowedFullscreen(int monitor)
 {
     int count;
     GLFWmonitor** data = glfwGetMonitors(&count);
@@ -85,7 +94,7 @@ GLFWwindow* CoffeeRenderer::setWindowedFullscreen(uint monitor)
                             windowTitle.toStdString().c_str(),mon,NULL);
 }
 
-GLFWwindow* CoffeeRenderer::setFullscreen(uint monitor)
+GLFWwindow* CoffeeRenderer::setFullscreen(int monitor)
 {
     int count;
     GLFWmonitor** data = glfwGetMonitors(&count);
@@ -464,7 +473,7 @@ int CoffeeRenderer::init(){
         qDebug() << "No debug 4 u!";
 #endif
 
-    glfwShowWindow(window);
+//    glfwShowWindow(window);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
@@ -508,6 +517,8 @@ int CoffeeRenderer::loop(){
 
 void CoffeeRenderer::openGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
+    Q_UNUSED(id)
+    Q_UNUSED(userParam)
     if(severity==GL_DEBUG_SEVERITY_NOTIFICATION)
         return;
     QByteArray messageB;

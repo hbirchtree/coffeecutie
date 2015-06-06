@@ -2,7 +2,6 @@
 #define COFFEEFRAMEBUFFEROBJECT_H
 
 #include "general/common.h"
-#include <QList>
 class CoffeeFrameBufferObject : public QObject
 {
     Q_PROPERTY(QSize renderSize READ getRenderSize)

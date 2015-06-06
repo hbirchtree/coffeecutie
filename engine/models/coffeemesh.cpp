@@ -1,5 +1,7 @@
 #include "coffeemesh.h"
 
+#include "coffeeinstancecontainer.h"
+
 CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){
     instances = new CoffeeInstanceContainer(this);
 }
@@ -305,7 +307,7 @@ bool CoffeeMesh::hasNewMatrices() const
 
 void CoffeeMesh::updateModelMatrices(QVector<glm::mat4> matrices)
 {
-    if(matrices.size()!=instances->instanceCount())
+    if((uint)matrices.size()!=instances->instanceCount())
         qFatal("Invalid amount of model matrices!");
 
     //TODO : write this

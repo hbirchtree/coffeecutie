@@ -2,10 +2,11 @@
 #define COFFEEOUTPUTSURFACE_H
 
 #include "engine/objects/coffeeobject.h"
-#include "opengl/components/shadercontainer.h"
-#include "opengl/components/coffeetexture.h"
-#include "general/data/numberbuffer.h"
-#include "opengl/components/coffeeframebufferobject.h"
+
+class CoffeeFrameBufferObject;
+class ShaderContainer;
+class CoffeeTexture;
+
 class CoffeeOutputSurface : public CoffeeObject
 {
     Q_INTERFACES(CoffeeObject)
@@ -25,7 +26,6 @@ protected:
     void setBaked(bool val);
     bool baked = false;
     QPointer<ShaderContainer> shader;
-    NumberBuffer<GLfloat> *mdl;
     GLuint vao;
     GLuint vbo;
     CoffeeFrameBufferObject* framebuffer;

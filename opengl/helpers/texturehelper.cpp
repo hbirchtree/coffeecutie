@@ -1,5 +1,7 @@
 #include "texturehelper.h"
 
+#include "general/filehandler.h"
+
 GLuint TextureHelper::allocTexture(GLenum internalFormat,
                                    GLenum colorFormat,
                                    int w, int h,
@@ -31,6 +33,8 @@ GLuint TextureHelper::allocCubeTexture(GLenum internalFormat,
                                        uint mipmaps,
                                        GLenum datatype)
 {
+    Q_UNUSED(mipmaps) //mipmaps really ruin the cubemap
+
     GLuint cubemap;
     glGenTextures(1,&cubemap);
     glBindTexture(GL_TEXTURE_CUBE_MAP,cubemap);

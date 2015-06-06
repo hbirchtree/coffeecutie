@@ -50,7 +50,7 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
                   << aiTextureType_NORMALS << aiTextureType_OPACITY << aiTextureType_REFLECTION
                       << aiTextureType_SHININESS << aiTextureType_SPECULAR;
     for(aiTextureType type : types)
-        for(int i=0;i<materialSource->GetTextureCount(type);i++){
+        for(uint i=0;i<materialSource->GetTextureCount(type);i++){
             CoffeeTexture::CoffeeTextureType ctype;
             switch(type){
             case aiTextureType_AMBIENT:
@@ -86,6 +86,8 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
             case aiTextureType_SPECULAR:
                 ctype = CoffeeTexture::CoffeeTexture_Specular;
                 break;
+            default:
+                ctype = CoffeeTexture::CoffeeTexture_Undefined;
             }
             aiString textureFile;
             materialSource->GetTexture(type,i,&textureFile);

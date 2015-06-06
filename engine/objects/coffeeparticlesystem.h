@@ -1,10 +1,7 @@
 #ifndef COFFEEPARTICLESYSTEM_H
 #define COFFEEPARTICLESYSTEM_H
 
-#include <QObject>
-#include <QVector3D>
 #include "engine/objects/coffeeobject.h"
-#include "general/data/numberbuffer.h"
 
 class ShaderContainer;
 class CoffeeTexture;

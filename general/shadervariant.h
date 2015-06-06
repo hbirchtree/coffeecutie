@@ -2,7 +2,6 @@
 #define SHADERVARIANT_H
 
 #include "general/common.h"
-#include "general/data/mutabledatacontainer.h"
 class ShaderVariant : public QObject
 {
 public:

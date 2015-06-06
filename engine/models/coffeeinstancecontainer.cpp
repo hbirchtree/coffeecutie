@@ -33,7 +33,7 @@ uint CoffeeInstanceContainer::instanceCount() const
     return instances.size();
 }
 
-CoffeeInstanceContainer::InstanceData *CoffeeInstanceContainer::getInstance(uint index)
+CoffeeInstanceContainer::InstanceData *CoffeeInstanceContainer::getInstance(int index)
 {
     if(index>instances.size())
         qFatal("Invalid instance index");

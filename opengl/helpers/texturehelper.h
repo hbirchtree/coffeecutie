@@ -2,7 +2,6 @@
 #define TEXTUREHELPER_H
 
 #include "general/common.h"
-#include "general/filehandler.h"
 
 class TextureHelper
 {

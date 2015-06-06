@@ -2,8 +2,9 @@
 #define SHADERCONTAINER_H
 
 #include "general/common.h"
-#include "general/filehandler.h"
-#include "general/shadervariant.h"
+
+class ShaderVariant;
+
 class ShaderContainer : public QObject
 {
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader)

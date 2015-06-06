@@ -104,17 +104,14 @@ public:
     }
 
     T &operator[](int i){
-        if(i>2)
+        switch(i){
+        case 1:
+            return velocity;
+        case 2:
+            return acceleration;
+        default:
             return value;
-        else
-            switch(i){
-            case 0:
-                return value;
-            case 1:
-                return velocity;
-            case 2:
-                return acceleration;
-            }
+        }
     }
 
     std::function<T()> getOffsetCallback() const{

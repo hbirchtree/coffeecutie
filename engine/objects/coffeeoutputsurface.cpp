@@ -1,5 +1,9 @@
 #include "coffeeoutputsurface.h"
 
+#include "opengl/components/shadercontainer.h"
+#include "opengl/components/coffeetexture.h"
+#include "opengl/components/coffeeframebufferobject.h"
+
 CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) : CoffeeObject(parent)
 {
     setFramebuffer(display);
@@ -12,7 +16,6 @@ void CoffeeOutputSurface::setFramebuffer(CoffeeFrameBufferObject *display)
 
 void CoffeeOutputSurface::load()
 {
-    mdl = NumberBuffer<GLfloat>::createArray(this,18);
     GLfloat g_quad_vertex_buffer_data[] = {
         -1.0f, -1.0f, 0.0f,
         1.0f, -1.0f, 0.0f,
@@ -24,7 +27,6 @@ void CoffeeOutputSurface::load()
     shader = new ShaderContainer(this);
     shader->buildProgram("ubw/shaders/vsh_passthrough.txt",
                          "ubw/shaders/fsh_simple.txt");
-    mdl->put(g_quad_vertex_buffer_data);
 
     glGenBuffers(1,&vbo);
     glBindBuffer(GL_ARRAY_BUFFER,vbo);

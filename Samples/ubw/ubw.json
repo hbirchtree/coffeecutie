@@ -132,7 +132,7 @@
 			"mesh": "cube:.*",
 			"shader": "skyshader"
 		},
-		"particle-systemd":[
+		"particle-systems":[
 			{
 				"id": "test-particles",
 				"texture": "quadtex",

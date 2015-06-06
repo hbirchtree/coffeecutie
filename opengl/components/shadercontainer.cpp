@@ -1,5 +1,8 @@
 #include "shadercontainer.h"
 
+#include "general/filehandler.h"
+#include "general/shadervariant.h"
+
 ShaderContainer::ShaderContainer(QObject *parent) : QObject(parent)
 {
 

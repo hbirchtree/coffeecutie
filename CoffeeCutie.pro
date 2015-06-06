@@ -21,7 +21,6 @@ SOURCES += main.cpp \
     engine/objects/coffeeobjectfactory.cpp \
     engine/physics/physicsobject.cpp \
     engine/rendering/coffeeadvancedloop.cpp \
-    engine/rendering/coffeerenderingmethod.cpp \
     general/data/coffeedatacontainer.cpp \
     general/data/mutabledatacontainer.cpp \
     general/data/numbercontainer.cpp \
@@ -42,7 +41,6 @@ SOURCES += main.cpp \
     opengl/helpers/renderingmethods.cpp \
     opengl/helpers/texturehelper.cpp \
     opengl/rendering/coffeerenderingloop.cpp \
-    opengl/rendering/coffeevertex.cpp \
     tests/boxtest.cpp \
     tests/CubeScape.cpp \
     tests/glutils.cpp \
@@ -56,19 +54,18 @@ SOURCES += main.cpp \
     engine/objects/coffeeparticlesystem.cpp \
     inspector/coffeerendererinspector.cpp \
     inspector/graphplotter.cpp \
-    engine/objects/coffeeinstancedobject.cpp \
     engine/objects/coffeeobject.cpp \
     engine/objects/coffeestandardobject.cpp \
     engine/objects/coffeeskybox.cpp \
     opengl/components/coffeematerial.cpp \
-    engine/models/coffeeinstancecontainer.cpp
+    engine/models/coffeeinstancecontainer.cpp \
+    general/filehandler.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
     engine/objects/coffeeobjectfactory.h \
     engine/physics/physicsobject.h \
     engine/rendering/coffeeadvancedloop.h \
-    engine/rendering/coffeerenderingmethod.h \
     general/data/coffeedatacontainer.h \
     general/data/coffeegameasset.h \
     general/data/mutabledatacontainer.h \
@@ -94,7 +91,6 @@ HEADERS += \
     opengl/helpers/renderingmethods.h \
     opengl/helpers/texturehelper.h \
     opengl/rendering/coffeerenderingloop.h \
-    opengl/rendering/coffeevertex.h \
     opengl/rendering/renderloop.h \
     tests/boxtest.h \
     tests/CubeScape.h \
@@ -110,7 +106,6 @@ HEADERS += \
     engine/objects/coffeeparticlesystem.h \
     inspector/coffeerendererinspector.h \
     inspector/graphplotter.h \
-    engine/objects/coffeeinstancedobject.h \
     engine/objects/coffeeobject.h \
     engine/objects/coffeestandardobject.h \
     engine/objects/coffeeskybox.h \

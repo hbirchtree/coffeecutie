@@ -2,10 +2,13 @@
 #define COFFEESTANDARDOBJECT_H
 
 #include "engine/objects/coffeeobject.h"
-#include "engine/models/coffeemesh.h"
-#include "opengl/components/coffeematerial.h"
-#include "opengl/components/shadercontainer.h"
-#include "general/shadervariant.h"
+
+class ShaderVariant;
+class ShaderContainer;
+class CoffeeMaterial;
+class CoffeeMesh;
+class CoffeeTexture;
+
 class CoffeeStandardObject : public CoffeeObject
 {
     Q_PROPERTY(QString position READ getStringPosition)

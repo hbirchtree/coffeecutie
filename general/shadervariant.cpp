@@ -1,5 +1,7 @@
 #include "shadervariant.h"
 
+#include "general/data/mutabledatacontainer.h"
+
 ShaderVariant::ShaderVariant(std::function<glm::vec2 ()> func)
 {
     data = new MutableDataContainer<std::function<glm::vec2 ()>>(this,func);

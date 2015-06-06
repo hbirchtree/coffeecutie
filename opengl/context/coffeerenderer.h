@@ -1,19 +1,11 @@
 #ifndef COFFEERENDERER_H
 #define COFFEERENDERER_H
 
-#include <QCoreApplication>
 #include "general/common.h"
-#include "opengl/rendering/renderloop.h"
-#include <QMimeData>
-#include <QKeyEvent>
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QResizeEvent>
-#include <QMoveEvent>
 
-
-class GLFWwindow;
 class RenderLoop;
+class QMimeData;
+class QWindowStateChangeEvent;
 
 class CoffeeRenderer : public QObject, public QRunnable
 {
@@ -76,8 +68,8 @@ public slots:
     virtual void run();
 
 private slots:
-    GLFWwindow *setWindowedFullscreen(uint monitor);
-    GLFWwindow *setFullscreen(uint monitor);
+    GLFWwindow *setWindowedFullscreen(int monitor);
+    GLFWwindow *setFullscreen(int monitor);
     GLFWwindow *setWindowed();
 
 protected:

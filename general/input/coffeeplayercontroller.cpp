@@ -1,5 +1,7 @@
 #include "coffeeplayercontroller.h"
 
+#include "general/qstringfunctions.h"
+
 CoffeePlayerController::CoffeePlayerController(QObject *parent) : QObject(parent)
 {
     position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));

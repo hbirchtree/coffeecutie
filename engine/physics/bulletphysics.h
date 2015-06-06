@@ -1,16 +1,21 @@
 #ifndef BULLETPHYSICS_H
 #define BULLETPHYSICS_H
 
-#include <QMutex>
-#include <QTimer>
 #include "general/common.h"
 #include "engine/physics/genericphysicsinterface.h"
-#include "general/qstringfunctions.h"
-#include "engine/physics/physicsobject.h"
-#include "btBulletDynamicsCommon.h"
-#include "btBulletCollisionCommon.h"
-#include "LinearMath/btVector3.h"
+
 #include "LinearMath/btAlignedObjectArray.h"
+
+class PhysicsObject;
+class btDynamicsWorld;
+class btCollisionDispatcher;
+class btBroadphaseInterface;
+class btConstraintSolver;
+class btDefaultCollisionConfiguration;
+class btQuaternion;
+class btVector3;
+class btCollisionShape;
+
 class BulletPhysics : public QObject
 {
     Q_PROPERTY(QString gravity READ getGravity)
@@ -30,11 +35,10 @@ public:
     static btVector3 convert_glm(const glm::vec3 &v);
     static glm::vec3 convert_bt(const btVector3 &v);
     static void internalTickCallback(btDynamicsWorld* wrld,btScalar timestep);
+
 signals:
     void objectCollision(QPointer<PhysicsObject> o1, QPointer<PhysicsObject> o2);
     void physicsInitialized();
-
-    void stopping();
 
 public slots:
     void updateObject(PhysicsObject* object,GenericPhysicsInterface::PhysicsProperty prop);

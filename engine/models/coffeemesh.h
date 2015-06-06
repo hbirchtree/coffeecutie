@@ -2,9 +2,10 @@
 #define COFFEEMESH
 
 #include "general/common.h"
-#include "coffeeinstancecontainer.h"
 #include "general/data/coffeegameasset.h"
 #include "general/data/numberbuffer.h"
+
+class CoffeeInstanceContainer;
 
 #define MESH_LOC_POS 0
 #define MESH_LOC_TEX 1

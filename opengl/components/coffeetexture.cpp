@@ -1,5 +1,9 @@
 #include "coffeetexture.h"
 
+#include <QColor>
+#include <QRgb>
+#include "opengl/helpers/texturehelper.h"
+
 CoffeeTexture::CoffeeTexture(QObject *parent, QMap<GLenum, QString> mapping) : QObject(parent)
 {
     this->cubemapping = mapping;
@@ -22,12 +26,12 @@ CoffeeTexture::CoffeeTexture(QObject *parent, aiTexture *texture) : QObject(pare
 {
     if(texture->mHeight==0){
         qDebug() << "Creating texture from format:" << texture->achFormatHint;
-        QImage::Format fmt;
+//        QImage::Format fmt;
         qDebug() << "Unimplemented function: decompressing texture data";
     }else{
         this->texture = QImage(QSize(texture->mWidth,texture->mHeight),QImage::Format_RGBA8888);
-        for(int x=0;x<texture->mWidth;x++)
-            for(int y=0;y<texture->mHeight;y++){
+        for(uint x=0;x<texture->mWidth;x++)
+            for(uint y=0;y<texture->mHeight;y++){
                 aiTexel s = texture->pcData[y*texture->mWidth+x];
                 QRgb c = qRgba(s.r,s.g,s.b,s.a);
                 this->texture.setColor(y*texture->mWidth+x,c);

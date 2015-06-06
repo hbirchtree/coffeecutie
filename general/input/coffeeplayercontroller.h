@@ -3,7 +3,6 @@
 
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
-#include "general/qstringfunctions.h"
 class CoffeePlayerController : public QObject
 {
     //Describes the input that is to be performed

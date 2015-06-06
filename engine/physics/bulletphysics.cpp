@@ -1,5 +1,11 @@
 #include "bulletphysics.h"
 
+#include "general/qstringfunctions.h"
+#include "engine/physics/physicsobject.h"
+#include "btBulletDynamicsCommon.h"
+#include "btBulletCollisionCommon.h"
+#include "LinearMath/btVector3.h"
+
 BulletPhysics::BulletPhysics(QObject *parent, const glm::vec3 &gravity) : QObject(parent)
 {
     this->gravity = gravity;
@@ -99,7 +105,7 @@ void BulletPhysics::addObject(PhysicsObject *object)
         return;
     }
     m_collideshapes.push_back(shape);
-    
+
     glm::quat rot = desc->orientation();
     btDefaultMotionState* mstate = new btDefaultMotionState(btTransform(
                                                                 btQuaternion(rot.x,rot.y,rot.z,rot.w),
@@ -173,6 +179,8 @@ void BulletPhysics::run()
 
 void BulletPhysics::updateObject(PhysicsObject *object, GenericPhysicsInterface::PhysicsProperty prop)
 {
+    Q_UNUSED(object)
+    Q_UNUSED(prop)
 }
 
 void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timestep)

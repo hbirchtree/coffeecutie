@@ -1,9 +1,14 @@
 #include "coffeeobjectfactory.h"
 
+#include "general/filehandler.h"
 #include "engine/objects/coffeestandardobject.h"
-#include "engine/rendering/coffeerenderingmethod.h"
 #include "opengl/components/coffeeworldopts.h"
 #include "engine/objects/coffeeobject.h"
+#include "engine/models/coffeemesh.h"
+#include "opengl/components/coffeematerial.h"
+#include "opengl/components/coffeetexture.h"
+#include "opengl/components/shadercontainer.h"
+#include "opengl/components/coffeeomnilight.h"
 #include "engine/objects/coffeestandardobject.h"
 #include "engine/objects/coffeeskybox.h"
 #include "engine/objects/coffeeparticlesystem.h"
@@ -73,7 +78,7 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
         if(key.startsWith("world."))
             worlds.append(createWorld(key,source.value(key).toMap(),parent));
     }
-    qDebug("Spent %i milliseconds parsing content from disk",t.elapsed());
+    qDebug("Spent %u milliseconds parsing content from disk",t.elapsed());
     return worlds;
 }
 
@@ -224,7 +229,7 @@ void CoffeeObjectFactory::importModel(Assimp::Importer &importer,const QVariantM
             meshes.insert(cmesh->objectName(),cmesh);
             CoffeeModelStruct *s = new CoffeeModelStruct;
             s->mesh = cmesh;
-            if(mesh->mMaterialIndex<mtllist.size()){
+            if(mesh->mMaterialIndex<(uint)mtllist.size()){
                 s->material = mtllist.at(mesh->mMaterialIndex);
             }else{
                 qDebug("Could not find material for mesh: %s",cmesh->objectName().toStdString().c_str());

@@ -13,6 +13,11 @@
 #include <QEventLoop>
 #include <QRunnable>
 
+#include <QKeyEvent>
+#include <QMoveEvent>
+#include <QMouseEvent>
+#include <QWindowStateChangeEvent>
+
 #include <iostream>
 
 #include <glm/glm/glm.hpp>

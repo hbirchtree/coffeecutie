@@ -34,7 +34,7 @@ public:
     ~CoffeeInstanceContainer();
 
     uint instanceCount() const;
-    InstanceData* getInstance(uint index);
+    InstanceData* getInstance(int index);
     QVector<glm::mat4> getData() const;
 
 private:

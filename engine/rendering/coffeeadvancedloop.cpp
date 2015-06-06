@@ -24,6 +24,10 @@
 #include "opengl/components/coffeeworldopts.h"
 #include "general/input/coffeejoystick.h"
 #include "general/input/coffeeplayercontroller.h"
+#include "engine/models/coffeemesh.h"
+#include "opengl/components/coffeematerial.h"
+#include "general/shadervariant.h"
+#include "opengl/components/shadercontainer.h"
 
 #include "engine/objects/coffeeparticlesystem.h"
 
@@ -98,7 +102,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         //bind the framebuffer which we render to
         renderFbo->bindFramebuffer();
         //clear the depth buffer, otherwise we won't see sh*t
-        glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
         //render the current world
         world->renderWorld();
@@ -272,6 +276,8 @@ void CoffeeAdvancedLoop::setupRenderer(CoffeeStandardObject *object)
             break;
         case CoffeeTexture::CoffeeTexture_Transparency:
             object->setTexture("mtl.transparencySampler",object->material()->getTexture(t));
+            break;
+        default:
             break;
         }
     }

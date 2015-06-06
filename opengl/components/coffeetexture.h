@@ -2,9 +2,6 @@
 #define COFFEETEXTURE_H
 
 #include "general/common.h"
-#include <QColor>
-#include <QRgb>
-#include "opengl/helpers/texturehelper.h"
 #include "general/data/coffeegameasset.h"
 class CoffeeTexture : public QObject, public CoffeeGameAsset
 {
@@ -24,7 +21,9 @@ public:
         CoffeeTexture_Ambient,CoffeeTexture_Heightmap,
         CoffeeTexture_Emissive,CoffeeTexture_Displacement,
 
-        CoffeeTexture_Lightmap,CoffeeTexture_Reflection
+        CoffeeTexture_Lightmap,CoffeeTexture_Reflection,
+
+        CoffeeTexture_Undefined
     };
 
     CoffeeTexture(QObject *parent,QMap<GLenum,QString> mapping); //Creates a cubemap

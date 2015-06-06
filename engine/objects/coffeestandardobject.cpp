@@ -1,5 +1,11 @@
 #include "coffeestandardobject.h"
 
+#include "engine/models/coffeemesh.h"
+#include "opengl/components/coffeematerial.h"
+#include "opengl/components/shadercontainer.h"
+#include "engine/models/coffeeinstancecontainer.h"
+#include "general/shadervariant.h"
+
 CoffeeStandardObject::CoffeeStandardObject(QObject *parent) : CoffeeObject(parent)
 {
 }

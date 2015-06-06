@@ -4,6 +4,7 @@
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeecamera.h"
 #include "opengl/helpers/renderingmethods.h"
+#include <QColor>
 
 CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeObject(parent)
 {
