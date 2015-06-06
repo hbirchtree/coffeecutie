@@ -4,6 +4,12 @@ CoffeeStandardObject::CoffeeStandardObject(QObject *parent) : CoffeeObject(paren
 {
 }
 
+CoffeeStandardObject::~CoffeeStandardObject()
+{
+    for(ShaderMapping map : uniforms)
+        map.data->deleteLater();
+}
+
 void CoffeeStandardObject::render()
 {
     if(!baked)

@@ -19,7 +19,6 @@ INCLUDEPATH += $$PWD/include
 SOURCES += main.cpp \
     engine/models/coffeemesh.cpp \
     engine/objects/coffeeobjectfactory.cpp \
-    engine/objects/coffeesimpleobject.cpp \
     engine/physics/physicsobject.cpp \
     engine/rendering/coffeeadvancedloop.cpp \
     engine/rendering/coffeerenderingmethod.cpp \
@@ -42,7 +41,6 @@ SOURCES += main.cpp \
     opengl/context/qcoffeewindow.cpp \
     opengl/helpers/renderingmethods.cpp \
     opengl/helpers/texturehelper.cpp \
-    opengl/helpers/vaohelper.cpp \
     opengl/rendering/coffeerenderingloop.cpp \
     opengl/rendering/coffeevertex.cpp \
     tests/boxtest.cpp \
@@ -68,7 +66,6 @@ SOURCES += main.cpp \
 HEADERS += \
     engine/models/coffeemesh.h \
     engine/objects/coffeeobjectfactory.h \
-    engine/objects/coffeesimpleobject.h \
     engine/physics/physicsobject.h \
     engine/rendering/coffeeadvancedloop.h \
     engine/rendering/coffeerenderingmethod.h \
@@ -96,7 +93,6 @@ HEADERS += \
     opengl/context/qcoffeewindow.h \
     opengl/helpers/renderingmethods.h \
     opengl/helpers/texturehelper.h \
-    opengl/helpers/vaohelper.h \
     opengl/rendering/coffeerenderingloop.h \
     opengl/rendering/coffeevertex.h \
     opengl/rendering/renderloop.h \

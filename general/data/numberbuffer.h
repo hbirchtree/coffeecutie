@@ -2,7 +2,6 @@
 #define NUMBERBUFFER_H
 
 #include "general/common.h"
-#include "opengl/rendering/coffeevertex.h"
 template <class T> class NumberBuffer : public QObject
 {
 public:

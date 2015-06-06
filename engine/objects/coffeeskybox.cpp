@@ -1,6 +1,10 @@
 #include "coffeeskybox.h"
 
 #include "engine/models/coffeemesh.h"
+#include "opengl/components/shadercontainer.h"
+#include "opengl/helpers/renderingmethods.h"
+#include "opengl/components/coffeetexture.h"
+#include "opengl/components/coffeecamera.h"
 
 CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) : CoffeeObject(parent)
 {

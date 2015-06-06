@@ -2,7 +2,6 @@
 #define RENDERINGMETHODS_H
 
 #include "general/common.h"
-#include "opengl/helpers/vaohelper.h"
 #include "opengl/components/coffeeworldopts.h"
 class RenderingMethods
 {

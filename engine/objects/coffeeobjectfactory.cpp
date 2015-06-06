@@ -7,6 +7,7 @@
 #include "engine/objects/coffeestandardobject.h"
 #include "engine/objects/coffeeskybox.h"
 #include "engine/objects/coffeeparticlesystem.h"
+#include "opengl/components/coffeecamera.h"
 #include <QVariantMap>
 #include <QElapsedTimer>
 #include <QJsonDocument>

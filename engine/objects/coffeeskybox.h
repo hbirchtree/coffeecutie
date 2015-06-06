@@ -2,10 +2,12 @@
 #define COFFEESKYBOX_H
 
 #include "coffeeobject.h"
-#include "opengl/components/shadercontainer.h"
-#include "opengl/helpers/renderingmethods.h"
-#include "opengl/components/coffeetexture.h"
-#include "opengl/components/coffeecamera.h"
+
+class CoffeeMesh;
+class CoffeeCamera;
+class ShaderContainer;
+class CoffeeTexture;
+
 class CoffeeSkybox : public CoffeeObject
 {
     Q_OBJECT

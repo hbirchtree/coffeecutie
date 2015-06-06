@@ -194,7 +194,8 @@ void CoffeeMesh::loadMesh()
     }
 
     if(useInstancing()){
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        GLuint instance_buffer = free_buffer++;
+        glBindBuffer(GL_ARRAY_BUFFER,buffers[instance_buffer]);
         for(int i=0;i<4;i++){
             glEnableVertexAttribArray(MESH_LOC_MODEL_MAT+i);
             glVertexAttribPointer(MESH_LOC_MODEL_MAT+i,
@@ -202,7 +203,7 @@ void CoffeeMesh::loadMesh()
                                   GL_FLOAT,
                                   GL_FALSE,
                                   sizeof(glm::mat4),
-                                  (GLvoid*)(sizeof(glm::vec4)*i));
+                                  (GLvoid*)(sizeof(GLfloat)*4*i));
             glVertexAttribDivisor(MESH_LOC_MODEL_MAT+i,1);
         }
         QVector<glm::mat4> data = instances->getData();

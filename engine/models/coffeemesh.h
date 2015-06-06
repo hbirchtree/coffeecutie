@@ -3,7 +3,6 @@
 
 #include "general/common.h"
 #include "coffeeinstancecontainer.h"
-#include "opengl/rendering/coffeevertex.h"
 #include "general/data/coffeegameasset.h"
 #include "general/data/numberbuffer.h"
 
@@ -13,7 +12,6 @@
 #define MESH_LOC_TAN 3
 #define MESH_LOC_BIT 4
 #define MESH_LOC_MODEL_MAT 5
-#define MESH_LOC_MODEL_MAT 9
 
 class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_OBJECT

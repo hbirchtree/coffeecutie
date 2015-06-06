@@ -17,6 +17,7 @@ class CoffeeStandardObject : public CoffeeObject
 
 public:
     CoffeeStandardObject(QObject* parent);
+    ~CoffeeStandardObject();
 
     void render();
     void unload();
