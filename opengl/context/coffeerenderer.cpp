@@ -473,7 +473,7 @@ int CoffeeRenderer::init(){
         qDebug() << "No debug 4 u!";
 #endif
 
-//    glfwShowWindow(window);
+    glfwShowWindow(window);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 

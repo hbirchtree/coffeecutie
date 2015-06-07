@@ -102,7 +102,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         //bind the framebuffer which we render to
         renderFbo->bindFramebuffer();
         //clear the depth buffer, otherwise we won't see sh*t
-        glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         //render the current world
         world->renderWorld();

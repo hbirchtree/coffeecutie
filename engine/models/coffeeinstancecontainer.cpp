@@ -12,7 +12,7 @@ CoffeeInstanceContainer::CoffeeInstanceContainer(QObject *parent) : QObject(pare
     for(i=0;i<100;i++)
         for(j=0;j<100;j++)
             instances.append(new InstanceData(
-                                 glm::vec3(i,0,j),
+                                 glm::vec3(i-50,0,j-50),
                                  glm::quat(1,0,0,0),
                                  glm::vec3(1,1,1),
                                  instanceAnchor));

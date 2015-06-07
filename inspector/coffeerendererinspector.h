@@ -30,6 +30,8 @@ private:
     QPointF last;
     QTreeWidgetItem* fpsItem;
     QTreeWidgetItem* frameTimeItem;
+    QTreeWidgetItem* memoryUsageItem;
+
     qreal readings = 0;
     GraphPlotter* scene = nullptr;
     Ui::CoffeeRendererInspector *ui;
