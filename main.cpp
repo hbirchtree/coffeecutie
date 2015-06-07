@@ -56,6 +56,11 @@ int main(int argc, char *argv[])
         sourceFile = opts.positionalArguments().at(0);
     }
 
+    QFileInfo srcInfo(sourceFile);
+    if(!srcInfo.exists()){
+        qFatal("Source file does not exist: %s",sourceFile.toStdString().c_str());
+    }
+
     qsrand((rand()%RAND_MAX)/10000.0);
 
     RenderLoop* loop;
