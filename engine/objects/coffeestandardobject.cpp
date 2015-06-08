@@ -20,6 +20,14 @@ void CoffeeStandardObject::render()
 {
     if(!baked)
         load();
+
+    if(!pmesh)
+        qFatal("Cannot render object: No mesh");
+
+    if(pmesh->useInstancing()&&pmesh->hasNewMatrices()){
+        pmesh->loadModelMatrices();
+    }
+
     glUseProgram(pshader->getProgramId());
     for(ShaderMapping m : uniforms)
         if(!m.constant)
@@ -97,7 +105,10 @@ CoffeeMesh *CoffeeStandardObject::mesh()
 
 void CoffeeStandardObject::setMesh(CoffeeMesh *mesh)
 {
+    if(pmesh)
+        pmesh->removeConsumer();
     this->pmesh = mesh;
+    pmesh->addConsumer();
 }
 
 ShaderContainer *CoffeeStandardObject::shader()
@@ -107,7 +118,10 @@ ShaderContainer *CoffeeStandardObject::shader()
 
 void CoffeeStandardObject::setShader(ShaderContainer *shader)
 {
+    if(pshader)
+        pshader->removeConsumer();
     this->pshader = shader;
+    pshader->addConsumer();
 }
 
 CoffeeMaterial *CoffeeStandardObject::material()
@@ -117,7 +131,10 @@ CoffeeMaterial *CoffeeStandardObject::material()
 
 void CoffeeStandardObject::setMaterial(CoffeeMaterial *mtl)
 {
+    if(pmaterial)
+        pmaterial->removeConsumer();
     this->pmaterial = mtl;
+    pmaterial->addConsumer();
 }
 
 void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)

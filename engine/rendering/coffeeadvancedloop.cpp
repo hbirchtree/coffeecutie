@@ -29,6 +29,8 @@
 #include "general/shadervariant.h"
 #include "opengl/components/shadercontainer.h"
 
+#include "engine/models/coffeeinstancecontainer.h"
+
 #include "engine/objects/coffeeparticlesystem.h"
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
@@ -58,6 +60,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
                 setupRenderer(stdobj);
                 if(stdobj->objectName().contains("gear")){
                     stdobj->mesh()->setUseInstancing(true);
+                    stdobj->mesh()->getInstances()->createInstance();
+                    test = stdobj;
                 }
             }
             if(o->physics())
@@ -98,6 +102,9 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         screenSurface = new CoffeeOutputSurface(this,renderFbo);
     };
     _rendering_loop = [=](){
+        test->mesh()->getInstances()->getInstance(0)->getPos()->setValue(
+                    glm::vec3(std::fmod(renderer->getLoopTime()*5,10),0,0));
+        test->mesh()->updateModelMatrices();
         js->update();
         //bind the framebuffer which we render to
         renderFbo->bindFramebuffer();
@@ -106,8 +113,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         //render the current world
         world->renderWorld();
-
-        //testing area
 
         glFlush();
 
@@ -201,6 +206,9 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             controller->addSpeedForward(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress)
             world->setWireframeMode(!world->wireframeMode());
+        else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
+            world->unloadWorld();
+        }
     });
     renderer->connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
         if(btn==6){

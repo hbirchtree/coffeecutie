@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl
+QT       += core gui opengl concurrent script
 
 TARGET = CoffeeCutie
 CONFIG += console c++11
@@ -59,7 +59,9 @@ SOURCES += main.cpp \
     engine/objects/coffeeskybox.cpp \
     opengl/components/coffeematerial.cpp \
     engine/models/coffeeinstancecontainer.cpp \
-    general/filehandler.cpp
+    general/filehandler.cpp \
+    engine/data/coffeeassetimporter.cpp \
+    engine/data/coffeeworldbuilder.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -109,7 +111,9 @@ HEADERS += \
     engine/objects/coffeeobject.h \
     engine/objects/coffeestandardobject.h \
     engine/objects/coffeeskybox.h \
-    engine/models/coffeeinstancecontainer.h
+    engine/models/coffeeinstancecontainer.h \
+    engine/data/coffeeassetimporter.h \
+    engine/data/coffeeworldbuilder.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

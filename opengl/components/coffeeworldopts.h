@@ -56,6 +56,7 @@ signals:
 public slots:
     void tickObjects(float d);
     void renderWorld();
+    void unloadWorld();
 
     void setWireframeMode(bool wireframeMode);
 

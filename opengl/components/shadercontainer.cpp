@@ -5,7 +5,6 @@
 
 ShaderContainer::ShaderContainer(QObject *parent) : QObject(parent)
 {
-
 }
 
 ShaderContainer::~ShaderContainer()
@@ -13,10 +12,12 @@ ShaderContainer::~ShaderContainer()
 
 }
 
-int ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile)
+bool ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile)
 {
-    if(getProgramId()!=0)
-        return 0;
+    if(isAllocated()){
+        addAllocation();
+        return true;
+    }
 
     createProgram();
 
@@ -27,16 +28,16 @@ int ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile
     compileShaders();
 
     if(!linkProgram())
-        return -1;
+        return false;
 
-    return 0;
+    return true;
 }
 
-int ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile){
+bool ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile){
     return buildProgram(vertShaderFile,fragShaderFile,QString());
 }
 
-int ShaderContainer::buildProgram()
+bool ShaderContainer::buildProgram()
 {
     return buildProgram(vertexShader(),fragmentShader(),geometryShader());
 }
@@ -95,6 +96,8 @@ bool ShaderContainer::linkProgram()
 
     for(int shader : shaders)
         glDetachShader(programId,shader);
+
+    addAllocation();
     return true;
 }
 
@@ -133,6 +136,9 @@ int ShaderContainer::getProgramId()
 
 void ShaderContainer::unload()
 {
+    removeAllocation();
+    if(isAllocated())
+        return;
     glDeleteProgram(programId);
     programId = 0;
 }

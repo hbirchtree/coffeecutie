@@ -92,9 +92,12 @@ QPointer<ShaderContainer> CoffeeSkybox::getShader() const
 
 void CoffeeSkybox::setShader(QPointer<ShaderContainer> value)
 {
-    if(value)
+    if(value){
+        if(shader)
+            shader->removeConsumer();
         shader = value;
-    else
+        shader->addConsumer();
+    }else
         qDebug("Skybox shader does not exist!");
 }
 
@@ -105,9 +108,12 @@ QPointer<CoffeeMesh> CoffeeSkybox::getSkymesh() const
 
 void CoffeeSkybox::setSkymesh(QPointer<CoffeeMesh> value)
 {
-    if(value&&value->hasPositions())
+    if(value&&value->hasPositions()){
+        if(skymesh)
+            skymesh->removeConsumer();
         skymesh = value;
-    else
+        skymesh->addConsumer();
+    }else
         qDebug("Could not assign mesh without positions!");
 }
 
@@ -118,8 +124,11 @@ QPointer<CoffeeTexture> CoffeeSkybox::getTexture() const
 
 void CoffeeSkybox::setTexture(QPointer<CoffeeTexture> value)
 {
-    if(value&&value->isCubemap())
+    if(value&&value->isCubemap()){
+        if(this->texture)
+            this->texture->removeConsumer();
         this->texture = value;
-    else
+        this->texture->addConsumer();
+    }else
         qDebug("Could not assign 2D texture as cubemap!");
 }

@@ -12,6 +12,8 @@
 #include "opengl/context/qcoffeerenderer.h"
 #endif
 
+#include <QtScript>
+
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
 //#define RUNNABLE_RENDERER
@@ -20,8 +22,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.1.16");
+    a.setApplicationVersion("0.0.1.21");
     a.setApplicationDisplayName("Coffee Cutie");
+
+
 
     bool inspect = true;
     bool logStderr = true;

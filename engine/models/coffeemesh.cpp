@@ -83,6 +83,11 @@ GLuint CoffeeMesh::getIndicesCount() const
 
 void CoffeeMesh::loadMesh()
 {
+    if(isAllocated()){
+        addAllocation();
+        return;
+    }
+
     int vbuff_count = 1;
     int varray_count = 1;
 
@@ -196,7 +201,7 @@ void CoffeeMesh::loadMesh()
     }
 
     if(useInstancing()){
-        GLuint instance_buffer = free_buffer++;
+        uint instance_buffer = free_buffer++;
         glBindBuffer(GL_ARRAY_BUFFER,buffers[instance_buffer]);
         for(int i=0;i<4;i++){
             glEnableVertexAttribArray(MESH_LOC_MODEL_MAT+i);
@@ -208,11 +213,8 @@ void CoffeeMesh::loadMesh()
                                   (GLvoid*)(sizeof(GLfloat)*4*i));
             glVertexAttribDivisor(MESH_LOC_MODEL_MAT+i,1);
         }
-        QVector<glm::mat4> data = instances->getData();
-        glBufferData(GL_ARRAY_BUFFER,
-                     sizeof(glm::mat4)*instances->instanceCount(),
-                     data.data(),
-                     GL_DYNAMIC_DRAW);
+        matrixbuffer = instance_buffer;
+        loadModelMatrices();
     }
 
     setIndexBufferIndex(free_buffer);
@@ -227,10 +229,14 @@ void CoffeeMesh::loadMesh()
 
     glBindVertexArray(0);
 
+    addAllocation();
     setBaked(true);
 }
 
 void CoffeeMesh::unloadMesh(){
+    removeAllocation();
+    if(isAllocated())
+        return;
     glDeleteVertexArrays(arrays.size(),arrays.data());
     glDeleteBuffers(buffers.size(),buffers.data());
 }
@@ -305,15 +311,23 @@ bool CoffeeMesh::hasNewMatrices() const
     return m_newMatrices;
 }
 
-void CoffeeMesh::updateModelMatrices(QVector<glm::mat4> matrices)
+void CoffeeMesh::updateModelMatrices()
 {
-    if((uint)matrices.size()!=instances->instanceCount())
-        qFatal("Invalid amount of model matrices!");
-
     //TODO : write this
     //request for the buffers to be updated in the loop, this one can be run from another thread
     //remember to transpose the matrices here!
     m_newMatrices = true;
+}
+
+void CoffeeMesh::loadModelMatrices()
+{
+    glBindBuffer(GL_ARRAY_BUFFER,buffers[matrixbuffer]);
+    QVector<glm::mat4> data = instances->getData();
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(glm::mat4)*instances->instanceCount(),
+                 data.data(),
+                 GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER,0);
 }
 
 void CoffeeMesh::setBaked(bool arg)

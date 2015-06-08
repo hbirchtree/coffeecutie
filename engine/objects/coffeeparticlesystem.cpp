@@ -284,7 +284,6 @@ void CoffeeParticleSystem::setParticleSize(float particleSize)
 
 void CoffeeParticleSystem::setParticleColor(QColor particleColor)
 {
-    qDebug() << particleColor;
     this->particleColor = glm::vec4(
                 particleColor.redF(),
                 particleColor.greenF(),
@@ -308,7 +307,10 @@ QPointer<ShaderContainer> CoffeeParticleSystem::getTransformShader()
 
 void CoffeeParticleSystem::setTransformShader(QPointer<ShaderContainer> value)
 {
+    if(tshader)
+        tshader->removeConsumer();
     tshader = value;
+    tshader->addConsumer();
 }
 
 QPointer<ShaderContainer> CoffeeParticleSystem::getShader()
@@ -318,7 +320,10 @@ QPointer<ShaderContainer> CoffeeParticleSystem::getShader()
 
 void CoffeeParticleSystem::setShader(QPointer<ShaderContainer> value)
 {
+    if(shader)
+        shader->removeConsumer();
     shader = value;
+    shader->addConsumer();
 }
 
 QPointer<CoffeeTexture> CoffeeParticleSystem::getTexture()
@@ -328,11 +333,13 @@ QPointer<CoffeeTexture> CoffeeParticleSystem::getTexture()
 
 void CoffeeParticleSystem::setTexture(QPointer<CoffeeTexture> value)
 {
+    if(texture)
+        texture->removeConsumer();
     texture = value;
+    texture->addConsumer();
 }
 
 void CoffeeParticleSystem::setCamera(const CoffeeCamera *value)
 {
     camera = value;
 }
-

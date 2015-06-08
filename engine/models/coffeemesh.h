@@ -78,7 +78,8 @@ public:
     QPointer<CoffeeInstanceContainer> getInstances();
 
 public slots:
-    void updateModelMatrices(QVector<glm::mat4> matrices);
+    void updateModelMatrices();
+    void loadModelMatrices();
 
     void setBaked(bool arg);
 
@@ -107,6 +108,8 @@ protected:
 
 
 private:
+    uint matrixbuffer = 0;
+
     QPointer<CoffeeInstanceContainer> instances;
 
     QVector<GLuint> buffers;

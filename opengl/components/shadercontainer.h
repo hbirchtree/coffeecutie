@@ -2,10 +2,11 @@
 #define SHADERCONTAINER_H
 
 #include "general/common.h"
+#include "general/data/coffeegameasset.h"
 
 class ShaderVariant;
 
-class ShaderContainer : public QObject
+class ShaderContainer : public QObject, public CoffeeGameAsset
 {
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader)
     Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader)
@@ -18,9 +19,9 @@ public:
     ~ShaderContainer();
 
     //Full-process functions
-    int buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
-    int buildProgram(QString vertShaderFile,QString fragShaderFile);
-    int buildProgram();
+    bool buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
+    bool buildProgram(QString vertShaderFile,QString fragShaderFile);
+    bool buildProgram();
 
     void compileShaders();
 

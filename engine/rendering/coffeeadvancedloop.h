@@ -32,6 +32,7 @@ private:
 
     CoffeeFrameBufferObject* renderFbo;
     CoffeeObject* screenSurface;
+    CoffeeStandardObject* test;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;

@@ -158,6 +158,16 @@ void CoffeeWorldOpts::renderWorld()
         glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 }
 
+void CoffeeWorldOpts::unloadWorld()
+{
+    for(CoffeeObject* o : this->getObjects()){
+        o->unload();
+    }
+
+    for(CoffeeParticleSystem* s : particles)
+        s->unload();
+}
+
 void CoffeeWorldOpts::setWireframeMode(bool wireframeMode)
 {
     m_wireframeMode = wireframeMode;

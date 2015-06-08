@@ -55,9 +55,8 @@ bool CoffeeTexture::isCubemap()
 
 void CoffeeTexture::loadTexture()
 {
-    addActiveUser();
-    if(textureHandle>0){
-        qDebug() << "Texture is already loaded";
+    if(isAllocated()){
+        addAllocation();
         return;
     }
     if(isCubemap()){
@@ -76,21 +75,22 @@ void CoffeeTexture::loadTexture()
                                                     texture.width(),texture.height(),
                                                     texture.bits(),3,GL_UNSIGNED_BYTE);
     }
-    if(textureHandle>0)
+    if(textureHandle>0){
+        addAllocation();
         validTexture = true;
+    }else{
+        qWarning("Failed to allocate texture!");
+    }
 }
 
 void CoffeeTexture::unloadTexture()
 {
-    removeActiveUser();
-    if(getActiveUses()>1){
-        qDebug() << "Resource in use elsewhere; keeping it loaded";
+    removeAllocation();
+    if(isAllocated())
         return;
-    }
     glDeleteTextures(1,&textureHandle);
     textureHandle = 0;
     validTexture = false;
-    removeActiveUser();
 }
 
 void CoffeeTexture::setProcessor(std::function<QImage (QImage)> func)
