@@ -109,16 +109,27 @@ void CoffeeParticleSystem::render()
 
 void CoffeeParticleSystem::unload()
 {
+    shader->unload();
+    tshader->unload();
+    glDeleteTransformFeedbacks(2,tfbs);
+    glDeleteVertexArrays(2,vaos);
+    glDeleteBuffers(2,vbos);
+    glDeleteQueries(1,&timeQuery);
+    glDeleteQueries(1,&primitiveQuery);
     texture->unloadTexture();
+
+    vaoIndex = 0;
+    vboIndex = 1;
+    tfbIndex = 0;
+    active_particles = 1;
+
+    setBaked(false);
 }
 
 void CoffeeParticleSystem::load()
 {
     texture->loadTexture();
 
-//    shader->buildProgram("ubw/shaders/particles/billboard.vs",
-//                         "ubw/shaders/particles/billboard.fs",
-//                         "ubw/shaders/particles/billboard.gs");
     shader->buildProgram();
 
     glUseProgram(shader->getProgramId());
@@ -130,9 +141,6 @@ void CoffeeParticleSystem::load()
     shader->getUniformLocation("particleSize");
 
     tshader->createProgram();
-
-//    tshader->setVertexShader("ubw/shaders/particles/vertex-process.vert");
-//    tshader->setGeometryShader("ubw/shaders/particles/geometry-process.geom");
 
     tshader->compileShaders();
 

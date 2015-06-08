@@ -79,7 +79,7 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
     //World data
     for(QString key : source.keys()){
         if(key.startsWith("world."))
-            s.worlds.append(createWorld(key,source.value(key).toMap(),s,parent));
+            s.worlds.append(createWorld(key.mid(6),source.value(key).toMap(),s,parent));
     }
     qDebug("Spent %i milliseconds parsing content from disk",t.elapsed());
     return s.worlds;
@@ -90,7 +90,7 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeA
     CoffeeStandardObject* obj = new CoffeeStandardObject(parent);
     for(QString key : data.keys()){
         if(key=="id")
-            obj->setObjectName("coffeeobject::"+data.value(key).toString());
+            obj->setObjectName(data.value(key).toString());
         else if(key=="shader.id"){
             if(assets.shaders.contains(data.value(key).toString())){
                 obj->setShader(assets.shaders.value(data.value(key).toString()));
@@ -162,7 +162,7 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeA
         }
     }
     if(obj->physics()){
-        obj->physics()->setObjectName(obj->objectName()+".physics-object");
+        obj->physics()->setObjectName("physics");
         obj->position()->bindValue(obj->physics()->getPositionObject());
     }
     if(!obj->shader()){

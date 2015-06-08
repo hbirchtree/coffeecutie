@@ -45,7 +45,11 @@ public:
     PhysicsDescriptor *getDescr();
     void setDescr(PhysicsDescriptor *value);
 
+    Q_INVOKABLE void setPosition(float x, float y, float z);
+    Q_INVOKABLE void setRotation(float x, float y, float z);
+
 public slots:
+
     void updatePosition(glm::vec3 p);
     void updateVelocity(glm::vec3 p);
     void updateAcceleration(glm::vec3 p);

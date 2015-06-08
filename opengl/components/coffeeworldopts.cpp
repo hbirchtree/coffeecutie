@@ -25,6 +25,11 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
             Qt::QueuedConnection);
     connect(physicsThread,SIGNAL(started()),
             physics.data(),SLOT(run()));
+    connect(this,
+            SIGNAL(modifyPhysics(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant)),
+            physics.data(),
+            SLOT(updateObject(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant)),
+            Qt::QueuedConnection);
     physicsThread->start();
 }
 
@@ -180,5 +185,10 @@ CoffeeSkybox* CoffeeWorldOpts::getSkybox() const
 void CoffeeWorldOpts::setSkybox(CoffeeSkybox* value)
 {
     skybox = value;
+}
+
+void CoffeeWorldOpts::physicsModify(PhysicsObject *object, GenericPhysicsInterface::PhysicsProperty prop, const VectorVariant &value)
+{
+    modifyPhysics(object,prop,value);
 }
 

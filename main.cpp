@@ -13,6 +13,7 @@
 #endif
 
 #include <QtScript>
+#include "general/data/numbercontainer.h"
 
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
@@ -24,8 +25,6 @@ int main(int argc, char *argv[])
     a.setApplicationName("CoffeeCutie");
     a.setApplicationVersion("0.0.1.21");
     a.setApplicationDisplayName("Coffee Cutie");
-
-
 
     bool inspect = true;
     bool logStderr = true;

@@ -68,6 +68,7 @@ void CoffeeStandardObject::unload()
         pmesh->unloadMesh();
     for(TextureMapping m : textures)
         m.texture->unloadTexture();
+    baked = false;
 }
 
 void CoffeeStandardObject::load()
@@ -152,5 +153,15 @@ void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture* textur
     map.samplerName = samplerName;
     map.texture = texture;
     textures.append(map);
+}
+
+void CoffeeStandardObject::setPosition(float x, float y, float z)
+{
+    position()->setValue(glm::vec3(x,y,z));
+}
+
+void CoffeeStandardObject::setRotation(float x, float y, float z)
+{
+    rotation()->setValue(glm::quat(glm::vec3(x,y,z)));
 }
 

@@ -6,6 +6,9 @@
 #include "general/data/coffeedatacontainer.h"
 #include "opengl/rendering/renderloop.h"
 
+class QScriptEngine;
+class QScriptValue;
+
 class CoffeeJoystick;
 class CoffeeWorldOpts;
 class CoffeeFrameBufferObject;
@@ -28,6 +31,8 @@ public:
     void connectSignals(CoffeeRenderer* renderer);
 
 private:
+    QScriptEngine *scriptEngine;
+
     QEventLoop* evloop;
 
     CoffeeFrameBufferObject* renderFbo;

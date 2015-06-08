@@ -33,8 +33,12 @@
 
 #include "engine/objects/coffeeparticlesystem.h"
 
+#include <QtScript>
+
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
 {
+    scriptEngine = new QScriptEngine(this);
+
     evloop = new QEventLoop(this);
     connectSignals(renderer);
 
@@ -45,6 +49,13 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qFatal("Failed to load any world information!");
     world = worlds.first();
     connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
+
+    QScriptValue worldValue = scriptEngine->newQObject(world);
+
+    scriptEngine->globalObject().setProperty(world->objectName().toStdString().c_str(),worldValue);
+
+    qDebug() << scriptEngine->evaluate("world1.blade.setPosition(100.,0.0,100.0)\n").toString();
+    qDebug() << scriptEngine->evaluate("world1.blade.position\n").toString();
 
     _rendering_loop_init = [=](){
 
@@ -207,7 +218,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
         else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress)
             world->setWireframeMode(!world->wireframeMode());
         else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
-            world->unloadWorld();
+//            world->unloadWorld();
         }
     });
     renderer->connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){

@@ -17,6 +17,7 @@ class CoffeeStandardObject : public CoffeeObject
 
     Q_INTERFACES(CoffeeObject)
     Q_PLUGIN_METADATA(IID CoffeeObjectIID)
+    Q_OBJECT
 
 public:
     CoffeeStandardObject(QObject* parent);
@@ -39,6 +40,9 @@ public:
 
     void setUniform(QString uniformName,ShaderVariant* data, bool constant);
     void setTexture(QString samplerName, CoffeeTexture *texture);
+
+    Q_INVOKABLE void setPosition(float x, float y, float z);
+    Q_INVOKABLE void setRotation(float x, float y, float z);
 
 protected:
     bool baked = false;

@@ -1,6 +1,7 @@
 #ifndef COFFEEWORLDOPTS_H
 #define COFFEEWORLDOPTS_H
 #include "general/common.h"
+#include "engine/physics/genericphysicsinterface.h"
 
 class CoffeeCamera;
 class CoffeeSkybox;
@@ -52,8 +53,14 @@ public:
 
 signals:
     void tickPhysics(float d);
+    void modifyPhysics(PhysicsObject *object,
+                       GenericPhysicsInterface::PhysicsProperty prop,
+                       const VectorVariant &value);
     void physicsObjectAdded(PhysicsObject* object);
 public slots:
+    void physicsModify(PhysicsObject *object,
+                       GenericPhysicsInterface::PhysicsProperty prop,
+                       const VectorVariant &value);
     void tickObjects(float d);
     void renderWorld();
     void unloadWorld();

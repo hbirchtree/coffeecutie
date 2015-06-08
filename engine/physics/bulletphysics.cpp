@@ -177,10 +177,42 @@ void BulletPhysics::run()
     evloop->exec();
 }
 
-void BulletPhysics::updateObject(PhysicsObject *object, GenericPhysicsInterface::PhysicsProperty prop)
+void BulletPhysics::updateObject(PhysicsObject *object,
+                                 GenericPhysicsInterface::PhysicsProperty prop,
+                                 const VectorVariant &value)
 {
-    Q_UNUSED(object)
-    Q_UNUSED(prop)
+    if(object->getPhysicspointer()){
+        btRigidBody* obj = (btRigidBody*)object->getPhysicspointer();
+        switch(prop){
+        case GenericPhysicsInterface::PhysProp_Pos:{
+            btTransform pt = obj->getWorldTransform();
+            pt.setOrigin(convert_glm(value.toVector3()));
+            obj->setWorldTransform(pt);
+            break;
+        }
+        case GenericPhysicsInterface::PhysProp_Orientation:{
+            btTransform rt = obj->getWorldTransform();
+            rt.setRotation(convert_glm(value.toQuaternion()));
+            obj->setWorldTransform(rt);
+            break;
+        }
+        case GenericPhysicsInterface::PhysProp_AngularVelocity:
+            break;
+        case GenericPhysicsInterface::PhysProp_Gravity:
+            break;
+        case GenericPhysicsInterface::PhysProp_Velocity:
+            break;
+        case GenericPhysicsInterface::PhysProp_Force:{
+            obj->applyCentralForce(convert_glm(value.toVector3()));
+            obj->activate(true);
+            break;
+        }
+        case GenericPhysicsInterface::PhysProp_Impulse:
+            break;
+        case GenericPhysicsInterface::PhysProp_Activation:
+            break;
+        }
+    }
 }
 
 void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timestep)

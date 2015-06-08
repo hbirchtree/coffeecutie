@@ -41,7 +41,9 @@ signals:
     void physicsInitialized();
 
 public slots:
-    void updateObject(PhysicsObject* object,GenericPhysicsInterface::PhysicsProperty prop);
+    void updateObject(PhysicsObject* object,
+                      GenericPhysicsInterface::PhysicsProperty prop,
+                      const VectorVariant &value);
     void addObject(PhysicsObject* object);
     void removeObject(void* pointer);
     void removeObject(PhysicsObject* object);

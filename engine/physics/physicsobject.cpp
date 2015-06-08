@@ -3,7 +3,9 @@
 PhysicsObject::PhysicsObject(QObject *parent) : QObject(parent){
     descr = new PhysicsDescriptor();
     v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    v_position->setObjectName("position");
     v_physics_rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
+    v_physics_rotation->setObjectName("orientation");
 }
 
 PhysicsObject::PhysicsObject(QPointer<PhysicsObject> object){
@@ -82,6 +84,16 @@ PhysicsDescriptor *PhysicsObject::getDescr()
 void PhysicsObject::setDescr(PhysicsDescriptor *value)
 {
     descr = value;
+}
+
+void PhysicsObject::setPosition(float x, float y, float z)
+{
+    v_position->setValue(glm::vec3(x,y,z));
+}
+
+void PhysicsObject::setRotation(float x, float y, float z)
+{
+    v_physics_rotation->setValue(glm::quat(glm::vec3(x,y,z)));
 }
 
 void PhysicsObject::updatePosition(glm::vec3 p)

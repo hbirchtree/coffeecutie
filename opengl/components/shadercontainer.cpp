@@ -94,8 +94,10 @@ bool ShaderContainer::linkProgram()
         return false;
     }
 
-    for(int shader : shaders)
+    for(int shader : shaders){
         glDetachShader(programId,shader);
+        glDeleteShader(shader);
+    }
 
     addAllocation();
     return true;
@@ -140,6 +142,8 @@ void ShaderContainer::unload()
     if(isAllocated())
         return;
     glDeleteProgram(programId);
+    uniforms.clear();
+    attributes.clear();
     programId = 0;
 }
 

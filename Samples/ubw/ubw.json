@@ -105,7 +105,7 @@
 			"vertex": "shaders/particles/vertex-process.vert"
 		}
 	],
-	"world.1":{
+	"world.world1":{
 		"lights":[
 			{
 				"position": [10,40,10],
@@ -192,7 +192,8 @@
 				"shader.id": "standard",
 				"model.id": "bumpbox:.*",
 				"model.scale": [2,2,2],
-				"physics":{
+				"position": [9,18,12],
+				"physicd":{
 					"position": [9,18,12],
 					"scale": [1,1,1],
 					"shape": "sphere",
