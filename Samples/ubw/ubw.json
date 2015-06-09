@@ -193,7 +193,7 @@
 				"model.id": "bumpbox:.*",
 				"model.scale": [2,2,2],
 				"position": [9,18,12],
-				"physicd":{
+				"physics":{
 					"position": [9,18,12],
 					"scale": [1,1,1],
 					"shape": "sphere",

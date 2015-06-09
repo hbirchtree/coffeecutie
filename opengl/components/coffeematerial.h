@@ -9,19 +9,19 @@ class CoffeeMaterial : public QObject, public CoffeeGameAsset{
 
     Q_PROPERTY(bool wireframe READ wireframe WRITE setWireframe)
     Q_PROPERTY(bool culling READ culling WRITE setCulling)
-    Q_PROPERTY(glm::vec3 transparency READ transparency WRITE setTransparency)
-    Q_PROPERTY(glm::vec3 diffuseColor READ diffuseColor WRITE setDiffuseColor)
-    Q_PROPERTY(glm::vec3 specularColor READ specularColor WRITE setSpecularColor)
-    Q_PROPERTY(glm::vec3 ambientColor READ ambientColor WRITE setAmbientColor)
-    Q_PROPERTY(glm::vec3 emissiveColor READ emissiveColor WRITE setEmissiveColor)
+//    Q_PROPERTY(glm::vec3 transparency READ transparency WRITE setTransparency)
+//    Q_PROPERTY(glm::vec3 diffuseColor READ diffuseColor WRITE setDiffuseColor)
+//    Q_PROPERTY(glm::vec3 specularColor READ specularColor WRITE setSpecularColor)
+//    Q_PROPERTY(glm::vec3 ambientColor READ ambientColor WRITE setAmbientColor)
+//    Q_PROPERTY(glm::vec3 emissiveColor READ emissiveColor WRITE setEmissiveColor)
     Q_PROPERTY(float shininessStrength READ shininessStrength WRITE setShininessStrength)
     Q_PROPERTY(float refraction READ refraction WRITE setRefraction)
     Q_PROPERTY(float reflectivity READ reflectivity WRITE setReflectivity)
     Q_PROPERTY(float shininess READ shininess WRITE setShininess)
     Q_PROPERTY(float opacity READ opacity WRITE setOpacity)
-    Q_PROPERTY(GLenum blendMode READ blendMode WRITE setBlendMode)
-    Q_PROPERTY(GLenum shadingMode READ shadingMode WRITE setShadingMode)
-    Q_PROPERTY(glm::vec3 colorMultiplier READ colorMultiplier WRITE setColorMultiplier)
+//    Q_PROPERTY(GLenum blendMode READ blendMode WRITE setBlendMode)
+//    Q_PROPERTY(GLenum shadingMode READ shadingMode WRITE setShadingMode)
+//    Q_PROPERTY(glm::vec3 colorMultiplier READ colorMultiplier WRITE setColorMultiplier)
 
     Q_OBJECT
 

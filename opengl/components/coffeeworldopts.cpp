@@ -17,9 +17,9 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
     physicsThread->setObjectName("physics-thread");
     physics->setObjectName("bullet");
     physics->moveToThread(physicsThread);
-    connect(this,SIGNAL(tickPhysics(float)),
-            physics.data(),SLOT(tickSimulation(float)),
-            Qt::QueuedConnection);
+//    connect(this,SIGNAL(tickPhysics(float)),
+//            physics.data(),SLOT(tickSimulation(float)),
+//            Qt::QueuedConnection);
     connect(this,SIGNAL(physicsObjectAdded(PhysicsObject*)),
             physics.data(),SLOT(addObject(PhysicsObject*)),
             Qt::QueuedConnection);

@@ -12,8 +12,7 @@
 #include "opengl/context/qcoffeerenderer.h"
 #endif
 
-#include <QtScript>
-#include "general/data/numbercontainer.h"
+#include "engine/physics/genericphysicsinterface.h"
 
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
@@ -53,6 +52,9 @@ int main(int argc, char *argv[])
             logStderr = true;
         }
     }
+
+    qRegisterMetaType<GenericPhysicsInterface::PhysicsProperty>("PhysicsProperty");
+    qRegisterMetaType<QEvent::Type>("QEventType");
 
     QString sourceFile = "ubw/ubw.json";
     if(opts.positionalArguments().size()>0){

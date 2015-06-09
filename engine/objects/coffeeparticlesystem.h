@@ -14,7 +14,7 @@ class CoffeeParticleSystem : public QObject,public CoffeeObject
     Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
     Q_PROPERTY(quint32 max_particles READ getMaxParticles WRITE setMaxParticles)
     Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
-    Q_PROPERTY(glm::vec3 gravity READ gravity WRITE setGravity)
+//    Q_PROPERTY(glm::vec3 gravity READ gravity WRITE setGravity)
 
     Q_OBJECT
 

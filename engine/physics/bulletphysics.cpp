@@ -5,6 +5,7 @@
 #include "btBulletDynamicsCommon.h"
 #include "btBulletCollisionCommon.h"
 #include "LinearMath/btVector3.h"
+#include <QTimer>
 
 BulletPhysics::BulletPhysics(QObject *parent, const glm::vec3 &gravity) : QObject(parent)
 {
@@ -173,6 +174,17 @@ void BulletPhysics::run()
 
     m_dynamicsWorld->setInternalTickCallback(internalTickCallback);
     m_dynamicsWorld->setWorldUserInfo(this);
+
+    QTimer t;
+
+    t.setInterval(10);
+
+    connect(&t,&QTimer::timeout,[=](){
+        tickSimulation(10);
+    });
+
+    t.start();
+
     evloop = new QEventLoop();
     evloop->exec();
 }
@@ -251,4 +263,13 @@ void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timeste
             }
         }
     }
+}
+
+void BulletPhysics::setGravity(float x, float y, float z)
+{
+    gravity.x = x;
+    gravity.y = y;
+    gravity.z = z;
+    qDebug() << QStringFunctions::toString(gravity);
+    m_dynamicsWorld->setGravity(convert_glm(gravity));
 }

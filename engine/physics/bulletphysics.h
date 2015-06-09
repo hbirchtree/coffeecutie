@@ -41,6 +41,8 @@ signals:
     void physicsInitialized();
 
 public slots:
+    void setGravity(float x, float y, float z);
+
     void updateObject(PhysicsObject* object,
                       GenericPhysicsInterface::PhysicsProperty prop,
                       const VectorVariant &value);
