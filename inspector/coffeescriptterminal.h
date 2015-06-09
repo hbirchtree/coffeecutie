@@ -2,6 +2,7 @@
 #define COFFEESCRIPTTERMINAL_H
 
 #include <QWidget>
+#include <QScriptEngine>
 
 namespace Ui {
 class CoffeeScriptTerminal;
@@ -12,10 +13,14 @@ class CoffeeScriptTerminal : public QWidget
     Q_OBJECT
 
 public:
-    explicit CoffeeScriptTerminal(QWidget *parent = 0);
+    CoffeeScriptTerminal(QWidget *parent, QList<QObject *> rootObject);
     ~CoffeeScriptTerminal();
 
+private slots:
+    void on_scriptInput_returnPressed();
+
 private:
+    QScriptEngine engine;
     Ui::CoffeeScriptTerminal *ui;
 };
 

@@ -37,7 +37,7 @@
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
 {
-    scriptEngine = new QScriptEngine(this);
+//    scriptEngine = new QScriptEngine(this);
 
     evloop = new QEventLoop(this);
     connectSignals(renderer);
@@ -50,15 +50,15 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     world = worlds.first();
     connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
 
-    QScriptValue worldValue = scriptEngine->newQObject(world);
-    QScriptValue rendererValue = scriptEngine->newQObject(renderer);
+//    QScriptValue worldValue = scriptEngine->newQObject(world);
+//    QScriptValue rendererValue = scriptEngine->newQObject(renderer);
 
-    scriptEngine->globalObject().setProperty("root",rendererValue);
-    scriptEngine->globalObject().setProperty(world->objectName().toStdString().c_str(),worldValue);
+//    scriptEngine->globalObject().setProperty("root",rendererValue);
+//    scriptEngine->globalObject().setProperty(world->objectName().toStdString().c_str(),worldValue);
 
-    qDebug() << scriptEngine->evaluate("world1.blade.setPosition(5.,0.0,5.0)\n").toString();
-    qDebug() << scriptEngine->evaluate("world1.blade.position\n").toString();
-    qDebug() << scriptEngine->evaluate("world1.blade.material.opacity\n").toString();
+//    qDebug() << scriptEngine->evaluate("world1.blade.setPosition(5.,0.0,5.0)\n").toString();
+//    qDebug() << scriptEngine->evaluate("world1.blade.position\n").toString();
+//    qDebug() << scriptEngine->evaluate("world1.blade.material.opacity\n").toString();
 
     _rendering_loop_init = [=](){
 

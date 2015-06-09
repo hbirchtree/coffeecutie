@@ -31,8 +31,6 @@ public:
     void connectSignals(CoffeeRenderer* renderer);
 
 private:
-    QScriptEngine *scriptEngine;
-
     QEventLoop* evloop;
 
     CoffeeFrameBufferObject* renderFbo;

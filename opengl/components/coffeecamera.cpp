@@ -172,6 +172,11 @@ bool CoffeeCamera::isOrthographic() const
 void CoffeeCamera::clearFramebufferSizeObject(){
     framebufferSize = NULL;
 }
+
+void CoffeeCamera::setFov(float fov)
+{
+    *this->fov = fov;
+}
 float CoffeeCamera::getZfar() const
 {
     return zfar;
@@ -200,6 +205,11 @@ QString CoffeeCamera::getStringPosition() const
 QString CoffeeCamera::getStringRotation() const
 {
     return QStringFunctions::toString(rotation_euler->getValue());
+}
+
+float CoffeeCamera::getFov() const
+{
+    return fov->getValue();
 }
 
 float CoffeeCamera::getZnear() const

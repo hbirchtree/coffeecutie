@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     RenderLoop* loop;
     QObject* root = new QObject();
     CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
-    root->setObjectName("[main,unlimited-root]");
+    root->setObjectName("coffeeroot");
 #ifndef QOPENGL_CONTEXT_MANAGER
     CoffeeRenderer *renderer = new CoffeeRenderer(root,
                                                   1280,720,Qt::WindowNoState,
@@ -79,11 +79,11 @@ int main(int argc, char *argv[])
                                                   1280,720,Qt::WindowNoState,
                                                   "Unlimited Frame Works");
 #endif
-    renderer->setObjectName("root.renderer");
+    renderer->setObjectName("renderer");
 
 #ifdef COFFEE_ADVANCED_RUN
     loop = new CoffeeAdvancedLoop(root,renderer,sourceFile);
-    loop->setObjectName("advanced-loop");
+    loop->setObjectName("evloop");
 #else
     //This demo taken from glbinding tests out general rendering
     loop = new BoxTest(renderer);

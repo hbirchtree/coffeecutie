@@ -179,3 +179,11 @@ void CoffeeInspector::clearChildren(QTreeWidgetItem *it)
         delete c;
     }
 }
+
+void CoffeeInspector::on_pushButton_clicked()
+{
+    if(!scriptTerminal)
+        scriptTerminal = new CoffeeScriptTerminal(0,engineRoot);
+
+    scriptTerminal->show();
+}

@@ -15,7 +15,7 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
     QThreadPool::globalInstance()->reserveThread();
     physicsThread = new QThread(this);
     physicsThread->setObjectName("physics-thread");
-    physics->setObjectName("[thread-1,bullet-physics]");
+    physics->setObjectName("bullet");
     physics->moveToThread(physicsThread);
     connect(this,SIGNAL(tickPhysics(float)),
             physics.data(),SLOT(tickSimulation(float)),

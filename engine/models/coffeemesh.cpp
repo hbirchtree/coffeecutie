@@ -4,6 +4,7 @@
 
 CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){
     instances = new CoffeeInstanceContainer(this);
+    instances->setObjectName("instances");
 }
 
 CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : CoffeeMesh(parent)

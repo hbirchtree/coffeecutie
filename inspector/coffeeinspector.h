@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <opengl/context/coffeerenderer.h>
 #include "coffeerendererinspector.h"
+#include "coffeescriptterminal.h"
 #include <QTreeWidgetItem>
 #include <QMetaProperty>
 #include <QList>
@@ -28,6 +29,8 @@ private slots:
 
     void on_rendererBtn_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     QTimer *refreshTimer;
 
@@ -41,6 +44,7 @@ private:
 
     QPointer<CoffeeRenderer> renderer;
     QPointer<CoffeeRendererInspector> rendererInspector;
+    QPointer<CoffeeScriptTerminal> scriptTerminal;
 
     Ui::CoffeeInspector *ui;
     void updateProperties(QObject* object);

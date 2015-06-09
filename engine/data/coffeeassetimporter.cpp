@@ -340,7 +340,7 @@ void CoffeeAssetStorage::setParents(QObject *parent)
     }
 
 
-    //This would be GREAT if we could set parents in different threads
+    //This is only viable for a large amount of objects. So far, it is only slower. Or maybe I did something wrong.
 //    QList<QFuture<void>> futures;
 
 //    QList<QHash<QString,QPointer<CoffeeMesh>>> meshvals = meshes.values();

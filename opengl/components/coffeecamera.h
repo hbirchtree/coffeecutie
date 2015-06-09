@@ -7,6 +7,7 @@ class CoffeeCamera : public QObject
 {
     Q_PROPERTY(float zNear READ getZnear WRITE setZnear)
     Q_PROPERTY(float zFar READ getZfar WRITE setZfar)
+    Q_PROPERTY(float fov READ getFov WRITE setFov)
     Q_PROPERTY(float aspectRatio READ getAspectValue WRITE setAspect)
     Q_PROPERTY(bool orthographic READ isOrthographic WRITE setOrthographic)
     Q_PROPERTY(QString position READ getStringPosition)
@@ -24,7 +25,6 @@ public:
     QPointer<NumberContainer<float>> getFieldOfView();
     QPointer<NumberContainer<float>> getAspect();
 
-    void offsetOrientation(float rightAngle,float upAngle);
     void cameraLookAt(glm::vec3 point);
 
     glm::vec3 getCameraRight() const;
@@ -49,25 +49,30 @@ public:
 
     static void normalizeEulerAngles(QPointer<NumberContainer<glm::vec3> > e, float x_min, float x_max);
 
-    void setOrthographic(bool value);
     bool isOrthographic() const;
 
     float getZnear() const;
-    void setZnear(float value);
 
     float getZfar() const;
-    void setZfar(float value);
 
     float getAspectValue() const;
-    void setAspect(float value);
 
     QString getStringPosition() const;
     QString getStringRotation() const;
+
+    float getFov() const;
 
 signals:
 
 public slots:
     void clearFramebufferSizeObject();
+
+    void setFov(float fov);
+    void setAspect(float value);
+    void setZfar(float value);
+    void setZnear(float value);
+    void setOrthographic(bool value);
+    void offsetOrientation(float rightAngle,float upAngle);
 
 private:
     bool orthographic = false;
