@@ -56,8 +56,9 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     scriptEngine->globalObject().setProperty("root",rendererValue);
     scriptEngine->globalObject().setProperty(world->objectName().toStdString().c_str(),worldValue);
 
-    qDebug() << scriptEngine->evaluate("world1.blade.setPosition(100.,0.0,100.0)\n").toString();
+    qDebug() << scriptEngine->evaluate("world1.blade.setPosition(5.,0.0,5.0)\n").toString();
     qDebug() << scriptEngine->evaluate("world1.blade.position\n").toString();
+    qDebug() << scriptEngine->evaluate("world1.blade.material.opacity\n").toString();
 
     _rendering_loop_init = [=](){
 

@@ -140,6 +140,21 @@ void CoffeeStandardObject::setMaterial(CoffeeMaterial *mtl)
     pmaterial->addConsumer();
 }
 
+QObject *CoffeeStandardObject::materialRef()
+{
+    return pmaterial;
+}
+
+QObject *CoffeeStandardObject::meshRef()
+{
+    return pmesh;
+}
+
+QObject *CoffeeStandardObject::shaderRef()
+{
+    return pshader;
+}
+
 void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)
 {
     ShaderMapping map;

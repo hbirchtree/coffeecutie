@@ -15,14 +15,9 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
     m_colorMultiplier = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
 }
 
-CoffeeMaterial::CoffeeMaterial(CoffeeMaterial &mtl) : CoffeeMaterial(0){
-    m_transparency = new NumberContainer<glm::vec3>(this,mtl.transparency());
-    m_shininess = new NumberContainer<float>(this,mtl.shininess());
-    *m_specularColor = glm::vec3(mtl.specularColor());
-    *m_colorMultiplier = glm::vec3(mtl.colorMultiplier());
-}
-
-CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource, const QString& filepath) : CoffeeMaterial(parent){
+CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource, const QString& filepath) :
+    CoffeeMaterial(parent)
+{
     aiString name;
     aiColor3D color,specular,ambient,transparency;
     int wireframe = 0,twosided = 1,shadingmodel = 0,blendfunc = 0;

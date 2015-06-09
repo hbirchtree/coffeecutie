@@ -61,7 +61,8 @@ SOURCES += main.cpp \
     engine/models/coffeeinstancecontainer.cpp \
     general/filehandler.cpp \
     engine/data/coffeeassetimporter.cpp \
-    engine/data/coffeeworldbuilder.cpp
+    engine/data/coffeeworldbuilder.cpp \
+    inspector/coffeescriptterminal.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -113,7 +114,8 @@ HEADERS += \
     engine/objects/coffeeskybox.h \
     engine/models/coffeeinstancecontainer.h \
     engine/data/coffeeassetimporter.h \
-    engine/data/coffeeworldbuilder.h
+    engine/data/coffeeworldbuilder.h \
+    inspector/coffeescriptterminal.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -144,7 +146,8 @@ DEPENDPATH += $$PWD/libs/bullet/src
 
 FORMS += \
     inspector/coffeeinspector.ui \
-    inspector/coffeerendererinspector.ui
+    inspector/coffeerendererinspector.ui \
+    inspector/coffeescriptterminal.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp

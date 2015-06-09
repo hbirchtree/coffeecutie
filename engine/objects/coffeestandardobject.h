@@ -3,11 +3,11 @@
 
 #include "engine/objects/coffeeobject.h"
 #include "opengl/components/coffeetexture.h" //TextureMapping needs to know.
+#include "opengl/components/coffeematerial.h"
+#include "opengl/components/shadercontainer.h"
+#include "engine/models/coffeemesh.h"
 
 class ShaderVariant;
-class ShaderContainer;
-class CoffeeMaterial;
-class CoffeeMesh;
 
 class ShaderMapping {
 public:
@@ -33,6 +33,10 @@ class CoffeeStandardObject : public QObject,public CoffeeObject
     Q_PROPERTY(QString rotation READ getStringRotation)
     Q_PROPERTY(QString scale READ getStringScale)
 
+    Q_PROPERTY(QObject* material READ materialRef)
+    Q_PROPERTY(QObject* shader READ shaderRef)
+    Q_PROPERTY(QObject* mesh READ meshRef)
+
     Q_OBJECT
 
 public:
@@ -43,15 +47,16 @@ public:
     QString getStringRotation() const;
     QString getStringScale() const;
 
-    CoffeeMesh* mesh();
+    Q_INVOKABLE CoffeeMesh* mesh();
     void setMesh(CoffeeMesh* mesh);
-    ShaderContainer* shader();
+    Q_INVOKABLE ShaderContainer* shader();
     void setShader(ShaderContainer* shader);
-    CoffeeMaterial* material();
+    Q_INVOKABLE CoffeeMaterial* material();
     void setMaterial(CoffeeMaterial *mtl);
 
-    void setUniform(QString uniformName,ShaderVariant* data, bool constant);
-    void setTexture(QString samplerName, CoffeeTexture *texture);
+    QObject* materialRef();
+    QObject* meshRef();
+    QObject* shaderRef();
 
 public slots:
     void render();
@@ -61,9 +66,11 @@ public slots:
     void setPosition(float x, float y, float z);
     void setRotation(float x, float y, float z);
 
+    void setUniform(QString uniformName,ShaderVariant* data, bool constant);
+    void setTexture(QString samplerName, CoffeeTexture *texture);
+
 protected:
     bool baked = false;
-
 
     QVector<ShaderMapping> uniforms;
     QVector<TextureMapping> textures;

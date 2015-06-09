@@ -41,13 +41,16 @@ class CoffeeAssetImporter : public QObject
 {
     Q_OBJECT
 public:
-    CoffeeAssetImporter(QObject *parent);
+    CoffeeAssetImporter(QObject *parent,QObject* outputParent);
 
     CoffeeAssetStorage importTexture(const QVariantMap &data, const QString &filepath);
     CoffeeAssetStorage importShader(const QVariantMap &data, const QString &filepath);
     CoffeeAssetStorage importModel(const QVariantMap &data, const QString &filepath);
 
     CoffeeAssetStorage importAssets(QVariantList assetList, const QString &filepath);
+
+private:
+    QObject* outputParent;
 };
 
 #endif // COFFEEASSETIMPORTER_H

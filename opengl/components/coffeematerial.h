@@ -17,15 +17,16 @@ class CoffeeMaterial : public QObject, public CoffeeGameAsset{
     Q_PROPERTY(float shininessStrength READ shininessStrength WRITE setShininessStrength)
     Q_PROPERTY(float refraction READ refraction WRITE setRefraction)
     Q_PROPERTY(float reflectivity READ reflectivity WRITE setReflectivity)
-    Q_PROPERTY(float shininess READ getShininess WRITE setShininess)
+    Q_PROPERTY(float shininess READ shininess WRITE setShininess)
     Q_PROPERTY(float opacity READ opacity WRITE setOpacity)
     Q_PROPERTY(GLenum blendMode READ blendMode WRITE setBlendMode)
     Q_PROPERTY(GLenum shadingMode READ shadingMode WRITE setShadingMode)
     Q_PROPERTY(glm::vec3 colorMultiplier READ colorMultiplier WRITE setColorMultiplier)
 
+    Q_OBJECT
+
 public:
     CoffeeMaterial(QObject* parent);
-    CoffeeMaterial(CoffeeMaterial &mtl);
     CoffeeMaterial(QObject *parent, const aiMaterial* materialSource, const QString &filepath);
 
     bool wireframe() const;

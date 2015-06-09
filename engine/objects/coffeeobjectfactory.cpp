@@ -56,8 +56,12 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
 
     for(QString key : source.keys())
         if(key=="assets"){
-            CoffeeAssetImporter* imp = new CoffeeAssetImporter(importerRoot); //temporary object
-            QFuture<CoffeeAssetStorage> index = QtConcurrent::run(imp,&CoffeeAssetImporter::importAssets,source.value(key).toList(),s.filepath);
+            CoffeeAssetImporter* imp = new CoffeeAssetImporter(importerRoot,parent); //temporary object
+            QFuture<CoffeeAssetStorage> index =
+                    QtConcurrent::run(imp,
+                                      &CoffeeAssetImporter::importAssets,
+                                      source.value(key).toList(),
+                                      s.filepath);
             importData.append(index);
         }
 
@@ -75,6 +79,7 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
            s.meshes.size(),
            s.materials.size(),
            s.textures.size());
+
 
     //World data
     for(QString key : source.keys()){

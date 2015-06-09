@@ -44,7 +44,7 @@ private:
 
     Ui::CoffeeInspector *ui;
     void updateProperties(QObject* object);
-    void updateTreeWidgetItem(QObject* object, QTreeWidgetItem *parent);
+    void updateTreeWidgetItem(QObject* object, QTreeWidgetItem *parent, bool listChildren = true);
     void updateProperty(QTreeWidgetItem* it, QVariant value);
     void clearChildren(QTreeWidgetItem* it);
 
