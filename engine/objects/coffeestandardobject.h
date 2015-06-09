@@ -2,30 +2,42 @@
 #define COFFEESTANDARDOBJECT_H
 
 #include "engine/objects/coffeeobject.h"
+#include "opengl/components/coffeetexture.h" //TextureMapping needs to know.
 
 class ShaderVariant;
 class ShaderContainer;
 class CoffeeMaterial;
 class CoffeeMesh;
-class CoffeeTexture;
 
-class CoffeeStandardObject : public CoffeeObject
+class ShaderMapping {
+public:
+    QString uniform;
+    QPointer<ShaderVariant> data;
+    bool constant = false;
+};
+class TextureMapping {
+public:
+    bool operator==(const TextureMapping& val){
+        return val.texture==this->texture.data()&&
+                val.unit==this->unit&&
+                val.samplerName==this->samplerName;
+    }
+    QPointer<CoffeeTexture> texture;
+    GLenum unit;
+    QString samplerName;
+};
+
+class CoffeeStandardObject : public QObject,public CoffeeObject
 {
     Q_PROPERTY(QString position READ getStringPosition)
     Q_PROPERTY(QString rotation READ getStringRotation)
     Q_PROPERTY(QString scale READ getStringScale)
 
-    Q_INTERFACES(CoffeeObject)
-    Q_PLUGIN_METADATA(IID CoffeeObjectIID)
     Q_OBJECT
 
 public:
     CoffeeStandardObject(QObject* parent);
     ~CoffeeStandardObject();
-
-    void render();
-    void unload();
-    void load();
 
     QString getStringPosition() const;
     QString getStringRotation() const;
@@ -41,29 +53,17 @@ public:
     void setUniform(QString uniformName,ShaderVariant* data, bool constant);
     void setTexture(QString samplerName, CoffeeTexture *texture);
 
-    Q_INVOKABLE void setPosition(float x, float y, float z);
-    Q_INVOKABLE void setRotation(float x, float y, float z);
+public slots:
+    void render();
+    void unload();
+    void load();
+
+    void setPosition(float x, float y, float z);
+    void setRotation(float x, float y, float z);
 
 protected:
     bool baked = false;
 
-    class ShaderMapping {
-    public:
-        QString uniform;
-        QPointer<ShaderVariant> data;
-        bool constant = false;
-    };
-    class TextureMapping {
-    public:
-        bool operator==(const TextureMapping& val){
-            return val.texture==this->texture&&
-                    val.unit==this->unit&&
-                    val.samplerName==this->samplerName;
-        }
-        QPointer<CoffeeTexture> texture;
-        GLenum unit;
-        QString samplerName;
-    };
 
     QVector<ShaderMapping> uniforms;
     QVector<TextureMapping> textures;

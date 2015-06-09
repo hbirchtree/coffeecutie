@@ -2,32 +2,25 @@
 #define COFFEEPARTICLESYSTEM_H
 
 #include "engine/objects/coffeeobject.h"
+#include <QColor>
 
 class ShaderContainer;
 class CoffeeTexture;
 class CoffeeCamera;
 
-class CoffeeParticleSystem : public CoffeeObject
+class CoffeeParticleSystem : public QObject,public CoffeeObject
 {
-    Q_PROPERTY(quint64 processTime READ processTime)
-    Q_PROPERTY(quint64 particleCount READ particleCount)
-    Q_PROPERTY(QColor particleColor READ particleColor WRITE setParticleColor)
-    Q_PROPERTY(float particleSize READ particleSize WRITE setParticleSize)
-    Q_PROPERTY(quint32 max_particles READ maxParticles WRITE setMaxParticles)
+    Q_PROPERTY(QColor particleColor READ getParticleColor WRITE setParticleColor)
+    Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
+    Q_PROPERTY(quint32 max_particles READ getMaxParticles WRITE setMaxParticles)
     Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
     Q_PROPERTY(glm::vec3 gravity READ gravity WRITE setGravity)
 
-    Q_INTERFACES(CoffeeObject)
-    Q_PLUGIN_METADATA(IID CoffeeObjectIID)
-
-//    Q_OBJECT
+    Q_OBJECT
 
 public:
     CoffeeParticleSystem(QObject *parent, const CoffeeCamera *camera);
 
-    void render();
-    void unload();
-    void load();
 
     bool isBaked();
     void setBaked(bool val);
@@ -52,6 +45,10 @@ public:
     void setTransformShader(QPointer<ShaderContainer> value);
 
 public slots:
+    void render();
+    void unload();
+    void load();
+
     void setFrametime(float time);
 
     void setMaxParticles(quint32 max_particles);

@@ -51,7 +51,9 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
 
     QScriptValue worldValue = scriptEngine->newQObject(world);
+    QScriptValue rendererValue = scriptEngine->newQObject(renderer);
 
+    scriptEngine->globalObject().setProperty("root",rendererValue);
     scriptEngine->globalObject().setProperty(world->objectName().toStdString().c_str(),worldValue);
 
     qDebug() << scriptEngine->evaluate("world1.blade.setPosition(100.,0.0,100.0)\n").toString();
@@ -77,7 +79,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
             }
             if(o->physics())
                 o->rotation()->bindValue(o->physics()->getPhysicalRotation());
-            qDebug("Set up for rendering: %s",o->objectName().toStdString().c_str());
+            qDebug("Set up for rendering: %s",stdobj->objectName().toStdString().c_str());
         }
 
         world->getLights().first()->getPosition()->bindValue(world->getCamera()->getPosition());

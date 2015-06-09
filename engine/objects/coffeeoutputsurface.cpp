@@ -4,7 +4,9 @@
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeeframebufferobject.h"
 
-CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) : CoffeeObject(parent)
+CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) :
+    QObject(parent),
+    CoffeeObject(this)
 {
     setFramebuffer(display);
 }

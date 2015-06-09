@@ -6,12 +6,11 @@
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeecamera.h"
 
-CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) : CoffeeObject(parent)
+CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) :
+    QObject(parent),
+    CoffeeObject(this)
 {
     setCamera(camera);
-//    this->shader = new ShaderContainer(this);
-//    shader->setVertexShader("ubw/shaders/skybox/vsh.txt");
-//    shader->setFragmentShader("ubw/shaders/skybox/fsh.txt");
 }
 
 void CoffeeSkybox::addMap(GLenum side, QString source)

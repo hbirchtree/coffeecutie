@@ -3,7 +3,7 @@
 
 #include "general/common.h"
 #include "general/data/coffeegameasset.h"
-class CoffeeTexture : public QObject, public CoffeeGameAsset
+class CoffeeTexture : public QObject,public CoffeeGameAsset
 {
     Q_PROPERTY(QString textureFile READ textureFile)
     Q_PROPERTY(uint textureHandle READ getHandle)

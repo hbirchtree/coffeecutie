@@ -7,6 +7,7 @@
 class GenericPhysicsInterface
 {
 public:
+    Q_ENUMS(PhysicsProperty)
     enum PhysicsProperty {
         PhysProp_Pos,
         PhysProp_Orientation,

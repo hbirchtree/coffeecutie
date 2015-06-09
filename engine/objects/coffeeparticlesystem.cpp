@@ -6,7 +6,9 @@
 #include "opengl/helpers/renderingmethods.h"
 #include <QColor>
 
-CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) : CoffeeObject(parent)
+CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) :
+    QObject(parent),
+    CoffeeObject(this)
 {
     this->camera = camera;
 

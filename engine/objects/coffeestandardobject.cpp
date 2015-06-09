@@ -6,7 +6,9 @@
 #include "engine/models/coffeeinstancecontainer.h"
 #include "general/shadervariant.h"
 
-CoffeeStandardObject::CoffeeStandardObject(QObject *parent) : CoffeeObject(parent)
+CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
+    QObject(parent),
+    CoffeeObject(this)
 {
 }
 

@@ -1,11 +1,10 @@
 #ifndef COFFEEOBJECT_H
 #define COFFEEOBJECT_H
 
-#include <QtPlugin>
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
 #include "engine/physics/physicsobject.h"
-class CoffeeObject : public QObject
+class CoffeeObject
 {
 public:
     /*
@@ -14,7 +13,6 @@ public:
      *  may be linked to the PhysicsObject
      *
      */
-    CoffeeObject(QObject *parent);
 
     virtual ~CoffeeObject();
 
@@ -31,14 +29,11 @@ public slots:
     virtual void load() = 0;
 
 protected:
+    CoffeeObject(QObject* parent = 0);
     QPointer<PhysicsObject> physical;
     QPointer<NumberContainer<glm::vec3>> vposition;
     QPointer<NumberContainer<glm::quat>> qrotation;
     QPointer<NumberContainer<glm::vec3>> vscale;
 };
-
-#define CoffeeObjectIID "com.hbirchtree.coffeecutie.CoffeeObject/2.0"
-
-Q_DECLARE_INTERFACE(CoffeeObject,CoffeeObjectIID)
 
 #endif // COFFEEOBJECT_H

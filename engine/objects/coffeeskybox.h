@@ -8,11 +8,9 @@ class CoffeeCamera;
 class ShaderContainer;
 class CoffeeTexture;
 
-class CoffeeSkybox : public CoffeeObject
+class CoffeeSkybox : public QObject,public CoffeeObject
 {
     Q_OBJECT
-    Q_INTERFACES(CoffeeObject)
-    Q_PLUGIN_METADATA(IID CoffeeObjectIID)
 public:
     CoffeeSkybox(QObject* parent = 0, CoffeeCamera *camera = 0);
 

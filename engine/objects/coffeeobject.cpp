@@ -1,15 +1,14 @@
 #include "coffeeobject.h"
 
-CoffeeObject::CoffeeObject(QObject *parent) : QObject(parent)
+CoffeeObject::CoffeeObject(QObject *parent)
 {
-    vposition = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-    qrotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
-    vscale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    vposition = new NumberContainer<glm::vec3>(parent,glm::vec3(0,0,0));
+    qrotation = new NumberContainer<glm::quat>(parent,glm::quat(1,0,0,0));
+    vscale = new NumberContainer<glm::vec3>(parent,glm::vec3(1,1,1));
 }
 
 CoffeeObject::~CoffeeObject()
 {
-
 }
 
 NumberContainer<glm::vec3> *CoffeeObject::position(){
