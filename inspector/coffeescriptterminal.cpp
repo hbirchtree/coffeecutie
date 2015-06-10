@@ -34,6 +34,7 @@ void CoffeeScriptTerminal::on_scriptInput_returnPressed()
     QString cmd = ui->scriptInput->text()+"\n";
     QString res = engine.evaluate(cmd).toString();
 
-    ui->scriptLog->appendPlainText(cmd);
+    ui->scriptLog->appendHtml(QString("<b>%1</b>").arg(cmd));
     ui->scriptLog->appendPlainText(res);
+    ui->scriptLog->appendPlainText("------------");
 }
