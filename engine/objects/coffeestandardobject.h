@@ -1,6 +1,7 @@
 #ifndef COFFEESTANDARDOBJECT_H
 #define COFFEESTANDARDOBJECT_H
 
+#include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/objects/coffeeobject.h"
 #include "opengl/components/coffeetexture.h" //TextureMapping needs to know.
 #include "opengl/components/coffeematerial.h"
@@ -29,9 +30,9 @@ public:
 
 class CoffeeStandardObject : public QObject,public CoffeeObject
 {
-    Q_PROPERTY(QString position READ getStringPosition)
-    Q_PROPERTY(QString rotation READ getStringRotation)
-    Q_PROPERTY(QString scale READ getStringScale)
+    Q_PROPERTY(QObject* position READ positionValue)
+    Q_PROPERTY(QObject* rotation READ rotationValue)
+    Q_PROPERTY(QObject* scale READ scaleValue)
 
     Q_PROPERTY(QObject* material READ materialRef)
     Q_PROPERTY(QObject* shader READ shaderRef)
@@ -58,6 +59,10 @@ public:
     QObject* meshRef();
     QObject* shaderRef();
 
+    QObject* positionValue();
+    QObject* rotationValue();
+    QObject* scaleValue();
+
 public slots:
     void render();
     void unload();
@@ -70,6 +75,10 @@ public slots:
     void setTexture(QString samplerName, CoffeeTexture *texture);
 
 protected:
+    VectorValue* posWrapper;
+    QuaternionValue* rotWrapper;
+    VectorValue* sclWrapper;
+
     bool baked = false;
 
     QVector<ShaderMapping> uniforms;

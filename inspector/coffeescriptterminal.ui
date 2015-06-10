@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Script shell</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="1" column="0">
@@ -65,5 +65,22 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>scriptLog</sender>
+   <signal>textChanged()</signal>
+   <receiver>scriptLog</receiver>
+   <slot>centerCursor()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>414</x>
+     <y>208</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>290</x>
+     <y>306</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -98,11 +98,11 @@ int main(int argc, char *argv[])
     QThreadPool::globalInstance()->setObjectName("QThreadPool");
     CoffeeInspector *inspector;
     if(inspect)
-         inspector = new CoffeeInspector(0,
-                                                     loop->getThreadObjects()
-                                                     << root
-                                                     << QThreadPool::globalInstance(),
-                                                     renderer);
+        inspector = new CoffeeInspector(0,
+                                        loop->getThreadObjects()
+                                        << root
+                                        << QThreadPool::globalInstance(),
+                                        renderer);
 #endif //COFFEE_INSPECTOR_RUN
 
 

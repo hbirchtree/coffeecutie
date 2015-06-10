@@ -135,21 +135,21 @@ public:
         return value;
     }
 
-    void setValueOffsetCallback(std::function<T()> offset){
+    void setValueOffsetCallback(std::function<T()> &offset){
         valueOffsetCallback = offset;
     }
 
-    void setValue(T value)
+    void setValue(const T &value)
     {
         unbindValue();
         this->value = value;
     }
 
-    void addValue(T value){
+    void addValue(const T &value){
         setValue(this->value+value);
     }
 
-    void setClamps(T min, T max)
+    void setClamps(const T &min, const T &max)
     {
         minval = min;
         maxval = max;
@@ -159,7 +159,7 @@ public:
         return velocity;
     }
 
-    void setVelocity(T value)
+    void setVelocity(const T &value)
     {
         unbindValue();
         velocity = value;
@@ -169,7 +169,7 @@ public:
         return acceleration;
     }
 
-    void setAcceleration(T value)
+    void setAcceleration(const T &value)
     {
         unbindValue();
         acceleration = value;

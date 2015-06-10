@@ -62,7 +62,8 @@ SOURCES += main.cpp \
     general/filehandler.cpp \
     engine/data/coffeeassetimporter.cpp \
     engine/data/coffeeworldbuilder.cpp \
-    inspector/coffeescriptterminal.cpp
+    inspector/coffeescriptterminal.cpp \
+    engine/scripting/qscriptvectorvalue.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -115,7 +116,8 @@ HEADERS += \
     engine/models/coffeeinstancecontainer.h \
     engine/data/coffeeassetimporter.h \
     engine/data/coffeeworldbuilder.h \
-    inspector/coffeescriptterminal.h
+    inspector/coffeescriptterminal.h \
+    engine/scripting/qscriptvectorvalue.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
