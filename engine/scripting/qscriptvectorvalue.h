@@ -6,9 +6,9 @@
 
 class VectorValue : public QObject
 {
-    Q_PROPERTY(QList<float> position READ position WRITE setPositionList)
-    Q_PROPERTY(QList<float> velocity READ velocity WRITE setVelocityList)
-    Q_PROPERTY(QList<float> acceleration READ acceleration WRITE setAccelerationList)
+    Q_PROPERTY(QVariantList position READ position WRITE setPositionList)
+    Q_PROPERTY(QVariantList velocity READ velocity WRITE setVelocityList)
+    Q_PROPERTY(QVariantList acceleration READ acceleration WRITE setAccelerationList)
 
     Q_PROPERTY(float x READ x WRITE setX)
     Q_PROPERTY(float y READ y WRITE setY)
@@ -39,9 +39,9 @@ public:
     float accelerationY() const;
     float accelerationZ() const;
 
-    QList<float> position() const;
-    QList<float> velocity() const;
-    QList<float> acceleration() const;
+    QVariantList position() const;
+    QVariantList velocity() const;
+    QVariantList acceleration() const;
 
 public slots:
     void setPosition(float x,float y,float z);
@@ -60,9 +60,9 @@ public slots:
     void setAccelerationY(float accelerationY);
     void setAccelerationZ(float accelerationZ);
 
-    void setPositionList(QList<float> position);
-    void setVelocityList(QList<float> velocity);
-    void setAccelerationList(QList<float> acceleration);
+    void setPositionList(QVariantList position);
+    void setVelocityList(QVariantList velocity);
+    void setAccelerationList(QVariantList acceleration);
 
 private:
     NumberContainer<glm::vec3> *source;
@@ -70,15 +70,15 @@ private:
 
 class QuaternionValue : public QObject
 {
-    Q_PROPERTY(QList<float> value READ value WRITE setValue)
+    Q_PROPERTY(QVariantList value READ value WRITE setValue)
 
     Q_OBJECT
 
 public:
     QuaternionValue(NumberContainer<glm::quat>* source);
-    QList<float> value() const;
+    QVariantList value() const;
 public slots:
-    void setValue(QList<float> value);
+    void setValue(QVariantList value);
 
 private:
     NumberContainer<glm::quat> *source;

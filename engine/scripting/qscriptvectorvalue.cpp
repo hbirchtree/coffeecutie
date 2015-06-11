@@ -50,22 +50,22 @@ float VectorValue::accelerationZ() const
     return source->getAcceleration().z;
 }
 
-QList<float> VectorValue::position() const
+QVariantList VectorValue::position() const
 {
     glm::vec3 p = source->getValue();
-    return QList<float>() << p.x << p.y << p.z;
+    return QVariantList() << p.x << p.y << p.z;
 }
 
-QList<float> VectorValue::velocity() const
+QVariantList VectorValue::velocity() const
 {
     glm::vec3 p = source->getVelocity();
-    return QList<float>() << p.x << p.y << p.z;
+    return QVariantList() << p.x << p.y << p.z;
 }
 
-QList<float> VectorValue::acceleration() const
+QVariantList VectorValue::acceleration() const
 {
     glm::vec3 p = source->getAcceleration();
-    return QList<float>() << p.x << p.y << p.z;
+    return QVariantList() << p.x << p.y << p.z;
 }
 
 void VectorValue::setPosition(float x, float y, float z)
@@ -146,25 +146,25 @@ void VectorValue::setAccelerationZ(float accelerationZ)
     source->setAcceleration(t);
 }
 
-void VectorValue::setPositionList(QList<float> position)
+void VectorValue::setPositionList(QVariantList position)
 {
     if(position.size()!=3)
         return;
-    source->setValue(glm::vec3(position.at(0),position.at(1),position.at(2)));
+    source->setValue(glm::vec3(position.at(0).toFloat(),position.at(1).toFloat(),position.at(2).toFloat()));
 }
 
-void VectorValue::setVelocityList(QList<float> velocity)
+void VectorValue::setVelocityList(QVariantList velocity)
 {
     if(velocity.size()!=3)
         return;
-    source->setVelocity(glm::vec3(velocity.at(0),velocity.at(1),velocity.at(2)));
+    source->setVelocity(glm::vec3(velocity.at(0).toFloat(),velocity.at(1).toFloat(),velocity.at(2).toFloat()));
 }
 
-void VectorValue::setAccelerationList(QList<float> acceleration)
+void VectorValue::setAccelerationList(QVariantList acceleration)
 {
     if(acceleration.size()!=3)
         return;
-    source->setAcceleration(glm::vec3(acceleration.at(0),acceleration.at(1),acceleration.at(2)));
+    source->setAcceleration(glm::vec3(acceleration.at(0).toFloat(),acceleration.at(1).toFloat(),acceleration.at(2).toFloat()));
 }
 
 
@@ -173,15 +173,15 @@ QuaternionValue::QuaternionValue(NumberContainer<glm::quat> *source) : QObject(s
     this->source = source;
 }
 
-QList<float> QuaternionValue::value() const
+QVariantList QuaternionValue::value() const
 {
     glm::quat p = source->getValue();
-    return QList<float>() << p.w << p.x << p.y << p.z;
+    return QVariantList() << p.w << p.x << p.y << p.z;
 }
 
-void QuaternionValue::setValue(QList<float> value)
+void QuaternionValue::setValue(QVariantList value)
 {
     if(value.size()!=4)
         return;
-    source->setValue(glm::quat(value.at(0),value.at(1),value.at(2),value.at(3)));
+    source->setValue(glm::quat(value.at(0).toFloat(),value.at(1).toFloat(),value.at(2).toFloat(),value.at(3).toFloat()));
 }
