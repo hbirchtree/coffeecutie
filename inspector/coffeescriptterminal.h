@@ -19,7 +19,11 @@ public:
 private slots:
     void on_scriptInput_returnPressed();
 
+    void on_pushButton_2_clicked();
+
 private:
+    void appendLog(const QString &command, const QString &output);
+
     QScriptEngine engine;
     Ui::CoffeeScriptTerminal *ui;
 };
