@@ -3,26 +3,18 @@
 
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
-#include "physicsdescriptor.h"
+#include "engine/physics/genericphysicsinterface.h"
+
+class PhysicsDescriptor;
 
 class PhysicsObject : public QObject
 {
-    Q_PROPERTY(QString position READ getStringPosition)
-    Q_PROPERTY(QString rotation READ getStringRotation)
-    Q_PROPERTY(QString scale READ getStringScale)
-    Q_PROPERTY(float mass READ getMass)
-    Q_PROPERTY(float friction READ getFriction)
-    Q_PROPERTY(float restitution READ getRestitution)
-    Q_PROPERTY(int shape READ getShape)
+    Q_PROPERTY(QVariantList position READ getPositionValue)
+    Q_PROPERTY(QVariantList rotation READ getRotationValue)
+    Q_PROPERTY(QVariantList scale READ getScaleValue)
 
     Q_OBJECT
 public:
-    enum PhysicsType {
-        PHYS_TYPE_NONE,PHYS_TYPE_BOX,
-        PHYS_TYPE_BALL,PHYS_TYPE_TRIMESH,
-        PHYS_TYPE_CYLINDER,PHYS_TYPE_CAPSULE,
-        PHYS_TYPE_HMAP
-    };
     PhysicsObject(QObject* parent);
     PhysicsObject(QPointer<PhysicsObject> object);
     ~PhysicsObject();
@@ -30,14 +22,9 @@ public:
     QPointer<NumberContainer<glm::vec3>> getPositionObject();
     QPointer<NumberContainer<glm::quat>> getPhysicalRotation();
 
-    QString getStringPosition() const;
-    QString getStringRotation() const;
-    QString getStringScale() const;
-    float getMass() const;
-    float getFriction() const;
-    float getRestitution() const;
-    bool getActivation() const;
-    PhysicsDescriptor::PhysicalShape getShape() const;
+    QVariantList getPositionValue() const;
+    QVariantList getRotationValue() const;
+    QVariantList getScaleValue() const;
 
     void *getPhysicspointer();
     void setPhysicspointer(void *value);
@@ -45,10 +32,11 @@ public:
     PhysicsDescriptor *getDescr();
     void setDescr(PhysicsDescriptor *value);
 
-    Q_INVOKABLE void setPosition(float x, float y, float z);
-    Q_INVOKABLE void setRotation(float x, float y, float z);
-
 public slots:
+    void setPosition(float x, float y, float z);
+    void setRotation(float x, float y, float z);
+    void applyForce(float x, float y, float z);
+    void applyImpulse(float x, float y, float z);
 
     void updatePosition(glm::vec3 p);
     void updateVelocity(glm::vec3 p);
@@ -58,6 +46,8 @@ public slots:
     void updateAngularVelocity(glm::quat r);
 
 signals:
+    void propertyModified(PhysicsObject* target, GenericPhysicsInterface::PhysicsProperty prop, VectorVariant *data);
+
     void deleteObject(void* pt);
 
 private:
@@ -65,6 +55,7 @@ private:
     void* physicspointer = nullptr;
 
     QPointer<NumberContainer<glm::vec3>> v_position;
+    QPointer<NumberContainer<glm::vec3>> v_scale;
     QPointer<NumberContainer<glm::quat>> v_physics_rotation;
 };
 

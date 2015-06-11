@@ -14,6 +14,8 @@
 #include "engine/objects/coffeeparticlesystem.h"
 #include "opengl/components/coffeecamera.h"
 
+#include "engine/physics/physicsdescriptor.h"
+
 #include "engine/data/coffeeassetimporter.h"
 
 #include <QVariantMap>
@@ -145,22 +147,21 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeA
                 else if(pkey=="restitution")
                     pobj->getDescr()->setRestitution(pd.value(pkey).toFloat());
                 else if(pkey=="inertia")
-                    pobj->getDescr()->setInertia(listToVec3(pd.value(pkey)));
+                    pobj->getDescr()->setInertia(pd.value(pkey).toList());
                 else if(pkey=="normal")
-                    pobj->getDescr()->setnormal(listToVec3(pd.value(pkey)));
+                    pobj->getDescr()->setNormal(pd.value(pkey).toList());
                 else if(pkey=="linear-factor")
-                    pobj->getDescr()->setLinearFactor(listToVec3(pd.value(pkey)));
+                    pobj->getDescr()->setLinearFactor(pd.value(pkey).toList());
                 else if(pkey=="data"){
-                    pobj->getDescr()->setFileSource(
-                                FileHandler::getBytesFromFile(pd.value(pkey).toString()));
+                    pobj->getDescr()->setFileSource(pd.value(pkey).toString());
                 }else if(pkey=="position")
-                    pobj->getDescr()->setPosition(listToVec3(pd.value(pkey)));
+                    pobj->getDescr()->setPosition(pd.value(pkey).toList());
                 else if(pkey=="scale")
-                    pobj->getDescr()->setScale(listToVec3(pd.value(pkey)));
+                    pobj->getDescr()->setScale(pd.value(pkey).toList());
             }
-            if(pobj->getDescr()->getShape()!=PhysicsDescriptor::Shape_None){
-                pobj->getPositionObject()->setValue(pobj->getDescr()->position());
-                pobj->getPhysicalRotation()->setValue(pobj->getDescr()->orientation());
+            if(pobj->getDescr()->shape()!=PhysicsDescriptor::Shape_None){
+                pobj->getPositionObject()->setValue(varListToVec3(pobj->getDescr()->position()));
+                pobj->getPhysicalRotation()->setValue(varListToQuat(pobj->getDescr()->orientation()));
                 obj->setPhysicsObject(pobj);
             }else
                 delete pobj;
@@ -357,4 +358,18 @@ QColor CoffeeObjectFactory::stringToColor(const QVariant &data)
     if(c.size()==8)
         r.setAlpha(c.mid(6,2).toUInt(0,16));
     return r;
+}
+
+glm::vec3 CoffeeObjectFactory::varListToVec3(const QVariantList &d)
+{
+    if(d.size()!=3)
+        return glm::vec3();
+    return glm::vec3(d.at(0).toFloat(),d.at(1).toFloat(),d.at(2).toFloat());
+}
+
+glm::quat CoffeeObjectFactory::varListToQuat(const QVariantList &d)
+{
+    if(d.size()!=4)
+        return glm::quat();
+    return glm::quat(d.at(0).toFloat(),d.at(1).toFloat(),d.at(2).toFloat(),d.at(3).toFloat());
 }

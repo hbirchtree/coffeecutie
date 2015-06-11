@@ -5,6 +5,8 @@
 #include "btBulletDynamicsCommon.h"
 #include "btBulletCollisionCommon.h"
 #include "LinearMath/btVector3.h"
+#include "engine/objects/coffeeobjectfactory.h"
+#include "engine/physics/physicsdescriptor.h"
 #include <QTimer>
 
 BulletPhysics::BulletPhysics(QObject *parent, const glm::vec3 &gravity) : QObject(parent)
@@ -83,43 +85,57 @@ void BulletPhysics::addObject(PhysicsObject *object)
         return;
     PhysicsDescriptor* desc = object->getDescr();
     btCollisionShape* shape = nullptr;
-    switch(desc->getShape()){
+    switch(desc->shape()){
     case PhysicsDescriptor::Shape_Box:
-        shape = new btBoxShape(convert_glm(desc->scale()));
+        shape = new btBoxShape(convert_glm(
+                                   CoffeeObjectFactory::varListToVec3(desc->scale())));
         break;
     case PhysicsDescriptor::Shape_Sphere:
-        shape = new btSphereShape(desc->scale().x);
+        shape = new btSphereShape(desc->scale().at(0).toFloat());
         break;
     case PhysicsDescriptor::Shape_Cylinder:
-        shape = new btCylinderShape(convert_glm(desc->scale()));
+        shape = new btCylinderShape(convert_glm(
+                                        CoffeeObjectFactory::varListToVec3(desc->scale())));
         break;
     case PhysicsDescriptor::Shape_Capsule:
-        shape = new btCapsuleShape(desc->scale().x,desc->scale().y);
+        shape = new btCapsuleShape(desc->scale().at(0).toFloat(),
+                                   desc->scale().at(1).toFloat());
         break;
     case PhysicsDescriptor::Shape_Cone:
-        shape = new btConeShape(desc->scale().x,desc->scale().y);
+        shape = new btConeShape(desc->scale().at(0).toFloat(),
+                                desc->scale().at(1).toFloat());
         break;
     case PhysicsDescriptor::Shape_StaticPlane:
-        shape = new btStaticPlaneShape(convert_glm(desc->normal()),desc->scale().x);
+        shape = new btStaticPlaneShape(convert_glm(
+                                           CoffeeObjectFactory::varListToVec3(desc->normal())),
+                                       desc->scale().at(0).toFloat());
         break;
     default:
         return;
     }
     m_collideshapes.push_back(shape);
 
-    glm::quat rot = desc->orientation();
+    glm::quat rot = CoffeeObjectFactory::varListToQuat(desc->orientation());
     btDefaultMotionState* mstate = new btDefaultMotionState(btTransform(
                                                                 btQuaternion(rot.x,rot.y,rot.z,rot.w),
-                                                                convert_glm(desc->position())));
-    btRigidBody::btRigidBodyConstructionInfo ci(desc->mass(),mstate,shape,convert_glm(desc->inertia()));
+                                    convert_glm(CoffeeObjectFactory::varListToVec3(desc->position()))));
+    btRigidBody::btRigidBodyConstructionInfo ci(desc->mass(),
+                                                mstate,
+                                                shape,
+                                                convert_glm(CoffeeObjectFactory::varListToVec3(desc->inertia())));
     btRigidBody* rb = new btRigidBody(ci);
 
-    rb->setAngularVelocity(convert_glm(desc->inertia()));
+    rb->setAngularVelocity(
+                convert_glm(CoffeeObjectFactory::varListToVec3(desc->inertia())));
     rb->setFriction(desc->friction());
     rb->setRestitution(desc->restitution());
 
     rb->setUserPointer(object);
     object->setPhysicspointer(rb);
+
+    connect(object,SIGNAL(deleteObject(void*)),SLOT(removeObject(void*)));
+    connect(object,SIGNAL(propertyModified(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant*)),
+            SLOT(updateObject(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant*)));
 
     m_dynamicsWorld->addRigidBody(rb);
     qDebug("Object added to %s physics: %s",systemName().toStdString().c_str(),
@@ -191,20 +207,21 @@ void BulletPhysics::run()
 
 void BulletPhysics::updateObject(PhysicsObject *object,
                                  GenericPhysicsInterface::PhysicsProperty prop,
-                                 const VectorVariant &value)
+                                 VectorVariant *value)
 {
     if(object->getPhysicspointer()){
         btRigidBody* obj = (btRigidBody*)object->getPhysicspointer();
+        qDebug() << "Update commenced";
         switch(prop){
         case GenericPhysicsInterface::PhysProp_Pos:{
             btTransform pt = obj->getWorldTransform();
-            pt.setOrigin(convert_glm(value.toVector3()));
+            pt.setOrigin(convert_glm(value->toVector3()));
             obj->setWorldTransform(pt);
             break;
         }
         case GenericPhysicsInterface::PhysProp_Orientation:{
             btTransform rt = obj->getWorldTransform();
-            rt.setRotation(convert_glm(value.toQuaternion()));
+            rt.setRotation(convert_glm(value->toQuaternion()));
             obj->setWorldTransform(rt);
             break;
         }
@@ -215,12 +232,15 @@ void BulletPhysics::updateObject(PhysicsObject *object,
         case GenericPhysicsInterface::PhysProp_Velocity:
             break;
         case GenericPhysicsInterface::PhysProp_Force:{
-            obj->applyCentralForce(convert_glm(value.toVector3()));
+            obj->applyCentralForce(convert_glm(value->toVector3()));
             obj->activate(true);
             break;
         }
-        case GenericPhysicsInterface::PhysProp_Impulse:
+        case GenericPhysicsInterface::PhysProp_Impulse:{
+            obj->applyCentralImpulse(convert_glm(value->toVector3()));
+            obj->activate(true);
             break;
+        }
         case GenericPhysicsInterface::PhysProp_Activation:
             break;
         }

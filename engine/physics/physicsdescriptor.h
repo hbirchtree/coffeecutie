@@ -2,23 +2,31 @@
 #define PHYSICSDESCRIPTOR_H
 
 #include "general/common.h"
-class PhysicsDescriptor
+class PhysicsDescriptor : public QObject
 {
+
     //This will be used for all the information that PhysicsObject doesn't need later on in the process, such as mass, physical scale and etc. These are only useful for initializing new bodies and shapes.
     Q_PROPERTY(float mass READ mass WRITE setMass)
-    Q_PROPERTY(glm::vec3 position READ position WRITE setPosition)
-    Q_PROPERTY(glm::quat orientation READ orientation WRITE setOrientation)
-    Q_PROPERTY(glm::vec3 normal READ normal WRITE setnormal)
-    Q_PROPERTY(glm::vec3 scale READ scale WRITE setScale)
     Q_PROPERTY(float friction READ friction WRITE setFriction)
     Q_PROPERTY(float restitution READ restitution WRITE setRestitution)
-    Q_PROPERTY(glm::vec3 inertia READ inertia WRITE setInertia)
-    Q_PROPERTY(glm::vec3 linearFactor READ linearFactor WRITE setLinearFactor)
-    Q_PROPERTY(bool activation READ activation WRITE setActivation)
-    Q_PROPERTY(bool updateRotation READ updateRotation WRITE setUpdateRotation)
-    Q_PROPERTY(bool updatePosition READ updatePosition WRITE setUpdatePosition)
-    Q_PROPERTY(QByteArray* fileSource READ fileSource WRITE setFileSource)
+    Q_PROPERTY(QString fileSource READ fileSource WRITE setFileSource)
+    Q_PROPERTY(PhysicalShape shape READ shape WRITE setShape)
 
+    Q_PROPERTY(QVariantList scale READ scale WRITE setScale)
+    Q_PROPERTY(QVariantList position READ position WRITE setPosition)
+    Q_PROPERTY(QVariantList orientation READ orientation WRITE setOrientation)
+
+    Q_PROPERTY(QVariantList angularVelocity READ angularVelocity WRITE setAngularVelocity)
+    Q_PROPERTY(QVariantList inertia READ inertia WRITE setInertia)
+    Q_PROPERTY(QVariantList normal READ normal WRITE setNormal)
+
+    Q_PROPERTY(QVariantList linearFactor READ linearFactor WRITE setLinearFactor)
+    Q_PROPERTY(QVariantList velocity READ velocity WRITE setVelocity)
+    Q_PROPERTY(QVariantList acceleration READ acceleration WRITE setAcceleration)
+
+    Q_PROPERTY(bool activation READ activation WRITE setActivation)
+
+    Q_OBJECT
 public:
     enum PhysicalShape {
         Shape_None,
@@ -33,169 +41,78 @@ public:
          * It is left as an option here.
          */
         Shape_TriMesh, Shape_TriMeshBt,
+
         Shape_ConvexHull, Shape_ConvexHullBt,
+
         Shape_Heightmap, Shape_HeightmapBt,
+
         Shape_StaticPlane,
 
         //Compound
         Shape_Compund //Loaded from .bullet file by default
     };
+    Q_ENUMS(PhysicalShape)
 
-    PhysicsDescriptor();
-    QByteArray* fileSource() const
-    {
-        return m_fileSource;
-    }
-    bool updatePosition() const
-    {
-        return m_updatePosition;
-    }
+    PhysicsDescriptor(QObject* parent);
 
-    bool updateRotation() const
-    {
-        return m_updateRotation;
-    }
+    float mass() const;
+    float friction() const;
+    float restitution() const;
 
-    bool activation() const
-    {
-        return m_activation;
-    }
+    PhysicalShape shape() const;
 
-    glm::vec3 linearFactor() const
-    {
-        return m_linearFactor;
-    }
+    QString fileSource() const;
 
-    glm::vec3 inertia() const
-    {
-        return m_inertia;
-    }
+    QVariantList scale() const;
+    QVariantList position() const;
+    QVariantList orientation() const;
+    QVariantList linearFactor() const;
+    QVariantList velocity() const;
+    QVariantList acceleration() const;
+    QVariantList angularVelocity() const;
+    QVariantList inertia() const;
+    QVariantList normal() const;
 
-    float restitution() const
-    {
-        return m_restitution;
-    }
-
-    float friction() const
-    {
-        return m_friction;
-    }
-
-    glm::vec3 scale() const
-    {
-        return m_scale;
-    }
-
-    glm::quat orientation() const
-    {
-        return m_orientation;
-    }
-
-    glm::vec3 position() const
-    {
-        return m_position;
-    }
-
-    float mass() const
-    {
-        return m_mass;
-    }
-
-
-    PhysicalShape getShape() const
-    {
-        return shape;
-    }
-    void setShape(const PhysicalShape &value);
-
-    glm::vec3 normal() const
-    {
-        return m_normal;
-    }
+    bool activation() const;
 
 public slots:
-    void setFileSource(QByteArray* fileSource)
-    {
-        m_fileSource = fileSource;
-    }
-    void setUpdatePosition(bool updatePosition)
-    {
-        m_updatePosition = updatePosition;
-    }
 
-    void setUpdateRotation(bool updateRotation)
-    {
-        m_updateRotation = updateRotation;
-    }
+    void setMass(float mass);
+    void setFriction(float friction);
+    void setRestitution(float restitution);
 
-    void setActivation(bool activation)
-    {
-        m_activation = activation;
-    }
+    void setShape(PhysicalShape shape);
 
-    void setLinearFactor(glm::vec3 linearFactor)
-    {
-        m_linearFactor = linearFactor;
-    }
+    void setFileSource(QString fileSource);
 
-    void setInertia(glm::vec3 inertia)
-    {
-        m_inertia = inertia;
-    }
+    void setScale(QVariantList scale);
+    void setPosition(QVariantList position);
+    void setOrientation(QVariantList orientation);
+    void setLinearFactor(QVariantList linearFactor);
+    void setVelocity(QVariantList velocity);
+    void setAcceleration(QVariantList acceleration);
+    void setAngularVelocity(QVariantList angularVelocity);
+    void setInertia(QVariantList inertia);
+    void setNormal(QVariantList normal);
 
-    void setRestitution(float restitution)
-    {
-        m_restitution = restitution;
-    }
-
-    void setFriction(float friction)
-    {
-        m_friction = friction;
-    }
-
-    void setScale(glm::vec3 scale)
-    {
-        m_scale = scale;
-    }
-
-    void setOrientation(glm::quat orientation)
-    {
-        m_orientation = orientation;
-    }
-
-    void setPosition(glm::vec3 position)
-    {
-        m_position = position;
-    }
-
-    void setMass(float mass)
-    {
-        m_mass = mass;
-    }
-
-    void setnormal(glm::vec3 normal)
-    {
-        if (m_normal == normal)
-            return;
-
-        m_normal = normal;
-    }
+    void setActivation(bool activation);
 
 private:
-    PhysicalShape shape = Shape_None;
-    QByteArray* m_fileSource;
-    bool m_updatePosition;
-    bool m_updateRotation;
-    bool m_activation;
-    glm::vec3 m_linearFactor;
-    glm::vec3 m_inertia;
-    float m_restitution;
-    float m_friction;
-    glm::vec3 m_scale;
-    glm::quat m_orientation;
-    glm::vec3 m_position;
-    float m_mass;
-    glm::vec3 m_normal;
+    float m_mass = 0.f;
+    float m_friction = 0.5f;
+    float m_restitution = 0.1f;
+    PhysicalShape m_shape = Shape_None;
+    QString m_fileSource;
+    QVariantList m_scale;
+    QVariantList m_position;
+    QVariantList m_orientation;
+    QVariantList m_linearFactor;
+    QVariantList m_velocity;
+    QVariantList m_acceleration;
+    QVariantList m_angularVelocity;
+    QVariantList m_inertia;
+    QVariantList m_normal;
+    bool m_activation = false;
 };
 
 #endif // PHYSICSDESCRIPTOR_H

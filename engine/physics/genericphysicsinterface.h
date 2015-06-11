@@ -33,7 +33,15 @@ public:
         NumberType,Vector3Type,Vector4Type,QuaternionType
     };
 
-    VectorVariant(QObject* parent = 0) : QObject(parent){}
+    VectorVariant(QObject* parent,const glm::vec3 &v) : QObject(parent){
+        m_data = new MutableDataContainer<glm::vec3>(this,v);
+    }
+    VectorVariant(QObject* parent,const glm::vec4 &v) : QObject(parent){
+        m_data = new MutableDataContainer<glm::vec4>(this,v);
+    }
+    VectorVariant(QObject* parent,const glm::quat &v) : QObject(parent){
+        m_data = new MutableDataContainer<glm::quat>(this,v);
+    }
 
     VectorType type(){
         return m_type;
@@ -51,7 +59,7 @@ public:
         m_data = new MutableDataContainer<glm::vec3>(this,val);
         m_type = Vector3Type;
     }
-    void setVec3(numbertype x, numbertype y, numbertype z){
+    void setVec(numbertype x, numbertype y, numbertype z){
         if(m_data)
             m_data->deleteLater();
         m_data = new MutableDataContainer<glm::vec3>(this,glm::vec3(x,y,z));
@@ -63,7 +71,7 @@ public:
         m_data = new MutableDataContainer<glm::vec4>(this,val);
         m_type = Vector4Type;
     }
-    void setVec3(numbertype x, numbertype y, numbertype z,numbertype w){
+    void setVec(numbertype x, numbertype y, numbertype z,numbertype w){
         if(m_data)
             m_data->deleteLater();
         m_data = new MutableDataContainer<glm::vec4>(this,glm::vec4(x,y,z,w));
@@ -108,6 +116,7 @@ public:
     }
 
 private:
+    VectorVariant(QObject* parent) : QObject(parent){}
     QPointer<QObject> m_data;
     VectorType m_type;
 };

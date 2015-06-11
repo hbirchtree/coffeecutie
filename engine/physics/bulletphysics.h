@@ -45,7 +45,8 @@ public slots:
 
     void updateObject(PhysicsObject* object,
                       GenericPhysicsInterface::PhysicsProperty prop,
-                      const VectorVariant &value);
+                      VectorVariant *value);
+
     void addObject(PhysicsObject* object);
     void removeObject(void* pointer);
     void removeObject(PhysicsObject* object);

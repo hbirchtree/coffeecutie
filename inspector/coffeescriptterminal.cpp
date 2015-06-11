@@ -12,8 +12,8 @@ CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, QList<QObject*> root
         engine.globalObject().setProperty(o->objectName(),v);
     }
 
-    qRegisterMetaType<GenericPhysicsInterface::PhysicsProperty>("PhysicsProperty");
-    qRegisterMetaType<QEvent::Type>("QEventType");
+    qRegisterMetaType<GenericPhysicsInterface::PhysicsProperty>("GenericPhysicsInterface::PhysicsProperty");
+    qRegisterMetaType<QEvent::Type>("QEvent::Type");
 
     QScriptValue MetaObj = engine.newQMetaObject(&staticMetaObject);
     QScriptValue QtMeta = engine.newQMetaObject(&staticQtMetaObject);

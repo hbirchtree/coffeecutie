@@ -1,6 +1,8 @@
 #include "coffeeinspector.h"
 #include "ui_coffeeinspector.h"
 
+#include "engine/physics/physicsdescriptor.h"
+
 CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, CoffeeRenderer *renderer) :
     QWidget(parent),
     ui(new Ui::CoffeeInspector)
@@ -12,6 +14,8 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, Co
     QStringList labels;
     labels << "Object name" << "Type/Data";
     ui->inspectorWidget->setHeaderLabels(labels);
+
+    qRegisterMetaType<PhysicsDescriptor::PhysicalShape>("PhysicsDescriptor::PhysicalShape");
 
     rendererInspector = new CoffeeRendererInspector(0,renderer);
     refreshTimer = new QTimer();

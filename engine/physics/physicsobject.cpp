@@ -1,11 +1,15 @@
 #include "physicsobject.h"
 
+#include "physicsdescriptor.h"
+
 PhysicsObject::PhysicsObject(QObject *parent) : QObject(parent){
-    descr = new PhysicsDescriptor();
+    descr = new PhysicsDescriptor(this);
     v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
     v_position->setObjectName("position");
     v_physics_rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
     v_physics_rotation->setObjectName("orientation");
+    v_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    v_scale->setObjectName("scale");
 }
 
 PhysicsObject::PhysicsObject(QPointer<PhysicsObject> object){
@@ -27,44 +31,22 @@ QPointer<NumberContainer<glm::quat> > PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 
-QString PhysicsObject::getStringPosition() const
+QVariantList PhysicsObject::getPositionValue() const
 {
-    return QStringFunctions::toString(v_position->getValue());
+    glm::vec3 v = v_position->getValue();
+    return QVariantList() << v.x << v.y << v.z;
 }
 
-QString PhysicsObject::getStringRotation() const
+QVariantList PhysicsObject::getRotationValue() const
 {
-    return QStringFunctions::toString(v_physics_rotation->getValue());
+    glm::quat v = v_physics_rotation->getValue();
+    return QVariantList() << v.w << v.x << v.y << v.z;
 }
 
-QString PhysicsObject::getStringScale() const
+QVariantList PhysicsObject::getScaleValue() const
 {
-    return QStringFunctions::toString(descr->scale());
-}
-
-float PhysicsObject::getMass() const
-{
-    return descr->mass();
-}
-
-float PhysicsObject::getFriction() const
-{
-    return descr->friction();
-}
-
-float PhysicsObject::getRestitution() const
-{
-    return descr->restitution();
-}
-
-bool PhysicsObject::getActivation() const
-{
-    return descr->activation();
-}
-
-PhysicsDescriptor::PhysicalShape PhysicsObject::getShape() const
-{
-    return descr->getShape();
+    glm::vec3 v = v_position->getValue();
+    return QVariantList() << v.x << v.y << v.z;
 }
 
 void *PhysicsObject::getPhysicspointer()
@@ -76,6 +58,7 @@ void PhysicsObject::setPhysicspointer(void *value)
 {
     physicspointer = value;
 }
+
 PhysicsDescriptor *PhysicsObject::getDescr()
 {
     return descr;
@@ -83,17 +66,36 @@ PhysicsDescriptor *PhysicsObject::getDescr()
 
 void PhysicsObject::setDescr(PhysicsDescriptor *value)
 {
-    descr = value;
+    if(value)
+        descr = value;
 }
 
 void PhysicsObject::setPosition(float x, float y, float z)
 {
-    v_position->setValue(glm::vec3(x,y,z));
+    propertyModified(this,
+                     GenericPhysicsInterface::PhysProp_Pos,
+                     new VectorVariant(this,glm::vec3(x,y,z)));
 }
 
 void PhysicsObject::setRotation(float x, float y, float z)
 {
-    v_physics_rotation->setValue(glm::quat(glm::vec3(x,y,z)));
+    propertyModified(this,
+                     GenericPhysicsInterface::PhysProp_Orientation,
+                     new VectorVariant(this,glm::quat(glm::vec3(x,y,z))));
+}
+
+void PhysicsObject::applyForce(float x, float y, float z)
+{
+    propertyModified(this,
+                     GenericPhysicsInterface::PhysProp_Force,
+                     new VectorVariant(this,glm::vec3(x,y,z)));
+}
+
+void PhysicsObject::applyImpulse(float x, float y, float z)
+{
+    propertyModified(this,
+                     GenericPhysicsInterface::PhysProp_Impulse,
+                     new VectorVariant(this,glm::vec3(x,y,z)));
 }
 
 void PhysicsObject::updatePosition(glm::vec3 p)
@@ -120,5 +122,3 @@ void PhysicsObject::updateAngularVelocity(glm::quat r)
 {
     v_physics_rotation->setVelocity(r);
 }
-
-
