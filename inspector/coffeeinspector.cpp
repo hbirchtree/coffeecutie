@@ -16,6 +16,7 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, Co
     ui->inspectorWidget->setHeaderLabels(labels);
 
     qRegisterMetaType<PhysicsDescriptor::PhysicalShape>("PhysicsDescriptor::PhysicalShape");
+    qRegisterMetaType<QObjectList>("QObjectList");
 
     rendererInspector = new CoffeeRendererInspector(0,renderer);
     refreshTimer = new QTimer();

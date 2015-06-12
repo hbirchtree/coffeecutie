@@ -15,6 +15,11 @@ class PhysicsObject;
 class CoffeeWorldOpts : public QObject
 {
     Q_PROPERTY(bool wireframeMode READ wireframeMode WRITE setWireframeMode)
+    Q_PROPERTY(glm::vec4 fogColor READ getFogColor WRITE setFogColor)
+    Q_PROPERTY(glm::vec4 clearColor READ getClearColor WRITE setClearColor)
+    Q_PROPERTY(float fogDensity READ getFogDensity WRITE setFogDensity)
+
+    Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
     //An OpenGL-level representation of the world or scene, not meant for modification. That will be done elsewhere.
     Q_OBJECT
 public:
@@ -22,41 +27,33 @@ public:
     ~CoffeeWorldOpts();
 
     QPointer<CoffeeCamera> getCamera();
-    void setCamera(QPointer<CoffeeCamera> value);
+    QObject* getCameraQObject();
 
-    void addLight(QPointer<CoffeeOmniLight> light);
     QList<QPointer<CoffeeOmniLight> > &getLights();
-
     glm::vec4 getFogColor() const;
-    void setFogColor(const glm::vec4 &value);
-
     float getFogDensity() const;
-    void setFogDensity(float value);
+    glm::vec4 getClearColor() const;
+    bool wireframeMode() const;
 
     QPointer<CoffeeRenderer> getRenderer();
     void setRenderer(const QPointer<CoffeeRenderer> &value);
 
-    void addObject(CoffeeObject* object);
     QList<CoffeeObject *> &getObjects();
 
-    void addParticleSystem(CoffeeParticleSystem* system);
     void prepareParticleSystems();
 
     QObject* getPhysicsRoot() const;
 
-    glm::vec4 getClearColor() const;
-    void setClearColor(const glm::vec4 &value);
-    bool wireframeMode() const;
-
     CoffeeSkybox* getSkybox() const;
     void setSkybox(CoffeeSkybox *value);
 
+
 signals:
-    void tickPhysics(float d);
     void modifyPhysics(PhysicsObject *object,
                        GenericPhysicsInterface::PhysicsProperty prop,
                        const VectorVariant &value);
     void physicsObjectAdded(PhysicsObject* object);
+
 public slots:
     void physicsModify(PhysicsObject *object,
                        GenericPhysicsInterface::PhysicsProperty prop,
@@ -65,7 +62,18 @@ public slots:
     void renderWorld();
     void unloadWorld();
 
+    void setClearColor(const glm::vec4 &value);
     void setWireframeMode(bool wireframeMode);
+    void setFogDensity(float value);
+    void setFogColor(const glm::vec4 &value);
+
+    void addLight(QPointer<CoffeeOmniLight> light);
+    void setCamera(QPointer<CoffeeCamera> value);
+    void setCameraQObject(QObject* camera);
+
+    void addObject(CoffeeObject* object);
+    void addParticleSystem(CoffeeParticleSystem* system);
+
 
 private:
 

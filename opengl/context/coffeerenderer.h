@@ -67,6 +67,8 @@ public slots:
 
     virtual void run();
 
+    virtual void flushPipeline();
+
 private slots:
     GLFWwindow *setWindowedFullscreen(int monitor);
     GLFWwindow *setFullscreen(int monitor);

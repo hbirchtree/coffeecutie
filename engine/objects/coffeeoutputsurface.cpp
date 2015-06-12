@@ -16,6 +16,13 @@ void CoffeeOutputSurface::setFramebuffer(CoffeeFrameBufferObject *display)
     this->framebuffer = display;
 }
 
+void CoffeeOutputSurface::setFramebuffer(QObject *display)
+{
+    CoffeeFrameBufferObject* fb = qobject_cast<CoffeeFrameBufferObject*>(display);
+    if(fb)
+        setFramebuffer(display);
+}
+
 void CoffeeOutputSurface::load()
 {
     GLfloat g_quad_vertex_buffer_data[] = {
@@ -49,6 +56,8 @@ void CoffeeOutputSurface::load()
 
 void CoffeeOutputSurface::render()
 {
+    framebuffer->unbindFramebuffer();
+
     if(!isBaked())
         load();
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -75,6 +84,21 @@ void CoffeeOutputSurface::unload()
 bool CoffeeOutputSurface::isBaked() const
 {
     return baked;
+}
+
+QObject *CoffeeOutputSurface::framebufferQObject()
+{
+    return framebuffer;
+}
+
+CoffeeFrameBufferObject *CoffeeOutputSurface::getFramebuffer()
+{
+    return framebuffer;
+}
+
+void CoffeeOutputSurface::bind()
+{
+    framebuffer->bindFramebuffer();
 }
 
 void CoffeeOutputSurface::setBaked(bool val)

@@ -5,22 +5,27 @@
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
 
+class VectorValue;
+class QuaternionValue;
 class PhysicsObject;
 
 class CoffeeInstanceData : public QObject{
+    Q_PROPERTY(QObject* position READ positionRef)
+    Q_PROPERTY(QObject* rotation READ rotationRef)
+    Q_PROPERTY(QObject* scale READ scaleRef)
 
     Q_OBJECT
 public:
-    CoffeeInstanceData(glm::vec3 pos,glm::quat rot, glm::vec3 scale, QObject* parent) : QObject(parent){
-        this->pos = new NumberContainer<glm::vec3>(this,pos);
-        this->scale = new NumberContainer<glm::vec3>(this,scale);
-        this->rot = new NumberContainer<glm::quat>(this,rot);
-    }
+    CoffeeInstanceData(glm::vec3 pos,glm::quat rot, glm::vec3 scale, QObject* parent);
 
-    NumberContainer<glm::vec3>* getPos(){ return pos;}
-    NumberContainer<glm::vec3>* getScale(){ return scale;}
-    NumberContainer<glm::quat>* getRot(){ return rot;}
+    NumberContainer<glm::vec3>* getPos();
+    NumberContainer<glm::vec3>* getScale();
+    NumberContainer<glm::quat>* getRot();
     PhysicsObject* physics();
+
+    QObject* rotationRef();
+    QObject* positionRef();
+    QObject* scaleRef();
 
 public slots:
     void bindObject(PhysicsObject* target);
@@ -30,11 +35,16 @@ private:
     NumberContainer<glm::vec3> *pos;
     NumberContainer<glm::quat> *rot;
     NumberContainer<glm::vec3> *scale;
+
+    VectorValue* posWrapper;
+    QuaternionValue* rotWrapper;
+    VectorValue* sclWrapper;
 };
 
 class CoffeeInstanceContainer : public QObject
 {
     Q_PROPERTY(uint instanceCount READ instanceCount)
+    Q_PROPERTY(QObjectList instanceObjects READ instanceObjects)
 
     Q_OBJECT
 public:
@@ -44,8 +54,10 @@ public:
     ~CoffeeInstanceContainer();
 
     uint instanceCount() const;
-    CoffeeInstanceData* getInstance(int index);
+    Q_INVOKABLE CoffeeInstanceData* getInstance(int index);
     QVector<glm::mat4> getData() const;
+
+    QObjectList instanceObjects() const;
 
 public slots:
     void createInstance();

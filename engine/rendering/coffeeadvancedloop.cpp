@@ -88,10 +88,9 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Resizing viewport");
         QSize s = world->getRenderer()->getCurrentFramebufferSize();
         *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
-        glViewport(0,0,s.width(),s.height());
 
         qDebug("Enabling standard OpenGL capabilities");
-//        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_2D);
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -106,14 +105,15 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         glfwSwapInterval(0);
 
         qDebug("Configuring framebuffer object");
-        renderFbo->createFramebuffer(renderer->getWindowDimensions(),1);
-        connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){ //We need to resize the FBO when the window dimensions change
-            renderFbo->resizeViewport(e.size());
+        screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
+
+        screenSurface->getFramebuffer()->createFramebuffer(renderer->getWindowDimensions(),1);
+        connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){
+            screenSurface->getFramebuffer()->resizeViewport(e.size());
             world->getCamera()->setAspect((float)e.size().width()/(float)e.size().height());
         });
 
         qDebug("Creating output surface");
-        screenSurface = new CoffeeOutputSurface(this,renderFbo);
     };
     _rendering_loop = [=](){
         test->mesh()->getInstances()->getInstance(0)->getPos()->setValue(
@@ -121,17 +121,16 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         test->mesh()->updateModelMatrices();
         js->update();
         //bind the framebuffer which we render to
-        renderFbo->bindFramebuffer();
+        screenSurface->bind();
         //clear the depth buffer, otherwise we won't see sh*t
         glClear(GL_DEPTH_BUFFER_BIT);
 
         //render the current world
         world->renderWorld();
 
-        glFlush();
+        renderer->flushPipeline();
 
         //render for the user
-        renderFbo->unbindFramebuffer();
         screenSurface->render();
     };
     _rendering_loop_cleanup = [=](){
@@ -167,7 +166,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 {
     controller = new CoffeePlayerController(this);
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
-    renderFbo = new CoffeeFrameBufferObject(this);
 
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){

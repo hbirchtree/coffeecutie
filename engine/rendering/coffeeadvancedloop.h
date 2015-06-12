@@ -11,7 +11,7 @@ class QScriptValue;
 
 class CoffeeJoystick;
 class CoffeeWorldOpts;
-class CoffeeFrameBufferObject;
+class CoffeeOutputSurface;
 class CoffeeObject;
 class CoffeeStandardObject;
 class CoffeePlayerController;
@@ -33,8 +33,7 @@ public:
 private:
     QEventLoop* evloop;
 
-    CoffeeFrameBufferObject* renderFbo;
-    CoffeeObject* screenSurface;
+    CoffeeOutputSurface* screenSurface;
     CoffeeStandardObject* test;
 
     CoffeePlayerController* controller;

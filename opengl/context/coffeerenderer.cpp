@@ -542,3 +542,8 @@ void CoffeeRenderer::run()
 
     qDebug("Stopping rendering thread");
 }
+
+void CoffeeRenderer::flushPipeline()
+{
+    glFlush();
+}

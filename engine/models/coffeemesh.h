@@ -35,15 +35,9 @@ class CoffeeMesh : public QObject, public CoffeeGameAsset{
 
     Q_PROPERTY(int indexBufferIndex READ indexBufferIndex WRITE setIndexBufferIndex)
 
+    Q_PROPERTY(QObject* instances READ getInstancesQObject)
+
 public:
-    class VertexArrayPointerDescriptor {
-    public:
-        int location = 0;
-        int size = 0;
-        int datasize = 0;
-        GLenum datatype = GL_FLOAT;
-        GLboolean normalized = GL_FALSE;
-    };
 
     CoffeeMesh(QObject* parent);
     CoffeeMesh(QObject* parent, aiMesh* meshSource, bool *success = 0);
@@ -75,6 +69,7 @@ public:
     bool useInstancing() const;
     bool hasNewMatrices() const;
 
+    QObject* getInstancesQObject();
     QPointer<CoffeeInstanceContainer> getInstances();
 
 public slots:

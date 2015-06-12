@@ -312,11 +312,13 @@ bool CoffeeMesh::hasNewMatrices() const
     return m_newMatrices;
 }
 
+QObject *CoffeeMesh::getInstancesQObject()
+{
+    return getInstances();
+}
+
 void CoffeeMesh::updateModelMatrices()
 {
-    //TODO : write this
-    //request for the buffers to be updated in the loop, this one can be run from another thread
-    //remember to transpose the matrices here!
     m_newMatrices = true;
 }
 

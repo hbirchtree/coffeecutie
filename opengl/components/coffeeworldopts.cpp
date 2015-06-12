@@ -40,10 +40,22 @@ QPointer<CoffeeCamera> CoffeeWorldOpts::getCamera()
     return camera;
 }
 
+QObject *CoffeeWorldOpts::getCameraQObject()
+{
+    return camera;
+}
+
 void CoffeeWorldOpts::setCamera(QPointer<CoffeeCamera> value)
 {
     camera = value;
     value->setParent(this);
+}
+
+void CoffeeWorldOpts::setCameraQObject(QObject *camera)
+{
+    CoffeeCamera* p = qobject_cast<CoffeeCamera*>(camera);
+    if(p)
+        this->camera = p;
 }
 
 void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
@@ -133,7 +145,6 @@ void CoffeeWorldOpts::tickObjects(float d)
 {
     for(CoffeeParticleSystem* s : particles)
         s->setFrametime(d);
-    tickPhysics(d);
 }
 
 void CoffeeWorldOpts::renderWorld()

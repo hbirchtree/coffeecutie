@@ -39,6 +39,13 @@ int main(int argc, char *argv[])
     opts.addOption(QCommandLineOption("inspect"));
     opts.addPositionalArgument("configuration file","Source .json file","*.json");
 
+    QObject test;
+    test.setObjectName("123");
+    QMetaProperty t  =test.metaObject()->property(0);
+    qDebug() << t.name() << t.read(&test);
+    test.setObjectName("111");
+    qDebug() << t.name() << t.read(&test);
+
     opts.process(a);
     for(QString key : opts.optionNames()){
         if(key=="licenses"){
@@ -52,9 +59,6 @@ int main(int argc, char *argv[])
             logStderr = true;
         }
     }
-
-    qRegisterMetaType<GenericPhysicsInterface::PhysicsProperty>("PhysicsProperty");
-    qRegisterMetaType<QEvent::Type>("QEventType");
 
     QString sourceFile = "ubw/ubw.json";
     if(opts.positionalArguments().size()>0){
@@ -128,16 +132,14 @@ int main(int argc, char *argv[])
 #endif
     QThreadPool::globalInstance()->start(renderer);
 
-    QCoreApplication::exec();
+    a.exec();
 #endif //RUNNABLE_RENDERER
 
 #ifdef COFFEE_INSPECTOR_RUN
-    if(inspect)
-        inspector->deleteLater();
+    delete inspector;
 #endif
 
     delete root;
-    delete renderer;
 
     return 0;
 }

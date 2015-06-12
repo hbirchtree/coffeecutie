@@ -3,6 +3,10 @@
 #include "opengl/helpers/renderingmethods.h"
 #include "engine/physics/physicsobject.h"
 
+#include "engine/scripting/qscriptvectorvalue.h"
+
+#include <QtConcurrent>
+
 CoffeeInstanceContainer::CoffeeInstanceContainer(QObject *parent) : QObject(parent)
 {
     //InstanceData is not a QObject, and should not be listed in the inspector.
@@ -44,6 +48,11 @@ QVector<glm::mat4> CoffeeInstanceContainer::getData() const
     return d;
 }
 
+QObjectList CoffeeInstanceContainer::instanceObjects() const
+{
+    return instanceAnchor->findChildren<QObject*>();
+}
+
 void CoffeeInstanceContainer::createInstance()
 {
     instances.append(createInstanceData());
@@ -67,9 +76,40 @@ CoffeeInstanceData *CoffeeInstanceContainer::createInstanceData()
 }
 
 
+CoffeeInstanceData::CoffeeInstanceData(glm::vec3 pos, glm::quat rot, glm::vec3 scale, QObject *parent) : QObject(parent){
+    this->pos = new NumberContainer<glm::vec3>(this,pos);
+    this->scale = new NumberContainer<glm::vec3>(this,scale);
+    this->rot = new NumberContainer<glm::quat>(this,rot);
+
+    this->posWrapper = new VectorValue(this->pos);
+    this->rotWrapper = new QuaternionValue(this->rot);
+    this->sclWrapper = new VectorValue(this->scale);
+}
+
+NumberContainer<glm::vec3> *CoffeeInstanceData::getPos(){ return pos;}
+
+NumberContainer<glm::vec3> *CoffeeInstanceData::getScale(){ return scale;}
+
+NumberContainer<glm::quat> *CoffeeInstanceData::getRot(){ return rot;}
+
 PhysicsObject *CoffeeInstanceData::physics()
 {
     return m_physics;
+}
+
+QObject *CoffeeInstanceData::rotationRef()
+{
+    return rotWrapper;
+}
+
+QObject *CoffeeInstanceData::positionRef()
+{
+    return posWrapper;
+}
+
+QObject *CoffeeInstanceData::scaleRef()
+{
+    return sclWrapper;
 }
 
 void CoffeeInstanceData::bindObject(PhysicsObject *target)
