@@ -13,12 +13,6 @@
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QObject(parent)
 {
-    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
-        framebufferSize = event.size();
-    });
-    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
-        glViewport(0,0,ev.size().width(),ev.size().height());
-    });
 }
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : CoffeeRenderer(parent)
@@ -375,6 +369,13 @@ static void _glfw_winevent_state(GLFWwindow* window, int val){
 
 
 int CoffeeRenderer::init(){
+    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
+        framebufferSize = event.size();
+    });
+    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
+        glViewport(0,0,ev.size().width(),ev.size().height());
+    });
+
     if(!glfwInit()){
         qFatal("Failed to initialize GLFW!");
     }
@@ -504,7 +505,7 @@ int CoffeeRenderer::loop(){
         glfwPollEvents();
         (*_loop)();
         glfwSwapBuffers(window);
-        QCoreApplication::processEvents();
+//        QCoreApplication::processEvents();
         this->frametime = glfwGetTime()-frametime;
         contextReportFrametime(this->frametime);
     }
@@ -532,7 +533,12 @@ void CoffeeRenderer::openGLDebugCallback(GLenum source, GLenum type, GLuint id, 
 
 void CoffeeRenderer::run()
 {
-    qDebug() << "Hello!";
-    init();
-    loop();
+    int stat = init();
+    if(stat!=0)
+        qFatal("Failed to initialize renderer!");
+    stat = loop();
+    if(stat!=0)
+        qFatal("Loop function failed!");
+
+    qDebug("Stopping rendering thread");
 }

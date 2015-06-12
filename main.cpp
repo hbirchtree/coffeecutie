@@ -16,7 +16,7 @@
 
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
-//#define RUNNABLE_RENDERER
+#define RUNNABLE_RENDERER
 
 int main(int argc, char *argv[])
 {
@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
     CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
     root->setObjectName("coffeeroot");
 #ifndef QOPENGL_CONTEXT_MANAGER
-    CoffeeRenderer *renderer = new CoffeeRenderer(root,
+    CoffeeRenderer *renderer = new CoffeeRenderer(0,
                                                   1280,720,Qt::WindowNoState,
                                                   "Unlimited Frame Works");
 #else
@@ -122,20 +122,22 @@ int main(int argc, char *argv[])
         qDebug("init() with abnormal code %i",initStat);
     }
 #else
-        QThreadPool::globalInstance()->start(renderer);
+#ifdef COFFEE_INSPECTOR_RUN
+    if(inspect)
+        inspector->show();
+#endif
+    QThreadPool::globalInstance()->start(renderer);
+
+    QCoreApplication::exec();
 #endif //RUNNABLE_RENDERER
 
-
 #ifdef COFFEE_INSPECTOR_RUN
-        if(inspect)
-            inspector->deleteLater();
+    if(inspect)
+        inspector->deleteLater();
 #endif
 
     delete root;
+    delete renderer;
 
-#ifndef RUNNABLE_RENDERER
-    return initStat;
-#else
     return 0;
-#endif
 }

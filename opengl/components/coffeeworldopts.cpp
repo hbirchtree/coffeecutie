@@ -25,11 +25,6 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
             Qt::QueuedConnection);
     connect(physicsThread,SIGNAL(started()),
             physics.data(),SLOT(run()));
-    connect(this,
-            SIGNAL(modifyPhysics(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant)),
-            physics.data(),
-            SLOT(updateObject(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant)),
-            Qt::QueuedConnection);
     physicsThread->start();
 }
 
