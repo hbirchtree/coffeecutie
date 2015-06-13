@@ -32,9 +32,9 @@ ShaderVariant::~ShaderVariant()
 {
     delete data;
 }
-ShaderVariant::ShaderVariant(std::function<double ()> func)
+ShaderVariant::ShaderVariant(std::function<float ()> func)
 {
-    data = new MutableDataContainer<std::function<double()>>(this,func);
+    data = new MutableDataContainer<std::function<float()>>(this,func);
     type = ShaderDub;
 }
 
@@ -74,7 +74,7 @@ std::function<glm::mat4 ()> ShaderVariant::getMat4() const
         return ((MutableDataContainer<std::function<glm::mat4 ()>>*)data)->getValue();
     return nullptr;
 }
-std::function<double ()> ShaderVariant::getDouble() const
+std::function<float ()> ShaderVariant::getDouble() const
 {
     if(type==ShaderDub)
         return ((MutableDataContainer<std::function<double()>>*)data)->getValue();

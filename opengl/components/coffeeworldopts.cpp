@@ -58,6 +58,11 @@ void CoffeeWorldOpts::setCameraQObject(QObject *camera)
         this->camera = p;
 }
 
+void CoffeeWorldOpts::injectPhysicsObject(PhysicsObject *object)
+{
+    physicsObjectAdded(object); //kind of a hack on our current ways, but it will work.
+}
+
 void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
 {
     lights.append(light);
@@ -114,6 +119,16 @@ QList<CoffeeObject*> &CoffeeWorldOpts::getObjects()
 void CoffeeWorldOpts::addParticleSystem(CoffeeParticleSystem *system)
 {
     particles.append(system);
+}
+
+void CoffeeWorldOpts::setFogColorValue(QColor fogColor)
+{
+    qDebug() << "New color:" << fogColor;
+}
+
+void CoffeeWorldOpts::setClearColorValue(QColor clearColor)
+{
+    qDebug() << "New color:" << clearColor;
 }
 
 void CoffeeWorldOpts::prepareParticleSystems()
@@ -193,8 +208,12 @@ void CoffeeWorldOpts::setSkybox(CoffeeSkybox* value)
     skybox = value;
 }
 
-void CoffeeWorldOpts::physicsModify(PhysicsObject *object, GenericPhysicsInterface::PhysicsProperty prop, const VectorVariant &value)
+QColor CoffeeWorldOpts::fogColorValue() const
 {
-    modifyPhysics(object,prop,value);
+    return QColor(qRgba(fogColor.x*255,fogColor.y*255,fogColor.z*255,fogColor.w*255));
 }
 
+QColor CoffeeWorldOpts::clearColorValue() const
+{
+    return QColor(qRgba(clearColor.x*255,clearColor.y*255,clearColor.z*255,clearColor.w*255));
+}

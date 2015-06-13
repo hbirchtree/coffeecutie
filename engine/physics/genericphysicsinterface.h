@@ -7,6 +7,17 @@
 class GenericPhysicsInterface
 {
 public:
+    virtual QString systemName();
+
+private:
+    GenericPhysicsInterface(QObject *parent);
+};
+
+class PhysicalPropertyClass :public QObject {
+    //To get the enum as a static meta-object
+    Q_OBJECT
+public:
+    PhysicalPropertyClass();
     enum PhysicsProperty {
         PhysProp_Pos,
         PhysProp_Orientation,
@@ -18,10 +29,6 @@ public:
         PhysProp_Activation
     };
     Q_ENUMS(PhysicsProperty)
-    virtual QString systemName();
-
-private:
-    GenericPhysicsInterface(QObject *parent);
 };
 
 class VectorVariant : public QObject

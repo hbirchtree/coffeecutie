@@ -25,6 +25,7 @@ public:
 
         CoffeeTexture_Undefined
     };
+    Q_ENUMS(CoffeeTextureType)
 
     CoffeeTexture(QObject *parent,QMap<GLenum,QString> mapping); //Creates a cubemap
     CoffeeTexture(QObject *parent,QString filename);

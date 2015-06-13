@@ -4,7 +4,7 @@
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/objects/coffeeobject.h"
 #include "opengl/components/coffeetexture.h" //TextureMapping needs to know.
-#include "opengl/components/coffeematerial.h"
+#include "opengl/components/coffeematerial.h" //These are needed for the property system
 #include "opengl/components/shadercontainer.h"
 #include "engine/models/coffeemesh.h"
 

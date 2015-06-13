@@ -140,11 +140,15 @@ QSize* CoffeeRenderer::getFramebufferSizePt()
 
 int CoffeeRenderer::getMouseInputMode() const
 {
+    if(!window)
+        return 0;
     return glfwGetInputMode(window,0);
 }
 
 bool CoffeeRenderer::isMouseGrabbed() const
 {
+    if(!window)
+        return false;
     int mode = glfwGetInputMode(window,GLFW_CURSOR);
     return (mode == GLFW_CURSOR_DISABLED);
 }
@@ -166,6 +170,8 @@ void CoffeeRenderer::setWindowDimensions(const QSize &value)
 
 QSize CoffeeRenderer::getCurrentFramebufferSize() const
 {
+    if(!window)
+        return QSize();
     int width,height;
     glfwGetFramebufferSize(window, &width, &height);
     return QSize(width,height);
@@ -178,6 +184,8 @@ int CoffeeRenderer::getStartDisplay() const
 
 double CoffeeRenderer::getLoopTime() const
 {
+    if(!window)
+        return 0.0;
     return glfwGetTime();
 }
 

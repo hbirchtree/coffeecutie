@@ -44,7 +44,7 @@ public slots:
     void setGravity(float x, float y, float z);
 
     void updateObject(PhysicsObject* object,
-                      GenericPhysicsInterface::PhysicsProperty prop,
+                      PhysicalPropertyClass::PhysicsProperty prop,
                       VectorVariant *value);
 
     void addObject(PhysicsObject* object);

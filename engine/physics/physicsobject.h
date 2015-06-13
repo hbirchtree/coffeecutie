@@ -30,7 +30,6 @@ public:
     void setPhysicspointer(void *value);
 
     PhysicsDescriptor *getDescr();
-    void setDescr(PhysicsDescriptor *value);
 
 public slots:
     void setPosition(float x, float y, float z);
@@ -45,8 +44,10 @@ public slots:
     void updateRotation(glm::quat r);
     void updateAngularVelocity(glm::quat r);
 
+    void setDescr(PhysicsDescriptor *value);
+
 signals:
-    void propertyModified(PhysicsObject* target, GenericPhysicsInterface::PhysicsProperty prop, VectorVariant *data);
+    void propertyModified(PhysicsObject* target, PhysicalPropertyClass::PhysicsProperty prop, VectorVariant *data);
 
     void deleteObject(void* pt);
 

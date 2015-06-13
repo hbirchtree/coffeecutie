@@ -4,31 +4,160 @@
 			"type": "shader",
 			"name": "standard",
 			"fragment": "shaders/fsh.txt",
-			"vertex": "shaders/vsh.txt"
+			"vertex": "shaders/vsh.txt",
+			"uniforms": {
+				"camera": "mat4",
+				"cameraPosition": "vec3",
+				"model": "mat4",
+				"fogParams": {
+					"fDensity": "float",
+					"fColor": "vec3"
+				},
+				"light": {
+					"position": "vec3",
+					"intensities": "vec3",
+					"attenuation": "float",
+					"ambientCoefficient": "float"
+				},
+				"mtl": {
+					"shininess": "float",
+					"opacity": "float",
+					"shininessStrength": "float",
+					"transparencyValue": "vec3",
+					"colorMultiplier": "vec3",
+					"diffuseColor": "vec3",
+					"ambientColor": "vec3",
+					"specularColor": "vec3"
+				}
+			},
+			"samplers": {
+				"mtl": {
+					"diffuseSampler": "texture2D"
+				}
+			}
+		},
+		{
+			"type": "shader-mapping",
+			"name": "default",
+			"source": "scripts/"
 		},
 		{
 			"type": "shader",
 			"name": "standard-instancing",
 			"fragment": "shaders/fsh.txt",
-			"vertex": "shaders/vsh_instanced.txt"
+			"vertex": "shaders/vsh_instanced.txt",
+			"uniforms": {
+				"camera": "mat4",
+				"cameraPosition": "vec3",
+				"model": "mat4",
+				"fogParams": {
+					"fDensity": "float",
+					"fColor": "vec3"
+				},
+				"light": {
+					"position": "vec3",
+					"intensities": "vec3",
+					"attenuation": "float",
+					"ambientCoefficient": "float"
+				},
+				"mtl": {
+					"shininess": "float",
+					"opacity": "float",
+					"refraction": "float",
+					"reflectivity": "float",
+					"shininessStrength": "float",
+					"transparencyValue": "vec3",
+					"colorMultiplier": "vec3",
+					"diffuseColor": "vec3",
+					"ambientColor": "vec3",
+					"specularColor": "vec3"
+				}
+			},
+			"samplers": {
+				"mtl": {
+					"diffuseSampler": "texture2D"
+				}
+			}
 		},
 		{
 			"type": "shader",
 			"name": "advanced",
 			"fragment": "shaders/fsh_bumpmap.txt",
-			"vertex": "shaders/vsh.txt"
+			"vertex": "shaders/vsh.txt",
+			"uniforms": {
+				"camera": "mat4",
+				"cameraPosition": "vec3",
+				"model": "mat4",
+				"fogParams": {
+					"fDensity": "float",
+					"fColor": "vec3"
+				},
+				"light": {
+					"position": "vec3",
+					"intensities": "vec3",
+					"attenuation": "float",
+					"ambientCoefficient": "float"
+				},
+				"mtl": {
+					"shininess": "float",
+					"opacity": "float",
+					"refraction": "float",
+					"reflectivity": "float",
+					"shininessStrength": "float",
+					"transparencyValue": "vec3",
+					"colorMultiplier": "vec3",
+					"diffuseColor": "vec3",
+					"emissiveColor": "vec3",
+					"ambientColor": "vec3",
+					"specularColor": "vec3"
+				}
+			},
+			"samplers": {
+				"mtl": {
+					"ambientSampler": "texture2D",
+					"diffuseSampler": "texture2D",
+					"specularSampler": "texture2D",
+					"lightmapSampler": "texture2D",
+					"bumpSampler": "texture2D",
+					"highlightSampler": "texture2D",
+					"transparencySampler": "texture2D",
+					"heightmapSampler": "texture2D",
+					"emissiveSampler": "texture2D",
+					"displacementSampler": "texture2D",
+					"reflectivitySampler": "texture2D"
+				}
+			}
 		},
 		{
 			"type": "shader",
 			"name": "standard-nolight",
 			"fragment": "shaders/fsh_nolight.txt",
-			"vertex": "shaders/vsh.txt"
+			"vertex": "shaders/vsh.txt",
+			"uniforms": {
+				"camera": "mat4",
+				"model": "mat4",
+				"mtl": {
+					"transparencyValue": "vec3",
+					"colorMultiplier": "vec3"
+				}
+			},
+			"samplers": {
+				"mtl": {
+					"diffuseSampler": "texture2D"
+				}
+			}
 		},
 		{
 			"type": "shader",
 			"name": "skyshader",
 			"fragment": "shaders/skybox/fsh.txt",
-			"vertex": "shaders/skybox/vsh.txt"
+			"vertex": "shaders/skybox/vsh.txt",
+			"uniforms": {
+				"wvp": "mat4"
+			},
+			"samplers": {
+				"cubemapTexture": "textureCube"
+			}
 		},
 		{
 			"type": "model",

@@ -36,8 +36,15 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
     t.start();
     QVariantMap source;
     QJsonParseError err;
-    source = QJsonDocument::fromJson(FileHandler::getStringFromFile(file).toLocal8Bit(),
-                                     &err).object().toVariantMap();
+    QByteArray srcData = FileHandler::getStringFromFile(file).toLocal8Bit();
+    source = QJsonDocument::fromJson(srcData,&err).object().toVariantMap();
+
+    if(err.error!=QJsonParseError::NoError){
+        qFatal("Failed to parse JSON document. This suggests that you should error-check the JSON data.\n"
+               "error code %i: %s",
+               err.error,
+               err.errorString().toStdString().c_str());
+    }
 
     if(source.isEmpty()){
         qDebug("Object file was empty or non-existing!");

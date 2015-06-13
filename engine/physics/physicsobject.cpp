@@ -18,7 +18,6 @@ PhysicsObject::PhysicsObject(QPointer<PhysicsObject> object){
 }
 
 PhysicsObject::~PhysicsObject(){
-    delete descr;
     if(physicspointer)
         deleteObject(physicspointer);
 }
@@ -73,28 +72,28 @@ void PhysicsObject::setDescr(PhysicsDescriptor *value)
 void PhysicsObject::setPosition(float x, float y, float z)
 {
     propertyModified(this,
-                     GenericPhysicsInterface::PhysProp_Pos,
+                     PhysicalPropertyClass::PhysProp_Pos,
                      new VectorVariant(this,glm::vec3(x,y,z)));
 }
 
 void PhysicsObject::setRotation(float x, float y, float z)
 {
     propertyModified(this,
-                     GenericPhysicsInterface::PhysProp_Orientation,
+                     PhysicalPropertyClass::PhysProp_Orientation,
                      new VectorVariant(this,glm::quat(glm::vec3(x,y,z))));
 }
 
 void PhysicsObject::applyForce(float x, float y, float z)
 {
     propertyModified(this,
-                     GenericPhysicsInterface::PhysProp_Force,
+                     PhysicalPropertyClass::PhysProp_Force,
                      new VectorVariant(this,glm::vec3(x,y,z)));
 }
 
 void PhysicsObject::applyImpulse(float x, float y, float z)
 {
     propertyModified(this,
-                     GenericPhysicsInterface::PhysProp_Impulse,
+                     PhysicalPropertyClass::PhysProp_Impulse,
                      new VectorVariant(this,glm::vec3(x,y,z)));
 }
 

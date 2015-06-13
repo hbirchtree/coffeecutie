@@ -3,6 +3,8 @@
 #include "general/common.h"
 #include "engine/physics/genericphysicsinterface.h"
 
+#include <QColor>
+
 class CoffeeCamera;
 class CoffeeSkybox;
 class CoffeeRenderer;
@@ -15,12 +17,11 @@ class PhysicsObject;
 class CoffeeWorldOpts : public QObject
 {
     Q_PROPERTY(bool wireframeMode READ wireframeMode WRITE setWireframeMode)
-    Q_PROPERTY(glm::vec4 fogColor READ getFogColor WRITE setFogColor)
-    Q_PROPERTY(glm::vec4 clearColor READ getClearColor WRITE setClearColor)
+    Q_PROPERTY(QColor clearColor READ clearColorValue WRITE setClearColorValue)
+    Q_PROPERTY(QColor fogColor READ fogColorValue WRITE setFogColorValue)
     Q_PROPERTY(float fogDensity READ getFogDensity WRITE setFogDensity)
 
     Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
-    //An OpenGL-level representation of the world or scene, not meant for modification. That will be done elsewhere.
     Q_OBJECT
 public:
     CoffeeWorldOpts(QObject *renderer);
@@ -47,17 +48,13 @@ public:
     CoffeeSkybox* getSkybox() const;
     void setSkybox(CoffeeSkybox *value);
 
+    QColor fogColorValue() const;
+    QColor clearColorValue() const;
 
 signals:
-    void modifyPhysics(PhysicsObject *object,
-                       GenericPhysicsInterface::PhysicsProperty prop,
-                       const VectorVariant &value);
     void physicsObjectAdded(PhysicsObject* object);
 
 public slots:
-    void physicsModify(PhysicsObject *object,
-                       GenericPhysicsInterface::PhysicsProperty prop,
-                       const VectorVariant &value);
     void tickObjects(float d);
     void renderWorld();
     void unloadWorld();
@@ -71,9 +68,12 @@ public slots:
     void setCamera(QPointer<CoffeeCamera> value);
     void setCameraQObject(QObject* camera);
 
+    void injectPhysicsObject(PhysicsObject* object);
     void addObject(CoffeeObject* object);
     void addParticleSystem(CoffeeParticleSystem* system);
 
+    void setFogColorValue(QColor fogColor);
+    void setClearColorValue(QColor clearColor);
 
 private:
 

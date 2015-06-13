@@ -1,5 +1,6 @@
 #include "coffeematerial.h"
 
+#include "general/shadervariant.h"
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
     m_shininess = new NumberContainer<float>(this,1.f);
@@ -188,6 +189,36 @@ GLenum CoffeeMaterial::blendMode() const
 GLenum CoffeeMaterial::shadingMode() const
 {
     return m_shadingMode;
+}
+
+QObject *CoffeeMaterial::transparencyVariant() const
+{
+    return new ShaderVariant([=](){return m_transparency->getValue();});
+}
+
+QObject *CoffeeMaterial::diffuseColorVariant() const
+{
+    return new ShaderVariant([=](){return m_diffuseColor->getValue();});
+}
+
+QObject *CoffeeMaterial::specularColorVariant() const
+{
+    return new ShaderVariant([=](){return m_specularColor->getValue();});
+}
+
+QObject *CoffeeMaterial::ambientColorVariant() const
+{
+    return new ShaderVariant([=](){return m_ambientColor->getValue();});
+}
+
+QObject *CoffeeMaterial::emissiveColorVariant() const
+{
+    return new ShaderVariant([=](){return m_emissiveColor->getValue();});
+}
+
+QObject *CoffeeMaterial::colorMultiplierVariant() const
+{
+    return new ShaderVariant([=](){return m_colorMultiplier->getValue();});
 }
 
 glm::vec3 CoffeeMaterial::emissiveColor() const

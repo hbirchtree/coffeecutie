@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
     QObject test;
     test.setObjectName("123");
-    QMetaProperty t  =test.metaObject()->property(0);
+    QMetaProperty t  = test.metaObject()->property(0);
     qDebug() << t.name() << t.read(&test);
     test.setObjectName("111");
     qDebug() << t.name() << t.read(&test);
@@ -105,7 +105,8 @@ int main(int argc, char *argv[])
         inspector = new CoffeeInspector(0,
                                         loop->getThreadObjects()
                                         << root
-                                        << QThreadPool::globalInstance(),
+                                        << QThreadPool::globalInstance()
+                                        << renderer,
                                         renderer);
 #endif //COFFEE_INSPECTOR_RUN
 

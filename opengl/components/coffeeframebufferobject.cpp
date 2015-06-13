@@ -116,8 +116,8 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
         framebufferActive=false;
     }
 
-    qDebug("Creating framebuffer: %ix%i -> %ix%i",renderSize.width(),renderSize.height(),
-           windowSize.width(),windowSize.height());
+//    qDebug("Creating framebuffer: %ix%i -> %ix%i",renderSize.width(),renderSize.height(),
+//           windowSize.width(),windowSize.height());
 
     GLuint framebuffer = 0;
     glGenFramebuffers(1,&framebuffer);

@@ -55,6 +55,7 @@ public:
 
     uint instanceCount() const;
     Q_INVOKABLE CoffeeInstanceData* getInstance(int index);
+    Q_INVOKABLE QObject* getInstanceQObject(int index);
     QVector<glm::mat4> getData() const;
 
     QObjectList instanceObjects() const;

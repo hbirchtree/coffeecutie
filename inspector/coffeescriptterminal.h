@@ -2,7 +2,7 @@
 #define COFFEESCRIPTTERMINAL_H
 
 #include <QWidget>
-#include <QScriptEngine>
+#include "engine/scripting/coffeescriptengine.h"
 
 namespace Ui {
 class CoffeeScriptTerminal;
@@ -24,7 +24,7 @@ private slots:
 private:
     void appendLog(const QString &command, const QString &output);
 
-    QScriptEngine engine;
+    CoffeeScriptEngine* engine;
     Ui::CoffeeScriptTerminal *ui;
 };
 

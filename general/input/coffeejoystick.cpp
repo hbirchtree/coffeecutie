@@ -6,7 +6,7 @@ CoffeeJoystick::CoffeeJoystick(QObject *parent, int joystick) : QObject(parent)
     j_name = QString(glfwGetJoystickName(joystick));
     int axes;
     int buttons;
-    setObjectName("controller::"+getJoystickName());
+    setObjectName("jsdev");
     glfwGetJoystickAxes(joystick,&axes);
     glfwGetJoystickButtons(joystick,&buttons);
     this->axes.resize(axes);

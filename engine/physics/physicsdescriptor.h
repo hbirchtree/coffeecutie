@@ -81,7 +81,7 @@ public slots:
     void setFriction(float friction);
     void setRestitution(float restitution);
 
-    void setShape(PhysicalShape shape);
+    void setShape(PhysicsDescriptor::PhysicalShape shape);
 
     void setFileSource(QString fileSource);
 

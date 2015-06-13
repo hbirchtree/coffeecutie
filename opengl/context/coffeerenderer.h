@@ -75,8 +75,7 @@ private slots:
     GLFWwindow *setWindowed();
 
 protected:
-    QPointer<RenderLoop> loopObject;
-    //Settings
+    QPointer<RenderLoop> loopObject; //Settings
     int samples = 0;
     QSize windowDimensions;
     QSize framebufferSize;
@@ -86,7 +85,7 @@ protected:
 
 private:
     //GLFW objects
-    GLFWwindow* window;
+    GLFWwindow* window = nullptr;
 
     double frametime;
 

@@ -1,5 +1,8 @@
 #include "coffeecamera.h"
 
+#include "general/shadervariant.h"
+#include "engine/scripting/qscriptvectorvalue.h"
+
 CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 {
     this->aspect = new NumberContainer<float>(this,1.f);
@@ -7,7 +10,9 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
     this->position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
     this->orientation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
     this->rotation_euler = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-//    rotation->setClamps(glm::vec3(-90,0,0),glm::vec3(90,0,0));
+
+    this->posWrapper = new VectorValue(position);
+    this->rotWrapper = new VectorValue(rotation_euler);
 }
 
 CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov) : CoffeeCamera(parent)
@@ -26,10 +31,6 @@ CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfa
 
 CoffeeCamera::~CoffeeCamera()
 {
-    aspect->deleteLater();
-    fov->deleteLater();
-    position->deleteLater();
-    orientation->deleteLater();
 }
 
 QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getPosition()
@@ -170,7 +171,7 @@ bool CoffeeCamera::isOrthographic() const
 }
 
 void CoffeeCamera::clearFramebufferSizeObject(){
-    framebufferSize = NULL;
+    framebufferSize = nullptr;
 }
 
 void CoffeeCamera::setFov(float fov)
@@ -197,19 +198,24 @@ void CoffeeCamera::setAspect(float value)
     aspect->setValue(value);
 }
 
-QString CoffeeCamera::getStringPosition() const
-{
-    return QStringFunctions::toString(position->getValue());
-}
-
-QString CoffeeCamera::getStringRotation() const
-{
-    return QStringFunctions::toString(rotation_euler->getValue());
-}
-
 float CoffeeCamera::getFov() const
 {
     return fov->getValue();
+}
+
+QObject *CoffeeCamera::getMatrixVariant() const
+{
+    return new ShaderVariant([=](){return getMatrix();});
+}
+
+QObject *CoffeeCamera::getPositionValue()
+{
+    return posWrapper;
+}
+
+QObject *CoffeeCamera::getRotationValue()
+{
+    return rotWrapper;
 }
 
 float CoffeeCamera::getZnear() const

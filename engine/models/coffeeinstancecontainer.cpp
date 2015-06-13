@@ -34,6 +34,11 @@ CoffeeInstanceData *CoffeeInstanceContainer::getInstance(int index)
     return instances.at(index);
 }
 
+QObject *CoffeeInstanceContainer::getInstanceQObject(int index)
+{
+    return getInstance(index);
+}
+
 QVector<glm::mat4> CoffeeInstanceContainer::getData() const
 {
     QVector<glm::mat4> d;

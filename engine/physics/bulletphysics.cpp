@@ -81,6 +81,7 @@ glm::vec3 BulletPhysics::convert_bt(const btVector3 &v)
 
 void BulletPhysics::addObject(PhysicsObject *object)
 {
+    qDebug() << "Creating physics object";
     if(!object->getDescr())
         return;
     PhysicsDescriptor* desc = object->getDescr();
@@ -134,8 +135,8 @@ void BulletPhysics::addObject(PhysicsObject *object)
     object->setPhysicspointer(rb);
 
     connect(object,SIGNAL(deleteObject(void*)),SLOT(removeObject(void*)));
-    connect(object,SIGNAL(propertyModified(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant*)),
-            SLOT(updateObject(PhysicsObject*,GenericPhysicsInterface::PhysicsProperty,VectorVariant*)));
+    connect(object,SIGNAL(propertyModified(PhysicsObject*,PhysicalPropertyClass::PhysicsProperty,VectorVariant*)),
+            SLOT(updateObject(PhysicsObject*,PhysicalPropertyClass::PhysicsProperty,VectorVariant*)));
 
     m_dynamicsWorld->addRigidBody(rb);
     qDebug("Object added to %s physics: %s",systemName().toStdString().c_str(),
@@ -206,42 +207,42 @@ void BulletPhysics::run()
 }
 
 void BulletPhysics::updateObject(PhysicsObject *object,
-                                 GenericPhysicsInterface::PhysicsProperty prop,
+                                 PhysicalPropertyClass::PhysicsProperty prop,
                                  VectorVariant *value)
 {
     if(object->getPhysicspointer()){
         btRigidBody* obj = (btRigidBody*)object->getPhysicspointer();
         qDebug() << "Update commenced";
         switch(prop){
-        case GenericPhysicsInterface::PhysProp_Pos:{
+        case PhysicalPropertyClass::PhysProp_Pos:{
             btTransform pt = obj->getWorldTransform();
             pt.setOrigin(convert_glm(value->toVector3()));
             obj->setWorldTransform(pt);
             break;
         }
-        case GenericPhysicsInterface::PhysProp_Orientation:{
+        case PhysicalPropertyClass::PhysProp_Orientation:{
             btTransform rt = obj->getWorldTransform();
             rt.setRotation(convert_glm(value->toQuaternion()));
             obj->setWorldTransform(rt);
             break;
         }
-        case GenericPhysicsInterface::PhysProp_AngularVelocity:
+        case PhysicalPropertyClass::PhysProp_AngularVelocity:
             break;
-        case GenericPhysicsInterface::PhysProp_Gravity:
+        case PhysicalPropertyClass::PhysProp_Gravity:
             break;
-        case GenericPhysicsInterface::PhysProp_Velocity:
+        case PhysicalPropertyClass::PhysProp_Velocity:
             break;
-        case GenericPhysicsInterface::PhysProp_Force:{
+        case PhysicalPropertyClass::PhysProp_Force:{
             obj->applyCentralForce(convert_glm(value->toVector3()));
             obj->activate(true);
             break;
         }
-        case GenericPhysicsInterface::PhysProp_Impulse:{
+        case PhysicalPropertyClass::PhysProp_Impulse:{
             obj->applyCentralImpulse(convert_glm(value->toVector3()));
             obj->activate(true);
             break;
         }
-        case GenericPhysicsInterface::PhysProp_Activation:
+        case PhysicalPropertyClass::PhysProp_Activation:
             break;
         }
     }

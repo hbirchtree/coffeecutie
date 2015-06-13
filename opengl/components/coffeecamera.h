@@ -3,6 +3,9 @@
 
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
+
+class VectorValue;
+
 class CoffeeCamera : public QObject
 {
     Q_PROPERTY(float zNear READ getZnear WRITE setZnear)
@@ -10,8 +13,10 @@ class CoffeeCamera : public QObject
     Q_PROPERTY(float fov READ getFov WRITE setFov)
     Q_PROPERTY(float aspectRatio READ getAspectValue WRITE setAspect)
     Q_PROPERTY(bool orthographic READ isOrthographic WRITE setOrthographic)
-    Q_PROPERTY(QString position READ getStringPosition)
-    Q_PROPERTY(QString rotation READ getStringRotation)
+    Q_PROPERTY(QObject* position READ getPositionValue)
+    Q_PROPERTY(QObject* rotation READ getRotationValue)
+
+    Q_PROPERTY(QObject* matrix READ getMatrixVariant)
 
     Q_OBJECT
 public:
@@ -50,17 +55,14 @@ public:
     static void normalizeEulerAngles(QPointer<NumberContainer<glm::vec3> > e, float x_min, float x_max);
 
     bool isOrthographic() const;
-
     float getZnear() const;
-
     float getZfar() const;
-
     float getAspectValue() const;
-
-    QString getStringPosition() const;
-    QString getStringRotation() const;
-
     float getFov() const;
+
+    QObject* getMatrixVariant() const;
+    QObject* getPositionValue();
+    QObject* getRotationValue();
 
 signals:
 
@@ -85,6 +87,9 @@ private:
     QPointer<NumberContainer<glm::vec3> > position;
     QPointer<NumberContainer<glm::quat>> orientation;
     QPointer<NumberContainer<glm::vec3>> rotation_euler;
+
+    VectorValue* posWrapper;
+    VectorValue* rotWrapper;
 };
 
 #endif // COFFEECAMERA_H

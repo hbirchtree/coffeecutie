@@ -105,7 +105,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         glfwSwapInterval(0);
 
         qDebug("Configuring framebuffer object");
-        screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
 
         screenSurface->getFramebuffer()->createFramebuffer(renderer->getWindowDimensions(),1);
         connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){
@@ -116,8 +115,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Creating output surface");
     };
     _rendering_loop = [=](){
-        test->mesh()->getInstances()->getInstance(0)->getPos()->setValue(
-                    glm::vec3(std::fmod(renderer->getLoopTime()*5,10),0,0));
+//        test->mesh()->getInstances()->getInstance(0)->getPos()->setValue(
+//                    glm::vec3(std::fmod(renderer->getLoopTime()*5,10),0,0));
         test->mesh()->updateModelMatrices();
         js->update();
         //bind the framebuffer which we render to
@@ -165,7 +164,9 @@ std::function<void ()> *CoffeeAdvancedLoop::getCleanup()
 void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 {
     controller = new CoffeePlayerController(this);
+    controller->setObjectName("cameracontrol");
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
+    screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
 
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
@@ -238,16 +239,16 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
         case 2:
 //            world->getCamera()->getFieldOfView()->setValue(120+val*70);
             break;
-        case 3:
-            if((val<0&&diff>0)||(val>0&&diff<0))
-                break;
-            controller->setRotationYaw(std::pow(val,3)*80);
-            break;
-        case 4:
-            if((val<0&&diff>0)||(val>0&&diff<0))
-                break;
-            controller->setRotationPitch(std::pow(val,3)*-80);
-            break;
+//        case 3:
+//            if((val<0&&diff>0)||(val>0&&diff<0))
+//                break;
+//            controller->setRotationYaw(std::pow(val,3)*80);
+//            break;
+//        case 4:
+//            if((val<0&&diff>0)||(val>0&&diff<0))
+//                break;
+//            controller->setRotationPitch(std::pow(val,3)*-80);
+//            break;
         }
     });
     connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
