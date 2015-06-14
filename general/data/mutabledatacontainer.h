@@ -18,6 +18,11 @@ public:
     T getValue(){
         return data;
     }
+    T* getPointer(){
+        //This one is better, we avoid copying data left and right unnecessarily.
+        //Setting shaders is done every frame, which becomes a shit-ton of overhead with more objects.
+        return &data;
+    }
 
 private:
     T data;

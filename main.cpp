@@ -128,8 +128,10 @@ int main(int argc, char *argv[])
     }
 #else
 #ifdef COFFEE_INSPECTOR_RUN
-    if(inspect)
+    if(inspect){
+        inspector->run();
         inspector->show();
+    }
 #endif
     QThreadPool::globalInstance()->start(renderer);
 

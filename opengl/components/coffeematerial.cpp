@@ -9,11 +9,25 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
     m_reflectivity = new NumberContainer<float>(this,0.f);
     m_opacity = new NumberContainer<float>(this,1.f);
 
-    m_transparency = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
-    m_diffuseColor = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
-    m_specularColor = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
-    m_ambientColor = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
-    m_colorMultiplier = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    m_transparency = new NumberContainer<glm::vec3>(this,glm::vec3(1));
+    m_emissiveColor = new NumberContainer<glm::vec3>(this,glm::vec3(0));
+    m_diffuseColor = new NumberContainer<glm::vec3>(this,glm::vec3(1));
+    m_specularColor = new NumberContainer<glm::vec3>(this,glm::vec3(1));
+    m_ambientColor = new NumberContainer<glm::vec3>(this,glm::vec3(1));
+    m_colorMultiplier = new NumberContainer<glm::vec3>(this,glm::vec3(1));
+
+    p_shininess = new ShaderVariant([=](){return m_shininess->getValue();});
+    p_shininessStrength = new ShaderVariant([=](){return m_shininessStrength->getValue();});
+    p_refraction = new ShaderVariant([=](){return m_refraction->getValue();});
+    p_reflectivity = new ShaderVariant([=](){return m_reflectivity->getValue();});
+    p_opacity = new ShaderVariant([=](){return m_opacity->getValue();});
+
+    p_transparency = new ShaderVariant([=](){return m_transparency->getValue();});
+    p_diffuseColor = new ShaderVariant([=](){return m_diffuseColor->getValue();});
+    p_specularColor = new ShaderVariant([=](){return m_specularColor->getValue();});
+    p_ambientColor = new ShaderVariant([=](){return m_ambientColor->getValue();});
+    p_emissiveColor = new ShaderVariant([=](){return m_emissiveColor->getValue();});
+    p_colorMultiplier = new ShaderVariant([=](){return m_colorMultiplier->getValue();});
 }
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource, const QString& filepath) :
@@ -191,34 +205,59 @@ GLenum CoffeeMaterial::shadingMode() const
     return m_shadingMode;
 }
 
+QObject *CoffeeMaterial::shininessVariant() const
+{
+    return p_shininess;
+}
+
+QObject *CoffeeMaterial::shininessStrengthVariant() const
+{
+    return p_shininessStrength;
+}
+
+QObject *CoffeeMaterial::reflectivityVariant() const
+{
+    return p_reflectivity;
+}
+
+QObject *CoffeeMaterial::refractionVariant() const
+{
+    return p_reflectivity;
+}
+
+QObject *CoffeeMaterial::opacityVariant() const
+{
+    return p_opacity;
+}
+
 QObject *CoffeeMaterial::transparencyVariant() const
 {
-    return new ShaderVariant([=](){return m_transparency->getValue();});
+    return p_transparency;
 }
 
 QObject *CoffeeMaterial::diffuseColorVariant() const
 {
-    return new ShaderVariant([=](){return m_diffuseColor->getValue();});
+    return p_diffuseColor;
 }
 
 QObject *CoffeeMaterial::specularColorVariant() const
 {
-    return new ShaderVariant([=](){return m_specularColor->getValue();});
+    return p_specularColor;
 }
 
 QObject *CoffeeMaterial::ambientColorVariant() const
 {
-    return new ShaderVariant([=](){return m_ambientColor->getValue();});
+    return p_ambientColor;
 }
 
 QObject *CoffeeMaterial::emissiveColorVariant() const
 {
-    return new ShaderVariant([=](){return m_emissiveColor->getValue();});
+    return p_emissiveColor;
 }
 
 QObject *CoffeeMaterial::colorMultiplierVariant() const
 {
-    return new ShaderVariant([=](){return m_colorMultiplier->getValue();});
+    return p_colorMultiplier;
 }
 
 glm::vec3 CoffeeMaterial::emissiveColor() const

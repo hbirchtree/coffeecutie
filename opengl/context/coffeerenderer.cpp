@@ -118,6 +118,16 @@ int CoffeeRenderer::getSamples() const
     return samples;
 }
 
+void CoffeeRenderer::getVideoMemoryUsage(qint32 *current, qint32 *total) const
+{
+    if(this->vmem_free==0&&vmem_total==0)
+        return;
+    if(!current||!total)
+        return;
+    *current = vmem_free;
+    *total = vmem_total;
+}
+
 void CoffeeRenderer::setSwapInterval(uint interval)
 {
     glfwSwapInterval(interval);
@@ -495,7 +505,6 @@ int CoffeeRenderer::init(){
 int CoffeeRenderer::loop(){
     if(!loopObject){
         qFatal("No loop object defined!");
-        return 1;
     }
     qDebug("Initializing loop");
 
@@ -509,11 +518,24 @@ int CoffeeRenderer::loop(){
     (*_init)();
     qDebug("Running loop function");
     while(!glfwWindowShouldClose(window)){
+        if(gpumemcheck){
+            if(gpumemcheck_nvidia){
+                glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX,&vmem_total);
+                glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX,&vmem_free);
+
+                if(vmem_total==0||vmem_free==0){ //If check fails, stop checking.
+                    gpumemcheck_nvidia = false;
+                }
+            }
+            //We will see if we can add Intel and AMD support later.
+            //So far, it seems like AMD only support Windows with that.
+            //I will never implement Windows-only functionality.
+        }
+
         frametime = glfwGetTime();
         glfwPollEvents();
         (*_loop)();
         glfwSwapBuffers(window);
-//        QCoreApplication::processEvents();
         this->frametime = glfwGetTime()-frametime;
         contextReportFrametime(this->frametime);
     }
@@ -554,4 +576,9 @@ void CoffeeRenderer::run()
 void CoffeeRenderer::flushPipeline()
 {
     glFlush();
+}
+
+void CoffeeRenderer::requestMemoryCheck()
+{
+    gpumemcheck = true;
 }

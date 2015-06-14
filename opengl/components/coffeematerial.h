@@ -20,7 +20,11 @@ class CoffeeMaterial : public QObject, public CoffeeGameAsset{
     Q_PROPERTY(QObject* emissiveColor READ emissiveColorVariant)
     Q_PROPERTY(QObject* colorMultiplier READ colorMultiplierVariant)
 
-    //These are made for
+    Q_PROPERTY(QObject* shininessVariant READ shininessVariant)
+    Q_PROPERTY(QObject* shininessStrengthVariant READ shininessStrengthVariant)
+    Q_PROPERTY(QObject* opacityVariant READ opacityVariant)
+    Q_PROPERTY(QObject* reflectivityVariant READ reflectivityVariant)
+    Q_PROPERTY(QObject* refractionVariant READ refractionVariant)
 
     Q_PROPERTY(float shininessStrength READ shininessStrength WRITE setShininessStrength)
     Q_PROPERTY(float refraction READ refraction WRITE setRefraction)
@@ -53,6 +57,12 @@ public:
     glm::vec3 emissiveColor() const;
     GLenum blendMode() const;
     GLenum shadingMode() const;
+
+    QObject* shininessVariant() const;
+    QObject* shininessStrengthVariant() const;
+    QObject* reflectivityVariant() const;
+    QObject* refractionVariant() const;
+    QObject* opacityVariant() const;
 
     QObject* transparencyVariant() const;
     QObject* diffuseColorVariant() const;
@@ -102,6 +112,18 @@ private:
     GLenum m_shadingMode = GL_FLAT;
     QPointer<NumberContainer<float>> m_opacity;
     QPointer<NumberContainer<float>> m_reflectivity;
+
+    ShaderVariant* p_shininess;
+    ShaderVariant* p_shininessStrength;
+    ShaderVariant* p_refraction;
+    ShaderVariant* p_transparency;
+    ShaderVariant* p_diffuseColor;
+    ShaderVariant* p_ambientColor;
+    ShaderVariant* p_specularColor;
+    ShaderVariant* p_emissiveColor;
+    ShaderVariant* p_colorMultiplier;
+    ShaderVariant* p_opacity;
+    ShaderVariant* p_reflectivity;
 };
 
 #endif // COFFEEMATERIAL

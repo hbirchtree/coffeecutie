@@ -31,7 +31,7 @@ public:
     void connectSignals(CoffeeRenderer* renderer);
 
 private:
-    QEventLoop* evloop;
+    QTimer *secondbop;
 
     CoffeeOutputSurface* screenSurface;
     CoffeeStandardObject* test;

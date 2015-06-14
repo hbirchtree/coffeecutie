@@ -167,6 +167,20 @@ void VectorValue::setAccelerationList(QVariantList acceleration)
     source->setAcceleration(glm::vec3(acceleration.at(0).toFloat(),acceleration.at(1).toFloat(),acceleration.at(2).toFloat()));
 }
 
+void VectorValue::pMult(float c)
+{
+    *source*=c;
+}
+
+void VectorValue::pMult(float x, float y, float z)
+{
+    *source*=glm::vec3(x,y,z);
+}
+
+void VectorValue::pAdd(float x, float y, float z)
+{
+    *source+=glm::vec3(x,y,z);
+}
 
 QuaternionValue::QuaternionValue(NumberContainer<glm::quat> *source) : QObject(source)
 {

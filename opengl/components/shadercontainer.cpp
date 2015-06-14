@@ -243,22 +243,22 @@ void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
     if(uniforms.keys().contains(name)){
         switch(val->getType()){
         case ShaderVariant::ShaderVec2:
-            setUniform(name,val->getVec2()());
+            setUniform(name,(*val->getVec2())());
             break;
         case ShaderVariant::ShaderVec3:
-            setUniform(name,val->getVec3()());
+            setUniform(name,(*val->getVec3())());
             break;
         case ShaderVariant::ShaderVec4:
-            setUniform(name,val->getVec4()());
+            setUniform(name,(*val->getVec4())());
             break;
         case ShaderVariant::ShaderMat3:
-            setUniform(name,val->getMat3()());
+            setUniform(name,(*val->getMat3())());
             break;
         case ShaderVariant::ShaderMat4:
-            setUniform(name,val->getMat4()());
+            setUniform(name,(*val->getMat4())());
             break;
         case ShaderVariant::ShaderDub:
-            setUniform(name,(float)val->getDouble()());
+            setUniform(name,(float)(*val->getDouble())());
             break;
         default:
             break;

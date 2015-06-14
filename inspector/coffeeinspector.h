@@ -11,12 +11,13 @@
 #include <QTimer>
 #include <QPointer>
 #include <QHash>
+#include <QRunnable>
 
 namespace Ui {
 class CoffeeInspector;
 }
 
-class CoffeeInspector : public QWidget
+class CoffeeInspector : public QWidget, public QRunnable
 {
     Q_OBJECT
 
@@ -52,6 +53,10 @@ private:
     void updateProperty(QTreeWidgetItem* it, QVariant value);
     void clearChildren(QTreeWidgetItem* it);
 
+
+    // QRunnable interface
+public:
+    void run();
 };
 
 #endif // COFFEEINSPECTOR_H

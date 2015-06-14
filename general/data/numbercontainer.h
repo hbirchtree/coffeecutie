@@ -32,6 +32,9 @@ public:
     T operator*(const T& t){
         return getValue()*t;
     }
+    T operator*(float t){
+        return getValue()*t;
+    }
     T operator*(const NumberContainer<T>& t){
         return getValue()*t.getValue();
     }
@@ -97,6 +100,9 @@ public:
         setValue(getValue()-t.getValue());
     }
     void operator*=(const T& t){
+        setValue(getValue()*t);
+    }
+    void operator*=(float t){
         setValue(getValue()*t);
     }
     void operator*=(const NumberContainer<T>& t){

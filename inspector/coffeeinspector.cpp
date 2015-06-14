@@ -7,9 +7,13 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, Co
     QWidget(parent),
     ui(new Ui::CoffeeInspector)
 {
-    ui->setupUi(this);
     this->engineRoot = engineRoot;
     this->renderer = renderer;
+}
+
+void CoffeeInspector::run()
+{
+    ui->setupUi(this);
 
     QStringList labels;
     labels << "Object name" << "Type/Data";
@@ -21,8 +25,9 @@ CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, Co
     rendererInspector = new CoffeeRendererInspector(0,renderer);
     refreshTimer = new QTimer();
     connect(refreshTimer,SIGNAL(timeout()),SLOT(updateInformation()));
-    refreshTimer->setInterval(500);
+    refreshTimer->setInterval(1000);
     refreshTimer->start();
+    this->show();
 }
 
 CoffeeInspector::~CoffeeInspector()

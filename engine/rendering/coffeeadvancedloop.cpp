@@ -37,9 +37,6 @@
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
 {
-//    scriptEngine = new QScriptEngine(this);
-
-    evloop = new QEventLoop(this);
     connectSignals(renderer);
 
     qDebug("Importing objects from file");
@@ -49,16 +46,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qFatal("Failed to load any world information!");
     world = worlds.first();
     connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
-
-//    QScriptValue worldValue = scriptEngine->newQObject(world);
-//    QScriptValue rendererValue = scriptEngine->newQObject(renderer);
-
-//    scriptEngine->globalObject().setProperty("root",rendererValue);
-//    scriptEngine->globalObject().setProperty(world->objectName().toStdString().c_str(),worldValue);
-
-//    qDebug() << scriptEngine->evaluate("world1.blade.setPosition(5.,0.0,5.0)\n").toString();
-//    qDebug() << scriptEngine->evaluate("world1.blade.position\n").toString();
-//    qDebug() << scriptEngine->evaluate("world1.blade.material.opacity\n").toString();
 
     _rendering_loop_init = [=](){
 
@@ -112,7 +99,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
             world->getCamera()->setAspect((float)e.size().width()/(float)e.size().height());
         });
 
-        qDebug("Creating output surface");
     };
     _rendering_loop = [=](){
 //        test->mesh()->getInstances()->getInstance(0)->getPos()->setValue(
@@ -167,9 +153,14 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     controller->setObjectName("cameracontrol");
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
+    secondbop = new QTimer(this);
+    secondbop->setInterval(1000);
+
+    connect(secondbop,SIGNAL(timeout()),renderer,SLOT(requestMemoryCheck()));
+    secondbop->start();
 
     qDebug("Setting up miscellaneous signals and slots");
-    renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
+    connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         *world->getCamera()->getAspect()=(float)ev.size().width()/(float)ev.size().height();
     });
     timers = new CoffeeDataContainer<QString,double>(this);
@@ -179,14 +170,14 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             timers->setValue("fps",glfwGetTime()+1);
         }
     });
-    renderer->connect(renderer,&CoffeeRenderer::winClose,[=](){
+    connect(renderer,&CoffeeRenderer::winClose,[=](){
         qDebug("Window closing request received");
         renderer->requestWindowClose();
     });
     connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
 
     qDebug("Configuring input handling");
-    renderer->connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
+    connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
         if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
             renderer->setMousePos(0,0);
             world->getCamera()->offsetOrientation(event.pos().x()*0.1,event.pos().y()*0.1);
@@ -198,7 +189,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
                 renderer->updateMouseGrabbing(false);
         }
     });
-    renderer->connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
+    connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             renderer->requestWindowClose();
         else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
@@ -223,12 +214,12 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 //            world->unloadWorld();
         }
     });
-    renderer->connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
+    connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
         if(btn==6){
             world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
         }
     });
-    renderer->connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){
+    connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){
         switch(axe){
         case 0:
             controller->addSpeedForward(world->getCamera()->getCameraRightNormal()*val*5.f);

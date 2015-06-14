@@ -20,7 +20,7 @@ CoffeeRendererInspector::CoffeeRendererInspector(QWidget *parent, CoffeeRenderer
     last.setY(0);
 
     QStringList tableHeader;
-    tableHeader << "Value" << "Data";
+    tableHeader << "Property" << "Data";
     ui->infoView->setHeaderLabels(tableHeader);
 
     fpsItem = new QTreeWidgetItem();
@@ -29,12 +29,16 @@ CoffeeRendererInspector::CoffeeRendererInspector(QWidget *parent, CoffeeRenderer
     frameTimeItem->setText(0,"Frametime");
     memoryUsageItem = new QTreeWidgetItem();
     memoryUsageItem->setText(0,"Memory usage");
+    vmemUsageItem = new QTreeWidgetItem();
+    vmemUsageItem->setText(0,"Video memory usage");
 
     ui->infoView->addTopLevelItem(fpsItem);
     ui->infoView->addTopLevelItem(frameTimeItem);
     ui->infoView->addTopLevelItem(memoryUsageItem);
+    ui->infoView->addTopLevelItem(vmemUsageItem);
 
     connect(renderer,SIGNAL(contextReportFrametime(float)),SLOT(plotGraph(float)),Qt::QueuedConnection);
+    this->renderer = renderer;
 }
 
 CoffeeRendererInspector::~CoffeeRendererInspector()
@@ -47,6 +51,7 @@ void CoffeeRendererInspector::plotGraph(float frametime)
 {
     if(!this->isVisible()||QDateTime::currentMSecsSinceEpoch()<measureTime)
         return;
+
     measureTime=QDateTime::currentMSecsSinceEpoch()+checkInterval;
 
     fpsItem->setText(1,QString("%1 FPS").arg(1/frametime));
@@ -62,6 +67,17 @@ void CoffeeRendererInspector::plotGraph(float frametime)
 #else
     memoryUsageItem->setText(1,"[unsupported feature]");
 #endif
+
+    {
+        qint32 c = 0;
+        qint32 t = 0;
+        renderer->getVideoMemoryUsage(&c,&t);
+        if(c==0||t==0){
+            vmemUsageItem->setText(1,"Unsupported feature!");
+        }else{
+            vmemUsageItem->setText(1,QString("%1MB/%2MB").arg((float)(t-c)/1024.f).arg((float)t/1024.f));
+        }
+    }
 
     scene->addPlot(frametime*1000.0);
     scene->invalidate(QRect(),QGraphicsScene::ForegroundLayer);

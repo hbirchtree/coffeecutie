@@ -50,6 +50,8 @@ public:
 
     virtual int getSamples() const;
 
+    virtual void getVideoMemoryUsage(qint32 *current, qint32 *total) const;
+
 public slots:
     virtual void setSwapInterval(uint interval);
     virtual void setStartDisplay(uint value);
@@ -68,6 +70,7 @@ public slots:
     virtual void run();
 
     virtual void flushPipeline();
+    virtual void requestMemoryCheck();
 
 private slots:
     GLFWwindow *setWindowedFullscreen(int monitor);
@@ -88,6 +91,15 @@ private:
     GLFWwindow* window = nullptr;
 
     double frametime;
+
+    bool gpumemcheck = false;
+
+    //if either fails, stop trying it
+    bool gpumemcheck_nvidia = true;
+//    bool gpumemcheck_ati = true; //If it ever was not a pain.
+
+    qint32 vmem_free = 0;
+    qint32 vmem_total = 0;
 
 signals:
     void rendererFailed(RendererExitStatus status);

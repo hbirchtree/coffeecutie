@@ -1,4 +1,4 @@
-#ifndef QSCRIPTVECTORVALUE_H
+﻿#ifndef QSCRIPTVECTORVALUE_H
 #define QSCRIPTVECTORVALUE_H
 
 #include "general/common.h"
@@ -63,6 +63,10 @@ public slots:
     void setPositionList(QVariantList position);
     void setVelocityList(QVariantList velocity);
     void setAccelerationList(QVariantList acceleration);
+
+    void pMult(float c);
+    void pMult(float x,float y,float z);
+    void pAdd(float x,float y,float z);
 
 private:
     NumberContainer<glm::vec3> *source;

@@ -24,6 +24,8 @@ private slots:
     void on_plotResizer_valueChanged(int value);
 
 private:
+    CoffeeRenderer* renderer;
+
     QColor clearColor;
     qint64 checkInterval = 200;
     qint64 measureTime = 0;
@@ -31,6 +33,7 @@ private:
     QTreeWidgetItem* fpsItem;
     QTreeWidgetItem* frameTimeItem;
     QTreeWidgetItem* memoryUsageItem;
+    QTreeWidgetItem* vmemUsageItem;
 
     qreal readings = 0;
     GraphPlotter* scene = nullptr;

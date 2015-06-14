@@ -3,12 +3,15 @@
 #include "engine/physics/genericphysicsinterface.h"
 #include "engine/physics/physicsobject.h"
 #include "engine/physics/physicsdescriptor.h"
+#include "engine/scripting/qscriptvectorvalue.h"
+#include "general/shadervariant.h"
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
     qRegisterMetaType<PhysicalPropertyClass::PhysicsProperty>("PhysicalPropertyClass::PhysicsProperty");
     qRegisterMetaType<QEvent::Type>("QEvent::Type");
     qRegisterMetaType<QObjectList>("QObjectList");
+    qRegisterMetaType<ShaderVariant*>("ShaderVariant*");
 
     //Global meta-objects
     {
@@ -30,6 +33,16 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue pdCt = e.newFunction(physicsDescConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("PhysicsDescriptor",mo);
+    }
+    {
+        QScriptValue pdCt = e.newFunction(vectorValueConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("VectorValue",mo);
+    }
+    {
+        QScriptValue pdCt = e.newFunction(quatValueConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("QuaternionValue",mo);
     }
     ////////
 
@@ -64,5 +77,17 @@ QScriptValue CoffeeScriptEngine::physicsObjectConstructor(QScriptContext *ctxt, 
 QScriptValue CoffeeScriptEngine::physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new PhysicsDescriptor(parent);
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new VectorValue(new NumberContainer<glm::vec3>(parent,glm::vec3(0,0,0)));
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new QuaternionValue(new NumberContainer<glm::quat>(parent,glm::quat(1,0,0,0)));
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }

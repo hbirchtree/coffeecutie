@@ -43,40 +43,40 @@ ShaderVariant::ShaderVariantType ShaderVariant::getType() const
     return type;
 }
 
-std::function<glm::vec2 ()> ShaderVariant::getVec2() const
+std::function<glm::vec2 ()> *ShaderVariant::getVec2() const
 {
     //Welcome to an object-oriented hell.
     if(type==ShaderVec2)
-        return ((MutableDataContainer<std::function<glm::vec2 ()>>*)data)->getValue();
+        return ((MutableDataContainer<std::function<glm::vec2 ()>>*)data)->getPointer();
     return nullptr;
 }
-std::function<glm::vec3 ()> ShaderVariant::getVec3() const
+std::function<glm::vec3 ()> *ShaderVariant::getVec3() const
 {
     if(type==ShaderVec3)
-        return ((MutableDataContainer<std::function<glm::vec3 ()>>*)data)->getValue();
+        return ((MutableDataContainer<std::function<glm::vec3 ()>>*)data)->getPointer();
     return nullptr;
 }
-std::function<glm::vec4 ()> ShaderVariant::getVec4() const
+std::function<glm::vec4 ()> *ShaderVariant::getVec4() const
 {
     if(type==ShaderVec4)
-        return ((MutableDataContainer<std::function<glm::vec4 ()>>*)data)->getValue();
+        return ((MutableDataContainer<std::function<glm::vec4 ()>>*)data)->getPointer();
     return nullptr;
 }
-std::function<glm::mat3 ()> ShaderVariant::getMat3() const
+std::function<glm::mat3 ()> *ShaderVariant::getMat3() const
 {
     if(type==ShaderMat3)
-        return ((MutableDataContainer<std::function<glm::mat3 ()>>*)data)->getValue();
+        return ((MutableDataContainer<std::function<glm::mat3 ()>>*)data)->getPointer();
     return nullptr;
 }
-std::function<glm::mat4 ()> ShaderVariant::getMat4() const
+std::function<glm::mat4 ()> *ShaderVariant::getMat4() const
 {
     if(type==ShaderMat4)
-        return ((MutableDataContainer<std::function<glm::mat4 ()>>*)data)->getValue();
+        return ((MutableDataContainer<std::function<glm::mat4 ()>>*)data)->getPointer();
     return nullptr;
 }
-std::function<float ()> ShaderVariant::getDouble() const
+std::function<float ()> *ShaderVariant::getDouble() const
 {
     if(type==ShaderDub)
-        return ((MutableDataContainer<std::function<double()>>*)data)->getValue();
+        return ((MutableDataContainer<std::function<float()>>*)data)->getPointer();
     return nullptr;
 }
