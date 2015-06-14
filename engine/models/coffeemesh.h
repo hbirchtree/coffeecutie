@@ -43,7 +43,7 @@ public:
     CoffeeMesh(QObject* parent, aiMesh* meshSource, bool *success = 0);
 
     GLuint getVertexIndexHandle() const;
-    GLuint getVertexArrayHandle() const;
+    GLuint getVertexArrayHandle();
 
     GLuint getIndicesCount() const;
 
@@ -126,6 +126,8 @@ private:
 
     bool m_newMatrices = false;
     bool m_useInstancing = false;
+
+    bool m_doReloadMesh = false;
 };
 
 #endif // COFFEEMESH

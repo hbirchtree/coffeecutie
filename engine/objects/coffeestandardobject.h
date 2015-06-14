@@ -15,6 +15,8 @@ public:
     QString uniform;
     QPointer<ShaderVariant> data;
     bool constant = false;
+
+    bool loaded = false;
 };
 class TextureMapping {
 public:
@@ -26,6 +28,8 @@ public:
     QPointer<CoffeeTexture> texture;
     GLenum unit;
     QString samplerName;
+
+    bool loaded = false;
 };
 
 class CoffeeStandardObject : public QObject,public CoffeeObject
@@ -37,6 +41,8 @@ class CoffeeStandardObject : public QObject,public CoffeeObject
     Q_PROPERTY(QObject* material READ materialRef)
     Q_PROPERTY(QObject* shader READ shaderRef)
     Q_PROPERTY(QObject* mesh READ meshRef)
+
+    Q_PROPERTY(QObject* matrix READ getModelMatrix)
 
     Q_OBJECT
 
@@ -63,6 +69,8 @@ public:
     QObject* rotationValue();
     QObject* scaleValue();
 
+    QObject* getModelMatrix() const;
+
 public slots:
     void render();
     void unload();
@@ -78,6 +86,8 @@ protected:
     VectorValue* posWrapper;
     QuaternionValue* rotWrapper;
     VectorValue* sclWrapper;
+
+    ShaderVariant* modelMatrix;
 
     bool baked = false;
 

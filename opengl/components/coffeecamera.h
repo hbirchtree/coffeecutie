@@ -5,6 +5,7 @@
 #include "general/data/numbercontainer.h"
 
 class VectorValue;
+class ShaderVariant;
 
 class CoffeeCamera : public QObject
 {
@@ -17,6 +18,9 @@ class CoffeeCamera : public QObject
     Q_PROPERTY(QObject* rotation READ getRotationValue)
 
     Q_PROPERTY(QObject* matrix READ getMatrixVariant)
+    Q_PROPERTY(QObject* right READ getCameraRightVariant)
+    Q_PROPERTY(QObject* forward READ getCameraForwardVariant)
+    Q_PROPERTY(QObject* positionVariant READ getCameraPositionVariant)
 
     Q_OBJECT
 public:
@@ -64,6 +68,10 @@ public:
     QObject* getPositionValue();
     QObject* getRotationValue();
 
+    QObject* getCameraRightVariant() const;
+    QObject* getCameraForwardVariant() const;
+    QObject* getCameraPositionVariant() const;
+
 signals:
 
 public slots:
@@ -90,6 +98,11 @@ private:
 
     VectorValue* posWrapper;
     VectorValue* rotWrapper;
+
+    ShaderVariant* matrixVariant;
+    ShaderVariant* cameraRightVariant;
+    ShaderVariant* cameraForwardVariant;
+    ShaderVariant* cameraPosVariant;
 };
 
 #endif // COFFEECAMERA_H

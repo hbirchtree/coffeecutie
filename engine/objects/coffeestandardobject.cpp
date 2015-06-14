@@ -5,6 +5,7 @@
 #include "opengl/components/shadercontainer.h"
 #include "engine/models/coffeeinstancecontainer.h"
 #include "general/shadervariant.h"
+#include "opengl/helpers/renderingmethods.h"
 
 CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
     QObject(parent),
@@ -13,6 +14,12 @@ CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
     posWrapper = new VectorValue(position());
     rotWrapper = new QuaternionValue(rotation());
     sclWrapper = new VectorValue(scale());
+
+    modelMatrix = new ShaderVariant([=](){
+        return RenderingMethods::translateObjectMatrix(position()->getValue(),
+                                                       rotation()->getValue(),
+                                                       scale()->getValue());
+    });
 }
 
 CoffeeStandardObject::~CoffeeStandardObject()
@@ -34,11 +41,20 @@ void CoffeeStandardObject::render()
     }
 
     glUseProgram(pshader->getProgramId());
-    for(ShaderMapping m : uniforms)
+    for(ShaderMapping m : uniforms){
+        if(!m.loaded){
+            pshader->getUniformLocation(m.uniform);
+            m.loaded = true;
+        }
         if(!m.constant)
             pshader->setUniform(m.uniform,m.data);
+    }
     for(TextureMapping m : textures){
-        //Might want to secure this in the future
+        if(!m.loaded){
+            pshader->getUniformLocation(m.samplerName);
+            m.texture->loadTexture();
+            m.loaded = true;
+        }
         glActiveTexture(static_cast<GLenum>(GL_TEXTURE0+textures.indexOf(m)));
         glBindTexture(GL_TEXTURE_2D,
                       m.texture->getHandle());
@@ -73,15 +89,18 @@ void CoffeeStandardObject::unload()
         pmesh->unloadMesh();
     for(TextureMapping m : textures)
         m.texture->unloadTexture();
+    pshader->unload();
     baked = false;
 }
 
 void CoffeeStandardObject::load()
 {
+    pshader->buildProgram();
     if(pmesh)
         pmesh->loadMesh();
     for(ShaderMapping m : uniforms){
         pshader->getUniformLocation(m.uniform);
+        m.loaded = true;
         if(m.constant)
             pshader->setUniform(m.uniform,m.data);
     }
@@ -171,6 +190,11 @@ QObject *CoffeeStandardObject::rotationValue()
 QObject *CoffeeStandardObject::scaleValue()
 {
     return sclWrapper;
+}
+
+QObject *CoffeeStandardObject::getModelMatrix() const
+{
+    return modelMatrix;
 }
 
 void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)

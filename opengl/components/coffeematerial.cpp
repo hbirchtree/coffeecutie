@@ -1,6 +1,7 @@
 #include "coffeematerial.h"
 
 #include "general/shadervariant.h"
+#include <QMetaEnum>
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
     m_shininess = new NumberContainer<float>(this,1.f);
@@ -279,12 +280,25 @@ void CoffeeMaterial::setTexture(CoffeeTexture::CoffeeTextureType id, QPointer<Co
     textures.insert(id,texture);
 }
 
-QPointer<CoffeeTexture> CoffeeMaterial::getTexture(CoffeeTexture::CoffeeTextureType id){
+CoffeeTexture* CoffeeMaterial::getTexture(CoffeeTexture::CoffeeTextureType id){
     return textures.value(id);
 }
 
-QList<CoffeeTexture::CoffeeTextureType> CoffeeMaterial::getTextureKeys(){
+CoffeeTexture* CoffeeMaterial::getTexture(int id){
+    CoffeeTexture::CoffeeTextureType t = static_cast<CoffeeTexture::CoffeeTextureType>(id);
+    return getTexture(t);
+}
+
+QList<CoffeeTexture::CoffeeTextureType> CoffeeMaterial::getTextureKeys() const{
     return textures.keys();
+}
+
+QVariantList CoffeeMaterial::textureTypes() const
+{
+    QVariantList l;
+    for(CoffeeTexture::CoffeeTextureType t : getTextureKeys())
+        l.append(t);
+    return l;
 }
 
 void CoffeeMaterial::setTransparency(const glm::vec3 &arg)

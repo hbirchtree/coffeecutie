@@ -13,6 +13,17 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 
     this->posWrapper = new VectorValue(position);
     this->rotWrapper = new VectorValue(rotation_euler);
+
+    this->matrixVariant = new ShaderVariant([=](){return getMatrix();});
+    this->cameraForwardVariant = new ShaderVariant([=](){
+        return getCameraForwardNormal();
+    });
+    this->cameraRightVariant = new ShaderVariant([=](){
+        return getCameraRightNormal();
+    });
+    this->cameraPosVariant = new ShaderVariant([=](){
+        return getCameraPos();
+    });
 }
 
 CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov) : CoffeeCamera(parent)
@@ -205,7 +216,7 @@ float CoffeeCamera::getFov() const
 
 QObject *CoffeeCamera::getMatrixVariant() const
 {
-    return new ShaderVariant([=](){return getMatrix();});
+    return matrixVariant;
 }
 
 QObject *CoffeeCamera::getPositionValue()
@@ -216,6 +227,21 @@ QObject *CoffeeCamera::getPositionValue()
 QObject *CoffeeCamera::getRotationValue()
 {
     return rotWrapper;
+}
+
+QObject *CoffeeCamera::getCameraRightVariant() const
+{
+    return cameraRightVariant;
+}
+
+QObject *CoffeeCamera::getCameraForwardVariant() const
+{
+    return cameraForwardVariant;
+}
+
+QObject *CoffeeCamera::getCameraPositionVariant() const
+{
+    return cameraPosVariant;
 }
 
 float CoffeeCamera::getZnear() const

@@ -251,10 +251,9 @@
 			"rotation": [0,0,0]
 		},
 		"clearcolor": "#002525FF",
-		"world.fog.density": 0.0,
+		"world.fog.density": 0.2,
 		"world.fog.color": "#002525FF",
-		"render-script": "scripts/render-buffered.js",
-		"logic-script": "scripts/gameloop.js",
+		"world-script": "scripts/test.qts",
 		"skybox": {
 			"id": "sky",
 			"cubemap": "skytexture",

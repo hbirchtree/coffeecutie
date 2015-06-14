@@ -6,6 +6,7 @@
 #include "engine/objects/coffeeskybox.h"
 #include "engine/objects/coffeeparticlesystem.h"
 #include "engine/physics/bulletphysics.h"
+#include "general/shadervariant.h"
 
 CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
 {
@@ -26,6 +27,13 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
     connect(physicsThread,SIGNAL(started()),
             physics.data(),SLOT(run()));
     physicsThread->start();
+
+    this->fogColorVariant = new ShaderVariant([=](){
+        return this->getFogColor();
+    });
+    this->fogDensityVariant = new ShaderVariant([=](){
+        return this->getFogDensity();
+    });
 }
 
 CoffeeWorldOpts::~CoffeeWorldOpts()
@@ -72,6 +80,14 @@ void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
 QList<QPointer<CoffeeOmniLight> > &CoffeeWorldOpts::getLights()
 {
     return lights;
+}
+
+QObjectList CoffeeWorldOpts::getVariantLights()
+{
+    QObjectList l;
+    for(QPointer<CoffeeOmniLight> p : lights)
+        l.append(p.data());
+    return l;
 }
 glm::vec4 CoffeeWorldOpts::getFogColor() const
 {
@@ -169,9 +185,8 @@ void CoffeeWorldOpts::renderWorld()
 
     if(wireframeMode())
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
     //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
-
-
     for(CoffeeObject* o : this->getObjects()){
         o->render();
     }
@@ -216,4 +231,14 @@ QColor CoffeeWorldOpts::fogColorValue() const
 QColor CoffeeWorldOpts::clearColorValue() const
 {
     return QColor(qRgba(clearColor.x*255,clearColor.y*255,clearColor.z*255,clearColor.w*255));
+}
+
+QObject *CoffeeWorldOpts::getFogColorVariant()
+{
+    return fogColorVariant;
+}
+
+QObject *CoffeeWorldOpts::getFogDensityVariant()
+{
+    return fogDensityVariant;
 }

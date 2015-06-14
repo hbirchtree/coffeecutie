@@ -15,13 +15,13 @@ class ShaderContainer : public QObject, public CoffeeGameAsset
 
     Q_OBJECT
 public:
-    explicit ShaderContainer(QObject *parent = 0);
+    ShaderContainer(QObject *parent);
     ~ShaderContainer();
 
     //Full-process functions
-    bool buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
-    bool buildProgram(QString vertShaderFile,QString fragShaderFile);
-    bool buildProgram();
+    Q_INVOKABLE bool buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
+    Q_INVOKABLE bool buildProgram(QString vertShaderFile,QString fragShaderFile);
+    Q_INVOKABLE bool buildProgram();
 
     void compileShaders();
 

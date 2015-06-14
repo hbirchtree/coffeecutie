@@ -44,8 +44,6 @@ private:
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;
 
-    void setupRenderer(CoffeeStandardObject *object);
-
 };
 
 #endif // COFFEEADVANCEDLOOP_H

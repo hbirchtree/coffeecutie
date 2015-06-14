@@ -13,6 +13,7 @@ class CoffeeObject;
 class CoffeeOmniLight;
 class CoffeeParticleSystem;
 class PhysicsObject;
+class ShaderVariant;
 
 class CoffeeWorldOpts : public QObject
 {
@@ -22,6 +23,12 @@ class CoffeeWorldOpts : public QObject
     Q_PROPERTY(float fogDensity READ getFogDensity WRITE setFogDensity)
 
     Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
+
+    Q_PROPERTY(QObject* fogColorVariant READ getFogColorVariant)
+    Q_PROPERTY(QObject* fogDensityVariant READ getFogDensityVariant)
+
+    Q_PROPERTY(QObjectList lights READ getVariantLights)
+
     Q_OBJECT
 public:
     CoffeeWorldOpts(QObject *renderer);
@@ -50,6 +57,10 @@ public:
 
     QColor fogColorValue() const;
     QColor clearColorValue() const;
+
+    QObjectList getVariantLights();
+    QObject* getFogColorVariant();
+    QObject* getFogDensityVariant();
 
 signals:
     void physicsObjectAdded(PhysicsObject* object);
@@ -92,6 +103,9 @@ private:
     QList<QPointer<CoffeeParticleSystem>> particles;
     QPointer<CoffeeRenderer> renderer;
     bool m_wireframeMode = false;
+
+    ShaderVariant* fogColorVariant;
+    ShaderVariant* fogDensityVariant;
 };
 
 #endif // COFFEEWORLDOPTS_H

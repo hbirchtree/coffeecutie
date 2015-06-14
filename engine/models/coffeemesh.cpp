@@ -67,8 +67,13 @@ GLuint CoffeeMesh::getVertexIndexHandle() const
     return buffers.at(indexBufferIndex());
 }
 
-GLuint CoffeeMesh::getVertexArrayHandle() const
+GLuint CoffeeMesh::getVertexArrayHandle()
 {
+    if(m_doReloadMesh){
+        unloadMesh();
+        loadMesh();
+        m_doReloadMesh = false;
+    }
     return arrays.at(0);
 }
 
@@ -238,6 +243,8 @@ void CoffeeMesh::unloadMesh(){
     removeAllocation();
     if(isAllocated())
         return;
+    matrixbuffer = 0;
+    m_indexBufferIndex = 0;
     glDeleteVertexArrays(arrays.size(),arrays.data());
     glDeleteBuffers(buffers.size(),buffers.data());
 }
@@ -324,6 +331,8 @@ void CoffeeMesh::updateModelMatrices()
 
 void CoffeeMesh::loadModelMatrices()
 {
+    if(matrixbuffer==0)
+        return;
     glBindBuffer(GL_ARRAY_BUFFER,buffers[matrixbuffer]);
     QVector<glm::mat4> data = instances->getData();
     glBufferData(GL_ARRAY_BUFFER,
@@ -371,4 +380,5 @@ void CoffeeMesh::setIndexBufferIndex(int indexBufferIndex)
 void CoffeeMesh::setUseInstancing(bool useInstancing)
 {
     m_useInstancing = useInstancing;
+    m_doReloadMesh = true;
 }

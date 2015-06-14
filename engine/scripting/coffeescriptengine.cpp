@@ -5,13 +5,16 @@
 #include "engine/physics/physicsdescriptor.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "general/shadervariant.h"
+#include "opengl/components/coffeetexture.h"
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
     qRegisterMetaType<PhysicalPropertyClass::PhysicsProperty>("PhysicalPropertyClass::PhysicsProperty");
+    qRegisterMetaType<CoffeeTexture::CoffeeTextureType>("CoffeeTexture::CoffeeTextureType");
     qRegisterMetaType<QEvent::Type>("QEvent::Type");
     qRegisterMetaType<QObjectList>("QObjectList");
     qRegisterMetaType<ShaderVariant*>("ShaderVariant*");
+    qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
 
     //Global meta-objects
     {
@@ -58,6 +61,10 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
     {
         QScriptValue mo = e.newQMetaObject(&PhysicalPropertyClass::staticMetaObject);
         e.globalObject().setProperty("PhysicalProperty",mo);
+    }
+    {
+        QScriptValue mo = e.newQMetaObject(&CoffeeTexture::staticMetaObject);
+        e.globalObject().setProperty("CoffeeTexture",mo);
     }
     ////////
 

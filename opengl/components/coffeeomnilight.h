@@ -3,12 +3,21 @@
 
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
+
+class VectorValue;
+class ShaderVariant;
+
 class CoffeeOmniLight : public QObject
 {
-    Q_PROPERTY(QString color READ getStringColor)
-    Q_PROPERTY(QString position READ getStringPosition)
+    Q_PROPERTY(QObject* color READ getColorValue)
+    Q_PROPERTY(QObject* position READ getPositionValue)
+    Q_PROPERTY(QObject* colorVariant READ getColorVariant)
+    Q_PROPERTY(QObject* positionVariant READ getPositionVariant)
+
     Q_PROPERTY(float attenuation READ getAttenuationValue)
     Q_PROPERTY(float ambientCoefficient READ getAmbientCoefficientValue)
+    Q_PROPERTY(QObject* attenuationVariant READ getAttenuationVariant)
+    Q_PROPERTY(QObject* ambientCoefficientVariant READ getAmbientCoefficientVariant)
 
     Q_OBJECT
 public:
@@ -17,26 +26,37 @@ public:
     ~CoffeeOmniLight();
 
     QPointer<NumberContainer<glm::vec3>> getPosition();
-    void setPosition(QPointer<NumberContainer<glm::vec3>> value);
-    QString getStringPosition() const;
 
     QPointer<NumberContainer<glm::vec3>> getColor();
-    void setColor(QPointer<NumberContainer<glm::vec3>> value);
-    QString getStringColor() const;
 
     QPointer<NumberContainer<float> > getAttenuation();
-    void setAttenuation(QPointer<NumberContainer<float>> value);
     float getAttenuationValue() const;
 
     QPointer<NumberContainer<float>> getAmbientCoefficient();
-    void setAmbientCoefficient(QPointer<NumberContainer<float>> value);
     float getAmbientCoefficientValue() const;
+
+    QObject* getColorValue();
+    QObject* getPositionValue();
+
+    QObject* getColorVariant();
+    QObject* getPositionVariant();
+    QObject* getAttenuationVariant();
+    QObject* getAmbientCoefficientVariant();
 
 private:
     QPointer<NumberContainer<glm::vec3>> position;
     QPointer<NumberContainer<glm::vec3>> color;
     QPointer<NumberContainer<float>> attenuation;
     QPointer<NumberContainer<float>> ambientCoefficient;
+
+    VectorValue* colorValue;
+    VectorValue* positionValue;
+
+    ShaderVariant* colorVariant;
+    ShaderVariant* positionVariant;
+
+    ShaderVariant* ambientCoefficientVariant;
+    ShaderVariant* attenuationVariant;
 };
 
 #endif // COFFEEOMNILIGHT_H

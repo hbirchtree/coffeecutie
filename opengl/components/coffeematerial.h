@@ -31,8 +31,8 @@ class CoffeeMaterial : public QObject, public CoffeeGameAsset{
     Q_PROPERTY(float reflectivity READ reflectivity WRITE setReflectivity)
     Q_PROPERTY(float shininess READ shininess WRITE setShininess)
     Q_PROPERTY(float opacity READ opacity WRITE setOpacity)
-//    Q_PROPERTY(GLenum blendMode READ blendMode WRITE setBlendMode)
-//    Q_PROPERTY(GLenum shadingMode READ shadingMode WRITE setShadingMode)
+
+    Q_PROPERTY(QVariantList textureTypes READ textureTypes)
 
     Q_OBJECT
 
@@ -70,11 +70,14 @@ public:
     QObject* ambientColorVariant() const;
     QObject* emissiveColorVariant() const;
     QObject* colorMultiplierVariant() const;
+    CoffeeTexture* getTexture(CoffeeTexture::CoffeeTextureType id);
+    Q_INVOKABLE CoffeeTexture* getTexture(int id);
+    QList<CoffeeTexture::CoffeeTextureType> getTextureKeys() const;
+
+    QVariantList textureTypes() const;
 
 public slots:
     void setTexture(CoffeeTexture::CoffeeTextureType id,QPointer<CoffeeTexture> texture);
-    QPointer<CoffeeTexture> getTexture(CoffeeTexture::CoffeeTextureType id);
-    QList<CoffeeTexture::CoffeeTextureType> getTextureKeys();
 
     void setWireframe(bool wireframe);
     void setCulling(bool culling);
