@@ -42,6 +42,9 @@ class CoffeeStandardObject : public QObject,public CoffeeObject
     Q_PROPERTY(QObject* shader READ shaderRef)
     Q_PROPERTY(QObject* mesh READ meshRef)
 
+    Q_PROPERTY(QObject* physics READ physicsRef WRITE setPhysicsObject)
+    Q_PROPERTY(bool hasPhysics READ hasPhysics)
+
     Q_PROPERTY(QObject* matrix READ getModelMatrix)
 
     Q_OBJECT
@@ -49,10 +52,6 @@ class CoffeeStandardObject : public QObject,public CoffeeObject
 public:
     CoffeeStandardObject(QObject* parent);
     ~CoffeeStandardObject();
-
-    QString getStringPosition() const;
-    QString getStringRotation() const;
-    QString getStringScale() const;
 
     Q_INVOKABLE CoffeeMesh* mesh();
     void setMesh(CoffeeMesh* mesh);
@@ -69,7 +68,11 @@ public:
     QObject* rotationValue();
     QObject* scaleValue();
 
+    QObject* physicsRef();
+
     QObject* getModelMatrix() const;
+
+    bool hasPhysics();
 
 public slots:
     void render();
@@ -78,6 +81,8 @@ public slots:
 
     void setPosition(float x, float y, float z);
     void setRotation(float x, float y, float z);
+
+    void setPhysicsObject(QObject* obj);
 
     void setUniform(QString uniformName,ShaderVariant* data, bool constant);
     void setTexture(QString samplerName, CoffeeTexture *texture);

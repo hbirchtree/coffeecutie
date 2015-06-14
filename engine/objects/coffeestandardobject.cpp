@@ -111,18 +111,6 @@ void CoffeeStandardObject::load()
     baked = true;
 }
 
-QString CoffeeStandardObject::getStringPosition() const{
-    return QStringFunctions::toString(vposition->getValue());
-}
-
-QString CoffeeStandardObject::getStringRotation() const{
-    return QStringFunctions::toString(qrotation->getValue());
-}
-
-QString CoffeeStandardObject::getStringScale() const{
-    return QStringFunctions::toString(vscale->getValue());
-}
-
 CoffeeMesh *CoffeeStandardObject::mesh()
 {
     return pmesh;
@@ -192,9 +180,19 @@ QObject *CoffeeStandardObject::scaleValue()
     return sclWrapper;
 }
 
+QObject *CoffeeStandardObject::physicsRef()
+{
+    return physics();
+}
+
 QObject *CoffeeStandardObject::getModelMatrix() const
 {
     return modelMatrix;
+}
+
+bool CoffeeStandardObject::hasPhysics()
+{
+    return physics();
 }
 
 void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)
@@ -222,5 +220,12 @@ void CoffeeStandardObject::setPosition(float x, float y, float z)
 void CoffeeStandardObject::setRotation(float x, float y, float z)
 {
     rotation()->setValue(glm::quat(glm::vec3(x,y,z)));
+}
+
+void CoffeeStandardObject::setPhysicsObject(QObject *obj)
+{
+    PhysicsObject* t = qobject_cast<PhysicsObject*>(obj);
+    if(t)
+        this->CoffeeObject::setPhysicsObject(t);
 }
 

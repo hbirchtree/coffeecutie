@@ -57,9 +57,10 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         qDebug("Configuring renderer");
         renderer->setSamples(4);
-        renderer->updateRendererClearColor(world->getClearColor());
 
         qDebug("Configuring objects for rendering");
+
+        // TODO : this needs to be done in QtScript
         for(CoffeeObject* o : world->getObjects()){
             CoffeeStandardObject* stdobj = dynamic_cast<CoffeeStandardObject*>(o);
             if(stdobj){
@@ -71,6 +72,9 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
                 o->rotation()->bindValue(o->physics()->getPhysicalRotation());
             qDebug("Set up for rendering: %s",stdobj->objectName().toStdString().c_str());
         }
+
+        // TODO : this needs to be moved into CoffeeWorldOpts
+        renderer->updateRendererClearColor(world->getClearColor());
 
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
@@ -153,6 +157,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     connect(secondbop,SIGNAL(timeout()),renderer,SLOT(requestMemoryCheck()));
     secondbop->start();
 
+    // TODO : move stuff into QtScript
     qDebug("Setting up miscellaneous signals and slots");
     timers = new CoffeeDataContainer<QString,double>(this);
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
