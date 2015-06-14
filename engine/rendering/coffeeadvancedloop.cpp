@@ -72,12 +72,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
             qDebug("Set up for rendering: %s",stdobj->objectName().toStdString().c_str());
         }
 
-        world->getLights().first()->getPosition()->bindValue(world->getCamera()->getPosition());
-
-        qDebug("Resizing viewport");
-//        QSize s = world->getRenderer()->getCurrentFramebufferSize();
-//        *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
-
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
 

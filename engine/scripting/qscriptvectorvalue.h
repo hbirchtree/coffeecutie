@@ -43,7 +43,12 @@ public:
     QVariantList velocity() const;
     QVariantList acceleration() const;
 
+    NumberContainer<glm::vec3>* getRaw();
+
 public slots:
+    void bind(VectorValue* v);
+    void unbind();
+
     void setPosition(float x,float y,float z);
     void setVelocity(float x,float y,float z);
     void setAcceleration(float x,float y,float z);
@@ -81,7 +86,11 @@ class QuaternionValue : public QObject
 public:
     QuaternionValue(NumberContainer<glm::quat>* source);
     QVariantList value() const;
+    NumberContainer<glm::quat>* getRaw();
+
 public slots:
+    void bind(QuaternionValue* v);
+    void unbind();
     void setValue(QVariantList value);
 
 private:

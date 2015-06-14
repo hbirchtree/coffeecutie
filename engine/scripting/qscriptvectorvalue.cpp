@@ -68,6 +68,21 @@ QVariantList VectorValue::acceleration() const
     return QVariantList() << p.x << p.y << p.z;
 }
 
+NumberContainer<glm::vec3> *VectorValue::getRaw()
+{
+    return source;
+}
+
+void VectorValue::bind(VectorValue *v)
+{
+    this->source->bindValue(v->getRaw());
+}
+
+void VectorValue::unbind()
+{
+    source->unbindValue();
+}
+
 void VectorValue::setPosition(float x, float y, float z)
 {
     source->setValue(glm::vec3(x,y,z));
@@ -191,6 +206,21 @@ QVariantList QuaternionValue::value() const
 {
     glm::quat p = source->getValue();
     return QVariantList() << p.w << p.x << p.y << p.z;
+}
+
+NumberContainer<glm::quat> *QuaternionValue::getRaw()
+{
+    return source;
+}
+
+void QuaternionValue::bind(QuaternionValue *v)
+{
+    this->source->bindValue(v->getRaw());
+}
+
+void QuaternionValue::unbind()
+{
+    source->unbindValue();
 }
 
 void QuaternionValue::setValue(QVariantList value)
