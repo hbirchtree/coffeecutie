@@ -22,7 +22,10 @@ class CoffeeInspector : public QWidget, public QRunnable
     Q_OBJECT
 
 public:
-    CoffeeInspector(QWidget *parent = 0,QList<QObject*> engineRoot = QList<QObject*>(),CoffeeRenderer* renderer = nullptr);
+    CoffeeInspector(QWidget *parent = 0,
+                    QList<QObject*> engineRoot = QList<QObject*>(),
+                    CoffeeRenderer* renderer = nullptr,
+                    CoffeeScriptEngine* scriptEngine = nullptr);
     ~CoffeeInspector();
 
 private slots:
@@ -34,6 +37,8 @@ private slots:
 
 private:
     QTimer *refreshTimer;
+
+    CoffeeScriptEngine* scriptEngine;
 
     QTreeWidgetItem* threadInfoItem = nullptr;
     QHash<QObject*,QTreeWidgetItem*> objectsMapping;

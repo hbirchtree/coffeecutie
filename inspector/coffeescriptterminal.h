@@ -13,7 +13,7 @@ class CoffeeScriptTerminal : public QWidget
     Q_OBJECT
 
 public:
-    CoffeeScriptTerminal(QWidget *parent, QList<QObject *> rootObject);
+    CoffeeScriptTerminal(QWidget *parent, QList<QObject *> rootObject, CoffeeScriptEngine* engine);
     ~CoffeeScriptTerminal();
 
 private slots:

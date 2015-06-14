@@ -32,27 +32,32 @@
 #include "engine/models/coffeeinstancecontainer.h"
 
 #include "engine/objects/coffeeparticlesystem.h"
-
-#include <QtScript>
+#include "engine/scripting/coffeescriptengine.h"
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
 {
     connectSignals(renderer);
 
+    this->scriptEngine = new CoffeeScriptEngine(this);
+    this->factory = new CoffeeObjectFactory(this);
+    this->factory->setObjectName("factory");
+    factory->setParent(this);
+
     qDebug("Importing objects from file");
-    CoffeeObjectFactory f;
-    QList<CoffeeWorldOpts*> worlds = f.importObjects(fileSource,this);
+    QList<CoffeeWorldOpts*> worlds = factory->importObjects(fileSource,this);
     if(worlds.isEmpty())
         qFatal("Failed to load any world information!");
     world = worlds.first();
     connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
+
+    world->setRenderer(renderer);
+    world->connectSignals(controller);
 
     _rendering_loop_init = [=](){
 
         qDebug("Configuring renderer");
         renderer->setSamples(4);
         renderer->updateRendererClearColor(world->getClearColor());
-        world->setRenderer(renderer);
 
         qDebug("Configuring objects for rendering");
         for(CoffeeObject* o : world->getObjects()){
@@ -70,8 +75,8 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         world->getLights().first()->getPosition()->bindValue(world->getCamera()->getPosition());
 
         qDebug("Resizing viewport");
-        QSize s = world->getRenderer()->getCurrentFramebufferSize();
-        *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
+//        QSize s = world->getRenderer()->getCurrentFramebufferSize();
+//        *world->getCamera()->getAspect()=(float)s.width()/(float)s.height();
 
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
@@ -93,22 +98,20 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         screenSurface->getFramebuffer()->createFramebuffer(renderer->getWindowDimensions(),1);
         connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){
             screenSurface->getFramebuffer()->resizeViewport(e.size());
-            world->getCamera()->setAspect((float)e.size().width()/(float)e.size().height());
         });
-
     };
     _rendering_loop = [=](){
-//        test->mesh()->getInstances()->getInstance(0)->getPos()->setValue(
-//                    glm::vec3(std::fmod(renderer->getLoopTime()*5,10),0,0));
         test->mesh()->updateModelMatrices();
         js->update();
+
         //bind the framebuffer which we render to
         screenSurface->bind();
         //clear the depth buffer, otherwise we won't see sh*t
         glClear(GL_DEPTH_BUFFER_BIT);
 
         //render the current world
-        world->renderWorld();
+        if(world)
+            world->renderWorld();
 
         renderer->flushPipeline();
 
@@ -157,9 +160,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     secondbop->start();
 
     qDebug("Setting up miscellaneous signals and slots");
-    connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
-        *world->getCamera()->getAspect()=(float)ev.size().width()/(float)ev.size().height();
-    });
     timers = new CoffeeDataContainer<QString,double>(this);
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
         if(glfwGetTime()>=timers->getValue("fps")){
@@ -174,16 +174,9 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
 
     qDebug("Configuring input handling");
-    connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
-        if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
-            renderer->setMousePos(0,0);
-            world->getCamera()->offsetOrientation(event.pos().x()*0.1,event.pos().y()*0.1);
-        }
-        if(event.type()==QMouseEvent::MouseButtonPress){
-            if(event.button()==Qt::LeftButton)
-                renderer->updateMouseGrabbing(true);
-            else if(event.button()==Qt::RightButton)
-                renderer->updateMouseGrabbing(false);
+    connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
+        if(btn==6){
+            world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
         }
     });
     connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
@@ -205,15 +198,10 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             controller->addSpeedRight(glm::vec3(0,0,0));
         else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
             controller->addSpeedForward(glm::vec3(0,0,0));
-        else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress)
-            world->setWireframeMode(!world->wireframeMode());
-        else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
+        else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress){
+//            setWireframeMode(!world->wireframeMode());
+        }else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
 //            world->unloadWorld();
-        }
-    });
-    connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
-        if(btn==6){
-            world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
         }
     });
     connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){
@@ -226,10 +214,26 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             break;
         }
     });
-    connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
-        world->getCamera()->offsetOrientation(d.y,d.x);
+    connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
+        if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
+            renderer->setMousePos(0,0);
+            controller->mouseSetRotation((float)event.pos().x(),(float)event.pos().y());
+        }
+        if(event.type()==QMouseEvent::MouseButtonPress){
+            if(event.button()==Qt::LeftButton)
+                renderer->updateMouseGrabbing(true);
+            else if(event.button()==Qt::RightButton)
+                renderer->updateMouseGrabbing(false);
+        }
     });
-    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
-        *world->getCamera()->getPosition()+=glm::vec3(d);
-    });
+}
+
+QObject *CoffeeAdvancedLoop::getFactory()
+{
+    return factory;
+}
+
+CoffeeScriptEngine *CoffeeAdvancedLoop::getScriptEngine()
+{
+    return scriptEngine;
 }

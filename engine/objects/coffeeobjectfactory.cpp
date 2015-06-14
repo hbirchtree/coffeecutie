@@ -28,9 +28,14 @@
 #include <QFuture>
 #include <QEventLoop>
 
-CoffeeObjectFactory::CoffeeObjectFactory(){}
+CoffeeObjectFactory::CoffeeObjectFactory(QObject *parent) : QObject(parent){}
 
-QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject *parent)
+QObject *CoffeeObjectFactory::importAssetRoot(QString file)
+{
+    return importAssets(file,this->parent());
+}
+
+CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *parent)
 {
     QElapsedTimer t;
     t.start();
@@ -46,73 +51,79 @@ QList<CoffeeWorldOpts*> CoffeeObjectFactory::importObjects(QString file, QObject
                err.errorString().toStdString().c_str());
     }
 
+    CoffeeAssetStorage *s = new CoffeeAssetStorage(0);
+    s->moveToThread(parent->thread());
+
     if(source.isEmpty()){
         qDebug("Object file was empty or non-existing!");
-        return QList<CoffeeWorldOpts*>();
+        return s;
     }
 
-    CoffeeAssetStorage s;
-
     QFileInfo f(file);
-    s.filepath = f.path()+QDir::separator();
+    s->filepath = f.path()+QDir::separator();
 
     //The asset-based system allows us to load a resource once and reuse it infinitely from the bottom up.
     //We will need to create a system later on that determines which resources should be unloaded and which should not.
     //We will most likely use the CoffeeGameAsset class for this (pre-alloc, alloc, and release as states)
 
     QObject* importerRoot = new QObject();
-    QList<QFuture<CoffeeAssetStorage>> importData;
+    QList<QFuture<CoffeeAssetStorage*>> importData;
 
     for(QString key : source.keys())
         if(key=="assets"){
             CoffeeAssetImporter* imp = new CoffeeAssetImporter(importerRoot,parent); //temporary object
-            QFuture<CoffeeAssetStorage> index =
+            QFuture<CoffeeAssetStorage*> index =
                     QtConcurrent::run(imp,
                                       &CoffeeAssetImporter::importAssets,
                                       source.value(key).toList(),
-                                      s.filepath);
+                                      s->filepath);
             importData.append(index);
         }
 
-    for(QFuture<CoffeeAssetStorage> e : importData){
-        s.merge(e.result());
+    for(QFuture<CoffeeAssetStorage*> e : importData){
+        s->merge(e.result());
     }
 
     importerRoot->deleteLater();
 
-    s.setParents(parent);
+    s->setParents(parent);
 
     qDebug("Assets: %i shader(s), %i model(s), %i mesh(es), %i material(s), %i texture(s)",
-           s.shaders.size(),
-           s.models.size(),
-           s.meshes.size(),
-           s.materials.size(),
-           s.textures.size());
+           s->shaders.size(),
+           s->models.size(),
+           s->meshes.size(),
+           s->materials.size(),
+           s->textures.size());
 
 
     //World data
     for(QString key : source.keys()){
         if(key.startsWith("world."))
-            s.worlds.append(createWorld(key.mid(6),source.value(key).toMap(),s,parent));
+            s->worlds.append(createWorld(key.mid(6),source.value(key).toMap(),s,parent));
     }
     qDebug("Spent %i milliseconds parsing content from disk",t.elapsed());
-    return s.worlds;
+    return s;
 }
 
-CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeAssetStorage &assets, QObject* parent)
+QList<CoffeeWorldOpts *> CoffeeObjectFactory::importObjects(QString file, QObject *parent)
+{
+    return importAssets(file,parent)->worlds;
+}
+
+CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeAssetStorage *assets, QObject* parent)
 {
     CoffeeStandardObject* obj = new CoffeeStandardObject(parent);
     for(QString key : data.keys()){
         if(key=="id")
             obj->setObjectName(data.value(key).toString());
         else if(key=="shader.id"){
-            if(assets.shaders.contains(data.value(key).toString())){
-                obj->setShader(assets.shaders.value(data.value(key).toString()));
+            if(assets->shaders.contains(data.value(key).toString())){
+                obj->setShader(assets->shaders.value(data.value(key).toString()));
             }else{
                 qFatal("Failed to set shader for CoffeeStandardObject: Shader not found");
             }
         }else if(key=="model.id"){
-            CoffeeModelStruct *m = assets.acquireModel(data.value(key).toString());
+            CoffeeModelStruct *m = assets->acquireModel(data.value(key).toString());
             if(!m)
                 qFatal("Failed to set model!");
             obj->setMesh(m->mesh);
@@ -191,7 +202,7 @@ CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeA
     return obj;
 }
 
-CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, CoffeeAssetStorage &assets, QObject *parent)
+CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
 {
     CoffeeWorldOpts* world = new CoffeeWorldOpts(parent);
     world->setObjectName(key);
@@ -265,23 +276,23 @@ CoffeeOmniLight *CoffeeObjectFactory::createLight(const QVariantMap &data, QObje
     return light;
 }
 
-CoffeeSkybox *CoffeeObjectFactory::createSkybox(const QVariantMap &data, CoffeeAssetStorage &assets, QObject *parent)
+CoffeeSkybox *CoffeeObjectFactory::createSkybox(const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
 {
     CoffeeSkybox* skybox = new CoffeeSkybox(parent);
     for(QString key : data.keys()){
         if(key=="cubemap"){
-            skybox->setTexture(assets.textures.value(data.value(key).toString()));
+            skybox->setTexture(assets->textures.value(data.value(key).toString()));
             if(!skybox->getTexture())
                 qFatal("Failed to set skybox texture!");
         }else if(key=="mesh"){
-            CoffeeModelStruct *m = assets.acquireModel(data.value(key).toString());
+            CoffeeModelStruct *m = assets->acquireModel(data.value(key).toString());
             if(!m)
                 qFatal("Failed to set skybox mesh!");
             skybox->setSkymesh(m->mesh);
             if(!skybox->getSkymesh())
                 qFatal("Failed to set skybox mesh!");
         }else if(key=="shader"){
-            skybox->setShader(assets.shaders.value(data.value(key).toString()));
+            skybox->setShader(assets->shaders.value(data.value(key).toString()));
             if(!skybox->getShader())
                 qFatal("Failed to set skybox texture!");
         }
@@ -291,21 +302,21 @@ CoffeeSkybox *CoffeeObjectFactory::createSkybox(const QVariantMap &data, CoffeeA
     return skybox;
 }
 
-CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMap &data, const CoffeeAssetStorage &assets, QObject *parent)
+CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
 {
     CoffeeParticleSystem* system = new CoffeeParticleSystem(parent,nullptr);
 
     for(QString key : data.keys()){
         if(key=="texture"){
-            system->setTexture(assets.textures.value(data.value(key).toString()));
+            system->setTexture(assets->textures.value(data.value(key).toString()));
             if(!system->getTexture())
                 qFatal("Failed to set particle system sprite!");
         }else if(key=="render-shader"){
-            system->setShader(assets.shaders.value(data.value(key).toString()));
+            system->setShader(assets->shaders.value(data.value(key).toString()));
             if(!system->getShader())
                 qFatal("Failed to set particle system render shader!");
         }else if(key=="transform-shader"){
-            system->setTransformShader(assets.shaders.value(data.value(key).toString()));
+            system->setTransformShader(assets->shaders.value(data.value(key).toString()));
             if(!system->getTransformShader())
                 qFatal("Failed to set particle system transform shader!");
         }else if(key=="color"){

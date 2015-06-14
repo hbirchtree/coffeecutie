@@ -14,6 +14,7 @@ class CoffeeOmniLight;
 class CoffeeParticleSystem;
 class PhysicsObject;
 class ShaderVariant;
+class CoffeePlayerController;
 
 class CoffeeWorldOpts : public QObject
 {
@@ -22,12 +23,11 @@ class CoffeeWorldOpts : public QObject
     Q_PROPERTY(QColor fogColor READ fogColorValue WRITE setFogColorValue)
     Q_PROPERTY(float fogDensity READ getFogDensity WRITE setFogDensity)
 
-    Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
-
     Q_PROPERTY(QObject* fogColorVariant READ getFogColorVariant)
     Q_PROPERTY(QObject* fogDensityVariant READ getFogDensityVariant)
 
     Q_PROPERTY(QObjectList lights READ getVariantLights)
+    Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
 
     Q_OBJECT
 public:
@@ -85,6 +85,8 @@ public slots:
 
     void setFogColorValue(QColor fogColor);
     void setClearColorValue(QColor clearColor);
+
+    void connectSignals(CoffeePlayerController* controller);
 
 private:
 

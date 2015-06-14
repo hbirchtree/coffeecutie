@@ -3,12 +3,16 @@
 
 #include "engine/physics/physicsdescriptor.h"
 
-CoffeeInspector::CoffeeInspector(QWidget *parent, QList<QObject*> engineRoot, CoffeeRenderer *renderer) :
+CoffeeInspector::CoffeeInspector(QWidget *parent,
+                                 QList<QObject*> engineRoot,
+                                 CoffeeRenderer *renderer,
+                                 CoffeeScriptEngine* scriptEngine) :
     QWidget(parent),
     ui(new Ui::CoffeeInspector)
 {
     this->engineRoot = engineRoot;
     this->renderer = renderer;
+    this->scriptEngine = scriptEngine;
 }
 
 void CoffeeInspector::run()
@@ -55,6 +59,8 @@ void CoffeeInspector::updateInformation()
 
 void CoffeeInspector::updateTreeWidgetItem(QObject *object,QTreeWidgetItem* parent, bool listChildren)
 {
+    if(!object)
+        return;
     QTreeWidgetItem* root;
     if(objectsMapping.contains(object))
         root = objectsMapping.value(object);
@@ -192,8 +198,12 @@ void CoffeeInspector::clearChildren(QTreeWidgetItem *it)
 
 void CoffeeInspector::on_pushButton_clicked()
 {
+    if(!scriptEngine){
+        qDebug("Script engine not found!");
+        return;
+    }
     if(!scriptTerminal)
-        scriptTerminal = new CoffeeScriptTerminal(0,engineRoot);
+        scriptTerminal = new CoffeeScriptTerminal(0,engineRoot,scriptEngine);
 
     scriptTerminal->show();
 }

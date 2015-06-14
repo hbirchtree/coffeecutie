@@ -234,11 +234,6 @@ void CoffeeRenderer::requestWindowClose(){
     glfwSetWindowShouldClose(window,1);
 }
 
-static void errorCallback(int error, const char* description){
-    QString errorMessage = "GLFW:"+QString::number(error)+": "+QString::fromLocal8Bit(description);
-    fprintf(stderr,"%s\n",errorMessage.toStdString().c_str());
-}
-
 static Qt::KeyboardModifiers _glfw_translate_mods(int mods){
     Qt::KeyboardModifiers qmods;
     if(mods & GLFW_MOD_ALT)
@@ -346,12 +341,12 @@ static void _glfw_input_charwrite(GLFWwindow *window, unsigned int character){
 static void _glfw_winevent_resize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->winResize(QResizeEvent(QSize(width,height),QSize()));
+    rend->winResize(QResizeEvent(QSize(width,height),rend->getWindowDimensions()));
 }
 static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    rend->winFrameBufferResize(QResizeEvent(QSize(width,height),QSize()));
+    rend->winFrameBufferResize(QResizeEvent(QSize(width,height),rend->getCurrentFramebufferSize()));
 }
 static void _glfw_winevent_focus(GLFWwindow* window, int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
@@ -377,6 +372,10 @@ static void _glfw_winevent_state(GLFWwindow* window, int val){
     rend->winStateChanged((val==1) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
 }
 
+static void _glfw_error_function(int stat, const char* message){
+    qDebug("GLFW error message: error %i: %s",stat,message);
+}
+
 /*
  * Exit signals:
  *  01 : failed to init GLFW
@@ -398,8 +397,6 @@ int CoffeeRenderer::init(){
         qFatal("Failed to initialize GLFW!");
     }
 
-    glfwSetErrorCallback(errorCallback);
-
     glfwDefaultWindowHints();
 
     glfwWindowHint(GLFW_SAMPLES,samples);
@@ -413,6 +410,7 @@ int CoffeeRenderer::init(){
     glfwWindowHint(GLFW_VISIBLE,false);
     glfwWindowHint(GLFW_RESIZABLE,true);
 
+    glfwSetErrorCallback(_glfw_error_function);
 
     switch(startmode){
     case Qt::WindowFullScreen:
@@ -516,6 +514,11 @@ int CoffeeRenderer::loop(){
 
     qDebug("Running initialization function");
     (*_init)();
+
+    {
+        emit winFrameBufferResize(QResizeEvent(getWindowDimensions(),getWindowDimensions()));
+    }
+
     qDebug("Running loop function");
     while(!glfwWindowShouldClose(window)){
         if(gpumemcheck){

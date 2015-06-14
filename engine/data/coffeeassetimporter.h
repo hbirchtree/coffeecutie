@@ -14,14 +14,28 @@ class CoffeeTexture;
 class CoffeeObject;
 class CoffeeParticleSystem;
 
-class CoffeeModelStruct {
+class CoffeeModelStruct :public QObject{
+    Q_PROPERTY(QObject* mesh READ getMeshObject)
+    Q_PROPERTY(QObject* material READ getMaterialObject)
+
+    Q_OBJECT
 public:
+    CoffeeModelStruct(QObject* parent);
     CoffeeMesh* mesh;
     CoffeeMaterial* material;
+
+    QObject* getMeshObject();
+    QObject* getMaterialObject();
 };
 
-class CoffeeAssetStorage {
+class CoffeeAssetStorage : public QObject
+{
+    Q_PROPERTY(QObjectList worlds READ getWorlds)
+
+    Q_OBJECT
 public:
+    CoffeeAssetStorage(QObject* parent);
+
     QString filepath;
     QHash<QString,QHash<QString,CoffeeModelStruct*> > models;
     QHash<QString,QHash<QString,QPointer<CoffeeMesh>> > meshes;
@@ -31,10 +45,20 @@ public:
     QHash<QString,QPointer<ShaderContainer>> shaders;
     QHash<QString,QPointer<CoffeeTexture>> textures;
 
-    void merge(const CoffeeAssetStorage &data);
+    void merge(CoffeeAssetStorage* data);
     CoffeeModelStruct *acquireModel(QString identification);
 
     void setParents(QObject* parent);
+
+    Q_INVOKABLE QObject* getMesh(QString source);
+    Q_INVOKABLE QObject* getMaterial(QString source);
+    Q_INVOKABLE QObject* getModel(QString source);
+
+    QObjectList getWorlds();
+
+
+public slots:
+
 };
 
 class CoffeeAssetImporter : public QObject
@@ -43,11 +67,11 @@ class CoffeeAssetImporter : public QObject
 public:
     CoffeeAssetImporter(QObject *parent,QObject* outputParent);
 
-    CoffeeAssetStorage importTexture(const QVariantMap &data, const QString &filepath);
-    CoffeeAssetStorage importShader(const QVariantMap &data, const QString &filepath);
-    CoffeeAssetStorage importModel(const QVariantMap &data, const QString &filepath);
+    CoffeeAssetStorage* importTexture(const QVariantMap &data, const QString &filepath);
+    CoffeeAssetStorage* importShader(const QVariantMap &data, const QString &filepath);
+    CoffeeAssetStorage* importModel(const QVariantMap &data, const QString &filepath);
 
-    CoffeeAssetStorage importAssets(QVariantList assetList, const QString &filepath);
+    CoffeeAssetStorage* importAssets(QVariantList assetList, const QString &filepath);
 
 private:
     QObject* outputParent;

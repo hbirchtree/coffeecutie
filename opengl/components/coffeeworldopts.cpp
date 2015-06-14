@@ -7,6 +7,7 @@
 #include "engine/objects/coffeeparticlesystem.h"
 #include "engine/physics/bulletphysics.h"
 #include "general/shadervariant.h"
+#include "general/input/coffeeplayercontroller.h"
 
 CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
 {
@@ -145,6 +146,22 @@ void CoffeeWorldOpts::setFogColorValue(QColor fogColor)
 void CoffeeWorldOpts::setClearColorValue(QColor clearColor)
 {
     qDebug() << "New color:" << clearColor;
+}
+
+void CoffeeWorldOpts::connectSignals(CoffeePlayerController *controller)
+{
+    connect(renderer.data(),&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
+        getCamera()->setAspect((float)ev.size().width()/(float)ev.size().height());
+    });
+    connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
+        getCamera()->offsetOrientation(d.y,d.x);
+    });
+    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
+        getCamera()->getPosition()->operator+=(glm::vec3(d));
+    });
+    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
+        getCamera()->getPosition()->operator+=(glm::vec3(d));
+    });
 }
 
 void CoffeeWorldOpts::prepareParticleSystems()

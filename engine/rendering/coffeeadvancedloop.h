@@ -17,6 +17,9 @@ class CoffeeStandardObject;
 class CoffeePlayerController;
 class CoffeeRenderer;
 
+class CoffeeObjectFactory;
+class CoffeeScriptEngine;
+
 class CoffeeAdvancedLoop : public RenderLoop
 {
 public:
@@ -30,7 +33,13 @@ public:
 
     void connectSignals(CoffeeRenderer* renderer);
 
+    QObject* getFactory();
+    CoffeeScriptEngine* getScriptEngine();
+
 private:
+    CoffeeObjectFactory* factory;
+    CoffeeScriptEngine* scriptEngine;
+
     QTimer *secondbop;
 
     CoffeeOutputSurface* screenSurface;

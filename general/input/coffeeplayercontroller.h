@@ -18,8 +18,12 @@ signals:
 
 public slots:
     void setRotation(glm::vec3 r);
-    void setRotationPitch(float p);
-    void setRotationYaw(float p);
+
+    void joystickSetRotationPitch(float p);
+    void joystickSetRotationYaw(float p);
+
+    void mouseSetRotation(float pitch, float yaw);
+
     void addRotation(glm::vec3 d);
     void addSpeedForward(glm::vec3 d);
     void addSpeedRight(glm::vec3 d);
@@ -27,6 +31,9 @@ public slots:
     void tick(float time);
 
 private:
+    float mouseSensitivity = 0.1f;
+    float joystickSensitivity = 1.f;
+
     //Because it's easy
     glm::vec3 forwardMove;
     glm::vec3 rightMove;

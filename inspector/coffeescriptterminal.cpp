@@ -4,11 +4,12 @@
 #include <QFile>
 #include <QFileDialog>
 
-CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, QList<QObject*> rootObject) :
+CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, QList<QObject*> rootObject, CoffeeScriptEngine *engine) :
     QWidget(parent),
-    engine(new CoffeeScriptEngine(this)),
     ui(new Ui::CoffeeScriptTerminal)
 {
+    qDebug() << rootObject;
+    this->engine = engine;
     for(QObject* o : rootObject){
         QScriptValue v = engine->getEngine()->newQObject(o);
         engine->getEngine()->globalObject().setProperty(o->objectName(),v);

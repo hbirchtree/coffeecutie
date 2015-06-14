@@ -39,13 +39,6 @@ int main(int argc, char *argv[])
     opts.addOption(QCommandLineOption("inspect"));
     opts.addPositionalArgument("configuration file","Source .json file","*.json");
 
-    QObject test;
-    test.setObjectName("123");
-    QMetaProperty t  = test.metaObject()->property(0);
-    qDebug() << t.name() << t.read(&test);
-    test.setObjectName("111");
-    qDebug() << t.name() << t.read(&test);
-
     opts.process(a);
     for(QString key : opts.optionNames()){
         if(key=="licenses"){
@@ -101,13 +94,22 @@ int main(int argc, char *argv[])
 #ifdef COFFEE_INSPECTOR_RUN
     QThreadPool::globalInstance()->setObjectName("QThreadPool");
     CoffeeInspector *inspector;
-    if(inspect)
+    if(inspect){
+        CoffeeScriptEngine* se = nullptr;
+        QObject* fc = nullptr;
+        if((CoffeeAdvancedLoop*)loop){
+            fc = ((CoffeeAdvancedLoop*)loop)->getFactory();
+            se = ((CoffeeAdvancedLoop*)loop)->getScriptEngine();
+        }
         inspector = new CoffeeInspector(0,
                                         loop->getThreadObjects()
                                         << root
                                         << QThreadPool::globalInstance()
-                                        << renderer,
-                                        renderer);
+                                        << renderer
+                                        << fc,
+                                        renderer,se);
+
+    }
 #endif //COFFEE_INSPECTOR_RUN
 
 

@@ -26,13 +26,14 @@ CoffeeAssetImporter::CoffeeAssetImporter(QObject *parent, QObject *outputParent)
     this->outputParent = outputParent;
 }
 
-CoffeeAssetStorage CoffeeAssetImporter::importAssets(QVariantList assetList, const QString &filepath)
+CoffeeAssetStorage *CoffeeAssetImporter::importAssets(QVariantList assetList, const QString &filepath)
 {
     QObject* importRoot = new QObject();
-    QList<QFuture<CoffeeAssetStorage>> importData;
+    QList<QFuture<CoffeeAssetStorage*>> importData;
 
-    CoffeeAssetStorage s;
-    s.filepath = filepath;
+    CoffeeAssetStorage* s = new CoffeeAssetStorage(0);
+    s->filepath = filepath;
+    s->moveToThread(outputParent->thread());
 
     for(QVariant assetContainer : assetList){
         QVariantMap assetData = assetContainer.toMap();
@@ -40,31 +41,31 @@ CoffeeAssetStorage CoffeeAssetImporter::importAssets(QVariantList assetList, con
             continue;
         QString assetType = assetData.value("type").toString();
         if(assetType=="shader"){
-            QFuture<CoffeeAssetStorage> asset =
+            QFuture<CoffeeAssetStorage*> asset =
                     QtConcurrent::run(new CoffeeAssetImporter(importRoot,outputParent),
                                       &CoffeeAssetImporter::importShader,
                                       assetData,
-                                      s.filepath);
+                                      s->filepath);
             importData.append(asset);
         }else if(assetType=="model"){
-            QFuture<CoffeeAssetStorage> asset =
+            QFuture<CoffeeAssetStorage*> asset =
                     QtConcurrent::run(new CoffeeAssetImporter(importRoot,outputParent),
                                       &CoffeeAssetImporter::importModel,
                                       assetData,
-                                      s.filepath);
+                                      s->filepath);
             importData.append(asset);
         }else if(assetType=="texture"){
-            QFuture<CoffeeAssetStorage> asset =
+            QFuture<CoffeeAssetStorage*> asset =
                     QtConcurrent::run(new CoffeeAssetImporter(importRoot,outputParent),
                                       &CoffeeAssetImporter::importTexture,
                                       assetData,
-                                      s.filepath);
+                                      s->filepath);
             importData.append(asset);
         }
     }
 
-    for(QFuture<CoffeeAssetStorage> e : importData){
-        s.merge(e.result());
+    for(QFuture<CoffeeAssetStorage*> e : importData){
+        s->merge(e.result());
     }
 
     importRoot->deleteLater();
@@ -72,11 +73,12 @@ CoffeeAssetStorage CoffeeAssetImporter::importAssets(QVariantList assetList, con
     return s;
 }
 
-CoffeeAssetStorage CoffeeAssetImporter::importModel(const QVariantMap &data,
+CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
                                                     const QString &filepath)
 {
-    CoffeeAssetStorage s;
-    s.filepath = filepath;
+    CoffeeAssetStorage *s = new CoffeeAssetStorage(0);
+    s->filepath = filepath;
+    s->moveToThread(outputParent->thread());
 
     Assimp::Importer importer;
     QFileInfo fileinfo(data.value("file").toString());
@@ -130,7 +132,7 @@ CoffeeAssetStorage CoffeeAssetImporter::importModel(const QVariantMap &data,
             while(meshes.contains(cmesh->objectName()))
                 cmesh->setObjectName("Mesh."+QString::number(qrand()));
             meshes.insert(cmesh->objectName(),cmesh);
-            CoffeeModelStruct *s = new CoffeeModelStruct;
+            CoffeeModelStruct *s = new CoffeeModelStruct(0);
             s->mesh = cmesh;
             if(mesh->mMaterialIndex<(uint)mtllist.size()){
                 s->material = mtllist.at(mesh->mMaterialIndex);
@@ -141,21 +143,23 @@ CoffeeAssetStorage CoffeeAssetImporter::importModel(const QVariantMap &data,
             qDebug("New model: name=%s,material=%s",cmesh->objectName().toStdString().c_str(),
                    s->material->objectName().toStdString().c_str());
             cmesh->moveToThread(outputParent->thread());
+            s->moveToThread(outputParent->thread());
             models.insert(cmesh->objectName(),s);
         }
     }
 
-    s.models.insert(key,models);
-    s.meshes.insert(key,meshes);
-    s.materials.insert(key,materials);
+    s->models.insert(key,models);
+    s->meshes.insert(key,meshes);
+    s->materials.insert(key,materials);
 
     return s;
 }
 
-CoffeeAssetStorage CoffeeAssetImporter::importTexture(const QVariantMap &data, const QString &filepath)
+CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, const QString &filepath)
 {
-    CoffeeAssetStorage s;
-    s.filepath = filepath;
+    CoffeeAssetStorage *s = new CoffeeAssetStorage(0);
+    s->filepath = filepath;
+    s->moveToThread(outputParent->thread());
 
     QString subtype = data.value("variant").toString();
     QString name = data.value("name").toString();
@@ -217,7 +221,7 @@ CoffeeAssetStorage CoffeeAssetImporter::importTexture(const QVariantMap &data, c
 
         t->setObjectName(name);
         t->moveToThread(outputParent->thread());
-        s.textures.insert(name,t);
+        s->textures.insert(name,t);
     }else if(subtype=="standard"){
         QFileInfo texture(data.value("file").toString());
         if(texture.isRelative())
@@ -233,15 +237,16 @@ CoffeeAssetStorage CoffeeAssetImporter::importTexture(const QVariantMap &data, c
 
         t->setObjectName(name);
         t->moveToThread(outputParent->thread());
-        s.textures.insert(name,t);
+        s->textures.insert(name,t);
     }
     return s;
 }
 
-CoffeeAssetStorage CoffeeAssetImporter::importShader(const QVariantMap &data, const QString &filepath)
+CoffeeAssetStorage *CoffeeAssetImporter::importShader(const QVariantMap &data, const QString &filepath)
 {
-    CoffeeAssetStorage s;
-    s.filepath = filepath;
+    CoffeeAssetStorage *s = new CoffeeAssetStorage(0);
+    s->filepath = filepath;
+    s->moveToThread(outputParent->thread());
 
     QString name = data.value("name").toString();
 
@@ -287,19 +292,23 @@ CoffeeAssetStorage CoffeeAssetImporter::importShader(const QVariantMap &data, co
 
     shader->setObjectName(name);
     shader->moveToThread(outputParent->thread());
-    s.shaders.insert(name,shader);
+    s->shaders.insert(name,shader);
 
     return s;
 }
 
-void CoffeeAssetStorage::merge(const CoffeeAssetStorage &data){
-    models.unite(data.models);
-    materials.unite(data.materials);
-    meshes.unite(data.meshes);
+CoffeeAssetStorage::CoffeeAssetStorage(QObject *parent) : QObject(parent)
+{
+}
 
-    shaders.unite(data.shaders);
-    worlds.append(data.worlds);
-    textures.unite(data.textures);
+void CoffeeAssetStorage::merge(CoffeeAssetStorage *data){
+    models.unite(data->models);
+    materials.unite(data->materials);
+    meshes.unite(data->meshes);
+
+    shaders.unite(data->shaders);
+    worlds.append(data->worlds);
+    textures.unite(data->textures);
 }
 
 
@@ -324,6 +333,10 @@ void CoffeeAssetStorage::setParents(QObject *parent)
 //        w->moveToThread(parent->thread());
         w->setParent(parent);
     }
+
+    for(QHash<QString,CoffeeModelStruct*> m : models.values())
+        for(CoffeeModelStruct* p : m.values())
+            p->setParent(parent);
 
     for(QHash<QString,QPointer<CoffeeMesh>> m : meshes.values())
         for(QPointer<CoffeeMesh> p : m.values()){
@@ -371,5 +384,64 @@ void CoffeeAssetStorage::setParents(QObject *parent)
 
 
 //    for(QFuture<void> v : futures)
-//        v.waitForFinished();
+    //        v.waitForFinished();
+}
+
+QObject *CoffeeAssetStorage::getMesh(QString source)
+{
+    QStringList id = source.split(":");
+    if(id.length()<2)
+        return nullptr;
+    QRegExp r(id.at(1));
+    for(QString o : meshes.keys())
+        if(o==id.at(0))
+            for(QString m : meshes.value(id.at(0)).keys())
+                if(m.contains(r)){
+                    return meshes.value(id.at(0)).value(m);
+                }
+    return nullptr;
+}
+
+QObject *CoffeeAssetStorage::getMaterial(QString source)
+{
+    QStringList id = source.split(":");
+    if(id.length()<2)
+        return nullptr;
+    QRegExp r(id.at(1));
+    for(QString o : materials.keys())
+        if(o==id.at(0))
+            for(QString m : materials.value(id.at(0)).keys())
+                if(m.contains(r)){
+                    return materials.value(id.at(0)).value(m);
+                }
+    return nullptr;
+}
+
+QObject *CoffeeAssetStorage::getModel(QString source)
+{
+    return acquireModel(source);
+}
+
+QObjectList CoffeeAssetStorage::getWorlds()
+{
+    QObjectList l;
+    for(CoffeeWorldOpts* e : worlds){
+        l.append(e);
+    }
+    return l;
+}
+
+
+CoffeeModelStruct::CoffeeModelStruct(QObject *parent) : QObject(parent)
+{
+}
+
+QObject *CoffeeModelStruct::getMeshObject()
+{
+    return mesh;
+}
+
+QObject *CoffeeModelStruct::getMaterialObject()
+{
+    return material;
 }

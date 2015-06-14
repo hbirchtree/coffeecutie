@@ -19,14 +19,19 @@ void CoffeePlayerController::setRotation(glm::vec3 r)
     *rotation = r;
 }
 
-void CoffeePlayerController::setRotationPitch(float p)
+void CoffeePlayerController::joystickSetRotationPitch(float p)
 {
-    (*rotation)[0].x = p;
+    (*rotation)[0].x = p*joystickSensitivity;
 }
 
-void CoffeePlayerController::setRotationYaw(float p)
+void CoffeePlayerController::joystickSetRotationYaw(float p)
 {
-    (*rotation)[0].y = p;
+    (*rotation)[0].y = p*joystickSensitivity;
+}
+
+void CoffeePlayerController::mouseSetRotation(float pitch, float yaw)
+{
+    rotateCamera(glm::vec3(yaw,pitch,0)*mouseSensitivity);
 }
 
 void CoffeePlayerController::addRotation(glm::vec3 d)
