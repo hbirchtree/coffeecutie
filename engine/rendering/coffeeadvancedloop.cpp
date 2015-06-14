@@ -156,29 +156,31 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 
     connect(secondbop,SIGNAL(timeout()),renderer,SLOT(requestMemoryCheck()));
     secondbop->start();
+    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
+    timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
 
     // TODO : move stuff into QtScript
+    // Problem : Controller should not know about "world", and it should not be used in its slots.
+    // We will create new functions for that purpose.
     qDebug("Setting up miscellaneous signals and slots");
-    timers = new CoffeeDataContainer<QString,double>(this);
-    renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){
+    renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){ //needs to be moved into QtScript
         if(glfwGetTime()>=timers->getValue("fps")){
             qDebug("FPS: %.0f",1.f/frametime);
             timers->setValue("fps",glfwGetTime()+1);
         }
     });
-    connect(renderer,&CoffeeRenderer::winClose,[=](){
+    connect(renderer,&CoffeeRenderer::winClose,[=](){ //needs to be moved into QtScript
         qDebug("Window closing request received");
         renderer->requestWindowClose();
     });
-    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
 
     qDebug("Configuring input handling");
-    connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){
+    connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){ //needs to be moved into QtScript
         if(btn==6){
             world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
         }
     });
-    connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){
+    connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){ //needs to be moved into QtScript
         if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
             renderer->requestWindowClose();
         else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
@@ -203,7 +205,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 //            world->unloadWorld();
         }
     });
-    connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){
+    connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){ //needs to be moved into QtScript
         switch(axe){
         case 0:
             controller->addSpeedForward(world->getCamera()->getCameraRightNormal()*val*5.f);
@@ -213,7 +215,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             break;
         }
     });
-    connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){
+    connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){ //needs to be moved into QtScript
         if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
             renderer->setMousePos(0,0);
             controller->mouseSetRotation((float)event.pos().x(),(float)event.pos().y());
