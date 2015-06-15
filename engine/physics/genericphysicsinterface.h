@@ -3,6 +3,7 @@
 
 #include "general/common.h"
 #include "general/data/mutabledatacontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 class GenericPhysicsInterface
 {
@@ -29,6 +30,47 @@ public:
         PhysProp_Activation
     };
     Q_ENUMS(PhysicsProperty)
+};
+
+class CoffeePhysicsEvent : public QObject {
+
+    enum PropertyType {
+        UpdateProperties, //for per-tick updates. less calls.
+
+        EventCollision,
+
+        ActionApplyAcceleration, //applyCentralForce(vec3)
+        ActionApplyRelativeAcceleration, //applyForce(vec3,vec3)
+        ActionApplyImpulse,
+        ActionApplyRelativeImpulse,
+        ActionApplyTorque,
+        ActionApplyTorqueImpulse,
+
+        ActionSetActivationState,
+        ActionSetVelocity,
+        ActionSetAcceleration,
+        ActionSetAngularFactor,
+        ActionSetFriction,
+        ActionSetRollingFriction,
+        ActionSetLinearFactor
+    };
+    Q_ENUMS(PropertyType)
+
+    Q_PROPERTY(PropertyType type READ type WRITE setType)
+    Q_PROPERTY(float float1 READ getFloatVal1 WRITE setFloatVal1)
+    Q_PROPERTY(bool bool1 READ getBoolVal1 WRITE setBoolVal1)
+
+    Q_OBJECT
+
+    PropertyType m_type;
+
+public:
+    CoffeePhysicsEvent(QObject* parent) : QObject(parent){}
+
+    PropertyType type() const {return m_type;}
+
+public slots:
+    void setType(PropertyType type){m_type = type;}
 };
 
 class VectorVariant : public QObject
