@@ -23,6 +23,8 @@ private:
     static QScriptValue physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+    static QScriptValue vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+    static QScriptValue coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng);
 };
 
 #endif // COFFEESCRIPTENGINE_H

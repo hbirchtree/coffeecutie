@@ -43,9 +43,7 @@ signals:
 public slots:
     void setGravity(float x, float y, float z);
 
-    void updateObject(PhysicsObject* object,
-                      PhysicalPropertyClass::PhysicsProperty prop,
-                      VectorVariant *value);
+    void updateObject(CoffeePhysicsEvent* event);
 
     void addObject(PhysicsObject* object);
     void removeObject(void* pointer);

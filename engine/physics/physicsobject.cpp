@@ -69,32 +69,9 @@ void PhysicsObject::setDescr(PhysicsDescriptor *value)
         descr = value;
 }
 
-void PhysicsObject::setPosition(float x, float y, float z)
+void PhysicsObject::modifyPhysics(CoffeePhysicsEvent *ev)
 {
-    propertyModified(this,
-                     PhysicalPropertyClass::PhysProp_Pos,
-                     new VectorVariant(this,glm::vec3(x,y,z)));
-}
-
-void PhysicsObject::setRotation(float x, float y, float z)
-{
-    propertyModified(this,
-                     PhysicalPropertyClass::PhysProp_Orientation,
-                     new VectorVariant(this,glm::quat(glm::vec3(x,y,z))));
-}
-
-void PhysicsObject::applyForce(float x, float y, float z)
-{
-    propertyModified(this,
-                     PhysicalPropertyClass::PhysProp_Force,
-                     new VectorVariant(this,glm::vec3(x,y,z)));
-}
-
-void PhysicsObject::applyImpulse(float x, float y, float z)
-{
-    propertyModified(this,
-                     PhysicalPropertyClass::PhysProp_Impulse,
-                     new VectorVariant(this,glm::vec3(x,y,z)));
+    propertyModified(ev);
 }
 
 void PhysicsObject::updatePosition(glm::vec3 p)

@@ -23,8 +23,8 @@ void CoffeeInspector::run()
     labels << "Object name" << "Type/Data";
     ui->inspectorWidget->setHeaderLabels(labels);
 
-    qRegisterMetaType<PhysicsDescriptor::PhysicalShape>("PhysicsDescriptor::PhysicalShape");
-    qRegisterMetaType<QObjectList>("QObjectList");
+//    qRegisterMetaType<PhysicsDescriptor::PhysicalShape>("PhysicsDescriptor::PhysicalShape");
+//    qRegisterMetaType<QObjectList>("QObjectList");
 
     rendererInspector = new CoffeeRendererInspector(0,renderer);
     refreshTimer = new QTimer();

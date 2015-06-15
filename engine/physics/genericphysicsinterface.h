@@ -3,7 +3,8 @@
 
 #include "general/common.h"
 #include "general/data/mutabledatacontainer.h"
-#include "engine/scripting/qscriptvectorvalue.h"
+
+class PhysicsObject;
 
 class GenericPhysicsInterface
 {
@@ -14,41 +15,90 @@ private:
     GenericPhysicsInterface(QObject *parent);
 };
 
-class PhysicalPropertyClass :public QObject {
-    //To get the enum as a static meta-object
+//class PhysicalPropertyClass :public QObject {
+//    //To get the enum as a static meta-object
+//    Q_OBJECT
+//public:
+//    PhysicalPropertyClass();
+//    enum PhysicsProperty {
+//        PhysProp_Pos,
+//        PhysProp_Orientation,
+//        PhysProp_AngularVelocity,
+//        PhysProp_Gravity,
+//        PhysProp_Velocity,
+//        PhysProp_Force,
+//        PhysProp_Impulse,
+//        PhysProp_Activation
+//    };
+//    Q_ENUMS(PhysicsProperty)
+//};
+
+class VectorVariant : public QObject
+{
+    Q_PROPERTY(VectorType type READ type)
+    Q_PROPERTY(QVariantList quat READ quat WRITE setQuat)
+    Q_PROPERTY(QVariantList vec3 READ vec3 WRITE setVec3)
+    Q_PROPERTY(float scalar READ scalar WRITE setScalar)
+
     Q_OBJECT
 public:
-    PhysicalPropertyClass();
-    enum PhysicsProperty {
-        PhysProp_Pos,
-        PhysProp_Orientation,
-        PhysProp_AngularVelocity,
-        PhysProp_Gravity,
-        PhysProp_Velocity,
-        PhysProp_Force,
-        PhysProp_Impulse,
-        PhysProp_Activation
+
+    enum VectorType {
+        None, Scalar, Vector3, Quaternion
     };
-    Q_ENUMS(PhysicsProperty)
+    Q_ENUMS(VectorType)
+
+    VectorVariant(QObject* parent);
+    VectorVariant(QObject* parent,glm::vec3 val);
+    VectorVariant(QObject* parent,glm::quat val);
+
+    VectorType type() const;
+
+    glm::vec3 getRawVec3() const;
+    glm::quat getRawQuat() const;
+
+    QVariantList quat() const;
+    QVariantList vec3() const;
+    float scalar() const;
+
+public slots:
+    void setRawQuat(glm::quat quat);
+    void setRawVec3(glm::vec3 vec3);
+
+    void setQuat(QVariantList quat);
+    void setVec3(QVariantList vec3);
+    void setScalar(float scalar);
+
+private:
+    QVector<float> v;
 };
 
 class CoffeePhysicsEvent : public QObject {
 
+public:
     enum PropertyType {
-        UpdateProperties, //for per-tick updates. less calls.
-
+        //Events: sent from the physics system. The physics system shall not react to these.
+        EventUpdateProperties, //for per-tick updates. less function calls.
         EventCollision,
 
-        ActionApplyAcceleration, //applyCentralForce(vec3)
-        ActionApplyRelativeAcceleration, //applyForce(vec3,vec3)
+        //Actions: Alterations done to the laws of physics. Be careful out there.
+        ActionApplyForce, //applyCentralForce(vec3)
+        ActionApplyRelativeForce, //applyForce(vec3,vec3)
         ActionApplyImpulse,
         ActionApplyRelativeImpulse,
         ActionApplyTorque,
         ActionApplyTorqueImpulse,
 
-        ActionSetActivationState,
+        ActionSetTransform, //position, rotation. no scale. this is not thermodynamics apparently.
+
+        ActionSetPosition,
         ActionSetVelocity,
         ActionSetAcceleration,
+
+        ActionSetAngularVelocity,
+        ActionSetOrientation,
+
+        ActionSetActivationState,
         ActionSetAngularFactor,
         ActionSetFriction,
         ActionSetRollingFriction,
@@ -56,118 +106,37 @@ class CoffeePhysicsEvent : public QObject {
     };
     Q_ENUMS(PropertyType)
 
+private:
     Q_PROPERTY(PropertyType type READ type WRITE setType)
-    Q_PROPERTY(float float1 READ getFloatVal1 WRITE setFloatVal1)
-    Q_PROPERTY(bool bool1 READ getBoolVal1 WRITE setBoolVal1)
+    Q_PROPERTY(QObjectList targets READ targets)
+    Q_PROPERTY(QVariantList data READ getData WRITE setData)
 
     Q_OBJECT
 
     PropertyType m_type;
+    QVariantList data;
+    QList<PhysicsObject*> m_target;
 
 public:
-    CoffeePhysicsEvent(QObject* parent) : QObject(parent){}
+    CoffeePhysicsEvent(QObject* parent);
 
     PropertyType type() const {return m_type;}
+    QObjectList targets();
+    QVariantList getData();
+    QList<PhysicsObject*> *targetsList();
 
 public slots:
+    //the event can affect multiple objects
+    void addTarget(QObject* t);
+    int removeTarget(QObject *t);
+    void clearTargets();
+
+    //the data is set as a list of values. ordering of the elements decides their usage.
+    //I know it's silly, but for now we'll let it go.
+    //we should be able to swap this under the hood if we need to.
+    void setData(const QVariantList &v);
+
     void setType(PropertyType type){m_type = type;}
-};
-
-class VectorVariant : public QObject
-{
-public:
-    typedef float numbertype;
-
-    enum VectorType {
-        NumberType,Vector3Type,Vector4Type,QuaternionType
-    };
-
-    VectorVariant(QObject* parent,const glm::vec3 &v) : QObject(parent){
-        m_data = new MutableDataContainer<glm::vec3>(this,v);
-    }
-    VectorVariant(QObject* parent,const glm::vec4 &v) : QObject(parent){
-        m_data = new MutableDataContainer<glm::vec4>(this,v);
-    }
-    VectorVariant(QObject* parent,const glm::quat &v) : QObject(parent){
-        m_data = new MutableDataContainer<glm::quat>(this,v);
-    }
-
-    VectorType type(){
-        return m_type;
-    }
-
-    void setValue(numbertype val){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<numbertype>(this,val);
-        m_type = NumberType;
-    }
-    void setValue(glm::vec3 val){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<glm::vec3>(this,val);
-        m_type = Vector3Type;
-    }
-    void setVec(numbertype x, numbertype y, numbertype z){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<glm::vec3>(this,glm::vec3(x,y,z));
-        m_type = Vector3Type;
-    }
-    void setValue(glm::vec4 val){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<glm::vec4>(this,val);
-        m_type = Vector4Type;
-    }
-    void setVec(numbertype x, numbertype y, numbertype z,numbertype w){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<glm::vec4>(this,glm::vec4(x,y,z,w));
-        m_type = Vector4Type;
-    }
-    void setValue(glm::quat val){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<glm::quat>(this,val);
-        m_type = QuaternionType;
-    }
-    void setQuat(numbertype w, numbertype x, numbertype y, numbertype z){
-        if(m_data)
-            m_data->deleteLater();
-        m_data = new MutableDataContainer<glm::quat>(this,glm::quat(w,x,y,z));
-        m_type = QuaternionType;
-    }
-
-    numbertype toNumber() const{
-        MutableDataContainer<numbertype>* p = dynamic_cast<MutableDataContainer<numbertype>*>(m_data.data());
-        if(p)
-            return p->getValue();
-        return numbertype();
-    }
-    glm::vec3 toVector3() const{
-        MutableDataContainer<glm::vec3>* p = dynamic_cast<MutableDataContainer<glm::vec3>*>(m_data.data());
-        if(p)
-            return p->getValue();
-        return glm::vec3();
-    }
-    glm::vec4 toVector4() const{
-        MutableDataContainer<glm::vec4>* p = dynamic_cast<MutableDataContainer<glm::vec4>*>(m_data.data());
-        if(p)
-            return p->getValue();
-        return glm::vec4();
-    }
-    glm::quat toQuaternion() const{
-        MutableDataContainer<glm::quat>* p = dynamic_cast<MutableDataContainer<glm::quat>*>(m_data.data());
-        if(p)
-            return p->getValue();
-        return glm::quat();
-    }
-
-private:
-    VectorVariant(QObject* parent) : QObject(parent){}
-    QPointer<QObject> m_data;
-    VectorType m_type;
 };
 
 #endif // GENERICPHYSICSINTERFACE_H

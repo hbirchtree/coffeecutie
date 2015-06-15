@@ -64,7 +64,8 @@ SOURCES += main.cpp \
     engine/data/coffeeworldbuilder.cpp \
     inspector/coffeescriptterminal.cpp \
     engine/scripting/qscriptvectorvalue.cpp \
-    engine/scripting/coffeescriptengine.cpp
+    engine/scripting/coffeescriptengine.cpp \
+    engine/physics/genericphysicsinterface.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \

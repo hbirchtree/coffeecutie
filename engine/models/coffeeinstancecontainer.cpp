@@ -18,8 +18,8 @@ CoffeeInstanceContainer::CoffeeInstanceContainer(QObject *parent) : QObject(pare
 CoffeeInstanceContainer::~CoffeeInstanceContainer()
 {
     delete instanceAnchor;
-    for(CoffeeInstanceData* d : instances)
-        delete d;
+//    for(CoffeeInstanceData* d : instances)
+//        delete d;
 }
 
 uint CoffeeInstanceContainer::instanceCount() const
@@ -55,7 +55,10 @@ QVector<glm::mat4> CoffeeInstanceContainer::getData() const
 
 QObjectList CoffeeInstanceContainer::instanceObjects() const
 {
-    return instanceAnchor->findChildren<QObject*>();
+    QObjectList l;
+    for(CoffeeInstanceData* i : instances)
+        l.append(i);
+    return l;
 }
 
 void CoffeeInstanceContainer::createInstance()
@@ -98,6 +101,11 @@ NumberContainer<glm::vec3> *CoffeeInstanceData::getScale(){ return scale;}
 NumberContainer<glm::quat> *CoffeeInstanceData::getRot(){ return rot;}
 
 PhysicsObject *CoffeeInstanceData::physics()
+{
+    return m_physics;
+}
+
+QObject *CoffeeInstanceData::physicsQObject()
 {
     return m_physics;
 }

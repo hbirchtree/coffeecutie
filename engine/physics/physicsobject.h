@@ -32,11 +32,6 @@ public:
     PhysicsDescriptor *getDescr();
 
 public slots:
-    void setPosition(float x, float y, float z);
-    void setRotation(float x, float y, float z);
-    void applyForce(float x, float y, float z);
-    void applyImpulse(float x, float y, float z);
-
     void updatePosition(glm::vec3 p);
     void updateVelocity(glm::vec3 p);
     void updateAcceleration(glm::vec3 p);
@@ -46,8 +41,10 @@ public slots:
 
     void setDescr(PhysicsDescriptor *value);
 
+    void modifyPhysics(CoffeePhysicsEvent* ev);
+
 signals:
-    void propertyModified(PhysicsObject* target, PhysicalPropertyClass::PhysicsProperty prop, VectorVariant *data);
+    void propertyModified(CoffeePhysicsEvent* ev);
 
     void deleteObject(void* pt);
 

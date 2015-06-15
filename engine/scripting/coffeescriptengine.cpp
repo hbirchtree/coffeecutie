@@ -6,15 +6,18 @@
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "general/shadervariant.h"
 #include "opengl/components/coffeetexture.h"
+#include "engine/models/coffeeinstancecontainer.h"
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
-    qRegisterMetaType<PhysicalPropertyClass::PhysicsProperty>("PhysicalPropertyClass::PhysicsProperty");
+    qRegisterMetaType<CoffeePhysicsEvent::PropertyType>("CoffeePhysicsEvent::PropertyType");
+    qRegisterMetaType<VectorVariant::VectorType>("VectorVariant::VectorType");
     qRegisterMetaType<CoffeeTexture::CoffeeTextureType>("CoffeeTexture::CoffeeTextureType");
     qRegisterMetaType<QEvent::Type>("QEvent::Type");
-    qRegisterMetaType<QObjectList>("QObjectList");
+//    qRegisterMetaType<QObjectList>("QObjectList");
     qRegisterMetaType<ShaderVariant*>("ShaderVariant*");
     qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
+    qRegisterMetaType<CoffeeInstanceData*>("CoffeeInstanceData*");
 
     //Global meta-objects
     {
@@ -47,6 +50,16 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("QuaternionValue",mo);
     }
+    {
+        QScriptValue pdCt = e.newFunction(vectorVariantConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("VectorVariant",mo);
+    }
+    {
+        QScriptValue pdCt = e.newFunction(coffeePhysEvConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("CoffeePhysicsEvent",mo);
+    }
     ////////
 
     //Enums
@@ -58,13 +71,21 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue mo = e.newQMetaObject(&QEvent::staticMetaObject);
         e.globalObject().setProperty("QEvent",mo);
     }
-    {
-        QScriptValue mo = e.newQMetaObject(&PhysicalPropertyClass::staticMetaObject);
-        e.globalObject().setProperty("PhysicalProperty",mo);
-    }
+//    {
+//        QScriptValue mo = e.newQMetaObject(&PhysicalPropertyClass::staticMetaObject);
+//        e.globalObject().setProperty("PhysicalProperty",mo);
+//    }
     {
         QScriptValue mo = e.newQMetaObject(&CoffeeTexture::staticMetaObject);
         e.globalObject().setProperty("CoffeeTexture",mo);
+    }
+    {
+        QScriptValue mo = e.newQMetaObject(&CoffeePhysicsEvent::staticMetaObject);
+        e.globalObject().setProperty("PhysicsProperty",mo);
+    }
+    {
+        QScriptValue mo = e.newQMetaObject(&VectorVariant::staticMetaObject);
+        e.globalObject().setProperty("VectorVariantType",mo);
     }
     ////////
 
@@ -96,5 +117,17 @@ QScriptValue CoffeeScriptEngine::vectorValueConstructor(QScriptContext *ctxt, QS
 QScriptValue CoffeeScriptEngine::quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new QuaternionValue(new NumberContainer<glm::quat>(parent,glm::quat(1,0,0,0)));
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng){
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new VectorVariant(parent);
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng){
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new CoffeePhysicsEvent(parent);
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }

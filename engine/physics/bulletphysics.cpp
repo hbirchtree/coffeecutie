@@ -135,8 +135,7 @@ void BulletPhysics::addObject(PhysicsObject *object)
     object->setPhysicspointer(rb);
 
     connect(object,SIGNAL(deleteObject(void*)),SLOT(removeObject(void*)));
-    connect(object,SIGNAL(propertyModified(PhysicsObject*,PhysicalPropertyClass::PhysicsProperty,VectorVariant*)),
-            SLOT(updateObject(PhysicsObject*,PhysicalPropertyClass::PhysicsProperty,VectorVariant*)));
+    connect(object,SIGNAL(propertyModified(CoffeePhysicsEvent*)),SLOT(updateObject(CoffeePhysicsEvent*)));
 
     m_dynamicsWorld->addRigidBody(rb);
     qDebug("Object added to %s physics: %s",systemName().toStdString().c_str(),
@@ -206,46 +205,69 @@ void BulletPhysics::run()
     evloop->exec();
 }
 
-void BulletPhysics::updateObject(PhysicsObject *object,
-                                 PhysicalPropertyClass::PhysicsProperty prop,
-                                 VectorVariant *value)
+void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
 {
-    if(object->getPhysicspointer()){
-        btRigidBody* obj = (btRigidBody*)object->getPhysicspointer();
-        qDebug() << "Update commenced";
-        switch(prop){
-        case PhysicalPropertyClass::PhysProp_Pos:{
-            btTransform pt = obj->getWorldTransform();
-            pt.setOrigin(convert_glm(value->toVector3()));
-            obj->setWorldTransform(pt);
-            break;
+    for(PhysicsObject* ev : *event->targetsList())
+        if(ev->getPhysicspointer()){
+            btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
+            qDebug() << "Update commenced";
+            switch(event->type()){
+            case CoffeePhysicsEvent::ActionSetTransform:{
+                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                btQuaternion v2 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(1))->getRawQuat());
+                btTransform pt = obj->getWorldTransform();
+                pt.setOrigin(v1);
+                pt.setRotation(v2);
+                obj->setWorldTransform(pt);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionSetPosition:{
+                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                btTransform pt = obj->getWorldTransform();
+                pt.setOrigin(v1);
+                obj->setWorldTransform(pt);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionSetAngularVelocity:
+                break;
+            case CoffeePhysicsEvent::ActionSetOrientation:{
+                btQuaternion v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawQuat());
+                btTransform rt = obj->getWorldTransform();
+                rt.setRotation(v1);
+                obj->setWorldTransform(rt);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionApplyForce:{
+                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                obj->applyCentralForce(v1);
+                obj->activate(true);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionApplyRelativeForce:
+                break;
+            case CoffeePhysicsEvent::ActionApplyImpulse:{
+                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                obj->applyCentralImpulse(v1);
+                obj->activate(true);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
+                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                btVector3 v2 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(1))->getRawVec3());
+                obj->applyImpulse(v1,v2);
+                obj->activate(true);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionApplyTorque:{
+                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                obj->applyTorque(v1);
+                obj->activate(true);
+                break;
+            }
+            default:
+                break;
+            }
         }
-        case PhysicalPropertyClass::PhysProp_Orientation:{
-            btTransform rt = obj->getWorldTransform();
-            rt.setRotation(convert_glm(value->toQuaternion()));
-            obj->setWorldTransform(rt);
-            break;
-        }
-        case PhysicalPropertyClass::PhysProp_AngularVelocity:
-            break;
-        case PhysicalPropertyClass::PhysProp_Gravity:
-            break;
-        case PhysicalPropertyClass::PhysProp_Velocity:
-            break;
-        case PhysicalPropertyClass::PhysProp_Force:{
-            obj->applyCentralForce(convert_glm(value->toVector3()));
-            obj->activate(true);
-            break;
-        }
-        case PhysicalPropertyClass::PhysProp_Impulse:{
-            obj->applyCentralImpulse(convert_glm(value->toVector3()));
-            obj->activate(true);
-            break;
-        }
-        case PhysicalPropertyClass::PhysProp_Activation:
-            break;
-        }
-    }
 }
 
 void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timestep)

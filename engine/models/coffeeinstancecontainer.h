@@ -14,6 +14,8 @@ class CoffeeInstanceData : public QObject{
     Q_PROPERTY(QObject* rotation READ rotationRef)
     Q_PROPERTY(QObject* scale READ scaleRef)
 
+    Q_PROPERTY(QObject* physics READ physicsQObject)
+
     Q_OBJECT
 public:
     CoffeeInstanceData(glm::vec3 pos,glm::quat rot, glm::vec3 scale, QObject* parent);
@@ -22,6 +24,8 @@ public:
     NumberContainer<glm::vec3>* getScale();
     NumberContainer<glm::quat>* getRot();
     PhysicsObject* physics();
+
+    QObject* physicsQObject();
 
     QObject* rotationRef();
     QObject* positionRef();
