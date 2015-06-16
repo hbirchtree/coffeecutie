@@ -14,6 +14,7 @@ class CoffeeCamera : public QObject
     Q_PROPERTY(float fov READ getFov WRITE setFov)
     Q_PROPERTY(float aspectRatio READ getAspectValue WRITE setAspect)
     Q_PROPERTY(bool orthographic READ isOrthographic WRITE setOrthographic)
+
     Q_PROPERTY(QObject* position READ getPositionValue)
     Q_PROPERTY(QObject* rotation READ getRotationValue)
 

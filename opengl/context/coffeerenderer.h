@@ -3,6 +3,7 @@
 
 #include "general/common.h"
 
+class CoffeeInputEvent;
 class RenderLoop;
 class QMimeData;
 class QWindowStateChangeEvent;
@@ -109,11 +110,13 @@ signals:
     void clearColorChanged(glm::vec4 color);
 
     //Input events
+    void inputEvent(CoffeeInputEvent* ev);
+
     void winMouseGrabbed(QEvent event);
     void winKeyboardEvent(QKeyEvent event);
     void winMouseEvent(QMouseEvent event);
     void winWheelEvent(QWheelEvent event);
-    void winDropEvent(QPointer<QMimeData> data); //Temporary workaround until QDropEvent decides to work. Delete the QMimeData object!
+    void winDropEvent(QDropEvent event);
     void winMouseEnterEvent(QEvent event);
 
     void winResize(QResizeEvent event);

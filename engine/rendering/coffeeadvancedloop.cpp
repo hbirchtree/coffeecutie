@@ -205,16 +205,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 //            world->unloadWorld();
         }
     });
-    connect(js,&CoffeeJoystick::axisMoved,[=](int axe,float val, float diff){ //needs to be moved into QtScript
-        switch(axe){
-        case 0:
-            controller->addSpeedForward(world->getCamera()->getCameraRightNormal()*val*5.f);
-            break;
-        case 1:
-            controller->addSpeedRight(world->getCamera()->getCameraForwardNormal()*-val*5.f);
-            break;
-        }
-    });
     connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){ //needs to be moved into QtScript
         if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
             renderer->setMousePos(0,0);

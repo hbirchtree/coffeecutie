@@ -212,8 +212,7 @@ void CoffeeWorldOpts::renderWorld()
         s->render();
 
     //We need to reset it so that the FBO is rendered
-    if(wireframeMode())
-        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 }
 
 void CoffeeWorldOpts::unloadWorld()

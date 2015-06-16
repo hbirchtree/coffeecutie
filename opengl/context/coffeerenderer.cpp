@@ -8,11 +8,25 @@
 #include <QWheelEvent>
 #include <QResizeEvent>
 #include <QMoveEvent>
+#include <QDropEvent>
+#include "engine/scripting/coffeeinputevent.h"
 
 #define RENDERER_DO_DEBUG
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QObject(parent)
 {
+    std::function<void(QEvent e)> ih = [=](QEvent e){
+        emit inputEvent(new CoffeeInputEvent(0,e));
+    };
+
+    connect(this,&CoffeeRenderer::winMouseEnterEvent,ih);
+    connect(this,&CoffeeRenderer::winMouseEvent,ih);
+    connect(this,&CoffeeRenderer::winMouseGrabbed,ih);
+    connect(this,&CoffeeRenderer::winWheelEvent,ih);
+
+    connect(this,&CoffeeRenderer::winKeyboardEvent,ih);
+
+    connect(this,&CoffeeRenderer::winDropEvent,ih);
 }
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : CoffeeRenderer(parent)
@@ -303,7 +317,7 @@ static void _glfw_input_scroll(GLFWwindow *window,double xoffset,double yoffset)
 //Drag and drop event
 static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** paths){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
-    QPointer<QMimeData> data = new QMimeData();
+    QMimeData *data = new QMimeData();
     if(numfiles>0&&QUrl(paths[0]).isValid()){
         QList<QUrl> files;
         for(int i=0;i<numfiles;i++){
@@ -314,7 +328,8 @@ static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** 
         for(int i=0;i<numfiles;i++)
             data->setText(data->text()+paths[i]);
     }
-    rend->winDropEvent(data);
+    QDropEvent ev(QPoint(),Qt::LinkAction,data,Qt::NoButton,Qt::NoModifier);
+    rend->winDropEvent(ev);
 }
 
 //Keyboard keys

@@ -1,6 +1,6 @@
 #include "coffeeplayercontroller.h"
 
-#include "general/qstringfunctions.h"
+#include "general/shadervariant.h"
 
 CoffeePlayerController::CoffeePlayerController(QObject *parent) : QObject(parent)
 {
@@ -56,6 +56,34 @@ void CoffeePlayerController::addSpeedRight(glm::vec3 d)
 void CoffeePlayerController::addAccel(glm::vec3 d)
 {
     position->setAcceleration(position->getAcceleration()+d);
+}
+
+void CoffeePlayerController::addSpeedForward(VectorValue *d)
+{
+    addSpeedForward(d->getRaw()->getValue());
+}
+
+void CoffeePlayerController::addSpeedRight(VectorValue *d)
+{
+    addSpeedRight(d->getRaw()->getValue());
+}
+
+void CoffeePlayerController::addSpeedForward(QObject *d, const QVariantList &factor)
+{
+    ShaderVariant* v = dynamic_cast<ShaderVariant*>(d);
+    if(factor.size()!=3||!v||!v->getVec3())
+        return;
+    glm::vec3 t_fac = glm::vec3(factor.at(0).toFloat(),factor.at(1).toFloat(),factor.at(2).toFloat());
+    addSpeedForward((*v->getVec3())()*t_fac);
+}
+
+void CoffeePlayerController::addSpeedRight(QObject *d, const QVariantList &factor)
+{
+    ShaderVariant* v = dynamic_cast<ShaderVariant*>(d);
+    if(factor.size()!=3||!v||!v->getVec3())
+        return;
+    glm::vec3 t_fac = glm::vec3(factor.at(0).toFloat(),factor.at(1).toFloat(),factor.at(2).toFloat());
+    addSpeedRight((*v->getVec3())()*t_fac);
 }
 
 void CoffeePlayerController::tick(float time)

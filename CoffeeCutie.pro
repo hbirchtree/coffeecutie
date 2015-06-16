@@ -65,7 +65,8 @@ SOURCES += main.cpp \
     inspector/coffeescriptterminal.cpp \
     engine/scripting/qscriptvectorvalue.cpp \
     engine/scripting/coffeescriptengine.cpp \
-    engine/physics/genericphysicsinterface.cpp
+    engine/physics/genericphysicsinterface.cpp \
+    engine/scripting/coffeeinputevent.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -120,7 +121,8 @@ HEADERS += \
     engine/data/coffeeworldbuilder.h \
     inspector/coffeescriptterminal.h \
     engine/scripting/qscriptvectorvalue.h \
-    engine/scripting/coffeescriptengine.h
+    engine/scripting/coffeescriptengine.h \
+    engine/scripting/coffeeinputevent.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

@@ -3,6 +3,8 @@
 
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
+
 class CoffeePlayerController : public QObject
 {
     //Describes the input that is to be performed
@@ -28,6 +30,13 @@ public slots:
     void addSpeedForward(glm::vec3 d);
     void addSpeedRight(glm::vec3 d);
     void addAccel(glm::vec3 d);
+
+    void addSpeedForward(VectorValue* d);
+    void addSpeedRight(VectorValue* d);
+
+    void addSpeedForward(QObject* d, const QVariantList &factor);
+    void addSpeedRight(QObject* d, const QVariantList &factor);
+
     void tick(float time);
 
 private:
