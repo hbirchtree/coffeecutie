@@ -6,22 +6,18 @@
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "general/shadervariant.h"
 #include "opengl/components/coffeetexture.h"
-#include "engine/models/coffeeinstancecontainer.h"
 #include "engine/scripting/coffeeinputevent.h"
+#include "engine/models/coffeeinstancecontainer.h"
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
-    qRegisterMetaType<CoffeePhysicsEvent::PropertyType>("CoffeePhysicsEvent::PropertyType");
-    qRegisterMetaType<VectorVariant::VectorType>("VectorVariant::VectorType");
 
-    qRegisterMetaType<QEvent::Type>("QEvent::Type");
+//    qRegisterMetaType<QEvent::Type>("QEvent::Type");
     qRegisterMetaType<ShaderVariant*>("ShaderVariant*");
     qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
-    qRegisterMetaType<CoffeeTexture::CoffeeTextureType>("CoffeeTexture::CoffeeTextureType");
-    qRegisterMetaType<CoffeeInstanceData*>("CoffeeInstanceData*");
+//    qRegisterMetaType<CoffeeInstanceData*>("CoffeeInstanceData*");
 
     qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
-    qRegisterMetaType<CoffeeInputEvent::EventSource>("CoffeeInputEvent::EventSource");
 
     //Global meta-objects
     {
@@ -75,10 +71,6 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue mo = e.newQMetaObject(&QEvent::staticMetaObject);
         e.globalObject().setProperty("QEvent",mo);
     }
-//    {
-//        QScriptValue mo = e.newQMetaObject(&PhysicalPropertyClass::staticMetaObject);
-//        e.globalObject().setProperty("PhysicalProperty",mo);
-//    }
     {
         QScriptValue mo = e.newQMetaObject(&CoffeeTexture::staticMetaObject);
         e.globalObject().setProperty("CoffeeTexture",mo);
