@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
             se = ((CoffeeAdvancedLoop*)loop)->getScriptEngine();
         }
         inspector = new CoffeeInspector(0,
-                                        loop->getThreadObjects()
+                                        QObjectList()
                                         << root
                                         << QThreadPool::globalInstance()
                                         << renderer

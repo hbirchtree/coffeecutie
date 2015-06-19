@@ -7,6 +7,8 @@ class CoffeeInputEvent : public QObject
 {
     Q_PROPERTY(EventSource type READ type WRITE setType)
 
+    Q_PROPERTY(QEvent::Type qtype READ qtype)
+
     Q_PROPERTY(JoystickEventType jType READ jType WRITE setJType)
     Q_PROPERTY(Qt::MouseButtons mouseButtons READ mouseButtons WRITE setMouseButtons)
     Q_PROPERTY(int key READ key WRITE setKey)
@@ -29,7 +31,7 @@ public:
         InputMethod,
         DropEvent,
 
-        Mouse,Keyboard,
+        Mouse,Scroll,Keyboard,
 
         Gamepad,
 
@@ -45,7 +47,10 @@ public:
     Q_ENUMS(JoystickEventType)
 
     CoffeeInputEvent(QObject *parent);
-    CoffeeInputEvent(QObject *parent, const QEvent &ev); //QEvent is not available in QtScript apparently
+    CoffeeInputEvent(QObject *parent, QEvent ev); //QEvent is not available in QtScript apparently
+    CoffeeInputEvent(QObject* parent, const QMouseEvent &ev);
+    CoffeeInputEvent(QObject* parent, const QWheelEvent &ev);
+    CoffeeInputEvent(QObject* parent, const QKeyEvent &ev);
 
     EventSource type() const;
     JoystickEventType jType() const;
@@ -58,6 +63,8 @@ public:
     QString text() const;
     bool autorepeat() const;
     QVariantList urls() const;
+
+    QEvent::Type qtype() const;
 
 public slots:
     void accept(); //destroys the object
@@ -85,6 +92,7 @@ private:
     QString m_text;
     bool m_autorepeat;
     QVariantList m_urls;
+    QEvent::Type m_qtype;
 };
 
 #endif // COFFEEINPUTEVENT_H

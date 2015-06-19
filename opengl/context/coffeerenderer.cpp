@@ -15,18 +15,24 @@
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : QObject(parent)
 {
-    std::function<void(QEvent e)> ih = [=](QEvent e){
+    connect(this,&CoffeeRenderer::winMouseEnterEvent,[=](QEvent e){
         emit inputEvent(new CoffeeInputEvent(0,e));
-    };
+    });
+    connect(this,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent e){
+        emit inputEvent(new CoffeeInputEvent(0,e));
+    });
+    connect(this,&CoffeeRenderer::winMouseGrabbed,[=](QEvent e){
+        emit inputEvent(new CoffeeInputEvent(0,e));
+    });
+    connect(this,&CoffeeRenderer::winWheelEvent,[=](QWheelEvent e){
+        emit inputEvent(new CoffeeInputEvent(0,e));
+    });
 
-    connect(this,&CoffeeRenderer::winMouseEnterEvent,ih);
-    connect(this,&CoffeeRenderer::winMouseEvent,ih);
-    connect(this,&CoffeeRenderer::winMouseGrabbed,ih);
-    connect(this,&CoffeeRenderer::winWheelEvent,ih);
+    connect(this,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent e){
+        emit inputEvent(new CoffeeInputEvent(0,e));
+    });
 
-    connect(this,&CoffeeRenderer::winKeyboardEvent,ih);
-
-    connect(this,&CoffeeRenderer::winDropEvent,ih);
+//    connect(this,&CoffeeRenderer::winDropEvent,ih);
 }
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : CoffeeRenderer(parent)
@@ -261,6 +267,20 @@ static Qt::KeyboardModifiers _glfw_translate_mods(int mods){
     return qmods;
 }
 
+static int _glfw_translate_key(int key){
+    if((key>=GLFW_KEY_A&&key<=GLFW_KEY_Z)||(key>=GLFW_KEY_0&&key<=GLFW_KEY_9))
+        return key; //same mapping between Qt::Key and GLFW
+    switch(key){
+    case GLFW_KEY_ENTER:{
+        return Qt::Key_Enter;
+    }
+    case GLFW_KEY_ESCAPE:{
+        return Qt::Key_Escape;
+    }
+    }
+    return Qt::Key_unknown;
+}
+
 //Mouse buttons
 static void _glfw_input_mouseBtn(GLFWwindow *window,int button,int action,int mods){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
@@ -341,7 +361,7 @@ static void _glfw_input_kbdKey(GLFWwindow *window,int key,int scancode,int actio
 
     //TODO : Translate int key to Qt::Key! We'll just stick the GLFW_KEY in there for now. Translation might be too slow anyway.
 
-    QKeyEvent event(type,key,_glfw_translate_mods(mods),QString(),autorep,1);
+    QKeyEvent event(type,_glfw_translate_key(key),_glfw_translate_mods(mods),QString(),autorep,1);
     rend->winKeyboardEvent(event);
 }
 //Character writing
@@ -401,11 +421,9 @@ static void _glfw_error_function(int stat, const char* message){
 
 
 int CoffeeRenderer::init(){
-    connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent event){
-        framebufferSize = event.size();
-    });
     connect(this,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         glViewport(0,0,ev.size().width(),ev.size().height());
+        framebufferSize = ev.size();
     });
 
     if(!glfwInit()){

@@ -164,16 +164,17 @@ void CoffeeWorldOpts::connectSignals(CoffeePlayerController *controller)
     });
 }
 
+void CoffeeWorldOpts::setLoadedState(bool loadedState)
+{
+    m_loadedState = loadedState;
+}
+
 void CoffeeWorldOpts::prepareParticleSystems()
 {
     for(CoffeeParticleSystem* s : particles)
         s->setCamera(this->getCamera());
 }
 
-QObject *CoffeeWorldOpts::getPhysicsRoot() const
-{
-    return physics;
-}
 glm::vec4 CoffeeWorldOpts::getClearColor() const
 {
     return clearColor;
@@ -197,6 +198,11 @@ void CoffeeWorldOpts::tickObjects(float d)
 
 void CoffeeWorldOpts::renderWorld()
 {
+    if(!loadedState()){
+        renderer->updateRendererClearColor(getClearColor());
+        setLoadedState(true);
+    }
+
     if(skybox) //rendering the skybox first avoids the color buffer mess with wireframe
         skybox->render();
 
@@ -257,4 +263,14 @@ QObject *CoffeeWorldOpts::getFogColorVariant()
 QObject *CoffeeWorldOpts::getFogDensityVariant()
 {
     return fogDensityVariant;
+}
+
+bool CoffeeWorldOpts::loadedState() const
+{
+    return m_loadedState;
+}
+
+QObject *CoffeeWorldOpts::physicsWorld() const
+{
+    return physics;
 }

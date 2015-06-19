@@ -23,7 +23,7 @@ class CoffeeInspector : public QWidget, public QRunnable
 
 public:
     CoffeeInspector(QWidget *parent = 0,
-                    QList<QObject*> engineRoot = QList<QObject*>(),
+                    QObjectList engineRoot = QObjectList(),
                     CoffeeRenderer* renderer = nullptr,
                     CoffeeScriptEngine* scriptEngine = nullptr);
     ~CoffeeInspector();
@@ -46,7 +46,7 @@ private:
 //    QHash<QMetaProperty,QTreeWidgetItem*> propertyMapping; //One property can only exist in one place. This seems fair enough.
     QHash<QObject*,QHash<int,QTreeWidgetItem*>> propertyMapping; //We assume that properties stay the same, only change value
 
-    QList<QObject*> engineRoot;
+    QObjectList engineRoot;
 
     QPointer<CoffeeRenderer> renderer;
     QPointer<CoffeeRendererInspector> rendererInspector;

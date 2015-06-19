@@ -26,7 +26,6 @@ public:
     CoffeeAdvancedLoop(QObject* parent,CoffeeRenderer* renderer, QString fileSource);
     ~CoffeeAdvancedLoop();
 
-    QList<QObject *> getThreadObjects() const;
     std::function<void ()> *getInit();
     std::function<void ()> *getLoop();
     std::function<void ()> *getCleanup();
@@ -43,7 +42,6 @@ private:
     QTimer *secondbop;
 
     CoffeeOutputSurface* screenSurface;
-    CoffeeStandardObject* test;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;

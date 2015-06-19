@@ -19,6 +19,8 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 
     qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
 
+    qScriptRegisterMetaType(&e,pointToScript,pointFromScript);
+
     //Global meta-objects
     {
         QScriptValue MetaObj = e.newQMetaObject(&staticMetaObject);
@@ -94,6 +96,20 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 QScriptEngine *CoffeeScriptEngine::getEngine()
 {
     return &e;
+}
+
+QScriptValue CoffeeScriptEngine::pointToScript(QScriptEngine *eng, const QPointF &v)
+{
+    QScriptValue out = eng->newObject();
+    out.setProperty("x",QScriptValue(eng,v.x()));
+    out.setProperty("y",QScriptValue(eng,v.y()));
+    return out;
+}
+
+void CoffeeScriptEngine::pointFromScript(const QScriptValue &v, QPointF &o)
+{
+    o.setX(v.property("x").toNumber());
+    o.setY(v.property("y").toNumber());
 }
 
 QScriptValue CoffeeScriptEngine::physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng){

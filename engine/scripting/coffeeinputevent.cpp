@@ -7,64 +7,65 @@ CoffeeInputEvent::CoffeeInputEvent(QObject *parent) : QObject(parent)
 
 }
 
-CoffeeInputEvent::CoffeeInputEvent(QObject *parent, const QEvent &ev) : CoffeeInputEvent(parent)
+CoffeeInputEvent::CoffeeInputEvent(QObject *parent, QEvent ev) : CoffeeInputEvent(parent)
 {
-//    real_event = ev;
-
+    m_qtype = ev.type();
     switch(ev.type()){
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease:
-    case QEvent::MouseButtonDblClick:
-    case QEvent::MouseMove:{
-        m_type = Mouse;
-        QMouseEvent *e = (QMouseEvent*)(&ev);
-        setMouseButtons(e->button());
-        setModifiers(e->modifiers());
-        setPos(e->pos());
-        break;
-    }
-    case QEvent::InputMethod:{
-        m_type = InputMethod;
-        QKeyEvent *e = (QKeyEvent*)(&ev);
-        setText(e->text());
-        break;
-    }
-    case QEvent::KeyRelease:
-    case QEvent::KeyPress:{
-        m_type = Keyboard;
-        QKeyEvent *e = (QKeyEvent*)(&ev);
-        setKey(e->key());
-        setModifiers(e->modifiers());
-        setAutorepeat(e->isAutoRepeat());
-        break;
-    }
-    case QEvent::FocusIn:
-    case QEvent::FocusOut:{
-        break;
-    }
-    case QEvent::Wheel:{
-        //WheelEvent
-        break;
-    }
     case QEvent::Drop:{
-        m_type = DropEvent;
-        QDropEvent *e = (QDropEvent*)(&ev);
-        setModifiers(e->keyboardModifiers());
-        setMouseButtons(e->mouseButtons());
-        const QMimeData* d = e->mimeData();
-        if(e->mimeData()->hasText()){
-            qDebug() << e->mimeData()->text();
-            setText(e->mimeData()->text());
-        }
-        if(e->mimeData()->hasUrls()){
-            QVariantList l;
-            for(QUrl u : e->mimeData()->urls())
-                l.append(u);
-            setUrls(l);
-        }
+//        m_type = DropEvent;
+//        QDropEvent *e = (QDropEvent*)&ev;
+//        setModifiers(e->keyboardModifiers());
+//        setMouseButtons(e->mouseButtons());
+//        const QMimeData* d = e->mimeData();
+//        if(e->mimeData()->hasText()){
+//            qDebug() << e->mimeData()->text();
+//            setText(e->mimeData()->text());
+//        }
+//        if(e->mimeData()->hasUrls()){
+//            QVariantList l;
+//            for(QUrl u : e->mimeData()->urls())
+//                l.append(u);
+//            setUrls(l);
+//        }
         break;
     }
     default:break;
+    }
+}
+
+CoffeeInputEvent::CoffeeInputEvent(QObject *parent, const QMouseEvent &ev) : CoffeeInputEvent(parent)
+{
+    m_type = Mouse;
+    m_qtype = ev.type();
+    setAutorepeat(ev.type()==QEvent::MouseButtonRelease);
+    setMouseButtons(ev.button());
+    setModifiers(ev.modifiers());
+    setPos(ev.pos());
+}
+
+CoffeeInputEvent::CoffeeInputEvent(QObject *parent, const QWheelEvent &ev) : CoffeeInputEvent(parent)
+{
+    m_type = Scroll;
+    m_qtype = ev.type();
+    setPos(ev.angleDelta());
+}
+
+CoffeeInputEvent::CoffeeInputEvent(QObject *parent, const QKeyEvent &ev) : CoffeeInputEvent(parent)
+{
+    m_qtype = ev.type();
+    switch(ev.type()){
+    case QEvent::InputMethod:{
+        m_type = InputMethod;
+        setText(ev.text());
+        break;
+    }
+    default:{
+        m_type = Keyboard;
+        setKey(ev.key());
+        setModifiers(ev.modifiers());
+        setAutorepeat(ev.isAutoRepeat());
+        setText(ev.text());
+    }
     }
 }
 
@@ -116,6 +117,11 @@ bool CoffeeInputEvent::autorepeat() const
 QVariantList CoffeeInputEvent::urls() const
 {
     return m_urls;
+}
+
+QEvent::Type CoffeeInputEvent::qtype() const
+{
+    return m_qtype;
 }
 
 void CoffeeInputEvent::setType(CoffeeInputEvent::EventSource type)

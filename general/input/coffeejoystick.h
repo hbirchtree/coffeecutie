@@ -5,6 +5,7 @@
 
 class CoffeeJoystick : public QObject
 {
+    Q_PROPERTY(bool enabled READ enabled WRITE setEnabled)
     Q_PROPERTY(QString deviceName READ getJoystickName)
     Q_PROPERTY(int axes READ getAxes)
     Q_PROPERTY(int buttons READ getButtons)
@@ -37,6 +38,11 @@ public:
     QVariantList axesValues() const;
     QVariantList btnValues() const;
 
+    bool enabled() const;
+
+public slots:
+    void setEnabled(bool enabled);
+
 signals:
     void axisMoved(int axis, float value, float diff);
     void buttonPressed(int button);
@@ -50,6 +56,7 @@ private:
     QString j_name;
     QVector<float> axes;
     QVector<unsigned char> buttons;
+    bool m_enabled;
 };
 
 #endif // COFFEEJOYSTICK_H

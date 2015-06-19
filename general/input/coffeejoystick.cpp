@@ -20,7 +20,7 @@ CoffeeJoystick::~CoffeeJoystick()
 
 bool CoffeeJoystick::update()
 {
-    if(glfwJoystickPresent(joystick)==0)
+    if(glfwJoystickPresent(joystick)==0||!enabled())
         return false;
 
     int count;
@@ -102,4 +102,14 @@ QVariantList CoffeeJoystick::btnValues() const
     for(unsigned char v : buttons)
         vals << v;
     return vals;
+}
+
+bool CoffeeJoystick::enabled() const
+{
+    return m_enabled;
+}
+
+void CoffeeJoystick::setEnabled(bool enabled)
+{
+    m_enabled = enabled;
 }

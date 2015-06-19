@@ -18,10 +18,13 @@ class CoffeePlayerController;
 
 class CoffeeWorldOpts : public QObject
 {
+    Q_PROPERTY(bool loadedState READ loadedState WRITE setLoadedState)
     Q_PROPERTY(bool wireframeMode READ wireframeMode WRITE setWireframeMode)
     Q_PROPERTY(QColor clearColor READ clearColorValue WRITE setClearColorValue)
     Q_PROPERTY(QColor fogColor READ fogColorValue WRITE setFogColorValue)
     Q_PROPERTY(float fogDensity READ getFogDensity WRITE setFogDensity)
+
+    Q_PROPERTY(QObject* physicsWorld READ physicsWorld)
 
     Q_PROPERTY(QObject* fogColorVariant READ getFogColorVariant)
     Q_PROPERTY(QObject* fogDensityVariant READ getFogDensityVariant)
@@ -50,8 +53,6 @@ public:
 
     void prepareParticleSystems();
 
-    QObject* getPhysicsRoot() const;
-
     CoffeeSkybox* getSkybox() const;
     void setSkybox(CoffeeSkybox *value);
 
@@ -61,6 +62,10 @@ public:
     QObjectList getVariantLights();
     QObject* getFogColorVariant();
     QObject* getFogDensityVariant();
+
+    bool loadedState() const;
+
+    QObject* physicsWorld() const;
 
 signals:
     void physicsObjectAdded(PhysicsObject* object);
@@ -88,6 +93,8 @@ public slots:
 
     void connectSignals(CoffeePlayerController* controller);
 
+    void setLoadedState(bool loadedState);
+
 private:
 
     QThread* physicsThread;
@@ -108,6 +115,7 @@ private:
 
     ShaderVariant* fogColorVariant;
     ShaderVariant* fogDensityVariant;
+    bool m_loadedState;
 };
 
 #endif // COFFEEWORLDOPTS_H

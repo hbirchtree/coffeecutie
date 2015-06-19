@@ -4,7 +4,7 @@
 #include "engine/physics/physicsdescriptor.h"
 
 CoffeeInspector::CoffeeInspector(QWidget *parent,
-                                 QList<QObject*> engineRoot,
+                                 QObjectList engineRoot,
                                  CoffeeRenderer *renderer,
                                  CoffeeScriptEngine* scriptEngine) :
     QWidget(parent),

@@ -29,6 +29,11 @@ void CoffeePlayerController::joystickSetRotationYaw(float p)
     (*rotation)[0].y = p*joystickSensitivity;
 }
 
+void CoffeePlayerController::mouseSetRotationPointF(const QPointF &offset)
+{
+    rotateCamera(glm::vec3(offset.y(),offset.x(),0)*mouseSensitivity);
+}
+
 void CoffeePlayerController::mouseSetRotation(float pitch, float yaw)
 {
     rotateCamera(glm::vec3(yaw,pitch,0)*mouseSensitivity);

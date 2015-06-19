@@ -61,20 +61,12 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Configuring objects for rendering");
 
         // TODO : this needs to be done in QtScript
-        for(CoffeeObject* o : world->getObjects()){
-            CoffeeStandardObject* stdobj = dynamic_cast<CoffeeStandardObject*>(o);
-            if(stdobj){
-                if(stdobj->objectName().contains("gear")){
-                    test = stdobj;
-                }
-            }
-            if(o->physics())
-                o->rotation()->bindValue(o->physics()->getPhysicalRotation());
-            qDebug("Set up for rendering: %s",stdobj->objectName().toStdString().c_str());
-        }
-
-        // TODO : this needs to be moved into CoffeeWorldOpts
-        renderer->updateRendererClearColor(world->getClearColor());
+//        for(CoffeeObject* o : world->getObjects()){
+//            CoffeeStandardObject* stdobj = dynamic_cast<CoffeeStandardObject*>(o);
+//            if(o->physics())
+//                o->rotation()->bindValue(o->physics()->getPhysicalRotation());
+//            qDebug("Set up for rendering: %s",stdobj->objectName().toStdString().c_str());
+//        }
 
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
@@ -93,13 +85,12 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         qDebug("Configuring framebuffer object");
 
-        screenSurface->getFramebuffer()->createFramebuffer(renderer->getWindowDimensions(),1);
-        connect(renderer,&CoffeeRenderer::winResize,[=](QResizeEvent e){
+        screenSurface->getFramebuffer()->createFramebuffer(*renderer->getFramebufferSizePt(),1);
+        connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent e){
             screenSurface->getFramebuffer()->resizeViewport(e.size());
         });
     };
     _rendering_loop = [=](){
-        test->mesh()->updateModelMatrices();
         js->update();
 
         //bind the framebuffer which we render to
@@ -123,11 +114,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
 CoffeeAdvancedLoop::~CoffeeAdvancedLoop()
 {
-}
-
-QList<QObject *> CoffeeAdvancedLoop::getThreadObjects() const
-{
-    return QList<QObject*>() << world->getPhysicsRoot();
 }
 
 std::function<void ()> *CoffeeAdvancedLoop::getInit()
@@ -169,54 +155,32 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             timers->setValue("fps",glfwGetTime()+1);
         }
     });
-    connect(renderer,&CoffeeRenderer::winClose,[=](){ //needs to be moved into QtScript
-        qDebug("Window closing request received");
-        renderer->requestWindowClose();
-    });
 
-    qDebug("Configuring input handling");
-    connect(js,&CoffeeJoystick::buttonPressed,[=](int btn){ //needs to be moved into QtScript
-        if(btn==6){
-            world->getCamera()->setOrthographic(!world->getCamera()->isOrthographic());
-        }
-    });
-    connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){ //needs to be moved into QtScript
-        if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
-            renderer->requestWindowClose();
-        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
-            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*6.f);
-        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress)
-            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-6.f);
-        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress)
-            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*6.f);
-        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress)
-            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-6.f);
-        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedForward(glm::vec3(0,0,0));
-        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedRight(glm::vec3(0,0,0));
-        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedRight(glm::vec3(0,0,0));
-        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
-            controller->addSpeedForward(glm::vec3(0,0,0));
-        else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress){
-//            setWireframeMode(!world->wireframeMode());
-        }else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
-//            world->unloadWorld();
-        }
-    });
-    connect(renderer,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent event){ //needs to be moved into QtScript
-        if(event.type()==QMouseEvent::MouseMove&&renderer->isMouseGrabbed()){
-            renderer->setMousePos(0,0);
-            controller->mouseSetRotation((float)event.pos().x(),(float)event.pos().y());
-        }
-        if(event.type()==QMouseEvent::MouseButtonPress){
-            if(event.button()==Qt::LeftButton)
-                renderer->updateMouseGrabbing(true);
-            else if(event.button()==Qt::RightButton)
-                renderer->updateMouseGrabbing(false);
-        }
-    });
+//    connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){ //needs to be moved into QtScript
+//        if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
+//            renderer->requestWindowClose();
+//        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
+//            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*6.f);
+//        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress)
+//            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-6.f);
+//        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress)
+//            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*6.f);
+//        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress)
+//            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-6.f);
+//        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyRelease)
+//            controller->addSpeedForward(glm::vec3(0,0,0));
+//        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyRelease)
+//            controller->addSpeedRight(glm::vec3(0,0,0));
+//        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyRelease)
+//            controller->addSpeedRight(glm::vec3(0,0,0));
+//        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
+//            controller->addSpeedForward(glm::vec3(0,0,0));
+//        else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress){
+////            setWireframeMode(!world->wireframeMode());
+//        }else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
+////            world->unloadWorld();
+//        }
+//    });
 }
 
 QObject *CoffeeAdvancedLoop::getFactory()

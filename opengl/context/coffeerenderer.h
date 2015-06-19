@@ -10,12 +10,12 @@ class QWindowStateChangeEvent;
 
 class CoffeeRenderer : public QObject, public QRunnable
 {
-    Q_PROPERTY(bool mouseGrabbing READ isMouseGrabbed)
-    Q_PROPERTY(int openGLSamples READ getSamples)
+    Q_PROPERTY(bool mouseGrabbing READ isMouseGrabbed WRITE updateMouseGrabbing)
+    Q_PROPERTY(int openGLSamples READ getSamples WRITE setSamples)
     Q_PROPERTY(double loopTime READ getLoopTime)
     Q_PROPERTY(QSize windowSize READ getWindowDimensions)
     Q_PROPERTY(QSize framebufferSize READ getCurrentFramebufferSize)
-    Q_PROPERTY(QString windowTitle READ getWindowTitle)
+    Q_PROPERTY(QString windowTitle READ getWindowTitle WRITE updateWindowTitle)
     Q_PROPERTY(double frameTime READ getLatestFrameTime)
 
     Q_OBJECT

@@ -25,6 +25,7 @@ public slots:
     void joystickSetRotationYaw(float p);
 
     void mouseSetRotation(float pitch, float yaw);
+    void mouseSetRotationPointF(const QPointF &offset);
 
     void addRotation(glm::vec3 d);
     void addSpeedForward(glm::vec3 d);
