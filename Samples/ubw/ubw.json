@@ -64,12 +64,12 @@
 			"type": "texture",
 			"name": "skytexture",
 			"variant": "cubemap",
-			"north": "models/textures/sky_north.png",
-			"south": "models/textures/sky_south.png",
-			"east": "models/textures/sky_east.png",
-			"west": "models/textures/sky_west.png",
-			"up": "models/textures/sky_up.png",
-			"down": "models/textures/sky_down.png"
+			"north": "models/textures/skn_n.jpg",
+			"south": "models/textures/skn_s.jpg",
+			"east": "models/textures/skn_e.jpg",
+			"west": "models/textures/skn_w.jpg",
+			"up": "models/textures/skn_u.jpg",
+			"down": "models/textures/skn_d.jpg"
 		},
 		{
 			"type": "texture",
@@ -122,12 +122,12 @@
 		"camera":{
 			"fov": 90,
 			"znear": 0.01,
-			"zfar": 100,
+			"zfar": 300,
 			"position": [0,20,0],
 			"rotation": [0,0,0]
 		},
 		"clearcolor": "#002525FF",
-		"world.fog.density": 0.2,
+		"world.fog.density": 0.02,
 		"world.fog.color": "#002525FF",
 		"world-script": "scripts/test.qts",
 		"skybox": {
@@ -136,7 +136,7 @@
 			"mesh": "cube:.*",
 			"shader": "skyshader"
 		},
-		"particle-systemd":[
+		"particle-systems":[
 			{
 				"id": "test-particles",
 				"texture": "quadtex",
@@ -144,8 +144,8 @@
 				"transform-shader": "particle-transform",
 				"color": "#FFFFFF88",
 				"particle-mass": 0.5,
-				"particle-size": 2.0,
-				"gravity": [0,-9.81,0],
+				"particle-size": 0.9,
+				"gravity": [0,0,0],
 				"position": [5,5,5]
 			},
 			{
@@ -155,8 +155,8 @@
 				"transform-shader": "particle-transform2",
 				"color": "#FFFFFF88",
 				"particle-mass": 0.5,
-				"particle-size": 2.0,
-				"gravity": [0,-9.81,0],
+				"particle-size": 0.7,
+				"gravity": [0,-4.0,0],
 				"position": [5,5,5]
 			}
 		],

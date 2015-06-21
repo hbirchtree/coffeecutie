@@ -44,10 +44,30 @@ void CoffeeFrameBufferObject::bindFramebuffer()
     glBindFramebuffer(GL_FRAMEBUFFER,framebufferHandle);
 }
 
+void CoffeeFrameBufferObject::bindFramebufferRead()
+{
+    glBindFramebuffer(GL_READ_FRAMEBUFFER,framebufferHandle);
+}
+
+void CoffeeFrameBufferObject::bindFramebufferWrite()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,framebufferHandle);
+}
+
 void CoffeeFrameBufferObject::unbindFramebuffer()
 {
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     glViewport(0,0,windowSize.width(),windowSize.height());
+}
+
+void CoffeeFrameBufferObject::unbindFramebufferRead()
+{
+    glBindFramebuffer(GL_READ_FRAMEBUFFER,0);
+}
+
+void CoffeeFrameBufferObject::unbindFramebufferWrite()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
 }
 
 GLuint CoffeeFrameBufferObject::allocTexture(int w, int h, gl::GLenum internal, gl::GLenum format, GLenum filtering,GLenum datatype)

@@ -26,6 +26,8 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
     first.vel = glm::vec3(0,10,0);
     first.lifetime = 6.f;
 
+    position()->setValue(glm::vec3(5,0,5));
+
     startParticles.append(first);
 }
 
@@ -48,8 +50,8 @@ void CoffeeParticleSystem::render()
 
 //    qDebug("Spawn count: %u",spawncount);
 
-    tshader->setUniform("randX",(float)(qrand()%1000000-500000)/100000.f);
-    tshader->setUniform("randZ",(float)(qrand()%1000000-500000)/100000.f);
+    tshader->setUniform("randRad",(float)(qrand()%1256000-628000)/100000.f);
+    tshader->setUniform("randAmpDiff",(float)(qrand()%1000000-500000)/500000.f);
 
     tshader->setUniform("spawncount",(float)spawncount);
 
@@ -78,7 +80,11 @@ void CoffeeParticleSystem::render()
 
     glDisable(GL_RASTERIZER_DISCARD);
 
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    c_additive = m_additive;
+
+    if(c_additive)
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    glDepthMask(GL_FALSE);
 
     glUseProgram(shader->getProgramId());
 
@@ -87,10 +93,10 @@ void CoffeeParticleSystem::render()
 
     shader->setUniform("colorMultiplier",particleColor);
     shader->setUniform("diffuseSampler",0);
-    shader->setUniform("modelview",camera->getMatrix()*RenderingMethods::translateObjectMatrix(
+    shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
                            position()->getValue(),
                            rotation()->getValue(),
-                           scale()->getValue()));
+                           scale()->getValue())*camera->getMatrix());
     shader->setUniform("cameraPos",camera->getCameraPos());
     shader->setUniform("particleSize",particleSize);
 
@@ -101,7 +107,9 @@ void CoffeeParticleSystem::render()
 
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
 
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_TRUE);
+    if(c_additive)
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
     tfbIndex = (tfbIndex+1)%2;
 
@@ -134,13 +142,13 @@ void CoffeeParticleSystem::load()
 
     shader->buildProgram();
 
-    glUseProgram(shader->getProgramId());
+//    glUseProgram(shader->getProgramId());
 
-    shader->getUniformLocation("colorMultiplier");
-    shader->getUniformLocation("diffuseSampler");
-    shader->getUniformLocation("modelview");
-    shader->getUniformLocation("cameraPos");
-    shader->getUniformLocation("particleSize");
+//    shader->getUniformLocation("colorMultiplier");
+//    shader->getUniformLocation("diffuseSampler");
+//    shader->getUniformLocation("modelview");
+//    shader->getUniformLocation("cameraPos");
+//    shader->getUniformLocation("particleSize");
 
     tshader->createProgram();
 
@@ -151,14 +159,14 @@ void CoffeeParticleSystem::load()
 
     tshader->linkProgram();
 
-    glUseProgram(tshader->getProgramId());
+//    glUseProgram(tshader->getProgramId());
 
-    tshader->getUniformLocation("mass");
-    tshader->getUniformLocation("spawncount");
-    tshader->getUniformLocation("timestep");
-    tshader->getUniformLocation("gravity");
-    tshader->getUniformLocation("randX");
-    tshader->getUniformLocation("randZ");
+//    tshader->getUniformLocation("mass");
+//    tshader->getUniformLocation("spawncount");
+//    tshader->getUniformLocation("timestep");
+//    tshader->getUniformLocation("gravity");
+//    tshader->getUniformLocation("randRad");
+//    tshader->getUniformLocation("randAmpDiff");
     tshader->setUniform("mass",particleMass());
     tshader->setUniform("gravity",gravity());
 
@@ -173,20 +181,20 @@ void CoffeeParticleSystem::load()
     glBindBuffer(GL_ARRAY_BUFFER, vbos[vaoIndex]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Particle)*max_particles, partsbuffer.data(), GL_STATIC_DRAW);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inType"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inType"),1,GL_FLOAT,
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)0);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inPos"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inPos"),3,GL_FLOAT,
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)4);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inVel"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inVel"),3,GL_FLOAT,
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)16);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inLife"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inLife"),1,GL_FLOAT,
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)28);
 
     glBindVertexArray(0);
@@ -196,20 +204,20 @@ void CoffeeParticleSystem::load()
     glBindBuffer(GL_ARRAY_BUFFER,vbos[vboIndex]);
     glBufferData(GL_ARRAY_BUFFER,sizeof(Particle)*max_particles,nullptr,GL_STATIC_READ);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inType"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inType"),1,GL_FLOAT,
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)0);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inPos"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inPos"),3,GL_FLOAT,
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)4);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inVel"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inVel"),3,GL_FLOAT,
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)16);
 
-    glEnableVertexAttribArray(tshader->getAttributeLocation("inLife"));
-    glVertexAttribPointer(tshader->getAttributeLocation("inLife"),1,GL_FLOAT,
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)28);
 
     glBindVertexArray(0);
@@ -310,6 +318,11 @@ void CoffeeParticleSystem::setParticleMass(float particleMass)
 {
     m_particleMass = particleMass;
 }
+
+void CoffeeParticleSystem::setAdditive(bool additive)
+{
+    m_additive = additive;
+}
 QPointer<ShaderContainer> CoffeeParticleSystem::getTransformShader()
 {
     return tshader;
@@ -321,6 +334,11 @@ void CoffeeParticleSystem::setTransformShader(QPointer<ShaderContainer> value)
         tshader->removeConsumer();
     tshader = value;
     tshader->addConsumer();
+}
+
+bool CoffeeParticleSystem::additive() const
+{
+    return m_additive;
 }
 
 QPointer<ShaderContainer> CoffeeParticleSystem::getShader()

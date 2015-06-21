@@ -36,14 +36,14 @@ void CoffeeStandardObject::render()
     if(!pmesh)
         qFatal("Cannot render object: No mesh");
 
-    if(pmesh->useInstancing()&&pmesh->hasNewMatrices()){
+    pmesh->getInstances()->setRenderPrepare(true);
+    if(pmesh->useInstancing()/*&&pmesh->hasNewMatrices()*/){ //Necessary to avoid crash
         pmesh->loadModelMatrices();
     }
 
     glUseProgram(pshader->getProgramId());
     for(ShaderMapping m : uniforms){
         if(!m.loaded){
-            pshader->getUniformLocation(m.uniform);
             m.loaded = true;
         }
         if(!m.constant)
@@ -51,7 +51,6 @@ void CoffeeStandardObject::render()
     }
     for(TextureMapping m : textures){
         if(!m.loaded){
-            pshader->getUniformLocation(m.samplerName);
             m.texture->loadTexture();
             m.loaded = true;
         }
@@ -68,12 +67,14 @@ void CoffeeStandardObject::render()
                        pmesh->getIndicesCount(),
                        GL_UNSIGNED_INT,
                        (GLvoid*)0);
-    else
+    else{
         glDrawElementsInstanced(GL_TRIANGLES,
                                           pmesh->getIndicesCount(),
                                           GL_UNSIGNED_INT,
                                           0,
-                                          this->mesh()->getInstances()->instanceCount());
+                                          pmesh->getInstances()->instanceCount());
+    }
+    pmesh->getInstances()->setRenderPrepare(false);
 
     for(TextureMapping m : textures){
         glActiveTexture(GL_TEXTURE0+textures.indexOf(m));
@@ -99,13 +100,11 @@ void CoffeeStandardObject::load()
     if(pmesh)
         pmesh->loadMesh();
     for(ShaderMapping m : uniforms){
-        pshader->getUniformLocation(m.uniform);
         m.loaded = true;
         if(m.constant)
             pshader->setUniform(m.uniform,m.data);
     }
     for(TextureMapping m : textures){
-        pshader->getUniformLocation(m.samplerName);
         m.texture->loadTexture();
     }
     baked = true;

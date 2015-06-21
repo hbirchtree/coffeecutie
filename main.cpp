@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
     bool logStderr = true;
     bool logFile = false;
 
+    //We parse user input first, to determine what to do.
     QCommandLineParser opts;
     opts.setApplicationDescription("A scriptable game engine");
     opts.addVersionOption();
@@ -45,7 +46,11 @@ int main(int argc, char *argv[])
             //show license information
             return 0;
         }else if(key=="inspect"){
+#ifndef COFFEE_INSPECTOR_RUN
+            qDebug() << "Inspector not enabled, it may have been disabled at build-time and is thus not accessible.";
+#else
             inspect = true;
+#endif
         }else if(key=="log-file"){
             logFile = true;
         }else if(key=="log-stderr"){
@@ -53,6 +58,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    //We have a standard file to load for testing purposes
     QString sourceFile = "ubw/ubw.json";
     if(opts.positionalArguments().size()>0){
         sourceFile = opts.positionalArguments().at(0);
@@ -63,8 +69,10 @@ int main(int argc, char *argv[])
         qFatal("Source file does not exist: %s",sourceFile.toStdString().c_str());
     }
 
+    //Set the random seed for qrand()
     qsrand((rand()%RAND_MAX)/10000.0);
 
+    //Set up logging , root object (for destruction of objects)
     RenderLoop* loop;
     QObject* root = new QObject();
     CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
@@ -78,8 +86,10 @@ int main(int argc, char *argv[])
                                                   1280,720,Qt::WindowNoState,
                                                   "Unlimited Frame Works");
 #endif
+    //for identification in script engine and inspector
     renderer->setObjectName("renderer");
 
+    //Choose a render loop, advanced is our scripted one, BoxTest is a glbinding sample
 #ifdef COFFEE_ADVANCED_RUN
     loop = new CoffeeAdvancedLoop(root,renderer,sourceFile);
     loop->setObjectName("evloop");
@@ -88,47 +98,43 @@ int main(int argc, char *argv[])
     loop = new BoxTest(renderer);
 #endif //COFFEE_ADVANCED_RUN
 
+    //Configure the loop, set default sampling
     renderer->setLoop(loop);
     renderer->setSamples(4);
 
-#ifdef COFFEE_INSPECTOR_RUN
-    QThreadPool::globalInstance()->setObjectName("QThreadPool");
-    CoffeeInspector *inspector;
-    if(inspect){
+    CoffeeInspector *inspector = nullptr;
+    //configure script engine and inspector if it is enabled
+    {
+        QThreadPool::globalInstance()->setObjectName("QThreadPool");
         CoffeeScriptEngine* se = nullptr;
         QObject* fc = nullptr;
         if((CoffeeAdvancedLoop*)loop){
             fc = ((CoffeeAdvancedLoop*)loop)->getFactory();
             se = ((CoffeeAdvancedLoop*)loop)->getScriptEngine();
         }
-        inspector = new CoffeeInspector(0,
-                                        QObjectList()
-                                        << root
-                                        << QThreadPool::globalInstance()
-                                        << renderer
-                                        << fc,
-                                        renderer,se);
 
-    }
-#endif //COFFEE_INSPECTOR_RUN
+        QObjectList objects;
+        objects << root
+               << QThreadPool::globalInstance()
+               << renderer
+               << fc;
 
+        if((CoffeeAdvancedLoop*)loop){
+            for(QObject* o : objects)
+                se->addObject(o);
+            se->execFile("ubw/scripts/test.qts");
+        }
 
-#ifndef RUNNABLE_RENDERER
-    int initStat = renderer->init();
-    switch(initStat){
-    case 0:{
 #ifdef COFFEE_INSPECTOR_RUN
-        if(inspect)
-            inspector->show();
-#endif
+        if(inspect){
+            inspector = new CoffeeInspector(0,
+                                            objects,
+                                            renderer,se);
 
-        initStat = renderer->loop();
-        break;
+        }
+#endif //COFFEE_INSPECTOR_RUN
     }
-    default:
-        qDebug("init() with abnormal code %i",initStat);
-    }
-#else
+
 #ifdef COFFEE_INSPECTOR_RUN
     if(inspect){
         inspector->run();
@@ -138,10 +144,10 @@ int main(int argc, char *argv[])
     QThreadPool::globalInstance()->start(renderer);
 
     a.exec();
-#endif //RUNNABLE_RENDERER
 
 #ifdef COFFEE_INSPECTOR_RUN
-    delete inspector;
+    if(inspect)
+        delete inspector;
 #endif
 
     delete root;

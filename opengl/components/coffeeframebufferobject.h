@@ -20,7 +20,11 @@ public:
     uint getSampling() const;
 
     void bindFramebuffer();
+    void bindFramebufferRead();
+    void bindFramebufferWrite();
     void unbindFramebuffer();
+    void unbindFramebufferRead();
+    void unbindFramebufferWrite();
 
     GLuint getTextureHandle() const;
 

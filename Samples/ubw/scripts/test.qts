@@ -81,7 +81,6 @@ function objInit(target){
 
 	if(obj.objectName == "gear"){
 		obj.mesh.useInstancing = true;
-		obj.mesh.instances.createInstance();
 	}
 }
 function axisReact(axe,val,diff){
@@ -137,7 +136,6 @@ function inputReact(event){
 		break;
 	}
 	case CoffeeInputEventType.Keyboard:{
-		print(event.key, event.qtype, event.type);
 		if(event.qtype==QEvent.KeyPress){
 			switch(event.key){
 			case Qt.Key_J:{
@@ -192,6 +190,7 @@ renderer.winClose.connect(renderClose);
 	}
 }
 
+/*
 for(i=0;i<5;i++){
 	world.gear.mesh.instances.createInstance();
 }
@@ -220,6 +219,7 @@ vec.vec3 = [0,100,0];
 testProp.data = vec;
 testProp.target = target;
 target.modifyPhysics(testProp);
+*/
 
 
 print("Done!");

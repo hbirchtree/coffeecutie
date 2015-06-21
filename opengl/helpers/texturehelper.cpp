@@ -41,7 +41,8 @@ GLuint TextureHelper::allocCubeTexture(GLenum internalFormat,
 
     glTexStorage2D(GL_TEXTURE_CUBE_MAP,1,internalFormat,w,h);
     for(GLenum map : source.keys()){
-        glTexSubImage2D(map,0,0,0,w,h,colorFormat,datatype,source.value(map).bits());
+        QImage im = source.value(map).mirrored(true,false);
+        glTexSubImage2D(map,0,0,0,w,h,colorFormat,datatype,im.bits());
 //        glGenerateMipmap(map);
     }
 

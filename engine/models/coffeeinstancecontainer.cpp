@@ -61,9 +61,18 @@ QObjectList CoffeeInstanceContainer::instanceObjects() const
     return l;
 }
 
+bool CoffeeInstanceContainer::renderPrepare() const
+{
+    return m_renderPrepare;
+}
+
 void CoffeeInstanceContainer::createInstance()
 {
+    qDebug() << "Creating";
+    while(renderPrepare())
+        QThread::msleep(1);
     instances.append(createInstanceData());
+    qDebug() << "Created";
 }
 
 void CoffeeInstanceContainer::addInstance(CoffeeInstanceData *i)
@@ -78,9 +87,17 @@ void CoffeeInstanceContainer::clearInstances()
     instances.clear();
 }
 
+void CoffeeInstanceContainer::setRenderPrepare(bool renderPrepare)
+{
+    m_renderPrepare = renderPrepare;
+}
+
 CoffeeInstanceData *CoffeeInstanceContainer::createInstanceData()
 {
-    return new CoffeeInstanceData(glm::vec3(0,0,0),glm::quat(1,0,0,0),glm::vec3(1,1,1),instanceAnchor);
+    CoffeeInstanceData* p = new CoffeeInstanceData(glm::vec3(0,0,0),glm::quat(1,0,0,0),glm::vec3(1,1,1),0);
+    p->moveToThread(instanceAnchor->thread());
+    p->setParent(instanceAnchor);
+    return p;
 }
 
 

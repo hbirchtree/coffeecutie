@@ -98,6 +98,29 @@ QScriptEngine *CoffeeScriptEngine::getEngine()
     return &e;
 }
 
+void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
+{
+    QFileInfo fileTest(file);
+    QFile script(file);
+    if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
+        QString src = script.readAll();
+        QString out = e.evaluate(src).toString();
+        if(logOut)
+            *logOut = out;
+        if(result)
+            *result = true;
+    }else{
+        if(result)
+            *result = false;
+    }
+}
+
+void CoffeeScriptEngine::addObject(QObject *o)
+{
+    QScriptValue wrapper = e.newQObject(o);
+    e.globalObject().setProperty(o->objectName(),wrapper);
+}
+
 QScriptValue CoffeeScriptEngine::pointToScript(QScriptEngine *eng, const QPointF &v)
 {
     QScriptValue out = eng->newObject();

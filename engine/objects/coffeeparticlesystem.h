@@ -10,6 +10,7 @@ class CoffeeCamera;
 
 class CoffeeParticleSystem : public QObject,public CoffeeObject
 {
+    Q_PROPERTY(bool additive READ additive WRITE setAdditive)
     Q_PROPERTY(QColor particleColor READ getParticleColor WRITE setParticleColor)
     Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
     Q_PROPERTY(quint32 max_particles READ getMaxParticles WRITE setMaxParticles)
@@ -44,6 +45,8 @@ public:
     QPointer<ShaderContainer> getTransformShader();
     void setTransformShader(QPointer<ShaderContainer> value);
 
+    bool additive() const;
+
 public slots:
     void render();
     void unload();
@@ -56,6 +59,8 @@ public slots:
     void setParticleColor(QColor particleColor);
     void setGravity(const glm::vec3 &gravity);
     void setParticleMass(float particleMass);
+
+    void setAdditive(bool additive);
 
 protected:
     glm::vec4 particleColor;
@@ -103,6 +108,8 @@ protected:
 private:
     glm::vec3 m_gravity;
     float m_particleMass;
+    bool m_additive = false;
+    bool c_additive; //so that we won't miss on swapping blendfunction
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

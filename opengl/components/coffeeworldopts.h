@@ -47,14 +47,12 @@ public:
     bool wireframeMode() const;
 
     QPointer<CoffeeRenderer> getRenderer();
-    void setRenderer(const QPointer<CoffeeRenderer> &value);
 
     QList<CoffeeObject *> &getObjects();
 
     void prepareParticleSystems();
 
     CoffeeSkybox* getSkybox() const;
-    void setSkybox(CoffeeSkybox *value);
 
     QColor fogColorValue() const;
     QColor clearColorValue() const;
@@ -83,6 +81,8 @@ public slots:
     void addLight(QPointer<CoffeeOmniLight> light);
     void setCamera(QPointer<CoffeeCamera> value);
     void setCameraQObject(QObject* camera);
+    void setRenderer(const QPointer<CoffeeRenderer> &value);
+    void setSkybox(CoffeeSkybox *value);
 
     void injectPhysicsObject(PhysicsObject* object);
     void addObject(CoffeeObject* object);
@@ -96,7 +96,6 @@ public slots:
     void setLoadedState(bool loadedState);
 
 private:
-
     QThread* physicsThread;
     QPointer<BulletPhysics> physics;
 

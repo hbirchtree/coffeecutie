@@ -1,8 +1,8 @@
 #version 330
-in float inType;
-in vec3 inPos;
-in vec3 inVel;
-in float inLife;
+layout(location = 0) in float inType;
+layout(location = 1) in vec3 inPos;
+layout(location = 2) in vec3 inVel;
+layout(location = 3) in float inLife;
 
 out float geoType;
 out vec3 geoPos;

@@ -203,7 +203,7 @@ void CoffeeInspector::on_pushButton_clicked()
         return;
     }
     if(!scriptTerminal)
-        scriptTerminal = new CoffeeScriptTerminal(0,engineRoot,scriptEngine);
+        scriptTerminal = new CoffeeScriptTerminal(0,scriptEngine);
 
     scriptTerminal->show();
 }

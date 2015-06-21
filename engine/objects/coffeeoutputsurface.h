@@ -33,9 +33,6 @@ public slots:
 protected:
     void setBaked(bool val);
     bool baked = false;
-    QPointer<ShaderContainer> shader;
-    GLuint vao;
-    GLuint vbo;
     CoffeeFrameBufferObject* framebuffer;
 };
 

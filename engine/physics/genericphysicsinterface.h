@@ -15,24 +15,6 @@ private:
     GenericPhysicsInterface(QObject *parent);
 };
 
-//class PhysicalPropertyClass :public QObject {
-//    //To get the enum as a static meta-object
-//    Q_OBJECT
-//public:
-//    PhysicalPropertyClass();
-//    enum PhysicsProperty {
-//        PhysProp_Pos,
-//        PhysProp_Orientation,
-//        PhysProp_AngularVelocity,
-//        PhysProp_Gravity,
-//        PhysProp_Velocity,
-//        PhysProp_Force,
-//        PhysProp_Impulse,
-//        PhysProp_Activation
-//    };
-//    Q_ENUMS(PhysicsProperty)
-//};
-
 class VectorVariant : public QObject
 {
     Q_PROPERTY(VectorType type READ type)

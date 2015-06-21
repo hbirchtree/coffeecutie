@@ -81,7 +81,6 @@ glm::vec3 BulletPhysics::convert_bt(const btVector3 &v)
 
 void BulletPhysics::addObject(PhysicsObject *object)
 {
-    qDebug() << "Creating physics object";
     if(!object->getDescr())
         return;
     PhysicsDescriptor* desc = object->getDescr();
@@ -210,7 +209,6 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
     for(PhysicsObject* ev : *event->targetsList())
         if(ev->getPhysicspointer()){
             btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
-            qDebug() << "Update commenced";
             switch(event->type()){
             case CoffeePhysicsEvent::ActionSetTransform:{
                 btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());

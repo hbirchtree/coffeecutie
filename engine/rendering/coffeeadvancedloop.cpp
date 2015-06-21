@@ -58,16 +58,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         qDebug("Configuring renderer");
         renderer->setSamples(4);
 
-        qDebug("Configuring objects for rendering");
-
-        // TODO : this needs to be done in QtScript
-//        for(CoffeeObject* o : world->getObjects()){
-//            CoffeeStandardObject* stdobj = dynamic_cast<CoffeeStandardObject*>(o);
-//            if(o->physics())
-//                o->rotation()->bindValue(o->physics()->getPhysicalRotation());
-//            qDebug("Set up for rendering: %s",stdobj->objectName().toStdString().c_str());
-//        }
-
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
 
@@ -84,7 +74,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         glfwSwapInterval(0);
 
         qDebug("Configuring framebuffer object");
-
         screenSurface->getFramebuffer()->createFramebuffer(*renderer->getFramebufferSizePt(),1);
         connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent e){
             screenSurface->getFramebuffer()->resizeViewport(e.size());

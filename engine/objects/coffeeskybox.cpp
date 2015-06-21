@@ -32,7 +32,7 @@ void CoffeeSkybox::render()
     GLint oldCullMode;
     glGetIntegerv(GL_CULL_FACE_MODE,&oldCullMode);
 
-    glDisable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glCullFace(GL_FRONT);
 
     glActiveTexture(GL_TEXTURE0);
@@ -48,7 +48,7 @@ void CoffeeSkybox::render()
     glDrawElements(GL_TRIANGLES,skymesh->getIndicesCount(),GL_UNSIGNED_INT,(GLvoid*)0);
 
     glCullFace(static_cast<GLenum>(oldCullMode));
-    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     glBindTexture(GL_TEXTURE_CUBE_MAP,0);
     glBindVertexArray(0);
@@ -77,8 +77,8 @@ void CoffeeSkybox::load()
     skymesh->loadMesh();
 
     shader->buildProgram();
-    shader->getUniformLocation("wvp");
-    shader->getUniformLocation("cubemapTexture");
+//    shader->getUniformLocation("wvp");
+//    shader->getUniformLocation("cubemapTexture");
 
     baked = true;
 

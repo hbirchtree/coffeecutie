@@ -12,6 +12,9 @@ public:
 
     QScriptEngine *getEngine();
 
+    void execFile(QString file, bool *result = nullptr, QString *logOut = nullptr);
+    void addObject(QObject* o);
+
 signals:
 
 public slots:

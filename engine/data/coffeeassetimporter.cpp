@@ -352,6 +352,9 @@ void CoffeeAssetStorage::setParents(QObject *parent)
         p->setParent(parent);
     }
 
+    for(QPointer<ShaderContainer> p : shaders)
+        p->setParent(parent);
+
 
     //This is only viable for a large amount of objects. So far, it is only slower. Or maybe I did something wrong.
 //    QList<QFuture<void>> futures;

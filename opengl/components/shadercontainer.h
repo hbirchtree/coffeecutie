@@ -11,6 +11,8 @@ class ShaderContainer : public QObject, public CoffeeGameAsset
     Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader)
     Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader)
     Q_PROPERTY(QString geometryShader READ geometryShader WRITE setGeometryShader)
+    Q_PROPERTY(QVariantMap uniforms READ getUniformsMap)
+    Q_PROPERTY(QVariantMap attributes READ getAttributesMap)
     Q_PROPERTY(int programId READ getProgramId)
 
     Q_OBJECT
@@ -33,23 +35,16 @@ public:
     GLuint compileShader(QString shaderFile, const GLenum &shaderType);
     GLuint compileShaderSource(const char* data, QString id, const GLenum& shaderType);
     int getProgramId();
-    void unload();
 
-    int getUniformLocation(QString name);
-    void getUniformLocations(QList<QString> names);
+    //We keep these available if a user wants to work with raw gl* operations
     int getAttributeLocation(QString name);
-    void setUniform(QString name, const glm::vec3 &val);
-    void setUniform(QString name,const glm::vec4& val);
-    void setUniformRgb(QString name,const glm::vec3& val);
-    void setUniformRgba(QString name,const glm::vec4& val);
-    void setUniform(QString name,const glm::vec2& val);
-    void setUniform(QString name,GLfloat val);
-    void setUniform(QString name,int val);
+    int getUniformLocation(QString name);
 
-    void setUniform(QString name, const glm::mat3 &val);
-    void setUniform(QString name, const glm::mat4 &val);
+    const QHash<QString,GLenum> getAttributes();
+    const QHash<QString,GLenum> getUniforms();
 
-    void setUniform(QString name, const ShaderVariant *val);
+    QVariantMap getUniformsMap();
+    QVariantMap getAttributesMap();
 
     QString fragmentShader() const;
     QString vertexShader() const;
@@ -60,7 +55,21 @@ public slots:
     void setVertexShader(const QString& sh);
     void setGeometryShader(const QString &geometryShader);
 
+    void setUniform(QString name, const glm::vec3 &val);
+    void setUniform(QString name,const glm::vec4& val);
+    void setUniform(QString name,const glm::vec2& val);
+    void setUniform(QString name,GLfloat val);
+    void setUniform(QString name,int val);
+
+    void setUniform(QString name, const glm::mat3 &val);
+    void setUniform(QString name, const glm::mat4 &val);
+
+    void setUniform(QString name, const ShaderVariant *val);
+
+    void unload();
+
 private:
+
     QString fragShaderFile;
     QString vertShaderFile;
 
@@ -71,6 +80,8 @@ private:
 
     QHash<QString,int> attributes;
     QHash<QString,int> uniforms;
+    QHash<QString,GLenum> attributes_t;
+    QHash<QString,GLenum> uniforms_t;
     QString m_geometryShader;
 };
 
