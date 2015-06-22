@@ -8,6 +8,7 @@
 #include "opengl/components/coffeetexture.h"
 #include "engine/scripting/coffeeinputevent.h"
 #include "engine/models/coffeeinstancecontainer.h"
+#include <QRegExp>
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
@@ -104,6 +105,10 @@ void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
     QFile script(file);
     if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
+        //TODO : implement some pre-processor directives to keep scripts cleaner
+        for(QString l : src.split("\n"))
+            if(l.contains("#inc"))
+                qDebug() << l;
         QString out = e.evaluate(src).toString();
         if(logOut)
             *logOut = out;

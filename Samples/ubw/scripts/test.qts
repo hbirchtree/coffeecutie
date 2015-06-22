@@ -1,3 +1,5 @@
+#inc "shader-setup.qts"
+
 var world = coffeeroot.evloop.world1;
 var controller = coffeeroot.evloop.cameracontrol;
 
