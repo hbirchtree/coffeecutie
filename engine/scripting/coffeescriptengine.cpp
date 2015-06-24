@@ -5,6 +5,7 @@
 #include "engine/physics/physicsdescriptor.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "general/shadervariant.h"
+#include "general/filehandler.h"
 #include "opengl/components/coffeetexture.h"
 #include "engine/scripting/coffeeinputevent.h"
 #include "engine/models/coffeeinstancecontainer.h"
@@ -105,10 +106,19 @@ void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
     QFile script(file);
     if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
-        //TODO : implement some pre-processor directives to keep scripts cleaner
+        //TODO : implement some pre-processor directives to keep scripts cleaner, allowing them to be split into several files.
+        QRegExp r;
+        r.setPattern("^#inc \"(.*)\"$");
         for(QString l : src.split("\n"))
-            if(l.contains("#inc"))
-                qDebug() << l;
+            if(r.indexIn(l)>=0){
+                QString fileSrc = fileTest.dir().absolutePath()+QDir::separator()+r.cap(1);
+                QString replace = FileHandler::getStringFromFile(fileSrc);
+                if(!replace.isEmpty()){
+                    src.replace(l,replace);
+                }else{
+                    qWarning("Failed to include contents from file: %s",fileSrc.toStdString().c_str());
+                }
+            }
         QString out = e.evaluate(src).toString();
         if(logOut)
             *logOut = out;
@@ -154,13 +164,13 @@ QScriptValue CoffeeScriptEngine::physicsDescConstructor(QScriptContext *ctxt, QS
 
 QScriptValue CoffeeScriptEngine::vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new VectorValue(new NumberContainer<glm::vec3>(parent,glm::vec3(0,0,0)));
+    QObject* o = new VectorValue(parent,new NumberContainer<glm::vec3>(glm::vec3(0,0,0)));
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 
 QScriptValue CoffeeScriptEngine::quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new QuaternionValue(new NumberContainer<glm::quat>(parent,glm::quat(1,0,0,0)));
+    QObject* o = new QuaternionValue(parent,new NumberContainer<glm::quat>(glm::quat(1,0,0,0)));
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 

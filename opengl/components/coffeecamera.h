@@ -2,7 +2,7 @@
 #define COFFEECAMERA_H
 
 #include "general/common.h"
-#include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 class VectorValue;
 class ShaderVariant;
@@ -30,10 +30,10 @@ public:
     CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov, glm::vec3 pos, glm::vec3 rot);
     ~CoffeeCamera();
 
-    QPointer<NumberContainer<glm::vec3> > getPosition();
-    QPointer<NumberContainer<glm::vec3>> getRotation();
-    QPointer<NumberContainer<float>> getFieldOfView();
-    QPointer<NumberContainer<float>> getAspect();
+    QPointer<Vector3Value> getPosition();
+    QPointer<Vector3Value> getRotation();
+    QPointer<ScalarValue> getFieldOfView();
+    QPointer<ScalarValue> getAspect();
 
     void cameraLookAt(glm::vec3 point);
 
@@ -57,7 +57,7 @@ public:
 
     void setFramebufferSizeObject(QSize* fb);
 
-    static void normalizeEulerAngles(QPointer<NumberContainer<glm::vec3> > e, float x_min, float x_max);
+    static void normalizeEulerAngles(QPointer<Vector3Value> e, float x_min, float x_max);
 
     bool isOrthographic() const;
     float getZnear() const;
@@ -88,14 +88,14 @@ public slots:
 private:
     bool orthographic = false;
     QSize* framebufferSize = NULL;
-    QPointer<NumberContainer<float>> aspect;
+    QPointer<ScalarValue> aspect;
     float znear = 0.1;
     float zfar = 50;
     glm::mat4 m_view;
-    QPointer<NumberContainer<float>> fov;
-    QPointer<NumberContainer<glm::vec3> > position;
-    QPointer<NumberContainer<glm::quat>> orientation;
-    QPointer<NumberContainer<glm::vec3>> rotation_euler;
+    QPointer<ScalarValue> fov;
+    QPointer<Vector3Value> position;
+    QPointer<QuatValue> orientation;
+    QPointer<Vector3Value> rotation_euler;
 
     VectorValue* posWrapper;
     VectorValue* rotWrapper;

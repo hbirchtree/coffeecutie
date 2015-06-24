@@ -2,7 +2,7 @@
 #define PHYSICSOBJECT_H
 
 #include "general/common.h"
-#include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/physics/genericphysicsinterface.h"
 
 class PhysicsDescriptor;
@@ -19,8 +19,8 @@ public:
     PhysicsObject(QPointer<PhysicsObject> object);
     ~PhysicsObject();
 
-    QPointer<NumberContainer<glm::vec3>> getPositionObject();
-    QPointer<NumberContainer<glm::quat>> getPhysicalRotation();
+    QPointer<Vector3Value> getPositionObject();
+    QPointer<QuatValue> getPhysicalRotation();
 
     QVariantList getPositionValue() const;
     QVariantList getRotationValue() const;
@@ -52,9 +52,9 @@ private:
     PhysicsDescriptor* descr = nullptr;
     void* physicspointer = nullptr;
 
-    QPointer<NumberContainer<glm::vec3>> v_position;
-    QPointer<NumberContainer<glm::vec3>> v_scale;
-    QPointer<NumberContainer<glm::quat>> v_physics_rotation;
+    QPointer<Vector3Value> v_position;
+    QPointer<Vector3Value> v_scale;
+    QPointer<QuatValue> v_physics_rotation;
 };
 
 #endif // PHYSICSOBJECT_H

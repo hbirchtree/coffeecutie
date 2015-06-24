@@ -1,18 +1,17 @@
 #include "coffeecamera.h"
 
 #include "general/shadervariant.h"
-#include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 {
-    this->aspect = new NumberContainer<float>(this,1.f);
-    this->fov = new NumberContainer<float>(this,90.f);
-    this->position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-    this->orientation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
-    this->rotation_euler = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    this->aspect = new ScalarValue(this,1.f);
+    this->fov = new ScalarValue(this,90.f);
+    this->position = new Vector3Value(this,glm::vec3(0,0,0));
+    this->orientation = new QuatValue(this,glm::quat(1,0,0,0));
+    this->rotation_euler = new Vector3Value(this,glm::vec3(0,0,0));
 
-    this->posWrapper = new VectorValue(position);
-    this->rotWrapper = new VectorValue(rotation_euler);
+    this->posWrapper = new VectorValue(this,position);
+    this->rotWrapper = new VectorValue(this,rotation_euler);
 
     this->matrixVariant = new ShaderVariant([=](){return getMatrix();});
     this->cameraForwardVariant = new ShaderVariant([=](){
@@ -44,22 +43,22 @@ CoffeeCamera::~CoffeeCamera()
 {
 }
 
-QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getPosition()
+QPointer<Vector3Value> CoffeeCamera::getPosition()
 {
     return position;
 }
 
-QPointer<NumberContainer<glm::vec3>> CoffeeCamera::getRotation()
+QPointer<Vector3Value> CoffeeCamera::getRotation()
 {
     return rotation_euler;
 }
 
-QPointer<NumberContainer<float>> CoffeeCamera::getFieldOfView()
+QPointer<ScalarValue> CoffeeCamera::getFieldOfView()
 {
     return fov;
 }
 
-QPointer<NumberContainer<float>> CoffeeCamera::getAspect()
+QPointer<ScalarValue> CoffeeCamera::getAspect()
 {
     return aspect;
 }
@@ -159,7 +158,7 @@ void CoffeeCamera::setFramebufferSizeObject(QSize *fb)
     framebufferSize = fb;
 }
 
-void CoffeeCamera::normalizeEulerAngles(QPointer<NumberContainer<glm::vec3>> e, float x_min, float x_max)
+void CoffeeCamera::normalizeEulerAngles(QPointer<Vector3Value> e, float x_min, float x_max)
 {
     glm::vec3 v = e->getValue();
 
@@ -187,7 +186,7 @@ void CoffeeCamera::clearFramebufferSizeObject(){
 
 void CoffeeCamera::setFov(float fov)
 {
-    *this->fov = fov;
+    this->fov->operator =(fov);
 }
 float CoffeeCamera::getZfar() const
 {

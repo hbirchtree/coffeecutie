@@ -2,7 +2,7 @@
 #define COFFEEOBJECT_H
 
 #include "general/common.h"
-#include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/physics/physicsobject.h"
 class CoffeeObject
 {
@@ -16,9 +16,9 @@ public:
 
     virtual ~CoffeeObject();
 
-    virtual NumberContainer<glm::vec3>* position();
-    virtual NumberContainer<glm::quat>* rotation();
-    virtual NumberContainer<glm::vec3>* scale();
+    virtual Vector3Value* position();
+    virtual QuatValue* rotation();
+    virtual Vector3Value* scale();
 
     virtual PhysicsObject* physics();
     virtual void setPhysicsObject(PhysicsObject* obj);
@@ -31,9 +31,9 @@ public slots:
 protected:
     CoffeeObject(QObject* parent = 0);
     QPointer<PhysicsObject> physical;
-    QPointer<NumberContainer<glm::vec3>> vposition;
-    QPointer<NumberContainer<glm::quat>> qrotation;
-    QPointer<NumberContainer<glm::vec3>> vscale;
+    QPointer<Vector3Value> vposition;
+    QPointer<QuatValue> qrotation;
+    QPointer<Vector3Value> vscale;
 };
 
 #endif // COFFEEOBJECT_H

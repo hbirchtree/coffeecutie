@@ -2,7 +2,7 @@
 #define COFFEEOMNILIGHT_H
 
 #include "general/common.h"
-#include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 class VectorValue;
 class ShaderVariant;
@@ -25,14 +25,14 @@ public:
     CoffeeOmniLight(QObject *parent,QString id,glm::vec3 pos,glm::vec3 color,float att,float ambco);
     ~CoffeeOmniLight();
 
-    QPointer<NumberContainer<glm::vec3>> getPosition();
+    QPointer<Vector3Value> getPosition();
 
-    QPointer<NumberContainer<glm::vec3>> getColor();
+    QPointer<Vector3Value> getColor();
 
-    QPointer<NumberContainer<float> > getAttenuation();
+    QPointer<ScalarValue> getAttenuation();
     float getAttenuationValue() const;
 
-    QPointer<NumberContainer<float>> getAmbientCoefficient();
+    QPointer<ScalarValue> getAmbientCoefficient();
     float getAmbientCoefficientValue() const;
 
     QObject* getColorValue();
@@ -44,10 +44,10 @@ public:
     QObject* getAmbientCoefficientVariant();
 
 private:
-    QPointer<NumberContainer<glm::vec3>> position;
-    QPointer<NumberContainer<glm::vec3>> color;
-    QPointer<NumberContainer<float>> attenuation;
-    QPointer<NumberContainer<float>> ambientCoefficient;
+    QPointer<Vector3Value> position;
+    QPointer<Vector3Value> color;
+    QPointer<ScalarValue> attenuation;
+    QPointer<ScalarValue> ambientCoefficient;
 
     VectorValue* colorValue;
     VectorValue* positionValue;

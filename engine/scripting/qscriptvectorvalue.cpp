@@ -1,6 +1,6 @@
 #include "qscriptvectorvalue.h"
 
-VectorValue::VectorValue(NumberContainer<glm::vec3> *source) : QObject(source)
+VectorValue::VectorValue(QObject* parent, NumberContainer<glm::vec3> *source) : QObject(parent)
 {
     this->source = source;
 }
@@ -18,36 +18,6 @@ float VectorValue::y() const
 float VectorValue::x() const
 {
     return source->getValue().x;
-}
-
-float VectorValue::velocityZ() const
-{
-    return source->getVelocity().z;
-}
-
-float VectorValue::velocityY() const
-{
-    return source->getVelocity().y;
-}
-
-float VectorValue::velocityX() const
-{
-    return source->getVelocity().x;
-}
-
-float VectorValue::accelerationX() const
-{
-    return source->getAcceleration().x;
-}
-
-float VectorValue::accelerationY() const
-{
-    return source->getAcceleration().y;
-}
-
-float VectorValue::accelerationZ() const
-{
-    return source->getAcceleration().z;
 }
 
 QVariantList VectorValue::position() const
@@ -119,48 +89,6 @@ void VectorValue::setX(float x)
     *source = t;
 }
 
-void VectorValue::setVelocityZ(float velocityZ)
-{
-    glm::vec3 t = source->getVelocity();
-    t.z = velocityZ;
-    source->setVelocity(t);
-}
-
-void VectorValue::setVelocityY(float velocityY)
-{
-    glm::vec3 t = source->getVelocity();
-    t.y = velocityY;
-    source->setVelocity(t);
-}
-
-void VectorValue::setVelocityX(float velocityX)
-{
-    glm::vec3 t = source->getVelocity();
-    t.x = velocityX;
-    source->setVelocity(t);
-}
-
-void VectorValue::setAccelerationX(float accelerationX)
-{
-    glm::vec3 t = source->getAcceleration();
-    t.x = accelerationX;
-    source->setAcceleration(t);
-}
-
-void VectorValue::setAccelerationY(float accelerationY)
-{
-    glm::vec3 t = source->getAcceleration();
-    t.y = accelerationY;
-    source->setAcceleration(t);
-}
-
-void VectorValue::setAccelerationZ(float accelerationZ)
-{
-    glm::vec3 t = source->getAcceleration();
-    t.z = accelerationZ;
-    source->setAcceleration(t);
-}
-
 void VectorValue::setPositionList(QVariantList position)
 {
     if(position.size()!=3)
@@ -197,7 +125,7 @@ void VectorValue::pAdd(float x, float y, float z)
     *source+=glm::vec3(x,y,z);
 }
 
-QuaternionValue::QuaternionValue(NumberContainer<glm::quat> *source) : QObject(source)
+QuaternionValue::QuaternionValue(QObject *parent, NumberContainer<glm::quat> *source) : QObject(parent)
 {
     this->source = source;
 }
@@ -228,4 +156,46 @@ void QuaternionValue::setValue(QVariantList value)
     if(value.size()!=4)
         return;
     source->setValue(glm::quat(value.at(0).toFloat(),value.at(1).toFloat(),value.at(2).toFloat(),value.at(3).toFloat()));
+}
+
+
+Vector3Value::Vector3Value(QObject *parent, const glm::vec3 &initial) :
+    QObject(parent),
+    NumberContainer<glm::vec3>(initial)
+{
+}
+
+Vector3Value::Vector3Value(QObject *parent, float x, float y, float z) :
+    QObject(parent),
+    NumberContainer<glm::vec3>(glm::vec3(x,y,z))
+{
+}
+
+void Vector3Value::bindValue(QPointer<Vector3Value> vec)
+{
+    NumberContainer<glm::vec3>::bindValue(((NumberContainer<glm::vec3>*)vec));
+}
+
+QuatValue::QuatValue(QObject *parent, const glm::quat &initial) :
+    QObject(parent),
+    NumberContainer<glm::quat>(initial)
+{
+}
+
+QuatValue::QuatValue(QObject *parent, float w, float x, float y, float z) :
+    QObject(parent),
+     NumberContainer<glm::quat>(glm::quat(w,x,y,z))
+{
+}
+
+void QuatValue::bindValue(QPointer<QuatValue> quat)
+{
+    NumberContainer<glm::quat>::bindValue(((NumberContainer<glm::quat>*)quat));
+}
+
+
+ScalarValue::ScalarValue(QObject *parent, float v) :
+    QObject(parent),
+    NumberContainer<float>(v)
+{
 }

@@ -5,13 +5,13 @@
 
 CoffeeOmniLight::CoffeeOmniLight(QObject *parent) : QObject(parent)
 {
-    position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
-    color = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
-    attenuation = new NumberContainer<float>(this,0.01f);
-    ambientCoefficient = new NumberContainer<float>(this,0.01f);
+    position = new Vector3Value(this,glm::vec3(0,0,0));
+    color = new Vector3Value(this,glm::vec3(1,1,1));
+    attenuation = new ScalarValue(this,0.01f);
+    ambientCoefficient = new ScalarValue(this,0.01f);
 
-    this->colorValue = new VectorValue(color);
-    this->positionValue = new VectorValue(position);
+    this->colorValue = new VectorValue(this,color);
+    this->positionValue = new VectorValue(this,position);
 
     this->colorVariant = new ShaderVariant([=](){
         return this->color->getValue();
@@ -44,17 +44,17 @@ CoffeeOmniLight::~CoffeeOmniLight()
     delete ambientCoefficientVariant;
     delete attenuationVariant;
 }
-QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getPosition()
+QPointer<Vector3Value> CoffeeOmniLight::getPosition()
 {
     return position;
 }
 
-QPointer<NumberContainer<glm::vec3>> CoffeeOmniLight::getColor()
+QPointer<Vector3Value> CoffeeOmniLight::getColor()
 {
     return color;
 }
 
-QPointer<NumberContainer<float>> CoffeeOmniLight::getAttenuation()
+QPointer<ScalarValue> CoffeeOmniLight::getAttenuation()
 {
     return attenuation;
 }
@@ -63,7 +63,7 @@ float CoffeeOmniLight::getAttenuationValue() const
 {
     return attenuation->getValue();
 }
-QPointer<NumberContainer<float> > CoffeeOmniLight::getAmbientCoefficient()
+QPointer<ScalarValue> CoffeeOmniLight::getAmbientCoefficient()
 {
     return ambientCoefficient;
 }

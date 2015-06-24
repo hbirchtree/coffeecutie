@@ -4,6 +4,74 @@
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
 
+class Vector3Value : public QObject,public NumberContainer<glm::vec3>
+{
+public:
+    Vector3Value(QObject* parent, const glm::vec3 &initial);
+    Vector3Value(QObject* parent, float x, float y, float z);
+
+
+    using NumberContainer<glm::vec3>::bindValue;
+    void bindValue(QPointer<Vector3Value> vec);
+
+    using NumberContainer<glm::vec3>::operator !=;
+    using NumberContainer<glm::vec3>::operator =;
+    using NumberContainer<glm::vec3>::operator *=;
+    using NumberContainer<glm::vec3>::operator +=;
+    using NumberContainer<glm::vec3>::operator -=;
+    using NumberContainer<glm::vec3>::operator *;
+    using NumberContainer<glm::vec3>::operator +;
+    using NumberContainer<glm::vec3>::operator -;
+    using NumberContainer<glm::vec3>::operator ==;
+    using NumberContainer<glm::vec3>::operator >=;
+    using NumberContainer<glm::vec3>::operator <=;
+    using NumberContainer<glm::vec3>::operator >=;
+};
+
+class QuatValue : public QObject,public NumberContainer<glm::quat>
+{
+public:
+    QuatValue(QObject* parent, const glm::quat &initial);
+    QuatValue(QObject* parent, float w, float x, float y, float z);
+
+    using NumberContainer<glm::quat>::bindValue;
+    void bindValue(QPointer<QuatValue> quat);
+
+    using NumberContainer<glm::quat>::operator !=;
+    using NumberContainer<glm::quat>::operator =;
+    using NumberContainer<glm::quat>::operator *=;
+    using NumberContainer<glm::quat>::operator +=;
+    using NumberContainer<glm::quat>::operator -=;
+    using NumberContainer<glm::quat>::operator *;
+    using NumberContainer<glm::quat>::operator +;
+    using NumberContainer<glm::quat>::operator -;
+    using NumberContainer<glm::quat>::operator ==;
+    using NumberContainer<glm::quat>::operator >=;
+    using NumberContainer<glm::quat>::operator <=;
+    using NumberContainer<glm::quat>::operator >=;
+};
+
+class ScalarValue : public QObject,public NumberContainer<float>
+{
+public:
+    ScalarValue(QObject* parent, float v);
+
+    void bindValue(QPointer<ScalarValue> quat);
+
+    using NumberContainer<float>::operator !=;
+    using NumberContainer<float>::operator =;
+    using NumberContainer<float>::operator *=;
+    using NumberContainer<float>::operator +=;
+    using NumberContainer<float>::operator -=;
+    using NumberContainer<float>::operator *;
+    using NumberContainer<float>::operator +;
+    using NumberContainer<float>::operator -;
+    using NumberContainer<float>::operator ==;
+    using NumberContainer<float>::operator >=;
+    using NumberContainer<float>::operator <=;
+    using NumberContainer<float>::operator >=;
+};
+
 class VectorValue : public QObject
 {
     Q_PROPERTY(QVariantList position READ position WRITE setPositionList)
@@ -14,30 +82,14 @@ class VectorValue : public QObject
     Q_PROPERTY(float y READ y WRITE setY)
     Q_PROPERTY(float z READ z WRITE setZ)
 
-    Q_PROPERTY(float velocityX READ velocityX WRITE setVelocityX)
-    Q_PROPERTY(float velocityY READ velocityY WRITE setVelocityY)
-    Q_PROPERTY(float velocityZ READ velocityZ WRITE setVelocityZ)
-
-    Q_PROPERTY(float accelerationX READ accelerationX WRITE setAccelerationX)
-    Q_PROPERTY(float accelerationY READ accelerationY WRITE setAccelerationY)
-    Q_PROPERTY(float accelerationZ READ accelerationZ WRITE setAccelerationZ)
-
     Q_OBJECT
 
 public:
-    VectorValue(NumberContainer<glm::vec3>* source);
+    VectorValue(QObject *parent, NumberContainer<glm::vec3> *source);
 
     float z() const;
     float y() const;
     float x() const;
-
-    float velocityZ() const;
-    float velocityY() const;
-    float velocityX() const;
-
-    float accelerationX() const;
-    float accelerationY() const;
-    float accelerationZ() const;
 
     QVariantList position() const;
     QVariantList velocity() const;
@@ -56,14 +108,6 @@ public slots:
     void setZ(float z);
     void setY(float y);
     void setX(float x);
-
-    void setVelocityZ(float velocityZ);
-    void setVelocityY(float velocityY);
-    void setVelocityX(float velocityX);
-
-    void setAccelerationX(float accelerationX);
-    void setAccelerationY(float accelerationY);
-    void setAccelerationZ(float accelerationZ);
 
     void setPositionList(QVariantList position);
     void setVelocityList(QVariantList velocity);
@@ -84,7 +128,7 @@ class QuaternionValue : public QObject
     Q_OBJECT
 
 public:
-    QuaternionValue(NumberContainer<glm::quat>* source);
+    QuaternionValue(QObject* parent,NumberContainer<glm::quat>* source);
     QVariantList value() const;
     NumberContainer<glm::quat>* getRaw();
 

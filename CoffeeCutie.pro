@@ -23,7 +23,6 @@ SOURCES += main.cpp \
     engine/rendering/coffeeadvancedloop.cpp \
     general/data/coffeedatacontainer.cpp \
     general/data/mutabledatacontainer.cpp \
-    general/data/numbercontainer.cpp \
     general/input/coffeejoystick.cpp \
     general/input/coffeeplayercontroller.cpp \
     general/input/coffeesdljoystick.cpp \

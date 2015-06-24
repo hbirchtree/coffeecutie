@@ -102,20 +102,20 @@ CoffeeInstanceData *CoffeeInstanceContainer::createInstanceData()
 
 
 CoffeeInstanceData::CoffeeInstanceData(glm::vec3 pos, glm::quat rot, glm::vec3 scale, QObject *parent) : QObject(parent){
-    this->pos = new NumberContainer<glm::vec3>(this,pos);
-    this->scale = new NumberContainer<glm::vec3>(this,scale);
-    this->rot = new NumberContainer<glm::quat>(this,rot);
+    this->pos = new Vector3Value(this,pos);
+    this->scale = new Vector3Value(this,scale);
+    this->rot = new QuatValue(this,rot);
 
-    this->posWrapper = new VectorValue(this->pos);
-    this->rotWrapper = new QuaternionValue(this->rot);
-    this->sclWrapper = new VectorValue(this->scale);
+    this->posWrapper = new VectorValue(this,this->pos);
+    this->rotWrapper = new QuaternionValue(this,this->rot);
+    this->sclWrapper = new VectorValue(this,this->scale);
 }
 
-NumberContainer<glm::vec3> *CoffeeInstanceData::getPos(){ return pos;}
+Vector3Value *CoffeeInstanceData::getPos(){ return pos;}
 
-NumberContainer<glm::vec3> *CoffeeInstanceData::getScale(){ return scale;}
+Vector3Value *CoffeeInstanceData::getScale(){ return scale;}
 
-NumberContainer<glm::quat> *CoffeeInstanceData::getRot(){ return rot;}
+QuatValue *CoffeeInstanceData::getRot(){ return rot;}
 
 PhysicsObject *CoffeeInstanceData::physics()
 {

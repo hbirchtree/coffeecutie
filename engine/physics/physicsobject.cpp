@@ -4,11 +4,11 @@
 
 PhysicsObject::PhysicsObject(QObject *parent) : QObject(parent){
     descr = new PhysicsDescriptor(this);
-    v_position = new NumberContainer<glm::vec3>(this,glm::vec3(0,0,0));
+    v_position = new Vector3Value(this,glm::vec3(0,0,0));
     v_position->setObjectName("position");
-    v_physics_rotation = new NumberContainer<glm::quat>(this,glm::quat(1,0,0,0));
+    v_physics_rotation = new QuatValue(this,glm::quat(1,0,0,0));
     v_physics_rotation->setObjectName("orientation");
-    v_scale = new NumberContainer<glm::vec3>(this,glm::vec3(1,1,1));
+    v_scale = new Vector3Value(this,glm::vec3(1,1,1));
     v_scale->setObjectName("scale");
 }
 
@@ -22,11 +22,11 @@ PhysicsObject::~PhysicsObject(){
         deleteObject(physicspointer);
 }
 
-QPointer<NumberContainer<glm::vec3> > PhysicsObject::getPositionObject(){
+QPointer<Vector3Value> PhysicsObject::getPositionObject(){
     return v_position;
 }
 
-QPointer<NumberContainer<glm::quat> > PhysicsObject::getPhysicalRotation(){
+QPointer<QuatValue> PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 

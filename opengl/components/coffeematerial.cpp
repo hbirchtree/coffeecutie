@@ -4,18 +4,18 @@
 #include <QMetaEnum>
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
-    m_shininess = new NumberContainer<float>(this,1.f);
-    m_shininessStrength = new NumberContainer<float>(this,1.f);
-    m_refraction = new NumberContainer<float>(this,1.f);
-    m_reflectivity = new NumberContainer<float>(this,0.f);
-    m_opacity = new NumberContainer<float>(this,1.f);
+    m_shininess = new ScalarValue(this,1.f);
+    m_shininessStrength = new ScalarValue(this,1.f);
+    m_refraction = new ScalarValue(this,1.f);
+    m_reflectivity = new ScalarValue(this,0.f);
+    m_opacity = new ScalarValue(this,1.f);
 
-    m_transparency = new NumberContainer<glm::vec3>(this,glm::vec3(1));
-    m_emissiveColor = new NumberContainer<glm::vec3>(this,glm::vec3(0));
-    m_diffuseColor = new NumberContainer<glm::vec3>(this,glm::vec3(1));
-    m_specularColor = new NumberContainer<glm::vec3>(this,glm::vec3(1));
-    m_ambientColor = new NumberContainer<glm::vec3>(this,glm::vec3(1));
-    m_colorMultiplier = new NumberContainer<glm::vec3>(this,glm::vec3(1));
+    m_transparency = new Vector3Value(this,glm::vec3(1));
+    m_emissiveColor = new Vector3Value(this,glm::vec3(0));
+    m_diffuseColor = new Vector3Value(this,glm::vec3(1));
+    m_specularColor = new Vector3Value(this,glm::vec3(1));
+    m_ambientColor = new Vector3Value(this,glm::vec3(1));
+    m_colorMultiplier = new Vector3Value(this,glm::vec3(1));
 
     p_shininess = new ShaderVariant([=](){return m_shininess->getValue();});
     p_shininessStrength = new ShaderVariant([=](){return m_shininessStrength->getValue();});
@@ -138,7 +138,7 @@ glm::vec3 CoffeeMaterial::transparency() const
     return m_transparency->getValue();
 }
 
-QPointer<NumberContainer<glm::vec3> > CoffeeMaterial::getTransparency()
+QPointer<Vector3Value > CoffeeMaterial::getTransparency()
 {
     return m_transparency;
 }
@@ -148,7 +148,7 @@ float CoffeeMaterial::shininess() const
     return m_shininess->getValue();
 }
 
-QPointer<NumberContainer<float>> CoffeeMaterial::getShininess()
+QPointer<ScalarValue> CoffeeMaterial::getShininess()
 {
     return m_shininess;
 }

@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include "general/common.h"
-#include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 #include <QMutex>
 
 class VectorValue;
@@ -21,9 +21,9 @@ class CoffeeInstanceData : public QObject{
 public:
     CoffeeInstanceData(glm::vec3 pos,glm::quat rot, glm::vec3 scale, QObject* parent);
 
-    NumberContainer<glm::vec3>* getPos();
-    NumberContainer<glm::vec3>* getScale();
-    NumberContainer<glm::quat>* getRot();
+    Vector3Value* getPos();
+    Vector3Value* getScale();
+    QuatValue *getRot();
     PhysicsObject* physics();
 
     QObject* physicsQObject();
@@ -37,9 +37,9 @@ public slots:
 
 private:
     QPointer<PhysicsObject> m_physics;
-    NumberContainer<glm::vec3> *pos;
-    NumberContainer<glm::quat> *rot;
-    NumberContainer<glm::vec3> *scale;
+    Vector3Value *pos;
+    QuatValue *rot;
+    Vector3Value *scale;
 
     VectorValue* posWrapper;
     QuaternionValue* rotWrapper;

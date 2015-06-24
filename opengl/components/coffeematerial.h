@@ -2,7 +2,7 @@
 #define COFFEEMATERIAL
 
 #include "general/common.h"
-#include "general/data/numbercontainer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 #include "opengl/components/coffeetexture.h"
 #include "general/data/coffeegameasset.h"
 
@@ -47,8 +47,8 @@ public:
     float shininessStrength() const;
     float refraction() const;
     float opacity() const;
-    QPointer<NumberContainer<glm::vec3>> getTransparency();
-    QPointer<NumberContainer<float>> getShininess();
+    QPointer<Vector3Value> getTransparency();
+    QPointer<ScalarValue> getShininess();
     glm::vec3 ambientColor() const;
     glm::vec3 specularColor() const;
     glm::vec3 colorMultiplier() const;
@@ -102,19 +102,19 @@ private:
 
     bool m_wireframe = false;
     bool m_culling = true;
-    QPointer<NumberContainer<float>> m_shininess;
-    QPointer<NumberContainer<float>> m_shininessStrength;
-    QPointer<NumberContainer<float>> m_refraction;
-    QPointer<NumberContainer<glm::vec3>> m_transparency;
-    QPointer<NumberContainer<glm::vec3>> m_diffuseColor;
-    QPointer<NumberContainer<glm::vec3>> m_specularColor;
-    QPointer<NumberContainer<glm::vec3>> m_ambientColor;
-    QPointer<NumberContainer<glm::vec3>> m_emissiveColor;
-    QPointer<NumberContainer<glm::vec3>> m_colorMultiplier;
+    QPointer<ScalarValue> m_shininess;
+    QPointer<ScalarValue> m_shininessStrength;
+    QPointer<ScalarValue> m_refraction;
+    QPointer<Vector3Value> m_transparency;
+    QPointer<Vector3Value> m_diffuseColor;
+    QPointer<Vector3Value> m_specularColor;
+    QPointer<Vector3Value> m_ambientColor;
+    QPointer<Vector3Value> m_emissiveColor;
+    QPointer<Vector3Value> m_colorMultiplier;
     GLenum m_blendMode;
     GLenum m_shadingMode = GL_FLAT;
-    QPointer<NumberContainer<float>> m_opacity;
-    QPointer<NumberContainer<float>> m_reflectivity;
+    QPointer<ScalarValue> m_opacity;
+    QPointer<ScalarValue> m_reflectivity;
 
     ShaderVariant* p_shininess;
     ShaderVariant* p_shininessStrength;

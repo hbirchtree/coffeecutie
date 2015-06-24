@@ -2,24 +2,24 @@
 
 CoffeeObject::CoffeeObject(QObject *parent)
 {
-    vposition = new NumberContainer<glm::vec3>(parent,glm::vec3(0,0,0));
-    qrotation = new NumberContainer<glm::quat>(parent,glm::quat(1,0,0,0));
-    vscale = new NumberContainer<glm::vec3>(parent,glm::vec3(1,1,1));
+    vposition = new Vector3Value(parent,glm::vec3(0,0,0));
+    qrotation = new QuatValue(parent,glm::quat(1,0,0,0));
+    vscale = new Vector3Value(parent,glm::vec3(1,1,1));
 }
 
 CoffeeObject::~CoffeeObject()
 {
 }
 
-NumberContainer<glm::vec3> *CoffeeObject::position(){
+Vector3Value *CoffeeObject::position(){
     return vposition;
 }
 
-NumberContainer<glm::quat> *CoffeeObject::rotation(){
+QuatValue *CoffeeObject::rotation(){
     return qrotation;
 }
 
-NumberContainer<glm::vec3> *CoffeeObject::scale(){
+Vector3Value *CoffeeObject::scale(){
     return vscale;
 }
 

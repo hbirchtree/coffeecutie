@@ -1,8 +1,0 @@
-mtl = object.material
-
-for(i=0;i<mtl.textureCount();i++){
-	t = object.textures[i]
-	if(t.type==CoffeeTexture.Diffuse){ //Here we export the TextureType enum and use it
-		
-	}
-}

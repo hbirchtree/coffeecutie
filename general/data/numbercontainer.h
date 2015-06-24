@@ -1,16 +1,16 @@
 #ifndef NUMBERCONTAINER_H
 #define NUMBERCONTAINER_H
 
-#include <QObject>
-template<class T> class NumberContainer : public QObject
+#include "general/common.h"
+
+template<class T> class NumberContainer
 {
 public:
-    NumberContainer(QObject* parent,T initial) : NumberContainer(parent)
+    NumberContainer(T initial) : NumberContainer()
     {
         value = initial;
     }
-    NumberContainer(QObject* parent,QPointer<NumberContainer<T> > floater) : NumberContainer(parent){
-        this->setParent(floater->parent());
+    NumberContainer(NumberContainer<T> *floater) : NumberContainer(){
         bindValue(floater);
     }
     ~NumberContainer()
@@ -134,10 +134,6 @@ public:
             value = bound->getValue();
         }
         value+=valueOffsetCallback();
-//        if(minval<maxval&&value>maxval)
-//            value=maxval;
-//        else if(minval<maxval&&value<minval)
-//            value=minval;
         return value;
     }
 
@@ -184,18 +180,18 @@ public:
     void unbindValue(){
         bound = 0;
     }
-    void bindValue(QPointer<NumberContainer<T> > bound){
+    void bindValue(NumberContainer<T> *bound){
         this->bound = bound;
     }
 
 private:
-    QPointer<NumberContainer<T> > bound;
+    NumberContainer<T> *bound;
 
     std::function<T()> valueOffsetCallback = [](){
         return T();
     };
 
-    NumberContainer(QObject* parent) : QObject(parent)
+    NumberContainer()
     {
         bound = nullptr;
     }
