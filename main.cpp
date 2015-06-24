@@ -16,7 +16,6 @@
 
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
-#define RUNNABLE_RENDERER
 
 int main(int argc, char *argv[])
 {
@@ -122,7 +121,12 @@ int main(int argc, char *argv[])
         if((CoffeeAdvancedLoop*)loop){
             for(QObject* o : objects)
                 se->addObject(o);
-            se->execFile("ubw/scripts/test.qts");
+            QString out;
+            bool res;
+            se->execFile("ubw/scripts/test.qts",&res,&out);
+            qDebug("Init script run: %i, %s",
+                   res,
+                   out.toStdString().c_str());
         }
 
 #ifdef COFFEE_INSPECTOR_RUN
@@ -141,13 +145,16 @@ int main(int argc, char *argv[])
         inspector->show();
     }
 #endif
+
+#ifdef COFFEE_INSPECTOR_RUN
     QThreadPool::globalInstance()->start(renderer);
 
     a.exec();
 
-#ifdef COFFEE_INSPECTOR_RUN
     if(inspect)
         delete inspector;
+#else
+    renderer->run(); //in this case, nothing else runs in the main thread.
 #endif
 
     delete root;

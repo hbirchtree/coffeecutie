@@ -4,7 +4,6 @@
 #include "general/common.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 
-class VectorValue;
 class ShaderVariant;
 
 class CoffeeOmniLight : public QObject
@@ -48,9 +47,6 @@ private:
     QPointer<Vector3Value> color;
     QPointer<ScalarValue> attenuation;
     QPointer<ScalarValue> ambientCoefficient;
-
-    VectorValue* colorValue;
-    VectorValue* positionValue;
 
     ShaderVariant* colorVariant;
     ShaderVariant* positionVariant;

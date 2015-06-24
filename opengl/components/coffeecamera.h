@@ -4,7 +4,6 @@
 #include "general/common.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 
-class VectorValue;
 class ShaderVariant;
 
 class CoffeeCamera : public QObject
@@ -96,9 +95,6 @@ private:
     QPointer<Vector3Value> position;
     QPointer<QuatValue> orientation;
     QPointer<Vector3Value> rotation_euler;
-
-    VectorValue* posWrapper;
-    VectorValue* rotWrapper;
 
     ShaderVariant* matrixVariant;
     ShaderVariant* cameraRightVariant;

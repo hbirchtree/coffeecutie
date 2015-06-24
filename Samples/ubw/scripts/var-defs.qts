@@ -1,0 +1,7 @@
+
+///////////
+//Here we put out global variables. This is easier than scouting for them in a large script.
+///////////
+
+var world = coffeeroot.evloop.world1;
+var controller = coffeeroot.evloop.cameracontrol;

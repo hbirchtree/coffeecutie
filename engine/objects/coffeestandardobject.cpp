@@ -11,10 +11,6 @@ CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
     QObject(parent),
     CoffeeObject(this)
 {
-    posWrapper = new VectorValue(this,position());
-    rotWrapper = new QuaternionValue(this,rotation());
-    sclWrapper = new VectorValue(this,scale());
-
     modelMatrix = new ShaderVariant([=](){
         return RenderingMethods::translateObjectMatrix(position()->getValue(),
                                                        rotation()->getValue(),
@@ -166,17 +162,17 @@ QObject *CoffeeStandardObject::shaderRef()
 
 QObject *CoffeeStandardObject::positionValue()
 {
-    return posWrapper;
+    return position();
 }
 
 QObject *CoffeeStandardObject::rotationValue()
 {
-    return rotWrapper;
+    return rotation();
 }
 
 QObject *CoffeeStandardObject::scaleValue()
 {
-    return sclWrapper;
+    return scale();
 }
 
 QObject *CoffeeStandardObject::physicsRef()

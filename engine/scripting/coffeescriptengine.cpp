@@ -15,6 +15,7 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
 
 //    qRegisterMetaType<QEvent::Type>("QEvent::Type");
+    qRegisterMetaType<ScalarDataType>("ScalarDataType");
     qRegisterMetaType<ShaderVariant*>("ShaderVariant*");
     qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
 //    qRegisterMetaType<CoffeeInstanceData*>("CoffeeInstanceData*");
@@ -47,12 +48,12 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
     {
         QScriptValue pdCt = e.newFunction(vectorValueConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("VectorValue",mo);
+        e.globalObject().setProperty("Vector3Value",mo);
     }
     {
         QScriptValue pdCt = e.newFunction(quatValueConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("QuaternionValue",mo);
+        e.globalObject().setProperty("QuatValue",mo);
     }
     {
         QScriptValue pdCt = e.newFunction(vectorVariantConstructor);
@@ -164,13 +165,13 @@ QScriptValue CoffeeScriptEngine::physicsDescConstructor(QScriptContext *ctxt, QS
 
 QScriptValue CoffeeScriptEngine::vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new VectorValue(parent,new NumberContainer<glm::vec3>(glm::vec3(0,0,0)));
+    QObject* o = new Vector3Value(parent,glm::vec3(0,0,0));
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 
 QScriptValue CoffeeScriptEngine::quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new QuaternionValue(parent,new NumberContainer<glm::quat>(glm::quat(1,0,0,0)));
+    QObject* o = new QuatValue(parent,glm::quat(1,0,0,0));
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 

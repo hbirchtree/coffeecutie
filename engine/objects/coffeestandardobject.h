@@ -88,10 +88,6 @@ public slots:
     void setTexture(QString samplerName, CoffeeTexture *texture);
 
 protected:
-    VectorValue* posWrapper;
-    QuaternionValue* rotWrapper;
-    VectorValue* sclWrapper;
-
     ShaderVariant* modelMatrix;
 
     bool baked = false;

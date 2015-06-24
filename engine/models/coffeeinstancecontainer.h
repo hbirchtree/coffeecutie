@@ -6,8 +6,6 @@
 #include "engine/scripting/qscriptvectorvalue.h"
 #include <QMutex>
 
-class VectorValue;
-class QuaternionValue;
 class PhysicsObject;
 
 class CoffeeInstanceData : public QObject{
@@ -40,10 +38,6 @@ private:
     Vector3Value *pos;
     QuatValue *rot;
     Vector3Value *scale;
-
-    VectorValue* posWrapper;
-    QuaternionValue* rotWrapper;
-    VectorValue* sclWrapper;
 };
 
 class CoffeeInstanceContainer : public QObject

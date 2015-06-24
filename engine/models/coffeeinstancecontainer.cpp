@@ -105,10 +105,6 @@ CoffeeInstanceData::CoffeeInstanceData(glm::vec3 pos, glm::quat rot, glm::vec3 s
     this->pos = new Vector3Value(this,pos);
     this->scale = new Vector3Value(this,scale);
     this->rot = new QuatValue(this,rot);
-
-    this->posWrapper = new VectorValue(this,this->pos);
-    this->rotWrapper = new QuaternionValue(this,this->rot);
-    this->sclWrapper = new VectorValue(this,this->scale);
 }
 
 Vector3Value *CoffeeInstanceData::getPos(){ return pos;}
@@ -129,17 +125,17 @@ QObject *CoffeeInstanceData::physicsQObject()
 
 QObject *CoffeeInstanceData::rotationRef()
 {
-    return rotWrapper;
+    return rot;
 }
 
 QObject *CoffeeInstanceData::positionRef()
 {
-    return posWrapper;
+    return pos;
 }
 
 QObject *CoffeeInstanceData::scaleRef()
 {
-    return sclWrapper;
+    return scale;
 }
 
 void CoffeeInstanceData::bindObject(PhysicsObject *target)

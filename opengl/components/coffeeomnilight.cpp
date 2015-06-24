@@ -10,9 +10,6 @@ CoffeeOmniLight::CoffeeOmniLight(QObject *parent) : QObject(parent)
     attenuation = new ScalarValue(this,0.01f);
     ambientCoefficient = new ScalarValue(this,0.01f);
 
-    this->colorValue = new VectorValue(this,color);
-    this->positionValue = new VectorValue(this,position);
-
     this->colorVariant = new ShaderVariant([=](){
         return this->color->getValue();
     });
@@ -75,12 +72,12 @@ float CoffeeOmniLight::getAmbientCoefficientValue() const
 
 QObject *CoffeeOmniLight::getColorValue()
 {
-    return colorValue;
+    return color;
 }
 
 QObject *CoffeeOmniLight::getPositionValue()
 {
-    return positionValue;
+    return position;
 }
 
 QObject *CoffeeOmniLight::getColorVariant()

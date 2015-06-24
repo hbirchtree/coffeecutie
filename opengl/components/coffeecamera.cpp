@@ -10,9 +10,6 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
     this->orientation = new QuatValue(this,glm::quat(1,0,0,0));
     this->rotation_euler = new Vector3Value(this,glm::vec3(0,0,0));
 
-    this->posWrapper = new VectorValue(this,position);
-    this->rotWrapper = new VectorValue(this,rotation_euler);
-
     this->matrixVariant = new ShaderVariant([=](){return getMatrix();});
     this->cameraForwardVariant = new ShaderVariant([=](){
         return getCameraForwardNormal();
@@ -220,12 +217,12 @@ QObject *CoffeeCamera::getMatrixVariant() const
 
 QObject *CoffeeCamera::getPositionValue()
 {
-    return posWrapper;
+    return position;
 }
 
 QObject *CoffeeCamera::getRotationValue()
 {
-    return rotWrapper;
+    return rotation_euler;
 }
 
 QObject *CoffeeCamera::getCameraRightVariant() const

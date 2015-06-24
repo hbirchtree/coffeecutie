@@ -55,9 +55,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
     _rendering_loop_init = [=](){
 
-        qDebug("Configuring renderer");
-        renderer->setSamples(4);
-
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
 

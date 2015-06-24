@@ -1,0 +1,80 @@
+function objStandardInitShader(target){
+	var obj = target;
+	var mat = obj.material;
+
+	//Material textures
+	for(var i=0;i<mat.textureTypes.length;i++){
+		var t = mat.textureTypes[i];
+		switch(t){
+		case CoffeeTexture.CoffeeTexture_Ambient:
+			obj.setTexture("mtl.ambientSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Heightmap:
+			obj.setTexture("mtl.heightmapSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Emissive:
+			obj.setTexture("mtl.emissiveSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Displacement:
+			obj.setTexture("mtl.displacementSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Lightmap:
+			obj.setTexture("mtl.lightmapSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Reflection:
+			obj.setTexture("mtl.reflectivitySampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Diffusion:
+			obj.setTexture("mtl.diffuseSampler",mat.getTexture(t));
+            break;
+		case CoffeeTexture.CoffeeTexture_Bumpmap:
+			obj.setTexture("mtl.bumpSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Specular:
+			obj.setTexture("mtl.specularSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Highlight:
+			obj.setTexture("mtl.highlightSampler",mat.getTexture(t));
+			break;
+		case CoffeeTexture.CoffeeTexture_Transparency:
+            obj.setTexture("mtl.transparencySampler",mat.getTexture(t));
+			break;
+		default:
+			break;
+        }
+	}
+
+	//Material
+	obj.setUniform("mtl.opacity",mat.opacityVariant,false);
+	obj.setUniform("mtl.shininess",mat.shininessVariant,false);
+	obj.setUniform("mtl.shininessStrength",mat.shininessStrengthVariant,false);
+	obj.setUniform("mtl.transparencyValue",mat.transparency,false);
+	obj.setUniform("mtl.colorMultiplier",mat.colorMultiplier,false);
+	obj.setUniform("mtl.specularColor",mat.specularColor,false);
+	obj.setUniform("mtl.ambientColor",mat.ambientColor,false);
+	obj.setUniform("mtl.diffuseColor",mat.diffuseColor,false);
+	obj.setUniform("mtl.emissiveColor",mat.emissiveColor,false);
+	obj.setUniform("mtl.refraction",mat.refractionVariant,false);
+	obj.setUniform("mtl.reflectivity",mat.reflectivityVariant,false);
+
+	//Camera
+	obj.setUniform("camera",world.camera.matrix,false);
+	obj.setUniform("cameraPosition",world.camera.positionVariant,false);
+
+	//Lights
+	obj.setUniform("light.position",world.lights[0].positionVariant,false);
+	obj.setUniform("light.intensities",world.lights[0].colorVariant,false);
+	obj.setUniform("light.attenuation",world.lights[0].attenuationVariant,false);
+	obj.setUniform("light.ambientCoefficient",world.lights[0].ambientCoefficientVariant,false);
+
+	//Fog
+	obj.setUniform("fogParams.fDensity",world.fogDensityVariant,false);
+	obj.setUniform("fogParams.fColor",world.fogColorVariant,false);
+
+	//Model
+	obj.setUniform("model",obj.matrix,false);
+
+	if(obj.objectName == "gear"){
+		obj.mesh.useInstancing = true;
+	}
+}

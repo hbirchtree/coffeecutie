@@ -65,7 +65,10 @@ CoffeeAssetStorage *CoffeeAssetImporter::importAssets(QVariantList assetList, co
     }
 
     for(QFuture<CoffeeAssetStorage*> e : importData){
-        s->merge(e.result());
+        CoffeeAssetStorage* p;
+        p = e.result();
+        s->merge(p);
+        delete p;
     }
 
     importRoot->deleteLater();
@@ -132,19 +135,19 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
             while(meshes.contains(cmesh->objectName()))
                 cmesh->setObjectName("Mesh."+QString::number(qrand()));
             meshes.insert(cmesh->objectName(),cmesh);
-            CoffeeModelStruct *s = new CoffeeModelStruct(0);
-            s->mesh = cmesh;
+            CoffeeModelStruct *ms = new CoffeeModelStruct(0);
+            ms->mesh = cmesh;
             if(mesh->mMaterialIndex<(uint)mtllist.size()){
-                s->material = mtllist.at(mesh->mMaterialIndex);
+                ms->material = mtllist.at(mesh->mMaterialIndex);
             }else{
                 qDebug("Could not find material for mesh: %s",cmesh->objectName().toStdString().c_str());
                 continue;
             }
             qDebug("New model: name=%s,material=%s",cmesh->objectName().toStdString().c_str(),
-                   s->material->objectName().toStdString().c_str());
+                   ms->material->objectName().toStdString().c_str());
             cmesh->moveToThread(outputParent->thread());
-            s->moveToThread(outputParent->thread());
-            models.insert(cmesh->objectName(),s);
+            ms->moveToThread(outputParent->thread());
+            models.insert(cmesh->objectName(),ms);
         }
     }
 
@@ -330,7 +333,6 @@ CoffeeModelStruct *CoffeeAssetStorage::acquireModel(QString identification)
 void CoffeeAssetStorage::setParents(QObject *parent)
 {
     for(CoffeeWorldOpts* w : worlds){
-//        w->moveToThread(parent->thread());
         w->setParent(parent);
     }
 
@@ -354,40 +356,6 @@ void CoffeeAssetStorage::setParents(QObject *parent)
 
     for(QPointer<ShaderContainer> p : shaders)
         p->setParent(parent);
-
-
-    //This is only viable for a large amount of objects. So far, it is only slower. Or maybe I did something wrong.
-//    QList<QFuture<void>> futures;
-
-//    QList<QHash<QString,QPointer<CoffeeMesh>>> meshvals = meshes.values();
-//    QFuture<void> task1 = QtConcurrent::map(meshvals,[=](QHash<QString,QPointer<CoffeeMesh>> m){
-//        QList<QPointer<CoffeeMesh>> vals = m.values();
-//        QFuture<void> task2 = QtConcurrent::map(vals,[=](QPointer<CoffeeMesh> mesh){
-//            mesh->setParent(parent);
-//        });
-//        task2.waitForFinished();
-//    });
-//    futures.append(task1);
-
-//    QList<QHash<QString,QPointer<CoffeeMaterial>>> matvals = materials.values();
-//    task1 = QtConcurrent::map(matvals,[=](QHash<QString,QPointer<CoffeeMaterial>> m){
-//        QList<QPointer<CoffeeMaterial>> vals = m.values();
-//        QFuture<void> task2 = QtConcurrent::map(vals,[=](QPointer<CoffeeMaterial> mat){
-//            mat->setParent(parent);
-//        });
-//        task2.waitForFinished();
-//    });
-//    futures.append(task1);
-
-//    QList<QPointer<CoffeeTexture>> texvals = textures.values();
-//    task1 = QtConcurrent::map(texvals,[=](QPointer<CoffeeTexture> tex){
-//        tex->setParent(parent);
-//    });
-//    futures.append(task1);
-
-
-//    for(QFuture<void> v : futures)
-    //        v.waitForFinished();
 }
 
 QObject *CoffeeAssetStorage::getMesh(QString source)

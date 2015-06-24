@@ -63,14 +63,14 @@ void CoffeePlayerController::addAccel(glm::vec3 d)
     position->setAcceleration(position->getAcceleration()+d);
 }
 
-void CoffeePlayerController::addSpeedForward(VectorValue *d)
+void CoffeePlayerController::addSpeedForward(Vector3Value *d)
 {
-    addSpeedForward(d->getRaw()->getValue());
+    addSpeedForward(d->getValue());
 }
 
-void CoffeePlayerController::addSpeedRight(VectorValue *d)
+void CoffeePlayerController::addSpeedRight(Vector3Value *d)
 {
-    addSpeedRight(d->getRaw()->getValue());
+    addSpeedRight(d->getValue());
 }
 
 void CoffeePlayerController::addSpeedForward(QObject *d, const QVariantList &factor)

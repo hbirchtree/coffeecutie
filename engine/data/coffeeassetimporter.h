@@ -56,9 +56,6 @@ public:
 
     QObjectList getWorlds();
 
-
-public slots:
-
 };
 
 class CoffeeAssetImporter : public QObject

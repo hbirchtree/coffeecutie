@@ -80,9 +80,15 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *par
             importData.append(index);
         }
 
+    qDebug("Data import initiated");
+
     for(QFuture<CoffeeAssetStorage*> e : importData){
-        s->merge(e.result());
+        CoffeeAssetStorage* p = e.result();
+        s->merge(p);
+        delete p;
     }
+
+    qDebug("Data import finished");
 
     importerRoot->deleteLater();
 
@@ -95,7 +101,6 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *par
            s->materials.size(),
            s->textures.size());
 
-
     //World data
     for(QString key : source.keys()){
         if(key.startsWith("world."))
@@ -107,7 +112,10 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *par
 
 QList<CoffeeWorldOpts *> CoffeeObjectFactory::importObjects(QString file, QObject *parent)
 {
-    return importAssets(file,parent)->worlds;
+    CoffeeAssetStorage* s = importAssets(file,parent);
+    QList<CoffeeWorldOpts *> w = s->worlds;
+    delete s;
+    return w;
 }
 
 CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeAssetStorage *assets, QObject* parent)

@@ -2,7 +2,7 @@
 #inc "shader-setup.qts"
 #inc "event-handling.qts"
 
-world.lights[0].position.bind(world.camera.position)
+world.lights[0].position.bindValue(world.camera.position)
 
 {
 	var objects = [world.gear, world.plane, world.blade, world.blade2];
@@ -13,35 +13,33 @@ world.lights[0].position.bind(world.camera.position)
 }
 
 
-/*
-for(i=0;i<5;i++){
-	world.gear.mesh.instances.createInstance();
-}
+//for(i=0;i<5;i++){
+//	world.gear.mesh.instances.createInstance();
+//}
 
-var objStack = new Array();
+//var objStack = new Array();
 
-for(i=0;i<6;i++){
-	var test = new PhysicsDescriptor();
-	test.setShape(1);
-	test.mass = 1;
-	var test2 = new PhysicsObject();
-	test2.setDescr(test);
+//for(i=0;i<6;i++){
+//	var test = new PhysicsDescriptor();
+//	test.setShape(1);
+//	test.mass = 1;
+//	var test2 = new PhysicsObject();
+//	test2.setDescr(test);
 
-	world.injectPhysicsObject(test2);
-	world.gear.mesh.instances.instanceObjects[i].bindObject(test2);
+//	world.injectPhysicsObject(test2);
+//	world.gear.mesh.instances.instanceObjects[i].bindObject(test2);
 
-	objStack.push(test);
-	objStack.push(test2);
-}
+//	objStack.push(test);
+//	objStack.push(test2);
+//}
 
-var target = world.gear.mesh.instances.instanceObjects[0].physics;
-var testProp = new CoffeePhysicsEvent();
-testProp.type = PhysicsProperty.ActionApplyForce;
-var vec = new VectorVariant();
-vec.vec3 = [0,100,0];
-testProp.data = vec;
-testProp.target = target;
-target.modifyPhysics(testProp);
-*/
+//var target = world.gear.mesh.instances.instanceObjects[0].physics;
+//var testProp = new CoffeePhysicsEvent();
+//testProp.type = PhysicsProperty.ActionApplyForce;
+//var vec = new VectorVariant();
+//vec.vec3 = [0,100,0];
+//testProp.data = vec;
+//testProp.target = target;
+//target.modifyPhysics(testProp);
 
 print("Done!");

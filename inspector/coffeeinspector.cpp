@@ -169,16 +169,28 @@ void CoffeeInspector::updateProperty(QTreeWidgetItem *it, QVariant value)
             it->addChild(entry);
         }
     }else if(value.userType()==QMetaType::QSize){
-        it->setText(1,QString("QSize(%1x%2)").arg(value.toSize().width()).arg(value.toSize().height()));
+        it->setText(1,QString("QSize(%1x%2)").
+                    arg(value.toSize().width()).
+                    arg(value.toSize().height()));
     }else if(value.userType()==QMetaType::QRect){
-        it->setText(1,QString("QRect(%1x%2+%3+%4)").arg(value.toRect().width()).arg(value.toRect().height()).arg(value.toRect().x()).arg(value.toRect().y()));
+        it->setText(1,QString("QRect(%1x%2+%3+%4)").
+                    arg(value.toRect().width()).
+                    arg(value.toRect().height()).
+                    arg(value.toRect().x()).
+                    arg(value.toRect().y()));
     }else if(value.userType()==QMetaType::QObjectStar&&qvariant_cast<QObject*>(value)){
         QObject *obj = qvariant_cast<QObject*>(value);
         it->setText(1,obj->objectName());
     }else if(value.userType()==QMetaType::QSize){
-        it->setText(1,QString("QSizeF(%1x%2)").arg(value.toSizeF().width()).arg(value.toSizeF().height()));
+        it->setText(1,QString("QSizeF(%1x%2)").
+                    arg(value.toSizeF().width()).
+                    arg(value.toSizeF().height()));
     }else if(value.userType()==QMetaType::QRect){
-        it->setText(1,QString("QRectF(%1x%2+%3+%4)").arg(value.toRectF().width()).arg(value.toRectF().height()).arg(value.toRectF().x()).arg(value.toRectF().y()));
+        it->setText(1,QString("QRectF(%1x%2+%3+%4)").
+                    arg(value.toRectF().width()).
+                    arg(value.toRectF().height()).
+                    arg(value.toRectF().x()).
+                    arg(value.toRectF().y()));
     }else{
         it->setText(1,value.typeName());
     }
