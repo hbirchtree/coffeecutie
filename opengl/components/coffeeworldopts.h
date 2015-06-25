@@ -84,7 +84,8 @@ public slots:
     void addLight(QPointer<CoffeeOmniLight> light);
     void setCamera(QPointer<CoffeeCamera> value);
     void setCameraQObject(QObject* camera);
-    void setRenderer(const QPointer<CoffeeRenderer> &value);
+    void setRendererP(QPointer<CoffeeRenderer> value);
+    void setRenderer(QObject* value);
     void setSkybox(QObject *value);
     void setSkybox(CoffeeSkybox *value);
 

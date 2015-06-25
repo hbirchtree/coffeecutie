@@ -2,9 +2,9 @@
 #define RENDERLOOP
 
 #include <QObject>
-class RenderLoop : public QObject{
+class RenderLoop{
 public:
-    RenderLoop(QObject* parent) : QObject(parent){}
+    RenderLoop(){}
     ~RenderLoop(){}
 
     virtual std::function<void()> *getInit() = 0;

@@ -20,8 +20,11 @@ class CoffeeRenderer;
 class CoffeeObjectFactory;
 class CoffeeScriptEngine;
 
-class CoffeeAdvancedLoop : public RenderLoop
+class CoffeeAdvancedLoop : public QObject,public RenderLoop
 {
+    Q_PROPERTY(QObject* world READ getWorld WRITE setWorld)
+
+    Q_OBJECT
 public:
     CoffeeAdvancedLoop(QObject* parent,CoffeeRenderer* renderer, QString fileSource);
     ~CoffeeAdvancedLoop();
@@ -35,6 +38,11 @@ public:
     QObject* getFactory();
     CoffeeScriptEngine* getScriptEngine();
 
+    QObject* getWorld();
+
+public slots:
+    void setWorld(QObject* world);
+
 private:
     CoffeeObjectFactory* factory;
     CoffeeScriptEngine* scriptEngine;
@@ -45,12 +53,11 @@ private:
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;
-    CoffeeWorldOpts *world;
+    QPointer<CoffeeWorldOpts> world;
     CoffeeJoystick* js;
     std::function<void()> _rendering_loop_init;
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;
-
 };
 
 #endif // COFFEEADVANCEDLOOP_H

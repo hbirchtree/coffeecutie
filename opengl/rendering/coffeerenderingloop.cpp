@@ -1,6 +1,6 @@
 #include "coffeerenderingloop.h"
 
-CoffeeRenderingLoop::CoffeeRenderingLoop(std::function<void()> init, std::function<void()> loop, std::function<void()> cleanup) : RenderLoop(0)
+CoffeeRenderingLoop::CoffeeRenderingLoop(std::function<void()> init, std::function<void()> loop, std::function<void()> cleanup)
 {
     this->_rendering_loop_init = init;
     this->_rendering_loop = loop;

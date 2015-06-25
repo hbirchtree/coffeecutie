@@ -1,6 +1,6 @@
 #include "boxtest.h"
 
-BoxTest::BoxTest(CoffeeRenderer* renderer) : RenderLoop(renderer){
+BoxTest::BoxTest(CoffeeRenderer* renderer){
     _rendering_loop_init = [this,renderer](){
         renderer->setSamples(4);
         renderer->setSwapInterval(0);
@@ -9,7 +9,7 @@ BoxTest::BoxTest(CoffeeRenderer* renderer) : RenderLoop(renderer){
         QSize s = renderer->getCurrentFramebufferSize();
         cubescape->resize(s.width(), s.height());
     };
-    connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
+    renderer->connect(renderer,&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         cubescape->resize(ev.size().width(),ev.size().height());
     });
     _rendering_loop = [this,renderer](){

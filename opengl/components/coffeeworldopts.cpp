@@ -113,9 +113,18 @@ QPointer<CoffeeRenderer> CoffeeWorldOpts::getRenderer()
     return renderer;
 }
 
-void CoffeeWorldOpts::setRenderer(const QPointer<CoffeeRenderer> &value)
+void CoffeeWorldOpts::setRendererP(QPointer<CoffeeRenderer> value)
 {
     renderer = value;
+}
+
+void CoffeeWorldOpts::setRenderer(QObject *value)
+{
+    CoffeeRenderer* r = qobject_cast<CoffeeRenderer*>(value);
+    if(r)
+        setRendererP(r);
+    else
+        qDebug("Invalid argument!");
 }
 
 void CoffeeWorldOpts::setSkybox(QObject *value)

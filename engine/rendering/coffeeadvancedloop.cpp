@@ -24,9 +24,10 @@
 
 #include "engine/scripting/coffeescriptengine.h"
 
-CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
+CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : QObject(parent)
 {
     connectSignals(renderer);
+    setObjectName("evloop");
 
     this->scriptEngine = new CoffeeScriptEngine(this);
     this->factory = new CoffeeObjectFactory(this);
@@ -34,14 +35,14 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     factory->setParent(this);
 
     qDebug("Importing objects from file");
-    QList<CoffeeWorldOpts*> worlds = factory->importObjects(fileSource,this);
-    if(worlds.isEmpty())
-        qFatal("Failed to load any world information!");
-    world = worlds.first();
-    connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
+//    QList<CoffeeWorldOpts*> worlds = factory->importObjects(fileSource,this);
+//    if(worlds.isEmpty())
+//        qFatal("Failed to load any world information!");
+//    world = worlds.first();
+//    connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
 
-    world->setRenderer(renderer);
-    world->connectSignals(controller);
+//    world->setRenderer(renderer);
+//    world->connectSignals(controller);
 
     _rendering_loop_init = [=](){
 
@@ -138,4 +139,16 @@ QObject *CoffeeAdvancedLoop::getFactory()
 CoffeeScriptEngine *CoffeeAdvancedLoop::getScriptEngine()
 {
     return scriptEngine;
+}
+
+QObject *CoffeeAdvancedLoop::getWorld()
+{
+    return (QObject*)world;
+}
+
+void CoffeeAdvancedLoop::setWorld(QObject *world)
+{
+    CoffeeWorldOpts* w = qobject_cast<CoffeeWorldOpts*>(world);
+    if(w)
+        this->world = w;
 }

@@ -1,8 +1,14 @@
+var assets = factory.importAssetRoot("ubw/ubw.json");
+coffeeroot.evloop.world = assets.worlds[0];
+assets.worlds[0].setRenderer(renderer);
+assets.worlds[0].connectSignals(coffeeroot.evloop.cameracontrol);
+renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
+
 #inc "var-defs.qts"
 #inc "shader-setup.qts"
 #inc "event-handling.qts"
 
-world.lights[0].position.bindValue(world.camera.position)
+world.lights[0].position.bindValue(world.camera.position);
 
 {
 	var objects = [world.gear, world.plane, world.blade, world.blade2];

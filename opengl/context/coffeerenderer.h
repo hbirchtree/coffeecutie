@@ -79,7 +79,7 @@ private slots:
     GLFWwindow *setWindowed();
 
 protected:
-    QPointer<RenderLoop> loopObject; //Settings
+    RenderLoop *loopObject;
     int samples = 0;
     QSize windowDimensions;
     QSize framebufferSize;
