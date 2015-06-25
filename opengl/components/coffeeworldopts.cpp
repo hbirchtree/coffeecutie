@@ -116,6 +116,8 @@ QPointer<CoffeeRenderer> CoffeeWorldOpts::getRenderer()
 void CoffeeWorldOpts::setRendererP(QPointer<CoffeeRenderer> value)
 {
     renderer = value;
+    QSize s = renderer->getCurrentFramebufferSize();
+    camera->setAspect((float)s.width()/(float)s.height());
 }
 
 void CoffeeWorldOpts::setRenderer(QObject *value)

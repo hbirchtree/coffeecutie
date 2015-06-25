@@ -26,7 +26,7 @@ class CoffeeAdvancedLoop : public QObject,public RenderLoop
 
     Q_OBJECT
 public:
-    CoffeeAdvancedLoop(QObject* parent,CoffeeRenderer* renderer, QString fileSource);
+    CoffeeAdvancedLoop(QObject* parent, CoffeeRenderer* renderer);
     ~CoffeeAdvancedLoop();
 
     std::function<void ()> *getInit();

@@ -1,49 +1,51 @@
-var assets = factory.importAssetRoot("ubw/ubw.json");
-coffeeroot.evloop.world = assets.worlds[0];
-assets.worlds[0].setRenderer(renderer);
-assets.worlds[0].connectSignals(coffeeroot.evloop.cameracontrol);
-renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
+function init(){
+	var assets = factory.importAssetRoot("ubw/ubw.json");
+	coffeeroot.evloop.world = assets.worlds[0];
+	assets.worlds[0].setRenderer(renderer);
+	assets.worlds[0].connectSignals(coffeeroot.evloop.cameracontrol);
+	renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
 
 #inc "var-defs.qts"
 #inc "shader-setup.qts"
 #inc "event-handling.qts"
 
-world.lights[0].position.bindValue(world.camera.position);
+	world.lights[0].position.bindValue(world.camera.position);
+	renderer.contextReportFrametime.connect(world.testparts.setFrametime);
 
-{
-	var objects = [world.gear, world.plane, world.blade, world.blade2];
+	{
+		var objects = [world.gear, world.plane, world.blade, world.blade2];
 
-	for(var i=0;i<objects.length;i++){
-		objStandardInitShader(objects[i]);
+		for(var i=0;i<objects.length;i++){
+			objStandardInitShader(objects[i]);
+		}
 	}
+
+	var objStack = new Array();
+
+	function addNewGear(mass,shape){
+		//Create instance, create physics-object, bind them and see what happens.
+		var i = world.gear.mesh.instances.instanceObjects.length;
+		world.gear.mesh.instances.createInstance();
+		var desc = new PhysicsDescriptor();
+		var pobj = new PhysicsObject();
+		desc.setShape(shape);
+		desc.mass = mass;
+		pobj.setDescr(desc);
+
+		world.injectPhysicsObject(pobj);
+		world.gear.mesh.instances.instanceObjects[i].bindObject(pobj);
+
+		objStack.push(desc);
+		objStack.push(pobj);
+	}
+
+
+	//var target = world.gear.mesh.instances.instanceObjects[0].physics;
+	//var testProp = new CoffeePhysicsEvent();
+	//testProp.type = PhysicsProperty.ActionApplyForce;
+	//var vec = new VectorVariant();
+	//vec.vec3 = [0,100,0];
+	//testProp.data = vec;
+	//testProp.target = target;
+	//target.modifyPhysics(testProp);
 }
-
-var objStack = new Array();
-
-function addNewGear(mass,shape){
-	//Create instance, create physics-object, bind them and see what happens.
-	var i = world.gear.mesh.instances.instanceObjects.length;
-	world.gear.mesh.instances.createInstance();
-	var desc = new PhysicsDescriptor();
-	var pobj = new PhysicsObject();
-	desc.setShape(shape);
-	desc.mass = mass;
-	pobj.setDescr(desc);
-
-	world.injectPhysicsObject(pobj);
-	world.gear.mesh.instances.instanceObjects[i].bindObject(pobj);
-
-	objStack.push(desc);
-	objStack.push(pobj);
-}
-
-renderer.contextReportFrametime.connect(world.testparts.setFrametime);
-
-//var target = world.gear.mesh.instances.instanceObjects[0].physics;
-//var testProp = new CoffeePhysicsEvent();
-//testProp.type = PhysicsProperty.ActionApplyForce;
-//var vec = new VectorVariant();
-//vec.vec3 = [0,100,0];
-//testProp.data = vec;
-//testProp.target = target;
-//target.modifyPhysics(testProp);

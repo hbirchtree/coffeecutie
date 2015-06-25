@@ -24,7 +24,7 @@
 
 #include "engine/scripting/coffeescriptengine.h"
 
-CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : QObject(parent)
+CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer) : QObject(parent)
 {
     connectSignals(renderer);
     setObjectName("evloop");

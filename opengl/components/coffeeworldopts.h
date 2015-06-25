@@ -97,6 +97,7 @@ public slots:
     void setClearColorValue(QColor clearColor);
 
     void connectSignals(CoffeePlayerController* controller);
+    //TODO : Disconnect-version of the above, necessary for switching world objects
 
     void setLoadedState(bool loadedState);
 

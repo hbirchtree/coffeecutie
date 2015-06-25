@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
     //Choose a render loop, advanced is our scripted one, BoxTest is a glbinding sample
 #ifdef COFFEE_ADVANCED_RUN
-    loop = new CoffeeAdvancedLoop(root,renderer,sourceFile);
+    loop = new CoffeeAdvancedLoop(root,renderer);
 #else
     //This demo taken from glbinding tests out general rendering
     loop = new BoxTest(renderer);
