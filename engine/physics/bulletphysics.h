@@ -63,7 +63,7 @@ private:
     btConstraintSolver* m_solver;
     btDefaultCollisionConfiguration* m_collideconfig;
 
-    btAlignedObjectArray<btCollisionShape*> m_collideshapes;
+    QVector<btCollisionShape*> m_collideshapes;
 };
 
 #endif // BULLETPHYSICS_H

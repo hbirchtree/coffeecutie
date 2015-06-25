@@ -39,8 +39,8 @@ class CoffeeStandardObject : public QObject,public CoffeeObject
     Q_PROPERTY(QObject* scale READ scaleValue)
 
     Q_PROPERTY(QObject* material READ materialRef)
-    Q_PROPERTY(QObject* shader READ shaderRef)
     Q_PROPERTY(QObject* mesh READ meshRef)
+    Q_PROPERTY(QObject* shader READ shaderRef WRITE setShaderRef)
 
     Q_PROPERTY(QObject* physics READ physicsRef WRITE setPhysicsObject)
     Q_PROPERTY(bool hasPhysics READ hasPhysics)
@@ -83,6 +83,7 @@ public slots:
     void setRotation(float x, float y, float z);
 
     void setPhysicsObject(QObject* obj);
+    void setShaderRef(QObject* sh);
 
     void setUniform(QString uniformName,ShaderVariant* data, bool constant);
     void setTexture(QString samplerName, CoffeeTexture *texture);
@@ -92,8 +93,8 @@ protected:
 
     bool baked = false;
 
-    QVector<ShaderMapping> uniforms;
-    QVector<TextureMapping> textures;
+    QVector<ShaderMapping*> uniforms;
+    QVector<TextureMapping*> textures;
 
     QPointer<CoffeeMesh> pmesh;
     QPointer<ShaderContainer> pshader;

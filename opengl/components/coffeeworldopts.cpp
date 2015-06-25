@@ -118,6 +118,13 @@ void CoffeeWorldOpts::setRenderer(const QPointer<CoffeeRenderer> &value)
     renderer = value;
 }
 
+void CoffeeWorldOpts::setSkybox(QObject *value)
+{
+    CoffeeSkybox * s = qobject_cast<CoffeeSkybox*>(value);
+    if(s)
+        setSkybox(s);
+}
+
 void CoffeeWorldOpts::addObject(CoffeeObject *object)
 {
     if(object->physics()){
@@ -199,6 +206,7 @@ void CoffeeWorldOpts::tickObjects(float d)
 void CoffeeWorldOpts::renderWorld()
 {
     if(!loadedState()){
+        qDebug() << "Setting OpenGL clear-color:" << clearColorValue();
         renderer->updateRendererClearColor(getClearColor());
         setLoadedState(true);
     }
@@ -206,19 +214,23 @@ void CoffeeWorldOpts::renderWorld()
     if(skybox) //rendering the skybox first avoids the color buffer mess with wireframe
         skybox->render();
 
-    if(wireframeMode())
+    if(wireframeMode()){
+        c_wireframed = true;
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    }
 
     //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
-    for(CoffeeObject* o : this->getObjects()){
+    for(CoffeeObject* o : this->getObjects())
         o->render();
-    }
 
     for(CoffeeParticleSystem* s : particles)
         s->render();
 
     //We need to reset it so that the FBO is rendered
-    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    if(c_wireframed){
+        c_wireframed = false;
+        glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    }
 }
 
 void CoffeeWorldOpts::unloadWorld()
@@ -273,4 +285,9 @@ bool CoffeeWorldOpts::loadedState() const
 QObject *CoffeeWorldOpts::physicsWorld() const
 {
     return physics;
+}
+
+QObject *CoffeeWorldOpts::getSkyboxQObject()
+{
+    return skybox;
 }

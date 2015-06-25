@@ -47,10 +47,15 @@ public:
 
     bool additive() const;
 
+signals:
+    void requestTick(float d);
+
 public slots:
     void render();
     void unload();
     void load();
+
+    void tickParticles(float frametime);
 
     void setFrametime(float time);
 
@@ -63,6 +68,8 @@ public slots:
     void setAdditive(bool additive);
 
 protected:
+    void renderParticles();
+
     glm::vec4 particleColor;
 
     bool baked = false;
@@ -80,7 +87,7 @@ protected:
 
     bool started = false;
 
-    float frametime = 0.005f;
+    QVector<float> particleTicks;
 
     uint vaoIndex = 0;
     uint vboIndex = 1;

@@ -247,6 +247,8 @@ void CoffeeMesh::unloadMesh(){
     m_indexBufferIndex = 0;
     glDeleteVertexArrays(arrays.size(),arrays.data());
     glDeleteBuffers(buffers.size(),buffers.data());
+    arrays.clear();
+    buffers.clear();
 }
 
 bool CoffeeMesh::baked() const

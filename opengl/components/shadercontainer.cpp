@@ -101,7 +101,6 @@ bool ShaderContainer::linkProgram()
 
     GLint c;
     glGetProgramiv(programId,GL_ACTIVE_UNIFORMS,&c);
-    qDebug() << "Shader info:" << c << "uniforms";
     for(int i=0;i<c;i++){
         GLchar o[64];
         int sz;
@@ -121,6 +120,10 @@ bool ShaderContainer::linkProgram()
         attributes.insert(QString(o),handle);
         attributes_t.insert(QString(o),t);
     }
+
+    qDebug("Shader info: name=%s,uniforms=%i, attributes=%i",
+           objectName().toStdString().c_str(), uniforms.size(),
+           attributes.size());
 
     addAllocation();
     return true;
@@ -244,6 +247,7 @@ void ShaderContainer::setUniform(QString name, const glm::mat4 &val){
 }
 
 void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
+    //According to Callgrind, this is the time-consuming part of rendering.
     if(uniforms.keys().contains(name)){
         switch(val->getType()){
         case ShaderVariant::ShaderVec2:

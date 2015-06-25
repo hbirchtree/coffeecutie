@@ -31,6 +31,7 @@ class CoffeeWorldOpts : public QObject
 
     Q_PROPERTY(QObjectList lights READ getVariantLights)
     Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
+    Q_PROPERTY(QObject* skybox READ getSkyboxQObject WRITE setSkybox)
 
     Q_OBJECT
 public:
@@ -65,6 +66,8 @@ public:
 
     QObject* physicsWorld() const;
 
+    QObject* getSkyboxQObject();
+
 signals:
     void physicsObjectAdded(PhysicsObject* object);
 
@@ -82,6 +85,7 @@ public slots:
     void setCamera(QPointer<CoffeeCamera> value);
     void setCameraQObject(QObject* camera);
     void setRenderer(const QPointer<CoffeeRenderer> &value);
+    void setSkybox(QObject *value);
     void setSkybox(CoffeeSkybox *value);
 
     void injectPhysicsObject(PhysicsObject* object);
@@ -111,6 +115,7 @@ private:
     QList<QPointer<CoffeeParticleSystem>> particles;
     QPointer<CoffeeRenderer> renderer;
     bool m_wireframeMode = false;
+    bool c_wireframed = false;
 
     ShaderVariant* fogColorVariant;
     ShaderVariant* fogDensityVariant;

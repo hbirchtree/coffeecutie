@@ -12,26 +12,26 @@ world.lights[0].position.bindValue(world.camera.position)
 	}
 }
 
+var objStack = new Array();
 
-//for(i=0;i<5;i++){
-//	world.gear.mesh.instances.createInstance();
-//}
+function addNewGear(mass,shape){
+	//Create instance, create physics-object, bind them and see what happens.
+	var i = world.gear.mesh.instances.instanceObjects.length;
+	world.gear.mesh.instances.createInstance();
+	var desc = new PhysicsDescriptor();
+	var pobj = new PhysicsObject();
+	desc.setShape(shape);
+	desc.mass = mass;
+	pobj.setDescr(desc);
 
-//var objStack = new Array();
+	world.injectPhysicsObject(pobj);
+	world.gear.mesh.instances.instanceObjects[i].bindObject(pobj);
 
-//for(i=0;i<6;i++){
-//	var test = new PhysicsDescriptor();
-//	test.setShape(1);
-//	test.mass = 1;
-//	var test2 = new PhysicsObject();
-//	test2.setDescr(test);
+	objStack.push(desc);
+	objStack.push(pobj);
+}
 
-//	world.injectPhysicsObject(test2);
-//	world.gear.mesh.instances.instanceObjects[i].bindObject(test2);
-
-//	objStack.push(test);
-//	objStack.push(test2);
-//}
+renderer.contextReportFrametime.connect(world.testparts.setFrametime);
 
 //var target = world.gear.mesh.instances.instanceObjects[0].physics;
 //var testProp = new CoffeePhysicsEvent();
@@ -41,5 +41,3 @@ world.lights[0].position.bindValue(world.camera.position)
 //testProp.data = vec;
 //testProp.target = target;
 //target.modifyPhysics(testProp);
-
-print("Done!");

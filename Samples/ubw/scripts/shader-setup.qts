@@ -75,6 +75,7 @@ function objStandardInitShader(target){
 	obj.setUniform("model",obj.matrix,false);
 
 	if(obj.objectName == "gear"){
+//		obj.shader = coffeeroot.evloop.standard
 		obj.mesh.useInstancing = true;
 	}
 }

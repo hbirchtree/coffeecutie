@@ -31,8 +31,8 @@ BulletPhysics::~BulletPhysics()
         delete obj;
     }
 
-    for(i=0;i<m_collideshapes.size();i++)
-        delete m_collideshapes[i];
+    for(btCollisionShape* p : m_collideshapes)
+        delete p;
     m_collideshapes.clear();
 
     delete m_dynamicsWorld;

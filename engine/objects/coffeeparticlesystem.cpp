@@ -36,85 +36,9 @@ void CoffeeParticleSystem::render()
     if(!isBaked())
         load();
 
-    glEnable(GL_RASTERIZER_DISCARD);
-
-    glUseProgram(tshader->getProgramId());
-    glBindVertexArray(vaos[vaoIndex]);
-
-    tshader->setUniform("timestep",frametime);
-
-    if(active_particles+spawncount>max_particles-1)
-        spawncount = 0;
-    else if(active_particles+1<max_particles-1)
-        spawncount = 1;
-
-//    qDebug("Spawn count: %u",spawncount);
-
-    tshader->setUniform("randRad",(float)(qrand()%1256000-628000)/100000.f);
-    tshader->setUniform("randAmpDiff",(float)(qrand()%1000000-500000)/500000.f);
-
-    tshader->setUniform("spawncount",(float)spawncount);
-
-    glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
-//    glBeginQuery(GL_TIME_ELAPSED,timeQuery);
-
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfbIndex]);
-    glBeginTransformFeedback(GL_POINTS);
-
-    if(!started){
-        glDrawArrays(GL_POINTS,0,active_particles);
-        started = true;
-    }else
-        glDrawTransformFeedback(GL_POINTS,tfbs[(tfbIndex+1)%2]);
-
-    glEndTransformFeedback();
-
-    glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
-//    glEndQuery(GL_TIME_ELAPSED);
-
-    //getting these values tanks performance!
-//    glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
-//    glGetQueryObjectui64v(timeQuery,GL_QUERY_RESULT,&processtime);
-
-//    qDebug("Particle data: %u written",active_particles);
-
-    glDisable(GL_RASTERIZER_DISCARD);
-
-    c_additive = m_additive;
-
-    if(c_additive)
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-    glDepthMask(GL_FALSE);
-
-    glUseProgram(shader->getProgramId());
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,texture->getHandle());
-
-    shader->setUniform("colorMultiplier",particleColor);
-    shader->setUniform("diffuseSampler",0);
-    shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
-                           position()->getValue(),
-                           rotation()->getValue(),
-                           scale()->getValue())*camera->getMatrix());
-    shader->setUniform("cameraPos",camera->getCameraPos());
-    shader->setUniform("particleSize",particleSize);
-
-    glDrawTransformFeedback(GL_POINTS,tfbs[tfbIndex]);
-
-    glBindVertexArray(0);
-    glUseProgram(0);
-
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
-
-    glDepthMask(GL_TRUE);
-    if(c_additive)
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-    tfbIndex = (tfbIndex+1)%2;
-
-    vaoIndex = vboIndex;
-    vboIndex = (vboIndex+1)%2;
+    tickParticles(0.0005f);
+    renderParticles();
+//    particleTicks.remove(0,i);
 }
 
 void CoffeeParticleSystem::unload()
@@ -140,18 +64,11 @@ void CoffeeParticleSystem::load()
 {
     texture->loadTexture();
 
+    //Rendering
     shader->buildProgram();
 
-//    glUseProgram(shader->getProgramId());
-
-//    shader->getUniformLocation("colorMultiplier");
-//    shader->getUniformLocation("diffuseSampler");
-//    shader->getUniformLocation("modelview");
-//    shader->getUniformLocation("cameraPos");
-//    shader->getUniformLocation("particleSize");
-
+    //Transform
     tshader->createProgram();
-
     tshader->compileShaders();
 
     const GLchar* feedbackattributes[] = {"outType","outPos","outVel","outLife"};
@@ -159,14 +76,7 @@ void CoffeeParticleSystem::load()
 
     tshader->linkProgram();
 
-//    glUseProgram(tshader->getProgramId());
-
-//    tshader->getUniformLocation("mass");
-//    tshader->getUniformLocation("spawncount");
-//    tshader->getUniformLocation("timestep");
-//    tshader->getUniformLocation("gravity");
-//    tshader->getUniformLocation("randRad");
-//    tshader->getUniformLocation("randAmpDiff");
+    glUseProgram(tshader->getProgramId());
     tshader->setUniform("mass",particleMass());
     tshader->setUniform("gravity",gravity());
 
@@ -236,6 +146,8 @@ void CoffeeParticleSystem::load()
     glGenQueries(1,&timeQuery);
     glGenQueries(1,&primitiveQuery);
 
+    tickParticles(0.001);
+
     setBaked(true);
 }
 
@@ -287,7 +199,7 @@ float CoffeeParticleSystem::particleMass() const
 
 void CoffeeParticleSystem::setFrametime(float time)
 {
-    frametime = time*2;
+    particleTicks.append(time);
 }
 
 void CoffeeParticleSystem::setMaxParticles(quint32 max_particles)
@@ -322,6 +234,91 @@ void CoffeeParticleSystem::setParticleMass(float particleMass)
 void CoffeeParticleSystem::setAdditive(bool additive)
 {
     m_additive = additive;
+}
+
+void CoffeeParticleSystem::renderParticles()
+{
+    c_additive = m_additive;
+
+    if(c_additive)
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+    glDepthMask(GL_FALSE);
+
+    glUseProgram(shader->getProgramId());
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,texture->getHandle());
+
+    shader->setUniform("colorMultiplier",particleColor);
+    shader->setUniform("diffuseSampler",0);
+    shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
+                           position()->getValue(),
+                           rotation()->getValue(),
+                           scale()->getValue())*camera->getMatrix());
+    shader->setUniform("cameraPos",camera->getCameraPos());
+    shader->setUniform("particleSize",particleSize);
+
+    glDrawTransformFeedback(GL_POINTS,tfbs[tfbIndex]);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
+
+    glDepthMask(GL_TRUE);
+    if(c_additive)
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+}
+
+void CoffeeParticleSystem::tickParticles(float frametime)
+{
+    glEnable(GL_RASTERIZER_DISCARD);
+
+    glUseProgram(tshader->getProgramId());
+    glBindVertexArray(vaos[vaoIndex]);
+
+    tshader->setUniform("timestep",frametime);
+
+    if(active_particles+spawncount>max_particles-1)
+        spawncount = 0;
+    else if(active_particles<max_particles)
+        spawncount = 1;
+
+//    qDebug("Spawn count: %u",spawncount);
+
+    tshader->setUniform("randRad",(float)(qrand()%1256000-628000)/100000.f);
+    tshader->setUniform("randAmpDiff",(float)(qrand()%1000000-500000)/500000.f);
+
+    tshader->setUniform("spawncount",(float)spawncount);
+
+    glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
+//    glBeginQuery(GL_TIME_ELAPSED,timeQuery);
+
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfbIndex]);
+    glBeginTransformFeedback(GL_POINTS);
+
+    if(!started){
+        glDrawArrays(GL_POINTS,0,active_particles);
+        started = true;
+    }else
+        glDrawTransformFeedback(GL_POINTS,tfbs[(tfbIndex+1)%2]);
+
+    glEndTransformFeedback();
+
+    glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+//    glEndQuery(GL_TIME_ELAPSED);
+
+    //getting these values tanks performance!
+//    glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
+//    glGetQueryObjectui64v(timeQuery,GL_QUERY_RESULT,&processtime);
+
+//    qDebug("Particle data: %u written",active_particles);
+
+    glDisable(GL_RASTERIZER_DISCARD);
+
+    tfbIndex = (tfbIndex+1)%2;
+    vaoIndex = vboIndex;
+    vboIndex = (vboIndex+1)%2;
 }
 QPointer<ShaderContainer> CoffeeParticleSystem::getTransformShader()
 {

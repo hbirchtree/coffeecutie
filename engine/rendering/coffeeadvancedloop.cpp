@@ -17,21 +17,11 @@
 
 //Engine
 #include "engine/objects/coffeeobjectfactory.h"
-#include "engine/objects/coffeeobject.h"
-#include "opengl/components/coffeecamera.h"
 #include "engine/objects/coffeestandardobject.h"
-#include "opengl/components/coffeeomnilight.h"
 #include "opengl/components/coffeeworldopts.h"
 #include "general/input/coffeejoystick.h"
 #include "general/input/coffeeplayercontroller.h"
-#include "engine/models/coffeemesh.h"
-#include "opengl/components/coffeematerial.h"
-#include "general/shadervariant.h"
-#include "opengl/components/shadercontainer.h"
 
-#include "engine/models/coffeeinstancecontainer.h"
-
-#include "engine/objects/coffeeparticlesystem.h"
 #include "engine/scripting/coffeescriptengine.h"
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer, QString fileSource) : RenderLoop(parent)
@@ -88,7 +78,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
         if(world)
             world->renderWorld();
 
-        renderer->flushPipeline();
+//        renderer->flushPipeline();
 
         //render for the user
         screenSurface->render();
@@ -131,9 +121,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
     timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
 
-    // TODO : move stuff into QtScript
-    // Problem : Controller should not know about "world", and it should not be used in its slots.
-    // We will create new functions for that purpose.
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){ //needs to be moved into QtScript
         if(glfwGetTime()>=timers->getValue("fps")){
@@ -141,32 +128,6 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
             timers->setValue("fps",glfwGetTime()+1);
         }
     });
-
-//    connect(renderer,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent event){ //needs to be moved into QtScript
-//        if(event.key()==GLFW_KEY_ESCAPE&&event.type()==QEvent::KeyPress)
-//            renderer->requestWindowClose();
-//        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyPress)
-//            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*6.f);
-//        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyPress)
-//            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*-6.f);
-//        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyPress)
-//            controller->addSpeedRight(world->getCamera()->getCameraRightNormal()*6.f);
-//        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyPress)
-//            controller->addSpeedForward(world->getCamera()->getCameraForwardNormal()*-6.f);
-//        else if(event.key()==GLFW_KEY_W&&event.type()==QEvent::KeyRelease)
-//            controller->addSpeedForward(glm::vec3(0,0,0));
-//        else if(event.key()==GLFW_KEY_A&&event.type()==QEvent::KeyRelease)
-//            controller->addSpeedRight(glm::vec3(0,0,0));
-//        else if(event.key()==GLFW_KEY_D&&event.type()==QEvent::KeyRelease)
-//            controller->addSpeedRight(glm::vec3(0,0,0));
-//        else if(event.key()==GLFW_KEY_S&&event.type()==QEvent::KeyRelease)
-//            controller->addSpeedForward(glm::vec3(0,0,0));
-//        else if(event.key()==GLFW_KEY_M&&event.type()==QEvent::KeyPress){
-////            setWireframeMode(!world->wireframeMode());
-//        }else if(event.key()==GLFW_KEY_O&&event.type()==QEvent::KeyPress){
-////            world->unloadWorld();
-//        }
-//    });
 }
 
 QObject *CoffeeAdvancedLoop::getFactory()

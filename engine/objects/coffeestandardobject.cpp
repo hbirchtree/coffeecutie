@@ -20,8 +20,8 @@ CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
 
 CoffeeStandardObject::~CoffeeStandardObject()
 {
-    for(ShaderMapping map : uniforms)
-        map.data->deleteLater();
+    for(ShaderMapping *map : uniforms)
+        map->data->deleteLater();
 }
 
 void CoffeeStandardObject::render()
@@ -38,22 +38,18 @@ void CoffeeStandardObject::render()
     }
 
     glUseProgram(pshader->getProgramId());
-    for(ShaderMapping m : uniforms){
-        if(!m.loaded){
-            m.loaded = true;
-        }
-        if(!m.constant)
-            pshader->setUniform(m.uniform,m.data);
+    for(ShaderMapping* m : uniforms){
+        pshader->setUniform(m->uniform,m->data);
     }
-    for(TextureMapping m : textures){
-        if(!m.loaded){
-            m.texture->loadTexture();
-            m.loaded = true;
+    for(TextureMapping* m : textures){
+        if(!m->loaded){
+            m->texture->loadTexture();
+            m->loaded = true;
         }
         glActiveTexture(static_cast<GLenum>(GL_TEXTURE0+textures.indexOf(m)));
         glBindTexture(GL_TEXTURE_2D,
-                      m.texture->getHandle());
-        pshader->setUniform(m.samplerName,
+                      m->texture->getHandle());
+        pshader->setUniform(m->samplerName,
                             textures.indexOf(m));
     }
 
@@ -72,7 +68,7 @@ void CoffeeStandardObject::render()
     }
     pmesh->getInstances()->setRenderPrepare(false);
 
-    for(TextureMapping m : textures){
+    for(TextureMapping *m : textures){
         glActiveTexture(GL_TEXTURE0+textures.indexOf(m));
         glBindTexture(GL_TEXTURE_2D,0);
     }
@@ -84,8 +80,8 @@ void CoffeeStandardObject::unload()
 {
     if(pmesh)
         pmesh->unloadMesh();
-    for(TextureMapping m : textures)
-        m.texture->unloadTexture();
+    for(TextureMapping* m : textures)
+        m->texture->unloadTexture();
     pshader->unload();
     baked = false;
 }
@@ -95,13 +91,13 @@ void CoffeeStandardObject::load()
     pshader->buildProgram();
     if(pmesh)
         pmesh->loadMesh();
-    for(ShaderMapping m : uniforms){
-        m.loaded = true;
-        if(m.constant)
-            pshader->setUniform(m.uniform,m.data);
+    for(ShaderMapping* m : uniforms){
+        m->loaded = true;
+        if(m->constant)
+            pshader->setUniform(m->uniform,m->data);
     }
-    for(TextureMapping m : textures){
-        m.texture->loadTexture();
+    for(TextureMapping* m : textures){
+        m->texture->loadTexture();
     }
     baked = true;
 }
@@ -192,18 +188,18 @@ bool CoffeeStandardObject::hasPhysics()
 
 void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)
 {
-    ShaderMapping map;
-    map.constant = constant;
-    map.uniform = uniformName;
-    map.data = data;
+    ShaderMapping *map = new ShaderMapping;
+    map->constant = constant;
+    map->uniform = uniformName;
+    map->data = data;
     uniforms.append(map);
 }
 
 void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture* texture)
 {
-    TextureMapping map;
-    map.samplerName = samplerName;
-    map.texture = texture;
+    TextureMapping *map = new TextureMapping;
+    map->samplerName = samplerName;
+    map->texture = texture;
     textures.append(map);
 }
 
@@ -222,5 +218,12 @@ void CoffeeStandardObject::setPhysicsObject(QObject *obj)
     PhysicsObject* t = qobject_cast<PhysicsObject*>(obj);
     if(t)
         this->CoffeeObject::setPhysicsObject(t);
+}
+
+void CoffeeStandardObject::setShaderRef(QObject *sh)
+{
+    ShaderContainer* shader = qobject_cast<ShaderContainer*>(sh);
+    if(shader)
+        setShader(shader);
 }
 
