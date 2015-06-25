@@ -31,8 +31,10 @@ public:
 class CoffeeAssetStorage : public QObject
 {
     Q_PROPERTY(QObjectList worlds READ getWorlds)
+    Q_PROPERTY(QObjectList shaders READ getShaders)
 
     Q_OBJECT
+
 public:
     CoffeeAssetStorage(QObject* parent);
 
@@ -56,6 +58,8 @@ public:
 
     QObjectList getWorlds();
 
+    QObjectList getShaders();
+public slots:
 };
 
 class CoffeeAssetImporter : public QObject

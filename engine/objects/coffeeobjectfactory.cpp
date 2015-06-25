@@ -30,7 +30,7 @@
 
 CoffeeObjectFactory::CoffeeObjectFactory(QObject *parent) : QObject(parent){}
 
-QObject *CoffeeObjectFactory::importAssetRoot(QString file)
+QObject *CoffeeObjectFactory::importAssets(QString file)
 {
     return importAssets(file,this->parent());
 }

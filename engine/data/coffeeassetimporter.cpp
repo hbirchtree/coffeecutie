@@ -402,6 +402,14 @@ QObjectList CoffeeAssetStorage::getWorlds()
     return l;
 }
 
+QObjectList CoffeeAssetStorage::getShaders()
+{
+    QObjectList l;
+    for(ShaderContainer* p : shaders.values())
+        l.append(p);
+    return l;
+}
+
 
 CoffeeModelStruct::CoffeeModelStruct(QObject *parent) : QObject(parent)
 {
