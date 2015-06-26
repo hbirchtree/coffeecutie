@@ -126,7 +126,10 @@ void QuatValue::mathCumulate(const QVariantList &vals)
         qWarning("Invalid argument!");
         return;
     }
-    NumberContainer<glm::quat>::operator=(glm::quat(vals.at(0).toFloat(),vals.at(1).toFloat(),vals.at(2).toFloat(),vals.at(3).toFloat())*getValue());
+    NumberContainer<glm::quat>::operator=(glm::quat(vals.at(0).toFloat(),
+                                                    vals.at(1).toFloat(),
+                                                    vals.at(2).toFloat(),
+                                                    vals.at(3).toFloat())*getValue());
 }
 
 void QuatValue::mathCumulate(QuatValue *val)

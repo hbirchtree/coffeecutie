@@ -69,15 +69,7 @@
 			"type": "texture",
 			"name": "skytexture",
 			"variant": "cubemap-dice",
-
-			"source": "models/textures/skytexture_blue.jpg",
-
-			"north": "models/textures/skn_n.jpg",
-			"south": "models/textures/skn_s.jpg",
-			"east": "models/textures/skn_e.jpg",
-			"west": "models/textures/skn_w.jpg",
-			"up": "models/textures/skn_u.jpg",
-			"down": "models/textures/skn_d.jpg"
+			"source": "models/textures/skytexture_blue.jpg"
 		},
 		{
 			"type": "texture",

@@ -65,6 +65,11 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("CoffeePhysicsEvent",mo);
     }
+    {
+        QScriptValue pdCt = e.newFunction(qtimerConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("QTimer",mo);
+    }
     ////////
 
     //Enums
@@ -184,5 +189,12 @@ QScriptValue CoffeeScriptEngine::vectorVariantConstructor(QScriptContext *ctxt, 
 QScriptValue CoffeeScriptEngine::coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeePhysicsEvent(parent);
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::qtimerConstructor(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new QTimer(parent);
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }

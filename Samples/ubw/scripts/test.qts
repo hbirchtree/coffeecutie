@@ -3,7 +3,6 @@ var controller;
 var assets;
 var objStack;
 
-function init(){
 	assets = factory.importAssets("ubw/ubw.json");
 	coffeeroot.evloop.world = assets.worlds[0];
 	assets.worlds[0].setRenderer(renderer);
@@ -57,6 +56,31 @@ function init(){
 	world.plane.rotation.value = [2,-3,0,0];
 	world.fogDensity = 0;
 	world.lights[0].attenuation = 0.00003;
+
+{
+	var gear = world.gear.mesh;
+	gear.useInstancing = true;
+	gear.instances.createInstance();
+	gear.instances.createInstance();
+	gear.instances.createInstance();
+
+	function modifyGear(index,size, pos){
+		gear.instances.instanceObjects[index].scale.value = [size,size,size];
+		gear.instances.instanceObjects[index].position.value = pos;
+	}
+
+	modifyGear(0,60,[100,100,100]);
+	modifyGear(1,40,[10,166,100]);
+}
+function rotateGear1(){
+	world.gear.mesh.instances.instanceObjects[1].rotation.mathCumulate([1,0,0,0.001]);
+}
+function rotateGear2(){
+	world.gear.mesh.instances.instanceObjects[0].rotation.mathCumulate([1,0,0,-0.001]);
 }
 
-init();
+var anim = new QTimer;
+anim.interval = 5;
+anim.timeout.connect(rotateGear1);
+anim.timeout.connect(rotateGear2);
+anim.start();
