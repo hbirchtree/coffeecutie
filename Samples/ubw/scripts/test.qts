@@ -17,7 +17,7 @@ var objStack;
 	renderer.contextReportFrametime.connect(world.testparts.setFrametime);
 
 	{
-		var objects = [world.gear, world.plane, world.blade, world.blade2];
+		var objects = [world.gear, world.plane, world.blade];
 
 		for(var i=0;i<objects.length;i++){
 			objStandardInitShader(objects[i]);
@@ -44,14 +44,14 @@ var objStack;
 	}
 
 
-	//var target = world.gear.mesh.instances.instanceObjects[0].physics;
-	//var testProp = new CoffeePhysicsEvent();
-	//testProp.type = PhysicsProperty.ActionApplyForce;
-	//var vec = new VectorVariant();
-	//vec.vec3 = [0,100,0];
-	//testProp.data = vec;
-	//testProp.target = target;
-	//target.modifyPhysics(testProp);
+	var target = world.blade.physics;
+	var testProp = new CoffeePhysicsEvent();
+	testProp.type = PhysicsProperty.ActionApplyForce;
+	var vec = new VectorVariant();
+	vec.vec3 = [0,100,0];
+	testProp.data = [vec];
+	testProp.addTarget(target);
+	target.modifyPhysics(testProp);
 
 	world.plane.rotation.value = [2,-3,0,0];
 	world.fogDensity = 0;

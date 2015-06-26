@@ -4,6 +4,8 @@ layout(points) in;
 layout(triangle_strip) out;
 layout(max_vertices = 4) out;
 
+in float[] gsLife;
+
 uniform mat4 modelview;
 uniform vec3 cameraPos;
 uniform float particleSize;

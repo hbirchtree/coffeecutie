@@ -149,7 +149,7 @@
 				"position": [5,5,5]
 			},
 			{
-				"id": "test-particles2",
+				"id": "testparts2",
 				"texture": "particle-fx",
 				"render-shader": "particle-render2",
 				"transform-shader": "particle-transform2",
@@ -205,20 +205,6 @@
 					"friction": 1,
 					"restitution":0.8,
 					"inertia": [0,0,1]
-				}
-			},
-			{
-				"id": "blade2",
-				"shader.id": "standard",
-				"model.id": "bumpbox:.*",
-				"model.scale": [2,2,2],
-				"physics":{
-					"position": [9,10,12],
-					"scale": [5,2,5],
-					"shape": "box",
-					"mass": 100,
-					"friction": 1,
-					"restitution":0.8
 				}
 			}
 		]

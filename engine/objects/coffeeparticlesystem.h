@@ -15,7 +15,8 @@ class CoffeeParticleSystem : public QObject,public CoffeeObject
     Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
     Q_PROPERTY(quint32 max_particles READ getMaxParticles WRITE setMaxParticles)
     Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
-//    Q_PROPERTY(glm::vec3 gravity READ gravity WRITE setGravity)
+    Q_PROPERTY(float particleSpread READ particleSpread WRITE setParticleSpread)
+    Q_PROPERTY(QObject* gravity READ getGravityObject)
 
     Q_OBJECT
 
@@ -45,7 +46,11 @@ public:
     QPointer<ShaderContainer> getTransformShader();
     void setTransformShader(QPointer<ShaderContainer> value);
 
+    QObject* getGravityObject();
+
     bool additive() const;
+
+    float particleSpread() const;
 
 signals:
     void requestTick(float d);
@@ -66,6 +71,8 @@ public slots:
     void setParticleMass(float particleMass);
 
     void setAdditive(bool additive);
+
+    void setParticleSpread(float particleSpread);
 
 protected:
     void renderParticles();
@@ -113,10 +120,11 @@ protected:
 
     GLuint64 processtime = 0;
 private:
-    glm::vec3 m_gravity;
+    Vector3Value* gravityObj;
     float m_particleMass;
     bool m_additive = false;
     bool c_additive; //so that we won't miss on swapping blendfunction
+    float m_particleSpread;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

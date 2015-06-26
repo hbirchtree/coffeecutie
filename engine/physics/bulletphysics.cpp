@@ -237,29 +237,29 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
             }
             case CoffeePhysicsEvent::ActionApplyForce:{
                 btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
-                obj->applyCentralForce(v1);
                 obj->activate(true);
+                obj->applyCentralForce(v1);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyRelativeForce:
                 break;
             case CoffeePhysicsEvent::ActionApplyImpulse:{
                 btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
-                obj->applyCentralImpulse(v1);
                 obj->activate(true);
+                obj->applyCentralImpulse(v1);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
                 btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
                 btVector3 v2 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(1))->getRawVec3());
-                obj->applyImpulse(v1,v2);
                 obj->activate(true);
+                obj->applyImpulse(v1,v2);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyTorque:{
                 btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
-                obj->applyTorque(v1);
                 obj->activate(true);
+                obj->applyTorque(v1);
                 break;
             }
             default:

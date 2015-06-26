@@ -12,13 +12,7 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
 {
     this->camera = camera;
 
-//    particleColor = glm::vec4(0.5,0.5,0.5,0.9);
-
-//    tshader = new ShaderContainer(this);
-//    shader = new ShaderContainer(this);
-
-//    texture = new CoffeeTexture(this,"ubw/models/textures/particle_fx.png");
-//    texture->setObjectName("sprite");
+    this->gravityObj = new Vector3Value(this,glm::vec3(0,-1,0));
 
     Particle first;
     first.type = 0;
@@ -75,10 +69,6 @@ void CoffeeParticleSystem::load()
     glTransformFeedbackVaryings(tshader->getProgramId(),4,feedbackattributes,GL_INTERLEAVED_ATTRIBS);
 
     tshader->linkProgram();
-
-    glUseProgram(tshader->getProgramId());
-    tshader->setUniform("mass",particleMass());
-    tshader->setUniform("gravity",gravity());
 
     glGenVertexArrays(2, vaos);
     glGenBuffers(2, vbos);
@@ -189,7 +179,7 @@ quint64 CoffeeParticleSystem::getProcessTime() const
 
 glm::vec3 CoffeeParticleSystem::gravity() const
 {
-    return m_gravity;
+    return gravityObj->getValue();
 }
 
 float CoffeeParticleSystem::particleMass() const
@@ -223,7 +213,7 @@ void CoffeeParticleSystem::setParticleColor(QColor particleColor)
 
 void CoffeeParticleSystem::setGravity(const glm::vec3 &gravity)
 {
-    m_gravity = gravity;
+    *gravityObj = gravity;
 }
 
 void CoffeeParticleSystem::setParticleMass(float particleMass)
@@ -234,6 +224,11 @@ void CoffeeParticleSystem::setParticleMass(float particleMass)
 void CoffeeParticleSystem::setAdditive(bool additive)
 {
     m_additive = additive;
+}
+
+void CoffeeParticleSystem::setParticleSpread(float particleSpread)
+{
+    m_particleSpread = particleSpread;
 }
 
 void CoffeeParticleSystem::renderParticles()
@@ -286,9 +281,11 @@ void CoffeeParticleSystem::tickParticles(float frametime)
 
 //    qDebug("Spawn count: %u",spawncount);
 
+    tshader->setUniform("mass",particleMass());
+    tshader->setUniform("gravity",gravity());
     tshader->setUniform("randRad",(float)(qrand()%1256000-628000)/100000.f);
     tshader->setUniform("randAmpDiff",(float)(qrand()%1000000-500000)/500000.f);
-
+    tshader->setUniform("partSpread",particleSpread());
     tshader->setUniform("spawncount",(float)spawncount);
 
     glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
@@ -333,9 +330,19 @@ void CoffeeParticleSystem::setTransformShader(QPointer<ShaderContainer> value)
     tshader->addConsumer();
 }
 
+QObject *CoffeeParticleSystem::getGravityObject()
+{
+    return gravityObj;
+}
+
 bool CoffeeParticleSystem::additive() const
 {
     return m_additive;
+}
+
+float CoffeeParticleSystem::particleSpread() const
+{
+    return m_particleSpread;
 }
 
 QPointer<ShaderContainer> CoffeeParticleSystem::getShader()
