@@ -88,6 +88,13 @@ void CoffeeTexture::loadTexture()
         int w_d = src.width()/4,h_d = src.height()/3;
         if(src.width()%w_d!=0||src.height()%h_d!=0||h_d!=w_d)
             qWarning("Cubemap dice not cut correctly!");
+        /* This is the arrangement (Maybe?):
+         *  ________
+         * |  U    |
+         * |W N E S|
+         * |_ D____|
+         *
+        */
         QMap<GLenum,QImage> mapping;
         //Up, down
         mapping.insert(GL_TEXTURE_CUBE_MAP_POSITIVE_Y,src.copy(w_d,0,w_d,h_d));
