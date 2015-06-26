@@ -53,4 +53,10 @@ function init(){
 	//testProp.data = vec;
 	//testProp.target = target;
 	//target.modifyPhysics(testProp);
+
+	world.plane.rotation.value = [2,-3,0,0];
+	world.fogDensity = 0;
+	world.lights[0].attenuation = 0.00003;
 }
+
+init();

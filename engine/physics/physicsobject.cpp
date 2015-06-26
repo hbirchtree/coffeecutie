@@ -91,7 +91,8 @@ void PhysicsObject::updateAcceleration(glm::vec3 p)
 
 void PhysicsObject::updateRotation(glm::quat r)
 {
-    v_physics_rotation->setValue(r);
+//    v_physics_rotation->setValue(r);
+    *v_physics_rotation = glm::normalize(r);
 }
 
 void PhysicsObject::updateAngularVelocity(glm::quat r)

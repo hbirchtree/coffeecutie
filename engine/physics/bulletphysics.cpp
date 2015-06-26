@@ -285,7 +285,7 @@ void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timeste
         obj->updateAcceleration(convert_bt(rb->getTotalForce()));
         btQuaternion r = t.getRotation();
         obj->updateRotation(convert_bt(r));
-        glm::quat av = glm::quat(1.f,convert_bt(rb->getAngularVelocity()));
+        glm::quat av = glm::quat(2.f,convert_bt(rb->getAngularVelocity()));
         obj->updateAngularVelocity(av);
     }
     //Report collisions

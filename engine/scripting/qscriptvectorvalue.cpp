@@ -134,6 +134,11 @@ void QuatValue::mathCumulate(QuatValue *val)
     NumberContainer<glm::quat>::operator=(val->getValue()*getValue());
 }
 
+void QuatValue::mathNormalize()
+{
+    NumberContainer<glm::quat>::operator=(glm::normalize(getValue()));
+}
+
 void QuatValue::setValue(const QVariantList &value)
 {
     if(value.size()!=4){

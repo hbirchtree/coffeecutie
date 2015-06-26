@@ -28,6 +28,7 @@ public:
     Q_ENUMS(CoffeeTextureType)
 
     CoffeeTexture(QObject *parent,QMap<GLenum,QString> mapping); //Creates a cubemap
+    CoffeeTexture(QObject *parent, QString source, const QRect &targetArea); //Creates a cubemap from a single image file
     CoffeeTexture(QObject *parent,QString filename);
     CoffeeTexture(QObject *parent,QByteArray* img);
     CoffeeTexture(QObject *parent,aiTexture* texture);
@@ -52,6 +53,8 @@ private:
         return input;
     };
     bool b_cubemap = false;
+    bool b_cubemap_dice = false;
+
     bool validTexture = false;
     QImage texture;
     GLuint textureHandle = 0;

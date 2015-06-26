@@ -13,8 +13,8 @@ class CoffeeOmniLight : public QObject
     Q_PROPERTY(QObject* colorVariant READ getColorVariant)
     Q_PROPERTY(QObject* positionVariant READ getPositionVariant)
 
-    Q_PROPERTY(float attenuation READ getAttenuationValue)
-    Q_PROPERTY(float ambientCoefficient READ getAmbientCoefficientValue)
+    Q_PROPERTY(float attenuation READ getAttenuationValue WRITE setAttenuationValue)
+    Q_PROPERTY(float ambientCoefficient READ getAmbientCoefficientValue WRITE setAmbientCoefficientValue)
     Q_PROPERTY(QObject* attenuationVariant READ getAttenuationVariant)
     Q_PROPERTY(QObject* ambientCoefficientVariant READ getAmbientCoefficientVariant)
 
@@ -41,6 +41,10 @@ public:
     QObject* getPositionVariant();
     QObject* getAttenuationVariant();
     QObject* getAmbientCoefficientVariant();
+
+public slots:
+    void setAttenuationValue(float v);
+    void setAmbientCoefficientValue(float v);
 
 private:
     QPointer<Vector3Value> position;

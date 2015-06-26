@@ -57,13 +57,21 @@
 		},
 		{
 			"type": "model",
+			"name": "unlimitedlandscape",
+			"file": "models/landscape.fbx"
+		},
+		{
+			"type": "model",
 			"name": "bumpbox",
 			"file": "models/Zelda 1.fbx"
 		},
 		{
 			"type": "texture",
 			"name": "skytexture",
-			"variant": "cubemap",
+			"variant": "cubemap-dice",
+
+			"source": "models/textures/skytexture_blue.jpg",
+
 			"north": "models/textures/skn_n.jpg",
 			"south": "models/textures/skn_s.jpg",
 			"east": "models/textures/skn_e.jpg",
@@ -163,10 +171,10 @@
 		"objects": [
 			{
 				"id": "plane",
-				"shader.id": "advanced",
+				"shader.id": "standard",
 				"model.position": [0,0,0],
-				"model.id": "quad:",
-				"model.scale": [1,1,1],
+				"model.id": "unlimitedlandscape:",
+				"model.scale": [0.2,0.2,0.2],
 				"physics":{
 					"shape": "staticplane",
 					"position": [0,-3,0],

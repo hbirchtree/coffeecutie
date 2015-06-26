@@ -3,7 +3,7 @@
 CoffeeObject::CoffeeObject(QObject *parent)
 {
     vposition = new Vector3Value(parent,glm::vec3(0,0,0));
-    qrotation = new QuatValue(parent,glm::quat(1,0,0,0));
+    qrotation = new QuatValue(parent,glm::quat(2,0,0,0));
     vscale = new Vector3Value(parent,glm::vec3(1,1,1));
 }
 

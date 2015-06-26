@@ -99,3 +99,13 @@ QObject *CoffeeOmniLight::getAmbientCoefficientVariant()
 {
     return ambientCoefficientVariant;
 }
+
+void CoffeeOmniLight::setAttenuationValue(float v)
+{
+    attenuation->setValue(v);
+}
+
+void CoffeeOmniLight::setAmbientCoefficientValue(float v)
+{
+    ambientCoefficient->setValue(v);
+}

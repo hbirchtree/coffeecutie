@@ -189,16 +189,9 @@ CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, 
                 mapping = GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
             else if(dir == "down")
                 mapping = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
-
-            if(mapping==GL_TEXTURE_CUBE_MAP_POSITIVE_X||
-                    mapping==GL_TEXTURE_CUBE_MAP_POSITIVE_Y||
-                    mapping==GL_TEXTURE_CUBE_MAP_POSITIVE_Z||
-                    mapping==GL_TEXTURE_CUBE_MAP_NEGATIVE_X||
-                    mapping==GL_TEXTURE_CUBE_MAP_NEGATIVE_Y||
-                    mapping==GL_TEXTURE_CUBE_MAP_NEGATIVE_Z){
-                return true;
-            }
-            return false;
+            else
+                return false;
+            return true;
         };
 
         for(QString key : data.keys()){
@@ -221,6 +214,17 @@ CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, 
             }
         }
         CoffeeTexture* t = new CoffeeTexture(0,textureMapping);
+
+        t->setObjectName(name);
+        t->moveToThread(outputParent->thread());
+        s->textures.insert(name,t);
+    }else if(subtype=="cubemap-dice"){
+        QFileInfo file(data.value("source").toString());
+
+        if(file.isRelative())
+            file.setFile(filepath+file.filePath());
+
+        CoffeeTexture* t = new CoffeeTexture(0,file.filePath(),QRect());
 
         t->setObjectName(name);
         t->moveToThread(outputParent->thread());

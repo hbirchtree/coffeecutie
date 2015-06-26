@@ -79,6 +79,8 @@ public slots:
     void mathCumulate(const QVariantList &vals);
     void mathCumulate(QuatValue* val);
 
+    void mathNormalize();
+
     void bindValue(QPointer<QuatValue> quat);
     void setValue(const QVariantList &value);
 };
