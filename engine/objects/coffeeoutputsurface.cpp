@@ -43,7 +43,7 @@ void CoffeeOutputSurface::render()
 
     framebuffer->bindFramebufferRead();
 
-    glReadBuffer(GL_COLOR_ATTACHMENT1);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
 //    glBlitFramebuffer(0,0,
 //                      buffer.center().x(),buffer.center().y(),
 //                      0,0,

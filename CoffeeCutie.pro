@@ -132,7 +132,7 @@ DEPENDPATH += $$PWD/libs/glbinding/source/glbinding/include
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glfw-library/src/release/ -lGL -lGLEW -lglfw3
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glfw-library/src/debug/ -lGL -lGLEW -lglfw3
-else:unix: LIBS += -L$$PWD/../glfw-library/src/ -lGL -lglfw3 -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
+else:unix: LIBS += -L$$PWD/../glfw-library/src/ -lm -lrt -lGL -lglfw3 -lGL -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
 
 INCLUDEPATH += $$PWD/libs/glfw/include
 DEPENDPATH += $$PWD/libs/glfw/include

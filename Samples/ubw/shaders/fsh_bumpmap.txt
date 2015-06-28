@@ -42,7 +42,7 @@ layout(location = 4) out vec4 finalSpecular;
 
 vec3 bumpedNormal(){
     vec3 normalStatic = normalize(localNormal);
-    vec3 normal = 2.0 * texture(mtl.bumpSampler,fragTexCoord).rgb - 1.0;
+    vec3 normal = 2.0 * texture(mtl.bumpSampler,localTexCoord).rgb - 1.0;
 	vec3 tangent = worldTangent;
     vec3 bitang = cross(tangent,normalStatic);
     tangent = normalize(tangent - dot(tangent,normalStatic)*normalStatic);
@@ -55,19 +55,19 @@ vec3 bumpedNormal(){
 
 void main() {
 	//Stuff
-    vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
+    vec4 surfaceColor = texture(mtl.diffuseSampler, localTexCoord);
     vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
     vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
     vec3 normal = bumpedNormal();
     
     //transparency map
-    float pixelTransparency = texture(mtl.transparencySampler,fragTexCoord).a * mtl.opacity;
+    float pixelTransparency = texture(mtl.transparencySampler,localTexCoord).a * mtl.opacity;
     
     //highlight map
-    float pixelShininess = dot(texture(mtl.highlightSampler,fragTexCoord).rgb,vec3(1.0,1.0,1.0))/3.0;
+    float pixelShininess = dot(texture(mtl.highlightSampler,localTexCoord).rgb,vec3(1.0,1.0,1.0))/3.0;
     
     //specular map
-    vec3 pixelSpecularColor = normalize(texture(mtl.specularSampler,fragTexCoord).rgb*2.0-1.0);
+    vec3 pixelSpecularColor = normalize(texture(mtl.specularSampler,localTexCoord).rgb*2.0-1.0);
     
     //ambient
     vec3 ambient = light.ambientCoefficient * surfaceColor.rgb * light.intensities;
