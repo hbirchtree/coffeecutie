@@ -17,6 +17,7 @@ class CoffeeCamera : public QObject
     Q_PROPERTY(QObject* position READ getPositionValue)
     Q_PROPERTY(QObject* rotation READ getRotationValue)
 
+    Q_PROPERTY(QObject* matrixVP READ getMatrixVPVariant)
     Q_PROPERTY(QObject* matrix READ getMatrixVariant)
     Q_PROPERTY(QObject* right READ getCameraRightVariant)
     Q_PROPERTY(QObject* forward READ getCameraForwardVariant)
@@ -51,6 +52,7 @@ public:
     glm::mat4 getOrientationMatrix() const;
     glm::mat4 getProjection() const;
     glm::mat4 getOrthographic() const;
+    glm::mat4 getPerspective() const;
 
     glm::mat4 getMatrix() const;
 
@@ -64,6 +66,7 @@ public:
     float getAspectValue() const;
     float getFov() const;
 
+    QObject* getMatrixVPVariant() const;
     QObject* getMatrixVariant() const;
     QObject* getPositionValue();
     QObject* getRotationValue();
@@ -96,6 +99,7 @@ private:
     QPointer<QuatValue> orientation;
     QPointer<Vector3Value> rotation_euler;
 
+    ShaderVariant* matrixVPVariant;
     ShaderVariant* matrixVariant;
     ShaderVariant* cameraRightVariant;
     ShaderVariant* cameraForwardVariant;

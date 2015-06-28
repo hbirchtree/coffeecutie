@@ -20,6 +20,9 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
     this->cameraPosVariant = new ShaderVariant([=](){
         return getCameraPos();
     });
+    this->matrixVPVariant = new ShaderVariant([=](){
+        return getPerspective();
+    });
 }
 
 CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov) : CoffeeCamera(parent)
@@ -129,17 +132,21 @@ glm::mat4 CoffeeCamera::getOrientationMatrix() const
 
 glm::mat4 CoffeeCamera::getProjection() const
 {
-    glm::mat4 camera = glm::perspective(QuickMath::math_degreesToRads(fov->getValue()),aspect->getValue(),znear,zfar);
+    glm::mat4 camera = getPerspective();
     camera *= getOrientationMatrix();
-    camera = glm::translate(camera,-position->getValue());
-    return camera;
+    return glm::translate(camera,-position->getValue());
 }
 
 glm::mat4 CoffeeCamera::getOrthographic() const
 {
     glm::mat4 camera = glm::ortho(0.f,16.f,0.f,10.f,znear,zfar);
     camera *= getOrientationMatrix();
-    return camera;
+    return glm::translate(camera,-position->getValue());
+}
+
+glm::mat4 CoffeeCamera::getPerspective() const
+{
+    return glm::perspective(QuickMath::math_degreesToRads(fov->getValue()),aspect->getValue(),znear,zfar);
 }
 
 glm::mat4 CoffeeCamera::getMatrix() const
@@ -208,6 +215,11 @@ void CoffeeCamera::setAspect(float value)
 float CoffeeCamera::getFov() const
 {
     return fov->getValue();
+}
+
+QObject *CoffeeCamera::getMatrixVPVariant() const
+{
+    return matrixVPVariant;
 }
 
 QObject *CoffeeCamera::getMatrixVariant() const

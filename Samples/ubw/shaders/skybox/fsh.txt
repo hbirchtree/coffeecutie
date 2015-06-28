@@ -2,12 +2,15 @@
 
 in vec3 TexCoord0;
 
-out vec4 FragColor;
+layout(location = 0) out vec4 FragColor;
+layout(location = 1) out vec4 FragNormal;
+layout(location = 2) out vec4 FragDiffuse;
 
 uniform samplerCube cubemapTexture;
 
 void main()
 {
     FragColor = texture(cubemapTexture, TexCoord0);
-    FragColor.w = 1.0;
+    FragDiffuse = FragColor;
+	FragNormal = vec4(0.0,0.0,0.0,1.0);
 }

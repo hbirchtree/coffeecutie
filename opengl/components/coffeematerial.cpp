@@ -76,14 +76,14 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
             case aiTextureType_EMISSIVE:
                 ctype = CoffeeTexture::CoffeeTexture_Emissive;
                 break;
+            case aiTextureType_NORMALS:
+                ctype = CoffeeTexture::CoffeeTexture_Bumpmap;
+                break;
             case aiTextureType_HEIGHT:
                 ctype = CoffeeTexture::CoffeeTexture_Heightmap;
                 break;
             case aiTextureType_LIGHTMAP:
                 ctype = CoffeeTexture::CoffeeTexture_Lightmap;
-                break;
-            case aiTextureType_NORMALS:
-                ctype = CoffeeTexture::CoffeeTexture_Bumpmap;
                 break;
             case aiTextureType_OPACITY:
                 ctype = CoffeeTexture::CoffeeTexture_Transparency;
@@ -113,6 +113,11 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
             }
             textures.insert(ctype,new CoffeeTexture(this,
                                                     fileProbe.filePath()));
+            textures.value(ctype)->setObjectName(
+                        CoffeeTexture::staticMetaObject.
+                        enumerator(CoffeeTexture::staticMetaObject.
+                                   indexOfEnumerator("CoffeeTextureType")).
+                        valueToKey(ctype));
         }
 
 
@@ -291,6 +296,19 @@ CoffeeTexture* CoffeeMaterial::getTexture(int id){
 
 QList<CoffeeTexture::CoffeeTextureType> CoffeeMaterial::getTextureKeys() const{
     return textures.keys();
+}
+
+QVariantMap CoffeeMaterial::textureObjects() const
+{
+    QVariantMap m;
+    for(CoffeeTexture::CoffeeTextureType t : textures.keys()){
+        QString ts = CoffeeTexture::staticMetaObject.
+                enumerator(CoffeeTexture::staticMetaObject.
+                           indexOfEnumerator("CoffeeTextureType")).
+                valueToKey(t);
+        m.insert(ts,QVariant::fromValue(textures.value(t).data()));
+    }
+    return m;
 }
 
 QVariantList CoffeeMaterial::textureTypes() const

@@ -36,7 +36,8 @@ void CoffeeSkybox::render()
     glBindTexture(GL_TEXTURE_CUBE_MAP,texture->getHandle());
 
     shader->setUniform("cubemapTexture",0);
-    shader->setUniform("wvp",camera->getMatrix()*RenderingMethods::translateObjectMatrix(
+    shader->setUniform("wvp",camera->getMatrix()*
+                       RenderingMethods::translateObjectMatrix(
                            camera->getPosition()->getValue(),
                            rotation()->getValue(),
                            scale()->getValue()));

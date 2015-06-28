@@ -27,18 +27,21 @@ uniform struct FogParams {
 	vec4 fColor;
 } fogParams;
 
-in vec2 fragTexCoord;
+in vec2 localTexCoord;
 in vec3 worldNormal;
+in vec3 localNormal;
 in vec3 worldVert;
 in vec3 worldTangent;
 in vec4 surfacePos;
 
 layout(location = 0) out vec4 finalColor;
+layout(location = 1) out vec4 finalNormal;
+layout(location = 2) out vec4 finalDiffuse;
+layout(location = 3) out vec4 finalPosition;
+layout(location = 4) out vec4 finalSpecular;
 
 void main() {
-    vec3 normal = normalize(worldNormal);
-//    vec3 surfacePos = worldVert;
-    vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
+    vec4 surfaceColor = texture(mtl.diffuseSampler, localTexCoord);
     vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
     vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
     
@@ -46,13 +49,13 @@ void main() {
     vec3 ambient = light.ambientCoefficient * mtl.ambientColor * light.intensities;
 
     //diffuse
-    float diffuseCoefficient = max(0.0, dot(normal, surfaceToLight));
+    float diffuseCoefficient = max(0.0, dot(worldNormal, surfaceToLight));
     vec3 diffuse = diffuseCoefficient * surfaceColor.rgb * light.intensities;
 
     //specular
     float specularCoefficient = 0.0;
     if(diffuseCoefficient > 0.0)
-        specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, normal))), mtl.shininess);
+        specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, worldNormal))), mtl.shininess);
     vec3 specular = specularCoefficient * mtl.specularColor * light.intensities;
     
     //attenuation
@@ -73,4 +76,8 @@ void main() {
     
     //final color (after gamma correction)
     finalColor = vec4(linearColor, surfaceColor.a*mtl.opacity);
+    finalNormal = vec4(worldNormal,1.0);
+    finalDiffuse = vec4(surfaceColor.rgb,surfaceColor.a*mtl.opacity);
+    finalPosition = surfacePos;
+    finalSpecular = vec4(specularCoefficient * mtl.specularColor,1.0);
 }

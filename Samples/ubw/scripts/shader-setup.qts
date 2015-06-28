@@ -58,6 +58,7 @@ function objStandardInitShader(target){
 	obj.setUniform("mtl.reflectivity",mat.reflectivityVariant,false);
 
 	//Camera
+	obj.setUniform("cameraVP",world.camera.matrixVP,false);
 	obj.setUniform("camera",world.camera.matrix,false);
 	obj.setUniform("cameraPosition",world.camera.positionVariant,false);
 

@@ -12,7 +12,6 @@
 
 //Display
 #include "opengl/components/coffeeframebufferobject.h"
-#include "opengl/components/coffeedepthbufferobject.h"
 #include "engine/objects/coffeeoutputsurface.h"
 
 //Engine

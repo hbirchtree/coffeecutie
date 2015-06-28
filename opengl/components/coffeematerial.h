@@ -33,6 +33,7 @@ class CoffeeMaterial : public QObject, public CoffeeGameAsset{
     Q_PROPERTY(float opacity READ opacity WRITE setOpacity)
 
     Q_PROPERTY(QVariantList textureTypes READ textureTypes)
+    Q_PROPERTY(QVariantMap textures READ textureObjects)
 
     Q_OBJECT
 
@@ -73,6 +74,7 @@ public:
     CoffeeTexture* getTexture(CoffeeTexture::CoffeeTextureType id);
     Q_INVOKABLE CoffeeTexture* getTexture(int id);
     QList<CoffeeTexture::CoffeeTextureType> getTextureKeys() const;
+    QVariantMap textureObjects() const;
 
     QVariantList textureTypes() const;
 

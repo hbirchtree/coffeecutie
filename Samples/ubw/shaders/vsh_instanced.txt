@@ -1,29 +1,32 @@
 #version 330
 
-uniform mat4 camera;
+uniform mat4 camera,cameraVP;
 
 layout(location = 0) in vec3 vert;
 layout(location = 1) in vec2 vertTexCoord;
 layout(location = 2) in vec3 vertNormal;
 layout(location = 3) in vec3 vertTangent;
 layout(location = 4) in vec3 vertBitangent;
-layout(location = 5) in mat4 modelView;
+layout(location = 5) in mat4 model;
 
 out vec3 worldVert;
-out vec2 fragTexCoord;
+out vec2 localTexCoord;
 out vec3 worldNormal;
+out vec3 localNormal;
 out vec3 worldTangent;
 out vec4 surfacePos;
 
 void main() {
 
     // Pass some variables to the fragment shader
-    fragTexCoord = vertTexCoord;
-    worldNormal = (camera * vec4(vertNormal,0)).xyz;
-    worldVert = (camera * modelView * vec4(vert,0)).xyz;
-    worldTangent = (camera * modelView * vec4(vertTangent,0.0)).xyz;
-    surfacePos = modelView * vec4(vert,1.0);
+    localTexCoord = vertTexCoord;
+    localNormal = normalize(vertNormal);
+    worldNormal = normalize((cameraVP * model * vec4(vertNormal,1)).xyz);
+	vec4 worldVert_t = camera * model * vec4(vert,1);
+    worldVert = worldVert_t.xyz;
+    worldTangent = (camera * model * vec4(vertTangent,0.0)).xyz;
+    surfacePos = model * vec4(vert,1.0);
     
     // Apply all matrix transformations to vert
-    gl_Position = camera * modelView * vec4(vert, 1);
+    gl_Position = worldVert_t;
 }

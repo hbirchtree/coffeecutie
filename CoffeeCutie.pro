@@ -47,7 +47,6 @@ SOURCES += main.cpp \
     coffeelogger.cpp \
     engine/physics/bulletphysics.cpp \
     engine/objects/coffeeoutputsurface.cpp \
-    opengl/components/coffeedepthbufferobject.cpp \
     engine/physics/physicsdescriptor.cpp \
     inspector/coffeeinspector.cpp \
     engine/objects/coffeeparticlesystem.cpp \
@@ -65,7 +64,8 @@ SOURCES += main.cpp \
     engine/scripting/qscriptvectorvalue.cpp \
     engine/scripting/coffeescriptengine.cpp \
     engine/physics/genericphysicsinterface.cpp \
-    engine/scripting/coffeeinputevent.cpp
+    engine/scripting/coffeeinputevent.cpp \
+    opengl/components/framebuffers/coffeeframebufferbaseclass.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -106,7 +106,6 @@ HEADERS += \
     engine/physics/genericphysicsinterface.h \
     engine/physics/bulletphysics.h \
     engine/objects/coffeeoutputsurface.h \
-    opengl/components/coffeedepthbufferobject.h \
     engine/physics/physicsdescriptor.h \
     inspector/coffeeinspector.h \
     engine/objects/coffeeparticlesystem.h \
@@ -121,7 +120,8 @@ HEADERS += \
     inspector/coffeescriptterminal.h \
     engine/scripting/qscriptvectorvalue.h \
     engine/scripting/coffeescriptengine.h \
-    engine/scripting/coffeeinputevent.h
+    engine/scripting/coffeeinputevent.h \
+    opengl/components/framebuffers/coffeeframebufferbaseclass.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

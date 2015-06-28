@@ -163,9 +163,9 @@
 		"objects": [
 			{
 				"id": "plane",
-				"shader.id": "standard",
+				"shader.id": "advanced",
 				"model.position": [0,0,0],
-				"model.id": "unlimitedlandscape:",
+				"model.id": "quad:",
 				"model.scale": [0.2,0.2,0.2],
 				"physics":{
 					"shape": "staticplane",
