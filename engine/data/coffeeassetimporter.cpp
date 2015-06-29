@@ -104,6 +104,7 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
     QHash<QString,QPointer<CoffeeMesh>> meshes;
     QHash<QString,QPointer<CoffeeMaterial>> materials;
 
+    //replace with importer.ReadFileFromMemory() to make use of CoffeeResource*
     const aiScene* scene = importer.ReadFile(
                 fileinfo.filePath().toStdString().c_str(),
                 aiProcess_CalcTangentSpace |
