@@ -97,6 +97,7 @@ void CoffeeStandardObject::load()
             pshader->setUniform(m->uniform,m->data);
     }
     for(TextureMapping* m : textures){
+        m->loaded = true;
         m->texture->loadTexture();
     }
     baked = true;

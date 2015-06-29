@@ -61,6 +61,8 @@ public slots:
     void setRemote(bool remote);
 
 private:
+    bool forceRefresh();
+
     static bool checkSource(QString u);
 
     bool loadLocalFile();

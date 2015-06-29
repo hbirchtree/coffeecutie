@@ -29,8 +29,7 @@ CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r) : QObject(paren
 {
     this->res = r;
     connect(res.data(),&CoffeeResource::resourceChanged,[=](){
-        unloadTexture();
-        loadTexture();
+        b_to_reload = true;
     });
 }
 
@@ -67,7 +66,7 @@ bool CoffeeTexture::isCubemap()
 
 void CoffeeTexture::loadTexture()
 {
-    qDebug() << "Loading texture";
+
     if(isAllocated()){
         addAllocation();
         return;
@@ -124,7 +123,6 @@ void CoffeeTexture::loadTexture()
     }else{
         qWarning("Failed to allocate texture!");
     }
-    qDebug() << "Texture was loaded";
 }
 
 void CoffeeTexture::unloadTexture()
@@ -144,10 +142,20 @@ void CoffeeTexture::setProcessor(std::function<QImage (QImage)> func)
 
 GLuint CoffeeTexture::getHandle()
 {
+    if(b_to_reload){
+        unloadTexture();
+        loadTexture();
+        b_to_reload = false;
+    }
     if(validTexture)
         return textureHandle;
     else
         return 0;
+}
+
+GLuint CoffeeTexture::getHandleOnly()
+{
+    return textureHandle;
 }
 
 QString CoffeeTexture::textureFile() const

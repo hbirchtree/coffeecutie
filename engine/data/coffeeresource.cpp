@@ -29,7 +29,7 @@ bool CoffeeResource::remote() const
 QByteArray *CoffeeResource::data()
 {
     if(m_data.isNull())
-        refresh();
+        forceRefresh();
     return &m_data;
 }
 
@@ -57,6 +57,14 @@ void CoffeeResource::setRemote(bool remote)
     emit remoteChanged(remote);
 }
 
+bool CoffeeResource::forceRefresh()
+{
+    if(remote())
+        loadRemoteFile();
+    else
+        loadLocalFile();
+}
+
 bool CoffeeResource::checkSource(QString u)
 {
     Q_UNUSED(u)
@@ -67,10 +75,7 @@ bool CoffeeResource::checkSource(QString u)
 void CoffeeResource::refresh()
 {
     //reloads file, prompts all users to reload their data as well. for textures, this should unload and reload the new one for instance.
-    if(remote())
-        loadRemoteFile();
-    else
-        loadLocalFile();
+    forceRefresh();
     resourceChanged();
 }
 

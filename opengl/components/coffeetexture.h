@@ -10,7 +10,7 @@ class CoffeeTexture : public QObject,public CoffeeGameAsset
 {
     Q_PROPERTY(QObject* resource READ resource)
     Q_PROPERTY(QString textureFile READ textureFile)
-    Q_PROPERTY(uint textureHandle READ getHandle)
+    Q_PROPERTY(uint textureHandle READ getHandleOnly)
     Q_PROPERTY(bool validTexture READ isValidTexture)
     Q_PROPERTY(bool cubemap READ isCubemap)
 
@@ -45,6 +45,7 @@ public:
     void setProcessor(std::function<QImage(QImage input)> func);
 
     GLuint getHandle();
+    GLuint getHandleOnly(); //because the other invokes gl* functions
 
     QString textureFile() const;
 
@@ -57,6 +58,9 @@ private:
         //We can use this to process the image the way we want.
         return input;
     };
+
+    bool b_to_reload = false;
+
     bool b_cubemap = false;
     bool b_cubemap_dice = false;
 
