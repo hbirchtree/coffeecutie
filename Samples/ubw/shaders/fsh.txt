@@ -49,13 +49,13 @@ void main() {
     vec3 ambient = light.ambientCoefficient * mtl.ambientColor * light.intensities;
 
     //diffuse
-    float diffuseCoefficient = max(0.0, dot(worldNormal, surfaceToLight));
+    float diffuseCoefficient = max(0.0, dot(localNormal, surfaceToLight));
     vec3 diffuse = diffuseCoefficient * surfaceColor.rgb * light.intensities;
 
     //specular
     float specularCoefficient = 0.0;
     if(diffuseCoefficient > 0.0)
-        specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, worldNormal))), mtl.shininess);
+        specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, localNormal))), mtl.shininess);
     vec3 specular = specularCoefficient * mtl.specularColor * light.intensities;
     
     //attenuation

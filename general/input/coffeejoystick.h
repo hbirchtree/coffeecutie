@@ -56,7 +56,7 @@ private:
     QString j_name;
     QVector<float> axes;
     QVector<unsigned char> buttons;
-    bool m_enabled;
+    bool m_enabled = true;
 };
 
 #endif // COFFEEJOYSTICK_H

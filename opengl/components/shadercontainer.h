@@ -5,12 +5,13 @@
 #include "general/data/coffeegameasset.h"
 
 class ShaderVariant;
+class CoffeeResource;
 
 class ShaderContainer : public QObject, public CoffeeGameAsset
 {
-    Q_PROPERTY(QString fragmentShader READ fragmentShader WRITE setFragmentShader)
-    Q_PROPERTY(QString vertexShader READ vertexShader WRITE setVertexShader)
-    Q_PROPERTY(QString geometryShader READ geometryShader WRITE setGeometryShader)
+    Q_PROPERTY(QString fragmentShader READ fragmentShader)
+    Q_PROPERTY(QString vertexShader READ vertexShader)
+    Q_PROPERTY(QString geometryShader READ geometryShader)
     Q_PROPERTY(QVariantMap uniforms READ getUniformsMap)
     Q_PROPERTY(QVariantMap attributes READ getAttributesMap)
     Q_PROPERTY(int programId READ getProgramId)
@@ -21,8 +22,8 @@ public:
     ~ShaderContainer();
 
     //Full-process functions
-    Q_INVOKABLE bool buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile);
-    Q_INVOKABLE bool buildProgram(QString vertShaderFile,QString fragShaderFile);
+    Q_INVOKABLE bool buildProgram(CoffeeResource *vertShaderFile, CoffeeResource *fragShaderFile, CoffeeResource *geomShaderFile);
+    Q_INVOKABLE bool buildProgram(CoffeeResource *vertShaderFile, CoffeeResource *fragShaderFile);
     Q_INVOKABLE bool buildProgram();
 
     void compileShaders();
@@ -32,7 +33,7 @@ public:
     bool addShader(const char* data, QString id, const GLenum& shaderType);
     bool linkProgram();
 
-    GLuint compileShader(QString shaderFile, const GLenum &shaderType);
+    GLuint compileShader(CoffeeResource *shader, const GLenum &shaderType);
     GLuint compileShaderSource(const char* data, QString id, const GLenum& shaderType);
     int getProgramId();
 
@@ -50,10 +51,11 @@ public:
     QString vertexShader() const;
     QString geometryShader() const;
 
+    void setFragmentShader(CoffeeResource *value);
+    void setVertexShader(CoffeeResource *value);
+    void setGeometryShader(CoffeeResource *geometryShader);
+
 public slots:
-    void setFragmentShader(const QString& sh);
-    void setVertexShader(const QString& sh);
-    void setGeometryShader(const QString &geometryShader);
 
     void setUniform(QString name, const glm::vec3 &val);
     void setUniform(QString name,const glm::vec4& val);
@@ -70,8 +72,9 @@ public slots:
 
 private:
 
-    QString fragShaderFile;
-    QString vertShaderFile;
+    CoffeeResource *fragShaderFile = nullptr;
+    CoffeeResource *vertShaderFile = nullptr;
+    CoffeeResource *m_geometryShader = nullptr;
 
     QVector<GLuint> shaders;
 
@@ -82,7 +85,6 @@ private:
     QHash<QString,int> uniforms;
     QHash<QString,GLenum> attributes_t;
     QHash<QString,GLenum> uniforms_t;
-    QString m_geometryShader;
 };
 
 #endif // SHADERCONTAINER_H

@@ -13,6 +13,7 @@ class ShaderContainer;
 class CoffeeTexture;
 class CoffeeObject;
 class CoffeeParticleSystem;
+class CoffeeResource;
 
 class CoffeeAssetStorage;
 
@@ -22,8 +23,8 @@ class CoffeeObjectFactory : public QObject
 public:
     CoffeeObjectFactory(QObject* parent);
 
-    Q_INVOKABLE QObject* importAssets(QString file); //Short, used for scripting
-    CoffeeAssetStorage *importAssets(QString file,
+    Q_INVOKABLE QObject* importAssets(QString src); //Short, used for scripting
+    CoffeeAssetStorage *importAssets(CoffeeResource *src,
                                      QObject *parent);
     QList<CoffeeWorldOpts*> importObjects(QString file,
                                           QObject *parent);

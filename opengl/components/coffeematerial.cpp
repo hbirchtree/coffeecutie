@@ -1,6 +1,7 @@
 #include "coffeematerial.h"
 
 #include "general/shadervariant.h"
+#include "engine/data/coffeeresource.h"
 #include <QMetaEnum>
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
@@ -112,7 +113,7 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
                 continue;
             }
             textures.insert(ctype,new CoffeeTexture(this,
-                                                    fileProbe.filePath()));
+                                                    new CoffeeResource(this,fileProbe.filePath())));
             textures.value(ctype)->setObjectName(
                         CoffeeTexture::staticMetaObject.
                         enumerator(CoffeeTexture::staticMetaObject.

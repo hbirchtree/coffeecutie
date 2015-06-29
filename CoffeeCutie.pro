@@ -65,7 +65,8 @@ SOURCES += main.cpp \
     engine/scripting/coffeescriptengine.cpp \
     engine/physics/genericphysicsinterface.cpp \
     engine/scripting/coffeeinputevent.cpp \
-    opengl/components/framebuffers/coffeeframebufferbaseclass.cpp
+    opengl/components/framebuffers/coffeeframebufferbaseclass.cpp \
+    engine/data/coffeeresource.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -121,7 +122,8 @@ HEADERS += \
     engine/scripting/qscriptvectorvalue.h \
     engine/scripting/coffeescriptengine.h \
     engine/scripting/coffeeinputevent.h \
-    opengl/components/framebuffers/coffeeframebufferbaseclass.h
+    opengl/components/framebuffers/coffeeframebufferbaseclass.h \
+    engine/data/coffeeresource.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -132,7 +134,7 @@ DEPENDPATH += $$PWD/libs/glbinding/source/glbinding/include
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glfw-library/src/release/ -lGL -lGLEW -lglfw3
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glfw-library/src/debug/ -lGL -lGLEW -lglfw3
-else:unix: LIBS += -L$$PWD/../glfw-library/src/ -lm -lrt -lGL -lglfw3 -lGL -lX11 -lXxf86vm -lXinerama -lXcursor -lXrandr -lpthread -lXi
+else:unix: LIBS += -L$$PWD/../glfw-library/src/ -lm -lrt -lGL  -lpthread -lglfw3 -lX11 -ldl -lXxf86vm -lXinerama -lXcursor -lXrandr -lXi
 
 INCLUDEPATH += $$PWD/libs/glfw/include
 DEPENDPATH += $$PWD/libs/glfw/include

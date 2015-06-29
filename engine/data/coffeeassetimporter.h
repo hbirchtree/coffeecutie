@@ -13,6 +13,7 @@ class ShaderContainer;
 class CoffeeTexture;
 class CoffeeObject;
 class CoffeeParticleSystem;
+class CoffeeResource;
 
 class CoffeeModelStruct :public QObject{
     Q_PROPERTY(QObject* mesh READ getMeshObject)
@@ -32,6 +33,10 @@ class CoffeeAssetStorage : public QObject
 {
     Q_PROPERTY(QObjectList worlds READ getWorlds)
     Q_PROPERTY(QObjectList shaders READ getShaders)
+    Q_PROPERTY(QObjectList textures READ getTextures)
+
+    Q_PROPERTY(QObjectList resources READ getResources)
+
 
     Q_OBJECT
 
@@ -42,6 +47,7 @@ public:
     QHash<QString,QHash<QString,CoffeeModelStruct*> > models;
     QHash<QString,QHash<QString,QPointer<CoffeeMesh>> > meshes;
     QHash<QString,QHash<QString,QPointer<CoffeeMaterial>> > materials;
+    QList<QPointer<CoffeeResource>> resources;
 
     QList<CoffeeWorldOpts*> worlds;
     QHash<QString,QPointer<ShaderContainer>> shaders;
@@ -57,9 +63,9 @@ public:
     Q_INVOKABLE QObject* getModel(QString source);
 
     QObjectList getWorlds();
-
     QObjectList getShaders();
-public slots:
+    QObjectList getTextures();
+    QObjectList getResources();
 };
 
 class CoffeeAssetImporter : public QObject

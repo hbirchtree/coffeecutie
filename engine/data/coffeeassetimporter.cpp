@@ -4,6 +4,7 @@
 #include "opengl/components/coffeeworldopts.h"
 #include "engine/objects/coffeeobject.h"
 #include "engine/models/coffeemesh.h"
+#include "engine/data/coffeeresource.h"
 #include "opengl/components/coffeematerial.h"
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/shadercontainer.h"
@@ -172,7 +173,7 @@ CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, 
     }
 
     if(subtype=="cubemap"){
-        QMap<GLenum,QString> textureMapping;
+        QMap<GLenum,CoffeeResource*> textureMapping;
 
         auto loopfunc = [](QString dir, GLenum &mapping){
             mapping = GL_NONE;
@@ -210,7 +211,10 @@ CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, 
                            file.filePath().toStdString().c_str());
                     return s;
                 }
-                textureMapping.insert(type,file.filePath());
+                CoffeeResource* r = new CoffeeResource(0,file.filePath());
+                s->resources.append(r);
+
+                textureMapping.insert(type,r);
             }
         }
         CoffeeTexture* t = new CoffeeTexture(0,textureMapping);
@@ -224,7 +228,10 @@ CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, 
         if(file.isRelative())
             file.setFile(filepath+file.filePath());
 
-        CoffeeTexture* t = new CoffeeTexture(0,file.filePath(),QRect());
+        CoffeeResource* r = new CoffeeResource(0,file.filePath());
+        s->resources.append(r);
+
+        CoffeeTexture* t = new CoffeeTexture(0,r,QRect());
 
         t->setObjectName(name);
         t->moveToThread(outputParent->thread());
@@ -239,8 +246,10 @@ CoffeeAssetStorage *CoffeeAssetImporter::importTexture(const QVariantMap &data, 
                    texture.filePath().toStdString().c_str());
             return s;
         }
+        CoffeeResource* r = new CoffeeResource(0,texture.filePath());
+        s->resources.append(r);
 
-        CoffeeTexture* t = new CoffeeTexture(0,texture.filePath());
+        CoffeeTexture* t = new CoffeeTexture(0,r);
 
         t->setObjectName(name);
         t->moveToThread(outputParent->thread());
@@ -262,20 +271,20 @@ CoffeeAssetStorage *CoffeeAssetImporter::importShader(const QVariantMap &data, c
         return s;
     }
 
-    QString fragshader,vertshader,geomshader;
+    CoffeeResource *fragshader = nullptr,*vertshader = nullptr,*geomshader = nullptr;
 
 
     for(QString key : data.keys()){
-        QString *target; //we use this so that, in the case the path is relative, we may update it.
+        CoffeeResource *target; //we use this so that, in the case the path is relative, we may update it.
         if(key=="fragment"){
-            fragshader=data.value(key).toString();
-            target = &fragshader;
+            fragshader= new CoffeeResource(0,data.value(key).toString());
+            target = fragshader;
         }else if(key=="vertex"){
-            vertshader=data.value(key).toString();
-            target = &vertshader;
+            vertshader= new CoffeeResource(0,data.value(key).toString());
+            target = vertshader;
         }else if(key=="geometry"){
-            geomshader=data.value(key).toString();
-            target = &geomshader;
+            geomshader= new CoffeeResource(0,data.value(key).toString());
+            target = geomshader;
         }else
             continue;
 
@@ -289,13 +298,15 @@ CoffeeAssetStorage *CoffeeAssetImporter::importShader(const QVariantMap &data, c
                    shaderFile.filePath().toStdString().c_str());
             return s;
         }
-        *target = shaderFile.filePath();
+        target->setSource(shaderFile.filePath());
     }
 
     ShaderContainer* shader = new ShaderContainer(0);
     shader->setVertexShader(vertshader);
     shader->setFragmentShader(fragshader);
     shader->setGeometryShader(geomshader);
+
+    s->resources << vertshader << fragshader << geomshader;
 
     shader->setObjectName(name);
     shader->moveToThread(outputParent->thread());
@@ -316,6 +327,8 @@ void CoffeeAssetStorage::merge(CoffeeAssetStorage *data){
     shaders.unite(data->shaders);
     worlds.append(data->worlds);
     textures.unite(data->textures);
+
+    resources.append(data->resources);
 }
 
 
@@ -411,6 +424,23 @@ QObjectList CoffeeAssetStorage::getShaders()
     QObjectList l;
     for(ShaderContainer* p : shaders.values())
         l.append(p);
+    return l;
+}
+
+QObjectList CoffeeAssetStorage::getTextures()
+{
+    QObjectList l;
+    for(QPointer<CoffeeTexture> p : textures.values())
+        l.append(p);
+    return l;
+}
+
+QObjectList CoffeeAssetStorage::getResources()
+{
+    QObjectList l;
+    for(QPointer<CoffeeResource> p : resources)
+        if(p)
+            l.append(p);
     return l;
 }
 

@@ -3,8 +3,12 @@
 
 #include "general/common.h"
 #include "general/data/coffeegameasset.h"
+
+class CoffeeResource;
+
 class CoffeeTexture : public QObject,public CoffeeGameAsset
 {
+    Q_PROPERTY(QObject* resource READ resource)
     Q_PROPERTY(QString textureFile READ textureFile)
     Q_PROPERTY(uint textureHandle READ getHandle)
     Q_PROPERTY(bool validTexture READ isValidTexture)
@@ -27,10 +31,9 @@ public:
     };
     Q_ENUMS(CoffeeTextureType)
 
-    CoffeeTexture(QObject *parent,QMap<GLenum,QString> mapping); //Creates a cubemap
-    CoffeeTexture(QObject *parent, QString source, const QRect &targetArea); //Creates a cubemap from a single image file
-    CoffeeTexture(QObject *parent,QString filename);
-    CoffeeTexture(QObject *parent,QByteArray* img);
+    CoffeeTexture(QObject *parent, QMap<GLenum, CoffeeResource *> mapping); //Creates a cubemap
+    CoffeeTexture(QObject *parent, CoffeeResource* r, const QRect &targetArea); //Creates a cubemap from a single image file
+    CoffeeTexture(QObject *parent, CoffeeResource *r);
     CoffeeTexture(QObject *parent,aiTexture* texture);
     ~CoffeeTexture();
 
@@ -44,6 +47,8 @@ public:
     GLuint getHandle();
 
     QString textureFile() const;
+
+    QObject* resource();
 
 signals:
 
@@ -59,9 +64,9 @@ private:
     QImage texture;
     GLuint textureHandle = 0;
 
-    QMap<GLenum,QString> cubemapping;
+    QMap<GLenum,CoffeeResource*> cubemapping;
 
-    QString m_textureFile;
+    QPointer<CoffeeResource> res;
 };
 
 #endif // COFFEETEXTURE_H

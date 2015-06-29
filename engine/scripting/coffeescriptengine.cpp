@@ -125,6 +125,7 @@ void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
                     qWarning("Failed to include contents from file: %s",fileSrc.toStdString().c_str());
                 }
             }
+        qDebug() << src;
         QString out = e.evaluate(src).toString();
         if(logOut)
             *logOut = out;

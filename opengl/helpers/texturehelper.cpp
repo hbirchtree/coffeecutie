@@ -1,7 +1,5 @@
 #include "texturehelper.h"
 
-#include "general/filehandler.h"
-
 GLuint TextureHelper::allocTexture(GLenum internalFormat,
                                    GLenum colorFormat,
                                    int w, int h,

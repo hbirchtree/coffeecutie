@@ -68,11 +68,7 @@ bool CoffeeInstanceContainer::renderPrepare() const
 
 void CoffeeInstanceContainer::createInstance()
 {
-    qDebug() << "Creating";
-    while(renderPrepare())
-        QThread::msleep(1);
     instances.append(createInstanceData());
-    qDebug() << "Created";
 }
 
 void CoffeeInstanceContainer::addInstance(CoffeeInstanceData *i)

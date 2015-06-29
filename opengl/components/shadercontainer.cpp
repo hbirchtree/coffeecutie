@@ -1,7 +1,7 @@
 #include "shadercontainer.h"
 
-#include "general/filehandler.h"
 #include "general/shadervariant.h"
+#include "engine/data/coffeeresource.h"
 
 ShaderContainer::ShaderContainer(QObject *parent) : QObject(parent)
 {
@@ -12,7 +12,9 @@ ShaderContainer::~ShaderContainer()
 
 }
 
-bool ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFile, QString geomShaderFile)
+bool ShaderContainer::buildProgram(CoffeeResource *vertShaderFile,
+                                   CoffeeResource *fragShaderFile,
+                                   CoffeeResource *geomShaderFile)
 {
     if(isAllocated()){
         addAllocation();
@@ -21,9 +23,9 @@ bool ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFil
 
     createProgram();
 
-    setVertexShader(vertShaderFile);
-    setFragmentShader(fragShaderFile);
-    setGeometryShader(geomShaderFile);
+    this->vertShaderFile = vertShaderFile;
+    this->fragShaderFile = fragShaderFile;
+    m_geometryShader = geomShaderFile;
 
     compileShaders();
 
@@ -33,29 +35,30 @@ bool ShaderContainer::buildProgram(QString vertShaderFile, QString fragShaderFil
     return true;
 }
 
-bool ShaderContainer::buildProgram(QString vertShaderFile,QString fragShaderFile){
-    return buildProgram(vertShaderFile,fragShaderFile,QString());
+bool ShaderContainer::buildProgram(CoffeeResource *vertShaderFile,
+                                   CoffeeResource *fragShaderFile){
+    return buildProgram(vertShaderFile,fragShaderFile,nullptr);
 }
 
 bool ShaderContainer::buildProgram()
 {
-    return buildProgram(vertexShader(),fragmentShader(),geometryShader());
+    return buildProgram(vertShaderFile,fragShaderFile,m_geometryShader);
 }
 
 void ShaderContainer::compileShaders()
 {
-    std::string src = FileHandler::getStringFromFile(vertexShader()).toStdString();
+    std::string src = vertShaderFile->data()->toStdString();
     const char* code = src.c_str();
     addShader(code,vertexShader(),GL_VERTEX_SHADER);
 
     if(!fragmentShader().isEmpty()){
-        src = FileHandler::getStringFromFile(fragmentShader()).toStdString();
+        src = fragShaderFile->data()->toStdString();
         code = src.c_str();
         addShader(code,fragmentShader(),GL_FRAGMENT_SHADER);
     }
 
     if(!geometryShader().isEmpty()){
-        src = FileHandler::getStringFromFile(geometryShader()).toStdString();
+        src = m_geometryShader->data()->toStdString();
         code = src.c_str();
         addShader(code,geometryShader(),GL_GEOMETRY_SHADER);
     }
@@ -129,10 +132,10 @@ bool ShaderContainer::linkProgram()
     return true;
 }
 
-GLuint ShaderContainer::compileShader(QString shaderFile, const GLenum &shaderType){
-    std::string src = FileHandler::getStringFromFile(shaderFile).toStdString();
+GLuint ShaderContainer::compileShader(CoffeeResource* shader, const GLenum &shaderType){
+    std::string src = shader->data()->toStdString();
     const char* code = src.c_str();
-    return compileShaderSource(code,shaderFile,shaderType);
+    return compileShaderSource(code,shader->source(),shaderType);
 }
 
 GLuint ShaderContainer::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
@@ -172,6 +175,21 @@ void ShaderContainer::unload()
     attributes.clear();
     programId = 0;
 }
+void ShaderContainer::setGeometryShader(CoffeeResource *geometryShader)
+{
+    m_geometryShader = geometryShader;
+}
+
+void ShaderContainer::setVertexShader(CoffeeResource *value)
+{
+    vertShaderFile = value;
+}
+
+void ShaderContainer::setFragmentShader(CoffeeResource *value)
+{
+    fragShaderFile = value;
+}
+
 
 int ShaderContainer::getUniformLocation(QString name){
     if(uniforms.contains(name))
@@ -296,30 +314,21 @@ QVariantMap ShaderContainer::getAttributesMap()
 
 QString ShaderContainer::fragmentShader() const
 {
-    return fragShaderFile;
+    if(fragShaderFile)
+        return fragShaderFile->source();
+    return "";
 }
 
 QString ShaderContainer::vertexShader() const
 {
-    return vertShaderFile;
+    if(vertShaderFile)
+        return vertShaderFile->source();
+    return "";
 }
 
 QString ShaderContainer::geometryShader() const
 {
-    return m_geometryShader;
-}
-
-void ShaderContainer::setFragmentShader(const QString &sh)
-{
-    this->fragShaderFile = sh;
-}
-
-void ShaderContainer::setVertexShader(const QString &sh)
-{
-    this->vertShaderFile = sh;
-}
-
-void ShaderContainer::setGeometryShader(const QString &geometryShader)
-{
-    m_geometryShader = geometryShader;
+    if(m_geometryShader)
+        return m_geometryShader->source();
+    return "";
 }

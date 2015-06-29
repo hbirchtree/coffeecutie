@@ -7,6 +7,7 @@ class CoffeeMesh;
 class CoffeeCamera;
 class ShaderContainer;
 class CoffeeTexture;
+class CoffeeResource;
 
 class CoffeeSkybox : public QObject,public CoffeeObject
 {
@@ -14,7 +15,7 @@ class CoffeeSkybox : public QObject,public CoffeeObject
 public:
     CoffeeSkybox(QObject* parent = 0, CoffeeCamera *camera = 0);
 
-    void addMap(GLenum side,QString source);
+    void addMap(GLenum side, CoffeeResource *source);
     void setCamera(CoffeeCamera* camera);
 
     QPointer<CoffeeTexture> getTexture() const;
@@ -34,7 +35,7 @@ public slots:
 protected:
     bool baked = false;
 
-    QMap<GLenum,QString> cubemapping;
+    QMap<GLenum,CoffeeResource*> cubemapping;
 
     QPointer<CoffeeCamera> camera;
     QPointer<ShaderContainer> shader;

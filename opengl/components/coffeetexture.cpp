@@ -3,33 +3,35 @@
 #include <QColor>
 #include <QRgb>
 #include "opengl/helpers/texturehelper.h"
+#include "engine/data/coffeeresource.h"
 
-CoffeeTexture::CoffeeTexture(QObject *parent, QMap<GLenum, QString> mapping) : QObject(parent)
+CoffeeTexture::CoffeeTexture(QObject *parent, QMap<GLenum, CoffeeResource*> mapping) : QObject(parent)
 {
     this->cubemapping = mapping;
     this->b_cubemap = true;
 }
 
-CoffeeTexture::CoffeeTexture(QObject *parent, QString source,
+CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r,
                              //TODO : Use this parameter
                              const QRect &targetArea) :
     QObject(parent)
 {
-    m_textureFile = source;
+    this->res = r;
+    connect(res.data(),&CoffeeResource::resourceChanged,[=](){
+        unloadTexture();
+        loadTexture();
+    });
     this->b_cubemap = true;
     this->b_cubemap_dice = true;
 }
 
-CoffeeTexture::CoffeeTexture(QObject *parent, QString filename) : QObject(parent)
+CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r) : QObject(parent)
 {
-    m_textureFile = filename;
-    texture = QImage(filename);
-}
-
-CoffeeTexture::CoffeeTexture(QObject *parent, QByteArray *img) : QObject(parent)
-{
-    texture = QImage::fromData(*img);
-    delete img;
+    this->res = r;
+    connect(res.data(),&CoffeeResource::resourceChanged,[=](){
+        unloadTexture();
+        loadTexture();
+    });
 }
 
 CoffeeTexture::CoffeeTexture(QObject *parent, aiTexture *texture) : QObject(parent)
@@ -65,6 +67,7 @@ bool CoffeeTexture::isCubemap()
 
 void CoffeeTexture::loadTexture()
 {
+    qDebug() << "Loading texture";
     if(isAllocated()){
         addAllocation();
         return;
@@ -72,17 +75,17 @@ void CoffeeTexture::loadTexture()
     if(isCubemap()&&!b_cubemap_dice){
         if(cubemapping.size()!=6)
             qWarning("Invalid size of cube mapping!");
-        QImage probe(cubemapping.first());
+        QImage probe = QImage::fromData(*cubemapping.first()->data());
         QMap<GLenum,QImage> source;
         for(GLenum map : cubemapping.keys())
-            source.insert(map,QImage(cubemapping.value(map)));
+            source.insert(map,QImage::fromData(*cubemapping.value(map)->data()));
         textureHandle = TextureHelper::allocCubeTexture(GL_RGBA8,GL_BGRA,
                                                         probe.width(),probe.height(),
                                                         source,1,GL_UNSIGNED_BYTE);
     }else if(b_cubemap_dice){
-        QImage src(m_textureFile);
+        QImage src = QImage::fromData(*res->data());
         if(src.isNull())
-            qWarning("Failed to load cubemap dice: Invalid image");
+            qFatal("Failed to load cubemap dice: Invalid image");
         if((float)src.width()/(float)src.height()!=3.f/4.f)
             qWarning("Cubemap dice does not have correct dimensions!");
         int w_d = src.width()/4,h_d = src.height()/3;
@@ -109,6 +112,7 @@ void CoffeeTexture::loadTexture()
                                                         w_d,h_d,
                                                         mapping,1,GL_UNSIGNED_BYTE);
     }else{
+        texture = QImage::fromData(*res->data());
         texture = imageProcessor(texture);
         textureHandle = TextureHelper::allocTexture(GL_RGBA8,GL_BGRA,
                                                     texture.width(),texture.height(),
@@ -120,6 +124,7 @@ void CoffeeTexture::loadTexture()
     }else{
         qWarning("Failed to allocate texture!");
     }
+    qDebug() << "Texture was loaded";
 }
 
 void CoffeeTexture::unloadTexture()
@@ -147,5 +152,10 @@ GLuint CoffeeTexture::getHandle()
 
 QString CoffeeTexture::textureFile() const
 {
-    return m_textureFile;
+    return res->source();
+}
+
+QObject *CoffeeTexture::resource()
+{
+    return res;
 }

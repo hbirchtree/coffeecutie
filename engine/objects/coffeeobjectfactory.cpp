@@ -13,6 +13,7 @@
 #include "engine/objects/coffeeskybox.h"
 #include "engine/objects/coffeeparticlesystem.h"
 #include "opengl/components/coffeecamera.h"
+#include "engine/data/coffeeresource.h"
 
 #include "engine/physics/physicsdescriptor.h"
 
@@ -30,19 +31,21 @@
 
 CoffeeObjectFactory::CoffeeObjectFactory(QObject *parent) : QObject(parent){}
 
-QObject *CoffeeObjectFactory::importAssets(QString file)
+QObject *CoffeeObjectFactory::importAssets(QString src)
 {
-    return importAssets(file,this->parent());
+    CoffeeResource *f = new CoffeeResource(0,src);
+    CoffeeAssetStorage* s = importAssets(f,this->parent());
+    delete f;
+    return s;
 }
 
-CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *parent)
+CoffeeAssetStorage* CoffeeObjectFactory::importAssets(CoffeeResource* src, QObject *parent)
 {
     QElapsedTimer t;
     t.start();
     QVariantMap source;
     QJsonParseError err;
-    QByteArray srcData = FileHandler::getStringFromFile(file).toLocal8Bit();
-    source = QJsonDocument::fromJson(srcData,&err).object().toVariantMap();
+    source = QJsonDocument::fromJson(*src->data(),&err).object().toVariantMap();
 
     if(err.error!=QJsonParseError::NoError){
         qFatal("Failed to parse JSON document. This suggests that you should error-check the JSON data.\n"
@@ -59,7 +62,7 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *par
         return s;
     }
 
-    QFileInfo f(file);
+    QFileInfo f(src->source());
     s->filepath = f.path()+QDir::separator();
 
     //The asset-based system allows us to load a resource once and reuse it infinitely from the bottom up.
@@ -112,9 +115,11 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(QString file, QObject *par
 
 QList<CoffeeWorldOpts *> CoffeeObjectFactory::importObjects(QString file, QObject *parent)
 {
-    CoffeeAssetStorage* s = importAssets(file,parent);
+    CoffeeResource *f = new CoffeeResource(0,file);
+    CoffeeAssetStorage* s = importAssets(f,parent);
     QList<CoffeeWorldOpts *> w = s->worlds;
     delete s;
+    delete f;
     return w;
 }
 

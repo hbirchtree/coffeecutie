@@ -5,6 +5,7 @@
 #include "opengl/helpers/renderingmethods.h"
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeecamera.h"
+#include "engine/data/coffeeresource.h"
 
 CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) :
     QObject(parent),
@@ -13,7 +14,7 @@ CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) :
     setCamera(camera);
 }
 
-void CoffeeSkybox::addMap(GLenum side, QString source)
+void CoffeeSkybox::addMap(GLenum side, CoffeeResource *source)
 {
     cubemapping.insert(side,source);
 }

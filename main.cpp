@@ -57,17 +57,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    //We have a standard file to load for testing purposes
-    QString sourceFile = "ubw/ubw.json";
-    if(opts.positionalArguments().size()>0){
-        sourceFile = opts.positionalArguments().at(0);
-    }
-
-    QFileInfo srcInfo(sourceFile);
-    if(!srcInfo.exists()){
-        qFatal("Source file does not exist: %s",sourceFile.toStdString().c_str());
-    }
-
     //Set the random seed for qrand()
     qsrand((rand()%RAND_MAX)/10000.0);
 
@@ -122,7 +111,7 @@ int main(int argc, char *argv[])
                 se->addObject(o);
             QString out;
             bool res;
-            se->execFile("ubw/scripts/test.qts",&res,&out);
+            se->execFile("ubw/ubw.qts",&res,&out);
             qDebug("Init script run: %i, %s",
                    res,
                    out.toStdString().c_str());
