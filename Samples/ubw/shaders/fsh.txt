@@ -44,7 +44,7 @@ void main() {
     vec4 surfaceColor = texture(mtl.diffuseSampler, localTexCoord);
     vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
     vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
-    
+
     //ambient
     vec3 ambient = light.ambientCoefficient * mtl.ambientColor * light.intensities;
 
@@ -57,23 +57,23 @@ void main() {
     if(diffuseCoefficient > 0.0)
         specularCoefficient = pow(max(0.0, dot(surfaceToCamera, reflect(-surfaceToLight, localNormal))), mtl.shininess);
     vec3 specular = specularCoefficient * mtl.specularColor * light.intensities;
-    
+
     //attenuation
     float distanceToLight = length(light.position - surfacePos.xyz);
     float attenuation = 1.0 / (1.0 + light.attenuation * pow(distanceToLight, 2));
 
     //linear color (color before gamma correction)
     vec3 linearColor = ambient + attenuation*(diffuse + specular);
-    
+
     //gamme correction
     vec3 gamma = vec3(1.0/1.3);
     linearColor = pow(linearColor, gamma);
-    
+
     //fog
     float fogCoord = abs(length(cameraPosition-surfacePos.xyz)/surfacePos.w);
     float fogVar = clamp(exp(-pow(fogParams.fDensity*fogCoord,7)),0.0,1.0);
     linearColor = mix(fogParams.fColor.xyz,linearColor,fogVar);
-    
+
     //final color (after gamma correction)
     finalColor = vec4(linearColor, surfaceColor.a*mtl.opacity);
     finalNormal = vec4(worldNormal,1.0);
