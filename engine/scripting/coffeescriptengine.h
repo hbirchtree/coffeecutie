@@ -34,6 +34,8 @@ private:
     static QScriptValue vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue qtimerConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+
+    static QString importFile(const QFileInfo &srcFile, QString &src);
 };
 
 #endif // COFFEESCRIPTENGINE_H

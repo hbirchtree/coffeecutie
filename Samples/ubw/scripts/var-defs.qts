@@ -1,7 +1,30 @@
-
 ///////////
 //Here we put out global variables. This is easier than scouting for them in a large script.
 ///////////
+var objStack = new Array(); //Here we store some objects to avoid them being destroyed.
 
-world = coffeeroot.evloop.world1;
-controller = coffeeroot.evloop.cameracontrol;
+//Load up the world
+var assets = factory.importAssets("ubw/ubw.json");
+coffeeroot.evloop.world = assets.worlds[0];
+assets.worlds[0].setRenderer(renderer);
+assets.worlds[0].connectSignals(coffeeroot.evloop.cameracontrol);
+renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
+
+//Some global variables for simplicity
+var world = coffeeroot.evloop.world1;
+var controller = coffeeroot.evloop.cameracontrol;
+
+//Define the shader bindings
+#inc "shader-setup.qts"
+
+//Set up objects for rendering
+{
+	var objects = [world.gear, world.plane, world.blade];
+
+	for(var i=0;i<objects.length;i++){
+		objStandardInitShader(objects[i]);
+	}
+}
+
+//Set up input and etc.
+#inc "event-handling.qts"

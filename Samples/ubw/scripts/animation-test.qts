@@ -1,0 +1,44 @@
+
+//Testing instanced rendering + animating these
+
+function addNewGear(mass,shape){
+	//Create instance, create physics-object, bind them and see what happens.
+	var i = world.gear.mesh.instances.instanceObjects.length;
+	world.gear.mesh.instances.createInstance();
+	var desc = new PhysicsDescriptor();
+	var pobj = new PhysicsObject();
+	desc.setShape(shape);
+	desc.mass = mass;
+	pobj.setDescr(desc);
+
+	world.injectPhysicsObject(pobj);
+	world.gear.mesh.instances.instanceObjects[i].bindObject(pobj);
+
+	objStack.push(desc);
+	objStack.push(pobj);
+}
+
+{
+	var gear = world.gear.mesh;
+	gear.useInstancing = true;
+	gear.instances.createInstance();
+	gear.instances.createInstance();
+	gear.instances.createInstance();
+
+	function modifyGear(index,size, pos){
+		gear.instances.instanceObjects[index].scale.value = [size,size,size];
+		gear.instances.instanceObjects[index].position.value = pos;
+	}
+
+	modifyGear(0,60,[100,100,100]);
+	modifyGear(1,40,[10,166,100]);
+}
+function rotateGears(){
+	world.gear.mesh.instances.instanceObjects[1].rotation.mathCumulate([1,0,0,0.001]);
+	world.gear.mesh.instances.instanceObjects[0].rotation.mathCumulate([1,0,0,-0.001]);
+}
+
+var anim = new QTimer;
+anim.interval = 5;
+anim.timeout.connect(rotateGears);
+anim.start();

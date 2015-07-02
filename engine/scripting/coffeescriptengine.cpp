@@ -125,19 +125,7 @@ void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
     if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
         //TODO : implement some pre-processor directives to keep scripts cleaner, allowing them to be split into several files.
-        QRegExp r;
-        r.setPattern("^#inc \"(.*)\"$");
-        for(QString l : src.split("\n"))
-            if(r.indexIn(l)>=0){
-                QString fileSrc = fileTest.dir().absolutePath()+QDir::separator()+r.cap(1);
-                QString replace = FileHandler::getStringFromFile(fileSrc);
-                if(!replace.isEmpty()){
-                    src.replace(l,replace);
-                }else{
-                    qWarning("Failed to include contents from file: %s",fileSrc.toStdString().c_str());
-                }
-            }
-        qDebug() << src;
+        src = importFile(fileTest,src);
         QString out = e.evaluate(src).toString();
         if(logOut)
             *logOut = out;
@@ -217,4 +205,23 @@ QScriptValue CoffeeScriptEngine::qtimerConstructor(QScriptContext *ctxt, QScript
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new QTimer(parent);
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QString CoffeeScriptEngine::importFile(const QFileInfo &srcFile,QString &src)
+{
+    QRegExp r;
+    r.setPattern("^#inc \"(.*)\"$");
+    for(QString l : src.split("\n"))
+        if(r.indexIn(l)>=0){
+            QString fileSrc = srcFile.dir().absolutePath()+QDir::separator()+r.cap(1);
+            QString replace = FileHandler::getStringFromFile(fileSrc);
+            if(!replace.isNull()){
+                QFileInfo tFile(fileSrc);
+                replace = importFile(tFile,replace);
+                src.replace(l,replace);
+            }else{
+                qWarning("Failed to include contents from file: %s",fileSrc.toStdString().c_str());
+            }
+        }
+    return src;
 }

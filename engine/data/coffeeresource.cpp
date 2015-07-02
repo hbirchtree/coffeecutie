@@ -88,12 +88,12 @@ bool CoffeeResource::loadLocalFile()
     if(!f.open(QIODevice::ReadOnly))
         throw CoffeeResourceError(CoffeeResourceError::UnreadableFileError);
     m_data = f.readAll();
-    qDebug() << "Loaded data from file";
     return true;
 }
 
 bool CoffeeResource::loadRemoteFile()
 {
+    qDebug() << "Attempted to load data from network. Sorry.";
     throw CoffeeResourceError(CoffeeResourceError::Undefined); //unsupported for now
 }
 
