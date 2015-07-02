@@ -9,6 +9,9 @@
 #include "opengl/components/coffeetexture.h"
 #include "engine/scripting/coffeeinputevent.h"
 #include "engine/models/coffeeinstancecontainer.h"
+
+#include "engine/ai/coffeeneuralnet.h"
+
 #include <QRegExp>
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
@@ -66,6 +69,11 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         e.globalObject().setProperty("CoffeePhysicsEvent",mo);
     }
     {
+        QScriptValue pdCt = e.newFunction(neuralNetConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("CoffeeNeuralNet",mo);
+    }
+    {
         QScriptValue pdCt = e.newFunction(qtimerConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("QTimer",mo);
@@ -96,6 +104,10 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
     {
         QScriptValue mo = e.newQMetaObject(&CoffeeInputEvent::staticMetaObject);
         e.globalObject().setProperty("CoffeeInputEventType",mo);
+    }
+    {
+        QScriptValue mo = e.newQMetaObject(&CoffeeNeuron::staticMetaObject);
+        e.globalObject().setProperty("CoffeeNeuronType",mo);
     }
     ////////
 
@@ -155,6 +167,13 @@ void CoffeeScriptEngine::pointFromScript(const QScriptValue &v, QPointF &o)
 {
     o.setX(v.property("x").toNumber());
     o.setY(v.property("y").toNumber());
+}
+
+QScriptValue CoffeeScriptEngine::neuralNetConstructor(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new CoffeeNeuralNet(parent);
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 
 QScriptValue CoffeeScriptEngine::physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng){

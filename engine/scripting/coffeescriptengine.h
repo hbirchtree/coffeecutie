@@ -26,6 +26,7 @@ private:
     static QScriptValue pointToScript(QScriptEngine* eng, const QPointF &v);
     static void pointFromScript(const QScriptValue& v, QPointF &o);
 
+    static QScriptValue neuralNetConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
