@@ -12,7 +12,8 @@ class CoffeeNeuron : public QObject
 public:
     enum NeuronType {
         Regular, //may have outputs, connects to other neurons
-        Sensor //brings input into the neural network
+        Sensor, //brings input into the neural network
+        Output
     };
     Q_ENUMS(NeuronType)
     CoffeeNeuron(QObject* parent);
@@ -36,11 +37,16 @@ private:
 
 class CoffeeNeuralNet : public QObject
 {
+    Q_PROPERTY(QObjectList outputs READ getOutputs)
+    Q_PROPERTY(QObjectList inputs READ getInputs)
     Q_PROPERTY(QObjectList neurons READ getNeurons)
     Q_OBJECT
 public:
     CoffeeNeuralNet(QObject *parent);
     QObjectList getNeurons() const;
+
+    QObjectList getOutputs() const;
+    QObjectList getInputs() const;
 
 public slots:
     void createNeuron();

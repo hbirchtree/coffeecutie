@@ -22,6 +22,11 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QFuture>
 
+#include "engine/models/coffeeskeleton.h"
+#include "assimp/anim.h"
+#include "assimp/matrix4x4.h"
+#include "assimp/vector3.h"
+
 CoffeeAssetImporter::CoffeeAssetImporter(QObject *parent, QObject *outputParent) : QObject(parent)
 {
     this->outputParent = outputParent;
@@ -123,6 +128,11 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
                scene->mNumTextures,scene->mNumLights,
                scene->mNumCameras,scene->mNumAnimations);
 
+        for(uint i=0;i<scene->mNumAnimations;i++){
+            aiAnimation* ani = scene->mAnimations[i];
+            CoffeeAnimation* cani = new CoffeeAnimation(0,ani,scene->mRootNode);
+        }
+
         QVector<CoffeeMaterial*> mtllist;
         for(uint i=0;i<scene->mNumMaterials;i++){
             aiMaterial* mtl = scene->mMaterials[i];
@@ -133,7 +143,7 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
         }
         for(uint i=0;i<scene->mNumMeshes;i++){
             aiMesh* mesh = scene->mMeshes[i];
-            CoffeeMesh* cmesh = new CoffeeMesh(0,mesh);
+            CoffeeMesh* cmesh = new CoffeeMesh(0,mesh,scene->mRootNode);
             while(meshes.contains(cmesh->objectName()))
                 cmesh->setObjectName("Mesh."+QString::number(qrand()));
             meshes.insert(cmesh->objectName(),cmesh);

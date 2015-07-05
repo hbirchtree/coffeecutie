@@ -1,14 +1,5 @@
 #inc "scripts/var-defs.qts"
 
-//Let's spice things up a little
-world.lights[0].position.bindValue(world.camera.position);
-renderer.contextReportFrametime.connect(world.testparts.setFrametime);
-
-// ... Fiddle with objects and world properties...
-world.plane.rotation.value = [2,-3,0,0];
-world.fogDensity = 0;
-world.lights[0].attenuation = 0.00003;
-
 // and tests galore!
 #inc "scripts/animation-test.qts"
 #inc "scripts/physics-test.qts"

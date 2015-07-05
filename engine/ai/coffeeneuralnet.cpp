@@ -12,6 +12,24 @@ QObjectList CoffeeNeuralNet::getNeurons() const
     return l;
 }
 
+QObjectList CoffeeNeuralNet::getOutputs() const
+{
+    QObjectList l;
+    for(CoffeeNeuron* n : m_neurons)
+        if(n->type()==CoffeeNeuron::Output)
+            l.append(n);
+    return l;
+}
+
+QObjectList CoffeeNeuralNet::getInputs() const
+{
+    QObjectList l;
+    for(CoffeeNeuron* n : m_neurons)
+        if(n->type()==CoffeeNeuron::Sensor)
+            l.append(n);
+    return l;
+}
+
 void CoffeeNeuralNet::createNeuron()
 {
     m_neurons.append(new CoffeeNeuron(this));

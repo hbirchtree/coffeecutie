@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     a.setApplicationVersion("0.0.1.21");
     a.setApplicationDisplayName("Coffee Cutie");
 
+    QString scriptFile;
     bool inspect = true;
     bool logStderr = true;
     bool logFile = false;
@@ -37,7 +38,7 @@ int main(int argc, char *argv[])
     opts.addOption(QCommandLineOption("log-file","Log to file"));
     opts.addOption(QCommandLineOption("log-stderr","Log to stderr"));
     opts.addOption(QCommandLineOption("inspect"));
-    opts.addPositionalArgument("configuration file","Source .json file","*.json");
+    opts.addPositionalArgument("script","Start-up script file","*.qts");
 
     opts.process(a);
     for(QString key : opts.optionNames()){
@@ -57,13 +58,30 @@ int main(int argc, char *argv[])
         }
     }
 
+    CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
+
+    for(int i=0;i<opts.positionalArguments().size();i++){
+        switch(i){
+        case 0:
+            scriptFile = opts.positionalArguments().at(0);
+            break;
+        }
+    }
+
+    QFileInfo sf(scriptFile);
+    if(!scriptFile.isEmpty()&&sf.exists()){
+        QDir::setCurrent(sf.absolutePath());
+        qDebug() << "Changing working directory to:" << sf.absolutePath();
+    }else{
+        qFatal("Failed to load script file: %s",sf.fileName().toStdString().c_str());
+    }
+
     //Set the random seed for qrand()
     qsrand((rand()%RAND_MAX)/10000.0);
 
-    //Set up logging , root object (for destruction of objects)
+    //Set up root object (for destruction of objects)
     RenderLoop* loop;
     QObject* root = new QObject();
-    CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
     root->setObjectName("coffeeroot");
 #ifndef QOPENGL_CONTEXT_MANAGER
     CoffeeRenderer *renderer = new CoffeeRenderer(0,
@@ -111,7 +129,7 @@ int main(int argc, char *argv[])
                 se->addObject(o);
             QString out;
             bool res;
-            se->execFile("ubw/ubw.qts",&res,&out);
+            se->execFile(sf.absoluteFilePath(),&res,&out);
             qDebug("Init script run: %i, %s",
                    res,
                    out.toStdString().c_str());

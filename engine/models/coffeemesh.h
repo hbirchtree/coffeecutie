@@ -6,6 +6,7 @@
 #include "general/data/numberbuffer.h"
 
 class CoffeeInstanceContainer;
+class CoffeeSkeleton;
 
 #define MESH_LOC_POS 0
 #define MESH_LOC_TEX 1
@@ -22,12 +23,14 @@ class CoffeeMesh : public QObject, public CoffeeGameAsset{
     Q_PROPERTY(bool hasTextureCoordinates READ hasTextureCoordinates)
     Q_PROPERTY(bool hasTangents READ hasTangents)
     Q_PROPERTY(bool hasBitangents READ hasBitangents)
+    Q_PROPERTY(bool hasSkeleton READ hasSkeleton)
 
     Q_PROPERTY(bool usePositions READ usePositions WRITE setUsePositions)
     Q_PROPERTY(bool useNormals READ useNormals WRITE setUseNormals)
     Q_PROPERTY(bool useTextureCoordinates READ useTextureCoordinates WRITE setUseTextureCoordinates)
     Q_PROPERTY(bool useTangents READ useTangents WRITE setUseTangents)
     Q_PROPERTY(bool useBitangents READ useBitangents WRITE setUseBitangents)
+    Q_PROPERTY(bool useSkeleton READ useSkeleton WRITE setUseSkeleton)
 
     Q_PROPERTY(bool useInstancing READ useInstancing WRITE setUseInstancing)
 
@@ -40,7 +43,7 @@ class CoffeeMesh : public QObject, public CoffeeGameAsset{
 public:
 
     CoffeeMesh(QObject* parent);
-    CoffeeMesh(QObject* parent, aiMesh* meshSource, bool *success = 0);
+    CoffeeMesh(QObject* parent, aiMesh* meshSource, aiNode *rootNode, bool *success = 0);
 
     GLuint getVertexIndexHandle() const;
     GLuint getVertexArrayHandle();
@@ -57,20 +60,23 @@ public:
     bool hasTextureCoordinates() const;
     bool hasTangents() const;
     bool hasBitangents() const;
+    bool hasNewMatrices() const;
+    bool hasSkeleton() const;
 
     bool usePositions() const;
     bool useNormals() const;
     bool useTextureCoordinates() const;
     bool useBitangents() const;
     bool useTangents() const;
+    bool useInstancing() const;
+    bool useSkeleton() const;
 
     int indexBufferIndex() const;
 
-    bool useInstancing() const;
-    bool hasNewMatrices() const;
 
     QObject* getInstancesQObject();
     QPointer<CoffeeInstanceContainer> getInstances();
+
 
 public slots:
     void updateModelMatrices();
@@ -83,24 +89,20 @@ public slots:
     void setUseTextureCoordinates(bool useTextureCoordinates);
     void setUseBitangents(bool useBitangents);
     void setUseTangents(bool useTangents);
+    void setUseInstancing(bool useInstancing);
+    void setUseSkeleton(bool useSkeleton);
 
     void setIndexBufferIndex(int indexBufferIndex);
 
-    void setUseInstancing(bool useInstancing);
 
 protected:
-    void generateIndices();
-
     QVector<glm::vec3> positions;
     QVector<glm::vec2> texcoords;
     QVector<glm::vec3> normals;
     QVector<glm::vec3> bitangents;
     QVector<glm::vec3> tangents;
     QVector<GLuint> indices;
-
-    NumberBuffer<GLfloat>* getData();
-    int getVerticesDataSize();
-
+    CoffeeSkeleton* skeleton;
 
 private:
     uint matrixbuffer = 0;
@@ -128,6 +130,8 @@ private:
     bool m_useInstancing = false;
 
     bool m_doReloadMesh = false;
+    bool m_hasSkeleton;
+    bool m_useSkeleton;
 };
 
 #endif // COFFEEMESH

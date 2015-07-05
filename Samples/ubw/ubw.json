@@ -62,6 +62,11 @@
 		},
 		{
 			"type": "model",
+			"name": "testskeleton",
+			"file": "models/playermesh.fbx"
+		},
+		{
+			"type": "model",
 			"name": "bumpbox",
 			"file": "models/Zelda 1.fbx"
 		},
@@ -163,9 +168,9 @@
 		"objects": [
 			{
 				"id": "plane",
-				"shader.id": "advanced",
+				"shader.id": "standard",
 				"model.position": [0,0,0],
-				"model.id": "quad:",
+				"model.id": "testskeleton:",
 				"model.scale": [0.2,0.2,0.2],
 				"physics":{
 					"shape": "staticplane",

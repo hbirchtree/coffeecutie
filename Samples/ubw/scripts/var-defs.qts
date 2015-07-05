@@ -4,7 +4,7 @@
 var objStack = new Array(); //Here we store some objects to avoid them being destroyed.
 
 //Load up the world
-var assets = factory.importAssets("ubw/ubw.json");
+var assets = factory.importAssets("ubw.json");
 coffeeroot.evloop.world = assets.worlds[0];
 assets.worlds[0].setRenderer(renderer);
 assets.worlds[0].connectSignals(coffeeroot.evloop.cameracontrol);
@@ -13,6 +13,7 @@ renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
 //Some global variables for simplicity
 var world = coffeeroot.evloop.world1;
 var controller = coffeeroot.evloop.cameracontrol;
+
 
 //Define the shader bindings
 #inc "shader-setup.qts"
@@ -25,6 +26,13 @@ var controller = coffeeroot.evloop.cameracontrol;
 		objStandardInitShader(objects[i]);
 	}
 }
+
+world.lights[0].position.bindValue(world.camera.position);
+renderer.contextReportFrametime.connect(world.testparts.setFrametime);
+
+world.plane.rotation.value = [2,-3,0,0];
+world.fogDensity = 0;
+world.lights[0].attenuation = 0.00003;
 
 //Set up input and etc.
 #inc "event-handling.qts"

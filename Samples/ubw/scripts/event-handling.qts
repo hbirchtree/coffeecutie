@@ -8,14 +8,18 @@
 //
 //////////////
 
+var cameraThrottle = 1.0;
+
 function axisReact(axe,val,diff){
 	switch(axe){
-	case 1:{
-		controller.addSpeedForward(world.camera.forward,[-val*5,-val*5,-val*5]);
+	case 0:{
+		val = val * cameraThrottle;
+		controller.addSpeedRight(world.camera.right,[val*5,val*5,val*5]);
 		break;
 	}
-	case 0:{
-		controller.addSpeedRight(world.camera.right,[val*5,val*5,val*5]);
+	case 1:{
+		val = val * cameraThrottle;
+		controller.addSpeedForward(world.camera.forward,[-val*5,-val*5,-val*5]);
 		break;
 	}
 	case 3:{
@@ -28,6 +32,10 @@ function axisReact(axe,val,diff){
 		if(!((val<0&&diff>0)||(val>0&&diff<0))){
 			controller.joystickSetRotationPitch(Math.pow(val,3)*(-100));
 		}
+		break;
+	}
+	case 5:{
+		cameraThrottle = 2.0 + val;
 		break;
 	}
 	};

@@ -46,7 +46,7 @@ layout(location = 4) out vec4 finalSpecular;
 vec3 bumpedNormal(){
     vec3 normal = 2.0 * texture(mtl.bumpSampler,localTexCoord).rgb - 1.0;
 	vec3 tangent = worldTangent;
-    vec3 bitang = cross(tangent,localNormal);
+    vec3 bitang = cross(tangent,worldNormal);
     tangent = normalize(tangent - dot(tangent,localNormal)*localNormal);
     mat3 TBN = mat3(tangent,bitang,localNormal);
     normal = TBN * normal;

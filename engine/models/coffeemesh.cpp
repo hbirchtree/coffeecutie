@@ -1,13 +1,14 @@
 #include "coffeemesh.h"
 
 #include "coffeeinstancecontainer.h"
+#include "coffeeskeleton.h"
 
 CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){
     instances = new CoffeeInstanceContainer(this);
     instances->setObjectName("instances");
 }
 
-CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : CoffeeMesh(parent)
+CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, aiNode* rootNode, bool* success) : CoffeeMesh(parent)
 {
     for(uint i=0;i<meshSource->mNumFaces;i++){
         aiFace face = meshSource->mFaces[i];
@@ -42,6 +43,13 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, bool* success) : Cof
         if(meshSource->HasTextureCoords(0)){
             aiVector3D tex = meshSource->mTextureCoords[0][i];
             texcoords.append(glm::vec2(tex.x,1.f-tex.y));
+        }
+    }
+    if(meshSource->HasBones()){
+        try{
+             skeleton = new CoffeeSkeleton(this,meshSource->mBones,meshSource->mNumBones,rootNode);
+        }catch(CoffeeSkeletonException e){
+            qDebug("Failed to create skeleton: Error %i",e.type());
         }
     }
 
@@ -80,6 +88,16 @@ GLuint CoffeeMesh::getVertexArrayHandle()
 QPointer<CoffeeInstanceContainer> CoffeeMesh::getInstances()
 {
     return instances;
+}
+
+bool CoffeeMesh::hasSkeleton() const
+{
+    return m_hasSkeleton;
+}
+
+bool CoffeeMesh::useSkeleton() const
+{
+    return m_useSkeleton;
 }
 
 GLuint CoffeeMesh::getIndicesCount() const
@@ -383,4 +401,9 @@ void CoffeeMesh::setUseInstancing(bool useInstancing)
 {
     m_useInstancing = useInstancing;
     m_doReloadMesh = true;
+}
+
+void CoffeeMesh::setUseSkeleton(bool useSkeleton)
+{
+    m_useSkeleton = useSkeleton;
 }
