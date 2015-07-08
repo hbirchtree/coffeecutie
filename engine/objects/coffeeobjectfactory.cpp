@@ -16,8 +16,8 @@
 #include "engine/data/coffeeresource.h"
 
 #include "engine/physics/physicsdescriptor.h"
-
 #include "engine/data/coffeeassetimporter.h"
+#include "engine/compute/coffeetransformcomputer.h"
 
 #include <QVariantMap>
 #include <QElapsedTimer>
@@ -329,17 +329,17 @@ CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMa
             if(!system->getShader())
                 qFatal("Failed to set particle system render shader!");
         }else if(key=="transform-shader"){
-            system->setTransformShader(assets->shaders.value(data.value(key).toString()));
-            if(!system->getTransformShader())
+            system->getTransform()->setShader(assets->shaders.value(data.value(key).toString()));
+            if(!system->getTransform()->getShader())
                 qFatal("Failed to set particle system transform shader!");
         }else if(key=="color"){
             system->setParticleColor(stringToColor(data.value(key)));
         }else if(key=="particle-mass"){
-            system->setParticleMass(data.value(key).toFloat());
+            system->getTransform()->setParticleMass(data.value(key).toFloat());
         }else if(key=="particle-size"){
             system->setParticleSize(data.value(key).toFloat());
         }else if(key=="gravity"){
-            system->setGravity(listToVec3(data.value(key)));
+            system->getTransform()->setGravity(listToVec3(data.value(key)));
         }else if(key=="position"){
             system->position()->setValue(listToVec3(data.value(key).toString()));
         }else if(key=="id"){
@@ -351,7 +351,7 @@ CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMa
         qFatal("Particle system has no sprite!");
     if(!system->getShader())
         qFatal("Particle system has no render shader!");
-    if(!system->getTransformShader())
+    if(!system->getTransform()->getShader())
         qFatal("Particle system has no transform shader!");
 
     return system;

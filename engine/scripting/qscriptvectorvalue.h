@@ -36,6 +36,11 @@ public:
     QVariantList value() const;
     QVariantList acceleration() const;
 
+signals:
+    void valueChanged();
+    void velocityChanged();
+    void accelerationChanged();
+
 public slots:
     void mathMultiply(const QVariantList &vals);
     void mathMultiply(Vector3Value* val);
@@ -44,8 +49,8 @@ public slots:
     void mathNormalize();
 
     void bindValue(Vector3Value *vec);
-    void setVelocity(const QVariantList &velocity);
     void setValue(const QVariantList &value);
+    void setVelocity(const QVariantList &velocity);
     void setAcceleration(const QVariantList &value);
 };
 
@@ -110,6 +115,10 @@ public:
     using NumberContainer<ScalarDataType>::operator <=;
     using NumberContainer<ScalarDataType>::operator >=;
     ScalarDataType value() const;
+
+signals:
+    void valueChanged();
+
 public slots:
     void setValue(ScalarDataType value);
     void bindValue(ScalarValue *val);

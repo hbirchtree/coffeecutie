@@ -77,6 +77,7 @@ void Vector3Value::setVelocity(const QVariantList &velocity)
         return;
     }
     setVelocity(glm::vec3(velocity.at(0).toFloat(),velocity.at(1).toFloat(),velocity.at(2).toFloat()));
+    velocityChanged();
 }
 
 void Vector3Value::setValue(const QVariantList &value)
@@ -86,6 +87,7 @@ void Vector3Value::setValue(const QVariantList &value)
         return;
     }
     setValue(glm::vec3(value.at(0).toFloat(),value.at(1).toFloat(),value.at(2).toFloat()));
+    valueChanged();
 }
 
 void Vector3Value::setAcceleration(const QVariantList &value)
@@ -95,6 +97,7 @@ void Vector3Value::setAcceleration(const QVariantList &value)
         return;
     }
     setAcceleration(glm::vec3(value.at(0).toFloat(),value.at(1).toFloat(),value.at(2).toFloat()));
+    accelerationChanged();
 }
 
 QuatValue::QuatValue(QObject *parent, const glm::quat &initial) :
@@ -166,6 +169,7 @@ ScalarDataType ScalarValue::value() const
 void ScalarValue::setValue(ScalarDataType value)
 {
     NumberContainer<ScalarDataType>::setValue(value);
+    valueChanged();
 }
 
 void ScalarValue::bindValue(ScalarValue *val)

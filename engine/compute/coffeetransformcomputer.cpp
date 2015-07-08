@@ -1,7 +1,8 @@
 #include "coffeetransformcomputer.h"
 
 #include "opengl/components/shadercontainer.h"
-#include "engine/objects/coffeeobject.h"
+#include "general/shadervariant.h"
+#include "engine/objects/coffeestandardobject.h"
 
 CoffeeTransformComputer::CoffeeTransformComputer(QObject *parent) : QObject(parent)
 {
@@ -48,31 +49,66 @@ QVector<CoffeeTransformComputer::Particle> *CoffeeTransformComputer::getParticle
     return &startParticles;
 }
 
-void CoffeeTransformComputer::tickParticles(float frametime)
+ShaderContainer *CoffeeTransformComputer::getShader()
 {
+    return tshader;
+}
+
+QVariantList CoffeeTransformComputer::feedbackAttributes() const
+{
+    return m_feedbackAttributes;
+}
+
+uint CoffeeTransformComputer::activeParticles() const
+{
+    return active_particles;
+}
+
+uint CoffeeTransformComputer::spawnCount() const
+{
+    return spawncount;
+}
+
+quint64 CoffeeTransformComputer::processTime() const
+{
+    return m_processTime;
+}
+
+bool CoffeeTransformComputer::query() const
+{
+    return m_query;
+}
+
+void CoffeeTransformComputer::doReload()
+{
+    m_reload = true;
+}
+
+void CoffeeTransformComputer::tickParticles()
+{
+    if(m_reload){
+        unload();
+        load();
+    }
     glEnable(GL_RASTERIZER_DISCARD);
 
     glUseProgram(tshader->getProgramId());
     glBindVertexArray(vaos[vaoIndex()]);
 
-    tshader->setUniform("timestep",frametime);
+    if(active_particles+spawncount>maxParticles()-1)
+        spawncount = 0;
+    else if(active_particles<maxParticles())
+        spawncount = 1;
 
-//    if(active_particles+spawncount>max_particles-1)
-//        spawncount = 0;
-//    else if(active_particles<max_particles)
-//        spawncount = 1;
+    for(ShaderMapping* m : uniforms){
+        tshader->setUniform(m->uniform,m->data);
+    }
 
-    //    qDebug("Spawn count: %u",spawncount);
-
-    tshader->setUniform("mass",particleMass());
-    tshader->setUniform("gravity",gravity());
-    tshader->setUniform("randRad",(float)(qrand()%1256000-628000)/100000.f);
-    tshader->setUniform("randAmpDiff",(float)(qrand()%1000000-500000)/500000.f);
-    tshader->setUniform("partSpread",particleSpread());
-    tshader->setUniform("spawncount",(float)spawncount);
-
-//    glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
-//    glBeginQuery(GL_TIME_ELAPSED,timeQuery);
+    t_query = m_query;
+    if(t_query){
+        glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
+        glBeginQuery(GL_TIME_ELAPSED,timeQuery);
+    }
 
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[vaoIndex()]);
     glBeginTransformFeedback(GL_POINTS);
@@ -85,16 +121,23 @@ void CoffeeTransformComputer::tickParticles(float frametime)
 
     glEndTransformFeedback();
 
-//    glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
-//    glEndQuery(GL_TIME_ELAPSED);
+    if(t_query){
+//      getting these values tanks performance!
+        glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+        glEndQuery(GL_TIME_ELAPSED);
 
-    //getting these values tanks performance!
-//    glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
-//    glGetQueryObjectui64v(timeQuery,GL_QUERY_RESULT,&processtime);
-
-//    qDebug("Particle data: %u written",active_particles);
+        glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
+        glGetQueryObjectui64v(timeQuery,GL_QUERY_RESULT,&m_processTime);
+    }
 
     glDisable(GL_RASTERIZER_DISCARD);
+
+    switchIndex();
+}
+
+void CoffeeTransformComputer::setShader(ShaderContainer *shader)
+{
+    this->tshader = shader;
 }
 
 void CoffeeTransformComputer::setParticleSpread(float particleSpread)
@@ -112,6 +155,11 @@ void CoffeeTransformComputer::setMaxParticles(quint32 maxParticles)
     m_maxParticles = maxParticles;
 }
 
+void CoffeeTransformComputer::setGravity(const glm::vec3 &grav)
+{
+    this->m_gravity->setValue(grav);
+}
+
 void CoffeeTransformComputer::switchIndex()
 {
     index = (index+1)%2;
@@ -123,8 +171,17 @@ void CoffeeTransformComputer::load()
     tshader->createProgram();
     tshader->compileShaders();
 
-    const GLchar* feedbackattributes[] = {"outType","outPos","outVel","outLife"};
-    glTransformFeedbackVaryings(tshader->getProgramId(),4,feedbackattributes,GL_INTERLEAVED_ATTRIBS);
+    QVector<std::string> feedback_backing; //we need to do this in order for the memory to be retained
+    QVector<const char*> feedbackattributes;
+    for(QVariant s : this->m_feedbackAttributes){
+        std::string t = s.toString().toStdString();
+        feedbackattributes.append(t.c_str());
+        feedback_backing.append(t);
+    }
+    glTransformFeedbackVaryings(tshader->getProgramId(),
+                                feedbackattributes.size(),
+                                feedbackattributes.data(),
+                                GL_INTERLEAVED_ATTRIBS);
 
     tshader->linkProgram();
 
@@ -142,20 +199,15 @@ void CoffeeTransformComputer::load()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)0);
-
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)4);
-
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)16);
-
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)28);
-
-    glBindVertexArray(0);
 
     glBindVertexArray(vaos[vboIndex()]);
 
@@ -165,15 +217,12 @@ void CoffeeTransformComputer::load()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)0);
-
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)4);
-
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2,3,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)16);
-
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(3,1,GL_FLOAT,
                           GL_FALSE,sizeof(Particle),(GLvoid*)28);
@@ -187,14 +236,13 @@ void CoffeeTransformComputer::load()
         glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[i]);
 
         glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER,0,vbos[(i+1)%2]);
-
-        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
     }
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
 
     glGenQueries(1,&timeQuery);
     glGenQueries(1,&primitiveQuery);
 
-    tickParticles(0);
+    tickParticles();
 }
 
 void CoffeeTransformComputer::unload()
@@ -216,4 +264,22 @@ uint CoffeeTransformComputer::vboIndex()
 uint CoffeeTransformComputer::vaoIndex()
 {
     return index;
+}
+
+void CoffeeTransformComputer::setUniform(QString uniformName, ShaderVariant* data)
+{
+    ShaderMapping *map = new ShaderMapping;
+    map->uniform = uniformName;
+    map->data = data;
+    uniforms.append(map);
+}
+
+void CoffeeTransformComputer::setFeedbackAttributes(QVariantList feedbackAttributes)
+{
+    m_feedbackAttributes = feedbackAttributes;
+}
+
+void CoffeeTransformComputer::setQuery(bool query)
+{
+    m_query = query;
 }
