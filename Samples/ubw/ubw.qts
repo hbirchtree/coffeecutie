@@ -1,6 +1,4 @@
 #inc "scripts/var-defs.qts"
 
 // and tests galore!
-#inc "scripts/animation-test.qts"
-#inc "scripts/physics-test.qts"
-#inc "scripts/ai-test.qts"
+#inc "scripts/testing.qts"

@@ -48,7 +48,6 @@ void CoffeeParticleSystem::unload()
 
     vaoIndex = 0;
     vboIndex = 1;
-    tfbIndex = 0;
     active_particles = 1;
 
     setBaked(false);
@@ -244,6 +243,9 @@ void CoffeeParticleSystem::renderParticles()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,texture->getHandle());
 
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,vboIndex);
+    glBindVertexArray(vaos[vboIndex]);
+
     shader->setUniform("colorMultiplier",particleColor);
     shader->setUniform("diffuseSampler",0);
     shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
@@ -253,8 +255,9 @@ void CoffeeParticleSystem::renderParticles()
     shader->setUniform("cameraPos",camera->getCameraPos());
     shader->setUniform("particleSize",particleSize);
 
-    glDrawTransformFeedback(GL_POINTS,tfbs[tfbIndex]);
+    glDrawTransformFeedback(GL_POINTS,tfbs[vaoIndex]);
 
+    glBindTexture(GL_TEXTURE_2D,0);
     glBindVertexArray(0);
     glUseProgram(0);
 
@@ -291,14 +294,14 @@ void CoffeeParticleSystem::tickParticles(float frametime)
     glBeginQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,primitiveQuery);
 //    glBeginQuery(GL_TIME_ELAPSED,timeQuery);
 
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[tfbIndex]);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,tfbs[vaoIndex]);
     glBeginTransformFeedback(GL_POINTS);
 
     if(!started){
         glDrawArrays(GL_POINTS,0,active_particles);
         started = true;
     }else
-        glDrawTransformFeedback(GL_POINTS,tfbs[(tfbIndex+1)%2]);
+        glDrawTransformFeedback(GL_POINTS,tfbs[(vaoIndex+1)%2]);
 
     glEndTransformFeedback();
 
@@ -312,8 +315,9 @@ void CoffeeParticleSystem::tickParticles(float frametime)
 //    qDebug("Particle data: %u written",active_particles);
 
     glDisable(GL_RASTERIZER_DISCARD);
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0);
+    glBindVertexArray(0);
 
-    tfbIndex = (tfbIndex+1)%2;
     vaoIndex = vboIndex;
     vboIndex = (vboIndex+1)%2;
 }

@@ -10,7 +10,8 @@ uniform mat4 modelview;
 uniform vec3 cameraPos;
 uniform float particleSize;
 
-out vec2 TexCoord;
+out vec2 texCoord;
+out vec4 position;
 
 void main()
 {
@@ -21,23 +22,27 @@ void main()
 
     Pos -= right;
     gl_Position = modelview * vec4(Pos, 1.0);
-    TexCoord = vec2(0.0, 0.0);
+    texCoord = vec2(0.0, 0.0);
+    position = gl_Position;
     EmitVertex();
 
     Pos.y += particleSize;
     gl_Position = modelview * vec4(Pos, 1.0);
-    TexCoord = vec2(0.0, 1.0);
+    texCoord = vec2(0.0, 1.0);
+    position = gl_Position;
     EmitVertex();
 
     Pos.y -= particleSize;
     Pos += right;
     gl_Position = modelview * vec4(Pos, 1.0);
-    TexCoord = vec2(1.0, 0.0);
+    texCoord = vec2(1.0, 0.0);
+    position = gl_Position;
     EmitVertex();
 
     Pos.y += particleSize;
     gl_Position = modelview * vec4(Pos, 1.0);
-    TexCoord = vec2(1.0, 1.0);
+    texCoord = vec2(1.0, 1.0);
+    position = gl_Position;
     EmitVertex();
 
     EndPrimitive();

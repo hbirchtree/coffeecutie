@@ -46,11 +46,12 @@ void CoffeeStandardObject::render()
             m->texture->loadTexture();
             m->loaded = true;
         }
-        glActiveTexture(static_cast<GLenum>(GL_TEXTURE0+textures.indexOf(m)));
+        int index = textures.indexOf(m);
+        glActiveTexture(GL_TEXTURE0+index);
         glBindTexture(GL_TEXTURE_2D,
                       m->texture->getHandle());
         pshader->setUniform(m->samplerName,
-                            textures.indexOf(m));
+                            index);
     }
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
@@ -58,7 +59,7 @@ void CoffeeStandardObject::render()
         glDrawElements(GL_TRIANGLES,
                        pmesh->getIndicesCount(),
                        GL_UNSIGNED_INT,
-                       (GLvoid*)0);
+                       0);
     else{
         glDrawElementsInstanced(GL_TRIANGLES,
                                           pmesh->getIndicesCount(),
@@ -91,11 +92,6 @@ void CoffeeStandardObject::load()
     pshader->buildProgram();
     if(pmesh)
         pmesh->loadMesh();
-    for(ShaderMapping* m : uniforms){
-        m->loaded = true;
-        if(m->constant)
-            pshader->setUniform(m->uniform,m->data);
-    }
     for(TextureMapping* m : textures){
         m->loaded = true;
         m->texture->loadTexture();

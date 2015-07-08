@@ -1,6 +1,7 @@
 #include "shadercontainer.h"
 
 #include "general/shadervariant.h"
+#include <QMetaEnum>
 #include "engine/data/coffeeresource.h"
 
 ShaderContainer::ShaderContainer(QObject *parent) : QObject(parent)
@@ -92,7 +93,7 @@ bool ShaderContainer::linkProgram()
         GLint loglen;
         GLchar log[1000];
         glGetProgramInfoLog(programId,sizeof(log),&loglen,log);
-        qDebug() << "Failed to link shader program: \nLog:"+QString(log);
+        qFatal("Failed to link shader program: \nLog: %s",log);
         glDeleteProgram(programId);
         return false;
     }
@@ -152,8 +153,7 @@ GLuint ShaderContainer::compileShaderSource(const char *data, QString id, const 
         GLint loglen;
         GLchar log[1000];
         glGetShaderInfoLog(handle,sizeof(log),&loglen,log);
-        qDebug() << "Failed to compile shader: "+id
-                    +"\nLog: "+QString::fromLocal8Bit(log);
+        qFatal("Failed to compile shader: %s\nLog: %s",id.toStdString().c_str(),log);
         glDeleteShader(handle);
         return 0;
     }
@@ -175,9 +175,19 @@ void ShaderContainer::unload()
     attributes.clear();
     programId = 0;
 }
+
+void ShaderContainer::setVerbosity(uint verbosity)
+{
+    this->verbosity = verbosity;
+}
 void ShaderContainer::setGeometryShader(CoffeeResource *geometryShader)
 {
     m_geometryShader = geometryShader;
+}
+
+uint ShaderContainer::getVerbosity() const
+{
+    return verbosity;
 }
 
 void ShaderContainer::setVertexShader(CoffeeResource *value)
@@ -219,49 +229,49 @@ void ShaderContainer::setUniform(QString name,const glm::vec3& val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC3)
         glUniform3f(uniforms.value(name),val.x,val.y,val.z);
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, const glm::vec4 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC4)
         glUniform4f(uniforms.value(name),val.x,val.y,val.z,val.w);
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, const glm::vec2 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC2)
         glUniform2f(uniforms.value(name),val.x,val.y);
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, GLfloat val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT)
         glUniform1f(uniforms.value(name),val);
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, int val){
     if(uniforms.keys().contains(name))
         glUniform1i(uniforms.value(name),val);
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, const glm::mat3 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_MAT3)
         glUniformMatrix3fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, const glm::mat4 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_MAT4)
         glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
-        qDebug() << this->objectName() << "Failed to set uniform: " << name;
+        qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
 void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
@@ -287,6 +297,14 @@ void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
             setUniform(name,(float)(*val->getDouble())());
             break;
         default:
+            qWarning() << this->objectName() << "Unhandled data-type of" <<
+                          ShaderVariant::staticMetaObject.className() <<
+                          ":" <<
+                          ShaderVariant::staticMetaObject.
+                          enumerator(
+                              ShaderVariant::staticMetaObject.
+                              indexOfEnumerator("ShaderVariantType")
+                          ).valueToKey(val->getType());
             break;
         }
     }

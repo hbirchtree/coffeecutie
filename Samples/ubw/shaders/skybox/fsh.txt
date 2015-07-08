@@ -10,7 +10,6 @@ uniform samplerCube cubemapTexture;
 
 void main()
 {
-    FragColor = texture(cubemapTexture, TexCoord0);
-    FragDiffuse = FragColor;
-	FragNormal = vec4(0.0,0.0,0.0,1.0);
+    FragDiffuse = texture(cubemapTexture, TexCoord0);
+	FragNormal = vec4(0.0,0.0,0.0,0.0);
 }

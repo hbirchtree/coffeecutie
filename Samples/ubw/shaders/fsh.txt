@@ -1,6 +1,6 @@
 #version 330
 
-uniform vec3 cameraPosition;
+//uniform vec3 cameraPosition;
 
 uniform struct Material {
 	sampler2D diffuseSampler;
@@ -39,9 +39,12 @@ layout(location = 1) out vec4 finalNormal;
 layout(location = 2) out vec4 finalDiffuse;
 layout(location = 3) out vec4 finalPosition;
 layout(location = 4) out vec4 finalSpecular;
+layout(location = 4) out vec4 finalAmbient;
 
 void main() {
     vec4 surfaceColor = texture(mtl.diffuseSampler, localTexCoord);
+
+    /*
     vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
     vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
 
@@ -76,8 +79,10 @@ void main() {
 
     //final color (after gamma correction)
     finalColor = vec4(linearColor, surfaceColor.a*mtl.opacity);
+    */
+
     finalNormal = vec4(worldNormal,1.0);
     finalDiffuse = vec4(surfaceColor.rgb,surfaceColor.a*mtl.opacity);
     finalPosition = surfacePos;
-    finalSpecular = vec4(specularCoefficient * mtl.specularColor,1.0);
+    finalSpecular = vec4(mtl.specularColor,mtl.shininess);
 }

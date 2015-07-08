@@ -4,6 +4,7 @@
 #include "general/common.h"
 class ShaderVariant : public QObject
 {
+    Q_OBJECT
 public:
     enum ShaderVariantType {
         ShaderVec2,ShaderVec3,ShaderVec4,
@@ -11,6 +12,8 @@ public:
 
         ShaderDub
     };
+    Q_ENUMS(ShaderVariantType)
+
     ShaderVariant(std::function<glm::vec2()> func);
     ShaderVariant(std::function<glm::vec3()> func);
     ShaderVariant(std::function<glm::vec4()> func);

@@ -13,10 +13,13 @@ renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
 //Some global variables for simplicity
 var world = coffeeroot.evloop.world1;
 var controller = coffeeroot.evloop.cameracontrol;
+var surface = coffeeroot.evloop.screenSurface;
 
+//Set up deferred rendering
+#inc "display/surface-setup.qts"
 
 //Define the shader bindings
-#inc "shader-setup.qts"
+#inc "rendering/shader-setup.qts"
 
 //Set up objects for rendering
 {
@@ -31,8 +34,8 @@ world.lights[0].position.bindValue(world.camera.position);
 renderer.contextReportFrametime.connect(world.testparts.setFrametime);
 
 world.plane.rotation.value = [2,-3,0,0];
-world.fogDensity = 0;
-world.lights[0].attenuation = 0.00003;
+world.fogDensity = 0.03;
+world.lights[0].attenuation = 0.003;
 
 //Set up input and etc.
-#inc "event-handling.qts"
+#inc "input/event-handling.qts"

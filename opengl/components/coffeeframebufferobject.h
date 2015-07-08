@@ -25,10 +25,11 @@ public:
     using CoffeeFramebufferBaseClass::getWindowSize;
 
     uint getSampling() const;
-    QVector<GLuint> getTextureHandle() const;
+    QVector<GLuint>* getTextureHandle();
     void bindFramebuffer();
 
 public slots:
+    void setNumTextures(uint textures);
     void resizeViewport(QSize windowSize);
     void updateSampling(uint sampling);
 
@@ -38,6 +39,7 @@ protected:
         GLenum attachment;
     };
 
+    uint numTextures = 1;
     void resizeFramebuffer();
     uint sampling = 1;
     QVector<DrawBuffer*> buffers;

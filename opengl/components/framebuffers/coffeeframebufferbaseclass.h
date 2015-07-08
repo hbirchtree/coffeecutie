@@ -12,7 +12,7 @@ public:
     virtual void createFramebuffer(QSize windowSize);
 
     virtual void cleanup() = 0;
-    virtual QVector<GLuint> getTextureHandle() const = 0;
+    virtual QVector<GLuint>* getTextureHandle() = 0;
 
     QSize getRenderSize() const;
     QSize getWindowSize() const;

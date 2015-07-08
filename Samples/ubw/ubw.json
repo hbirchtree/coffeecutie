@@ -38,7 +38,7 @@
 		{
 			"type": "model",
 			"name": "quad",
-			"file": "models/cubetest.model/cubetest.dae"
+			"file": "primitives/quad.obj"
 		},
 		{
 			"type": "model",

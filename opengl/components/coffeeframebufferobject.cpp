@@ -45,14 +45,19 @@ void CoffeeFrameBufferObject::unbindFramebufferWrite()
 {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
 }
-QVector<GLuint> CoffeeFrameBufferObject::getTextureHandle() const
+QVector<GLuint>* CoffeeFrameBufferObject::getTextureHandle()
 {
-    return textureHandles;
+    return &textureHandles;
 }
 
 void CoffeeFrameBufferObject::bindFramebuffer()
 {
     CoffeeFramebufferBaseClass::bindFramebuffer(framebufferHandle);
+}
+
+void CoffeeFrameBufferObject::setNumTextures(uint textures)
+{
+    this->numTextures = textures;
 }
 
 void CoffeeFrameBufferObject::resizeViewport(QSize windowSize)
@@ -75,18 +80,22 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
         framebufferActive = true;
     }
 
+    if(renderSize.height()<=0||renderSize.width()<=0)
+        return;
+
     GLuint framebuffer = 0;
     glGenFramebuffers(1,&framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER,framebuffer);
 
     QVector<GLenum> drawBufs;
 
-    for(int i=0;i<5;i++){
+
+    for(uint i=0;i<numTextures;i++){
         GLuint texture = allocTexture(renderSize.width(),renderSize.height(),
                                       GL_RGBA8,GL_BGRA,
                                       GL_LINEAR,GL_FLOAT);
 
-        GLenum attachment = static_cast<GLenum>(GL_COLOR_ATTACHMENT0+i);
+        GLenum attachment = GL_COLOR_ATTACHMENT0+i;
         drawBufs.append(attachment);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER,attachment,

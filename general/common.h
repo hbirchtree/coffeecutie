@@ -46,6 +46,7 @@
 using namespace gl;
 
 #include "qstringfunctions.h"
+#include "engine/data/coffeeresource.h"
 
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"

@@ -14,6 +14,7 @@ class ShaderContainer : public QObject, public CoffeeGameAsset
     Q_PROPERTY(QString geometryShader READ geometryShader)
     Q_PROPERTY(QVariantMap uniforms READ getUniformsMap)
     Q_PROPERTY(QVariantMap attributes READ getAttributesMap)
+    Q_PROPERTY(uint verbosity READ getVerbosity WRITE setVerbosity)
     Q_PROPERTY(int programId READ getProgramId)
 
     Q_OBJECT
@@ -55,6 +56,8 @@ public:
     void setVertexShader(CoffeeResource *value);
     void setGeometryShader(CoffeeResource *geometryShader);
 
+    uint getVerbosity() const;
+
 public slots:
 
     void setUniform(QString name, const glm::vec3 &val);
@@ -70,6 +73,8 @@ public slots:
 
     void unload();
 
+    void setVerbosity(uint verbosity);
+
 private:
 
     CoffeeResource *fragShaderFile = nullptr;
@@ -78,8 +83,8 @@ private:
 
     QVector<GLuint> shaders;
 
-    int programId = 0;
-    int verbosity = 1;
+    GLuint programId = 0;
+    uint verbosity = 1;
 
     QHash<QString,int> attributes;
     QHash<QString,int> uniforms;

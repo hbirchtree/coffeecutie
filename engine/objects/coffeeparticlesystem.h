@@ -7,6 +7,7 @@
 class ShaderContainer;
 class CoffeeTexture;
 class CoffeeCamera;
+class CoffeeTransformComputer;
 
 class CoffeeParticleSystem : public QObject,public CoffeeObject
 {
@@ -107,7 +108,6 @@ protected:
 
     GLuint timeQuery;
     GLuint primitiveQuery;
-    GLuint queries[2];
 
     float particleSize = 0.01f;
 

@@ -15,18 +15,14 @@ public:
     QString uniform;
     QPointer<ShaderVariant> data;
     bool constant = false;
-
-    bool loaded = false;
 };
 class TextureMapping {
 public:
     bool operator==(const TextureMapping& val){
         return val.texture==this->texture.data()&&
-                val.unit==this->unit&&
                 val.samplerName==this->samplerName;
     }
     QPointer<CoffeeTexture> texture;
-    GLenum unit;
     QString samplerName;
 
     bool loaded = false;

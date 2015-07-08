@@ -5,10 +5,24 @@
 
 class CoffeeFrameBufferObject;
 class ShaderContainer;
-class CoffeeTexture;
+class CoffeeMesh;
+class CoffeeWorldOpts;
+class TextureMapping;
+class ShaderMapping;
+class ShaderVariant;
+
+class CoffeeOutputChannel //Mapping of framebuffer textures to uniforms
+{
+public:
+    CoffeeOutputChannel(const QString &uniform,int textureIndex,int textureUnit);
+    QString uniformName;
+    int textureIndex;
+    int textureUnit;
+};
 
 class CoffeeOutputSurface : public QObject,public CoffeeObject
 {
+    Q_PROPERTY(QObject* shader READ getShader WRITE setShader)
     Q_PROPERTY(QObject* framebuffer READ framebufferQObject WRITE setFramebuffer)
 
     Q_OBJECT
@@ -24,16 +38,32 @@ public:
     QObject* framebufferQObject();
     CoffeeFrameBufferObject* getFramebuffer();
 
+
+    QObject* getShader();
+
 public slots:
+    void setUniform(const QString &uniformName,ShaderVariant* data);
+    void setFramebufferMapping(const QString &uniformName, int textureIndex, int textureUnit);
+
+    void setWorld(CoffeeWorldOpts* value);
+    void setMesh(CoffeeMesh* mesh);
     void bind();
     void load();
     void render();
     void unload();
 
+    void setShader(QObject* shader);
+
 protected:
     void setBaked(bool val);
     bool baked = false;
+
+    QVector<ShaderMapping*> uniforms;
     CoffeeFrameBufferObject* framebuffer;
+    ShaderContainer* shader;
+    QVector<CoffeeOutputChannel*> textures;
+    QPointer<CoffeeMesh> surface;
+    QPointer<CoffeeWorldOpts> world;
 };
 
 #endif // COFFEEOUTPUTSURFACE_H

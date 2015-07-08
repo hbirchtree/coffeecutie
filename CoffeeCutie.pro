@@ -68,7 +68,9 @@ SOURCES += main.cpp \
     opengl/components/framebuffers/coffeeframebufferbaseclass.cpp \
     engine/data/coffeeresource.cpp \
     engine/ai/coffeeneuralnet.cpp \
-    engine/models/coffeeskeleton.cpp
+    engine/models/coffeeskeleton.cpp \
+    engine/compute/coffeecomputeresource.cpp \
+    engine/compute/coffeetransformcomputer.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -127,7 +129,9 @@ HEADERS += \
     opengl/components/framebuffers/coffeeframebufferbaseclass.h \
     engine/data/coffeeresource.h \
     engine/ai/coffeeneuralnet.h \
-    engine/models/coffeeskeleton.h
+    engine/models/coffeeskeleton.h \
+    engine/compute/coffeecomputeresource.h \
+    engine/compute/coffeetransformcomputer.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
