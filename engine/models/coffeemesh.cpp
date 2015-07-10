@@ -249,7 +249,7 @@ void CoffeeMesh::loadMesh()
                  GL_STATIC_DRAW);
 
     if(free_buffer!=vbuff_count)
-        qWarning("Error when allocating VBOs! Buffers were not used!");
+        qWarning("VBOs were allocated but not used!");
 
     glBindVertexArray(0);
 

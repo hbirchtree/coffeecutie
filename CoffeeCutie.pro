@@ -70,7 +70,8 @@ SOURCES += main.cpp \
     engine/ai/coffeeneuralnet.cpp \
     engine/models/coffeeskeleton.cpp \
     engine/compute/coffeecomputeresource.cpp \
-    engine/compute/coffeetransformcomputer.cpp
+    engine/compute/coffeetransformcomputer.cpp \
+    opengl/helpers/coffeeperlinnoisesource.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -131,7 +132,8 @@ HEADERS += \
     engine/ai/coffeeneuralnet.h \
     engine/models/coffeeskeleton.h \
     engine/compute/coffeecomputeresource.h \
-    engine/compute/coffeetransformcomputer.h
+    engine/compute/coffeetransformcomputer.h \
+    opengl/helpers/coffeeperlinnoisesource.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

@@ -9,9 +9,9 @@ class PhysicsDescriptor;
 
 class PhysicsObject : public QObject
 {
-    Q_PROPERTY(QVariantList position READ getPositionValue)
-    Q_PROPERTY(QVariantList rotation READ getRotationValue)
-    Q_PROPERTY(QVariantList scale READ getScaleValue)
+    Q_PROPERTY(QObject* position READ getPositionQObject)
+    Q_PROPERTY(QObject* rotation READ getRotationQObject)
+    Q_PROPERTY(QObject* scale READ getScaleQObject)
 
     Q_OBJECT
 public:
@@ -22,14 +22,14 @@ public:
     QPointer<Vector3Value> getPositionObject();
     QPointer<QuatValue> getPhysicalRotation();
 
-    QVariantList getPositionValue() const;
-    QVariantList getRotationValue() const;
-    QVariantList getScaleValue() const;
-
     void *getPhysicspointer();
     void setPhysicspointer(void *value);
 
     PhysicsDescriptor *getDescr();
+
+    QObject* getPositionQObject();
+    QObject* getRotationQObject();
+    QObject* getScaleQObject();
 
 public slots:
     void updatePosition(glm::vec3 p);

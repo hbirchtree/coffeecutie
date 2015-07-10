@@ -12,10 +12,18 @@ class CoffeeTexture : public QObject,public CoffeeGameAsset
     Q_PROPERTY(QString textureFile READ textureFile)
     Q_PROPERTY(uint textureHandle READ getHandleOnly)
     Q_PROPERTY(bool validTexture READ isValidTexture)
-    Q_PROPERTY(bool cubemap READ isCubemap)
+    Q_PROPERTY(CoffeeGLTextureType type READ type WRITE setType)
 
     Q_OBJECT
 public:
+    enum CoffeeGLTextureType {
+        None, //Means nothing
+
+        Cubemap,CubemapDice, //Dice version uses a single image as source
+
+        Texture1D,Texture2D,Texture3D
+    };
+    Q_ENUMS(CoffeeGLTextureType)
 
     enum CoffeeTextureType{
         CoffeeTexture_Diffusion,CoffeeTexture_Specular,
@@ -51,7 +59,12 @@ public:
 
     QObject* resource();
 
-signals:
+    CoffeeGLTextureType type() const;
+
+    GLenum getGlTextureType() const;
+
+public slots:
+    void setType(CoffeeGLTextureType type);
 
 private:
     std::function<QImage(QImage input)> imageProcessor = [](QImage input){
@@ -61,9 +74,6 @@ private:
 
     bool b_to_reload = false;
 
-    bool b_cubemap = false;
-    bool b_cubemap_dice = false;
-
     bool validTexture = false;
     QImage texture;
     GLuint textureHandle = 0;
@@ -71,6 +81,7 @@ private:
     QMap<GLenum,CoffeeResource*> cubemapping;
 
     QPointer<CoffeeResource> res;
+    CoffeeGLTextureType m_type;
 };
 
 #endif // COFFEETEXTURE_H

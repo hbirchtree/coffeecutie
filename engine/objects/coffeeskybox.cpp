@@ -34,7 +34,7 @@ void CoffeeSkybox::render()
     glCullFace(GL_FRONT);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP,texture->getHandle());
+    glBindTexture(texture->getGlTextureType(),texture->getHandle());
 
     shader->setUniform("cubemapTexture",0);
     shader->setUniform("wvp",camera->getMatrix()*
@@ -49,7 +49,7 @@ void CoffeeSkybox::render()
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP,0);
+    glBindTexture(texture->getGlTextureType(),0);
     glBindVertexArray(0);
     glUseProgram(0);
 }

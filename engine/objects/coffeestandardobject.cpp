@@ -48,7 +48,7 @@ void CoffeeStandardObject::render()
         }
         int index = textures.indexOf(m);
         glActiveTexture(GL_TEXTURE0+index);
-        glBindTexture(GL_TEXTURE_2D,
+        glBindTexture(m->texture->getGlTextureType(),
                       m->texture->getHandle());
         pshader->setUniform(m->samplerName,
                             index);
@@ -71,7 +71,7 @@ void CoffeeStandardObject::render()
 
     for(TextureMapping *m : textures){
         glActiveTexture(GL_TEXTURE0+textures.indexOf(m));
-        glBindTexture(GL_TEXTURE_2D,0);
+        glBindTexture(m->texture->getGlTextureType(),0);
     }
     glBindVertexArray(0);
     glUseProgram(0);

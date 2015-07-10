@@ -21,6 +21,9 @@ class CoffeeTransformComputer : public QObject
     Q_PROPERTY(uint spawnCount READ spawnCount)
 
     Q_PROPERTY(bool query READ query WRITE setQuery)
+    //Whether we should use queries to get primitive count and processing time. Retrieving this is expensive compared to not doing so.
+    Q_PROPERTY(bool capture READ capture WRITE setCapture)
+    //whether the data should be synchronized between VRAM and RAM, useful if you want to use the GPU as a calculator of sorts.
 
     Q_OBJECT
 public:
@@ -55,6 +58,8 @@ public:
 
     bool query() const;
 
+    bool capture() const;
+
 public slots:
     void doReload();
 
@@ -69,9 +74,10 @@ public slots:
     void setGravity(const glm::vec3 &grav);
 
     void setUniform(QString uniformName, ShaderVariant *data);
-    void setFeedbackAttributes(QVariantList feedbackAttributes);
+    void setFeedbackAttributes(const QVariantList &feedbackAttributes);
 
     void setQuery(bool query);
+    void setCapture(bool capture);
 
 private slots:
     void switchIndex();
@@ -107,6 +113,35 @@ private:
     QVariantList m_feedbackAttributes;
     bool m_query;
     bool t_query;
+    bool m_capture;
+};
+
+//This is used in CoffeeComputeDataSet to define a field to be loaded into VRAM.
+class CoffeeComputeTransformAttribute {
+public:
+    QString attributeName;
+    GLenum datatype;
+    GLboolean normalization;
+
+};
+//The purpose of this class is to contain a data-set for use in compute operations.
+//It may be returned from VRAM or inserted into it
+class CoffeeComputeTransformDataSet {
+public:
+    void setData(const QVector<float> &data);
+    QVector<float> copy() const; //you don't really want to use this.
+    QVector<float>* data();
+
+private:
+    //the pure floating-point data
+    //you may put vec*, mat* and float in there, but you parse it externally yourself
+    QVector<float> dataset;
+
+    //contains descriptions of attributes in data
+    //order is significant for retrieval of data
+    QVector<CoffeeComputeTransformAttribute> descriptors;
+
 };
 
 #endif // COFFEETRANSFORMCOMPUTER_H
+

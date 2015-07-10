@@ -47,12 +47,11 @@ private:
     CoffeeObjectFactory* factory;
     CoffeeScriptEngine* scriptEngine;
 
-    QTimer *secondbop;
-
     CoffeeOutputSurface* screenSurface;
 
     CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;
+    QPointer<CoffeeRenderer> renderer;
     QPointer<CoffeeWorldOpts> world;
     CoffeeJoystick* js;
     std::function<void()> _rendering_loop_init;

@@ -148,6 +148,11 @@ void CoffeeRenderer::getVideoMemoryUsage(qint32 *current, qint32 *total) const
     *total = vmem_total;
 }
 
+void CoffeeRenderer::queueFunction(std::function<void ()> *func)
+{
+    runqueue.append(func);
+}
+
 void CoffeeRenderer::setSwapInterval(uint interval)
 {
     glfwSwapInterval(interval);
@@ -571,6 +576,14 @@ int CoffeeRenderer::loop(){
         frametime = glfwGetTime();
         glfwPollEvents();
         (*_loop)();
+        if(runqueue.size()>0){
+            QVector<std::function<void()>*> t_queue(runqueue);
+            for(auto f : t_queue){
+                (*f)();
+                delete f;
+                runqueue.removeOne(f);
+            }
+        }
         glfwSwapBuffers(window);
         this->frametime = glfwGetTime()-frametime;
         contextReportFrametime(this->frametime);

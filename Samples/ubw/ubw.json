@@ -3,37 +3,38 @@
 		{
 			"type": "shader",
 			"name": "standard",
-			"fragment": "shaders/fsh.txt",
-			"vertex": "shaders/vsh.txt"
-		},
-		{
-			"type": "shader-mapping",
-			"name": "default",
-			"source": "scripts/"
+			"fragment": "shaders/fsh.fs",
+			"vertex": "shaders/vsh.vs"
 		},
 		{
 			"type": "shader",
 			"name": "standard-instancing",
-			"fragment": "shaders/fsh.txt",
-			"vertex": "shaders/vsh_instanced.txt"
+			"fragment": "shaders/fsh.fs",
+			"vertex": "shaders/vsh_instanced.vs"
 		},
 		{
 			"type": "shader",
 			"name": "advanced",
-			"fragment": "shaders/fsh_bumpmap.txt",
-			"vertex": "shaders/vsh.txt"
+			"fragment": "shaders/fsh_bumpmap.fs",
+			"vertex": "shaders/vsh.vs"
+		},
+		{
+			"type": "shader",
+			"name": "deferred_display",
+			"fragment": "shaders/deferred/fsh.fs",
+			"vertex": "shaders/deferred/vsh.vs"
 		},
 		{
 			"type": "shader",
 			"name": "standard-nolight",
-			"fragment": "shaders/fsh_nolight.txt",
-			"vertex": "shaders/vsh.txt"
+			"fragment": "shaders/fsh_nolight.fs",
+			"vertex": "shaders/vsh.vs"
 		},
 		{
 			"type": "shader",
 			"name": "skyshader",
-			"fragment": "shaders/skybox/fsh.txt",
-			"vertex": "shaders/skybox/vsh.txt"
+			"fragment": "shaders/skybox/fsh.fs",
+			"vertex": "shaders/skybox/vsh.vs"
 		},
 		{
 			"type": "model",
@@ -98,8 +99,8 @@
 		{
 			"type": "shader",
 			"name": "particle-transform",
-			"geometry": "shaders/particles/geometry-process.geom",
-			"vertex": "shaders/particles/vertex-process.vert"
+			"geometry": "shaders/particles/geometry-process.gs",
+			"vertex": "shaders/particles/vertex-process.vs"
 		},
 		{
 			"type": "shader",
@@ -111,8 +112,8 @@
 		{
 			"type": "shader",
 			"name": "particle-transform2",
-			"geometry": "shaders/particles/geometry-process.geom",
-			"vertex": "shaders/particles/vertex-process.vert"
+			"geometry": "shaders/particles/geometry-process.gs",
+			"vertex": "shaders/particles/vertex-process.vs"
 		}
 	],
 	"world.world1":{

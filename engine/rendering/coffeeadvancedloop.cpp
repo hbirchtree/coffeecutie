@@ -25,6 +25,7 @@
 
 CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer) : QObject(parent)
 {
+    this->renderer = renderer;
     connectSignals(renderer);
     setObjectName("evloop");
 
@@ -47,6 +48,7 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         qDebug("Enabling standard OpenGL capabilities");
         glEnable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_3D);
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -56,9 +58,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-        qDebug("Setting vertical sync mode");
-        glfwSwapInterval(0);
 
         qDebug("Configuring framebuffer object");
         screenSurface->getFramebuffer()->createFramebuffer(*renderer->getFramebufferSizePt(),1);
@@ -113,11 +112,7 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
     controller->setObjectName("cameracontrol");
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
-    secondbop = new QTimer(this);
-    secondbop->setInterval(1000);
 
-    connect(secondbop,SIGNAL(timeout()),renderer,SLOT(requestMemoryCheck()));
-    secondbop->start();
     connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
     timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
 
@@ -148,6 +143,13 @@ QObject *CoffeeAdvancedLoop::getWorld()
 void CoffeeAdvancedLoop::setWorld(QObject *world)
 {
     CoffeeWorldOpts* w = qobject_cast<CoffeeWorldOpts*>(world);
-    if(w)
+    if(this->world){
+        this->world->unloadWorld();
+        this->world->disconnectSignals(); //avoid changing state of the world
+    }
+    if(w){
+        w->setRenderer(renderer);
+        w->connectSignals(controller);
         this->world = w;
+    }
 }

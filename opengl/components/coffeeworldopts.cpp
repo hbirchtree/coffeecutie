@@ -19,15 +19,13 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
     physicsThread->setObjectName("physics-thread");
     physics->setObjectName("bullet");
     physics->moveToThread(physicsThread);
-//    connect(this,SIGNAL(tickPhysics(float)),
-//            physics.data(),SLOT(tickSimulation(float)),
-//            Qt::QueuedConnection);
     connect(this,SIGNAL(physicsObjectAdded(PhysicsObject*)),
             physics.data(),SLOT(addObject(PhysicsObject*)),
             Qt::QueuedConnection);
     connect(physicsThread,SIGNAL(started()),
             physics.data(),SLOT(run()));
     physicsThread->start();
+    //The physics thread runs on its own tick.
 
     this->fogColorVariant = new ShaderVariant([=](){
         return this->getFogColor();
@@ -168,18 +166,25 @@ void CoffeeWorldOpts::setClearColorValue(QColor clearColor)
 
 void CoffeeWorldOpts::connectSignals(CoffeePlayerController *controller)
 {
-    connect(renderer.data(),&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
+    connections.append(connect(renderer.data(),&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
         getCamera()->setAspect((float)ev.size().width()/(float)ev.size().height());
-    });
-    connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
+    }));
+    connections.append(connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
         getCamera()->offsetOrientation(d.y,d.x);
-    });
-    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
+    }));
+    connections.append(connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
         getCamera()->getPosition()->operator+=(glm::vec3(d));
-    });
-    connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
+    }));
+    connections.append(connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
         getCamera()->getPosition()->operator+=(glm::vec3(d));
-    });
+    }));
+}
+
+void CoffeeWorldOpts::disconnectSignals()
+{
+    for(QMetaObject::Connection c : connections)
+        disconnect(c);
+    connections.clear();
 }
 
 void CoffeeWorldOpts::setLoadedState(bool loadedState)
@@ -230,7 +235,6 @@ void CoffeeWorldOpts::renderWorld()
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     }
 
-    //will basically take care of skybox, coffeeobject and all the fuzz, but not post-processing.
     for(CoffeeObject* o : this->getObjects())
         o->render();
 
@@ -246,12 +250,16 @@ void CoffeeWorldOpts::renderWorld()
 
 void CoffeeWorldOpts::unloadWorld()
 {
-    for(CoffeeObject* o : this->getObjects()){
-        o->unload();
-    }
+    //We queue it up for the render-thread to execute it. (Otherwise, it may run on the script thread or elsewhere (!))
+    std::function<void()> *fp = new std::function<void()>([=](){
+        for(CoffeeObject* o : this->getObjects()){
+            o->unload();
+        }
 
-    for(CoffeeParticleSystem* s : particles)
-        s->unload();
+        for(CoffeeParticleSystem* s : particles)
+            s->unload();
+    });
+    renderer->queueFunction(fp);
 }
 
 void CoffeeWorldOpts::setWireframeMode(bool wireframeMode)

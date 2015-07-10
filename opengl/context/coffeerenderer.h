@@ -54,6 +54,7 @@ public:
     virtual void getVideoMemoryUsage(qint32 *current, qint32 *total) const;
 
 public slots:
+    virtual void queueFunction(std::function<void()> *func);
     virtual void setSwapInterval(uint interval);
     virtual void setStartDisplay(uint value);
     virtual void setWindowDimensions(const QSize &value);
@@ -86,6 +87,7 @@ protected:
     QString windowTitle = "Qt Café";
     Qt::WindowState startmode = Qt::WindowNoState;
     int startDisplay = 0;
+    QVector<std::function<void()>*> runqueue;
 
 private:
     //GLFW objects

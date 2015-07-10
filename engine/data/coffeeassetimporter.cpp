@@ -430,12 +430,12 @@ QObjectList CoffeeAssetStorage::getWorlds()
     return l;
 }
 
-QObjectList CoffeeAssetStorage::getShaders()
+QVariantMap CoffeeAssetStorage::getShaders()
 {
-    QObjectList l;
-    for(ShaderContainer* p : shaders.values())
-        l.append(p);
-    return l;
+    QVariantMap m;
+    for(QString s : shaders.keys())
+        m.insert(s,QVariant::fromValue(shaders.value(s)));
+    return m;
 }
 
 QObjectList CoffeeAssetStorage::getTextures()

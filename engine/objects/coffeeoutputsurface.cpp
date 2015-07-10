@@ -13,7 +13,7 @@ CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject
     QObject(parent),
     CoffeeObject(this)
 {
-    shader = new ShaderContainer(this);
+//    shader = new ShaderContainer(this);
     setObjectName("screenSurface");
     setFramebuffer(display);
 }
@@ -32,11 +32,17 @@ void CoffeeOutputSurface::setFramebuffer(QObject *display)
 
 void CoffeeOutputSurface::load()
 {
-    if(!shader->isAllocated())
-        shader->buildProgram(new CoffeeResource(0,"shaders/deferred/vsh.vs"),
-                             new CoffeeResource(0,"shaders/deferred/fsh.fs"));
-    if(surface)
+    if(shader){
+        if(shader->isAllocated())
+            shader->unload();
+        shader->buildProgram(/*new CoffeeResource(0,"shaders/deferred/vsh.vs"),
+                             new CoffeeResource(0,"shaders/deferred/fsh.fs")*/);
+    }
+    if(surface){
+        if(surface->isAllocated())
+            surface->unloadMesh();
         surface->loadMesh();
+    }
     setBaked(true);
 }
 
@@ -53,7 +59,7 @@ void CoffeeOutputSurface::render()
     QRect screen;
     screen.setSize(framebuffer->getWindowSize());
 
-    if(!surface)
+    if(!surface||!shader)
         return;
 
     glUseProgram(shader->getProgramId());
@@ -92,13 +98,19 @@ void CoffeeOutputSurface::render()
 
 void CoffeeOutputSurface::unload()
 {
+    if(shader)
+        shader->unload();
+    if(surface)
+        surface->unloadMesh();
 }
 
 void CoffeeOutputSurface::setShader(QObject *shader)
 {
     ShaderContainer* msh = qobject_cast<ShaderContainer*>(shader);
-    if(msh)
+    if(msh){
         this->shader = msh;
+        setBaked(false);
+    }
 }
 
 bool CoffeeOutputSurface::isBaked() const
@@ -119,6 +131,11 @@ CoffeeFrameBufferObject *CoffeeOutputSurface::getFramebuffer()
 QObject *CoffeeOutputSurface::getShader()
 {
     return shader;
+}
+
+void CoffeeOutputSurface::addUiTexture(CoffeeTexture *tex)
+{
+    textureTest = tex;
 }
 
 void CoffeeOutputSurface::setUniform(const QString &uniformName, ShaderVariant *data)

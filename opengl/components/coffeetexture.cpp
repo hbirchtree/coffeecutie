@@ -8,7 +8,7 @@
 CoffeeTexture::CoffeeTexture(QObject *parent, QMap<GLenum, CoffeeResource*> mapping) : QObject(parent)
 {
     this->cubemapping = mapping;
-    this->b_cubemap = true;
+    setType(Cubemap);
 }
 
 CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r,
@@ -21,8 +21,7 @@ CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r,
         unloadTexture();
         loadTexture();
     });
-    this->b_cubemap = true;
-    this->b_cubemap_dice = true;
+    setType(CubemapDice);
 }
 
 CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r) : QObject(parent)
@@ -31,13 +30,15 @@ CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r) : QObject(paren
     connect(res.data(),&CoffeeResource::resourceChanged,[=](){
         b_to_reload = true;
     });
+    setType(Texture2D);
 }
 
 CoffeeTexture::CoffeeTexture(QObject *parent, aiTexture *texture) : QObject(parent)
 {
+    qWarning("Unimplemented constructor!");
+
     if(texture->mHeight==0){
         qDebug() << "Creating texture from format:" << texture->achFormatHint;
-//        QImage::Format fmt;
         qDebug() << "Unimplemented function: decompressing texture data";
     }else{
         this->texture = QImage(QSize(texture->mWidth,texture->mHeight),QImage::Format_RGBA8888);
@@ -61,7 +62,7 @@ bool CoffeeTexture::isValidTexture()
 
 bool CoffeeTexture::isCubemap()
 {
-    return b_cubemap;
+    return m_type==Cubemap||m_type==CubemapDice;
 }
 
 void CoffeeTexture::loadTexture()
@@ -71,7 +72,8 @@ void CoffeeTexture::loadTexture()
         addAllocation();
         return;
     }
-    if(isCubemap()&&!b_cubemap_dice){
+    switch(type()){
+    case CoffeeTexture::Cubemap:{
         if(cubemapping.size()!=6)
             qWarning("Invalid size of cube mapping!");
         QImage probe = QImage::fromData(*cubemapping.first()->data());
@@ -81,7 +83,9 @@ void CoffeeTexture::loadTexture()
         textureHandle = TextureHelper::allocCubeTexture(GL_RGBA8,GL_BGRA,
                                                         probe.width(),probe.height(),
                                                         source,1,GL_UNSIGNED_BYTE);
-    }else if(b_cubemap_dice){
+        break;
+    }
+    case CoffeeTexture::CubemapDice:{
         QImage src = QImage::fromData(*res->data());
         if(src.isNull())
             qFatal("Failed to load cubemap dice: Invalid image");
@@ -110,13 +114,23 @@ void CoffeeTexture::loadTexture()
         textureHandle = TextureHelper::allocCubeTexture(GL_RGBA8,GL_BGRA,
                                                         w_d,h_d,
                                                         mapping,1,GL_UNSIGNED_BYTE);
-    }else{
+        break;
+    }
+    case CoffeeTexture::Texture2D:{
         texture = QImage::fromData(*res->data());
         texture = imageProcessor(texture);
         textureHandle = TextureHelper::allocTexture(GL_RGBA8,GL_BGRA,
                                                     texture.width(),texture.height(),
                                                     texture.bits(),3,GL_UNSIGNED_BYTE);
+        break;
     }
+    case CoffeeTexture::Texture3D:
+        //TODO : find a way to load 3D textures
+        break;
+    default:
+        break;
+    }
+
     if(textureHandle>0){
         addAllocation();
         validTexture = true;
@@ -166,4 +180,27 @@ QString CoffeeTexture::textureFile() const
 QObject *CoffeeTexture::resource()
 {
     return res;
+}
+
+CoffeeTexture::CoffeeGLTextureType CoffeeTexture::type() const
+{
+    return m_type;
+}
+
+GLenum CoffeeTexture::getGlTextureType() const
+{
+    switch(type()){
+    case CoffeeTexture::Cubemap:
+    case CoffeeTexture::CubemapDice:
+        return GL_TEXTURE_CUBE_MAP;
+    case CoffeeTexture::Texture3D:
+        return GL_TEXTURE_3D;
+    default:
+        return GL_TEXTURE_2D;
+    }
+}
+
+void CoffeeTexture::setType(CoffeeTexture::CoffeeGLTextureType type)
+{
+    m_type = type;
 }

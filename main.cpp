@@ -105,7 +105,6 @@ int main(int argc, char *argv[])
 
     //Configure the loop, set default sampling
     renderer->setLoop(loop);
-    renderer->setSamples(4);
 
     CoffeeInspector *inspector = nullptr;
     //configure script engine and inspector if it is enabled

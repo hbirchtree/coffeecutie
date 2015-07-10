@@ -138,7 +138,7 @@ void CoffeeParticleSystem::renderParticles()
     glUseProgram(shader->getProgramId());
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,texture->getHandle());
+    glBindTexture(texture->getGlTextureType(),texture->getHandle());
 
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,transform->getRenderTransform());
     glBindVertexArray(transform->getRenderArray());
@@ -154,7 +154,7 @@ void CoffeeParticleSystem::renderParticles()
 
     glDrawTransformFeedback(GL_POINTS,transform->getRenderTransform());
 
-    glBindTexture(GL_TEXTURE_2D,0);
+    glBindTexture(texture->getGlTextureType(),0);
     glBindVertexArray(0);
     glUseProgram(0);
 

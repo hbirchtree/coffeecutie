@@ -15,6 +15,8 @@ var world = coffeeroot.evloop.world1;
 var controller = coffeeroot.evloop.cameracontrol;
 var surface = coffeeroot.evloop.screenSurface;
 
+surface.shader = assets.deferred_display;
+
 world.testparts.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
 world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
 
@@ -23,6 +25,10 @@ world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","ou
 
 //Define the shader bindings
 #inc "rendering/shader-setup.qts"
+
+function printFrametime(){
+
+}
 
 //Set up objects for rendering
 {
@@ -35,6 +41,7 @@ world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","ou
 
 world.lights[0].position.bindValue(world.camera.position);
 renderer.contextReportFrametime.connect(world.testparts.setFrametime);
+renderer.setSwapInterval(0);
 
 world.plane.rotation.value = [2,-3,0,0];
 world.fogDensity = 0.03;

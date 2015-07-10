@@ -32,7 +32,7 @@ public:
 class CoffeeAssetStorage : public QObject
 {
     Q_PROPERTY(QObjectList worlds READ getWorlds)
-    Q_PROPERTY(QObjectList shaders READ getShaders)
+    Q_PROPERTY(QVariantMap shaders READ getShaders)
     Q_PROPERTY(QObjectList textures READ getTextures)
 
     Q_PROPERTY(QObjectList resources READ getResources)
@@ -63,7 +63,7 @@ public:
     Q_INVOKABLE QObject* getModel(QString source);
 
     QObjectList getWorlds();
-    QObjectList getShaders();
+    QVariantMap getShaders();
     QObjectList getTextures();
     QObjectList getResources();
 };

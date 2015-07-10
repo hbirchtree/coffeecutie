@@ -79,6 +79,11 @@ bool CoffeeTransformComputer::query() const
     return m_query;
 }
 
+bool CoffeeTransformComputer::capture() const
+{
+    return m_capture;
+}
+
 void CoffeeTransformComputer::doReload()
 {
     m_reload = true;
@@ -122,10 +127,10 @@ void CoffeeTransformComputer::tickParticles()
     glEndTransformFeedback();
 
     if(t_query){
-//      getting these values tanks performance!
         glEndQuery(GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
         glEndQuery(GL_TIME_ELAPSED);
 
+        //getting these values tanks performance!
         glGetQueryObjectuiv(primitiveQuery,GL_QUERY_RESULT,&active_particles);
         glGetQueryObjectui64v(timeQuery,GL_QUERY_RESULT,&m_processTime);
     }
@@ -188,10 +193,12 @@ void CoffeeTransformComputer::load()
     glGenVertexArrays(2, vaos);
     glGenBuffers(2, vbos);
 
-    glBindVertexArray(vaos[vaoIndex()]);
-
     QVector<Particle> partsbuffer = QVector<Particle>(startParticles);
     partsbuffer.resize(maxParticles());
+
+    //Two buffers are swapped to provide iteration on the data
+
+    glBindVertexArray(vaos[vaoIndex()]);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbos[vaoIndex()]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Particle)*maxParticles(), partsbuffer.data(), GL_STATIC_DRAW);
@@ -274,7 +281,7 @@ void CoffeeTransformComputer::setUniform(QString uniformName, ShaderVariant* dat
     uniforms.append(map);
 }
 
-void CoffeeTransformComputer::setFeedbackAttributes(QVariantList feedbackAttributes)
+void CoffeeTransformComputer::setFeedbackAttributes(const QVariantList &feedbackAttributes)
 {
     m_feedbackAttributes = feedbackAttributes;
 }
@@ -282,4 +289,13 @@ void CoffeeTransformComputer::setFeedbackAttributes(QVariantList feedbackAttribu
 void CoffeeTransformComputer::setQuery(bool query)
 {
     m_query = query;
+    if(!query){
+        m_processTime = 0;
+        active_particles = 0;
+    }
+}
+
+void CoffeeTransformComputer::setCapture(bool capture)
+{
+    m_capture = capture;
 }

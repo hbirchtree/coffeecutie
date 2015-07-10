@@ -30,24 +30,6 @@ QPointer<QuatValue> PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 
-QVariantList PhysicsObject::getPositionValue() const
-{
-    glm::vec3 v = v_position->getValue();
-    return QVariantList() << v.x << v.y << v.z;
-}
-
-QVariantList PhysicsObject::getRotationValue() const
-{
-    glm::quat v = v_physics_rotation->getValue();
-    return QVariantList() << v.w << v.x << v.y << v.z;
-}
-
-QVariantList PhysicsObject::getScaleValue() const
-{
-    glm::vec3 v = v_position->getValue();
-    return QVariantList() << v.x << v.y << v.z;
-}
-
 void *PhysicsObject::getPhysicspointer()
 {
     return physicspointer;
@@ -61,6 +43,21 @@ void PhysicsObject::setPhysicspointer(void *value)
 PhysicsDescriptor *PhysicsObject::getDescr()
 {
     return descr;
+}
+
+QObject *PhysicsObject::getPositionQObject()
+{
+    return v_position;
+}
+
+QObject *PhysicsObject::getRotationQObject()
+{
+    return v_physics_rotation;
+}
+
+QObject *PhysicsObject::getScaleQObject()
+{
+    return v_scale;
 }
 
 void PhysicsObject::setDescr(PhysicsDescriptor *value)

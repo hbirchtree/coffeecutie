@@ -10,6 +10,7 @@ class CoffeeWorldOpts;
 class TextureMapping;
 class ShaderMapping;
 class ShaderVariant;
+class CoffeeTexture;
 
 class CoffeeOutputChannel //Mapping of framebuffer textures to uniforms
 {
@@ -42,6 +43,8 @@ public:
     QObject* getShader();
 
 public slots:
+    void addUiTexture(CoffeeTexture* tex);
+
     void setUniform(const QString &uniformName,ShaderVariant* data);
     void setFramebufferMapping(const QString &uniformName, int textureIndex, int textureUnit);
 
@@ -58,9 +61,10 @@ protected:
     void setBaked(bool val);
     bool baked = false;
 
+    CoffeeTexture* textureTest = nullptr;
     QVector<ShaderMapping*> uniforms;
     CoffeeFrameBufferObject* framebuffer;
-    ShaderContainer* shader;
+    ShaderContainer* shader = nullptr;
     QVector<CoffeeOutputChannel*> textures;
     QPointer<CoffeeMesh> surface;
     QPointer<CoffeeWorldOpts> world;
