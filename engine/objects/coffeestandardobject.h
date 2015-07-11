@@ -3,32 +3,14 @@
 
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/objects/coffeeobject.h"
-#include "opengl/components/coffeetexture.h" //TextureMapping needs to know.
 #include "opengl/components/coffeematerial.h" //These are needed for the property system
 #include "opengl/components/shadercontainer.h"
 #include "engine/models/coffeemesh.h"
+#include "engine/shaders/coffeeuniformsetter.h"
 
 class ShaderVariant;
 
-class ShaderMapping {
-public:
-    QString uniform;
-    QPointer<ShaderVariant> data;
-    bool constant = false;
-};
-class TextureMapping {
-public:
-    bool operator==(const TextureMapping& val){
-        return val.texture==this->texture.data()&&
-                val.samplerName==this->samplerName;
-    }
-    QPointer<CoffeeTexture> texture;
-    QString samplerName;
-
-    bool loaded = false;
-};
-
-class CoffeeStandardObject : public QObject,public CoffeeObject
+class CoffeeStandardObject : public QObject,public CoffeeObject, public CoffeeUniformSetter
 {
     Q_PROPERTY(QObject* position READ positionValue)
     Q_PROPERTY(QObject* rotation READ rotationValue)
@@ -65,7 +47,6 @@ public:
     QObject* scaleValue();
 
     QObject* physicsRef();
-
     QObject* getModelMatrix() const;
 
     bool hasPhysics();
@@ -81,19 +62,14 @@ public slots:
     void setPhysicsObject(QObject* obj);
     void setShaderRef(QObject* sh);
 
-    void setUniform(QString uniformName,ShaderVariant* data, bool constant);
+    //We want these to work as slots, slots inherited from non-QObject classes do not work.
+    void setUniform(QString uniformName, ShaderVariant* data);
     void setTexture(QString samplerName, CoffeeTexture *texture);
 
 protected:
     ShaderVariant* modelMatrix;
-
     bool baked = false;
-
-    QVector<ShaderMapping*> uniforms;
-    QVector<TextureMapping*> textures;
-
     QPointer<CoffeeMesh> pmesh;
-    QPointer<CoffeeShader> pshader;
     QPointer<CoffeeMaterial> pmaterial;
 };
 

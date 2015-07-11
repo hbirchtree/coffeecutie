@@ -12,7 +12,7 @@ renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
 
 //Some global variables for simplicity
 var world = coffeeroot.evloop.world1;
-var controller = coffeeroot.evloop.cameracontrol;
+var controller = new CoffeePlayerControl();
 var surface = coffeeroot.evloop.screenSurface;
 
 surface.shader = assets.shaders.deferred_display;
@@ -26,8 +26,8 @@ world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","ou
 //Define the shader bindings
 #inc "rendering/shader-setup.qts"
 
-function printFrametime(){
-
+function printFrametime(frametime){
+	print("FPS: {1:{0}}".format("02f",frametime));
 }
 
 //Set up objects for rendering
@@ -41,6 +41,7 @@ function printFrametime(){
 
 world.lights[0].position.bindValue(world.camera.position);
 renderer.contextReportFrametime.connect(world.testparts.setFrametime);
+renderer.contextReportFrametime.connect(printFrametime);
 renderer.setSwapInterval(0);
 
 world.plane.rotation.value = [2,-3,0,0];

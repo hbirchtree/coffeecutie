@@ -12,6 +12,7 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
     QObject(parent),
     CoffeeObject(this)
 {
+    this->m_gravity = new Vector3Value(this,glm::vec3(0,-1,0));
     this->transform = new CoffeeTransformComputer(this);
     this->camera = camera;
 
@@ -29,13 +30,13 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
         return tickTime;
     });
     mass = new ShaderVariant([=](){
-        return transform->particleMass();
+        return particleMass();
     });
     partSpread = new ShaderVariant([=](){
-        return transform->particleSpread();
+        return particleSpread();
     });
     gravity = new ShaderVariant([=](){
-        return transform->gravity();
+        return m_gravity->getValue();
     });
     randRad = new ShaderVariant([=](){
         return (float)(qrand()%1256000-628000)/100000.f;
@@ -180,6 +181,26 @@ QObject* CoffeeParticleSystem::getTextureQObject()
     return texture;
 }
 
+float CoffeeParticleSystem::particleMass() const
+{
+    return m_particleMass;
+}
+
+float CoffeeParticleSystem::particleSpread() const
+{
+    return m_particleSpread;
+}
+
+QObject *CoffeeParticleSystem::gravityQObject()
+{
+    return m_gravity;
+}
+
+glm::vec3 CoffeeParticleSystem::getGravity() const
+{
+    return m_gravity->getValue();
+}
+
 QPointer<CoffeeShader> CoffeeParticleSystem::getShader()
 {
     return shader;
@@ -216,6 +237,33 @@ void CoffeeParticleSystem::setTexture(QObject *value)
     CoffeeTexture* tex = qobject_cast<CoffeeTexture*>(value);
     if(tex)
         setTexture(tex);
+}
+
+void CoffeeParticleSystem::setParticleMass(float particleMass)
+{
+    m_particleMass = particleMass;
+}
+
+void CoffeeParticleSystem::setParticleSpread(float particleSpread)
+{
+    m_particleSpread = particleSpread;
+}
+
+void CoffeeParticleSystem::setGravity(Vector3Value *gravity)
+{
+    m_gravity = gravity;
+}
+
+void CoffeeParticleSystem::setGravity(QObject *gravity)
+{
+    Vector3Value* v = qobject_cast<Vector3Value*>(gravity);
+    if(v)
+        setGravity(v);
+}
+
+void CoffeeParticleSystem::setGravity(const glm::vec3 &gravity)
+{
+    m_gravity->setValue(gravity);
 }
 
 void CoffeeParticleSystem::setCamera(const CoffeeCamera *value)

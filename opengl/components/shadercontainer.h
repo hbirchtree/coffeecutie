@@ -59,7 +59,6 @@ public:
     uint getVerbosity() const;
 
 public slots:
-
     void setUniform(QString name, const glm::vec3 &val);
     void setUniform(QString name,const glm::vec4& val);
     void setUniform(QString name,const glm::vec2& val);

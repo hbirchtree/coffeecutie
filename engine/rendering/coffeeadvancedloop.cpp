@@ -108,13 +108,13 @@ std::function<void ()> *CoffeeAdvancedLoop::getCleanup()
 
 void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 {
-    controller = new CoffeePlayerController(this);
-    controller->setObjectName("cameracontrol");
+//    controller = new CoffeePlayerController(this);
+//    controller->setObjectName("cameracontrol");
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
 
-    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
-    timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
+//    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
+//    timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
 
     qDebug("Setting up miscellaneous signals and slots");
     renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){ //needs to be moved into QtScript
@@ -149,7 +149,6 @@ void CoffeeAdvancedLoop::setWorld(QObject *world)
     }
     if(w){
         w->setRenderer(renderer);
-        w->connectSignals(controller);
         this->world = w;
     }
 }

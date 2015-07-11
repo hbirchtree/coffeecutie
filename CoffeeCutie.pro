@@ -72,7 +72,8 @@ SOURCES += main.cpp \
     engine/compute/coffeecomputeresource.cpp \
     engine/compute/coffeetransformcomputer.cpp \
     opengl/helpers/coffeeperlinnoisesource.cpp \
-    engine/interface/coffeedrawableelement.cpp
+    engine/interface/coffeedrawableelement.cpp \
+    engine/shaders/coffeeuniformsetter.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -135,7 +136,8 @@ HEADERS += \
     engine/compute/coffeecomputeresource.h \
     engine/compute/coffeetransformcomputer.h \
     opengl/helpers/coffeeperlinnoisesource.h \
-    engine/interface/coffeedrawableelement.h
+    engine/interface/coffeedrawableelement.h \
+    engine/shaders/coffeeuniformsetter.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

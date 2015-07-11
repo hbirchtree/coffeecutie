@@ -54,6 +54,38 @@ public slots:
     void setAcceleration(const QVariantList &value);
 };
 
+class Vector2Value : public QObject, public NumberContainer<glm::vec2>
+{
+    Q_PROPERTY(QVariantList value READ value WRITE setValue)
+
+    Q_OBJECT
+
+public:
+    Vector2Value(QObject* parent, const glm::vec2 &initial);
+    Vector2Value(QObject* parent, float x, float y);
+
+    using NumberContainer<glm::vec2>::setValue;
+    using NumberContainer<glm::vec2>::setVelocity;
+    using NumberContainer<glm::vec2>::setAcceleration;
+    using NumberContainer<glm::vec2>::operator !=;
+    using NumberContainer<glm::vec2>::operator =;
+    using NumberContainer<glm::vec2>::operator *=;
+    using NumberContainer<glm::vec2>::operator +=;
+    using NumberContainer<glm::vec2>::operator -=;
+    using NumberContainer<glm::vec2>::operator *;
+    using NumberContainer<glm::vec2>::operator +;
+    using NumberContainer<glm::vec2>::operator -;
+    using NumberContainer<glm::vec2>::operator ==;
+    using NumberContainer<glm::vec2>::operator >=;
+    using NumberContainer<glm::vec2>::operator <=;
+    using NumberContainer<glm::vec2>::operator >=;
+    using NumberContainer<glm::vec2>::bindValue;
+
+    QVariantList value() const;
+public slots:
+    void setValue(const QVariantList &value);
+};
+
 class QuatValue : public QObject,public NumberContainer<glm::quat>
 {
     Q_PROPERTY(QVariantList value READ value WRITE setValue)

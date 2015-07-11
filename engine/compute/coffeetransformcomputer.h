@@ -2,18 +2,16 @@
 #define COFFEETRANSFORMCOMPUTER_H
 
 #include "general/common.h"
+#include "engine/shaders/coffeeuniformsetter.h"
 
 class CoffeeShader;
 class Vector3Value;
 class ShaderVariant;
 class ShaderMapping;
 
-class CoffeeTransformComputer : public QObject
+class CoffeeTransformComputer : public QObject,public CoffeeUniformSetter
 {
-    Q_PROPERTY(float particleSpread READ particleSpread WRITE setParticleSpread)
-    Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
     Q_PROPERTY(quint32 maxParticles READ maxParticles WRITE setMaxParticles)
-    Q_PROPERTY(QObject* gravity READ getGravityObject)
     Q_PROPERTY(QVariantList feedbackAttributes READ feedbackAttributes WRITE setFeedbackAttributes)
 
     Q_PROPERTY(uint activeParticles READ activeParticles)
@@ -36,11 +34,6 @@ public:
 
     CoffeeTransformComputer(QObject *parent);
 
-    QObject* getGravityObject();
-    glm::vec3 gravity() const;
-
-    float particleSpread() const;
-    float particleMass() const;
     quint32 maxParticles() const;
 
     GLuint getRenderTransform();
@@ -57,7 +50,6 @@ public:
     quint64 processTime() const;
 
     bool query() const;
-
     bool capture() const;
 
 public slots:
@@ -68,10 +60,7 @@ public slots:
     void tickParticles();
 
     void setShader(CoffeeShader* shader);
-    void setParticleSpread(float particleSpread);
-    void setParticleMass(float particleMass);
     void setMaxParticles(quint32 maxParticles);
-    void setGravity(const glm::vec3 &grav);
 
     void setUniform(QString uniformName, ShaderVariant *data);
     void setFeedbackAttributes(const QVariantList &feedbackAttributes);
@@ -90,8 +79,6 @@ private:
     bool m_loaded = false;
     bool m_started = false;
 
-    QPointer<CoffeeShader> tshader;
-
     GLuint tfbs[2];
     GLuint vbos[2];
     GLuint vaos[2];
@@ -105,10 +92,6 @@ private:
     GLuint64 m_processTime = 0;
 
     QVector<Particle> startParticles;
-    QVector<ShaderMapping*> uniforms;
-    Vector3Value* m_gravity;
-    float m_particleSpread = 0.f;
-    float m_particleMass = 1.0f;
     quint32 m_maxParticles = 1024;
     QVariantList m_feedbackAttributes;
     bool m_query;

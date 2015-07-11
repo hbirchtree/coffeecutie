@@ -335,11 +335,11 @@ CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMa
         }else if(key=="color"){
             system->setParticleColor(stringToColor(data.value(key)));
         }else if(key=="particle-mass"){
-            system->getTransform()->setParticleMass(data.value(key).toFloat());
+            system->setParticleMass(data.value(key).toFloat());
         }else if(key=="particle-size"){
             system->setParticleSize(data.value(key).toFloat());
         }else if(key=="gravity"){
-            system->getTransform()->setGravity(listToVec3(data.value(key)));
+            system->setGravity(listToVec3(data.value(key)));
         }else if(key=="position"){
             system->position()->setValue(listToVec3(data.value(key).toString()));
         }else if(key=="id"){

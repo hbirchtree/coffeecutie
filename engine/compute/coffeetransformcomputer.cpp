@@ -6,27 +6,6 @@
 
 CoffeeTransformComputer::CoffeeTransformComputer(QObject *parent) : QObject(parent)
 {
-    this->m_gravity = new Vector3Value(this,glm::vec3(0,-1,0));
-}
-
-QObject *CoffeeTransformComputer::getGravityObject()
-{
-    return m_gravity;
-}
-
-glm::vec3 CoffeeTransformComputer::gravity() const
-{
-    return m_gravity->getValue();
-}
-
-float CoffeeTransformComputer::particleSpread() const
-{
-    return m_particleSpread;
-}
-
-float CoffeeTransformComputer::particleMass() const
-{
-    return m_particleMass;
 }
 
 quint32 CoffeeTransformComputer::maxParticles() const
@@ -51,7 +30,7 @@ QVector<CoffeeTransformComputer::Particle> *CoffeeTransformComputer::getParticle
 
 CoffeeShader *CoffeeTransformComputer::getShader()
 {
-    return tshader;
+    return pshader;
 }
 
 QVariantList CoffeeTransformComputer::feedbackAttributes() const
@@ -97,7 +76,7 @@ void CoffeeTransformComputer::tickParticles()
     }
     glEnable(GL_RASTERIZER_DISCARD);
 
-    glUseProgram(tshader->getProgramId());
+    glUseProgram(pshader->getProgramId());
     glBindVertexArray(vaos[vaoIndex()]);
 
     if(active_particles+spawncount>maxParticles()-1)
@@ -105,9 +84,7 @@ void CoffeeTransformComputer::tickParticles()
     else if(active_particles<maxParticles())
         spawncount = 1;
 
-    for(ShaderMapping* m : uniforms){
-        tshader->setUniform(m->uniform,m->data);
-    }
+    applyUniforms();
 
     t_query = m_query;
     if(t_query){
@@ -142,27 +119,12 @@ void CoffeeTransformComputer::tickParticles()
 
 void CoffeeTransformComputer::setShader(CoffeeShader *shader)
 {
-    this->tshader = shader;
-}
-
-void CoffeeTransformComputer::setParticleSpread(float particleSpread)
-{
-    m_particleSpread = particleSpread;
-}
-
-void CoffeeTransformComputer::setParticleMass(float particleMass)
-{
-    m_particleMass = particleMass;
+    this->pshader = shader;
 }
 
 void CoffeeTransformComputer::setMaxParticles(quint32 maxParticles)
 {
-    m_maxParticles = maxParticles;
-}
-
-void CoffeeTransformComputer::setGravity(const glm::vec3 &grav)
-{
-    this->m_gravity->setValue(grav);
+    this->m_maxParticles = maxParticles;
 }
 
 void CoffeeTransformComputer::switchIndex()
@@ -173,8 +135,8 @@ void CoffeeTransformComputer::switchIndex()
 void CoffeeTransformComputer::load()
 {
     index = 0;
-    tshader->createProgram();
-    tshader->compileShaders();
+    pshader->createProgram();
+    pshader->compileShaders();
 
     QVector<std::string> feedback_backing; //we need to do this in order for the memory to be retained
     QVector<const char*> feedbackattributes;
@@ -183,12 +145,12 @@ void CoffeeTransformComputer::load()
         feedbackattributes.append(t.c_str());
         feedback_backing.append(t);
     }
-    glTransformFeedbackVaryings(tshader->getProgramId(),
+    glTransformFeedbackVaryings(pshader->getProgramId(),
                                 feedbackattributes.size(),
                                 feedbackattributes.data(),
                                 GL_INTERLEAVED_ATTRIBS);
 
-    tshader->linkProgram();
+    pshader->linkProgram();
 
     glGenVertexArrays(2, vaos);
     glGenBuffers(2, vbos);
@@ -255,7 +217,7 @@ void CoffeeTransformComputer::load()
 void CoffeeTransformComputer::unload()
 {
     index = 0;
-    tshader->unload();
+    pshader->unload();
     glDeleteTransformFeedbacks(2,tfbs);
     glDeleteVertexArrays(2,vaos);
     glDeleteBuffers(2,vbos);
@@ -275,10 +237,7 @@ uint CoffeeTransformComputer::vaoIndex()
 
 void CoffeeTransformComputer::setUniform(QString uniformName, ShaderVariant* data)
 {
-    ShaderMapping *map = new ShaderMapping;
-    map->uniform = uniformName;
-    map->data = data;
-    uniforms.append(map);
+    CoffeeUniformSetter::setUniform(uniformName,data);
 }
 
 void CoffeeTransformComputer::setFeedbackAttributes(const QVariantList &feedbackAttributes)

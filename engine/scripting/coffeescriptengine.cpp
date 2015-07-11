@@ -9,6 +9,7 @@
 #include "opengl/components/coffeetexture.h"
 #include "engine/scripting/coffeeinputevent.h"
 #include "engine/models/coffeeinstancecontainer.h"
+#include "general/input/coffeeplayercontroller.h"
 
 #include "engine/ai/coffeeneuralnet.h"
 
@@ -72,6 +73,11 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue pdCt = e.newFunction(neuralNetConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("CoffeeNeuralNet",mo);
+    }
+    {
+        QScriptValue pdCt = e.newFunction(coffeePlayerControllerConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("CoffeePlayerController",mo);
     }
     {
         QScriptValue pdCt = e.newFunction(qtimerConstructor);
@@ -197,6 +203,13 @@ QScriptValue CoffeeScriptEngine::vectorVariantConstructor(QScriptContext *ctxt, 
 QScriptValue CoffeeScriptEngine::coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeePhysicsEvent(parent);
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::coffeePlayerControllerConstructor(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new CoffeePlayerController(parent);
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 

@@ -12,13 +12,15 @@ class CoffeeTransformComputer;
 
 class CoffeeParticleSystem : public QObject,public CoffeeObject
 {
+    Q_PROPERTY(float particleSpread READ particleSpread WRITE setParticleSpread)
+    Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
     Q_PROPERTY(bool additive READ additive WRITE setAdditive)
     Q_PROPERTY(QColor particleColor READ getParticleColor WRITE setParticleColor)
     Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
 
     Q_PROPERTY(QObject* texture READ getTextureQObject WRITE setTexture)
-
     Q_PROPERTY(QObject* transform READ getTransformObject)
+    Q_PROPERTY(QObject* gravity READ gravityQObject WRITE setGravity)
 
     Q_OBJECT
 
@@ -46,6 +48,11 @@ public:
 
     QObject* getTextureQObject();
 
+    float particleMass() const;
+    float particleSpread() const;
+    QObject* gravityQObject();
+    glm::vec3 getGravity() const;
+
 signals:
     void requestTick(float d);
 
@@ -60,6 +67,12 @@ public slots:
     void setAdditive(bool additive);
     void setTexture(CoffeeTexture* value);
     void setTexture(QObject* value);
+
+    void setParticleMass(float particleMass);
+    void setParticleSpread(float particleSpread);
+    void setGravity(Vector3Value* gravity);
+    void setGravity(QObject* gravity);
+    void setGravity(const glm::vec3 &gravity);
 
 protected:
     CoffeeTransformComputer* transform = nullptr;
@@ -88,6 +101,9 @@ private:
     ShaderVariant* partSpread;
     ShaderVariant* spawncount;
     QObject* m_texture;
+    float m_particleMass;
+    float m_particleSpread;
+    Vector3Value* m_gravity;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

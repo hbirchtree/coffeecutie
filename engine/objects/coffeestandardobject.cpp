@@ -20,8 +20,8 @@ CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
 
 CoffeeStandardObject::~CoffeeStandardObject()
 {
-    for(ShaderMapping *map : uniforms)
-        map->data->deleteLater();
+    clearUniforms();
+    clearTextures();
 }
 
 void CoffeeStandardObject::render()
@@ -38,21 +38,9 @@ void CoffeeStandardObject::render()
     }
 
     glUseProgram(pshader->getProgramId());
-    for(ShaderMapping* m : uniforms){
-        pshader->setUniform(m->uniform,m->data);
-    }
-    for(TextureMapping* m : textures){
-        if(!m->loaded){
-            m->texture->loadTexture();
-            m->loaded = true;
-        }
-        int index = textures.indexOf(m);
-        glActiveTexture(GL_TEXTURE0+index);
-        glBindTexture(m->texture->getGlTextureType(),
-                      m->texture->getHandle());
-        pshader->setUniform(m->samplerName,
-                            index);
-    }
+
+    applyUniforms();
+    bindTextures();
 
     glBindVertexArray(pmesh->getVertexArrayHandle());
     if(!this->mesh()->useInstancing())
@@ -69,10 +57,8 @@ void CoffeeStandardObject::render()
     }
     pmesh->getInstances()->setRenderPrepare(false);
 
-    for(TextureMapping *m : textures){
-        glActiveTexture(GL_TEXTURE0+textures.indexOf(m));
-        glBindTexture(m->texture->getGlTextureType(),0);
-    }
+    unbindTextures();
+
     glBindVertexArray(0);
     glUseProgram(0);
 }
@@ -183,23 +169,6 @@ bool CoffeeStandardObject::hasPhysics()
     return physics();
 }
 
-void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant* data, bool constant)
-{
-    ShaderMapping *map = new ShaderMapping;
-    map->constant = constant;
-    map->uniform = uniformName;
-    map->data = data;
-    uniforms.append(map);
-}
-
-void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture* texture)
-{
-    TextureMapping *map = new TextureMapping;
-    map->samplerName = samplerName;
-    map->texture = texture;
-    textures.append(map);
-}
-
 void CoffeeStandardObject::setPosition(float x, float y, float z)
 {
     position()->setValue(glm::vec3(x,y,z));
@@ -222,5 +191,15 @@ void CoffeeStandardObject::setShaderRef(QObject *sh)
     CoffeeShader* shader = qobject_cast<CoffeeShader*>(sh);
     if(shader)
         setShader(shader);
+}
+
+void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant *data)
+{
+    CoffeeUniformSetter::setUniform(uniformName,data);
+}
+
+void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture *texture)
+{
+    CoffeeUniformSetter::setTexture(samplerName,texture);
 }
 

@@ -49,7 +49,7 @@ private:
 
     CoffeeOutputSurface* screenSurface;
 
-    CoffeePlayerController* controller;
+//    CoffeePlayerController* controller;
     CoffeeDataContainer<QString,double>* timers;
     QPointer<CoffeeRenderer> renderer;
     QPointer<CoffeeWorldOpts> world;

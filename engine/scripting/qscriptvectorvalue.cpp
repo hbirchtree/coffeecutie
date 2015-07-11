@@ -176,3 +176,30 @@ void ScalarValue::bindValue(ScalarValue *val)
 {
     NumberContainer<ScalarDataType>::bindValue(((NumberContainer<ScalarDataType>*)val));
 }
+
+
+Vector2Value::Vector2Value(QObject *parent, const glm::vec2 &initial) :
+    QObject(parent),
+    NumberContainer<glm::vec2>(initial)
+{
+}
+
+Vector2Value::Vector2Value(QObject *parent, float x, float y) :
+    Vector2Value(parent,glm::vec2(x,y))
+{
+}
+
+QVariantList Vector2Value::value() const
+{
+    glm::vec2 v = getValue();
+    return QVariantList() << v.x << v.y;
+}
+
+void Vector2Value::setValue(const QVariantList &value)
+{
+    if(value.size()!=2){
+        qWarning("Invalid argument!");
+        return;
+    }
+    setValue(glm::vec2(value.at(0).toFloat(),value.at(1).toFloat()));
+}
