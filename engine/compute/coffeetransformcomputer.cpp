@@ -49,7 +49,7 @@ QVector<CoffeeTransformComputer::Particle> *CoffeeTransformComputer::getParticle
     return &startParticles;
 }
 
-ShaderContainer *CoffeeTransformComputer::getShader()
+CoffeeShader *CoffeeTransformComputer::getShader()
 {
     return tshader;
 }
@@ -140,7 +140,7 @@ void CoffeeTransformComputer::tickParticles()
     switchIndex();
 }
 
-void CoffeeTransformComputer::setShader(ShaderContainer *shader)
+void CoffeeTransformComputer::setShader(CoffeeShader *shader)
 {
     this->tshader = shader;
 }

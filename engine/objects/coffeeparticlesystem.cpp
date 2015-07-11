@@ -175,12 +175,17 @@ QObject *CoffeeParticleSystem::getTransformObject()
     return transform;
 }
 
-QPointer<ShaderContainer> CoffeeParticleSystem::getShader()
+QObject* CoffeeParticleSystem::getTextureQObject()
+{
+    return texture;
+}
+
+QPointer<CoffeeShader> CoffeeParticleSystem::getShader()
 {
     return shader;
 }
 
-void CoffeeParticleSystem::setShader(QPointer<ShaderContainer> value)
+void CoffeeParticleSystem::setShader(QPointer<CoffeeShader> value)
 {
     if(shader)
         shader->removeConsumer();
@@ -198,12 +203,19 @@ QPointer<CoffeeTexture> CoffeeParticleSystem::getTexture()
     return texture;
 }
 
-void CoffeeParticleSystem::setTexture(QPointer<CoffeeTexture> value)
+void CoffeeParticleSystem::setTexture(CoffeeTexture *value)
 {
     if(texture)
         texture->removeConsumer();
     texture = value;
     texture->addConsumer();
+}
+
+void CoffeeParticleSystem::setTexture(QObject *value)
+{
+    CoffeeTexture* tex = qobject_cast<CoffeeTexture*>(value);
+    if(tex)
+        setTexture(tex);
 }
 
 void CoffeeParticleSystem::setCamera(const CoffeeCamera *value)

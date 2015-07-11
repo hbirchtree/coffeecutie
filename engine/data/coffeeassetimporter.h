@@ -9,7 +9,7 @@ class CoffeeOmniLight;
 class CoffeeSkybox;
 class CoffeeMesh;
 class CoffeeMaterial;
-class ShaderContainer;
+class CoffeeShader;
 class CoffeeTexture;
 class CoffeeObject;
 class CoffeeParticleSystem;
@@ -50,7 +50,7 @@ public:
     QList<QPointer<CoffeeResource>> resources;
 
     QList<CoffeeWorldOpts*> worlds;
-    QHash<QString,QPointer<ShaderContainer>> shaders;
+    QHash<QString,QPointer<CoffeeShader>> shaders;
     QHash<QString,QPointer<CoffeeTexture>> textures;
 
     void merge(CoffeeAssetStorage* data);

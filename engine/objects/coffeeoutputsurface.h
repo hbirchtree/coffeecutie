@@ -4,7 +4,7 @@
 #include "coffeeobject.h"
 
 class CoffeeFrameBufferObject;
-class ShaderContainer;
+class CoffeeShader;
 class CoffeeMesh;
 class CoffeeWorldOpts;
 class TextureMapping;
@@ -64,7 +64,7 @@ protected:
     CoffeeTexture* textureTest = nullptr;
     QVector<ShaderMapping*> uniforms;
     CoffeeFrameBufferObject* framebuffer;
-    ShaderContainer* shader = nullptr;
+    CoffeeShader* shader = nullptr;
     QVector<CoffeeOutputChannel*> textures;
     QPointer<CoffeeMesh> surface;
     QPointer<CoffeeWorldOpts> world;

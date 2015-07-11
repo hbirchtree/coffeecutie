@@ -9,7 +9,7 @@ class CoffeeOmniLight;
 class CoffeeSkybox;
 class CoffeeMesh;
 class CoffeeMaterial;
-class ShaderContainer;
+class CoffeeShader;
 class CoffeeTexture;
 class CoffeeObject;
 class CoffeeParticleSystem;

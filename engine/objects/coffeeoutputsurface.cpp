@@ -106,7 +106,7 @@ void CoffeeOutputSurface::unload()
 
 void CoffeeOutputSurface::setShader(QObject *shader)
 {
-    ShaderContainer* msh = qobject_cast<ShaderContainer*>(shader);
+    CoffeeShader* msh = qobject_cast<CoffeeShader*>(shader);
     if(msh){
         this->shader = msh;
         setBaked(false);

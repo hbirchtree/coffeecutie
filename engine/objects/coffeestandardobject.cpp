@@ -112,12 +112,12 @@ void CoffeeStandardObject::setMesh(CoffeeMesh *mesh)
     pmesh->addConsumer();
 }
 
-ShaderContainer *CoffeeStandardObject::shader()
+CoffeeShader *CoffeeStandardObject::shader()
 {
     return pshader;
 }
 
-void CoffeeStandardObject::setShader(ShaderContainer *shader)
+void CoffeeStandardObject::setShader(CoffeeShader *shader)
 {
     if(pshader)
         pshader->removeConsumer();
@@ -219,7 +219,7 @@ void CoffeeStandardObject::setPhysicsObject(QObject *obj)
 
 void CoffeeStandardObject::setShaderRef(QObject *sh)
 {
-    ShaderContainer* shader = qobject_cast<ShaderContainer*>(sh);
+    CoffeeShader* shader = qobject_cast<CoffeeShader*>(sh);
     if(shader)
         setShader(shader);
 }

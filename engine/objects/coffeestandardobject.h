@@ -51,8 +51,8 @@ public:
 
     Q_INVOKABLE CoffeeMesh* mesh();
     void setMesh(CoffeeMesh* mesh);
-    Q_INVOKABLE ShaderContainer* shader();
-    void setShader(ShaderContainer* shader);
+    Q_INVOKABLE CoffeeShader* shader();
+    void setShader(CoffeeShader* shader);
     Q_INVOKABLE CoffeeMaterial* material();
     void setMaterial(CoffeeMaterial *mtl);
 
@@ -93,7 +93,7 @@ protected:
     QVector<TextureMapping*> textures;
 
     QPointer<CoffeeMesh> pmesh;
-    QPointer<ShaderContainer> pshader;
+    QPointer<CoffeeShader> pshader;
     QPointer<CoffeeMaterial> pmaterial;
 };
 

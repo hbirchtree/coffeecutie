@@ -4,16 +4,16 @@
 #include <QMetaEnum>
 #include "engine/data/coffeeresource.h"
 
-ShaderContainer::ShaderContainer(QObject *parent) : QObject(parent)
+CoffeeShader::CoffeeShader(QObject *parent) : QObject(parent)
 {
 }
 
-ShaderContainer::~ShaderContainer()
+CoffeeShader::~CoffeeShader()
 {
 
 }
 
-bool ShaderContainer::buildProgram(CoffeeResource *vertShaderFile,
+bool CoffeeShader::buildProgram(CoffeeResource *vertShaderFile,
                                    CoffeeResource *fragShaderFile,
                                    CoffeeResource *geomShaderFile)
 {
@@ -36,17 +36,17 @@ bool ShaderContainer::buildProgram(CoffeeResource *vertShaderFile,
     return true;
 }
 
-bool ShaderContainer::buildProgram(CoffeeResource *vertShaderFile,
+bool CoffeeShader::buildProgram(CoffeeResource *vertShaderFile,
                                    CoffeeResource *fragShaderFile){
     return buildProgram(vertShaderFile,fragShaderFile,nullptr);
 }
 
-bool ShaderContainer::buildProgram()
+bool CoffeeShader::buildProgram()
 {
     return buildProgram(vertShaderFile,fragShaderFile,m_geometryShader);
 }
 
-void ShaderContainer::compileShaders()
+void CoffeeShader::compileShaders()
 {
     std::string src = vertShaderFile->data()->toStdString();
     const char* code = src.c_str();
@@ -65,12 +65,12 @@ void ShaderContainer::compileShaders()
     }
 }
 
-void ShaderContainer::createProgram()
+void CoffeeShader::createProgram()
 {
     programId = glCreateProgram();
 }
 
-bool ShaderContainer::addShader(const char *data, QString id, const GLenum &shaderType)
+bool CoffeeShader::addShader(const char *data, QString id, const GLenum &shaderType)
 {
     GLuint shader = compileShaderSource(data,id,shaderType);
     if(shader>0)
@@ -80,7 +80,7 @@ bool ShaderContainer::addShader(const char *data, QString id, const GLenum &shad
     return true;
 }
 
-bool ShaderContainer::linkProgram()
+bool CoffeeShader::linkProgram()
 {
     for(GLuint shader : shaders)
         glAttachShader(programId,shader);
@@ -133,13 +133,13 @@ bool ShaderContainer::linkProgram()
     return true;
 }
 
-GLuint ShaderContainer::compileShader(CoffeeResource* shader, const GLenum &shaderType){
+GLuint CoffeeShader::compileShader(CoffeeResource* shader, const GLenum &shaderType){
     std::string src = shader->data()->toStdString();
     const char* code = src.c_str();
     return compileShaderSource(code,shader->source(),shaderType);
 }
 
-GLuint ShaderContainer::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
+GLuint CoffeeShader::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
 {
     GLuint handle = glCreateShader(shaderType);
 
@@ -160,12 +160,12 @@ GLuint ShaderContainer::compileShaderSource(const char *data, QString id, const 
     return handle;
 }
 
-int ShaderContainer::getProgramId()
+int CoffeeShader::getProgramId()
 {
     return programId;
 }
 
-void ShaderContainer::unload()
+void CoffeeShader::unload()
 {
     removeAllocation();
     if(isAllocated())
@@ -176,48 +176,48 @@ void ShaderContainer::unload()
     programId = 0;
 }
 
-void ShaderContainer::setVerbosity(uint verbosity)
+void CoffeeShader::setVerbosity(uint verbosity)
 {
     this->verbosity = verbosity;
 }
-void ShaderContainer::setGeometryShader(CoffeeResource *geometryShader)
+void CoffeeShader::setGeometryShader(CoffeeResource *geometryShader)
 {
     m_geometryShader = geometryShader;
 }
 
-uint ShaderContainer::getVerbosity() const
+uint CoffeeShader::getVerbosity() const
 {
     return verbosity;
 }
 
-void ShaderContainer::setVertexShader(CoffeeResource *value)
+void CoffeeShader::setVertexShader(CoffeeResource *value)
 {
     vertShaderFile = value;
 }
 
-void ShaderContainer::setFragmentShader(CoffeeResource *value)
+void CoffeeShader::setFragmentShader(CoffeeResource *value)
 {
     fragShaderFile = value;
 }
 
 
-int ShaderContainer::getUniformLocation(QString name){
+int CoffeeShader::getUniformLocation(QString name){
     if(uniforms.contains(name))
         return uniforms.value(name);
     return -1;
 }
 
-const QHash<QString, GLenum> ShaderContainer::getAttributes()
+const QHash<QString, GLenum> CoffeeShader::getAttributes()
 {
     return attributes_t;
 }
 
-const QHash<QString, GLenum> ShaderContainer::getUniforms()
+const QHash<QString, GLenum> CoffeeShader::getUniforms()
 {
     return uniforms_t;
 }
 
-int ShaderContainer::getAttributeLocation(QString name){
+int CoffeeShader::getAttributeLocation(QString name){
     if(attributes.contains(name))
         return attributes.value(name);
     return -1;
@@ -225,56 +225,56 @@ int ShaderContainer::getAttributeLocation(QString name){
     return handle;
 }
 
-void ShaderContainer::setUniform(QString name,const glm::vec3& val){
+void CoffeeShader::setUniform(QString name,const glm::vec3& val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC3)
         glUniform3f(uniforms.value(name),val.x,val.y,val.z);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, const glm::vec4 &val){
+void CoffeeShader::setUniform(QString name, const glm::vec4 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC4)
         glUniform4f(uniforms.value(name),val.x,val.y,val.z,val.w);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, const glm::vec2 &val){
+void CoffeeShader::setUniform(QString name, const glm::vec2 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC2)
         glUniform2f(uniforms.value(name),val.x,val.y);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, GLfloat val){
+void CoffeeShader::setUniform(QString name, GLfloat val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT)
         glUniform1f(uniforms.value(name),val);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, int val){
+void CoffeeShader::setUniform(QString name, int val){
     if(uniforms.keys().contains(name))
         glUniform1i(uniforms.value(name),val);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, const glm::mat3 &val){
+void CoffeeShader::setUniform(QString name, const glm::mat3 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_MAT3)
         glUniformMatrix3fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, const glm::mat4 &val){
+void CoffeeShader::setUniform(QString name, const glm::mat4 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_MAT4)
         glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
+void CoffeeShader::setUniform(QString name, const ShaderVariant* val){
     //According to Callgrind, this is the time-consuming part of rendering.
     if(uniforms.keys().contains(name)){
         switch(val->getType()){
@@ -310,7 +310,7 @@ void ShaderContainer::setUniform(QString name, const ShaderVariant* val){
     }
 }
 
-QVariantMap ShaderContainer::getUniformsMap()
+QVariantMap CoffeeShader::getUniformsMap()
 {
     QVariantMap r;
     for(QString k : uniforms.keys()){
@@ -319,7 +319,7 @@ QVariantMap ShaderContainer::getUniformsMap()
     return r;
 }
 
-QVariantMap ShaderContainer::getAttributesMap()
+QVariantMap CoffeeShader::getAttributesMap()
 {
     QVariantMap r;
     for(QString k : attributes.keys()){
@@ -330,21 +330,21 @@ QVariantMap ShaderContainer::getAttributesMap()
     return r;
 }
 
-QString ShaderContainer::fragmentShader() const
+QString CoffeeShader::fragmentShader() const
 {
     if(fragShaderFile)
         return fragShaderFile->source();
     return "";
 }
 
-QString ShaderContainer::vertexShader() const
+QString CoffeeShader::vertexShader() const
 {
     if(vertShaderFile)
         return vertShaderFile->source();
     return "";
 }
 
-QString ShaderContainer::geometryShader() const
+QString CoffeeShader::geometryShader() const
 {
     if(m_geometryShader)
         return m_geometryShader->source();

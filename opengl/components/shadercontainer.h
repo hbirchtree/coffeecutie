@@ -7,7 +7,7 @@
 class ShaderVariant;
 class CoffeeResource;
 
-class ShaderContainer : public QObject, public CoffeeGameAsset
+class CoffeeShader : public QObject, public CoffeeGameAsset
 {
     Q_PROPERTY(QString fragmentShader READ fragmentShader)
     Q_PROPERTY(QString vertexShader READ vertexShader)
@@ -19,8 +19,8 @@ class ShaderContainer : public QObject, public CoffeeGameAsset
 
     Q_OBJECT
 public:
-    ShaderContainer(QObject *parent);
-    ~ShaderContainer();
+    CoffeeShader(QObject *parent);
+    ~CoffeeShader();
 
     //Full-process functions
     Q_INVOKABLE bool buildProgram(CoffeeResource *vertShaderFile, CoffeeResource *fragShaderFile, CoffeeResource *geomShaderFile);

@@ -5,7 +5,7 @@
 
 class CoffeeMesh;
 class CoffeeCamera;
-class ShaderContainer;
+class CoffeeShader;
 class CoffeeTexture;
 class CoffeeResource;
 
@@ -24,8 +24,8 @@ public:
     QPointer<CoffeeMesh> getSkymesh() const;
     void setSkymesh(QPointer<CoffeeMesh> value);
 
-    QPointer<ShaderContainer> getShader() const;
-    void setShader(QPointer<ShaderContainer> value);
+    QPointer<CoffeeShader> getShader() const;
+    void setShader(QPointer<CoffeeShader> value);
 
 public slots:
     void render();
@@ -38,7 +38,7 @@ protected:
     QMap<GLenum,CoffeeResource*> cubemapping;
 
     QPointer<CoffeeCamera> camera;
-    QPointer<ShaderContainer> shader;
+    QPointer<CoffeeShader> shader;
     QPointer<CoffeeTexture> texture;
     QPointer<CoffeeMesh> skymesh;
 

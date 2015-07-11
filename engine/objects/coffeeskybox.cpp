@@ -79,12 +79,12 @@ void CoffeeSkybox::load()
 
     qDebug("Skybox loaded");
 }
-QPointer<ShaderContainer> CoffeeSkybox::getShader() const
+QPointer<CoffeeShader> CoffeeSkybox::getShader() const
 {
     return shader;
 }
 
-void CoffeeSkybox::setShader(QPointer<ShaderContainer> value)
+void CoffeeSkybox::setShader(QPointer<CoffeeShader> value)
 {
     if(value){
         if(shader)

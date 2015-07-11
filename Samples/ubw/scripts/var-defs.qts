@@ -15,7 +15,7 @@ var world = coffeeroot.evloop.world1;
 var controller = coffeeroot.evloop.cameracontrol;
 var surface = coffeeroot.evloop.screenSurface;
 
-surface.shader = assets.deferred_display;
+surface.shader = assets.shaders.deferred_display;
 
 world.testparts.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
 world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];

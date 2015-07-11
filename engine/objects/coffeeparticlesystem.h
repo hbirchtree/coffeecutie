@@ -4,7 +4,7 @@
 #include "engine/objects/coffeeobject.h"
 #include <QColor>
 
-class ShaderContainer;
+class CoffeeShader;
 class ShaderVariant;
 class CoffeeTexture;
 class CoffeeCamera;
@@ -15,6 +15,8 @@ class CoffeeParticleSystem : public QObject,public CoffeeObject
     Q_PROPERTY(bool additive READ additive WRITE setAdditive)
     Q_PROPERTY(QColor particleColor READ getParticleColor WRITE setParticleColor)
     Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
+
+    Q_PROPERTY(QObject* texture READ getTextureQObject WRITE setTexture)
 
     Q_PROPERTY(QObject* transform READ getTransformObject)
 
@@ -32,16 +34,17 @@ public:
     void setCamera(const CoffeeCamera *value);
 
     QPointer<CoffeeTexture> getTexture();
-    void setTexture(QPointer<CoffeeTexture> value);
 
-    QPointer<ShaderContainer> getShader();
-    void setShader(QPointer<ShaderContainer> value);
+    QPointer<CoffeeShader> getShader();
+    void setShader(QPointer<CoffeeShader> value);
 
     CoffeeTransformComputer* getTransform();
 
     bool additive() const;
 
     QObject* getTransformObject();
+
+    QObject* getTextureQObject();
 
 signals:
     void requestTick(float d);
@@ -55,6 +58,8 @@ public slots:
     void setParticleSize(float particleSize);
     void setParticleColor(QColor particleColor);
     void setAdditive(bool additive);
+    void setTexture(CoffeeTexture* value);
+    void setTexture(QObject* value);
 
 protected:
     CoffeeTransformComputer* transform = nullptr;
@@ -63,7 +68,7 @@ protected:
     glm::vec4 particleColor;
 
     bool baked = false;
-    QPointer<ShaderContainer> shader;
+    QPointer<CoffeeShader> shader;
     QPointer<CoffeeTexture> texture;
     const CoffeeCamera* camera;
 
@@ -82,6 +87,7 @@ private:
     ShaderVariant* randAmp;
     ShaderVariant* partSpread;
     ShaderVariant* spawncount;
+    QObject* m_texture;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

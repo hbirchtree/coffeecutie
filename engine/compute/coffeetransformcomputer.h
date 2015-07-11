@@ -3,7 +3,7 @@
 
 #include "general/common.h"
 
-class ShaderContainer;
+class CoffeeShader;
 class Vector3Value;
 class ShaderVariant;
 class ShaderMapping;
@@ -48,7 +48,7 @@ public:
 
     QVector<Particle>* getParticles();
 
-    ShaderContainer *getShader();
+    CoffeeShader *getShader();
 
     QVariantList feedbackAttributes() const;
 
@@ -67,7 +67,7 @@ public slots:
     void unload();
     void tickParticles();
 
-    void setShader(ShaderContainer* shader);
+    void setShader(CoffeeShader* shader);
     void setParticleSpread(float particleSpread);
     void setParticleMass(float particleMass);
     void setMaxParticles(quint32 maxParticles);
@@ -90,7 +90,7 @@ private:
     bool m_loaded = false;
     bool m_started = false;
 
-    QPointer<ShaderContainer> tshader;
+    QPointer<CoffeeShader> tshader;
 
     GLuint tfbs[2];
     GLuint vbos[2];

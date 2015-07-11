@@ -312,7 +312,7 @@ CoffeeAssetStorage *CoffeeAssetImporter::importShader(const QVariantMap &data, c
         target->setSource(shaderFile.filePath());
     }
 
-    ShaderContainer* shader = new ShaderContainer(0);
+    CoffeeShader* shader = new CoffeeShader(0);
     shader->setVertexShader(vertshader);
     shader->setFragmentShader(fragshader);
     shader->setGeometryShader(geomshader);
@@ -382,7 +382,7 @@ void CoffeeAssetStorage::setParents(QObject *parent)
         p->setParent(parent);
     }
 
-    for(QPointer<ShaderContainer> p : shaders)
+    for(QPointer<CoffeeShader> p : shaders)
         p->setParent(parent);
 }
 
