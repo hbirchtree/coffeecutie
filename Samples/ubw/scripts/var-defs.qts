@@ -14,7 +14,7 @@ var inputClock = new QTimer;
 var controller = new CoffeePlayerController;
 var surface = coffeeroot.evloop.screenSurface;
 
-world.connectSignals(controller);
+//world.connectSignals(controller);
 
 surface.shader = assets.shaders.deferred_display;
 

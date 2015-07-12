@@ -83,6 +83,7 @@ public:
         ActionSetActivationState,
         ActionSetAngularFactor,
         ActionSetFriction,
+        ActionSetRestitution,
         ActionSetRollingFriction,
         ActionSetLinearFactor
     };

@@ -99,8 +99,8 @@ public slots:
 
 private:
     float m_mass = 0.f;
-    float m_friction = 0.5f;
-    float m_restitution = 0.1f;
+    float m_friction = 1.f;
+    float m_restitution = 1.f;
     PhysicalShape m_shape = Shape_None;
     QString m_fileSource;
     QVariantList m_scale;

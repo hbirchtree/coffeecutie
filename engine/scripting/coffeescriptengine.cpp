@@ -55,15 +55,20 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         e.globalObject().setProperty("Vector3Value",mo);
     }
     {
+        QScriptValue pdCt = e.newFunction(scalarValueConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("ScalarValue",mo);
+    }
+    {
         QScriptValue pdCt = e.newFunction(quatValueConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("QuatValue",mo);
     }
-    {
-        QScriptValue pdCt = e.newFunction(vectorVariantConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("VectorVariant",mo);
-    }
+//    {
+//        QScriptValue pdCt = e.newFunction(vectorVariantConstructor);
+//        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+//        e.globalObject().setProperty("VectorVariant",mo);
+//    }
     {
         QScriptValue pdCt = e.newFunction(coffeePhysEvConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
@@ -179,6 +184,13 @@ QScriptValue CoffeeScriptEngine::physicsObjectConstructor(QScriptContext *ctxt, 
 QScriptValue CoffeeScriptEngine::physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new PhysicsDescriptor(parent);
+    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+}
+
+QScriptValue CoffeeScriptEngine::scalarValueConstructor(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new ScalarValue(parent,0.f);
     return eng->newQObject(o,QScriptEngine::ScriptOwnership);
 }
 

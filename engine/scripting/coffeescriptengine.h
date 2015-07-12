@@ -30,8 +30,11 @@ private:
     static QScriptValue neuralNetConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+
+    static QScriptValue scalarValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+
     static QScriptValue vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeePlayerControllerConstructor(QScriptContext *ctxt, QScriptEngine *eng);

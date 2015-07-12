@@ -209,7 +209,7 @@
 					"shape": "sphere",
 					"mass": 10,
 					"friction": 1,
-					"restitution":0.8,
+					"restitution":0.1,
 					"inertia": [0,0,1]
 				}
 			}

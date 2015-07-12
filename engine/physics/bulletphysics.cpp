@@ -85,23 +85,28 @@ void BulletPhysics::addObject(PhysicsObject *object)
         return;
     PhysicsDescriptor* desc = object->getDescr();
     btCollisionShape* shape = nullptr;
+    bool rollable = false;
     switch(desc->shape()){
     case PhysicsDescriptor::Shape_Box:
         shape = new btBoxShape(convert_glm(
                                    CoffeeObjectFactory::varListToVec3(desc->scale())));
         break;
     case PhysicsDescriptor::Shape_Sphere:
+        rollable = true;
         shape = new btSphereShape(desc->scale().at(0).toFloat());
         break;
     case PhysicsDescriptor::Shape_Cylinder:
+        rollable = true;
         shape = new btCylinderShape(convert_glm(
                                         CoffeeObjectFactory::varListToVec3(desc->scale())));
         break;
     case PhysicsDescriptor::Shape_Capsule:
+        rollable = true;
         shape = new btCapsuleShape(desc->scale().at(0).toFloat(),
                                    desc->scale().at(1).toFloat());
         break;
     case PhysicsDescriptor::Shape_Cone:
+        rollable = true;
         shape = new btConeShape(desc->scale().at(0).toFloat(),
                                 desc->scale().at(1).toFloat());
         break;
@@ -122,11 +127,11 @@ void BulletPhysics::addObject(PhysicsObject *object)
     btRigidBody::btRigidBodyConstructionInfo ci(desc->mass(),
                                                 mstate,
                                                 shape,
-                                                convert_glm(CoffeeObjectFactory::varListToVec3(desc->inertia())));
+                                                btVector3(0,0,0));
     btRigidBody* rb = new btRigidBody(ci);
 
-    rb->setAngularVelocity(
-                convert_glm(CoffeeObjectFactory::varListToVec3(desc->inertia())));
+//    rb->setAngularVelocity(
+//                convert_glm(CoffeeObjectFactory::varListToVec3(desc->inertia())));
     rb->setFriction(desc->friction());
     rb->setRestitution(desc->restitution());
 
@@ -211,8 +216,8 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
             btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
             switch(event->type()){
             case CoffeePhysicsEvent::ActionSetTransform:{
-                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
-                btQuaternion v2 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(1))->getRawQuat());
+                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
+                btQuaternion v2 = convert_glm(qvariant_cast<QuatValue*>(event->getData().at(1))->getValue());
                 btTransform pt = obj->getWorldTransform();
                 pt.setOrigin(v1);
                 pt.setRotation(v2);
@@ -220,7 +225,7 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
                 break;
             }
             case CoffeePhysicsEvent::ActionSetPosition:{
-                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
                 btTransform pt = obj->getWorldTransform();
                 pt.setOrigin(v1);
                 obj->setWorldTransform(pt);
@@ -229,14 +234,14 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
             case CoffeePhysicsEvent::ActionSetAngularVelocity:
                 break;
             case CoffeePhysicsEvent::ActionSetOrientation:{
-                btQuaternion v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawQuat());
+                btQuaternion v1 = convert_glm(qvariant_cast<QuatValue*>(event->getData().at(0))->getValue());
                 btTransform rt = obj->getWorldTransform();
                 rt.setRotation(v1);
                 obj->setWorldTransform(rt);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyForce:{
-                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
                 obj->activate(true);
                 obj->applyCentralForce(v1);
                 break;
@@ -244,22 +249,35 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
             case CoffeePhysicsEvent::ActionApplyRelativeForce:
                 break;
             case CoffeePhysicsEvent::ActionApplyImpulse:{
-                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                Vector3Value* v1_o = qvariant_cast<Vector3Value*>(event->getData().at(0));
+                if(!v1_o)
+                    return;
+                btVector3 v1 = convert_glm(v1_o->getValue());
                 obj->activate(true);
                 obj->applyCentralImpulse(v1);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
-                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
-                btVector3 v2 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(1))->getRawVec3());
+                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
+                btVector3 v2 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(1))->getValue());
                 obj->activate(true);
                 obj->applyImpulse(v1,v2);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyTorque:{
-                btVector3 v1 = convert_glm(qvariant_cast<VectorVariant*>(event->getData().at(0))->getRawVec3());
+                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
                 obj->activate(true);
                 obj->applyTorque(v1);
+                break;
+            }
+            case CoffeePhysicsEvent::ActionSetFriction:{
+                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
+                obj->setFriction(s->getValue());
+                break;
+            }
+            case CoffeePhysicsEvent::ActionSetRestitution:{
+                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
+                obj->setRestitution(s->getValue());
                 break;
             }
             default:

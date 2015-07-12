@@ -1,17 +1,29 @@
 var cameraThrottle = 1.0;
 
 //Input should only interact with the controller-object
+var c_target = world.blade.physics;
+var c_moveProp = new CoffeePhysicsEvent();
+c_moveProp.type = PhysicsProperty.ActionApplyImpulse;
+var c_vec = new Vector3Value();
+c_vec.value = [0,100,0];
+c_moveProp.data = [c_vec];
+c_moveProp.addTarget(c_target);
+c_target.modifyPhysics(c_moveProp);
 
 function axisReact(axe,val,diff){
 	switch(axe){
 	case 0:{
-		val = val * cameraThrottle;
-		controller.addSpeedRight(coffeeroot.evloop.world.camera.right,[val*5,val*5,val*5]);
+//		val = val * cameraThrottle;
+//		controller.addSpeedRight(coffeeroot.evloop.world.camera.right,[val*5,val*5,val*5]);
+		c_vec.value = [val,0,0];
+		c_target.modifyPhysics(c_moveProp);
 		break;
 	}
 	case 1:{
-		val = val * cameraThrottle;
-		controller.addSpeedForward(coffeeroot.evloop.world.camera.forward,[-val*5,-val*5,-val*5]);
+//		val = val * cameraThrottle;
+//		controller.addSpeedForward(coffeeroot.evloop.world.camera.forward,[-val*5,-val*5,-val*5]);
+		c_vec.value = [0,0,val];
+		c_target.modifyPhysics(c_moveProp);
 		break;
 	}
 	case 3:{

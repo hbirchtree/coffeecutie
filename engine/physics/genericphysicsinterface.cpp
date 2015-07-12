@@ -74,7 +74,7 @@ VectorVariant::VectorType VectorVariant::type() const
 
 glm::vec3 VectorVariant::getRawVec3() const
 {
-    if(type()!=Vector3)
+    if(type()!=Vector3||v.size()!=3)
         return glm::vec3();
     return glm::vec3(v.at(0),v.at(1),v.at(2));
 }
