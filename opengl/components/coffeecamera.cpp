@@ -252,6 +252,11 @@ QObject *CoffeeCamera::getCameraPositionVariant() const
     return cameraPosVariant;
 }
 
+void CoffeeCamera::setCameraAspect(QResizeEvent ev)
+{
+    setAspect((float)ev.size().width()/(float)ev.size().height());
+}
+
 float CoffeeCamera::getZnear() const
 {
     return znear;

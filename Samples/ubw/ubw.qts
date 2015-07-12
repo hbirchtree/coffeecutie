@@ -2,5 +2,3 @@
 
 // and tests galore!
 #inc "scripts/testing.qts"
-
-world.camera.position.bindValue(world.blade.position);

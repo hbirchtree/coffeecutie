@@ -43,7 +43,7 @@ public:
     virtual double getLoopTime() const;
     virtual QString getWindowTitle() const;
     virtual QSize getWindowDimensions() const;
-    virtual QSize getCurrentFramebufferSize() const;
+    Q_INVOKABLE virtual QSize getCurrentFramebufferSize() const;
     virtual QSize *getFramebufferSizePt();
     virtual int getMouseInputMode() const;
     virtual bool isMouseGrabbed() const;
@@ -99,7 +99,7 @@ private:
 
     //if either fails, stop trying it
     bool gpumemcheck_nvidia = true;
-//    bool gpumemcheck_ati = true; //If it ever was not a pain.
+//    bool gpumemcheck_ati = true; //Not even tested
 
     qint32 vmem_free = 0;
     qint32 vmem_total = 0;
@@ -126,6 +126,7 @@ signals:
     void winFocusChanged(QFocusEvent event);
     void winRefresh();
     void winFrameBufferResize(QResizeEvent event);
+    void windowAspectChanged(float aspect);
     void winClose();
     void winStateChanged(QWindowStateChangeEvent event);
 

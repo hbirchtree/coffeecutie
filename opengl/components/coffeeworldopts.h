@@ -1,7 +1,6 @@
 #ifndef COFFEEWORLDOPTS_H
 #define COFFEEWORLDOPTS_H
 #include "general/common.h"
-#include "engine/physics/genericphysicsinterface.h"
 
 #include <QColor>
 
@@ -96,6 +95,7 @@ public slots:
     void setFogColorValue(QColor fogColor);
     void setClearColorValue(QColor clearColor);
 
+    void connectSignals(QObject* controller);
     void connectSignals(CoffeePlayerController* controller);
     void disconnectSignals();
     //TODO : Disconnect-version of the above, necessary for switching world objects
@@ -122,7 +122,7 @@ private:
 
     ShaderVariant* fogColorVariant;
     ShaderVariant* fogDensityVariant;
-    bool m_loadedState;
+    bool m_loadedState = false;
 
     QVector<QMetaObject::Connection> connections;
 };

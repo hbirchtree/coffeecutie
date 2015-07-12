@@ -155,7 +155,9 @@ void CoffeeRenderer::queueFunction(std::function<void ()> *func)
 
 void CoffeeRenderer::setSwapInterval(uint interval)
 {
-    glfwSwapInterval(interval);
+    runqueue.append(new std::function<void()>([=](){
+        glfwSwapInterval(interval);
+    }));
 }
 
 void CoffeeRenderer::setSamples(uint value)
@@ -387,6 +389,7 @@ static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
 {
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
     rend->winFrameBufferResize(QResizeEvent(QSize(width,height),rend->getCurrentFramebufferSize()));
+    rend->windowAspectChanged((float)width/(float)height);
 }
 static void _glfw_winevent_focus(GLFWwindow* window, int val){
     CoffeeRenderer* rend = (CoffeeRenderer*)glfwGetWindowUserPointer(window);
@@ -498,19 +501,6 @@ int CoffeeRenderer::init(){
            .arg(QString::fromStdString(glbinding::ContextInfo::renderer()))
            .arg(QString::fromStdString(glbinding::ContextInfo::vendor()))
            .arg(QString::fromStdString(glbinding::ContextInfo::version().toString())).toStdString().c_str());
-
-    setSwapInterval(1);
-
-//    glbinding::setAfterCallback([](const glbinding::FunctionCall&){
-//        gl::GLenum error = glGetError();
-//        if(error!=GL_NO_ERROR)
-//            fprintf(stderr,"OGLERROR: error code:%i\n",static_cast<int>(error));
-//    });
-//    glbinding::setBeforeCallback([](const glbinding::FunctionCall&){
-//        gl::GLenum error = glGetError();
-//        if(error!=GL_NO_ERROR)
-//            fprintf(stderr,"OGLERROR: error code:%i\n",static_cast<int>(error));
-//    });
 
 #ifdef RENDERER_DO_DEBUG
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

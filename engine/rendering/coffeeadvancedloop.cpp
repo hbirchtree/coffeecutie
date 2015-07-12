@@ -32,17 +32,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRenderer* renderer
     this->scriptEngine = new CoffeeScriptEngine(this);
     this->factory = new CoffeeObjectFactory(this);
     this->factory->setObjectName("factory");
-    factory->setParent(this);
-
-    qDebug("Importing objects from file");
-//    QList<CoffeeWorldOpts*> worlds = factory->importObjects(fileSource,this);
-//    if(worlds.isEmpty())
-//        qFatal("Failed to load any world information!");
-//    world = worlds.first();
-//    connect(renderer,SIGNAL(contextReportFrametime(float)),world,SLOT(tickObjects(float)));
-
-//    world->setRenderer(renderer);
-//    world->connectSignals(controller);
 
     _rendering_loop_init = [=](){
 
@@ -117,12 +106,12 @@ void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 //    timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
 
     qDebug("Setting up miscellaneous signals and slots");
-    renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){ //needs to be moved into QtScript
-        if(glfwGetTime()>=timers->getValue("fps")){
-            qDebug("FPS: %.0f",1.f/frametime);
-            timers->setValue("fps",glfwGetTime()+1);
-        }
-    });
+//    renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){ //needs to be moved into QtScript
+//        if(glfwGetTime()>=timers->getValue("fps")){
+//            qDebug("FPS: %.0f",1.f/frametime);
+//            timers->setValue("fps",glfwGetTime()+1);
+//        }
+//    });
 }
 
 QObject *CoffeeAdvancedLoop::getFactory()

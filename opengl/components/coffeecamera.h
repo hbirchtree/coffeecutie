@@ -74,10 +74,12 @@ public:
     QObject* getCameraRightVariant() const;
     QObject* getCameraForwardVariant() const;
     QObject* getCameraPositionVariant() const;
+    void setCameraAspect(QResizeEvent ev);
 
 signals:
 
 public slots:
+
     void clearFramebufferSizeObject();
 
     void setFov(float fov);

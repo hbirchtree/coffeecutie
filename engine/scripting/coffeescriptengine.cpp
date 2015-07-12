@@ -13,6 +13,7 @@
 
 #include "engine/ai/coffeeneuralnet.h"
 
+#include <QResizeEvent>
 #include <QRegExp>
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
@@ -22,8 +23,7 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
     qRegisterMetaType<ScalarDataType>("ScalarDataType");
     qRegisterMetaType<ShaderVariant*>("ShaderVariant*");
     qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
-//    qRegisterMetaType<CoffeeInstanceData*>("CoffeeInstanceData*");
-
+    qRegisterMetaType<CoffeePlayerController*>("CoffeePlayerController*");
     qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
 
     qScriptRegisterMetaType(&e,pointToScript,pointFromScript);

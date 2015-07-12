@@ -7,13 +7,14 @@ var objStack = new Array(); //Here we store some objects to avoid them being des
 var assets = factory.importAssets("ubw.json");
 coffeeroot.evloop.world = assets.worlds[0];
 assets.worlds[0].setRenderer(renderer);
-assets.worlds[0].connectSignals(coffeeroot.evloop.cameracontrol);
-renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
 
 //Some global variables for simplicity
 var world = coffeeroot.evloop.world1;
-var controller = new CoffeePlayerControl();
+var inputClock = new QTimer;
+var controller = new CoffeePlayerController;
 var surface = coffeeroot.evloop.screenSurface;
+
+world.connectSignals(controller);
 
 surface.shader = assets.shaders.deferred_display;
 
@@ -23,13 +24,33 @@ world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","ou
 //Set up deferred rendering
 #inc "display/surface-setup.qts"
 
-//Define the shader bindings
-#inc "rendering/shader-setup.qts"
+var framecheck = 0.0;
 
 function printFrametime(frametime){
-	print("FPS: {1:{0}}".format("02f",frametime));
+	if(framecheck <= renderer.loopTime){
+		print("FPS: $1".replace("$1",(1.0/frametime).toFixed(1)));
+		framecheck = renderer.loopTime+1.0;
+	}
+}
+function applyAspectChange(aspect){
+	world.camera.aspectRatio = aspect;
 }
 
+world.lights[0].position.bindValue(world.camera.position);
+renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
+renderer.contextReportFrametime.connect(world.testparts.setFrametime);
+renderer.contextReportFrametime.connect(printFrametime);
+renderer.windowAspectChanged.connect(applyAspectChange);
+renderer.setSwapInterval(0);
+
+world.camera.position.bindValue(world.blade.position);
+
+world.plane.rotation.value = [2,-3,0,0];
+world.fogDensity = 0.03;
+world.lights[0].attenuation = 0.003;
+
+//Define the shader bindings
+#inc "rendering/shader-setup.qts"
 //Set up objects for rendering
 {
 	var objects = [world.gear, world.plane, world.blade];
@@ -38,15 +59,5 @@ function printFrametime(frametime){
 		objStandardInitShader(objects[i]);
 	}
 }
-
-world.lights[0].position.bindValue(world.camera.position);
-renderer.contextReportFrametime.connect(world.testparts.setFrametime);
-renderer.contextReportFrametime.connect(printFrametime);
-renderer.setSwapInterval(0);
-
-world.plane.rotation.value = [2,-3,0,0];
-world.fogDensity = 0.03;
-world.lights[0].attenuation = 0.003;
-
 //Set up input and etc.
 #inc "input/event-handling.qts"

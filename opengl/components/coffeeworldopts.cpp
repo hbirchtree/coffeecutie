@@ -164,11 +164,15 @@ void CoffeeWorldOpts::setClearColorValue(QColor clearColor)
     qDebug() << "New color:" << clearColor;
 }
 
+void CoffeeWorldOpts::connectSignals(QObject *controller)
+{
+    CoffeePlayerController* c = qobject_cast<CoffeePlayerController*>(controller);
+    if(c)
+        connectSignals(c);
+}
+
 void CoffeeWorldOpts::connectSignals(CoffeePlayerController *controller)
 {
-    connections.append(connect(renderer.data(),&CoffeeRenderer::winFrameBufferResize,[=](QResizeEvent ev){
-        getCamera()->setAspect((float)ev.size().width()/(float)ev.size().height());
-    }));
     connections.append(connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
         getCamera()->offsetOrientation(d.y,d.x);
     }));
@@ -206,6 +210,10 @@ glm::vec4 CoffeeWorldOpts::getClearColor() const
 void CoffeeWorldOpts::setClearColor(const glm::vec4 &value)
 {
     clearColor = value;
+    if(renderer)
+        renderer->queueFunction(new std::function<void()>([=](){
+            renderer->updateRendererClearColor(getClearColor());
+        }));
 }
 
 bool CoffeeWorldOpts::wireframeMode() const
