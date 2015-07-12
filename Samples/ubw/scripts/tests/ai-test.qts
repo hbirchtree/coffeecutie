@@ -1,0 +1,20 @@
+
+//Here we test out the neural networks.
+
+var net = new CoffeeNeuralNet;
+net.createNeuron();
+net.createNeuron();
+net.createNeuron();
+net.neurons[0].type = CoffeeNeuronType.Sensor;
+net.neurons[0].addOutput(net.neurons[1]);
+net.neurons[0].addOutput(net.neurons[2]);
+net.neurons[0].badify(net.neurons[2],0.1);
+
+function testFunc1(){
+	print("slot 1");
+}
+function testFunc2(){
+	print("slot 2");
+}
+net.neurons[1].output.connect(testFunc1);
+net.neurons[2].output.connect(testFunc2);

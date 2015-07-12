@@ -1,0 +1,15 @@
+surface.setMesh(assets.getMesh("quad:"));
+surface.setWorld(world);
+surface.setUniform("cameraPosition",world.camera.positionVariant);
+surface.setUniform("light.position",world.lights[0].positionVariant);
+surface.setUniform("light.intensities",world.lights[0].colorVariant);
+surface.setUniform("light.attenuation",world.lights[0].attenuationVariant);
+surface.setUniform("light.ambientCoefficient",world.lights[0].ambientCoefficientVariant);
+surface.setUniform("fogParams.fDensity",world.fogDensityVariant);
+surface.setUniform("fogParams.fColor",world.fogColorVariant);
+
+surface.framebuffer.setNumTextures(5);
+surface.setFramebufferMapping("diffuseSampler",2,0);
+surface.setFramebufferMapping("normalSampler",1,1);
+surface.setFramebufferMapping("specularSampler",4,2);
+surface.setFramebufferMapping("positionSampler",3,3);
