@@ -5,6 +5,7 @@
 #include "general/data/coffeegameasset.h"
 #include "general/data/numberbuffer.h"
 
+class CoffeeBuffer;
 class CoffeeInstanceContainer;
 class CoffeeSkeleton;
 
@@ -109,7 +110,9 @@ private:
 
     QPointer<CoffeeInstanceContainer> instances;
 
-    QVector<GLuint> buffers;
+    QVector<CoffeeBuffer*> buffers;
+//    QVector<GLuint> buffers;
+    CoffeeBuffer* indexBuffer;
     QVector<GLuint> arrays;
     GLenum drawmode = GL_STATIC_DRAW;
     bool m_baked = false;

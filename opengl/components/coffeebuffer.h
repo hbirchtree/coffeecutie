@@ -11,20 +11,37 @@ class CoffeeBuffer : public QObject
 
     Q_OBJECT
 public:
-    CoffeeBuffer(QObject *parent);
+    CoffeeBuffer(QObject *parent, BufferStorageMask flags, GLenum bufferType);
+    CoffeeBuffer(QObject *parent, BufferStorageMask flags, GLenum bufferType, GLuint handle);
 
     uint size() const;
 
+    GLuint handle() const;
+
+    void allocBuffer();
+    void freeBuffer();
+
+    void bindBuffer();
+    void unbindBuffer();
+
+    void commitData(const void *data, GLsizeiptr size);
+    void commitSubData(const void* data, GLintptr offset, GLsizeiptr size);
+
+    QVector<unsigned char> getSubData(GLintptr offset, GLsizeiptr size);
+
+    bool isValidBuffer() const;
 signals:
     void sizeChanged(uint size);
 
 public slots:
-    void allocBuffer();
+    void giveHandle(GLuint handle);
     void setSize(uint size);
 
 private:
-    QVector<char> m_bufferData; //Will be kept here, not handed to driver
-    GLuint m_handle;
+    QVector<unsigned char> m_bufferData; //Our local storage, might be used by OpenGL if flags allow it
+    GLuint m_handle = 0;
+    GLenum m_bufferType;
+    BufferStorageMask m_dataFlags;
 };
 
 #endif // COFFEEBUFFER_H

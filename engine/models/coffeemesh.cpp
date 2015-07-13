@@ -1,6 +1,7 @@
 #include "coffeemesh.h"
 
 #include "coffeeinstancecontainer.h"
+#include "opengl/components/coffeebuffer.h"
 #include "coffeeskeleton.h"
 
 CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){
@@ -72,7 +73,7 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, aiNode* rootNode, bo
 
 GLuint CoffeeMesh::getVertexIndexHandle() const
 {
-    return buffers.at(indexBufferIndex());
+    return indexBuffer->handle();
 }
 
 GLuint CoffeeMesh::getVertexArrayHandle()
@@ -128,6 +129,8 @@ void CoffeeMesh::loadMesh()
     if(useInstancing())
         vbuff_count++;
 
+    QVector<GLuint> buffers;
+
     buffers.resize(vbuff_count);
     arrays.resize(varray_count);
     glGenBuffers(vbuff_count,buffers.data());
@@ -137,12 +140,12 @@ void CoffeeMesh::loadMesh()
 
     int free_buffer = 0;
 
+    BufferStorageMask defMask = GL_MAP_WRITE_BIT;
+
     if(usePositions()&&hasPositions()){
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
-        glBufferData(GL_ARRAY_BUFFER,
-                     positions.size()*sizeof(glm::vec3),
-                     positions.data(),
-                     GL_STATIC_DRAW);
+        CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        pos->commitData(positions.data(),positions.size()*sizeof(glm::vec3));
+        pos->bindBuffer();
         glEnableVertexAttribArray(MESH_LOC_POS);
         glVertexAttribPointer(MESH_LOC_POS,
                               3,
@@ -150,17 +153,17 @@ void CoffeeMesh::loadMesh()
                               GL_FALSE,
                               0,
                               (GLvoid*)0);
+        pos->unbindBuffer();
+        this->buffers.append(pos);
     }
 
     if(free_buffer>=vbuff_count)
         qFatal("Error when allocating VBOs! Not enough buffers!");
 
     if(useTextureCoordinates()&&hasTextureCoordinates()){
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
-        glBufferData(GL_ARRAY_BUFFER,
-                     texcoords.size()*sizeof(glm::vec2),
-                     texcoords.data(),
-                     GL_STATIC_DRAW);
+        CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        pos->commitData(texcoords.data(),texcoords.size()*sizeof(glm::vec2));
+        pos->bindBuffer();
         glEnableVertexAttribArray(MESH_LOC_TEX);
         glVertexAttribPointer(MESH_LOC_TEX,
                               2,
@@ -168,17 +171,17 @@ void CoffeeMesh::loadMesh()
                               GL_TRUE,
                               0,
                               (GLvoid*)0);
+        pos->unbindBuffer();
+        this->buffers.append(pos);
     }
 
     if(free_buffer>=vbuff_count)
         qFatal("Error when allocating VBOs! Not enough buffers!");
 
     if(useNormals()&&hasNormals()){
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
-        glBufferData(GL_ARRAY_BUFFER,
-                     normals.size()*sizeof(glm::vec3),
-                     normals.data(),
-                     GL_STATIC_DRAW);
+        CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        pos->commitData(normals.data(),normals.size()*sizeof(glm::vec3));
+        pos->bindBuffer();
         glEnableVertexAttribArray(MESH_LOC_NOR);
         glVertexAttribPointer(MESH_LOC_NOR,
                               3,
@@ -186,17 +189,17 @@ void CoffeeMesh::loadMesh()
                               GL_FALSE,
                               0,
                               (GLvoid*)0);
+        pos->unbindBuffer();
+        this->buffers.append(pos);
     }
 
     if(free_buffer>=vbuff_count)
         qFatal("Error when allocating VBOs! Not enough buffers!");
 
     if(useTangents()&&hasTangents()){
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
-        glBufferData(GL_ARRAY_BUFFER,
-                     tangents.size()*sizeof(glm::vec3),
-                     tangents.data(),
-                     GL_STATIC_DRAW);
+        CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        pos->commitData(tangents.data(),tangents.size()*sizeof(glm::vec3));
+        pos->bindBuffer();
         glEnableVertexAttribArray(MESH_LOC_TAN);
         glVertexAttribPointer(MESH_LOC_TAN,
                               3,
@@ -204,24 +207,26 @@ void CoffeeMesh::loadMesh()
                               GL_FALSE,
                               0,
                               (GLvoid*)0);
+        pos->unbindBuffer();
+        this->buffers.append(pos);
     }
 
     if(free_buffer>=vbuff_count)
         qFatal("Error when allocating VBOs! Not enough buffers!");
 
     if(useBitangents()&&hasBitangents()){
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[free_buffer++]);
-        glBufferData(GL_ARRAY_BUFFER,
-                     tangents.size()*sizeof(glm::vec3),
-                     tangents.data(),
-                     GL_STATIC_DRAW);
-        glEnableVertexAttribArray(MESH_LOC_TAN);
-        glVertexAttribPointer(MESH_LOC_TAN,
+        CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
+        pos->commitData(bitangents.data(),bitangents.size()*sizeof(glm::vec3));
+        pos->bindBuffer();
+        glEnableVertexAttribArray(MESH_LOC_BIT);
+        glVertexAttribPointer(MESH_LOC_BIT,
                               3,
                               GL_FLOAT,
                               GL_FALSE,
                               0,
                               (GLvoid*)0);
+        pos->unbindBuffer();
+        this->buffers.append(pos);
     }
 
     if(useInstancing()){
@@ -243,10 +248,10 @@ void CoffeeMesh::loadMesh()
 
     setIndexBufferIndex(free_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,buffers[free_buffer++]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+    glBufferStorage(GL_ELEMENT_ARRAY_BUFFER,
                  indices.size()*sizeof(indices[0]),
                  indices.data(),
-                 GL_STATIC_DRAW);
+                 GL_MAP_WRITE_BIT);
 
     if(free_buffer!=vbuff_count)
         qWarning("VBOs were allocated but not used!");
@@ -264,7 +269,9 @@ void CoffeeMesh::unloadMesh(){
     matrixbuffer = 0;
     m_indexBufferIndex = 0;
     glDeleteVertexArrays(arrays.size(),arrays.data());
-    glDeleteBuffers(buffers.size(),buffers.data());
+    for(CoffeeBuffer* b : buffers)
+        b->freeBuffer();
+//    glDeleteBuffers(buffers.size(),buffers.data());
     arrays.clear();
     buffers.clear();
 }
