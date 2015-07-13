@@ -7,6 +7,31 @@
 class ShaderVariant;
 class CoffeeResource;
 
+class CoffeeUniformValue {
+public:
+    QString uniformName;
+    GLint blockIndex;
+    GLint blockOffset;
+    GLuint uniformHandle;
+    GLenum uniformType;
+    GLint uniformSize;
+    GLint arrayStride;
+};
+
+class CoffeeUniformBlock : public QObject{
+public:
+    enum ObjectType {
+        Prototype, //Serves as a mould for an object of type Application
+        Application //A modifiable uniform block to be loaded into memory
+    };
+
+    QString blockName;
+    GLuint blockHandle = 0;
+    GLuint bufferHandle = 0;
+    uint bufferSize;
+    QVector<CoffeeUniformValue*> uniforms;
+};
+
 class CoffeeShader : public QObject, public CoffeeGameAsset
 {
     Q_PROPERTY(QString fragmentShader READ fragmentShader)
@@ -58,6 +83,10 @@ public:
 
     uint getVerbosity() const;
 
+    void getProgramAttributes();
+    void getProgramUniforms();
+    CoffeeUniformValue* getProgramUniform(GLuint index);
+
 public slots:
     void setUniform(QString name, const glm::vec3 &val);
     void setUniform(QString name,const glm::vec4& val);
@@ -85,6 +114,7 @@ private:
     GLuint programId = 0;
     uint verbosity = 1;
 
+    QHash<QString,int> uniformBlocks;
     QHash<QString,int> attributes;
     QHash<QString,int> uniforms;
     QHash<QString,GLenum> attributes_t;

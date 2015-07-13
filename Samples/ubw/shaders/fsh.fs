@@ -2,9 +2,11 @@
 
 //uniform vec3 cameraPosition;
 
-uniform struct Material {
+uniform struct MaterialStruct {
 	sampler2D diffuseSampler;
+} mtl;
 
+uniform MaterialBlock {
 	vec3 transparencyValue;
 	float shininess;
 	float shininessStrength;
@@ -13,19 +15,19 @@ uniform struct Material {
 	vec3 specularColor;
 	vec3 ambientColor;
 	vec3 colorMultiplier;
-} mtl;
+};
 
-uniform struct Light {
-   vec3 position;
-   vec3 intensities; //a.k.a the color of the light
-   float attenuation;
-   float ambientCoefficient;
-} light;
+//uniform LightBlock {
+//   vec3 position;
+//   vec3 intensities; //a.k.a the color of the light
+//   float attenuation;
+//   float ambientCoefficient;
+//};
 
-uniform struct FogParams {
-	float fDensity;
-	vec4 fColor;
-} fogParams;
+//uniform FogParams {
+//	float fDensity;
+//	vec4 fColor;
+//} fogParams;
 
 in vec2 localTexCoord;
 in vec3 worldNormal;
@@ -39,11 +41,17 @@ layout(location = 1) out vec4 finalNormal;
 layout(location = 2) out vec4 finalDiffuse;
 layout(location = 3) out vec4 finalPosition;
 layout(location = 4) out vec4 finalSpecular;
-layout(location = 4) out vec4 finalAmbient;
+layout(location = 5) out vec4 finalAmbient;
 
 void main() {
     vec4 surfaceColor = texture(mtl.diffuseSampler, localTexCoord);
 
+    finalNormal = vec4(worldNormal,1.0);
+    finalDiffuse = vec4((surfaceColor.rgb+diffuseColor)*colorMultiplier,surfaceColor.a*opacity);
+    finalPosition = surfacePos;
+    finalSpecular = vec4(specularColor,shininess);
+    finalAmbient = vec4(ambientColor,0.0);
+}
     /*
     vec3 surfaceToLight = normalize(light.position - surfacePos.xyz);
     vec3 surfaceToCamera = normalize(cameraPosition - surfacePos.xyz);
@@ -80,9 +88,3 @@ void main() {
     //final color (after gamma correction)
     finalColor = vec4(linearColor, surfaceColor.a*mtl.opacity);
     */
-
-    finalNormal = vec4(worldNormal,1.0);
-    finalDiffuse = vec4(surfaceColor.rgb,surfaceColor.a*mtl.opacity);
-    finalPosition = surfacePos;
-    finalSpecular = vec4(mtl.specularColor,mtl.shininess);
-}

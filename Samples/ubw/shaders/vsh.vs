@@ -1,6 +1,11 @@
 #version 330
 
-uniform mat4 camera,model,cameraVP;
+uniform ModelBlock {
+	mat4 model;
+};
+uniform CameraBlock {
+	mat4 camera,cameraVP;
+};
 
 layout(location = 0) in vec3 vert;
 layout(location = 1) in vec2 vertTexCoord;

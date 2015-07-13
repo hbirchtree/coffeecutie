@@ -103,30 +103,14 @@ bool CoffeeShader::linkProgram()
         glDeleteShader(shader);
     }
 
-    GLint c;
-    glGetProgramiv(programId,GL_ACTIVE_UNIFORMS,&c);
-    for(int i=0;i<c;i++){
-        GLchar o[64];
-        int sz;
-        GLenum t;
-        glGetActiveUniform(programId,i,64,nullptr,&sz,&t,o);
-        int handle = glGetUniformLocation(programId,o);
-        uniforms.insert(QString(o),handle);
-        uniforms_t.insert(QString(o),t);
-    }
-    glGetProgramiv(programId,GL_ACTIVE_ATTRIBUTES,&c);
-    for(int i=0;i<c;i++){
-        GLchar o[64];
-        int sz;
-        GLenum t;
-        glGetActiveAttrib(programId,i,64,nullptr,&sz,&t,o);
-        int handle = glGetAttribLocation(programId,o);
-        attributes.insert(QString(o),handle);
-        attributes_t.insert(QString(o),t);
-    }
 
-    qDebug("Shader info: name=%s,uniforms=%i, attributes=%i",
-           objectName().toStdString().c_str(), uniforms.size(),
+    getProgramAttributes();
+    getProgramUniforms();
+
+    qDebug("Shader info: name=%s,uniforms=%i, uniform blocks=%i, attributes=%i",
+           objectName().toStdString().c_str(),
+           uniforms.size(),
+           uniformBlocks.size(),
            attributes.size());
 
     addAllocation();
@@ -188,6 +172,87 @@ void CoffeeShader::setGeometryShader(CoffeeResource *geometryShader)
 uint CoffeeShader::getVerbosity() const
 {
     return verbosity;
+}
+
+void CoffeeShader::getProgramAttributes()
+{
+    GLint c;
+    glGetProgramiv(programId,GL_ACTIVE_ATTRIBUTES,&c);
+    for(int i=0;i<c;i++){
+        GLchar o[64];
+        int sz;
+        GLenum t;
+        glGetActiveAttrib(programId,i,64,nullptr,&sz,&t,o);
+        int handle = glGetAttribLocation(programId,o);
+        attributes.insert(QString(o),handle);
+        attributes_t.insert(QString(o),t);
+    }
+}
+
+void CoffeeShader::getProgramUniforms()
+{
+    GLint c;
+    glGetProgramiv(programId,GL_ACTIVE_UNIFORMS,&c);
+    for(int i=0;i<c;i++){
+        getProgramUniform(i);
+        GLchar o[64];
+        int sz;
+        GLenum t;
+        glGetActiveUniform(programId,i,64,nullptr,&sz,&t,o);
+        int handle = glGetUniformLocation(programId,o);
+        uniforms.insert(QString(o),handle);
+        uniforms_t.insert(QString(o),t);
+    }
+
+    QVector<std::string> names_b;
+    QVector<const GLchar*> names;
+    for(QString u : uniforms.keys()){
+        std::string b = u.toStdString();
+        names_b.append(b);
+        names.append(b.c_str());
+    }
+    QVector<GLuint> indices;
+    indices.resize(uniforms.size());
+    glGetUniformIndices(programId,uniforms.size(),names.data(),indices.data());
+
+    glGetProgramiv(programId,GL_ACTIVE_UNIFORM_BLOCKS,&c);
+    for(int i=0;i<c;i++){
+        GLchar o[64];
+        int sz;
+        glGetActiveUniformBlockName(programId,i,64,&sz,o);
+        int handle = glGetUniformBlockIndex(programId,o);
+        GLint size;
+        glGetActiveUniformBlockiv(programId,i,GL_UNIFORM_BLOCK_DATA_SIZE,&size);
+        uniformBlocks.insert(QString(o),handle);
+    }
+}
+
+CoffeeUniformValue *CoffeeShader::getProgramUniform(GLuint index)
+{
+    CoffeeUniformValue* v = new CoffeeUniformValue();
+
+    GLint t;
+
+    GLchar o[64];
+    glGetActiveUniformName(programId,index,64,nullptr,o);
+    v->uniformName = QString(o);
+
+    glGetActiveUniformsiv(programId,1,&index,GL_UNIFORM_TYPE,&t);
+    v->uniformType = static_cast<GLenum>(t);
+
+    glGetActiveUniformsiv(programId,1,&index,GL_UNIFORM_BLOCK_INDEX,&t);
+    v->blockIndex = t;
+
+    glGetActiveUniformsiv(programId,1,&index,GL_UNIFORM_OFFSET,&t);
+    v->blockOffset = t;
+
+    glGetActiveUniformsiv(programId,1,&index,GL_UNIFORM_SIZE,&t);
+    v->uniformSize = t;
+
+    glGetActiveUniformsiv(programId,1,&index,GL_UNIFORM_ARRAY_STRIDE,&t);
+    v->arrayStride= t;
+
+    return v;
 }
 
 void CoffeeShader::setVertexShader(CoffeeResource *value)
