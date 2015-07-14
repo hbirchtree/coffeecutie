@@ -1,6 +1,7 @@
 #include "shadercontainer.h"
 
 #include "general/shadervariant.h"
+#include "opengl/components/coffeeuniformblock.h"
 #include <QMetaEnum>
 #include "engine/data/coffeeresource.h"
 
@@ -174,6 +175,22 @@ uint CoffeeShader::getVerbosity() const
     return verbosity;
 }
 
+CoffeeUniformBlock *CoffeeShader::getUniformBlock(const QString &name)
+{
+    for(CoffeeUniformBlock* b : m_uniformBlocks)
+        if(b->name()==name)
+            return b;
+    return nullptr;
+}
+
+CoffeeUniformValue *CoffeeShader::getUniformValue(const QString &name)
+{
+    for(CoffeeUniformValue* b : m_uniformValues)
+        if(b->uniformName==name)
+            return b;
+    return nullptr;
+}
+
 void CoffeeShader::getProgramAttributes()
 {
     GLint c;
@@ -194,7 +211,7 @@ void CoffeeShader::getProgramUniforms()
     GLint c;
     glGetProgramiv(programId,GL_ACTIVE_UNIFORMS,&c);
     for(int i=0;i<c;i++){
-        getProgramUniform(i);
+        m_uniformValues.append(getProgramUniform(i));
         GLchar o[64];
         int sz;
         GLenum t;
@@ -203,20 +220,24 @@ void CoffeeShader::getProgramUniforms()
         uniforms.insert(QString(o),handle);
         uniforms_t.insert(QString(o),t);
     }
-
-    QVector<std::string> names_b;
-    QVector<const GLchar*> names;
-    for(QString u : uniforms.keys()){
-        std::string b = u.toStdString();
-        names_b.append(b);
-        names.append(b.c_str());
+    for(CoffeeUniformValue* v : m_uniformValues){
+        qDebug() << v->uniformName << glbinding::Meta::getString(v->uniformType).c_str() << v->uniformSize << v->blockIndex << v->blockOffset;
     }
-    QVector<GLuint> indices;
-    indices.resize(uniforms.size());
-    glGetUniformIndices(programId,uniforms.size(),names.data(),indices.data());
+
+//    QVector<std::string> names_b;
+//    QVector<const GLchar*> names;
+//    for(QString u : uniforms.keys()){
+//        std::string b = u.toStdString();
+//        names_b.append(b);
+//        names.append(b.c_str());
+//    }
+//    QVector<GLuint> indices;
+//    indices.resize(uniforms.size());
+//    glGetUniformIndices(programId,uniforms.size(),names.data(),indices.data());
 
     glGetProgramiv(programId,GL_ACTIVE_UNIFORM_BLOCKS,&c);
     for(int i=0;i<c;i++){
+        m_uniformBlocks.append(getProgramUniformBlock(i));
         GLchar o[64];
         int sz;
         glGetActiveUniformBlockName(programId,i,64,&sz,o);
@@ -255,6 +276,25 @@ CoffeeUniformValue *CoffeeShader::getProgramUniform(GLuint index)
     return v;
 }
 
+CoffeeUniformBlock *CoffeeShader::getProgramUniformBlock(GLuint index)
+{
+    GLchar o[64];
+    glGetActiveUniformBlockName(programId,index,64,nullptr,o);
+
+    qDebug() << o << index;
+
+    GLint size;
+    glGetActiveUniformBlockiv(programId,index,GL_UNIFORM_BLOCK_DATA_SIZE,&size);
+
+    CoffeeUniformBlock* b = new CoffeeUniformBlock(0,size);
+
+    for(CoffeeUniformValue* v : m_uniformValues)
+        if(v->blockIndex==(uint16_t)index)
+            b->addUniform(v);
+
+    return b;
+}
+
 void CoffeeShader::setVertexShader(CoffeeResource *value)
 {
     vertShaderFile = value;
@@ -286,6 +326,8 @@ int CoffeeShader::getAttributeLocation(QString name){
     if(attributes.contains(name))
         return attributes.value(name);
     return -1;
+
+    //Dead code..?
     int handle = glGetAttribLocation(getProgramId(),name.toStdString().c_str());
     return handle;
 }

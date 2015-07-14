@@ -32,7 +32,6 @@ void CoffeeStandardObject::render()
     if(!pmesh)
         qFatal("Cannot render object: No mesh");
 
-    pmesh->getInstances()->setRenderPrepare(true);
     if(pmesh->useInstancing()/*&&pmesh->hasNewMatrices()*/){ //Necessary to avoid crash
         pmesh->loadModelMatrices();
     }
@@ -55,7 +54,6 @@ void CoffeeStandardObject::render()
                                           0,
                                           pmesh->getInstances()->instanceCount());
     }
-    pmesh->getInstances()->setRenderPrepare(false);
 
     unbindTextures();
 

@@ -45,17 +45,17 @@ function objStandardInitShader(target){
 	}
 
 	//Material
-	obj.setUniform("mtl.opacity",mat.opacityVariant);
-	obj.setUniform("mtl.shininess",mat.shininessVariant);
-	obj.setUniform("mtl.shininessStrength",mat.shininessStrengthVariant);
-	obj.setUniform("mtl.transparencyValue",mat.transparency);
-	obj.setUniform("mtl.colorMultiplier",mat.colorMultiplier);
-	obj.setUniform("mtl.specularColor",mat.specularColor);
-	obj.setUniform("mtl.ambientColor",mat.ambientColor);
-	obj.setUniform("mtl.diffuseColor",mat.diffuseColor);
-	obj.setUniform("mtl.emissiveColor",mat.emissiveColor);
-	obj.setUniform("mtl.refraction",mat.refractionVariant);
-	obj.setUniform("mtl.reflectivity",mat.reflectivityVariant);
+	obj.setUniform("opacity",mat.opacityVariant);
+	obj.setUniform("shininess",mat.shininessVariant);
+	obj.setUniform("shininessStrength",mat.shininessStrengthVariant);
+	obj.setUniform("transparencyValue",mat.transparency);
+	obj.setUniform("colorMultiplier",mat.colorMultiplier);
+	obj.setUniform("specularColor",mat.specularColor);
+	obj.setUniform("ambientColor",mat.ambientColor);
+	obj.setUniform("diffuseColor",mat.diffuseColor);
+	obj.setUniform("emissiveColor",mat.emissiveColor);
+	obj.setUniform("refraction",mat.refractionVariant);
+	obj.setUniform("reflectivity",mat.reflectivityVariant);
 
 	//Camera
 	obj.setUniform("cameraVP",world.camera.matrixVP);

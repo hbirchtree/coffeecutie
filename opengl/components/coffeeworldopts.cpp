@@ -268,6 +268,7 @@ void CoffeeWorldOpts::unloadWorld()
             s->unload();
     });
     renderer->queueFunction(fp);
+    setLoadedState(false);
 }
 
 void CoffeeWorldOpts::setWireframeMode(bool wireframeMode)

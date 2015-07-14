@@ -75,7 +75,9 @@ SOURCES += main.cpp \
     engine/interface/coffeedrawableelement.cpp \
     engine/shaders/coffeeuniformsetter.cpp \
     opengl/components/coffeebuffer.cpp \
-    engine/models/coffeevertexarrayobject.cpp
+    engine/models/coffeevertexarrayobject.cpp \
+    opengl/components/coffeeuniformblock.cpp \
+    engine/rendering/coffeerendergraph.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -141,7 +143,9 @@ HEADERS += \
     engine/interface/coffeedrawableelement.h \
     engine/shaders/coffeeuniformsetter.h \
     opengl/components/coffeebuffer.h \
-    engine/models/coffeevertexarrayobject.h
+    engine/models/coffeevertexarrayobject.h \
+    opengl/components/coffeeuniformblock.h \
+    engine/rendering/coffeerendergraph.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

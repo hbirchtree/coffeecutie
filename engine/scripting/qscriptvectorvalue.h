@@ -156,5 +156,35 @@ public slots:
     void bindValue(ScalarValue *val);
 };
 
+class Matrix4Value : public QObject, public NumberContainer<glm::mat4>
+{
+    Q_OBJECT
+public:
+    Matrix4Value(QObject* parent);
+
+    using NumberContainer<glm::mat4>::setValue;
+    using NumberContainer<glm::mat4>::operator !=;
+    using NumberContainer<glm::mat4>::operator =;
+    using NumberContainer<glm::mat4>::operator *=;
+    using NumberContainer<glm::mat4>::operator +=;
+    using NumberContainer<glm::mat4>::operator -=;
+    using NumberContainer<glm::mat4>::operator *;
+    using NumberContainer<glm::mat4>::operator +;
+    using NumberContainer<glm::mat4>::operator -;
+    using NumberContainer<glm::mat4>::operator ==;
+    using NumberContainer<glm::mat4>::operator >=;
+    using NumberContainer<glm::mat4>::operator <=;
+    using NumberContainer<glm::mat4>::operator >=;
+    using NumberContainer<glm::mat4>::bindValue;
+
+    Q_INVOKABLE float getValue(uint col, uint row);
+
+signals:
+    void valueChanged();
+
+
+public slots:
+    void setValue(uint col, uint row, ScalarDataType val);
+};
 
 #endif // QSCRIPTVECTORVALUE_H

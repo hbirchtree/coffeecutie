@@ -132,6 +132,7 @@ void CoffeeMesh::loadMesh()
 
     QVector<GLuint> buffers;
 
+    buffers.resize(vbuff_count);
     glGenBuffers(vbuff_count,buffers.data());
 
     vertexArray->allocArray();

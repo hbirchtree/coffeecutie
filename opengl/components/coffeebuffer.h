@@ -42,7 +42,7 @@ private:
     bool isValidBuffer() const;
     bool isBufferBound() const;
 
-    QVector<quint8> m_bufferData; //Our local storage, might be used by OpenGL if flags allow it
+    QByteArray m_bufferData; //Our local storage, might be used by OpenGL if flags allow it
     GLuint m_handle = 0;
     GLenum m_bufferType;
     BufferStorageMask m_dataFlags;

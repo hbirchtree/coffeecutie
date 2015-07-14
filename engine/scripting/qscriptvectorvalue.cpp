@@ -203,3 +203,21 @@ void Vector2Value::setValue(const QVariantList &value)
     }
     setValue(glm::vec2(value.at(0).toFloat(),value.at(1).toFloat()));
 }
+
+
+Matrix4Value::Matrix4Value(QObject *parent) :
+    QObject(parent),
+    NumberContainer<glm::mat4>(glm::mat4())
+{
+
+}
+
+float Matrix4Value::getValue(uint col, uint row)
+{
+    return NumberContainer<glm::mat4>::getValue()[col][row];
+}
+
+void Matrix4Value::setValue(uint col, uint row, ScalarDataType val)
+{
+
+}
