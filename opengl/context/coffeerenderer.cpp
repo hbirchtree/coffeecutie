@@ -441,7 +441,7 @@ int CoffeeRenderer::init(){
     glfwDefaultWindowHints();
 
     glfwWindowHint(GLFW_SAMPLES,samples);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,true);
+//    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT,true);
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
 #ifdef RENDERER_DO_DEBUG
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);

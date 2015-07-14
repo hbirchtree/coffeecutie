@@ -18,6 +18,8 @@ public:
 
     GLuint handle() const;
 
+    void applyBufferStorage(); //Allows us to update the storage flags, clears the buffer
+
     void allocBuffer();
     void freeBuffer();
 
@@ -27,9 +29,8 @@ public:
     void commitData(const void *data, GLsizeiptr size);
     void commitSubData(const void* data, GLintptr offset, GLsizeiptr size);
 
-    QVector<unsigned char> getSubData(GLintptr offset, GLsizeiptr size);
+    QVector<quint8> getSubData(GLintptr offset, GLsizeiptr size);
 
-    bool isValidBuffer() const;
 signals:
     void sizeChanged(uint size);
 
@@ -38,7 +39,10 @@ public slots:
     void setSize(uint size);
 
 private:
-    QVector<unsigned char> m_bufferData; //Our local storage, might be used by OpenGL if flags allow it
+    bool isValidBuffer() const;
+    bool isBufferBound() const;
+
+    QVector<quint8> m_bufferData; //Our local storage, might be used by OpenGL if flags allow it
     GLuint m_handle = 0;
     GLenum m_bufferType;
     BufferStorageMask m_dataFlags;

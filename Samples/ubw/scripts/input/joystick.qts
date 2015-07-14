@@ -12,14 +12,14 @@ c_target.modifyPhysics(c_moveProp);
 
 function axisReact(axe,val,diff){
 	switch(axe){
-	case 0:{
+	case 6:{
 //		val = val * cameraThrottle;
 //		controller.addSpeedRight(coffeeroot.evloop.world.camera.right,[val*5,val*5,val*5]);
 		c_vec.value = [val,0,0];
 		c_target.modifyPhysics(c_moveProp);
 		break;
 	}
-	case 1:{
+	case 7:{
 //		val = val * cameraThrottle;
 //		controller.addSpeedForward(coffeeroot.evloop.world.camera.forward,[-val*5,-val*5,-val*5]);
 		c_vec.value = [0,0,val];
@@ -47,7 +47,9 @@ function axisReact(axe,val,diff){
 function buttonReact(btn){
 	switch(btn){
 	case 0:{
-		coffeeroot.evloop.world.wireframeMode = !coffeeroot.evloop.world.wireframeMode;
+		c_vec.value = [0,50,0];
+		c_target.modifyPhysics(c_moveProp);
+//		coffeeroot.evloop.world.wireframeMode = !coffeeroot.evloop.world.wireframeMode;
 		break;
 	}
 	}

@@ -1,11 +1,13 @@
 #include "coffeemesh.h"
 
 #include "coffeeinstancecontainer.h"
+#include "engine/models/coffeevertexarrayobject.h"
 #include "opengl/components/coffeebuffer.h"
 #include "coffeeskeleton.h"
 
 CoffeeMesh::CoffeeMesh(QObject *parent) : QObject(parent){
     instances = new CoffeeInstanceContainer(this);
+    vertexArray = new CoffeeVertexArrayObject(this);
     instances->setObjectName("instances");
 }
 
@@ -18,7 +20,7 @@ CoffeeMesh::CoffeeMesh(QObject *parent, aiMesh *meshSource, aiNode* rootNode, bo
         }
     }
     for(uint i=0;i<meshSource->mNumVertices;i++){
-        if(meshSource->HasPositions()){ //I have no idea why.
+        if(meshSource->HasPositions()){
             aiVector3D pos = meshSource->mVertices[i];
             positions.append(glm::vec3(pos.x,pos.y,pos.z));
         }else{
@@ -83,7 +85,7 @@ GLuint CoffeeMesh::getVertexArrayHandle()
         loadMesh();
         m_doReloadMesh = false;
     }
-    return arrays.at(0);
+    return vertexArray->handle();
 }
 
 QPointer<CoffeeInstanceContainer> CoffeeMesh::getInstances()
@@ -114,7 +116,6 @@ void CoffeeMesh::loadMesh()
     }
 
     int vbuff_count = 1;
-    int varray_count = 1;
 
     if(hasPositions()&&usePositions())
         vbuff_count++;
@@ -131,29 +132,27 @@ void CoffeeMesh::loadMesh()
 
     QVector<GLuint> buffers;
 
-    buffers.resize(vbuff_count);
-    arrays.resize(varray_count);
     glGenBuffers(vbuff_count,buffers.data());
-    glGenVertexArrays(varray_count,arrays.data());
 
-    glBindVertexArray(arrays.at(0));
+    vertexArray->allocArray();
+    vertexArray->bindArray();
 
     int free_buffer = 0;
 
     BufferStorageMask defMask = GL_MAP_WRITE_BIT;
 
+    /*
+     *  Future improvement:
+     *  - Match buffer with vertex attribute pointer
+     *
+     */
+
     if(usePositions()&&hasPositions()){
         CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
         pos->commitData(positions.data(),positions.size()*sizeof(glm::vec3));
-        pos->bindBuffer();
-        glEnableVertexAttribArray(MESH_LOC_POS);
-        glVertexAttribPointer(MESH_LOC_POS,
-                              3,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0,
-                              (GLvoid*)0);
-        pos->unbindBuffer();
+        vertexArray->addAttribute(pos,MESH_LOC_POS,
+                                  GL_FLOAT,GL_FALSE,
+                                  3,0);
         this->buffers.append(pos);
     }
 
@@ -163,15 +162,9 @@ void CoffeeMesh::loadMesh()
     if(useTextureCoordinates()&&hasTextureCoordinates()){
         CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
         pos->commitData(texcoords.data(),texcoords.size()*sizeof(glm::vec2));
-        pos->bindBuffer();
-        glEnableVertexAttribArray(MESH_LOC_TEX);
-        glVertexAttribPointer(MESH_LOC_TEX,
-                              2,
-                              GL_FLOAT,
-                              GL_TRUE,
-                              0,
-                              (GLvoid*)0);
-        pos->unbindBuffer();
+        vertexArray->addAttribute(pos,MESH_LOC_TEX,
+                                  GL_FLOAT,GL_FALSE,
+                                  2,0);
         this->buffers.append(pos);
     }
 
@@ -181,15 +174,9 @@ void CoffeeMesh::loadMesh()
     if(useNormals()&&hasNormals()){
         CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
         pos->commitData(normals.data(),normals.size()*sizeof(glm::vec3));
-        pos->bindBuffer();
-        glEnableVertexAttribArray(MESH_LOC_NOR);
-        glVertexAttribPointer(MESH_LOC_NOR,
-                              3,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0,
-                              (GLvoid*)0);
-        pos->unbindBuffer();
+        vertexArray->addAttribute(pos,MESH_LOC_NOR,
+                                  GL_FLOAT,GL_FALSE,
+                                  3,0);
         this->buffers.append(pos);
     }
 
@@ -199,15 +186,9 @@ void CoffeeMesh::loadMesh()
     if(useTangents()&&hasTangents()){
         CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
         pos->commitData(tangents.data(),tangents.size()*sizeof(glm::vec3));
-        pos->bindBuffer();
-        glEnableVertexAttribArray(MESH_LOC_TAN);
-        glVertexAttribPointer(MESH_LOC_TAN,
-                              3,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0,
-                              (GLvoid*)0);
-        pos->unbindBuffer();
+        vertexArray->addAttribute(pos,MESH_LOC_TAN,
+                                  GL_FLOAT,GL_FALSE,
+                                  3,0);
         this->buffers.append(pos);
     }
 
@@ -217,46 +198,38 @@ void CoffeeMesh::loadMesh()
     if(useBitangents()&&hasBitangents()){
         CoffeeBuffer *pos = new CoffeeBuffer(0,defMask,GL_ARRAY_BUFFER,buffers[free_buffer++]);
         pos->commitData(bitangents.data(),bitangents.size()*sizeof(glm::vec3));
-        pos->bindBuffer();
-        glEnableVertexAttribArray(MESH_LOC_BIT);
-        glVertexAttribPointer(MESH_LOC_BIT,
-                              3,
-                              GL_FLOAT,
-                              GL_FALSE,
-                              0,
-                              (GLvoid*)0);
-        pos->unbindBuffer();
+        vertexArray->addAttribute(pos,MESH_LOC_BIT,
+                                  GL_FLOAT,GL_FALSE,
+                                  3,0);
         this->buffers.append(pos);
     }
 
     if(useInstancing()){
-        uint instance_buffer = free_buffer++;
-        glBindBuffer(GL_ARRAY_BUFFER,buffers[instance_buffer]);
+        matrixBuffer = new
+                CoffeeBuffer(0,
+                             GL_DYNAMIC_STORAGE_BIT,
+                             GL_ARRAY_BUFFER,
+                             buffers[free_buffer++]);
+        matrixBuffer->commitData(instances->getData().data(),
+                                 sizeof(glm::mat4)*instances->instanceCount());
         for(int i=0;i<4;i++){
-            glEnableVertexAttribArray(MESH_LOC_MODEL_MAT+i);
-            glVertexAttribPointer(MESH_LOC_MODEL_MAT+i,
-                                  4,
-                                  GL_FLOAT,
-                                  GL_FALSE,
-                                  sizeof(glm::mat4),
-                                  (GLvoid*)(sizeof(GLfloat)*4*i));
-            glVertexAttribDivisor(MESH_LOC_MODEL_MAT+i,1);
+            vertexArray->addAttributeDivided(matrixBuffer,MESH_LOC_MODEL_MAT+i,
+                                      GL_FLOAT,GL_FALSE,
+                                      4,sizeof(glm::mat4),1,(GLvoid*)(sizeof(GLfloat)*4*i));
         }
-        matrixbuffer = instance_buffer;
-        loadModelMatrices();
     }
 
-    setIndexBufferIndex(free_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,buffers[free_buffer++]);
-    glBufferStorage(GL_ELEMENT_ARRAY_BUFFER,
-                 indices.size()*sizeof(indices[0]),
-                 indices.data(),
-                 GL_MAP_WRITE_BIT);
+    indexBuffer = new
+            CoffeeBuffer(0,
+                         GL_MAP_WRITE_BIT,
+                         GL_ELEMENT_ARRAY_BUFFER,
+                         buffers[free_buffer++]);
+    indexBuffer->commitData(indices.data(),sizeof(indices[0])*indices.size());
 
     if(free_buffer!=vbuff_count)
         qWarning("VBOs were allocated but not used!");
 
-    glBindVertexArray(0);
+    vertexArray->unbindArray();
 
     addAllocation();
     setBaked(true);
@@ -266,12 +239,13 @@ void CoffeeMesh::unloadMesh(){
     removeAllocation();
     if(isAllocated())
         return;
-    matrixbuffer = 0;
-    m_indexBufferIndex = 0;
-    glDeleteVertexArrays(arrays.size(),arrays.data());
-    for(CoffeeBuffer* b : buffers)
+    vertexArray->freeArray();
+    for(CoffeeBuffer* b : buffers){
         b->freeBuffer();
-//    glDeleteBuffers(buffers.size(),buffers.data());
+        delete b;
+    }
+    matrixBuffer->freeBuffer();
+    indexBuffer->freeBuffer();
     arrays.clear();
     buffers.clear();
 }
@@ -358,15 +332,8 @@ void CoffeeMesh::updateModelMatrices()
 
 void CoffeeMesh::loadModelMatrices()
 {
-    if(matrixbuffer==0)
-        return;
-    glBindBuffer(GL_ARRAY_BUFFER,buffers[matrixbuffer]);
     QVector<glm::mat4> data = instances->getData();
-    glBufferData(GL_ARRAY_BUFFER,
-                 sizeof(glm::mat4)*instances->instanceCount(),
-                 data.data(),
-                 GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER,0);
+    matrixBuffer->commitSubData(data.data(),0,sizeof(glm::mat4)*instances->instanceCount());
 }
 
 void CoffeeMesh::setBaked(bool arg)

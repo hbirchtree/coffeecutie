@@ -9,7 +9,7 @@ CoffeeBuffer::CoffeeBuffer(QObject *parent, BufferStorageMask flags, GLenum buff
 CoffeeBuffer::CoffeeBuffer(QObject *parent, BufferStorageMask flags, GLenum bufferType, GLuint handle) :
     CoffeeBuffer(parent,flags,bufferType)
 {
-    m_handle = handle;
+    giveHandle(handle);
 }
 
 uint CoffeeBuffer::size() const
@@ -20,6 +20,15 @@ uint CoffeeBuffer::size() const
 GLuint CoffeeBuffer::handle() const
 {
     return m_handle;
+}
+
+void CoffeeBuffer::applyBufferStorage()
+{
+    bindBuffer();
+    if(m_dataFlags==GL_DYNAMIC_STORAGE_BIT)
+        qDebug() << "Doh!";
+    glBufferStorage(m_bufferType,0,nullptr,m_dataFlags);
+    unbindBuffer();
 }
 
 void CoffeeBuffer::allocBuffer()
@@ -59,17 +68,15 @@ void CoffeeBuffer::commitData(const void* data, GLsizeiptr size)
 {
     bindBuffer();
     glBufferStorage(m_bufferType,size,data,m_dataFlags);
-    unbindBuffer();
 }
 
 void CoffeeBuffer::commitSubData(const void *data, GLintptr offset, GLsizeiptr size)
 {
     bindBuffer();
     glBufferSubData(m_bufferType,offset,size,data);
-    unbindBuffer();
 }
 
-QVector<unsigned char> CoffeeBuffer::getSubData(GLintptr offset, GLsizeiptr size)
+QVector<quint8> CoffeeBuffer::getSubData(GLintptr offset, GLsizeiptr size)
 {
     QVector<unsigned char> d_out;
     d_out.resize(size);
@@ -86,7 +93,6 @@ void CoffeeBuffer::giveHandle(GLuint handle)
     m_handle = handle;
     if(!isValidBuffer()){
         qWarning("Oh no! Our buffer is bad!");
-        m_handle = 0;
     }
 }
 
@@ -101,6 +107,14 @@ void CoffeeBuffer::setSize(uint size)
 
 bool CoffeeBuffer::isValidBuffer() const
 {
-    return true;
+    return (m_handle!=0);
+}
+
+bool CoffeeBuffer::isBufferBound() const
+{
+    GLint bound = 0;
+    glGetIntegerv(GL_BUFFER_BINDING,&bound);
+    qDebug() << m_handle << bound;
+    return m_handle==(GLuint)bound&&isValidBuffer();
 }
 

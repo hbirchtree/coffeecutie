@@ -67,8 +67,8 @@ void CoffeeSkybox::load()
     if(!texture)
         texture = new CoffeeTexture(this,cubemapping);
 
-    if(glIsEnabled(GL_TEXTURE_CUBE_MAP)==GL_FALSE)
-        glEnable(GL_TEXTURE_CUBE_MAP);
+//    if(glIsEnabled(GL_TEXTURE_CUBE_MAP)==GL_FALSE)
+//        glEnable(GL_TEXTURE_CUBE_MAP);
     qDebug("Skybox initializing");
 
     texture->loadTexture();

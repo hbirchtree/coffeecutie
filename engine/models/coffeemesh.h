@@ -6,6 +6,7 @@
 #include "general/data/numberbuffer.h"
 
 class CoffeeBuffer;
+class CoffeeVertexArrayObject;
 class CoffeeInstanceContainer;
 class CoffeeSkeleton;
 
@@ -106,13 +107,14 @@ protected:
     CoffeeSkeleton* skeleton;
 
 private:
-    uint matrixbuffer = 0;
-
     QPointer<CoffeeInstanceContainer> instances;
 
     QVector<CoffeeBuffer*> buffers;
 //    QVector<GLuint> buffers;
     CoffeeBuffer* indexBuffer;
+    CoffeeBuffer* matrixBuffer;
+    CoffeeVertexArrayObject* vertexArray;
+
     QVector<GLuint> arrays;
     GLenum drawmode = GL_STATIC_DRAW;
     bool m_baked = false;
