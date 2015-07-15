@@ -184,7 +184,6 @@ signals:
 
 
 public slots:
-    void setValue(uint col, uint row, ScalarDataType val);
 };
 
 #endif // QSCRIPTVECTORVALUE_H

@@ -31,6 +31,8 @@ public:
 
     QVector<quint8> getSubData(GLintptr offset, GLsizeiptr size);
 
+    QByteArray* getSubBuffer(uint32_t size, uint32_t offset);
+
 signals:
     void sizeChanged(uint size);
 

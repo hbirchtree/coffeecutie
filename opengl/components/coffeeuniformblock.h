@@ -2,6 +2,7 @@
 #define COFFEEUNIFORMBLOCK_H
 
 #include "general/common.h"
+#include <QBuffer>
 
 class Vector3Value;
 class Vector2Value;
@@ -27,7 +28,12 @@ class CoffeeUniformBlock : public QObject
 
     Q_OBJECT
 public:
-    CoffeeUniformBlock(QObject *parent, uint64_t bufferSize);
+    CoffeeUniformBlock(QObject *parent,
+                       uint64_t bufferSize);
+    CoffeeUniformBlock(QObject *parent,
+                       CoffeeUniformBlock *source,
+                       uint32_t offset,
+                       uint32_t size);
 
     Q_INVOKABLE static uint16_t systemFloatSize();
     Q_INVOKABLE static uint16_t systemVec3Size();
@@ -39,14 +45,34 @@ public:
 
     QString name() const;
 
+    QVector<CoffeeUniformValue*> getUniforms();
+
+    QByteArray* getData();
+    void* getDataRange(uint32_t offset, uint32_t size);
+
+    CoffeeUniformBlock* getChild(uint32_t offset, uint32_t size);
+    void copyUniforms(CoffeeUniformBlock* src);
+
+    void setUniformData(const QString &uniformName, const void* data, uint32_t size);
+
 signals:
+    void dataRangeUpdated(const void *data, uint32_t offset, uint32_t size);
+
+    void dataUpdated();
 
 public slots:
+    void setDataRange(const void *data, uint32_t offset, uint32_t size);
+
+    void updateData(uint32_t offset, uint32_t size);
+
     void addUniform(CoffeeUniformValue* val);
     void setName(const QString &name);
 
 private:
-    CoffeeBuffer* m_buffer;
+    QBuffer* m_dataBuffer;
+    QByteArray *m_data;
+
+    CoffeeBuffer* m_buffer = nullptr;
     QVector<CoffeeUniformValue*> m_uniforms;
     QString m_name;
 };

@@ -220,9 +220,6 @@ void CoffeeShader::getProgramUniforms()
         uniforms.insert(QString(o),handle);
         uniforms_t.insert(QString(o),t);
     }
-    for(CoffeeUniformValue* v : m_uniformValues){
-        qDebug() << v->uniformName << glbinding::Meta::getString(v->uniformType).c_str() << v->uniformSize << v->blockIndex << v->blockOffset;
-    }
 
 //    QVector<std::string> names_b;
 //    QVector<const GLchar*> names;
@@ -281,8 +278,6 @@ CoffeeUniformBlock *CoffeeShader::getProgramUniformBlock(GLuint index)
     GLchar o[64];
     glGetActiveUniformBlockName(programId,index,64,nullptr,o);
 
-    qDebug() << o << index;
-
     GLint size;
     glGetActiveUniformBlockiv(programId,index,GL_UNIFORM_BLOCK_DATA_SIZE,&size);
 
@@ -291,6 +286,14 @@ CoffeeUniformBlock *CoffeeShader::getProgramUniformBlock(GLuint index)
     for(CoffeeUniformValue* v : m_uniformValues)
         if(v->blockIndex==(uint16_t)index)
             b->addUniform(v);
+
+    glm::mat4 d_;
+    qDebug() << *b->getData();
+    b->setUniformData("camera",&d_,sizeof(glm::mat4));
+    b->setUniformData("cameraVP",&d_,sizeof(glm::mat4));
+    qDebug() << *b->getData();
+//    b->setDataRange(&d_,0,sizeof(float));
+//    qDebug() << *reinterpret_cast<float*>(b->getDataRange(0,sizeof(float)));
 
     return b;
 }

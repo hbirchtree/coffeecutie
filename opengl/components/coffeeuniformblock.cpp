@@ -6,6 +6,24 @@ CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, uint64_t bufferSize) : Q
 {
     m_buffer = new CoffeeBuffer(this,GL_DYNAMIC_STORAGE_BIT,GL_UNIFORM_BUFFER);
     m_buffer->setSize(bufferSize);
+    m_data = new QByteArray();
+    m_data->resize(bufferSize);
+}
+
+CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, CoffeeUniformBlock* source, uint32_t offset, uint32_t size) : QObject(parent)
+{
+    //This means we are using a part of another CoffeeUniformBlock object for storage, thus no m_buffer object is available.
+//    connect(this,&CoffeeUniformBlock::dataUpdated,[=](){
+//        source->updateData(offset,size);
+//    });
+    connect(this,&CoffeeUniformBlock::dataRangeUpdated,
+            [=](const void* data, uint32_t _offset, uint32_t _size){
+        if(_offset+_size>size){
+            qWarning("Attempted to write outside permitted area! Will not proceed!");
+            return;
+        }
+        source->setDataRange(data,_offset+offset,_size);
+    });
 }
 
 uint16_t CoffeeUniformBlock::systemFloatSize()
@@ -46,6 +64,67 @@ uint16_t CoffeeUniformBlock::systemUintSize()
 QString CoffeeUniformBlock::name() const
 {
     return m_name;
+}
+
+QVector<CoffeeUniformValue *> CoffeeUniformBlock::getUniforms()
+{
+    return m_uniforms;
+}
+
+QByteArray *CoffeeUniformBlock::getData()
+{
+    return m_data;
+}
+
+void *CoffeeUniformBlock::getDataRange(uint32_t offset, uint32_t size)
+{
+    void* d = malloc(size);
+    if(offset+size>(uint32_t)m_data->size())
+        return d;
+    memcpy(d,&m_data->data()[offset],size);
+    return d;
+}
+
+CoffeeUniformBlock *CoffeeUniformBlock::getChild(uint32_t offset, uint32_t size)
+{
+    if(!m_data||offset+size>uint32_t(m_data->size()))
+        return nullptr;
+    return new CoffeeUniformBlock(this,this,offset,size);
+}
+
+void CoffeeUniformBlock::copyUniforms(CoffeeUniformBlock *src)
+{
+    for(CoffeeUniformValue* v : src->getUniforms())
+        if(!m_uniforms.contains(v)&&v)
+            m_uniforms.append(v);
+}
+
+void CoffeeUniformBlock::setUniformData(const QString &uniformName, const void *data, uint32_t size)
+{
+    for(CoffeeUniformValue* v : m_uniforms)
+        if(v->uniformName==uniformName){
+            setDataRange(data,v->blockOffset,size);
+        }
+}
+
+void CoffeeUniformBlock::setDataRange(const void* data, uint32_t offset, uint32_t size)
+{
+    if(!m_data){
+        if(m_data->size()<int(offset+size))
+            return;
+        memcpy(&m_data->data()[offset],data,size);
+        updateData(offset,size);
+    }else{
+        //We forward it to the parent of the block
+        dataRangeUpdated(data,offset,size);
+    }
+}
+
+void CoffeeUniformBlock::updateData(uint32_t offset, uint32_t size)
+{
+    Q_UNUSED(offset)
+    Q_UNUSED(size)
+    //updates a certain range of the buffer in GL memory
 }
 
 void CoffeeUniformBlock::addUniform(CoffeeUniformValue *val)

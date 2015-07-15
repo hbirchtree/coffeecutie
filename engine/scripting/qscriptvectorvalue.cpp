@@ -216,8 +216,3 @@ float Matrix4Value::getValue(uint col, uint row)
 {
     return NumberContainer<glm::mat4>::getValue()[col][row];
 }
-
-void Matrix4Value::setValue(uint col, uint row, ScalarDataType val)
-{
-
-}
