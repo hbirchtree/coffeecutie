@@ -7,7 +7,7 @@
 class Vector3Value;
 class Vector2Value;
 class CoffeeBuffer;
-class ShaderVariant;
+class VectorData;
 
 class CoffeeUniformValue
 {
@@ -53,7 +53,7 @@ public:
     CoffeeUniformBlock* getChild(uint32_t offset, uint32_t size);
     void copyUniforms(CoffeeUniformBlock* src);
 
-    void setUniformData(const QString &uniformName, const void* data, uint32_t size);
+    void setUniformData(const QString uniformName, VectorData *uniformData);
 
 signals:
     void dataRangeUpdated(const void *data, uint32_t offset, uint32_t size);
@@ -69,8 +69,7 @@ public slots:
     void setName(const QString &name);
 
 private:
-    QBuffer* m_dataBuffer;
-    QByteArray *m_data;
+    QByteArray *m_data = nullptr;
 
     CoffeeBuffer* m_buffer = nullptr;
     QVector<CoffeeUniformValue*> m_uniforms;

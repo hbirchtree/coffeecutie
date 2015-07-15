@@ -16,10 +16,11 @@ inputClock.interval = 10;
 inputClock.timeout.connect(inputTick);
 inputClock.start();
 
-#inc "joystick.qts"
-#inc "keyboard-mouse.qts"
-
 function renderClose(){
 	renderer.requestWindowClose();
 }
+
+#inc "joystick.qts"
+#inc "keyboard-mouse.qts"
+
 renderer.winClose.connect(renderClose);

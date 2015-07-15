@@ -287,13 +287,15 @@ CoffeeUniformBlock *CoffeeShader::getProgramUniformBlock(GLuint index)
         if(v->blockIndex==(uint16_t)index)
             b->addUniform(v);
 
-    glm::mat4 d_;
+    CoffeeUniformBlock* c = b->getChild(sizeof(float),sizeof(float));
+    float d_ = 1.234f;
     qDebug() << *b->getData();
-    b->setUniformData("camera",&d_,sizeof(glm::mat4));
-    b->setUniformData("cameraVP",&d_,sizeof(glm::mat4));
+    c->setDataRange(&d_,0,sizeof(float));
+//    b->setUniformData("camera",&d_,sizeof(glm::mat4));
+//    b->setUniformData("cameraVP",&d_,sizeof(glm::mat4));
     qDebug() << *b->getData();
 //    b->setDataRange(&d_,0,sizeof(float));
-//    qDebug() << *reinterpret_cast<float*>(b->getDataRange(0,sizeof(float)));
+    qDebug() << *reinterpret_cast<float*>(b->getDataRange(sizeof(float),sizeof(float)));
 
     return b;
 }

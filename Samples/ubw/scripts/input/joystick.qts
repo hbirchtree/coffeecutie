@@ -52,6 +52,14 @@ function buttonReact(btn){
 //		coffeeroot.evloop.world.wireframeMode = !coffeeroot.evloop.world.wireframeMode;
 		break;
 	}
+	case 7:{
+		renderClose();
+		break;
+	}
+	default:{
+		print("Joystick button pressed:",btn);
+		break;
+	}
 	}
 }
 renderer.jsdev.axisMoved.connect(axisReact);

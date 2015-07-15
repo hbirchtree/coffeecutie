@@ -1,6 +1,7 @@
 #include "coffeeuniformblock.h"
 
 #include "opengl/components/coffeebuffer.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, uint64_t bufferSize) : QObject(parent)
 {
@@ -13,9 +14,6 @@ CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, uint64_t bufferSize) : Q
 CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, CoffeeUniformBlock* source, uint32_t offset, uint32_t size) : QObject(parent)
 {
     //This means we are using a part of another CoffeeUniformBlock object for storage, thus no m_buffer object is available.
-//    connect(this,&CoffeeUniformBlock::dataUpdated,[=](){
-//        source->updateData(offset,size);
-//    });
     connect(this,&CoffeeUniformBlock::dataRangeUpdated,
             [=](const void* data, uint32_t _offset, uint32_t _size){
         if(_offset+_size>size){
@@ -99,17 +97,29 @@ void CoffeeUniformBlock::copyUniforms(CoffeeUniformBlock *src)
             m_uniforms.append(v);
 }
 
-void CoffeeUniformBlock::setUniformData(const QString &uniformName, const void *data, uint32_t size)
+void CoffeeUniformBlock::setUniformData(const QString uniformName,VectorData* uniformData)
 {
     for(CoffeeUniformValue* v : m_uniforms)
         if(v->uniformName==uniformName){
-            setDataRange(data,v->blockOffset,size);
+            setDataRange(uniformData->getVectorData(),
+                         v->blockOffset,
+                         uniformData->getVectorDataSize());
+            {
+                Vector3Value *vec = dynamic_cast<Vector3Value*>(uniformData);
+                if(v){
+                    connect(vec,&Vector3Value::valueChanged,[=](){
+                        setDataRange(uniformData->getVectorData(),
+                                     v->blockOffset,
+                                     uniformData->getVectorDataSize());
+                    });
+                }
+            }
         }
 }
 
 void CoffeeUniformBlock::setDataRange(const void* data, uint32_t offset, uint32_t size)
 {
-    if(!m_data){
+    if(m_data){
         if(m_data->size()<int(offset+size))
             return;
         memcpy(&m_data->data()[offset],data,size);

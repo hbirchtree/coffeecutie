@@ -41,7 +41,7 @@ function inputReact(event){
 		} else if(event.qtype == QEvent.KeyRelease){
 			switch(event.key){
 			case Qt.Key_Escape:{
-				renderer.requestWindowClose();
+				renderClose();
 				break;
 			}
 			}

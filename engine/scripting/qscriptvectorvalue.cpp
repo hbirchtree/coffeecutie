@@ -14,6 +14,9 @@ Vector3Value::Vector3Value(QObject *parent, float x, float y, float z) :
 
 void Vector3Value::bindValue(Vector3Value *vec)
 {
+    boundConnection = connect(vec,&Vector3Value::valueChanged,[=](){
+        valueChanged();
+    });
     NumberContainer<glm::vec3>::bindValue(((NumberContainer<glm::vec3>*)vec));
 }
 
@@ -33,6 +36,31 @@ QVariantList Vector3Value::acceleration() const
 {
     glm::vec3 q = getAcceleration();
     return QVariantList() << q.x << q.y << q.z;
+}
+
+void Vector3Value::setValue(const glm::vec3 &val)
+{
+    NumberContainer<glm::vec3>::setValue(val);
+    valueChanged();
+}
+
+void Vector3Value::updateVectorData()
+{
+    if(!_tmp_vec_storage)
+        _tmp_vec_storage = malloc(getVectorDataSize());
+    glm::vec3 vec = getValue();
+    memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
+}
+
+const void *Vector3Value::getVectorData()
+{
+    updateVectorData();
+    return _tmp_vec_storage;
+}
+
+uint32_t Vector3Value::getVectorDataSize()
+{
+    return sizeof(glm::vec3);
 }
 
 void Vector3Value::mathMultiply(const QVariantList &vals)
@@ -112,8 +140,11 @@ QuatValue::QuatValue(QObject *parent, float w, float x, float y, float z) :
 {
 }
 
-void QuatValue::bindValue(QPointer<QuatValue> quat)
+void QuatValue::bindValue(QuatValue* quat)
 {
+    boundConnection = connect(quat,&QuatValue::valueChanged,[=](){
+        valueChanged();
+    });
     NumberContainer<glm::quat>::bindValue(((NumberContainer<glm::quat>*)quat));
 }
 
@@ -121,6 +152,12 @@ QVariantList QuatValue::value() const
 {
     glm::quat q = getValue();
     return QVariantList() << q.w << q.x << q.y << q.z;
+}
+
+void QuatValue::setValue(const glm::quat &val)
+{
+    NumberContainer<glm::quat>::setValue(val);
+    valueChanged();
 }
 
 void QuatValue::mathCumulate(const QVariantList &vals)
@@ -133,16 +170,19 @@ void QuatValue::mathCumulate(const QVariantList &vals)
                                                     vals.at(1).toFloat(),
                                                     vals.at(2).toFloat(),
                                                     vals.at(3).toFloat())*getValue());
+    valueChanged();
 }
 
 void QuatValue::mathCumulate(QuatValue *val)
 {
     NumberContainer<glm::quat>::operator=(val->getValue()*getValue());
+    valueChanged();
 }
 
 void QuatValue::mathNormalize()
 {
     NumberContainer<glm::quat>::operator=(glm::normalize(getValue()));
+    valueChanged();
 }
 
 void QuatValue::setValue(const QVariantList &value)
@@ -152,6 +192,7 @@ void QuatValue::setValue(const QVariantList &value)
         return;
     }
     setValue(glm::quat(value.at(0).toFloat(),value.at(1).toFloat(),value.at(2).toFloat(),value.at(3).toFloat()));
+    valueChanged();
 }
 
 
@@ -174,6 +215,9 @@ void ScalarValue::setValue(ScalarDataType value)
 
 void ScalarValue::bindValue(ScalarValue *val)
 {
+    boundConnection = connect(val,&ScalarValue::valueChanged,[=](){
+        valueChanged();
+    });
     NumberContainer<ScalarDataType>::bindValue(((NumberContainer<ScalarDataType>*)val));
 }
 
@@ -189,6 +233,12 @@ Vector2Value::Vector2Value(QObject *parent, float x, float y) :
 {
 }
 
+void Vector2Value::setValue(const glm::vec2 &val)
+{
+    NumberContainer<glm::vec2>::setValue(val);
+    valueChanged();
+}
+
 QVariantList Vector2Value::value() const
 {
     glm::vec2 v = getValue();
@@ -202,17 +252,35 @@ void Vector2Value::setValue(const QVariantList &value)
         return;
     }
     setValue(glm::vec2(value.at(0).toFloat(),value.at(1).toFloat()));
+    valueChanged();
 }
 
+void Vector2Value::bindValue(Vector2Value *vec)
+{
+    boundConnection = connect(vec,&Vector2Value::valueChanged,[=](){
+        valueChanged();
+    });
+    NumberContainer<glm::vec2>::bindValue(((NumberContainer<glm::vec2>*)vec));
+}
 
 Matrix4Value::Matrix4Value(QObject *parent) :
     QObject(parent),
     NumberContainer<glm::mat4>(glm::mat4())
 {
-
 }
 
 float Matrix4Value::getValue(uint col, uint row)
 {
     return NumberContainer<glm::mat4>::getValue()[col][row];
+}
+
+void Matrix4Value::setValue(const glm::mat4 &val)
+{
+    NumberContainer<glm::mat4>::setValue(val);
+    valueChanged();
+}
+
+void Matrix4Value::setValue(Matrix4Value *val)
+{
+    setValue(val->getValue());
 }

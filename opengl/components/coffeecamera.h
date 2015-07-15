@@ -2,11 +2,14 @@
 #define COFFEECAMERA_H
 
 #include "general/common.h"
-#include "engine/scripting/qscriptvectorvalue.h"
 
 class ShaderVariant;
 class CoffeeBuffer;
 class CoffeeUniformBlock;
+class ScalarValue;
+class QuatValue;
+class Vector3Value;
+class Matrix4Value;
 
 class CoffeeCamera : public QObject
 {
@@ -99,8 +102,6 @@ private:
     QPointer<Vector3Value> position;
     QPointer<QuatValue> orientation;
     QPointer<Vector3Value> rotation_euler;
-
-    CoffeeUniformBlock* m_cameraUniformBlock;
 
     ShaderVariant* matrixVPVariant;
     ShaderVariant* matrixVariant;

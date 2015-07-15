@@ -4,7 +4,18 @@
 #include "general/common.h"
 #include "general/data/numbercontainer.h"
 
-class Vector3Value : public QObject,public NumberContainer<glm::vec3>
+class VectorData
+{
+public:
+    virtual void updateVectorData() = 0;
+    virtual const void* getVectorData() = 0;
+    virtual uint32_t getVectorDataSize() = 0;
+
+protected:
+    void* _tmp_vec_storage = nullptr;
+};
+
+class Vector3Value : public QObject,public NumberContainer<glm::vec3>,public VectorData
 {
     Q_PROPERTY(QVariantList value READ value WRITE setValue)
     Q_PROPERTY(QVariantList velocity READ velocity WRITE setVelocity)
@@ -15,7 +26,7 @@ public:
     Vector3Value(QObject* parent, const glm::vec3 &initial);
     Vector3Value(QObject* parent, float x, float y, float z);
 
-    using NumberContainer<glm::vec3>::setValue;
+//    using NumberContainer<glm::vec3>::setValue;
     using NumberContainer<glm::vec3>::setVelocity;
     using NumberContainer<glm::vec3>::setAcceleration;
     using NumberContainer<glm::vec3>::operator !=;
@@ -35,6 +46,12 @@ public:
     QVariantList velocity() const;
     QVariantList value() const;
     QVariantList acceleration() const;
+
+    void setValue(const glm::vec3& val);
+
+    void updateVectorData();
+    const void* getVectorData();
+    uint32_t getVectorDataSize();
 
 signals:
     void valueChanged();
@@ -64,7 +81,6 @@ public:
     Vector2Value(QObject* parent, const glm::vec2 &initial);
     Vector2Value(QObject* parent, float x, float y);
 
-    using NumberContainer<glm::vec2>::setValue;
     using NumberContainer<glm::vec2>::setVelocity;
     using NumberContainer<glm::vec2>::setAcceleration;
     using NumberContainer<glm::vec2>::operator !=;
@@ -81,9 +97,15 @@ public:
     using NumberContainer<glm::vec2>::operator >=;
     using NumberContainer<glm::vec2>::bindValue;
 
+    void setValue(const glm::vec2& val);
+
     QVariantList value() const;
+signals:
+    void valueChanged();
+
 public slots:
     void setValue(const QVariantList &value);
+    void bindValue(Vector2Value *vec);
 };
 
 class QuatValue : public QObject,public NumberContainer<glm::quat>
@@ -95,7 +117,6 @@ public:
     QuatValue(QObject* parent, const glm::quat &initial);
     QuatValue(QObject* parent, float w, float x, float y, float z);
 
-    using NumberContainer<glm::quat>::setValue;
     using NumberContainer<glm::quat>::operator !=;
     using NumberContainer<glm::quat>::operator =;
     using NumberContainer<glm::quat>::operator *=;
@@ -111,6 +132,10 @@ public:
     using NumberContainer<glm::quat>::bindValue;
 
     QVariantList value() const;
+    void setValue(const glm::quat& val);
+
+signals:
+    void valueChanged();
 
 public slots:
     void mathCumulate(const QVariantList &vals);
@@ -118,7 +143,7 @@ public slots:
 
     void mathNormalize();
 
-    void bindValue(QPointer<QuatValue> quat);
+    void bindValue(QuatValue *quat);
     void setValue(const QVariantList &value);
 };
 
@@ -162,6 +187,7 @@ class Matrix4Value : public QObject, public NumberContainer<glm::mat4>
 public:
     Matrix4Value(QObject* parent);
 
+    using NumberContainer<glm::mat4>::getValue;
     using NumberContainer<glm::mat4>::setValue;
     using NumberContainer<glm::mat4>::operator !=;
     using NumberContainer<glm::mat4>::operator =;
@@ -182,8 +208,9 @@ public:
 signals:
     void valueChanged();
 
-
 public slots:
+    void setValue(const glm::mat4& val);
+    void setValue(Matrix4Value *val);
 };
 
 #endif // QSCRIPTVECTORVALUE_H

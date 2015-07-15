@@ -10,6 +10,11 @@ public:
     {
         value = initial;
     }
+    NumberContainer(const std::function<T(const T&)>& func) : NumberContainer()
+    {
+        valueTransform = func;
+    }
+
     NumberContainer(NumberContainer<T> *floater) : NumberContainer(){
         bindValue(floater);
     }
@@ -120,9 +125,6 @@ public:
         }
     }
 
-    std::function<T()> getOffsetCallback() const{
-        return valueOffsetCallback;
-    }
     T getRawValue() const{
         return value;
     }
@@ -133,12 +135,8 @@ public:
         if(bound){
             value = bound->getValue();
         }
-        value+=valueOffsetCallback();
+        value = valueTransform(value);
         return value;
-    }
-
-    void setValueOffsetCallback(std::function<T()> &offset){
-        valueOffsetCallback = offset;
     }
 
     void setValue(const T &value)
@@ -184,16 +182,27 @@ public:
         this->bound = bound;
     }
 
-private:
-    NumberContainer<T> *bound;
+    std::function<T (const T &)> getValueTransform() const
+    {
+    return valueTransform;
+    }
+    void setValueTransform(const std::function<T (const T &)> &value)
+    {
+        valueTransform = value;
+    }
 
-    std::function<T()> valueOffsetCallback = [](){
-        return T();
+protected:
+    QMetaObject::Connection boundConnection;
+
+private:
+    NumberContainer<T> *bound = nullptr;
+
+    std::function<T(const T&)> valueTransform = [](const T& v){
+        return v;
     };
 
     NumberContainer()
     {
-        bound = nullptr;
     }
 
     T value;

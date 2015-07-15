@@ -1,6 +1,7 @@
 #include "coffeecamera.h"
 
 #include "general/shadervariant.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 {
