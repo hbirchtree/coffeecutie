@@ -3,7 +3,6 @@
 
 #include "general/common.h"
 
-class ShaderVariant;
 class CoffeeBuffer;
 class CoffeeUniformBlock;
 class ScalarValue;
@@ -26,7 +25,6 @@ class CoffeeCamera : public QObject
     Q_PROPERTY(QObject* matrix READ getMatrixVariant)
     Q_PROPERTY(QObject* right READ getCameraRightVariant)
     Q_PROPERTY(QObject* forward READ getCameraForwardVariant)
-    Q_PROPERTY(QObject* positionVariant READ getCameraPositionVariant)
 
     Q_OBJECT
 public:
@@ -78,7 +76,6 @@ public:
 
     QObject* getCameraRightVariant() const;
     QObject* getCameraForwardVariant() const;
-    QObject* getCameraPositionVariant() const;
     void setCameraAspect(QResizeEvent ev);
 
 public slots:
@@ -103,11 +100,10 @@ private:
     QPointer<QuatValue> orientation;
     QPointer<Vector3Value> rotation_euler;
 
-    ShaderVariant* matrixVPVariant;
-    ShaderVariant* matrixVariant;
-    ShaderVariant* cameraRightVariant;
-    ShaderVariant* cameraForwardVariant;
-    ShaderVariant* cameraPosVariant;
+    Matrix4Value* matrixVPVal;
+    Matrix4Value* matrixVal;
+    Vector3Value* cameraRightVal;
+    Vector3Value* cameraForwardVal;
 };
 
 #endif // COFFEECAMERA_H

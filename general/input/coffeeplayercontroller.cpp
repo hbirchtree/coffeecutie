@@ -4,8 +4,8 @@
 
 CoffeePlayerController::CoffeePlayerController(QObject *parent) : QObject(parent)
 {
-    position = new NumberContainer<glm::vec3>(glm::vec3(0,0,0));
-    rotation = new NumberContainer<glm::vec3>(glm::vec3(0,0,0));
+    position = new Vector3Value(this,glm::vec3(0,0,0));
+    rotation = new Vector3Value(this,glm::vec3(0,0,0));
 }
 
 CoffeePlayerController::~CoffeePlayerController()

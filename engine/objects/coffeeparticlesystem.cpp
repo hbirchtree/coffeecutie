@@ -4,7 +4,6 @@
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeecamera.h"
 #include "opengl/helpers/renderingmethods.h"
-#include "general/shadervariant.h"
 #include "engine/compute/coffeetransformcomputer.h"
 #include <QColor>
 
@@ -14,7 +13,7 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
 {
     this->m_gravity = new Vector3Value(this,glm::vec3(0,-1,0));
     this->transform = new CoffeeTransformComputer(this);
-    this->camera = camera;
+    this->m_camera = camera;
 
     CoffeeTransformComputer::Particle first;
     first.type = 0;
@@ -26,34 +25,26 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
 
     transform->getParticles()->append(first);
 
-    frametime = new ShaderVariant([=](){
-        return tickTime;
-    });
-    mass = new ShaderVariant([=](){
-        return particleMass();
-    });
-    partSpread = new ShaderVariant([=](){
-        return particleSpread();
-    });
-    gravity = new ShaderVariant([=](){
-        return m_gravity->getValue();
-    });
-    randRad = new ShaderVariant([=](){
+    m_particleSize = new ScalarValue(this,0.5f);
+    m_frametime = new ScalarValue(this,0.1f);
+    m_particleMass = new ScalarValue(this,1.0f);
+    m_particleSpread = new ScalarValue(this,0.1f);
+    m_randomDir = new ScalarValue(this,[=](float v){
+        Q_UNUSED(v)
         return (float)(qrand()%1256000-628000)/100000.f;
     });
-    randAmp = new ShaderVariant([=](){
+    m_randomAmplitude = new ScalarValue(this,[=](float v){
+        Q_UNUSED(v)
         return (float)(qrand()%1000000-500000)/500000.f;
     });
-    spawncount = new ShaderVariant([=](){
-        return 1.f;
-    });
-    transform->setUniform("timestep",frametime);
-    transform->setUniform("mass",mass);
-    transform->setUniform("gravity",gravity);
-    transform->setUniform("randRad",randRad);
-    transform->setUniform("randAmpDiff",randAmp);
-    transform->setUniform("partSpread",partSpread);
-    transform->setUniform("spawncount",spawncount);
+    m_spawnCount = new ScalarValue(this,1.f);
+    transform->setUniform("timestep",m_frametime);
+    transform->setUniform("mass",m_particleMass);
+    transform->setUniform("gravity",m_gravity);
+    transform->setUniform("randRad",m_randomDir);
+    transform->setUniform("randAmpDiff",m_randomAmplitude);
+    transform->setUniform("partSpread",m_particleSpread);
+    transform->setUniform("spawncount",m_spawnCount);
 }
 
 void CoffeeParticleSystem::render()
@@ -85,7 +76,7 @@ void CoffeeParticleSystem::load()
 
 void CoffeeParticleSystem::setFrametime(float time)
 {
-    this->tickTime = time;
+    *m_frametime = time;
 }
 
 bool CoffeeParticleSystem::isBaked()
@@ -96,31 +87,6 @@ bool CoffeeParticleSystem::isBaked()
 void CoffeeParticleSystem::setBaked(bool val)
 {
     this->baked = val;
-}
-
-float CoffeeParticleSystem::getParticleSize() const
-{
-    return particleSize;
-}
-
-QColor CoffeeParticleSystem::getParticleColor() const
-{
-    glm::vec4 c = particleColor*255.f;
-    return QColor(c.x,c.y,c.z,c.w);
-}
-
-void CoffeeParticleSystem::setParticleSize(float particleSize)
-{
-    this->particleSize = particleSize;
-}
-
-void CoffeeParticleSystem::setParticleColor(QColor particleColor)
-{
-    this->particleColor = glm::vec4(
-                particleColor.redF(),
-                particleColor.greenF(),
-                particleColor.blueF(),
-                particleColor.alphaF());
 }
 
 void CoffeeParticleSystem::setAdditive(bool additive)
@@ -144,14 +110,14 @@ void CoffeeParticleSystem::renderParticles()
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,transform->getRenderTransform());
     glBindVertexArray(transform->getRenderArray());
 
-    shader->setUniform("colorMultiplier",particleColor);
+    shader->setUniform("colorMultiplier",m_particleColor);
     shader->setUniform("diffuseSampler",0);
     shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
                            position()->getValue(),
                            rotation()->getValue(),
-                           scale()->getValue())*camera->getMatrix());
-    shader->setUniform("cameraPos",camera->getCameraPos());
-    shader->setUniform("particleSize",particleSize);
+                           scale()->getValue())*m_camera->getMatrix());
+    shader->setUniform("cameraPos",m_camera->getCameraPos());
+    shader->setUniform("particleSize",m_particleSize);
 
     glDrawTransformFeedback(GL_POINTS,transform->getRenderTransform());
 
@@ -181,24 +147,29 @@ QObject* CoffeeParticleSystem::getTextureQObject()
     return texture;
 }
 
-float CoffeeParticleSystem::particleMass() const
-{
-    return m_particleMass;
-}
-
-float CoffeeParticleSystem::particleSpread() const
-{
-    return m_particleSpread;
-}
-
 QObject *CoffeeParticleSystem::gravityQObject()
 {
     return m_gravity;
 }
 
-glm::vec3 CoffeeParticleSystem::getGravity() const
+QObject *CoffeeParticleSystem::particleColor()
 {
-    return m_gravity->getValue();
+    return m_particleColor;
+}
+
+QObject *CoffeeParticleSystem::particleSpread()
+{
+    return m_particleSpread;
+}
+
+QObject *CoffeeParticleSystem::particleSize()
+{
+    return m_particleSize;
+}
+
+QObject *CoffeeParticleSystem::particleMass()
+{
+    return m_particleMass;
 }
 
 QPointer<CoffeeShader> CoffeeParticleSystem::getShader()
@@ -239,16 +210,6 @@ void CoffeeParticleSystem::setTexture(QObject *value)
         setTexture(tex);
 }
 
-void CoffeeParticleSystem::setParticleMass(float particleMass)
-{
-    m_particleMass = particleMass;
-}
-
-void CoffeeParticleSystem::setParticleSpread(float particleSpread)
-{
-    m_particleSpread = particleSpread;
-}
-
 void CoffeeParticleSystem::setGravity(Vector3Value *gravity)
 {
     m_gravity = gravity;
@@ -261,12 +222,14 @@ void CoffeeParticleSystem::setGravity(QObject *gravity)
         setGravity(v);
 }
 
-void CoffeeParticleSystem::setGravity(const glm::vec3 &gravity)
+void CoffeeParticleSystem::setCamera(const QObject *value)
 {
-    m_gravity->setValue(gravity);
+    const CoffeeCamera* c = qobject_cast<const CoffeeCamera*>(value);
+    if(c)
+        setCamera(c);
 }
 
 void CoffeeParticleSystem::setCamera(const CoffeeCamera *value)
 {
-    camera = value;
+    m_camera = value;
 }

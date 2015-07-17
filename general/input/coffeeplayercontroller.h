@@ -48,8 +48,8 @@ private:
     glm::vec3 forwardMove;
     glm::vec3 rightMove;
 
-    NumberContainer<glm::vec3> *position;
-    NumberContainer<glm::vec3> *rotation;
+    Vector3Value *position;
+    Vector3Value *rotation;
 };
 
 #endif // COFFEEPLAYERCONTROLLER_H

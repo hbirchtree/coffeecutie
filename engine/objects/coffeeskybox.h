@@ -11,12 +11,18 @@ class CoffeeResource;
 
 class CoffeeSkybox : public QObject,public CoffeeObject
 {
+    Q_PROPERTY(QObject* texture READ texture WRITE setTexture)
+    Q_PROPERTY(QObject* mesh READ mesh WRITE setMesh)
+    Q_PROPERTY(QObject* shader READ shader WRITE setShader)
+    Q_PROPERTY(QObject* camera READ camera WRITE setCamera)
+
     Q_OBJECT
 public:
-    CoffeeSkybox(QObject* parent = 0, CoffeeCamera *camera = 0);
+    CoffeeSkybox(QObject* parent = 0, CoffeeCamera *m_camera = 0);
 
     void addMap(GLenum side, CoffeeResource *source);
-    void setCamera(CoffeeCamera* camera);
+
+    void setCamera(CoffeeCamera* m_camera);
 
     QPointer<CoffeeTexture> getTexture() const;
     void setTexture(QPointer<CoffeeTexture> value);
@@ -27,20 +33,28 @@ public:
     QPointer<CoffeeShader> getShader() const;
     void setShader(QPointer<CoffeeShader> value);
 
+    QObject* camera() const;
+    QObject* shader() const;
+    QObject* mesh() const;
+    QObject* texture() const;
+
 public slots:
     void render();
     void unload();
     void load();
 
+    void setMesh(QObject* mesh);
+    void setShader(QObject* shader);
+    void setCamera(QObject* camera);
+    void setTexture(QObject* texture);
+
 protected:
     bool baked = false;
 
-    QMap<GLenum,CoffeeResource*> cubemapping;
-
-    QPointer<CoffeeCamera> camera;
-    QPointer<CoffeeShader> shader;
-    QPointer<CoffeeTexture> texture;
-    QPointer<CoffeeMesh> skymesh;
+    QPointer<CoffeeCamera> m_camera;
+    QPointer<CoffeeShader> m_shader;
+    QPointer<CoffeeTexture> m_texture;
+    QPointer<CoffeeMesh> m_mesh;
 
     GLuint buffs[2];
     GLuint vao;

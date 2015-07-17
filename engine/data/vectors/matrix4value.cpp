@@ -1,0 +1,54 @@
+#include "matrix4value.h"
+
+Matrix4Value::Matrix4Value(QObject *parent) :
+    VectorData(parent),
+    NumberContainer<glm::mat4>(glm::mat4())
+{
+}
+
+Matrix4Value::Matrix4Value(QObject *parent, std::function<glm::mat4 (const glm::mat4 &)> fun) :
+    VectorData(parent),
+    NumberContainer<glm::mat4>(fun)
+{
+}
+
+float Matrix4Value::getValue(uint col, uint row)
+{
+    return NumberContainer<glm::mat4>::getValue()[col][row];
+}
+
+void Matrix4Value::unbindValue()
+{
+    disconnect(boundConnection);
+    NumberContainer<glm::mat4>::unbindValue();
+}
+
+void Matrix4Value::updateVectorData()
+{
+    if(!_tmp_vec_storage)
+        _tmp_vec_storage = malloc(getVectorDataSize());
+    glm::mat4 vec = getValue();
+    memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
+}
+
+const void *Matrix4Value::getVectorData()
+{
+    updateVectorData();
+    return _tmp_vec_storage;
+}
+
+uint32_t Matrix4Value::getVectorDataSize() const
+{
+    return sizeof(glm::mat4);
+}
+
+void Matrix4Value::setValue(const glm::mat4 &val)
+{
+    NumberContainer<glm::mat4>::setValue(val);
+    valueChanged();
+}
+
+void Matrix4Value::setValue(Matrix4Value *val)
+{
+    setValue(val->getValue());
+}

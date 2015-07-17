@@ -9,7 +9,9 @@
 #include "general/shadervariant.h"
 #include "general/input/coffeeplayercontroller.h"
 
-CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
+#include "engine/scripting/qscriptvectorvalue.h"
+
+CoffeeWorldOpts::CoffeeWorldOpts(QObject *parent) : QObject(parent)
 {
     qDebug("Creating world object: thread=%p",this->thread());
     physics = new BulletPhysics(0,glm::vec3(0,-9.81,0));
@@ -27,12 +29,9 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *renderer) : QObject(renderer)
     physicsThread->start();
     //The physics thread runs on its own tick.
 
-    this->fogColorVariant = new ShaderVariant([=](){
-        return this->getFogColor();
-    });
-    this->fogDensityVariant = new ShaderVariant([=](){
-        return this->getFogDensity();
-    });
+    fogDensity = new ScalarValue(this,0.01f);
+    fogColor = new Vector4Value(this,glm::vec4(1,1,1,1));
+    clearColor = new Vector4Value(this,glm::vec4(1,1,1,1));
 }
 
 CoffeeWorldOpts::~CoffeeWorldOpts()
@@ -52,7 +51,7 @@ QObject *CoffeeWorldOpts::getCameraQObject()
     return camera;
 }
 
-void CoffeeWorldOpts::setCamera(QPointer<CoffeeCamera> value)
+void CoffeeWorldOpts::setCamera(CoffeeCamera *value)
 {
     camera = value;
     value->setParent(this);
@@ -70,7 +69,7 @@ void CoffeeWorldOpts::injectPhysicsObject(PhysicsObject *object)
     physicsObjectAdded(object); //kind of a hack on our current ways, but it will work.
 }
 
-void CoffeeWorldOpts::addLight(QPointer<CoffeeOmniLight> light)
+void CoffeeWorldOpts::addLight(CoffeeOmniLight* light)
 {
     lights.append(light);
     light->setParent(this);
@@ -88,30 +87,13 @@ QObjectList CoffeeWorldOpts::getVariantLights()
         l.append(p.data());
     return l;
 }
-glm::vec4 CoffeeWorldOpts::getFogColor() const
-{
-    return fogColor;
-}
 
-void CoffeeWorldOpts::setFogColor(const glm::vec4 &value)
-{
-    fogColor = value;
-}
-float CoffeeWorldOpts::getFogDensity() const
-{
-    return fogDensity;
-}
-
-void CoffeeWorldOpts::setFogDensity(float value)
-{
-    fogDensity = value;
-}
 QPointer<CoffeeRenderer> CoffeeWorldOpts::getRenderer()
 {
     return renderer;
 }
 
-void CoffeeWorldOpts::setRendererP(QPointer<CoffeeRenderer> value)
+void CoffeeWorldOpts::setRendererP(CoffeeRenderer *value)
 {
     renderer = value;
     QSize s = renderer->getCurrentFramebufferSize();
@@ -154,16 +136,6 @@ void CoffeeWorldOpts::addParticleSystem(CoffeeParticleSystem *system)
     particles.append(system);
 }
 
-void CoffeeWorldOpts::setFogColorValue(QColor fogColor)
-{
-    qDebug() << "New color:" << fogColor;
-}
-
-void CoffeeWorldOpts::setClearColorValue(QColor clearColor)
-{
-    qDebug() << "New color:" << clearColor;
-}
-
 void CoffeeWorldOpts::connectSignals(QObject *controller)
 {
     CoffeePlayerController* c = qobject_cast<CoffeePlayerController*>(controller);
@@ -202,20 +174,6 @@ void CoffeeWorldOpts::prepareParticleSystems()
         s->setCamera(this->getCamera());
 }
 
-glm::vec4 CoffeeWorldOpts::getClearColor() const
-{
-    return clearColor;
-}
-
-void CoffeeWorldOpts::setClearColor(const glm::vec4 &value)
-{
-    clearColor = value;
-    if(renderer)
-        renderer->queueFunction(new std::function<void()>([=](){
-            renderer->updateRendererClearColor(getClearColor());
-        }));
-}
-
 bool CoffeeWorldOpts::wireframeMode() const
 {
     return m_wireframeMode;
@@ -230,8 +188,8 @@ void CoffeeWorldOpts::tickObjects(float d)
 void CoffeeWorldOpts::renderWorld()
 {
     if(!loadedState()){
-        qDebug() << "Setting OpenGL clear-color:" << clearColorValue();
-        renderer->updateRendererClearColor(getClearColor());
+        qDebug() << "Setting OpenGL clear-color:" << clearColor->asColor();
+        renderer->updateRendererClearColor(clearColor->getValue());
         setLoadedState(true);
     }
 
@@ -275,6 +233,7 @@ void CoffeeWorldOpts::setWireframeMode(bool wireframeMode)
 {
     m_wireframeMode = wireframeMode;
 }
+
 CoffeeSkybox* CoffeeWorldOpts::getSkybox() const
 {
     return skybox;
@@ -285,24 +244,14 @@ void CoffeeWorldOpts::setSkybox(CoffeeSkybox* value)
     skybox = value;
 }
 
-QColor CoffeeWorldOpts::fogColorValue() const
-{
-    return QColor(qRgba(fogColor.x*255,fogColor.y*255,fogColor.z*255,fogColor.w*255));
-}
-
-QColor CoffeeWorldOpts::clearColorValue() const
-{
-    return QColor(qRgba(clearColor.x*255,clearColor.y*255,clearColor.z*255,clearColor.w*255));
-}
-
 QObject *CoffeeWorldOpts::getFogColorVariant()
 {
-    return fogColorVariant;
+    return fogColor;
 }
 
 QObject *CoffeeWorldOpts::getFogDensityVariant()
 {
-    return fogDensityVariant;
+    return fogDensity;
 }
 
 bool CoffeeWorldOpts::loadedState() const

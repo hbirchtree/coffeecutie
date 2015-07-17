@@ -3,14 +3,19 @@
 
 #include "general/common.h"
 
-class ShaderVariant;
+class VectorData;
 class CoffeeTexture;
 class CoffeeShader;
+
+class ScalarValue;
+class Vector2Value;
+class Vector3Value;
+class Matrix4Value;
 
 class ShaderMapping {
 public:
     QString uniform;
-    QPointer<ShaderVariant> data;
+    VectorData* data;
     bool constant = false;
 };
 class TextureMapping {
@@ -30,8 +35,9 @@ public:
     void bindTextures();
     void unbindTextures();
 
-    void setUniform(QString uniformName,ShaderVariant* data);
-    void setTexture(QString samplerName, CoffeeTexture *texture);
+    void setUniform(const QString &uniformName, VectorData* data);
+
+    void setTexture(const QString &samplerName, CoffeeTexture *texture);
 
     void clearUniforms();
     void clearTextures();
@@ -41,7 +47,6 @@ protected:
     QVector<ShaderMapping*> uniforms;
     QVector<TextureMapping*> textures;
     QPointer<CoffeeShader> pshader;
-
 };
 
 #endif // COFFEEUNIFORMSETTER_H

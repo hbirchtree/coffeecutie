@@ -105,10 +105,10 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(CoffeeResource* src, QObje
            s->textures.size());
 
     //World data
-    for(QString key : source.keys()){
-        if(key.startsWith("world."))
-            s->worlds.append(createWorld(key.mid(6),source.value(key).toMap(),s,parent));
-    }
+//    for(QString key : source.keys()){
+//        if(key.startsWith("world."))
+//            s->worlds.append(createWorld(key.mid(6),source.value(key).toMap(),s,parent));
+//    }
     qDebug("Spent %i milliseconds parsing content from disk",t.elapsed());
     return s;
 }
@@ -123,239 +123,239 @@ QList<CoffeeWorldOpts *> CoffeeObjectFactory::importObjects(QString file, QObjec
     return w;
 }
 
-CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeAssetStorage *assets, QObject* parent)
-{
-    CoffeeStandardObject* obj = new CoffeeStandardObject(parent);
-    for(QString key : data.keys()){
-        if(key=="id")
-            obj->setObjectName(data.value(key).toString());
-        else if(key=="shader.id"){
-            if(assets->shaders.contains(data.value(key).toString())){
-                obj->setShader(assets->shaders.value(data.value(key).toString()));
-            }else{
-                qFatal("Failed to set shader for CoffeeStandardObject: Shader not found");
-            }
-        }else if(key=="model.id"){
-            CoffeeModelStruct *m = assets->acquireModel(data.value(key).toString());
-            if(!m)
-                qFatal("Failed to set model!");
-            obj->setMesh(m->mesh);
-            obj->setMaterial(m->material);
-            if(!obj->mesh()||!obj->material()){
-                qFatal("Failed to set CoffeeStandardObject model or mesh: Please verify configuration");
-            }
-        }
-        else if(key=="model.position")
-            obj->position()->setValue(listToVec3(data.value(key)));
-        else if(key=="model.scale")
-            obj->scale()->setValue(listToVec3(data.value(key)));
-        else if(key=="physics"){
-            PhysicsObject* pobj = new PhysicsObject(obj);
-            QVariantMap pd = data.value(key).toMap();
-            for(QString pkey : pd.keys()){
-                if(pkey=="shape"){
-                    QString t = pd.value(pkey).toString();
-                    PhysicsDescriptor::PhysicalShape s = PhysicsDescriptor::Shape_None;
-                    if(t=="box")
-                        s = PhysicsDescriptor::Shape_Box;
-                    else if(t=="sphere")
-                        s = PhysicsDescriptor::Shape_Sphere;
-                    else if(t=="staticplane")
-                        s = PhysicsDescriptor::Shape_StaticPlane;
-                    else if(t=="capsule")
-                        s = PhysicsDescriptor::Shape_Capsule;
-                    else if(t=="cylinder")
-                        s = PhysicsDescriptor::Shape_Cylinder;
-                    else if(t=="cone")
-                        s = PhysicsDescriptor::Shape_Cone;
-                    else if(t=="staticplane")
-                        s = PhysicsDescriptor::Shape_StaticPlane;
-                    pobj->getDescr()->setShape(s);
-                }else if(pkey=="mass")
-                    pobj->getDescr()->setMass(pd.value(pkey).toFloat());
-                else if(pkey=="friction")
-                    pobj->getDescr()->setFriction(pd.value(pkey).toFloat());
-                else if(pkey=="restitution")
-                    pobj->getDescr()->setRestitution(pd.value(pkey).toFloat());
-                else if(pkey=="inertia")
-                    pobj->getDescr()->setInertia(pd.value(pkey).toList());
-                else if(pkey=="normal")
-                    pobj->getDescr()->setNormal(pd.value(pkey).toList());
-                else if(pkey=="linear-factor")
-                    pobj->getDescr()->setLinearFactor(pd.value(pkey).toList());
-                else if(pkey=="data"){
-                    pobj->getDescr()->setFileSource(pd.value(pkey).toString());
-                }else if(pkey=="position")
-                    pobj->getDescr()->setPosition(pd.value(pkey).toList());
-                else if(pkey=="scale")
-                    pobj->getDescr()->setScale(pd.value(pkey).toList());
-            }
-            if(pobj->getDescr()->shape()!=PhysicsDescriptor::Shape_None){
-                pobj->getPositionObject()->setValue(varListToVec3(pobj->getDescr()->position()));
-                pobj->getPhysicalRotation()->setValue(varListToQuat(pobj->getDescr()->orientation()));
-                obj->setPhysicsObject(pobj);
-            }else
-                delete pobj;
-        }
-    }
-    if(obj->physics()){
-        obj->physics()->setObjectName("physics");
-        obj->position()->bindValue(obj->physics()->getPositionObject());
-    }
-    if(!obj->shader()){
-        qFatal("CoffeeStandardObject does not have a shader!");
-    }
-    if(!obj->mesh()){
-        qFatal("CoffeeStandardObject does not have a mesh!");
-    }
-    if(!obj->material()){
-        qFatal("CoffeeStandardObject does not have a material!");
-    }
+//CoffeeObject *CoffeeObjectFactory::createObject(const QVariantMap &data, CoffeeAssetStorage *assets, QObject* parent)
+//{
+//    CoffeeStandardObject* obj = new CoffeeStandardObject(parent);
+//    for(QString key : data.keys()){
+//        if(key=="id")
+//            obj->setObjectName(data.value(key).toString());
+//        else if(key=="shader.id"){
+//            if(assets->shaders.contains(data.value(key).toString())){
+//                obj->setShader(assets->shaders.value(data.value(key).toString()));
+//            }else{
+//                qFatal("Failed to set shader for CoffeeStandardObject: Shader not found");
+//            }
+//        }else if(key=="model.id"){
+//            CoffeeModelStruct *m = assets->acquireModel(data.value(key).toString());
+//            if(!m)
+//                qFatal("Failed to set model!");
+//            obj->setMesh(m->mesh);
+//            obj->setMaterial(m->material);
+//            if(!obj->mesh()||!obj->material()){
+//                qFatal("Failed to set CoffeeStandardObject model or mesh: Please verify configuration");
+//            }
+//        }
+//        else if(key=="model.position")
+//            obj->position()->setValue(listToVec3(data.value(key)));
+//        else if(key=="model.scale")
+//            obj->scale()->setValue(listToVec3(data.value(key)));
+//        else if(key=="physics"){
+//            PhysicsObject* pobj = new PhysicsObject(obj);
+//            QVariantMap pd = data.value(key).toMap();
+//            for(QString pkey : pd.keys()){
+//                if(pkey=="shape"){
+//                    QString t = pd.value(pkey).toString();
+//                    PhysicsDescriptor::PhysicalShape s = PhysicsDescriptor::Shape_None;
+//                    if(t=="box")
+//                        s = PhysicsDescriptor::Shape_Box;
+//                    else if(t=="sphere")
+//                        s = PhysicsDescriptor::Shape_Sphere;
+//                    else if(t=="staticplane")
+//                        s = PhysicsDescriptor::Shape_StaticPlane;
+//                    else if(t=="capsule")
+//                        s = PhysicsDescriptor::Shape_Capsule;
+//                    else if(t=="cylinder")
+//                        s = PhysicsDescriptor::Shape_Cylinder;
+//                    else if(t=="cone")
+//                        s = PhysicsDescriptor::Shape_Cone;
+//                    else if(t=="staticplane")
+//                        s = PhysicsDescriptor::Shape_StaticPlane;
+//                    pobj->getDescr()->setShape(s);
+//                }else if(pkey=="mass")
+//                    pobj->getDescr()->setMass(pd.value(pkey).toFloat());
+//                else if(pkey=="friction")
+//                    pobj->getDescr()->setFriction(pd.value(pkey).toFloat());
+//                else if(pkey=="restitution")
+//                    pobj->getDescr()->setRestitution(pd.value(pkey).toFloat());
+//                else if(pkey=="inertia")
+//                    pobj->getDescr()->setInertia(pd.value(pkey).toList());
+//                else if(pkey=="normal")
+//                    pobj->getDescr()->setNormal(pd.value(pkey).toList());
+//                else if(pkey=="linear-factor")
+//                    pobj->getDescr()->setLinearFactor(pd.value(pkey).toList());
+//                else if(pkey=="data"){
+//                    pobj->getDescr()->setFileSource(pd.value(pkey).toString());
+//                }else if(pkey=="position")
+//                    pobj->getDescr()->setPosition(pd.value(pkey).toList());
+//                else if(pkey=="scale")
+//                    pobj->getDescr()->setScale(pd.value(pkey).toList());
+//            }
+//            if(pobj->getDescr()->shape()!=PhysicsDescriptor::Shape_None){
+//                pobj->getPositionObject()->setValue(varListToVec3(pobj->getDescr()->position()));
+//                pobj->getPhysicalRotation()->setValue(varListToQuat(pobj->getDescr()->orientation()));
+//                obj->setPhysicsObject(pobj);
+//            }else
+//                delete pobj;
+//        }
+//    }
+//    if(obj->physics()){
+//        obj->physics()->setObjectName("physics");
+//        obj->position()->bindValue(obj->physics()->getPositionObject());
+//    }
+//    if(!obj->shader()){
+//        qFatal("CoffeeStandardObject does not have a shader!");
+//    }
+//    if(!obj->mesh()){
+//        qFatal("CoffeeStandardObject does not have a mesh!");
+//    }
+//    if(!obj->material()){
+//        qFatal("CoffeeStandardObject does not have a material!");
+//    }
 
-    return obj;
-}
+//    return obj;
+//}
 
-CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
-{
-    CoffeeWorldOpts* world = new CoffeeWorldOpts(parent);
-    world->setObjectName(key);
-    for(QString key : data.keys()){
-        if(key=="camera")
-            world->setCamera(createCamera(data.value(key).toMap(),world));
-        else if(key=="world.fog.density")
-            world->setFogDensity(data.value(key).toFloat());
-        else if(key=="world.fog.color"){
-            QColor c = stringToColor(data.value(key));
-            world->setFogColor(glm::vec4(c.redF(),c.greenF(),c.blueF(),c.alphaF()));
-        }else if(key=="objects")
-            for(const QVariant &obj : data.value(key).toList())
-                world->addObject(createObject(obj.toMap(),assets,world));
-        else if(key=="lights")
-            for(const QVariant &obj : data.value(key).toList())
-                world->addLight(createLight(obj.toMap(),world));
-        else if(key=="clearcolor"){
-            QColor c = stringToColor(data.value(key));
-            world->setClearColor(glm::vec4(c.redF(),c.greenF(),c.blueF(),c.alphaF()));
-        }else if(key=="skybox"){
-            world->setSkybox(createSkybox(data.value(key).toMap(),assets,world));
-        }else if(key=="particle-systems")
-            for(const QVariant &obj : data.value(key).toList())
-                world->addParticleSystem(createParticleSystem(obj.toMap(),assets,world));
-    }
+//CoffeeWorldOpts *CoffeeObjectFactory::createWorld(const QString &key, const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
+//{
+//    CoffeeWorldOpts* world = new CoffeeWorldOpts(parent);
+//    world->setObjectName(key);
+//    for(QString key : data.keys()){
+//        if(key=="camera")
+//            world->setCamera(createCamera(data.value(key).toMap(),world));
+//        else if(key=="world.fog.density")
+//            world->setFogDensity(data.value(key).toFloat());
+//        else if(key=="world.fog.color"){
+//            QColor c = stringToColor(data.value(key));
+//            world->setFogColor(glm::vec4(c.redF(),c.greenF(),c.blueF(),c.alphaF()));
+//        }else if(key=="objects")
+//            for(const QVariant &obj : data.value(key).toList())
+//                world->addObject(createObject(obj.toMap(),assets,world));
+//        else if(key=="lights")
+//            for(const QVariant &obj : data.value(key).toList())
+//                world->addLight(createLight(obj.toMap(),world));
+//        else if(key=="clearcolor"){
+//            QColor c = stringToColor(data.value(key));
+//            world->setClearColor(glm::vec4(c.redF(),c.greenF(),c.blueF(),c.alphaF()));
+//        }else if(key=="skybox"){
+//            world->setSkybox(createSkybox(data.value(key).toMap(),assets,world));
+//        }else if(key=="particle-systems")
+//            for(const QVariant &obj : data.value(key).toList())
+//                world->addParticleSystem(createParticleSystem(obj.toMap(),assets,world));
+//    }
 
-    if(world->getSkybox())
-        world->getSkybox()->setCamera(world->getCamera());
+//    if(world->getSkybox())
+//        world->getSkybox()->setCamera(world->getCamera());
 
-    world->prepareParticleSystems(); //sets camera for them
+//    world->prepareParticleSystems(); //sets camera for them
 
-    return world;
-}
+//    return world;
+//}
 
-CoffeeCamera *CoffeeObjectFactory::createCamera(const QVariantMap &data, QObject *parent)
-{
-    CoffeeCamera* camera = new CoffeeCamera(parent);
-    for(QString key : data.keys()){
-        if(key=="fov")
-            camera->getFieldOfView()->setValue(data.value(key).toFloat());
-        else if(key=="znear")
-            camera->setZnear(data.value(key).toFloat());
-        else if(key=="zfar")
-            camera->setZfar(data.value(key).toFloat());
-        else if(key=="position")
-            camera->getPosition()->setValue(listToVec3(data.value(key)));
-        else if(key=="rotation")
-            camera->getRotation()->setValue(listToVec3(data.value(key)));
-        else if(key=="orthographic")
-            camera->setOrthographic(data.value(key).toBool());
-    }
-    return camera;
-}
+//CoffeeCamera *CoffeeObjectFactory::createCamera(const QVariantMap &data, QObject *parent)
+//{
+//    CoffeeCamera* camera = new CoffeeCamera(parent);
+//    for(QString key : data.keys()){
+//        if(key=="fov")
+//            camera->getFieldOfView()->setValue(data.value(key).toFloat());
+//        else if(key=="znear")
+//            camera->setZnear(data.value(key).toFloat());
+//        else if(key=="zfar")
+//            camera->setZfar(data.value(key).toFloat());
+//        else if(key=="position")
+//            camera->getPosition()->setValue(listToVec3(data.value(key)));
+//        else if(key=="rotation")
+//            camera->getRotation()->setValue(listToVec3(data.value(key)));
+//        else if(key=="orthographic")
+//            camera->setOrthographic(data.value(key).toBool());
+//    }
+//    return camera;
+//}
 
-CoffeeOmniLight *CoffeeObjectFactory::createLight(const QVariantMap &data, QObject *parent)
-{
-    CoffeeOmniLight* light = new CoffeeOmniLight(parent);
-    for(QString key : data.keys()){
-        if(key=="ambient-coefficient")
-            light->getAmbientCoefficient()->setValue(data.value(key).toFloat());
-        else if(key=="attenuation")
-            light->getAttenuation()->setValue(data.value(key).toFloat());
-        else if(key=="position")
-            light->getPosition()->setValue(listToVec3(data.value(key)));
-        else if(key=="color"){
-            QColor c = stringToColor(data.value(key));
-            light->getColor()->setValue(glm::vec3(c.redF(),c.greenF(),c.blueF()));
-        }
-    }
-    return light;
-}
+//CoffeeOmniLight *CoffeeObjectFactory::createLight(const QVariantMap &data, QObject *parent)
+//{
+//    CoffeeOmniLight* light = new CoffeeOmniLight(parent);
+//    for(QString key : data.keys()){
+//        if(key=="ambient-coefficient")
+//            light->getAmbientCoefficient()->setValue(data.value(key).toFloat());
+//        else if(key=="attenuation")
+//            light->getAttenuation()->setValue(data.value(key).toFloat());
+//        else if(key=="position")
+//            light->getPosition()->setValue(listToVec3(data.value(key)));
+//        else if(key=="color"){
+//            QColor c = stringToColor(data.value(key));
+//            light->getColor()->setValue(glm::vec3(c.redF(),c.greenF(),c.blueF()));
+//        }
+//    }
+//    return light;
+//}
 
-CoffeeSkybox *CoffeeObjectFactory::createSkybox(const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
-{
-    CoffeeSkybox* skybox = new CoffeeSkybox(parent);
-    for(QString key : data.keys()){
-        if(key=="cubemap"){
-            skybox->setTexture(assets->textures.value(data.value(key).toString()));
-            if(!skybox->getTexture())
-                qFatal("Failed to set skybox texture!");
-        }else if(key=="mesh"){
-            CoffeeModelStruct *m = assets->acquireModel(data.value(key).toString());
-            if(!m)
-                qFatal("Failed to set skybox mesh!");
-            skybox->setSkymesh(m->mesh);
-            if(!skybox->getSkymesh())
-                qFatal("Failed to set skybox mesh!");
-        }else if(key=="shader"){
-            skybox->setShader(assets->shaders.value(data.value(key).toString()));
-            if(!skybox->getShader())
-                qFatal("Failed to set skybox texture!");
-        }
-    }
-    if(!skybox->getShader()||!skybox->getSkymesh()||!skybox->getTexture())
-        qFatal("Skybox does not have the required components!");
-    return skybox;
-}
+//CoffeeSkybox *CoffeeObjectFactory::createSkybox(const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
+//{
+//    CoffeeSkybox* skybox = new CoffeeSkybox(parent);
+//    for(QString key : data.keys()){
+//        if(key=="cubemap"){
+//            skybox->setTexture(assets->textures.value(data.value(key).toString()));
+//            if(!skybox->getTexture())
+//                qFatal("Failed to set skybox texture!");
+//        }else if(key=="mesh"){
+//            CoffeeModelStruct *m = assets->acquireModel(data.value(key).toString());
+//            if(!m)
+//                qFatal("Failed to set skybox mesh!");
+//            skybox->setSkymesh(m->mesh);
+//            if(!skybox->getSkymesh())
+//                qFatal("Failed to set skybox mesh!");
+//        }else if(key=="shader"){
+//            skybox->setShader(assets->shaders.value(data.value(key).toString()));
+//            if(!skybox->getShader())
+//                qFatal("Failed to set skybox texture!");
+//        }
+//    }
+//    if(!skybox->getShader()||!skybox->getSkymesh()||!skybox->getTexture())
+//        qFatal("Skybox does not have the required components!");
+//    return skybox;
+//}
 
-CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
-{
-    CoffeeParticleSystem* system = new CoffeeParticleSystem(parent,nullptr);
+//CoffeeParticleSystem *CoffeeObjectFactory::createParticleSystem(const QVariantMap &data, CoffeeAssetStorage *assets, QObject *parent)
+//{
+//    CoffeeParticleSystem* system = new CoffeeParticleSystem(parent,nullptr);
 
-    for(QString key : data.keys()){
-        if(key=="texture"){
-            system->setTexture(assets->textures.value(data.value(key).toString()));
-            if(!system->getTexture())
-                qFatal("Failed to set particle system sprite!");
-        }else if(key=="render-shader"){
-            system->setShader(assets->shaders.value(data.value(key).toString()));
-            if(!system->getShader())
-                qFatal("Failed to set particle system render shader!");
-        }else if(key=="transform-shader"){
-            system->getTransform()->setShader(assets->shaders.value(data.value(key).toString()));
-            if(!system->getTransform()->getShader())
-                qFatal("Failed to set particle system transform shader!");
-        }else if(key=="color"){
-            system->setParticleColor(stringToColor(data.value(key)));
-        }else if(key=="particle-mass"){
-            system->setParticleMass(data.value(key).toFloat());
-        }else if(key=="particle-size"){
-            system->setParticleSize(data.value(key).toFloat());
-        }else if(key=="gravity"){
-            system->setGravity(listToVec3(data.value(key)));
-        }else if(key=="position"){
-            system->position()->setValue(listToVec3(data.value(key).toString()));
-        }else if(key=="id"){
-            system->setObjectName(data.value(key).toString());
-        }
-    }
+//    for(QString key : data.keys()){
+//        if(key=="texture"){
+//            system->setTexture(assets->textures.value(data.value(key).toString()));
+//            if(!system->getTexture())
+//                qFatal("Failed to set particle system sprite!");
+//        }else if(key=="render-shader"){
+//            system->setShader(assets->shaders.value(data.value(key).toString()));
+//            if(!system->getShader())
+//                qFatal("Failed to set particle system render shader!");
+//        }else if(key=="transform-shader"){
+//            system->getTransform()->setShader(assets->shaders.value(data.value(key).toString()));
+//            if(!system->getTransform()->getShader())
+//                qFatal("Failed to set particle system transform shader!");
+//        }else if(key=="color"){
+//            system->setParticleColor(stringToColor(data.value(key)));
+//        }else if(key=="particle-mass"){
+//            system->setParticleMass(data.value(key).toFloat());
+//        }else if(key=="particle-size"){
+//            system->setParticleSize(data.value(key).toFloat());
+//        }else if(key=="gravity"){
+//            system->setGravity(listToVec3(data.value(key)));
+//        }else if(key=="position"){
+//            system->position()->setValue(listToVec3(data.value(key).toString()));
+//        }else if(key=="id"){
+//            system->setObjectName(data.value(key).toString());
+//        }
+//    }
 
-    if(!system->getTexture())
-        qFatal("Particle system has no sprite!");
-    if(!system->getShader())
-        qFatal("Particle system has no render shader!");
-    if(!system->getTransform()->getShader())
-        qFatal("Particle system has no transform shader!");
+//    if(!system->getTexture())
+//        qFatal("Particle system has no sprite!");
+//    if(!system->getShader())
+//        qFatal("Particle system has no render shader!");
+//    if(!system->getTransform()->getShader())
+//        qFatal("Particle system has no transform shader!");
 
-    return system;
-}
+//    return system;
+//}
 
 glm::vec3 CoffeeObjectFactory::listToVec3(const QVariant &data)
 {

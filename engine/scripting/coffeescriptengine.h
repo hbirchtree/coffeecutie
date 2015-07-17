@@ -1,8 +1,7 @@
 #ifndef COFFEESCRIPTENGINE_H
 #define COFFEESCRIPTENGINE_H
 
-#include <QObject>
-#include <QtScript>
+#include "coffeescriptconstructors.h"
 
 class CoffeeScriptEngine : public QObject
 {
@@ -15,33 +14,13 @@ public:
     void execFile(QString file, bool *result = nullptr, QString *logOut = nullptr);
     void addObject(QObject* o);
 
-signals:
-
-public slots:
-
 private:
     QScriptEngine e;
 
-    //QPointF
-    static QScriptValue pointToScript(QScriptEngine* eng, const QPointF &v);
-    static void pointFromScript(const QScriptValue& v, QPointF &o);
+    //Functions to export
+    static QScriptValue coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng);
 
-    //Coffee objects
-    static QScriptValue neuralNetConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-
-    static QScriptValue scalarValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue vectorValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-
-    static QScriptValue vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue coffeePlayerControllerConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-
-    //Qt objects
-    static QScriptValue qtimerConstructor(QScriptContext *ctxt, QScriptEngine *eng);
-
+    //ScriptEngine internal functions
     static QString importFile(const QFileInfo &srcFile, QString &src);
 };
 

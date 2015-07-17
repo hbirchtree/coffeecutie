@@ -4,6 +4,7 @@
 #include "general/common.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/physics/physicsobject.h"
+
 class CoffeeObject
 {
 public:

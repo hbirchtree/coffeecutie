@@ -4,14 +4,14 @@
 #include "opengl/components/coffeematerial.h"
 #include "opengl/components/shadercontainer.h"
 #include "engine/models/coffeeinstancecontainer.h"
-#include "general/shadervariant.h"
 #include "opengl/helpers/renderingmethods.h"
 
 CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
     QObject(parent),
     CoffeeObject(this)
 {
-    modelMatrix = new ShaderVariant([=](){
+    modelMatrix = new Matrix4Value(this,[=](const glm::mat4& v){
+        Q_UNUSED(v)
         return RenderingMethods::translateObjectMatrix(position()->getValue(),
                                                        rotation()->getValue(),
                                                        scale()->getValue());
@@ -191,9 +191,11 @@ void CoffeeStandardObject::setShaderRef(QObject *sh)
         setShader(shader);
 }
 
-void CoffeeStandardObject::setUniform(QString uniformName, ShaderVariant *data)
+void CoffeeStandardObject::setUniform(QString uniformName, QObject *data)
 {
-    CoffeeUniformSetter::setUniform(uniformName,data);
+    VectorData* d = qobject_cast<VectorData*>(data);
+    if(d)
+        CoffeeUniformSetter::setUniform(uniformName,d);
 }
 
 void CoffeeStandardObject::setTexture(QString samplerName, CoffeeTexture *texture)

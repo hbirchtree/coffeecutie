@@ -1,8 +1,8 @@
 #include "coffeetransformcomputer.h"
 
 #include "opengl/components/shadercontainer.h"
-#include "general/shadervariant.h"
 #include "engine/objects/coffeestandardobject.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeTransformComputer::CoffeeTransformComputer(QObject *parent) : QObject(parent)
 {
@@ -235,9 +235,11 @@ uint CoffeeTransformComputer::vaoIndex()
     return index;
 }
 
-void CoffeeTransformComputer::setUniform(QString uniformName, ShaderVariant* data)
+void CoffeeTransformComputer::setUniform(QString uniformName, QObject *data)
 {
-    CoffeeUniformSetter::setUniform(uniformName,data);
+    VectorData* d = qobject_cast<VectorData*>(data);
+    if(d)
+        CoffeeUniformSetter::setUniform(uniformName,d);
 }
 
 void CoffeeTransformComputer::setFeedbackAttributes(const QVariantList &feedbackAttributes)

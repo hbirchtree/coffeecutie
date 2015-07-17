@@ -132,17 +132,18 @@
 			"position": [0,20,0],
 			"rotation": [0,0,0]
 		},
+		"fog":{
+			"density": 0.02,
+			"color": "#002525FF",
+		},
 		"clearcolor": "#002525FF",
-		"world.fog.density": 0.02,
-		"world.fog.color": "#002525FF",
-		"world-script": "scripts/test.qts",
 		"skybox": {
 			"id": "sky",
 			"cubemap": "skytexture",
 			"mesh": "cube:.*",
 			"shader": "skyshader"
 		},
-		"particle-systems":[
+		"particle_systems":[
 			{
 				"id": "testparts",
 				"texture": "quadtex",

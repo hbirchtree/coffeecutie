@@ -11,17 +11,20 @@ CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
     this->orientation = new QuatValue(this,glm::quat(1,0,0,0));
     this->rotation_euler = new Vector3Value(this,glm::vec3(0,0,0));
 
-    this->matrixVariant = new ShaderVariant([=](){return getMatrix();});
-    this->cameraForwardVariant = new ShaderVariant([=](){
+    this->matrixVal = new Matrix4Value(this,[=](const glm::mat4& v){
+        Q_UNUSED(v)
+        return getMatrix();
+    });
+    this->cameraForwardVal = new Vector3Value(this,[=](const glm::vec3& v){
+        Q_UNUSED(v)
         return getCameraForwardNormal();
     });
-    this->cameraRightVariant = new ShaderVariant([=](){
+    this->cameraRightVal = new Vector3Value(this,[=](const glm::vec3& v){
+        Q_UNUSED(v)
         return getCameraRightNormal();
     });
-    this->cameraPosVariant = new ShaderVariant([=](){
-        return getCameraPos();
-    });
-    this->matrixVPVariant = new ShaderVariant([=](){
+    this->matrixVPVal = new Matrix4Value(this,[=](const glm::mat4& v){
+        Q_UNUSED(v)
         return getPerspective();
     });
 }
@@ -220,12 +223,12 @@ float CoffeeCamera::getFov() const
 
 QObject *CoffeeCamera::getMatrixVPVariant() const
 {
-    return matrixVPVariant;
+    return matrixVPVal;
 }
 
 QObject *CoffeeCamera::getMatrixVariant() const
 {
-    return matrixVariant;
+    return matrixVal;
 }
 
 QObject *CoffeeCamera::getPositionValue()
@@ -240,17 +243,12 @@ QObject *CoffeeCamera::getRotationValue()
 
 QObject *CoffeeCamera::getCameraRightVariant() const
 {
-    return cameraRightVariant;
+    return cameraRightVal;
 }
 
 QObject *CoffeeCamera::getCameraForwardVariant() const
 {
-    return cameraForwardVariant;
-}
-
-QObject *CoffeeCamera::getCameraPositionVariant() const
-{
-    return cameraPosVariant;
+    return cameraForwardVal;
 }
 
 void CoffeeCamera::setCameraAspect(QResizeEvent ev)

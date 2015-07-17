@@ -2,6 +2,7 @@
 
 #include "general/shadervariant.h"
 #include "opengl/components/coffeeuniformblock.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 #include <QMetaEnum>
 #include "engine/data/coffeeresource.h"
 
@@ -71,7 +72,7 @@ void CoffeeShader::createProgram()
     programId = glCreateProgram();
 }
 
-bool CoffeeShader::addShader(const char *data, QString id, const GLenum &shaderType)
+bool CoffeeShader::addShader(const char *data, const QString &id, const GLenum &shaderType)
 {
     GLuint shader = compileShaderSource(data,id,shaderType);
     if(shader>0)
@@ -124,7 +125,7 @@ GLuint CoffeeShader::compileShader(CoffeeResource* shader, const GLenum &shaderT
     return compileShaderSource(code,shader->source(),shaderType);
 }
 
-GLuint CoffeeShader::compileShaderSource(const char *data, QString id, const GLenum &shaderType)
+GLuint CoffeeShader::compileShaderSource(const char *data, const QString &id, const GLenum &shaderType)
 {
     GLuint handle = glCreateShader(shaderType);
 
@@ -287,15 +288,15 @@ CoffeeUniformBlock *CoffeeShader::getProgramUniformBlock(GLuint index)
         if(v->blockIndex==(uint16_t)index)
             b->addUniform(v);
 
-    CoffeeUniformBlock* c = b->getChild(sizeof(float),sizeof(float));
-    float d_ = 1.234f;
-    qDebug() << *b->getData();
-    c->setDataRange(&d_,0,sizeof(float));
-//    b->setUniformData("camera",&d_,sizeof(glm::mat4));
-//    b->setUniformData("cameraVP",&d_,sizeof(glm::mat4));
-    qDebug() << *b->getData();
-//    b->setDataRange(&d_,0,sizeof(float));
-    qDebug() << *reinterpret_cast<float*>(b->getDataRange(sizeof(float),sizeof(float)));
+//    CoffeeUniformBlock* c = b->getChild(sizeof(float),sizeof(float));
+//    float d_ = 1.234f;
+//    qDebug() << *b->getData();
+//    c->setDataRange(&d_,0,sizeof(float));
+////    b->setUniformData("camera",&d_,sizeof(glm::mat4));
+////    b->setUniformData("cameraVP",&d_,sizeof(glm::mat4));
+//    qDebug() << *b->getData();
+////    b->setDataRange(&d_,0,sizeof(float));
+//    qDebug() << *reinterpret_cast<float*>(b->getDataRange(sizeof(float),sizeof(float)));
 
     return b;
 }
@@ -311,7 +312,7 @@ void CoffeeShader::setFragmentShader(CoffeeResource *value)
 }
 
 
-int CoffeeShader::getUniformLocation(QString name){
+int CoffeeShader::getUniformLocation(const QString &name){
     if(uniforms.contains(name))
         return uniforms.value(name);
     return -1;
@@ -327,7 +328,7 @@ const QHash<QString, GLenum> CoffeeShader::getUniforms()
     return uniforms_t;
 }
 
-int CoffeeShader::getAttributeLocation(QString name){
+int CoffeeShader::getAttributeLocation(const QString &name){
     if(attributes.contains(name))
         return attributes.value(name);
     return -1;
@@ -337,56 +338,56 @@ int CoffeeShader::getAttributeLocation(QString name){
     return handle;
 }
 
-void CoffeeShader::setUniform(QString name,const glm::vec3& val){
+void CoffeeShader::setUniform(const QString &name, const glm::vec3& val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC3)
         glUniform3f(uniforms.value(name),val.x,val.y,val.z);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, const glm::vec4 &val){
+void CoffeeShader::setUniform(const QString &name, const glm::vec4 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC4)
         glUniform4f(uniforms.value(name),val.x,val.y,val.z,val.w);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, const glm::vec2 &val){
+void CoffeeShader::setUniform(const QString &name, const glm::vec2 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_VEC2)
         glUniform2f(uniforms.value(name),val.x,val.y);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, GLfloat val){
+void CoffeeShader::setUniform(const QString &name, GLfloat val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT)
         glUniform1f(uniforms.value(name),val);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, int val){
+void CoffeeShader::setUniform(const QString &name, int val){
     if(uniforms.keys().contains(name))
         glUniform1i(uniforms.value(name),val);
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, const glm::mat3 &val){
+void CoffeeShader::setUniform(const QString &name, const glm::mat3 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_MAT3)
         glUniformMatrix3fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, const glm::mat4 &val){
+void CoffeeShader::setUniform(const QString &name, const glm::mat4 &val){
     if(uniforms.keys().contains(name)&&uniforms_t.value(name)==GL_FLOAT_MAT4)
         glUniformMatrix4fv(uniforms.value(name),1,GL_FALSE,glm::value_ptr(val));
     else if(verbosity>1)
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(QString name, const ShaderVariant* val){
+void CoffeeShader::setUniform(const QString &name, const ShaderVariant* val){
     //According to Callgrind, this is the time-consuming part of rendering.
     if(uniforms.keys().contains(name)){
         switch(val->getType()){
@@ -420,6 +421,54 @@ void CoffeeShader::setUniform(QString name, const ShaderVariant* val){
             break;
         }
     }
+}
+
+void CoffeeShader::setUniform(const QString &name, VectorData *val)
+{
+    switch(val->getVectorDataSize()){
+    case sizeof(float):{
+        glUniform1fv(getUniformLocation(name),
+                     1,
+                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+        break;
+    }
+    case sizeof(glm::vec2):{
+        glUniform2fv(getUniformLocation(name),
+                     1,
+                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+        break;
+    }
+    case sizeof(glm::vec3):{
+        glUniform3fv(getUniformLocation(name),
+                     1,
+                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+        break;
+    }
+    case sizeof(glm::vec4):{
+        glUniform4fv(getUniformLocation(name),
+                     1,
+                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+        break;
+    }
+    case sizeof(glm::mat3):{
+        glUniformMatrix3fv(getUniformLocation(name),
+                     1,GL_FALSE,
+                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+        break;
+    }
+    case sizeof(glm::mat4):{
+        glUniformMatrix4fv(getUniformLocation(name),
+                     1,GL_FALSE, // <-- Transpose flag!
+                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+        break;
+    }
+    }
+}
+
+void CoffeeShader::bindUniformBufferRange(GLuint uboIndex, GLuint uboHandle, uint32_t offset, uint32_t size)
+{
+    glBindBuffer(GL_UNIFORM_BUFFER,uboHandle);
+    glBindBufferRange(GL_UNIFORM_BUFFER,uboIndex,uboHandle,offset,size);
 }
 
 QVariantMap CoffeeShader::getUniformsMap()

@@ -6,7 +6,6 @@
 
 class CoffeeShader;
 class Vector3Value;
-class ShaderVariant;
 class ShaderMapping;
 
 class CoffeeTransformComputer : public QObject,public CoffeeUniformSetter
@@ -62,7 +61,7 @@ public slots:
     void setShader(CoffeeShader* shader);
     void setMaxParticles(quint32 maxParticles);
 
-    void setUniform(QString uniformName, ShaderVariant *data);
+    void setUniform(QString uniformName, QObject *data);
     void setFeedbackAttributes(const QVariantList &feedbackAttributes);
 
     void setQuery(bool query);

@@ -5,6 +5,7 @@
 #include "general/data/coffeegameasset.h"
 
 class ShaderVariant;
+class VectorData;
 class CoffeeResource;
 
 class CoffeeUniformValue;
@@ -34,16 +35,16 @@ public:
 
     //Partial
     void createProgram();
-    bool addShader(const char* data, QString id, const GLenum& shaderType);
+    bool addShader(const char* data, const QString &id, const GLenum& shaderType);
     bool linkProgram();
 
     GLuint compileShader(CoffeeResource *shader, const GLenum &shaderType);
-    GLuint compileShaderSource(const char* data, QString id, const GLenum& shaderType);
+    GLuint compileShaderSource(const char* data, const QString &id, const GLenum& shaderType);
     int getProgramId();
 
     //We keep these available if a user wants to work with raw gl* operations
-    int getAttributeLocation(QString name);
-    int getUniformLocation(QString name);
+    int getAttributeLocation(const QString &name);
+    int getUniformLocation(const QString &name);
 
     const QHash<QString,GLenum> getAttributes();
     const QHash<QString,GLenum> getUniforms();
@@ -64,18 +65,21 @@ public:
     Q_INVOKABLE CoffeeUniformBlock* getUniformBlock(const QString &name);
     Q_INVOKABLE CoffeeUniformValue* getUniformValue(const QString &name);
 
+    void setUniform(const QString &name, const glm::vec3 &val);
+    void setUniform(const QString &name, const glm::vec4& val);
+    void setUniform(const QString &name, const glm::vec2& val);
+    void setUniform(const QString &name, GLfloat val);
+    void setUniform(const QString &name, int val);
+
+    void setUniform(const QString &name, const glm::mat3 &val);
+    void setUniform(const QString &name, const glm::mat4 &val);
+
+    void setUniform(const QString &name, const ShaderVariant *val);
+    void setUniform(const QString &name, VectorData *val);
+
+    void bindUniformBufferRange(GLuint uboIndex, GLuint uboHandle, uint32_t offset, uint32_t size);
+
 public slots:
-    void setUniform(QString name, const glm::vec3 &val);
-    void setUniform(QString name,const glm::vec4& val);
-    void setUniform(QString name,const glm::vec2& val);
-    void setUniform(QString name,GLfloat val);
-    void setUniform(QString name,int val);
-
-    void setUniform(QString name, const glm::mat3 &val);
-    void setUniform(QString name, const glm::mat4 &val);
-
-    void setUniform(QString name, const ShaderVariant *val);
-
     void unload();
 
     void setVerbosity(uint verbosity);

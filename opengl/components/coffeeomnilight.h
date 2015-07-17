@@ -2,21 +2,17 @@
 #define COFFEEOMNILIGHT_H
 
 #include "general/common.h"
-#include "engine/scripting/qscriptvectorvalue.h"
 
-class ShaderVariant;
+class Vector3Value;
+class ScalarValue;
 
 class CoffeeOmniLight : public QObject
 {
     Q_PROPERTY(QObject* color READ getColorValue)
     Q_PROPERTY(QObject* position READ getPositionValue)
-    Q_PROPERTY(QObject* colorVariant READ getColorVariant)
-    Q_PROPERTY(QObject* positionVariant READ getPositionVariant)
 
-    Q_PROPERTY(float attenuation READ getAttenuationValue WRITE setAttenuationValue)
-    Q_PROPERTY(float ambientCoefficient READ getAmbientCoefficientValue WRITE setAmbientCoefficientValue)
-    Q_PROPERTY(QObject* attenuationVariant READ getAttenuationVariant)
-    Q_PROPERTY(QObject* ambientCoefficientVariant READ getAmbientCoefficientVariant)
+    Q_PROPERTY(QObject* attenuation READ getAttenuationVariant)
+    Q_PROPERTY(QObject* ambientCoefficient READ getAmbientCoefficientVariant)
 
     Q_OBJECT
 public:
@@ -29,34 +25,20 @@ public:
     QPointer<Vector3Value> getColor();
 
     QPointer<ScalarValue> getAttenuation();
-    float getAttenuationValue() const;
 
     QPointer<ScalarValue> getAmbientCoefficient();
-    float getAmbientCoefficientValue() const;
 
     QObject* getColorValue();
     QObject* getPositionValue();
 
-    QObject* getColorVariant();
-    QObject* getPositionVariant();
     QObject* getAttenuationVariant();
     QObject* getAmbientCoefficientVariant();
-
-public slots:
-    void setAttenuationValue(float v);
-    void setAmbientCoefficientValue(float v);
 
 private:
     QPointer<Vector3Value> position;
     QPointer<Vector3Value> color;
     QPointer<ScalarValue> attenuation;
     QPointer<ScalarValue> ambientCoefficient;
-
-    ShaderVariant* colorVariant;
-    ShaderVariant* positionVariant;
-
-    ShaderVariant* ambientCoefficientVariant;
-    ShaderVariant* attenuationVariant;
 };
 
 #endif // COFFEEOMNILIGHT_H

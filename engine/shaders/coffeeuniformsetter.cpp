@@ -19,6 +19,14 @@ void CoffeeUniformSetter::unbindTextures()
     }
 }
 
+void CoffeeUniformSetter::setUniform(const QString &uniformName, VectorData *data)
+{
+    ShaderMapping *map = new ShaderMapping;
+    map->uniform = uniformName;
+    map->data = data;
+    uniforms.append(map);
+}
+
 void CoffeeUniformSetter::bindTextures()
 {
     for(TextureMapping* m : textures){
@@ -35,15 +43,15 @@ void CoffeeUniformSetter::bindTextures()
     }
 }
 
-void CoffeeUniformSetter::setUniform(QString uniformName, ShaderVariant *data)
-{
-    ShaderMapping *map = new ShaderMapping;
-    map->uniform = uniformName;
-    map->data = data;
-    uniforms.append(map);
-}
+//void CoffeeUniformSetter::setUniform(QString uniformName, ShaderVariant *data)
+//{
+//    ShaderMapping *map = new ShaderMapping;
+//    map->uniform = uniformName;
+//    map->data = data;
+//    uniforms.append(map);
+//}
 
-void CoffeeUniformSetter::setTexture(QString samplerName, CoffeeTexture *texture)
+void CoffeeUniformSetter::setTexture(const QString &samplerName, CoffeeTexture *texture)
 {
     TextureMapping *map = new TextureMapping;
     map->samplerName = samplerName;

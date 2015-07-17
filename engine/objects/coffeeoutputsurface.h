@@ -2,6 +2,7 @@
 #define COFFEEOUTPUTSURFACE_H
 
 #include "coffeeobject.h"
+#include "engine/shaders/coffeeuniformsetter.h"
 
 class CoffeeFrameBufferObject;
 class CoffeeShader;
@@ -9,7 +10,6 @@ class CoffeeMesh;
 class CoffeeWorldOpts;
 class TextureMapping;
 class ShaderMapping;
-class ShaderVariant;
 class CoffeeTexture;
 
 class CoffeeOutputChannel //Mapping of framebuffer textures to uniforms
@@ -21,7 +21,7 @@ public:
     int textureUnit;
 };
 
-class CoffeeOutputSurface : public QObject,public CoffeeObject
+class CoffeeOutputSurface : public QObject,public CoffeeObject, public CoffeeUniformSetter
 {
     Q_PROPERTY(QObject* shader READ getShader WRITE setShader)
     Q_PROPERTY(QObject* framebuffer READ framebufferQObject WRITE setFramebuffer)
@@ -45,7 +45,7 @@ public:
 public slots:
     void addUiTexture(CoffeeTexture* tex);
 
-    void setUniform(const QString &uniformName,ShaderVariant* data);
+    void setUniform(const QString &uniformName, QObject *data);
     void setFramebufferMapping(const QString &uniformName, int textureIndex, int textureUnit);
 
     void setWorld(CoffeeWorldOpts* value);

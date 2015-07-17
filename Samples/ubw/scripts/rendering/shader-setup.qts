@@ -45,33 +45,34 @@ function objStandardInitShader(target){
 	}
 
 	//Material
-	obj.setUniform("opacity",mat.opacityVariant);
-	obj.setUniform("shininess",mat.shininessVariant);
-	obj.setUniform("shininessStrength",mat.shininessStrengthVariant);
+	obj.setUniform("opacity",mat.opacity);
+	obj.setUniform("shininess",mat.shininess);
+	obj.setUniform("shininessStrength",mat.shininessStrength);
 	obj.setUniform("transparencyValue",mat.transparency);
 	obj.setUniform("colorMultiplier",mat.colorMultiplier);
 	obj.setUniform("specularColor",mat.specularColor);
 	obj.setUniform("ambientColor",mat.ambientColor);
 	obj.setUniform("diffuseColor",mat.diffuseColor);
 	obj.setUniform("emissiveColor",mat.emissiveColor);
-	obj.setUniform("refraction",mat.refractionVariant);
-	obj.setUniform("reflectivity",mat.reflectivityVariant);
+	obj.setUniform("refraction",mat.refraction);
+	obj.setUniform("reflectivity",mat.reflectivity);
 
 	//Camera
 	obj.setUniform("cameraVP",world.camera.matrixVP);
 	obj.setUniform("camera",world.camera.matrix);
-	obj.setUniform("cameraPosition",world.camera.positionVariant);
+	obj.setUniform("cameraPosition",world.camera.position);
 
 	//Lights
-	obj.setUniform("light.position",world.lights[0].positionVariant);
-	obj.setUniform("light.intensities",world.lights[0].colorVariant);
-	obj.setUniform("light.attenuation",world.lights[0].attenuationVariant);
-	obj.setUniform("light.ambientCoefficient",world.lights[0].ambientCoefficientVariant);
+	obj.setUniform("light.position",world.lights[0].position);
+	obj.setUniform("light.intensities",world.lights[0].color);
+	obj.setUniform("light.attenuation",world.lights[0].attenuation);
+	obj.setUniform("light.ambientCoefficient",world.lights[0].ambientCoefficient);
 
 	//Fog
-	obj.setUniform("fogParams.fDensity",world.fogDensityVariant);
-	obj.setUniform("fogParams.fColor",world.fogColorVariant);
+	obj.setUniform("fogParams.fDensity",world.fogDensity);
+	obj.setUniform("fogParams.fColor",world.fogColor);
 
+	print("Model matrix:");
 	//Model
 	obj.setUniform("model",obj.matrix);
 }

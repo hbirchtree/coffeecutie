@@ -1,6 +1,5 @@
 #include "coffeematerial.h"
 
-#include "general/shadervariant.h"
 #include "engine/data/coffeeresource.h"
 #include <QMetaEnum>
 
@@ -17,19 +16,6 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
     m_specularColor = new Vector3Value(this,glm::vec3(1));
     m_ambientColor = new Vector3Value(this,glm::vec3(1));
     m_colorMultiplier = new Vector3Value(this,glm::vec3(1));
-
-    p_shininess = new ShaderVariant([=](){return m_shininess->getValue();});
-    p_shininessStrength = new ShaderVariant([=](){return m_shininessStrength->getValue();});
-    p_refraction = new ShaderVariant([=](){return m_refraction->getValue();});
-    p_reflectivity = new ShaderVariant([=](){return m_reflectivity->getValue();});
-    p_opacity = new ShaderVariant([=](){return m_opacity->getValue();});
-
-    p_transparency = new ShaderVariant([=](){return m_transparency->getValue();});
-    p_diffuseColor = new ShaderVariant([=](){return m_diffuseColor->getValue();});
-    p_specularColor = new ShaderVariant([=](){return m_specularColor->getValue();});
-    p_ambientColor = new ShaderVariant([=](){return m_ambientColor->getValue();});
-    p_emissiveColor = new ShaderVariant([=](){return m_emissiveColor->getValue();});
-    p_colorMultiplier = new ShaderVariant([=](){return m_colorMultiplier->getValue();});
 }
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource, const QString& filepath) :
@@ -124,57 +110,19 @@ CoffeeMaterial::CoffeeMaterial(QObject *parent, const aiMaterial *materialSource
 
     this->setObjectName(name.C_Str());
 
-    setDiffuseColor(glm::vec3(color.r,color.g,color.b));
-    setSpecularColor(glm::vec3(specular.r,specular.g,specular.b));
-    setAmbientColor(glm::vec3(ambient.r,ambient.g,ambient.b));
-    setTransparency(glm::vec3(transparency.r,transparency.g,transparency.b));
+    m_diffuseColor->setValue(glm::vec3(color.r,color.g,color.b));
+    m_specularColor->setValue(glm::vec3(specular.r,specular.g,specular.b));
+    m_ambientColor->setValue(glm::vec3(ambient.r,ambient.g,ambient.b));
+    m_transparency->setValue(glm::vec3(transparency.r,transparency.g,transparency.b));
 
     setWireframe(wireframe);
     setCulling(twosided);
 
-    setOpacity(opacity);
-    setShininess(shininess);
-    setShininessStrength(shininessStrength);
-    setRefraction(refract);
-    setReflectivity(reflectivity);
-}
-
-glm::vec3 CoffeeMaterial::transparency() const
-{
-    return m_transparency->getValue();
-}
-
-QPointer<Vector3Value > CoffeeMaterial::getTransparency()
-{
-    return m_transparency;
-}
-
-float CoffeeMaterial::shininess() const
-{
-    return m_shininess->getValue();
-}
-
-QPointer<ScalarValue> CoffeeMaterial::getShininess()
-{
-    return m_shininess;
-}
-
-glm::vec3 CoffeeMaterial::specularColor() const
-{
-    return m_specularColor->getValue();
-}
-
-glm::vec3 CoffeeMaterial::colorMultiplier() const
-{
-    return m_colorMultiplier->getValue();
-}
-
-glm::vec3 CoffeeMaterial::diffuseColor() const{
-    return m_diffuseColor->getValue();
-}
-
-void CoffeeMaterial::setDiffuseColor(const glm::vec3 &diffuseColor){
-    *m_diffuseColor = diffuseColor;
+    m_opacity->setValue(opacity);
+    m_shininess->setValue(shininess);
+    m_shininessStrength->setValue(shininessStrength);
+    m_refraction->setValue(refract);
+    m_reflectivity->setValue(reflectivity);
 }
 
 bool CoffeeMaterial::wireframe() const
@@ -185,21 +133,6 @@ bool CoffeeMaterial::wireframe() const
 bool CoffeeMaterial::culling() const
 {
     return m_culling;
-}
-
-glm::vec3 CoffeeMaterial::ambientColor() const
-{
-    return m_ambientColor->getValue();
-}
-
-float CoffeeMaterial::shininessStrength() const
-{
-    return m_shininessStrength->getValue();
-}
-
-float CoffeeMaterial::refraction() const
-{
-    return m_refraction->getValue();
 }
 
 GLenum CoffeeMaterial::blendMode() const
@@ -214,72 +147,57 @@ GLenum CoffeeMaterial::shadingMode() const
 
 QObject *CoffeeMaterial::shininessVariant() const
 {
-    return p_shininess;
+    return m_shininess;
 }
 
 QObject *CoffeeMaterial::shininessStrengthVariant() const
 {
-    return p_shininessStrength;
+    return m_shininessStrength;
 }
 
 QObject *CoffeeMaterial::reflectivityVariant() const
 {
-    return p_reflectivity;
+    return m_reflectivity;
 }
 
 QObject *CoffeeMaterial::refractionVariant() const
 {
-    return p_reflectivity;
+    return m_reflectivity;
 }
 
 QObject *CoffeeMaterial::opacityVariant() const
 {
-    return p_opacity;
+    return m_opacity;
 }
 
 QObject *CoffeeMaterial::transparencyVariant() const
 {
-    return p_transparency;
+    return m_transparency;
 }
 
 QObject *CoffeeMaterial::diffuseColorVariant() const
 {
-    return p_diffuseColor;
+    return m_diffuseColor;
 }
 
 QObject *CoffeeMaterial::specularColorVariant() const
 {
-    return p_specularColor;
+    return m_specularColor;
 }
 
 QObject *CoffeeMaterial::ambientColorVariant() const
 {
-    return p_ambientColor;
+    return m_ambientColor;
 }
 
 QObject *CoffeeMaterial::emissiveColorVariant() const
 {
-    return p_emissiveColor;
+    return m_emissiveColor;
 }
 
 QObject *CoffeeMaterial::colorMultiplierVariant() const
 {
-    return p_colorMultiplier;
-}
-
-glm::vec3 CoffeeMaterial::emissiveColor() const
-{
-    return m_emissiveColor->getValue();
-}
-
-float CoffeeMaterial::reflectivity() const
-{
-    return m_reflectivity->getValue();
-}
-
-float CoffeeMaterial::opacity() const
-{
-    return m_opacity->getValue();
+    return m_colorMultiplier;
 }
 
 void CoffeeMaterial::setTexture(CoffeeTexture::CoffeeTextureType id, QPointer<CoffeeTexture> texture){
@@ -320,50 +238,9 @@ QVariantList CoffeeMaterial::textureTypes() const
     return l;
 }
 
-void CoffeeMaterial::setTransparency(const glm::vec3 &arg)
-{
-    *m_transparency = arg;
-}
-
-void CoffeeMaterial::setShininess(float arg)
-{
-    *m_shininess = arg;
-}
-
-void CoffeeMaterial::setSpecularColor(const glm::vec3& arg)
-{
-    if (*m_specularColor == arg)
-        return;
-
-    *m_specularColor = arg;
-}
-
-void CoffeeMaterial::setColorMultiplier(const glm::vec3 &arg)
-{
-    if (*m_colorMultiplier == arg)
-        return;
-
-    *m_colorMultiplier = arg;
-}
-
 void CoffeeMaterial::unloadData(){
     for(QPointer<CoffeeTexture> text : textures)
         text->unloadTexture();
-}
-
-void CoffeeMaterial::setEmissiveColor(const glm::vec3 &emissiveColor)
-{
-    *m_emissiveColor = emissiveColor;
-}
-
-void CoffeeMaterial::setReflectivity(float reflectivity)
-{
-    *m_reflectivity = reflectivity;
-}
-
-void CoffeeMaterial::setOpacity(float opacity)
-{
-    *m_opacity = opacity;
 }
 
 void CoffeeMaterial::setWireframe(bool wireframe)
@@ -374,21 +251,6 @@ void CoffeeMaterial::setWireframe(bool wireframe)
 void CoffeeMaterial::setCulling(bool culling)
 {
     m_culling = culling;
-}
-
-void CoffeeMaterial::setAmbientColor(const glm::vec3& ambientColor)
-{
-    *m_ambientColor = ambientColor;
-}
-
-void CoffeeMaterial::setShininessStrength(float shininessStrength)
-{
-    *m_shininessStrength = shininessStrength;
-}
-
-void CoffeeMaterial::setRefraction(float refraction)
-{
-    *m_refraction = refraction;
 }
 
 void CoffeeMaterial::setBlendMode(GLenum blendMode)

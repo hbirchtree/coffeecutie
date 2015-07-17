@@ -77,7 +77,15 @@ SOURCES += main.cpp \
     opengl/components/coffeebuffer.cpp \
     engine/models/coffeevertexarrayobject.cpp \
     opengl/components/coffeeuniformblock.cpp \
-    engine/rendering/coffeerendergraph.cpp
+    engine/rendering/coffeerendergraph.cpp \
+    engine/data/vectors/matrix4value.cpp \
+    engine/data/vectors/vector3value.cpp \
+    engine/data/vectors/quatvalue.cpp \
+    engine/data/vectors/scalarvalue.cpp \
+    engine/data/vectors/vector2value.cpp \
+    engine/data/vectors/vector4value.cpp \
+    engine/scripting/coffeescriptconstructors.cpp \
+    engine/scripting/qtscriptconstructors.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -145,7 +153,15 @@ HEADERS += \
     opengl/components/coffeebuffer.h \
     engine/models/coffeevertexarrayobject.h \
     opengl/components/coffeeuniformblock.h \
-    engine/rendering/coffeerendergraph.h
+    engine/rendering/coffeerendergraph.h \
+    engine/data/vectors/matrix4value.h \
+    engine/data/vectors/vector3value.h \
+    engine/data/vectors/quatvalue.h \
+    engine/data/vectors/scalarvalue.h \
+    engine/data/vectors/vector2value.h \
+    engine/data/vectors/vector4value.h \
+    engine/scripting/coffeescriptconstructors.h \
+    engine/scripting/qtscriptconstructors.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

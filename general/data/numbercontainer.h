@@ -125,11 +125,11 @@ public:
         }
     }
 
-    T getRawValue() const{
+    virtual T getRawValue() const{
         return value;
     }
 
-    T getValue() const
+    virtual T getValue() const
     {
         T value = this->value;
         if(bound){
@@ -139,13 +139,13 @@ public:
         return value;
     }
 
-    void setValue(const T &value)
+    virtual void setValue(const T &value)
     {
         unbindValue();
         this->value = value;
     }
 
-    void addValue(const T &value){
+    virtual void addValue(const T &value){
         setValue(this->value+value);
     }
 
@@ -154,37 +154,37 @@ public:
         minval = min;
         maxval = max;
     }
-    T getVelocity() const
+    virtual T getVelocity() const
     {
         return velocity;
     }
 
-    void setVelocity(const T &value)
+    virtual void setVelocity(const T &value)
     {
         unbindValue();
         velocity = value;
     }
-    T getAcceleration() const
+    virtual T getAcceleration() const
     {
         return acceleration;
     }
 
-    void setAcceleration(const T &value)
+    virtual void setAcceleration(const T &value)
     {
         unbindValue();
         acceleration = value;
     }
 
-    void unbindValue(){
-        bound = 0;
+    virtual void unbindValue(){
+        bound = nullptr;
     }
-    void bindValue(NumberContainer<T> *bound){
+    virtual void bindValue(NumberContainer<T> *bound){
         this->bound = bound;
     }
 
     std::function<T (const T &)> getValueTransform() const
     {
-    return valueTransform;
+        return valueTransform;
     }
     void setValueTransform(const std::function<T (const T &)> &value)
     {

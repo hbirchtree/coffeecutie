@@ -8,8 +8,6 @@
 #include "engine/models/coffeemesh.h"
 #include "engine/shaders/coffeeuniformsetter.h"
 
-class ShaderVariant;
-
 class CoffeeStandardObject : public QObject,public CoffeeObject, public CoffeeUniformSetter
 {
     Q_PROPERTY(QObject* position READ positionValue)
@@ -63,11 +61,11 @@ public slots:
     void setShaderRef(QObject* sh);
 
     //We want these to work as slots, slots inherited from non-QObject classes do not work.
-    void setUniform(QString uniformName, ShaderVariant* data);
+    void setUniform(QString uniformName, QObject *data);
     void setTexture(QString samplerName, CoffeeTexture *texture);
 
 protected:
-    ShaderVariant* modelMatrix;
+    Matrix4Value* modelMatrix;
     bool baked = false;
     QPointer<CoffeeMesh> pmesh;
     QPointer<CoffeeMaterial> pmaterial;

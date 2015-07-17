@@ -12,21 +12,20 @@ class CoffeeObject;
 class CoffeeOmniLight;
 class CoffeeParticleSystem;
 class PhysicsObject;
-class ShaderVariant;
 class CoffeePlayerController;
+
+class ScalarValue;
+class Vector4Value;
 
 class CoffeeWorldOpts : public QObject
 {
     Q_PROPERTY(bool loadedState READ loadedState WRITE setLoadedState)
     Q_PROPERTY(bool wireframeMode READ wireframeMode WRITE setWireframeMode)
-    Q_PROPERTY(QColor clearColor READ clearColorValue WRITE setClearColorValue)
-    Q_PROPERTY(QColor fogColor READ fogColorValue WRITE setFogColorValue)
-    Q_PROPERTY(float fogDensity READ getFogDensity WRITE setFogDensity)
 
     Q_PROPERTY(QObject* physicsWorld READ physicsWorld)
 
-    Q_PROPERTY(QObject* fogColorVariant READ getFogColorVariant)
-    Q_PROPERTY(QObject* fogDensityVariant READ getFogDensityVariant)
+    Q_PROPERTY(QObject* fogColor READ getFogColorVariant)
+    Q_PROPERTY(QObject* fogDensity READ getFogDensityVariant)
 
     Q_PROPERTY(QObjectList lights READ getVariantLights)
     Q_PROPERTY(QObject* camera READ getCameraQObject WRITE setCameraQObject)
@@ -34,16 +33,13 @@ class CoffeeWorldOpts : public QObject
 
     Q_OBJECT
 public:
-    CoffeeWorldOpts(QObject *renderer);
+    CoffeeWorldOpts(QObject *parent);
     ~CoffeeWorldOpts();
 
     QPointer<CoffeeCamera> getCamera();
     QObject* getCameraQObject();
 
     QList<QPointer<CoffeeOmniLight> > &getLights();
-    glm::vec4 getFogColor() const;
-    float getFogDensity() const;
-    glm::vec4 getClearColor() const;
     bool wireframeMode() const;
 
     QPointer<CoffeeRenderer> getRenderer();
@@ -53,9 +49,6 @@ public:
     void prepareParticleSystems();
 
     CoffeeSkybox* getSkybox() const;
-
-    QColor fogColorValue() const;
-    QColor clearColorValue() const;
 
     QObjectList getVariantLights();
     QObject* getFogColorVariant();
@@ -75,15 +68,12 @@ public slots:
     void renderWorld();
     void unloadWorld();
 
-    void setClearColor(const glm::vec4 &value);
     void setWireframeMode(bool wireframeMode);
-    void setFogDensity(float value);
-    void setFogColor(const glm::vec4 &value);
 
-    void addLight(QPointer<CoffeeOmniLight> light);
-    void setCamera(QPointer<CoffeeCamera> value);
+    void addLight(CoffeeOmniLight* light);
+    void setCamera(CoffeeCamera* value);
     void setCameraQObject(QObject* camera);
-    void setRendererP(QPointer<CoffeeRenderer> value);
+    void setRendererP(CoffeeRenderer* value);
     void setRenderer(QObject* value);
     void setSkybox(QObject *value);
     void setSkybox(CoffeeSkybox *value);
@@ -91,9 +81,6 @@ public slots:
     void injectPhysicsObject(PhysicsObject* object);
     void addObject(CoffeeObject* object);
     void addParticleSystem(CoffeeParticleSystem* system);
-
-    void setFogColorValue(QColor fogColor);
-    void setClearColorValue(QColor clearColor);
 
     void connectSignals(QObject* controller);
     void connectSignals(CoffeePlayerController* controller);
@@ -106,10 +93,9 @@ private:
     QThread* physicsThread;
     QPointer<BulletPhysics> physics;
 
-    float fogDensity = 0.01;
-    glm::vec4 fogColor;
-
-    glm::vec4 clearColor;
+    ScalarValue* fogDensity;
+    Vector4Value* fogColor;
+    Vector4Value* clearColor;
 
     QPointer<CoffeeSkybox> skybox;
     QList<CoffeeObject*> objects;
@@ -120,8 +106,6 @@ private:
     bool m_wireframeMode = false;
     bool c_wireframed = false;
 
-    ShaderVariant* fogColorVariant;
-    ShaderVariant* fogDensityVariant;
     bool m_loadedState = false;
 
     QVector<QMetaObject::Connection> connections;

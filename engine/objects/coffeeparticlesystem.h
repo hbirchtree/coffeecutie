@@ -5,33 +5,32 @@
 #include <QColor>
 
 class CoffeeShader;
-class ShaderVariant;
 class CoffeeTexture;
 class CoffeeCamera;
 class CoffeeTransformComputer;
 
 class CoffeeParticleSystem : public QObject,public CoffeeObject
 {
-    Q_PROPERTY(float particleSpread READ particleSpread WRITE setParticleSpread)
-    Q_PROPERTY(float particleMass READ particleMass WRITE setParticleMass)
     Q_PROPERTY(bool additive READ additive WRITE setAdditive)
-    Q_PROPERTY(QColor particleColor READ getParticleColor WRITE setParticleColor)
-    Q_PROPERTY(float particleSize READ getParticleSize WRITE setParticleSize)
 
+    Q_PROPERTY(QObject* camera WRITE setCamera)
     Q_PROPERTY(QObject* texture READ getTextureQObject WRITE setTexture)
     Q_PROPERTY(QObject* transform READ getTransformObject)
-    Q_PROPERTY(QObject* gravity READ gravityQObject WRITE setGravity)
+
+    Q_PROPERTY(QObject* particleColor READ particleColor)
+    Q_PROPERTY(QObject* gravity READ gravityQObject)
+
+    Q_PROPERTY(QObject* particleSize READ particleSize)
+    Q_PROPERTY(QObject* particleMass READ particleMass)
+    Q_PROPERTY(QObject* particleSpread READ particleSpread)
 
     Q_OBJECT
 
 public:
-    CoffeeParticleSystem(QObject *parent, const CoffeeCamera *camera);
+    CoffeeParticleSystem(QObject *parent, const CoffeeCamera *camera = nullptr);
 
     bool isBaked();
     void setBaked(bool val);
-
-    float getParticleSize() const;
-    QColor getParticleColor() const;
 
     void setCamera(const CoffeeCamera *value);
 
@@ -45,13 +44,13 @@ public:
     bool additive() const;
 
     QObject* getTransformObject();
-
     QObject* getTextureQObject();
-
-    float particleMass() const;
-    float particleSpread() const;
     QObject* gravityQObject();
-    glm::vec3 getGravity() const;
+
+    QObject* particleColor();
+    QObject* particleSize();
+    QObject* particleMass();
+    QObject* particleSpread();
 
 signals:
     void requestTick(float d);
@@ -62,48 +61,38 @@ public slots:
     void load();
 
     void setFrametime(float time);
-    void setParticleSize(float particleSize);
-    void setParticleColor(QColor particleColor);
     void setAdditive(bool additive);
     void setTexture(CoffeeTexture* value);
     void setTexture(QObject* value);
 
-    void setParticleMass(float particleMass);
-    void setParticleSpread(float particleSpread);
     void setGravity(Vector3Value* gravity);
     void setGravity(QObject* gravity);
-    void setGravity(const glm::vec3 &gravity);
+
+    void setCamera(const QObject *value);
 
 protected:
     CoffeeTransformComputer* transform = nullptr;
     void renderParticles();
 
-    glm::vec4 particleColor;
-
     bool baked = false;
-    QPointer<CoffeeShader> shader;
-    QPointer<CoffeeTexture> texture;
-    const CoffeeCamera* camera;
+    CoffeeShader* shader = nullptr;
+    CoffeeTexture* texture = nullptr;
+    const CoffeeCamera* m_camera = nullptr;
 
-    float particleSize = 0.01f;
-
-    float tickTime = 0.001f;
 private:
     bool m_additive = false;
     bool c_additive; //so that we won't miss on swapping blendfunction
-    QObject* m_transform;
 
-    ShaderVariant* frametime;
-    ShaderVariant* mass;
-    ShaderVariant* gravity;
-    ShaderVariant* randRad;
-    ShaderVariant* randAmp;
-    ShaderVariant* partSpread;
-    ShaderVariant* spawncount;
-    QObject* m_texture;
-    float m_particleMass;
-    float m_particleSpread;
+    ScalarValue* m_particleMass;
+    ScalarValue* m_particleSpread;
+    ScalarValue* m_particleSize;
     Vector3Value* m_gravity;
+    Vector4Value* m_particleColor;
+
+    ScalarValue* m_spawnCount;
+    ScalarValue* m_frametime;
+    ScalarValue* m_randomDir;
+    ScalarValue* m_randomAmplitude;
 };
 
 #endif // COFFEEPARTICLESYSTEM_H

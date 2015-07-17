@@ -6,7 +6,6 @@
 #include "opengl/components/coffeeframebufferobject.h"
 #include "opengl/components/coffeeworldopts.h"
 #include "opengl/components/coffeecamera.h"
-#include "general/shadervariant.h"
 #include "engine/objects/coffeestandardobject.h"
 
 CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) :
@@ -138,12 +137,11 @@ void CoffeeOutputSurface::addUiTexture(CoffeeTexture *tex)
     textureTest = tex;
 }
 
-void CoffeeOutputSurface::setUniform(const QString &uniformName, ShaderVariant *data)
+void CoffeeOutputSurface::setUniform(const QString &uniformName, QObject *data)
 {
-    ShaderMapping *map = new ShaderMapping;
-    map->uniform = uniformName;
-    map->data = data;
-    uniforms.append(map);
+    VectorData* d = qobject_cast<VectorData*>(data);
+    if(d)
+        CoffeeUniformSetter::setUniform(uniformName,d);
 }
 
 void CoffeeOutputSurface::setFramebufferMapping(const QString &uniformName, int textureIndex, int textureUnit)
