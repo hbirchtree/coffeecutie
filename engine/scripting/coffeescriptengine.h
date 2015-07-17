@@ -12,6 +12,7 @@ public:
     QScriptEngine *getEngine();
 
     void execFile(QString file, bool *result = nullptr, QString *logOut = nullptr);
+    static void execFile(QScriptEngine* e,QString file, bool *result = nullptr, QString *logOut = nullptr);
     void addObject(QObject* o);
 
 private:
@@ -19,9 +20,11 @@ private:
 
     //Functions to export
     static QScriptValue coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng);
+    static QScriptValue coffeeExecuteScriptFile(QScriptContext *ctxt, QScriptEngine *eng);
 
     //ScriptEngine internal functions
     static QString importFile(const QFileInfo &srcFile, QString &src);
 };
 
 #endif // COFFEESCRIPTENGINE_H
+

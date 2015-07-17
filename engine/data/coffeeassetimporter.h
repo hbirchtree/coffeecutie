@@ -37,7 +37,6 @@ class CoffeeAssetStorage : public QObject
 
     Q_PROPERTY(QObjectList resources READ getResources)
 
-
     Q_OBJECT
 
 public:

@@ -31,6 +31,10 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue fun = e.newFunction(coffeeImportVariantMap);
         e.globalObject().setProperty("importVariantMap",fun);
     }
+    {
+        QScriptValue fun = e.newFunction(coffeeExecuteScriptFile);
+        e.globalObject().setProperty("executeScript",fun);
+    }
     ////////
 
     //Enums
@@ -73,12 +77,17 @@ QScriptEngine *CoffeeScriptEngine::getEngine()
 
 void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
 {
+    execFile(&e,file,result,logOut);
+}
+
+void CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut)
+{
     QFileInfo fileTest(file);
     QFile script(file);
     if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
         src = importFile(fileTest,src);
-        QString out = e.evaluate(src).toString();
+        QString out = e->evaluate(src).toString();
         if(logOut)
             *logOut = out;
         if(result)
@@ -113,6 +122,25 @@ QScriptValue CoffeeScriptEngine::coffeeImportVariantMap(QScriptContext *ctxt, QS
         return ctxt->throwError(QString("Error while importing: %1").arg(error.errorString()));
 
     return eng->toScriptValue(data);
+}
+
+QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    if(ctxt->argumentCount()<1){
+        return ctxt->throwError("Invalid amount of arguments!");
+    }
+    QString file = ctxt->argument(0).toString();
+
+    bool status = false;
+    QString res;
+
+    execFile(eng,file,&status,&res);
+
+    if(!status){
+        return ctxt->throwError("Failed: File may not exist!");
+    }else{
+        return eng->toScriptValue(res);
+    }
 }
 
 QString CoffeeScriptEngine::importFile(const QFileInfo &srcFile,QString &src)

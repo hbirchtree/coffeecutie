@@ -23,9 +23,13 @@ class CoffeeObjectFactory : public QObject
 public:
     CoffeeObjectFactory(QObject* parent);
 
-    Q_INVOKABLE QObject* importAssets(QString src); //Short, used for scripting
+    Q_INVOKABLE QObject* importAssets(QObject *parent, const QVariantMap& source, const QString &srcFile);
+    Q_INVOKABLE QObject* importAssetsFile(QString src); //Short, used for scripting
+
+    CoffeeAssetStorage* importAssets__base(QObject *parent, const QVariantMap& source, const QString &srcFile);
     CoffeeAssetStorage *importAssets(CoffeeResource *src,
                                      QObject *parent);
+
     QList<CoffeeWorldOpts*> importObjects(QString file,
                                           QObject *parent);
 

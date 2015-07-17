@@ -31,7 +31,12 @@
 
 CoffeeObjectFactory::CoffeeObjectFactory(QObject *parent) : QObject(parent){}
 
-QObject *CoffeeObjectFactory::importAssets(QString src)
+QObject *CoffeeObjectFactory::importAssets(QObject* parent, const QVariantMap &source, const QString &srcFile)
+{
+    return importAssets__base(parent,source,srcFile);
+}
+
+QObject *CoffeeObjectFactory::importAssetsFile(QString src)
 {
     CoffeeResource *f = new CoffeeResource(0,src);
     CoffeeAssetStorage* s = importAssets(f,this->parent());
@@ -39,21 +44,10 @@ QObject *CoffeeObjectFactory::importAssets(QString src)
     return s;
 }
 
-CoffeeAssetStorage* CoffeeObjectFactory::importAssets(CoffeeResource* src, QObject *parent)
+CoffeeAssetStorage *CoffeeObjectFactory::importAssets__base(QObject *parent, const QVariantMap &source, const QString &srcFile)
 {
     QElapsedTimer t;
     t.start();
-    QVariantMap source;
-    QJsonParseError err;
-    source = QJsonDocument::fromJson(*src->data(),&err).object().toVariantMap();
-
-    if(err.error!=QJsonParseError::NoError){
-        qFatal("Failed to parse JSON document. This suggests that you should error-check the JSON data.\n"
-               "error code %i: %s",
-               err.error,
-               err.errorString().toStdString().c_str());
-    }
-
     CoffeeAssetStorage *s = new CoffeeAssetStorage(0);
     s->moveToThread(parent->thread());
 
@@ -62,7 +56,7 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(CoffeeResource* src, QObje
         return s;
     }
 
-    QFileInfo f(src->source());
+    QFileInfo f(srcFile);
     s->filepath = f.path()+QDir::separator();
 
     //The asset-based system allows us to load a resource once and reuse it infinitely from the bottom up.
@@ -111,6 +105,22 @@ CoffeeAssetStorage* CoffeeObjectFactory::importAssets(CoffeeResource* src, QObje
 //    }
     qDebug("Spent %i milliseconds parsing content from disk",t.elapsed());
     return s;
+}
+
+CoffeeAssetStorage* CoffeeObjectFactory::importAssets(CoffeeResource* src, QObject *parent)
+{
+    QVariantMap source;
+    QJsonParseError err;
+    source = QJsonDocument::fromJson(*src->data(),&err).object().toVariantMap();
+
+    if(err.error!=QJsonParseError::NoError){
+        qFatal("Failed to parse JSON document. This suggests that you should error-check the JSON data.\n"
+               "error code %i: %s",
+               err.error,
+               err.errorString().toStdString().c_str());
+    }
+
+    return importAssets__base(parent,source,src->source());
 }
 
 QList<CoffeeWorldOpts *> CoffeeObjectFactory::importObjects(QString file, QObject *parent)
