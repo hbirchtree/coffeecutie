@@ -134,7 +134,7 @@
 		},
 		"fog":{
 			"density": 0.02,
-			"color": "#002525FF",
+			"color": "#002525FF"
 		},
 		"clearcolor": "#002525FF",
 		"skybox": {

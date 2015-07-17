@@ -1,0 +1,26 @@
+function load_object_light(src){
+	var light = new CoffeeOmniLight;
+	for(p in src){
+		switch(p){
+		case "position":{
+			light.position.value = src[p];
+			break;
+		}
+		case "color":{
+			light.color.value = src[p];
+			break;
+		}
+		case "ambient-coefficient":{
+			light.ambientCoefficient.value = src[p];
+			break;
+		}
+		case "attenuation":{
+			light.attenuation.value = src[p];
+			break;
+		}
+		}
+	}
+	return light;
+}
+
+print(load_object_light)

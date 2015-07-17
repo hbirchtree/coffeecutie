@@ -1,0 +1,17 @@
+var framecheck = 0.0;
+
+function printFrametime(frametime){
+	if(framecheck <= renderer.loopTime){
+		print("FPS: $1".replace("$1",(1.0/frametime).toFixed(1)));
+		framecheck = renderer.loopTime+1.0;
+	}
+}
+function applyAspectChange(aspect){
+	world.camera.aspectRatio = aspect;
+}
+
+renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
+renderer.contextReportFrametime.connect(world.testparts.setFrametime);
+renderer.contextReportFrametime.connect(printFrametime);
+renderer.windowAspectChanged.connect(applyAspectChange);
+renderer.setSwapInterval(0);
