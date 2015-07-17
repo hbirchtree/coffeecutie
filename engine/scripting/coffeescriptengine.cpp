@@ -35,6 +35,10 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         QScriptValue fun = e.newFunction(coffeeExecuteScriptFile);
         e.globalObject().setProperty("executeScript",fun);
     }
+    {
+        QScriptValue fun = e.newFunction(coffeeParentingFunc);
+        e.globalObject().setProperty("parenting",fun);
+    }
     ////////
 
     //Enums
@@ -140,6 +144,28 @@ QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, Q
         return ctxt->throwError("Failed: File may not exist!");
     }else{
         return eng->toScriptValue(res);
+    }
+}
+
+QScriptValue CoffeeScriptEngine::coffeeParentingFunc(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    if(ctxt->argumentCount()<1){
+        return ctxt->throwError("Invalid amount of arguments!");
+    }
+    QObject* target = ctxt->argument(0).toQObject();
+
+    if(!target)
+        return ctxt->throwError("Not a valid pointer to QObject");
+
+    if(ctxt->argumentCount()<2){
+        QObject *parent = target->parent();
+        return eng->toScriptValue(parent);
+    }else{
+        QObject* parent = ctxt->argument(1).toQObject();
+        if(!parent)
+            return ctxt->throwError("Not a valid pointer to QObject");
+        target->setParent(parent);
+        return eng->toScriptValue(parent==target->parent());
     }
 }
 

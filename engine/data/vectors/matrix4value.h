@@ -5,7 +5,10 @@
 
 class Matrix4Value : public VectorData,public NumberContainer<glm::mat4>
 {
+    Q_PROPERTY(QVariantMap values READ values)
+
     Q_OBJECT
+
 public:
     Matrix4Value(QObject* parent);
     Matrix4Value(QObject* parent, std::function<glm::mat4(const glm::mat4& v)> fun);
@@ -33,6 +36,8 @@ public:
     void updateVectorData();
     const void* getVectorData();
     uint32_t getVectorDataSize()const;
+    QVariantMap values() const;
+
 signals:
     void valueChanged();
 

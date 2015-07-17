@@ -42,6 +42,21 @@ uint32_t Matrix4Value::getVectorDataSize() const
     return sizeof(glm::mat4);
 }
 
+QVariantMap Matrix4Value::values() const
+{
+    glm::mat4 val = getValue();
+    QVariantMap map;
+
+    for(int i=0;i<4;i++){
+        QVariantMap child;
+        for(int j=0;j<4;j++)
+            child.insert(QString::number(j),val[i][j]);
+        map.insert(QString::number(i),child);
+    }
+
+    return map;
+}
+
 void Matrix4Value::setValue(const glm::mat4 &val)
 {
     NumberContainer<glm::mat4>::setValue(val);

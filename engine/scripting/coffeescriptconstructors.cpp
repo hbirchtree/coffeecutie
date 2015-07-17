@@ -98,90 +98,90 @@ QScriptValue CoffeeScriptConstructors::neuralNetConstructor(QScriptContext *ctxt
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeNeuralNet(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new PhysicsObject(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new PhysicsDescriptor(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::scalarValueConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new ScalarValue(parent,0.f);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::vector2ValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new Vector2Value(parent,glm::vec2(0,0));
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::vector3ValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new Vector3Value(parent,glm::vec3(0,0,0));
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::vector4ValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new Vector4Value(parent,glm::vec4(0,0,0,0));
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new QuatValue(parent,glm::quat(1,0,0,0));
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new VectorVariant(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeePhysicsEvent(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeePlayerControllerConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeePlayerController(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeeLightConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeOmniLight(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeeCameraConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeCamera(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeeObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeStandardObject(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeeSkyboxConstructor(QScriptContext *ctxt, QScriptEngine *eng)
@@ -192,19 +192,19 @@ QScriptValue CoffeeScriptConstructors::coffeeSkyboxConstructor(QScriptContext *c
     CoffeeCamera* camera = qobject_cast<CoffeeCamera*>(ctxt->argument(1).toQObject());
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeSkybox(parent,camera);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeeParticlesConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeParticleSystem(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
 QScriptValue CoffeeScriptConstructors::coffeeWorldConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeWorldOpts(parent);
-    return eng->newQObject(o,QScriptEngine::ScriptOwnership);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }

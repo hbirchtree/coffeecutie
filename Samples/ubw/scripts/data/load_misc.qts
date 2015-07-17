@@ -1,5 +1,5 @@
-function load_object_light(src){
-	var light = new CoffeeOmniLight;
+function _load_object_light(src,parent){
+	var light = new CoffeeOmniLight(parent);
 	for(p in src){
 		switch(p){
 		case "position":{
@@ -23,4 +23,35 @@ function load_object_light(src){
 	return light;
 }
 
-print(load_object_light)
+function _load_object_camera(src,parent){
+	var camera = new CoffeeCamera(parent);
+	for(p in src){
+		switch(p){
+			case "fov":{
+				camera.fov.value = src[p];
+				break;
+			}
+			case "znear":{
+				camera.zNear = src[p];
+				break;
+			}
+			case "zfar":{
+				camera.zFar = src[p];
+				break;
+			}
+			case "position":{
+				camera.position.value = src[p];
+				break;
+			}
+			case "rotation":{
+				camera.rotation.value = src[p];
+				break;
+			}
+		}
+	}
+	return camera;
+}
+
+function _load_object_fog(src,world){
+
+}

@@ -55,7 +55,7 @@ public:
     void merge(CoffeeAssetStorage* data);
     CoffeeModelStruct *acquireModel(QString identification);
 
-    void setParents(QObject* parent);
+    Q_INVOKABLE void setParents(QObject* parent);
 
     Q_INVOKABLE QObject* getMesh(QString source);
     Q_INVOKABLE QObject* getMaterial(QString source);

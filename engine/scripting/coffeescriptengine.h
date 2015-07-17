@@ -21,6 +21,7 @@ private:
     //Functions to export
     static QScriptValue coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeExecuteScriptFile(QScriptContext *ctxt, QScriptEngine *eng);
+    static QScriptValue coffeeParentingFunc(QScriptContext *ctxt, QScriptEngine *eng);
 
     //ScriptEngine internal functions
     static QString importFile(const QFileInfo &srcFile, QString &src);
