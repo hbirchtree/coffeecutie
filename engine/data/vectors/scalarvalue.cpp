@@ -10,7 +10,14 @@ ScalarValue::ScalarValue(QObject *parent, std::function<ScalarDataType (ScalarDa
     VectorData(parent),
     NumberContainer<ScalarDataType>(fun)
 {
+}
 
+ScalarValue::ScalarValue(QObject *parent, float floor, float ceil) :
+ScalarValue(parent,[=](ScalarDataType v){
+    Q_UNUSED(v)
+    return (ceil-floor)*((float)qrand()/(float)RAND_MAX)-(ceil-floor)/2;
+})
+{
 }
 
 ScalarDataType ScalarValue::value() const

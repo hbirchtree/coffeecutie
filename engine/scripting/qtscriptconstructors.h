@@ -13,8 +13,9 @@ public:
 
     static void defineConstructors(QScriptEngine &e);
 
-    //QTimer
+    //Qt objects
     static QScriptValue qtimerConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+    static QScriptValue qcolorConstructor(QScriptContext *ctxt, QScriptEngine *eng);
 
     //QPointF
     static QScriptValue pointToScript(QScriptEngine* eng, const QPointF &v);

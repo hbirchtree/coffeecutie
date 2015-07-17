@@ -63,6 +63,11 @@ bool CoffeeTransformComputer::capture() const
     return m_capture;
 }
 
+QObject *CoffeeTransformComputer::shader()
+{
+    return pshader;
+}
+
 void CoffeeTransformComputer::doReload()
 {
     m_reload = true;
@@ -120,6 +125,13 @@ void CoffeeTransformComputer::tickParticles()
 void CoffeeTransformComputer::setShader(CoffeeShader *shader)
 {
     this->pshader = shader;
+}
+
+void CoffeeTransformComputer::setShader(QObject *shader)
+{
+    CoffeeShader* s = qobject_cast<CoffeeShader*>(shader);
+    if(s)
+        setShader(s);
 }
 
 void CoffeeTransformComputer::setMaxParticles(quint32 maxParticles)

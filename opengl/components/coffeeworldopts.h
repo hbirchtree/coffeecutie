@@ -2,8 +2,6 @@
 #define COFFEEWORLDOPTS_H
 #include "general/common.h"
 
-#include <QColor>
-
 class CoffeeCamera;
 class CoffeeSkybox;
 class CoffeeRenderer;
@@ -23,6 +21,8 @@ class CoffeeWorldOpts : public QObject
     Q_PROPERTY(bool wireframeMode READ wireframeMode WRITE setWireframeMode)
 
     Q_PROPERTY(QObject* physicsWorld READ physicsWorld)
+
+    Q_PROPERTY(QObject* clearColor READ clearColorValue)
 
     Q_PROPERTY(QObject* fogColor READ getFogColorVariant)
     Q_PROPERTY(QObject* fogDensity READ getFogDensityVariant)
@@ -60,6 +60,8 @@ public:
 
     QObject* getSkyboxQObject();
 
+    QObject* clearColorValue() const;
+
 signals:
     void physicsObjectAdded(PhysicsObject* object);
 
@@ -85,7 +87,6 @@ public slots:
     void connectSignals(QObject* controller);
     void connectSignals(CoffeePlayerController* controller);
     void disconnectSignals();
-    //TODO : Disconnect-version of the above, necessary for switching world objects
 
     void setLoadedState(bool loadedState);
 

@@ -12,7 +12,7 @@ public:
     QScriptEngine *getEngine();
 
     void execFile(QString file, bool *result = nullptr, QString *logOut = nullptr);
-    static void execFile(QScriptEngine* e,QString file, bool *result = nullptr, QString *logOut = nullptr);
+    static QScriptValue execFile(QScriptEngine* e,QString file, bool *result = nullptr, QString *logOut = nullptr);
     void addObject(QObject* o);
 
 private:

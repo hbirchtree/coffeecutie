@@ -98,7 +98,7 @@ QPointer<CoffeeShader> CoffeeSkybox::getShader() const
     return m_shader;
 }
 
-void CoffeeSkybox::setShader(QPointer<CoffeeShader> value)
+void CoffeeSkybox::setShader(CoffeeShader* value)
 {
     if(value){
         if(m_shader)
@@ -134,7 +134,7 @@ QPointer<CoffeeMesh> CoffeeSkybox::getSkymesh() const
     return m_mesh;
 }
 
-void CoffeeSkybox::setSkymesh(QPointer<CoffeeMesh> value)
+void CoffeeSkybox::setSkymesh(CoffeeMesh *value)
 {
     if(value&&value->hasPositions()){
         if(m_mesh)
@@ -150,7 +150,7 @@ QPointer<CoffeeTexture> CoffeeSkybox::getTexture() const
     return m_texture;
 }
 
-void CoffeeSkybox::setTexture(QPointer<CoffeeTexture> value)
+void CoffeeSkybox::setTexture(CoffeeTexture* value)
 {
     if(value&&value->isCubemap()){
         if(this->m_texture)

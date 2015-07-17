@@ -1,3 +1,12 @@
+function _asset_getTexture(str,src){
+	for(var i = 0; i<src.textures.length;i++){
+		if(src.textures[i].objectName === str){
+			return src.textures[i];
+		}
+	}
+	return null;
+}
+
 function _load_object_light(src,parent){
 	var light = new CoffeeOmniLight(parent);
 	for(p in src){
@@ -53,5 +62,96 @@ function _load_object_camera(src,parent){
 }
 
 function _load_object_fog(src,world){
+	//Only sets the fog parameters in the world object for now
+	//We might separate fog into its own, script-side entity
+	for(p in src){
+		switch(p){
+			case "density":{
+				world.fogDensity = src[p];
+				break;
+			}
+			case "color":{
+				world.fogColor.fromColor(QColor(src[p]));
+				break;
+			}
+		}
+	}
+}
 
+function _load_object_skybox(src,camera,parent,assetSource){
+	var skybox = new CoffeeSkybox(parent,camera);
+	for(p in src){
+		switch(p){
+			case "id":{
+				skybox.objectName = src[p];
+				break;
+			}
+			case "shader":{
+				skybox.shader = assetSource.shaders[src[p]];
+				break;
+			}
+			case "mesh":{
+				skybox.mesh = assetSource.getMesh(src[p]);
+				break;
+			}
+			case "cubemap":{
+				skybox.texture = _asset_getTexture(src[p],assetSource);
+				break;
+			}
+		}
+	}
+	return skybox;
+}
+
+function _load_object_particles(src,camera,parent,assetSource){
+	var ps = new CoffeeParticleSystem(parent,camera);
+	for(p in src){
+		switch(p){
+			case "id":{
+				ps.objectName = src[p];
+				break;
+			}
+			case "render-shader":{
+				ps.shader = assetSource.shaders[src[p]];
+				break;
+			}
+			case "particle-mass":{
+				ps.particleMass.value = src[p];
+				break;
+			}
+			case "particle-size":{
+				ps.particleSize.value = src[p];
+				break;
+			}
+			case "gravity":{
+				ps.gravity.value = src[p];
+				break;
+			}
+			case "position":{
+				ps.position.value = src[p];
+				break;
+			}
+			case "particle-spread":{
+				ps.particleSpread.value = src[p];
+				break;
+			}
+			case "color":{
+				ps.particleColor.fromColor(QColor(src[p]));
+				break;
+			}
+			case "additive":{
+				ps.additive = src[p];
+				break;
+			}
+			case "transform-shader":{
+				ps.transform.shader = assetSource.shaders[src[p]];
+				break;
+			}
+			case "texture":{
+				ps.texture = _asset_getTexture(src[p],assetSource);
+				break;
+			}
+		}
+	}
+	return ps;
 }

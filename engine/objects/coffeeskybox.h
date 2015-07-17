@@ -25,13 +25,13 @@ public:
     void setCamera(CoffeeCamera* m_camera);
 
     QPointer<CoffeeTexture> getTexture() const;
-    void setTexture(QPointer<CoffeeTexture> value);
+    void setTexture(CoffeeTexture* value);
 
     QPointer<CoffeeMesh> getSkymesh() const;
-    void setSkymesh(QPointer<CoffeeMesh> value);
+    void setSkymesh(CoffeeMesh* value);
 
     QPointer<CoffeeShader> getShader() const;
-    void setShader(QPointer<CoffeeShader> value);
+    void setShader(CoffeeShader *value);
 
     QObject* camera() const;
     QObject* shader() const;

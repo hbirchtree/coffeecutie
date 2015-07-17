@@ -126,6 +126,11 @@ void CoffeeWorldOpts::addObject(CoffeeObject *object)
     objects.append(object);
 }
 
+void CoffeeWorldOpts::addObject(QObject *object)
+{
+
+}
+
 QList<CoffeeObject*> &CoffeeWorldOpts::getObjects()
 {
     return objects;
@@ -267,4 +272,9 @@ QObject *CoffeeWorldOpts::physicsWorld() const
 QObject *CoffeeWorldOpts::getSkyboxQObject()
 {
     return skybox;
+}
+
+QObject *CoffeeWorldOpts::clearColorValue() const
+{
+    return clearColor;
 }

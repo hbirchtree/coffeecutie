@@ -29,6 +29,11 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
         e.globalObject().setProperty("ScalarValue",mo);
     }
     {
+        QScriptValue pdCt = e.newFunction(scalarRandConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("RandomScalarValue",mo);
+    }
+    {
         QScriptValue pdCt = e.newFunction(quatValueConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("QuatValue",mo);
@@ -110,6 +115,21 @@ QScriptValue CoffeeScriptConstructors::physicsObjectConstructor(QScriptContext *
 QScriptValue CoffeeScriptConstructors::physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new PhysicsDescriptor(parent);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
+}
+
+QScriptValue CoffeeScriptConstructors::scalarRandConstructor(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QObject* parent = ctxt->argument(0).toQObject();
+
+    if(ctxt->argumentCount()<3){
+        return ctxt->throwError("Invalid amount of arguments!");
+    }
+
+    float floor = ctxt->argument(1).toNumber();
+    float ceil = ctxt->argument(2).toNumber();
+
+    QObject* o = new ScalarValue(parent,floor,ceil);
     return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 

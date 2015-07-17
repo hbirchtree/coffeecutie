@@ -134,9 +134,9 @@
 		},
 		"fog":{
 			"density": 0.02,
-			"color": "#002525FF"
+			"color": "#002525"
 		},
-		"clearcolor": "#002525FF",
+		"clearcolor": "#002525",
 		"skybox": {
 			"id": "sky",
 			"cubemap": "skytexture",
@@ -149,7 +149,7 @@
 				"texture": "quadtex",
 				"render-shader": "particle-render",
 				"transform-shader": "particle-transform",
-				"color": "#FFFFFF88",
+				"color": "#FFFFFF",
 				"particle-mass": 0.5,
 				"particle-size": 0.9,
 				"gravity": [0,0,0],
@@ -160,7 +160,7 @@
 				"texture": "particle-fx",
 				"render-shader": "particle-render2",
 				"transform-shader": "particle-transform2",
-				"color": "#FFFFFF88",
+				"color": "#FFFFFF",
 				"particle-mass": 0.5,
 				"particle-size": 0.7,
 				"gravity": [0,-4.0,0],

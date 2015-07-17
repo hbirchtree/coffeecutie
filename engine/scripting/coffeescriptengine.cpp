@@ -84,22 +84,25 @@ void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
     execFile(&e,file,result,logOut);
 }
 
-void CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut)
+QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut)
 {
     QFileInfo fileTest(file);
     QFile script(file);
+    QScriptValue out;
     if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
         src = importFile(fileTest,src);
-        QString out = e->evaluate(src).toString();
+        QScriptProgram p(src); //we might get use for these QScriptProgram objects, but for now we live it at this
+        out = e->evaluate(p);
         if(logOut)
-            *logOut = out;
+            *logOut = out.toString();
         if(result)
             *result = true;
     }else{
         if(result)
             *result = false;
     }
+    return out;
 }
 
 void CoffeeScriptEngine::addObject(QObject *o)
@@ -136,14 +139,13 @@ QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, Q
     QString file = ctxt->argument(0).toString();
 
     bool status = false;
-    QString res;
 
-    execFile(eng,file,&status,&res);
+    QScriptValue res = execFile(eng,file,&status);
 
     if(!status){
         return ctxt->throwError("Failed: File may not exist!");
     }else{
-        return eng->toScriptValue(res);
+        return res;
     }
 }
 

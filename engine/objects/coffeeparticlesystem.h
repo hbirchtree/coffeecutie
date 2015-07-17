@@ -16,6 +16,7 @@ class CoffeeParticleSystem : public QObject,public CoffeeObject
     Q_PROPERTY(QObject* camera WRITE setCamera)
     Q_PROPERTY(QObject* texture READ getTextureQObject WRITE setTexture)
     Q_PROPERTY(QObject* transform READ getTransformObject)
+    Q_PROPERTY(QObject* shader READ shader WRITE setShader)
 
     Q_PROPERTY(QObject* particleColor READ particleColor)
     Q_PROPERTY(QObject* gravity READ gravityQObject)
@@ -37,7 +38,6 @@ public:
     QPointer<CoffeeTexture> getTexture();
 
     QPointer<CoffeeShader> getShader();
-    void setShader(QPointer<CoffeeShader> value);
 
     CoffeeTransformComputer* getTransform();
 
@@ -52,6 +52,8 @@ public:
     QObject* particleMass();
     QObject* particleSpread();
 
+    QObject* shader() const;
+
 signals:
     void requestTick(float d);
 
@@ -62,8 +64,12 @@ public slots:
 
     void setFrametime(float time);
     void setAdditive(bool additive);
+
     void setTexture(CoffeeTexture* value);
     void setTexture(QObject* value);
+
+    void setShader(QObject* value);
+    void setShader(CoffeeShader* value);
 
     void setGravity(Vector3Value* gravity);
     void setGravity(QObject* gravity);
@@ -75,7 +81,7 @@ protected:
     void renderParticles();
 
     bool baked = false;
-    CoffeeShader* shader = nullptr;
+    CoffeeShader* m_shader = nullptr;
     CoffeeTexture* texture = nullptr;
     const CoffeeCamera* m_camera = nullptr;
 

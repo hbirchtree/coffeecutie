@@ -1,1 +1,47 @@
 //Load CoffeeWorldOpts
+
+function _load_object_world(src,parent,assetStorage){
+	var world = new CoffeeWorldOpts(parent);
+
+	for(p in src){
+		switch(p){
+			case "fog":{
+				_load_object_fog(src[p],world);
+				break;
+			}
+			case "camera":{
+				world.camera = _load_object_camera(src[p],world);
+				break;
+			}
+			case "clearcolor":{
+				world.clearColor.fromColor(QColor(src[p]));
+				break;
+			}
+			case "objects":{
+				for(o in src[p]){
+					world.addObject(_load_object_camera(o,world,assetStorage));
+				}
+				break;
+			}
+		}
+	}
+
+	//For objects that require a camera
+	for(p in src){
+		switch(p){
+			case "skybox":{
+				world.skybox = _load_object_skybox(src[p],world.camera,world,assetStorage);
+				break;
+			}
+			case "particle_systems":{
+				for(o in src[p]){
+					var ps = _load_object_particles(src[p],world);
+					world.addParticleSystem(ps);
+				}
+				break;
+			}
+		}
+	}
+
+	return world;
+}

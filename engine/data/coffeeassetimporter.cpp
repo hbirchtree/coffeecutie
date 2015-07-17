@@ -434,7 +434,7 @@ QVariantMap CoffeeAssetStorage::getShaders()
 {
     QVariantMap m;
     for(QString s : shaders.keys())
-        m.insert(s,QVariant::fromValue(shaders.value(s)));
+        m.insert(s,QVariant::fromValue((QObject*)shaders.value(s)));
     return m;
 }
 

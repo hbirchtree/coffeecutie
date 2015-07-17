@@ -1,1 +1,124 @@
 //Load CoffeeStandardObject
+
+//TODO : add the other shapes, both here and in code
+function _phys_translate_string_shape(str){
+	switch(str){
+		case "static_plane":{
+			return PhysicalShape.Shape_StaticPlane;
+		}
+		case "sphere":{
+			return PhysicalShape.Shape_Sphere;
+		}
+		case "box":{
+			return PhysicalShape.Shape_Box;
+		}
+		case "cylinder":{
+			return PhysicalShape.Shape_Cylinder;
+		}
+		case "capsule":{
+			return PhysicalShape.Shape_Capsule;
+		}
+		case "cone":{
+			return PhysicalShape.Shape_Cone;
+		}
+	}
+	return PhysicalShape.Shape_None;;
+}
+
+function _load_object_physics(src,parent){
+	var phys = new PhysicsObject(parent);
+	var desc = new PhysicsDescriptor(phys);
+
+	for(p in src){
+		switch(p){
+			case "shape":{
+				desc.shape = _phys_translate_string_shape(src[p]);
+				break;
+			}
+			case "position":{
+				desc.position = src[p];
+				break;
+			}
+			case "scale":{
+				desc.scale = src[p];
+				break;
+			}
+			case "rotation":{
+				desc.orientation = src[p];
+				break;
+			}
+			case "angular-velocity":{
+				desc.angularVelocity = src[p];
+				break;
+			}
+			case "inertia":{
+				desc.inertia = src[p];
+				break;
+			}
+			case "linear-factory":{
+				desc.linearFactor = src[p];
+				break;
+			}
+			case "velocity":{
+				desc.velocity = src[p];
+				break;
+			}
+			case "friction":{
+				desc.friction = src[p];
+				break;
+			}
+			case "mass":{
+				desc.mass = src[p];
+				break;
+			}
+			case "restitution":{
+				desc.restitution = src[p];
+				break;
+			}
+			case "normal":{
+				desc.position = src[p];
+				break;
+			}
+		}
+	}
+	var shape = _phys_translate_string_shape(src["shape"]);
+
+	phys.setDescr(desc);
+	return phys;
+}
+
+function _load_object_standard(src,parent,assetSource){
+	var obj = new CoffeeStandardObject(parent);
+	for(p in src){
+		switch(p){
+			case "id":{
+				obj.objectName = src[p];
+				break;
+			}
+			case "model.id":{
+				skybox.mesh = assetSource.getMesh(src[p]);
+				break;
+			}
+			case "model.position":{
+				obj.position.value = src[p];
+				break;
+			}
+			case "model.scale":{
+				obj.scale.value = src[p];
+				break;
+			}
+			case "model.rotation":{
+				obj.rotation.value = src[p];
+				break;
+			}
+			case "shader.id":{
+				obj.shader = assetSource.shaders[src[p]];
+				break;
+			}
+			case "physics":{
+				obj.physics = _load_object_physics(src[p],obj);
+				break;
+			}
+		}
+	}
+}

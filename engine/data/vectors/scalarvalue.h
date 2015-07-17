@@ -13,6 +13,8 @@ public:
     ScalarValue(QObject* parent, ScalarDataType v);
     ScalarValue(QObject* parent, std::function<ScalarDataType(ScalarDataType v)> fun);
 
+    ScalarValue(QObject* parent, float floor, float ceil); //random number generator constructor
+
     using NumberContainer<ScalarDataType>::operator !=;
     using NumberContainer<ScalarDataType>::operator =;
     using NumberContainer<ScalarDataType>::operator *=;

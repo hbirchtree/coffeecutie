@@ -33,6 +33,8 @@ public:
     static QScriptValue physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng);
 
+    static QScriptValue scalarRandConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+
     static QScriptValue scalarValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue vector2ValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue vector3ValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);

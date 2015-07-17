@@ -58,7 +58,7 @@ void CoffeeParticleSystem::render()
 
 void CoffeeParticleSystem::unload()
 {
-    shader->unload();
+    m_shader->unload();
     texture->unloadTexture();
     transform->unload();
 
@@ -68,7 +68,7 @@ void CoffeeParticleSystem::unload()
 void CoffeeParticleSystem::load()
 {
     texture->loadTexture();
-    shader->buildProgram();
+    m_shader->buildProgram();
     transform->load();
 
     setBaked(true);
@@ -102,7 +102,7 @@ void CoffeeParticleSystem::renderParticles()
         glBlendFunc(GL_SRC_ALPHA,GL_ONE);
     glDepthMask(GL_FALSE);
 
-    glUseProgram(shader->getProgramId());
+    glUseProgram(m_shader->getProgramId());
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(texture->getGlTextureType(),texture->getHandle());
@@ -110,14 +110,14 @@ void CoffeeParticleSystem::renderParticles()
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,transform->getRenderTransform());
     glBindVertexArray(transform->getRenderArray());
 
-    shader->setUniform("colorMultiplier",m_particleColor);
-    shader->setUniform("diffuseSampler",0);
-    shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
+    m_shader->setUniform("colorMultiplier",m_particleColor);
+    m_shader->setUniform("diffuseSampler",0);
+    m_shader->setUniform("modelview",RenderingMethods::translateObjectMatrix(
                            position()->getValue(),
                            rotation()->getValue(),
                            scale()->getValue())*m_camera->getMatrix());
-    shader->setUniform("cameraPos",m_camera->getCameraPos());
-    shader->setUniform("particleSize",m_particleSize);
+    m_shader->setUniform("cameraPos",m_camera->getCameraPos());
+    m_shader->setUniform("particleSize",m_particleSize);
 
     glDrawTransformFeedback(GL_POINTS,transform->getRenderTransform());
 
@@ -162,6 +162,11 @@ QObject *CoffeeParticleSystem::particleSpread()
     return m_particleSpread;
 }
 
+QObject *CoffeeParticleSystem::shader() const
+{
+    return m_shader;
+}
+
 QObject *CoffeeParticleSystem::particleSize()
 {
     return m_particleSize;
@@ -174,15 +179,15 @@ QObject *CoffeeParticleSystem::particleMass()
 
 QPointer<CoffeeShader> CoffeeParticleSystem::getShader()
 {
-    return shader;
+    return m_shader;
 }
 
-void CoffeeParticleSystem::setShader(QPointer<CoffeeShader> value)
+void CoffeeParticleSystem::setShader(CoffeeShader *value)
 {
-    if(shader)
-        shader->removeConsumer();
-    shader = value;
-    shader->addConsumer();
+    if(m_shader)
+        m_shader->removeConsumer();
+    m_shader = value;
+    m_shader->addConsumer();
 }
 
 CoffeeTransformComputer *CoffeeParticleSystem::getTransform()
@@ -208,6 +213,13 @@ void CoffeeParticleSystem::setTexture(QObject *value)
     CoffeeTexture* tex = qobject_cast<CoffeeTexture*>(value);
     if(tex)
         setTexture(tex);
+}
+
+void CoffeeParticleSystem::setShader(QObject *value)
+{
+    CoffeeShader* s = qobject_cast<CoffeeShader*>(value);
+    if(s)
+        setShader(s);
 }
 
 void CoffeeParticleSystem::setGravity(Vector3Value *gravity)

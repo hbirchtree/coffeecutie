@@ -10,6 +10,8 @@ class ShaderMapping;
 
 class CoffeeTransformComputer : public QObject,public CoffeeUniformSetter
 {
+    Q_PROPERTY(QObject* shader READ shader WRITE setShader)
+
     Q_PROPERTY(quint32 maxParticles READ maxParticles WRITE setMaxParticles)
     Q_PROPERTY(QVariantList feedbackAttributes READ feedbackAttributes WRITE setFeedbackAttributes)
 
@@ -51,6 +53,8 @@ public:
     bool query() const;
     bool capture() const;
 
+    QObject* shader();
+
 public slots:
     void doReload();
 
@@ -59,6 +63,7 @@ public slots:
     void tickParticles();
 
     void setShader(CoffeeShader* shader);
+    void setShader(QObject* shader);
     void setMaxParticles(quint32 maxParticles);
 
     void setUniform(QString uniformName, QObject *data);
@@ -104,14 +109,12 @@ public:
     QString attributeName;
     GLenum datatype;
     GLboolean normalization;
-
 };
 //The purpose of this class is to contain a data-set for use in compute operations.
 //It may be returned from VRAM or inserted into it
 class CoffeeComputeTransformDataSet {
 public:
     void setData(const QVector<float> &data);
-    QVector<float> copy() const; //you don't really want to use this.
     QVector<float>* data();
 
 private:

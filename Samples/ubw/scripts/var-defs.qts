@@ -3,17 +3,17 @@
 ///////////
 var objStack = new Array(); //Here we store some objects to avoid them being destroyed.
 
+var initData = importVariantMap("ubw.json");
+var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
+
 #inc "data/load_data.qts"
 
-var initData = importVariantMap("ubw.json");
-
 //Load up the world
-var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
-coffeeroot.evloop.world = assets.worlds[0];
+coffeeroot.evloop.world = _load_object_world(initData["world.world1"],coffeeroot,assets);
 assets.worlds[0].setRenderer(renderer);
 
 //Some global variables for simplicity
-var world = coffeeroot.evloop.world1;
+var world = coffeeroot.evloop.world;
 var inputClock = new QTimer;
 var controller = new CoffeePlayerController;
 var surface = coffeeroot.evloop.screenSurface;

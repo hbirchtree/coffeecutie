@@ -40,7 +40,7 @@ public:
     const void* getVectorData();
     uint32_t getVectorDataSize()const;
 
-    QColor asColor();
+    Q_INVOKABLE QColor asColor();
 
 signals:
     void valueChanged();
