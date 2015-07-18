@@ -22,8 +22,8 @@ world.connectSignals(controller);
 world.setRenderer(renderer);
 surface.shader = assets.shaders.deferred_display;
 
-//world.testparts.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
-//world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
+world.testparts.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
+world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
 
 //Set up deferred rendering
 #inc "display/surface-setup.qts"
