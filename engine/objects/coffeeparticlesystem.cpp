@@ -37,6 +37,8 @@ CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* c
         return (float)(qrand()%1000000-500000)/500000.f;
     });
     m_spawnCount = new ScalarValue(this,1.f);
+    m_particleColor = new Vector4Value(this,glm::vec4(1.f,1.f,1.f,1.f));
+
     transform->setUniform("timestep",m_frametime);
     transform->setUniform("mass",m_particleMass);
     transform->setUniform("gravity",m_gravity);

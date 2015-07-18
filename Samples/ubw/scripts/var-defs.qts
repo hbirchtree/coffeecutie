@@ -9,8 +9,7 @@ var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
 #inc "data/load_data.qts"
 
 //Load up the world
-//coffeeroot.evloop.world = _load_object_world(initData["world.world1"],coffeeroot,assets);
-var w = _load_object_world(initData["world.world1"],coffeeroot,assets);
+coffeeroot.evloop.world = _load_object_world(initData["world.world1"],coffeeroot,assets);
 
 //Some global variables for simplicity
 var world = coffeeroot.evloop.world;
@@ -18,7 +17,7 @@ var inputClock = new QTimer;
 var controller = new CoffeePlayerController;
 var surface = coffeeroot.evloop.screenSurface;
 
-//world.connectSignals(controller);
+world.connectSignals(controller);
 
 world.setRenderer(renderer);
 surface.shader = assets.shaders.deferred_display;

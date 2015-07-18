@@ -36,7 +36,6 @@ function _load_object_world(src,parent,assetStorage){
 
 	//For objects that require a camera
 	for(p in src){
-		print(assetStorage);
 		switch(p){
 			case "skybox":{
 				world.skybox = _load_object_skybox(src[p],world.camera,world,assetStorage);

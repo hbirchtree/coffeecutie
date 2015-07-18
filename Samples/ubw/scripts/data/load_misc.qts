@@ -105,6 +105,7 @@ function _load_object_skybox(src,camera,parent,assetSource){
 
 function _load_object_particles(src,camera,parent,assetSource){
 	var ps = new CoffeeParticleSystem(parent,camera);
+	ps.setCamera(camera);
 	for(p in src){
 		switch(p){
 			case "id":{

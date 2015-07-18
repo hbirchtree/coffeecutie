@@ -14,8 +14,8 @@ class CoffeeStandardObject : public CoffeeObject, public CoffeeUniformSetter
     Q_PROPERTY(QObject* rotation READ rotationValue)
     Q_PROPERTY(QObject* scale READ scaleValue)
 
-    Q_PROPERTY(QObject* material READ materialRef)
-    Q_PROPERTY(QObject* mesh READ meshRef)
+    Q_PROPERTY(QObject* material READ materialRef WRITE setMaterialRef)
+    Q_PROPERTY(QObject* mesh READ meshRef WRITE setMeshRef)
     Q_PROPERTY(QObject* shader READ shaderRef WRITE setShaderRef)
 
     Q_PROPERTY(QObject* physics READ physicsRef WRITE setPhysicsObject)
@@ -59,6 +59,8 @@ public slots:
 
     void setPhysicsObject(QObject* obj);
     void setShaderRef(QObject* sh);
+    void setMeshRef(QObject* me);
+    void setMaterialRef(QObject* ma);
 
     //We want these to work as slots, slots inherited from non-QObject classes do not work.
     void setUniform(QString uniformName, QObject *data);

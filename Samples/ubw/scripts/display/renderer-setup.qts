@@ -10,7 +10,7 @@ function applyAspectChange(aspect){
 	world.camera.aspectRatio = aspect;
 }
 
-renderer.contextReportFrametime.connect(assets.worlds[0].tickObjects);
+renderer.contextReportFrametime.connect(world.tickObjects);
 renderer.contextReportFrametime.connect(world.testparts.setFrametime);
 renderer.contextReportFrametime.connect(printFrametime);
 renderer.windowAspectChanged.connect(applyAspectChange);

@@ -190,6 +190,20 @@ void CoffeeStandardObject::setShaderRef(QObject *sh)
         setShader(shader);
 }
 
+void CoffeeStandardObject::setMeshRef(QObject *me)
+{
+    CoffeeMesh* mesh = qobject_cast<CoffeeMesh*>(me);
+    if(mesh)
+        setMesh(mesh);
+}
+
+void CoffeeStandardObject::setMaterialRef(QObject *ma)
+{
+    CoffeeMaterial* material = qobject_cast<CoffeeMaterial*>(ma);
+    if(material)
+        setMaterial(material);
+}
+
 void CoffeeStandardObject::setUniform(QString uniformName, QObject *data)
 {
     VectorData* d = qobject_cast<VectorData*>(data);

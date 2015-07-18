@@ -178,9 +178,9 @@ void CoffeeInspector::updateProperty(QTreeWidgetItem *it, QVariant value)
                     arg(value.toRect().height()).
                     arg(value.toRect().x()).
                     arg(value.toRect().y()));
-    }else if(value.userType()==QMetaType::QObjectStar){
+    }else if(value.userType()==QMetaType::QObjectStar&&false){
         QObject *obj = qvariant_cast<QObject*>(value);
-        if(obj)
+        if(obj&&!obj->objectName().isEmpty())
             it->setText(1,obj->objectName());
         else
             it->setText(1,obj->staticMetaObject.className());
