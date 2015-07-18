@@ -128,7 +128,9 @@ void CoffeeWorldOpts::addObject(CoffeeObject *object)
 
 void CoffeeWorldOpts::addObject(QObject *object)
 {
-
+    CoffeeObject* o = qobject_cast<CoffeeObject*>(object);
+    if(o)
+        addObject(o);
 }
 
 QList<CoffeeObject*> &CoffeeWorldOpts::getObjects()
@@ -206,7 +208,7 @@ void CoffeeWorldOpts::renderWorld()
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
     }
 
-    for(CoffeeObject* o : this->getObjects())
+    for(CoffeeObject* o : objects)
         o->render();
 
     for(CoffeeParticleSystem* s : particles)

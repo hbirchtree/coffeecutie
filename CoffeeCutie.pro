@@ -85,7 +85,8 @@ SOURCES += main.cpp \
     engine/data/vectors/vector2value.cpp \
     engine/data/vectors/vector4value.cpp \
     engine/scripting/coffeescriptconstructors.cpp \
-    engine/scripting/qtscriptconstructors.cpp
+    engine/scripting/qtscriptconstructors.cpp \
+    inspector/coffeeexceptiondialog.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -161,7 +162,8 @@ HEADERS += \
     engine/data/vectors/vector2value.h \
     engine/data/vectors/vector4value.h \
     engine/scripting/coffeescriptconstructors.h \
-    engine/scripting/qtscriptconstructors.h
+    engine/scripting/qtscriptconstructors.h \
+    inspector/coffeeexceptiondialog.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -193,7 +195,8 @@ DEPENDPATH += $$PWD/libs/bullet/src
 FORMS += \
     inspector/coffeeinspector.ui \
     inspector/coffeerendererinspector.ui \
-    inspector/coffeescriptterminal.ui
+    inspector/coffeescriptterminal.ui \
+    inspector/coffeeexceptiondialog.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp

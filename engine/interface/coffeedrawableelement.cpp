@@ -4,7 +4,7 @@
 #include "opengl/components/shadercontainer.h"
 #include "opengl/components/coffeetexture.h"
 
-CoffeeDrawableElement::CoffeeDrawableElement(QObject *parent) : QObject(parent)
+CoffeeDrawableElement::CoffeeDrawableElement(QObject *parent) : CoffeeObject(parent)
 {
     m_size = new Vector2Value(this,glm::vec2(0.5,0.5));
     m_position = new Vector2Value(this,glm::vec2(0,0));

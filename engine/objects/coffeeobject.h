@@ -5,8 +5,9 @@
 #include "engine/scripting/qscriptvectorvalue.h"
 #include "engine/physics/physicsobject.h"
 
-class CoffeeObject
+class CoffeeObject : public QObject
 {
+    Q_OBJECT
 public:
     /*
      * This is the base for a physics-enabled object
@@ -30,7 +31,7 @@ public slots:
     virtual void load() = 0;
 
 protected:
-    CoffeeObject(QObject* parent = 0);
+    CoffeeObject(QObject* parent);
     QPointer<PhysicsObject> physical;
     QPointer<Vector3Value> vposition;
     QPointer<QuatValue> qrotation;

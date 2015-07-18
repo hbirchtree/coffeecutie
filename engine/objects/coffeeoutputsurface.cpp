@@ -9,8 +9,7 @@
 #include "engine/objects/coffeestandardobject.h"
 
 CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) :
-    QObject(parent),
-    CoffeeObject(this)
+    CoffeeObject(parent)
 {
 //    shader = new ShaderContainer(this);
     setObjectName("screenSurface");

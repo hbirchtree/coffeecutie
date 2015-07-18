@@ -8,7 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
-CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
+CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent),e(this)
 {
     qRegisterMetaType<ScalarDataType>("ScalarDataType");
     qRegisterMetaType<VectorData*>("VectorData*");
@@ -38,6 +38,10 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
     {
         QScriptValue fun = e.newFunction(coffeeParentingFunc);
         e.globalObject().setProperty("parenting",fun);
+    }
+    {
+        QScriptValue fun = e.newFunction(coffeeExceptionFunc);
+        e.globalObject().setProperty("backtrace",fun);
     }
     ////////
 
@@ -71,7 +75,6 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
         e.globalObject().setProperty("CoffeeNeuronType",mo);
     }
     ////////
-
 }
 
 QScriptEngine *CoffeeScriptEngine::getEngine()
@@ -84,7 +87,7 @@ void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
     execFile(&e,file,result,logOut);
 }
 
-QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut)
+QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut, QScriptContext* ctxt)
 {
     QFileInfo fileTest(file);
     QFile script(file);
@@ -94,6 +97,12 @@ QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *
         src = importFile(fileTest,src);
         QScriptProgram p(src); //we might get use for these QScriptProgram objects, but for now we live it at this
         out = e->evaluate(p);
+
+        if(e->hasUncaughtException()){
+            qDebug() << src.split("\n").at(e->uncaughtExceptionLineNumber()-1).trimmed();
+            return coffeeExceptionFunc(ctxt ? ctxt : e->currentContext(),e);
+        }
+
         if(logOut)
             *logOut = out.toString();
         if(result)
@@ -140,13 +149,9 @@ QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, Q
 
     bool status = false;
 
-    QScriptValue res = execFile(eng,file,&status);
+    QScriptValue res = execFile(eng,file,&status,nullptr,ctxt);
 
-    if(!status){
-        return ctxt->throwError("Failed: File may not exist!");
-    }else{
-        return res;
-    }
+    return res;
 }
 
 QScriptValue CoffeeScriptEngine::coffeeParentingFunc(QScriptContext *ctxt, QScriptEngine *eng)
@@ -171,6 +176,42 @@ QScriptValue CoffeeScriptEngine::coffeeParentingFunc(QScriptContext *ctxt, QScri
     }
 }
 
+QScriptValue CoffeeScriptEngine::coffeeExceptionFunc(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QScriptValue exceptionValue = eng->uncaughtException();
+
+    if(exceptionValue.isUndefined()||eng->uncaughtExceptionLineNumber()<0){
+        return ctxt->throwError("No uncaught exceptions");
+    }
+
+    QString err("Uncaught exception: %1\n"
+                "Error on line: %2\n"
+                "Backtrace:\n");
+    for(QString l : eng->uncaughtExceptionBacktrace())
+        err.append(l+"\n");
+
+    err = err
+            .arg(exceptionValue.toString())
+            .arg(eng->uncaughtExceptionLineNumber());
+
+    QScriptValue outputExceptionValue = eng->toScriptValue(err);
+
+    CoffeeScriptException exObj;
+    exObj.message = outputExceptionValue;
+    exObj.callee = ctxt->callee();
+    exObj.activator = ctxt->activationObject();
+    exObj.backtrace = eng->uncaughtExceptionBacktrace();
+    exObj.self = exceptionValue;
+    exObj.lineNumber = eng->uncaughtExceptionLineNumber();
+    CoffeeScriptEngine* e = qobject_cast<CoffeeScriptEngine*>(eng->parent());
+    if(e)
+        e->uncaughtException(exObj);
+
+    eng->clearExceptions();
+
+    return outputExceptionValue;
+}
+
 QString CoffeeScriptEngine::importFile(const QFileInfo &srcFile,QString &src)
 {
     QRegExp r;
@@ -189,3 +230,4 @@ QString CoffeeScriptEngine::importFile(const QFileInfo &srcFile,QString &src)
         }
     return src;
 }
+

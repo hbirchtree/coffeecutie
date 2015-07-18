@@ -2,6 +2,7 @@
 #define COFFEESCRIPTTERMINAL_H
 
 #include <QWidget>
+#include "coffeeexceptiondialog.h"
 #include "engine/scripting/coffeescriptengine.h"
 
 namespace Ui {

@@ -8,8 +8,7 @@
 #include <QColor>
 
 CoffeeParticleSystem::CoffeeParticleSystem(QObject *parent,const CoffeeCamera* camera) :
-    QObject(parent),
-    CoffeeObject(this)
+    CoffeeObject(parent)
 {
     this->m_gravity = new Vector3Value(this,glm::vec3(0,-1,0));
     this->transform = new CoffeeTransformComputer(this);

@@ -82,6 +82,7 @@ public slots:
 
     void injectPhysicsObject(PhysicsObject* object);
     void addObject(CoffeeObject* object);
+    void addObject(QObject* object);
     void addParticleSystem(CoffeeParticleSystem* system);
 
     void connectSignals(QObject* controller);

@@ -127,24 +127,25 @@ function _load_object_particles(src,camera,parent,assetSource){
 				ps.gravity.value = src[p];
 				break;
 			}
-			case "position":{
-				ps.position.value = src[p];
-				break;
-			}
+//			case "position":{
+//				ps.position.value = src[p];
+//				break;
+//			}
 			case "particle-spread":{
 				ps.particleSpread.value = src[p];
 				break;
 			}
-			case "color":{
-				ps.particleColor.fromColor(QColor(src[p]));
-				break;
-			}
+//			case "color":{
+//				ps.particleColor.fromColor(QColor(src[p]));
+//				break;
+//			}
 			case "additive":{
 				ps.additive = src[p];
 				break;
 			}
 			case "transform-shader":{
-				ps.transform.shader = assetSource.shaders[src[p]];
+				var id = src[p];
+				ps.transform.shader = assetSource.shaders[id];
 				break;
 			}
 			case "texture":{

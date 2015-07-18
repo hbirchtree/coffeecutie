@@ -8,7 +8,7 @@
 #include "engine/models/coffeemesh.h"
 #include "engine/shaders/coffeeuniformsetter.h"
 
-class CoffeeStandardObject : public QObject,public CoffeeObject, public CoffeeUniformSetter
+class CoffeeStandardObject : public CoffeeObject, public CoffeeUniformSetter
 {
     Q_PROPERTY(QObject* position READ positionValue)
     Q_PROPERTY(QObject* rotation READ rotationValue)

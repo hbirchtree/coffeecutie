@@ -9,7 +9,7 @@ class CoffeeShader;
 class CoffeeTexture;
 class CoffeeResource;
 
-class CoffeeSkybox : public QObject,public CoffeeObject
+class CoffeeSkybox : public CoffeeObject
 {
     Q_PROPERTY(QObject* texture READ texture WRITE setTexture)
     Q_PROPERTY(QObject* mesh READ mesh WRITE setMesh)

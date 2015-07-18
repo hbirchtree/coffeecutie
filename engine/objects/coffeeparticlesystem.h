@@ -9,7 +9,7 @@ class CoffeeTexture;
 class CoffeeCamera;
 class CoffeeTransformComputer;
 
-class CoffeeParticleSystem : public QObject,public CoffeeObject
+class CoffeeParticleSystem : public CoffeeObject
 {
     Q_PROPERTY(bool additive READ additive WRITE setAdditive)
 

@@ -8,8 +8,7 @@
 #include "engine/data/coffeeresource.h"
 
 CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) :
-    QObject(parent),
-    CoffeeObject(this)
+    CoffeeObject(parent)
 {
     setCamera(camera);
 }

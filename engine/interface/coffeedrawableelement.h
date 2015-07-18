@@ -8,7 +8,7 @@ class CoffeeTexture;
 class CoffeeShader;
 class Vector2Value;
 
-class CoffeeDrawableElement : public QObject,public CoffeeObject
+class CoffeeDrawableElement : public CoffeeObject
 {
     Q_PROPERTY(QString text READ text WRITE setText)
     Q_PROPERTY(QObject* texture READ texture WRITE setTexture)

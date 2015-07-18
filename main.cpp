@@ -126,12 +126,11 @@ int main(int argc, char *argv[])
         if((CoffeeAdvancedLoop*)loop){
             for(QObject* o : objects)
                 se->addObject(o);
-            QString out;
             bool res;
-            se->execFile(sf.absoluteFilePath(),&res,&out);
+            QScriptValue ex = se->execFile(se->getEngine(),sf.absoluteFilePath(),&res);
             qDebug("Init script run: %i, %s",
                    res,
-                   out.toStdString().c_str());
+                   ex.toString().toStdString().c_str());
         }
 
 #ifdef COFFEE_INSPECTOR_RUN

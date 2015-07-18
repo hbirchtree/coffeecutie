@@ -96,7 +96,9 @@ function _load_object_standard(src,parent,assetSource){
 				break;
 			}
 			case "model.id":{
-				skybox.mesh = assetSource.getMesh(src[p]);
+				var model = assetSource.getModel(src[p]);
+				obj.mesh = model.mesh;
+				obj.material = model.material;
 				break;
 			}
 			case "model.position":{
@@ -121,4 +123,5 @@ function _load_object_standard(src,parent,assetSource){
 			}
 		}
 	}
+	return obj;
 }

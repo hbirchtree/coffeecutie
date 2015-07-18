@@ -21,7 +21,7 @@ public:
     int textureUnit;
 };
 
-class CoffeeOutputSurface : public QObject,public CoffeeObject, public CoffeeUniformSetter
+class CoffeeOutputSurface : public CoffeeObject, public CoffeeUniformSetter
 {
     Q_PROPERTY(QObject* shader READ getShader WRITE setShader)
     Q_PROPERTY(QObject* framebuffer READ framebufferQObject WRITE setFramebuffer)

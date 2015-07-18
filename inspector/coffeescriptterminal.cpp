@@ -11,6 +11,15 @@ CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, CoffeeScriptEngine *
     this->engine = engine;
 
     ui->setupUi(this);
+
+    connect(engine,&CoffeeScriptEngine::uncaughtException,[=](CoffeeScriptException ex){
+        CoffeeExceptionDialog* dialog = new CoffeeExceptionDialog(this,ex);
+        connect(dialog,&CoffeeExceptionDialog::finished,[=](int res){
+            Q_UNUSED(res)
+            dialog->deleteLater();
+        });
+        dialog->show();
+    });
 }
 
 CoffeeScriptTerminal::~CoffeeScriptTerminal()
@@ -31,17 +40,18 @@ void CoffeeScriptTerminal::on_pushButton_2_clicked()
     QString file = scriptSelect.getOpenFileName(this,tr("Open a QtScript file"),QString(),"*.qts");
 
     bool ret;
-    QString res = "Failed to load file: Either it does not exist, is not a file or cannot be opened for reading.";
     //if execFile() fails, it does not change *logOut
     //failure is the case where the script cannot be opened
 
-    engine->execFile(file,&ret,&res);
+    QScriptValue e = engine->execFile(engine->getEngine(),file,&ret);
 
-    appendLog(QString("FileLoad: %1").arg(file),res);
+    appendLog(QString("FileLoad: %1").arg(file),e.toString());
 }
 
 void CoffeeScriptTerminal::appendLog(const QString &command, const QString &output)
 {
+    QString cmd(command);
+    QString out(output);
     ui->scriptLog->append(QString("<em><strong>%1</strong></em><br>"
-                                  "<small>%2</small><br>").arg(command).arg(output));
+                                  "<small>%2</small><br>").arg(cmd.replace("\n","<br>")).arg(out.replace("\n","<br>")));
 }

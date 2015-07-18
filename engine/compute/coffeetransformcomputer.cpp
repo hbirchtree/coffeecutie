@@ -1,7 +1,6 @@
 #include "coffeetransformcomputer.h"
 
 #include "opengl/components/shadercontainer.h"
-#include "engine/objects/coffeestandardobject.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeTransformComputer::CoffeeTransformComputer(QObject *parent) : QObject(parent)

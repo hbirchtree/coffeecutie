@@ -7,8 +7,7 @@
 #include "opengl/helpers/renderingmethods.h"
 
 CoffeeStandardObject::CoffeeStandardObject(QObject *parent) :
-    QObject(parent),
-    CoffeeObject(this)
+    CoffeeObject(parent)
 {
     modelMatrix = new Matrix4Value(this,[=](const glm::mat4& v){
         Q_UNUSED(v)
