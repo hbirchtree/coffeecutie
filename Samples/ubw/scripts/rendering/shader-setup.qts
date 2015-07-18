@@ -72,7 +72,6 @@ function objStandardInitShader(target){
 	obj.setUniform("fogParams.fDensity",world.fogDensity);
 	obj.setUniform("fogParams.fColor",world.fogColor);
 
-	print("Model matrix:");
 	//Model
 	obj.setUniform("model",obj.matrix);
 }
