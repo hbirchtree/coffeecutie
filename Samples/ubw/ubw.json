@@ -175,7 +175,7 @@
 				"model.id": "testskeleton:",
 				"model.scale": [0.2,0.2,0.2],
 				"physics":{
-					"shape": "staticplane",
+					"shape": "static_plane",
 					"position": [0,-3,0],
 					"normal": [0,1,0],
 					"mass": 0,

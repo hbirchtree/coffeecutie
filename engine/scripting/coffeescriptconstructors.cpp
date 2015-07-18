@@ -164,12 +164,6 @@ QScriptValue CoffeeScriptConstructors::quatValueConstructor(QScriptContext *ctxt
     return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
-QScriptValue CoffeeScriptConstructors::vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng){
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new VectorVariant(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
 QScriptValue CoffeeScriptConstructors::coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeePhysicsEvent(parent);

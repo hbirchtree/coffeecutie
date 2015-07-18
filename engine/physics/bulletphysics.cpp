@@ -216,68 +216,57 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
             btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
             switch(event->type()){
             case CoffeePhysicsEvent::ActionSetTransform:{
-                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
-                btQuaternion v2 = convert_glm(qvariant_cast<QuatValue*>(event->getData().at(1))->getValue());
                 btTransform pt = obj->getWorldTransform();
-                pt.setOrigin(v1);
-                pt.setRotation(v2);
+                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
+                pt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(1))));
                 obj->setWorldTransform(pt);
                 break;
             }
             case CoffeePhysicsEvent::ActionSetPosition:{
-                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
                 btTransform pt = obj->getWorldTransform();
-                pt.setOrigin(v1);
+                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
                 obj->setWorldTransform(pt);
                 break;
             }
             case CoffeePhysicsEvent::ActionSetAngularVelocity:
                 break;
             case CoffeePhysicsEvent::ActionSetOrientation:{
-                btQuaternion v1 = convert_glm(qvariant_cast<QuatValue*>(event->getData().at(0))->getValue());
                 btTransform rt = obj->getWorldTransform();
-                rt.setRotation(v1);
+                rt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(0))));
                 obj->setWorldTransform(rt);
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyForce:{
-                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
                 obj->activate(true);
-                obj->applyCentralForce(v1);
+                obj->applyCentralForce(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyRelativeForce:
                 break;
             case CoffeePhysicsEvent::ActionApplyImpulse:{
-                Vector3Value* v1_o = qvariant_cast<Vector3Value*>(event->getData().at(0));
-                if(!v1_o)
-                    return;
-                btVector3 v1 = convert_glm(v1_o->getValue());
                 obj->activate(true);
-                obj->applyCentralImpulse(v1);
+                obj->applyCentralImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
-                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
-                btVector3 v2 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(1))->getValue());
                 obj->activate(true);
-                obj->applyImpulse(v1,v2);
+                obj->applyImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))),
+                                  convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(1))));
                 break;
             }
             case CoffeePhysicsEvent::ActionApplyTorque:{
-                btVector3 v1 = convert_glm(qvariant_cast<Vector3Value*>(event->getData().at(0))->getValue());
                 obj->activate(true);
-                obj->applyTorque(v1);
+                obj->applyTorque(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
                 break;
             }
             case CoffeePhysicsEvent::ActionSetFriction:{
-                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
-                obj->setFriction(s->getValue());
+//                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
+                obj->setFriction(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
                 break;
             }
             case CoffeePhysicsEvent::ActionSetRestitution:{
-                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
-                obj->setRestitution(s->getValue());
+//                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
+                obj->setRestitution(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
                 break;
             }
             default:
@@ -322,6 +311,29 @@ void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timeste
             }
         }
     }
+}
+
+btVector3 BulletPhysics::convert_coffee(Vector3Value *v)
+{
+    if(!v) //If it is an invalid cast
+        return btVector3();
+    glm::vec3 val = v->getValue();
+    return btVector3(val.x,val.y,val.z);
+}
+
+btQuaternion BulletPhysics::convert_coffee(QuatValue *q)
+{
+    if(!q) //If it is an invalid cast
+        return btQuaternion();
+    glm::quat val = q->getValue();
+    return btQuaternion(val.x,val.y,val.z,val.w);
+}
+
+btScalar BulletPhysics::convert_coffee(ScalarValue *q)
+{
+    if(!q)
+        return 0.f;
+    return q->getValue();
 }
 
 void BulletPhysics::setGravity(float x, float y, float z)

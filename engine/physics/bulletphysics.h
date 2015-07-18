@@ -16,6 +16,10 @@ class btQuaternion;
 class btVector3;
 class btCollisionShape;
 
+class ScalarValue;
+class Vector3Value;
+class QuatValue;
+
 class BulletPhysics : public QObject
 {
     Q_PROPERTY(QString gravity READ getGravity)
@@ -36,6 +40,9 @@ public:
     static glm::vec3 convert_bt(const btVector3 &v);
     static void internalTickCallback(btDynamicsWorld* wrld,btScalar timestep);
 
+    static btVector3 convert_coffee(Vector3Value* v);
+    static btQuaternion convert_coffee(QuatValue* q);
+    static btScalar convert_coffee(ScalarValue* q);
 signals:
     void objectCollision(QPointer<PhysicsObject> o1, QPointer<PhysicsObject> o2);
     void physicsInitialized();

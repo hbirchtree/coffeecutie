@@ -33,6 +33,7 @@ function _load_object_physics(src,parent){
 		switch(p){
 			case "shape":{
 				desc.shape = _phys_translate_string_shape(src[p]);
+				print("Physical shape:",desc.shape);
 				break;
 			}
 			case "position":{
@@ -76,7 +77,7 @@ function _load_object_physics(src,parent){
 				break;
 			}
 			case "normal":{
-				desc.position = src[p];
+				desc.normal = src[p];
 				break;
 			}
 		}
@@ -123,5 +124,11 @@ function _load_object_standard(src,parent,assetSource){
 			}
 		}
 	}
+
+	if(obj.physics!=null){
+		obj.position.bindValue(obj.physics.position);
+		obj.rotation.bindValue(obj.physics.rotation);
+	}
+
 	return obj;
 }

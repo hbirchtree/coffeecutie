@@ -63,10 +63,6 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent),e(this
         e.globalObject().setProperty("PhysicsProperty",mo);
     }
     {
-        QScriptValue mo = e.newQMetaObject(&VectorVariant::staticMetaObject);
-        e.globalObject().setProperty("VectorVariantType",mo);
-    }
-    {
         QScriptValue mo = e.newQMetaObject(&CoffeeInputEvent::staticMetaObject);
         e.globalObject().setProperty("CoffeeInputEventType",mo);
     }

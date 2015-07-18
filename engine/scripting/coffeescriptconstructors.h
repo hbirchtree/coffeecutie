@@ -41,7 +41,6 @@ public:
     static QScriptValue vector4ValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng);
 
-    static QScriptValue vectorVariantConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeePlayerControllerConstructor(QScriptContext *ctxt, QScriptEngine *eng);
 

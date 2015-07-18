@@ -4,8 +4,8 @@
 var target = world.blade.physics;
 var testProp = new CoffeePhysicsEvent();
 testProp.type = PhysicsProperty.ActionApplyImpulse;
-var vec = new VectorVariant();
-vec.vec3 = [0,100,0];
+var vec = new Vector3Value();
+vec.value = [0,100,0];
 testProp.data = [vec];
 testProp.addTarget(target);
 target.modifyPhysics(testProp);
