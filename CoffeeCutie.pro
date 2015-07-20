@@ -86,7 +86,9 @@ SOURCES += main.cpp \
     engine/data/vectors/vector4value.cpp \
     engine/scripting/coffeescriptconstructors.cpp \
     engine/scripting/qtscriptconstructors.cpp \
-    inspector/coffeeexceptiondialog.cpp
+    inspector/coffeeexceptiondialog.cpp \
+    engine/rendering/coffeerendercall.cpp \
+    engine/scripting/coffeescriptengineagent.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -163,7 +165,9 @@ HEADERS += \
     engine/data/vectors/vector4value.h \
     engine/scripting/coffeescriptconstructors.h \
     engine/scripting/qtscriptconstructors.h \
-    inspector/coffeeexceptiondialog.h
+    inspector/coffeeexceptiondialog.h \
+    engine/rendering/coffeerendercall.h \
+    engine/scripting/coffeescriptengineagent.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

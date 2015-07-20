@@ -8,18 +8,10 @@
 #include "engine/models/coffeemesh.h"
 #include "engine/shaders/coffeeuniformsetter.h"
 
-class CoffeeStandardObject : public CoffeeObject, public CoffeeUniformSetter
+class CoffeeStandardObject : public CoffeeObject
 {
-    Q_PROPERTY(QObject* position READ positionValue)
-    Q_PROPERTY(QObject* rotation READ rotationValue)
-    Q_PROPERTY(QObject* scale READ scaleValue)
-
     Q_PROPERTY(QObject* material READ materialRef WRITE setMaterialRef)
     Q_PROPERTY(QObject* mesh READ meshRef WRITE setMeshRef)
-    Q_PROPERTY(QObject* shader READ shaderRef WRITE setShaderRef)
-
-    Q_PROPERTY(QObject* physics READ physicsRef WRITE setPhysicsObject)
-    Q_PROPERTY(bool hasPhysics READ hasPhysics)
 
     Q_PROPERTY(QObject* matrix READ getModelMatrix)
 
@@ -31,46 +23,26 @@ public:
 
     Q_INVOKABLE CoffeeMesh* mesh();
     void setMesh(CoffeeMesh* mesh);
-    Q_INVOKABLE CoffeeShader* shader();
-    void setShader(CoffeeShader* shader);
     Q_INVOKABLE CoffeeMaterial* material();
     void setMaterial(CoffeeMaterial *mtl);
 
     QObject* materialRef();
     QObject* meshRef();
-    QObject* shaderRef();
 
-    QObject* positionValue();
-    QObject* rotationValue();
-    QObject* scaleValue();
-
-    QObject* physicsRef();
     QObject* getModelMatrix() const;
-
-    bool hasPhysics();
 
 public slots:
     void render();
     void unload();
     void load();
 
-    void setPosition(float x, float y, float z);
-    void setRotation(float x, float y, float z);
-
-    void setPhysicsObject(QObject* obj);
-    void setShaderRef(QObject* sh);
     void setMeshRef(QObject* me);
     void setMaterialRef(QObject* ma);
 
-    //We want these to work as slots, slots inherited from non-QObject classes do not work.
-    void setUniform(QString uniformName, QObject *data);
-    void setTexture(QString samplerName, CoffeeTexture *texture);
-
 protected:
     Matrix4Value* modelMatrix;
-    bool baked = false;
-    QPointer<CoffeeMesh> pmesh;
-    QPointer<CoffeeMaterial> pmaterial;
+    QPointer<CoffeeMesh> m_mesh;
+    QPointer<CoffeeMaterial> m_material;
 };
 
 #endif // COFFEESTANDARDOBJECT_H

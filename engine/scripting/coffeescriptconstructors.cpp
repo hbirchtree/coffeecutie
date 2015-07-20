@@ -1,5 +1,25 @@
 #include "coffeescriptconstructors.h"
 
+#include "engine/physics/genericphysicsinterface.h"
+#include "engine/physics/physicsobject.h"
+#include "engine/physics/physicsdescriptor.h"
+#include "engine/scripting/qscriptvectorvalue.h"
+#include "general/filehandler.h"
+#include "opengl/components/coffeetexture.h"
+#include "engine/scripting/coffeeinputevent.h"
+#include "engine/models/coffeeinstancecontainer.h"
+#include "general/input/coffeeplayercontroller.h"
+#include "engine/ai/coffeeneuralnet.h"
+
+#include "engine/objects/coffeestandardobject.h"
+#include "engine/objects/coffeeskybox.h"
+#include "engine/objects/coffeeparticlesystem.h"
+#include "opengl/components/coffeecamera.h"
+#include "opengl/components/coffeeomnilight.h"
+#include "opengl/components/coffeeworldopts.h"
+
+#include "engine/rendering/coffeerendergraph.h"
+
 CoffeeScriptConstructors::CoffeeScriptConstructors()
 {
 
@@ -96,6 +116,13 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
         QScriptValue pdCt = e.newFunction(coffeeParticlesConstructor);
         QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
         e.globalObject().setProperty("CoffeeParticleSystem",mo);
+    }
+
+    //Rendering
+    {
+        QScriptValue pdCt = e.newFunction(coffeeRenderGraphConstructor);
+        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        e.globalObject().setProperty("CoffeeRenderGraph",mo);
     }
 }
 
@@ -220,5 +247,12 @@ QScriptValue CoffeeScriptConstructors::coffeeWorldConstructor(QScriptContext *ct
 {
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeWorldOpts(parent);
+    return eng->newQObject(o,QScriptEngine::AutoOwnership);
+}
+
+QScriptValue CoffeeScriptConstructors::coffeeRenderGraphConstructor(QScriptContext *ctxt, QScriptEngine *eng)
+{
+    QObject* parent = ctxt->argument(0).toQObject();
+    QObject* o = new CoffeeRenderGraph(parent);
     return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }

@@ -102,23 +102,24 @@ void CoffeeFrameBufferObject::resizeFramebuffer()
                                GL_TEXTURE_2D,texture,0);
         textureHandles.append(texture);
     }
+    {
+        GLuint depthText = allocTexture(renderSize.width(),renderSize.height(),
+                                        GL_DEPTH_COMPONENT24,GL_DEPTH_COMPONENT,
+                                        GL_NEAREST,GL_FLOAT);
 
-    GLuint depthText = allocTexture(renderSize.width(),renderSize.height(),
-                                    GL_DEPTH_COMPONENT32F,GL_DEPTH_COMPONENT,
-                                    GL_NEAREST,GL_FLOAT);
-    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,
-                           GL_TEXTURE_2D,depthText,0);
-    textureHandles.append(depthText);
+        glFramebufferTexture(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,depthText,0);
+        textureHandles.append(depthText);
+    }
 
     glDrawBuffers(drawBufs.size(),drawBufs.data());
 
-    GLenum status;
-    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    switch(status){
+    GLenum fbStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    switch(fbStatus){
     case GL_FRAMEBUFFER_COMPLETE:
         break;
     default:
-        qWarning("Failed to create framebuffer!");
+        qWarning("Failed to create framebuffer: %s",
+                 glbinding::Meta::getString(fbStatus).c_str());
         break;
     }
     glBindFramebuffer(GL_FRAMEBUFFER,0);

@@ -4,6 +4,7 @@
 #include <QRgb>
 #include "opengl/helpers/texturehelper.h"
 #include "engine/data/coffeeresource.h"
+#include "opengl/components/shadercontainer.h"
 
 CoffeeTexture::CoffeeTexture(QObject *parent, QMap<GLenum, CoffeeResource*> mapping) : QObject(parent)
 {
@@ -58,11 +59,6 @@ CoffeeTexture::~CoffeeTexture()
 bool CoffeeTexture::isValidTexture()
 {
     return validTexture;
-}
-
-bool CoffeeTexture::isCubemap()
-{
-    return m_type==Cubemap||m_type==CubemapDice;
 }
 
 void CoffeeTexture::loadTexture()
@@ -200,7 +196,14 @@ GLenum CoffeeTexture::getGlTextureType() const
     }
 }
 
+void CoffeeTexture::bindTexture(GLenum unit)
+{
+    glActiveTexture(unit);
+    glBindTexture(getGlTextureType(),this->textureHandle);
+}
+
 void CoffeeTexture::setType(CoffeeTexture::CoffeeGLTextureType type)
 {
     m_type = type;
+    textureType = getGlTextureType();
 }

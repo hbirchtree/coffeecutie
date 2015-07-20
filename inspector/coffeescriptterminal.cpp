@@ -12,7 +12,8 @@ CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, CoffeeScriptEngine *
 
     ui->setupUi(this);
 
-    connect(engine,&CoffeeScriptEngine::uncaughtException,[=](CoffeeScriptException ex){
+    connect(engine->getAgent(),&CoffeeScriptEngineAgent::exceptionReport,
+            [=](CoffeeScriptException ex){
         CoffeeExceptionDialog* dialog = new CoffeeExceptionDialog(this,ex);
         connect(dialog,&CoffeeExceptionDialog::finished,[=](int res){
             Q_UNUSED(res)
@@ -53,5 +54,7 @@ void CoffeeScriptTerminal::appendLog(const QString &command, const QString &outp
     QString cmd(command);
     QString out(output);
     ui->scriptLog->append(QString("<em><strong>%1</strong></em><br>"
-                                  "<small>%2</small><br>").arg(cmd.replace("\n","<br>")).arg(out.replace("\n","<br>")));
+                                  "<small>%2</small><br>")
+                          .arg(cmd.replace("\n","<br>"))
+                          .arg(out.replace("\n","<br>")));
 }

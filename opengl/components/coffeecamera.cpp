@@ -1,32 +1,43 @@
 #include "coffeecamera.h"
 
+#include <math.h>
+
 #include "general/shadervariant.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 {
     this->aspect = new ScalarValue(this,1.f);
+    aspect->setObjectName("aspect_ratio");
     this->fov = new ScalarValue(this,90.f);
+    fov->setObjectName("fov");
     this->position = new Vector3Value(this,glm::vec3(0,0,0));
+    position->setObjectName("position");
     this->orientation = new QuatValue(this,glm::quat(1,0,0,0));
+    orientation->setObjectName("quat_orientation");
     this->rotation_euler = new Vector3Value(this,glm::vec3(0,0,0));
+    rotation_euler->setObjectName("euler_rotation");
 
     this->matrixVal = new Matrix4Value(this,[=](const glm::mat4& v){
         Q_UNUSED(v)
         return getMatrix();
     });
+    matrixVal->setObjectName("default");
     this->cameraForwardVal = new Vector3Value(this,[=](const glm::vec3& v){
         Q_UNUSED(v)
         return getCameraForwardNormal();
     });
+    cameraForwardVal->setObjectName("forward");
     this->cameraRightVal = new Vector3Value(this,[=](const glm::vec3& v){
         Q_UNUSED(v)
         return getCameraRightNormal();
     });
+    cameraRightVal->setObjectName("right");
     this->matrixVPVal = new Matrix4Value(this,[=](const glm::mat4& v){
         Q_UNUSED(v)
         return getPerspective();
     });
+    matrixVPVal->setObjectName("viewproject");
 }
 
 CoffeeCamera::CoffeeCamera(QObject *parent, float aspect, float znear, float zfar, float fov) : CoffeeCamera(parent)
@@ -74,8 +85,8 @@ void CoffeeCamera::offsetOrientation(float rightAngle, float upAngle)
 //    curr.y+=rightAngle*QuickMath::Math_DegToRadFactor();
 //    curr.x+=upAngle*QuickMath::Math_DegToRadFactor();
     *rotation_euler += glm::vec3(
-                upAngle*QuickMath::Math_DegToRadFactor(),
-                rightAngle*QuickMath::Math_DegToRadFactor(),
+                glm::radians(upAngle),
+                glm::radians(rightAngle),
                 0);
     normalizeEulerAngles(rotation_euler,glm::radians(-70.f),glm::radians(90.f));
 //    glm::quat rot(0.f,rotation_euler->getValue());
@@ -129,9 +140,7 @@ glm::mat4 CoffeeCamera::getOrientationMatrix() const
     ori = glm::rotate(ori,
                       rotation_euler->getValue().z,
                       glm::vec3(0,0,1));
-//    qDebug() << QStringFunctions::toString(ori);
     return ori;
-//    return glm::mat4(rotation->getValue());
 }
 
 glm::mat4 CoffeeCamera::getProjection() const
@@ -150,7 +159,9 @@ glm::mat4 CoffeeCamera::getOrthographic() const
 
 glm::mat4 CoffeeCamera::getPerspective() const
 {
-    return glm::perspective(QuickMath::math_degreesToRads(fov->getValue()),aspect->getValue(),znear,zfar);
+    return glm::perspective(glm::radians(fov->getValue()),
+                            aspect->getValue(),
+                            znear,zfar);
 }
 
 glm::mat4 CoffeeCamera::getMatrix() const
@@ -170,10 +181,10 @@ void CoffeeCamera::normalizeEulerAngles(QPointer<Vector3Value> e, float x_min, f
 {
     glm::vec3 v = e->getValue();
 
-    if(std::abs(v.y)>QuickMath::Math_Pi*2.f)
-        v.y = std::fmod(v.y,QuickMath::Math_Pi*2.f);
+    if(std::abs(v.y)>M_PI*2.f)
+        v.y = std::fmod(v.y,M_PI*2.f);
     if(v.y<0.f)
-        v.y += QuickMath::Math_Pi*2.f;
+        v.y += M_PI*2.f;
 
     if(v.x<x_min)
         v.x = x_min;
@@ -251,10 +262,10 @@ QObject *CoffeeCamera::getCameraForwardVariant() const
     return cameraForwardVal;
 }
 
-void CoffeeCamera::setCameraAspect(QResizeEvent ev)
-{
-    setAspect((float)ev.size().width()/(float)ev.size().height());
-}
+//void CoffeeCamera::setCameraAspect(QResizeEvent ev)
+//{
+//    setAspect((float)ev.size().width()/(float)ev.size().height());
+//}
 
 float CoffeeCamera::getZnear() const
 {

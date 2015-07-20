@@ -6,9 +6,8 @@
 
 void CoffeeUniformSetter::applyUniforms()
 {
-    for(ShaderMapping* m : uniforms){
-        pshader->setUniform(m->uniform,m->data);
-    }
+    for(ShaderMapping* m : uniforms)
+        m_shader->setUniform(m->uniform,m->data);
 }
 
 void CoffeeUniformSetter::unbindTextures()
@@ -38,18 +37,10 @@ void CoffeeUniformSetter::bindTextures()
         glActiveTexture(GL_TEXTURE0+index);
         glBindTexture(m->texture->getGlTextureType(),
                       m->texture->getHandle());
-        pshader->setUniform(m->samplerName,
+        m_shader->setUniform(m->samplerName,
                             index);
     }
 }
-
-//void CoffeeUniformSetter::setUniform(QString uniformName, ShaderVariant *data)
-//{
-//    ShaderMapping *map = new ShaderMapping;
-//    map->uniform = uniformName;
-//    map->data = data;
-//    uniforms.append(map);
-//}
 
 void CoffeeUniformSetter::setTexture(const QString &samplerName, CoffeeTexture *texture)
 {
@@ -73,6 +64,21 @@ void CoffeeUniformSetter::clearTextures()
     textures.clear();
 }
 
+const QVector<ShaderMapping *> CoffeeUniformSetter::getUniforms() const
+{
+    return uniforms;
+}
+
+const QVector<TextureMapping *> CoffeeUniformSetter::getTextures() const
+{
+    return textures;
+}
+
+CoffeeShader *CoffeeUniformSetter::_shader_obj()
+{
+    return m_shader;
+}
+
 CoffeeUniformSetter::CoffeeUniformSetter()
 {
 }
@@ -80,4 +86,12 @@ CoffeeUniformSetter::CoffeeUniformSetter()
 bool TextureMapping::operator==(const TextureMapping &val){
     return val.texture==this->texture.data()&&
             val.samplerName==this->samplerName;
+}
+
+void CoffeeUniformSetter::setShader(CoffeeShader *shader)
+{
+    if(m_shader)
+        m_shader->removeConsumer();
+    this->m_shader = shader;
+    m_shader->addConsumer();
 }

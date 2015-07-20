@@ -1,5 +1,8 @@
 #include "boxtest.h"
 
+#include <QResizeEvent>
+#include <QKeyEvent>
+
 BoxTest::BoxTest(CoffeeRenderer* renderer){
     _rendering_loop_init = [this,renderer](){
         renderer->setSamples(4);

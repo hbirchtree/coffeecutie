@@ -85,28 +85,23 @@ void BulletPhysics::addObject(PhysicsObject *object)
         return;
     PhysicsDescriptor* desc = object->getDescr();
     btCollisionShape* shape = nullptr;
-    bool rollable = false;
     switch(desc->shape()){
     case PhysicsDescriptor::Shape_Box:
         shape = new btBoxShape(convert_glm(
                                    CoffeeObjectFactory::varListToVec3(desc->scale())));
         break;
     case PhysicsDescriptor::Shape_Sphere:
-        rollable = true;
         shape = new btSphereShape(desc->scale().at(0).toFloat());
         break;
     case PhysicsDescriptor::Shape_Cylinder:
-        rollable = true;
         shape = new btCylinderShape(convert_glm(
                                         CoffeeObjectFactory::varListToVec3(desc->scale())));
         break;
     case PhysicsDescriptor::Shape_Capsule:
-        rollable = true;
         shape = new btCapsuleShape(desc->scale().at(0).toFloat(),
                                    desc->scale().at(1).toFloat());
         break;
     case PhysicsDescriptor::Shape_Cone:
-        rollable = true;
         shape = new btConeShape(desc->scale().at(0).toFloat(),
                                 desc->scale().at(1).toFloat());
         break;
@@ -142,8 +137,8 @@ void BulletPhysics::addObject(PhysicsObject *object)
     connect(object,SIGNAL(propertyModified(CoffeePhysicsEvent*)),SLOT(updateObject(CoffeePhysicsEvent*)));
 
     m_dynamicsWorld->addRigidBody(rb);
-    qDebug("Object added to %s physics: %s",systemName().toStdString().c_str(),
-           object->objectName().toStdString().c_str());
+//    qDebug("Object added to %s physics: %s",systemName().toStdString().c_str(),
+//           object->objectName().toStdString().c_str());
 }
 
 void BulletPhysics::removeObject(void *pointer)
@@ -334,6 +329,13 @@ btScalar BulletPhysics::convert_coffee(ScalarValue *q)
     if(!q)
         return 0.f;
     return q->getValue();
+}
+
+QString BulletPhysics::toString()
+{
+    return QString("Bullet Physics(instance=0x%1,objects=%2)")
+            .arg(QString::number((uintptr_t)this,16))
+            .arg(getObjectsCount());
 }
 
 void BulletPhysics::setGravity(float x, float y, float z)

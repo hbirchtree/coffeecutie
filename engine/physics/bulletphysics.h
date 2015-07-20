@@ -43,6 +43,8 @@ public:
     static btVector3 convert_coffee(Vector3Value* v);
     static btQuaternion convert_coffee(QuatValue* q);
     static btScalar convert_coffee(ScalarValue* q);
+
+    Q_INVOKABLE QString toString();
 signals:
     void objectCollision(QPointer<PhysicsObject> o1, QPointer<PhysicsObject> o2);
     void physicsInitialized();

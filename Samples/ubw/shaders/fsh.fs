@@ -6,16 +6,16 @@ uniform struct MaterialStruct {
 	sampler2D diffuseSampler;
 } mtl;
 
-uniform MaterialBlock {
-	vec3 transparencyValue;
-	float shininess;
-	float shininessStrength;
-	float opacity;
-	vec3 diffuseColor;
-	vec3 specularColor;
-	vec3 ambientColor;
-	vec3 colorMultiplier;
-};
+//uniform MaterialBlock {
+	uniform vec3 transparencyValue;
+	uniform float shininess;
+	uniform float shininessStrength;
+	uniform float opacity;
+	uniform vec3 diffuseColor;
+	uniform vec3 specularColor;
+	uniform vec3 ambientColor;
+	uniform vec3 colorMultiplier;
+//};
 
 //uniform LightBlock {
 //   vec3 position;
@@ -47,7 +47,7 @@ void main() {
     vec4 surfaceColor = texture(mtl.diffuseSampler, localTexCoord);
 
     finalNormal = vec4(worldNormal,1.0);
-    finalDiffuse = vec4((surfaceColor.rgb+diffuseColor)*colorMultiplier,surfaceColor.a*opacity);
+    finalDiffuse = vec4((surfaceColor.rgb*diffuseColor)*colorMultiplier,1.0);
     finalPosition = surfacePos;
     finalSpecular = vec4(specularColor,shininess);
     finalAmbient = vec4(ambientColor,0.0);

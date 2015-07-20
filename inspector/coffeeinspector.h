@@ -2,16 +2,16 @@
 #define COFFEEINSPECTOR_H
 
 #include <QWidget>
-#include <opengl/context/coffeerenderer.h>
-#include "coffeerendererinspector.h"
-#include "coffeescriptterminal.h"
 #include <QTreeWidgetItem>
 #include <QMetaProperty>
-#include <QList>
 #include <QTimer>
 #include <QPointer>
-#include <QHash>
 #include <QRunnable>
+
+class CoffeeRenderer;
+class CoffeeScriptEngine;
+class CoffeeRendererInspector;
+class CoffeeScriptTerminal;
 
 namespace Ui {
 class CoffeeInspector;

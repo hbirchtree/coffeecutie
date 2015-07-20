@@ -3,6 +3,8 @@
 
 #include "general/filehandler.h"
 
+#include <QDateTime>
+
 CoffeeRendererInspector::CoffeeRendererInspector(QWidget *parent, CoffeeRenderer *renderer) :
     QWidget(parent),
     ui(new Ui::CoffeeRendererInspector)
@@ -23,21 +25,42 @@ CoffeeRendererInspector::CoffeeRendererInspector(QWidget *parent, CoffeeRenderer
     tableHeader << "Property" << "Data";
     ui->infoView->setHeaderLabels(tableHeader);
 
-    fpsItem = new QTreeWidgetItem();
-    fpsItem->setText(0,"Framerate (FPS)");
-    frameTimeItem = new QTreeWidgetItem();
-    frameTimeItem->setText(0,"Frametime");
-    memoryUsageItem = new QTreeWidgetItem();
-    memoryUsageItem->setText(0,"Memory usage");
-    vmemUsageItem = new QTreeWidgetItem();
-    vmemUsageItem->setText(0,"Video memory usage");
+//    fpsItem = new QTreeWidgetItem();
+//    fpsItem->setText(0,"Framerate (FPS)");
 
-    ui->infoView->addTopLevelItem(fpsItem);
-    ui->infoView->addTopLevelItem(frameTimeItem);
-    ui->infoView->addTopLevelItem(memoryUsageItem);
-    ui->infoView->addTopLevelItem(vmemUsageItem);
+//    frameTimeItem = new QTreeWidgetItem();
+//    frameTimeItem->setText(0,"Frametime");
 
-    connect(renderer,SIGNAL(contextReportFrametime(float)),SLOT(plotGraph(float)),Qt::QueuedConnection);
+//    memoryUsageItem = new QTreeWidgetItem();
+//    memoryUsageItem->setText(0,"Memory usage");
+
+//    threadUsageItem = new QTreeWidgetItem();
+//    threadUsageItem->setText(0,"System threads");
+
+//    ppriorityItem = new QTreeWidgetItem();
+//    ppriorityItem->setText(0,"System priority");
+
+//    virtUsageItem = new QTreeWidgetItem();
+//    virtUsageItem->setText(0,"Virtual memory");
+
+//    vmemUsageItem = new QTreeWidgetItem();
+//    vmemUsageItem->setText(0,"Video memory usage");
+
+//    ui->infoView->addTopLevelItem(fpsItem);
+//    ui->infoView->addTopLevelItem(frameTimeItem);
+
+//    ui->infoView->addTopLevelItem(memoryUsageItem);
+//    ui->infoView->addTopLevelItem(virtUsageItem);
+//    ui->infoView->addTopLevelItem(threadUsageItem);
+//    ui->infoView->addTopLevelItem(ppriorityItem);
+
+
+//    ui->infoView->addTopLevelItem(vmemUsageItem);
+
+    connect(renderer,
+            SIGNAL(contextReportFrametime(float)),
+            SLOT(plotGraph(float)),
+            Qt::QueuedConnection);
     this->renderer = renderer;
 }
 
@@ -54,28 +77,25 @@ void CoffeeRendererInspector::plotGraph(float frametime)
 
     measureTime=QDateTime::currentMSecsSinceEpoch()+checkInterval;
 
-    fpsItem->setText(1,QString("%1 FPS").arg(1/frametime));
-    frameTimeItem->setText(1,QString("%1ms").arg(frametime*1000.0));
+    m_sysinfo.updateData();
 
-#ifdef Q_OS_LINUX
-//        QStringList pdata = FileHandler::getStringFromFile("/proc/self/stat").split(' ');
-        QStringList mdata = FileHandler::getStringFromFile("/proc/self/statm").split(' ');
-        if(mdata.size()>2)
-            memoryUsageItem->setText(1,QString("mem:%1MB,res:%2MB").
-                                     arg(mdata.at(0).toDouble()/1024.0).
-                                     arg(mdata.at(1).toDouble()/1024.0));
-#else
-    memoryUsageItem->setText(1,"[unsupported feature]");
-#endif
+    setSysInfoField("Framerate (FPS)",QString("%1 FPS").arg(1/frametime));
+    setSysInfoField("Framerate (ms)",QString("%1ms").arg(frametime*1000.0));
+
+    setSysInfoField("System threads",QString::number(m_sysinfo.getThreadCount()));
+    setSysInfoField("Process priority",QString::number(m_sysinfo.getPriority()));
+
+    setSysInfoField("Resident memory",QString("%1MB").arg(m_sysinfo.getResidentMemory()));
+    setSysInfoField("Virtual memory",QString("%1MB").arg(m_sysinfo.getVirtualMemory()));
 
     {
         qint32 c = 0;
         qint32 t = 0;
         renderer->getVideoMemoryUsage(&c,&t);
-        if(c==0||t==0){
-            vmemUsageItem->setText(1,"Unsupported feature!");
-        }else{
-            vmemUsageItem->setText(1,QString("%1MB/%2MB").arg((float)(t-c)/1024.f).arg((float)t/1024.f));
+        if(c!=0&&t!=0){
+            setSysInfoField("Video memory",QString("%1MB/%2MB")
+                            .arg((float)(t-c)/1024.f)
+                            .arg((float)t/1024.f));
         }
     }
 
@@ -86,4 +106,52 @@ void CoffeeRendererInspector::plotGraph(float frametime)
 void CoffeeRendererInspector::on_plotResizer_valueChanged(int value)
 {
     scene->setPlotSize(value);
+}
+
+void CoffeeRendererInspector::setSysInfoField(const QString &field, const QString &data)
+{
+    QTreeWidgetItem* item = nullptr;
+    if(m_properties.contains(field)){
+        item = m_properties.value(field);
+    }else{
+        item = new QTreeWidgetItem();
+        item->setText(0,field);
+        ui->infoView->addTopLevelItem(item);
+        m_properties.insert(field,item);
+    }
+    if(!item)
+        return;
+    item->setText(1,data);
+}
+
+
+void CoffeeSystemInformation::updateData()
+{
+#if defined Q_OS_LINUX
+    QStringList mdata = FileHandler::getStringFromFile("/proc/self/stat").split(' ');
+    m_thrds = mdata.at(19).toInt();
+    m_rss = mdata.at(23).toLongLong();
+    m_vrt = mdata.at(22).toLongLong();
+    m_priority = mdata.at(17).toInt();
+#endif
+}
+
+double CoffeeSystemInformation::getVirtualMemory() const
+{
+    return m_vrt/1024.0;
+}
+
+double CoffeeSystemInformation::getResidentMemory() const
+{
+    return m_rss/1024.0;
+}
+
+quint16 CoffeeSystemInformation::getThreadCount() const
+{
+    return m_thrds;
+}
+
+qint8 CoffeeSystemInformation::getPriority() const
+{
+    return m_priority;
 }

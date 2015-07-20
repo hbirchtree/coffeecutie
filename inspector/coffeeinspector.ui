@@ -91,14 +91,14 @@
       <item>
        <widget class="QPushButton" name="rendererBtn">
         <property name="text">
-         <string>Open renderer info</string>
+         <string>&amp;Resource info</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="pushButton">
         <property name="text">
-         <string>Open Coffee shell</string>
+         <string>Interactive &amp;shell</string>
         </property>
        </widget>
       </item>
@@ -107,6 +107,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>pushButton</tabstop>
+  <tabstop>inspectorWidget</tabstop>
+  <tabstop>rendererBtn</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

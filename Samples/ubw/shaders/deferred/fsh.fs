@@ -4,10 +4,13 @@ in vec2 uv;
 
 out vec4 finalColor;
 
+uniform float lightness;
+
 uniform sampler2D diffuseSampler;
 uniform sampler2D normalSampler;
 uniform sampler2D specularSampler;
 uniform sampler2D positionSampler;
+uniform sampler2D depthSampler;
 uniform sampler2D ambientSampler;
 uniform sampler2D emissionSampler;
 
@@ -35,9 +38,22 @@ void main(){
 
 	vec3 linearColor = diffuse.xyz;
 
+	vec3 blurCol = vec3(0.0);
+
+	for(float i=0.0;i<10.0;i++){
+		vec2 target = vec2(i-5.0);
+		vec2 _uv = uv+target;
+		float dist = abs(dot(target,vec2(0.0)));
+		blurCol += texture(diffuseSampler,_uv).rgb/lightness;
+	}
+
+	linearColor = blurCol;
+
+
 //    float fogCoord = abs(length(cameraPosition-position.xyz)/position.w);
 //    float fogVar = clamp(exp(-pow(fogParams.fDensity*fogCoord,7)),0.0,1.0);
 //    linearColor = mix(fogParams.fColor.rgb,linearColor,fogVar);
+
 
     finalColor = vec4(linearColor,1.0);
 }

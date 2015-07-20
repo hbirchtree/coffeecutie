@@ -1,8 +1,8 @@
 #ifndef GENERICPHYSICSINTERFACE_H
 #define GENERICPHYSICSINTERFACE_H
 
-#include "general/common.h"
-#include "general/data/mutabledatacontainer.h"
+#include <QObject>
+#include <QVariant>
 
 class PhysicsObject;
 
@@ -14,46 +14,6 @@ public:
 private:
     GenericPhysicsInterface(QObject *parent);
 };
-
-//class VectorVariant : public QObject
-//{
-//    Q_PROPERTY(VectorType type READ type)
-//    Q_PROPERTY(QVariantList quat READ quat WRITE setQuat)
-//    Q_PROPERTY(QVariantList vec3 READ vec3 WRITE setVec3)
-//    Q_PROPERTY(float scalar READ scalar WRITE setScalar)
-
-//    Q_OBJECT
-//public:
-
-//    enum VectorType {
-//        None, Scalar, Vector3, Quaternion
-//    };
-//    Q_ENUMS(VectorType)
-
-//    VectorVariant(QObject* parent);
-//    VectorVariant(QObject* parent,glm::vec3 val);
-//    VectorVariant(QObject* parent,glm::quat val);
-
-//    VectorType type() const;
-
-//    glm::vec3 getRawVec3() const;
-//    glm::quat getRawQuat() const;
-
-//    QVariantList quat() const;
-//    QVariantList vec3() const;
-//    float scalar() const;
-
-//public slots:
-//    void setRawQuat(glm::quat quat);
-//    void setRawVec3(glm::vec3 vec3);
-
-//    void setQuat(QVariantList quat);
-//    void setVec3(QVariantList vec3);
-//    void setScalar(float scalar);
-
-//private:
-//    QVector<float> v;
-//};
 
 class CoffeePhysicsEvent : public QObject {
 

@@ -42,11 +42,20 @@ public:
     void clearUniforms();
     void clearTextures();
 
+    const QVector<ShaderMapping*> getUniforms() const;
+    const QVector<TextureMapping*> getTextures() const;
+
+    virtual void load() = 0;
+    virtual void unload() = 0;
+
+    CoffeeShader* _shader_obj();
+    void setShader(CoffeeShader* shader);
+
 protected:
     CoffeeUniformSetter();
     QVector<ShaderMapping*> uniforms;
     QVector<TextureMapping*> textures;
-    QPointer<CoffeeShader> pshader;
+    QPointer<CoffeeShader> m_shader;
 };
 
 #endif // COFFEEUNIFORMSETTER_H

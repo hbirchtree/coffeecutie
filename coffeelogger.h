@@ -1,8 +1,6 @@
 #ifndef COFFEELOGGER_H
 #define COFFEELOGGER_H
 
-#include <stdio.h>
-#include <QString>
 #include <QMessageLogContext>
 #include <QDateTime>
 #include <QFile>

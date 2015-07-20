@@ -75,10 +75,10 @@ public:
 
     int indexBufferIndex() const;
 
-
     QObject* getInstancesQObject();
     QPointer<CoffeeInstanceContainer> getInstances();
 
+    void renderMesh();
 
 public slots:
     void updateModelMatrices();

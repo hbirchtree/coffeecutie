@@ -104,7 +104,7 @@ private:
     QPointer<CoffeeCamera> camera;
     QList<QPointer<CoffeeOmniLight> > lights;
     QList<QPointer<CoffeeParticleSystem>> particles;
-    QPointer<CoffeeRenderer> renderer;
+    CoffeeRenderer* renderer = nullptr;
     bool m_wireframeMode = false;
     bool c_wireframed = false;
 

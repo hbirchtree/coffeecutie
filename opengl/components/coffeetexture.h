@@ -3,8 +3,10 @@
 
 #include "general/common.h"
 #include "general/data/coffeegameasset.h"
+#include <QImage>
 
 class CoffeeResource;
+class CoffeeShader;
 
 class CoffeeTexture : public QObject,public CoffeeGameAsset
 {
@@ -46,7 +48,6 @@ public:
     ~CoffeeTexture();
 
     bool isValidTexture();
-    bool isCubemap();
     void loadTexture();
     void unloadTexture();
 
@@ -63,6 +64,8 @@ public:
 
     GLenum getGlTextureType() const;
 
+    void bindTexture(GLenum unit);
+
 public slots:
     void setType(CoffeeGLTextureType type);
 
@@ -77,6 +80,7 @@ private:
     bool validTexture = false;
     QImage texture;
     GLuint textureHandle = 0;
+    GLenum textureType;
 
     QMap<GLenum,CoffeeResource*> cubemapping;
 

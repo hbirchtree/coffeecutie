@@ -33,7 +33,6 @@ function _load_object_physics(src,parent){
 		switch(p){
 			case "shape":{
 				desc.shape = _phys_translate_string_shape(src[p]);
-				print("Physical shape:",desc.shape);
 				break;
 			}
 			case "position":{

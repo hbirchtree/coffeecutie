@@ -1,5 +1,7 @@
 #include "texturehelper.h"
 
+#include <QImage>
+
 GLuint TextureHelper::allocTexture(GLenum internalFormat,
                                    GLenum colorFormat,
                                    int w, int h,

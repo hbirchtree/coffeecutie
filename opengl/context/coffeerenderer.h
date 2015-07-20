@@ -3,6 +3,16 @@
 
 #include "general/common.h"
 
+#include <QSize>
+#include <QEvent>
+
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
+#include <QResizeEvent>
+#include <QMoveEvent>
+#include <QDropEvent>
+
 class CoffeeInputEvent;
 class RenderLoop;
 class QMimeData;
@@ -36,8 +46,11 @@ public:
     virtual int init();
     virtual int loop();
 
-    static void APIENTRY openGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                      GLsizei length, const GLchar* message, const void* userParam);
+    static void APIENTRY openGLDebugCallback(GLenum source, GLenum type,
+                                             GLuint id, GLenum severity,
+                                             GLsizei length,
+                                             const GLchar* message,
+                                             const void* userParam);
 
     virtual int getStartDisplay() const;
     virtual double getLoopTime() const;
@@ -55,13 +68,14 @@ public:
 
 public slots:
     virtual void queueFunction(std::function<void()> *func);
+
     virtual void setSwapInterval(uint interval);
     virtual void setStartDisplay(uint value);
     virtual void setWindowDimensions(const QSize &value);
     virtual void setSamples(uint value);
     virtual void setLoop(RenderLoop *value);
     virtual void requestWindowClose();
-    virtual void updateWindowTitle(QString value);
+    virtual void updateWindowTitle(const QString &value);
     virtual void updateRendererClearColor(glm::vec4 value);
     virtual void updateWindowDimensions(QSize dims);
     virtual void setWindowState(Qt::WindowState state);

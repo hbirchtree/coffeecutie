@@ -1,5 +1,9 @@
+var lightnessVar = new ScalarValue();
+
+lightnessVar.value = 5.0;
+
 surface.setMesh(assets.getMesh("quad:"));
-surface.setWorld(world);
+surface.setUniform("lightness",lightnessVar);
 surface.setUniform("cameraPosition",world.camera.position);
 surface.setUniform("light.position",world.lights[0].position);
 surface.setUniform("light.intensities",world.lights[0].color);
@@ -13,3 +17,4 @@ surface.setFramebufferMapping("diffuseSampler",2,0);
 surface.setFramebufferMapping("normalSampler",1,1);
 surface.setFramebufferMapping("specularSampler",4,2);
 surface.setFramebufferMapping("positionSampler",3,3);
+surface.setFramebufferMapping("depthSampler",4,4);

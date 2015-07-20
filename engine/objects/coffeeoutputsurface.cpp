@@ -4,14 +4,13 @@
 #include "engine/models/coffeemesh.h"
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeeframebufferobject.h"
-#include "opengl/components/coffeeworldopts.h"
 #include "opengl/components/coffeecamera.h"
 #include "engine/objects/coffeestandardobject.h"
 
 CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) :
     CoffeeObject(parent)
 {
-//    shader = new ShaderContainer(this);
+//    m_shader = new m_shaderContainer(this);
     setObjectName("screenSurface");
     setFramebuffer(display);
 }
@@ -30,11 +29,10 @@ void CoffeeOutputSurface::setFramebuffer(QObject *display)
 
 void CoffeeOutputSurface::load()
 {
-    if(shader){
-        if(shader->isAllocated())
-            shader->unload();
-        shader->buildProgram(/*new CoffeeResource(0,"shaders/deferred/vsh.vs"),
-                             new CoffeeResource(0,"shaders/deferred/fsh.fs")*/);
+    if(m_shader){
+        if(m_shader->isAllocated())
+            m_shader->unload();
+        m_shader->buildProgram();
     }
     if(surface){
         if(surface->isAllocated())
@@ -48,7 +46,7 @@ void CoffeeOutputSurface::render()
 {
     framebuffer->unbindFramebuffer();
 
-    if(!isBaked())
+    if(!baked())
         load();
 
     QRect buffer;
@@ -57,32 +55,27 @@ void CoffeeOutputSurface::render()
     QRect screen;
     screen.setSize(framebuffer->getWindowSize());
 
-    if(!surface||!shader)
+    if(!surface||!m_shader)
         return;
 
-    glUseProgram(shader->getProgramId());
+    glUseProgram(m_shader->getProgramId());
 
     glClear(GL_DEPTH_BUFFER_BIT);
     for(CoffeeOutputChannel* s : textures){
         glActiveTexture(GL_TEXTURE0+s->textureUnit);
         glBindTexture(GL_TEXTURE_2D,framebuffer->getTextureHandle()->at(s->textureIndex));
-        shader->setUniform(s->uniformName,s->textureUnit);
+        m_shader->setUniform(s->uniformName,s->textureUnit);
     }
 
-    for(ShaderMapping* m : uniforms){
-        shader->setUniform(m->uniform,m->data);
-    }
+    applyUniforms();
 
-    glBindVertexArray(surface->getVertexArrayHandle());
-
-    glDrawElements(GL_TRIANGLES,surface->getIndicesCount(),GL_UNSIGNED_INT,0);
+    surface->renderMesh();
 
     for(CoffeeOutputChannel* s : textures){
         glActiveTexture(GL_TEXTURE0+s->textureUnit);
         glBindTexture(GL_TEXTURE_2D,0);
     }
 
-    glBindVertexArray(0);
     glUseProgram(0);
 
 //    framebuffer->bindFramebufferRead();
@@ -96,24 +89,19 @@ void CoffeeOutputSurface::render()
 
 void CoffeeOutputSurface::unload()
 {
-    if(shader)
-        shader->unload();
+    if(m_shader)
+        m_shader->unload();
     if(surface)
         surface->unloadMesh();
 }
 
-void CoffeeOutputSurface::setShader(QObject *shader)
+void CoffeeOutputSurface::setShader(QObject *m_shader)
 {
-    CoffeeShader* msh = qobject_cast<CoffeeShader*>(shader);
+    CoffeeShader* msh = qobject_cast<CoffeeShader*>(m_shader);
     if(msh){
-        this->shader = msh;
+        this->m_shader = msh;
         setBaked(false);
     }
-}
-
-bool CoffeeOutputSurface::isBaked() const
-{
-    return baked;
 }
 
 QObject *CoffeeOutputSurface::framebufferQObject()
@@ -128,7 +116,7 @@ CoffeeFrameBufferObject *CoffeeOutputSurface::getFramebuffer()
 
 QObject *CoffeeOutputSurface::getShader()
 {
-    return shader;
+    return m_shader;
 }
 
 void CoffeeOutputSurface::addUiTexture(CoffeeTexture *tex)
@@ -141,6 +129,13 @@ void CoffeeOutputSurface::setUniform(const QString &uniformName, QObject *data)
     VectorData* d = qobject_cast<VectorData*>(data);
     if(d)
         CoffeeUniformSetter::setUniform(uniformName,d);
+}
+
+void CoffeeOutputSurface::setTexture(const QString &samplerName, QObject *texture)
+{
+    CoffeeTexture* d = qobject_cast<CoffeeTexture*>(texture);
+    if(d)
+        CoffeeUniformSetter::setTexture(samplerName,d);
 }
 
 void CoffeeOutputSurface::setFramebufferMapping(const QString &uniformName, int textureIndex, int textureUnit)
@@ -158,22 +153,13 @@ void CoffeeOutputSurface::setFramebufferMapping(const QString &uniformName, int 
 
 void CoffeeOutputSurface::setMesh(CoffeeMesh *mesh)
 {
-    this->baked = false;
+    this->setBaked(false);
     this->surface = mesh;
 }
 
 void CoffeeOutputSurface::bind()
 {
     framebuffer->bindFramebuffer();
-}
-
-void CoffeeOutputSurface::setBaked(bool val)
-{
-    this->baked = val;
-}
-void CoffeeOutputSurface::setWorld(CoffeeWorldOpts *value)
-{
-    world = value;
 }
 
 CoffeeOutputChannel::CoffeeOutputChannel(const QString &uniform, int textureIndex, int textureUnit)

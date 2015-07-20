@@ -2,6 +2,9 @@
 #define COFFEEFRAMEBUFFERBASECLASS_H
 
 #include "general/common.h"
+
+#include <QSize>
+
 class CoffeeFramebufferBaseClass
 {
 
@@ -27,6 +30,8 @@ protected:
     bool framebufferActive = true;
     QSize renderSize;
     QSize windowSize;
+
+    bool m_viewport_set = true;
 };
 
 #endif // COFFEEFRAMEBUFFERBASECLASS_H

@@ -1,7 +1,16 @@
 ///////////
-//Here we put out global variables. This is easier than scouting for them in a large script.
+//Here we put our global variables. This is easier than scouting for them in a large script.
 ///////////
-var objStack = new Array(); //Here we store some objects to avoid them being destroyed.
+
+function ls(){
+	for(var p in this){
+		print(p);
+	}
+}
+
+var objStack = new Array(); //Here we store some objects to avoid them being garbage-collected
+
+#inc "display/renderer-setup.qts"
 
 var initData = importVariantMap("ubw.json");
 var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
@@ -9,15 +18,22 @@ var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
 #inc "data/load_data.qts"
 
 //Load up the world
-coffeeroot.evloop.world = _load_object_world(initData["world.world1"],coffeeroot,assets);
 
 //Some global variables for simplicity
-var world = coffeeroot.evloop.world;
+var world = _load_object_world(initData["world.world1"],coffeeroot,assets);
 var inputClock = new QTimer;
 var controller = new CoffeePlayerController;
 var surface = coffeeroot.evloop.screenSurface;
 
-world.connectSignals(controller);
+coffeeroot.evloop.world = world;
+
+//var graph = new CoffeeRenderGraph();
+//graph.setRenderer(renderer);
+//graph.includeObject(world.skybox);
+//graph.includeObject(world.gear);
+//graph.includeObject(world.blade);
+
+//world.connectSignals(controller);
 
 world.setRenderer(renderer);
 surface.shader = assets.shaders.deferred_display;
@@ -28,8 +44,8 @@ world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","ou
 //Set up deferred rendering
 #inc "display/surface-setup.qts"
 
-#inc "display/renderer-setup.qts"
-
+renderer.contextReportFrametime.connect(world.tickObjects);
+renderer.contextReportFrametime.connect(world.testparts.setFrametime);
 world.camera.position.bindValue(world.blade.position);
 world.lights[0].position.bindValue(world.camera.position);
 world.plane.rotation.value = [2,-3,0,0];
@@ -46,6 +62,8 @@ world.lights[0].attenuation = 0.003;
 		objStandardInitShader(objects[i]);
 	}
 }
+
+lsllll
 
 //Set up input and etc.
 #inc "input/event-handling.qts"

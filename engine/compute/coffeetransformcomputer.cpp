@@ -29,7 +29,7 @@ QVector<CoffeeTransformComputer::Particle> *CoffeeTransformComputer::getParticle
 
 CoffeeShader *CoffeeTransformComputer::getShader()
 {
-    return pshader;
+    return m_shader;
 }
 
 QVariantList CoffeeTransformComputer::feedbackAttributes() const
@@ -64,7 +64,7 @@ bool CoffeeTransformComputer::capture() const
 
 QObject *CoffeeTransformComputer::shader()
 {
-    return pshader;
+    return m_shader;
 }
 
 void CoffeeTransformComputer::doReload()
@@ -80,7 +80,7 @@ void CoffeeTransformComputer::tickParticles()
     }
     glEnable(GL_RASTERIZER_DISCARD);
 
-    glUseProgram(pshader->getProgramId());
+    glUseProgram(m_shader->getProgramId());
     glBindVertexArray(vaos[vaoIndex()]);
 
     if(active_particles+spawncount>maxParticles()-1)
@@ -123,7 +123,7 @@ void CoffeeTransformComputer::tickParticles()
 
 void CoffeeTransformComputer::setShader(CoffeeShader *shader)
 {
-    this->pshader = shader;
+    this->m_shader = shader;
 }
 
 void CoffeeTransformComputer::setShader(QObject *shader)
@@ -146,8 +146,8 @@ void CoffeeTransformComputer::switchIndex()
 void CoffeeTransformComputer::load()
 {
     index = 0;
-    pshader->createProgram();
-    pshader->compileShaders();
+    m_shader->createProgram();
+    m_shader->compileShaders();
 
     QVector<std::string> feedback_backing; //we need to do this in order for the memory to be retained
     QVector<const char*> feedbackattributes;
@@ -156,12 +156,12 @@ void CoffeeTransformComputer::load()
         feedbackattributes.append(t.c_str());
         feedback_backing.append(t);
     }
-    glTransformFeedbackVaryings(pshader->getProgramId(),
+    glTransformFeedbackVaryings(m_shader->getProgramId(),
                                 feedbackattributes.size(),
                                 feedbackattributes.data(),
                                 GL_INTERLEAVED_ATTRIBS);
 
-    pshader->linkProgram();
+    m_shader->linkProgram();
 
     glGenVertexArrays(2, vaos);
     glGenBuffers(2, vbos);
@@ -228,7 +228,7 @@ void CoffeeTransformComputer::load()
 void CoffeeTransformComputer::unload()
 {
     index = 0;
-    pshader->unload();
+    m_shader->unload();
     glDeleteTransformFeedbacks(2,tfbs);
     glDeleteVertexArrays(2,vaos);
     glDeleteBuffers(2,vbos);

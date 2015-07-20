@@ -1,5 +1,7 @@
 #include "coffeeadvancedloop.h"
 
+#include <QResizeEvent>
+
 //Data, etc
 #include "general/data/numbercontainer.h"
 #include "general/qstringfunctions.h"
@@ -97,21 +99,8 @@ std::function<void ()> *CoffeeAdvancedLoop::getCleanup()
 
 void CoffeeAdvancedLoop::connectSignals(CoffeeRenderer *renderer)
 {
-//    controller = new CoffeePlayerController(this);
-//    controller->setObjectName("cameracontrol");
     js = new CoffeeJoystick(renderer,GLFW_JOYSTICK_1);
     screenSurface = new CoffeeOutputSurface(this,new CoffeeFrameBufferObject(this));
-
-//    connect(renderer,SIGNAL(contextReportFrametime(float)),controller,SLOT(tick(float)));
-//    timers = new CoffeeDataContainer<QString,double>(this); //this one needs to be slotted into QtScript somehow.
-
-    qDebug("Setting up miscellaneous signals and slots");
-//    renderer->connect(renderer,&CoffeeRenderer::contextReportFrametime,[=](float frametime){ //needs to be moved into QtScript
-//        if(glfwGetTime()>=timers->getValue("fps")){
-//            qDebug("FPS: %.0f",1.f/frametime);
-//            timers->setValue("fps",glfwGetTime()+1);
-//        }
-//    });
 }
 
 QObject *CoffeeAdvancedLoop::getFactory()

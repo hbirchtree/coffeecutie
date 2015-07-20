@@ -100,6 +100,10 @@ function _load_object_skybox(src,camera,parent,assetSource){
 			}
 		}
 	}
+
+	skybox.setUniform("wvp",skybox.skyboxMatrix);
+	skybox.setTexture("cubemapTexture",skybox.texture);
+
 	return skybox;
 }
 

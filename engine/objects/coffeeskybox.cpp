@@ -11,6 +11,15 @@ CoffeeSkybox::CoffeeSkybox(QObject *parent,CoffeeCamera* camera) :
     CoffeeObject(parent)
 {
     setCamera(camera);
+
+    m_matrix = new Matrix4Value(this,[=](const glm::mat4& m){
+        Q_UNUSED(m)
+        return this->m_camera.data()->getMatrix()*
+                RenderingMethods::translateObjectMatrix(
+                    m_camera->getPosition()->getValue(),
+                    rotation()->getValue(),
+                    scale()->getValue());
+    });
 }
 
 void CoffeeSkybox::setCamera(CoffeeCamera *camera)
@@ -20,40 +29,33 @@ void CoffeeSkybox::setCamera(CoffeeCamera *camera)
 
 void CoffeeSkybox::render()
 {
-    if(!baked)
+    if(!baked())
         load();
     glUseProgram(m_shader->getProgramId());
 
     glDepthFunc(GL_LEQUAL);
     glCullFace(GL_FRONT);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(m_texture->getGlTextureType(),m_texture->getHandle());
+    applyUniforms();
+    bindTextures();
 
-    m_shader->setUniform("cubemapTexture",0);
-    m_shader->setUniform("wvp",m_camera->getMatrix()*
-                       RenderingMethods::translateObjectMatrix(
-                           m_camera->getPosition()->getValue(),
-                           rotation()->getValue(),
-                           scale()->getValue()));
-
-    glBindVertexArray(m_mesh->getVertexArrayHandle());
-    glDrawElements(GL_TRIANGLES,m_mesh->getIndicesCount(),GL_UNSIGNED_INT,0);
+    m_mesh->renderMesh();
 
     glCullFace(GL_BACK);
     glDepthFunc(GL_LESS);
 
-    glBindTexture(m_texture->getGlTextureType(),0);
-    glBindVertexArray(0);
+    unbindTextures();
+
     glUseProgram(0);
 }
 
 void CoffeeSkybox::unload()
 {
-    glDeleteVertexArrays(1,&vao);
-    glDeleteBuffers(2,buffs);
+    m_mesh->unloadMesh();
+    m_shader->unload();
     m_texture->unloadTexture();
-    glDisable(GL_TEXTURE_CUBE_MAP);
+
+    setBaked(false);
 }
 
 void CoffeeSkybox::load()
@@ -62,7 +64,7 @@ void CoffeeSkybox::load()
     m_mesh->loadMesh();
     m_shader->buildProgram();
 
-    baked = true;
+    setBaked(true);
 }
 
 void CoffeeSkybox::setMesh(QObject *mesh)
@@ -128,6 +130,11 @@ QObject *CoffeeSkybox::texture() const
     return m_texture;
 }
 
+QObject *CoffeeSkybox::skyboxMatrix()
+{
+    return m_matrix;
+}
+
 QPointer<CoffeeMesh> CoffeeSkybox::getSkymesh() const
 {
     return m_mesh;
@@ -151,7 +158,9 @@ QPointer<CoffeeTexture> CoffeeSkybox::getTexture() const
 
 void CoffeeSkybox::setTexture(CoffeeTexture* value)
 {
-    if(value&&value->isCubemap()){
+    if(value&&
+            (value->type()==CoffeeTexture::Cubemap||
+             value->type()==CoffeeTexture::CubemapDice)){
         if(this->m_texture)
             this->m_texture->removeConsumer();
         this->m_texture = value;

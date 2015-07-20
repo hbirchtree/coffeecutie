@@ -1,9 +1,7 @@
 #ifndef COFFEEADVANCEDLOOP_H
 #define COFFEEADVANCEDLOOP_H
 
-#include "general/common.h"
-
-#include "general/data/coffeedatacontainer.h"
+//#include "general/common.h"
 #include "opengl/rendering/renderloop.h"
 
 class QScriptEngine;
@@ -44,16 +42,14 @@ public slots:
     void setWorld(QObject* world);
 
 private:
-    CoffeeObjectFactory* factory;
-    CoffeeScriptEngine* scriptEngine;
+    CoffeeObjectFactory* factory = nullptr;
+    CoffeeScriptEngine* scriptEngine = nullptr;
 
-    CoffeeOutputSurface* screenSurface;
+    CoffeeOutputSurface* screenSurface = nullptr;
 
-//    CoffeePlayerController* controller;
-    CoffeeDataContainer<QString,double>* timers;
-    QPointer<CoffeeRenderer> renderer;
-    QPointer<CoffeeWorldOpts> world;
-    CoffeeJoystick* js;
+    CoffeeRenderer* renderer = nullptr;
+    CoffeeWorldOpts* world = nullptr;
+    CoffeeJoystick* js = nullptr;
     std::function<void()> _rendering_loop_init;
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;

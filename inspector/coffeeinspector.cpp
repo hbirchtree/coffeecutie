@@ -2,6 +2,10 @@
 #include "ui_coffeeinspector.h"
 
 #include "engine/physics/physicsdescriptor.h"
+#include "opengl/context/coffeerenderer.h"
+#include "coffeerendererinspector.h"
+#include "coffeescriptterminal.h"
+#include "engine/scripting/coffeescriptengine.h"
 
 CoffeeInspector::CoffeeInspector(QWidget *parent,
                                  QObjectList engineRoot,
@@ -31,6 +35,10 @@ void CoffeeInspector::run()
     connect(refreshTimer,SIGNAL(timeout()),SLOT(updateInformation()));
     refreshTimer->setInterval(1000);
     refreshTimer->start();
+
+    if(scriptEngine)
+        scriptTerminal = new CoffeeScriptTerminal(0,scriptEngine);
+
     this->show();
 }
 
@@ -217,8 +225,6 @@ void CoffeeInspector::on_pushButton_clicked()
         qDebug("Script engine not found!");
         return;
     }
-    if(!scriptTerminal)
-        scriptTerminal = new CoffeeScriptTerminal(0,scriptEngine);
 
     scriptTerminal->show();
 }

@@ -7,7 +7,6 @@
 class CoffeeFrameBufferObject;
 class CoffeeShader;
 class CoffeeMesh;
-class CoffeeWorldOpts;
 class TextureMapping;
 class ShaderMapping;
 class CoffeeTexture;
@@ -21,7 +20,7 @@ public:
     int textureUnit;
 };
 
-class CoffeeOutputSurface : public CoffeeObject, public CoffeeUniformSetter
+class CoffeeOutputSurface : public CoffeeObject
 {
     Q_PROPERTY(QObject* shader READ getShader WRITE setShader)
     Q_PROPERTY(QObject* framebuffer READ framebufferQObject WRITE setFramebuffer)
@@ -34,11 +33,8 @@ public:
     void setFramebuffer(CoffeeFrameBufferObject *display);
     void setFramebuffer(QObject* display);
 
-    bool isBaked() const;
-
     QObject* framebufferQObject();
     CoffeeFrameBufferObject* getFramebuffer();
-
 
     QObject* getShader();
 
@@ -46,9 +42,10 @@ public slots:
     void addUiTexture(CoffeeTexture* tex);
 
     void setUniform(const QString &uniformName, QObject *data);
+    void setTexture(const QString &samplerName, QObject *texture);
+
     void setFramebufferMapping(const QString &uniformName, int textureIndex, int textureUnit);
 
-    void setWorld(CoffeeWorldOpts* value);
     void setMesh(CoffeeMesh* mesh);
     void bind();
     void load();
@@ -58,16 +55,12 @@ public slots:
     void setShader(QObject* shader);
 
 protected:
-    void setBaked(bool val);
-    bool baked = false;
-
     CoffeeTexture* textureTest = nullptr;
     QVector<ShaderMapping*> uniforms;
     CoffeeFrameBufferObject* framebuffer;
-    CoffeeShader* shader = nullptr;
     QVector<CoffeeOutputChannel*> textures;
     QPointer<CoffeeMesh> surface;
-    QPointer<CoffeeWorldOpts> world;
+
 };
 
 #endif // COFFEEOUTPUTSURFACE_H

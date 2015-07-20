@@ -1,5 +1,6 @@
 #include "coffeescriptengine.h"
 
+
 #include "qtscriptconstructors.h"
 
 #include <QResizeEvent>
@@ -8,8 +9,31 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
+#include "engine/physics/genericphysicsinterface.h"
+#include "engine/physics/physicsobject.h"
+#include "engine/physics/physicsdescriptor.h"
+#include "engine/scripting/qscriptvectorvalue.h"
+#include "general/filehandler.h"
+#include "opengl/components/coffeetexture.h"
+#include "engine/scripting/coffeeinputevent.h"
+#include "engine/models/coffeeinstancecontainer.h"
+#include "general/input/coffeeplayercontroller.h"
+#include "engine/ai/coffeeneuralnet.h"
+
+#include "engine/objects/coffeestandardobject.h"
+#include "engine/objects/coffeeskybox.h"
+#include "engine/objects/coffeeparticlesystem.h"
+#include "opengl/components/coffeecamera.h"
+#include "opengl/components/coffeeomnilight.h"
+#include "opengl/components/coffeeworldopts.h"
+
+#include "engine/rendering/coffeerendergraph.h"
+
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent),e(this)
 {
+    agent = new CoffeeScriptEngineAgent(this,&e);
+    e.setAgent(agent);
+
     qRegisterMetaType<ScalarDataType>("ScalarDataType");
     qRegisterMetaType<VectorData*>("VectorData*");
     qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
@@ -28,20 +52,19 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent),e(this
 
     //Exported functions
     {
+        //Read QVariantMap from file
         QScriptValue fun = e.newFunction(coffeeImportVariantMap);
         e.globalObject().setProperty("importVariantMap",fun);
     }
     {
+        //Executes a script. Really.
         QScriptValue fun = e.newFunction(coffeeExecuteScriptFile);
         e.globalObject().setProperty("executeScript",fun);
     }
     {
+        //Setting and checking parenting of QObjects
         QScriptValue fun = e.newFunction(coffeeParentingFunc);
         e.globalObject().setProperty("parenting",fun);
-    }
-    {
-        QScriptValue fun = e.newFunction(coffeeExceptionFunc);
-        e.globalObject().setProperty("backtrace",fun);
     }
     ////////
 
@@ -78,6 +101,11 @@ QScriptEngine *CoffeeScriptEngine::getEngine()
     return &e;
 }
 
+CoffeeScriptEngineAgent *CoffeeScriptEngine::getAgent()
+{
+    return agent;
+}
+
 void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
 {
     execFile(&e,file,result,logOut);
@@ -91,13 +119,8 @@ QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *
     if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
         src = importFile(fileTest,src);
-        QScriptProgram p(src); //we might get use for these QScriptProgram objects, but for now we live it at this
+        QScriptProgram p(src,file); //we might get use for these QScriptProgram objects, but for now we live it at this
         out = e->evaluate(p);
-
-        if(e->hasUncaughtException()){
-            qDebug() << src.split("\n").at(e->uncaughtExceptionLineNumber()-1).trimmed();
-            return coffeeExceptionFunc(ctxt ? ctxt : e->currentContext(),e);
-        }
 
         if(logOut)
             *logOut = out.toString();
@@ -193,9 +216,6 @@ QScriptValue CoffeeScriptEngine::coffeeExceptionFunc(QScriptContext *ctxt, QScri
     QScriptValue outputExceptionValue = eng->toScriptValue(err);
 
     CoffeeScriptException exObj;
-    exObj.message = outputExceptionValue;
-    exObj.callee = ctxt->callee();
-    exObj.activator = ctxt->activationObject();
     exObj.backtrace = eng->uncaughtExceptionBacktrace();
     exObj.self = exceptionValue;
     exObj.lineNumber = eng->uncaughtExceptionLineNumber();

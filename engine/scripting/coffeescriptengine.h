@@ -2,18 +2,7 @@
 #define COFFEESCRIPTENGINE_H
 
 #include "coffeescriptconstructors.h"
-
-class CoffeeScriptException
-{
-public:
-    QScriptValue message;
-    QStringList backtrace;
-    QScriptValue callee;
-    QScriptValue self;
-    QScriptValue activator;
-    int lineNumber;
-//    QScriptContext context;
-};
+#include "coffeescriptengineagent.h"
 
 class CoffeeScriptEngine : public QObject
 {
@@ -22,6 +11,7 @@ public:
     CoffeeScriptEngine(QObject *parent);
 
     QScriptEngine *getEngine();
+    CoffeeScriptEngineAgent* getAgent();
 
     void execFile(QString file, bool *result = nullptr, QString *logOut = nullptr);
     static QScriptValue execFile(QScriptEngine* e, QString file, bool *result = nullptr, QString *logOut = nullptr, QScriptContext *ctxt = nullptr);
@@ -32,6 +22,7 @@ signals:
 
 private:
     QScriptEngine e;
+    CoffeeScriptEngineAgent* agent;
 
     //Functions to export
     static QScriptValue coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng);

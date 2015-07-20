@@ -1,24 +1,6 @@
 #ifndef COFFEESCRIPTCONSTRUCTORS_H
 #define COFFEESCRIPTCONSTRUCTORS_H
 
-#include "engine/physics/genericphysicsinterface.h"
-#include "engine/physics/physicsobject.h"
-#include "engine/physics/physicsdescriptor.h"
-#include "engine/scripting/qscriptvectorvalue.h"
-#include "general/filehandler.h"
-#include "opengl/components/coffeetexture.h"
-#include "engine/scripting/coffeeinputevent.h"
-#include "engine/models/coffeeinstancecontainer.h"
-#include "general/input/coffeeplayercontroller.h"
-#include "engine/ai/coffeeneuralnet.h"
-
-#include "engine/objects/coffeestandardobject.h"
-#include "engine/objects/coffeeskybox.h"
-#include "engine/objects/coffeeparticlesystem.h"
-#include "opengl/components/coffeecamera.h"
-#include "opengl/components/coffeeomnilight.h"
-#include "opengl/components/coffeeworldopts.h"
-
 #include <QObject>
 #include <QtScript>
 
@@ -50,6 +32,8 @@ public:
     static QScriptValue coffeeSkyboxConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeParticlesConstructor(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeWorldConstructor(QScriptContext *ctxt, QScriptEngine *eng);
+
+    static QScriptValue coffeeRenderGraphConstructor(QScriptContext *ctxt, QScriptEngine *eng);
 };
 
 #endif // COFFEESCRIPTCONSTRUCTORS_H

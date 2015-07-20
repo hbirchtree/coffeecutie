@@ -93,6 +93,26 @@ QPointer<CoffeeInstanceContainer> CoffeeMesh::getInstances()
     return instances;
 }
 
+void CoffeeMesh::renderMesh()
+{
+    if(useInstancing())
+        loadModelMatrices(); //TODO : load only the section of the matrix that needs an update
+
+    glBindVertexArray(getVertexArrayHandle());
+    if(useInstancing()){
+        glDrawElementsInstanced(GL_TRIANGLES,
+                                getIndicesCount(),
+                                GL_UNSIGNED_INT,0,
+                                getInstances()->instanceCount());
+    }else{
+        glDrawElements(GL_TRIANGLES,
+                       getIndicesCount(),
+                       GL_UNSIGNED_INT,
+                       0);
+    }
+    glBindVertexArray(0);
+}
+
 bool CoffeeMesh::hasSkeleton() const
 {
     return m_hasSkeleton;

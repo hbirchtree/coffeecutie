@@ -3,6 +3,10 @@
 
 #include "general/common.h"
 
+#include <QMouseEvent>
+#include <QWheelEvent>
+#include <QKeyEvent>
+
 class CoffeeInputEvent : public QObject
 {
     Q_PROPERTY(EventSource type READ type WRITE setType)

@@ -2,6 +2,7 @@
 
 #include "engine/data/coffeeresource.h"
 #include <QMetaEnum>
+#include <QFileInfo>
 
 CoffeeMaterial::CoffeeMaterial(QObject *parent) : QObject(parent){
     m_shininess = new ScalarValue(this,1.f);

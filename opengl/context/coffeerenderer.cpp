@@ -3,12 +3,7 @@
 #include <QCoreApplication>
 #include "opengl/rendering/renderloop.h"
 #include <QMimeData>
-#include <QKeyEvent>
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QResizeEvent>
-#include <QMoveEvent>
-#include <QDropEvent>
+
 #include "engine/scripting/coffeeinputevent.h"
 
 #define RENDERER_DO_DEBUG
@@ -58,7 +53,7 @@ CoffeeRenderer::~CoffeeRenderer()
     glfwTerminate();
 }
 
-void CoffeeRenderer::updateWindowTitle(QString value){
+void CoffeeRenderer::updateWindowTitle(const QString &value){
     windowTitle = value;
     glfwSetWindowTitle(window,value.toStdString().c_str());
 }
@@ -593,7 +588,7 @@ void CoffeeRenderer::openGLDebugCallback(GLenum source, GLenum type, GLuint id, 
         return;
     QByteArray messageB;
     messageB.setRawData(message,length);
-    qDebug("OpenGL debug callback:\n%s(%s):%s:\n%s",
+    qWarning("OpenGL debug callback:\n%s(%s):%s:\n%s",
            glbinding::Meta::getString(source).c_str(),
            glbinding::Meta::getString(type).c_str(),
            glbinding::Meta::getString(severity).c_str(),
