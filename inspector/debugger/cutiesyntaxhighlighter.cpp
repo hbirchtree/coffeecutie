@@ -33,12 +33,12 @@ CutieSyntaxHighlighter::CutieSyntaxHighlighter(QTextDocument *parent) : QSyntaxH
 
     //Comments, single-line
     commentFormat.setForeground(cbComment);
-    commentFormat.setFontWeight(QFont::Cursive);
+    commentFormat.setFontWeight(QFont::Bold);
 
     HighlightScope cmt_single;
     cmt_single.format = commentFormat;
     cmt_single.patt_b = QRegExp("//");
-    cmt_single.patt_e = QRegExp("\n");
+    cmt_single.patt_e = QRegExp("$");
 
     HighlightScope cmt_multi;
     cmt_multi.format = commentFormat;
@@ -47,6 +47,14 @@ CutieSyntaxHighlighter::CutieSyntaxHighlighter(QTextDocument *parent) : QSyntaxH
 
     rules_scoped.append(cmt_single);
     rules_scoped.append(cmt_multi);
+
+    //Strings
+    stringFormat.setForeground(cbString);
+
+    HighlightScope string;
+    string.format = stringFormat;
+    string.patt_b = QRegExp("\"");
+    string.patt_e = QRegExp("\"");
 }
 
 void CutieSyntaxHighlighter::highlightBlock(const QString &text)
@@ -70,10 +78,16 @@ void CutieSyntaxHighlighter::highlightBlock(const QString &text)
         int idx_e = 0;
         while(idx>=0){
             idx_e = e.indexIn(text,idx+b.matchedLength());
-            if(idx_e<0)
+            if(idx_e<0&&previousBlockState()!=1){
+                setFormat(idx,text.size()-idx,set.format);
+                setCurrentBlockState(1);
                 break;
+            }else if(previousBlockState()==1){
+                setFormat(0,text.size(),set.format);
+                setCurrentBlockState(1);
+                break;
+            }
             setFormat(idx,idx_e-idx,set.format);
-            printf("marking");
             idx = b.indexIn(text,idx_e+e.matchedLength());
         }
     }

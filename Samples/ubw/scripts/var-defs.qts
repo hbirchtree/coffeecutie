@@ -2,6 +2,10 @@
 //Here we put our global variables. This is easier than scouting for them in a large script.
 ///////////
 
+/*
+ - Implying herpes
+*/
+
 function ls(){
 	for(var p in this){
 		print(p);
