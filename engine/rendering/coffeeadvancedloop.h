@@ -43,6 +43,8 @@ public slots:
 
 private:
     CoffeeObjectFactory* factory = nullptr;
+
+    QThread* scriptThread = nullptr;
     CoffeeScriptEngine* scriptEngine = nullptr;
 
     CoffeeOutputSurface* screenSurface = nullptr;

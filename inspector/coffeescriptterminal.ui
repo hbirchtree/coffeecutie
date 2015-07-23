@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>598</width>
-    <height>484</height>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,27 +56,16 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
+     </property>
+     <property name="tabsClosable">
+      <bool>false</bool>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
        <string>Shell</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
-        <widget class="QPushButton" name="pushButton">
-         <property name="text">
-          <string>&amp;Clear log</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="text">
-          <string>E&amp;xecute script</string>
-         </property>
-        </widget>
-       </item>
        <item row="1" column="0" colspan="2">
         <widget class="QTextEdit" name="scriptLog">
          <property name="textInteractionFlags">
@@ -84,13 +73,6 @@
          </property>
          <property name="placeholderText">
           <string>Nothing to display. Try to type something.</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0" colspan="2">
-        <widget class="Line" name="line">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -104,17 +86,46 @@
          </property>
         </widget>
        </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="pushButton_2">
+         <property name="text">
+          <string>E&amp;xecute script</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QPushButton" name="pushButton">
+         <property name="text">
+          <string>&amp;Clear log</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="2">
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
        <string>Debugger</string>
       </attribute>
+      <layout class="QGridLayout" name="gridLayout_4"/>
      </widget>
     </widget>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>scriptInput</tabstop>
+  <tabstop>scriptLog</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>tabWidget</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -124,12 +135,12 @@
    <slot>clear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>103</x>
-     <y>29</y>
+     <x>48</x>
+     <y>37</y>
     </hint>
     <hint type="destinationlabel">
-     <x>170</x>
-     <y>132</y>
+     <x>92</x>
+     <y>42</y>
     </hint>
    </hints>
   </connection>

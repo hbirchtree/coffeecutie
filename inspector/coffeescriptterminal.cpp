@@ -3,6 +3,8 @@
 
 #include <QFile>
 #include <QFileDialog>
+#include <QTreeWidget>
+#include <QSplitter>
 
 CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, CoffeeScriptEngine *engine) :
     QWidget(parent),
@@ -12,14 +14,37 @@ CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, CoffeeScriptEngine *
 
     ui->setupUi(this);
 
+    QSplitter* dbgSplit = new QSplitter(this);
+    dbgSplit->setOrientation(Qt::Vertical);
+
+    m_editor = new CoffeeCodeEditor(dbgSplit);
+    QTreeWidget* backtree = new QTreeWidget(dbgSplit);
+    backtree->setHeaderHidden(true);
+    ui->gridLayout_4->addWidget(dbgSplit);
+    dbgSplit->addWidget(m_editor);
+    dbgSplit->addWidget(backtree);
+
     connect(engine->getAgent(),&CoffeeScriptEngineAgent::exceptionReport,
             [=](CoffeeScriptException ex){
-        CoffeeExceptionDialog* dialog = new CoffeeExceptionDialog(this,ex);
-        connect(dialog,&CoffeeExceptionDialog::finished,[=](int res){
-            Q_UNUSED(res)
-            dialog->deleteLater();
-        });
-        dialog->show();
+
+        backtree->clear();
+
+        QList<QTreeWidgetItem*> m_items;
+
+        QTreeWidgetItem* p = new QTreeWidgetItem();
+        p->setText(0,ex.self.toString());
+        backtree->addTopLevelItem(p);
+        m_items.append(p);
+
+        for(int i=0;i<ex.backtrace.size();i++){
+            QTreeWidgetItem* e = new QTreeWidgetItem;
+            e->setText(0,ex.backtrace.at(i));
+            m_items.last()->addChild(e);
+            m_items.append(e);
+        }
+        m_editor->setText(engine->getAgent()->getProgram(ex.scriptReference));
+        m_editor->addErrorLine(546);
+        m_editor->addDebugLine(900);
     });
 }
 
@@ -46,7 +71,7 @@ void CoffeeScriptTerminal::on_pushButton_2_clicked()
 
     QScriptValue e = engine->execFile(engine->getEngine(),file,&ret);
 
-    appendLog(QString("FileLoad: %1").arg(file),e.toString());
+    appendLog(QString("File load: %1").arg(file),e.toString());
 }
 
 void CoffeeScriptTerminal::appendLog(const QString &command, const QString &output)

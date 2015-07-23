@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "coffeeexceptiondialog.h"
 #include "engine/scripting/coffeescriptengine.h"
+#include "debugger/coffeecodeeditor.h"
 
 namespace Ui {
 class CoffeeScriptTerminal;
@@ -25,6 +26,7 @@ private slots:
 private:
     void appendLog(const QString &command, const QString &output);
 
+    CoffeeCodeEditor* m_editor;
     CoffeeScriptEngine* engine;
     Ui::CoffeeScriptTerminal *ui;
 };

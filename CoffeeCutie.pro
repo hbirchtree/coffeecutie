@@ -88,7 +88,9 @@ SOURCES += main.cpp \
     engine/scripting/qtscriptconstructors.cpp \
     inspector/coffeeexceptiondialog.cpp \
     engine/rendering/coffeerendercall.cpp \
-    engine/scripting/coffeescriptengineagent.cpp
+    engine/scripting/coffeescriptengineagent.cpp \
+    inspector/debugger/coffeecodeeditor.cpp \
+    inspector/debugger/cutiesyntaxhighlighter.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -167,7 +169,9 @@ HEADERS += \
     engine/scripting/qtscriptconstructors.h \
     inspector/coffeeexceptiondialog.h \
     engine/rendering/coffeerendercall.h \
-    engine/scripting/coffeescriptengineagent.h
+    engine/scripting/coffeescriptengineagent.h \
+    inspector/debugger/coffeecodeeditor.h \
+    inspector/debugger/cutiesyntaxhighlighter.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

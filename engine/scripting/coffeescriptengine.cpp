@@ -29,10 +29,11 @@
 
 #include "engine/rendering/coffeerendergraph.h"
 
-CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent),e(this)
+CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
-    agent = new CoffeeScriptEngineAgent(this,&e);
-    e.setAgent(agent);
+    m_engine = new QScriptEngine(this);
+    m_agent = new CoffeeScriptEngineAgent(this,m_engine);
+    m_engine->setAgent(m_agent);
 
     qRegisterMetaType<ScalarDataType>("ScalarDataType");
     qRegisterMetaType<VectorData*>("VectorData*");
@@ -40,75 +41,75 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent),e(this
     qRegisterMetaType<CoffeePlayerController*>("CoffeePlayerController*");
     qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
 
-    CoffeeScriptConstructors::defineConstructors(e);
-    QtScriptConstructors::defineConstructors(e);
+    CoffeeScriptConstructors::defineConstructors(*m_engine);
+    QtScriptConstructors::defineConstructors(*m_engine);
 
     //Global meta-objects
     {
-        QScriptValue MetaObj = e.newQMetaObject(&staticMetaObject);
-        e.globalObject().setProperty("MOC",MetaObj);
+        QScriptValue MetaObj = m_engine->newQMetaObject(&staticMetaObject);
+        m_engine->globalObject().setProperty("MOC",MetaObj);
     }
     ////////
 
     //Exported functions
     {
         //Read QVariantMap from file
-        QScriptValue fun = e.newFunction(coffeeImportVariantMap);
-        e.globalObject().setProperty("importVariantMap",fun);
+        QScriptValue fun = m_engine->newFunction(coffeeImportVariantMap);
+        m_engine->globalObject().setProperty("importVariantMap",fun);
     }
     {
         //Executes a script. Really.
-        QScriptValue fun = e.newFunction(coffeeExecuteScriptFile);
-        e.globalObject().setProperty("executeScript",fun);
+        QScriptValue fun = m_engine->newFunction(coffeeExecuteScriptFile);
+        m_engine->globalObject().setProperty("executeScript",fun);
     }
     {
         //Setting and checking parenting of QObjects
-        QScriptValue fun = e.newFunction(coffeeParentingFunc);
-        e.globalObject().setProperty("parenting",fun);
+        QScriptValue fun = m_engine->newFunction(coffeeParentingFunc);
+        m_engine->globalObject().setProperty("parenting",fun);
     }
     ////////
 
     //Enums
     {
-        QScriptValue mo = e.newQMetaObject(&PhysicsDescriptor::staticMetaObject);
-        e.globalObject().setProperty("PhysicalShape",mo);
+        QScriptValue mo = m_engine->newQMetaObject(&PhysicsDescriptor::staticMetaObject);
+        m_engine->globalObject().setProperty("PhysicalShape",mo);
     }
     {
-        QScriptValue mo = e.newQMetaObject(&QEvent::staticMetaObject);
-        e.globalObject().setProperty("QEvent",mo);
+        QScriptValue mo = m_engine->newQMetaObject(&QEvent::staticMetaObject);
+        m_engine->globalObject().setProperty("QEvent",mo);
     }
     {
-        QScriptValue mo = e.newQMetaObject(&CoffeeTexture::staticMetaObject);
-        e.globalObject().setProperty("CoffeeTexture",mo);
+        QScriptValue mo = m_engine->newQMetaObject(&CoffeeTexture::staticMetaObject);
+        m_engine->globalObject().setProperty("CoffeeTexture",mo);
     }
     {
-        QScriptValue mo = e.newQMetaObject(&CoffeePhysicsEvent::staticMetaObject);
-        e.globalObject().setProperty("PhysicsProperty",mo);
+        QScriptValue mo = m_engine->newQMetaObject(&CoffeePhysicsEvent::staticMetaObject);
+        m_engine->globalObject().setProperty("PhysicsProperty",mo);
     }
     {
-        QScriptValue mo = e.newQMetaObject(&CoffeeInputEvent::staticMetaObject);
-        e.globalObject().setProperty("CoffeeInputEventType",mo);
+        QScriptValue mo = m_engine->newQMetaObject(&CoffeeInputEvent::staticMetaObject);
+        m_engine->globalObject().setProperty("CoffeeInputEventType",mo);
     }
     {
-        QScriptValue mo = e.newQMetaObject(&CoffeeNeuron::staticMetaObject);
-        e.globalObject().setProperty("CoffeeNeuronType",mo);
+        QScriptValue mo = m_engine->newQMetaObject(&CoffeeNeuron::staticMetaObject);
+        m_engine->globalObject().setProperty("CoffeeNeuronType",mo);
     }
     ////////
 }
 
 QScriptEngine *CoffeeScriptEngine::getEngine()
 {
-    return &e;
+    return m_engine;
 }
 
 CoffeeScriptEngineAgent *CoffeeScriptEngine::getAgent()
 {
-    return agent;
+    return m_agent;
 }
 
 void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
 {
-    execFile(&e,file,result,logOut);
+    execFile(m_engine,file,result,logOut);
 }
 
 QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut, QScriptContext* ctxt)
@@ -135,8 +136,8 @@ QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *
 
 void CoffeeScriptEngine::addObject(QObject *o)
 {
-    QScriptValue wrapper = e.newQObject(o);
-    e.globalObject().setProperty(o->objectName(),wrapper);
+    QScriptValue wrapper = m_engine->newQObject(o);
+    m_engine->globalObject().setProperty(o->objectName(),wrapper);
 }
 
 QScriptValue CoffeeScriptEngine::coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng)
