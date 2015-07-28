@@ -1,28 +1,20 @@
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
+#define RENDERER_DO_DEBUG
 
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QThreadPool>
+#include <QFileInfo>
+#include <QDir>
 #include "coffeelogger.h"
-#include "inspector/coffeeinspector.h"
+
+#include "coffeegameenvironment.h"
+
+#ifdef COFFEE_ADVANCED_RUN
 #include "engine/rendering/coffeeadvancedloop.h"
-
-#ifndef QOPENGL_CONTEXT_MANAGER
-    #include "opengl/context/coffeerenderer.h"
-
-    #ifndef COFFEE_ADVANCED_RUN
-        #include "tests/boxtest.h"
-    #endif
-
 #else
-    #include "opengl/context/qcoffeerenderer.h"
+#include "tests/boxtest.h"
 #endif
-
-#include "engine/scripting/coffeescriptengine.h"
-
-#include "engine/physics/genericphysicsinterface.h"
-
 
 int main(int argc, char *argv[])
 {
@@ -89,93 +81,43 @@ int main(int argc, char *argv[])
     qsrand((rand()%RAND_MAX)/10000.0);
 
     //Set up root object (for destruction of objects)
-    QObject* root = new QObject();
+
+    CoffeeGameEnvironment* root = new CoffeeGameEnvironment();
     root->setObjectName("coffeeroot");
 
-/*
- * Picking context manager:
- *  - GLFW
- *     or
- *  - QtOpenGL (not working at this moment)
- *
- */
-
-
-#ifndef QOPENGL_CONTEXT_MANAGER
-    CoffeeRenderer *renderer = new CoffeeRenderer(0,
-                                                  1280,720,Qt::WindowNoState,
-                                                  "Unlimited Frame Works");
-#else
-    QCoffeeRenderer *renderer = new QCoffeeRenderer(root,
-                                                  1280,720,Qt::WindowNoState,
-                                                  "Unlimited Frame Works");
-#endif
-    //for identification in script engine and inspector
-    renderer->setObjectName("renderer");
-
+    root->setThreadPool(QThreadPool::globalInstance());
+    root->setInitScript("ubw.qts");
 
     //Choose a render loop, advanced is our scripted one, BoxTest is a glbinding sample
-    RenderLoop* loop;
     CoffeeAdvancedLoop* advancedLoop = nullptr;
 #ifdef COFFEE_ADVANCED_RUN
-    advancedLoop = new CoffeeAdvancedLoop(root,renderer);
-    loop = advancedLoop;
+    advancedLoop = new CoffeeAdvancedLoop(root,root->renderer());
+    //Provide the script engine
+    root->setScriptEngine(advancedLoop->getScriptEngine());
+    root->setRenderLoop(advancedLoop);
 #else
     //This demo taken from glbinding tests out general rendering
-    loop = new BoxTest(renderer);
+    root->setRenderLoop(new BoxTest(root->renderer()));
 #endif //COFFEE_ADVANCED_RUN
-
-
-    //Configure the loop, set default sampling
-    renderer->setLoop(loop);
-
-    CoffeeInspector *inspector = nullptr;
     //configure script engine and inspector if it is enabled
-    {
-        QThreadPool::globalInstance()->setObjectName("QThreadPool");
-        CoffeeScriptEngine* se = nullptr;
-        QObject* fc = nullptr;
-        if(advancedLoop){
-            fc = advancedLoop->getFactory();
-            se = advancedLoop->getScriptEngine();
-        }
 
-        QObjectList objects;
-        objects << root
-               << QThreadPool::globalInstance()
-               << renderer
-               << fc;
+//    QObjectList objects;
+//    objects << root
+//            << QThreadPool::globalInstance()
+//            << renderer
+//            << fc;
 
-        if(inspect){
-            inspector = new CoffeeInspector(0,
-                                            objects,
-                                            renderer,se);
-            inspector->run();
-            inspector->show();
-        }
+//    if(advancedLoop){
+//        for(QObject* o : objects)
+//            se->addObject(o);
+//        bool res;
+//        QScriptValue ex = se->execFile(se->getEngine(),sf.absoluteFilePath(),&res);
+//        qDebug("Init script run: %i, %s",
+//               res,
+//               ex.toString().toStdString().c_str());
+//    }
 
-        if(advancedLoop){
-            for(QObject* o : objects)
-                se->addObject(o);
-            bool res;
-            QScriptValue ex = se->execFile(se->getEngine(),sf.absoluteFilePath(),&res);
-            qDebug("Init script run: %i, %s",
-                   res,
-                   ex.toString().toStdString().c_str());
-        }
-    }
-
-
-    if(inspect){
-        QThreadPool::globalInstance()->start(renderer);
-
-        a.exec();
-
-        if(inspect)
-            delete inspector;
-    }else{
-        renderer->run(); //in this case, nothing else runs in the main thread.
-    }
+    root->startExecution(&a);
 
     delete root;
 

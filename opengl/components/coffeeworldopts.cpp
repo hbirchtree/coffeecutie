@@ -196,7 +196,8 @@ void CoffeeWorldOpts::renderWorld()
 {
     if(!loadedState()){
         qDebug() << "Setting OpenGL clear-color:" << clearColor->asColor();
-        renderer->updateRendererClearColor(clearColor->getValue());
+        glm::vec4 cc = clearColor->getValue();
+        renderer->setClearColor(cc.r, cc.g, cc.b, cc.a);
         setLoadedState(true);
     }
 

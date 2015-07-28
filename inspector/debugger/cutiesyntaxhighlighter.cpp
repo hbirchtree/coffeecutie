@@ -10,6 +10,13 @@ CutieSyntaxHighlighter::CutieSyntaxHighlighter(QTextDocument *parent) : QSyntaxH
     QColor cbString("#3AD900");
     QColor cbComment("#009DFF");
 
+    QTextCharFormat commentFormat;
+    QTextCharFormat varnameFormat;
+    QTextCharFormat funcFormat;
+    QTextCharFormat classFormat;
+    QTextCharFormat constructFormat;
+    QTextCharFormat stringFormat;
+    QTextCharFormat numberFormat;
 
     //Variable declarations
     varnameFormat.setForeground(cbStatement);
@@ -31,6 +38,23 @@ CutieSyntaxHighlighter::CutieSyntaxHighlighter(QTextDocument *parent) : QSyntaxH
 
     genRules(fundeclare,funcFormat);
 
+    //Function calls
+    constructFormat.setFontWeight(QFont::Cursive|QFont::Bold);
+    QStringList constructdeclare;
+    constructdeclare << "\\b\\w+\\b()";
+
+//    genRules(constructdeclare,constructFormat);
+
+    //Strings
+    stringFormat.setForeground(cbString);
+
+    HighlightScope string;
+    string.format = stringFormat;
+    string.patt_b = QRegExp("\"");
+    string.patt_e = QRegExp("\"");
+
+    rules_scoped.append(string);
+
     //Comments, single-line
     commentFormat.setForeground(cbComment);
     commentFormat.setFontWeight(QFont::Bold);
@@ -46,15 +70,15 @@ CutieSyntaxHighlighter::CutieSyntaxHighlighter(QTextDocument *parent) : QSyntaxH
     cmt_multi.patt_e = QRegExp("*/");
 
     rules_scoped.append(cmt_single);
-    rules_scoped.append(cmt_multi);
+//    rules_scoped.append(cmt_multi);
 
-    //Strings
-    stringFormat.setForeground(cbString);
+    //Number
+    numberFormat.setForeground(cbNumber);
 
-    HighlightScope string;
-    string.format = stringFormat;
-    string.patt_b = QRegExp("\"");
-    string.patt_e = QRegExp("\"");
+    QStringList numberFormats;
+    numberFormats << "\\b\\d*\\.\\d*\\b" << "\\b\\d+\\b";
+
+    genRules(numberFormats,numberFormat);
 }
 
 void CutieSyntaxHighlighter::highlightBlock(const QString &text)
@@ -82,13 +106,14 @@ void CutieSyntaxHighlighter::highlightBlock(const QString &text)
                 setFormat(idx,text.size()-idx,set.format);
                 setCurrentBlockState(1);
                 break;
-            }else if(previousBlockState()==1){
+            }else if(idx_e<0&&previousBlockState()==1){
                 setFormat(0,text.size(),set.format);
                 setCurrentBlockState(1);
                 break;
+            }else{
+                setFormat(idx,idx_e-idx,set.format);
+                idx = b.indexIn(text,idx_e+e.matchedLength());
             }
-            setFormat(idx,idx_e-idx,set.format);
-            idx = b.indexIn(text,idx_e+e.matchedLength());
         }
     }
 }

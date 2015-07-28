@@ -46,6 +46,10 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 
     //Global meta-objects
     {
+        QScriptValue MetaObj = m_engine->newQMetaObject(&staticQtMetaObject);
+        m_engine->globalObject().setProperty("Qt",MetaObj);
+    }
+    {
         QScriptValue MetaObj = m_engine->newQMetaObject(&staticMetaObject);
         m_engine->globalObject().setProperty("MOC",MetaObj);
     }

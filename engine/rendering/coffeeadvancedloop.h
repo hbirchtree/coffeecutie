@@ -1,57 +1,52 @@
 #ifndef COFFEEADVANCEDLOOP_H
 #define COFFEEADVANCEDLOOP_H
 
-//#include "general/common.h"
 #include "opengl/rendering/renderloop.h"
 
 class QScriptEngine;
 class QScriptValue;
 
-class CoffeeJoystick;
 class CoffeeWorldOpts;
 class CoffeeOutputSurface;
 class CoffeeObject;
 class CoffeeStandardObject;
 class CoffeePlayerController;
-class CoffeeRenderer;
+class CoffeeRendererBase;
 
 class CoffeeObjectFactory;
 class CoffeeScriptEngine;
 
-class CoffeeAdvancedLoop : public QObject,public RenderLoop
+class CoffeeAdvancedLoop : public RenderLoop
 {
     Q_PROPERTY(QObject* world READ getWorld WRITE setWorld)
+    Q_PROPERTY(QObject* factory READ factory)
 
     Q_OBJECT
 public:
-    CoffeeAdvancedLoop(QObject* parent, CoffeeRenderer* renderer);
-    ~CoffeeAdvancedLoop();
+    CoffeeAdvancedLoop(QObject* parent, CoffeeRendererBase* m_renderer);
 
-    std::function<void ()> *getInit();
-    std::function<void ()> *getLoop();
-    std::function<void ()> *getCleanup();
-
-    void connectSignals(CoffeeRenderer* renderer);
+    std::function<void ()> *init();
+    std::function<void ()> *loop();
+    std::function<void ()> *cleanup();
 
     QObject* getFactory();
     CoffeeScriptEngine* getScriptEngine();
 
     QObject* getWorld();
 
+    QObject* factory() const;
+
+    Q_INVOKABLE QObject* createRenderSurface();
+
 public slots:
-    void setWorld(QObject* world);
+    void setWorld(QObject* m_world);
 
 private:
-    CoffeeObjectFactory* factory = nullptr;
+    CoffeeObjectFactory* m_factory = nullptr;
+    CoffeeScriptEngine* m_scriptEngine = nullptr;
+    CoffeeRendererBase* m_renderer = nullptr;
+    CoffeeWorldOpts* m_world = nullptr;
 
-    QThread* scriptThread = nullptr;
-    CoffeeScriptEngine* scriptEngine = nullptr;
-
-    CoffeeOutputSurface* screenSurface = nullptr;
-
-    CoffeeRenderer* renderer = nullptr;
-    CoffeeWorldOpts* world = nullptr;
-    CoffeeJoystick* js = nullptr;
     std::function<void()> _rendering_loop_init;
     std::function<void()> _rendering_loop;
     std::function<void()> _rendering_loop_cleanup;

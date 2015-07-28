@@ -4,6 +4,9 @@
 #include <QMessageLogContext>
 #include <QDateTime>
 #include <QFile>
+
+#include <QDebug>
+
 class CoffeeLogger : public QObject
 {
 public:

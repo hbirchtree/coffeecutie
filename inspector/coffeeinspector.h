@@ -2,31 +2,26 @@
 #define COFFEEINSPECTOR_H
 
 #include <QWidget>
-#include <QTreeWidgetItem>
-#include <QMetaProperty>
 #include <QTimer>
-#include <QPointer>
-#include <QRunnable>
 
-class CoffeeRenderer;
-class CoffeeScriptEngine;
-class CoffeeRendererInspector;
-class CoffeeScriptTerminal;
+class CoffeeObjectExplorer;
 
 namespace Ui {
 class CoffeeInspector;
 }
 
-class CoffeeInspector : public QWidget, public QRunnable
+class CoffeeInspector : public QWidget
 {
     Q_OBJECT
 
 public:
     CoffeeInspector(QWidget *parent = 0,
-                    QObjectList engineRoot = QObjectList(),
-                    CoffeeRenderer* renderer = nullptr,
-                    CoffeeScriptEngine* scriptEngine = nullptr);
+                    QObjectList engineRoot = QObjectList());
     ~CoffeeInspector();
+
+signals:
+    void showTerminal();
+    void showInformation();
 
 private slots:
     void updateInformation();
@@ -36,32 +31,12 @@ private slots:
     void on_pushButton_clicked();
 
 private:
+    CoffeeObjectExplorer* m_explorer;
     QTimer *refreshTimer;
-
-    CoffeeScriptEngine* scriptEngine;
-
-    QTreeWidgetItem* threadInfoItem = nullptr;
-    QHash<QObject*,QTreeWidgetItem*> objectsMapping;
-    QHash<QObject*,QTreeWidgetItem*> childTrees; //Yup. So far the weirdest name I've come up with. I'm keeping it.
-//    QHash<QMetaProperty,QTreeWidgetItem*> propertyMapping; //One property can only exist in one place. This seems fair enough.
-    QHash<QObject*,QHash<int,QTreeWidgetItem*>> propertyMapping; //We assume that properties stay the same, only change value
-
     QObjectList engineRoot;
 
-    QPointer<CoffeeRenderer> renderer;
-    QPointer<CoffeeRendererInspector> rendererInspector;
-    QPointer<CoffeeScriptTerminal> scriptTerminal;
-
     Ui::CoffeeInspector *ui;
-    void updateProperties(QObject* object);
-    void updateTreeWidgetItem(QObject* object, QTreeWidgetItem *parent, bool listChildren = true);
-    void updateProperty(QTreeWidgetItem* it, QVariant value);
-    void clearChildren(QTreeWidgetItem* it);
 
-
-    // QRunnable interface
-public:
-    void run();
 };
 
 #endif // COFFEEINSPECTOR_H

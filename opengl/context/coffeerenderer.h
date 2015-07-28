@@ -1,150 +1,32 @@
 #ifndef COFFEERENDERER_H
 #define COFFEERENDERER_H
 
-#include "general/common.h"
+#include "coffeegpumonitor.h"
+#include "coffeeglfwcontextmanager.h"
 
-#include <QSize>
-#include <QEvent>
-
-#include <QKeyEvent>
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QResizeEvent>
-#include <QMoveEvent>
-#include <QDropEvent>
-
-class CoffeeInputEvent;
 class RenderLoop;
-class QMimeData;
-class QWindowStateChangeEvent;
 
-class CoffeeRenderer : public QObject, public QRunnable
+class CoffeeRenderer :
+        public CoffeeGLFWContextManager,
+        public CoffeeGPUMonitor
 {
-    Q_PROPERTY(bool mouseGrabbing READ isMouseGrabbed WRITE updateMouseGrabbing)
-    Q_PROPERTY(int openGLSamples READ getSamples WRITE setSamples)
-    Q_PROPERTY(double loopTime READ getLoopTime)
-    Q_PROPERTY(QSize windowSize READ getWindowDimensions)
-    Q_PROPERTY(QSize framebufferSize READ getCurrentFramebufferSize)
-    Q_PROPERTY(QString windowTitle READ getWindowTitle WRITE updateWindowTitle)
-    Q_PROPERTY(double frameTime READ getLatestFrameTime)
-
     Q_OBJECT
 public:
-    enum RendererExitStatus {
-        Undefined,
-        NoLoopObject,
-        FailedToCreateWindow,
-        FailedToInitGLFW
-    };
-
     CoffeeRenderer(QObject *parent);
     CoffeeRenderer(QObject *parent, int w, int h);
     CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state);
     CoffeeRenderer(QObject *parent, int w, int h, Qt::WindowState state, QString windowTitle);
     ~CoffeeRenderer();
 
-    virtual int init();
-    virtual int loop();
-
-    static void APIENTRY openGLDebugCallback(GLenum source, GLenum type,
-                                             GLuint id, GLenum severity,
-                                             GLsizei length,
-                                             const GLchar* message,
-                                             const void* userParam);
-
-    virtual int getStartDisplay() const;
-    virtual double getLoopTime() const;
-    virtual QString getWindowTitle() const;
-    virtual QSize getWindowDimensions() const;
-    Q_INVOKABLE virtual QSize getCurrentFramebufferSize() const;
-    virtual QSize *getFramebufferSizePt();
-    virtual int getMouseInputMode() const;
-    virtual bool isMouseGrabbed() const;
-    virtual double getLatestFrameTime() const;
-
-    virtual int getSamples() const;
+    int loop();
 
     virtual void getVideoMemoryUsage(qint32 *current, qint32 *total) const;
 
 public slots:
-    virtual void queueFunction(std::function<void()> *func);
+    void requestMemoryCheck();
+    void flushPipeline();
 
-    virtual void setSwapInterval(uint interval);
-    virtual void setStartDisplay(uint value);
-    virtual void setWindowDimensions(const QSize &value);
-    virtual void setSamples(uint value);
-    virtual void setLoop(RenderLoop *value);
-    virtual void requestWindowClose();
-    virtual void updateWindowTitle(const QString &value);
-    virtual void updateRendererClearColor(glm::vec4 value);
-    virtual void updateWindowDimensions(QSize dims);
-    virtual void setWindowState(Qt::WindowState state);
-    virtual void setStartmode(const Qt::WindowState &value);
-    virtual void updateMouseGrabbing(bool state);
-    virtual void setMousePos(int x,int y);
-
-    virtual void run();
-
-    virtual void flushPipeline();
-    virtual void requestMemoryCheck();
-
-private slots:
-    GLFWwindow *setWindowedFullscreen(int monitor);
-    GLFWwindow *setFullscreen(int monitor);
-    GLFWwindow *setWindowed();
-
-protected:
-    RenderLoop *loopObject;
-    int samples = 0;
-    QSize windowDimensions;
-    QSize framebufferSize;
-    QString windowTitle = "Qt Café";
-    Qt::WindowState startmode = Qt::WindowNoState;
-    int startDisplay = 0;
-    QVector<std::function<void()>*> runqueue;
-
-private:
-    //GLFW objects
-    GLFWwindow* window = nullptr;
-
-    double frametime;
-
-    bool gpumemcheck = false;
-
-    //if either fails, stop trying it
-    bool gpumemcheck_nvidia = true;
-//    bool gpumemcheck_ati = true; //Not even tested
-
-    qint32 vmem_free = 0;
-    qint32 vmem_total = 0;
-
-signals:
-    void rendererFailed(RendererExitStatus status);
-
-    //Renderer events
-    void windowTitleUpdated(QString title);
-    void clearColorChanged(glm::vec4 color);
-
-    //Input events
-    void inputEvent(CoffeeInputEvent* ev);
-
-    void winMouseGrabbed(QEvent event);
-    void winKeyboardEvent(QKeyEvent event);
-    void winMouseEvent(QMouseEvent event);
-    void winWheelEvent(QWheelEvent event);
-    void winDropEvent(QDropEvent event);
-    void winMouseEnterEvent(QEvent event);
-
-    void winResize(QResizeEvent event);
-    void winPosChanged(QMoveEvent event);
-    void winFocusChanged(QFocusEvent event);
-    void winRefresh();
-    void winFrameBufferResize(QResizeEvent event);
-    void windowAspectChanged(float aspect);
-    void winClose();
-    void winStateChanged(QWindowStateChangeEvent event);
-
-    void contextReportFrametime(float framerate);
+    void setClearColor(float r, float g, float b, float a);
 };
 
 #endif // COFFEERENDERER_H

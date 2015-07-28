@@ -8,8 +8,9 @@
 
 class BoxTest : public RenderLoop
 {
+    Q_OBJECT
 public:
-    BoxTest(CoffeeRenderer *renderer);
+    BoxTest(QObject* parent,CoffeeRenderer *renderer);
     ~BoxTest();
 
 private:
@@ -20,9 +21,9 @@ private:
     std::function<void()> _rendering_loop_cleanup;
 
 public:
-    std::function<void ()> *getInit();
-    std::function<void ()> *getLoop();
-    std::function<void ()> *getCleanup();
+    std::function<void ()> *init();
+    std::function<void ()> *loop();
+    std::function<void ()> *cleanup();
 
     // RenderLoop interface
 public:

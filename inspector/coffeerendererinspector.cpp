@@ -25,38 +25,6 @@ CoffeeRendererInspector::CoffeeRendererInspector(QWidget *parent, CoffeeRenderer
     tableHeader << "Property" << "Data";
     ui->infoView->setHeaderLabels(tableHeader);
 
-//    fpsItem = new QTreeWidgetItem();
-//    fpsItem->setText(0,"Framerate (FPS)");
-
-//    frameTimeItem = new QTreeWidgetItem();
-//    frameTimeItem->setText(0,"Frametime");
-
-//    memoryUsageItem = new QTreeWidgetItem();
-//    memoryUsageItem->setText(0,"Memory usage");
-
-//    threadUsageItem = new QTreeWidgetItem();
-//    threadUsageItem->setText(0,"System threads");
-
-//    ppriorityItem = new QTreeWidgetItem();
-//    ppriorityItem->setText(0,"System priority");
-
-//    virtUsageItem = new QTreeWidgetItem();
-//    virtUsageItem->setText(0,"Virtual memory");
-
-//    vmemUsageItem = new QTreeWidgetItem();
-//    vmemUsageItem->setText(0,"Video memory usage");
-
-//    ui->infoView->addTopLevelItem(fpsItem);
-//    ui->infoView->addTopLevelItem(frameTimeItem);
-
-//    ui->infoView->addTopLevelItem(memoryUsageItem);
-//    ui->infoView->addTopLevelItem(virtUsageItem);
-//    ui->infoView->addTopLevelItem(threadUsageItem);
-//    ui->infoView->addTopLevelItem(ppriorityItem);
-
-
-//    ui->infoView->addTopLevelItem(vmemUsageItem);
-
     connect(renderer,
             SIGNAL(contextReportFrametime(float)),
             SLOT(plotGraph(float)),

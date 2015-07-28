@@ -7,7 +7,7 @@
 #include "opengl/components/coffeecamera.h"
 #include "engine/objects/coffeestandardobject.h"
 
-CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject* display) :
+CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFramebufferObject* display) :
     CoffeeObject(parent)
 {
 //    m_shader = new m_shaderContainer(this);
@@ -15,14 +15,14 @@ CoffeeOutputSurface::CoffeeOutputSurface(QObject *parent,CoffeeFrameBufferObject
     setFramebuffer(display);
 }
 
-void CoffeeOutputSurface::setFramebuffer(CoffeeFrameBufferObject *display)
+void CoffeeOutputSurface::setFramebuffer(CoffeeFramebufferObject *display)
 {
     this->framebuffer = display;
 }
 
 void CoffeeOutputSurface::setFramebuffer(QObject *display)
 {
-    CoffeeFrameBufferObject* fb = qobject_cast<CoffeeFrameBufferObject*>(display);
+    CoffeeFramebufferObject* fb = qobject_cast<CoffeeFramebufferObject*>(display);
     if(fb)
         setFramebuffer(display);
 }
@@ -44,7 +44,13 @@ void CoffeeOutputSurface::load()
 
 void CoffeeOutputSurface::render()
 {
-    framebuffer->unbindFramebuffer();
+    if(!framebuffer->ready()){
+        framebuffer->setNumTextures(textures.size());
+        framebuffer->createFramebuffer(framebuffer->getWindowSize(),framebuffer->getSampling());
+    }
+
+    if(framebuffer->getWindowSize().isEmpty())
+        return;
 
     if(!baked())
         load();
@@ -109,7 +115,7 @@ QObject *CoffeeOutputSurface::framebufferQObject()
     return framebuffer;
 }
 
-CoffeeFrameBufferObject *CoffeeOutputSurface::getFramebuffer()
+CoffeeFramebufferObject *CoffeeOutputSurface::getFramebuffer()
 {
     return framebuffer;
 }

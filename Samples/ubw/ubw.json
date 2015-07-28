@@ -207,7 +207,7 @@
 				"physics":{
 					"position": [9,18,12],
 					"scale": [1,1,1],
-					"shape": "sphere",
+					"shape": "box",
 					"mass": 10,
 					"friction": 1,
 					"restitution":0.1,

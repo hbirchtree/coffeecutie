@@ -4,7 +4,7 @@
 #include "coffeeobject.h"
 #include "engine/shaders/coffeeuniformsetter.h"
 
-class CoffeeFrameBufferObject;
+class CoffeeFramebufferObject;
 class CoffeeShader;
 class CoffeeMesh;
 class TextureMapping;
@@ -28,13 +28,13 @@ class CoffeeOutputSurface : public CoffeeObject
     Q_OBJECT
 
 public:
-    CoffeeOutputSurface(QObject *parent, CoffeeFrameBufferObject *display);
+    CoffeeOutputSurface(QObject *parent, CoffeeFramebufferObject *display);
 
-    void setFramebuffer(CoffeeFrameBufferObject *display);
+    void setFramebuffer(CoffeeFramebufferObject *display);
     void setFramebuffer(QObject* display);
 
     QObject* framebufferQObject();
-    CoffeeFrameBufferObject* getFramebuffer();
+    CoffeeFramebufferObject* getFramebuffer();
 
     QObject* getShader();
 
@@ -57,7 +57,7 @@ public slots:
 protected:
     CoffeeTexture* textureTest = nullptr;
     QVector<ShaderMapping*> uniforms;
-    CoffeeFrameBufferObject* framebuffer;
+    CoffeeFramebufferObject* framebuffer;
     QVector<CoffeeOutputChannel*> textures;
     QPointer<CoffeeMesh> surface;
 

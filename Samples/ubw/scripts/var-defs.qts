@@ -27,20 +27,15 @@ var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
 var world = _load_object_world(initData["world.world1"],coffeeroot,assets);
 var inputClock = new QTimer;
 var controller = new CoffeePlayerController;
-var surface = coffeeroot.evloop.screenSurface;
+var surface = coffeeroot.evloop.createRenderSurface();
 
-coffeeroot.evloop.world = world;
-
-//var graph = new CoffeeRenderGraph();
-//graph.setRenderer(renderer);
-//graph.includeObject(world.skybox);
-//graph.includeObject(world.gear);
-//graph.includeObject(world.blade);
+//coffeeroot.evloop.world = world;
 
 //world.connectSignals(controller);
 
 world.setRenderer(renderer);
 surface.shader = assets.shaders.deferred_display;
+
 
 world.testparts.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
 world.testparts2.transform.feedbackAttributes = ["outType","outPos","outVel","outLife"];
@@ -67,7 +62,12 @@ world.lights[0].attenuation = 0.003;
 	}
 }
 
-lsllll
+//llll
 
 //Set up input and etc.
 #inc "input/event-handling.qts"
+
+var renderTimer = new QTimer();
+renderTimer.interval = 5;
+renderTimer.timeout.connect(graph.queueRender);
+renderTimer.start();

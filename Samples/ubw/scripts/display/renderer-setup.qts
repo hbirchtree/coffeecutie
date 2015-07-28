@@ -2,7 +2,7 @@ var framecheck = 0.0;
 
 function printFrametime(frametime){
 	if(framecheck <= renderer.loopTime){
-		renderer.updateWindowTitle("Unlimited Frame Works (ms:"+renderer.frameTime*1000+")");
+		renderer.windowTitle = "Unlimited Frame Works (ms:"+frametime*1000+")";
 		print("FPS: $1".replace("$1",(1.0/frametime).toFixed(1)));
 		framecheck = renderer.loopTime+1.0;
 	}

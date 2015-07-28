@@ -39,7 +39,6 @@ SOURCES += main.cpp \
     opengl/context/qcoffeewindow.cpp \
     opengl/helpers/renderingmethods.cpp \
     opengl/helpers/texturehelper.cpp \
-    opengl/rendering/coffeerenderingloop.cpp \
     tests/boxtest.cpp \
     tests/CubeScape.cpp \
     tests/glutils.cpp \
@@ -90,7 +89,15 @@ SOURCES += main.cpp \
     engine/rendering/coffeerendercall.cpp \
     engine/scripting/coffeescriptengineagent.cpp \
     inspector/debugger/coffeecodeeditor.cpp \
-    inspector/debugger/cutiesyntaxhighlighter.cpp
+    inspector/debugger/cutiesyntaxhighlighter.cpp \
+    opengl/context/coffeerendererbase.cpp \
+    opengl/context/coffeegpumonitor.cpp \
+    general/eventloop/coffeefunctionqueuerunner.cpp \
+    opengl/context/coffeeglfwcontextmanager.cpp \
+    opengl/context/glfwnativefunctions.cpp \
+    inspector/editor/coffeegameeditor.cpp \
+    coffeegameenvironment.cpp \
+    inspector/coffeeobjectexplorer.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -121,7 +128,6 @@ HEADERS += \
     opengl/context/qcoffeewindow.h \
     opengl/helpers/renderingmethods.h \
     opengl/helpers/texturehelper.h \
-    opengl/rendering/coffeerenderingloop.h \
     opengl/rendering/renderloop.h \
     tests/boxtest.h \
     tests/CubeScape.h \
@@ -171,7 +177,15 @@ HEADERS += \
     engine/rendering/coffeerendercall.h \
     engine/scripting/coffeescriptengineagent.h \
     inspector/debugger/coffeecodeeditor.h \
-    inspector/debugger/cutiesyntaxhighlighter.h
+    inspector/debugger/cutiesyntaxhighlighter.h \
+    opengl/context/coffeerendererbase.h \
+    opengl/context/coffeegpumonitor.h \
+    general/eventloop/coffeefunctionqueuerunner.h \
+    opengl/context/coffeeglfwcontextmanager.h \
+    opengl/context/glfwnativefunctions.h \
+    inspector/editor/coffeegameeditor.h \
+    coffeegameenvironment.h \
+    inspector/coffeeobjectexplorer.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -204,7 +218,8 @@ FORMS += \
     inspector/coffeeinspector.ui \
     inspector/coffeerendererinspector.ui \
     inspector/coffeescriptterminal.ui \
-    inspector/coffeeexceptiondialog.ui
+    inspector/coffeeexceptiondialog.ui \
+    inspector/editor/coffeegameeditor.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp

@@ -43,8 +43,14 @@ CoffeeScriptTerminal::CoffeeScriptTerminal(QWidget *parent, CoffeeScriptEngine *
             m_items.append(e);
         }
         m_editor->setText(engine->getAgent()->getProgram(ex.scriptReference));
-        m_editor->addErrorLine(546);
-        m_editor->addDebugLine(900);
+
+        //Error marking of line
+        bool okCheck = false;
+        int line = ex.backtrace.first().split(":").last().toInt(&okCheck);
+        if(okCheck)
+            m_editor->addErrorLine(line);
+        else
+            qDebug() << "Failed to locate error line";
     });
 }
 
@@ -53,25 +59,24 @@ CoffeeScriptTerminal::~CoffeeScriptTerminal()
     delete ui;
 }
 
+void CoffeeScriptTerminal::clearLog()
+{
+    ui->scriptLog->clear();
+}
+
+void CoffeeScriptTerminal::execFile(const QString &file)
+{
+    bool ret;
+    QScriptValue e = engine->execFile(engine->getEngine(),file,&ret);
+
+    appendLog(QString("File load: %1").arg(file),e.toString());
+}
+
 void CoffeeScriptTerminal::on_scriptInput_returnPressed()
 {
     QString cmd = ui->scriptInput->text();
     QString res = engine->getEngine()->evaluate(cmd).toString();
     appendLog(cmd,res);
-}
-
-void CoffeeScriptTerminal::on_pushButton_2_clicked()
-{
-    QFileDialog scriptSelect(this);
-    QString file = scriptSelect.getOpenFileName(this,tr("Open a QtScript file"),QString(),"*.qts");
-
-    bool ret;
-    //if execFile() fails, it does not change *logOut
-    //failure is the case where the script cannot be opened
-
-    QScriptValue e = engine->execFile(engine->getEngine(),file,&ret);
-
-    appendLog(QString("File load: %1").arg(file),e.toString());
 }
 
 void CoffeeScriptTerminal::appendLog(const QString &command, const QString &output)

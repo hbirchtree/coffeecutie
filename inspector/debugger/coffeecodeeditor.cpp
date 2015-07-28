@@ -12,12 +12,13 @@ CoffeeCodeEditor::CoffeeCodeEditor(QWidget *parent) : QTextEdit(parent)
     m_lineNumberer = new CoffeeLineNumberArea(this);
 
     setTextColor(QColor("#FFFFFF"));
-    setStyleSheet("QTextEdit{background-color:"+bgcol+";}");
+    setStyleSheet("QTextEdit{background-color:"+bgcol+";color:white}");
 
     connect(this->document(),SIGNAL(blockCountChanged(int)),SLOT(updateLineNumberWidth(int)));
     connect(this,SIGNAL(cursorPositionChanged()),SLOT(highlightLine()));
     connect(this,&CoffeeCodeEditor::textChanged,[=](){
         updateLineNumberWidth(0);
+        m_lineNumberer->repaint();
     });
     connect(this->verticalScrollBar(),&QScrollBar::valueChanged,[=](int val){
         Q_UNUSED(val)

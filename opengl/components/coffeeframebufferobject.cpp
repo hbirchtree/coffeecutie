@@ -2,85 +2,103 @@
 
 #include "opengl/helpers/texturehelper.h"
 
-CoffeeFrameBufferObject::CoffeeFrameBufferObject(QObject *parent) :
-    QObject(parent),
-    CoffeeFramebufferBaseClass()
+CoffeeFramebufferObject::CoffeeFramebufferObject(QObject *parent) :
+    CoffeeFramebufferBaseClass(parent)
 {
 }
 
-void CoffeeFrameBufferObject::createFramebuffer(QSize windowSize, uint sampling)
+void CoffeeFramebufferObject::createFramebuffer(QSize windowSize, uint sampling)
 {
     this->sampling = sampling;
     this->renderSize = windowSize*sampling;
     CoffeeFramebufferBaseClass::createFramebuffer(windowSize);
 }
 
-void CoffeeFrameBufferObject::cleanup()
+void CoffeeFramebufferObject::setSize(QSize windowSize, uint sampling)
+{
+    this->sampling = sampling;
+    this->renderSize = windowSize*sampling;
+    m_ready = false;
+}
+
+void CoffeeFramebufferObject::cleanup()
 {
     glDeleteFramebuffersEXT(1,&framebufferHandle);
     glDeleteTextures(textureHandles.size(),textureHandles.data());
 }
 
-uint CoffeeFrameBufferObject::getSampling() const
+uint CoffeeFramebufferObject::getSampling() const
 {
     return sampling;
 }
 
-void CoffeeFrameBufferObject::bindFramebufferRead()
+void CoffeeFramebufferObject::bindFramebufferRead()
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER,framebufferHandle);
 }
 
-void CoffeeFrameBufferObject::bindFramebufferWrite()
+void CoffeeFramebufferObject::bindFramebufferWrite()
 {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,framebufferHandle);
 }
 
-void CoffeeFrameBufferObject::unbindFramebufferRead()
+void CoffeeFramebufferObject::unbindFramebufferRead()
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER,0);
 }
 
-void CoffeeFrameBufferObject::unbindFramebufferWrite()
+void CoffeeFramebufferObject::unbindFramebufferWrite()
 {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
 }
-QVector<GLuint>* CoffeeFrameBufferObject::getTextureHandle()
+
+bool CoffeeFramebufferObject::ready() const
+{
+    return m_ready;
+}
+
+QVector<GLuint>* CoffeeFramebufferObject::getTextureHandle()
 {
     return &textureHandles;
 }
 
-void CoffeeFrameBufferObject::bindFramebuffer()
+void CoffeeFramebufferObject::bindFramebuffer()
 {
     CoffeeFramebufferBaseClass::bindFramebuffer(framebufferHandle);
 }
 
-void CoffeeFrameBufferObject::setNumTextures(uint textures)
+void CoffeeFramebufferObject::setNumTextures(uint textures)
 {
     this->numTextures = textures;
 }
 
-void CoffeeFrameBufferObject::resizeViewport(QSize windowSize)
+void CoffeeFramebufferObject::resizeViewport(QSize windowSize)
 {
     this->windowSize = windowSize;
     this->renderSize = windowSize*sampling;
+
     resizeFramebuffer();
 }
 
-void CoffeeFrameBufferObject::updateSampling(uint sampling)
+void CoffeeFramebufferObject::updateSampling(uint sampling)
 {
     this->sampling = sampling;
-    resizeViewport(windowSize);
+    m_ready = false;
 }
 
-void CoffeeFrameBufferObject::resizeFramebuffer()
+void CoffeeFramebufferObject::setReady(bool ready)
+{
+    m_ready = ready;
+}
+
+void CoffeeFramebufferObject::resizeFramebuffer()
 {
     if(framebufferActive){
         cleanup(); //We clear the previous framebuffer, renderbuffers and texture if the exist
         framebufferActive = true;
     }
 
-    if(renderSize.height()<=0||renderSize.width()<=0)
+    if(renderSize.isEmpty())
         return;
 
     GLuint framebuffer = 0;

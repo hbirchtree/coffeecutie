@@ -18,3 +18,12 @@ surface.setFramebufferMapping("normalSampler",1,1);
 surface.setFramebufferMapping("specularSampler",4,2);
 surface.setFramebufferMapping("positionSampler",3,3);
 surface.setFramebufferMapping("depthSampler",4,4);
+
+var graph = new CoffeeRenderGraph();
+graph.includeObject(world.skybox);
+graph.includeObject(world.gear);
+graph.includeObject(world.blade);
+
+graph.setRenderTarget(surface.framebuffer);
+graph.setRenderSurface(surface);
+graph.setRenderer(renderer);

@@ -19,8 +19,10 @@ public:
     ~CoffeeScriptTerminal();
 
 private slots:
-    void on_scriptInput_returnPressed();
+    void clearLog();
+    void execFile(const QString& file);
 
+    void on_scriptInput_returnPressed();
     void on_pushButton_2_clicked();
 
 private:

@@ -1,8 +1,7 @@
 #include "coffeeframebufferbaseclass.h"
 
-CoffeeFramebufferBaseClass::CoffeeFramebufferBaseClass()
+CoffeeFramebufferBaseClass::CoffeeFramebufferBaseClass(QObject *parent) : QObject(parent)
 {
-
 }
 
 GLuint CoffeeFramebufferBaseClass::allocTexture(int w, int h, gl::GLenum internal, gl::GLenum format, GLenum filtering,GLenum datatype)

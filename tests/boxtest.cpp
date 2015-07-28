@@ -3,11 +3,13 @@
 #include <QResizeEvent>
 #include <QKeyEvent>
 
-BoxTest::BoxTest(CoffeeRenderer* renderer){
+BoxTest::BoxTest(QObject* parent,CoffeeRenderer* renderer) :
+    RenderLoop(parent)
+{
     _rendering_loop_init = [this,renderer](){
-        renderer->setSamples(4);
+//        renderer->setSamples(4);
         renderer->setSwapInterval(0);
-        renderer->updateRendererClearColor(glm::vec4(0,0.2,0.2,1));
+        renderer->setClearColor(0,0.2,0.2,1.0);
         cubescape = new CubeScape();
         QSize s = renderer->getCurrentFramebufferSize();
         cubescape->resize(s.width(), s.height());
@@ -42,17 +44,17 @@ BoxTest::~BoxTest()
 {
 }
 
-std::function<void ()> *BoxTest::getInit()
+std::function<void ()> *BoxTest::init()
 {
     return &_rendering_loop_init;
 }
 
-std::function<void ()> *BoxTest::getLoop()
+std::function<void ()> *BoxTest::loop()
 {
     return &_rendering_loop;
 }
 
-std::function<void ()> *BoxTest::getCleanup()
+std::function<void ()> *BoxTest::cleanup()
 {
     return &_rendering_loop_cleanup;
 }

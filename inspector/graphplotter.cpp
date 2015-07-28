@@ -62,6 +62,8 @@ void GraphPlotter::drawBackground(QPainter *painter, const QRectF &rect)
 
 void GraphPlotter::drawForeground(QPainter *painter, const QRectF &rect)
 {
+    if(values.size()==0)
+        return;
     painter->setPen(QPen(Qt::green));
     float xcrd_inc = (float)rect.width()/(float)values.size();
     float ycrd = -values.first();
