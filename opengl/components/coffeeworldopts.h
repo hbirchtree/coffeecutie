@@ -11,6 +11,7 @@ class CoffeeOmniLight;
 class CoffeeParticleSystem;
 class PhysicsObject;
 class CoffeePlayerController;
+class CoffeePhysicsEvent;
 
 class ScalarValue;
 class Vector4Value;
@@ -62,10 +63,9 @@ public:
 
     QObject* clearColorValue() const;
 
-signals:
-    void physicsObjectAdded(PhysicsObject* object);
-
 public slots:
+    void handlePhysEvent(CoffeePhysicsEvent* ev);
+
     void tickObjects(float d);
     void renderWorld();
     void unloadWorld();
@@ -80,7 +80,6 @@ public slots:
     void setSkybox(QObject *value);
     void setSkybox(CoffeeSkybox *value);
 
-    void injectPhysicsObject(PhysicsObject* object);
     void addObject(CoffeeObject* object);
     void addObject(QObject* object);
     void addParticleSystem(CoffeeParticleSystem* system);
@@ -111,6 +110,9 @@ private:
     bool m_loadedState = false;
 
     QVector<QMetaObject::Connection> connections;
+
+signals:
+    void physicsEventReceived(CoffeePhysicsEvent* ev); //only sent to Bullet
 };
 
 #endif // COFFEEWORLDOPTS_H

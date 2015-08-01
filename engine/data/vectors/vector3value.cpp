@@ -75,6 +75,13 @@ uint32_t Vector3Value::getVectorDataSize() const
     return sizeof(glm::vec3);
 }
 
+glm::vec3 Vector3Value::fromRawData(uint32_t size, void *data)
+{
+    glm::vec3 r;
+    memcpy(&r,data,size);
+    return r;
+}
+
 void Vector3Value::mathMultiply(const QVariantList &vals)
 {
     if(vals.size()!=3){

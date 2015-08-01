@@ -44,6 +44,9 @@ public:
     const void* getVectorData();
     uint32_t getVectorDataSize()const;
 
+    //Static, general-purpose functions
+    static glm::vec3 fromRawData(uint32_t size, void* data);
+
 signals:
     void valueChanged();
     void velocityChanged();

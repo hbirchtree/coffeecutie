@@ -30,3 +30,8 @@ CoffeeGameEditor::~CoffeeGameEditor()
 {
     delete ui;
 }
+
+void CoffeeGameEditor::on_actionQuit_triggered()
+{
+    requestShutdown();
+}

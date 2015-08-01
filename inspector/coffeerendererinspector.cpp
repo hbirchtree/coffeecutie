@@ -48,7 +48,7 @@ void CoffeeRendererInspector::plotGraph(float frametime)
     m_sysinfo.updateData();
 
     setSysInfoField("Framerate (FPS)",QString("%1 FPS").arg(1/frametime));
-    setSysInfoField("Framerate (ms)",QString("%1ms").arg(frametime*1000.0));
+    setSysInfoField("Frametime (ms)",QString("%1ms").arg(frametime*1000.0));
 
     setSysInfoField("System threads",QString::number(m_sysinfo.getThreadCount()));
     setSysInfoField("Process priority",QString::number(m_sysinfo.getPriority()));

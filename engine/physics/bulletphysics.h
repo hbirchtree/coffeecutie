@@ -15,6 +15,7 @@ class btDefaultCollisionConfiguration;
 class btQuaternion;
 class btVector3;
 class btCollisionShape;
+class btRigidBody;
 
 class ScalarValue;
 class Vector3Value;
@@ -46,22 +47,19 @@ public:
 
     Q_INVOKABLE QString toString();
 signals:
-    void objectCollision(QPointer<PhysicsObject> o1, QPointer<PhysicsObject> o2);
+    void objectCollision(PhysicsObject* o1, PhysicsObject* o2);
     void physicsInitialized();
 
 public slots:
-    void setGravity(float x, float y, float z);
-
-    void updateObject(CoffeePhysicsEvent* event);
-
-    void addObject(PhysicsObject* object);
-    void removeObject(void* pointer);
-    void removeObject(PhysicsObject* object);
+    void handlePhysicsEvent(CoffeePhysicsEvent* event);
     void tickSimulation(float d);
-
     void run();
 
 private:
+    btRigidBody* createObject(CoffeePhysicsEvent* ev);
+    void updateObject(CoffeePhysicsEvent *event, btRigidBody *body);
+    void removeObject(PhysicsObject* obj);
+
     QEventLoop *evloop;
 
     glm::vec3 gravity;

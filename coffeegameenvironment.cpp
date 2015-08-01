@@ -111,11 +111,10 @@ void CoffeeGameEnvironment::createInspector()
     if(m_scriptEngine)
         m_terminal = new CoffeeScriptTerminal(0,m_scriptEngine);
 
-    connect(m_inspector,SIGNAL(showInformation()),m_information,SLOT(show()));
-    if(m_scriptEngine)
-        connect(m_inspector,SIGNAL(showTerminal()),m_terminal,SLOT(show()));
-
     m_editor = new CoffeeGameEditor(0,m_information,m_inspector,m_terminal);
+
+    connect(m_editor,&CoffeeGameEditor::requestShutdown,
+            this,&CoffeeGameEnvironment::shutdownEnvironment);
 }
 
 void CoffeeGameEnvironment::constructRenderer()
@@ -148,4 +147,12 @@ void CoffeeGameEnvironment::onRendererInit()
 {
     if(m_scriptEngine)
         m_scriptEngine->execFile(m_initScript);
+}
+
+void CoffeeGameEnvironment::shutdownEnvironment()
+{
+    if(m_rendererObject&&m_editor){
+        m_rendererObject->requestWindowClose();
+        m_editor->close();
+    }
 }

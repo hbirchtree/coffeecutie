@@ -42,8 +42,7 @@ protected:
 
 protected slots:
     void onRendererInit();
-
-signals:
+    void shutdownEnvironment(); //This is necessary to shut down both the game and the editor
 
 public slots:
     void setInspect(bool inspect);

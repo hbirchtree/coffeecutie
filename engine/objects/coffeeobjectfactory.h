@@ -33,31 +33,6 @@ public:
     QList<CoffeeWorldOpts*> importObjects(QString file,
                                           QObject *parent);
 
-    static glm::vec3 varListToVec3(const QVariantList &d);
-    static glm::quat varListToQuat(const QVariantList &d);
-
-private:
-//    static CoffeeWorldOpts* createWorld(const QString &key,
-//                                        const QVariantMap &data,
-//                                        CoffeeAssetStorage *assets,
-//                                        QObject* parent);
-//    static CoffeeCamera* createCamera(const QVariantMap &data,
-//                                      QObject* parent);
-//    static CoffeeOmniLight* createLight(const QVariantMap &data,
-//                                        QObject* parent);
-//    static CoffeeSkybox* createSkybox(const QVariantMap &data,
-//                                      CoffeeAssetStorage *assets,
-//                                      QObject* parent);
-//    static CoffeeParticleSystem* createParticleSystem(const QVariantMap &data,
-//                                                      CoffeeAssetStorage *assets,
-//                                                      QObject* parent);
-//    static CoffeeObject *createObject(const QVariantMap &data,
-//                                      CoffeeAssetStorage *assets,
-//                                      QObject *parent);
-
-    static glm::vec3 listToVec3(const QVariant &data);
-    static glm::vec4 listToVec4(const QVariant &data);
-    static QColor stringToColor(const QVariant &data);
 };
 
 #endif // COFFEEOBJECTFACTORY_H

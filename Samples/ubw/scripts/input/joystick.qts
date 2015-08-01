@@ -7,7 +7,7 @@ c_moveProp.type = PhysicsProperty.ActionApplyImpulse;
 var c_vec = new Vector3Value();
 c_vec.value = [0,100,0];
 c_moveProp.data = [c_vec];
-c_moveProp.addTarget(c_target);
+c_moveProp.targets = [c_target];
 c_target.modifyPhysics(c_moveProp);
 
 function axisReact(axe,val,diff){
@@ -65,5 +65,7 @@ function buttonReact(btn){
 
 var js1 = renderer.getJoystickDevice(0);
 
-js1.axisMoved.connect(axisReact);
-js1.buttonPressed.connect(buttonReact);
+if(js1!=null){
+	js1.axisMoved.connect(axisReact);
+	js1.buttonPressed.connect(buttonReact);
+}

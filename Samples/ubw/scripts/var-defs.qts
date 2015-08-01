@@ -25,6 +25,7 @@ var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
 
 //Some global variables for simplicity
 var world = _load_object_world(initData["world.world1"],coffeeroot,assets);
+world.objectName = "world1";
 var inputClock = new QTimer;
 var controller = new CoffeePlayerController;
 var surface = coffeeroot.evloop.createRenderSurface();

@@ -35,9 +35,10 @@ void CoffeeObjectExplorer::updateTreeWidgetItem(QObject *object,
     if(!object)
         return;
     QTreeWidgetItem* root;
-    if(objectsMapping.contains(object))
+    if(objectsMapping.contains(object)){
         root = objectsMapping.value(object);
-    else if(object->children().size()>0||object->metaObject()->propertyCount()>1){
+        root->setText(0,object->objectName());
+    }else if(object->children().size()>0||object->metaObject()->propertyCount()>1){
         root = new QTreeWidgetItem();
         root->setText(0,object->objectName());
         root->setText(1,object->metaObject()->className());

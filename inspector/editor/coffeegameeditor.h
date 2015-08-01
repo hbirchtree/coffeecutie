@@ -18,6 +18,12 @@ public:
                      QWidget* scripting);
     ~CoffeeGameEditor();
 
+signals:
+    void requestShutdown();
+
+private slots:
+    void on_actionQuit_triggered();
+
 private:
     Ui::CoffeeGameEditor *ui;
 };

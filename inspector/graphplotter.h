@@ -20,6 +20,13 @@ protected:
     QVector<float> values;
     void drawBackground(QPainter *painter, const QRectF &rect);
     void drawForeground(QPainter *painter, const QRectF &rect);
+
+private:
+    void drawFrametimeIndicator(QPainter* painter, const QColor &color,
+                                const QString& text, float height,
+                                const QRectF &rect);
+
+    double m_yscale = 2.0;
 };
 
 #endif // GRAPHPLOTTER_H

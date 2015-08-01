@@ -1,5 +1,9 @@
 #include "graphplotter.h"
 
+#include <QDebug>
+
+#define BOTTOM_OFFSET 5.0
+
 GraphPlotter::GraphPlotter(QObject *parent) : QGraphicsScene(parent)
 {
 
@@ -42,22 +46,20 @@ void GraphPlotter::drawBackground(QPainter *painter, const QRectF &rect)
     }
 
     //millisecond marks, 100, 33.2, 16.6, 0
-    painter->setPen(QPen(QColor(255,0,0,127)));
-    painter->drawLine(rect.left(),-100,rect.right(),-100);
-    painter->setPen(QPen(QColor(255,0,0,255)));
-    painter->drawText(rect.left(),-100,"100.0ms");
-    painter->setPen(QPen(QColor(255,0,0,127)));
-    painter->drawLine(rect.left(),-33.2,rect.right(),-33.2);
-    painter->setPen(QPen(QColor(255,0,0,255)));
-    painter->drawText(rect.left(),-33.2,"33.2ms");
-    painter->setPen(QPen(QColor(255,255,0,127)));
-    painter->drawLine(rect.left(),-16.6,rect.right(),-16.6);
-    painter->setPen(QPen(QColor(255,255,0,255)));
-    painter->drawText(rect.left(),-16.6,"16.6ms");
-    painter->setPen(QPen(QColor(0,0,255,127)));
-    painter->drawLine(rect.left(),0,rect.right(),0);
-    painter->setPen(QPen(QColor(0,0,255,255)));
-    painter->drawText(rect.left(),0,"0.0ms");
+    double bottomOffset = -BOTTOM_OFFSET;
+
+    drawFrametimeIndicator(painter,QColor(255,0,0,255),
+                           "100.0ms",
+                           rect.bottom()-100.0*m_yscale+bottomOffset,rect);
+    drawFrametimeIndicator(painter,QColor(255,0,0,255),
+                           "33.2ms",
+                           rect.bottom()-33.2*m_yscale+bottomOffset,rect);
+    drawFrametimeIndicator(painter,QColor(255,255,0,255),
+                           "16.6ms",
+                           rect.bottom()-16.6*m_yscale+bottomOffset,rect);
+    drawFrametimeIndicator(painter,QColor(0,0,255,255),
+                           "0.0ms",
+                           rect.bottom()+bottomOffset,rect);
 }
 
 void GraphPlotter::drawForeground(QPainter *painter, const QRectF &rect)
@@ -65,13 +67,30 @@ void GraphPlotter::drawForeground(QPainter *painter, const QRectF &rect)
     if(values.size()==0)
         return;
     painter->setPen(QPen(Qt::green));
+
     float xcrd_inc = (float)rect.width()/(float)values.size();
-    float ycrd = -values.first();
+    float ycrd = -values.first()*m_yscale+(float)rect.bottom()-BOTTOM_OFFSET;
     for(int i=0;i<values.size();i++){
+        float _ycrd = -values.at(i)*m_yscale+(float)rect.bottom()-BOTTOM_OFFSET;
         painter->drawLine(rect.left()+xcrd_inc*(float)i,
                           ycrd,
                           rect.left()+xcrd_inc*(float)(i+1),
-                          -values.at(i));
-        ycrd = -values.at(i);
+                          _ycrd);
+        ycrd = _ycrd;
     }
+}
+
+void GraphPlotter::drawFrametimeIndicator(QPainter *painter, const QColor& color,
+                                          const QString &text, float height,
+                                          const QRectF& rect)
+{
+    //Draw the line
+    QColor lineColor(color);
+    lineColor.setAlphaF(lineColor.alphaF()/2.0); //Line is more transparent
+    painter->setPen(QPen(lineColor));
+    painter->drawLine(rect.left(),height,rect.right(),height);
+
+    //Draw the label
+    painter->setPen(QPen(color));
+    painter->drawText(rect.left(),height,text);
 }

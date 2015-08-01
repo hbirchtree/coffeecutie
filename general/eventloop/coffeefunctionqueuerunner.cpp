@@ -4,7 +4,7 @@ void CoffeeFunctionQueueRunner::executeRunQueue()
 {
     if(runqueue.size()>0){
         QVector<std::function<void()>*> t_queue(runqueue);
-        for(auto f : t_queue){
+        for(std::function<void()>* f : t_queue){
             if(f){
                 (*f)();
                 delete f;

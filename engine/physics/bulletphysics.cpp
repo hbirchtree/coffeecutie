@@ -79,91 +79,38 @@ glm::vec3 BulletPhysics::convert_bt(const btVector3 &v)
     return glm::vec3((float)v.getX(),(float)v.getY(),(float)v.getZ());
 }
 
-void BulletPhysics::addObject(PhysicsObject *object)
-{
-    if(!object->getDescr())
-        return;
-    PhysicsDescriptor* desc = object->getDescr();
-    btCollisionShape* shape = nullptr;
-    switch(desc->shape()){
-    case PhysicsDescriptor::Shape_Box:
-        shape = new btBoxShape(convert_glm(
-                                   CoffeeObjectFactory::varListToVec3(desc->scale())));
-        break;
-    case PhysicsDescriptor::Shape_Sphere:
-        shape = new btSphereShape(desc->scale().at(0).toFloat());
-        break;
-    case PhysicsDescriptor::Shape_Cylinder:
-        shape = new btCylinderShape(convert_glm(
-                                        CoffeeObjectFactory::varListToVec3(desc->scale())));
-        break;
-    case PhysicsDescriptor::Shape_Capsule:
-        shape = new btCapsuleShape(desc->scale().at(0).toFloat(),
-                                   desc->scale().at(1).toFloat());
-        break;
-    case PhysicsDescriptor::Shape_Cone:
-        shape = new btConeShape(desc->scale().at(0).toFloat(),
-                                desc->scale().at(1).toFloat());
-        break;
-    case PhysicsDescriptor::Shape_StaticPlane:
-        shape = new btStaticPlaneShape(convert_glm(
-                                           CoffeeObjectFactory::varListToVec3(desc->normal())),
-                                       desc->scale().at(0).toFloat());
-        break;
-    default:
-        return;
-    }
-    m_collideshapes.push_back(shape);
+//void BulletPhysics::addObject(PhysicsObject *object)
+//{
+//    btRigidBody* rb = createObject();
 
-    glm::quat rot = CoffeeObjectFactory::varListToQuat(desc->orientation());
-    btDefaultMotionState* mstate = new btDefaultMotionState(btTransform(
-                                                                btQuaternion(rot.x,rot.y,rot.z,rot.w),
-                                    convert_glm(CoffeeObjectFactory::varListToVec3(desc->position()))));
-    btRigidBody::btRigidBodyConstructionInfo ci(desc->mass(),
-                                                mstate,
-                                                shape,
-                                                btVector3(0,0,0));
-    btRigidBody* rb = new btRigidBody(ci);
+//    rb->setUserPointer(object);
+//    object->setPhysicspointer(rb);
 
-//    rb->setAngularVelocity(
-//                convert_glm(CoffeeObjectFactory::varListToVec3(desc->inertia())));
-    rb->setFriction(desc->friction());
-    rb->setRestitution(desc->restitution());
+//}
 
-    rb->setUserPointer(object);
-    object->setPhysicspointer(rb);
+//void BulletPhysics::removeObject(void *pointer)
+//{
+//    if(pointer){
+//        m_dynamicsWorld->removeRigidBody((btRigidBody*)pointer);
+//        qDebug("Removed unparented physics object, instance=%p",
+//               this);
+//    }else
+//        qDebug("Failed to remove unparented physics object, instance=%p",
+//               this);
+//}
 
-    connect(object,SIGNAL(deleteObject(void*)),SLOT(removeObject(void*)));
-    connect(object,SIGNAL(propertyModified(CoffeePhysicsEvent*)),SLOT(updateObject(CoffeePhysicsEvent*)));
-
-    m_dynamicsWorld->addRigidBody(rb);
-//    qDebug("Object added to %s physics: %s",systemName().toStdString().c_str(),
-//           object->objectName().toStdString().c_str());
-}
-
-void BulletPhysics::removeObject(void *pointer)
-{
-    if(pointer){
-        m_dynamicsWorld->removeRigidBody((btRigidBody*)pointer);
-        qDebug("Removed unparented physics object, instance=%p",
-               this);
-    }else
-        qDebug("Failed to remove unparented physics object, instance=%p",
-               this);
-}
-
-void BulletPhysics::removeObject(PhysicsObject *object)
-{
-    if(object&&object->getPhysicspointer()){
-        m_dynamicsWorld->removeRigidBody((btRigidBody*)object->getPhysicspointer());
-        qDebug("Removed physics object: %s, instance=%p",
-               object->objectName().toStdString().c_str(),
-               this);
-    }else
-        qDebug("Failed to remove physics object: %s, instance=%p",
-               (object ? object->objectName().toStdString().c_str() : "unidentified"),
-               this);
-}
+//void BulletPhysics::removeObject(PhysicsObject *object)
+//{
+//    if(object&&object->getPhysicspointer()){
+//        m_dynamicsWorld->removeRigidBody((btRigidBody*)object->getPhysicspointer());
+//        qDebug("Removed physics object: %s, instance=%p",
+//               object->objectName().toStdString().c_str(),
+//               this);
+//    }else
+//        qDebug("Failed to remove physics object: %s, instance=%p",
+//               (object ? object->objectName().toStdString().c_str() : "unidentified"),
+//               this);
+//}
 
 void BulletPhysics::tickSimulation(float d)
 {
@@ -204,70 +151,146 @@ void BulletPhysics::run()
     evloop->exec();
 }
 
-void BulletPhysics::updateObject(CoffeePhysicsEvent *event)
+btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
 {
-    for(PhysicsObject* ev : *event->targetsList())
-        if(ev->getPhysicspointer()){
-            btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
-            switch(event->type()){
-            case CoffeePhysicsEvent::ActionSetTransform:{
-                btTransform pt = obj->getWorldTransform();
-                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-                pt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(1))));
-                obj->setWorldTransform(pt);
-                break;
-            }
-            case CoffeePhysicsEvent::ActionSetPosition:{
-                btTransform pt = obj->getWorldTransform();
-                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-                obj->setWorldTransform(pt);
-                break;
-            }
-            case CoffeePhysicsEvent::ActionSetAngularVelocity:
-                break;
-            case CoffeePhysicsEvent::ActionSetOrientation:{
-                btTransform rt = obj->getWorldTransform();
-                rt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(0))));
-                obj->setWorldTransform(rt);
-                break;
-            }
-            case CoffeePhysicsEvent::ActionApplyForce:{
-                obj->activate(true);
-                obj->applyCentralForce(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-                break;
-            }
-            case CoffeePhysicsEvent::ActionApplyRelativeForce:
-                break;
-            case CoffeePhysicsEvent::ActionApplyImpulse:{
-                obj->activate(true);
-                obj->applyCentralImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-                break;
-            }
-            case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
-                obj->activate(true);
-                obj->applyImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))),
-                                  convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(1))));
-                break;
-            }
-            case CoffeePhysicsEvent::ActionApplyTorque:{
-                obj->activate(true);
-                obj->applyTorque(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-                break;
-            }
-            case CoffeePhysicsEvent::ActionSetFriction:{
-//                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
-                obj->setFriction(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
-                break;
-            }
-            case CoffeePhysicsEvent::ActionSetRestitution:{
-//                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
-                obj->setRestitution(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
-                break;
-            }
-            default:
-                break;
-            }
-        }
+    //ev should not be null
+    //shape should not be NullShape
+    //intent should be creation
+    if(!(ev||
+         ev->getInt(CoffeePhysicsEvent::ShapeProperty)||
+         ev->intent()==CoffeePhysicsEvent::CreateIntent))
+        return nullptr;
+
+    CoffeePhysicsEvent::PhysicShape v_shape =
+            static_cast<CoffeePhysicsEvent::PhysicShape>
+            (ev->getInt(CoffeePhysicsEvent::ShapeProperty));
+    btVector3 scale =
+            convert_glm(ev->getVector3(CoffeePhysicsEvent::ScaleProperty));
+
+    btCollisionShape* shape = nullptr;
+
+    switch(v_shape){
+    case CoffeePhysicsEvent::SphereShape:
+        shape = new btSphereShape(scale.x());
+        break;
+    case CoffeePhysicsEvent::BoxShape:
+        shape = new btBoxShape(scale);
+        break;
+    case CoffeePhysicsEvent::CylinderShape:
+        shape = new btCylinderShape(scale);
+        break;
+    case CoffeePhysicsEvent::CapsuleShape:
+        shape = new btCapsuleShape(scale.x(),scale.y());
+        break;
+    case CoffeePhysicsEvent::ConeShape:
+        shape = new btConeShape(scale.x(),scale.y());
+        break;
+    case CoffeePhysicsEvent::StaticPlaneShape:
+        shape = new btStaticPlaneShape(
+                    convert_glm(ev->getVector3(CoffeePhysicsEvent::OrientationProperty)),
+                    (btScalar)ev->getScalar(CoffeePhysicsEvent::PlaneConstantProperty));
+        break;
+    default:
+        return nullptr; //TODO : Implement the other shapes
+    }
+    m_collideshapes.push_back(shape);
+
+    btTransform transform,comTransform;
+    transform.setOrigin(
+                convert_glm(ev->getVector3(CoffeePhysicsEvent::PositionProperty)));
+    transform.setRotation(
+                convert_glm(ev->getQuaternion(CoffeePhysicsEvent::OrientationProperty)));
+
+    comTransform.setOrigin(
+                convert_glm(ev->getVector3(CoffeePhysicsEvent::CMPositionProperty)));
+
+    btDefaultMotionState* mstate = new btDefaultMotionState(transform,comTransform);
+
+    btVector3 localInertia =
+            convert_glm(ev->getVector3(CoffeePhysicsEvent::LocalInertiaProperty));
+
+    btRigidBody::btRigidBodyConstructionInfo ci(ev->getScalar(CoffeePhysicsEvent::MassProperty),
+                                                mstate,
+                                                shape,
+                                                localInertia);
+
+    return new btRigidBody(ci);
+}
+
+void BulletPhysics::updateObject(CoffeePhysicsEvent *event,btRigidBody* body)
+{
+
+
+
+//    for(PhysicsObject* ev : *event->targetsList())
+//        if(ev->getPhysicspointer()){
+//            btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
+//            switch(event->type()){
+//            case CoffeePhysicsEvent::ActionSetTransform:{
+//                btTransform pt = obj->getWorldTransform();
+//                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
+//                pt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(1))));
+//                obj->setWorldTransform(pt);
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionSetPosition:{
+//                btTransform pt = obj->getWorldTransform();
+//                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
+//                obj->setWorldTransform(pt);
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionSetAngularVelocity:
+//                break;
+//            case CoffeePhysicsEvent::ActionSetOrientation:{
+//                btTransform rt = obj->getWorldTransform();
+//                rt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(0))));
+//                obj->setWorldTransform(rt);
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionApplyForce:{
+//                obj->activate(true);
+//                obj->applyCentralForce(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionApplyRelativeForce:
+//                break;
+//            case CoffeePhysicsEvent::ActionApplyImpulse:{
+//                obj->activate(true);
+//                obj->applyCentralImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
+//                obj->activate(true);
+//                obj->applyImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))),
+//                                  convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(1))));
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionApplyTorque:{
+//                obj->activate(true);
+//                obj->applyTorque(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionSetFriction:{
+////                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
+//                obj->setFriction(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
+//                break;
+//            }
+//            case CoffeePhysicsEvent::ActionSetRestitution:{
+////                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
+//                obj->setRestitution(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
+//                break;
+//            }
+//            default:
+//                break;
+//            }
+    //        }
+}
+
+void BulletPhysics::removeObject(PhysicsObject *obj)
+{
+    if(!obj||!obj->getPhysicspointer())
+        return;
+    m_dynamicsWorld->removeRigidBody((btRigidBody*)obj->getPhysicspointer());
 }
 
 void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timestep)
@@ -293,11 +316,11 @@ void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timeste
     //Report collisions
     if(wrld->getWorldUserInfo()){
         BulletPhysics* ct = (BulletPhysics*)wrld->getWorldUserInfo();
-        for(int i=0;i<wrld->getDispatcher()->getNumManifolds();i++){
+        for(uint32_t i=0;i<wrld->getDispatcher()->getNumManifolds();i++){
             btPersistentManifold* man = wrld->getDispatcher()->getManifoldByIndexInternal(i);
             btRigidBody* b1 = (btRigidBody*)man->getBody0();
             btRigidBody* b2 = (btRigidBody*)man->getBody1();
-            for(int j=0;j<man->getNumContacts();j++){
+            for(uint32_t j=0;j<man->getNumContacts();j++){
                 btManifoldPoint mp = man->getContactPoint(i);
                 if(mp.getDistance()<0.f)
                     if(b1->getUserPointer()&&b2->getUserPointer())
@@ -338,11 +361,37 @@ QString BulletPhysics::toString()
             .arg(getObjectsCount());
 }
 
-void BulletPhysics::setGravity(float x, float y, float z)
+void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
 {
-    gravity.x = x;
-    gravity.y = y;
-    gravity.z = z;
-    qDebug() << QStringFunctions::toString(gravity);
-    m_dynamicsWorld->setGravity(convert_glm(gravity));
+    switch(event->intent()){
+    case CoffeePhysicsEvent::CreateIntent:{
+        if(event->physicsTargets().size()!=1)
+            qFatal("Unsupported operation: Assigning same btRigidBody to several PhysicsObject instances");
+        PhysicsObject* cobj = event->physicsTargets().first();
+        btRigidBody* body = createObject(event);
+        if(!body)
+            qFatal("Failed to create physics-object: Invalid parameters");
+        body->setUserPointer(cobj);
+        cobj->setPhysicspointer(body);
+
+        connect(cobj,SIGNAL(deleteObject(void*)),SLOT(removeObject(void*)));
+        connect(cobj,SIGNAL(propertyModified(CoffeePhysicsEvent*)),
+                SLOT(updateObject(CoffeePhysicsEvent*)));
+
+        m_dynamicsWorld->addRigidBody(body);
+
+    }break;
+    case CoffeePhysicsEvent::DefineIntent:
+        for(PhysicsObject* o : event->physicsTargets())
+            updateObject(event,(btRigidBody*)o->getPhysicspointer());
+        break;
+    case CoffeePhysicsEvent::RemoveIntent:
+        for(PhysicsObject* o : event->physicsTargets())
+            removeObject(o);
+        break;
+    default:
+        break;
+    }
+    if(event->dispose())
+        event->deleteLater();
 }

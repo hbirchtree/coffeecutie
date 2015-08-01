@@ -21,8 +21,8 @@ CoffeeWorldOpts::CoffeeWorldOpts(QObject *parent) : QObject(parent)
     physicsThread->setObjectName("physics-thread");
     physics->setObjectName("bullet");
     physics->moveToThread(physicsThread);
-    connect(this,SIGNAL(physicsObjectAdded(PhysicsObject*)),
-            physics.data(),SLOT(addObject(PhysicsObject*)),
+    connect(this,SIGNAL(physicsEventReceived(CoffeePhysicsEvent*)),
+            physics.data(),SLOT(handlePhysicsEvent(CoffeePhysicsEvent*)),
             Qt::QueuedConnection);
     connect(physicsThread,SIGNAL(started()),
             physics.data(),SLOT(run()));
@@ -62,11 +62,6 @@ void CoffeeWorldOpts::setCameraQObject(QObject *camera)
     CoffeeCamera* p = qobject_cast<CoffeeCamera*>(camera);
     if(p)
         this->camera = p;
-}
-
-void CoffeeWorldOpts::injectPhysicsObject(PhysicsObject *object)
-{
-    physicsObjectAdded(object); //kind of a hack on our current ways, but it will work.
 }
 
 void CoffeeWorldOpts::addLight(CoffeeOmniLight* light)
@@ -118,11 +113,6 @@ void CoffeeWorldOpts::setSkybox(QObject *value)
 
 void CoffeeWorldOpts::addObject(CoffeeObject *object)
 {
-    if(object->physics()){
-        connect(object->physics(),SIGNAL(deleteObject(void*)),
-                physics,SLOT(removeObject(void*)),Qt::QueuedConnection);
-        physicsObjectAdded(object->physics());
-    }
     objects.append(object);
 }
 
@@ -280,4 +270,9 @@ QObject *CoffeeWorldOpts::getSkyboxQObject()
 QObject *CoffeeWorldOpts::clearColorValue() const
 {
     return clearColor;
+}
+
+void CoffeeWorldOpts::handlePhysEvent(CoffeePhysicsEvent *ev)
+{
+    physicsEventReceived(ev);
 }

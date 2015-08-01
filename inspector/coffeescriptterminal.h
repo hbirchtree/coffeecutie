@@ -23,7 +23,6 @@ private slots:
     void execFile(const QString& file);
 
     void on_scriptInput_returnPressed();
-    void on_pushButton_2_clicked();
 
 private:
     void appendLog(const QString &command, const QString &output);

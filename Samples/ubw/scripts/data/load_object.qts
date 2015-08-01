@@ -27,7 +27,8 @@ function _phys_translate_string_shape(str){
 
 function _load_object_physics(src,parent){
 	var phys = new PhysicsObject(parent);
-	var desc = new PhysicsDescriptor(phys);
+	var desc = new CoffeePhysicsEvent(phys);
+	desc.dispose = true;
 
 	for(p in src){
 		switch(p){
@@ -83,7 +84,6 @@ function _load_object_physics(src,parent){
 	}
 	var shape = _phys_translate_string_shape(src["shape"]);
 
-	phys.setDescr(desc);
 	return phys;
 }
 

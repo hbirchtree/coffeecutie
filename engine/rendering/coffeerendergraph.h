@@ -22,10 +22,13 @@ public:
 
 class CoffeeRenderGraph : public QObject
 {
+    Q_PROPERTY(bool continuousRender READ continuousRender WRITE setContinuousRender)
+
     Q_OBJECT
 public:
     CoffeeRenderGraph(QObject *parent);
 
+    bool continuousRender() const;
 
 signals:
     void submitRenderCall(std::function<void()> *func);
@@ -41,6 +44,8 @@ public slots:
 
     void setRenderSurface(CoffeeOutputSurface *renderSurface);
 
+    void setContinuousRender(bool continuousRender);
+
 private:
     QAtomicInt m_taskCount;
     //We store a connection to avoid updating pointers
@@ -51,6 +56,7 @@ private:
 
     CoffeeFramebufferBaseClass* m_renderTarget;
     CoffeeOutputSurface* m_renderSurface;
+    bool m_continuousRender = false;
 };
 
 #endif // COFFEERENDERGRAPH_H

@@ -15,6 +15,11 @@ CoffeeRenderGraph::CoffeeRenderGraph(QObject *parent) : QObject(parent)
 {
 }
 
+bool CoffeeRenderGraph::continuousRender() const
+{
+    return m_continuousRender;
+}
+
 void CoffeeRenderGraph::setRenderTarget(CoffeeFramebufferBaseClass *fb)
 {
     m_renderTarget = fb;
@@ -30,11 +35,10 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
                               SLOT(queueFunction(std::function<void()>*))));
 
     //Set up the rendering surface, mainly resizing its framebuffer to the whole viewport
-    std::function<void()> *func = new std::function<void()>([=](){
-        m_renderSurface->getFramebuffer()->
-                resizeViewport(renderer->getCurrentFramebufferSize());
-    });
-    submitRenderCall(func);
+//    std::function<void()> *func = new std::function<void()>([=](){
+//        m_renderSurface->getFramebuffer()->createFramebuffer(renderer->getCurrentFramebufferSize(),1);
+//    });
+//    submitRenderCall(func);
     //It also needs to react to resizing
     m_renderConnections.
             append(connect(renderer,
@@ -69,22 +73,26 @@ void CoffeeRenderGraph::queueRender()
     submitRenderCall(func);
 
     func = new std::function<void()>([=](){
-        for(CoffeeRenderGroup* _grp : m_renderGroups)
+        for(CoffeeRenderGroup* _grp : m_renderGroups.values())
             for(CoffeeObject* o : _grp->m_objects)
                 o->render();
     });
     submitRenderCall(func);
 
     func = new std::function<void()>([=](){
+        if(m_renderTarget)
             m_renderTarget->unbindFramebufferWrite();
-//            if(m_renderSurface)
-//                m_renderSurface->render();
+        if(m_renderSurface)
+            m_renderSurface->render();
     });
     submitRenderCall(func);
+
+    func = nullptr;
 }
 
 void CoffeeRenderGraph::includeObject(CoffeeObject *obj)
 {
+    qDebug() << "Include";
     if(m_renderGroups.contains(obj->_shader_obj())){
         m_renderGroups.value(obj->_shader_obj())->m_objects.append(obj);
     }else{
@@ -97,5 +105,10 @@ void CoffeeRenderGraph::includeObject(CoffeeObject *obj)
 void CoffeeRenderGraph::setRenderSurface(CoffeeOutputSurface *renderSurface)
 {
     m_renderSurface = renderSurface;
+}
+
+void CoffeeRenderGraph::setContinuousRender(bool continuousRender)
+{
+    m_continuousRender = continuousRender;
 }
 

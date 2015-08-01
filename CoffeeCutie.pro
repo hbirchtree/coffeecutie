@@ -97,7 +97,8 @@ SOURCES += main.cpp \
     opengl/context/glfwnativefunctions.cpp \
     inspector/editor/coffeegameeditor.cpp \
     coffeegameenvironment.cpp \
-    inspector/coffeeobjectexplorer.cpp
+    inspector/coffeeobjectexplorer.cpp \
+    general/data/coffeepropertycontainer.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -185,7 +186,8 @@ HEADERS += \
     opengl/context/glfwnativefunctions.h \
     inspector/editor/coffeegameeditor.h \
     coffeegameenvironment.h \
-    inspector/coffeeobjectexplorer.h
+    inspector/coffeeobjectexplorer.h \
+    general/data/coffeepropertycontainer.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
