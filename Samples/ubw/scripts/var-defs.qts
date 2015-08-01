@@ -71,4 +71,3 @@ world.lights[0].attenuation = 0.003;
 var renderTimer = new QTimer();
 renderTimer.interval = 5;
 renderTimer.timeout.connect(graph.queueRender);
-renderTimer.start();

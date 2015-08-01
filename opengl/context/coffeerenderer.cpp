@@ -75,7 +75,7 @@ int CoffeeRenderer::loop(){
 
         frametime = getLoopTime();
         pollEvents();
-        (*_loop)();
+//        (*_loop)();
         executeRunQueue();
         swapBuffers();
         setLatestFrameTime(getLoopTime()-frametime);

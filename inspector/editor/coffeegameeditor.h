@@ -24,6 +24,8 @@ signals:
 private slots:
     void on_actionQuit_triggered();
 
+    void on_actionToolbar_toggled(bool arg1);
+
 private:
     Ui::CoffeeGameEditor *ui;
 };

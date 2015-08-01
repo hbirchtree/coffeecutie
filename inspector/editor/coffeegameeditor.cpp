@@ -24,6 +24,8 @@ CoffeeGameEditor::CoffeeGameEditor(QWidget *parent, QWidget *info, QWidget *insp
     viewSplit->setOrientation(Qt::Vertical);
     ui->centralwidget->layout()->addWidget(inspectSplit);
     ui->centralwidget->layout()->setContentsMargins(0,0,0,0);
+
+    ui->actionToolbar->setChecked(true);
 }
 
 CoffeeGameEditor::~CoffeeGameEditor()
@@ -34,4 +36,9 @@ CoffeeGameEditor::~CoffeeGameEditor()
 void CoffeeGameEditor::on_actionQuit_triggered()
 {
     requestShutdown();
+}
+
+void CoffeeGameEditor::on_actionToolbar_toggled(bool arg1)
+{
+    ui->toolBar->setVisible(arg1);
 }

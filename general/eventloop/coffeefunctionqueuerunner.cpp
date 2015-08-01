@@ -1,5 +1,7 @@
 #include "coffeefunctionqueuerunner.h"
 
+#include <QDebug>
+
 void CoffeeFunctionQueueRunner::executeRunQueue()
 {
     if(runqueue.size()>0){
