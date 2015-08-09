@@ -80,6 +80,7 @@ public:
     void bindUniformBufferRange(GLuint uboIndex, GLuint uboHandle, uint32_t offset, uint32_t size);
 
 public slots:
+    void load();
     void unload();
 
     void setVerbosity(uint verbosity);

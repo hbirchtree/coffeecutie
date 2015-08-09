@@ -215,14 +215,14 @@ void CoffeeWorldOpts::renderWorld()
 void CoffeeWorldOpts::unloadWorld()
 {
     //We queue it up for the render-thread to execute it. (Otherwise, it may run on the script thread or elsewhere (!))
-    std::function<void()> *fp = new std::function<void()>([=](){
+    std::function<void()> fp = [=](){
         for(CoffeeObject* o : this->getObjects()){
             o->unload();
         }
 
         for(CoffeeParticleSystem* s : particles)
             s->unload();
-    });
+    };
     renderer->queueFunction(fp);
     setLoadedState(false);
 }

@@ -9,14 +9,12 @@ CoffeeFramebufferObject::CoffeeFramebufferObject(QObject *parent) :
 
 void CoffeeFramebufferObject::createFramebuffer(QSize windowSize, uint sampling)
 {
-    this->sampling = sampling;
     this->renderSize = windowSize*sampling;
     CoffeeFramebufferBaseClass::createFramebuffer(windowSize);
 }
 
 void CoffeeFramebufferObject::setSize(QSize windowSize, uint sampling)
 {
-    this->sampling = sampling;
     this->renderSize = windowSize*sampling;
     m_ready = false;
 }
@@ -27,11 +25,6 @@ void CoffeeFramebufferObject::cleanup()
     glDeleteTextures(textureHandles.size(),textureHandles.data());
 }
 
-uint CoffeeFramebufferObject::getSampling() const
-{
-    return sampling;
-}
-
 void CoffeeFramebufferObject::bindFramebufferRead()
 {
     glBindFramebuffer(GL_READ_FRAMEBUFFER,framebufferHandle);
@@ -40,16 +33,6 @@ void CoffeeFramebufferObject::bindFramebufferRead()
 void CoffeeFramebufferObject::bindFramebufferWrite()
 {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER,framebufferHandle);
-}
-
-void CoffeeFramebufferObject::unbindFramebufferRead()
-{
-    glBindFramebuffer(GL_READ_FRAMEBUFFER,0);
-}
-
-void CoffeeFramebufferObject::unbindFramebufferWrite()
-{
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
 }
 
 bool CoffeeFramebufferObject::ready() const
@@ -70,20 +53,6 @@ void CoffeeFramebufferObject::bindFramebuffer()
 void CoffeeFramebufferObject::setNumTextures(uint textures)
 {
     this->numTextures = textures;
-}
-
-void CoffeeFramebufferObject::resizeViewport(QSize windowSize)
-{
-    this->windowSize = windowSize;
-    this->renderSize = windowSize*sampling;
-
-    resizeFramebuffer();
-}
-
-void CoffeeFramebufferObject::updateSampling(uint sampling)
-{
-    this->sampling = sampling;
-    m_ready = false;
 }
 
 void CoffeeFramebufferObject::setReady(bool ready)

@@ -2,7 +2,7 @@ function inputReact(event){
 	switch(event.type){
 	case CoffeeInputEventType.Mouse:{
 		if(renderer.mouseGrabbing){
-			renderer.setMousePos(0,0);
+			renderer.setMousePosition(0,0);
 			controller.mouseSetRotation(event.pos.x,event.pos.y);
 		}
 		if(event.qtype==QEvent.MouseButtonPress){

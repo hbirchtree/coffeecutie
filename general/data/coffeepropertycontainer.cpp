@@ -1,5 +1,7 @@
 #include "coffeepropertycontainer.h"
 
+#include <QDebug>
+
 CoffeePropertyContainer::CoffeePropertyContainer(QObject *parent) : QObject(parent)
 {
 }
@@ -73,8 +75,9 @@ uint32_t CoffeePropertyContainer::getFreeId()
     //Quite naive, does not find IDs unless it is greater than all others.
 
     uint32_t greatest = 0;
-    for(auto it = m_properties.begin();it!=m_properties.end();it++)
+    for(auto it = m_properties.begin();it!=m_properties.end();it++){
         if(it->first > greatest)
             greatest = it->first;
-    return greatest;
+    }
+    return greatest+1;
 }

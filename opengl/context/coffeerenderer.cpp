@@ -55,14 +55,14 @@ int CoffeeRenderer::loop(){
     }
     qDebug("Initializing loop");
 
-    std::function<void()> *_init = m_loop->init();
+    std::function<void()> _init = *(m_loop->init());
     std::function<void()> *_loop = m_loop->loop();
-    std::function<void()> *_cleanup = m_loop->cleanup();
+    std::function<void()> _cleanup = *(m_loop->cleanup());
 
     double frametime = 0.0;
 
     qDebug("Running initialization function");
-    (*_init)();
+    _init();
 
     {
         emit winFrameBufferResize(QResizeEvent(getWindowDimensions(),getWindowDimensions()));
@@ -75,6 +75,7 @@ int CoffeeRenderer::loop(){
 
         frametime = getLoopTime();
         pollEvents();
+        updateJoysticks();
 //        (*_loop)();
         executeRunQueue();
         swapBuffers();
@@ -82,7 +83,7 @@ int CoffeeRenderer::loop(){
         contextReportFrametime(getLatestFrameTime());
     }
     qDebug("Running cleanup function");
-    (*_cleanup)();
+    _cleanup();
 
     qDebug("Estimated uptime: %.1f seconds",getLoopTime());
     return 0;
@@ -104,7 +105,7 @@ void CoffeeRenderer::flushPipeline(){
 
 void CoffeeRenderer::setClearColor(float r, float g, float b, float a)
 {
-    queueFunction(new std::function<void()>([=](){
+    queueFunction([=](){
         glClearColor(r,g,b,a);
-    }));
+    });
 }

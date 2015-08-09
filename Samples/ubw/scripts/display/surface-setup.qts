@@ -29,3 +29,7 @@ graph.includeObject(world.blade);
 graph.setRenderTarget(surface.framebuffer);
 graph.setRenderSurface(surface);
 graph.setRenderer(renderer);
+
+var renderTimer = new QTimer();
+renderTimer.interval = 50;
+renderTimer.timeout.connect(graph.queueRender);

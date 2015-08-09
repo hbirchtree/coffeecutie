@@ -1,31 +1,28 @@
 var cameraThrottle = 1.0;
 
 //Input should only interact with the controller-object
-var c_target = world.blade.physics;
-var c_moveProp = new CoffeePhysicsEvent();
-c_moveProp.type = PhysicsProperty.ActionApplyImpulse;
-var c_vec = new Vector3Value();
-c_vec.value = [0,100,0];
-c_moveProp.data = [c_vec];
-c_moveProp.targets = [c_target];
-c_target.modifyPhysics(c_moveProp);
+//var c_target = world.blade.physics;
+//var c_moveProp = new CoffeePhysicsEvent();
+//c_moveProp.intent = PhysicsProperty.ActionApplyImpulse;
+//var c_vec = new Vector3Value();
+//c_vec.value = [0,100,0];
+//c_moveProp.data = [c_vec];
+//c_moveProp.targets = [c_target];
+//c_target.modifyPhysics(c_moveProp);
 
 function axisReact(axe,val,diff){
 	switch(axe){
-	case 6:{
-//		val = val * cameraThrottle;
-//		controller.addSpeedRight(coffeeroot.evloop.world.camera.right,[val*5,val*5,val*5]);
-		c_vec.value = [val,0,0];
-		c_target.modifyPhysics(c_moveProp);
-		break;
-	}
-	case 7:{
-//		val = val * cameraThrottle;
-//		controller.addSpeedForward(coffeeroot.evloop.world.camera.forward,[-val*5,-val*5,-val*5]);
-		c_vec.value = [0,0,val];
-		c_target.modifyPhysics(c_moveProp);
-		break;
-	}
+//	case 6:{
+//		c_vec.value = [val,0,0];
+//		c_moveProp.setVector3();
+//		c_target.modifyPhysics(c_moveProp);
+//		break;
+//	}
+//	case 7:{
+//		c_vec.value = [0,0,val];
+//		c_target.modifyPhysics(c_moveProp);
+//		break;
+//	}
 	case 3:{
 		if(!((val<0&&diff>0)||(val>0&&diff<0))){
 			controller.joystickSetRotationYaw(Math.pow(val,3)*100);
@@ -65,7 +62,10 @@ function buttonReact(btn){
 
 var js1 = renderer.getJoystickDevice(0);
 
-if(js1!=null){
+if(js1==null){
+	print("No joystick device detected!");
+}else{
+	print("Joystick attached:",js1.deviceName);
 	js1.axisMoved.connect(axisReact);
 	js1.buttonPressed.connect(buttonReact);
 }

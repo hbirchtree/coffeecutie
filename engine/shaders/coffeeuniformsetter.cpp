@@ -30,7 +30,7 @@ void CoffeeUniformSetter::bindTextures()
 {
     for(TextureMapping* m : textures){
         if(!m->loaded){
-            m->texture->loadTexture();
+            m->texture->load();
             m->loaded = true;
         }
         int index = textures.indexOf(m);

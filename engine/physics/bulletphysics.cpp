@@ -79,39 +79,6 @@ glm::vec3 BulletPhysics::convert_bt(const btVector3 &v)
     return glm::vec3((float)v.getX(),(float)v.getY(),(float)v.getZ());
 }
 
-//void BulletPhysics::addObject(PhysicsObject *object)
-//{
-//    btRigidBody* rb = createObject();
-
-//    rb->setUserPointer(object);
-//    object->setPhysicspointer(rb);
-
-//}
-
-//void BulletPhysics::removeObject(void *pointer)
-//{
-//    if(pointer){
-//        m_dynamicsWorld->removeRigidBody((btRigidBody*)pointer);
-//        qDebug("Removed unparented physics object, instance=%p",
-//               this);
-//    }else
-//        qDebug("Failed to remove unparented physics object, instance=%p",
-//               this);
-//}
-
-//void BulletPhysics::removeObject(PhysicsObject *object)
-//{
-//    if(object&&object->getPhysicspointer()){
-//        m_dynamicsWorld->removeRigidBody((btRigidBody*)object->getPhysicspointer());
-//        qDebug("Removed physics object: %s, instance=%p",
-//               object->objectName().toStdString().c_str(),
-//               this);
-//    }else
-//        qDebug("Failed to remove physics object: %s, instance=%p",
-//               (object ? object->objectName().toStdString().c_str() : "unidentified"),
-//               this);
-//}
-
 void BulletPhysics::tickSimulation(float d)
 {
     //We know that, as long as the object is created, there is an instance of btDynamicsWorld
@@ -185,11 +152,13 @@ btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
     case CoffeePhysicsEvent::ConeShape:
         shape = new btConeShape(scale.x(),scale.y());
         break;
-    case CoffeePhysicsEvent::StaticPlaneShape:
+    case CoffeePhysicsEvent::StaticPlaneShape:{
         shape = new btStaticPlaneShape(
                     convert_glm(ev->getVector3(CoffeePhysicsEvent::OrientationProperty)),
                     (btScalar)ev->getScalar(CoffeePhysicsEvent::PlaneConstantProperty));
+        qDebug() << "Plane constant:" << ev->getScalar(CoffeePhysicsEvent::PlaneConstantProperty);
         break;
+    }
     default:
         return nullptr; //TODO : Implement the other shapes
     }
@@ -219,8 +188,6 @@ btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
 
 void BulletPhysics::updateObject(CoffeePhysicsEvent *event,btRigidBody* body)
 {
-
-
 
 //    for(PhysicsObject* ev : *event->targetsList())
 //        if(ev->getPhysicspointer()){
@@ -374,9 +341,9 @@ void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
         body->setUserPointer(cobj);
         cobj->setPhysicspointer(body);
 
-        connect(cobj,SIGNAL(deleteObject(void*)),SLOT(removeObject(void*)));
+        connect(cobj,SIGNAL(deleteObject(void*)),SLOT(removePhysicsObject(void*)));
         connect(cobj,SIGNAL(propertyModified(CoffeePhysicsEvent*)),
-                SLOT(updateObject(CoffeePhysicsEvent*)));
+                SLOT(handlePhysicsEvent(CoffeePhysicsEvent*)));
 
         m_dynamicsWorld->addRigidBody(body);
 
@@ -394,4 +361,9 @@ void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
     }
     if(event->dispose())
         event->deleteLater();
+}
+
+void BulletPhysics::removePhysicsObject(void *p)
+{
+    m_dynamicsWorld->removeRigidBody((btRigidBody*)p);
 }

@@ -32,7 +32,7 @@ var surface = coffeeroot.evloop.createRenderSurface();
 
 //coffeeroot.evloop.world = world;
 
-//world.connectSignals(controller);
+world.connectSignals(controller);
 
 world.setRenderer(renderer);
 surface.shader = assets.shaders.deferred_display;
@@ -63,11 +63,11 @@ world.lights[0].attenuation = 0.003;
 	}
 }
 
-//llll
-
 //Set up input and etc.
 #inc "input/event-handling.qts"
 
-var renderTimer = new QTimer();
-renderTimer.interval = 5;
-renderTimer.timeout.connect(graph.queueRender);
+//renderTimer.start();
+renderer.contextReportFrametime.connect(function(t){
+	print("Rendering");
+	graph.queueRender();
+});

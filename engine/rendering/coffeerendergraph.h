@@ -31,7 +31,7 @@ public:
     bool continuousRender() const;
 
 signals:
-    void submitRenderCall(std::function<void()> *func);
+    void submitRenderCall(std::function<void()> func);
 
 public slots:
     void setRenderTarget(CoffeeFramebufferBaseClass* fb);

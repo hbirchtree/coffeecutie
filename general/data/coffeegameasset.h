@@ -41,6 +41,9 @@ public:
         return false;
     }
 
+    virtual void load() = 0;
+    virtual void unload() = 0;
+
 private:
     int consumers = 0;
     int allocations = 0;

@@ -52,6 +52,7 @@ signals:
 
 public slots:
     void handlePhysicsEvent(CoffeePhysicsEvent* event);
+    void removePhysicsObject(void* p);
     void tickSimulation(float d);
     void run();
 

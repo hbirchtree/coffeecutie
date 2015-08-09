@@ -31,6 +31,12 @@ void CoffeeGLFWContextManager::pollEvents()
     glfwPollEvents();
 }
 
+void CoffeeGLFWContextManager::updateJoysticks()
+{
+    for(CoffeeJoystick* js : m_joysticks)
+        js->update();
+}
+
 void CoffeeGLFWContextManager::setLatestFrameTime(double time)
 {
     this->m_frameTime = time;
@@ -220,7 +226,7 @@ void CoffeeGLFWContextManager::setWindowTitle(const QString &value)
         glfwSetWindowTitle(window,value.toStdString().c_str());
 }
 
-void CoffeeGLFWContextManager::queueFunction(std::function<void ()> *func)
+void CoffeeGLFWContextManager::queueFunction(std::function<void()> func)
 {
     CoffeeFunctionQueueRunner::queueFunction(func);
 }
@@ -296,9 +302,9 @@ void CoffeeGLFWContextManager::requestWindowClose(){
 
 void CoffeeGLFWContextManager::setSwapInterval(uint interval)
 {
-    queueFunction(new std::function<void()>([=](){
+    queueFunction([=](){
         glfwSwapInterval(interval);
-    }));
+    });
 }
 
 double CoffeeGLFWContextManager::getLoopTime() const
@@ -439,7 +445,9 @@ int CoffeeGLFWContextManager::init(){
 QObject *CoffeeGLFWContextManager::getJoystickDevice(uint index)
 {
     if(glfwJoystickPresent(index)){
-        return new CoffeeJoystick(this,index);
+        CoffeeJoystick* js = new CoffeeJoystick(this,index);
+        m_joysticks.append(js);
+        return js;
     }else{
         return nullptr;
     }

@@ -60,7 +60,7 @@ void CoffeeParticleSystem::render()
 void CoffeeParticleSystem::unload()
 {
     m_shader->unload();
-    texture->unloadTexture();
+    texture->unload();
     transform->unload();
 
     setBaked(false);
@@ -68,7 +68,7 @@ void CoffeeParticleSystem::unload()
 
 void CoffeeParticleSystem::load()
 {
-    texture->loadTexture();
+    texture->load();
     m_shader->buildProgram();
     transform->load();
 

@@ -69,7 +69,8 @@ public slots:
     void setBlendMode(GLenum blendMode);
     void setShadingMode(GLenum shadingMode);
 
-    void unloadData();
+    void load();
+    void unload();
 
 private:
     QHash<CoffeeTexture::CoffeeTextureType,QPointer<CoffeeTexture> > textures;

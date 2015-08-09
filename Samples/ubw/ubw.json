@@ -176,6 +176,7 @@
 				"model.scale": [0.2,0.2,0.2],
 				"physics":{
 					"shape": "static_plane",
+					"plane-constant": 2,
 					"position": [0,-3,0],
 					"normal": [0,1,0],
 					"mass": 0,

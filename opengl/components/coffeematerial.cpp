@@ -239,9 +239,9 @@ QVariantList CoffeeMaterial::textureTypes() const
     return l;
 }
 
-void CoffeeMaterial::unloadData(){
+void CoffeeMaterial::unload(){
     for(QPointer<CoffeeTexture> text : textures)
-        text->unloadTexture();
+        text->unload();
 }
 
 void CoffeeMaterial::setWireframe(bool wireframe)
@@ -262,4 +262,9 @@ void CoffeeMaterial::setBlendMode(GLenum blendMode)
 void CoffeeMaterial::setShadingMode(GLenum shadingMode)
 {
     m_shadingMode = shadingMode;
+}
+
+void CoffeeMaterial::load()
+{
+    //Stub
 }

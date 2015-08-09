@@ -4,86 +4,106 @@
 function _phys_translate_string_shape(str){
 	switch(str){
 		case "static_plane":{
-			return PhysicalShape.Shape_StaticPlane;
+			return PhysicsProperty.StaticPlaneShape;
 		}
 		case "sphere":{
-			return PhysicalShape.Shape_Sphere;
+			return PhysicsProperty.SphereShape;
 		}
 		case "box":{
-			return PhysicalShape.Shape_Box;
+			return PhysicsProperty.BoxShape;
 		}
 		case "cylinder":{
-			return PhysicalShape.Shape_Cylinder;
+			return PhysicsProperty.CylinderShape;
 		}
 		case "capsule":{
-			return PhysicalShape.Shape_Capsule;
+			return PhysicsProperty.CapsuleShape;
 		}
 		case "cone":{
-			return PhysicalShape.Shape_Cone;
+			return PhysicsProperty.ConeShape;
 		}
 	}
-	return PhysicalShape.Shape_None;;
+	return PhysicsProperty.NullShape;
 }
 
-function _load_object_physics(src,parent){
+function _load_object_physics(src,parent,world){
 	var phys = new PhysicsObject(parent);
 	var desc = new CoffeePhysicsEvent(phys);
 	desc.dispose = true;
+	desc.intent = PhysicsProperty.CreateIntent;
+
+	var scalar = new ScalarValue();
+	var vec3 = new Vector3Value();
+	var quat = new QuatValue();
 
 	for(p in src){
 		switch(p){
 			case "shape":{
-				desc.shape = _phys_translate_string_shape(src[p]);
+				desc.setInt(PhysicsProperty.ShapeProperty,_phys_translate_string_shape(src[p]));
 				break;
 			}
 			case "position":{
-				desc.position = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.PositionProperty,vec3);
 				break;
 			}
 			case "scale":{
-				desc.scale = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.ScaleProperty,vec3);
 				break;
 			}
 			case "rotation":{
-				desc.orientation = src[p];
+				quat.value = src[p]
+				desc.setQuaternion(PhysicsProperty.OrientationProperty,quat);
 				break;
 			}
 			case "angular-velocity":{
-				desc.angularVelocity = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.AngularVelocityProperty,vec3);
 				break;
 			}
 			case "inertia":{
-				desc.inertia = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.LocalInertiaProperty,vec3);
 				break;
 			}
 			case "linear-factory":{
-				desc.linearFactor = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.LinearFactorProperty,vec3);
 				break;
 			}
 			case "velocity":{
-				desc.velocity = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.VelocityProperty,vec3);
 				break;
 			}
 			case "friction":{
-				desc.friction = src[p];
+				scalar.value = src[p]
+				desc.setScalar(PhysicsProperty.FrictionProperty,scalar);
 				break;
 			}
 			case "mass":{
-				desc.mass = src[p];
+				scalar.value = src[p]
+				desc.setScalar(PhysicsProperty.MassProperty,scalar);
 				break;
 			}
 			case "restitution":{
-				desc.restitution = src[p];
+				scalar.value = src[p]
+				desc.setScalar(PhysicsProperty.RestitutionProperty,scalar);
 				break;
 			}
 			case "normal":{
-				desc.normal = src[p];
+				vec3.value = src[p]
+				desc.setVector3(PhysicsProperty.OrientationProperty,vec3);
 				break;
+			}
+			case "plane-constant":{
+				scalar.value = src[p];
+				desc.setScalar(PhysicsProperty.PlaneConstantProperty,scalar);
 			}
 		}
 	}
-	var shape = _phys_translate_string_shape(src["shape"]);
-
+	desc.targets = [phys];
+	world.handlePhysEvent(desc);
 	return phys;
 }
 
@@ -118,7 +138,7 @@ function _load_object_standard(src,parent,assetSource){
 				break;
 			}
 			case "physics":{
-				obj.physics = _load_object_physics(src[p],obj);
+				obj.physics = _load_object_physics(src[p],obj,parent);
 				break;
 			}
 		}

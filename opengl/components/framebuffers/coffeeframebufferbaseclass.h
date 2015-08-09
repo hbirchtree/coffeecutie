@@ -2,13 +2,13 @@
 #define COFFEEFRAMEBUFFERBASECLASS_H
 
 #include "general/common.h"
+#include "general/data/coffeegameasset.h"
 
 #include <QSize>
 
 class CoffeeFramebufferBaseClass : public QObject
 {
     Q_PROPERTY(QSize renderSize READ getRenderSize)
-    Q_PROPERTY(QSize windowSize READ getWindowSize)
 
     Q_OBJECT
 public:
@@ -18,8 +18,8 @@ public:
     virtual void bindFramebufferRead() = 0;
     virtual void bindFramebufferWrite() = 0;
 
-    virtual void unbindFramebufferRead() = 0;
-    virtual void unbindFramebufferWrite() = 0;
+    virtual void unbindFramebufferRead();
+    virtual void unbindFramebufferWrite();
 
     virtual void createFramebuffer(QSize windowSize);
 
@@ -27,7 +27,6 @@ public:
     virtual QVector<GLuint>* getTextureHandle() = 0;
 
     QSize getRenderSize() const;
-    QSize getWindowSize() const;
 protected:
     CoffeeFramebufferBaseClass(QObject* parent);
 
@@ -42,9 +41,6 @@ protected:
 
     bool framebufferActive = true;
     QSize renderSize;
-    QSize windowSize;
-
-    bool m_viewport_set = true;
 };
 
 #endif // COFFEEFRAMEBUFFERBASECLASS_H

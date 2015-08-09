@@ -51,17 +51,17 @@ void CoffeeSkybox::render()
 
 void CoffeeSkybox::unload()
 {
-    m_mesh->unloadMesh();
+    m_mesh->unload();
     m_shader->unload();
-    m_texture->unloadTexture();
+    m_texture->unload();
 
     setBaked(false);
 }
 
 void CoffeeSkybox::load()
 {
-    m_texture->loadTexture();
-    m_mesh->loadMesh();
+    m_texture->load();
+    m_mesh->load();
     m_shader->buildProgram();
 
     setBaked(true);

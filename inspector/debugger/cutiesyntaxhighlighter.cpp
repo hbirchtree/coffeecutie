@@ -34,7 +34,8 @@ CutieSyntaxHighlighter::CutieSyntaxHighlighter(QTextDocument *parent) : QSyntaxH
     QStringList fundeclare;
     fundeclare << "\\bfunction\\b"<< "\\bfor\\b"
                   << "\\bif\\b" << "\\bwhile\\b"
-                  << "\\bswitch\\b" << "\\bcase\\b";
+                  << "\\bswitch\\b" << "\\bcase\\b"
+                  << "\\bnew\\b";
 
     genRules(fundeclare,funcFormat);
 

@@ -122,6 +122,7 @@ void CoffeePhysicsEvent::setTargets(QObjectList targets)
         if(qobject_cast<PhysicsObject*>(o))
             m_targets.append(o);
     }
+    qDebug() << "New target list:" << m_targets;
 }
 
 void CoffeePhysicsEvent::setProperty(CoffeePhysicsEvent::PropertyEnum property, uint64_t size, void *data)
@@ -139,6 +140,7 @@ void CoffeePhysicsEvent::setProperty(CoffeePhysicsEvent::PropertyEnum property, 
             qDebug("Failed to set physics property!");
         }
     }
+    qDebug() << "Added property:" << property << id;
 
     m_propertyCombination |= property;
 }

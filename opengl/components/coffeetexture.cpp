@@ -19,8 +19,8 @@ CoffeeTexture::CoffeeTexture(QObject *parent, CoffeeResource* r,
 {
     this->res = r;
     connect(res.data(),&CoffeeResource::resourceChanged,[=](){
-        unloadTexture();
-        loadTexture();
+        unload();
+        load();
     });
     setType(CubemapDice);
 }
@@ -61,7 +61,7 @@ bool CoffeeTexture::isValidTexture()
     return validTexture;
 }
 
-void CoffeeTexture::loadTexture()
+void CoffeeTexture::load()
 {
 
     if(isAllocated()){
@@ -135,7 +135,7 @@ void CoffeeTexture::loadTexture()
     }
 }
 
-void CoffeeTexture::unloadTexture()
+void CoffeeTexture::unload()
 {
     removeAllocation();
     if(isAllocated())
@@ -153,8 +153,8 @@ void CoffeeTexture::setProcessor(std::function<QImage (QImage)> func)
 GLuint CoffeeTexture::getHandle()
 {
     if(b_to_reload){
-        unloadTexture();
-        loadTexture();
+        unload();
+        load();
         b_to_reload = false;
     }
     if(validTexture)

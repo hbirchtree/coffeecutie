@@ -51,6 +51,7 @@ public slots:
     void load();
     void render();
     void unload();
+    void resize(const QSize& size);
 
     void setShader(QObject* shader);
 

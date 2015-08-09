@@ -48,8 +48,8 @@ public:
     ~CoffeeTexture();
 
     bool isValidTexture();
-    void loadTexture();
-    void unloadTexture();
+    void load();
+    void unload();
 
     void setProcessor(std::function<QImage(QImage input)> func);
 

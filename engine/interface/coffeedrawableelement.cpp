@@ -89,7 +89,7 @@ void CoffeeDrawableElement::unload()
     if(m_shader)
         m_shader->unload();
     if(m_texture)
-        m_texture->unloadTexture();
+        m_texture->unload();
 }
 
 void CoffeeDrawableElement::load()
@@ -97,5 +97,5 @@ void CoffeeDrawableElement::load()
     if(m_shader&&!m_shader->isAllocated())
         m_shader->buildProgram();
     if(m_texture&&!m_texture->isAllocated())
-        m_texture->loadTexture();
+        m_texture->load();
 }

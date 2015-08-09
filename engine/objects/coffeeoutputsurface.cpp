@@ -36,20 +36,15 @@ void CoffeeOutputSurface::load()
     }
     if(surface){
         if(surface->isAllocated())
-            surface->unloadMesh();
-        surface->loadMesh();
+            surface->unload();
+        surface->load();
     }
     setBaked(true);
 }
 
 void CoffeeOutputSurface::render()
 {
-    if(!framebuffer->ready()){
-        framebuffer->setNumTextures(textures.size());
-        framebuffer->createFramebuffer(framebuffer->getWindowSize(),framebuffer->getSampling());
-    }
-
-    if(framebuffer->getWindowSize().isEmpty())
+    if(framebuffer->getRenderSize().isEmpty())
         return;
 
     if(!baked())
@@ -58,15 +53,12 @@ void CoffeeOutputSurface::render()
     QRect buffer;
     buffer.setSize(framebuffer->getRenderSize());
 
-    QRect screen;
-    screen.setSize(framebuffer->getWindowSize());
-
     if(!surface||!m_shader)
         return;
 
     glUseProgram(m_shader->getProgramId());
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     for(CoffeeOutputChannel* s : textures){
         glActiveTexture(GL_TEXTURE0+s->textureUnit);
         glBindTexture(GL_TEXTURE_2D,framebuffer->getTextureHandle()->at(s->textureIndex));
@@ -98,7 +90,12 @@ void CoffeeOutputSurface::unload()
     if(m_shader)
         m_shader->unload();
     if(surface)
-        surface->unloadMesh();
+        surface->unload();
+}
+
+void CoffeeOutputSurface::resize(const QSize &size)
+{
+    framebuffer->setNumTextures(textures.size());
 }
 
 void CoffeeOutputSurface::setShader(QObject *m_shader)

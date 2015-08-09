@@ -471,6 +471,11 @@ void CoffeeShader::bindUniformBufferRange(GLuint uboIndex, GLuint uboHandle, uin
     glBindBufferRange(GL_UNIFORM_BUFFER,uboIndex,uboHandle,offset,size);
 }
 
+void CoffeeShader::load()
+{
+    buildProgram();
+}
+
 QVariantMap CoffeeShader::getUniformsMap()
 {
     QVariantMap r;

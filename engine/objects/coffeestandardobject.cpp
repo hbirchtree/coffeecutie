@@ -43,9 +43,9 @@ void CoffeeStandardObject::render()
 void CoffeeStandardObject::unload()
 {
     if(m_mesh)
-        m_mesh->unloadMesh();
+        m_mesh->unload();
     for(TextureMapping* m : textures)
-        m->texture->unloadTexture();
+        m->texture->unload();
     m_shader->unload();
     setBaked(false);
 }
@@ -54,10 +54,10 @@ void CoffeeStandardObject::load()
 {
     m_shader->buildProgram();
     if(m_mesh)
-        m_mesh->loadMesh();
+        m_mesh->load();
     for(TextureMapping* m : textures){
         m->loaded = true;
-        m->texture->loadTexture();
+        m->texture->load();
     }
     setBaked(true);
 }

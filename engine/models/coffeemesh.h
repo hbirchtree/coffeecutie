@@ -52,8 +52,8 @@ public:
 
     GLuint getIndicesCount() const;
 
-    void loadMesh();
-    void unloadMesh();
+    void load();
+    void unload();
 
     bool baked() const;
 

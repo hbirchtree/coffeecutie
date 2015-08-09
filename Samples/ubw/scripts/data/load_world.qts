@@ -20,7 +20,8 @@ function _load_object_world(src,parent,assetStorage){
 			case "objects":{
 				var objs = src[p];
 				for(i in objs){
-					world.addObject(_load_object_standard(objs[i],world,assetStorage));
+					var obj = _load_object_standard(objs[i],world,assetStorage);
+					world.addObject(obj);
 				}
 				break;
 			}

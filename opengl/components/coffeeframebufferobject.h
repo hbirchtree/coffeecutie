@@ -5,7 +5,6 @@
 
 class CoffeeFramebufferObject : public CoffeeFramebufferBaseClass
 {
-    Q_PROPERTY(uint sampling READ getSampling WRITE updateSampling)
     Q_PROPERTY(bool ready READ ready WRITE setReady)
 
     Q_OBJECT
@@ -17,7 +16,6 @@ public:
 
     void cleanup();
 
-    uint getSampling() const;
     QVector<GLuint>* getTextureHandle();
 
     void bindFramebuffer();
@@ -25,15 +23,10 @@ public:
     void bindFramebufferRead();
     void bindFramebufferWrite();
 
-    void unbindFramebufferRead();
-    void unbindFramebufferWrite();
-
     bool ready() const;
 
 public slots:
     void setNumTextures(uint textures);
-    void resizeViewport(QSize windowSize);
-    void updateSampling(uint sampling);
     void setReady(bool ready);
 
 protected:
@@ -46,11 +39,10 @@ protected:
 
     uint numTextures = 1;
     void resizeFramebuffer();
-    uint sampling = 1;
     QVector<DrawBuffer*> buffers;
     QVector<GLuint> textureHandles;
     GLuint framebufferHandle = 0;
-    bool m_ready;
+    bool m_ready = false;
 };
 
 #endif // COFFEEFRAMEBUFFEROBJECT_H

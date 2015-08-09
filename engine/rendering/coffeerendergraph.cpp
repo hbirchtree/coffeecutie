@@ -30,24 +30,23 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
     if(m_renderer_connected)
         return;
     m_renderConnections.append(connect(this,
-                              SIGNAL(submitRenderCall(std::function<void()>*)),
+                              SIGNAL(submitRenderCall(std::function<void()>)),
                               renderer,
-                              SLOT(queueFunction(std::function<void()>*))));
+                              SLOT(queueFunction(std::function<void()>))));
 
     //Set up the rendering surface, mainly resizing its framebuffer to the whole viewport
-//    std::function<void()> *func = new std::function<void()>([=](){
-//        m_renderSurface->getFramebuffer()->createFramebuffer(renderer->getCurrentFramebufferSize(),1);
-//    });
-//    submitRenderCall(func);
+    std::function<void()> func = [=](){
+        m_renderSurface->getFramebuffer()->createFramebuffer(renderer->getCurrentFramebufferSize(),1);
+    };
+    submitRenderCall(func);
     //It also needs to react to resizing
     m_renderConnections.
             append(connect(renderer,
                            &CoffeeRenderer::winFrameBufferResize,
                            [=](QResizeEvent e){
-        std::function<void()> *func = new std::function<void()>([=](){
-            m_renderSurface->getFramebuffer()->
-                    resizeViewport(e.size());
-        });
+        std::function<void()> func = [=](){
+            m_renderSurface->resize(e.size());
+        };
         submitRenderCall(func);
     }));
 
@@ -66,33 +65,22 @@ void CoffeeRenderGraph::clearRenderer()
 
 void CoffeeRenderGraph::queueRender()
 {
-    std::function<void()> *func = new std::function<void()>([=](){
-        m_renderTarget->bindFramebufferWrite();
+    std::function<void()> func = [=](){
+        m_renderTarget->bindFramebuffer();
         glClear(GL_DEPTH_BUFFER_BIT);
-    });
-    submitRenderCall(func);
 
-    func = new std::function<void()>([=](){
         for(CoffeeRenderGroup* _grp : m_renderGroups.values())
             for(CoffeeObject* o : _grp->m_objects)
                 o->render();
-    });
-    submitRenderCall(func);
 
-    func = new std::function<void()>([=](){
-        if(m_renderTarget)
-            m_renderTarget->unbindFramebufferWrite();
-        if(m_renderSurface)
-            m_renderSurface->render();
-    });
+        m_renderTarget->unbindFramebuffer();
+        m_renderSurface->render();
+    };
     submitRenderCall(func);
-
-    func = nullptr;
 }
 
 void CoffeeRenderGraph::includeObject(CoffeeObject *obj)
 {
-    qDebug() << "Include";
     if(m_renderGroups.contains(obj->_shader_obj())){
         m_renderGroups.value(obj->_shader_obj())->m_objects.append(obj);
     }else{

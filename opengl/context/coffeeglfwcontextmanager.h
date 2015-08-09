@@ -22,6 +22,8 @@ protected:
     void swapBuffers();
     void pollEvents();
 
+    void updateJoysticks();
+
     void setLatestFrameTime(double time);
 
 public:
@@ -39,7 +41,7 @@ public:
     Q_INVOKABLE QObject* getJoystickDevice(uint index);
 
 public slots:
-    void queueFunction(std::function<void ()> *func);
+    void queueFunction(std::function<void ()> func);
 
     void setWindowTitle(const QString &value);
     void setWindowDimensions(const QSize &windowSize);
@@ -52,6 +54,7 @@ public slots:
     void requestWindowClose();
 
 private:
+    QList<CoffeeJoystick*> m_joysticks;
     GLFWwindow *setWindowedFullscreen(int monitor);
     GLFWwindow *setFullscreen(int monitor);
     GLFWwindow *setWindowed();

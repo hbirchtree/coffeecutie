@@ -81,8 +81,8 @@ GLuint CoffeeMesh::getVertexIndexHandle() const
 GLuint CoffeeMesh::getVertexArrayHandle()
 {
     if(m_doReloadMesh){
-        unloadMesh();
-        loadMesh();
+        unload();
+        load();
         m_doReloadMesh = false;
     }
     return vertexArray->handle();
@@ -128,7 +128,7 @@ GLuint CoffeeMesh::getIndicesCount() const
     return indices.size();
 }
 
-void CoffeeMesh::loadMesh()
+void CoffeeMesh::load()
 {
     if(isAllocated()){
         addAllocation();
@@ -256,7 +256,7 @@ void CoffeeMesh::loadMesh()
     setBaked(true);
 }
 
-void CoffeeMesh::unloadMesh(){
+void CoffeeMesh::unload(){
     removeAllocation();
     if(isAllocated())
         return;

@@ -49,14 +49,20 @@ GLuint CoffeeFramebufferBaseClass::allocRenderBuffer(gl::GLenum component, int w
 void CoffeeFramebufferBaseClass::unbindFramebuffer()
 {
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    if(m_viewport_set)
-        glViewport(0,0,windowSize.width(),windowSize.height());
+}
+
+void CoffeeFramebufferBaseClass::unbindFramebufferRead()
+{
+    glBindFramebuffer(GL_READ_FRAMEBUFFER,0);
+}
+
+void CoffeeFramebufferBaseClass::unbindFramebufferWrite()
+{
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER,0);
 }
 
 void CoffeeFramebufferBaseClass::bindFramebuffer(GLuint handle)
 {
-    if(m_viewport_set)
-        glViewport(0,0,renderSize.width(),renderSize.height());
     glBindFramebuffer(GL_FRAMEBUFFER,handle);
 }
 
@@ -65,13 +71,8 @@ QSize CoffeeFramebufferBaseClass::getRenderSize() const
     return renderSize;
 }
 
-QSize CoffeeFramebufferBaseClass::getWindowSize() const
-{
-    return windowSize;
-}
-
 void CoffeeFramebufferBaseClass::createFramebuffer(QSize windowSize)
 {
-    this->windowSize = windowSize;
+    this->renderSize = windowSize;
     resizeFramebuffer();
 }
