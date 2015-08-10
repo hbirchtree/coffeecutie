@@ -66,8 +66,7 @@ world.lights[0].attenuation = 0.003;
 //Set up input and etc.
 #inc "input/event-handling.qts"
 
-//renderTimer.start();
-renderer.contextReportFrametime.connect(function(t){
-	print("Rendering");
+function renderFunction(t){
 	graph.queueRender();
-});
+}
+renderer.contextReportFrametime.connect(renderFunction);

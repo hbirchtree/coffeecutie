@@ -98,7 +98,10 @@ SOURCES += main.cpp \
     inspector/editor/coffeegameeditor.cpp \
     coffeegameenvironment.cpp \
     inspector/coffeeobjectexplorer.cpp \
-    general/data/coffeepropertycontainer.cpp
+    general/data/coffeepropertycontainer.cpp \
+    inspector/debugger/coffeescriptexceptionhandler.cpp \
+    inspector/debugger/coffeedebugview.cpp \
+    inspector/information/coffeesystemmonitor.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -187,7 +190,10 @@ HEADERS += \
     inspector/editor/coffeegameeditor.h \
     coffeegameenvironment.h \
     inspector/coffeeobjectexplorer.h \
-    general/data/coffeepropertycontainer.h
+    general/data/coffeepropertycontainer.h \
+    inspector/debugger/coffeescriptexceptionhandler.h \
+    inspector/debugger/coffeedebugview.h \
+    inspector/information/coffeesystemmonitor.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -221,7 +227,8 @@ FORMS += \
     inspector/coffeerendererinspector.ui \
     inspector/coffeescriptterminal.ui \
     inspector/coffeeexceptiondialog.ui \
-    inspector/editor/coffeegameeditor.ui
+    inspector/editor/coffeegameeditor.ui \
+    inspector/debugger/coffeedebugview.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp

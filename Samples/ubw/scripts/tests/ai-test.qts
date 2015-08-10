@@ -5,7 +5,7 @@ var net = new CoffeeNeuralNet;
 net.createNeuron();
 net.createNeuron();
 net.createNeuron();
-net.neurons[0].type = CoffeeNeuronType.Sensor;
+net.neurons[0].type = CoffeeNeuron.Sensor;
 net.neurons[0].addOutput(net.neurons[1]);
 net.neurons[0].addOutput(net.neurons[2]);
 net.neurons[0].badify(net.neurons[2],0.1);

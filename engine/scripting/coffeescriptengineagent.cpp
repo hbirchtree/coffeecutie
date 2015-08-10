@@ -38,6 +38,7 @@ void CoffeeScriptEngineAgent::exceptionThrow(qint64 scriptId, const QScriptValue
     exc.backtrace = this->engine()->currentContext()->backtrace();
     exc.self = exception;
     exc.scriptReference = scriptId;
+    exc.program = getProgram(scriptId);
 
     exceptionReport(exc);
 }

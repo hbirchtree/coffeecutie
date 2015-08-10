@@ -1,28 +1,28 @@
 #include "coffeegameeditor.h"
 #include "ui_coffeegameeditor.h"
 
-#include <QSplitter>
 #include <QTabWidget>
 #include <QInputDialog>
 
-CoffeeGameEditor::CoffeeGameEditor(QWidget *parent, QWidget *info, QWidget *inspector, QWidget *scripting) :
+CoffeeGameEditor::CoffeeGameEditor(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::CoffeeGameEditor)
 {
     ui->setupUi(this);
-    QSplitter* inspectSplit = new QSplitter(ui->centralwidget);
-    QSplitter* viewSplit = new QSplitter(inspectSplit);
+    m_inspectSplit = new QSplitter(ui->centralwidget);
+    m_viewSplit = new QSplitter(m_inspectSplit);
 
-    QTabWidget* inspectionBar = new QTabWidget(inspectSplit);
-    inspectionBar->addTab(inspector,"Object inspector");
-    inspectionBar->addTab(info,"Renderer");
+    m_inspectWidget = new QTabWidget(m_inspectSplit);
 
-    inspectSplit->addWidget(scripting);
-    inspectSplit->addWidget(inspectionBar);
-    inspectSplit->setOrientation(Qt::Horizontal);
-    viewSplit->addWidget(scripting);
-    viewSplit->setOrientation(Qt::Vertical);
-    ui->centralwidget->layout()->addWidget(inspectSplit);
+    m_inspectSplit->addWidget(m_viewSplit);
+    m_inspectSplit->addWidget(m_inspectWidget);
+    m_inspectSplit->setOrientation(Qt::Horizontal);
+
+    m_infoWidget = new QTabWidget(m_viewSplit);
+
+    m_viewSplit->addWidget(m_infoWidget);
+    m_viewSplit->setOrientation(Qt::Vertical);
+    ui->centralwidget->layout()->addWidget(m_inspectSplit);
     ui->centralwidget->layout()->setContentsMargins(0,0,0,0);
 
     ui->actionToolbar->setChecked(true);
@@ -31,6 +31,21 @@ CoffeeGameEditor::CoffeeGameEditor(QWidget *parent, QWidget *info, QWidget *insp
 CoffeeGameEditor::~CoffeeGameEditor()
 {
     delete ui;
+}
+
+void CoffeeGameEditor::setPrimaryView(QWidget *primary)
+{
+    m_viewSplit->addWidget(primary);
+}
+
+void CoffeeGameEditor::addInfoTab(QWidget *tab,const QString& name)
+{
+    m_infoWidget->addTab(tab,name);
+}
+
+void CoffeeGameEditor::addInspectorTab(QWidget *tab,const QString& name)
+{
+    m_inspectWidget->addTab(tab,name);
 }
 
 void CoffeeGameEditor::on_actionQuit_triggered()

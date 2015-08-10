@@ -32,13 +32,3 @@ void CoffeeInspector::updateInformation()
 {
     m_explorer->updateInformation();
 }
-
-void CoffeeInspector::on_rendererBtn_clicked()
-{
-    showInformation();
-}
-
-void CoffeeInspector::on_pushButton_clicked()
-{
-    showTerminal();
-}

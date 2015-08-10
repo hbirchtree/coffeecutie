@@ -8,6 +8,7 @@
 class CoffeeScriptException
 {
 public:
+    QString program;
     QStringList backtrace;
     QScriptValue self;
     int lineNumber;

@@ -51,6 +51,8 @@ public:
         TorqueApplication,
         TorqueImpulseApplication,
 
+        RelativePositionProperty, //For forces
+
         //Just the transform, position and orientation
         TransformProperty,
         ScaleProperty,
@@ -88,6 +90,8 @@ public:
 public:
     CoffeePhysicsEvent(QObject* parent);
     uint32_t propertyCombination() const;
+
+    QList<uint32_t> getPropertyList() const;
 
     uint32_t getInt(PropertyEnum property);
     ScalarDataType getScalar(PropertyEnum property);

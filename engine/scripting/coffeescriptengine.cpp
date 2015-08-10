@@ -9,37 +9,31 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 
-#include "engine/physics/genericphysicsinterface.h"
-#include "engine/physics/physicsobject.h"
-#include "engine/physics/physicsdescriptor.h"
-#include "engine/scripting/qscriptvectorvalue.h"
+//#include "engine/physics/genericphysicsinterface.h"
+//#include "engine/physics/physicsobject.h"
+//#include "engine/physics/physicsdescriptor.h"
+//#include "engine/scripting/qscriptvectorvalue.h"
 #include "general/filehandler.h"
-#include "opengl/components/coffeetexture.h"
-#include "engine/scripting/coffeeinputevent.h"
-#include "engine/models/coffeeinstancecontainer.h"
-#include "general/input/coffeeplayercontroller.h"
-#include "engine/ai/coffeeneuralnet.h"
+//#include "opengl/components/coffeetexture.h"
+//#include "engine/scripting/coffeeinputevent.h"
+//#include "engine/models/coffeeinstancecontainer.h"
+//#include "general/input/coffeeplayercontroller.h"
+//#include "engine/ai/coffeeneuralnet.h"
 
-#include "engine/objects/coffeestandardobject.h"
-#include "engine/objects/coffeeskybox.h"
-#include "engine/objects/coffeeparticlesystem.h"
-#include "opengl/components/coffeecamera.h"
-#include "opengl/components/coffeeomnilight.h"
-#include "opengl/components/coffeeworldopts.h"
+//#include "engine/objects/coffeestandardobject.h"
+//#include "engine/objects/coffeeskybox.h"
+//#include "engine/objects/coffeeparticlesystem.h"
+//#include "opengl/components/coffeecamera.h"
+//#include "opengl/components/coffeeomnilight.h"
+//#include "opengl/components/coffeeworldopts.h"
 
-#include "engine/rendering/coffeerendergraph.h"
+//#include "engine/rendering/coffeerendergraph.h"
 
 CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 {
     m_engine = new QScriptEngine(this);
     m_agent = new CoffeeScriptEngineAgent(this,m_engine);
     m_engine->setAgent(m_agent);
-
-    qRegisterMetaType<ScalarDataType>("ScalarDataType");
-    qRegisterMetaType<VectorData*>("VectorData*");
-    qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
-    qRegisterMetaType<CoffeePlayerController*>("CoffeePlayerController*");
-    qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
 
     CoffeeScriptConstructors::defineConstructors(*m_engine);
     QtScriptConstructors::defineConstructors(*m_engine);
@@ -75,28 +69,8 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : QObject(parent)
 
     //Enums
     {
-        QScriptValue mo = m_engine->newQMetaObject(&PhysicsDescriptor::staticMetaObject);
-        m_engine->globalObject().setProperty("PhysicalShape",mo);
-    }
-    {
         QScriptValue mo = m_engine->newQMetaObject(&QEvent::staticMetaObject);
         m_engine->globalObject().setProperty("QEvent",mo);
-    }
-    {
-        QScriptValue mo = m_engine->newQMetaObject(&CoffeeTexture::staticMetaObject);
-        m_engine->globalObject().setProperty("CoffeeTexture",mo);
-    }
-    {
-        QScriptValue mo = m_engine->newQMetaObject(&CoffeePhysicsEvent::staticMetaObject);
-        m_engine->globalObject().setProperty("PhysicsProperty",mo);
-    }
-    {
-        QScriptValue mo = m_engine->newQMetaObject(&CoffeeInputEvent::staticMetaObject);
-        m_engine->globalObject().setProperty("CoffeeInputEventType",mo);
-    }
-    {
-        QScriptValue mo = m_engine->newQMetaObject(&CoffeeNeuron::staticMetaObject);
-        m_engine->globalObject().setProperty("CoffeeNeuronType",mo);
     }
     ////////
 }
@@ -111,29 +85,31 @@ CoffeeScriptEngineAgent *CoffeeScriptEngine::getAgent()
     return m_agent;
 }
 
-void CoffeeScriptEngine::execFile(QString file, bool *result, QString *logOut)
+void CoffeeScriptEngine::engine_execFile(const QString &filename)
 {
-    execFile(m_engine,file,result,logOut);
+    QScriptValue result = execFile(this->m_engine,filename);
+    executionReturn(QString(),filename,result.toString());
 }
 
-QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file, bool *result, QString *logOut, QScriptContext* ctxt)
+void CoffeeScriptEngine::engine_execCmd(const QString &program)
+{
+    QScriptValue result = this->m_engine->evaluate(program);
+    executionReturn(program,QString(),result.toString());
+}
+
+QScriptValue CoffeeScriptEngine::execFile(QScriptEngine *e, QString file)
 {
     QFileInfo fileTest(file);
     QFile script(file);
     QScriptValue out;
-    if(!file.isEmpty()&&fileTest.exists()&&fileTest.isFile()&&script.open(QIODevice::ReadOnly)){
+    if(!file.isEmpty()&&
+            fileTest.exists()&&
+            fileTest.isFile()&&
+            script.open(QIODevice::ReadOnly)){
         QString src = script.readAll();
         src = importFile(fileTest,src);
         QScriptProgram p(src,file); //we might get use for these QScriptProgram objects, but for now we live it at this
         out = e->evaluate(p);
-
-        if(logOut)
-            *logOut = out.toString();
-        if(result)
-            *result = true;
-    }else{
-        if(result)
-            *result = false;
     }
     return out;
 }
@@ -173,7 +149,7 @@ QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, Q
 
     bool status = false;
 
-    QScriptValue res = execFile(eng,file,&status,nullptr,ctxt);
+    QScriptValue res = execFile(eng,file);
 
     return res;
 }
@@ -200,38 +176,38 @@ QScriptValue CoffeeScriptEngine::coffeeParentingFunc(QScriptContext *ctxt, QScri
     }
 }
 
-QScriptValue CoffeeScriptEngine::coffeeExceptionFunc(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QScriptValue exceptionValue = eng->uncaughtException();
+//QScriptValue CoffeeScriptEngine::coffeeExceptionFunc(QScriptContext *ctxt, QScriptEngine *eng)
+//{
+//    QScriptValue exceptionValue = eng->uncaughtException();
 
-    if(exceptionValue.isUndefined()||eng->uncaughtExceptionLineNumber()<0){
-        return ctxt->throwError("No uncaught exceptions");
-    }
+//    if(exceptionValue.isUndefined()||eng->uncaughtExceptionLineNumber()<0){
+//        return ctxt->throwError("No uncaught exceptions");
+//    }
 
-    QString err("Uncaught exception: %1\n"
-                "Error on line: %2\n"
-                "Backtrace:\n");
-    for(QString l : eng->uncaughtExceptionBacktrace())
-        err.append(l+"\n");
+//    QString err("Uncaught exception: %1\n"
+//                "Error on line: %2\n"
+//                "Backtrace:\n");
+//    for(QString l : eng->uncaughtExceptionBacktrace())
+//        err.append(l+"\n");
 
-    err = err
-            .arg(exceptionValue.toString())
-            .arg(eng->uncaughtExceptionLineNumber());
+//    err = err
+//            .arg(exceptionValue.toString())
+//            .arg(eng->uncaughtExceptionLineNumber());
 
-    QScriptValue outputExceptionValue = eng->toScriptValue(err);
+//    QScriptValue outputExceptionValue = eng->toScriptValue(err);
 
-    CoffeeScriptException exObj;
-    exObj.backtrace = eng->uncaughtExceptionBacktrace();
-    exObj.self = exceptionValue;
-    exObj.lineNumber = eng->uncaughtExceptionLineNumber();
-    CoffeeScriptEngine* e = qobject_cast<CoffeeScriptEngine*>(eng->parent());
-    if(e)
-        e->uncaughtException(exObj);
+//    CoffeeScriptException exObj;
+//    exObj.backtrace = eng->uncaughtExceptionBacktrace();
+//    exObj.self = exceptionValue;
+//    exObj.lineNumber = eng->uncaughtExceptionLineNumber();
+//    CoffeeScriptEngine* e = qobject_cast<CoffeeScriptEngine*>(eng->parent());
+//    if(e)
+//        e->uncaughtException(exObj);
 
-    eng->clearExceptions();
+//    eng->clearExceptions();
 
-    return outputExceptionValue;
-}
+//    return outputExceptionValue;
+//}
 
 QString CoffeeScriptEngine::importFile(const QFileInfo &srcFile,QString &src)
 {
@@ -251,4 +227,3 @@ QString CoffeeScriptEngine::importFile(const QFileInfo &srcFile,QString &src)
         }
     return src;
 }
-

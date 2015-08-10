@@ -19,16 +19,8 @@ public:
                     QObjectList engineRoot = QObjectList());
     ~CoffeeInspector();
 
-signals:
-    void showTerminal();
-    void showInformation();
-
 private slots:
     void updateInformation();
-
-    void on_rendererBtn_clicked();
-
-    void on_pushButton_clicked();
 
 private:
     CoffeeObjectExplorer* m_explorer;

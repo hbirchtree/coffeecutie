@@ -1,6 +1,6 @@
 function inputReact(event){
 	switch(event.type){
-	case CoffeeInputEventType.Mouse:{
+	case CoffeeInputEvent.Mouse:{
 		if(renderer.mouseGrabbing){
 			renderer.setMousePosition(0,0);
 			controller.mouseSetRotation(event.pos.x,event.pos.y);
@@ -14,7 +14,7 @@ function inputReact(event){
 		}
 		break;
 	}
-	case CoffeeInputEventType.Keyboard:{
+	case CoffeeInputEvent.Keyboard:{
 		if(event.qtype==QEvent.KeyPress){
 			switch(event.key){
 			case Qt.Key_J:{

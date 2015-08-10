@@ -9,6 +9,11 @@ uint32_t CoffeePhysicsEvent::propertyCombination() const
     return m_propertyCombination;
 }
 
+QList<uint32_t> CoffeePhysicsEvent::getPropertyList() const
+{
+    return m_propertyMapping.keys();
+}
+
 CoffeePhysicsEvent::PropertyIntent CoffeePhysicsEvent::intent() const
 {
     return (PropertyIntent)m_intent;
@@ -122,7 +127,6 @@ void CoffeePhysicsEvent::setTargets(QObjectList targets)
         if(qobject_cast<PhysicsObject*>(o))
             m_targets.append(o);
     }
-    qDebug() << "New target list:" << m_targets;
 }
 
 void CoffeePhysicsEvent::setProperty(CoffeePhysicsEvent::PropertyEnum property, uint64_t size, void *data)
@@ -140,7 +144,6 @@ void CoffeePhysicsEvent::setProperty(CoffeePhysicsEvent::PropertyEnum property, 
             qDebug("Failed to set physics property!");
         }
     }
-    qDebug() << "Added property:" << property << id;
 
     m_propertyCombination |= property;
 }

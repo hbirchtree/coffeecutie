@@ -19,6 +19,7 @@
 #include "opengl/components/coffeeworldopts.h"
 
 #include "engine/rendering/coffeerendergraph.h"
+#include "inspector/information/coffeesystemmonitor.h"
 
 CoffeeScriptConstructors::CoffeeScriptConstructors()
 {
@@ -27,6 +28,15 @@ CoffeeScriptConstructors::CoffeeScriptConstructors()
 
 void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
 {
+    qRegisterMetaType<ScalarDataType>("ScalarDataType");
+    qRegisterMetaType<VectorData*>("VectorData*");
+    qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
+    qRegisterMetaType<CoffeePlayerController*>("CoffeePlayerController*");
+    qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
+
+    //System-related
+    defineQObjectScriptType<CoffeeSystemMonitor>(&e);
+
     //Data storage
     {
         QScriptValue pdCt = e.newFunction(vector2ValueConstructor);
@@ -59,90 +69,27 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
         e.globalObject().setProperty("QuatValue",mo);
     }
     //Physics
-    {
-        QScriptValue pdCt = e.newFunction(coffeePhysEvConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeePhysicsEvent",mo);
-    }
-    {
-        QScriptValue poCt = e.newFunction(physicsObjectConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,poCt);
-        e.globalObject().setProperty("PhysicsObject",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(physicsDescConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("PhysicsDescriptor",mo);
-    }
+    defineQObjectScriptType<CoffeePhysicsEvent>(&e);
+    defineQObjectScriptType<PhysicsObject>(&e);
     //AI objects
-    {
-        QScriptValue pdCt = e.newFunction(neuralNetConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeNeuralNet",mo);
-    }
+    defineQObjectScriptType<CoffeeNeuralNet>(&e);
+    defineQMetaObject<CoffeeNeuron>(&e);
     //Input
-    {
-        QScriptValue pdCt = e.newFunction(coffeePlayerControllerConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeePlayerController",mo);
-    }
+    defineQObjectScriptType<CoffeePlayerController>(&e);
+    defineQMetaObject<CoffeeInputEvent>(&e);
+
     //Internal objects
-    {
-        QScriptValue pdCt = e.newFunction(coffeeLightConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeOmniLight",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(coffeeCameraConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeCamera",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(coffeeWorldConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeWorldOpts",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(coffeeObjectConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeStandardObject",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(coffeeSkyboxConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeSkybox",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(coffeeParticlesConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeParticleSystem",mo);
-    }
+    defineQMetaObject<CoffeeTexture>(&e);
+    defineQObjectScriptType<CoffeeOmniLight>(&e);
+    defineQObjectScriptType<CoffeeCamera>(&e);
+    defineQObjectScriptType<CoffeeWorldOpts>(&e);
+    defineQObjectScriptType<CoffeeStandardObject>(&e);
+    defineQObjectScriptType<CoffeeParticleSystem>(&e);
+
+    defineQObjectScriptType<CoffeeSkybox>(&e);
 
     //Rendering
-    {
-        QScriptValue pdCt = e.newFunction(coffeeRenderGraphConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("CoffeeRenderGraph",mo);
-    }
-}
-
-QScriptValue CoffeeScriptConstructors::neuralNetConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeNeuralNet(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::physicsObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng){
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new PhysicsObject(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::physicsDescConstructor(QScriptContext *ctxt, QScriptEngine *eng){
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new PhysicsDescriptor(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
+    defineQObjectScriptType<CoffeeRenderGraph>(&e);
 }
 
 QScriptValue CoffeeScriptConstructors::scalarRandConstructor(QScriptContext *ctxt, QScriptEngine *eng)
@@ -191,40 +138,6 @@ QScriptValue CoffeeScriptConstructors::quatValueConstructor(QScriptContext *ctxt
     return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }
 
-QScriptValue CoffeeScriptConstructors::coffeePhysEvConstructor(QScriptContext *ctxt, QScriptEngine *eng){
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeePhysicsEvent(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeePlayerControllerConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeePlayerController(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeLightConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeOmniLight(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeCameraConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeCamera(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeObjectConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeStandardObject(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
 QScriptValue CoffeeScriptConstructors::coffeeSkyboxConstructor(QScriptContext *ctxt, QScriptEngine *eng)
 {
     if(ctxt->argumentCount()!=2){
@@ -233,26 +146,5 @@ QScriptValue CoffeeScriptConstructors::coffeeSkyboxConstructor(QScriptContext *c
     CoffeeCamera* camera = qobject_cast<CoffeeCamera*>(ctxt->argument(1).toQObject());
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new CoffeeSkybox(parent,camera);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeParticlesConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeParticleSystem(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeWorldConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeWorldOpts(parent);
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeRenderGraphConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeRenderGraph(parent);
     return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }

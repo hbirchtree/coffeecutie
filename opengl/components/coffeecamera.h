@@ -2,6 +2,7 @@
 #define COFFEECAMERA_H
 
 #include "general/common.h"
+#include <QPointF>
 
 class CoffeeBuffer;
 class CoffeeUniformBlock;
@@ -90,6 +91,7 @@ public slots:
 
 private:
     bool orthographic = false;
+    QPointF m_rotationLimit;
     QSize* framebufferSize = NULL;
     QPointer<ScalarValue> aspect;
     float znear = 0.1;

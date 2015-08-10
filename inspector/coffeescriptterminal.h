@@ -2,9 +2,11 @@
 #define COFFEESCRIPTTERMINAL_H
 
 #include <QWidget>
-#include "coffeeexceptiondialog.h"
 #include "engine/scripting/coffeescriptengine.h"
-#include "debugger/coffeecodeeditor.h"
+#include "debugger/coffeescriptexceptionhandler.h"
+
+class QLineEdit;
+class QTreeWidget;
 
 namespace Ui {
 class CoffeeScriptTerminal;
@@ -15,20 +17,24 @@ class CoffeeScriptTerminal : public QWidget
     Q_OBJECT
 
 public:
-    CoffeeScriptTerminal(QWidget *parent, CoffeeScriptEngine* engine);
+    CoffeeScriptTerminal(QWidget *parent);
     ~CoffeeScriptTerminal();
 
-private slots:
-    void clearLog();
-    void execFile(const QString& file);
+    QLineEdit* getScriptInput();
 
+signals:
+    void requestExecFile(const QString& filename);
+    void requestExecCmd(const QString& cmd);
+
+public slots:
+    void clearLog();
+    void appendLog(const QString &command, const QString &output);
+
+private slots:
+    void execFile(const QString& file);
     void on_scriptInput_returnPressed();
 
 private:
-    void appendLog(const QString &command, const QString &output);
-
-    CoffeeCodeEditor* m_editor;
-    CoffeeScriptEngine* engine;
     Ui::CoffeeScriptTerminal *ui;
 };
 

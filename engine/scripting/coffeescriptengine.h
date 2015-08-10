@@ -13,17 +13,15 @@ public:
     QScriptEngine *getEngine();
     CoffeeScriptEngineAgent* getAgent();
 
-    static QScriptValue execFile(QScriptEngine* m_engine, QString file,
-                                 bool *result = nullptr,
-                                 QString *logOut = nullptr,
-                                 QScriptContext *ctxt = nullptr);
+    static QScriptValue execFile(QScriptEngine* m_engine, QString file);
     void addObject(QObject* o);
 
 public slots:
-    void execFile(QString file, bool *result = nullptr, QString *logOut = nullptr);
+    void engine_execFile(const QString& filename);
+    void engine_execCmd(const QString& program);
 
 signals:
-    void uncaughtException(CoffeeScriptException ex);
+    void executionReturn(QString program, QString file, QString result);
 
 private:
     QScriptEngine* m_engine;
@@ -33,7 +31,7 @@ private:
     static QScriptValue coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeExecuteScriptFile(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeParentingFunc(QScriptContext *ctxt, QScriptEngine *eng);
-    static QScriptValue coffeeExceptionFunc(QScriptContext *ctxt, QScriptEngine *eng);
+//    static QScriptValue coffeeExceptionFunc(QScriptContext *ctxt, QScriptEngine *eng);
 
     //ScriptEngine internal functions
     static QString importFile(const QFileInfo &srcFile, QString &src);

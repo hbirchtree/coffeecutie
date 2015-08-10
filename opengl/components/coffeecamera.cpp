@@ -7,6 +7,9 @@
 
 CoffeeCamera::CoffeeCamera(QObject *parent) : QObject(parent)
 {
+    m_rotationLimit.setX(-70.f);
+    m_rotationLimit.setY(90.f);
+
     this->aspect = new ScalarValue(this,1.f);
     aspect->setObjectName("aspect_ratio");
     this->fov = new ScalarValue(this,90.f);
@@ -88,7 +91,8 @@ void CoffeeCamera::offsetOrientation(float rightAngle, float upAngle)
                 glm::radians(upAngle),
                 glm::radians(rightAngle),
                 0);
-    normalizeEulerAngles(rotation_euler,glm::radians(-70.f),glm::radians(90.f));
+    normalizeEulerAngles(rotation_euler,glm::radians(m_rotationLimit.x()),
+                         glm::radians(m_rotationLimit.y()));
 //    glm::quat rot(0.f,rotation_euler->getValue());
 //    *rotation=rot*rotation->getValue();
 }
@@ -261,11 +265,6 @@ QObject *CoffeeCamera::getCameraForwardVariant() const
 {
     return cameraForwardVal;
 }
-
-//void CoffeeCamera::setCameraAspect(QResizeEvent ev)
-//{
-//    setAspect((float)ev.size().width()/(float)ev.size().height());
-//}
 
 float CoffeeCamera::getZnear() const
 {

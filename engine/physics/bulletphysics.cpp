@@ -188,69 +188,64 @@ btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
 
 void BulletPhysics::updateObject(CoffeePhysicsEvent *event,btRigidBody* body)
 {
-
-//    for(PhysicsObject* ev : *event->targetsList())
-//        if(ev->getPhysicspointer()){
-//            btRigidBody* obj = (btRigidBody*)ev->getPhysicspointer();
-//            switch(event->type()){
-//            case CoffeePhysicsEvent::ActionSetTransform:{
-//                btTransform pt = obj->getWorldTransform();
-//                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-//                pt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(1))));
-//                obj->setWorldTransform(pt);
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionSetPosition:{
-//                btTransform pt = obj->getWorldTransform();
-//                pt.setOrigin(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-//                obj->setWorldTransform(pt);
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionSetAngularVelocity:
-//                break;
-//            case CoffeePhysicsEvent::ActionSetOrientation:{
-//                btTransform rt = obj->getWorldTransform();
-//                rt.setRotation(convert_coffee(qvariant_cast<QuatValue*>(event->getData().at(0))));
-//                obj->setWorldTransform(rt);
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionApplyForce:{
-//                obj->activate(true);
-//                obj->applyCentralForce(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionApplyRelativeForce:
-//                break;
-//            case CoffeePhysicsEvent::ActionApplyImpulse:{
-//                obj->activate(true);
-//                obj->applyCentralImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionApplyRelativeImpulse:{
-//                obj->activate(true);
-//                obj->applyImpulse(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))),
-//                                  convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(1))));
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionApplyTorque:{
-//                obj->activate(true);
-//                obj->applyTorque(convert_coffee(qvariant_cast<Vector3Value*>(event->getData().at(0))));
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionSetFriction:{
-////                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
-//                obj->setFriction(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
-//                break;
-//            }
-//            case CoffeePhysicsEvent::ActionSetRestitution:{
-////                ScalarValue* s = qvariant_cast<ScalarValue*>(event->getData().at(0));
-//                obj->setRestitution(convert_coffee(qvariant_cast<ScalarValue*>(event->getData().at(0))));
-//                break;
-//            }
-//            default:
-//                break;
-//            }
-    //        }
+    for(uint32_t property_raw : event->getPropertyList()){
+        CoffeePhysicsEvent::PropertyEnum prop =
+                static_cast<CoffeePhysicsEvent::PropertyEnum>(property_raw);
+        switch(prop){
+        case CoffeePhysicsEvent::ForceApplication:
+            body->applyCentralForce(convert_glm(event->getVector3(prop)));
+            break;
+        case CoffeePhysicsEvent::RelativeForceApplication:
+            body->applyForce(convert_glm(event->getVector3(prop)),
+                             convert_glm(event->getVector3(CoffeePhysicsEvent::RelativePositionProperty)));
+            break;
+        case CoffeePhysicsEvent::ImpulseApplication:
+            body->applyCentralImpulse(convert_glm(event->getVector3(prop)));
+            break;
+        case CoffeePhysicsEvent::RelativeImpulseApplication:
+            body->applyImpulse(convert_glm(event->getVector3(prop)),
+                             convert_glm(event->getVector3(CoffeePhysicsEvent::RelativePositionProperty)));
+            break;
+        case CoffeePhysicsEvent::TorqueApplication:
+            break;
+        case CoffeePhysicsEvent::TorqueImpulseApplication:
+            break;
+        case CoffeePhysicsEvent::ScaleProperty:
+            break;
+        case CoffeePhysicsEvent::PositionProperty:
+            break;
+        case CoffeePhysicsEvent::VelocityProperty:
+            break;
+        case CoffeePhysicsEvent::AccelerationProperty:
+            break;
+        case CoffeePhysicsEvent::CMPositionProperty:
+            break;
+        case CoffeePhysicsEvent::OrientationProperty:
+            break;
+        case CoffeePhysicsEvent::AngularVelocityProperty:
+            break;
+        case CoffeePhysicsEvent::MassProperty:
+            break;
+        case CoffeePhysicsEvent::LocalInertiaProperty:
+            break;
+        case CoffeePhysicsEvent::ActivationStateProperty:
+            break;
+        case CoffeePhysicsEvent::AngularFactorProperty:
+            break;
+        case CoffeePhysicsEvent::FrictionProperty:
+            break;
+        case CoffeePhysicsEvent::RestitutionProperty:
+            break;
+        case CoffeePhysicsEvent::RollingFrictionProperty:
+            break;
+        case CoffeePhysicsEvent::LinearFactorProperty:
+            break;
+        case CoffeePhysicsEvent::PlaneConstantProperty:
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void BulletPhysics::removeObject(PhysicsObject *obj)
