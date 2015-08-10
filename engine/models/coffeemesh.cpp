@@ -265,9 +265,9 @@ void CoffeeMesh::unload(){
         b->freeBuffer();
         delete b;
     }
-    matrixBuffer->freeBuffer();
+    if(matrixBuffer)
+        matrixBuffer->freeBuffer();
     indexBuffer->freeBuffer();
-    arrays.clear();
     buffers.clear();
 }
 

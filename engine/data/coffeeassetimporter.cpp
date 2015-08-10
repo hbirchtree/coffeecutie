@@ -152,10 +152,12 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
             if(mesh->mMaterialIndex<(uint)mtllist.size()){
                 ms->material = mtllist.at(mesh->mMaterialIndex);
             }else{
-                qDebug("Could not find material for mesh: %s",cmesh->objectName().toStdString().c_str());
+                qDebug("Could not find material for mesh: %s",
+                       cmesh->objectName().toStdString().c_str());
                 continue;
             }
-            qDebug("New model: name=%s,material=%s",cmesh->objectName().toStdString().c_str(),
+            qDebug("New model: name=%s,material=%s",
+                   cmesh->objectName().toStdString().c_str(),
                    ms->material->objectName().toStdString().c_str());
             cmesh->moveToThread(outputParent->thread());
             ms->moveToThread(outputParent->thread());

@@ -94,7 +94,7 @@ void CoffeeSkybox::setTexture(QObject *texture)
     if(m)
         setTexture(m);
 }
-QPointer<CoffeeShader> CoffeeSkybox::getShader() const
+CoffeeShader* CoffeeSkybox::getShader()
 {
     return m_shader;
 }
@@ -120,7 +120,7 @@ QObject *CoffeeSkybox::shader() const
     return m_shader;
 }
 
-QObject *CoffeeSkybox::mesh() const
+QObject *CoffeeSkybox::meshQObject() const
 {
     return m_mesh;
 }
@@ -135,7 +135,7 @@ QObject *CoffeeSkybox::skyboxMatrix()
     return m_matrix;
 }
 
-QPointer<CoffeeMesh> CoffeeSkybox::getSkymesh() const
+CoffeeMesh* CoffeeSkybox::mesh()
 {
     return m_mesh;
 }
@@ -151,7 +151,7 @@ void CoffeeSkybox::setSkymesh(CoffeeMesh *value)
         qDebug("Could not assign mesh without positions!");
 }
 
-QPointer<CoffeeTexture> CoffeeSkybox::getTexture() const
+CoffeeTexture* CoffeeSkybox::getTexture()
 {
     return m_texture;
 }

@@ -19,8 +19,8 @@ public:
     PhysicsObject(QPointer<PhysicsObject> object);
     ~PhysicsObject();
 
-    QPointer<Vector3Value> getPositionObject();
-    QPointer<QuatValue> getPhysicalRotation();
+    Vector3Value* getPositionObject();
+    QuatValue* getPhysicalRotation();
 
     void *getPhysicspointer();
     void setPhysicspointer(void *value);
@@ -32,11 +32,6 @@ public:
     QObject* getScaleQObject();
 
 public slots:
-    void updatePosition(glm::vec3 p);
-    void updateVelocity(glm::vec3 p);
-    void updateAcceleration(glm::vec3 p);
-
-    void updateRotation(glm::quat r);
     void updateAngularVelocity(glm::quat r);
 
     void setDescr(PhysicsDescriptor *value);

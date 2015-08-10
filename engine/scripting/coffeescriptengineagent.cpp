@@ -12,7 +12,7 @@ CoffeeScriptEngineAgent::CoffeeScriptEngineAgent(QObject *parent, QScriptEngine*
 void CoffeeScriptEngineAgent::scriptLoad(qint64 id, const QString &program,
                                          const QString &fileName, int baseLineNumber)
 {
-    qDebug() << "Loading script:" << id << fileName;
+//    qDebug() << "Loading script:" << id << fileName;
     CoffeeScriptInstance* _s = new CoffeeScriptInstance();
     _s->baseLn = baseLineNumber;
     _s->program = program;
@@ -23,7 +23,7 @@ void CoffeeScriptEngineAgent::scriptLoad(qint64 id, const QString &program,
 
 void CoffeeScriptEngineAgent::scriptUnload(qint64 id)
 {
-    qDebug() << "Unloading script:" << id;
+//    qDebug() << "Unloading script:" << id;
     if(m_loaded_scripts.contains(id))
         delete m_loaded_scripts.value(id);
     m_loaded_scripts.remove(id);

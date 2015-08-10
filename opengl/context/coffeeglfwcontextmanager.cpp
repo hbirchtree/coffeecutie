@@ -325,6 +325,11 @@ double CoffeeGLFWContextManager::getLatestFrameTime() const
     return m_frameTime;
 }
 
+QWindow *CoffeeGLFWContextManager::windowHandle()
+{
+    return GLFWNativeFunctions::getQWindow(this->window);
+}
+
 void CoffeeGLFWContextManager::setWindowState(Qt::WindowState state)
 {
     CoffeeRendererBase::setWindowState(state);

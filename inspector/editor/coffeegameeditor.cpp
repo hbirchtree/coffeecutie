@@ -57,3 +57,8 @@ void CoffeeGameEditor::on_actionToolbar_toggled(bool arg1)
 {
     ui->toolBar->setVisible(arg1);
 }
+
+void CoffeeGameEditor::on_actionShow_renderer_toggled(bool arg1)
+{
+    requestRendererWindowState(arg1);
+}

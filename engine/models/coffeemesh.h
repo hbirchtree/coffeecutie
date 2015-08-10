@@ -104,18 +104,16 @@ protected:
     QVector<glm::vec3> bitangents;
     QVector<glm::vec3> tangents;
     QVector<GLuint> indices;
-    CoffeeSkeleton* skeleton;
+    CoffeeSkeleton* skeleton = nullptr;
 
 private:
     QPointer<CoffeeInstanceContainer> instances;
 
     QVector<CoffeeBuffer*> buffers;
-//    QVector<GLuint> buffers;
-    CoffeeBuffer* indexBuffer;
-    CoffeeBuffer* matrixBuffer;
-    CoffeeVertexArrayObject* vertexArray;
+    CoffeeBuffer* indexBuffer = nullptr;
+    CoffeeBuffer* matrixBuffer = nullptr;
+    CoffeeVertexArrayObject* vertexArray = nullptr;
 
-    QVector<GLuint> arrays;
     GLenum drawmode = GL_STATIC_DRAW;
     bool m_baked = false;
 

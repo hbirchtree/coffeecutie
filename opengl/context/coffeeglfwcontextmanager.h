@@ -36,6 +36,8 @@ public:
     double getLoopTime() const;
     double getLatestFrameTime() const;
 
+    QWindow *windowHandle();
+
     int init();
 
     Q_INVOKABLE QObject* getJoystickDevice(uint index);
@@ -63,6 +65,7 @@ private:
     double m_frameTime = 0.0;
 
     int m_multisamples = 0;
+
 };
 
 #endif // COFFEEGLFWCONTEXTMANAGER_H

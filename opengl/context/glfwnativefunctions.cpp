@@ -26,13 +26,15 @@
 
 QWindow *GLFWNativeFunctions::getQWindow(GLFWwindow* window)
 {
-    WId id;
+    QWindow* win = nullptr;
 
 #if defined(Q_OS_LINUX)
-    id = glfwGetX11Window(window); //X11 returns a long pointer, id is a long long pointer
+    Window xwin = glfwGetX11Window(window);
+    win = QWindow::fromWinId(xwin);
+
 #endif
 
-    qDebug() << "GLFW window ID:" << id;
+    qDebug() << "GLFW window ID:" << win;
 
-    return QWindow::fromWinId(id);
+    return win;
 }

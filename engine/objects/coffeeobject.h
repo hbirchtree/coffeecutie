@@ -6,6 +6,8 @@
 #include "engine/physics/physicsobject.h"
 #include "engine/shaders/coffeeuniformsetter.h"
 
+class CoffeeMesh;
+
 class CoffeeObject : public QObject,public CoffeeUniformSetter
 {
     Q_PROPERTY(QObject* position READ positionValue)
@@ -43,6 +45,8 @@ public:
 
     bool baked() const;
     bool hasPhysics() const;
+
+    Q_INVOKABLE virtual CoffeeMesh* mesh();
 
     QObject* positionValue();
     QObject* rotationValue();

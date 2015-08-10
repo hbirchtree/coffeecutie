@@ -13,7 +13,7 @@ class CoffeeResource;
 class CoffeeSkybox : public CoffeeObject
 {
     Q_PROPERTY(QObject* texture READ texture WRITE setTexture)
-    Q_PROPERTY(QObject* mesh READ mesh WRITE setMesh)
+    Q_PROPERTY(QObject* mesh READ meshQObject WRITE setMesh)
     Q_PROPERTY(QObject* shader READ shader WRITE setShader)
     Q_PROPERTY(QObject* camera READ camera WRITE setCamera)
 
@@ -27,18 +27,18 @@ public:
 
     void setCamera(CoffeeCamera* m_camera);
 
-    QPointer<CoffeeTexture> getTexture() const;
+    CoffeeTexture* getTexture();
     void setTexture(CoffeeTexture* value);
 
-    QPointer<CoffeeMesh> getSkymesh() const;
+    CoffeeMesh* mesh();
     void setSkymesh(CoffeeMesh* value);
 
-    QPointer<CoffeeShader> getShader() const;
+    CoffeeShader* getShader();
     void setShader(CoffeeShader *value);
 
     QObject* camera() const;
     QObject* shader() const;
-    QObject* mesh() const;
+    QObject* meshQObject() const;
     QObject* texture() const;
 
     QObject* skyboxMatrix();

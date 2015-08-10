@@ -101,6 +101,11 @@ bool CoffeeObject::hasPhysics() const
     return m_physics;
 }
 
+CoffeeMesh *CoffeeObject::mesh()
+{
+    return nullptr;
+}
+
 void CoffeeObject::setUniform(QString uniformName, QObject *data)
 {
     VectorData* d = qobject_cast<VectorData*>(data);

@@ -147,8 +147,6 @@ QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, Q
     }
     QString file = ctxt->argument(0).toString();
 
-    bool status = false;
-
     QScriptValue res = execFile(eng,file);
 
     return res;

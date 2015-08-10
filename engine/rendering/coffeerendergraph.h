@@ -40,6 +40,8 @@ public slots:
     void clearRenderer();
 
     void queueRender();
+    void stopRender();
+
     void includeObject(CoffeeObject *obj);
 
     void setRenderSurface(CoffeeOutputSurface *renderSurface);

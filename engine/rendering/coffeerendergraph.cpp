@@ -10,6 +10,7 @@
 #include "engine/objects/coffeeobject.h"
 #include "opengl/context/coffeerenderer.h"
 #include "opengl/components/coffeeframebufferobject.h"
+#include "engine/models/coffeemesh.h"
 
 CoffeeRenderGraph::CoffeeRenderGraph(QObject *parent) : QObject(parent)
 {
@@ -70,11 +71,35 @@ void CoffeeRenderGraph::queueRender()
         glClear(GL_DEPTH_BUFFER_BIT);
 
         for(CoffeeRenderGroup* _grp : m_renderGroups.values())
-            for(CoffeeObject* o : _grp->m_objects)
-                o->render();
+            for(CoffeeObject* o : _grp->m_objects){
+                if(!o->baked())
+                    o->load();
+
+                glUseProgram(o->_shader_obj()->getProgramId());
+
+                o->applyUniforms();
+                o->bindTextures();
+
+                o->mesh()->renderMesh();
+
+                o->unbindTextures();
+
+                glUseProgram(0);
+            }
 
         m_renderTarget->unbindFramebuffer();
         m_renderSurface->render();
+    };
+    submitRenderCall(func);
+}
+
+void CoffeeRenderGraph::stopRender()
+{
+    std::function<void()> func = [=](){
+        for(CoffeeRenderGroup* _grp : m_renderGroups.values())
+            for(CoffeeObject* o : _grp->m_objects)
+                if(o->baked())
+                    o->unload();
     };
     submitRenderCall(func);
 }

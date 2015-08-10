@@ -186,12 +186,23 @@ void CoffeeGameEnvironment::createGameWindow()
 void CoffeeGameEnvironment::registerInspectionObject(QObject *o)
 {
     m_scriptObjects.append(o);
+    if(m_scriptEngine)
+        m_scriptEngine->addObject(o);
 }
 
 void CoffeeGameEnvironment::onRendererInit()
 {
     if(m_scriptEngine)
         m_scriptEngine->engine_execFile(m_initScript);
+
+    QWindow* glfw = m_rendererObject->windowHandle();
+
+    if(glfw){
+        glfw->setObjectName("glfw_window");
+        if(inspect())
+            m_editor->setPrimaryView(QWidget::createWindowContainer(glfw));
+        registerInspectionObject(glfw);
+    }
 }
 
 void CoffeeGameEnvironment::shutdownEnvironment()

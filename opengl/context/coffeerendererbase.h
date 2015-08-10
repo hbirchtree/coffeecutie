@@ -66,6 +66,8 @@ public:
 
     virtual bool isMouseGrabbed() const = 0;
 
+    virtual QWindow* windowHandle() = 0;
+
 public slots:
     virtual void run();
 

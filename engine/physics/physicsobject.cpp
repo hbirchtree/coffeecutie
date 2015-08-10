@@ -22,11 +22,11 @@ PhysicsObject::~PhysicsObject(){
         deleteObject(physicspointer);
 }
 
-QPointer<Vector3Value> PhysicsObject::getPositionObject(){
+Vector3Value* PhysicsObject::getPositionObject(){
     return v_position;
 }
 
-QPointer<QuatValue> PhysicsObject::getPhysicalRotation(){
+QuatValue* PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 
@@ -69,27 +69,6 @@ void PhysicsObject::setDescr(PhysicsDescriptor *value)
 void PhysicsObject::modifyPhysics(CoffeePhysicsEvent *ev)
 {
     propertyModified(ev);
-}
-
-void PhysicsObject::updatePosition(glm::vec3 p)
-{
-    v_position->setValue(p);
-}
-
-void PhysicsObject::updateVelocity(glm::vec3 p)
-{
-    v_position->setVelocity(p);
-}
-
-void PhysicsObject::updateAcceleration(glm::vec3 p)
-{
-    v_position->setAcceleration(p);
-}
-
-void PhysicsObject::updateRotation(glm::quat r)
-{
-//    v_physics_rotation->setValue(r);
-    *v_physics_rotation = glm::normalize(r);
 }
 
 void PhysicsObject::updateAngularVelocity(glm::quat r)

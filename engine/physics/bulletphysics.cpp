@@ -156,7 +156,6 @@ btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
         shape = new btStaticPlaneShape(
                     convert_glm(ev->getVector3(CoffeePhysicsEvent::OrientationProperty)),
                     (btScalar)ev->getScalar(CoffeePhysicsEvent::PlaneConstantProperty));
-        qDebug() << "Plane constant:" << ev->getScalar(CoffeePhysicsEvent::PlaneConstantProperty);
         break;
     }
     default:
@@ -267,13 +266,16 @@ void BulletPhysics::internalTickCallback(btDynamicsWorld *wrld, btScalar timeste
         PhysicsObject* obj = (PhysicsObject*)rb->getUserPointer();
         btTransform t;
         rb->getMotionState()->getWorldTransform(t);
-        obj->updatePosition(convert_bt(t.getOrigin()));
-        obj->updateVelocity(convert_bt(rb->getLinearVelocity()));
-        obj->updateAcceleration(convert_bt(rb->getTotalForce())+convert_bt(rb->getGravity()));
+
+        obj->getPositionObject()->setValue(convert_bt(t.getOrigin()));
+        obj->getPositionObject()->setVelocity(convert_bt(rb->getLinearVelocity()));
+        obj->getPositionObject()->setAcceleration(convert_bt(rb->getTotalForce()
+                                                             +rb->getGravity()));
         btQuaternion r = t.getRotation();
-        obj->updateRotation(convert_bt(r));
-        glm::quat av = glm::quat(2.f,convert_bt(rb->getAngularVelocity()));
-        obj->updateAngularVelocity(av);
+        obj->getPhysicalRotation()->setValue(glm::normalize(convert_bt(r)));
+
+        glm::quat av = glm::quat(0.f,convert_bt(rb->getAngularVelocity()));
+        obj->getPhysicalRotation()->setVelocity(av);
     }
     //Report collisions
     if(wrld->getWorldUserInfo()){
@@ -339,6 +341,8 @@ void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
         connect(cobj,SIGNAL(deleteObject(void*)),SLOT(removePhysicsObject(void*)));
         connect(cobj,SIGNAL(propertyModified(CoffeePhysicsEvent*)),
                 SLOT(handlePhysicsEvent(CoffeePhysicsEvent*)));
+
+        qDebug() << "Physics:" << body;
 
         m_dynamicsWorld->addRigidBody(body);
 
