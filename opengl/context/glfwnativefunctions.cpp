@@ -29,12 +29,11 @@ QWindow *GLFWNativeFunctions::getQWindow(GLFWwindow* window)
     QWindow* win = nullptr;
 
 #if defined(Q_OS_LINUX)
+
     Window xwin = glfwGetX11Window(window);
     win = QWindow::fromWinId(xwin);
 
 #endif
-
-    qDebug() << "GLFW window ID:" << win;
 
     return win;
 }
