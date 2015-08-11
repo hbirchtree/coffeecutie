@@ -22,6 +22,7 @@ public slots:
     void submitMessage(int cat, const QString& text);
 
 private:
+    qint64 m_nextMessage = 0;
     QList<QTextEdit*> m_tabs;
     Ui::CoffeeMessageLogger *ui;
 };
