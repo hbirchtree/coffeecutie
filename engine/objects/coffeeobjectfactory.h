@@ -19,7 +19,11 @@ class CoffeeAssetStorage;
 
 class CoffeeObjectFactory : public QObject
 {
+    Q_PROPERTY(bool verbose READ verbose WRITE setVerbose)
+
     Q_OBJECT
+    bool m_verbose;
+
 public:
     CoffeeObjectFactory(QObject* parent);
 
@@ -33,6 +37,9 @@ public:
     QList<CoffeeWorldOpts*> importObjects(QString file,
                                           QObject *parent);
 
+    bool verbose() const;
+public slots:
+    void setVerbose(bool verbose);
 };
 
 #endif // COFFEEOBJECTFACTORY_H

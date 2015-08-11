@@ -94,6 +94,16 @@ void CoffeeSkybox::setTexture(QObject *texture)
     if(m)
         setTexture(m);
 }
+
+GLenum CoffeeSkybox::_gl_depthFunc()
+{
+    return GL_LEQUAL;
+}
+
+GLenum CoffeeSkybox::_gl_culling()
+{
+    return GL_FRONT;
+}
 CoffeeShader* CoffeeSkybox::getShader()
 {
     return m_shader;

@@ -47,6 +47,7 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
                            [=](QResizeEvent e){
         std::function<void()> func = [=](){
             m_renderSurface->resize(e.size());
+            glViewport(0,0,e.size().width(),e.size().height());
         };
         submitRenderCall(func);
     }));
@@ -79,6 +80,9 @@ void CoffeeRenderGraph::queueRender()
 
                 o->applyUniforms();
                 o->bindTextures();
+
+                glDepthFunc(o->_gl_depthFunc());
+                glCullFace(o->_gl_culling());
 
                 o->mesh()->renderMesh();
 

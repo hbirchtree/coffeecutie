@@ -55,6 +55,9 @@ public:
     QObject* physicsRef();
     QObject* shaderRef();
 
+    virtual GLenum _gl_depthFunc();
+    virtual GLenum _gl_culling();
+
     Q_INVOKABLE QString toString();
 
 public slots:

@@ -69,6 +69,16 @@ QObject *CoffeeObject::shaderRef()
     return m_shader.data();
 }
 
+GLenum CoffeeObject::_gl_depthFunc()
+{
+    return GL_LESS;
+}
+
+GLenum CoffeeObject::_gl_culling()
+{
+    return GL_BACK;
+}
+
 QString CoffeeObject::toString()
 {
     return QString("CoffeeObject("

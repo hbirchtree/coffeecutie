@@ -62,6 +62,11 @@ protected:
 
     GLuint buffs[2];
     GLuint vao;
+
+    // CoffeeObject interface
+public:
+    GLenum _gl_depthFunc();
+    GLenum _gl_culling();
 };
 
 #endif // COFFEESKYBOX_H

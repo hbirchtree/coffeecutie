@@ -20,11 +20,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.1.54");
+    a.setApplicationVersion("0.0.1.70");
     a.setApplicationDisplayName("Coffee Cutie");
 
     QString scriptFile;
-    bool inspect = true;
     bool logStderr = true;
     bool logFile = false;
 
@@ -36,7 +35,6 @@ int main(int argc, char *argv[])
     opts.addOption(QCommandLineOption("licenses","Get licensing information"));
     opts.addOption(QCommandLineOption("log-file","Log to file"));
     opts.addOption(QCommandLineOption("log-stderr","Log to stderr"));
-    opts.addOption(QCommandLineOption("inspect"));
     opts.addPositionalArgument("script","Start-up script file","*.qts");
 
     opts.process(a);
@@ -44,12 +42,6 @@ int main(int argc, char *argv[])
         if(key=="licenses"){
             //show license information
             return 0;
-        }else if(key=="inspect"){
-#ifndef COFFEE_INSPECTOR_RUN
-            qDebug() << "Inspector not enabled, it may have been disabled at build-time and is thus not accessible.";
-#else
-            inspect = true;
-#endif
         }else if(key=="log-file"){
             logFile = true;
         }else if(key=="log-stderr"){
@@ -99,23 +91,6 @@ int main(int argc, char *argv[])
     //This demo taken from glbinding tests out general rendering
     root->setRenderLoop(new BoxTest(root->renderer()));
 #endif //COFFEE_ADVANCED_RUN
-    //configure script engine and inspector if it is enabled
-
-//    QObjectList objects;
-//    objects << root
-//            << QThreadPool::globalInstance()
-//            << renderer
-//            << fc;
-
-//    if(advancedLoop){
-//        for(QObject* o : objects)
-//            se->addObject(o);
-//        bool res;
-//        QScriptValue ex = se->execFile(se->getEngine(),sf.absoluteFilePath(),&res);
-//        qDebug("Init script run: %i, %s",
-//               res,
-//               ex.toString().toStdString().c_str());
-//    }
 
     root->startExecution(&a);
 

@@ -69,6 +69,7 @@ CoffeeAssetStorage *CoffeeObjectFactory::importAssets__base(QObject *parent, con
     for(QString key : source.keys())
         if(key=="assets"){
             CoffeeAssetImporter* imp = new CoffeeAssetImporter(importerRoot,parent); //temporary object
+            imp->setVerbose(this->verbose());
             QFuture<CoffeeAssetStorage*> index =
                     QtConcurrent::run(imp,
                                       &CoffeeAssetImporter::importAssets,
@@ -131,4 +132,14 @@ QList<CoffeeWorldOpts *> CoffeeObjectFactory::importObjects(QString file, QObjec
     delete s;
     delete f;
     return w;
+}
+
+bool CoffeeObjectFactory::verbose() const
+{
+    return m_verbose;
+}
+
+void CoffeeObjectFactory::setVerbose(bool verbose)
+{
+    m_verbose = verbose;
 }

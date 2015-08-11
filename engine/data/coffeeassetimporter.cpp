@@ -85,8 +85,13 @@ CoffeeAssetStorage *CoffeeAssetImporter::importAssets(QVariantList assetList, co
     return s;
 }
 
+bool CoffeeAssetImporter::verbose() const
+{
+    return m_verbose;
+}
+
 CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
-                                                    const QString &filepath)
+                                                     const QString &filepath)
 {
     CoffeeAssetStorage *s = new CoffeeAssetStorage(0);
     s->filepath = filepath;
@@ -123,13 +128,14 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
         qDebug("Failed to read model data %s: %s",
                fileinfo.filePath().toStdString().c_str(),importer.GetErrorString());
     }else{
-        qDebug("Successfully read model data: %s:"
-               " %i mesh(es), %i material(s), %i texture(s), "
-               "%i light(s), %i camera(s), %i animation(s)",
-               fileinfo.filePath().toStdString().c_str(),
-               scene->mNumMeshes,scene->mNumMaterials,
-               scene->mNumTextures,scene->mNumLights,
-               scene->mNumCameras,scene->mNumAnimations);
+        if(verbose())
+            qDebug("Successfully read model data: %s:"
+                   " %i mesh(es), %i material(s), %i texture(s), "
+                   "%i light(s), %i camera(s), %i animation(s)",
+                   fileinfo.filePath().toStdString().c_str(),
+                   scene->mNumMeshes,scene->mNumMaterials,
+                   scene->mNumTextures,scene->mNumLights,
+                   scene->mNumCameras,scene->mNumAnimations);
 
 //        for(uint i=0;i<scene->mNumAnimations;i++){
 //            aiAnimation* ani = scene->mAnimations[i];
@@ -159,9 +165,10 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
                        cmesh->objectName().toStdString().c_str());
                 continue;
             }
-            qDebug("New model: name=%s,material=%s",
-                   cmesh->objectName().toStdString().c_str(),
-                   ms->material->objectName().toStdString().c_str());
+            if(verbose())
+                qDebug("New model: name=%s,material=%s",
+                       cmesh->objectName().toStdString().c_str(),
+                       ms->material->objectName().toStdString().c_str());
             cmesh->moveToThread(outputParent->thread());
             ms->moveToThread(outputParent->thread());
             models.insert(cmesh->objectName(),ms);
@@ -472,4 +479,10 @@ QObject *CoffeeModelStruct::getMeshObject()
 QObject *CoffeeModelStruct::getMaterialObject()
 {
     return material;
+}
+
+
+void CoffeeAssetImporter::setVerbose(bool verbose)
+{
+    m_verbose = verbose;
 }

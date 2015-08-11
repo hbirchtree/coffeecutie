@@ -69,6 +69,8 @@ public:
 
 class CoffeeAssetImporter : public QObject
 {
+    Q_PROPERTY(bool verbose READ verbose WRITE setVerbose)
+
     Q_OBJECT
 public:
     CoffeeAssetImporter(QObject *parent,QObject* outputParent);
@@ -79,8 +81,16 @@ public:
 
     CoffeeAssetStorage* importAssets(QVariantList assetList, const QString &filepath);
 
+    bool verbose() const;
+
+public slots:
+    void setVerbose(bool verbose);
+
 private:
     QObject* outputParent;
+    bool m_verbose;
 };
+
+
 
 #endif // COFFEEASSETIMPORTER_H
