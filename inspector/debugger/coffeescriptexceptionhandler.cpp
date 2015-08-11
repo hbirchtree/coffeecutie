@@ -2,14 +2,30 @@
 #include <QTreeWidget>
 #include "engine/scripting/coffeescriptengine.h"
 #include "coffeecodeeditor.h"
+#include "inspector/debugger/coffeedebugview.h"
 
 CoffeeScriptExceptionHandler::CoffeeScriptExceptionHandler(QObject *parent) : QObject(parent)
 {
 
 }
 
+void CoffeeScriptExceptionHandler::setDebugView(CoffeeDebugView *m)
+{
+    this->m_backtree = m->getBacktraceTree();
+    this->m_editor = m->getCodeEditor();
+}
+
+void CoffeeScriptExceptionHandler::attachAgent(CoffeeScriptEngine *e)
+{
+    connect(e->agent(),&CoffeeScriptEngineAgent::exceptionReport,
+            this,&CoffeeScriptExceptionHandler::receiveScriptException);
+}
+
 void CoffeeScriptExceptionHandler::receiveScriptException(CoffeeScriptException ex)
 {
+    if(!m_backtree||!m_editor)
+        return;
+
     m_backtree->clear();
 
     QList<QTreeWidgetItem*> m_items;

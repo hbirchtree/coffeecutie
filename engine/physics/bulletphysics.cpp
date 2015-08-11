@@ -342,8 +342,6 @@ void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
         connect(cobj,SIGNAL(propertyModified(CoffeePhysicsEvent*)),
                 SLOT(handlePhysicsEvent(CoffeePhysicsEvent*)));
 
-        qDebug() << "Physics:" << body;
-
         m_dynamicsWorld->addRigidBody(body);
 
     }break;

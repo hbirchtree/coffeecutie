@@ -14,7 +14,7 @@ void QtScriptConstructors::defineConstructors(QScriptEngine &e)
     qScriptRegisterMetaType(&e,pointToScript,pointFromScript);
     {
         QScriptValue pdCt = e.newFunction(qtimerConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
+        QScriptValue mo = e.newQMetaObject(&QTimer::staticMetaObject,pdCt);
         e.globalObject().setProperty("QTimer",mo);
     }
     {

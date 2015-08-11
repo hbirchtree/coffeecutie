@@ -3,14 +3,11 @@
 
 #include "coffeeobjectexplorer.h"
 
-CoffeeInspector::CoffeeInspector(QWidget *parent,
-                                 QObjectList engineRoot) :
+CoffeeInspector::CoffeeInspector(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::CoffeeInspector)
 {
     ui->setupUi(this);
-
-    m_explorer = new CoffeeObjectExplorer(this,engineRoot,ui->objectView);
 
     QStringList headers;
     headers << "Property" << "Value";
@@ -30,5 +27,13 @@ CoffeeInspector::~CoffeeInspector()
 
 void CoffeeInspector::updateInformation()
 {
-    m_explorer->updateInformation();
+    if(m_explorer)
+        m_explorer->updateInformation();
 }
+
+void CoffeeInspector::setExplorer(CoffeeObjectExplorer *explorer)
+{
+    explorer->setTarget(ui->objectView);
+    m_explorer = explorer;
+}
+

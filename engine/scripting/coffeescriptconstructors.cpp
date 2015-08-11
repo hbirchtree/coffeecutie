@@ -21,6 +21,9 @@
 #include "engine/rendering/coffeerendergraph.h"
 #include "inspector/information/coffeesystemmonitor.h"
 
+#include "general/scripting/scripthelpers.h"
+#include "inspector/debugger/coffeescriptexceptionhandler.h"
+
 CoffeeScriptConstructors::CoffeeScriptConstructors()
 {
 
@@ -38,36 +41,13 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
     defineQObjectScriptType<CoffeeSystemMonitor>(&e);
 
     //Data storage
-    {
-        QScriptValue pdCt = e.newFunction(vector2ValueConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("Vector2Value",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(vector3ValueConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("Vector3Value",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(vector4ValueConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("Vector4Value",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(scalarValueConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("ScalarValue",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(scalarRandConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("RandomScalarValue",mo);
-    }
-    {
-        QScriptValue pdCt = e.newFunction(quatValueConstructor);
-        QScriptValue mo = e.newQMetaObject(&QObject::staticMetaObject,pdCt);
-        e.globalObject().setProperty("QuatValue",mo);
-    }
+    defineObjectConstructor<Vector2Value>(&e,vector2ValueConstructor);
+    defineObjectConstructor<Vector3Value>(&e,vector3ValueConstructor);
+    defineObjectConstructor<Vector4Value>(&e,vector4ValueConstructor);
+    defineObjectConstructor<ScalarValue>(&e,scalarValueConstructor);
+    defineObjectConstructor<ScalarValue>(&e,"RandomScalarValue",scalarRandConstructor);
+    defineObjectConstructor<QuatValue>(&e,quatValueConstructor);
+
     //Physics
     defineQObjectScriptType<CoffeePhysicsEvent>(&e);
     defineQObjectScriptType<PhysicsObject>(&e);
@@ -90,6 +70,8 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
 
     //Rendering
     defineQObjectScriptType<CoffeeRenderGraph>(&e);
+
+    //Widgets and etc.
 }
 
 QScriptValue CoffeeScriptConstructors::scalarRandConstructor(QScriptContext *ctxt, QScriptEngine *eng)
@@ -135,16 +117,5 @@ QScriptValue CoffeeScriptConstructors::vector4ValueConstructor(QScriptContext *c
 QScriptValue CoffeeScriptConstructors::quatValueConstructor(QScriptContext *ctxt, QScriptEngine *eng){
     QObject* parent = ctxt->argument(0).toQObject();
     QObject* o = new QuatValue(parent,glm::quat(1,0,0,0));
-    return eng->newQObject(o,QScriptEngine::AutoOwnership);
-}
-
-QScriptValue CoffeeScriptConstructors::coffeeSkyboxConstructor(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    if(ctxt->argumentCount()!=2){
-        return ctxt->throwError("Mandatory camera not specified!");
-    }
-    CoffeeCamera* camera = qobject_cast<CoffeeCamera*>(ctxt->argument(1).toQObject());
-    QObject* parent = ctxt->argument(0).toQObject();
-    QObject* o = new CoffeeSkybox(parent,camera);
     return eng->newQObject(o,QScriptEngine::AutoOwnership);
 }

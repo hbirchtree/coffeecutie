@@ -2,16 +2,15 @@
 
 #include <QApplication>
 
-#include "inspector/coffeeinspector.h"
 #include "engine/rendering/coffeeadvancedloop.h"
 #include "engine/scripting/coffeescriptengine.h"
 #include "opengl/context/coffeerendererbase.h"
 #include "opengl/context/coffeerenderer.h"
 
-#include "inspector/coffeerendererinspector.h"
-#include "inspector/coffeescriptterminal.h"
 #include "inspector/editor/coffeegameeditor.h"
-#include "inspector/debugger/coffeedebugview.h"
+#include "inspector/editor/coffeeeditorshell.h"
+
+#include <QMessageBox>
 
 CoffeeGameEnvironment::CoffeeGameEnvironment(QObject *parent) : QObject(parent)
 {
@@ -41,6 +40,21 @@ CoffeeRendererBase *CoffeeGameEnvironment::renderer()
 QString CoffeeGameEnvironment::initScript() const
 {
     return m_initScript;
+}
+
+QObject *CoffeeGameEnvironment::renderWindow() const
+{
+    return m_renderWindow;
+}
+
+QObject *CoffeeGameEnvironment::scriptEngineQObject()
+{
+    return m_scriptEngine;
+}
+
+QObjectList CoffeeGameEnvironment::scriptObjects() const
+{
+    return m_scriptObjects;
 }
 
 void CoffeeGameEnvironment::setScriptEngine(CoffeeScriptEngine *scriptEngine)
@@ -79,7 +93,7 @@ void CoffeeGameEnvironment::startExecution(QApplication* app)
 
     if(m_scriptEngine){
         for(QObject* o : m_scriptObjects)
-            m_scriptEngine->addObject(o);
+            m_scriptEngine->insertObject(o);
     }
 
     connect(m_rendererObject,SIGNAL(rendererInitFinished()),SLOT(onRendererInit()));
@@ -104,59 +118,24 @@ void CoffeeGameEnvironment::setRenderLoop(RenderLoop *loop)
 
 void CoffeeGameEnvironment::createInspector()
 {
-//    CoffeeRenderer* renderer = qobject_cast<CoffeeRenderer*>(m_rendererObject);
+    m_editorShell = new CoffeeEditorShell(this);
 
-    //Create the inspector
-    m_inspector = new CoffeeInspector(0,m_scriptObjects);
+    m_editor = new CoffeeGameEditor(0);
 
-    //Create the renderer information
-    m_information = new CoffeeRendererInspector(0);
-    m_information->setObjectName("information_widget");
+    m_editorShell->insertObject("root",this);
+    m_editorShell->insertObject("app",m_editor);
+    m_editorShell->insertObject("cutie_engine",m_scriptEngine);
 
-    m_scriptObjects.append(m_information);
+    connect(m_editorShell,&CoffeeEditorShell::executionReturn,
+            [=](QString p, QString f, QString r){
+        if(r!=m_editorShell->engine()->undefinedValue().toString()){
+            QMessageBox::warning(0,tr("Error initializing editor"),r);
+            qWarning() << r;
+        }
+    });
 
-    if(m_scriptEngine){
-
-        //Create editor forms
-
-        //Script terminal
-        m_terminal = new CoffeeScriptTerminal(0);
-        connect(m_scriptEngine,&CoffeeScriptEngine::executionReturn,
-                [=](QString program, QString file, QString result){
-            QString cmd;
-            if(file.isNull()){
-                cmd = program;
-            }else{
-                cmd = file;
-            }
-            m_terminal->appendLog(cmd,result);
-        });
-        connect(m_terminal,&CoffeeScriptTerminal::requestExecCmd,
-                m_scriptEngine,&CoffeeScriptEngine::engine_execCmd);
-        connect(m_terminal,&CoffeeScriptTerminal::requestExecFile,
-                m_scriptEngine,&CoffeeScriptEngine::engine_execFile);
-
-        //Debug view
-        CoffeeDebugView* dbg = new CoffeeDebugView(0);
-
-        //Exception handler, translation between CoffeeScriptException and interface
-        CoffeeScriptExceptionHandler* m_exhandler = new CoffeeScriptExceptionHandler(m_terminal);
-        m_exhandler->m_backtree = dbg->getBacktraceTree();
-        m_exhandler->m_editor = dbg->getCodeEditor();
-
-        connect(m_scriptEngine->getAgent(),&CoffeeScriptEngineAgent::exceptionReport,
-                m_exhandler,&CoffeeScriptExceptionHandler::receiveScriptException);
-
-        //Create the primary editor window
-        m_editor = new CoffeeGameEditor(0);
-
-        //Insert widgets
-        m_editor->addInspectorTab(m_inspector,tr("Object inspector"));
-        m_editor->addInspectorTab(m_information,tr("Renderer info"));
-
-        m_editor->addInfoTab(m_terminal,tr("Shell"));
-        m_editor->addInfoTab(dbg,tr("Debugger"));
-    }
+    m_editorShell->executeFile("editor.qts");
+    registerInspectionObject(m_editor);
 
     connect(m_editor,&CoffeeGameEditor::requestShutdown,
             this,&CoffeeGameEnvironment::shutdownEnvironment);
@@ -186,23 +165,25 @@ void CoffeeGameEnvironment::createGameWindow()
 void CoffeeGameEnvironment::registerInspectionObject(QObject *o)
 {
     m_scriptObjects.append(o);
+    newInspectionObject(o);
     if(m_scriptEngine)
-        m_scriptEngine->addObject(o);
+        m_scriptEngine->insertObject(o);
 }
 
 void CoffeeGameEnvironment::onRendererInit()
 {
     if(m_scriptEngine)
-        m_scriptEngine->engine_execFile(m_initScript);
+        m_scriptEngine->executeFile(m_initScript);
 
-    QWindow* glfw = m_rendererObject->windowHandle();
+    m_renderWindow = m_rendererObject->windowHandle();
 
-    if(glfw){
-        glfw->setObjectName("glfw_window");
-        if(inspect())
-            m_editor->setPrimaryView(QWidget::createWindowContainer(glfw));
-        registerInspectionObject(glfw);
+    if(m_renderWindow){
+        m_renderWindow->setObjectName("cutie_window");
+//        if(inspect())
+//            m_editor->setPrimaryView(QWidget::createWindowContainer(m_renderWindow));
+        registerInspectionObject(m_renderWindow);
     }
+    rendererInitialized();
 }
 
 void CoffeeGameEnvironment::shutdownEnvironment()

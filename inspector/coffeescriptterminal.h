@@ -29,6 +29,7 @@ signals:
 public slots:
     void clearLog();
     void appendLog(const QString &command, const QString &output);
+    void receiveOutput(QString program, QString file, QString result);
 
 private slots:
     void execFile(const QString& file);

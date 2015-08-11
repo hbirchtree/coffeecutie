@@ -15,17 +15,17 @@ class CoffeeInspector : public QWidget
     Q_OBJECT
 
 public:
-    CoffeeInspector(QWidget *parent = 0,
-                    QObjectList engineRoot = QObjectList());
+    CoffeeInspector(QWidget *parent = 0);
     ~CoffeeInspector();
 
-private slots:
+
+public slots:
+    void setExplorer(CoffeeObjectExplorer *explorer);
     void updateInformation();
 
 private:
     CoffeeObjectExplorer* m_explorer;
     QTimer *refreshTimer;
-    QObjectList engineRoot;
 
     Ui::CoffeeInspector *ui;
 

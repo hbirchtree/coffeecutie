@@ -6,22 +6,41 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>739</width>
-    <height>537</height>
+    <width>776</width>
+    <height>615</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Coffee Game Environment</string>
   </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>true</bool>
+  </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout"/>
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>739</width>
+     <width>776</width>
      <height>22</height>
     </rect>
    </property>
@@ -36,6 +55,7 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="actionUnfocus_game"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -48,7 +68,6 @@
      <string>View</string>
     </property>
     <addaction name="actionToolbar"/>
-    <addaction name="actionShow_renderer"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTools"/>
@@ -64,7 +83,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>false</bool>
+    <bool>true</bool>
    </attribute>
   </widget>
   <action name="actionQuit">
@@ -88,12 +107,9 @@
     <string>Toolbar</string>
    </property>
   </action>
-  <action name="actionShow_renderer">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
+  <action name="actionUnfocus_game">
    <property name="text">
-    <string>Show renderer</string>
+    <string>Unfocus game</string>
    </property>
   </action>
  </widget>

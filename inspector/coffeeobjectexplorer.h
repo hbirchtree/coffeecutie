@@ -10,10 +10,12 @@ class CoffeeObjectExplorer : public QObject
 {
 public:
     CoffeeObjectExplorer(QObject* parent,
-                         QObjectList root,
-                         QTreeWidget* target);
+                         QObjectList root);
+
+    void setTarget(QTreeWidget *target);
 
 public slots:
+    void addObject(QObject* obj);
     void updateInformation();
 
 protected:

@@ -4,6 +4,8 @@
 #include <QObject>
 #include "engine/scripting/coffeescriptengineagent.h"
 
+class CoffeeScriptEngine;
+class CoffeeDebugView;
 class CoffeeCodeEditor;
 class QTreeWidget;
 
@@ -17,6 +19,9 @@ public:
     QTreeWidget* m_backtree = nullptr;
 
 public slots:
+    void setDebugView(CoffeeDebugView* m);
+    void attachAgent(CoffeeScriptEngine* e);
+
     void receiveScriptException(CoffeeScriptException ex);
 };
 

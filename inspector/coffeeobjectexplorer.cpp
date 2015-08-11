@@ -4,15 +4,22 @@
 #include <QDebug>
 
 CoffeeObjectExplorer::CoffeeObjectExplorer(QObject *parent,
-                                           QObjectList root,
-                                           QTreeWidget* target) :
+                                           QObjectList root) :
     QObject(parent)
 {
     this->m_root = root;
-    this->m_target = target;
 }
+
+void CoffeeObjectExplorer::addObject(QObject *obj)
+{
+    m_root.append(obj);
+}
+
 void CoffeeObjectExplorer::updateInformation()
 {
+    if(!m_target)
+        return;
+
     for(QObject* root : m_root)
         if(objectsMapping.contains(root)){
             updateTreeWidgetItem(root,nullptr);
@@ -179,3 +186,8 @@ void CoffeeObjectExplorer::clearChildren(QTreeWidgetItem *it)
         delete c;
     }
 }
+void CoffeeObjectExplorer::setTarget(QTreeWidget *target)
+{
+    m_target = target;
+}
+

@@ -101,7 +101,9 @@ SOURCES += main.cpp \
     general/data/coffeepropertycontainer.cpp \
     inspector/debugger/coffeescriptexceptionhandler.cpp \
     inspector/debugger/coffeedebugview.cpp \
-    inspector/information/coffeesystemmonitor.cpp
+    inspector/information/coffeesystemmonitor.cpp \
+    inspector/editor/coffeeeditorshell.cpp \
+    general/scripting/coffeebasescriptenvironment.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -193,7 +195,10 @@ HEADERS += \
     general/data/coffeepropertycontainer.h \
     inspector/debugger/coffeescriptexceptionhandler.h \
     inspector/debugger/coffeedebugview.h \
-    inspector/information/coffeesystemmonitor.h
+    inspector/information/coffeesystemmonitor.h \
+    inspector/editor/coffeeeditorshell.h \
+    general/scripting/coffeebasescriptenvironment.h \
+    general/scripting/scripthelpers.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

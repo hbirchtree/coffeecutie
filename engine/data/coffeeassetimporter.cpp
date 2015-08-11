@@ -70,10 +70,13 @@ CoffeeAssetStorage *CoffeeAssetImporter::importAssets(QVariantList assetList, co
         }
     }
 
+    QElapsedTimer rtimer;
     for(QFuture<CoffeeAssetStorage*> e : importData){
+        rtimer.start();
         CoffeeAssetStorage* p;
         p = e.result();
         s->merge(p);
+
         delete p;
     }
 
@@ -128,10 +131,10 @@ CoffeeAssetStorage *CoffeeAssetImporter::importModel(const QVariantMap &data,
                scene->mNumTextures,scene->mNumLights,
                scene->mNumCameras,scene->mNumAnimations);
 
-        for(uint i=0;i<scene->mNumAnimations;i++){
-            aiAnimation* ani = scene->mAnimations[i];
-            CoffeeAnimation* cani = new CoffeeAnimation(0,ani,scene->mRootNode);
-        }
+//        for(uint i=0;i<scene->mNumAnimations;i++){
+//            aiAnimation* ani = scene->mAnimations[i];
+//            CoffeeAnimation* cani = new CoffeeAnimation(0,ani,scene->mRootNode);
+//        }
 
         QVector<CoffeeMaterial*> mtllist;
         for(uint i=0;i<scene->mNumMaterials;i++){
@@ -456,7 +459,6 @@ QObjectList CoffeeAssetStorage::getResources()
             l.append(p);
     return l;
 }
-
 
 CoffeeModelStruct::CoffeeModelStruct(QObject *parent) : QObject(parent)
 {

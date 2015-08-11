@@ -23,12 +23,12 @@ public slots:
 
 signals:
     void requestShutdown();
-    void requestRendererWindowState(bool);
 
 private slots:
     void on_actionQuit_triggered();
     void on_actionToolbar_toggled(bool arg1);
-    void on_actionShow_renderer_toggled(bool arg1);
+
+    void on_actionUnfocus_game_triggered();
 
 private:
     QTabWidget* m_inspectWidget;

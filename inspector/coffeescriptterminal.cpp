@@ -47,3 +47,14 @@ void CoffeeScriptTerminal::appendLog(const QString &command, const QString &outp
                           .arg(cmd.replace("\n","<br>"))
                           .arg(out.replace("\n","<br>")));
 }
+
+void CoffeeScriptTerminal::receiveOutput(QString program, QString file, QString result)
+{
+    QString cmd;
+    if(file.isNull()){
+        cmd = program;
+    }else{
+        cmd = file;
+    }
+    appendLog(cmd,result);
+}

@@ -3,7 +3,7 @@ var framecheck = 0.0;
 var sys_monitor = new CoffeeSystemMonitor();
 
 function printFrametime(frametime){
-	if(framecheck <= renderer.loopTime){
+	if(framecheck <= renderer.loopTime && information_widget!=null){
 		sys_monitor.refresh();
 
 		information_widget.plotGraph(frametime);
