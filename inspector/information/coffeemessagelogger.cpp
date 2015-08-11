@@ -35,6 +35,6 @@ void CoffeeMessageLogger::submitMessage(int cat, const QString &text)
 {
     if(cat>=m_tabs.size())
         return;
-
+    m_tabs.at(cat)->document()->setMaximumBlockCount(128);
     m_tabs.at(cat)->append(text);
 }
