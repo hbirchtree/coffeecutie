@@ -1,0 +1,37 @@
+print("Hello");
+
+var se = root.scriptEngine;
+
+//Inspection bar
+var inspector = new CoffeeInspector(0);
+var explorer = new CoffeeObjectExplorer(root,root.scriptObjects);
+inspector.setExplorer(explorer);
+
+var renderinspect = new CoffeeRendererInspector(0);
+renderinspect.objectName = "information_widget";
+
+root.registerInspectionObject(renderinspect);
+
+app.addInspectorTab(inspector,"Inspector");
+app.addInspectorTab(renderinspect,"Renderer");
+
+//Debug and script shell
+var terminal = new CoffeeScriptTerminal(0);
+se.executionReturn.connect(terminal.receiveOutput);
+terminal.requestExecCmd.connect(se.executeCmd);
+terminal.requestExecFile.connect(se.executeFile);
+
+var debug = new CoffeeDebugView(0);
+//var exhandler = new CoffeeScriptExceptionHandler(debug);
+//exhandler.setDebugView(debug);
+//exhandler.attachAgent(se);
+llll
+
+app.addInfoTab(terminal,"Shell");
+app.addInfoTab(debug,"Debugger");
+
+root.rendererInitialized.connect(function(){
+	var renderer = new WindowWidget(0,root.renderWindow);
+//	app.addInfoTab(renderer,"Renderer"); //Shows up as its own window until tab is shown?
+	app.setPrimaryView(renderer);
+});
