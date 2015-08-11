@@ -55,6 +55,9 @@ public slots:
 
     void requestWindowClose();
 
+    void showWindow();
+    void hideWindow();
+
 private:
     QList<CoffeeJoystick*> m_joysticks;
     GLFWwindow *setWindowedFullscreen(int monitor);

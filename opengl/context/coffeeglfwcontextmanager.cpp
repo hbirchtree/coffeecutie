@@ -300,6 +300,16 @@ void CoffeeGLFWContextManager::requestWindowClose(){
     }
 }
 
+void CoffeeGLFWContextManager::showWindow()
+{
+    glfwShowWindow(window);
+}
+
+void CoffeeGLFWContextManager::hideWindow()
+{
+    glfwHideWindow(window);
+}
+
 void CoffeeGLFWContextManager::setSwapInterval(uint interval)
 {
     queueFunction([=](){
@@ -439,8 +449,6 @@ int CoffeeGLFWContextManager::init(){
     }else
         qDebug() << "No debug 4 u!";
 #endif
-
-    glfwShowWindow(window);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 

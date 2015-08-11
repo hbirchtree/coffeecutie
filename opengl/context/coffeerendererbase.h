@@ -86,6 +86,9 @@ public slots:
 
     virtual void setClearColor(float r, float g, float b, float a) = 0;
 
+    virtual void showWindow() = 0;
+    virtual void hideWindow() = 0;
+
 protected slots:
     virtual void setFramebufferSize(const QSize& size);
 

@@ -25,13 +25,15 @@ var debug = new CoffeeDebugView(0);
 //var exhandler = new CoffeeScriptExceptionHandler(debug);
 //exhandler.setDebugView(debug);
 //exhandler.attachAgent(se);
-llll
 
 app.addInfoTab(terminal,"Shell");
 app.addInfoTab(debug,"Debugger");
 
 root.rendererInitialized.connect(function(){
 	var renderer = new WindowWidget(0,root.renderWindow);
-//	app.addInfoTab(renderer,"Renderer"); //Shows up as its own window until tab is shown?
+	//NOTE: hide() the window before embedding as a widget.
+	//Otherwise, we will have a weird transition where it shows up as its own window for a short while.
+	//When disconnecting, use show() when you want to display it again
+//	app.addInfoTab(renderer,"Renderer");
 	app.setPrimaryView(renderer);
 });
