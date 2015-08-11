@@ -153,9 +153,11 @@ btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
         shape = new btConeShape(scale.x(),scale.y());
         break;
     case CoffeePhysicsEvent::StaticPlaneShape:{
-        shape = new btStaticPlaneShape(
+        btStaticPlaneShape* _s = new btStaticPlaneShape(
                     convert_glm(ev->getVector3(CoffeePhysicsEvent::OrientationProperty)),
                     (btScalar)ev->getScalar(CoffeePhysicsEvent::PlaneConstantProperty));
+        shape = _s;
+
         break;
     }
     default:
@@ -166,13 +168,13 @@ btRigidBody *BulletPhysics::createObject(CoffeePhysicsEvent *ev)
     btTransform transform,comTransform;
     transform.setOrigin(
                 convert_glm(ev->getVector3(CoffeePhysicsEvent::PositionProperty)));
-    transform.setRotation(
-                convert_glm(ev->getQuaternion(CoffeePhysicsEvent::OrientationProperty)));
+//    transform.setRotation(
+//                convert_glm(ev->getQuaternion(CoffeePhysicsEvent::OrientationProperty)));
 
-    comTransform.setOrigin(
-                convert_glm(ev->getVector3(CoffeePhysicsEvent::CMPositionProperty)));
+//    comTransform.setOrigin(
+//                convert_glm(ev->getVector3(CoffeePhysicsEvent::CMPositionProperty)));
 
-    btDefaultMotionState* mstate = new btDefaultMotionState(transform,comTransform);
+    btDefaultMotionState* mstate = new btDefaultMotionState(transform/*,comTransform*/);
 
     btVector3 localInertia =
             convert_glm(ev->getVector3(CoffeePhysicsEvent::LocalInertiaProperty));
@@ -232,10 +234,16 @@ void BulletPhysics::updateObject(CoffeePhysicsEvent *event,btRigidBody* body)
         case CoffeePhysicsEvent::AngularFactorProperty:
             break;
         case CoffeePhysicsEvent::FrictionProperty:
+            body->setFriction(
+                        event->getScalar(CoffeePhysicsEvent::FrictionProperty));
             break;
         case CoffeePhysicsEvent::RestitutionProperty:
+            body->setRestitution(
+                        event->getScalar(CoffeePhysicsEvent::RestitutionProperty));
             break;
         case CoffeePhysicsEvent::RollingFrictionProperty:
+            body->setRollingFriction(
+                        event->getScalar(CoffeePhysicsEvent::RollingFrictionProperty));
             break;
         case CoffeePhysicsEvent::LinearFactorProperty:
             break;
@@ -329,8 +337,12 @@ void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
 {
     switch(event->intent()){
     case CoffeePhysicsEvent::CreateIntent:{
-        if(event->physicsTargets().size()!=1)
-            qFatal("Unsupported operation: Assigning same btRigidBody to several PhysicsObject instances");
+        if(event->physicsTargets().size()>1){
+            qDebug("Unsupported operation: Assigning same btRigidBody to several PhysicsObject instances");
+        }else if(event->physicsTargets().size()==0){
+            qDebug("No targets for event!");
+            return;
+        }
         PhysicsObject* cobj = event->physicsTargets().first();
         btRigidBody* body = createObject(event);
         if(!body)
@@ -354,6 +366,7 @@ void BulletPhysics::handlePhysicsEvent(CoffeePhysicsEvent *event)
             removeObject(o);
         break;
     default:
+        qDebug("Intent not specified for event!");
         break;
     }
     if(event->dispose())

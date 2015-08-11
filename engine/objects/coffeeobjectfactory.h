@@ -22,7 +22,7 @@ class CoffeeObjectFactory : public QObject
     Q_PROPERTY(bool verbose READ verbose WRITE setVerbose)
 
     Q_OBJECT
-    bool m_verbose;
+    bool m_verbose = false;
 
 public:
     CoffeeObjectFactory(QObject* parent);

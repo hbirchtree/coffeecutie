@@ -14,6 +14,12 @@ class CoffeeGLFWContextManager : public CoffeeRendererBase,
     Q_PROPERTY(double frameTime READ getLatestFrameTime)
     Q_PROPERTY(double loopTime READ getLoopTime)
 
+    Q_PROPERTY(QString renderer READ renderer)
+    Q_PROPERTY(QString vendor READ vendor)
+    Q_PROPERTY(QString version READ version)
+
+    Q_PROPERTY(QString contextManager READ contextManager)
+
     Q_OBJECT
 protected:
     CoffeeGLFWContextManager(QObject* parent);
@@ -42,6 +48,11 @@ public:
 
     Q_INVOKABLE QObject* getJoystickDevice(uint index);
 
+    QString renderer() const;
+    QString vendor() const;
+    QString version() const;
+    QString contextManager() const;
+
 public slots:
     void queueFunction(std::function<void ()> func);
 
@@ -69,6 +80,10 @@ private:
 
     int m_multisamples = 0;
 
+    QString m_renderer;
+    QString m_vendor;
+    QString m_version;
+    QString m_contextManager;
 };
 
 #endif // COFFEEGLFWCONTEXTMANAGER_H

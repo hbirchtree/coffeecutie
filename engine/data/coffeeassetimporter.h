@@ -88,7 +88,7 @@ public slots:
 
 private:
     QObject* outputParent;
-    bool m_verbose;
+    bool m_verbose = false;
 };
 
 

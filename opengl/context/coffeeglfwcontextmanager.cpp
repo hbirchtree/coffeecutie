@@ -3,6 +3,8 @@
 #include <QMimeData>
 #include "general/input/coffeejoystick.h"
 
+#define RENDERER_DO_DEBUG
+
 CoffeeGLFWContextManager::CoffeeGLFWContextManager(QObject *parent) :
     CoffeeRendererBase(parent)
 {
@@ -425,20 +427,23 @@ int CoffeeGLFWContextManager::init(){
     {
         int maj,min,rev;
         glfwGetVersion(&maj,&min,&rev);
-        qDebug("GLFW version: %i.%i rev. %i",maj,min,rev);
+        m_contextManager = QString("GLFW %1.%2 rev. %3")
+                .arg(maj)
+                .arg(min)
+                .arg(rev);
     }
 
     glbinding::Binding::initialize(true);
-    qDebug("%s",QString("\nOpenGL renderer: %1\nOpenGL vendor  : %2\nOpenGL version : %3")
-           .arg(QString::fromStdString(glbinding::ContextInfo::renderer()))
-           .arg(QString::fromStdString(glbinding::ContextInfo::vendor()))
-           .arg(QString::fromStdString(glbinding::ContextInfo::version().toString())).toStdString().c_str());
+
+    m_renderer = QString::fromStdString(glbinding::ContextInfo::renderer());
+    m_vendor = QString::fromStdString(glbinding::ContextInfo::vendor());
+    m_version = QString::fromStdString(glbinding::ContextInfo::version().toString());
 
 #ifdef RENDERER_DO_DEBUG
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
     if(glDebugMessageCallback){
-        glDebugMessageCallback(openGLDebugCallback,nullptr);
+        glDebugMessageCallback(openGLDebugCallback,this);
         GLuint unusedIds = 0;
         glDebugMessageControl(GL_DONT_CARE,
                               GL_DONT_CARE,
@@ -464,4 +469,24 @@ QObject *CoffeeGLFWContextManager::getJoystickDevice(uint index)
     }else{
         return nullptr;
     }
+}
+
+QString CoffeeGLFWContextManager::renderer() const
+{
+    return m_renderer;
+}
+
+QString CoffeeGLFWContextManager::vendor() const
+{
+    return m_vendor;
+}
+
+QString CoffeeGLFWContextManager::version() const
+{
+    return m_version;
+}
+
+QString CoffeeGLFWContextManager::contextManager() const
+{
+    return m_contextManager;
 }

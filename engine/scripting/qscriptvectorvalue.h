@@ -15,7 +15,7 @@ public:
     virtual const void* getVectorData() = 0;
     virtual uint32_t getVectorDataSize() const = 0;
 
-    Q_INVOKABLE QString toString();
+    Q_INVOKABLE virtual QString toString();
 
 protected:
     VectorData(QObject*parent);

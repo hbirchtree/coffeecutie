@@ -122,6 +122,9 @@ signals:
     void rendererInitFinished();
     void rendererShuttingDown();
 
+    void renderingErrorOccurred(QString source,   QString type,
+                                QString severity, QString message);
+
 protected:
     CoffeeRendererBase(QObject *parent);
 

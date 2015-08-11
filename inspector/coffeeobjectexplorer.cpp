@@ -2,6 +2,7 @@
 
 #include <QMetaProperty>
 #include <QDebug>
+#include "engine/scripting/qscriptvectorvalue.h"
 
 CoffeeObjectExplorer::CoffeeObjectExplorer(QObject *parent,
                                            QObjectList root) :
@@ -154,9 +155,12 @@ void CoffeeObjectExplorer::updateProperty(QTreeWidgetItem *it, QVariant value)
                     arg(value.toRect().height()).
                     arg(value.toRect().x()).
                     arg(value.toRect().y()));
-    }else if(value.userType()==QMetaType::QObjectStar&&false){
+    }else if(value.userType()==QMetaType::QObjectStar){
         QObject *obj = qvariant_cast<QObject*>(value);
-        if(obj&&!obj->objectName().isEmpty())
+        if(qobject_cast<VectorData*>(obj)){
+            VectorData* v = qobject_cast<VectorData*>(obj);
+            it->setText(1,v->toString());
+        }else if(obj&&!obj->objectName().isEmpty())
             it->setText(1,obj->objectName());
         else
             it->setText(1,obj->staticMetaObject.className());

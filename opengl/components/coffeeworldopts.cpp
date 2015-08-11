@@ -14,7 +14,7 @@
 CoffeeWorldOpts::CoffeeWorldOpts(QObject *parent) : QObject(parent)
 {
     qDebug("Creating world object: thread=%p",this->thread());
-    physics = new BulletPhysics(0,glm::vec3(0,-9.81,0));
+    physics = new BulletPhysics(0,glm::vec3(0,-1,0));
     //We reserve one such that it won't allocate too many threads in the future.
     QThreadPool::globalInstance()->reserveThread();
     physicsThread = new QThread(this);

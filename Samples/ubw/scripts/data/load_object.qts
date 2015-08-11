@@ -149,7 +149,5 @@ function _load_object_standard(src,parent,assetSource){
 		obj.rotation.bindValue(obj.physics.rotation);
 	}
 
-	print("Loading object:",obj.objectName);
-
 	return obj;
 }

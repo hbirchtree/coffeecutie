@@ -37,7 +37,7 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
 
     //Set up the rendering surface, mainly resizing its framebuffer to the whole viewport
     std::function<void()> func = [=](){
-        m_renderSurface->getFramebuffer()->createFramebuffer(renderer->getCurrentFramebufferSize(),1);
+        m_renderSurface->resize(renderer->getCurrentFramebufferSize());
     };
     submitRenderCall(func);
     //It also needs to react to resizing

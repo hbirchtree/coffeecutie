@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
         }
     }
 
+    //Created so that the destructor closes the file
     CoffeeLogger logger(logStderr,logFile); Q_UNUSED(logger);
 
     for(int i=0;i<opts.positionalArguments().size();i++){
@@ -73,6 +74,8 @@ int main(int argc, char *argv[])
     qsrand((rand()%RAND_MAX)/10000.0);
 
     //Set up root object (for destruction of objects)
+
+    qRegisterMetaType<std::function<void()>>("std::function<void()>");
 
     CoffeeGameEnvironment* root = new CoffeeGameEnvironment();
     root->setObjectName("coffeeroot");

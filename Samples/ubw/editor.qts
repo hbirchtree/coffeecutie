@@ -1,5 +1,3 @@
-print("Hello");
-
 var se = root.scriptEngine;
 
 //Inspection bar
@@ -36,4 +34,14 @@ root.rendererInitialized.connect(function(){
 	//When disconnecting, use show() when you want to display it again
 //	app.addInfoTab(renderer,"Renderer");
 	app.setPrimaryView(renderer);
+});
+
+//Message logger
+var messages = new CoffeeMessageLogger(0);
+messages.addMessageTab("OpenGL");
+messages.addMessageTab("Renderer messages");
+app.addInspectorTab(messages,"Messages");
+
+cutie_renderer.renderingErrorOccurred.connect(function(src,type,sev,msg){
+	messages.submitMessage(0,"<i>"+src+"</i> -> <b>"+type+" : "+sev+"</b>:<br>"+msg);
 });

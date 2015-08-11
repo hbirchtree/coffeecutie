@@ -35,8 +35,6 @@ CoffeeAdvancedLoop::CoffeeAdvancedLoop(QObject *parent, CoffeeRendererBase* rend
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-        qDebug("Configuring framebuffer object");
     };
     _rendering_loop = [=](){
         //bind the framebuffer which we render to
@@ -96,12 +94,11 @@ QObject *CoffeeAdvancedLoop::createRenderSurface()
 {
     CoffeeOutputSurface* m_screenSurface =
             new CoffeeOutputSurface(this,new CoffeeFramebufferObject(this));
-    m_screenSurface->getFramebuffer()->
-            setSize(m_renderer->getCurrentFramebufferSize(),1);
-    connect(m_renderer,&CoffeeRendererBase::winFrameBufferResize,
-            [=](QResizeEvent e){
-        m_screenSurface->getFramebuffer()->setSize(e.size(),1);
-    });
+//    m_screenSurface->resize(m_renderer->getCurrentFramebufferSize());
+//    connect(m_renderer,&CoffeeRendererBase::winFrameBufferResize,
+//            [=](QResizeEvent e){
+//        m_screenSurface->getFramebuffer()->resize(e.size());
+//    });
     return m_screenSurface;
 }
 

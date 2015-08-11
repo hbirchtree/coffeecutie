@@ -6,6 +6,8 @@
  - Implying herpes
 */
 
+print("OpenGL renderer: "+renderer.renderer+"; OpenGL vendor: "+renderer.vendor+"; OpenGL version: "+renderer.version+"; Context manager: "+renderer.contextManager);
+
 function ls(){
 	for(var p in this){
 		print(p);

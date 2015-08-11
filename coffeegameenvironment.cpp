@@ -125,6 +125,7 @@ void CoffeeGameEnvironment::createInspector()
     m_editorShell->insertObject("root",this);
     m_editorShell->insertObject("app",m_editor);
     m_editorShell->insertObject("cutie_engine",m_scriptEngine);
+    m_editorShell->insertObject("cutie_renderer",m_rendererObject);
 
     connect(m_editorShell,&CoffeeEditorShell::executionReturn,
             [=](QString p, QString f, QString r){

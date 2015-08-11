@@ -53,7 +53,6 @@ int CoffeeRenderer::loop(){
     if(!m_loop){
         qFatal("No loop object defined!");
     }
-    qDebug("Initializing loop");
 
     std::function<void()> _init = *(m_loop->init());
     std::function<void()> *_loop = m_loop->loop();
@@ -61,14 +60,12 @@ int CoffeeRenderer::loop(){
 
     double frametime = 0.0;
 
-    qDebug("Running initialization function");
     _init();
 
     {
         emit winFrameBufferResize(QResizeEvent(getWindowDimensions(),getWindowDimensions()));
     }
 
-    qDebug("Running loop function");
     while(!shouldWindowClose()){
 
         checkGpuMemoryStatistics();
@@ -82,7 +79,6 @@ int CoffeeRenderer::loop(){
         setLatestFrameTime(getLoopTime()-frametime);
         contextReportFrametime(getLatestFrameTime());
     }
-    qDebug("Running cleanup function");
     _cleanup();
 
     qDebug("Estimated uptime: %.1f seconds",getLoopTime());

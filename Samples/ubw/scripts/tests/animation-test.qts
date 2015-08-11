@@ -2,20 +2,33 @@
 //Testing instanced rendering + animating these
 
 function addNewGear(mass,shape){
+	var scl = new ScalarValue();
+	var v3 = new Vector3Value();
 	//Create instance, create physics-object, bind them and see what happens.
 	var i = world.gear.mesh.instances.instanceObjects.length;
 	world.gear.mesh.instances.createInstance();
-	var desc = new PhysicsDescriptor();
-	var pobj = new PhysicsObject();
-	desc.setShape(shape);
-	desc.mass = mass;
-	pobj.setDescr(desc);
+	var pobj = new PhysicsObject(coffeeroot);
+	var desc = new CoffeePhysicsEvent(pobj);
 
-	world.injectPhysicsObject(pobj);
+	desc.targets = [pobj];
+	desc.intent = CoffeePhysicsEvent.CreateIntent;
+
+	desc.setInt(CoffeePhysicsEvent.ShapeProperty,CoffeePhysicsEvent.BoxShape);
+
+	scl.value = mass;
+	desc.setScalar(CoffeePhysicsEvent.MassProperty,scl);
+
+	v3.value = [1,1,0.5];
+	desc.setVector3(CoffeePhysicsEvent.ScaleProperty,v3);
+
+	v3.value = [5,20,-5];
+	desc.setVector3(CoffeePhysicsEvent.PositionProperty,v3);
+
+	desc.dispose = true;
+
+	world.handlePhysEvent(desc);
+
 	world.gear.mesh.instances.instanceObjects[i].bindObject(pobj);
-
-	objStack.push(desc);
-	objStack.push(pobj);
 }
 
 {

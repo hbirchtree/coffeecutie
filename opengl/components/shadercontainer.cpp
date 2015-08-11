@@ -109,11 +109,11 @@ bool CoffeeShader::linkProgram()
     getProgramAttributes();
     getProgramUniforms();
 
-    qDebug("Shader info: name=%s,uniforms=%i, uniform blocks=%i, attributes=%i",
-           objectName().toStdString().c_str(),
-           uniforms.size(),
-           uniformBlocks.size(),
-           attributes.size());
+//    qDebug("Shader info: name=%s,uniforms=%i, uniform blocks=%i, attributes=%i",
+//           objectName().toStdString().c_str(),
+//           uniforms.size(),
+//           uniformBlocks.size(),
+//           attributes.size());
 
     addAllocation();
     return true;

@@ -19,7 +19,7 @@ CoffeeSkeleton::CoffeeSkeleton(QObject *parent, aiBone **bones, uint numBones, a
     }
     if(!validateWeights())
         throw CoffeeSkeletonException(CoffeeSkeletonException::InvalidWeights);
-    qDebug("Created skeleton: %i bones",this->bones.size());
+//    qDebug("Created skeleton: %i bones",this->bones.size());
 }
 
 glm::mat4 CoffeeSkeleton::assimpToMat4(aiMatrix4x4 &m){

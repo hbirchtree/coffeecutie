@@ -51,7 +51,7 @@ void CoffeeScriptTerminal::appendLog(const QString &command, const QString &outp
 void CoffeeScriptTerminal::receiveOutput(QString program, QString file, QString result)
 {
     QString cmd;
-    if(file.isNull()){
+    if(file.isEmpty()){
         cmd = program;
     }else{
         cmd = file;

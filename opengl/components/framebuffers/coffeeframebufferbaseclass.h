@@ -21,13 +21,14 @@ public:
     virtual void unbindFramebufferRead();
     virtual void unbindFramebufferWrite();
 
-    virtual void createFramebuffer(QSize windowSize);
-
     virtual void cleanup() = 0;
     virtual QVector<GLuint>* getTextureHandle() = 0;
 
     QSize getRenderSize() const;
+
 protected:
+    virtual void createFramebuffer(QSize windowSize);
+
     CoffeeFramebufferBaseClass(QObject* parent);
 
     virtual void resizeFramebuffer() = 0;

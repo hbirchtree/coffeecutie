@@ -96,6 +96,7 @@ void CoffeeOutputSurface::unload()
 void CoffeeOutputSurface::resize(const QSize &size)
 {
     framebuffer->setNumTextures(textures.size());
+    framebuffer->resize(size);
 }
 
 void CoffeeOutputSurface::setShader(QObject *m_shader)

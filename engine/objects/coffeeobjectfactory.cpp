@@ -78,15 +78,11 @@ CoffeeAssetStorage *CoffeeObjectFactory::importAssets__base(QObject *parent, con
             importData.append(index);
         }
 
-    qDebug("Data import initiated");
-
     for(QFuture<CoffeeAssetStorage*> e : importData){
         CoffeeAssetStorage* p = e.result();
         s->merge(p);
         delete p;
     }
-
-    qDebug("Data import finished");
 
     importerRoot->deleteLater();
 

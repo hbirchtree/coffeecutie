@@ -3,7 +3,7 @@
 
 #include "engine/scripting/qscriptvectorvalue.h"
 
-class QuatValue : public QObject,public NumberContainer<glm::quat>
+class QuatValue : public VectorData,public NumberContainer<glm::quat>
 {
     Q_PROPERTY(QVariantList value READ value WRITE setValue)
 
@@ -29,6 +29,10 @@ public:
 
     QVariantList value() const;
     void setValue(const glm::quat& val);
+
+    void updateVectorData();
+    const void* getVectorData();
+    uint32_t getVectorDataSize()const;
 
 signals:
     void valueChanged();

@@ -57,16 +57,21 @@ void CoffeeRendererBase::setFramebufferSize(const QSize &size)
 void CoffeeRendererBase::openGLDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
     Q_UNUSED(id)
-    Q_UNUSED(userParam)
     if(severity==GL_DEBUG_SEVERITY_NOTIFICATION)
         return;
     QByteArray messageB;
     messageB.setRawData(message,length);
-    qWarning("OpenGL debug callback:\n%s(%s):%s:\n%s",
-           glbinding::Meta::getString(source).c_str(),
-           glbinding::Meta::getString(type).c_str(),
-           glbinding::Meta::getString(severity).c_str(),
-           messageB.toStdString().c_str());
+//    qWarning("OpenGL debug callback:\n%s(%s):%s:\n%s",
+//           glbinding::Meta::getString(source).c_str(),
+//           glbinding::Meta::getString(type).c_str(),
+//           glbinding::Meta::getString(severity).c_str(),
+//           messageB.toStdString().c_str());
+    ((CoffeeRendererBase*)userParam)
+            ->renderingErrorOccurred(
+                QString::fromStdString(glbinding::Meta::getString(source)),
+                QString::fromStdString(glbinding::Meta::getString(type)),
+                QString::fromStdString(glbinding::Meta::getString(severity)),
+                QString(messageB));
 }
 
 Qt::WindowState CoffeeRendererBase::windowState() const

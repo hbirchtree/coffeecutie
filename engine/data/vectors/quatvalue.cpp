@@ -1,13 +1,13 @@
 #include "quatvalue.h"
 
 QuatValue::QuatValue(QObject *parent, const glm::quat &initial) :
-    QObject(parent),
+    VectorData(parent),
     NumberContainer<glm::quat>(initial)
 {
 }
 
 QuatValue::QuatValue(QObject *parent, float w, float x, float y, float z) :
-    QObject(parent),
+    VectorData(parent),
      NumberContainer<glm::quat>(glm::quat(w,x,y,z))
 {
 }
@@ -65,4 +65,23 @@ void QuatValue::setValue(const QVariantList &value)
     }
     setValue(glm::quat(value.at(0).toFloat(),value.at(1).toFloat(),value.at(2).toFloat(),value.at(3).toFloat()));
     valueChanged();
+}
+
+void QuatValue::updateVectorData()
+{
+    if(!_tmp_vec_storage)
+        _tmp_vec_storage = malloc(getVectorDataSize());
+    glm::quat vec = getValue();
+    memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
+}
+
+const void *QuatValue::getVectorData()
+{
+    updateVectorData();
+    return _tmp_vec_storage;
+}
+
+uint32_t QuatValue::getVectorDataSize() const
+{
+    return sizeof(glm::quat);
 }
