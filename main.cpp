@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.1.70");
+    a.setApplicationVersion("0.0.1.100");
     a.setApplicationDisplayName("Coffee Cutie");
 
     QString scriptFile;
