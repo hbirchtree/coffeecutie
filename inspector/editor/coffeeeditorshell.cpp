@@ -4,6 +4,7 @@
 #include "inspector/coffeescriptterminal.h"
 #include "inspector/coffeerendererinspector.h"
 #include "inspector/coffeeinspector.h"
+#include "inspector/debugger/coffeescriptexceptionhandler.h"
 
 #include "inspector/information/coffeemessagelogger.h"
 
@@ -35,6 +36,7 @@ CoffeeEditorShell::CoffeeEditorShell(QObject *parent) : CoffeeBaseScriptEnvironm
     defineWidgetScriptType<CoffeeScriptTerminal>(m_engine);
     defineWidgetScriptType<CoffeeDebugView>(m_engine);
     defineWidgetScriptType<CoffeeMessageLogger>(m_engine);
+    defineQObjectScriptType<CoffeeScriptExceptionHandler>(m_engine);
 
     defineObjectConstructor<CoffeeObjectExplorer>(m_engine,"CoffeeObjectExplorer",
                                                   [=](QScriptContext* ctxt, QScriptEngine* eng){

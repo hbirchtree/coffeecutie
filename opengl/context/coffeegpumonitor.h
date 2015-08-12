@@ -17,9 +17,9 @@ private:
 
     //Data sources, different methods for acquiring the data
     bool gpumemcheck_nvidia = true;
-//    bool gpumemcheck_ati = true; //Not implemented
+    bool gpumemcheck_ati = true;
 
-    qint32 vmem_free = 0;
+    qint32 vmem_free = -1;
     qint32 vmem_total = 0;
 };
 

@@ -20,9 +20,9 @@ terminal.requestExecCmd.connect(se.executeCmd);
 terminal.requestExecFile.connect(se.executeFile);
 
 var debug = new CoffeeDebugView(0);
-//var exhandler = new CoffeeScriptExceptionHandler(debug);
-//exhandler.setDebugView(debug);
-//exhandler.attachAgent(se);
+var exhandler = new CoffeeScriptExceptionHandler(debug);
+exhandler.setDebugView(debug);
+exhandler.attachAgent(se);
 
 app.addInfoTab(terminal,"Shell");
 app.addInfoTab(debug,"Debugger");

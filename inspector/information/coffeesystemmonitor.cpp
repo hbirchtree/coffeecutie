@@ -47,12 +47,9 @@ QString CoffeeSystemMonitor::interpretVideoMemory(CoffeeRenderer *ren)
     qint32 c = 0;
     qint32 t = 0;
     ren->getVideoMemoryUsage(&c,&t);
-    if(c!=0&&t!=0){
-        return QString("%1MB/%2MB")
-                           .arg((float)(t-c)/1024.f)
-                           .arg((float)t/1024.f);
-    }
-    return "Unavailable";
+    return QString("%1MB/%2MB")
+            .arg((float)(t-c)/1024.f)
+            .arg((float)t/1024.f);
 }
 
 void CoffeeSystemMonitor::setRenderer(CoffeeRenderer *renderer)
