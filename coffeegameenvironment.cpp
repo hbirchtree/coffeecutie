@@ -4,13 +4,14 @@
 
 #include "engine/rendering/coffeeadvancedloop.h"
 #include "engine/scripting/coffeescriptengine.h"
-#include "opengl/context/coffeerendererbase.h"
-#include "opengl/context/coffeerenderer.h"
 
 #include "inspector/editor/coffeegameeditor.h"
 #include "inspector/editor/coffeeeditorshell.h"
 
 #include <QMessageBox>
+#include <QThread>
+#include <QThreadPool>
+#include <QWindow>
 
 CoffeeGameEnvironment::CoffeeGameEnvironment(QObject *parent) : QObject(parent)
 {

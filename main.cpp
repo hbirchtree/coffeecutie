@@ -1,6 +1,7 @@
 #define COFFEE_ADVANCED_RUN
 #define COFFEE_INSPECTOR_RUN
 #define RENDERER_DO_DEBUG
+#define RENDERER_FAST_DEBUG
 
 #include <QApplication>
 #include <QCommandLineParser>

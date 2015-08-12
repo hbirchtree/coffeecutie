@@ -2,9 +2,7 @@
 #define COFFEEGAMEENVIRONMENT_H
 
 #include <QObject>
-#include <QThread>
-#include <QThreadPool>
-#include <QWindow>
+#include "opengl/context/coffeerenderer.h"
 
 class CoffeeScriptTerminal;
 class CoffeeRendererInspector;
@@ -16,7 +14,10 @@ class CoffeeScriptEngine;
 class CoffeeEditorShell;
 
 class RenderLoop;
+
 class QApplication;
+class QWindow;
+class QThreadPool;
 
 class CoffeeGameEnvironment : public QObject
 {
@@ -75,10 +76,6 @@ private:
     QWindow* m_renderWindow = nullptr;
 
     CoffeeGameEditor* m_editor = nullptr;
-//    CoffeeScriptTerminal* m_terminal = nullptr;
-//    CoffeeRendererInspector* m_information = nullptr;
-//    CoffeeInspector* m_inspector = nullptr;
-
     CoffeeRendererBase* m_rendererObject = nullptr;
     CoffeeScriptEngine* m_scriptEngine = nullptr;
     CoffeeEditorShell* m_editorShell = nullptr;

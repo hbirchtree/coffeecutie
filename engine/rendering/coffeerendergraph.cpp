@@ -76,7 +76,7 @@ void CoffeeRenderGraph::queueRender()
                 if(!o->baked())
                     o->load();
 
-                glUseProgram(o->_shader_obj()->getProgramId());
+                glUseProgram(_grp->m_shader->getProgramId());
 
                 o->applyUniforms();
                 o->bindTextures();

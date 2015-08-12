@@ -1,6 +1,7 @@
 #include "coffeerendererbase.h"
 
 #include <QDebug>
+#define RENDERER_FAST_DEBUG
 
 CoffeeRendererBase::CoffeeRendererBase(QObject *parent) : QObject(parent)
 {
@@ -61,17 +62,20 @@ void CoffeeRendererBase::openGLDebugCallback(GLenum source, GLenum type, GLuint 
         return;
     QByteArray messageB;
     messageB.setRawData(message,length);
-//    qWarning("OpenGL debug callback:\n%s(%s):%s:\n%s",
-//           glbinding::Meta::getString(source).c_str(),
-//           glbinding::Meta::getString(type).c_str(),
-//           glbinding::Meta::getString(severity).c_str(),
-//           messageB.toStdString().c_str());
+#ifdef RENDERER_FAST_DEBUG
+    qWarning("OpenGL debug callback:\n%s(%s):%s:\n%s",
+           glbinding::Meta::getString(source).c_str(),
+           glbinding::Meta::getString(type).c_str(),
+           glbinding::Meta::getString(severity).c_str(),
+           messageB.toStdString().c_str());
+#else
     ((CoffeeRendererBase*)userParam)
             ->renderingErrorOccurred(
                 QString::fromStdString(glbinding::Meta::getString(source)),
                 QString::fromStdString(glbinding::Meta::getString(type)),
                 QString::fromStdString(glbinding::Meta::getString(severity)),
                 QString(messageB));
+#endif
 }
 
 Qt::WindowState CoffeeRendererBase::windowState() const

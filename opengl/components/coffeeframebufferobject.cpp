@@ -22,6 +22,7 @@ void CoffeeFramebufferObject::cleanup()
 {
     glDeleteFramebuffersEXT(1,&framebufferHandle);
     glDeleteTextures(textureHandles.size(),textureHandles.data());
+    textureHandles.resize(0);
 }
 
 void CoffeeFramebufferObject::bindFramebufferRead()
@@ -76,7 +77,7 @@ void CoffeeFramebufferObject::resizeFramebuffer()
 
         glFramebufferTexture2D(GL_FRAMEBUFFER,attachment,
                                GL_TEXTURE_2D,texture,0);
-        textureHandles.append(texture);
+        textureHandles.push_back(texture);
     }
     {
         GLuint depthText = allocTexture(renderSize.width(),renderSize.height(),
@@ -84,7 +85,7 @@ void CoffeeFramebufferObject::resizeFramebuffer()
                                         GL_NEAREST,GL_FLOAT);
 
         glFramebufferTexture(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,depthText,0);
-        textureHandles.append(depthText);
+        textureHandles.push_back(depthText);
     }
 
     glDrawBuffers(drawBufs.size(),drawBufs.data());
