@@ -6,6 +6,14 @@
 
 //Hex codes are only for simplicity when looking them up
 
+/*
+ * The basic jist of it:
+ *  - A data packet is sent from CoffeeRenderer to script environment
+ *  - Packet contains the CoffeeInputEvent structure as a header, describing what the event is
+ *  - The parser extracts the information it needs from the event and creates signals
+ *
+*/
+
 struct CoffeeInputEvent
 {
     enum EventType {
@@ -18,9 +26,6 @@ struct CoffeeInputEvent
         Drop         = 0x5, //Drag-and-drop
     };
      uint8_t type = 0;
-
-     //Will contain one of the other event structures, according the the type
-     void* payload = nullptr;
 };
 
 struct CoffeeKeyEvent

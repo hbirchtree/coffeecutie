@@ -36,8 +36,6 @@ int main(int argc, char *argv[])
 
     test.type = 2;
 
-    qDebug() << (102&0x02) << test.Window;
-
     qDebug() << "Event size:" << sizeof(test);
     qDebug() << "MEvent size:" << sizeof(t2);
     qDebug() << "int64 size:" << sizeof(qint64);
