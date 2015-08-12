@@ -9,22 +9,22 @@
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : CoffeeGLFWContextManager(parent)
 {
-    connect(this,&CoffeeRenderer::winMouseEnterEvent,[=](QEvent e){
-        emit inputEvent(new CoffeeInputEvent(0,e));
-    });
-    connect(this,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent e){
-        emit inputEvent(new CoffeeInputEvent(0,e));
-    });
-    connect(this,&CoffeeRenderer::winMouseGrabbed,[=](QEvent e){
-        emit inputEvent(new CoffeeInputEvent(0,e));
-    });
-    connect(this,&CoffeeRenderer::winWheelEvent,[=](QWheelEvent e){
-        emit inputEvent(new CoffeeInputEvent(0,e));
-    });
+//    connect(this,&CoffeeRenderer::winMouseEnterEvent,[=](QEvent e){
+//        emit inputEvent(new CoffeeInputEvent(0,e));
+//    });
+//    connect(this,&CoffeeRenderer::winMouseEvent,[=](QMouseEvent e){
+//        emit inputEvent(new CoffeeInputEvent(0,e));
+//    });
+//    connect(this,&CoffeeRenderer::winMouseGrabbed,[=](QEvent e){
+//        emit inputEvent(new CoffeeInputEvent(0,e));
+//    });
+//    connect(this,&CoffeeRenderer::winWheelEvent,[=](QWheelEvent e){
+//        emit inputEvent(new CoffeeInputEvent(0,e));
+//    });
 
-    connect(this,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent e){
-        emit inputEvent(new CoffeeInputEvent(0,e));
-    });
+//    connect(this,&CoffeeRenderer::winKeyboardEvent,[=](QKeyEvent e){
+//        emit inputEvent(new CoffeeInputEvent(0,e));
+//    });
 }
 
 CoffeeRenderer::CoffeeRenderer(QObject *parent, int w, int h) : CoffeeRenderer(parent)

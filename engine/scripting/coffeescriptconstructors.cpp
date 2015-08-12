@@ -56,7 +56,7 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
     defineQMetaObject<CoffeeNeuron>(&e);
     //Input
     defineQObjectScriptType<CoffeePlayerController>(&e);
-    defineQMetaObject<CoffeeInputEvent>(&e);
+//    defineQMetaObject<CoffeeInputEvent>(&e);
 
     //Internal objects
     defineQMetaObject<CoffeeTexture>(&e);

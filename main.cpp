@@ -7,6 +7,7 @@
 #include <QCommandLineParser>
 #include <QFileInfo>
 #include <QDir>
+#include <QDebug>
 #include "coffeelogger.h"
 
 #include "coffeegameenvironment.h"
@@ -16,6 +17,8 @@
 #else
 #include "tests/boxtest.h"
 #endif
+
+#include "engine/scripting/coffeeinputevent.h"
 
 int main(int argc, char *argv[])
 {
@@ -27,6 +30,24 @@ int main(int argc, char *argv[])
     QString scriptFile;
     bool logStderr = true;
     bool logFile = false;
+
+    CoffeeInputEvent test;
+    CoffeeMouseEvent t2;
+
+    test.type = 2;
+
+    qDebug() << (102&0x02) << test.Window;
+
+    qDebug() << "Event size:" << sizeof(test);
+    qDebug() << "MEvent size:" << sizeof(t2);
+    qDebug() << "int64 size:" << sizeof(qint64);
+    qDebug() << "void* size:" << sizeof(void*);
+    qDebug() << "uint8_t size:" << sizeof(uint8_t);
+    qDebug() << "uint16_t size:" << sizeof(uint16_t);
+    qDebug() << "uint32_t size:" << sizeof(uint32_t);
+    qDebug() << "QEvent size:" << sizeof(QEvent);
+
+    return 0;
 
     //We parse user input first, to determine what to do.
     QCommandLineParser opts;

@@ -1,102 +1,105 @@
 #ifndef COFFEEINPUTEVENT_H
 #define COFFEEINPUTEVENT_H
 
+#include <QObject>
 #include "general/common.h"
 
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QKeyEvent>
+//Hex codes are only for simplicity when looking them up
 
-class CoffeeInputEvent : public QObject
+struct CoffeeInputEvent
 {
-    Q_PROPERTY(EventSource type READ type WRITE setType)
+    enum EventType {
+        NoEvent      = 0x0,
 
-    Q_PROPERTY(QEvent::Type qtype READ qtype)
+        Mouse        = 0x1,
+        Keyboard     = 0x2,
+        Joystick     = 0x3,
+        Scroll       = 0x4,
+        Drop         = 0x5, //Drag-and-drop
+    };
+     uint8_t type = 0;
 
-    Q_PROPERTY(JoystickEventType jType READ jType WRITE setJType)
-    Q_PROPERTY(Qt::MouseButtons mouseButtons READ mouseButtons WRITE setMouseButtons)
-    Q_PROPERTY(int key READ key WRITE setKey)
-    Q_PROPERTY(Qt::KeyboardModifiers modifiers READ modifiers WRITE setModifiers)
-    Q_PROPERTY(QPointF pos READ pos WRITE setPos)
-    Q_PROPERTY(bool autorepeat READ autorepeat WRITE setAutorepeat)
+     //Will contain one of the other event structures, according the the type
+     void* payload = nullptr;
+};
 
-    Q_PROPERTY(QString text READ text WRITE setText)
-    Q_PROPERTY(QVariantList urls READ urls WRITE setUrls)
+struct CoffeeKeyEvent
+{
+    enum KeyEventType
+    {
+        NoEvent    = 0x0,
 
-    Q_PROPERTY(uint joyProperty READ joyProperty WRITE setJoyProperty) //axis, button
+        Press      = 0x1,
+        Release    = 0x2,
+        Repeated   = 0x3,
 
+        Text       = 0x4,
+    };
+    uint8_t type = 0;
+
+    uint32_t keyCode = 0;
+    uint32_t modifier = 0; // Modifier keys
+};
+struct CoffeeMouseEvent
+{
+    enum MouseEventType
+    {
+        NoEvent    = 0x0,
+
+        Press      = 0x1,
+        Release    = 0x2,
+        Move       = 0x3,
+
+        Enter      = 0x4,
+        Leave      = 0x5,
+    };
+    uint8_t type = 0;
+
+    uint8_t modifier = 0;
+
+    enum MouseButton
+    {
+        NoButton       = 0x0,
+
+        LeftButton     = 0x1,
+        MiddleButton   = 0x2,
+        RightButton    = 0x3,
+
+        //buttons up to 255 are perfectly fine
+    };
+    uint8_t keyCode = 0; // 0 = no button, 1 = button 1 etc.
+    float x = 0.f,y = 0.f; // Position where event occurred
+};
+struct CoffeeScrollEvent
+{
+    float deltaX = 0.f,deltaY = 0.f;
+    uint8_t modifiers = 0;
+};
+struct CoffeeJoystickState
+{
+    uint8_t buttons = 0;
+    uint8_t axes = 0;
+    uint8_t* buttonStates = nullptr;
+    float* axeStates = nullptr;
+};
+struct CoffeeDropEvent
+{
+    enum DataType
+    {
+        Unknown  = 0x0,
+
+        Link     = 0x01,
+        File     = 0x02,
+    };
+
+    uint8_t type = 0;
+    uint32_t size = 0;
+    void* data = nullptr;
+};
+
+class CoffeeInputEventParser : public QObject
+{
     Q_OBJECT
-public:
-
-    //A quite simplified model of input
-    enum EventSource {
-        None,
-
-        InputMethod,
-        DropEvent,
-
-        Mouse,Scroll,Keyboard,
-
-        Gamepad,
-
-        Touch //got nuthin'
-    };
-    enum JoystickEventType {
-        JoyNoneEvent,
-        JoyButtonEvent,
-        JoyAxisEvent
-    };
-
-    Q_ENUMS(EventSource)
-    Q_ENUMS(JoystickEventType)
-
-    CoffeeInputEvent(QObject *parent);
-    CoffeeInputEvent(QObject *parent, QEvent ev); //QEvent is not available in QtScript apparently
-    CoffeeInputEvent(QObject* parent, const QMouseEvent &ev);
-    CoffeeInputEvent(QObject* parent, const QWheelEvent &ev);
-    CoffeeInputEvent(QObject* parent, const QKeyEvent &ev);
-
-    EventSource type() const;
-    JoystickEventType jType() const;
-
-    QPointF pos() const;
-    Qt::KeyboardModifiers modifiers() const;
-    uint key() const;
-    Qt::MouseButtons mouseButtons() const;
-    uint joyProperty() const;
-    QString text() const;
-    bool autorepeat() const;
-    QVariantList urls() const;
-
-    QEvent::Type qtype() const;
-
-public slots:
-    void accept(); //destroys the object
-
-    void setType(EventSource type);
-    void setJType(JoystickEventType jType);
-
-    void setPos(QPointF pos);
-    void setModifiers(Qt::KeyboardModifiers modifiers);
-    void setKey(uint key);
-    void setMouseButtons(Qt::MouseButtons mouseButtons);
-    void setJoyProperty(uint joyProperty);
-    void setText(QString text);
-    void setAutorepeat(bool autorepeat);
-    void setUrls(QVariantList urls);
-
-private:
-    EventSource m_type = None;
-    JoystickEventType m_jType = JoyNoneEvent;
-    QPointF m_pos;
-    Qt::KeyboardModifiers m_modifiers = Qt::NoModifier;
-    uint m_key = Qt::Key_unknown;
-    Qt::MouseButtons m_mouseButtons = Qt::NoButton;
-    uint m_joyProperty = 0;
-    QString m_text;
-    bool m_autorepeat;
-    QVariantList m_urls;
-    QEvent::Type m_qtype;
 };
 
 #endif // COFFEEINPUTEVENT_H
