@@ -19,7 +19,7 @@ float Matrix4Value::getValue(uint col, uint row)
 
 void Matrix4Value::unbindValue()
 {
-    disconnect(boundConnection);
+    VectorData::bindSignals(nullptr);
     NumberContainer<glm::mat4>::unbindValue();
 }
 
@@ -29,12 +29,6 @@ void Matrix4Value::updateVectorData()
         _tmp_vec_storage = malloc(getVectorDataSize());
     glm::mat4 vec = getValue();
     memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
-}
-
-const void *Matrix4Value::getVectorData()
-{
-    updateVectorData();
-    return _tmp_vec_storage;
 }
 
 uint32_t Matrix4Value::getVectorDataSize() const

@@ -44,12 +44,6 @@ void Vector2Value::updateVectorData()
     memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
 }
 
-const void *Vector2Value::getVectorData()
-{
-    updateVectorData();
-    return _tmp_vec_storage;
-}
-
 uint32_t Vector2Value::getVectorDataSize() const
 {
     return sizeof(glm::vec2);
@@ -67,8 +61,6 @@ void Vector2Value::setValue(const QVariantList &value)
 
 void Vector2Value::bindValue(Vector2Value *vec)
 {
-    boundConnection = connect(vec,&Vector2Value::valueChanged,[=](){
-        valueChanged();
-    });
+    VectorData::bindSignals(vec);
     NumberContainer<glm::vec2>::bindValue(((NumberContainer<glm::vec2>*)vec));
 }

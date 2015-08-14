@@ -38,6 +38,16 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
     //Set up the rendering surface, mainly resizing its framebuffer to the whole viewport
     std::function<void()> func = [=](){
         m_renderSurface->resize(renderer->getCurrentFramebufferSize());
+
+        GLint b = 0;
+        glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS,&b);
+        qDebug() << "Max buffer bindings:" << b;
+        glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,&b);
+        qDebug() << "Max buffer size:" << b;
+        glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,&b);
+        qDebug() << "Max fragment blocks:" << b;
+        glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS,&b);
+        qDebug() << "Max vertex blocks:" << b;
     };
     submitRenderCall(func);
     //It also needs to react to resizing

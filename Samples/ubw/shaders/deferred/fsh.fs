@@ -38,16 +38,18 @@ void main(){
 
 	vec3 linearColor = diffuse.xyz;
 
-	vec3 blurCol = vec3(0.0);
+//	linearColor.z = 1.0-linearColor.z;
 
-	for(float i=0.0;i<10.0;i++){
-		vec2 target = vec2(i-5.0);
-		vec2 _uv = uv+target;
-		float dist = abs(dot(target,vec2(0.0)));
-		blurCol += texture(diffuseSampler,_uv).rgb/lightness;
-	}
+//	vec3 blurCol = vec3(0.0);
 
-	linearColor = blurCol;
+//	for(float i=0.0;i<10.0;i++){
+//		vec2 target = vec2(i-5.0);
+//		vec2 _uv = uv+target;
+//		float dist = abs(dot(target,vec2(0.0)));
+//		blurCol += texture(diffuseSampler,_uv).rgb/lightness;
+//	}
+
+//	linearColor = blurCol;
 
 
 //    float fogCoord = abs(length(cameraPosition-position.xyz)/position.w);

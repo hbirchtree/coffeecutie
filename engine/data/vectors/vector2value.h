@@ -28,7 +28,6 @@ public:
     using NumberContainer<glm::vec2>::operator >=;
     using NumberContainer<glm::vec2>::operator <=;
     using NumberContainer<glm::vec2>::operator >=;
-    using NumberContainer<glm::vec2>::bindValue;
 
     void setValue(const glm::vec2 &val);
 
@@ -37,10 +36,7 @@ public:
     void unbindValue();
 
     void updateVectorData();
-    const void* getVectorData();
     uint32_t getVectorDataSize()const;
-signals:
-    void valueChanged();
 
 public slots:
     void setValue(const QVariantList &value);

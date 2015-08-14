@@ -30,12 +30,10 @@ public:
     QVariantList value() const;
     void setValue(const glm::quat& val);
 
-    void updateVectorData();
-    const void* getVectorData();
-    uint32_t getVectorDataSize()const;
+    void unbindValue();
 
-signals:
-    void valueChanged();
+    void updateVectorData();
+    uint32_t getVectorDataSize()const;
 
 public slots:
     void mathCumulate(const QVariantList &vals);

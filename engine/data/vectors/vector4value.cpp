@@ -27,7 +27,7 @@ QVariantList Vector4Value::value() const
 
 void Vector4Value::unbindValue()
 {
-    disconnect(boundConnection);
+    VectorData::bindSignals(nullptr);
     NumberContainer<glm::vec4>::unbindValue();
 }
 
@@ -37,12 +37,6 @@ void Vector4Value::updateVectorData()
         _tmp_vec_storage = malloc(getVectorDataSize());
     glm::vec4 vec = getValue();
     memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
-}
-
-const void *Vector4Value::getVectorData()
-{
-    updateVectorData();
-    return _tmp_vec_storage;
 }
 
 uint32_t Vector4Value::getVectorDataSize() const
@@ -78,8 +72,6 @@ void Vector4Value::setValue(const QVariantList &value)
 
 void Vector4Value::bindValue(Vector4Value *vec)
 {
-    boundConnection = connect(vec,&Vector4Value::valueChanged,[=](){
-        valueChanged();
-    });
+    VectorData::bindSignals(vec);
     NumberContainer<glm::vec4>::bindValue(((NumberContainer<glm::vec4>*)vec));
 }

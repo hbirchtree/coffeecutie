@@ -18,7 +18,7 @@ var objStack = new Array(); //Here we store some objects to avoid them being gar
 
 #inc "display/renderer-setup.qts"
 
-var initData = importVariantMap("ubw.json");
+var initData = JSON.toObject(File.readTextFile("ubw.json"));
 var assets = factory.importAssets(coffeeroot,initData,"ubw.json");
 
 #inc "data/load_data.qts"

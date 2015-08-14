@@ -20,9 +20,7 @@ Vector3Value::Vector3Value(QObject *parent, float x, float y, float z) :
 
 void Vector3Value::bindValue(Vector3Value *vec)
 {
-    boundConnection = connect(vec,&Vector3Value::valueChanged,[=](){
-        valueChanged();
-    });
+    VectorData::bindSignals(vec);
     NumberContainer<glm::vec3>::bindValue(((NumberContainer<glm::vec3>*)vec));
 }
 
@@ -52,7 +50,7 @@ void Vector3Value::setValue(const glm::vec3 &val)
 
 void Vector3Value::unbindValue()
 {
-    disconnect(boundConnection);
+    VectorData::bindSignals(nullptr);
     NumberContainer<glm::vec3>::unbindValue();
 }
 
@@ -62,12 +60,6 @@ void Vector3Value::updateVectorData()
         _tmp_vec_storage = malloc(getVectorDataSize());
     glm::vec3 vec = getValue();
     memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
-}
-
-const void *Vector3Value::getVectorData()
-{
-    updateVectorData();
-    return _tmp_vec_storage;
 }
 
 uint32_t Vector3Value::getVectorDataSize() const

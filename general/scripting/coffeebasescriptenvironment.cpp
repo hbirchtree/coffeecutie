@@ -2,6 +2,7 @@
 
 #include "engine/scripting/coffeescriptengineagent.h"
 #include "general/filehandler.h"
+#include "engine/scripting/coffeescriptfilehandler.h"
 
 CoffeeBaseScriptEnvironment::CoffeeBaseScriptEnvironment(QObject *parent) : QObject(parent)
 {
@@ -9,6 +10,9 @@ CoffeeBaseScriptEnvironment::CoffeeBaseScriptEnvironment(QObject *parent) : QObj
     m_agent = new CoffeeScriptEngineAgent(this,m_engine);
 
     m_engine->setAgent(m_agent);
+
+    insertObject("File",new CoffeeScriptFileHandler(this));
+    insertObject("JSON",new CoffeeScriptJsonHandler(this));
 }
 
 QScriptEngine *CoffeeBaseScriptEnvironment::engine()
@@ -35,6 +39,7 @@ void CoffeeBaseScriptEnvironment::insertObject(QObject *object)
 
 void CoffeeBaseScriptEnvironment::executeFile(const QString &filename, int arg0)
 {
+    Q_UNUSED(arg0)
     QScriptValue result = execFile(this->m_engine,filename);
     executionReturn(QString(),filename,result.toString());
 }

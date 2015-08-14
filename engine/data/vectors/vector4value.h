@@ -29,7 +29,6 @@ public:
     using NumberContainer<glm::vec4>::operator >=;
     using NumberContainer<glm::vec4>::operator <=;
     using NumberContainer<glm::vec4>::operator >=;
-    using NumberContainer<glm::vec4>::bindValue;
 
     void setValue(const glm::vec4& val);
     QVariantList value() const;
@@ -37,13 +36,9 @@ public:
     void unbindValue();
 
     void updateVectorData();
-    const void* getVectorData();
     uint32_t getVectorDataSize()const;
 
     Q_INVOKABLE QColor asColor();
-
-signals:
-    void valueChanged();
 
 public slots:
     void fromColor(const QColor& color);

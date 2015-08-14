@@ -104,7 +104,8 @@ SOURCES += main.cpp \
     inspector/information/coffeesystemmonitor.cpp \
     inspector/editor/coffeeeditorshell.cpp \
     general/scripting/coffeebasescriptenvironment.cpp \
-    inspector/information/coffeemessagelogger.cpp
+    inspector/information/coffeemessagelogger.cpp \
+    engine/scripting/coffeescriptfilehandler.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -200,7 +201,8 @@ HEADERS += \
     inspector/editor/coffeeeditorshell.h \
     general/scripting/coffeebasescriptenvironment.h \
     general/scripting/scripthelpers.h \
-    inspector/information/coffeemessagelogger.h
+    inspector/information/coffeemessagelogger.h \
+    engine/scripting/coffeescriptfilehandler.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

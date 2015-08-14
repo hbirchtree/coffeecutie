@@ -34,12 +34,9 @@ public:
     void unbindValue();
 
     void updateVectorData();
-    const void* getVectorData();
     uint32_t getVectorDataSize()const;
-    QVariantMap values() const;
 
-signals:
-    void valueChanged();
+    QVariantMap values() const;
 
 public slots:
     void setValue(const glm::mat4& val);

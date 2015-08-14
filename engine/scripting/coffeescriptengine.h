@@ -10,11 +10,8 @@ class CoffeeScriptEngine : public CoffeeBaseScriptEnvironment
 public:
     CoffeeScriptEngine(QObject *parent);
 
-    //Functions to export
-    static QScriptValue coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeExecuteScriptFile(QScriptContext *ctxt, QScriptEngine *eng);
     static QScriptValue coffeeParentingFunc(QScriptContext *ctxt, QScriptEngine *eng);
-
 };
 
 #endif // COFFEESCRIPTENGINE_H

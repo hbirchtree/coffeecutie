@@ -30,10 +30,9 @@ public:
     ScalarDataType value() const;
 
     void updateVectorData();
-    const void* getVectorData();
     uint32_t getVectorDataSize()const;
-signals:
-    void valueChanged();
+
+    void unbindValue();
 
 public slots:
     void setValue(ScalarDataType value);

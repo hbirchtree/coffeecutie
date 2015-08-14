@@ -105,6 +105,14 @@ struct CoffeeDropEvent
 class CoffeeInputEventParser : public QObject
 {
     Q_OBJECT
+public:
+    CoffeeInputEventParser(QObject* parent);
+
+public slots:
+    void receiveEvent(void* data, uint16_t size);
+
+signals:
+
 };
 
 #endif // COFFEEINPUTEVENT_H

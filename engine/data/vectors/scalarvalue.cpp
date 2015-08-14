@@ -33,15 +33,15 @@ void ScalarValue::updateVectorData()
     memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
 }
 
-const void *ScalarValue::getVectorData()
-{
-    updateVectorData();
-    return _tmp_vec_storage;
-}
-
 uint32_t ScalarValue::getVectorDataSize() const
 {
     return sizeof(ScalarDataType);
+}
+
+void ScalarValue::unbindValue()
+{
+    VectorData::bindSignals(nullptr);
+    NumberContainer<ScalarDataType>::unbindValue();
 }
 
 void ScalarValue::setValue(ScalarDataType value)
@@ -52,8 +52,6 @@ void ScalarValue::setValue(ScalarDataType value)
 
 void ScalarValue::bindValue(ScalarValue *val)
 {
-    boundConnection = connect(val,&ScalarValue::valueChanged,[=](){
-        valueChanged();
-    });
+    VectorData::bindSignals(val);
     NumberContainer<ScalarDataType>::bindValue(((NumberContainer<ScalarDataType>*)val));
 }

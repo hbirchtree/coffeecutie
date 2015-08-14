@@ -1,3 +1,7 @@
+var settings = JSON.toObject(File.readTextFile("editor.json"));
+
+app.setStyleSheet(settings.stylesheet);
+
 var se = root.scriptEngine;
 
 //Inspection bar

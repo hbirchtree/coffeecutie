@@ -20,32 +20,11 @@ CoffeeScriptEngine::CoffeeScriptEngine(QObject *parent) : CoffeeBaseScriptEnviro
     defineQMetaObjectByValue(m_engine,"Qt",&staticQtMetaObject);
 
     //Exported functions
-    defineScriptFunction(m_engine,"importVariantMap",coffeeImportVariantMap,0);
     defineScriptFunction(m_engine,"executeScript",coffeeExecuteScriptFile,0);
     defineScriptFunction(m_engine,"parenting",coffeeParentingFunc,0);
 
     //Enums
     defineQMetaObject<QEvent>(m_engine);
-}
-
-QScriptValue CoffeeScriptEngine::coffeeImportVariantMap(QScriptContext *ctxt, QScriptEngine *eng)
-{
-    if(ctxt->argumentCount()!=1)
-        return ctxt->throwError("Invalid amount of arguments!");
-    QString file = ctxt->argument(0).toString();
-
-    QFileInfo f(file);
-    if(!f.exists())
-        return ctxt->throwError(QString("File does not exist: %1").arg(file));
-
-    QJsonParseError error;
-    QVariantMap data =
-            QJsonDocument::fromJson(FileHandler::getStringFromFile(file).toLocal8Bit(),&error)
-            .object().toVariantMap();
-    if(error.error!=QJsonParseError::NoError)
-        return ctxt->throwError(QString("Error while importing: %1").arg(error.errorString()));
-
-    return eng->toScriptValue(data);
 }
 
 QScriptValue CoffeeScriptEngine::coffeeExecuteScriptFile(QScriptContext *ctxt, QScriptEngine *eng)

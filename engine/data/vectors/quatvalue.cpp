@@ -14,9 +14,7 @@ QuatValue::QuatValue(QObject *parent, float w, float x, float y, float z) :
 
 void QuatValue::bindValue(QuatValue* quat)
 {
-    boundConnection = connect(quat,&QuatValue::valueChanged,[=](){
-        valueChanged();
-    });
+    VectorData::bindSignals(quat);
     NumberContainer<glm::quat>::bindValue(((NumberContainer<glm::quat>*)quat));
 }
 
@@ -30,6 +28,12 @@ void QuatValue::setValue(const glm::quat &val)
 {
     NumberContainer<glm::quat>::setValue(val);
     valueChanged();
+}
+
+void QuatValue::unbindValue()
+{
+    VectorData::bindSignals(nullptr);
+    NumberContainer<glm::quat>::unbindValue();
 }
 
 void QuatValue::mathCumulate(const QVariantList &vals)
@@ -73,12 +77,6 @@ void QuatValue::updateVectorData()
         _tmp_vec_storage = malloc(getVectorDataSize());
     glm::quat vec = getValue();
     memcpy(_tmp_vec_storage,&vec,getVectorDataSize());
-}
-
-const void *QuatValue::getVectorData()
-{
-    updateVectorData();
-    return _tmp_vec_storage;
 }
 
 uint32_t QuatValue::getVectorDataSize() const

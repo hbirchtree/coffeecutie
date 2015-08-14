@@ -9,7 +9,7 @@ CoffeeGameEditor::CoffeeGameEditor(QWidget *parent) :
     ui(new Ui::CoffeeGameEditor)
 {
     ui->setupUi(this);
-    m_inspectSplit = new QSplitter(ui->centralwidget);
+    m_inspectSplit = new QSplitter(this);
     m_viewSplit = new QSplitter(m_inspectSplit);
 
     m_inspectWidget = new QTabWidget(m_inspectSplit);
