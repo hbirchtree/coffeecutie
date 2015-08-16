@@ -3,7 +3,6 @@
 
 #include "general/common.h"
 #include "general/data/coffeegameasset.h"
-#include "general/data/numberbuffer.h"
 
 class CoffeeBuffer;
 class CoffeeVertexArrayObject;

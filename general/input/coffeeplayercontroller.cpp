@@ -74,24 +74,6 @@ void CoffeePlayerController::addSpeedRight(Vector3Value *d)
     addSpeedRight(d->getValue());
 }
 
-void CoffeePlayerController::addSpeedForward(QObject *d, const QVariantList &factor)
-{
-    ShaderVariant* v = dynamic_cast<ShaderVariant*>(d);
-    if(factor.size()!=3||!v||!v->getVec3())
-        return;
-    glm::vec3 t_fac = glm::vec3(factor.at(0).toFloat(),factor.at(1).toFloat(),factor.at(2).toFloat());
-    addSpeedForward((*v->getVec3())()*t_fac);
-}
-
-void CoffeePlayerController::addSpeedRight(QObject *d, const QVariantList &factor)
-{
-    ShaderVariant* v = dynamic_cast<ShaderVariant*>(d);
-    if(factor.size()!=3||!v||!v->getVec3())
-        return;
-    glm::vec3 t_fac = glm::vec3(factor.at(0).toFloat(),factor.at(1).toFloat(),factor.at(2).toFloat());
-    addSpeedRight((*v->getVec3())()*t_fac);
-}
-
 void CoffeePlayerController::tick(float time)
 {
     position->setVelocity(position->getVelocity()+position->getAcceleration()*time);

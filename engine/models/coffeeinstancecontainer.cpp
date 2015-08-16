@@ -44,12 +44,10 @@ QVector<glm::mat4> CoffeeInstanceContainer::getData() const
     QVector<glm::mat4> d;
 
     //TODO : Implement QtConcurrent for the case where we have tons of instances
-
     for(CoffeeInstanceData* i : instances)
         d.append(RenderingMethods::translateObjectMatrix(i->getPos()->getValue(),
                                                          i->getRot()->getValue(),
                                                          i->getScale()->getValue()));
-
     return d;
 }
 

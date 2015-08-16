@@ -71,4 +71,6 @@ world.lights[0].attenuation = 0.003;
 function renderFunction(t){
 	graph.queueRender();
 }
-renderer.contextReportFrametime.connect(renderFunction);
+//renderer.contextReportFrametime.connect(renderFunction);
+
+world.camera.position.value = [0,5,0];

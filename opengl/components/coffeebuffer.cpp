@@ -96,7 +96,7 @@ void CoffeeBuffer::giveHandle(GLuint handle)
     }
 }
 
-void CoffeeBuffer::setSize(uint size)
+void CoffeeBuffer::setSize(uint32_t size)
 {
     if((uint)m_bufferData.size() == size)
         return;

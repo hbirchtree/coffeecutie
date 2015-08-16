@@ -25,6 +25,7 @@ graph.objectName = "scenegraph";
 graph.includeObject(world.skybox);
 graph.includeObject(world.gear);
 graph.includeObject(world.blade);
+graph.includeObject(world.grass);
 
 graph.setRenderTarget(surface.framebuffer);
 graph.setRenderSurface(surface);

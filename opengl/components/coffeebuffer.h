@@ -14,7 +14,7 @@ public:
     CoffeeBuffer(QObject *parent, BufferStorageMask flags, GLenum bufferType);
     CoffeeBuffer(QObject *parent, BufferStorageMask flags, GLenum bufferType, GLuint handle);
 
-    uint size() const;
+    uint32_t size() const;
 
     GLuint handle() const;
 
@@ -38,7 +38,7 @@ signals:
 
 public slots:
     void giveHandle(GLuint handle);
-    void setSize(uint size);
+    void setSize(uint32_t size);
 
 private:
     bool isValidBuffer() const;
@@ -48,6 +48,9 @@ private:
     GLuint m_handle = 0;
     GLenum m_bufferType;
     BufferStorageMask m_dataFlags;
+
+    void* m_buffer_mapped = nullptr;
+    ptrdiff_t m_buffer_size = 0;
 };
 
 #endif // COFFEEBUFFER_H

@@ -76,26 +76,20 @@ void CoffeeRenderGraph::clearRenderer()
     m_renderConnections.clear();
     m_renderer_connected = false;
 }
-
+#include <QElapsedTimer>
 void CoffeeRenderGraph::queueRender()
 {
     std::function<void()> func = [=](){
         m_renderTarget->bindFramebuffer();
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        for(CoffeeRenderGroup* _grp : m_renderGroups.values())
-            for(CoffeeObject* o : _grp->m_objects){
+        for(CoffeeRenderGroup* _grp : m_renderGroups.values()){
+            for(CoffeeObject* o : _grp->m_objects)
                 if(!o->baked())
                     o->load();
 
-                _grp->m_shader->useProgram();
-
-//                for(CoffeeUniformBlock* b : _grp->m_shader->getUniformBlocks()){
-//                    qDebug() << b->name();
-//                    for(CoffeeUniformValue* v : b->getUniforms())
-//                        qDebug() << v->uniformName << v->uniformSize;
-//                }
-
+            _grp->m_shader->useProgram();
+            for(CoffeeObject* o : _grp->m_objects){
                 o->applyUniforms();
                 o->bindTextures();
 
@@ -105,9 +99,9 @@ void CoffeeRenderGraph::queueRender()
                 o->mesh()->renderMesh();
 
                 o->unbindTextures();
-
-                glUseProgram(0);
             }
+        }
+        glUseProgram(0);
 
         m_renderTarget->unbindFramebuffer();
         m_renderSurface->render();
@@ -128,6 +122,7 @@ void CoffeeRenderGraph::stopRender()
 
 void CoffeeRenderGraph::includeObject(CoffeeObject *obj)
 {
+    qDebug() << "Adding object to render graph:" << obj->objectName();
     if(m_renderGroups.contains(obj->_shader_obj())){
         m_renderGroups.value(obj->_shader_obj())->m_objects.append(obj);
     }else{

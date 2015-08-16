@@ -145,12 +145,9 @@ void CoffeeWorldOpts::connectSignals(CoffeePlayerController *controller)
     connections.append(connect(controller,&CoffeePlayerController::rotateCamera,[=](glm::vec3 d){
         getCamera()->offsetOrientation(d.y,d.x);
     }));
-//    connections.append(connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
-//        getCamera()->getPosition()->operator+=(glm::vec3(d));
-//    }));
-//    connections.append(connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
-//        getCamera()->getPosition()->operator+=(glm::vec3(d));
-//    }));
+    connections.append(connect(controller,&CoffeePlayerController::movePlayer,[=](glm::vec4 d){
+        getCamera()->getPosition()->operator+=(glm::vec3(d));
+    }));
 }
 
 void CoffeeWorldOpts::disconnectSignals()

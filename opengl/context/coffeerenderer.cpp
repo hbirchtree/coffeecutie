@@ -7,6 +7,8 @@
 #include "engine/scripting/coffeeinputevent.h"
 #include "opengl/rendering/renderloop.h"
 
+#include <QEventLoop>
+
 CoffeeRenderer::CoffeeRenderer(QObject *parent) : CoffeeGLFWContextManager(parent)
 {
 //    connect(this,&CoffeeRenderer::winMouseEnterEvent,[=](QEvent e){

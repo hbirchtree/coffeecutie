@@ -32,11 +32,8 @@ public slots:
     void addSpeedRight(glm::vec3 d);
     void addAccel(glm::vec3 d);
 
-    void addSpeedForward(Vector3Value *d);
+    void addSpeedForward(Vector3Value* d);
     void addSpeedRight(Vector3Value* d);
-
-    void addSpeedForward(QObject* d, const QVariantList &factor);
-    void addSpeedRight(QObject* d, const QVariantList &factor);
 
     void tick(float time);
 

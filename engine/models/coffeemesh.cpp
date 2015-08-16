@@ -350,7 +350,6 @@ void CoffeeMesh::updateModelMatrices()
 {
     m_newMatrices = true;
 }
-
 void CoffeeMesh::loadModelMatrices()
 {
     QVector<glm::mat4> data = instances->getData();

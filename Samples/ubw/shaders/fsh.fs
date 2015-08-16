@@ -6,16 +6,16 @@ uniform struct MaterialStruct {
 	sampler2D diffuseSampler;
 } mtl;
 
-uniform MaterialBlock {
-	vec3 transparencyValue;
-	float shininess;
-	float shininessStrength;
-	float opacity;
-	vec3 diffuseColor;
-	vec3 specularColor;
-	vec3 ambientColor;
-	vec3 colorMultiplier;
-};
+//uniform MaterialBlock {
+	uniform vec3 transparencyValue;
+	uniform float shininess;
+	uniform float shininessStrength;
+	uniform float opacity;
+	uniform vec3 diffuseColor;
+	uniform vec3 specularColor;
+	uniform vec3 ambientColor;
+	uniform vec3 colorMultiplier;
+//};
 
 //uniform LightBlock {
 //   vec3 position;

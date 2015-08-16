@@ -5,8 +5,19 @@ var joy_inputevent = new CoffeePhysicsEvent();
 var joy_force = new Vector3Value();
 joy_inputevent.targets = [world.blade.physics];
 
+var joy_mover = new Vector3Value();
+
 function axisReact(axe,val,diff){
 	switch(axe){
+	case 0:{
+//		joy_mover.value = [];
+//		controller.addSpeedForward(joy_mover);
+		break;
+	}
+	case 1:{
+
+		break;
+	}
 	case 6:{
 		if(val==0){
 			return;

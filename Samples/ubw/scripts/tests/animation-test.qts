@@ -55,3 +55,18 @@ var anim = new QTimer;
 anim.interval = 5;
 anim.timeout.connect(rotateGears);
 anim.start();
+
+function createGrassGrid(sz){
+	print("Creating grass grid:",Math.pow(sz,2));
+	var grass = world.grass.mesh;
+	for(var i=0;i<Math.pow(sz,2);i++){
+		grass.instances.createInstance();
+		grass.instances.instanceObjects[i].scale.value = [1,1,1];
+		var x = Math.floor(i/sz);
+		var y = i-x*sz;
+		grass.instances.instanceObjects[i].position.value = [x,0,y];
+	}
+	grass.useInstancing = true;
+	print("Grass grid created");
+}
+createGrassGrid(50);

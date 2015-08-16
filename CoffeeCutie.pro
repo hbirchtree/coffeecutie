@@ -21,8 +21,6 @@ SOURCES += main.cpp \
     engine/objects/coffeeobjectfactory.cpp \
     engine/physics/physicsobject.cpp \
     engine/rendering/coffeeadvancedloop.cpp \
-    general/data/coffeedatacontainer.cpp \
-    general/data/mutabledatacontainer.cpp \
     general/input/coffeejoystick.cpp \
     general/input/coffeeplayercontroller.cpp \
     general/qstringfunctions.cpp \
@@ -57,7 +55,6 @@ SOURCES += main.cpp \
     engine/models/coffeeinstancecontainer.cpp \
     general/filehandler.cpp \
     engine/data/coffeeassetimporter.cpp \
-    engine/data/coffeeworldbuilder.cpp \
     inspector/coffeescriptterminal.cpp \
     engine/scripting/qscriptvectorvalue.cpp \
     engine/scripting/coffeescriptengine.cpp \
@@ -111,10 +108,7 @@ HEADERS += \
     engine/objects/coffeeobjectfactory.h \
     engine/physics/physicsobject.h \
     engine/rendering/coffeeadvancedloop.h \
-    general/data/coffeedatacontainer.h \
     general/data/coffeegameasset.h \
-    general/data/mutabledatacontainer.h \
-    general/data/numberbuffer.h \
     general/data/numbercontainer.h \
     general/input/coffeejoystick.h \
     general/input/coffeeplayercontroller.h \
@@ -153,7 +147,6 @@ HEADERS += \
     engine/objects/coffeeskybox.h \
     engine/models/coffeeinstancecontainer.h \
     engine/data/coffeeassetimporter.h \
-    engine/data/coffeeworldbuilder.h \
     inspector/coffeescriptterminal.h \
     engine/scripting/qscriptvectorvalue.h \
     engine/scripting/coffeescriptengine.h \
