@@ -4,7 +4,6 @@
 #include "general/common.h"
 #include "general/data/coffeegameasset.h"
 
-class ShaderVariant;
 class VectorData;
 class CoffeeResource;
 

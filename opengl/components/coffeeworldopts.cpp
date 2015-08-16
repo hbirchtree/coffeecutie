@@ -6,7 +6,6 @@
 #include "engine/objects/coffeeskybox.h"
 #include "engine/objects/coffeeparticlesystem.h"
 #include "engine/physics/bulletphysics.h"
-#include "general/shadervariant.h"
 #include "general/input/coffeeplayercontroller.h"
 
 #include "engine/scripting/qscriptvectorvalue.h"

@@ -24,7 +24,6 @@ SOURCES += main.cpp \
     general/input/coffeejoystick.cpp \
     general/input/coffeeplayercontroller.cpp \
     general/qstringfunctions.cpp \
-    general/shadervariant.cpp \
     opengl/components/coffeecamera.cpp \
     opengl/components/coffeeframebufferobject.cpp \
     opengl/components/coffeeomnilight.cpp \
@@ -115,7 +114,6 @@ HEADERS += \
     general/common.h \
     general/filehandler.h \
     general/qstringfunctions.h \
-    general/shadervariant.h \
     opengl/components/coffeecamera.h \
     opengl/components/coffeeframebufferobject.h \
     opengl/components/coffeematerial.h \
