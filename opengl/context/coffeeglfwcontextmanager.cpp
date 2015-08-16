@@ -150,6 +150,7 @@ static void _glfw_input_dropevent(GLFWwindow *window, int numfiles,const char** 
     }
     QDropEvent ev(QPoint(),Qt::LinkAction,data,Qt::NoButton,Qt::NoModifier);
     rend->winDropEvent(ev);
+    rend->rendererMessage(CoffeeGLFWContextManager::InformationMessage,"Drag-and-Drop event received");
 }
 
 //Keyboard keys
@@ -180,6 +181,7 @@ static void _glfw_winevent_resize(GLFWwindow* window, int width, int height)
     CoffeeGLFWContextManager* rend =
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
     rend->winResize(QResizeEvent(QSize(width,height),rend->getWindowDimensions()));
+    rend->rendererMessage(CoffeeGLFWContextManager::InformationMessage,"Window resized");
 }
 static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
 {
@@ -187,6 +189,7 @@ static void _glfw_winevent_fbresize(GLFWwindow* window, int width, int height)
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
     rend->winFrameBufferResize(QResizeEvent(QSize(width,height),rend->getCurrentFramebufferSize()));
     rend->windowAspectChanged((float)width/(float)height);
+    rend->rendererMessage(CoffeeGLFWContextManager::InformationMessage,"Framebuffer resized");
 }
 static void _glfw_winevent_focus(GLFWwindow* window, int val){
     CoffeeGLFWContextManager* rend =
@@ -215,6 +218,7 @@ static void _glfw_winevent_state(GLFWwindow* window, int val){
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
     //Not very accurate
     rend->windowStateChanged((val==1) ? QWindowStateChangeEvent(Qt::WindowMinimized) : QWindowStateChangeEvent(Qt::WindowMaximized));
+    rend->rendererMessage(CoffeeGLFWContextManager::InformationMessage,"Window state changed");
 }
 
 static void _glfw_error_function(int stat, const char* message){
@@ -363,6 +367,9 @@ void CoffeeGLFWContextManager::setWindowState(Qt::WindowState state)
 }
 
 int CoffeeGLFWContextManager::init(){
+
+    rendererMessage(InformationMessage,"Setting up GLFW context");
+
     connect(this,&CoffeeGLFWContextManager::winFrameBufferResize,
             [=](QResizeEvent ev){
         glViewport(0,0,ev.size().width(),ev.size().height());
@@ -372,6 +379,8 @@ int CoffeeGLFWContextManager::init(){
     if(!glfwInit()){
         qFatal("Failed to initialize GLFW!");
     }
+    rendererMessage(InformationMessage,
+                          "GLFW initialized");
 
     glfwDefaultWindowHints();
 
@@ -388,15 +397,24 @@ int CoffeeGLFWContextManager::init(){
     glfwSetErrorCallback(_glfw_error_function);
 
     switch(windowState()){
-    case Qt::WindowFullScreen:
+    case Qt::WindowFullScreen:{
+        rendererMessage(InformationMessage,
+                              "Setting exclusive fullscreen mode");
         window = setFullscreen(startDisplay());
         break;
-    case Qt::WindowMaximized:
+    }
+    case Qt::WindowMaximized:{
+        rendererMessage(InformationMessage,
+                              "Setting windowed fullscreen mode");
         window = setWindowedFullscreen(startDisplay());
         break;
-    default:
+    }
+    default:{
+        rendererMessage(InformationMessage,
+                              "Setting windowed mode");
         window = setWindowed();
         break;
+    }
     }
     if(window==NULL){
         qFatal("Failed to create window");
@@ -433,6 +451,8 @@ int CoffeeGLFWContextManager::init(){
                 .arg(rev);
     }
 
+    rendererMessage(InformationMessage,
+                          "Initializing glbinding");
     glbinding::Binding::initialize(true);
 
     m_renderer = QString::fromStdString(glbinding::ContextInfo::renderer());
@@ -451,8 +471,11 @@ int CoffeeGLFWContextManager::init(){
                               0,
                               &unusedIds,
                               GL_TRUE);
+        rendererMessage(InformationMessage,
+                              "OpenGL debugging is enabled");
     }else
-        qDebug() << "No debug 4 u!";
+        rendererMessage(InformationMessage,
+                              "OpenGL debugging not available!");
 #endif
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
@@ -463,8 +486,11 @@ int CoffeeGLFWContextManager::init(){
 QObject *CoffeeGLFWContextManager::getJoystickDevice(uint index)
 {
     if(glfwJoystickPresent(index)){
-        CoffeeJoystick* js = new CoffeeJoystick(this,index);
+        CoffeeJoystick* js = new CoffeeGLFWJoystick(this,index);
         m_joysticks.append(js);
+        rendererMessage(InformationMessage,
+                              QString("Joystick device created: %1")
+                              .arg(js->getJoystickName()));
         return js;
     }else{
         return nullptr;

@@ -34,13 +34,23 @@ class CoffeeRendererBase : public QObject, public QRunnable
     Q_PROPERTY(uint startDisplay READ startDisplay WRITE setStartDisplay)
 
     Q_OBJECT
-    Qt::WindowState m_windowState;
+    Qt::WindowState m_windowState = Qt::WindowNoState;
     QSize m_framebufferSize;
     QSize m_windowSize;
     QString m_windowTitle;
     uint m_startDisplay;
 
 public:
+    enum RendererMessageSeverity
+    {
+        NotSupposedToHappen,
+
+        InformationMessage,
+        WarningMessage,
+        FatalMessage,
+    };
+    Q_ENUMS(RendererMessageSeverity)
+
     enum RendererExitStatus {
         Undefined,
         NoLoopObject,
@@ -124,6 +134,8 @@ signals:
 
     void renderingErrorOccurred(QString source,   QString type,
                                 QString severity, QString message);
+
+    void rendererMessage(uint severity, QString message); //TODO : Switch it to RendererMessageSeverity type at some point.
 
 protected:
     CoffeeRendererBase(QObject *parent);

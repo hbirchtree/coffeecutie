@@ -1,3 +1,4 @@
+print("Editor script starting");
 var settings = JSON.toObject(File.readTextFile("editor.json"));
 
 app.setStyleSheet(settings.stylesheet);
@@ -32,12 +33,13 @@ app.addInfoTab(terminal,"Shell");
 app.addInfoTab(debug,"Debugger");
 
 root.rendererInitialized.connect(function(){
-	var renderer = new WindowWidget(0,root.renderWindow);
+//	var renderer = new WindowWidget(0,root.renderWindow);
+	print("Renderer window:",root.renderWindow);
 	//NOTE: hide() the window before embedding as a widget.
 	//Otherwise, we will have a weird transition where it shows up as its own window for a short while.
 	//When disconnecting, use show() when you want to display it again
 //	app.addInfoTab(renderer,"Renderer");
-	app.setPrimaryView(renderer);
+//	app.setPrimaryView(renderer);
 });
 
 //Message logger
@@ -49,3 +51,28 @@ app.addInspectorTab(messages,"Messages");
 cutie_renderer.renderingErrorOccurred.connect(function(src,type,sev,msg){
 	messages.submitMessage(0,"<i>"+src+"</i> -> <b>"+type+" : "+sev+"</b>:<br>"+msg);
 });
+
+cutie_renderer.rendererMessage.connect(function(severity,msg){
+	var sev;
+	switch(severity){
+		case 0:{
+			sev = "<span style=\"color:red\"><i>Horrible</i> things</span>";
+			break;
+		}
+		case 1:{
+			sev = "<span style=\"color:blue\">INFO</span>";
+			break;
+		}
+		case 2:{
+			sev = "<span style=\"color:yellow\">WARN</span>";
+			break;
+		}
+		case 3:{
+			sev = "<span style=\"color:red\">FATAL</span>";
+			break;
+		}
+	}
+	messages.submitMessage(1,"<b>"+sev+"</b>: "+msg);
+});
+
+print("Editor script finishing");

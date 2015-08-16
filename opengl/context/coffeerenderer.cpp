@@ -55,7 +55,7 @@ int CoffeeRenderer::loop(){
     }
 
     std::function<void()> _init = *(m_loop->init());
-    std::function<void()> *_loop = m_loop->loop();
+//    std::function<void()> *_loop = m_loop->loop();
     std::function<void()> _cleanup = *(m_loop->cleanup());
 
     double frametime = 0.0;
@@ -65,6 +65,8 @@ int CoffeeRenderer::loop(){
     {
         emit winFrameBufferResize(QResizeEvent(getWindowDimensions(),getWindowDimensions()));
     }
+
+    rendererMessage(InformationMessage,"Entering rendering loop");
 
     while(!shouldWindowClose()){
 
@@ -80,6 +82,11 @@ int CoffeeRenderer::loop(){
         contextReportFrametime(getLatestFrameTime());
     }
     _cleanup();
+
+    rendererMessage(InformationMessage,"Exiting rendering loop");
+
+    rendererMessage(InformationMessage,
+                    QString("Estimated uptime: %1 seconds").arg(getLoopTime()));
 
     qDebug("Estimated uptime: %.1f seconds",getLoopTime());
     return 0;

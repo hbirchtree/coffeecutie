@@ -181,8 +181,6 @@ void CoffeeGameEnvironment::onRendererInit()
 
     if(m_renderWindow){
         m_renderWindow->setObjectName("cutie_window");
-//        if(inspect())
-//            m_editor->setPrimaryView(QWidget::createWindowContainer(m_renderWindow));
         registerInspectionObject(m_renderWindow);
     }
     rendererInitialized();

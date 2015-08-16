@@ -11,13 +11,16 @@ void CoffeeRendererBase::run()
 {
     int stat = init();
     rendererInitFinished();
-    if(stat!=0)
-        qFatal("Failed to initialize renderer!");
+    if(stat!=0){
+        rendererMessage(FatalMessage,"Failed to initialize renderer!");
+    }
     stat = loop();
-    if(stat!=0)
-        qFatal("Loop function failed!");
+    if(stat!=0){
+        rendererMessage(FatalMessage,"Loop function failed!");
+    }
 
     qDebug("Stopping rendering thread");
+    rendererMessage(InformationMessage,"Stopping rendering thread");
     rendererShuttingDown();
 }
 
