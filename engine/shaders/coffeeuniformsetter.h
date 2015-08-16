@@ -11,11 +11,13 @@ class ScalarValue;
 class Vector2Value;
 class Vector3Value;
 class Matrix4Value;
+class CoffeeUniformValue;
 
 class ShaderMapping {
 public:
     QString uniform;
     VectorData* data;
+    CoffeeUniformValue* value = nullptr;
     bool constant = false;
 };
 class TextureMapping {

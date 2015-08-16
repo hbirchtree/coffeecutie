@@ -3,6 +3,8 @@
 #include "opengl/components/coffeebuffer.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 
+#include "opengl/components/shadercontainer.h"
+
 CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, uint64_t bufferSize) : QObject(parent)
 {
     m_buffer = new CoffeeBuffer(this,GL_DYNAMIC_STORAGE_BIT,GL_UNIFORM_BUFFER);
@@ -22,41 +24,6 @@ CoffeeUniformBlock::CoffeeUniformBlock(QObject *parent, CoffeeUniformBlock* sour
         }
         source->setDataRange(data,_offset+offset,_size);
     });
-}
-
-uint16_t CoffeeUniformBlock::systemFloatSize()
-{
-    return sizeof(float);
-}
-
-uint16_t CoffeeUniformBlock::systemVec3Size()
-{
-    return sizeof(glm::vec3);
-}
-
-uint16_t CoffeeUniformBlock::systemVec4Size()
-{
-    return sizeof(glm::vec4);
-}
-
-uint16_t CoffeeUniformBlock::systemVec2Size()
-{
-    return sizeof(glm::vec2);
-}
-
-uint16_t CoffeeUniformBlock::systemMat4Size()
-{
-    return sizeof(glm::mat4);
-}
-
-uint16_t CoffeeUniformBlock::systemMat3Size()
-{
-    return sizeof(glm::mat3);
-}
-
-uint16_t CoffeeUniformBlock::systemUintSize()
-{
-    return sizeof(uint);
 }
 
 QString CoffeeUniformBlock::name() const
@@ -148,4 +115,15 @@ void CoffeeUniformBlock::addUniform(CoffeeUniformValue *val)
 void CoffeeUniformBlock::setName(const QString &name)
 {
     m_name = name;
+}
+
+
+CoffeeUniformValue::CoffeeUniformValue(CoffeeShader *parent)
+{
+    m_shader = parent;
+}
+
+void CoffeeUniformValue::setUniform(const void *data, uint16_t size)
+{
+    m_shader->setUniformRaw(location,data,size);
 }

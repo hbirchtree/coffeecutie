@@ -26,8 +26,8 @@ bool CoffeeShader::buildProgram(CoffeeResource *vertShaderFile,
 
     createProgram();
 
-    this->vertShaderFile = vertShaderFile;
-    this->fragShaderFile = fragShaderFile;
+    this->m_vertexShader = vertShaderFile;
+    this->m_fragmentShader = fragShaderFile;
     m_geometryShader = geomShaderFile;
 
     compileShaders();
@@ -45,17 +45,17 @@ bool CoffeeShader::buildProgram(CoffeeResource *vertShaderFile,
 
 bool CoffeeShader::buildProgram()
 {
-    return buildProgram(vertShaderFile,fragShaderFile,m_geometryShader);
+    return buildProgram(m_vertexShader,m_fragmentShader,m_geometryShader);
 }
 
 void CoffeeShader::compileShaders()
 {
-    std::string src = vertShaderFile->data()->toStdString();
+    std::string src = m_vertexShader->data()->toStdString();
     const char* code = src.c_str();
     addShader(code,vertexShader(),GL_VERTEX_SHADER);
 
     if(!fragmentShader().isEmpty()){
-        src = fragShaderFile->data()->toStdString();
+        src = m_fragmentShader->data()->toStdString();
         code = src.c_str();
         addShader(code,fragmentShader(),GL_FRAGMENT_SHADER);
     }
@@ -222,17 +222,6 @@ void CoffeeShader::getProgramUniforms()
         uniforms_t.insert(QString(o),t);
     }
 
-//    QVector<std::string> names_b;
-//    QVector<const GLchar*> names;
-//    for(QString u : uniforms.keys()){
-//        std::string b = u.toStdString();
-//        names_b.append(b);
-//        names.append(b.c_str());
-//    }
-//    QVector<GLuint> indices;
-//    indices.resize(uniforms.size());
-//    glGetUniformIndices(programId,uniforms.size(),names.data(),indices.data());
-
     glGetProgramiv(programId,GL_ACTIVE_UNIFORM_BLOCKS,&c);
     for(int i=0;i<c;i++){
         m_uniformBlocks.append(getProgramUniformBlock(i));
@@ -248,7 +237,7 @@ void CoffeeShader::getProgramUniforms()
 
 CoffeeUniformValue *CoffeeShader::getProgramUniform(GLuint index)
 {
-    CoffeeUniformValue* v = new CoffeeUniformValue();
+    CoffeeUniformValue* v = new CoffeeUniformValue(this);
 
     GLint t;
 
@@ -271,6 +260,8 @@ CoffeeUniformValue *CoffeeShader::getProgramUniform(GLuint index)
     glGetActiveUniformsiv(programId,1,&index,GL_UNIFORM_ARRAY_STRIDE,&t);
     v->arrayStride= t;
 
+    v->location = glGetUniformLocation(programId,o);
+
     return v;
 }
 
@@ -283,32 +274,23 @@ CoffeeUniformBlock *CoffeeShader::getProgramUniformBlock(GLuint index)
     glGetActiveUniformBlockiv(programId,index,GL_UNIFORM_BLOCK_DATA_SIZE,&size);
 
     CoffeeUniformBlock* b = new CoffeeUniformBlock(0,size);
+    b->setName(o);
 
     for(CoffeeUniformValue* v : m_uniformValues)
         if(v->blockIndex==(uint16_t)index)
             b->addUniform(v);
-
-//    CoffeeUniformBlock* c = b->getChild(sizeof(float),sizeof(float));
-//    float d_ = 1.234f;
-//    qDebug() << *b->getData();
-//    c->setDataRange(&d_,0,sizeof(float));
-////    b->setUniformData("camera",&d_,sizeof(glm::mat4));
-////    b->setUniformData("cameraVP",&d_,sizeof(glm::mat4));
-//    qDebug() << *b->getData();
-////    b->setDataRange(&d_,0,sizeof(float));
-//    qDebug() << *reinterpret_cast<float*>(b->getDataRange(sizeof(float),sizeof(float)));
 
     return b;
 }
 
 void CoffeeShader::setVertexShader(CoffeeResource *value)
 {
-    vertShaderFile = value;
+    m_vertexShader = value;
 }
 
 void CoffeeShader::setFragmentShader(CoffeeResource *value)
 {
-    fragShaderFile = value;
+    m_fragmentShader = value;
 }
 
 
@@ -318,14 +300,14 @@ int CoffeeShader::getUniformLocation(const QString &name){
     return -1;
 }
 
-const QHash<QString, GLenum> CoffeeShader::getAttributes()
+QVector<CoffeeUniformValue *> CoffeeShader::getUniforms()
 {
-    return attributes_t;
+    return m_uniformValues;
 }
 
-const QHash<QString, GLenum> CoffeeShader::getUniforms()
+QVector<CoffeeUniformBlock *> CoffeeShader::getUniformBlocks()
 {
-    return uniforms_t;
+    return m_uniformBlocks;
 }
 
 int CoffeeShader::getAttributeLocation(const QString &name){
@@ -387,79 +369,48 @@ void CoffeeShader::setUniform(const QString &name, const glm::mat4 &val){
         qWarning() << this->objectName() << "Failed to set uniform: " << name;
 }
 
-void CoffeeShader::setUniform(const QString &name, const ShaderVariant* val){
-    //According to Callgrind, this is the time-consuming part of rendering.
-    if(uniforms.keys().contains(name)){
-        switch(val->getType()){
-        case ShaderVariant::ShaderVec2:
-            setUniform(name,(*val->getVec2())());
-            break;
-        case ShaderVariant::ShaderVec3:
-            setUniform(name,(*val->getVec3())());
-            break;
-        case ShaderVariant::ShaderVec4:
-            setUniform(name,(*val->getVec4())());
-            break;
-        case ShaderVariant::ShaderMat3:
-            setUniform(name,(*val->getMat3())());
-            break;
-        case ShaderVariant::ShaderMat4:
-            setUniform(name,(*val->getMat4())());
-            break;
-        case ShaderVariant::ShaderDub:
-            setUniform(name,(float)(*val->getDouble())());
-            break;
-        default:
-            qWarning() << this->objectName() << "Unhandled data-type of" <<
-                          ShaderVariant::staticMetaObject.className() <<
-                          ":" <<
-                          ShaderVariant::staticMetaObject.
-                          enumerator(
-                              ShaderVariant::staticMetaObject.
-                              indexOfEnumerator("ShaderVariantType")
-                          ).valueToKey(val->getType());
-            break;
-        }
-    }
-}
-
 void CoffeeShader::setUniform(const QString &name, VectorData *val)
 {
-    switch(val->getVectorDataSize()){
+    setUniformRaw(getUniformLocation(name),val->getVectorData(),val->getVectorDataSize());
+}
+
+void CoffeeShader::setUniformRaw(GLint location, const void *data, uint32_t size)
+{
+    switch(size){
     case sizeof(float):{
-        glUniform1fv(getUniformLocation(name),
+        glUniform1fv(location,
                      1,
-                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+                     reinterpret_cast<const GLfloat*>(data));
         break;
     }
     case sizeof(glm::vec2):{
-        glUniform2fv(getUniformLocation(name),
+        glUniform2fv(location,
                      1,
-                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+                     reinterpret_cast<const GLfloat*>(data));
         break;
     }
     case sizeof(glm::vec3):{
-        glUniform3fv(getUniformLocation(name),
+        glUniform3fv(location,
                      1,
-                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+                     reinterpret_cast<const GLfloat*>(data));
         break;
     }
     case sizeof(glm::vec4):{
-        glUniform4fv(getUniformLocation(name),
+        glUniform4fv(location,
                      1,
-                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+                     reinterpret_cast<const GLfloat*>(data));
         break;
     }
     case sizeof(glm::mat3):{
-        glUniformMatrix3fv(getUniformLocation(name),
+        glUniformMatrix3fv(location,
                      1,GL_FALSE,
-                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+                     reinterpret_cast<const GLfloat*>(data));
         break;
     }
     case sizeof(glm::mat4):{
-        glUniformMatrix4fv(getUniformLocation(name),
+        glUniformMatrix4fv(location,
                      1,GL_FALSE, // <-- Transpose flag!
-                     reinterpret_cast<const GLfloat*>(val->getVectorData()));
+                     reinterpret_cast<const GLfloat*>(data));
         break;
     }
     }
@@ -469,6 +420,11 @@ void CoffeeShader::bindUniformBufferRange(GLuint uboIndex, GLuint uboHandle, uin
 {
     glBindBuffer(GL_UNIFORM_BUFFER,uboHandle);
     glBindBufferRange(GL_UNIFORM_BUFFER,uboIndex,uboHandle,offset,size);
+}
+
+void CoffeeShader::useProgram()
+{
+    glUseProgram(programId);
 }
 
 void CoffeeShader::load()
@@ -498,15 +454,15 @@ QVariantMap CoffeeShader::getAttributesMap()
 
 QString CoffeeShader::fragmentShader() const
 {
-    if(fragShaderFile)
-        return fragShaderFile->source();
+    if(m_fragmentShader)
+        return m_fragmentShader->source();
     return "";
 }
 
 QString CoffeeShader::vertexShader() const
 {
-    if(vertShaderFile)
-        return vertShaderFile->source();
+    if(m_vertexShader)
+        return m_vertexShader->source();
     return "";
 }
 

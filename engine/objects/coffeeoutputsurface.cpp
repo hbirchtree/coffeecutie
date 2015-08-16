@@ -56,7 +56,7 @@ void CoffeeOutputSurface::render()
     if(!surface||!m_shader)
         return;
 
-    glUseProgram(m_shader->getProgramId());
+    m_shader->useProgram();
 
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     for(CoffeeOutputChannel* s : textures){

@@ -59,6 +59,9 @@ private:
     CoffeeFramebufferBaseClass* m_renderTarget;
     CoffeeOutputSurface* m_renderSurface;
     bool m_continuousRender = false;
+
+    int32_t m_uboMaxSize = 0;
+    int32_t m_uboMaxBindings = 0;
 };
 
 #endif // COFFEERENDERGRAPH_H

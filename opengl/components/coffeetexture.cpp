@@ -52,6 +52,13 @@ CoffeeTexture::CoffeeTexture(QObject *parent, aiTexture *texture) : QObject(pare
     }
 }
 
+CoffeeTexture::CoffeeTexture(QObject *parent, GLuint handle) : QObject(parent)
+{
+    if(handle!=0)
+        validTexture = true;
+    textureHandle = handle;
+}
+
 CoffeeTexture::~CoffeeTexture()
 {
 }

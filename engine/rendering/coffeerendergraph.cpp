@@ -12,6 +12,8 @@
 #include "opengl/components/coffeeframebufferobject.h"
 #include "engine/models/coffeemesh.h"
 
+#include "opengl/components/coffeeuniformblock.h"
+
 CoffeeRenderGraph::CoffeeRenderGraph(QObject *parent) : QObject(parent)
 {
 }
@@ -40,9 +42,9 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
         m_renderSurface->resize(renderer->getCurrentFramebufferSize());
 
         GLint b = 0;
-        glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS,&b);
+        glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS,&m_uboMaxBindings);
         qDebug() << "Max buffer bindings:" << b;
-        glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,&b);
+        glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE,&m_uboMaxSize);
         qDebug() << "Max buffer size:" << b;
         glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS,&b);
         qDebug() << "Max fragment blocks:" << b;
@@ -86,7 +88,13 @@ void CoffeeRenderGraph::queueRender()
                 if(!o->baked())
                     o->load();
 
-                glUseProgram(_grp->m_shader->getProgramId());
+                _grp->m_shader->useProgram();
+
+//                for(CoffeeUniformBlock* b : _grp->m_shader->getUniformBlocks()){
+//                    qDebug() << b->name();
+//                    for(CoffeeUniformValue* v : b->getUniforms())
+//                        qDebug() << v->uniformName << v->uniformSize;
+//                }
 
                 o->applyUniforms();
                 o->bindTextures();

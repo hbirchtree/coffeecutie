@@ -3,11 +3,20 @@
 #include "opengl/components/shadercontainer.h"
 #include "general/shadervariant.h"
 #include "opengl/components/coffeetexture.h"
+#include "opengl/components/coffeeuniformblock.h"
+#include "engine/scripting/qscriptvectorvalue.h"
 
 void CoffeeUniformSetter::applyUniforms()
 {
-    for(ShaderMapping* m : uniforms)
-        m_shader->setUniform(m->uniform,m->data);
+    for(ShaderMapping* m : uniforms){
+        if(!m->value){
+            m->value = m_shader->getUniformValue(m->uniform);
+        }
+        if(!m->value)
+            continue; //This means it is not a valid uniform.
+        m->value->setUniform(m->data->getVectorData(),m->data->getVectorDataSize());
+    }
+//        m_shader->setUniform(m->uniform,m->data);
 }
 
 void CoffeeUniformSetter::unbindTextures()

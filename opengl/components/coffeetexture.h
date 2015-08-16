@@ -45,6 +45,8 @@ public:
     CoffeeTexture(QObject *parent, CoffeeResource* r, const QRect &targetArea); //Creates a cubemap from a single image file
     CoffeeTexture(QObject *parent, CoffeeResource *r);
     CoffeeTexture(QObject *parent,aiTexture* texture);
+
+    CoffeeTexture(QObject* parent, GLuint handle);
     ~CoffeeTexture();
 
     bool isValidTexture();

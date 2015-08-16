@@ -27,8 +27,8 @@ public:
     ~CoffeeShader();
 
     //Full-process functions
-    Q_INVOKABLE bool buildProgram(CoffeeResource *vertShaderFile, CoffeeResource *fragShaderFile, CoffeeResource *geomShaderFile);
-    Q_INVOKABLE bool buildProgram(CoffeeResource *vertShaderFile, CoffeeResource *fragShaderFile);
+    Q_INVOKABLE bool buildProgram(CoffeeResource *m_vertexShader, CoffeeResource *m_fragmentShader, CoffeeResource *geomShaderFile);
+    Q_INVOKABLE bool buildProgram(CoffeeResource *m_vertexShader, CoffeeResource *m_fragmentShader);
     Q_INVOKABLE bool buildProgram();
 
     void compileShaders();
@@ -46,8 +46,11 @@ public:
     int getAttributeLocation(const QString &name);
     int getUniformLocation(const QString &name);
 
-    const QHash<QString,GLenum> getAttributes();
-    const QHash<QString,GLenum> getUniforms();
+//    const QHash<QString,GLenum> getAttributes();
+//    const QHash<QString,GLenum> getUniforms();
+
+    QVector<CoffeeUniformValue*> getUniforms();
+    QVector<CoffeeUniformBlock*> getUniformBlocks();
 
     QVariantMap getUniformsMap();
     QVariantMap getAttributesMap();
@@ -74,12 +77,14 @@ public:
     void setUniform(const QString &name, const glm::mat3 &val);
     void setUniform(const QString &name, const glm::mat4 &val);
 
-    void setUniform(const QString &name, const ShaderVariant *val);
     void setUniform(const QString &name, VectorData *val);
+    void setUniformRaw(GLint location, const void* data, uint32_t size);
 
     void bindUniformBufferRange(GLuint uboIndex, GLuint uboHandle, uint32_t offset, uint32_t size);
 
 public slots:
+    void useProgram();
+
     void load();
     void unload();
 
@@ -91,8 +96,8 @@ private:
     CoffeeUniformValue* getProgramUniform(GLuint index);
     CoffeeUniformBlock* getProgramUniformBlock(GLuint index);
 
-    CoffeeResource *fragShaderFile = nullptr;
-    CoffeeResource *vertShaderFile = nullptr;
+    CoffeeResource *m_fragmentShader = nullptr;
+    CoffeeResource *m_vertexShader = nullptr;
     CoffeeResource *m_geometryShader = nullptr;
 
     QVector<GLuint> shaders;

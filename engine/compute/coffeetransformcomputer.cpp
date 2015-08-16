@@ -80,7 +80,7 @@ void CoffeeTransformComputer::tickParticles()
     }
     glEnable(GL_RASTERIZER_DISCARD);
 
-    glUseProgram(m_shader->getProgramId());
+    m_shader->useProgram();
     glBindVertexArray(vaos[vaoIndex()]);
 
     if(active_particles+spawncount>maxParticles()-1)
