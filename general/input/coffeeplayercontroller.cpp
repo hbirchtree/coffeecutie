@@ -1,6 +1,5 @@
 #include "coffeeplayercontroller.h"
 
-#include "general/shadervariant.h"
 #include <QPointF>
 
 CoffeePlayerController::CoffeePlayerController(QObject *parent) : QObject(parent)

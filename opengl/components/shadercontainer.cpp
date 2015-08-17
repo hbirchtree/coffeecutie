@@ -1,6 +1,5 @@
 #include "shadercontainer.h"
 
-#include "general/shadervariant.h"
 #include "opengl/components/coffeeuniformblock.h"
 #include "engine/scripting/qscriptvectorvalue.h"
 #include <QMetaEnum>

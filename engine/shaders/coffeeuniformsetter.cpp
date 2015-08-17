@@ -1,7 +1,6 @@
 #include "coffeeuniformsetter.h"
 
 #include "opengl/components/shadercontainer.h"
-#include "general/shadervariant.h"
 #include "opengl/components/coffeetexture.h"
 #include "opengl/components/coffeeuniformblock.h"
 #include "engine/scripting/qscriptvectorvalue.h"

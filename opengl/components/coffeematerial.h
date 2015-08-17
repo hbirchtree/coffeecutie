@@ -6,8 +6,6 @@
 #include "opengl/components/coffeetexture.h"
 #include "general/data/coffeegameasset.h"
 
-class ShaderVariant;
-
 class CoffeeMaterial : public QObject, public CoffeeGameAsset{
 
     Q_PROPERTY(bool wireframe READ wireframe WRITE setWireframe)
