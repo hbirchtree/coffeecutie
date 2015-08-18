@@ -3,3 +3,4 @@
 // and tests galore!
 #inc "scripts/testing.qts"
 
+graph.setRenderer(renderer);

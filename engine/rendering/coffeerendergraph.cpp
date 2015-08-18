@@ -36,6 +36,9 @@ void CoffeeRenderGraph::setRenderer(CoffeeRenderer *renderer)
                               SIGNAL(submitRenderCall(std::function<void()>)),
                               renderer,
                               SLOT(queueFunction(std::function<void()>))));
+    m_renderConnections.append(connect(renderer,&CoffeeRenderer::pollRendering,
+                                       this,&CoffeeRenderGraph::queueRender,
+                                       Qt::DirectConnection));
 
     //Set up the rendering surface, mainly resizing its framebuffer to the whole viewport
     std::function<void()> func = [=](){
@@ -76,10 +79,10 @@ void CoffeeRenderGraph::clearRenderer()
     m_renderConnections.clear();
     m_renderer_connected = false;
 }
-#include <QElapsedTimer>
+
 void CoffeeRenderGraph::queueRender()
 {
-    std::function<void()> func = [=](){
+//    std::function<void()> func = [=](){
         m_renderTarget->bindFramebuffer();
         glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -105,8 +108,9 @@ void CoffeeRenderGraph::queueRender()
 
         m_renderTarget->unbindFramebuffer();
         m_renderSurface->render();
-    };
-    submitRenderCall(func);
+        qDebug() << "Rendering";
+//    };
+//    submitRenderCall(func);
 }
 
 void CoffeeRenderGraph::stopRender()

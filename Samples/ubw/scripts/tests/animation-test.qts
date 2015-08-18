@@ -69,4 +69,4 @@ function createGrassGrid(sz){
 	grass.useInstancing = true;
 	print("Grass grid created");
 }
-createGrassGrid(50);
+createGrassGrid(10);

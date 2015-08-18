@@ -51,6 +51,11 @@ QVector<glm::mat4> CoffeeInstanceContainer::getData() const
     return d;
 }
 
+uintptr_t CoffeeInstanceContainer::getDataSize() const
+{
+    return m_tmpSize;
+}
+
 QObjectList CoffeeInstanceContainer::instanceObjects() const
 {
     QObjectList l;

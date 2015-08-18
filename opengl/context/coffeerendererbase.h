@@ -137,6 +137,8 @@ signals:
 
     void rendererMessage(uint severity, QString message); //TODO : Switch it to RendererMessageSeverity type at some point.
 
+    void pollRendering(); //Connected directly to facilitate rendering
+
 protected:
     CoffeeRendererBase(QObject *parent);
 

@@ -29,4 +29,3 @@ graph.includeObject(world.grass);
 
 graph.setRenderTarget(surface.framebuffer);
 graph.setRenderSurface(surface);
-graph.setRenderer(renderer);

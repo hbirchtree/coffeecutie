@@ -78,6 +78,7 @@ int CoffeeRenderer::loop(){
         pollEvents();
         updateJoysticks();
 //        (*_loop)();
+        pollRendering();
         executeRunQueue();
         swapBuffers();
         setLatestFrameTime(getLoopTime()-frametime);

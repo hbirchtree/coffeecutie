@@ -58,7 +58,9 @@ public:
 
     Q_INVOKABLE CoffeeInstanceData* getInstance(int index);
     Q_INVOKABLE QObject* getInstanceQObject(int index);
+
     QVector<glm::mat4> getData() const;
+    uintptr_t getDataSize() const;
 
     QObjectList instanceObjects() const;
 
@@ -73,11 +75,15 @@ public slots:
 
 private:
     CoffeeInstanceData* createInstanceData();
+    QVector<uintptr_t> m_touched;
 
     QObject *instanceAnchor;
 
     QVector<CoffeeInstanceData*> instances;
     bool m_renderPrepare = false;
+
+    void* m_tmpBuffer = nullptr;
+    uintptr_t m_tmpSize = 0;
 };
 
 
