@@ -108,7 +108,6 @@ void CoffeeRenderGraph::queueRender()
 
         m_renderTarget->unbindFramebuffer();
         m_renderSurface->render();
-        qDebug() << "Rendering";
 //    };
 //    submitRenderCall(func);
 }

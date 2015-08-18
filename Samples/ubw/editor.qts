@@ -33,14 +33,14 @@ app.addInfoTab(terminal,"Shell");
 app.addInfoTab(debug,"Debugger");
 
 root.rendererInitialized.connect(function(){
-	root.renderWindow.show();
-//	var renderer = new WindowWidget(0,root.renderWindow);
+//	root.renderWindow.show();
+	var renderer = new WindowWidget(0,root.renderWindow);
 //	print("Renderer window:",root.renderWindow);
 	//NOTE: hide() the window before embedding as a widget.
 	//Otherwise, we will have a weird transition where it shows up as its own window for a short while.
 	//When disconnecting, use show() when you want to display it again
 //	app.addInfoTab(renderer,"Renderer");
-//	app.setPrimaryView(renderer);
+	app.setPrimaryView(renderer);
 });
 
 //Message logger

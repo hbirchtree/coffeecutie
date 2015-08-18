@@ -3,7 +3,7 @@
 
 #include <QWidget>
 
-class QTextEdit;
+class CoffeeMessageDisplay;
 
 namespace Ui {
 class CoffeeMessageLogger;
@@ -23,7 +23,7 @@ public slots:
 
 private:
     qint64 m_nextMessage = 0;
-    QList<QTextEdit*> m_tabs;
+    QList<CoffeeMessageDisplay*> m_tabs;
     Ui::CoffeeMessageLogger *ui;
 };
 

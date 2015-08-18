@@ -100,7 +100,8 @@ SOURCES += main.cpp \
     inspector/editor/coffeeeditorshell.cpp \
     general/scripting/coffeebasescriptenvironment.cpp \
     inspector/information/coffeemessagelogger.cpp \
-    engine/scripting/coffeescriptfilehandler.cpp
+    engine/scripting/coffeescriptfilehandler.cpp \
+    inspector/information/coffeemessagedisplay.cpp
 
 HEADERS += \
     engine/models/coffeemesh.h \
@@ -191,7 +192,8 @@ HEADERS += \
     general/scripting/coffeebasescriptenvironment.h \
     general/scripting/scripthelpers.h \
     inspector/information/coffeemessagelogger.h \
-    engine/scripting/coffeescriptfilehandler.h
+    engine/scripting/coffeescriptfilehandler.h \
+    inspector/information/coffeemessagedisplay.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -227,7 +229,8 @@ FORMS += \
     inspector/coffeeexceptiondialog.ui \
     inspector/editor/coffeegameeditor.ui \
     inspector/debugger/coffeedebugview.ui \
-    inspector/information/coffeemessagelogger.ui
+    inspector/information/coffeemessagelogger.ui \
+    inspector/information/coffeemessagedisplay.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp

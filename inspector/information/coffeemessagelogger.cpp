@@ -1,6 +1,8 @@
 #include "coffeemessagelogger.h"
 #include "ui_coffeemessagelogger.h"
 
+#include "coffeemessagedisplay.h"
+
 #include <QTextEdit>
 #include <QDateTime>
 
@@ -22,10 +24,10 @@ int CoffeeMessageLogger::addMessageTab(const QString &title)
 {
     int index = m_tabs.size();
 
-    QTextEdit* ed = new QTextEdit(0);
-    ed->setReadOnly(true);
-    ed->setAcceptRichText(true);
-    ed->document()->setMaximumBlockCount(128);
+    CoffeeMessageDisplay* ed = new CoffeeMessageDisplay(0);
+    ed->text()->setReadOnly(true);
+    ed->text()->setAcceptRichText(true);
+    ed->text()->document()->setMaximumBlockCount(128);
     ui->toolBox->addItem(ed,title);
 
     m_tabs.append(ed);
@@ -38,5 +40,5 @@ void CoffeeMessageLogger::submitMessage(int cat, const QString &text)
     if(cat>=m_tabs.size()/*||m_nextMessage>=QDateTime::currentMSecsSinceEpoch()*/)
         return;
 //    m_nextMessage = QDateTime::currentMSecsSinceEpoch()+10;
-    m_tabs.at(cat)->append(text);
+    m_tabs.at(cat)->text()->append(text);
 }
