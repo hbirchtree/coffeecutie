@@ -9,6 +9,7 @@ class QWindowStateChangeEvent;
 class RenderLoop;
 
 #include "general/common.h"
+#include "coffee.h"
 
 #include <QSize>
 #include <QPointF>

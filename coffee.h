@@ -5,9 +5,8 @@ namespace Coffee{
     class CObject;
 
     namespace CInput{
-        using CInputHandlerFunction = void (void*)(void* data,uint32_t size);
-
-        class CInputHandler;
+//        using CInputHandlerFunction = void (*void)(void*,uint32_t);
+        typedef std::function<void(void*,uint32_t)> CInputHandlerFunction;
 
         struct CIEvent;
         struct CIKeyEvent;
@@ -27,7 +26,7 @@ namespace Coffee{
     }
 
     namespace CFunctional{
-        using QueueFunction = void (void*)();
+        typedef std::function<void()> QueueFunction;
 
         class CRQueueRunner;
     }

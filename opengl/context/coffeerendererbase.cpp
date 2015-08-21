@@ -53,6 +53,11 @@ void CoffeeRendererBase::inputEventPass(void *data, uint32_t size)
     free(data);
 }
 
+void CoffeeRendererBase::setInputHandler()
+{
+
+}
+
 void CoffeeRendererBase::setWindowDimensions(const QSize &windowSize)
 {
     m_windowSize = windowSize;
