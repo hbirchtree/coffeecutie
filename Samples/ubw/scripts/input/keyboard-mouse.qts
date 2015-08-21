@@ -51,4 +51,4 @@ function inputReact(event){
 	}
 	event.accept();
 }
-renderer.inputEvent.connect(inputReact);
+//renderer.inputEvent.connect(inputReact);

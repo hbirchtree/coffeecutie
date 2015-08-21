@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     //Set up root object (for destruction of objects)
 
     qRegisterMetaType<std::function<void()>>("std::function<void()>");
+    qRegisterMetaType<uint32_t>("uint32_t");
 
     CoffeeGameEnvironment* root = new CoffeeGameEnvironment();
     root->setObjectName("coffeeroot");

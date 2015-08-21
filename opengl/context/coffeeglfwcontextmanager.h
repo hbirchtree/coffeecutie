@@ -1,7 +1,6 @@
 #ifndef COFFEEGLFWCONTEXTMANAGER_H
 #define COFFEEGLFWCONTEXTMANAGER_H
 
-#include <QObject>
 #include "opengl/context/coffeerendererbase.h"
 #include "general/eventloop/coffeefunctionqueuerunner.h"
 

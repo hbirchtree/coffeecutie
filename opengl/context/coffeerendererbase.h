@@ -7,7 +7,6 @@
 class QMimeData;
 class QWindowStateChangeEvent;
 class RenderLoop;
-class CoffeeInputEvent;
 
 #include "general/common.h"
 
@@ -99,6 +98,8 @@ public slots:
     virtual void showWindow() = 0;
     virtual void hideWindow() = 0;
 
+    void inputEventPass(void* data, uint32_t size);
+
 protected slots:
     virtual void setFramebufferSize(const QSize& size);
 
@@ -107,7 +108,6 @@ protected slots:
 
 signals:
     //Input events
-    void inputEvent(CoffeeInputEvent* ev);
 
     void winMouseGrabbed(QEvent event);
     void winKeyboardEvent(QKeyEvent event);

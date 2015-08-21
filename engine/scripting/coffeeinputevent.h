@@ -14,7 +14,9 @@
  *
 */
 
-struct CoffeeInputEvent
+#include "coffee.h"
+
+struct Coffee::CInput::CIEvent
 {
     enum EventType {
         NoEvent      = 0x0,
@@ -28,8 +30,17 @@ struct CoffeeInputEvent
      uint8_t type = 0;
 };
 
-struct CoffeeKeyEvent
+struct Coffee::CInput::CIKeyEvent
 {
+    enum KeyModifiers
+    {
+        NoModifier        = 0,
+
+        ShiftModifier     = 0b1,
+        CtrlModifier      = 0b10,
+        AltModifier       = 0b100,
+        SuperModifier     = 0b1000,
+    };
     enum KeyEventType
     {
         NoEvent    = 0x0,
@@ -45,7 +56,7 @@ struct CoffeeKeyEvent
     uint32_t keyCode = 0;
     uint32_t modifier = 0; // Modifier keys
 };
-struct CoffeeMouseEvent
+struct Coffee::CInput::CIMouseEvent
 {
     enum MouseEventType
     {
@@ -64,37 +75,47 @@ struct CoffeeMouseEvent
 
     enum MouseButton
     {
-        NoButton       = 0x0,
+        NoButton       = 0b0,
 
-        LeftButton     = 0x1,
-        MiddleButton   = 0x2,
-        RightButton    = 0x3,
+        LeftButton     = 0b1,
+        MiddleButton   = 0b10,
+        RightButton    = 0b100,
 
         //buttons up to 255 are perfectly fine
     };
     uint8_t keyCode = 0; // 0 = no button, 1 = button 1 etc.
-    float x = 0.f,y = 0.f; // Position where event occurred
+    double x = 0.f,y = 0.f; // Position where event occurred
 };
-struct CoffeeScrollEvent
+struct Coffee::CInput::CIScrollEvent
 {
     float deltaX = 0.f,deltaY = 0.f;
     uint8_t modifiers = 0;
 };
-struct CoffeeJoystickState
+
+struct Coffee::CInput::CIJoyState
 {
     uint8_t buttons = 0;
     uint8_t axes = 0;
     uint8_t* buttonStates = nullptr;
     float* axeStates = nullptr;
 };
-struct CoffeeDropEvent
+struct Coffee::CInput::CIJoyInfo
+{
+    const char* name = nullptr;
+    uint8_t buttons = 0;
+    uint8_t axes = 0;
+    float* axe_min = nullptr;
+    float* axe_max = nullptr;
+};
+
+struct Coffee::CInput::CIDropEvent
 {
     enum DataType
     {
         Unknown  = 0x0,
 
-        Link     = 0x01,
-        File     = 0x02,
+        Link     = 0x1,
+        File     = 0x2,
     };
 
     uint8_t type = 0;
@@ -102,11 +123,14 @@ struct CoffeeDropEvent
     void* data = nullptr;
 };
 
-class CoffeeInputEventParser : public QObject
+class Coffee::CInput::CIEventParser : public QObject
 {
     Q_OBJECT
 public:
-    CoffeeInputEventParser(QObject* parent);
+    CIEventParser(QObject* parent);
+
+    static void createEvent(CIEvent::EventType i_type, const void* i_data, uint32_t i_size,
+                     void* o_data, uint32_t &o_size);
 
 public slots:
     void receiveEvent(void* data, uint16_t size);

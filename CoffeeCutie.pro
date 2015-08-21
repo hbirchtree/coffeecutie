@@ -193,7 +193,8 @@ HEADERS += \
     general/scripting/scripthelpers.h \
     inspector/information/coffeemessagelogger.h \
     engine/scripting/coffeescriptfilehandler.h \
-    inspector/information/coffeemessagedisplay.h
+    inspector/information/coffeemessagedisplay.h \
+    coffee.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

@@ -35,7 +35,6 @@ void CoffeeScriptConstructors::defineConstructors(QScriptEngine &e)
     qRegisterMetaType<VectorData*>("VectorData*");
     qRegisterMetaType<CoffeeTexture*>("CoffeeTexture*");
     qRegisterMetaType<CoffeePlayerController*>("CoffeePlayerController*");
-    qRegisterMetaType<CoffeeInputEvent*>("CoffeeInputEvent*");
 
     //System-related
     defineQObjectScriptType<CoffeeSystemMonitor>(&e);

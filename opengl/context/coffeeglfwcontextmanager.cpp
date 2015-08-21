@@ -1,9 +1,12 @@
 #include "coffeeglfwcontextmanager.h"
 
 #include <QMimeData>
+#include "engine/scripting/coffeeinputevent.h"
 #include "general/input/coffeejoystick.h"
 
 #define RENDERER_DO_DEBUG
+
+using namespace Coffee::CInput;
 
 CoffeeGLFWContextManager::CoffeeGLFWContextManager(QObject *parent) :
     CoffeeRendererBase(parent)
@@ -80,36 +83,32 @@ static int _glfw_translate_key(int key){
 static void _glfw_input_mouseBtn(GLFWwindow *window,int button,int action,int mods){
     CoffeeGLFWContextManager* rend =
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
-    QEvent::Type type = ((action==GLFW_PRESS) ? QMouseEvent::MouseButtonPress : QMouseEvent::MouseButtonRelease);
-    Qt::MouseButton btn = Qt::NoButton;
-    switch(button){
-    case GLFW_MOUSE_BUTTON_1:
-        btn = Qt::LeftButton;
-        break;
-    case GLFW_MOUSE_BUTTON_2:
-        btn = Qt::RightButton;
-        break;
-    case GLFW_MOUSE_BUTTON_3:
-        btn = Qt::MiddleButton;
-        break;
-    case GLFW_MOUSE_BUTTON_4:
-        btn = Qt::XButton1;
-        break;
-    case GLFW_MOUSE_BUTTON_5:
-        btn = Qt::XButton2;
-        break;
-    default:
-        qDebug() << "Unhandled mouse button: " << button;
-    }
-    QMouseEvent event(type,QPoint(),btn,Qt::NoButton,_glfw_translate_mods(mods));
-    rend->winMouseEvent(event);
+
+    CIMouseEvent m;
+    m.keyCode = button<<1; //Flag-style; we might support mulitple button presses
+    m.modifier = mods;
+    m.type = (action == GLFW_PRESS) ? CIMouseEvent::Press : CIMouseEvent::Release;
+
+    void *d = nullptr;
+    uint32_t s;
+
+    CIEventParser::createEvent(CIEvent::Mouse,&m,sizeof(m),d,s);
+    rend->inputEventPass(d,s);
 }
 //Mouse movement
 static void _glfw_input_mousemove(GLFWwindow *window, double xpos, double ypos){
     CoffeeGLFWContextManager* rend =
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
-    QMouseEvent event(QEvent::MouseMove,QPointF(xpos,ypos),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
-    rend->winMouseEvent(event);
+    CIMouseEvent m;
+    m.x = xpos;
+    m.y = ypos;
+    m.type = CIMouseEvent::Move;
+
+    void *d = nullptr;
+    uint32_t s;
+
+    CIEventParser::createEvent(CIEvent::Mouse,&m,sizeof(m),d,s);
+    rend->inputEventPass(d,s);
 }
 
 //Mouse enter event
