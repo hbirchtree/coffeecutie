@@ -7,6 +7,8 @@ namespace Coffee{
     namespace CInput{
         using CInputHandlerFunction = void (void*)(void* data,uint32_t size);
 
+        class CInputHandler;
+
         struct CIEvent;
         struct CIKeyEvent;
         struct CIMouseEvent;

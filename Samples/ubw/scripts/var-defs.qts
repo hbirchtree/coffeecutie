@@ -34,7 +34,7 @@ var surface = coffeeroot.evloop.createRenderSurface();
 
 //coffeeroot.evloop.world = world;
 
-world.connectSignals(controller);
+/*world.connectSignals(controller);*/
 
 world.setRenderer(renderer);
 surface.shader = assets.shaders.deferred_display;

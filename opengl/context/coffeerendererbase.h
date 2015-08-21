@@ -99,6 +99,7 @@ public slots:
     virtual void hideWindow() = 0;
 
     void inputEventPass(void* data, uint32_t size);
+    void setInputHandler();
 
 protected slots:
     virtual void setFramebufferSize(const QSize& size);
