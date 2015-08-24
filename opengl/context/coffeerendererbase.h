@@ -10,6 +10,9 @@ class RenderLoop;
 
 #include "general/common.h"
 #include "coffee.h"
+#include "coffee/coffee_functional.h"
+
+using namespace Coffee::CInput;
 
 #include <QSize>
 #include <QPointF>
@@ -77,6 +80,7 @@ public:
     virtual bool isMouseGrabbed() const = 0;
 
     virtual QWindow* windowHandle() = 0;
+    void setInputHandler(CInputHandlerFunction* func);
 
 public slots:
     virtual void run();
@@ -100,7 +104,6 @@ public slots:
     virtual void hideWindow() = 0;
 
     void inputEventPass(void* data, uint32_t size);
-    void setInputHandler();
 
 protected slots:
     virtual void setFramebufferSize(const QSize& size);
@@ -145,6 +148,7 @@ protected:
     CoffeeRendererBase(QObject *parent);
 
     RenderLoop *m_loop;
+    CInputHandlerFunction* m_inputFunc = nullptr;
 };
 
 #endif // COFFEERENDERERBASE_H

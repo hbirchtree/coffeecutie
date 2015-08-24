@@ -18,7 +18,10 @@
 #include "tests/boxtest.h"
 #endif
 
-#include "coffee.h"
+#include "coffee/coffee_functional.h"
+
+using namespace Coffee::CFunctional;
+using namespace Coffee::CInput;
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +33,21 @@ int main(int argc, char *argv[])
     QString scriptFile;
     bool logStderr = true;
     bool logFile = false;
+
+//    typedef CRMemberFunction<QApplication,QObject,QString> TF;
+
+//    CInputHandlerFunction *i = new CRStaticFunction<void,void*,uint32_t>([](void* d, uint32_t s){
+//        qDebug() << "Size:" << s;
+//    });
+//    i->exec(0,5);
+//    CRFunction<QString> *t = new TF(&a,&QApplication::objectName);
+//    CRFunction<void,int> *r = new CRStaticFunction<void,int>(&QApplication::exit);
+//    QString n = t->exec();
+//    r->exec(0);
+
+//    qDebug() << n;
+
+//    return 0;
 
     //We parse user input first, to determine what to do.
     QCommandLineParser opts;

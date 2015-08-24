@@ -50,12 +50,14 @@ void CoffeeRendererBase::setLoop(RenderLoop *obj)
 
 void CoffeeRendererBase::inputEventPass(void *data, uint32_t size)
 {
+    if(m_inputFunc)
+        m_inputFunc->exec(data,size);
     free(data);
 }
 
-void CoffeeRendererBase::setInputHandler()
+void CoffeeRendererBase::setInputHandler(CInputHandlerFunction *func)
 {
-
+    m_inputFunc = func;
 }
 
 void CoffeeRendererBase::setWindowDimensions(const QSize &windowSize)

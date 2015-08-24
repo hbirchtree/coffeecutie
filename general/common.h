@@ -1,3 +1,6 @@
+#ifndef COFFEE_COMMON_HEADERS
+#define COFFEE_COMMON_HEADERS
+
 //Qt-centric
 #include <QPointer>
 #include <QDebug>
@@ -40,3 +43,5 @@ using namespace gl;
 
 //Coffee
 #include "engine/data/coffeeresource.h"
+
+#endif

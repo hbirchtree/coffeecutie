@@ -1,46 +1,58 @@
 #ifndef COFFEE
 #define COFFEE
 
+#include <QDebug>
+
 namespace Coffee{
-    class CObject;
+class CObject;
 
-    namespace CInput{
-//        using CInputHandlerFunction = void (*void)(void*,uint32_t);
-        typedef std::function<void(void*,uint32_t)> CInputHandlerFunction;
+//Core classes
+namespace CFunctional{
+class CRQueueRunner;
 
-        struct CIEvent;
-        struct CIKeyEvent;
-        struct CIMouseEvent;
-        struct CIScrollEvent;
-        struct CIDropEvent;
+template<typename RType, typename... AType>
+class CRFunction;
+template<typename RType,typename... AType>
+class CRStaticFunction;
+template<class TClass, class FClass, typename RType, typename... AType>
+class CRMemberFunction;
 
-        struct CIJoyInfo;
-        struct CIJoyState;
+typedef std::function<void()> QueueFunction; //This needs to be light
 
-        class CIEventParser;
-    }
-
-    namespace CDisplay{
-        class CDRendererBase;
-        class CDRenderer;
-    }
-
-    namespace CFunctional{
-        typedef std::function<void()> QueueFunction;
-
-        class CRQueueRunner;
-    }
-
-    namespace CFiles{
-        class CFResource;
-        class CFAssetStorage;
-        class CFObjectImport;
-    }
-
-    namespace CScripting{
-        class CSScriptEngine;
-        class CSObject;
-    }
 }
+
+namespace CInput{
+typedef CFunctional::CRFunction<void,void*,uint32_t> CInputHandlerFunction;
+
+struct CIEvent;
+struct CIKeyEvent;
+struct CIMouseEvent;
+struct CIScrollEvent;
+struct CIDropEvent;
+
+struct CIJoyInfo;
+struct CIJoyState;
+
+class CIEventParser;
+}
+
+namespace CDisplay{
+class CDRendererBase;
+class CDRenderer;
+}
+
+namespace CFiles{
+class CFResource;
+class CFAssetStorage;
+class CFObjectImport;
+}
+
+namespace CScripting{
+class CSScriptEngine;
+class CSObject;
+}
+
+} //Coffee
+
 
 #endif // COFFEE

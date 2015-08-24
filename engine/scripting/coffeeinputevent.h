@@ -27,7 +27,7 @@ struct Coffee::CInput::CIEvent
         Scroll       = 0x4,
         Drop         = 0x5, //Drag-and-drop
     };
-     uint8_t type = 0;
+    uint8_t type = NoEvent;
 };
 
 struct Coffee::CInput::CIKeyEvent
@@ -51,10 +51,10 @@ struct Coffee::CInput::CIKeyEvent
 
         Text       = 0x4,
     };
-    uint8_t type = 0;
+    uint8_t type = NoEvent;
 
     uint32_t keyCode = 0;
-    uint32_t modifier = 0; // Modifier keys
+    uint32_t modifier = NoModifier; // Modifier keys, flags
 };
 struct Coffee::CInput::CIMouseEvent
 {
@@ -69,21 +69,21 @@ struct Coffee::CInput::CIMouseEvent
         Enter      = 0x4,
         Leave      = 0x5,
     };
-    uint8_t type = 0;
+    uint8_t type = NoEvent;
 
-    uint8_t modifier = 0;
+    uint8_t modifier = CIKeyEvent::NoModifier;
 
     enum MouseButton
     {
-        NoButton       = 0b0,
+        NoButton       = 0x0,
 
-        LeftButton     = 0b1,
-        MiddleButton   = 0b10,
-        RightButton    = 0b100,
+        LeftButton     = 0x1,
+        MiddleButton   = 0x2,
+        RightButton    = 0x3,
 
         //buttons up to 255 are perfectly fine
     };
-    uint8_t keyCode = 0; // 0 = no button, 1 = button 1 etc.
+    uint8_t keyCode = NoButton;
     double x = 0.f,y = 0.f; // Position where event occurred
 };
 struct Coffee::CInput::CIScrollEvent
@@ -118,7 +118,7 @@ struct Coffee::CInput::CIDropEvent
         File     = 0x2,
     };
 
-    uint8_t type = 0;
+    uint8_t type = Unknown;
     uint32_t size = 0;
     void* data = nullptr;
 };
@@ -130,13 +130,24 @@ public:
     CIEventParser(QObject* parent);
 
     static void createEvent(CIEvent::EventType i_type, const void* i_data, uint32_t i_size,
-                     void* o_data, uint32_t &o_size);
+                             void **o_data, uint32_t &o_size);
 
-public slots:
-    void receiveEvent(void* data, uint16_t size);
+    void receiveEvent(void* data, uint32_t size);
 
 signals:
+    void mouseButton(bool pressed, int button, int modifiers);
+    void mouseMove(double x, double y);
+    void mouseEnter(bool enter); // true = enter, false = leave
+    void mouseScroll(float x, float y);
 
+    void keyboardKey(int type, int key, int modifiers);
+    void keyboardEntry(unsigned int t);
+
+    void jsAxisMove(int axis, float value);
+    void jsButton(int button, bool pressed);
+
+    void dropText(QString text);
+    void dropLink(QString link);
 };
 
 #endif // COFFEEINPUTEVENT_H

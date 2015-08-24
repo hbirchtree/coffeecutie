@@ -85,14 +85,19 @@ static void _glfw_input_mouseBtn(GLFWwindow *window,int button,int action,int mo
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
 
     CIMouseEvent m;
-    m.keyCode = button<<1; //Flag-style; we might support mulitple button presses
+    if(button==GLFW_MOUSE_BUTTON_MIDDLE)
+        m.keyCode = CIMouseEvent::MiddleButton;
+    else if(button==GLFW_MOUSE_BUTTON_RIGHT)
+        m.keyCode = CIMouseEvent::RightButton;
+    else
+        m.keyCode = button+1;
     m.modifier = mods;
     m.type = (action == GLFW_PRESS) ? CIMouseEvent::Press : CIMouseEvent::Release;
 
-    void *d = nullptr;
+    void* d = nullptr;
     uint32_t s;
 
-    CIEventParser::createEvent(CIEvent::Mouse,&m,sizeof(m),d,s);
+    CIEventParser::createEvent(CIEvent::Mouse,&m,sizeof(m),&d,s);
     rend->inputEventPass(d,s);
 }
 //Mouse movement
@@ -104,10 +109,10 @@ static void _glfw_input_mousemove(GLFWwindow *window, double xpos, double ypos){
     m.y = ypos;
     m.type = CIMouseEvent::Move;
 
-    void *d = nullptr;
+    void* d = nullptr;
     uint32_t s;
 
-    CIEventParser::createEvent(CIEvent::Mouse,&m,sizeof(m),d,s);
+    CIEventParser::createEvent(CIEvent::Mouse,&m,sizeof(m),&d,s);
     rend->inputEventPass(d,s);
 }
 
@@ -157,13 +162,20 @@ static void _glfw_input_kbdKey(GLFWwindow *window,int key,int scancode,int actio
     Q_UNUSED(scancode);
     CoffeeGLFWContextManager* rend =
             static_cast<CoffeeGLFWContextManager*>(glfwGetWindowUserPointer(window));
-    bool autorep = ((action==GLFW_REPEAT) ? true : false);
-    QEvent::Type type = ((action==GLFW_RELEASE) ? QEvent::KeyRelease : QEvent::KeyPress);
+//    bool autorep = ((action==GLFW_REPEAT) ? true : false);
+//    QEvent::Type type = ((action==GLFW_RELEASE) ? QEvent::KeyRelease : QEvent::KeyPress);
 
-    //TODO : Translate int key to Qt::Key! We'll just stick the GLFW_KEY in there for now. Translation might be too slow anyway.
+//    QKeyEvent event(type,_glfw_translate_key(key),_glfw_translate_mods(mods),QString(),autorep,1);
+//    rend->winKeyboardEvent(event);
+    CIKeyEvent e;
+    e.type = (action == GLFW_PRESS) ? CIKeyEvent::Press : (action == GLFW_RELEASE) ? CIKeyEvent::Release : CIKeyEvent::Repeated;
+    e.keyCode = _glfw_translate_key(key);
+    e.modifier = mods;
 
-    QKeyEvent event(type,_glfw_translate_key(key),_glfw_translate_mods(mods),QString(),autorep,1);
-    rend->winKeyboardEvent(event);
+    void* d = nullptr;
+    uint32_t s;
+    CIEventParser::createEvent(CIEvent::Keyboard,&e,sizeof(e),&d,s);
+    rend->inputEventPass(d,s);
 }
 //Character writing
 static void _glfw_input_charwrite(GLFWwindow *window, unsigned int character){
@@ -291,11 +303,15 @@ void CoffeeGLFWContextManager::setMousePosition(QPointF pos)
 void CoffeeGLFWContextManager::setMouseGrabbing(bool state)
 {
     if(window){
+        uint32_t mode;
         if(state){
-            glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_DISABLED);
+            mode = GLFW_CURSOR_DISABLED;
         }else{
-            glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
+            mode = GLFW_CURSOR_NORMAL;
         }
+        queueFunction([=](){
+            glfwSetInputMode(window,GLFW_CURSOR,mode);
+        });
     }
 }
 

@@ -13,6 +13,9 @@
 #include <QThreadPool>
 #include <QWindow>
 
+#include "coffee/coffee_functional.h"
+#include "engine/scripting/coffeeinputevent.h"
+
 CoffeeGameEnvironment::CoffeeGameEnvironment(QObject *parent) : QObject(parent)
 {
 }
@@ -150,6 +153,12 @@ void CoffeeGameEnvironment::constructRenderer()
     m_rendererObject = new CoffeeRenderer(0,
                                           1280,720,Qt::WindowNoState,
                                           "Unlimited Frame Works");
+
+    CIEventParser* e = new CIEventParser(this);
+    CInputHandlerFunction * f = new Coffee::CFunctional::CRMemberFunction<CIEventParser,CIEventParser,void,void*,uint32_t>(e,&CIEventParser::receiveEvent);
+    m_rendererObject->setInputHandler(f);
+    e->setObjectName("input");
+    registerInspectionObject(e);
 }
 
 void CoffeeGameEnvironment::createGameWindow()
