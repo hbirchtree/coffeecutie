@@ -223,6 +223,10 @@ private:
         value = (T*)malloc(sizeof(T));
         velocity = (T*)malloc(sizeof(T));
         acceleration = (T*)malloc(sizeof(T));
+
+        *value = T();
+        *velocity = T();
+        *acceleration = T();
     }
 
     T* value;
