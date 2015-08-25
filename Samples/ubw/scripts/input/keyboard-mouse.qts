@@ -38,7 +38,7 @@ function mouseButtonReact(pressed,button,mods){
 	}
 }
 function mouseMoveReact(x,y){
-	print(renderer.mouseGrabbing,x,y);
+	//Temporary issue: Mouse grabbing bool is negated?
 	if(renderer.mouseGrabbing){
 		print(x,y);
 		renderer.setMousePosition(0,0);

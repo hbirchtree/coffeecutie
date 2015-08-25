@@ -8,7 +8,16 @@ template<class T> class NumberContainer
 public:
     NumberContainer(T initial) : NumberContainer()
     {
-        value = initial;
+        *value = initial;
+    }
+    NumberContainer(T* base, T* velocity = nullptr, T* acceleration = nullptr){
+        //In this case, we are pointing to a memory address on the outside.
+        //In particular this is useful for instances,
+        // where we are working on an area of memory instead of a concrete value.
+        if(!base){
+            qFatal("Failed to create NumberContainer: No base pointer");
+        }
+        attachPointers(base,velocity,acceleration);
     }
     NumberContainer(const std::function<T(const T&)>& func) : NumberContainer()
     {
@@ -20,6 +29,11 @@ public:
     }
     ~NumberContainer()
     {
+        if(!attached){
+            free(value);
+            free(velocity);
+            free(acceleration);
+        }
     }
 
     T operator+(const T& t){
@@ -117,21 +131,21 @@ public:
     T &operator[](int i){
         switch(i){
         case 1:
-            return velocity;
+            return *velocity;
         case 2:
-            return acceleration;
+            return *acceleration;
         default:
-            return value;
+            return *value;
         }
     }
 
     virtual T getRawValue() const{
-        return value;
+        return *value;
     }
 
     virtual T getValue() const
     {
-        T value = this->value;
+        T value = *(this->value);
         if(bound){
             value = bound->getValue();
         }
@@ -142,37 +156,32 @@ public:
     virtual void setValue(const T &value)
     {
         unbindValue();
-        this->value = value;
+        *(this->value) = value;
     }
 
     virtual void addValue(const T &value){
-        setValue(this->value+value);
+        setValue(*(this->value)+value);
     }
 
-    void setClamps(const T &min, const T &max)
-    {
-        minval = min;
-        maxval = max;
-    }
     virtual T getVelocity() const
     {
-        return velocity;
+        return *velocity;
     }
 
     virtual void setVelocity(const T &value)
     {
         unbindValue();
-        velocity = value;
+        *velocity = value;
     }
     virtual T getAcceleration() const
     {
-        return acceleration;
+        return *acceleration;
     }
 
     virtual void setAcceleration(const T &value)
     {
         unbindValue();
-        acceleration = value;
+        *acceleration = value;
     }
 
     virtual void unbindValue(){
@@ -191,6 +200,14 @@ public:
         valueTransform = value;
     }
 
+    virtual void attachPointers(T* base, T* vel, T* acc){
+        attached = true;
+
+        this->value = base;
+        this->velocity = vel;
+        this->acceleration = acc;
+    }
+
 protected:
     QMetaObject::Connection boundConnection;
 
@@ -203,17 +220,16 @@ private:
 
     NumberContainer()
     {
+        value = (T*)malloc(sizeof(T));
+        velocity = (T*)malloc(sizeof(T));
+        acceleration = (T*)malloc(sizeof(T));
     }
 
-    T value;
-    T velocity;
-    T acceleration;
+    T* value;
+    T* velocity = nullptr;
+    T* acceleration = nullptr;
 
-    T minval;
-    T maxval;
-
-    T animationVelocity;
-    T animationAcceleration;
+    bool attached = false;
 };
 
 #endif // NUMBERCONTAINER_H

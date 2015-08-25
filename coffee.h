@@ -4,6 +4,7 @@
 #include <QDebug>
 
 namespace Coffee{
+
 class CObject;
 
 //Core classes

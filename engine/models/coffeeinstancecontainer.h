@@ -40,6 +40,13 @@ private:
     Vector3Value *scale;
 };
 
+struct CoffeeInstanceChunk
+{
+    glm::vec3 position;
+    glm::vec3 scale;
+    glm::quat rotation;
+};
+
 class CoffeeInstanceContainer : public QObject
 {
     Q_PROPERTY(uint instanceCount READ instanceCount)
