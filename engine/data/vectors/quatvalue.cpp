@@ -12,6 +12,12 @@ QuatValue::QuatValue(QObject *parent, float w, float x, float y, float z) :
 {
 }
 
+QuatValue::QuatValue(QObject *parent, glm::quat *address) :
+    VectorData(parent),
+    NumberContainer<glm::quat>(address)
+{
+}
+
 void QuatValue::bindValue(QuatValue* quat)
 {
     VectorData::bindSignals(quat);

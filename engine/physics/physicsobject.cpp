@@ -30,6 +30,11 @@ QuatValue* PhysicsObject::getPhysicalRotation(){
     return v_physics_rotation;
 }
 
+Vector3Value *PhysicsObject::getScaleObject()
+{
+    return v_scale;
+}
+
 void *PhysicsObject::getPhysicspointer()
 {
     return physicspointer;

@@ -28,7 +28,8 @@ function addNewGear(mass,shape){
 
 	world.handlePhysEvent(desc);
 
-	world.gear.mesh.instances.instanceObjects[i].bindObject(pobj);
+	var inst = world.gear.mesh.instances.getInstanceQObject(i);
+	inst.bindObject(pobj);
 }
 
 {
@@ -39,16 +40,23 @@ function addNewGear(mass,shape){
 	gear.instances.createInstance();
 
 	function modifyGear(index,size, pos){
-		gear.instances.instanceObjects[index].scale.value = [size,size,size];
-		gear.instances.instanceObjects[index].position.value = pos;
+		var inst = gear.instances.getInstanceQObject(index);
+		inst.scale.value = [size,size,size];
+		inst.position.value = pos;
+		inst.deleteLater();
 	}
 
 	modifyGear(0,60,[100,100,100]);
 	modifyGear(1,40,[10,166,100]);
 }
 function rotateGears(){
-	world.gear.mesh.instances.instanceObjects[1].rotation.mathCumulate([1,0,0,0.001]);
-	world.gear.mesh.instances.instanceObjects[0].rotation.mathCumulate([1,0,0,-0.001]);
+	var inst1 = world.gear.mesh.instances.getInstanceQObject(1);
+	inst1.rotation.mathCumulate([1,0,0,0.001]);
+	var inst0 = world.gear.mesh.instances.getInstanceQObject(0);
+	inst0.rotation.mathCumulate([1,0,0,-0.001]);
+	
+	inst1.deleteLater();
+	inst0.deleteLater();
 }
 
 var anim = new QTimer;
@@ -61,10 +69,12 @@ function createGrassGrid(sz){
 	var grass = world.grass.mesh;
 	for(var i=0;i<Math.pow(sz,2);i++){
 		grass.instances.createInstance();
-		grass.instances.instanceObjects[i].scale.value = [1,1,1];
+		var inst = grass.instances.getInstanceQObject(i);
+		inst.scale.value = [1,1,1];
 		var x = Math.floor(i/sz);
 		var y = i-x*sz;
-		grass.instances.instanceObjects[i].position.value = [x,0,y];
+		inst.position.value = [x,0,y];
+		inst.deleteLater();
 	}
 	grass.useInstancing = true;
 	print("Grass grid created");

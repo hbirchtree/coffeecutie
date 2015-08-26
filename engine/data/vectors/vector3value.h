@@ -14,6 +14,7 @@ public:
     Vector3Value(QObject* parent, const glm::vec3 &initial);
     Vector3Value(QObject* parent, std::function<glm::vec3(const glm::vec3& v)> fun);
     Vector3Value(QObject* parent, float x, float y, float z);
+    Vector3Value(QObject* parent, glm::vec3* address);
 
     using NumberContainer<glm::vec3>::setVelocity;
     using NumberContainer<glm::vec3>::setAcceleration;
@@ -29,6 +30,7 @@ public:
     using NumberContainer<glm::vec3>::operator >=;
     using NumberContainer<glm::vec3>::operator <=;
     using NumberContainer<glm::vec3>::operator >=;
+    using NumberContainer<glm::vec3>::attachPointers;
 
     QVariantList velocity() const;
     QVariantList value() const;

@@ -204,8 +204,21 @@ public:
         attached = true;
 
         this->value = base;
-        this->velocity = vel;
-        this->acceleration = acc;
+        if(vel)
+            this->velocity = vel;
+        if(acc)
+            this->acceleration = acc;
+    }
+
+    //Used when you *really* need control of the data. Use with attachPointers.
+    T* _data_val(){
+        return value;
+    }
+    T* _data_vel(){
+        return velocity;
+    }
+    T* _data_acc(){
+        return acceleration;
     }
 
 protected:

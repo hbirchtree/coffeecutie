@@ -6,6 +6,7 @@
 #include "engine/scripting/qscriptvectorvalue.h"
 #include <QMutex>
 
+struct CoffeeInstanceChunk;
 class PhysicsObject;
 
 class CoffeeInstanceData : public QObject{
@@ -13,18 +14,9 @@ class CoffeeInstanceData : public QObject{
     Q_PROPERTY(QObject* rotation READ rotationRef)
     Q_PROPERTY(QObject* scale READ scaleRef)
 
-    Q_PROPERTY(QObject* physics READ physicsQObject)
-
     Q_OBJECT
 public:
-    CoffeeInstanceData(glm::vec3 pos,glm::quat rot, glm::vec3 scale, QObject* parent);
-
-    Vector3Value* getPos();
-    Vector3Value* getScale();
-    QuatValue *getRot();
-    PhysicsObject* physics();
-
-    QObject* physicsQObject();
+    CoffeeInstanceData(QObject* parent,CoffeeInstanceChunk* chunk);
 
     QObject* rotationRef();
     QObject* positionRef();
@@ -34,7 +26,6 @@ public slots:
     void bindObject(PhysicsObject* target);
 
 private:
-    QPointer<PhysicsObject> m_physics;
     Vector3Value *pos;
     QuatValue *rot;
     Vector3Value *scale;
@@ -50,7 +41,7 @@ struct CoffeeInstanceChunk
 class CoffeeInstanceContainer : public QObject
 {
     Q_PROPERTY(uint instanceCount READ instanceCount)
-    Q_PROPERTY(QObjectList instanceObjects READ instanceObjects)
+//    Q_PROPERTY(QObjectList instanceObjects READ instanceObjects)
 
     //used to avoid new instances being created before rendering.
     //if there are, it will fail catastrophically because the object does not have any data in its model-matrix buffer
@@ -69,24 +60,24 @@ public:
     QVector<glm::mat4> getData() const;
     uintptr_t getDataSize() const;
 
-    QObjectList instanceObjects() const;
+//    QObjectList instanceObjects() const;
 
     bool renderPrepare() const;
 
 public slots:
     void createInstance();
-    void addInstance(CoffeeInstanceData* i);
+    void addInstance(CoffeeInstanceChunk *i);
     void clearInstances();
 
     void setRenderPrepare(bool renderPrepare);
 
 private:
-    CoffeeInstanceData* createInstanceData();
+    CoffeeInstanceChunk *createInstanceData();
     QVector<uintptr_t> m_touched;
 
     QObject *instanceAnchor;
 
-    QVector<CoffeeInstanceData*> instances;
+    QVector<CoffeeInstanceChunk*> instances;
     bool m_renderPrepare = false;
 
     void* m_tmpBuffer = nullptr;

@@ -21,6 +21,7 @@ public:
 
     Vector3Value* getPositionObject();
     QuatValue* getPhysicalRotation();
+    Vector3Value* getScaleObject();
 
     void *getPhysicspointer();
     void setPhysicspointer(void *value);

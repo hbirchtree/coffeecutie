@@ -12,6 +12,7 @@ public:
     QuatValue(QObject* parent, const glm::quat &initial);
     QuatValue(QObject* parent, std::function<glm::quat(const glm::quat& v)> fun);
     QuatValue(QObject* parent, float w, float x, float y, float z);
+    QuatValue(QObject* parent, glm::quat* address);
 
     using NumberContainer<glm::quat>::operator !=;
     using NumberContainer<glm::quat>::operator =;
@@ -26,6 +27,7 @@ public:
     using NumberContainer<glm::quat>::operator <=;
     using NumberContainer<glm::quat>::operator >=;
     using NumberContainer<glm::quat>::bindValue;
+    using NumberContainer<glm::quat>::attachPointers;
 
     QVariantList value() const;
     void setValue(const glm::quat& val);

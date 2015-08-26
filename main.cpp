@@ -19,6 +19,7 @@
 #endif
 
 #include "engine/models/coffeeinstancecontainer.h"
+#include "engine/physics/physicsobject.h"
 #include "general/data/numbercontainer.h"
 
 using namespace Coffee::CFunctional;
@@ -28,12 +29,24 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setApplicationName("CoffeeCutie");
-    a.setApplicationVersion("0.0.1.100");
+    a.setApplicationVersion("0.0.1.105");
     a.setApplicationDisplayName("Coffee Cutie");
 
     QString scriptFile;
     bool logStderr = true;
     bool logFile = false;
+
+//    CoffeeInstanceChunk b;
+//    CoffeeInstanceData d(0,&b);
+//    PhysicsObject p(0);
+//    qDebug() << b.position.x << b.position.y << b.position.z;
+
+//    d.bindObject(&p);
+//    p.getPositionObject()->setValue(glm::vec3(1,2,3));
+
+//    qDebug() << b.position.x << b.position.y << b.position.z;
+
+//    return 0;
 
     //We parse user input first, to determine what to do.
     QCommandLineParser opts;

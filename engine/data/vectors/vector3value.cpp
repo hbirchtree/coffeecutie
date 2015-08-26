@@ -18,6 +18,12 @@ Vector3Value::Vector3Value(QObject *parent, float x, float y, float z) :
 {
 }
 
+Vector3Value::Vector3Value(QObject *parent, glm::vec3 *address) :
+    VectorData(parent),
+    NumberContainer<glm::vec3>(address)
+{
+}
+
 void Vector3Value::bindValue(Vector3Value *vec)
 {
     VectorData::bindSignals(vec);
