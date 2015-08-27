@@ -239,8 +239,9 @@ static void _glfw_error_function(int stat, const char* message){
 void CoffeeGLFWContextManager::setWindowTitle(const QString &value)
 {
     CoffeeRendererBase::setWindowTitle(value);
+    std::string _t = value.toStdString();
     if(window)
-        glfwSetWindowTitle(window,value.toStdString().c_str());
+	glfwSetWindowTitle(window,_t.c_str());
 }
 
 void CoffeeGLFWContextManager::queueFunction(std::function<void()> func)
@@ -255,7 +256,7 @@ void CoffeeGLFWContextManager::setWindowDimensions(const QSize &windowSize)
         glfwSetWindowSize(window,windowSize.width(),windowSize.height());
 }
 
-GLFWwindow* CoffeeGLFWContextManager::setWindowedFullscreen(int monitor)
+GLFWwindow* CoffeeGLFWContextManager::setWindowedFullscreen(int monitor, const char *title)
 {
     int count;
     GLFWmonitor** data = glfwGetMonitors(&count);
@@ -271,10 +272,10 @@ GLFWwindow* CoffeeGLFWContextManager::setWindowedFullscreen(int monitor)
     glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
 
     return glfwCreateWindow(current->width,current->height,
-                            getWindowTitle().toStdString().c_str(),mon,NULL);
+			    title,mon,NULL);
 }
 
-GLFWwindow* CoffeeGLFWContextManager::setFullscreen(int monitor)
+GLFWwindow* CoffeeGLFWContextManager::setFullscreen(int monitor, const char *title)
 {
     int count;
     GLFWmonitor** data = glfwGetMonitors(&count);
@@ -284,13 +285,13 @@ GLFWwindow* CoffeeGLFWContextManager::setFullscreen(int monitor)
     GLFWmonitor* mon = data[monitor];
 
     return glfwCreateWindow(getWindowDimensions().width(),getWindowDimensions().height(),
-                            getWindowTitle().toStdString().c_str(),mon,NULL);
+			    title,mon,NULL);
 }
 
-GLFWwindow* CoffeeGLFWContextManager::setWindowed()
+GLFWwindow* CoffeeGLFWContextManager::setWindowed(const char* title)
 {
     return glfwCreateWindow(getWindowDimensions().width(),getWindowDimensions().height(),
-                            getWindowTitle().toStdString().c_str(),NULL,NULL);
+			    title,NULL,NULL);
 }
 
 void CoffeeGLFWContextManager::setMousePosition(QPointF pos)
@@ -411,26 +412,29 @@ int CoffeeGLFWContextManager::init(){
 
     glfwSetErrorCallback(_glfw_error_function);
 
+    std::string _title_std = getWindowTitle().toStdString();
+    const char* title = _title_std.c_str();
     switch(windowState()){
     case Qt::WindowFullScreen:{
         rendererMessage(InformationMessage,
                               "Setting exclusive fullscreen mode");
-        window = setFullscreen(startDisplay());
+	window = setFullscreen(startDisplay(),title);
         break;
     }
     case Qt::WindowMaximized:{
         rendererMessage(InformationMessage,
                               "Setting windowed fullscreen mode");
-        window = setWindowedFullscreen(startDisplay());
+	window = setWindowedFullscreen(startDisplay(),title);
         break;
     }
     default:{
         rendererMessage(InformationMessage,
                               "Setting windowed mode");
-        window = setWindowed();
+	window = setWindowed(title);
         break;
     }
     }
+
     if(window==NULL){
         qFatal("Failed to create window");
         return 10;

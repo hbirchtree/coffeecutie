@@ -70,9 +70,9 @@ public slots:
 
 private:
     QList<CoffeeJoystick*> m_joysticks;
-    GLFWwindow *setWindowedFullscreen(int monitor);
-    GLFWwindow *setFullscreen(int monitor);
-    GLFWwindow *setWindowed();
+    GLFWwindow *setWindowedFullscreen(int monitor,const char *title);
+    GLFWwindow *setFullscreen(int monitor,const char *title);
+    GLFWwindow *setWindowed(const char *title);
 
     GLFWwindow* window = nullptr;
     double m_frameTime = 0.0;

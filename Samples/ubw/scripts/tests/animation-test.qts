@@ -49,11 +49,13 @@ function addNewGear(mass,shape){
 	modifyGear(0,60,[100,100,100]);
 	modifyGear(1,40,[10,166,100]);
 }
+
+var __g1_inst = world.gear.mesh.instances.getInstanceQObject(1);
+var __g2_inst = world.gear.mesh.instances.getInstanceQObject(0);
+
 function rotateGears(){
-	var inst1 = world.gear.mesh.instances.getInstanceQObject(1);
-	inst1.rotation.mathCumulate([1,0,0,0.001]);
-	var inst0 = world.gear.mesh.instances.getInstanceQObject(0);
-	inst0.rotation.mathCumulate([1,0,0,-0.001]);
+	__g2_inst.rotation.mathCumulate([1,0,0,0.001]);
+	__g1_inst.rotation.mathCumulate([1,0,0,-0.001]);
 	
 	inst1.deleteLater();
 	inst0.deleteLater();
