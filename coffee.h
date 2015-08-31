@@ -1,14 +1,20 @@
 #ifndef COFFEE
 #define COFFEE
 
-#include <QDebug>
+#include <string>
+#include <map>
+#include <functional>
+#include <vector>
+#include <stdint.h>
 
 namespace Coffee{
 //Core types, might become base type for all classes in place of QObject
 class CObject;
 
-//Wrappers of data types
+//Different data types we implement
 namespace CPrimitiveDataTypes{
+namespace CVectorTypes{
+class VectorData;
 class ScalarValue;
 
 class Vector2Value;
@@ -19,6 +25,44 @@ class QuatValue;
 
 class Matrix3Value;
 class Matrix4Value;
+}
+
+//General data types
+typedef std::string CString; //In case we want to switch it
+
+//Light-weight data types
+
+//Size type
+struct CSize{
+    uint32_t w;
+    uint32_t h;
+};
+struct CSizeF{
+    float w;
+    float h;
+};
+//Point type
+struct CPoint{
+    uint32_t x;
+    uint32_t y;
+};
+struct CPointF{
+    float x;
+    float y;
+};
+//Rectangle type
+struct CRect{
+    uint32_t x;
+    uint32_t y;
+    uint32_t w;
+    uint32_t h;
+};
+struct CRectF{
+    float x;
+    float y;
+    float w;
+    float h;
+};
 }
 
 //Wrappers for GL features
@@ -113,6 +157,8 @@ class CSObject;
 }
 
 } //Coffee
+
+using namespace Coffee::CPrimitiveDataTypes;
 
 
 #endif // COFFEE
