@@ -3,14 +3,17 @@
 
 #include "coffee.h"
 
+namespace Coffee{
+namespace CFunctional{
+
 template<typename RType, typename... AType>
-class Coffee::CFunctional::CRFunction {
+class CRFunction {
 public:
     virtual RType exec(AType... args) = 0;
 };
 
 template<class TClass, class FClass, typename RType, typename... AType>
-class Coffee::CFunctional::CRMemberFunction : public CRFunction<RType,AType...>{
+class CRMemberFunction : public CRFunction<RType,AType...>{
     typedef RType (FClass::*FuncPtr)(AType...);
 
     TClass* m_instance;
@@ -26,7 +29,7 @@ public:
 };
 
 template<typename RType,typename... AType>
-class Coffee::CFunctional::CRStaticFunction : public CRFunction<RType,AType...>{
+class CRStaticFunction : public CRFunction<RType,AType...>{
     typedef RType (*FuncPtr)(AType...);
 
     FuncPtr m_func;
@@ -38,5 +41,9 @@ public:
         return (*m_func)(args...);
     }
 };
+
+}
+}
+
 
 #endif // COFFEE_FUNCTIONAL_H

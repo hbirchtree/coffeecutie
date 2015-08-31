@@ -6,7 +6,11 @@
 #include <QApplication>
 #include "coffeelogger.h"
 
+#include <iostream>
+#include <unistd.h>
+
 #include "coffee/cobject.h"
+#include "coffee/cdebug.h"
 
 using namespace Coffee;
 
@@ -19,19 +23,6 @@ int main(int argc, char *argv[])
 
     //Created so that the destructor closes the file
     CoffeeLogger logger(false,false); Q_UNUSED(logger);
-
-    CObject* t1 = new CObject();
-    CObject* c1 = new CObject(t1);
-    CObject* cc1 = new CObject(c1);
-    CObject* ccc1 = new CObject(cc1);
-
-    delete t1;
-
-    fprintf(stderr,"Hello!\n");
-
-    qDebug() << "Our object:" << ccc1->objectName().c_str();
-
-    qDebug() << "It's a whole new woooorld!";
 
     return 0;
 }

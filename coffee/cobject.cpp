@@ -26,6 +26,23 @@ CObject *CObject::parent()
     return m_parent;
 }
 
+void CObject::setParent(CObject *parent)
+{
+    if(parent!=this){
+        for(auto it=m_parent->m_children.begin();
+            it!=m_parent->m_children.end();
+            it++)
+            if(*it==this){
+                m_parent->m_children.erase(it);
+                break;
+            }
+        this->m_parent = parent;
+        m_parent->m_children.push_back(this);
+    }else{
+
+    }
+}
+
 CString CObject::objectName()
 {
     return m_objectName;

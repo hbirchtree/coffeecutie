@@ -13,6 +13,7 @@ public:
     ~CObject();
 
     CObject* parent();
+    void setParent(CObject* parent);
 
     //Object name
     CString objectName();

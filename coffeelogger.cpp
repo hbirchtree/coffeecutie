@@ -48,9 +48,5 @@ void CoffeeLogger::defaultMessageHandler(QtMsgType t, const QMessageLogContext &
     logmessage.append(QString(":%1:%2: %3\n").arg(context.function).arg(context.line).arg(m_msg.constData()));
 
     std::string os = logmessage.toStdString();
-    if(logFile)
-        outputFile->write(os.c_str(),logmessage.size());
-    if(logStdOut)
-        fprintf(stderr, "%s",
-                os.c_str());
+    fprintf(stderr, "%s",os.c_str());
 }

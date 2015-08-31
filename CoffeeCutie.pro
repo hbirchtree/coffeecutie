@@ -30,9 +30,11 @@ HEADERS += \
     tests/RawFile.h \
     coffeelogger.h \
     coffee.h \
-    coffee/coffee_functional.h \
     coffee/display/cdrendererbase.h \
-    coffee/cobject.h
+    coffee/cobject.h \
+    coffee/cdebug.h \
+    coffee/cfunctional.h \
+    coffee/cdisplay.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding

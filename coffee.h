@@ -136,6 +136,9 @@ class CIEventParser;
 
 //Windowing and rendering contexts
 namespace CDisplay{
+struct CDMonitor; //Represents a monitor and its properties
+struct CDWindow; //Represents a window, most commonly the context window
+
 class CDRendererBase;
 class CDRenderer;
 
@@ -159,6 +162,6 @@ class CSObject;
 } //Coffee
 
 using namespace Coffee::CPrimitiveDataTypes;
-
+using namespace Coffee::CFunctional;
 
 #endif // COFFEE
