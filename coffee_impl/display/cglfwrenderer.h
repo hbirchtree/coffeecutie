@@ -1,20 +1,11 @@
 #ifndef COFFEE_CDISPLAY_CGLFWRENDERER_H
 #define COFFEE_CDISPLAY_CGLFWRENDERER_H
 
+#include "coffee_impl/graphics/cgraphicswrappers.h"
 #include "coffee/display/cdrendererbase.h"
 #include "coffee/cdebug.h"
 
 #include "cglfwnativefuncs.h"
-
-#include <glbinding/ContextInfo.h>
-#include <glbinding/Version.h>
-#include <glbinding/callbacks.h>
-#include <glbinding/Binding.h>
-#include <glbinding/Meta.h>
-
-#include <glbinding/gl/gl.h>
-
-using namespace gl;
 
 namespace Coffee {
 namespace CDisplay {
@@ -56,7 +47,6 @@ public:
     void pollEvents();
 
     void init(WindowState startState, CSize startSize, int monitorIndex);
-    void run();
     void cleanup();
 
     static void APIENTRY glbindingCallbackDirect(GLenum source, GLenum type, GLuint id, GLenum severity,
@@ -65,7 +55,7 @@ public:
 protected:
     virtual void updateJoysticks();
     virtual void glbindingCallbackInternal(GLenum source, GLenum type, GLuint id,
-                                           GLenum severity, GLsizei length, const GLchar* msg) const;
+                                           GLenum severity, GLsizei length, const GLchar* msg) const = 0;
 
 private:
     GLFWwindow* m_window = nullptr;

@@ -15,6 +15,7 @@ struct CIEvent
         Joystick     = 0x3,
         Scroll       = 0x4,
         Drop         = 0x5, //Drag-and-drop
+        Input        = 0x6,
     };
     uint8_t type = NoEvent;
 };
@@ -43,6 +44,7 @@ struct CIKeyEvent
     uint8_t type = NoEvent;
 
     uint32_t keyCode = 0;
+    uint32_t scanCode = 0;
     uint32_t modifier = NoModifier; // Modifier keys, flags
 };
 struct CIMouseEvent
@@ -79,6 +81,11 @@ struct CIScrollEvent
 {
     float deltaX = 0.f,deltaY = 0.f;
     uint8_t modifiers = 0;
+};
+
+struct CIWriteEvent
+{
+    uint32_t character;
 };
 
 struct CIJoyState

@@ -67,14 +67,7 @@ struct CRectF{
 
 //Wrappers for GL features
 namespace CGraphicsWrappers{
-class CBuffer;
-class CVertexArrayObject;
 
-class CUniformBlock;
-class CUniformValue; //Bound to a uniform or uniform block field
-class CShader;
-
-class CFramebuffer;
 }
 
 //Physics-related types
@@ -94,44 +87,23 @@ class CInstanceContainer;
 class CCamera;
 class CMaterial;
 class CLight;
-
-//Separating animation-related types
-namespace CAnimationDataTypes{
-class CSkeleton;
-class CAnimationState;
-}
 }
 
 //Core classes
 namespace CFunctional{
-class CRQueueRunner;
+class CQueueRunner;
 
-//Templates for function wrappers, all under a common CRFunction type
 template<typename RType, typename... AType>
 class CRFunction;
-template<typename RType,typename... AType>
-class CRStaticFunction;
-template<class TClass, class FClass, typename RType, typename... AType>
-class CRMemberFunction;
 
-typedef std::function<void()> QueueFunction; //This needs to be light
-
+//These are queued up, run and deleted
+typedef std::function<void()> QueueFunction;
 }
 
 //Input classes
 namespace CInput{
+//Rest of it is in "coffee/cinput.h"
 typedef CFunctional::CRFunction<void,void*,uint32_t> CInputHandlerFunction;
-
-struct CIEvent;
-struct CIKeyEvent;
-struct CIMouseEvent;
-struct CIScrollEvent;
-struct CIDropEvent;
-
-struct CIJoyInfo;
-struct CIJoyState;
-
-class CIEventParser;
 }
 
 //Windowing and rendering contexts
@@ -145,10 +117,12 @@ class CGLFWRenderer; //One of several context managers, we might use SDL2 someti
 class CGPUMonitor;
 
 class CDRenderer; //This is a placeholder for the final implemented class
+
+typedef CFunctional::CRFunction<void> RenderFunction;
 }
 
 //File management
-namespace CFiles{
+namespace CResources{
 class CResource;
 class CFAssetStorage;
 class CFObjectImport;

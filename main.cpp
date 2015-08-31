@@ -6,15 +6,17 @@
 //#include <QApplication>
 #include "coffeelogger.h"
 
+#include <QtConcurrent>
+
 #include <iostream>
 #include <unistd.h>
 
-#include "coffee/cobject.h"
 #include "coffee/cdebug.h"
-#include "coffee/cdisplay.h"
-#include "coffee_impl/display/cglfwrenderer.h"
+#include "coffee_impl/context/cdrenderer.h"
+#include "coffee_impl/graphics/cgraphicswrappers.h"
 
 using namespace Coffee::CDisplay;
+using namespace Coffee::CGraphicsWrappers;
 
 int main(int argc, char *argv[])
 {
@@ -26,13 +28,25 @@ int main(int argc, char *argv[])
     //Created so that the destructor closes the file
     CoffeeLogger logger(false,false); Q_UNUSED(logger);
 
-    CGLFWRenderer* renderer = new CGLFWRenderer(nullptr);
+    CDRenderer* renderer = new CDRenderer(nullptr);
+
+    char* storageArea = reinterpret_cast<char*>(malloc(1024*1024*256));
+
+    qDebug() << sizeof(storageArea);
+
+    CVertexArrayObject* test = reinterpret_cast<CVertexArrayObject*>(&storageArea[0]);
+
+    qDebug() << sizeof(CDRenderer);
+    qDebug() << sizeof(test) << test->handle << test << (void*)storageArea;
+    test->handle = 10;
+    qDebug() << sizeof(test) << test->handle;
+
     CSize s;
     s.w = 1280;
     s.h = 720;
-    renderer->init(CGLFWRenderer::Windowed,s,0);
-    renderer->run();
-    renderer->cleanup();
+    QtConcurrent::run(QThreadPool::globalInstance(),renderer,&CDRenderer::run,CDRenderer::Windowed,s,0);
+
+    usleep(1000000000);
 
     return 0;
 }

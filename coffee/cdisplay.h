@@ -43,16 +43,14 @@ struct CDEvent{
         WindowMoved            = 0x2,
         WindowResized          = 0x4,
         WindowStateChanged     = 0x5, //Includes closing and focus change
+        FramebufferResized     = 0x6,
     };
     uint8_t type;
 };
 
 struct CDResizeEvent{
-    uint32_t old_w;
-    uint32_t old_h;
-
-    uint32_t new_w;
-    uint32_t new_h;
+    uint32_t w;
+    uint32_t h;
 };
 
 struct CDStateEvent{
@@ -68,11 +66,8 @@ struct CDStateEvent{
 };
 
 struct CDMoveEvent{
-    uint32_t old_x;
-    uint32_t old_y;
-
-    uint32_t new_x;
-    uint32_t new_y;
+    uint32_t x;
+    uint32_t y;
 };
 
 }

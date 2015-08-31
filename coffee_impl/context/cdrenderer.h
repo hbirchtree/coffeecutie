@@ -1,0 +1,26 @@
+#ifndef COFFEE_CDISPLAY_CDRENDERER_H
+#define COFFEE_CDISPLAY_CDRENDERER_H
+
+#include "coffee_impl/display/cglfwrenderer.h"
+#include "coffee_impl/functional/cqueuerunner.h"
+
+namespace Coffee {
+namespace CDisplay {
+
+class CDRenderer : public CGLFWRenderer,public CQueueRunner
+{
+public:
+    CDRenderer(CObject* parent = nullptr);
+
+    void run();
+
+    void run(WindowState state, CSize resolution, int monitor = 0);
+
+protected:
+    void glbindingCallbackInternal(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg) const;
+};
+
+} // namespace CDisplay
+} // namespace Coffee
+
+#endif // COFFEE_CDISPLAY_CDRENDERER_H

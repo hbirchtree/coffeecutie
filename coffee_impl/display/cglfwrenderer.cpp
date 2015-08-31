@@ -219,7 +219,6 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
             return;
 
         GLFWmonitor* mon = monitors[monitorIndex];
-
         if(startState==WindowedFullScreen){
             const GLFWvidmode* current = glfwGetVideoMode(mon);
 
@@ -227,10 +226,11 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
             glfwWindowHint(GLFW_GREEN_BITS,current->greenBits);
             glfwWindowHint(GLFW_BLUE_BITS,current->blueBits);
             glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
+
+            startSize.w = current->width;
+            startSize.h = current->height;
         }
-
         m_window = glfwCreateWindow(startSize.w,startSize.h,"",mon,NULL);
-
         break;
     }
     case Windowed:
@@ -243,23 +243,22 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     glfwMakeContextCurrent(m_window);
     glfwSetWindowUserPointer(m_window,this);
 
-//    //Input callbacks
+    //Input callbacks
     glfwSetMouseButtonCallback(m_window,glfw_input_mouseBtn);
-//    glfwSetKeyCallback(m_window,glfw_input_kbdKey);
+    glfwSetKeyCallback(m_window,glfw_input_kbdKey);
     glfwSetCursorPosCallback(m_window,glfw_input_mouseMove);
-//    glfwSetCursorEnterCallback(m_window,glfw_input_mouseenter);
-//    glfwSetDropCallback(m_window,glfw_input_dropevent);
-//    glfwSetScrollCallback(m_window,glfw_input_scroll);
-//    glfwSetCharCallback(m_window,glfw_input_charwrite);
+    glfwSetCursorEnterCallback(m_window,glfw_input_mouseenter);
+    glfwSetDropCallback(m_window,glfw_input_dropevent);
+    glfwSetScrollCallback(m_window,glfw_input_scroll);
+    glfwSetCharCallback(m_window,glfw_input_charwrite);
 
-//    //Window callbacks
-//    glfwSetWindowSizeCallback       (m_window,glfw_win_resize);
-//    glfwSetWindowCloseCallback      (m_window,glfw_win_close);
-//    glfwSetWindowFocusCallback      (m_window,glfw_win_focus);
-//    glfwSetWindowIconifyCallback    (m_window,glfw_win_state);
-//    glfwSetWindowPosCallback        (m_window,glfw_win_pos);
-//    glfwSetWindowRefreshCallback    (m_window,glfw_win_refresh);
-//    glfwSetFramebufferSizeCallback  (m_window,glfw_win_fbresize);
+    //Window callbacks
+    glfwSetWindowSizeCallback       (m_window,glfw_win_resize);
+    glfwSetWindowCloseCallback      (m_window,glfw_win_close);
+    glfwSetWindowFocusCallback      (m_window,glfw_win_focus);
+    glfwSetWindowIconifyCallback    (m_window,glfw_win_state);
+    glfwSetWindowPosCallback        (m_window,glfw_win_pos);
+    glfwSetFramebufferSizeCallback  (m_window,glfw_win_fbresize);
 
     {
         int maj,min,rev;
@@ -283,22 +282,6 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     //GLBINDING ENDS
 }
 
-void CGLFWRenderer::run()
-{
-    //Temporary for testing
-
-    showWindow();
-
-    setMouseGrabbing(true);
-
-    while(!closeFlag()){
-        pollEvents();
-
-        swapBuffers();
-    }
-
-}
-
 void CGLFWRenderer::cleanup()
 {
     glfwDestroyWindow(m_window);
@@ -313,11 +296,6 @@ void CGLFWRenderer::glbindingCallbackDirect(GLenum source, GLenum type, GLuint i
 
 void CGLFWRenderer::updateJoysticks()
 {
-}
-
-void CGLFWRenderer::glbindingCallbackInternal(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg) const
-{
-
 }
 
 } // namespace CDisplay
