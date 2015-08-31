@@ -21,6 +21,21 @@ void cDebug(uint8_t severity, const char* str, Arg... args){
     }
 }
 
+template<typename... Arg>
+void cMsg(const char* src, const char* msg, Arg... args){
+    //Message logger stuff, centralized for convenience
+    qDebug(msg,args...);
+}
+
+template<typename... Arg>
+std::string cStringFormat(const char* fmt, Arg... args){
+    char* _s = new char[strlen(fmt)];
+    sprintf(_s,fmt,args...);
+    std::string _o = _s;
+    delete[] _s;
+    return _o;
+}
+
 }
 }
 

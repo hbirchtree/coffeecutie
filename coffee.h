@@ -34,8 +34,8 @@ typedef std::string CString; //In case we want to switch it
 
 //Size type
 struct CSize{
-    uint32_t w;
-    uint32_t h;
+    int32_t w;
+    int32_t h;
 };
 struct CSizeF{
     float w;
@@ -43,8 +43,8 @@ struct CSizeF{
 };
 //Point type
 struct CPoint{
-    uint32_t x;
-    uint32_t y;
+    int32_t x;
+    int32_t y;
 };
 struct CPointF{
     float x;
@@ -52,10 +52,10 @@ struct CPointF{
 };
 //Rectangle type
 struct CRect{
-    uint32_t x;
-    uint32_t y;
-    uint32_t w;
-    uint32_t h;
+    int32_t x;
+    int32_t y;
+    int32_t w;
+    int32_t h;
 };
 struct CRectF{
     float x;
@@ -139,11 +139,12 @@ namespace CDisplay{
 struct CDMonitor; //Represents a monitor and its properties
 struct CDWindow; //Represents a window, most commonly the context window
 
+//Parts of the renderer class, should allow switching context manager without hassle
 class CDRendererBase;
-class CDRenderer;
-
-class CGLFWRenderer;
+class CGLFWRenderer; //One of several context managers, we might use SDL2 sometime.
 class CGPUMonitor;
+
+class CDRenderer; //This is a placeholder for the final implemented class
 }
 
 //File management

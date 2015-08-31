@@ -12,14 +12,23 @@ namespace CDisplay {
 
 class CDRendererBase : public CObject
 {
+    //This class and its inherited classes should remain stateless
+
 public:
     enum WindowState{
-        FullScreen          = 0b0000001,
-        WindowedFullScreen  = 0b0000010,
-        Windowed            = 0b0000100,
+        FullScreen          = 0b001,
+        WindowedFullScreen  = 0b010,
+        Windowed            = 0b100,
 
-        Minimized           = 0b0001000,
-        Maximized           = 0b0010000,
+        Minimized           = 0b01000,
+        Maximized           = 0b10000,
+
+        Focused             = 0b0100000,
+        Resizable           = 0b1000000,
+
+        Decorated           = 0b00010000000,
+        Floating            = 0b00100000000,
+        Visible             = 0b01000000000,
     };
 
     enum RendererExitStatus{ //Accumulated to describe exit state
@@ -33,12 +42,17 @@ public:
 
     CDRendererBase(CObject* parent);
 
+    virtual void init(WindowState,CSize,int)    = 0; //Initializes the context manager and etc.
+    virtual void run()                          = 0;
+    virtual void cleanup()                      = 0;
+
     //Window-related
     virtual CString windowTitle() const               = 0;
     virtual void setWindowTitle(const CString &title) = 0;
 
-    virtual CDMonitor monitor() = 0; //If it is a window, return the monitor it is on
-    virtual CDWindow window()   = 0;
+    virtual CDMonitor monitor()         = 0; //If it is a window, return the monitor it is on
+    virtual CDWindow window()           = 0; //Describes the window
+    virtual CDContextBits context()     = 0; //Stencil bits, depth bits etc.
 
     virtual uint32_t windowState() const           = 0;
     virtual void setWindowState(uint32_t newstate) = 0;
@@ -47,12 +61,16 @@ public:
     virtual bool hideWindow()  = 0;
     virtual bool closeWindow() = 0;
 
-    virtual int swapInterval()     = 0;
-    virtual void setSwapInterval() = 0;
+    virtual int swapInterval()          = 0;
+    virtual void setSwapInterval(int)   = 0;
+
+    virtual bool closeFlag() = 0;
 
     //Framebuffer size of context
     virtual CSize framebufferSize() const               = 0;
-    virtual void setFramebufferSize(const CSize &size)  = 0;
+
+    virtual CSize windowSize() const                    = 0;
+    virtual void setWindowSize(const CSize& size)       = 0;
 
     //Mouse controls, managed by context
     virtual bool isMouseGrabbed() const      = 0;

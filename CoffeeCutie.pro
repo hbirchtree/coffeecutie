@@ -22,7 +22,10 @@ SOURCES += main.cpp \
     tests/RawFile.cpp \
     coffeelogger.cpp \
     coffee/display/cdrendererbase.cpp \
-    coffee/cobject.cpp
+    coffee/cobject.cpp \
+    coffee_impl/display/cglfwrenderer.cpp \
+    coffee_impl/display/cglfwrenderer_eventhandlers.cpp \
+    coffee_impl/display/cglfwnativefuncs.cpp
 
 HEADERS += \
     tests/CubeScape.h \
@@ -34,7 +37,11 @@ HEADERS += \
     coffee/cobject.h \
     coffee/cdebug.h \
     coffee/cfunctional.h \
-    coffee/cdisplay.h
+    coffee/cdisplay.h \
+    coffee_impl/display/cglfwrenderer.h \
+    coffee/cinput.h \
+    coffee_impl/display/cglfwrenderer_eventhandlers.h \
+    coffee_impl/display/cglfwnativefuncs.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
