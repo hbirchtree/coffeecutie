@@ -30,17 +30,6 @@ int main(int argc, char *argv[])
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
-    char* storageArea = reinterpret_cast<char*>(malloc(1024*1024*256));
-
-    qDebug() << sizeof(storageArea);
-
-    CVertexArrayObject* test = reinterpret_cast<CVertexArrayObject*>(&storageArea[0]);
-
-    qDebug() << sizeof(CDRenderer);
-    qDebug() << sizeof(test) << test->handle << test << (void*)storageArea;
-    test->handle = 10;
-    qDebug() << sizeof(test) << test->handle;
-
     CSize s;
     s.w = 1280;
     s.h = 720;

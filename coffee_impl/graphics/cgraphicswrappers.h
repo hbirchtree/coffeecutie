@@ -19,8 +19,7 @@ struct CBuffer{
     uint32_t    size    = 0;
     void*       dataPtr = nullptr;
 
-    GLenum              bufferType;
-    BufferStorageMask   dataFlags;
+    GLenum      bufferType = GL_ARRAY_BUFFER;
 };
 
 struct CVertexArrayObject{
@@ -36,7 +35,7 @@ struct CVertexArrayObject{
     bool isBound(){
         GLint bound = 0;
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&bound);
-        return bound==handle;
+        return (GLuint)bound==handle;
     }
     bool isValid(){
         return glIsVertexArray(handle)==GL_TRUE;
