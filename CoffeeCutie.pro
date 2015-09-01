@@ -4,50 +4,24 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl concurrent script
+QT       += core concurrent
 
 TARGET = CoffeeCutie
 CONFIG += console c++11
 CONFIG -= app_bundle
 
-#DEFINES += QOPENGL_CONTEXT_MANAGER
+csharp {
+    #Use CONFIG += csharp to build as library, requires rebuild for -fPIC flag
+    TEMPLATE = lib
+    message(Configured for CoffeeSharp)
+    QMAKE_CXXFLAGS += -fPIC
 
-TEMPLATE = app
+    #Remember: ar rcs libCoffeeSharp.a *.o
+}else{
+    TEMPLATE = app
+}
 
 INCLUDEPATH += $$PWD/include
-
-SOURCES += main.cpp \
-    tests/CubeScape.cpp \
-    tests/glutils.cpp \
-    tests/RawFile.cpp \
-    coffeelogger.cpp \
-    coffee/display/cdrendererbase.cpp \
-    coffee/cobject.cpp \
-    coffee_impl/display/cglfwrenderer.cpp \
-    coffee_impl/display/cglfwnativefuncs.cpp \
-    coffee_impl/context/cdrenderer.cpp \
-    coffee_impl/functional/cqueuerunner.cpp \
-    coffee_impl/graphics/cshader.cpp
-
-HEADERS += \
-    tests/CubeScape.h \
-    tests/glutils.h \
-    tests/RawFile.h \
-    coffeelogger.h \
-    coffee.h \
-    coffee/display/cdrendererbase.h \
-    coffee/cobject.h \
-    coffee/cdebug.h \
-    coffee/cfunctional.h \
-    coffee/cdisplay.h \
-    coffee_impl/display/cglfwrenderer.h \
-    coffee/cinput.h \
-    coffee_impl/display/cglfwrenderer_eventhandlers.h \
-    coffee_impl/display/cglfwnativefuncs.h \
-    coffee_impl/context/cdrenderer.h \
-    coffee_impl/functional/cqueuerunner.h \
-    coffee_impl/graphics/cgraphicswrappers.h \
-    coffee_impl/graphics/cshader.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -83,3 +57,35 @@ else:unix: LIBS += -L$$PWD/../assimp-library/code/ -lassimp
 INCLUDEPATH += $$PWD/libs/assimp/include
 DEPENDPATH += $$PWD/libs/assimp/include
 
+SOURCES += main.cpp \
+    tests/CubeScape.cpp \
+    tests/glutils.cpp \
+    tests/RawFile.cpp \
+    coffeelogger.cpp \
+    coffee/display/cdrendererbase.cpp \
+    coffee/cobject.cpp \
+    coffee_impl/display/cglfwrenderer.cpp \
+    coffee_impl/display/cglfwnativefuncs.cpp \
+    coffee_impl/context/cdrenderer.cpp \
+    coffee_impl/functional/cqueuerunner.cpp \
+    coffee_impl/graphics/cshader.cpp
+
+HEADERS += \
+    tests/CubeScape.h \
+    tests/glutils.h \
+    tests/RawFile.h \
+    coffeelogger.h \
+    coffee.h \
+    coffee/display/cdrendererbase.h \
+    coffee/cobject.h \
+    coffee/cdebug.h \
+    coffee/cfunctional.h \
+    coffee/cdisplay.h \
+    coffee_impl/display/cglfwrenderer.h \
+    coffee/cinput.h \
+    coffee_impl/display/cglfwrenderer_eventhandlers.h \
+    coffee_impl/display/cglfwnativefuncs.h \
+    coffee_impl/context/cdrenderer.h \
+    coffee_impl/functional/cqueuerunner.h \
+    coffee_impl/graphics/cgraphicswrappers.h \
+    coffee_impl/graphics/cshader.h

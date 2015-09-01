@@ -34,8 +34,6 @@ int main(int argc, char *argv[])
 
     qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
 
-
-
     CSize s;
     s.w = 1280;
     s.h = 720;
