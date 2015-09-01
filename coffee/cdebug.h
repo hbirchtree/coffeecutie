@@ -1,7 +1,8 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
-#include <QDebug>
+#include <stdio.h>
+#include <string.h>
 
 namespace Coffee{
 namespace CFunctional{
@@ -10,13 +11,13 @@ template<typename... Arg>
 void cDebug(uint8_t severity, const char* str, Arg... args){
     switch(severity){
     case 0:
-        qDebug(str, args...);
+        fprintf(stderr,str, args...);
         break;
     case 1:
-        qWarning(str, args...);
+        fprintf(stderr,str, args...);
         break;
     default:
-        qFatal(str, args...);
+        fprintf(stderr,str, args...);
         break;
     }
 }
@@ -24,9 +25,7 @@ void cDebug(uint8_t severity, const char* str, Arg... args){
 template<typename... Arg>
 void cMsg(const char* src, const char* msg, Arg... args){
     //Message logger stuff, centralized for convenience
-    std::string m = msg;
-    m = "%s: "+m;
-    qDebug(m.c_str(),src,args...);
+    printf(msg,args...);
 }
 
 template<typename... Arg>
