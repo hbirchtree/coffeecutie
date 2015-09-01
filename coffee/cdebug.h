@@ -24,7 +24,9 @@ void cDebug(uint8_t severity, const char* str, Arg... args){
 template<typename... Arg>
 void cMsg(const char* src, const char* msg, Arg... args){
     //Message logger stuff, centralized for convenience
-    qDebug(msg,args...);
+    std::string m = msg;
+    m = "%s: "+m;
+    qDebug(m.c_str(),src,args...);
 }
 
 template<typename... Arg>

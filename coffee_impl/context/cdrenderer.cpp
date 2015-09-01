@@ -1,6 +1,6 @@
 #include "cdrenderer.h"
 
-#include "tests/CubeScape.h"
+using namespace Coffee::CGraphicsWrappers;
 
 namespace Coffee {
 namespace CDisplay {

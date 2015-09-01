@@ -260,6 +260,8 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     glfwSetWindowPosCallback        (m_window,glfw_win_pos);
     glfwSetFramebufferSizeCallback  (m_window,glfw_win_fbresize);
 
+    glfwSetErrorCallback            (glfw_error_function);
+
     {
         int maj,min,rev;
         glfwGetVersion(&maj,&min,&rev);

@@ -44,6 +44,10 @@ struct CBuffer{
     void subStore(GLintptr offset, GLsizeiptr size, const GLvoid* data){
         glBufferSubData(bufferType,offset,size,data);
     }
+
+    void invalidate(GLintptr offset, GLsizeiptr size){
+        glInvalidateBufferSubData(handle,offset,size);
+    }
 };
 
 struct CVertexArrayObject{
@@ -56,6 +60,7 @@ struct CVertexArrayObject{
     void unbind(){
         glBindVertexArray(0);
     }
+
     bool isBound(){
         GLint bound = 0;
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&bound);
@@ -64,6 +69,7 @@ struct CVertexArrayObject{
     bool isValid(){
         return glIsVertexArray(handle)==GL_TRUE;
     }
+
     void addAttribute(GLuint index, GLenum type,
                       GLboolean normalized, GLuint size,
                       GLuint stride, GLvoid* pointer)
@@ -84,12 +90,43 @@ struct CVertexArrayObject{
 struct CUniformValue{
     enum UniformFlags{
         BlockFlag       = 0b1, //Part of a uniform block
+        MatrixTranspose = 0b10,
     };
 
     CString name;
     uint8_t size    = 0; //Uniforms should not be larger than this, right? Right..?
     void* data      = nullptr;
     uint8_t flags   = 0;
+    GLint location  = -1;
+    GLuint program  = 0;
+
+    void applyUniform(){
+        GLboolean matrix_transpose = GL_FALSE;
+        if(flags&MatrixTranspose)
+            matrix_transpose = GL_TRUE;
+        const GLfloat* data = reinterpret_cast<const GLfloat*>(this->data);
+        switch(size){
+        case sizeof(float):
+            glProgramUniform1fv(program,location,1,data);
+            break;
+        case sizeof(float)*2:
+            glProgramUniform2fv(program,location,1,data);
+            break;
+        case sizeof(float)*3:
+            glProgramUniform3fv(program,location,1,data);
+            break;
+        case sizeof(float)*4:
+            glProgramUniform4fv(program,location,1,data);
+            break;
+        case sizeof(float)*9:
+            glProgramUniformMatrix3fv(program,location,1,matrix_transpose,data);
+            break;
+        case sizeof(float)*16:
+            glProgramUniformMatrix4fv(program,location,1,matrix_transpose,data);
+            break;
+
+        }
+    }
 };
 
 struct CUniformBlock{
