@@ -16,7 +16,6 @@ void CDRenderer::run()
         pollEvents();
         swapBuffers();
     }
-
 }
 
 void CDRenderer::run(WindowState state, CSize resolution, int monitor)

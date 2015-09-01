@@ -1,6 +1,8 @@
 #ifndef CGRAPHICSWRAPPERS_H
 #define CGRAPHICSWRAPPERS_H
 
+#include "coffee.h"
+
 #include <glbinding/ContextInfo.h>
 #include <glbinding/Version.h>
 #include <glbinding/callbacks.h>
@@ -16,14 +18,37 @@ namespace CGraphicsWrappers{
 
 struct CBuffer{
     GLuint      handle  = 0;
-    uint32_t    size    = 0;
-    void*       dataPtr = nullptr;
-
+    GLsizeiptr  size    = 0;
     GLenum      bufferType = GL_ARRAY_BUFFER;
+    BufferStorageMask flags = GL_DYNAMIC_STORAGE_BIT;
+
+    void bind(){
+        glBindBuffer(bufferType,handle);
+    }
+    void unbind(){
+        glBindBuffer(bufferType,0);
+    }
+
+    void store(GLenum type, GLsizeiptr size,
+               const GLvoid* data, BufferStorageMask flags)
+    {
+        this->bufferType = type;
+        this->size = size;
+        this->flags = flags;
+
+        glBufferStorage(type,size,data,flags);
+    }
+    void store(GLsizeiptr size, const GLvoid* data){
+        store(bufferType,size,data,flags);
+    }
+    void subStore(GLintptr offset, GLsizeiptr size, const GLvoid* data){
+        glBufferSubData(bufferType,offset,size,data);
+    }
 };
 
 struct CVertexArrayObject{
     GLuint      handle  = 0;
+    CBuffer**   buffers = nullptr;
 
     void bind(){
         glBindVertexArray(handle);
@@ -31,7 +56,6 @@ struct CVertexArrayObject{
     void unbind(){
         glBindVertexArray(0);
     }
-
     bool isBound(){
         GLint bound = 0;
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&bound);
@@ -42,25 +66,38 @@ struct CVertexArrayObject{
     }
     void addAttribute(GLuint index, GLenum type,
                       GLboolean normalized, GLuint size,
-                      GLuint stride, GLvoid* pointer){
+                      GLuint stride, GLvoid* pointer)
+    {
         glEnableVertexAttribArray(index);
         glVertexAttribPointer(index,size,type,normalized,stride,pointer);
     }
     void addAttributeDivided(GLuint index, GLenum type,
                              GLboolean normalized, GLuint size,
                              GLuint stride, GLuint divisor,
-                             GLvoid* pointer){
+                             GLvoid* pointer)
+    {
         addAttribute(index,type,normalized,size,stride,pointer);
         glVertexAttribDivisor(index,divisor);
     }
 };
 
-struct CUniformBlock{
+struct CUniformValue{
+    enum UniformFlags{
+        BlockFlag       = 0b1, //Part of a uniform block
+    };
 
+    CString name;
+    uint8_t size    = 0; //Uniforms should not be larger than this, right? Right..?
+    void* data      = nullptr;
+    uint8_t flags   = 0;
 };
 
-struct CUniformValue{
-
+struct CUniformBlock{
+    uint32_t size   = 0;
+    CString name;
+    void* data      = nullptr;
+    uint16_t numValues = 0;
+    CUniformValue** values = nullptr;
 };
 
 struct CShader;
