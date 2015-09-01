@@ -1,6 +1,6 @@
 #include "cdrenderer.h"
 
-#include "tests/CubeScape.h"
+using namespace Coffee::CGraphicsWrappers;
 
 namespace Coffee {
 namespace CDisplay {
@@ -16,7 +16,6 @@ void CDRenderer::run()
         pollEvents();
         swapBuffers();
     }
-
 }
 
 void CDRenderer::run(WindowState state, CSize resolution, int monitor)

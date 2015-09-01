@@ -26,7 +26,8 @@ SOURCES += main.cpp \
     coffee_impl/display/cglfwrenderer.cpp \
     coffee_impl/display/cglfwnativefuncs.cpp \
     coffee_impl/context/cdrenderer.cpp \
-    coffee_impl/functional/cqueuerunner.cpp
+    coffee_impl/functional/cqueuerunner.cpp \
+    coffee_impl/graphics/cshader.cpp
 
 HEADERS += \
     tests/CubeScape.h \
@@ -45,7 +46,8 @@ HEADERS += \
     coffee_impl/display/cglfwnativefuncs.h \
     coffee_impl/context/cdrenderer.h \
     coffee_impl/functional/cqueuerunner.h \
-    coffee_impl/graphics/cgraphicswrappers.h
+    coffee_impl/graphics/cgraphicswrappers.h \
+    coffee_impl/graphics/cshader.h
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glbinding-library/release/ -lglbinding
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../glbinding-library/debug/ -lglbinding
@@ -73,16 +75,6 @@ else:unix: LIBS += -L$$PWD/../bullet-library/src/ -lBulletSoftBody -lBulletDynam
 
 INCLUDEPATH += $$PWD/libs/bullet/src
 DEPENDPATH += $$PWD/libs/bullet/src
-
-FORMS += \
-    inspector/coffeeinspector.ui \
-    inspector/coffeerendererinspector.ui \
-    inspector/coffeescriptterminal.ui \
-    inspector/coffeeexceptiondialog.ui \
-    inspector/editor/coffeegameeditor.ui \
-    inspector/debugger/coffeedebugview.ui \
-    inspector/information/coffeemessagelogger.ui \
-    inspector/information/coffeemessagedisplay.ui
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp

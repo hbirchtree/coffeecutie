@@ -13,13 +13,15 @@
 
 #include "coffee/cdebug.h"
 #include "coffee_impl/context/cdrenderer.h"
-#include "coffee_impl/graphics/cgraphicswrappers.h"
+#include "coffee_impl/graphics/cshader.h"
 
 using namespace Coffee::CDisplay;
 using namespace Coffee::CGraphicsWrappers;
 
 int main(int argc, char *argv[])
 {
+    Q_UNUSED(argc)
+    Q_UNUSED(argv)
 //    QApplication a(argc, argv);
 //    a.setApplicationName("CoffeeCutie");
 //    a.setApplicationVersion("0.0.1.105");
@@ -29,6 +31,10 @@ int main(int argc, char *argv[])
     CoffeeLogger logger(false,false); Q_UNUSED(logger);
 
     CDRenderer* renderer = new CDRenderer(nullptr);
+
+    qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
+
+
 
     CSize s;
     s.w = 1280;
