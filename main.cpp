@@ -29,15 +29,9 @@ int main(int argc, char *argv[])
     qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
     cDebug("%ld",sizeof(CDRenderer));
 
-    const char* string = "Hello World!\nHeh.";
     CResource t = CResource("testfile.txt");
-    t.data = malloc(strlen(string));
-    t.size = strlen(string);
-    memcpy(t.data,string,strlen(string));
-
-    qDebug() << t.size << t.data << t.exists();
-    qDebug() << t.save_data();
-    qDebug() << t.exists();
+    qDebug() << t.append_text("What???\n");
+    qDebug() << sizeof(CResource);
 
     QFuture<void> rendererFuture = QtConcurrent::run(
                 QThreadPool::globalInstance(),

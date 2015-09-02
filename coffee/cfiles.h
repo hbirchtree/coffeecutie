@@ -91,7 +91,7 @@ struct CResource{
     }
 
     void read_data(bool textmode = false){
-        FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"r");
+        FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"rb");
         data = CFiles::coffee_file_read(fp,data,&size,textmode);
         if(CFiles::coffee_file_close(fp))
             cWarning("Failed to close file: %s",m_resource.c_str());
@@ -100,6 +100,14 @@ struct CResource{
     bool save_data(){
         FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"wb");
         bool stat = CFiles::coffee_file_write(fp,data,size);
+        if(CFiles::coffee_file_close(fp))
+            cWarning("Failed to close file: %s",m_resource.c_str());
+        return stat;
+    }
+
+    bool append_text(const char* text){
+        FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"ab+");
+        bool stat = CFiles::coffee_file_write(fp,text,strlen(text));
         if(CFiles::coffee_file_close(fp))
             cWarning("Failed to close file: %s",m_resource.c_str());
         return stat;
