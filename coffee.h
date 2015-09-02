@@ -1,6 +1,8 @@
 #ifndef COFFEE
 #define COFFEE
 
+#include <sys/resource.h>
+
 #include <string>
 #include <map>
 #include <functional>
@@ -9,6 +11,8 @@
 
 namespace Coffee{
 //Core types, might become base type for all classes in place of QObject
+static void CoffeeInit();
+
 class CObject;
 
 //Different data types we implement
@@ -159,6 +163,14 @@ class CSObject;
 }
 
 } //Coffee
+
+
+void Coffee::CoffeeInit(){
+    //Allow core dump by default
+    struct rlimit core_limits;
+    core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
+    setrlimit(RLIMIT_CORE,&core_limits);
+}
 
 using namespace Coffee::CPrimitiveDataTypes;
 using namespace Coffee::CFunctional;

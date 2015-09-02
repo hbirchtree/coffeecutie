@@ -19,12 +19,10 @@ private:
     };
     void identify_resource(){
         //Not all of these are implemented!
-        const char** remotes    =
-        {"^http:.*","^https:.*","^ftp:.*","^ftps:.*","^sftp:.*"};
-        uint8_t remotes_size = 5;
-        const char** locals     =
-        {"^file:.*","^/.*","^[A-Za-z]:.*"};
-        uint8_t locals_size = 3;
+        std::vector<std::string> remotes =
+        {"http:.*","https:.*","ftp:.*","ftps:.*","sftp:.*"};
+        std::vector<std::string> =
+        {"file:.*","/.*","[A-Za-z]:.*"};
 
         for(uint8_t i=0;i<remotes_size;i++){
 

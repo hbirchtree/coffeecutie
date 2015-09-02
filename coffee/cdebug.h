@@ -1,6 +1,9 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
+#define UNW_LOCAL_ONLY
+#include <libunwind.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -15,6 +18,7 @@ std::string cStringFormat(const char* fmt, Arg... args);
 
 template<typename... Arg>
 void cDebug(uint8_t severity, const char* str, Arg... args){
+    //Get time as string
     time_t t;
     struct tm *tm;
     char clock[10];
@@ -22,9 +26,29 @@ void cDebug(uint8_t severity, const char* str, Arg... args){
     tm = localtime(&t);
     strftime(clock,sizeof(clock),"%H:%M:%S:",tm);
 
+    //Some settings for output
     FILE* strm = stdout;
     bool fail = false;
     std::string s_(clock);
+
+    //Get call stack
+    unw_cursor_t cur;
+    unw_context_t ctx;
+    unw_getcontext(&ctx);
+    unw_init_local(&cur,&ctx);
+
+    while(unw_step(&cur)>0){
+        unw_word_t offset,pc;
+        unw_get_reg(&cur,UNW_REG_IP,&pc);
+        if(pc == 0)
+            break;
+        printf("0x%lx:",pc);
+
+        char sym[256];
+        if(unw_get_proc_name(&cur,sym,sizeof(sym),&offset)==0){
+            printf();
+        }
+    }
 
     switch(severity){
     case 0: //Info

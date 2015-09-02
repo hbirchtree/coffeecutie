@@ -10,6 +10,8 @@ TARGET = CoffeeCutie
 CONFIG += console c++11
 CONFIG -= app_bundle
 
+LIBS += -lunwind
+
 csharp {
     #Use CONFIG += csharp to build as library, requires rebuild for -fPIC flag
     TEMPLATE = lib
