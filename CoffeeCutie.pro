@@ -88,4 +88,5 @@ HEADERS += \
     coffee_impl/context/cdrenderer.h \
     coffee_impl/functional/cqueuerunner.h \
     coffee_impl/graphics/cgraphicswrappers.h \
-    coffee_impl/graphics/cshader.h
+    coffee_impl/graphics/cshader.h \
+    coffeesharp.h

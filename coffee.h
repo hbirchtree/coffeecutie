@@ -63,6 +63,31 @@ struct CRectF{
     float w;
     float h;
 };
+
+//These are not meant to replace glm
+//Will be used as a dumbed-down version for C# and similar
+//The memory layout is the same anyway
+struct CVec2{
+    float x;
+    float y;
+};
+struct CVec3{
+    float x;
+    float y;
+    float z;
+};
+struct CVec4{
+    float x;
+    float y;
+    float z;
+    float w;
+};
+struct CQuat{
+    float w;
+    float x;
+    float y;
+    float z;
+};
 }
 
 //Wrappers for GL features
