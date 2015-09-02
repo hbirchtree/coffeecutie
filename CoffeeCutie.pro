@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core concurrent
+QT += core concurrent
 
 TARGET = CoffeeCutie
 CONFIG += console c++11
@@ -13,9 +13,9 @@ CONFIG -= app_bundle
 csharp {
     #Use CONFIG += csharp to build as library, requires rebuild for -fPIC flag
     TEMPLATE = lib
+    TARGET = CoffeeSharp
     message(Configured for CoffeeSharp)
     QMAKE_CXXFLAGS += -fPIC
-
     #Remember: ar rcs libCoffeeSharp.a *.o
 }else{
     TEMPLATE = app
