@@ -9,6 +9,9 @@
 #include <vector>
 #include <stdint.h>
 
+//For unused variables
+#define C_UNUSED(v) do{(void)(v);}while(0);
+
 namespace Coffee{
 //Core types, might become base type for all classes in place of QObject
 static void CoffeeInit();
@@ -38,30 +41,64 @@ typedef std::string CString; //In case we want to switch it
 
 //Size type
 struct CSize{
+    CSize(int32_t w,int32_t h){
+        this->w = w;
+        this->h = h;
+    }
+    CSize(){}
     int32_t w;
     int32_t h;
 };
 struct CSizeF{
+    CSizeF(float w,float h){
+        this->w = w;
+        this->h = h;
+    }
+    CSizeF(){}
     float w;
     float h;
 };
 //Point type
 struct CPoint{
+    CPoint(int32_t x,int32_t y){
+        this->x = x;
+        this->y = y;
+    }
+    CPoint(){}
     int32_t x;
     int32_t y;
 };
 struct CPointF{
+    CPointF(float x,float y){
+        this->x = x;
+        this->y = y;
+    }
+    CPointF(){}
     float x;
     float y;
 };
 //Rectangle type
 struct CRect{
+    CRect(int32_t x,int32_t y,int32_t w,int32_t h){
+        this->x = x;
+        this->y = y;
+        this->w = w;
+        this->h = h;
+    }
+    CRect(){}
     int32_t x;
     int32_t y;
     int32_t w;
     int32_t h;
 };
 struct CRectF{
+    CRectF(float x,float y,float w,float h){
+        this->x = x;
+        this->y = y;
+        this->w = w;
+        this->h = h;
+    }
+    CRectF(){}
     float x;
     float y;
     float w;
@@ -72,21 +109,46 @@ struct CRectF{
 //Will be used as a dumbed-down version for C# and similar
 //The memory layout is the same anyway
 struct CVec2{
+    CVec2(float x,float y){
+        this->x = x;
+        this->y = y;
+    }
+    CVec2(){}
     float x;
     float y;
 };
 struct CVec3{
+    CVec3(float x,float y,float z){
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+    CVec3(){}
     float x;
     float y;
     float z;
 };
 struct CVec4{
+    CVec4(float x,float y,float z,float w){
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    }
+    CVec4(){}
     float x;
     float y;
     float z;
     float w;
 };
 struct CQuat{
+    CQuat(float w,float x,float y,float z){
+        this->x = x;
+        this->y = y;
+        this->z = z;
+        this->w = w;
+    }
+    CQuat(){}
     float w;
     float x;
     float y;

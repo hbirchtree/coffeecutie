@@ -298,6 +298,7 @@ void CGLFWRenderer::cleanup()
         m_window = nullptr;
     }
     glfwTerminate();
+    cMsg("GLFW","Terminated");
     m_initMutex.unlock();
 }
 
