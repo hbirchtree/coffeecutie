@@ -14,7 +14,7 @@ class CGLFWRenderer : public CDRendererBase
 {
 public:
     CGLFWRenderer(CObject* parent);
-    ~CGLFWRenderer();
+    virtual ~CGLFWRenderer();
 
     CString windowTitle() const;
     void setWindowTitle(const CString &title);

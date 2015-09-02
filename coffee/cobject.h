@@ -2,6 +2,7 @@
 #define COFFEE_COBJECT_H
 
 #include "coffee.h"
+#include <thread>
 
 namespace Coffee {
 
@@ -18,6 +19,9 @@ public:
     //Object name
     CString objectName();
     void setObjectName(const CString &name);
+
+protected:
+    std::thread::id m_thread;
 
 private:
     std::vector<CObject*> m_children;

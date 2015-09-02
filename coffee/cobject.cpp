@@ -13,6 +13,7 @@ CObject::CObject(CObject *parent)
         parent->m_children.push_back(this);
         this->m_parent = parent;
     }
+    m_thread = std::this_thread::get_id();
 }
 
 CObject::~CObject()

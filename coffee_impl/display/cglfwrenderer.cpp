@@ -286,7 +286,13 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 
 void CGLFWRenderer::cleanup()
 {
-    glfwDestroyWindow(m_window);
+    printf("%i and %i",m_thread,std::this_thread::get_id());
+    if(m_thread!=std::this_thread::get_id())
+        throw;
+    if(m_window){
+        glfwDestroyWindow(m_window);
+        m_window = nullptr;
+    }
     glfwTerminate();
 }
 

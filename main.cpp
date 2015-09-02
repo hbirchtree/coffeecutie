@@ -3,7 +3,7 @@
 #define RENDERER_DO_DEBUG
 #define RENDERER_FAST_DEBUG
 
-//#include <QApplication>
+#include <QCoreApplication>
 #include "coffeelogger.h"
 
 #include <QtConcurrent>
@@ -22,9 +22,9 @@ int main(int argc, char *argv[])
 {
     Q_UNUSED(argc)
     Q_UNUSED(argv)
-//    QApplication a(argc, argv);
+//    QCoreApplication a(argc, argv);
 //    a.setApplicationName("CoffeeCutie");
-//    a.setApplicationVersion("0.0.1.105");
+//    a.setApplicationVersion("0.0.2.0");
 //    a.setApplicationDisplayName("Coffee Cutie");
 
     //Created so that the destructor closes the file
@@ -33,13 +33,15 @@ int main(int argc, char *argv[])
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
+    qDebug() << sizeof(CDRenderer);
 
     CSize s;
     s.w = 1280;
     s.h = 720;
-    QtConcurrent::run(QThreadPool::globalInstance(),renderer,&CDRenderer::run,CDRenderer::Windowed,s,0);
+    QFuture<void> rendererFuture = QtConcurrent::run(QThreadPool::globalInstance(),renderer,&CDRenderer::run,CDRenderer::Windowed,s,0);
+    rendererFuture.waitForFinished();
 
-    usleep(1000000000);
+    delete renderer;
 
     return 0;
 }
