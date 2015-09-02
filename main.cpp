@@ -14,7 +14,9 @@
 #include "coffee/cdebug.h"
 #include "coffee_impl/context/cdrenderer.h"
 #include "coffee_impl/graphics/cshader.h"
+#include "coffee/cfunctional.h"
 
+using namespace Coffee::CFunctional;
 using namespace Coffee::CDisplay;
 using namespace Coffee::CGraphicsWrappers;
 
@@ -35,13 +37,22 @@ int main(int argc, char *argv[])
     qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
     qDebug() << sizeof(CDRenderer);
 
+    std::vector<std::string> data;
+    data.push_back("http://pomf.se");
+    std::vector<CRegexMatch> match = coffee_regex_match("http:.*",data);
+    qDebug() << match.size();
+    for(const CRegexMatch& m : match){
+        qDebug() << m.b_match;
+    }
+
     CSize s;
     s.w = 1280;
     s.h = 720;
     QFuture<void> rendererFuture = QtConcurrent::run(QThreadPool::globalInstance(),renderer,&CDRenderer::run,CDRenderer::Windowed,s,0);
     rendererFuture.waitForFinished();
 
-    delete renderer;
+//    delete renderer;
 
     return 0;
 }
+

@@ -2,11 +2,6 @@
 
 namespace Coffee {
 
-CObject::CObject()
-{
-
-}
-
 CObject::CObject(CObject *parent)
 {
     if(parent){

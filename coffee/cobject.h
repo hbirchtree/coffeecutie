@@ -9,8 +9,7 @@ namespace Coffee {
 class CObject
 {
 public:
-    CObject();
-    CObject(CObject* parent);
+    CObject(CObject* parent = nullptr);
     ~CObject();
 
     CObject* parent();

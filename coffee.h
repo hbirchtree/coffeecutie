@@ -148,7 +148,6 @@ typedef CFunctional::CRFunction<void> RenderFunction;
 
 //File management
 namespace CResources{
-class CResource;
 class CFAssetStorage;
 class CFObjectImport;
 }

@@ -89,4 +89,5 @@ HEADERS += \
     coffee_impl/functional/cqueuerunner.h \
     coffee_impl/graphics/cgraphicswrappers.h \
     coffee_impl/graphics/cshader.h \
-    coffeesharp.h
+    coffeesharp.h \
+    coffee/cfiles.h
