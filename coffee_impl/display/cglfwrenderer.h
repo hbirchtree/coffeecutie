@@ -6,6 +6,7 @@
 #include "coffee/cdebug.h"
 
 #include "cglfwnativefuncs.h"
+#include <mutex>
 
 namespace Coffee {
 namespace CDisplay {
@@ -58,6 +59,8 @@ protected:
                                            GLenum severity, GLsizei length, const GLchar* msg) const = 0;
 
 private:
+    std::mutex m_initMutex;
+    std::thread::id m_contextThread;
     GLFWwindow* m_window = nullptr;
 
     CString m_rendererString;

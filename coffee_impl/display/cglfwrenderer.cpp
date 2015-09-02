@@ -197,6 +197,9 @@ void CGLFWRenderer::pollEvents()
 
 void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorIndex)
 {
+    m_initMutex.lock();
+    m_contextThread = std::this_thread::get_id();
+
     if(!glfwInit())
         cDebug(2,"Failed to initialize GLFW");
     cMsg("GLFW","Initialized");
@@ -282,18 +285,20 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     glDebugMessageCallback(glbindingCallbackDirect,this);
 
     //GLBINDING ENDS
+    m_initMutex.unlock();
 }
 
 void CGLFWRenderer::cleanup()
 {
-    printf("%i and %i",m_thread,std::this_thread::get_id());
-    if(m_thread!=std::this_thread::get_id())
-        throw;
+    m_initMutex.lock();
+    if(m_contextThread!=std::this_thread::get_id())
+        cDebug(3,"GLFW context cannot be terminated on this thread!");
     if(m_window){
         glfwDestroyWindow(m_window);
         m_window = nullptr;
     }
     glfwTerminate();
+    m_initMutex.unlock();
 }
 
 void CGLFWRenderer::glbindingCallbackDirect(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg, const void *userPtr)

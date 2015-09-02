@@ -4,40 +4,56 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <stdexcept>
+#include <ctime>
 
 namespace Coffee{
 namespace CFunctional{
 
 template<typename... Arg>
+std::string cStringFormat(const char* fmt, Arg... args);
+
+template<typename... Arg>
 void cDebug(uint8_t severity, const char* str, Arg... args){
+    time_t t;
+    struct tm *tm;
+    char clock[10];
+    time(&t);
+    tm = localtime(&t);
+    strftime(clock,sizeof(clock),"%H:%M:%S:",tm);
+
     FILE* strm = stdout;
     bool fail = false;
-    std::string s_ = str;
-    s_ = s_+"\n";
+    std::string s_(clock);
 
     switch(severity){
     case 0: //Info
-        s_ = "INFO:"+s_;
+        s_ += "INFO:";
         strm = stderr;
         break;
     case 1: //Debug
-        s_ = "DEBG:"+s_;
+        s_ += "DEBG:";
         strm = stderr;
         break;
     case 2: //Warning
-        s_ = "WARN:"+s_;
+        s_ += "WARN:";
         strm = stderr;
         break;
     case 3:{ //Fatal
-        s_ = "FTAL:"+s_;
+        s_ += "FTAL:";
         strm = stderr;
         fail = true;
         break;
     }
     }
-    fprintf(strm,s_.c_str(),args...);
+
+    s_ += str;
+    s_ += "\n";
+
     if(fail)
-        throw;
+        throw std::runtime_error(cStringFormat(s_.c_str(),args...));
+    else
+        fprintf(strm,s_.c_str(),args...);
 }
 
 template<typename... Arg>
@@ -54,7 +70,7 @@ template<typename... Arg>
 std::string cStringFormat(const char* fmt, Arg... args){
     char* _s = new char[strlen(fmt)];
     sprintf(_s,fmt,args...);
-    std::string _o = _s;
+    std::string _o(_s);
     delete[] _s;
     return _o;
 }
