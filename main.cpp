@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
-    qDebug() << sizeof(CDRenderer);
+    cDebug("%ld",sizeof(CDRenderer));
 
 
     CSize s;

@@ -188,7 +188,7 @@ static void glfw_win_state              (GLFWwindow* win, int val)
 //This generates errors. All the time.
 static void glfw_error_function         (int stat, const char* message)
 {
-    cDebug(1,"GLFW error code %i: %s",stat,message);
+    cDebug("GLFW error code %i: %s",stat,message);
 }
 
 #endif // CGLFWRENDERER_EVENTHANDLERS_H

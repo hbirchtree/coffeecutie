@@ -201,7 +201,7 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     m_contextThread = std::this_thread::get_id();
 
     if(!glfwInit())
-        cDebug(2,"Failed to initialize GLFW");
+        cWarning("Failed to initialize GLFW");
     cMsg("GLFW","Initialized");
 
     glfwDefaultWindowHints();
@@ -292,7 +292,7 @@ void CGLFWRenderer::cleanup()
 {
     m_initMutex.lock();
     if(m_contextThread!=std::this_thread::get_id())
-        cDebug(3,"GLFW context cannot be terminated on this thread!");
+        cFatal("GLFW context cannot be terminated on this thread!");
     if(m_window){
         glfwDestroyWindow(m_window);
         m_window = nullptr;
