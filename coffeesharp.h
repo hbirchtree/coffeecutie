@@ -3,11 +3,7 @@
 //In other words, it is a simple API.
 
 //Core classes that work
-#include "coffee/display/cdrendererbase.h"
+#include "coffee_impl/context/cdrenderer.h"
+#include "coffee/cfiles.h"
 #include "coffee/cinput.h"
 #include "coffee/cdebug.h"
-
-//These don't work or don't export anything useful (Clang errors)
-//#include "coffee/cfunctional.h"
-//#include "coffee_impl/context/cdrenderer.h"
-//#include "coffee_impl/graphics/cgraphicswrappers.h"

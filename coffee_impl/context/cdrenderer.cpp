@@ -1,5 +1,7 @@
 #include "cdrenderer.h"
 
+#include "coffee_impl/graphics/cgraphicswrappers.h"
+
 using namespace Coffee::CGraphicsWrappers;
 
 namespace Coffee {
@@ -29,13 +31,13 @@ void CDRenderer::run(WindowState state, CSize resolution, int monitor)
     cleanup();
 }
 
-void CDRenderer::glbindingCallbackInternal(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg) const
+void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
 {
-    std::string smsg = msg;
+    std::string smsg = report->message;
     std::string out = "OpenGL: "
-            +glbinding::Meta::getString(source)+"("
-            +glbinding::Meta::getString(type)+"):"
-            +glbinding::Meta::getString(severity)+": "+smsg;
+            +glbinding::Meta::getString(report->source)+"("
+            +glbinding::Meta::getString(report->type)+"):"
+            +glbinding::Meta::getString(report->severity)+": "+smsg;
     cDebug(0,"OpenGL: %s",out.c_str());
 }
 

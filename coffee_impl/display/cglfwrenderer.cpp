@@ -1,7 +1,9 @@
 #include "cglfwrenderer.h"
 
+#include "cglfwnativefuncs.h"
 #include "cglfwrenderer_eventhandlers.h"
 #include <stdio.h>
+#include "coffee_impl/graphics/cgraphicswrappers.h"
 
 namespace Coffee {
 namespace CDisplay {
@@ -22,12 +24,12 @@ CString CGLFWRenderer::windowTitle() const
 
 void CGLFWRenderer::setWindowTitle(const CString &title)
 {
-    glfwSetWindowTitle(m_window,title.c_str());
+    glfwSetWindowTitle(m_ctxt->window,title.c_str());
 }
 
 CDMonitor CGLFWRenderer::monitor()
 {
-    GLFWmonitor* gm = glfwGetWindowMonitor(m_window);
+    GLFWmonitor* gm = glfwGetWindowMonitor(m_ctxt->window);
     CDMonitor cm;
 
     if(!gm){
@@ -56,9 +58,9 @@ CDMonitor CGLFWRenderer::monitor()
 CDWindow CGLFWRenderer::window()
 {
     CDWindow cw;
-    cw.handle = CGLFWNativeFuncs::glfwGetNativeWindowHandle(m_window);
-    glfwGetWindowSize(m_window,&(cw.screenArea.w),&(cw.screenArea.h));
-    glfwGetWindowPos(m_window,&(cw.screenArea.x),&(cw.screenArea.y));
+    cw.handle = CGLFWNativeFuncs::glfwGetNativeWindowHandle(m_ctxt->window);
+    glfwGetWindowSize(m_ctxt->window,&(cw.screenArea.w),&(cw.screenArea.h));
+    glfwGetWindowPos(m_ctxt->window,&(cw.screenArea.x),&(cw.screenArea.y));
 
     return cw;
 }
@@ -67,13 +69,13 @@ CDContextBits CGLFWRenderer::context()
 {
     CDContextBits bits;
 
-    bits.red = glfwGetWindowAttrib(m_window,GLFW_RED_BITS);
-    bits.green = glfwGetWindowAttrib(m_window,GLFW_GREEN_BITS);
-    bits.blue = glfwGetWindowAttrib(m_window,GLFW_BLUE_BITS);
-    bits.alpha = glfwGetWindowAttrib(m_window,GLFW_ALPHA_BITS);
+    bits.red = glfwGetWindowAttrib(m_ctxt->window,GLFW_RED_BITS);
+    bits.green = glfwGetWindowAttrib(m_ctxt->window,GLFW_GREEN_BITS);
+    bits.blue = glfwGetWindowAttrib(m_ctxt->window,GLFW_BLUE_BITS);
+    bits.alpha = glfwGetWindowAttrib(m_ctxt->window,GLFW_ALPHA_BITS);
 
-    bits.depth = glfwGetWindowAttrib(m_window,GLFW_DEPTH_BITS);
-    bits.stencil = glfwGetWindowAttrib(m_window,GLFW_STENCIL_BITS);
+    bits.depth = glfwGetWindowAttrib(m_ctxt->window,GLFW_DEPTH_BITS);
+    bits.stencil = glfwGetWindowAttrib(m_ctxt->window,GLFW_STENCIL_BITS);
 
     return bits;
 }
@@ -82,22 +84,22 @@ uint32_t CGLFWRenderer::windowState() const
 {
     uint32_t flags = 0;
 
-    if(glfwGetWindowAttrib(m_window,GLFW_FOCUSED))
+    if(glfwGetWindowAttrib(m_ctxt->window,GLFW_FOCUSED))
         flags |= Focused;
-    if(glfwGetWindowAttrib(m_window,GLFW_VISIBLE))
+    if(glfwGetWindowAttrib(m_ctxt->window,GLFW_VISIBLE))
         flags |= Visible;
 
-    if(glfwGetWindowAttrib(m_window,GLFW_ICONIFIED))
+    if(glfwGetWindowAttrib(m_ctxt->window,GLFW_ICONIFIED))
         flags |= Minimized;
     else
         flags |= Maximized;
 
-    if(glfwGetWindowAttrib(m_window,GLFW_DECORATED))
+    if(glfwGetWindowAttrib(m_ctxt->window,GLFW_DECORATED))
         flags |= Decorated;
-    if(glfwGetWindowAttrib(m_window,GLFW_FLOATING))
+    if(glfwGetWindowAttrib(m_ctxt->window,GLFW_FLOATING))
         flags |= Floating;
 
-    if(glfwGetWindowMonitor(m_window))
+    if(glfwGetWindowMonitor(m_ctxt->window))
         flags |= FullScreen;
     else
         flags |= Windowed;
@@ -108,27 +110,27 @@ uint32_t CGLFWRenderer::windowState() const
 void CGLFWRenderer::setWindowState(uint32_t newstate)
 {
     if(newstate&Minimized){
-        glfwIconifyWindow(m_window);
+        glfwIconifyWindow(m_ctxt->window);
     }else if(newstate&Maximized){
-        glfwRestoreWindow(m_window);
+        glfwRestoreWindow(m_ctxt->window);
     }
 }
 
 bool CGLFWRenderer::showWindow()
 {
-    glfwShowWindow(m_window);
+    glfwShowWindow(m_ctxt->window);
     return true;
 }
 
 bool CGLFWRenderer::hideWindow()
 {
-    glfwHideWindow(m_window);
+    glfwHideWindow(m_ctxt->window);
     return true;
 }
 
 bool CGLFWRenderer::closeWindow()
 {
-    glfwSetWindowShouldClose(m_window,1);
+    glfwSetWindowShouldClose(m_ctxt->window,1);
     return true;
 }
 
@@ -145,25 +147,25 @@ void CGLFWRenderer::setSwapInterval(int interval)
 CSize CGLFWRenderer::framebufferSize() const
 {
     CSize f;
-    glfwGetFramebufferSize(m_window,&(f.w),&(f.h));
+    glfwGetFramebufferSize(m_ctxt->window,&(f.w),&(f.h));
     return f;
 }
 
 CSize CGLFWRenderer::windowSize() const
 {
     CSize w;
-    glfwGetWindowSize(m_window,&(w.w),&(w.h));
+    glfwGetWindowSize(m_ctxt->window,&(w.w),&(w.h));
     return w;
 }
 
 void CGLFWRenderer::setWindowSize(const CSize &size)
 {
-    glfwSetWindowSize(m_window,size.w,size.h);
+    glfwSetWindowSize(m_ctxt->window,size.w,size.h);
 }
 
 bool CGLFWRenderer::isMouseGrabbed() const
 {
-    return glfwGetInputMode(m_window,GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
+    return glfwGetInputMode(m_ctxt->window,GLFW_CURSOR) == GLFW_CURSOR_DISABLED;
 }
 
 void CGLFWRenderer::setMouseGrabbing(bool grab)
@@ -176,23 +178,33 @@ void CGLFWRenderer::setMouseGrabbing(bool grab)
         val = GLFW_CURSOR_NORMAL;
     }
 
-    glfwSetInputMode(m_window,GLFW_CURSOR,val);
+    glfwSetInputMode(m_ctxt->window,GLFW_CURSOR,val);
 }
 
 bool CGLFWRenderer::closeFlag()
 {
-    return glfwWindowShouldClose(m_window);
+    return glfwWindowShouldClose(m_ctxt->window);
 }
 
 void CGLFWRenderer::swapBuffers()
 {
-    glfwSwapBuffers(m_window);
+    glfwSwapBuffers(m_ctxt->window);
 }
 
 void CGLFWRenderer::pollEvents()
 {
     glfwPollEvents();
     updateJoysticks();
+}
+
+static void APIENTRY glbindingCallbackDirect(GLenum source, GLenum type,
+                                             GLuint id, GLenum severity,
+                                             GLsizei length, const GLchar* msg,
+                                             const void* userPtr)
+{
+    const CGLFWRenderer* renderer = static_cast<const CGLFWRenderer*>(userPtr);
+    CGLReport *report = reinterpret_cast<CGLReport*>(malloc(sizeof(CGLReport)));
+    renderer->glbindingCallbackInternal(report);
 }
 
 void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorIndex)
@@ -233,35 +245,35 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
             startSize.w = current->width;
             startSize.h = current->height;
         }
-        m_window = glfwCreateWindow(startSize.w,startSize.h,"",mon,NULL);
+        m_ctxt->window = glfwCreateWindow(startSize.w,startSize.h,"",mon,NULL);
         break;
     }
     case Windowed:
-        m_window = glfwCreateWindow(startSize.w,startSize.h,"",NULL,NULL);
+        m_ctxt->window = glfwCreateWindow(startSize.w,startSize.h,"",NULL,NULL);
         break;
     default:
         return;
     }
 
-    glfwMakeContextCurrent(m_window);
-    glfwSetWindowUserPointer(m_window,this);
+    m_ctxt->makeCurrent();
+    glfwSetWindowUserPointer(m_ctxt->window,this);
 
     //Input callbacks
-    glfwSetMouseButtonCallback(m_window,glfw_input_mouseBtn);
-    glfwSetKeyCallback(m_window,glfw_input_kbdKey);
-    glfwSetCursorPosCallback(m_window,glfw_input_mouseMove);
-    glfwSetCursorEnterCallback(m_window,glfw_input_mouseenter);
-    glfwSetDropCallback(m_window,glfw_input_dropevent);
-    glfwSetScrollCallback(m_window,glfw_input_scroll);
-    glfwSetCharCallback(m_window,glfw_input_charwrite);
+    glfwSetMouseButtonCallback(m_ctxt->window,glfw_input_mouseBtn);
+    glfwSetKeyCallback(m_ctxt->window,glfw_input_kbdKey);
+    glfwSetCursorPosCallback(m_ctxt->window,glfw_input_mouseMove);
+    glfwSetCursorEnterCallback(m_ctxt->window,glfw_input_mouseenter);
+    glfwSetDropCallback(m_ctxt->window,glfw_input_dropevent);
+    glfwSetScrollCallback(m_ctxt->window,glfw_input_scroll);
+    glfwSetCharCallback(m_ctxt->window,glfw_input_charwrite);
 
     //Window callbacks
-    glfwSetWindowSizeCallback       (m_window,glfw_win_resize);
-    glfwSetWindowCloseCallback      (m_window,glfw_win_close);
-    glfwSetWindowFocusCallback      (m_window,glfw_win_focus);
-    glfwSetWindowIconifyCallback    (m_window,glfw_win_state);
-    glfwSetWindowPosCallback        (m_window,glfw_win_pos);
-    glfwSetFramebufferSizeCallback  (m_window,glfw_win_fbresize);
+    glfwSetWindowSizeCallback       (m_ctxt->window,glfw_win_resize);
+    glfwSetWindowCloseCallback      (m_ctxt->window,glfw_win_close);
+    glfwSetWindowFocusCallback      (m_ctxt->window,glfw_win_focus);
+    glfwSetWindowIconifyCallback    (m_ctxt->window,glfw_win_state);
+    glfwSetWindowPosCallback        (m_ctxt->window,glfw_win_pos);
+    glfwSetFramebufferSizeCallback  (m_ctxt->window,glfw_win_fbresize);
 
     glfwSetErrorCallback            (glfw_error_function);
 
@@ -293,19 +305,13 @@ void CGLFWRenderer::cleanup()
     m_initMutex.lock();
     if(m_contextThread!=std::this_thread::get_id())
         cFatal("GLFW context cannot be terminated on this thread!");
-    if(m_window){
-        glfwDestroyWindow(m_window);
-        m_window = nullptr;
+    if(m_ctxt->window){
+        glfwDestroyWindow(m_ctxt->window);
+        m_ctxt->window = nullptr;
     }
     glfwTerminate();
     cMsg("GLFW","Terminated");
     m_initMutex.unlock();
-}
-
-void CGLFWRenderer::glbindingCallbackDirect(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg, const void *userPtr)
-{
-    const CGLFWRenderer* renderer = static_cast<const CGLFWRenderer*>(userPtr);
-    renderer->glbindingCallbackInternal(source,type,id,severity,length,msg);
 }
 
 void CGLFWRenderer::updateJoysticks()

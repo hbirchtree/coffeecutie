@@ -16,6 +16,15 @@ using namespace gl;
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+struct CGLReport
+{
+    GLenum source;
+    GLenum type;
+    GLuint id;
+    GLenum severity;
+    const char* message;
+};
+
 struct CBuffer{
     GLuint      handle  = 0;
     GLsizeiptr  size    = 0;

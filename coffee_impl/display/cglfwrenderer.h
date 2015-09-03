@@ -1,15 +1,22 @@
 #ifndef COFFEE_CDISPLAY_CGLFWRENDERER_H
 #define COFFEE_CDISPLAY_CGLFWRENDERER_H
 
-#include "coffee_impl/graphics/cgraphicswrappers.h"
 #include "coffee/display/cdrendererbase.h"
 #include "coffee/cdebug.h"
 
-#include "cglfwnativefuncs.h"
 #include <mutex>
 
 namespace Coffee {
+
+namespace CGraphicsWrappers{
+struct CGLReport;
+}
+
 namespace CDisplay {
+
+using namespace CGraphicsWrappers;
+
+struct CGLFWContext;
 
 class CGLFWRenderer : public CDRendererBase
 {
@@ -50,18 +57,15 @@ public:
     void init(WindowState startState, CSize startSize, int monitorIndex);
     void cleanup();
 
-    static void APIENTRY glbindingCallbackDirect(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                            GLsizei length, const GLchar* msg, const void* userPtr);
+    virtual void glbindingCallbackInternal(CGLReport* report) const = 0;
 
 protected:
     virtual void updateJoysticks();
-    virtual void glbindingCallbackInternal(GLenum source, GLenum type, GLuint id,
-                                           GLenum severity, GLsizei length, const GLchar* msg) const = 0;
 
 private:
     std::mutex m_initMutex;
     std::thread::id m_contextThread;
-    GLFWwindow* m_window = nullptr;
+    CGLFWContext* m_ctxt = nullptr;
 
     CString m_rendererString;
     CString m_vendorString;

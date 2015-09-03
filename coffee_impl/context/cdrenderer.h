@@ -16,8 +16,7 @@ public:
 
     void run(WindowState state, CSize resolution, int monitor = 0);
 
-protected:
-    void glbindingCallbackInternal(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg) const;
+    void glbindingCallbackInternal(CGLReport* report) const;
 };
 
 } // namespace CDisplay

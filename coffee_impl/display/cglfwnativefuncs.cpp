@@ -20,6 +20,9 @@
 
 #include "GLFW/glfw3native.h"
 
+namespace Coffee{
+namespace CDisplay{
+
 CGLFWNativeFuncs::CGLFWNativeFuncs()
 {
 
@@ -31,4 +34,7 @@ uintptr_t CGLFWNativeFuncs::glfwGetNativeWindowHandle(GLFWwindow* window)
     return glfwGetX11Window(window);
 #endif
     return 0;
+}
+
+}
 }
