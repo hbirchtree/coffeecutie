@@ -17,8 +17,8 @@ public:
     void setParent(CObject* parent);
 
     //Object name
-    CString objectName();
-    void setObjectName(const CString &name);
+    const char *objectName();
+    void setObjectName(const char *name);
 
 protected:
     std::thread::id m_thread;

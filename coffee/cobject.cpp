@@ -43,12 +43,12 @@ void CObject::setParent(CObject *parent)
     }
 }
 
-CString CObject::objectName()
+const char* CObject::objectName()
 {
-    return m_objectName;
+    return m_objectName.c_str();
 }
 
-void CObject::setObjectName(const CString &name)
+void CObject::setObjectName(const char* name)
 {
     this->m_objectName = name;
 }

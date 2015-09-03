@@ -10,13 +10,11 @@ namespace CDisplay {
 
 CGLFWRenderer::CGLFWRenderer(CObject *parent) : CDQueueRendererBase(parent)
 {
-    m_ctxt = reinterpret_cast<CGLFWContext*>(malloc(sizeof(CGLFWContext)));
 }
 
 CGLFWRenderer::~CGLFWRenderer()
 {
     cleanup();
-    free(m_ctxt);
 }
 
 CString CGLFWRenderer::windowTitle() const
@@ -227,6 +225,9 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     glfwWindowHint(GLFW_VISIBLE,false);
     glfwWindowHint(GLFW_RESIZABLE,true);
 
+    //Allocate our context object, is deleted when context is gone
+    m_ctxt = reinterpret_cast<CGLFWContext*>(malloc(sizeof(CGLFWContext)));
+
     switch(startState){
     case FullScreen:
     case WindowedFullScreen:{
@@ -305,6 +306,11 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 void CGLFWRenderer::cleanup()
 {
     m_initMutex.lock();
+    if(!m_ctxt){
+        cMsg("GLFW","Context already terminated");
+        return;
+    }
+
     if(m_contextThread!=std::this_thread::get_id())
         cFatal("GLFW context cannot be terminated on this thread!");
     if(m_ctxt->window){
@@ -313,6 +319,8 @@ void CGLFWRenderer::cleanup()
     }
     glfwTerminate();
     cMsg("GLFW","Terminated");
+    free(m_ctxt);
+    m_ctxt = nullptr;
     m_initMutex.unlock();
 }
 

@@ -7,7 +7,7 @@
 QT += core concurrent
 
 TARGET = CoffeeCutie
-CONFIG += console c++11 csharp
+CONFIG += console c++11
 CONFIG -= app_bundle
 
 LIBS += -lunwind

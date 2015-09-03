@@ -20,6 +20,10 @@ int main(int argc, char *argv[])
 //    a.setApplicationVersion("0.0.2.0");
 //    a.setApplicationDisplayName("Coffee Cutie");
 
+    for(int i=0;i<argc;i++){
+        std::cout << argv[i] << std::endl;
+    }
+
     //Created so that the destructor closes the file
     Coffee::CoffeeInit();
 
@@ -32,6 +36,7 @@ int main(int argc, char *argv[])
     qDebug() << t.append_text("What???\n");
     qDebug() << sizeof(CResource);
 
+    //Just for prototyping, we'll be looking at std::thread later
     QFuture<void> rendererFuture = QtConcurrent::run(
                 QThreadPool::globalInstance(),
                 renderer,
@@ -42,5 +47,6 @@ int main(int argc, char *argv[])
 
     rendererFuture.waitForFinished();
 
+    delete renderer;
     return 0;
 }
