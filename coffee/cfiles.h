@@ -2,9 +2,8 @@
 #define CFILES_H
 
 #include "coffee.h"
-#include "coffee/cfunctional.h"
+#include "coffee/cregex.h"
 #include "coffee/cdebug.h"
-#include <stdio.h>
 
 namespace Coffee{
 namespace CResources{

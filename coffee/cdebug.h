@@ -17,7 +17,7 @@ namespace Coffee{
 namespace CFunctional{
 
 template<typename... Arg>
-std::string cStringFormat(const char* fmt, Arg... args);
+static std::string cStringFormat(const char* fmt, Arg... args);
 
 namespace CDebugHelpers
 {

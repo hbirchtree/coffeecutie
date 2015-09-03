@@ -8,8 +8,9 @@
 namespace Coffee {
 namespace CDisplay {
 
-CGLFWRenderer::CGLFWRenderer(CObject *parent) : CDRendererBase(parent)
+CGLFWRenderer::CGLFWRenderer(CObject *parent) : CDQueueRendererBase(parent)
 {
+    m_ctxt = reinterpret_cast<CGLFWContext*>(malloc(sizeof(CGLFWContext)));
 }
 
 CGLFWRenderer::~CGLFWRenderer()
@@ -259,13 +260,13 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     glfwSetWindowUserPointer(m_ctxt->window,this);
 
     //Input callbacks
-    glfwSetMouseButtonCallback(m_ctxt->window,glfw_input_mouseBtn);
-    glfwSetKeyCallback(m_ctxt->window,glfw_input_kbdKey);
-    glfwSetCursorPosCallback(m_ctxt->window,glfw_input_mouseMove);
-    glfwSetCursorEnterCallback(m_ctxt->window,glfw_input_mouseenter);
-    glfwSetDropCallback(m_ctxt->window,glfw_input_dropevent);
-    glfwSetScrollCallback(m_ctxt->window,glfw_input_scroll);
-    glfwSetCharCallback(m_ctxt->window,glfw_input_charwrite);
+    glfwSetMouseButtonCallback      (m_ctxt->window,glfw_input_mouseBtn);
+    glfwSetKeyCallback              (m_ctxt->window,glfw_input_kbdKey);
+    glfwSetCursorPosCallback        (m_ctxt->window,glfw_input_mouseMove);
+    glfwSetCursorEnterCallback      (m_ctxt->window,glfw_input_mouseenter);
+    glfwSetDropCallback             (m_ctxt->window,glfw_input_dropevent);
+    glfwSetScrollCallback           (m_ctxt->window,glfw_input_scroll);
+    glfwSetCharCallback             (m_ctxt->window,glfw_input_charwrite);
 
     //Window callbacks
     glfwSetWindowSizeCallback       (m_ctxt->window,glfw_win_resize);

@@ -5,7 +5,6 @@
 #include "coffee/cdebug.h"
 #include "coffee_impl/context/cdrenderer.h"
 #include "coffee_impl/graphics/cshader.h"
-#include "coffee/cfunctional.h"
 #include "coffee/cfiles.h"
 
 using namespace Coffee::CFunctional;

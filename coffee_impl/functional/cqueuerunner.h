@@ -10,12 +10,9 @@ namespace CFunctional {
 class CQueueRunner
 {
 public:
-    void queueFunction(QueueFunction func);
-
-protected:
     CQueueRunner();
-
-    void executeRunQueue();
+    void queueFunction(QueueFunction func);
+    virtual void executeRunQueue();
 
 private:
     std::vector<QueueFunction> m_queue_pending;

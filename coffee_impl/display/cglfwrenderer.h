@@ -18,7 +18,7 @@ using namespace CGraphicsWrappers;
 
 struct CGLFWContext;
 
-class CGLFWRenderer : public CDRendererBase
+class CGLFWRenderer : public CDQueueRendererBase
 {
 public:
     CGLFWRenderer(CObject* parent);

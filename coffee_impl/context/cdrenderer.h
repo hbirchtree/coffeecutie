@@ -7,7 +7,7 @@
 namespace Coffee {
 namespace CDisplay {
 
-class CDRenderer : public CGLFWRenderer,public CQueueRunner
+class CDRenderer : public CGLFWRenderer
 {
 public:
     CDRenderer(CObject* parent = nullptr);

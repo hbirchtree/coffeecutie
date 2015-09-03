@@ -67,7 +67,8 @@ namespace CoffeeGeneration
 
 		public void Postprocess(Driver driver,CppSharp.AST.ASTContext ctxt)
 		{
-
+			ctxt.IgnoreClassField ("Coffee::CObject","m_thread");
+			ctxt.CopyClassFields ("Coffee::CFunctional::CQueueRunner","Coffee::CDisplay::CDRenderer");
 		}
 	}
 }

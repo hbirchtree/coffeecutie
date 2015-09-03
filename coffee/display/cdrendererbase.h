@@ -4,6 +4,7 @@
 #include "coffee.h"
 #include "coffee/cobject.h"
 #include "coffee/cdisplay.h"
+#include "coffee_impl/functional/cqueuerunner.h"
 
 using namespace Coffee::CInput;
 
@@ -79,6 +80,18 @@ public:
     //Render loop flow
     virtual void swapBuffers() = 0;
     virtual void pollEvents()  = 0;
+};
+
+class CDQueueRendererBase : public CDRendererBase
+{
+public:
+    virtual ~CDQueueRendererBase();
+    virtual void queueFunction(QueueFunction func);
+
+protected:
+    CDQueueRendererBase(CObject* parent);
+    CQueueRunner* m_queueRunner;
+    void executeRunQueue();
 };
 
 } // namespace CDisplay

@@ -23,6 +23,15 @@ namespace CoffeeTest
 			CObject obj2 = new CObject (obj);
 
 			Console.WriteLine (obj2.parent());
+
+			CSize t = new CSize (800,600);
+			Console.WriteLine ("CSize: {0}x{1}",t.w, t.h);
+
+			CDRenderer renderer = new CDRenderer(obj2);
+
+			renderer.run(CDRendererBase.WindowState.Windowed,t,0);
+
+			Console.WriteLine ("Renderer exited");
 		}
 	}
 }

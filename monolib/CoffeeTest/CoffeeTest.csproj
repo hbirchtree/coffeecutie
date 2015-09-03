@@ -24,7 +24,7 @@
     <EnvironmentVariables>
       <EnvironmentVariables>
         <Variable name="LD_LIBRARY_PATH" value="." />
-        <Variable name="MONO_LOG_LEVEL" value="debug" />
+        <Variable name="MONO_LOG_LEVEL" value="" />
       </EnvironmentVariables>
     </EnvironmentVariables>
   </PropertyGroup>
@@ -40,14 +40,24 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Folder Include="gen\" />
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Include="CoffeeTest.cs" />
     <Compile Include="..\bin\gen\cdisplay.cs">
       <Link>gen\cdisplay.cs</Link>
     </Compile>
+    <Compile Include="..\bin\gen\cdrenderer.cs">
+      <Link>gen\cdrenderer.cs</Link>
+    </Compile>
     <Compile Include="..\bin\gen\cdrendererbase.cs">
       <Link>gen\cdrendererbase.cs</Link>
+    </Compile>
+    <Compile Include="..\bin\gen\cfiles.cs">
+      <Link>gen\cfiles.cs</Link>
+    </Compile>
+    <Compile Include="..\bin\gen\cglfwrenderer.cs">
+      <Link>gen\cglfwrenderer.cs</Link>
+    </Compile>
+    <Compile Include="..\bin\gen\cinput.cs">
+      <Link>gen\cinput.cs</Link>
     </Compile>
     <Compile Include="..\bin\gen\cobject.cs">
       <Link>gen\cobject.cs</Link>
@@ -55,6 +65,19 @@
     <Compile Include="..\bin\gen\coffee.cs">
       <Link>gen\coffee.cs</Link>
     </Compile>
-    <Compile Include="CoffeeTest.cs" />
+    <Compile Include="..\bin\gen\cqueuerunner.cs">
+      <Link>gen\cqueuerunner.cs</Link>
+    </Compile>
+    <Compile Include="..\bin\gen\cregex.cs">
+      <Link>gen\cregex.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="CppSharp.Runtime">
+      <HintPath>..\..\..\CppSharp\build\gmake\lib\Release_x64\CppSharp.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="gen\" />
   </ItemGroup>
 </Project>

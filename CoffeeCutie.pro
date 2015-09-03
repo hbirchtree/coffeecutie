@@ -7,7 +7,7 @@
 QT += core concurrent
 
 TARGET = CoffeeCutie
-CONFIG += console c++11
+CONFIG += console c++11 csharp
 CONFIG -= app_bundle
 
 LIBS += -lunwind
@@ -92,4 +92,5 @@ HEADERS += \
     coffee_impl/graphics/cgraphicswrappers.h \
     coffee_impl/graphics/cshader.h \
     coffeesharp.h \
-    coffee/cfiles.h
+    coffee/cfiles.h \
+    coffee/cregex.h
