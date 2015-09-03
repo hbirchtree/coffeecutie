@@ -16,6 +16,7 @@ CGLFWRenderer::CGLFWRenderer(CObject *parent) : CDQueueRendererBase(parent)
 CGLFWRenderer::~CGLFWRenderer()
 {
     cleanup();
+    free(m_ctxt);
 }
 
 CString CGLFWRenderer::windowTitle() const

@@ -34,10 +34,10 @@ void CDRenderer::run(WindowState state, CSize resolution, int monitor)
 void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
 {
     std::string smsg = report->message;
-    std::string out = "OpenGL: "
-            +glbinding::Meta::getString(report->source)+"("
+    std::string out = glbinding::Meta::getString(report->source)+"("
             +glbinding::Meta::getString(report->type)+"):"
             +glbinding::Meta::getString(report->severity)+": "+smsg;
+    free(report);
     cDebug(0,"OpenGL: %s",out.c_str());
 }
 
