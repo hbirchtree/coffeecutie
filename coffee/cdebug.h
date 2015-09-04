@@ -115,7 +115,6 @@ static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout o
                         Arg... args         //The arguments
                         )
 {
-
     //Some settings for output
     FILE* strm = stdout;
     bool fail = false;
@@ -156,7 +155,10 @@ static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout o
 
     s_ += first;
     s_ += ":";
-    s_ += str;
+    if(str)
+        s_ += str;
+    else
+        fail = true;
     s_ += "\n";
 
     if(fail){

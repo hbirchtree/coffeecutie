@@ -4,8 +4,6 @@
 
 #include "coffee/cdebug.h"
 #include "coffee_impl/context/cdrenderer.h"
-#include "coffee_impl/graphics/cshader.h"
-#include "coffee/cfiles.h"
 
 using namespace Coffee::CFunctional;
 using namespace Coffee::CResources;
@@ -28,24 +26,19 @@ int main(int argc, char *argv[])
     Coffee::CoffeeInit();
 
     CDRenderer* renderer = new CDRenderer(nullptr);
-
-    qDebug() << sizeof(CBuffer) << sizeof(CVertexArrayObject) << sizeof(CUniformBlock) << sizeof(CUniformValue);
     cDebug("%ld",sizeof(CDRenderer));
 
-    CResource t = CResource("testfile.txt");
-    qDebug() << t.append_text("What???\n");
-    qDebug() << sizeof(CResource);
-
     //Just for prototyping, we'll be looking at std::thread later
-    QFuture<void> rendererFuture = QtConcurrent::run(
-                QThreadPool::globalInstance(),
-                renderer,
-                &CDRenderer::run,
-                CDRenderer::Windowed,
-                CSize(1280,720),
-                0);
+    renderer->run(CDRenderer::Windowed,CSize(1280,720),0);
+//    QFuture<void> rendererFuture = QtConcurrent::run(
+//                QThreadPool::globalInstance(),
+//                renderer,
+//                &CDRenderer::run,
+//                CDRenderer::Windowed,
+//                CSize(1280,720),
+//                0);
 
-    rendererFuture.waitForFinished();
+//    rendererFuture.waitForFinished();
 
     delete renderer;
     return 0;

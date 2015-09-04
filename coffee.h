@@ -8,6 +8,7 @@
 #include <functional>
 #include <vector>
 #include <stdint.h>
+#include <string.h>
 
 //For unused variables
 #define C_UNUSED(v) do{(void)(v);}while(0);
@@ -36,6 +37,12 @@ class Matrix4Value;
 
 //General data types
 typedef std::string CString; //In case we want to switch it
+
+static const char* coffee_cpy_string(const char* str){
+    char* buf = reinterpret_cast<char*>(malloc(strlen(str)+1));
+    strcpy(buf,str);
+    return buf;
+}
 
 //Light-weight data types
 

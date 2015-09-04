@@ -45,7 +45,7 @@ void CObject::setParent(CObject *parent)
 
 const char* CObject::objectName()
 {
-    return m_objectName.c_str();
+    return coffee_cpy_string(m_objectName.c_str());
 }
 
 void CObject::setObjectName(const char* name)

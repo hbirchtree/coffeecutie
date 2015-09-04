@@ -1,7 +1,9 @@
 #include "cdrenderer.h"
 
-#include "coffee_impl/graphics/cgraphicswrappers.h"
+#include "coffee_impl/graphics/cshader.h"
+#include "coffee/cfiles.h"
 
+using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
 
 namespace Coffee {
@@ -13,6 +15,10 @@ CDRenderer::CDRenderer(CObject *parent) : CGLFWRenderer(parent)
 
 void CDRenderer::run()
 {
+    CResource t = CResource("ubw/shaders/vsh.vs");
+    CShader* shdr = new CShader;
+    cDebug("Compile status: %i",shdr->compile(&t,GL_VERTEX_SHADER,GL_VERTEX_SHADER_BIT));
+
     while(!closeFlag()){
         executeRunQueue();
         pollEvents();
@@ -34,11 +40,11 @@ void CDRenderer::run(WindowState state, CSize resolution, int monitor)
 void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
 {
     std::string smsg = report->message;
-    std::string out = glbinding::Meta::getString(report->source)+"("
-            +glbinding::Meta::getString(report->type)+"):"
-            +glbinding::Meta::getString(report->severity)+": "+smsg;
+    std::string out = glbinding::Meta::getString(report->type)+":"
+            +glbinding::Meta::getString(report->severity)+":"
+            +glbinding::Meta::getString(report->source)+": "+smsg;
+    cDebug("OpenGL: %s",out.c_str());
     free(report);
-    cDebug(0,"OpenGL: %s",out.c_str());
 }
 
 } // namespace CDisplay

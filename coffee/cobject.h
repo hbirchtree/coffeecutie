@@ -5,7 +5,6 @@
 #include <thread>
 
 namespace Coffee {
-
 class CObject
 {
 public:
@@ -16,7 +15,7 @@ public:
     CObject* parent();
     void setParent(CObject* parent);
 
-    //Object name
+    //Object name, must be freed
     const char *objectName();
     void setObjectName(const char *name);
 
@@ -28,7 +27,6 @@ private:
     CObject* m_parent;
     CString m_objectName;
 };
-
 } // namespace Coffee
 
 #endif // COFFEE_COBJECT_H

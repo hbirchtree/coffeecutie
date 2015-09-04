@@ -106,7 +106,7 @@ struct CUniformValue{
     uint8_t size    = 0; //Uniforms should not be larger than this, right? Right..?
     void* data      = nullptr;
     uint8_t flags   = 0;
-    GLint location  = -1;
+    GLint location  =-1;
     GLuint program  = 0;
 
     void applyUniform(){
