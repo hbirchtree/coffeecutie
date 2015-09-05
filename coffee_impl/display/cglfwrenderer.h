@@ -46,6 +46,8 @@ public:
     CSize windowSize() const;
     void setWindowSize(const CSize &size);
 
+    double contextTime() const;
+
     bool isMouseGrabbed() const;
     void setMouseGrabbing(bool grab);
 

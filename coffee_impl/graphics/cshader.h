@@ -7,34 +7,55 @@
 namespace Coffee {
 namespace CGraphicsWrappers {
 
+struct CShaderStageProgram;
+struct CShaderProgram;
+struct CShader;
+
+static bool coffee_shader_compile_checklog(GLuint handle);
+static bool coffee_program_link_checklog(GLuint handle);
+
 struct CPipeline
 {
     GLuint handle = 0;
     UseProgramStageMask stages;
 
-    bool createPipeline();
-    void attachShader(CShader* shader);
+    bool create();
+    void free();
+    void attachStages(CShaderStageProgram *shader, UseProgramStageMask bits);
+    void attachProgram(CShaderProgram *shader, UseProgramStageMask bits);
 };
 
 struct CShaderProgram
 {
     GLuint handle = 0;
+    UseProgramStageMask stages;
 
-    uint16_t numAttributes      = 0;
-    uint16_t numUniforms        = 0;
-    uint16_t numUniformBlocks   = 0;
+    void create(bool separable = true);
+    void attachShader(CShader* shader, UseProgramStageMask maskopt);
+    void detachShader(CShader* shader);
+    void link();
+    void free();
+
+    void storeProgram(CResources::CResource* out);
+    bool fetchProgram(CResources::CResource* in);
+};
+
+struct CShaderStageProgram
+{
+    GLuint handle = 0;
+    UseProgramStageMask stage;
+
+    bool compile(CResources::CResource* res, GLenum stage, UseProgramStageMask stageMask);
+    void free();
 };
 
 struct CShader
 {
     GLuint handle = 0;
-    UseProgramStageMask stage;
+    GLenum stage = GL_NONE;
 
-    uint16_t numAttributes      = 0;
-    uint16_t numUniforms        = 0;
-    uint16_t numUniformBlocks   = 0;
-
-    bool compile(CResources::CResource* res, GLenum stage, UseProgramStageMask stageMask);
+    bool compile(CResources::CResource* res, GLenum stage);
+    void free();
 };
 
 } // namespace CGraphicsWrappers

@@ -1,17 +1,23 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
+//Callstack unwinding
 #define UNW_LOCAL_ONLY
 #include <cxxabi.h> //Demangling function names
 #include <libunwind.h> //For retrieving the callstack
 
+//C++ headers
+#include <sstream>
+#include <iostream>
 #include <vector>
-#include <stdio.h>
-#include <string.h>
 #include <string>
 #include <stdexcept>
+#include <cstdio>
+
+//C libraries
 #include <ctime>
 #include <sys/time.h>
+#include <string.h>
 
 namespace Coffee{
 namespace CFunctional{
@@ -194,11 +200,14 @@ static void cMsg(const char* src, const char* msg, Arg... args){
     free(str);
 }
 
+//cStringFormat should not be used for debug printing, it's slower than using printf
 template<typename... Arg>
 static std::string cStringFormat(const char* fmt, Arg... args){
-    char* _s = new char[strlen(fmt)];
+    int sz = snprintf(nullptr,0,fmt,args...);
+    char* _s = reinterpret_cast<char*>(malloc(sz+1));
     sprintf(_s,fmt,args...);
     std::string _o(_s);
+    free(_s);
     return _o;
 }
 

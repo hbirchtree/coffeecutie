@@ -12,6 +12,7 @@ CDQueueRendererBase::CDQueueRendererBase(CObject *parent) : CDRendererBase(paren
 }
 CDQueueRendererBase::~CDQueueRendererBase()
 {
+    delete m_queueRunner;
 }
 
 void CDQueueRendererBase::executeRunQueue()

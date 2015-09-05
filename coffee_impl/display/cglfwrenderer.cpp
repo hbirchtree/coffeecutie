@@ -163,6 +163,11 @@ void CGLFWRenderer::setWindowSize(const CSize &size)
     glfwSetWindowSize(m_ctxt->window,size.w,size.h);
 }
 
+double CGLFWRenderer::contextTime() const
+{
+    return glfwGetTime();
+}
+
 bool CGLFWRenderer::isMouseGrabbed() const
 {
     return glfwGetInputMode(m_ctxt->window,GLFW_CURSOR) == GLFW_CURSOR_DISABLED;

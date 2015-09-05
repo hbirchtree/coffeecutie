@@ -12,10 +12,7 @@ namespace CFiles{
 
 static FILE* coffee_file_open(const char* fname, const char* mode)
 {
-    FILE* f = fopen(fname,mode);
-    if(!f)
-        cFatal("Failed to close file: %s",fname); //We'll make it temporarily fatal
-    return f;
+    return fopen(fname,mode);
 }
 
 static size_t coffee_file_size(FILE* file)
@@ -86,14 +83,23 @@ struct CResource{
 
     bool exists(){
         FILE *f = fopen(m_resource.c_str(),"r");
+        if(f)
+            fclose(f);
         return f;
     }
 
-    void read_data(bool textmode = false){
+    bool read_data(bool textmode = false){
         FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"rb");
+
+        if(!fp){
+            cWarning("Failed to read file: %s",m_resource.c_str());
+            return false;
+        }
+
         data = CFiles::coffee_file_read(fp,data,&size,textmode);
         if(CFiles::coffee_file_close(fp))
             cWarning("Failed to close file: %s",m_resource.c_str());
+        return true;
     }
 
     bool save_data(){
@@ -114,6 +120,7 @@ struct CResource{
 
     void free_data(){
         free(data);
+        data = nullptr;
     }
 
 private:

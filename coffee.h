@@ -164,9 +164,7 @@ struct CQuat{
 }
 
 //Wrappers for GL features
-namespace CGraphicsWrappers{
-
-}
+namespace CGraphicsWrappers{}
 
 //Physics-related types
 namespace CPhysicsSystem{
@@ -178,6 +176,12 @@ class CBulletSystem;
 
 //Misc. resources in engine, should not interface with GL directly
 namespace CResourceTypes{
+
+namespace CAssimp{
+class CAssimpImporters;
+struct CAssimpData;
+}
+
 class CMesh;
 class CTexture;
 class CInstanceContainer;

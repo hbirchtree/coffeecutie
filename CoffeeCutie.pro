@@ -70,7 +70,8 @@ SOURCES += main.cpp \
     coffee_impl/display/cglfwnativefuncs.cpp \
     coffee_impl/context/cdrenderer.cpp \
     coffee_impl/functional/cqueuerunner.cpp \
-    coffee_impl/graphics/cshader.cpp
+    coffee_impl/graphics/cshader.cpp \
+    coffee_impl/assimp/cassimpimporters.cpp
 
 HEADERS += \
     tests/CubeScape.h \
@@ -93,4 +94,5 @@ HEADERS += \
     coffee_impl/graphics/cshader.h \
     coffeesharp.h \
     coffee/cfiles.h \
-    coffee/cregex.h
+    coffee/cregex.h \
+    coffee_impl/assimp/cassimpimporters.h

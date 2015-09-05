@@ -38,6 +38,10 @@ struct CBuffer{
         glBindBuffer(bufferType,0);
     }
 
+    bool isValid(){
+        return glIsBuffer(handle)==GL_TRUE;
+    }
+
     void store(GLenum type, GLsizeiptr size,
                const GLvoid* data, BufferStorageMask flags)
     {
@@ -107,9 +111,8 @@ struct CUniformValue{
     void* data      = nullptr;
     uint8_t flags   = 0;
     GLint location  =-1;
-    GLuint program  = 0;
 
-    void applyUniform(){
+    void applyUniform(GLuint program){
         GLboolean matrix_transpose = GL_FALSE;
         if(flags&MatrixTranspose)
             matrix_transpose = GL_TRUE;
@@ -146,8 +149,7 @@ struct CUniformBlock{
     CUniformValue** values = nullptr;
 };
 
-struct CShader;
-struct CFramebuffer;
+struct CFramebuffer; //Implement this!
 }
 }
 

@@ -3,6 +3,8 @@
 #include <unistd.h>
 
 #include "coffee/cdebug.h"
+#include "coffee/cfiles.h"
+#include "coffee_impl/graphics/cshader.h"
 #include "coffee_impl/context/cdrenderer.h"
 
 using namespace Coffee::CFunctional;
@@ -24,6 +26,9 @@ int main(int argc, char *argv[])
 
     //Created so that the destructor closes the file
     Coffee::CoffeeInit();
+
+    cDebug("CResource: %ld",sizeof(CResource));
+    cDebug("CShader: %ld",sizeof(CShader));
 
     CDRenderer* renderer = new CDRenderer(nullptr);
     cDebug("%ld",sizeof(CDRenderer));
