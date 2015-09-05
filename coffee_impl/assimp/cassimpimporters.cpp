@@ -1,13 +1,13 @@
 #include "cassimpimporters.h"
 
 #include "coffee/cregex.h"
+#include "coffee/cfunctional.h"
+#include "coffee/cdebug.h"
+#include "coffee/cfiles.h"
 
-#include "assimp/Importer.hpp"
-#include "assimp/scene.h"
-#include "assimp/postprocess.h"
-#include "assimp/anim.h"
-#include "assimp/matrix4x4.h"
-#include "assimp/vector3.h"
+#include "assimpfun.h"
+
+//#define CASSIMP_MULTITHREAD
 
 namespace Coffee {
 namespace CResourceTypes {
@@ -19,7 +19,8 @@ CAssimpImporters::CAssimpImporters()
 {
 }
 
-CAssimpData *CAssimpImporters::importResource(CResource *source, CString hint)
+CAssimpData *CAssimpImporters::importResource(CResource *source,
+                                              CString hint)
 {
     Importer importer;
 
@@ -41,6 +42,37 @@ CAssimpData *CAssimpImporters::importResource(CResource *source, CString hint)
              scene->mNumMeshes,scene->mNumMaterials,
              scene->mNumAnimations,scene->mNumTextures);
     }
+
+    CElapsedTimer timer;
+    timer.start();
+
+    std::vector<CAssimpMesh*> meshes;
+#ifdef CASSIMP_MULTITHREAD
+    std::vector<std::future<CAssimpMesh*> > meshes_future;
+#endif
+    size_t i;
+    for(i=0;i<scene->mNumMeshes;i++){
+#ifdef CASSIMP_MULTITHREAD
+        meshes_future.push_back(CThreading::runAsync<CAssimpMesh*>([=](){
+            return importMesh(scene->mMeshes[i]);
+        }));
+#else
+        meshes.push_back(importMesh(scene->mMeshes[i]));
+#endif
+    }
+
+#ifdef CASSIMP_MULTITHREAD
+    for(std::future<CAssimpMesh*>& future : meshes_future){
+        meshes.push_back(future.get());
+    }
+#endif
+
+    for(CAssimpMesh* mesh : meshes){
+        cDebug("Mesh name: %s",mesh->name);
+        free(mesh);
+    }
+
+    cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
 
     importer.FreeScene();
 

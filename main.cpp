@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
     cDebug("CElapsedTimer: %ld",sizeof(CElapsedTimer));
     cDebug("CElapsedTimerD: %ld",sizeof(CElapsedTimerD));
 
-    CElapsedTimer t;
-    t.start();
+    CElapsedTimer timer;
+    timer.start();
 
     CDRenderer* renderer = new CDRenderer(nullptr);
     cDebug("%ld",sizeof(CDRenderer));
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 
 //    rendererFuture.waitForFinished();
 
-    cDebug("Time: %lld",t.elapsed());
+    cDebug("Time: %lld",timer.elapsed());
 
     delete renderer;
     return 0;
