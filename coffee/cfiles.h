@@ -73,7 +73,7 @@ struct CResource{
         identify_resource();
     }
 
-    const std::string resource(){
+    const std::string &resource(){
         return m_resource;
     }
 

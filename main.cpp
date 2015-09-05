@@ -1,4 +1,3 @@
-#include <QtConcurrent>
 #include <iostream>
 #include <unistd.h>
 
@@ -30,6 +29,12 @@ int main(int argc, char *argv[])
     cDebug("CResource: %ld",sizeof(CResource));
     cDebug("CShader: %ld",sizeof(CShader));
 
+    cDebug("CElapsedTimer: %ld",sizeof(CElapsedTimer));
+    cDebug("CElapsedTimerD: %ld",sizeof(CElapsedTimerD));
+
+    CElapsedTimer t;
+    t.start();
+
     CDRenderer* renderer = new CDRenderer(nullptr);
     cDebug("%ld",sizeof(CDRenderer));
 
@@ -44,6 +49,8 @@ int main(int argc, char *argv[])
 //                0);
 
 //    rendererFuture.waitForFinished();
+
+    cDebug("Time: %lld",t.elapsed());
 
     delete renderer;
     return 0;

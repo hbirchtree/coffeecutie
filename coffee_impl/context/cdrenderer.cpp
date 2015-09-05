@@ -4,6 +4,7 @@
 
 #include "coffee_impl/graphics/cshader.h"
 #include "coffee/cfiles.h"
+#include "coffee_impl/assimp/cassimpimporters.h"
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
@@ -26,6 +27,11 @@ void CDRenderer::run()
     cDebug("Compile status: %i",fshdr->compile(&f,GL_FRAGMENT_SHADER));
 #endif
 
+    CResource testFile("ubw/models/ubw.blend");
+    testFile.read_data();
+    CResourceTypes::CAssimp::CAssimpImporters::importResource(&testFile,".blend");
+    testFile.free_data();
+
     CShaderProgram* prog = new CShaderProgram;
 #ifndef LOAD_FILE
     prog->create();
@@ -47,7 +53,10 @@ void CDRenderer::run()
     prog->storeProgram(&progStore);
     if(!progStore.save_data())
         cDebug("Failed to save shader!");
+    progStore.free_data();
 #endif
+
+    cMsg("Coffee","Init time: %fs",contextTime());
 
     showWindow();
     CString title = cStringFormat("GLFW OpenGL renderer (running for %fs)",contextTime());
