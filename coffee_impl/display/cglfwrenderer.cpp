@@ -268,8 +268,13 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
         return;
     }
 
+    if(!m_ctxt->window){
+        cFatal("GLFW: No window could be created!");
+    }
+
     m_ctxt->makeCurrent();
     glfwSetWindowUserPointer(m_ctxt->window,this);
+    cMsg("GLFW","User-pointer set");
 
     //Input callbacks
     glfwSetMouseButtonCallback      (m_ctxt->window,glfw_input_mouseBtn);
@@ -290,6 +295,8 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 
     glfwSetErrorCallback            (glfw_error_function);
 
+    cMsg("GLFW","Callbacks were set");
+
     {
         int maj,min,rev;
         glfwGetVersion(&maj,&min,&rev);
@@ -301,10 +308,13 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 
     //GLBINDING BEGINS
     glbinding::Binding::initialize(true);
+    cMsg("glbinding","Initializing glbinding");
 
     m_rendererString = glbinding::ContextInfo::renderer();
     m_vendorString = glbinding::ContextInfo::vendor();
     m_versionString = glbinding::ContextInfo::version().toString();
+
+    cMsg("glbinding","Obtained context information");
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glbindingCallbackDirect,this);
