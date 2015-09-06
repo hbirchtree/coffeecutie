@@ -143,22 +143,22 @@ struct CUniformValue{
             matrix_transpose = GL_TRUE;
         const GLfloat* data = reinterpret_cast<const GLfloat*>(this->data);
         switch(size){
-        case sizeof(float):
+        case sizeof(GLfloat):
             glProgramUniform1fv(program,location,1,data);
             break;
-        case sizeof(float)*2:
+        case sizeof(GLfloat)*2:
             glProgramUniform2fv(program,location,1,data);
             break;
-        case sizeof(float)*3:
+        case sizeof(GLfloat)*3:
             glProgramUniform3fv(program,location,1,data);
             break;
-        case sizeof(float)*4:
+        case sizeof(GLfloat)*4:
             glProgramUniform4fv(program,location,1,data);
             break;
-        case sizeof(float)*9:
+        case sizeof(GLfloat)*9:
             glProgramUniformMatrix3fv(program,location,1,matrix_transpose,data);
             break;
-        case sizeof(float)*16:
+        case sizeof(GLfloat)*16:
             glProgramUniformMatrix4fv(program,location,1,matrix_transpose,data);
             break;
 

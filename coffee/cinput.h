@@ -79,7 +79,7 @@ struct CIMouseEvent
 };
 struct CIScrollEvent
 {
-    float deltaX = 0.f,deltaY = 0.f;
+    scalar deltaX = 0.f,deltaY = 0.f;
     uint8_t modifiers = 0;
 };
 
@@ -93,15 +93,15 @@ struct CIJoyState
     uint8_t buttons = 0;
     uint8_t axes = 0;
     uint8_t* buttonStates = nullptr;
-    float* axeStates = nullptr;
+    scalar* axeStates = nullptr;
 };
 struct CIJoyInfo
 {
     CString name;
     uint8_t buttons = 0;
     uint8_t axes = 0;
-    float* axe_min = nullptr;
-    float* axe_max = nullptr;
+    scalar* axe_min = nullptr;
+    scalar* axe_max = nullptr;
 };
 
 struct CIDropEvent

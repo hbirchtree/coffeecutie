@@ -1,6 +1,8 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
+#include "coffee.h"
+
 //Callstack unwinding
 #define UNW_LOCAL_ONLY
 #include <cxxabi.h> //Demangling function names
@@ -23,13 +25,13 @@ namespace Coffee{
 namespace CFunctional{
 
 template<typename... Arg>
-static std::string cStringFormat(const char* fmt, Arg... args);
+static CString cStringFormat(cstring fmt, Arg... args);
 
 namespace CDebugHelpers
 {
-static char* coffee_demangle_symbol(char* sym,bool* success){
+static cstring_w coffee_demangle_symbol(cstring_w sym,bool* success){
     int stat = 0;
-    char* demangled = abi::__cxa_demangle(sym,nullptr,nullptr,&stat);
+    cstring_w demangled = abi::__cxa_demangle(sym,nullptr,nullptr,&stat);
     if(stat == 0){
         *success = true;
         return demangled;
@@ -40,10 +42,10 @@ static char* coffee_demangle_symbol(char* sym,bool* success){
     }
 }
 
-static char** coffee_callstack(size_t *length,uint stackreduce = 0){
+static cstring_w* coffee_callstack(size_t *length,uint stackreduce = 0){
     //Initial values, create a valid ptr for callstack
     size_t callstack_ptr = 0;
-    char** callstack = reinterpret_cast<char**>(malloc(0));
+    cstring_w* callstack = reinterpret_cast<cstring_w*>(malloc(0));
     //Set up for unwind
     unw_cursor_t cur;
     unw_context_t ctx;
@@ -56,7 +58,7 @@ static char** coffee_callstack(size_t *length,uint stackreduce = 0){
 
     //Allocate buffer for symbol
     bool success;
-    char sym[256];
+    byte sym[256];
     while(unw_step(&cur)>0){
         //Unwinding stuff here
         unw_word_t offset,pc;
@@ -65,17 +67,17 @@ static char** coffee_callstack(size_t *length,uint stackreduce = 0){
             break;
         if(unw_get_proc_name(&cur,sym,sizeof(sym),&offset)==0){
             //Demangle the symbol with CXXABI
-            char* fname = coffee_demangle_symbol(sym,&success);
+            cstring_w fname = coffee_demangle_symbol(sym,&success);
             //Increment the callstack pointer, also known as length of the array
             callstack_ptr++;
             //Resize the callstack array
-            callstack = reinterpret_cast<char**>(realloc(callstack,callstack_ptr*sizeof(char*)));
+            callstack = reinterpret_cast<cstring_w*>(realloc(callstack,callstack_ptr*sizeof(cstring_w)));
             if(success){
-                //If demangling succeeded, we created a new char* which we can bring with us
+                //If demangling succeeded, we created a new cstring which we can bring with us
                 callstack[callstack_ptr-1] = fname;
             }else{
                 //If demangling failed, we copy the string and move on
-                char *str = reinterpret_cast<char*>(malloc(strlen(fname)+1));
+                cstring_w str = reinterpret_cast<cstring_w>(malloc(strlen(fname)+1));
                 strcpy(str,fname);
                 callstack[callstack_ptr-1] = str;
             }
@@ -85,7 +87,7 @@ static char** coffee_callstack(size_t *length,uint stackreduce = 0){
     return callstack;
 }
 
-static void coffee_print_callstack(const char* header, const char* callfmt, char** callstack, size_t stacksize){
+static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, size_t stacksize){
     fprintf(stderr,header);
     for(size_t i=0;i<stacksize;i++){
         fprintf(stderr,callfmt,callstack[i]);
@@ -94,14 +96,14 @@ static void coffee_print_callstack(const char* header, const char* callfmt, char
     free(callstack);
 }
 
-static void coffee_free_callstack(char** callstack, size_t stacksize){
+static void coffee_free_callstack(cstring_w* callstack, size_t stacksize){
     for(size_t i=0;i<stacksize;i++)
         free(callstack[i]);
     free(callstack);
 }
 
-static char* coffee_clock_string(){
-    char *time_val = reinterpret_cast<char*>(malloc(17));
+static cstring_w coffee_clock_string(){
+    cstring_w time_val = reinterpret_cast<cstring_w>(malloc(17));
     time_t t;
     struct tm *tm;
     time(&t);
@@ -117,20 +119,20 @@ static char* coffee_clock_string(){
 template<typename... Arg>
 static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout or crash
                         uint stackreduce,   //Removes parts of the displayed callstack
-                        const char* str,    //The formatting string
+                        cstring str,    //The formatting string
                         Arg... args         //The arguments
                         )
 {
     //Some settings for output
     FILE* strm = stdout;
     bool fail = false;
-    char* time_val = CDebugHelpers::coffee_clock_string();
-    std::string s_(time_val);
+    cstring_w time_val = CDebugHelpers::coffee_clock_string();
+    CString s_(time_val);
     free(time_val);
 
     //Get call stack
-    const char* first = nullptr;
-    char** callstack = nullptr;
+    cstring first = nullptr;
+    cstring_w* callstack = nullptr;
     size_t cs_length;
     {
         callstack = CDebugHelpers::coffee_callstack(&cs_length,stackreduce);
@@ -176,23 +178,23 @@ static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout o
 }
 
 template<typename... Arg>
-static void cDebug(const char* str, Arg... args){
+static void cDebug(cstring str, Arg... args){
     cDebugPrint(1,1,str,args...);
 }
 
 template<typename... Arg>
-static void cWarning(const char* str, Arg... args){
+static void cWarning(cstring str, Arg... args){
     cDebugPrint(2,1,str,args...);
 }
 
 template<typename... Arg>
-static void cFatal(const char* str, Arg... args){
+static void cFatal(cstring str, Arg... args){
     cDebugPrint(3,1,str,args...);
 }
 
 template<typename... Arg>
-static void cMsg(const char* src, const char* msg, Arg... args){
-    char* str = reinterpret_cast<char*>(malloc(strlen(src)+strlen(msg)+2));
+static void cMsg(cstring src, cstring msg, Arg... args){
+    cstring_w str = reinterpret_cast<cstring_w>(malloc(strlen(src)+strlen(msg)+2));
     memcpy(str,src,strlen(src)+1);
     strcat(str,":");
     strcat(str,msg);
@@ -202,11 +204,11 @@ static void cMsg(const char* src, const char* msg, Arg... args){
 
 //cStringFormat should not be used for debug printing, it's slower than using printf
 template<typename... Arg>
-static std::string cStringFormat(const char* fmt, Arg... args){
+static CString cStringFormat(cstring fmt, Arg... args){
     int sz = snprintf(nullptr,0,fmt,args...);
-    char* _s = reinterpret_cast<char*>(malloc(sz+1));
+    cstring_w _s = reinterpret_cast<cstring_w>(malloc(sz+1));
     sprintf(_s,fmt,args...);
-    std::string _o(_s);
+    CString _o(_s);
     free(_s);
     return _o;
 }

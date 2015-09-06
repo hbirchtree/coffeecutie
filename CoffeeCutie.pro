@@ -72,7 +72,8 @@ SOURCES += main.cpp \
     coffee_impl/functional/cqueuerunner.cpp \
     coffee_impl/graphics/cshader.cpp \
     coffee_impl/assimp/cassimpimporters.cpp \
-    coffee_impl/storage/cdatastore.cpp
+    coffee_impl/storage/cdatastore.cpp \
+    coffee_impl/graphics/cgraphicsdata.cpp
 
 HEADERS += \
     tests/CubeScape.h \
@@ -100,4 +101,5 @@ HEADERS += \
     coffee_impl/storage/cdatastore.h \
     coffee_impl/assimp/assimpfun.h \
     coffee_impl/assimp/cassimptypes.h \
-    coffee_impl/assimp/cassimploader.h
+    coffee_impl/assimp/cassimploader.h \
+    coffee_impl/graphics/cgraphicsdata.h

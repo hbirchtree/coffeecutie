@@ -16,8 +16,8 @@ public:
     void setParent(CObject* parent);
 
     //Object name, must be freed
-    const char *objectName();
-    void setObjectName(const char *name);
+    cstring objectName();
+    void setObjectName(cstring name);
 
 protected:
     std::thread::id m_thread;

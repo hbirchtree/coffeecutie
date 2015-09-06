@@ -10,7 +10,7 @@ namespace CResources{
 
 namespace CFiles{
 
-static FILE* coffee_file_open(const char* fname, const char* mode)
+static FILE* coffee_file_open(cstring fname, cstring mode)
 {
     return fopen(fname,mode);
 }
@@ -23,20 +23,20 @@ static size_t coffee_file_size(FILE* file)
     return fsize;
 }
 
-static char* coffee_file_read(FILE* file, void* ptr, size_t *size, bool textmode = false)
+static cstring_w coffee_file_read(FILE* file, void* ptr, size_t *size, bool textmode = false)
 {
     size_t esize = CFiles::coffee_file_size(file);
-    size_t msize = esize*sizeof(char);
+    size_t msize = esize*sizeof(byte);
 
     //Extra byte for null terminator
     if(textmode)
         msize+=1;
 
-    char* data = reinterpret_cast<char*>(realloc(ptr,msize));
-    *size = fread(data,sizeof(char),esize,file);
+    byte* data = reinterpret_cast<byte*>(realloc(ptr,msize));
+    *size = fread(data,sizeof(byte),esize,file);
     //In text mode, we terminate the array
     if(textmode)
-        data[esize*sizeof(char)] = '\0';
+        data[esize*sizeof(byte)] = '\0';
 
     if(*size<esize)
         cFatal("Read error: expected %ld bytes, got %ld",esize,*size);
@@ -46,7 +46,7 @@ static char* coffee_file_read(FILE* file, void* ptr, size_t *size, bool textmode
 
 static bool coffee_file_write(FILE* file, const void* data, size_t size)
 {
-    size_t wsize = fwrite(data,sizeof(char),size,file);
+    size_t wsize = fwrite(data,sizeof(byte),size,file);
 
     if(wsize<size)
         return false;
@@ -68,13 +68,13 @@ struct CResource{
         WriteOnly   = 0b1000,
     };
 
-    CResource(std::string resource){
+    CResource(cstring resource){
         m_resource = resource;
         identify_resource();
     }
 
-    const std::string &resource(){
-        return m_resource;
+    cstring resource(){
+        return m_resource.c_str();
     }
 
     uint8_t flags   = 0;
@@ -110,7 +110,7 @@ struct CResource{
         return stat;
     }
 
-    bool append_text(const char* text){
+    bool append_text(cstring text){
         FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"ab+");
         bool stat = CFiles::coffee_file_write(fp,text,strlen(text));
         if(CFiles::coffee_file_close(fp))
@@ -126,10 +126,10 @@ struct CResource{
 private:
     void identify_resource(){
         //Not all of these are implemented!
-        std::vector<std::string> remotes =
+        std::vector<CString> remotes =
         {"http:.*","https:.*","ftp:.*","ftps:.*","sftp:.*"};
 
-        for(const std::string& rem : remotes){
+        for(const CString& rem : remotes){
             CRegexMatch match = CFunctional::coffee_regex_match(rem,m_resource);
             if(match.b_match){
                 flags|=Remote;
@@ -138,7 +138,7 @@ private:
         }
     }
 
-    std::string m_resource;
+    CString m_resource;
 };
 
 }

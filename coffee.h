@@ -14,9 +14,23 @@
 #define C_UNUSED(v) do{(void)(v);}while(0);
 
 namespace Coffee{
-//Core types, might become base type for all classes in place of QObject
+//Core typedefs
+typedef float              scalar;
+typedef double             bigscalar;
+typedef char               byte;
+//Your typical C-string
+typedef const char*        cstring;
+typedef char*              cstring_w;
+//Wide string
+typedef const int16_t*     cwstring;
+typedef int16_t*           cwstring_w;
+//std::string can be switched for other string types, like QString
+typedef std::string CString;
+//
+
 static void CoffeeInit();
 
+//A simpler implementation of QObject
 class CObject;
 
 //Different data types we implement
@@ -36,10 +50,9 @@ class Matrix4Value;
 }
 
 //General data types
-typedef std::string CString; //In case we want to switch it
 
-static const char* coffee_cpy_string(const char* str){
-    char* buf = reinterpret_cast<char*>(malloc(strlen(str)+1));
+static cstring coffee_cpy_string(cstring str){
+    cstring_w buf = reinterpret_cast<cstring_w>(malloc(strlen(str)+1));
     strcpy(buf,str);
     return buf;
 }
@@ -57,13 +70,13 @@ struct CSize{
     int32_t h;
 };
 struct CSizeF{
-    CSizeF(float w,float h){
+    CSizeF(scalar w,scalar h){
         this->w = w;
         this->h = h;
     }
     CSizeF(){}
-    float w;
-    float h;
+    scalar w;
+    scalar h;
 };
 //Point type
 struct CPoint{
@@ -76,13 +89,13 @@ struct CPoint{
     int32_t y;
 };
 struct CPointF{
-    CPointF(float x,float y){
+    CPointF(scalar x,scalar y){
         this->x = x;
         this->y = y;
     }
     CPointF(){}
-    float x;
-    float y;
+    scalar x;
+    scalar y;
 };
 //Rectangle type
 struct CRect{
@@ -99,67 +112,67 @@ struct CRect{
     int32_t h;
 };
 struct CRectF{
-    CRectF(float x,float y,float w,float h){
+    CRectF(scalar x,scalar y,scalar w,scalar h){
         this->x = x;
         this->y = y;
         this->w = w;
         this->h = h;
     }
     CRectF(){}
-    float x;
-    float y;
-    float w;
-    float h;
+    scalar x;
+    scalar y;
+    scalar w;
+    scalar h;
 };
 
 //These are not meant to replace glm
 //Will be used as a dumbed-down version for C# and similar
 //The memory layout is the same anyway
 struct CVec2{
-    CVec2(float x,float y){
+    CVec2(scalar x,scalar y){
         this->x = x;
         this->y = y;
     }
     CVec2(){}
-    float x;
-    float y;
+    scalar x;
+    scalar y;
 };
 struct CVec3{
-    CVec3(float x,float y,float z){
+    CVec3(scalar x,scalar y,scalar z){
         this->x = x;
         this->y = y;
         this->z = z;
     }
     CVec3(){}
-    float x;
-    float y;
-    float z;
+    scalar x;
+    scalar y;
+    scalar z;
 };
 struct CVec4{
-    CVec4(float x,float y,float z,float w){
+    CVec4(scalar x,scalar y,scalar z,scalar w){
         this->x = x;
         this->y = y;
         this->z = z;
         this->w = w;
     }
     CVec4(){}
-    float x;
-    float y;
-    float z;
-    float w;
+    scalar x;
+    scalar y;
+    scalar z;
+    scalar w;
 };
 struct CQuat{
-    CQuat(float w,float x,float y,float z){
+    CQuat(scalar w,scalar x,scalar y,scalar z){
         this->x = x;
         this->y = y;
         this->z = z;
         this->w = w;
     }
     CQuat(){}
-    float w;
-    float x;
-    float y;
-    float z;
+    scalar w;
+    scalar x;
+    scalar y;
+    scalar z;
 };
 }
 

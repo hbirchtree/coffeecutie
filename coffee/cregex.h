@@ -9,12 +9,12 @@ namespace CFunctional{
 
 struct CRegexMatch
 {
-    std::vector<std::string> s_match;
+    std::vector<CString> s_match;
     bool b_match;
 };
 
-static std::vector<CRegexMatch> coffee_regex_match_multi(const std::string& pattern,
-                   const std::vector<std::string>& data,
+static std::vector<CRegexMatch> coffee_regex_match_multi(const CString& pattern,
+                   const std::vector<CString>& data,
                    bool capture = false)
 {
     std::regex rgx(pattern);
@@ -22,7 +22,7 @@ static std::vector<CRegexMatch> coffee_regex_match_multi(const std::string& patt
 
     std::vector<CRegexMatch> matches;
 
-    for(const std::string& string : data){
+    for(const CString& string : data){
         CRegexMatch m;
         m.b_match = false;
         if(std::regex_match(string,mch,rgx)){
@@ -37,7 +37,7 @@ static std::vector<CRegexMatch> coffee_regex_match_multi(const std::string& patt
     }
     return matches;
 }
-static CRegexMatch coffee_regex_match(std::string pattern, const std::string& data, bool capture = false)
+static CRegexMatch coffee_regex_match(CString pattern, const CString& data, bool capture = false)
 {
     std::regex rgx(pattern);
     std::smatch mch;

@@ -34,7 +34,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
                                 hint.c_str());
     if(!scene){
         cWarning("Failed to import scene \"%s\": %s",
-               source->resource().c_str(),
+               source->resource(),
                importer.GetErrorString());
         return nullptr;
     }else{

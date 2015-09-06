@@ -77,20 +77,19 @@ void CDRenderer::run()
     GLuint c_u = glGetUniformLocation(prog->handle,"camera");
     GLuint m_u = glGetUniformLocation(prog->handle,"model");
 
-    cMsg("Coffee","Init time: %fs",contextTime());
-
     showWindow();
 
     bufm.vao()->bind();
     pip->bind();
-
     glCullFace(GL_BACK);
+    glClearColor(0.175f,0.175f,0.175f,1.f);
+    glViewport(0,0,1280,720);
 
     double mtime = 0.0;
     CElapsedTimerMicro *t = new CElapsedTimerMicro;
 
-    glClearColor(0.175f,0.175f,0.175f,1.f);
-    glViewport(0,0,1280,720);
+    setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
+    cMsg("Coffee","Init time: %fs",contextTime());
 
     while(!closeFlag()){
 
@@ -107,7 +106,7 @@ void CDRenderer::run()
 
         glDrawElements(GL_TRIANGLES,bufm.elements,GL_UNSIGNED_INT,0);
         if(contextTime()>mtime){
-            setWindowTitle(cStringFormat("GLFW OpenGL renderer (running for: %fs,render time: %ldus)",contextTime(),t->elapsed()));
+            cDebug("Render time: %lldus",t->elapsed());
             mtime = contextTime()+1.0;
         }
 
@@ -115,8 +114,12 @@ void CDRenderer::run()
         pollEvents();
         swapBuffers();
     }
+
+    t->start();
+
     hideWindow();
 
+    bufm.vao()->free();
     pip->free();
 #ifndef LOAD_FILE
     v.free_data();
@@ -126,6 +129,8 @@ void CDRenderer::run()
 #endif
     delete prog;
     delete pip;
+
+    cMsg("Coffee","Termination time: %lldus",t->elapsed());
 }
 
 void CDRenderer::run(WindowState state, CSize resolution, int monitor)
@@ -139,8 +144,8 @@ void CDRenderer::run(WindowState state, CSize resolution, int monitor)
 
 void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
 {
-    std::string smsg = report->message;
-    std::string out = glbinding::Meta::getString(report->type)+":"
+    CString smsg = report->message;
+    CString out = glbinding::Meta::getString(report->type)+":"
             +glbinding::Meta::getString(report->severity)+":"
             +glbinding::Meta::getString(report->source)+": "+smsg;
     cDebug("OpenGL: %s",out.c_str());
