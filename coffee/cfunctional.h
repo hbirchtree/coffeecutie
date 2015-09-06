@@ -46,11 +46,9 @@ public:
 namespace CThreading
 {
 
-template<typename... Args>
-static void runIndependent(std::function<void(Args...)> function,
-                           Args... args)
+static void runIndependent(std::function<void()> function)
 {
-    std::thread m_thread(function,args...);
+    std::thread m_thread(function);
     m_thread.detach();
 }
 

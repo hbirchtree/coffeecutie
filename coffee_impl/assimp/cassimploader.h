@@ -68,7 +68,7 @@ struct CBufferedMesh
                 buf.create();
                 buf.bufferType = GL_ELEMENT_ARRAY_BUFFER;
                 buf.bind();
-                buf.store(GL_ELEMENT_ARRAY_BUFFER,mesh->bufferSize[i],
+                buf.store(GL_ELEMENT_ARRAY_BUFFER,mesh->bufferSize[i]*sizeof(uint32_t),
                           mesh->buffers[i],GL_DYNAMIC_STORAGE_BIT);
                 elements = mesh->bufferSize[i];
                 break;

@@ -2,10 +2,10 @@
 
 //#define LOAD_FILE
 
+#include "coffee/cfunctional.h"
 #include "coffee_impl/graphics/cshader.h"
 #include "coffee/cfiles.h"
 #include "coffee_impl/assimp/cassimpimporters.h"
-#include "coffee_impl/assimp/cassimptypes.h"
 #include "coffee_impl/assimp/cassimploader.h"
 
 #include <glm/glm/glm.hpp>
@@ -70,8 +70,9 @@ void CDRenderer::run()
     res->freeData();
     delete res;
 
+    glm::quat m_rot = glm::quat(2,0,0,0);
     glm::mat4 camera = glm::perspective(glm::radians(90.f),1.6f,0.1f,100.f);
-    glm::mat4 model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(glm::quat(2,0,0,0))*glm::scale(glm::mat4(),glm::vec3(10,10,10));
+    glm::mat4 model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
 
     GLuint c_u = glGetUniformLocation(prog->handle,"camera");
     GLuint m_u = glGetUniformLocation(prog->handle,"model");
@@ -79,35 +80,37 @@ void CDRenderer::run()
     cMsg("Coffee","Init time: %fs",contextTime());
 
     showWindow();
-    CString title = cStringFormat("GLFW OpenGL renderer (running for %fs)",contextTime());
 
     bufm.vao()->bind();
     pip->bind();
 
+    glCullFace(GL_BACK);
+
     double mtime = 0.0;
-    CElapsedTimerMicro t;
+    CElapsedTimerMicro *t = new CElapsedTimerMicro;
 
     glClearColor(0.175f,0.175f,0.175f,1.f);
     glViewport(0,0,1280,720);
 
     while(!closeFlag()){
 
-        t.start();
+        t->start();
 
         glClear(GL_COLOR_BUFFER_BIT);
-        camera = glm::perspective(glm::radians(90.f),1.6f,0.1f,100.f);
-        model = glm::translate(glm::mat4(),glm::vec3(10,0,0))*glm::lookAt(glm::vec3(0,0,0),glm::vec3(10,0,0),glm::vec3(0,1,0))*glm::scale(glm::mat4(),glm::vec3(10,10,10));
+
+        m_rot=glm::normalize(glm::quat(2,0,0.01,0)*m_rot);
+
+        model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
 
         glProgramUniformMatrix4fv(prog->handle,c_u,1,GL_FALSE,reinterpret_cast<GLfloat*>(&camera));
         glProgramUniformMatrix4fv(prog->handle,m_u,1,GL_FALSE,reinterpret_cast<GLfloat*>(&model));
 
         glDrawElements(GL_TRIANGLES,bufm.elements,GL_UNSIGNED_INT,0);
         if(contextTime()>mtime){
-            title = cStringFormat("GLFW OpenGL renderer (running for: %fs,render time: %ld)",contextTime(),t.elapsed());
+            setWindowTitle(cStringFormat("GLFW OpenGL renderer (running for: %fs,render time: %ldus)",contextTime(),t->elapsed()));
             mtime = contextTime()+1.0;
         }
 
-        setWindowTitle(title);
         executeRunQueue();
         pollEvents();
         swapBuffers();
@@ -142,6 +145,7 @@ void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
             +glbinding::Meta::getString(report->source)+": "+smsg;
     cDebug("OpenGL: %s",out.c_str());
     CGLState* state = _dump_state(); //Should provide a view of OpenGL state
+    delete state;
     free(report);
 }
 
@@ -161,6 +165,8 @@ CGLState *CDRenderer::_dump_state() const
 
     glGetIntegerv(GL_PROGRAM_PIPELINE_BINDING,&t);
     state->pipeline_obj = t;
+
+    return state;
 }
 
 } // namespace CDisplay
