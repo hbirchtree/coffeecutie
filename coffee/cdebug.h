@@ -174,11 +174,13 @@ static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout o
         fail = true;
     s_ += "\n";
 
+    fprintf(strm,s_.c_str(),args...);
+
     if(fail){
         CDebugHelpers::coffee_print_callstack("Callstack before crash: \n","-> %s\n",callstack,cs_length);
-        throw std::runtime_error(cStringFormat(s_.c_str(),args...));
-    }else
-        fprintf(strm,s_.c_str(),args...);
+        throw std::runtime_error(cStringFormat(str,args...));
+    }
+
     CDebugHelpers::coffee_free_callstack(callstack,cs_length);
 }
 
