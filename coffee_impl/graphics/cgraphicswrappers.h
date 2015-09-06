@@ -30,6 +30,7 @@ struct CGLState
 {
     GLuint      vertex_array    = 0;
     GLuint      array_buffer    = 0;
+    GLuint      uniform_buffer  = 0;
     GLuint      element_buffer  = 0;
     GLuint      program_obj     = 0;
     GLuint      pipeline_obj    = 0;
@@ -74,6 +75,16 @@ struct CBuffer{
     }
     void subStore(GLintptr offset, GLsizeiptr size, const GLvoid* data){
         glBufferSubData(bufferType,offset,size,data);
+    }
+
+    void fetch(GLenum type, GLsizeiptr offset,
+               GLsizeiptr size, GLvoid* data)
+    {
+        glGetBufferSubData(type,offset,size,data);
+    }
+    void fetch(GLsizeiptr offset, GLsizeiptr size, GLvoid* data)
+    {
+        fetch(bufferType,offset,size,data);
     }
 
     void invalidate(GLintptr offset, GLsizeiptr size){
