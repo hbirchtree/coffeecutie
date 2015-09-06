@@ -29,7 +29,8 @@ static CString cStringFormat(cstring fmt, Arg... args);
 
 namespace CDebugHelpers
 {
-static cstring_w coffee_demangle_symbol(cstring_w sym,bool* success){
+static cstring_w coffee_demangle_symbol(cstring_w sym,bool* success)
+{
     int stat = 0;
     cstring_w demangled = abi::__cxa_demangle(sym,nullptr,nullptr,&stat);
     if(stat == 0){
@@ -42,7 +43,8 @@ static cstring_w coffee_demangle_symbol(cstring_w sym,bool* success){
     }
 }
 
-static cstring_w* coffee_callstack(size_t *length,uint stackreduce = 0){
+static cstring_w* coffee_callstack(size_t *length,uint stackreduce = 0)
+{
     //Initial values, create a valid ptr for callstack
     size_t callstack_ptr = 0;
     cstring_w* callstack = reinterpret_cast<cstring_w*>(malloc(0));
@@ -87,7 +89,8 @@ static cstring_w* coffee_callstack(size_t *length,uint stackreduce = 0){
     return callstack;
 }
 
-static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, size_t stacksize){
+static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, size_t stacksize)
+{
     fprintf(stderr,header);
     for(size_t i=0;i<stacksize;i++){
         fprintf(stderr,callfmt,callstack[i]);
@@ -96,13 +99,15 @@ static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* c
     free(callstack);
 }
 
-static void coffee_free_callstack(cstring_w* callstack, size_t stacksize){
+static void coffee_free_callstack(cstring_w* callstack, size_t stacksize)
+{
     for(size_t i=0;i<stacksize;i++)
         free(callstack[i]);
     free(callstack);
 }
 
-static cstring_w coffee_clock_string(){
+static cstring_w coffee_clock_string()
+{
     cstring_w time_val = reinterpret_cast<cstring_w>(malloc(17));
     time_t t;
     struct tm *tm;
@@ -178,22 +183,35 @@ static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout o
 }
 
 template<typename... Arg>
-static void cDebug(cstring str, Arg... args){
+static void cBasicPrint(cstring str, Arg... args)
+{
+    cstring_w fmt = reinterpret_cast<cstring_w>(malloc(strlen(str)+2));
+    strcpy(fmt,str);
+    strcat(fmt,"\n");
+    fprintf(stderr,fmt,args...);
+}
+
+template<typename... Arg>
+static void cDebug(cstring str, Arg... args)
+{
     cDebugPrint(1,1,str,args...);
 }
 
 template<typename... Arg>
-static void cWarning(cstring str, Arg... args){
+static void cWarning(cstring str, Arg... args)
+{
     cDebugPrint(2,1,str,args...);
 }
 
 template<typename... Arg>
-static void cFatal(cstring str, Arg... args){
+static void cFatal(cstring str, Arg... args)
+{
     cDebugPrint(3,1,str,args...);
 }
 
 template<typename... Arg>
-static void cMsg(cstring src, cstring msg, Arg... args){
+static void cMsg(cstring src, cstring msg, Arg... args)
+{
     cstring_w str = reinterpret_cast<cstring_w>(malloc(strlen(src)+strlen(msg)+2));
     memcpy(str,src,strlen(src)+1);
     strcat(str,":");
@@ -204,7 +222,8 @@ static void cMsg(cstring src, cstring msg, Arg... args){
 
 //cStringFormat should not be used for debug printing, it's slower than using printf
 template<typename... Arg>
-static CString cStringFormat(cstring fmt, Arg... args){
+static CString cStringFormat(cstring fmt, Arg... args)
+{
     int sz = snprintf(nullptr,0,fmt,args...);
     cstring_w _s = reinterpret_cast<cstring_w>(malloc(sz+1));
     sprintf(_s,fmt,args...);

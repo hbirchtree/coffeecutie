@@ -226,6 +226,19 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
         cWarning("Failed to initialize GLFW");
     cMsg("GLFW","Initialized");
 
+    //Check for extensions! Quick!
+    glbinding::Binding::initialize(true);
+
+    {
+        cDebug("Now printing supported extensions according to glbinding");
+        cBasicPrint("------| Supported extensions |------");
+        for(GLextension ext : glbinding::Meta::extensions())
+            cBasicPrint("Extension: %s, required version: %s",
+                   glbinding::Meta::getString(ext).c_str(),
+                   glbinding::Meta::getRequiringVersion(ext).toString().c_str());
+        cBasicPrint("------------------------------------");
+    }
+
     glfwDefaultWindowHints();
 
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
@@ -307,7 +320,6 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     }
 
     //GLBINDING BEGINS
-    glbinding::Binding::initialize(true);
     cMsg("glbinding","Initializing glbinding");
 
     m_rendererString = glbinding::ContextInfo::renderer();

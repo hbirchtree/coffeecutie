@@ -33,19 +33,10 @@ int main(int argc, char *argv[])
 
     CoffeeTests::run_tests();
 
-    cDebug("CResource: %ld",sizeof(CResource));
-    cDebug("CShader: %ld",sizeof(CShader));
-
-    cDebug("CElapsedTimer: %ld",sizeof(CElapsedTimer));
-    cDebug("CElapsedTimerD: %ld",sizeof(CElapsedTimerD));
-
-    cDebug("CBlock: %ld",sizeof(Coffee::CGraphicsData::CBlock));
-
     CElapsedTimer timer;
     timer.start();
 
     CDRenderer* renderer = new CDRenderer(nullptr);
-    cDebug("%ld",sizeof(CDRenderer));
 
     //Just for prototyping, we'll be looking at std::thread later
     renderer->run(CDRenderer::Windowed,CSize(1280,720),0);
