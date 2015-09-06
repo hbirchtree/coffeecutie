@@ -8,9 +8,7 @@
 #include "coffee_impl/assimp/cassimpimporters.h"
 #include "coffee_impl/assimp/cassimploader.h"
 
-#include <glm/glm/glm.hpp>
-#include <glm/glm/gtc/type_ptr.hpp>
-#include <glm/glm/gtc/matrix_transform.hpp>
+#include "coffee_impl/graphics/cgraphicsdata.h"
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;

@@ -9,9 +9,12 @@
 #include <vector>
 #include <stdint.h>
 #include <string.h>
+#include <exception>
 
 //For unused variables
 #define C_UNUSED(v) do{(void)(v);}while(0);
+//Assertion for unit tests
+#define CASSERT(exp) (!exp)?throw std::runtime_error("Assert failed"):fprintf(stderr,"Assert passed\n");
 
 namespace Coffee{
 //Core typedefs

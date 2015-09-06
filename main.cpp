@@ -5,6 +5,7 @@
 #include "coffee/cfiles.h"
 #include "coffee_impl/graphics/cshader.h"
 #include "coffee_impl/context/cdrenderer.h"
+#include "coffee_impl/graphics/cgraphicsdata.h"
 
 using namespace Coffee::CFunctional;
 using namespace Coffee::CResources;
@@ -26,11 +27,20 @@ int main(int argc, char *argv[])
     //Created so that the destructor closes the file
     Coffee::CoffeeInit();
 
+    CASSERT((1>2));
+
     cDebug("CResource: %ld",sizeof(CResource));
     cDebug("CShader: %ld",sizeof(CShader));
 
     cDebug("CElapsedTimer: %ld",sizeof(CElapsedTimer));
     cDebug("CElapsedTimerD: %ld",sizeof(CElapsedTimerD));
+
+    CQuat testVec(2.f,0.5f,0.5f,0.5f);
+    cDebug("Vector3: %f,%f,%f",testVec.w,testVec.x,testVec.y,testVec.z);
+    glm::quat* vec3 = reinterpret_cast<glm::quat*>(&testVec);
+
+    cDebug("Sizes: glm:%i cof:%i",sizeof(glm::vec3),sizeof(CVec3));
+    cDebug("Quat: %f,%f,%f,%f",vec3->w,vec3->x,vec3->y,vec3->z);
 
     CElapsedTimer timer;
     timer.start();
