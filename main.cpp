@@ -9,10 +9,12 @@
 
 #include "unit_tests/data_types.h"
 
+using namespace Coffee;
 using namespace Coffee::CFunctional;
 using namespace Coffee::CResources;
 using namespace Coffee::CDisplay;
 using namespace Coffee::CGraphicsWrappers;
+using namespace Coffee::CGraphicsData;
 
 int main(int argc, char *argv[])
 {
@@ -37,12 +39,7 @@ int main(int argc, char *argv[])
     cDebug("CElapsedTimer: %ld",sizeof(CElapsedTimer));
     cDebug("CElapsedTimerD: %ld",sizeof(CElapsedTimerD));
 
-    CQuat testVec(2.f,0.5f,0.5f,0.5f);
-    cDebug("Vector3: %f,%f,%f",testVec.w,testVec.x,testVec.y,testVec.z);
-    glm::quat* vec3 = reinterpret_cast<glm::quat*>(&testVec);
-
-    cDebug("Sizes: glm:%i cof:%i",sizeof(glm::vec3),sizeof(CVec3));
-    cDebug("Quat: %f,%f,%f,%f",vec3->w,vec3->x,vec3->y,vec3->z);
+    cDebug("CBlock: %ld",sizeof(Coffee::CGraphicsData::CBlock));
 
     CElapsedTimer timer;
     timer.start();

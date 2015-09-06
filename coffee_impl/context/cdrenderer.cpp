@@ -23,7 +23,7 @@ CDRenderer::CDRenderer(CObject *parent) : CGLFWRenderer(parent)
 void CDRenderer::run()
 {
 #ifndef LOAD_FILE
-    CResource v = CResource("ubw/shaders/vertex/vsh.vs");
+    CResource v = CResource("ubw/shaders/vertex/vsh_ubo.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
     CShader* vshdr = new CShader;
     CShader* fshdr = new CShader;
@@ -72,10 +72,35 @@ void CDRenderer::run()
     glm::mat4 camera = glm::perspective(glm::radians(90.f),1.6f,0.1f,100.f);
     glm::mat4 model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
 
-    GLuint c_u = glGetUniformLocation(prog->handle,"camera");
-    GLuint m_u = glGetUniformLocation(prog->handle,"model");
+    GLuint m_u;
+    m_u = glGetUniformBlockIndex(prog->handle,"MatrixBlock");
+
+    {
+        GLint thing;
+        glGetProgramiv(prog->handle,GL_ACTIVE_UNIFORM_BLOCKS,&thing);
+        cDebug("Uniform blocks: %i",thing);
+
+        glGetProgramiv(prog->handle,GL_ACTIVE_UNIFORMS,&thing);
+        cDebug("Uniforms: %i",thing);
+    }
+
+    CASSERT((m_u!=GL_INVALID_INDEX));
 
     showWindow();
+
+    CGraphicsData::CBlock* matrixBlock =
+            CGraphicsData::coffee_create_block(sizeof(glm::mat4)*3,2);
+    matrixBlock->propertySizes[0] = sizeof(glm::mat4);
+    matrixBlock->propertySizes[1] = sizeof(glm::mat4);
+
+    matrixBlock->setPropertyData(0,&model,sizeof(glm::mat4));
+    matrixBlock->setPropertyData(1,&camera,sizeof(glm::mat4));
+
+    CBuffer matrixBuffer;
+    matrixBuffer.create();
+    matrixBuffer.bufferType = GL_UNIFORM_BUFFER;
+    matrixBuffer.bind();
+    matrixBuffer.store(GL_UNIFORM_BUFFER,matrixBlock->dataSize(),matrixBlock->dataPtr(),GL_DYNAMIC_STORAGE_BIT);
 
     bufm.vao()->bind();
     pip->bind();
@@ -83,11 +108,14 @@ void CDRenderer::run()
     glClearColor(0.175f,0.175f,0.175f,1.f);
     glViewport(0,0,1280,720);
 
-    double mtime = 0.0;
+    bigscalar mtime = 0.0;
     CElapsedTimerMicro *t = new CElapsedTimerMicro;
 
     setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
+
+    matrixBuffer.bind();
+    glUniformBlockBinding(prog->handle,m_u,0);
 
     while(!closeFlag()){
 
@@ -99,8 +127,10 @@ void CDRenderer::run()
 
         model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
 
-        glProgramUniformMatrix4fv(prog->handle,c_u,1,GL_FALSE,reinterpret_cast<GLfloat*>(&camera));
-        glProgramUniformMatrix4fv(prog->handle,m_u,1,GL_FALSE,reinterpret_cast<GLfloat*>(&model));
+        matrixBuffer.bind();
+        matrixBuffer.subStore(0,sizeof(glm::mat4),&model);
+
+        glBindBufferRange(GL_UNIFORM_BUFFER,0,matrixBuffer.handle,0,matrixBuffer.size);
 
         glDrawElements(GL_TRIANGLES,bufm.elements,GL_UNSIGNED_INT,0);
         if(contextTime()>mtime){
@@ -165,6 +195,9 @@ CGLState *CDRenderer::_dump_state() const
 
     glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&t);
     state->array_buffer = t;
+
+    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING,&t);
+    state->uniform_buffer = t;
 
     glGetIntegerv(GL_PROGRAM_PIPELINE_BINDING,&t);
     state->pipeline_obj = t;

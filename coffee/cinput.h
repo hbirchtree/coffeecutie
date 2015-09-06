@@ -75,7 +75,7 @@ struct CIMouseEvent
         //buttons up to 255 are perfectly fine
     };
     uint8_t keyCode = NoButton;
-    double x = 0.f,y = 0.f; // Position where event occurred
+    bigscalar x = 0.f,y = 0.f; // Position where event occurred
 };
 struct CIScrollEvent
 {

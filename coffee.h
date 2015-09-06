@@ -18,6 +18,8 @@
 
 namespace Coffee{
 //Core typedefs
+//Small letters = basic type, mostly C types
+//Big letters = class/struct type, mostly C++ types
 typedef float              scalar;
 typedef double             bigscalar;
 typedef char               byte;
@@ -27,7 +29,7 @@ typedef char*              cstring_w;
 //Wide string
 typedef const int16_t*     cwstring;
 typedef int16_t*           cwstring_w;
-//std::string can be switched for other string types, like QString
+//Can be switched for other string types from libraries
 typedef std::string CString;
 //
 
@@ -137,8 +139,16 @@ struct CVec2{
         this->y = y;
     }
     CVec2(){}
-    scalar x;
-    scalar y;
+    union{
+        scalar x;
+        scalar s;
+        scalar u;
+    };
+    union{
+        scalar y;
+        scalar t;
+        scalar v;
+    };
 };
 struct CVec3{
     CVec3(scalar x,scalar y,scalar z){
@@ -147,9 +157,24 @@ struct CVec3{
         this->z = z;
     }
     CVec3(){}
-    scalar x;
-    scalar y;
-    scalar z;
+    union{
+        scalar x;
+        scalar r;
+        scalar s;
+        scalar u;
+    };
+    union{
+        scalar y;
+        scalar g;
+        scalar t;
+        scalar v;
+    };
+    union{
+        scalar z;
+        scalar b;
+        scalar p;
+        scalar w;
+    };
 };
 struct CVec4{
     CVec4(scalar x,scalar y,scalar z,scalar w){
@@ -159,10 +184,22 @@ struct CVec4{
         this->w = w;
     }
     CVec4(){}
-    scalar x;
-    scalar y;
-    scalar z;
-    scalar w;
+    union{
+        scalar x;
+        scalar r;
+    };
+    union{
+        scalar y;
+        scalar g;
+    };
+    union{
+        scalar z;
+        scalar b;
+    };
+    union{
+        scalar w;
+        scalar a;
+    };
 };
 struct CQuat{
     CQuat(scalar w,scalar x,scalar y,scalar z){

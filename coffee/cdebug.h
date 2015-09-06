@@ -248,12 +248,12 @@ private:
         return tv.tv_sec*1000000+tv.tv_usec;
     }
 };
-class CElapsedTimerD : public _coffee_elapsed_timer_template<double>
+class CElapsedTimerD : public _coffee_elapsed_timer_template<bigscalar>
 {
 private:
-    double _curr_time(){
+    bigscalar _curr_time(){
         timeval tv = _tv();
-        return (double)tv.tv_sec+(double)tv.tv_usec/1000000.0;
+        return (bigscalar)tv.tv_sec+(bigscalar)tv.tv_usec/1000000.0;
     }
 };
 
