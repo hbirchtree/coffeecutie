@@ -13,12 +13,12 @@ namespace CAssimp {
 
 struct CAssimpMaterial
 {
-    const char*     name          = nullptr;
-    uint16_t        numProperties = 0;
-    uint32_t**      propertySizes = nullptr;
-    const char*     propertyData  = nullptr;
+    const char*             name            = nullptr;
+    uint16_t                numProperties   = 0;
+    const uint32_t* const*  propertySizes   = nullptr;
+    const char*             propertyData    = nullptr;
     //User-defined types, differentiates bool, bytes, int and float
-    uint8_t*        propertyTypes = nullptr;
+    const uint8_t*          propertyTypes   = nullptr;
 };
 
 struct CAssimpMesh
@@ -27,12 +27,13 @@ struct CAssimpMesh
         //Struct at offset=0
         //free() is called on the CAssimpMesh struct ptr
 {
-    const char*   name       = nullptr;
+    const char*         name            = nullptr;
 
-    uint8_t       numBuffers = 0;
+    uint8_t             numBuffers      = 0;
     //Applies to the below lists
-    const char**  buffers    = nullptr;
-    const uint8_t*bufferType = nullptr;
+    const char* const*  buffers         = nullptr;
+    const uint8_t*      bufferType      = nullptr;
+    const uint32_t*     bufferSize      = nullptr;
 
     enum BufferType
     {
@@ -85,12 +86,34 @@ struct CAssimpData
     uint32_t            numTextures     = 0;
     uint32_t            numAnimations   = 0;
 
-    CAssimpMesh*        meshes      = nullptr;
-    CAssimpMaterial*    materials   = nullptr;
-    CAssimpCamera*      cameras     = nullptr;
-    CAssimpLight*       lights      = nullptr;
-    CAssimpTexture*     textures    = nullptr;
-    CAssimpAnimation*   animations  = nullptr;
+    CAssimpMesh**       meshes      = nullptr;
+    CAssimpMaterial**   materials   = nullptr;
+    CAssimpCamera**     cameras     = nullptr;
+    CAssimpLight**      lights      = nullptr;
+    CAssimpTexture**    textures    = nullptr;
+    CAssimpAnimation**  animations  = nullptr;
+
+    void freeData(){
+        size_t i;
+        for(i=0;i<numMeshes;i++)
+            free(meshes[i]);
+        free(meshes);
+        for(i=0;i<numMaterials;i++)
+            free(materials[i]);
+        free(materials);
+        for(i=0;i<numCameras;i++)
+            free(cameras[i]);
+        free(cameras);
+        for(i=0;i<numLights;i++)
+            free(lights[i]);
+        free(lights);
+        for(i=0;i<numTextures;i++)
+            free(textures[i]);
+        free(textures);
+        for(i=0;i<numAnimations;i++)
+            free(animations[i]);
+        free(animations);
+    }
 };
 
 } // namespace CAssimp

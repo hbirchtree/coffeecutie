@@ -99,4 +99,5 @@ HEADERS += \
     coffee_impl/assimp/cassimpimporters.h \
     coffee_impl/storage/cdatastore.h \
     coffee_impl/assimp/assimpfun.h \
-    coffee_impl/assimp/cassimptypes.h
+    coffee_impl/assimp/cassimptypes.h \
+    coffee_impl/assimp/cassimploader.h

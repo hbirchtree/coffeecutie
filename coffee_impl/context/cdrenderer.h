@@ -5,6 +5,11 @@
 #include "coffee_impl/functional/cqueuerunner.h"
 
 namespace Coffee {
+
+namespace CGraphicsWrappers{
+struct CGLState;
+}
+
 namespace CDisplay {
 
 class CDRenderer : public CGLFWRenderer
@@ -17,6 +22,8 @@ public:
     void run(WindowState state, CSize resolution, int monitor = 0);
 
     void glbindingCallbackInternal(CGLReport* report) const;
+private:
+    CGLState* _dump_state() const;
 };
 
 } // namespace CDisplay

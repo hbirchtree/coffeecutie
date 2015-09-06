@@ -41,6 +41,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasFaces()){
         bufferCnt++;
+        j=0;
         for(i=0;i<faces;i++)
             j+=meshdata->mFaces[i].mNumIndices;
         bufferSize+=j*sizeof(uint32_t);
@@ -55,18 +56,28 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
 
     bufferSize+=bufferCnt*sizeof(uint8_t);
+    bufferSize+=bufferCnt*sizeof(uint32_t);
     bufferSize+=bufferCnt*sizeof(char*);
 
-    char* buffer = reinterpret_cast<char*>(malloc(bufferSize));
+    char* buffer = reinterpret_cast<char*>(calloc(1,bufferSize));
 
     CAssimpMesh* mesh = reinterpret_cast<CAssimpMesh*>(&buffer[0]);
 
     //We use bufferSize as a ptr in the buffer now
     bufferSize = sizeof(CAssimpMesh);
 
+    mesh->numBuffers = bufferCnt;
+
     uint8_t* typeBuffer = reinterpret_cast<uint8_t*>(&buffer[bufferSize]);
+    mesh->bufferType = typeBuffer;
     bufferSize+=bufferCnt*sizeof(uint8_t);
+
+    uint32_t* sizeBuffer = reinterpret_cast<uint32_t*>(&buffer[bufferSize]);
+    mesh->bufferSize = sizeBuffer;
+    bufferSize+=bufferCnt*sizeof(uint32_t);
+
     char** listBuffer = reinterpret_cast<char**>(&buffer[bufferSize]);
+    mesh->buffers = listBuffer;
     bufferSize+=bufferCnt*sizeof(char*);
 
     //bufferCnt is the index for buffers
@@ -75,6 +86,8 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
     if(meshdata->HasPositions()){
         //Positions
+        typeBuffer[bufferCnt] = CAssimpMesh::PositionType;
+        sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
         CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
 
@@ -90,6 +103,8 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasNormals()){
         //Normals
+        typeBuffer[bufferCnt] = CAssimpMesh::NormalType;
+        sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
         CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
 
@@ -106,6 +121,8 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     if(meshdata->HasTangentsAndBitangents()){
         {
             //Tangents
+            typeBuffer[bufferCnt] = CAssimpMesh::BitanType;
+            sizeBuffer[bufferCnt] = vertices;
             listBuffer[bufferCnt] = &buffer[bufferSize];
             CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
 
@@ -122,6 +139,8 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
         {
             //Bitangents
+            typeBuffer[bufferCnt] = CAssimpMesh::TangentType;
+            sizeBuffer[bufferCnt] = vertices;
             listBuffer[bufferCnt] = &buffer[bufferSize];
             CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
 
@@ -138,6 +157,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasFaces()){
         //Face indices
+        typeBuffer[bufferCnt] = CAssimpMesh::IndexType;
         listBuffer[bufferCnt] = &buffer[bufferSize];
         uint32_t* list = reinterpret_cast<uint32_t*>(listBuffer[bufferCnt]);
 
@@ -148,11 +168,15 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
                 k++;
             }
 
+        sizeBuffer[bufferCnt] = k;
+
         bufferSize+=k*sizeof(uint32_t);
         bufferCnt++;
     }
     if(meshdata->HasTextureCoords(0)){
         //Texture coordinates
+        typeBuffer[bufferCnt] = CAssimpMesh::TextCoordType;
+        sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
         CVec2* list = reinterpret_cast<CVec2*>(listBuffer[bufferCnt]);
 
@@ -166,7 +190,9 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
         bufferCnt++;
     }
     if(meshdata->HasVertexColors(0)){
-        //Normals
+        //Vertex colors
+        typeBuffer[bufferCnt] = CAssimpMesh::VColorType;
+        sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
         CVec4* list = reinterpret_cast<CVec4*>(listBuffer[bufferCnt]);
 

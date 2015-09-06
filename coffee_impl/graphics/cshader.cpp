@@ -3,6 +3,16 @@
 namespace Coffee {
 namespace CGraphicsWrappers {
 
+void CPipeline::bind()
+{
+    glBindProgramPipeline(handle);
+}
+
+void CPipeline::unbind()
+{
+    glBindProgramPipeline(0);
+}
+
 bool CPipeline::create()
 {
     glGenProgramPipelines(1,&handle);

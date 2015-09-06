@@ -19,6 +19,9 @@ struct CPipeline
     GLuint handle = 0;
     UseProgramStageMask stages;
 
+    void bind();
+    void unbind();
+
     bool create();
     void free();
     void attachStages(CShaderStageProgram *shader, UseProgramStageMask bits);

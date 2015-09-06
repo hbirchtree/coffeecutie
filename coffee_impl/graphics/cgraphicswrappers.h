@@ -25,11 +25,29 @@ struct CGLReport
     const char* message;
 };
 
+struct CGLState
+        //A partial state dump of OpenGL bindings and etc.
+{
+    GLuint      vertex_array    = 0;
+    GLuint      array_buffer    = 0;
+    GLuint      element_buffer  = 0;
+    GLuint      program_obj     = 0;
+    GLuint      pipeline_obj    = 0;
+};
+
 struct CBuffer{
     GLuint      handle  = 0;
     GLsizeiptr  size    = 0;
     GLenum      bufferType = GL_ARRAY_BUFFER;
     BufferStorageMask flags = GL_DYNAMIC_STORAGE_BIT;
+
+    void create(){
+        glGenBuffers(1,&handle);
+    }
+    void free(){
+        glDeleteBuffers(1,&handle);
+        handle = 0;
+    }
 
     void bind(){
         glBindBuffer(bufferType,handle);
@@ -66,6 +84,13 @@ struct CBuffer{
 struct CVertexArrayObject{
     GLuint      handle  = 0;
     CBuffer**   buffers = nullptr;
+
+    void create(){
+        glGenVertexArrays(1,&handle);
+    }
+    void free(){
+        glDeleteVertexArrays(1,&handle);
+    }
 
     void bind(){
         glBindVertexArray(handle);

@@ -7,7 +7,7 @@
 
 #include "assimpfun.h"
 
-//#define CASSIMP_MULTITHREAD
+#define CASSIMP_MULTITHREAD
 
 namespace Coffee {
 namespace CResourceTypes {
@@ -36,6 +36,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
         cWarning("Failed to import scene \"%s\": %s",
                source->resource().c_str(),
                importer.GetErrorString());
+        return nullptr;
     }else{
         cMsg("Assimp","Scene imported: cam=%i,lgt=%i,msh=%i,mat=%i,anm=%i,txt=%i",
              scene->mNumCameras,scene->mNumLights,
@@ -67,16 +68,23 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
     }
 #endif
 
-    for(CAssimpMesh* mesh : meshes){
-        cDebug("Mesh name: %s",mesh->name);
-        free(mesh);
+    CAssimpData* data = new CAssimpData;
+
+    {
+        data->numMeshes = meshes.size();
+        data->meshes    = reinterpret_cast<CAssimpMesh**>(calloc(meshes.size(),sizeof(CAssimpMesh*)));
+        i=0;
+        for(CAssimpMesh* mesh : meshes){
+            data->meshes[i] = mesh;
+            i++;
+        }
     }
 
     cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
 
     importer.FreeScene();
 
-    return nullptr;
+    return data;
 }
 
 } // namespace CAssimp

@@ -28,7 +28,7 @@ static std::string cStringFormat(const char* fmt, Arg... args);
 namespace CDebugHelpers
 {
 static char* coffee_demangle_symbol(char* sym,bool* success){
-    int stat;
+    int stat = 0;
     char* demangled = abi::__cxa_demangle(sym,nullptr,nullptr,&stat);
     if(stat == 0){
         *success = true;
