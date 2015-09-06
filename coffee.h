@@ -14,7 +14,7 @@
 //For unused variables
 #define C_UNUSED(v) do{(void)(v);}while(0);
 //Assertion for unit tests
-#define CASSERT(exp) (!exp)?throw std::runtime_error("Assert failed"):fprintf(stderr,"Assert passed\n");
+#define CASSERT(exp) if(!exp)throw std::runtime_error("Assert failed");
 
 namespace Coffee{
 //Core typedefs
@@ -172,10 +172,10 @@ struct CQuat{
         this->w = w;
     }
     CQuat(){}
-    scalar w;
     scalar x;
     scalar y;
     scalar z;
+    scalar w;
 };
 }
 

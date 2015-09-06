@@ -102,4 +102,5 @@ HEADERS += \
     coffee_impl/assimp/assimpfun.h \
     coffee_impl/assimp/cassimptypes.h \
     coffee_impl/assimp/cassimploader.h \
-    coffee_impl/graphics/cgraphicsdata.h
+    coffee_impl/graphics/cgraphicsdata.h \
+    unit_tests/data_types.h

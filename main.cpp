@@ -7,6 +7,8 @@
 #include "coffee_impl/context/cdrenderer.h"
 #include "coffee_impl/graphics/cgraphicsdata.h"
 
+#include "unit_tests/data_types.h"
+
 using namespace Coffee::CFunctional;
 using namespace Coffee::CResources;
 using namespace Coffee::CDisplay;
@@ -27,7 +29,7 @@ int main(int argc, char *argv[])
     //Created so that the destructor closes the file
     Coffee::CoffeeInit();
 
-    CASSERT((1>2));
+    CoffeeTests::run_tests();
 
     cDebug("CResource: %ld",sizeof(CResource));
     cDebug("CShader: %ld",sizeof(CShader));
