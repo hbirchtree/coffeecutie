@@ -39,7 +39,7 @@ struct CIKeyEvent
 
     uint32_t keyCode  = 0;
     uint32_t scanCode = 0;
-    uint32_t modifier = NoModifier; // Modifier keys, flags
+    uint32_t modifier = 0; // Modifier keys, flags
 };
 struct CIMouseEvent
 {
@@ -54,7 +54,7 @@ struct CIMouseEvent
     };
     uint8_t type = 0;
 
-    uint8_t modifier = CIKeyEvent::NoModifier;
+    uint8_t modifier = 0;
 
     enum MouseButton
     {
@@ -81,7 +81,7 @@ struct CIWriteEvent
 struct CIJoyState
 {
     uint8_t buttons         = 0;
-    uint8_t axes            = 0;Unknown
+    uint8_t axes            = 0;
     uint8_t* buttonStates   = nullptr;
     scalar* axeStates       = nullptr;
 };

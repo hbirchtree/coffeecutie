@@ -81,7 +81,7 @@ public:
     virtual void swapBuffers() = 0;
     virtual void pollEvents()  = 0;
 
-    virtual void eventHandle(CDEvent* event) = 0;
+    virtual void eventWHandle(CDEvent* event) = 0;
 };
 
 class CDQueueRendererBase : public CDRendererBase

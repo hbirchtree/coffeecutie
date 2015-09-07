@@ -22,6 +22,9 @@ public:
     void run(WindowState state, CSize resolution, int monitor = 0);
 
     void glbindingCallbackInternal(CGLReport* report) const;
+
+    void eventWHandle(CDEvent *event);
+    void eventHandle(CIEvent *event);
 private:
     CGLState* _dump_state() const;
 };

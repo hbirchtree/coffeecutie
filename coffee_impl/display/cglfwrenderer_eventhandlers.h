@@ -49,6 +49,7 @@ inline static void _inputEventHandle(CIEvent::EventType type, GLFWwindow* win,
     _createEvent(type,&data,&size,idata,isize);
 
     CIEvent* ev = reinterpret_cast<CIEvent*>(data);
+    ptr->eventHandle(ev);
 
     free(data);
 }
@@ -63,7 +64,8 @@ inline static void _windowEventHandle(CDEvent::EventType type, GLFWwindow* win,
 
     _createWEvent(type,&data,&size,idata,isize);
 
-    CDEvent* ev = reinterpret_cast<CIEvent*>(data);
+    CDEvent* ev = reinterpret_cast<CDEvent*>(data);
+    ptr->eventWHandle(ev);
 
     free(data);
 }

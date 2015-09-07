@@ -184,6 +184,16 @@ void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
     free(report);
 }
 
+void CDRenderer::eventWHandle(CDEvent *event)
+{
+
+}
+
+void CDRenderer::eventHandle(CIEvent *event)
+{
+
+}
+
 CGLState *CDRenderer::_dump_state() const
 {
     CGLState *state = new CGLState;

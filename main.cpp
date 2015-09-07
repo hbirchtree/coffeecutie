@@ -29,9 +29,9 @@ int main(int argc, char *argv[])
         std::cout << argv[i] << std::endl;
     }
 
-    //Created so that the destructor closes the file
+    //Sets up core dumping
     Coffee::CoffeeInit();
-
+    //Checks that the platform is sane
     CoffeeTests::run_tests();
 
     CElapsedTimer timer;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
-    //Just for prototyping, we'll be looking at std::thread later
+    //Magic happens here
     std::future<void> renturn = CThreading::runAsync<void>([=](){
         renderer->run(CDRenderer::Windowed,CSize(1280,720),0);
     });
