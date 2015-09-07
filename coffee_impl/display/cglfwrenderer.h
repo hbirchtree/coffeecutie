@@ -75,6 +75,7 @@ private:
     CString m_vendorString;
     CString m_versionString;
     CString m_contextString;
+    int m_libraryRevision;
 
 };
 

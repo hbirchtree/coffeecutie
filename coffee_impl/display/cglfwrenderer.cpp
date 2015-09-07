@@ -232,7 +232,10 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     cMsg("GLFW","Initialized");
 
     //Check for extensions! Quick!
+    cMsg("glbinding","Initializing glbinding");
     glbinding::Binding::initialize(true);
+
+    cMsg("glbinding","Initialized");
 
     {
         cDebug("Now printing supported extensions according to glbinding");
@@ -248,8 +251,8 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,1);
     glfwWindowHint(GLFW_VISIBLE,false);
     glfwWindowHint(GLFW_RESIZABLE,true);
 
@@ -327,13 +330,22 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     //GLBINDING BEGINS
     cMsg("glbinding","Initializing glbinding");
 
-    m_rendererString = glbinding::ContextInfo::renderer();
-    m_vendorString = glbinding::ContextInfo::vendor();
-    m_versionString = glbinding::ContextInfo::version().toString();
+    m_rendererString        = glbinding::ContextInfo::renderer();
+    m_vendorString          = glbinding::ContextInfo::vendor();
+    m_versionString         = glbinding::ContextInfo::version().toString();
+    m_libraryRevision       = glbinding::Meta::glRevision();
 
     cMsg("glbinding","Obtained context information");
 
-    cDebug("GL_ARB_separate_shader_objects: %i",requestGLExtension("GL_ARB_separate_shader_objects"));
+    cMsg("glbinding","Currently running OpenGL revision: %i",m_libraryRevision);
+
+#ifdef GLBINDING_INVESTIGATION
+    glbinding::setCallbackMask(glbinding::CallbackMask::After);
+
+    glbinding::setAfterCallback([](const glbinding::FunctionCall& call){
+        printf("GL call: %s\n",call.function->name());
+    });
+#endif
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glbindingCallbackDirect,this);

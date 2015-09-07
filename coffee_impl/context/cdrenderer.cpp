@@ -72,8 +72,9 @@ void CDRenderer::run()
     glm::mat4 camera = glm::perspective(glm::radians(90.f),1.6f,0.1f,100.f);
     glm::mat4 model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
 
-    GLuint m_u;
-    m_u = glGetUniformBlockIndex(prog->handle,"MatrixBlock");
+    CUniformBlock matrices;
+    matrices.blockBinding = 0;
+    matrices.shaderIndex = glGetUniformBlockIndex(prog->handle,"MatrixBlock");
 
     {
         GLint thing;
@@ -84,7 +85,7 @@ void CDRenderer::run()
         cDebug("Uniforms: %i",thing);
     }
 
-    CASSERT((m_u!=GL_INVALID_INDEX));
+    CASSERT((matrices.shaderIndex!=GL_INVALID_INDEX));
 
     showWindow();
 
@@ -99,8 +100,9 @@ void CDRenderer::run()
     CBuffer matrixBuffer;
     matrixBuffer.create();
     matrixBuffer.bufferType = GL_UNIFORM_BUFFER;
+    matrixBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
     matrixBuffer.bind();
-    matrixBuffer.store(GL_UNIFORM_BUFFER,matrixBlock->dataSize(),matrixBlock->dataPtr(),GL_DYNAMIC_STORAGE_BIT);
+    matrixBuffer.store(matrixBlock->dataSize(),matrixBlock->dataPtr());
 
     bufm.vao()->bind();
     pip->bind();
@@ -115,7 +117,7 @@ void CDRenderer::run()
     cMsg("Coffee","Init time: %fs",contextTime());
 
     matrixBuffer.bind();
-    glUniformBlockBinding(prog->handle,m_u,0);
+    glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
 
     while(!closeFlag()){
 
@@ -130,7 +132,7 @@ void CDRenderer::run()
         matrixBuffer.bind();
         matrixBuffer.subStore(0,sizeof(glm::mat4),&model);
 
-        glBindBufferRange(GL_UNIFORM_BUFFER,0,matrixBuffer.handle,0,matrixBuffer.size);
+        matrixBuffer.bindRange();
 
         glDrawElements(GL_TRIANGLES,bufm.elements,GL_UNSIGNED_INT,0);
         if(contextTime()>mtime){

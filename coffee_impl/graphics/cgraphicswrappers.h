@@ -37,10 +37,10 @@ struct CGLState
 };
 
 struct CBuffer{
-    GLuint      handle  = 0;
-    GLsizeiptr  size    = 0;
-    GLenum      bufferType = GL_ARRAY_BUFFER;
-    BufferStorageMask flags = GL_DYNAMIC_STORAGE_BIT;
+    GLuint      handle      = 0;
+    GLsizeiptr  size        = 0;
+    GLenum      bufferType  = GL_NONE;
+    BufferStorageMask flags;
 
     void create(){
         glGenBuffers(1,&handle);
@@ -52,6 +52,12 @@ struct CBuffer{
 
     void bind(){
         glBindBuffer(bufferType,handle);
+    }
+    void bindRange(GLsizeiptr offset, GLsizeiptr size){
+        glBindBufferRange(bufferType,0,handle,offset,size);
+    }
+    void bindRange(){ //Convenience for typical buffers
+        bindRange(0,size);
     }
     void unbind(){
         glBindBuffer(bufferType,0);
@@ -90,6 +96,14 @@ struct CBuffer{
     void invalidate(GLintptr offset, GLsizeiptr size){
         glInvalidateBufferSubData(handle,offset,size);
     }
+};
+
+struct CSubBuffer
+{
+    CBuffer*    parent      = nullptr;
+    void*       dataPtr     = nullptr;
+    GLsizeiptr  size        = 0;
+    GLenum      bufferType  = GL_NONE;
 };
 
 struct CVertexArrayObject{
@@ -142,7 +156,7 @@ struct CUniformValue{
         MatrixTranspose = 0b10,
     };
 
-    CString name;
+    cstring name    = nullptr;
     uint8_t size    = 0; //Uniforms should not be larger than this, right? Right..?
     void* data      = nullptr;
     uint8_t flags   = 0;
@@ -172,17 +186,18 @@ struct CUniformValue{
         case sizeof(GLfloat)*16:
             glProgramUniformMatrix4fv(program,location,1,matrix_transpose,data);
             break;
-
         }
     }
 };
 
 struct CUniformBlock{
-    uint32_t size   = 0;
-    CString name;
-    void* data      = nullptr;
-    uint16_t numValues = 0;
-    CUniformValue** values = nullptr;
+    //A CBuffer is created to correspond with these objects
+    //It is beneficial to create a larger buffer
+    GLuint blockBinding         = 0;
+    GLuint shaderIndex          = 0;
+
+    uint32_t size               = 0;
+    cstring name                = nullptr;
 };
 
 struct CFramebuffer; //Implement this!
