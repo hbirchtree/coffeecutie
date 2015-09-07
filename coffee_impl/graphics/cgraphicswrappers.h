@@ -40,7 +40,7 @@ struct CBuffer{
     GLuint      handle      = 0;
     GLsizeiptr  size        = 0;
     GLenum      bufferType  = GL_NONE;
-    BufferStorageMask flags;
+    BufferStorageMask flags = (BufferStorageMask)0;
 
     void create(){
         glGenBuffers(1,&handle);
@@ -53,11 +53,11 @@ struct CBuffer{
     void bind(){
         glBindBuffer(bufferType,handle);
     }
-    void bindRange(GLsizeiptr offset, GLsizeiptr size){
-        glBindBufferRange(bufferType,0,handle,offset,size);
+    void bindRange(GLuint index, GLsizeiptr offset, GLsizeiptr size){
+        glBindBufferRange(bufferType,index,handle,offset,size);
     }
-    void bindRange(){ //Convenience for typical buffers
-        bindRange(0,size);
+    void bindRange(GLuint index){ //Convenience for typical buffers
+        bindRange(index,0,size);
     }
     void unbind(){
         glBindBuffer(bufferType,0);

@@ -104,8 +104,8 @@ void CDRenderer::run()
     matrixBuffer.bind();
     matrixBuffer.store(matrixBlock->dataSize(),matrixBlock->dataPtr());
 
-    bufm.vao()->bind();
     pip->bind();
+    bufm.vao()->bind();
     glCullFace(GL_BACK);
     glClearColor(0.175f,0.175f,0.175f,1.f);
     glViewport(0,0,1280,720);
@@ -132,9 +132,9 @@ void CDRenderer::run()
         matrixBuffer.bind();
         matrixBuffer.subStore(0,sizeof(glm::mat4),&model);
 
-        matrixBuffer.bindRange();
+        matrixBuffer.bindRange(matrices.blockBinding);
 
-        glDrawElements(GL_TRIANGLES,bufm.elements,GL_UNSIGNED_INT,0);
+        bufm.draw();
         if(contextTime()>mtime){
             cDebug("Render time: %lldus",t->elapsed());
             mtime = contextTime()+1.0;
