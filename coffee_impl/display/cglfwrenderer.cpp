@@ -191,6 +191,11 @@ bool CGLFWRenderer::closeFlag()
     return glfwWindowShouldClose(m_ctxt->window);
 }
 
+bool CGLFWRenderer::requestGLExtension(cstring extension)
+{
+    return glfwExtensionSupported(extension);
+}
+
 void CGLFWRenderer::swapBuffers()
 {
     glfwSwapBuffers(m_ctxt->window);
@@ -243,8 +248,8 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,1);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,3);
     glfwWindowHint(GLFW_VISIBLE,false);
     glfwWindowHint(GLFW_RESIZABLE,true);
 
@@ -327,6 +332,8 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     m_versionString = glbinding::ContextInfo::version().toString();
 
     cMsg("glbinding","Obtained context information");
+
+    cDebug("GL_ARB_separate_shader_objects: %i",requestGLExtension("GL_ARB_separate_shader_objects"));
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glbindingCallbackDirect,this);

@@ -53,6 +53,8 @@ public:
 
     bool closeFlag();
 
+    bool requestGLExtension(cstring extension);
+
     void swapBuffers();
     void pollEvents();
 
