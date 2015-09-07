@@ -3,6 +3,7 @@
 
 #include "coffee/cdebug.h"
 #include "coffee/cfiles.h"
+#include "coffee/cfunctional.h"
 #include "coffee_impl/graphics/cshader.h"
 #include "coffee_impl/context/cdrenderer.h"
 #include "coffee_impl/graphics/cgraphicsdata.h"
@@ -39,17 +40,11 @@ int main(int argc, char *argv[])
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     //Just for prototyping, we'll be looking at std::thread later
-    renderer->run(CDRenderer::Windowed,CSize(1280,720),0);
-//    QFuture<void> rendererFuture = QtConcurrent::run(
-//                QThreadPool::globalInstance(),
-//                renderer,
-//                &CDRenderer::run,
-//                CDRenderer::Windowed,
-//                CSize(1280,720),
-//                0);
+    std::future<void> renturn = CThreading::runAsync<void>([=](){
+        renderer->run(CDRenderer::Windowed,CSize(1280,720),0);
+    });
 
-//    rendererFuture.waitForFinished();
-
+    renturn.wait();
     cDebug("Time: %lld",timer.elapsed());
 
     delete renderer;

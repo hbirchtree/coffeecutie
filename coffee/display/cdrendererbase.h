@@ -80,6 +80,8 @@ public:
     //Render loop flow
     virtual void swapBuffers() = 0;
     virtual void pollEvents()  = 0;
+
+    virtual void eventHandle(CDEvent* event) = 0;
 };
 
 class CDQueueRendererBase : public CDRendererBase

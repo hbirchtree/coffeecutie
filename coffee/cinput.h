@@ -8,8 +8,6 @@ namespace CInput{
 struct CIEvent
 {
     enum EventType {
-        NoEvent      = 0x0,
-
         Mouse        = 0x1,
         Keyboard     = 0x2,
         Joystick     = 0x3,
@@ -17,15 +15,13 @@ struct CIEvent
         Drop         = 0x5, //Drag-and-drop
         Input        = 0x6,
     };
-    uint8_t type = NoEvent;
+    uint8_t type = 0;
 };
 
 struct CIKeyEvent
 {
     enum KeyModifiers
     {
-        NoModifier        = 0,
-
         ShiftModifier     = 0b1,
         CtrlModifier      = 0b10,
         AltModifier       = 0b100,
@@ -33,17 +29,15 @@ struct CIKeyEvent
     };
     enum KeyEventType
     {
-        NoEvent    = 0x0,
-
         Press      = 0x1,
         Release    = 0x2,
         Repeated   = 0x3,
 
         Text       = 0x4,
     };
-    uint8_t type = NoEvent;
+    uint8_t type = 0;
 
-    uint32_t keyCode = 0;
+    uint32_t keyCode  = 0;
     uint32_t scanCode = 0;
     uint32_t modifier = NoModifier; // Modifier keys, flags
 };
@@ -51,8 +45,6 @@ struct CIMouseEvent
 {
     enum MouseEventType
     {
-        NoEvent    = 0x0,
-
         Press      = 0x1,
         Release    = 0x2,
         Move       = 0x3,
@@ -60,21 +52,19 @@ struct CIMouseEvent
         Enter      = 0x4,
         Leave      = 0x5,
     };
-    uint8_t type = NoEvent;
+    uint8_t type = 0;
 
     uint8_t modifier = CIKeyEvent::NoModifier;
 
     enum MouseButton
     {
-        NoButton       = 0x0,
-
         LeftButton     = 0x1,
         MiddleButton   = 0x2,
         RightButton    = 0x3,
 
         //buttons up to 255 are perfectly fine
     };
-    uint8_t keyCode = NoButton;
+    uint8_t keyCode = 0;
     bigscalar x = 0.f,y = 0.f; // Position where event occurred
 };
 struct CIScrollEvent
@@ -90,16 +80,16 @@ struct CIWriteEvent
 
 struct CIJoyState
 {
-    uint8_t buttons = 0;
-    uint8_t axes = 0;
-    uint8_t* buttonStates = nullptr;
-    scalar* axeStates = nullptr;
+    uint8_t buttons         = 0;
+    uint8_t axes            = 0;Unknown
+    uint8_t* buttonStates   = nullptr;
+    scalar* axeStates       = nullptr;
 };
 struct CIJoyInfo
 {
     CString name;
     uint8_t buttons = 0;
-    uint8_t axes = 0;
+    uint8_t axes    = 0;
     scalar* axe_min = nullptr;
     scalar* axe_max = nullptr;
 };
@@ -108,16 +98,14 @@ struct CIDropEvent
 {
     enum DataType
     {
-        Unknown  = 0x0,
-
         Link     = 0x1,
         File     = 0x2,
         Text     = 0x3,
     };
 
-    uint8_t type = Unknown;
-    uint32_t size = 0;
-    void* data = nullptr;
+    uint8_t type    = 0;
+    uint32_t size   = 0;
+    void* data      = nullptr;
 };
 
 }

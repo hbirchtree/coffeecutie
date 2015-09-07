@@ -4,6 +4,17 @@
 #include "coffee/cdebug.h"
 #include "coffee_impl/graphics/cgraphicsdata.h"
 
+#include <glbinding/gl/gl.h>
+
+/*
+ * Most of development has been done purely on 64-bit systems.
+ * I have no idea how it will react to 32-bit.
+ * As such, I have formulated these tests to check for most of the important assumptions
+ *   we are operating under.
+ * If something fails here, the rest will surely not work.
+ *
+ */
+
 namespace CoffeeTests{
 
 static void vector2_test()
@@ -55,19 +66,60 @@ static void quaternion_test()
 
 static void vector_tests()
 {
+    cMsg("Coffee Unit Tests","Vec2 test starting");
     vector2_test();
     cMsg("Coffee Unit Tests","Vec2 test passed");
+    cMsg("Coffee Unit Tests","Vec3 test starting");
     vector3_test();
     cMsg("Coffee Unit Tests","Vec3 test passed");
+    cMsg("Coffee Unit Tests","Vec4 test starting");
     vector4_test();
     cMsg("Coffee Unit Tests","Vec4 test passed");
+    cMsg("Coffee Unit Tests","Quat test starting");
     quaternion_test();
     cMsg("Coffee Unit Tests","Quat test passed");
+}
+
+static void int_tests()
+{
+    //We want this for safe buffer operations
+    CASSERT((sizeof(gl::GLint64)==sizeof(int64_t)));
+    CASSERT((sizeof(gl::GLint)==sizeof(int32_t)));
+    CASSERT((sizeof(gl::GLuint)==sizeof(uint32_t)));
+    CASSERT((sizeof(gl::GLuint64)==sizeof(uint64_t)));
+
+    CASSERT((sizeof(Coffee::byte)==sizeof(gl::GLbyte)));
+    CASSERT((sizeof(char)==sizeof(gl::GLchar)));
+
+    CASSERT((sizeof(uint32_t)==sizeof(int)));
+    CASSERT((sizeof(uint64_t)==sizeof(unsigned long long)));
+
+    CASSERT((sizeof(uintptr_t)==sizeof(void*)));
+}
+
+static void floating_tests()
+{
+    //Just to make sure...
+    CASSERT((sizeof(Coffee::scalar)==sizeof(float)));
+    CASSERT((sizeof(Coffee::bigscalar)==sizeof(double)));
+
+    //I want to know when this is not valid, okay?!
+    CASSERT((sizeof(float)==4));
+    CASSERT((sizeof(double)==8));
+
+    CASSERT((sizeof(float)==sizeof(gl::GLfloat)));
+    CASSERT((sizeof(double)==sizeof(gl::GLdouble)));
 }
 
 static void run_tests()
 {
     vector_tests();
+    cMsg("Coffee Unit Tests","Integer tests starting");
+    int_tests();
+    cMsg("Coffee Unit Tests","Integer tests passed");
+    cMsg("Coffee Unit Tests","Floating-point tests starting");
+    floating_tests();
+    cMsg("Coffee Unit Tests","Floating-point tests passed");
 }
 
 
