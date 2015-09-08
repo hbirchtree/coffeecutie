@@ -43,10 +43,10 @@ static cstring_w coffee_demangle_symbol(cstring_w sym,bool* success)
     }
 }
 
-static cstring_w* coffee_callstack(size_t *length,uint stackreduce = 0)
+static cstring_w* coffee_callstack(szptr *length,uint stackreduce = 0)
 {
     //Initial values, create a valid ptr for callstack
-    size_t callstack_ptr = 0;
+    szptr callstack_ptr = 0;
     cstring_w* callstack = reinterpret_cast<cstring_w*>(malloc(0));
     //Set up for unwind
     unw_cursor_t cur;
@@ -89,19 +89,19 @@ static cstring_w* coffee_callstack(size_t *length,uint stackreduce = 0)
     return callstack;
 }
 
-static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, size_t stacksize)
+static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
     fprintf(stderr,header);
-    for(size_t i=0;i<stacksize;i++){
+    for(szptr i=0;i<stacksize;i++){
         fprintf(stderr,callfmt,callstack[i]);
         free(callstack[i]);
     }
     free(callstack);
 }
 
-static void coffee_free_callstack(cstring_w* callstack, size_t stacksize)
+static void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
 {
-    for(size_t i=0;i<stacksize;i++)
+    for(szptr i=0;i<stacksize;i++)
         free(callstack[i]);
     free(callstack);
 }
@@ -138,7 +138,7 @@ static void cDebugPrint(uint8_t severity,   //Whether we should stderr, stdout o
     //Get call stack
     cstring first = nullptr;
     cstring_w* callstack = nullptr;
-    size_t cs_length;
+    szptr cs_length;
     {
         callstack = CDebugHelpers::coffee_callstack(&cs_length,stackreduce);
         first = (cs_length>0) ? callstack[0] : "[callstack unavailable]";

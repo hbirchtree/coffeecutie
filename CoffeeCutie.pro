@@ -103,4 +103,10 @@ HEADERS += \
     coffee_impl/assimp/cassimptypes.h \
     coffee_impl/assimp/cassimploader.h \
     coffee_impl/graphics/cgraphicsdata.h \
-    unit_tests/data_types.h
+    unit_tests/data_types.h \
+    coffee_impl/graphics/cbuffer.h \
+    coffee_impl/graphics/glbinding.h \
+    coffee_impl/graphics/cvertexarrayobject.h \
+    coffee_impl/graphics/cuniformtypes.h \
+    coffee_impl/graphics/cframebuffer.h \
+    coffee_impl/graphics/ctexture.h

@@ -240,10 +240,13 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     {
         cDebug("Now printing supported extensions according to glbinding");
         cBasicPrint("------| Supported extensions |------");
-        for(GLextension ext : glbinding::Meta::extensions())
+        for(GLextension ext : glbinding::Meta::extensions()){
+            cstring extname = glbinding::Meta::getString(ext).c_str();
             cBasicPrint("Extension: %s, required version: %s",
-                   glbinding::Meta::getString(ext).c_str(),
-                   glbinding::Meta::getRequiringVersion(ext).toString().c_str());
+                        extname,
+                        glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
+                        requestGLExtension(extname));
+        }
         cBasicPrint("------------------------------------");
     }
 

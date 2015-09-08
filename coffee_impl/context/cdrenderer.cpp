@@ -33,7 +33,7 @@ void CDRenderer::run()
 
     CResource testFile("ubw/models/ubw.blend");
     testFile.read_data();
-    CResourceTypes::CAssimp::CAssimpData* res = CResourceTypes::CAssimp::CAssimpImporters::importResource(&testFile,".blend");
+    CResourceTypes::CAssimp::CAssimpData* res = CResourceTypes::CAssimp::CAssimpImporters::importResource(&testFile,"blend");
     testFile.free_data();
 
     CShaderProgram* prog = new CShaderProgram;

@@ -36,9 +36,9 @@ struct CBlock
     uint8_t*    propertyTypes   = nullptr;
     uint16_t*   propertySizes   = nullptr;
 
-    uint16_t dataSize() const;
-    void* dataPtr() const;
-    void setPropertyData(uint16_t index, const void* data, uint16_t size);
+    uint16_t    dataSize        () const;
+    void*       dataPtr         () const;
+    void        setPropertyData (uint16_t index, const void* data, uint16_t size);
 
     void*       data_ptr        = nullptr;
 };
@@ -46,7 +46,7 @@ struct CBlock
 //Datasize: Size of data without struct
 static CBlock* coffee_create_block(uint16_t dataSize, uint16_t numProperties)
 {
-    size_t chunk_size = dataSize
+    szptr chunk_size = dataSize
             +sizeof(CBlock)
             +numProperties*sizeof(uint8_t)
             +numProperties*sizeof(uint16_t);

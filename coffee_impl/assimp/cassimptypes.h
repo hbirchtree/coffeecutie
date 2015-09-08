@@ -94,7 +94,7 @@ struct CAssimpData
     CAssimpAnimation**  animations  = nullptr;
 
     void freeData(){
-        size_t i;
+        szptr i;
         for(i=0;i<numMeshes;i++)
             free(meshes[i]);
         free(meshes);

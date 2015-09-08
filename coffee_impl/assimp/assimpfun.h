@@ -20,11 +20,11 @@ namespace CResourceTypes{
 namespace CAssimp{
 
 static  CAssimpMesh*        importMesh(aiMesh* meshdata){
-    size_t vertices = meshdata->mNumVertices;
-    size_t faces    = meshdata->mNumFaces;
-    size_t i,j,k;
+    szptr vertices = meshdata->mNumVertices;
+    szptr faces    = meshdata->mNumFaces;
+    szptr i,j,k;
 
-    size_t bufferSize = sizeof(CAssimpMesh);
+    szptr bufferSize = sizeof(CAssimpMesh);
     uint bufferCnt    = 0;
 
     if(meshdata->HasPositions()){

@@ -15,18 +15,18 @@ static FILE* coffee_file_open(cstring fname, cstring mode)
     return fopen(fname,mode);
 }
 
-static size_t coffee_file_size(FILE* file)
+static szptr coffee_file_size(FILE* file)
 {
     fseek(file,0,SEEK_END);
-    size_t fsize = ftell(file);
+    szptr fsize = ftell(file);
     rewind(file);
     return fsize;
 }
 
-static cstring_w coffee_file_read(FILE* file, void* ptr, size_t *size, bool textmode = false)
+static cstring_w coffee_file_read(FILE* file, void* ptr, szptr *size, bool textmode = false)
 {
-    size_t esize = CFiles::coffee_file_size(file);
-    size_t msize = esize*sizeof(byte);
+    szptr esize = CFiles::coffee_file_size(file);
+    szptr msize = esize*sizeof(byte);
 
     //Extra byte for null terminator
     if(textmode)
@@ -44,9 +44,9 @@ static cstring_w coffee_file_read(FILE* file, void* ptr, size_t *size, bool text
     return data;
 }
 
-static bool coffee_file_write(FILE* file, const void* data, size_t size)
+static bool coffee_file_write(FILE* file, const void* data, szptr size)
 {
-    size_t wsize = fwrite(data,sizeof(byte),size,file);
+    szptr wsize = fwrite(data,sizeof(byte),size,file);
 
     if(wsize<size)
         return false;
@@ -78,7 +78,7 @@ struct CResource{
     }
 
     uint8_t flags   = 0;
-    size_t size     = 0;
+    szptr size     = 0;
     void* data      = nullptr;
 
     bool exists(){

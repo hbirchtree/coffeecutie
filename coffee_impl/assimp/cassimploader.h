@@ -18,7 +18,7 @@ struct CBufferedMesh
         m_vao = new CVertexArrayObject;
         m_vao->create();
         m_vao->bind();
-        size_t i,j;
+        szptr i,j;
         for(i=0;i<mesh->numBuffers;i++){
             switch(mesh->bufferType[i]){
             case 1:{

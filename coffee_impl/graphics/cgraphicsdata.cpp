@@ -18,7 +18,7 @@ void CBlock::setPropertyData(uint16_t index, const void *data, uint16_t size)
     CASSERT((index<numProperties));
     CASSERT((size==propertySizes[index]))
 
-    size_t offset = 0;
+    szptr offset = 0;
     for(int i=0;i<index;i++)
         offset+=propertySizes[i];
 

@@ -9,6 +9,7 @@
 #include "coffee_impl/graphics/cgraphicsdata.h"
 
 #include "unit_tests/data_types.h"
+#include "coffee_impl/graphics/ctexture.h"
 
 using namespace Coffee;
 using namespace Coffee::CFunctional;
@@ -25,7 +26,8 @@ int main(int argc, char *argv[])
 //    a.setApplicationVersion("0.0.2.0");
 //    a.setApplicationDisplayName("Coffee Cutie");
 
-    for(int i=0;i<argc;i++){
+    for(int i=0;i<argc;i++)
+    {
         std::cout << argv[i] << std::endl;
     }
 
@@ -36,6 +38,11 @@ int main(int argc, char *argv[])
 
     CElapsedTimer timer;
     timer.start();
+
+    CTextureTools::CTextureData data;
+    CTextureTools::coffee_create_texturesize(&data,1024,1024,1024);
+
+    cDebug("Dimensions: %i",data.dimensions);
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
