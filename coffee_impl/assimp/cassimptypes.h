@@ -40,8 +40,8 @@ struct CAssimpMesh
         PositionType    = 0x1,
         NormalType      = 0x2,
         TextCoordType   = 0x3,
-        BitanType       = 0x4,
-        TangentType     = 0x5,
+        TangentType     = 0x4,
+        BitanType       = 0x5,
 
         IndexType       = 0x6,
 

@@ -77,9 +77,9 @@ void CDRenderer::run()
     camera.zVals.far = 100.f;
     camera.genPerspective();
     CModelTransform model;
-    model.position.z = -0.4f;
+    model.position.z = -1.f;
 
-    model.scale.x = model.scale.y = model.scale.z = 10.f;
+    model.scale.x = model.scale.y = model.scale.z = 1.f;
 
     model.rotation.w = 2.f;
 

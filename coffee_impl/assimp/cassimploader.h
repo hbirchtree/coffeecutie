@@ -38,7 +38,7 @@ struct CBufferedMesh
                 buf.bind();
                 buf.store(GL_ARRAY_BUFFER,mesh->bufferSize[i],
                           mesh->buffers[i],(BufferStorageMask)0);
-                m_vao->addAttribute(0,GL_FLOAT,GL_FALSE,3,0,0);
+                m_vao->addAttribute(2,GL_FLOAT,GL_FALSE,3,0,0);
                 break;
             }
             case 3:{
@@ -48,7 +48,7 @@ struct CBufferedMesh
                 buf.bind();
                 buf.store(GL_ARRAY_BUFFER,mesh->bufferSize[i],
                           mesh->buffers[i],(BufferStorageMask)0);
-                m_vao->addAttribute(0,GL_FLOAT,GL_FALSE,2,0,0);
+                m_vao->addAttribute(1,GL_FLOAT,GL_FALSE,2,0,0);
                 break;
             }
             case 4:{
@@ -58,7 +58,7 @@ struct CBufferedMesh
                 buf.bind();
                 buf.store(GL_ARRAY_BUFFER,mesh->bufferSize[i],
                           mesh->buffers[i],(BufferStorageMask)0);
-                m_vao->addAttribute(0,GL_FLOAT,GL_FALSE,3,0,0);
+                m_vao->addAttribute(3,GL_FLOAT,GL_FALSE,3,0,0);
                 break;
             }
             case 5:{
@@ -68,7 +68,7 @@ struct CBufferedMesh
                 buf.bind();
                 buf.store(GL_ARRAY_BUFFER,mesh->bufferSize[i],
                           mesh->buffers[i],(BufferStorageMask)0);
-                m_vao->addAttribute(0,GL_FLOAT,GL_FALSE,3,0,0);
+                m_vao->addAttribute(4,GL_FLOAT,GL_FALSE,3,0,0);
                 break;
             }
             case 6:{
