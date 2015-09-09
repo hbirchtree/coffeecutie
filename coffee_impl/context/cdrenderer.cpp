@@ -9,6 +9,7 @@
 #include "coffee_impl/assimp/cassimploader.h"
 
 #include "coffee_impl/graphics/cgraphicsdata.h"
+#include "coffee_impl/graphics/cframebuffer.h"
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
@@ -104,6 +105,25 @@ void CDRenderer::run()
     matrixBuffer.bind();
     matrixBuffer.store(matrixBlock->dataSize(),matrixBlock->dataPtr());
 
+    CFramebuffer testFb;
+    testFb.create();
+    testFb.bind();
+
+    CTexture testTex;
+    testTex.textureType = GL_TEXTURE_2D;
+    testTex.levels = 1;
+    testTex.create();
+    testTex.bind();
+    CTextureTools::CTextureData texData;
+    texData.format = GL_RGBA8;
+    CTextureTools::coffee_create_texturesize(&texData,1024,1024);
+    CTextureTools::coffee_texture2d_define(&testTex,&texData);
+
+    testFb.attach2D(&testTex,GL_COLOR_ATTACHMENT0,0,testTex.textureType);
+
+    cDebug("Framebuffer: %i",testFb.valid());
+    testFb.unbind();
+
     pip->bind();
     bufm.vao()->bind();
     glCullFace(GL_BACK);
@@ -149,6 +169,7 @@ void CDRenderer::run()
 
     hideWindow();
 
+    testFb.free();
     bufm.vao()->free();
     pip->free();
 #ifndef LOAD_FILE
@@ -213,6 +234,24 @@ CGLState *CDRenderer::_dump_state() const
 
     glGetIntegerv(GL_PROGRAM_PIPELINE_BINDING,&t);
     state->pipeline_obj = t;
+
+    glGetIntegerv(GL_TEXTURE_BINDING_2D,&t);
+    state->texture_2d = t;
+
+    glGetIntegerv(GL_TEXTURE_BINDING_3D,&t);
+    state->texture_3d = t;
+
+    glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP,&t);
+    state->texture_cube = t;
+
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING,&t);
+    state->fb_all = t;
+
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&t);
+    state->fb_draw = t;
+
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&t);
+    state->fb_read = t;
 
     return state;
 }

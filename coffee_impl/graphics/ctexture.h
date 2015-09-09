@@ -77,8 +77,7 @@ template<typename arg, typename... sizes>
 static void _coffee_create_texturelist(szptr* list, int index, arg subject, sizes... sizelist)
 {
     list[index] = subject;
-    if(sizeof...(sizelist)>0)
-        _coffee_create_texturelist(list,index+1,sizelist...);
+    _coffee_create_texturelist(list,index+1,sizelist...);
 }
 
 template<typename... Sizes>
@@ -89,7 +88,7 @@ static void coffee_create_texturesize(CTextureData* val, Sizes... sizes)
         return;
     val->dimensions = n;
     val->lengths = reinterpret_cast<szptr*>(malloc(sizeof(szptr)*n));
-    _coffee_create_texturelist(val->lengths,sizes...);
+    _coffee_create_texturelist(val->lengths,0,sizes...);
 }
 
 static bool coffee_texture2d_store(CTexture* texture, CTextureData* data)
