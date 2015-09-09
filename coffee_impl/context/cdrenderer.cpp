@@ -146,7 +146,7 @@ void CDRenderer::run()
     setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
-    matrixBuffer.bind();
+
     glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
 
     while(!closeFlag()){
@@ -158,7 +158,7 @@ void CDRenderer::run()
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1)*model.rotation);
         model.genMatrix();
 
-        matrixBuffer.bind();
+//        matrixBuffer.bind();
         matrixBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
         matrixBuffer.bindRange(matrices.blockBinding);

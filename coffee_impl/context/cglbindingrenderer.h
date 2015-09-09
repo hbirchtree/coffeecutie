@@ -12,8 +12,8 @@ public:
     CGLBindingRenderer(CObject* parent);
 
 protected:
-    void bindingPostInit();
     void bindingPreInit();
+    void bindingPostInit();
     void bindingTerminate();
 
     CString m_rendererString;

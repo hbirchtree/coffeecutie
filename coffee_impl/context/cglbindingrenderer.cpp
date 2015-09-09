@@ -31,6 +31,28 @@ CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
 
 }
 
+void CGLBindingRenderer::bindingPreInit()
+{
+    //Check for extensions! Quick!
+    cMsg("glbinding","Initializing glbinding");
+    glbinding::Binding::initialize(true);
+
+    cMsg("glbinding","Initialized");
+
+    {
+        cDebug("Now printing supported extensions according to glbinding");
+        cBasicPrint("------| Supported extensions |------");
+        for(GLextension ext : glbinding::Meta::extensions()){
+            cstring extname = glbinding::Meta::getString(ext).c_str();
+            cBasicPrint("Extension: %s, required version: %s",
+                        extname,
+                        glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
+                        requestGLExtension(extname));
+        }
+        cBasicPrint("------------------------------------");
+    }
+}
+
 void CGLBindingRenderer::bindingPostInit()
 {
     cMsg("glbinding","Initializing glbinding");
@@ -52,28 +74,6 @@ void CGLBindingRenderer::bindingPostInit()
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glbindingCallbackDirect,this);
-}
-
-void CGLBindingRenderer::bindingPreInit()
-{
-    //Check for extensions! Quick!
-    cMsg("glbinding","Initializing glbinding");
-    glbinding::Binding::initialize(true);
-
-    cMsg("glbinding","Initialized");
-
-    {
-        cDebug("Now printing supported extensions according to glbinding");
-        cBasicPrint("------| Supported extensions |------");
-        for(GLextension ext : glbinding::Meta::extensions()){
-            cstring extname = glbinding::Meta::getString(ext).c_str();
-            cBasicPrint("Extension: %s, required version: %s",
-                        extname,
-                        glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
-                        requestGLExtension(extname));
-        }
-        cBasicPrint("------------------------------------");
-    }
 }
 
 void CGLBindingRenderer::bindingTerminate()
