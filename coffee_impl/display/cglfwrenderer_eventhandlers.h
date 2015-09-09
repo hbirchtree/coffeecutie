@@ -49,7 +49,7 @@ inline static void _inputEventHandle(CIEvent::EventType type, GLFWwindow* win,
     _createEvent(type,&data,&size,idata,isize);
 
     CIEvent* ev = reinterpret_cast<CIEvent*>(data);
-    ptr->eventHandle(ev);
+    ptr->eventIHandle(ev);
 
     free(data);
 }

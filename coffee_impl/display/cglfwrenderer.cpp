@@ -2,8 +2,6 @@
 
 #include "cglfwnativefuncs.h"
 #include "cglfwrenderer_eventhandlers.h"
-#include <stdio.h>
-#include "coffee_impl/graphics/cgraphicswrappers.h"
 
 namespace Coffee {
 namespace CDisplay {
@@ -207,20 +205,20 @@ void CGLFWRenderer::pollEvents()
     updateJoysticks();
 }
 
-static void APIENTRY glbindingCallbackDirect(GLenum source, GLenum type,
-                                             GLuint id, GLenum severity,
-                                             GLsizei length, const GLchar* msg,
-                                             const void* userPtr)
-{
-    const CGLFWRenderer* renderer = static_cast<const CGLFWRenderer*>(userPtr);
-    CGLReport *report = reinterpret_cast<CGLReport*>(malloc(sizeof(CGLReport)));
-    report->source = source;
-    report->type = type;
-    report->id = id;
-    report->message = msg;
-    report->severity = severity;
-    renderer->glbindingCallbackInternal(report);
-}
+//static void APIENTRY glbindingCallbackDirect(GLenum source, GLenum type,
+//                                             GLuint id, GLenum severity,
+//                                             GLsizei length, const GLchar* msg,
+//                                             const void* userPtr)
+//{
+//    const CGLFWRenderer* renderer = static_cast<const CGLFWRenderer*>(userPtr);
+//    CGLReport *report = reinterpret_cast<CGLReport*>(malloc(sizeof(CGLReport)));
+//    report->source = source;
+//    report->type = type;
+//    report->id = id;
+//    report->message = msg;
+//    report->severity = severity;
+//    renderer->glbindingCallbackInternal(report);
+//}
 
 void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorIndex)
 {
@@ -231,24 +229,7 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
         cWarning("Failed to initialize GLFW");
     cMsg("GLFW","Initialized");
 
-    //Check for extensions! Quick!
-    cMsg("glbinding","Initializing glbinding");
-    glbinding::Binding::initialize(true);
-
-    cMsg("glbinding","Initialized");
-
-    {
-        cDebug("Now printing supported extensions according to glbinding");
-        cBasicPrint("------| Supported extensions |------");
-        for(GLextension ext : glbinding::Meta::extensions()){
-            cstring extname = glbinding::Meta::getString(ext).c_str();
-            cBasicPrint("Extension: %s, required version: %s",
-                        extname,
-                        glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
-                        requestGLExtension(extname));
-        }
-        cBasicPrint("------------------------------------");
-    }
+    bindingPreInit();
 
     glfwDefaultWindowHints();
 
@@ -330,30 +311,8 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
         delete[] cstring;
     }
 
-    //GLBINDING BEGINS
-    cMsg("glbinding","Initializing glbinding");
+    bindingPostInit();
 
-    m_rendererString        = glbinding::ContextInfo::renderer();
-    m_vendorString          = glbinding::ContextInfo::vendor();
-    m_versionString         = glbinding::ContextInfo::version().toString();
-    m_libraryRevision       = glbinding::Meta::glRevision();
-
-    cMsg("glbinding","Obtained context information");
-
-    cMsg("glbinding","Currently running OpenGL revision: %i",m_libraryRevision);
-
-#ifdef GLBINDING_INVESTIGATION
-    glbinding::setCallbackMask(glbinding::CallbackMask::After);
-
-    glbinding::setAfterCallback([](const glbinding::FunctionCall& call){
-        printf("GL call: %s\n",call.function->name());
-    });
-#endif
-
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(glbindingCallbackDirect,this);
-
-    //GLBINDING ENDS
     m_initMutex.unlock();
 }
 

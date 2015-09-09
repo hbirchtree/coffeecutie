@@ -1,8 +1,7 @@
 #ifndef COFFEE_CDISPLAY_CDRENDERER_H
 #define COFFEE_CDISPLAY_CDRENDERER_H
 
-#include "coffee_impl/display/cglfwrenderer.h"
-#include "coffee_impl/functional/cqueuerunner.h"
+#include "cglbindingrenderer.h"
 
 namespace Coffee {
 
@@ -12,7 +11,7 @@ struct CGLState;
 
 namespace CDisplay {
 
-class CDRenderer : public CGLFWRenderer
+class CDRenderer : public CGLBindingRenderer
 {
 public:
     CDRenderer(CObject* parent = nullptr);
@@ -21,10 +20,10 @@ public:
 
     void run(WindowState state, CSize resolution, int monitor = 0);
 
-    void glbindingCallbackInternal(CGLReport* report) const;
+    void bindingCallback(CGLReport* report) const;
 
     void eventWHandle(CDEvent *event);
-    void eventHandle(CIEvent *event);
+    void eventIHandle(CIEvent *event);
 private:
     CGLState* _dump_state() const;
 };

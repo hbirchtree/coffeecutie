@@ -73,7 +73,8 @@ SOURCES += main.cpp \
     coffee_impl/graphics/cshader.cpp \
     coffee_impl/assimp/cassimpimporters.cpp \
     coffee_impl/storage/cdatastore.cpp \
-    coffee_impl/graphics/cgraphicsdata.cpp
+    coffee_impl/graphics/cgraphicsdata.cpp \
+    coffee_impl/context/cglbindingrenderer.cpp
 
 HEADERS += \
     tests/CubeScape.h \
@@ -109,4 +110,5 @@ HEADERS += \
     coffee_impl/graphics/cvertexarrayobject.h \
     coffee_impl/graphics/cuniformtypes.h \
     coffee_impl/graphics/cframebuffer.h \
-    coffee_impl/graphics/ctexture.h
+    coffee_impl/graphics/ctexture.h \
+    coffee_impl/context/cglbindingrenderer.h

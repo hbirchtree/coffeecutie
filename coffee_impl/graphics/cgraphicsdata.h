@@ -10,21 +10,65 @@
 namespace Coffee{
 namespace CGraphicsData{
 
+struct CZField
+{
+    scalar near = 0.f;
+    scalar far  = 0.f;
+};
+
 struct CGCamera
 {
     enum CameraFlags{
-        OrthographicFlag        = 0b1,
-        PerspectiveFlag         = 0b10,
+        OrthographicFlag        = 0b1, //When off, assume perspective
     };
 
     byte        flags            = 0;
 
     scalar      aspect           = 1.f;
-    CSizeF      zVals;
+    CZField     zVals;
     scalar      fieldOfView      = 90.f;
 
-    CVec3       position;
-    CQuat       rotation;
+    glm::vec3   position;
+    glm::quat   rotation;
+
+    CRectF      orthoview;
+
+    glm::mat4 matrix;
+
+    void genPerspective(){
+        matrix = glm::perspective(glm::radians(fieldOfView),
+                                  aspect,
+                                  zVals.near,zVals.far);
+        rotate();
+        translate();
+    }
+    void genOrthographic(){
+        matrix = glm::ortho(orthoview.x,orthoview.w,orthoview.y,orthoview.h,
+                                  zVals.near,zVals.far);
+        rotate();
+        translate();
+    }
+    void rotate(){
+        matrix *= glm::mat4_cast(rotation);
+    }
+    void translate(){
+        matrix = glm::translate(matrix,position);
+    }
+};
+
+struct CModelTransform
+{
+    glm::vec3   position;
+    glm::quat   rotation;
+    glm::vec3   scale;
+
+    glm::mat4 matrix;
+
+    void genMatrix(){
+        matrix = glm::scale(glm::mat4(),scale);
+        matrix = glm::translate(matrix,position)
+                * glm::mat4_cast(rotation);
+    }
 };
 
 struct CBlock

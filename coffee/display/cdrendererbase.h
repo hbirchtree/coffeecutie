@@ -5,10 +5,18 @@
 #include "coffee/cobject.h"
 #include "coffee/cdisplay.h"
 #include "coffee_impl/functional/cqueuerunner.h"
+#include "coffee/cinput.h"
 
 using namespace Coffee::CInput;
 
 namespace Coffee {
+
+using namespace Coffee::CGraphicsWrappers;
+
+namespace CGraphicsWrappers{
+struct CGLReport;
+}
+
 namespace CDisplay {
 
 class CDRendererBase : public CObject
@@ -43,6 +51,7 @@ public:
 
     CDRendererBase(CObject* parent);
 
+    //Initialization
     virtual void init(WindowState,CSize,int)    = 0; //Initializes the context manager and etc.
     virtual void run()                          = 0;
     virtual void cleanup()                      = 0;
@@ -81,7 +90,15 @@ public:
     virtual void swapBuffers() = 0;
     virtual void pollEvents()  = 0;
 
+    //Event handling
     virtual void eventWHandle(CDEvent* event) = 0;
+    virtual void eventIHandle(CIEvent* event) = 0;
+
+    //OpenGL context functions, may be provided by binding or context manager
+    virtual bool requestGLExtension(cstring extension) = 0;
+    virtual void bindingCallback(CGLReport* report) const = 0;
+    virtual void bindingPreInit() = 0; //Called before context is created
+    virtual void bindingPostInit() = 0; //Called after context is created
 };
 
 class CDQueueRendererBase : public CDRendererBase

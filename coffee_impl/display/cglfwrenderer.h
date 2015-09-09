@@ -3,16 +3,10 @@
 
 #include "coffee/display/cdrendererbase.h"
 #include "coffee/cdebug.h"
-#include "coffee/cinput.h"
 
 #include <mutex>
 
 namespace Coffee {
-
-namespace CGraphicsWrappers{
-struct CGLReport;
-}
-
 namespace CDisplay {
 
 using namespace CGraphicsWrappers;
@@ -62,24 +56,15 @@ public:
     void init(WindowState startState, CSize startSize, int monitorIndex);
     void cleanup();
 
-    virtual void glbindingCallbackInternal(CGLReport* report) const = 0;
-
-    virtual void eventHandle(CIEvent* event) = 0;
-
 protected:
     virtual void updateJoysticks();
+
+    CString m_contextString;
 
 private:
     std::mutex m_initMutex;
     std::thread::id m_contextThread;
     CGLFWContext* m_ctxt = nullptr;
-
-    CString m_rendererString;
-    CString m_vendorString;
-    CString m_versionString;
-    CString m_contextString;
-    int m_libraryRevision;
-
 };
 
 } // namespace CDisplay

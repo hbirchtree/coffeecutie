@@ -13,11 +13,12 @@
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
+using namespace Coffee::CGraphicsData;
 
 namespace Coffee {
 namespace CDisplay {
 
-CDRenderer::CDRenderer(CObject *parent) : CGLFWRenderer(parent)
+CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
 }
 
@@ -69,9 +70,18 @@ void CDRenderer::run()
     res->freeData();
     delete res;
 
-    glm::quat m_rot = glm::quat(2,0,0,0);
-    glm::mat4 camera = glm::perspective(glm::radians(90.f),1.6f,0.1f,100.f);
-    glm::mat4 model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
+    CGCamera camera;
+    camera.fieldOfView = 120.f;
+    camera.aspect = 1.6f;
+    camera.zVals.near = 0.1f;
+    camera.zVals.far = 100.f;
+    camera.genPerspective();
+    CModelTransform model;
+    model.position.z = -0.4f;
+
+    model.scale.x = model.scale.y = model.scale.z = 10.f;
+
+    model.rotation.w = 2.f;
 
     CUniformBlock matrices;
     matrices.blockBinding = 0;
@@ -95,8 +105,8 @@ void CDRenderer::run()
     matrixBlock->propertySizes[0] = sizeof(glm::mat4);
     matrixBlock->propertySizes[1] = sizeof(glm::mat4);
 
-    matrixBlock->setPropertyData(0,&model,sizeof(glm::mat4));
-    matrixBlock->setPropertyData(1,&camera,sizeof(glm::mat4));
+    matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
+    matrixBlock->setPropertyData(1,&camera.matrix,sizeof(glm::mat4));
 
     CBuffer matrixBuffer;
     matrixBuffer.create();
@@ -145,12 +155,11 @@ void CDRenderer::run()
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        m_rot=glm::normalize(glm::quat(2,0,0.01,0)*m_rot);
-
-        model = glm::translate(glm::mat4(),glm::vec3(0,0,-10))*glm::mat4_cast(m_rot)*glm::scale(glm::mat4(),glm::vec3(10,10,10));
+        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1)*model.rotation);
+        model.genMatrix();
 
         matrixBuffer.bind();
-        matrixBuffer.subStore(0,sizeof(glm::mat4),&model);
+        matrixBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
         matrixBuffer.bindRange(matrices.blockBinding);
 
@@ -193,7 +202,7 @@ void CDRenderer::run(WindowState state, CSize resolution, int monitor)
     cleanup();
 }
 
-void CDRenderer::glbindingCallbackInternal(CGLReport *report) const
+void CDRenderer::bindingCallback(CGLReport *report) const
 {
     CString smsg = report->message;
     CString out = glbinding::Meta::getString(report->type)+":"
@@ -210,7 +219,7 @@ void CDRenderer::eventWHandle(CDEvent *event)
 
 }
 
-void CDRenderer::eventHandle(CIEvent *event)
+void CDRenderer::eventIHandle(CIEvent *event)
 {
 
 }
