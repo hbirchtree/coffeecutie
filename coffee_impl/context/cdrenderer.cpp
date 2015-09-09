@@ -262,6 +262,8 @@ CGLState *CDRenderer::_dump_state() const
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&t);
     state->fb_read = t;
 
+    glGetFloatv(GL_COLOR_CLEAR_VALUE,reinterpret_cast<GLfloat*>(&state->clear_color));
+
     return state;
 }
 

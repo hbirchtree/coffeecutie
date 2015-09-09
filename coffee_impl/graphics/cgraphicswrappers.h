@@ -33,6 +33,8 @@ struct CGLState
     GLuint      fb_all          = 0;
     GLuint      fb_draw         = 0;
     GLuint      fb_read         = 0;
+
+    CVec4       clear_color;
 };
 
 }

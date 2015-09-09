@@ -14,6 +14,7 @@ public:
 protected:
     void bindingPostInit();
     void bindingPreInit();
+    void bindingTerminate();
 
     CString m_rendererString;
     CString m_vendorString;

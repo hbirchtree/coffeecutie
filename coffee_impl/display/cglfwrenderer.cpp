@@ -205,21 +205,6 @@ void CGLFWRenderer::pollEvents()
     updateJoysticks();
 }
 
-//static void APIENTRY glbindingCallbackDirect(GLenum source, GLenum type,
-//                                             GLuint id, GLenum severity,
-//                                             GLsizei length, const GLchar* msg,
-//                                             const void* userPtr)
-//{
-//    const CGLFWRenderer* renderer = static_cast<const CGLFWRenderer*>(userPtr);
-//    CGLReport *report = reinterpret_cast<CGLReport*>(malloc(sizeof(CGLReport)));
-//    report->source = source;
-//    report->type = type;
-//    report->id = id;
-//    report->message = msg;
-//    report->severity = severity;
-//    renderer->glbindingCallbackInternal(report);
-//}
-
 void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorIndex)
 {
     m_initMutex.lock();

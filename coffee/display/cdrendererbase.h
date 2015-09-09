@@ -99,6 +99,8 @@ public:
     virtual void bindingCallback(CGLReport* report) const = 0;
     virtual void bindingPreInit() = 0; //Called before context is created
     virtual void bindingPostInit() = 0; //Called after context is created
+
+    virtual void bindingTerminate() = 0;
 };
 
 class CDQueueRendererBase : public CDRendererBase

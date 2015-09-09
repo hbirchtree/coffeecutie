@@ -3,7 +3,6 @@
 
 #include "coffee/display/cdrendererbase.h"
 #include "coffee/cdebug.h"
-
 #include <mutex>
 
 namespace Coffee {

@@ -44,13 +44,11 @@ void CGLBindingRenderer::bindingPostInit()
 
     cMsg("glbinding","Currently running OpenGL revision: %i",m_libraryRevision);
 
-#ifdef GLBINDING_INVESTIGATION
-    glbinding::setCallbackMask(glbinding::CallbackMask::After);
+//    glbinding::setCallbackMask(glbinding::CallbackMask::After);
 
-    glbinding::setAfterCallback([](const glbinding::FunctionCall& call){
-        printf("GL call: %s\n",call.function->name());
-    });
-#endif
+//    glbinding::setAfterCallback([](const glbinding::FunctionCall& call){
+//        printf("GL call: %s\n",call.function->name());
+//    });
 
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glbindingCallbackDirect,this);
@@ -76,6 +74,10 @@ void CGLBindingRenderer::bindingPreInit()
         }
         cBasicPrint("------------------------------------");
     }
+}
+
+void CGLBindingRenderer::bindingTerminate()
+{
 }
 
 } // namespace CDisplay
