@@ -42,23 +42,22 @@ void CGLBindingRenderer::bindingPreInit()
 
     cMsg("glbinding","Initialized");
 
+}
+
+void CGLBindingRenderer::bindingPostInit()
+{
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
-        cDebug("Now printing supported extensions according to glbinding");
-        cBasicPrint("------| Supported extensions |------");
+        cDebug("Now printing extensions available to glbinding (Not necessarily supported by your hardware!)");
+        cBasicPrint("-----------| Extensions |-----------");
         for(GLextension ext : glbinding::Meta::extensions()){
             cstring extname = glbinding::Meta::getString(ext).c_str();
-            cBasicPrint("Extension: %s, required version: %s",
+            cBasicPrint("Extension: %s, required version: %s, supported: %i",
                         extname,
                         glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
                         requestGLExtension(extname));
         }
         cBasicPrint("------------------------------------");
     }
-}
-
-void CGLBindingRenderer::bindingPostInit()
-{
-    cMsg("glbinding","Initializing glbinding");
 
     m_rendererString        = glbinding::ContextInfo::renderer();
     m_vendorString          = glbinding::ContextInfo::vendor();

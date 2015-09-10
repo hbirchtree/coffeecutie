@@ -161,6 +161,18 @@ void CGLFWRenderer::setWindowSize(const CSize &size)
     glfwSetWindowSize(m_ctxt->window,size.w,size.h);
 }
 
+CPoint CGLFWRenderer::windowPosition() const
+{
+    CPoint pos;
+    glfwGetWindowPos(m_ctxt->window,&pos.x,&pos.y);
+    return pos;
+}
+
+void CGLFWRenderer::setWindowPosition(CPoint pos)
+{
+    glfwSetWindowPos(m_ctxt->window,pos.x,pos.y);
+}
+
 double CGLFWRenderer::contextTime() const
 {
     return glfwGetTime();
@@ -341,6 +353,8 @@ void CGLFWRenderer::_glfw_init(const CDWindowProperties& props)
     }
 
     bindingPostInit();
+
+    CGLFWNativeFuncs::glfwSetDecorations(m_ctxt->window,false);
 
     m_initMutex.unlock();
 }

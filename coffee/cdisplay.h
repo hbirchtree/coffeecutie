@@ -82,6 +82,7 @@ struct CGLContextProperties
         GLCoreProfile   = 0b1,
         GLVSync         = 0b10,
         GLDebug         = 0b100,
+        GLAutoResize    = 0b1000,
     };
 
     uint16_t            flags = 0b1;

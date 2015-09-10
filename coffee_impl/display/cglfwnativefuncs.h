@@ -22,6 +22,8 @@ class CGLFWNativeFuncs
     CGLFWNativeFuncs();
 public:
     static uintptr_t glfwGetNativeWindowHandle(GLFWwindow* window);
+    static void glfwSetDecorations(GLFWwindow *window, bool mode);
+    static void glfwSetFloating(GLFWwindow *window, bool mode);
 };
 
 }

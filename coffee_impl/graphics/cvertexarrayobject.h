@@ -8,7 +8,6 @@ namespace CGraphicsWrappers{
 
 struct CVertexArrayObject{
     GLuint      handle  = 0;
-    CBuffer**   buffers = nullptr;
 
     void create(){
         glGenVertexArrays(1,&handle);

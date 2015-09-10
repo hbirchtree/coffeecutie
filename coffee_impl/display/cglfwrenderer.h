@@ -1,7 +1,7 @@
 #ifndef COFFEE_CDISPLAY_CGLFWRENDERER_H
 #define COFFEE_CDISPLAY_CGLFWRENDERER_H
 
-#include "coffee/display/cdrendererbase.h"
+#include "coffee_impl/functional/cqueuerunner.h"
 #include "coffee/cdebug.h"
 #include <mutex>
 
@@ -40,6 +40,10 @@ public:
     CSize windowSize() const;
     void setWindowSize(const CSize &size);
 
+    //Main thread only
+    CPoint windowPosition() const;
+    void setWindowPosition(CPoint);
+
     double contextTime() const;
 
     bool isMouseGrabbed() const;
@@ -66,6 +70,7 @@ private:
     std::mutex m_initMutex;
     std::thread::id m_contextThread;
     CGLFWContext* m_ctxt = nullptr;
+
 };
 
 } // namespace CDisplay

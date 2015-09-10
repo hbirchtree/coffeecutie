@@ -28,6 +28,7 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
+
 #ifndef LOAD_FILE
     CResource v = CResource("ubw/shaders/vertex/vsh_ubo.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
@@ -119,25 +120,6 @@ void CDRenderer::run()
     matrixBuffer.bind();
     matrixBuffer.store(matrixBlock->dataSize(),matrixBlock->dataPtr());
 
-    CFramebuffer testFb;
-    testFb.create();
-    testFb.bind();
-
-    CTexture testTex;
-    testTex.textureType = GL_TEXTURE_2D;
-    testTex.levels = 1;
-    testTex.create();
-    testTex.bind();
-    CTextureTools::CTextureData texData;
-    texData.format = GL_RGBA8;
-    CTextureTools::coffee_create_texturesize(&texData,1024,1024);
-    CTextureTools::coffee_texture2d_define(&testTex,&texData);
-
-    testFb.attach2D(&testTex,GL_COLOR_ATTACHMENT0,0,testTex.textureType);
-
-    cDebug("Framebuffer: %i",testFb.valid());
-    testFb.unbind();
-
     pip->bind();
     bufm.vao()->bind();
     glCullFace(GL_BACK);
@@ -220,7 +202,12 @@ void CDRenderer::bindingCallback(CGLReport *report) const
 
 void CDRenderer::eventWHandle(CDEvent *event)
 {
-
+    if(event->type==CDEvent::FramebufferResized)
+        if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
+            CDResizeEvent* resize = reinterpret_cast<CDResizeEvent*>(&event[1]);
+            cDebug("Resize: %ix%i",resize->w,resize->h);
+            glViewport(0,0,resize->w,resize->h);
+        }
 }
 
 void CDRenderer::eventIHandle(CIEvent *event)

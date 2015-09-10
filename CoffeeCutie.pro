@@ -111,4 +111,6 @@ HEADERS += \
     coffee_impl/graphics/cuniformtypes.h \
     coffee_impl/graphics/cframebuffer.h \
     coffee_impl/graphics/ctexture.h \
-    coffee_impl/context/cglbindingrenderer.h
+    coffee_impl/context/cglbindingrenderer.h \
+    plat/linux_wm.h \
+    coffee_impl/graphics/ctransformcomputer.h

@@ -2,6 +2,7 @@
 #define COFFEE_CFUNCTIONAL_CQUEUERUNNER_H
 
 #include "coffee.h"
+#include "coffee/display/cdrendererbase.h"
 #include <mutex>
 
 namespace Coffee {
@@ -21,6 +22,22 @@ private:
 };
 
 } // namespace CFunctional
+
+namespace CDisplay{
+
+class CDQueueRendererBase : public CDRendererBase
+{
+public:
+    virtual ~CDQueueRendererBase();
+    virtual void queueFunction(QueueFunction func);
+
+protected:
+    CDQueueRendererBase(CObject* parent);
+    CQueueRunner* m_queueRunner;
+    void executeRunQueue();
+};
+
+}
 } // namespace Coffee
 
 #endif // COFFEE_CFUNCTIONAL_CQUEUERUNNER_H

@@ -9,7 +9,7 @@
 #include "coffee_impl/graphics/cgraphicsdata.h"
 
 #include "unit_tests/data_types.h"
-#include "coffee_impl/graphics/ctexture.h"
+#include "coffee_impl/graphics/ctransformcomputer.h"
 
 using namespace Coffee;
 using namespace Coffee::CFunctional;
@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
     //Magic happens here
     CDWindowProperties props;
 
+    cDebug("Size of TransformPair: %ld",sizeof(CTransformPair));
+
     props.flags |= CDWindowProperties::Resizable;
     props.flags |= CDWindowProperties::Windowed;
     props.flags |= CDWindowProperties::Decorated;
@@ -53,6 +55,8 @@ int main(int argc, char *argv[])
 
 //    props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLVSync;
+    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;
     props.contextProperties.version.major = 3;
 
