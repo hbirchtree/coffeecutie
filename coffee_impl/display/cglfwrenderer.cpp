@@ -41,9 +41,9 @@ CDMonitor CGLFWRenderer::monitor()
 
         const GLFWvidmode* vmode = glfwGetVideoMode(gm);
         if(vmode){
-            cm.colorBits.bits_blue = vmode->blueBits;
-            cm.colorBits.bits_red = vmode->redBits;
-            cm.colorBits.bits_green = vmode->greenBits;
+            cm.colorBits.red = vmode->redBits;
+            cm.colorBits.green = vmode->greenBits;
+            cm.colorBits.blue = vmode->blueBits;
             cm.refresh = vmode->refreshRate;
 
             cm.screenArea.w = vmode->width;
@@ -83,33 +83,33 @@ uint32_t CGLFWRenderer::windowState() const
     uint32_t flags = 0;
 
     if(glfwGetWindowAttrib(m_ctxt->window,GLFW_FOCUSED))
-        flags |= Focused;
+        flags |= CDWindowProperties::Focused;
     if(glfwGetWindowAttrib(m_ctxt->window,GLFW_VISIBLE))
-        flags |= Visible;
+        flags |= CDWindowProperties::Visible;
 
     if(glfwGetWindowAttrib(m_ctxt->window,GLFW_ICONIFIED))
-        flags |= Minimized;
+        flags |= CDWindowProperties::Minimized;
     else
-        flags |= Maximized;
+        flags |= CDWindowProperties::Maximized;
 
     if(glfwGetWindowAttrib(m_ctxt->window,GLFW_DECORATED))
-        flags |= Decorated;
+        flags |= CDWindowProperties::Decorated;
     if(glfwGetWindowAttrib(m_ctxt->window,GLFW_FLOATING))
-        flags |= Floating;
+        flags |= CDWindowProperties::Floating;
 
     if(glfwGetWindowMonitor(m_ctxt->window))
-        flags |= FullScreen;
+        flags |= CDWindowProperties::FullScreen;
     else
-        flags |= Windowed;
+        flags |= CDWindowProperties::Windowed;
 
     return flags;
 }
 
 void CGLFWRenderer::setWindowState(uint32_t newstate)
 {
-    if(newstate&Minimized){
+    if(newstate&CDWindowProperties::Minimized){
         glfwIconifyWindow(m_ctxt->window);
-    }else if(newstate&Maximized){
+    }else if(newstate&CDWindowProperties::Maximized){
         glfwRestoreWindow(m_ctxt->window);
     }
 }
@@ -205,7 +205,18 @@ void CGLFWRenderer::pollEvents()
     updateJoysticks();
 }
 
-void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorIndex)
+void CGLFWRenderer::init(const CDWindowProperties &props)
+{
+    m_properties = props;
+    try{
+        _glfw_init(props);
+    }catch(CStdFault err){
+        m_initMutex.unlock();
+        throw err;
+    }
+}
+
+void CGLFWRenderer::_glfw_init(const CDWindowProperties& props)
 {
     m_initMutex.lock();
     m_contextThread = std::this_thread::get_id();
@@ -218,26 +229,50 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
 
     glfwDefaultWindowHints();
 
-    glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,1);
-    glfwWindowHint(GLFW_VISIBLE,false);
-    glfwWindowHint(GLFW_RESIZABLE,true);
+    //Core profile
+    if(props.contextProperties.flags&CGLContextProperties::GLCoreProfile)
+        glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
+    //Debugging
+    if(props.contextProperties.flags&CGLContextProperties::GLDebug)
+        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,true);
+    //OpenGL version
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,
+                   props.contextProperties.version.major);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,
+                   props.contextProperties.version.minor);
+    //Window flags
+    glfwWindowHint(GLFW_VISIBLE,
+                   props.flags&CDWindowProperties::Visible);
+    glfwWindowHint(GLFW_RESIZABLE,
+                   props.flags&CDWindowProperties::Resizable);
+    glfwWindowHint(GLFW_DECORATED,
+                   props.flags&CDWindowProperties::Decorated);
+    glfwWindowHint(GLFW_FLOATING,
+                   props.flags&CDWindowProperties::Floating);
 
     //Allocate our context object, is deleted when context is gone
     m_ctxt = reinterpret_cast<CGLFWContext*>(malloc(sizeof(CGLFWContext)));
 
-    switch(startState){
-    case FullScreen:
-    case WindowedFullScreen:{
+    glfwWindowHint(GLFW_RED_BITS,props.contextProperties.bits.red);
+    glfwWindowHint(GLFW_GREEN_BITS,props.contextProperties.bits.green);
+    glfwWindowHint(GLFW_BLUE_BITS,props.contextProperties.bits.blue);
+    glfwWindowHint(GLFW_ALPHA_BITS,props.contextProperties.bits.alpha);
+    glfwWindowHint(GLFW_STENCIL_BITS,props.contextProperties.bits.stencil);
+    glfwWindowHint(GLFW_DEPTH_BITS,props.contextProperties.bits.depth);
+
+    switch(props.flags&(CDWindowProperties::FullScreen
+                  |CDWindowProperties::WindowedFullScreen
+                  |CDWindowProperties::Windowed))
+    {
+    case CDWindowProperties::FullScreen:
+    case CDWindowProperties::WindowedFullScreen:{
         int count = 0;
         GLFWmonitor** monitors = glfwGetMonitors(&count);
-        if(monitorIndex>=count)
+        if(props.monitor>=count)
             return;
 
-        GLFWmonitor* mon = monitors[monitorIndex];
-        if(startState==WindowedFullScreen){
+        GLFWmonitor* mon = monitors[props.monitor];
+        if(props.flags&CDWindowProperties::WindowedFullScreen){
             const GLFWvidmode* current = glfwGetVideoMode(mon);
 
             glfwWindowHint(GLFW_RED_BITS,current->redBits);
@@ -245,14 +280,18 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
             glfwWindowHint(GLFW_BLUE_BITS,current->blueBits);
             glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
 
-            startSize.w = current->width;
-            startSize.h = current->height;
+            m_properties.size.w = current->width;
+            m_properties.size.h = current->height;
         }
-        m_ctxt->window = glfwCreateWindow(startSize.w,startSize.h,"",mon,NULL);
+        m_ctxt->window = glfwCreateWindow(props.size.w,props.size.h,
+                                          "",
+                                          mon,NULL);
         break;
     }
-    case Windowed:
-        m_ctxt->window = glfwCreateWindow(startSize.w,startSize.h,"",NULL,NULL);
+    case CDWindowProperties::Windowed:
+        m_ctxt->window = glfwCreateWindow(props.size.w,props.size.h,
+                                          "",
+                                          NULL,NULL);
         break;
     default:
         return;
@@ -265,6 +304,11 @@ void CGLFWRenderer::init(WindowState startState, CSize startSize, int monitorInd
     m_ctxt->makeCurrent();
     glfwSetWindowUserPointer(m_ctxt->window,this);
     cMsg("GLFW","User-pointer set");
+
+    if(props.contextProperties.flags&CGLContextProperties::GLVSync)
+        glfwSwapInterval(1);
+    else
+        glfwSwapInterval(0);
 
     //Input callbacks
     glfwSetMouseButtonCallback      (m_ctxt->window,glfw_input_mouseBtn);
@@ -328,4 +372,5 @@ void CGLFWRenderer::updateJoysticks()
 
 } // namespace CDisplay
 } // namespace Coffee
+
 

@@ -35,8 +35,10 @@ typedef intptr_t            ptr_s;
 typedef uintptr_t           ptr_u;
 typedef size_t              szptr;
 
-//Can be switched for other string types from libraries
+//Can be switched for other types from libraries
 typedef std::string         CString;
+
+typedef std::runtime_error  CStdFault;
 //
 
 static void CoffeeInit();
@@ -77,8 +79,8 @@ struct CSize{
         this->h = h;
     }
     CSize(){}
-    int32_t w;
-    int32_t h;
+    int32_t w = 0;
+    int32_t h = 0;
 };
 struct CSizeF{
     CSizeF(scalar w,scalar h){
@@ -86,8 +88,8 @@ struct CSizeF{
         this->h = h;
     }
     CSizeF(){}
-    scalar w;
-    scalar h;
+    scalar w = 0.f;
+    scalar h = 0.f;
 };
 //Point type
 struct CPoint{
@@ -96,8 +98,8 @@ struct CPoint{
         this->y = y;
     }
     CPoint(){}
-    int32_t x;
-    int32_t y;
+    int32_t x = 0;
+    int32_t y = 0;
 };
 struct CPointF{
     CPointF(scalar x,scalar y){
@@ -105,8 +107,8 @@ struct CPointF{
         this->y = y;
     }
     CPointF(){}
-    scalar x;
-    scalar y;
+    scalar x = 0.f;
+    scalar y = 0.f;
 };
 //Rectangle type
 struct CRect{
@@ -117,10 +119,10 @@ struct CRect{
         this->h = h;
     }
     CRect(){}
-    int32_t x;
-    int32_t y;
-    int32_t w;
-    int32_t h;
+    int32_t x = 0;
+    int32_t y = 0;
+    int32_t w = 0;
+    int32_t h = 0;
 };
 struct CRectF{
     CRectF(scalar x,scalar y,scalar w,scalar h){
@@ -130,10 +132,10 @@ struct CRectF{
         this->h = h;
     }
     CRectF(){}
-    scalar x;
-    scalar y;
-    scalar w;
-    scalar h;
+    scalar x = 0.f;
+    scalar y = 0.f;
+    scalar w = 0.f;
+    scalar h = 0.f;
 };
 
 //These are not meant to replace glm
@@ -191,19 +193,19 @@ struct CVec4{
     }
     CVec4(){}
     union{
-        scalar x;
+        scalar x = 0.f;
         scalar r;
     };
     union{
-        scalar y;
+        scalar y = 0.f;
         scalar g;
     };
     union{
-        scalar z;
+        scalar z = 0.f;
         scalar b;
     };
     union{
-        scalar w;
+        scalar w = 0.f;
         scalar a;
     };
 };
@@ -215,10 +217,10 @@ struct CQuat{
         this->w = w;
     }
     CQuat(){}
-    scalar x;
-    scalar y;
-    scalar z;
-    scalar w;
+    scalar x = 0.f;
+    scalar y = 0.f;
+    scalar z = 0.f;
+    scalar w = 0.f;
 };
 }
 

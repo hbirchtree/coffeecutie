@@ -58,19 +58,21 @@ static std::future<ReturnType> runAsync(std::function<ReturnType()> function)
     return std::async(std::launch::async,function);
 }
 
+template<typename DataType>
 struct CThreadWorker
 {
-    template<typename... Args>
-    void run(std::function<void(Args...)> function,
-             Args... args){
-        m_thread = new std::thread(function,args...);
+    CThreadWorker(std::atomic<DataType>& atomic_ptr){
+        thread_ptr = &atomic_ptr;
     }
-    void waitForFinish(){
-        m_thread->join();
+    template<typename RType>
+    std::future<RType> run(std::function<RType()> fun){
+        return std::async(std::launch::async,fun);
     }
-
+    std::atomic<DataType>* dataPtr() const{
+        return thread_ptr;
+    }
 private:
-    std::thread *m_thread = nullptr;
+    std::atomic<DataType>* thread_ptr = nullptr;
 };
 
 }

@@ -36,23 +36,55 @@ int main(int argc, char *argv[])
     //Checks that the platform is sane
     CoffeeTests::run_tests();
 
-    CElapsedTimer timer;
+    CElapsedTimerMicro timer;
     timer.start();
-
-    CTextureTools::CTextureData data;
-    CTextureTools::coffee_create_texturesize(&data,1024,1024,1024);
-
-    cDebug("Dimensions: %i",data.dimensions);
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     //Magic happens here
-    std::future<void> renturn = CThreading::runAsync<void>([=](){
-        renderer->run(CDRenderer::Windowed,CSize(1280,720),0);
+    CDWindowProperties props;
+
+    props.flags |= CDWindowProperties::Resizable;
+    props.flags |= CDWindowProperties::Windowed;
+    props.flags |= CDWindowProperties::Decorated;
+    props.size.w = 1600;
+    props.size.h = 900;
+    props.monitor = 0;
+
+//    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags |= CGLContextProperties::GLVSync;
+    props.contextProperties.version.major = 3;
+    props.contextProperties.version.major = 3;
+
+    std::atomic<ubyte> atomic;
+    atomic.store(0);
+    CThreading::CThreadWorker<ubyte> worker(atomic);
+    std::future<void> ret = worker.run<void>([=](){
+        try{
+            renderer->run(props);
+        }catch(std::runtime_error exc){
+            cDebug("Caught exception in thread: 0x%llx, message: %s",std::this_thread::get_id(),exc.what());
+            worker.dataPtr()->store(1);
+            renderer->cleanup();
+        }
+        if(worker.dataPtr()->load()==0)
+            worker.dataPtr()->store(255);
     });
 
-    renturn.wait();
-    cDebug("Time: %lld",timer.elapsed());
+    while(worker.dataPtr()->load()==0)
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    switch(worker.dataPtr()->load()){
+    case 1:
+        cDebug("Renderer exited with failure");
+        break;
+    default:
+        cDebug("Renderer exited normally");
+    }
+
+    cDebug("Time: %lldus",timer.elapsed());
+
+    ret.get();
 
     delete renderer;
     return 0;

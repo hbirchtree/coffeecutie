@@ -24,21 +24,6 @@ class CDRendererBase : public CObject
     //This class and its inherited classes should remain stateless
 
 public:
-    enum WindowState{
-        FullScreen          = 0b001,
-        WindowedFullScreen  = 0b010,
-        Windowed            = 0b100,
-
-        Minimized           = 0b01000,
-        Maximized           = 0b10000,
-
-        Focused             = 0b0100000,
-        Resizable           = 0b1000000,
-
-        Decorated           = 0b00010000000,
-        Floating            = 0b00100000000,
-        Visible             = 0b01000000000,
-    };
 
     enum RendererExitStatus{ //Accumulated to describe exit state
         StartSucess         = 0b00001,
@@ -50,9 +35,10 @@ public:
     };
 
     CDRendererBase(CObject* parent);
+    virtual ~CDRendererBase();
 
     //Initialization
-    virtual void init(WindowState,CSize,int)    = 0; //Initializes the context manager and etc.
+    virtual void init(const CDWindowProperties&)= 0; //Initializes the context manager and etc.
     virtual void run()                          = 0;
     virtual void cleanup()                      = 0;
 

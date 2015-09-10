@@ -15,10 +15,11 @@ class CDRenderer : public CGLBindingRenderer
 {
 public:
     CDRenderer(CObject* parent = nullptr);
+    ~CDRenderer();
 
     void run();
 
-    void run(WindowState state, CSize resolution, int monitor = 0);
+    void run(CDWindowProperties props);
 
     void bindingCallback(CGLReport* report) const;
 

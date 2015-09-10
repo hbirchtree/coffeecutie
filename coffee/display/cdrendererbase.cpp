@@ -6,6 +6,10 @@ namespace CDisplay {
 CDRendererBase::CDRendererBase(CObject *parent) : CObject(parent)
 {
 }
+
+CDRendererBase::~CDRendererBase()
+{
+}
 CDQueueRendererBase::CDQueueRendererBase(CObject *parent) : CDRendererBase(parent)
 {
     m_queueRunner = new CQueueRunner();

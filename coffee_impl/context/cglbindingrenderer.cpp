@@ -28,7 +28,10 @@ static void glbindingCallbackDirect(GLenum source, GLenum type,
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
     CGLFWRenderer(parent)
 {
+}
 
+CGLBindingRenderer::~CGLBindingRenderer()
+{
 }
 
 void CGLBindingRenderer::bindingPreInit()
@@ -39,7 +42,7 @@ void CGLBindingRenderer::bindingPreInit()
 
     cMsg("glbinding","Initialized");
 
-    {
+    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
         cDebug("Now printing supported extensions according to glbinding");
         cBasicPrint("------| Supported extensions |------");
         for(GLextension ext : glbinding::Meta::extensions()){
@@ -72,8 +75,10 @@ void CGLBindingRenderer::bindingPostInit()
 //        printf("GL call: %s\n",call.function->name());
 //    });
 
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(glbindingCallbackDirect,this);
+    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback(glbindingCallbackDirect,this);
+    }
 }
 
 void CGLBindingRenderer::bindingTerminate()

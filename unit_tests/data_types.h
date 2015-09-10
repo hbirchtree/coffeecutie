@@ -64,20 +64,28 @@ static void quaternion_test()
     CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z&&from_coffee.w==to_glm->w));
 }
 
-static void vector_tests()
+static void vector_tests(bool silent = true)
 {
-    cMsg("Coffee Unit Tests","Vec2 test starting");
+    if(!silent)
+        cMsg("Coffee Unit Tests","Vec2 test starting");
     vector2_test();
-    cMsg("Coffee Unit Tests","Vec2 test passed");
-    cMsg("Coffee Unit Tests","Vec3 test starting");
+    if(!silent){
+        cMsg("Coffee Unit Tests","Vec2 test passed");
+        cMsg("Coffee Unit Tests","Vec3 test starting");
+    }
     vector3_test();
-    cMsg("Coffee Unit Tests","Vec3 test passed");
-    cMsg("Coffee Unit Tests","Vec4 test starting");
+    if(!silent){
+        cMsg("Coffee Unit Tests","Vec3 test passed");
+        cMsg("Coffee Unit Tests","Vec4 test starting");
+    }
     vector4_test();
-    cMsg("Coffee Unit Tests","Vec4 test passed");
-    cMsg("Coffee Unit Tests","Quat test starting");
+    if(!silent){
+        cMsg("Coffee Unit Tests","Vec4 test passed");
+        cMsg("Coffee Unit Tests","Quat test starting");
+    }
     quaternion_test();
-    cMsg("Coffee Unit Tests","Quat test passed");
+    if(!silent)
+        cMsg("Coffee Unit Tests","Quat test passed");
 }
 
 static void int_tests()
@@ -111,15 +119,19 @@ static void floating_tests()
     CASSERT((sizeof(double)==sizeof(gl::GLdouble)));
 }
 
-static void run_tests()
+static void run_tests(bool silent = true)
 {
-    vector_tests();
-    cMsg("Coffee Unit Tests","Integer tests starting");
+    vector_tests(silent);
+    if(!silent)
+        cMsg("Coffee Unit Tests","Integer tests starting");
     int_tests();
-    cMsg("Coffee Unit Tests","Integer tests passed");
-    cMsg("Coffee Unit Tests","Floating-point tests starting");
+    if(!silent){
+        cMsg("Coffee Unit Tests","Integer tests passed");
+        cMsg("Coffee Unit Tests","Floating-point tests starting");
+    }
     floating_tests();
-    cMsg("Coffee Unit Tests","Floating-point tests passed");
+    if(!silent)
+        cMsg("Coffee Unit Tests","Floating-point tests passed");
 }
 
 

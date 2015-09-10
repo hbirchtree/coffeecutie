@@ -52,15 +52,17 @@ public:
     void swapBuffers();
     void pollEvents();
 
-    void init(WindowState startState, CSize startSize, int monitorIndex);
+    void init(const CDWindowProperties &props);
     void cleanup();
 
 protected:
     virtual void updateJoysticks();
-
+    CDWindowProperties m_properties;
     CString m_contextString;
 
 private:
+    void _glfw_init(const CDWindowProperties &props);
+
     std::mutex m_initMutex;
     std::thread::id m_contextThread;
     CGLFWContext* m_ctxt = nullptr;

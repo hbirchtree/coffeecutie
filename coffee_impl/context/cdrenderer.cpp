@@ -22,6 +22,10 @@ CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
 }
 
+CDRenderer::~CDRenderer()
+{
+}
+
 void CDRenderer::run()
 {
 #ifndef LOAD_FILE
@@ -138,7 +142,7 @@ void CDRenderer::run()
     bufm.vao()->bind();
     glCullFace(GL_BACK);
     glClearColor(0.175f,0.175f,0.175f,1.f);
-    glViewport(0,0,1280,720);
+    glViewport(0,0,m_properties.size.w,m_properties.size.h);
 
     bigscalar mtime = 0.0;
     CElapsedTimerMicro *t = new CElapsedTimerMicro;
@@ -193,9 +197,9 @@ void CDRenderer::run()
     cMsg("Coffee","Termination time: %lldus",t->elapsed());
 }
 
-void CDRenderer::run(WindowState state, CSize resolution, int monitor)
+void CDRenderer::run(CDWindowProperties props)
 {
-    init(state,resolution,monitor);
+    init(props);
 
     run();
 

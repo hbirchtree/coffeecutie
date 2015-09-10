@@ -10,6 +10,7 @@ class CGLBindingRenderer : public CGLFWRenderer
 {
 public:
     CGLBindingRenderer(CObject* parent);
+    virtual ~CGLBindingRenderer();
 
 protected:
     void bindingPreInit();
