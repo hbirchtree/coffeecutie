@@ -164,7 +164,6 @@ void CDRenderer::run()
 
     hideWindow();
 
-    testFb.free();
     bufm.vao()->free();
     pip->free();
 #ifndef LOAD_FILE
@@ -212,7 +211,14 @@ void CDRenderer::eventWHandle(CDEvent *event)
 
 void CDRenderer::eventIHandle(CIEvent *event)
 {
-
+    if(event->type==CIEvent::Keyboard){
+        CIKeyEvent* kev = reinterpret_cast<CIKeyEvent*>(&event[1]);
+        cDebug("Key event: t=%i,key=%i,mods=%i",kev->type,
+               kev->keyCode,
+               kev->modifier);
+        if(kev->keyCode==256) //TODO: Add key mapping
+            this->closeWindow();
+    }
 }
 
 CGLState *CDRenderer::_dump_state() const

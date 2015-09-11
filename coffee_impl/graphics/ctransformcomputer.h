@@ -44,7 +44,7 @@ struct CTransformData
 struct CTransformPair
 {
     CVertexArrayObject dataDescriptor;
-    CBuffer dataBuffer;
+    CSubBuffer dataBuffer;
     CTransformFeedback transform;
 };
 
@@ -63,10 +63,9 @@ static CTransformPair* coffee_create_transform_vao(CTransformData* spec, szptr n
     tf->dataDescriptor.create();
     tf->transform.create();
 
-    tf->dataBuffer.create();
     tf->dataBuffer.bufferType = GL_TRANSFORM_FEEDBACK_BUFFER;
-    tf->dataBuffer.flags = (BufferStorageMask)0;
 
+    int i;
     szptr total = 0;
     szptr stride = 0;
 
@@ -74,25 +73,23 @@ static CTransformPair* coffee_create_transform_vao(CTransformData* spec, szptr n
         total+=spec->datasizes[i];
 
     tf->dataDescriptor.bind();
-    int i;
+    tf->dataBuffer.bind();
     for(i=0;i<spec->numVaryings;i++){
-        tf->dataBuffer.bindRange(spec->locations[i],stride*numElements,spec->datasizes[i]*numElements);
         tf->dataDescriptor.addAttribute(spec->locations[i],spec->types[i],GL_FALSE,
-                                        spec->sizes[i],0,0);
+                                        spec->sizes[i],total,(GLvoid*)stride);
         stride+=spec->datasizes[i];
     }
     tf->dataDescriptor.unbind();
 
     stride = 0;
     tf->transform.bind();
-    for(i=0;i<spec->numVaryings;i++){
-        tf->dataBuffer.bindRange(spec->locations[i],
-                                 stride*numElements,
-                                 spec->datasizes[i]*numElements);
-        stride+=spec->datasizes[i];
-    }
+    tf->dataBuffer.bind();
 
     tf->transform.unbind();
+
+    tf->dataBuffer.unbind();
+
+    return tf;
 }
 
 struct CTransformComputer
@@ -101,10 +98,12 @@ struct CTransformComputer
     GLenum primitiveMode    = GL_NONE;
 
     void simulate(CTransformPair* source, CTransformPair* target){
+        cWarning("TODO: Finish transform computer!");
         glEnable(GL_RASTERIZER_DISCARD); //Avoid drawing to framebuffer
 
+        source->dataDescriptor.bind();
         program->bind(); //Bind transform program
-        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,0); //Bind TFB
+//        target->transform.bind();
         glBeginTransformFeedback(primitiveMode);
 
         glDrawArrays(primitiveMode,0,0); //Draws TFB, first buffer filling

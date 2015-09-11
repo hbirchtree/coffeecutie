@@ -53,7 +53,6 @@ int main(int argc, char *argv[])
     props.size.h = 900;
     props.monitor = 0;
 
-//    props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLVSync;
     props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;

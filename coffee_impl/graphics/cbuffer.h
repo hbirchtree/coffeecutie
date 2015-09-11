@@ -71,9 +71,27 @@ struct CBuffer{
 struct CSubBuffer
 {
     CBuffer*    parent      = nullptr;
-    void*       dataPtr     = nullptr;
+    GLsizeiptr  offset      = 0;
     GLsizeiptr  size        = 0;
     GLenum      bufferType  = GL_NONE;
+    GLuint      index       = 0;
+
+    void bind(){
+        glBindBufferRange(bufferType,index,parent->handle,offset,size);
+    }
+    void unbind()
+    {
+        glBindBufferRange(bufferType,index,0,0,0);
+    }
+
+    void store(const void* data)
+    {
+        glBufferSubData(bufferType,offset,size,data);
+    }
+    void subStore(GLsizeiptr offset, GLsizeiptr size, const void* data)
+    {
+        glBufferSubData(bufferType,this->offset+offset,this->size+size,data);
+    }
 };
 
 }
