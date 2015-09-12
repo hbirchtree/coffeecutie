@@ -66,11 +66,73 @@ void CDRenderer::run()
         cDebug("Failed to save shader!");
     progStore.free_data();
 #endif
-
     CResourceTypes::CAssimp::CAssimpMesh* mesh = res->meshes[4];
 
-    CBufferedMesh bufm;
-    bufm.load(mesh);
+    szptr posit_pos;
+    szptr index_pos;
+
+    for(int i=0;i<mesh->numBuffers;i++)
+        switch(mesh->bufferType[i]){
+        case 1:
+            posit_pos = i;
+            break;
+        case 6:
+            index_pos = i;
+            break;
+        }
+
+    CBuffer primaryBuffer;
+    primaryBuffer.bufferType = GL_ARRAY_BUFFER;
+    primaryBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
+    primaryBuffer.create();
+    primaryBuffer.bind();
+    primaryBuffer.store(sizeof(glm::mat4)*2
+                        + sizeof(glm::vec3)*mesh->bufferSize[posit_pos]
+                        + sizeof(GLuint)*mesh->bufferSize[index_pos],
+                        nullptr);
+
+    CVertexArrayObject stdVao;
+    stdVao.create();
+
+
+    CSubBuffer matBuffer;
+    matBuffer.parent = &primaryBuffer;
+    matBuffer.bufferType = GL_UNIFORM_BUFFER;
+    matBuffer.size = sizeof(glm::mat4)*2;
+    matBuffer.offset = 0;
+
+    stdVao.bind();
+    CSubBuffer posBuffer;
+    posBuffer.parent = &primaryBuffer;
+    posBuffer.bufferType = GL_ARRAY_BUFFER;
+    posBuffer.size = sizeof(glm::vec3)*mesh->bufferSize[posit_pos];
+    posBuffer.offset = matBuffer.size;
+
+    CVertexAttribute posAttr;
+    posAttr.size = 3;
+    posAttr.type = GL_FLOAT;
+    posAttr.location = 0;
+    stdVao.addAttribute(&posAttr);
+
+    posBuffer.bindParent();
+    posBuffer.store(mesh->buffers[posit_pos]);
+
+    CSubBuffer idxBuffer;
+    idxBuffer.parent = &primaryBuffer;
+    idxBuffer.bufferType = GL_ELEMENT_ARRAY_BUFFER;
+    idxBuffer.size = sizeof(GLuint)*mesh->bufferSize[index_pos];
+    idxBuffer.offset = matBuffer.size+posBuffer.size;
+    idxBuffer.bindParent();
+    idxBuffer.store(mesh->buffers[index_pos]);
+
+    stdVao.unbind();
+
+    CGLDrawCall meshcall;
+    meshcall.baseInstance = 0;
+    meshcall.baseVertex = 0;
+    meshcall.count = mesh->bufferSize[index_pos];
+    meshcall.firstIndex = 0;
+    meshcall.instanceCount = 1;
 
     res->freeData();
     delete res;
@@ -81,12 +143,23 @@ void CDRenderer::run()
     camera.zVals.near = 0.1f;
     camera.zVals.far = 100.f;
     camera.genPerspective();
+
     CModelTransform model;
     model.position.z = -1.f;
-
     model.scale.x = model.scale.y = model.scale.z = 1.f;
-
     model.rotation.w = 2.f;
+
+    CGraphicsData::CBlock* matrixBlock =
+            CGraphicsData::coffee_create_block(sizeof(glm::mat4)*3,2);
+    matrixBlock->propertySizes[0] = sizeof(glm::mat4);
+    matrixBlock->propertySizes[1] = sizeof(glm::mat4);
+
+    matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
+    matrixBlock->setPropertyData(1,&camera.matrix,sizeof(glm::mat4));
+
+    matBuffer.bind();
+    matBuffer.store(matrixBlock->dataPtr());
+    matBuffer.unbind();
 
     CUniformBlock matrices;
     matrices.blockBinding = 0;
@@ -105,23 +178,13 @@ void CDRenderer::run()
 
     showWindow();
 
-    CGraphicsData::CBlock* matrixBlock =
-            CGraphicsData::coffee_create_block(sizeof(glm::mat4)*3,2);
-    matrixBlock->propertySizes[0] = sizeof(glm::mat4);
-    matrixBlock->propertySizes[1] = sizeof(glm::mat4);
-
-    matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
-    matrixBlock->setPropertyData(1,&camera.matrix,sizeof(glm::mat4));
-
-    CBuffer matrixBuffer;
-    matrixBuffer.create();
-    matrixBuffer.bufferType = GL_UNIFORM_BUFFER;
-    matrixBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
-    matrixBuffer.bind();
-    matrixBuffer.store(matrixBlock->dataSize(),matrixBlock->dataPtr());
+    CBuffer drawcalls;
+    drawcalls.bufferType = GL_DRAW_INDIRECT_BUFFER;
+    drawcalls.flags = (BufferStorageMask)0;
+    drawcalls.bind();
+    drawcalls.store(sizeof(CGLDrawCall),&meshcall);
 
     pip->bind();
-    bufm.vao()->bind();
     glCullFace(GL_BACK);
     glClearColor(0.175f,0.175f,0.175f,1.f);
     glViewport(0,0,m_properties.size.w,m_properties.size.h);
@@ -132,8 +195,10 @@ void CDRenderer::run()
     setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
-
+    stdVao.bind();
+    idxBuffer.bind();
     glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
+    matBuffer.index = matrices.blockBinding;
 
     while(!closeFlag()){
 
@@ -145,11 +210,11 @@ void CDRenderer::run()
         model.genMatrix();
 
 //        matrixBuffer.bind();
-        matrixBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        matBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
-        matrixBuffer.bindRange(matrices.blockBinding);
+        matBuffer.bind();
 
-        bufm.draw();
+        glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,0,1,sizeof(CGLDrawCall));
         if(contextTime()>mtime){
             cDebug("Render time: %lldus",t->elapsed());
             mtime = contextTime()+1.0;
@@ -164,7 +229,6 @@ void CDRenderer::run()
 
     hideWindow();
 
-    bufm.vao()->free();
     pip->free();
 #ifndef LOAD_FILE
     v.free_data();

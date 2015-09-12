@@ -1,6 +1,8 @@
 #version 330
 
-uniform mat4 camera,cameraVP;
+layout(std140) uniform MatrixBlock {
+	mat4 camera,cameraVP;
+};
 
 layout(location = 0) in vec3 vert;
 layout(location = 1) in vec2 vertTexCoord;
@@ -24,6 +26,6 @@ void main() {
     worldVert = worldVert_t.xyz;
     worldTangent = (camera * model * vec4(vertTangent,0.0)).xyz;
     surfacePos = model * vec4(vert,1.0);
-    
+
     gl_Position = worldVert_t;
 }

@@ -6,6 +6,18 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+struct CVertexAttribute
+{
+    GLenum type         = GL_NONE;
+    GLboolean normalized= GL_FALSE;
+
+    GLuint location = 0;
+    GLuint size     = 0;
+    GLuint offset   = 0;
+    GLuint stride   = 0;
+    GLuint divisor  = 0;
+};
+
 struct CVertexArrayObject{
     GLuint      handle  = 0;
 
@@ -46,6 +58,10 @@ struct CVertexArrayObject{
     {
         addAttribute(index,type,normalized,size,stride,pointer);
         glVertexAttribDivisor(index,divisor);
+    }
+    void addAttribute(CVertexAttribute* attr){
+        addAttributeDivided(attr->location,attr->type,attr->normalized,attr->size,
+                            attr->stride,attr->divisor,(GLvoid*)attr->offset);
     }
 };
 

@@ -76,7 +76,10 @@ struct CSubBuffer
     GLenum      bufferType  = GL_NONE;
     GLuint      index       = 0;
 
-    void bind(){
+    void bindParent(){
+        parent->bind();
+    }
+    void bindRange(){
         glBindBufferRange(bufferType,index,parent->handle,offset,size);
     }
     void unbind()
