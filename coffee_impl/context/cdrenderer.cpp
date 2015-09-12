@@ -81,37 +81,35 @@ void CDRenderer::run()
             break;
         }
 
-    CBuffer primaryBuffer;
-    primaryBuffer.bufferType = GL_ARRAY_BUFFER;
-    primaryBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
-    primaryBuffer.create();
-    primaryBuffer.bind();
-    primaryBuffer.store(sizeof(glm::mat4)*2
-                        + sizeof(glm::vec3)*mesh->bufferSize[posit_pos]
-                        + sizeof(GLuint)*mesh->bufferSize[index_pos],
-                        nullptr);
+    CBuffer vertexBuffer;
+    vertexBuffer.bufferType = GL_ARRAY_BUFFER;
+    vertexBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
+    vertexBuffer.create();
+    vertexBuffer.bind();
+    vertexBuffer.store(sizeof(glm::vec3)*mesh->bufferSize[posit_pos],nullptr);
+
+    CBuffer uniformBuffer;
+    uniformBuffer.bufferType = GL_UNIFORM_BUFFER;
+    uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
+    uniformBuffer.create();
+    uniformBuffer.bind();
+    uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
 
     CVertexArrayObject stdVao;
     stdVao.create();
 
-
-    CSubBuffer matBuffer;
-    matBuffer.parent = &primaryBuffer;
-    matBuffer.bufferType = GL_UNIFORM_BUFFER;
-    matBuffer.size = sizeof(glm::mat4)*2;
-    matBuffer.offset = 0;
-
     stdVao.bind();
     CSubBuffer posBuffer;
-    posBuffer.parent = &primaryBuffer;
+    posBuffer.parent = &vertexBuffer;
     posBuffer.bufferType = GL_ARRAY_BUFFER;
     posBuffer.size = sizeof(glm::vec3)*mesh->bufferSize[posit_pos];
-    posBuffer.offset = matBuffer.size;
+    posBuffer.offset = 0;
 
     CVertexAttribute posAttr;
     posAttr.size = 3;
     posAttr.type = GL_FLOAT;
     posAttr.location = 0;
+    posAttr.offset = 0;
     stdVao.addAttribute(&posAttr);
 
     posBuffer.bindParent();
@@ -148,16 +146,16 @@ void CDRenderer::run()
     model.rotation.w = 2.f;
 
     CGraphicsData::CBlock* matrixBlock =
-            CGraphicsData::coffee_create_block(sizeof(glm::mat4)*3,2);
+            CGraphicsData::coffee_create_block(sizeof(glm::mat4)*2,2);
     matrixBlock->propertySizes[0] = sizeof(glm::mat4);
     matrixBlock->propertySizes[1] = sizeof(glm::mat4);
 
     matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
     matrixBlock->setPropertyData(1,&camera.matrix,sizeof(glm::mat4));
 
-    matBuffer.bindParent();
-    matBuffer.store(matrixBlock->dataPtr());
-    matBuffer.unbind();
+    uniformBuffer.bind();
+    uniformBuffer.subStore(0,matrixBlock->dataSize(),matrixBlock->dataPtr());
+    uniformBuffer.unbind();
 
     CUniformBlock matrices;
     matrices.blockBinding = 0;
@@ -197,10 +195,9 @@ void CDRenderer::run()
     idxBuffer.bind();
     stdVao.bind();
     glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
-    matBuffer.index = matrices.blockBinding;
+    uniformBuffer.bind();
 
     while(!closeFlag()){
-
         t->start();
 
         glClear(GL_COLOR_BUFFER_BIT);
@@ -208,10 +205,9 @@ void CDRenderer::run()
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1)*model.rotation);
         model.genMatrix();
 
-//        matrixBuffer.bind();
-        matBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        uniformBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
-        matBuffer.bindRange();
+        uniformBuffer.bindRange(matrices.blockBinding,0,sizeof(glm::mat4)*2);
 
         glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,0,1,sizeof(CGLDrawCall));
         if(contextTime()>mtime){

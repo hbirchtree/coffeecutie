@@ -5,7 +5,7 @@ namespace CGraphicsData{
 
 uint16_t CBlock::dataSize() const
 {
-    return blockSize-sizeof(CBlock);
+    return data_size;
 }
 
 void *CBlock::dataPtr() const

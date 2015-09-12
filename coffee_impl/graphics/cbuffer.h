@@ -93,7 +93,7 @@ struct CSubBuffer
     }
     void subStore(GLsizeiptr offset, GLsizeiptr size, const void* data)
     {
-        parent->subStore(this->offset+offset,this->size+size,data);
+        parent->subStore(this->offset+offset,size,data);
     }
 };
 
