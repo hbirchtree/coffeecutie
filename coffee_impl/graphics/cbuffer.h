@@ -79,7 +79,7 @@ struct CSubBuffer
     void bindParent(){
         parent->bind();
     }
-    void bindRange(){
+    void bindRange(){ //TF and uniform buffers
         glBindBufferRange(bufferType,index,parent->handle,offset,size);
     }
     void unbind()
@@ -89,11 +89,11 @@ struct CSubBuffer
 
     void store(const void* data)
     {
-        glBufferSubData(bufferType,offset,size,data);
+        parent->subStore(offset,size,data);
     }
     void subStore(GLsizeiptr offset, GLsizeiptr size, const void* data)
     {
-        glBufferSubData(bufferType,this->offset+offset,this->size+size,data);
+        parent->subStore(this->offset+offset,this->size+size,data);
     }
 };
 

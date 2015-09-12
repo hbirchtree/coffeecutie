@@ -117,13 +117,11 @@ void CDRenderer::run()
     posBuffer.bindParent();
     posBuffer.store(mesh->buffers[posit_pos]);
 
-    CSubBuffer idxBuffer;
-    idxBuffer.parent = &primaryBuffer;
+    CBuffer idxBuffer;
+    idxBuffer.create();
     idxBuffer.bufferType = GL_ELEMENT_ARRAY_BUFFER;
-    idxBuffer.size = sizeof(GLuint)*mesh->bufferSize[index_pos];
-    idxBuffer.offset = matBuffer.size+posBuffer.size;
-    idxBuffer.bindParent();
-    idxBuffer.store(mesh->buffers[index_pos]);
+    idxBuffer.bind();
+    idxBuffer.store(sizeof(GLuint)*mesh->bufferSize[index_pos],mesh->buffers[index_pos]);
 
     stdVao.unbind();
 
@@ -157,7 +155,7 @@ void CDRenderer::run()
     matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
     matrixBlock->setPropertyData(1,&camera.matrix,sizeof(glm::mat4));
 
-    matBuffer.bind();
+    matBuffer.bindParent();
     matBuffer.store(matrixBlock->dataPtr());
     matBuffer.unbind();
 
@@ -179,6 +177,7 @@ void CDRenderer::run()
     showWindow();
 
     CBuffer drawcalls;
+    drawcalls.create();
     drawcalls.bufferType = GL_DRAW_INDIRECT_BUFFER;
     drawcalls.flags = (BufferStorageMask)0;
     drawcalls.bind();
@@ -195,8 +194,8 @@ void CDRenderer::run()
     setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
-    stdVao.bind();
     idxBuffer.bind();
+    stdVao.bind();
     glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
     matBuffer.index = matrices.blockBinding;
 
@@ -212,7 +211,7 @@ void CDRenderer::run()
 //        matrixBuffer.bind();
         matBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
-        matBuffer.bind();
+        matBuffer.bindRange();
 
         glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,0,1,sizeof(CGLDrawCall));
         if(contextTime()>mtime){
@@ -301,6 +300,9 @@ CGLState *CDRenderer::_dump_state() const
 
     glGetIntegerv(GL_UNIFORM_BUFFER_BINDING,&t);
     state->uniform_buffer = t;
+
+    glGetIntegerv(GL_DRAW_INDIRECT_BUFFER_BINDING,&t);
+    state->indirect_buffer = t;
 
     glGetIntegerv(GL_PROGRAM_PIPELINE_BINDING,&t);
     state->pipeline_obj = t;

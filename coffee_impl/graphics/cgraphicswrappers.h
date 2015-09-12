@@ -26,6 +26,8 @@ struct CGLState
     GLuint      program_obj     = 0;
     GLuint      pipeline_obj    = 0;
 
+    GLuint      indirect_buffer = 0;
+
     GLuint      texture_2d      = 0;
     GLuint      texture_3d      = 0;
     GLuint      texture_cube    = 0;
