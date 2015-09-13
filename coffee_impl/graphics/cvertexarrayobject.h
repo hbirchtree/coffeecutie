@@ -8,6 +8,13 @@ namespace CGraphicsWrappers{
 
 struct CVertexAttribute
 {
+    enum AttributeFlags{
+        MatrixType = 0b1,
+    };
+    uint8_t flags   = 0;
+
+    uint8_t rows    = 0; //matrices
+
     GLenum type         = GL_NONE;
     GLboolean normalized= GL_FALSE;
 
@@ -46,22 +53,22 @@ struct CVertexArrayObject{
 
     void addAttribute(GLuint index, GLenum type,
                       GLboolean normalized, GLuint size,
-                      GLuint stride, GLvoid* pointer)
+                      GLsizeiptr stride, GLsizeiptr pointer)
     {
         glEnableVertexAttribArray(index);
-        glVertexAttribPointer(index,size,type,normalized,stride,pointer);
+        glVertexAttribPointer(index,size,type,normalized,stride,(GLvoid*)pointer);
     }
     void addAttributeDivided(GLuint index, GLenum type,
                              GLboolean normalized, GLuint size,
-                             GLuint stride, GLuint divisor,
-                             GLvoid* pointer)
+                             GLsizeiptr stride, GLuint divisor,
+                             GLsizeiptr pointer)
     {
         addAttribute(index,type,normalized,size,stride,pointer);
         glVertexAttribDivisor(index,divisor);
     }
     void addAttribute(CVertexAttribute* attr){
         addAttributeDivided(attr->location,attr->type,attr->normalized,attr->size,
-                            attr->stride,attr->divisor,(GLvoid*)attr->offset);
+                            attr->stride,attr->divisor,attr->offset);
     }
 };
 

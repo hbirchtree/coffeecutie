@@ -6,7 +6,6 @@
 #include "coffee_impl/graphics/cshader.h"
 #include "coffee/cfiles.h"
 #include "coffee_impl/assimp/cassimpimporters.h"
-#include "coffee_impl/assimp/cassimploader.h"
 
 #include "coffee_impl/graphics/cgraphicsdata.h"
 #include "coffee_impl/graphics/cframebuffer.h"
@@ -30,7 +29,7 @@ void CDRenderer::run()
 {
 
 #ifndef LOAD_FILE
-    CResource v = CResource("ubw/shaders/vertex/vsh_ubo.vs");
+    CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
     CShader* vshdr = new CShader;
     CShader* fshdr = new CShader;
@@ -93,7 +92,16 @@ void CDRenderer::run()
     uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
     uniformBuffer.create();
     uniformBuffer.bind();
-    uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
+    uniformBuffer.store(sizeof(glm::mat4),nullptr);
+    uniformBuffer.unbind();
+
+    CBuffer instanceBuffer;
+    instanceBuffer.bufferType = GL_ARRAY_BUFFER;
+    instanceBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
+    instanceBuffer.create();
+    instanceBuffer.bind();
+    instanceBuffer.store(sizeof(glm::mat4)*2,nullptr);
+    instanceBuffer.unbind();
 
     CVertexArrayObject stdVao;
     stdVao.create();
@@ -114,6 +122,17 @@ void CDRenderer::run()
 
     posBuffer.bindParent();
     posBuffer.store(mesh->buffers[posit_pos]);
+
+//    instanceBuffer.bind();
+//    CVertexAttribute instAttr;
+//    instAttr.divisor = 1;
+//    instAttr.location = 5;
+//    instAttr.size = 4;
+//    instAttr.stride = sizeof(glm::mat4);
+//    for(int i=0;i<4;i++){
+//        stdVao.addAttributeDivided(instAttr.location+i,GL_FLOAT,GL_FALSE,instAttr.size,
+//                                   instAttr.stride,instAttr.divisor,sizeof(glm::vec4)*i);
+//    }
 
     CBuffer idxBuffer;
     idxBuffer.create();
@@ -146,12 +165,12 @@ void CDRenderer::run()
     model.rotation.w = 2.f;
 
     CGraphicsData::CBlock* matrixBlock =
-            CGraphicsData::coffee_create_block(sizeof(glm::mat4)*2,2);
+            CGraphicsData::coffee_create_block(sizeof(glm::mat4),1);
     matrixBlock->propertySizes[0] = sizeof(glm::mat4);
-    matrixBlock->propertySizes[1] = sizeof(glm::mat4);
+//    matrixBlock->propertySizes[1] = sizeof(glm::mat4);
 
-    matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
-    matrixBlock->setPropertyData(1,&camera.matrix,sizeof(glm::mat4));
+//    matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
+    matrixBlock->setPropertyData(0,&camera.matrix,sizeof(glm::mat4));
 
     uniformBuffer.bind();
     uniformBuffer.subStore(0,matrixBlock->dataSize(),matrixBlock->dataPtr());
@@ -196,6 +215,7 @@ void CDRenderer::run()
     stdVao.bind();
     glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
     uniformBuffer.bind();
+    instanceBuffer.bind();
 
     while(!closeFlag()){
         t->start();
@@ -205,9 +225,11 @@ void CDRenderer::run()
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1)*model.rotation);
         model.genMatrix();
 
-        uniformBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        instanceBuffer.bind();
+        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        instanceBuffer.unbind();
 
-        uniformBuffer.bindRange(matrices.blockBinding,0,sizeof(glm::mat4)*2);
+        uniformBuffer.bindRange(matrices.blockBinding,0,sizeof(glm::mat4));
 
         glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,0,1,sizeof(CGLDrawCall));
         if(contextTime()>mtime){
@@ -253,8 +275,8 @@ void CDRenderer::bindingCallback(CGLReport *report) const
             +glbinding::Meta::getString(report->severity)+":"
             +glbinding::Meta::getString(report->source)+": "+smsg;
     cDebug("OpenGL: %s",out.c_str());
-    CGLState* state = _dump_state(); //Should provide a view of OpenGL state
-    delete state;
+//    CGLState* state = _dump_state(); //Should provide a view of OpenGL state
+//    delete state;
     free(report);
 }
 

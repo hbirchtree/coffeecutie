@@ -74,7 +74,8 @@ SOURCES += main.cpp \
     coffee_impl/assimp/cassimpimporters.cpp \
     coffee_impl/storage/cdatastore.cpp \
     coffee_impl/graphics/cgraphicsdata.cpp \
-    coffee_impl/context/cglbindingrenderer.cpp
+    coffee_impl/context/cglbindingrenderer.cpp \
+    coffee_impl/rendering/cmultidrawgraph.cpp
 
 HEADERS += \
     tests/CubeScape.h \
@@ -113,4 +114,5 @@ HEADERS += \
     coffee_impl/graphics/ctexture.h \
     coffee_impl/context/cglbindingrenderer.h \
     plat/linux_wm.h \
-    coffee_impl/graphics/ctransformcomputer.h
+    coffee_impl/graphics/ctransformcomputer.h \
+    coffee_impl/rendering/cmultidrawgraph.h

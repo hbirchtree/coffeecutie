@@ -76,7 +76,7 @@ static CTransformPair* coffee_create_transform_vao(CTransformData* spec, szptr n
     tf->dataBuffer.bindRange();
     for(i=0;i<spec->numVaryings;i++){
         tf->dataDescriptor.addAttribute(spec->locations[i],spec->types[i],GL_FALSE,
-                                        spec->sizes[i],total,(GLvoid*)stride);
+                                        spec->sizes[i],total,stride);
         stride+=spec->datasizes[i];
     }
     tf->dataDescriptor.unbind();
