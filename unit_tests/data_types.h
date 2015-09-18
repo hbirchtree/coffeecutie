@@ -1,6 +1,7 @@
 #ifndef DATA_TYPES
 #define DATA_TYPES
 
+#include "coffee.h"
 #include "coffee/cdebug.h"
 #include "coffee_impl/graphics/cgraphicsdata.h"
 
@@ -16,6 +17,8 @@
  */
 
 namespace CoffeeTests{
+
+using namespace Coffee;
 
 static void vector2_test()
 {
@@ -96,22 +99,33 @@ static void int_tests()
     CASSERT((sizeof(gl::GLuint)==sizeof(uint32_t)));
     CASSERT((sizeof(gl::GLuint64)==sizeof(uint64_t)));
 
-    CASSERT((sizeof(Coffee::byte)==sizeof(gl::GLbyte)));
-    CASSERT((sizeof(char)==sizeof(gl::GLchar)));
+    CASSERT((sizeof(byte)==sizeof(gl::GLbyte)));
+    CASSERT((sizeof(byte)==sizeof(gl::GLchar)));
 
-    CASSERT((sizeof(uint32_t)==sizeof(int)));
-    CASSERT((sizeof(uint64_t)==sizeof(unsigned long long)));
+    CASSERT((sizeof(uint32)==sizeof(int)));
+    CASSERT((sizeof(uint64)==sizeof(unsigned long long)));
 
-    CASSERT((sizeof(uintptr_t)==sizeof(void*)));
+    CASSERT((sizeof(ptr_u)==sizeof(void*)));
+
+    //Check for unwanted integer overflow, ensure consistency
+    uint8 n8 = std::pow(2,8)-1;
+    CASSERT((n8==std::pow(2,8)-1));
+
+    uint16 n16 = std::pow(2,16)-1;
+    CASSERT((n16==std::pow(2,16)-1));
+
+    uint32 n32 = std::pow(2,32)-1;
+    CASSERT((n32==std::pow(2,32)-1));
+
+    uint64 n64 = LONG_LONG_MAX-LONG_LONG_MIN;
+    CASSERT((n64==LONG_LONG_MAX-LONG_LONG_MIN));
 }
 
 static void floating_tests()
 {
-    //Just to make sure...
     CASSERT((sizeof(Coffee::scalar)==sizeof(float)));
     CASSERT((sizeof(Coffee::bigscalar)==sizeof(double)));
 
-    //I want to know when this is not valid, okay?!
     CASSERT((sizeof(float)==4));
     CASSERT((sizeof(double)==8));
 

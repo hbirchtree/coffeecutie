@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
     //Magic happens here
     CDWindowProperties props;
 
+    cDebug("Ints: %i %i %i %i",sizeof(int8),sizeof(int16),sizeof(int32),sizeof(int64));
+
     cDebug("Size of TransformPair: %ld",sizeof(CTransformPair));
 
     props.flags |= CDWindowProperties::Resizable;
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
     props.size.h = 900;
     props.monitor = 0;
 
-    props.contextProperties.flags |= CGLContextProperties::GLVSync;
+//    props.contextProperties.flags |= CGLContextProperties::GLVSync;
     props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;

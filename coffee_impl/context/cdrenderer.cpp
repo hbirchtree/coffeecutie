@@ -9,6 +9,7 @@
 
 #include "coffee_impl/graphics/cgraphicsdata.h"
 #include "coffee_impl/graphics/cframebuffer.h"
+#include "coffee_impl/graphics/cuniformchunk.h"
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
@@ -29,7 +30,7 @@ void CDRenderer::run()
 {
 
 #ifndef LOAD_FILE
-    CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
+    CResource v = CResource("ubw/shaders/vertex/vsh_ubo.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
     CShader* vshdr = new CShader;
     CShader* fshdr = new CShader;
@@ -92,7 +93,7 @@ void CDRenderer::run()
     uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
     uniformBuffer.create();
     uniformBuffer.bind();
-    uniformBuffer.store(sizeof(glm::mat4),nullptr);
+    uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
     uniformBuffer.unbind();
 
     CBuffer instanceBuffer;
@@ -105,8 +106,8 @@ void CDRenderer::run()
 
     CVertexArrayObject stdVao;
     stdVao.create();
-
     stdVao.bind();
+
     CSubBuffer posBuffer;
     posBuffer.parent = &vertexBuffer;
     posBuffer.bufferType = GL_ARRAY_BUFFER;
@@ -118,9 +119,8 @@ void CDRenderer::run()
     posAttr.type = GL_FLOAT;
     posAttr.location = 0;
     posAttr.offset = 0;
-    stdVao.addAttribute(&posAttr);
-
     posBuffer.bindParent();
+    stdVao.addAttribute(&posAttr);
     posBuffer.store(mesh->buffers[posit_pos]);
 
 //    instanceBuffer.bind();
@@ -164,22 +164,6 @@ void CDRenderer::run()
     model.scale.x = model.scale.y = model.scale.z = 1.f;
     model.rotation.w = 2.f;
 
-    CGraphicsData::CBlock* matrixBlock =
-            CGraphicsData::coffee_create_block(sizeof(glm::mat4),1);
-    matrixBlock->propertySizes[0] = sizeof(glm::mat4);
-//    matrixBlock->propertySizes[1] = sizeof(glm::mat4);
-
-//    matrixBlock->setPropertyData(0,&model.matrix,sizeof(glm::mat4));
-    matrixBlock->setPropertyData(0,&camera.matrix,sizeof(glm::mat4));
-
-    uniformBuffer.bind();
-    uniformBuffer.subStore(0,matrixBlock->dataSize(),matrixBlock->dataPtr());
-    uniformBuffer.unbind();
-
-    CUniformBlock matrices;
-    matrices.blockBinding = 0;
-    matrices.shaderIndex = glGetUniformBlockIndex(prog->handle,"MatrixBlock");
-
     {
         GLint thing;
         glGetProgramiv(prog->handle,GL_ACTIVE_UNIFORM_BLOCKS,&thing);
@@ -188,8 +172,6 @@ void CDRenderer::run()
         glGetProgramiv(prog->handle,GL_ACTIVE_UNIFORMS,&thing);
         cDebug("Uniforms: %i",thing);
     }
-
-    CASSERT((matrices.shaderIndex!=GL_INVALID_INDEX));
 
     showWindow();
 
@@ -208,35 +190,55 @@ void CDRenderer::run()
     bigscalar mtime = 0.0;
     CElapsedTimerMicro *t = new CElapsedTimerMicro;
 
+    CSubBuffer matrixBuf;
+    matrixBuf.parent = &uniformBuffer;
+    matrixBuf.size = sizeof(glm::mat4)*2;
+    szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
+    CUniformChunk* uchunk =
+            coffee_create_uchunk(&matrixBuf,sizeof(glm::mat4)*2,2,matrixSz,"MatrixBlock");
+    uchunk->buffer->bufferType = GL_UNIFORM_BUFFER;
+    uchunk->buffer->parent->bind();
+    uchunk->buffer->subStore(sizeof(glm::mat4),sizeof(glm::mat4),&camera.matrix);
+    uchunk->buffer->parent->unbind();
+
+    uchunk->ublock.blockBinding = 0;
+    uchunk->ublock.shaderIndex = glGetUniformBlockIndex(prog->handle,uchunk->ublock.name);
+    glUniformBlockBinding(prog->handle,uchunk->ublock.shaderIndex,uchunk->ublock.blockBinding);
+
     setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
     idxBuffer.bind();
     stdVao.bind();
-    glUniformBlockBinding(prog->handle,matrices.shaderIndex,matrices.blockBinding);
-    uniformBuffer.bind();
     instanceBuffer.bind();
+
+    double delta = contextTime();
+    uint64 frames = 0;
 
     while(!closeFlag()){
         t->start();
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1)*model.rotation);
+        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*(contextTime()-delta))*model.rotation);
         model.genMatrix();
 
-        instanceBuffer.bind();
-        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
-        instanceBuffer.unbind();
+        uniformBuffer.bind();
+        uniformBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        uniformBuffer.unbind();
 
-        uniformBuffer.bindRange(matrices.blockBinding,0,sizeof(glm::mat4));
+        uchunk->buffer->bindRange();/*uchunk->ublock.blockBinding,0,sizeof(glm::mat4));*/
 
         glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,0,1,sizeof(CGLDrawCall));
+
         if(contextTime()>mtime){
-            cDebug("Render time: %lldus",t->elapsed());
+            cDebug("Render time: %lldus\nFPS: %lld",t->elapsed(),frames-1);
             mtime = contextTime()+1.0;
+            frames = 0;
         }
 
+        frames++;
+        delta = contextTime();
         executeRunQueue();
         pollEvents();
         swapBuffers();

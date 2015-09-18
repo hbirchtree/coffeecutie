@@ -89,7 +89,9 @@ struct CBlock
 };
 
 //Datasize: Size of data without struct
-static CBlock* coffee_create_block(uint16_t dataSize, uint16_t numProperties)
+static CBlock* coffee_create_block(uint16_t dataSize,
+                                   uint16_t numProperties,
+                                   szptr* sizes = nullptr)
 {
     szptr chunk_size = dataSize
             +sizeof(CBlock)
@@ -110,6 +112,11 @@ static CBlock* coffee_create_block(uint16_t dataSize, uint16_t numProperties)
             -sizeof(CBlock)
             -numProperties*sizeof(uint8_t)
             -numProperties*sizeof(uint16_t);
+
+    if(sizes){
+        for(int i=0;i<numProperties;i++)
+            block->propertySizes[i] = sizes[i];
+    }
 
     return block;
 }

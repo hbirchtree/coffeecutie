@@ -53,6 +53,14 @@ struct CBuffer{
         glBufferSubData(bufferType,offset,size,data);
     }
 
+    void subCopy(GLuint from, GLsizeiptr roffset, GLsizeiptr woffset, GLsizeiptr size){
+        glBindBuffer(GL_COPY_READ_BUFFER,from);
+        glBindBuffer(GL_COPY_WRITE_BUFFER,handle);
+        glCopyBufferSubData(GL_COPY_READ_BUFFER,GL_COPY_WRITE_BUFFER,roffset,woffset,size);
+        glBindBuffer(GL_COPY_READ_BUFFER,0);
+        glBindBuffer(GL_COPY_WRITE_BUFFER,0);
+    }
+
     void fetch(GLenum type, GLsizeiptr offset,
                GLsizeiptr size, GLvoid* data)
     {

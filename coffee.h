@@ -18,22 +18,34 @@
 
 namespace Coffee{
 //Core typedefs
+
+//Integer types
+typedef char                int8;
+typedef short               int16;
+typedef int                 int32;
+typedef long long           int64;
+
+typedef unsigned char       uint8;
+typedef unsigned short      uint16;
+typedef unsigned int        uint32;
+typedef unsigned long long  uint64;
+
 //Small letters = basic type, mostly C types
 //Big letters = class/struct type, mostly C++ types
 typedef float               scalar;
 typedef double              bigscalar;
-typedef char                byte;
-typedef unsigned char       ubyte;
+typedef int8                byte;
+typedef uint8               ubyte;
 //Your typical C-string
-typedef const char*         cstring;
-typedef char*               cstring_w;
+typedef const byte*         cstring;
+typedef byte*               cstring_w;
 //Wide string
-typedef const int16_t*      cwstring;
-typedef int16_t*            cwstring_w;
+typedef const int16*        cwstring;
+typedef int16*              cwstring_w;
 
 typedef intptr_t            ptr_s;
 typedef uintptr_t           ptr_u;
-typedef size_t              szptr;
+typedef unsigned long long  szptr;
 
 //Can be switched for other types from libraries
 typedef std::string         CString;

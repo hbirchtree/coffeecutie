@@ -9,6 +9,7 @@ namespace Coffee {
 namespace CRendering {
 
 using namespace CGraphicsWrappers;
+using namespace CGraphicsData;
 
 struct CMultiDrawDescriptor{
     CVertexArrayObject vao;
@@ -18,16 +19,14 @@ struct CMultiDrawDescriptor{
 class CMultiDrawGraph
 {
 public:
-    CMultiDrawGraph(CMultiDrawDescriptor* desc);
+    CMultiDrawGraph();
 
-    void addMesh(CResourceTypes::CAssimp::CAssimpMesh* mesh);
+    void addDrawCalls(CGLDrawCall *dc,szptr numCalls);
+    void render();
 
 private:
-    CBuffer m_drawcallBuffer;
-    CVertexArrayObject *m_vao = nullptr;
-
-    std::vector<CGLDrawCall> m_drawcalls;
-    std::vector<CBuffer> m_vertexBuffers;
+    CBuffer drawcalls;
+    szptr numPrimitives;
 };
 
 } // namespace CRendering
