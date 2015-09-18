@@ -3,50 +3,70 @@
 namespace Coffee {
 namespace CRendering {
 
-CMultiDrawGraph::CMultiDrawGraph()
+CMultiDrawGraph::CMultiDrawGraph(CMultiDrawDescriptor *desc)
 {
     drawcalls.create();
     drawcalls.bufferType = GL_DRAW_INDIRECT_BUFFER;
     drawcalls.flags = GL_DYNAMIC_STORAGE_BIT;
-//    desc->vao.create();
 
-//    desc->vao.bind();
+    vao.create();
+    vao.bind();
 
-//    int idx = 0;
-//    int i,j;
-//    for(CVertexAttribute& attr : desc->attributes){
-//        CBuffer buffer;
-//        buffer.create();
-//        buffer.bind();
-//        if(attr.flags&CVertexAttribute::MatrixType){
-//            for(i=0;i<attr.rows;i++)
-//                desc->vao.addAttributeDivided(
-//                            attr.location,attr.type,
-//                            attr.normalized,
-//                            attr.size,attr.stride,
-//                            attr.divisor,attr.offset);
-//        }else{
-//            desc->vao.addAttribute(&attr);
-//        }
-//        idx++;
-    //    }
+    for(int j=0;j<desc->attributes.size();j++){
+        CVertexAttribute* attr = &desc->attributes.at(j);
+        CBuffer* buf = new CBuffer;
+        buf->create();
+        buf->bufferType = GL_ARRAY_BUFFER;
+        buf->flags = GL_DYNAMIC_STORAGE_BIT;
+        buf->bind();
+        buf->store(0,nullptr);
+        if(attr->flags&CVertexAttribute::MatrixType)
+            for(int i=0;i<attr->rows;i++)
+                vao.addAttributeDivided(attr->location+i,attr->type,attr->normalized,
+                                        attr->size,attr->stride,attr->divisor,
+                                        attr->offset*i);
+        else
+            vao.addAttribute(attr);
+
+        m_vbuffers.insert(std::pair<uint8_t,CBuffer*>(desc->attribute_mapping.at(j),
+                                                      buf));
+    }
+    m_idxbuf = new CBuffer;
+    m_idxbuf->bufferType = GL_ELEMENT_ARRAY_BUFFER;
+    m_idxbuf->flags = GL_DYNAMIC_STORAGE_BIT;
+    m_idxbuf->create();
+    m_idxbuf->bind();
+    m_idxbuf->store(0,nullptr);
+
+    vao.unbind();
 }
 
-void CMultiDrawGraph::addDrawCalls(CGLDrawCall *dc,szptr numCalls)
+void CMultiDrawGraph::addMesh(CAssimpMesh *mesh)
 {
-    //"Resize" the buffer
-    //You should not add drawcalls during operation, use existing ones
-    //Those will use faster methods
-    GLuint old = drawcalls.handle;
-    drawcalls.create();
-    drawcalls.store(drawcalls.size+sizeof(CGLDrawCall)*numCalls,nullptr);
-    drawcalls.subCopy(old,0,0,drawcalls.size);
-    glDeleteBuffers(1,&old);
+    CGLDrawCall call;
+    call.baseInstance = 0;
+    call.baseVertex = 0;
+    for(const std::pair<uint8_t,CBuffer*>& b : m_vbuffers)
+        for(int i=0;i<mesh->numBuffers;i++)
+            if(mesh->bufferType[i]==b.first){
+                szptr offset = b.second->size;
+                b.second->resize(b.second->size
+                                 +mesh->bufferSize[i]*mesh->elementSizes[i]);
+                b.second->subStore(offset,mesh->bufferSize[i]*mesh->elementSizes[i],
+                                   mesh->buffers[i]);
+            }
 
-    drawcalls.subStore(drawcalls.size,sizeof(CGLDrawCall)*numCalls,dc);
+    for(int i=0;i<mesh->numBuffers;i++)
+        if(mesh->bufferType[i]==CAssimpMesh::IndexType){
+            call.count = mesh->bufferSize[i];
+            call.firstIndex = m_idxbuf->size/sizeof(GLuint);
 
-    drawcalls.size += sizeof(CGLDrawCall)*numCalls;
-    numPrimitives++;
+            szptr offset = m_idxbuf->size;
+            m_idxbuf->resize(m_idxbuf->size
+                             +mesh->bufferSize[i]*mesh->elementSizes[i]);
+            m_idxbuf->subStore(offset,mesh->bufferSize[i]*mesh->elementSizes[i],
+                               mesh->buffers[i]);
+        }
 }
 
 void CMultiDrawGraph::render()

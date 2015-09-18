@@ -9,22 +9,29 @@ namespace Coffee {
 namespace CRendering {
 
 using namespace CGraphicsWrappers;
+using namespace CResourceTypes::CAssimp;
 using namespace CGraphicsData;
 
 struct CMultiDrawDescriptor{
-    CVertexArrayObject vao;
-    std::vector<CVertexAttribute> attributes;
+    CVertexArrayObject              vao;
+    std::vector<CVertexAttribute>   attributes;
+    std::vector<uint8_t>            attribute_mapping;
 };
 
 class CMultiDrawGraph
 {
 public:
-    CMultiDrawGraph();
+    CMultiDrawGraph(CMultiDrawDescriptor* desc);
 
-    void addDrawCalls(CGLDrawCall *dc,szptr numCalls);
+    void addMesh(CAssimpMesh* mesh);
     void render();
 
+    std::vector<CGLDrawCall> m_calls;
+
 private:
+    CVertexArrayObject vao;
+    std::map<uint8_t,CBuffer*> m_vbuffers;
+    CBuffer* m_idxbuf;
     CBuffer drawcalls;
     szptr numPrimitives;
 };

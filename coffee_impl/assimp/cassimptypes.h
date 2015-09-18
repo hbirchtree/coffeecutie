@@ -33,6 +33,7 @@ struct CAssimpMesh
     //Applies to the below lists
     const char* const*  buffers         = nullptr;
     const uint8_t*      bufferType      = nullptr;
+    const uint8_t*      elementSizes    = nullptr;
     const uint32_t*     bufferSize      = nullptr;
 
     enum BufferType

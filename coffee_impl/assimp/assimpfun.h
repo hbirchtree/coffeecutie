@@ -56,6 +56,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
 
     bufferSize+=bufferCnt*sizeof(uint8_t);
+    bufferSize+=bufferCnt*sizeof(uint8_t);
     bufferSize+=bufferCnt*sizeof(uint32_t);
     bufferSize+=bufferCnt*sizeof(char*);
 
@@ -72,6 +73,10 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     mesh->bufferType = typeBuffer;
     bufferSize+=bufferCnt*sizeof(uint8_t);
 
+    uint8_t* elBuffer = reinterpret_cast<uint8_t*>(&buffer[bufferSize]);
+    mesh->elementSizes = elBuffer;
+    bufferSize+=bufferCnt*sizeof(uint8_t);
+
     uint32_t* sizeBuffer = reinterpret_cast<uint32_t*>(&buffer[bufferSize]);
     mesh->bufferSize = sizeBuffer;
     bufferSize+=bufferCnt*sizeof(uint32_t);
@@ -86,6 +91,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
     if(meshdata->HasPositions()){
         //Positions
+        elBuffer[bufferCnt] = sizeof(CVec3);
         typeBuffer[bufferCnt] = CAssimpMesh::PositionType;
         sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
@@ -103,6 +109,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasNormals()){
         //Normals
+        elBuffer[bufferCnt] = sizeof(CVec3);
         typeBuffer[bufferCnt] = CAssimpMesh::NormalType;
         sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
@@ -121,6 +128,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     if(meshdata->HasTangentsAndBitangents()){
         {
             //Tangents
+            elBuffer[bufferCnt] = sizeof(CVec3);
             typeBuffer[bufferCnt] = CAssimpMesh::BitanType;
             sizeBuffer[bufferCnt] = vertices;
             listBuffer[bufferCnt] = &buffer[bufferSize];
@@ -139,6 +147,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
         {
             //Bitangents
+            elBuffer[bufferCnt] = sizeof(CVec3);
             typeBuffer[bufferCnt] = CAssimpMesh::TangentType;
             sizeBuffer[bufferCnt] = vertices;
             listBuffer[bufferCnt] = &buffer[bufferSize];
@@ -157,6 +166,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasFaces()){
         //Face indices
+        elBuffer[bufferCnt] = sizeof(uint32_t);
         typeBuffer[bufferCnt] = CAssimpMesh::IndexType;
         listBuffer[bufferCnt] = &buffer[bufferSize];
         uint32_t* list = reinterpret_cast<uint32_t*>(listBuffer[bufferCnt]);
@@ -175,6 +185,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasTextureCoords(0)){
         //Texture coordinates
+        elBuffer[bufferCnt] = sizeof(CVec2);
         typeBuffer[bufferCnt] = CAssimpMesh::TextCoordType;
         sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
@@ -186,11 +197,12 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
             list[i].y = 1.f-vec->y;
         }
 
-        bufferSize+=vertices*sizeof(CVec3);
+        bufferSize+=vertices*sizeof(CVec2);
         bufferCnt++;
     }
     if(meshdata->HasVertexColors(0)){
         //Vertex colors
+        elBuffer[bufferCnt] = sizeof(CVec3);
         typeBuffer[bufferCnt] = CAssimpMesh::VColorType;
         sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];

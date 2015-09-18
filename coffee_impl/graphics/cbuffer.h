@@ -10,7 +10,7 @@ struct CBuffer{
     GLuint      handle      = 0;
     GLsizeiptr  size        = 0;
     GLenum      bufferType  = GL_NONE;
-    BufferStorageMask flags = (BufferStorageMask)0;
+    BufferStorageMask flags = GL_NONE_BIT;
 
     void create(){
         glGenBuffers(1,&handle);
@@ -59,6 +59,18 @@ struct CBuffer{
         glCopyBufferSubData(GL_COPY_READ_BUFFER,GL_COPY_WRITE_BUFFER,roffset,woffset,size);
         glBindBuffer(GL_COPY_READ_BUFFER,0);
         glBindBuffer(GL_COPY_WRITE_BUFFER,0);
+    }
+
+    void resize(GLsizeiptr newsize){
+        GLuint old = handle;
+        GLsizeiptr osize = size;
+        create();
+        store(newsize,nullptr);
+        if(osize<newsize)
+            subCopy(old,0,0,osize);
+        else
+            subCopy(old,0,0,newsize);
+        glDeleteBuffers(1,&old);
     }
 
     void fetch(GLenum type, GLsizeiptr offset,

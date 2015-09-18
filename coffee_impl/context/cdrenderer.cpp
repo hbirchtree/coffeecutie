@@ -30,7 +30,7 @@ void CDRenderer::run()
 {
 
 #ifndef LOAD_FILE
-    CResource v = CResource("ubw/shaders/vertex/vsh_ubo.vs");
+    CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
     CShader* vshdr = new CShader;
     CShader* fshdr = new CShader;
@@ -123,16 +123,16 @@ void CDRenderer::run()
     stdVao.addAttribute(&posAttr);
     posBuffer.store(mesh->buffers[posit_pos]);
 
-//    instanceBuffer.bind();
-//    CVertexAttribute instAttr;
-//    instAttr.divisor = 1;
-//    instAttr.location = 5;
-//    instAttr.size = 4;
-//    instAttr.stride = sizeof(glm::mat4);
-//    for(int i=0;i<4;i++){
-//        stdVao.addAttributeDivided(instAttr.location+i,GL_FLOAT,GL_FALSE,instAttr.size,
-//                                   instAttr.stride,instAttr.divisor,sizeof(glm::vec4)*i);
-//    }
+    instanceBuffer.bind();
+    CVertexAttribute instAttr;
+    instAttr.divisor = 1;
+    instAttr.location = 5;
+    instAttr.size = 4;
+    instAttr.stride = sizeof(glm::mat4);
+    for(int i=0;i<4;i++){
+        stdVao.addAttributeDivided(instAttr.location+i,GL_FLOAT,GL_FALSE,instAttr.size,
+                                   instAttr.stride,instAttr.divisor,sizeof(glm::vec4)*i);
+    }
 
     CBuffer idxBuffer;
     idxBuffer.create();
@@ -143,7 +143,7 @@ void CDRenderer::run()
     stdVao.unbind();
 
     CGLDrawCall meshcall;
-    meshcall.baseInstance = 0;
+    meshcall.baseInstance = 1;
     meshcall.baseVertex = 0;
     meshcall.count = mesh->bufferSize[index_pos];
     meshcall.firstIndex = 0;
@@ -198,7 +198,7 @@ void CDRenderer::run()
             coffee_create_uchunk(&matrixBuf,sizeof(glm::mat4)*2,2,matrixSz,"MatrixBlock");
     uchunk->buffer->bufferType = GL_UNIFORM_BUFFER;
     uchunk->buffer->parent->bind();
-    uchunk->buffer->subStore(sizeof(glm::mat4),sizeof(glm::mat4),&camera.matrix);
+    uchunk->buffer->subStore(0,sizeof(glm::mat4),&camera.matrix);
     uchunk->buffer->parent->unbind();
 
     uchunk->ublock.blockBinding = 0;
@@ -223,9 +223,9 @@ void CDRenderer::run()
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*(contextTime()-delta))*model.rotation);
         model.genMatrix();
 
-        uniformBuffer.bind();
-        uniformBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
-        uniformBuffer.unbind();
+        instanceBuffer.bind();
+        instanceBuffer.subStore(sizeof(glm::mat4),sizeof(glm::mat4),&(model.matrix));
+        instanceBuffer.unbind();
 
         uchunk->buffer->bindRange();/*uchunk->ublock.blockBinding,0,sizeof(glm::mat4));*/
 
