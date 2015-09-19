@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     cDebug("Ints: %i %i %i %i",sizeof(int8),sizeof(int16),sizeof(int32),sizeof(int64));
 
-    cDebug("Size of TransformPair: %ld",sizeof(CTransformPair));
+    cDebug("Drawcall: %i",sizeof(CGLDrawCall));
 
     props.flags |= CDWindowProperties::Resizable;
     props.flags |= CDWindowProperties::Windowed;

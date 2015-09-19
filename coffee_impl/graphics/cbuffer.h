@@ -65,7 +65,9 @@ struct CBuffer{
         GLuint old = handle;
         GLsizeiptr osize = size;
         create();
+        bind();
         store(newsize,nullptr);
+        unbind();
         if(osize<newsize)
             subCopy(old,0,0,osize);
         else

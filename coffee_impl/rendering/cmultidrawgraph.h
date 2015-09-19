@@ -33,7 +33,7 @@ private:
     std::map<uint8_t,CBuffer*> m_vbuffers;
     CBuffer* m_idxbuf;
     CBuffer drawcalls;
-    szptr numPrimitives;
+    szptr numPrimitives = 0;
 };
 
 } // namespace CRendering
