@@ -51,11 +51,14 @@ static CMultiDrawDataSet coffee_multidraw_create(){
     return multidraw;
 }
 
-static void coffee_multidraw_render(const CMultiDrawDataSet& set)
+
+static void coffee_multidraw_bind_states(const CMultiDrawDataSet& set)
 {
     for(CVertexBufferBinding* bnd : set.bindings)
         bnd->bindBuffer(set.vao);
-
+}
+static void coffee_multidraw_render(const CMultiDrawDataSet& set)
+{
     set.drawcalls->drawbuffer->bind();
     set.vao->bind();
     glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,

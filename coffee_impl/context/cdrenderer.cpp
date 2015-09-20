@@ -31,6 +31,10 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
+    {
+        //Check for max buffer size!
+
+    }
 
 #ifndef LOAD_FILE
     CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
@@ -90,7 +94,7 @@ void CDRenderer::run()
     instanceBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
     instanceBuffer.create();
     instanceBuffer.bind();
-    instanceBuffer.store(sizeof(glm::mat4)*2,nullptr);
+    instanceBuffer.store(sizeof(glm::mat4)*10000,nullptr);
     instanceBuffer.unbind();
 
     CVertexFormat stdFmt;
@@ -134,6 +138,8 @@ void CDRenderer::run()
     vertexBuffer.store(verData.size(),verData.data());
     vertexBuffer.unbind();
     coffee_multidraw_create_call(multidraw,mesh);
+
+    multidraw.drawcalls->drawcalls.data()[0].instanceCount = 100;
     //END Vertex data
 
     coffee_multidraw_load_drawcalls(multidraw);
@@ -150,8 +156,6 @@ void CDRenderer::run()
     uniformBuffer.bind();
     uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
     uniformBuffer.unbind();
-
-
 
     res->freeData();
     delete res;
@@ -171,6 +175,14 @@ void CDRenderer::run()
     model.position.z = -1.f;
     model.scale.x = model.scale.y = model.scale.z = 1.f;
     model.rotation.w = 2.f;
+
+    instanceBuffer.bind();
+    for(szptr i=1;i<10000;i++)
+    {
+        model.genMatrix();
+        instanceBuffer.subStore(sizeof(glm::mat4)*i,sizeof(glm::mat4),&model.matrix);
+    }
+    instanceBuffer.unbind();
 
     showWindow();
 
@@ -207,18 +219,27 @@ void CDRenderer::run()
     cMsg("Coffee","Init time: %fs",contextTime());
 
     double delta = contextTime();
+    double deltaT = 0;
     uint64 frames = 0;
     uint64 rendertime = 0;
     uint64 inputtime = 0;
     uint64 qtime = 0;
+    uint64 swaptime = 0;
+
+    setSwapInterval(0);
+
+    instanceBuffer.bind();
+    coffee_multidraw_bind_states(multidraw);
+    uchunk->buffer->bindRange();
 
     while(!closeFlag()){
+        delta = contextTime();
         swap->start();
 
-        //Rendering part
+//        Rendering part
         glClear(GL_COLOR_BUFFER_BIT);
 
-        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*(contextTime()-delta))*model.rotation);
+        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
         model.genMatrix();
 
         instanceBuffer.bind();
@@ -228,25 +249,29 @@ void CDRenderer::run()
         coffee_multidraw_render(multidraw);
 
         rendertime = swap->elapsed();
-        // END Rendering part
-        delta = contextTime();
+//        // END Rendering part
 
-        //Event handling
+//        //Event handling
         swap->start();
         executeRunQueue();
         qtime = swap->elapsed();
         swap->start();
         pollEvents();
         inputtime = swap->elapsed();
+        //Buffer swapping. Really slow...
         swap->start();
         swapBuffers();
+        swaptime = swap->elapsed();
         frames++;
 
         //Info
+        deltaT = contextTime()-delta;
         if(contextTime()>mtime){
             cDebug("Render time: %lldus, swap time: %lldus, "
-                   "input: %lldus, queue: %lldus, frames: %lld",
-                   rendertime,swap->elapsed(),inputtime,qtime,frames-1);
+                   "input: %lldus, queue: %lldus, frames: %lld, frametime: %lldus",
+                   rendertime,swaptime,
+                   inputtime,qtime,frames-1,
+                   rendertime+swaptime+inputtime+qtime);
             mtime = contextTime()+1.0;
             frames = 0;
         }
