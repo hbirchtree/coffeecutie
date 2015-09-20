@@ -121,7 +121,7 @@ static bool coffee_multidraw_create_call(CMultiDrawDataSet& set,CAssimpMesh* mes
     call.count = numIndices;
     call.instanceCount = 1;
 
-    std::copy(&indices[0],&indices[numIndices],std::back_inserter(set.index->indices));
+    std::copy(&indices[0],&indices[call.count],std::back_inserter(set.index->indices));
 
     set.drawcalls->drawcalls.push_back(call);
     return true;

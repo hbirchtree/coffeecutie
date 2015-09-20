@@ -86,7 +86,7 @@ void CDRenderer::run()
 
     CVertexFormat stdFmt;
     stdFmt.type = GL_FLOAT;
-    stdFmt.offset = 12;
+    stdFmt.offset = 0;
     stdFmt.size = 3;
 
     CVertexBufferBinding posBnd;
@@ -113,7 +113,7 @@ void CDRenderer::run()
     for(int i=0;i<mesh->numBuffers;i++)
         if(mesh->bufferType[i]==CAssimpMesh::PositionType){
             coffee_mesh_load_vertexdata(verData,mesh->buffers[i],
-                                        0,mesh->bufferSize[i]);
+                                        0,mesh->bufferSize[i]*sizeof(CVec3));
         }
     vertexBuffer.bind();
     vertexBuffer.store(verData.size(),verData.data());
