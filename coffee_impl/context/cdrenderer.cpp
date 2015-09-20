@@ -86,7 +86,7 @@ void CDRenderer::run()
 
     CVertexFormat stdFmt;
     stdFmt.type = GL_FLOAT;
-    stdFmt.offset = 0;
+    stdFmt.offset = 12;
     stdFmt.size = 3;
 
     CVertexBufferBinding posBnd;
@@ -104,20 +104,12 @@ void CDRenderer::run()
     posA.fmt = &stdFmt;
     desc.attributes.push_back(posA);
 
-    CMultiDrawDataSet multidraw;
-    std::vector<byte> verData;
-
-    multidraw.index = new CMultiIndexStorage;
-    multidraw.index->buffer = new CBuffer;
-    multidraw.index->buffer->create();
-    multidraw.drawcalls = new CMultiDrawCalls;
-    multidraw.drawcalls->drawbuffer = new CBuffer;
-    multidraw.drawcalls->drawbuffer->create();
-    multidraw.vao = new CVertexArrayObject;
-    multidraw.vao->create();
+    CMultiDrawDataSet multidraw = coffee_multidraw_create();
 
     coffee_multidraw_load_vao(multidraw,desc);
 
+    //Vertex data
+    std::vector<byte> verData;
     for(int i=0;i<mesh->numBuffers;i++)
         if(mesh->bufferType[i]==CAssimpMesh::PositionType){
             coffee_mesh_load_vertexdata(verData,mesh->buffers[i],
@@ -126,8 +118,9 @@ void CDRenderer::run()
     vertexBuffer.bind();
     vertexBuffer.store(verData.size(),verData.data());
     vertexBuffer.unbind();
+    coffee_multidraw_create_call(multidraw,mesh);
+    //END Vertex data
 
-    cDebug("Draw call: %i",coffee_multidraw_create_call(multidraw,mesh));
     coffee_multidraw_load_drawcalls(multidraw);
     coffee_multidraw_load_indices(multidraw);
 
@@ -304,9 +297,8 @@ void CDRenderer::eventIHandle(CIEvent *event)
 {
     if(event->type==CIEvent::Keyboard){
         CIKeyEvent* kev = reinterpret_cast<CIKeyEvent*>(&event[1]);
-        cDebug("Key event: t=%i,key=%i,mods=%i",kev->type,
-               kev->keyCode,
-               kev->modifier);
+        cDebug("Key event: t=%i,key=%i,mods=%i",
+               kev->type,kev->keyCode,kev->modifier);
         if(kev->keyCode==256) //TODO: Add key mapping
             this->closeWindow();
     }

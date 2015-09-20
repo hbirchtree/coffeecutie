@@ -36,6 +36,21 @@ struct CMultiDrawDescriptor{
     std::vector<CVertexAttribute>   attributes;
 };
 
+static CMultiDrawDataSet coffee_multidraw_create(){
+    CMultiDrawDataSet multidraw;
+
+    multidraw.index = new CMultiIndexStorage;
+    multidraw.index->buffer = new CBuffer;
+    multidraw.index->buffer->create();
+    multidraw.drawcalls = new CMultiDrawCalls;
+    multidraw.drawcalls->drawbuffer = new CBuffer;
+    multidraw.drawcalls->drawbuffer->create();
+    multidraw.vao = new CVertexArrayObject;
+    multidraw.vao->create();
+
+    return multidraw;
+}
+
 static void coffee_multidraw_render(const CMultiDrawDataSet& set)
 {
     for(CVertexBufferBinding* bnd : set.bindings)
@@ -49,25 +64,25 @@ static void coffee_multidraw_render(const CMultiDrawDataSet& set)
     set.drawcalls->drawbuffer->unbind();
     set.vao->unbind();
 }
+template<typename DataType>
+static void _coffee_bufferload_vector(const std::vector<DataType>& source, CBuffer* buffer){
+    szptr datasz = source.size()*sizeof(DataType);
+
+    buffer->bind();
+    buffer->store(datasz,source.data());
+    buffer->unbind();
+}
 //Load drawcalls into GPU memory
 static void coffee_multidraw_load_drawcalls(const CMultiDrawDataSet& set)
 {
     set.drawcalls->drawbuffer->bufferType = GL_DRAW_INDIRECT_BUFFER;
-    szptr datasz = set.drawcalls->drawcalls.size()*sizeof(set.drawcalls->drawcalls.data()[0]);
-
-    set.drawcalls->drawbuffer->bind();
-    set.drawcalls->drawbuffer->store(datasz,set.drawcalls->drawcalls.data());
-    set.drawcalls->drawbuffer->unbind();
+    _coffee_bufferload_vector<CGLDrawCall>(set.drawcalls->drawcalls,set.drawcalls->drawbuffer);
 }
 //Load indices into GPU memory
 static void coffee_multidraw_load_indices(const CMultiDrawDataSet& set)
 {
     set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
-    szptr datasz = set.index->indices.size()*sizeof(set.index->indices.data()[0]);
-
-    set.index->buffer->bind();
-    set.index->buffer->store(datasz,set.index->indices.data());
-    set.index->buffer->unbind();
+    _coffee_bufferload_vector<GLuint>(set.index->indices,set.index->buffer);
 }
 //Load up VAO
 static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescriptor& desc)
@@ -90,11 +105,6 @@ static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescript
 static bool coffee_multidraw_create_call(CMultiDrawDataSet& set,CAssimpMesh* mesh)
 {
     CGLDrawCall call;
-    call.baseInstance = 0;
-    call.baseVertex = 0;
-    call.count = 0;
-    call.firstIndex = 0;
-    call.instanceCount = 0;
 
     const GLuint* indices = nullptr;
     csize_t numIndices = 0;
