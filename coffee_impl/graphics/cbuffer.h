@@ -1,6 +1,7 @@
 #ifndef CBUFFER
 #define CBUFFER
 
+#include "coffee.h"
 #include "glbinding.h"
 
 namespace Coffee{

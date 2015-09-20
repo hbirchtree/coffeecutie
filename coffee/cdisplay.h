@@ -79,10 +79,10 @@ struct CGLContextVersion
 struct CGLContextProperties
 {
     enum ContextProperties{
-        GLCoreProfile   = 0b1,
-        GLVSync         = 0b10,
-        GLDebug         = 0b100,
-        GLAutoResize    = 0b1000,
+        GLCoreProfile   = 0b1,      //GL core profile
+        GLVSync         = 0b10,     //vertical sync
+        GLDebug         = 0b100,    //GL debugging context
+        GLAutoResize    = 0b1000,   //Whether the context auto-resizes
     };
 
     uint16_t            flags = 0b1;

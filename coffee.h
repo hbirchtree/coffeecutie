@@ -47,6 +47,8 @@ typedef intptr_t            ptr_s;
 typedef uintptr_t           ptr_u;
 typedef unsigned long long  szptr;
 
+typedef size_t              csize_t;
+
 //Can be switched for other types from libraries
 typedef std::string         CString;
 

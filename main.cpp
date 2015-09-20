@@ -18,14 +18,9 @@ using namespace Coffee::CDisplay;
 using namespace Coffee::CGraphicsWrappers;
 using namespace Coffee::CGraphicsData;
 
-int main(int argc, char *argv[])
+int main(int argc, char** argv)
 {
     C_UNUSED(argc)C_UNUSED(argv);
-//    QCoreApplication a(argc, argv);
-//    a.setApplicationName("CoffeeCutie");
-//    a.setApplicationVersion("0.0.2.0");
-//    a.setApplicationDisplayName("Coffee Cutie");
-
     for(int i=0;i<argc;i++)
     {
         std::cout << argv[i] << std::endl;
@@ -44,22 +39,18 @@ int main(int argc, char *argv[])
     //Magic happens here
     CDWindowProperties props;
 
-    cDebug("Ints: %i %i %i %i",sizeof(int8),sizeof(int16),sizeof(int32),sizeof(int64));
-
-    cDebug("Drawcall: %i",sizeof(CGLDrawCall));
-
-    props.flags |= CDWindowProperties::Resizable;
+//    props.flags |= CDWindowProperties::Resizable;
     props.flags |= CDWindowProperties::Windowed;
     props.flags |= CDWindowProperties::Decorated;
-    props.size.w = 1600;
-    props.size.h = 900;
+    props.size.w = 1280;
+    props.size.h = 720;
     props.monitor = 0;
 
 //    props.contextProperties.flags |= CGLContextProperties::GLVSync;
     props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;
-    props.contextProperties.version.major = 3;
+    props.contextProperties.version.minor = 3;
 
     std::atomic<ubyte> atomic;
     atomic.store(0);

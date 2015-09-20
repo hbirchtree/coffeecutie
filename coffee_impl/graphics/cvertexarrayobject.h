@@ -6,23 +6,40 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+struct CVertexFormat
+{
+    GLuint      size            = 0;
+    GLuint      offset          = 0;
+    GLenum      type            = GL_NONE;
+    GLboolean   normalized      = GL_FALSE;
+};
+
+struct CVertexBufferBinding
+{
+    CBuffer* buffer  = nullptr;
+    GLsizei  offset  = 0;
+    GLsizei  stride  = 0;
+    GLuint   divisor = 0;
+    GLuint   binding = 0;
+
+    void bindBuffer(){
+        glBindVertexBuffer(binding,buffer->handle,offset,stride);
+    }
+};
+
 struct CVertexAttribute
 {
-    enum AttributeFlags{
-        MatrixType = 0b1,
-    };
-    uint8_t flags   = 0;
+    GLuint                  attribIdx   = 0;
+    CVertexFormat*          fmt         = nullptr;
+    CVertexBufferBinding*   bnd         = nullptr;
 
-    uint8_t rows    = 0; //matrices
-
-    GLenum type         = GL_NONE;
-    GLboolean normalized= GL_FALSE;
-
-    GLuint location = 0;
-    GLuint size     = 0;
-    GLuint offset   = 0;
-    GLuint stride   = 0;
-    GLuint divisor  = 0;
+    void setFormat(const CVertexFormat& fmt){
+        glVertexAttribFormat(attribIdx,fmt.size,fmt.type,fmt.normalized,fmt.offset);
+    }
+    void setBuffer(const CVertexBufferBinding& buf){
+        glVertexAttribBinding(attribIdx,buf.binding);
+        glVertexBindingDivisor(buf.binding,buf.divisor);
+    }
 };
 
 struct CVertexArrayObject{
@@ -65,10 +82,6 @@ struct CVertexArrayObject{
     {
         addAttribute(index,type,normalized,size,stride,pointer);
         glVertexAttribDivisor(index,divisor);
-    }
-    void addAttribute(CVertexAttribute* attr){
-        addAttributeDivided(attr->location,attr->type,attr->normalized,attr->size,
-                            attr->stride,attr->divisor,attr->offset);
     }
 };
 

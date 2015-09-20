@@ -41,10 +41,14 @@ void CDRenderer::run()
     cDebug("Compile status: %i",fshdr->compile(&f,GL_FRAGMENT_SHADER));
 #endif
 
+    //Loading a mesh
+
     CResource testFile("ubw/models/ubw.blend");
     testFile.read_data();
     CResourceTypes::CAssimp::CAssimpData* res = CResourceTypes::CAssimp::CAssimpImporters::importResource(&testFile,"blend");
     testFile.free_data();
+
+    //Loading up shader
 
     CShaderProgram* prog = new CShaderProgram;
 #ifndef LOAD_FILE
@@ -62,6 +66,10 @@ void CDRenderer::run()
     pip->create();
     pip->attachProgram(prog,GL_VERTEX_SHADER_BIT|GL_FRAGMENT_SHADER_BIT);
 
+    //End of shader loading
+
+    //Testing: Dumping shader program to file, caching
+
 #ifndef LOAD_FILE
     CResource progStore("shader.dmp");
     prog->storeProgram(&progStore);
@@ -71,26 +79,71 @@ void CDRenderer::run()
 #endif
     CResourceTypes::CAssimp::CAssimpMesh* mesh = res->meshes[4];
 
-    CMultiDrawDescriptor desc;
-    CVertexAttribute posA;
-    posA.location = 0;
-    posA.type = GL_FLOAT;
-    posA.size = 3;
-    posA.stride = sizeof(CVec3);
-    posA.normalized = GL_FALSE;
-    desc.attributes.push_back(posA);
-    desc.attribute_mapping.push_back(CAssimpMesh::PositionType);
+    //Mesh specification
+    CBuffer vertexBuffer;
+    vertexBuffer.create();
+    vertexBuffer.bufferType = GL_ARRAY_BUFFER;
 
-    CMultiDrawGraph graph(&desc);
-    graph.addMesh(mesh);
+    CVertexFormat stdFmt;
+    stdFmt.type = GL_FLOAT;
+    stdFmt.offset = 0;
+    stdFmt.size = 3;
+
+    CVertexBufferBinding posBnd;
+    posBnd.buffer = &vertexBuffer;
+    posBnd.binding = 0;
+    posBnd.divisor = 0;
+    posBnd.offset = 0;
+    posBnd.stride = sizeof(CVec3);
+
+    CMultiDrawDescriptor desc;
+
+    CVertexAttribute posA;
+    posA.attribIdx = 0;
+    posA.bnd = &posBnd;
+    posA.fmt = &stdFmt;
+    desc.attributes.push_back(posA);
+
+    CMultiDrawDataSet multidraw;
+    std::vector<byte> verData;
+
+    multidraw.index = new CMultiIndexStorage;
+    multidraw.index->buffer = new CBuffer;
+    multidraw.index->buffer->create();
+    multidraw.drawcalls = new CMultiDrawCalls;
+    multidraw.drawcalls->drawbuffer = new CBuffer;
+    multidraw.drawcalls->drawbuffer->create();
+    multidraw.vao = new CVertexArrayObject;
+    multidraw.vao->create();
+
+    cDebug("Draw call: %i",coffee_multidraw_create_call(multidraw,mesh));
+    coffee_multidraw_load_indices(multidraw);
+    coffee_multidraw_load_vao(multidraw,desc);
+
+    for(int i=0;i<mesh->numBuffers;i++)
+        if(mesh->bufferType[i]==CAssimpMesh::PositionType){
+            coffee_mesh_load_vertexdata(verData,mesh->buffers[i],
+                                        0,mesh->bufferSize[i]);
+        }
+    vertexBuffer.bind();
+    vertexBuffer.store(verData.size(),verData.data());
+    vertexBuffer.unbind();
+
+    coffee_multidraw_load_drawcalls(multidraw);
+
+    // END mesh specification
+
+    //Uniform buffer storage
 
     CBuffer uniformBuffer;
     uniformBuffer.bufferType = GL_UNIFORM_BUFFER;
-    uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
+    uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT|GL_MAP_READ_BIT;
     uniformBuffer.create();
     uniformBuffer.bind();
     uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
     uniformBuffer.unbind();
+
+    //Instance buffer, stores object transforms for *all* objects
 
     CBuffer instanceBuffer;
     instanceBuffer.bufferType = GL_ARRAY_BUFFER;
@@ -103,12 +156,16 @@ void CDRenderer::run()
     res->freeData();
     delete res;
 
+    //Representation of camera
+
     CGCamera camera;
     camera.fieldOfView = 120.f;
     camera.aspect = 1.6f;
     camera.zVals.near = 0.1f;
     camera.zVals.far = 100.f;
     camera.genPerspective();
+
+    //Model transform
 
     CModelTransform model;
     model.position.z = -1.f;
@@ -123,19 +180,25 @@ void CDRenderer::run()
     glViewport(0,0,m_properties.size.w,m_properties.size.h);
 
     bigscalar mtime = 0.0;
-    CElapsedTimerMicro *t = new CElapsedTimerMicro;
+    CElapsedTimerMicro *swap = new CElapsedTimerMicro;
 
+    //Organizing the uniform chunk
+
+    //Create sub-buffer from UBO
     CSubBuffer matrixBuf;
     matrixBuf.parent = &uniformBuffer;
     matrixBuf.size = sizeof(glm::mat4)*2;
+    matrixBuf.bufferType = GL_UNIFORM_BUFFER;
     szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
+    //Function creates our chunk
     CUniformChunk* uchunk =
             coffee_create_uchunk(&matrixBuf,sizeof(glm::mat4)*2,2,matrixSz,"MatrixBlock");
-    uchunk->buffer->bufferType = GL_UNIFORM_BUFFER;
+    //Set initial data
     uchunk->buffer->parent->bind();
     uchunk->buffer->subStore(sizeof(glm::mat4),sizeof(glm::mat4),&camera.matrix);
     uchunk->buffer->parent->unbind();
 
+    //Set binding for the chunk
     uchunk->ublock.blockBinding = 0;
     uchunk->ublock.shaderIndex = glGetUniformBlockIndex(prog->handle,uchunk->ublock.name);
     glUniformBlockBinding(prog->handle,uchunk->ublock.shaderIndex,uchunk->ublock.blockBinding);
@@ -143,14 +206,16 @@ void CDRenderer::run()
     setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
-    instanceBuffer.bind();
-
     double delta = contextTime();
     uint64 frames = 0;
+    uint64 rendertime = 0;
+    uint64 inputtime = 0;
+    uint64 qtime = 0;
 
     while(!closeFlag()){
-        t->start();
+        swap->start();
 
+        //Rendering part
         glClear(GL_COLOR_BUFFER_BIT);
 
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*(contextTime()-delta))*model.rotation);
@@ -158,26 +223,36 @@ void CDRenderer::run()
 
         uniformBuffer.bind();
         uniformBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
-        uniformBuffer.unbind();
 
         uchunk->buffer->bindRange();
+        coffee_multidraw_render(multidraw);
 
-        graph.render();
+        rendertime = swap->elapsed();
+        // END Rendering part
+        delta = contextTime();
 
+        //Event handling
+        swap->start();
+        executeRunQueue();
+        qtime = swap->elapsed();
+        swap->start();
+        pollEvents();
+        inputtime = swap->elapsed();
+        swap->start();
+        swapBuffers();
+        frames++;
+
+        //Info
         if(contextTime()>mtime){
-            cDebug("Render time: %lldus\nFPS: %lld",t->elapsed(),frames-1);
+            cDebug("Render time: %lldus, swap time: %lldus, "
+                   "input: %lldus, queue: %lldus, frames: %lld",
+                   rendertime,swap->elapsed(),inputtime,qtime,frames-1);
             mtime = contextTime()+1.0;
             frames = 0;
         }
-
-        frames++;
-        delta = contextTime();
-        executeRunQueue();
-        pollEvents();
-        swapBuffers();
     }
 
-    t->start();
+    swap->start();
 
     hideWindow();
 
@@ -191,7 +266,7 @@ void CDRenderer::run()
     delete prog;
     delete pip;
 
-    cMsg("Coffee","Termination time: %lldus",t->elapsed());
+    cMsg("Coffee","Termination time: %lldus",swap->elapsed());
 }
 
 void CDRenderer::run(CDWindowProperties props)
@@ -277,6 +352,9 @@ CGLState *CDRenderer::_dump_state() const
 
     glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&t);
     state->fb_read = t;
+
+    glGetIntegerv(GL_VERTEX_ARRAY_BUFFER_BINDING,&t);
+    state->vertex_binding = t;
 
     glGetFloatv(GL_COLOR_CLEAR_VALUE,reinterpret_cast<GLfloat*>(&state->clear_color));
 

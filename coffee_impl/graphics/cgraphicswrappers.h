@@ -28,6 +28,8 @@ struct CGLState
 
     GLuint      indirect_buffer = 0;
 
+    GLuint      vertex_binding  = 0;
+
     GLuint      texture_2d      = 0;
     GLuint      texture_3d      = 0;
     GLuint      texture_cube    = 0;

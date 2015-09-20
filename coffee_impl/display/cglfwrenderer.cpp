@@ -254,23 +254,23 @@ void CGLFWRenderer::_glfw_init(const CDWindowProperties& props)
                    props.contextProperties.version.minor);
     //Window flags
     glfwWindowHint(GLFW_VISIBLE,
-                   props.flags&CDWindowProperties::Visible);
+                   (bool)(props.flags&CDWindowProperties::Visible));
     glfwWindowHint(GLFW_RESIZABLE,
-                   props.flags&CDWindowProperties::Resizable);
+                   (bool)(props.flags&CDWindowProperties::Resizable));
     glfwWindowHint(GLFW_DECORATED,
-                   props.flags&CDWindowProperties::Decorated);
+                   (bool)(props.flags&CDWindowProperties::Decorated));
     glfwWindowHint(GLFW_FLOATING,
-                   props.flags&CDWindowProperties::Floating);
+                   (bool)(props.flags&CDWindowProperties::Floating));
 
     //Allocate our context object, is deleted when context is gone
     m_ctxt = reinterpret_cast<CGLFWContext*>(malloc(sizeof(CGLFWContext)));
 
-    glfwWindowHint(GLFW_RED_BITS,props.contextProperties.bits.red);
-    glfwWindowHint(GLFW_GREEN_BITS,props.contextProperties.bits.green);
-    glfwWindowHint(GLFW_BLUE_BITS,props.contextProperties.bits.blue);
-    glfwWindowHint(GLFW_ALPHA_BITS,props.contextProperties.bits.alpha);
+    glfwWindowHint(GLFW_RED_BITS,   props.contextProperties.bits.red);
+    glfwWindowHint(GLFW_GREEN_BITS, props.contextProperties.bits.green);
+    glfwWindowHint(GLFW_BLUE_BITS,  props.contextProperties.bits.blue);
+    glfwWindowHint(GLFW_ALPHA_BITS, props.contextProperties.bits.alpha);
     glfwWindowHint(GLFW_STENCIL_BITS,props.contextProperties.bits.stencil);
-    glfwWindowHint(GLFW_DEPTH_BITS,props.contextProperties.bits.depth);
+    glfwWindowHint(GLFW_DEPTH_BITS, props.contextProperties.bits.depth);
 
     switch(props.flags&(CDWindowProperties::FullScreen
                   |CDWindowProperties::WindowedFullScreen
@@ -287,9 +287,9 @@ void CGLFWRenderer::_glfw_init(const CDWindowProperties& props)
         if(props.flags&CDWindowProperties::WindowedFullScreen){
             const GLFWvidmode* current = glfwGetVideoMode(mon);
 
-            glfwWindowHint(GLFW_RED_BITS,current->redBits);
-            glfwWindowHint(GLFW_GREEN_BITS,current->greenBits);
-            glfwWindowHint(GLFW_BLUE_BITS,current->blueBits);
+            glfwWindowHint(GLFW_RED_BITS,   current->redBits);
+            glfwWindowHint(GLFW_GREEN_BITS, current->greenBits);
+            glfwWindowHint(GLFW_BLUE_BITS,  current->blueBits);
             glfwWindowHint(GLFW_REFRESH_RATE,current->refreshRate);
 
             m_properties.size.w = current->width;
@@ -354,7 +354,7 @@ void CGLFWRenderer::_glfw_init(const CDWindowProperties& props)
 
     bindingPostInit();
 
-    CGLFWNativeFuncs::glfwSetDecorations(m_ctxt->window,false);
+//    CGLFWNativeFuncs::glfwSetDecorations(m_ctxt->window,false);
 
     m_initMutex.unlock();
 }
