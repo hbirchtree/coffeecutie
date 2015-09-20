@@ -137,7 +137,7 @@ void CDRenderer::run()
 
     CBuffer uniformBuffer;
     uniformBuffer.bufferType = GL_UNIFORM_BUFFER;
-    uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT|GL_MAP_READ_BIT;
+    uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
     uniformBuffer.create();
     uniformBuffer.bind();
     uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);

@@ -72,6 +72,7 @@ static void coffee_multidraw_load_indices(const CMultiDrawDataSet& set)
 //Load up VAO
 static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescriptor& desc)
 {
+    set.vao->bind();
     for(CVertexAttribute& attr : desc.attributes){
         attr.setBuffer(set.vao,*attr.bnd);
         attr.setFormat(set.vao,*attr.fmt);
@@ -80,7 +81,6 @@ static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescript
         set.bindings.push_back(attr.bnd);
     }
 
-    set.vao->bind();
     set.index->buffer->create();
     set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
     set.index->buffer->bind();
