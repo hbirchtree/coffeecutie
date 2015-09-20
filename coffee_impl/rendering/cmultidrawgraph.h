@@ -126,6 +126,41 @@ static bool coffee_multidraw_create_call(CMultiDrawDataSet& set,CAssimpMesh* mes
     set.drawcalls->drawcalls.push_back(call);
     return true;
 }
+//For creating instance buffer data
+static void coffee_mesh_define_matrix_attribs(CBuffer* instanceBuffer,
+                                              CVertexFormat& fmt,
+                                              CMultiDrawDescriptor& desc,
+                                              uint16 baseIdx,
+                                              uint16 baseBind)
+{
+    //Define dimensions, we use vertex format for amount of rows
+    //We assume TxT matrix
+
+    CVertexAttribute attr;
+    attr.fmt = &fmt;
+
+    for(int i=0;i<fmt.size;i++)
+    {
+        CVertexBufferBinding* bind = new CVertexBufferBinding;
+        bind->binding = baseBind+i;
+        bind->buffer = instanceBuffer;
+        bind->divisor = 1;
+        bind->stride = sizeof(float)*fmt.size*fmt.size;
+        bind->offset = sizeof(float)*fmt.size*i;
+
+        attr.attribIdx = baseIdx+i;
+        attr.bnd = bind;
+
+        desc.attributes.push_back(attr);
+    }
+}
+static void coffee_mesh_free_matrix_attribs(std::vector<CVertexAttribute>::iterator start, std::vector<CVertexAttribute>::iterator end)
+{
+    for(auto it=start; it!=end; it++)
+    {
+        free((*it).bnd);
+    }
+}
 //Copy mesh data
 static void coffee_mesh_load_vertexdata(std::vector<byte>& data, const void* rsrc,
                                         szptr roffset, szptr size)

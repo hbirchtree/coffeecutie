@@ -33,7 +33,7 @@ void CDRenderer::run()
 {
 
 #ifndef LOAD_FILE
-    CResource v = CResource("ubw/shaders/vertex/vsh_ubo.vs");
+    CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
     CShader* vshdr = new CShader;
     CShader* fshdr = new CShader;
@@ -84,10 +84,24 @@ void CDRenderer::run()
     vertexBuffer.create();
     vertexBuffer.bufferType = GL_ARRAY_BUFFER;
 
+    //Instance buffer, stores object transforms for *all* objects
+    CBuffer instanceBuffer;
+    instanceBuffer.bufferType = GL_ARRAY_BUFFER;
+    instanceBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
+    instanceBuffer.create();
+    instanceBuffer.bind();
+    instanceBuffer.store(sizeof(glm::mat4)*2,nullptr);
+    instanceBuffer.unbind();
+
     CVertexFormat stdFmt;
     stdFmt.type = GL_FLOAT;
     stdFmt.offset = 0;
     stdFmt.size = 3;
+
+    CVertexFormat matFmt;
+    matFmt.type = GL_FLOAT;
+    matFmt.offset = 0;
+    matFmt.size = 4;
 
     CVertexBufferBinding posBnd;
     posBnd.buffer = &vertexBuffer;
@@ -106,6 +120,7 @@ void CDRenderer::run()
 
     CMultiDrawDataSet multidraw = coffee_multidraw_create();
 
+    coffee_mesh_define_matrix_attribs(&instanceBuffer,matFmt,desc,5,1);
     coffee_multidraw_load_vao(multidraw,desc);
 
     //Vertex data
@@ -136,15 +151,7 @@ void CDRenderer::run()
     uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
     uniformBuffer.unbind();
 
-    //Instance buffer, stores object transforms for *all* objects
 
-    CBuffer instanceBuffer;
-    instanceBuffer.bufferType = GL_ARRAY_BUFFER;
-    instanceBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
-    instanceBuffer.create();
-    instanceBuffer.bind();
-    instanceBuffer.store(sizeof(glm::mat4)*2,nullptr);
-    instanceBuffer.unbind();
 
     res->freeData();
     delete res;
@@ -188,7 +195,7 @@ void CDRenderer::run()
             coffee_create_uchunk(&matrixBuf,sizeof(glm::mat4)*2,2,matrixSz,"MatrixBlock");
     //Set initial data
     uchunk->buffer->parent->bind();
-    uchunk->buffer->subStore(sizeof(glm::mat4),sizeof(glm::mat4),&camera.matrix);
+    uchunk->buffer->subStore(0,sizeof(glm::mat4),&camera.matrix);
     uchunk->buffer->parent->unbind();
 
     //Set binding for the chunk
@@ -214,8 +221,8 @@ void CDRenderer::run()
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*(contextTime()-delta))*model.rotation);
         model.genMatrix();
 
-        uniformBuffer.bind();
-        uniformBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        instanceBuffer.bind();
+        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
         uchunk->buffer->bindRange();
         coffee_multidraw_render(multidraw);
