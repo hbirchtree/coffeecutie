@@ -116,8 +116,6 @@ void CDRenderer::run()
     multidraw.vao = new CVertexArrayObject;
     multidraw.vao->create();
 
-    cDebug("Draw call: %i",coffee_multidraw_create_call(multidraw,mesh));
-    coffee_multidraw_load_indices(multidraw);
     coffee_multidraw_load_vao(multidraw,desc);
 
     for(int i=0;i<mesh->numBuffers;i++)
@@ -129,7 +127,9 @@ void CDRenderer::run()
     vertexBuffer.store(verData.size(),verData.data());
     vertexBuffer.unbind();
 
+    cDebug("Draw call: %i",coffee_multidraw_create_call(multidraw,mesh));
     coffee_multidraw_load_drawcalls(multidraw);
+    coffee_multidraw_load_indices(multidraw);
 
     // END mesh specification
 

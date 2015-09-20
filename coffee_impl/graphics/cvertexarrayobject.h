@@ -6,42 +6,6 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-struct CVertexFormat
-{
-    GLuint      size            = 0;
-    GLuint      offset          = 0;
-    GLenum      type            = GL_NONE;
-    GLboolean   normalized      = GL_FALSE;
-};
-
-struct CVertexBufferBinding
-{
-    CBuffer* buffer  = nullptr;
-    GLsizei  offset  = 0;
-    GLsizei  stride  = 0;
-    GLuint   divisor = 0;
-    GLuint   binding = 0;
-
-    void bindBuffer(){
-        glBindVertexBuffer(binding,buffer->handle,offset,stride);
-    }
-};
-
-struct CVertexAttribute
-{
-    GLuint                  attribIdx   = 0;
-    CVertexFormat*          fmt         = nullptr;
-    CVertexBufferBinding*   bnd         = nullptr;
-
-    void setFormat(const CVertexFormat& fmt){
-        glVertexAttribFormat(attribIdx,fmt.size,fmt.type,fmt.normalized,fmt.offset);
-    }
-    void setBuffer(const CVertexBufferBinding& buf){
-        glVertexAttribBinding(attribIdx,buf.binding);
-        glVertexBindingDivisor(buf.binding,buf.divisor);
-    }
-};
-
 struct CVertexArrayObject{
     GLuint      handle  = 0;
 
@@ -82,6 +46,44 @@ struct CVertexArrayObject{
     {
         addAttribute(index,type,normalized,size,stride,pointer);
         glVertexAttribDivisor(index,divisor);
+    }
+};
+
+struct CVertexFormat
+{
+    GLuint      size            = 0;
+    GLuint      offset          = 0;
+    GLenum      type            = GL_NONE;
+    GLboolean   normalized      = GL_FALSE;
+};
+
+struct CVertexBufferBinding
+{
+    CBuffer* buffer  = nullptr;
+    GLsizei  offset  = 0;
+    GLsizei  stride  = 0;
+    GLuint   divisor = 0;
+    GLuint   binding = 0;
+
+    void bindBuffer(CVertexArrayObject* vao){
+        glVertexArrayVertexBuffer(vao->handle,binding,buffer->handle,offset,stride);
+    }
+};
+
+struct CVertexAttribute
+{
+    GLuint                  attribIdx   = 0;
+    CVertexFormat*          fmt         = nullptr;
+    CVertexBufferBinding*   bnd         = nullptr;
+
+    void setFormat(CVertexArrayObject* vao, const CVertexFormat& fmt){
+        glVertexArrayAttribFormat(vao->handle,
+                                  attribIdx,fmt.size,fmt.type,fmt.normalized,fmt.offset);
+    }
+    void setBuffer(CVertexArrayObject* vao, const CVertexBufferBinding& buf){
+        glEnableVertexArrayAttrib(vao->handle,attribIdx);
+        glVertexArrayAttribBinding(vao->handle,attribIdx,buf.binding);
+        glVertexArrayBindingDivisor(vao->handle,buf.binding,buf.divisor);
     }
 };
 

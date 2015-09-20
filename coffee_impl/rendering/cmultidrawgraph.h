@@ -38,10 +38,11 @@ struct CMultiDrawDescriptor{
 
 static void coffee_multidraw_render(const CMultiDrawDataSet& set)
 {
+    for(CVertexBufferBinding* bnd : set.bindings)
+        bnd->bindBuffer(set.vao);
+
     set.drawcalls->drawbuffer->bind();
     set.vao->bind();
-    for(CVertexBufferBinding* bnd : set.bindings)
-        bnd->bindBuffer();
     glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,
                                 0,set.drawcalls->drawcalls.size(),
                                 sizeof(CGLDrawCall));
@@ -71,20 +72,18 @@ static void coffee_multidraw_load_indices(const CMultiDrawDataSet& set)
 //Load up VAO
 static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescriptor& desc)
 {
-    set.vao->bind();
-
     for(CVertexAttribute& attr : desc.attributes){
-        attr.setBuffer(*attr.bnd);
-        attr.setFormat(*attr.fmt);
+        attr.setBuffer(set.vao,*attr.bnd);
+        attr.setFormat(set.vao,*attr.fmt);
 
-        attr.bnd->bindBuffer();
+        attr.bnd->bindBuffer(set.vao);
         set.bindings.push_back(attr.bnd);
     }
 
+    set.vao->bind();
     set.index->buffer->create();
     set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
     set.index->buffer->bind();
-
     set.vao->unbind();
 }
 //Copy indices, create drawcall
