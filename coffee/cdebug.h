@@ -253,18 +253,18 @@ protected:
 private:
     T _start = 0;
 };
-class CElapsedTimer : public _coffee_elapsed_timer_template<uint64_t>
+class CElapsedTimer : public _coffee_elapsed_timer_template<uint64>
 {
 private:
-    uint64_t _curr_time(){
+    uint64 _curr_time(){
         timeval tv = _tv();
         return tv.tv_sec*1000+tv.tv_usec/1000;
     }
 };
-class CElapsedTimerMicro : public _coffee_elapsed_timer_template<uint64_t>
+class CElapsedTimerMicro : public _coffee_elapsed_timer_template<uint64>
 {
 private:
-    uint64_t _curr_time(){
+    uint64 _curr_time(){
         timeval tv = _tv();
         return tv.tv_sec*1000000+tv.tv_usec;
     }

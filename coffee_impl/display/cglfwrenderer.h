@@ -25,8 +25,8 @@ public:
     CDWindow window();
     CDContextBits context();
 
-    uint32_t windowState() const;
-    void setWindowState(uint32_t newstate);
+    uint32 windowState() const;
+    void setWindowState(uint32 newstate);
 
     bool showWindow();
     bool hideWindow();

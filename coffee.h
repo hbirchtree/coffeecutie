@@ -88,13 +88,13 @@ static cstring coffee_cpy_string(cstring str){
 
 //Size type
 struct CSize{
-    CSize(int32_t w,int32_t h){
+    CSize(int32 w,int32 h){
         this->w = w;
         this->h = h;
     }
     CSize(){}
-    int32_t w = 0;
-    int32_t h = 0;
+    int32 w = 0;
+    int32 h = 0;
 };
 struct CSizeF{
     CSizeF(scalar w,scalar h){
@@ -107,13 +107,13 @@ struct CSizeF{
 };
 //Point type
 struct CPoint{
-    CPoint(int32_t x,int32_t y){
+    CPoint(int32 x,int32 y){
         this->x = x;
         this->y = y;
     }
     CPoint(){}
-    int32_t x = 0;
-    int32_t y = 0;
+    int32 x = 0;
+    int32 y = 0;
 };
 struct CPointF{
     CPointF(scalar x,scalar y){
@@ -126,17 +126,17 @@ struct CPointF{
 };
 //Rectangle type
 struct CRect{
-    CRect(int32_t x,int32_t y,int32_t w,int32_t h){
+    CRect(int32 x,int32 y,int32 w,int32 h){
         this->x = x;
         this->y = y;
         this->w = w;
         this->h = h;
     }
     CRect(){}
-    int32_t x = 0;
-    int32_t y = 0;
-    int32_t w = 0;
-    int32_t h = 0;
+    int32 x = 0;
+    int32 y = 0;
+    int32 w = 0;
+    int32 h = 0;
 };
 struct CRectF{
     CRectF(scalar x,scalar y,scalar w,scalar h){

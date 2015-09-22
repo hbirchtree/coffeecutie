@@ -32,7 +32,7 @@ struct CDMonitor{
 };
 struct CDWindow{
     void*           handle_p    = nullptr; //Native handle, in X11, the Window value
-    uintptr_t       handle      = 0;
+    ptr_u           handle      = 0;
     cstring         title       = nullptr; //Have a *wild* guess.
     CRect           screenArea;
 };

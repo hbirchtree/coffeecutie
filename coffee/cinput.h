@@ -15,7 +15,7 @@ struct CIEvent
         Drop         = 0x5, //Drag-and-drop
         Input        = 0x6,
     };
-    uint8_t type = 0;
+    uint8 type = 0;
 };
 
 struct CIKeyEvent
@@ -35,11 +35,11 @@ struct CIKeyEvent
 
         Text       = 0x4,
     };
-    uint8_t type = 0;
+    uint8 type = 0;
 
-    uint32_t keyCode  = 0;
-    uint32_t scanCode = 0;
-    uint32_t modifier = 0; // Modifier keys, flags
+    uint32 keyCode  = 0;
+    uint32 scanCode = 0;
+    uint32 modifier = 0; // Modifier keys, flags
 };
 struct CIMouseEvent
 {
@@ -52,9 +52,9 @@ struct CIMouseEvent
         Enter      = 0x4,
         Leave      = 0x5,
     };
-    uint8_t type = 0;
+    uint8 type = 0;
 
-    uint8_t modifier = 0;
+    uint8 modifier = 0;
 
     enum MouseButton
     {
@@ -64,32 +64,32 @@ struct CIMouseEvent
 
         //buttons up to 255 are perfectly fine
     };
-    uint8_t keyCode = 0;
+    uint8 keyCode = 0;
     bigscalar x = 0.f,y = 0.f; // Position where event occurred
 };
 struct CIScrollEvent
 {
     scalar deltaX = 0.f,deltaY = 0.f;
-    uint8_t modifiers = 0;
+    uint8 modifiers = 0;
 };
 
 struct CIWriteEvent
 {
-    uint32_t character;
+    uint32 character;
 };
 
 struct CIJoyState
 {
-    uint8_t buttons         = 0;
-    uint8_t axes            = 0;
-    uint8_t* buttonStates   = nullptr;
+    uint8 buttons         = 0;
+    uint8 axes            = 0;
+    uint8* buttonStates   = nullptr;
     scalar* axeStates       = nullptr;
 };
 struct CIJoyInfo
 {
     CString name;
-    uint8_t buttons = 0;
-    uint8_t axes    = 0;
+    uint8 buttons = 0;
+    uint8 axes    = 0;
     scalar* axe_min = nullptr;
     scalar* axe_max = nullptr;
 };
@@ -103,8 +103,8 @@ struct CIDropEvent
         Text     = 0x3,
     };
 
-    uint8_t type    = 0;
-    uint32_t size   = 0;
+    uint8 type    = 0;
+    uint32 size   = 0;
     void* data      = nullptr;
 };
 

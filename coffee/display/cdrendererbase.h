@@ -54,8 +54,8 @@ public:
     virtual CDWindow window()           = 0; //Describes the window
     virtual CDContextBits context()     = 0; //Stencil bits, depth bits etc.
 
-    virtual uint32_t windowState() const           = 0;
-    virtual void     setWindowState(uint32_t)      = 0;
+    virtual uint32 windowState() const           = 0;
+    virtual void     setWindowState(uint32)      = 0;
 
     virtual CPoint windowPosition() const = 0;
     virtual void setWindowPosition(CPoint) = 0;

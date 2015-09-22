@@ -35,9 +35,10 @@ static Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
     return res;
 }
 
-static void coffee_sdl2_set_winflags(uint32 flags)
+static void coffee_sdl2_set_winflags(SDL_Window* win,uint32 flags)
 {
-
+    C_UNUSED(win);
+    C_UNUSED(flags);
 }
 
 static uint32 coffee_sdl2_get_winflags(SDL_Window* win)

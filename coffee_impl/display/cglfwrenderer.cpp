@@ -78,7 +78,7 @@ CDContextBits CGLFWRenderer::context()
     return bits;
 }
 
-uint32_t CGLFWRenderer::windowState() const
+uint32 CGLFWRenderer::windowState() const
 {
     uint32_t flags = 0;
 
@@ -105,7 +105,7 @@ uint32_t CGLFWRenderer::windowState() const
     return flags;
 }
 
-void CGLFWRenderer::setWindowState(uint32_t newstate)
+void CGLFWRenderer::setWindowState(uint32 newstate)
 {
     if(newstate&CDWindowProperties::Minimized){
         glfwIconifyWindow(m_ctxt->window);

@@ -62,10 +62,12 @@ static int coffee_file_close(FILE* file)
 
 struct CResource{
     enum ResourceFlags{
-        Remote      = 0b1,
-        ReadOnly    = 0b10,
-        ReadWrite   = 0b100,
-        WriteOnly   = 0b1000,
+        Remote      = 0x1,
+        ReadOnly    = 0x2,
+        ReadWrite   = 0x4,
+        WriteOnly   = 0x8,
+
+        Streaming   = 0x16,
     };
 
     CResource(cstring resource){
@@ -77,8 +79,8 @@ struct CResource{
         return m_resource.c_str();
     }
 
-    uint8_t flags   = 0;
-    szptr size     = 0;
+    uint8 flags     = 0;
+    szptr size      = 0;
     void* data      = nullptr;
 
     bool exists(){
