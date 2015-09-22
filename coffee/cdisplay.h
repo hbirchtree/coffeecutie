@@ -23,12 +23,12 @@ struct CDContextBits{
 };
 
 struct CDMonitor{
-    uint16        index = 0;  //Real monitor index
+    uint16          index = 0;  //Real monitor index
     CDColorSpace    colorBits;  //Color depth
     CRect           screenArea; //Area occupied on screen
     cstring         name;       //Name of monitor
     CSize           phySize;    //Physical size, reported by some ctxts
-    int32         refresh = 0;//Refresh rate of monitor
+    int32           refresh = 0;//Refresh rate of monitor
 };
 struct CDWindow{
     void*           handle_p    = nullptr; //Native handle, in X11, the Window value
@@ -55,11 +55,11 @@ struct CDResizeEvent{
 
 struct CDStateEvent{
     enum StateChange{
-        Minimized   = 0b1,
-        Maximized   = 0b10,
-        Closed      = 0b100,
-        GainedFocus = 0b1000,
-        LostFocus   = 0b10000,
+        Minimized   = 0x1,
+        Maximized   = 0x2,
+        Closed      = 0x4,
+        GainedFocus = 0x8,
+        LostFocus   = 0x16,
         //TODO : Add more states here
     };
     uint8   bits;
@@ -80,35 +80,37 @@ struct CGLContextVersion
 struct CGLContextProperties
 {
     enum ContextProperties{
-        GLCoreProfile   = 0b1,      //GL core profile
-        GLVSync         = 0b10,     //vertical sync
-        GLDebug         = 0b100,    //GL debugging context
-        GLAutoResize    = 0b1000,   //Whether the context auto-resizes
-        GLRobust        = 0b10000,
+        GLCoreProfile   = 0x01,      //GL core profile
+        GLVSync         = 0x02,     //vertical sync
+        GLDebug         = 0x04,    //GL debugging context
+        GLAutoResize    = 0x08,   //Whether the context auto-resizes
+        GLRobust        = 0x16,
     };
 
-    uint16              flags = 0b1;
+    uint16              flags = GLCoreProfile;
     CGLContextVersion   version;
     CDContextBits       bits;
 };
 struct CDWindowProperties
 {
     enum WindowState{
-        FullScreen          = 0b001,
-        WindowedFullScreen  = 0b010,
-        Windowed            = 0b100,
+        FullScreen          = 0x001,
+        WindowedFullScreen  = 0x002,
+        Windowed            = 0x004,
 
-        Minimized           = 0b01000,
-        Maximized           = 0b10000,
+        Minimized           = 0x008,
+        Maximized           = 0x016,
 
-        Focused             = 0b0100000,
-        Resizable           = 0b1000000,
+        Focused             = 0x032,
+        Resizable           = 0x064,
 
-        Decorated           = 0b00010000000,
-        Floating            = 0b00100000000,
-        Visible             = 0b01000000000,
+        Decorated           = 0x0128,
+        Floating            = 0x0256,
+        Visible             = 0x0512,
 
-        HighDPI             = 0b00001000000,
+        HighDPI             = 0x1024,
+
+        Foreign             = 0x2048,
     };
 
     uint16                  flags           = 0;

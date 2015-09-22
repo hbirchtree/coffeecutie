@@ -35,7 +35,7 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     }
     cMsg("SDL2","Initialized");
 
-    Uint32 flags = coffee_sdl2_interpret_winflags(props.flags);
+    Uint32 flags = coffee_sdl2_set_winflags(props.flags);
 
     flags|=SDL_WINDOW_OPENGL;
 
@@ -154,7 +154,7 @@ CDContextBits CSDL2Renderer::context()
 
 uint32_t CSDL2Renderer::windowState() const
 {
-    return 0;
+    return coffee_sdl2_get_winflags(m_context->window);
 }
 
 void CSDL2Renderer::setWindowState(uint32_t state)

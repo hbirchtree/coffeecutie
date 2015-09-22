@@ -26,12 +26,53 @@ static Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Decorated,SDL_WINDOW_BORDERLESS);
 
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::FullScreen,SDL_WINDOW_FULLSCREEN);
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::WindowedFullScreen,
-                                    SDL_WINDOW_FULLSCREEN_DESKTOP);
+    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::WindowedFullScreen,SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Resizable,SDL_WINDOW_RESIZABLE);
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Minimized,SDL_WINDOW_MINIMIZED);
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Maximized,SDL_WINDOW_MAXIMIZED);
+
+    return res;
+}
+
+static void coffee_sdl2_set_winflags(uint32 flags)
+{
+
+}
+
+static uint32 coffee_sdl2_get_winflags(SDL_Window* win)
+{
+    Uint32 flags = SDL_GetWindowFlags(win);
+    uint32 res = 0;
+
+    if(flags&SDL_WINDOW_BORDERLESS)
+        res^=CDWindowProperties::Decorated;
+    else
+        res|=CDWindowProperties::Decorated;
+
+    if(flags&SDL_WINDOW_FULLSCREEN)
+        res|=CDWindowProperties::FullScreen;
+    else if(flags&SDL_WINDOW_FULLSCREEN_DESKTOP)
+        res|=CDWindowProperties::WindowedFullScreen;
+    else
+        res|=CDWindowProperties::Windowed;
+
+    if(flags&SDL_WINDOW_RESIZABLE)
+        res|=CDWindowProperties::Resizable;
+
+    if(flags&SDL_WINDOW_MINIMIZED)
+        res|=CDWindowProperties::Minimized;
+    if(flags&SDL_WINDOW_MAXIMIZED)
+        res|=CDWindowProperties::Maximized;
+
+    if(flags&SDL_WINDOW_SHOWN)
+        res|=CDWindowProperties::Visible;
+
+    if(flags&SDL_WINDOW_INPUT_FOCUS)
+        res|=CDWindowProperties::Focused;
+
+    if(flags&SDL_WINDOW_FOREIGN)
+        res|=CDWindowProperties::Foreign;
 
     return res;
 }
