@@ -2,9 +2,11 @@
 #define CINPUT_H
 
 #include "coffee.h"
+#include "cinput_keymap.h"
 
 namespace Coffee{
 namespace CInput{
+
 struct CIEvent
 {
     enum EventType {
@@ -13,7 +15,7 @@ struct CIEvent
         Joystick     = 0x3,
         Scroll       = 0x4,
         Drop         = 0x5, //Drag-and-drop
-        Input        = 0x6,
+        TextInput    = 0x6,
 
         MouseButton    = 0x7,
 
@@ -27,55 +29,31 @@ struct CIKeyEvent
 {
     enum KeyModifiers
     {
-        ShiftModifier     = 0x1,
-        CtrlModifier      = 0x2,
-        AltModifier       = 0x4,
+        LShiftModifier    = 0x1,
+        LCtrlModifier     = 0x2,
+        LAltModifier      = 0x4,
         SuperModifier     = 0x8,
-    };
-    enum KeyEventType
-    {
-        Press      = 0x1,
-        Release    = 0x2,
-        Repeated   = 0x3,
-    };
-    uint8 type      = 0;
 
-    uint32 keyCode  = 0;
-    uint32 scanCode = 0;
-    uint32 modifier = 0; // Modifier keys, flags
+        RShiftModifier    = 0x040,
+        RCtrlModifier     = 0x080,
+        RAltModifier      = 0x100,
+
+        CapsLockModifier  = 0x200,
+        NumLockModifier   = 0x200,
+        AltGrModifier     = 0x400,
+
+        RepeatedModifier  = 0x10,
+        PressedModifier   = 0x20,
+    };
+
+    uint32 key  = 0;
+    uint32 scan = 0;
+    uint32 mod = 0; // Modifier keys, flags
 };
 
 struct CITextEvent
 {
     byte character  = 0;
-};
-
-struct CIMouseEvent
-{
-    enum MouseEventType
-    {
-        Press      = 0x1,
-        Release    = 0x2,
-        Move       = 0x3,
-
-        Enter      = 0x4,
-        Leave      = 0x5,
-    };
-    uint8 type = 0;
-
-    uint8 modifier = 0;
-
-    enum MouseButton
-    {
-        LeftButton     = 0x1,
-        MiddleButton   = 0x2,
-        RightButton    = 0x3,
-
-        //buttons up to 255 are perfectly fine
-    };
-    uint8 keyCode = 0;
-    CPointD pos; // Position where event occurred
-    CPointD rel;
 };
 
 struct CIMouseMoveEvent
@@ -89,7 +67,6 @@ struct CIMouseButtonEvent
 {
     enum ButtonModifier
     {
-        SingleClick = 0x0,
         DoubleClick = 0x1,
         Pressed     = 0x2,
     };
@@ -120,16 +97,16 @@ struct CIWriteEvent
 
 struct CIJoyState
 {
-    uint8 buttons         = 0;
-    uint8 axes            = 0;
-    uint8* buttonStates   = nullptr;
+    uint8   buttons         = 0;
+    uint8   axes            = 0;
+    uint8*  buttonStates    = nullptr;
     scalar* axeStates       = nullptr;
 };
 struct CIJoyInfo
 {
-    CString name;
-    uint8 buttons = 0;
-    uint8 axes    = 0;
+    cstring name;
+    uint8   buttons = 0;
+    uint8   axes    = 0;
     scalar* axe_min = nullptr;
     scalar* axe_max = nullptr;
 };

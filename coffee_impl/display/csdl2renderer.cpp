@@ -248,22 +248,8 @@ void CSDL2Renderer::swapBuffers()
 
 void CSDL2Renderer::pollEvents()
 {
-    while(SDL_PollEvent(&m_context->eventhandle)){
+    while(SDL_PollEvent(&m_context->eventhandle))
         coffee_sdl2_eventhandle_all(this,&m_context->eventhandle);
-        if(m_context->eventhandle.type == SDL_KEYDOWN){
-            cMsg("SDL2:Input","Key down: %i",m_context->eventhandle.key.keysym.sym);
-            if(m_context->eventhandle.key.keysym.sym == SDLK_ESCAPE)
-                closeWindow();
-        }
-        if(m_context->eventhandle.type == SDL_WINDOWEVENT){
-            switch(m_context->eventhandle.window.type){
-            case SDL_WINDOWEVENT_RESIZED:{
-                //TODO: Add event handlers
-                break;
-            }
-            }
-        }
-    }
 }
 
 bool CSDL2Renderer::requestGLExtension(cstring)

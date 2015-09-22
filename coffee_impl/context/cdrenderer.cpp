@@ -334,15 +334,27 @@ void CDRenderer::eventIHandle(CIEvent *event)
 {
     if(event->type==CIEvent::Keyboard){
         CIKeyEvent* kev = reinterpret_cast<CIKeyEvent*>(&event[1]);
-        cDebug("Key event: t=%i,key=%i,mods=%i",
-               kev->type,kev->keyCode,kev->modifier);
-        if(kev->keyCode==256) //TODO: Add key mapping
+        cDebug("Key event: key=%i,mods=%i,scan=%i",
+               kev->key,kev->mod,kev->scan);
+        if(kev->key==CK_Escape) //TODO: Add key mapping
             this->closeWindow();
     }
     if(event->type==CIEvent::Scroll){
-        cDebug("YOU SCROLLED YOU SICK FUCK!");
         CIScrollEvent* sev = reinterpret_cast<CIScrollEvent*>(&event[1]);
         cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
+    }
+    if(event->type==CIEvent::MouseButton){
+        CIMouseButtonEvent* mev = reinterpret_cast<CIMouseButtonEvent*>(&event[1]);
+        cDebug("Btn: %i:%i, %f,%f",mev->btn,mev->modifier,mev->pos.x,mev->pos.x);
+    }
+    if(event->type==CIEvent::MouseMove&&false){
+        CIMouseMoveEvent* mev = reinterpret_cast<CIMouseMoveEvent*>(&event[1]);
+        CIMouseMoveEvent* t = (CIMouseMoveEvent*)malloc(sizeof(CIMouseMoveEvent));
+        memmove(t,mev,sizeof(CIMouseMoveEvent));
+        CThreading::runIndependent([=](){
+            cDebug("Move: %f,%f : %f,%f",t->pos.x,t->pos.y,t->rel.x,t->rel.y);
+            free(t);
+        });
     }
 }
 

@@ -146,4 +146,5 @@ HEADERS += \
     coffee_impl/graphics/cuniformchunk.h \
     coffee_impl/display/coffeesdl2/sdl2helpers.h \
     coffee_impl/display/coffeesdl2/sdl2eventhandlers.h \
-    coffee_impl/input/cinput_eventhandling.h
+    coffee_impl/input/cinput_eventhandling.h \
+    coffee/cinput_keymap.h
