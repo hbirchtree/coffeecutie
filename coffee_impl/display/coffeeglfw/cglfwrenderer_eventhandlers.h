@@ -9,6 +9,7 @@
 
 #include "coffee_impl/input/cinput_eventhandling.h"
 
+using namespace Coffee;
 using namespace Coffee::CInput;
 using namespace Coffee::CDisplay;
 
@@ -75,45 +76,44 @@ inline static void _inputEventHandle(CIEvent::EventType type, GLFWwindow* win,
 
 //These generate input events
 static void glfw_input_mouseBtn         (GLFWwindow* win, int btn, int act, int mods){
-    CIMouseEvent m;
-    m.type = (act==GLFW_PRESS) ? CIMouseEvent::Press : CIMouseEvent::Release;
+    CIMouseButtonEvent m;
+    m.mod = (act==GLFW_PRESS) ? CIMouseButtonEvent::Pressed : 0;
 
     if(btn==GLFW_MOUSE_BUTTON_MIDDLE)
-        m.keyCode = CIMouseEvent::MiddleButton;
+        m.btn = CIMouseButtonEvent::MiddleButton;
     else if(btn==GLFW_MOUSE_BUTTON_RIGHT)
-        m.keyCode = CIMouseEvent::RightButton;
+        m.btn = CIMouseButtonEvent::RightButton;
     else
-        m.keyCode = btn+1;
+        m.btn = btn+1;
 
-    m.modifier = mods;
+    m.mod = mods;
 
-    _inputEventHandle(CIEvent::Mouse, win, &m, sizeof(m));
+    _inputEventHandle(CIEvent::MouseButton, win, &m, sizeof(m));
 }
 
 static void glfw_input_mouseMove        (GLFWwindow* win, double x, double y)
 {
-    CIMouseEvent m;
-    m.type = CIMouseEvent::Move;
+    CIMouseMoveEvent m;
 
-    m.x = x;
-    m.y = y;
+    m.pos.x = x;
+    m.pos.y = y;
 
-    _inputEventHandle(CIEvent::Mouse, win, &m, sizeof(m));
+    _inputEventHandle(CIEvent::MouseMove, win, &m, sizeof(m));
 }
 
 static void glfw_input_mouseenter       (GLFWwindow* win, int val)
 {
-    CIMouseEvent m;
-    m.type = (val) ? CIMouseEvent::Enter : CIMouseEvent::Leave;
+    CIFocusEvent m;
+    m.mod = (val) ? CIFocusEvent::Enter : CIFocusEvent::Leave;
 
-    _inputEventHandle(CIEvent::Mouse, win, &m, sizeof(m));
+    _inputEventHandle(CIEvent::Focus, win, &m, sizeof(m));
 }
 
 static void glfw_input_scroll           (GLFWwindow* win, double xoffset, double yoffset)
 {
     CIScrollEvent m;
-    m.deltaX = xoffset;
-    m.deltaY = yoffset;
+    m.delta.x = xoffset;
+    m.delta.y = yoffset;
 
     _inputEventHandle(CIEvent::Scroll, win, &m, sizeof(m));
 }
@@ -126,14 +126,28 @@ static void glfw_input_dropevent        (GLFWwindow* win, int numfiles, const ch
 
     _inputEventHandle(CIEvent::Drop, win, &m, sizeof(m));
 }
+
+inline static uint32 glfw_translate_kbdkey(int key)
+{
+    if(key>=GLFW_KEY_A&&key<=GLFW_KEY_Z)
+        return CK_a+key-GLFW_KEY_A;
+    if(key>0&&key<256)
+        return key;
+    switch(key){
+    case GLFW_KEY_ESCAPE: return CK_Escape;
+    default:break;
+    }
+    return 0;
+}
+
 static void glfw_input_kbdKey           (GLFWwindow* win, int key, int scancode, int action, int mods)
 {
     CIKeyEvent m;
-    m.type = (action==GLFW_PRESS) ? CIKeyEvent::Press :(action==GLFW_RELEASE) ? CIKeyEvent::Release : CIKeyEvent::Repeated;
+    m.mod |= (action==GLFW_PRESS) ? CIKeyEvent::PressedModifier :(action==GLFW_RELEASE) ? 0 : CIKeyEvent::RepeatedModifier|CIKeyEvent::PressedModifier;
 
-    m.scanCode = scancode;
-    m.keyCode = key;
-    m.modifier = mods;
+    m.scan = scancode;
+    m.key = glfw_translate_kbdkey(key);
+    m.mod |= mods;
 
     _inputEventHandle(CIEvent::Keyboard, win, &m, sizeof(m));
 }
@@ -142,7 +156,7 @@ static void glfw_input_charwrite        (GLFWwindow *win, unsigned int character
     CIWriteEvent m;
     m.character = character;
 
-    _inputEventHandle(CIEvent::Input, win, &m, sizeof(m));
+    _inputEventHandle(CIEvent::TextInput, win, &m, sizeof(m));
 }
 
 //These generate window events

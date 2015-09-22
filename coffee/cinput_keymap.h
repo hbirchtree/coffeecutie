@@ -67,7 +67,7 @@ enum C1SpecialKeyMapping
 
 enum CILatin1Mapping
 {
-    CK_Null             = 0x0,
+    CK_Null             = 0x0, //We'll use this when no other key is appropriate.
 //    CK_                = 0x1,
 //    CK_                = 0x2,
 //    CK_                = 0x3,

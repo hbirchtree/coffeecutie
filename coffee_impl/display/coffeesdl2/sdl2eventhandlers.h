@@ -110,9 +110,9 @@ inline static void coffee_sdl2_eventhandle_mouse(
         e.type = CIEvent::MouseButton;
 
         if(btn.state==SDL_PRESSED)
-            m.modifier|=CIMouseButtonEvent::Pressed;
+            m.mod|=CIMouseButtonEvent::Pressed;
         if(btn.clicks==2)
-            m.modifier|=CIMouseButtonEvent::DoubleClick;
+            m.mod|=CIMouseButtonEvent::DoubleClick;
         m.pos.x = btn.x;
         m.pos.y = btn.y;
         m.btn = coffee_sdl2_translate_mouse_btn(btn.button);

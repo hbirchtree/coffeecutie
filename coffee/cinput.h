@@ -17,9 +17,11 @@ struct CIEvent
         Drop         = 0x5, //Drag-and-drop
         TextInput    = 0x6,
 
-        MouseButton    = 0x7,
+        MouseButton  = 0x7,
 
         QuitSign     = 0x8, //Notifies the program
+
+        Focus        = 0x9,
     };
     uint8   type  = 0;
     uint32  ts    = 0;
@@ -80,14 +82,25 @@ struct CIMouseButtonEvent
     };
 
     CPointF pos;
-    uint8 modifier  = 0;
+    uint8 mod  = 0;
     uint8 btn       = 0;
 };
 
 struct CIScrollEvent
 {
     CPointF delta;
-    uint8 modifiers = 0;
+    uint8 mod = 0;
+};
+
+struct CIFocusEvent
+{
+    enum FocusModifier
+    {
+        Enter   = 0x1,
+        Leave   = 0x2,
+    };
+
+    uint8 mod = 0;
 };
 
 struct CIWriteEvent
