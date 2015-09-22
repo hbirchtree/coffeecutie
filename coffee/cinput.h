@@ -14,33 +14,40 @@ struct CIEvent
         Scroll       = 0x4,
         Drop         = 0x5, //Drag-and-drop
         Input        = 0x6,
+
+        QuitSign     = 0x7, //Notifies the program
     };
-    uint8 type = 0;
+    uint8   type  = 0;
+    uint32  ts    = 0;
 };
 
 struct CIKeyEvent
 {
     enum KeyModifiers
     {
-        ShiftModifier     = 0b1,
-        CtrlModifier      = 0b10,
-        AltModifier       = 0b100,
-        SuperModifier     = 0b1000,
+        ShiftModifier     = 0x1,
+        CtrlModifier      = 0x2,
+        AltModifier       = 0x4,
+        SuperModifier     = 0x8,
     };
     enum KeyEventType
     {
         Press      = 0x1,
         Release    = 0x2,
         Repeated   = 0x3,
-
-        Text       = 0x4,
     };
-    uint8 type = 0;
+    uint8 type      = 0;
 
     uint32 keyCode  = 0;
     uint32 scanCode = 0;
     uint32 modifier = 0; // Modifier keys, flags
 };
+
+struct CITextEvent
+{
+    byte character  = 0;
+};
+
 struct CIMouseEvent
 {
     enum MouseEventType

@@ -15,6 +15,8 @@
 #define C_UNUSED(v) do{(void)(v);}while(0);
 //Assertion for unit tests
 #define CASSERT(exp) if(!exp)throw std::runtime_error("Assert failed");
+//void* to char*
+#define C_CHARDATA(ptr) reinterpret_cast<byte*>(ptr)
 
 namespace Coffee{
 //Core typedefs
@@ -62,95 +64,72 @@ class CObject;
 
 //Different data types we implement
 namespace CPrimitiveDataTypes{
-namespace CVectorTypes{
-class VectorData;
-class ScalarValue;
-
-class Vector2Value;
-class Vector3Value;
-class Vector4Value;
-
-class QuatValue;
-
-class Matrix3Value;
-class Matrix4Value;
-}
 
 //General data types
-
 static cstring coffee_cpy_string(cstring str){
     cstring_w buf = reinterpret_cast<cstring_w>(malloc(strlen(str)+1));
     strcpy(buf,str);
     return buf;
 }
 
-//Light-weight data types
+struct CDataChunk{
+    void* ptr   = nullptr;
+    ptr_u size  = 0;
+};
 
 //Size type
-struct CSize{
-    CSize(int32 w,int32 h){
+template<typename T>
+struct _cbasic_size
+{
+    _cbasic_size(T w,T h){
         this->w = w;
         this->h = h;
     }
-    CSize(){}
-    int32 w = 0;
-    int32 h = 0;
+    _cbasic_size(){}
+    T w = 0;
+    T h = 0;
 };
-struct CSizeF{
-    CSizeF(scalar w,scalar h){
-        this->w = w;
-        this->h = h;
-    }
-    CSizeF(){}
-    scalar w = 0.f;
-    scalar h = 0.f;
-};
+
+typedef _cbasic_size<int32> CSize;
+typedef _cbasic_size<scalar> CSizeF;
+typedef _cbasic_size<bigscalar> CSizeD;
+
 //Point type
-struct CPoint{
-    CPoint(int32 x,int32 y){
+template<typename T>
+struct _cbasic_point
+{
+    _cbasic_point(T x,T y){
         this->x = x;
         this->y = y;
     }
-    CPoint(){}
-    int32 x = 0;
-    int32 y = 0;
+    _cbasic_point(){}
+    T x = 0;
+    T y = 0;
 };
-struct CPointF{
-    CPointF(scalar x,scalar y){
-        this->x = x;
-        this->y = y;
-    }
-    CPointF(){}
-    scalar x = 0.f;
-    scalar y = 0.f;
-};
+
+typedef _cbasic_point<int32> CPoint;
+typedef _cbasic_point<scalar> CPointF;
+typedef _cbasic_point<bigscalar> CPointD;
 //Rectangle type
-struct CRect{
-    CRect(int32 x,int32 y,int32 w,int32 h){
+template<typename T>
+struct _cbasic_rect
+{
+    _cbasic_rect(T x,T y,T w,T h){
         this->x = x;
         this->y = y;
         this->w = w;
         this->h = h;
     }
-    CRect(){}
-    int32 x = 0;
-    int32 y = 0;
-    int32 w = 0;
-    int32 h = 0;
+    _cbasic_rect(){}
+    T x = 0;
+    T y = 0;
+    T w = 0;
+    T h = 0;
 };
-struct CRectF{
-    CRectF(scalar x,scalar y,scalar w,scalar h){
-        this->x = x;
-        this->y = y;
-        this->w = w;
-        this->h = h;
-    }
-    CRectF(){}
-    scalar x = 0.f;
-    scalar y = 0.f;
-    scalar w = 0.f;
-    scalar h = 0.f;
-};
+
+typedef _cbasic_rect<int32> CRect;
+typedef _cbasic_rect<scalar> CRectF;
+typedef _cbasic_rect<bigscalar> CRectD;
 
 //These are not meant to replace glm
 //Will be used as a dumbed-down version for C# and similar
@@ -236,34 +215,25 @@ struct CQuat{
     scalar z = 0.f;
     scalar w = 0.f;
 };
+
+struct CMat3{
+    scalar m[3][3];
+};
+struct CMat4{
+    scalar m[4][4];
+};
+
 }
 
 //Wrappers for GL features
 namespace CGraphicsWrappers{}
 
 //Physics-related types
-namespace CPhysicsSystem{
-class CPhyObject;
-
-//Physics libraries here, should make an interface soon
-class CBulletSystem;
-}
+namespace CPhysicsSystem{}
 
 //Misc. resources in engine, should not interface with GL directly
 namespace CResourceTypes{
-
-namespace CAssimp{
-class CAssimpImporters;
-struct CAssimpData;
-}
-
-class CMesh;
-class CTexture;
-class CInstanceContainer;
-
-class CCamera;
-class CMaterial;
-class CLight;
+namespace CAssimp{}
 }
 
 //Core classes
@@ -285,30 +255,14 @@ typedef CFunctional::CRFunction<void,void*,uint32_t> CInputHandlerFunction;
 
 //Windowing and rendering contexts
 namespace CDisplay{
-struct CDMonitor; //Represents a monitor and its properties
-struct CDWindow; //Represents a window, most commonly the context window
-
-//Parts of the renderer class, should allow switching context manager without hassle
-class CDRendererBase;
-class CGLFWRenderer; //One of several context managers, we might use SDL2 sometime.
-class CGPUMonitor;
-
-class CDRenderer; //This is a placeholder for the final implemented class
-
 typedef CFunctional::CRFunction<void> RenderFunction;
 }
 
 //File management
-namespace CResources{
-class CFAssetStorage;
-class CFObjectImport;
-}
+namespace CResources{}
 
 //Scripting
-namespace CScripting{
-class CScriptEngine;
-class CSObject;
-}
+namespace CScripting{}
 
 } //Coffee
 

@@ -67,7 +67,7 @@ struct CResource{
         ReadWrite   = 0x4,
         WriteOnly   = 0x8,
 
-        Streaming   = 0x16,
+        Streaming   = 0x10,
     };
 
     CResource(cstring resource){

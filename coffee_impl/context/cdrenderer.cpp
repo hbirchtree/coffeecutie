@@ -339,6 +339,11 @@ void CDRenderer::eventIHandle(CIEvent *event)
         if(kev->keyCode==256) //TODO: Add key mapping
             this->closeWindow();
     }
+    if(event->type==CIEvent::Scroll){
+        cDebug("YOU SCROLLED YOU SICK FUCK!");
+        CIScrollEvent* sev = reinterpret_cast<CIScrollEvent*>(&event[1]);
+        cDebug("Dist: %i, %i",sev->deltaX,sev->deltaY);
+    }
 }
 
 CGLState *CDRenderer::_dump_state() const

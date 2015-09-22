@@ -29,7 +29,9 @@ int main(int argc, char** argv)
     //Sets up core dumping
     Coffee::CoffeeInit();
     //Checks that the platform is sane
-    CoffeeTests::run_tests();
+    CoffeeTests::run_tests(false);
+
+    cDebug("Mat3: %i",sizeof(CMat3));
 
     CElapsedTimerMicro timer;
     timer.start();

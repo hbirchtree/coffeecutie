@@ -7,12 +7,15 @@
 #include "coffee_impl/display/cglfwrenderer.h"
 #include "coffee/cinput.h"
 
+#include "coffee_impl/input/cinput_eventhandling.h"
+
 using namespace Coffee::CInput;
 using namespace Coffee::CDisplay;
 
 inline static CGLFWRenderer* getPtr(GLFWwindow* w){
     return static_cast<CGLFWRenderer*>(glfwGetWindowUserPointer(w));
 }
+
 
 inline static void _createEvent(CIEvent::EventType t, void** outData, uint32_t* size, const void* data, uint32_t isize){
     CIEvent ev;
@@ -38,22 +41,6 @@ inline static void _createWEvent(CDEvent::EventType t, void** outData, uint32_t*
     *size = sizeof(ev)+isize;
 }
 
-inline static void _inputEventHandle(CIEvent::EventType type, GLFWwindow* win,
-                              const void* idata, uint32_t isize)
-{
-    CGLFWRenderer* ptr = getPtr(win);
-
-    void* data = nullptr;
-    uint32_t size = 0;
-
-    _createEvent(type,&data,&size,idata,isize);
-
-    CIEvent* ev = reinterpret_cast<CIEvent*>(data);
-    ptr->eventIHandle(ev);
-
-    free(data);
-}
-
 inline static void _windowEventHandle(CDEvent::EventType type, GLFWwindow* win,
                               const void* idata, uint32_t isize)
 {
@@ -66,6 +53,22 @@ inline static void _windowEventHandle(CDEvent::EventType type, GLFWwindow* win,
 
     CDEvent* ev = reinterpret_cast<CDEvent*>(data);
     ptr->eventWHandle(ev);
+
+    free(data);
+}
+
+inline static void _inputEventHandle(CIEvent::EventType type, GLFWwindow* win,
+                              const void* idata, uint32_t isize)
+{
+    CGLFWRenderer* ptr = getPtr(win);
+
+    void* data = nullptr;
+    uint32_t size = 0;
+
+    _createEvent(type,&data,&size,idata,isize);
+
+    CIEvent* ev = reinterpret_cast<CIEvent*>(data);
+    ptr->eventIHandle(ev);
 
     free(data);
 }

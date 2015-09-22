@@ -67,6 +67,19 @@ static void quaternion_test()
     CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z&&from_coffee.w==to_glm->w));
 }
 
+static void matrix_test()
+{
+    CMat4 from_coffee;
+    from_coffee.m[0][0] = 1.f;
+    from_coffee.m[2][3] = 2.f;
+    from_coffee.m[3][1] = 3.f;
+    glm::mat4 *to_glm = reinterpret_cast<glm::mat4*>(&from_coffee);
+
+    CASSERT((from_coffee.m[0][0]==(*to_glm)[0][0]&&
+            from_coffee.m[2][3]==(*to_glm)[2][3]&&
+            from_coffee.m[3][1]==(*to_glm)[3][1]));
+}
+
 static void vector_tests(bool silent = true)
 {
     if(!silent)
@@ -89,6 +102,9 @@ static void vector_tests(bool silent = true)
     quaternion_test();
     if(!silent)
         cMsg("Coffee Unit Tests","Quat test passed");
+    matrix_test();
+    if(!silent)
+        cMsg("Coffee Unit Tests","The Matrix test passed");
 }
 
 static void int_tests()

@@ -1,6 +1,7 @@
 #include "csdl2renderer.h"
 
 #include "coffeesdl2/sdl2helpers.h"
+#include "coffeesdl2/sdl2eventhandlers.h"
 
 namespace Coffee{
 namespace CDisplay{
@@ -247,6 +248,7 @@ void CSDL2Renderer::swapBuffers()
 void CSDL2Renderer::pollEvents()
 {
     while(SDL_PollEvent(&m_context->eventhandle)){
+        coffee_sdl2_eventhandle_all(this,&m_context->eventhandle);
         if(m_context->eventhandle.type == SDL_KEYDOWN){
             cMsg("SDL2:Input","Key down: %i",m_context->eventhandle.key.keysym.sym);
             if(m_context->eventhandle.key.keysym.sym == SDLK_ESCAPE)

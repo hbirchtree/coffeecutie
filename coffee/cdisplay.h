@@ -55,11 +55,11 @@ struct CDResizeEvent{
 
 struct CDStateEvent{
     enum StateChange{
-        Minimized   = 0x1,
-        Maximized   = 0x2,
-        Closed      = 0x4,
-        GainedFocus = 0x8,
-        LostFocus   = 0x16,
+        Minimized   = 0x01,
+        Maximized   = 0x02,
+        Closed      = 0x04,
+        GainedFocus = 0x08,
+        LostFocus   = 0x10,
         //TODO : Add more states here
     };
     uint8   bits;
@@ -84,7 +84,7 @@ struct CGLContextProperties
         GLVSync         = 0x02,     //vertical sync
         GLDebug         = 0x04,    //GL debugging context
         GLAutoResize    = 0x08,   //Whether the context auto-resizes
-        GLRobust        = 0x16,
+        GLRobust        = 0x10,
     };
 
     uint16              flags = GLCoreProfile;
@@ -99,18 +99,18 @@ struct CDWindowProperties
         Windowed            = 0x004,
 
         Minimized           = 0x008,
-        Maximized           = 0x016,
+        Maximized           = 0x010,
 
-        Focused             = 0x032,
-        Resizable           = 0x064,
+        Focused             = 0x020,
+        Resizable           = 0x040,
 
-        Decorated           = 0x0128,
-        Floating            = 0x0256,
-        Visible             = 0x0512,
+        Decorated           = 0x080,
+        Floating            = 0x100,
+        Visible             = 0x200,
 
-        HighDPI             = 0x1024,
+        HighDPI             = 0x400,
 
-        Foreign             = 0x2048,
+        Foreign             = 0x800,
     };
 
     uint16                  flags           = 0;
