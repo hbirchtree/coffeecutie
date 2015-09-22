@@ -61,6 +61,12 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     SDL_GetVersion(&ver);
     m_contextString = cStringFormat("SDL %i.%i.%i",ver.major,ver.minor,ver.patch);
 
+    SDL_SetWindowFullscreen(m_context->window,SDL_WINDOW_FULLSCREEN_DESKTOP);
+    SDL_SetWindowFullscreen(m_context->window,0);
+    SDL_SetWindowBordered(m_context->window,SDL_FALSE);
+
+    setWindowSize(props.size);
+
     cMsg("SDL2","Running %s",m_contextString.c_str());
 
     cMsg("SDL2","OpenGL context created");
@@ -247,8 +253,9 @@ void CSDL2Renderer::swapBuffers()
 
 void CSDL2Renderer::pollEvents()
 {
-    if(SDL_PollEvent(&m_context->eventhandle)){
+    while(SDL_PollEvent(&m_context->eventhandle)){
         if(m_context->eventhandle.type == SDL_KEYDOWN){
+            cMsg("SDL2:Input","Key down: %i",m_context->eventhandle.key.keysym.sym);
             if(m_context->eventhandle.key.keysym.sym == SDLK_ESCAPE)
                 closeWindow();
         }

@@ -40,14 +40,14 @@ int main(int argc, char** argv)
     CDWindowProperties props;
 
     props.flags |= CDWindowProperties::Resizable;
-    props.flags |= CDWindowProperties::WindowedFullScreen;
+    props.flags |= CDWindowProperties::Windowed;
     props.flags |= CDWindowProperties::Decorated;
     props.size.w = 1280;
     props.size.h = 720;
     props.monitor = 0;
 
 //    props.contextProperties.flags |= CGLContextProperties::GLVSync;
-    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+//    props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;
     props.contextProperties.version.minor = 3;
