@@ -36,6 +36,38 @@ inline static void coffee_sdl2_send_full_ievent(CSDL2Renderer* ctxt,
     free(payload);
 }
 
+inline static uint8 coffee_sdl2_translate_mouse_btn(Uint8 code)
+{
+    switch(code){
+    case SDL_BUTTON_LEFT: return CIMouseButtonEvent::LeftButton;
+    case SDL_BUTTON_MIDDLE: return CIMouseButtonEvent::MiddleButton;
+    case SDL_BUTTON_RIGHT: return CIMouseButtonEvent::RightButton;
+    case SDL_BUTTON_X1: return CIMouseButtonEvent::X1Button;
+    case SDL_BUTTON_X2: return CIMouseButtonEvent::X2Button;
+
+    //Any remaining buttons will map to the range 17-255
+    default: return code+11;
+    }
+}
+
+inline static uint8 coffee_sdl2_translate_mouse_btnmask(Uint32 code)
+{
+    uint8 res = 0;
+
+    if(code&SDL_BUTTON_LMASK)
+        res |= CIMouseButtonEvent::LeftButton;
+    if(code&SDL_BUTTON_MMASK)
+        res |= CIMouseButtonEvent::MiddleButton;
+    if(code&SDL_BUTTON_RMASK)
+        res |= CIMouseButtonEvent::RightButton;
+    if(code&SDL_BUTTON_X1MASK)
+        res |= CIMouseButtonEvent::X1Button;
+    if(code&SDL_BUTTON_X2MASK)
+        res |= CIMouseButtonEvent::X2Button;
+
+    return res;
+}
+
 inline static void coffee_sdl2_eventhandle_mouse(
         CSDL2Renderer* ctxt,
         Uint32 type,
@@ -45,14 +77,38 @@ inline static void coffee_sdl2_eventhandle_mouse(
 {
     CIEvent e;
 
-    if(type==SDL_MOUSEWHEEL&&wheel.which!=SDL_TOUCH_MOUSEID){
+    if(type==SDL_MOUSEWHEEL
+            &&wheel.which!=SDL_TOUCH_MOUSEID){
         CIScrollEvent s;
         e.ts = wheel.timestamp;
         e.type = CIEvent::Scroll;
-        s.deltaX = wheel.x;
-        s.deltaY = wheel.y;
+
+        s.delta.x = wheel.x;
+        s.delta.y = wheel.y;
 
         coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&s,sizeof(CIScrollEvent));
+    }else if(type==SDL_MOUSEMOTION&&
+             motion.which!=SDL_TOUCH_MOUSEID){
+        CIMouseMoveEvent m;
+        e.ts = motion.timestamp;
+
+        m.pos.x = motion.x;
+        m.pos.y = motion.y;
+        m.rel.x = motion.xrel;
+        m.rel.y = motion.yrel;
+        m.btn = coffee_sdl2_translate_mouse_btnmask(motion.state);
+
+    }else if((type==SDL_MOUSEBUTTONDOWN||
+              type==SDL_MOUSEBUTTONUP)&&
+             btn.which!=SDL_TOUCH_MOUSEID){
+        CIMouseButtonEvent m;
+        e.ts = btn.timestamp;
+
+        if(btn.state==SDL_PRESSED)
+            m.modifier|=CIMouseButtonEvent::Pressed;
+        m.pos.x = btn.x;
+        m.pos.y = btn.y;
+        m.btn = coffee_sdl2_translate_mouse_btn(btn.button);
     }
 }
 

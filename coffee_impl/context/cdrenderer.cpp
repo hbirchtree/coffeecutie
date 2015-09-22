@@ -342,7 +342,7 @@ void CDRenderer::eventIHandle(CIEvent *event)
     if(event->type==CIEvent::Scroll){
         cDebug("YOU SCROLLED YOU SICK FUCK!");
         CIScrollEvent* sev = reinterpret_cast<CIScrollEvent*>(&event[1]);
-        cDebug("Dist: %i, %i",sev->deltaX,sev->deltaY);
+        cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
     }
 }
 

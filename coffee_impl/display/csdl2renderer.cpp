@@ -91,6 +91,7 @@ void CSDL2Renderer::cleanup()
         SDL_DestroyWindow(m_context->window);
         SDL_Quit();
         delete m_context;
+        m_context = nullptr;
         cMsg("SDL2","Terminated");
     }else{
         cMsg("SDL2","Already cleaned up");
