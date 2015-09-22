@@ -143,4 +143,5 @@ HEADERS += \
     plat/linux_wm.h \
     coffee_impl/graphics/ctransformcomputer.h \
     coffee_impl/rendering/cmultidrawgraph.h \
-    coffee_impl/graphics/cuniformchunk.h
+    coffee_impl/graphics/cuniformchunk.h \
+    coffee_impl/display/coffeesdl2/sdl2helpers.h

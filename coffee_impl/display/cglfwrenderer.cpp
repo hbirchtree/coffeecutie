@@ -1,7 +1,7 @@
 #include "cglfwrenderer.h"
 
-#include "cglfwnativefuncs.h"
-#include "cglfwrenderer_eventhandlers.h"
+#include "coffeeglfw/cglfwnativefuncs.h"
+#include "coffeeglfw/cglfwrenderer_eventhandlers.h"
 
 namespace Coffee {
 namespace CDisplay {

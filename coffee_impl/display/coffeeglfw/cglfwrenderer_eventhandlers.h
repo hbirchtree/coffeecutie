@@ -4,7 +4,7 @@
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
-#include "cglfwrenderer.h"
+#include "coffee_impl/display/cglfwrenderer.h"
 #include "coffee/cinput.h"
 
 using namespace Coffee::CInput;

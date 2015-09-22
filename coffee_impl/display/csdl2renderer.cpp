@@ -1,6 +1,6 @@
 #include "csdl2renderer.h"
 
-#include "coffeesdl2/sdl2datatypes.h"
+#include "coffeesdl2/sdl2helpers.h"
 
 namespace Coffee{
 namespace CDisplay{
@@ -61,11 +61,19 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     SDL_GetVersion(&ver);
     m_contextString = cStringFormat("SDL %i.%i.%i",ver.major,ver.minor,ver.patch);
 
-    SDL_SetWindowFullscreen(m_context->window,SDL_WINDOW_FULLSCREEN_DESKTOP);
-    SDL_SetWindowFullscreen(m_context->window,0);
-    SDL_SetWindowBordered(m_context->window,SDL_FALSE);
+    //For consistent behavior
+    if(props.contextProperties.flags&CGLContextProperties::GLVSync)
+        setSwapInterval(1);
+    else
+        setSwapInterval(0);
 
-    setWindowSize(props.size);
+    if(props.flags&CDWindowProperties::Windowed)
+        SDL_SetWindowFullscreen(m_context->window,0);
+
+    setMouseGrabbing(false);
+
+    setSwapInterval(0);
+    cMsg("SDL2","VSync: %i",swapInterval());
 
     cMsg("SDL2","Running %s",m_contextString.c_str());
 
@@ -141,24 +149,7 @@ CDWindow CSDL2Renderer::window()
 
 CDContextBits CSDL2Renderer::context()
 {
-    CDContextBits bits;
-
-    int t;
-    SDL_GL_GetAttribute(SDL_GL_RED_SIZE,&t);
-    bits.red = t;
-    SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE,&t);
-    bits.green = t;
-    SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE,&t);
-    bits.blue = t;
-
-    SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,&t);
-    bits.depth = t;
-    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE,&t);
-    bits.stencil = t;
-    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE,&t);
-    bits.alpha = t;
-
-    return bits;
+    return coffee_sdl2_get_context_properties().bits;
 }
 
 uint32_t CSDL2Renderer::windowState() const
@@ -166,7 +157,7 @@ uint32_t CSDL2Renderer::windowState() const
     return 0;
 }
 
-void CSDL2Renderer::setWindowState(uint32_t)
+void CSDL2Renderer::setWindowState(uint32_t state)
 {
 
 }
@@ -234,6 +225,8 @@ CSize CSDL2Renderer::windowSize() const
 void CSDL2Renderer::setWindowSize(const CSize &size)
 {
     SDL_SetWindowSize(m_context->window,size.w,size.h);
+    SDL_SetWindowMinimumSize(m_context->window,size.w,size.h);
+    SDL_SetWindowMaximumSize(m_context->window,size.w,size.h);
 }
 
 bool CSDL2Renderer::isMouseGrabbed() const

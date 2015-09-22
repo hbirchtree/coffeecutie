@@ -32,7 +32,7 @@ public:
     CDContextBits context();
 
     uint32_t windowState() const;
-    void setWindowState(uint32_t);
+    void setWindowState(uint32_t state);
 
     CPoint windowPosition() const;
     void setWindowPosition(CPoint pos);
