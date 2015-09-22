@@ -6,33 +6,34 @@
 namespace Coffee{
 namespace CDisplay{
 struct CDColorSpace{
-    uint8_t red     = 0;
-    uint8_t green   = 0;
-    uint8_t blue    = 0;
+    uint8 red     = 0;
+    uint8 green   = 0;
+    uint8 blue    = 0;
 };
 
 struct CDContextBits{
     //Bit depths for a GL context
-    uint8_t red     = 0;
-    uint8_t green   = 0;
-    uint8_t blue    = 0;
-    uint8_t alpha   = 0;
+    uint8 red     = 0;
+    uint8 green   = 0;
+    uint8 blue    = 0;
+    uint8 alpha   = 0;
 
-    uint8_t depth   = 0;
-    uint8_t stencil = 0;
+    uint8 depth   = 0;
+    uint8 stencil = 0;
 };
 
 struct CDMonitor{
-    uint8_t         index = 0;  //Real monitor index
+    uint16        index = 0;  //Real monitor index
     CDColorSpace    colorBits;  //Color depth
     CRect           screenArea; //Area occupied on screen
     cstring         name;       //Name of monitor
     CSize           phySize;    //Physical size, reported by some ctxts
-    int32_t         refresh = 0;//Refresh rate of monitor
+    int32         refresh = 0;//Refresh rate of monitor
 };
 struct CDWindow{
-    uintptr_t       handle; //Native handle, in X11, the Window value
-    cstring         title = nullptr;      //Have a *wild* guess.
+    void*           handle_p    = nullptr; //Native handle, in X11, the Window value
+    uintptr_t       handle      = 0;
+    cstring         title       = nullptr; //Have a *wild* guess.
     CRect           screenArea;
 };
 
@@ -44,12 +45,12 @@ struct CDEvent{
         WindowStateChanged     = 0x5, //Includes closing and focus change
         FramebufferResized     = 0x6,
     };
-    uint8_t type;
+    uint8   type = 0;
 };
 
 struct CDResizeEvent{
-    uint32_t w;
-    uint32_t h;
+    uint32   w = 0;
+    uint32   h = 0;
 };
 
 struct CDStateEvent{
@@ -61,17 +62,17 @@ struct CDStateEvent{
         LostFocus   = 0b10000,
         //TODO : Add more states here
     };
-    uint8_t bits;
+    uint8   bits;
 };
 
 struct CDMoveEvent{
-    uint32_t x;
-    uint32_t y;
+    uint32   x = 0;
+    uint32   y = 0;
 };
 
 struct CGLContextVersion
 {
-    //Default context is OpenGL core 3.3
+    //Default context is OpenGL core 3.3const
     int major = 3;
     int minor = 3;
 };
@@ -86,7 +87,7 @@ struct CGLContextProperties
         GLRobust        = 0b10000,
     };
 
-    uint16_t            flags = 0b1;
+    uint16              flags = 0b1;
     CGLContextVersion   version;
     CDContextBits       bits;
 };
@@ -110,9 +111,9 @@ struct CDWindowProperties
         HighDPI             = 0b00001000000,
     };
 
-    uint16_t                flags           = 0;
+    uint16                  flags           = 0;
     //For all of you with 65536 monitors, this is for you.
-    uint16_t                monitor         = 0;
+    uint16                  monitor         = 0;
     CSize                   size;
     CGLContextProperties    contextProperties;
     cstring                 title           = nullptr;

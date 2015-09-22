@@ -99,22 +99,65 @@ double CSDL2Renderer::contextTime()
 
 CDMonitor CSDL2Renderer::monitor()
 {
+    CDMonitor mon;
 
+    SDL_DisplayMode dm;
+    if(SDL_GetCurrentDisplayMode(m_properties.monitor,&dm)<0)
+        cDebug("Failed to get monitor information: %s",SDL_GetError());
+    else{
+
+        mon.refresh = dm.refresh_rate;
+        mon.screenArea.w = dm.w;
+        mon.screenArea.h = dm.h;
+        mon.name = SDL_GetDisplayName(m_properties.monitor);
+        mon.index = m_properties.monitor;
+
+        //TODO: Add color space
+        //TODO: Add physical dimensions
+        //TODO: Add screenArea offsets
+    }
+
+    return mon;
 }
 
 CDWindow CSDL2Renderer::window()
 {
+    CDWindow win;
 
+    SDL_GetWindowSize(m_context->window,&win.screenArea.w,&win.screenArea.h);
+    SDL_GetWindowPosition(m_context->window,&win.screenArea.x,&win.screenArea.y);
+
+    win.title = SDL_GetWindowTitle(m_context->window);
+    coffee_sdl2_get_window_ptr(m_context->window,&win);
+
+    return win;
 }
 
 CDContextBits CSDL2Renderer::context()
 {
+    CDContextBits bits;
 
+    int t;
+    SDL_GL_GetAttribute(SDL_GL_RED_SIZE,&t);
+    bits.red = t;
+    SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE,&t);
+    bits.green = t;
+    SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE,&t);
+    bits.blue = t;
+
+    SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE,&t);
+    bits.depth = t;
+    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE,&t);
+    bits.stencil = t;
+    SDL_GL_GetAttribute(SDL_GL_ALPHA_SIZE,&t);
+    bits.alpha = t;
+
+    return bits;
 }
 
 uint32_t CSDL2Renderer::windowState() const
 {
-
+    return 0;
 }
 
 void CSDL2Renderer::setWindowState(uint32_t)
@@ -137,16 +180,19 @@ void CSDL2Renderer::setWindowPosition(CPoint pos)
 bool CSDL2Renderer::showWindow()
 {
     SDL_ShowWindow(m_context->window);
+    return true;
 }
 
 bool CSDL2Renderer::hideWindow()
 {
     SDL_HideWindow(m_context->window);
+    return true;
 }
 
 bool CSDL2Renderer::closeWindow()
 {
     m_context->contextFlags |= 0b1;
+    return true;
 }
 
 bool CSDL2Renderer::closeFlag()

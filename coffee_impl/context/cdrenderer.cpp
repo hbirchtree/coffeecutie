@@ -31,10 +31,6 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
-    {
-        //Check for max buffer size!
-
-    }
 
 #ifndef LOAD_FILE
     CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");

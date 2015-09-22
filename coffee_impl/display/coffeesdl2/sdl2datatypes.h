@@ -5,6 +5,7 @@
 #include "coffee/cdisplay.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
+#include <SDL2/SDL_syswm.h>
 
 namespace Coffee{
 namespace CSDL2Types{
@@ -78,6 +79,43 @@ static void coffee_sdl2_set_context_properties(const CGLContextProperties& props
         cflags|=SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
+}
+
+static void coffee_sdl2_get_window_ptr(SDL_Window* window, CDWindow* win)
+{
+    SDL_SysWMinfo info;
+
+    SDL_VERSION(&info.version)
+
+    if(SDL_GetWindowWMInfo(window,&info)){
+        switch(info.subsystem){
+#ifdef __linux__
+        case SDL_SYSWM_X11:
+            win->handle = info.info.x11.window;
+            break;
+        case SDL_SYSWM_MIR:
+            win->handle_p = info.info.mir.surface;
+            break;
+        case SDL_SYSWM_WAYLAND:
+            win->handle_p = info.info.wl.surface;
+            break;
+#endif
+#ifdef _WIN32
+        case SDL_SYSWM_WINDOWS:
+            break;
+#endif
+#if defined(__APPLE__) && defined(__MACH__)
+        case SDL_SYSWM_COCOA:
+            break;
+        case SDL_SYSWM_UIKIT:
+            break;
+#endif
+        default:
+            break;
+        }
+    }else{
+        cDebug("Failed to acquire information on window: %s",SDL_GetError());
+    }
 }
 
 }
