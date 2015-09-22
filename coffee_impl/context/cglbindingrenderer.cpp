@@ -26,7 +26,7 @@ static void glbindingCallbackDirect(GLenum source, GLenum type,
 }
 
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
-    CGLFWRenderer(parent)
+    CSDL2Renderer(parent)
 {
 }
 

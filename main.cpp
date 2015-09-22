@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     //Magic happens here
     CDWindowProperties props;
 
-//    props.flags |= CDWindowProperties::Resizable;
+    props.flags |= CDWindowProperties::Resizable;
     props.flags |= CDWindowProperties::Windowed;
     props.flags |= CDWindowProperties::Decorated;
     props.size.w = 1280;

@@ -83,6 +83,7 @@ struct CGLContextProperties
         GLVSync         = 0b10,     //vertical sync
         GLDebug         = 0b100,    //GL debugging context
         GLAutoResize    = 0b1000,   //Whether the context auto-resizes
+        GLRobust        = 0b10000,
     };
 
     uint16_t            flags = 0b1;
@@ -105,6 +106,8 @@ struct CDWindowProperties
         Decorated           = 0b00010000000,
         Floating            = 0b00100000000,
         Visible             = 0b01000000000,
+
+        HighDPI             = 0b00001000000,
     };
 
     uint16_t                flags           = 0;
@@ -112,6 +115,7 @@ struct CDWindowProperties
     uint16_t                monitor         = 0;
     CSize                   size;
     CGLContextProperties    contextProperties;
+    cstring                 title           = nullptr;
 };
 
 }

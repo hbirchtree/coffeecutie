@@ -139,7 +139,7 @@ void CDRenderer::run()
     vertexBuffer.unbind();
     coffee_multidraw_create_call(multidraw,mesh);
 
-    multidraw.drawcalls->drawcalls.data()[0].instanceCount = 100;
+    multidraw.drawcalls->drawcalls.data()[0].instanceCount = 10000;
     //END Vertex data
 
     coffee_multidraw_load_drawcalls(multidraw);
@@ -237,16 +237,16 @@ void CDRenderer::run()
         swap->start();
 
 //        Rendering part
-        glClear(GL_COLOR_BUFFER_BIT);
+//        glClear(GL_COLOR_BUFFER_BIT);
 
-        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
-        model.genMatrix();
+//        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
+//        model.genMatrix();
 
-        instanceBuffer.bind();
-        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+//        instanceBuffer.bind();
+//        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
-        uchunk->buffer->bindRange();
-        coffee_multidraw_render(multidraw);
+//        uchunk->buffer->bindRange();
+//        coffee_multidraw_render(multidraw);
 
         rendertime = swap->elapsed();
 //        // END Rendering part

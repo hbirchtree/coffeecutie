@@ -1,12 +1,13 @@
 #ifndef CGLBINDINGRENDERER_H
 #define CGLBINDINGRENDERER_H
 
-#include "coffee_impl/display/cglfwrenderer.h"
+//#include "coffee_impl/display/cglfwrenderer.h"
+#include "coffee_impl/display/csdl2renderer.h"
 
 namespace Coffee{
 namespace CDisplay{
 
-class CGLBindingRenderer : public CGLFWRenderer
+class CGLBindingRenderer : public CSDL2Renderer
 {
 public:
     CGLBindingRenderer(CObject* parent);
