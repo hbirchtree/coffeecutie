@@ -62,7 +62,6 @@ protected:
     CString m_contextString;
 private:
     CSDL2Types::CSDL2Context* m_context = nullptr;
-
 };
 
 }

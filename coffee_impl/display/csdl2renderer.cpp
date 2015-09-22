@@ -16,7 +16,6 @@ CSDL2Renderer::CSDL2Renderer(Coffee::CObject *parent) :
 CSDL2Renderer::~CSDL2Renderer()
 {
     cleanup();
-    delete m_context;
 }
 
 void CSDL2Renderer::init(const CDWindowProperties &props)
@@ -58,6 +57,12 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
         cFatal("Failed to create SDL2 OpenGL context: %s",SDL_GetError());
     }
 
+    SDL_version ver;
+    SDL_GetVersion(&ver);
+    m_contextString = cStringFormat("SDL %i.%i.%i",ver.major,ver.minor,ver.patch);
+
+    cMsg("SDL2","Running %s",m_contextString.c_str());
+
     cMsg("SDL2","OpenGL context created");
 
     bindingPostInit();
@@ -89,7 +94,7 @@ void CSDL2Renderer::setWindowTitle(const CString &title)
 
 double CSDL2Renderer::contextTime()
 {
-    return 0.0;
+    return (double)SDL_GetTicks()/1000.0;
 }
 
 CDMonitor CSDL2Renderer::monitor()
@@ -141,7 +146,7 @@ bool CSDL2Renderer::hideWindow()
 
 bool CSDL2Renderer::closeWindow()
 {
-
+    m_context->contextFlags |= 0b1;
 }
 
 bool CSDL2Renderer::closeFlag()
@@ -161,7 +166,10 @@ void CSDL2Renderer::setSwapInterval(int interval)
 
 CSize CSDL2Renderer::framebufferSize() const
 {
-    return CSize(-1,-1);
+    CSize sz;
+    SDL_GL_GetDrawableSize(m_context->window,&sz.w,&sz.h);
+    cDebug("Framebuffer size: %ix%i",sz.w,sz.h);
+    return sz;
 }
 
 CSize CSDL2Renderer::windowSize() const
@@ -194,12 +202,18 @@ void CSDL2Renderer::swapBuffers()
 void CSDL2Renderer::pollEvents()
 {
     if(SDL_PollEvent(&m_context->eventhandle)){
-        if(m_context->eventhandle.type == SDL_WINDOWEVENT){
-            if(m_context->eventhandle.window.type == SDL_WINDOWEVENT_CLOSE)
-                m_context->contextFlags |= 0b1;
+        if(m_context->eventhandle.type == SDL_KEYDOWN){
+            if(m_context->eventhandle.key.keysym.sym == SDLK_ESCAPE)
+                closeWindow();
         }
-
-
+        if(m_context->eventhandle.type == SDL_WINDOWEVENT){
+            switch(m_context->eventhandle.window.type){
+            case SDL_WINDOWEVENT_RESIZED:{
+                //TODO: Add event handlers
+                break;
+            }
+            }
+        }
     }
 }
 

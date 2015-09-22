@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     CDWindowProperties props;
 
     props.flags |= CDWindowProperties::Resizable;
-    props.flags |= CDWindowProperties::Windowed;
+    props.flags |= CDWindowProperties::WindowedFullScreen;
     props.flags |= CDWindowProperties::Decorated;
     props.size.w = 1280;
     props.size.h = 720;

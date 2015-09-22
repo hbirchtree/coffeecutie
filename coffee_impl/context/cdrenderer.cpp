@@ -179,10 +179,16 @@ void CDRenderer::run()
     instanceBuffer.bind();
     for(szptr i=1;i<10000;i++)
     {
+        model.position.z = (float)(-i);
+        model.position.y = (float)((i%11)-5);
         model.genMatrix();
         instanceBuffer.subStore(sizeof(glm::mat4)*i,sizeof(glm::mat4),&model.matrix);
     }
     instanceBuffer.unbind();
+
+    model.position.z = -1.f;
+    model.position.y = 0.f;
+    model.position.x = 0.f;
 
     showWindow();
 
@@ -215,7 +221,9 @@ void CDRenderer::run()
     uchunk->ublock.shaderIndex = glGetUniformBlockIndex(prog->handle,uchunk->ublock.name);
     glUniformBlockBinding(prog->handle,uchunk->ublock.shaderIndex,uchunk->ublock.blockBinding);
 
-    setWindowTitle(cStringFormat("GLFW OpenGL renderer (init time: %fs)",contextTime()));
+    setWindowTitle(cStringFormat("%s renderer (init time: %fs)",
+                                 m_contextString.c_str(),
+                                 contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
     double delta = contextTime();
@@ -237,16 +245,17 @@ void CDRenderer::run()
         swap->start();
 
 //        Rendering part
-//        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
 
-//        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
-//        model.genMatrix();
+        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
+        model.genMatrix();
 
-//        instanceBuffer.bind();
-//        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
+        instanceBuffer.bind();
+        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
-//        uchunk->buffer->bindRange();
-//        coffee_multidraw_render(multidraw);
+        uchunk->buffer->bindRange();
+        coffee_multidraw_render(multidraw);
+        glFlush();
 
         rendertime = swap->elapsed();
 //        // END Rendering part
