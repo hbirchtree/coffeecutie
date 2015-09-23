@@ -93,10 +93,11 @@ void CGLBindingRenderer::bindingPostInit()
         cBasicPrint("-----------| Extensions |-----------");
         for(GLextension ext : glbinding::Meta::extensions()){
             cstring extname = glbinding::Meta::getString(ext).c_str();
-            cBasicPrint("Extension: %s, required version: %s, supported: %i",
-                        extname,
-                        glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
-                        requestGLExtension(extname));
+            bool support = requestGLExtension(extname);
+            if(support)
+                cBasicPrint("Extension: %s, core version: %s",
+                            extname,
+                            glbinding::Meta::getRequiringVersion(ext).toString().c_str());
         }
         cBasicPrint("------------------------------------");
     }
