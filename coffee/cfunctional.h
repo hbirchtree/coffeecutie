@@ -45,6 +45,7 @@ public:
 };
 namespace CThreading
 {
+typedef std::thread::id thread_id;
 
 static void runIndependent(std::function<void()> function)
 {

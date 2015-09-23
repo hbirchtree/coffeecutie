@@ -29,9 +29,7 @@ int main(int argc, char** argv)
     //Sets up core dumping
     Coffee::CoffeeInit();
     //Checks that the platform is sane
-    CoffeeTests::run_tests(false);
-
-    cDebug("Mat3: %i",sizeof(CMat3));
+    CoffeeTests::run_tests();
 
     CElapsedTimerMicro timer;
     timer.start();
@@ -50,7 +48,7 @@ int main(int argc, char** argv)
     props.monitor = 0;
 
 //    props.contextProperties.flags |= CGLContextProperties::GLVSync;
-//    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;
     props.contextProperties.version.minor = 3;

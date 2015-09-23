@@ -13,6 +13,9 @@ public:
     CGLBindingRenderer(CObject* parent);
     virtual ~CGLBindingRenderer();
 
+    void fetchGLExtensions();
+    bool requestGLExtension(cstring ext);
+
 protected:
     void bindingPreInit();
     void bindingPostInit();
@@ -21,7 +24,11 @@ protected:
     CString m_rendererString;
     CString m_vendorString;
     CString m_versionString;
-    int m_libraryRevision;
+    int m_libraryRevision = 0;
+
+private:
+    cstring m_extensions = nullptr;
+
 };
 
 }

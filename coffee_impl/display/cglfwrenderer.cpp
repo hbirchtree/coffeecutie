@@ -15,6 +15,11 @@ CGLFWRenderer::~CGLFWRenderer()
     cleanup();
 }
 
+thread_id CGLFWRenderer::contextThread()
+{
+    return m_contextThread;
+}
+
 CString CGLFWRenderer::windowTitle() const
 {
     return CString(); //Not available with GLFW

@@ -17,8 +17,8 @@ public:
     CSDL2Renderer(CObject* parent);
     virtual ~CSDL2Renderer();
 
-    // CDRendererBase interface
-public:
+    virtual thread_id contextThread();
+
     void init(const CDWindowProperties &);
     void cleanup();
 
@@ -54,8 +54,6 @@ public:
 
     void swapBuffers();
     void pollEvents();
-
-    bool requestGLExtension(cstring);
 
 protected:
     CDWindowProperties m_properties;

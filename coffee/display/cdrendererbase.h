@@ -5,8 +5,10 @@
 #include "coffee/cobject.h"
 #include "coffee/cdisplay.h"
 #include "coffee/cinput.h"
+#include "coffee/cfunctional.h"
 
 using namespace Coffee::CInput;
+using namespace Coffee::CFunctional::CThreading;
 
 namespace Coffee {
 
@@ -41,6 +43,8 @@ public:
     CDRendererBase(CObject* parent);
     virtual ~CDRendererBase();
 
+    virtual thread_id contextThread() = 0;
+
     //Initialization
     virtual void init(const CDWindowProperties&) = 0;//Initializes the context manager and etc.
     virtual void run()                           = 0;
@@ -67,7 +71,7 @@ public:
     virtual int  swapInterval()          = 0;
     virtual void setSwapInterval(int)   = 0;
 
-    virtual bool closeFlag() = 0;
+    virtual bool closeFlag() = 0; //Used to determine when the loop should terminate
 
     //Framebuffer size of context
     virtual CSize framebufferSize() const     = 0;
@@ -94,6 +98,8 @@ public:
     virtual void bindingPostInit() = 0; //Called after context is created
 
     virtual void bindingTerminate() = 0;
+
+    virtual double contextTime() = 0;
 };
 
 } // namespace CDisplay

@@ -18,6 +18,8 @@ public:
     CGLFWRenderer(CObject* parent);
     virtual ~CGLFWRenderer();
 
+    virtual thread_id contextThread();
+
     CString windowTitle() const;
     void setWindowTitle(const CString &title);
 
@@ -51,7 +53,7 @@ public:
 
     bool closeFlag();
 
-    bool requestGLExtension(cstring extension);
+    virtual bool requestGLExtension(cstring extension);
 
     void swapBuffers();
     void pollEvents();

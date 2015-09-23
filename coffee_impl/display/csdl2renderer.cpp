@@ -19,6 +19,11 @@ CSDL2Renderer::~CSDL2Renderer()
     cleanup();
 }
 
+thread_id CSDL2Renderer::contextThread()
+{
+    return m_context->thread;
+}
+
 void CSDL2Renderer::init(const CDWindowProperties &props)
 {
     m_properties = props;
@@ -86,6 +91,7 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
 void CSDL2Renderer::cleanup()
 {
     if(m_context){
+        bindingTerminate();
         cMsg("SDL2","Cleaning up context");
         SDL_GL_DeleteContext(m_context->context);
         SDL_DestroyWindow(m_context->window);
@@ -250,11 +256,6 @@ void CSDL2Renderer::pollEvents()
 {
     while(SDL_PollEvent(&m_context->eventhandle))
         coffee_sdl2_eventhandle_all(this,&m_context->eventhandle);
-}
-
-bool CSDL2Renderer::requestGLExtension(cstring)
-{
-    return false;
 }
 
 }

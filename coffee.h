@@ -53,7 +53,6 @@ typedef size_t              csize_t;
 
 //Can be switched for other types from libraries
 typedef std::string         CString;
-
 typedef std::runtime_error  CStdFault;
 //
 
