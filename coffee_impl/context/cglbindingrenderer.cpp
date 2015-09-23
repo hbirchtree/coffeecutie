@@ -58,6 +58,7 @@ bool CGLBindingRenderer::requestGLExtension(cstring ext)
         if(std::this_thread::get_id()==contextThread())
             fetchGLExtensions();
         else{
+            //In case we are on the wrong thread, try queueing a function
             cDebug("Failed to acquire extensions: Wrong thread, attempting workaround");
             std::atomic_int* atom = new std::atomic_int();
             atom->store(0);

@@ -14,6 +14,9 @@ public:
     virtual ~CGLBindingRenderer();
 
     void fetchGLExtensions();
+
+    //Note: May hang!
+    //It is wise to run this asynchronously
     bool requestGLExtension(cstring ext);
 
 protected:
