@@ -172,6 +172,19 @@ void CSDL2Renderer::setWindowState(uint32 state)
     coffee_sdl2_set_winflags(m_context->window,state);
 }
 
+bool CSDL2Renderer::screensaverMode()
+{
+    return SDL_IsScreenSaverEnabled();
+}
+
+void CSDL2Renderer::setScreensaverMode(bool state)
+{
+    if(state)
+        SDL_EnableScreenSaver();
+    else
+        SDL_DisableScreenSaver();
+}
+
 CPoint CSDL2Renderer::windowPosition() const
 {
     CPoint pos;
@@ -179,7 +192,7 @@ CPoint CSDL2Renderer::windowPosition() const
     return pos;
 }
 
-void CSDL2Renderer::setWindowPosition(CPoint pos)
+void CSDL2Renderer::setWindowPosition(const CPoint& pos)
 {
     SDL_SetWindowPosition(m_context->window,pos.x,pos.y);
 }
@@ -207,7 +220,7 @@ bool CSDL2Renderer::closeFlag()
     return m_context->contextFlags&0b1;
 }
 
-int CSDL2Renderer::swapInterval()
+int CSDL2Renderer::swapInterval() const
 {
     return SDL_GL_GetSwapInterval();
 }
@@ -247,6 +260,31 @@ bool CSDL2Renderer::isMouseGrabbed() const
 void CSDL2Renderer::setMouseGrabbing(bool grab)
 {
     SDL_SetWindowGrab(m_context->window,(grab) ? SDL_TRUE : SDL_FALSE);
+}
+
+bool CSDL2Renderer::textInputMode() const
+{
+    return SDL_IsTextInputActive();
+}
+
+void CSDL2Renderer::setTextInputMode(bool state)
+{
+    if(state)
+        SDL_StartTextInput();
+    else
+        SDL_StopTextInput();
+}
+
+void CSDL2Renderer::setTextArea(const CRect &area)
+{
+    SDL_Rect r;
+
+    r.x = area.x;
+    r.y = area.y;
+    r.w = area.w;
+    r.h = area.h;
+
+    SDL_SetTextInputRect(&r);
 }
 
 void CSDL2Renderer::swapBuffers()

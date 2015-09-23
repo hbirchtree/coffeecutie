@@ -32,9 +32,13 @@ CDRenderer::~CDRenderer()
 void CDRenderer::run()
 {
 
+    setTextInputMode(true);
+
 #ifndef LOAD_FILE
     CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
+    v.read_data(true);
+    f.read_data(true);
     CShader* vshdr = new CShader;
     CShader* fshdr = new CShader;
     cDebug("Compile status: %i",vshdr->compile(&v,GL_VERTEX_SHADER));
@@ -321,35 +325,35 @@ void CDRenderer::bindingCallback(CGLReport *report) const
     free(report);
 }
 
-void CDRenderer::eventWHandle(CDEvent *event)
+void CDRenderer::eventWHandle(const CDEvent *event)
 {
     if(event->type==CDEvent::FramebufferResized)
         if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
-            CDResizeEvent* resize = (CDResizeEvent*)&event[1];
+            const CDResizeEvent* resize = (const CDResizeEvent*)&event[1];
             cDebug("Resize: %ix%i",resize->w,resize->h);
             glViewport(0,0,resize->w,resize->h);
         }
 }
 
-void CDRenderer::eventIHandle(CIEvent *event)
+void CDRenderer::eventIHandle(const CIEvent *event)
 {
     if(event->type==CIEvent::Keyboard){
-        CIKeyEvent* kev = (CIKeyEvent*)&event[1];
+        const CIKeyEvent* kev = (const CIKeyEvent*)&event[1];
         cDebug("Key event: key=%i,mods=%i,scan=%i,char=%s",
                kev->key,kev->mod,kev->scan,&kev->key);
         if(kev->key==CK_Escape)
             this->closeWindow();
     }
     if(event->type==CIEvent::Scroll){
-        CIScrollEvent* sev = (CIScrollEvent*)&event[1];
+        const CIScrollEvent* sev = (const CIScrollEvent*)&event[1];
         cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
     }
     if(event->type==CIEvent::MouseButton){
-        CIMouseButtonEvent* mev = (CIMouseButtonEvent*)&event[1];
+        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)&event[1];
         cDebug("Btn: %i:%i, %f,%f",mev->btn,mev->mod,mev->pos.x,mev->pos.x);
     }
     if(event->type==CIEvent::MouseMove&&false){
-        CIMouseMoveEvent* mev = (CIMouseMoveEvent*)&event[1];
+        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
         CIMouseMoveEvent* t = (CIMouseMoveEvent*)malloc(sizeof(CIMouseMoveEvent));
         memmove(t,mev,sizeof(CIMouseMoveEvent));
         CThreading::runIndependent([=](){
@@ -358,16 +362,30 @@ void CDRenderer::eventIHandle(CIEvent *event)
         });
     }
     if(event->type==CIEvent::Drop){
-        CIDropEvent* dev = (CIDropEvent*)&event[1];
+        const CIDropEvent* dev = (const CIDropEvent*)&event[1];
         cDebug("File drop: %s",(cstring)dev->data);
     }
     if(event->type==CIEvent::TextInput){
-        CIWriteEvent* w = (CIWriteEvent*)&event[1];
+        const CIWriteEvent* w = (const CIWriteEvent*)&event[1];
         cDebug("Write event: %s",w->text);
     }
     if(event->type==CIEvent::TextEdit){
-        CIWEditEvent* w = (CIWEditEvent*)&event[1];
+        const CIWEditEvent* w = (const CIWEditEvent*)&event[1];
         cDebug("Edit event: %s,cur=%i,len=%i",w->text,w->cursor,w->len);
+    }
+    if(event->type==CIEvent::Controller){
+        const CIControllerAtomicEvent* c = (const CIControllerAtomicEvent*)&event[1];
+        cDebug("Controller: %i,v=%f",c->state,c->value);
+    }
+    if(event->type==CIEvent::ControllerEv){
+        const CIControllerAtomicUpdateEvent* c =
+                (const CIControllerAtomicUpdateEvent*)&event[1];
+        if((c->state&CIControllerAtomicUpdateEvent::StateMask)&
+                CIControllerAtomicUpdateEvent::Connected){
+            cDebug("Controller connected: %s",c->name);
+        }else{
+            cDebug("Controller disconnected: %s",c->name);
+        }
     }
 }
 

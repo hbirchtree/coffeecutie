@@ -58,20 +58,23 @@ public:
     virtual CDWindow window()           = 0; //Describes the window
     virtual CDContextBits context()     = 0; //Stencil bits, depth bits etc.
 
-    virtual uint32 windowState() const           = 0;
-    virtual void     setWindowState(uint32)      = 0;
+    virtual uint32 windowState() const          = 0;
+    virtual void setWindowState(uint32)         = 0;
 
     virtual CPoint windowPosition() const = 0;
-    virtual void setWindowPosition(CPoint) = 0;
+    virtual void setWindowPosition(const CPoint&) = 0;
 
     virtual bool showWindow()  = 0; //bool: whether it succeeded or not, can be a static value
     virtual bool hideWindow()  = 0;
     virtual bool closeWindow() = 0;
 
-    virtual int  swapInterval()          = 0;
+    virtual int  swapInterval() const    = 0;
     virtual void setSwapInterval(int)   = 0;
 
     virtual bool closeFlag() = 0; //Used to determine when the loop should terminate
+
+    virtual bool screensaverMode() = 0;
+    virtual void setScreensaverMode(bool) = 0;
 
     //Framebuffer size of context
     virtual CSize framebufferSize() const     = 0;
@@ -83,13 +86,16 @@ public:
     virtual bool isMouseGrabbed() const = 0;
     virtual void setMouseGrabbing(bool) = 0;
 
+    virtual bool textInputMode() const = 0;
+    virtual void setTextInputMode(bool) = 0;
+
     //Render loop flow
     virtual void swapBuffers() = 0;
     virtual void pollEvents()  = 0;
 
     //Event handling
-    virtual void eventWHandle(CDEvent*) = 0;
-    virtual void eventIHandle(CIEvent*) = 0;
+    virtual void eventWHandle(const CDEvent*) = 0;
+    virtual void eventIHandle(const CIEvent*) = 0;
 
     //OpenGL context functions, may be provided by binding or context manager
     virtual bool requestGLExtension(cstring)       = 0;

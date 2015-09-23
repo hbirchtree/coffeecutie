@@ -271,7 +271,7 @@ inline static void coffee_sdl2_eventhandle_input(
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
 }
 
-inline static void coffee_sdl2_eventhandle_inputedit(
+inline static void coffee_sdl2_eventhandle_inputedit( //Note: Yet to be tested
         CSDL2Renderer* ctxt,
         const SDL_TextEditingEvent& edit)
 {
@@ -285,6 +285,67 @@ inline static void coffee_sdl2_eventhandle_inputedit(
     w.len = edit.length;
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
+}
+
+inline static void coffee_sdl2_eventhandle_controller_input(
+        CSDL2Renderer* ctxt,
+        Uint32 type,
+        const SDL_ControllerAxisEvent& axis,
+        const SDL_ControllerButtonEvent& btn)
+{
+    CIEvent e;
+    e.type = CIEvent::Controller;
+
+    CIControllerAtomicEvent c;
+
+    if(type==SDL_CONTROLLERAXISMOTION){
+        e.ts = axis.timestamp;
+
+        c.state |=
+                1 |
+                ((axis.which<<1)&CIControllerAtomicEvent::ControllerMask) |
+                ((axis.axis<<5)&CIControllerAtomicEvent::IndexMask);
+        c.value = axis.value;
+
+    }else{
+        e.ts = btn.timestamp;
+
+        c.state |=
+                0 |
+                ((btn.which<<1)&CIControllerAtomicEvent::ControllerMask) |
+                ((btn.button<<5)&CIControllerAtomicEvent::IndexMask) |
+                ((btn.state<<10)&CIControllerAtomicEvent::ButtonStateMask);
+    }
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&c,sizeof(c));
+}
+
+inline static void coffee_sdl2_eventhandle_controller_device(
+        CSDL2Renderer* ctxt,
+        const SDL_ControllerDeviceEvent& dev)
+{
+    CIEvent e;
+    e.type = CIEvent::ControllerEv;
+    e.ts = dev.timestamp;
+
+    CIControllerAtomicUpdateEvent c;
+    c.name = SDL_GameControllerNameForIndex(dev.which);
+
+    uint8 state = 0;
+    switch(dev.type){
+    case SDL_CONTROLLERDEVICEREMAPPED:
+        state |= CIControllerAtomicUpdateEvent::Remapped;
+    case SDL_CONTROLLERDEVICEADDED:{
+        state |= CIControllerAtomicUpdateEvent::Connected;
+        break;
+    }
+    }
+
+    c.state =
+            ((dev.which<<12)&CIControllerAtomicUpdateEvent::ControllerMask) |
+            ((state)&CIControllerAtomicUpdateEvent::StateMask);
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&c,sizeof(c));
 }
 
 inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Event* ev){
@@ -317,11 +378,13 @@ inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Eve
     case SDL_CONTROLLERAXISMOTION:
     case SDL_CONTROLLERBUTTONDOWN:
     case SDL_CONTROLLERBUTTONUP:{
+        coffee_sdl2_eventhandle_controller_input(ctxt,ev->type,ev->caxis,ev->cbutton);
         break;
     }
     case SDL_CONTROLLERDEVICEADDED:
     case SDL_CONTROLLERDEVICEREMOVED:
     case SDL_CONTROLLERDEVICEREMAPPED:{
+        coffee_sdl2_eventhandle_controller_device(ctxt,ev->cdevice);
         break;
     }
     case SDL_DROPFILE:{

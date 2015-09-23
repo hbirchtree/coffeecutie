@@ -12,7 +12,7 @@ struct CIEvent
     enum EventType {
         MouseMove    = 0x1,
         Keyboard     = 0x2,
-        Joystick     = 0x3,
+        Controller   = 0x3,
         Scroll       = 0x4,
         Drop         = 0x5, //Drag-and-drop
         TextInput    = 0x6,
@@ -23,6 +23,8 @@ struct CIEvent
 
         Focus        = 0x9,
         TextEdit     = 0xa,
+
+        ControllerEv = 0xb,
     };
     uint8   type  = 0;
     uint32  ts    = 0;
@@ -121,25 +123,39 @@ struct CIControllerState
     uint8   id              = 0;
     uint8   buttons         = 0;
     uint8   axes            = 0;
-    uint8*  buttonStates    = nullptr;
+    uint32  buttonstates    = 0;
     scalar* axeStates       = nullptr;
 };
 
 struct CIControllerAtomicEvent
 {
     enum AtomicMasks{
-        AxisMask        = 0x1,
-        ControllerMask  = 0x1e,
+        AxisMask        = 0x001, //Shifted 0, 1 bit
+        ControllerMask  = 0x01e, //Shifted 1, 4 bits
+        IndexMask       = 0x3e0, //Shifted 5, 5 bits
+        ButtonStateMask = 0x400, //Shifted 10, 1 bit
     };
-    /*
-     *  Bits:
-     * 0   : 0 = button, 1 = axis
-     * 1-4 : 4-bit number for controller
-     *       max of 16 controllers at a time
-     *       should do for a few years
-    */
     uint32  state   = 0;
     scalar  value   = 0.f;
+};
+
+struct CIControllerAtomicUpdateEvent
+{
+    enum Masks
+    {
+        StateMask       = 0x0003, //Shifted 0,  2 bits
+        ButtonMask      = 0x007c, //Shifted 2,  5 bits
+        AxisMask        = 0x0f80, //Shifted 7,  5 bits
+        ControllerMask  = 0xf000, //Shifted 12, 4 bits
+    };
+    enum States
+    {
+        Connected   = 0x1,
+        Remapped    = 0x2,
+    };
+
+    uint32  state   = 0;
+    cstring name    = nullptr;
 };
 
 struct CIControllerInfo

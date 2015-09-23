@@ -23,8 +23,8 @@ public:
 
     void bindingCallback(CGLReport* report) const;
 
-    void eventWHandle(CDEvent *event);
-    void eventIHandle(CIEvent *event);
+    void eventWHandle(const CDEvent *event);
+    void eventIHandle(const CIEvent *event);
 private:
     CGLState* _dump_state() const;
 };

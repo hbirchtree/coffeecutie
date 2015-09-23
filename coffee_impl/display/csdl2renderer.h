@@ -34,15 +34,18 @@ public:
     uint32 windowState() const;
     void setWindowState(uint32 state);
 
+    bool screensaverMode();
+    void setScreensaverMode(bool);
+
     CPoint windowPosition() const;
-    void setWindowPosition(CPoint pos);
+    void setWindowPosition(const CPoint &pos);
 
     bool showWindow();
     bool hideWindow();
     bool closeWindow();
     bool closeFlag();
 
-    int swapInterval();
+    int swapInterval() const;
     void setSwapInterval(int interval);
 
     CSize framebufferSize() const;
@@ -52,6 +55,10 @@ public:
     bool isMouseGrabbed() const;
     void setMouseGrabbing(bool grab);
 
+    bool textInputMode() const;
+    void setTextInputMode(bool state);
+    void setTextArea(const CRect& area);
+
     void swapBuffers();
     void pollEvents();
 
@@ -60,6 +67,7 @@ protected:
     CString m_contextString;
 private:
     CSDL2Types::CSDL2Context* m_context = nullptr;
+
 };
 
 }
