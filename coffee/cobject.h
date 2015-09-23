@@ -2,9 +2,12 @@
 #define COFFEE_COBJECT_H
 
 #include "coffee.h"
-#include <thread>
+#include "cfunctional.h"
 
 namespace Coffee {
+
+using namespace CFunctional::CThreading;
+
 class CObject
 {
 public:
@@ -20,7 +23,7 @@ public:
     void setObjectName(cstring name);
 
 protected:
-    std::thread::id m_thread;
+    thread_id m_thread;
 
 private:
     std::vector<CObject*> m_children;

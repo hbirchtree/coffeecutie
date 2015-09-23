@@ -5,6 +5,7 @@
 
 namespace Coffee{
 namespace CDisplay{
+
 struct CDColorSpace{
     uint8 red     = 0;
     uint8 green   = 0;
@@ -38,43 +39,47 @@ struct CDWindow{
 };
 
 struct CDEvent{
-    enum EventType{
-        WindowRefreshed        = 0x1, //Perhaps not so interesting?
-        WindowMoved            = 0x2,
-        WindowResized          = 0x4,
-        WindowStateChanged     = 0x5, //Includes closing and focus change
-        FramebufferResized     = 0x6,
+    enum EventType
+    {
+        Refresh = 0x1,
+        Move    = 0x2,
+        Resize  = 0x4,
+        State   = 0x5,
+
+        Focus   = 0x6,
     };
-    uint8   type = 0;
+    uint8   type    = 0;
+    uint32  ts      = 0;
 };
 
-struct CDResizeEvent{
-    uint32   w = 0;
-    uint32   h = 0;
-};
+typedef CPoint CDMoveEvent;
+typedef CSize CDResizeEvent;
+typedef _cbasic_version<uint8> CGLContextVersion;
 
 struct CDStateEvent{
     enum StateChange{
         Minimized   = 0x01,
         Maximized   = 0x02,
+        Restored    = 0x03,
+
         Closed      = 0x04,
-        GainedFocus = 0x08,
-        LostFocus   = 0x10,
-        //TODO : Add more states here
+
+        Hidden      = 0x05,
+        Shown       = 0x06,
     };
-    uint8   bits;
+    uint8   type    = 0;
 };
 
-struct CDMoveEvent{
-    uint32   x = 0;
-    uint32   y = 0;
-};
-
-struct CGLContextVersion
+struct CDFocusEvent
 {
-    //Default context is OpenGL core 3.3const
-    int major = 3;
-    int minor = 3;
+    enum FocusMask
+    {
+        Mouse   = 0x1, // 0 = keyboard focus, 1 = mouse focus
+        Enter   = 0x2,
+        Exposed = 0x4,
+    };
+
+    uint8   mod     = 0;
 };
 
 struct CGLContextProperties

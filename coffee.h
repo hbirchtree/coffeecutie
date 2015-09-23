@@ -76,6 +76,14 @@ struct CDataChunk{
     ptr_u size  = 0;
 };
 
+template<typename T>
+struct _cbasic_version
+{
+    T major     = 0;
+    T minor     = 0;
+    T revision  = 0;
+};
+
 //Size type
 template<typename T>
 struct _cbasic_size

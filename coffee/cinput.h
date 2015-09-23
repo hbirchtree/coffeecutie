@@ -95,17 +95,6 @@ struct CIScrollEvent
     uint8 mod = 0;
 };
 
-struct CIFocusEvent
-{
-    enum FocusModifier
-    {
-        Enter   = 0x1,
-        Leave   = 0x2,
-    };
-
-    uint8 mod = 0;
-};
-
 struct CIWriteEvent
 {
     cstring  text   = nullptr;

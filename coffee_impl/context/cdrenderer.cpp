@@ -244,7 +244,7 @@ void CDRenderer::run()
         delta = contextTime();
         swap->start();
 
-//        Rendering part
+        //Rendering part
         glClear(GL_COLOR_BUFFER_BIT);
 
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
@@ -258,16 +258,16 @@ void CDRenderer::run()
         glFlush();
 
         rendertime = swap->elapsed();
-//        // END Rendering part
+        // END Rendering part
 
-//        //Event handling
+        //Event handling
         swap->start();
         executeRunQueue();
         qtime = swap->elapsed();
         swap->start();
         pollEvents();
         inputtime = swap->elapsed();
-        //Buffer swapping. Really slow...
+        //Buffer swapping
         swap->start();
         swapBuffers();
         swaptime = swap->elapsed();
@@ -327,12 +327,12 @@ void CDRenderer::bindingCallback(CGLReport *report) const
 
 void CDRenderer::eventWHandle(const CDEvent *event)
 {
-    if(event->type==CDEvent::FramebufferResized)
+    if(event->type==CDEvent::Resize){
         if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
             const CDResizeEvent* resize = (const CDResizeEvent*)&event[1];
-            cDebug("Resize: %ix%i",resize->w,resize->h);
             glViewport(0,0,resize->w,resize->h);
         }
+    }
 }
 
 void CDRenderer::eventIHandle(const CIEvent *event)
@@ -344,49 +344,49 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         if(kev->key==CK_Escape)
             this->closeWindow();
     }
-    if(event->type==CIEvent::Scroll){
-        const CIScrollEvent* sev = (const CIScrollEvent*)&event[1];
-        cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
-    }
-    if(event->type==CIEvent::MouseButton){
-        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)&event[1];
-        cDebug("Btn: %i:%i, %f,%f",mev->btn,mev->mod,mev->pos.x,mev->pos.x);
-    }
-    if(event->type==CIEvent::MouseMove&&false){
-        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
-        CIMouseMoveEvent* t = (CIMouseMoveEvent*)malloc(sizeof(CIMouseMoveEvent));
-        memmove(t,mev,sizeof(CIMouseMoveEvent));
-        CThreading::runIndependent([=](){
-            cDebug("Move: %f,%f : %f,%f",t->pos.x,t->pos.y,t->rel.x,t->rel.y);
-            free(t);
-        });
-    }
-    if(event->type==CIEvent::Drop){
-        const CIDropEvent* dev = (const CIDropEvent*)&event[1];
-        cDebug("File drop: %s",(cstring)dev->data);
-    }
-    if(event->type==CIEvent::TextInput){
-        const CIWriteEvent* w = (const CIWriteEvent*)&event[1];
-        cDebug("Write event: %s",w->text);
-    }
-    if(event->type==CIEvent::TextEdit){
-        const CIWEditEvent* w = (const CIWEditEvent*)&event[1];
-        cDebug("Edit event: %s,cur=%i,len=%i",w->text,w->cursor,w->len);
-    }
-    if(event->type==CIEvent::Controller){
-        const CIControllerAtomicEvent* c = (const CIControllerAtomicEvent*)&event[1];
-        cDebug("Controller: %i,v=%f",c->state,c->value);
-    }
-    if(event->type==CIEvent::ControllerEv){
-        const CIControllerAtomicUpdateEvent* c =
-                (const CIControllerAtomicUpdateEvent*)&event[1];
-        if((c->state&CIControllerAtomicUpdateEvent::StateMask)&
-                CIControllerAtomicUpdateEvent::Connected){
-            cDebug("Controller connected: %s",c->name);
-        }else{
-            cDebug("Controller disconnected: %s",c->name);
-        }
-    }
+//    if(event->type==CIEvent::Scroll){
+//        const CIScrollEvent* sev = (const CIScrollEvent*)&event[1];
+//        cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
+//    }
+//    if(event->type==CIEvent::MouseButton){
+//        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)&event[1];
+//        cDebug("Btn: %i:%i, %f,%f",mev->btn,mev->mod,mev->pos.x,mev->pos.x);
+//    }
+//    if(event->type==CIEvent::MouseMove&&false){
+//        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
+//        CIMouseMoveEvent* t = (CIMouseMoveEvent*)malloc(sizeof(CIMouseMoveEvent));
+//        memmove(t,mev,sizeof(CIMouseMoveEvent));
+//        CThreading::runIndependent([=](){
+//            cDebug("Move: %f,%f : %f,%f",t->pos.x,t->pos.y,t->rel.x,t->rel.y);
+//            free(t);
+//        });
+//    }
+//    if(event->type==CIEvent::Drop){
+//        const CIDropEvent* dev = (const CIDropEvent*)&event[1];
+//        cDebug("File drop: %s",(cstring)dev->data);
+//    }
+//    if(event->type==CIEvent::TextInput){
+//        const CIWriteEvent* w = (const CIWriteEvent*)&event[1];
+//        cDebug("Write event: %s",w->text);
+//    }
+//    if(event->type==CIEvent::TextEdit){
+//        const CIWEditEvent* w = (const CIWEditEvent*)&event[1];
+//        cDebug("Edit event: %s,cur=%i,len=%i",w->text,w->cursor,w->len);
+//    }
+//    if(event->type==CIEvent::Controller){
+//        const CIControllerAtomicEvent* c = (const CIControllerAtomicEvent*)&event[1];
+//        cDebug("Controller: %i,v=%f",c->state,c->value);
+//    }
+//    if(event->type==CIEvent::ControllerEv){
+//        const CIControllerAtomicUpdateEvent* c =
+//                (const CIControllerAtomicUpdateEvent*)&event[1];
+//        if((c->state&CIControllerAtomicUpdateEvent::StateMask)&
+//                CIControllerAtomicUpdateEvent::Connected){
+//            cDebug("Controller connected: %s",c->name);
+//        }else{
+//            cDebug("Controller disconnected: %s",c->name);
+//        }
+//    }
 }
 
 CGLState *CDRenderer::_dump_state() const

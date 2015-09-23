@@ -41,6 +41,21 @@ inline static void coffee_sdl2_send_full_ievent(
     free(payload);
 }
 
+inline static void coffee_sdl2_send_full_wevent(
+        CSDL2Renderer* ctxt,
+        const void* base,
+        szptr baseSize,
+        const void* data,
+        szptr dataSize)
+{
+    void* payload = malloc(baseSize+dataSize);
+    memcpy(payload,base,baseSize);
+    memcpy(&reinterpret_cast<char*>(payload)[baseSize],data,dataSize);
+
+    ctxt->eventWHandle((CDEvent*)payload);
+    free(payload);
+}
+
 inline static uint8 coffee_sdl2_translate_mouse_btn(
         Uint8 code)
 {
@@ -348,6 +363,121 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&c,sizeof(c));
 }
 
+inline static void coffee_sdl2_eventhandle_window_state(
+        CSDL2Renderer* ctxt,
+        Uint32 ts,
+        uint8 state)
+{
+    CDEvent e;
+    CDStateEvent s;
+    e.type = CDEvent::State;
+    e.ts = ts;
+    s.type = state;
+
+    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+}
+
+inline static void coffee_sdl2_eventhandle_window_focus(
+        CSDL2Renderer* ctxt,
+        Uint32 ts,
+        Uint8 type)
+{
+    CDEvent e;
+    CDFocusEvent s;
+    e.type = CDEvent::Focus;
+    e.ts = ts;
+    s.mod = 0;
+
+    switch(type){
+    case SDL_WINDOWEVENT_ENTER: s.mod |= CDFocusEvent::Mouse | CDFocusEvent::Enter; break;
+    case SDL_WINDOWEVENT_LEAVE: s.mod |= CDFocusEvent::Mouse; break;
+    case SDL_WINDOWEVENT_EXPOSED: s.mod |= CDFocusEvent::Exposed; break;
+    case SDL_WINDOWEVENT_FOCUS_GAINED: s.mod |= CDFocusEvent::Enter; break;
+    }
+
+    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+}
+
+inline static void coffee_sdl2_eventhandle_window_resize(
+        CSDL2Renderer* ctxt,
+        Uint32 ts,
+        int32 w,
+        int32 h)
+{
+    CDEvent e;
+    CDResizeEvent s;
+    e.type = CDEvent::Resize;
+    e.ts = ts;
+    s.w = w;
+    s.h = h;
+
+    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+}
+
+inline static void coffee_sdl2_eventhandle_window_move(
+        CSDL2Renderer* ctxt,
+        Uint32 ts,
+        int32 x,
+        int32 y)
+{
+    CDEvent e;
+    CDMoveEvent s;
+    e.type = CDEvent::Move;
+    e.ts = ts;
+    s.x = x;
+    s.y = y;
+
+    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+}
+
+inline static void coffee_sdl2_eventhandle_window(
+        CSDL2Renderer* ctxt,
+        const SDL_WindowEvent& win)
+{
+    switch(win.event){
+    case SDL_WINDOWEVENT_ENTER:
+    case SDL_WINDOWEVENT_LEAVE:
+    case SDL_WINDOWEVENT_EXPOSED:
+    case SDL_WINDOWEVENT_FOCUS_GAINED:{
+        coffee_sdl2_eventhandle_window_focus(ctxt,win.timestamp,win.event);
+        break;
+    }
+    case SDL_WINDOWEVENT_CLOSE:{
+        coffee_sdl2_eventhandle_window_state(ctxt,win.timestamp,CDStateEvent::Closed);
+        break;
+    }
+    case SDL_WINDOWEVENT_MINIMIZED:{
+        coffee_sdl2_eventhandle_window_state(ctxt,win.timestamp,CDStateEvent::Minimized);
+        break;
+    }
+    case SDL_WINDOWEVENT_MAXIMIZED:{
+        coffee_sdl2_eventhandle_window_state(ctxt,win.timestamp,CDStateEvent::Maximized);
+        break;
+    }
+    case SDL_WINDOWEVENT_RESTORED:{
+        coffee_sdl2_eventhandle_window_state(ctxt,win.timestamp,CDStateEvent::Restored);
+        break;
+    }
+    case SDL_WINDOWEVENT_HIDDEN:{
+        coffee_sdl2_eventhandle_window_state(ctxt,win.timestamp,CDStateEvent::Hidden);
+        break;
+    }
+    case SDL_WINDOWEVENT_SHOWN:{
+        coffee_sdl2_eventhandle_window_state(ctxt,win.timestamp,CDStateEvent::Shown);
+        break;
+    }
+    case SDL_WINDOWEVENT_RESIZED:
+    case SDL_WINDOWEVENT_SIZE_CHANGED:{
+        coffee_sdl2_eventhandle_window_resize(ctxt,win.timestamp,win.data1,win.data2);
+        break;
+    }
+    case SDL_WINDOWEVENT_MOVED:{
+        coffee_sdl2_eventhandle_window_move(ctxt,win.timestamp,win.data1,win.data2);
+        break;
+    }
+    }
+}
+
 inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Event* ev){
     switch(ev->type){
     case SDL_QUIT:{
@@ -355,6 +485,7 @@ inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Eve
         break;
     }
     case SDL_WINDOWEVENT:{
+        coffee_sdl2_eventhandle_window(ctxt,ev->window);
         break;
     }
     case SDL_KEYDOWN:

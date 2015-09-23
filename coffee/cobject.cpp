@@ -38,8 +38,6 @@ void CObject::setParent(CObject *parent)
             }
         this->m_parent = parent;
         m_parent->m_children.push_back(this);
-    }else{
-
     }
 }
 
