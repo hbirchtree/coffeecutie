@@ -324,7 +324,7 @@ void CDRenderer::eventWHandle(CDEvent *event)
 {
     if(event->type==CDEvent::FramebufferResized)
         if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
-            CDResizeEvent* resize = reinterpret_cast<CDResizeEvent*>(&event[1]);
+            CDResizeEvent* resize = (CDResizeEvent*)&event[1];
             cDebug("Resize: %ix%i",resize->w,resize->h);
             glViewport(0,0,resize->w,resize->h);
         }
@@ -333,28 +333,40 @@ void CDRenderer::eventWHandle(CDEvent *event)
 void CDRenderer::eventIHandle(CIEvent *event)
 {
     if(event->type==CIEvent::Keyboard){
-        CIKeyEvent* kev = reinterpret_cast<CIKeyEvent*>(&event[1]);
+        CIKeyEvent* kev = (CIKeyEvent*)&event[1];
         cDebug("Key event: key=%i,mods=%i,scan=%i,char=%s",
                kev->key,kev->mod,kev->scan,&kev->key);
         if(kev->key==CK_Escape)
             this->closeWindow();
     }
     if(event->type==CIEvent::Scroll){
-        CIScrollEvent* sev = reinterpret_cast<CIScrollEvent*>(&event[1]);
+        CIScrollEvent* sev = (CIScrollEvent*)&event[1];
         cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
     }
     if(event->type==CIEvent::MouseButton){
-        CIMouseButtonEvent* mev = reinterpret_cast<CIMouseButtonEvent*>(&event[1]);
+        CIMouseButtonEvent* mev = (CIMouseButtonEvent*)&event[1];
         cDebug("Btn: %i:%i, %f,%f",mev->btn,mev->mod,mev->pos.x,mev->pos.x);
     }
     if(event->type==CIEvent::MouseMove&&false){
-        CIMouseMoveEvent* mev = reinterpret_cast<CIMouseMoveEvent*>(&event[1]);
+        CIMouseMoveEvent* mev = (CIMouseMoveEvent*)&event[1];
         CIMouseMoveEvent* t = (CIMouseMoveEvent*)malloc(sizeof(CIMouseMoveEvent));
         memmove(t,mev,sizeof(CIMouseMoveEvent));
         CThreading::runIndependent([=](){
             cDebug("Move: %f,%f : %f,%f",t->pos.x,t->pos.y,t->rel.x,t->rel.y);
             free(t);
         });
+    }
+    if(event->type==CIEvent::Drop){
+        CIDropEvent* dev = (CIDropEvent*)&event[1];
+        cDebug("File drop: %s",(cstring)dev->data);
+    }
+    if(event->type==CIEvent::TextInput){
+        CIWriteEvent* w = (CIWriteEvent*)&event[1];
+        cDebug("Write event: %s",w->text);
+    }
+    if(event->type==CIEvent::TextEdit){
+        CIWEditEvent* w = (CIWEditEvent*)&event[1];
+        cDebug("Edit event: %s,cur=%i,len=%i",w->text,w->cursor,w->len);
     }
 }
 

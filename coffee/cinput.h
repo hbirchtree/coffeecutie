@@ -22,6 +22,7 @@ struct CIEvent
         QuitSign     = 0x8, //Notifies the program
 
         Focus        = 0x9,
+        TextEdit     = 0xa,
     };
     uint8   type  = 0;
     uint32  ts    = 0;
@@ -105,24 +106,60 @@ struct CIFocusEvent
 
 struct CIWriteEvent
 {
-    uint32 character    = 0;
+    cstring  text   = nullptr;
 };
 
-struct CIJoyState
+struct CIWEditEvent
 {
+    cstring text    = nullptr;
+    uint32  cursor  = 0;
+    uint32  len     = 0;
+};
+
+struct CIControllerState
+{
+    uint8   id              = 0;
     uint8   buttons         = 0;
     uint8   axes            = 0;
     uint8*  buttonStates    = nullptr;
     scalar* axeStates       = nullptr;
 };
-struct CIJoyInfo
+
+struct CIControllerAtomicEvent
 {
-    cstring name;
+    enum AtomicMasks{
+        AxisMask        = 0x1,
+        ControllerMask  = 0x1e,
+    };
+    /*
+     *  Bits:
+     * 0   : 0 = button, 1 = axis
+     * 1-4 : 4-bit number for controller
+     *       max of 16 controllers at a time
+     *       should do for a few years
+    */
+    uint32  state   = 0;
+    scalar  value   = 0.f;
+};
+
+struct CIControllerInfo
+{
+    enum ControllerFlags
+    {
+        Connected       = 0x1,
+        Disconnected    = 0x2,
+        Remapped        = 0x4,
+    };
+
+    cstring name    = nullptr;
+    uint8   flags   = 0;
+
     uint8   buttons = 0;
     uint8   axes    = 0;
     scalar* axe_min = nullptr;
     scalar* axe_max = nullptr;
 };
+
 
 struct CIDropEvent
 {
@@ -133,9 +170,18 @@ struct CIDropEvent
         Text     = 0x3,
     };
 
-    uint8 type      = 0;
-    uint32 size     = 0;
-    void* data      = nullptr;
+    uint8   type      = 0;
+    uint32  size      = 0;
+    void*   data      = nullptr;
+};
+
+struct CISensorEvent
+{
+    uint64          id      = 0;
+    union {
+        uint64      lvalue  = 0;
+        bigscalar   dvalue;
+    };
 };
 
 }

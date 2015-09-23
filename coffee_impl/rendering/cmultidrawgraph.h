@@ -51,7 +51,6 @@ static CMultiDrawDataSet coffee_multidraw_create(){
     return multidraw;
 }
 
-
 static void coffee_multidraw_bind_states(const CMultiDrawDataSet& set)
 {
     for(CVertexBufferBinding* bnd : set.bindings)

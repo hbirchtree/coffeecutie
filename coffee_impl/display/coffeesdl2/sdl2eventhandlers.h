@@ -8,25 +8,30 @@
 namespace Coffee{
 namespace CSDL2Types{
 
-inline static void coffee_sdl2_send_atomic_ievent(CSDL2Renderer* ctxt, uint8 type)
+inline static void coffee_sdl2_send_atomic_ievent(
+        CSDL2Renderer* ctxt,
+        uint8 type)
 {
     CIEvent e;
     e.type = type;
     ctxt->eventIHandle(&e);
 }
 
-inline static void coffee_sdl2_send_atomic_wevent(CSDL2Renderer* ctxt, uint8 type)
+inline static void coffee_sdl2_send_atomic_wevent(
+        CSDL2Renderer* ctxt,
+        uint8 type)
 {
     CDEvent e;
     e.type = type;
     ctxt->eventWHandle(&e);
 }
 
-inline static void coffee_sdl2_send_full_ievent(CSDL2Renderer* ctxt,
-                                                const void* base,
-                                                szptr baseSize,
-                                                const void* data,
-                                                szptr dataSize)
+inline static void coffee_sdl2_send_full_ievent(
+        CSDL2Renderer* ctxt,
+        const void* base,
+        szptr baseSize,
+        const void* data,
+        szptr dataSize)
 {
     void* payload = malloc(baseSize+dataSize);
     memcpy(payload,base,baseSize);
@@ -36,7 +41,8 @@ inline static void coffee_sdl2_send_full_ievent(CSDL2Renderer* ctxt,
     free(payload);
 }
 
-inline static uint8 coffee_sdl2_translate_mouse_btn(Uint8 code)
+inline static uint8 coffee_sdl2_translate_mouse_btn(
+        Uint8 code)
 {
     switch(code){
     case SDL_BUTTON_LEFT: return CIMouseButtonEvent::LeftButton;
@@ -50,7 +56,8 @@ inline static uint8 coffee_sdl2_translate_mouse_btn(Uint8 code)
     }
 }
 
-inline static uint8 coffee_sdl2_translate_mouse_btnmask(Uint32 code)
+inline static uint8 coffee_sdl2_translate_mouse_btnmask(
+        Uint32 code)
 {
     uint8 res = 0;
 
@@ -68,60 +75,73 @@ inline static uint8 coffee_sdl2_translate_mouse_btnmask(Uint32 code)
     return res;
 }
 
-inline static void coffee_sdl2_eventhandle_mouse(
+inline static void coffee_sdl2_eventhandle_mouse_wheel(
         CSDL2Renderer* ctxt,
-        Uint32 type,
-        const SDL_MouseButtonEvent& btn,
-        const SDL_MouseMotionEvent& motion,
         const SDL_MouseWheelEvent& wheel)
 {
+    if(wheel.which==SDL_TOUCH_MOUSEID)
+        return;
+
     CIEvent e;
+    e.ts = wheel.timestamp;
+    e.type = CIEvent::Scroll;
 
-    if(type==SDL_MOUSEWHEEL
-            &&wheel.which!=SDL_TOUCH_MOUSEID){
-        CIScrollEvent s;
-        e.ts = wheel.timestamp;
-        e.type = CIEvent::Scroll;
+    CIScrollEvent s;
 
-        s.delta.x = wheel.x;
-        s.delta.y = wheel.y;
+    s.delta.x = wheel.x;
+    s.delta.y = wheel.y;
 
-        coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&s,sizeof(CIScrollEvent));
-    }else if(type==SDL_MOUSEMOTION&&
-             motion.which!=SDL_TOUCH_MOUSEID){
-
-        CIMouseMoveEvent m;
-        e.ts = motion.timestamp;
-        e.type = CIEvent::MouseMove;
-
-        m.pos.x = motion.x;
-        m.pos.y = motion.y;
-        m.rel.x = motion.xrel;
-        m.rel.y = motion.yrel;
-        m.btn = coffee_sdl2_translate_mouse_btnmask(motion.state);
-
-        coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&m,sizeof(CIMouseMoveEvent));
-    }else if((type==SDL_MOUSEBUTTONDOWN||
-              type==SDL_MOUSEBUTTONUP)&&
-             btn.which!=SDL_TOUCH_MOUSEID){
-
-        CIMouseButtonEvent m;
-        e.ts = btn.timestamp;
-        e.type = CIEvent::MouseButton;
-
-        if(btn.state==SDL_PRESSED)
-            m.mod|=CIMouseButtonEvent::Pressed;
-        if(btn.clicks==2)
-            m.mod|=CIMouseButtonEvent::DoubleClick;
-        m.pos.x = btn.x;
-        m.pos.y = btn.y;
-        m.btn = coffee_sdl2_translate_mouse_btn(btn.button);
-
-        coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&m,sizeof(CIMouseButtonEvent));
-    }
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&s,sizeof(s));
 }
 
-inline static int32 coffee_sdl2_interpret_key_modifier(Uint16 mod)
+inline static void coffee_sdl2_eventhandle_mouse_motion(
+        CSDL2Renderer* ctxt,
+        const SDL_MouseMotionEvent& motion)
+{
+    if(motion.which==SDL_TOUCH_MOUSEID)
+        return;
+
+    CIEvent e;
+    e.ts = motion.timestamp;
+    e.type = CIEvent::MouseMove;
+
+    CIMouseMoveEvent m;
+
+    m.pos.x = motion.x;
+    m.pos.y = motion.y;
+    m.rel.x = motion.xrel;
+    m.rel.y = motion.yrel;
+    m.btn = coffee_sdl2_translate_mouse_btnmask(motion.state);
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&m,sizeof(m));
+}
+
+inline static void coffee_sdl2_eventhandle_mouse_btn(
+        CSDL2Renderer* ctxt,
+        const SDL_MouseButtonEvent& btn)
+{
+    if(btn.which==SDL_TOUCH_MOUSEID)
+        return;
+
+    CIEvent e;
+    e.ts = btn.timestamp;
+    e.type = CIEvent::MouseButton;
+
+    CIMouseButtonEvent m;
+
+    if(btn.state==SDL_PRESSED)
+        m.mod|=CIMouseButtonEvent::Pressed;
+    if(btn.clicks==2)
+        m.mod|=CIMouseButtonEvent::DoubleClick;
+    m.pos.x = btn.x;
+    m.pos.y = btn.y;
+    m.btn = coffee_sdl2_translate_mouse_btn(btn.button);
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&m,sizeof(m));
+}
+
+inline static int32 coffee_sdl2_interpret_key_modifier(
+        Uint16 mod)
 {
     int32 res;
     if(mod&KMOD_LSHIFT)
@@ -147,7 +167,8 @@ inline static int32 coffee_sdl2_interpret_key_modifier(Uint16 mod)
         return res;
 }
 
-inline static uint32 coffee_sdl2_interpret_symbol(SDL_Keycode key)
+inline static uint32 coffee_sdl2_interpret_symbol(
+        SDL_Keycode key)
 {
     switch(key){
 
@@ -219,7 +240,51 @@ inline static void coffee_sdl2_eventhandle_keys(
 
     k.scan = key.keysym.scancode;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&k,sizeof(CIKeyEvent));
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&k,sizeof(k));
+}
+
+inline static void coffee_sdl2_eventhandle_drop(
+        CSDL2Renderer* ctxt,
+        const SDL_DropEvent& drop)
+{
+    CIEvent e;
+    e.type = CIEvent::Drop;
+    e.ts = drop.timestamp;
+    CIDropEvent d;
+    d.size = strlen(drop.file)+1;
+    d.data = drop.file;
+    d.type = CIDropEvent::File;
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&d,sizeof(d));
+}
+
+inline static void coffee_sdl2_eventhandle_input(
+        CSDL2Renderer* ctxt,
+        const SDL_TextInputEvent& input)
+{
+    CIEvent e;
+    e.type = CIEvent::TextInput;
+    e.ts = input.timestamp;
+    CIWriteEvent w;
+    w.text = input.text;
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
+}
+
+inline static void coffee_sdl2_eventhandle_inputedit(
+        CSDL2Renderer* ctxt,
+        const SDL_TextEditingEvent& edit)
+{
+    CIEvent e;
+    e.type = CIEvent::TextEdit;
+    e.ts = edit.timestamp;
+
+    CIWEditEvent w;
+    w.text = edit.text;
+    w.cursor = edit.start;
+    w.len = edit.length;
+
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
 }
 
 inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Event* ev){
@@ -237,26 +302,38 @@ inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Eve
         break;
     }
     case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
-    case SDL_MOUSEMOTION:
+    case SDL_MOUSEBUTTONUP:{
+        coffee_sdl2_eventhandle_mouse_btn(ctxt,ev->button);
+        break;
+    }
+    case SDL_MOUSEMOTION:{
+        coffee_sdl2_eventhandle_mouse_motion(ctxt,ev->motion);
+        break;
+    }
     case SDL_MOUSEWHEEL:{
-        coffee_sdl2_eventhandle_mouse(ctxt,ev->type,ev->button,ev->motion,ev->wheel);
+        coffee_sdl2_eventhandle_mouse_wheel(ctxt,ev->wheel);
         break;
     }
     case SDL_CONTROLLERAXISMOTION:
     case SDL_CONTROLLERBUTTONDOWN:
-    case SDL_CONTROLLERBUTTONUP:
-
+    case SDL_CONTROLLERBUTTONUP:{
+        break;
+    }
     case SDL_CONTROLLERDEVICEADDED:
     case SDL_CONTROLLERDEVICEREMOVED:
     case SDL_CONTROLLERDEVICEREMAPPED:{
         break;
     }
     case SDL_DROPFILE:{
+        coffee_sdl2_eventhandle_drop(ctxt,ev->drop);
         break;
     }
-    case SDL_TEXTEDITING:
+    case SDL_TEXTEDITING:{
+        coffee_sdl2_eventhandle_inputedit(ctxt,ev->edit);
+        break;
+    }
     case SDL_TEXTINPUT:{
+        coffee_sdl2_eventhandle_input(ctxt,ev->text);
         break;
     }
     }

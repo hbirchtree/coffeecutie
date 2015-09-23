@@ -41,7 +41,8 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     }
     cMsg("SDL2","Initialized");
 
-    Uint32 flags = coffee_sdl2_interpret_winflags(props.flags);
+    Uint32 flags = 0;
+    flags = coffee_sdl2_interpret_winflags(props.flags);
 
     flags|=SDL_WINDOW_OPENGL;
 
@@ -50,7 +51,8 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     m_context->window =
             SDL_CreateWindow(props.title,
                              SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,
-                             props.size.w,props.size.h,flags);
+                             props.size.w,props.size.h,
+                             flags);
 
     if(!m_context->window){
         cFatal("Failed to create SDL2 window: %s",SDL_GetError());

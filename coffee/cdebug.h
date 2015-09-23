@@ -191,6 +191,7 @@ static void cBasicPrint(cstring str, Arg... args)
     strcpy(fmt,str);
     strcat(fmt,"\n");
     fprintf(stderr,fmt,args...);
+    free(fmt);
 }
 
 template<typename... Arg>

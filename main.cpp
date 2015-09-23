@@ -36,6 +36,16 @@ int main(int argc, char** argv)
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
+    cDebug("AtomicEvent: %i",sizeof(CIControllerAtomicEvent));
+    cDebug("SensorEvent: %i",sizeof(CISensorEvent));
+
+    uint64 t = 0;
+    t |= (10<<8) | (3<<1) | 1;
+
+    cDebug("Sum: %i",t);
+
+    cDebug("Controller: %i",t>>1);
+
     //Magic happens here
     CDWindowProperties props;
 
