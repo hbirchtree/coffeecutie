@@ -344,49 +344,6 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         if(kev->key==CK_Escape)
             this->closeWindow();
     }
-//    if(event->type==CIEvent::Scroll){
-//        const CIScrollEvent* sev = (const CIScrollEvent*)&event[1];
-//        cDebug("Dist: %f, %f",sev->delta.x,sev->delta.y);
-//    }
-//    if(event->type==CIEvent::MouseButton){
-//        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)&event[1];
-//        cDebug("Btn: %i:%i, %f,%f",mev->btn,mev->mod,mev->pos.x,mev->pos.x);
-//    }
-//    if(event->type==CIEvent::MouseMove&&false){
-//        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
-//        CIMouseMoveEvent* t = (CIMouseMoveEvent*)malloc(sizeof(CIMouseMoveEvent));
-//        memmove(t,mev,sizeof(CIMouseMoveEvent));
-//        CThreading::runIndependent([=](){
-//            cDebug("Move: %f,%f : %f,%f",t->pos.x,t->pos.y,t->rel.x,t->rel.y);
-//            free(t);
-//        });
-//    }
-//    if(event->type==CIEvent::Drop){
-//        const CIDropEvent* dev = (const CIDropEvent*)&event[1];
-//        cDebug("File drop: %s",(cstring)dev->data);
-//    }
-//    if(event->type==CIEvent::TextInput){
-//        const CIWriteEvent* w = (const CIWriteEvent*)&event[1];
-//        cDebug("Write event: %s",w->text);
-//    }
-//    if(event->type==CIEvent::TextEdit){
-//        const CIWEditEvent* w = (const CIWEditEvent*)&event[1];
-//        cDebug("Edit event: %s,cur=%i,len=%i",w->text,w->cursor,w->len);
-//    }
-//    if(event->type==CIEvent::Controller){
-//        const CIControllerAtomicEvent* c = (const CIControllerAtomicEvent*)&event[1];
-//        cDebug("Controller: %i,v=%f",c->state,c->value);
-//    }
-//    if(event->type==CIEvent::ControllerEv){
-//        const CIControllerAtomicUpdateEvent* c =
-//                (const CIControllerAtomicUpdateEvent*)&event[1];
-//        if((c->state&CIControllerAtomicUpdateEvent::StateMask)&
-//                CIControllerAtomicUpdateEvent::Connected){
-//            cDebug("Controller connected: %s",c->name);
-//        }else{
-//            cDebug("Controller disconnected: %s",c->name);
-//        }
-//    }
 }
 
 CGLState *CDRenderer::_dump_state() const
