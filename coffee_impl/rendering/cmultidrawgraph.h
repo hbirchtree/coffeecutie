@@ -51,6 +51,12 @@ static CMultiDrawDataSet coffee_multidraw_create(){
     return multidraw;
 }
 
+static void coffee_multidraw_free(CMultiDrawDataSet* md){
+    delete md->index->buffer;
+    delete md->index;
+    delete md->drawcalls->drawbuffer;
+    delete md->vao;
+}
 
 static void coffee_multidraw_bind_states(const CMultiDrawDataSet& set)
 {

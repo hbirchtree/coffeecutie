@@ -57,7 +57,6 @@ void CShaderStageProgram::free()
 bool CShader::compile(CResources::CResource *res, GLenum stage)
 {
     this->stage = stage;
-    res->read_data(true);
     if(res->size==0||!res->data)
         return false;
     const char* str = reinterpret_cast<const char*>(res->data);

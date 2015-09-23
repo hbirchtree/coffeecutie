@@ -1,0 +1,64 @@
+#ifndef CGAME_DATASET
+#define CGAME_DATASET
+
+#include "coffee_impl/graphics/cbuffer.h"
+#include "coffee_impl/rendering/cmultidrawgraph.h"
+#include "coffee_impl/assimp/cassimptypes.h"
+
+namespace Coffee{
+using namespace CGraphicsWrappers;
+using namespace CRendering;
+
+namespace CMemoryManagement{
+
+template<typename T>
+struct chunk_mem
+{
+    szptr   size    = 0;
+    T*      d   = nullptr;
+};
+
+struct game_vertexdata_chunk
+{
+    chunk_mem<chunk_mem<byte>>  buffers;
+    chunk_mem<CAssimpData*>     data;
+};
+
+struct game_shader_manager
+{
+    chunk_mem<CShader>          shaders;
+    chunk_mem<CShaderProgram>   programs;
+    chunk_mem<CPipeline>        pipelines;
+};
+
+typedef chunk_mem<CResource> game_resource_chunk;
+
+struct game_memory_chunk
+{
+    chunk_mem<CMultiDrawDataSet>    datasets;
+
+    chunk_mem<CBuffer>              buffers;
+    chunk_mem<CSubBuffer>           subbuffers;
+};
+
+struct game_transform_chunk
+{
+    chunk_mem<CModelTransform>      transforms;
+    chunk_mem<CGCamera>             cameras;
+};
+
+template<typename T>
+static void coffee_mem_expand_array(chunk_mem<T> *mem, szptr size){
+    mem->size += size;
+    mem->d = (T*)realloc(mem->d,sizeof(T)*mem->size);
+}
+
+static void coffee_mem_clear(void* start, szptr size){
+    memset(start,0,size);
+}
+
+}
+}
+
+#endif // CGAME_DATASET
+

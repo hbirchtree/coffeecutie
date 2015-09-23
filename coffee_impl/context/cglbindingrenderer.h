@@ -30,7 +30,7 @@ protected:
     int m_libraryRevision = 0;
 
 private:
-    cstring m_extensions = nullptr;
+    cstring_w m_extensions = nullptr;
 
 };
 
