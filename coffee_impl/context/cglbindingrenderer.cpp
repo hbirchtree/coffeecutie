@@ -32,10 +32,15 @@ CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
 
 CGLBindingRenderer::~CGLBindingRenderer()
 {
+    if(m_extensions)
+        free(m_extensions);
 }
 
 void CGLBindingRenderer::fetchGLExtensions()
 {
+    if(m_extensions)
+        free(m_extensions);
+
     GLint exts = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS,&exts);
 
@@ -47,9 +52,8 @@ void CGLBindingRenderer::fetchGLExtensions()
             tmp.push_back('\n');
     }
 
-    cstring_w extensions = (cstring_w)malloc(tmp.size()+1);
-    strcpy(extensions,tmp.c_str());
-    m_extensions = extensions;
+    m_extensions = (cstring_w)malloc(tmp.size()+1);
+    strcpy(m_extensions,tmp.c_str());
 }
 
 bool CGLBindingRenderer::requestGLExtension(cstring ext)
@@ -93,10 +97,11 @@ void CGLBindingRenderer::bindingPostInit()
         cBasicPrint("-----------| Extensions |-----------");
         for(GLextension ext : glbinding::Meta::extensions()){
             cstring extname = glbinding::Meta::getString(ext).c_str();
-            cBasicPrint("Extension: %s, required version: %s, supported: %i",
-                        extname,
-                        glbinding::Meta::getRequiringVersion(ext).toString().c_str(),
-                        requestGLExtension(extname));
+            bool support = requestGLExtension(extname);
+            if(support)
+                cBasicPrint("Extension: %s, core version: %s",
+                            extname,
+                            glbinding::Meta::getRequiringVersion(ext).toString().c_str());
         }
         cBasicPrint("------------------------------------");
     }

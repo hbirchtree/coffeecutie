@@ -147,4 +147,6 @@ HEADERS += \
     coffee_impl/display/coffeesdl2/sdl2helpers.h \
     coffee_impl/display/coffeesdl2/sdl2eventhandlers.h \
     coffee_impl/input/cinput_eventhandling.h \
-    coffee/cinput_keymap.h
+    coffee/cinput_keymap.h \
+    coffee_impl/memory/cgame_dataset.h \
+    coffee_impl/sample/base_case.h

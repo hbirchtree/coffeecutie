@@ -15,8 +15,12 @@ struct CUniformChunk{
     CGraphicsData::CBlock*  block   = nullptr;
 };
 
-static CUniformChunk* coffee_create_uchunk(CSubBuffer* part,szptr size,szptr numProperties,
-                                    szptr* sizes,cstring chunkName)
+static CUniformChunk* coffee_create_uchunk(
+	CSubBuffer* part,
+	szptr size,
+	szptr numProperties,
+	szptr* sizes,
+	cstring chunkName)
 {
     CUniformChunk* chunk = reinterpret_cast<CUniformChunk*>(calloc(1,sizeof(CUniformChunk)));
 
@@ -27,6 +31,8 @@ static CUniformChunk* coffee_create_uchunk(CSubBuffer* part,szptr size,szptr num
 
     chunk->ublock.name = chunkName;
     chunk->ublock.size = size;
+
+    return chunk;
 }
 
 

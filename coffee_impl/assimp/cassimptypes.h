@@ -1,7 +1,7 @@
 #ifndef CASSIMPTYPES
 #define CASSIMPTYPES
 
-#include <stdint.h>
+#include "coffee.h"
 
 namespace Coffee {
 namespace CResourceTypes {
@@ -13,12 +13,12 @@ namespace CAssimp {
 
 struct CAssimpMaterial
 {
-    const char*             name            = nullptr;
-    uint16_t                numProperties   = 0;
-    const uint32_t* const*  propertySizes   = nullptr;
-    const char*             propertyData    = nullptr;
+    cstring                 name            = nullptr;
+    uint16                  numProperties   = 0;
+    const uint32* const*    propertySizes   = nullptr;
+    const byte*             propertyData    = nullptr;
     //User-defined types, differentiates bool, bytes, int and float
-    const uint8_t*          propertyTypes   = nullptr;
+    const uint8*            propertyTypes   = nullptr;
 };
 
 struct CAssimpMesh
@@ -27,14 +27,14 @@ struct CAssimpMesh
         //Struct at offset=0
         //free() is called on the CAssimpMesh struct ptr
 {
-    const char*         name            = nullptr;
+    cstring             name            = nullptr;
 
-    uint8_t             numBuffers      = 0;
+    uint8               numBuffers      = 0;
     //Applies to the below lists
-    const char* const*  buffers         = nullptr;
-    const uint8_t*      bufferType      = nullptr;
-    const uint8_t*      elementSizes    = nullptr;
-    const uint32_t*     bufferSize      = nullptr;
+    cstring const*      buffers         = nullptr;
+    const uint8*        bufferType      = nullptr;
+    const uint8*        elementSizes    = nullptr;
+    const uint32*       bufferSize      = nullptr;
 
     enum BufferType
     {
@@ -52,27 +52,27 @@ struct CAssimpMesh
 
 struct CAssimpCamera
 {
-    const char*   name       = nullptr;
+    cstring       name       = nullptr;
 };
 
 struct CAssimpLight
 {
-    const char*   name       = nullptr;
+    cstring       name       = nullptr;
 };
 
 struct CAssimpTexture
 {
-    const char*   name       = nullptr;
+    cstring       name       = nullptr;
 };
 
 struct CAssimpAnimation
 {
-    const char*   name       = nullptr;
+    cstring       name       = nullptr;
 };
 
 struct CAssimpModel //Material + Mesh
 {
-    const char*         name     = nullptr;
+    cstring             name     = nullptr;
 
     CAssimpMesh*        mesh     = nullptr;
     CAssimpMaterial*    material = nullptr;
@@ -80,12 +80,12 @@ struct CAssimpModel //Material + Mesh
 
 struct CAssimpData
 {
-    uint32_t            numMeshes       = 0;
-    uint32_t            numMaterials    = 0;
-    uint32_t            numCameras      = 0;
-    uint32_t            numLights       = 0;
-    uint32_t            numTextures     = 0;
-    uint32_t            numAnimations   = 0;
+    uint32            numMeshes       = 0;
+    uint32            numMaterials    = 0;
+    uint32            numCameras      = 0;
+    uint32            numLights       = 0;
+    uint32            numTextures     = 0;
+    uint32            numAnimations   = 0;
 
     CAssimpMesh**       meshes      = nullptr;
     CAssimpMaterial**   materials   = nullptr;

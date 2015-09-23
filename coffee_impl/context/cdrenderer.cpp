@@ -104,11 +104,11 @@ void CDRenderer::run()
     matFmt.size = 4;
 
     CVertexBufferBinding posBnd;
-    posBnd.buffer = &vertexBuffer;
+    posBnd.buffer  = &vertexBuffer;
     posBnd.binding = 0;
     posBnd.divisor = 0;
-    posBnd.offset = 0;
-    posBnd.stride = sizeof(CVec3);
+    posBnd.offset  = 0;
+    posBnd.stride  = sizeof(CVec3);
 
     CMultiDrawDescriptor desc;
 
@@ -286,6 +286,7 @@ void CDRenderer::run()
 
     hideWindow();
 
+    coffee_multidraw_free(&multidraw);
     pip->free();
 #ifndef LOAD_FILE
     v.free_data();

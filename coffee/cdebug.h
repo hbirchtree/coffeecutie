@@ -235,7 +235,8 @@ static CString cStringFormat(cstring fmt, Arg... args)
     return _o;
 }
 
-template<typename T> class _coffee_elapsed_timer_template
+template<typename T>
+class _coffee_elapsed_timer_template
 {
 public:
     void start(){
