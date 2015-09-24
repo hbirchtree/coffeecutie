@@ -239,6 +239,7 @@ template<typename T>
 class _coffee_elapsed_timer_template
 {
 public:
+    virtual ~_coffee_elapsed_timer_template(){}
     void start(){
         _start = _curr_time();
     }

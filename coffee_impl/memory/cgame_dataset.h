@@ -4,6 +4,7 @@
 #include "coffee_impl/graphics/cbuffer.h"
 #include "coffee_impl/rendering/cmultidrawgraph.h"
 #include "coffee_impl/assimp/cassimptypes.h"
+#include "coffee_impl/graphics/cuniformchunk.h"
 
 namespace Coffee{
 using namespace CGraphicsWrappers;
@@ -47,6 +48,8 @@ struct game_memory_chunk
 
     chunk_mem<CBuffer>              buffers;
     chunk_mem<CSubBuffer>           subbuffers;
+
+    chunk_mem<CUniformChunk>        uniformchunks;
 };
 
 struct game_transform_chunk

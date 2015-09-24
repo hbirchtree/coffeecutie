@@ -2,7 +2,6 @@
 #define BASE_CASE
 
 #include "coffee_impl/memory/cgame_dataset.h"
-#include "coffee_impl/graphics/cuniformchunk.h"
 
 namespace Coffee{
 namespace CRendering{
@@ -185,6 +184,7 @@ static void coffee_test_load(game_context* ctxt)
     coffee_mem_expand_array<CGCamera>(&ctxt->transforms.cameras,1);
     coffee_mem_expand_array<CModelTransform>(&ctxt->transforms.transforms,1);
     coffee_mem_expand_array<CSubBuffer>(&ctxt->renderdata.subbuffers,1);
+    coffee_mem_expand_array<CUniformChunk>(&ctxt->renderdata.uniformchunks,1);
     {
         {
             CGCamera* cam = &ctxt->transforms.cameras.d[0];
@@ -197,10 +197,12 @@ static void coffee_test_load(game_context* ctxt)
             CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
             ubuffer->bufferType = GL_UNIFORM_BUFFER;
             ubuffer->flags = GL_DYNAMIC_STORAGE_BIT;
+            //GL calls
             ubuffer->create();
             ubuffer->bind();
             ubuffer->store(sizeof(glm::mat4)*2+sizeof(glm::vec4),nullptr);
             ubuffer->unbind();
+            //
 
             CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
             camBuffer->parent = ubuffer;
@@ -210,12 +212,21 @@ static void coffee_test_load(game_context* ctxt)
             {
                 szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
                 CUniformChunk* uchunk =
-                        coffee_create_uchunk(&matrixBuf,sizeof(glm::mat4)*2,2,matrixSz,"MatrixBlock");
+                        coffee_create_uchunk(
+                            &matrixBuf,
+                            sizeof(glm::mat4)*2,
+                            2,
+                            matrixSz,
+                            "MatrixBlock");
+                uchunk = memmove(
+                            &ctxt->renderdata.uniformchunks.d[0],
+                        uchunk,sizeof(CUniformChunk));
                 uchunk->buffer->parent->bind();
                 uchunk->buffer->subStore(0,sizeof(glm::mat4),&cam->matrix);
                 uchunk->buffer->parent->unbind();
 
                 uchunk->ublock.blockBinding = 0;
+                //GL calls
                 uchunk->ublock.shaderIndex = glGetUniformBlockIndex(
                             &ctxt->shaders.programs.d[0].handle,
                         uchunk->ublock.name);
@@ -223,6 +234,7 @@ static void coffee_test_load(game_context* ctxt)
                             &ctxt->shaders.programs.d[0].handle,
                         uchunk->ublock.shaderIndex,
                         uchunk->ublock.blockBinding);
+                //
             }
         }
 
@@ -252,6 +264,37 @@ static void coffee_test_load(game_context* ctxt)
             //
         }
     }
+}
+
+static void coffee_prepare_test(game_context* ctxt)
+{
+    coffee_multidraw_bind_states(ctxt->renderdata.datasets.d[0]);
+    ctxt->renderdata.buffers.d[2].bind();
+    ctxt->renderdata.uniformchunks.d[0].buffer->bindRange();
+}
+
+static void coffee_render_test(game_context* ctxt, double delta)
+{
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    ctxt->transforms.transforms.d[0].rotation =
+            glm::normalize(
+                glm::quat(2,0,0,-0.1*delta)*
+                ctxt->transforms.transforms.d[0].rotation);
+    ctxt->transforms.transforms.d[0].genMatrix();
+    ctxt->renderdata.buffers.d[2].subStore(
+                0,
+                sizeof(glm::mat4),
+                &ctxt->transforms.transforms.d[0].matrix);
+
+    coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
+    glFlush();
+}
+
+static void coffee_unload_test(game_context* ctxt)
+{
+    ctxt->renderdata.buffers.d[2].unbind();
+    ctxt->renderdata.uniformchunks.d[0].buffer->unbind();
 }
 
 }

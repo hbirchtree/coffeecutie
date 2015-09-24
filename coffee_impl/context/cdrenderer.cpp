@@ -125,6 +125,13 @@ void CDRenderer::run()
 
     CMultiDrawDataSet multidraw = coffee_multidraw_create();
 
+    multidraw.vao = new CVertexArrayObject;
+    multidraw.vao->create();
+    multidraw.drawcalls->drawbuffer = new CBuffer;
+    multidraw.drawcalls->drawbuffer->create();
+    multidraw.index->buffer = new CBuffer;
+    multidraw.index->buffer->create();
+
     coffee_mesh_define_matrix_attribs(&instanceBuffer,matFmt,desc,5,1);
     coffee_multidraw_load_vao(multidraw,desc);
 
@@ -245,23 +252,22 @@ void CDRenderer::run()
 
     while(!closeFlag()){
         delta = contextTime();
-        swap->start();
 
+        swap->start();
         //Rendering part
         glClear(GL_COLOR_BUFFER_BIT);
 
         model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
         model.genMatrix();
 
-        instanceBuffer.bind();
         instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
 
         uchunk->buffer->bindRange();
         coffee_multidraw_render(multidraw);
         glFlush();
 
-        rendertime = swap->elapsed();
         // END Rendering part
+        rendertime = swap->elapsed();
 
         //Event handling
         swap->start();
