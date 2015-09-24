@@ -6,4 +6,5 @@
 #include "coffee_impl/context/cdrenderer.h"
 #include "coffee/cfiles.h"
 #include "coffee/cinput.h"
+#include "coffee/cdisplay.h"
 #include "coffee/cdebug.h"

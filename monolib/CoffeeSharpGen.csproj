@@ -55,9 +55,6 @@
     <Reference Include="CppSharp.Parser.CSharp">
       <HintPath>..\..\CppSharp\build\gmake\lib\Release_x64\CppSharp.Parser.CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="CppSharp.Parser.Gen">
-      <HintPath>..\..\CppSharp\build\gmake\lib\Release_x64\CppSharp.Parser.Gen.exe</HintPath>
-    </Reference>
     <Reference Include="CppSharp.Runtime">
       <HintPath>..\..\CppSharp\build\gmake\lib\Release_x64\CppSharp.Runtime.dll</HintPath>
     </Reference>
