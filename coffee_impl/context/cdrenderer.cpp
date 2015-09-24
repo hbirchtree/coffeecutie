@@ -3,20 +3,11 @@
 //#define LOAD_FILE
 
 #include "coffee/cfunctional.h"
-#include "coffee_impl/graphics/cshader.h"
-#include "coffee/cfiles.h"
-#include "coffee_impl/assimp/cassimpimporters.h"
-
-#include "coffee_impl/graphics/cgraphicsdata.h"
-#include "coffee_impl/graphics/cframebuffer.h"
-#include "coffee_impl/graphics/cuniformchunk.h"
-
-#include "coffee_impl/rendering/cmultidrawgraph.h"
+#include "coffee_impl/sample/base_case.h"
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
-using namespace Coffee::CGraphicsData;
-using namespace Coffee::CRendering;
+using namespace Coffee::CRendering::CTest;
 
 namespace Coffee {
 namespace CDisplay {
@@ -31,211 +22,6 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
-
-#ifndef LOAD_FILE
-    CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
-    CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
-    v.read_data(true);
-    f.read_data(true);
-    CShader* vshdr = new CShader;
-    CShader* fshdr = new CShader;
-    cDebug("Compile status: %i",vshdr->compile(&v,GL_VERTEX_SHADER));
-    cDebug("Compile status: %i",fshdr->compile(&f,GL_FRAGMENT_SHADER));
-
-    v.free_data();
-    f.free_data();
-#endif
-
-    //Loading a mesh
-
-    CResource testFile("ubw/models/ubw.blend");
-    testFile.read_data();
-    CResourceTypes::CAssimp::CAssimpData* res = CResourceTypes::CAssimp::CAssimpImporters::importResource(&testFile,"blend");
-    testFile.free_data();
-
-    //Loading up shader
-
-    CShaderProgram* prog = new CShaderProgram;
-#ifndef LOAD_FILE
-    prog->create();
-    prog->attachShader(vshdr,GL_VERTEX_SHADER_BIT);
-    prog->attachShader(fshdr,GL_FRAGMENT_SHADER_BIT);
-    prog->link();
-#else
-    CResource progStore("shader.dmp");
-    if(progStore.read_data())
-        cDebug("Loaded program: %i",prog->fetchProgram(&progStore),true);
-#endif
-
-    CPipeline* pip = new CPipeline;
-    pip->create();
-    pip->attachProgram(prog,GL_VERTEX_SHADER_BIT|GL_FRAGMENT_SHADER_BIT);
-
-    //End of shader loading
-
-    //Testing: Dumping shader program to file, caching
-
-#ifndef LOAD_FILE
-    CResource progStore("shader.dmp");
-    prog->storeProgram(&progStore);
-    if(!progStore.save_data())
-        cDebug("Failed to save shader!");
-    progStore.free_data();
-#endif
-    CResourceTypes::CAssimp::CAssimpMesh* mesh = res->meshes[4];
-
-    //Mesh specification
-    CBuffer vertexBuffer;
-    vertexBuffer.create();
-    vertexBuffer.bufferType = GL_ARRAY_BUFFER;
-
-    //Instance buffer, stores object transforms for *all* objects
-    CBuffer instanceBuffer;
-    instanceBuffer.bufferType = GL_ARRAY_BUFFER;
-    instanceBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
-    instanceBuffer.create();
-    instanceBuffer.bind();
-    instanceBuffer.store(sizeof(glm::mat4)*10000,nullptr);
-    instanceBuffer.unbind();
-
-    CVertexFormat stdFmt;
-    stdFmt.type = GL_FLOAT;
-    stdFmt.offset = 0;
-    stdFmt.size = 3;
-
-    CVertexFormat matFmt;
-    matFmt.type = GL_FLOAT;
-    matFmt.offset = 0;
-    matFmt.size = 4;
-
-    CVertexBufferBinding posBnd;
-    posBnd.buffer  = &vertexBuffer;
-    posBnd.binding = 0;
-    posBnd.divisor = 0;
-    posBnd.offset  = 0;
-    posBnd.stride  = sizeof(CVec3);
-
-    CMultiDrawDescriptor desc;
-
-    CVertexAttribute posA;
-    posA.attribIdx = 0;
-    posA.bnd = &posBnd;
-    posA.fmt = &stdFmt;
-    desc.attributes.push_back(posA);
-
-    CMultiDrawDataSet multidraw = coffee_multidraw_create();
-
-    multidraw.vao = new CVertexArrayObject;
-    multidraw.vao->create();
-    multidraw.drawcalls->drawbuffer = new CBuffer;
-    multidraw.drawcalls->drawbuffer->create();
-    multidraw.index->buffer = new CBuffer;
-    multidraw.index->buffer->create();
-
-    coffee_mesh_define_matrix_attribs(&instanceBuffer,matFmt,desc,5,1);
-    coffee_multidraw_load_vao(multidraw,desc);
-
-    //Vertex data
-    {
-        std::vector<byte> verData;
-        for(int i=0;i<mesh->numBuffers;i++)
-            if(mesh->bufferType[i]==CAssimpMesh::PositionType){
-                coffee_mesh_fill_vertexdata(verData,mesh->buffers[i],
-                                            0,mesh->bufferSize[i]*sizeof(CVec3));
-            }
-        vertexBuffer.bind();
-        vertexBuffer.store(verData.size(),verData.data());
-        vertexBuffer.unbind();
-    }
-    coffee_multidraw_create_call(multidraw,mesh);
-
-    multidraw.drawcalls->drawcalls.data()[0].instanceCount = 10000;
-    //END Vertex data
-
-    coffee_multidraw_load_drawcalls(multidraw);
-    coffee_multidraw_load_indices(multidraw);
-
-    // END mesh specification
-
-    //Uniform buffer storage
-
-    CBuffer uniformBuffer;
-    uniformBuffer.bufferType = GL_UNIFORM_BUFFER;
-    uniformBuffer.flags = GL_DYNAMIC_STORAGE_BIT;
-    uniformBuffer.create();
-    uniformBuffer.bind();
-    uniformBuffer.store(sizeof(glm::mat4)*2,nullptr);
-    uniformBuffer.unbind();
-
-    res->freeData();
-    delete res;
-
-    //Representation of camera
-
-    CGCamera camera;
-    camera.fieldOfView = 120.f;
-    camera.aspect = 1.6f;
-    camera.zVals.near = 0.1f;
-    camera.zVals.far = 100.f;
-    camera.genPerspective();
-
-    //Model transform
-
-    CModelTransform model;
-    model.position.z = -1.f;
-    model.scale.x = model.scale.y = model.scale.z = 1.f;
-    model.rotation.w = 2.f;
-
-    instanceBuffer.bind();
-    for(szptr i=1;i<10000;i++)
-    {
-        model.position.z = (float)(-i);
-        model.position.y = (float)((i%11)-5);
-        model.genMatrix();
-        instanceBuffer.subStore(sizeof(glm::mat4)*i,sizeof(glm::mat4),&model.matrix);
-    }
-    instanceBuffer.unbind();
-
-    model.position.z = -1.f;
-    model.position.y = 0.f;
-    model.position.x = 0.f;
-
-    showWindow();
-
-    pip->bind();
-    glCullFace(GL_BACK);
-    glClearColor(0.175f,0.175f,0.175f,1.f);
-    glViewport(0,0,m_properties.size.w,m_properties.size.h);
-
-    bigscalar mtime = 0.0;
-    CElapsedTimerMicro *swap = new CElapsedTimerMicro;
-
-    //Organizing the uniform chunk
-
-    //Create sub-buffer from UBO
-    CSubBuffer matrixBuf;
-    matrixBuf.parent = &uniformBuffer;
-    matrixBuf.size = sizeof(glm::mat4)*2;
-    matrixBuf.bufferType = GL_UNIFORM_BUFFER;
-    szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
-    //Function creates our chunk
-    CUniformChunk* uchunk =
-            coffee_create_uchunk(&matrixBuf,sizeof(glm::mat4)*2,2,matrixSz,"MatrixBlock");
-    //Set initial data
-    uchunk->buffer->parent->bind();
-    uchunk->buffer->subStore(0,sizeof(glm::mat4),&camera.matrix);
-    uchunk->buffer->parent->unbind();
-
-    //Set binding for the chunk
-    uchunk->ublock.blockBinding = 0;
-    uchunk->ublock.shaderIndex = glGetUniformBlockIndex(prog->handle,uchunk->ublock.name);
-    glUniformBlockBinding(prog->handle,uchunk->ublock.shaderIndex,uchunk->ublock.blockBinding);
-
-    setWindowTitle(cStringFormat("%s renderer (init time: %fs)",
-                                 m_contextString.c_str(),
-                                 contextTime()));
-    cMsg("Coffee","Init time: %fs",contextTime());
-
     double delta = contextTime();
     double deltaT = 0;
     uint64 frames = 0;
@@ -244,27 +30,34 @@ void CDRenderer::run()
     uint64 qtime = 0;
     uint64 swaptime = 0;
 
-    setSwapInterval(0);
+    game_context game;
 
-    instanceBuffer.bind();
-    coffee_multidraw_bind_states(multidraw);
-    uchunk->buffer->bindRange();
+    coffee_test_load(&game);
+
+    showWindow();
+
+    glCullFace(GL_BACK);
+    glClearColor(0.175f,0.175f,0.175f,1.f);
+    glViewport(0,0,m_properties.size.w,m_properties.size.h);
+
+    bigscalar mtime = 0.0;
+    CElapsedTimerMicro *swap = new CElapsedTimerMicro;
+
+    setSwapInterval(0);
+    setWindowTitle(cStringFormat("%s renderer (init time: %fs)",
+                                 m_contextString.c_str(),
+                                 contextTime()));
+    cMsg("Coffee","Init time: %fs",contextTime());
+
+    coffee_prepare_test(&game);
 
     while(!closeFlag()){
         delta = contextTime();
 
         swap->start();
         //Rendering part
-        glClear(GL_COLOR_BUFFER_BIT);
 
-        model.rotation=glm::normalize(glm::quat(2,0,0,-0.1*deltaT)*model.rotation);
-        model.genMatrix();
-
-        instanceBuffer.subStore(0,sizeof(glm::mat4),&(model.matrix));
-
-        uchunk->buffer->bindRange();
-        coffee_multidraw_render(multidraw);
-        glFlush();
+        coffee_render_test(&game,deltaT);
 
         // END Rendering part
         rendertime = swap->elapsed();
@@ -295,21 +88,11 @@ void CDRenderer::run()
         }
     }
 
+    coffee_unload_test(&game);
+
     swap->start();
 
     hideWindow();
-
-    coffee_multidraw_free(&multidraw);
-    pip->free();
-#ifndef LOAD_FILE
-    v.free_data();
-    f.free_data();
-    delete vshdr;
-    delete fshdr;
-#endif
-    delete uchunk;
-    delete prog;
-    delete pip;
 
     cMsg("Coffee","Termination time: %lldus",swap->elapsed());
     delete swap;

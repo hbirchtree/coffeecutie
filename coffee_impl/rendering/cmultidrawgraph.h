@@ -105,8 +105,6 @@ static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescript
         set.bindings.push_back(attr.bnd);
     }
 
-    set.index->buffer->create();
-    set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
     set.index->buffer->bind();
     set.vao->unbind();
 }

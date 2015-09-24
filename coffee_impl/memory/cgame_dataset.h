@@ -12,11 +12,11 @@ using namespace CRendering;
 
 namespace CMemoryManagement{
 
-template<typename T>
-struct chunk_mem
+struct game_vertex_description
 {
-    szptr   size    = 0;
-    T*      d   = nullptr;
+    chunk_mem<CVertexFormat>        formats;
+    chunk_mem<CVertexArrayObject>   arrays;
+    chunk_mem<CVertexBufferBinding> bindings;
 };
 
 struct game_vertexdata_chunk
@@ -31,13 +31,6 @@ struct game_shader_manager
     chunk_mem<CShader>          shaders;
     chunk_mem<CShaderProgram>   programs;
     chunk_mem<CPipeline>        pipelines;
-};
-
-struct game_vertex_description
-{
-    chunk_mem<CVertexFormat>        formats;
-    chunk_mem<CVertexArrayObject>   arrays;
-    chunk_mem<CVertexBufferBinding> bindings;
 };
 
 typedef chunk_mem<CResource> game_resource_chunk;

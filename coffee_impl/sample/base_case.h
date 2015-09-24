@@ -11,12 +11,12 @@ using namespace CMemoryManagement;
 
 struct game_context
 {
-    game_vertexdata_chunk   vertexdata  = {0};
-    game_shader_manager     shaders     = {0};
-    game_resource_chunk     resources   = {0};
-    game_memory_chunk       renderdata  = {0};
+    game_vertexdata_chunk   vertexdata;
+    game_shader_manager     shaders;
+    game_resource_chunk     resources;
+    game_memory_chunk       renderdata;
 
-    game_transform_chunk    transforms  = {0};
+    game_transform_chunk    transforms;
 };
 
 static void coffee_test_load(game_context* ctxt)
@@ -31,8 +31,8 @@ static void coffee_test_load(game_context* ctxt)
     coffee_mem_expand_array<CShaderProgram>(&ctxt->shaders.programs,1);
     coffee_mem_expand_array<CPipeline>(&ctxt->shaders.pipelines,1);
     {
-        CResource v; //Vertex shader
-        CResource f; //Fragment shader
+        CResource v("ubw/shaders/vertex/vsh_instanced.vs"); //Vertex shader
+        CResource f("ubw/shaders/fragment/direct/fsh_nolight.fs"); //Fragment shader
         v.read_data(true);
         f.read_data(true);
 
@@ -40,13 +40,13 @@ static void coffee_test_load(game_context* ctxt)
         CShader* fshdr = &ctxt->shaders.shaders.d[1];
         //GL calls
         vshdr->compile(&v,GL_VERTEX_SHADER);
-        fshdr->compile(&f,GL_VERTEX_SHADER);
+        fshdr->compile(&f,GL_FRAGMENT_SHADER);
         //
 
         v.free_data();
         f.free_data();
 
-        CShaderProgram* p = &ctxt->shaders.programs[0];
+        CShaderProgram* p = &ctxt->shaders.programs.d[0];
         //GL calls
         p->create();
         p->attachShader(vshdr,GL_VERTEX_SHADER_BIT);
@@ -54,9 +54,13 @@ static void coffee_test_load(game_context* ctxt)
         p->link();
         //
 
+        CPipeline* pl = &ctxt->shaders.pipelines.d[0];
+        pl->create();
+        pl->attachProgram(p,GL_VERTEX_SHADER_BIT|GL_FRAGMENT_SHADER_BIT);
+
         //Try dumping it to a file, we don't care about the resource later on
         {
-            CResource dmp;
+            CResource dmp("shader.dmp");
             //GL call
             p->storeProgram(&dmp);
             //
@@ -64,9 +68,20 @@ static void coffee_test_load(game_context* ctxt)
                 cDebug("Failed to save shader to file!");
             dmp.free_data();
         }
+
+        /*
+         *
+         * Loading a shader from file:
+         *
+         * if(progStore.read_data())
+         *     cDebug("Loaded program: %i",prog->fetchProgram(&progStore),true);
+         *
+         */
     }
 
     //Specify VAO for vertex data, we will only use one for now
+
+    szptr numGears = 10000;
 
     //We have two formats
     coffee_mem_expand_array<CVertexFormat>(&ctxt->vertexdata.descriptor.formats,2);
@@ -77,18 +92,30 @@ static void coffee_test_load(game_context* ctxt)
         CBuffer* vbuffer = &ctxt->renderdata.buffers.d[0];
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
+        mbuffer->bufferType = GL_ARRAY_BUFFER;
+        mbuffer->flags = GL_DYNAMIC_STORAGE_BIT;
+        mbuffer->create();
+        mbuffer->bind();
+        mbuffer->store(sizeof(glm::mat4)*numGears,nullptr);
+        mbuffer->unbind();
+
+        vbuffer->create();
+
         {
             CBuffer* ibuffer = &ctxt->renderdata.buffers.d[1];
             CBuffer* dbuffer = &ctxt->renderdata.buffers.d[3];
             multidraw->drawcalls->drawbuffer = dbuffer;
+
             multidraw->index->buffer = ibuffer;
 
-            CVertexArrayObject* vao = &ctxt->renderdata.buffers.d[0];
+            CVertexArrayObject* vao = &ctxt->vertexdata.descriptor.arrays.d[0];
             multidraw->vao = vao;
 
             vao->create();
-            ibuffer->create();
             dbuffer->create();
+
+            ibuffer->create();
+            ibuffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
         }
 
         CVertexFormat* stdFmt = &ctxt->vertexdata.descriptor.formats.d[0];
@@ -117,7 +144,7 @@ static void coffee_test_load(game_context* ctxt)
 
         CMultiDrawDescriptor desc;
 
-        desc.attributes.push_back(*posAtt);
+        desc.attributes.push_back(posAtt);
 
         //GL calls
         coffee_mesh_define_matrix_attribs(mbuffer,*matFmt,desc,5,1);
@@ -125,12 +152,10 @@ static void coffee_test_load(game_context* ctxt)
         //
     }
 
-    szptr numGears = 9998;
-
     //Load mesh
     coffee_mem_expand_array<CAssimpData*>(&ctxt->vertexdata.data,1);
     {
-        CResource m;
+        CResource m("ubw/models/ubw.blend");
         m.read_data();
         CAssimpData* d = CAssimpImporters::importResource(&m,"blend");
         m.free_data();
@@ -142,24 +167,14 @@ static void coffee_test_load(game_context* ctxt)
             cFatal("Failed to load mesh data! File does not match!");
 
         CBuffer* vbuffer = &ctxt->renderdata.buffers.d[0];
-        CBuffer* ibuffer = &ctxt->renderdata.buffers.d[1];
-        CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
-
-        mbuffer->bufferType = GL_ARRAY_BUFFER;
-        mbuffer->flags = GL_DYNAMIC_STORAGE_BIT;
-        mbuffer->create();
 
         //Temporary storage for data
-        std::vector<byte> vertexdata;
-
-        vbuffer->create();
-        ibuffer->create();
-        mbuffer->create();
+        std::vector<byte> *vertexdata = new std::vector<byte>();
 
         std::function<void(CAssimpMesh*)> lmesh = [=](CAssimpMesh* mesh){
             for(int i=0;i<mesh->numBuffers;i++)
                 if(mesh->bufferType[i]==CAssimpMesh::PositionType){
-                    coffee_mesh_fill_vertexdata(vertexdata,mesh->buffers[i],
+                    coffee_mesh_fill_vertexdata(*vertexdata,mesh->buffers[i],
                                                 0,mesh->bufferSize[i]*sizeof(CVec3));
                 }
             //Store indices and create the drawcall
@@ -167,17 +182,21 @@ static void coffee_test_load(game_context* ctxt)
         };
 
         //Future improvement: Do this in parallel with reserved memory chunks
-        lmesh(d->meshes[1]);
-        lmesh(d->meshes[3]);
+//        lmesh(d->meshes[1]);
+//        lmesh(d->meshes[3]);
         lmesh(d->meshes[4]);
 
-        multidraw->drawcalls->drawcalls.data()[3].instanceCount = numGears;
+        multidraw->drawcalls->drawcalls.data()[0].instanceCount = numGears;
 
         //GL calls
-        coffee_multidraw_load_buffer(vbuffer,vertexdata);
+        coffee_multidraw_load_buffer(vbuffer,*vertexdata);
         coffee_multidraw_load_drawcalls(*multidraw);
         coffee_multidraw_load_indices(*multidraw);
         //
+        vertexdata->resize(0);
+        delete vertexdata;
+        d->freeData();
+        delete d;
     }
 
     //Define instance matrices and camera matrix
@@ -213,12 +232,12 @@ static void coffee_test_load(game_context* ctxt)
                 szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
                 CUniformChunk* uchunk =
                         coffee_create_uchunk(
-                            &matrixBuf,
+                            camBuffer,
                             sizeof(glm::mat4)*2,
                             2,
                             matrixSz,
                             "MatrixBlock");
-                uchunk = memmove(
+                uchunk = (CUniformChunk*)memmove(
                             &ctxt->renderdata.uniformchunks.d[0],
                         uchunk,sizeof(CUniformChunk));
                 uchunk->buffer->parent->bind();
@@ -228,10 +247,10 @@ static void coffee_test_load(game_context* ctxt)
                 uchunk->ublock.blockBinding = 0;
                 //GL calls
                 uchunk->ublock.shaderIndex = glGetUniformBlockIndex(
-                            &ctxt->shaders.programs.d[0].handle,
+                            ctxt->shaders.programs.d[0].handle,
                         uchunk->ublock.name);
                 glUniformBlockBinding(
-                            &ctxt->shaders.programs.d[0].handle,
+                            ctxt->shaders.programs.d[0].handle,
                         uchunk->ublock.shaderIndex,
                         uchunk->ublock.blockBinding);
                 //
@@ -259,9 +278,10 @@ static void coffee_test_load(game_context* ctxt)
 
             //GL calls
             mbuffer->bind();
-            mbuffer->store(transform*sizeof(glm::mat4),transform.data());
+            mbuffer->subStore(0,transform.size()*sizeof(glm::mat4),transform.data());
             mbuffer->unbind();
             //
+            transform.resize(0);
         }
     }
 }
@@ -271,6 +291,7 @@ static void coffee_prepare_test(game_context* ctxt)
     coffee_multidraw_bind_states(ctxt->renderdata.datasets.d[0]);
     ctxt->renderdata.buffers.d[2].bind();
     ctxt->renderdata.uniformchunks.d[0].buffer->bindRange();
+    ctxt->shaders.pipelines.d[0].bind();
 }
 
 static void coffee_render_test(game_context* ctxt, double delta)

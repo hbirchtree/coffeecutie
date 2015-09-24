@@ -71,9 +71,11 @@ static cstring coffee_cpy_string(cstring str){
     return buf;
 }
 
-struct CDataChunk{
-    void* ptr   = nullptr;
-    ptr_u size  = 0;
+template<typename T>
+struct chunk_mem
+{
+    szptr   size    = 0;
+    T*      d   = nullptr;
 };
 
 template<typename T>
