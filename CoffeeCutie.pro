@@ -10,7 +10,7 @@ TARGET = CoffeeCutie
 CONFIG += console c++11
 CONFIG -= app_bundle
 
-CONFIG += sdl2_context csharp
+CONFIG += sdl2_context
 
 LIBS += -lunwind
 
