@@ -35,6 +35,14 @@ else:unix: LIBS += -L$$PWD/../glbinding-library/ -lglbinding
 INCLUDEPATH += $$PWD/libs/glbinding/source/glbinding/include
 DEPENDPATH += $$PWD/libs/glbinding/source/glbinding/include
 
+#ASSIMP LIBRARY
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp
+else:unix: LIBS += -L$$PWD/../assimp-library/code/ -lassimp
+
+INCLUDEPATH += $$PWD/libs/assimp/include
+DEPENDPATH += $$PWD/libs/assimp/include
+
 glfw_context {
     #GLFW LIBRARY
     win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../glfw-library/src/release/ -lGL -lGLEW -lglfw3
@@ -73,22 +81,14 @@ sdl2_context {
 #END OF SDL2
 
 #BULLET LIBRARY
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../bullet-library/src/release/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../bullet-library/src/debug/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
-else:unix: LIBS += -L$$PWD/../bullet-library/src/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+bullet_lib{
+    win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../bullet-library/src/release/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+    else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../bullet-library/src/debug/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
+    else:unix: LIBS += -L$$PWD/../bullet-library/src/ -lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath
 
-INCLUDEPATH += $$PWD/libs/bullet/src
-DEPENDPATH += $$PWD/libs/bullet/src
-
-#ASSIMP LIBRARY
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../assimp-library/code/release/ -lassimp
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../assimp-library/code/debug/ -lassimp
-else:unix: LIBS += -L$$PWD/../assimp-library/code/ -lassimp
-
-INCLUDEPATH += $$PWD/libs/assimp/include
-DEPENDPATH += $$PWD/libs/assimp/include
-
-#YES, I DO BELIEVE CAPS = YELLING
+    INCLUDEPATH += $$PWD/libs/bullet/src
+    DEPENDPATH += $$PWD/libs/bullet/src
+}
 
 SOURCES += main.cpp \
     tests/CubeScape.cpp \
