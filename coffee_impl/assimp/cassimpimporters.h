@@ -17,7 +17,7 @@ private:
     CAssimpImporters();
 public:
     static CAssimpData* importResource(CResource* source,
-                                       CString hint = CString());
+                                       cstring hint = nullptr);
 };
 
 } // namespace CAssimp

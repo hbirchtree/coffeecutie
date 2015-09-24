@@ -40,22 +40,14 @@ static CMultiDrawDataSet coffee_multidraw_create(){
     CMultiDrawDataSet multidraw;
 
     multidraw.index = new CMultiIndexStorage;
-    multidraw.index->buffer = new CBuffer;
-    multidraw.index->buffer->create();
     multidraw.drawcalls = new CMultiDrawCalls;
-    multidraw.drawcalls->drawbuffer = new CBuffer;
-    multidraw.drawcalls->drawbuffer->create();
-    multidraw.vao = new CVertexArrayObject;
-    multidraw.vao->create();
 
     return multidraw;
 }
 
 static void coffee_multidraw_free(CMultiDrawDataSet* md){
-    delete md->index->buffer;
     delete md->index;
-    delete md->drawcalls->drawbuffer;
-    delete md->vao;
+    delete md->drawcalls;
 }
 
 static void coffee_multidraw_bind_states(const CMultiDrawDataSet& set)
@@ -92,6 +84,14 @@ static void coffee_multidraw_load_indices(const CMultiDrawDataSet& set)
 {
     set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
     _coffee_bufferload_vector<GLuint>(set.index->indices,set.index->buffer);
+}
+//Load buffer data into GPU memory
+static void coffee_multidraw_load_buffer(
+        CBuffer* buffer,
+        const std::vector<byte>& data)
+{
+    buffer->bufferType = GL_ARRAY_BUFFER;
+    _coffee_bufferload_vector<byte>(data,buffer);
 }
 //Load up VAO
 static void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescriptor& desc)
@@ -150,6 +150,7 @@ static void coffee_mesh_define_matrix_attribs(CBuffer* instanceBuffer,
 
     for(int i=0;i<fmt.size;i++)
     {
+        //TODO: Store binding somewhere convenient
         CVertexBufferBinding* bind = new CVertexBufferBinding;
         bind->binding = baseBind+i;
         bind->buffer = instanceBuffer;
@@ -171,7 +172,7 @@ static void coffee_mesh_free_matrix_attribs(std::vector<CVertexAttribute>::itera
     }
 }
 //Copy mesh data
-static void coffee_mesh_load_vertexdata(std::vector<byte>& data, const void* rsrc,
+static void coffee_mesh_fill_vertexdata(std::vector<byte>& data, const void* rsrc,
                                         szptr roffset, szptr size)
 {
     const byte* bytes = reinterpret_cast<const byte*>(rsrc);

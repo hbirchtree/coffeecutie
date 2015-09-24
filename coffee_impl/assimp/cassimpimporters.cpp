@@ -20,7 +20,7 @@ CAssimpImporters::CAssimpImporters()
 }
 
 CAssimpData *CAssimpImporters::importResource(CResource *source,
-                                              CString hint)
+                                              cstring hint)
 {
     Importer importer;
 
@@ -31,7 +31,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
                                 aiProcess_Triangulate|
                                 aiProcess_OptimizeMeshes|
                                 aiProcess_SortByPType,
-                                hint.c_str());
+                                hint);
     if(!scene){
         cWarning("Failed to import scene \"%s\": %s",
                source->resource(),

@@ -16,13 +16,13 @@ struct CUniformChunk{
 };
 
 static CUniformChunk* coffee_create_uchunk(
-	CSubBuffer* part,
-	szptr size,
-	szptr numProperties,
-	szptr* sizes,
-	cstring chunkName)
+        CSubBuffer* part,
+        szptr size,
+        szptr numProperties,
+        szptr* sizes,
+        cstring chunkName)
 {
-    CUniformChunk* chunk = reinterpret_cast<CUniformChunk*>(calloc(1,sizeof(CUniformChunk)));
+    CUniformChunk* chunk = (CUniformChunk*)calloc(1,sizeof(CUniformChunk));
 
     chunk->buffer = part;
     CASSERT((part->size==size));

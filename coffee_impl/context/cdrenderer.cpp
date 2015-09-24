@@ -32,8 +32,6 @@ CDRenderer::~CDRenderer()
 void CDRenderer::run()
 {
 
-    setTextInputMode(true);
-
 #ifndef LOAD_FILE
     CResource v = CResource("ubw/shaders/vertex/vsh_instanced.vs");
     CResource f = CResource("ubw/shaders/fragment/direct/fsh_nolight.fs");
@@ -43,6 +41,9 @@ void CDRenderer::run()
     CShader* fshdr = new CShader;
     cDebug("Compile status: %i",vshdr->compile(&v,GL_VERTEX_SHADER));
     cDebug("Compile status: %i",fshdr->compile(&f,GL_FRAGMENT_SHADER));
+
+    v.free_data();
+    f.free_data();
 #endif
 
     //Loading a mesh
@@ -128,15 +129,17 @@ void CDRenderer::run()
     coffee_multidraw_load_vao(multidraw,desc);
 
     //Vertex data
-    std::vector<byte> verData;
-    for(int i=0;i<mesh->numBuffers;i++)
-        if(mesh->bufferType[i]==CAssimpMesh::PositionType){
-            coffee_mesh_load_vertexdata(verData,mesh->buffers[i],
-                                        0,mesh->bufferSize[i]*sizeof(CVec3));
-        }
-    vertexBuffer.bind();
-    vertexBuffer.store(verData.size(),verData.data());
-    vertexBuffer.unbind();
+    {
+        std::vector<byte> verData;
+        for(int i=0;i<mesh->numBuffers;i++)
+            if(mesh->bufferType[i]==CAssimpMesh::PositionType){
+                coffee_mesh_fill_vertexdata(verData,mesh->buffers[i],
+                                            0,mesh->bufferSize[i]*sizeof(CVec3));
+            }
+        vertexBuffer.bind();
+        vertexBuffer.store(verData.size(),verData.data());
+        vertexBuffer.unbind();
+    }
     coffee_multidraw_create_call(multidraw,mesh);
 
     multidraw.drawcalls->drawcalls.data()[0].instanceCount = 10000;
@@ -298,10 +301,12 @@ void CDRenderer::run()
     delete vshdr;
     delete fshdr;
 #endif
+    delete uchunk;
     delete prog;
     delete pip;
 
     cMsg("Coffee","Termination time: %lldus",swap->elapsed());
+    delete swap;
 }
 
 void CDRenderer::run(CDWindowProperties props)
