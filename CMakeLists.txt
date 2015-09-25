@@ -7,7 +7,8 @@ add_library(glbinding SHARED IMPORTED)
 
 include(ExternalProject)
 ExternalProjectAdd(
-	PATH = 
+	GlbindingLib
+	PREFIX = libs/glbinding
 )
 
 add_definitions ( -Wall )
