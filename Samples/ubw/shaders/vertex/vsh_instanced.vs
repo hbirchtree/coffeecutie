@@ -1,4 +1,6 @@
-#version 330
+#version 410
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_shader_draw_parameters : require
 
 layout(std140) uniform MatrixBlock {
 	mat4 camera,cameraVP;
@@ -11,21 +13,36 @@ layout(location = 3) in vec3 vertTangent;
 layout(location = 4) in vec3 vertBitangent;
 layout(location = 5) in mat4 model;
 
-out vec3 worldVert;
-out vec2 localTexCoord;
-out vec3 localNormal;
-out vec3 worldNormal;
-out vec3 worldTangent;
-out vec4 surfacePos;
+out v_block {
+	vec3 vert;
+	vec4 mVert;
+	vec2 texCoord;
+	vec3 normal;
+	vec3 wNormal;
+	vec3 wTangent;
+	flat int iDrawID;
+} Out;
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+//out vec3 worldVert;
+//out vec2 localTexCoord;
+//out vec3 localNormal;
+//out vec3 worldNormal;
+//out vec3 worldTangent;
+//out vec4 surfacePos;
 
 void main() {
-    localTexCoord = vertTexCoord;
-    localNormal = normalize(model * vec4(vertNormal,0.0)).xyz;
-    worldNormal = normalize((cameraVP * model * vec4(vertNormal,0.0)).xyz);
+    Out.texCoord = vertTexCoord;
+    Out.normal = normalize(model * vec4(vertNormal,0.0)).xyz;
+    Out.wNormal = normalize((cameraVP * model * vec4(vertNormal,0.0)).xyz);
 	vec4 worldVert_t = camera * model * vec4(vert,1);
-    worldVert = worldVert_t.xyz;
-    worldTangent = (camera * model * vec4(vertTangent,0.0)).xyz;
-    surfacePos = model * vec4(vert,1.0);
+    Out.vert = worldVert_t.xyz;
+    Out.wTangent = (camera * model * vec4(vertTangent,0.0)).xyz;
+    Out.mVert = model * vec4(vert,1.0);
 
     gl_Position = worldVert_t;
+    Out.iDrawID = gl_DrawIDARB;
 }
