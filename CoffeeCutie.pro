@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT -= core concurrent
+QT -= core
 
 TARGET = CoffeeCutie
 CONFIG += console c++11

@@ -1,4 +1,4 @@
-project( CoffeeSharp )
+project( CoffeeCore )
 cmake_minimum_required( VERSION 2.8 )
 set ( CMAKE_BUILD_TYPE Release )
 
@@ -78,41 +78,24 @@ set ( CoffeeCore_SRCS
 	coffee_impl/graphics/cuniformchunk.cpp
 	)
 
-#We want to compile GLbinding and Assimp automatically with CoffeeCore
-
 include(ExternalProject)
-
-#ExternalProject_Add(
-#	glbinding_target
-#	SOURCE_DIR ../libs/glbinding
-#	PREFIX ../libs/glbinding
-#	BINARY_DIR compile/glbinding
-#	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=lib/glbinding
-#)
-#ExternalProject_Add(
-#	assimp_target
-#	SOURCE_DIR ../libs/assimp
-#	PREFIX ../libs/assimp
-#	BINARY_DIR compile/assimp
-#	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=lib/assimp
-#)
 
 find_library(assimp_loc NAMES "assimp" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
 find_library(glbinding_loc NAMES "glbinding" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
+find_library(unwind_loc NAMES "unwind")
 
 message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
+message("Libunwind located at: ${unwind_loc}")
 
 INCLUDE(FindPkgConfig)
 
 PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
-#PKG_SEARCH_MODULE(UNWIND REQUIRED unwind)
+
 
 add_executable ( CoffeeCore ${CoffeeCore_SRCS} ${UIS} ${RSCS} ${TRS} ${MOCS} )
 
-#add_dependencies(CoffeeCore glbinding_target assimp_target)
-
-target_link_libraries ( CoffeeCore ${SDL2_LIBRARIES} unwind ${assimp_loc} ${glbinding_loc} )
+target_link_libraries ( CoffeeCore ${SDL2_LIBRARIES} ${unwind_loc} ${assimp_loc} ${glbinding_loc} )
 set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)

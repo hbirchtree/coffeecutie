@@ -30,9 +30,10 @@ void CDRenderer::run()
     uint64 qtime = 0;
     uint64 swaptime = 0;
 
-    game_context game;
+    game = new game_context;
 
-    coffee_test_load(&game);
+    if(!coffee_test_load(game))
+        return;
 
     showWindow();
 
@@ -49,7 +50,7 @@ void CDRenderer::run()
                                  contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
-    coffee_prepare_test(&game);
+    coffee_prepare_test(game);
 
     while(!closeFlag()){
         delta = contextTime();
@@ -57,7 +58,13 @@ void CDRenderer::run()
         swap->start();
         //Rendering part
 
-        coffee_render_test(&game,deltaT);
+        game->transforms.transforms.d[0].rotation =
+                glm::normalize(
+                    glm::quat(2,0,0,-0.1*deltaT)*
+                    game->transforms.transforms.d[0].rotation);
+        game->transforms.cameras.d[0].position.z = std::fmod(contextTime()*4,90.0);
+
+        coffee_render_test(game,deltaT);
 
         // END Rendering part
         rendertime = swap->elapsed();
@@ -88,9 +95,10 @@ void CDRenderer::run()
         }
     }
 
-    coffee_unload_test(&game);
+    coffee_unload_test(game);
 
     swap->start();
+    delete game;
 
     hideWindow();
 

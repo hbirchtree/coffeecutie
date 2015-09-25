@@ -4,7 +4,12 @@
 #include "cglbindingrenderer.h"
 
 namespace Coffee {
-
+namespace CRendering{
+namespace CTest{
+struct game_context;
+}
+}
+using namespace CRendering::CTest;
 namespace CGraphicsWrappers{
 struct CGLState;
 }
@@ -27,6 +32,8 @@ public:
     void eventIHandle(const CIEvent *event);
 private:
     CGLState* _dump_state() const;
+
+    game_context* game = nullptr;
 };
 
 } // namespace CDisplay

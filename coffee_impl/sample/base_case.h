@@ -19,7 +19,7 @@ struct game_context
     game_transform_chunk    transforms;
 };
 
-static void coffee_test_load(game_context* ctxt)
+static bool coffee_test_load(game_context* ctxt)
 {
     //Create multidraw object
     coffee_mem_expand_array<CMultiDrawDataSet>(&ctxt->renderdata.datasets,1);
@@ -33,6 +33,8 @@ static void coffee_test_load(game_context* ctxt)
     {
         CResource v("ubw/shaders/vertex/vsh_instanced.vs"); //Vertex shader
         CResource f("ubw/shaders/fragment/direct/fsh_nolight.fs"); //Fragment shader
+        if(!v.exists()||!f.exists())
+            cFatal("Failed to locate shaders");
         v.read_data(true);
         f.read_data(true);
 
@@ -93,11 +95,12 @@ static void coffee_test_load(game_context* ctxt)
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
         mbuffer->bufferType = GL_ARRAY_BUFFER;
-        mbuffer->flags = GL_DYNAMIC_STORAGE_BIT;
+        mbuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
         mbuffer->create();
         mbuffer->bind();
         mbuffer->store(sizeof(glm::mat4)*numGears,nullptr);
         mbuffer->unbind();
+        mbuffer->map(GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
 
         vbuffer->create();
 
@@ -156,6 +159,8 @@ static void coffee_test_load(game_context* ctxt)
     coffee_mem_expand_array<CAssimpData*>(&ctxt->vertexdata.data,1);
     {
         CResource m("ubw/models/ubw.blend");
+        if(!m.exists())
+            cFatal("Failed to locate scene");
         m.read_data();
         CAssimpData* d = CAssimpImporters::importResource(&m,"blend");
         m.free_data();
@@ -182,11 +187,11 @@ static void coffee_test_load(game_context* ctxt)
         };
 
         //Future improvement: Do this in parallel with reserved memory chunks
-//        lmesh(d->meshes[1]);
-//        lmesh(d->meshes[3]);
         lmesh(d->meshes[4]);
+//        lmesh(d->meshes[1]);
+        lmesh(d->meshes[3]);
 
-        multidraw->drawcalls->drawcalls.data()[0].instanceCount = numGears;
+        multidraw->drawcalls->drawcalls.data()[0].instanceCount = numGears-2;
 
         //GL calls
         coffee_multidraw_load_buffer(vbuffer,*vertexdata);
@@ -215,12 +220,13 @@ static void coffee_test_load(game_context* ctxt)
 
             CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
             ubuffer->bufferType = GL_UNIFORM_BUFFER;
-            ubuffer->flags = GL_DYNAMIC_STORAGE_BIT;
+            ubuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
             //GL calls
             ubuffer->create();
             ubuffer->bind();
             ubuffer->store(sizeof(glm::mat4)*2+sizeof(glm::vec4),nullptr);
             ubuffer->unbind();
+            ubuffer->map(GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
             //
 
             CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
@@ -240,10 +246,7 @@ static void coffee_test_load(game_context* ctxt)
                 uchunk = (CUniformChunk*)memmove(
                             &ctxt->renderdata.uniformchunks.d[0],
                         uchunk,sizeof(CUniformChunk));
-                uchunk->buffer->parent->bind();
-                uchunk->buffer->subStore(0,sizeof(glm::mat4),&cam->matrix);
-                uchunk->buffer->parent->unbind();
-
+                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(glm::mat4));
                 uchunk->ublock.blockBinding = 0;
                 //GL calls
                 uchunk->ublock.shaderIndex = glGetUniformBlockIndex(
@@ -276,14 +279,13 @@ static void coffee_test_load(game_context* ctxt)
             mod->position.z = -1.f;
             CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
-            //GL calls
-            mbuffer->bind();
-            mbuffer->subStore(0,transform.size()*sizeof(glm::mat4),transform.data());
-            mbuffer->unbind();
-            //
+            memcpy(mbuffer->data,
+                   transform.data(),
+                   transform.size()*sizeof(transform.data()[0]));
             transform.resize(0);
         }
     }
+    return true;
 }
 
 static void coffee_prepare_test(game_context* ctxt)
@@ -298,16 +300,19 @@ static void coffee_render_test(game_context* ctxt, double delta)
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    ctxt->transforms.transforms.d[0].rotation =
-            glm::normalize(
-                glm::quat(2,0,0,-0.1*delta)*
-                ctxt->transforms.transforms.d[0].rotation);
+    //Generate our matrices
     ctxt->transforms.transforms.d[0].genMatrix();
-    ctxt->renderdata.buffers.d[2].subStore(
-                0,
-                sizeof(glm::mat4),
-                &ctxt->transforms.transforms.d[0].matrix);
+    ctxt->transforms.cameras.d[0].genPerspective();
 
+    //Copy memory into GL
+    memcpy(ctxt->renderdata.buffers.d[4].data,
+            &ctxt->transforms.cameras.d[0].matrix,
+            sizeof(glm::mat4));
+    memcpy(ctxt->renderdata.buffers.d[2].data,
+            &ctxt->transforms.transforms.d[0].matrix,
+            sizeof(glm::mat4));
+
+    //Send it off
     coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
     glFlush();
 }

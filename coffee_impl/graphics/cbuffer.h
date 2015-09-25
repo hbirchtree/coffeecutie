@@ -12,6 +12,7 @@ struct CBuffer{
     GLsizeiptr  size        = 0;
     GLenum      bufferType  = GL_NONE;
     BufferStorageMask flags = GL_NONE_BIT;
+    void*       data        = nullptr;
 
     void create(){
         glGenBuffers(1,&handle);
@@ -34,6 +35,19 @@ struct CBuffer{
         glBindBuffer(bufferType,0);
     }
 
+    void map(BufferAccessMask access){
+        bind();
+        data = glMapBufferRange(bufferType,0,size,access);
+        unbind();
+    }
+    bool unmap(){
+        bind();
+        data = nullptr;
+        if(glUnmapBuffer(bufferType)!=GL_TRUE)
+            return false;
+        unbind();
+        return true;
+    }
     bool isValid(){
         return glIsBuffer(handle)==GL_TRUE;
     }
