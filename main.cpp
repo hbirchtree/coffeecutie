@@ -1,49 +1,20 @@
-#include <iostream>
-
-#include "coffee/cdebug.h"
-#include "coffee/cfiles.h"
-#include "coffee/cfunctional.h"
-#include "coffee_impl/graphics/cshader.h"
 #include "coffee_impl/context/cdrenderer.h"
-#include "coffee_impl/graphics/cgraphicsdata.h"
 
-#include "unit_tests/data_types.h"
-#include "coffee_impl/graphics/ctransformcomputer.h"
+#include "plat/argument_parse.h"
 
 using namespace Coffee;
-using namespace Coffee::CFunctional;
-using namespace Coffee::CResources;
 using namespace Coffee::CDisplay;
-using namespace Coffee::CGraphicsWrappers;
-using namespace Coffee::CGraphicsData;
 
 int main(int argc, char** argv)
 {
-    C_UNUSED(argc)C_UNUSED(argv);
-    for(int i=0;i<argc;i++)
-    {
-        std::cout << argv[i] << std::endl;
-    }
+    cDebug("Launching from %s",coffee_executable_name());
 
-    //Sets up core dumping
     Coffee::CoffeeInit();
-    //Checks that the platform is sane
-    CoffeeTests::run_tests();
 
     CElapsedTimerMicro timer;
     timer.start();
 
     CDRenderer* renderer = new CDRenderer(nullptr);
-
-    cDebug("AtomicEvent: %i",sizeof(CIControllerAtomicEvent));
-    cDebug("SensorEvent: %i",sizeof(CISensorEvent));
-
-    uint64 t = 0;
-    t |= (10<<8) | (3<<1) | 1;
-
-    cDebug("Sum: %i",t);
-
-    cDebug("Controller: %i",t>>1);
 
     //Magic happens here
     CDWindowProperties props;

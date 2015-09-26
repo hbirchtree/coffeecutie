@@ -1,6 +1,8 @@
 #ifndef COFFEE
 #define COFFEE
 
+#include "unit_tests/data_types.h"
+
 #include "coffee_types.h"
 #include "coffee_macros.h"
 
@@ -22,7 +24,12 @@ typedef std::string         CString;
 typedef std::runtime_error  CStdFault;
 //
 
-static void CoffeeInit();
+static void CoffeeInit()
+{
+    //Allow core dump by default
+    coffee_enable_core_dump();
+    CoffeeTests::run_tests();
+}
 
 //A simpler implementation of QObject
 class CObject;
@@ -72,13 +79,6 @@ namespace CResources{}
 namespace CScripting{}
 
 } //Coffee
-
-
-void Coffee::CoffeeInit()
-{
-    //Allow core dump by default
-    coffee_enable_core_dump();
-}
 
 using namespace Coffee::CFunctional;
 

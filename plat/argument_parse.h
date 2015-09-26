@@ -6,7 +6,50 @@
 #include "coffee_macros.h"
 #include "coffee_types.h"
 
+#include <vector>
+
+#define COFFEE_ARG_SWITCH '-'
+
 using namespace Coffee;
+
+namespace Coffee{
+
+static cstring _switch_short(cstring in)
+{
+    if(strlen(in)<2)
+        return in;
+    if(in[0]!=COFFEE_ARG_SWITCH)
+        return in;
+    return &in[1];
+}
+static cstring _switch_long(cstring in)
+{
+    if(strlen(in)<3)
+        return in;
+    return &in[2];
+}
+static bool _cmp_short_switch(cstring in, cstring sw)
+{
+    return strcmp(_switch_short(in),sw)==0;
+}
+static bool _cmp_long_switch(cstring in, cstring sw)
+{
+    return strcmp(_switch_long(in),sw)==0;
+}
+static bool coffee_args_check_switch(int argc, cstring_w* argv, cstring sw)
+{
+    for(int i=0;i<argc;i++)
+        if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
+            return true;
+    return false;
+}
+static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
+{
+    for(int i=0;i<argc-1;i++)
+        if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
+            return argv[i+1];
+    return nullptr;
+}
 
 #if defined(COFFEE_LINUX)
 
@@ -21,6 +64,12 @@ static cstring coffee_executable_name()
 
 static cstring coffee_executable_name();
 
+#elif defined(COFFEE_APPLE)
+
+static cstring coffee_executable_name();
+
 #endif
+
+}
 
 #endif
