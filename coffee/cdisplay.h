@@ -31,12 +31,6 @@ struct CDMonitor{
     CSize           phySize;    //Physical size, reported by some ctxts
     int32           refresh = 0;//Refresh rate of monitor
 };
-struct CDWindow{
-    void*           handle_p    = nullptr; //Native handle, in X11, the Window value
-    ptr_u           handle      = 0;
-    cstring         title       = nullptr; //Have a *wild* guess.
-    CRect           screenArea;
-};
 
 struct CDEvent{
     enum EventType

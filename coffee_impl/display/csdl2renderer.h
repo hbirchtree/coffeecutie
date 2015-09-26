@@ -28,7 +28,7 @@ public:
     double contextTime();
 
     CDMonitor monitor();
-    CDWindow window();
+    CDWindow* window();
     CDContextBits context();
 
     uint32 windowState() const;

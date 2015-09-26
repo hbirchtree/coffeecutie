@@ -5,6 +5,8 @@
 #include "coffee/cfunctional.h"
 #include "coffee_impl/sample/base_case.h"
 
+#include "plat/plat_wm.h"
+
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
 using namespace Coffee::CRendering::CTest;
@@ -36,6 +38,14 @@ void CDRenderer::run()
         return;
 
     showWindow();
+
+#ifdef __linux__
+
+    CDWindow* sdlwin = this->window();
+
+    CoffeePlat::X11::set_alwaysontop(sdlwin->wininfo.x11.display,sdlwin->wininfo.x11.window,true);
+
+#endif
 
     glCullFace(GL_BACK);
     glClearColor(0.175f,0.175f,0.175f,1.f);
