@@ -1,5 +1,4 @@
 #include <iostream>
-#include <unistd.h>
 
 #include "coffee/cdebug.h"
 #include "coffee/cfiles.h"
