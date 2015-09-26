@@ -1,6 +1,8 @@
 project( CoffeeCore )
-cmake_minimum_required( VERSION 2.8 )
+cmake_minimum_required( VERSION 3.1 )
 set ( CMAKE_BUILD_TYPE Debug )
+
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 add_definitions ( -Wall )
 include_directories (
@@ -86,20 +88,24 @@ include(ExternalProject)
 
 find_library(assimp_loc NAMES "assimp" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
 find_library(glbinding_loc NAMES "glbinding" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
-find_library(unwind_loc NAMES "unwind")
 
 message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
-message("Libunwind located at: ${unwind_loc}")
 
-INCLUDE(FindPkgConfig)
+find_package(SDL2 REQUIRED)
+find_package(Unwind REQUIRED)
 
-PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
+#INCLUDE(FindPkgConfig)
+
+#PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
 
 
 add_executable ( CoffeeCore ${CoffeeCore_SRCS} ${UIS} ${RSCS} ${TRS} ${MOCS} )
 
-target_link_libraries ( CoffeeCore ${SDL2_LIBRARIES} ${unwind_loc} ${assimp_loc} ${glbinding_loc} )
+target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
+target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
+
+target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} )
 set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
