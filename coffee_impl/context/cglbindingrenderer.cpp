@@ -123,7 +123,7 @@ void CGLBindingRenderer::bindingPostInit()
 
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(glbindingCallbackDirect,this);
+        glDebugMessageCallback((gl::GLDEBUGPROC)glbindingCallbackDirect,this);
     }
 }
 
