@@ -1,2 +1,17 @@
 *.user
 *~
+*.dll
+*.o
+*.so
+*.exe
+*.mdb
+*.userprefs
+*.a
+*.lib
+.ninja_deps
+.ninja_log
+.ninja
+CMakeCache.txt
+CMakeFiles
+bin
+build
