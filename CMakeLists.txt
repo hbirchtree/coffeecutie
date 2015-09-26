@@ -13,14 +13,7 @@ include_directories (
         libs/glfw/include
         libs/bullet/src)
 set ( CoffeeCore_HDRS
-        coffee_impl/display/cglfwrenderer.h
-        coffee_impl/display/coffeeglfw/cglfwrenderer_eventhandlers.h
-        coffee_impl/display/coffeeglfw/cglfwnativefuncs.h
-        coffee_impl/display/csdl2renderer.h
-        coffee_impl/display/coffeesdl2/sdl2datatypes.h
-        tests/CubeScape.h
-        tests/glutils.h
-        tests/RawFile.h
+        coffeesharp.h
         coffee.h
         coffee/display/cdrendererbase.h
         coffee/cobject.h
@@ -28,20 +21,21 @@ set ( CoffeeCore_HDRS
         coffee/cfunctional.h
         coffee/cdisplay.h
         coffee/cinput.h
+        coffee/cfiles.h
+        coffee/cregex.h
+        coffee/cinput_keymap.h
         coffee_impl/context/cdrenderer.h
         coffee_impl/functional/cqueuerunner.h
         coffee_impl/graphics/cgraphicswrappers.h
         coffee_impl/graphics/cshader.h
-        coffeesharp.h
-        coffee/cfiles.h
-        coffee/cregex.h
+        coffee_impl/display/csdl2renderer.h
+        coffee_impl/display/coffeesdl2/sdl2datatypes.h
         coffee_impl/assimp/cassimpimporters.h
         coffee_impl/storage/cdatastore.h
         coffee_impl/assimp/assimpfun.h
         coffee_impl/assimp/cassimptypes.h
         coffee_impl/assimp/cassimploader.h
         coffee_impl/graphics/cgraphicsdata.h
-        unit_tests/data_types.h
         coffee_impl/graphics/cbuffer.h
         coffee_impl/graphics/glbinding.h
         coffee_impl/graphics/cvertexarrayobject.h
@@ -49,16 +43,20 @@ set ( CoffeeCore_HDRS
         coffee_impl/graphics/cframebuffer.h
         coffee_impl/graphics/ctexture.h
         coffee_impl/context/cglbindingrenderer.h
-        plat/linux_wm.h
+        coffee_impl/memory/cgame_dataset.h
+        coffee_impl/sample/base_case.h
         coffee_impl/graphics/ctransformcomputer.h
         coffee_impl/rendering/cmultidrawgraph.h
         coffee_impl/graphics/cuniformchunk.h
         coffee_impl/display/coffeesdl2/sdl2helpers.h
         coffee_impl/display/coffeesdl2/sdl2eventhandlers.h
         coffee_impl/input/cinput_eventhandling.h
-        coffee/cinput_keymap.h
-        coffee_impl/memory/cgame_dataset.h
-        coffee_impl/sample/base_case.h
+        plat/linux_wm.h
+        plat/unix_core.h
+        unit_tests/data_types.h
+        tests/CubeScape.h
+        tests/glutils.h
+        tests/RawFile.h
         )
 
 set ( CoffeeCore_SRCS
@@ -80,9 +78,6 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/cuniformchunk.cpp
         )
 
-if(COFFEESHARP_BUILD)
-    add_library(CoffeeSharp SHARED)
-endif()
 
 include(ExternalProject)
 
@@ -100,7 +95,8 @@ find_package(Unwind REQUIRED)
 #PKG_SEARCH_MODULE(SDL2 REQUIRED sdl2)
 
 
-add_executable ( CoffeeCore ${CoffeeCore_SRCS} ${UIS} ${RSCS} ${TRS} ${MOCS} )
+#add_library(CoffeeSharp SHARED)
+add_executable ( CoffeeCore ${CoffeeCore_SRCS} )
 
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")

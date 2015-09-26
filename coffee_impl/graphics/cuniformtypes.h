@@ -14,10 +14,10 @@ struct CUniformValue{
     };
 
     cstring name    = nullptr;
-    uint8_t size    = 0; //Uniforms should not be larger than this, right? Right..?
-    void* data      = nullptr;
-    uint8_t flags   = 0;
-    GLint location  =-1;
+    uint8   size    = 0; //Uniforms should not be larger than this, right? Right..?
+    void*   data      = nullptr;
+    uint8   flags   = 0;
+    GLint   location  =-1;
 
     void applyUniform(GLuint program){
         GLboolean matrix_transpose = GL_FALSE;
@@ -50,10 +50,10 @@ struct CUniformValue{
 struct CUniformBlock{
     //A CBuffer is created to correspond with these objects
     //It is beneficial to create a larger buffer
-    GLuint blockBinding         = 0;
-    GLuint shaderIndex          = 0;
+    GLuint  blockBinding         = 0;
+    GLuint  shaderIndex          = 0;
 
-    uint32_t size               = 0;
+    uint32  size               = 0;
     cstring name                = nullptr;
 };
 

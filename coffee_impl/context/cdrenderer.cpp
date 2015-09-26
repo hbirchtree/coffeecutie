@@ -146,6 +146,24 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         if(kev->key==CK_Escape)
             this->closeWindow();
     }
+    else if(event->type==CIEvent::Controller){
+        const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
+        if(jev->axis())
+            cDebug("Axis: enum=%i,value=%f",jev->index(),jev->value);
+        else
+            cDebug("Button: enum=%i,state=%i",jev->index(),jev->buttonState());
+    }
+    else if(event->type==CIEvent::ControllerEv){
+        const CIControllerAtomicUpdateEvent* jev =
+                (const CIControllerAtomicUpdateEvent*)&event[1];
+        if(jev->connected()&&!jev->remapped()){
+            cDebug("New controller: idx=%i,name=%s",jev->controller(),jev->name);
+            _controllers_handle(jev);
+        }else if(!jev->connected()){
+            cDebug("Removed controller: idx=%i,name=%s",jev->controller(),jev->name);
+            _controllers_handle(jev);
+        }
+    }
 }
 
 CGLState *CDRenderer::_dump_state() const

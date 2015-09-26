@@ -3,7 +3,7 @@
 namespace Coffee{
 namespace CGraphicsData{
 
-uint16_t CBlock::dataSize() const
+uint16 CBlock::dataSize() const
 {
     return data_size;
 }
@@ -13,7 +13,7 @@ void *CBlock::dataPtr() const
     return data_ptr;
 }
 
-void CBlock::setPropertyData(uint16_t index, const void *data, uint16_t size)
+void CBlock::setPropertyData(uint16 index, const void *data, uint16 size)
 {
     CASSERT((index<numProperties));
     CASSERT((size==propertySizes[index]))

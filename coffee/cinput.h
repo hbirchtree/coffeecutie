@@ -126,6 +126,24 @@ struct CIControllerAtomicEvent
     };
     uint32  state   = 0;
     scalar  value   = 0.f;
+
+    //TODO: Make these inline-able and static
+    bool axis() const
+    {
+        return state&AxisMask;
+    }
+    byte index() const
+    {
+        return (state&IndexMask)>>5;
+    }
+    bool buttonState() const
+    {
+        return (state&ButtonStateMask)>>10;
+    }
+    byte controller() const
+    {
+        return (state&ControllerMask)>>1;
+    }
 };
 
 struct CIControllerAtomicUpdateEvent
@@ -145,6 +163,28 @@ struct CIControllerAtomicUpdateEvent
 
     uint32  state   = 0;
     cstring name    = nullptr;
+
+    //TODO: Make these inline-able and static
+    bool connected() const
+    {
+        return (state&StateMask)&Connected;
+    }
+    bool remapped() const
+    {
+        return (state&StateMask)&Remapped;
+    }
+    byte buttons() const
+    {
+        return (state&ButtonMask)>>2;
+    }
+    byte axes() const
+    {
+        return (state&AxisMask)>>7;
+    }
+    byte controller() const
+    {
+        return (state&ControllerMask)>>12;
+    }
 };
 
 struct CIControllerInfo

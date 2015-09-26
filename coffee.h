@@ -1,55 +1,20 @@
 #ifndef COFFEE
 #define COFFEE
 
-#include <sys/resource.h>
+#include "coffee_types.h"
+#include "coffee_macros.h"
+
+//Platform core functions
+#include "plat/plat_core.h"
 
 #include <string>
 #include <map>
 #include <functional>
 #include <vector>
-#include <stdint.h>
 #include <string.h>
 #include <exception>
 
-//For unused variables
-#define C_UNUSED(v) do{(void)(v);}while(0);
-//Assertion for unit tests
-#define CASSERT(exp) if(!exp)throw std::runtime_error("Assert failed");
-//void* to char*
-#define C_CHARDATA(ptr) reinterpret_cast<byte*>(ptr)
-
 namespace Coffee{
-//Core typedefs
-
-//Integer types
-typedef char                int8;
-typedef short               int16;
-typedef int                 int32;
-typedef long long           int64;
-
-typedef unsigned char       uint8;
-typedef unsigned short      uint16;
-typedef unsigned int        uint32;
-typedef unsigned long long  uint64;
-
-//Small letters = basic type, mostly C types
-//Big letters = class/struct type, mostly C++ types
-typedef float               scalar;
-typedef double              bigscalar;
-typedef int8                byte;
-typedef uint8               ubyte;
-//Your typical C-string
-typedef const byte*         cstring;
-typedef byte*               cstring_w;
-//Wide string
-typedef const int16*        cwstring;
-typedef int16*              cwstring_w;
-
-typedef intptr_t            ptr_s;
-typedef uintptr_t           ptr_u;
-typedef unsigned long long  szptr;
-
-typedef size_t              csize_t;
 
 //Can be switched for other types from libraries
 typedef std::string         CString;
@@ -259,7 +224,7 @@ typedef std::function<void()> QueueFunction;
 //Input classes
 namespace CInput{
 //Rest of it is in "coffee/cinput.h"
-typedef CFunctional::CRFunction<void,void*,uint32_t> CInputHandlerFunction;
+typedef CFunctional::CRFunction<void,void*,uint32> CInputHandlerFunction;
 }
 
 //Windowing and rendering contexts
@@ -276,11 +241,10 @@ namespace CScripting{}
 } //Coffee
 
 
-void Coffee::CoffeeInit(){
+void Coffee::CoffeeInit()
+{
     //Allow core dump by default
-    struct rlimit core_limits;
-    core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
-    setrlimit(RLIMIT_CORE,&core_limits);
+    coffee_enable_core_dump();
 }
 
 using namespace Coffee::CPrimitiveDataTypes;

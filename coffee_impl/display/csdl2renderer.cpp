@@ -294,8 +294,27 @@ void CSDL2Renderer::swapBuffers()
 
 void CSDL2Renderer::pollEvents()
 {
-    while(SDL_PollEvent(&m_context->eventhandle))
+    while(SDL_PollEvent(&m_context->eventhandle)){
         coffee_sdl2_eventhandle_all(this,&m_context->eventhandle);
+    }
+}
+
+void CSDL2Renderer::_controllers_handle(const CIControllerAtomicUpdateEvent *ev)
+{
+    if(ev->connected()){
+        if(ev->remapped()){
+            cMsg("SDL2","Controller remapped: %i",ev->controller());
+            SDL_GameControllerClose(m_context->controllers.at(ev->controller()));
+        }
+        m_context->controllers.insert(
+                    std::pair<byte,SDL_GameController*>
+                    (ev->controller(),
+                     SDL_GameControllerOpen(ev->controller())));
+        cMsg("SDL2","Controller connected: %i",ev->controller());
+    }else{
+        SDL_GameControllerClose(m_context->controllers.at(ev->controller()));
+        cMsg("SDL2","Controller disconnected: %i",ev->controller());
+    }
 }
 
 }

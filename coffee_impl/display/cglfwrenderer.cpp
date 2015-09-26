@@ -85,7 +85,7 @@ CDContextBits CGLFWRenderer::context()
 
 uint32 CGLFWRenderer::windowState() const
 {
-    uint32_t flags = 0;
+    uint32 flags = 0;
 
     if(glfwGetWindowAttrib(m_ctxt->window,GLFW_FOCUSED))
         flags |= CDWindowProperties::Focused;
@@ -190,7 +190,7 @@ bool CGLFWRenderer::isMouseGrabbed() const
 
 void CGLFWRenderer::setMouseGrabbing(bool grab)
 {
-    int val;
+    uint32 val;
 
     if(grab){
         val = GLFW_CURSOR_DISABLED;

@@ -18,7 +18,12 @@ inline static CGLFWRenderer* getPtr(GLFWwindow* w){
 }
 
 
-inline static void _createEvent(CIEvent::EventType t, void** outData, uint32_t* size, const void* data, uint32_t isize){
+inline static void _createEvent(
+        CIEvent::EventType t,
+        void** outData,
+        uint32* size,
+        const void* data,
+        uint32 isize){
     CIEvent ev;
     ev.type = t;
 
@@ -30,25 +35,33 @@ inline static void _createEvent(CIEvent::EventType t, void** outData, uint32_t* 
     *size = sizeof(ev)+isize;
 }
 
-inline static void _createWEvent(CDEvent::EventType t, void** outData, uint32_t* size, const void* data, uint32_t isize){
+inline static void _createWEvent(
+        CDEvent::EventType t,
+        void** outData,
+        uint32* size,
+        const void* data,
+        uint32 isize){
     CDEvent ev;
     ev.type = t;
 
     *outData = realloc(*outData,sizeof(ev)+isize);
-    char* bytes = reinterpret_cast<char*>(*outData);
+    byte* bytes = reinterpret_cast<byte*>(*outData);
 
     memcpy(bytes,&ev,sizeof(ev));
     memcpy(bytes+sizeof(ev),data,isize);
     *size = sizeof(ev)+isize;
 }
 
-inline static void _windowEventHandle(CDEvent::EventType type, GLFWwindow* win,
-                              const void* idata, uint32_t isize)
+inline static void _windowEventHandle(
+        CDEvent::EventType type,
+        GLFWwindow* win,
+        const void* idata,
+        uint32 isize)
 {
     CGLFWRenderer* ptr = getPtr(win);
 
     void* data = nullptr;
-    uint32_t size = 0;
+    uint32 size = 0;
 
     _createWEvent(type,&data,&size,idata,isize);
 
@@ -58,13 +71,16 @@ inline static void _windowEventHandle(CDEvent::EventType type, GLFWwindow* win,
     free(data);
 }
 
-inline static void _inputEventHandle(CIEvent::EventType type, GLFWwindow* win,
-                              const void* idata, uint32_t isize)
+inline static void _inputEventHandle(
+        CIEvent::EventType type,
+        GLFWwindow* win,
+        const void* idata,
+        uint32 isize)
 {
     CGLFWRenderer* ptr = getPtr(win);
 
     void* data = nullptr;
-    uint32_t size = 0;
+    uint32 size = 0;
 
     _createEvent(type,&data,&size,idata,isize);
 

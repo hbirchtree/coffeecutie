@@ -37,6 +37,7 @@ inline static void coffee_sdl2_send_full_ievent(
     memcpy(payload,base,baseSize);
     memcpy(&reinterpret_cast<char*>(payload)[baseSize],data,dataSize);
 
+
     ctxt->eventIHandle((CIEvent*)payload);
     free(payload);
 }
@@ -158,7 +159,7 @@ inline static void coffee_sdl2_eventhandle_mouse_btn(
 inline static int32 coffee_sdl2_interpret_key_modifier(
         Uint16 mod)
 {
-    int32 res;
+    int32 res = 0;
     if(mod&KMOD_LSHIFT)
         res|=CIKeyEvent::LShiftModifier;
     if(mod&KMOD_LCTRL)
@@ -356,6 +357,8 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     }
     }
 
+    cDebug("Controller: %i, state=%i,type=%i",dev.which,state,dev.type);
+
     c.state =
             ((dev.which<<12)&CIControllerAtomicUpdateEvent::ControllerMask) |
             ((state)&CIControllerAtomicUpdateEvent::StateMask);
@@ -479,25 +482,28 @@ inline static void coffee_sdl2_eventhandle_window(
 }
 
 inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Event* ev){
+
     switch(ev->type){
+
     case SDL_QUIT:{
         coffee_sdl2_send_atomic_ievent(ctxt,CIEvent::QuitSign);
         break;
     }
+
     case SDL_WINDOWEVENT:{
         coffee_sdl2_eventhandle_window(ctxt,ev->window);
         break;
     }
+
     case SDL_KEYDOWN:
-    case SDL_KEYUP:{
-        coffee_sdl2_eventhandle_keys(ctxt,ev->type,ev->key);
-        break;
-    }
+        goto keyboard_event;
+    case SDL_KEYUP:
+        goto keyboard_event;
+
     case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:{
-        coffee_sdl2_eventhandle_mouse_btn(ctxt,ev->button);
-        break;
-    }
+        goto mouse_button_event;
+    case SDL_MOUSEBUTTONUP:
+        goto mouse_button_event;
     case SDL_MOUSEMOTION:{
         coffee_sdl2_eventhandle_mouse_motion(ctxt,ev->motion);
         break;
@@ -506,18 +512,20 @@ inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Eve
         coffee_sdl2_eventhandle_mouse_wheel(ctxt,ev->wheel);
         break;
     }
+
     case SDL_CONTROLLERAXISMOTION:
+        goto controller_input_event;
     case SDL_CONTROLLERBUTTONDOWN:
-    case SDL_CONTROLLERBUTTONUP:{
-        coffee_sdl2_eventhandle_controller_input(ctxt,ev->type,ev->caxis,ev->cbutton);
-        break;
-    }
+        goto controller_input_event;
+    case SDL_CONTROLLERBUTTONUP:
+        goto controller_input_event;
     case SDL_CONTROLLERDEVICEADDED:
+        goto controller_device_event;
     case SDL_CONTROLLERDEVICEREMOVED:
-    case SDL_CONTROLLERDEVICEREMAPPED:{
-        coffee_sdl2_eventhandle_controller_device(ctxt,ev->cdevice);
-        break;
-    }
+        goto controller_device_event;
+    case SDL_CONTROLLERDEVICEREMAPPED:
+        goto controller_device_event;
+
     case SDL_DROPFILE:{
         coffee_sdl2_eventhandle_drop(ctxt,ev->drop);
         break;
@@ -531,6 +539,24 @@ inline static void coffee_sdl2_eventhandle_all(CSDL2Renderer* ctxt,const SDL_Eve
         break;
     }
     }
+
+    return;
+
+    mouse_button_event:
+    coffee_sdl2_eventhandle_mouse_btn(ctxt,ev->button);
+    return;
+
+    keyboard_event:
+    coffee_sdl2_eventhandle_keys(ctxt,ev->type,ev->key);
+    return;
+
+    controller_input_event:
+    coffee_sdl2_eventhandle_controller_input(ctxt,ev->type,ev->caxis,ev->cbutton);
+    return;
+
+    controller_device_event:
+    coffee_sdl2_eventhandle_controller_device(ctxt,ev->cdevice);
+    return;
 }
 
 }

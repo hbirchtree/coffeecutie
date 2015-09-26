@@ -22,6 +22,8 @@ struct CSDL2Context{
     uint8 contextFlags = 0;
 
     std::thread::id thread;
+
+    std::map<byte,SDL_GameController*> controllers;
 };
 
 }

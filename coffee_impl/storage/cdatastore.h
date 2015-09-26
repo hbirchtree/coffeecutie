@@ -20,7 +20,7 @@ private:
     void unlock();
 
     CDataStore* m_store = nullptr;
-    uint64_t    m_id    = 0;
+    uint64      m_id    = 0;
 };
 
 struct CDataStore
@@ -28,7 +28,7 @@ struct CDataStore
     const void* dataPtr() const{
         return data;
     }
-    uint64_t size() const{
+    uint64 size() const{
         return m_size;
     }
 
@@ -41,10 +41,10 @@ struct CDataStore
 
         m_mut.unlock();
     }
-    void* allocBlock(uint64_t asize){
+    void* allocBlock(uint64 asize){
         m_mut.lock();
 
-        uint64_t offset = m_size;
+        uint64 offset = m_size;
         m_size += asize;
         data = realloc(data,m_size);
         char* ptr = reinterpret_cast<char*>(data);
@@ -65,13 +65,13 @@ struct CDataStore
 private:
     struct CDataChunk
     {
-        uint64_t offset = 0;
-        uint64_t size   = 0;
+        uint64 offset = 0;
+        uint64 size   = 0;
     };
 
     void*       data        = nullptr;
-    uint64_t    m_size        = 0;
-    std::map<uint64_t,CDataChunk> m_chunks;
+    uint64    m_size        = 0;
+    std::map<uint64,CDataChunk> m_chunks;
     std::mutex m_mut;
 };
 

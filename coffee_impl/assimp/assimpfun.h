@@ -25,7 +25,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     szptr i,j,k;
 
     szptr bufferSize = sizeof(CAssimpMesh);
-    uint bufferCnt    = 0;
+    uint32 bufferCnt    = 0;
 
     if(meshdata->HasPositions()){
         bufferCnt++;
@@ -44,7 +44,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
         j=0;
         for(i=0;i<faces;i++)
             j+=meshdata->mFaces[i].mNumIndices;
-        bufferSize+=j*sizeof(uint32_t);
+        bufferSize+=j*sizeof(uint32);
     }
     if(meshdata->HasTextureCoords(0)){
         bufferCnt++;
@@ -55,9 +55,9 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
         bufferSize+=vertices*sizeof(CVec4);
     }
 
-    bufferSize+=bufferCnt*sizeof(uint8_t);
-    bufferSize+=bufferCnt*sizeof(uint8_t);
-    bufferSize+=bufferCnt*sizeof(uint32_t);
+    bufferSize+=bufferCnt*sizeof(uint8);
+    bufferSize+=bufferCnt*sizeof(uint8);
+    bufferSize+=bufferCnt*sizeof(uint32);
     bufferSize+=bufferCnt*sizeof(char*);
 
     char* buffer = reinterpret_cast<char*>(calloc(1,bufferSize));
@@ -69,17 +69,17 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
     mesh->numBuffers = bufferCnt;
 
-    uint8_t* typeBuffer = reinterpret_cast<uint8_t*>(&buffer[bufferSize]);
+    uint8* typeBuffer = reinterpret_cast<uint8*>(&buffer[bufferSize]);
     mesh->bufferType = typeBuffer;
-    bufferSize+=bufferCnt*sizeof(uint8_t);
+    bufferSize+=bufferCnt*sizeof(byte);
 
-    uint8_t* elBuffer = reinterpret_cast<uint8_t*>(&buffer[bufferSize]);
+    uint8* elBuffer = reinterpret_cast<uint8*>(&buffer[bufferSize]);
     mesh->elementSizes = elBuffer;
-    bufferSize+=bufferCnt*sizeof(uint8_t);
+    bufferSize+=bufferCnt*sizeof(byte);
 
-    uint32_t* sizeBuffer = reinterpret_cast<uint32_t*>(&buffer[bufferSize]);
+    uint32* sizeBuffer = reinterpret_cast<uint32*>(&buffer[bufferSize]);
     mesh->bufferSize = sizeBuffer;
-    bufferSize+=bufferCnt*sizeof(uint32_t);
+    bufferSize+=bufferCnt*sizeof(uint32);
 
     char** listBuffer = reinterpret_cast<char**>(&buffer[bufferSize]);
     mesh->buffers = listBuffer;
@@ -166,10 +166,10 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     }
     if(meshdata->HasFaces()){
         //Face indices
-        elBuffer[bufferCnt] = sizeof(uint32_t);
+        elBuffer[bufferCnt] = sizeof(uint32);
         typeBuffer[bufferCnt] = CAssimpMesh::IndexType;
         listBuffer[bufferCnt] = &buffer[bufferSize];
-        uint32_t* list = reinterpret_cast<uint32_t*>(listBuffer[bufferCnt]);
+        uint32* list = reinterpret_cast<uint32*>(listBuffer[bufferCnt]);
 
         k = 0;
         for(i=0;i<faces;i++)
@@ -180,7 +180,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
         sizeBuffer[bufferCnt] = k;
 
-        bufferSize+=k*sizeof(uint32_t);
+        bufferSize+=k*sizeof(uint32);
         bufferCnt++;
     }
     if(meshdata->HasTextureCoords(0)){

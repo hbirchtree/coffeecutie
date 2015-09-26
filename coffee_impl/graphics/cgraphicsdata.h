@@ -75,43 +75,43 @@ struct CBlock
         //A block of data, f.ex. a light or material
         //Lights should not be treated differently than other uniform blocks
 {
-    uint16_t    blockSize       = 0; //The size of the whole block, including this struct
-    uint16_t    numProperties   = 0; //Determines size of types* and sizes*
-    uint8_t*    propertyTypes   = nullptr;
-    uint16_t*   propertySizes   = nullptr;
+    uint16    blockSize       = 0; //The size of the whole block, including this struct
+    uint16    numProperties   = 0; //Determines size of types* and sizes*
+    uint8*    propertyTypes   = nullptr;
+    uint16*   propertySizes   = nullptr;
 
-    uint16_t    dataSize        () const;
+    uint16 dataSize() const;
     void*       dataPtr         () const;
-    void        setPropertyData (uint16_t index, const void* data, uint16_t size);
+    void        setPropertyData (uint16 index, const void* data, uint16 size);
 
     void*       data_ptr        = nullptr;
-    uint16_t    data_size       = 0;
+    uint16    data_size       = 0;
 };
 
 //Datasize: Size of data without struct
-static CBlock* coffee_create_block(uint16_t dataSize,
-                                   uint16_t numProperties,
+static CBlock* coffee_create_block(uint16 dataSize,
+                                   uint16 numProperties,
                                    szptr* sizes = nullptr)
 {
     szptr chunk_size = dataSize
             +sizeof(CBlock)
-            +numProperties*sizeof(uint8_t)
-            +numProperties*sizeof(uint16_t);
+            +numProperties*sizeof(uint8)
+            +numProperties*sizeof(uint16);
     void* chunk = calloc(sizeof(byte),chunk_size); //We want all zeros instead of undefined
     byte* chunk_bytes = reinterpret_cast<byte*>(chunk);
 
     CBlock* block = reinterpret_cast<CBlock*>(chunk);
     block->numProperties = numProperties;
     block->blockSize = chunk_size;
-    block->propertyTypes = reinterpret_cast<uint8_t*>(&chunk_bytes[sizeof(CBlock)]);
-    block->propertySizes = reinterpret_cast<uint16_t*>(&chunk_bytes[sizeof(CBlock)+numProperties*sizeof(uint8_t)]);
+    block->propertyTypes = reinterpret_cast<uint8*>(&chunk_bytes[sizeof(CBlock)]);
+    block->propertySizes = reinterpret_cast<uint16*>(&chunk_bytes[sizeof(CBlock)+numProperties*sizeof(uint8)]);
     block->data_ptr = &chunk_bytes[sizeof(CBlock)
-            +numProperties*sizeof(uint8_t)
-            +numProperties*sizeof(uint16_t)];
+            +numProperties*sizeof(uint8)
+            +numProperties*sizeof(uint16)];
     block->data_size = chunk_size
             -sizeof(CBlock)
-            -numProperties*sizeof(uint8_t)
-            -numProperties*sizeof(uint16_t);
+            -numProperties*sizeof(uint8)
+            -numProperties*sizeof(uint16);
 
     if(sizes){
         for(int i=0;i<numProperties;i++)

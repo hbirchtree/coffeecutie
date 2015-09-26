@@ -63,6 +63,8 @@ public:
     void pollEvents();
 
 protected:
+    void _controllers_handle(const CIControllerAtomicUpdateEvent* ev);
+
     CDWindowProperties m_properties;
     CString m_contextString;
 private:

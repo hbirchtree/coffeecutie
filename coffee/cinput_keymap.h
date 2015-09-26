@@ -4,7 +4,45 @@
 namespace Coffee{
 namespace CInput{
 
-enum C1SpecialKeyMapping
+enum CIControllerButtonMapping
+{
+    //Same as SDL2 layout for GameController
+    //We don't want to expose all of SDL2
+
+    CK_BUTTON_A         = 0x0,
+    CK_BUTTON_B         = 0x1,
+    CK_BUTTON_X         = 0x2,
+    CK_BUTTON_Y         = 0x3,
+
+    CK_BUTTON_BACK      = 0x4,
+    CK_BUTTON_GUIDE     = 0x5,
+    CK_BUTTON_START     = 0x6,
+
+    CK_BUTTON_LS        = 0x7,
+    CK_BUTTON_RS        = 0x8,
+
+    CK_BUTTON_LB        = 0x9,
+    CK_BUTTON_RB        = 0xA,
+
+    CK_BUTTON_POV_UP    = 0xB,
+    CK_BUTTON_POV_DOWN  = 0xC,
+    CK_BUTTON_POV_LEFT  = 0xD,
+    CK_BUTTON_POV_RIGHT = 0xE,
+};
+
+enum CIControllerAxisMapping
+{
+    CK_LEFT_X           = 0x00,
+    CK_LEFT_Y           = 0x01,
+
+    CK_RIGHT_X          = 0x02,
+    CK_RIGHT_Y          = 0x03,
+
+    CK_TRIGGER_LEFT     = 0x04,
+    CK_TRIGGER_RIGHT    = 0x05,
+};
+
+enum CISpecialKeyMapping
 {
     CK_F1               = 0x100,
     CK_F2               = 0x101,
@@ -18,7 +56,6 @@ enum C1SpecialKeyMapping
     CK_F10              = 0x109,
     CK_F11              = 0x10A,
     CK_F12              = 0x10B,
-
 
     /* Reserving range 0x10C-0x10F */
 
@@ -68,12 +105,12 @@ enum C1SpecialKeyMapping
 enum CILatin1Mapping
 {
     CK_Null             = 0x0, //We'll use this when no other key is appropriate.
-//    CK_                = 0x1,
-//    CK_                = 0x2,
-//    CK_                = 0x3,
-//    CK_                = 0x4,
-//    CK_                = 0x5,
-//    CK_                = 0x6,
+//    CK_                 = 0x1,
+//    CK_                 = 0x2,
+//    CK_                 = 0x3,
+//    CK_                 = 0x4,
+//    CK_                 = 0x5,
+//    CK_                 = 0x6,
     CK_Bell             = 0x7,
     CK_BackSpace        = 0x8,
     CK_HTab             = 0x9,
@@ -81,24 +118,24 @@ enum CILatin1Mapping
 //    CK_VTab             = 0xB,
 //    CK_NewPage          = 0xC,
     CK_EnterCR          = 0xD,
-//    CK_                = 0xE,
-//    CK_                = 0xF,
-//    CK_                = 0x10,
-//    CK_                = 0x11,
-//    CK_                = 0x12,
-//    CK_                = 0x13,
-//    CK_                = 0x14,
-//    CK_                = 0x15,
-//    CK_                = 0x16,
-//    CK_                = 0x17,
-//    CK_                = 0x18,
-//    CK_                = 0x19,
-//    CK_                = 0x1A,
+//    CK_                 = 0xE,
+//    CK_                 = 0xF,
+//    CK_                 = 0x10,
+//    CK_                 = 0x11,
+//    CK_                 = 0x12,
+//    CK_                 = 0x13,
+//    CK_                 = 0x14,
+//    CK_                 = 0x15,
+//    CK_                 = 0x16,
+//    CK_                 = 0x17,
+//    CK_                 = 0x18,
+//    CK_                 = 0x19,
+//    CK_                 = 0x1A,
     CK_Escape           = 0x1B,
-//    CK_                = 0x1C,
-//    CK_                = 0x1D,
-//    CK_                = 0x1E,
-//    CK_                = 0x1F,
+//    CK_                 = 0x1C,
+//    CK_                 = 0x1D,
+//    CK_                 = 0x1E,
+//    CK_                 = 0x1F,
     CK_Space            = 0x20,
     CK_ExclamationMark  = 0x21,
     CK_QuotationMark    = 0x22,

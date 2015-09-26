@@ -110,10 +110,10 @@ static void vector_tests(bool silent = true)
 static void int_tests()
 {
     //We want this for safe buffer operations
-    CASSERT((sizeof(gl::GLint64)==sizeof(int64_t)));
-    CASSERT((sizeof(gl::GLint)==sizeof(int32_t)));
-    CASSERT((sizeof(gl::GLuint)==sizeof(uint32_t)));
-    CASSERT((sizeof(gl::GLuint64)==sizeof(uint64_t)));
+    CASSERT((sizeof(gl::GLint64)==sizeof(int64)));
+    CASSERT((sizeof(gl::GLint)==sizeof(int32)));
+    CASSERT((sizeof(gl::GLuint)==sizeof(uint32)));
+    CASSERT((sizeof(gl::GLuint64)==sizeof(uint64)));
 
     CASSERT((sizeof(byte)==sizeof(gl::GLbyte)));
     CASSERT((sizeof(byte)==sizeof(gl::GLchar)));

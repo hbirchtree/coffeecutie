@@ -32,13 +32,13 @@ struct CTransformFeedback
 struct CTransformData
 {
     //Used as vertex spec and transform spec, allows iteration
-    int             numVaryings     = 0;
-    const char**    varyings        = nullptr;
+    uint32          numVaryings     = 0;
+    cstring*        varyings        = nullptr;
 
-    uint32_t*       datasizes       = nullptr;
-    uint16_t*       sizes           = nullptr;
+    uint32*         datasizes       = nullptr;
+    uint16*         sizes           = nullptr;
     GLenum*         types           = nullptr;
-    uint16_t*       locations       = nullptr;
+    uint16*         locations       = nullptr;
 };
 
 struct CTransformPair
@@ -65,7 +65,7 @@ static CTransformPair* coffee_create_transform_vao(CTransformData* spec, szptr n
 
     tf->dataBuffer.bufferType = GL_TRANSFORM_FEEDBACK_BUFFER;
 
-    int i;
+    uint32 i;
     szptr total = 0;
     szptr stride = 0;
 
@@ -115,7 +115,7 @@ struct CTransformComputer
     }
 
 private:
-    int numActiveTFs = 0;
+    uint32 numActiveTFs = 0;
 };
 
 }
