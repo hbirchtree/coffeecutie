@@ -14,6 +14,7 @@ include_directories (
         libs/bullet/src)
 set ( CoffeeCore_HDRS
         coffeesharp.h
+
         coffee.h
         coffee/display/cdrendererbase.h
         coffee/cobject.h
@@ -24,17 +25,24 @@ set ( CoffeeCore_HDRS
         coffee/cfiles.h
         coffee/cregex.h
         coffee/cinput_keymap.h
-        coffee_impl/context/cdrenderer.h
-        coffee_impl/functional/cqueuerunner.h
-        coffee_impl/graphics/cgraphicswrappers.h
-        coffee_impl/graphics/cshader.h
-        coffee_impl/display/csdl2renderer.h
-        coffee_impl/display/coffeesdl2/sdl2datatypes.h
+
         coffee_impl/assimp/cassimpimporters.h
-        coffee_impl/storage/cdatastore.h
         coffee_impl/assimp/assimpfun.h
         coffee_impl/assimp/cassimptypes.h
         coffee_impl/assimp/cassimploader.h
+
+        coffee_impl/context/cdrenderer.h
+        coffee_impl/context/cglbindingrenderer.h
+
+        coffee_impl/display/csdl2renderer.h
+        coffee_impl/display/coffeesdl2/sdl2datatypes.h
+        coffee_impl/display/coffeesdl2/sdl2helpers.h
+        coffee_impl/display/coffeesdl2/sdl2eventhandlers.h
+
+        coffee_impl/functional/cqueuerunner.h
+
+        coffee_impl/graphics/cgraphicswrappers.h
+        coffee_impl/graphics/cshader.h
         coffee_impl/graphics/cgraphicsdata.h
         coffee_impl/graphics/cbuffer.h
         coffee_impl/graphics/glbinding.h
@@ -42,42 +50,58 @@ set ( CoffeeCore_HDRS
         coffee_impl/graphics/cuniformtypes.h
         coffee_impl/graphics/cframebuffer.h
         coffee_impl/graphics/ctexture.h
-        coffee_impl/context/cglbindingrenderer.h
-        coffee_impl/memory/cgame_dataset.h
-        coffee_impl/sample/base_case.h
-        coffee_impl/graphics/ctransformcomputer.h
-        coffee_impl/rendering/cmultidrawgraph.h
         coffee_impl/graphics/cuniformchunk.h
-        coffee_impl/display/coffeesdl2/sdl2helpers.h
-        coffee_impl/display/coffeesdl2/sdl2eventhandlers.h
+        coffee_impl/graphics/ctransformcomputer.h
+
         coffee_impl/input/cinput_eventhandling.h
+
+        coffee_impl/memory/cgame_dataset.h
+
+        coffee_impl/rendering/cmultidrawgraph.h
+
+        coffee_impl/sample/base_case.h
+
+        plat/plat_wm.h
         plat/linux_wm.h
+        plat/plat_core.h
         plat/unix_core.h
+
         unit_tests/data_types.h
+
         tests/CubeScape.h
         tests/glutils.h
         tests/RawFile.h
         )
 
 set ( CoffeeCore_SRCS
-        coffee_impl/display/csdl2renderer.cpp
         main.cpp
+
+        coffee/cobject.cpp
+        coffee/display/cdrendererbase.cpp
+
+        coffee_impl/assimp/cassimpimporters.cpp
+
+        coffee_impl/context/cdrenderer.cpp
+        coffee_impl/context/cglbindingrenderer.cpp
+
+        coffee_impl/display/csdl2renderer.cpp
+
+        coffee_impl/functional/cqueuerunner.cpp
+
+        coffee_impl/graphics/cshader.cpp
+        coffee_impl/graphics/cuniformchunk.cpp
+        coffee_impl/graphics/cgraphicsdata.cpp
+
+        coffee_impl/rendering/cmultidrawgraph.cpp
+
+        coffee_impl/storage/cdatastore.cpp
+
         tests/CubeScape.cpp
         tests/glutils.cpp
         tests/RawFile.cpp
-        coffee/display/cdrendererbase.cpp
-        coffee/cobject.cpp
-        coffee_impl/context/cdrenderer.cpp
-        coffee_impl/functional/cqueuerunner.cpp
-        coffee_impl/graphics/cshader.cpp
-        coffee_impl/assimp/cassimpimporters.cpp
-        coffee_impl/storage/cdatastore.cpp
-        coffee_impl/graphics/cgraphicsdata.cpp
-        coffee_impl/context/cglbindingrenderer.cpp
-        coffee_impl/rendering/cmultidrawgraph.cpp
-        coffee_impl/graphics/cuniformchunk.cpp
         )
 
+find_package(X11)
 
 include(ExternalProject)
 
@@ -101,7 +125,7 @@ add_executable ( CoffeeCore ${CoffeeCore_SRCS} )
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
 
-target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} )
+target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )
 set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)

@@ -2,6 +2,7 @@
 
 #include "coffeesdl2/sdl2helpers.h"
 #include "coffeesdl2/sdl2eventhandlers.h"
+#include "plat/plat_wm.h"
 
 namespace Coffee{
 namespace CDisplay{
@@ -144,15 +145,15 @@ CDMonitor CSDL2Renderer::monitor()
     return mon;
 }
 
-CDWindow CSDL2Renderer::window()
+CDWindow* CSDL2Renderer::window()
 {
-    CDWindow win;
+    CDWindow* win = new CDWindow;
 
-    SDL_GetWindowSize(m_context->window,&win.screenArea.w,&win.screenArea.h);
-    SDL_GetWindowPosition(m_context->window,&win.screenArea.x,&win.screenArea.y);
+    SDL_GetWindowSize(m_context->window,&win->screenArea.w,&win->screenArea.h);
+    SDL_GetWindowPosition(m_context->window,&win->screenArea.x,&win->screenArea.y);
 
-    win.title = SDL_GetWindowTitle(m_context->window);
-    coffee_sdl2_get_window_ptr(m_context->window,&win);
+    win->title = SDL_GetWindowTitle(m_context->window);
+    coffee_sdl2_get_window_ptr(m_context->window,win);
 
     return win;
 }

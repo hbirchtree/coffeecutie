@@ -1,6 +1,9 @@
 #ifndef LINUX_WM_H
 #define LINUX_WM_H
 
+#define __COFFEE_X11
+#define __COFFEE_WAYLAND
+
 #include <stdlib.h> //for getenv()
 #include <X11/Xlib.h>
 #include "X11/X.h"
@@ -13,6 +16,12 @@
 namespace CoffeePlat{
 
 namespace X11{
+
+struct X11Window
+{
+    Window handle;
+    Display* display;
+};
 
 typedef struct {
     unsigned long   flags;

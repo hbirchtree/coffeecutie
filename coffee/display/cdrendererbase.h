@@ -55,7 +55,7 @@ public:
     virtual void setWindowTitle(const CString&) = 0;
 
     virtual CDMonitor monitor()         = 0; //If it is a window, return the monitor it is on
-    virtual CDWindow window()           = 0; //Describes the window
+    virtual CDWindow* window()          = 0; //Describes the window
     virtual CDContextBits context()     = 0; //Stencil bits, depth bits etc.
 
     virtual uint32 windowState() const          = 0;
