@@ -5,8 +5,8 @@
 
 #if defined(__linux__)
 #include "linux_wm.h"
-#elif defined(_WIN32)
-#include "win_wm.h"
+//#elif defined(_WIN32)
+//#include "win_wm.h"
 #elif defined(__APPLE__) && defined(__MACH__)
 
 #else
@@ -33,6 +33,11 @@ struct CDWindow{
             Window window;
             Display* display;
         } x11;
+#endif
+#ifdef _WIN32
+        struct {
+
+        } win32;
 #endif
 
     } wininfo;
