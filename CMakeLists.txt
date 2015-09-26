@@ -103,7 +103,9 @@ set ( CoffeeCore_SRCS
         tests/RawFile.cpp
         )
 
+if(NOT WIN32)
 find_package(X11)
+endif()
 
 include(ExternalProject)
 
