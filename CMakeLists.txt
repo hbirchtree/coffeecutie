@@ -114,7 +114,7 @@ message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
 
 find_package(SDL2 REQUIRED)
-find_package(Unwind REQUIRED)
+find_package(Unwind)
 
 #INCLUDE(FindPkgConfig)
 
