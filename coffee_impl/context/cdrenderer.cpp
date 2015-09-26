@@ -39,7 +39,7 @@ void CDRenderer::run()
 
     showWindow();
 
-#ifdef __linux__
+#ifdef COFFEE_LINUX
 
     CDWindow* sdlwin = this->window();
 

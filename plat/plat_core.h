@@ -5,9 +5,9 @@
 #include "coffee_types.h"
 
 #ifdef __unix__
-#include "unix_core.h"
+#include "coffee_unix/unix_core.h"
 //#elif defined(_WIN32)
-//#include "win_core.h"
+//#include "coffee_windows/win_core.h"
 #elif defined(__APPLE__) && defined(__MACH__)
 
 #else

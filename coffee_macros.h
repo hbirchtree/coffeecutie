@@ -12,5 +12,7 @@
 //When porting, stubs are nice to have
 #define C_STUBBED(name) fprintf(stderr,"COFFEE:CORE:STUB: %s\n",name)
 
+#define C_BADERROR(name) fprintf(stderr,"COFFEE:CORE:ERR: %s\n",name)
+
 
 #endif //COFFEE_MACROS

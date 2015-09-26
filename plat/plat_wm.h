@@ -1,13 +1,14 @@
 #ifndef COFFEE_PLAT_WM
 #define COFFEE_PLAT_WM
 
+#include "plat/platform_detect.h"
 #include "coffee_types.h"
 
-#if defined(__linux__)
-#include "linux_wm.h"
-//#elif defined(_WIN32)
-//#include "win_wm.h"
-#elif defined(__APPLE__) && defined(__MACH__)
+#if defined(COFFEE_LINUX)
+#include "coffee_linux/linux_wm.h"
+#elif defined(COFFEE_WINDOWS)
+#include "coffee_windows/win_wm.h"
+#elif defined(COFFEE_APPLE)
 
 #else
 namespace Coffee{

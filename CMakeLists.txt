@@ -62,11 +62,14 @@ set ( CoffeeCore_HDRS
         coffee_impl/sample/base_case.h
 
         plat/plat_wm.h
-        plat/linux_wm.h
+        plat/linux/linux_wm.h
         plat/plat_core.h
-        plat/unix_core.h
-        plat/win_wm.h
-        plat/win_core.h
+        plat/unix/unix_core.h
+        plat/windows/win_wm.h
+        plat/windows/win_core.h
+
+        plat/argument_parse.h
+        plat/platform_detect.h
 
         unit_tests/data_types.h
 

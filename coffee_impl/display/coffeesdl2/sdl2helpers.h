@@ -5,6 +5,7 @@
 
 #include "sdl2datatypes.h"
 #include "plat/plat_wm.h"
+#include "plat/platform_detect.h"
 
 namespace Coffee{
 namespace CSDL2Types{
@@ -158,17 +159,17 @@ static void coffee_sdl2_get_window_ptr(SDL_Window* window, CDWindow* win)
 
     if(SDL_GetWindowWMInfo(window,&info)){
         switch(info.subsystem){
-#ifdef __linux__
+#ifdef COFFEE_LINUX
         case SDL_SYSWM_X11:
             win->wininfo.x11.window = info.info.x11.window;
             win->wininfo.x11.display = info.info.x11.display;
             break;
 #endif
-#ifdef _WIN32
+#ifdef COFFEE_WINDOWS
         case SDL_SYSWM_WINDOWS:
             break;
 #endif
-#if defined(__APPLE__) && defined(__MACH__)
+#ifdef COFFEE_APPLE
         case SDL_SYSWM_COCOA:
             break;
         case SDL_SYSWM_UIKIT:

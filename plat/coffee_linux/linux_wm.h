@@ -1,4 +1,6 @@
-#ifdef __linux__
+#include "plat/platform_detect.h"
+
+#ifdef COFFEE_LINUX
 
 #ifndef LINUX_WM_H
 #define LINUX_WM_H
@@ -77,5 +79,5 @@ namespace Wayland{
 }
 
 #endif // LINUX_WM_H
-#endif // __linux__
+#endif // COFFEE_LINUX
 

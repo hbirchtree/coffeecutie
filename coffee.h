@@ -6,6 +6,7 @@
 
 //Platform core functions
 #include "plat/plat_core.h"
+#include "plat/platform_detect.h"
 
 #include <string>
 #include <map>
