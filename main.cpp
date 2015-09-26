@@ -1,6 +1,7 @@
 #include "coffee_impl/context/cdrenderer.h"
 
 #include "plat/argument_parse.h"
+#include "unit_tests/data_types.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
@@ -10,6 +11,7 @@ int main(int argc, char** argv)
     cDebug("Launching from %s",coffee_executable_name());
 
     Coffee::CoffeeInit();
+    CoffeeTests::run_tests();
 
     CElapsedTimerMicro timer;
     timer.start();

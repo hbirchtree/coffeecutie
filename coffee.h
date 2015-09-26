@@ -1,8 +1,6 @@
 #ifndef COFFEE
 #define COFFEE
 
-#include "unit_tests/data_types.h"
-
 #include "coffee_types.h"
 #include "coffee_macros.h"
 
@@ -28,7 +26,6 @@ static void CoffeeInit()
 {
     //Allow core dump by default
     coffee_enable_core_dump();
-    CoffeeTests::run_tests();
 }
 
 //A simpler implementation of QObject
