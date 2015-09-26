@@ -65,6 +65,8 @@ set ( CoffeeCore_HDRS
         plat/linux_wm.h
         plat/plat_core.h
         plat/unix_core.h
+        plat/win_wm.h
+        plat/win_core.h
 
         unit_tests/data_types.h
 
