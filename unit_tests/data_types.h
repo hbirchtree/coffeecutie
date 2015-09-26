@@ -132,9 +132,6 @@ static void int_tests()
 
     uint32 n32 = std::pow(2,32)-1;
     CASSERT((n32==std::pow(2,32)-1));
-
-    uint64 n64 = LONG_LONG_MAX-LONG_LONG_MIN;
-    CASSERT((n64==LONG_LONG_MAX-LONG_LONG_MIN));
 }
 
 static void floating_tests()
