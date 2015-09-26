@@ -4,6 +4,7 @@
 #define SDL2_WINDOWING
 
 #include "sdl2datatypes.h"
+#include "plat/plat_wm.h"
 
 namespace Coffee{
 namespace CSDL2Types{
@@ -159,13 +160,8 @@ static void coffee_sdl2_get_window_ptr(SDL_Window* window, CDWindow* win)
         switch(info.subsystem){
 #ifdef __linux__
         case SDL_SYSWM_X11:
-//            win->handle = info.info.x11.window;
-            break;
-        case SDL_SYSWM_MIR:
-//            win->handle_p = info.info.mir.surface;
-            break;
-        case SDL_SYSWM_WAYLAND:
-//            win->handle_p = info.info.wl.surface;
+            win->wininfo.x11.window = info.info.x11.window;
+            win->wininfo.x11.display = info.info.x11.display;
             break;
 #endif
 #ifdef _WIN32
