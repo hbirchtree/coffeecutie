@@ -27,13 +27,13 @@ void CPipeline::free()
 
 void CPipeline::attachStages(CShaderStageProgram *shader, UseProgramStageMask bits)
 {
-    cDebug("Pipeline attachment(SSP): ssp=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint)bits);
+    cDebug("Pipeline attachment(SSP): ssp=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint32)bits);
     glUseProgramStages(handle,shader->stage&bits,shader->handle);
 }
 
 void CPipeline::attachProgram(CShaderProgram *shader, UseProgramStageMask bits)
 {
-    cDebug("Pipeline attachment: prg=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint)bits);
+    cDebug("Pipeline attachment: prg=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint32)bits);
     glUseProgramStages(handle,shader->stages&bits,shader->handle);
 }
 
