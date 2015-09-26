@@ -78,6 +78,10 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/cuniformchunk.cpp
         )
 
+if(COFFEESHARP_BUILD)
+    add_library(CoffeeSharp SHARED)
+endif()
+
 include(ExternalProject)
 
 find_library(assimp_loc NAMES "assimp" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )

@@ -83,7 +83,7 @@ static bool coffee_test_load(game_context* ctxt)
 
     //Specify VAO for vertex data, we will only use one for now
 
-    szptr numGears = 10000;
+    szptr numGears = 1000;
 
     //We have two formats
     coffee_mem_expand_array<CVertexFormat>(&ctxt->vertexdata.descriptor.formats,2);
@@ -242,58 +242,58 @@ static bool coffee_test_load(game_context* ctxt)
             ubuffer->map(GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
             //
 
-//            {
-//                szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
-//                CUniformChunk* uchunk =
-//                        coffee_create_uchunk(
-//                            camBuffer,
-//                            camBuffer->size,
-//                            2,
-//                            matrixSz,
-//                            "MatrixBlock");
-//                uchunk = (CUniformChunk*)memmove(
-//                            &ctxt->renderdata.uniformchunks.d[0],
-//                        uchunk,sizeof(CUniformChunk));
-//                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(glm::mat4));
-//                uchunk->ublock.blockBinding = 0;
-//                //GL calls
-//                uchunk->ublock.shaderIndex = glGetUniformBlockIndex(
-//                            ctxt->shaders.programs.d[0].handle,
-//                        uchunk->ublock.name);
-//                glUniformBlockBinding(
-//                            ctxt->shaders.programs.d[0].handle,
-//                        uchunk->ublock.shaderIndex,
-//                        uchunk->ublock.blockBinding);
-//                //
-//            }
-
             {
+                szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
                 CUniformChunk* uchunk =
                         coffee_create_uchunk(
-                            matBuffer,
-                            matBuffer->size,
+                            camBuffer,
+                            camBuffer->size,
                             2,
-                            nullptr,
-                            "material_data");
+                            matrixSz,
+                            "MatrixBlock");
                 uchunk = (CUniformChunk*)memmove(
-                            &ctxt->renderdata.uniformchunks.d[1],
+                            &ctxt->renderdata.uniformchunks.d[0],
                         uchunk,sizeof(CUniformChunk));
-
                 memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(glm::mat4));
-
-                uchunk->ublock.blockBinding = 1;
+                uchunk->ublock.blockBinding = 0;
                 //GL calls
-                uchunk->ublock.shaderIndex = glGetProgramResourceIndex(
+                uchunk->ublock.shaderIndex = glGetUniformBlockIndex(
                             ctxt->shaders.programs.d[0].handle,
-                        GL_SHADER_STORAGE_BLOCK,
                         uchunk->ublock.name);
-                glShaderStorageBlockBinding(
+                glUniformBlockBinding(
                             ctxt->shaders.programs.d[0].handle,
                         uchunk->ublock.shaderIndex,
                         uchunk->ublock.blockBinding);
-
                 //
             }
+
+//            {
+//                CUniformChunk* uchunk =
+//                        coffee_create_uchunk(
+//                            matBuffer,
+//                            matBuffer->size,
+//                            2,
+//                            nullptr,
+//                            "material_data");
+//                uchunk = (CUniformChunk*)memmove(
+//                            &ctxt->renderdata.uniformchunks.d[1],
+//                        uchunk,sizeof(CUniformChunk));
+
+//                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(glm::mat4));
+
+//                uchunk->ublock.blockBinding = 1;
+//                //GL calls
+//                uchunk->ublock.shaderIndex = glGetProgramResourceIndex(
+//                            ctxt->shaders.programs.d[0].handle,
+//                        GL_SHADER_STORAGE_BLOCK,
+//                        uchunk->ublock.name);
+//                glShaderStorageBlockBinding(
+//                            ctxt->shaders.programs.d[0].handle,
+//                        uchunk->ublock.shaderIndex,
+//                        uchunk->ublock.blockBinding);
+
+//                //
+//            }
         }
 
         {
