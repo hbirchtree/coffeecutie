@@ -4,6 +4,7 @@
 #include "coffee_impl/assimp/cassimpimporters.h"
 #include "coffee_impl/graphics/cgraphicsdata.h"
 #include "coffee_impl/graphics/cshader.h"
+#include <iterator>
 
 namespace Coffee {
 namespace CRendering {

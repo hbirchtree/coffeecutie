@@ -1,5 +1,7 @@
 #include "cqueuerunner.h"
 
+#include <iterator>
+
 namespace Coffee {
 namespace CFunctional {
 
