@@ -3,10 +3,13 @@
 
 #include "coffee_types.h"
 
-#ifdef __linux__
+#if defined(__linux__)
 #include "linux_wm.h"
-#else
+#elif defined(_WIN32)
+#include "win_wm.h"
+#elif defined(__APPLE__) && defined(__MACH__)
 
+#else
 namespace Coffee{
 namespace CDisplay{
 
@@ -41,4 +44,4 @@ struct CDWindow{
 }
 }
 
-#endif
+#endif //COFFEE_PLAT_WM

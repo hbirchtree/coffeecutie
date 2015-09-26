@@ -1,3 +1,5 @@
+#ifdef __linux__
+
 #ifndef LINUX_WM_H
 #define LINUX_WM_H
 
@@ -75,4 +77,5 @@ namespace Wayland{
 }
 
 #endif // LINUX_WM_H
+#endif // __linux__
 

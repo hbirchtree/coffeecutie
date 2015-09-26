@@ -1,5 +1,7 @@
-#ifndef POSIX_CORE
-#define POSIX_CORE
+#ifdef __unix__
+
+#ifndef UNIX_CORE
+#define UNIX_CORE
 
 /*
  * Here we specify UNIX-specific code
@@ -161,4 +163,5 @@ private:
 } //CFunctional
 } //Coffee
 
-#endif
+#endif // UNIX_CORE
+#endif // __unix__

@@ -113,15 +113,14 @@ find_library(glbinding_loc NAMES "glbinding" PATHS ${CMAKE_CURRENT_BINARY_DIR}/l
 message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
 
-#add_library(CoffeeSharp SHARED)
 add_executable ( CoffeeCore ${CoffeeCore_SRCS} )
 
 find_package(SDL2 REQUIRED)
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 
 if(NOT WIN32)
-	find_package(Unwind)
-	target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
+        find_package(Unwind)
+        target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
 endif()
 
 target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )

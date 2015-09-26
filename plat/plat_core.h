@@ -6,6 +6,9 @@
 
 #ifdef __unix__
 #include "unix_core.h"
+#elif defined(_WIN32)
+#include "win_core.h"
+#elif defined(__APPLE__) && defined(__MACH__)
 
 #else
 namespace Coffee{
