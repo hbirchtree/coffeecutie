@@ -62,7 +62,18 @@ static cstring coffee_executable_name()
 
 #elif defined(COFFEE_WINDOWS)
 
-static cstring coffee_executable_name();
+#include <Windows.h>
+#include <WinUser.h>
+
+#define MAX_FILEPATH_SIZE 255
+
+static cstring coffee_executable_name()
+{
+	cstring_w path = (cstring_w)malloc(MAX_FILEPATH_SIZE);
+	DWORD size = GetModuleFileNameA(NULL,path,MAX_FILEPATH_SIZE);
+	path[size] = '\0';
+	return path;
+}
 
 #elif defined(COFFEE_APPLE)
 

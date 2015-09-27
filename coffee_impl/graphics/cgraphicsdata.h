@@ -12,8 +12,8 @@ namespace CGraphicsData{
 
 struct CZField
 {
-    scalar near = 0.f;
-    scalar far  = 0.f;
+    scalar near = 0;
+    scalar far  = 0;
 };
 
 struct CGCamera
