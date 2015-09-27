@@ -13,7 +13,7 @@ include_directories (
         libs/glfw/include
         libs/bullet/src)
 set ( CoffeeCore_HDRS
-        coffeesharp.h
+        cppsharp/coffeesharp.h
 
         coffee.h
         coffee/display/cdrendererbase.h
@@ -72,10 +72,6 @@ set ( CoffeeCore_HDRS
         plat/platform_detect.h
 
         unit_tests/data_types.h
-
-        tests/CubeScape.h
-        tests/glutils.h
-        tests/RawFile.h
         )
 
 set ( CoffeeCore_SRCS
@@ -98,12 +94,6 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/cgraphicsdata.cpp
 
         coffee_impl/rendering/cmultidrawgraph.cpp
-
-        coffee_impl/storage/cdatastore.cpp
-
-        tests/CubeScape.cpp
-        tests/glutils.cpp
-        tests/RawFile.cpp
         )
 
 if(NOT WIN32)
