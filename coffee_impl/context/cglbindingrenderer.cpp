@@ -92,8 +92,8 @@ void CGLBindingRenderer::bindingPreInit()
 
 void CGLBindingRenderer::bindingPostInit()
 {
-    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug&&false){
-        cDebug("Now printing extensions available to glbinding (Not necessarily supported by your hardware!)");
+    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
+        cDebug("Now printing available extensions");
         cBasicPrint("-----------| Extensions |-----------");
         for(GLextension ext : glbinding::Meta::extensions()){
             cstring extname = glbinding::Meta::getString(ext).c_str();
