@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{5F6E59EB-CA12-446E-B1A2-28B42A7AF124}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>CoffeeSharp</RootNamespace>
+    <AssemblyName>CoffeeSharp</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="generated\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="generated\CDColorSpace.cs" />
+    <Compile Include="generated\CDContextBits.cs" />
+    <Compile Include="generated\CDEvent.cs" />
+    <Compile Include="generated\CDFocusEvent.cs" />
+    <Compile Include="generated\CDMonitor.cs" />
+    <Compile Include="generated\CDQueueRendererBase.cs" />
+    <Compile Include="generated\CDRenderer.cs" />
+    <Compile Include="generated\CDRendererBase.cs" />
+    <Compile Include="generated\CDStateEvent.cs" />
+    <Compile Include="generated\CDWindowProperties.cs" />
+    <Compile Include="generated\CGLBindingRenderer.cs" />
+    <Compile Include="generated\CGLContextProperties.cs" />
+    <Compile Include="generated\CGLContextVersion.cs" />
+    <Compile Include="generated\CIControllerAtomicEvent.cs" />
+    <Compile Include="generated\CIControllerAtomicUpdateEvent.cs" />
+    <Compile Include="generated\CIControllerInfo.cs" />
+    <Compile Include="generated\CIControllerState.cs" />
+    <Compile Include="generated\CIDropEvent.cs" />
+    <Compile Include="generated\CIEvent.cs" />
+    <Compile Include="generated\CIKeyEvent.cs" />
+    <Compile Include="generated\CIMouseButtonEvent.cs" />
+    <Compile Include="generated\CIMouseMoveEvent.cs" />
+    <Compile Include="generated\CIScrollEvent.cs" />
+    <Compile Include="generated\CISensorEvent.cs" />
+    <Compile Include="generated\CITextEvent.cs" />
+    <Compile Include="generated\CIWEditEvent.cs" />
+    <Compile Include="generated\CIWriteEvent.cs" />
+    <Compile Include="generated\CMat3.cs" />
+    <Compile Include="generated\CMat4.cs" />
+    <Compile Include="generated\CObject.cs" />
+    <Compile Include="generated\CQuat.cs" />
+    <Compile Include="generated\CQueueRunner.cs" />
+    <Compile Include="generated\CSDL2Renderer.cs" />
+    <Compile Include="generated\CVec2.cs" />
+    <Compile Include="generated\CVec3.cs" />
+    <Compile Include="generated\CVec4.cs" />
+    <Compile Include="generated\Coffee.cs" />
+    <Compile Include="generated\CoffeePINVOKE.cs" />
+    <Compile Include="generated\SWIGTYPE_p_Coffee__CDisplay__CDWindow.cs" />
+    <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_pointT_float_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_pointT_int_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_rectT_int_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_sizeT_int_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_a_3__float.cs" />
+    <Compile Include="generated\SWIGTYPE_p_a_4__float.cs" />
+    <Compile Include="generated\SWIGTYPE_p_float.cs" />
+    <Compile Include="generated\SWIGTYPE_p_std__functionT_void_fF_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_std__string.cs" />
+    <Compile Include="generated\SWIGTYPE_p_std__thread__id.cs" />
+    <Compile Include="generated\SWIGTYPE_p_void.cs" />
+    <Compile Include="CoffeeSharpTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="generated\CMakeCache.txt" />
+  </ItemGroup>
+</Project>
