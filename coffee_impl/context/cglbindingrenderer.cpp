@@ -106,10 +106,15 @@ void CGLBindingRenderer::bindingPostInit()
         cBasicPrint("------------------------------------");
     }
 
-    m_rendererString        = glbinding::ContextInfo::renderer();
-    m_vendorString          = glbinding::ContextInfo::vendor();
-    m_versionString         = glbinding::ContextInfo::version().toString();
-    m_libraryRevision       = glbinding::Meta::glRevision();
+    try{
+        m_rendererString        = glbinding::ContextInfo::renderer();
+        m_vendorString          = glbinding::ContextInfo::vendor();
+        m_versionString         = glbinding::ContextInfo::version().toString();
+        m_libraryRevision       = glbinding::Meta::glRevision();
+    }
+    catch(std::logic_error e){
+        cMsg("glbinding","Failed to acquire GL details");
+    }
 
     cMsg("glbinding","Obtained context information");
 

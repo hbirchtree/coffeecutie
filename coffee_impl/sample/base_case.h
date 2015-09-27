@@ -51,6 +51,8 @@ static bool coffee_test_load(game_context* ctxt)
         CShaderProgram* p = &ctxt->shaders.programs.d[0];
         //GL calls
         p->create();
+        if(p->handle==0)
+            cFatal("Failed to create ShaderProgram");
         p->attachShader(vshdr,GL_VERTEX_SHADER_BIT);
         p->attachShader(fshdr,GL_FRAGMENT_SHADER_BIT);
         p->link();
@@ -58,6 +60,8 @@ static bool coffee_test_load(game_context* ctxt)
 
         CPipeline* pl = &ctxt->shaders.pipelines.d[0];
         pl->create();
+        if(pl->handle==0)
+            cFatal("Failed to create Pipeline");
         pl->attachProgram(p,GL_VERTEX_SHADER_BIT|GL_FRAGMENT_SHADER_BIT);
 
         //Try dumping it to a file, we don't care about the resource later on
