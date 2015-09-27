@@ -64,6 +64,8 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
     CAssimpMesh* mesh = reinterpret_cast<CAssimpMesh*>(&buffer[0]);
 
+    mesh->chunk_size = bufferSize;
+
     //We use bufferSize as a ptr in the buffer now
     bufferSize = sizeof(CAssimpMesh);
 
