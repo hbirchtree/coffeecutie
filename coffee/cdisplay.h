@@ -48,7 +48,14 @@ struct CDEvent{
 
 typedef CPoint CDMoveEvent;
 typedef CSize CDResizeEvent;
-typedef _cbasic_version<uint8> CGLContextVersion;
+struct CGLContextVersion : public _cbasic_version<uint8>
+{
+    CGLContextVersion(){}
+    CGLContextVersion(uint8 maj, uint8 min){
+        this->major = maj;
+        this->minor = min;
+    }
+};
 
 struct CDStateEvent{
     enum StateChange{
