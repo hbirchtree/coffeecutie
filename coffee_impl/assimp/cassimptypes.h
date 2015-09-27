@@ -2,6 +2,7 @@
 #define CASSIMPTYPES
 
 #include "coffee.h"
+#include "coffee/cfiles.h"
 
 namespace Coffee {
 namespace CResourceTypes {
@@ -27,6 +28,12 @@ struct CAssimpMesh
         //Struct at offset=0
         //free() is called on the CAssimpMesh struct ptr
 {
+
+    //BUG : We cannot load these from memory dumps
+    //Make the pointers relative to (this)
+
+    szptr               chunk_size      = 0;
+
     cstring             name            = nullptr;
 
     uint8               numBuffers      = 0;
@@ -49,6 +56,26 @@ struct CAssimpMesh
         VColorType      = 0x7,
     };
 };
+
+static bool coffee_dump_mesh(CAssimpMesh* mesh, CResources::CResource* resource)
+{
+    bool success = false;
+
+    resource->free_data();
+
+    resource->size = mesh->chunk_size;
+    resource->data = malloc(resource->size);
+
+    memcpy(resource->data,mesh,resource->size);
+
+    if(!resource->save_data())
+        cWarning("Failed to store mesh data");
+    else success = true;
+
+    resource->free_data();
+
+    return success;
+}
 
 struct CAssimpCamera
 {

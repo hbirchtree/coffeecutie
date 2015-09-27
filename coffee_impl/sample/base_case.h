@@ -190,6 +190,14 @@ static bool coffee_test_load(game_context* ctxt)
             coffee_multidraw_create_call(*multidraw,mesh);
         };
 
+        CResource meshtest("ubw/ubw_gear.mesh");
+        if(!meshtest.exists())
+            coffee_dump_mesh(d->meshes[4],&meshtest);
+        else{
+            if(meshtest.read_data())
+                d->meshes[4] = (CAssimpMesh*)meshtest.data;
+        }
+
         //Future improvement: Do this in parallel with reserved memory chunks
         lmesh(d->meshes[4]);
 //        lmesh(d->meshes[1]);
