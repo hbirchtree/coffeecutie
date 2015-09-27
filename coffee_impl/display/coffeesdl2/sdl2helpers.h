@@ -20,7 +20,7 @@ static Uint32 _coffee_sdl2_toggle_flag(bool flag, Uint32 value)
 
 static Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
 {
-    Uint32 res;
+    Uint32 res = 0;
 
     if(flags&CDWindowProperties::Visible)
         res|=SDL_WINDOW_SHOWN;

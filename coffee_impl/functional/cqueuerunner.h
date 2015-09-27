@@ -12,6 +12,7 @@ class CQueueRunner
 {
 public:
     CQueueRunner();
+    virtual ~CQueueRunner();
     void queueFunction(QueueFunction func);
     virtual void executeRunQueue();
 

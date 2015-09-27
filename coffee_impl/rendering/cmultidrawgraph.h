@@ -147,7 +147,7 @@ static void coffee_mesh_define_matrix_attribs(CBuffer* instanceBuffer,
     CVertexAttribute attr;
     attr.fmt = &fmt;
 
-    for(int i=0;i<fmt.size;i++)
+    for(GLuint i=0;i<fmt.size;i++)
     {
         //TODO: Store binding somewhere convenient
         CVertexBufferBinding* bind = new CVertexBufferBinding;

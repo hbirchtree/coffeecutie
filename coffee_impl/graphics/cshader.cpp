@@ -3,6 +3,9 @@
 namespace Coffee {
 namespace CGraphicsWrappers {
 
+static bool coffee_shader_compile_checklog(GLuint handle);
+static bool coffee_program_link_checklog(GLuint handle);
+
 void CPipeline::bind()
 {
     glBindProgramPipeline(handle);

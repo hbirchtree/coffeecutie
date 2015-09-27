@@ -7,7 +7,10 @@ namespace CFunctional {
 
 CQueueRunner::CQueueRunner()
 {
+}
 
+CQueueRunner::~CQueueRunner()
+{
 }
 
 void CQueueRunner::executeRunQueue()

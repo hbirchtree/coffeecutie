@@ -64,7 +64,7 @@ static void set_alwaysontop(Display* disp, Window target, bool enable)
     ev.xclient.data.l[3] = 0;
     ev.xclient.data.l[4] = 0;
 
-    Status exit = XSendEvent(disp,
+    XSendEvent(disp,
                DefaultRootWindow(disp),
                False,
                SubstructureRedirectMask|SubstructureNotifyMask,
