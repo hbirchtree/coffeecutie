@@ -86,7 +86,7 @@ bool coffee_shader_compile_checklog(GLuint handle){
         std::vector<char> log(succ);
         glGetShaderInfoLog(handle,succ,&succ,log.data());
         glDeleteShader(handle);
-        cWarning("Failed to compile shader: %s\n",log.data());
+        cWarning("Failed to compile shader %i: %s\n",handle,log.data());
         return false;
     }
     return true;
@@ -100,7 +100,7 @@ bool coffee_program_link_checklog(GLuint handle){
         std::vector<char> log(succ);
         glGetProgramInfoLog(handle,succ,&succ,log.data());
         glDeleteProgram(handle);
-        cWarning("Failed to link program: %s\n",log.data());
+        cWarning("Failed to link program %i: %s\n",handle,log.data());
         return false;
     }
     return true;
