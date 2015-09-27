@@ -97,7 +97,7 @@ set ( CoffeeCore_SRCS
         )
 
 if(NOT WIN32)
-find_package(X11)
+    find_package(X11)
 endif()
 
 include(ExternalProject)
@@ -108,10 +108,12 @@ find_library(glbinding_loc NAMES "glbinding" PATHS ${CMAKE_CURRENT_BINARY_DIR}/l
 message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
 
+add_library( CoffeeLib SHARED ${CoffeeCore_SRCS} )
 add_executable ( CoffeeCore ${CoffeeCore_SRCS} )
 
 find_package(SDL2 REQUIRED)
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
+target_include_directories(CoffeeLib SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 
 if(NOT WIN32)
         find_package(Unwind)
@@ -119,6 +121,11 @@ if(NOT WIN32)
 endif()
 
 target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )
+target_link_libraries ( CoffeeLib "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )
 set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
+
+set_property(TARGET CoffeeLib PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CoffeeLib PRIVATE cxx_variadic_templates)
+target_compile_features(CoffeeLib PRIVATE cxx_constexpr)

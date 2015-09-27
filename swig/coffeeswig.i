@@ -1,4 +1,4 @@
-%module coffee
+%module Coffee
 %{
 #include "../coffee.h"
 %}
