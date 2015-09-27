@@ -67,9 +67,11 @@ static cstring coffee_executable_name()
 
 #define MAX_FILEPATH_SIZE 255
 
-static cstring coffee_executable_name()
+static cstring coffee_executable_name(cstring_w path = nullptr)
 {
-	cstring_w path = (cstring_w)malloc(MAX_FILEPATH_SIZE);
+	if(!path)
+		path = (cstring_w)malloc(MAX_FILEPATH_SIZE);
+
 	DWORD size = GetModuleFileNameA(NULL,path,MAX_FILEPATH_SIZE);
 	path[size] = '\0';
 	return path;
