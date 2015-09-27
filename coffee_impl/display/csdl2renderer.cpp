@@ -20,7 +20,7 @@ CSDL2Renderer::~CSDL2Renderer()
     cleanup();
 }
 
-thread_id CSDL2Renderer::contextThread()
+std::thread::id CSDL2Renderer::contextThread()
 {
     return m_context->thread;
 }

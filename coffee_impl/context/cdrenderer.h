@@ -26,7 +26,7 @@ public:
 
     void run(CDWindowProperties props);
 
-    void bindingCallback(CGLReport* report) const;
+    void bindingCallback(void* report) const;
 
     void eventWHandle(const CDEvent *event);
     void eventIHandle(const CIEvent *event);

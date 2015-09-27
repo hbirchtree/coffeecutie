@@ -8,15 +8,10 @@
 #include "coffee/cfunctional.h"
 
 using namespace Coffee::CInput;
-using namespace Coffee::CFunctional::CThreading;
 
 namespace Coffee {
 
 using namespace Coffee::CGraphicsWrappers;
-
-namespace CGraphicsWrappers{
-struct CGLReport;
-}
 
 namespace CDisplay {
 
@@ -26,24 +21,23 @@ class CDRendererBase : public CObject
 
 public:
     enum VerbosityLevels{
-        PrintInitializationMessages     = 0b1,
-        PrintExtraData                  = 0b10,
+        PrintInitializationMessages     = 0x1,
+        PrintExtraData                  = 0x2,
 
     };
 
     enum RendererExitStatus{ //Accumulated to describe exit state
-        StartSucess         = 0b00001,
-        ExitSucess          = 0b00010,
+        StartSucess         = 0x01,
+        ExitSucess          = 0x02,
 
-        InitSucess          = 0b00100,
-        LoopingSucess       = 0b01000,
-        CleanupSucess       = 0b10000,
+        InitSucess          = 0x04,
+        LoopingSucess       = 0x08,
+        CleanupSucess       = 0x10,
     };
 
-    CDRendererBase(CObject* parent);
     virtual ~CDRendererBase();
 
-    virtual thread_id contextThread() = 0;
+    virtual std::thread::id contextThread() = 0;
 
     //Initialization
     virtual void init(const CDWindowProperties&) = 0;//Initializes the context manager and etc.
@@ -99,13 +93,16 @@ public:
 
     //OpenGL context functions, may be provided by binding or context manager
     virtual bool requestGLExtension(cstring)       = 0;
-    virtual void bindingCallback(CGLReport*) const = 0;
+    virtual void bindingCallback(void*) const = 0;
     virtual void bindingPreInit()  = 0; //Called before context is created
     virtual void bindingPostInit() = 0; //Called after context is created
 
     virtual void bindingTerminate() = 0;
 
     virtual double contextTime() = 0;
+
+protected:
+    CDRendererBase(CObject* parent);
 };
 
 } // namespace CDisplay

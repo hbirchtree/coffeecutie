@@ -10,7 +10,6 @@ namespace CDisplay{
 class CGLBindingRenderer : public CSDL2Renderer
 {
 public:
-    CGLBindingRenderer(CObject* parent);
     virtual ~CGLBindingRenderer();
 
     void fetchGLExtensions();
@@ -20,6 +19,8 @@ public:
     bool requestGLExtension(cstring ext);
 
 protected:
+    CGLBindingRenderer(CObject* parent);
+
     void bindingPreInit();
     void bindingPostInit();
     void bindingTerminate();

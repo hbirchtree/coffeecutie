@@ -14,6 +14,7 @@
 #include <vector>
 #include <string.h>
 #include <exception>
+#include <thread>
 
 namespace Coffee{
 
@@ -50,6 +51,10 @@ namespace CAssimp{}
 //Core classes
 namespace CFunctional{
 class CQueueRunner;
+
+namespace CThreading{
+typedef std::thread::id thread_id;
+}
 
 template<typename RType, typename... AType>
 class CRFunction;

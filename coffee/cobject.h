@@ -23,7 +23,7 @@ public:
     void setObjectName(cstring name);
 
 protected:
-    thread_id m_thread;
+    std::thread::id m_thread;
 
 private:
     std::vector<CObject*> m_children;

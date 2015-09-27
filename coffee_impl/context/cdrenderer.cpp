@@ -125,12 +125,13 @@ void CDRenderer::run(CDWindowProperties props)
     cleanup();
 }
 
-void CDRenderer::bindingCallback(CGLReport *report) const
+void CDRenderer::bindingCallback(void *report) const
 {
-    CString smsg = report->message;
-    CString out = glbinding::Meta::getString(report->type)+":"
-            +glbinding::Meta::getString(report->severity)+":"
-            +glbinding::Meta::getString(report->source)+": "+smsg;
+    CGLReport* rep = (CGLReport*)report;
+    CString smsg = rep->message;
+    CString out = glbinding::Meta::getString(rep->type)+":"
+            +glbinding::Meta::getString(rep->severity)+":"
+            +glbinding::Meta::getString(rep->source)+": "+smsg;
     cDebug("OpenGL: %s",out.c_str());
 //    CGLState* state = _dump_state(); //Should provide a view of OpenGL state
 //    delete state;

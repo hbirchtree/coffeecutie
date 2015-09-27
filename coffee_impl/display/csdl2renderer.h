@@ -14,10 +14,9 @@ namespace CDisplay{
 class CSDL2Renderer : public CDQueueRendererBase
 {
 public:
-    CSDL2Renderer(CObject* parent);
     virtual ~CSDL2Renderer();
 
-    virtual thread_id contextThread();
+    virtual std::thread::id contextThread();
 
     void init(const CDWindowProperties &);
     void cleanup();
@@ -63,6 +62,7 @@ public:
     void pollEvents();
 
 protected:
+    CSDL2Renderer(CObject* parent);
     void _controllers_handle(const CIControllerAtomicUpdateEvent* ev);
 
     CDWindowProperties m_properties;
