@@ -68,6 +68,7 @@ set ( CoffeeCore_HDRS
         plat/windows/win_wm.h
         plat/windows/win_core.h
 
+	plat/environment_details.h
         plat/argument_parse.h
         plat/platform_detect.h
 

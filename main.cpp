@@ -2,12 +2,15 @@
 
 #include "plat/argument_parse.h"
 #include "unit_tests/data_types.h"
+#include "plat/environment_details.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
 
 int main(int argc, char** argv)
 {
+    cDebug("Settings directory: %s",
+           coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time"));
     cDebug("Launching from %s",coffee_executable_name());
 
     Coffee::CoffeeInit();
