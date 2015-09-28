@@ -1,18 +1,19 @@
 #ifndef ARGUMENT_PARSE
 #define ARGUMENT_PARSE
 
-#include "plat/platform_detect.h"
+#define COFFEE_MAX_FILEPATH_BUFFER_SIZE 255
+#define COFFEE_ARG_SWITCH '-'
 
+#include "plat/platform_detect.h"
 #include "coffee_macros.h"
 #include "coffee_types.h"
-
 #include <vector>
-
-#define COFFEE_ARG_SWITCH '-'
 
 using namespace Coffee;
 
 namespace Coffee{
+
+static cstring_w coffee_executable_name(cstring_w path);
 
 static cstring _switch_short(cstring in)
 {
@@ -24,7 +25,8 @@ static cstring _switch_short(cstring in)
 }
 static cstring _switch_long(cstring in)
 {
-    if(strlen(in)<3)
+    //Very crude, indeed
+    if(strlen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
         return in;
     return &in[2];
 }
@@ -55,7 +57,7 @@ static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
 
 #include <stdlib.h>
 
-static cstring coffee_executable_name()
+static cstring_w coffee_executable_name(cstring_w path = nullptr)
 {
     return realpath("/proc/self/exe",nullptr);
 }
@@ -65,21 +67,19 @@ static cstring coffee_executable_name()
 #include <Windows.h>
 #include <WinUser.h>
 
-#define MAX_FILEPATH_SIZE 255
-
-static cstring coffee_executable_name(cstring_w path = nullptr)
+static cstring_w coffee_executable_name(cstring_w path = nullptr)
 {
 	if(!path)
-		path = (cstring_w)malloc(MAX_FILEPATH_SIZE);
+		path = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 
-	DWORD size = GetModuleFileNameA(NULL,path,MAX_FILEPATH_SIZE);
+	DWORD size = GetModuleFileNameA(NULL,path,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 	path[size] = '\0';
 	return path;
 }
 
 #elif defined(COFFEE_APPLE)
 
-static cstring coffee_executable_name();
+//TODO: Implement this
 
 #endif
 
