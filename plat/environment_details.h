@@ -3,7 +3,17 @@
 
 #include "../coffee_types.h"
 #include "platform_detect.h"
+#include "argument_parse.h"
 #include <stdlib.h>
+
+#if defined(COFFEE_LINUX)
+
+#include <libgen.h>
+#include <unistd.h>
+
+#elif defined(COFFEE_LINUX)
+
+#endif
 
 namespace Coffee{
 
@@ -57,6 +67,25 @@ static cstring_w coffee_get_userdata_dir(cstring orgname, cstring appname)
     return coffee_concat_plat_path(base,appname);
 }
 
+static cstring_w coffee_get_application_dir()
+{
+#if defined(COFFEE_LINUX)
+    return dirname(coffee_executable_name());
+#else
+    return "";
+#endif
 }
+
+static cstring_w coffee_get_current_dir()
+{
+#if defined(COFFEE_LINUX)
+    cstring_w cwd = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+    return getcwd(cwd,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+#else
+    return "";
+#endif
+}
+
+} //Coffee
 
 #endif

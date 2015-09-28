@@ -10,6 +10,11 @@ namespace CResources{
 
 namespace CFiles{
 
+static bool coffee_dir_create(cstring dname)
+{
+
+}
+
 static FILE* coffee_file_open(cstring fname, cstring mode)
 {
     return fopen(fname,mode);

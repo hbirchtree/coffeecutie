@@ -32,9 +32,7 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Folder Include="generated\" />
-  </ItemGroup>
-  <ItemGroup>
+    <Compile Include="CoffeeSharpTest.cs" />
     <Compile Include="generated\CDColorSpace.cs" />
     <Compile Include="generated\CDContextBits.cs" />
     <Compile Include="generated\CDEvent.cs" />
@@ -45,20 +43,27 @@
     <Compile Include="generated\CDRendererBase.cs" />
     <Compile Include="generated\CDStateEvent.cs" />
     <Compile Include="generated\CDWindowProperties.cs" />
+    <Compile Include="generated\CElapsedTimer.cs" />
+    <Compile Include="generated\CElapsedTimerD.cs" />
+    <Compile Include="generated\CElapsedTimerMicro.cs" />
     <Compile Include="generated\CGLBindingRenderer.cs" />
     <Compile Include="generated\CGLContextProperties.cs" />
     <Compile Include="generated\CGLContextVersion.cs" />
     <Compile Include="generated\CIControllerAtomicEvent.cs" />
     <Compile Include="generated\CIControllerAtomicUpdateEvent.cs" />
+    <Compile Include="generated\CIControllerAxisMapping.cs" />
+    <Compile Include="generated\CIControllerButtonMapping.cs" />
     <Compile Include="generated\CIControllerInfo.cs" />
     <Compile Include="generated\CIControllerState.cs" />
     <Compile Include="generated\CIDropEvent.cs" />
     <Compile Include="generated\CIEvent.cs" />
     <Compile Include="generated\CIKeyEvent.cs" />
+    <Compile Include="generated\CILatin1Mapping.cs" />
     <Compile Include="generated\CIMouseButtonEvent.cs" />
     <Compile Include="generated\CIMouseMoveEvent.cs" />
     <Compile Include="generated\CIScrollEvent.cs" />
     <Compile Include="generated\CISensorEvent.cs" />
+    <Compile Include="generated\CISpecialKeyMapping.cs" />
     <Compile Include="generated\CITextEvent.cs" />
     <Compile Include="generated\CIWEditEvent.cs" />
     <Compile Include="generated\CIWriteEvent.cs" />
@@ -81,11 +86,15 @@
     <Compile Include="generated\SWIGTYPE_p_a_3__float.cs" />
     <Compile Include="generated\SWIGTYPE_p_a_4__float.cs" />
     <Compile Include="generated\SWIGTYPE_p_float.cs" />
+    <Compile Include="generated\SWIGTYPE_p_p_char.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__functionT_void_fF_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__string.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__thread__id.cs" />
+    <Compile Include="generated\SWIGTYPE_p_unsigned_long_long.cs" />
     <Compile Include="generated\SWIGTYPE_p_void.cs" />
-    <Compile Include="CoffeeSharpTest.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="generated\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="generated\CMakeCache.txt" />

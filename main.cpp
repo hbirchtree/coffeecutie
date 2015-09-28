@@ -11,7 +11,9 @@ int main(int argc, char** argv)
 {
     cDebug("Settings directory: %s",
            coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time"));
-    cDebug("Launching from %s",coffee_executable_name());
+    cDebug("Program directory: %s",
+           coffee_get_application_dir());
+    cDebug("Launching from     %s",coffee_executable_name());
 
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();

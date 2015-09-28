@@ -75,8 +75,11 @@ set ( CoffeeCore_HDRS
         unit_tests/data_types.h
         )
 
+set ( CoffeeTest_SRCS
+	main.cpp
+	)
+
 set ( CoffeeCore_SRCS
-        main.cpp
 
         coffee/cobject.cpp
         coffee/display/cdrendererbase.cpp
@@ -110,7 +113,7 @@ message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
 
 add_library( CoffeeLib SHARED ${CoffeeCore_SRCS} )
-add_executable ( CoffeeCore ${CoffeeCore_SRCS} )
+add_executable ( CoffeeCore ${CoffeeCore_SRCS} ${CoffeeTest_SRCS} )
 
 find_package(SDL2 REQUIRED)
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
