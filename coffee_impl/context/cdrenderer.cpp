@@ -162,7 +162,7 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         if(kev->key==CK_Escape)
             this->closeWindow();
         if(kev->key==CK_Up&&!(kev->mod&CIKeyEvent::PressedModifier))
-            game->transforms.cameras.d[0].position.y += 5.0;
+            game->transforms.cameras.d[0].position.y -= 5.0;
     }
     else if(event->type==CIEvent::Controller){
         const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];

@@ -34,8 +34,16 @@ static bool coffee_test_load(game_context* ctxt)
     coffee_mem_expand_array<CShaderProgram>(&ctxt->shaders.programs,1);
     coffee_mem_expand_array<CPipeline>(&ctxt->shaders.pipelines,1);
     {
-        CResource v("ubw/shaders/vertex/vsh_instanced.vs"); //Vertex shader
-        CResource f("ubw/shaders/fragment/direct/fsh_nolight.fs"); //Fragment shader
+	cstring shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
+	cstring shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
+
+	if(ctxt->features->render_ssbo_support){
+	    shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
+	    shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
+	}
+
+	CResource v(shader_v); //Vertex shader
+	CResource f(shader_f); //Fragment shader
         if(!v.exists()||!f.exists())
             cFatal("Failed to locate shaders");
         v.read_data(true);
@@ -206,7 +214,8 @@ static bool coffee_test_load(game_context* ctxt)
 
         //GL calls
         coffee_multidraw_load_buffer(vbuffer,*vertexdata);
-        coffee_multidraw_load_drawcalls(*multidraw);
+	if(ctxt->features->render_multidraw)
+	    coffee_multidraw_load_drawcalls(*multidraw);
         coffee_multidraw_load_indices(*multidraw);
         //
         vertexdata->resize(0);
@@ -317,7 +326,7 @@ static bool coffee_test_load(game_context* ctxt)
             transform.reserve(numGears);
             for(szptr i=1;i<numGears;i++){
                 mod->position.z = (float)(-i);
-                mod->position.y = (float)((i%11)-5);
+		mod->position.y = (float)((i%11)/2);
                 mod->genMatrix();
                 transform.push_back(mod->matrix);
             }
@@ -364,6 +373,7 @@ static void coffee_render_test(game_context* ctxt, double delta)
     if(ctxt->features->render_multidraw)
 	coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
     else{
+	//Workaround: Intel does not support drawcall-buffers on old drivers
 	for(const CGLDrawCall& call : ctxt->renderdata.datasets.d[0].drawcalls->drawcalls)
 	{
 	    glDrawElementsInstancedBaseVertexBaseInstance(
