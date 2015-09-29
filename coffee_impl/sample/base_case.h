@@ -2,6 +2,7 @@
 #define BASE_CASE
 
 #include "coffee_impl/memory/cgame_dataset.h"
+#include "coffee_impl/graphics/cgraphics_quirks.h"
 
 namespace Coffee{
 namespace CRendering{
@@ -17,6 +18,8 @@ struct game_context
     game_memory_chunk       renderdata;
 
     game_transform_chunk    transforms;
+
+    CGraphicsQuirks::CFeatureSet *features;
 };
 
 static bool coffee_test_load(game_context* ctxt)
@@ -358,7 +361,6 @@ static void coffee_render_test(game_context* ctxt, double delta)
 
     //Send it off
     coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
-    glFlush();
 }
 
 static void coffee_unload_test(game_context* ctxt)

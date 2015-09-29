@@ -63,9 +63,11 @@ bool CGLBindingRenderer::requestGLExtension(cstring ext)
             fetchGLExtensions();
         else{
             //In case we are on the wrong thread, try queueing a function
+            //Will cause a deadlock if functions are not being processed
             cDebug("Failed to acquire extensions: Wrong thread, attempting workaround");
             std::atomic_int* atom = new std::atomic_int();
             atom->store(0);
+
             queueFunction([=](){
                 fetchGLExtensions();
                 (*atom)++;
@@ -80,6 +82,30 @@ bool CGLBindingRenderer::requestGLExtension(cstring ext)
     return strstr(m_extensions,ext);
 }
 
+bool CGLBindingRenderer::printExtensions(bool doFetch)
+{
+    if(!m_extensions){
+        if(doFetch)
+            fetchGLExtensions();
+        else
+            return false;
+    }
+
+    cDebug("Now printing available extensions");
+    cBasicPrint("-----------| Extensions |-----------");
+    for(GLextension ext : glbinding::Meta::extensions()){
+        cstring extname = glbinding::Meta::getString(ext).c_str();
+        bool support = requestGLExtension(extname);
+        if(support)
+            cBasicPrint("Extension: %s, core version: %s",
+                        extname,
+                        glbinding::Meta::getRequiringVersion(ext).toString().c_str());
+    }
+    cBasicPrint("------------------------------------");
+
+    return true;
+}
+
 void CGLBindingRenderer::bindingPreInit()
 {
     //Check for extensions! Quick!
@@ -92,18 +118,9 @@ void CGLBindingRenderer::bindingPreInit()
 
 void CGLBindingRenderer::bindingPostInit()
 {
-    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
-        cDebug("Now printing available extensions");
-        cBasicPrint("-----------| Extensions |-----------");
-        for(GLextension ext : glbinding::Meta::extensions()){
-            cstring extname = glbinding::Meta::getString(ext).c_str();
-            bool support = requestGLExtension(extname);
-            if(support)
-                cBasicPrint("Extension: %s, core version: %s",
-                            extname,
-                            glbinding::Meta::getRequiringVersion(ext).toString().c_str());
-        }
-        cBasicPrint("------------------------------------");
+    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug&&
+            m_properties.contextProperties.flags&CGLContextProperties::GLPrintExtensions){
+        printExtensions(true);
     }
 
     try{
@@ -134,6 +151,11 @@ void CGLBindingRenderer::bindingPostInit()
 
 void CGLBindingRenderer::bindingTerminate()
 {
+}
+
+cstring const* CGLBindingRenderer::extensions()
+{
+    return &m_extensions;
 }
 
 } // namespace CDisplay

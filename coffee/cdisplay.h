@@ -86,11 +86,12 @@ struct CDFocusEvent
 struct CGLContextProperties
 {
     enum ContextProperties{
-        GLCoreProfile   = 0x01,      //GL core profile
-        GLVSync         = 0x02,     //vertical sync
-        GLDebug         = 0x04,    //GL debugging context
-        GLAutoResize    = 0x08,   //Whether the context auto-resizes
-        GLRobust        = 0x10,
+	GLCoreProfile	    = 0x01,   //GL core profile
+	GLVSync		    = 0x02,   //vertical sync
+	GLDebug		    = 0x04,   //GL debugging context
+	GLAutoResize	    = 0x08,   //Whether the context auto-resizes
+	GLRobust	    = 0x10,   //According to the new extensions on robustness
+	GLPrintExtensions   = 0x20,   //I won't write about this.
     };
 
     uint16              flags = GLCoreProfile;

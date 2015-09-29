@@ -4,6 +4,7 @@
 
 #include "coffee/cfunctional.h"
 #include "coffee_impl/sample/base_case.h"
+#include "coffee_impl/graphics/cgraphics_quirks.h"
 
 #include "plat/plat_wm.h"
 
@@ -24,6 +25,9 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
+    CGraphicsQuirks::CFeatureSet quirks;
+    quirks.extensions = extensions();
+
     double delta = contextTime();
     double deltaT = 0;
     uint64 frames = 0;
@@ -33,6 +37,7 @@ void CDRenderer::run()
     uint64 swaptime = 0;
 
     game = new game_context;
+    game->features = &quirks;
 
     if(!coffee_test_load(game))
         return;
@@ -156,6 +161,8 @@ void CDRenderer::eventIHandle(const CIEvent *event)
                kev->key,kev->mod,kev->scan,&kev->key);
         if(kev->key==CK_Escape)
             this->closeWindow();
+        if(kev->key==CK_Up&&!(kev->mod&CIKeyEvent::PressedModifier))
+            game->transforms.cameras.d[0].position.y += 5.0;
     }
     else if(event->type==CIEvent::Controller){
         const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];

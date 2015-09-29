@@ -18,6 +18,8 @@ public:
     //It is wise to run this asynchronously
     bool requestGLExtension(cstring ext);
 
+    bool printExtensions(bool doFetch = false);
+
 protected:
     CGLBindingRenderer(CObject* parent);
 
@@ -29,6 +31,8 @@ protected:
     CString m_vendorString;
     CString m_versionString;
     int m_libraryRevision = 0;
+
+    cstring const* extensions();
 
 private:
     cstring_w m_extensions = nullptr;
