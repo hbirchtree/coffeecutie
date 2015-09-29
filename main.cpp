@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     props.monitor = 0;
 
 //    props.contextProperties.flags |= CGLContextProperties::GLVSync;
-//    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags |= CGLContextProperties::GLDebug;
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;
     props.contextProperties.version.minor = 3;

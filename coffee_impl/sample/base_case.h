@@ -341,6 +341,7 @@ static void coffee_prepare_test(game_context* ctxt)
     ctxt->renderdata.buffers.d[2].bind();
     ctxt->renderdata.uniformchunks.d[0].buffer->bindRange();
     ctxt->shaders.pipelines.d[0].bind();
+    ctxt->renderdata.datasets.d[0].vao->bind();
 }
 
 static void coffee_render_test(game_context* ctxt, double delta)
@@ -360,7 +361,21 @@ static void coffee_render_test(game_context* ctxt, double delta)
             sizeof(glm::mat4));
 
     //Send it off
-    coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
+    if(ctxt->features->render_multidraw)
+	coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
+    else{
+	for(const CGLDrawCall& call : ctxt->renderdata.datasets.d[0].drawcalls->drawcalls)
+	{
+	    glDrawElementsInstancedBaseVertexBaseInstance(
+			GL_TRIANGLES,
+			call.count,
+			GL_UNSIGNED_INT,
+			(void*)0,
+			call.instanceCount,
+			call.baseVertex,
+			call.baseInstance);
+	}
+    }
 }
 
 static void coffee_unload_test(game_context* ctxt)
