@@ -1,4 +1,6 @@
-#version 330
+#version 410
+#extension GL_ARB_shader_storage_buffer_object : require
+#extension GL_ARB_shader_draw_parameters : require
 
 layout(std140) uniform MatrixBlock {
 	mat4 camera,cameraVP;
@@ -25,6 +27,12 @@ out gl_PerVertex
 {
 	vec4 gl_Position;
 };
+//out vec3 worldVert;
+//out vec2 localTexCoord;
+//out vec3 localNormal;
+//out vec3 worldNormal;
+//out vec3 worldTangent;
+//out vec4 surfacePos;
 
 void main() {
     Out.texCoord = vertTexCoord;
@@ -36,4 +44,5 @@ void main() {
     Out.mVert = model * vec4(vert,1.0);
 
     gl_Position = worldVert_t;
+    Out.iDrawID = gl_DrawIDARB;
 }
