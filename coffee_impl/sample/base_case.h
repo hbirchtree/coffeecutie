@@ -20,6 +20,8 @@ struct game_context
     game_transform_chunk    transforms;
 
     CGraphicsQuirks::CFeatureSet *features;
+
+    std::function<void(const CMultiDrawDataSet&)> renderfun;
 };
 
 static bool coffee_test_load(game_context* ctxt)
@@ -34,16 +36,16 @@ static bool coffee_test_load(game_context* ctxt)
     coffee_mem_expand_array<CShaderProgram>(&ctxt->shaders.programs,1);
     coffee_mem_expand_array<CPipeline>(&ctxt->shaders.pipelines,1);
     {
-	cstring shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
-	cstring shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
+        cstring shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
+        cstring shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
 
-	if(ctxt->features->render_ssbo_support){
-	    shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
-	    shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
-	}
+        if(ctxt->features->render_ssbo_support){
+            shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
+            shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
+        }
 
-	CResource v(shader_v); //Vertex shader
-	CResource f(shader_f); //Fragment shader
+        CResource v(shader_v); //Vertex shader
+        CResource f(shader_f); //Fragment shader
         if(!v.exists()||!f.exists())
             cFatal("Failed to locate shaders");
         v.read_data(true);
@@ -113,7 +115,7 @@ static bool coffee_test_load(game_context* ctxt)
         mbuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
         mbuffer->create();
         mbuffer->bind();
-        mbuffer->store(sizeof(glm::mat4)*numGears,nullptr);
+        mbuffer->store(sizeof(CMath::mat4)*numGears,nullptr);
         mbuffer->unbind();
         mbuffer->map(GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
 
@@ -171,17 +173,13 @@ static bool coffee_test_load(game_context* ctxt)
     }
 
     //Load mesh
-    coffee_mem_expand_array<CAssimpData*>(&ctxt->vertexdata.data,1);
     {
         CResource m("ubw/models/ubw.blend");
         if(!m.exists())
             cFatal("Failed to locate scene");
         m.read_data();
-        CAssimpData* d = CAssimpImporters::importResource(&m,"blend");
+        CAssimpData* d = CAssimpImporters::importResource(&m,m.resource());
         m.free_data();
-
-        //Store a pointer to the data for freeing later
-        ctxt->vertexdata.data.d[0] = d;
 
         if(d->numMeshes<5)
             cFatal("Failed to load mesh data! File does not match!");
@@ -214,8 +212,8 @@ static bool coffee_test_load(game_context* ctxt)
 
         //GL calls
         coffee_multidraw_load_buffer(vbuffer,*vertexdata);
-	if(ctxt->features->render_multidraw)
-	    coffee_multidraw_load_drawcalls(*multidraw);
+        if(ctxt->features->render_multidraw)
+            coffee_multidraw_load_drawcalls(*multidraw);
         coffee_multidraw_load_indices(*multidraw);
         //
         vertexdata->resize(0);
@@ -245,13 +243,13 @@ static bool coffee_test_load(game_context* ctxt)
 
             CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
             camBuffer->parent = ubuffer;
-            camBuffer->size = sizeof(glm::mat4)*2;
+            camBuffer->size = sizeof(CMath::mat4)*2;
             camBuffer->bufferType = GL_UNIFORM_BUFFER;
 
             CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
             matBuffer->bufferType = GL_SHADER_STORAGE_BUFFER;
             matBuffer->parent = ubuffer;
-            matBuffer->size = sizeof(GLuint)*numGears+sizeof(glm::vec3)*numGears;
+            matBuffer->size = sizeof(GLuint)*numGears+sizeof(CMath::vec3)*numGears;
             matBuffer->offset = camBuffer->size;
 
             //GL calls
@@ -263,7 +261,7 @@ static bool coffee_test_load(game_context* ctxt)
             //
 
             {
-                szptr matrixSz[2] = {sizeof(glm::mat4),sizeof(glm::mat4)};
+                szptr matrixSz[2] = {sizeof(CMath::mat4),sizeof(CMath::mat4)};
                 CUniformChunk* uchunk =
                         coffee_create_uchunk(
                             camBuffer,
@@ -274,7 +272,7 @@ static bool coffee_test_load(game_context* ctxt)
                 uchunk = (CUniformChunk*)memmove(
                             &ctxt->renderdata.uniformchunks.d[0],
                         uchunk,sizeof(CUniformChunk));
-                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(glm::mat4));
+                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(CMath::mat4));
                 uchunk->ublock.blockBinding = 0;
                 //GL calls
                 uchunk->ublock.shaderIndex = glGetUniformBlockIndex(
@@ -299,7 +297,7 @@ static bool coffee_test_load(game_context* ctxt)
 //                            &ctxt->renderdata.uniformchunks.d[1],
 //                        uchunk,sizeof(CUniformChunk));
 
-//                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(glm::mat4));
+//                memcpy(uchunk->buffer->parent->data,&cam->matrix,sizeof(CMath::mat4));
 
 //                uchunk->ublock.blockBinding = 1;
 //                //GL calls
@@ -322,11 +320,11 @@ static bool coffee_test_load(game_context* ctxt)
             mod->scale.x = mod->scale.y = mod->scale.z = 1.f;
             mod->rotation.w = 2.f;
 
-            std::vector<glm::mat4> transform;
+            std::vector<CMath::mat4> transform;
             transform.reserve(numGears);
             for(szptr i=1;i<numGears;i++){
                 mod->position.z = (float)(-i);
-		mod->position.y = (float)((i%11)/2);
+                mod->position.y = (float)((i%11)/2);
                 mod->genMatrix();
                 transform.push_back(mod->matrix);
             }
@@ -364,34 +362,62 @@ static void coffee_render_test(game_context* ctxt, double delta)
     //Copy memory into GL
     memcpy(ctxt->renderdata.buffers.d[4].data,
             &ctxt->transforms.cameras.d[0].matrix,
-            sizeof(glm::mat4));
+            sizeof(CMath::mat4));
     memcpy(ctxt->renderdata.buffers.d[2].data,
             &ctxt->transforms.transforms.d[0].matrix,
-            sizeof(glm::mat4));
+            sizeof(CMath::mat4));
 
     //Send it off
-    if(ctxt->features->render_multidraw)
-	coffee_multidraw_render(ctxt->renderdata.datasets.d[0]);
-    else{
-	//Workaround: Intel does not support drawcall-buffers on old drivers
-	for(const CGLDrawCall& call : ctxt->renderdata.datasets.d[0].drawcalls->drawcalls)
-	{
-	    glDrawElementsInstancedBaseVertexBaseInstance(
-			GL_TRIANGLES,
-			call.count,
-			GL_UNSIGNED_INT,
-			(void*)0,
-			call.instanceCount,
-			call.baseVertex,
-			call.baseInstance);
-	}
-    }
+    ctxt->renderfun(ctxt->renderdata.datasets.d[0]);
 }
 
 static void coffee_unload_test(game_context* ctxt)
 {
     ctxt->renderdata.buffers.d[2].unbind();
     ctxt->renderdata.uniformchunks.d[0].buffer->unbind();
+
+    szptr i;
+
+    for(i=0;i<ctxt->renderdata.buffers.size;i++)
+    {
+        ctxt->renderdata.buffers.d[i].unmap();
+        ctxt->renderdata.buffers.d[i].free();
+    }
+
+    for(i=0;i<ctxt->vertexdata.descriptor.arrays.size;i++)
+        ctxt->vertexdata.descriptor.arrays.d[i].free();
+    for(i=0;i<ctxt->vertexdata.data.size;i++)
+        ctxt->vertexdata.data.d[i]->freeData();
+
+    for(i=0;i<ctxt->shaders.pipelines.size;i++)
+        ctxt->shaders.pipelines.d[i].free();
+    for(i=0;i<ctxt->shaders.shaders.size;i++)
+        ctxt->shaders.shaders.d[i].free();
+    for(i=0;i<ctxt->shaders.programs.size;i++)
+        ctxt->shaders.programs.d[i].free();
+
+    for(i=0;i<ctxt->renderdata.datasets.size;i++)
+        coffee_multidraw_free(&ctxt->renderdata.datasets.d[i]);
+
+    free(ctxt->vertexdata.buffers.d);
+    free(ctxt->vertexdata.data.d);
+    free(ctxt->vertexdata.descriptor.arrays.d);
+    free(ctxt->vertexdata.descriptor.bindings.d);
+    free(ctxt->vertexdata.descriptor.formats.d);
+
+    free(ctxt->renderdata.buffers.d);
+    free(ctxt->renderdata.datasets.d);
+    free(ctxt->renderdata.subbuffers.d);
+    free(ctxt->renderdata.uniformchunks.d);
+
+    free(ctxt->resources.d);
+
+    free(ctxt->shaders.pipelines.d);
+    free(ctxt->shaders.programs.d);
+    free(ctxt->shaders.shaders.d);
+
+    free(ctxt->transforms.cameras.d);
+    free(ctxt->transforms.transforms.d);
 }
 
 }

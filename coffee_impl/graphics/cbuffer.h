@@ -41,11 +41,13 @@ struct CBuffer{
         unbind();
     }
     bool unmap(){
+        if(!data)
+            return false;
         bind();
-        data = nullptr;
         if(glUnmapBuffer(bufferType)!=GL_TRUE)
             return false;
         unbind();
+        data = nullptr;
         return true;
     }
     bool isValid(){

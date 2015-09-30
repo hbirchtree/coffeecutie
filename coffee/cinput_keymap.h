@@ -32,14 +32,14 @@ enum CIControllerButtonMapping
 
 enum CIControllerAxisMapping
 {
-    CK_LEFT_X           = 0x00,
-    CK_LEFT_Y           = 0x01,
+    CK_AXIS_LEFT_X          = 0x0,
+    CK_AXIS_LEFT_Y          = 0x1,
 
-    CK_RIGHT_X          = 0x02,
-    CK_RIGHT_Y          = 0x03,
+    CK_AXIS_RIGHT_X         = 0x2,
+    CK_AXIS_RIGHT_Y         = 0x3,
 
-    CK_TRIGGER_LEFT     = 0x04,
-    CK_TRIGGER_RIGHT    = 0x05,
+    CK_AXIS_TRIGGER_LEFT    = 0x4,
+    CK_AXIS_TRIGGER_RIGHT   = 0x5,
 };
 
 enum CISpecialKeyMapping

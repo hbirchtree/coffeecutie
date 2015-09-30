@@ -66,6 +66,23 @@ static void coffee_multidraw_render(const CMultiDrawDataSet& set)
     set.drawcalls->drawbuffer->unbind();
     set.vao->unbind();
 }
+static void coffee_multidraw_render_safe(const CMultiDrawDataSet& set)
+{
+    for(const CGLDrawCall& call : set.drawcalls->drawcalls)
+    {
+        if(call.count<1)
+            continue;
+        glDrawElementsInstancedBaseVertexBaseInstance(
+                    GL_TRIANGLES,
+                    call.count,
+                    GL_UNSIGNED_INT,
+                    (void*)0,
+                    call.instanceCount,
+                    call.baseVertex,
+                    call.baseInstance);
+    }
+}
+
 template<typename DataType>
 static void _coffee_bufferload_vector(const std::vector<DataType>& source, CBuffer* buffer){
     szptr datasz = source.size()*sizeof(DataType);

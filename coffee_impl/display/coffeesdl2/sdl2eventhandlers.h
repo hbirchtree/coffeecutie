@@ -357,8 +357,6 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     }
     }
 
-    cDebug("Controller: %i, state=%i,type=%i",dev.which,state,dev.type);
-
     c.state =
             ((dev.which<<12)&CIControllerAtomicUpdateEvent::ControllerMask) |
             ((state)&CIControllerAtomicUpdateEvent::StateMask);

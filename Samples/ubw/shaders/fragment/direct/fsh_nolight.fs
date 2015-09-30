@@ -1,8 +1,5 @@
 #version 330
 
-uniform mat4 camera;
-uniform mat4 model;
-
 // material settings
 uniform struct Material {
 	sampler2D diffuseSampler;
@@ -22,7 +19,7 @@ void main() {
 
     //diffuse
     vec3 diffuse = surfaceColor.rgb*mtl.colorMultiplier;
-    
+
     //final color (after gamma correction)
     vec3 gamma = vec3(1.0/1.3);
     finalColor = vec4(pow(diffuse, gamma), surfaceColor.a);

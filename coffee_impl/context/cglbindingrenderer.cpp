@@ -153,9 +153,9 @@ void CGLBindingRenderer::bindingTerminate()
 {
 }
 
-cstring const* CGLBindingRenderer::extensions()
+cstring CGLBindingRenderer::extensions()
 {
-    return &m_extensions;
+    return m_extensions;
 }
 
 } // namespace CDisplay

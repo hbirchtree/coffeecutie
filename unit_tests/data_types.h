@@ -3,7 +3,7 @@
 
 #include "coffee.h"
 #include "coffee/cdebug.h"
-#include "coffee_impl/graphics/cgraphicsdata.h"
+#include "coffee/cmath.h"
 
 #include <glbinding/gl/gl.h>
 
@@ -23,7 +23,7 @@ using namespace Coffee;
 static void vector2_test()
 {
     CVec2 from_coffee(1.2f,3.4f);
-    glm::vec2 *to_glm = reinterpret_cast<glm::vec2*>(&from_coffee);
+    CMath::vec2 *to_glm = reinterpret_cast<CMath::vec2*>(&from_coffee);
 
     //Test for XY component, GLM to Coffee
     CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y));
@@ -35,7 +35,7 @@ static void vector2_test()
 static void vector3_test()
 {
     CVec3 from_coffee(1.2f,3.4f,5.6f);
-    glm::vec3 *to_glm = reinterpret_cast<glm::vec3*>(&from_coffee);
+    CMath::vec3 *to_glm = reinterpret_cast<CMath::vec3*>(&from_coffee);
 
     //Test for XYZ component, Coffee to GLM
     CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z));
@@ -50,7 +50,7 @@ static void vector3_test()
 static void vector4_test()
 {
     CVec4 from_coffee(1.2f,3.4f,5.6f,7.8f);
-    glm::vec4 *to_glm = reinterpret_cast<glm::vec4*>(&from_coffee);
+    CMath::vec4 *to_glm = reinterpret_cast<CMath::vec4*>(&from_coffee);
 
     //Test for XYZW component, Coffee to GLM
     CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z&&from_coffee.w==to_glm->w));
@@ -62,7 +62,7 @@ static void vector4_test()
 static void quaternion_test()
 {
     CQuat from_coffee(1.2f,3.4f,5.6f,7.8f);
-    glm::quat *to_glm = reinterpret_cast<glm::quat*>(&from_coffee);
+    CMath::quat *to_glm = reinterpret_cast<CMath::quat*>(&from_coffee);
 
     CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z&&from_coffee.w==to_glm->w));
 }
@@ -73,7 +73,7 @@ static void matrix_test()
     from_coffee.m[0][0] = 1.f;
     from_coffee.m[2][3] = 2.f;
     from_coffee.m[3][1] = 3.f;
-    glm::mat4 *to_glm = reinterpret_cast<glm::mat4*>(&from_coffee);
+    CMath::mat4 *to_glm = reinterpret_cast<CMath::mat4*>(&from_coffee);
 
     CASSERT((from_coffee.m[0][0]==(*to_glm)[0][0]&&
             from_coffee.m[2][3]==(*to_glm)[2][3]&&

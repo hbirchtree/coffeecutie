@@ -25,8 +25,11 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
+    fetchGLExtensions();
+
     CGraphicsQuirks::CFeatureSet quirks;
     quirks.extensions = extensions();
+    CGraphicsQuirks::coffee_quirks_set(&quirks);
 
     double delta = contextTime();
     double deltaT = 0;
@@ -38,6 +41,12 @@ void CDRenderer::run()
 
     game = new game_context;
     game->features = &quirks;
+
+    //We set the function pointer that works for the set quirks
+    if(quirks.render_multidraw)
+        game->renderfun = coffee_multidraw_render;
+    else
+        game->renderfun = coffee_multidraw_render_safe;
 
     if(!coffee_test_load(game))
         return;
@@ -74,10 +83,10 @@ void CDRenderer::run()
         //Rendering part
 
         game->transforms.transforms.d[0].rotation =
-                glm::normalize(
-                    glm::quat(2,0,0,-0.1*deltaT)*
+                CMath::normalize(
+                    CMath::quat(2,0,0,-0.1*deltaT)*
                     game->transforms.transforms.d[0].rotation);
-        game->transforms.cameras.d[0].position.z = std::fmod(contextTime()*4,90.0);
+        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
         coffee_render_test(game,deltaT);
 
@@ -161,17 +170,13 @@ void CDRenderer::eventIHandle(const CIEvent *event)
                kev->key,kev->mod,kev->scan,&kev->key);
         if(kev->key==CK_Escape)
             this->closeWindow();
-        if(kev->key==CK_Up&&!(kev->mod&CIKeyEvent::PressedModifier))
-            game->transforms.cameras.d[0].position.y -= 5.0;
+        if(kev->key==CK_Up&&kev->mod&CIKeyEvent::PressedModifier)
+            game->transforms.cameras.d[0].position.y -= 0.05;
+        if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
+            game->transforms.cameras.d[0].position.y += 0.05;
     }
-    else if(event->type==CIEvent::Controller){
-        const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
-        if(jev->axis())
-            cDebug("Axis: enum=%i,value=%f",jev->index(),jev->value);
-        else
-            cDebug("Button: enum=%i,state=%i",jev->index(),jev->buttonState());
-    }
-    else if(event->type==CIEvent::ControllerEv){
+    else if(event->type==CIEvent::ControllerEv)
+    {
         const CIControllerAtomicUpdateEvent* jev =
                 (const CIControllerAtomicUpdateEvent*)&event[1];
         if(jev->connected()&&!jev->remapped()){
@@ -180,6 +185,32 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         }else if(!jev->connected()){
             cDebug("Removed controller: idx=%i,name=%s",jev->controller(),jev->name);
             _controllers_handle(jev);
+        }
+    }
+    else if(event->type==CIEvent::Controller)
+    {
+
+        //TODO: Create joystick filters
+        //Allow buttons to have repeated state
+        //Filter out centering of joystick (that is, movement towards its center)
+
+        const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
+        if(jev->axis())
+        {
+            if(CMath::fabs(jev->value)<0.1)
+                return;
+            switch(jev->index()){
+            case CK_AXIS_LEFT_X:{
+                game->transforms.cameras.d[0].position.x -= jev->value/32000.f;
+                break;
+            }
+            case CK_AXIS_LEFT_Y:{
+                game->transforms.cameras.d[0].position.y -= jev->value/32000.f;
+                break;
+            }
+            default:
+                break;
+            }
         }
     }
 }

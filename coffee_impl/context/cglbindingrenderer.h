@@ -32,7 +32,7 @@ protected:
     CString m_versionString;
     int m_libraryRevision = 0;
 
-    cstring const* extensions();
+    cstring extensions();
 
 private:
     cstring_w m_extensions = nullptr;

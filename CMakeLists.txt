@@ -25,6 +25,7 @@ set ( CoffeeCore_HDRS
         coffee/cfiles.h
         coffee/cregex.h
         coffee/cinput_keymap.h
+        coffee/cmath.h
 
         coffee_impl/assimp/cassimpimporters.h
         coffee_impl/assimp/assimpfun.h
@@ -68,7 +69,7 @@ set ( CoffeeCore_HDRS
         plat/windows/win_wm.h
         plat/windows/win_core.h
 
-	plat/environment_details.h
+        plat/environment_details.h
         plat/argument_parse.h
         plat/platform_detect.h
 
@@ -76,8 +77,8 @@ set ( CoffeeCore_HDRS
         )
 
 set ( CoffeeTest_SRCS
-	main.cpp
-	)
+        main.cpp
+        )
 
 set ( CoffeeCore_SRCS
 

@@ -2,10 +2,7 @@
 #define CGRAPHICSDATA_H
 
 #include "coffee.h"
-
-#include <glm/glm/glm.hpp>
-#include <glm/glm/gtc/type_ptr.hpp>
-#include <glm/glm/gtc/matrix_transform.hpp>
+#include "coffee/cmath.h"
 
 namespace Coffee{
 namespace CGraphicsData{
@@ -28,46 +25,46 @@ struct CGCamera
     CZField     zVals;
     scalar      fieldOfView      = 90.f;
 
-    glm::vec3   position;
-    glm::quat   rotation;
+    CMath::vec3   position;
+    CMath::quat   rotation;
 
     CRectF      orthoview;
 
-    glm::mat4 matrix;
+    CMath::mat4 matrix;
 
     void genPerspective(){
-        matrix = glm::perspective(glm::radians(fieldOfView),
+        matrix = CMath::perspective(CMath::radians(fieldOfView),
                                   aspect,
                                   zVals.near,zVals.far);
         rotate();
         translate();
     }
     void genOrthographic(){
-        matrix = glm::ortho(orthoview.x,orthoview.w,orthoview.y,orthoview.h,
+        matrix = CMath::ortho(orthoview.x,orthoview.w,orthoview.y,orthoview.h,
                                   zVals.near,zVals.far);
         rotate();
         translate();
     }
     void rotate(){
-        matrix *= glm::mat4_cast(rotation);
+        matrix *= CMath::mat4_cast(rotation);
     }
     void translate(){
-        matrix = glm::translate(matrix,position);
+        matrix = CMath::translate(matrix,position);
     }
 };
 
 struct CModelTransform
 {
-    glm::vec3   position;
-    glm::quat   rotation;
-    glm::vec3   scale;
+    CMath::vec3   position;
+    CMath::quat   rotation;
+    CMath::vec3   scale;
 
-    glm::mat4 matrix;
+    CMath::mat4 matrix;
 
     void genMatrix(){
-        matrix = glm::scale(glm::mat4(),scale);
-        matrix = glm::translate(matrix,position)
-                * glm::mat4_cast(rotation);
+        matrix = CMath::scale(CMath::mat4(),scale);
+        matrix = CMath::translate(matrix,position)
+                * CMath::mat4_cast(rotation);
     }
 };
 
