@@ -26,6 +26,9 @@ typedef float               scalar;
 typedef double              bigscalar;
 typedef int8                byte;
 typedef uint8               ubyte;
+
+typedef unsigned short      ushort;
+
 //Your typical C-string
 typedef const byte*         cstring;
 typedef byte*               cstring_w;
