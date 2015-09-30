@@ -54,7 +54,7 @@ set ( CoffeeCore_HDRS
         coffee_impl/graphics/cuniformchunk.h
         coffee_impl/graphics/ctransformcomputer.h
 
-	coffee_impl/image/cimage.h
+        coffee_impl/image/cimage.h
 
         coffee_impl/input/cinput_eventhandling.h
 
@@ -101,6 +101,8 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/cgraphicsdata.cpp
 
         coffee_impl/rendering/cmultidrawgraph.cpp
+
+        include/stb/stb_vorbis.c
         )
 
 if(NOT WIN32)

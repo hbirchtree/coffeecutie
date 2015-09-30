@@ -69,9 +69,9 @@ void CDRenderer::run()
     CElapsedTimerMicro *swap = new CElapsedTimerMicro;
 
     setSwapInterval(0);
-    setWindowTitle(cStringFormat("%s renderer (init time: %fs)",
-                                 m_contextString.c_str(),
-                                 contextTime()));
+//    setWindowTitle(cStringFormat("%s renderer (init time: %fs)",
+//                                 m_contextString.c_str(),
+//                                 contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
     coffee_prepare_test(game);

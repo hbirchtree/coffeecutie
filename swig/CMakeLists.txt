@@ -24,6 +24,8 @@ set ( CoffeeCore_SRCS
         ../coffee_impl/graphics/cgraphicsdata.cpp
 
         ../coffee_impl/rendering/cmultidrawgraph.cpp
+
+        ../include/stb/stb_vorbis.c
         )
 
 find_package(SWIG REQUIRED)

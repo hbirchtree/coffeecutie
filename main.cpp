@@ -3,7 +3,7 @@
 #include "plat/argument_parse.h"
 #include "unit_tests/data_types.h"
 #include "plat/environment_details.h"
-#include "coffee_impl/image/cimage.h"
+#include "coffee_impl/audio/caudio.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
@@ -12,22 +12,18 @@ int main(int argc, char** argv)
 {
     cDebug("Settings directory: %s",
            coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time"));
-    cDebug("Program directory: %s",
+    cDebug("Program directory:  %s",
            coffee_get_application_dir());
-    cDebug("Launching from     %s",coffee_executable_name());
+    cDebug("Launching from      %s",coffee_executable_name());
 
-    CResources::CResource src("ubw/models/textures/gear.png");
-    CResources::CResource out("gear.png");
+    CResources::CResource src("/home/havard/Skrivebord/healing.ogg");
     src.read_data();
-    CStbImageLib::CStbImage img;
-    CStbImageLib::coffee_stb_image_load(&src,&img);
-    CStbImageLib::coffee_stb_image_resize(&img,CSize(256,256),4);
-    CStbImageLib::coffee_stb_image_save_png(&out,&img);
+    CStbAudio::CStbAudioSample smp;
 
-    cDebug("Image: %ix%i, %i bpp",img.size.w,img.size.h,img.bpp);
-    cDebug("Image out: %lld",out.size);
+    CStbAudio::coffee_stb_audio_vorbis_load(&smp,&src);
 
-    out.save_data();
+    cDebug("Audio sample: samples=%i,samplerate=%i,channels=%i,size=%i",
+           smp.fmt.samples,smp.fmt.samplerate,smp.fmt.channels,src.size);
 
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();

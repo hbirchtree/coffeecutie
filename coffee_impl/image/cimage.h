@@ -24,7 +24,7 @@ struct CStbImage
     int bpp = 0;
 };
 
-static bool coffee_stb_image_load(CResource* src, CStbImage* target)
+static bool coffee_stb_image_load(CStbImage* target, CResource* src)
 {
     target->data = stbi_load_from_memory(
                 (const ubyte*)src->data,src->size,

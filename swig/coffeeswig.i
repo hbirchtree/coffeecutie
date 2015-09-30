@@ -20,6 +20,9 @@
 #include "../coffee_impl/assimp/cassimptypes.h"
 #include "../coffee_impl/assimp/cassimpimporters.h"
 
+#include "../coffee_impl/audio/caudio.h"
+#include "../coffee_impl/image/cimage.h"
+
 %}
 
 %include "../coffee.h"
@@ -46,6 +49,9 @@ using namespace Coffee::CResources;
 
 %include "../coffee_impl/assimp/cassimptypes.h"
 %include "../coffee_impl/assimp/cassimpimporters.h"
+
+%include "../coffee_impl/audio/caudio.h"
+%include "../coffee_impl/image/cimage.h"
 
 %ignore Coffee::CGraphicsWrappers::CGLState;
 %ignore Coffee::CGraphicsWrappers::CGLReport;
