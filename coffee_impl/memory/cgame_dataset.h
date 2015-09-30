@@ -2,6 +2,7 @@
 #define CGAME_DATASET
 
 #include "coffee_impl/graphics/cbuffer.h"
+#include "coffee_impl/graphics/ctexture.h"
 #include "coffee_impl/rendering/cmultidrawgraph.h"
 #include "coffee_impl/assimp/cassimptypes.h"
 #include "coffee_impl/graphics/cuniformchunk.h"
@@ -31,6 +32,11 @@ struct game_shader_manager
     chunk_mem<CShader>          shaders;
     chunk_mem<CShaderProgram>   programs;
     chunk_mem<CPipeline>        pipelines;
+};
+
+struct game_texture_storage
+{
+
 };
 
 typedef chunk_mem<CResource> game_resource_chunk;

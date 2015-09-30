@@ -351,6 +351,8 @@ static bool coffee_test_load(game_context* ctxt)
 
 static void coffee_prepare_test(game_context* ctxt)
 {
+
+
     coffee_multidraw_bind_states(ctxt->renderdata.datasets.d[0]);
     ctxt->renderdata.buffers.d[2].bind();
     ctxt->renderdata.uniformchunks.d[0].buffer->bindRange();

@@ -13,3 +13,6 @@
 [submodule "libs/assimp"]
 	path = libs/assimp
 	url = https://github.com/hbirchtree/assimp.git
+[submodule "include/stb"]
+	path = include/stb
+	url = https://github.com/nothings/stb.git

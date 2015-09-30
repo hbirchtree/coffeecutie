@@ -86,7 +86,7 @@ void CDRenderer::run()
                 CMath::normalize(
                     CMath::quat(2,0,0,-0.1*deltaT)*
                     game->transforms.transforms.d[0].rotation);
-//        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
+        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
         coffee_render_test(game,deltaT);
 
