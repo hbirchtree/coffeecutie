@@ -100,7 +100,7 @@ static bool coffee_test_load(game_context* ctxt)
 
     //Specify VAO for vertex data, we will only use one for now
 
-    szptr numGears = 1000;
+    szptr numGears = 100;
 
     //We have two formats
     coffee_mem_expand_array<CVertexFormat>(&ctxt->vertexdata.descriptor.formats,2);
@@ -190,6 +190,10 @@ static bool coffee_test_load(game_context* ctxt)
         std::vector<byte> *vertexdata = new std::vector<byte>();
 
         std::function<void(CAssimpMesh*)> lmesh = [=](CAssimpMesh* mesh){
+
+	    CResource meshtest(cStringFormat("ubw/%s.mesh",mesh->name).c_str());
+	    coffee_dump_mesh(mesh,&meshtest);
+
             for(int i=0;i<mesh->numBuffers;i++)
                 if(mesh->bufferType[i]==CAssimpMesh::PositionType){
                     coffee_mesh_fill_vertexdata(*vertexdata,mesh->buffers[i],
@@ -199,16 +203,15 @@ static bool coffee_test_load(game_context* ctxt)
             coffee_multidraw_create_call(*multidraw,mesh);
         };
 
-        CResource meshtest("ubw/ubw_gear.mesh");
-        coffee_dump_mesh(d->meshes[4],&meshtest);
-
 
         //Future improvement: Do this in parallel with reserved memory chunks
-        lmesh(d->meshes[4]);
+	lmesh(d->meshes[4]);
 //        lmesh(d->meshes[1]);
         lmesh(d->meshes[3]);
 
-        multidraw->drawcalls->drawcalls.data()[0].instanceCount = numGears-2;
+	multidraw->drawcalls->drawcalls.data()[0].instanceCount = numGears-4;
+	multidraw->drawcalls->drawcalls.data()[1].baseInstance = numGears-4;
+	multidraw->drawcalls->drawcalls.data()[1].instanceCount = 2;
 
         //GL calls
         coffee_multidraw_load_buffer(vbuffer,*vertexdata);
@@ -233,7 +236,7 @@ static bool coffee_test_load(game_context* ctxt)
             cam->fieldOfView = 120.f;
             cam->aspect = 1.6f;
             cam->zVals.far = 100.f;
-            cam->zVals.near = 0.1f;
+	    cam->zVals.near = 0.1f;
             cam->genPerspective();
 
             CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
@@ -322,7 +325,7 @@ static bool coffee_test_load(game_context* ctxt)
 
             std::vector<CMath::mat4> transform;
             transform.reserve(numGears);
-            for(szptr i=1;i<numGears;i++){
+	    for(szptr i=1;i<numGears-2;i++){
                 mod->position.z = (float)(-i);
                 mod->position.y = (float)((i%11)/2);
                 mod->genMatrix();
@@ -331,7 +334,11 @@ static bool coffee_test_load(game_context* ctxt)
 
             mod->position.x = mod->position.y = 0.f;
             mod->position.z = -1.f;
-            CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
+	    mod->genMatrix();
+	    CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
+
+	    transform.push_back(mod->matrix);
+	    transform.push_back(mod->matrix);
 
             memcpy(mbuffer->data,
                    transform.data(),

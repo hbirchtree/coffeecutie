@@ -19,6 +19,21 @@ namespace Coffee{
 namespace CResourceTypes{
 namespace CAssimp{
 
+struct assimp_mesh_intermediate
+{
+    szptr bufferSize	= 0;
+    szptr vertices	= 0;
+    szptr faces		= 0;
+
+    uint32 bufferCnt	= 0;
+};
+
+template<typename EType>
+static void assimp_create_attrib()
+{
+
+}
+
 static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     szptr vertices = meshdata->mNumVertices;
     szptr faces    = meshdata->mNumFaces;
@@ -60,9 +75,9 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
     bufferSize+=bufferCnt*sizeof(uint32);
     bufferSize+=bufferCnt*sizeof(char*);
 
-    char* buffer = reinterpret_cast<char*>(calloc(1,bufferSize));
+    char* buffer = (char*)(calloc(1,bufferSize));
 
-    CAssimpMesh* mesh = reinterpret_cast<CAssimpMesh*>(&buffer[0]);
+    CAssimpMesh* mesh = (CAssimpMesh*)(&buffer[0]);
 
     mesh->chunk_size = bufferSize;
 
@@ -71,19 +86,19 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
 
     mesh->numBuffers = bufferCnt;
 
-    uint8* typeBuffer = reinterpret_cast<uint8*>(&buffer[bufferSize]);
+    uint8* typeBuffer = (uint8*)(&buffer[bufferSize]);
     mesh->bufferType = typeBuffer;
     bufferSize+=bufferCnt*sizeof(byte);
 
-    uint8* elBuffer = reinterpret_cast<uint8*>(&buffer[bufferSize]);
+    uint8* elBuffer = (uint8*)(&buffer[bufferSize]);
     mesh->elementSizes = elBuffer;
     bufferSize+=bufferCnt*sizeof(byte);
 
-    uint32* sizeBuffer = reinterpret_cast<uint32*>(&buffer[bufferSize]);
+    uint32* sizeBuffer = (uint32*)(&buffer[bufferSize]);
     mesh->bufferSize = sizeBuffer;
     bufferSize+=bufferCnt*sizeof(uint32);
 
-    char** listBuffer = reinterpret_cast<char**>(&buffer[bufferSize]);
+    char** listBuffer = (char**)(&buffer[bufferSize]);
     mesh->buffers = listBuffer;
     bufferSize+=bufferCnt*sizeof(char*);
 
@@ -97,7 +112,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
         typeBuffer[bufferCnt] = CAssimpMesh::PositionType;
         sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
-        CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
+	CVec3* list = (CVec3*)(listBuffer[bufferCnt]);
 
         for(i=0;i<vertices;i++){
             aiVector3D* vec = &meshdata->mVertices[i];
@@ -115,7 +130,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
         typeBuffer[bufferCnt] = CAssimpMesh::NormalType;
         sizeBuffer[bufferCnt] = vertices;
         listBuffer[bufferCnt] = &buffer[bufferSize];
-        CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
+	CVec3* list = (CVec3*)(listBuffer[bufferCnt]);
 
         for(i=0;i<vertices;i++){
             aiVector3D* vec = &meshdata->mNormals[i];
@@ -134,7 +149,7 @@ static  CAssimpMesh*        importMesh(aiMesh* meshdata){
             typeBuffer[bufferCnt] = CAssimpMesh::BitanType;
             sizeBuffer[bufferCnt] = vertices;
             listBuffer[bufferCnt] = &buffer[bufferSize];
-            CVec3* list = reinterpret_cast<CVec3*>(listBuffer[bufferCnt]);
+	    CVec3* list = (CVec3*)(listBuffer[bufferCnt]);
 
             for(i=0;i<vertices;i++){
                 aiVector3D* vec = &meshdata->mTangents[i];

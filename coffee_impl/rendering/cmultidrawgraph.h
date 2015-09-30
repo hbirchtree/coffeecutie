@@ -76,7 +76,7 @@ static void coffee_multidraw_render_safe(const CMultiDrawDataSet& set)
                     GL_TRIANGLES,
                     call.count,
                     GL_UNSIGNED_INT,
-                    (void*)0,
+                    (void*)(sizeof(GLuint)*call.firstIndex),
                     call.instanceCount,
                     call.baseVertex,
                     call.baseInstance);
