@@ -3,6 +3,7 @@
 #include "plat/argument_parse.h"
 #include "unit_tests/data_types.h"
 #include "plat/environment_details.h"
+#include "coffee_impl/image/cimage.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
@@ -14,6 +15,19 @@ int main(int argc, char** argv)
     cDebug("Program directory: %s",
            coffee_get_application_dir());
     cDebug("Launching from     %s",coffee_executable_name());
+
+    CResources::CResource src("ubw/models/textures/gear.png");
+    CResources::CResource out("gear.png");
+    src.read_data();
+    CStbImageLib::CStbImage img;
+    CStbImageLib::coffee_stb_image_load(&src,&img);
+    CStbImageLib::coffee_stb_image_resize(&img,CSize(256,256),4);
+    CStbImageLib::coffee_stb_image_save_png(&out,&img);
+
+    cDebug("Image: %ix%i, %i bpp",img.size.w,img.size.h,img.bpp);
+    cDebug("Image out: %lld",out.size);
+
+    out.save_data();
 
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();

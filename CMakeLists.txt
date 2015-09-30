@@ -54,6 +54,8 @@ set ( CoffeeCore_HDRS
         coffee_impl/graphics/cuniformchunk.h
         coffee_impl/graphics/ctransformcomputer.h
 
+	coffee_impl/image/cimage.h
+
         coffee_impl/input/cinput_eventhandling.h
 
         coffee_impl/memory/cgame_dataset.h
@@ -103,6 +105,7 @@ set ( CoffeeCore_SRCS
 
 if(NOT WIN32)
     find_package(X11)
+    find_library(M_LIB m)
 endif()
 
 include(ExternalProject)
@@ -126,7 +129,7 @@ if(NOT WIN32)
 endif()
 
 target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )
-target_link_libraries ( CoffeeLib "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )
+target_link_libraries ( CoffeeLib "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} ${M_LIB_LIBRARIES} )
 set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
