@@ -55,23 +55,7 @@ struct CAssimpMesh
 
         VColorType      = 0x7,
     };
-
-    //Byte offsets
-    szptr m_off_dbuffers = 0;
-    szptr m_off_tbuffers = 0;
-    szptr m_off_ebuffers = 0;
-    szptr m_off_sbuffers = 0;
 };
-
-static void refresh_ptrs(CAssimpMesh* mesh)
-{
-    //Fuck. Why did I do this? Why does it work?
-    //Cast mesh ptr to byte*, get address of the byte where it starts, cast said ptr
-    mesh->buffers = (cstring const*)&(((byte*)mesh)[mesh->m_off_dbuffers]);
-    mesh->bufferType = (const uint8*)&(((byte*)mesh)[mesh->m_off_tbuffers]);
-    mesh->bufferSize = (const uint32*)&(((byte*)mesh)[mesh->m_off_sbuffers]);
-    mesh->elementSizes = (const uint8*)&(((byte*)mesh)[mesh->m_off_ebuffers]);
-}
 
 static bool coffee_dump_mesh(CAssimpMesh* mesh, CResources::CResource* resource)
 {
