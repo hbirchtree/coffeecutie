@@ -38,6 +38,11 @@ struct CShaderProgram
 
     void storeProgram(CResources::CResource* out);
     bool fetchProgram(CResources::CResource* in);
+
+    GLint uniformLocation(cstring name);
+
+    void uniformBlockIndex(CUniformBlock *block);
+    void setUniformBlockBind(const CUniformBlock &block);
 };
 
 struct CShaderStageProgram

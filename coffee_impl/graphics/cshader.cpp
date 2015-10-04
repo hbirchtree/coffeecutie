@@ -30,13 +30,13 @@ void CPipeline::free()
 
 void CPipeline::attachStages(CShaderStageProgram *shader, UseProgramStageMask bits)
 {
-    cDebug("Pipeline attachment(SSP): ssp=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint32)bits);
+//    cDebug("Pipeline attachment(SSP): ssp=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint32)bits);
     glUseProgramStages(handle,shader->stage&bits,shader->handle);
 }
 
 void CPipeline::attachProgram(CShaderProgram *shader, UseProgramStageMask bits)
 {
-    cDebug("Pipeline attachment: prg=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint32)bits);
+//    cDebug("Pipeline attachment: prg=%i,ppl=%i,stg=%#x",shader->handle,handle,(uint32)bits);
     glUseProgramStages(handle,shader->stages&bits,shader->handle);
 }
 
@@ -63,7 +63,7 @@ bool CShader::compile(CResources::CResource *res, GLenum stage)
     if(res->size==0||!res->data)
         return false;
     const char* str = reinterpret_cast<const char*>(res->data);
-    cMsg("GL","Creating shader: %s",glbinding::Meta::getString(stage).c_str());
+//    cMsg("GL","Creating shader: %s",glbinding::Meta::getString(stage).c_str());
 
     handle = glCreateShader(stage);
     glShaderSource(handle,1,&str,nullptr);
@@ -160,6 +160,21 @@ bool CShaderProgram::fetchProgram(CResources::CResource *in)
     create();
     glProgramBinary(handle,format,&bytes[sizeof(GLenum)],in->size-sizeof(GLenum));
     return coffee_program_link_checklog(handle);
+}
+
+GLint CShaderProgram::uniformLocation(cstring name)
+{
+    glGetUniformLocation(handle,name);
+}
+
+void CShaderProgram::uniformBlockIndex(CUniformBlock *block)
+{
+    block->shaderIndex = glGetUniformBlockIndex(handle,block->name);
+}
+
+void CShaderProgram::setUniformBlockBind(const CUniformBlock &block)
+{
+    glUniformBlockBinding(handle,block.shaderIndex,block.blockBinding);
 }
 
 } // namespace CGraphicsWrappers

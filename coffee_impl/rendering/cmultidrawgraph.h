@@ -23,6 +23,7 @@ struct CMultiDrawCalls
 {
     std::vector<CGLDrawCall>    drawcalls;
     CBuffer*                    drawbuffer  = nullptr;
+    szptr                       vertexoffset = 0;
 };
 
 struct CMultiDrawDataSet
@@ -58,13 +59,9 @@ static void coffee_multidraw_bind_states(const CMultiDrawDataSet& set)
 }
 static void coffee_multidraw_render(const CMultiDrawDataSet& set)
 {
-    set.drawcalls->drawbuffer->bind();
-    set.vao->bind();
     glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,
                                 0,set.drawcalls->drawcalls.size(),
                                 sizeof(CGLDrawCall));
-    set.drawcalls->drawbuffer->unbind();
-    set.vao->unbind();
 }
 static void coffee_multidraw_render_safe(const CMultiDrawDataSet& set)
 {
@@ -143,6 +140,7 @@ static bool coffee_multidraw_create_call(CMultiDrawDataSet& set,CAssimpMesh* mes
         return false;
 
     call.firstIndex = set.index->indices.size();
+    call.baseVertex = set.drawcalls->vertexoffset;
     call.count = numIndices;
     call.instanceCount = 1;
 

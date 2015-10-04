@@ -38,10 +38,10 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
                importer.GetErrorString());
         return nullptr;
     }else{
-        cMsg("Assimp","Scene imported: cam=%i,lgt=%i,msh=%i,mat=%i,anm=%i,txt=%i",
-             scene->mNumCameras,scene->mNumLights,
-             scene->mNumMeshes,scene->mNumMaterials,
-             scene->mNumAnimations,scene->mNumTextures);
+//        cMsg("Assimp","Scene imported: cam=%i,lgt=%i,msh=%i,mat=%i,anm=%i,txt=%i",
+//             scene->mNumCameras,scene->mNumLights,
+//             scene->mNumMeshes,scene->mNumMaterials,
+//             scene->mNumAnimations,scene->mNumTextures);
     }
 
     CElapsedTimer timer;
@@ -80,7 +80,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
         }
     }
 
-    cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
+//    cMsg("Assimp","Elapsed time on import: %ld",timer.elapsed());
 
     importer.FreeScene();
 

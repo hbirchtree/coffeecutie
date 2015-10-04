@@ -54,6 +54,12 @@ public:
     bool isMouseGrabbed() const;
     void setMouseGrabbing(bool grab);
 
+    CPoint mousePosition() const;
+    void setMousePosition(const CPoint& pos);
+
+    bool relativeMouse() const;
+    void setRelativeMouse(bool enable);
+
     bool textInputMode() const;
     void setTextInputMode(bool state);
     void setTextArea(const CRect& area);

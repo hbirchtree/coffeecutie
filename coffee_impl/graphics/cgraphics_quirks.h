@@ -15,6 +15,7 @@ struct CFeatureSet
 
     bool    render_multidraw		= false;
     bool    render_ssbo_support		= false;
+    bool    render_bindless_texture     = false;
 };
 
 static bool coffee_quirks_query_extension(
@@ -27,7 +28,7 @@ static bool coffee_quirks_query_extension(
 static bool _quirk_extension(cstring extension, cstring allexts)
 {
     if(strstr(allexts,extension)){
-        cDebug("Enabling code for %s",extension);
+//        cDebug("Enabling code for %s",extension);
         return true;
     }else{
         cDebug("Extension %s not available",extension);
@@ -43,6 +44,10 @@ static void coffee_quirks_set(CFeatureSet* featureset)
 
     featureset->render_ssbo_support = _quirk_extension(
                 "GL_ARB_shader_storage_buffer_object",
+                featureset->extensions);
+
+    featureset->render_bindless_texture = _quirk_extension(
+                "GL_ARB_bindless_texture",
                 featureset->extensions);
 }
 

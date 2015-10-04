@@ -1,9 +1,13 @@
 using System;
+using System.Threading;
 
 namespace CoffeeSharp
 {
 	public class CoffeeSharpTest
 	{
+		public static CDRenderer renderer;
+		public static CDWindowProperties props;
+
 		public static void Main(String[] args)
 		{
 			Console.WriteLine ("Application directory: {0}\n" +
@@ -31,14 +35,24 @@ namespace CoffeeSharp
 
 			CGLContextVersion ctxtVer = new CGLContextVersion (3,3);
 
-			CDWindowProperties props = new CDWindowProperties ();
+			props = new CDWindowProperties ();
 			props.flags = (ushort)(CDWindowProperties.WindowState.Decorated | CDWindowProperties.WindowState.Windowed | CDWindowProperties.WindowState.Resizable);
 			props.monitor = 0;
 			props.contextProperties.flags = (ushort)(CGLContextProperties.ContextProperties.GLAutoResize | CGLContextProperties.ContextProperties.GLDebug | CGLContextProperties.ContextProperties.GLCoreProfile);
 			props.contextProperties.version = ctxtVer;
 			props.title = "Hello you!";
 
-			CDRenderer renderer = new CDRenderer ();
+			renderer = new CDRenderer ();
+
+			Thread renderThread = new Thread(thread_run);
+
+			renderThread.Start ();
+
+			renderThread.Join ();
+		}
+
+		public static void thread_run()
+		{
 			renderer.run (props);
 		}
 	}

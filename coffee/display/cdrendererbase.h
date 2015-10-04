@@ -80,6 +80,9 @@ public:
     virtual bool isMouseGrabbed() const = 0;
     virtual void setMouseGrabbing(bool) = 0;
 
+    virtual CPoint mousePosition() const                = 0;
+    virtual void setMousePosition(const CPoint& pos)    = 0;
+
     virtual bool textInputMode() const = 0;
     virtual void setTextInputMode(bool) = 0;
 

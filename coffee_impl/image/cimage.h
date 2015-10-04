@@ -29,7 +29,7 @@ static bool coffee_stb_image_load(CStbImage* target, CResource* src)
     target->data = stbi_load_from_memory(
                 (const ubyte*)src->data,src->size,
                 &target->size.w,&target->size.h,
-                &target->bpp,0);
+                &target->bpp,STBI_rgb_alpha);
     return true;
 }
 
@@ -59,7 +59,42 @@ static bool coffee_stb_image_save_png(CResource* target, CStbImage* src)
 
 static bool coffee_stb_image_save_tga(CResource* target, CStbImage* src)
 {
-    return stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
+    int out = stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
+    cDebug("Failure: %s",stbi_failure_reason());
+}
+
+static void coffee_stb_image_flip_vertical(CStbImage* src)
+{
+    int32 wdt = src->size.w;
+    szptr siz = src->bpp*src->size.w*src->size.h;
+
+    ubyte* data = (ubyte*)malloc(siz);
+
+    for(int32 i=0;i<siz;i+=wdt*src->bpp)
+    {
+        memcpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
+    }
+
+    free(src->data);
+    src->data = data;
+}
+
+static void coffee_stb_image_flip_horizontal(CStbImage* src)
+{
+    int32 bot = src->size.h;
+    int32 wdt = src->size.w;
+    szptr siz = src->bpp*src->size.w*src->size.h;
+
+    ubyte* data = (ubyte*)malloc(siz);
+
+    for(int32 i=0;i<bot;i++)
+        for(int32 j=0;j<wdt;j++)
+        {
+            memcpy(&data[(i*wdt+wdt-j)*src->bpp],&src->data[(i*wdt+j)*src->bpp],src->bpp);
+        }
+
+    free(src->data);
+    src->data = data;
 }
 
 } //CStbImageLib

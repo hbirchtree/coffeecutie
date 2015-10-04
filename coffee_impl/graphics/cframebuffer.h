@@ -38,16 +38,16 @@ struct CFramebuffer
         return value==GL_FRAMEBUFFER_COMPLETE;
     }
 
-    void attach2D(CTexture* texture, GLenum attachment, GLint level,
-                GLenum textureTarget, GLenum target = GL_FRAMEBUFFER)
+    void attach(CTexture* texture, GLenum attachment, GLint level)
     {
-        glFramebufferTexture2D(target,attachment,textureTarget,texture->handle,level);
+//        glFramebufferTexture2D(target,attachment,textureTarget,texture->handle,level);
+        glNamedFramebufferTexture(handle,attachment,texture->handle,level);
     }
     void attach3D(CTexture* texture, GLenum attachment, GLint level, GLint zoffset,
                 GLenum textureTarget, GLenum target = GL_FRAMEBUFFER)
     {
-        glFramebufferTexture3D(target,attachment,textureTarget,
-                               texture->handle,level,zoffset);
+//        glFramebufferTexture3D(target,attachment,textureTarget,
+//                               texture->handle,level,zoffset);
     }
 };
 

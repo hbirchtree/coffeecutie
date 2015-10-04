@@ -96,6 +96,7 @@
     <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_pointT_int_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_rectT_int_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_sizeT_int_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_Coffee__CRendering__CTest__game_context.cs" />
     <Compile Include="generated\SWIGTYPE_p_FILE.cs" />
     <Compile Include="generated\SWIGTYPE_p_a_3__float.cs" />
     <Compile Include="generated\SWIGTYPE_p_a_4__float.cs" />
@@ -110,6 +111,7 @@
     <Compile Include="generated\SWIGTYPE_p_p_unsigned_int.cs" />
     <Compile Include="generated\SWIGTYPE_p_short.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__functionT_void_fF_t.cs" />
+    <Compile Include="generated\SWIGTYPE_p_std__futureT_void_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__string.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__thread__id.cs" />
     <Compile Include="generated\SWIGTYPE_p_unsigned_char.cs" />
@@ -130,7 +132,6 @@
     <None Include="generated\cmake_install.cmake" />
     <None Include="generated\coffeeswigCSHARP_wrap.cxx" />
     <None Include="generated\coffeeswigPYTHON_wrap.cxx" />
-    <None Include="generated\libCoffee.so" />
     <None Include="generated\libCoffeeLib.so" />
     <None Include="generated\rules.ninja" />
     <None Include="generated\CMakeFiles\CMakeError.log" />
@@ -149,7 +150,6 @@
     <None Include="generated\CMakeFiles\3.2.2\CompilerIdC\a.out" />
     <None Include="generated\CMakeFiles\3.2.2\CompilerIdCXX\CMakeCXXCompilerId.cpp" />
     <None Include="generated\CMakeFiles\3.2.2\CompilerIdCXX\a.out" />
-    <None Include="generated\CMakeFiles\Coffee.dir\coffeeswigCSHARP_wrap.cxx.o" />
     <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\main.cpp.o" />
     <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee\cobject.cpp.o" />
     <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee\display\cdrendererbase.cpp.o" />
@@ -162,6 +162,7 @@
     <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\graphics\cshader.cpp.o" />
     <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\graphics\cuniformchunk.cpp.o" />
     <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\rendering\cmultidrawgraph.cpp.o" />
+    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\include\stb\stb_vorbis.c.o" />
     <None Include="generated\CMakeFiles\_Coffee.dir\coffeeswigPYTHON_wrap.cxx.o" />
   </ItemGroup>
 </Project>

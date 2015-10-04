@@ -4,12 +4,12 @@
 #include "cglbindingrenderer.h"
 
 namespace Coffee {
-namespace CRendering{
-namespace CTest{
+namespace CMemoryManagement{
 struct game_context;
 }
-}
-using namespace CRendering::CTest;
+
+using namespace CMemoryManagement;
+
 namespace CGraphicsWrappers{
 struct CGLState;
 }
@@ -30,10 +30,10 @@ public:
 
     void eventWHandle(const CDEvent *event);
     void eventIHandle(const CIEvent *event);
-private:
-    CGLState* _dump_state() const;
 
+private:
     game_context* game = nullptr;
+
 };
 
 } // namespace CDisplay

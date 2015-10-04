@@ -3,6 +3,7 @@
 
 #include "glbinding.h"
 #include "coffee.h"
+#include "coffee_impl/image/cimage.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
@@ -12,7 +13,7 @@ struct CTexture
     GLenum          textureType     = GL_NONE;
     GLuint          handle          = 0;
     GLsizei         levels          = 1;
-    GLenum          components      = GL_NONE;
+    GLenum          format          = GL_NONE;
 
     void create(){
         glGenTextures(1,&handle);
@@ -42,6 +43,31 @@ struct CTexture
     }
 };
 
+static GLuint64 coffee_tex_get_handle(CTexture* tex)
+{
+    return glGetTextureHandleARB(tex->handle);
+}
+
+static void coffee_tex_make_resident(GLuint64 handle)
+{
+    glMakeTextureHandleResidentARB(handle);
+}
+
+static void coffee_tex_make_nonresident(GLuint64 handle)
+{
+    glMakeTextureHandleNonResidentARB(handle);
+}
+
+static void coffee_tex_download_texture(
+        CTexture* tex, GLint level,
+        szptr size, GLenum format, CStbImageLib::CStbImage* img)
+{
+    img->data = (ubyte*)malloc(size);
+    glGetTextureImage(
+                tex->handle,level,format,
+                GL_UNSIGNED_BYTE,size,img->data);
+}
+
 namespace CTextureTools{
 struct CTextureFormat
 {
@@ -57,8 +83,7 @@ struct CTextureFormat
 };
 struct CTextureData
 {
-    const byte*     data        = nullptr;
-    szptr           size        = 0;
+    const void*     data        = nullptr;
     byte            dimensions  = 0;
     szptr*          lengths     = nullptr;
     GLenum          format      = GL_NONE; //This is the format of the image
@@ -91,32 +116,32 @@ static void coffee_create_texturesize(CTextureData* val, Sizes... sizes)
     _coffee_create_texturelist(val->lengths,0,sizes...);
 }
 
-static bool coffee_texture2d_store(CTexture* texture, CTextureData* data)
+static bool coffee_texture2d_store(CTexture* texture, CTextureData* data, GLint level)
 {
     if(data->dimensions!=2)
         return false;
-    glTexImage2D(texture->textureType,texture->levels,static_cast<GLint>(texture->components),
+    glTextureSubImage2D(texture->handle,level,0,0,
                  data->lengths[0],data->lengths[1],
-            0,data->format,data->datatype,data->data);
+            texture->format,data->datatype,data->data);
     return true;
 }
-static bool coffee_texture3d_store(CTexture* texture, CTextureData* data)
+static bool coffee_texture3d_store(CTexture* texture, CTextureData* data, GLint level)
 {
     if(data->dimensions!=3)
         return false;
-    glTexImage3D(texture->textureType,texture->levels,static_cast<GLint>(texture->components),
+    glTexImage3D(texture->textureType,level,static_cast<GLint>(data->format),
                  data->lengths[0],data->lengths[1],data->lengths[2],
-            0,data->format,data->datatype,data->data);
+            0,texture->format,data->datatype,data->data);
     return true;
 }
 
-static bool coffee_texture_cube_store(CTexture* texture, GLenum type, CTextureData* data)
+static bool coffee_texture_cube_store(CTexture* texture, GLenum type, CTextureData* data, GLint level)
 {
     if(data->dimensions!=3)
         return false;
-    glTexImage3D(type,texture->levels,static_cast<GLint>(texture->components),
+    glTextureSubImage3D(texture->handle,level,0,0,0,
                  data->lengths[0],data->lengths[1],data->lengths[2],
-            0,data->format,data->datatype,data->data);
+            texture->format,data->datatype,data->data);
     return true;
 }
 
@@ -124,7 +149,7 @@ static bool coffee_texture2d_define(CTexture* texture, CTextureData* data)
 {
     if(data->dimensions!=2)
         return false;
-    glTexStorage2D(texture->textureType,texture->levels,data->format,
+    glTextureStorage2D(texture->handle,texture->levels,data->format,
                    data->lengths[0],data->lengths[1]);
     return true;
 }
@@ -132,7 +157,7 @@ static bool coffee_texture3d_define(CTexture* texture, CTextureData* data)
 {
     if(data->dimensions!=3)
         return false;
-    glTexStorage3D(texture->textureType,texture->levels,data->format,
+    glTextureStorage3D(texture->handle,texture->levels,texture->format,
                    data->lengths[0],data->lengths[1],data->lengths[2]);
     return true;
 }

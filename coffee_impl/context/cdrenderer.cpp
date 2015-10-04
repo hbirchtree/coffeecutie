@@ -4,6 +4,7 @@
 
 #include "coffee/cfunctional.h"
 #include "coffee_impl/sample/base_case.h"
+#include "coffee_impl/graphics/cframebuffer.h"
 #include "coffee_impl/graphics/cgraphics_quirks.h"
 
 #include "plat/plat_wm.h"
@@ -48,20 +49,28 @@ void CDRenderer::run()
     else
         game->renderfun = coffee_multidraw_render_safe;
 
+    CResource mdata("ubw/models/grass.fbx");
+    mdata.read_data();
+    CAssimpData* d = CAssimpImporters::importResource(&mdata,mdata.resource());
+    for(szptr i=0;i<d->numMeshes;i++)
+        game->meshes.push_back(d->meshes[i]);
+
     if(!coffee_test_load(game))
         return;
 
     showWindow();
 
-#ifdef COFFEE_LINUX
+//#ifdef COFFEE_LINUX
 
-    CDWindow* sdlwin = this->window();
+//    CDWindow* sdlwin = this->window();
 
-    CoffeePlat::X11::set_alwaysontop(sdlwin->wininfo.x11.display,sdlwin->wininfo.x11.window,true);
+//    CoffeePlat::X11::set_alwaysontop(sdlwin->wininfo.x11.display,sdlwin->wininfo.x11.window,true);
 
-#endif
+//#endif
 
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
+
     glClearColor(0.175f,0.175f,0.175f,1.f);
     glViewport(0,0,m_properties.size.w,m_properties.size.h);
 
@@ -69,12 +78,26 @@ void CDRenderer::run()
     CElapsedTimerMicro *swap = new CElapsedTimerMicro;
 
     setSwapInterval(0);
-//    setWindowTitle(cStringFormat("%s renderer (init time: %fs)",
-//                                 m_contextString.c_str(),
-//                                 contextTime()));
     cMsg("Coffee","Init time: %fs",contextTime());
 
     coffee_prepare_test(game);
+
+    CFramebuffer fb;
+    CTexture fbtex;
+    fb.create();
+    fbtex.create();
+    fbtex.textureType = GL_TEXTURE_2D;
+    fbtex.levels = 1;
+    CTextureTools::CTextureData texd;
+    texd.format = GL_RGBA8;
+    fbtex.bind();
+    fbtex.unbind();
+    fb.bind();
+    fb.unbind();
+    CTextureTools::coffee_create_texturesize(&texd,1280,720);
+    CTextureTools::coffee_texture2d_define(&fbtex,&texd);
+    fb.attach(&fbtex,GL_COLOR_ATTACHMENT0,0);
+    fb.valid();
 
     while(!closeFlag()){
         delta = contextTime();
@@ -82,13 +105,17 @@ void CDRenderer::run()
         swap->start();
         //Rendering part
 
+
         game->transforms.transforms.d[0].rotation =
                 CMath::normalize(
-                    CMath::quat(2,0,0,-0.1*deltaT)*
+                    CMath::quat(2,0,-0.1*deltaT,0)*
                     game->transforms.transforms.d[0].rotation);
-        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
+//        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
+//        fb.bind(GL_DRAW_FRAMEBUFFER);
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         coffee_render_test(game,deltaT);
+//        fb.unbind(GL_DRAW_FRAMEBUFFER);
 
         // END Rendering part
         rendertime = swap->elapsed();
@@ -119,9 +146,25 @@ void CDRenderer::run()
         }
     }
 
-    coffee_unload_test(game);
+
+
+    CResource texture("test.png");
+    CStbImageLib::CStbImage img;
+    img.size = windowSize();
+    img.bpp = 4;
+    swap->start();
+    coffee_tex_download_texture(&fbtex,0,4*windowSize().w*windowSize().h,GL_RGBA,&img);
+    cDebug("Fetching time: %lld",swap->elapsed());
+    swap->start();
+    CStbImageLib::coffee_stb_image_flip_vertical(&img);
+    cDebug("Flipping time: %lld",swap->elapsed());
+    swap->start();
+    CStbImageLib::coffee_stb_image_save_png(&texture,&img);
+    texture.save_data();
+    cDebug("File time: %lld",swap->elapsed());
 
     swap->start();
+    coffee_unload_test(game);
     delete game;
 
     hideWindow();
@@ -142,13 +185,12 @@ void CDRenderer::run(CDWindowProperties props)
 void CDRenderer::bindingCallback(void *report) const
 {
     CGLReport* rep = (CGLReport*)report;
-    CString smsg = rep->message;
+    if(rep->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
+        return;
     CString out = glbinding::Meta::getString(rep->type)+":"
             +glbinding::Meta::getString(rep->severity)+":"
-            +glbinding::Meta::getString(rep->source)+": "+smsg;
+            +glbinding::Meta::getString(rep->source)+": "+rep->message;
     cDebug("OpenGL: %s",out.c_str());
-//    CGLState* state = _dump_state(); //Should provide a view of OpenGL state
-//    delete state;
     free(report);
 }
 
@@ -178,6 +220,27 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
             game->transforms.cameras.d[0].position.y += 0.05;
     }
+    else if(event->type==CIEvent::MouseMove)
+    {
+        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
+        if(relativeMouse())
+        {
+            game->transforms.cameras.d[0].rotation =
+                    CMath::normalize(
+                        CMath::quat(1,0.01*mev->rel.y,0,0)
+                        *game->transforms.cameras.d[0].rotation
+                        *CMath::quat(1,0,0.01*mev->rel.x,0));
+            game->transforms.cameras.d[0].rotation.z = 0;
+        }
+    }
+    else if(event->type==CIEvent::MouseButton)
+    {
+        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)&event[1];
+        if(mev->btn == CIMouseButtonEvent::LeftButton)
+            setRelativeMouse(true);
+        else if(mev->btn == CIMouseButtonEvent::RightButton)
+            setRelativeMouse(false);
+    }
     else if(event->type==CIEvent::ControllerEv)
     {
         const CIControllerAtomicUpdateEvent* jev =
@@ -192,7 +255,6 @@ void CDRenderer::eventIHandle(const CIEvent *event)
     }
     else if(event->type==CIEvent::Controller)
     {
-
         //TODO: Create joystick filters
         //Allow buttons to have repeated state
         //Filter out centering of joystick (that is, movement towards its center)
@@ -216,55 +278,6 @@ void CDRenderer::eventIHandle(const CIEvent *event)
             }
         }
     }
-}
-
-CGLState *CDRenderer::_dump_state() const
-{
-    CGLState *state = new CGLState;
-    GLint t;
-
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING,&t);
-    state->vertex_array = t;
-
-    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING,&t);
-    state->element_buffer = t;
-
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING,&t);
-    state->array_buffer = t;
-
-    glGetIntegerv(GL_UNIFORM_BUFFER_BINDING,&t);
-    state->uniform_buffer = t;
-
-    glGetIntegerv(GL_DRAW_INDIRECT_BUFFER_BINDING,&t);
-    state->indirect_buffer = t;
-
-    glGetIntegerv(GL_PROGRAM_PIPELINE_BINDING,&t);
-    state->pipeline_obj = t;
-
-    glGetIntegerv(GL_TEXTURE_BINDING_2D,&t);
-    state->texture_2d = t;
-
-    glGetIntegerv(GL_TEXTURE_BINDING_3D,&t);
-    state->texture_3d = t;
-
-    glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP,&t);
-    state->texture_cube = t;
-
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING,&t);
-    state->fb_all = t;
-
-    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&t);
-    state->fb_draw = t;
-
-    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&t);
-    state->fb_read = t;
-
-    glGetIntegerv(GL_VERTEX_ARRAY_BUFFER_BINDING,&t);
-    state->vertex_binding = t;
-
-    glGetFloatv(GL_COLOR_CLEAR_VALUE,reinterpret_cast<GLfloat*>(&state->clear_color));
-
-    return state;
 }
 
 } // namespace CDisplay

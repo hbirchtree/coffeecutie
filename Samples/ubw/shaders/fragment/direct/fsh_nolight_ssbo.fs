@@ -14,9 +14,11 @@ in v_block {
 } In;
 
 // material settings
-layout(std430, binding=1) buffer sampler_data {
-	vec3 diffuseSampler[];
-};
+uniform sampler2D diffuseSampler;
+
+//layout(std430, binding=1) buffer samplerd_data {
+//	sampler2D diffuseSampler[];
+//};
 
 layout(location = 0) out vec4 Out_color;
 
@@ -28,5 +30,5 @@ void main() {
 
     //final color (after gamma correction)
 //    vec3 gamma = vec3(1.0/1.3);
-    Out_color = vec4(diffuseSampler[In.iDrawID],1.0);
+    Out_color = vec4(texture(diffuseSampler,In.texCoord).xyz*(1.0/1.3),1.0);
 }

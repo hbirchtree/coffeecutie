@@ -109,10 +109,10 @@ bool CGLBindingRenderer::printExtensions(bool doFetch)
 void CGLBindingRenderer::bindingPreInit()
 {
     //Check for extensions! Quick!
-    cMsg("glbinding","Initializing glbinding");
+//    cMsg("glbinding","Initializing glbinding");
     glbinding::Binding::initialize(true);
 
-    cMsg("glbinding","Initialized");
+//    cMsg("glbinding","Initialized");
 
 }
 
@@ -133,7 +133,7 @@ void CGLBindingRenderer::bindingPostInit()
         cMsg("glbinding","Failed to acquire GL details");
     }
 
-    cMsg("glbinding","Obtained context information");
+//    cMsg("glbinding","Obtained context information");
 
     cMsg("glbinding","Currently running OpenGL revision: %i",m_libraryRevision);
 

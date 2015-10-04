@@ -1,9 +1,7 @@
 #ifndef COFFEE_FUNCTIONAL_H
 #define COFFEE_FUNCTIONAL_H
 
-#include <thread>
-#include <functional>
-#include <future>
+#include "cthreading.h"
 
 namespace Coffee{
 namespace CFunctional{
@@ -44,39 +42,7 @@ public:
         return (*m_func)(args...);
     }
 };
-namespace CThreading
-{
 
-static void runIndependent(std::function<void()> function)
-{
-    std::thread m_thread(function);
-    m_thread.detach();
-}
-
-template<typename ReturnType>
-static std::future<ReturnType> runAsync(std::function<ReturnType()> function)
-{
-    return std::async(std::launch::async,function);
-}
-
-template<typename DataType>
-struct CThreadWorker
-{
-    CThreadWorker(std::atomic<DataType>& atomic_ptr){
-        thread_ptr = &atomic_ptr;
-    }
-    template<typename RType>
-    std::future<RType> run(std::function<RType()> fun){
-        return std::async(std::launch::async,fun);
-    }
-    std::atomic<DataType>* dataPtr() const{
-        return thread_ptr;
-    }
-private:
-    std::atomic<DataType>* thread_ptr = nullptr;
-};
-
-}
 }
 }
 

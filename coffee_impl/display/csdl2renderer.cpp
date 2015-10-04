@@ -32,7 +32,7 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     m_context = new CSDL2Context;
     m_context->thread = std::this_thread::get_id();
 
-    cMsg("SDL2","Starting");
+//    cMsg("SDL2","Starting");
 
     bindingPreInit();
 
@@ -82,11 +82,11 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     setMouseGrabbing(false);
 
     setSwapInterval(0);
-    cMsg("SDL2","VSync: %i",swapInterval());
+//    cMsg("SDL2","VSync: %i",swapInterval());
 
-    cMsg("SDL2","Running %s",m_contextString.c_str());
+//    cMsg("SDL2","Running %s",m_contextString.c_str());
 
-    cMsg("SDL2","OpenGL context created");
+//    cMsg("SDL2","OpenGL context created");
 
     bindingPostInit();
 }
@@ -95,7 +95,7 @@ void CSDL2Renderer::cleanup()
 {
     if(m_context){
         bindingTerminate();
-        cMsg("SDL2","Cleaning up context");
+//        cMsg("SDL2","Cleaning up context");
         SDL_GL_DeleteContext(m_context->context);
         SDL_DestroyWindow(m_context->window);
         SDL_Quit();
@@ -261,6 +261,28 @@ bool CSDL2Renderer::isMouseGrabbed() const
 void CSDL2Renderer::setMouseGrabbing(bool grab)
 {
     SDL_SetWindowGrab(m_context->window,(grab) ? SDL_TRUE : SDL_FALSE);
+}
+
+CPoint CSDL2Renderer::mousePosition() const
+{
+    CPoint p;
+    SDL_GetMouseState(&p.x,&p.y);
+    return p;
+}
+
+void CSDL2Renderer::setMousePosition(const CPoint &pos)
+{
+    SDL_WarpMouseInWindow(m_context->window,pos.x,pos.y);
+}
+
+bool CSDL2Renderer::relativeMouse() const
+{
+    return SDL_GetRelativeMouseMode();
+}
+
+void CSDL2Renderer::setRelativeMouse(bool enable)
+{
+    SDL_SetRelativeMouseMode((enable) ? SDL_TRUE : SDL_FALSE);
 }
 
 bool CSDL2Renderer::textInputMode() const

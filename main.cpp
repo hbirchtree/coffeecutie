@@ -16,15 +16,6 @@ int main(int argc, char** argv)
            coffee_get_application_dir());
     cDebug("Launching from      %s",coffee_executable_name());
 
-    CResources::CResource src("/home/havard/Skrivebord/healing.ogg");
-    src.read_data();
-    CStbAudio::CStbAudioSample smp;
-
-    CStbAudio::coffee_stb_audio_vorbis_load(&smp,&src);
-
-    cDebug("Audio sample: samples=%i,samplerate=%i,channels=%i,size=%i",
-           smp.fmt.samples,smp.fmt.samplerate,smp.fmt.channels,src.size);
-
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();
 
@@ -50,10 +41,17 @@ int main(int argc, char** argv)
     props.contextProperties.version.major = 3;
     props.contextProperties.version.minor = 3;
 
+    props.contextProperties.bits.alpha = 8;
+    props.contextProperties.bits.red = 8;
+    props.contextProperties.bits.blue = 8;
+    props.contextProperties.bits.green = 8;
+    props.contextProperties.bits.depth = 24;
+    props.contextProperties.bits.stencil = 8;
+
     std::atomic<ubyte> atomic;
     atomic.store(0);
     CThreading::CThreadWorker<ubyte> worker(atomic);
-    std::future<void> ret = worker.run<void>([=](){
+    std::future<void> ret = worker.run([=](){
         try{
             renderer->run(props);
         }catch(std::runtime_error exc){

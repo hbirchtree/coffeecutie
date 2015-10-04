@@ -2,6 +2,7 @@
 #define CBUFFER
 
 #include "coffee.h"
+#include "coffee/cdebug.h"
 #include "glbinding.h"
 
 namespace Coffee{
@@ -115,6 +116,11 @@ struct CSubBuffer
     GLenum      bufferType  = GL_NONE;
     GLuint      index       = 0;
 
+    void* data()
+    {
+        return &((char*)parent->data)[offset];
+    }
+
     void bindParent(){
         parent->bind();
     }
@@ -132,6 +138,8 @@ struct CSubBuffer
     }
     void subStore(GLsizeiptr offset, GLsizeiptr size, const void* data)
     {
+        if(this->offset+offset+size>this->offset+this->size)
+            cFatal("GL buffer out of bounds of subbuffer");
         parent->subStore(this->offset+offset,size,data);
     }
 };
