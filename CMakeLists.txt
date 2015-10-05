@@ -93,6 +93,8 @@ set ( CoffeeCore_SRCS
         coffee_impl/context/cglbindingrenderer.cpp
 
         coffee_impl/display/csdl2renderer.cpp
+        coffee_impl/display/coffeesdl2/sdl2eventhandlers.cpp
+        coffee_impl/display/coffeesdl2/sdl2helpers.cpp
 
         coffee_impl/functional/cqueuerunner.cpp
 
@@ -100,9 +102,15 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/cuniformchunk.cpp
         coffee_impl/graphics/cgraphicsdata.cpp
 
+        coffee_impl/image/cimage.cpp
+
         coffee_impl/rendering/cmultidrawgraph.cpp
 
+        coffee_impl/sample/base_case.cpp
+
         include/stb/stb_vorbis.c
+
+        datasources/blam/cblam_bitm.cpp
         )
 
 if(NOT WIN32)

@@ -109,6 +109,22 @@ struct CResource{
         return true;
     }
 
+    bool memory_map()
+    {
+        this->size = coffee_file_get_size(m_resource.c_str());
+        this->data = CMemoryManagement::coffee_memory_map_file(m_resource.c_str(),0,size);
+        if(!this->data)
+            this->size = 0;
+    }
+
+    bool memory_unmap()
+    {
+        bool s = CMemoryManagement::coffee_memory_unmap_file(this->data,this->size);
+        this->data = nullptr;
+        this->size = 0;
+        return s;
+    }
+
     bool save_data(){
         FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"wb");
         bool stat = CFiles::coffee_file_write(fp,data,size);

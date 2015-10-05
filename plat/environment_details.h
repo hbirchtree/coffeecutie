@@ -11,8 +11,6 @@
 #include <libgen.h>
 #include <unistd.h>
 
-#elif defined(COFFEE_LINUX)
-
 #endif
 
 namespace Coffee{
@@ -37,33 +35,33 @@ static cstring_w coffee_concat_plat_path(cstring_w target, cstring v2)
     szptr len = ((target) ? strlen(target)+1 : 0)+strlen(v2)+1;
     cstring_w p = (cstring_w)realloc(target,len);
     if(target) //In the case where we start out with an empty buffer
-	strcat(p,coffee_get_path_sep());
+        strcat(p,coffee_get_path_sep());
     else
-	p[0] = '\0';
+        p[0] = '\0';
     return strcat(p,v2);
 }
 
 static cstring_w coffee_get_userdata_dir(cstring orgname, cstring appname)
 {
     cstring_w base = coffee_concat_plat_path(
-		nullptr,
-		coffee_get_env_variable("HOME"));
+                nullptr,
+                coffee_get_env_variable("HOME"));
 #if defined(COFFEE_LINUX)
     base = coffee_concat_plat_path(
-		base,
-		".local/share");
+                base,
+                ".local/share");
 #elif defined(COFFEE_WINDOWS)
     base = coffee_concat_plat_path(
-		base,
-		"AppData\\Local");
+                base,
+                "AppData\\Local");
 #elif defined(COFFEE_APPLE)
     base = coffee_concat_plat_path(
-		base,
-		"Library/Application Support");
+                base,
+                "Library/Application Support");
 #endif
     base = coffee_concat_plat_path(
-		base,
-		orgname);
+                base,
+                orgname);
     return coffee_concat_plat_path(base,appname);
 }
 

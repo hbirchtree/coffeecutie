@@ -3,7 +3,6 @@
 #include "plat/argument_parse.h"
 #include "unit_tests/data_types.h"
 #include "plat/environment_details.h"
-#include "coffee_impl/audio/caudio.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;

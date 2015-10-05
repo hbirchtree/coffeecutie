@@ -11,6 +11,11 @@
 
 #include "coffee_types.h"
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <cstdlib>
@@ -29,6 +34,39 @@ inline static void coffee_enable_core_dump()
     struct rlimit core_limits;
     core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
     setrlimit(RLIMIT_CORE,&core_limits);
+}
+
+namespace CResources{
+static szptr coffee_file_get_size(cstring file)
+{
+    struct stat sb;
+    int fd = open(file,O_RDONLY);
+    if(fstat(fd,&sb)==-1)
+        return 0;
+    return sb.st_size;
+}
+}
+
+namespace CMemoryManagement{
+
+static void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
+{
+    if(size<1)
+        return nullptr;
+
+    szptr pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE)-1);
+    int fd = open(filename,O_RDONLY);
+    byte* addr = (byte*)mmap(NULL,offset+size-pa_offset,PROT_READ,MAP_PRIVATE,fd,pa_offset);
+    if(addr == MAP_FAILED)
+        return nullptr;
+    return addr;
+}
+
+static bool coffee_memory_unmap_file(void* ptr, szptr size)
+{
+    return munmap(ptr,size);
+}
+
 }
 
 namespace CFunctional{
