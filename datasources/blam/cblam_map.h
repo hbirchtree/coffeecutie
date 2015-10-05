@@ -19,9 +19,9 @@ namespace CBlam{
 
 enum blam_maptype
 {
-    blam_singleplayer_map_type  = 0,
-    blam_multiplayer_map_type   = 1,
-    blam_ui_map_type            = 2,
+    blam_maptype_singleplayer  = 0,
+    blam_maptype_multiplayer   = 1,
+    blam_maptype_ui            = 2,
 };
 
 enum blam_versions
