@@ -17,10 +17,8 @@ extern CTexture* coffee_texture_2d_load(
         CResource* textureres,
         game_context* ctxt);
 
-extern CTexture* coffee_texture_2d_load_blam(
-        const CBlam::blam_bitm_image* text,
-        const CBlam::blam_file_header* head,
-        int32 magic,
+extern CTexture* coffee_texture_2d_load_blam(const CBlam::blam_bitm_image* text,
+        const void *bitm,
         game_context* ctxt);
 
 extern bool coffee_test_load(

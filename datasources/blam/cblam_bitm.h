@@ -84,9 +84,8 @@ extern const blam_bitm_image* coffee_bitm_get(
         int32 magic,
         int32 *numImages);
 
-extern uint32 *coffee_bitm_decode_a8r8g8b8(
-        const blam_bitm_image* img,
-        const blam_file_header* map);
+extern uint32 *coffee_bitm_decode_a8r8g8b8(const blam_bitm_image* img,
+        const void *map);
 
 }
 }

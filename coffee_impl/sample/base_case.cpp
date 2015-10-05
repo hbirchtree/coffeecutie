@@ -106,7 +106,7 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
     return tex;
 }
 
-CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const CBlam::blam_file_header *head, int32 magic, game_context *ctxt)
+CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const void *bitm, game_context *ctxt)
 {
     coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
     CTexture *tex = &ctxt->texstorage.d[ctxt->texstorage.size-1];
@@ -114,7 +114,19 @@ CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const 
     tex->create();
     //
 
-    uint32* d = CBlam::coffee_bitm_decode_a8r8g8b8(text,head);
+    uint32* d = CBlam::coffee_bitm_decode_a8r8g8b8(text,bitm);
+
+    CStbImageLib::CStbImageConst img;
+    img.data = (ubyte*)d;
+    img.bpp = 4;
+    img.size.w = text->isize.w;
+    img.size.h = text->isize.h;
+    CResource res("test_tex.png");
+
+    CStbImageLib::coffee_stb_image_save_png(&res,&img);
+    CStbImageLib::coffee_stb_error();
+
+    res.save_data();
 
     CTextureTools::CTextureData dt;
     dt.data = d;
@@ -132,6 +144,7 @@ CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const 
     CTextureTools::coffee_texture2d_define(tex,&dt);
     CTextureTools::coffee_texture2d_store(tex,&dt,0);
     //
+    free(d);
 
     return tex;
 }
@@ -362,7 +375,9 @@ bool coffee_test_load(game_context *ctxt)
         {
             const CBlam::blam_bitm_image* img_t = nullptr;
 
-            CResources::CResource mapfile("/home/havard/.local/share/winedata/Halo/Maps/Halo Combat Evolved/ratrace.map");
+            CResources::CResource mapfile("/home/havard/.local/share/winedata/Halo/Maps/Halo Combat Evolved/bloodgulch.map");
+            CResources::CResource bitmfile("/home/havard/.local/share/winedata/Halo/Maps/Halo Combat Evolved/bitmaps.map");
+            bitmfile.memory_map();
             mapfile.memory_map();
             const CBlam::blam_file_header* map =
                     CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version_pc);
@@ -386,28 +401,18 @@ bool coffee_test_load(game_context *ctxt)
                     //                           img->width,img->height,img->depth,
                     //                           img->format,img->mipmaps,img->size);
                     if(img->isize.w==img->isize.h&&
-                            img->format==CBlam::blam_bitm_format_A8R8G8B8)
+                            img->format==CBlam::blam_bitm_format_A8R8G8B8&&
+                            img->isize.w==256)
                     {
                         cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
                         cDebug("Image: %s,d=%i",t,img->depth);
-                        img_t = img;
+                        if(strstr(t,"sky clear blue"))
+                            img_t = img;
                     }
                 }
             }
 
-            //            CStbImageLib::CStbImageConst img;
-            //            img.data = ((const ubyte*)map)+img_t->offset;
-            //            img.bpp = 1;
-            //            img.size.w = img_t->isize.w;
-            //            img.size.h = img_t->isize.h;
-            //            CResource res("test.png");
-
-            //            CStbImageLib::coffee_stb_image_save_png(&res,&img);
-            //            CStbImageLib::coffee_stb_error();
-
-            //            res.save_data();
-
-            coffee_texture_2d_load_blam(img_t,map,tags.index_magic,ctxt);
+            coffee_texture_2d_load_blam(img_t,bitmfile.data,ctxt);
         }
 
         {

@@ -28,12 +28,12 @@ const blam_bitm_image *coffee_bitm_get(
     return img;
 }
 
-uint32 *coffee_bitm_decode_a8r8g8b8(const blam_bitm_image *img, const blam_file_header *map)
+uint32 *coffee_bitm_decode_a8r8g8b8(const blam_bitm_image *img, const void *map)
 {
     int32 w = img->isize.w;
     int32 h = img->isize.h;
 
-    uint32* out = (uint32*)malloc(w*h);
+    uint32* out = (uint32*)calloc(w*h,sizeof(uint32));
 
     blam_rgba col;
     uint32 cdata;
