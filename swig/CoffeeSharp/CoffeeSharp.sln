@@ -16,5 +16,6 @@ Global
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = CoffeeSharp\CoffeeSharp.csproj
+		version = 0.5
 	EndGlobalSection
 EndGlobal

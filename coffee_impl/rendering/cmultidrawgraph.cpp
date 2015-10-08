@@ -20,7 +20,7 @@ void coffee_multidraw_free(CMultiDrawDataSet *md){
 void coffee_multidraw_bind_states(const CMultiDrawDataSet &set)
 {
     for(CVertexBufferBinding* bnd : set.bindings)
-        bnd->bindBuffer(set.vao);
+        coffee_vao_attribute_bind_buffer(set.vao,*bnd);
 }
 
 void coffee_multidraw_render(const CMultiDrawDataSet &set)
@@ -69,10 +69,10 @@ void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &des
 {
     set.vao->bind();
     for(CVertexAttribute& attr : desc.attributes){
-        attr.setBuffer(set.vao,*attr.bnd);
-        attr.setFormat(set.vao,*attr.fmt);
+        coffee_vao_attribute_buffer(set.vao,attr,*attr.bnd);
+        coffee_vao_attribute_format(set.vao,attr,*attr.fmt);
 
-        attr.bnd->bindBuffer(set.vao);
+        coffee_vao_attribute_bind_buffer(set.vao,*attr.bnd);
         set.bindings.push_back(attr.bnd);
     }
 

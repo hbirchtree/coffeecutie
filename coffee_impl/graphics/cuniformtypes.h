@@ -19,32 +19,6 @@ struct CUniformValue{
     uint8   flags   = 0;
     GLint   location  =-1;
 
-    void applyUniform(GLuint program){
-        GLboolean matrix_transpose = GL_FALSE;
-        if(flags&MatrixTranspose)
-            matrix_transpose = GL_TRUE;
-        const GLfloat* data = reinterpret_cast<const GLfloat*>(this->data);
-        switch(size){
-        case sizeof(GLfloat):
-            glProgramUniform1fv(program,location,1,data);
-            break;
-        case sizeof(GLfloat)*2:
-            glProgramUniform2fv(program,location,1,data);
-            break;
-        case sizeof(GLfloat)*3:
-            glProgramUniform3fv(program,location,1,data);
-            break;
-        case sizeof(GLfloat)*4:
-            glProgramUniform4fv(program,location,1,data);
-            break;
-        case sizeof(GLfloat)*9:
-            glProgramUniformMatrix3fv(program,location,1,matrix_transpose,data);
-            break;
-        case sizeof(GLfloat)*16:
-            glProgramUniformMatrix4fv(program,location,1,matrix_transpose,data);
-            break;
-        }
-    }
 };
 
 struct CUniformBlock{
@@ -58,6 +32,8 @@ struct CUniformBlock{
 
     CSubBuffer* buffer          = nullptr;
 };
+
+extern void coffee_shader_apply_uniform(GLuint program, const CUniformValue& val);
 
 }
 }

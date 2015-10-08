@@ -51,7 +51,6 @@ set ( CoffeeCore_HDRS
         coffee_impl/graphics/cuniformtypes.h
         coffee_impl/graphics/cframebuffer.h
         coffee_impl/graphics/ctexture.h
-        coffee_impl/graphics/cuniformchunk.h
         coffee_impl/graphics/ctransformcomputer.h
 
         coffee_impl/image/cimage.h
@@ -99,8 +98,8 @@ set ( CoffeeCore_SRCS
         coffee_impl/functional/cqueuerunner.cpp
 
         coffee_impl/graphics/cshader.cpp
-        coffee_impl/graphics/cuniformchunk.cpp
         coffee_impl/graphics/cgraphicsdata.cpp
+        coffee_impl/graphics/cvertexarrayobject.cpp
 
         coffee_impl/image/cimage.cpp
 

@@ -6,11 +6,19 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+struct CVertexAttributeData
+{
+};
+
 struct CVertexArrayObject{
     GLuint      handle  = 0;
 
     void create(){
         glGenVertexArrays(1,&handle);
+    }
+    void activate(){
+        bind();
+        unbind();
     }
     void free(){
         glDeleteVertexArrays(1,&handle);
@@ -31,22 +39,6 @@ struct CVertexArrayObject{
     bool isValid(){
         return glIsVertexArray(handle)==GL_TRUE;
     }
-
-    void addAttribute(GLuint index, GLenum type,
-                      GLboolean normalized, GLuint size,
-                      GLsizeiptr stride, GLsizeiptr pointer)
-    {
-        glEnableVertexAttribArray(index);
-        glVertexAttribPointer(index,size,type,normalized,stride,(GLvoid*)pointer);
-    }
-    void addAttributeDivided(GLuint index, GLenum type,
-                             GLboolean normalized, GLuint size,
-                             GLsizeiptr stride, GLuint divisor,
-                             GLsizeiptr pointer)
-    {
-        addAttribute(index,type,normalized,size,stride,pointer);
-        glVertexAttribDivisor(index,divisor);
-    }
 };
 
 struct CVertexFormat
@@ -64,10 +56,6 @@ struct CVertexBufferBinding
     GLsizei  stride  = 0;
     GLuint   divisor = 0;
     GLuint   binding = 0;
-
-    void bindBuffer(CVertexArrayObject* vao){
-        glVertexArrayVertexBuffer(vao->handle,binding,buffer->handle,offset,stride);
-    }
 };
 
 struct CVertexAttribute
@@ -75,17 +63,17 @@ struct CVertexAttribute
     GLuint                  attribIdx   = 0;
     CVertexFormat*          fmt         = nullptr;
     CVertexBufferBinding*   bnd         = nullptr;
-
-    void setFormat(CVertexArrayObject* vao, const CVertexFormat& fmt){
-        glVertexArrayAttribFormat(vao->handle,
-                                  attribIdx,fmt.size,fmt.type,fmt.normalized,fmt.offset);
-    }
-    void setBuffer(CVertexArrayObject* vao, const CVertexBufferBinding& buf){
-        glEnableVertexArrayAttrib(vao->handle,attribIdx);
-        glVertexArrayAttribBinding(vao->handle,attribIdx,buf.binding);
-        glVertexArrayBindingDivisor(vao->handle,buf.binding,buf.divisor);
-    }
 };
+
+extern void coffee_vao_attribute_format(
+        CVertexArrayObject *vao, const CVertexAttribute& attr,
+        const CVertexFormat &fmt);
+extern void coffee_vao_attribute_buffer(
+        CVertexArrayObject* vao, const CVertexAttribute &attr,
+        const CVertexBufferBinding& buf);
+extern void coffee_vao_attribute_bind_buffer(
+        CVertexArrayObject* vao,
+        const CVertexBufferBinding& buf);
 
 }
 }
