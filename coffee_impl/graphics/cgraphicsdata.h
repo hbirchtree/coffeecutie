@@ -16,7 +16,7 @@ struct CZField
 struct CGCamera
 {
     enum CameraFlags{
-        OrthographicFlag        = 0b1, //When off, assume perspective
+        OrthographicFlag        = 0x1, //When off, assume perspective
     };
 
     byte        flags            = 0;
@@ -86,37 +86,9 @@ struct CBlock
 };
 
 //Datasize: Size of data without struct
-static CBlock* coffee_create_block(uint16 dataSize,
+extern CBlock* coffee_create_block(uint16 dataSize,
                                    uint16 numProperties,
-                                   szptr* sizes = nullptr)
-{
-    szptr chunk_size = dataSize
-            +sizeof(CBlock)
-            +numProperties*sizeof(uint8)
-            +numProperties*sizeof(uint16);
-    void* chunk = calloc(sizeof(byte),chunk_size); //We want all zeros instead of undefined
-    byte* chunk_bytes = reinterpret_cast<byte*>(chunk);
-
-    CBlock* block = reinterpret_cast<CBlock*>(chunk);
-    block->numProperties = numProperties;
-    block->blockSize = chunk_size;
-    block->propertyTypes = reinterpret_cast<uint8*>(&chunk_bytes[sizeof(CBlock)]);
-    block->propertySizes = reinterpret_cast<uint16*>(&chunk_bytes[sizeof(CBlock)+numProperties*sizeof(uint8)]);
-    block->data_ptr = &chunk_bytes[sizeof(CBlock)
-            +numProperties*sizeof(uint8)
-            +numProperties*sizeof(uint16)];
-    block->data_size = chunk_size
-            -sizeof(CBlock)
-            -numProperties*sizeof(uint8)
-            -numProperties*sizeof(uint16);
-
-    if(sizes){
-        for(int i=0;i<numProperties;i++)
-            block->propertySizes[i] = sizes[i];
-    }
-
-    return block;
-}
+                                   szptr* sizes = nullptr);
 
 } //CGraphicsData
 } //Coffee
