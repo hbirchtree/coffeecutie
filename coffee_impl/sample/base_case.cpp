@@ -44,29 +44,29 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
     f.read_data(true);
 
     //GL calls
-    vshdr->compile(&v,GL_VERTEX_SHADER);
-    fshdr->compile(&f,GL_FRAGMENT_SHADER);
+    coffee_graphics_shader_compile(vshdr,&v,GL_VERTEX_SHADER,GL_VERTEX_SHADER_BIT);
+    coffee_graphics_shader_compile(fshdr,&f,GL_FRAGMENT_SHADER,GL_FRAGMENT_SHADER_BIT);
     //
 
     v.free_data();
     f.free_data();
 
     //GL calls
-    p->create();
+    coffee_graphics_alloc(p,true);
     if(p->handle==0)
         cFatal("Failed to create ShaderProgram");
-    p->attachShader(vshdr,GL_VERTEX_SHADER_BIT);
-    p->attachShader(fshdr,GL_FRAGMENT_SHADER_BIT);
-    p->link();
+    coffee_graphics_shader_attach(p,vshdr);
+    coffee_graphics_shader_attach(p,fshdr);
+    coffee_graphics_shader_link(p);
     //
 
-    pl->create();
+    coffee_graphics_alloc(pl);
     if(pl->handle==0)
         cFatal("Failed to create Pipeline");
-    pl->attachProgram(p,GL_VERTEX_SHADER_BIT|GL_FRAGMENT_SHADER_BIT);
+    coffee_graphics_shader_attach(pl,p,p->stages);
 
     //GL call
-    p->storeProgram(&dmp);
+    coffee_graphics_store(p,&dmp);
     //
     if(!dmp.save_data())
         cDebug("Failed to save shader to file!");
@@ -162,6 +162,12 @@ bool coffee_test_load(game_context *ctxt)
         d.shader_dump = "basic_dump.shdr";
         d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
         d.shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
+
+        if(!ctxt->features->render_ssbo_support)
+        {
+            d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
+            d.shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
+        }
 
         coffee_shader_program_load(d,ctxt);
     }
@@ -366,8 +372,13 @@ bool coffee_test_load(game_context *ctxt)
                 memcpy(camBuffer->data(),&cam->matrix,sizeof(CMath::mat4));
                 ublock->blockBinding = 0;
                 //GL calls
-                ctxt->shaders.programs.d[0].uniformBlockIndex(ublock);
-                ctxt->shaders.programs.d[0].setUniformBlockBind(*ublock);
+                coffee_graphics_shader_uniform_block_get(
+                            &ctxt->shaders.programs.d[0],
+                        ublock->name,
+                        &ublock->shaderIndex);
+                coffee_graphics_shader_uniform_block_set(
+                            &ctxt->shaders.programs.d[0],
+                        *ublock);
                 //
             }
         }
@@ -375,8 +386,8 @@ bool coffee_test_load(game_context *ctxt)
         {
             const CBlam::blam_bitm_image* img_t = nullptr;
 
-            CResources::CResource mapfile("/home/havard/.local/share/winedata/Halo/Maps/Halo Combat Evolved/bloodgulch.map");
-            CResources::CResource bitmfile("/home/havard/.local/share/winedata/Halo/Maps/Halo Combat Evolved/bitmaps.map");
+            CResources::CResource mapfile("bloodgulch.map");
+            CResources::CResource bitmfile("bitmaps.map");
             bitmfile.memory_map();
             mapfile.memory_map();
             const CBlam::blam_file_header* map =
@@ -405,9 +416,11 @@ bool coffee_test_load(game_context *ctxt)
                             img->isize.w==256)
                     {
                         cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
-                        cDebug("Image: %s,d=%i",t,img->depth);
                         if(strstr(t,"sky clear blue"))
+                        {
+                            cDebug("Image: %s,d=%i",t,img->depth);
                             img_t = img;
+                        }
                     }
                 }
             }
@@ -455,14 +468,27 @@ void coffee_prepare_test(game_context *ctxt)
     coffee_multidraw_bind_states(ctxt->renderdata.datasets.d[0]);
     ctxt->renderdata.buffers.d[2].bind();
     ctxt->renderdata.uniformblocks.d[0].buffer->bindRange();
-    ctxt->shaders.pipelines.d[0].bind();
+    coffee_graphics_bind(&ctxt->shaders.pipelines.d[0]);
     ctxt->renderdata.datasets.d[0].vao->bind();
     ctxt->renderdata.datasets.d[0].drawcalls->drawbuffer->bind();
 
-    GLint loc = ctxt->shaders.programs.d[0].uniformLocation("diffuseSampler");
-    GLuint64 handle = coffee_tex_get_handle(&ctxt->texstorage.d[0]);
-    coffee_tex_make_resident(handle);
-    glProgramUniformHandleui64ARB(ctxt->shaders.programs.d[0].handle,loc,handle);
+    GLint loc = coffee_graphics_shader_uniform_value_get(
+                &ctxt->shaders.programs.d[0],
+            "diffuseSampler");
+    if(ctxt->features->render_bindless_texture)
+    {
+        GLuint64 handle = coffee_tex_get_handle(&ctxt->texstorage.d[0]);
+        coffee_tex_make_resident(handle);
+        glProgramUniformHandleui64ARB(
+                    ctxt->shaders.programs.d[0].handle,
+                loc,
+                handle);
+    }else{
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(ctxt->texstorage.d[0].textureType,
+                ctxt->texstorage.d[0].handle);
+        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,0);
+    }
 }
 
 void coffee_render_test(game_context *ctxt, double delta)
@@ -502,11 +528,11 @@ void coffee_unload_test(game_context *ctxt)
         ctxt->vertexdata.data.d[i]->freeData();
 
     for(i=0;i<ctxt->shaders.pipelines.size;i++)
-        ctxt->shaders.pipelines.d[i].free();
+        coffee_graphics_free(&ctxt->shaders.pipelines.d[i]);
     for(i=0;i<ctxt->shaders.shaders.size;i++)
-        ctxt->shaders.shaders.d[i].free();
+        coffee_graphics_free(&ctxt->shaders.shaders.d[i]);
     for(i=0;i<ctxt->shaders.programs.size;i++)
-        ctxt->shaders.programs.d[i].free();
+        coffee_graphics_free(&ctxt->shaders.programs.d[i]);
 
     for(i=0;i<ctxt->renderdata.datasets.size;i++)
         coffee_multidraw_free(&ctxt->renderdata.datasets.d[i]);

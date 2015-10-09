@@ -16,19 +16,8 @@ in v_block {
 // material settings
 uniform sampler2D diffuseSampler;
 
-//layout(std430, binding=1) buffer samplerd_data {
-//	sampler2D diffuseSampler[];
-//};
-
 layout(location = 0) out vec4 Out_color;
 
 void main() {
-//    vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
-
-    //diffuse
-//    vec3 diffuse = surfaceColor.rgb*mtl.colorMultiplier;
-
-    //final color (after gamma correction)
-//    vec3 gamma = vec3(1.0/1.3);
     Out_color = vec4(texture(diffuseSampler,In.texCoord).xyz*(1.0/1.3),1.0);
 }

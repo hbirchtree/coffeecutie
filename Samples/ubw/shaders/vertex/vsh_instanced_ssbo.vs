@@ -27,12 +27,6 @@ out gl_PerVertex
 {
 	vec4 gl_Position;
 };
-//out vec3 worldVert;
-//out vec2 localTexCoord;
-//out vec3 localNormal;
-//out vec3 worldNormal;
-//out vec3 worldTangent;
-//out vec4 surfacePos;
 
 void main() {
     Out.texCoord = vertTexCoord;

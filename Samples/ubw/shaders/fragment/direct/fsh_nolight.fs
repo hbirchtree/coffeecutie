@@ -1,26 +1,23 @@
 #version 330
 
-// material settings
-uniform struct Material {
-	sampler2D diffuseSampler;
 
-	vec3 transparencyValue;
-	vec3 colorMultiplier;
-} mtl;
 
-in vec2 fragTexCoord;
-in vec3 fragNormal;
-in vec3 fragVert;
 
-out vec4 finalColor;
+in v_block {
+	vec3 vert;
+	vec4 mVert;
+	vec2 texCoord;
+	vec3 normal;
+	vec3 wNormal;
+	vec3 wTangent;
+	flat int iDrawID;
+} In;
+
+
+uniform sampler2D diffuseSampler;
+
+layout(location = 0) out vec4 Out_color;
 
 void main() {
-    vec4 surfaceColor = texture(mtl.diffuseSampler, fragTexCoord);
-
-    //diffuse
-    vec3 diffuse = surfaceColor.rgb*mtl.colorMultiplier;
-
-    //final color (after gamma correction)
-    vec3 gamma = vec3(1.0/1.3);
-    finalColor = vec4(pow(diffuse, gamma), surfaceColor.a);
+    Out_color = vec4(texture(diffuseSampler,In.texCoord).xyz*(1.0/1.3),1.0);
 }
