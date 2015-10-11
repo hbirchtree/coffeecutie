@@ -16,3 +16,6 @@
 [submodule "include/stb"]
 	path = include/stb
 	url = https://github.com/nothings/stb.git
+[submodule "include/cppformat"]
+	path = include/cppformat
+	url = https://github.com/hbirchtree/cppformat.git

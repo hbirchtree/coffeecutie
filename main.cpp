@@ -3,9 +3,12 @@
 #include "plat/argument_parse.h"
 #include "unit_tests/data_types.h"
 #include "plat/environment_details.h"
+#include "coffee_impl/audio/openal/copenal.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
+using namespace Coffee::CAudio;
+using namespace Coffee::CAudio::COpenAL;
 
 int main(int argc, char** argv)
 {
@@ -20,6 +23,34 @@ int main(int argc, char** argv)
 
     CElapsedTimerMicro timer;
     timer.start();
+
+    CResources::CResource rsc("/home/havard/Skrivebord/healing.ogg");
+    rsc.read_data();
+
+    CAudioSample smp;
+    CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
+
+    CALContext ctxt;
+    ctxt.callback = [](CALReport* r){
+        cDebug("%s",r->message);
+    };
+
+    coffee_audio_context_create(&ctxt);
+    coffee_audio_context_get_error(&ctxt);
+    CALBuffer *buf = new CALBuffer;
+    CALListener l;
+    l.gain = 1;
+    l.position = CVec3(0,0,0);
+    l.velocity = CVec3(-100,0,-100);
+    l.orientation_forward = CVec3(1,0,0);
+    CALSource src;
+
+    coffee_audio_listener_set(&l);
+    coffee_audio_alloc(buf,&smp);
+    rsc.free_data();
+    free(smp.data);
+    coffee_audio_alloc(&src);
+    coffee_audio_source_transform(&src,CVec3(5,0,5),CVec3(10,0,0),CVec3(0,0,0));
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
@@ -47,6 +78,8 @@ int main(int argc, char** argv)
     props.contextProperties.bits.depth = 24;
     props.contextProperties.bits.stencil = 8;
 
+    coffee_audio_source_queue_buffers(&src,1,&buf);
+    coffee_audio_source_set_state(&src,CALStatePlaying);
     std::atomic<ubyte> atomic;
     atomic.store(0);
     CThreading::CThreadWorker<ubyte> worker(atomic);
@@ -74,6 +107,8 @@ int main(int argc, char** argv)
     }
 
     cDebug("Time: %lldus",timer.elapsed());
+
+    coffee_audio_context_destroy(&ctxt);
 
 //    ret.get();
 

@@ -34,6 +34,7 @@ include_directories (
         libs/assimp/include
         libs/glfw/include
         libs/bullet/src)
+
 set ( CoffeeCore_HDRS
         cppsharp/coffeesharp.h
 
@@ -104,13 +105,18 @@ set ( CoffeeTest_SRCS
 
 set ( CoffeeCore_SRCS
 
+        coffee.cpp
         coffee/cobject.cpp
+        coffee/cregex.cpp
         coffee/cfiles.cpp
 
         coffee/display/cdrendererbase.cpp
 
         coffee_impl/assimp/cassimpimporters.cpp
         coffee_impl/assimp/assimpfun.cpp
+
+        coffee_impl/audio/caudio.cpp
+        coffee_impl/audio/openal/copenal.cpp
 
         coffee_impl/context/cdrenderer.cpp
         coffee_impl/context/cglbindingrenderer.cpp
@@ -134,39 +140,70 @@ set ( CoffeeCore_SRCS
 
         coffee_impl/sample/base_case.cpp
 
-        include/stb/stb_vorbis.c
-
         datasources/blam/cblam_bitm.cpp
         datasources/blam/cblam_map.cpp
+
+#Third-party sources
+
+        include/stb/stb_vorbis.c
+
+        include/cppformat/format.cc
         )
 
-if(NOT WIN32)
-    find_package(X11)
-    find_library(M_LIB m)
-endif()
 
-include(ExternalProject)
-
+#Locate Assimp and glbinding libraries
 find_library(assimp_loc NAMES "assimp" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
 find_library(glbinding_loc NAMES "glbinding" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
 
 message("Assimp located at: ${assimp_loc}")
 message("GLbinding located at: ${glbinding_loc}")
+######################################
 
+#Set up build targets
 add_library( CoffeeLib SHARED ${CoffeeCore_SRCS} )
 add_executable ( CoffeeCore ${CoffeeCore_SRCS} ${CoffeeTest_SRCS} )
+#####################
+
+#Set up necessary linking options
+find_package(OpenAL REQUIRED)
+target_include_directories(CoffeeCore SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
+target_include_directories(CoffeeLib SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
 
 find_package(SDL2 REQUIRED)
 target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 target_include_directories(CoffeeLib SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 
-if(NOT WIN32)
-        find_package(Unwind)
-        target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
-endif()
+#################################
 
-target_link_libraries ( CoffeeCore "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} )
-target_link_libraries ( CoffeeLib "${SDL2_LIBRARY}" ${LIBUNWIND_LIBRARIES} ${assimp_loc} ${glbinding_loc} ${X11_LIBRARIES} ${M_LIB_LIBRARIES} )
+#Libraries for X11 and Linux
+if(NOT WIN32)
+    find_package(X11)
+    find_library(M_LIB m)
+
+    find_package(Unwind)
+    target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
+endif()
+############################
+
+#Configure linking options
+target_link_libraries ( CoffeeCore
+${SDL2_LIBRARY}
+${LIBUNWIND_LIBRARIES}
+${assimp_loc}
+${glbinding_loc}
+${X11_LIBRARIES}
+${OPENAL_LIBRARY} )
+target_link_libraries ( CoffeeLib
+${SDL2_LIBRARY}
+${LIBUNWIND_LIBRARIES}
+${assimp_loc}
+${glbinding_loc}
+${X11_LIBRARIES}
+${M_LIB_LIBRARIES}
+${OPENAL_LIBRARY} )
+##########################
+
+#Configure PIC and C++11
 set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
@@ -174,6 +211,7 @@ target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
 set_property(TARGET CoffeeLib PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeLib PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeLib PRIVATE cxx_constexpr)
+########################
 
 #Documentation with Doxygen
 GENERATE_DOCUMENTATION("docs/coffee.dox")

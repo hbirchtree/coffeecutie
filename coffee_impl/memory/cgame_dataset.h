@@ -79,18 +79,6 @@ struct game_shader_program_desc
     cstring shader_dump = nullptr;
 };
 
-static void coffee_mem_clear(void* start, szptr size){
-    memset(start,0,size);
-}
-
-template<typename T>
-static void coffee_mem_expand_array(chunk_mem<T> *mem, szptr size){
-    szptr osize = mem->size;
-    mem->size += size;
-    mem->d = (T*)realloc(mem->d,sizeof(T)*mem->size);
-    coffee_mem_clear(&mem->d[osize],sizeof(T)*(size-osize));
-}
-
 }
 }
 

@@ -46,6 +46,8 @@ void coffee_quirks_set(CFeatureSet *featureset)
     featureset->ext_direct_state_access = _quirk_extension(
                 "GL_ARB_direct_state_access",
                 featureset->extensions);
+
+    featureset->ext_bindless_texture = false;
 }
 
 }

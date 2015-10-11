@@ -7,52 +7,36 @@
 namespace Coffee{
 namespace CFunctional{
 
+/*!
+ * \brief Regex matches
+ */
 struct CRegexMatch
 {
-    std::vector<CString> s_match;
-    bool b_match;
+    std::vector<CString> s_match; /*!< Matching strings*/
+    bool b_match; /*!< True if match was found*/
 };
 
-static std::vector<CRegexMatch> coffee_regex_match_multi(const CString& pattern,
-                   const std::vector<CString>& data,
-                   bool capture = false)
-{
-    std::regex rgx(pattern);
-    std::smatch mch;
+/*!
+ * \brief Match pattern in multiple strings
+ * \param pattern Pattern to apply
+ * \param data Data set
+ * \param capture Whether to capture
+ * \return Array with same size as data containing results
+ */
+extern std::vector<CRegexMatch> coffee_regex_match_multi(
+        const CString& pattern, const std::vector<CString>& data,
+        bool capture = false);
 
-    std::vector<CRegexMatch> matches;
-
-    for(const CString& string : data){
-        CRegexMatch m;
-        m.b_match = false;
-        if(std::regex_match(string,mch,rgx)){
-            for(szptr i=0;i<mch.size();i++){
-                std::ssub_match smch = mch[i];
-                m.b_match = true;
-                if(capture)
-                    m.s_match.push_back(smch.str());
-            }
-        }
-        matches.push_back(m);
-    }
-    return matches;
-}
-static CRegexMatch coffee_regex_match(CString pattern, const CString& data, bool capture = false)
-{
-    std::regex rgx(pattern);
-    std::smatch mch;
-    CRegexMatch m;
-    m.b_match = false;
-    if(std::regex_match(data,mch,rgx)){
-        for(szptr i=0;i<mch.size();i++){
-            std::ssub_match smch = mch[i];
-            m.b_match = true;
-            if(capture)
-                m.s_match.push_back(smch.str());
-        }
-    }
-    return m;
-}
+/*!
+ * \brief Match pattern in single string
+ * \param pattern Pattern to apply
+ * \param data String to test
+ * \param capture Whether to capture
+ * \return Struct with results
+ */
+extern CRegexMatch coffee_regex_match(
+        CString pattern, const CString& data,
+        bool capture = false);
 
 }
 }

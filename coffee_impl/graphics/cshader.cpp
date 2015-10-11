@@ -173,7 +173,7 @@ void coffee_graphics_shader_uniform_block_set(CShaderProgram *prg, const CUnifor
 
 GLint coffee_graphics_shader_uniform_value_get(CShaderProgram *prg, cglstring name)
 {
-    glGetUniformLocation(prg->handle,(const GLchar*)name);
+    return glGetUniformLocation(prg->handle,(const GLchar*)name);
 }
 
 UseProgramStageMask operator~(UseProgramStageMask msk)

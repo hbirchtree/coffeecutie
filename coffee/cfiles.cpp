@@ -89,7 +89,11 @@ bool CResource::memory_map()
     this->size = coffee_file_get_size(m_resource.c_str());
     this->data = CMemoryManagement::coffee_memory_map_file(m_resource.c_str(),0,size);
     if(!this->data)
+    {
         this->size = 0;
+        return false;
+    }
+    return true;
 }
 
 bool CResource::memory_unmap()

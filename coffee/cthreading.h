@@ -16,7 +16,7 @@ namespace CThreading
  * \brief Launch a task to run independently. Used as fire-and-forget, never to return.
  * \param function Function to run
  */
-static void runIndependent(std::function<void()> function)
+inline static void runIndependent(std::function<void()> function)
 {
     std::thread m_thread(function);
     m_thread.detach();

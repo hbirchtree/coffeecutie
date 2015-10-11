@@ -226,8 +226,8 @@ void CDRenderer::eventIHandle(const CIEvent *event)
 {
     if(event->type==CIEvent::Keyboard){
         const CIKeyEvent* kev = (const CIKeyEvent*)&event[1];
-        cDebug("Key event: key=%i,mods=%i,scan=%i,char=%s",
-               kev->key,kev->mod,kev->scan,&kev->key);
+//        cDebug("Key event: key=%i,mods=%i,scan=%i,char=%s",
+//               kev->key,kev->mod,kev->scan,&kev->key);
         if(kev->key==CK_Escape)
             this->closeWindow();
         if(kev->key==CK_Up&&kev->mod&CIKeyEvent::PressedModifier)

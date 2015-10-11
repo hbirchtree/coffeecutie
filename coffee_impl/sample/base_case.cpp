@@ -464,18 +464,11 @@ bool coffee_test_load(game_context *ctxt)
             for(int32 i=0;i<tags.tagCount;i++)
             {
                 idx = &base_idx[i];
-                //        cDebug("Index: %s",
-                //               CBlam::blam_index_item_get_string(idx,map,&tags));
                 if(coffee_cmp_memarea(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
                 {
                     int32 num = 0;
-                    //                    cDebug("Bitmap: %s",CBlam::blam_index_item_get_string(idx,map,&tags));
                     const CBlam::blam_bitm_image* img =
                             CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
-                    //                    cDebug("Image: %i: %ix%i@%i, %i,%i,%i",
-                    //                           num,
-                    //                           img->width,img->height,img->depth,
-                    //                           img->format,img->mipmaps,img->size);
                     if(img->isize.w==img->isize.h&&
                             img->format==CBlam::blam_bitm_format_A8R8G8B8&&
                             img->isize.w==256)
@@ -546,12 +539,10 @@ void coffee_prepare_test(game_context *ctxt)
     if(ctxt->features->ext_bindless_texture)
     {
         glProgramUniformHandleui64ARB(
-                    ctxt->shaders.programs.d[0].handle,
-                loc,
+                    ctxt->shaders.programs.d[0].handle,loc,
                 ctxt->texstorage.d[0].bhandle);
     }else{
-        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,
-                loc,ctxt->texstorage.d[0].unit);
+        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,ctxt->texstorage.d[0].unit);
     }
 }
 

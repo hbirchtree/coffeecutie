@@ -4,6 +4,8 @@
 #include "coffee.h"
 #include "plat/plat_core.h"
 
+#include "cppformat/format.h"
+
 //C++ headers
 #include <sstream>
 #include <iostream>
@@ -22,14 +24,25 @@ namespace CFunctional{
 template<typename... Arg>
 static CString cStringFormat(cstring fmt, Arg... args);
 
+template<typename... Args>
+static void cfprintf(FILE* stream, cstring format, Args... args)
+{
+    try{
+        fmt::fprintf(stream,format,args...);
+    }catch(std::exception e)
+    {
+        fprintf(stderr,"Failed to print message: %s\n",e.what());
+    }
+}
+
 namespace CDebugHelpers
 {
 
 static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
-    fprintf(stderr,header);
+    cfprintf(stderr,header);
     for(szptr i=0;i<stacksize;i++){
-        fprintf(stderr,callfmt,callstack[i]);
+        cfprintf(stderr,callfmt,callstack[i]);
         free(callstack[i]);
     }
     free(callstack);
@@ -44,12 +57,30 @@ static void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
 
 }
 
+/*!
+ * \brief Different severities for debug messages
+ */
+enum DebugSeverity
+{
+    DebugMsgInfo, /*!< Simple info, nothing serious*/
+    DebugMsgDebug, /*!< Debug info, should be disabled in release mode*/
+    DebugMsgWarning, /*!< Warning, should be paid attention to*/
+    DebugMsgFatal, /*!< Fatal message, followed by a crash*/
+};
+
 template<typename... Arg>
+/*!
+ * \brief cDebugPrint
+ * \param severity Whether we should use stderr, stdout or crash
+ * \param stackreduce How much of the stack should be reduced with respect to debug functions and etc.
+ * \param str Format string to print with
+ * \param args Variadic arguments to string format
+ */
 static void cDebugPrint(
-        uint8 severity,       //Whether we should stderr, stdout or crash
-        uint32 stackreduce,   //Removes parts of the displayed callstack
-        cstring str,          //The formatting string
-        Arg... args)          //The arguments
+        uint8 severity,
+        uint32 stackreduce,
+        cstring str,
+        Arg... args)
 {
     //Some settings for output
     FILE* strm = stdout;
@@ -69,19 +100,19 @@ static void cDebugPrint(
     //
 
     switch(severity){
-    case 0: //Info
+    case DebugMsgInfo:
         s_ += "INFO:";
         strm = stderr;
         break;
-    case 1: //Debug
+    case DebugMsgDebug:
         s_ += "DEBG:";
         strm = stderr;
         break;
-    case 2: //Warning
+    case DebugMsgWarning:
         s_ += "WARN:";
         strm = stderr;
         break;
-    case 3:{ //Fatal
+    case DebugMsgFatal:{
         s_ += "FTAL:";
         strm = stderr;
         fail = true;
@@ -97,7 +128,7 @@ static void cDebugPrint(
         fail = true;
     s_ += "\n";
 
-    fprintf(strm,s_.c_str(),args...);
+    cfprintf(strm,s_.c_str(),args...);
 
     if(fail){
         CDebugHelpers::coffee_print_callstack("Callstack before crash: \n","-> %s\n",callstack,cs_length);
@@ -118,7 +149,7 @@ static void cBasicPrint(cstring str, Arg... args)
     cstring_w fmt = reinterpret_cast<cstring_w>(malloc(strlen(str)+2));
     strcpy(fmt,str);
     strcat(fmt,"\n");
-    fprintf(stderr,fmt,args...);
+    cfprintf(stderr,fmt,args...);
     free(fmt);
 }
 
@@ -181,12 +212,14 @@ template<typename... Arg>
  */
 static CString cStringFormat(cstring fmt, Arg... args)
 {
-    szptr sz = snprintf(nullptr,0,fmt,args...);
-    cstring_w _s = reinterpret_cast<cstring_w>(malloc(sz+1));
-    sprintf(_s,fmt,args...);
-    CString _o(_s);
-    free(_s);
-    return _o;
+//    szptr sz = snprintf(nullptr,0,fmt,args...);
+//    cstring_w _s = reinterpret_cast<cstring_w>(malloc(sz+1));
+//    sprintf(_s,fmt,args...);
+//    CString _o(_s);
+//    free(_s);
+//    return _o;
+
+    return fmt::sprintf(fmt,args...);
 }
 
 }
