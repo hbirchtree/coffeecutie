@@ -108,6 +108,11 @@ static void cDebugPrint(
 }
 
 template<typename... Arg>
+/*!
+ * \brief Prints message with newline, nothing else
+ * \param str
+ * \param args
+ */
 static void cBasicPrint(cstring str, Arg... args)
 {
     cstring_w fmt = reinterpret_cast<cstring_w>(malloc(strlen(str)+2));
@@ -118,24 +123,45 @@ static void cBasicPrint(cstring str, Arg... args)
 }
 
 template<typename... Arg>
+/*!
+ * \brief Debug message
+ * \param str
+ * \param args
+ */
 static void cDebug(cstring str, Arg... args)
 {
     cDebugPrint(1,1,str,args...);
 }
 
 template<typename... Arg>
+/*!
+ * \brief Warning message
+ * \param str
+ * \param args
+ */
 static void cWarning(cstring str, Arg... args)
 {
     cDebugPrint(2,1,str,args...);
 }
 
 template<typename... Arg>
+/*!
+ * \brief Fatal message, will crash program
+ * \param str
+ * \param args
+ */
 static void cFatal(cstring str, Arg... args)
 {
     cDebugPrint(3,1,str,args...);
 }
 
 template<typename... Arg>
+/*!
+ * \brief Print message with source and message
+ * \param src
+ * \param msg
+ * \param args
+ */
 static void cMsg(cstring src, cstring msg, Arg... args)
 {
     cstring_w str = reinterpret_cast<cstring_w>(malloc(strlen(src)+strlen(msg)+2));
@@ -146,8 +172,13 @@ static void cMsg(cstring src, cstring msg, Arg... args)
     free(str);
 }
 
-//cStringFormat should not be used for debug printing, it's slower than using printf
 template<typename... Arg>
+/*!
+ * \brief Should not be used for debug printing, it's slower than using printf
+ * \param fmt
+ * \param args
+ * \return A readily formatted string
+ */
 static CString cStringFormat(cstring fmt, Arg... args)
 {
     szptr sz = snprintf(nullptr,0,fmt,args...);

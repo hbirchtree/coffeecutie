@@ -7,159 +7,90 @@
 
 namespace Coffee{
 namespace CResources{
-
 namespace CFiles{
 
-static bool coffee_dir_create(cstring dname)
-{
+extern FILE* coffee_file_open(cstring fname, cstring mode);
+extern szptr coffee_file_size(FILE* file);
+extern cstring_w coffee_file_read(FILE* file, void* ptr, szptr *size, bool textmode = false);
+extern bool coffee_file_write(FILE* file, const void* data, szptr size);
+extern int coffee_file_close(FILE* file);
 
 }
 
-static FILE* coffee_file_open(cstring fname, cstring mode)
-{
-    return fopen(fname,mode);
-}
-
-static szptr coffee_file_size(FILE* file)
-{
-    fseek(file,0,SEEK_END);
-    szptr fsize = ftell(file);
-    rewind(file);
-    return fsize;
-}
-
-static cstring_w coffee_file_read(FILE* file, void* ptr, szptr *size, bool textmode = false)
-{
-    szptr esize = CFiles::coffee_file_size(file);
-    szptr msize = esize*sizeof(byte);
-
-    //Extra byte for null terminator
-    if(textmode)
-        msize+=1;
-
-    byte* data = reinterpret_cast<byte*>(realloc(ptr,msize));
-    *size = fread(data,sizeof(byte),esize,file);
-    //In text mode, we terminate the array
-    if(textmode)
-        data[esize*sizeof(byte)] = '\0';
-
-    if(*size<esize)
-        cFatal("Read error: expected %ld bytes, got %ld",esize,*size);
-
-    return data;
-}
-
-static bool coffee_file_write(FILE* file, const void* data, szptr size)
-{
-    szptr wsize = fwrite(data,sizeof(byte),size,file);
-
-    if(wsize<size)
-        return false;
-    return true;
-}
-
-static int coffee_file_close(FILE* file)
-{
-    return fclose(file);
-}
-
-}
-
+/*!
+ * \brief A data resource which location cannot be changed.
+ */
 struct CResource{
     enum ResourceFlags{
+        /*! Resource is in a remote location, internet and etc.*/
         Remote      = 0x1,
+        /*! Resource is read-only*/
         ReadOnly    = 0x2,
+        /*! Resource is read-write*/
         ReadWrite   = 0x4,
+        /*! Resource is write-only*/
         WriteOnly   = 0x8,
 
+        /*! Resource is mapped or streamed*/
         Streaming   = 0x10,
     };
 
-    CResource(cstring resource){
-        m_resource = resource;
-        identify_resource();
-    }
+    /*!
+     * \brief Creates resource with location
+     * \param resource Resource to use
+     */
+    CResource(cstring resource);
 
-    cstring resource(){
-        return m_resource.c_str();
-    }
+    /*!
+     * \brief Get location of resource
+     * \return
+     */
+    cstring resource();
 
-    uint8 flags     = 0;
-    szptr size      = 0;
-    void* data      = nullptr;
+    uint8 flags     = 0; /*! Resource flags*/
+    szptr size      = 0; /*! Data size*/
+    void* data      = nullptr; /*! Data pointer*/
 
-    bool exists(){
-        FILE *f = fopen(m_resource.c_str(),"r");
-        if(f)
-            fclose(f);
-        return f;
-    }
+    /*!
+     * \brief Whether resource exists or not
+     * \return True if exists
+     */
+    bool exists();
+    /*!
+     * \brief Read data from file if it exists
+     * \param textmode Read as text, null-terminate data
+     * \return True if success
+     */
+    bool read_data(bool textmode = false);
+    /*!
+     * \brief Append text to data with null-termination
+     * \param text Text to append
+     * \return True if success
+     */
+    bool append_text(cstring text);
+    /*!
+     * \brief Save data to file, overwrites previous contents
+     * \return
+     */
+    bool save_data();
+    /*!
+     * \brief Free data pointer
+     */
+    void free_data();
 
-    bool read_data(bool textmode = false){
-        FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"rb");
-
-        if(!fp){
-            cWarning("Failed to read file: %s",m_resource.c_str());
-            return false;
-        }
-
-        data = CFiles::coffee_file_read(fp,data,&size,textmode);
-        if(CFiles::coffee_file_close(fp))
-            cWarning("Failed to close file: %s",m_resource.c_str());
-        return true;
-    }
-
-    bool memory_map()
-    {
-        this->size = coffee_file_get_size(m_resource.c_str());
-        this->data = CMemoryManagement::coffee_memory_map_file(m_resource.c_str(),0,size);
-        if(!this->data)
-            this->size = 0;
-    }
-
-    bool memory_unmap()
-    {
-        bool s = CMemoryManagement::coffee_memory_unmap_file(this->data,this->size);
-        this->data = nullptr;
-        this->size = 0;
-        return s;
-    }
-
-    bool save_data(){
-        FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"wb");
-        bool stat = CFiles::coffee_file_write(fp,data,size);
-        if(CFiles::coffee_file_close(fp))
-            cWarning("Failed to close file: %s",m_resource.c_str());
-        return stat;
-    }
-
-    bool append_text(cstring text){
-        FILE *fp = CFiles::coffee_file_open(m_resource.c_str(),"ab+");
-        bool stat = CFiles::coffee_file_write(fp,text,strlen(text));
-        if(CFiles::coffee_file_close(fp))
-            cWarning("Failed to close file: %s",m_resource.c_str());
-        return stat;
-    }
-
-    void free_data(){
-        free(data);
-        data = nullptr;
-    }
+    /*!
+     * \brief Memory map file as buffer
+     * \return True if success
+     */
+    bool memory_map();
+    /*!
+     * \brief Unmap file
+     * \return True if success
+     */
+    bool memory_unmap();
 
 private:
-    void identify_resource(){
-        //Not all of these are implemented!
-        std::vector<CString> remotes =
-        {"http:.*","https:.*","ftp:.*","ftps:.*","sftp:.*"};
-
-        for(const CString& rem : remotes){
-            CRegexMatch match = CFunctional::coffee_regex_match(rem,m_resource);
-            if(match.b_match){
-                flags|=Remote;
-                break;
-            }
-        }
-    }
+    void identify_resource();
 
     CString m_resource;
 };

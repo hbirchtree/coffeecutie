@@ -11,12 +11,12 @@ ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE})
 
 IF( DOXYGEN_FOUND )
      IF( DOXYFILE_FOUND )
-	# Add target
-         ADD_CUSTOM_TARGET( doc ALL ${DOXYGEN_EXECUTABLE}  
+        # Add target
+         ADD_CUSTOM_TARGET( doc ALL ${DOXYGEN_EXECUTABLE}
 "${PROJECT_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE}" )
 
      ELSE( DOXYFILE_FOUND )
-	MESSAGE( STATUS "Doxygen configuration file not found - Documentation  
+        MESSAGE( STATUS "Doxygen configuration file not found - Documentation
 will not be generated" )
      ENDIF( DOXYFILE_FOUND )
 ELSE(DOXYGEN_FOUND)
@@ -105,6 +105,8 @@ set ( CoffeeTest_SRCS
 set ( CoffeeCore_SRCS
 
         coffee/cobject.cpp
+        coffee/cfiles.cpp
+
         coffee/display/cdrendererbase.cpp
 
         coffee_impl/assimp/cassimpimporters.cpp

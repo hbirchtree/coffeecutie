@@ -17,17 +17,20 @@ struct CIEvent
         Keyboard     = 0x2,
         Controller   = 0x3,
         Scroll       = 0x4,
-        Drop         = 0x5, /*!< Drag-and-drop event*/
+        /*!< Drag-and-drop event*/
+        Drop         = 0x5,
         TextInput    = 0x6,
 
         MouseButton  = 0x7,
 
-        QuitSign     = 0x8, /*!< Notifies the program, can be ignored or handled*/
+        /*!< Notifies the program, can be ignored or handled*/
+        QuitSign     = 0x8,
 
         Focus        = 0x9,
         TextEdit     = 0xa,
 
-        ControllerEv = 0xb, /*!< Controller connection or disconnection*/
+        /*!< Controller connection or disconnection*/
+        ControllerEv = 0xb,
     };
     uint8   type  = 0; /*!< Event type*/
     uint32  ts    = 0; /*!< Event timestamp*/
@@ -75,9 +78,9 @@ struct CITextEvent
  */
 struct CIMouseMoveEvent
 {
-    uint8 btn = 0;
-    CPointF pos;
-    CPointF rel;
+    uint8 btn = 0; /*! Button held down while moved*/
+    CPointF pos; /*! Absolute position*/
+    CPointF rel; /*! Relative movement since last poll*/
 };
 
 /*!
@@ -118,7 +121,7 @@ struct CIScrollEvent
  */
 struct CIWriteEvent
 {
-    cstring  text   = nullptr;
+    cstring  text   = nullptr; /*! Submitted text*/
 };
 
 /*!
@@ -126,9 +129,9 @@ struct CIWriteEvent
  */
 struct CIWEditEvent
 {
-    cstring text    = nullptr;
-    uint32  cursor  = 0;
-    uint32  len     = 0;
+    cstring text    = nullptr; /*! Current text*/
+    uint32  cursor  = 0; /*! Cursor position*/
+    uint32  len     = 0; /*! Text length*/
 };
 
 /*!

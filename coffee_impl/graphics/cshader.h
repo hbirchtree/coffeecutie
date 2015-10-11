@@ -95,7 +95,7 @@ extern void coffee_graphics_free(CShader* shd);
 extern void coffee_graphics_free(CShaderProgram* prg);
 /*!
  * \brief Free stage program resource
- * \param shd Stage program to free
+ * \param prg Stage program to free
  */
 extern void coffee_graphics_free(CShaderStageProgram* prg);
 
