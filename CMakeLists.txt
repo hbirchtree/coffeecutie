@@ -137,6 +137,7 @@ set ( CoffeeCore_SRCS
         include/stb/stb_vorbis.c
 
         datasources/blam/cblam_bitm.cpp
+        datasources/blam/cblam_map.cpp
         )
 
 if(NOT WIN32)

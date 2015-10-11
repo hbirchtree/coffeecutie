@@ -3,12 +3,24 @@
 namespace Coffee{
 namespace CBlam{
 
+struct blam_rgba
+{
+    uint32 r,g,b,a;
+};
+
+uint32 blam_rgba_to_int(const blam_rgba &c);
+
 blam_bitm_header _bitm_get_header(const void* base, int32 offset)
 {
     const blam_bitm_header* ptr = (const blam_bitm_header*)(((const byte*)base)+offset);
     blam_bitm_header hdr;
     memcpy(&hdr,ptr,sizeof(blam_bitm_header));
     return hdr;
+}
+
+uint32 blam_rgba_to_int(const blam_rgba &c)
+{
+    return (c.r << 24) | (c.g << 16) | (c.b << 8) | c.a;
 }
 
 const blam_bitm_image *coffee_bitm_get(
@@ -53,6 +65,7 @@ uint32 *coffee_bitm_decode_a8r8g8b8(const blam_bitm_image *img, const void *map)
 
     return out;
 }
+
 
 }
 }

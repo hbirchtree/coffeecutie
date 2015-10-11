@@ -13,24 +13,16 @@ namespace CInput{
 struct CIEvent
 {
     enum EventType {
-        MouseMove    = 0x1,
-        Keyboard     = 0x2,
-        Controller   = 0x3,
-        Scroll       = 0x4,
-        /*!< Drag-and-drop event*/
-        Drop         = 0x5,
-        TextInput    = 0x6,
-
-        MouseButton  = 0x7,
-
-        /*!< Notifies the program, can be ignored or handled*/
-        QuitSign     = 0x8,
-
-        Focus        = 0x9,
-        TextEdit     = 0xa,
-
-        /*!< Controller connection or disconnection*/
-        ControllerEv = 0xb,
+        MouseMove    = 0x1,/*!< Mouse motion events*/
+        Keyboard     = 0x2,/*!< Keyboard events*/
+        Controller   = 0x3,/*!< Controller input events*/
+        Scroll       = 0x4,/*!< Scroll events*/
+        Drop         = 0x5,/*!< Drag-and-drop event*/
+        TextInput    = 0x6,/*!< Text input events*/
+        MouseButton  = 0x7,/*!< Mouse button presses and releases*/
+        QuitSign     = 0x8,/*!< Notifies the program, can be ignored or handled*/
+        TextEdit     = 0x9,/*!< Text edit event, cursor position and stuff*/
+        ControllerEv = 0xa,/*!< Controller connection or disconnection*/
     };
     uint8   type  = 0; /*!< Event type*/
     uint32  ts    = 0; /*!< Event timestamp*/
@@ -60,7 +52,7 @@ struct CIKeyEvent
         PressedModifier   = 0x20,
     };
 
-    uint32 key  = 0;
+    uint32 key  = 0; /*!< A keycode, use this to identify keys*/
     uint32 scan = 0; /*!< System scancode*/
     uint32 mod = 0; /*!< Modifier keys*/
 };
@@ -78,9 +70,9 @@ struct CITextEvent
  */
 struct CIMouseMoveEvent
 {
-    uint8 btn = 0; /*! Button held down while moved*/
-    CPointF pos; /*! Absolute position*/
-    CPointF rel; /*! Relative movement since last poll*/
+    uint8 btn = 0; /*!< Button held down while moved*/
+    CPointF pos; /*!< Absolute position*/
+    CPointF rel; /*!< Relative movement since last poll*/
 };
 
 /*!
@@ -129,9 +121,9 @@ struct CIWriteEvent
  */
 struct CIWEditEvent
 {
-    cstring text    = nullptr; /*! Current text*/
-    uint32  cursor  = 0; /*! Cursor position*/
-    uint32  len     = 0; /*! Text length*/
+    cstring text    = nullptr; /*!< Current text*/
+    uint32  cursor  = 0; /*!< Cursor position*/
+    uint32  len     = 0; /*!< Text length*/
 };
 
 /*!
@@ -155,10 +147,10 @@ struct CIControllerAtomicEvent
      * \brief Masks used to extract state
      */
     enum AtomicMasks{
-        AxisMask        = 0x001, /*! Shifted 0, 1 bit*/
-        ControllerMask  = 0x01e, /*! Shifted 1, 4 bits*/
-        IndexMask       = 0x3e0, /*! Shifted 5, 5 bits*/
-        ButtonStateMask = 0x400, /*! Shifted 10,1 bit*/
+        AxisMask        = 0x001, /*!< Shifted 0, 1 bit*/
+        ControllerMask  = 0x01e, /*!< Shifted 1, 4 bits*/
+        IndexMask       = 0x3e0, /*!< Shifted 5, 5 bits*/
+        ButtonStateMask = 0x400, /*!< Shifted 10,1 bit*/
     };
     uint32  state   = 0; /*!< Stores most of state, whether it is an axis, which controller, which button or axis, and button state*/
     scalar  value   = 0.f; /*!< Scalar value for axis*/
