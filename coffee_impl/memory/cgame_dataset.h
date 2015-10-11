@@ -1,9 +1,7 @@
 #ifndef CGAME_DATASET
 #define CGAME_DATASET
 
-#include "coffee_impl/graphics/cbuffer.h"
-#include "coffee_impl/graphics/ctexture.h"
-#include "coffee_impl/rendering/cmultidrawgraph.h"
+#include "cgame_function_binds.h"
 #include "coffee_impl/assimp/cassimptypes.h"
 #include "coffee_impl/graphics/cuniformtypes.h"
 #include "coffee_impl/graphics/cgraphics_quirks.h"
@@ -55,6 +53,7 @@ struct game_transform_chunk
     chunk_mem<CGCamera>             cameras;
 };
 
+
 struct game_context
 {
     game_vertexdata_chunk   vertexdata;
@@ -65,9 +64,8 @@ struct game_context
 
     game_transform_chunk    transforms;
 
-    CGraphicsQuirks::CFeatureSet *features;
-
-    std::function<void(const CMultiDrawDataSet&)> renderfun;
+    CGraphicsQuirks::CFeatureSet*   features;
+    game_function_binds             funptrs;
 
     std::vector<CAssimpMesh*>   meshes;
     std::vector<szptr>          mesh_indices;

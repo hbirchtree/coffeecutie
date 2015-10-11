@@ -6,6 +6,7 @@
 #include "coffee_impl/sample/base_case.h"
 #include "coffee_impl/graphics/cframebuffer.h"
 #include "coffee_impl/graphics/cgraphics_quirks.h"
+#include "coffee_impl/assimp/assimpfun.h"
 
 #include "plat/plat_wm.h"
 
@@ -18,6 +19,11 @@ namespace CDisplay {
 
 CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
+    m_msg_filter = [](CGLReport* r){
+//        if(r->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
+//            return false;
+        return true;
+    };
 }
 
 CDRenderer::~CDRenderer()
@@ -43,20 +49,27 @@ void CDRenderer::run()
     game = new game_context;
     game->features = &quirks;
 
-    //We set the function pointer that works for the set quirks
-    if(quirks.render_multidraw)
-        game->renderfun = coffee_multidraw_render;
-    else
-        game->renderfun = coffee_multidraw_render_safe;
+    coffee_test_fun_set(game);
 
-    CResource mdata("ubw/models/grass.fbx");
-    mdata.read_data();
-    CAssimpData* d = CAssimpImporters::importResource(&mdata,mdata.resource());
-    for(szptr i=0;i<d->numMeshes;i++)
-        game->meshes.push_back(d->meshes[i]);
+//    CResource mdata("ubw/models/grass.fbx");
+//    mdata.read_data();
+//    CAssimpData* d = CAssimpImporters::importResource(&mdata,mdata.resource());
+//    for(szptr i=0;i<d->numMeshes;i++)
+//        game->meshes.push_back(d->meshes[i]);
+//    mdata.free_data();
+
+    CResource gdata("ubw/models/ubw.blend");
+    gdata.read_data();
+    CAssimpData* d2 = CAssimpImporters::importResource(&gdata,gdata.resource());
+    for(szptr i=0;i<d2->numMeshes;i++)
+        game->meshes.push_back(d2->meshes[i]);
+    gdata.free_data();
 
     if(!coffee_test_load(game))
         return;
+
+//    CResourceTypes::coffee_assimp_free(d);
+    CResourceTypes::coffee_assimp_free(d2);
 
     showWindow();
 
@@ -87,19 +100,21 @@ void CDRenderer::run()
     CFramebuffer fb;
     CTexture fbtex;
     fb.create();
-    fbtex.create();
+    coffee_graphics_alloc(&fbtex);
     fbtex.textureType = GL_TEXTURE_2D;
     fbtex.levels = 1;
     CTextureTools::CTextureData texd;
     texd.format = GL_RGBA8;
-    fbtex.bind();
-    fbtex.unbind();
+    coffee_graphics_tex_activate(&fbtex);
     fb.bind();
     fb.unbind();
     CTextureTools::coffee_create_texturesize(&texd,1280,720);
-    CTextureTools::coffee_texture2d_define(&fbtex,&texd);
+    game->funptrs.tex_define(&fbtex,&texd);
     fb.attach(&fbtex,GL_COLOR_ATTACHMENT0,0);
     fb.valid();
+
+    game->transforms.transforms.d[0].rotation =
+            CMath::quat(CMath::vec3(-90.f,0,0))*game->transforms.transforms.d[0].rotation;
 
     while(!closeFlag()){
         delta = contextTime();
@@ -148,14 +163,12 @@ void CDRenderer::run()
         }
     }
 
-
-
     CResource texture("test.png");
     CStbImageLib::CStbImage img;
     img.size = windowSize();
     img.bpp = 4;
     swap->start();
-    coffee_tex_download_texture(&fbtex,0,4*windowSize().w*windowSize().h,GL_RGBA,&img);
+    coffee_graphics_tex_download_texture(&fbtex,0,4*windowSize().w*windowSize().h,GL_RGBA,&img);
     cDebug("Fetching time: %lld",swap->elapsed());
     swap->start();
     CStbImageLib::coffee_stb_image_flip_vertical(&img);
@@ -163,6 +176,7 @@ void CDRenderer::run()
     swap->start();
     CStbImageLib::coffee_stb_image_save_png(&texture,&img);
     texture.save_data();
+    CStbImageLib::coffee_stb_image_free(&img);
     cDebug("File time: %lld",swap->elapsed());
 
     swap->start();
@@ -187,7 +201,7 @@ void CDRenderer::run(CDWindowProperties props)
 void CDRenderer::bindingCallback(void *report) const
 {
     CGLReport* rep = (CGLReport*)report;
-    if(rep->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
+    if(!m_msg_filter(rep))
         return;
     CString out = glbinding::Meta::getString(rep->type)+":"
             +glbinding::Meta::getString(rep->severity)+":"
@@ -198,14 +212,13 @@ void CDRenderer::bindingCallback(void *report) const
 
 void CDRenderer::eventWHandle(const CDEvent *event)
 {
-    if(event->type==CDEvent::Resize){
-        if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
-            const CDResizeEvent* resize = (const CDResizeEvent*)&event[1];
-            glViewport(0,0,resize->w,resize->h);
+    if(event->type==CDEvent::Resize &&
+            m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
+        const CDResizeEvent* resize = (const CDResizeEvent*)&event[1];
+        glViewport(0,0,resize->w,resize->h);
 
-            game->transforms.cameras.d[0].aspect =
-                    (float)resize->w/(float)resize->h;
-        }
+        game->transforms.cameras.d[0].aspect =
+                (float)resize->w/(float)resize->h;
     }
 }
 
@@ -229,10 +242,9 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         {
             game->transforms.cameras.d[0].rotation =
                     CMath::normalize(
-                        CMath::quat(1,0.01*mev->rel.y,0,0)
-                        *game->transforms.cameras.d[0].rotation
-                        *CMath::quat(1,0,0.01*mev->rel.x,0));
-            game->transforms.cameras.d[0].rotation.z = 0;
+                        CMath::quat(glm::vec3(0.01*mev->rel.y,0,0))
+                        *CMath::quat(glm::vec3(0,0.01*mev->rel.x,0))
+                        *game->transforms.cameras.d[0].rotation);
         }
     }
     else if(event->type==CIEvent::MouseButton)

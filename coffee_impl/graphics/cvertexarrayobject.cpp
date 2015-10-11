@@ -27,5 +27,32 @@ void coffee_vao_attribute_bind_buffer(CVertexArrayObject *vao, const CVertexBuff
     glVertexArrayVertexBuffer(vao->handle,buf.binding,buf.buffer->handle,buf.offset,buf.stride);
 }
 
+void coffee_graphics_alloc(CVertexArrayObject *vao)
+{
+    glGenVertexArrays(1,&vao->handle);
+}
+
+void coffee_graphics_free(CVertexArrayObject *vao)
+{
+    glDeleteVertexArrays(1,&vao->handle);
+}
+
+void coffee_graphics_activate(const CVertexArrayObject *vao)
+{
+    coffee_graphics_bind(vao);
+    coffee_graphics_unbind(vao);
+}
+
+void coffee_graphics_bind(const CVertexArrayObject *vao)
+{
+    glBindVertexArray(vao->handle);
+}
+
+void coffee_graphics_unbind(const CVertexArrayObject *vao)
+{
+    C_UNUSED(vao);
+    glBindVertexArray(0);
+}
+
 }
 }

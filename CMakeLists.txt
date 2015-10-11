@@ -2,6 +2,28 @@ project( CoffeeCore )
 cmake_minimum_required( VERSION 3.1 )
 set ( CMAKE_BUILD_TYPE Debug )
 
+MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
+FIND_PACKAGE(Doxygen)
+SET(DOXYFILE_FOUND false)
+IF(EXISTS ${PROJECT_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE})
+     SET(DOXYFILE_FOUND true)
+ENDIF(EXISTS ${PROJECT_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE})
+
+IF( DOXYGEN_FOUND )
+     IF( DOXYFILE_FOUND )
+	# Add target
+         ADD_CUSTOM_TARGET( doc ALL ${DOXYGEN_EXECUTABLE}  
+"${PROJECT_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE}" )
+
+     ELSE( DOXYFILE_FOUND )
+	MESSAGE( STATUS "Doxygen configuration file not found - Documentation  
+will not be generated" )
+     ENDIF( DOXYFILE_FOUND )
+ELSE(DOXYGEN_FOUND)
+     MESSAGE(STATUS "Doxygen not found - Documentation will not be generated")
+ENDIF(DOXYGEN_FOUND)
+ENDMACRO(GENERATE_DOCUMENTATION)
+
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 add_definitions ( -Wall )
@@ -30,7 +52,6 @@ set ( CoffeeCore_HDRS
         coffee_impl/assimp/cassimpimporters.h
         coffee_impl/assimp/assimpfun.h
         coffee_impl/assimp/cassimptypes.h
-        coffee_impl/assimp/cassimploader.h
 
         coffee_impl/context/cdrenderer.h
         coffee_impl/context/cglbindingrenderer.h
@@ -87,6 +108,7 @@ set ( CoffeeCore_SRCS
         coffee/display/cdrendererbase.cpp
 
         coffee_impl/assimp/cassimpimporters.cpp
+        coffee_impl/assimp/assimpfun.cpp
 
         coffee_impl/context/cdrenderer.cpp
         coffee_impl/context/cglbindingrenderer.cpp
@@ -97,9 +119,12 @@ set ( CoffeeCore_SRCS
 
         coffee_impl/functional/cqueuerunner.cpp
 
+        coffee_impl/graphics/cbuffer.cpp
         coffee_impl/graphics/cshader.cpp
         coffee_impl/graphics/cgraphicsdata.cpp
         coffee_impl/graphics/cvertexarrayobject.cpp
+        coffee_impl/graphics/ctexture.cpp
+        coffee_impl/graphics/cgraphics_quirks.cpp
 
         coffee_impl/image/cimage.cpp
 
@@ -146,3 +171,6 @@ target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
 set_property(TARGET CoffeeLib PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeLib PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeLib PRIVATE cxx_constexpr)
+
+#Documentation with Doxygen
+GENERATE_DOCUMENTATION("docs/coffee.dox")

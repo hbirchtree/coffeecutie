@@ -93,5 +93,10 @@ void coffee_stb_error()
     cDebug("%s",stbi_failure_reason());
 }
 
+void coffee_stb_image_free(CStbImage *img)
+{
+    free(img->data);
+}
+
 }
 }

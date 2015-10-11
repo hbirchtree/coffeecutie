@@ -50,6 +50,8 @@ extern void coffee_stb_image_flip_vertical(
 extern void coffee_stb_image_flip_horizontal(
         CStbImage* src);
 
+extern void coffee_stb_image_free(CStbImage* img);
+
 } //CStbImageLib
 } //Coffee
 

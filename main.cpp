@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     std::atomic<ubyte> atomic;
     atomic.store(0);
     CThreading::CThreadWorker<ubyte> worker(atomic);
-    std::future<void> ret = worker.run([=](){
+//    std::future<void> ret = worker.run([=](){
         try{
             renderer->run(props);
         }catch(std::runtime_error exc){
@@ -60,10 +60,10 @@ int main(int argc, char** argv)
         }
         if(worker.dataPtr()->load()==0)
             worker.dataPtr()->store(255);
-    });
+//    });
 
-    while(worker.dataPtr()->load()==0)
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//    while(worker.dataPtr()->load()==0)
+//        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     switch(worker.dataPtr()->load()){
     case 1:
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 
     cDebug("Time: %lldus",timer.elapsed());
 
-    ret.get();
+//    ret.get();
 
     delete renderer;
     return 0;

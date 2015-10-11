@@ -47,27 +47,32 @@ void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
     }
 }
 
-void coffee_multidraw_load_drawcalls(const CMultiDrawDataSet &set)
+void coffee_multidraw_load_drawcalls(
+        const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
 {
     set.drawcalls->drawbuffer->bufferType = GL_DRAW_INDIRECT_BUFFER;
-    _coffee_bufferload_vector<CGLDrawCall>(set.drawcalls->drawcalls,set.drawcalls->drawbuffer);
+    _coffee_bufferload_vector<CGLDrawCall>(
+                set.drawcalls->drawcalls,
+                set.drawcalls->drawbuffer,bfun);
 }
 
-void coffee_multidraw_load_indices(const CMultiDrawDataSet &set)
+void coffee_multidraw_load_indices(
+        const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
 {
     set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
-    _coffee_bufferload_vector<GLuint>(set.index->indices,set.index->buffer);
+    _coffee_bufferload_vector<GLuint>(set.index->indices,set.index->buffer,bfun);
 }
 
-void coffee_multidraw_load_buffer(CBuffer *buffer, const std::vector<byte> &data)
+void coffee_multidraw_load_buffer(
+        CBuffer *buffer, const std::vector<byte> &data, const CBufferFunctionBinds& bfun)
 {
     buffer->bufferType = GL_ARRAY_BUFFER;
-    _coffee_bufferload_vector<byte>(data,buffer);
+    _coffee_bufferload_vector<byte>(data,buffer,bfun);
 }
 
 void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &desc)
 {
-    set.vao->bind();
+    coffee_graphics_bind(set.vao);
     for(CVertexAttribute& attr : desc.attributes){
         coffee_vao_attribute_buffer(set.vao,attr,*attr.bnd);
         coffee_vao_attribute_format(set.vao,attr,*attr.fmt);
@@ -76,8 +81,8 @@ void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &des
         set.bindings.push_back(attr.bnd);
     }
 
-    set.index->buffer->bind();
-    set.vao->unbind();
+    coffee_graphics_bind(set.index->buffer);
+    coffee_graphics_unbind(set.vao);
 }
 
 bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)

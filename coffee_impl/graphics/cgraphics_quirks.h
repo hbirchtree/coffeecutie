@@ -13,43 +13,26 @@ struct CFeatureSet
     //Is a pointer to a string, not an array
     cstring extensions  = nullptr;
 
-    bool    render_multidraw		= false;
-    bool    render_ssbo_support		= false;
-    bool    render_bindless_texture     = false;
+    bool    ext_multi_draw_indirect     = false;
+
+    bool    ext_ssbo_support            = false;
+
+    bool    ext_bindless_texture        = false;
+    bool    ext_texture_storage         = false;
+
+    bool    ext_separate_shader_objs    = false;
+
+    bool    ext_direct_state_access     = false;
+    bool    ext_invalidate_subdata      = false;
 };
 
-static bool coffee_quirks_query_extension(
+extern bool coffee_quirks_query_extension(
         const CFeatureSet& features,
-        cstring requested)
-{
-    return strstr(features.extensions,requested);
-}
-
-static bool _quirk_extension(cstring extension, cstring allexts)
-{
-    if(strstr(allexts,extension)){
-//        cDebug("Enabling code for %s",extension);
-        return true;
-    }else{
-        cDebug("Extension %s not available",extension);
-        return false;
-    }
-}
-
-static void coffee_quirks_set(CFeatureSet* featureset)
-{
-    featureset->render_multidraw = _quirk_extension(
-                "GL_ARB_multi_draw_indirect",
-                featureset->extensions);
-
-    featureset->render_ssbo_support = _quirk_extension(
-                "GL_ARB_shader_storage_buffer_object",
-                featureset->extensions);
-
-    featureset->render_bindless_texture = _quirk_extension(
-                "GL_ARB_bindless_texture",
-                featureset->extensions);
-}
+        cstring requested);
+extern bool _quirk_extension(
+        cstring extension, cstring allexts);
+extern void coffee_quirks_set(
+        CFeatureSet* featureset);
 
 }
 

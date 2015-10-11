@@ -4,6 +4,11 @@
 #include "cglbindingrenderer.h"
 
 namespace Coffee {
+
+namespace CGraphicsWrappers{
+struct CGLReport;
+}
+
 namespace CMemoryManagement{
 struct game_context;
 }
@@ -16,6 +21,11 @@ struct CGLState;
 
 namespace CDisplay {
 
+/*!
+ * \brief Returns true if message is accepted, false is discarded
+ */
+typedef std::function<bool(CGLReport*)> CGLMessageFilter;
+
 class CDRenderer : public CGLBindingRenderer
 {
 public:
@@ -24,6 +34,10 @@ public:
 
     void run();
 
+    /*!
+     * \brief Launches the full context, init, run, cleanup
+     * \param props
+     */
     void run(CDWindowProperties props);
 
     void bindingCallback(void* report) const;
@@ -33,7 +47,7 @@ public:
 
 private:
     game_context* game = nullptr;
-
+    CGLMessageFilter m_msg_filter = nullptr;
 };
 
 } // namespace CDisplay

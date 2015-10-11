@@ -8,6 +8,7 @@
 
 namespace Coffee{
 namespace CFunctional{
+
 namespace CThreading
 {
 

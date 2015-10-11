@@ -31,26 +31,6 @@ struct CGCamera
     CRectF      orthoview;
 
     CMath::mat4 matrix;
-
-    void genPerspective(){
-        matrix = CMath::perspective(CMath::radians(fieldOfView),
-                                  aspect,
-                                  zVals.near,zVals.far);
-        rotate();
-        translate();
-    }
-    void genOrthographic(){
-        matrix = CMath::ortho(orthoview.x,orthoview.w,orthoview.y,orthoview.h,
-                                  zVals.near,zVals.far);
-        rotate();
-        translate();
-    }
-    void rotate(){
-        matrix *= CMath::mat4_cast(rotation);
-    }
-    void translate(){
-        matrix = CMath::translate(matrix,position);
-    }
 };
 
 struct CModelTransform
@@ -60,13 +40,23 @@ struct CModelTransform
     CMath::vec3   scale;
 
     CMath::mat4 matrix;
-
-    void genMatrix(){
-        matrix = CMath::scale(CMath::mat4(),scale);
-        matrix = CMath::translate(matrix,position)
-                * CMath::mat4_cast(rotation);
-    }
 };
+
+/*!
+ * \brief Update a model transform matrix
+ * \param mat
+ */
+extern void coffee_graphics_gen_matrix(CModelTransform* mat);
+/*!
+ * \brief Update projection matrix for camera
+ * \param cam
+ */
+extern void coffee_graphics_gen_matrix_perspective(CGCamera* cam);
+/*!
+ * \brief Update orthographic matrix for camera
+ * \param cam
+ */
+extern void coffee_graphics_gen_matrix_orthographic(CGCamera* cam);
 
 struct CBlock
         //A block of data, f.ex. a light or material

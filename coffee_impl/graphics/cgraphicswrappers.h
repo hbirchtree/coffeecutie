@@ -7,22 +7,28 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+/*!
+ * \brief Contains a GL message
+ */
 struct CGLReport
 {
-    GLenum source;
-    GLenum type;
-    GLuint id;
-    GLenum severity;
-    const char* message;
+    GLenum source; /*!< Source of message*/
+    GLenum type; /*!< Type of message*/
+    GLuint id; /*!< ID of message*/
+    GLenum severity; /*!< Severity of message*/
+    const char* message; /*!< Textual message*/
 };
 
+/*!
+ * \brief GL multidraw indirect call
+ */
 struct CGLDrawCall
 {
-    GLuint count            = 0;
-    GLuint instanceCount    = 0;
-    GLuint firstIndex       = 0;
-    GLuint baseVertex       = 0;
-    GLuint baseInstance     = 0;
+    GLuint count            = 0; /*!< Number of indices*/
+    GLuint instanceCount    = 0; /*!< Number of instances*/
+    GLuint firstIndex       = 0; /*!< First index in buffer*/
+    GLuint baseVertex       = 0; /*!< First vertex in buffer*/
+    GLuint baseInstance     = 0; /*!< First instance to render*/
 };
 
 }

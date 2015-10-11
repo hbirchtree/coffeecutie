@@ -22,26 +22,24 @@ struct CAssimpMaterial
     const uint8*            propertyTypes   = nullptr;
 };
 
+/*!
+ * \brief Assimp mesh containing vertex data, from positions to bitangents and texture coordinates. Should be allocated in a single, contiguous block to allow simple free'ing of resources.
+ */
 struct CAssimpMesh
-        //Vertex data
-        //Should be allocated in a single block for storage purposes
-        //Struct at offset=0
-        //free() is called on the CAssimpMesh struct ptr
 {
 
     //BUG : We cannot load these from memory dumps
     //Make the pointers relative to (this)
 
-    szptr               chunk_size      = 0;
+    szptr               chunk_size      = 0; /*! Total size of the memory chunk*/
 
     cstring             name            = nullptr;
 
-    uint8               numBuffers      = 0;
-    //Applies to the below lists
-    cstring const*      buffers         = nullptr;
-    const uint8*        bufferType      = nullptr;
-    const uint8*        elementSizes    = nullptr;
-    const uint32*       bufferSize      = nullptr;
+    uint8               numBuffers      = 0; /*! Number of buffers contained*/
+    cstring const*      buffers         = nullptr; /*! Buffer data pointers*/
+    const uint8*        bufferType      = nullptr; /*! Buffer types according to BufferType enum*/
+    const uint8*        elementSizes    = nullptr; /*! Sizes of elements in buffers*/
+    const uint32*       bufferSize      = nullptr; /*! Amount of elements in buffers*/
 
     enum BufferType
     {
@@ -57,25 +55,7 @@ struct CAssimpMesh
     };
 };
 
-static bool coffee_dump_mesh(CAssimpMesh* mesh, CResources::CResource* resource)
-{
-    bool success = false;
 
-    resource->free_data();
-
-    resource->size = mesh->chunk_size;
-    resource->data = malloc(resource->size);
-
-    memcpy(resource->data,mesh,resource->size);
-
-    if(!resource->save_data())
-        cWarning("Failed to store mesh data");
-    else success = true;
-
-    resource->free_data();
-
-    return success;
-}
 
 struct CAssimpCamera
 {
@@ -97,7 +77,10 @@ struct CAssimpAnimation
     cstring       name       = nullptr;
 };
 
-struct CAssimpModel //Material + Mesh
+/*!
+ * \brief A set of Assimp mesh and material
+ */
+struct CAssimpModel
 {
     cstring             name     = nullptr;
 
@@ -120,28 +103,6 @@ struct CAssimpData
     CAssimpLight**      lights      = nullptr;
     CAssimpTexture**    textures    = nullptr;
     CAssimpAnimation**  animations  = nullptr;
-
-    void freeData(){
-        szptr i;
-        for(i=0;i<numMeshes;i++)
-            free(meshes[i]);
-        free(meshes);
-        for(i=0;i<numMaterials;i++)
-            free(materials[i]);
-        free(materials);
-        for(i=0;i<numCameras;i++)
-            free(cameras[i]);
-        free(cameras);
-        for(i=0;i<numLights;i++)
-            free(lights[i]);
-        free(lights);
-        for(i=0;i<numTextures;i++)
-            free(textures[i]);
-        free(textures);
-        for(i=0;i<numAnimations;i++)
-            free(animations[i]);
-        free(animations);
-    }
 };
 
 } // namespace CAssimp

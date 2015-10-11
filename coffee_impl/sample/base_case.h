@@ -10,6 +10,8 @@ namespace CTest{
 
 using namespace CMemoryManagement;
 
+extern void coffee_test_fun_set(game_context* ctxt);
+
 extern CPipeline* coffee_shader_program_load(
         const game_shader_program_desc& desc,
         game_context* ctxt);
