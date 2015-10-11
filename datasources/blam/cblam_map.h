@@ -12,10 +12,7 @@ namespace Coffee{
  * \param len The length of the comparison
  * \return
  */
-extern bool coffee_cmp_memarea(
-        cstring target,
-        cstring cmp,
-        szptr len);
+extern bool coffee_cmp_memarea(cstring target, cstring cmp, szptr len);
 
 namespace CBlam{
 
