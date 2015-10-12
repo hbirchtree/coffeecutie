@@ -47,8 +47,8 @@ void coffee_quirks_set(CFeatureSet *featureset)
                 "GL_ARB_direct_state_access",
                 featureset->extensions);
 
-    featureset->ext_bindless_texture = false;
-    featureset->ext_ssbo_support = false;
+//    featureset->ext_bindless_texture = false;
+//    featureset->ext_ssbo_support = false;
 }
 
 }

@@ -550,7 +550,7 @@ void coffee_prepare_test(game_context *ctxt)
                     ctxt->shaders.programs.d[0].handle,loc,
                 ctxt->texstorage.d[0].bhandle);
     }else{
-        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,0);
+        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,ctxt->texstorage.d[0].unit);
     }
 }
 
