@@ -48,6 +48,7 @@ void coffee_quirks_set(CFeatureSet *featureset)
                 featureset->extensions);
 
     featureset->ext_bindless_texture = false;
+    featureset->ext_ssbo_support = false;
 }
 
 }

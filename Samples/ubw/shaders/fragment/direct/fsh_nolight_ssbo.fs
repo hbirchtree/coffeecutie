@@ -13,11 +13,12 @@ in v_block {
 	flat int iDrawID;
 } In;
 
-// material settings
+
 uniform sampler2D diffuseSampler;
 
 layout(location = 0) out vec4 Out_color;
 
 void main() {
-    Out_color = vec4(texture(diffuseSampler,In.texCoord).xyz*(1.0/1.3),1.0);
+	vec4 col = texture(diffuseSampler,In.texCoord);
+    Out_color = vec4(col.xyz*(1.0/1.3),col.a);
 }

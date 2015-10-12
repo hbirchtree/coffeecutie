@@ -82,8 +82,8 @@ void coffee_graphics_tex_use(
 void coffee_graphics_tex_use_safe(
         const CTexture *tex)
 {
-    glActiveTexture((GLenum)((uint32)(GL_TEXTURE0)+tex->unit));
-    coffee_graphics_bind(tex);
+    glBindMultiTextureEXT((GLenum)((uint32)(GL_TEXTURE0)+tex->unit),
+                          tex->textureType,tex->handle);
 }
 
 void coffee_graphics_tex_unload(
@@ -95,8 +95,8 @@ void coffee_graphics_tex_unload(
 void coffee_graphics_tex_unload_safe(
         const CTexture *tex)
 {
-    glActiveTexture((GLenum)((uint32)(GL_TEXTURE0)+tex->unit));
-    coffee_graphics_unbind(tex);
+    glBindMultiTextureEXT((GLenum)((uint32)(GL_TEXTURE0)+tex->unit),
+                          tex->textureType,0);
 }
 
 void coffee_graphics_tex_param(

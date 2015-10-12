@@ -82,7 +82,7 @@ void CDRenderer::run()
 //#endif
 
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
 
@@ -94,8 +94,6 @@ void CDRenderer::run()
 
     setSwapInterval(0);
     cMsg("Coffee","Init time: %fs",contextTime());
-
-    coffee_prepare_test(game);
 
     CFramebuffer fb;
     CTexture fbtex;
@@ -112,6 +110,8 @@ void CDRenderer::run()
     game->funptrs.tex_define(&fbtex,&texd);
     fb.attach(&fbtex,GL_COLOR_ATTACHMENT0,0);
     fb.valid();
+
+    coffee_prepare_test(game);
 
     game->transforms.transforms.d[0].rotation =
             CMath::quat(CMath::vec3(-90.f,0,0))*game->transforms.transforms.d[0].rotation;

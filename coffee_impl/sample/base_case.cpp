@@ -535,6 +535,14 @@ void coffee_prepare_test(game_context *ctxt)
     if(ctxt->features->ext_bindless_texture)
         coffee_graphics_tex_get_handle(&ctxt->texstorage.d[0]);
 
+    coffee_graphics_tex_param(&ctxt->texstorage.d[0],GL_TEXTURE_BASE_LEVEL,0);
+    coffee_graphics_tex_param(&ctxt->texstorage.d[0],GL_TEXTURE_MAX_LEVEL,0);
+
+    coffee_graphics_tex_param(
+                &ctxt->texstorage.d[0],GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    coffee_graphics_tex_param(
+                &ctxt->texstorage.d[0],GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+
     ctxt->funptrs.tex_load(&ctxt->texstorage.d[0]);
     if(ctxt->features->ext_bindless_texture)
     {
@@ -542,7 +550,7 @@ void coffee_prepare_test(game_context *ctxt)
                     ctxt->shaders.programs.d[0].handle,loc,
                 ctxt->texstorage.d[0].bhandle);
     }else{
-        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,ctxt->texstorage.d[0].unit);
+        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,0);
     }
 }
 
