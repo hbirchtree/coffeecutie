@@ -94,8 +94,7 @@ void coffee_graphics_tex_unload(
 void coffee_graphics_tex_unload_safe(
         const CTexture *tex)
 {
-    glBindMultiTextureEXT((GLenum)((uint32)(GL_TEXTURE0)+tex->unit),
-                          tex->textureType,0);
+    C_UNUSED(tex);
 }
 
 void coffee_graphics_tex_param(

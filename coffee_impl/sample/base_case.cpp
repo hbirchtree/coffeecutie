@@ -176,7 +176,8 @@ CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const 
     coffee_graphics_alloc(tex);
     //
 
-    uint32* d = CBlam::coffee_bitm_decode_a8r8g8b8(text,bitm);
+    uint32* d = CBlam::coffee_bitm_decode_micro(
+                text,bitm,CBlam::coffee_bitm_decode_m_a8r8g8b8);
 
     CStbImageLib::CStbImageConst img;
     img.data = (ubyte*)d;

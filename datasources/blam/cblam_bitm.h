@@ -3,6 +3,7 @@
 
 #include "cblam_map.h"
 #include "coffee_types.h"
+#include <functional>
 
 namespace Coffee{
 namespace CBlam{
@@ -63,6 +64,16 @@ struct blam_bitm_padding
     int32 unknown[16];
 };
 
+struct blam_rgba
+{
+    uint32 r,g,b,a;
+};
+
+/*!
+ * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
+ */
+typedef uint32 (BlamBitmProcess)(uint32,byte);
+
 /*!
  * \brief A memory structure for Blam images containing all the necessary information to extract the data.
  */
@@ -97,13 +108,52 @@ extern const blam_bitm_image* coffee_bitm_get(
         int32 *numImages);
 
 /*!
- * \brief Decode A8R8G8B8 data into something readable by GL. The resulting data may be loaded directly into GL and rendered on a texture. The acceptable format to display this data is GL_RGBA8. To note, this allocates memory which will be used to store the texture data.
- * \param img Image which will be extracted
- * \param map Pointer to bitmap data or file header, depending on the situation. Halo PC usually stores textures in a "bitmaps.map" file, while some third-party content stores this same data in the map file, a-la Xbox does.
- * \return A pointer to texture data for GL to use
+ * \brief Decoder which can be told how to decode each bit.
+ * \param img
+ * \param map
+ * \param process This specifies how to process each pixel, from a uint32 to another uint32
+ * \return
  */
-extern uint32 *coffee_bitm_decode_a8r8g8b8(const blam_bitm_image* img,
-        const void *map);
+extern uint32* coffee_bitm_decode_micro(
+        const blam_bitm_image* img,
+        const void* map,
+        BlamBitmProcess process);
+
+inline static uint32 blam_rgba_to_int(const blam_rgba &c)
+{
+    return (c.r << 24) | (c.g << 16) | (c.b << 8) | c.a;
+}
+
+inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d,byte b)
+{
+    blam_rgba col;
+    col.a = (d >> 24);
+    col.r = (d >> 16) & 0xff;
+    col.g = (d >> 8) & 0xff;
+    col.b = (d) & 0xff;
+
+    return blam_rgba_to_int(col);
+}
+inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d,byte b)
+{
+    blam_rgba col;
+    col.a = 0;
+    col.r = col.g = col.b = d;
+
+    return blam_rgba_to_int(col);
+}
+inline static uint32 coffee_bitm_decode_m_x8r8g8b8(uint32 d,byte b)
+{
+    blam_rgba col;
+    col.a = 0;
+    col.r = col.g = col.b = d;
+
+    return blam_rgba_to_int(col);
+}
+inline static uint32 coffee_bitm_decode_m_a8(uint32 d,byte b)
+{
+    return d << 24;
+}
 
 }
 }
