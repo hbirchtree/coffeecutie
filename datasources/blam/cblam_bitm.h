@@ -134,25 +134,19 @@ inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d,byte b)
 
     return blam_rgba_to_int(col);
 }
-inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d,byte b)
-{
-    blam_rgba col;
-    col.a = 0;
-    col.r = col.g = col.b = d;
-
-    return blam_rgba_to_int(col);
-}
 inline static uint32 coffee_bitm_decode_m_x8r8g8b8(uint32 d,byte b)
 {
     blam_rgba col;
     col.a = 0;
-    col.r = col.g = col.b = d;
+    col.r = (d >> 16) & 0xff;
+    col.g = (d >> 8) & 0xff;
+    col.b = (d) & 0xff;
 
     return blam_rgba_to_int(col);
 }
 inline static uint32 coffee_bitm_decode_m_a8(uint32 d,byte b)
 {
-    return d << 24;
+    return b << 24;
 }
 
 }
