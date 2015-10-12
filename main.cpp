@@ -3,12 +3,11 @@
 #include "plat/argument_parse.h"
 #include "unit_tests/data_types.h"
 #include "plat/environment_details.h"
-#include "coffee_impl/audio/openal/copenal.h"
+#include "datasources/blam/cblam.h"
+#include "coffee/cfiles.h"
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
-using namespace Coffee::CAudio;
-using namespace Coffee::CAudio::COpenAL;
 
 int main(int argc, char** argv)
 {
@@ -21,55 +20,46 @@ int main(int argc, char** argv)
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();
 
+    CResources::CResource h2("coagulation.map");
+    h2.memory_map();
+    const CBlam::blam_file_header* h2_map =
+            CBlam::blam_file_header_get(h2.data,CBlam::blam_version_h2);
+
+    const CBlam::blam_file_header_h2* h2_header = (const CBlam::blam_file_header_h2*)h2_map;
+
+    CResources::CResource h1("bloodgulch.map");
+    h1.memory_map();
+    const CBlam::blam_file_header* h1_map =
+            CBlam::blam_file_header_get(h1.data,CBlam::blam_version_pc);
+
+    CResources::CResource h3("lockout.map");
+    h3.memory_map();
+    const CBlam::blam_file_header* h3_map = (const CBlam::blam_file_header*)h3.data;
+
+    const CBlam::blam_file_header_h3* h3_header = (const CBlam::blam_file_header_h3*)h3_map;
+
+    return 0;
+
     CElapsedTimerMicro timer;
     timer.start();
-
-//    CResources::CResource rsc("/home/havard/Skrivebord/healing.ogg");
-//    rsc.read_data();
-
-//    CAudioSample smp;
-//    CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
-
-//    CALContext ctxt;
-//    ctxt.callback = [](CALReport* r){
-//        cDebug("%s",r->message);
-//    };
-
-//    coffee_audio_context_create(&ctxt);
-//    coffee_audio_context_get_error(&ctxt);
-//    CALBuffer *buf = new CALBuffer;
-//    CALListener l;
-//    l.gain = 1;
-//    l.position = CVec3(0,0,0);
-//    l.velocity = CVec3(-100,0,-100);
-//    l.orientation_forward = CVec3(1,0,0);
-//    CALSource src;
-
-//    coffee_audio_listener_set(&l);
-//    coffee_audio_alloc(buf,&smp);
-//    rsc.free_data();
-//    free(smp.data);
-//    coffee_audio_alloc(&src);
-//    coffee_audio_source_transform(&src,CVec3(5,0,5),CVec3(10,0,0),CVec3(0,0,0));
-//    coffee_audio_source_queue_buffers(&src,1,&buf);
-//    coffee_audio_source_set_state(&src,CALStatePlaying);
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     //Magic happens here
     CDWindowProperties props;
 
-    props.flags |= CDWindowProperties::Minimized;
-    props.flags |= CDWindowProperties::Resizable;
-    props.flags |= CDWindowProperties::Windowed;
-    props.flags |= CDWindowProperties::Decorated;
+    props.flags |=
+            CDWindowProperties::Minimized |
+            CDWindowProperties::Decorated |
+            CDWindowProperties::Resizable |
+            CDWindowProperties::Windowed;
     props.size.w = 1280;
     props.size.h = 720;
     props.monitor = 0;
 
-//    props.contextProperties.flags |= CGLContextProperties::GLVSync;
-    props.contextProperties.flags |= CGLContextProperties::GLDebug;
-    props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
+    props.contextProperties.flags |=
+            CGLContextProperties::GLDebug |
+            CGLContextProperties::GLAutoResize;
     props.contextProperties.version.major = 3;
     props.contextProperties.version.minor = 3;
 
@@ -84,15 +74,15 @@ int main(int argc, char** argv)
     atomic.store(0);
     CThreading::CThreadWorker<ubyte> worker(atomic);
 //    std::future<void> ret = worker.run([=](){
-        try{
+//        try{
             renderer->run(props);
-        }catch(std::runtime_error exc){
-            cDebug("Caught exception in thread: 0x%llx, message: %s",std::this_thread::get_id(),exc.what());
-            worker.dataPtr()->store(1);
-            renderer->cleanup();
-        }
-        if(worker.dataPtr()->load()==0)
-            worker.dataPtr()->store(255);
+//        }catch(std::runtime_error exc){
+//            cDebug("Caught exception in thread: 0x%llx, message: %s",std::this_thread::get_id(),exc.what());
+//            worker.dataPtr()->store(1);
+//            renderer->cleanup();
+//        }
+//        if(worker.dataPtr()->load()==0)
+//            worker.dataPtr()->store(255);
 //    });
 
 //    while(worker.dataPtr()->load()==0)

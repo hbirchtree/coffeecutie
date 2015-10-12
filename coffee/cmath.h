@@ -13,10 +13,14 @@ namespace Coffee{
  * \brief Contains functions related to mathematical operations. This namespace was created to simplify overloading the standard functions if there is a need to.
  */
 namespace CMath{
-
 using namespace std;
-
 using namespace glm;
+
+template<typename T>
+inline static bool power2(T n)
+{
+    return n!=0&&(n&(n-1))==0;
+}
 
 }
 }

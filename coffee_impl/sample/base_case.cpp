@@ -176,21 +176,7 @@ CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const 
     coffee_graphics_alloc(tex);
     //
 
-    uint32* d = CBlam::coffee_bitm_decode_micro(
-                text,bitm,CBlam::coffee_bitm_decode_m_a8r8g8b8);
-
-    CStbImageLib::CStbImageConst img;
-    img.data = (ubyte*)d;
-    img.bpp = 4;
-    img.size.w = text->isize.w;
-    img.size.h = text->isize.h;
-    CResource res("test_tex.png");
-
-    CStbImageLib::coffee_stb_image_save_png(&res,&img);
-    CStbImageLib::coffee_stb_error();
-
-    res.save_data();
-    res.free_data();
+    uint32* d = CBlam::coffee_bitm_decode_image(text,bitm);
 
     CTextureTools::CTextureData dt;
     dt.data = d;
@@ -470,17 +456,17 @@ bool coffee_test_load(game_context *ctxt)
                     int32 num = 0;
                     const CBlam::blam_bitm_image* img =
                             CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
-                    if(img->isize.w==img->isize.h&&
-                            img->format==CBlam::blam_bitm_format_A8R8G8B8&&
-                            img->isize.w==256)
-                    {
-                        cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
-                        if(strstr(t,"sky clear blue"))
-                        {
-                            cDebug("Image: %s,d=%i",t,img->depth);
-                            img_t = img;
-                        }
-                    }
+                    cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
+                    cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
+                    if(img->format!=CBlam::blam_bitm_format_DXT1&&
+                            img->format!=CBlam::blam_bitm_format_DXT2AND3&&
+                            img->format!=CBlam::blam_bitm_format_DXT4AND5&&
+                            img->flags&CBlam::blam_bitm_flag_linear)
+                        img_t = img;
+                    CBlam::coffee_bitm_dump(
+                                img,
+                                bitmfile.data,
+                                cStringFormat("texdump/%s.png",t).c_str());
                 }
             }
 

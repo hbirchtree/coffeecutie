@@ -13,6 +13,42 @@
 
 namespace Coffee{
 namespace CAudio{
+/*!
+ * \brief Basic wrapping for OpenAL, nothing extensive
+ *
+ * Example code, keeping it here temporarily:
+ *
+ *    CResources::CResource rsc("/home/havard/Skrivebord/healing.ogg");
+ *    rsc.read_data();
+ *
+ *    CAudioSample smp;
+ *    CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
+
+ *    CALContext ctxt;
+ *    ctxt.callback = [](CALReport* r){
+ *        cDebug("%s",r->message);
+ *    };
+ *
+ *    coffee_audio_context_create(&ctxt);
+ *    coffee_audio_context_get_error(&ctxt);
+ *    CALBuffer *buf = new CALBuffer;
+ *    CALListener l;
+ *    l.gain = 1;
+ *    l.position = CVec3(0,0,0);
+ *    l.velocity = CVec3(-100,0,-100);
+ *    l.orientation_forward = CVec3(1,0,0);
+ *    CALSource src;
+ *
+ *    coffee_audio_listener_set(&l);
+ *    coffee_audio_alloc(buf,&smp);
+ *    rsc.free_data();
+ *    free(smp.data);
+ *    coffee_audio_alloc(&src);
+ *    coffee_audio_source_transform(&src,CVec3(5,0,5),CVec3(10,0,0),CVec3(0,0,0));
+ *    coffee_audio_source_queue_buffers(&src,1,&buf);
+ *    coffee_audio_source_set_state(&src,CALStatePlaying);
+ *
+ */
 namespace COpenAL{
 
 /*!

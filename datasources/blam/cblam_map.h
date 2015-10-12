@@ -33,6 +33,7 @@ enum blam_versions
 {
     blam_version_xbox   = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
     blam_version_pc     = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
+    blam_version_h2     = 8, /*!< The Halo 2 map version*/
 };
 
 static cstring const blam_index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
@@ -85,7 +86,7 @@ struct blam_file_header
     int32   id; /*!< Header value, should correspond with specific data*/
     int32   version; /*!< Version of Halo, determines the process*/
     int32   decomp_len; /*!< Decompressed length, for Xbox where format is compressed. PC is uncompressed*/
-    int32   Unknown1;
+    int32   unknown1;
     int32   tagIndexOffset; /*!< Offset to tag index*/
     int32   tagIndexMetaLen; /*!< Length of tag index item metadata*/
     int32   reserved_1[2];
@@ -95,6 +96,49 @@ struct blam_file_header
     int32   unknown_4;
     int32   reserved_2[485];
     int32   footer; /*!< Footer value, should correspond with specific data*/
+};
+
+/*!
+ * \brief A mockup of the Halo 2 file header format, only speculation out of hex editor
+ */
+struct blam_file_header_h2
+{
+    byte    header[4];
+    int32   version; /*!< Will be 8 for all Halo 2, Xbox and PC */
+    int32   decomp_len;
+    int32   unknown4;
+    int32   tagCount2;
+    byte    reserved1[280];
+    byte    buildDate[32];
+    int32   mapType;
+    int32   tagCount;
+    int32   unknown5;
+    byte    unknown1[76];
+    byte    name[32]; /*!< Short-hand name for map*/
+    int32   unknown6;
+
+    byte    scenario[64]; /*!< Scenario to load on start */
+
+    byte    reserved2[196];
+    byte    unknown2[48];
+    byte    reserved3[1280];
+    byte    footer[4];
+};
+
+/*!
+ * \brief A mockup of the Halo 3 file header format, only speculation out of hex editor
+ */
+struct blam_file_header_h3
+{
+    byte    header[4];
+    byte    unknown1[280];
+    byte    buildDate[32];
+    byte    unknown2[80];
+    byte    name[32];
+    int32   unknown3;
+    byte    scenario[64];
+    byte    unknown4[11788];
+    byte    footer[4];
 };
 
 /*!

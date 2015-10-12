@@ -95,21 +95,21 @@ void CDRenderer::run()
     setSwapInterval(0);
     cMsg("Coffee","Init time: %fs",contextTime());
 
-    CFramebuffer fb;
-    CTexture fbtex;
-    fb.create();
-    coffee_graphics_alloc(&fbtex);
-    fbtex.textureType = GL_TEXTURE_2D;
-    fbtex.levels = 1;
-    CTextureTools::CTextureData texd;
-    texd.format = GL_RGBA8;
-    coffee_graphics_tex_activate(&fbtex);
-    fb.bind();
-    fb.unbind();
-    CTextureTools::coffee_create_texturesize(&texd,1280,720);
-    game->funptrs.tex_define(&fbtex,&texd);
-    fb.attach(&fbtex,GL_COLOR_ATTACHMENT0,0);
-    fb.valid();
+//    CFramebuffer fb;
+//    CTexture fbtex;
+//    fb.create();
+//    coffee_graphics_alloc(&fbtex);
+//    fbtex.textureType = GL_TEXTURE_2D;
+//    fbtex.levels = 1;
+//    CTextureTools::CTextureData texd;
+//    texd.format = GL_RGBA8;
+//    coffee_graphics_tex_activate(&fbtex);
+//    fb.bind();
+//    fb.unbind();
+//    CTextureTools::coffee_create_texturesize(&texd,1280,720);
+//    game->funptrs.tex_define(&fbtex,&texd);
+//    fb.attach(&fbtex,GL_COLOR_ATTACHMENT0,0);
+//    fb.valid();
 
     coffee_prepare_test(game);
 
@@ -132,6 +132,7 @@ void CDRenderer::run()
 //        fb.bind(GL_DRAW_FRAMEBUFFER);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         coffee_render_test(game,deltaT);
+        CASSERT(false);
 //        fb.unbind(GL_DRAW_FRAMEBUFFER);
 
         // END Rendering part
@@ -163,21 +164,21 @@ void CDRenderer::run()
         }
     }
 
-    CResource texture("test.png");
-    CStbImageLib::CStbImage img;
-    img.size = windowSize();
-    img.bpp = 4;
-    swap->start();
-    coffee_graphics_tex_download_texture(&fbtex,0,4*windowSize().w*windowSize().h,GL_RGBA,&img);
-    cDebug("Fetching time: %lld",swap->elapsed());
-    swap->start();
-    CStbImageLib::coffee_stb_image_flip_vertical(&img);
-    cDebug("Flipping time: %lld",swap->elapsed());
-    swap->start();
-    CStbImageLib::coffee_stb_image_save_png(&texture,&img);
-    texture.save_data();
-    CStbImageLib::coffee_stb_image_free(&img);
-    cDebug("File time: %lld",swap->elapsed());
+//    CResource texture("test.png");
+//    CStbImageLib::CStbImage img;
+//    img.size = windowSize();
+//    img.bpp = 4;
+//    swap->start();
+//    coffee_graphics_tex_download_texture(&fbtex,0,4*windowSize().w*windowSize().h,GL_RGBA,&img);
+//    cDebug("Fetching time: %lld",swap->elapsed());
+//    swap->start();
+//    CStbImageLib::coffee_stb_image_flip_vertical(&img);
+//    cDebug("Flipping time: %lld",swap->elapsed());
+//    swap->start();
+//    CStbImageLib::coffee_stb_image_save_png(&texture,&img);
+//    texture.save_data();
+//    CStbImageLib::coffee_stb_image_free(&img);
+//    cDebug("File time: %lld",swap->elapsed());
 
     swap->start();
     coffee_unload_test(game);
