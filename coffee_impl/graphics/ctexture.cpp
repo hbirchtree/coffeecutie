@@ -264,5 +264,22 @@ void CTextureTools::coffee_graphics_tex_free_texdata(CTextureTools::CTextureData
     tex->lengths = nullptr;
 }
 
+void coffee_graphics_tex_dump(const CTexture *tex, cstring filename)
+{
+    CStbImageLib::CStbImage img;
+    coffee_graphics_tex_download_texture(tex,0,4*512*512,GL_RGBA,&img);
+
+    img.bpp = 4;
+    img.size.w = 512;
+    img.size.h = 512;
+
+    CResources::CResource fl(filename);
+    CStbImageLib::coffee_stb_image_save_png(&fl,&img);
+    fl.save_data();
+    fl.free_data();
+
+    free(img.data);
+}
+
 }
 }

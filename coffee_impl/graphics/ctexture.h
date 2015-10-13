@@ -267,6 +267,14 @@ extern void     coffee_graphics_tex_download_texture(
         const CTexture* tex, GLint level,
         szptr size, GLenum format, CStbImageLib::CStbImage* img);
 
+/*!
+ * \brief Debug function for dumping texture to file
+ * \param tex
+ * \param filename
+ */
+extern void     coffee_graphics_tex_dump(
+        const CTexture* tex, cstring filename);
+
 }
 }
 

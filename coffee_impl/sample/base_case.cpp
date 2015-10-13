@@ -224,13 +224,15 @@ CTexture *coffee_texture_2d_load_blam_dxtc(
     case CBlam::blam_bitm_format_DXT4AND5:
         dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
         break;
-    }
+    };
 
     dx.mipmaps = text->mipmaps;
     dx.resolution.w = text->isize.w;
     dx.resolution.h = text->isize.h;
     dx.data = ((ubyte*)bitm)+text->offset;
     CTexture* t = coffee_graphics_tex_dxtc_load(&dx);
+
+    coffee_graphics_tex_dump(t,"test.png");
 
     memcpy(&ctxt->texstorage.d[i],t,sizeof(CTexture));
 
@@ -494,11 +496,13 @@ bool coffee_test_load(game_context *ctxt)
                     const CBlam::blam_bitm_image* img =
                             CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
                     cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
-                    cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
                     if(img->format==CBlam::blam_bitm_format_DXT1||
                             img->format==CBlam::blam_bitm_format_DXT2AND3||
                             img->format==CBlam::blam_bitm_format_DXT4AND5)
+                    {
                         coffee_texture_2d_load_blam_dxtc(img,bitmfile.data,ctxt);
+                        cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
+                    }
 //                    CBlam::coffee_bitm_dump(
 //                                img,
 //                                bitmfile.data,
@@ -553,25 +557,26 @@ void coffee_prepare_test(game_context *ctxt)
 
     GLint loc = coffee_graphics_shader_uniform_value_get(
                 &ctxt->shaders.programs.d[0],"diffuseSampler");
-    if(ctxt->features->ext_bindless_texture)
-        coffee_graphics_tex_get_handle(&ctxt->texstorage.d[0]);
 
-    coffee_graphics_tex_param(&ctxt->texstorage.d[0],GL_TEXTURE_BASE_LEVEL,0);
-    coffee_graphics_tex_param(&ctxt->texstorage.d[0],GL_TEXTURE_MAX_LEVEL,0);
+    szptr texIndex = rand()%ctxt->texstorage.size;
+
+    if(ctxt->features->ext_bindless_texture)
+        coffee_graphics_tex_get_handle(&ctxt->texstorage.d[texIndex]);
 
     coffee_graphics_tex_param(
                 &ctxt->texstorage.d[0],GL_TEXTURE_MAG_FILTER,GL_LINEAR);
     coffee_graphics_tex_param(
-                &ctxt->texstorage.d[0],GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+                &ctxt->texstorage.d[0],GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
-    ctxt->funptrs.tex_load(&ctxt->texstorage.d[0]);
+    ctxt->texstorage.d[texIndex].unit = 0;
+    ctxt->funptrs.tex_load(&ctxt->texstorage.d[texIndex]);
     if(ctxt->features->ext_bindless_texture)
     {
         glProgramUniformHandleui64ARB(
                     ctxt->shaders.programs.d[0].handle,loc,
-                ctxt->texstorage.d[0].bhandle);
+                ctxt->texstorage.d[texIndex].bhandle);
     }else{
-        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,ctxt->texstorage.d[0].unit);
+        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,ctxt->texstorage.d[texIndex].unit);
     }
 }
 
