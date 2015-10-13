@@ -132,6 +132,7 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/cgraphicsdata.cpp
         coffee_impl/graphics/cvertexarrayobject.cpp
         coffee_impl/graphics/ctexture.cpp
+        coffee_impl/graphics/ctexture_dxtc.cpp
         coffee_impl/graphics/cgraphics_quirks.cpp
 
         coffee_impl/image/cimage.cpp

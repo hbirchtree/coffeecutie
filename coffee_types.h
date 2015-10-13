@@ -86,7 +86,7 @@ static void coffee_mem_expand_array(chunk_mem<T> *mem, szptr size){
     szptr osize = mem->size;
     mem->size += size;
     mem->d = (T*)realloc(mem->d,sizeof(T)*mem->size);
-    coffee_mem_clear(&mem->d[osize],sizeof(T)*(size-osize));
+    coffee_mem_clear(&mem->d[osize],sizeof(T)*(mem->size-osize));
 }
 
 template<typename T>

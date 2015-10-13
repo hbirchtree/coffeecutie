@@ -20,8 +20,8 @@ namespace CDisplay {
 CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
     m_msg_filter = [](CGLReport* r){
-//        if(r->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
-//            return false;
+        if(r->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
+            return false;
         return true;
     };
 }
@@ -132,7 +132,6 @@ void CDRenderer::run()
 //        fb.bind(GL_DRAW_FRAMEBUFFER);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         coffee_render_test(game,deltaT);
-        CASSERT(false);
 //        fb.unbind(GL_DRAW_FRAMEBUFFER);
 
         // END Rendering part

@@ -2,6 +2,8 @@
 
 #include "coffee_impl/graphics/cgraphics_quirks.h"
 #include "coffee_impl/assimp/assimpfun.h"
+#include "coffee_impl/graphics/ctexture_dxtc.h"
+#include "datasources/blam/cblam_bitm.h"
 
 namespace Coffee{
 namespace CRendering{
@@ -198,6 +200,44 @@ CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const 
     free(d);
 
     return tex;
+}
+
+CTexture *coffee_texture_2d_load_blam_dxtc(
+        const CBlam::blam_bitm_image *text,
+        const void *bitm,
+        game_context *ctxt)
+{
+    szptr i = ctxt->texstorage.size;
+    coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
+
+    CDXTCHeader dx;
+    dx.blockSize = (text->format == CBlam::blam_bitm_format_DXT1) ? 8 : 16;
+    dx.components = (text->format == CBlam::blam_bitm_format_DXT1) ? 3 : 4;
+
+    switch(text->format)
+    {
+    case CBlam::blam_bitm_format_DXT1:
+        dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+        break;
+    case CBlam::blam_bitm_format_DXT2AND3:
+        dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+        break;
+    case CBlam::blam_bitm_format_DXT4AND5:
+        dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+        break;
+    }
+
+    dx.mipmaps = text->mipmaps;
+    dx.resolution.w = text->isize.w;
+    dx.resolution.h = text->isize.h;
+    dx.data = ((ubyte*)bitm)+text->offset;
+    CTexture* t = coffee_graphics_tex_dxtc_load(&dx);
+
+    memcpy(&ctxt->texstorage.d[i],t,sizeof(CTexture));
+
+    delete t;
+
+    return &ctxt->texstorage.d[i];
 }
 
 bool coffee_test_load(game_context *ctxt)
@@ -458,19 +498,16 @@ bool coffee_test_load(game_context *ctxt)
                             CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
                     cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
-                    if(img->format!=CBlam::blam_bitm_format_DXT1&&
-                            img->format!=CBlam::blam_bitm_format_DXT2AND3&&
-                            img->format!=CBlam::blam_bitm_format_DXT4AND5&&
-                            img->flags&CBlam::blam_bitm_flag_linear)
-                        img_t = img;
-                    CBlam::coffee_bitm_dump(
-                                img,
-                                bitmfile.data,
-                                cStringFormat("texdump/%s.png",t).c_str());
+                    if(img->format==CBlam::blam_bitm_format_DXT1||
+                            img->format==CBlam::blam_bitm_format_DXT2AND3||
+                            img->format==CBlam::blam_bitm_format_DXT4AND5)
+                        coffee_texture_2d_load_blam_dxtc(img,bitmfile.data,ctxt);
+//                    CBlam::coffee_bitm_dump(
+//                                img,
+//                                bitmfile.data,
+//                                cStringFormat("texdump/%s.png",t).c_str());
                 }
             }
-
-            coffee_texture_2d_load_blam(img_t,bitmfile.data,ctxt);
         }
 
         {
