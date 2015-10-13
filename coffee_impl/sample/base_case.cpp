@@ -212,7 +212,6 @@ CTexture *coffee_texture_2d_load_blam_dxtc(
 
     CDXTCHeader dx;
     dx.blockSize = (text->format == CBlam::blam_bitm_format_DXT1) ? 8 : 16;
-    dx.components = (text->format == CBlam::blam_bitm_format_DXT1) ? 3 : 4;
 
     switch(text->format)
     {
@@ -476,8 +475,6 @@ bool coffee_test_load(game_context *ctxt)
         }
 
         {
-            const CBlam::blam_bitm_image* img_t = nullptr;
-
             CResources::CResource mapfile("bloodgulch.map");
             CResources::CResource bitmfile("bitmaps.map");
             bitmfile.memory_map();

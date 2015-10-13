@@ -13,18 +13,11 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
     tex->textureType = GL_TEXTURE_2D;
     tex->levels = rsc->mipmaps;
 
-//    CTextureTools::CTextureData dat;
-//    dat.format = GL_RGBA8;
-//    CTextureTools::coffee_create_texturesize(&dat,rsc->resolution.w,rsc->resolution.h);
-
-//    CTextureTools::coffee_graphics_tex_2d_define_safe(tex,&dat);
-
     CSize res = rsc->resolution;
     csize_t i;
     szptr size;
     szptr offset = 0;
     coffee_graphics_bind(tex);
-
     for(i=0; i < rsc->mipmaps && (res.w || res.h);i++)
     {
         if(res.w == 0)
