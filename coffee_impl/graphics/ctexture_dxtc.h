@@ -24,6 +24,13 @@ struct CDXTCHeader
  */
 extern CTexture* coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc);
 
+/*!
+ * \brief Dump an S3TC-compressed texture to file
+ * \param tex Texture that will be dumped, will regardlessly yield compressed data
+ * \param res Resource to dump the data to
+ */
+extern void coffee_graphics_tex_dxtc_dump(const CTexture* tex, CResources::CResource* res);
+
 }
 }
 
