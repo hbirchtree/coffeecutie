@@ -3,6 +3,7 @@
 #include "coffee/cdebug.h"
 #include "coffee/cfiles.h"
 #include "coffee_impl/image/cimage.h"
+#include "coffee_impl/graphics/ctexture_dxtc.h"
 
 namespace Coffee{
 namespace CBlam{
@@ -113,40 +114,46 @@ void coffee_bitm_dump(
     free(data);
 }
 
-szptr coffee_bitm_dxtc_getsize(int16 f, int16 w, int16 h)
+blam_bitm_texture_def coffee_bitm_get_texture(const blam_bitm_image *img, const void *bitmfile)
 {
-    if(w<4)
-        w = 4;
-    if(h<4)
-        h = 4;
+    CASSERT(img->format <= blam_bitm_format_P8);
 
-    int multiplier = 0;
+    blam_bitm_texture_def def;
 
-    switch(f)
+    def.mipmaps = CMath::max<int16>(1,img->mipmaps);
+    def.type = img->type;
+    def.resolution = img->isize;
+
+    switch(img->format)
+    {
+    case CBlam::blam_bitm_format_DXT1:
+        def.format = blam_bitm_tex_DXT1;
+        break;
+    case CBlam::blam_bitm_format_DXT2AND3:
+        def.format = blam_bitm_tex_DXT3;
+        break;
+    case CBlam::blam_bitm_format_DXT4AND5:
+        def.format = blam_bitm_tex_DXT5;
+        break;
+    default:
+        def.format = blam_bitm_tex_RGBA;
+        break;
+    };
+
+    switch(img->format)
     {
     case blam_bitm_format_DXT1:
-        multiplier = 8;
-        break;
-
     case blam_bitm_format_DXT2AND3:
-    case blam_bitm_format_DXT4AND5:
-        multiplier = 16;
+    case blam_bitm_format_DXT4AND5:{
+        def.data = ((ubyte*)bitmfile)+img->offset;
         break;
     }
-    return (w >> 2) * (h >> 2) * multiplier;
-}
+    default:
+        def.data = coffee_bitm_decode_image(img,bitmfile);
+        break;
+    }
 
-blam_bitm_texture_data coffee_bitm_decode_dxtc(const blam_bitm_image *img, const void *bitmfile)
-{
-    CASSERT(CMath::power2<int16>(img->isize.w));
-    CASSERT(CMath::power2<int16>(img->isize.h));
-
-    blam_bitm_texture_data data;
-    data.mipmaps = 0;
-
-    const ubyte* src = ((const ubyte*)bitmfile)+img->offset;
-
-    return data;
+    return def;
 }
 
 }

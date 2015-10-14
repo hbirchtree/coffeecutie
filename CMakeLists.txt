@@ -36,67 +36,63 @@ include_directories (
         libs/bullet/src)
 
 set ( CoffeeCore_HDRS
-        cppsharp/coffeesharp.h
-
-        coffee.h
-        coffee/display/cdrendererbase.h
-        coffee/cobject.h
-        coffee/cdebug.h
-        coffee/cfunctional.h
-        coffee/cdisplay.h
-        coffee/cinput.h
-        coffee/cfiles.h
-        coffee/cregex.h
-        coffee/cinput_keymap.h
-        coffee/cmath.h
-
-        coffee_impl/assimp/cassimpimporters.h
-        coffee_impl/assimp/assimpfun.h
-        coffee_impl/assimp/cassimptypes.h
-
-        coffee_impl/context/cdrenderer.h
-        coffee_impl/context/cglbindingrenderer.h
-
-        coffee_impl/display/csdl2renderer.h
-        coffee_impl/display/coffeesdl2/sdl2datatypes.h
-        coffee_impl/display/coffeesdl2/sdl2helpers.h
-        coffee_impl/display/coffeesdl2/sdl2eventhandlers.h
-
-        coffee_impl/functional/cqueuerunner.h
-
-        coffee_impl/graphics/cgraphicswrappers.h
-        coffee_impl/graphics/cshader.h
-        coffee_impl/graphics/cgraphicsdata.h
-        coffee_impl/graphics/cbuffer.h
-        coffee_impl/graphics/glbinding.h
-        coffee_impl/graphics/cvertexarrayobject.h
-        coffee_impl/graphics/cuniformtypes.h
-        coffee_impl/graphics/cframebuffer.h
-        coffee_impl/graphics/ctexture.h
-        coffee_impl/graphics/ctransformcomputer.h
-
-        coffee_impl/image/cimage.h
-
-        coffee_impl/input/cinput_eventhandling.h
-
-        coffee_impl/memory/cgame_dataset.h
-
-        coffee_impl/rendering/cmultidrawgraph.h
-
-        coffee_impl/sample/base_case.h
-
-        plat/plat_wm.h
-        plat/linux/linux_wm.h
-        plat/plat_core.h
-        plat/unix/unix_core.h
-        plat/windows/win_wm.h
-        plat/windows/win_core.h
-
-        plat/environment_details.h
-        plat/argument_parse.h
-        plat/platform_detect.h
-
-        unit_tests/data_types.h
+coffee/cfiles.h
+coffee/cinput_keymap.h
+coffee/cinput.h
+coffee/cthreading.h
+coffee/cmath.h
+coffee/display/cdrendererbase.h
+coffee/cfunctional.h
+coffee/cdebug.h
+coffee/cobject.h
+coffee/cdisplay.h
+coffee/cregex.h
+coffee_impl/functional/cqueuerunner.h
+coffee_impl/display/coffeeglfw/cglfwnativefuncs.h
+coffee_impl/display/coffeeglfw/cglfwrenderer_eventhandlers.h
+coffee_impl/display/csdl2renderer.h
+coffee_impl/display/coffeesdl2/sdl2helpers.h
+coffee_impl/display/coffeesdl2/sdl2datatypes.h
+coffee_impl/display/coffeesdl2/sdl2eventhandlers.h
+coffee_impl/display/cglfwrenderer.h
+coffee_impl/audio/caudio.h
+coffee_impl/audio/openal/copenal.h
+coffee_impl/rendering/cmultidrawgraph.h
+coffee_impl/memory/cgame_dataset.h
+coffee_impl/memory/cgame_function_binds.h
+coffee_impl/image/cimage.h
+coffee_impl/input/cinput_eventhandling.h
+coffee_impl/sample/base_case.h
+coffee_impl/graphics/glbinding.h
+coffee_impl/graphics/cvertexarrayobject.h
+coffee_impl/graphics/ctexture.h
+coffee_impl/graphics/cgraphicsdata.h
+coffee_impl/graphics/ctexture_dxtc.h
+coffee_impl/graphics/cuniformtypes.h
+coffee_impl/graphics/cshader.h
+coffee_impl/graphics/cgraphicswrappers.h
+coffee_impl/graphics/cbuffer.h
+coffee_impl/graphics/cframebuffer.h
+coffee_impl/graphics/ctransformcomputer.h
+coffee_impl/graphics/cgraphics_quirks.h
+coffee_impl/assimp/cassimpimporters.h
+coffee_impl/assimp/cassimptypes.h
+coffee_impl/assimp/assimpfun.h
+coffee_impl/context/cdrenderer.h
+coffee_impl/context/cglbindingrenderer.h
+datasources/blam/cblam_map.h
+datasources/blam/cblam.h
+datasources/blam/cblam_bitm.h
+unit_tests/data_types.h
+plat/platform_detect.h
+plat/argument_parse.h
+plat/coffee_windows/win_core.h
+plat/coffee_windows/win_wm.h
+plat/coffee_linux/linux_wm.h
+plat/environment_details.h
+plat/plat_wm.h
+plat/coffee_unix/unix_core.h
+plat/plat_core.h
         )
 
 set ( CoffeeTest_SRCS

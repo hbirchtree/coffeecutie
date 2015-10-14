@@ -59,11 +59,18 @@ void CDRenderer::run()
 //    mdata.free_data();
 
     CResource gdata("ubw/models/ubw.blend");
-    gdata.read_data();
+    gdata.memory_map();
     CAssimpData* d2 = CAssimpImporters::importResource(&gdata,gdata.resource());
     for(szptr i=0;i<d2->numMeshes;i++)
         game->meshes.push_back(d2->meshes[i]);
-    gdata.free_data();
+    gdata.memory_unmap();
+
+    CResource zdata("ubw/models/Zelda 1.fbx");
+    zdata.memory_map();
+    CAssimpData* d1 = CAssimpImporters::importResource(&zdata,zdata.resource());
+    for(szptr i=0;i<d1->numMeshes;i++)
+        game->meshes.push_back(d1->meshes[i]);
+    zdata.memory_unmap();
 
     if(!coffee_test_load(game))
         return;

@@ -31,6 +31,51 @@ struct CTextureData
     GLenum          datatype    = GL_NONE; /*!< Which datatype, most likely unsigned byte */
 };
 
+}
+
+/*!
+ * \brief Load a texture for rendering
+ */
+typedef void (*TexLoadFun)(const CTexture* tex);
+/*!
+ * \brief Unload a texture after finished rendering
+ */
+typedef void (*TexUnloadFun)(const CTexture* tex);
+
+/*!
+ * \brief Define texture storage, mutable storage
+ */
+typedef bool (*TexDefineFun)(
+        const CTexture* tex,
+        const CTextureTools::CTextureData* data);
+/*!
+ * \brief Store texture data
+ */
+typedef bool (*TexStoreFun)(
+        const CTexture* tex,
+        const CTextureTools::CTextureData* data,
+        GLint level);
+
+typedef void (*TexParamEnumFun)(const CTexture*,GLenum param,GLenum val);
+typedef void (*TexParamFun)(const CTexture*,GLenum param,GLenum val);
+
+typedef void (*TexMipmapFun)(const CTexture* tex);
+
+struct CTextureFunctionBinds
+{
+    TexLoadFun      load    = nullptr;
+    TexUnloadFun    unload  = nullptr;
+
+    TexDefineFun    define  = nullptr;
+    TexStoreFun     store   = nullptr;
+
+    TexParamEnumFun param_e = nullptr;
+    TexParamFun     param   = nullptr;
+
+    TexMipmapFun    mipmap  = nullptr;
+};
+
+namespace CTextureTools{
 /*!
  * \brief Frees data in CTextureData
  * \param tex Structure to free

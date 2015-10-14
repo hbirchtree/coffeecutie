@@ -20,26 +20,6 @@ int main(int argc, char** argv)
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();
 
-//    CResources::CResource h2("coagulation.map");
-//    h2.memory_map();
-//    const CBlam::blam_file_header* h2_map =
-//            CBlam::blam_file_header_get(h2.data,CBlam::blam_version_h2);
-
-//    const CBlam::blam_file_header_h2* h2_header = (const CBlam::blam_file_header_h2*)h2_map;
-
-//    CResources::CResource h1("bloodgulch.map");
-//    h1.memory_map();
-//    const CBlam::blam_file_header* h1_map =
-//            CBlam::blam_file_header_get(h1.data,CBlam::blam_version_pc);
-
-//    CResources::CResource h3("lockout.map");
-//    h3.memory_map();
-//    const CBlam::blam_file_header* h3_map = (const CBlam::blam_file_header*)h3.data;
-
-//    const CBlam::blam_file_header_h3* h3_header = (const CBlam::blam_file_header_h3*)h3_map;
-
-//    return 0;
-
     CElapsedTimerMicro timer;
     timer.start();
 

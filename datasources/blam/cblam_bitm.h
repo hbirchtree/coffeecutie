@@ -28,19 +28,31 @@ typedef uint32 (*BlamBitmProcess)(uint32,uint16,byte);
  */
 enum blam_bitm_formats
 {
-    blam_bitm_format_A8         = 0x00, /*!< Alpha map?*/
-    blam_bitm_format_Y8         = 0x01, /*!< */
-    blam_bitm_format_AY8        = 0x02, /*!< */
-    blam_bitm_format_A8Y8       = 0x03, /*!< */
-    blam_bitm_format_R5G6B5     = 0x06, /*!< */
-    blam_bitm_format_A1R5G5B5   = 0x08, /*!< */
-    blam_bitm_format_A4R4G4B4   = 0x09, /*!< */
-    blam_bitm_format_X8R8G8B8   = 0x0A, /*!< */
-    blam_bitm_format_A8R8G8B8   = 0x0B, /*!< Run-of-the-mill RGBA, still needs to be converted*/
+    blam_bitm_format_A8         = 0x00, /*!< Alpha only*/
+    blam_bitm_format_Y8         = 0x01, /*!< Luminance*/
+    blam_bitm_format_AY8        = 0x02, /*!< Same bits all over*/
+    blam_bitm_format_A8Y8       = 0x03, /*!< Alpha+luminance*/
+    blam_bitm_format_R5G6B5     = 0x06, /*!< Short RGB format*/
+    blam_bitm_format_A1R5G5B5   = 0x08, /*!< RGB + alpha-bit*/
+    blam_bitm_format_A4R4G4B4   = 0x09, /*!< Short RGBA*/
+    blam_bitm_format_X8R8G8B8   = 0x0A, /*!< RGB + extra bits*/
+    blam_bitm_format_A8R8G8B8   = 0x0B, /*!< RGBA*/
     blam_bitm_format_DXT1       = 0x0E, /*!< S3TC format*/
     blam_bitm_format_DXT2AND3   = 0x0F, /*!< S3TC format*/
     blam_bitm_format_DXT4AND5   = 0x10, /*!< S3TC format*/
-    blam_bitm_format_P8         = 0x11, /*!< */
+    blam_bitm_format_P8         = 0x11, /*!< Same as Y8, with a different name*/
+};
+
+/*!
+ * \brief Converted texture formats we yield, DXT formats are loaded like any other S3TC data, requiring no definition of data store, only upload.
+ */
+enum blam_bitm_texture_format
+{
+    blam_bitm_tex_RGBA,
+
+    blam_bitm_tex_DXT1,
+    blam_bitm_tex_DXT3,
+    blam_bitm_tex_DXT5,
 };
 
 /*!
@@ -48,9 +60,9 @@ enum blam_bitm_formats
  */
 enum blam_bitm_types
 {
-    blam_bitm_type_2D   = 0x0, /*!< A typical 2D texture*/
-    blam_bitm_type_3D   = 0x1, /*!< A volume texture?*/
-    blam_bitm_type_cube = 0x2, /*!< A cubemap used for skybox*/
+    blam_bitm_type_2D   = 0x0, /*!< Typical 2D texture*/
+    blam_bitm_type_3D   = 0x1, /*!< Volume texture*/
+    blam_bitm_type_cube = 0x2, /*!< Cubemap used for skybox*/
 };
 
 /*!
@@ -89,29 +101,30 @@ struct blam_rgba
  */
 struct blam_bitm_image
 {
-    int32   id; /*!< A character string*/
-    blam_size isize; /*!< Size of image*/
-    int16   depth; /*!< Depth bits for image*/
-    int16   type; /*!< Type of image*/
-    int16   format; /*!< Format of image*/
-    int16   flags; /*!< Flags present in image*/
-    blam_point reg_pnt;
-    int16   mipmaps; /*!< Number of mipmaps*/
-    int16   pixOffset; /*!< Pixel offset when in use*/
-    int32   offset; /*!< Data offset*/
-    int32   size; /*!< Data size in bytes*/
-    int32   unknown[4];
+    int32       id;         /*!< A character string*/
+    blam_size   isize;      /*!< Size of image*/
+    int16       depth;      /*!< Depth bits for image*/
+    int16       type;       /*!< Type of image*/
+    int16       format;     /*!< Format of image*/
+    int16       flags;      /*!< Flags present in image*/
+    blam_point  reg_pnt;    /*!< I have no idea what this is.*/
+    int16       mipmaps;    /*!< Number of mipmaps*/
+    int16       pixOffset;  /*!< Pixel offset when in use*/
+    int32       offset;     /*!< Data offset*/
+    int32       size;       /*!< Data size in bytes*/
+    int32       unknown[4];
 };
 
 /*!
- * \brief Stores mipmapped texture data, ready for upload to OpenGL
+ * \brief Data ready to be uploaded to the GL
  */
-struct blam_bitm_texture_data
+struct blam_bitm_texture_def
 {
-    int16 mipmaps; /*!< Number of mipmaps*/
-    const byte** data; /*!< Data buffers*/
-    szptr* dsizes; /*!< Data buffer sizes*/
-    blam_size* sizes; /*!< Mipmap sizes*/
+    int16       mipmaps     = 0;        /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
+    int16       type        = 0;        /*!< Texture type, 2D, 3D and cubes*/
+    int16       format      = 0;        /*!< Texture format, DXT or RGBA*/
+    blam_size   resolution;             /*!< Size of texture*/
+    void*       data        = nullptr;  /*!< Pointer to described data*/
 };
 
 /*!
@@ -150,21 +163,12 @@ extern void coffee_bitm_dump(
         cstring filename);
 
 /*!
- * \brief Calculate size of DXTC data
- * \param f
- * \param w
- * \param h
- * \return The size of described data
- */
-extern szptr coffee_bitm_dxtc_getsize(int16 f, int16 w, int16 h);
-
-/*!
- * \brief Decode Blam data to texture data (necessary for DXTC formats)
+ * \brief Decode a Blam bitmap and return GL-friendly data directly
  * \param img
  * \param bitmfile
- * \return A structure containing all decoded data, including all mipmaps
+ * \return A struct containing data readily digested for GL
  */
-extern blam_bitm_texture_data coffee_bitm_decode_dxtc(
+extern blam_bitm_texture_def coffee_bitm_get_texture(
         const blam_bitm_image* img,
         const void* bitmfile);
 

@@ -273,19 +273,28 @@ extern void coffee_graphics_buffer_sub_unbind(CSubBuffer* buf);
 extern void* coffee_graphics_buffer_sub_data(CSubBuffer* buf);
 
 
-typedef std::function<void*(CSubBuffer*)> SubBufferData;
-typedef std::function<void(CBuffer*, CBuffer*,
-                           GLsizeiptr, GLsizeiptr,GLsizeiptr)> BufferCopy;
-typedef std::function<void(CBuffer*, const void*,
-                           GLsizeiptr, GLenum)> BufferStore;
-typedef std::function<void(CBuffer*, const void*,GLsizeiptr,
-                           BufferStorageMask)> BufferStoreImmutable;
-typedef std::function<void(CBuffer*, const void*,GLsizeiptr, GLsizeiptr)> BufferSubStore;
-typedef std::function<void*(CBuffer*,BufferAccessMask)> BufferMap;
-typedef std::function<void(CBuffer*)> BufferUnmap;
-typedef std::function<void(CBuffer*, GLsizeiptr,GLsizeiptr)> BufferDownload;
-typedef std::function<void(CBuffer*)> BufferInvalidate;
+typedef void* (*SubBufferData)(CSubBuffer*);
+typedef void  (*BufferCopy)(CBuffer*, CBuffer*,GLsizeiptr, GLsizeiptr,GLsizeiptr);
+typedef void  (*BufferStore)(CBuffer*, const void*,GLsizeiptr, GLenum);
+typedef void  (*BufferStoreImmutable)(CBuffer*, const void*,GLsizeiptr,BufferStorageMask);
+typedef void  (*BufferSubStore)(CBuffer*, const void*,GLsizeiptr, GLsizeiptr);
+typedef void* (*BufferMap)(CBuffer*,BufferAccessMask);
+typedef bool  (*BufferUnmap)(CBuffer*);
+typedef void* (*BufferDownload)(CBuffer*, GLsizeiptr,GLsizeiptr);
+typedef void  (*BufferInvalidate)(CBuffer*);
 
+//typedef std::function<void*(CSubBuffer*)> SubBufferData;
+//typedef std::function<void(CBuffer*, CBuffer*,
+//                           GLsizeiptr, GLsizeiptr,GLsizeiptr)> BufferCopy;
+//typedef std::function<void(CBuffer*, const void*,
+//                           GLsizeiptr, GLenum)> BufferStore;
+//typedef std::function<void(CBuffer*, const void*,GLsizeiptr,
+//                           BufferStorageMask)> BufferStoreImmutable;
+//typedef std::function<void(CBuffer*, const void*,GLsizeiptr, GLsizeiptr)> BufferSubStore;
+//typedef std::function<void*(CBuffer*,BufferAccessMask)> BufferMap;
+//typedef std::function<void(CBuffer*)> BufferUnmap;
+//typedef std::function<void(CBuffer*, GLsizeiptr,GLsizeiptr)> BufferDownload;
+//typedef std::function<void(CBuffer*)> BufferInvalidate;
 
 struct CBufferFunctionBinds
 {

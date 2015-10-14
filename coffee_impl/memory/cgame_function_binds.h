@@ -23,14 +23,10 @@ typedef std::function<void(const CTexture* tex)> TexUnloadFun;
 
 struct game_function_binds
 {
-    RenderFun       renderfun = nullptr;
+    RenderFun renderfun = nullptr;
 
-    TexDefineFun    tex_define = nullptr;
-    TexStoreFun     tex_store = nullptr;
-    TexLoadFun      tex_load = nullptr;
-    TexUnloadFun    tex_unload = nullptr;
-
-    CBufferFunctionBinds buffers = {0};
+    CTextureFunctionBinds textures;
+    CBufferFunctionBinds  buffers;
 };
 
 }

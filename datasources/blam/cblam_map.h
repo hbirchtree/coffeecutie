@@ -99,29 +99,43 @@ struct blam_file_header
 };
 
 /*!
- * \brief A mockup of the Halo 2 file header format, only speculation out of hex editor
+ * \brief Halo 2 header, credits to Assembly project for offsets
  */
 struct blam_file_header_h2
 {
     byte    header[4];
-    int32   version; /*!< Will be 8 for all Halo 2, Xbox and PC */
-    int32   decomp_len;
-    int32   unknown4;
-    int32   tagCount2;
-    byte    reserved1[280];
+    uint32  version;
+    uint32  filesize;
+    uint32  unknown2;
+    uint32  meta_offset;
+    uint32  tagdata_offset;
+    int32   tagdata_size;
+    int32   meta_size;
+    uint32  meta_offset_mask;
+    byte    reserved1[264];
     byte    buildDate[32];
-    int32   mapType;
-    int32   tagCount;
-    int32   unknown5;
-    byte    unknown1[76];
-    byte    name[32]; /*!< Short-hand name for map*/
-    int32   unknown6;
+    int32   maptype;
+    byte    unknown3[28];
+    int32   strings_block_offset;
+    int32   strings_table_count;
+    int32   strings_table_size;
+    uint32  strings_indextable_offset;
+    uint32  strings_table_offset;
+    byte    unknown4[36];
+    byte    name[36];
+    byte    scenario[260];
+    uint32  file_table_count;
+    uint32  file_table_offset;
+    int32   file_table_size;
+    uint32  file_indextable_offset;
+    uint32  unknown5[3];
+    uint32  raw_table_offset;
+    int32   raw_table_size;
+    uint32  map_checksum;
+    uint32  unknown6;
 
-    byte    scenario[64]; /*!< Scenario to load on start */
+    byte    reserved2[1284];
 
-    byte    reserved2[196];
-    byte    unknown2[48];
-    byte    reserved3[1280];
     byte    footer[4];
 };
 
@@ -131,14 +145,34 @@ struct blam_file_header_h2
 struct blam_file_header_h3
 {
     byte    header[4];
-    byte    unknown1[280];
+    int32  version;
+    uint32  filesize;
+    byte    unknown1[4];
+    uint32  index_header_addr;
+    uint32  index_offset_string_size;
+    uint32  virt_size;
+    byte    reserved1[256];
     byte    buildDate[32];
-    byte    unknown2[80];
-    byte    name[32];
-    int32   unknown3;
-    byte    scenario[64];
-    byte    unknown4[11788];
-    byte    footer[4];
+    int16   maptype;
+    byte    unknown3[24];
+    int32   string_table_count;
+    int32   string_table_size;
+    int32   string_index_table_offset;
+    int32   string_table_offset;
+    byte    unknown4[36];
+    byte    name[36];
+    byte    scenario[260];
+    int32   file_table_count;
+    int32   file_table_offset;
+    int32   file_table_size;
+    int32   file_index_table_offset;
+    byte    unknown5[36];
+    uint32  virt_base_addr;
+    uint32  xdk_ver;
+    struct {
+        uint32  load_addr;
+        uint32  size;
+    } partitions[6];
 };
 
 /*!

@@ -44,7 +44,7 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
 
 void coffee_graphics_tex_dxtc_dump(const CTexture *tex, CResources::CResource *res)
 {
-    glGetCompressedTextureImage(tex->handle,0,);
+    glGetCompressedTextureImage(tex->handle,0,res->size,res->data);
 }
 
 }

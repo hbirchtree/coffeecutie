@@ -18,25 +18,25 @@ void coffee_test_fun_set(game_context *ctxt)
 
     if(ctxt->features->ext_bindless_texture)
     {
-        ctxt->funptrs.tex_load = coffee_graphics_tex_use;
-        ctxt->funptrs.tex_unload = coffee_graphics_tex_unload;
+        ctxt->funptrs.textures.load = coffee_graphics_tex_use;
+        ctxt->funptrs.textures.unload = coffee_graphics_tex_unload;
     }else{
-        ctxt->funptrs.tex_load = coffee_graphics_tex_use_safe;
-        ctxt->funptrs.tex_unload = coffee_graphics_tex_unload_safe;
+        ctxt->funptrs.textures.load = coffee_graphics_tex_use_safe;
+        ctxt->funptrs.textures.unload = coffee_graphics_tex_unload_safe;
     }
 
     if(ctxt->features->ext_texture_storage)
     {
-        ctxt->funptrs.tex_define = CTextureTools::coffee_graphics_tex_define;
-        ctxt->funptrs.tex_store = CTextureTools::coffee_graphics_tex_store;
+        ctxt->funptrs.textures.define = CTextureTools::coffee_graphics_tex_define;
+        ctxt->funptrs.textures.store = CTextureTools::coffee_graphics_tex_store;
     }else{
-        ctxt->funptrs.tex_define = CTextureTools::coffee_graphics_tex_define_safe;
-        ctxt->funptrs.tex_store = CTextureTools::coffee_graphics_tex_store_safe;
+        ctxt->funptrs.textures.define = CTextureTools::coffee_graphics_tex_define_safe;
+        ctxt->funptrs.textures.store = CTextureTools::coffee_graphics_tex_store_safe;
     }
 
     if(ctxt->features->ext_direct_state_access)
     {
-//        ctxt->funptrs.buffers.copy = coffee_graphics_buffer_copy;
+        ctxt->funptrs.buffers.copy = coffee_graphics_buffer_copy;
         ctxt->funptrs.buffers.download = coffee_graphics_buffer_download_buffer;
 
         ctxt->funptrs.buffers.store = coffee_graphics_buffer_store;
@@ -47,7 +47,7 @@ void coffee_test_fun_set(game_context *ctxt)
         ctxt->funptrs.buffers.unmap = coffee_graphics_buffer_unmap;
 
     }else{
-//        ctxt->funptrs.buffers.copy = coffee_graphics_buffer_copy_safe;
+        ctxt->funptrs.buffers.copy = coffee_graphics_buffer_copy_safe;
         ctxt->funptrs.buffers.download = coffee_graphics_buffer_download_buffer_safe;
 
         ctxt->funptrs.buffers.store = coffee_graphics_buffer_store_safe;
@@ -161,8 +161,8 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
     //GL calls
     coffee_graphics_bind(tex);
     coffee_graphics_unbind(tex);
-    ctxt->funptrs.tex_define(tex,&dt);
-    ctxt->funptrs.tex_store(tex,&dt,0);
+    ctxt->funptrs.textures.define(tex,&dt);
+    ctxt->funptrs.textures.store(tex,&dt,0);
     //
     CTextureTools::coffee_graphics_tex_free_texdata(&dt);
     CStbImageLib::coffee_stb_image_free(&img);
@@ -170,75 +170,33 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
     return tex;
 }
 
-CTexture *coffee_texture_2d_load_blam(const CBlam::blam_bitm_image *text, const void *bitm, game_context *ctxt)
+CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_context* ctxt)
 {
     coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
-    CTexture *tex = &ctxt->texstorage.d[ctxt->texstorage.size-1];
-    //GL call
-    coffee_graphics_alloc(tex);
-    //
+    CTexture* t = &ctxt->texstorage.d[ctxt->texstorage.size-1];
 
-    uint32* d = CBlam::coffee_bitm_decode_image(text,bitm);
-
-    CTextureTools::CTextureData dt;
-    dt.data = d;
-    dt.datatype = GL_UNSIGNED_BYTE;
-    dt.format = GL_RGBA8;
-
-    CTextureTools::coffee_create_texturesize(&dt,text->isize.w,text->isize.h);
-
-    tex->textureType = GL_TEXTURE_2D;
-    tex->levels = 1;
-    tex->format = GL_RGBA;
-    //GL calls
-    coffee_graphics_bind(tex);
-    coffee_graphics_unbind(tex);
-    ctxt->funptrs.tex_define(tex,&dt);
-    ctxt->funptrs.tex_store(tex,&dt,0);
-    //
-    CTextureTools::coffee_graphics_tex_free_texdata(&dt);
-    free(d);
-
-    return tex;
-}
-
-CTexture *coffee_texture_2d_load_blam_dxtc(
-        const CBlam::blam_bitm_image *text,
-        const void *bitm,
-        game_context *ctxt)
-{
-    szptr i = ctxt->texstorage.size;
-    coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
-
-    CDXTCHeader dx;
-    dx.blockSize = (text->format == CBlam::blam_bitm_format_DXT1) ? 8 : 16;
-
-    switch(text->format)
+    switch(tex.format)
     {
-    case CBlam::blam_bitm_format_DXT1:
-        dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+    case CBlam::blam_bitm_tex_RGBA:{
+        CTextureTools::CTextureData dt;
+        dt.data = tex.data;
+        dt.datatype = GL_UNSIGNED_BYTE;
+        dt.format = GL_RGBA8;
+        CTextureTools::coffee_create_texturesize(&dt,tex.resolution.w,tex.resolution.h);
+
+        t->textureType = (tex.type==CBlam::blam_bitm_type_2D) ? GL_TEXTURE_2D : GL_TEXTURE_3D;
+        t->levels = tex.mipmaps;
+        t->format = GL_RGBA;
+        coffee_graphics_tex_activate(t);
+        ctxt->funptrs.textures.define(t,&dt);
+        ctxt->funptrs.textures.store(t,&dt,0);
+
+        ctxt->funptrs.textures.define(t,&dt);
         break;
-    case CBlam::blam_bitm_format_DXT2AND3:
-        dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        break;
-    case CBlam::blam_bitm_format_DXT4AND5:
-        dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-        break;
-    };
+    }
+    }
 
-    dx.mipmaps = text->mipmaps;
-    dx.resolution.w = text->isize.w;
-    dx.resolution.h = text->isize.h;
-    dx.data = ((ubyte*)bitm)+text->offset;
-    CTexture* t = coffee_graphics_tex_dxtc_load(&dx);
-
-    coffee_graphics_tex_dump(t,"test.png");
-
-    memcpy(&ctxt->texstorage.d[i],t,sizeof(CTexture));
-
-    delete t;
-
-    return &ctxt->texstorage.d[i];
+    return t;
 }
 
 bool coffee_test_load(game_context *ctxt)
@@ -496,17 +454,11 @@ bool coffee_test_load(game_context *ctxt)
                     const CBlam::blam_bitm_image* img =
                             CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
                     cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
-                    if(img->format==CBlam::blam_bitm_format_DXT1||
-                            img->format==CBlam::blam_bitm_format_DXT2AND3||
-                            img->format==CBlam::blam_bitm_format_DXT4AND5)
-                    {
-                        coffee_texture_2d_load_blam_dxtc(img,bitmfile.data,ctxt);
-                        cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
-                    }
-//                    CBlam::coffee_bitm_dump(
-//                                img,
-//                                bitmfile.data,
-//                                cStringFormat("texdump/%s.png",t).c_str());
+                    CBlam::blam_bitm_texture_def tex =
+                            CBlam::coffee_bitm_get_texture(img,bitmfile.data);
+
+                    coffee_texture_2d_load(tex,ctxt);
+                    cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
                 }
             }
         }
@@ -569,7 +521,7 @@ void coffee_prepare_test(game_context *ctxt)
                 &ctxt->texstorage.d[0],GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
     ctxt->texstorage.d[texIndex].unit = 0;
-    ctxt->funptrs.tex_load(&ctxt->texstorage.d[texIndex]);
+    ctxt->funptrs.textures.load(&ctxt->texstorage.d[texIndex]);
     if(ctxt->features->ext_bindless_texture)
     {
         glProgramUniformHandleui64ARB(
