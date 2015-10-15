@@ -28,7 +28,7 @@ namespace CResources{
 		LARGE_INTEGER sz;
 		szptr ret = 0;
 		if (GetFileSizeEx(fp, &sz))
-			ret = sz;
+			ret = (szptr)sz;
 		return ret;
 	}
 
