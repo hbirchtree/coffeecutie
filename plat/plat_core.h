@@ -1,13 +1,14 @@
 #ifndef COFFEE_PLAT_CORE
 #define COFFEE_PLAT_CORE
 
+#include "platform_detect.h"
 #include "coffee_macros.h"
 #include "coffee_types.h"
 
 #ifdef __unix__
 #include "coffee_unix/unix_core.h"
-//#elif defined(_WIN32)
-//#include "coffee_windows/win_core.h"
+#elif defined(COFFEE_WINDOWS)
+#include "coffee_windows/win_core.h"
 #elif defined(__APPLE__) && defined(__MACH__)
 
 #else

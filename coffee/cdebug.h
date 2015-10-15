@@ -3,6 +3,7 @@
 
 #include "coffee.h"
 #include "plat/plat_core.h"
+#include "coffee/cregex.h"
 
 //C++ headers
 #include <sstream>
@@ -22,8 +23,7 @@ namespace CFunctional{
 template<typename... Arg>
 static CString cStringFormat(cstring fmt, Arg... args);
 
-namespace CDebugHelpers
-{
+namespace CDebugHelpers{
 
 static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
