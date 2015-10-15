@@ -8,17 +8,11 @@ namespace CGraphicsQuirks{
 bool _quirk_extension(cstring extension, cstring allexts)
 {
     if(strstr(allexts,extension)){
-        //        cDebug("Enabling code for %s",extension);
         return true;
     }else{
         cDebug("Extension %s not available",extension);
         return false;
     }
-}
-
-bool coffee_quirks_query_extension(const CFeatureSet &features, cstring requested)
-{
-    return strstr(features.extensions,requested);
 }
 
 void coffee_quirks_set(CFeatureSet *featureset)

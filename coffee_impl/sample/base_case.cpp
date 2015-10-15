@@ -172,12 +172,18 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
 
 CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_context* ctxt)
 {
+    if(tex.format > CBlam::blam_bitm_tex_DXT5)
+        return nullptr;
+
     coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
     CTexture* t = &ctxt->texstorage.d[ctxt->texstorage.size-1];
 
     switch(tex.format)
     {
     case CBlam::blam_bitm_tex_RGBA:{
+
+        coffee_graphics_alloc(t);
+
         CTextureTools::CTextureData dt;
         dt.data = tex.data;
         dt.datatype = GL_UNSIGNED_BYTE;
@@ -192,6 +198,33 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         ctxt->funptrs.textures.store(t,&dt,0);
 
         ctxt->funptrs.textures.define(t,&dt);
+        break;
+    }
+    default:{
+        CDXTCHeader dxt;
+        dxt.blockSize = (tex.format==CBlam::blam_bitm_tex_DXT1) ? 8 : 16;
+        dxt.data = tex.data;
+        dxt.mipmaps = tex.mipmaps;
+        dxt.resolution.w = tex.resolution.w;
+        dxt.resolution.h = tex.resolution.h;
+
+        switch(tex.format)
+        {
+        case CBlam::blam_bitm_tex_DXT1:
+            dxt.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            break;
+        case CBlam::blam_bitm_tex_DXT3:
+            dxt.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            break;
+        case CBlam::blam_bitm_tex_DXT5:
+            dxt.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            break;
+        }
+
+        CTexture *tmp = coffee_graphics_tex_dxtc_load(&dxt);
+        memcpy(t,tmp,sizeof(CTexture));
+        delete tmp;
+
         break;
     }
     }
@@ -510,14 +543,14 @@ void coffee_prepare_test(game_context *ctxt)
     GLint loc = coffee_graphics_shader_uniform_value_get(
                 &ctxt->shaders.programs.d[0],"diffuseSampler");
 
-    szptr texIndex = rand()%ctxt->texstorage.size;
+    szptr texIndex = CMath::crand()%ctxt->texstorage.size;
 
     if(ctxt->features->ext_bindless_texture)
         coffee_graphics_tex_get_handle(&ctxt->texstorage.d[texIndex]);
 
-    coffee_graphics_tex_param(
+    ctxt->funptrs.textures.param_e(
                 &ctxt->texstorage.d[0],GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-    coffee_graphics_tex_param(
+    ctxt->funptrs.textures.param_e(
                 &ctxt->texstorage.d[0],GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
     ctxt->texstorage.d[texIndex].unit = 0;
