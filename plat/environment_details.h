@@ -74,7 +74,7 @@ static cstring_w coffee_get_application_dir()
 #endif
 }
 
-static cstring_w coffee_get_current_dir()
+inline static cstring_w coffee_get_current_dir()
 {
 #if defined(COFFEE_LINUX)
     cstring_w cwd = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);

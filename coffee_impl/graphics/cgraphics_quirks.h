@@ -7,49 +7,42 @@ namespace Coffee
 {
 namespace CGraphicsQuirks{
 
-//With the feature set of the platform, we can determine if a certain rendering method can be performed and do with a workaround
+/*!
+ * \brief Feature sets are used to present which extensions are possible on the runtime platform. Due to some extensions not being implemented with Intel, we want workarounds that will perform the task, but not optimally as with newer extensions. Case in point: Bindless textures allow us to use 64-bit handles to access textures without binding or texture units, Intel does not support it on older drivers, workaround uses old methods. Naming scheme for these flags should resemble the extension which they represent.
+ */
 struct CFeatureSet
 {
     //Is a pointer to a string, not an array
     cstring extensions  = nullptr;
 
-    bool    render_multidraw		= false;
-    bool    render_ssbo_support		= false;
-    bool    render_bindless_texture     = false;
+    bool    ext_multi_draw_indirect     = false;
+
+    bool    ext_ssbo_support            = false;
+
+    bool    ext_bindless_texture        = false;
+    bool    ext_texture_storage         = false;
+
+    bool    ext_separate_shader_objs    = false;
+
+    bool    ext_direct_state_access     = false;
+    bool    ext_invalidate_subdata      = false;
 };
 
-static bool coffee_quirks_query_extension(
+/*!
+ * \brief Queries if an extension is present in a feature set
+ * \param features
+ * \param requested
+ * \return True if the extension is present
+ */
+extern bool coffee_quirks_query_extension(
         const CFeatureSet& features,
-        cstring requested)
-{
-    return strstr(features.extensions,requested);
-}
-
-static bool _quirk_extension(cstring extension, cstring allexts)
-{
-    if(strstr(allexts,extension)){
-//        cDebug("Enabling code for %s",extension);
-        return true;
-    }else{
-        cDebug("Extension %s not available",extension);
-        return false;
-    }
-}
-
-static void coffee_quirks_set(CFeatureSet* featureset)
-{
-    featureset->render_multidraw = _quirk_extension(
-                "GL_ARB_multi_draw_indirect",
-                featureset->extensions);
-
-    featureset->render_ssbo_support = _quirk_extension(
-                "GL_ARB_shader_storage_buffer_object",
-                featureset->extensions);
-
-    featureset->render_bindless_texture = _quirk_extension(
-                "GL_ARB_bindless_texture",
-                featureset->extensions);
-}
+        cstring requested);
+/*!
+ * \brief Set the bool values to match what is presented by the string "extensions" within the structure
+ * \param featureset Structure to modify
+ */
+extern void coffee_quirks_set(
+        CFeatureSet* featureset);
 
 }
 

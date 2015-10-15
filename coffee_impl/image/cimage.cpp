@@ -36,6 +36,7 @@ bool coffee_stb_image_resize(CStbImage *img, const CSize &target, int channels)
     free(img->data);
     img->data = data;
     img->size = target;
+    return img->data;
 }
 
 bool coffee_stb_image_save_png(CResource *target, CStbImageConst *src)
@@ -50,8 +51,7 @@ bool coffee_stb_image_save_png(CResource *target, CStbImage *src)
 
 bool coffee_stb_image_save_tga(CResource *target, CStbImage *src)
 {
-    int out = stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
-    cDebug("Failure: %s",stbi_failure_reason());
+    return stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
 }
 
 void coffee_stb_image_flip_vertical(CStbImage *src)
@@ -61,7 +61,7 @@ void coffee_stb_image_flip_vertical(CStbImage *src)
 
     ubyte* data = (ubyte*)malloc(siz);
 
-    for(int32 i=0;i<siz;i+=wdt*src->bpp)
+    for(csize_t i=0;i<siz;i+=wdt*src->bpp)
     {
         memcpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
     }
@@ -91,6 +91,11 @@ void coffee_stb_image_flip_horizontal(CStbImage *src)
 void coffee_stb_error()
 {
     cDebug("%s",stbi_failure_reason());
+}
+
+void coffee_stb_image_free(CStbImage *img)
+{
+    free(img->data);
 }
 
 }

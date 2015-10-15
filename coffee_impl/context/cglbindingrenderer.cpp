@@ -8,9 +8,9 @@ using namespace Coffee::CDisplay;
 namespace Coffee {
 namespace CDisplay {
 
-static void glbindingCallbackDirect(GLenum source, GLenum type,GLuint id, GLenum severity,GLsizei length, const GLchar* msg,const void* userPtr);
+void glbindingCallbackDirect(GLenum source, GLenum type,GLuint id, GLenum severity,GLsizei length, const GLchar* msg,const void* userPtr);
 
-static void glbindingCallbackDirect(GLenum source, GLenum type,
+void glbindingCallbackDirect(GLenum source, GLenum type,
                                              GLuint id, GLenum severity,
                                              GLsizei length, const GLchar* msg,
                                              const void* userPtr)

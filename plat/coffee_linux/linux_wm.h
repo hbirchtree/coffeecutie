@@ -35,7 +35,7 @@ typedef struct {
     unsigned long   status;
 } Hints;
 
-static void set_decorations(Display* disp, Window target,bool enable = false)
+inline static void set_decorations(Display* disp, Window target,bool enable = false)
 {
     Hints   w_hints;
     Atom    prop;
@@ -47,7 +47,7 @@ static void set_decorations(Display* disp, Window target,bool enable = false)
     XChangeProperty(disp,target,prop,prop,32,PropModeReplace,(unsigned char*)&w_hints,5);
 }
 
-static void set_alwaysontop(Display* disp, Window target, bool enable)
+inline static void set_alwaysontop(Display* disp, Window target, bool enable)
 {
     XEvent ev;
 

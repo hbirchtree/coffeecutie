@@ -1,4 +1,6 @@
-#ifdef __unix__
+#include "plat/platform_detect.h"
+
+#ifdef COFFEE_UNIXPLAT
 
 #ifndef UNIX_CORE
 #define UNIX_CORE
@@ -37,7 +39,7 @@ inline static void coffee_enable_core_dump()
 }
 
 namespace CResources{
-static szptr coffee_file_get_size(cstring file)
+inline static szptr coffee_file_get_size(cstring file)
 {
     struct stat sb;
     int fd = open(file,O_RDONLY);
@@ -49,7 +51,7 @@ static szptr coffee_file_get_size(cstring file)
 
 namespace CMemoryManagement{
 
-static void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
+inline static void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
 {
     if(size<1)
         return nullptr;
@@ -62,7 +64,7 @@ static void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
     return addr;
 }
 
-static bool coffee_memory_unmap_file(void* ptr, szptr size)
+inline static bool coffee_memory_unmap_file(void* ptr, szptr size)
 {
     return munmap(ptr,size);
 }
@@ -86,7 +88,7 @@ static cstring_w _coffee_posix_demangle_symbol(cstring_w sym,bool* success)
     }
 }
 
-static cstring_w* coffee_callstack(szptr *length,uint32 stackreduce = 0)
+inline static cstring_w* coffee_callstack(szptr *length,uint32 stackreduce = 0)
 {
     //Initial values, create a valid ptr for callstack
     szptr callstack_ptr = 0;
@@ -132,7 +134,7 @@ static cstring_w* coffee_callstack(szptr *length,uint32 stackreduce = 0)
     return callstack;
 }
 
-static cstring_w coffee_clock_string()
+inline static cstring_w coffee_clock_string()
 {
     cstring_w time_val = reinterpret_cast<cstring_w>(malloc(17));
     time_t t;

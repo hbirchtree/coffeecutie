@@ -4,44 +4,50 @@
 namespace Coffee{
 namespace CInput{
 
+/*!
+ * \brief Xbox 360 controller mapping of buttons. Same layout as SDL2's GameController, but we do not expose all parts of SDL2.
+ */
 enum CIControllerButtonMapping
 {
-    //Same as SDL2 layout for GameController
-    //We don't want to expose all of SDL2
+    CK_BUTTON_A         = 0x0, /*!< A button*/
+    CK_BUTTON_B         = 0x1, /*!< B button*/
+    CK_BUTTON_X         = 0x2, /*!< X button*/
+    CK_BUTTON_Y         = 0x3, /*!< Y button*/
 
-    CK_BUTTON_A         = 0x0,
-    CK_BUTTON_B         = 0x1,
-    CK_BUTTON_X         = 0x2,
-    CK_BUTTON_Y         = 0x3,
+    CK_BUTTON_BACK      = 0x4, /*!< Back button*/
+    CK_BUTTON_GUIDE     = 0x5, /*!< Guide button, also known as the Xbox button*/
+    CK_BUTTON_START     = 0x6, /*!< Start button*/
 
-    CK_BUTTON_BACK      = 0x4,
-    CK_BUTTON_GUIDE     = 0x5,
-    CK_BUTTON_START     = 0x6,
+    CK_BUTTON_LS        = 0x7, /*!< Left stick button*/
+    CK_BUTTON_RS        = 0x8, /*!< Right stick button*/
 
-    CK_BUTTON_LS        = 0x7,
-    CK_BUTTON_RS        = 0x8,
+    CK_BUTTON_LB        = 0x9, /*!< Left bumper*/
+    CK_BUTTON_RB        = 0xA, /*!< Right bumper*/
 
-    CK_BUTTON_LB        = 0x9,
-    CK_BUTTON_RB        = 0xA,
-
-    CK_BUTTON_POV_UP    = 0xB,
-    CK_BUTTON_POV_DOWN  = 0xC,
-    CK_BUTTON_POV_LEFT  = 0xD,
-    CK_BUTTON_POV_RIGHT = 0xE,
+    CK_BUTTON_POV_UP    = 0xB, /*!< Also known as D-Pad up*/
+    CK_BUTTON_POV_DOWN  = 0xC, /*!< Also known as D-Pad down*/
+    CK_BUTTON_POV_LEFT  = 0xD, /*!< Also known as D-Pad left*/
+    CK_BUTTON_POV_RIGHT = 0xE, /*!< Also known as D-Pad right*/
 };
 
+/*!
+ * \brief Xbox 360 controller mapping of axes. Same mapping as SDL2's GameController.
+ */
 enum CIControllerAxisMapping
 {
-    CK_AXIS_LEFT_X          = 0x0,
-    CK_AXIS_LEFT_Y          = 0x1,
+    CK_AXIS_LEFT_X          = 0x0, /*!< Left stick X-axis*/
+    CK_AXIS_LEFT_Y          = 0x1, /*!< Left stick Y-axis*/
 
-    CK_AXIS_RIGHT_X         = 0x2,
-    CK_AXIS_RIGHT_Y         = 0x3,
+    CK_AXIS_RIGHT_X         = 0x2, /*!< Right stick X-axis*/
+    CK_AXIS_RIGHT_Y         = 0x3, /*!< Right stick Y-axis*/
 
-    CK_AXIS_TRIGGER_LEFT    = 0x4,
-    CK_AXIS_TRIGGER_RIGHT   = 0x5,
+    CK_AXIS_TRIGGER_LEFT    = 0x4, /*!< Left trigger*/
+    CK_AXIS_TRIGGER_RIGHT   = 0x5, /*!< Right trigger*/
 };
 
+/*!
+ * \brief Special key mapping for use with input functions
+ */
 enum CISpecialKeyMapping
 {
     CK_F1               = 0x100,
@@ -94,17 +100,20 @@ enum CISpecialKeyMapping
     CK_RShift           = 0x12E,
     CK_RSuper           = 0x12F,
 
-    CK_Left             = 0x130,
-    CK_Right            = 0x131,
-    CK_Up               = 0x132,
-    CK_Down             = 0x133,
+    CK_Left             = 0x130, /*!< Arrow key left*/
+    CK_Right            = 0x131, /*!< Arrow key right*/
+    CK_Up               = 0x132, /*!< Arrow key up*/
+    CK_Down             = 0x133, /*!< Arrow key down*/
 
     CK_AltGr            = 0x134,
 };
 
+/*!
+ * \brief A mapping of keycodes for Latin-1 for use with input functions
+ */
 enum CILatin1Mapping
 {
-    CK_Null             = 0x0, //We'll use this when no other key is appropriate.
+    CK_Null             = 0x0,  /*!< Used for unrecognized keys*/
 //    CK_                 = 0x1,
 //    CK_                 = 0x2,
 //    CK_                 = 0x3,
@@ -114,10 +123,10 @@ enum CILatin1Mapping
     CK_Bell             = 0x7,
     CK_BackSpace        = 0x8,
     CK_HTab             = 0x9,
-    CK_EnterNL          = 0xA,
+    CK_EnterNL          = 0xA,  /*!< Enter key*/
 //    CK_VTab             = 0xB,
 //    CK_NewPage          = 0xC,
-    CK_EnterCR          = 0xD,
+    CK_EnterCR          = 0xD,  /*!< Enter key?*/
 //    CK_                 = 0xE,
 //    CK_                 = 0xF,
 //    CK_                 = 0x10,

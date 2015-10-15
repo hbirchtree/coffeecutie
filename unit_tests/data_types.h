@@ -121,8 +121,6 @@ static void int_tests()
     CASSERT((sizeof(uint32)==sizeof(int)));
     CASSERT((sizeof(uint64)==sizeof(unsigned long long)));
 
-    CASSERT((sizeof(ptr_u)==sizeof(void*)));
-
     //Check for unwanted integer overflow, ensure consistency
     uint8 n8 = std::pow(2,8)-1;
     CASSERT((n8==std::pow(2,8)-1));

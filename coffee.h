@@ -8,26 +8,15 @@
 #include "plat/plat_core.h"
 #include "plat/platform_detect.h"
 
-#include <string>
-#include <map>
-#include <functional>
-#include <vector>
-#include <string.h>
-#include <exception>
 #include <thread>
+#include <functional>
 
 namespace Coffee{
 
-//Can be switched for other types from libraries
-typedef std::string         CString;
-typedef std::runtime_error  CStdFault;
-//
-
-static void CoffeeInit()
-{
-    //Allow core dump by default
-    coffee_enable_core_dump();
-}
+/*!
+ * \brief Initializes process state before running. Mainly core dumping.
+ */
+extern void CoffeeInit();
 
 //A simpler implementation of QObject
 class CObject;

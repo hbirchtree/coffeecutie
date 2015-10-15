@@ -10,15 +10,13 @@ namespace CTest{
 
 using namespace CMemoryManagement;
 
+extern void coffee_test_fun_set(game_context* ctxt);
+
 extern CPipeline* coffee_shader_program_load(
         const game_shader_program_desc& desc,
         game_context* ctxt);
 extern CTexture* coffee_texture_2d_load(
         CResource* textureres,
-        game_context* ctxt);
-
-extern CTexture* coffee_texture_2d_load_blam(const CBlam::blam_bitm_image* text,
-        const void *bitm,
         game_context* ctxt);
 
 extern bool coffee_test_load(

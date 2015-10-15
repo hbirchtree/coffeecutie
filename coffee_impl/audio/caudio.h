@@ -1,36 +1,43 @@
 #ifndef CAUDIO_FUN
 #define CAUDIO_FUN
 
-#define STB_VORBIS_HEADER_ONLY
-#include "stb/stb_vorbis.c"
-#include "stb/stb.h"
-
 #include "coffee_types.h"
 #include "coffee/cfiles.h"
 
 namespace Coffee{
+namespace CAudio{
+
+/*!
+ * \brief Format structure for audio
+ */
+struct CAudioFormat
+{
+    int samplerate  = 0; /*!< Samplerate, typically 44.1kHz*/
+    int samples     = 0;
+    int channels    = 0; /*!< Audio channels, typically 2 or 4*/
+};
+
+/*!
+ * \brief An audio sample
+ */
+struct CAudioSample
+{
+    CAudioFormat fmt; /*!< Format specification*/
+    short* data = nullptr; /*!< Pointer to audio data*/
+};
+
 namespace CStbAudio{
 
 using namespace CResources;
+using namespace CAudio;
 
-struct CStbAudioFormat
-{
-    int samplerate  = 0;
-    int samples     = 0;
-    int channels    = 0;
-};
+/*!
+ * \brief Import a Vorbis audio sample
+ * \param smp Sample to load to
+ * \param src Resource to load from
+ */
+extern void coffee_stb_audio_vorbis_load(CAudioSample* smp, CResource* src);
 
-struct CStbAudioSample
-{
-    CStbAudioFormat fmt;
-    short* data = nullptr;
-};
-
-static void coffee_stb_audio_vorbis_load(CStbAudioSample* smp, CResource* src)
-{
-    smp->fmt.samples = stb_vorbis_decode_memory(
-                (ubyte*)src->data,src->size,
-                &smp->fmt.channels,&smp->fmt.samplerate,&smp->data);
 }
 
 }

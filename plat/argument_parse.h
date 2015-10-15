@@ -38,14 +38,14 @@ static bool _cmp_long_switch(cstring in, cstring sw)
 {
     return strcmp(_switch_long(in),sw)==0;
 }
-static bool coffee_args_check_switch(int argc, cstring_w* argv, cstring sw)
+inline static bool coffee_args_check_switch(int argc, cstring_w* argv, cstring sw)
 {
     for(int i=0;i<argc;i++)
         if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
             return true;
     return false;
 }
-static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
+inline static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
 {
     for(int i=0;i<argc-1;i++)
         if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
@@ -69,12 +69,12 @@ static cstring_w coffee_executable_name(cstring_w path = nullptr)
 
 static cstring_w coffee_executable_name(cstring_w path = nullptr)
 {
-	if(!path)
-		path = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+        if(!path)
+                path = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 
-	DWORD size = GetModuleFileNameA(NULL,path,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
-	path[size] = '\0';
-	return path;
+        DWORD size = GetModuleFileNameA(NULL,path,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+        path[size] = '\0';
+        return path;
 }
 
 #elif defined(COFFEE_APPLE)

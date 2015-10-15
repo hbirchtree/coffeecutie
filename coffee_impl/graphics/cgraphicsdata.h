@@ -16,7 +16,7 @@ struct CZField
 struct CGCamera
 {
     enum CameraFlags{
-        OrthographicFlag        = 0b1, //When off, assume perspective
+        OrthographicFlag        = 0x1, //When off, assume perspective
     };
 
     byte        flags            = 0;
@@ -31,26 +31,6 @@ struct CGCamera
     CRectF      orthoview;
 
     CMath::mat4 matrix;
-
-    void genPerspective(){
-        matrix = CMath::perspective(CMath::radians(fieldOfView),
-                                  aspect,
-                                  zVals.near,zVals.far);
-        rotate();
-        translate();
-    }
-    void genOrthographic(){
-        matrix = CMath::ortho(orthoview.x,orthoview.w,orthoview.y,orthoview.h,
-                                  zVals.near,zVals.far);
-        rotate();
-        translate();
-    }
-    void rotate(){
-        matrix *= CMath::mat4_cast(rotation);
-    }
-    void translate(){
-        matrix = CMath::translate(matrix,position);
-    }
 };
 
 struct CModelTransform
@@ -60,13 +40,23 @@ struct CModelTransform
     CMath::vec3   scale;
 
     CMath::mat4 matrix;
-
-    void genMatrix(){
-        matrix = CMath::scale(CMath::mat4(),scale);
-        matrix = CMath::translate(matrix,position)
-                * CMath::mat4_cast(rotation);
-    }
 };
+
+/*!
+ * \brief Update a model transform matrix
+ * \param mat
+ */
+extern void coffee_graphics_gen_matrix(CModelTransform* mat);
+/*!
+ * \brief Update projection matrix for camera
+ * \param cam
+ */
+extern void coffee_graphics_gen_matrix_perspective(CGCamera* cam);
+/*!
+ * \brief Update orthographic matrix for camera
+ * \param cam
+ */
+extern void coffee_graphics_gen_matrix_orthographic(CGCamera* cam);
 
 struct CBlock
         //A block of data, f.ex. a light or material
@@ -86,37 +76,9 @@ struct CBlock
 };
 
 //Datasize: Size of data without struct
-static CBlock* coffee_create_block(uint16 dataSize,
+extern CBlock* coffee_create_block(uint16 dataSize,
                                    uint16 numProperties,
-                                   szptr* sizes = nullptr)
-{
-    szptr chunk_size = dataSize
-            +sizeof(CBlock)
-            +numProperties*sizeof(uint8)
-            +numProperties*sizeof(uint16);
-    void* chunk = calloc(sizeof(byte),chunk_size); //We want all zeros instead of undefined
-    byte* chunk_bytes = reinterpret_cast<byte*>(chunk);
-
-    CBlock* block = reinterpret_cast<CBlock*>(chunk);
-    block->numProperties = numProperties;
-    block->blockSize = chunk_size;
-    block->propertyTypes = reinterpret_cast<uint8*>(&chunk_bytes[sizeof(CBlock)]);
-    block->propertySizes = reinterpret_cast<uint16*>(&chunk_bytes[sizeof(CBlock)+numProperties*sizeof(uint8)]);
-    block->data_ptr = &chunk_bytes[sizeof(CBlock)
-            +numProperties*sizeof(uint8)
-            +numProperties*sizeof(uint16)];
-    block->data_size = chunk_size
-            -sizeof(CBlock)
-            -numProperties*sizeof(uint8)
-            -numProperties*sizeof(uint16);
-
-    if(sizes){
-        for(int i=0;i<numProperties;i++)
-            block->propertySizes[i] = sizes[i];
-    }
-
-    return block;
-}
+                                   szptr* sizes = nullptr);
 
 } //CGraphicsData
 } //Coffee

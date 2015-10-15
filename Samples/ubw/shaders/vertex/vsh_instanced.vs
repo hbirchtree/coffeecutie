@@ -4,6 +4,8 @@ layout(std140) uniform MatrixBlock {
 	mat4 camera,cameraVP;
 };
 
+
+
 layout(location = 0) in vec3 vert;
 layout(location = 1) in vec2 vertTexCoord;
 layout(location = 2) in vec3 vertNormal;

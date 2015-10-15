@@ -11,5 +11,13 @@
 
 using namespace gl;
 
+namespace Coffee{
+namespace CGraphicsWrappers{
+
+typedef const GLchar* cglstring;
+
+}
+}
+
 #endif // GLBINDING
 

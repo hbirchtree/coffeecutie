@@ -8,24 +8,35 @@
 
 namespace Coffee{
 namespace CFunctional{
+
 namespace CThreading
 {
 
-static void runIndependent(std::function<void()> function)
+/*!
+ * \brief Launch a task to run independently. Used as fire-and-forget, never to return.
+ * \param function Function to run
+ */
+inline static void runIndependent(std::function<void()> function)
 {
     std::thread m_thread(function);
     m_thread.detach();
 }
 
 template<typename ReturnType>
+/*!
+ * \brief Launch a task asynchronously, returning a future value
+ * \param function
+ * \return A future object for return value
+ */
 static std::future<ReturnType> runAsync(std::function<ReturnType()> function)
 {
     return std::async(std::launch::async,function);
 }
 
-static std::future<void> runAsyncVoid(std::function<void()> function);
-
 template<typename DataType>
+/*!
+ * \brief Contains a reference to an atomic pointer to be used with async worker
+ */
 struct CThreadWorker
 {
     CThreadWorker(std::atomic<DataType>& atomic_ptr){
