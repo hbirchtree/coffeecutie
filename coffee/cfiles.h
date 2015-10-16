@@ -4,6 +4,7 @@
 #include "coffee.h"
 #include "coffee/cregex.h"
 #include "coffee/cdebug.h"
+#include "plat\plat_core.h"
 
 namespace Coffee{
 namespace CResources{

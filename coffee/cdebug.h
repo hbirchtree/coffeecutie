@@ -3,6 +3,7 @@
 
 #include "coffee.h"
 #include "plat/plat_core.h"
+#include "coffee/cregex.h"
 
 #include "cppformat/format.h"
 
@@ -23,6 +24,8 @@ namespace CFunctional{
 
 template<typename... Arg>
 static CString cStringFormat(cstring fmt, Arg... args);
+
+namespace CDebugHelpers{
 
 template<typename... Args>
 static void cfprintf(FILE* stream, cstring format, Args... args)
