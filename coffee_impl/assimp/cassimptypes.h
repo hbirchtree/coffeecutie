@@ -36,7 +36,7 @@ struct CAssimpMesh
     cstring             name            = nullptr;
 
     uint8               numBuffers      = 0; /*! Number of buffers contained*/
-    cstring const*      buffers         = nullptr; /*! Buffer data pointers*/
+    const szptr*        bufferOffsets   = nullptr; /*! Buffer data offsets*/
     const uint8*        bufferType      = nullptr; /*! Buffer types according to BufferType enum*/
     const uint8*        elementSizes    = nullptr; /*! Sizes of elements in buffers*/
     const uint32*       bufferSize      = nullptr; /*! Amount of elements in buffers*/

@@ -4,48 +4,62 @@ namespace Coffee{
 namespace CResourceTypes{
 namespace CAssimp{
 
+szptr coffee_assimp_mesh_get_size(const aiMesh* meshdata, uint32* numBuffers)
+{
+    *numBuffers = 0;
+
+    szptr bufferSize = sizeof(CAssimpMesh);
+
+    if(meshdata->HasPositions())
+    {
+        bufferSize+=meshdata->mNumVertices*sizeof(CVec3);
+        *numBuffers++;
+    }
+
+    if(meshdata->HasNormals())
+    {
+        bufferSize+=meshdata->mNumVertices*sizeof(CVec3);
+        *numBuffers++;
+    }
+
+    if(meshdata->HasTangentsAndBitangents())
+    {
+        bufferSize+=meshdata->mNumVertices*sizeof(CVec3)*2;
+        *numBuffers+=2;
+    }
+
+    for(unsigned int i=0;i<meshdata->GetNumUVChannels();i++)
+    {
+        if(meshdata->HasTextureCoords(i))
+            bufferSize+=meshdata->mNumUVComponents[i]*sizeof(scalar)*meshdata->mNumVertices;
+        *numBuffers++;
+    }
+
+    if(meshdata->HasFaces()){
+        for(unsigned int i=0;i<meshdata->mNumFaces;i++)
+            bufferSize+=meshdata->mFaces[i].mNumIndices*sizeof(unsigned int);
+        *numBuffers++;
+    }
+
+    for(unsigned int i=0;i<meshdata->GetNumColorChannels();i++)
+    {
+        if(meshdata->HasVertexColors(i))
+            bufferSize+=meshdata->mNumVertices*sizeof(CVec4);
+        *numBuffers++;
+    }
+
+    return bufferSize;
+}
+
 CAssimpMesh *importMesh(aiMesh *meshdata){
     szptr vertices = meshdata->mNumVertices;
     szptr faces    = meshdata->mNumFaces;
     szptr i,j,k;
 
-    szptr bufferSize = sizeof(CAssimpMesh);
-    uint32 bufferCnt    = 0;
+    uint32 bufferCnt;
+    szptr bufSize = coffee_assimp_mesh_get_size(meshdata,&bufferCnt);
 
-    if(meshdata->HasPositions()){
-        bufferCnt++;
-        bufferSize+=vertices*sizeof(CVec3);
-    }
-    if(meshdata->HasNormals()){
-        bufferCnt++;
-        bufferSize+=vertices*sizeof(CVec3);
-    }
-    if(meshdata->HasTangentsAndBitangents()){
-        bufferCnt+=2;
-        bufferSize+=vertices*sizeof(CVec3)*2;
-    }
-    if(meshdata->HasFaces()){
-        bufferCnt++;
-        j=0;
-        for(i=0;i<faces;i++)
-            j+=meshdata->mFaces[i].mNumIndices;
-        bufferSize+=j*sizeof(uint32);
-    }
-    if(meshdata->HasTextureCoords(0)){
-        bufferCnt++;
-        bufferSize+=vertices*sizeof(CVec2);
-    }
-    if(meshdata->HasVertexColors(0)){
-        bufferCnt++;
-        bufferSize+=vertices*sizeof(CVec4);
-    }
-
-    bufferSize+=bufferCnt*sizeof(uint8);
-    bufferSize+=bufferCnt*sizeof(uint8);
-    bufferSize+=bufferCnt*sizeof(uint32);
-    bufferSize+=bufferCnt*sizeof(char*);
-
-    char* buffer = (char*)(calloc(1,bufferSize));
+    byte* buffer = (byte*)(calloc(1,bufSize));
 
     CAssimpMesh* mesh = (CAssimpMesh*)(&buffer[0]);
 

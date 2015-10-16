@@ -29,9 +29,15 @@ void coffee_test_fun_set(game_context *ctxt)
     {
         ctxt->funptrs.textures.define = CTextureTools::coffee_graphics_tex_define;
         ctxt->funptrs.textures.store = CTextureTools::coffee_graphics_tex_store;
+        ctxt->funptrs.textures.param = coffee_graphics_tex_param;
+        ctxt->funptrs.textures.param_e = coffee_graphics_tex_param;
+        ctxt->funptrs.textures.mipmap = coffee_graphics_tex_mipmap;
     }else{
         ctxt->funptrs.textures.define = CTextureTools::coffee_graphics_tex_define_safe;
         ctxt->funptrs.textures.store = CTextureTools::coffee_graphics_tex_store_safe;
+        ctxt->funptrs.textures.param = coffee_graphics_tex_param_safe;
+        ctxt->funptrs.textures.param_e = coffee_graphics_tex_param_safe;
+        ctxt->funptrs.textures.mipmap = coffee_graphics_tex_mipmap_safe;
     }
 
     if(ctxt->features->ext_direct_state_access)
