@@ -25,7 +25,6 @@ namespace CFunctional{
 template<typename... Arg>
 static CString cStringFormat(cstring fmt, Arg... args);
 
-namespace CDebugHelpers{
 
 template<typename... Args>
 static void cfprintf(FILE* stream, cstring format, Args... args)
@@ -38,9 +37,7 @@ static void cfprintf(FILE* stream, cstring format, Args... args)
     }
 }
 
-namespace CDebugHelpers
-{
-
+namespace CDebugHelpers{
 static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
     cfprintf(stderr,header);
