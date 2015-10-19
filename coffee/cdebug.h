@@ -82,53 +82,47 @@ static void cDebugPrint(
         cstring str,
         Arg... args)
 {
+    cstring sevstring = nullptr;
+    cstring_w timestring = nullptr;
+    cstring callstring = nullptr;
+
     //Some settings for output
     FILE* strm = stdout;
     bool fail = false;
-    cstring_w time_val = CDebugHelpers::coffee_clock_string();
-    CString s_ = time_val;
-    CDebugHelpers::coffee_clock_free(time_val); //inlined
+    timestring = CDebugHelpers::coffee_clock_string();
+
 
     //Get call stack
-    cstring first = nullptr;
     cstring_w* callstack = nullptr;
     szptr cs_length;
     {
         callstack = CDebugHelpers::coffee_callstack(&cs_length,stackreduce);
-        first = (cs_length>0) ? callstack[0] : "[callstack unavailable]";
+        callstring = (cs_length>0) ? callstack[0] : "[callstack unavailable]";
     }
     //
 
     switch(severity){
     case DebugMsgInfo:
-        s_ += "INFO:";
+        sevstring = "INFO:";
         strm = stderr;
         break;
     case DebugMsgDebug:
-        s_ += "DEBG:";
+        sevstring = "DEBG:";
         strm = stderr;
         break;
     case DebugMsgWarning:
-        s_ += "WARN:";
+        sevstring = "WARN:";
         strm = stderr;
         break;
     case DebugMsgFatal:{
-        s_ += "FTAL:";
+        sevstring = "FTAL:";
         strm = stderr;
         fail = true;
         break;
     }
     }
 
-    s_ += first;
-    s_ += ":";
-    if(str)
-        s_ += str;
-    else
-        fail = true;
-    s_ += "\n";
-
-    cfprintf(strm,s_.c_str(),args...);
+    cfprintf(strm,"%s%s:%s:%s%s: %s\n",print_color_debug,timestring,sevstring,callstring,print_color_reset,cStringFormat(str,args...));
 
     if(fail){
         CDebugHelpers::coffee_print_callstack("Callstack before crash: \n","-> %s\n",callstack,cs_length);
@@ -136,6 +130,7 @@ static void cDebugPrint(
     }
 
     CDebugHelpers::coffee_free_callstack(callstack,cs_length);
+    CDebugHelpers::coffee_clock_free(timestring);
 }
 
 template<typename... Arg>
@@ -226,4 +221,3 @@ static CString cStringFormat(cstring fmt, Arg... args)
 }
 
 #endif // COFFEE_DEBUG
-

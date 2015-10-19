@@ -6,6 +6,7 @@
 #include "sdl2datatypes.h"
 #include "plat/plat_wm.h"
 #include "plat/platform_detect.h"
+#include "coffee/cdisplay.h"
 
 namespace Coffee{
 namespace CSDL2Types{

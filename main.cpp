@@ -11,11 +11,19 @@ using namespace Coffee::CDisplay;
 
 int main(int argc, char** argv)
 {
-    cDebug("Settings directory: %s",
-           coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time"));
-    cDebug("Program directory:  %s",
-           coffee_get_application_dir());
-    cDebug("Launching from      %s",coffee_executable_name());
+    cstring_w cfg_dir = coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time");
+    cstring_w app_dir = coffee_get_application_dir();
+    cstring_w exe_name = coffee_executable_name();
+
+    cDebug("Settings directory: %s",cfg_dir);
+    cDebug("Program directory:  %s",app_dir);
+    cDebug("Launching from      %s",exe_name);
+
+    CResources::CFiles::coffee_file_mkdir(cfg_dir,true);
+
+    free(cfg_dir);
+    free(app_dir);
+    free(exe_name);
 
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();

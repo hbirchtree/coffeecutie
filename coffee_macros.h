@@ -5,6 +5,13 @@
 #include <stdio.h>
 #include <stdexcept>
 
+static constexpr Coffee::cstring print_color_debug = "\033[1m\033[44m";
+static constexpr Coffee::cstring print_color_warning = "\033[1m\033[43m";
+static constexpr Coffee::cstring print_color_stub = "\033[1m\033[42m";
+static constexpr Coffee::cstring print_color_fatal = "\033[1m\033[41m";
+
+static constexpr Coffee::cstring print_color_reset = "\033[0m";
+
 #define C_UNUSED(v) do{(void)(v);}while(0);
 
 /*!
@@ -23,7 +30,7 @@ inline static void CASSERT(bool expr)
  */
 inline static void C_STUBBED(Coffee::cstring name)
 {
-    fprintf(stderr,"COFFEE:CORE:STUB: %s\n",name);
+    fprintf(stderr,"%sCOFFEE:CORE:STUB%s: %s\n",print_color_fatal,print_color_reset,name);
 }
 
 /*!
@@ -32,7 +39,7 @@ inline static void C_STUBBED(Coffee::cstring name)
  */
 inline static void C_BADERROR(Coffee::cstring name)
 {
-    fprintf(stderr,"COFFEE:CORE:FTAL: %s\n",name);
+    fprintf(stderr,"%sCOFFEE:CORE:FTAL%s: %s\n",print_color_fatal,print_color_reset,name);
 }
 
 #endif //COFFEE_MACROS

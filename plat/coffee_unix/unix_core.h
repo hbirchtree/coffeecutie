@@ -39,6 +39,31 @@ inline static void coffee_enable_core_dump()
 }
 
 namespace CResources{
+namespace CFiles{
+inline static bool coffee_file_mkdir(cstring dname, bool createParent = false)
+{
+    if(!createParent)
+        return mkdir(dname,S_IRWXU|S_IRWXG)==0;
+
+    char tmp[256];
+    char *p = NULL;
+    size_t len;
+
+    snprintf(tmp,sizeof(tmp),"%s",dname);
+    len = strlen(tmp);
+    if(tmp[len-1] == '/')
+        tmp[len-1] = 0;
+    for(p = tmp+1; *p;p++)
+        if(*p == '/')
+        {
+            *p = 0;
+            mkdir(tmp,S_IRWXU);
+            *p = '/';
+        }
+    return mkdir(tmp,S_IRWXU)==0;
+}
+}
+
 inline static szptr coffee_file_get_size(cstring file)
 {
     struct stat sb;
@@ -144,7 +169,7 @@ inline static cstring_w coffee_clock_string()
     strftime(time_val,10,"%H:%M:%S.",tm);
     struct timeval tv;
     gettimeofday(&tv,0);
-    sprintf(&time_val[9],"%03ld:",tv.tv_usec/1000);
+    sprintf(&time_val[9],"%03ld",tv.tv_usec/1000);
     return time_val;
 }
 inline static void coffee_clock_free(cstring_w arg)
