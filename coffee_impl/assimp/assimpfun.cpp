@@ -4,213 +4,57 @@ namespace Coffee{
 namespace CResourceTypes{
 namespace CAssimp{
 
-szptr coffee_assimp_mesh_get_size(const aiMesh* meshdata, uint32* numBuffers)
+szptr coffee_assimp_mesh_approx_size(const aiMesh* mesh, szptr* numBuffers)
 {
+    szptr size = 0;
     *numBuffers = 0;
+    size+=mesh->mNumVertices
+            *mesh->HasPositions()*sizeof(CVec3);
+    *numBuffers+= mesh->HasPositions();
 
-    szptr bufferSize = sizeof(CAssimpMesh);
+    size+=mesh->mNumVertices
+            *mesh->HasNormals()*sizeof(CVec3);
+    *numBuffers+= mesh->HasNormals();
 
-    if(meshdata->HasPositions())
-    {
-        bufferSize+=meshdata->mNumVertices*sizeof(CVec3);
-        *numBuffers++;
-    }
+    size+=mesh->mNumVertices
+            *mesh->HasTangentsAndBitangents()*sizeof(CVec3)*2;
+    *numBuffers+= mesh->HasTangentsAndBitangents()*2;
 
-    if(meshdata->HasNormals())
-    {
-        bufferSize+=meshdata->mNumVertices*sizeof(CVec3);
-        *numBuffers++;
-    }
+    size+=mesh->mNumVertices*mesh->GetNumColorChannels()*sizeof(CVec4);
+    *numBuffers+= mesh->GetNumColorChannels();
 
-    if(meshdata->HasTangentsAndBitangents())
-    {
-        bufferSize+=meshdata->mNumVertices*sizeof(CVec3)*2;
-        *numBuffers+=2;
-    }
+    unsigned int i,j;
 
-    for(unsigned int i=0;i<meshdata->GetNumUVChannels();i++)
-    {
-        if(meshdata->HasTextureCoords(i))
-            bufferSize+=meshdata->mNumUVComponents[i]*sizeof(scalar)*meshdata->mNumVertices;
-        *numBuffers++;
-    }
+    for(i=0;i<mesh->GetNumUVChannels();i++)
+        size+=mesh->mNumVertices*mesh->mNumUVComponents[i]*sizeof(scalar);
+    *numBuffers+=mesh->GetNumUVChannels();
 
-    if(meshdata->HasFaces()){
-        for(unsigned int i=0;i<meshdata->mNumFaces;i++)
-            bufferSize+=meshdata->mFaces[i].mNumIndices*sizeof(unsigned int);
-        *numBuffers++;
-    }
-
-    for(unsigned int i=0;i<meshdata->GetNumColorChannels();i++)
-    {
-        if(meshdata->HasVertexColors(i))
-            bufferSize+=meshdata->mNumVertices*sizeof(CVec4);
-        *numBuffers++;
-    }
-
-    return bufferSize;
+    return size;
 }
 
 CAssimpMesh *importMesh(aiMesh *meshdata){
-    szptr vertices = meshdata->mNumVertices;
-    szptr faces    = meshdata->mNumFaces;
-    szptr i,j,k;
+    szptr bufferCount;
     szptr offset = 0;
+    byte* buffer;
 
-    uint32 bufferCnt;
-    szptr bufSize = coffee_assimp_mesh_get_size(meshdata,&bufferCnt);
+    {
+        szptr bufsize = coffee_assimp_mesh_approx_size(meshdata,&bufferCount);
+        bufsize+=sizeof(CAssimpMesh);
+        bufsize+=bufferCount*sizeof(assimp_reflexive);
 
-    byte* buffer = (byte*)(calloc(1,bufSize));
+        buffer = (byte*)calloc(
+                    sizeof(byte),
+                    bufsize);
+    }
+
 
     CAssimpMesh* mesh = (CAssimpMesh*)(&buffer[0]);
-
-    mesh->chunk_size = bufSize;
-
-    //We use bufferSize as a ptr in the buffer now
-    offset = sizeof(CAssimpMesh);
-
-    mesh->numBuffers = bufferCnt;
-
-    uint8* typeBuffer = (uint8*)(&buffer[offset]);
-    mesh->bufferType = typeBuffer;
-    offset+=bufferCnt*sizeof(byte);
-
-    uint8* elBuffer = (uint8*)(&buffer[offset]);
-    mesh->elementSizes = elBuffer;
-    offset+=bufferCnt*sizeof(byte);
-
-    uint32* sizeBuffer = (uint32*)(&buffer[offset]);
-    mesh->bufferSize = sizeBuffer;
-    offset+=bufferCnt*sizeof(uint32);
-
-    //bufferCnt is the index for buffers
-    bufferCnt = 0;
-
-//    if(meshdata->HasPositions()){
-//        //Positions
-//        elBuffer[bufferCnt] = sizeof(CVec3);
-//        typeBuffer[bufferCnt] = CAssimpMesh::PositionType;
-//        sizeBuffer[bufferCnt] = vertices;
-//        CVec3* list = (CVec3*)(&buffer[offset]);
-
-//        for(i=0;i<vertices;i++){
-//            aiVector3D* vec = &meshdata->mVertices[i];
-//            list[i].x = vec->x;
-//            list[i].y = vec->y;
-//            list[i].z = vec->z;
-//        }
-
-//        offset+=vertices*sizeof(CVec3);
-//        bufferCnt++;
-//    }
-//    if(meshdata->HasNormals()){
-//        //Normals
-//        elBuffer[bufferCnt] = sizeof(CVec3);
-//        typeBuffer[bufferCnt] = CAssimpMesh::NormalType;
-//        sizeBuffer[bufferCnt] = vertices;
-//        CVec3* list = (CVec3*)(&buffer[offset]);
-
-//        for(i=0;i<vertices;i++){
-//            aiVector3D* vec = &meshdata->mNormals[i];
-//            list[i].x = vec->x;
-//            list[i].y = vec->y;
-//            list[i].z = vec->z;
-//        }
-
-//        bufferSize+=vertices*sizeof(CVec3);
-//        bufferCnt++;
-//    }
-//    if(meshdata->HasTangentsAndBitangents()){
-//        {
-//            //Tangents
-//            elBuffer[bufferCnt] = sizeof(CVec3);
-//            typeBuffer[bufferCnt] = CAssimpMesh::BitanType;
-//            sizeBuffer[bufferCnt] = vertices;
-//            CVec3* list = (CVec3*)(&buffer[offset]);
-
-//            for(i=0;i<vertices;i++){
-//                aiVector3D* vec = &meshdata->mTangents[i];
-//                list[i].x = vec->x;
-//                list[i].y = vec->y;
-//                list[i].z = vec->z;
-//            }
-
-//            bufferSize+=vertices*sizeof(CVec3);
-//            bufferCnt++;
-//        }
-
-//        {
-//            //Bitangents
-//            elBuffer[bufferCnt] = sizeof(CVec3);
-//            typeBuffer[bufferCnt] = CAssimpMesh::TangentType;
-//            sizeBuffer[bufferCnt] = vertices;
-//            CVec3* list = (CVec3*)(&buffer[offset]);
-
-//            for(i=0;i<vertices;i++){
-//                aiVector3D* vec = &meshdata->mBitangents[i];
-//                list[i].x = vec->x;
-//                list[i].y = vec->y;
-//                list[i].z = vec->z;
-//            }
-
-//            offset+=vertices*sizeof(CVec3);
-//            bufferCnt++;
-//        }
-//    }
-//    if(meshdata->HasFaces()){
-//        //Face indices
-//        elBuffer[bufferCnt] = sizeof(uint32);
-//        typeBuffer[bufferCnt] = CAssimpMesh::IndexType;
-//        uint32* list = (uint32*)(&buffer[offset]);
-
-//        k = 0;
-//        for(i=0;i<faces;i++)
-//            for(j=0;j<meshdata->mFaces[i].mNumIndices;j++){
-//                list[k]=meshdata->mFaces[i].mIndices[j];
-//                k++;
-//            }
-
-//        sizeBuffer[bufferCnt] = k;
-
-//        offset+=k*sizeof(uint32);
-//        bufferCnt++;
-//    }
-//    if(meshdata->HasTextureCoords(0)){
-//        //Texture coordinates
-//        elBuffer[bufferCnt] = sizeof(CVec2);
-//        typeBuffer[bufferCnt] = CAssimpMesh::TextCoordType;
-//        sizeBuffer[bufferCnt] = vertices;
-//        CVec2* list = (CVec2*)(&buffer[offset]);
-
-//        for(i=0;i<vertices;i++){
-//            aiVector3D* vec = &meshdata->mTextureCoords[0][i];
-//            list[i].x = vec->x;
-//            list[i].y = 1.f-vec->y;
-//        }
-
-//        offset+=vertices*sizeof(CVec2);
-//        bufferCnt++;
-//    }
-//    if(meshdata->HasVertexColors(0)){
-//        //Vertex colors
-//        elBuffer[bufferCnt] = sizeof(CVec3);
-//        typeBuffer[bufferCnt] = CAssimpMesh::VColorType;
-//        sizeBuffer[bufferCnt] = vertices;
-//        CVec4* list = (CVec4*)(listBuffer[bufferCnt]);
-
-//        for(i=0;i<vertices;i++){
-//            aiColor4D* vec = &meshdata->mColors[0][i];
-//            list[i].x = vec->r;
-//            list[i].y = vec->g;
-//            list[i].z = vec->b;
-//            list[i].w = vec->a;
-//        }
-
-//        bufferSize+=vertices*sizeof(CVec4);
-//        bufferCnt++;
-//    }
-
+    offset += sizeof(CAssimpMesh);
+    mesh->numBuffers = bufferCount;
     mesh->name = coffee_cpy_string(meshdata->mName.C_Str());
+
+    assimp_reflexive* bufferArray = (assimp_reflexive*)&buffer[offset];
+
 
     return mesh;
 }
@@ -222,7 +66,7 @@ bool coffee_assimp_dump_mesh(CAssimp::CAssimpMesh *mesh, CResources::CResource *
 
     resource->free_data();
 
-    resource->size = mesh->chunk_size;
+    resource->size = mesh->byteSize;
     resource->data = malloc(resource->size);
 
     memcpy(resource->data,mesh,resource->size);

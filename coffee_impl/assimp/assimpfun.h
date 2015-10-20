@@ -34,6 +34,30 @@ extern  CAssimpLight*        importLight(aiLight* ldata);
 extern  CAssimpCamera*       importCamera(aiCamera* camdata);
 extern  CAssimpTexture*      importTexture(aiTexture* texdata);
 extern  CAssimpAnimation*    importAnimation(aiAnimation* anidata);
+
+template<typename Element>
+static szptr coffee_assimp_create_attribute(
+        assimp_reflexive* reflex,
+        Element* src,
+        szptr numElements,
+        byte* basePtr)
+{
+
+}
+
+/*!
+ * \brief Tiny functions that transform Assimp data into Coffee. Returns an offset in the output data buffer which is accumulated to store the data. Don't destroy the stack!
+ */
+template<typename Element,typename OutType>
+using AssimpElementPredicate = szptr(*)(const Element&,OutType*);
+
+static szptr coffee_assimp_convert(const aiVector3D& vec,CVec3* buffer)
+{
+    buffer->x = vec.x;
+    buffer->y = vec.y;
+    buffer->z = vec.z;
+    return 1;
+}
 }
 
 extern bool coffee_assimp_dump_mesh(

@@ -22,24 +22,23 @@ struct CAssimpMaterial
     const uint8*            propertyTypes   = nullptr;
 };
 
+struct assimp_reflexive
+{
+    byte  type;
+    szptr offset;
+    szptr size;
+};
+
 /*!
  * \brief Assimp mesh containing vertex data, from positions to bitangents and texture coordinates. Should be allocated in a single, contiguous block to allow simple free'ing of resources.
  */
 struct CAssimpMesh
 {
+    szptr   byteSize = 0; /*!< Size of mesh in memory, used when dumping to file*/
+    cstring name     = nullptr; /*!< Name of mesh from Assimp*/
+    uint8   numBuffers = 0; /*!< Number of buffers contained*/
 
-    //BUG : We cannot load these from memory dumps
-    //Make the pointers relative to (this)
-
-    szptr               chunk_size      = 0; /*! Total size of the memory chunk*/
-
-    cstring             name            = nullptr;
-
-    uint8               numBuffers      = 0; /*! Number of buffers contained*/
-    const szptr*        bufferOffsets   = nullptr; /*! Buffer data offsets*/
-    const uint8*        bufferType      = nullptr; /*! Buffer types according to BufferType enum*/
-    const uint8*        elementSizes    = nullptr; /*! Sizes of elements in buffers*/
-    const uint32*       bufferSize      = nullptr; /*! Amount of elements in buffers*/
+    const assimp_reflexive* buffers = nullptr; /*!< Buffer offsets, sizes and type */
 
     enum BufferType
     {
