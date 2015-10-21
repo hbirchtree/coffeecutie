@@ -106,7 +106,7 @@ void coffee_assimp_mesh_get_offsets(const aiMesh* mesh, assimp_reflexive* buffer
     }
 }
 
-CAssimpMesh *importMesh(aiMesh *meshdata){
+CAssimpMesh *importMesh(const aiMesh *meshdata){
     szptr bufferCount;
     szptr offset = 0;
     szptr bufsize;
@@ -128,6 +128,7 @@ CAssimpMesh *importMesh(aiMesh *meshdata){
     mesh->byteSize = bufsize;
     mesh->name = coffee_cpy_string(meshdata->mName.C_Str());
 
+    offset+=sizeof(assimp_reflexive)*bufferCount;
     assimp_reflexive* bufferArray = (assimp_reflexive*)&buffer[offset];
     mesh->buffers = bufferArray;
 
@@ -183,7 +184,7 @@ CAssimpMesh *importMesh(aiMesh *meshdata){
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
                 coffee_assimp_mesh_attribute_process<aiFace>(
-                            meshdata->mFaces,meshdata->mNumVertices,
+                            meshdata->mFaces,meshdata->mNumFaces,
                             &buffer[buf->offset],_assimp_face_transform);
             }));
             break;

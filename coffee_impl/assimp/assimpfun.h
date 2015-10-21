@@ -28,7 +28,7 @@ struct assimp_mesh_intermediate
     uint32 bufferCnt	= 0;
 };
 
-extern  CAssimpMesh*         importMesh(aiMesh* meshdata);
+extern  CAssimpMesh*         importMesh(const aiMesh *meshdata);
 extern  CAssimpMaterial*     importMaterial(aiMaterial* matdata);
 extern  CAssimpLight*        importLight(aiLight* ldata);
 extern  CAssimpCamera*       importCamera(aiCamera* camdata);
@@ -52,9 +52,11 @@ void coffee_assimp_mesh_attribute_process(
         Element* input, szptr numElements, byte* basePtr,
         AssimpTransformFun<Element> fun)
 {
+    std::cout << "thread:" << std::this_thread::get_id() << "ptr:" << (void*)basePtr << " " << sizeof(Element) << std::endl;
     szptr offset = 0;
     for(szptr i=0;i<numElements;i++)
         offset+=fun(input[i],&basePtr[offset]);
+    std::cout << "Finish: thread:" << std::this_thread::get_id() << "ptr:" << (void*)basePtr << std::endl;
 }
 
 }
