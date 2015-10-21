@@ -1,5 +1,7 @@
 #include "cmultidrawgraph.h"
 
+#include "coffee_impl/assimp/assimpfun.h"
+
 namespace Coffee {
 namespace CRendering {
 
@@ -91,11 +93,15 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
 
     const GLuint* indices = nullptr;
     csize_t numIndices = 0;
+    const assimp_reflexive* ref;
     for(int i=0;i<mesh->numBuffers;i++)
-        if(mesh->bufferType[i]==CAssimpMesh::IndexType){
-            indices = reinterpret_cast<const GLuint*>(mesh->buffers[i]);
-            numIndices = mesh->bufferSize[i];
+    {
+        ref = &mesh->buffers[i];
+        if(ref->type==CAssimpMesh::IndexType){
+            indices = (uint32*)coffee_assimp_get_reflexive_ptr(mesh,ref);
+            numIndices = ref->size/sizeof(unsigned int);
         }
+    }
 
     if(numIndices<1)
         return false;

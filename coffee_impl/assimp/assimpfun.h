@@ -35,29 +35,28 @@ extern  CAssimpCamera*       importCamera(aiCamera* camdata);
 extern  CAssimpTexture*      importTexture(aiTexture* texdata);
 extern  CAssimpAnimation*    importAnimation(aiAnimation* anidata);
 
-template<typename Element>
-static szptr coffee_assimp_create_attribute(
-        assimp_reflexive* reflex,
-        Element* src,
-        szptr numElements,
-        byte* basePtr)
-{
-
-}
-
 /*!
- * \brief Tiny functions that transform Assimp data into Coffee. Returns an offset in the output data buffer which is accumulated to store the data. Don't destroy the stack!
+ * \brief Transforms data of type Element to type OutType, returning the size of data written
  */
-template<typename Element,typename OutType>
-using AssimpElementPredicate = szptr(*)(const Element&,OutType*);
+template<typename Element>
+using AssimpTransformFun = szptr(const Element&,byte*);
 
-static szptr coffee_assimp_convert(const aiVector3D& vec,CVec3* buffer)
+extern szptr _assimp_face_transform(const aiFace& v,byte* d);
+extern szptr _assimp_vec_transform(const aiVector3D& v,byte* d);
+extern szptr _assimp_col_transform(const aiColor4D& v, byte* d);
+
+extern byte* coffee_assimp_get_reflexive_ptr(void* baseptr, const assimp_reflexive* ref);
+
+template<typename Element>
+void coffee_assimp_mesh_attribute_process(
+        Element* input, szptr numElements, byte* basePtr,
+        AssimpTransformFun<Element> fun)
 {
-    buffer->x = vec.x;
-    buffer->y = vec.y;
-    buffer->z = vec.z;
-    return 1;
+    szptr offset = 0;
+    for(szptr i=0;i<numElements;i++)
+        offset+=fun(input[i],&basePtr[offset]);
 }
+
 }
 
 extern bool coffee_assimp_dump_mesh(

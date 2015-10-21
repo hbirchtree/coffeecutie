@@ -337,16 +337,24 @@ bool coffee_test_load(game_context *ctxt)
             CResourceTypes::coffee_assimp_dump_mesh(mesh,&meshtest);
 
             szptr voffset = 0;
+            const assimp_reflexive* ref;
             for(int i=0;i<mesh->numBuffers;i++){
-                if(mesh->bufferType[i]==CAssimpMesh::PositionType)
+                ref = &mesh->buffers[i];
+                if(ref->type==CAssimpMesh::PositionType)
                 {
-                    coffee_mesh_fill_vertexdata(*vertexdata,mesh->buffers[i],
-                                                0,mesh->bufferSize[i]*sizeof(CVec3));
-                    voffset=mesh->bufferSize[i];
+                    coffee_mesh_fill_vertexdata(
+                                *vertexdata,
+                                CResourceTypes::CAssimp::
+                                    coffee_assimp_get_reflexive_ptr(mesh,ref),
+                            0,ref->size);
+                    voffset=ref->size;
                 }
-                if(mesh->bufferType[i]==CAssimpMesh::TextCoordType)
-                    coffee_mesh_fill_vertexdata(*texcdata,mesh->buffers[i],
-                                                0,mesh->bufferSize[i]*sizeof(CVec2));
+                if(ref->type==CAssimpMesh::TextCoordType)
+                    coffee_mesh_fill_vertexdata(
+                                *texcdata,
+                                CResourceTypes::CAssimp::
+                                    coffee_assimp_get_reflexive_ptr(mesh,ref),
+                                0,ref->size);
             }
             //Store indices and create the drawcall
             coffee_multidraw_create_call(*multidraw,mesh);
