@@ -10,16 +10,7 @@ namespace CMemoryManagement{
 using namespace CGraphicsWrappers;
 using namespace CRendering;
 
-typedef std::function<void(const CMultiDrawDataSet&)> RenderFun;
-
-typedef std::function
-<void(const CTexture* tex, const CTextureTools::CTextureData* data)> TexDefineFun;
-typedef std::function
-<void(const CTexture* tex, const CTextureTools::CTextureData* data, GLint level)> TexStoreFun;
-
-typedef std::function<void(const CTexture* tex)> TexLoadFun;
-typedef std::function<void(const CTexture* tex)> TexUnloadFun;
-
+typedef void(*RenderFun)(const CMultiDrawDataSet&);
 
 struct game_function_binds
 {

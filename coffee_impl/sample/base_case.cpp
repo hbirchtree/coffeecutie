@@ -465,12 +465,17 @@ bool coffee_test_load(game_context *ctxt)
                             CBlam::coffee_bitm_get_texture(img,bitmfile.data);
 
                     if(tex.type==CBlam::blam_bitm_type_2D)
+                    {
                         coffee_texture_2d_load(tex,ctxt);
+                        break;
+                    }
                     else
                         cWarning("Unsupported format: 3D and cube!");
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
                 }
             }
+            bitmfile.memory_unmap();
+            mapfile.memory_unmap();
         }
 
         {

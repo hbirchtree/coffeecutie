@@ -1,6 +1,6 @@
 project( CoffeeCore )
 cmake_minimum_required( VERSION 3.1 )
-set ( CMAKE_BUILD_TYPE Debug )
+set ( CMAKE_BUILD_TYPE Release )
 
 MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
 FIND_PACKAGE(Doxygen)
@@ -31,9 +31,7 @@ include_directories (
         ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
         include
         libs/glbinding/source/glbinding/include
-        libs/assimp/include
-        libs/glfw/include
-        libs/bullet/src)
+        libs/assimp/include)
 
 set ( CoffeeCore_HDRS
 coffee/cfiles.h
@@ -95,10 +93,6 @@ plat/coffee_unix/unix_core.h
 plat/plat_core.h
         )
 
-set ( CoffeeTest_SRCS
-        main.cpp
-        )
-
 set ( CoffeeCore_SRCS
 
         coffee.cpp
@@ -110,9 +104,6 @@ set ( CoffeeCore_SRCS
 
         coffee_impl/assimp/cassimpimporters.cpp
         coffee_impl/assimp/assimpfun.cpp
-
-        coffee_impl/audio/caudio.cpp
-        coffee_impl/audio/openal/copenal.cpp
 
         coffee_impl/context/cdrenderer.cpp
         coffee_impl/context/cglbindingrenderer.cpp
@@ -131,20 +122,32 @@ set ( CoffeeCore_SRCS
         coffee_impl/graphics/ctexture_dxtc.cpp
         coffee_impl/graphics/cgraphics_quirks.cpp
 
-        coffee_impl/image/cimage.cpp
-
         coffee_impl/rendering/cmultidrawgraph.cpp
 
         coffee_impl/sample/base_case.cpp
 
-        datasources/blam/cblam_bitm.cpp
-        datasources/blam/cblam_map.cpp
-
 #Third-party sources
 
-        include/stb/stb_vorbis.c
-
         include/cppformat/format.cc
+        )
+
+set ( CoffeeTest_SRCS
+        main.cpp
+        )
+
+set ( CBlam_SRCS
+        datasources/blam/cblam_bitm.cpp
+        datasources/blam/cblam_map.cpp
+        )
+
+set ( CAudio_SRCS
+        include/stb/stb_vorbis.c
+        coffee_impl/audio/caudio.cpp
+        coffee_impl/audio/openal/copenal.cpp
+        )
+
+set ( CImage_SRCS
+        coffee_impl/image/cimage.cpp
         )
 
 
@@ -157,17 +160,19 @@ message("GLbinding located at: ${glbinding_loc}")
 ######################################
 
 #Set up build targets
+add_library( CBlam SHARED ${CBlam_SRCS})
 add_library( CoffeeLib SHARED ${CoffeeCore_SRCS} )
-add_executable ( CoffeeCore ${CoffeeCore_SRCS} ${CoffeeTest_SRCS} )
+add_library( CAudio SHARED ${CAudio_SRCS})
+add_library( CImage SHARED ${CImage_SRCS})
+add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 #####################
 
 #Set up necessary linking options
 find_package(OpenAL REQUIRED)
-target_include_directories(CoffeeCore SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
-target_include_directories(CoffeeLib SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
+target_include_directories(CAudio SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
+#target_include_directories(CoffeeLib SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
 
 find_package(SDL2 REQUIRED)
-target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 target_include_directories(CoffeeLib SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 
 #################################
@@ -178,18 +183,11 @@ if(NOT WIN32)
     find_library(M_LIB m)
 
     find_package(Unwind)
-    target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
+    target_include_directories(CoffeeLib SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
 endif()
 ############################
 
 #Configure linking options
-target_link_libraries ( CoffeeCore
-${SDL2_LIBRARY}
-${LIBUNWIND_LIBRARIES}
-${assimp_loc}
-${glbinding_loc}
-${X11_LIBRARIES}
-${OPENAL_LIBRARY} )
 target_link_libraries ( CoffeeLib
 ${SDL2_LIBRARY}
 ${LIBUNWIND_LIBRARIES}
@@ -198,12 +196,32 @@ ${glbinding_loc}
 ${X11_LIBRARIES}
 ${M_LIB_LIBRARIES}
 ${OPENAL_LIBRARY} )
+target_link_libraries ( CoffeeTest
+${SDL2_LIBRARY}
+${LIBUNWIND_LIBRARIES}
+${assimp_loc}
+${glbinding_loc}
+${X11_LIBRARIES}
+${OPENAL_LIBRARY}
+CoffeeLib
+CBlam
+CAudio
+CImage )
 ##########################
 
 #Configure PIC and C++11
-set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
-target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
-target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
+set_property(TARGET CBlam PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CBlam PRIVATE cxx_variadic_templates)
+
+set_property(TARGET CAudio PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CAudio PRIVATE cxx_variadic_templates)
+
+set_property(TARGET CImage PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CImage PRIVATE cxx_variadic_templates)
+
+set_property(TARGET CoffeeTest PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CoffeeTest PRIVATE cxx_variadic_templates)
+target_compile_features(CoffeeTest PRIVATE cxx_constexpr)
 
 set_property(TARGET CoffeeLib PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeLib PRIVATE cxx_variadic_templates)

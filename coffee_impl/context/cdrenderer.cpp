@@ -51,13 +51,6 @@ void CDRenderer::run()
 
     coffee_test_fun_set(game);
 
-//    CResource mdata("ubw/models/grass.fbx");
-//    mdata.read_data();
-//    CAssimpData* d = CAssimpImporters::importResource(&mdata,mdata.resource());
-//    for(szptr i=0;i<d->numMeshes;i++)
-//        game->meshes.push_back(d->meshes[i]);
-//    mdata.free_data();
-
     CResource gdata("ubw/models/ubw.blend");
     gdata.memory_map();
     CAssimpData* d2 = CAssimpImporters::importResource(&gdata,gdata.resource());
@@ -75,23 +68,15 @@ void CDRenderer::run()
     if(!coffee_test_load(game))
         return;
 
-//    CResourceTypes::coffee_assimp_free(d);
     CResourceTypes::coffee_assimp_free(d2);
+    CResourceTypes::coffee_assimp_free(d1);
 
     showWindow();
 
-//#ifdef COFFEE_LINUX
-
-//    CDWindow* sdlwin = this->window();
-
-//    CoffeePlat::X11::set_alwaysontop(sdlwin->wininfo.x11.display,sdlwin->wininfo.x11.window,true);
-
-//#endif
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+//    glEnable(GL_CULL_FACE);
+//    glCullFace(GL_FRONT);
 
     glClearColor(0.175f,0.175f,0.175f,1.f);
     glViewport(0,0,m_properties.size.w,m_properties.size.h);
@@ -102,22 +87,6 @@ void CDRenderer::run()
     setSwapInterval(0);
     cMsg("Coffee","Init time: %fs",contextTime());
 
-//    CFramebuffer fb;
-//    CTexture fbtex;
-//    fb.create();
-//    coffee_graphics_alloc(&fbtex);
-//    fbtex.textureType = GL_TEXTURE_2D;
-//    fbtex.levels = 1;
-//    CTextureTools::CTextureData texd;
-//    texd.format = GL_RGBA8;
-//    coffee_graphics_tex_activate(&fbtex);
-//    fb.bind();
-//    fb.unbind();
-//    CTextureTools::coffee_create_texturesize(&texd,1280,720);
-//    game->funptrs.tex_define(&fbtex,&texd);
-//    fb.attach(&fbtex,GL_COLOR_ATTACHMENT0,0);
-//    fb.valid();
-
     coffee_prepare_test(game);
 
     game->transforms.transforms.d[0].rotation =
@@ -127,8 +96,8 @@ void CDRenderer::run()
         delta = contextTime();
 
         swap->start();
-        //Rendering part
 
+        //Rendering part
 
         game->transforms.transforms.d[0].rotation =
                 CMath::normalize(
@@ -136,11 +105,8 @@ void CDRenderer::run()
                     game->transforms.transforms.d[0].rotation);
 //        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
-//        fb.bind(GL_DRAW_FRAMEBUFFER);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         coffee_render_test(game,deltaT);
-//        fb.unbind(GL_DRAW_FRAMEBUFFER);
-
         // END Rendering part
         rendertime = swap->elapsed();
 
@@ -169,22 +135,6 @@ void CDRenderer::run()
             frames = 0;
         }
     }
-
-//    CResource texture("test.png");
-//    CStbImageLib::CStbImage img;
-//    img.size = windowSize();
-//    img.bpp = 4;
-//    swap->start();
-//    coffee_graphics_tex_download_texture(&fbtex,0,4*windowSize().w*windowSize().h,GL_RGBA,&img);
-//    cDebug("Fetching time: %lld",swap->elapsed());
-//    swap->start();
-//    CStbImageLib::coffee_stb_image_flip_vertical(&img);
-//    cDebug("Flipping time: %lld",swap->elapsed());
-//    swap->start();
-//    CStbImageLib::coffee_stb_image_save_png(&texture,&img);
-//    texture.save_data();
-//    CStbImageLib::coffee_stb_image_free(&img);
-//    cDebug("File time: %lld",swap->elapsed());
 
     swap->start();
     coffee_unload_test(game);
