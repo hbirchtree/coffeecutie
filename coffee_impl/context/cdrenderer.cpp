@@ -213,7 +213,7 @@ void CDRenderer::bindingCallback(void *report) const
     CString out = glbinding::Meta::getString(rep->type)+":"
             +glbinding::Meta::getString(rep->severity)+":"
             +glbinding::Meta::getString(rep->source)+": "+rep->message;
-    cDebug("OpenGL: %s",out.c_str());
+    cWarning("OpenGL: %s",out.c_str());
     free(report);
 }
 

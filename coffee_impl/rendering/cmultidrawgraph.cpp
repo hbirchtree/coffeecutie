@@ -94,12 +94,13 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
     const GLuint* indices = nullptr;
     csize_t numIndices = 0;
     const assimp_reflexive* ref;
-    for(int i=0;i<mesh->numBuffers;i++)
+    for(uint8 i=0;i<mesh->numBuffers;i++)
     {
         ref = &mesh->buffers[i];
         if(ref->type==CAssimpMesh::IndexType){
             indices = (uint32*)coffee_assimp_get_reflexive_ptr(mesh,ref);
             numIndices = ref->size/sizeof(unsigned int);
+            break;
         }
     }
 
@@ -107,7 +108,7 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
         return false;
 
     call.firstIndex = set.index->indices.size();
-    call.baseVertex = set.drawcalls->vertexoffset;
+    call.baseVertex = set.drawcalls->vertexoffset+1;
     call.count = numIndices;
     call.instanceCount = 1;
 
@@ -152,7 +153,7 @@ void coffee_mesh_free_matrix_attribs(std::vector<CVertexAttribute>::iterator sta
 
 void coffee_mesh_fill_vertexdata(std::vector<byte> &data, const void *rsrc, szptr roffset, szptr size)
 {
-    const byte* bytes = reinterpret_cast<const byte*>(rsrc);
+    const byte* bytes = (const byte*)rsrc;
 
     std::copy(&bytes[roffset],&bytes[roffset+size],std::back_inserter(data));
 }

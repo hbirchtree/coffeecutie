@@ -1,5 +1,7 @@
 #include "assimpfun.h"
 
+//#define ASSIMP_PARSE_MULTICORE
+
 #include "coffee/cfunctional.h"
 
 namespace Coffee{
@@ -128,8 +130,8 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     mesh->byteSize = bufsize;
     mesh->name = coffee_cpy_string(meshdata->mName.C_Str());
 
-    offset+=sizeof(assimp_reflexive)*bufferCount;
     assimp_reflexive* bufferArray = (assimp_reflexive*)&buffer[offset];
+    offset+=sizeof(assimp_reflexive)*bufferCount;
     mesh->buffers = bufferArray;
 
     coffee_assimp_mesh_get_offsets(meshdata,bufferArray,offset);
@@ -145,75 +147,105 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
         switch(buf->type)
         {
         case CAssimpMesh::PositionType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mVertices,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             break;
         }
         case CAssimpMesh::NormalType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mNormals,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             break;
         }
         case CAssimpMesh::TangentType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mTangents,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             break;
         }
         case CAssimpMesh::BitanType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mBitangents,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             break;
         }
         case CAssimpMesh::IndexType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiFace>(
                             meshdata->mFaces,meshdata->mNumFaces,
                             &buffer[buf->offset],_assimp_face_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             break;
         }
         case CAssimpMesh::VColorType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiColor4D>(
                             meshdata->mColors[numCols],meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_col_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             numCols++;
             break;
         }
         case CAssimpMesh::TextCoordType:{
+#ifdef ASSIMP_PARSE_MULTICORE
             futures.push_back(CThreading::runAsync<void>(
                                   [=](){
+#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mTextureCoords[numUVs],meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
+#ifdef ASSIMP_PARSE_MULTICORE
             }));
+#endif
             numUVs++;
             break;
         }
         }
     }
 
+#ifdef ASSIMP_PARSE_MULTICORE
     for(std::future<void>& f : futures)
         f.get();
+#endif
 
     return mesh;
 }

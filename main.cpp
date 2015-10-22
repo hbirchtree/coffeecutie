@@ -11,8 +11,6 @@ using namespace Coffee::CDisplay;
 
 int main(int argc, char** argv)
 {
-    cDebug("TEST %#x",123);
-
     cstring_w cfg_dir = coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time");
     cstring_w app_dir = coffee_get_application_dir();
     cstring_w exe_name = coffee_executable_name();

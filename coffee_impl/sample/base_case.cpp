@@ -179,6 +179,7 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
     {
     case CBlam::blam_bitm_tex_RGBA:{
         CTextureTools::CTextureData dt;
+        coffee_graphics_alloc(t);
         dt.data = tex.data;
         dt.datatype = GL_UNSIGNED_BYTE;
         dt.format = GL_RGBA8;
@@ -463,7 +464,10 @@ bool coffee_test_load(game_context *ctxt)
                     CBlam::blam_bitm_texture_def tex =
                             CBlam::coffee_bitm_get_texture(img,bitmfile.data);
 
-                    coffee_texture_2d_load(tex,ctxt);
+                    if(tex.type==CBlam::blam_bitm_type_2D)
+                        coffee_texture_2d_load(tex,ctxt);
+                    else
+                        cWarning("Unsupported format: 3D and cube!");
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
                 }
             }

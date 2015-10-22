@@ -101,6 +101,8 @@ static void cDebugPrint(
     }
     //
 
+    cstring col = print_color_debug;
+
     switch(severity){
     case DebugMsgInfo:
         sevstring = "INFO:";
@@ -112,17 +114,19 @@ static void cDebugPrint(
         break;
     case DebugMsgWarning:
         sevstring = "WARN:";
+	col = print_color_warning;
         strm = stderr;
         break;
     case DebugMsgFatal:{
         sevstring = "FTAL:";
+	col = print_color_fatal;
         strm = stderr;
         fail = true;
         break;
     }
     }
 
-    cfprintf(strm,"%s%s:%s:%s%s: %s\n",print_color_debug,timestring,sevstring,callstring,print_color_reset,cStringFormat(str,args...));
+    cfprintf(strm,"%s%s:%s:%s%s: %s\n",col,timestring,sevstring,callstring,print_color_reset,cStringFormat(str,args...));
 
     if(fail){
         CDebugHelpers::coffee_print_callstack("Callstack before crash: \n","-> %s\n",callstack,cs_length);
