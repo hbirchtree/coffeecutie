@@ -42,8 +42,8 @@ public:
 
     void bindingCallback(void* report) const;
 
-    void eventWHandle(const CDEvent *event);
-    void eventIHandle(const CIEvent *event);
+    void eventWindowsHandle(const CDEvent *event);
+    void eventInputHandle(const CIEvent *event);
 
 private:
     game_context* game = nullptr;

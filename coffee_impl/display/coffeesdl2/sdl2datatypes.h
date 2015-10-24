@@ -23,7 +23,8 @@ struct CSDL2Context{
 
     std::thread::id thread;
 
-    std::map<byte,SDL_GameController*> controllers;
+    std::map<uint8,SDL_GameController*> controllers;
+    std::map<uint8,SDL_Haptic*> haptics;
 };
 
 }

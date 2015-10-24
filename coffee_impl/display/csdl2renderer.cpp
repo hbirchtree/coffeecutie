@@ -12,7 +12,6 @@ using namespace Coffee::CSDL2Types;
 CSDL2Renderer::CSDL2Renderer(Coffee::CObject *parent) :
     CDQueueRendererBase(parent)
 {
-
 }
 
 CSDL2Renderer::~CSDL2Renderer()
@@ -95,7 +94,14 @@ void CSDL2Renderer::cleanup()
 {
     if(m_context){
         bindingTerminate();
-//        cMsg("SDL2","Cleaning up context");
+        cMsg("SDL2","Cleaning up context");
+
+        for(std::pair<uint8,SDL_GameController*> con : m_context->controllers)
+        {
+            SDL_HapticClose(m_context->haptics[con.first]);
+            SDL_GameControllerClose(m_context->controllers[con.first]);
+        }
+
         SDL_GL_DeleteContext(m_context->context);
         SDL_DestroyWindow(m_context->window);
         SDL_Quit();
@@ -310,6 +316,18 @@ void CSDL2Renderer::setTextArea(const CRect &area)
     SDL_SetTextInputRect(&r);
 }
 
+void CSDL2Renderer::setKeyboardRepeat(bool m)
+{
+}
+
+void CSDL2Renderer::eventHapticHandle(const CIHapticEvent *haptic)
+{
+    SDL_HapticRumblePlay(
+                m_context->haptics[haptic->rumble_input.index],
+            haptic->rumble_input.strength,
+            haptic->rumble_input.duration);
+}
+
 void CSDL2Renderer::swapBuffers()
 {
     SDL_GL_SwapWindow(m_context->window);
@@ -322,21 +340,73 @@ void CSDL2Renderer::pollEvents()
     }
 }
 
+/*!
+ * \brief Opens and acquires a haptic device for a joystick
+ * \param controller Controller for which we acquire a haptic device
+ * \param index Index of controller used for associating it with a controller
+ * \param dev Reference to a pointer to the haptic device
+ * \return A valid pointer to a CIHapticEvent
+ */
+CIEvent* sdl2_controller_get_haptic(
+        SDL_GameController* controller,
+        uint8 index,
+        SDL_Haptic*& dev)
+{
+    dev = nullptr;
+
+    if(!controller)
+        return nullptr;
+
+    SDL_Joystick* js = SDL_GameControllerGetJoystick(controller);
+    dev = SDL_HapticOpenFromJoystick(js);
+    if(dev)
+    {
+        int idx = SDL_HapticIndex(dev);
+        cstring hname = SDL_HapticName(idx);
+        CIEvent* ev = (CIEvent*)calloc(1,sizeof(CIEvent)
+                                       +sizeof(CIHapticEvent)
+                                       +strlen(hname)-6);
+        ev->type = CIEvent::HapticDev;
+        CIHapticEvent *h = (CIHapticEvent*)&ev[1];
+        memcpy((byte*)&h->rumble_device.name,
+               hname,
+               strlen(hname)+1);
+        h->rumble_device.index = index;
+
+        if(SDL_HapticRumbleInit(dev)==0)
+            return ev;
+        free(ev);
+        SDL_HapticClose(dev);
+    }
+    return nullptr;
+}
+
 void CSDL2Renderer::_controllers_handle(const CIControllerAtomicUpdateEvent *ev)
 {
-    if(ev->connected()){
-        if(ev->remapped()){
-            cMsg("SDL2","Controller remapped: %i",ev->controller());
-            SDL_GameControllerClose(m_context->controllers.at(ev->controller()));
+    if(ev->connected){
+        if(ev->remapped){
+            cMsg("SDL2","Controller remapped: %i",ev->controller);
+            SDL_GameControllerClose(m_context->controllers.at(ev->controller));
         }
-        m_context->controllers.insert(
-                    std::pair<byte,SDL_GameController*>
-                    (ev->controller(),
-                     SDL_GameControllerOpen(ev->controller())));
-        cMsg("SDL2","Controller connected: %i",ev->controller());
+        SDL_GameController* gc = SDL_GameControllerOpen(ev->controller);
+        m_context->controllers[ev->controller] = gc;
+
+        SDL_Haptic* hdev;
+        CIEvent* hev = sdl2_controller_get_haptic(gc,ev->controller,hdev);
+        if(hev)
+        {
+            cMsg("SDL2","Controller %i with rumble connected",ev->controller+1);
+            m_context->haptics[ev->controller] = hdev;
+            eventInputHandle(hev);
+            free(hev);
+        }else
+            cMsg("SDL2","Controller %i detected",ev->controller+1);
     }else{
-        SDL_GameControllerClose(m_context->controllers.at(ev->controller()));
-        cMsg("SDL2","Controller disconnected: %i",ev->controller());
+        SDL_GameControllerClose(m_context->controllers[ev->controller]);
+        m_context->controllers.erase(ev->controller);
+        SDL_HapticClose(m_context->haptics[ev->controller]);
+        m_context->haptics.erase(ev->controller);
+        cMsg("SDL2","Controller disconnected: %i",ev->controller);
     }
 }
 

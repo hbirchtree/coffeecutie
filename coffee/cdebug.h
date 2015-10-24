@@ -114,12 +114,12 @@ static void cDebugPrint(
         break;
     case DebugMsgWarning:
         sevstring = "WARN:";
-	col = print_color_warning;
+        col = print_color_warning;
         strm = stderr;
         break;
     case DebugMsgFatal:{
         sevstring = "FTAL:";
-	col = print_color_fatal;
+        col = print_color_fatal;
         strm = stderr;
         fail = true;
         break;

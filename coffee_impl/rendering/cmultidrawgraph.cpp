@@ -108,7 +108,7 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
         return false;
 
     call.firstIndex = set.index->indices.size();
-    call.baseVertex = set.drawcalls->vertexoffset+1;
+    call.baseVertex = set.drawcalls->vertexoffset;
     call.count = numIndices;
     call.instanceCount = 1;
 

@@ -10,7 +10,7 @@ inline static void coffee_sdl2_send_atomic_ievent(
 {
     CIEvent e;
     e.type = type;
-    ctxt->eventIHandle(&e);
+    ctxt->eventInputHandle(&e);
 }
 
 inline static void coffee_sdl2_send_atomic_wevent(
@@ -19,7 +19,7 @@ inline static void coffee_sdl2_send_atomic_wevent(
 {
     CDEvent e;
     e.type = type;
-    ctxt->eventWHandle(&e);
+    ctxt->eventWindowsHandle(&e);
 }
 
 inline static void coffee_sdl2_send_full_ievent(
@@ -34,7 +34,7 @@ inline static void coffee_sdl2_send_full_ievent(
     memcpy(&reinterpret_cast<char*>(payload)[baseSize],data,dataSize);
 
 
-    ctxt->eventIHandle((CIEvent*)payload);
+    ctxt->eventInputHandle((CIEvent*)payload);
     free(payload);
 }
 
@@ -49,7 +49,7 @@ inline static void coffee_sdl2_send_full_wevent(
     memcpy(payload,base,baseSize);
     memcpy(&reinterpret_cast<char*>(payload)[baseSize],data,dataSize);
 
-    ctxt->eventWHandle((CDEvent*)payload);
+    ctxt->eventWindowsHandle((CDEvent*)payload);
     free(payload);
 }
 
@@ -310,23 +310,17 @@ inline static void coffee_sdl2_eventhandle_controller_input(
 
     CIControllerAtomicEvent c;
 
+    e.ts = axis.timestamp;
+    c.controller = axis.which;
     if(type==SDL_CONTROLLERAXISMOTION){
-        e.ts = axis.timestamp;
-
-        c.state |=
-                1 |
-                ((axis.which<<1)&CIControllerAtomicEvent::ControllerMask) |
-                ((axis.axis<<5)&CIControllerAtomicEvent::IndexMask);
+        c.axis = true;
+        c.index = axis.axis;
         c.value = axis.value;
 
     }else{
-        e.ts = btn.timestamp;
-
-        c.state |=
-                0 |
-                ((btn.which<<1)&CIControllerAtomicEvent::ControllerMask) |
-                ((btn.button<<5)&CIControllerAtomicEvent::IndexMask) |
-                ((btn.state<<10)&CIControllerAtomicEvent::ButtonStateMask);
+        c.axis = false;
+        c.index = btn.button;
+        c.button_state = btn.state;
     }
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&c,sizeof(c));
@@ -340,24 +334,39 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     e.type = CIEvent::ControllerEv;
     e.ts = dev.timestamp;
 
-    CIControllerAtomicUpdateEvent c;
-    c.name = SDL_GameControllerNameForIndex(dev.which);
+    cstring name = SDL_GameControllerNameForIndex(dev.which);
 
-    uint8 state = 0;
+    szptr evsize = sizeof(CIControllerAtomicUpdateEvent);
+    if(name)
+        evsize += strlen(name)+1;
+
+    CIControllerAtomicUpdateEvent *c = (CIControllerAtomicUpdateEvent*)calloc(1,evsize);
+
+    if(name)
+        memcpy((byte*)&c->name,name,strlen(name)+1);
+    else
+        memset((byte*)&c->name,0,1);
+
     switch(dev.type){
     case SDL_CONTROLLERDEVICEREMAPPED:
-        state |= CIControllerAtomicUpdateEvent::Remapped;
+        c->remapped = true;
     case SDL_CONTROLLERDEVICEADDED:{
-        state |= CIControllerAtomicUpdateEvent::Connected;
+        c->connected = true;
         break;
-    }
+    default:{
+            c->connected = false;
+            c->remapped = false;
+            break;
+        }
+        }
     }
 
-    c.state =
+    /*c.state =
             ((dev.which<<12)&CIControllerAtomicUpdateEvent::ControllerMask) |
-            ((state)&CIControllerAtomicUpdateEvent::StateMask);
+            ((state)&CIControllerAtomicUpdateEvent::StateMask);*/
+    c->controller = dev.which;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&c,sizeof(c));
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),c,evsize);
 }
 
 inline static void coffee_sdl2_eventhandle_window_state(

@@ -206,6 +206,12 @@ public:
     virtual void setTextInputMode(bool m) = 0;
 
     /*!
+     * \brief Keyboard repeat rate determines the interval between pressing a key and it sending repeated events.
+     * \param m True for enabling, false for disabling
+     */
+    virtual void setKeyboardRepeat(bool m) = 0;
+
+    /*!
      * \brief Function used for swapping buffers in render loop
      */
     virtual void swapBuffers() = 0;
@@ -218,12 +224,17 @@ public:
      * \brief Function for handling window events
      * \param e
      */
-    virtual void eventWHandle(const CDEvent* e) = 0;
+    virtual void eventWindowsHandle(const CDEvent* e) = 0;
     /*!
      * \brief Function for handling input events
      * \param e
      */
-    virtual void eventIHandle(const CIEvent* e) = 0;
+    virtual void eventInputHandle(const CIEvent* e) = 0;
+    /*!
+     * \brief Function for handling haptic events
+     * \param e
+     */
+    virtual void eventHapticHandle(const CIHapticEvent* e) = 0;
 
     /*!
      * \brief Function for querying context or the GL whether an extension is supported or not

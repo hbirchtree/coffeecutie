@@ -1,6 +1,6 @@
 project( CoffeeCore )
 cmake_minimum_required( VERSION 3.1 )
-set ( CMAKE_BUILD_TYPE Release )
+set ( CMAKE_BUILD_TYPE Debug )
 
 MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
 FIND_PACKAGE(Doxygen)

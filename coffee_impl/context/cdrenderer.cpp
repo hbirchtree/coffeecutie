@@ -167,7 +167,7 @@ void CDRenderer::bindingCallback(void *report) const
     free(report);
 }
 
-void CDRenderer::eventWHandle(const CDEvent *event)
+void CDRenderer::eventWindowsHandle(const CDEvent *event)
 {
     if(event->type==CDEvent::Resize &&
             m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
@@ -179,7 +179,7 @@ void CDRenderer::eventWHandle(const CDEvent *event)
     }
 }
 
-void CDRenderer::eventIHandle(const CIEvent *event)
+void CDRenderer::eventInputHandle(const CIEvent *event)
 {
     if(event->type==CIEvent::Keyboard){
         const CIKeyEvent* kev = (const CIKeyEvent*)&event[1];
@@ -187,10 +187,15 @@ void CDRenderer::eventIHandle(const CIEvent *event)
 //               kev->key,kev->mod,kev->scan,&kev->key);
         if(kev->key==CK_Escape)
             this->closeWindow();
-        if(kev->key==CK_Up&&kev->mod&CIKeyEvent::PressedModifier)
+        else if(kev->key==CK_Up&&kev->mod&CIKeyEvent::PressedModifier)
             game->transforms.cameras.d[0].position.y -= 0.05;
-        if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
+        else if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
             game->transforms.cameras.d[0].position.y += 0.05;
+        else
+        {
+            cDebug("Key: %i",kev->key);
+        }
+
     }
     else if(event->type==CIEvent::MouseMove)
     {
@@ -216,13 +221,24 @@ void CDRenderer::eventIHandle(const CIEvent *event)
     {
         const CIControllerAtomicUpdateEvent* jev =
                 (const CIControllerAtomicUpdateEvent*)&event[1];
-        if(jev->connected()&&!jev->remapped()){
-            cDebug("New controller: idx=%i,name=%s",jev->controller(),jev->name);
+        if(jev->connected&&!jev->remapped){
+            cDebug("New controller: idx=%i,name=%s",jev->controller,jev->name);
             _controllers_handle(jev);
-        }else if(!jev->connected()){
-            cDebug("Removed controller: idx=%i,name=%s",jev->controller(),jev->name);
+        }else if(!jev->connected){
+            cDebug("Removed controller: idx=%i,name=%s",jev->controller,jev->name);
             _controllers_handle(jev);
         }
+    }
+    else if(event->type==CIEvent::HapticDev)
+    {
+        const CIHapticEvent* hev = (const CIHapticEvent*)&event[1];
+        cDebug("Haptic device added: %i,%s",hev->rumble_device.index,hev->rumble_device.name);
+
+        CIHapticEvent test;
+        test.rumble_input.duration = 500;
+        test.rumble_input.index = hev->rumble_device.index;
+        test.rumble_input.strength = 0.2f;
+        eventHapticHandle(&test);
     }
     else if(event->type==CIEvent::Controller)
     {
@@ -231,11 +247,11 @@ void CDRenderer::eventIHandle(const CIEvent *event)
         //Filter out centering of joystick (that is, movement towards its center)
 
         const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
-        if(jev->axis())
+        if(jev->axis)
         {
             if(CMath::fabs(jev->value)<0.1)
                 return;
-            switch(jev->index()){
+            switch(jev->index){
             case CK_AXIS_LEFT_X:{
                 game->transforms.cameras.d[0].position.x -= jev->value/32000.f;
                 break;

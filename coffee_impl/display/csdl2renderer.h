@@ -63,6 +63,9 @@ public:
     bool textInputMode() const;
     void setTextInputMode(bool state);
     void setTextArea(const CRect& area);
+    void setKeyboardRepeat(bool m);
+
+    void eventHapticHandle(const CIHapticEvent* haptic);
 
     void swapBuffers();
     void pollEvents();
@@ -75,7 +78,6 @@ protected:
     CString m_contextString;
 private:
     CSDL2Types::CSDL2Context* m_context = nullptr;
-
 };
 
 }

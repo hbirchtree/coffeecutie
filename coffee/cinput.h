@@ -23,9 +23,11 @@ struct CIEvent
         QuitSign     = 0x8,/*!< Notifies the program, can be ignored or handled*/
         TextEdit     = 0x9,/*!< Text edit event, cursor position and stuff*/
         ControllerEv = 0xa,/*!< Controller connection or disconnection*/
+        HapticDev    = 0xb,/*!< Sent when a new haptic device is connected or disconnected*/
+        Haptic       = 0xc,/*!< Sent when a new haptic device is connected or disconnected*/
     };
-    uint8   type  = 0; /*!< Event type*/
     uint32  ts    = 0; /*!< Event timestamp*/
+    uint8   type  = 0; /*!< Event type*/
 };
 
 /*!
@@ -152,41 +154,12 @@ struct CIControllerAtomicEvent
         IndexMask       = 0x3e0, /*!< Shifted 5, 5 bits*/
         ButtonStateMask = 0x400, /*!< Shifted 10,1 bit*/
     };
-    uint32  state   = 0; /*!< Stores most of state, whether it is an axis, which controller, which button or axis, and button state*/
-    scalar  value   = 0.f; /*!< Scalar value for axis*/
 
-    /*!
-     * \brief Whether it is an axis or not
-     * \return
-     */
-    bool axis() const
-    {
-        return state&AxisMask;
-    }
-    /*!
-     * \brief Axis or button index
-     * \return
-     */
-    byte index() const
-    {
-        return (state&IndexMask)>>5;
-    }
-    /*!
-     * \brief Button state
-     * \return
-     */
-    bool buttonState() const
-    {
-        return (state&ButtonStateMask)>>10;
-    }
-    /*!
-     * \brief Controller index
-     * \return
-     */
-    byte controller() const
-    {
-        return (state&ControllerMask)>>1;
-    }
+    uint16 value; /*!< Scalar value for axis*/
+    uint8 index:5;
+    uint8 controller:4;
+    bool button_state:1;
+    bool axis:1;
 };
 
 /*!
@@ -213,73 +186,33 @@ struct CIControllerAtomicUpdateEvent
         Remapped    = 0x2,
     };
 
-    uint32  state   = 0; /*!< Stores state, button count, axis count, controller index*/
-    cstring name    = nullptr; /*!< Controller's name*/
-
-    /*!
-     * \brief Connected status
-     * \return
-     */
-    bool connected() const
-    {
-        return (state&StateMask)&Connected;
-    }
-    /*!
-     * \brief Remapping status
-     * \return
-     */
-    bool remapped() const
-    {
-        return (state&StateMask)&Remapped;
-    }
-    /*!
-     * \brief Count of buttons
-     * \return
-     */
-    byte buttons() const
-    {
-        return (state&ButtonMask)>>2;
-    }
-    /*!
-     * \brief Count of axes
-     * \return
-     */
-    byte axes() const
-    {
-        return (state&AxisMask)>>7;
-    }
-    /*!
-     * \brief Index of controller
-     * \return
-     */
-    byte controller() const
-    {
-        return (state&ControllerMask)>>12;
-    }
+    uint8 button:5;
+    uint8 axis:5;
+    uint8 controller:4;
+    bool connected:1;
+    bool remapped:1;
+    const byte name[];
 };
 
 /*!
- * \brief Fat controller info
+ * \brief Haptic events used for rumble.
  */
-struct CIControllerInfo
+struct CIHapticEvent
 {
-    /*!
-     * \brief Controller state flags
-     */
-    enum ControllerFlags
-    {
-        Connected       = 0x1,
-        Disconnected    = 0x2,
-        Remapped        = 0x4,
+    union {
+        uint64 data = 0;
+        struct
+        {
+            scalar strength;
+            uint32 duration:24;
+            uint8 index;
+        } rumble_input;
+        struct
+        {
+            uint8 index;
+            const byte name[];
+        } rumble_device;
     };
-
-    cstring name    = nullptr; /*!< Controller name*/
-    uint8   flags   = 0; /*!< Controller flags*/
-
-    uint8   buttons = 0; /*!< Count of buttons*/
-    uint8   axes    = 0; /*!< Count of axes*/
-    scalar* axe_min = nullptr; /*!< Minimum axis values*/
-    scalar* axe_max = nullptr; /*!< Maximum axis values*/
 };
 
 /*!
@@ -307,9 +240,21 @@ struct CIDropEvent
  */
 struct CISensorEvent
 {
-    uint64          id      = 0; /*!< Enumeration ID*/
+    uint64 id; /*!< Enumeration ID*/
     union {
-        uint64      lvalue  = 0; /*!< Integer value for input*/
+        struct{
+            int16 x;
+            int16 y;
+            int16 z;
+            int16 w;
+        } sivec;
+        struct{
+            uint16 x;
+            uint16 y;
+            uint16 z;
+            uint16 w;
+        } suvec;
+        uint64      lvalue; /*!< Integer value for input*/
         bigscalar   dvalue; /*!< Floating-point value for input*/
     };
 };

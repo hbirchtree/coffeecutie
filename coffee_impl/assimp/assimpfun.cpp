@@ -102,7 +102,7 @@ void coffee_assimp_mesh_get_offsets(const aiMesh* mesh, assimp_reflexive* buffer
     {
         buffers[buf].offset = size;
         size+=mesh->mFaces[i].mNumIndices*sizeof(mesh->mFaces[i].mIndices[0]);
-        buffers[buf].size = mesh->mFaces[i].mNumIndices*sizeof(mesh->mFaces[i].mIndices[0]);
+        buffers[buf].size = mesh->mNumFaces*mesh->mFaces[i].mNumIndices*sizeof(mesh->mFaces[i].mIndices[0]);
         buffers[buf].type = CAssimpMesh::IndexType;
         buf++;
     }
