@@ -265,6 +265,11 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
             }
         }
     }
+    else if(event->type==CIEvent::Drop)
+    {
+        const CIDropEvent* dev = (const CIDropEvent*)&event[1];
+        cDebug("File: %s",dev->text_data.text);
+    }
 }
 
 } // namespace CDisplay

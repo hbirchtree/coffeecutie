@@ -106,11 +106,8 @@ template<typename T>
  */
 struct _cbasic_size
 {
-    _cbasic_size(T w,T h){
-        this->w = w;
-        this->h = h;
-    }
     _cbasic_size(){}
+    _cbasic_size(T wd,T hg) : w(wd),h(hg){}
     T w = 0;
     T h = 0;
 };
@@ -118,7 +115,11 @@ struct _cbasic_size
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
-typedef _cbasic_size<int32> CSize;
+struct CSize : public  _cbasic_size<int32>
+{
+    CSize(){}
+    CSize(int32 wid,int32 hgh) : _cbasic_size<int32>(wid,hgh){}
+};
 /*!
  * \brief Size for inaccurate measurements
  */

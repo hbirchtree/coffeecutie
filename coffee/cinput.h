@@ -7,6 +7,8 @@
 namespace Coffee{
 namespace CInput{
 
+constexpr szptr ci_max_text_edit_size = 32;
+
 /*!
  * \brief Base for input events
  */
@@ -115,7 +117,7 @@ struct CIScrollEvent
  */
 struct CIWriteEvent
 {
-    cstring  text   = nullptr; /*! Submitted text*/
+    byte text[ci_max_text_edit_size]; /*! Submitted text*/
 };
 
 /*!
@@ -123,21 +125,9 @@ struct CIWriteEvent
  */
 struct CIWEditEvent
 {
-    cstring text    = nullptr; /*!< Current text*/
-    uint32  cursor  = 0; /*!< Cursor position*/
-    uint32  len     = 0; /*!< Text length*/
-};
-
-/*!
- * \brief Full controller state dump
- */
-struct CIControllerState
-{
-    uint8   id              = 0; /*!< Controller ID*/
-    uint8   buttons         = 0; /*!< Amount of buttons*/
-    uint8   axes            = 0; /*!< Amount of axes*/
-    uint32  buttonstates    = 0; /*!< Button states as bits*/
-    scalar* axeStates       = nullptr; /*!< Axis states as scalar values*/
+    int32 cursor; /*!< Cursor position*/
+    int32 len; /*!< Text length*/
+    byte text[ci_max_text_edit_size]; /*!< Current text*/
 };
 
 /*!
@@ -230,9 +220,15 @@ struct CIDropEvent
         Text     = 0x3, /*!< Text*/
     };
 
-    uint8   type      = 0; /*!< Event type*/
-    uint32  size      = 0; /*!< Size of data*/
-    void*   data      = nullptr; /*!< Data pointer*/
+    uint32  size:24; /*!< Size of data*/
+    uint8   type; /*!< Event type*/
+    union{
+        void* data = 0;
+        struct
+        {
+            const byte text[];
+        } text_data;
+    };
 };
 
 /*!

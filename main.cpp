@@ -11,11 +11,6 @@ using namespace Coffee::CDisplay;
 
 int main(int,char**)
 {
-    cDebug("Haptic event: %i",sizeof(CIHapticEvent));
-    cDebug("Sensor event: %i",sizeof(CISensorEvent));
-    cDebug("CUAtomic event: %i",sizeof(CIControllerAtomicUpdateEvent));
-    cDebug("CAtomic event: %i",sizeof(CIControllerAtomicEvent));
-
     cstring_w cfg_dir = coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time");
     cstring_w app_dir = coffee_get_application_dir();
     cstring_w exe_name = coffee_executable_name();

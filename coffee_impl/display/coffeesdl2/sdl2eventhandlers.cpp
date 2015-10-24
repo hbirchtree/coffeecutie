@@ -262,12 +262,15 @@ inline static void coffee_sdl2_eventhandle_drop(
     CIEvent e;
     e.type = CIEvent::Drop;
     e.ts = drop.timestamp;
-    CIDropEvent d;
-    d.size = strlen(drop.file)+1;
-    d.data = drop.file;
-    d.type = CIDropEvent::File;
+    szptr textsz = strlen(drop.file)+1;
+    CIDropEvent* d = (CIDropEvent*)
+            malloc(sizeof(CIDropEvent)
+                   +textsz);
+    d->size = textsz;
+    memcpy((byte*)&d->text_data.text,drop.file,d->size);
+    d->type = CIDropEvent::File;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&d,sizeof(d));
+    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),d,sizeof(CIDropEvent)+textsz);
 }
 
 inline static void coffee_sdl2_eventhandle_input(
@@ -278,7 +281,7 @@ inline static void coffee_sdl2_eventhandle_input(
     e.type = CIEvent::TextInput;
     e.ts = input.timestamp;
     CIWriteEvent w;
-    w.text = input.text;
+    memcpy(w.text,input.text,ci_max_text_edit_size);
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
 }
@@ -292,7 +295,7 @@ inline static void coffee_sdl2_eventhandle_inputedit( //Note: Yet to be tested
     e.ts = edit.timestamp;
 
     CIWEditEvent w;
-    w.text = edit.text;
+    memcpy(w.text,edit.text,ci_max_text_edit_size);
     w.cursor = edit.start;
     w.len = edit.length;
 

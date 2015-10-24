@@ -101,7 +101,7 @@ struct CDFocusEvent
 {
     enum FocusMask
     {
-        Mouse   = 0x1, // 0 = keyboard focus, 1 = mouse focus
+        Mouse   = 0x1,
         Enter   = 0x2,
         Exposed = 0x4,
     };
