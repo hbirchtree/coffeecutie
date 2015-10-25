@@ -57,6 +57,17 @@ inline static cstring coffee_cpy_string(cstring str){
     return buf;
 }
 
+struct CRGBA
+{
+    union{
+        uint32 i = 0;
+        struct
+        {
+            uint8 r,g,b,a;
+        } c;
+    };
+};
+
 /*!
  * \brief Convenience function for clearing memory
  * \param start

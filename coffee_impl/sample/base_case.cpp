@@ -193,6 +193,32 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         ctxt->funptrs.textures.store(t,&dt,0);
         break;
     }
+    default:{
+        CDXTCHeader dx;
+        dx.data = tex.data;
+        dx.blockSize = (tex.format == CBlam::blam_bitm_tex_DXT1) ? 8 : 16;
+        dx.mipmaps = tex.mipmaps;
+        dx.resolution.w = tex.resolution.w;
+        dx.resolution.h = tex.resolution.h;
+
+        switch(tex.format)
+        {
+        case CBlam::blam_bitm_tex_DXT1:
+            dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            break;
+        case CBlam::blam_bitm_tex_DXT3:
+            dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            break;
+        case CBlam::blam_bitm_tex_DXT5:
+            dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            break;
+        }
+        CTexture *tex = coffee_graphics_tex_dxtc_load(&dx);
+        memcpy(t,tex,sizeof(CTexture));
+        delete tex;
+
+        break;
+    }
     }
 
     return t;
@@ -379,6 +405,7 @@ bool coffee_test_load(game_context *ctxt)
         coffee_multidraw_load_indices(*multidraw,ctxt->funptrs.buffers);
         //
         vertexdata->resize(0);
+        texcdata->resize(0);
         delete vertexdata;
         delete texcdata;
     }

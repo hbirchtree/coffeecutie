@@ -28,15 +28,12 @@ struct CAudioSample
 
 namespace CStbAudio{
 
-using namespace CResources;
-using namespace CAudio;
-
 /*!
  * \brief Import a Vorbis audio sample
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern void coffee_stb_audio_vorbis_load(CAudioSample* smp, CResource* src);
+extern void coffee_stb_audio_vorbis_load(CAudioSample* smp, CResources::CResource* src);
 
 }
 

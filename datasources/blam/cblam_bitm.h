@@ -91,10 +91,7 @@ struct blam_bitm_padding
     int32 unknown[16];
 };
 
-struct blam_rgba
-{
-    uint32 r,g,b,a;
-};
+typedef CRGBA blam_rgba;
 
 /*!
  * \brief A memory structure for Blam images containing all the necessary information to extract the data.
@@ -191,7 +188,7 @@ extern uint32* coffee_bitm_decode_micro(
  */
 inline static uint32 blam_rgba_to_int(const blam_rgba &c)
 {
-    return (c.r << 24) | (c.g << 16) | (c.b << 8) | c.a;
+    return c.i;
 }
 
 /*!
@@ -215,8 +212,8 @@ inline static uint32 coffee_bitm_decode_m_a8(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte b)
 {
     blam_rgba col;
-    col.a = 0;
-    col.r = col.g = col.b = b;
+    col.c.a = 0;
+    col.c.r = col.c.g = col.c.b = b;
     return blam_rgba_to_int(col);
 }
 /*!
@@ -229,7 +226,7 @@ inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte b)
 {
     blam_rgba col;
-    col.r = col.g = col.b = col.a = b;
+    col.c.r = col.c.g = col.c.b = col.c.a = b;
     return blam_rgba_to_int(col);
 }
 /*!
@@ -242,8 +239,8 @@ inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte b)
 {
     blam_rgba col;
-    col.a = s & 0xFF;
-    col.r = col.g = col.b = s >> 8;
+    col.c.a = s & 0xFF;
+    col.c.r = col.c.g = col.c.b = s >> 8;
     return blam_rgba_to_int(col);
 }
 /*!
@@ -256,10 +253,10 @@ inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte b)
 {
     blam_rgba c;
-    c.r = (((s >> 11) & 0x1F) * 0xFF) / 31;
-    c.g = (((s >>  5) & 0x3F) * 0xFF) / 63;
-    c.b = (((s      ) & 0x1F) * 0xFF) / 31;
-    c.a = 255;
+    c.c.r = (((s >> 11) & 0x1F) * 0xFF) / 31;
+    c.c.g = (((s >>  5) & 0x3F) * 0xFF) / 63;
+    c.c.b = (((s      ) & 0x1F) * 0xFF) / 31;
+    c.c.a = 255;
     return blam_rgba_to_int(c);
 }
 /*!
@@ -272,10 +269,10 @@ inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte b)
 {
     blam_rgba c;
-    c.a = (  s >> 15)         * 0xFF;
-    c.r = (((s >> 10) & 0x1F) * 0xFF) / 31;
-    c.g = (((s >>  5) & 0x3F) * 0xFF) / 31;
-    c.b = (((s      ) & 0x1F) * 0xFF) / 31;
+    c.c.a = (  s >> 15)         * 0xFF;
+    c.c.r = (((s >> 10) & 0x1F) * 0xFF) / 31;
+    c.c.g = (((s >>  5) & 0x3F) * 0xFF) / 31;
+    c.c.b = (((s      ) & 0x1F) * 0xFF) / 31;
     return blam_rgba_to_int(c);
 }
 /*!
@@ -288,10 +285,10 @@ inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte b)
 {
     blam_rgba c;
-    c.a = (( s >> 12)         * 0xFF) / 15;
-    c.r = (((s >>  8) & 0x0F) * 0xFF) / 15;
-    c.g = (((s >>  4) & 0x0F) * 0xFF) / 15;
-    c.b = (((s >>  0) & 0x0F) * 0xFF) / 15;
+    c.c.a = (( s >> 12)         * 0xFF) / 15;
+    c.c.r = (((s >>  8) & 0x0F) * 0xFF) / 15;
+    c.c.g = (((s >>  4) & 0x0F) * 0xFF) / 15;
+    c.c.b = (((s >>  0) & 0x0F) * 0xFF) / 15;
     return blam_rgba_to_int(c);
 }
 /*!
@@ -304,10 +301,10 @@ inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte b)
 {
     blam_rgba col;
-    col.a = (d >> 24);
-    col.r = (d >> 16) & 0xFF;
-    col.g = (d >>  8) & 0xFF;
-    col.b = (d      ) & 0xFF;
+    col.c.a = (d >> 24);
+    col.c.r = (d >> 16) & 0xFF;
+    col.c.g = (d >>  8) & 0xFF;
+    col.c.b = (d      ) & 0xFF;
     return blam_rgba_to_int(col);
 }
 /*!
@@ -320,10 +317,10 @@ inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte b)
 inline static uint32 coffee_bitm_decode_m_x8r8g8b8(uint32 d, uint16 s,byte b)
 {
     blam_rgba col;
-    col.a = 0;
-    col.r = (d >> 16) & 0xFF;
-    col.g = (d >> 8) & 0xFF;
-    col.b = (d) & 0xFF;
+    col.c.a = 0;
+    col.c.r = (d >> 16) & 0xFF;
+    col.c.g = (d >> 8) & 0xFF;
+    col.c.b = (d) & 0xFF;
     return blam_rgba_to_int(col);
 }
 

@@ -1,11 +1,7 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
-#include "coffee.h"
-#include "plat/plat_core.h"
-#include "coffee/cregex.h"
-
-#include "cppformat/format.h"
+#include <cppformat/format.h>
 
 //C++ headers
 #include <sstream>
@@ -18,6 +14,11 @@
 //C libraries
 #include <ctime>
 #include <string.h>
+
+#include "coffee.h"
+#include "plat/plat_core.h"
+#include "coffee/cregex.h"
+
 
 namespace Coffee{
 namespace CFunctional{

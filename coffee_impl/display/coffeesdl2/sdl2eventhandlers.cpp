@@ -314,7 +314,7 @@ inline static void coffee_sdl2_eventhandle_controller_input(
     CIControllerAtomicEvent c;
 
     e.ts = axis.timestamp;
-    c.controller = axis.which;
+    c.controller = axis.which+1;
     if(type==SDL_CONTROLLERAXISMOTION){
         c.axis = true;
         c.index = axis.axis;
@@ -350,24 +350,18 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     else
         memset((byte*)&c->name,0,1);
 
+    c->connected = false;
+    c->remapped = false;
     switch(dev.type){
     case SDL_CONTROLLERDEVICEREMAPPED:
         c->remapped = true;
     case SDL_CONTROLLERDEVICEADDED:{
         c->connected = true;
         break;
-    default:{
-            c->connected = false;
-            c->remapped = false;
-            break;
-        }
         }
     }
 
-    /*c.state =
-            ((dev.which<<12)&CIControllerAtomicUpdateEvent::ControllerMask) |
-            ((state)&CIControllerAtomicUpdateEvent::StateMask);*/
-    c->controller = dev.which;
+    c->controller = dev.which+1;
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),c,evsize);
 }
@@ -518,6 +512,16 @@ void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev){
         coffee_sdl2_eventhandle_mouse_wheel(ctxt,ev->wheel);
         break;
     }
+//    case SDL_JOYDEVICEADDED:
+//    case SDL_JOYDEVICEREMOVED:{
+//        SDL_ControllerDeviceEvent dev;
+//        dev.type = (ev->type==SDL_JOYDEVICEADDED)
+//                ? SDL_CONTROLLERDEVICEADDED
+//                : SDL_CONTROLLERDEVICEREMOVED;
+//        dev.which = ev->jdevice.which;
+//        coffee_sdl2_eventhandle_controller_device(ctxt,dev);
+//        break;
+//    }
 
     case SDL_CONTROLLERAXISMOTION:
         goto controller_input_event;

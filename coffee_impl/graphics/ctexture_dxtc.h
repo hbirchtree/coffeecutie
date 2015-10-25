@@ -20,7 +20,7 @@ struct CDXTCHeader
 /*!
  * \brief Loads DXTC data and returns a texture object pointing to it.
  * \param rsc A header describing the DXTC data
- * \return Always a texture object, validity depends on the input data, has same amount of mipmap levels as input data specifies.
+ * \return Always a texture object, validity depends on the input data, has same amount of mipmap levels as input data specifies. Texture object is deleted with delete operator.
  */
 extern CTexture* coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc);
 

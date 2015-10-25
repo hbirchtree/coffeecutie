@@ -6,7 +6,7 @@
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5F6E59EB-CA12-446E-B1A2-28B42A7AF124}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>CoffeeSharp</RootNamespace>
     <AssemblyName>CoffeeSharp</AssemblyName>
     <StartupObject>CoffeeSharp.CoffeeSharpTest</StartupObject>
@@ -45,6 +45,8 @@
     <Compile Include="generated\CAssimpMesh.cs" />
     <Compile Include="generated\CAssimpModel.cs" />
     <Compile Include="generated\CAssimpTexture.cs" />
+    <Compile Include="generated\CAudioFormat.cs" />
+    <Compile Include="generated\CAudioSample.cs" />
     <Compile Include="generated\CDColorSpace.cs" />
     <Compile Include="generated\CDContextBits.cs" />
     <Compile Include="generated\CDEvent.cs" />
@@ -65,10 +67,9 @@
     <Compile Include="generated\CIControllerAtomicUpdateEvent.cs" />
     <Compile Include="generated\CIControllerAxisMapping.cs" />
     <Compile Include="generated\CIControllerButtonMapping.cs" />
-    <Compile Include="generated\CIControllerInfo.cs" />
-    <Compile Include="generated\CIControllerState.cs" />
     <Compile Include="generated\CIDropEvent.cs" />
     <Compile Include="generated\CIEvent.cs" />
+    <Compile Include="generated\CIHapticEvent.cs" />
     <Compile Include="generated\CIKeyEvent.cs" />
     <Compile Include="generated\CILatin1Mapping.cs" />
     <Compile Include="generated\CIMouseButtonEvent.cs" />
@@ -84,26 +85,25 @@
     <Compile Include="generated\CObject.cs" />
     <Compile Include="generated\CQuat.cs" />
     <Compile Include="generated\CQueueRunner.cs" />
+    <Compile Include="generated\CRGBA.cs" />
     <Compile Include="generated\CResource.cs" />
     <Compile Include="generated\CSDL2Renderer.cs" />
-    <Compile Include="generated\CStbAudioFormat.cs" />
-    <Compile Include="generated\CStbAudioSample.cs" />
+    <Compile Include="generated\CSize.cs" />
     <Compile Include="generated\CStbImage.cs" />
+    <Compile Include="generated\CStbImageConst.cs" />
     <Compile Include="generated\CVec2.cs" />
     <Compile Include="generated\CVec3.cs" />
     <Compile Include="generated\CVec4.cs" />
     <Compile Include="generated\Coffee.cs" />
     <Compile Include="generated\CoffeePINVOKE.cs" />
+    <Compile Include="generated\DebugSeverity.cs" />
     <Compile Include="generated\SWIGTYPE_p_Coffee__CDisplay__CDWindow.cs" />
     <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_pointT_float_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_pointT_int_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_rectT_int_t.cs" />
-    <Compile Include="generated\SWIGTYPE_p_Coffee__CPrimitiveDataTypes___cbasic_sizeT_int_t.cs" />
-    <Compile Include="generated\SWIGTYPE_p_Coffee__CRendering__CTest__game_context.cs" />
     <Compile Include="generated\SWIGTYPE_p_FILE.cs" />
     <Compile Include="generated\SWIGTYPE_p_a_3__float.cs" />
     <Compile Include="generated\SWIGTYPE_p_a_4__float.cs" />
-    <Compile Include="generated\SWIGTYPE_p_float.cs" />
     <Compile Include="generated\SWIGTYPE_p_p_Coffee__CResourceTypes__CAssimp__CAssimpAnimation.cs" />
     <Compile Include="generated\SWIGTYPE_p_p_Coffee__CResourceTypes__CAssimp__CAssimpCamera.cs" />
     <Compile Include="generated\SWIGTYPE_p_p_Coffee__CResourceTypes__CAssimp__CAssimpLight.cs" />
@@ -114,13 +114,12 @@
     <Compile Include="generated\SWIGTYPE_p_p_unsigned_int.cs" />
     <Compile Include="generated\SWIGTYPE_p_short.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__functionT_void_fF_t.cs" />
-    <Compile Include="generated\SWIGTYPE_p_std__futureT_void_t.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__string.cs" />
     <Compile Include="generated\SWIGTYPE_p_std__thread__id.cs" />
     <Compile Include="generated\SWIGTYPE_p_unsigned_char.cs" />
-    <Compile Include="generated\SWIGTYPE_p_unsigned_int.cs" />
     <Compile Include="generated\SWIGTYPE_p_unsigned_long_long.cs" />
     <Compile Include="generated\SWIGTYPE_p_void.cs" />
+    <Compile Include="generated\assimp_reflexive.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="generated\" />
@@ -128,16 +127,22 @@
   <ItemGroup>
     <None Include="generated\.ninja_deps" />
     <None Include="generated\.ninja_log" />
+    <None Include="generated\2" />
     <None Include="generated\CMakeCache.txt" />
-    <None Include="generated\Coffee.py" />
-    <None Include="generated\_Coffee.so" />
     <None Include="generated\build.ninja" />
     <None Include="generated\cmake_install.cmake" />
     <None Include="generated\coffeeswigCSHARP_wrap.cxx" />
-    <None Include="generated\coffeeswigPYTHON_wrap.cxx" />
-    <None Include="generated\libCoffeeLib.so" />
+    <None Include="generated\libCAudio.so" />
+    <None Include="generated\libCAudio.so.1" />
+    <None Include="generated\libCBlam.so" />
+    <None Include="generated\libCBlam.so.1" />
+    <None Include="generated\libCImage.so" />
+    <None Include="generated\libCImage.so.1" />
+    <None Include="generated\libCoffee.so" />
+    <None Include="generated\libCoffeeCore.so" />
+    <None Include="generated\libCoffeeCore.so.1" />
+    <None Include="generated\log.txt" />
     <None Include="generated\rules.ninja" />
-    <None Include="generated\CMakeFiles\CMakeError.log" />
     <None Include="generated\CMakeFiles\CMakeOutput.log" />
     <None Include="generated\CMakeFiles\TargetDirectories.txt" />
     <None Include="generated\CMakeFiles\cmake.check_cache" />
@@ -153,19 +158,6 @@
     <None Include="generated\CMakeFiles\3.2.2\CompilerIdC\a.out" />
     <None Include="generated\CMakeFiles\3.2.2\CompilerIdCXX\CMakeCXXCompilerId.cpp" />
     <None Include="generated\CMakeFiles\3.2.2\CompilerIdCXX\a.out" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\main.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee\cobject.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee\display\cdrendererbase.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\assimp\cassimpimporters.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\context\cdrenderer.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\context\cglbindingrenderer.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\display\csdl2renderer.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\functional\cqueuerunner.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\graphics\cgraphicsdata.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\graphics\cshader.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\graphics\cuniformchunk.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\coffee_impl\rendering\cmultidrawgraph.cpp.o" />
-    <None Include="generated\CMakeFiles\CoffeeLib.dir\home\havard\Code\coffeecutie\include\stb\stb_vorbis.c.o" />
-    <None Include="generated\CMakeFiles\_Coffee.dir\coffeeswigPYTHON_wrap.cxx.o" />
+    <None Include="generated\CMakeFiles\Coffee.dir\coffeeswigCSHARP_wrap.cxx.o" />
   </ItemGroup>
 </Project>

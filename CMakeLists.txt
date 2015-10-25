@@ -161,7 +161,7 @@ message("GLbinding located at: ${glbinding_loc}")
 
 #Set up build targets
 add_library( CBlam SHARED ${CBlam_SRCS})
-add_library( CoffeeLib SHARED ${CoffeeCore_SRCS} )
+add_library( CoffeeCore SHARED ${CoffeeCore_SRCS} )
 add_library( CAudio SHARED ${CAudio_SRCS})
 add_library( CImage SHARED ${CImage_SRCS})
 add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
@@ -170,10 +170,10 @@ add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 #Set up necessary linking options
 find_package(OpenAL REQUIRED)
 target_include_directories(CAudio SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
-#target_include_directories(CoffeeLib SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
+#target_include_directories(CoffeeCore SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
 
 find_package(SDL2 REQUIRED)
-target_include_directories(CoffeeLib SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
+target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
 
 #################################
 
@@ -183,12 +183,12 @@ if(NOT WIN32)
     find_library(M_LIB m)
 
     find_package(Unwind)
-    target_include_directories(CoffeeLib SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
+    target_include_directories(CoffeeCore SYSTEM PRIVATE "${LIBUNWIND_INCLUDE_DIR}")
 endif()
 ############################
 
 #Configure linking options
-target_link_libraries ( CoffeeLib
+target_link_libraries ( CoffeeCore
 ${SDL2_LIBRARY}
 ${LIBUNWIND_LIBRARIES}
 ${assimp_loc}
@@ -203,7 +203,7 @@ ${assimp_loc}
 ${glbinding_loc}
 ${X11_LIBRARIES}
 ${OPENAL_LIBRARY}
-CoffeeLib
+CoffeeCore
 CBlam
 CAudio
 CImage )
@@ -223,9 +223,9 @@ set_property(TARGET CoffeeTest PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeTest PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeTest PRIVATE cxx_constexpr)
 
-set_property(TARGET CoffeeLib PROPERTY POSITION_INDEPENDENT_CODE TRUE)
-target_compile_features(CoffeeLib PRIVATE cxx_variadic_templates)
-target_compile_features(CoffeeLib PRIVATE cxx_constexpr)
+set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
+target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
 ########################
 
 #Documentation with Doxygen

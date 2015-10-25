@@ -222,10 +222,8 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         const CIControllerAtomicUpdateEvent* jev =
                 (const CIControllerAtomicUpdateEvent*)&event[1];
         if(jev->connected&&!jev->remapped){
-            cDebug("New controller: idx=%i,name=%s",jev->controller,jev->name);
             _controllers_handle(jev);
         }else if(!jev->connected){
-            cDebug("Removed controller: idx=%i,name=%s",jev->controller,jev->name);
             _controllers_handle(jev);
         }
     }
@@ -234,11 +232,11 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         const CIHapticEvent* hev = (const CIHapticEvent*)&event[1];
         cDebug("Haptic device added: %i,%s",hev->rumble_device.index,hev->rumble_device.name);
 
-        CIHapticEvent test;
-        test.rumble_input.duration = 500;
-        test.rumble_input.index = hev->rumble_device.index;
-        test.rumble_input.strength = 0.2f;
-        eventHapticHandle(&test);
+//        CIHapticEvent test;
+//        test.rumble_input.duration = 500;
+//        test.rumble_input.index = hev->rumble_device.index;
+//        test.rumble_input.strength = 0.2f;
+//        eventHapticHandle(&test);
     }
     else if(event->type==CIEvent::Controller)
     {
