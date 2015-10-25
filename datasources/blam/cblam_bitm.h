@@ -173,7 +173,7 @@ extern blam_bitm_texture_def coffee_bitm_get_texture(
  * \brief Decoder which can be told how to decode each bit.
  * \param img
  * \param map
- * \param process This specifies how to process each pixel, from a uint32 to another uint32
+ * \param process This specifies how to process each pixel, from either of the inputs (uint32,uint16,byte) to uint32
  * \return
  */
 extern uint32* coffee_bitm_decode_micro(
@@ -183,8 +183,8 @@ extern uint32* coffee_bitm_decode_micro(
 
 /*!
  * \brief Convert RGBA struct to integer format containing the RGBA bytes
- * \param c
- * \return
+ * \param c Color structure to be converted
+ * \return An RGBA integer
  */
 inline static uint32 blam_rgba_to_int(const blam_rgba &c)
 {

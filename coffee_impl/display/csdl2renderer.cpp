@@ -99,6 +99,17 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
 //    cMsg("SDL2","OpenGL context created");
 
     bindingPostInit();
+
+    for(int i=0;i<SDL_NumHaptics();i++)
+    {
+        SDL_Haptic* h = SDL_HapticOpen(i);
+        SDL_HapticClose(h);
+    }
+    for(int i=0;i<SDL_NumJoysticks();i++)
+    {
+        SDL_Joystick* h = SDL_JoystickOpen(i);
+        SDL_JoystickClose(h);
+    }
 }
 
 void CSDL2Renderer::cleanup()
@@ -395,7 +406,7 @@ CIEvent* sdl2_controller_get_haptic(
 void CSDL2Renderer::_controllers_handle(const CIControllerAtomicUpdateEvent *ev)
 {
     if(ev->connected){
-        if(m_context->controllers[ev->controller]!=0)
+        if(m_context->controllers[ev->controller])
             return;
 
         if(ev->remapped){
@@ -416,7 +427,7 @@ void CSDL2Renderer::_controllers_handle(const CIControllerAtomicUpdateEvent *ev)
         }else
             cMsg("SDL2","Controller %i connected: %s",ev->controller,ev->name);
     }else{
-        if(m_context->controllers[ev->controller]==0)
+        if(!m_context->controllers[ev->controller])
             return;
 
         SDL_GameControllerClose(m_context->controllers[ev->controller]);

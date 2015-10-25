@@ -74,7 +74,11 @@ struct game_context
 struct game_shader_program_desc
 {
     cstring shader_v    = nullptr;
+    cstring shader_g    = nullptr;
     cstring shader_f    = nullptr;
+
+    cstring shader_tes  = nullptr;
+    cstring shader_tcs  = nullptr;
 
     cstring shader_dump = nullptr;
 };

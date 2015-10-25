@@ -191,11 +191,6 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
             game->transforms.cameras.d[0].position.y -= 0.05;
         else if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
             game->transforms.cameras.d[0].position.y += 0.05;
-        else
-        {
-            cDebug("Key: %i",kev->key);
-        }
-
     }
     else if(event->type==CIEvent::MouseMove)
     {
@@ -230,7 +225,6 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
     else if(event->type==CIEvent::HapticDev)
     {
         const CIHapticEvent* hev = (const CIHapticEvent*)&event[1];
-        cDebug("Haptic device added: %i,%s",hev->rumble_device.index,hev->rumble_device.name);
 
 //        CIHapticEvent test;
 //        test.rumble_input.duration = 500;

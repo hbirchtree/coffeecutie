@@ -224,33 +224,8 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
     return t;
 }
 
-bool coffee_test_load(game_context *ctxt)
+void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr numGears)
 {
-    //Create multidraw object
-    coffee_mem_expand_array<CMultiDrawDataSet>(&ctxt->renderdata.datasets,1);
-    CMultiDrawDataSet* multidraw = &ctxt->renderdata.datasets.d[0];
-    *multidraw = coffee_multidraw_create();
-
-    //Load basic shader
-    {
-        game_shader_program_desc d;
-        d.shader_dump = "basic_dump.shdr";
-        d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
-        d.shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
-
-        if(!ctxt->features->ext_ssbo_support)
-        {
-            d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
-            d.shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
-        }
-
-        coffee_shader_program_load(d,ctxt);
-    }
-
-    //Specify VAO for vertex data, we will only use one for now
-
-    szptr numGears = 100;
-
     //We have two formats
     coffee_mem_expand_array<CVertexFormat>(&ctxt->vertexdata.descriptor.formats,3);
     coffee_mem_expand_array<CVertexBufferBinding>(&ctxt->vertexdata.descriptor.bindings,2);
@@ -348,7 +323,10 @@ bool coffee_test_load(game_context *ctxt)
         coffee_multidraw_load_vao(*multidraw,desc);
         //
     }
+}
 
+void coffee_test_load_meshes(game_context* ctxt, CMultiDrawDataSet* multidraw)
+{
     //Load mesh
     {
         CBuffer* vbuffer = &ctxt->renderdata.buffers.d[0];
@@ -409,64 +387,133 @@ bool coffee_test_load(game_context *ctxt)
         delete vertexdata;
         delete texcdata;
     }
+}
+
+void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
+{
+    coffee_mem_expand_array<CGCamera>(&ctxt->transforms.cameras,1);
+    coffee_mem_expand_array<CSubBuffer>(&ctxt->renderdata.subbuffers,2);
+    coffee_mem_expand_array<CModelTransform>(&ctxt->transforms.transforms,1);
+    coffee_mem_expand_array<CUniformBlock>(&ctxt->renderdata.uniformblocks,1);
+
+    CGCamera* cam = &ctxt->transforms.cameras.d[0];
+    cam->fieldOfView = 60.f;
+    cam->aspect = 1.6f;
+    cam->zVals.far = 100.f;
+    cam->zVals.near = 0.1f;
+    coffee_graphics_gen_matrix_perspective(cam);
+
+    CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
+    ubuffer->bufferType = GL_UNIFORM_BUFFER;
+    ubuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
+
+
+    CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
+    camBuffer->parent = ubuffer;
+    camBuffer->offset = 0;
+    camBuffer->size = sizeof(CMath::mat4)*2;
+    camBuffer->bufferType = GL_UNIFORM_BUFFER;
+
+    CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
+    matBuffer->bufferType = GL_SHADER_STORAGE_BUFFER;
+    matBuffer->parent = ubuffer;
+    matBuffer->size = sizeof(GLuint)*numGears+sizeof(CMath::vec3)*numGears;
+    matBuffer->offset = camBuffer->size;
+
+    //GL calls
+    coffee_graphics_alloc(ubuffer);
+    ctxt->funptrs.buffers.store_immutable(
+                ubuffer,nullptr,
+                matBuffer->size+camBuffer->size,ubuffer->flags);
+    ctxt->funptrs.buffers.map(ubuffer,GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
+    //
+
+    {
+        CUniformBlock *ublock = &ctxt->renderdata.uniformblocks.d[0];
+        ublock->buffer = camBuffer;
+        ublock->name = "MatrixBlock";
+        void* data = ctxt->funptrs.buffers.subdata(camBuffer);
+        memcpy(data,&cam->matrix,sizeof(CMath::mat4));
+        ublock->blockBinding = 0;
+        //GL calls
+        coffee_graphics_shader_uniform_block_get(
+                    &ctxt->shaders.programs.d[0],
+                ublock->name,
+                &ublock->shaderIndex);
+        coffee_graphics_shader_uniform_block_set(
+                    &ctxt->shaders.programs.d[0],
+                *ublock);
+        //
+    }
+
+
+    {
+        CModelTransform* mod = &ctxt->transforms.transforms.d[0];
+        mod->position.z = -1.f;
+        mod->scale.x = mod->scale.y = mod->scale.z = 1.f;
+        mod->rotation.w = 2.f;
+
+        mod->position.x = 5.f;
+
+        std::vector<CMath::mat4> transform;
+        transform.reserve(numGears);
+        for(szptr i=1;i<numGears-2;i++){
+            mod->position.z = (float)(-i);
+            mod->position.y = (float)((i%11)/2);
+            coffee_graphics_gen_matrix(mod);
+            transform.push_back(mod->matrix);
+        }
+
+        mod->position.x = mod->position.y = 0.f;
+        mod->position.z = -1.f;
+
+        coffee_graphics_gen_matrix(mod);
+        CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
+
+        transform.push_back(mod->matrix);
+        transform.push_back(mod->matrix);
+
+        memcpy(mbuffer->data,
+               transform.data(),
+               transform.size()*sizeof(transform.data()[0]));
+        transform.resize(0);
+    }
+}
+
+bool coffee_test_load(game_context *ctxt)
+{
+    //Create multidraw object
+    coffee_mem_expand_array<CMultiDrawDataSet>(&ctxt->renderdata.datasets,1);
+    CMultiDrawDataSet* multidraw = &ctxt->renderdata.datasets.d[0];
+    *multidraw = coffee_multidraw_create();
+
+    //Load basic shader
+    {
+        game_shader_program_desc d;
+        d.shader_dump = "basic_dump.shdr";
+        d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
+        d.shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
+
+        if(!ctxt->features->ext_ssbo_support)
+        {
+            d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
+            d.shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
+        }
+
+        coffee_shader_program_load(d,ctxt);
+    }
+
+    //Specify VAO for vertex data, we will only use one for now
+
+    szptr numGears = 100;
+
+    coffee_test_def_vao(ctxt,multidraw,numGears);
+
+    coffee_test_load_meshes(ctxt,multidraw);
 
     //Define instance matrices and camera matrix
-    coffee_mem_expand_array<CGCamera>(&ctxt->transforms.cameras,1);
-    coffee_mem_expand_array<CModelTransform>(&ctxt->transforms.transforms,1);
-    coffee_mem_expand_array<CSubBuffer>(&ctxt->renderdata.subbuffers,2);
-    coffee_mem_expand_array<CUniformBlock>(&ctxt->renderdata.uniformblocks,2);
     {
-        {
-            CGCamera* cam = &ctxt->transforms.cameras.d[0];
-            cam->fieldOfView = 60.f;
-            cam->aspect = 1.6f;
-            cam->zVals.far = 100.f;
-            cam->zVals.near = 0.1f;
-            coffee_graphics_gen_matrix_perspective(cam);
-
-            CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
-            ubuffer->bufferType = GL_UNIFORM_BUFFER;
-            ubuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
-
-
-            CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
-            camBuffer->parent = ubuffer;
-            camBuffer->offset = 0;
-            camBuffer->size = sizeof(CMath::mat4)*2;
-            camBuffer->bufferType = GL_UNIFORM_BUFFER;
-
-            CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
-            matBuffer->bufferType = GL_SHADER_STORAGE_BUFFER;
-            matBuffer->parent = ubuffer;
-            matBuffer->size = sizeof(GLuint)*numGears+sizeof(CMath::vec3)*numGears;
-            matBuffer->offset = camBuffer->size;
-
-            //GL calls
-            coffee_graphics_alloc(ubuffer);
-            ctxt->funptrs.buffers.store_immutable(
-                        ubuffer,nullptr,
-                        matBuffer->size+camBuffer->size,ubuffer->flags);
-            ctxt->funptrs.buffers.map(ubuffer,GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
-            //
-
-            {
-                CUniformBlock *ublock = &ctxt->renderdata.uniformblocks.d[0];
-                ublock->buffer = camBuffer;
-                ublock->name = "MatrixBlock";
-                void* data = ctxt->funptrs.buffers.subdata(camBuffer);
-                memcpy(data,&cam->matrix,sizeof(CMath::mat4));
-                ublock->blockBinding = 0;
-                //GL calls
-                coffee_graphics_shader_uniform_block_get(
-                            &ctxt->shaders.programs.d[0],
-                        ublock->name,
-                        &ublock->shaderIndex);
-                coffee_graphics_shader_uniform_block_set(
-                            &ctxt->shaders.programs.d[0],
-                        *ublock);
-                //
-            }
-        }
+        coffee_test_def_transforms(ctxt,numGears);
 
         {
             CResources::CResource mapfile("bloodgulch.map");
@@ -505,37 +552,6 @@ bool coffee_test_load(game_context *ctxt)
             mapfile.memory_unmap();
         }
 
-        {
-            CModelTransform* mod = &ctxt->transforms.transforms.d[0];
-            mod->position.z = -1.f;
-            mod->scale.x = mod->scale.y = mod->scale.z = 1.f;
-            mod->rotation.w = 2.f;
-
-            mod->position.x = 5.f;
-
-            std::vector<CMath::mat4> transform;
-            transform.reserve(numGears);
-            for(szptr i=1;i<numGears-2;i++){
-                mod->position.z = (float)(-i);
-                mod->position.y = (float)((i%11)/2);
-                coffee_graphics_gen_matrix(mod);
-                transform.push_back(mod->matrix);
-            }
-
-            mod->position.x = mod->position.y = 0.f;
-            mod->position.z = -1.f;
-
-            coffee_graphics_gen_matrix(mod);
-            CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
-
-            transform.push_back(mod->matrix);
-            transform.push_back(mod->matrix);
-
-            memcpy(mbuffer->data,
-                   transform.data(),
-                   transform.size()*sizeof(transform.data()[0]));
-            transform.resize(0);
-        }
     }
     return true;
 }

@@ -361,7 +361,7 @@ inline static void coffee_sdl2_eventhandle_controller_device(
         }
     }
 
-    c->controller = dev.which+1;
+    c->controller = dev.which;
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),c,evsize);
 }
@@ -496,14 +496,16 @@ void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev){
     }
 
     case SDL_KEYDOWN:
-        goto keyboard_event;
-    case SDL_KEYUP:
-        goto keyboard_event;
+    case SDL_KEYUP:{
+        coffee_sdl2_eventhandle_keys(ctxt,ev->type,ev->key);
+        break;
+    }
 
     case SDL_MOUSEBUTTONDOWN:
-        goto mouse_button_event;
-    case SDL_MOUSEBUTTONUP:
-        goto mouse_button_event;
+    case SDL_MOUSEBUTTONUP:{
+        coffee_sdl2_eventhandle_mouse_btn(ctxt,ev->button);
+        break;
+    }
     case SDL_MOUSEMOTION:{
         coffee_sdl2_eventhandle_mouse_motion(ctxt,ev->motion);
         break;
@@ -512,30 +514,29 @@ void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev){
         coffee_sdl2_eventhandle_mouse_wheel(ctxt,ev->wheel);
         break;
     }
-//    case SDL_JOYDEVICEADDED:
-//    case SDL_JOYDEVICEREMOVED:{
-//        SDL_ControllerDeviceEvent dev;
-//        dev.type = (ev->type==SDL_JOYDEVICEADDED)
-//                ? SDL_CONTROLLERDEVICEADDED
-//                : SDL_CONTROLLERDEVICEREMOVED;
-//        dev.which = ev->jdevice.which;
-//        coffee_sdl2_eventhandle_controller_device(ctxt,dev);
-//        break;
-//    }
+    case SDL_JOYDEVICEADDED:
+    case SDL_JOYDEVICEREMOVED:{
+        SDL_ControllerDeviceEvent dev;
+        dev.type = (ev->type==SDL_JOYDEVICEADDED)
+                ? SDL_CONTROLLERDEVICEADDED
+                : SDL_CONTROLLERDEVICEREMOVED;
+        dev.which = ev->jdevice.which;
+        coffee_sdl2_eventhandle_controller_device(ctxt,dev);
+        break;
+    }
 
     case SDL_CONTROLLERAXISMOTION:
-        goto controller_input_event;
     case SDL_CONTROLLERBUTTONDOWN:
-        goto controller_input_event;
-    case SDL_CONTROLLERBUTTONUP:
-        goto controller_input_event;
+    case SDL_CONTROLLERBUTTONUP:{
+        coffee_sdl2_eventhandle_controller_input(ctxt,ev->type,ev->caxis,ev->cbutton);
+        break;
+    }
     case SDL_CONTROLLERDEVICEADDED:
-        goto controller_device_event;
     case SDL_CONTROLLERDEVICEREMOVED:
-        goto controller_device_event;
-    case SDL_CONTROLLERDEVICEREMAPPED:
-        goto controller_device_event;
-
+    case SDL_CONTROLLERDEVICEREMAPPED:{
+        coffee_sdl2_eventhandle_controller_device(ctxt,ev->cdevice);
+        break;
+    }
     case SDL_DROPFILE:{
         coffee_sdl2_eventhandle_drop(ctxt,ev->drop);
         break;
@@ -552,21 +553,7 @@ void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev){
 
     return;
 
-mouse_button_event:
-    coffee_sdl2_eventhandle_mouse_btn(ctxt,ev->button);
-    return;
 
-keyboard_event:
-    coffee_sdl2_eventhandle_keys(ctxt,ev->type,ev->key);
-    return;
-
-controller_input_event:
-    coffee_sdl2_eventhandle_controller_input(ctxt,ev->type,ev->caxis,ev->cbutton);
-    return;
-
-controller_device_event:
-    coffee_sdl2_eventhandle_controller_device(ctxt,ev->cdevice);
-    return;
 }
 
 }
