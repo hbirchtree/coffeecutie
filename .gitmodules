@@ -7,15 +7,15 @@
 [submodule "libs/glbinding"]
 	path = libs/glbinding
 	url = https://github.com/hbirchtree/glbinding
-[submodule "include/glm"]
-	path = include/glm
-	url = https://github.com/hbirchtree/glm
+[submodule "libs/glm"]
+	path = libs/glm
+	url = https://github.com/hbirchtree/glm.git
 [submodule "libs/assimp"]
 	path = libs/assimp
 	url = https://github.com/hbirchtree/assimp.git
-[submodule "include/stb"]
-	path = include/stb
+[submodule "libs/stb"]
+	path = libs/stb
 	url = https://github.com/nothings/stb.git
-[submodule "include/cppformat"]
-	path = include/cppformat
+[submodule "libs/cppformat"]
+	path = libs/cppformat
 	url = https://github.com/hbirchtree/cppformat.git

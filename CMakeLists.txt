@@ -2,6 +2,8 @@ project( CoffeeCore )
 cmake_minimum_required( VERSION 3.1 )
 set ( CMAKE_BUILD_TYPE Debug )
 
+set ( COFFEE_BUILD_STATIC false )
+
 MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
 FIND_PACKAGE(Doxygen)
 SET(DOXYFILE_FOUND false)
@@ -29,9 +31,10 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 add_definitions ( -Wall )
 include_directories (
         ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-        include
+        libs
         libs/glbinding/source/glbinding/include
-        libs/assimp/include)
+        libs/assimp/include
+        datasources)
 
 set ( CoffeeCore_HDRS
 coffee/cfiles.h
@@ -78,9 +81,11 @@ coffee_impl/assimp/cassimptypes.h
 coffee_impl/assimp/assimpfun.h
 coffee_impl/context/cdrenderer.h
 coffee_impl/context/cglbindingrenderer.h
+
 datasources/blam/cblam_map.h
 datasources/blam/cblam.h
 datasources/blam/cblam_bitm.h
+
 unit_tests/data_types.h
 plat/platform_detect.h
 plat/argument_parse.h
@@ -95,61 +100,60 @@ plat/plat_core.h
 
 set ( CoffeeCore_SRCS
 
-        coffee.cpp
-        coffee/cobject.cpp
-        coffee/cregex.cpp
-        coffee/cfiles.cpp
+        coffee/core/coffee.cpp
+        coffee/core/base/cobject.cpp
+        coffee/core/base/cregex.cpp
+        coffee/core/base/cfiles.cpp
 
-        coffee/display/cdrendererbase.cpp
+        coffee/core/base/cdrendererbase.cpp
 
-        coffee_impl/assimp/cassimpimporters.cpp
-        coffee_impl/assimp/assimpfun.cpp
+        coffee/core/context/cglbindingrenderer.cpp
 
-        coffee_impl/context/cdrenderer.cpp
-        coffee_impl/context/cglbindingrenderer.cpp
+        coffee/core/display/csdl2renderer.cpp
+        coffee/core/display/coffeesdl2/sdl2eventhandlers.cpp
+        coffee/core/display/coffeesdl2/sdl2helpers.cpp
 
-        coffee_impl/display/csdl2renderer.cpp
-        coffee_impl/display/coffeesdl2/sdl2eventhandlers.cpp
-        coffee_impl/display/coffeesdl2/sdl2helpers.cpp
+        coffee/core/functional/cqueuerunner.cpp
 
-        coffee_impl/functional/cqueuerunner.cpp
-
-        coffee_impl/graphics/cbuffer.cpp
-        coffee_impl/graphics/cshader.cpp
-        coffee_impl/graphics/cgraphicsdata.cpp
-        coffee_impl/graphics/cvertexarrayobject.cpp
-        coffee_impl/graphics/ctexture.cpp
-        coffee_impl/graphics/ctexture_dxtc.cpp
-        coffee_impl/graphics/cgraphics_quirks.cpp
-
-        coffee_impl/rendering/cmultidrawgraph.cpp
-
-        coffee_impl/sample/base_case.cpp
+        coffee/core/graphics/cbuffer.cpp
+        coffee/core/graphics/cshader.cpp
+        coffee/core/graphics/cgraphicsdata.cpp
+        coffee/core/graphics/cvertexarrayobject.cpp
+        coffee/core/graphics/ctexture.cpp
+        coffee/core/graphics/ctexture_dxtc.cpp
+        coffee/core/graphics/cgraphics_quirks.cpp
 
 #Third-party sources
 
-        include/cppformat/format.cc
+        libs/cppformat/format.cc
         )
 
 set ( CoffeeTest_SRCS
-        main.cpp
+        tests/ctest/main.cpp
+        tests/ctest/rendering/cmultidrawgraph.cpp
+        tests/ctest/base_case.cpp
+        tests/ctest/cdrenderer.cpp
         )
 
-set ( CBlam_SRCS
-        datasources/blam/cblam_bitm.cpp
-        datasources/blam/cblam_map.cpp
+set ( CAssimp_SRCS
+        coffee/assimp/cassimpimporters.cpp
+        coffee/assimp/assimpfun.cpp
         )
 
 set ( CAudio_SRCS
-        include/stb/stb_vorbis.c
-        coffee_impl/audio/caudio.cpp
-        coffee_impl/audio/openal/copenal.cpp
+        libs/stb/stb_vorbis.c
+        coffee/audio/caudio.cpp
+        coffee/audio/openal/copenal.cpp
         )
 
 set ( CImage_SRCS
-        coffee_impl/image/cimage.cpp
+        coffee/image/cimage.cpp
         )
 
+set ( CBlamVolta_SRCS
+        datasources/blam/volta/cblam_bitm.cpp
+        datasources/blam/volta/cblam_map.cpp
+        )
 
 #Locate Assimp and glbinding libraries
 find_library(assimp_loc NAMES "assimp" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
@@ -160,11 +164,21 @@ message("GLbinding located at: ${glbinding_loc}")
 ######################################
 
 #Set up build targets
-add_library( CBlam SHARED ${CBlam_SRCS})
-add_library( CoffeeCore SHARED ${CoffeeCore_SRCS} )
-add_library( CAudio SHARED ${CAudio_SRCS})
-add_library( CImage SHARED ${CImage_SRCS})
-add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+if (COFFEE_BUILD_STATIC)
+    add_library( CBlamVolta STATIC ${CBlamVolta_SRCS})
+    add_library( CoffeeCore STATIC ${CoffeeCore_SRCS} )
+    add_library( CAudio STATIC ${CAudio_SRCS})
+    add_library( CAssimp STATIC ${CAssimp_SRCS})
+    add_library( CImage STATIC ${CImage_SRCS})
+    add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+else()
+    add_library( CBlamVolta SHARED ${CBlamVolta_SRCS})
+    add_library( CoffeeCore SHARED ${CoffeeCore_SRCS} )
+    add_library( CAudio SHARED ${CAudio_SRCS})
+    add_library( CAssimp SHARED ${CAssimp_SRCS})
+    add_library( CImage SHARED ${CImage_SRCS})
+    add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+endif()
 #####################
 
 #Set up necessary linking options
@@ -188,42 +202,35 @@ endif()
 ############################
 
 #Configure linking options
+target_link_libraries ( CAssimp
+${assimp_loc}
+)
+target_link_libraries ( CAudio
+${OPENAL_LIBRARY}
+)
 target_link_libraries ( CoffeeCore
 ${SDL2_LIBRARY}
 ${LIBUNWIND_LIBRARIES}
-${assimp_loc}
-${glbinding_loc}
 ${X11_LIBRARIES}
 ${M_LIB_LIBRARIES}
-${OPENAL_LIBRARY} )
+)
 target_link_libraries ( CoffeeTest
-${SDL2_LIBRARY}
-${LIBUNWIND_LIBRARIES}
-${assimp_loc}
-${glbinding_loc}
-${X11_LIBRARIES}
-${OPENAL_LIBRARY}
 CoffeeCore
-CBlam
+${glbinding_loc}
+CBlamVolta
 CAudio
-CImage )
+CImage
+CAssimp
+)
 ##########################
 
 #Configure PIC and C++11
-set_property(TARGET CBlam PROPERTY POSITION_INDEPENDENT_CODE TRUE)
-target_compile_features(CBlam PRIVATE cxx_variadic_templates)
-
-set_property(TARGET CAudio PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CBlamVolta PRIVATE cxx_variadic_templates)
 target_compile_features(CAudio PRIVATE cxx_variadic_templates)
-
-set_property(TARGET CImage PROPERTY POSITION_INDEPENDENT_CODE TRUE)
+target_compile_features(CAssimp PRIVATE cxx_variadic_templates)
 target_compile_features(CImage PRIVATE cxx_variadic_templates)
-
-set_property(TARGET CoffeeTest PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeTest PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeTest PRIVATE cxx_constexpr)
-
-set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE TRUE)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
 ########################
