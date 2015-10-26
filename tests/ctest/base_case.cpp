@@ -3,7 +3,7 @@
 #include <coffee/core/graphics/cgraphics_quirks.h>
 #include <coffee/assimp/assimpfun.h>
 #include <coffee/core/graphics/ctexture_dxtc.h>
-#include <blam/volta/cblam.h>
+#include <blam/cblam.h>
 
 namespace Coffee{
 namespace CRendering{

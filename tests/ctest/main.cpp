@@ -4,7 +4,7 @@
 #include <coffee/core/plat/argument_parse.h>
 #include <coffee/core/unit_tests/data_types.h>
 #include <coffee/core/plat/environment_details.h>
-#include <blam/volta/cblam.h>
+#include <blam/cblam.h>
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;

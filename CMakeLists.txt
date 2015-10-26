@@ -154,6 +154,12 @@ set ( CBlamVolta_SRCS
         datasources/blam/volta/cblam_bitm.cpp
         datasources/blam/volta/cblam_map.cpp
         )
+set ( CBlamDimeter_SRCS
+        datasources/blam/dimeter/cblam_map.cpp
+        )
+set ( CBlamElegy_SRCS
+        datasources/blam/elegy/cblam_map.cpp
+        )
 
 #Locate Assimp and glbinding libraries
 find_library(assimp_loc NAMES "assimp" PATHS ${CMAKE_CURRENT_BINARY_DIR}/lib )
@@ -165,14 +171,14 @@ message("GLbinding located at: ${glbinding_loc}")
 
 #Set up build targets
 if (COFFEE_BUILD_STATIC)
-    add_library( CBlamVolta STATIC ${CBlamVolta_SRCS})
+    add_library( CBlam STATIC ${CBlamVolta_SRCS} ${CBlamDimeter_SRCS} ${CBlamElegy_SRCS})
     add_library( CoffeeCore STATIC ${CoffeeCore_SRCS} )
     add_library( CAudio STATIC ${CAudio_SRCS})
     add_library( CAssimp STATIC ${CAssimp_SRCS})
     add_library( CImage STATIC ${CImage_SRCS})
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 else()
-    add_library( CBlamVolta SHARED ${CBlamVolta_SRCS})
+    add_library( CBlam SHARED ${CBlamVolta_SRCS} ${CBlamDimeter_SRCS} ${CBlamElegy_SRCS})
     add_library( CoffeeCore SHARED ${CoffeeCore_SRCS} )
     add_library( CAudio SHARED ${CAudio_SRCS})
     add_library( CAssimp SHARED ${CAssimp_SRCS})
@@ -217,7 +223,7 @@ ${M_LIB_LIBRARIES}
 target_link_libraries ( CoffeeTest
 CoffeeCore
 ${glbinding_loc}
-CBlamVolta
+CBlam
 CAudio
 CImage
 CAssimp
@@ -225,7 +231,7 @@ CAssimp
 ##########################
 
 #Configure PIC and C++11
-target_compile_features(CBlamVolta PRIVATE cxx_variadic_templates)
+target_compile_features(CBlam PRIVATE cxx_variadic_templates)
 target_compile_features(CAudio PRIVATE cxx_variadic_templates)
 target_compile_features(CAssimp PRIVATE cxx_variadic_templates)
 target_compile_features(CImage PRIVATE cxx_variadic_templates)

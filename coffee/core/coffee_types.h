@@ -43,6 +43,18 @@ typedef uint32              csize_t; /*!< Typical size type*/
 typedef std::string         CString; /*!< Typical string object */
 typedef std::runtime_error  CStdFault; /*!< Exception to be thrown by default */
 
+/*!
+ * \brief Primarily created to compare tag classes, it compares part of memory
+ * \param target Typically a non-null-terminated string
+ * \param cmp Typically what is compared to
+ * \param len The length of the comparison
+ * \return
+ */
+inline static bool coffee_cmp_memarea(cstring target, cstring cmp, szptr len)
+{
+    return memcmp(target,cmp,len)==0;
+}
+
 //Different data types we implement
 namespace CPrimitiveDataTypes{
 

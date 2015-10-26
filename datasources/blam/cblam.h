@@ -1,8 +1,8 @@
 #ifndef CBLAM_HEADER
 #define CBLAM_HEADER
 
-#include "cblam_map.h"
-#include "cblam_bitm.h"
+#include "volta/cblam_map.h"
+#include "volta/cblam_bitm.h"
 
 namespace Coffee{
 /*!

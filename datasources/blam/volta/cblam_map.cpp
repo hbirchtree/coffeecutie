@@ -61,9 +61,4 @@ cstring blam_index_item_get_string(const blam_index_item *idx, const blam_file_h
 
 }
 
-bool coffee_cmp_memarea(cstring target, cstring cmp, szptr len)
-{
-    return memcmp(target,cmp,len)==0;
-}
-
 }
