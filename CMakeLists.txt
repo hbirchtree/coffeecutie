@@ -30,11 +30,12 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 add_definitions ( -Wall )
 include_directories (
-        ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_CURRENT_BINARY_DIR}
         libs
         libs/glbinding/source/glbinding/include
         libs/assimp/include
-        datasources)
+        coffee)
 
 set ( CoffeeCore_HDRS
 coffee/cfiles.h
@@ -151,14 +152,14 @@ set ( CImage_SRCS
         )
 
 set ( CBlamVolta_SRCS
-        datasources/blam/volta/cblam_bitm.cpp
-        datasources/blam/volta/cblam_map.cpp
+        coffee/blam/volta/cblam_bitm.cpp
+        coffee/blam/volta/cblam_map.cpp
         )
 set ( CBlamDimeter_SRCS
-        datasources/blam/dimeter/cblam_map.cpp
+        coffee/blam/dimeter/cblam_map.cpp
         )
 set ( CBlamElegy_SRCS
-        datasources/blam/elegy/cblam_map.cpp
+        coffee/blam/elegy/cblam_map.cpp
         )
 
 #Locate Assimp and glbinding libraries
