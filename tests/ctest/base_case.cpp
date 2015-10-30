@@ -3,7 +3,6 @@
 #include <coffee/core/graphics/cgraphics_quirks.h>
 #include <coffee/assimp/assimpfun.h>
 #include <coffee/core/graphics/ctexture_dxtc.h>
-#include <blam/cblam.h>
 
 namespace Coffee{
 namespace CRendering{
@@ -201,18 +200,10 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         dx.resolution.w = tex.resolution.w;
         dx.resolution.h = tex.resolution.h;
 
-        switch(tex.format)
-        {
-        case CBlam::blam_bitm_tex_DXT1:
-            dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-            break;
-        case CBlam::blam_bitm_tex_DXT3:
-            dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-            break;
-        case CBlam::blam_bitm_tex_DXT5:
-            dx.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-            break;
-        }
+        for(int i=0;i<blam_dxtc_tex_mapping_count;i++)
+            if(tex.format==blam_dxtc_tex_mapping[i].in)
+                dx.internalFormat = blam_dxtc_tex_mapping[i].out;
+
         CTexture *tex = coffee_graphics_tex_dxtc_load(&dx);
         memcpy(t,tex,sizeof(CTexture));
         delete tex;
@@ -541,7 +532,7 @@ bool coffee_test_load(game_context *ctxt)
                     if(tex.type==CBlam::blam_bitm_type_2D)
                     {
                         coffee_texture_2d_load(tex,ctxt);
-//                        break;
+                        break;
                     }
                     else
                         cWarning("Unsupported format: 3D and cube!");
@@ -551,7 +542,9 @@ bool coffee_test_load(game_context *ctxt)
                     const CBlam::blam_mod2_header* mod2;
                     mod2 = (CBlam::blam_mod2_header*)(((byte*)mapfile.data)+idx->offset-tags.index_magic);
                     const CBlam::blam_mod2_region* reg2 = mod2->regions.data<CBlam::blam_mod2_region>(mapfile.data,tags.index_magic);
-                    cDebug("TEST: %i,%s,%s",mod2->zero1,reg2[0].name,reg2[1].name);
+                    cDebug("TEST: %i",mod2->zero1);
+                    for(int i=0;i<mod2->regions.count;i++)
+                        cDebug("Part: %s",reg2[i].name);
                 }
             }
             bitmfile.memory_unmap();
