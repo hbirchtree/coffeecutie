@@ -515,7 +515,7 @@ bool coffee_test_load(game_context *ctxt)
                     CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version_pc);
             CBlam::blam_tag_index tags = CBlam::blam_tag_index_get(map);
 
-            const CBlam::blam_index_item* base_idx = CBlam::blam_tag_meta_offset(map);
+            const CBlam::blam_index_item* base_idx = CBlam::blam_tag_index_get_items(map);
             const CBlam::blam_index_item* idx = nullptr;
             for(int32 i=0;i<tags.tagCount;i++)
             {
@@ -539,9 +539,10 @@ bool coffee_test_load(game_context *ctxt)
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
                 } else if(coffee_cmp_memarea(idx->tagclass[0],CBlam::blam_index_item_type_mod2,4))
                 {
-                    const CBlam::blam_mod2_header* mod2;
-                    mod2 = (CBlam::blam_mod2_header*)(((byte*)mapfile.data)+idx->offset-tags.index_magic);
-                    const CBlam::blam_mod2_region* reg2 = mod2->regions.data<CBlam::blam_mod2_region>(mapfile.data,tags.index_magic);
+                    const CBlam::blam_mod2_header* mod2 =
+                            CBlam::blam_mod2_get_header(idx,map,tags.index_magic);
+                    const CBlam::blam_mod2_region* reg2 =
+                            mod2->regions.data(mapfile.data,tags.index_magic);
                     cDebug("TEST: %i",mod2->zero1);
                     for(int i=0;i<mod2->regions.count;i++)
                         cDebug("Part: %s",reg2[i].name);

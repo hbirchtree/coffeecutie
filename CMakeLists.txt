@@ -11,23 +11,23 @@ SET(DOXYFILE_FOUND false)
 set (DOXYGEN_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/docs")
 
 IF(EXISTS ${CMAKE_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE})
-	configure_file(${CMAKE_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-	SET(DOXYFILE_FOUND true)
+        configure_file(${CMAKE_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+        SET(DOXYFILE_FOUND true)
 ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/${DOXYGEN_CONFIG_FILE})
 
 IF( DOXYGEN_FOUND )
-	IF( DOXYFILE_FOUND )
-		# Add target
-		
-		add_custom_target(make_docdir ALL COMMAND ${CMAKE_COMMAND} -E make_directory ${DOXYGEN_OUT_DIR})
-		ADD_CUSTOM_TARGET(doc ALL ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
-			WORKING_DIRECTORY ${DOXYGEN_OUT_DIR})
+        IF( DOXYFILE_FOUND )
+                # Add target
 
-	ELSE( DOXYFILE_FOUND )
-		MESSAGE( STATUS "Doxygen configuration file not found - Documentation will not be generated" )
-	ENDIF( DOXYFILE_FOUND )
+                add_custom_target(make_docdir ALL COMMAND ${CMAKE_COMMAND} -E make_directory ${DOXYGEN_OUT_DIR})
+                ADD_CUSTOM_TARGET(doc ALL ${DOXYGEN_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+                        WORKING_DIRECTORY ${DOXYGEN_OUT_DIR})
+
+        ELSE( DOXYFILE_FOUND )
+                MESSAGE( STATUS "Doxygen configuration file not found - Documentation will not be generated" )
+        ENDIF( DOXYFILE_FOUND )
 ELSE(DOXYGEN_FOUND)
-	MESSAGE(STATUS "Doxygen not found - Documentation will not be generated")
+        MESSAGE(STATUS "Doxygen not found - Documentation will not be generated")
 ENDIF(DOXYGEN_FOUND)
 ENDMACRO(GENERATE_DOCUMENTATION)
 
@@ -35,12 +35,12 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 add_definitions ( -Wall )
 include_directories (
-		${CMAKE_SOURCE_DIR}
-		${CMAKE_CURRENT_BINARY_DIR}
-		libs
-		libs/glbinding/source/glbinding/include
-		libs/assimp/include
-		coffee)
+                ${CMAKE_SOURCE_DIR}
+                ${CMAKE_CURRENT_BINARY_DIR}
+                libs
+                libs/glbinding/source/glbinding/include
+                libs/assimp/include
+                coffee)
 
 set ( CoffeeCore_HDRS
 coffee/cfiles.h
@@ -159,12 +159,18 @@ set ( CImage_SRCS
 set ( CBlamVolta_SRCS
         coffee/blam/volta/cblam_bitm.cpp
         coffee/blam/volta/cblam_map.cpp
+        coffee/blam/volta/cblam_mod2.cpp
+        coffee/blam/volta/cblam_scenario_loader.cpp
         )
 set ( CBlamDimeter_SRCS
         coffee/blam/dimeter/cblam_map.cpp
         )
 set ( CBlamElegy_SRCS
         coffee/blam/elegy/cblam_map.cpp
+        )
+
+set ( CBlamTesting_SRCS
+        tests/cblam-testing/main.cpp
         )
 
 #Locate Assimp and glbinding libraries
@@ -182,6 +188,7 @@ if (COFFEE_BUILD_STATIC)
     add_library( CAudio STATIC ${CAudio_SRCS})
     add_library( CAssimp STATIC ${CAssimp_SRCS})
     add_library( CImage STATIC ${CImage_SRCS})
+    add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 else()
     add_library( CBlam SHARED ${CBlamVolta_SRCS} ${CBlamDimeter_SRCS} ${CBlamElegy_SRCS})
@@ -189,6 +196,7 @@ else()
     add_library( CAudio SHARED ${CAudio_SRCS})
     add_library( CAssimp SHARED ${CAssimp_SRCS})
     add_library( CImage SHARED ${CImage_SRCS})
+    add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 endif()
 #####################
@@ -214,18 +222,18 @@ endif()
 ############################
 
 #Configure linking options
-target_link_libraries ( CAssimp
-${assimp_loc}
-)
-target_link_libraries ( CAudio
-${OPENAL_LIBRARY}
-)
 target_link_libraries ( CoffeeCore
 ${SDL2_LIBRARY}
 ${glbinding_loc}
 ${LIBUNWIND_LIBRARIES}
 ${X11_LIBRARIES}
 ${M_LIB_LIBRARIES}
+)
+target_link_libraries ( CAssimp
+${assimp_loc}
+)
+target_link_libraries ( CAudio
+${OPENAL_LIBRARY}
 )
 target_link_libraries ( CoffeeTest
 CoffeeCore
@@ -235,9 +243,15 @@ CAudio
 CImage
 CAssimp
 )
+target_link_libraries ( CBlamTesting
+CoffeeCore
+CImage
+CBlam
+)
 ##########################
 
 #Configure PIC and C++11
+target_compile_features(CBlamTesting PRIVATE cxx_variadic_templates)
 target_compile_features(CBlam PRIVATE cxx_variadic_templates)
 target_compile_features(CAudio PRIVATE cxx_variadic_templates)
 target_compile_features(CAssimp PRIVATE cxx_variadic_templates)

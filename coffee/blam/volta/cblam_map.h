@@ -43,7 +43,7 @@ extern const blam_tag_index* blam_tag_index_ptr(const blam_file_header* file);
  * \param file File header from which we get the pointer
  * \return A pointer to the first tag index item
  */
-extern const blam_index_item* blam_tag_meta_offset(const blam_file_header* file);
+extern const blam_index_item* blam_tag_index_get_items(const blam_file_header* file);
 
 /*!
  * \brief Creates a copy of the tag index and sets up its magic index

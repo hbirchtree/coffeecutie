@@ -43,7 +43,7 @@ blam_tag_index blam_tag_index_get(const blam_file_header *file)
     return dupe;
 }
 
-const blam_index_item *blam_tag_meta_offset(const blam_file_header *file)
+const blam_index_item *blam_tag_index_get_items(const blam_file_header *file)
 {
     const blam_tag_index* ptr = blam_tag_index_ptr(file);
     return (const blam_index_item*)&(ptr[1]);

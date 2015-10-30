@@ -15,89 +15,14 @@ struct blam_bounding_box
     CVec3 max;
 };
 
+template<typename T>
 /*!
  * \brief Encapsulates a base and reference reflexive group
  */
 struct blam_reflex_group
 {
-    blam_reflexive base;
-    blam_reflexive ref;
-};
-
-/*!
- * \brief A Blam! scenario descriptor
- */
-struct blam_scenario
-{
-    byte unk_str1[16];
-    byte unk_str2[16];
-    byte unk_str3[16];
-    blam_reflexive skybox;
-    uint32 unknown_1;
-    blam_reflexive child_scenarios;
-
-    uint32 reserved1[46];
-
-    int32 editor_scenario_size;
-    uint32 unknown_2;
-    uint32 unknown_3;
-    uint32 ptr_to_index;
-    uint32 reserved2[2];
-    uint32 ptr_to_index_end;
-    uint32 reserved3[57];
-
-    blam_reflexive object_names;
-    blam_reflex_group scenery;
-    blam_reflex_group biped;
-    blam_reflex_group vehicle;
-    blam_reflex_group equip;
-    blam_reflex_group weap;
-    blam_reflexive device_groups;
-    blam_reflex_group machine;
-    blam_reflex_group control;
-    blam_reflex_group light_fixture;
-    blam_reflex_group snd_scenery;
-    blam_reflexive unknown_4[7];
-    blam_reflexive player_start_profile;
-    blam_reflexive player_spawn;
-    blam_reflexive trigger_volume;
-    blam_reflexive animation;
-    blam_reflexive multiplayer_flags;
-    blam_reflexive multiplayer_equipment;
-    blam_reflexive starting_equipment;
-    blam_reflexive bsp_switch_trigger;
-    blam_reflex_group decals;
-    blam_reflexive detail_obj_collision_ref;
-    blam_reflexive unknown_5[7];
-    blam_reflexive actor_variant_ref;
-    blam_reflexive encounters;
-
-    blam_reflexive command_lists;
-    blam_reflexive unknown_6;
-    blam_reflexive starting_locations;
-    blam_reflexive platoons;
-    blam_reflexive ai_conversations;
-    uint32 script_syntax_data_size;
-    uint32 unknown_7;
-    blam_reflexive scripts;
-    blam_reflexive commands;
-    blam_reflexive points;
-    blam_reflexive ai_animation_refs;
-    blam_reflexive globals;
-    blam_reflexive ai_recording_refs;
-    blam_reflexive unknown_8;
-    blam_reflexive participants;
-    blam_reflexive lines;
-    blam_reflexive script_triggers;
-    blam_reflexive cutscenes_verify;
-    blam_reflexive cutscene_titles_verify;
-    blam_reflexive source_files;
-    blam_reflexive cutscene_flags;
-    blam_reflexive cutscene_camera_poi;
-    blam_reflexive cutscene_titles;
-    blam_reflexive unknown_9[8];
-    uint32 unknown_10[2];
-    blam_reflexive struct_bsp;
+    blam_reflexive<T> base;
+    blam_reflexive<T> ref;
 };
 
 struct blam_scn_biped
@@ -338,10 +263,10 @@ struct blam_scn_encounter
 {
     byte text[16];
     uint32 unk[28];
-    blam_reflexive Squads;
-    blam_reflexive Platoons;
-    blam_reflexive FiringPositions;
-    blam_reflexive PlayerStartLocations;
+    blam_reflexive<byte> squads;
+    blam_reflexive<byte> platoons;
+    blam_reflexive<byte> firingPositions;
+    blam_reflexive<byte> playerStartLocations;
 };
 
 struct blam_scn_encounter_squad
@@ -363,11 +288,11 @@ struct blam_scn_encounter_squad
     int16 NormalDiffCount;
     int16 InsaneDiffCount;
     uint32  unk3[20];
-    blam_reflexive StartLocations;
+    blam_reflexive<byte> StartLocations;
     uint32  unk4[3];
 };
 
-struct blam_scn_encounter_squad
+struct blam_scn_encounter_squad_spawn
 {
     CVec3 pos;
     scalar yaw;
@@ -380,9 +305,9 @@ struct blam_scn_encounter_info
     byte text[16];
     blam_scn_encounter_squad *pSquads;
     blam_scn_encounter_squad **ppSquadSpawns;
-    blam_reflexive Platoons;
-    blam_reflexive FiringPositions;
-    blam_reflexive PlayerStartLocations;
+    blam_reflexive<byte> Platoons;
+    blam_reflexive<byte> FiringPositions;
+    blam_reflexive<byte> PlayerStartLocations;
 };
 
 struct blam_scn_decal
@@ -432,6 +357,82 @@ struct blam_scn_control
 struct blam_scn_light_fixture
 {
     uint32 unk[22];
+};
+
+/*!
+ * \brief A Blam! scenario descriptor
+ */
+struct blam_scenario
+{
+    byte unk_str1[16];
+    byte unk_str2[16];
+    byte unk_str3[16];
+    blam_reflexive<byte> skybox;
+    uint32 unknown_1;
+    blam_reflexive<byte> child_scenarios;
+
+    uint32 reserved1[46];
+
+    int32 editor_scenario_size;
+    uint32 unknown_2;
+    uint32 unknown_3;
+    uint32 ptr_to_index;
+    uint32 reserved2[2];
+    uint32 ptr_to_index_end;
+    uint32 reserved3[57];
+
+    blam_reflexive<cstring> object_names;
+    blam_reflex_group<byte> scenery;
+    blam_reflex_group<byte> biped;
+    blam_reflex_group<byte> vehicle;
+    blam_reflex_group<byte> equip;
+    blam_reflex_group<byte> weap;
+    blam_reflexive<byte> device_groups;
+    blam_reflex_group<byte> machine;
+    blam_reflex_group<byte> control;
+    blam_reflex_group<byte> light_fixture;
+    blam_reflex_group<byte> snd_scenery;
+    blam_reflexive<byte> unknown_4[7];
+    blam_reflexive<byte> player_start_profile;
+    blam_reflexive<byte> player_spawn;
+    blam_reflexive<byte> trigger_volume;
+    blam_reflexive<byte> animation;
+    blam_reflexive<byte> multiplayer_flags;
+    blam_reflexive<byte> multiplayer_equipment;
+    blam_reflexive<byte> starting_equipment;
+    blam_reflexive<byte> bsp_switch_trigger;
+    blam_reflex_group<byte> decals;
+    blam_reflexive<byte> detail_obj_collision_ref;
+    blam_reflexive<byte> unknown_5[7];
+    blam_reflexive<byte> actor_variant_ref;
+    blam_reflexive<byte> encounters;
+
+    blam_reflexive<byte> command_lists;
+    blam_reflexive<byte> unknown_6;
+    blam_reflexive<byte> starting_locations;
+    blam_reflexive<byte> platoons;
+    blam_reflexive<byte> ai_conversations;
+    uint32 script_syntax_data_size;
+    uint32 unknown_7;
+    blam_reflexive<byte> scripts;
+    blam_reflexive<byte> commands;
+    blam_reflexive<byte> points;
+    blam_reflexive<byte> ai_animation_refs;
+    blam_reflexive<byte> globals;
+    blam_reflexive<byte> ai_recording_refs;
+    blam_reflexive<byte> unknown_8;
+    blam_reflexive<byte> participants;
+    blam_reflexive<byte> lines;
+    blam_reflexive<byte> script_triggers;
+    blam_reflexive<byte> cutscenes_verify;
+    blam_reflexive<byte> cutscene_titles_verify;
+    blam_reflexive<byte> source_files;
+    blam_reflexive<byte> cutscene_flags;
+    blam_reflexive<byte> cutscene_camera_poi;
+    blam_reflexive<byte> cutscene_titles;
+    blam_reflexive<byte> unknown_9[8];
+    uint32 unknown_10[2];
+    blam_reflexive<byte> struct_bsp;
 };
 
 }

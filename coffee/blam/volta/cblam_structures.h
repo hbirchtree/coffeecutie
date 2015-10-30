@@ -118,19 +118,25 @@ struct blam_index_item
 /*!
  * \brief Points to a chunk of memory within the file, mostly with Xbox version
  */
+template<typename T>
 struct blam_reflexive
 {
     int32 count; /*! Size of data*/
     int32 offset; /*! Offset to data within file (this will only refer to data within the map file)*/
     int32 zero;
 
-    template<typename T>
+    /*!
+     * \brief Made for simplicity in working with reflexive data. Instead of several functions performing the same task, this template allows to access the data much more conveniently.
+     * \param basePtr Base pointer of map in most cases
+     * \param magic Magic number from tag index
+     * \return A valid pointer if the reflexive is deemed valid (if the variable zero is indeed zero)
+     */
     const T* data(const void* basePtr, szptr magic) const
     {
-	if(zero != 0)
-	    return nullptr;
-	const byte* b_basePtr = (const byte*)basePtr;
-	return (const T*)(b_basePtr+offset-magic);
+        if(zero != 0)
+            return nullptr;
+        const byte* b_basePtr = (const byte*)basePtr;
+        return (const T*)(b_basePtr+offset-magic);
     }
 };
 
