@@ -123,6 +123,15 @@ struct blam_reflexive
     int32 count; /*! Size of data*/
     int32 offset; /*! Offset to data within file (this will only refer to data within the map file)*/
     int32 zero;
+
+    template<typename T>
+    const T* data(const void* basePtr, szptr magic) const
+    {
+	if(zero != 0)
+	    return nullptr;
+	const byte* b_basePtr = (const byte*)basePtr;
+	return (const T*)(b_basePtr+offset-magic);
+    }
 };
 
 /*!

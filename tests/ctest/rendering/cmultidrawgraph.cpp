@@ -99,7 +99,7 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
         ref = &mesh->buffers[i];
         if(ref->type==CAssimpMesh::IndexType){
             indices = (uint32*)coffee_assimp_get_reflexive_ptr(mesh,ref);
-            numIndices = ref->size/sizeof(unsigned int);
+            numIndices = ref->size/sizeof(uint32);
             break;
         }
     }

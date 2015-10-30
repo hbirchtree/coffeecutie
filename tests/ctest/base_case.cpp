@@ -541,11 +541,17 @@ bool coffee_test_load(game_context *ctxt)
                     if(tex.type==CBlam::blam_bitm_type_2D)
                     {
                         coffee_texture_2d_load(tex,ctxt);
-                        break;
+//                        break;
                     }
                     else
                         cWarning("Unsupported format: 3D and cube!");
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
+                } else if(coffee_cmp_memarea(idx->tagclass[0],CBlam::blam_index_item_type_mod2,4))
+                {
+                    const CBlam::blam_mod2_header* mod2;
+                    mod2 = (CBlam::blam_mod2_header*)(((byte*)mapfile.data)+idx->offset-tags.index_magic);
+                    const CBlam::blam_mod2_region* reg2 = mod2->regions.data<CBlam::blam_mod2_region>(mapfile.data,tags.index_magic);
+                    cDebug("TEST: %i,%s,%s",mod2->zero1,reg2[0].name,reg2[1].name);
                 }
             }
             bitmfile.memory_unmap();

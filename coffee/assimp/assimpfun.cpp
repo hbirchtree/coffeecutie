@@ -117,7 +117,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     {
         bufsize = coffee_assimp_mesh_approx_size(meshdata,&bufferCount);
         bufsize+=sizeof(CAssimpMesh);
-        bufsize+=bufferCount*sizeof(assimp_reflexive);
+        bufsize+=bufferCount*sizeof(assimp_reflexive)-sizeof(assimp_reflexive);
 
         buffer = (byte*)calloc(
                     sizeof(byte),
@@ -130,9 +130,8 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     mesh->byteSize = bufsize;
     mesh->name = coffee_cpy_string(meshdata->mName.C_Str());
 
-    assimp_reflexive* bufferArray = (assimp_reflexive*)&buffer[offset];
-    offset+=sizeof(assimp_reflexive)*bufferCount;
-    mesh->buffers = bufferArray;
+    assimp_reflexive* bufferArray = (assimp_reflexive*)&mesh->buffers;
+    offset+=sizeof(assimp_reflexive)*bufferCount-sizeof(assimp_reflexive);
 
     coffee_assimp_mesh_get_offsets(meshdata,bufferArray,offset);
 

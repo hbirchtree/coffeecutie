@@ -38,7 +38,7 @@ struct CAssimpMesh
     cstring name     = nullptr; /*!< Name of mesh from Assimp*/
     uint8   numBuffers = 0; /*!< Number of buffers contained*/
 
-    const assimp_reflexive* buffers = nullptr; /*!< Buffer offsets, sizes and type */
+    const assimp_reflexive buffers[1]; /*!< Buffer offsets, sizes and type */
 
     enum BufferType
     {
