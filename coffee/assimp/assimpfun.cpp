@@ -98,11 +98,13 @@ void coffee_assimp_mesh_get_offsets(const aiMesh* mesh, assimp_reflexive* buffer
         buf++;
     }
 
-    for(i=0;i<mesh->mNumFaces;i++)
-    {
+    if(mesh->HasFaces()){
         buffers[buf].offset = size;
-        size+=mesh->mFaces[i].mNumIndices*sizeof(mesh->mFaces[i].mIndices[0]);
-        buffers[buf].size = mesh->mNumFaces*mesh->mFaces[i].mNumIndices*sizeof(mesh->mFaces[i].mIndices[0]);
+        for(i=0;i<mesh->mNumFaces;i++)
+        {
+            buffers[buf].size += mesh->mFaces[i].mNumIndices
+                    *sizeof(mesh->mFaces[i].mIndices[0]);
+        }
         buffers[buf].type = CAssimpMesh::IndexType;
         buf++;
     }
@@ -118,6 +120,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
         bufsize = coffee_assimp_mesh_approx_size(meshdata,&bufferCount);
         bufsize+=sizeof(CAssimpMesh);
         bufsize+=bufferCount*sizeof(assimp_reflexive)-sizeof(assimp_reflexive);
+        bufsize+=strlen(meshdata->mName.C_Str())+1;
 
         buffer = (byte*)calloc(
                     sizeof(byte),
@@ -128,10 +131,15 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     offset += sizeof(CAssimpMesh);
     mesh->numBuffers = bufferCount;
     mesh->byteSize = bufsize;
-    mesh->name = coffee_cpy_string(meshdata->mName.C_Str());
 
     assimp_reflexive* bufferArray = (assimp_reflexive*)&mesh->buffers;
     offset+=sizeof(assimp_reflexive)*bufferCount-sizeof(assimp_reflexive);
+
+    cstring mname = meshdata->mName.C_Str();
+    mesh->name.offset = offset;
+    mesh->name.size = strlen(mname)+1;
+    memcpy(&buffer[offset],mname,mesh->name.size);
+    offset+=mesh->name.size;
 
     coffee_assimp_mesh_get_offsets(meshdata,bufferArray,offset);
 
@@ -279,6 +287,12 @@ byte *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *ref
     return &((byte*)baseptr)[ref->offset];
 }
 
+cstring assimp_reflexive_string_get(const void* basePtr, const assimp_reflexive &ref)
+{
+    const byte* b_ptr = (const byte*)basePtr;
+    return &b_ptr[ref.offset];
+}
+
 }
 
 bool coffee_assimp_dump_mesh(CAssimp::CAssimpMesh *mesh, CResources::CResource *resource)
@@ -307,21 +321,6 @@ void coffee_assimp_free(CAssimp::CAssimpData *data)
     for(i=0;i<data->numMeshes;i++)
         free(data->meshes[i]);
     free(data->meshes);
-    for(i=0;i<data->numMaterials;i++)
-        free(data->materials[i]);
-    free(data->materials);
-    for(i=0;i<data->numCameras;i++)
-        free(data->cameras[i]);
-    free(data->cameras);
-    for(i=0;i<data->numLights;i++)
-        free(data->lights[i]);
-    free(data->lights);
-    for(i=0;i<data->numTextures;i++)
-        free(data->textures[i]);
-    free(data->textures);
-    for(i=0;i<data->numAnimations;i++)
-        free(data->animations[i]);
-    free(data->animations);
 }
 
 }

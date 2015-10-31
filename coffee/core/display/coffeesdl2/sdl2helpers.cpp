@@ -37,7 +37,7 @@ Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
     else
         res|=SDL_WINDOW_HIDDEN;
 
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Decorated,SDL_WINDOW_BORDERLESS);
+    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Undecorated,SDL_WINDOW_BORDERLESS);
 
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::FullScreen,SDL_WINDOW_FULLSCREEN);
     res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::WindowedFullScreen,SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -144,9 +144,9 @@ uint32 coffee_sdl2_get_winflags(SDL_Window *win)
     uint32 res = 0;
 
     if(flags&SDL_WINDOW_BORDERLESS)
-        res^=CDWindowProperties::Decorated;
+        res^=CDWindowProperties::Undecorated;
     else
-        res|=CDWindowProperties::Decorated;
+        res|=CDWindowProperties::Undecorated;
 
     if(flags&SDL_WINDOW_FULLSCREEN)
         res|=CDWindowProperties::FullScreen;

@@ -1,13 +1,21 @@
 #include <coffee/blam/cblam.h>
 #include <coffee/core/base/cfiles.h>
+#include <coffee/core/plat/application_start.h>
+#include <coffee/core/plat/argument_parse.h>
+
+/*!
+ * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
+ *   The purpose of this is platform abstraction such that the rest of the code works consistently across platforms.
+ */
 
 using namespace Coffee;
 using namespace CResources;
 using namespace CBlam;
 
-int main()
+int coffee_main(int32 argv,byte** argc)
 {
-    CResource mapfile("bloodgulch.map");
+    cstring mapstring = coffee_args_get_arg(argv,argc,"halomap");
+    CResource mapfile(mapstring);
     CResource bitmfile("bitmaps.map");
     bitmfile.memory_map();
     mapfile.memory_map();
@@ -21,3 +29,5 @@ int main()
 
     return 0;
 }
+
+COFFEE_APPLICATION_MAIN(coffee_main)

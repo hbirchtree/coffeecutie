@@ -359,7 +359,6 @@ void CSDL2Renderer::pollEvents()
 {
     while(SDL_PollEvent(&m_context->eventhandle))
         coffee_sdl2_eventhandle_all(this,&m_context->eventhandle);
-
 }
 
 /*!

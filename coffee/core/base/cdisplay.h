@@ -141,7 +141,7 @@ struct CDWindowProperties
         Focused             = 0x020, /*! Focused mode*/
         Resizable           = 0x040, /*! Resizable mode*/
 
-        Decorated           = 0x080, /*! Decorated mode*/
+        Undecorated         = 0x080, /*! Decorated mode*/
         Floating            = 0x100, /*! Floating mode, not supported by all platforms and context managers*/
         Visible             = 0x200, /*! Visibility*/
 
@@ -156,6 +156,8 @@ struct CDWindowProperties
     CGLContextProperties    contextProperties; /*! Context properties to set*/
     cstring                 title           = nullptr; /*! Window title to start with*/
 };
+
+extern CDWindowProperties coffee_get_default_visual();
 
 }
 }

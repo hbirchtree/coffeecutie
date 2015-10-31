@@ -29,12 +29,12 @@ struct assimp_mesh_intermediate
     uint32 bufferCnt	= 0;
 };
 
-extern  CAssimpMesh*         importMesh(const aiMesh *meshdata);
-extern  CAssimpMaterial*     importMaterial(aiMaterial* matdata);
-extern  CAssimpLight*        importLight(aiLight* ldata);
-extern  CAssimpCamera*       importCamera(aiCamera* camdata);
-extern  CAssimpTexture*      importTexture(aiTexture* texdata);
-extern  CAssimpAnimation*    importAnimation(aiAnimation* anidata);
+extern cstring assimp_reflexive_string_get(
+        const void *basePtr,
+        const assimp_reflexive& ref);
+
+extern CAssimpMesh* importMesh(
+        const aiMesh *meshdata);
 
 /*!
  * \brief Transforms data of type Element to type OutType, returning the size of data written

@@ -12,21 +12,11 @@ namespace CAssimp {
 //The thought being that they are free()'d in a single call
 //Disadvantage: Difficult to move them once created
 
-struct CAssimpMaterial
-{
-    cstring                 name            = nullptr;
-    uint16                  numProperties   = 0;
-    const uint32* const*    propertySizes   = nullptr;
-    const byte*             propertyData    = nullptr;
-    //User-defined types, differentiates bool, bytes, int and float
-    const uint8*            propertyTypes   = nullptr;
-};
-
 struct assimp_reflexive
 {
-    byte  type;
     szptr offset;
     szptr size;
+    byte  type;
 };
 
 /*!
@@ -35,10 +25,10 @@ struct assimp_reflexive
 struct CAssimpMesh
 {
     szptr   byteSize = 0; /*!< Size of mesh in memory, used when dumping to file*/
-    cstring name     = nullptr; /*!< Name of mesh from Assimp*/
+    assimp_reflexive name; /*!< Name of mesh from Assimp*/
     uint8   numBuffers = 0; /*!< Number of buffers contained*/
 
-    const assimp_reflexive buffers[1]; /*!< Buffer offsets, sizes and type */
+    assimp_reflexive buffers[1]; /*!< Buffer offsets, sizes and type */
 
     enum BufferType
     {
@@ -54,39 +44,6 @@ struct CAssimpMesh
     };
 };
 
-
-
-struct CAssimpCamera
-{
-    cstring       name       = nullptr;
-};
-
-struct CAssimpLight
-{
-    cstring       name       = nullptr;
-};
-
-struct CAssimpTexture
-{
-    cstring       name       = nullptr;
-};
-
-struct CAssimpAnimation
-{
-    cstring       name       = nullptr;
-};
-
-/*!
- * \brief A set of Assimp mesh and material
- */
-struct CAssimpModel
-{
-    cstring             name     = nullptr;
-
-    CAssimpMesh*        mesh     = nullptr;
-    CAssimpMaterial*    material = nullptr;
-};
-
 struct CAssimpData
 {
     uint32            numMeshes       = 0;
@@ -97,11 +54,6 @@ struct CAssimpData
     uint32            numAnimations   = 0;
 
     CAssimpMesh**       meshes      = nullptr;
-    CAssimpMaterial**   materials   = nullptr;
-    CAssimpCamera**     cameras     = nullptr;
-    CAssimpLight**      lights      = nullptr;
-    CAssimpTexture**    textures    = nullptr;
-    CAssimpAnimation**  animations  = nullptr;
 };
 
 } // namespace CAssimp

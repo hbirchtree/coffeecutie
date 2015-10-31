@@ -1,10 +1,9 @@
 #include "cdrenderer.h"
 
-#include <coffee/core/base/cfiles.h>
-#include <coffee/core/plat/argument_parse.h>
-#include <coffee/core/unit_tests/data_types.h>
 #include <coffee/core/plat/environment_details.h>
-#include <blam/cblam.h>
+#include <coffee/core/plat/application_start.h>
+#include <coffee/core/unit_tests/data_types.h>
+#include <coffee/core/base/cfiles.h>
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;
@@ -34,29 +33,9 @@ int main(int,char**)
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     //Magic happens here
-    CDWindowProperties props;
+    CDWindowProperties props = coffee_get_default_visual();
 
-    props.flags |=
-            CDWindowProperties::Minimized |
-            CDWindowProperties::Decorated |
-            CDWindowProperties::Resizable |
-            CDWindowProperties::Windowed;
-    props.size.w = 1280;
-    props.size.h = 720;
-    props.monitor = 0;
-
-    props.contextProperties.flags |=
-            CGLContextProperties::GLDebug |
-            CGLContextProperties::GLAutoResize;
-    props.contextProperties.version.major = 3;
-    props.contextProperties.version.minor = 3;
-
-    props.contextProperties.bits.alpha = 8;
-    props.contextProperties.bits.red = 8;
-    props.contextProperties.bits.blue = 8;
-    props.contextProperties.bits.green = 8;
-    props.contextProperties.bits.depth = 24;
-    props.contextProperties.bits.stencil = 8;
+    props.contextProperties.flags |= CGLContextProperties::GLDebug;
 
     std::atomic<ubyte> atomic;
     atomic.store(0);
@@ -76,17 +55,13 @@ int main(int,char**)
     while(worker.dataPtr()->load()==0)
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-    switch(worker.dataPtr()->load()){
-    case 1:
-        cDebug("Renderer exited with failure");
-        break;
-    default:
-        cDebug("Renderer exited normally");
-    }
+    cDebug((worker.dataPtr()->load() == 1)
+           ? "Renderer exited with failure"
+           : "Renderer exited normally");
 
     cDebug("Time: %lldus",timer.elapsed());
 
-//    ret.get();
+    ret.get();
 
     delete renderer;
     return 0;

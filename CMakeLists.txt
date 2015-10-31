@@ -42,74 +42,13 @@ include_directories (
                 libs/assimp/include
                 coffee)
 
-set ( CoffeeCore_HDRS
-coffee/cfiles.h
-coffee/cinput_keymap.h
-coffee/cinput.h
-coffee/cthreading.h
-coffee/cmath.h
-coffee/display/cdrendererbase.h
-coffee/cfunctional.h
-coffee/cdebug.h
-coffee/cobject.h
-coffee/cdisplay.h
-coffee/cregex.h
-coffee_impl/functional/cqueuerunner.h
-coffee_impl/display/coffeeglfw/cglfwnativefuncs.h
-coffee_impl/display/coffeeglfw/cglfwrenderer_eventhandlers.h
-coffee_impl/display/csdl2renderer.h
-coffee_impl/display/coffeesdl2/sdl2helpers.h
-coffee_impl/display/coffeesdl2/sdl2datatypes.h
-coffee_impl/display/coffeesdl2/sdl2eventhandlers.h
-coffee_impl/display/cglfwrenderer.h
-coffee_impl/audio/caudio.h
-coffee_impl/audio/openal/copenal.h
-coffee_impl/rendering/cmultidrawgraph.h
-coffee_impl/memory/cgame_dataset.h
-coffee_impl/memory/cgame_function_binds.h
-coffee_impl/image/cimage.h
-coffee_impl/input/cinput_eventhandling.h
-coffee_impl/sample/base_case.h
-coffee_impl/graphics/glbinding.h
-coffee_impl/graphics/cvertexarrayobject.h
-coffee_impl/graphics/ctexture.h
-coffee_impl/graphics/cgraphicsdata.h
-coffee_impl/graphics/ctexture_dxtc.h
-coffee_impl/graphics/cuniformtypes.h
-coffee_impl/graphics/cshader.h
-coffee_impl/graphics/cgraphicswrappers.h
-coffee_impl/graphics/cbuffer.h
-coffee_impl/graphics/cframebuffer.h
-coffee_impl/graphics/ctransformcomputer.h
-coffee_impl/graphics/cgraphics_quirks.h
-coffee_impl/assimp/cassimpimporters.h
-coffee_impl/assimp/cassimptypes.h
-coffee_impl/assimp/assimpfun.h
-coffee_impl/context/cdrenderer.h
-coffee_impl/context/cglbindingrenderer.h
-
-datasources/blam/cblam_map.h
-datasources/blam/cblam.h
-datasources/blam/cblam_bitm.h
-
-unit_tests/data_types.h
-plat/platform_detect.h
-plat/argument_parse.h
-plat/coffee_windows/win_core.h
-plat/coffee_windows/win_wm.h
-plat/coffee_linux/linux_wm.h
-plat/environment_details.h
-plat/plat_wm.h
-plat/coffee_unix/unix_core.h
-plat/plat_core.h
-        )
-
 set ( CoffeeCore_SRCS
 
         coffee/core/coffee.cpp
+        coffee/core/base/cdisplay.cpp
+        coffee/core/base/cfiles.cpp
         coffee/core/base/cobject.cpp
         coffee/core/base/cregex.cpp
-        coffee/core/base/cfiles.cpp
 
         coffee/core/base/cdrendererbase.cpp
 
@@ -129,8 +68,7 @@ set ( CoffeeCore_SRCS
         coffee/core/graphics/ctexture_dxtc.cpp
         coffee/core/graphics/cgraphics_quirks.cpp
 
-#Third-party sources
-
+        #Third-party sources
         libs/cppformat/format.cc
         )
 

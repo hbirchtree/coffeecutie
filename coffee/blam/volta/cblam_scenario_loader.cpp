@@ -11,6 +11,9 @@ const blam_scenario* blam_scn_get(
 {
     const blam_index_item* base = blam_tag_index_get_items(map);
 
+    if(!coffee_cmp_memarea(blam_index_item_type_scnr,base->tagclass[0],4))
+        return nullptr;
+
     cDebug("Scenario name: %s",blam_index_item_get_string(base,map,tags));
 
     const byte* b_ptr = (const byte*)map;

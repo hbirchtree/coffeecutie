@@ -8,6 +8,8 @@ namespace Coffee{
 namespace CRendering{
 namespace CTest{
 
+using namespace CResourceTypes;
+
 void coffee_test_fun_set(game_context *ctxt)
 {
     if(ctxt->features->ext_multi_draw_indirect)
@@ -329,7 +331,10 @@ void coffee_test_load_meshes(game_context* ctxt, CMultiDrawDataSet* multidraw)
 
         std::function<void(CAssimpMesh*)> lmesh = [=](CAssimpMesh* mesh){
 
-            CResource meshtest(cStringFormat("ubw/%s.mesh",mesh->name).c_str());
+            CResource meshtest(cStringFormat(
+                                   "ubw/%s.mesh",
+                                   assimp_reflexive_string_get(mesh,mesh->name))
+                               .c_str());
             CResourceTypes::coffee_assimp_dump_mesh(mesh,&meshtest);
 
             szptr voffset = 0;
