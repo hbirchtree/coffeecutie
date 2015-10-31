@@ -24,9 +24,9 @@ struct CIEvent
         MouseButton  = 0x7,/*!< Mouse button presses and releases*/
         QuitSign     = 0x8,/*!< Notifies the program, can be ignored or handled*/
         TextEdit     = 0x9,/*!< Text edit event, cursor position and stuff*/
-        ControllerEv = 0xa,/*!< Controller connection or disconnection*/
+        ControllerUpdate = 0xa,/*!< Controller connection or disconnection*/
         HapticDev    = 0xb,/*!< Sent when a new haptic device is connected or disconnected*/
-        Haptic       = 0xc,/*!< Sent when a new haptic device is connected or disconnected*/
+        Haptic       = 0xc,/*!< Transmitted when user wants to create a rumble event*/
     };
     uint32  ts    = 0; /*!< Event timestamp*/
     uint8   type  = 0; /*!< Event type*/
@@ -200,7 +200,7 @@ struct CIHapticEvent
         struct
         {
             uint8 index;
-            const byte name[];
+            byte name[];
         } rumble_device;
     };
 };

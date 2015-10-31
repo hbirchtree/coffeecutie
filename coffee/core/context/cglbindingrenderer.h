@@ -14,8 +14,11 @@ public:
 
     void fetchGLExtensions();
 
-    //Note: May hang!
-    //It is wise to run this asynchronously
+    /*!
+     * \brief Note: This function may hang the application if run on a different thread from the main one before the renderer is started. To avoid this, run fetchGLExtensions() early on.
+     * \param ext
+     * \return
+     */
     bool requestGLExtension(cstring ext);
 
     bool printExtensions(bool doFetch = false);

@@ -23,6 +23,7 @@ void glbindingCallbackDirect(GLenum source, GLenum type,
     report->message = msg;
     report->severity = severity;
     renderer->bindingCallback(report);
+    free(report);
 }
 
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :

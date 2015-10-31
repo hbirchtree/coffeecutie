@@ -15,10 +15,11 @@ using namespace Coffee::CGraphicsWrappers;
 
 namespace CDisplay {
 
+/*!
+ * \brief The base class for creating a rendering context. It will handle window events, input events and creating a GL context for the user. The user will then work on top of this stack with Coffee-defined events and classes.
+ */
 class CDRendererBase : public CObject
 {
-    //This class and its inherited classes should remain stateless
-
 public:
     /*!
      * \brief Verbosity level for messages
@@ -49,7 +50,7 @@ public:
     virtual std::thread::id contextThread() = 0;
 
     /*!
-     * \brief Initialize context manager with necessary details
+     * \brief Initialize context manager with necessary details, should not be overridden by the user.
      * \param props Hints for creating the context
      */
     virtual void init(const CDWindowProperties& props) = 0;
@@ -146,7 +147,7 @@ public:
 
     /*!
      * \brief Get current screensaver mode
-     * \return
+     * \return True if screensaver is enabled
      */
     virtual bool screensaverMode() = 0;
     /*!
@@ -221,17 +222,17 @@ public:
     virtual void pollEvents() = 0;
 
     /*!
-     * \brief Function for handling window events
+     * \brief Function for handling window events, implemented by the user.
      * \param e
      */
     virtual void eventWindowsHandle(const CDEvent* e) = 0;
     /*!
-     * \brief Function for handling input events
+     * \brief Function for handling input events, implemented by the user.
      * \param e
      */
     virtual void eventInputHandle(const CIEvent* e) = 0;
     /*!
-     * \brief Function for handling haptic events
+     * \brief Function for handling haptic events. A user will call this with a constructed event e and have it play in a fire-and-forget.
      * \param e
      */
     virtual void eventHapticHandle(const CIHapticEvent* e) = 0;
@@ -243,8 +244,8 @@ public:
      */
     virtual bool requestGLExtension(cstring e) = 0;
     /*!
-     * \brief Callback for GL errors and messages
-     * \param d
+     * \brief Callback for GL errors and messages, implemented by the user.
+     * \param d A pointer to the system's OpenGL report format. For the time being this is the CGLReport structure. The given data is freed when the function exits.
      */
     virtual void bindingCallback(void* d) const = 0;
     /*!

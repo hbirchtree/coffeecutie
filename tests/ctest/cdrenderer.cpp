@@ -145,12 +145,10 @@ void CDRenderer::run()
     cMsg("Coffee","Termination time: %lldus",swap.elapsed());
 }
 
-void CDRenderer::run(CDWindowProperties props)
+void CDRenderer::run(const CDWindowProperties& props)
 {
     init(props);
-
     run();
-
     cleanup();
 }
 
@@ -159,11 +157,10 @@ void CDRenderer::bindingCallback(void *report) const
     CGLReport* rep = (CGLReport*)report;
     if(!m_msg_filter(rep))
         return;
-    CString out = glbinding::Meta::getString(rep->type)+":"
-            +glbinding::Meta::getString(rep->severity)+":"
-            +glbinding::Meta::getString(rep->source)+": "+rep->message;
+    CString out = _glbinding_get_string<GLenum>(rep->type)+":"
+            +_glbinding_get_string<GLenum>(rep->severity)+":"
+            +_glbinding_get_string<GLenum>(rep->source)+": "+rep->message;
     cWarning("OpenGL: %s",out.c_str());
-    free(report);
 }
 
 void CDRenderer::eventWindowsHandle(const CDEvent *event)
@@ -184,6 +181,7 @@ void CDRenderer::eventWindowsHandle(const CDEvent *event)
 
 void CDRenderer::eventInputHandle(const CIEvent *event)
 {
+    CSDL2Renderer::eventInputHandle(event);
     if(event->type==CIEvent::Keyboard){
         const CIKeyEvent* kev = (const CIKeyEvent*)&event[1];
 //        cDebug("Key event: key=%i,mods=%i,scan=%i,char=%s",
@@ -215,32 +213,8 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         else if(mev->btn == CIMouseButtonEvent::RightButton)
             setRelativeMouse(false);
     }
-    else if(event->type==CIEvent::ControllerEv)
-    {
-        const CIControllerAtomicUpdateEvent* jev =
-                (const CIControllerAtomicUpdateEvent*)&event[1];
-        if(jev->connected&&!jev->remapped){
-            _controllers_handle(jev);
-        }else if(!jev->connected){
-            _controllers_handle(jev);
-        }
-    }
-    else if(event->type==CIEvent::HapticDev)
-    {
-        const CIHapticEvent* hev = (const CIHapticEvent*)&event[1];
-
-//        CIHapticEvent test;
-//        test.rumble_input.duration = 500;
-//        test.rumble_input.index = hev->rumble_device.index;
-//        test.rumble_input.strength = 0.2f;
-//        eventHapticHandle(&test);
-    }
     else if(event->type==CIEvent::Controller)
     {
-        //TODO: Create joystick filters
-        //Allow buttons to have repeated state
-        //Filter out centering of joystick (that is, movement towards its center)
-
         const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
         if(jev->axis)
         {
@@ -257,6 +231,20 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
             }
             default:
                 break;
+            }
+        }else{
+            switch(jev->index)
+            {
+            case CK_BUTTON_RB:{
+                if(!jev->button_state)
+                    break;
+                CIHapticEvent test;
+                test.rumble_input.duration = 180;
+                test.rumble_input.index = 0;
+                test.rumble_input.strength = 0.6f;
+                eventHapticHandle(&test);
+                break;
+            }
             }
         }
     }

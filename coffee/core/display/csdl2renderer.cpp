@@ -350,6 +350,20 @@ void CSDL2Renderer::eventHapticHandle(const CIHapticEvent *haptic)
             haptic->rumble_input.duration);
 }
 
+/*!
+ * \brief A default event handler created to intercept controller connect and disconnect. This is optional, and the user may choose to implement their own methods based on this.
+ * \param event
+ */
+void CSDL2Renderer::eventInputHandle(const CIEvent *event)
+{
+    if(event->type==CIEvent::ControllerUpdate)
+    {
+        const CIControllerAtomicUpdateEvent* jev =
+                (const CIControllerAtomicUpdateEvent*)&event[1];
+        _sdl2_controllers_handle(jev);
+    }
+}
+
 void CSDL2Renderer::swapBuffers()
 {
     SDL_GL_SwapWindow(m_context->window);
@@ -402,7 +416,7 @@ CIEvent* sdl2_controller_get_haptic(
     return nullptr;
 }
 
-void CSDL2Renderer::_controllers_handle(const CIControllerAtomicUpdateEvent *ev)
+void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent *ev)
 {
     if(ev->connected){
         if(m_context->controllers[ev->controller])

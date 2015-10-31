@@ -8,7 +8,7 @@ namespace Coffee{
 namespace CGraphicsWrappers{
 
 /*!
- * \brief Contains a GL message
+ * \brief Contains a GL message from the binding layer
  */
 struct CGLReport
 {
@@ -20,7 +20,7 @@ struct CGLReport
 };
 
 /*!
- * \brief GL multidraw indirect call
+ * \brief GL multidraw indirect call used to put triangles on the screen
  */
 struct CGLDrawCall
 {

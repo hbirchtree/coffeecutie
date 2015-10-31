@@ -66,18 +66,24 @@ public:
     void setKeyboardRepeat(bool m);
 
     void eventHapticHandle(const CIHapticEvent* haptic);
+    void eventInputHandle(const CIEvent *event);
 
     void swapBuffers();
     void pollEvents();
 
 protected:
     CSDL2Renderer(CObject* parent);
-    void _controllers_handle(const CIControllerAtomicUpdateEvent* ev);
+    /*!
+     * \brief Takes care of opening, closing and remapping controllers as they come and go. This method is mandatory if you want to open controllers under the SDL2 context.
+     * \param ev The atomic update event for this event
+     */
+    void _sdl2_controllers_handle(const CIControllerAtomicUpdateEvent* ev);
 
     CDWindowProperties m_properties;
     CString m_contextString;
 private:
     CSDL2Types::CSDL2Context* m_context = nullptr;
+
 };
 
 }

@@ -334,7 +334,7 @@ inline static void coffee_sdl2_eventhandle_controller_device(
         const SDL_ControllerDeviceEvent& dev)
 {
     CIEvent e;
-    e.type = CIEvent::ControllerEv;
+    e.type = CIEvent::ControllerUpdate;
     e.ts = dev.timestamp;
 
     cstring name = SDL_GameControllerNameForIndex(dev.which);
