@@ -104,6 +104,14 @@ struct blam_mod2_header
 };
 
 /*!
+ * \brief The blam_mod2_bsp_header struct
+ */
+struct blam_mod2_bsp_header
+{
+    byte data[500];
+};
+
+/*!
  * \brief Acquire the header of a model from the index item
  * \param item Item for which we acquire a model
  * \param map Map from which we extract a pointer

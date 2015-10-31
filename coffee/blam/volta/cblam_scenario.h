@@ -2,6 +2,7 @@
 #define CBLAM_SCENARIO
 
 #include "cblam_structures.h"
+#include "cblam_mod2.h"
 
 namespace Coffee{
 namespace CBlam{
@@ -360,6 +361,21 @@ struct blam_scn_light_fixture
 };
 
 /*!
+ * \brief Is not the same as a blam_mod2_bsp_header, this is extracted from the scenario and references the blam_mod2_bsp_header structure it belongs to.
+ */
+struct blam_scn_bsp_header
+{
+    uint32 offset;
+    uint32 size;
+    uint32 magic;
+    uint32 zero;
+    byte tag[4];
+    uint32 name_ptr;
+    uint32 unknown1;
+    uint32 tag_id;
+};
+
+/*!
  * \brief A Blam! scenario descriptor
  */
 struct blam_scenario
@@ -432,7 +448,7 @@ struct blam_scenario
     blam_reflexive<byte> cutscene_titles;
     blam_reflexive<byte> unknown_9[8];
     uint32 unknown_10[2];
-    blam_reflexive<byte> struct_bsp;
+    blam_reflexive<blam_scn_bsp_header> struct_bsp;
 };
 
 }

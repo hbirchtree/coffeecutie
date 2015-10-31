@@ -27,6 +27,7 @@ enum blam_versions
 constexpr cstring blam_index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
 constexpr cstring blam_index_item_type_bitm = "mtib"; /*!< Tag class for bitmaps*/
 constexpr cstring blam_index_item_type_scnr = "rncs"; /*!< Tag class for scenarios*/
+constexpr cstring blam_index_item_type_sbsp = "psbs"; /*!< Tag class for scenario BSPs (?)*/
 
 constexpr cstring blam_header_head = "deah"; /*!< Header of file header*/
 constexpr cstring blam_header_foot = "toof"; /*!< Footer of file header*/
@@ -140,9 +141,6 @@ struct blam_reflexive
     }
 };
 
-/*!
- * \brief Not yet implemented
- */
 struct blam_tagref
 {
     byte    tag[4];
