@@ -67,6 +67,7 @@ set ( CoffeeCore_SRCS
         coffee/core/graphics/ctexture.cpp
         coffee/core/graphics/ctexture_dxtc.cpp
         coffee/core/graphics/cgraphics_quirks.cpp
+        coffee/core/unit_tests/data_types.cpp
 
         #Third-party sources
         libs/cppformat/format.cc
@@ -126,6 +127,7 @@ if (COFFEE_BUILD_STATIC)
     add_library( CAudio STATIC ${CAudio_SRCS})
     add_library( CAssimp STATIC ${CAssimp_SRCS})
     add_library( CImage STATIC ${CImage_SRCS})
+    add_library ( CoffeeTest STATIC ${CoffeeTest_SRCS} )
     add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 else()
@@ -134,6 +136,7 @@ else()
     add_library( CAudio SHARED ${CAudio_SRCS})
     add_library( CAssimp SHARED ${CAssimp_SRCS})
     add_library( CImage SHARED ${CImage_SRCS})
+    add_library ( CoffeeTestLib SHARED ${CoffeeTest_SRCS} ) #For SWIG
     add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 endif()
@@ -173,6 +176,14 @@ ${assimp_loc}
 target_link_libraries ( CAudio
 ${OPENAL_LIBRARY}
 )
+target_link_libraries ( CoffeeTestLib
+CoffeeCore
+${glbinding_loc}
+CBlam
+CAudio
+CImage
+CAssimp
+)
 target_link_libraries ( CoffeeTest
 CoffeeCore
 ${glbinding_loc}
@@ -190,12 +201,15 @@ CBlam
 
 #Configure PIC and C++11
 target_compile_features(CBlamTesting PRIVATE cxx_variadic_templates)
+
 target_compile_features(CBlam PRIVATE cxx_variadic_templates)
 target_compile_features(CAudio PRIVATE cxx_variadic_templates)
 target_compile_features(CAssimp PRIVATE cxx_variadic_templates)
 target_compile_features(CImage PRIVATE cxx_variadic_templates)
+
+target_compile_features(CoffeeTestLib PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeTest PRIVATE cxx_variadic_templates)
-target_compile_features(CoffeeTest PRIVATE cxx_constexpr)
+
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
 ########################

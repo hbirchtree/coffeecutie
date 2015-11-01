@@ -349,22 +349,21 @@ struct blam_scn_skybox
 
 struct blam_scn_starting_equip
 {
-    uint32 padding1;
-    uint32 unk1;
-    ubyte padding[51];
-    blam_tagref items1;
-    blam_tagref items2;
-    ubyte unk3[109];
+    uint32 unknown1; /*!< Sometimes 1? */
+    uint32 index;
+    ubyte padding2[51];
+    blam_tagref items[6];
+    ubyte padding3[45];
 };
 
 struct blam_scn_control
 {
     int16 unk1;
     int16 unk2;
-    uint32  unk3;
+    ubyte unk3[4];
     CVec3 pos;
-    uint32  Tag_Id;
-    uint32 unk[10];
+    uint32 tag_id;
+    ubyte unk[40];
 };
 
 struct blam_scn_light_fixture

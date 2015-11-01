@@ -2,7 +2,7 @@
 #define COFFEE_COBJECT_H
 
 #include "coffee/core/coffee.h"
-#include "cfunctional.h"
+#include "cthreading.h"
 
 namespace Coffee {
 

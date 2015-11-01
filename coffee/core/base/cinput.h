@@ -181,7 +181,7 @@ struct CIControllerAtomicUpdateEvent
     uint8 controller:4;
     bool connected:1;
     bool remapped:1;
-    const byte name[];
+    byte name[];
 };
 
 /*!
@@ -226,7 +226,7 @@ struct CIDropEvent
         void* data = 0;
         struct
         {
-            const byte text[];
+            byte text[];
         } text_data;
     };
 };

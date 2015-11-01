@@ -1,7 +1,11 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
+//#define CPPFORMAT_PRINTING
+
+#ifdef CPPFORMAT_PRINTING
 #include <cppformat/format.h>
+#endif
 
 //C++ headers
 #include <sstream>
@@ -9,30 +13,46 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
-#include <cstdio>
 
 //C libraries
 #include <ctime>
 #include <string.h>
+#include <stdio.h>
 
 #include "coffee/core/coffee.h"
-#include "coffee/core/plat/plat_core.h"
-#include "coffee/core/base/cregex.h"
-
 
 namespace Coffee{
 namespace CFunctional{
 
 template<typename... Arg>
-static CString cStringFormat(cstring fmt, Arg... args);
-
+/*!
+ * \brief Should not be used for debug printing, it's slower than using printf
+ * \param fmt
+ * \param args
+ * \return A readily formatted string
+ */
+static CString cStringFormat(cstring fmt, Arg... args)
+{
+#ifdef CPPFORMAT_PRINTING
+    return fmt::sprintf(fmt,args...);
+#else
+    CString str;
+    str.reserve(snprintf(NULL,0,fmt,args...));
+    sprintf(&str[0],fmt,args...);
+    str[str.size()-1] = 0;
+    return str;
+#endif
+}
 
 template<typename... Args>
 static void cfprintf(FILE* stream, cstring format, Args... args)
 {
     try{
-        fmt::fprintf(stream,format,args...);
-    }catch(std::exception e)
+        CString formatted = cStringFormat(format,args...);
+        fputs(formatted.c_str(),stream);
+//        fmt::fprintf(stream,format,args...);
+    }
+    catch(std::exception e)
     {
         fprintf(stderr,"Failed to print message: %s\n",e.what());
     }
@@ -127,7 +147,9 @@ static void cDebugPrint(
     }
     }
 
-    cfprintf(strm,"%s%s:%s:%s%s: %s\n",col,timestring,sevstring,callstring,print_color_reset,cStringFormat(str,args...));
+    cfprintf(strm,"%s%s:%s:%s%s: %s\n",
+             col,timestring,sevstring,callstring,print_color_reset,
+             cStringFormat(str,args...).c_str());
 
     if(fail){
         CDebugHelpers::coffee_print_callstack("Callstack before crash: \n","-> %s\n",callstack,cs_length);
@@ -201,25 +223,6 @@ static void cMsg(cstring src, cstring msg, Arg... args)
     strcat(str,msg);
     cDebugPrint(0,1,str,args...);
     free(str);
-}
-
-template<typename... Arg>
-/*!
- * \brief Should not be used for debug printing, it's slower than using printf
- * \param fmt
- * \param args
- * \return A readily formatted string
- */
-static CString cStringFormat(cstring fmt, Arg... args)
-{
-//    szptr sz = snprintf(nullptr,0,fmt,args...);
-//    cstring_w _s = reinterpret_cast<cstring_w>(malloc(sz+1));
-//    sprintf(_s,fmt,args...);
-//    CString _o(_s);
-//    free(_s);
-//    return _o;
-
-    return fmt::sprintf(fmt,args...);
 }
 
 }

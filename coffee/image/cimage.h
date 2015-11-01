@@ -3,7 +3,6 @@
 
 #include <coffee/core/coffee_types.h>
 #include <coffee/core/base/cfiles.h>
-#include <coffee/core/base/cmath.h>
 
 namespace Coffee{
 namespace CStbImageLib{

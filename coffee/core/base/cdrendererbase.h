@@ -5,7 +5,6 @@
 #include "coffee/core/base/cobject.h"
 #include "coffee/core/base/cdisplay.h"
 #include "coffee/core/base/cinput.h"
-#include "coffee/core/base/cfunctional.h"
 
 using namespace Coffee::CInput;
 

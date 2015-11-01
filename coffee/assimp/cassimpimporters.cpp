@@ -1,7 +1,7 @@
 #include "cassimpimporters.h"
 
 #include <coffee/core/base/cregex.h>
-#include <coffee/core/base/cfunctional.h>
+#include <coffee/core/base/cthreading.h>
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/base/cfiles.h>
 

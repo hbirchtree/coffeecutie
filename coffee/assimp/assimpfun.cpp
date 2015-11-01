@@ -2,7 +2,7 @@
 
 //#define ASSIMP_PARSE_MULTICORE
 
-#include <coffee/core/base/cfunctional.h>
+#include <coffee/core/base/cthreading.h>
 
 namespace Coffee{
 namespace CResourceTypes{

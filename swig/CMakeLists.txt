@@ -5,7 +5,12 @@ set( CMAKE_VERBOSE_MAKEFILE on )
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-include_directories( ${CMAKE_SOURCE_DIR}/.. ${CMAKE_SOURCE_DIR}/../include )
+include_directories(
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/..
+    ${CMAKE_SOURCE_DIR}/../libs/glbinding/source/glbinding/include
+    ${CMAKE_SOURCE_DIR}/../libs/glm
+    ${CMAKE_SOURCE_DIR}/../include)
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
@@ -14,9 +19,10 @@ set(CMAKE_SWIG_FLAGS "")
 
 link_directories( ${CMAKE_BINARY_DIR})
 
-set(COFFEE_LINKING CoffeeCore CAudio CBlam CImage)
+set(COFFEE_LINKING CoffeeCore CAudio CBlam CImage CoffeeTestLib)
 
 set_source_files_properties(${CFILE} PROPERTIES CPLUSPLUS ON)
+set_property(SOURCE ${CFILE} PROPERTY SWIG_FLAGS "-includeall" "-ignoremissing")
 
 if(COFFEE_CSHARP)
 #CSharp build

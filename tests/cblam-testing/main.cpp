@@ -3,15 +3,15 @@
 #include <coffee/core/plat/application_start.h>
 #include <coffee/core/plat/argument_parse.h>
 
-/*!
- * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
- *   The purpose of this is platform abstraction such that the rest of the code works consistently across platforms.
- */
 
 using namespace Coffee;
 using namespace CResources;
 using namespace CBlam;
 
+/*!
+ * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
+ *   The purpose of this is platform abstraction such that the rest of the code works consistently across platforms.
+ */
 int coffee_main(int32 argv,byte** argc)
 {
     cstring mapstring = coffee_args_get_arg(argv,argc,"halomap");
@@ -25,14 +25,7 @@ int coffee_main(int32 argv,byte** argc)
 
     const blam_scenario* scn = blam_scn_get(map,&tags);
 
-    const blam_scn_starting_equip* equip = scn->starting_equipment.data(map,tags.index_magic);
-    for(int i=0;i<scn->starting_equipment.count;i++)
-    {
-        const blam_scn_starting_equip* eq = &equip[i];
-        cDebug("Equipment: %s, %s",
-               (cstring)blam_mptr(map,tags.index_magic,eq->items1.namePtr),
-               (cstring)blam_mptr(map,tags.index_magic,eq->items2.namePtr));
-    }
+
 
     const blam_scn_bsp_header* sbsp = scn->struct_bsp.data(map,tags.index_magic);
     for(int i=0;i<scn->struct_bsp.count;i++)

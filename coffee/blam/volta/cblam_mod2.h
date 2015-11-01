@@ -63,7 +63,7 @@ struct blam_mod2_geometry_header
 
 struct blam_mod2_marker
 {
-    const byte name[32];
+    byte name[32];
     uint32 unknown[5];
     blam_reflexive<byte> chunk;
 };

@@ -4,7 +4,6 @@
 #include <coffee/core/coffee_types.h>
 #include <coffee/core/coffee_macros.h>
 #include <functional>
-#include "cblam_bitm_decoders.h"
 #include "cblam_map.h"
 
 namespace Coffee{

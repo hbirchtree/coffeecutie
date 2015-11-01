@@ -2,7 +2,6 @@
 
 //#define LOAD_FILE
 
-#include <coffee/core/base/cfunctional.h>
 #include <coffee/core/graphics/cframebuffer.h>
 #include <coffee/core/graphics/cgraphics_quirks.h>
 #include <coffee/assimp/assimpfun.h>
