@@ -13,7 +13,7 @@ using namespace Coffee;
 
 namespace Coffee{
 
-static cstring_w coffee_executable_name(cstring_w path);
+static cstring_w coffee_executable_name(cstring_w n);
 
 static cstring _switch_short(cstring in)
 {
@@ -57,8 +57,9 @@ inline static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
 
 #include <stdlib.h>
 
-static cstring_w coffee_executable_name(cstring_w path = nullptr)
+static cstring_w coffee_executable_name(cstring_w n = nullptr)
 {
+    C_UNUSED(n)
     return realpath("/proc/self/exe",nullptr);
 }
 

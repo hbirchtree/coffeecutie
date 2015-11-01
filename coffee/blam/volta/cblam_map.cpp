@@ -3,7 +3,8 @@
 namespace Coffee{
 namespace CBlam{
 
-cstring blam_file_header_full_mapname(const blam_file_header *map)
+cstring blam_file_header_full_mapname(
+        const blam_file_header *map)
 {
     for(int32 i=0;i<blam_num_map_names;i++)
     {
@@ -13,7 +14,8 @@ cstring blam_file_header_full_mapname(const blam_file_header *map)
     return "";
 }
 
-blam_file_header *blam_file_header_get(void *baseptr, int32 expectedVersion)
+blam_file_header *blam_file_header_get(
+        void *baseptr, int32 expectedVersion)
 {
     blam_file_header* fh = (blam_file_header*)baseptr;
     if(
@@ -24,17 +26,21 @@ blam_file_header *blam_file_header_get(void *baseptr, int32 expectedVersion)
     return fh;
 }
 
-void blam_tag_index_magic(blam_tag_index *tagindex, int32 tagIndexOffset)
+void blam_tag_index_magic(
+        blam_tag_index *tagindex,
+        int32 tagIndexOffset)
 {
     tagindex->index_magic -= tagIndexOffset+40;
 }
 
-const blam_tag_index *blam_tag_index_ptr(const blam_file_header *file)
+const blam_tag_index *blam_tag_index_ptr(
+        const blam_file_header *file)
 {
     return (const blam_tag_index*)&((const byte*)file)[file->tagIndexOffset];
 }
 
-blam_tag_index blam_tag_index_get(const blam_file_header *file)
+blam_tag_index blam_tag_index_get(
+        const blam_file_header *file)
 {
     const blam_tag_index* tgi = blam_tag_index_ptr(file);
     blam_tag_index dupe;
@@ -43,20 +49,33 @@ blam_tag_index blam_tag_index_get(const blam_file_header *file)
     return dupe;
 }
 
-const blam_index_item *blam_tag_index_get_items(const blam_file_header *file)
+const blam_index_item *blam_tag_index_get_items(
+        const blam_file_header *file)
 {
     const blam_tag_index* ptr = blam_tag_index_ptr(file);
     return (const blam_index_item*)&(ptr[1]);
 }
 
-const void *blam_magic_ptr(const void *base, int32 magic, int32 offset)
+const void *blam_mptr(const void *base, int32 magic, int32 offset)
 {
-    return ((const byte*)base)+offset-magic;
+    const byte* ptr = ((const byte*)base)+offset-magic;
+    return (ptr < base) ? nullptr : ptr;
 }
 
-cstring blam_index_item_get_string(const blam_index_item *idx, const blam_file_header *map, const blam_tag_index *tagindex)
+cstring blam_index_item_get_string(
+        const blam_index_item *idx,
+        const blam_file_header *map,
+        const blam_tag_index *tagindex)
 {
-    return ((const byte*)map)+idx->stringOffset-tagindex->index_magic;
+    return (const byte*)blam_mptr(map,tagindex->index_magic,idx->stringOffset);
+}
+
+const blam_index_item *blam_tag_index_get_item(
+        const blam_file_header *file,
+        const blam_tag_index *tags,
+        int32 tag_id)
+{
+    return &blam_tag_index_get_items(file)[tag_id-tags->baseTag];
 }
 
 }

@@ -27,7 +27,7 @@ enum blam_versions
 constexpr cstring blam_index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
 constexpr cstring blam_index_item_type_bitm = "mtib"; /*!< Tag class for bitmaps*/
 constexpr cstring blam_index_item_type_scnr = "rncs"; /*!< Tag class for scenarios*/
-constexpr cstring blam_index_item_type_sbsp = "psbs"; /*!< Tag class for scenario BSPs (?)*/
+constexpr cstring blam_index_item_type_sbsp = "psbs"; /*!< Tag class for structured BSP*/
 
 constexpr cstring blam_header_head = "deah"; /*!< Header of file header*/
 constexpr cstring blam_header_foot = "toof"; /*!< Footer of file header*/
@@ -148,6 +148,22 @@ struct blam_tagref
     int32   unknown;
     int32   tagId;
 };
+
+/*!
+ * \brief Blam, at least for Halo 1, uses int16 to store bitmap sizes
+ */
+typedef _cbasic_size<int16> blam_size;
+/*!
+ * \brief As with blam_size, int16 is standard size for Halo 1.
+ */
+typedef _cbasic_point<int16> blam_point;
+
+/*!
+ * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
+ */
+typedef uint32 (*BlamBitmProcess)(uint32,uint16,byte);
+
+typedef CRGBA blam_rgba;
 
 }
 }

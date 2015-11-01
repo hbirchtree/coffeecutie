@@ -12,7 +12,8 @@ namespace CBlam{
  * \param map Map from which we identify a string
  * \return A null-terminated string with a map name or empty (empty if map name is not recognized)
  */
-extern cstring blam_file_header_full_mapname(const blam_file_header* map);
+extern cstring blam_file_header_full_mapname(
+        const blam_file_header* map);
 
 /*!
  * \brief Validate and get the file header from a base pointer, mostly validation
@@ -20,7 +21,8 @@ extern cstring blam_file_header_full_mapname(const blam_file_header* map);
  * \param expectedVersion Expected version of Halo to be parsed. If version does not match, fail.
  * \return Returns a casted pointer on success, nullptr on failure
  */
-extern blam_file_header* blam_file_header_get(void* baseptr, int32 expectedVersion);
+extern blam_file_header* blam_file_header_get(
+        void* baseptr, int32 expectedVersion);
 
 /*!
  * \brief Sets index magic for a tag index and modifies it with the correct magic number.
@@ -36,21 +38,29 @@ extern void blam_tag_index_magic(
  * \param file File header from which we want a tag index
  * \return A pointer to the tag index
  */
-extern const blam_tag_index* blam_tag_index_ptr(const blam_file_header* file);
+extern const blam_tag_index* blam_tag_index_ptr(
+        const blam_file_header* file);
 
 /*!
  * \brief Get a pointer to the start of the tag index items, traversed as a simple array
  * \param file File header from which we get the pointer
  * \return A pointer to the first tag index item
  */
-extern const blam_index_item* blam_tag_index_get_items(const blam_file_header* file);
+extern const blam_index_item* blam_tag_index_get_items(
+        const blam_file_header* file);
+
+extern const blam_index_item* blam_tag_index_get_item(
+        const blam_file_header* file,
+        const blam_tag_index* tags,
+        int32 tag_id);
 
 /*!
  * \brief Creates a copy of the tag index and sets up its magic index
  * \param file File header from which we extract a tag index
  * \return A tag index object copied from the file
  */
-extern blam_tag_index blam_tag_index_get(const blam_file_header* file);
+extern blam_tag_index blam_tag_index_get(
+        const blam_file_header* file);
 
 /*!
  * \brief Used to decode magic index pointers
@@ -59,7 +69,8 @@ extern blam_tag_index blam_tag_index_get(const blam_file_header* file);
  * \param offset Data offset which will be transformed
  * \return A pointer to the described data
  */
-extern const void* blam_magic_ptr(const void* base, int32 magic, int32 offset);
+extern const void* blam_mptr(
+        const void* base, int32 magic, int32 offset);
 
 /*!
  * \brief Acquire the name string for a tag

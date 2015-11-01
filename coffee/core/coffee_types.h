@@ -44,6 +44,11 @@ typedef std::string         CString; /*!< Typical string object */
 typedef std::runtime_error  CStdFault; /*!< Exception to be thrown by default */
 
 /*!
+ * \brief A prototype for Coffee-managed main functions. Benefits to this is that Coffee will abstract away any platform-specific quirks to the main function, such as difference in arguments. (Eg. some platforms do not include the main executable while others do)
+ */
+typedef int32 (*CoffeeMainWithArgs)(int32,byte**);
+
+/*!
  * \brief Primarily created to compare tag classes, it compares part of memory
  * \param target Typically a non-null-terminated string
  * \param cmp Typically what is compared to
@@ -68,17 +73,6 @@ inline static cstring coffee_cpy_string(cstring str){
     strcpy(buf,str);
     return buf;
 }
-
-struct CRGBA
-{
-    union{
-        uint32 i = 0;
-        struct
-        {
-            uint8 r,g,b,a;
-        } c;
-    };
-};
 
 /*!
  * \brief Convenience function for clearing memory
@@ -308,6 +302,21 @@ struct CMat3{
  */
 struct CMat4{
     scalar m[4][4];
+};
+
+struct CRGBA
+{
+    union{
+        uint32 i = 0;
+        struct
+        {
+            uint8 r,g,b,a;
+        } c;
+    };
+    CVec4 vec() const
+    {
+        return CVec4(c.r/255.f,c.g/255.f,c.b/255.f,c.a/255.f);
+    }
 };
 
 }

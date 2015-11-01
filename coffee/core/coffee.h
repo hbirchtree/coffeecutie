@@ -14,6 +14,11 @@
 namespace Coffee{
 
 /*!
+ * \brief This function handles initial program startup
+ */
+extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte** argc);
+
+/*!
  * \brief Initializes process state before running. Mainly core dumping.
  */
 extern void CoffeeInit();

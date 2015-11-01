@@ -109,6 +109,12 @@ struct blam_mod2_header
 struct blam_mod2_bsp_header
 {
     byte data[500];
+//    blam_tagref lightmaps_tag;
+//    uint32 unknown1[37];
+//    blam_reflexive<byte> shaders;
+//    blam_reflexive<byte> collision_bsp_header;
+//    blam_reflexive<byte> nodes;
+//    uint32 unknown2[6];
 };
 
 /*!

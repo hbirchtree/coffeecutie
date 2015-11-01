@@ -169,7 +169,16 @@ struct blam_scn_multiplayer_equipment
 
 struct blam_scn_player_starting_profile
 {
-    uint32 unk[26];
+    uint32 unk1_offset;
+    byte name[28];
+    uint16 padding1;
+    uint32 unk2_offset;
+    blam_tagref weapon1;
+    uint32 unk3;
+    blam_tagref weapon2;
+    uint32 unk4;
+    uint32 unk5;
+    uint32 padding2[5];
 };
 
 struct blam_scn_device_group
@@ -190,14 +199,12 @@ struct blam_scn_move_positions
     uint32 unk[5];
 };
 
-struct blam_scn_object_names
+struct blam_scn_object_name
 {
-    byte name[32];
-    uint16 unk1;
-    uint16 unk2;
+    byte name[36];
 };
 
-struct blam_scn_trigger_volumes
+struct blam_scn_trigger_volume
 {
     uint32 unk;
     byte name[32];
@@ -342,7 +349,12 @@ struct blam_scn_skybox
 
 struct blam_scn_starting_equip
 {
-    uint32 unk[51];
+    uint32 padding1;
+    uint32 unk1;
+    ubyte padding[51];
+    blam_tagref items1;
+    blam_tagref items2;
+    ubyte unk3[109];
 };
 
 struct blam_scn_control
@@ -357,7 +369,14 @@ struct blam_scn_control
 
 struct blam_scn_light_fixture
 {
-    uint32 unk[22];
+    blam_rgba ambient;
+    ubyte unk1[4];
+    CVec3 pos;
+    ubyte unk2[12];
+    blam_rgba specular;
+    int32 zero1;
+    blam_rgba color;
+    ubyte unk3[40];
 };
 
 /*!
@@ -383,7 +402,7 @@ struct blam_scenario
     byte unk_str1[16];
     byte unk_str2[16];
     byte unk_str3[16];
-    blam_reflexive<byte> skybox;
+    blam_reflexive<blam_scn_skybox> skybox;
     uint32 unknown_1;
     blam_reflexive<byte> child_scenarios;
 
@@ -397,31 +416,33 @@ struct blam_scenario
     uint32 ptr_to_index_end;
     uint32 reserved3[57];
 
-    blam_reflexive<cstring> object_names;
+    blam_reflexive<blam_scn_object_name> object_names;
     blam_reflex_group<byte> scenery;
-    blam_reflex_group<byte> biped;
-    blam_reflex_group<byte> vehicle;
-    blam_reflex_group<byte> equip;
-    blam_reflex_group<byte> weap;
-    blam_reflexive<byte> device_groups;
-    blam_reflex_group<byte> machine;
-    blam_reflex_group<byte> control;
-    blam_reflex_group<byte> light_fixture;
-    blam_reflex_group<byte> snd_scenery;
+    blam_reflex_group<blam_scn_biped> biped;
+    blam_reflex_group<blam_scn_vehicle_spawn> vehicle;
+    blam_reflex_group<blam_scn_equip> equip;
+    blam_reflex_group<blam_scn_weapon_spawn> weap;
+    blam_reflexive<blam_scn_device_group> device_groups;
+    blam_reflex_group<blam_scn_machine> machine;
+    blam_reflex_group<blam_scn_control> control;
+    blam_reflex_group<blam_scn_light_fixture> light_fixture;
+    blam_reflex_group<blam_scn_sound_scenery> snd_scenery;
+
     blam_reflexive<byte> unknown_4[7];
-    blam_reflexive<byte> player_start_profile;
-    blam_reflexive<byte> player_spawn;
-    blam_reflexive<byte> trigger_volume;
+
+    blam_reflexive<blam_scn_player_starting_profile> player_start_profile;
+    blam_reflexive<blam_scn_player_spawn> player_spawn;
+    blam_reflexive<blam_scn_trigger_volume> trigger_volume;
     blam_reflexive<byte> animation;
-    blam_reflexive<byte> multiplayer_flags;
-    blam_reflexive<byte> multiplayer_equipment;
-    blam_reflexive<byte> starting_equipment;
-    blam_reflexive<byte> bsp_switch_trigger;
-    blam_reflex_group<byte> decals;
+    blam_reflexive<blam_scn_multiplayer_flag> multiplayer_flags;
+    blam_reflexive<blam_scn_multiplayer_equipment> multiplayer_equipment;
+    blam_reflexive<blam_scn_starting_equip> starting_equipment;
+    blam_reflexive<blam_scn_bsp_trigger> bsp_switch_trigger;
+    blam_reflex_group<blam_scn_decal> decals;
     blam_reflexive<byte> detail_obj_collision_ref;
     blam_reflexive<byte> unknown_5[7];
-    blam_reflexive<byte> actor_variant_ref;
-    blam_reflexive<byte> encounters;
+    blam_reflexive<blam_scn_actor_variant_ref> actor_variant_ref;
+    blam_reflexive<blam_scn_encounter> encounters;
 
     blam_reflexive<byte> command_lists;
     blam_reflexive<byte> unknown_6;
@@ -433,13 +454,13 @@ struct blam_scenario
     blam_reflexive<byte> scripts;
     blam_reflexive<byte> commands;
     blam_reflexive<byte> points;
-    blam_reflexive<byte> ai_animation_refs;
-    blam_reflexive<byte> globals;
-    blam_reflexive<byte> ai_recording_refs;
+    blam_reflexive<blam_scn_ai_animation_ref> ai_animation_refs;
+    blam_reflexive<blam_scn_globals> globals;
+    blam_reflexive<blam_scn_ai_recording_ref> ai_recording_refs;
     blam_reflexive<byte> unknown_8;
     blam_reflexive<byte> participants;
     blam_reflexive<byte> lines;
-    blam_reflexive<byte> script_triggers;
+    blam_reflexive<blam_scn_script_triggers> script_triggers;
     blam_reflexive<byte> cutscenes_verify;
     blam_reflexive<byte> cutscene_titles_verify;
     blam_reflexive<byte> source_files;

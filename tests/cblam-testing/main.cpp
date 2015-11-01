@@ -23,9 +23,26 @@ int coffee_main(int32 argv,byte** argc)
             blam_file_header_get(mapfile.data,blam_version_pc);
     blam_tag_index tags = blam_tag_index_get(map);
 
-    const blam_index_item* base = blam_tag_index_get_items(map);
-
     const blam_scenario* scn = blam_scn_get(map,&tags);
+
+    const blam_scn_starting_equip* equip = scn->starting_equipment.data(map,tags.index_magic);
+    for(int i=0;i<scn->starting_equipment.count;i++)
+    {
+        const blam_scn_starting_equip* eq = &equip[i];
+        cDebug("Equipment: %s, %s",
+               (cstring)blam_mptr(map,tags.index_magic,eq->items1.namePtr),
+               (cstring)blam_mptr(map,tags.index_magic,eq->items2.namePtr));
+    }
+
+    const blam_scn_bsp_header* sbsp = scn->struct_bsp.data(map,tags.index_magic);
+    for(int i=0;i<scn->struct_bsp.count;i++)
+    {
+        const blam_scn_bsp_header* s_bsp = &sbsp[i];
+        const blam_mod2_bsp_header* bsp =
+                (const blam_mod2_bsp_header*)
+                blam_mptr(map,tags.index_magic,s_bsp->offset+s_bsp->magic);
+        cDebug("Name of BSP: %s",(cstring)blam_mptr(map,tags.index_magic,s_bsp->name_ptr));
+    }
 
     return 0;
 }
