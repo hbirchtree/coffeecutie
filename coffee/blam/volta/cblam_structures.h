@@ -111,13 +111,13 @@ struct blam_index_item
 {
     byte    tagclass[3][4]; /*! Strings which identify its class*/
     int32   tagId; /*! A number representing its ID, only used for enumeration*/
-    uint32  stringOffset; /*! Magic data offset to a full string for the item*/
+    uint32  string_offset; /*! Magic data offset to a full string for the item*/
     int32   offset; /*! A byte offset to associated data*/
     int32   zeroes[2];
 };
 
 /*!
- * \brief Points to a chunk of memory within the file, mostly with Xbox version
+ * \brief Points to a chunk of memory within the file
  */
 template<typename T>
 struct blam_reflexive
@@ -127,7 +127,7 @@ struct blam_reflexive
     int32 zero;
 
     /*!
-     * \brief Made for simplicity in working with reflexive data. Instead of several functions performing the same task, this template allows to access the data much more conveniently.
+     * \brief Made for simplicity when working with reflexive data. Instead of several functions performing the same task, this template allows to access the data much more conveniently.
      * \param basePtr Base pointer of map in most cases
      * \param magic Magic number from tag index
      * \return A valid pointer if the reflexive is deemed valid (if the variable zero is indeed zero)
@@ -144,7 +144,7 @@ struct blam_reflexive
 struct blam_tagref
 {
     byte    tag[4];
-    int32   namePtr;
+    int32   string_offset;
     int32   unknown;
     int32   tagId;
 };

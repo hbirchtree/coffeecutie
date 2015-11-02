@@ -84,6 +84,18 @@ extern cstring blam_index_item_get_string(
         const blam_file_header* map,
         const blam_tag_index* tagindex);
 
+/*!
+ * \brief Get the name of a referenced tag
+ * \param tag
+ * \param file
+ * \param tags
+ * \return
+ */
+extern cstring blam_tagref_get_name(
+        const blam_tagref* tag,
+        const blam_file_header* file,
+        const blam_tag_index* tags);
+
 }
 }
 

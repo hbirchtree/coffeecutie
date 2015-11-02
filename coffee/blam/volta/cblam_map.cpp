@@ -67,7 +67,7 @@ cstring blam_index_item_get_string(
         const blam_file_header *map,
         const blam_tag_index *tagindex)
 {
-    return (const byte*)blam_mptr(map,tagindex->index_magic,idx->stringOffset);
+    return (const byte*)blam_mptr(map,tagindex->index_magic,idx->string_offset);
 }
 
 const blam_index_item *blam_tag_index_get_item(
@@ -76,6 +76,11 @@ const blam_index_item *blam_tag_index_get_item(
         int32 tag_id)
 {
     return &blam_tag_index_get_items(file)[tag_id-tags->baseTag];
+}
+
+cstring blam_tagref_get_name(const blam_tagref *tag, const blam_file_header *file, const blam_tag_index *tags)
+{
+    return (cstring)blam_mptr(file,tags->index_magic,tag->string_offset);
 }
 
 }

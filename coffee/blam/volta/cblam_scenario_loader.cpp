@@ -14,7 +14,9 @@ const blam_scenario* blam_scn_get(
     if(!coffee_cmp_memarea(blam_index_item_type_scnr,base->tagclass[0],4))
         return nullptr;
 
-    cDebug("Scenario name: %s",blam_index_item_get_string(base,map,tags));
+    cDebug("Scenario name: %s,offset=%lld",
+           blam_index_item_get_string(base,map,tags),
+           base->offset-tags->index_magic);
 
     const byte* b_ptr = (const byte*)map;
     return (const blam_scenario*)(b_ptr+base->offset-tags->index_magic);

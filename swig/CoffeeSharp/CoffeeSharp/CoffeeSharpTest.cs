@@ -25,8 +25,8 @@ namespace CoffeeSharp
 				String.Format("{0}/Skrivebord/healing.ogg",
 			              Coffee.coffee_get_env_variable("HOME")));
 			smp_file.read_data ();
-			//CStbAudioSample smp = new CStbAudioSample();
-			//Coffee.coffee_stb_audio_vorbis_load (smp,smp_file);
+			CAudioSample smp = new CAudioSample();
+			Coffee.coffee_stb_audio_vorbis_load (smp,smp_file);
 
 			CResource img_file = new CResource ("ubw/models/textures/gear.png");
 			img_file.read_data ();
@@ -39,8 +39,7 @@ namespace CoffeeSharp
 
 			props = new CDWindowProperties ();
 			props.flags = (ushort)(
-				CDWindowProperties.WindowState.Decorated 
-				| CDWindowProperties.WindowState.Windowed 
+				CDWindowProperties.WindowState.Windowed 
 				| CDWindowProperties.WindowState.Resizable);
 			props.monitor = 0;
 			props.contextProperties.flags = (ushort)(

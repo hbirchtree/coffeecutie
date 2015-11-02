@@ -15,6 +15,8 @@ using namespace CBlam;
 int coffee_main(int32 argv,byte** argc)
 {
     cstring mapstring = coffee_args_get_arg(argv,argc,"halomap");
+    if(!mapstring)
+        return 1;
     CResource mapfile(mapstring);
     CResource bitmfile("bitmaps.map");
     bitmfile.memory_map();
