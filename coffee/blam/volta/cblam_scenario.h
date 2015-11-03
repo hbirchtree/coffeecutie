@@ -7,6 +7,8 @@
 namespace Coffee{
 namespace CBlam{
 
+typedef byte blam_scn_chunk[100];
+
 /*!
  * \brief The blam_bounding_box struct
  */
@@ -57,7 +59,7 @@ struct blam_scn_vehicle_spawn
 
 struct blam_scn_palette
 {
-    byte tag[4];
+    bl_tag tag;
     uint32 NamePtr;
     uint32 unk1;
     uint32 ObjectTagId;
@@ -124,16 +126,16 @@ struct blam_scn_player_spawn
 
 struct blam_scn_profile_placement
 {
-    byte name[32];
+    bl_string name;
     scalar health;
     scalar shields;
-    byte primarytag[4];
+    bl_tag primarytag;
     int32 primaryrawfilename;
     byte zero1[4];
     int32 primaryidentifier;
     int16 primaryclip;
     int16 primarytotal;
-    byte secondarytag[4];
+    bl_tag secondarytag;
     int32 secondaryfilename;
     byte zero2[4];
     int32 secondaryidentifier;
@@ -151,7 +153,7 @@ struct blam_scn_multiplayer_flag
     scalar yaw;
     uint16 index1;
     uint16 index2;
-    byte  tag[4];
+    bl_tag  tag;
     uint32  unk2[31];
 };
 
@@ -201,21 +203,21 @@ struct blam_scn_move_positions
 
 struct blam_scn_object_name
 {
-    byte name[32];
+    bl_string name;
     uint32 unknown;
 };
 
 struct blam_scn_trigger_volume
 {
     uint32 unk;
-    byte name[32];
+    bl_string name;
     scalar unk2[9];
     blam_bounding_box box;
 };
 
 struct blam_scn_actor_variant_ref
 {
-    byte tag[4];
+    bl_tag tag;
     uint32 NamePtr;
     uint32 unk;
     scalar unk2;
@@ -223,7 +225,7 @@ struct blam_scn_actor_variant_ref
 
 struct blam_scn_ai_animation_ref
 {
-    byte name[32];
+    bl_string name;
     int16 unk1;
     int16 unk2;
     uint32 unk[14];
@@ -231,14 +233,14 @@ struct blam_scn_ai_animation_ref
 
 struct blam_scn_ai_script_ref
 {
-    byte name[32];
+    bl_string name;
     uint32 unk[15];
 };
 
 struct blam_scn_ai_recording_ref
 {
     uint32 unk1[6];
-    byte tag[4];
+    bl_tag tag;
     uint32 NamePtr;
     uint32 unk[2];
 };
@@ -246,7 +248,7 @@ struct blam_scn_ai_recording_ref
 struct blam_scn_script_triggers
 {
     uint32 unk1;
-    byte name[32];
+    bl_string name;
     CVec3 pos;
     uint32 unk[11];
 };
@@ -254,7 +256,7 @@ struct blam_scn_script_triggers
 struct blam_scn_globals
 {
     uint32 unk1;
-    byte name[32];
+    bl_string name;
     uint32 unk2;
     CVec3 pos;
     scalar unk3[4];
@@ -264,7 +266,7 @@ struct blam_scn_globals
 struct blam_scn_references
 {
     uint32 unk1;
-    byte name[32];
+    bl_string name;
     uint32 unk[15];
 };
 
@@ -280,7 +282,7 @@ struct blam_scn_encounter
 
 struct blam_scn_encounter_squad
 {
-    byte name[32];
+    bl_string name;
     int16 ActorType;
     int16 Platoon;
     int16 InitialState;
@@ -328,7 +330,7 @@ struct blam_scn_decal
 
 struct blam_scn_decal_ref
 {
-    byte tag[4];
+    bl_tag tag;
     uint32 NamePtr;
     uint32 reserved;
     uint32 TagId;
@@ -342,7 +344,7 @@ struct blam_scn_shader_index
 
 struct blam_scn_skybox
 {
-    byte tag[4];
+    bl_tag tag;
     uint32 NameRef;
     uint32 unk1;
     uint32 TagId;
@@ -355,11 +357,6 @@ struct blam_scn_starting_equip
     ubyte padding2[51];
     blam_tagref items[6];
     ubyte padding3[45];
-};
-
-struct blam_scn_chunk
-{
-    byte unknown[100];
 };
 
 struct blam_scn_control
@@ -391,7 +388,7 @@ struct blam_scn_sbsp
     uint32 xbox_reflexive_offset;
     uint32 xbox_lightmap_reflexive_count;
     uint32 xbox_lightmap_reflexive_offset;
-    byte tag[4];
+    bl_tag tag;
 };
 
 /*!
@@ -403,7 +400,7 @@ struct blam_scn_bsp_header
     uint32 size;
     uint32 magic;
     uint32 zero;
-    byte tag[4];
+    bl_tag tag;
     uint32 name_ptr;
     uint32 unknown1;
     uint32 tag_id;

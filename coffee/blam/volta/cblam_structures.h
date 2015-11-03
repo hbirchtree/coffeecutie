@@ -5,6 +5,12 @@
 
 namespace Coffee{
 namespace CBlam{
+
+typedef byte bl_tag[4];
+typedef byte bl_string[32];
+typedef byte bl_header[4];
+typedef byte bl_footer[4];
+
 /*!
  * \brief Blam maptypes. Names being obvious, the UI type does not give a playable map.
  */
@@ -72,19 +78,19 @@ constexpr struct mapnames { byte inname[32]; byte outname[32];} blam_map_names[2
  */
 struct blam_file_header
 {
-    int32   id; /*!< Header value, should correspond with specific data*/
+    bl_header id; /*!< Header value, should correspond with specific data*/
     int32   version; /*!< Version of Halo, determines the process*/
     int32   decomp_len; /*!< Decompressed length, for Xbox where format is compressed. PC is uncompressed*/
     int32   unknown1;
     int32   tagIndexOffset; /*!< Offset to tag index*/
     int32   tagIndexMetaLen; /*!< Length of tag index item metadata*/
     int32   reserved_1[2];
-    byte    name[32]; /*!< Name identifier for map*/
-    byte    buildDate[32]; /*!< Build date for the map file*/
+    bl_string name; /*!< Name identifier for map*/
+    bl_string buildDate; /*!< Build date for the map file*/
     int32   mapType; /*!< Type of map, determines whether it is playable*/
     int32   unknown_4;
     int32   reserved_2[485];
-    int32   footer; /*!< Footer value, should correspond with specific data*/
+    bl_footer footer; /*!< Footer value, should correspond with specific data*/
 };
 
 /*!
@@ -109,7 +115,7 @@ struct blam_tag_index
  */
 struct blam_index_item
 {
-    byte    tagclass[3][4]; /*! Strings which identify its class*/
+    bl_tag  tagclass[3]; /*! Strings which identify its class*/
     int32   tagId; /*! A number representing its ID, only used for enumeration*/
     uint32  string_offset; /*! Magic data offset to a full string for the item*/
     int32   offset; /*! A byte offset to associated data*/
@@ -143,7 +149,7 @@ struct blam_reflexive
 
 struct blam_tagref
 {
-    byte    tag[4];
+    bl_tag  tag;
     int32   string_offset;
     int32   unknown;
     int32   tagId;
