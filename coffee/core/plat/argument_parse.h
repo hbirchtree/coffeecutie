@@ -53,6 +53,23 @@ inline static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
     return nullptr;
 }
 
+/*!
+ * \brief Acquire all arguments listed by in_argv and write them to out_argv, pulling data from argv. Relatively high computational complexity.
+ * \param argc Number of input arguments
+ * \param argv Source for arguments
+ * \param get_argc Number of arguments to acquire, needs to be same size as in_argv and out_argv
+ * \param in_argv Contains null-terminated strings with names of switches
+ * \param out_argv
+ */
+static void coffee_args_get_all(int argc, cstring_w* argv, int get_argc, cstring const* in_argv, cstring* out_argv)
+{
+    /*TODO: Write a better implementation that maps from argv to in_argv*/
+    for(int i=0;i<get_argc;i++)
+    {
+	out_argv[i] = coffee_args_get_arg(argc,argv,in_argv[i]);
+    }
+}
+
 #if defined(COFFEE_LINUX)
 
 #include <stdlib.h>
