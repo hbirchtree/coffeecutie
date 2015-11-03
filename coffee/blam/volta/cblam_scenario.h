@@ -201,7 +201,8 @@ struct blam_scn_move_positions
 
 struct blam_scn_object_name
 {
-    byte name[36];
+    byte name[32];
+    uint32 unknown;
 };
 
 struct blam_scn_trigger_volume
@@ -381,6 +382,16 @@ struct blam_scn_light_fixture
     int32 zero1;
     blam_rgba color;
     ubyte unk3[40];
+};
+
+struct blam_scn_sbsp
+{
+    uint32 header_offset;
+    uint32 xbox_reflexive_count;
+    uint32 xbox_reflexive_offset;
+    uint32 xbox_lightmap_reflexive_count;
+    uint32 xbox_lightmap_reflexive_offset;
+    byte tag[4];
 };
 
 /*!

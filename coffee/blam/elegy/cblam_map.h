@@ -43,7 +43,8 @@ struct blam_file_header_h3
     int32   string_index_table_offset;
     int32   string_table_offset;
     byte    unknown4[36];
-    byte    name[36];
+    byte    name[32];
+    uint32  unknown6;
     byte    scenario[260];
     int32   file_table_count;
     int32   file_table_offset;
