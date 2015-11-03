@@ -36,6 +36,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 add_definitions ( -Wall )
 include_directories (
                 ${CMAKE_SOURCE_DIR}
+		${CMAKE_SOURCE_DIR}/include
                 ${CMAKE_CURRENT_BINARY_DIR}
                 libs
                 libs/glbinding/source/glbinding/include
@@ -79,6 +80,10 @@ set ( CoffeeTest_SRCS
         tests/ctest/base_case.cpp
         tests/ctest/cdrenderer.cpp
         )
+
+set ( CoffeeTestHud_SRCS
+	tests/ctest-hud/main.cpp
+	)
 
 set ( CAssimp_SRCS
         coffee/assimp/cassimpimporters.cpp
@@ -130,6 +135,7 @@ if (COFFEE_BUILD_STATIC)
     add_library ( CoffeeTest STATIC ${CoffeeTest_SRCS} )
     add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+    add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
 else()
     add_library( CBlam SHARED ${CBlamVolta_SRCS} ${CBlamDimeter_SRCS} ${CBlamElegy_SRCS})
     add_library( CoffeeCore SHARED ${CoffeeCore_SRCS} )
@@ -139,6 +145,7 @@ else()
     add_library ( CoffeeTestLib SHARED ${CoffeeTest_SRCS} ) #For SWIG
     add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
     add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+    add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
 endif()
 #####################
 
@@ -186,11 +193,14 @@ CAssimp
 )
 target_link_libraries ( CoffeeTest
 CoffeeCore
-${glbinding_loc}
 CBlam
 CAudio
 CImage
 CAssimp
+)
+target_link_libraries ( CoffeeTestHud
+CoffeeCore
+CImage
 )
 target_link_libraries ( CBlamTesting
 CoffeeCore
@@ -209,6 +219,7 @@ target_compile_features(CImage PRIVATE cxx_variadic_templates)
 
 target_compile_features(CoffeeTestLib PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeTest PRIVATE cxx_variadic_templates)
+target_compile_features(CoffeeTestHud PRIVATE cxx_variadic_templates)
 
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
