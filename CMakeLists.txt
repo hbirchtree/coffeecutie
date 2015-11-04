@@ -73,6 +73,8 @@ set ( CoffeeCore_SRCS
 
         coffee/core/input/cinputfunctions.cpp
 
+        coffee/scene/cnode.cpp
+
         #Third-party sources
         libs/cppformat/format.cc
         )

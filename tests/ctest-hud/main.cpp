@@ -93,12 +93,25 @@ public:
         coffee_graphics_bind(&vao);
         coffee_graphics_bind(&indices);
 
+        CTransform root;
+        root.position = CMath::vec3(1,2,3);
+        root.scale = CMath::vec3(1,1,1);
+        coffee_graphics_gen_matrix(&root);
+
         CGCamera camera;
         camera.aspect = 1.6f;
 
+        coffee_graphics_gen_matrix_perspective(&camera);
+
         CNode worldNode;
+        worldNode.transform = (CMat4*)&camera.matrix;
 
         CNode rootNode;
+        rootNode.parent = &worldNode;
+        rootNode.transform = (CMat4*)&root.matrix;
+
+        CMat4 wt = coffee_node_get_transform(&worldNode);
+        CMat4 rt = coffee_node_get_transform(&rootNode);
 
         this->showWindow();
         while(!closeFlag())

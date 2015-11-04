@@ -104,6 +104,19 @@ template<typename T> struct _cbasic_quat{
  * \brief A base for all NxN matrix types
  */
 template<typename T, int ns> struct _cbasic_matrix_n{
+    _cbasic_matrix_n()
+    {
+        for(int x=0;x<ns;x++)
+            for(int y=0;y<ns;y++)
+                m[x][y] = 1;
+    }
+    _cbasic_matrix_n(T v)
+    {
+        for(int x=0;x<ns;x++)
+            for(int y=0;y<ns;y++)
+                m[x][y] = v;
+    }
+
     T m[ns][ns];
 };
 
@@ -111,6 +124,19 @@ template<typename T, int ns> struct _cbasic_matrix_n{
  * \brief A base for all MxN matrix types
  */
 template<typename T, int ms, int ns> struct _cbasic_matrix_nm{
+    _cbasic_matrix_nm()
+    {
+        for(int x=0;x<ms;x++)
+            for(int y=0;y<ns;y++)
+                m[x][y] = 1;
+    }
+    _cbasic_matrix_nm(T v)
+    {
+        for(int x=0;x<ms;x++)
+            for(int y=0;y<ns;y++)
+                m[x][y] = v;
+    }
+
     T m[ms][ns];
 };
 
