@@ -4,11 +4,7 @@
 #include <cmath>
 #include <random>
 
-#include "coffee/core/coffee_types.h"
-
-#include <glm/glm/glm.hpp>
-#include <glm/glm/gtc/type_ptr.hpp>
-#include <glm/glm/gtc/matrix_transform.hpp>
+#include "cmath_glm.h"
 
 namespace Coffee{
 /*!
@@ -16,7 +12,6 @@ namespace Coffee{
  */
 namespace CMath{
 using namespace std;
-using namespace glm;
 
 template<typename T>
 inline static bool power2(T n)

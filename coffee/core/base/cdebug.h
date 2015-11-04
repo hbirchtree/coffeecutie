@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "coffee/core/coffee.h"
+#include "counter.h"
 
 namespace Coffee{
 namespace CFunctional{

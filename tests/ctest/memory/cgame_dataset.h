@@ -49,10 +49,9 @@ struct game_memory_chunk
 
 struct game_transform_chunk
 {
-    chunk_mem<CModelTransform>      transforms;
+    chunk_mem<CTransform>      transforms;
     chunk_mem<CGCamera>             cameras;
 };
-
 
 struct game_context
 {

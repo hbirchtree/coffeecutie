@@ -5,7 +5,17 @@
 #include "coffee/core/display/csdl2renderer.h"
 
 namespace Coffee{
+
+namespace CGraphicsWrappers{
+struct CGLReport;
+}
+
 namespace CDisplay{
+
+/*!
+ * \brief Returns true if message is accepted, false is discarded
+ */
+typedef std::function<bool(CGLReport*)> CGLMessageFilter;
 
 class CGLBindingRenderer : public CSDL2Renderer
 {
@@ -23,6 +33,8 @@ public:
 
     bool printExtensions(bool doFetch = false);
 
+    virtual void bindingCallback(void* report) const;
+
 protected:
     CGLBindingRenderer(CObject* parent);
 
@@ -33,13 +45,14 @@ protected:
     CString m_rendererString;
     CString m_vendorString;
     CString m_versionString;
-    int m_libraryRevision = 0;
+    int m_libraryRevision;
 
     cstring extensions();
 
-private:
-    cstring_w m_extensions = nullptr;
+    CGLMessageFilter m_msg_filter;
 
+private:
+    cstring_w m_extensions;
 };
 
 }

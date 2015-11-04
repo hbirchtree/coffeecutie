@@ -12,3 +12,5 @@
 #include "coffee/core/graphics/cframebuffer.h"
 
 #include "coffee/core/graphics/cuniformtypes.h"
+
+#include "coffee/scene/cnode.h"

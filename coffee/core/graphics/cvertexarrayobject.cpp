@@ -3,7 +3,7 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-void coffee_vao_attribute_format(
+void coffee_graphics_vao_attribute_format(
         CVertexArrayObject *vao, const CVertexAttribute& attr,
         const CVertexFormat &fmt)
 {
@@ -13,7 +13,7 @@ void coffee_vao_attribute_format(
                 fmt.normalized,fmt.offset);
 }
 
-void coffee_vao_attribute_buffer(
+void coffee_graphics_vao_attribute_buffer(
         CVertexArrayObject *vao, const CVertexAttribute& attr,
         const CVertexBufferBinding &buf)
 {
@@ -22,7 +22,7 @@ void coffee_vao_attribute_buffer(
     glVertexArrayBindingDivisor(vao->handle,buf.binding,buf.divisor);
 }
 
-void coffee_vao_attribute_bind_buffer(CVertexArrayObject *vao, const CVertexBufferBinding &buf)
+void coffee_graphics_vao_attribute_bind_buffer(CVertexArrayObject *vao, const CVertexBufferBinding &buf)
 {
     glVertexArrayVertexBuffer(vao->handle,buf.binding,buf.buffer->handle,buf.offset,buf.stride);
 }

@@ -6,6 +6,7 @@
 #include <coffee/core/graphics/cgraphics_quirks.h>
 #include <coffee/assimp/assimpfun.h>
 #include <coffee/core/plat/plat_wm.h>
+#include <coffee/core/input/cinputfunctions.h>
 #include "base_case.h"
 
 
@@ -151,17 +152,6 @@ void CDRenderer::run(const CDWindowProperties& props)
     cleanup();
 }
 
-void CDRenderer::bindingCallback(void *report) const
-{
-    CGLReport* rep = (CGLReport*)report;
-    if(!m_msg_filter(rep))
-        return;
-    CString out = _glbinding_get_string<GLenum>(rep->type)+":"
-            +_glbinding_get_string<GLenum>(rep->severity)+":"
-            +_glbinding_get_string<GLenum>(rep->source)+": "+rep->message;
-    cWarning("OpenGL: %s",out.c_str());
-}
-
 void CDRenderer::eventWindowsHandle(const CDEvent *event)
 {
     if(event->type==CDEvent::Resize &&
@@ -197,11 +187,7 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
         if(relativeMouse())
         {
-            game->transforms.cameras.d[0].rotation =
-                    CMath::normalize(
-                        CMath::quat(glm::vec3(0.01*mev->rel.y,0,0))
-                        *CMath::quat(glm::vec3(0,0.01*mev->rel.x,0))
-                        *game->transforms.cameras.d[0].rotation);
+            CInput::coffee_input_mouse_rotate(&(game->transforms.cameras.d[0].rotation),mev);
         }
     }
     else if(event->type==CIEvent::MouseButton)

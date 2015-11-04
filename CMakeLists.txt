@@ -36,7 +36,7 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 add_definitions ( -Wall )
 include_directories (
                 ${CMAKE_SOURCE_DIR}
-		${CMAKE_SOURCE_DIR}/include
+                ${CMAKE_SOURCE_DIR}/include
                 ${CMAKE_CURRENT_BINARY_DIR}
                 libs
                 libs/glbinding/source/glbinding/include
@@ -46,6 +46,7 @@ include_directories (
 set ( CoffeeCore_SRCS
 
         coffee/core/coffee.cpp
+        coffee/core/base/counter.cpp
         coffee/core/base/cdisplay.cpp
         coffee/core/base/cfiles.cpp
         coffee/core/base/cobject.cpp
@@ -70,6 +71,8 @@ set ( CoffeeCore_SRCS
         coffee/core/graphics/cgraphics_quirks.cpp
         coffee/core/unit_tests/data_types.cpp
 
+        coffee/core/input/cinputfunctions.cpp
+
         #Third-party sources
         libs/cppformat/format.cc
         )
@@ -82,8 +85,8 @@ set ( CoffeeTest_SRCS
         )
 
 set ( CoffeeTestHud_SRCS
-	tests/ctest-hud/main.cpp
-	)
+        tests/ctest-hud/main.cpp
+        )
 
 set ( CAssimp_SRCS
         coffee/assimp/cassimpimporters.cpp

@@ -45,7 +45,7 @@ extern void coffee_graphics_unbind(const CVertexArrayObject*);
  */
 struct CVertexFormat
 {
-    GLuint      size            = 0; /*!< Amount of values of type*/
+    GLint      size            = 0; /*!< Amount of values of type*/
     GLuint      offset          = 0; /*!< Offset in vertex buffer, used for interleaved attribute*/
     GLenum      type            = GL_NONE; /*!< Data type*/
     GLboolean   normalized      = GL_FALSE; /*!< Whether it is normalized or not*/
@@ -74,29 +74,29 @@ struct CVertexAttribute
 };
 
 /*!
- * \brief Set format for a VAO attribute
+ * \brief Set format for a VAO attribute. This is used initally to specify the vertex attribute
  * \param vao VAO to set vertex attribute to
  * \param attr Attribute to set
  * \param fmt Format to set
  */
-extern void coffee_vao_attribute_format(
+extern void coffee_graphics_vao_attribute_format(
         CVertexArrayObject *vao, const CVertexAttribute& attr,
         const CVertexFormat &fmt);
 /*!
- * \brief Set vertex buffer binding for a VAO attribute
+ * \brief Set vertex buffer binding for a VAO attribute. This is done after defining the format of a vertex attribute
  * \param vao VAO to set vertex buffer to
  * \param attr Attribute to bind with
  * \param buf Buffer binding
  */
-extern void coffee_vao_attribute_buffer(
+extern void coffee_graphics_vao_attribute_buffer(
         CVertexArrayObject* vao, const CVertexAttribute &attr,
         const CVertexBufferBinding& buf);
 /*!
- * \brief Bind buffer for VAO
+ * \brief Bind buffer for VAO. This is done before a VAO is rendered
  * \param vao VAO to bind with
  * \param buf Buffer binding to bind
  */
-extern void coffee_vao_attribute_bind_buffer(
+extern void coffee_graphics_vao_attribute_bind_buffer(
         CVertexArrayObject* vao,
         const CVertexBufferBinding& buf);
 

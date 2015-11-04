@@ -27,7 +27,9 @@ void glbindingCallbackDirect(GLenum source, GLenum type,
 }
 
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
-    CSDL2Renderer(parent)
+    CSDL2Renderer(parent),
+    m_msg_filter(nullptr),
+    m_extensions(nullptr)
 {
 }
 
@@ -152,6 +154,17 @@ void CGLBindingRenderer::bindingPostInit()
 
 void CGLBindingRenderer::bindingTerminate()
 {
+}
+
+void CGLBindingRenderer::bindingCallback(void *report) const
+{
+    CGLReport* rep = (CGLReport*)report;
+    if(!m_msg_filter(rep))
+        return;
+    CString out = _glbinding_get_string<GLenum>(rep->type)+":"
+            +_glbinding_get_string<GLenum>(rep->severity)+":"
+            +_glbinding_get_string<GLenum>(rep->source)+": "+rep->message;
+    cWarning("OpenGL: %s",out.c_str());
 }
 
 cstring CGLBindingRenderer::extensions()

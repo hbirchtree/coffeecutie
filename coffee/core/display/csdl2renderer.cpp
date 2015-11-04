@@ -92,11 +92,8 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     setMouseGrabbing(false);
 
     setSwapInterval(0);
-//    cMsg("SDL2","VSync: %i",swapInterval());
 
-//    cMsg("SDL2","Running %s",m_contextString.c_str());
-
-//    cMsg("SDL2","OpenGL context created");
+    cMsg("SDL2","Running %s",m_contextString.c_str());
 
     bindingPostInit();
 

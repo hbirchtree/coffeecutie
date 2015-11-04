@@ -389,7 +389,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 {
     coffee_mem_expand_array<CGCamera>(&ctxt->transforms.cameras,1);
     coffee_mem_expand_array<CSubBuffer>(&ctxt->renderdata.subbuffers,2);
-    coffee_mem_expand_array<CModelTransform>(&ctxt->transforms.transforms,1);
+    coffee_mem_expand_array<CTransform>(&ctxt->transforms.transforms,1);
     coffee_mem_expand_array<CUniformBlock>(&ctxt->renderdata.uniformblocks,1);
 
     CGCamera* cam = &ctxt->transforms.cameras.d[0];
@@ -444,7 +444,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 
 
     {
-        CModelTransform* mod = &ctxt->transforms.transforms.d[0];
+        CTransform* mod = &ctxt->transforms.transforms.d[0];
         mod->position.z = -1.f;
         mod->scale.x = mod->scale.y = mod->scale.z = 1.f;
         mod->rotation.w = 2.f;
