@@ -43,6 +43,28 @@ public:
             0, 1, 2,
         };
 
+        const byte vshader[] = {
+            "#version 330\n"
+            "layout(location = 0) in vec3 position;"
+            "uniform mat4 transform;"
+            "out gl_PerVertex {"
+            "   vec4 gl_Position;"
+            "};"
+            "void main(){"
+            "   gl_Position = transform * position;"
+            "}"
+        };
+
+        const byte fshader[] = {
+            "#version 330\n"
+            "layout(location = 0) out vec4 Out_color;"
+            "void main(){"
+            "   Out_color = vec4(1.0,0.0,0.0,1.0);"
+            "}"
+        };
+
+        CShader baseShader;
+
         CBuffer vertices;
         CBuffer indices;
         vertices.bufferType = GL_ARRAY_BUFFER;

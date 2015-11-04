@@ -110,7 +110,6 @@ void coffee_graphics_unbind(CPipeline *pl)
 bool coffee_graphics_shader_compile(CShaderStageProgram *prg, CResources::CResource* res, GLenum stage, UseProgramStageMask stageMask)
 {
     prg->stage = stageMask;
-    res->read_data(true);
     if(res->size==0||!res->data)
         return false;
     cstring str = (cstring)(res->data);
