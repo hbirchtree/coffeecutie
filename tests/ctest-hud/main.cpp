@@ -64,6 +64,8 @@ public:
         };
 
         CShader baseShader;
+        coffee_graphics_alloc(baseShader);
+        coffee_graphics_shader_compile()
 
         CBuffer vertices;
         CBuffer indices;
