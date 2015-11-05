@@ -145,7 +145,7 @@ struct CIControllerAtomicEvent
         ButtonStateMask = 0x400, /*!< Shifted 10,1 bit*/
     };
 
-    uint16 value; /*!< Scalar value for axis*/
+    int16 value; /*!< Scalar value for axis*/
     uint8 index:5;
     uint8 controller:4;
     bool button_state:1;

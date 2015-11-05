@@ -9,6 +9,7 @@
 #include <coffee/core/input/cinputfunctions.h>
 #include "base_case.h"
 
+static CIAxisFilter m_axisFilter[2];
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;
@@ -187,7 +188,7 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
         if(relativeMouse())
         {
-            CInput::coffee_input_mouse_rotate(&(game->transforms.cameras.d[0].rotation),mev);
+            coffee_input_mouse_rotate(&(game->transforms.cameras.d[0].rotation),mev);
         }
     }
     else if(event->type==CIEvent::MouseButton)
@@ -203,21 +204,13 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
         if(jev->axis)
         {
-            if(CMath::fabs(jev->value)<0.1)
-                return;
-            switch(jev->index){
-            case CK_AXIS_LEFT_X:{
-                game->transforms.cameras.d[0].position.x -= jev->value/32000.f;
-                break;
-            }
-            case CK_AXIS_LEFT_Y:{
-                game->transforms.cameras.d[0].position.y -= jev->value/32000.f;
-                break;
-            }
-            default:
-                break;
-            }
-        }else{
+            CIAxisFilter& filter = (jev->index == CK_AXIS_RIGHT_X)
+                    ? m_axisFilter[0] : m_axisFilter[1];
+            coffee_input_controller_rotate(
+                        &(game->transforms.cameras.d[0].rotation),
+                    jev,filter);
+        }
+        else{
             switch(jev->index)
             {
             case CK_BUTTON_RB:{

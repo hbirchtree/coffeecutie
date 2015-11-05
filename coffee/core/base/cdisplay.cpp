@@ -13,6 +13,8 @@ CDWindowProperties coffee_get_default_visual()
 
     props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
 
+    props.title = "CoffeeCore";
+
     props.size.w = 1280;
     props.size.h = 720;
     props.monitor = 0;

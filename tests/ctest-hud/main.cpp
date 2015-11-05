@@ -106,6 +106,11 @@ public:
         vrt_bind.buffer = &vertices;
         vrt_bind.stride = sizeof(CVec3);
 
+        CVertexBufferBinding ind_bind;
+        ind_bind.buffer = &indices;
+        ind_bind.binding = 1;
+        vrt_bind.stride = sizeof(uint32);
+
         CVertexFormat vrt_fmt;
         vrt_fmt.normalized = GL_FALSE;
         vrt_fmt.offset = 0;
