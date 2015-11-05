@@ -66,7 +66,7 @@ static void coffee_args_get_all(int argc, cstring_w* argv, int get_argc, cstring
     /*TODO: Write a better implementation that maps from argv to in_argv*/
     for(int i=0;i<get_argc;i++)
     {
-	out_argv[i] = coffee_args_get_arg(argc,argv,in_argv[i]);
+        out_argv[i] = coffee_args_get_arg(argc,argv,in_argv[i]);
     }
 }
 
@@ -76,7 +76,7 @@ static void coffee_args_get_all(int argc, cstring_w* argv, int get_argc, cstring
 
 static cstring_w coffee_executable_name(cstring_w n = nullptr)
 {
-    C_UNUSED(n)
+    C_UNUSED(n);
     return realpath("/proc/self/exe",nullptr);
 }
 

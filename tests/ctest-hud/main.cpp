@@ -104,11 +104,6 @@ public:
         vrt_bind.buffer = &vertices;
         vrt_bind.stride = sizeof(CVec3);
 
-        CVertexBufferBinding ind_bind;
-        ind_bind.buffer = &indices;
-        ind_bind.binding = 1;
-        vrt_bind.stride = sizeof(uint32);
-
         CVertexFormat vrt_fmt;
         vrt_fmt.normalized = GL_FALSE;
         vrt_fmt.offset = 0;
@@ -148,8 +143,8 @@ public:
 
         glProgramUniformMatrix4fv(
                     vertshader.handle,
-                    glGetUniformLocation(vertshader.handle,"transform"),
-                    1,GL_FALSE,(scalar*)&rt.m);
+                    glGetUniformLocation(vertshader.handle,"world_transform"),
+                    1,GL_FALSE,(scalar*)&wt.m);
 
         this->showWindow();
         while(!closeFlag())
@@ -157,7 +152,7 @@ public:
             glClear(GL_COLOR_BUFFER_BIT);
 
             counter.update(clock.elapsed());
-            glDrawElements(GL_TRIANGLES,sizeof(indexdata)/sizeof(uint32),GL_UNSIGNED_INT,0);
+            glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_INT,0);
 
             this->pollEvents();
             this->swapBuffers();

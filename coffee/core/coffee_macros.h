@@ -12,7 +12,20 @@ static constexpr Coffee::cstring print_color_fatal = "\033[1m\033[41m";
 
 static constexpr Coffee::cstring print_color_reset = "\033[0m";
 
-#define C_UNUSED(v) do{(void)(v);}while(0);
+//#define C_UNUSED(v) do{(void)(v);}while(0);
+
+/*!
+ * \brief Use this to mark variables as unused to avoid compiler warnings
+ */
+inline static void C_UNUSED(...){}
+
+/*!
+ * \brief Cringeworthy, indeed
+ */
+inline static void C_NOOP()
+{
+    (void)0;
+}
 
 /*!
  * \brief Assertion method for core values and unit tests
