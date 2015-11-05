@@ -36,10 +36,22 @@ struct CSubBuffer
  */
 extern void coffee_graphics_alloc(CBuffer* buf);
 /*!
+ * \brief Allocate multiple buffers at once, efficient for minimal GL calls
+ * \param count
+ * \param buf
+ */
+extern void coffee_graphics_alloc(int count, CBuffer *buf);
+/*!
  * \brief Any mapped buffer, content or similar is no longer valid after this.
  * \param buf Buffer to be freed
  */
 extern void coffee_graphics_free(CBuffer* buf);
+/*!
+ * \brief Free multiple buffers at once, efficient for minimal GL calls
+ * \param count
+ * \param buf
+ */
+extern void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf);
 
 /*!
  * \brief This operation is used before bindless operations, where a buffer has to have been bound at some point before being used. Binds and unbinds a buffer

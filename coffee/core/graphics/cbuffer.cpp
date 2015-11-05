@@ -220,5 +220,27 @@ void coffee_graphics_buffer_sub_unbind(CSubBuffer *buf)
     glBindBufferRange(buf->bufferType,buf->index,0,0,0);
 }
 
+void coffee_graphics_free(int count, CBuffer *buf)
+{
+    GLuint handles[count];
+    for(int i=0;i<count;i++)
+    {
+        handles[i] = buf[i].handle;
+        buf[i].handle = 0;
+    }
+    glDeleteBuffers(count,handles);
+}
+
+void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf)
+{
+    GLuint handles[count];
+    glGenBuffers(count,handles);
+    for(int i=0;i<count;i++)
+    {
+        buf[i].handle = handles[i];
+        buf[i].bufferType = type;
+    }
+}
+
 }
 }

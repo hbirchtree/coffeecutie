@@ -41,13 +41,13 @@ public:
 
         const uint32 indexdata[] = {
             0, 1, 2,
-            2, 0, 3
+            2, 1, 3
         };
 
         const byte vshader_src[] = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
-            "uniform mat4 transform;"
+            "layout(location = 1) in mat4 transform;"
             "out gl_PerVertex {"
             "   vec4 gl_Position;"
             "};"
@@ -79,10 +79,12 @@ public:
 
         CBuffer vertices;
         CBuffer indices;
+        CBuffer transforms[3];
         vertices.bufferType = GL_ARRAY_BUFFER;
         indices.bufferType = GL_ELEMENT_ARRAY_BUFFER;
         coffee_graphics_alloc(&vertices);
         coffee_graphics_alloc(&indices);
+        coffee_graphics_alloc(3,GL_ARRAY_BUFFER,(CBuffer*)transforms);
 
         coffee_graphics_activate(&vertices);
         coffee_graphics_activate(&indices);
@@ -104,6 +106,11 @@ public:
         vrt_bind.buffer = &vertices;
         vrt_bind.stride = sizeof(CVec3);
 
+        CVertexBufferBinding ind_bind;
+        ind_bind.buffer = &indices;
+        ind_bind.binding = 1;
+        vrt_bind.stride = sizeof(uint32);
+
         CVertexFormat vrt_fmt;
         vrt_fmt.normalized = GL_FALSE;
         vrt_fmt.offset = 0;
@@ -118,6 +125,27 @@ public:
         coffee_graphics_vao_attribute_format(&vao,vrt_att,vrt_fmt);
         coffee_graphics_vao_attribute_buffer(&vao,vrt_att,vrt_bind);
         coffee_graphics_vao_attribute_bind_buffer(&vao,vrt_bind);
+
+        CVertexFormat mat_fmt;
+        mat_fmt.offset = 0;
+        mat_fmt.size = 4;
+        mat_fmt.type = GL_FLOAT;
+
+        CVertexBufferBinding mat_bnd[4];
+
+        for(int i=0;i<4;i++)
+        {
+            CVertexBufferBinding* bnd = &mat_bnd[i];
+            bnd->binding = 1+i;
+            bnd->buffer = &transforms[0];
+            bnd->offset = sizeof(CVec4)*i;
+            bnd->stride = sizeof(CMat4);
+            bnd->divisor = 1;
+            CVertexAttribute attr;
+            attr.attribIdx = 1+i;
+            attr.bnd = bnd;
+            attr.fmt = &mat_fmt;
+        }
 
         coffee_graphics_bind(&indices);
 
@@ -141,18 +169,37 @@ public:
         CMat4 wt = coffee_node_get_transform(&worldNode);
         CMat4 rt = coffee_node_get_transform(&rootNode);
 
-        glProgramUniformMatrix4fv(
-                    vertshader.handle,
-                    glGetUniformLocation(vertshader.handle,"world_transform"),
-                    1,GL_FALSE,(scalar*)&wt.m);
+        for(int i=0;i<3;i++)
+        {
+            coffee_graphics_activate(&transforms[i]);
+            coffee_graphics_buffer_store_immutable(
+                        &transforms[i],&rt,sizeof(CMat4),
+                        GL_NONE_BIT);
+//            coffee_graphics_buffer_map(
+//                        &transforms[i],
+//                        GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
+        }
+
+//        glProgramUniformMatrix4fv(
+//                    vertshader.handle,
+//                    glGetUniformLocation(vertshader.handle,"transform"),
+//                    1,GL_FALSE,(scalar*)&rt.m);
+
+        int transform_index = 0;
 
         this->showWindow();
         while(!closeFlag())
         {
             glClear(GL_COLOR_BUFFER_BIT);
 
+            for(int i=0;i<4;i++)
+                coffee_graphics_vao_attribute_bind_buffer(
+                            &vao,
+                            mat_bnd[i],
+                            &transforms[transform_index]);
+
             counter.update(clock.elapsed());
-            glDrawElements(GL_TRIANGLES,3,GL_UNSIGNED_INT,0);
+            glDrawElementsInstanced(GL_TRIANGLES,sizeof(indexdata)/sizeof(uint32),GL_UNSIGNED_INT,0,1);
 
             this->pollEvents();
             this->swapBuffers();

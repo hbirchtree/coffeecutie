@@ -105,8 +105,18 @@ extern void coffee_graphics_vao_attribute_buffer(
  * \param buf Buffer binding to bind
  */
 extern void coffee_graphics_vao_attribute_bind_buffer(
-        CVertexArrayObject* vao,
+        const CVertexArrayObject* vao,
         const CVertexBufferBinding& buf);
+/*!
+ * \brief Bind a specified buffer to a binding point on a VAO, useful for swapping vertex buffers
+ * \param vao
+ * \param buf
+ * \param buffer
+ */
+extern void coffee_graphics_vao_attribute_bind_buffer(
+        const CVertexArrayObject *vao,
+        const CVertexBufferBinding &buf,
+        const CBuffer* buffer);
 
 }
 }

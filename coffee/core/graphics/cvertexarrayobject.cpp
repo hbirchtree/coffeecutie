@@ -51,9 +51,19 @@ void coffee_graphics_vao_attribute_buffer(
     glVertexArrayBindingDivisor(vao->handle,buf.binding,buf.divisor);
 }
 
-void coffee_graphics_vao_attribute_bind_buffer(CVertexArrayObject *vao, const CVertexBufferBinding &buf)
+void coffee_graphics_vao_attribute_bind_buffer(
+        const CVertexArrayObject *vao,
+        const CVertexBufferBinding &buf)
 {
     glVertexArrayVertexBuffer(vao->handle,buf.binding,buf.buffer->handle,buf.offset,buf.stride);
+}
+
+void coffee_graphics_vao_attribute_bind_buffer(
+        const CVertexArrayObject *vao,
+        const CVertexBufferBinding &buf,
+        const CBuffer* buffer)
+{
+    glVertexArrayVertexBuffer(vao->handle,buf.binding,buffer->handle,buf.offset,buf.stride);
 }
 
 void coffee_graphics_alloc(CVertexArrayObject *vao)
