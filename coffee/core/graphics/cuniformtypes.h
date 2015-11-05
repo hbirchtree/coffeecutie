@@ -8,27 +8,31 @@ namespace Coffee{
 namespace CGraphicsWrappers{
 
 struct CUniformValue{
+    CUniformValue();
+
     enum UniformFlags{
         BlockFlag       = 0x1, //Part of a uniform block
         MatrixTranspose = 0x2,
     };
 
-    cstring name        = nullptr;
-    uint8   size        = 0;
-    void*   data        = nullptr;
-    uint8   flags       = 0;
-    GLint   location    = -1;
+    cstring name;
+    uint8   size;
+    void*   data;
+    uint8   flags;
+    GLint   location;
 };
 
 /*!
  * \brief Corresponds to a GL uniform block. Contains the necessary information.
  */
 struct CUniformBlock{
-    GLuint  blockBinding    = 0; /*! The block binding, chosen by client*/
-    GLuint  shaderIndex     = 0; /*! Shader index*/
-    uint32  size            = 0; /*! Size of block*/
-    cstring name            = nullptr;
-    CSubBuffer* buffer      = nullptr; /*! Subbuffer associated with block*/
+    CUniformBlock();
+
+    GLuint  blockBinding; /*! The block binding, chosen by client*/
+    GLuint  shaderIndex; /*! Shader index*/
+    uint32  size; /*! Size of block*/
+    cstring name;
+    CSubBuffer* buffer; /*! Subbuffer associated with block*/
 };
 
 /*!

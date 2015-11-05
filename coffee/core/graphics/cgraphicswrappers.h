@@ -12,6 +12,8 @@ namespace CGraphicsWrappers{
  */
 struct CGLReport
 {
+    CGLReport();
+
     GLenum source; /*!< Source of message*/
     GLenum type; /*!< Type of message*/
     GLuint id; /*!< ID of message*/
@@ -24,11 +26,13 @@ struct CGLReport
  */
 struct CGLDrawCall
 {
-    GLuint count            = 0; /*!< Number of indices*/
-    GLuint instanceCount    = 0; /*!< Number of instances*/
-    GLuint firstIndex       = 0; /*!< First index in buffer*/
-    GLuint baseVertex       = 0; /*!< First vertex in buffer*/
-    GLuint baseInstance     = 0; /*!< First instance to render*/
+    CGLDrawCall();
+
+    GLuint count; /*!< Number of indices*/
+    GLuint instanceCount; /*!< Number of instances*/
+    GLuint firstIndex; /*!< First index in buffer*/
+    GLuint baseVertex; /*!< First vertex in buffer*/
+    GLuint baseInstance; /*!< First instance to render*/
 };
 
 }

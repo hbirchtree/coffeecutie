@@ -64,7 +64,9 @@ set ( CoffeeCore_SRCS
 
         coffee/core/graphics/cbuffer.cpp
         coffee/core/graphics/cshader.cpp
+        coffee/core/graphics/cframebuffer.cpp
         coffee/core/graphics/cgraphicsdata.cpp
+        coffee/core/graphics/cgraphicswrappers.cpp
         coffee/core/graphics/cvertexarrayobject.cpp
         coffee/core/graphics/ctexture.cpp
         coffee/core/graphics/ctexture_dxtc.cpp

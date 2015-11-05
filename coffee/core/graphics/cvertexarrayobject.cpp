@@ -3,6 +3,35 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+CVertexAttribute::CVertexAttribute():
+    attribIdx(0),
+    fmt(nullptr),
+    bnd(nullptr)
+{
+}
+
+CVertexBufferBinding::CVertexBufferBinding():
+    buffer(nullptr),
+    offset(0),
+    stride(0),
+    divisor(0),
+    binding(0)
+{
+}
+
+CVertexFormat::CVertexFormat():
+    size(0),
+    offset(0),
+    type(GL_NONE),
+    normalized(GL_FALSE)
+{
+}
+
+CVertexArrayObject::CVertexArrayObject():
+    handle(0)
+{
+}
+
 void coffee_graphics_vao_attribute_format(
         CVertexArrayObject *vao, const CVertexAttribute& attr,
         const CVertexFormat &fmt)

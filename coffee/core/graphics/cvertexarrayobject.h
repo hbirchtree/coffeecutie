@@ -10,7 +10,48 @@ namespace CGraphicsWrappers{
  * \brief A wrapper for VAO objects
  */
 struct CVertexArrayObject{
-    GLuint      handle  = 0; /*!< VAO handle */
+    CVertexArrayObject();
+
+    GLuint      handle; /*!< VAO handle */
+};
+
+/*!
+ * \brief Vertex format description, specifies data format in buffer
+ */
+struct CVertexFormat
+{
+    CVertexFormat();
+
+    GLint size; /*!< Amount of values of type*/
+    GLuint offset; /*!< Offset in vertex buffer, used for interleaved attribute*/
+    GLenum type; /*!< Data type*/
+    GLboolean normalized; /*!< Whether it is normalized or not*/
+};
+
+/*!
+ * \brief Vertex buffer binding, used to associate vertex attribute with buffer
+ */
+struct CVertexBufferBinding
+{
+    CVertexBufferBinding();
+
+    CBuffer* buffer; /*!< Buffer bound to attribute*/
+    GLsizei offset; /*!< Offset into stride*/
+    GLsizei stride; /*!< Total size of attributes*/
+    GLuint divisor; /*!< Divisor for instancing*/
+    GLuint binding; /*!< Binding index*/
+};
+
+/*!
+ * \brief A vertex attribute that is used with VAO objects
+ */
+struct CVertexAttribute
+{
+    CVertexAttribute();
+
+    GLuint attribIdx; /*!< Attribute index to shader*/
+    CVertexFormat* fmt; /*!< Vertex format for attribute*/
+    CVertexBufferBinding* bnd; /*!< Vertex buffer binding for attribute*/
 };
 
 /*!
@@ -39,39 +80,6 @@ extern void coffee_graphics_bind(const CVertexArrayObject* vao);
  * \brief Unbind vertex array object, takes arbitrary VAO object to select the overload
  */
 extern void coffee_graphics_unbind(const CVertexArrayObject*);
-
-/*!
- * \brief Vertex format description, specifies data format in buffer
- */
-struct CVertexFormat
-{
-    GLint      size            = 0; /*!< Amount of values of type*/
-    GLuint      offset          = 0; /*!< Offset in vertex buffer, used for interleaved attribute*/
-    GLenum      type            = GL_NONE; /*!< Data type*/
-    GLboolean   normalized      = GL_FALSE; /*!< Whether it is normalized or not*/
-};
-
-/*!
- * \brief Vertex buffer binding, used to associate vertex attribute with buffer
- */
-struct CVertexBufferBinding
-{
-    CBuffer* buffer  = nullptr; /*!< Buffer bound to attribute*/
-    GLsizei  offset  = 0; /*!< Offset into stride*/
-    GLsizei  stride  = 0; /*!< Total size of attributes*/
-    GLuint   divisor = 0; /*!< Divisor for instancing*/
-    GLuint   binding = 0; /*!< Binding index*/
-};
-
-/*!
- * \brief A vertex attribute that is used with VAO objects
- */
-struct CVertexAttribute
-{
-    GLuint                  attribIdx   = 0; /*!< Attribute index to shader*/
-    CVertexFormat*          fmt         = nullptr; /*!< Vertex format for attribute*/
-    CVertexBufferBinding*   bnd         = nullptr; /*!< Vertex buffer binding for attribute*/
-};
 
 /*!
  * \brief Set format for a VAO attribute. This is used initally to specify the vertex attribute

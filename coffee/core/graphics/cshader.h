@@ -16,26 +16,34 @@ extern UseProgramStageMask operator~(UseProgramStageMask msk);
 
 struct CPipeline
 {
-    GLuint handle = 0; /*!< Handle for pipeline */
-    UseProgramStageMask stages = GL_NONE_BIT; /*!< Stages contained within pipeline */
+    CPipeline();
+
+    GLuint handle; /*!< Handle for pipeline */
+    UseProgramStageMask stages; /*!< Stages contained within pipeline */
 };
 
 struct CShaderProgram
 {
-    GLuint handle = 0; /*!< Handle for program */
-    UseProgramStageMask stages = GL_NONE_BIT; /*!< Stages contained within program */
+    CShaderProgram();
+
+    GLuint handle; /*!< Handle for program */
+    UseProgramStageMask stages; /*!< Stages contained within program */
 };
 
 struct CShaderStageProgram
 {
-    GLuint handle = 0; /*!< Handle for shader stage program */
-    UseProgramStageMask stage = GL_NONE_BIT; /*!< Stage contained within stage program */
+    CShaderStageProgram();
+
+    GLuint handle; /*!< Handle for shader stage program */
+    UseProgramStageMask stage; /*!< Stage contained within stage program */
 };
 
 struct CShader
 {
-    GLuint handle = 0; /*!< Handle for shader */
-    UseProgramStageMask stage = GL_NONE_BIT; /*!< Stage contained within shader */
+    CShader();
+
+    GLuint handle; /*!< Handle for shader */
+    UseProgramStageMask stage; /*!< Stage contained within shader */
 };
 
 //For rendering
@@ -99,6 +107,14 @@ extern void coffee_graphics_free(CShaderProgram* prg);
  */
 extern void coffee_graphics_free(CShaderStageProgram* prg);
 
+extern bool coffee_graphics_shader_compile(
+        CShader *prg, cstring rsc,
+        GLenum type, UseProgramStageMask stage);
+
+extern bool coffee_graphics_shader_compile(
+        CShaderStageProgram *prg, cstring rsc,
+        GLenum stage, UseProgramStageMask stageMask);
+
 /*!
  * \brief Compile a shader from resource
  * \param prg Shader to compile
@@ -107,7 +123,9 @@ extern void coffee_graphics_free(CShaderStageProgram* prg);
  * \param stage Mask for the stage
  * \return
  */
-extern bool coffee_graphics_shader_compile(CShader *prg, CResources::CResource *rsc, GLenum type, UseProgramStageMask stage);
+extern bool coffee_graphics_shader_compile(
+        CShader *prg, CResources::CResource *rsc,
+        GLenum type, UseProgramStageMask stage);
 /*!
  * \brief Compile a shader stage program from resource
  * \param prg Program being compiled
@@ -116,7 +134,9 @@ extern bool coffee_graphics_shader_compile(CShader *prg, CResources::CResource *
  * \param stageMask Mask for the stage
  * \return
  */
-extern bool coffee_graphics_shader_compile(CShaderStageProgram* prg, CResources::CResource *res, GLenum stage, UseProgramStageMask stageMask);
+extern bool coffee_graphics_shader_compile(
+        CShaderStageProgram* prg, CResources::CResource *res,
+        GLenum stage, UseProgramStageMask stageMask);
 
 /*!
  * \brief Link the shader program
@@ -149,15 +169,6 @@ extern void coffee_graphics_shader_attach(CShaderProgram* shd, CShader* stg);
  */
 extern void coffee_graphics_shader_detach(
         CShaderProgram* shd, CShader* stg);
-
-/*!
- * \brief Attach a shader stage to a shader program
- * \param shd Target shader program
- * \param stg Shader stage to attach
- * \param filter Mask for which part should be attached
- */
-extern void coffee_graphics_shader_attach(
-        CShaderProgram* shd, CShaderStageProgram* stg, UseProgramStageMask filter);
 
 /*!
  * \brief Get shader index of uniform block

@@ -3,6 +3,25 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+CBuffer::CBuffer():
+    handle(0),
+    size(0),
+    bufferType(GL_NONE),
+    flags(GL_NONE_BIT),
+    mapflags(GL_NONE_BIT),
+    data(nullptr)
+{
+}
+
+CSubBuffer::CSubBuffer():
+    parent(nullptr),
+    offset(0),
+    size(0),
+    bufferType(GL_NONE),
+    index(0)
+{
+}
+
 void coffee_graphics_buffer_bind_range(CBuffer *buf, GLuint index, GLenum bufferType, GLsizeiptr offset, GLsizeiptr size)
 {
     glBindBufferRange(bufferType,index,buf->handle,offset,size);

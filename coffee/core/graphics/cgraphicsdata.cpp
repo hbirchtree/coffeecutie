@@ -3,6 +3,25 @@
 namespace Coffee{
 namespace CGraphicsData{
 
+CGCamera::CGCamera():
+    flags(0),
+    aspect(1),
+    zVals(0.1,100.0),
+    fieldOfView(90),
+    position(0,0,0),
+    rotation(2,0,0,0),
+    orthoview(0,0,1,1)
+{
+}
+
+CTransform::CTransform():
+    matrix(0.0),
+    rotation(2,0,0,0),
+    position(0),
+    scale(1.0)
+{
+}
+
 void coffee_graphics_gen_matrix(CTransform *mat)
 {
     mat->matrix = CMath::scale(CMath::mat4(),mat->scale);

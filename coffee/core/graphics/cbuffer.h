@@ -9,21 +9,25 @@ namespace Coffee{
 namespace CGraphicsWrappers{
 
 struct CBuffer{
-    GLuint              handle      = 0; /*!< GL handle for buffer */
-    GLsizeiptr          size        = 0; /*!< Size of buffer */
-    GLenum              bufferType  = GL_NONE;  /*!< Buffer type */
-    BufferStorageMask   flags       = GL_NONE_BIT;  /*!< Access mask */
-    BufferAccessMask    mapflags    = GL_NONE_BIT; /*!< Mapping access mask */
-    void*               data        = nullptr;  /*!< Data pointer, only valid if it is mapped */
+    CBuffer();
+
+    GLuint handle; /*!< GL handle for buffer */
+    GLsizeiptr size; /*!< Size of buffer */
+    GLenum bufferType;  /*!< Buffer type */
+    BufferStorageMask flags;  /*!< Access mask */
+    BufferAccessMask mapflags; /*!< Mapping access mask */
+    void* data; /*!< Data pointer, only valid if it is mapped */
 };
 
 struct CSubBuffer
 {
-    CBuffer*    parent      = nullptr;  /*!< Pointer to parent containing data */
-    GLsizeiptr  offset      = 0;  /*!< Offset into parent */
-    GLsizeiptr  size        = 0;  /*!< Size in parent */
-    GLenum      bufferType  = GL_NONE;  /*!< Buffer type */
-    GLuint      index       = 0;  /*!< Binding index */
+    CSubBuffer();
+
+    CBuffer* parent; /*!< Pointer to parent containing data */
+    GLsizeiptr offset; /*!< Offset into parent */
+    GLsizeiptr size; /*!< Size in parent */
+    GLenum bufferType; /*!< Buffer type */
+    GLuint index; /*!< Binding index */
 };
 
 /*!

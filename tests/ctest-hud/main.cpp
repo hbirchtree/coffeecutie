@@ -41,9 +41,10 @@ public:
 
         const uint32 indexdata[] = {
             0, 1, 2,
+            2, 0, 3
         };
 
-        const byte vshader[] = {
+        const byte vshader_src[] = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
             "uniform mat4 transform;"
@@ -51,11 +52,11 @@ public:
             "   vec4 gl_Position;"
             "};"
             "void main(){"
-            "   gl_Position = transform * position;"
+            "   gl_Position = transform * vec4(position,1.0);"
             "}"
         };
 
-        const byte fshader[] = {
+        const byte fshader_src[] = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "void main(){"
@@ -63,9 +64,18 @@ public:
             "}"
         };
 
-        CShader baseShader;
-        coffee_graphics_alloc(baseShader);
-        coffee_graphics_shader_compile()
+        CPipeline basePipeline;
+        CShaderStageProgram vertshader;
+        CShaderStageProgram fragshader;
+        coffee_graphics_alloc(&basePipeline);
+        coffee_graphics_shader_compile(&vertshader,vshader_src,GL_VERTEX_SHADER,
+                                       GL_VERTEX_SHADER_BIT);
+        coffee_graphics_shader_compile(&fragshader,fshader_src,GL_FRAGMENT_SHADER,
+                                       GL_FRAGMENT_SHADER_BIT);
+        coffee_graphics_shader_attach(&basePipeline,&vertshader,GL_VERTEX_SHADER_BIT);
+        coffee_graphics_shader_attach(&basePipeline,&fragshader,GL_FRAGMENT_SHADER_BIT);
+
+        coffee_graphics_bind(&basePipeline);
 
         CBuffer vertices;
         CBuffer indices;
@@ -88,7 +98,7 @@ public:
 
         CVertexArrayObject vao;
         coffee_graphics_alloc(&vao);
-        coffee_graphics_activate(&vao);
+        coffee_graphics_bind(&vao);
 
         CVertexBufferBinding vrt_bind;
         vrt_bind.buffer = &vertices;
@@ -114,17 +124,16 @@ public:
         coffee_graphics_vao_attribute_buffer(&vao,vrt_att,vrt_bind);
         coffee_graphics_vao_attribute_bind_buffer(&vao,vrt_bind);
 
-        coffee_graphics_bind(&vao);
         coffee_graphics_bind(&indices);
 
         CTransform root;
-        root.position = CMath::vec3(1,2,3);
-        root.scale = CMath::vec3(1,1,1);
-        coffee_graphics_gen_matrix(&root);
+        root.position = CMath::vec3(0,-0.5,0);
 
         CGCamera camera;
         camera.aspect = 1.6f;
+        camera.position = CMath::vec3(0,0,-3);
 
+        coffee_graphics_gen_matrix(&root);
         coffee_graphics_gen_matrix_perspective(&camera);
 
         CNode worldNode;
@@ -137,14 +146,18 @@ public:
         CMat4 wt = coffee_node_get_transform(&worldNode);
         CMat4 rt = coffee_node_get_transform(&rootNode);
 
+        glProgramUniformMatrix4fv(
+                    vertshader.handle,
+                    glGetUniformLocation(vertshader.handle,"transform"),
+                    1,GL_FALSE,(scalar*)&rt.m);
+
         this->showWindow();
         while(!closeFlag())
         {
-//            glClearColor(CMath::cfrand(0,1),CMath::cfrand(0,1),CMath::cfrand(0,1),1.f);
             glClear(GL_COLOR_BUFFER_BIT);
 
             counter.update(clock.elapsed());
-            glDrawElements(GL_TRIANGLES,1,GL_UNSIGNED_INT,0);
+            glDrawElements(GL_TRIANGLES,sizeof(indexdata)/sizeof(uint32),GL_UNSIGNED_INT,0);
 
             this->pollEvents();
             this->swapBuffers();

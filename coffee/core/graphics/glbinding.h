@@ -2,6 +2,7 @@
 #define GLBINDING
 
 #include "coffee/core/coffee_types.h"
+
 #include <glbinding/ContextInfo.h>
 #include <glbinding/Version.h>
 #include <glbinding/callbacks.h>

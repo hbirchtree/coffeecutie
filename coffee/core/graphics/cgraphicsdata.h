@@ -9,15 +9,7 @@ namespace CGraphicsData{
 
 struct CGCamera
 {
-    CGCamera():
-        flags(0),
-        aspect(1),
-        fieldOfView(90),
-        position(0,0,0),
-        rotation(2,0,0,0),
-        orthoview(0,0,1,1)
-    {
-    }
+    CGCamera();
 
     enum CameraFlags{
         OrthographicFlag = 0x1, //When off, assume perspective
@@ -39,6 +31,8 @@ struct CGCamera
 
 struct CTransform
 {
+    CTransform();
+
     CMath::mat4 matrix;
     CMath::quat rotation;
     CMath::vec3 position;

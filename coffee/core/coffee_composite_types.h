@@ -31,6 +31,11 @@ struct _cbasic_zfield
           far(10)
     {
     }
+    _cbasic_zfield(T near, T far)
+        : near(near),
+          far(far)
+    {
+    }
 
     T near;
     T far;
@@ -91,24 +96,24 @@ template<typename T> struct _cbasic_rect
     T w = 0;
     T h = 0;
 
-    T left()
+    T left() const
     {
         return x;
     }
-    T right()
+    T right() const
     {
         return x+w;
     }
-    T bottom()
+    T bottom() const
     {
         return y;
     }
-    T top()
+    T top() const
     {
         return y+h;
     }
 
-    T area()
+    T area() const
     {
         return w*h;
     }

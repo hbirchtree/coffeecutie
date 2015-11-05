@@ -3,6 +3,30 @@
 namespace Coffee {
 namespace CGraphicsWrappers {
 
+CPipeline::CPipeline():
+    handle(0),
+    stages(GL_NONE_BIT)
+{
+}
+
+CShaderProgram::CShaderProgram():
+    handle(0),
+    stages(GL_NONE_BIT)
+{
+}
+
+CShaderStageProgram::CShaderStageProgram():
+    handle(0),
+    stage(GL_NONE_BIT)
+{
+}
+
+CShader::CShader():
+    handle(0),
+    stage(GL_NONE_BIT)
+{
+}
+
 bool coffee_shader_compile_checklog(GLuint handle);
 bool coffee_program_link_checklog(GLuint handle);
 
@@ -46,7 +70,8 @@ void coffee_graphics_alloc(CShaderProgram *shd, bool separable = true)
         glProgramParameteri(shd->handle,GL_PROGRAM_SEPARABLE,1);
 }
 
-bool coffee_graphics_restore(CShaderProgram *prg, CResources::CResource *rsc)
+bool coffee_graphics_restore(
+        CShaderProgram *prg, CResources::CResource *rsc)
 {
     if(rsc->size<sizeof(GLenum)){
         cWarning("Shader program file not found\n");
@@ -107,70 +132,96 @@ void coffee_graphics_unbind(CPipeline *pl)
     glBindProgramPipeline(0);
 }
 
-bool coffee_graphics_shader_compile(CShaderStageProgram *prg, CResources::CResource* res, GLenum stage, UseProgramStageMask stageMask)
+bool coffee_graphics_shader_compile(
+        CShaderStageProgram *prg, cstring rsc,
+        GLenum type, UseProgramStageMask stage)
 {
-    prg->stage = stageMask;
-    if(res->size==0||!res->data)
-        return false;
-    cstring str = (cstring)(res->data);
-    cDebug("Creating shader: %s",glbinding::Meta::getString(stage).c_str());
-    prg->handle = glCreateShaderProgramv(stage,1,&str);
+    prg->stage = stage;
+    prg->handle = glCreateShaderProgramv(type,1,&rsc);
     return coffee_program_link_checklog(prg->handle);
 }
 
-bool coffee_graphics_shader_compile(CShader *prg, CResources::CResource* rsc, GLenum type, UseProgramStageMask stage)
+bool coffee_graphics_shader_compile(
+        CShader *prg, cstring rsc,
+        GLenum stage, UseProgramStageMask stageMask)
 {
-    prg->stage = stage;
-    if(rsc->size==0||!rsc->data)
-        return false;
-    const byte* str = (const byte*)(rsc->data);
-
-    prg->handle = glCreateShader(type);
-    glShaderSource(prg->handle,1,&str,nullptr);
+    prg->stage = stageMask;
+    prg->handle = glCreateShader(stage);
+    glShaderSource(prg->handle,1,&rsc,nullptr);
     glCompileShader(prg->handle);
-
     return coffee_shader_compile_checklog(prg->handle);
 }
 
-void coffee_graphics_shader_link(CShaderProgram *prg)
+bool coffee_graphics_shader_compile(
+        CShader *prg, CResources::CResource* res,
+        GLenum stage, UseProgramStageMask stageMask)
+{
+    if(res->size==0)
+        return false;
+    return coffee_graphics_shader_compile(
+                prg,(cstring)res->data,
+                stage,stageMask);
+}
+
+bool coffee_graphics_shader_compile(
+        CShaderStageProgram *prg, CResources::CResource* rsc,
+        GLenum stage, UseProgramStageMask stageMask)
+{
+    if(rsc->size==0)
+        return false;
+    return coffee_graphics_shader_compile(
+                prg,(cstring)rsc->data,
+                stage,stageMask);
+}
+
+void coffee_graphics_shader_link(
+        CShaderProgram *prg)
 {
     glLinkProgram(prg->handle);
     coffee_program_link_checklog(prg->handle);
 }
 
-void coffee_graphics_shader_attach(CShaderProgram *shd, CShader *stg)
+void coffee_graphics_shader_attach(
+        CShaderProgram *shd, CShader *stg)
 {
     glAttachShader(shd->handle,stg->handle);
     shd->stages = shd->stages|stg->stage;
 }
 
-void coffee_graphics_shader_detach(CShaderProgram *shd, CShader *stg)
+void coffee_graphics_shader_detach(
+        CShaderProgram *shd, CShader *stg)
 {
     glDetachShader(shd->handle,stg->handle);
     shd->stages = shd->stages&(~stg->stage);
 }
 
-void coffee_graphics_shader_attach(CPipeline *pl, CShaderStageProgram *stg, UseProgramStageMask filter)
+void coffee_graphics_shader_attach(
+        CPipeline *pl,
+        CShaderStageProgram *stg, UseProgramStageMask filter)
 {
     glUseProgramStages(pl->handle,stg->stage&filter,stg->handle);
 }
 
-void coffee_graphics_shader_attach(CPipeline *pl, CShaderProgram *stg, UseProgramStageMask filter)
+void coffee_graphics_shader_attach(
+        CPipeline *pl, CShaderProgram *stg, UseProgramStageMask filter)
 {
     glUseProgramStages(pl->handle,stg->stages&filter,stg->handle);
 }
 
-void coffee_graphics_shader_uniform_block_get(CShaderProgram *prg, cglstring name, GLuint* loc)
+void coffee_graphics_shader_uniform_block_get(
+        CShaderProgram *prg, cglstring name, GLuint* loc)
 {
     *loc = glGetUniformBlockIndex(prg->handle,name);
 }
 
-void coffee_graphics_shader_uniform_block_set(CShaderProgram *prg, const CUniformBlock &block)
+void coffee_graphics_shader_uniform_block_set(
+        CShaderProgram *prg, const CUniformBlock &block)
 {
     glUniformBlockBinding(prg->handle,block.shaderIndex,block.blockBinding);
 }
 
-GLint coffee_graphics_shader_uniform_value_get(CShaderProgram *prg, cglstring name)
+GLint coffee_graphics_shader_uniform_value_get(
+        CShaderProgram *prg, cglstring name)
 {
     return glGetUniformLocation(prg->handle,(const GLchar*)name);
 }
