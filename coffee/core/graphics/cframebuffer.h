@@ -117,6 +117,8 @@ extern void coffee_graphics_framebuffer_attach_texture_safe(
  * \param trgFb
  * \param srcRect
  * \param trgRect
+ * \param mask
+ * \param filter
  */
 extern void coffee_graphics_framebuffer_blit(
         const CFramebuffer* srcFb,
@@ -130,6 +132,8 @@ extern void coffee_graphics_framebuffer_blit(
  * \param trgFb
  * \param srcRect
  * \param trgRect
+ * \param mask
+ * \param filter
  */
 extern void coffee_graphics_framebuffer_blit_safe(
         const CFramebuffer* srcFb,
