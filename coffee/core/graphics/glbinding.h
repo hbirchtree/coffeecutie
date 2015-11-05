@@ -3,12 +3,6 @@
 
 #include "coffee/core/coffee_types.h"
 
-#include <glbinding/ContextInfo.h>
-#include <glbinding/Version.h>
-#include <glbinding/callbacks.h>
-#include <glbinding/Binding.h>
-#include <glbinding/Meta.h>
-
 #include <glbinding/gl/gl.h>
 
 using namespace gl;
@@ -18,11 +12,8 @@ namespace CGraphicsWrappers{
 
 typedef const GLchar* cglstring;
 
-template<typename GT>
-CString _glbinding_get_string(GT e)
-{
-    return glbinding::Meta::getString(e);
-}
+extern CString _glbinding_get_string(GLenum e);
+extern CString _glbinding_get_string(GLextension e);
 
 }
 }

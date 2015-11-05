@@ -13,7 +13,8 @@ void framefun(uint32 t, const void*)
 
 bool _glmessagefilter(CGLReport* report)
 {
-    return !(report->severity==GL_DEBUG_SEVERITY_NOTIFICATION);
+//    return !(report->severity==GL_DEBUG_SEVERITY_NOTIFICATION);
+    return true;
 }
 
 class CDHudRenderer : public Coffee::CDisplay::CGLBindingRenderer
@@ -106,11 +107,6 @@ public:
         vrt_bind.buffer = &vertices;
         vrt_bind.stride = sizeof(CVec3);
 
-        CVertexBufferBinding ind_bind;
-        ind_bind.buffer = &indices;
-        ind_bind.binding = 1;
-        vrt_bind.stride = sizeof(uint32);
-
         CVertexFormat vrt_fmt;
         vrt_fmt.normalized = GL_FALSE;
         vrt_fmt.offset = 0;
@@ -145,6 +141,9 @@ public:
             attr.attribIdx = 1+i;
             attr.bnd = bnd;
             attr.fmt = &mat_fmt;
+
+            coffee_graphics_vao_attribute_format(&vao,attr,mat_fmt);
+            coffee_graphics_vao_attribute_buffer(&vao,attr,*bnd);
         }
 
         coffee_graphics_bind(&indices);
@@ -174,16 +173,11 @@ public:
             coffee_graphics_activate(&transforms[i]);
             coffee_graphics_buffer_store_immutable(
                         &transforms[i],&rt,sizeof(CMat4),
-                        GL_NONE_BIT);
-//            coffee_graphics_buffer_map(
-//                        &transforms[i],
-//                        GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
+                        GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
+            coffee_graphics_buffer_map(
+                        &transforms[i],
+                        GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
         }
-
-//        glProgramUniformMatrix4fv(
-//                    vertshader.handle,
-//                    glGetUniformLocation(vertshader.handle,"transform"),
-//                    1,GL_FALSE,(scalar*)&rt.m);
 
         int transform_index = 0;
 
@@ -199,7 +193,9 @@ public:
                             &transforms[transform_index]);
 
             counter.update(clock.elapsed());
-            glDrawElementsInstanced(GL_TRIANGLES,sizeof(indexdata)/sizeof(uint32),GL_UNSIGNED_INT,0,1);
+            glDrawElementsInstanced(GL_TRIANGLES,
+                                    sizeof(indexdata)/sizeof(uint32),
+                                    GL_UNSIGNED_INT,0,1);
 
             this->pollEvents();
             this->swapBuffers();

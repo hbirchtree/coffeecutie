@@ -1,9 +1,14 @@
 #include "cglbindingrenderer.h"
 #include "coffee/core/graphics/cgraphicswrappers.h"
 
+#include <glbinding/ContextInfo.h>
+#include <glbinding/Version.h>
+#include <glbinding/callbacks.h>
+#include <glbinding/Binding.h>
+#include <glbinding/Meta.h>
+
 using namespace gl;
 using namespace Coffee::CDisplay;
-
 
 namespace Coffee {
 namespace CDisplay {
@@ -161,9 +166,9 @@ void CGLBindingRenderer::bindingCallback(void *report) const
     CGLReport* rep = (CGLReport*)report;
     if(!m_msg_filter(rep))
         return;
-    CString out = _glbinding_get_string<GLenum>(rep->type)+":"
-            +_glbinding_get_string<GLenum>(rep->severity)+":"
-            +_glbinding_get_string<GLenum>(rep->source)+": "+rep->message;
+    CString out = _glbinding_get_string(rep->type)+":"
+            +_glbinding_get_string(rep->severity)+":"
+            +_glbinding_get_string(rep->source)+": "+rep->message;
     cWarning("OpenGL: %s",out.c_str());
 }
 

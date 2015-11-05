@@ -1,7 +1,6 @@
 #ifndef CGLBINDINGRENDERER_H
 #define CGLBINDINGRENDERER_H
 
-//#include "coffee_impl/display/cglfwrenderer.h"
 #include "coffee/core/display/csdl2renderer.h"
 
 namespace Coffee{

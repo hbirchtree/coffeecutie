@@ -274,8 +274,8 @@ void coffee_graphics_tex_dump(const CTexture *tex, cstring filename)
 
     CResources::CResource fl(filename);
     CStbImageLib::coffee_stb_image_save_png(&fl,&img);
-    fl.save_data();
-    fl.free_data();
+    coffee_file_commit(&fl);
+    coffee_file_free(&fl);
 
     free(img.data);
 }

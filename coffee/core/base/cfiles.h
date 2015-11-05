@@ -1,27 +1,13 @@
 #ifndef CFILES_H
 #define CFILES_H
 
-#include "coffee/core/coffee.h"
-#include "coffee/core/base/cregex.h"
-#include "coffee/core/base/cdebug.h"
-#include "coffee/core/plat/plat_core.h"
+#include "coffee/core/coffee_basetypes.h"
 
 namespace Coffee{
 namespace CResources{
-namespace CFiles{
 
-extern FILE* coffee_file_open(cstring fname, cstring mode);
-extern szptr coffee_file_size(FILE* file);
-extern cstring_w coffee_file_read(FILE* file, void* ptr, szptr *size, bool textmode = false);
-extern bool coffee_file_write(FILE* file, const void* data, szptr size);
-extern int coffee_file_close(FILE* file);
-
-}
-
-/*!
- * \brief A data resource which location cannot be changed.
- */
-struct CResource{
+struct CResourceUrl
+{
     enum ResourceFlags{
         /*! Resource is in a remote location, internet and etc.*/
         Remote      = 0x1,
@@ -36,65 +22,59 @@ struct CResource{
         Streaming   = 0x10,
     };
 
-    /*!
-     * \brief Creates resource with location
-     * \param resource Resource to use
-     */
-    CResource(cstring resource);
+    CResourceUrl();
 
-    /*!
-     * \brief Get location of resource
-     * \return
-     */
-    cstring resource();
+    uint8 flags;
+    cstring url;
+};
 
-    uint8 flags     = 0; /*! Resource flags*/
-    szptr size      = 0; /*! Data size*/
-    void* data      = nullptr; /*! Data pointer*/
+/*!
+ * \brief A data resource which location cannot be changed.
+ */
+struct CResource{
+    CResource(cstring rsrc = nullptr);
 
-    /*!
-     * \brief Whether resource exists or not
-     * \return True if exists
-     */
-    bool exists();
-    /*!
-     * \brief Read data from file if it exists
-     * \param textmode Read as text, null-terminate data
-     * \return True if success
-     */
-    bool read_data(bool textmode = false);
-    /*!
-     * \brief Append text to data with null-termination
-     * \param text Text to append
-     * \return True if success
-     */
-    bool append_text(cstring text);
-    /*!
-     * \brief Save data to file, overwrites previous contents
-     * \return
-     */
-    bool save_data();
-    /*!
-     * \brief Free data pointer
-     */
-    void free_data();
+    uint8 flags; /*!< Resource flags*/
+    szptr size; /*!< Data size*/
+    void* data; /*!< Data pointer*/
 
-    /*!
-     * \brief Memory map file as buffer
-     * \return True if success
-     */
-    bool memory_map();
-    /*!
-     * \brief Unmap file
-     * \return True if success
-     */
-    bool memory_unmap();
+    cstring resource() const;
 
 private:
-    void identify_resource();
-
-    CString m_resource;
+    CString m_resource; /*!< URL for the resource*/
 };
+
+extern bool coffee_file_exists(const CResource* resc);
+
+extern void coffee_file_open(CResource* resc);
+extern void coffee_file_close(CResource* resc);
+
+/*!
+ * \brief Memory map file as buffer
+ * \return True if success
+ */
+extern bool coffee_file_memmap(CResource* resc);
+/*!
+ * \brief Unmap file
+ * \return True if success
+ */
+extern bool coffee_file_memunmap(CResource* resc);
+
+/*!
+ * \brief Free data pointer
+ */
+extern void coffee_file_free(CResource* resc);
+extern bool coffee_file_pull(CResource* resc, bool textmode = false);
+/*!
+ * \brief Save data to file
+ * \return
+ */
+extern bool coffee_file_commit(const CResource* resc, bool append = false);
+/*!
+ * \brief Save data to file, append null-terminator
+ * \return
+ */
+extern void coffee_file_commit_textmode(const CResource* resc, bool append = false);
 
 }
 }

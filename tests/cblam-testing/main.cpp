@@ -2,7 +2,7 @@
 #include <coffee/core/base/cfiles.h>
 #include <coffee/core/plat/application_start.h>
 #include <coffee/core/plat/argument_parse.h>
-
+#include <coffee/core/base/cdebug.h>
 
 using namespace Coffee;
 using namespace CResources;
@@ -19,8 +19,8 @@ int coffee_main(int32 argv,byte** argc)
         return 1;
     CResource mapfile(mapstring);
     CResource bitmfile("bitmaps.map");
-    bitmfile.memory_map();
-    mapfile.memory_map();
+    coffee_file_memmap(&bitmfile);
+    coffee_file_memmap(&mapfile);
     const blam_file_header* map =
             blam_file_header_get(mapfile.data,blam_version_pc);
     blam_tag_index tags = blam_tag_index_get(map);

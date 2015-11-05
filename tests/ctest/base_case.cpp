@@ -101,18 +101,18 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
 
     CResource v(desc.shader_v); //Vertex shader
     CResource f(desc.shader_f); //Fragment shader
-    if(!v.exists()||!f.exists())
+    if(!coffee_file_exists(&v)||!coffee_file_exists(&f))
         cFatal("Failed to locate shaders");
-    v.read_data(true);
-    f.read_data(true);
+    coffee_file_pull(&v,true);
+    coffee_file_pull(&f,true);
 
     //GL calls
     coffee_graphics_shader_compile(vshdr,&v,GL_VERTEX_SHADER,GL_VERTEX_SHADER_BIT);
     coffee_graphics_shader_compile(fshdr,&f,GL_FRAGMENT_SHADER,GL_FRAGMENT_SHADER_BIT);
     //
 
-    v.free_data();
-    f.free_data();
+    coffee_file_free(&v);
+    coffee_file_free(&f);
 
     //GL calls separable programs
     coffee_graphics_alloc(p,true);
@@ -131,9 +131,9 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
     //GL call
     coffee_graphics_store(p,&dmp);
     //
-    if(!dmp.save_data())
+    if(!coffee_file_commit(&dmp))
         cDebug("Failed to save shader to file!");
-    dmp.free_data();
+    coffee_file_free(&dmp);
 
     return pl;
 }
@@ -514,8 +514,8 @@ bool coffee_test_load(game_context *ctxt)
         {
             CResources::CResource mapfile("bloodgulch.map");
             CResources::CResource bitmfile("bitmaps.map");
-            bitmfile.memory_map();
-            mapfile.memory_map();
+            coffee_file_memmap(&bitmfile);
+            coffee_file_memmap(&mapfile);
             const CBlam::blam_file_header* map =
                     CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version_pc);
             CBlam::blam_tag_index tags = CBlam::blam_tag_index_get(map);
@@ -542,19 +542,10 @@ bool coffee_test_load(game_context *ctxt)
                     else
                         cWarning("Unsupported format: 3D and cube!");
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
-                } else if(coffee_cmp_memarea(idx->tagclass[0],CBlam::blam_index_item_type_mod2,4))
-                {
-                    const CBlam::blam_mod2_header* mod2 =
-                            CBlam::blam_mod2_get_header(idx,map,tags.index_magic);
-                    const CBlam::blam_mod2_region* reg2 =
-                            mod2->regions.data(mapfile.data,tags.index_magic);
-                    cDebug("TEST: %i",mod2->zero1);
-                    for(int i=0;i<mod2->regions.count;i++)
-                        cDebug("Part: %s",reg2[i].name);
                 }
             }
-            bitmfile.memory_unmap();
-            mapfile.memory_unmap();
+            coffee_file_memunmap(&bitmfile);
+            coffee_file_memunmap(&mapfile);
         }
 
     }

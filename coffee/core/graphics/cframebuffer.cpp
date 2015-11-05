@@ -1,5 +1,7 @@
 #include "cframebuffer.h"
 
+#include <coffee/core/base/cdebug.h>
+
 namespace Coffee{
 namespace CGraphicsWrappers{
 

@@ -71,6 +71,8 @@ set ( CoffeeCore_SRCS
         coffee/core/graphics/ctexture.cpp
         coffee/core/graphics/ctexture_dxtc.cpp
         coffee/core/graphics/cgraphics_quirks.cpp
+        coffee/core/graphics/glbinding.cpp
+
         coffee/core/unit_tests/data_types.cpp
 
         coffee/core/input/cinputfunctions.cpp

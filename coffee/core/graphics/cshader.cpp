@@ -89,7 +89,6 @@ void coffee_graphics_store(CShaderProgram *prg, CResources::CResource *rsc)
 {
     GLint psize = 0;
     glGetProgramiv(prg->handle,GL_PROGRAM_BINARY_LENGTH,&psize);
-    rsc->free_data();
     rsc->data = malloc(psize+sizeof(GLenum));
     rsc->size = psize+sizeof(GLenum);
     GLenum format = GL_NONE;

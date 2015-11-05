@@ -110,8 +110,8 @@ void coffee_bitm_dump(
     stb.size.h = img->isize.h;
 
     CStbImageLib::coffee_stb_image_save_png(&r,&stb);
-    r.save_data();
-    r.free_data();
+    coffee_file_commit(&r);
+    coffee_file_free(&r);
 
     free(data);
 }

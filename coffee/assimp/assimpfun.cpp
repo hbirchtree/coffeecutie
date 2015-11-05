@@ -2,6 +2,7 @@
 
 //#define ASSIMP_PARSE_MULTICORE
 
+#include <coffee/core/base/cdebug.h>
 #include <coffee/core/base/cthreading.h>
 
 namespace Coffee{
@@ -299,18 +300,18 @@ bool coffee_assimp_dump_mesh(CAssimp::CAssimpMesh *mesh, CResources::CResource *
 {
     bool success = false;
 
-    resource->free_data();
+    coffee_file_free(resource);
 
     resource->size = mesh->byteSize;
     resource->data = malloc(resource->size);
 
     memcpy(resource->data,mesh,resource->size);
 
-    if(!resource->save_data())
+    if(!coffee_file_commit(resource))
         cWarning("Failed to store mesh data");
     else success = true;
 
-    resource->free_data();
+    coffee_file_free(resource);
 
     return success;
 }
