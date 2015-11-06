@@ -14,10 +14,10 @@ class CIAxisFilter
 {
 public:
     CIAxisFilter();
-    const scalar &filterDelta(const scalar &v);
+    const CVec2 &filterDelta(const CVec2 &v);
 private:
-    scalar last;
-    scalar delta;
+    CVec2 last;
+    scalar m_deadzone;
 };
 
 /*!
@@ -25,15 +25,14 @@ private:
  * \param quat
  * \param evsrc
  */
-extern void coffee_input_mouse_rotate(CMath::quat* quat, const CIMouseMoveEvent* evsrc);
+extern void coffee_input_mouse_rotate(CMath::quat* qt, const CIMouseMoveEvent* evsrc);
 
 /*!
  * \brief Stock function for rotating a quaternion by controller stick movement.
  * \param quat
  * \param jev Controller event
  */
-extern void coffee_input_controller_rotate(
-        CMath::quat *quat,
+extern void coffee_input_controller_rotate(CMath::quat *qt,
         const CIControllerAtomicEvent *jev,
         CIAxisFilter &filter);
 

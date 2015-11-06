@@ -26,7 +26,7 @@ public:
 
     const tvec2* operator=(const _cbasic_vec2<T>* vec)
     {
-        return (tvec2*)vec;
+        return (const tvec2*)vec;
     }
 
     tvec2& operator=(const _cbasic_vec2<T>& vec)

@@ -3,58 +3,63 @@
 namespace Coffee{
 namespace CInput{
 
-void coffee_input_mouse_rotate(CMath::quat *quat, const CIMouseMoveEvent *evsrc)
+using namespace CMath;
+
+void coffee_input_mouse_rotate(CMath::quat *qt, const CIMouseMoveEvent *evsrc)
 {
-    *quat = CMath::normalize(
-                CMath::quat(glm::vec3(0.01*evsrc->rel.y,0,0))
-                *CMath::quat(glm::vec3(0,0.01*evsrc->rel.x,0))
-                *(*quat));
+    *qt = CMath::normalize(
+                quat(vec3(0.01*evsrc->rel.y,0,0))
+                *quat(vec3(0,0.01*evsrc->rel.x,0))
+                *(*qt));
 }
 
-void coffee_input_controller_rotate(CMath::quat *quat, const CIControllerAtomicEvent *jev, CIAxisFilter& filter)
+void coffee_input_controller_rotate(CMath::quat *qt, const CIControllerAtomicEvent *jev, CIAxisFilter& filter)
 {
     if(CMath::fabs(jev->value)<0.1)
         return;
-    scalar vx=0,vy=0;
+    CVec2 v;
+    scalar tmp;
     switch(jev->index){
     case CK_AXIS_RIGHT_X:{
-        vx = filter.filterDelta(
-                    jev->value/CMath::pow(2.0,9.0));
+        tmp = jev->value/CMath::pow(2.0,16.0);
+        v = filter.filterDelta(CVec2(tmp,0));
         break;
     }
     case CK_AXIS_RIGHT_Y:{
-        vy = filter.filterDelta(
-                    jev->value/CMath::pow(2.0,9.0));
+        tmp = jev->value/CMath::pow(2.0,16.0);
+        v = filter.filterDelta(CVec2(0,tmp));
         break;
     }
     default:
-        break;
+        return;
     }
 
-    *quat = CMath::normalize(
-                CMath::quat(glm::vec3(0.01*vy,0,0))
-                *CMath::quat(glm::vec3(0,0.01*vx,0))
-                *(*quat));
+    *qt = normalize(
+                quat(vec3(v.y*0.1,0,0))
+                *quat(vec3(0,v.x*0.1,0))
+                *(*qt));
 }
 
 CIAxisFilter::CIAxisFilter():
-    last(0)
+    last(0,0)
 {
 }
 
-const scalar &CIAxisFilter::filterDelta(const scalar &v)
+const CVec2 &CIAxisFilter::filterDelta(const CVec2 &v)
 {
-    if(v-last < 0 && v > 0.f)
-        this->delta = 0;
-    else if(v-last > 0 && v < 0.f)
-        this->delta = 0;
-    else if(CMath::abs(v-last) < 0.02f)
-        C_NOOP();
-    else
-        this->delta = v-last;
+    CVec2 out = v;
 
-    this->last = v;
-    return this->delta;
+    if(sqrt(pow(out.x,2.f)+pow(out.x,2.f)) < sqrt(pow(m_deadzone,2.f)+pow(m_deadzone,2.f)))
+    {
+        out = CVec2(0,0);
+    }
+
+    //TODO: Filter out movement toward center
+
+    //TODO: Remap stick from 0.1-0.85 to 0.0,1.0
+
+    this->last = out;
+    return this->last;
 }
 
 }
