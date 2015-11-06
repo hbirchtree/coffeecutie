@@ -38,21 +38,37 @@ public:
             -1.f, -1.f, 1.f,
              1.f,  1.f, 1.f,
              1.f, -1.f, 1.f,
+            -1.f, -1.f, 1.f,
+            -1.f,  1.f, 1.f,
+        };
+
+        const scalar texdata[] = {
+            1.f, 0.f,
+            0.f, 1.f,
+            1.f, 1.f,
+            0.f, 0.f,
+            0.f, 1.f,
+            1.f, 0.f,
         };
 
         const uint32 indexdata[] = {
             0, 1, 2,
-            2, 1, 3
+            3, 4, 5
         };
 
         const byte vshader_src[] = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
-            "layout(location = 1) in mat4 transform;"
+            "layout(location = 1) in vec2 texcoord;"
+            "layout(location = 2) in mat4 transform;"
             "out gl_PerVertex {"
             "   vec4 gl_Position;"
             "};"
+            "out VData {"
+            "   vec2 vtex;"
+            "} vdata;"
             "void main(){"
+            "   vdata.vtex = texcoord;"
             "   gl_Position = transform * vec4(position,1.0);"
             "}"
         };
@@ -60,8 +76,13 @@ public:
         const byte fshader_src[] = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
+            "uniform sampler2D diffsamp;"
+            "in VData {"
+            "   vec2 vtex;"
+            "} vdata;"
             "void main(){"
-            "   Out_color = vec4(1.0,0.0,0.0,1.0);"
+            "   vec4 smp = texture(diffsamp,vdata.vtex);"
+            "   Out_color = smp;"
             "}"
         };
 
@@ -79,20 +100,28 @@ public:
         coffee_graphics_bind(&basePipeline);
 
         CBuffer vertices;
+        CBuffer texcoords;
         CBuffer indices;
         CBuffer transforms[3];
+        texcoords.bufferType = GL_ARRAY_BUFFER;
         vertices.bufferType = GL_ARRAY_BUFFER;
         indices.bufferType = GL_ELEMENT_ARRAY_BUFFER;
         coffee_graphics_alloc(&vertices);
+        coffee_graphics_alloc(&texcoords);
         coffee_graphics_alloc(&indices);
         coffee_graphics_alloc(3,GL_ARRAY_BUFFER,(CBuffer*)transforms);
 
+        coffee_graphics_activate(&texcoords);
         coffee_graphics_activate(&vertices);
         coffee_graphics_activate(&indices);
 
         coffee_graphics_buffer_store(&vertices,
                                      vertexdata,
                                      sizeof(vertexdata),
+                                     GL_STATIC_DRAW);
+        coffee_graphics_buffer_store(&texcoords,
+                                     texdata,
+                                     sizeof(texdata),
                                      GL_STATIC_DRAW);
         coffee_graphics_buffer_store(&indices,
                                      indexdata,
@@ -107,20 +136,39 @@ public:
         vrt_bind.buffer = &vertices;
         vrt_bind.stride = sizeof(CVec3);
 
+        CVertexBufferBinding tex_bind;
+        tex_bind.buffer = &texcoords;
+        tex_bind.stride = sizeof(CVec2);
+
         CVertexFormat vrt_fmt;
         vrt_fmt.normalized = GL_FALSE;
         vrt_fmt.offset = 0;
         vrt_fmt.size = 3;
         vrt_fmt.type = GL_FLOAT;
 
+        CVertexFormat tex_fmt;
+        tex_fmt.normalized = GL_FALSE;
+        tex_fmt.offset = 0;
+        tex_fmt.size = 2;
+        tex_fmt.type = GL_FLOAT;
+
         CVertexAttribute vrt_att;
         vrt_att.attribIdx = 0;
         vrt_att.bnd = &vrt_bind;
         vrt_att.fmt = &vrt_fmt;
 
+        CVertexAttribute tex_att;
+        tex_att.attribIdx = 1;
+        tex_att.bnd = &tex_bind;
+        tex_att.fmt = &tex_fmt;
+
         coffee_graphics_vao_attribute_format(&vao,vrt_att,vrt_fmt);
         coffee_graphics_vao_attribute_buffer(&vao,vrt_att,vrt_bind);
         coffee_graphics_vao_attribute_bind_buffer(&vao,vrt_bind);
+
+        coffee_graphics_vao_attribute_format(&vao,tex_att,tex_fmt);
+        coffee_graphics_vao_attribute_buffer(&vao,tex_att,tex_bind);
+        coffee_graphics_vao_attribute_bind_buffer(&vao,tex_bind);
 
         CVertexFormat mat_fmt;
         mat_fmt.offset = 0;
@@ -132,13 +180,13 @@ public:
         for(int i=0;i<4;i++)
         {
             CVertexBufferBinding* bnd = &mat_bnd[i];
-            bnd->binding = 1+i;
+            bnd->binding = 2+i;
             bnd->buffer = &transforms[0];
             bnd->offset = sizeof(CVec4)*i;
             bnd->stride = sizeof(CMat4);
             bnd->divisor = 1;
             CVertexAttribute attr;
-            attr.attribIdx = 1+i;
+            attr.attribIdx = 2+i;
             attr.bnd = bnd;
             attr.fmt = &mat_fmt;
 
@@ -179,12 +227,43 @@ public:
                         GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
         }
 
+        CResources::CResource texture("ubw/models/textures/particle_fx.png");
+        CResources::coffee_file_pull(&texture);
+
+        CStbImageLib::CStbImage ptext;
+        CStbImageLib::coffee_stb_image_load(&ptext,&texture);
+
+        CTexture gltext;
+        gltext.textureType = GL_TEXTURE_2D;
+        gltext.format = GL_RGBA;
+        coffee_graphics_alloc(&gltext);
+        coffee_graphics_tex_activate(&gltext);
+        CTextureTools::CTextureData gtexdata;
+        gtexdata.data = ptext.data;
+        gtexdata.datatype = GL_UNSIGNED_BYTE;
+        CTextureTools::coffee_create_texturesize(&gtexdata,ptext.size.w,ptext.size.h);
+        gtexdata.format = GL_RGBA8;
+
+        CTextureTools::coffee_graphics_tex_define(&gltext,&gtexdata);
+        CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
+
+        coffee_graphics_tex_mipmap(&gltext);
+
+        coffee_graphics_tex_get_handle(&gltext);
+        coffee_graphics_tex_make_resident(&gltext);
+
+        glProgramUniformHandleui64ARB(fragshader.handle,glGetUniformLocation(fragshader.handle,"diffsamp"),gltext.bhandle);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        glEnable(GL_DEPTH_TEST);
+
         int transform_index = 0;
 
         this->showWindow();
         while(!closeFlag())
         {
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
             for(int i=0;i<4;i++)
                 coffee_graphics_vao_attribute_bind_buffer(
@@ -202,7 +281,17 @@ public:
         }
 
         coffee_graphics_free(&vao);
+        coffee_graphics_free(&gltext);
         coffee_graphics_free(&vertices);
+        coffee_graphics_free(&texcoords);
+        for(int i=0;i<4;i++)
+        {
+            coffee_graphics_free(&transforms[i]);
+        }
+        coffee_graphics_free(&basePipeline);
+        coffee_graphics_free(&vertshader);
+        coffee_graphics_free(&fragshader);
+        coffee_graphics_free(&indices);
     }
     void eventWindowsHandle(const CDisplay::CDEvent *e)
     {
