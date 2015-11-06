@@ -33,22 +33,22 @@ public:
         CElapsedTimerMicro clock;
         clock.start();
 
-        const scalar vertexdata[] = {
-            -1.f,  1.f, 1.f,
-            -1.f, -1.f, 1.f,
-             1.f,  1.f, 1.f,
-             1.f, -1.f, 1.f,
-            -1.f, -1.f, 1.f,
-            -1.f,  1.f, 1.f,
+        const CVec3 vertexdata[] = {
+            CVec3(-1.f, -1.f, 0.f), //2
+            CVec3( 1.f, -1.f, 0.f), //1
+            CVec3(-1.f,  1.f, 0.f), //4
+            CVec3( 1.f, -1.f, 0.f), //1
+            CVec3( 1.f,  1.f, 0.f), //3
+            CVec3(-1.f,  1.f, 0.f), //4
         };
 
-        const scalar texdata[] = {
-            1.f, 0.f,
-            0.f, 1.f,
-            1.f, 1.f,
-            0.f, 0.f,
-            0.f, 1.f,
-            1.f, 0.f,
+        const CVec2 texdata[] = {
+            CVec2(0.f, 0.f), //1
+            CVec2(1.f, 0.f), //2
+            CVec2(0.f, 1.f), //3
+            CVec2(1.f, 0.f), //2
+            CVec2(1.f, 1.f), //4
+            CVec2(0.f, 1.f), //3
         };
 
         const uint32 indexdata[] = {
@@ -81,7 +81,8 @@ public:
             "   vec2 vtex;"
             "} vdata;"
             "void main(){"
-            "   vec4 smp = texture(diffsamp,vdata.vtex);"
+//            "   vec4 smp = texture(diffsamp,vdata.vtex);"
+            "   vec4 smp = vec4(1.0);"
             "   Out_color = smp;"
             "}"
         };
