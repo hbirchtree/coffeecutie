@@ -16,10 +16,6 @@ enum blam_versions
     blam_version_h2     = 8, /*!< The Halo 2 map version*/
 };
 
-const static int32 blam_num_map_names = 0; /*!< Number of recognizable map names*/
-const static struct mapnames { byte inname[32]; byte outname[32];} blam_map_names[0] = {
-}; /*!< A mapping of map names which this library can recognize. These are the stock maps.*/
-
 /*!
  * \brief Halo 2 header, credits to Assembly project for offsets
  */
@@ -62,13 +58,6 @@ struct blam_file_header_h2
 
     byte    footer[4];
 };
-
-/*!
- * \brief Get the proper, full name of a map
- * \param map Map from which we identify a string
- * \return A null-terminated string with a map name or empty (empty if map name is not recognized)
- */
-extern cstring blam_file_header_full_mapname(const blam_file_header_h2* map);
 
 }
 }

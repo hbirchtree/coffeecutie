@@ -166,7 +166,7 @@ void coffee_audio_source_set_state(CALSource *source, CALPlaybackState state)
 void coffee_audio_source_set_states(
         const CALSource **sources, szptr numSources, CALPlaybackState state)
 {
-    ALuint src[numSources];
+    ALuint *src = new ALuint[numSources];
     for(szptr i=0;i<numSources;i++)
         src[i] = sources[i]->handle;
 
@@ -185,6 +185,7 @@ void coffee_audio_source_set_states(
         alSourceRewindv(numSources,src);
         break;
     }
+    delete[] src;
 }
 
 void coffee_audio_listener_set(const CALListener *listener)
@@ -215,19 +216,21 @@ void coffee_audio_source_transform(
 void coffee_audio_source_queue_buffers(
         CALSource *source, szptr numBuffers, CALBuffer **buffers)
 {
-    ALuint buf[numBuffers];
+    ALuint *buf = new ALuint[numBuffers];
     for(szptr i=0;i<numBuffers;i++)
         buf[i] = buffers[i]->handle;
     alSourceQueueBuffers(source->handle,numBuffers,buf);
+    delete[] buf;
 }
 
 void coffee_audio_source_dequeue_buffers(
         CALSource *source, szptr numBuffers, CALBuffer **buffers)
 {
-    ALuint buf[numBuffers];
+    ALuint *buf = new ALuint[numBuffers];
     for(szptr i=0;i<numBuffers;i++)
         buf[i] = buffers[i]->handle;
     alSourceUnqueueBuffers(source->handle,numBuffers,buf);
+    delete[] buf;
 }
 
 }

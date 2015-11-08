@@ -3,10 +3,9 @@
 #ifndef WIN_CORE
 #define WIN_CORE
 
-#include <Windows.h>
-#include "plat/platform_detect.h"
-#include "coffee_types.h"
-#include "coffee/cdebug.h"
+#include "coffee/core/plat/platform_detect.h"
+#include "coffee/core/coffee_types.h"
+#include "coffee/core/base/cdebug.h"
 
 namespace Coffee{
 	inline static void coffee_enable_core_dump()
@@ -14,51 +13,15 @@ namespace Coffee{
 
 	}
 namespace CResources{
-	static HANDLE _winapi_open_file_read(cstring file)
-	{
-		return CreateFile(file, GENERIC_READ,
-			FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	}
-	static szptr _winapi_file_get_size(HANDLE fp)
-	{
-		if (fp == INVALID_HANDLE_VALUE)
-			return 0;
+        struct CWinFile;
 
-		LARGE_INTEGER sz;
-		szptr ret = 0;
-		if (GetFileSizeEx(fp, &sz))
-			ret = (szptr)sz;
-		return ret;
-	}
-
-	static szptr coffee_file_get_size(cstring file)
-	{
-		HANDLE fp = _winapi_open_file_read(file);
-
-		szptr ret = _winapi_file_get_size(fp);
-
-		CloseHandle(fp);
-		return ret;
-	}
+        extern CWinFile* _winapi_open_file_read(cstring file);
+        extern szptr _winapi_file_get_size(CWinFile *fp);
+        extern szptr coffee_file_get_size(cstring file);
 }
 namespace CMemoryManagement{
-	static void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
-	{
-		HANDLE fp = CResources::_winapi_open_file_read(filename);
-		szptr len = CResources::_winapi_file_get_size(fp);
-
-		HANDLE map = CreateFileMapping(fp, NULL, PAGE_READONLY, 0, 0, 0);
-		if (map == 0)return nullptr;
-
-		void* ptr = MapViewOfFile(map, FILE_MAP_READ, 0, 0, size);
-
-		return ptr;
-	}
-	static bool coffee_memory_unmap_file(void* ptr, szptr size)
-	{
-		return UnmapViewOfFile(ptr);
-	}
+        extern void* coffee_memory_map_file(cstring filename, szptr offset, szptr size);
+        extern bool coffee_memory_unmap_file(void* ptr, szptr size);
 }
 
 namespace CFunctional {

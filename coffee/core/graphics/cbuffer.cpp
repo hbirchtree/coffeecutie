@@ -222,13 +222,14 @@ void coffee_graphics_buffer_sub_unbind(CSubBuffer *buf)
 
 void coffee_graphics_free(int count, CBuffer *buf)
 {
-    GLuint handles[count];
+    GLuint *handles = new GLuint[count];
     for(int i=0;i<count;i++)
     {
         handles[i] = buf[i].handle;
         buf[i].handle = 0;
     }
     glDeleteBuffers(count,handles);
+    delete[] handles;
 }
 
 void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf)

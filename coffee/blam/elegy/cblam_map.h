@@ -18,10 +18,6 @@ enum blam_versions
 static cstring const blam_header_head = "head"; /*!< Character string for header of file header, used to determine validity of data*/
 static cstring const blam_header_foot = "foot"; /*!< Character string for footer of file header, used to determine validity of data*/
 
-const static int32 blam_num_map_names = 0; /*!< Number of recognizable map names*/
-const static struct mapnames { byte inname[32]; byte outname[32];} blam_map_names[0] = {
-}; /*!< A mapping of map names which this library can recognize. These are the stock maps.*/
-
 /*!
  * \brief A mockup of the Halo 3 file header format, only speculation out of hex editor
  */
@@ -58,13 +54,6 @@ struct blam_file_header_h3
         uint32  size;
     } partitions[6];
 };
-
-/*!
- * \brief Get the proper, full name of a map
- * \param map Map from which we identify a string
- * \return A null-terminated string with a map name or empty (empty if map name is not recognized)
- */
-extern cstring blam_file_header_full_mapname(const blam_file_header_h3* map);
 
 }
 }
