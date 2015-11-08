@@ -1,0 +1,16 @@
+#include "coffee/core/graphics/cbuffer.h"
+#include "coffee/core/graphics/cvertexarrayobject.h"
+
+#include "coffee/core/graphics/cgraphics_quirks.h"
+#include "coffee/core/graphics/cgraphicsdata.h"
+#include "coffee/core/graphics/cgraphicswrappers.h"
+
+#include "coffee/core/graphics/cshader.h"
+
+#include "coffee/core/graphics/ctexture.h"
+#include "coffee/core/graphics/ctexture_dxtc.h"
+#include "coffee/core/graphics/cframebuffer.h"
+
+#include "coffee/core/graphics/cuniformtypes.h"
+
+#include "coffee/scene/cnode.h"
