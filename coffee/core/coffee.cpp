@@ -1,6 +1,7 @@
 #include "coffee.h"
 
 #include "base/cdebug.h"
+#include "coffee/core/plat/plat_core.h"
 
 static bool coffee_initialized = false;
 

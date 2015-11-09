@@ -30,8 +30,8 @@ public:
     {
         CFunctional::CFrameCounter counter(framefun);
         counter.interval = 1000000;
-        CElapsedTimerMicro clock;
-        clock.start();
+        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
+        clock->start();
 
         const CVec3 vertexdata[] = {
             CVec3(-1.f, -1.f, 0.f), //2
@@ -272,7 +272,7 @@ public:
                             mat_bnd[i],
                             &transforms[transform_index]);
 
-            counter.update(clock.elapsed());
+            counter.update(clock->elapsed());
             glDrawElementsInstanced(GL_TRIANGLES,
                                     sizeof(indexdata)/sizeof(uint32),
                                     GL_UNSIGNED_INT,0,1);

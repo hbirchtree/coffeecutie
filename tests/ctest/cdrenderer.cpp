@@ -83,7 +83,7 @@ void CDRenderer::run()
     glViewport(0,0,m_properties.size.w,m_properties.size.h);
 
     bigscalar mtime = 0.0;
-    CElapsedTimerMicro swap;
+    CElapsedTimerMicro* swap = coffee_fun_alloc_timer_micro();
 
     setSwapInterval(0);
     cMsg("Coffee","Init time: %fs",contextTime());
@@ -96,7 +96,7 @@ void CDRenderer::run()
     while(!closeFlag()){
         delta = contextTime();
 
-        swap.start();
+        swap->start();
 
         //Rendering part
 
@@ -109,19 +109,19 @@ void CDRenderer::run()
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         coffee_render_test(game,deltaT);
         // END Rendering part
-        rendertime = swap.elapsed();
+        rendertime = swap->elapsed();
 
         //Event handling
-        swap.start();
+        swap->start();
         executeRunQueue();
-        qtime = swap.elapsed();
-        swap.start();
+        qtime = swap->elapsed();
+        swap->start();
         pollEvents();
-        inputtime = swap.elapsed();
+        inputtime = swap->elapsed();
         //Buffer swapping
-        swap.start();
+        swap->start();
         swapBuffers();
-        swaptime = swap.elapsed();
+        swaptime = swap->elapsed();
         frames++;
 
         //Info
@@ -137,13 +137,13 @@ void CDRenderer::run()
         }
     }
 
-    swap.start();
+    swap->start();
     coffee_unload_test(game);
     delete game;
 
     hideWindow();
 
-    cMsg("Coffee","Termination time: %lldus",swap.elapsed());
+    cMsg("Coffee","Termination time: %lldus",swap->elapsed());
 }
 
 void CDRenderer::run(const CDWindowProperties& props)

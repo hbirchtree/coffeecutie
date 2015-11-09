@@ -9,6 +9,7 @@
 
 #include "coffee_vector_types.h"
 #include "coffee_composite_types.h"
+#include "coffee/core/plat/plat_timers.h"
 
 namespace Coffee{
 

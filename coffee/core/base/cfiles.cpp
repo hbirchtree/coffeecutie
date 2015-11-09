@@ -1,6 +1,8 @@
 #include "cfiles.h"
 
 #include "coffee/core/plat/plat_file.h"
+#include "coffee/core/plat/plat_core.h"
+#include "coffee/core/base/cdebug.h"
 
 namespace Coffee{
 namespace CResources{
@@ -63,7 +65,7 @@ void coffee_file_free(CResource *resc)
 
 bool coffee_file_pull(CResource *resc, bool textmode)
 {
-    FILE *fp = CFiles::coffee_file_open(resc->resource(),"rb");
+    CFiles::CFile *fp = CFiles::coffee_file_open(resc->resource(),"rb");
 
     if(!fp){
         cWarning("Failed to read file: %s",resc->resource());
@@ -78,7 +80,7 @@ bool coffee_file_pull(CResource *resc, bool textmode)
 
 bool coffee_file_commit(const CResource *resc, bool append)
 {
-    FILE *fp = CFiles::coffee_file_open(resc->resource(),(append) ? "ab+" : "wb");
+    CFiles::CFile *fp = CFiles::coffee_file_open(resc->resource(),(append) ? "ab+" : "wb");
     bool stat = CFiles::coffee_file_write(fp,resc->data,resc->size);
     if(CFiles::coffee_file_close(fp))
         cWarning("Failed to close file: %s",resc->resource());
@@ -96,6 +98,11 @@ CResource::CResource(cstring rsrc):
 cstring CResource::resource() const
 {
     return m_resource.c_str();
+}
+
+bool coffee_file_mkdir(cstring dirname, bool recursive)
+{
+    return CFiles::coffee_file_mkdir(dirname,recursive);
 }
 
 }

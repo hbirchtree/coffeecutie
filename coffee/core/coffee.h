@@ -4,8 +4,6 @@
 #include "coffee_types.h"
 #include "coffee_macros.h"
 
-//Platform core functions
-#include "plat/plat_core.h"
 #include "plat/platform_detect.h"
 
 #include <thread>

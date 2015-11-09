@@ -5,7 +5,7 @@
 #include "coffee/core/coffee_macros.h"
 #include "coffee/core/coffee_types.h"
 
-#ifdef __unix__
+#ifdef COFFEE_UNIXPLAT
 #include "coffee_unix/unix_core.h"
 #elif defined(COFFEE_WINDOWS)
 #include "coffee_windows/win_core.h"
@@ -54,6 +54,5 @@ class CElapsedTimerD : public _coffee_stub_timer<double>{};
 } //CFunctional
 } //Coffee
 #endif
-
 
 #endif

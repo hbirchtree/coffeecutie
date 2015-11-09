@@ -76,6 +76,14 @@ extern bool coffee_file_commit(const CResource* resc, bool append = false);
  */
 extern void coffee_file_commit_textmode(const CResource* resc, bool append = false);
 
+/*!
+ * \brief Create a directory
+ * \param dirname
+ * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
+ * \return True if process succeeded
+ */
+extern bool coffee_file_mkdir(cstring dirname, bool recursive);
+
 }
 }
 

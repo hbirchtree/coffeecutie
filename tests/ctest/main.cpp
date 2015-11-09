@@ -18,7 +18,7 @@ int main(int,char**)
     cDebug("Program directory:  %s",app_dir);
     cDebug("Launching from      %s",exe_name);
 
-    CResources::CFiles::coffee_file_mkdir(cfg_dir,true);
+    CResources::coffee_file_mkdir(cfg_dir,true);
 
     free(cfg_dir);
     free(app_dir);
@@ -27,8 +27,8 @@ int main(int,char**)
     Coffee::CoffeeInit();
     CoffeeTests::run_tests();
 
-    CElapsedTimerMicro timer;
-    timer.start();
+    CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
+    timer->start();
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
@@ -59,7 +59,7 @@ int main(int,char**)
            ? "Renderer exited with failure"
            : "Renderer exited normally");
 
-    cDebug("Time: %lldus",timer.elapsed());
+    cDebug("Time: %lldus",timer->elapsed());
 
     ret.get();
 

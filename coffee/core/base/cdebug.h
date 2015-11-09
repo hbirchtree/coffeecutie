@@ -25,6 +25,10 @@
 namespace Coffee{
 namespace CFunctional{
 
+extern cstring_w coffee_debug_get_clock_string();
+extern void coffee_debug_clear_clock_string(cstring_w str);
+extern cstring_w* coffee_debug_get_callstack(szptr *cs_length, uint32 stackreduce);
+
 template<typename... Arg>
 /*!
  * \brief Should not be used for debug printing, it's slower than using printf
@@ -111,14 +115,14 @@ static void cDebugPrint(
     //Some settings for output
     FILE* strm = stdout;
     bool fail = false;
-    timestring = CDebugHelpers::coffee_clock_string();
+    timestring = coffee_debug_get_clock_string();
 
 
     //Get call stack
     cstring_w* callstack = nullptr;
     szptr cs_length;
     {
-        callstack = CDebugHelpers::coffee_callstack(&cs_length,stackreduce);
+        callstack = coffee_debug_get_callstack(&cs_length,stackreduce+1);
         callstring = (cs_length>0) ? callstack[0] : "[callstack unavailable]";
     }
     //
@@ -158,7 +162,7 @@ static void cDebugPrint(
     }
 
     CDebugHelpers::coffee_free_callstack(callstack,cs_length);
-    CDebugHelpers::coffee_clock_free(timestring);
+    coffee_debug_clear_clock_string(timestring);
 }
 
 template<typename... Arg>

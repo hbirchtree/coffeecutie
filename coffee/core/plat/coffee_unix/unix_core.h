@@ -40,6 +40,7 @@ inline static void coffee_enable_core_dump()
 
 namespace CResources{
 namespace CFiles{
+
 inline static bool coffee_file_mkdir(cstring dname, bool createParent = false)
 {
     if(!createParent)
@@ -180,10 +181,10 @@ inline static void coffee_clock_free(cstring_w arg)
 } //CDebugHelpers
 
 template<typename T>
-class _coffee_elapsed_timer_template
+class _cbasic_posix_timer : public _cbasic_timer<T>
 {
 public:
-    virtual ~_coffee_elapsed_timer_template(){}
+    virtual ~_cbasic_posix_timer(){}
     void start(){
         _start = _curr_time();
     }
@@ -200,7 +201,8 @@ protected:
 private:
     T _start = 0;
 };
-class CElapsedTimer : public _coffee_elapsed_timer_template<uint64>
+
+class _posix_CElapsedTimer : public _cbasic_posix_timer<uint64>
 {
 private:
     uint64 _curr_time(){
@@ -208,7 +210,7 @@ private:
         return tv.tv_sec*1000+tv.tv_usec/1000;
     }
 };
-class CElapsedTimerMicro : public _coffee_elapsed_timer_template<uint64>
+class _posix_CElapsedTimerMicro : public _cbasic_posix_timer<uint64>
 {
 private:
     uint64 _curr_time(){
@@ -216,7 +218,7 @@ private:
         return tv.tv_sec*1000000+tv.tv_usec;
     }
 };
-class CElapsedTimerD : public _coffee_elapsed_timer_template<bigscalar>
+class _posix_CElapsedTimerD : public _cbasic_posix_timer<bigscalar>
 {
 private:
     bigscalar _curr_time(){

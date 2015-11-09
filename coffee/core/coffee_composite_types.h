@@ -6,6 +6,15 @@
 
 namespace Coffee{
 
+template<typename T>
+class _cbasic_timer
+{
+public:
+    virtual ~_cbasic_timer(){}
+    virtual void start() = 0;
+    virtual T elapsed() = 0;
+};
+
 /*!
  * \brief Used for storing typical 8-bit color with alpha
  */
@@ -179,6 +188,12 @@ typedef _cbasic_point<bigscalar> CPointD;
  * \brief Standard clipping type
  */
 typedef _cbasic_zfield<scalar> CZField;
+
+typedef _cbasic_timer<uint64> CElapsedTimer;
+
+typedef _cbasic_timer<uint64> CElapsedTimerMicro;
+
+typedef _cbasic_timer<bigscalar> CElapsedTimerD;
 }
 
 #endif

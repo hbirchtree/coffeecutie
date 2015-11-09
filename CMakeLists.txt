@@ -47,6 +47,7 @@ set ( CoffeeCore_SRCS
 
         coffee/core/coffee.cpp
         coffee/core/base/counter.cpp
+        coffee/core/base/cdebug.cpp
         coffee/core/base/cdisplay.cpp
         coffee/core/base/cfiles.cpp
         coffee/core/base/cobject.cpp
@@ -78,11 +79,10 @@ set ( CoffeeCore_SRCS
         coffee/core/input/cinputfunctions.cpp
 
         coffee/scene/cnode.cpp
-	
-	coffee/core/plat/coffee_windows/win_core.cpp
 
-        #Third-party sources
-        libs/cppformat/format.cc
+        coffee/core/plat/coffee_windows/win_core.cpp
+        coffee/core/plat/plat_file.cpp
+        coffee/core/plat/plat_timers.cpp
         )
 
 set ( CoffeeTest_SRCS
