@@ -182,11 +182,15 @@ template<typename T,size_t Size> _cbasic_tvector<T,Size> normalize(
     return vnew;
 }
 
-template<typename T,size_t Size> _cbasic_tvector<T,Size> cross(
-        const _cbasic_tvector<T,Size>& v1,
-        const _cbasic_tvector<T,Size>& v2)
+template<typename T> _cbasic_tvector<T,3> cross(
+        const _cbasic_tvector<T,3>& v1,
+        const _cbasic_tvector<T,3>& v2)
 {
-    return _cbasic_tvector<T,Size>();
+    _cbasic_tvector<T,3> vnew;
+    vnew[0] = v1[1]*v2[2] - v1[2]*v2[1];
+    vnew[1] = v1[2]*v2[0] - v1[0]*v2[2];
+    vnew[2] = v1[0]*v2[1] - v1[1]*v2[0];
+    return vnew;
 }
 
 template<typename T,size_t Size> T distance(
@@ -297,29 +301,9 @@ template<typename T> struct _cbasic_quat{
 };
 
 /*!
- * \brief A base for all NxN matrix types
- */
-template<typename T, int ns> struct _cbasic_matrix_n{
-    _cbasic_matrix_n()
-    {
-        for(int x=0;x<ns;x++)
-            for(int y=0;y<ns;y++)
-                m[x][y] = 1;
-    }
-    _cbasic_matrix_n(T v)
-    {
-        for(int x=0;x<ns;x++)
-            for(int y=0;y<ns;y++)
-                m[x][y] = v;
-    }
-
-    T m[ns][ns];
-};
-
-/*!
  * \brief A base for all MxN matrix types
  */
-template<typename T, int ms, int ns> struct _cbasic_matrix_nm{
+template<typename T, size_t ms, size_t ns> struct _cbasic_matrix_nm{
     _cbasic_matrix_nm()
     {
         for(int x=0;x<ms;x++)
@@ -335,6 +319,11 @@ template<typename T, int ms, int ns> struct _cbasic_matrix_nm{
 
     T m[ms][ns];
 };
+
+/*!
+ * \brief A base for all NxN matrix types
+ */
+template<typename T, size_t ms> using _cbasic_matrix_n = _cbasic_matrix_nm<T,ms,ms>;
 
 typedef _cbasic_vec2<scalar> CVec2;
 typedef _cbasic_vec3<scalar> CVec3;

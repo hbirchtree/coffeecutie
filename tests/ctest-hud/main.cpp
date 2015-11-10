@@ -81,8 +81,8 @@ public:
             "   vec2 vtex;"
             "} vdata;"
             "void main(){"
-//            "   vec4 smp = texture(diffsamp,vdata.vtex);"
-            "   vec4 smp = vec4(1.0);"
+            "   vec4 smp = texture(diffsamp,vdata.vtex);"
+//            "   vec4 smp = vec4(1.0);"
             "   Out_color = smp;"
             "}"
         };
@@ -248,6 +248,8 @@ public:
         CTextureTools::coffee_graphics_tex_define(&gltext,&gtexdata);
         CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
 
+        CStbImageLib::coffee_stb_image_free(&ptext);
+
         coffee_graphics_tex_mipmap(&gltext);
 
         coffee_graphics_tex_get_handle(&gltext);
@@ -319,24 +321,14 @@ typedef CVectors::_cbasic_tvector<scalar,3> VEC3;
 
 int32 coffee_main(int32 argc, byte** argv)
 {
-    VEC3 t(0);
-    t[0] = 1,t[1] = 2,t[2] = 3;
-    VEC3 t2(0);
-    t2[0] = 1,t2[1] = 2,t2[2] = 3;
-    t += t2;
-    t /= 2;
-    t *= 3;
-
-    t = CVectors::normalize(t);
-
-    cDebug("Length of vec3: %f",CVectors::distance(t,t2));
-
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
     props.contextProperties.flags |= CGLContextProperties::GLDebug;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();
+    delete renderer;
+
     return 0;
 }
 

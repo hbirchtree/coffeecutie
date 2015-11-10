@@ -5,12 +5,12 @@
 #include <stdio.h>
 #include <stdexcept>
 
-static constexpr Coffee::cstring print_color_debug = "\033[1m\033[44m";
-static constexpr Coffee::cstring print_color_warning = "\033[1m\033[43m";
-static constexpr Coffee::cstring print_color_stub = "\033[1m\033[42m";
-static constexpr Coffee::cstring print_color_fatal = "\033[1m\033[41m";
+constexpr Coffee::cstring print_color_debug = "\033[1m\033[44m";
+constexpr Coffee::cstring print_color_warning = "\033[1m\033[43m";
+constexpr Coffee::cstring print_color_stub = "\033[1m\033[42m";
+constexpr Coffee::cstring print_color_fatal = "\033[1m\033[41m";
 
-static constexpr Coffee::cstring print_color_reset = "\033[0m";
+constexpr Coffee::cstring print_color_reset = "\033[0m";
 
 //#define C_UNUSED(v) do{(void)(v);}while(0);
 

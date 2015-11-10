@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "coffee/core/coffee_macros.h"
+
 #include "coffee/core/coffee.h"
 #include "counter.h"
 
