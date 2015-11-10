@@ -22,15 +22,16 @@ private:
 
 /*!
  * \brief Stock function for rotating a quaternion by mouse movement.
- * \param quat
+ * \param qt
  * \param evsrc
  */
 extern void coffee_input_mouse_rotate(CMath::quat* qt, const CIMouseMoveEvent* evsrc);
 
 /*!
  * \brief Stock function for rotating a quaternion by controller stick movement.
- * \param quat
+ * \param qt
  * \param jev Controller event
+ * \param filter
  */
 extern void coffee_input_controller_rotate(CMath::quat *qt,
         const CIControllerAtomicEvent *jev,

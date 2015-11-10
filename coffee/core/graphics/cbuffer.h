@@ -38,6 +38,7 @@ extern void coffee_graphics_free(CBuffer* buf);
 /*!
  * \brief Free multiple buffers at once, efficient for minimal GL calls
  * \param count
+ * \param type
  * \param buf
  */
 extern void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf);
@@ -261,6 +262,7 @@ extern void coffee_graphics_buffer_invalidate_safe(CBuffer* buf);
 /*!
  * \brief Binds a range
  * \param buf Subbuffer target
+ * \param binding
  */
 extern void coffee_graphics_buffer_sub_bind(
         const _cbasic_graphics_buffer_section *buf,
@@ -269,6 +271,7 @@ extern void coffee_graphics_buffer_sub_bind(
 /*!
  * \brief Unbinds a range
  * \param buf Subbuffer target
+ * \param binding
  */
 extern void coffee_graphics_buffer_sub_unbind(
         const _cbasic_graphics_buffer_section *buf,

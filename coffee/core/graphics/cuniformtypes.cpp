@@ -10,8 +10,9 @@ _cbasic_graphics_resource_desc::_cbasic_graphics_resource_desc():
 }
 
 _cbasic_graphics_buffer_resource_desc::_cbasic_graphics_buffer_resource_desc():
-    _cbasic_graphics_resource_desc(),
-    buffer(nullptr)
+    object_name(nullptr),
+    buffer(nullptr),
+    index(0)
 {
 }
 

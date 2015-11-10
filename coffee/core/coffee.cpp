@@ -9,8 +9,8 @@ namespace Coffee{
 
 void CoffeeInit()
 {
-    //Allow core dump by default
     coffee_initialized = true;
+    //Allow core dump by default
     coffee_enable_core_dump();
 }
 

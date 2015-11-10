@@ -23,23 +23,23 @@ struct _cbasic_graphics_shader_program
     };
 };
 
-struct _cbasic_graphics_buffer_desc : _cbasic_graphics_resource
-{
-    GLsizeiptr size;
-    GLenum type;
-};
-
-struct _cbasic_graphics_buffer_mappable : _cbasic_graphics_buffer_desc
+struct _cbasic_graphics_buffer_mappable
 {
     void* data;
     BufferStorageMask flags;
     BufferAccessMask mapflags;
+    GLsizeiptr size;
+    GLuint handle;
+    GLenum type;
 };
 
-struct _cbasic_graphics_buffer_section : _cbasic_graphics_buffer_desc
+struct _cbasic_graphics_buffer_section
 {
     _cbasic_graphics_buffer_mappable* parent;
     GLsizeiptr offset;
+    GLsizeiptr size;
+    GLuint handle;
+    GLenum type;
 };
 
 struct _cbasic_graphics_resource_desc
@@ -50,11 +50,13 @@ struct _cbasic_graphics_resource_desc
     GLuint index;
 };
 
-struct _cbasic_graphics_buffer_resource_desc : _cbasic_graphics_resource_desc
+struct _cbasic_graphics_buffer_resource_desc
 {
     _cbasic_graphics_buffer_resource_desc();
 
+    cstring object_name;
     _cbasic_graphics_buffer_section* buffer;
+    GLuint index;
 };
 
 template<typename T>

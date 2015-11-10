@@ -315,17 +315,33 @@ public:
     }
 };
 
+struct VEC3 : CVectors::_cbasic_tvector<scalar,3>
+{
+    using _cbasic_tvector<scalar,3>::_cbasic_tvector;
+
+    scalar& x()
+    {
+        return (*this)[0];
+    }
+    scalar& y()
+    {
+        return (*this)[1];
+    }
+    scalar& z()
+    {
+        return (*this)[2];
+    }
+};
+
 int32 coffee_main(int32 argc, byte** argv)
 {
-    CResources::CResource res("test.struct");
-    res.data = malloc(sizeof(_cbasic_graphics_buffer_mappable));
-    CResources::coffee_file_commit(&res);
-    CResources::coffee_file_free(&res);
-
-    CVec3 tvec(4,5,6);
-    CMath::vec3 gvec(1,2,3);
-    gvec = tvec;
-    cDebug("Vector: %f",gvec.x);
+    VEC3 t(0);
+    t.x() = 1,t.y() = 2,t.z() = 3;
+    VEC3 t2(0);
+    t2[0] = 1,t2[1] = 2,t2[2] = 3;
+    t += t2;
+    t /= 2;
+    t *= 3;
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();

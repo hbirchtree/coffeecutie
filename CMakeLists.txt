@@ -147,10 +147,7 @@ if (COFFEE_BUILD_STATIC)
     add_library( CAudio STATIC ${CAudio_SRCS})
     add_library( CAssimp STATIC ${CAssimp_SRCS})
     add_library( CImage STATIC ${CImage_SRCS})
-    add_library ( CoffeeTest STATIC ${CoffeeTest_SRCS} )
-    add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
-    add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
-    add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
+    add_library ( CoffeeTestLib STATIC ${CoffeeTest_SRCS} )
 else()
     add_library( CBlam SHARED ${CBlamVolta_SRCS} ${CBlamDimeter_SRCS} ${CBlamElegy_SRCS})
     add_library( CoffeeCore SHARED ${CoffeeCore_SRCS} )
@@ -158,10 +155,11 @@ else()
     add_library( CAssimp SHARED ${CAssimp_SRCS})
     add_library( CImage SHARED ${CImage_SRCS})
     add_library ( CoffeeTestLib SHARED ${CoffeeTest_SRCS} ) #For SWIG
-    add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
-    add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
-    add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
 endif()
+
+add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
+add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
 #####################
 
 #Set up necessary linking options
