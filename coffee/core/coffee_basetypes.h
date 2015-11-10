@@ -1,10 +1,20 @@
 #ifndef COFFEE_BASETYPES_H
 #define COFFEE_BASETYPES_H
 
+#define C_FLAGS(type,utype) \
+    inline type operator&(type lhs, type rhs){return (type)(((utype)lhs)&((utype)rhs));} \
+    inline type operator|(type lhs, type rhs){return (type)(((utype)lhs)|((utype)rhs));}
+
 #include <string>
 #include <stdexcept>
 
 namespace Coffee{
+
+template<typename T>
+inline bool flag_eval(T flagcombo)
+{
+    return (int)flagcombo;
+}
 
 //Integer types
 typedef char                int8;

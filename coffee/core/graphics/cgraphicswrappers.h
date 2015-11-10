@@ -7,6 +7,8 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+extern void coffee_graphics_clear(CClearFlag flg);
+
 /*!
  * \brief Contains a GL message from the binding layer
  */

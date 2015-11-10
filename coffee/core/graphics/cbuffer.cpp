@@ -127,24 +127,31 @@ void coffee_graphics_buffer_store_safe(
     coffee_graphics_unbind(buf);
 }
 
-void coffee_graphics_buffer_substore(CBuffer *buf, const void *data, GLsizeiptr offset, GLsizeiptr size)
+void coffee_graphics_buffer_substore(
+        CBuffer *buf, const void *data, GLsizeiptr offset, GLsizeiptr size)
 {
     glNamedBufferSubData(buf->handle,offset,size,data);
 }
 
-void coffee_graphics_buffer_substore_safe(CBuffer *buf, const void *data, GLsizeiptr offset, GLsizeiptr size)
+void coffee_graphics_buffer_substore_safe(
+        CBuffer *buf, const void *data,
+        GLsizeiptr offset, GLsizeiptr size)
 {
     coffee_graphics_bind(buf);
     glBufferSubData(buf->type,offset,size,data);
     coffee_graphics_unbind(buf);
 }
 
-void coffee_graphics_buffer_copy(GLuint buf1, GLuint buf2, GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
+void coffee_graphics_buffer_copy(
+        GLuint buf1, GLuint buf2, GLsizeiptr offset1,
+        GLsizeiptr offset2, GLsizeiptr size)
 {
     glCopyNamedBufferSubData(buf1,buf2,offset1,offset2,size);
 }
 
-void coffee_graphics_buffer_copy_safe(GLuint buf1, GLuint buf2, GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
+void coffee_graphics_buffer_copy_safe(
+        GLuint buf1, GLuint buf2,
+        GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
 {
     glBindBuffer(GL_COPY_READ_BUFFER,buf1);
     glBindBuffer(GL_COPY_WRITE_BUFFER,buf2);
@@ -153,17 +160,23 @@ void coffee_graphics_buffer_copy_safe(GLuint buf1, GLuint buf2, GLsizeiptr offse
     glBindBuffer(GL_COPY_WRITE_BUFFER,0);
 }
 
-void coffee_graphics_buffer_copy(CBuffer *buf1, CBuffer *buf2, GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
+void coffee_graphics_buffer_copy(
+        CBuffer *buf1, CBuffer *buf2,
+        GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
 {
     coffee_graphics_buffer_copy(buf1->handle,buf2->handle,offset1,offset2,size);
 }
 
-void coffee_graphics_buffer_copy_safe(CBuffer *buf1, CBuffer *buf2, GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
+void coffee_graphics_buffer_copy_safe(
+        CBuffer *buf1, CBuffer *buf2,
+        GLsizeiptr offset1, GLsizeiptr offset2, GLsizeiptr size)
 {
     coffee_graphics_buffer_copy_safe(buf1->handle,buf2->handle,offset1,offset2,size);
 }
 
-void coffee_graphics_buffer_resize(CBuffer *buf, GLsizeiptr oldOffset, GLsizeiptr oldSize, GLsizeiptr targetOffset, GLsizeiptr newSize)
+void coffee_graphics_buffer_resize(
+        CBuffer *buf, GLsizeiptr oldOffset,
+        GLsizeiptr oldSize, GLsizeiptr targetOffset, GLsizeiptr newSize)
 {
     GLuint old = buf->handle;
 
@@ -210,7 +223,8 @@ void *coffee_graphics_buffer_sub_data(CSubBuffer *buf)
     return &((byte*)(buf->parent->data))[buf->offset];
 }
 
-void coffee_graphics_buffer_sub_bind(const _cbasic_graphics_buffer_section *buf,
+void coffee_graphics_buffer_sub_bind(
+        const _cbasic_graphics_buffer_section *buf,
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
     glBindBufferRange(buf->type,binding->index,buf->parent->handle,buf->offset,buf->size);
