@@ -3,31 +3,20 @@
 
 #include "coffee/core/coffee.h"
 #include "coffee/core/base/cdebug.h"
-#include "glbinding.h"
+#include "cuniformtypes.h"
+#include "copengl_types.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-struct CBuffer{
+struct CBuffer : _cbasic_graphics_buffer_mappable
+{
     CBuffer();
-
-    GLuint handle; /*!< GL handle for buffer */
-    GLsizeiptr size; /*!< Size of buffer */
-    GLenum bufferType;  /*!< Buffer type */
-    BufferStorageMask flags;  /*!< Access mask */
-    BufferAccessMask mapflags; /*!< Mapping access mask */
-    void* data; /*!< Data pointer, only valid if it is mapped */
 };
 
-struct CSubBuffer
+struct CSubBuffer : _cbasic_graphics_buffer_section
 {
     CSubBuffer();
-
-    CBuffer* parent; /*!< Pointer to parent containing data */
-    GLsizeiptr offset; /*!< Offset into parent */
-    GLsizeiptr size; /*!< Size in parent */
-    GLenum bufferType; /*!< Buffer type */
-    GLuint index; /*!< Binding index */
 };
 
 /*!
@@ -273,13 +262,17 @@ extern void coffee_graphics_buffer_invalidate_safe(CBuffer* buf);
  * \brief Binds a range
  * \param buf Subbuffer target
  */
-extern void coffee_graphics_buffer_sub_bind(CSubBuffer* buf);
+extern void coffee_graphics_buffer_sub_bind(
+        const _cbasic_graphics_buffer_section *buf,
+        const _cbasic_graphics_buffer_resource_desc *binding);
 
 /*!
  * \brief Unbinds a range
  * \param buf Subbuffer target
  */
-extern void coffee_graphics_buffer_sub_unbind(CSubBuffer* buf);
+extern void coffee_graphics_buffer_sub_unbind(
+        const _cbasic_graphics_buffer_section *buf,
+        const _cbasic_graphics_buffer_resource_desc *binding);
 
 /*!
  * \brief If parent is a mapped buffer, return an offset pointer

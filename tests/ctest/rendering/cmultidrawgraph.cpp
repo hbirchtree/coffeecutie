@@ -52,7 +52,7 @@ void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
 void coffee_multidraw_load_drawcalls(
         const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
 {
-    set.drawcalls->drawbuffer->bufferType = GL_DRAW_INDIRECT_BUFFER;
+    set.drawcalls->drawbuffer->type = GL_DRAW_INDIRECT_BUFFER;
     _coffee_bufferload_vector<CGLDrawCall>(
                 set.drawcalls->drawcalls,
                 set.drawcalls->drawbuffer,bfun);
@@ -61,14 +61,14 @@ void coffee_multidraw_load_drawcalls(
 void coffee_multidraw_load_indices(
         const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
 {
-    set.index->buffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
+    set.index->buffer->type = GL_ELEMENT_ARRAY_BUFFER;
     _coffee_bufferload_vector<GLuint>(set.index->indices,set.index->buffer,bfun);
 }
 
 void coffee_multidraw_load_buffer(
         CBuffer *buffer, const std::vector<byte> &data, const CBufferFunctionBinds& bfun)
 {
-    buffer->bufferType = GL_ARRAY_BUFFER;
+    buffer->type = GL_ARRAY_BUFFER;
     _coffee_bufferload_vector<byte>(data,buffer,bfun);
 }
 

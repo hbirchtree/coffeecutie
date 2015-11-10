@@ -1,6 +1,8 @@
 #ifndef COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 #define COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 
+#include "copengl_types.h"
+
 #include "cgraphicswrappers.h"
 #include "coffee/core/base/cfiles.h"
 
@@ -14,39 +16,11 @@ namespace CGraphicsWrappers {
  */
 extern UseProgramStageMask operator~(UseProgramStageMask msk);
 
-struct CPipeline
-{
-    CPipeline();
+struct CPipeline : public _cbasic_graphics_shader_program{};
+struct CShaderProgram : public _cbasic_graphics_shader_program{};
+struct CShaderStageProgram : public _cbasic_graphics_shader_program{};
+struct CShader : public _cbasic_graphics_shader_program{};
 
-    GLuint handle; /*!< Handle for pipeline */
-    UseProgramStageMask stages; /*!< Stages contained within pipeline */
-};
-
-struct CShaderProgram
-{
-    CShaderProgram();
-
-    GLuint handle; /*!< Handle for program */
-    UseProgramStageMask stages; /*!< Stages contained within program */
-};
-
-struct CShaderStageProgram
-{
-    CShaderStageProgram();
-
-    GLuint handle; /*!< Handle for shader stage program */
-    UseProgramStageMask stage; /*!< Stage contained within stage program */
-};
-
-struct CShader
-{
-    CShader();
-
-    GLuint handle; /*!< Handle for shader */
-    UseProgramStageMask stage; /*!< Stage contained within shader */
-};
-
-//For rendering
 /*!
  * \brief Bind pipeline for rendering
  * \param pl Pipeline to bind
@@ -182,8 +156,7 @@ extern void coffee_graphics_shader_uniform_block_get(CShaderProgram* prg, cglstr
  * \param prg Program to set index to
  * \param block Uniform block to set, contains binding index
  */
-extern void coffee_graphics_shader_uniform_block_set(
-        CShaderProgram* prg, const CUniformBlock& block);
+extern void coffee_graphics_shader_uniform_block_set(CShaderProgram* prg, const CUniformBlockBinding &block);
 /*!
  * \brief Get uniform value location in shader
  * \param prg Program to acquire location from

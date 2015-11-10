@@ -73,6 +73,10 @@ set ( CoffeeCore_SRCS
         coffee/core/graphics/ctexture_dxtc.cpp
         coffee/core/graphics/cgraphics_quirks.cpp
         coffee/core/graphics/glbinding.cpp
+        coffee/core/graphics/copengl_types.cpp
+        coffee/core/graphics/cuniformtypes.cpp
+
+        coffee/core/jobs/ctasksystem.cpp
 
         coffee/core/unit_tests/data_types.cpp
 

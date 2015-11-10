@@ -3,30 +3,6 @@
 namespace Coffee {
 namespace CGraphicsWrappers {
 
-CPipeline::CPipeline():
-    handle(0),
-    stages(GL_NONE_BIT)
-{
-}
-
-CShaderProgram::CShaderProgram():
-    handle(0),
-    stages(GL_NONE_BIT)
-{
-}
-
-CShaderStageProgram::CShaderStageProgram():
-    handle(0),
-    stage(GL_NONE_BIT)
-{
-}
-
-CShader::CShader():
-    handle(0),
-    stage(GL_NONE_BIT)
-{
-}
-
 bool coffee_shader_compile_checklog(GLuint handle);
 bool coffee_program_link_checklog(GLuint handle);
 
@@ -214,9 +190,9 @@ void coffee_graphics_shader_uniform_block_get(
 }
 
 void coffee_graphics_shader_uniform_block_set(
-        CShaderProgram *prg, const CUniformBlock &block)
+        CShaderProgram *prg, const CUniformBlockBinding &block)
 {
-    glUniformBlockBinding(prg->handle,block.shaderIndex,block.blockBinding);
+    glUniformBlockBinding(prg->handle,block.object->index,block.binding);
 }
 
 GLint coffee_graphics_shader_uniform_value_get(

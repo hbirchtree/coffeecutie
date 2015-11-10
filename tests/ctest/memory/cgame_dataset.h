@@ -28,9 +28,9 @@ struct game_vertexdata_chunk
 
 struct game_shader_manager
 {
-    chunk_mem<CShader>          shaders;
-    chunk_mem<CShaderProgram>   programs;
-    chunk_mem<CPipeline>        pipelines;
+    chunk_mem<CShader>        shaders;
+    chunk_mem<CShaderProgram> programs;
+    chunk_mem<CPipeline>      pipelines;
 };
 
 typedef chunk_mem<CTexture> game_texture_storage;
@@ -39,35 +39,36 @@ typedef chunk_mem<CResource> game_resource_chunk;
 
 struct game_memory_chunk
 {
-    chunk_mem<CMultiDrawDataSet>    datasets;
+    chunk_mem<CMultiDrawDataSet> datasets;
 
-    chunk_mem<CBuffer>              buffers;
-    chunk_mem<CSubBuffer>           subbuffers;
+    chunk_mem<CBuffer>    buffers;
+    chunk_mem<CSubBuffer> subbuffers;
 
-    chunk_mem<CUniformBlock>        uniformblocks;
+    chunk_mem<_cbasic_graphics_buffer_resource_desc> storageblocks;
+    chunk_mem<_cbasic_graphics_resource_binding_generic> bufferbindings;
 };
 
 struct game_transform_chunk
 {
-    chunk_mem<CTransform>      transforms;
-    chunk_mem<CGCamera>             cameras;
+    chunk_mem<CTransform> transforms;
+    chunk_mem<CGCamera>   cameras;
 };
 
 struct game_context
 {
-    game_vertexdata_chunk   vertexdata;
-    game_shader_manager     shaders;
-    game_resource_chunk     resources;
-    game_memory_chunk       renderdata;
-    game_texture_storage    texstorage;
+    game_vertexdata_chunk vertexdata;
+    game_shader_manager   shaders;
+    game_resource_chunk   resources;
+    game_memory_chunk     renderdata;
+    game_texture_storage  texstorage;
 
-    game_transform_chunk    transforms;
+    game_transform_chunk transforms;
 
-    CGraphicsQuirks::CFeatureSet*   features;
-    game_function_binds             funptrs;
+    CGraphicsQuirks::CFeatureSet* features;
+    game_function_binds           funptrs;
 
-    std::vector<CAssimpMesh*>   meshes;
-    std::vector<szptr>          mesh_indices;
+    std::vector<CAssimpMesh*> meshes;
+    std::vector<szptr>        mesh_indices;
 };
 
 struct game_shader_program_desc

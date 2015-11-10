@@ -104,9 +104,9 @@ public:
         CBuffer texcoords;
         CBuffer indices;
         CBuffer transforms[3];
-        texcoords.bufferType = GL_ARRAY_BUFFER;
-        vertices.bufferType = GL_ARRAY_BUFFER;
-        indices.bufferType = GL_ELEMENT_ARRAY_BUFFER;
+        texcoords.type = GL_ARRAY_BUFFER;
+        vertices.type = GL_ARRAY_BUFFER;
+        indices.type = GL_ELEMENT_ARRAY_BUFFER;
         coffee_graphics_alloc(&vertices);
         coffee_graphics_alloc(&texcoords);
         coffee_graphics_alloc(&indices);
@@ -317,6 +317,11 @@ public:
 
 int32 coffee_main(int32 argc, byte** argv)
 {
+    CResources::CResource res("test.struct");
+    res.data = malloc(sizeof(_cbasic_graphics_buffer_mappable));
+    CResources::coffee_file_commit(&res);
+    CResources::coffee_file_free(&res);
+
     CVec3 tvec(4,5,6);
     CMath::vec3 gvec(1,2,3);
     gvec = tvec;

@@ -2,45 +2,23 @@
 #define CUNIFORMTYPES
 
 #include "coffee/core/coffee.h"
+#include "copengl_types.h"
 #include "cbuffer.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-struct CUniformValue{
-    CUniformValue();
+typedef _cbasic_graphics_resource_desc CUniform;
+typedef _cbasic_graphics_buffer_resource_desc CUniformBlock;
+typedef _cbasic_graphics_buffer_resource_desc CStorageBlock;
 
-    enum UniformFlags{
-        BlockFlag       = 0x1, //Part of a uniform block
-        MatrixTranspose = 0x2,
-    };
+typedef _cbasic_graphics_resource_binding<CUniform> CUniformBinding;
+typedef _cbasic_graphics_resource_binding<CUniformBlock> CUniformBlockBinding;
+typedef _cbasic_graphics_resource_binding<CStorageBlock> CStorageBlockBinding;
 
-    cstring name;
-    uint8   size;
-    void*   data;
-    uint8   flags;
-    GLint   location;
-};
-
-/*!
- * \brief Corresponds to a GL uniform block. Contains the necessary information.
- */
-struct CUniformBlock{
-    CUniformBlock();
-
-    GLuint  blockBinding; /*! The block binding, chosen by client*/
-    GLuint  shaderIndex; /*! Shader index*/
-    uint32  size; /*! Size of block*/
-    cstring name;
-    CSubBuffer* buffer; /*! Subbuffer associated with block*/
-};
-
-/*!
- * \brief Apply a uniform value to a shader program
- * \param program Program to apply to
- * \param val Value to be applied
- */
-extern void coffee_shader_apply_uniform(GLuint program, const CUniformValue& val);
+extern void coffee_graphics_uniform_get(
+        CUniform* unif,
+        _cbasic_graphics_shader_program* shader);
 
 }
 }

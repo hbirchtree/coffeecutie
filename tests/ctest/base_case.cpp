@@ -229,7 +229,7 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
         CBuffer* tbuffer = &ctxt->renderdata.buffers.d[6];
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
-        mbuffer->bufferType = GL_ARRAY_BUFFER;
+        mbuffer->type = GL_ARRAY_BUFFER;
         mbuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
         //GL calls
         coffee_graphics_alloc(mbuffer);
@@ -244,7 +244,7 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
 
         {
             CBuffer* sbuffer = &ctxt->renderdata.buffers.d[5];
-            sbuffer->bufferType = GL_SHADER_STORAGE_BUFFER;
+            sbuffer->type = GL_SHADER_STORAGE_BUFFER;
             coffee_graphics_alloc(sbuffer);
 
             CBuffer* ibuffer = &ctxt->renderdata.buffers.d[1];
@@ -260,7 +260,7 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
             coffee_graphics_alloc(dbuffer);
 
             coffee_graphics_alloc(ibuffer);
-            ibuffer->bufferType = GL_ELEMENT_ARRAY_BUFFER;
+            ibuffer->type = GL_ELEMENT_ARRAY_BUFFER;
         }
         //
 
@@ -390,7 +390,10 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     coffee_mem_expand_array<CGCamera>(&ctxt->transforms.cameras,1);
     coffee_mem_expand_array<CSubBuffer>(&ctxt->renderdata.subbuffers,2);
     coffee_mem_expand_array<CTransform>(&ctxt->transforms.transforms,1);
-    coffee_mem_expand_array<CUniformBlock>(&ctxt->renderdata.uniformblocks,1);
+    coffee_mem_expand_array<_cbasic_graphics_buffer_resource_desc>
+            (&ctxt->renderdata.storageblocks,1);
+    coffee_mem_expand_array<_cbasic_graphics_resource_binding_generic>
+            (&ctxt->renderdata.bufferbindings,1);
 
     CGCamera* cam = &ctxt->transforms.cameras.d[0];
     cam->fieldOfView = 60.f;
@@ -400,7 +403,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     coffee_graphics_gen_matrix_perspective(cam);
 
     CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
-    ubuffer->bufferType = GL_UNIFORM_BUFFER;
+    ubuffer->type = GL_UNIFORM_BUFFER;
     ubuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
 
 
@@ -408,10 +411,10 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     camBuffer->parent = ubuffer;
     camBuffer->offset = 0;
     camBuffer->size = sizeof(CMath::mat4)*2;
-    camBuffer->bufferType = GL_UNIFORM_BUFFER;
+    camBuffer->type = GL_UNIFORM_BUFFER;
 
     CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
-    matBuffer->bufferType = GL_SHADER_STORAGE_BUFFER;
+    matBuffer->type = GL_SHADER_STORAGE_BUFFER;
     matBuffer->parent = ubuffer;
     matBuffer->size = sizeof(GLuint)*numGears+sizeof(CMath::vec3)*numGears;
     matBuffer->offset = camBuffer->size;
@@ -425,20 +428,22 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     //
 
     {
-        CUniformBlock *ublock = &ctxt->renderdata.uniformblocks.d[0];
+        CUniformBlock *ublock = &ctxt->renderdata.storageblocks.d[0];
+        CUniformBlockBinding *bind = &ctxt->renderdata.bufferbindings.d[0];
+        bind->object = ublock;
         ublock->buffer = camBuffer;
-        ublock->name = "MatrixBlock";
+        ublock->object_name = "MatrixBlock";
         void* data = ctxt->funptrs.buffers.subdata(camBuffer);
         memcpy(data,&cam->matrix,sizeof(CMath::mat4));
-        ublock->blockBinding = 0;
+        bind->binding = 0;
         //GL calls
         coffee_graphics_shader_uniform_block_get(
                     &ctxt->shaders.programs.d[0],
-                ublock->name,
-                &ublock->shaderIndex);
+                ublock->object_name,
+                &bind->binding);
         coffee_graphics_shader_uniform_block_set(
                     &ctxt->shaders.programs.d[0],
-                *ublock);
+                *bind);
         //
     }
 
@@ -556,7 +561,9 @@ void coffee_prepare_test(game_context *ctxt)
 {
     coffee_multidraw_bind_states(ctxt->renderdata.datasets.d[0]);
     coffee_graphics_bind(&ctxt->renderdata.buffers.d[2]);
-    coffee_graphics_buffer_sub_bind(ctxt->renderdata.uniformblocks.d[0].buffer);
+    coffee_graphics_buffer_sub_bind(
+                ctxt->renderdata.storageblocks.d[0].buffer,
+            ctxt->renderdata.bufferbindings.d[0].object);
     coffee_graphics_bind(&ctxt->shaders.pipelines.d[0]);
     coffee_graphics_bind(ctxt->renderdata.datasets.d[0].vao);
     coffee_graphics_bind(ctxt->renderdata.datasets.d[0].drawcalls->drawbuffer);
@@ -644,7 +651,8 @@ void coffee_unload_test(game_context *ctxt)
     free(ctxt->renderdata.buffers.d);
     free(ctxt->renderdata.datasets.d);
     free(ctxt->renderdata.subbuffers.d);
-    free(ctxt->renderdata.uniformblocks.d);
+    free(ctxt->renderdata.bufferbindings.d);
+    free(ctxt->renderdata.storageblocks.d);
 
     free(ctxt->resources.d);
 

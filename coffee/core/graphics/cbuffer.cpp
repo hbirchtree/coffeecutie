@@ -3,23 +3,23 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-CBuffer::CBuffer():
-    handle(0),
-    size(0),
-    bufferType(GL_NONE),
-    flags(GL_NONE_BIT),
-    mapflags(GL_NONE_BIT),
-    data(nullptr)
+CBuffer::CBuffer()
 {
+    this->data = nullptr;
+    this->flags = GL_NONE_BIT;
+    this->handle = 0;
+    this->mapflags = GL_NONE_BIT;
+    this->size = 0;
+    this->type = GL_NONE;
 }
 
-CSubBuffer::CSubBuffer():
-    parent(nullptr),
-    offset(0),
-    size(0),
-    bufferType(GL_NONE),
-    index(0)
+CSubBuffer::CSubBuffer()
 {
+    this->handle = 0;
+    this->offset = 0;
+    this->parent = nullptr;
+    this->size = 0;
+    this->type = GL_NONE;
 }
 
 void coffee_graphics_buffer_bind_range(CBuffer *buf, GLuint index, GLenum bufferType, GLsizeiptr offset, GLsizeiptr size)
@@ -45,12 +45,12 @@ void coffee_graphics_activate(CBuffer *buf)
 
 void coffee_graphics_bind(CBuffer *buf)
 {
-    glBindBuffer(buf->bufferType,buf->handle);
+    glBindBuffer(buf->type,buf->handle);
 }
 
 void coffee_graphics_unbind(CBuffer *buf)
 {
-    glBindBuffer(buf->bufferType,0);
+    glBindBuffer(buf->type,0);
 }
 
 void *coffee_graphics_buffer_map(CBuffer *buf, BufferAccessMask mask)
@@ -73,7 +73,7 @@ void *coffee_graphics_buffer_map_safe(CBuffer *buf, BufferAccessMask mask)
 {
     buf->mapflags = mask;
     coffee_graphics_bind(buf);
-    glMapBufferRange(buf->bufferType,0,buf->size,mask);
+    glMapBufferRange(buf->type,0,buf->size,mask);
     coffee_graphics_unbind(buf);
     return buf->data;
 }
@@ -83,7 +83,7 @@ bool coffee_graphics_buffer_unmap_safe(CBuffer *buf)
     if(!buf->data)
         return true;
     coffee_graphics_bind(buf);
-    GLboolean b = glUnmapBuffer(buf->bufferType);
+    GLboolean b = glUnmapBuffer(buf->type);
     buf->data = nullptr;
     coffee_graphics_unbind(buf);
     return b == GL_TRUE;
@@ -102,7 +102,7 @@ void* coffee_graphics_buffer_download_buffer_safe(
 {
     void* data = malloc(size);
     coffee_graphics_bind(buf);
-    glGetBufferSubData(buf->bufferType,offset,size,data);
+    glGetBufferSubData(buf->type,offset,size,data);
     coffee_graphics_unbind(buf);
     return data;
 }
@@ -123,7 +123,7 @@ void coffee_graphics_buffer_store_safe(
 {
     buf->size = size;
     coffee_graphics_bind(buf);
-    glBufferData(buf->bufferType,size,data,usage);
+    glBufferData(buf->type,size,data,usage);
     coffee_graphics_unbind(buf);
 }
 
@@ -135,7 +135,7 @@ void coffee_graphics_buffer_substore(CBuffer *buf, const void *data, GLsizeiptr 
 void coffee_graphics_buffer_substore_safe(CBuffer *buf, const void *data, GLsizeiptr offset, GLsizeiptr size)
 {
     coffee_graphics_bind(buf);
-    glBufferSubData(buf->bufferType,offset,size,data);
+    glBufferSubData(buf->type,offset,size,data);
     coffee_graphics_unbind(buf);
 }
 
@@ -199,7 +199,7 @@ void coffee_graphics_buffer_store_immutable_safe(
 {
     buf->size = size;
     coffee_graphics_bind(buf);
-    glBufferStorage(buf->bufferType,size,data,usage);
+    glBufferStorage(buf->type,size,data,usage);
     coffee_graphics_unbind(buf);
 }
 
@@ -210,14 +210,17 @@ void *coffee_graphics_buffer_sub_data(CSubBuffer *buf)
     return &((byte*)(buf->parent->data))[buf->offset];
 }
 
-void coffee_graphics_buffer_sub_bind(CSubBuffer *buf)
+void coffee_graphics_buffer_sub_bind(const _cbasic_graphics_buffer_section *buf,
+        const _cbasic_graphics_buffer_resource_desc* binding)
 {
-    glBindBufferRange(buf->bufferType,buf->index,buf->parent->handle,buf->offset,buf->size);
+    glBindBufferRange(buf->type,binding->index,buf->parent->handle,buf->offset,buf->size);
 }
 
-void coffee_graphics_buffer_sub_unbind(CSubBuffer *buf)
+void coffee_graphics_buffer_sub_unbind(
+        const _cbasic_graphics_buffer_section *buf,
+        const _cbasic_graphics_buffer_resource_desc* binding)
 {
-    glBindBufferRange(buf->bufferType,buf->index,0,0,0);
+    glBindBufferRange(buf->type,binding->index,0,0,0);
 }
 
 void coffee_graphics_free(int count, CBuffer *buf)
@@ -239,7 +242,7 @@ void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf)
     for(int i=0;i<count;i++)
     {
         buf[i].handle = handles[i];
-        buf[i].bufferType = type;
+        buf[i].type = type;
     }
 }
 
