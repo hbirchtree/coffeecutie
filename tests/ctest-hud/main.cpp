@@ -315,33 +315,21 @@ public:
     }
 };
 
-struct VEC3 : CVectors::_cbasic_tvector<scalar,3>
-{
-    using _cbasic_tvector<scalar,3>::_cbasic_tvector;
-
-    scalar& x()
-    {
-        return (*this)[0];
-    }
-    scalar& y()
-    {
-        return (*this)[1];
-    }
-    scalar& z()
-    {
-        return (*this)[2];
-    }
-};
+typedef CVectors::_cbasic_tvector<scalar,3> VEC3;
 
 int32 coffee_main(int32 argc, byte** argv)
 {
     VEC3 t(0);
-    t.x() = 1,t.y() = 2,t.z() = 3;
+    t[0] = 1,t[1] = 2,t[2] = 3;
     VEC3 t2(0);
     t2[0] = 1,t2[1] = 2,t2[2] = 3;
     t += t2;
     t /= 2;
     t *= 3;
+
+    t = CVectors::normalize(t);
+
+    cDebug("Length of vec3: %f",CVectors::distance(t,t2));
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();

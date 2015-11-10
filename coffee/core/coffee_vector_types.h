@@ -21,7 +21,9 @@ template<typename T, size_t Size> struct _cbasic_tvector
         for(size_t i=0;i<Size;i++)
             (*this)[i] = c;
     }
-    _cbasic_tvector(const _cbasic_tvector<T,Size-1>& v, T c)
+    _cbasic_tvector(
+            const _cbasic_tvector<T,Size-1>& v,
+            T c)
     {
         static_assert((Size-1) > 1,"Invalid vector combination!");
         for(size_t i=0;i<(Size-1);i++)
@@ -30,7 +32,8 @@ template<typename T, size_t Size> struct _cbasic_tvector
     }
     //This is absolutely disgusting. And yet it works.
     template<typename... I>
-    _cbasic_tvector(typename std::enable_if<std::is_convertible<I,T>::value && Size == sizeof...(I),T>::type... args)
+    _cbasic_tvector(
+            typename std::enable_if<std::is_convertible<I,T>::value && Size == sizeof...(I),T>::type... args)
     {
         fprintf(stderr,"Sizes: %i, %i",sizeof...(args),Size);
         for(size_t i=0;i<Size;i++)
@@ -44,55 +47,70 @@ template<typename T, size_t Size> struct _cbasic_tvector
     {
         return d[i];
     }
-    bool operator==(const _cbasic_tvector<T,Size>& v)
+    bool operator==(
+            const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             if(v[i]!=(*this)[i])
                 return false;
         return true;
     }
-    void operator+=(const _cbasic_tvector<T,Size>& v)
+    void operator=(
+            const _cbasic_tvector<T,Size>& v)
+    {
+        for(size_t i=0;i<Size;i++)
+            (*this)[i] = v[i];
+    }
+    void operator+=(
+            const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] += v[i];
     }
-    void operator-=(const _cbasic_tvector<T,Size>& v)
+    void operator-=(
+            const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] += v[i];
     }
-    void operator*=(const _cbasic_tvector<T,Size>& v)
+    void operator*=(
+            const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] *= v[i];
     }
-    void operator/=(const _cbasic_tvector<T,Size>& v)
+    void operator/=(
+            const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v[i];
     }
-    _cbasic_tvector<T,Size> operator+(const _cbasic_tvector<T,Size>& v) const
+    _cbasic_tvector<T,Size> operator+(
+            const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]+v[i];
         return vnew;
     }
-    _cbasic_tvector<T,Size> operator-(const _cbasic_tvector<T,Size>& v) const
+    _cbasic_tvector<T,Size> operator-(
+            const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]-v[i];
         return vnew;
     }
-    _cbasic_tvector<T,Size> operator*(const _cbasic_tvector<T,Size>& v) const
+    _cbasic_tvector<T,Size> operator*(
+            const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]*v[i];
         return vnew;
     }
-    _cbasic_tvector<T,Size> operator/(const _cbasic_tvector<T,Size>& v) const
+    _cbasic_tvector<T,Size> operator/(
+            const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
@@ -101,7 +119,8 @@ template<typename T, size_t Size> struct _cbasic_tvector
     }
 
     template<typename I>
-    _cbasic_tvector<T,Size> operator*(typename std::enable_if<std::is_convertible<I,T>::value>::type& v) const
+    _cbasic_tvector<T,Size> operator*(
+            typename std::enable_if<std::is_convertible<I,T>::value>::type& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
@@ -109,7 +128,8 @@ template<typename T, size_t Size> struct _cbasic_tvector
         return vnew;
     }
     template<typename I>
-    _cbasic_tvector<T,Size> operator/(typename std::enable_if<std::is_convertible<I,T>::value>::type& v) const
+    _cbasic_tvector<T,Size> operator/(
+            typename std::enable_if<std::is_convertible<I,T>::value>::type& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
@@ -117,13 +137,15 @@ template<typename T, size_t Size> struct _cbasic_tvector
         return vnew;
     }
     template<typename I>
-    void operator*(typename std::enable_if<std::is_convertible<I,T>::value>::type& v)
+    void operator*(
+            typename std::enable_if<std::is_convertible<I,T>::value>::type& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] *= v;
     }
     template<typename I>
-    void operator/(typename std::enable_if<std::is_convertible<I,T>::value>::type& v)
+    void operator/(
+            typename std::enable_if<std::is_convertible<I,T>::value>::type& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v;
@@ -132,7 +154,8 @@ template<typename T, size_t Size> struct _cbasic_tvector
     T d[Size];
 };
 
-template<typename T,size_t Size> T length(const _cbasic_tvector<T,Size>& v)
+template<typename T,size_t Size> T length(
+        const _cbasic_tvector<T,Size>& v)
 {
     T sum = 0;
     for(int i=0;i<Size;i++)
@@ -140,7 +163,9 @@ template<typename T,size_t Size> T length(const _cbasic_tvector<T,Size>& v)
     return sqrt(sum);
 }
 
-template<typename T,size_t Size> T dot(const _cbasic_tvector<T,Size>& v1,const _cbasic_tvector<T,Size>& v2)
+template<typename T,size_t Size> T dot(
+        const _cbasic_tvector<T,Size>& v1,
+        const _cbasic_tvector<T,Size>& v2)
 {
     T sum = 0;
     for(int i=0;i<Size;i++)
@@ -151,12 +176,24 @@ template<typename T,size_t Size> T dot(const _cbasic_tvector<T,Size>& v1,const _
 template<typename T,size_t Size> _cbasic_tvector<T,Size> normalize(
         const _cbasic_tvector<T,Size>& v)
 {
-
+    _cbasic_tvector<T,Size> vnew;
+    T len = length<T,Size>(v);
+    vnew = v/len;
+    return vnew;
 }
 
-template<typename T,int Size> _cbasic_tvector<T,Size> cross(const _cbasic_tvector<T,Size>& v1,const _cbasic_tvector<T,Size>& v2)
+template<typename T,size_t Size> _cbasic_tvector<T,Size> cross(
+        const _cbasic_tvector<T,Size>& v1,
+        const _cbasic_tvector<T,Size>& v2)
 {
     return _cbasic_tvector<T,Size>();
+}
+
+template<typename T,size_t Size> T distance(
+        const _cbasic_tvector<T,Size>& v1,
+        const _cbasic_tvector<T,Size>& v2)
+{
+    return length(v1-v2);
 }
 
 }
@@ -216,7 +253,8 @@ template<typename T> struct _cbasic_vec3
 /*!
  * \brief A vector4 type used for storage of colors and positions. Compatible with glm::vec4. Has RGBA and XYZW members.
  */
-template<typename T> struct _cbasic_vec4{
+template<typename T> struct _cbasic_vec4
+{
     _cbasic_vec4(T x,T y,T z,T w){
         this->x = x;
         this->y = y;
