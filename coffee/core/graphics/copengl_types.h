@@ -180,6 +180,27 @@ enum class CTexFormat : uint16
     DepthStencil = 10,
 };
 
+enum class CFBType : uint16
+{
+    None = 0,
+    All = 1,
+    Draw = 2,
+    Read = 3,
+};
+
+enum class CFBAttachment : uint16
+{
+    Color = 1,
+    Depth = 2,
+    Stencil = 3,
+    DepthStencil = 4,
+};
+
+enum class CTexParam : uint16
+{
+    MipmapMaxLevel = 1,
+};
+
 //Misc. data structures
 
 struct _cbasic_graphics_resource

@@ -117,5 +117,25 @@ void coffee_graphics_framebuffer_blit_safe(
     coffee_graphics_unbind(trgFb,GL_DRAW_FRAMEBUFFER);
 }
 
+CFramebufferAttachment::CFramebufferAttachment():
+    target(CFBAttachment::Color),
+    texture(nullptr),
+    attachLevel(0),
+    level(0)
+{
+}
+
+CFramebufferAttachment::CFramebufferAttachment(
+        CFBAttachment target,
+        const CTexture *texture,
+        CGint attlevel,
+        CGint level):
+    target(target),
+    texture(texture),
+    attachLevel(attlevel),
+    level(level)
+{
+}
+
 }
 }

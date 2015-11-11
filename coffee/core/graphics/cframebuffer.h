@@ -10,41 +10,22 @@ struct CFramebuffer
 {
     CFramebuffer();
 
-    CGhnd      handle;
-    CSize       size;
-    GLenum      target;
-
-    void attach(CTexture* texture, GLenum attachment, CGint level)
-    {
-//        glFramebufferTexture2D(target,attachment,textureTarget,texture->handle,level);
-        glNamedFramebufferTexture(handle,attachment,texture->handle,level);
-    }
-    void attach3D(CTexture* texture, GLenum attachment, CGint level, CGint zoffset,
-                GLenum textureTarget, GLenum target = GL_FRAMEBUFFER)
-    {
-//        glFramebufferTexture3D(target,attachment,textureTarget,
-//                               texture->handle,level,zoffset);
-    }
+    CGhnd handle;
+    CSize size;
+    CFBType target;
 };
 
 struct CFramebufferAttachment
 {
-    CFramebufferAttachment():
-        target(GL_NONE),
-        texture(nullptr),
-        level(0)
-    {
-    }
-    CFramebufferAttachment(GLenum target, const CTexture* texture, CGint level):
-        target(target),
-        texture(texture),
-        level(level)
-    {
-    }
+    CFramebufferAttachment();
+    CFramebufferAttachment(
+            CFBAttachment target, const CTexture* texture,
+            CGint attlevel, CGint level);
 
-    GLenum target;
+    CFBAttachment target;
+    CGint attachLevel;
     const CTexture* texture;
-    GLint level;
+    CGint level;
 };
 
 static const CFramebuffer coffee_default_framebuffer;
