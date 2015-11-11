@@ -8,6 +8,9 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+typedef int32 CGint;
+typedef uint32 CGuint;
+
 typedef int32 CGsize;
 typedef int64 CGszptr;
 
@@ -123,6 +126,19 @@ enum class CDataType : uint16
     UByte = 8,
 };
 
+enum class CPrimitiveMode : uint16
+{
+    Triangles = 0,
+    Points = 1,
+    Line = 2,
+    TriangleStrip = 3,
+    TriangleFan = 4,
+    TriangleStripAdjacency = 5,
+    TrianglesAdjacency = 6,
+    LineStrip = 7,
+    LineLoop = 8,
+};
+
 //Misc. data structures
 
 struct _cbasic_graphics_resource
@@ -144,6 +160,7 @@ struct _cbasic_graphics_shader_program
 struct _cbasic_graphics_buffer_mappable
 {
     void* data;
+    CBufferStorage flags;
     CBufferAccess mapflags;
     CGsize size;
     CGhnd handle;

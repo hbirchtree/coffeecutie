@@ -116,7 +116,9 @@ void coffee_graphics_buffer_store(
         CBufferUsage usage = CBufferUsage::Default)
 {
     buf->size = size;
-    glNamedBufferData(buf->handle,size,data,usage);
+    glNamedBufferData(
+                buf->handle,size,data,
+                coffee_get(usage,cbufusage_map));
 }
 
 void coffee_graphics_buffer_store_safe(CBuffer *buf,
@@ -126,8 +128,9 @@ void coffee_graphics_buffer_store_safe(CBuffer *buf,
     buf->size = size;
     coffee_graphics_bind(buf);
     glBufferData(
-                buf->type,size,data,
-                usage);
+                coffee_get(buf->type,cbuffertype_map),
+                size,data,
+                coffee_get(usage,cbufusage_map));
     coffee_graphics_unbind(buf);
 }
 
@@ -141,7 +144,9 @@ void coffee_graphics_buffer_substore_safe(CBuffer *buf, const void *data,
         CGszptr offset, CGsize size)
 {
     coffee_graphics_bind(buf);
-    glBufferSubData(buf->type,offset,size,data);
+    glBufferSubData(
+                coffee_get(buf->type,cbuffertype_map),
+                offset,size,data);
     coffee_graphics_unbind(buf);
 }
 
@@ -197,7 +202,7 @@ void coffee_graphics_buffer_invalidate(CBuffer *buf)
 
 void coffee_graphics_buffer_invalidate_safe(CBuffer *buf)
 {
-    coffee_graphics_buffer_store_safe(buf,nullptr,0,GL_STATIC_DRAW);
+    coffee_graphics_buffer_store_safe(buf,nullptr,0,CBufferUsage::StaticDraw);
 }
 
 void coffee_graphics_buffer_store_immutable(CBuffer *buf, const void *data, CGsize size,
@@ -205,18 +210,20 @@ void coffee_graphics_buffer_store_immutable(CBuffer *buf, const void *data, CGsi
 {
     coffee_graphics_activate(buf);
     buf->size = size;
-    glNamedBufferStorage(buf->handle,size,data,usage);
+    glNamedBufferStorage(buf->handle,size,data,
+                         coffee_get_flags(usage,cbufferstore_map));
 }
 
 void coffee_graphics_buffer_store_immutable_safe(
         CBuffer *buf, const void *data, CGsize size,
-        BufferStorageMask usage = GL_NONE_BIT)
+        CBufferStorage usage = CBufferStorage::Dynamic)
 {
     buf->size = size;
     coffee_graphics_bind(buf);
     glBufferStorage(
                 coffee_get(buf->type,cbuffertype_map),
-                size,data,usage);
+                size,data,
+                coffee_get_flags(usage,cbufferstore_map));
     coffee_graphics_unbind(buf);
 }
 

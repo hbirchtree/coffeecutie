@@ -84,7 +84,7 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
     CShader* vshdr = &ctxt->shaders.shaders.d[sh_idx];
     CShader* fshdr = &ctxt->shaders.shaders.d[sh_idx+1];
 
-    p->stages = GL_VERTEX_SHADER_BIT|GL_FRAGMENT_SHADER_BIT;
+    p->stages = CProgramStage::Vertex|CProgramStage::Fragment;
 
     CResource dmp(desc.shader_dump);
 
@@ -107,8 +107,8 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
     coffee_file_pull(&f,true);
 
     //GL calls
-    coffee_graphics_shader_compile(vshdr,&v,GL_VERTEX_SHADER,GL_VERTEX_SHADER_BIT);
-    coffee_graphics_shader_compile(fshdr,&f,GL_FRAGMENT_SHADER,GL_FRAGMENT_SHADER_BIT);
+    coffee_graphics_shader_compile(vshdr,&v,CProgramStage::Vertex);
+    coffee_graphics_shader_compile(fshdr,&f,CProgramStage::Fragment);
     //
 
     coffee_file_free(&v);
@@ -229,22 +229,24 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
         CBuffer* tbuffer = &ctxt->renderdata.buffers.d[6];
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
-        mbuffer->type = GL_ARRAY_BUFFER;
-        mbuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
+        mbuffer->type = CBufferType::Array;
+        mbuffer->flags = CBufferStorage::Coherent|CBufferStorage::Persistent|CBufferStorage::WriteBit;
         //GL calls
         coffee_graphics_alloc(mbuffer);
         coffee_graphics_activate(mbuffer);
         ctxt->funptrs.buffers.store_immutable(
                     mbuffer,nullptr,sizeof(CMath::mat4)*numGears,
                     mbuffer->flags);
-        ctxt->funptrs.buffers.map(mbuffer,GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
+        ctxt->funptrs.buffers.map(mbuffer,CBufferAccess::Coherent|
+                                  CBufferAccess::Persistent|
+                                  CBufferAccess::WriteBit);
 
         coffee_graphics_alloc(vbuffer);
         coffee_graphics_alloc(tbuffer);
 
         {
             CBuffer* sbuffer = &ctxt->renderdata.buffers.d[5];
-            sbuffer->type = GL_SHADER_STORAGE_BUFFER;
+            sbuffer->type = CBufferType::ShaderStorage;
             coffee_graphics_alloc(sbuffer);
 
             CBuffer* ibuffer = &ctxt->renderdata.buffers.d[1];
@@ -260,27 +262,24 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
             coffee_graphics_alloc(dbuffer);
 
             coffee_graphics_alloc(ibuffer);
-            ibuffer->type = GL_ELEMENT_ARRAY_BUFFER;
+            ibuffer->type = CBufferType::Index;
         }
         //
 
         CVertexFormat* stdFmt = &ctxt->vertexdata.descriptor.formats.d[0];
-        stdFmt->normalized = GL_FALSE;
         stdFmt->offset = 0;
         stdFmt->size = 3;
-        stdFmt->type = GL_FLOAT;
+        stdFmt->type = CDataType::Scalar;
 
         CVertexFormat* texFmt = &ctxt->vertexdata.descriptor.formats.d[2];
-        texFmt->normalized = GL_FALSE;
         texFmt->offset = 0;
         texFmt->size = 2;
-        texFmt->type = GL_FLOAT;
+        texFmt->type = CDataType::Scalar;
 
         CVertexFormat* matFmt = &ctxt->vertexdata.descriptor.formats.d[1];
-        matFmt->normalized = GL_FALSE;
         matFmt->offset = 0;
         matFmt->size = 4;
-        matFmt->type = GL_FLOAT;
+        matFmt->type = CDataType::Scalar;
 
         CVertexBufferBinding* posBnd = &ctxt->vertexdata.descriptor.bindings.d[0];
         posBnd->binding = 0;
@@ -403,18 +402,18 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     coffee_graphics_gen_matrix_perspective(cam);
 
     CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
-    ubuffer->type = GL_UNIFORM_BUFFER;
-    ubuffer->flags = GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT;
+    ubuffer->type = CBufferType::Uniform;
+    ubuffer->flags = CBufferStorage::Coherent|CBufferStorage::Persistent|CBufferStorage::WriteBit;
 
 
     CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
     camBuffer->parent = ubuffer;
     camBuffer->offset = 0;
     camBuffer->size = sizeof(CMath::mat4)*2;
-    camBuffer->type = GL_UNIFORM_BUFFER;
+    camBuffer->type = CBufferType::Uniform;
 
     CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
-    matBuffer->type = GL_SHADER_STORAGE_BUFFER;
+    matBuffer->type = CBufferType::ShaderStorage;
     matBuffer->parent = ubuffer;
     matBuffer->size = sizeof(GLuint)*numGears+sizeof(CMath::vec3)*numGears;
     matBuffer->offset = camBuffer->size;
@@ -424,7 +423,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     ctxt->funptrs.buffers.store_immutable(
                 ubuffer,nullptr,
                 matBuffer->size+camBuffer->size,ubuffer->flags);
-    ctxt->funptrs.buffers.map(ubuffer,GL_MAP_PERSISTENT_BIT|GL_MAP_WRITE_BIT);
+    ctxt->funptrs.buffers.map(ubuffer,CBufferAccess::Coherent|CBufferAccess::Persistent|CBufferAccess::WriteBit);
     //
 
     {

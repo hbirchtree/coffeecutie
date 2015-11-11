@@ -16,7 +16,7 @@ using namespace CGraphicsData;
 struct CMultiIndexStorage
 {
     CBuffer*                buffer  = nullptr;
-    std::vector<GLuint>     indices;
+    std::vector<CGuint>     indices;
 };
 
 struct CMultiDrawCalls

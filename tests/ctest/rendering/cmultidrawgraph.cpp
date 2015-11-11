@@ -27,9 +27,10 @@ void coffee_multidraw_bind_states(const CMultiDrawDataSet &set)
 
 void coffee_multidraw_render(const CMultiDrawDataSet &set)
 {
-    glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,
-                                0,set.drawcalls->drawcalls.size(),
-                                sizeof(CGLDrawCall));
+    coffee_graphics_multidraw(CPrimitiveMode::Triangles,set.drawcalls->drawbuffer);
+//    glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,
+//                                0,set.drawcalls->drawcalls.size(),
+//                                sizeof(CGLDrawCall));
 }
 
 void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
@@ -38,21 +39,22 @@ void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
     {
         if(call.count<1)
             continue;
-        glDrawElementsInstancedBaseVertexBaseInstance(
-                    GL_TRIANGLES,
-                    call.count,
-                    GL_UNSIGNED_INT,
-                    (void*)(sizeof(GLuint)*call.firstIndex),
-                    call.instanceCount,
-                    call.baseVertex,
-                    call.baseInstance);
+        coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&call);
+//        glDrawElementsInstancedBaseVertexBaseInstance(
+//                    GL_TRIANGLES,
+//                    call.count,
+//                    GL_UNSIGNED_INT,
+//                    (void*)(sizeof(GLuint)*call.firstIndex),
+//                    call.instanceCount,
+//                    call.baseVertex,
+//                    call.baseInstance);
     }
 }
 
 void coffee_multidraw_load_drawcalls(
         const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
 {
-    set.drawcalls->drawbuffer->type = GL_DRAW_INDIRECT_BUFFER;
+    set.drawcalls->drawbuffer->type = CBufferType::DrawIndirect;
     _coffee_bufferload_vector<CGLDrawCall>(
                 set.drawcalls->drawcalls,
                 set.drawcalls->drawbuffer,bfun);
@@ -61,14 +63,14 @@ void coffee_multidraw_load_drawcalls(
 void coffee_multidraw_load_indices(
         const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
 {
-    set.index->buffer->type = GL_ELEMENT_ARRAY_BUFFER;
-    _coffee_bufferload_vector<GLuint>(set.index->indices,set.index->buffer,bfun);
+    set.index->buffer->type = CBufferType::Index;
+    _coffee_bufferload_vector<CGuint>(set.index->indices,set.index->buffer,bfun);
 }
 
 void coffee_multidraw_load_buffer(
         CBuffer *buffer, const std::vector<byte> &data, const CBufferFunctionBinds& bfun)
 {
-    buffer->type = GL_ARRAY_BUFFER;
+    buffer->type = CBufferType::Array;
     _coffee_bufferload_vector<byte>(data,buffer,bfun);
 }
 
@@ -91,7 +93,7 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
 {
     CGLDrawCall call;
 
-    const GLuint* indices = nullptr;
+    const uint32* indices = nullptr;
     csize_t numIndices = 0;
     const assimp_reflexive* ref;
     for(uint8 i=0;i<mesh->numBuffers;i++)
@@ -126,7 +128,7 @@ void coffee_mesh_define_matrix_attribs(CBuffer *instanceBuffer, CVertexFormat &f
     CVertexAttribute attr;
     attr.fmt = &fmt;
 
-    for(GLint i=0;i<fmt.size;i++)
+    for(CGint i=0;i<fmt.size;i++)
     {
         //TODO: Store binding somewhere convenient
         CVertexBufferBinding* bind = new CVertexBufferBinding;

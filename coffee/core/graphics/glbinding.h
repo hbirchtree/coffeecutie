@@ -13,8 +13,21 @@ namespace CGraphicsWrappers{
 
 C_FLAGS(UseProgramStageMask,uint32)
 C_FLAGS(BufferAccessMask,uint32)
+C_FLAGS(BufferStorageMask,uint32)
 
-typedef const GLchar* cglstring;
+/*!
+ * \brief Contains a GL message from the binding layer
+ */
+struct CGLReport
+{
+    CGLReport();
+
+    GLenum source; /*!< Source of message*/
+    GLenum type; /*!< Type of message*/
+    GLuint id; /*!< ID of message*/
+    GLenum severity; /*!< Severity of message*/
+    const char* message; /*!< Textual message*/
+};
 
 extern CString _glbinding_get_string(GLenum e);
 extern CString _glbinding_get_string(GLextension e);
@@ -59,10 +72,20 @@ static coffeetype_mapping<CBufferAccess,BufferAccessMask> cbufferaccess_map[4] =
     {CBufferAccess::Persistent, GL_MAP_PERSISTENT_BIT},
 };
 
+static coffeetype_mapping<CBufferStorage,BufferStorageMask> cbufferstore_map[6] = {
+    {CBufferStorage::WriteBit, GL_MAP_WRITE_BIT},
+    {CBufferStorage::ReadBit, GL_MAP_READ_BIT},
+    {CBufferStorage::Coherent, GL_MAP_COHERENT_BIT},
+    {CBufferStorage::Persistent, GL_MAP_PERSISTENT_BIT},
+    {CBufferStorage::Dynamic, GL_DYNAMIC_STORAGE_BIT},
+    {CBufferStorage::ClientStorage, GL_CLIENT_STORAGE_BIT},
+};
+
 static coffeetype_mapping<CProgramStage,UseProgramStageMask> cprogmask_map[5] = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER_BIT},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER_BIT},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER_BIT},
+
     {CProgramStage::TessellationControl,GL_TESS_CONTROL_SHADER_BIT},
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER_BIT},
 };
@@ -71,6 +94,7 @@ static coffeetype_mapping<CProgramStage,GLenum> cshader_map[5] = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER},
+
     {CProgramStage::TessellationControl,GL_TESS_CONTROL_SHADER},
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER},
 };
@@ -78,12 +102,44 @@ static coffeetype_mapping<CProgramStage,GLenum> cshader_map[5] = {
 static coffeetype_mapping<CDataType,GLenum> cdtypes_map[7] = {
     {CDataType::Scalar,GL_FLOAT},
     {CDataType::BigScalar,GL_DOUBLE},
+
     {CDataType::UInt,GL_UNSIGNED_INT},
     {CDataType::Int,GL_INT},
+
     {CDataType::UInt64,GL_UNSIGNED_INT64_ARB},
+
     {CDataType::UByte,GL_UNSIGNED_BYTE},
     {CDataType::Byte,GL_BYTE},
 };
+
+static coffeetype_mapping<CBufferUsage,GLenum> cbufusage_map[10] = {
+    {CBufferUsage::Default,GL_NONE},
+
+    {CBufferUsage::DynamicCopy,GL_DYNAMIC_COPY},
+    {CBufferUsage::DynamicRead,GL_DYNAMIC_READ},
+    {CBufferUsage::DynamicDraw,GL_DYNAMIC_DRAW},
+
+    {CBufferUsage::StaticCopy,GL_STATIC_COPY},
+    {CBufferUsage::StaticRead,GL_STATIC_READ},
+    {CBufferUsage::StaticDraw,GL_STATIC_DRAW},
+
+    {CBufferUsage::StreamCopy,GL_STREAM_COPY},
+    {CBufferUsage::StreamCopy,GL_STREAM_READ},
+    {CBufferUsage::StreamCopy,GL_STREAM_DRAW},
+};
+
+static coffeetype_mapping<CPrimitiveMode,GLenum> cpritype_map[9] = {
+    {CPrimitiveMode::Triangles,GL_TRIANGLES},
+    {CPrimitiveMode::Points,GL_POINTS},
+    {CPrimitiveMode::Line,GL_LINES},
+    {CPrimitiveMode::TriangleFan,GL_TRIANGLE_FAN},
+    {CPrimitiveMode::TriangleStrip,GL_TRIANGLE_STRIP},
+    {CPrimitiveMode::TrianglesAdjacency,GL_TRIANGLES_ADJACENCY},
+    {CPrimitiveMode::TriangleStripAdjacency,GL_TRIANGLE_STRIP_ADJACENCY},
+    {CPrimitiveMode::LineStrip,GL_LINE_STRIP},
+    {CPrimitiveMode::LineLoop,GL_LINE_LOOP},
+};
+
 
 }
 }

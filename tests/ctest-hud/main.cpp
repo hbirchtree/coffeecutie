@@ -91,12 +91,14 @@ public:
         CShaderStageProgram vertshader;
         CShaderStageProgram fragshader;
         coffee_graphics_alloc(&basePipeline);
-        coffee_graphics_shader_compile(&vertshader,vshader_src,GL_VERTEX_SHADER,
-                                       GL_VERTEX_SHADER_BIT);
-        coffee_graphics_shader_compile(&fragshader,fshader_src,GL_FRAGMENT_SHADER,
-                                       GL_FRAGMENT_SHADER_BIT);
-        coffee_graphics_shader_attach(&basePipeline,&vertshader,GL_VERTEX_SHADER_BIT);
-        coffee_graphics_shader_attach(&basePipeline,&fragshader,GL_FRAGMENT_SHADER_BIT);
+        coffee_graphics_shader_compile(&vertshader,
+                                       vshader_src,CProgramStage::Vertex);
+        coffee_graphics_shader_compile(&fragshader,
+                                       fshader_src,CProgramStage::Fragment);
+        coffee_graphics_shader_attach(&basePipeline,&vertshader,
+                                      CProgramStage::Vertex);
+        coffee_graphics_shader_attach(&basePipeline,&fragshader,
+                                      CProgramStage::Fragment);
 
         coffee_graphics_bind(&basePipeline);
 
@@ -104,13 +106,13 @@ public:
         CBuffer texcoords;
         CBuffer indices;
         CBuffer transforms[3];
-        texcoords.type = GL_ARRAY_BUFFER;
-        vertices.type = GL_ARRAY_BUFFER;
-        indices.type = GL_ELEMENT_ARRAY_BUFFER;
+        texcoords.type = CBufferType::Array;
+        vertices.type = CBufferType::Array;
+        indices.type = CBufferType::Index;
         coffee_graphics_alloc(&vertices);
         coffee_graphics_alloc(&texcoords);
         coffee_graphics_alloc(&indices);
-        coffee_graphics_alloc(3,GL_ARRAY_BUFFER,(CBuffer*)transforms);
+        coffee_graphics_alloc(3,CBufferType::Array,(CBuffer*)transforms);
 
         coffee_graphics_activate(&texcoords);
         coffee_graphics_activate(&vertices);
@@ -119,15 +121,15 @@ public:
         coffee_graphics_buffer_store(&vertices,
                                      vertexdata,
                                      sizeof(vertexdata),
-                                     GL_STATIC_DRAW);
+                                     CBufferUsage::StaticDraw);
         coffee_graphics_buffer_store(&texcoords,
                                      texdata,
                                      sizeof(texdata),
-                                     GL_STATIC_DRAW);
+                                     CBufferUsage::StaticDraw);
         coffee_graphics_buffer_store(&indices,
                                      indexdata,
                                      sizeof(indexdata),
-                                     GL_STATIC_DRAW);
+                                     CBufferUsage::StaticDraw);
 
         CVertexArrayObject vao;
         coffee_graphics_alloc(&vao);
@@ -142,16 +144,14 @@ public:
         tex_bind.stride = sizeof(CVec2);
 
         CVertexFormat vrt_fmt;
-        vrt_fmt.normalized = GL_FALSE;
         vrt_fmt.offset = 0;
         vrt_fmt.size = 3;
-        vrt_fmt.type = GL_FLOAT;
+        vrt_fmt.type = CDataType::Scalar;
 
         CVertexFormat tex_fmt;
-        tex_fmt.normalized = GL_FALSE;
         tex_fmt.offset = 0;
         tex_fmt.size = 2;
-        tex_fmt.type = GL_FLOAT;
+        tex_fmt.type = CDataType::Scalar;
 
         CVertexAttribute vrt_att;
         vrt_att.attribIdx = 0;
@@ -174,7 +174,7 @@ public:
         CVertexFormat mat_fmt;
         mat_fmt.offset = 0;
         mat_fmt.size = 4;
-        mat_fmt.type = GL_FLOAT;
+        mat_fmt.type = CDataType::Scalar;
 
         CVertexBufferBinding mat_bnd[4];
 
@@ -222,10 +222,14 @@ public:
             coffee_graphics_activate(&transforms[i]);
             coffee_graphics_buffer_store_immutable(
                         &transforms[i],&rt,sizeof(CMat4),
-                        GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
+                        CBufferStorage::Coherent|
+                        CBufferStorage::Persistent|
+                        CBufferStorage::WriteBit);
             coffee_graphics_buffer_map(
                         &transforms[i],
-                        GL_MAP_PERSISTENT_BIT|GL_MAP_COHERENT_BIT|GL_MAP_WRITE_BIT);
+                        CBufferAccess::Coherent|
+                        CBufferAccess::Persistent|
+                        CBufferAccess::WriteBit);
         }
 
         CResources::CResource texture("ubw/models/textures/particle_fx.png");
