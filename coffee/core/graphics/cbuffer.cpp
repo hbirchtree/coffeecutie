@@ -214,7 +214,9 @@ void coffee_graphics_buffer_store_immutable_safe(
 {
     buf->size = size;
     coffee_graphics_bind(buf);
-    glBufferStorage(buf->type,size,data,usage);
+    glBufferStorage(
+                coffee_get(buf->type,cbuffertype_map),
+                size,data,usage);
     coffee_graphics_unbind(buf);
 }
 
@@ -229,14 +231,18 @@ void coffee_graphics_buffer_sub_bind(
         const _cbasic_graphics_buffer_section *buf,
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
-    glBindBufferRange(buf->type,binding->index,buf->parent->handle,buf->offset,buf->size);
+    glBindBufferRange(
+                coffee_get(buf->type,cbuffertype_map),
+                binding->index,buf->parent->handle,buf->offset,buf->size);
 }
 
 void coffee_graphics_buffer_sub_unbind(
         const _cbasic_graphics_buffer_section *buf,
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
-    glBindBufferRange(buf->type,binding->index,0,0,0);
+    glBindBufferRange(
+                coffee_get(buf->type,cbuffertype_map),
+                binding->index,0,0,0);
 }
 
 void coffee_graphics_free(int count, CBuffer *buf)
@@ -251,7 +257,7 @@ void coffee_graphics_free(int count, CBuffer *buf)
     delete[] handles;
 }
 
-void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf)
+void coffee_graphics_alloc(int count, CBufferType type, CBuffer *buf)
 {
     GLuint handles[count];
     glGenBuffers(count,handles);

@@ -23,7 +23,7 @@ template<typename T1, typename T2>
 struct coffeetype_mapping {T1 k; T2 v;};
 
 template<typename T1, typename T2>
-T2 coffee_get(T1 v, coffeetype_mapping<T1,T2>* list)
+T2 coffee_get(T1 v, const coffeetype_mapping<T1,T2>* list)
 {
     for(size_t i=0;i<sizeof(list)/sizeof(list[0]);i++)
         if(list[i].k == v)
@@ -32,7 +32,7 @@ T2 coffee_get(T1 v, coffeetype_mapping<T1,T2>* list)
 }
 
 template<typename T1, typename T2>
-T2 coffee_get_flags(T1 v, coffeetype_mapping<T1,T2>* list)
+T2 coffee_get_flags(T1 v, const coffeetype_mapping<T1,T2>* list)
 {
     T2 flag = GL_NONE_BIT;
     for(size_t i=0;i<sizeof(list)/sizeof(list[0]);i++)
