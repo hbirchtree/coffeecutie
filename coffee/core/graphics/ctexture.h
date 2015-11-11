@@ -310,8 +310,8 @@ extern void     coffee_graphics_tex_unload_safe(const CTexture*);
  * \param img Target image
  */
 extern void     coffee_graphics_tex_download_texture(
-        const CTexture* tex, GLint level,
-        szptr size, GLenum format, CStbImageLib::CStbImage* img);
+        const CTexture* tex, CGint level,
+        CGsize size, GLenum format, CStbImageLib::CStbImage* img);
 
 /*!
  * \brief Debug function for dumping texture to file

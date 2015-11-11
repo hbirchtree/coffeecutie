@@ -10,16 +10,16 @@ struct CFramebuffer
 {
     CFramebuffer();
 
-    GLuint      handle;
+    CGhnd      handle;
     CSize       size;
     GLenum      target;
 
-    void attach(CTexture* texture, GLenum attachment, GLint level)
+    void attach(CTexture* texture, GLenum attachment, CGint level)
     {
 //        glFramebufferTexture2D(target,attachment,textureTarget,texture->handle,level);
         glNamedFramebufferTexture(handle,attachment,texture->handle,level);
     }
-    void attach3D(CTexture* texture, GLenum attachment, GLint level, GLint zoffset,
+    void attach3D(CTexture* texture, GLenum attachment, CGint level, CGint zoffset,
                 GLenum textureTarget, GLenum target = GL_FRAMEBUFFER)
     {
 //        glFramebufferTexture3D(target,attachment,textureTarget,
@@ -35,7 +35,7 @@ struct CFramebufferAttachment
         level(0)
     {
     }
-    CFramebufferAttachment(GLenum target, const CTexture* texture, GLint level):
+    CFramebufferAttachment(GLenum target, const CTexture* texture, CGint level):
         target(target),
         texture(texture),
         level(level)
@@ -125,7 +125,7 @@ extern void coffee_graphics_framebuffer_blit(
         const CFramebuffer* trgFb,
         const CRectF& srcRect,
         const CRectF& trgRect,
-        ClearBufferMask mask, GLenum filter);
+        CClearFlag mask, GLenum filter);
 /*!
  * \brief Blit framebuffer to another framebuffer, perhaps the default one
  * \param srcFb
@@ -135,12 +135,11 @@ extern void coffee_graphics_framebuffer_blit(
  * \param mask
  * \param filter
  */
-extern void coffee_graphics_framebuffer_blit_safe(
-        const CFramebuffer* srcFb,
+extern void coffee_graphics_framebuffer_blit_safe(const CFramebuffer* srcFb,
         const CFramebuffer* trgFb,
         const CRectF& srcRect,
         const CRectF& trgRect,
-        ClearBufferMask mask, GLenum filter);
+        CClearFlag mask, GLenum filter);
 
 }
 }

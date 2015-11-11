@@ -1,5 +1,6 @@
 #include "ctexture_dxtc.h"
 
+#include "glbinding.h"
 #include "ctexture.h"
 
 namespace Coffee{
@@ -10,7 +11,7 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
     CTexture* tex = new CTexture;
     coffee_graphics_alloc(tex);
 
-    tex->textureType = GL_TEXTURE_2D;
+    tex->textureType = CTexType::Tex2D;
     tex->levels = rsc->mipmaps;
 
     CSize res = rsc->resolution;
@@ -28,7 +29,9 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
         size = ((res.w+3)/4)*((res.h+3)/4)*rsc->blockSize;
 
         glCompressedTexImage2D(
-                    tex->textureType,i,rsc->internalFormat,
+                    CG_GET(tex->textureType,ctextp_map),
+                    i,
+                    CG_GET(rsc->internalFormat,ctexint_map),
                     res.w,res.h,0,size,
                     ((ubyte*)rsc->data)+offset);
 

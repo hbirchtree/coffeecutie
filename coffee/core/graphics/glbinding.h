@@ -158,7 +158,7 @@ constexpr coffeetype_mapping<CTexIntFormat,GLenum> ctexint_map[10] = {
     {CTexIntFormat::DXT5,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT},
 };
 
-constexpr coffeetype_mapping<CTexFormat,GLenum> ctextp_map[9] = {
+constexpr coffeetype_mapping<CTexFormat,GLenum> ctexfmt_map[9] = {
     {CTexFormat::Depth,GL_DEPTH_COMPONENT},
     {CTexFormat::DepthStencil,GL_DEPTH24_STENCIL8},
     {CTexFormat::Stencil,GL_STENCIL_INDEX8},
@@ -170,6 +170,12 @@ constexpr coffeetype_mapping<CTexFormat,GLenum> ctextp_map[9] = {
     {CTexFormat::RED,GL_RED},
     {CTexFormat::GREEN,GL_GREEN},
     {CTexFormat::BLUE,GL_BLUE},
+};
+
+constexpr coffeetype_mapping<CTexType,GLenum> ctextp_map[9] = {
+    {CTexType::Tex2D,GL_TEXTURE_2D},
+    {CTexType::Tex3D,GL_TEXTURE_3D},
+    {CTexType::CubeMap,GL_TEXTURE_CUBE_MAP},
 };
 
 }

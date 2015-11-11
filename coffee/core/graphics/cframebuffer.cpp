@@ -1,5 +1,6 @@
 #include "cframebuffer.h"
 
+#include "glbinding.h"
 #include <coffee/core/base/cdebug.h>
 
 namespace Coffee{
@@ -90,10 +91,9 @@ void coffee_graphics_framebuffer_attach_texture_safe(
     coffee_graphics_unbind(fb);
 }
 
-void coffee_graphics_framebuffer_blit(
-        const CFramebuffer *srcFb, const CFramebuffer *trgFb,
+void coffee_graphics_framebuffer_blit(const CFramebuffer *srcFb, const CFramebuffer *trgFb,
         const CRectF &srcRect, const CRectF &trgRect,
-        ClearBufferMask mask, GLenum filter)
+        CClearFlag mask, GLenum filter)
 {
     glBlitNamedFramebuffer(
                 srcFb->handle, trgFb->handle,
@@ -105,7 +105,7 @@ void coffee_graphics_framebuffer_blit(
 void coffee_graphics_framebuffer_blit_safe(
         const CFramebuffer *srcFb, const CFramebuffer *trgFb,
         const CRectF &srcRect, const CRectF &trgRect,
-        ClearBufferMask mask, GLenum filter)
+        CClearFlag mask, GLenum filter)
 {
     coffee_graphics_bind(srcFb,GL_READ_FRAMEBUFFER);
     coffee_graphics_bind(trgFb,GL_DRAW_FRAMEBUFFER);
