@@ -7,6 +7,8 @@
 #include <glbinding/Binding.h>
 #include <glbinding/Meta.h>
 
+#include "coffee/core/graphics/glbinding.h"
+
 using namespace gl;
 using namespace Coffee::CDisplay;
 

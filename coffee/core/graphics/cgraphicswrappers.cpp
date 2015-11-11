@@ -1,4 +1,5 @@
 #include "cgraphicswrappers.h"
+#include "glbinding.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{

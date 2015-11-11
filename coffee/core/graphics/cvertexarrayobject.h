@@ -12,7 +12,7 @@ namespace CGraphicsWrappers{
 struct CVertexArrayObject{
     CVertexArrayObject();
 
-    GLuint      handle; /*!< VAO handle */
+    CGhnd handle; /*!< VAO handle */
 };
 
 /*!
@@ -22,10 +22,10 @@ struct CVertexFormat
 {
     CVertexFormat();
 
-    GLint size; /*!< Amount of values of type*/
-    GLuint offset; /*!< Offset in vertex buffer, used for interleaved attribute*/
-    GLenum type; /*!< Data type*/
-    GLboolean normalized; /*!< Whether it is normalized or not*/
+    CGsize size; /*!< Amount of values of type*/
+    CGszptr offset; /*!< Offset in vertex buffer, used for interleaved attribute*/
+    CDataType type; /*!< Data type*/
+    bool normalized; /*!< Whether it is normalized or not*/
 };
 
 /*!
@@ -36,10 +36,10 @@ struct CVertexBufferBinding
     CVertexBufferBinding();
 
     CBuffer* buffer; /*!< Buffer bound to attribute*/
-    GLsizei offset; /*!< Offset into stride*/
-    GLsizei stride; /*!< Total size of attributes*/
-    GLuint divisor; /*!< Divisor for instancing*/
-    GLuint binding; /*!< Binding index*/
+    CGszptr offset; /*!< Offset into stride*/
+    CGsize stride; /*!< Total size of attributes*/
+    CGidx divisor; /*!< Divisor for instancing*/
+    CGidx binding; /*!< Binding index*/
 };
 
 /*!
@@ -49,7 +49,7 @@ struct CVertexAttribute
 {
     CVertexAttribute();
 
-    GLuint attribIdx; /*!< Attribute index to shader*/
+    CGidx attribIdx; /*!< Attribute index to shader*/
     CVertexFormat* fmt; /*!< Vertex format for attribute*/
     CVertexBufferBinding* bnd; /*!< Vertex buffer binding for attribute*/
 };

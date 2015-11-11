@@ -4,19 +4,21 @@
 #include <bitset>
 
 #include "coffee/core/coffee_basetypes.h"
-#include "glbinding.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+typedef int32 CGsize;
+typedef int64 CGszptr;
+
 /*!
  * \brief A handle for a GL resource
  */
-struct CGHndl;
+typedef uint32 CGhnd;
 /*!
  * \brief An index retrieved from GL or to be used in GL
  */
-typedef uint32 CGIdx;
+typedef uint32 CGidx;
 
 //Misc. flags
 
@@ -32,6 +34,7 @@ C_FLAGS(CClearFlag,uint8);
 
 enum class CBufferType : uint16
 {
+    None = 0,
     Array = 1,
     Index = 2,
     Uniform = 3,
@@ -56,6 +59,7 @@ enum class CTextureType : uint16
 
 enum class CProgramStage : uint16
 {
+    None = 0x0,
     Vertex = 0x1,
     Fragment = 0x2,
     Geometry = 0x4,
@@ -70,17 +74,27 @@ enum class CBufferAccess : uint16
     WriteBit = 0x1, /*!< Enable writing to the buffer*/
     ReadBit = 0x2, /*!< Enable reading from the buffer*/
     Persistent = 0x4, /*!< Make the buffer mapping persistent*/
+    Coherent = 0x8, /*!< Make buffer contents coherent across draws*/
+};
+
+C_FLAGS(CBufferAccess,uint16);
+
+enum class CBufferStorage : uint16
+{
+    WriteBit = 0x1,
+    ReadBit = 0x2,
+    Persistent = 0x4, /*!< Make the buffer mapping persistent*/
     Coherent = 0x8, /*!< Make buffer contents coherent across draws and etc., performance impact*/
     Dynamic = 0x10, /*!< Allow use of coffee_graphics_buffer_substore()*/
     ClientStorage = 0x20, /*!< Read from client memory*/
 };
 
-C_FLAGS(CBufferAccess,uint16);
+C_FLAGS(CBufferStorage,uint16);
 
 /*!
  * \brief Specifies buffer storage parameters in coffee_graphics_buffer_store(). Stream* specifies data modified once and drawn few times, static is modified once and drawn many times, dynamic is modified often and drawn many times. *Draw specifies data used for GL drawing, *Read specifies data read from the GL, *Copy specifies data is used for both reading and drawing operations.
  */
-enum class CBufferStorage : uint16
+enum class CBufferUsage : uint16
 {
     Default = 0,
 
@@ -97,41 +111,52 @@ enum class CBufferStorage : uint16
     DynamicCopy = 9,
 };
 
+enum class CDataType : uint16
+{
+    None = 0,
+    Scalar = 1,
+    BigScalar = 2,
+    UInt = 3,
+    Int = 4,
+    UInt64 = 5,
+    Byte = 7,
+    UByte = 8,
+};
+
 //Misc. data structures
 
 struct _cbasic_graphics_resource
 {
-    GLuint handle;
+    CGhnd handle;
 };
 
 struct _cbasic_graphics_shader_program
 {
     _cbasic_graphics_shader_program();
 
-    GLuint handle;
+    CGhnd handle;
     union{
-        UseProgramStageMask stages;
-        UseProgramStageMask stage;
+        CProgramStage stages;
+        CProgramStage stage;
     };
 };
 
 struct _cbasic_graphics_buffer_mappable
 {
     void* data;
-    BufferStorageMask flags;
-    BufferAccessMask mapflags;
-    GLsizeiptr size;
-    GLuint handle;
-    GLenum type;
+    CBufferAccess mapflags;
+    CGsize size;
+    CGhnd handle;
+    CBufferType type;
 };
 
 struct _cbasic_graphics_buffer_section
 {
     _cbasic_graphics_buffer_mappable* parent;
-    GLsizeiptr offset;
-    GLsizeiptr size;
-    GLuint handle;
-    GLenum type;
+    CGszptr offset;
+    CGsize size;
+    CGhnd handle;
+    CBufferType type;
 };
 
 struct _cbasic_graphics_resource_desc
@@ -139,7 +164,7 @@ struct _cbasic_graphics_resource_desc
     _cbasic_graphics_resource_desc();
 
     cstring object_name;
-    GLuint index;
+    CGidx index;
 };
 
 struct _cbasic_graphics_buffer_resource_desc
@@ -148,7 +173,7 @@ struct _cbasic_graphics_buffer_resource_desc
 
     cstring object_name;
     _cbasic_graphics_buffer_section* buffer;
-    GLuint index;
+    CGidx index;
 };
 
 template<typename T>
@@ -161,7 +186,7 @@ struct _cbasic_graphics_resource_binding
     }
 
     T* object;
-    GLuint binding;
+    CGhnd binding;
 };
 
 typedef _cbasic_graphics_resource_binding<_cbasic_graphics_buffer_resource_desc>

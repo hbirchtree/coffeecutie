@@ -9,13 +9,6 @@
 namespace Coffee {
 namespace CGraphicsWrappers {
 
-/*!
- * \brief Additional operator for UseProgramStageMask type
- * \param msk Value to be negated
- * \return Negated value
- */
-extern UseProgramStageMask operator~(UseProgramStageMask msk);
-
 struct CPipeline : public _cbasic_graphics_shader_program{};
 struct CShaderProgram : public _cbasic_graphics_shader_program{};
 struct CShaderStageProgram : public _cbasic_graphics_shader_program{};
@@ -83,11 +76,11 @@ extern void coffee_graphics_free(CShaderStageProgram* prg);
 
 extern bool coffee_graphics_shader_compile(
         CShader *prg, cstring rsc,
-        GLenum type, UseProgramStageMask stage);
+        CProgramStage type);
 
 extern bool coffee_graphics_shader_compile(
         CShaderStageProgram *prg, cstring rsc,
-        GLenum stage, UseProgramStageMask stageMask);
+        CProgramStage stage);
 
 /*!
  * \brief Compile a shader from resource
@@ -99,18 +92,17 @@ extern bool coffee_graphics_shader_compile(
  */
 extern bool coffee_graphics_shader_compile(
         CShader *prg, CResources::CResource *rsc,
-        GLenum type, UseProgramStageMask stage);
+        CProgramStage stage);
 /*!
  * \brief Compile a shader stage program from resource
  * \param prg Program being compiled
  * \param res Resource containing shader
  * \param stage Which stage it contains
- * \param stageMask Mask for the stage
  * \return
  */
 extern bool coffee_graphics_shader_compile(
         CShaderStageProgram* prg, CResources::CResource *res,
-        GLenum stage, UseProgramStageMask stageMask);
+        CProgramStage stage);
 
 /*!
  * \brief Link the shader program
@@ -125,7 +117,7 @@ extern void coffee_graphics_shader_link(CShaderProgram* prg);
  * \param filter Mask for which stage to attach
  */
 extern void coffee_graphics_shader_attach(
-        CPipeline* pl, CShaderStageProgram* stg, UseProgramStageMask filter);
+        CPipeline* pl, CShaderStageProgram* stg, CProgramStage filter);
 /*!
  * \brief Attach shader program to pipeline
  * \param pl Pipeline being attached to
@@ -133,7 +125,7 @@ extern void coffee_graphics_shader_attach(
  * \param filter Mask for which stages to attach
  */
 extern void coffee_graphics_shader_attach(
-        CPipeline* pl, CShaderProgram* stg, UseProgramStageMask filter);
+        CPipeline* pl, CShaderProgram* stg, CProgramStage filter);
 
 extern void coffee_graphics_shader_attach(CShaderProgram* shd, CShader* stg);
 /*!
@@ -150,7 +142,8 @@ extern void coffee_graphics_shader_detach(
  * \param name Name of the block
  * \param loc Pointer to which the location will be stored
  */
-extern void coffee_graphics_shader_uniform_block_get(CShaderProgram* prg, cglstring name, GLuint* loc);
+extern void coffee_graphics_shader_uniform_block_get(
+        CShaderProgram* prg, cstring name, CGhnd* loc);
 /*!
  * \brief Set binding index for uniform block
  * \param prg Program to set index to
@@ -163,7 +156,7 @@ extern void coffee_graphics_shader_uniform_block_set(CShaderProgram* prg, const 
  * \param name Name of uniform value
  * \return Uniform value location
  */
-extern GLint coffee_graphics_shader_uniform_value_get(CShaderProgram* prg, cglstring name);
+extern CGhnd coffee_graphics_shader_uniform_value_get(CShaderProgram* prg, cstring name);
 
 } // namespace CGraphicsWrappers
 } // namespace Coffee

@@ -30,11 +30,11 @@ struct CGLDrawCall
 {
     CGLDrawCall();
 
-    GLuint count; /*!< Number of indices*/
-    GLuint instanceCount; /*!< Number of instances*/
-    GLuint firstIndex; /*!< First index in buffer*/
-    GLuint baseVertex; /*!< First vertex in buffer*/
-    GLuint baseInstance; /*!< First instance to render*/
+    CGidx count; /*!< Number of indices*/
+    CGidx instanceCount; /*!< Number of instances*/
+    CGidx firstIndex; /*!< First index in buffer*/
+    CGidx baseVertex; /*!< First vertex in buffer*/
+    CGidx baseInstance; /*!< First instance to render*/
 };
 
 }

@@ -41,7 +41,7 @@ extern void coffee_graphics_free(CBuffer* buf);
  * \param type
  * \param buf
  */
-extern void coffee_graphics_alloc(int count, GLenum type, CBuffer *buf);
+extern void coffee_graphics_alloc(int count, CBufferType type, CBuffer *buf);
 
 /*!
  * \brief This operation is used before bindless operations, where a buffer has to have been bound at some point before being used. Binds and unbinds a buffer
@@ -65,7 +65,7 @@ extern void coffee_graphics_unbind(CBuffer* buf);
  * \param mask Buffer data access mask, determines characteristics of mapping
  * \return A pointer to the buffer data
  */
-extern void* coffee_graphics_buffer_map(CBuffer* buf, BufferAccessMask mask);
+extern void* coffee_graphics_buffer_map(CBuffer* buf, CBufferAccess mask);
 /*!
  * \brief The previously mapped pointer should no longer be used.
  * \param buf Buffer to be unmapped
@@ -79,7 +79,7 @@ extern bool coffee_graphics_buffer_unmap(CBuffer* buf);
  * \param mask Buffer data access mask, determines characteristics of mapping
  * \return A pointer to the buffer data
  */
-extern void* coffee_graphics_buffer_map_safe(CBuffer* buf, BufferAccessMask mask);
+extern void* coffee_graphics_buffer_map_safe(CBuffer* buf, CBufferAccess mask);
 /*!
  * \brief The previously mapped pointer should no longer be used. This is a slower version for older GL versions.
  * \param buf Buffer to be unmapped
@@ -94,7 +94,7 @@ extern bool coffee_graphics_buffer_unmap_safe(CBuffer* buf);
  * \param size Size of region
  * \return A pointer to the downloaded buffer data
  */
-extern void *coffee_graphics_buffer_download_buffer(CBuffer* buf, GLsizeiptr offset, GLsizeiptr size);
+extern void *coffee_graphics_buffer_download_buffer(CBuffer* buf, CGszptr offset, CGsize size);
 
 /*!
  * \brief Download part or all of a buffer into a local pointer. This is a slower version for older GL versions.
@@ -104,7 +104,7 @@ extern void *coffee_graphics_buffer_download_buffer(CBuffer* buf, GLsizeiptr off
  * \return A pointer to the downloaded buffer data
  */
 extern void* coffee_graphics_buffer_download_buffer_safe(
-        CBuffer* buf, GLsizeiptr offset, GLsizeiptr size);
+        CBuffer* buf, CGszptr offset, CGsize size);
 
 /*!
  * \brief Store mutable data in buffer
@@ -114,7 +114,7 @@ extern void* coffee_graphics_buffer_download_buffer_safe(
  * \param usage Storage flag, determines storage location
  */
 extern void coffee_graphics_buffer_store(CBuffer* buf, const void* data,
-        GLsizeiptr size, GLenum usage);
+        CGsize size, CBufferUsage usage);
 /*!
  * \brief Store mutable data in buffer. This is a slower version for older GL versions.
  * \param buf Buffer to store into
@@ -124,7 +124,7 @@ extern void coffee_graphics_buffer_store(CBuffer* buf, const void* data,
  */
 extern void coffee_graphics_buffer_store_safe(
         CBuffer* buf, const void* data,
-        GLsizeiptr size, GLenum usage);
+        CGsize size, CBufferUsage usage);
 
 /*!
  * \brief Store immutable data in buffer.
@@ -135,7 +135,7 @@ extern void coffee_graphics_buffer_store_safe(
  */
 extern void coffee_graphics_buffer_store_immutable(
         CBuffer* buf, const void* data,
-        GLsizeiptr size, BufferStorageMask usage);
+        CGsize size, CBufferStorage usage);
 /*!
  * \brief Store mutable data in buffer. This is a slower version for older GL versions.
  * \param buf Buffer to store into
@@ -145,7 +145,7 @@ extern void coffee_graphics_buffer_store_immutable(
  */
 extern void coffee_graphics_buffer_store_immutable_safe(
         CBuffer* buf, const void* data,
-        GLsizeiptr size, BufferStorageMask usage);
+        CGsize size, CBufferStorage usage);
 
 /*!
  * \brief coffee_graphics_buffer_substore
@@ -156,7 +156,7 @@ extern void coffee_graphics_buffer_store_immutable_safe(
  */
 extern void coffee_graphics_buffer_substore(
         CBuffer* buf, const void* data,
-        GLsizeiptr offset, GLsizeiptr size);
+        CGszptr offset, CGsize size);
 /*!
  * \brief This version uses a more widely available set of commands, but is generally slower. Binds and unbinds buffer in order to work.
  * \param buf Buffer to be stored into
@@ -167,7 +167,7 @@ extern void coffee_graphics_buffer_substore(
  */
 extern void coffee_graphics_buffer_substore_safe(
         CBuffer* buf, const void* data,
-        GLsizeiptr offset, GLsizeiptr size);
+        CGszptr offset, CGsize size);
 
 /*!
  * \brief Bind range of buffer to an indexed target
@@ -179,8 +179,8 @@ extern void coffee_graphics_buffer_substore_safe(
  */
 extern void coffee_graphics_buffer_bind_range(
         CBuffer* buf,
-        GLuint index, GLenum bufferType,
-        GLsizeiptr offset, GLsizeiptr size);
+        CGidx index, CBufferType bufferType,
+        CGszptr offset, CGsize size);
 
 /*!
  * \brief Copies buffer data, using buffer handles
@@ -191,9 +191,9 @@ extern void coffee_graphics_buffer_bind_range(
  * \param size Size of data
  */
 extern void coffee_graphics_buffer_copy(
-        GLuint buf1, GLuint buf2,
-        GLsizeiptr offset1, GLsizeiptr offset2,
-        GLsizeiptr size);
+        CGhnd buf1, CGhnd buf2,
+        CGszptr offset1, CGszptr offset2,
+        CGsize size);
 
 /*!
  * \brief Copies buffer data, using buffer handles. This is a slower version for older GL versions.
@@ -204,9 +204,9 @@ extern void coffee_graphics_buffer_copy(
  * \param size Size of data
  */
 extern void coffee_graphics_buffer_copy_safe(
-        GLuint buf1, GLuint buf2,
-        GLsizeiptr offset1, GLsizeiptr offset2,
-        GLsizeiptr size);
+        CGhnd buf1, CGhnd buf2,
+        CGszptr offset1, CGszptr offset2,
+        CGsize size);
 
 /*!
  * \brief Copies buffer data
@@ -218,8 +218,8 @@ extern void coffee_graphics_buffer_copy_safe(
  */
 extern void coffee_graphics_buffer_copy(
         CBuffer* buf1, CBuffer* buf2,
-        GLsizeiptr offset1, GLsizeiptr offset2,
-        GLsizeiptr size);
+        CGszptr offset1, CGszptr offset2,
+        CGsize size);
 
 /*!
  * \brief Copies buffer data. This is a slower version for older GL versions.
@@ -231,8 +231,8 @@ extern void coffee_graphics_buffer_copy(
  */
 extern void coffee_graphics_buffer_copy_safe(
         CBuffer* buf1, CBuffer* buf2,
-        GLsizeiptr offset1, GLsizeiptr offset2,
-        GLsizeiptr size);
+        CGszptr offset1, CGszptr offset2,
+        CGsize size);
 
 /*!
  * \brief This operation will create a new buffer, copy the specified data and delete the old buffer.
@@ -244,8 +244,8 @@ extern void coffee_graphics_buffer_copy_safe(
  */
 extern void coffee_graphics_buffer_resize(
         CBuffer* buf,
-        GLsizeiptr oldOffset, GLsizeiptr oldSize,
-        GLsizeiptr targetOffset, GLsizeiptr newSize);
+        CGszptr oldOffset, CGsize oldSize,
+        CGszptr targetOffset, CGsize newSize);
 
 /*!
  * \brief Invalidates contents of buffer, often used with mapping to allow faster discarding
@@ -286,27 +286,14 @@ extern void* coffee_graphics_buffer_sub_data(CSubBuffer* buf);
 
 
 typedef void* (*SubBufferData)(CSubBuffer*);
-typedef void  (*BufferCopy)(CBuffer*, CBuffer*,GLsizeiptr, GLsizeiptr,GLsizeiptr);
-typedef void  (*BufferStore)(CBuffer*, const void*,GLsizeiptr, GLenum);
-typedef void  (*BufferStoreImmutable)(CBuffer*, const void*,GLsizeiptr,BufferStorageMask);
-typedef void  (*BufferSubStore)(CBuffer*, const void*,GLsizeiptr, GLsizeiptr);
-typedef void* (*BufferMap)(CBuffer*,BufferAccessMask);
+typedef void  (*BufferCopy)(CBuffer*, CBuffer*,CGszptr, CGszptr,CGsize);
+typedef void  (*BufferStore)(CBuffer*, const void*,CGsize, CBufferUsage);
+typedef void  (*BufferStoreImmutable)(CBuffer*, const void*,CGsize,CBufferStorage);
+typedef void  (*BufferSubStore)(CBuffer*, const void*,CGszptr, CGsize);
+typedef void* (*BufferMap)(CBuffer*,CBufferAccess);
 typedef bool  (*BufferUnmap)(CBuffer*);
-typedef void* (*BufferDownload)(CBuffer*, GLsizeiptr,GLsizeiptr);
+typedef void* (*BufferDownload)(CBuffer*, CGszptr,CGsize);
 typedef void  (*BufferInvalidate)(CBuffer*);
-
-//typedef std::function<void*(CSubBuffer*)> SubBufferData;
-//typedef std::function<void(CBuffer*, CBuffer*,
-//                           GLsizeiptr, GLsizeiptr,GLsizeiptr)> BufferCopy;
-//typedef std::function<void(CBuffer*, const void*,
-//                           GLsizeiptr, GLenum)> BufferStore;
-//typedef std::function<void(CBuffer*, const void*,GLsizeiptr,
-//                           BufferStorageMask)> BufferStoreImmutable;
-//typedef std::function<void(CBuffer*, const void*,GLsizeiptr, GLsizeiptr)> BufferSubStore;
-//typedef std::function<void*(CBuffer*,BufferAccessMask)> BufferMap;
-//typedef std::function<void(CBuffer*)> BufferUnmap;
-//typedef std::function<void(CBuffer*, GLsizeiptr,GLsizeiptr)> BufferDownload;
-//typedef std::function<void(CBuffer*)> BufferInvalidate;
 
 struct CBufferFunctionBinds
 {

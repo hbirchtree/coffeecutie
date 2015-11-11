@@ -1,4 +1,5 @@
 #include "cvertexarrayobject.h"
+#include "glbinding.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
@@ -22,8 +23,8 @@ CVertexBufferBinding::CVertexBufferBinding():
 CVertexFormat::CVertexFormat():
     size(0),
     offset(0),
-    type(GL_NONE),
-    normalized(GL_FALSE)
+    type(CDataType::None),
+    normalized(false)
 {
 }
 
@@ -38,8 +39,11 @@ void coffee_graphics_vao_attribute_format(
 {
     glVertexArrayAttribFormat(
                 vao->handle,
-                attr.attribIdx,fmt.size,fmt.type,
-                fmt.normalized,fmt.offset);
+                attr.attribIdx,
+                fmt.size,
+                fmt.type,
+                (fmt.normalized) ? GL_TRUE : GL_FALSE,
+                fmt.offset);
 }
 
 void coffee_graphics_vao_attribute_buffer(
