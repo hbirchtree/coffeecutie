@@ -1,5 +1,7 @@
 #include "ctexture.h"
 
+#include "glbinding.h"
+
 namespace Coffee{
 namespace CGraphicsWrappers{
 
@@ -20,7 +22,7 @@ bool CTextureTools::coffee_graphics_tex_3d_define(
 }
 
 bool CTextureTools::coffee_graphics_tex_cube_store(
-        const CTexture *texture, const CTextureTools::CTextureData *data, GLint level)
+        const CTexture *texture, const CTextureTools::CTextureData *data, CGint level)
 {
     glTextureSubImage3D(texture->handle,level,0,0,0,
                         data->lengths[0],data->lengths[1],data->lengths[2],
@@ -29,7 +31,7 @@ bool CTextureTools::coffee_graphics_tex_cube_store(
 }
 
 bool CTextureTools::coffee_graphics_tex_2d_store(
-        const CTexture *texture, const CTextureTools::CTextureData *data, GLint level)
+        const CTexture *texture, const CTextureTools::CTextureData *data, CGint level)
 {
     glTextureSubImage2D(texture->handle,level,0,0,
                         data->lengths[0],data->lengths[1],
@@ -38,15 +40,15 @@ bool CTextureTools::coffee_graphics_tex_2d_store(
 }
 
 bool CTextureTools::coffee_graphics_tex_3d_store(
-        const CTexture *texture, const CTextureTools::CTextureData *data, GLint level)
+        const CTexture *texture, const CTextureTools::CTextureData *data, CGint level)
 {
-    glTexImage3D(texture->textureType,level,static_cast<GLint>(data->format),
+    glTexImage3D(texture->textureType,level,(CGint)data->format,
                  data->lengths[0],data->lengths[1],data->lengths[2],
             0,texture->format,data->datatype,data->data);
     return true;
 }
 
-GLuint64 coffee_graphics_tex_get_handle(CTexture *tex)
+CGuint64 coffee_graphics_tex_get_handle(CTexture *tex)
 {
     tex->bhandle = glGetTextureHandleARB(tex->handle);
     return tex->bhandle;
@@ -63,7 +65,7 @@ void coffee_graphics_tex_make_nonresident(const CTexture* tex)
 }
 
 void coffee_graphics_tex_download_texture(
-        const CTexture *tex, GLint level,
+        const CTexture *tex, CGint level,
         szptr size, GLenum format,
         CStbImageLib::CStbImage *img)
 {
@@ -97,7 +99,7 @@ void coffee_graphics_tex_unload_safe(
 }
 
 void coffee_graphics_tex_param(
-        const CTexture *tex, GLenum param, GLint val)
+        const CTexture *tex, GLenum param, CGint val)
 {
     glTextureParameteri(tex->handle,param,val);
 }
@@ -105,7 +107,7 @@ void coffee_graphics_tex_param(
 void coffee_graphics_tex_param(
         const CTexture *tex, GLenum param, GLenum val)
 {
-    coffee_graphics_tex_param(tex,param,(GLint)val);
+    coffee_graphics_tex_param(tex,param,(CGint)val);
 }
 
 void coffee_graphics_tex_mipmap(
@@ -123,7 +125,7 @@ void coffee_graphics_tex_mipmap_safe(
 }
 
 void coffee_graphics_tex_param_safe(
-        const CTexture *tex, GLenum param, GLint val)
+        const CTexture *tex, GLenum param, CGint val)
 {
     coffee_graphics_bind(tex);
     glTexParameteri(tex->textureType,param,val);
@@ -133,11 +135,11 @@ void coffee_graphics_tex_param_safe(
 void coffee_graphics_tex_param_safe(
         const CTexture *tex, GLenum param, GLenum val)
 {
-    coffee_graphics_tex_param_safe(tex,param,(GLint)val);
+    coffee_graphics_tex_param_safe(tex,param,(CGint)val);
 }
 
 bool CTextureTools::coffee_graphics_tex_2d_store_safe(
-        const CTexture *texture, const CTextureTools::CTextureData *data, GLint level)
+        const CTexture *texture, const CTextureTools::CTextureData *data, CGint level)
 {
     coffee_graphics_bind(texture);
     glTexSubImage2D(texture->textureType,level,0,0,
@@ -149,7 +151,7 @@ bool CTextureTools::coffee_graphics_tex_2d_store_safe(
 
 bool CTextureTools::coffee_graphics_tex_3d_store_safe(
         const CTexture *texture, const CTextureTools::CTextureData *data,
-        GLint level)
+        CGint level)
 {
     coffee_graphics_bind(texture);
     glTexSubImage3D(texture->textureType,level,0,0,0,
@@ -161,7 +163,7 @@ bool CTextureTools::coffee_graphics_tex_3d_store_safe(
 
 bool CTextureTools::coffee_graphics_tex_cube_store_safe(
         const CTexture *texture, const CTextureTools::CTextureData *data,
-        GLint level)
+        CGint level)
 {
     coffee_graphics_tex_3d_store_safe(texture,data,level);
     return false;
@@ -210,7 +212,7 @@ bool CTextureTools::coffee_graphics_tex_define_safe(
 }
 
 bool CTextureTools::coffee_graphics_tex_store(
-        const CTexture *tex, const CTextureTools::CTextureData *data, GLint level)
+        const CTexture *tex, const CTextureTools::CTextureData *data, CGint level)
 {
     switch(data->dimensions)
     {
@@ -220,8 +222,7 @@ bool CTextureTools::coffee_graphics_tex_store(
     return false;
 }
 
-bool CTextureTools::coffee_graphics_tex_store_safe(
-        const CTexture *tex, const CTextureTools::CTextureData *data, GLint level)
+bool CTextureTools::coffee_graphics_tex_store_safe(const CTexture *tex, const CTextureTools::CTextureData *data, CGint level)
 {
     switch(data->dimensions)
     {

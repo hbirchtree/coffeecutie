@@ -142,7 +142,7 @@ enum class CPrimitiveMode : uint16
     LineLoop = 8,
 };
 
-enum class CTexIntFormat : uint16
+enum class CTexIntFormat : CGint
 {
     None = 0,
     RGBA8 = 1,

@@ -143,7 +143,7 @@ constexpr coffeetype_mapping<CPrimitiveMode,GLenum> cpritype_map[9] = {
     {CPrimitiveMode::LineLoop,GL_LINE_LOOP},
 };
 
-constexpr coffeetype_mapping<CTexIntFormat,GLenum> ctexint_map[] = {
+constexpr coffeetype_mapping<CTexIntFormat,GLenum> ctexint_map[10] = {
     {CTexIntFormat::Depth,GL_DEPTH_COMPONENT},
     {CTexIntFormat::DepthStencil,GL_DEPTH24_STENCIL8},
     {CTexIntFormat::Stencil,GL_STENCIL_INDEX8},
@@ -152,6 +152,24 @@ constexpr coffeetype_mapping<CTexIntFormat,GLenum> ctexint_map[] = {
     {CTexIntFormat::RGB8,GL_RGB8},
     {CTexIntFormat::RG8,GL_RG8},
     {CTexIntFormat::RED8,GL_RED},
+
+    {CTexIntFormat::DXT1,GL_COMPRESSED_RGBA_S3TC_DXT1_EXT},
+    {CTexIntFormat::DXT3,GL_COMPRESSED_RGBA_S3TC_DXT3_EXT},
+    {CTexIntFormat::DXT5,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT},
+};
+
+constexpr coffeetype_mapping<CTexFormat,GLenum> ctextp_map[9] = {
+    {CTexFormat::Depth,GL_DEPTH_COMPONENT},
+    {CTexFormat::DepthStencil,GL_DEPTH24_STENCIL8},
+    {CTexFormat::Stencil,GL_STENCIL_INDEX8},
+
+    {CTexFormat::RGBA,GL_RGBA8},
+    {CTexFormat::RGB,GL_RGB8},
+    {CTexFormat::RG,GL_RG8},
+
+    {CTexFormat::RED,GL_RED},
+    {CTexFormat::GREEN,GL_GREEN},
+    {CTexFormat::BLUE,GL_BLUE},
 };
 
 }

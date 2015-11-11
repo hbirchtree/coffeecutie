@@ -1,7 +1,7 @@
 #ifndef CTEXTURE
 #define CTEXTURE
 
-#include "glbinding.h"
+#include "copengl_types.h"
 #include "coffee/core/coffee.h"
 #include "coffee/image/cimage.h"
 
@@ -56,10 +56,10 @@ typedef bool (*TexDefineFun)(
 typedef bool (*TexStoreFun)(
         const CTexture* tex,
         const CTextureTools::CTextureData* data,
-        GLint level);
+        CGint level);
 
 typedef void (*TexParamEnumFun)(const CTexture*,GLenum param,GLenum val);
-typedef void (*TexParamFun)(const CTexture*,GLenum param,GLenum val);
+typedef void (*TexParamFun)(const CTexture*,GLenum param,CGint val);
 
 typedef void (*TexMipmapFun)(const CTexture* tex);
 
@@ -119,13 +119,13 @@ static void coffee_create_texturesize(
 
 extern bool coffee_graphics_tex_2d_store_safe(
         const CTexture* texture, const CTextureData* data,
-        GLint level);
+        CGint level);
 extern bool coffee_graphics_tex_3d_store_safe(
         const CTexture* texture, const CTextureData* data,
-        GLint level);
+        CGint level);
 extern bool coffee_graphics_tex_cube_store_safe(
         const CTexture* texture, const CTextureData* data,
-        GLint level);
+        CGint level);
 
 extern bool coffee_graphics_tex_2d_define_safe(
         const CTexture* texture, const CTextureData* data);
@@ -135,13 +135,13 @@ extern bool coffee_graphics_tex_3d_define_safe(
 //Texture storage, modern versions, bindless
 extern bool coffee_graphics_tex_2d_store(
         const CTexture* texture, const CTextureData* data,
-        GLint level);
+        CGint level);
 extern bool coffee_graphics_tex_3d_store(
         const CTexture* texture, const CTextureData* data,
-        GLint level);
+        CGint level);
 extern bool coffee_graphics_tex_cube_store(
         const CTexture* texture, const CTextureData* data,
-        GLint level);
+        CGint level);
 
 extern bool coffee_graphics_tex_2d_define(
         const CTexture* texture, const CTextureData* data);
@@ -173,7 +173,7 @@ extern bool coffee_graphics_tex_define_safe(
  * \return Whether or not the process succeeded
  */
 extern bool coffee_graphics_tex_store(
-        const CTexture* tex, const CTextureData* data, GLint level);
+        const CTexture* tex, const CTextureData* data, CGint level);
 /*!
  * \brief Store texture data into texture, old variant
  * \param tex Texture to store to
@@ -182,7 +182,7 @@ extern bool coffee_graphics_tex_store(
  * \return Whether or not the process succeeded
  */
 extern bool coffee_graphics_tex_store_safe(
-        const CTexture* tex, const CTextureData* data, GLint level);
+        const CTexture* tex, const CTextureData* data, CGint level);
 
 }
 
@@ -229,7 +229,7 @@ extern void     coffee_graphics_tex_mipmap_safe(
  * \param val
  */
 extern void     coffee_graphics_tex_param(
-        const CTexture* tex, GLenum param, GLint val);
+        const CTexture* tex, GLenum param, CGint val);
 /*!
  * \brief Set texture parameter, GLenum variant
  * \param tex
@@ -246,7 +246,7 @@ extern void     coffee_graphics_tex_param(
  * \param val
  */
 extern void     coffee_graphics_tex_param_safe(
-        const CTexture* tex, GLenum param, GLint val);
+        const CTexture* tex, GLenum param, CGint val);
 /*!
  * \brief Set texture parameter, GLenum variant, old variant
  * \param tex
@@ -268,7 +268,7 @@ extern void     coffee_graphics_tex_activate(
  * \param tex
  * \return
  */
-extern GLuint64 coffee_graphics_tex_get_handle(CTexture* tex);
+extern CGuint64 coffee_graphics_tex_get_handle(CTexture* tex);
 /*!
  * \brief Ask the GL to load the texture into memory
  * \param tex
