@@ -41,7 +41,7 @@ void coffee_graphics_vao_attribute_format(
                 vao->handle,
                 attr.attribIdx,
                 fmt.size,
-                coffee_get(fmt.type,cdtypes_map,cdtypes_size),
+                CG_GET(fmt.type,cdtypes_map),
                 (fmt.normalized) ? GL_TRUE : GL_FALSE,
                 fmt.offset);
 }

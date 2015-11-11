@@ -11,6 +11,9 @@ namespace CGraphicsWrappers{
 typedef int32 CGint;
 typedef uint32 CGuint;
 
+typedef int64 CGint64;
+typedef uint64 CGuint64;
+
 typedef int32 CGsize;
 typedef int64 CGszptr;
 
@@ -48,7 +51,7 @@ enum class CBufferType : uint16
     Query = 8,
 };
 
-enum class CTextureType : uint16
+enum class CTexType : uint16
 {
     Array1D = 1,
     Array2D = 2,
@@ -137,6 +140,44 @@ enum class CPrimitiveMode : uint16
     TrianglesAdjacency = 6,
     LineStrip = 7,
     LineLoop = 8,
+};
+
+enum class CTexIntFormat : uint16
+{
+    None = 0,
+    RGBA8 = 1,
+    RED8 = 2,
+    Depth = 3,
+    Stencil = 4,
+
+    RG8 = 5,
+    RGB8 = 6,
+
+    RGBA32F = 7,
+
+    DXT1 = 8,
+    DXT3 = 9,
+    DXT5 = 10,
+
+    DepthStencil = 11,
+};
+
+enum class CTexFormat : uint16
+{
+    None = 0,
+    RGBA = 1,
+    BGRA = 2,
+
+    RG = 3,
+    RGB = 4,
+
+    RED = 5,
+    GREEN = 6,
+    BLUE = 7,
+
+    Depth = 8,
+    Stencil = 9,
+    DepthStencil = 10,
 };
 
 //Misc. data structures

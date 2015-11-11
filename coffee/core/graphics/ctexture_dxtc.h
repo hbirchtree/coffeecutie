@@ -1,7 +1,6 @@
 #ifndef CTEXTURE_DXTC
 #define CTEXTURE_DXTC
 
-#include "glbinding.h"
 #include "coffee/core/base/cfiles.h"
 #include "ctexture.h"
 
@@ -10,11 +9,13 @@ namespace CGraphicsWrappers{
 
 struct CDXTCHeader
 {
-    uint16 mipmaps      = 0; /*!< Mipmap levels present in the texture */
-    uint16 blockSize    = 0; /*!< 8 for DXT1, 16 for DXT2 through DXT5 */
-    GLenum internalFormat = GL_NONE; /*!< Specifies version of DXTC*/
+    CDXTCHeader();
+
     CSize  resolution; /*!< Size of the largest mipmap */
-    const void*    data     = nullptr; /*!< Pointer to DXTC data */
+    const void* data; /*!< Pointer to DXTC data */
+    uint16 mipmaps; /*!< Mipmap levels present in the texture */
+    uint16 blockSize; /*!< 8 for DXT1, 16 for DXT2 through DXT5 */
+    CTexIntFormat internalFormat; /*!< Specifies version of DXTC*/
 };
 
 /*!

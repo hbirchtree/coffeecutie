@@ -27,8 +27,10 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
 
         size = ((res.w+3)/4)*((res.h+3)/4)*rsc->blockSize;
 
-        glCompressedTexImage2D(tex->textureType,i,rsc->internalFormat,
-                               res.w,res.h,0,size,((ubyte*)rsc->data)+offset);
+        glCompressedTexImage2D(
+                    tex->textureType,i,rsc->internalFormat,
+                    res.w,res.h,0,size,
+                    ((ubyte*)rsc->data)+offset);
 
         offset+=size;
         res.w >>= 1;
@@ -45,6 +47,15 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
 void coffee_graphics_tex_dxtc_dump(const CTexture *tex, CResources::CResource *res)
 {
     glGetCompressedTextureImage(tex->handle,0,res->size,res->data);
+}
+
+CDXTCHeader::CDXTCHeader():
+    data(nullptr),
+    mipmaps(0),
+    blockSize(0),
+    internalFormat(CTexIntFormat::DXT1)
+{
+
 }
 
 }

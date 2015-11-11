@@ -10,12 +10,14 @@ namespace CGraphicsWrappers{
 
 struct CTexture
 {
-    GLenum          textureType     = GL_NONE; /*!< Texture type, defines texture target */
-    GLuint          handle          = 0; /*!< Texture handle */
-    GLsizei         levels          = 1; /*!< Mipmap levels */
-    GLenum          format          = GL_NONE; /*!< Texture format */
-    int32           unit            = -1; /*!< GL_TEXTURE* unit */
-    GLuint64        bhandle         = 0; /*!< Bindless texture handle */
+    CTexture();
+
+    CTexType textureType; /*!< Texture type, defines texture target */
+    CGhnd handle; /*!< Texture handle */
+    CGsize levels; /*!< Mipmap levels */
+    CTexFormat format; /*!< Texture format */
+    int32 unit; /*!< GL_TEXTURE* unit */
+    CGuint64 bhandle; /*!< Bindless texture handle */
 };
 
 namespace CTextureTools{
@@ -24,11 +26,11 @@ namespace CTextureTools{
  */
 struct CTextureData
 {
-    const void*     data        = nullptr; /*!< Pointer to data */
-    byte            dimensions  = 0;       /*!< Amount of dimensions in lengths array */
-    szptr*          lengths     = nullptr; /*!< The stored dimensions of the image */
-    GLenum          format      = GL_NONE; /*!< The format of the image, often GL_RGBA */
-    GLenum          datatype    = GL_NONE; /*!< Which datatype, most likely unsigned byte */
+    const void* data; /*!< Pointer to data */
+    szptr* lengths; /*!< The stored dimensions of the image */
+    CTexIntFormat format; /*!< The format of the image, often GL_RGBA */
+    CDataType datatype; /*!< Which datatype, most likely unsigned byte */
+    uint8 dimensions;       /*!< Amount of dimensions in lengths array */
 };
 
 }
