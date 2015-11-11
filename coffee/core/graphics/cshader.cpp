@@ -112,7 +112,7 @@ bool coffee_graphics_shader_compile(
 {
     prg->stage = type;
     prg->handle = glCreateShaderProgramv(
-                coffee_get(type,cshader_map),
+                coffee_get(type,cshader_map,cshader_size),
                 1,&rsc);
     return coffee_program_link_checklog(prg->handle);
 }
@@ -122,7 +122,7 @@ bool coffee_graphics_shader_compile(CShader *prg, cstring rsc,
 {
     prg->stage = stage;
     prg->handle = glCreateShader(
-                coffee_get<CProgramStage,GLenum>(stage,cshader_map));
+                coffee_get(stage,cshader_map,cshader_size));
     glShaderSource(prg->handle,1,&rsc,nullptr);
     glCompileShader(prg->handle);
     return coffee_shader_compile_checklog(prg->handle);
@@ -176,14 +176,15 @@ void coffee_graphics_shader_attach(
         CShaderStageProgram *stg, CProgramStage filter)
 {
     glUseProgramStages(pl->handle,
-                       coffee_get(stg->stage&filter,cprogmask_map),
+                       coffee_get(stg->stage&filter,cprogmask_map,cprogmask_size),
                        stg->handle);
 }
 
 void coffee_graphics_shader_attach(CPipeline *pl, CShaderProgram *stg, CProgramStage filter)
 {
     glUseProgramStages(pl->handle,
-                       coffee_get_flags(stg->stages&filter,cprogmask_map),
+                       coffee_get_flags(stg->stages&filter,
+                                        cprogmask_map,cprogmask_size),
                        stg->handle);
 }
 

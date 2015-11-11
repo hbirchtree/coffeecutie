@@ -44,12 +44,14 @@ void coffee_graphics_activate(CBuffer *buf)
 
 void coffee_graphics_bind(CBuffer *buf)
 {
-    glBindBuffer(coffee_get(buf->type,cbuffertype_map),buf->handle);
+    glBindBuffer(coffee_get(buf->type,cbuffertype_map,cbuffertype_size),
+                 buf->handle);
 }
 
 void coffee_graphics_unbind(CBuffer *buf)
 {
-    glBindBuffer(coffee_get(buf->type,cbuffertype_map),0);
+    glBindBuffer(coffee_get(buf->type,cbuffertype_map,cbuffertype_size),
+                 0);
 }
 
 void *coffee_graphics_buffer_map(CBuffer *buf, CBufferAccess mask)
@@ -57,7 +59,7 @@ void *coffee_graphics_buffer_map(CBuffer *buf, CBufferAccess mask)
     buf->mapflags = mask;
     buf->data = glMapNamedBufferRange(
                 buf->handle,0,buf->size,
-                coffee_get_flags(mask,cbufferaccess_map));
+                CG_GETF(mask,cbufferaccess_map));
     return buf->data;
 }
 
@@ -74,9 +76,9 @@ void *coffee_graphics_buffer_map_safe(CBuffer *buf, CBufferAccess mask)
 {
     buf->mapflags = mask;
     coffee_graphics_bind(buf);
-    glMapBufferRange(coffee_get(buf->type,cbuffertype_map),
+    glMapBufferRange(coffee_get(buf->type,cbuffertype_map,cbuffertype_size),
                      0,buf->size,
-                     coffee_get_flags(mask,cbufferaccess_map));
+                     coffee_get_flags(mask,cbufferaccess_map,cbufferaccess_size));
     coffee_graphics_unbind(buf);
     return buf->data;
 }
@@ -86,7 +88,9 @@ bool coffee_graphics_buffer_unmap_safe(CBuffer *buf)
     if(!buf->data)
         return true;
     coffee_graphics_bind(buf);
-    GLboolean b = glUnmapBuffer(coffee_get(buf->type,cbuffertype_map));
+    GLboolean b = glUnmapBuffer(coffee_get(
+                                    buf->type,cbuffertype_map,
+                                    cbuffertype_size));
     buf->data = nullptr;
     coffee_graphics_unbind(buf);
     return b == GL_TRUE;
@@ -104,7 +108,7 @@ void* coffee_graphics_buffer_download_buffer_safe(CBuffer *buf, CGszptr offset, 
     void* data = malloc(size);
     coffee_graphics_bind(buf);
     glGetBufferSubData(
-                coffee_get(buf->type,cbuffertype_map),
+                coffee_get(buf->type,cbuffertype_map,cbuffertype_size),
                 offset,size,data);
     coffee_graphics_unbind(buf);
     return data;
@@ -118,7 +122,7 @@ void coffee_graphics_buffer_store(
     buf->size = size;
     glNamedBufferData(
                 buf->handle,size,data,
-                coffee_get(usage,cbufusage_map));
+                coffee_get(usage,cbufusage_map,cbufusage_size));
 }
 
 void coffee_graphics_buffer_store_safe(CBuffer *buf,
@@ -128,9 +132,9 @@ void coffee_graphics_buffer_store_safe(CBuffer *buf,
     buf->size = size;
     coffee_graphics_bind(buf);
     glBufferData(
-                coffee_get(buf->type,cbuffertype_map),
+                coffee_get(buf->type,cbuffertype_map,cbuffertype_size),
                 size,data,
-                coffee_get(usage,cbufusage_map));
+                coffee_get(usage,cbufusage_map,cbufusage_size));
     coffee_graphics_unbind(buf);
 }
 
@@ -145,7 +149,7 @@ void coffee_graphics_buffer_substore_safe(CBuffer *buf, const void *data,
 {
     coffee_graphics_bind(buf);
     glBufferSubData(
-                coffee_get(buf->type,cbuffertype_map),
+                CG_GET(buf->type,cbuffertype_map),
                 offset,size,data);
     coffee_graphics_unbind(buf);
 }
@@ -211,7 +215,7 @@ void coffee_graphics_buffer_store_immutable(CBuffer *buf, const void *data, CGsi
     coffee_graphics_activate(buf);
     buf->size = size;
     glNamedBufferStorage(buf->handle,size,data,
-                         coffee_get_flags(usage,cbufferstore_map));
+                         CG_GETF(usage,cbufferstore_map));
 }
 
 void coffee_graphics_buffer_store_immutable_safe(
@@ -221,9 +225,9 @@ void coffee_graphics_buffer_store_immutable_safe(
     buf->size = size;
     coffee_graphics_bind(buf);
     glBufferStorage(
-                coffee_get(buf->type,cbuffertype_map),
+                CG_GET(buf->type,cbuffertype_map),
                 size,data,
-                coffee_get_flags(usage,cbufferstore_map));
+                CG_GETF(usage,cbufferstore_map));
     coffee_graphics_unbind(buf);
 }
 
@@ -239,7 +243,7 @@ void coffee_graphics_buffer_sub_bind(
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
     glBindBufferRange(
-                coffee_get(buf->type,cbuffertype_map),
+                CG_GET(buf->type,cbuffertype_map),
                 binding->index,buf->parent->handle,buf->offset,buf->size);
 }
 
@@ -248,7 +252,7 @@ void coffee_graphics_buffer_sub_unbind(
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
     glBindBufferRange(
-                coffee_get(buf->type,cbuffertype_map),
+                CG_GET(buf->type,cbuffertype_map),
                 binding->index,0,0,0);
 }
 

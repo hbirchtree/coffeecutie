@@ -6,6 +6,9 @@
 
 #include <glbinding/gl/gl.h>
 
+#define CG_GET(val,arr) coffee_get(val,arr,sizeof(arr)/sizeof(arr[0]))
+#define CG_GETF(val,arr) coffee_get_flags(val,arr,sizeof(arr)/sizeof(arr[0]))
+
 using namespace gl;
 
 namespace Coffee{
@@ -36,19 +39,19 @@ template<typename T1, typename T2>
 struct coffeetype_mapping {T1 k; T2 v;};
 
 template<typename T1, typename T2>
-T2 coffee_get(T1 v, const coffeetype_mapping<T1,T2>* list)
+T2 coffee_get(T1 v, const coffeetype_mapping<T1,T2>* list, size_t size)
 {
-    for(size_t i=0;i<sizeof(list)/sizeof(list[0]);i++)
+    for(size_t i=0;i<size;i++)
         if(list[i].k == v)
             return list[i].v;
     return T2();
 }
 
 template<typename T1, typename T2>
-T2 coffee_get_flags(T1 v, const coffeetype_mapping<T1,T2>* list)
+T2 coffee_get_flags(T1 v, const coffeetype_mapping<T1,T2>* list, size_t size)
 {
     T2 flag = GL_NONE_BIT;
-    for(size_t i=0;i<sizeof(list)/sizeof(list[0]);i++)
+    for(size_t i=0;i<size;i++)
         if(flag_eval(list[i].k & v))
             flag = flag|list[i].v;
     return flag;
@@ -65,14 +68,18 @@ constexpr coffeetype_mapping<CBufferType,GLenum> cbuffertype_map[8] = {
     {CBufferType::Query, GL_QUERY_BUFFER},
 };
 
-static coffeetype_mapping<CBufferAccess,BufferAccessMask> cbufferaccess_map[4] = {
+constexpr size_t cbuffertype_size = 8;
+
+static const coffeetype_mapping<CBufferAccess,BufferAccessMask> cbufferaccess_map[4] = {
     {CBufferAccess::WriteBit, GL_MAP_WRITE_BIT},
     {CBufferAccess::ReadBit, GL_MAP_READ_BIT},
     {CBufferAccess::Coherent, GL_MAP_COHERENT_BIT},
     {CBufferAccess::Persistent, GL_MAP_PERSISTENT_BIT},
 };
 
-static coffeetype_mapping<CBufferStorage,BufferStorageMask> cbufferstore_map[6] = {
+constexpr size_t cbufferaccess_size = 4;
+
+static const coffeetype_mapping<CBufferStorage,BufferStorageMask> cbufferstore_map[6] = {
     {CBufferStorage::WriteBit, GL_MAP_WRITE_BIT},
     {CBufferStorage::ReadBit, GL_MAP_READ_BIT},
     {CBufferStorage::Coherent, GL_MAP_COHERENT_BIT},
@@ -81,7 +88,9 @@ static coffeetype_mapping<CBufferStorage,BufferStorageMask> cbufferstore_map[6] 
     {CBufferStorage::ClientStorage, GL_CLIENT_STORAGE_BIT},
 };
 
-static coffeetype_mapping<CProgramStage,UseProgramStageMask> cprogmask_map[5] = {
+constexpr size_t cbufferstore_size = 6;
+
+static const coffeetype_mapping<CProgramStage,UseProgramStageMask> cprogmask_map[5] = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER_BIT},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER_BIT},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER_BIT},
@@ -90,7 +99,9 @@ static coffeetype_mapping<CProgramStage,UseProgramStageMask> cprogmask_map[5] = 
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER_BIT},
 };
 
-static coffeetype_mapping<CProgramStage,GLenum> cshader_map[5] = {
+constexpr size_t cprogmask_size = 5;
+
+constexpr coffeetype_mapping<CProgramStage,GLenum> cshader_map[5] = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER},
@@ -99,7 +110,9 @@ static coffeetype_mapping<CProgramStage,GLenum> cshader_map[5] = {
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER},
 };
 
-static coffeetype_mapping<CDataType,GLenum> cdtypes_map[7] = {
+constexpr size_t cshader_size = 5;
+
+constexpr coffeetype_mapping<CDataType,GLenum> cdtypes_map[7] = {
     {CDataType::Scalar,GL_FLOAT},
     {CDataType::BigScalar,GL_DOUBLE},
 
@@ -112,7 +125,9 @@ static coffeetype_mapping<CDataType,GLenum> cdtypes_map[7] = {
     {CDataType::Byte,GL_BYTE},
 };
 
-static coffeetype_mapping<CBufferUsage,GLenum> cbufusage_map[10] = {
+constexpr size_t cdtypes_size = 7;
+
+constexpr coffeetype_mapping<CBufferUsage,GLenum> cbufusage_map[10] = {
     {CBufferUsage::Default,GL_NONE},
 
     {CBufferUsage::DynamicCopy,GL_DYNAMIC_COPY},
@@ -128,7 +143,9 @@ static coffeetype_mapping<CBufferUsage,GLenum> cbufusage_map[10] = {
     {CBufferUsage::StreamCopy,GL_STREAM_DRAW},
 };
 
-static coffeetype_mapping<CPrimitiveMode,GLenum> cpritype_map[9] = {
+constexpr size_t cbufusage_size = 10;
+
+constexpr coffeetype_mapping<CPrimitiveMode,GLenum> cpritype_map[9] = {
     {CPrimitiveMode::Triangles,GL_TRIANGLES},
     {CPrimitiveMode::Points,GL_POINTS},
     {CPrimitiveMode::Line,GL_LINES},
@@ -140,6 +157,7 @@ static coffeetype_mapping<CPrimitiveMode,GLenum> cpritype_map[9] = {
     {CPrimitiveMode::LineLoop,GL_LINE_LOOP},
 };
 
+constexpr size_t cpritype_size = 9;
 
 }
 }
