@@ -25,7 +25,7 @@ struct CRGBA
         struct
         {
             uint8 r,g,b,a;
-        } c;
+        };
     };
 };
 

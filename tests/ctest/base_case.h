@@ -11,11 +11,11 @@ namespace CTest{
 using namespace CMemoryManagement;
 
 constexpr int blam_dxtc_tex_mapping_count = 3;
-constexpr struct {int16 in; GLenum out;} blam_dxtc_tex_mapping[blam_dxtc_tex_mapping_count]
+constexpr struct {int16 in; CTexIntFormat out;} blam_dxtc_tex_mapping[blam_dxtc_tex_mapping_count]
 {
-{CBlam::blam_bitm_tex_DXT1,GL_COMPRESSED_RGBA_S3TC_DXT1_EXT},
-{CBlam::blam_bitm_tex_DXT3,GL_COMPRESSED_RGBA_S3TC_DXT3_EXT},
-{CBlam::blam_bitm_tex_DXT5,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT},
+{CBlam::blam_bitm_tex_DXT1,CTexIntFormat::DXT1},
+{CBlam::blam_bitm_tex_DXT3,CTexIntFormat::DXT3},
+{CBlam::blam_bitm_tex_DXT5,CTexIntFormat::DXT5},
 };
 
 extern void coffee_test_fun_set(game_context* ctxt);

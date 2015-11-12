@@ -9,7 +9,7 @@ namespace CGraphicsWrappers{
 CFramebuffer::CFramebuffer():
     handle(0),
     size(0,0),
-    target(GL_NONE)
+    target(CFBType::All)
 {
 }
 
@@ -26,22 +26,26 @@ void coffee_graphics_free(CFramebuffer* fb)
 
 void coffee_graphics_bind(const CFramebuffer* fb)
 {
-    glBindFramebuffer(fb->target,fb->handle);
+    glBindFramebuffer(CG_GET(fb->target,cfbtype_map),
+                      fb->handle);
 }
 
 void coffee_graphics_unbind(const CFramebuffer* fb)
 {
-    glBindFramebuffer(fb->target,0);
+    glBindFramebuffer(CG_GET(fb->target,cfbtype_map),
+                      0);
 }
 
-void coffee_graphics_bind(const CFramebuffer* fb, const GLenum &target)
+void coffee_graphics_bind(const CFramebuffer* fb, const CFBType &target)
 {
-    glBindFramebuffer(target,fb->handle);
+    glBindFramebuffer(CG_GET(target,cfbtype_map),
+                      fb->handle);
 }
 
-void coffee_graphics_unbind(const CFramebuffer*, const GLenum &target)
+void coffee_graphics_unbind(const CFramebuffer*, const CFBType &target)
 {
-    glBindFramebuffer(target,0);
+    glBindFramebuffer(CG_GET(target,cfbtype_map),
+                      0);
 }
 
 inline bool _coffee_graphics_framebuffer_check_status(const GLenum& value)
@@ -55,14 +59,17 @@ inline bool _coffee_graphics_framebuffer_check_status(const GLenum& value)
 
 bool coffee_graphics_framebuffer_check_valid(const CFramebuffer *fb)
 {
-    GLenum value = glCheckNamedFramebufferStatus(fb->handle,fb->target);
+    GLenum value = glCheckNamedFramebufferStatus(
+                fb->handle,
+                CG_GET(fb->target,cfbtype_map));
     return _coffee_graphics_framebuffer_check_status(value);
 }
 
 bool coffee_graphics_framebuffer_check_valid_safe(const CFramebuffer *fb)
 {
     coffee_graphics_bind(fb);
-    GLenum value = glCheckFramebufferStatus(fb->target);
+    GLenum value = glCheckFramebufferStatus(
+                CG_GET(fb->target,cfbtype_map));
     coffee_graphics_unbind(fb);
     return _coffee_graphics_framebuffer_check_status(value);
 }
@@ -71,9 +78,12 @@ void coffee_graphics_framebuffer_attach_texture(
         const CFramebuffer *fb,
         const CFramebufferAttachment* attachment)
 {
+    uint32 offset = (attachment->target == CFBAttachment::Color)
+            ? attachment->attachLevel: 0;
+
     glNamedFramebufferTexture(
                 fb->handle,
-                attachment->target,
+                CG_GETI(attachment->target,cfbattch_map,offset),
                 attachment->texture->handle,
                 attachment->level);
 }
@@ -82,10 +92,13 @@ void coffee_graphics_framebuffer_attach_texture_safe(
         const CFramebuffer *fb,
         const CFramebufferAttachment *attachment)
 {
+    uint32 offset = (attachment->target == CFBAttachment::Color)
+            ? attachment->attachLevel: 0;
+
     coffee_graphics_bind(fb);
     glFramebufferTexture(
-                fb->target,
-                attachment->target,
+                CG_GET(fb->target,cfbtype_map),
+                CG_GETI(attachment->target,cfbattch_map,offset),
                 attachment->texture->handle,
                 attachment->level);
     coffee_graphics_unbind(fb);
@@ -93,34 +106,35 @@ void coffee_graphics_framebuffer_attach_texture_safe(
 
 void coffee_graphics_framebuffer_blit(const CFramebuffer *srcFb, const CFramebuffer *trgFb,
         const CRectF &srcRect, const CRectF &trgRect,
-        CClearFlag mask, GLenum filter)
+        CClearFlag mask, CFBFilter filter)
 {
     glBlitNamedFramebuffer(
                 srcFb->handle, trgFb->handle,
                 srcRect.left(), srcRect.bottom(), srcRect.right(), srcRect.top(),
                 trgRect.left(), trgRect.bottom(), trgRect.right(), trgRect.top(),
-                mask,filter);
+                CG_GETF(mask,cclearflag_map),
+                CG_GET(filter,cfbfilt_map));
 }
 
-void coffee_graphics_framebuffer_blit_safe(
-        const CFramebuffer *srcFb, const CFramebuffer *trgFb,
+void coffee_graphics_framebuffer_blit_safe(const CFramebuffer *srcFb, const CFramebuffer *trgFb,
         const CRectF &srcRect, const CRectF &trgRect,
-        CClearFlag mask, GLenum filter)
+        CClearFlag mask, CFBFilter filter)
 {
-    coffee_graphics_bind(srcFb,GL_READ_FRAMEBUFFER);
-    coffee_graphics_bind(trgFb,GL_DRAW_FRAMEBUFFER);
+    coffee_graphics_bind(srcFb,CFBType::Read);
+    coffee_graphics_bind(trgFb,CFBType::Draw);
     glBlitFramebuffer(
                 srcRect.left(), srcRect.bottom(), srcRect.right(), srcRect.top(),
                 trgRect.left(), trgRect.bottom(), trgRect.right(), trgRect.top(),
-                mask,filter);
-    coffee_graphics_unbind(srcFb,GL_READ_FRAMEBUFFER);
-    coffee_graphics_unbind(trgFb,GL_DRAW_FRAMEBUFFER);
+                CG_GETF(mask,cclearflag_map),
+                CG_GET(filter,cfbfilt_map));
+    coffee_graphics_unbind(srcFb,CFBType::Read);
+    coffee_graphics_unbind(trgFb,CFBType::Draw);
 }
 
 CFramebufferAttachment::CFramebufferAttachment():
     target(CFBAttachment::Color),
-    texture(nullptr),
     attachLevel(0),
+    texture(nullptr),
     level(0)
 {
 }
@@ -131,8 +145,8 @@ CFramebufferAttachment::CFramebufferAttachment(
         CGint attlevel,
         CGint level):
     target(target),
-    texture(texture),
     attachLevel(attlevel),
+    texture(texture),
     level(level)
 {
 }

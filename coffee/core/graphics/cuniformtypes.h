@@ -17,8 +17,18 @@ typedef _cbasic_graphics_resource_binding<CUniformBlock> CUniformBlockBinding;
 typedef _cbasic_graphics_resource_binding<CStorageBlock> CStorageBlockBinding;
 
 extern void coffee_graphics_uniform_get(
-        CUniform* unif,
-        _cbasic_graphics_shader_program* shader);
+        const _cbasic_graphics_shader_program* shader,
+        _cbasic_graphics_resource_desc* uniform);
+
+extern void coffee_graphics_uniform_set_texhandle(
+        const _cbasic_graphics_shader_program* prog,
+        const _cbasic_graphics_resource_desc* uniform,
+        const CGuint64& value);
+
+extern void coffee_graphics_uniform_set_texhandle_safe(
+        const _cbasic_graphics_shader_program* prog,
+        const _cbasic_graphics_resource_desc* uniform,
+        const CGuint& value);
 
 }
 }

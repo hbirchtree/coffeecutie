@@ -59,5 +59,26 @@ void coffee_graphics_multidraw(const CPrimitiveMode &mode, const CBuffer *buf)
                 sizeof(CGLDrawCall));
 }
 
+void coffee_graphics_enable_depth(bool enable)
+{
+    if(enable)
+        glEnable(GL_DEPTH_TEST);
+    else
+        glDisable(GL_DEPTH_TEST);
+}
+
+void coffee_graphics_enable_blend(bool enable,bool additive)
+{
+    if(enable)
+    {
+        glEnable(GL_BLEND);
+        if(additive)
+            glBlendFunc(GL_ONE,GL_ONE);
+        else
+            glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    }else
+        glDisable(GL_BLEND);
+}
+
 }
 }

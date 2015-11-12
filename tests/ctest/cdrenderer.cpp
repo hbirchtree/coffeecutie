@@ -1,6 +1,7 @@
 #include "cdrenderer.h"
 
 //#define LOAD_FILE
+#include "coffee/core/graphics/glbinding.h"
 
 #include <coffee/core/graphics/cframebuffer.h>
 #include <coffee/core/graphics/cgraphics_quirks.h>
@@ -107,7 +108,9 @@ void CDRenderer::run()
 //        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
         coffee_render_test(game,deltaT);
+
         // END Rendering part
         rendertime = swap->elapsed();
 

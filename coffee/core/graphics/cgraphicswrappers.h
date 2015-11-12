@@ -21,6 +21,9 @@ struct CGLDrawCall
     CGuint baseInstance; /*!< First instance to render*/
 };
 
+extern void coffee_graphics_enable_blend(bool enable, bool additive = false);
+extern void coffee_graphics_enable_depth(bool enable);
+
 extern void coffee_graphics_clear(CClearFlag flg);
 
 extern void coffee_graphics_draw_indexed(

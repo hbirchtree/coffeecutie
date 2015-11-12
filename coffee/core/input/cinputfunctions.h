@@ -2,7 +2,6 @@
 #define CINPUTFUNCTIONS_H
 
 #include "coffee/core/base/cinput.h"
-#include "coffee/core/base/cmath.h"
 
 namespace Coffee{
 namespace CInput{
@@ -25,7 +24,8 @@ private:
  * \param qt
  * \param evsrc
  */
-extern void coffee_input_mouse_rotate(CMath::quat* qt, const CIMouseMoveEvent* evsrc);
+extern void coffee_input_mouse_rotate(
+        CQuat *cqt, const CIMouseMoveEvent* evsrc);
 
 /*!
  * \brief Stock function for rotating a quaternion by controller stick movement.
@@ -33,7 +33,8 @@ extern void coffee_input_mouse_rotate(CMath::quat* qt, const CIMouseMoveEvent* e
  * \param jev Controller event
  * \param filter
  */
-extern void coffee_input_controller_rotate(CMath::quat *qt,
+extern void coffee_input_controller_rotate(
+        CQuat *cqt,
         const CIControllerAtomicEvent *jev,
         CIAxisFilter &filter);
 

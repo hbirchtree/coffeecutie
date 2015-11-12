@@ -21,22 +21,22 @@ struct CGCamera
     CZField zVals;
     scalar  fieldOfView;
 
-    CMath::vec3 position;
-    CMath::quat rotation;
+    CVec3 position;
+    CQuat rotation;
 
     CRectF orthoview;
 
-    CMath::mat4 matrix;
+    CMat4 matrix;
 };
 
 struct CTransform
 {
     CTransform();
 
-    CMath::mat4 matrix;
-    CMath::quat rotation;
-    CMath::vec3 position;
-    CMath::vec3 scale;
+    CMat4 matrix;
+    CQuat rotation;
+    CVec3 position;
+    CVec3 scale;
 };
 
 /*!
@@ -48,12 +48,12 @@ extern void coffee_graphics_gen_matrix(CTransform* mat);
  * \brief Update projection matrix for camera
  * \param cam
  */
-extern glm::mat4 &coffee_graphics_gen_matrix_perspective(CGCamera* cam);
+extern CMat4 &coffee_graphics_gen_matrix_perspective(CGCamera* cam);
 /*!
  * \brief Update orthographic matrix for camera
  * \param cam
  */
-extern glm::mat4 &coffee_graphics_gen_matrix_orthographic(CGCamera* cam);
+extern CMat4 &coffee_graphics_gen_matrix_orthographic(CGCamera* cam);
 
 } //CGraphicsData
 } //Coffee

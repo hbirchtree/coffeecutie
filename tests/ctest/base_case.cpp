@@ -151,14 +151,14 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
 
     CTextureTools::CTextureData dt;
     dt.data = img.data;
-    dt.datatype = GL_UNSIGNED_BYTE;
-    dt.format = GL_RGBA8;
+    dt.datatype = CDataType::UByte;
+    dt.format = CTexIntFormat::RGBA8;
 
     CTextureTools::coffee_create_texturesize(&dt,img.size.w,img.size.h);
 
-    tex->textureType = GL_TEXTURE_2D;
+    tex->textureType = CTexType::Tex2D;
     tex->levels = 1;
-    tex->format = GL_RGBA;
+    tex->format = CTexFormat::RGBA;
     //GL calls
     coffee_graphics_bind(tex);
     coffee_graphics_unbind(tex);
@@ -182,14 +182,14 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         CTextureTools::CTextureData dt;
         coffee_graphics_alloc(t);
         dt.data = tex.data;
-        dt.datatype = GL_UNSIGNED_BYTE;
-        dt.format = GL_RGBA8;
+        dt.datatype = CDataType::UByte;
+        dt.format = CTexIntFormat::RGBA8;
         CTextureTools::coffee_create_texturesize(&dt,tex.resolution.w,tex.resolution.h);
 
-        t->textureType = (tex.type==CBlam::blam_bitm_type_2D) ? GL_TEXTURE_2D : GL_TEXTURE_3D;
+        t->textureType = (tex.type==CBlam::blam_bitm_type_2D) ? CTexType::Tex2D : CTexType::Tex3D;
         t->levels = tex.mipmaps;
-        t->format = GL_RGBA;
-        coffee_graphics_tex_activate(t);
+        t->format = CTexFormat::RGBA;
+        coffee_graphics_activate(t);
         ctxt->funptrs.textures.define(t,&dt);
         ctxt->funptrs.textures.store(t,&dt,0);
         break;
@@ -415,7 +415,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
     matBuffer->type = CBufferType::ShaderStorage;
     matBuffer->parent = ubuffer;
-    matBuffer->size = sizeof(GLuint)*numGears+sizeof(CMath::vec3)*numGears;
+    matBuffer->size = sizeof(CGuint)*numGears+sizeof(CVec3)*numGears;
     matBuffer->offset = camBuffer->size;
 
     //GL calls
@@ -567,8 +567,11 @@ void coffee_prepare_test(game_context *ctxt)
     coffee_graphics_bind(ctxt->renderdata.datasets.d[0].vao);
     coffee_graphics_bind(ctxt->renderdata.datasets.d[0].drawcalls->drawbuffer);
 
-    GLint loc = coffee_graphics_shader_uniform_value_get(
-                &ctxt->shaders.programs.d[0],"diffuseSampler");
+    CUniform texuni;
+    texuni.object_name = "diffuseSampler";
+    coffee_graphics_uniform_get(
+                &ctxt->shaders.programs.d[0],
+            &texuni);
 
     szptr texIndex = rand()%ctxt->texstorage.size;
 
@@ -576,19 +579,25 @@ void coffee_prepare_test(game_context *ctxt)
         coffee_graphics_tex_get_handle(&ctxt->texstorage.d[texIndex]);
 
     coffee_graphics_tex_param(
-                &ctxt->texstorage.d[0],GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+                &ctxt->texstorage.d[0],
+            CTexParam::MipmapMagFilter,CTexParamOpt::Linear);
     coffee_graphics_tex_param(
-                &ctxt->texstorage.d[0],GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+                &ctxt->texstorage.d[0],
+            CTexParam::MipmapMinFilter,CTexParamOpt::LinearMipmapLinear);
 
     ctxt->texstorage.d[texIndex].unit = 0;
     ctxt->funptrs.textures.load(&ctxt->texstorage.d[texIndex]);
     if(ctxt->features->ext_bindless_texture)
     {
-        glProgramUniformHandleui64ARB(
-                    ctxt->shaders.programs.d[0].handle,loc,
+        coffee_graphics_uniform_set_texhandle(
+                    &ctxt->shaders.programs.d[0],
+                &texuni,
                 ctxt->texstorage.d[texIndex].bhandle);
     }else{
-        glProgramUniform1i(ctxt->shaders.programs.d[0].handle,loc,ctxt->texstorage.d[texIndex].unit);
+        coffee_graphics_uniform_set_texhandle_safe(
+                    &ctxt->shaders.programs.d[0],
+                &texuni,
+                ctxt->texstorage.d[texIndex].unit);
     }
 }
 

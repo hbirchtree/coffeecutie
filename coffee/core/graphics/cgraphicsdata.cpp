@@ -35,7 +35,7 @@ void _coffee_graphics_rotate_translate(
     *matrix = CMath::translate(*matrix,position);
 }
 
-glm::mat4& coffee_graphics_gen_matrix_perspective(CGCamera *cam)
+CMat4& coffee_graphics_gen_matrix_perspective(CGCamera *cam)
 {
     cam->matrix = CMath::perspective(
                 CMath::radians(cam->fieldOfView), cam->aspect,
@@ -44,7 +44,7 @@ glm::mat4& coffee_graphics_gen_matrix_perspective(CGCamera *cam)
     return cam->matrix;
 }
 
-glm::mat4& coffee_graphics_gen_matrix_orthographic(CGCamera *cam)
+CMat4 &coffee_graphics_gen_matrix_orthographic(CGCamera *cam)
 {
     cam->matrix = CMath::ortho(cam->orthoview.x,cam->orthoview.w,
                           cam->orthoview.y,cam->orthoview.h);

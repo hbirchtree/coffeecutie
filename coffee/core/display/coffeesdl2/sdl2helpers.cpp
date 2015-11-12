@@ -51,6 +51,11 @@ Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
 
 void coffee_sdl2_set_context_properties(const CGLContextProperties &props)
 {
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE,props.bits.accum.r);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE,props.bits.accum.g);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_BLUE_SIZE,props.bits.accum.b);
+    SDL_GL_SetAttribute(SDL_GL_ACCUM_ALPHA_SIZE,props.bits.accum.a);
+
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,props.bits.alpha);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE,props.bits.stencil);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,props.bits.depth);

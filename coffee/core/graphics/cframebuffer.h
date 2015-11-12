@@ -51,7 +51,7 @@ extern void coffee_graphics_bind(const CFramebuffer* fb);
  * \param fb
  * \param target
  */
-extern void coffee_graphics_bind(const CFramebuffer* fb, const GLenum& target);
+extern void coffee_graphics_bind(const CFramebuffer* fb, const CFBType& target);
 /*!
  * \brief Unbind framebuffer object
  * \param fb
@@ -61,7 +61,7 @@ extern void coffee_graphics_unbind(const CFramebuffer* fb);
  * \brief Unbind framebuffer object from specific target
  * \param target
  */
-extern void coffee_graphics_unbind(const CFramebuffer*, const GLenum& target);
+extern void coffee_graphics_unbind(const CFramebuffer*, const CFBType& target);
 
 /*!
  * \brief Check if the framebuffer is complete. Rendering with an incomplete framebuffer will result in undefined behavior.
@@ -106,7 +106,7 @@ extern void coffee_graphics_framebuffer_blit(
         const CFramebuffer* trgFb,
         const CRectF& srcRect,
         const CRectF& trgRect,
-        CClearFlag mask, GLenum filter);
+        CClearFlag mask, CFBFilter filter);
 /*!
  * \brief Blit framebuffer to another framebuffer, perhaps the default one
  * \param srcFb
@@ -120,7 +120,7 @@ extern void coffee_graphics_framebuffer_blit_safe(const CFramebuffer* srcFb,
         const CFramebuffer* trgFb,
         const CRectF& srcRect,
         const CRectF& trgRect,
-        CClearFlag mask, GLenum filter);
+        CClearFlag mask, CFBFilter filter);
 
 }
 }

@@ -26,6 +26,8 @@ struct CDContextBits{
 
     uint8 depth   = 0;
     uint8 stencil = 0;
+
+    CRGBA accum;
 };
 
 /*!

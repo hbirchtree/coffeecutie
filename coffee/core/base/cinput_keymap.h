@@ -1,13 +1,15 @@
 #ifndef CINPUT_KEYMAP
 #define CINPUT_KEYMAP
 
+#include "coffee/core/coffee_basetypes.h"
+
 namespace Coffee{
 namespace CInput{
 
 /*!
  * \brief Xbox 360 controller mapping of buttons. Same layout as SDL2's GameController, but we do not expose all parts of SDL2.
  */
-enum CIControllerButtonMapping
+enum CIControllerButtonMapping : uint8
 {
     CK_BUTTON_A         = 0x0, /*!< A button*/
     CK_BUTTON_B         = 0x1, /*!< B button*/
@@ -33,7 +35,7 @@ enum CIControllerButtonMapping
 /*!
  * \brief Xbox 360 controller mapping of axes. Same mapping as SDL2's GameController.
  */
-enum CIControllerAxisMapping
+enum CIControllerAxisMapping : uint8
 {
     CK_AXIS_LEFT_X          = 0x0, /*!< Left stick X-axis*/
     CK_AXIS_LEFT_Y          = 0x1, /*!< Left stick Y-axis*/
@@ -48,7 +50,7 @@ enum CIControllerAxisMapping
 /*!
  * \brief Special key mapping for use with input functions
  */
-enum CISpecialKeyMapping
+enum CISpecialKeyMapping : uint16
 {
     CK_F1               = 0x100,
     CK_F2               = 0x101,
@@ -111,7 +113,7 @@ enum CISpecialKeyMapping
 /*!
  * \brief A mapping of keycodes for Latin-1 for use with input functions
  */
-enum CILatin1Mapping
+enum CILatin1Mapping : uint8
 {
     CK_Null             = 0x0,  /*!< Used for unrecognized keys*/
 //    CK_                 = 0x1,

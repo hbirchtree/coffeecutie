@@ -2,6 +2,8 @@
 #include <coffee/core/Graphics>
 #include <coffee/core/plat/application_start.h>
 
+#include "coffee/core/graphics/glbinding.h"
+
 using namespace Coffee;
 using namespace CDisplay;
 using namespace CGraphicsData;
@@ -239,15 +241,15 @@ public:
         CStbImageLib::coffee_stb_image_load(&ptext,&texture);
 
         CTexture gltext;
-        gltext.textureType = GL_TEXTURE_2D;
-        gltext.format = GL_RGBA;
+        gltext.textureType = CTexType::Tex2D;
+        gltext.format = CTexFormat::RGBA;
         coffee_graphics_alloc(&gltext);
-        coffee_graphics_tex_activate(&gltext);
+        coffee_graphics_activate(&gltext);
         CTextureTools::CTextureData gtexdata;
         gtexdata.data = ptext.data;
-        gtexdata.datatype = GL_UNSIGNED_BYTE;
+        gtexdata.datatype = CDataType::UByte;
         CTextureTools::coffee_create_texturesize(&gtexdata,ptext.size.w,ptext.size.h);
-        gtexdata.format = GL_RGBA8;
+        gtexdata.format = CTexIntFormat::RGBA8;
 
         CTextureTools::coffee_graphics_tex_define(&gltext,&gtexdata);
         CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
@@ -259,18 +261,68 @@ public:
         coffee_graphics_tex_get_handle(&gltext);
         coffee_graphics_tex_make_resident(&gltext);
 
-        glProgramUniformHandleui64ARB(fragshader.handle,glGetUniformLocation(fragshader.handle,"diffsamp"),gltext.bhandle);
+        CUniform texuni;
+        texuni.object_name = "diffsamp";
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-        glEnable(GL_DEPTH_TEST);
+        coffee_graphics_uniform_get(&fragshader,&texuni);
+
+        coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
+
+        coffee_graphics_enable_blend(true);
+        coffee_graphics_enable_depth(true);
 
         int transform_index = 0;
+
+        CGLDrawCall drawcall;
+        drawcall.count = sizeof(indexdata)/sizeof(uint32);
+        drawcall.instanceCount = 1;
+
+        CFramebuffer cfb;
+        coffee_graphics_alloc(&cfb);
+        cfb.size.w = 1280;
+        cfb.size.h = 720;
+
+        CTextureTools::CTextureData filler;
+        CTextureTools::coffee_create_texturesize(&filler,1280,720);
+        filler.format = CTexIntFormat::Depth;
+        filler.datatype = CDataType::UByte;
+
+        CTexture dtex;
+        dtex.format = CTexFormat::Depth;
+        dtex.levels = 1;
+        dtex.textureType = CTexType::Tex2D;
+        coffee_graphics_alloc(&dtex);
+        coffee_graphics_activate(&dtex);
+        CTextureTools::coffee_graphics_tex_2d_define(&dtex,&filler);
+
+        CTexture ctex;
+        ctex.format = CTexFormat::RGBA;
+        ctex.levels = 1;
+        ctex.textureType = CTexType::Tex2D;
+        coffee_graphics_alloc(&ctex);
+        coffee_graphics_activate(&ctex);
+        filler.format = CTexIntFormat::RGBA8;
+        CTextureTools::coffee_graphics_tex_2d_define(&ctex,&filler);
+
+        CFramebufferAttachment fbatt;
+        fbatt.texture = &dtex;
+        fbatt.attachLevel = 0;
+        fbatt.level = 0;
+        fbatt.target = CFBAttachment::Depth;
+        coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+
+        fbatt.texture = &ctex;
+        fbatt.attachLevel = 0;
+        fbatt.level = 0;
+        fbatt.target = CFBAttachment::Color;
+        coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+
+        coffee_graphics_bind(&cfb);
 
         this->showWindow();
         while(!closeFlag())
         {
-            glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+            coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
 
             for(int i=0;i<4;i++)
                 coffee_graphics_vao_attribute_bind_buffer(
@@ -279,13 +331,14 @@ public:
                             &transforms[transform_index]);
 
             counter.update(clock->elapsed());
-            glDrawElementsInstanced(GL_TRIANGLES,
-                                    sizeof(indexdata)/sizeof(uint32),
-                                    GL_UNSIGNED_INT,0,1);
+            coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
 
-            this->pollEvents();
             this->swapBuffers();
+            this->pollEvents();
         }
+        coffee_graphics_unbind(&cfb);
+
+        coffee_graphics_tex_dump(&dtex,"depth.png");
 
         coffee_graphics_free(&vao);
         coffee_graphics_free(&gltext);
@@ -317,8 +370,14 @@ public:
             const CIKeyEvent* kev = (const CIKeyEvent*)&e[1];
             if(kev->key == CK_Escape)
                 this->closeWindow();
+        }else if(e->type==CIEvent::MouseMove)
+        {
+            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
+
         }
     }
+private:
+    CQuat t;
 };
 
 typedef CVectors::_cbasic_tvector<scalar,3> VEC3;

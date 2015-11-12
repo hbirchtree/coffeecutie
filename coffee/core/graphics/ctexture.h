@@ -58,23 +58,27 @@ typedef bool (*TexStoreFun)(
         const CTextureTools::CTextureData* data,
         CGint level);
 
-typedef void (*TexParamEnumFun)(const CTexture*,GLenum param,GLenum val);
-typedef void (*TexParamFun)(const CTexture*,GLenum param,CGint val);
+typedef void (*TexParamEnumFun)(const CTexture*,CTexParam param,CTexParamOpt val);
+typedef void (*TexParamFun)(const CTexture*,CTexParam param,CGint val);
+typedef void (*TexParamFunF)(const CTexture*,CTexParam param,scalar val);
 
 typedef void (*TexMipmapFun)(const CTexture* tex);
 
 struct CTextureFunctionBinds
 {
-    TexLoadFun      load    = nullptr;
-    TexUnloadFun    unload  = nullptr;
+    CTextureFunctionBinds();
 
-    TexDefineFun    define  = nullptr;
-    TexStoreFun     store   = nullptr;
+    TexLoadFun      load;
+    TexUnloadFun    unload;
 
-    TexParamEnumFun param_e = nullptr;
-    TexParamFun     param   = nullptr;
+    TexDefineFun    define;
+    TexStoreFun     store;
 
-    TexMipmapFun    mipmap  = nullptr;
+    TexParamEnumFun param_e;
+    TexParamFun     param;
+    TexParamFunF    paramf;
+
+    TexMipmapFun    mipmap;
 };
 
 namespace CTextureTools{
@@ -229,7 +233,16 @@ extern void     coffee_graphics_tex_mipmap_safe(
  * \param val
  */
 extern void     coffee_graphics_tex_param(
-        const CTexture* tex, GLenum param, CGint val);
+        const CTexture* tex, CTexParam param, CGint val);
+
+/*!
+ * \brief Set texture parameter, GLfloat variant
+ * \param tex
+ * \param param
+ * \param val
+ */
+extern void     coffee_graphics_tex_paramf(
+        const CTexture* tex, CTexParam param, scalar val);
 /*!
  * \brief Set texture parameter, GLenum variant
  * \param tex
@@ -237,7 +250,7 @@ extern void     coffee_graphics_tex_param(
  * \param val
  */
 extern void     coffee_graphics_tex_param(
-        const CTexture* tex, GLenum param, GLenum val);
+        const CTexture* tex, CTexParam param, CTexParamOpt val);
 
 /*!
  * \brief Set texture parameter, GLint variant, old variant
@@ -246,7 +259,16 @@ extern void     coffee_graphics_tex_param(
  * \param val
  */
 extern void     coffee_graphics_tex_param_safe(
-        const CTexture* tex, GLenum param, CGint val);
+        const CTexture* tex, CTexParam param, CGint val);
+
+/*!
+ * \brief Set texture parameter, GLfloat variant, old variant
+ * \param tex
+ * \param param
+ * \param val
+ */
+extern void     coffee_graphics_tex_paramf_safe(
+        const CTexture* tex, CTexParam param, scalar val);
 /*!
  * \brief Set texture parameter, GLenum variant, old variant
  * \param tex
@@ -254,13 +276,13 @@ extern void     coffee_graphics_tex_param_safe(
  * \param val
  */
 extern void     coffee_graphics_tex_param_safe(
-        const CTexture* tex, GLenum param, GLenum val);
+        const CTexture* tex, CTexParam param, CTexParamOpt val);
 
 /*!
  * \brief Binds and unbinds texture, used for bindless textures among others, only for convenience
  * \param tex
  */
-extern void     coffee_graphics_tex_activate(
+extern void     coffee_graphics_activate(
         const CTexture* tex);
 
 /*!
@@ -311,7 +333,7 @@ extern void     coffee_graphics_tex_unload_safe(const CTexture*);
  */
 extern void     coffee_graphics_tex_download_texture(
         const CTexture* tex, CGint level,
-        CGsize size, GLenum format, CStbImageLib::CStbImage* img);
+        CGsize size, CTexFormat format, CStbImageLib::CStbImage* img);
 
 /*!
  * \brief Debug function for dumping texture to file

@@ -76,13 +76,16 @@ void coffee_graphics_tex_make_nonresident(const CTexture* tex)
 }
 
 void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
-        CGsize size, GLenum format,
+        CGsize size, CTexFormat format,
         CStbImageLib::CStbImage *img)
 {
     img->data = (ubyte*)malloc(size);
     glGetTextureImage(
-                tex->handle,level,format,
-                GL_UNSIGNED_BYTE,size,img->data);
+                tex->handle,
+                level,
+                CG_GET(format,ctexfmt_map),
+                GL_UNSIGNED_BYTE,
+                size,img->data);
 }
 
 void coffee_graphics_tex_use(
@@ -109,15 +112,16 @@ void coffee_graphics_tex_unload_safe(
 }
 
 void coffee_graphics_tex_param(
-        const CTexture *tex, GLenum param, CGint val)
+        const CTexture *tex, CTexParam param, CGint val)
 {
-    glTextureParameteri(tex->handle,param,val);
+    glTextureParameteri(tex->handle,
+                        CG_GET(param,ctexparm_map),
+                        val);
 }
 
-void coffee_graphics_tex_param(
-        const CTexture *tex, GLenum param, GLenum val)
+void coffee_graphics_tex_param(const CTexture *tex, CTexParam param, CTexParamOpt val)
 {
-    coffee_graphics_tex_param(tex,param,(CGint)val);
+    coffee_graphics_tex_param(tex,param,(CGint)CG_GET(val,ctexparmopt_map));
 }
 
 void coffee_graphics_tex_mipmap(
@@ -134,27 +138,28 @@ void coffee_graphics_tex_mipmap_safe(
     coffee_graphics_unbind(tex);
 }
 
-void coffee_graphics_tex_param_safe(
-        const CTexture *tex, GLenum param, CGint val)
+void coffee_graphics_tex_param_safe(const CTexture *tex, CTexParam param, CGint val)
 {
     coffee_graphics_bind(tex);
-    glTexParameteri(CG_GET(tex->textureType,ctextp_map),param,val);
+    glTexParameteri(CG_GET(tex->textureType,ctextp_map),
+                    CG_GET(param,ctexparm_map),
+                    val);
     coffee_graphics_unbind(tex);
 }
 
-void coffee_graphics_tex_param_safe(
-        const CTexture *tex, GLenum param, GLenum val)
+void coffee_graphics_tex_param_safe(const CTexture *tex, CTexParam param, CTexParamOpt val)
 {
-    coffee_graphics_tex_param_safe(tex,param,(CGint)val);
+    coffee_graphics_tex_param_safe(tex,param,(CGint)(CG_GET(val,ctexparmopt_map)));
 }
 
 bool CTextureTools::coffee_graphics_tex_2d_store_safe(
         const CTexture *texture, const CTextureTools::CTextureData *data, CGint level)
 {
     coffee_graphics_bind(texture);
-    glTexSubImage2D(CG_GET(texture->textureType,ctextp_map),
-                    level,0,0,
-                    data->lengths[0],data->lengths[1],
+    glTexSubImage2D(
+                CG_GET(texture->textureType,ctextp_map),
+                level,0,0,
+                data->lengths[0],data->lengths[1],
             CG_GET(texture->format,ctexfmt_map),
             CG_GET(data->datatype,cdtypes_map),
             data->data);
@@ -252,7 +257,7 @@ bool CTextureTools::coffee_graphics_tex_store_safe(const CTexture *tex, const CT
     return false;
 }
 
-void coffee_graphics_tex_activate(const CTexture *tex)
+void coffee_graphics_activate(const CTexture *tex)
 {
     coffee_graphics_bind(tex);
     coffee_graphics_unbind(tex);
@@ -287,11 +292,15 @@ void CTextureTools::coffee_graphics_tex_free_texdata(CTextureTools::CTextureData
 void coffee_graphics_tex_dump(const CTexture *tex, cstring filename)
 {
     CStbImageLib::CStbImage img;
-    coffee_graphics_tex_download_texture(tex,0,4*512*512,GL_RGBA,&img);
 
     img.bpp = 4;
-    img.size.w = 512;
-    img.size.h = 512;
+    img.size.w = 1280;
+    img.size.h = 720;
+
+    coffee_graphics_tex_download_texture(
+                tex,0,img.bpp*img.size.w*img.size.h,
+                tex->format,&img);
+
 
     CResources::CResource fl(filename);
     CStbImageLib::coffee_stb_image_save_png(&fl,&img);
@@ -299,6 +308,46 @@ void coffee_graphics_tex_dump(const CTexture *tex, cstring filename)
     coffee_file_free(&fl);
 
     free(img.data);
+}
+
+void coffee_graphics_tex_paramf(const CTexture *tex, CTexParam param, scalar val)
+{
+    glTextureParameterf(
+                tex->handle,
+                CG_GET(param,ctexparm_map),
+                val);
+}
+
+void coffee_graphics_tex_paramf_safe(const CTexture *tex, CTexParam param, scalar val)
+{
+
+    coffee_graphics_bind(tex);
+    glTexParameterf(CG_GET(tex->textureType,ctextp_map),
+                    CG_GET(param,ctexparm_map),
+                    val);
+    coffee_graphics_unbind(tex);
+}
+
+CTextureFunctionBinds::CTextureFunctionBinds():
+    load(nullptr),
+    unload(nullptr),
+    define(nullptr),
+    store(nullptr),
+    param_e(nullptr),
+    param(nullptr),
+    paramf(nullptr),
+    mipmap(nullptr)
+{
+}
+
+CTexture::CTexture():
+    textureType(CTexType::Tex2D),
+    handle(0),
+    levels(1),
+    format(CTexFormat::None),
+    unit(-1),
+    bhandle(0)
+{
 }
 
 }

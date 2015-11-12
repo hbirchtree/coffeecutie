@@ -1,20 +1,26 @@
 #include "cinputfunctions.h"
 
+#include "coffee/core/base/cmath.h"
+
 namespace Coffee{
 namespace CInput{
 
 using namespace CMath;
 
-void coffee_input_mouse_rotate(CMath::quat *qt, const CIMouseMoveEvent *evsrc)
+void coffee_input_mouse_rotate(CQuat *cqt, const CIMouseMoveEvent *evsrc)
 {
+    CMath::quat* qt = (CMath::quat*)cqt;
+
     *qt = CMath::normalize(
                 quat(vec3(0.01*evsrc->rel.y,0,0))
                 *quat(vec3(0,0.01*evsrc->rel.x,0))
                 *(*qt));
 }
 
-void coffee_input_controller_rotate(CMath::quat *qt, const CIControllerAtomicEvent *jev, CIAxisFilter& filter)
+void coffee_input_controller_rotate(CQuat *cqt, const CIControllerAtomicEvent *jev, CIAxisFilter& filter)
 {
+    CMath::quat* qt = (CMath::quat*)cqt;
+
     if(CMath::fabs(jev->value)<0.1)
         return;
     CVec2 v;

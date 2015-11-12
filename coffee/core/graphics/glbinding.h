@@ -7,6 +7,7 @@
 #include <glbinding/gl/gl.h>
 
 #define CG_GET(val,arr) coffee_get(val,arr,sizeof(arr)/sizeof(arr[0]))
+#define CG_GETI(val,arr,offset) coffee_get(val,arr,sizeof(arr)/sizeof(arr[0]),offset)
 #define CG_GETF(val,arr) coffee_get_flags(val,arr,sizeof(arr)/sizeof(arr[0]))
 
 using namespace gl;
@@ -17,6 +18,7 @@ namespace CGraphicsWrappers{
 C_FLAGS(UseProgramStageMask,uint32)
 C_FLAGS(BufferAccessMask,uint32)
 C_FLAGS(BufferStorageMask,uint32)
+C_FLAGS(ClearBufferMask,uint32)
 
 /*!
  * \brief Contains a GL message from the binding layer
@@ -48,6 +50,17 @@ T2 coffee_get(T1 v, const coffeetype_mapping<T1,T2>* list, size_t size)
 }
 
 template<typename T1, typename T2>
+T2 coffee_get(T1 v, const coffeetype_mapping<T1,T2>* list, size_t size, size_t offset)
+{
+    T2 out;
+    for(size_t i=0;i<size;i++)
+        if(list[i].k == v)
+            out = list[i].v;
+    out = (T2)((uint32)out+offset);
+    return out;
+}
+
+template<typename T1, typename T2>
 T2 coffee_get_flags(T1 v, const coffeetype_mapping<T1,T2>* list, size_t size)
 {
     T2 flag = GL_NONE_BIT;
@@ -56,6 +69,13 @@ T2 coffee_get_flags(T1 v, const coffeetype_mapping<T1,T2>* list, size_t size)
             flag = flag|list[i].v;
     return flag;
 }
+
+static const coffeetype_mapping<CClearFlag,ClearBufferMask> cclearflag_map[4] = {
+    {CClearFlag::Accum, GL_ACCUM_BUFFER_BIT},
+    {CClearFlag::Color, GL_COLOR_BUFFER_BIT},
+    {CClearFlag::Depth, GL_DEPTH_BUFFER_BIT},
+    {CClearFlag::Stencil, GL_STENCIL_BUFFER_BIT},
+};
 
 constexpr coffeetype_mapping<CBufferType,GLenum> cbuffertype_map[8] = {
     {CBufferType::Array, GL_ARRAY_BUFFER},
@@ -144,7 +164,7 @@ constexpr coffeetype_mapping<CPrimitiveMode,GLenum> cpritype_map[9] = {
 };
 
 constexpr coffeetype_mapping<CTexIntFormat,GLenum> ctexint_map[10] = {
-    {CTexIntFormat::Depth,GL_DEPTH_COMPONENT},
+    {CTexIntFormat::Depth,GL_DEPTH_COMPONENT24},
     {CTexIntFormat::DepthStencil,GL_DEPTH24_STENCIL8},
     {CTexIntFormat::Stencil,GL_STENCIL_INDEX8},
 
@@ -160,12 +180,12 @@ constexpr coffeetype_mapping<CTexIntFormat,GLenum> ctexint_map[10] = {
 
 constexpr coffeetype_mapping<CTexFormat,GLenum> ctexfmt_map[9] = {
     {CTexFormat::Depth,GL_DEPTH_COMPONENT},
-    {CTexFormat::DepthStencil,GL_DEPTH24_STENCIL8},
-    {CTexFormat::Stencil,GL_STENCIL_INDEX8},
+    {CTexFormat::DepthStencil,GL_DEPTH_STENCIL},
+    {CTexFormat::Stencil,GL_STENCIL_INDEX},
 
-    {CTexFormat::RGBA,GL_RGBA8},
-    {CTexFormat::RGB,GL_RGB8},
-    {CTexFormat::RG,GL_RG8},
+    {CTexFormat::RGBA,GL_RGBA},
+    {CTexFormat::RGB,GL_RGB},
+    {CTexFormat::RG,GL_RG},
 
     {CTexFormat::RED,GL_RED},
     {CTexFormat::GREEN,GL_GREEN},
@@ -176,6 +196,59 @@ constexpr coffeetype_mapping<CTexType,GLenum> ctextp_map[9] = {
     {CTexType::Tex2D,GL_TEXTURE_2D},
     {CTexType::Tex3D,GL_TEXTURE_3D},
     {CTexType::CubeMap,GL_TEXTURE_CUBE_MAP},
+};
+
+constexpr coffeetype_mapping<CTexParam,GLenum> ctexparm_map[15] = {
+    {CTexParam::MipmapBaseLevel,GL_TEXTURE_BASE_LEVEL},
+    {CTexParam::MipmapLodBias,GL_TEXTURE_LOD_BIAS},
+    {CTexParam::MipmapMinLod,GL_TEXTURE_MIN_LOD},
+    {CTexParam::MipmapMaxLod,GL_TEXTURE_MAX_LOD},
+    {CTexParam::MipmapMinFilter,GL_TEXTURE_MIN_FILTER},
+    {CTexParam::MipmapMagFilter,GL_TEXTURE_MAG_FILTER},
+    {CTexParam::MipmapMaxLevel,GL_TEXTURE_MAX_LEVEL},
+
+    {CTexParam::WrapS,GL_TEXTURE_WRAP_S},
+    {CTexParam::WrapT,GL_TEXTURE_WRAP_T},
+    {CTexParam::WrapR,GL_TEXTURE_WRAP_R},
+
+    {CTexParam::SwizzleR,GL_TEXTURE_SWIZZLE_R},
+    {CTexParam::SwizzleG,GL_TEXTURE_SWIZZLE_G},
+    {CTexParam::SwizzleB,GL_TEXTURE_SWIZZLE_B},
+    {CTexParam::SwizzleA,GL_TEXTURE_SWIZZLE_A},
+    {CTexParam::SwizzleRGBA,GL_TEXTURE_SWIZZLE_RGBA},
+};
+
+constexpr coffeetype_mapping<CTexParamOpt,GLenum> ctexparmopt_map[11] = {
+    {CTexParamOpt::Nearest,GL_NEAREST},
+    {CTexParamOpt::Linear,GL_LINEAR},
+    {CTexParamOpt::LinearMipmapLinear,GL_LINEAR_MIPMAP_LINEAR},
+    {CTexParamOpt::NearestMipmapLinear,GL_NEAREST_MIPMAP_LINEAR},
+    {CTexParamOpt::NearestMipmapNearest,GL_NEAREST_MIPMAP_NEAREST},
+    {CTexParamOpt::LinearMipmapNearest,GL_LINEAR_MIPMAP_NEAREST},
+
+    {CTexParamOpt::ClampEdge,GL_CLAMP_TO_EDGE},
+    {CTexParamOpt::ClampBorder,GL_CLAMP_TO_BORDER},
+    {CTexParamOpt::Repeat,GL_REPEAT},
+    {CTexParamOpt::RepeatMirror,GL_MIRRORED_REPEAT},
+    {CTexParamOpt::ClampEdgeMirror,GL_MIRROR_CLAMP_TO_EDGE},
+};
+
+constexpr coffeetype_mapping<CFBFilter,GLenum> cfbfilt_map[2] = {
+    {CFBFilter::Nearest,GL_NEAREST},
+    {CFBFilter::Linear,GL_LINEAR},
+};
+
+constexpr coffeetype_mapping<CFBType,GLenum> cfbtype_map[3] = {
+    {CFBType::All,GL_FRAMEBUFFER},
+    {CFBType::Draw,GL_DRAW_FRAMEBUFFER},
+    {CFBType::Read,GL_READ_FRAMEBUFFER},
+};
+
+constexpr coffeetype_mapping<CFBAttachment,GLenum> cfbattch_map[4] = {
+    {CFBAttachment::Color,GL_COLOR_ATTACHMENT0},
+    {CFBAttachment::Depth,GL_DEPTH_ATTACHMENT},
+    {CFBAttachment::Stencil,GL_STENCIL_ATTACHMENT},
+    {CFBAttachment::DepthStencil,GL_DEPTH_STENCIL_ATTACHMENT},
 };
 
 }

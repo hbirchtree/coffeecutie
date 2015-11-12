@@ -180,15 +180,14 @@ enum class CTexFormat : uint16
     DepthStencil = 10,
 };
 
-enum class CFBType : uint16
+enum class CFBType : uint8
 {
-    None = 0,
     All = 1,
     Draw = 2,
     Read = 3,
 };
 
-enum class CFBAttachment : uint16
+enum class CFBAttachment : uint8
 {
     Color = 1,
     Depth = 2,
@@ -196,9 +195,49 @@ enum class CFBAttachment : uint16
     DepthStencil = 4,
 };
 
+enum class CFBFilter : uint8
+{
+    Nearest = 1,
+    Linear = 2,
+};
+
 enum class CTexParam : uint16
 {
     MipmapMaxLevel = 1,
+    MipmapMinFilter = 2,
+    MipmapMagFilter = 3,
+
+    MipmapMinLod = 4,
+    MipmapLodBias = 5,
+    MipmapMaxLod = 6,
+
+    WrapS = 7,
+    WrapT = 8,
+    WrapR = 9,
+
+    SwizzleR = 10,
+    SwizzleG = 11,
+    SwizzleB = 12,
+    SwizzleA = 13,
+    SwizzleRGBA = 14,
+
+    MipmapBaseLevel = 15,
+};
+
+enum class CTexParamOpt : uint16
+{
+    Nearest = 1,
+    Linear = 2,
+    LinearMipmapLinear = 3,
+    LinearMipmapNearest = 4,
+    NearestMipmapNearest = 5,
+    NearestMipmapLinear = 6,
+
+    ClampEdge = 7,
+    ClampBorder = 8,
+    RepeatMirror = 9,
+    Repeat = 10,
+    ClampEdgeMirror = 11,
 };
 
 //Misc. data structures
@@ -243,7 +282,7 @@ struct _cbasic_graphics_resource_desc
     _cbasic_graphics_resource_desc();
 
     cstring object_name;
-    CGidx index;
+    CGhnd index;
 };
 
 struct _cbasic_graphics_buffer_resource_desc
@@ -252,7 +291,7 @@ struct _cbasic_graphics_buffer_resource_desc
 
     cstring object_name;
     _cbasic_graphics_buffer_section* buffer;
-    CGidx index;
+    CGhnd index;
 };
 
 template<typename T>
