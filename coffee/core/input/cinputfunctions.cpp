@@ -1,6 +1,7 @@
 #include "cinputfunctions.h"
 
 #include "coffee/core/base/cmath.h"
+#include "coffee/core/base/cmath_glm.h"
 
 namespace Coffee{
 namespace CInput{

@@ -384,6 +384,8 @@ typedef CVectors::_cbasic_tvector<scalar,3> VEC3;
 
 int32 coffee_main(int32 argc, byte** argv)
 {
+    VEC3 t(1.0);
+
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
     props.contextProperties.flags |= CGLContextProperties::GLDebug;
