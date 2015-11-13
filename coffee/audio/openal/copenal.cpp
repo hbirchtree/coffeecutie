@@ -232,7 +232,7 @@ void coffee_audio_listener_set(const CALListener *listener)
     scalar *orient = new scalar[6];
     memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
     memcpy(&orient[2],&listener->orientation_forward,sizeof(CVec3));
-    alListenerfv(AL_ORIENTATION,orient);
+//    alListenerfv(AL_ORIENTATION,orient);
     delete[] orient;
     coffee_audio_context_get_error();
 }
