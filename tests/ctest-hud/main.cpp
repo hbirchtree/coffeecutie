@@ -384,7 +384,6 @@ private:
 
 int32 coffee_main(int32 argc, byte** argv)
 {
-    CMat4 matrix;
     CMath::mat4 tmat;
 
     CMath::quat q;
@@ -392,6 +391,11 @@ int32 coffee_main(int32 argc, byte** argv)
     tmat = CMath::perspective(60.f,1.6f,0.1f,100.f);
     tmat *= CMath::mat4_cast(q);
     tmat = CMath::translate(tmat,CMath::vec3(1,2,3));
+
+    CGCamera cam;
+    cam.aspect = 1.6;
+
+    CMat4 cam_mat = coffee_graphics_gen_matrix_perspective(&cam);
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();

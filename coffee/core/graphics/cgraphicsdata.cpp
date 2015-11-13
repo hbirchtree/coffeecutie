@@ -51,7 +51,7 @@ void coffee_graphics_gen_matrix(CTransform *mat)
 void _coffee_graphics_rotate_translate(
         CMat4* matrix, const CQuat& rotation, const CVec3& position)
 {
-    *matrix *= CVectors::matrixify(rotation);
+    *matrix = (*matrix) * CVectors::matrixify(rotation);
     *matrix = CVectors::translate(*matrix,position);
 }
 

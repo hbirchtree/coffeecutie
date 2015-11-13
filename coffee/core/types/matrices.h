@@ -72,18 +72,6 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] -= matrix[x][y];
     }
-    void operator*=(const _cbasic_tmatrix<T,Size>& matrix)
-    {
-        for(size_t y=0;y<Size;y++)
-            for(size_t x=0;x<Size;x++)
-                (*this)[x][y] *= matrix[y][x];
-    }
-    void operator/=(const _cbasic_tmatrix<T,Size>& matrix)
-    {
-        for(size_t y=0;y<Size;y++)
-            for(size_t x=0;x<Size;x++)
-                (*this)[x][y] /= matrix[y][x];
-    }
 
     _cbasic_tmatrix<T,Size> operator+(const _cbasic_tmatrix<T,Size>& matrix)
     {
@@ -101,12 +89,47 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
                 newmat[x][y] = (*this)[x][y]-matrix[x][y];
         return newmat;
     }
-    _cbasic_tmatrix<T,Size> operator*(const _cbasic_tmatrix<T,Size>& matrix)
+
+    void operator*=(const _cbasic_tmatrix<T,Size>& matrix)
     {
-        _cbasic_tmatrix<T,Size> newmat;
-        for(size_t y=0;y<Size;y++)
-            for(size_t x=0;x<Size;x++)
-                newmat[x][y] = (*this)[x][y]*matrix[y][x];
+	for(size_t y=0;y<Size;y++)
+	    for(size_t x=0;x<Size;x++)
+		(*this)[x][y] *= matrix[x][y];
+    }
+    void operator/=(const _cbasic_tmatrix<T,Size>& matrix)
+    {
+	for(size_t y=0;y<Size;y++)
+	    for(size_t x=0;x<Size;x++)
+		(*this)[x][y] /= matrix[x][y];
+    }
+    _cbasic_tmatrix<T,4> operator*(const _cbasic_tmatrix<T,4>& matrix)
+    {
+	_cbasic_tmatrix<T,4> newmat;
+
+	for(size_t i=0;i<4;i++)
+	    for(size_t j=0;j<4;j++)
+
+	newmat[0] =
+		  (*this)[0]*matrix[0][0]
+		+ (*this)[1]*matrix[0][1]
+		+ (*this)[2]*matrix[0][2]
+		+ (*this)[3]*matrix[0][3];
+	newmat[1] =
+		  (*this)[0]*matrix[1][0]
+		+ (*this)[1]*matrix[1][1]
+		+ (*this)[2]*matrix[1][2]
+		+ (*this)[3]*matrix[1][3];
+	newmat[2] =
+		  (*this)[0]*matrix[2][0]
+		+ (*this)[1]*matrix[2][1]
+		+ (*this)[2]*matrix[2][2]
+		+ (*this)[3]*matrix[2][3];
+	newmat[3] =
+		  (*this)[0]*matrix[3][0]
+		+ (*this)[1]*matrix[3][1]
+		+ (*this)[2]*matrix[3][2]
+		+ (*this)[3]*matrix[3][3];
+
         return newmat;
     }
     _cbasic_tmatrix<T,Size> operator/(const _cbasic_tmatrix<T,Size>& matrix)
@@ -114,7 +137,7 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
         _cbasic_tmatrix<T,Size> newmat;
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
-                newmat[x][y] = (*this)[x][y]/matrix[y][x];
+		newmat[x][y] = (*this)[x][y]/matrix[x][y];
         return newmat;
     }
 
