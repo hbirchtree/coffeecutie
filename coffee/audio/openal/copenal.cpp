@@ -49,6 +49,9 @@ bool coffee_audio_context_create(CALContext *context)
     context->context = alcCreateContext(context->device,NULL);
 
     coffee_audio_context_make_current(context);
+
+    alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
+
     return true;
 }
 
@@ -96,7 +99,7 @@ void coffee_audio_alloc(CALBuffer *buffer, CAudioSample *sample)
 {
     coffee_audio_alloc(buffer);
     alBufferData(
-                *buffer,AL_FORMAT_STEREO16,
+                *buffer,AL_FORMAT_MONO16,
                 sample->data,
                 sample->fmt.samples*sample->fmt.channels*sizeof(sample->data[0]),
                 sample->fmt.samplerate);
@@ -238,9 +241,9 @@ void coffee_audio_source_transform(
         CALSource *source, const CVec3& position,
         const CVec3& velocity, const CVec3& direction)
 {
-    memcpy((void*)&source->position,&position,sizeof(position));
-    memcpy((void*)&source->velocity,&velocity,sizeof(velocity));
-    memcpy((void*)&source->direction,&direction,sizeof(direction));
+    source->position = position;
+    source->velocity = velocity;
+    source->direction = direction;
 
     alSourcefv(source->handle,AL_POSITION,(scalar*)&source->position);
     coffee_audio_context_get_error();

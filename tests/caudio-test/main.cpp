@@ -21,7 +21,7 @@ public:
     {
         CAudioSample smp;
         //Read audio sample from file
-        CResources::CResource rsc("healing.ogg");
+        CResources::CResource rsc("monosample.ogg");
         coffee_file_pull(&rsc);
         CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
         coffee_file_free(&rsc);
@@ -42,8 +42,8 @@ public:
         coffee_audio_context_get_error(&ctxt);
 
         //Set listener properties
-        l.gain = 0.2;
-        l.position = CVec3(0,0,1.0f);
+        l.gain = 1.0;
+        l.position = CVec3(0,0,0);
         l.velocity = CVec3(0,0,0);
         l.orientation_forward = CVec3(0,0,1);
         l.orientation_up = CVec3(0,1,0);
@@ -55,8 +55,8 @@ public:
         free(smp.data);
         //Create audio source
         coffee_audio_alloc(&src);
-        coffee_audio_source_transform(&src,CVec3(100,0,20),CVec3(10,0,0),CVec3(0,0,0));
-        coffee_audio_source_seti(&src,CSourceProperty::Looping,1);
+        coffee_audio_source_transform(&src,CVec3(100,0,0),CVec3(0,0,0),CVec3(0,0,0));
+        coffee_audio_source_setf(&src,CSourceProperty::RolloffFactor,1.f);
         //Queue our buffer for playback
         coffee_audio_source_queue_buffers(&src,1,&buf);
         //Start playing
@@ -66,9 +66,6 @@ public:
         while(!closeFlag())
         {
             coffee_graphics_clear(CClearFlag::Color);
-
-            l.position.x() += 0.0001;
-            coffee_audio_listener_set(&l);
 
             this->pollEvents();
             this->swapBuffers();
