@@ -123,9 +123,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
         bufsize+=bufferCount*sizeof(assimp_reflexive)-sizeof(assimp_reflexive);
         bufsize+=strlen(meshdata->mName.C_Str())+1;
 
-        buffer = (byte*)calloc(
-                    sizeof(byte),
-                    bufsize);
+        buffer = (byte*)c_calloc(sizeof(byte),bufsize);
     }
 
     CAssimpMesh* mesh = (CAssimpMesh*)(&buffer[0]);
@@ -139,7 +137,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     cstring mname = meshdata->mName.C_Str();
     mesh->name.offset = offset;
     mesh->name.size = strlen(mname)+1;
-    memcpy(&buffer[offset],mname,mesh->name.size);
+    c_memcpy(&buffer[offset],mname,mesh->name.size);
     offset+=mesh->name.size;
 
     coffee_assimp_mesh_get_offsets(meshdata,bufferArray,offset);
@@ -149,7 +147,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     szptr numUVs = 0,numCols = 0;
 
     assimp_reflexive* buf;
-    for(csize_t i=0;i<bufferCount;i++)
+    for(szptr i=0;i<bufferCount;i++)
     {
         buf = &bufferArray[i];
         switch(buf->type)
@@ -260,7 +258,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
 
 szptr _assimp_face_transform(const aiFace &v, byte *d)
 {
-    memcpy(d,v.mIndices,sizeof(v.mIndices[0])*v.mNumIndices);
+    c_memcpy(d,v.mIndices,sizeof(v.mIndices[0])*v.mNumIndices);
     return sizeof(v.mIndices[0])*v.mNumIndices;
 }
 
@@ -303,9 +301,9 @@ bool coffee_assimp_dump_mesh(CAssimp::CAssimpMesh *mesh, CResources::CResource *
     coffee_file_free(resource);
 
     resource->size = mesh->byteSize;
-    resource->data = malloc(resource->size);
+    resource->data = c_alloc(resource->size);
 
-    memcpy(resource->data,mesh,resource->size);
+    c_memcpy(resource->data,mesh,resource->size);
 
     if(!coffee_file_commit(resource))
         cWarning("Failed to store mesh data");
@@ -320,8 +318,8 @@ void coffee_assimp_free(CAssimp::CAssimpData *data)
 {
     szptr i;
     for(i=0;i<data->numMeshes;i++)
-        free(data->meshes[i]);
-    free(data->meshes);
+        c_free(data->meshes[i]);
+    c_free(data->meshes);
 }
 
 }

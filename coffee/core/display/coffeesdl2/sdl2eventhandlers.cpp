@@ -29,13 +29,13 @@ inline static void coffee_sdl2_send_full_ievent(
         const void* data,
         szptr dataSize)
 {
-    void* payload = malloc(baseSize+dataSize);
-    memcpy(payload,base,baseSize);
-    memcpy(&reinterpret_cast<char*>(payload)[baseSize],data,dataSize);
+    void* payload = c_alloc(baseSize+dataSize);
+    c_memcpy(payload,base,baseSize);
+    c_memcpy(&((char*)payload)[baseSize],data,dataSize);
 
 
     ctxt->eventInputHandle((CIEvent*)payload);
-    free(payload);
+    c_free(payload);
 }
 
 inline static void coffee_sdl2_send_full_wevent(
@@ -45,12 +45,12 @@ inline static void coffee_sdl2_send_full_wevent(
         const void* data,
         szptr dataSize)
 {
-    void* payload = malloc(baseSize+dataSize);
-    memcpy(payload,base,baseSize);
-    memcpy(&reinterpret_cast<char*>(payload)[baseSize],data,dataSize);
+    void* payload = c_alloc(baseSize+dataSize);
+    c_memcpy(payload,base,baseSize);
+    c_memcpy(&((char*)payload)[baseSize],data,dataSize);
 
     ctxt->eventWindowsHandle((CDEvent*)payload);
-    free(payload);
+    c_free(payload);
 }
 
 inline static uint8 coffee_sdl2_translate_mouse_btn(
@@ -263,11 +263,9 @@ inline static void coffee_sdl2_eventhandle_drop(
     e.type = CIEvent::Drop;
     e.ts = drop.timestamp;
     szptr textsz = strlen(drop.file)+1;
-    CIDropEvent* d = (CIDropEvent*)
-            malloc(sizeof(CIDropEvent)
-                   +textsz);
+    CIDropEvent* d = (CIDropEvent*)c_alloc(sizeof(CIDropEvent)+textsz);
     d->size = textsz;
-    memcpy((byte*)&d->text_data.text,drop.file,d->size);
+    c_memcpy((byte*)&d->text_data.text,drop.file,d->size);
     d->type = CIDropEvent::File;
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),d,sizeof(CIDropEvent)+textsz);
@@ -281,7 +279,7 @@ inline static void coffee_sdl2_eventhandle_input(
     e.type = CIEvent::TextInput;
     e.ts = input.timestamp;
     CIWriteEvent w;
-    memcpy(w.text,input.text,ci_max_text_edit_size);
+    c_memcpy(w.text,input.text,ci_max_text_edit_size);
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
 }
@@ -295,7 +293,7 @@ inline static void coffee_sdl2_eventhandle_inputedit( //Note: Yet to be tested
     e.ts = edit.timestamp;
 
     CIWEditEvent w;
-    memcpy(w.text,edit.text,ci_max_text_edit_size);
+    c_memcpy(w.text,edit.text,ci_max_text_edit_size);
     w.cursor = edit.start;
     w.len = edit.length;
 
@@ -343,12 +341,12 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     if(name)
         evsize += strlen(name)+1;
 
-    CIControllerAtomicUpdateEvent *c = (CIControllerAtomicUpdateEvent*)calloc(1,evsize);
+    CIControllerAtomicUpdateEvent *c = (CIControllerAtomicUpdateEvent*)c_calloc(1,evsize);
 
     if(name)
-        memcpy((byte*)&c->name,name,strlen(name)+1);
+        c_memcpy((byte*)&c->name,name,strlen(name)+1);
     else
-        memset((byte*)&c->name,0,1);
+        c_memclear((byte*)&c->name,1);
 
     c->connected = false;
     c->remapped = false;

@@ -23,14 +23,14 @@ void glbindingCallbackDirect(GLenum source, GLenum type,
                                              const void* userPtr)
 {
     const CGLBindingRenderer* renderer = static_cast<const CGLBindingRenderer*>(userPtr);
-    CGLReport *report = reinterpret_cast<CGLReport*>(malloc(sizeof(CGLReport)));
+    CGLReport *report = (CGLReport*)c_alloc(sizeof(CGLReport));
     report->source = source;
     report->type = type;
     report->id = id;
     report->message = msg;
     report->severity = severity;
     renderer->bindingCallback(report);
-    free(report);
+    c_free(report);
 }
 
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
@@ -43,13 +43,13 @@ CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
 CGLBindingRenderer::~CGLBindingRenderer()
 {
     if(m_extensions)
-        free(m_extensions);
+        c_free(m_extensions);
 }
 
 void CGLBindingRenderer::fetchGLExtensions()
 {
     if(m_extensions)
-        free(m_extensions);
+        c_free(m_extensions);
 
     GLint exts = 0;
     glGetIntegerv(GL_NUM_EXTENSIONS,&exts);
@@ -62,7 +62,7 @@ void CGLBindingRenderer::fetchGLExtensions()
             tmp.push_back('\n');
     }
 
-    m_extensions = (cstring_w)malloc(tmp.size()+1);
+    m_extensions = (cstring_w)c_alloc(tmp.size()+1);
     strcpy(m_extensions,tmp.c_str());
 }
 

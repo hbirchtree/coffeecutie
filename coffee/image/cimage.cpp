@@ -25,17 +25,17 @@ void _stbi_write_data(void *ctxt, void *data, int size)
 {
     CResource* target = (CResource*)ctxt;
     target->size = size;
-    target->data = malloc(size);
-    memcpy(target->data,data,size);
+    target->data = c_alloc(size);
+    c_memcpy(target->data,data,size);
 }
 
 bool coffee_stb_image_resize(CStbImage *img, const CSize &target, int channels)
 {
-    ubyte* data = (ubyte*)malloc(img->bpp*img->size.h*img->size.w*channels);
+    ubyte* data = (ubyte*)c_alloc(img->bpp*img->size.h*img->size.w*channels);
     stbir_resize_uint8(img->data,img->size.w,img->size.h,0,
                        data,target.w,target.h,0,
                        channels);
-    free(img->data);
+    c_free(img->data);
     img->data = data;
     img->size = target;
     return img->data;
@@ -61,14 +61,14 @@ void coffee_stb_image_flip_vertical(CStbImage *src)
     int32 wdt = src->size.w;
     szptr siz = src->bpp*src->size.w*src->size.h;
 
-    ubyte* data = (ubyte*)malloc(siz);
+    ubyte* data = (ubyte*)c_alloc(siz);
 
-    for(csize_t i=0;i<siz;i+=wdt*src->bpp)
+    for(szptr i=0;i<siz;i+=wdt*src->bpp)
     {
-        memcpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
+        c_memcpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
     }
 
-    free(src->data);
+    c_free(src->data);
     src->data = data;
 }
 
@@ -78,15 +78,15 @@ void coffee_stb_image_flip_horizontal(CStbImage *src)
     int32 wdt = src->size.w;
     szptr siz = src->bpp*src->size.w*src->size.h;
 
-    ubyte* data = (ubyte*)malloc(siz);
+    ubyte* data = (ubyte*)c_alloc(siz);
 
     for(int32 i=0;i<bot;i++)
         for(int32 j=0;j<wdt;j++)
         {
-            memcpy(&data[(i*wdt+wdt-j)*src->bpp],&src->data[(i*wdt+j)*src->bpp],src->bpp);
+            c_memcpy(&data[(i*wdt+wdt-j)*src->bpp],&src->data[(i*wdt+j)*src->bpp],src->bpp);
         }
 
-    free(src->data);
+    c_free(src->data);
     src->data = data;
 }
 
@@ -97,7 +97,7 @@ void coffee_stb_error()
 
 void coffee_stb_image_free(CStbImage *img)
 {
-    free(img->data);
+    c_free(img->data);
 }
 
 }

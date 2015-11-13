@@ -12,22 +12,6 @@
 
 namespace CoffeeTests{
 
-extern void vector2_test();
-
-extern void vector3_test();
-
-extern void vector4_test();
-
-extern void quaternion_test();
-
-extern void matrix_test();
-
-extern void vector_tests(bool silent = true);
-
-extern void int_tests();
-
-extern void floating_tests();
-
 extern void run_tests(bool silent = true);
 
 

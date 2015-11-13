@@ -3,6 +3,8 @@
 #include "coffee/core/coffee.h"
 #include "coffee/core/base/cdebug.h"
 #include "coffee/core/base/cmath.h"
+#include "coffee/core/base/cmath_glm.h"
+#include "coffee/core/graphics/cgraphicsdata.h"
 
 #include <glbinding/gl/gl.h>
 
@@ -10,91 +12,48 @@ namespace CoffeeTests{
 
 using namespace Coffee;
 
-//void vector2_test()
-//{
-//    CVec2 from_coffee(1.2f,3.4f);
-//    CMath::vec2 *to_glm = reinterpret_cast<CMath::vec2*>(&from_coffee);
-
-//    //Test for XY component, GLM to Coffee
-//    CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y));
-
-//    //Test for ST component
-//    CASSERT((from_coffee.s==to_glm->s&&from_coffee.t==to_glm->t));
-//}
-
-//void vector3_test()
-//{
-//    CVec3 from_coffee(1.2f,3.4f,5.6f);
-//    CMath::vec3 *to_glm = reinterpret_cast<CMath::vec3*>(&from_coffee);
-
-//    //Test for XYZ component, Coffee to GLM
-//    CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z));
-
-//    //Test for RGB component
-//    CASSERT((from_coffee.r==to_glm->r&&from_coffee.g==to_glm->g&&from_coffee.b==to_glm->b));
-
-//    //Test for STP component
-//    CASSERT((from_coffee.s==to_glm->s&&from_coffee.t==to_glm->t&&from_coffee.p==to_glm->p));
-//}
-
-//void vector4_test()
-//{
-//    CVec4 from_coffee(1.2f,3.4f,5.6f,7.8f);
-//    CMath::vec4 *to_glm = reinterpret_cast<CMath::vec4*>(&from_coffee);
-
-//    //Test for XYZW component, Coffee to GLM
-//    CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z&&from_coffee.w==to_glm->w));
-
-//    //Test for RGBA component
-//    CASSERT((from_coffee.r==to_glm->r&&from_coffee.g==to_glm->g&&from_coffee.b==to_glm->b&&from_coffee.a==to_glm->a));
-//}
-
-//void quaternion_test()
-//{
-//    CQuat from_coffee(1.2f,3.4f,5.6f,7.8f);
-//    CMath::quat *to_glm = reinterpret_cast<CMath::quat*>(&from_coffee);
-
-//    CASSERT((from_coffee.x==to_glm->x&&from_coffee.y==to_glm->y&&from_coffee.z==to_glm->z&&from_coffee.w==to_glm->w));
-//}
-
-//void matrix_test()
-//{
-//    CMat4 from_coffee;
-//    from_coffee.m[0][0] = 1.f;
-//    from_coffee.m[2][3] = 2.f;
-//    from_coffee.m[3][1] = 3.f;
-//    CMath::mat4 *to_glm = reinterpret_cast<CMath::mat4*>(&from_coffee);
-
-//    CASSERT((from_coffee.m[0][0]==(*to_glm)[0][0]&&
-//            from_coffee.m[2][3]==(*to_glm)[2][3]&&
-//            from_coffee.m[3][1]==(*to_glm)[3][1]));
-//}
-
-void vector_tests(bool silent)
+static void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
 {
-    if(!silent)
-        cMsg("Coffee Unit Tests","Vec2 test starting");
-//    vector2_test();
-    if(!silent){
-        cMsg("Coffee Unit Tests","Vec2 test passed");
-        cMsg("Coffee Unit Tests","Vec3 test starting");
-    }
-//    vector3_test();
-    if(!silent){
-        cMsg("Coffee Unit Tests","Vec3 test passed");
-        cMsg("Coffee Unit Tests","Vec4 test starting");
-    }
-//    vector4_test();
-    if(!silent){
-        cMsg("Coffee Unit Tests","Vec4 test passed");
-        cMsg("Coffee Unit Tests","Quat test starting");
-    }
-//    quaternion_test();
-    if(!silent)
-        cMsg("Coffee Unit Tests","Quat test passed");
-//    matrix_test();
-    if(!silent)
-        cMsg("Coffee Unit Tests","The Matrix test passed");
+    CASSERT(c_memcmp(m1,m2,size)==0);
+}
+
+void matrix_tests()
+{
+    CASSERT(sizeof(CQuat)==sizeof(glm::quat));
+    CASSERT(sizeof(CMat4)==sizeof(glm::mat4));
+
+    CGraphicsData::CGCamera camera;
+    camera.aspect = 1.6f;
+    camera.fieldOfView = 60.f;
+
+    //Test quaternion conversion
+
+    CMat4 my_quat = CVectors::matrixify(camera.rotation);
+    glm::mat4 glm_quat = glm::mat4_cast(*((glm::quat*)&camera.rotation));
+
+    CASSERT_MEM(&glm_quat,&my_quat,sizeof(CMat4));
+
+    //Test projection matrices
+
+    CMat4 my_matrix = CGraphicsData::coffee_graphics_gen_matrix_perspective(&camera);
+    glm::mat4 glm_matrix = glm::perspective(camera.fieldOfView,camera.aspect,
+                                            camera.zVals.near,camera.zVals.far);
+
+    CASSERT_MEM(&glm_matrix,&my_matrix,sizeof(CMat4));
+
+    //Test matrix multiplication and rotation
+
+    glm_matrix *= glm_quat;
+    my_matrix = my_matrix*my_quat;
+
+    CASSERT_MEM(&glm_matrix,&my_matrix,sizeof(CMat4));
+
+    //Test translation
+
+    glm_matrix = glm::translate(glm_matrix,*((glm::vec3*)&camera.position));
+    my_matrix = CVectors::translate(my_matrix,camera.position);
+
+    CASSERT_MEM(&glm_matrix,&my_matrix,sizeof(CMat4));
 }
 
 void int_tests()
@@ -136,9 +95,14 @@ void floating_tests()
 
 void run_tests(bool silent)
 {
-    vector_tests(silent);
     if(!silent)
+        cMsg("Coffee Unit Tests","Matrix tests starting");
+    matrix_tests();
+    if(!silent)
+    {
+        cMsg("Coffee Unit Tests","Matrix tests passed");
         cMsg("Coffee Unit Tests","Integer tests starting");
+    }
     int_tests();
     if(!silent){
         cMsg("Coffee Unit Tests","Integer tests passed");

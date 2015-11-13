@@ -58,7 +58,7 @@ bool coffee_file_memunmap(CResource *resc)
 
 void coffee_file_free(CResource *resc)
 {
-    free(resc->data);
+    c_free(resc->data);
     resc->data = nullptr;
     resc->size = 0;
 }

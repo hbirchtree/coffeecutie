@@ -530,7 +530,7 @@ bool coffee_test_load(game_context *ctxt)
             for(int32 i=0;i<tags.tagCount;i++)
             {
                 idx = &base_idx[i];
-                if(coffee_cmp_memarea(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
+                if(c_memcmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
                 {
                     int32 num = 0;
                     const CBlam::blam_bitm_image* img =

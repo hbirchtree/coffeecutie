@@ -72,7 +72,9 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
 
     {
         data->numMeshes = meshes.size();
-        data->meshes    = reinterpret_cast<CAssimpMesh**>(calloc(meshes.size(),sizeof(CAssimpMesh*)));
+        data->meshes    = (CAssimpMesh**)c_calloc(
+                    meshes.size(),
+                    sizeof(CAssimpMesh*));
         i=0;
         for(CAssimpMesh* mesh : meshes){
             data->meshes[i] = mesh;

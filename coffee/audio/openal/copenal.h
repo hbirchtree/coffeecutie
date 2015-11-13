@@ -19,6 +19,44 @@ namespace CAudio{
  */
 namespace COpenAL{
 
+enum class CALPlaybackState : uint8
+{
+    Stopped,
+    Playing,
+    Paused,
+    Rewind,
+};
+
+enum class CSourceProperty : uint8
+{
+    Pitch,
+
+    Gain,
+    MinGain,
+    MaxGain,
+
+    MaxDist,
+    RolloffFactor,
+    ReferenceDistance,
+
+    ConeOuterGain,
+    ConeInnerAngle,
+    ConeOuterAngle,
+
+    Relative,
+    Looping
+};
+
+enum class CDistanceModel : uint8
+{
+    InverseDistance = 1,
+    InverseDistanceClamped = 2,
+    LinearDistance = 3,
+    LinearDistanceClamped = 4,
+    ExponentDistance = 5,
+    ExponentDistanceClamped = 6,
+};
+
 /*!
  * \brief Presents an error message from OpenAL
  */
@@ -75,34 +113,6 @@ struct CALSource
     CVec3 direction; /*!< Source direction vector*/
     ALuint handle; /*!< AL handle*/
     uint16 state; /*!< Source state*/
-};
-
-enum class CALPlaybackState
-{
-    Stopped,
-    Playing,
-    Paused,
-    Rewind,
-};
-
-enum class CSourceProperty
-{
-    Pitch,
-
-    Gain,
-    MinGain,
-    MaxGain,
-
-    MaxDist,
-    RolloffFactor,
-    ReferenceDistance,
-
-    ConeOuterGain,
-    ConeInnerAngle,
-    ConeOuterAngle,
-
-    Relative,
-    Looping
 };
 
 /*!
@@ -268,6 +278,9 @@ extern void coffee_audio_source_seti(
  */
 extern void coffee_audio_source_setf(
         CALSource* source, CSourceProperty prop, scalar val);
+
+extern void coffee_audio_context_set_distance_model(
+        CDistanceModel m);
 
 }
 }

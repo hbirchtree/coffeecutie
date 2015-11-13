@@ -6,6 +6,7 @@
 
 #include <glbinding/gl/gl.h>
 
+//We are using macros here because it preserves the size of static arrays
 #define CG_GET(val,arr) coffee_get(val,arr,sizeof(arr)/sizeof(arr[0]))
 #define CG_GETI(val,arr,offset) coffee_get(val,arr,sizeof(arr)/sizeof(arr[0]),offset)
 #define CG_GETF(val,arr) coffee_get_flags(val,arr,sizeof(arr)/sizeof(arr[0]))

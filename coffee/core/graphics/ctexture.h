@@ -117,7 +117,7 @@ static void coffee_create_texturesize(
     if(n<1)
         return;
     val->dimensions = n;
-    val->lengths = (szptr*)malloc(sizeof(szptr)*n);
+    val->lengths = (szptr*)c_alloc(sizeof(szptr)*n);
     _coffee_create_texturelist(val->lengths,0,sizes...);
 }
 

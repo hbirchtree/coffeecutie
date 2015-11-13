@@ -87,6 +87,7 @@ set ( CoffeeCore_SRCS
         coffee/core/plat/coffee_windows/win_core.cpp
         coffee/core/plat/plat_file.cpp
         coffee/core/plat/plat_timers.cpp
+        coffee/core/plat/cmemory.cpp
         )
 
 set ( CAssimp_SRCS

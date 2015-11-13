@@ -2,6 +2,7 @@
 
 #include "base/cdebug.h"
 #include "coffee/core/plat/plat_core.h"
+#include "coffee/core/unit_tests/data_types.h"
 
 static bool coffee_initialized = false;
 
@@ -12,6 +13,7 @@ void CoffeeInit()
     coffee_initialized = true;
     //Allow core dump by default
     coffee_enable_core_dump();
+    CoffeeTests::run_tests();
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte **argc)

@@ -79,7 +79,7 @@ void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
         CGsize size, CTexFormat format,
         CStbImageLib::CStbImage *img)
 {
-    img->data = (ubyte*)malloc(size);
+    img->data = (ubyte*)c_alloc(size);
     glGetTextureImage(
                 tex->handle,
                 level,
@@ -285,7 +285,7 @@ void coffee_graphics_unbind(const CTexture *tex)
 
 void CTextureTools::coffee_graphics_tex_free_texdata(CTextureTools::CTextureData *tex)
 {
-    free(tex->lengths);
+    c_free(tex->lengths);
     tex->lengths = nullptr;
 }
 
@@ -307,7 +307,7 @@ void coffee_graphics_tex_dump(const CTexture *tex, cstring filename)
     coffee_file_commit(&fl);
     coffee_file_free(&fl);
 
-    free(img.data);
+    c_free(img.data);
 }
 
 void coffee_graphics_tex_paramf(const CTexture *tex, CTexParam param, scalar val)

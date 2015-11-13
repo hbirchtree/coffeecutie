@@ -30,7 +30,7 @@ szptr coffee_file_size(CFile *file)
     return fsize;
 }
 
-cstring_w coffee_file_read(CFile *file, void *ptr, szptr *size, bool textmode)
+cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool textmode)
 {
     szptr esize = CFiles::coffee_file_size(file);
     szptr msize = esize*sizeof(byte);
@@ -39,7 +39,7 @@ cstring_w coffee_file_read(CFile *file, void *ptr, szptr *size, bool textmode)
     if(textmode)
         msize+=1;
 
-    byte* data = reinterpret_cast<byte*>(realloc(ptr,msize));
+    byte* data = (byte*)c_realloc(ptr,msize);
     *size = fread(data,sizeof(byte),esize,file->handle);
     //In text mode, we terminate the array
     if(textmode)
@@ -51,7 +51,7 @@ cstring_w coffee_file_read(CFile *file, void *ptr, szptr *size, bool textmode)
     return data;
 }
 
-bool coffee_file_write(CFile *file, const void *data, szptr size)
+bool coffee_file_write(CFile *file, c_cptr data, szptr size)
 {
     szptr wsize = fwrite(data,sizeof(byte),size,file->handle);
 

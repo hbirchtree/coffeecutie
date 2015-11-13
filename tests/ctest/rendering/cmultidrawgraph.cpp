@@ -94,7 +94,7 @@ bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)
     CGLDrawCall call;
 
     const uint32* indices = nullptr;
-    csize_t numIndices = 0;
+    szptr numIndices = 0;
     const assimp_reflexive* ref;
     for(uint8 i=0;i<mesh->numBuffers;i++)
     {

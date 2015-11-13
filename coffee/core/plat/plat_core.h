@@ -34,6 +34,7 @@ inline static cstring_w coffee_clock_string()
 }
 inline static void coffee_clock_free(cstring_w arg)
 {
+    C_STUBBED("Clock free");
     return;
 }
 

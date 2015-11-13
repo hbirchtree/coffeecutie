@@ -17,7 +17,7 @@ static cstring_w coffee_executable_name(cstring_w n);
 
 static cstring _switch_short(cstring in)
 {
-    if(strlen(in)<2)
+    if(c_strlen(in)<2)
         return in;
     if(in[0]!=COFFEE_ARG_SWITCH)
         return in;
@@ -26,26 +26,28 @@ static cstring _switch_short(cstring in)
 static cstring _switch_long(cstring in)
 {
     //Very crude, indeed
-    if(strlen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
+    if(c_strlen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
         return in;
     return &in[2];
 }
 static bool _cmp_short_switch(cstring in, cstring sw)
 {
-    return strcmp(_switch_short(in),sw)==0;
+    return c_strcmp(_switch_short(in),sw)==0;
 }
 static bool _cmp_long_switch(cstring in, cstring sw)
 {
-    return strcmp(_switch_long(in),sw)==0;
+    return c_strcmp(_switch_long(in),sw)==0;
 }
-inline static bool coffee_args_check_switch(int argc, cstring_w* argv, cstring sw)
+inline static bool coffee_args_check_switch(
+        int argc, cstring_w* argv, cstring sw)
 {
     for(int i=0;i<argc;i++)
         if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
             return true;
     return false;
 }
-inline static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
+inline static cstring coffee_args_get_arg(
+        int argc, cstring_w* argv, cstring sw)
 {
     for(int i=0;i<argc-1;i++)
         if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
@@ -61,7 +63,10 @@ inline static cstring coffee_args_get_arg(int argc, cstring_w* argv, cstring sw)
  * \param in_argv Contains null-terminated strings with names of switches
  * \param out_argv
  */
-static void coffee_args_get_all(int argc, cstring_w* argv, int get_argc, cstring const* in_argv, cstring* out_argv)
+static void coffee_args_get_all(
+        int argc, cstring_w* argv,
+        int get_argc, cstring const* in_argv,
+        cstring* out_argv)
 {
     /*TODO: Write a better implementation that maps from argv to in_argv*/
     for(int i=0;i<get_argc;i++)
@@ -88,7 +93,7 @@ static cstring_w coffee_executable_name(cstring_w n = nullptr)
 static cstring_w coffee_executable_name(cstring_w path = nullptr)
 {
         if(!path)
-                path = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+                path = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 
         DWORD size = GetModuleFileNameA(NULL,path,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
         path[size] = '\0';

@@ -40,9 +40,10 @@ typedef byte*               cstring_w; /*!< Writable C-string*/
 typedef const int16*        cwstring; /*!< Wide C-string*/
 typedef int16*              cwstring_w; /*!< Wide, writable C-string*/
 
-typedef uint64              szptr; /*!< Usable as offset into data*/
+typedef size_t              szptr; /*!< Usable as offset into data*/
 
-typedef uint32              csize_t; /*!< Typical size type*/
+typedef const void* c_cptr;
+typedef void* c_ptr;
 
 typedef std::string         CString; /*!< Typical string object */
 typedef std::runtime_error  CStdFault; /*!< Exception to be thrown by default */

@@ -41,6 +41,8 @@ public:
         coffee_audio_context_create(&ctxt);
         coffee_audio_context_get_error(&ctxt);
 
+        coffee_audio_context_set_distance_model(CDistanceModel::LinearDistanceClamped);
+
         //Set listener properties
         l.gain = 1;
         l.position = CVec3(0,0,0);
@@ -57,8 +59,11 @@ public:
         coffee_audio_alloc(&src);
         coffee_audio_source_transform(&src,CVec3(100,0,0),CVec3(0,0,0),CVec3(0,0,0));
         coffee_audio_source_setf(&src,CSourceProperty::Gain,1.f);
+        coffee_audio_source_setf(&src,CSourceProperty::Pitch,0.2f);
         coffee_audio_source_setf(&src,CSourceProperty::RolloffFactor,1.f);
         coffee_audio_source_setf(&src,CSourceProperty::MaxDist,110.f);
+        coffee_audio_source_setf(&src,CSourceProperty::ReferenceDistance,50.f);
+        coffee_audio_source_seti(&src,CSourceProperty::Looping,1);
         //Queue our buffer for playback
         coffee_audio_source_queue_buffers(&src,1,&buf);
         //Start playing

@@ -268,7 +268,7 @@ void CGLFWRenderer::_glfw_init(const CDWindowProperties& props)
                    (bool)(props.flags&CDWindowProperties::Floating));
 
     //Allocate our context object, is deleted when context is gone
-    m_ctxt = reinterpret_cast<CGLFWContext*>(malloc(sizeof(CGLFWContext)));
+    m_ctxt = (CGLFWContext*)c_alloc(sizeof(CGLFWContext));
 
     glfwWindowHint(GLFW_RED_BITS,   props.contextProperties.bits.red);
     glfwWindowHint(GLFW_GREEN_BITS, props.contextProperties.bits.green);
@@ -380,7 +380,7 @@ void CGLFWRenderer::cleanup()
     }
     glfwTerminate();
     cMsg("GLFW","Terminated");
-    free(m_ctxt);
+    c_free(m_ctxt);
     m_ctxt = nullptr;
     m_initMutex.unlock();
 }

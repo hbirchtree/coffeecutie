@@ -5,6 +5,7 @@
 #include "coffee_macros.h"
 
 #include "plat/platform_detect.h"
+#include "plat/cmemory.h"
 
 #include <thread>
 #include <functional>

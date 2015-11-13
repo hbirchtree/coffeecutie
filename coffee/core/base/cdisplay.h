@@ -7,9 +7,17 @@ namespace Coffee{
 namespace CDisplay{
 
 /*!
+ * \brief Contains system-dependent window data. Is not allowed in the global namespace.
+ */
+struct CDWindow;
+
+/*!
  * \brief Color space, typically for monitors
  */
-struct CDColorSpace{
+struct CDColorSpace
+{
+    CDColorSpace();
+
     uint8 red     = 0;
     uint8 green   = 0;
     uint8 blue    = 0;
@@ -18,14 +26,17 @@ struct CDColorSpace{
 /*!
  * \brief Bit depths for context
  */
-struct CDContextBits{
-    uint8 red     = 0;
-    uint8 green   = 0;
-    uint8 blue    = 0;
-    uint8 alpha   = 0;
+struct CDContextBits
+{
+    CDContextBits();
 
-    uint8 depth   = 0;
-    uint8 stencil = 0;
+    uint8 red;
+    uint8 green;
+    uint8 blue;
+    uint8 alpha;
+
+    uint8 depth;
+    uint8 stencil;
 
     CRGBA accum;
 };
@@ -34,18 +45,22 @@ struct CDContextBits{
  * \brief Monitor information
  */
 struct CDMonitor{
-    uint16          index = 0;  /*! Real monitor index*/
-    CDColorSpace    colorBits;  /*! Color depth bits*/
-    CRect           screenArea; /*! Area occupied in window manager*/
-    cstring         name;       /*! Name of monitor*/
-    CSize           phySize;    /*! Physical size of monitor*/
-    int32           refresh = 0;/*! Refresh rate*/
+    CDMonitor();
+
+    uint16          index; /*!< Real monitor index*/
+    CDColorSpace    colorBits; /*!< Color depth bits*/
+    CRect           screenArea; /*!< Area occupied in window manager*/
+    cstring         name; /*!< Name of monitor*/
+    CSize           phySize; /*!< Physical size of monitor*/
+    int32           refresh;/*!< Refresh rate*/
 };
 
 /*!
  * \brief Window event
  */
 struct CDEvent{
+    CDEvent();
+
     enum EventType
     {
         Refresh = 0x1,
@@ -55,8 +70,8 @@ struct CDEvent{
 
         Focus   = 0x6,
     };
-    uint8   type    = 0; /*! Event type*/
-    uint32  ts      = 0; /*! Event timestamp*/
+    uint8   type; /*!< Event type*/
+    uint32  ts; /*!< Event timestamp*/
 };
 
 /*!
@@ -72,17 +87,17 @@ typedef CSize CDResizeEvent;
  */
 struct CGLContextVersion : public _cbasic_version<uint8>
 {
-    CGLContextVersion(){}
-    CGLContextVersion(uint8 maj, uint8 min){
-        this->major = maj;
-        this->minor = min;
-    }
+    CGLContextVersion();
+    CGLContextVersion(uint8 maj, uint8 min);
 };
 
 /*!
  * \brief Window state event
  */
-struct CDStateEvent{
+struct CDStateEvent
+{
+    CDStateEvent();
+
     enum StateChange{
         Minimized   = 0x01,
         Maximized   = 0x02,
@@ -93,7 +108,7 @@ struct CDStateEvent{
         Hidden      = 0x05,
         Shown       = 0x06,
     };
-    uint8   type    = 0; /*! Type of window state event*/
+    uint8   type; /*!< Type of window state event*/
 };
 
 /*!
@@ -101,13 +116,15 @@ struct CDStateEvent{
  */
 struct CDFocusEvent
 {
+    CDFocusEvent();
+
     enum FocusMask
     {
         Mouse   = 0x1,
         Enter   = 0x2,
         Exposed = 0x4,
     };
-    uint8   mod     = 0; /*! Type of focus event*/
+    uint8   mod; /*!< Type of focus event*/
 };
 
 /*!
@@ -115,48 +132,53 @@ struct CDFocusEvent
  */
 struct CGLContextProperties
 {
+    CGLContextProperties();
+
     enum ContextProperties{
-        GLCoreProfile	    = 0x01, /*! Set GL core profile*/
-        GLVSync		    = 0x02, /*! Set GL vertical sync*/
-        GLDebug		    = 0x04, /*! Set GL debug context*/
-        GLAutoResize	    = 0x08, /*! Set GL auto resize of context*/
-        GLRobust	    = 0x10, /*! Set GL robustness*/
-        GLPrintExtensions   = 0x20, /*! Print GL extensions on startup*/
+        GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
+        GLVSync		    = 0x02, /*!< Set GL vertical sync*/
+        GLDebug		    = 0x04, /*!< Set GL debug context*/
+        GLAutoResize	    = 0x08, /*!< Set GL auto resize of context*/
+        GLRobust	    = 0x10, /*!< Set GL robustness*/
+        GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
     };
-    uint16              flags = GLCoreProfile; /*! Context flags*/
-    CGLContextVersion   version; /*! Context version*/
-    CDContextBits       bits; /*! Context bits*/
+    uint16              flags; /*!< Context flags*/
+    CGLContextVersion   version; /*!< Context version*/
+    CDContextBits       bits; /*!< Context bits*/
 };
 /*!
  * \brief Window properties to set on start-up
  */
 struct CDWindowProperties
 {
+    CDWindowProperties();
+
     enum WindowState{
-        FullScreen          = 0x001, /*! Exclusive fullscreen mode*/
-        WindowedFullScreen  = 0x002, /*! Windowed fullscreen mode*/
-        Windowed            = 0x004, /*! Regular window mode*/
+        FullScreen          = 0x001, /*!< Exclusive fullscreen mode*/
+        WindowedFullScreen  = 0x002, /*!< Windowed fullscreen mode*/
+        Windowed            = 0x004, /*!< Regular window mode*/
 
-        Minimized           = 0x008, /*! Minimized mode*/
-        Maximized           = 0x010, /*! Maximized mode*/
+        Minimized           = 0x008, /*!< Minimized mode*/
+        Maximized           = 0x010, /*!< Maximized mode*/
 
-        Focused             = 0x020, /*! Focused mode*/
-        Resizable           = 0x040, /*! Resizable mode*/
+        Focused             = 0x020, /*!< Focused mode*/
+        Resizable           = 0x040, /*!< Resizable mode*/
 
-        Undecorated         = 0x080, /*! Decorated mode*/
-        Floating            = 0x100, /*! Floating mode, not supported by all platforms and context managers*/
-        Visible             = 0x200, /*! Visibility*/
+        Undecorated         = 0x080, /*!< Decorated mode*/
+        Floating            = 0x100, /*!< Floating mode, not supported by all platforms and context managers*/
+        Visible             = 0x200, /*!< Visibility*/
 
-        HighDPI             = 0x400, /*! HighDPI mode for platforms that support it (not Windows)*/
+        HighDPI             = 0x400, /*!< HighDPI mode for platforms that support it (not Windows)*/
 
-        Foreign             = 0x800, /*! For windows not created by context manager*/
+        Foreign             = 0x800, /*!< For windows not created by context manager*/
     };
 
-    uint16                  flags           = 0; /*! Window flags*/
-    uint16                  monitor         = 0; /*! Monitor to use with fullscreen*/
-    CSize                   size; /*! Size of window*/
-    CGLContextProperties    contextProperties; /*! Context properties to set*/
-    cstring                 title           = nullptr; /*! Window title to start with*/
+    uint16                  flags; /*!< Window flags*/
+    uint16                  monitor; /*!< Monitor to use with fullscreen*/
+    CSize                   size; /*!< Size of window*/
+    CGLContextProperties    contextProperties; /*!< Context properties to set*/
+    cstring                 title; /*!< Window title to start with*/
+    CDWindow*               window; /*!< If applicable, contains data about a window*/
 };
 
 extern CDWindowProperties coffee_get_default_visual();

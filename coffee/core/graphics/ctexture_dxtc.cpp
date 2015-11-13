@@ -15,7 +15,7 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
     tex->levels = rsc->mipmaps;
 
     CSize res = rsc->resolution;
-    csize_t i;
+    szptr i;
     szptr size;
     szptr offset = 0;
     coffee_graphics_bind(tex);

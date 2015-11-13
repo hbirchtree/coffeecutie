@@ -96,14 +96,14 @@ bool coffee_graphics_buffer_unmap_safe(CBuffer *buf)
 
 void *coffee_graphics_buffer_download_buffer(CBuffer *buf, CGszptr offset, CGsize size)
 {
-    void* data = malloc(size);
+    void* data = c_alloc(size);
     glGetNamedBufferSubData(buf->handle,offset,size,data);
     return data;
 }
 
 void* coffee_graphics_buffer_download_buffer_safe(CBuffer *buf, CGszptr offset, CGsize size)
 {
-    void* data = malloc(size);
+    void* data = c_alloc(size);
     coffee_graphics_bind(buf);
     glGetBufferSubData(
                 CG_GET(buf->type,cbuffertype_map),

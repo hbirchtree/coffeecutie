@@ -33,7 +33,7 @@ static cstring coffee_get_path_sep()
 static cstring_w coffee_concat_plat_path(cstring_w target, cstring v2)
 {
     szptr len = ((target) ? strlen(target)+1 : 0)+strlen(v2)+1;
-    cstring_w p = (cstring_w)realloc(target,len);
+    cstring_w p = (cstring_w)c_realloc(target,len);
     if(target) //In the case where we start out with an empty buffer
         strcat(p,coffee_get_path_sep());
     else
@@ -77,7 +77,7 @@ static cstring_w coffee_get_application_dir()
 inline static cstring_w coffee_get_current_dir()
 {
 #if defined(COFFEE_LINUX)
-    cstring_w cwd = (cstring_w)malloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+    cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
     return getcwd(cwd,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 #else
     return "";

@@ -2,7 +2,6 @@
 
 #include <coffee/core/plat/environment_details.h>
 #include <coffee/core/plat/application_start.h>
-#include <coffee/core/unit_tests/data_types.h>
 #include <coffee/core/base/cfiles.h>
 
 using namespace Coffee;
@@ -10,6 +9,8 @@ using namespace Coffee::CDisplay;
 
 int main(int,char**)
 {
+    Coffee::CoffeeInit();
+
     cstring_w cfg_dir = coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time");
     cstring_w app_dir = coffee_get_application_dir();
     cstring_w exe_name = coffee_executable_name();
@@ -23,9 +24,6 @@ int main(int,char**)
     free(cfg_dir);
     free(app_dir);
     free(exe_name);
-
-    Coffee::CoffeeInit();
-    CoffeeTests::run_tests();
 
     CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
     timer->start();

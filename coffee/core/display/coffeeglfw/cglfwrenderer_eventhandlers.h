@@ -27,11 +27,11 @@ inline static void _createEvent(
     CIEvent ev;
     ev.type = t;
 
-    *outData = realloc(*outData,sizeof(ev)+isize);
+    *outData = c_realloc(*outData,sizeof(ev)+isize);
     char* bytes = reinterpret_cast<char*>(*outData);
 
-    memcpy(bytes,&ev,sizeof(ev));
-    memcpy(bytes+sizeof(ev),data,isize);
+    c_memcpy(bytes,&ev,sizeof(ev));
+    c_memcpy(bytes+sizeof(ev),data,isize);
     *size = sizeof(ev)+isize;
 }
 
@@ -44,11 +44,11 @@ inline static void _createWEvent(
     CDEvent ev;
     ev.type = t;
 
-    *outData = realloc(*outData,sizeof(ev)+isize);
+    *outData = c_realloc(*outData,sizeof(ev)+isize);
     byte* bytes = reinterpret_cast<byte*>(*outData);
 
-    memcpy(bytes,&ev,sizeof(ev));
-    memcpy(bytes+sizeof(ev),data,isize);
+    c_memcpy(bytes,&ev,sizeof(ev));
+    c_memcpy(bytes+sizeof(ev),data,isize);
     *size = sizeof(ev)+isize;
 }
 
@@ -68,7 +68,7 @@ inline static void _windowEventHandle(
     CDEvent* ev = reinterpret_cast<CDEvent*>(data);
     ptr->eventWHandle(ev);
 
-    free(data);
+    c_free(data);
 }
 
 inline static void _inputEventHandle(
@@ -87,7 +87,7 @@ inline static void _inputEventHandle(
     CIEvent* ev = reinterpret_cast<CIEvent*>(data);
     ptr->eventIHandle(ev);
 
-    free(data);
+    c_free(data);
 }
 
 //These generate input events

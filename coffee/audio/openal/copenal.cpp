@@ -21,12 +21,17 @@ constexpr struct {CSourceProperty k; ALenum v;} al_source_prop_map[12] = {
 {CSourceProperty::Looping,AL_LOOPING},
 };
 
-ALenum _al_get_prop(CSourceProperty p)
+ALenum _al_get_prop(const CSourceProperty& p)
 {
     for(size_t i=0;i<12;i++)
         if(al_source_prop_map[i].k==p)
             return al_source_prop_map[i].v;
     return AL_NONE;
+}
+
+ALenum _al_get_model(const CDistanceModel& m)
+{
+    return AL_DISTANCE_MODEL + (uint32)m;
 }
 
 bool coffee_audio_context_create(CALContext *context)
@@ -49,8 +54,6 @@ bool coffee_audio_context_create(CALContext *context)
     context->context = alcCreateContext(context->device,NULL);
 
     coffee_audio_context_make_current(context);
-
-    alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
 
     return true;
 }
@@ -230,8 +233,8 @@ void coffee_audio_listener_set(const CALListener *listener)
     alListenerfv(AL_VELOCITY,(scalar*)&listener->velocity);
     coffee_audio_context_get_error();
     scalar *orient = new scalar[6];
-    memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    memcpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
+    c_memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
+    c_memcpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
     alListenerfv(AL_ORIENTATION,orient);
     delete[] orient;
     coffee_audio_context_get_error();
@@ -303,6 +306,11 @@ CALSource::CALSource():
     handle(0),
     state(AL_STOPPED)
 {
+}
+
+void coffee_audio_context_set_distance_model(CDistanceModel m)
+{
+    alDistanceModel(_al_get_model(m));
 }
 
 }

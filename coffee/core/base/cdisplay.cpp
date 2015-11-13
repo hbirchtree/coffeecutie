@@ -37,5 +37,76 @@ CDWindowProperties coffee_get_default_visual()
     return props;
 }
 
+CDWindowProperties::CDWindowProperties():
+    flags(0),
+    monitor(0),
+    size(0,0),
+    contextProperties(),
+    title(nullptr),
+    window(nullptr)
+{
+}
+
+CGLContextProperties::CGLContextProperties():
+    flags(GLCoreProfile),
+    version(3,3),
+    bits()
+{
+}
+
+CDFocusEvent::CDFocusEvent():
+    mod(0)
+{
+}
+
+CDStateEvent::CDStateEvent():
+    type(0)
+{
+}
+
+CGLContextVersion::CGLContextVersion()
+{
+}
+
+CGLContextVersion::CGLContextVersion(uint8 maj, uint8 min)
+{
+    this->major = maj;
+    this->minor = min;
+}
+
+CDEvent::CDEvent():
+    type(0),
+    ts(0)
+{
+}
+
+CDMonitor::CDMonitor():
+    index(0),
+    colorBits(),
+    screenArea(),
+    name(nullptr),
+    phySize(0,0),
+    refresh(0)
+{
+}
+
+CDContextBits::CDContextBits():
+    red(0),
+    green(0),
+    blue(0),
+    alpha(0),
+    depth(0),
+    stencil(0),
+    accum()
+{
+}
+
+CDColorSpace::CDColorSpace():
+    red(0),
+    green(0),
+    blue(0)
+{
+}
+
 }
 }

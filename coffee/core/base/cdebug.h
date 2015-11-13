@@ -71,16 +71,16 @@ static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* c
     cfprintf(stderr,header);
     for(szptr i=0;i<stacksize;i++){
         cfprintf(stderr,callfmt,callstack[i]);
-        free(callstack[i]);
+        c_free(callstack[i]);
     }
-    free(callstack);
+    c_free(callstack);
 }
 
 static void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
 {
     for(szptr i=0;i<stacksize;i++)
-        free(callstack[i]);
-    free(callstack);
+        c_free(callstack[i]);
+    c_free(callstack);
 }
 
 }
@@ -175,11 +175,11 @@ template<typename... Arg>
  */
 static void cBasicPrint(cstring str, Arg... args)
 {
-    cstring_w fmt = reinterpret_cast<cstring_w>(malloc(strlen(str)+2));
+    cstring_w fmt = cstring_w(c_alloc(strlen(str)+2));
     strcpy(fmt,str);
     strcat(fmt,"\n");
     cfprintf(stderr,fmt,args...);
-    free(fmt);
+    c_free(fmt);
 }
 
 template<typename... Arg>
@@ -224,12 +224,12 @@ template<typename... Arg>
  */
 static void cMsg(cstring src, cstring msg, Arg... args)
 {
-    cstring_w str = reinterpret_cast<cstring_w>(malloc(strlen(src)+strlen(msg)+2));
-    memcpy(str,src,strlen(src)+1);
+    cstring_w str = cstring_w(c_alloc(strlen(src)+strlen(msg)+2));
+    c_memcpy(str,src,strlen(src)+1);
     strcat(str,":");
     strcat(str,msg);
     cDebugPrint(0,1,str,args...);
-    free(str);
+    c_free(str);
 }
 
 }

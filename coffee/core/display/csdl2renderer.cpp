@@ -395,19 +395,19 @@ CIEvent* sdl2_controller_get_haptic(
     {
         int idx = SDL_HapticIndex(dev);
         cstring hname = SDL_HapticName(idx);
-        CIEvent* ev = (CIEvent*)calloc(1,sizeof(CIEvent)
+        CIEvent* ev = (CIEvent*)c_calloc(1,sizeof(CIEvent)
                                        +sizeof(CIHapticEvent)
                                        +strlen(hname)-6);
         ev->type = CIEvent::HapticDev;
         CIHapticEvent *h = (CIHapticEvent*)&ev[1];
-        memcpy((byte*)&h->rumble_device.name,
+        c_memcpy((byte*)&h->rumble_device.name,
                hname,
                strlen(hname)+1);
         h->rumble_device.index = index;
 
         if(SDL_HapticRumbleInit(dev)==0)
             return ev;
-        free(ev);
+        c_free(ev);
         SDL_HapticClose(dev);
     }
     return nullptr;
@@ -433,7 +433,7 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
             cMsg("SDL2","Controller %i with rumble connected: %s",ev->controller,ev->name);
             m_context->haptics[ev->controller] = hdev;
             eventInputHandle(hev);
-            free(hev);
+            c_free(hev);
         }else
             cMsg("SDL2","Controller %i connected: %s",ev->controller,ev->name);
     }else{

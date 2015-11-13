@@ -14,7 +14,7 @@ blam_bitm_header _bitm_get_header(const void* base, int32 offset)
 {
     const blam_bitm_header* ptr = (const blam_bitm_header*)(((const byte*)base)+offset);
     blam_bitm_header hdr;
-    memcpy(&hdr,ptr,sizeof(blam_bitm_header));
+    c_memcpy(&hdr,ptr,sizeof(blam_bitm_header));
     return hdr;
 }
 
@@ -43,7 +43,7 @@ uint32 *coffee_bitm_decode_micro(
     int16 h = img->isize.h;
 
     const ubyte* src = ((const ubyte*)map)+img->offset;
-    uint32* out = (uint32*)calloc(w*h,sizeof(uint32));
+    uint32* out = (uint32*)c_calloc(w*h,sizeof(uint32));
 
     for(int16 x=0;x<w;x++)
         for(int16 y=0;y<h;y++)
@@ -113,7 +113,7 @@ void coffee_bitm_dump(
     coffee_file_commit(&r);
     coffee_file_free(&r);
 
-    free(data);
+    c_free(data);
 }
 
 blam_bitm_texture_def coffee_bitm_get_texture(const blam_bitm_image *img, const void *bitmfile)
