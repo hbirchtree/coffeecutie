@@ -18,18 +18,18 @@ namespace CoffeeSharp
 			                   Coffee.coffee_get_userdata_dir("hbirchtree","Coffee of Time"));
 
 			CResource res = new CResource ("ubw/models/ubw.fbx");
-			res.read_data ();
+			Coffee.coffee_file_pull (res);
 			CAssimpData meshes = CAssimpImporters.importResource (res,res.resource());
 
 			CResource smp_file = new CResource (
 				String.Format("{0}/Skrivebord/healing.ogg",
 			              Coffee.coffee_get_env_variable("HOME")));
-			smp_file.read_data ();
+			Coffee.coffee_file_pull (smp_file);
 			CAudioSample smp = new CAudioSample();
 			Coffee.coffee_stb_audio_vorbis_load (smp,smp_file);
 
 			CResource img_file = new CResource ("ubw/models/textures/gear.png");
-			img_file.read_data ();
+			Coffee.coffee_file_pull (img_file);
 			CStbImage img = new CStbImage ();
 			Coffee.coffee_stb_image_load (img,img_file);
 
@@ -48,7 +48,7 @@ namespace CoffeeSharp
 				| CGLContextProperties.ContextProperties.GLCoreProfile);
 			props.contextProperties.version = ctxtVer;
 			props.title = "Hello you!";
-			props.size = new CSize (1280,720);
+			props.size = new CSize();
 
 			renderer = new CDRenderer ();
 

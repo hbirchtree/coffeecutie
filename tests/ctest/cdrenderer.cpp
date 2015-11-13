@@ -92,7 +92,7 @@ void CDRenderer::run()
     coffee_prepare_test(game);
 
     game->transforms.transforms.d[0].rotation =
-            CMath::quat(CMath::vec3(-90.f,0,0))*game->transforms.transforms.d[0].rotation;
+            CQuat(CVec3(-90.f,0,0))*game->transforms.transforms.d[0].rotation;
 
     while(!closeFlag()){
         delta = contextTime();
@@ -102,8 +102,8 @@ void CDRenderer::run()
         //Rendering part
 
         game->transforms.transforms.d[0].rotation =
-                CMath::normalize(
-                    CMath::quat(2,0,-0.1*deltaT,0)*
+                CVectors::normalize(
+                    CQuat(2,0,-0.1*deltaT,0)*
                     game->transforms.transforms.d[0].rotation);
 //        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
@@ -182,9 +182,9 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
         if(kev->key==CK_Escape)
             this->closeWindow();
         else if(kev->key==CK_Up&&kev->mod&CIKeyEvent::PressedModifier)
-            game->transforms.cameras.d[0].position.y -= 0.05;
+            game->transforms.cameras.d[0].position.y() -= 0.05;
         else if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
-            game->transforms.cameras.d[0].position.y += 0.05;
+            game->transforms.cameras.d[0].position.y() += 0.05;
     }
     else if(event->type==CIEvent::MouseMove)
     {

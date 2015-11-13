@@ -14,6 +14,12 @@ typedef byte blam_scn_chunk[100];
  */
 struct blam_bounding_box
 {
+    blam_bounding_box():
+        min(0),
+        max(0)
+    {
+    }
+
     CVec3 min;
     CVec3 max;
 };
@@ -32,7 +38,7 @@ struct blam_scn_biped
 {
     int16 BipedType;
     int16 unk2;
-    uint32  unk3;
+    uint32 unk3;
     CVec3 pos;
     scalar rot;
     uint32 unk[24];

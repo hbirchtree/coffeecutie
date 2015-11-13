@@ -21,7 +21,7 @@ private:
 
 /*!
  * \brief Stock function for rotating a quaternion by mouse movement.
- * \param qt
+ * \param cqt
  * \param evsrc
  */
 extern void coffee_input_mouse_rotate(
@@ -29,7 +29,7 @@ extern void coffee_input_mouse_rotate(
 
 /*!
  * \brief Stock function for rotating a quaternion by controller stick movement.
- * \param qt
+ * \param cqt
  * \param jev Controller event
  * \param filter
  */

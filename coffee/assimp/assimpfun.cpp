@@ -267,19 +267,19 @@ szptr _assimp_face_transform(const aiFace &v, byte *d)
 szptr _assimp_vec_transform(const aiVector3D &v, byte *d)
 {
     CVec3* o = (CVec3*)d;
-    o->x = v.x;
-    o->y = v.y;
-    o->z = v.z;
+    o->x() = v.x;
+    o->y() = v.y;
+    o->z() = v.z;
     return sizeof(CVec3);
 }
 
 szptr _assimp_col_transform(const aiColor4D &v, byte *d)
 {
     CVec4* o = (CVec4*)d;
-    o->r = v.r;
-    o->g = v.g;
-    o->b = v.b;
-    o->a = v.a;
+    o->r() = v.r;
+    o->g() = v.g;
+    o->b() = v.b;
+    o->a() = v.a;
     return sizeof(CVec4);
 }
 

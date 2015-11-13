@@ -200,11 +200,11 @@ public:
         coffee_graphics_bind(&indices);
 
         CTransform root;
-        root.position = CMath::vec3(0,-0.5,0);
+        root.position = CVec3(0,-0.5,0);
 
         CGCamera camera;
         camera.aspect = 1.6f;
-        camera.position = CMath::vec3(0,0,-3);
+        camera.position = CVec3(0,0,-3);
 
         coffee_graphics_gen_matrix(&root);
         coffee_graphics_gen_matrix_perspective(&camera);
@@ -380,11 +380,18 @@ private:
     CQuat t;
 };
 
-typedef CVectors::_cbasic_tvector<scalar,3> VEC3;
+#include <coffee/core/base/cmath_glm.h>
 
 int32 coffee_main(int32 argc, byte** argv)
 {
-    VEC3 t(1.0);
+    CMat4 matrix;
+    CMath::mat4 tmat;
+
+    CMath::quat q;
+
+    tmat = CMath::perspective(60.f,1.6f,0.1f,100.f);
+    tmat *= CMath::mat4_cast(q);
+    tmat = CMath::translate(tmat,CMath::vec3(1,2,3));
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();

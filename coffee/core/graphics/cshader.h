@@ -86,8 +86,7 @@ extern bool coffee_graphics_shader_compile(
  * \brief Compile a shader from resource
  * \param prg Shader to compile
  * \param rsc Resource containing shader
- * \param type Which stage it contains
- * \param stage Mask for the stage
+ * \param stage Which stage you are compiling
  * \return
  */
 extern bool coffee_graphics_shader_compile(

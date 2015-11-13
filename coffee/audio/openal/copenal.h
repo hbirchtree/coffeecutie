@@ -16,38 +16,6 @@ namespace CAudio{
 /*!
  * \brief Basic wrapping for OpenAL, nothing extensive
  *
- * Example code, keeping it here temporarily:
- *
- *    CResources::CResource rsc("/home/havard/Skrivebord/healing.ogg");
- *    rsc.read_data();
- *
- *    CAudioSample smp;
- *    CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
-
- *    CALContext ctxt;
- *    ctxt.callback = [](CALReport* r){
- *        cDebug("%s",r->message);
- *    };
- *
- *    coffee_audio_context_create(&ctxt);
- *    coffee_audio_context_get_error(&ctxt);
- *    CALBuffer *buf = new CALBuffer;
- *    CALListener l;
- *    l.gain = 1;
- *    l.position = CVec3(0,0,0);
- *    l.velocity = CVec3(-100,0,-100);
- *    l.orientation_forward = CVec3(1,0,0);
- *    CALSource src;
- *
- *    coffee_audio_listener_set(&l);
- *    coffee_audio_alloc(buf,&smp);
- *    rsc.free_data();
- *    free(smp.data);
- *    coffee_audio_alloc(&src);
- *    coffee_audio_source_transform(&src,CVec3(5,0,5),CVec3(10,0,0),CVec3(0,0,0));
- *    coffee_audio_source_queue_buffers(&src,1,&buf);
- *    coffee_audio_source_set_state(&src,CALStatePlaying);
- *
  */
 namespace COpenAL{
 
@@ -66,47 +34,33 @@ typedef std::function<void(CALReport*)> CALCallback;
  */
 struct CALContext
 {
-    std::thread::id context_thread; /*!< Which thread the context is currently located on*/
-    CALCallback callback = nullptr; /*!< Callback to be called on error*/
+    CALContext();
 
-    ALCcontext *context = nullptr;
-    ALCdevice *device = nullptr;
+    ALCcontext *context;
+    ALCdevice *device;
+    CALCallback callback; /*!< Callback to be called on error*/
+    std::thread::id context_thread; /*!< Which thread the context is currently located on*/
 };
 
 /*!
  * \brief An AL buffer containg an audio sample
  */
-struct CALBuffer
-{
-    ALuint handle       = 0; /*!< AL handle*/
-
-    uint8 bits         = 0; /*!< Bit depth of sample*/
-    uint32 size         = 0; /*!< Size of buffer*/
-    ALenum format       = 0; /*!< Format of buffer*/
-    uint32 frequency    = 0; /*!< Frequency of buffer*/
-    uint8 channels     = 0; /*!< Channels of buffer*/
-};
+using CALBuffer = ALuint;
 
 /*!
  * \brief A listener which will receive audio from a source
  */
 struct CALListener
 {
-    scalar gain         = 10; /*!< Audio gain*/
+    CALListener();
 
     CVec3 orientation_forward; /*!< Listener orientation*/
     CVec3 orientation_up; /*!< Listener orientation*/
 
     CVec3 position; /*!< Listener position*/
     CVec3 velocity; /*!< Listener velocity*/
-};
 
-enum CALPlaybackState
-{
-    CALStateStopped,
-    CALStatePlaying,
-    CALStatePaused,
-    CALStateRewind,
+    scalar gain; /*!< Audio gain*/
 };
 
 /*!
@@ -114,34 +68,41 @@ enum CALPlaybackState
  */
 struct CALSource
 {
-    ALuint handle   = 0; /*!< AL handle*/
+    CALSource();
 
-    const CVec3 position; /*!< Source position*/
-    const CVec3 velocity; /*!< Source velocity*/
-    const CVec3 direction; /*!< Source direction vector*/
-    const uint16 state = AL_STOPPED; /*!< Source state*/
+    CVec3 position; /*!< Source position*/
+    CVec3 velocity; /*!< Source velocity*/
+    CVec3 direction; /*!< Source direction vector*/
+    ALuint handle; /*!< AL handle*/
+    uint16 state; /*!< Source state*/
 };
 
-/*!
- * \brief Data defining a CALSource
- */
-struct CALSourceData
+enum class CALPlaybackState
 {
-    scalar pitch        = 1; /*!< Pitch multiplier*/
-    scalar gain         = 10; /*!< Audio gain*/
-    scalar max_dist     = 10; /*!< Outside of this radius, sound will not be heard*/
-    scalar rolloff_dist = 10; /*!< ???*/
-    scalar ref_dist     = 10; /*!< At this distance, sound is 50% reduced*/
-    scalar min_gain     = 10; /*!< Minimum gain possible for the source*/
-    scalar max_gain     = 10; /*!< Maximum gain possible for this source*/
+    Stopped,
+    Playing,
+    Paused,
+    Rewind,
+};
 
-    scalar cone_out_gain    = 10; /*!< Gain outside cone*/
-    scalar cone_in_angle    = 10; /*!< Inner angle of audio cone*/
-    scalar cone_out_angle   = 360; /*!< Outer angle of audio cone, default 360*/
+enum class CSourceProperty
+{
+    Pitch,
 
-    uint8  source_relative = AL_FALSE;
+    Gain,
+    MinGain,
+    MaxGain,
 
-    uint8 looping = AL_FALSE;
+    MaxDist,
+    RolloffFactor,
+    ReferenceDistance,
+
+    ConeOuterGain,
+    ConeInnerAngle,
+    ConeOuterAngle,
+
+    Relative,
+    Looping
 };
 
 /*!
@@ -165,13 +126,13 @@ extern bool coffee_audio_context_make_current(CALContext* context);
  * \param extension
  * \return True if supported
  */
-extern bool coffee_audio_context_check_extension(const CALContext* context, cstring extension);
+extern bool coffee_audio_context_check_extension(
+        const CALContext* context, cstring extension);
 /*!
  * \brief Check if error is present. If it is, call context's callback
  * \param context
  */
-extern void coffee_audio_context_get_error(const CALContext* context);
-
+extern void coffee_audio_context_get_error(const CALContext* context = nullptr);
 
 /*!
  * \brief Allocate audio buffer with sample data
@@ -200,14 +161,6 @@ extern void coffee_audio_free(CALSource* source);
  * \param buffer
  */
 extern void coffee_audio_free(CALBuffer* buffer);
-
-/*!
- * \brief Set propreties of source
- * \param source
- * \param data
- */
-extern void coffee_audio_source_set(
-        CALSource* source, const CALSourceData* data);
 
 /*!
  * \brief Get second offset into buffer
@@ -271,7 +224,10 @@ extern void coffee_audio_source_transform(
  * \param numSources Number of sources to process
  * \param state
  */
-extern void coffee_audio_source_set_states(const CALSource **sources, szptr numSources, CALPlaybackState state);
+extern void coffee_audio_source_set_states(
+        const CALSource **sources,
+        szptr numSources,
+        CALPlaybackState state);
 
 /*!
  * \brief Set AL listener properties
@@ -295,6 +251,23 @@ extern void coffee_audio_source_queue_buffers(
  */
 extern void coffee_audio_source_dequeue_buffers(
         CALSource* source, szptr numBuffers, CALBuffer** buffers);
+
+/*!
+ * \brief Set integer property of source
+ * \param source
+ * \param prop
+ * \param val
+ */
+extern void coffee_audio_source_seti(
+        CALSource* source, CSourceProperty prop, int32 val);
+/*!
+ * \brief Set scalar property of source
+ * \param source
+ * \param prop
+ * \param val
+ */
+extern void coffee_audio_source_setf(
+        CALSource* source, CSourceProperty prop, scalar val);
 
 }
 }

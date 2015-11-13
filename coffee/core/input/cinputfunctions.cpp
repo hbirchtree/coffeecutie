@@ -24,7 +24,7 @@ void coffee_input_controller_rotate(CQuat *cqt, const CIControllerAtomicEvent *j
 
     if(CMath::fabs(jev->value)<0.1)
         return;
-    CVec2 v;
+    CVec2 v(0);
     scalar tmp;
     switch(jev->index){
     case CK_AXIS_RIGHT_X:{
@@ -42,8 +42,8 @@ void coffee_input_controller_rotate(CQuat *cqt, const CIControllerAtomicEvent *j
     }
 
     *qt = normalize(
-                quat(vec3(v.y*0.1,0,0))
-                *quat(vec3(0,v.x*0.1,0))
+                quat(vec3(v.y()*0.1,0,0))
+                *quat(vec3(0,v.x()*0.1,0))
                 *(*qt));
 }
 
@@ -56,7 +56,7 @@ const CVec2 &CIAxisFilter::filterDelta(const CVec2 &v)
 {
     CVec2 out = v;
 
-    if(sqrt(pow(out.x,2.f)+pow(out.x,2.f)) < sqrt(pow(m_deadzone,2.f)+pow(m_deadzone,2.f)))
+    if(sqrt(pow(out.x(),2.f)+pow(out.y(),2.f)) < sqrt(pow(m_deadzone,2.f)+pow(m_deadzone,2.f)))
     {
         out = CVec2(0,0);
     }

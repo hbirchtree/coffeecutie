@@ -235,7 +235,7 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
         coffee_graphics_alloc(mbuffer);
         coffee_graphics_activate(mbuffer);
         ctxt->funptrs.buffers.store_immutable(
-                    mbuffer,nullptr,sizeof(CMath::mat4)*numGears,
+                    mbuffer,nullptr,sizeof(CMat4)*numGears,
                     mbuffer->flags);
         ctxt->funptrs.buffers.map(mbuffer,CBufferAccess::Coherent|
                                   CBufferAccess::Persistent|
@@ -395,6 +395,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
             (&ctxt->renderdata.bufferbindings,1);
 
     CGCamera* cam = &ctxt->transforms.cameras.d[0];
+    cam->rotation.w() = 2;
     cam->fieldOfView = 60.f;
     cam->aspect = 1.6f;
     cam->zVals.far = 100.f;
@@ -409,7 +410,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     CSubBuffer* camBuffer = &ctxt->renderdata.subbuffers.d[0];
     camBuffer->parent = ubuffer;
     camBuffer->offset = 0;
-    camBuffer->size = sizeof(CMath::mat4)*2;
+    camBuffer->size = sizeof(CMat4)*2;
     camBuffer->type = CBufferType::Uniform;
 
     CSubBuffer* matBuffer = &ctxt->renderdata.subbuffers.d[1];
@@ -433,7 +434,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
         ublock->buffer = camBuffer;
         ublock->object_name = "MatrixBlock";
         void* data = ctxt->funptrs.buffers.subdata(camBuffer);
-        memcpy(data,&cam->matrix,sizeof(CMath::mat4));
+        memcpy(data,&cam->matrix,sizeof(CMat4));
         bind->binding = 0;
         //GL calls
         coffee_graphics_shader_uniform_block_get(
@@ -449,23 +450,23 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 
     {
         CTransform* mod = &ctxt->transforms.transforms.d[0];
-        mod->position.z = -1.f;
-        mod->scale.x = mod->scale.y = mod->scale.z = 1.f;
-        mod->rotation.w = 2.f;
+        mod->position.z() = -1.f;
+        mod->scale.x() = mod->scale.y() = mod->scale.z() = 1.f;
+        mod->rotation.w() = 2.f;
 
-        mod->position.x = 5.f;
+        mod->position.x() = 5.f;
 
-        std::vector<CMath::mat4> transform;
+        std::vector<CMat4> transform;
         transform.reserve(numGears);
         for(szptr i=1;i<numGears-2;i++){
-            mod->position.z = (float)(-i);
-            mod->position.y = (float)((i%11)/2);
+            mod->position.z() = (float)(-i);
+            mod->position.y() = (float)((i%11)/2);
             coffee_graphics_gen_matrix(mod);
             transform.push_back(mod->matrix);
         }
 
-        mod->position.x = mod->position.y = 0.f;
-        mod->position.z = -1.f;
+        mod->position.x() = mod->position.y() = 0.f;
+        mod->position.z() = -1.f;
 
         coffee_graphics_gen_matrix(mod);
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
@@ -610,10 +611,10 @@ void coffee_render_test(game_context *ctxt, double delta)
     //Copy memory into GL
     memcpy(ctxt->renderdata.buffers.d[4].data,
             &ctxt->transforms.cameras.d[0].matrix,
-            sizeof(CMath::mat4));
+            sizeof(CMat4));
     memcpy(ctxt->renderdata.buffers.d[2].data,
             &ctxt->transforms.transforms.d[0].matrix,
-            sizeof(CMath::mat4));
+            sizeof(CMat4));
 
     //Send it off
     ctxt->funptrs.renderfun(ctxt->renderdata.datasets.d[0]);

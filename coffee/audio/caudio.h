@@ -12,9 +12,12 @@ namespace CAudio{
  */
 struct CAudioFormat
 {
-    int samplerate  = 0; /*!< Samplerate, typically 44.1kHz*/
-    int samples     = 0;
-    int channels    = 0; /*!< Audio channels, typically 2 or 4*/
+    CAudioFormat();
+
+    int samplerate; /*!< Samplerate, typically 44.1kHz*/
+    int samples;
+    int channels; /*!< Audio channels, typically 2 or 4*/
+    int bitdepth;
 };
 
 /*!

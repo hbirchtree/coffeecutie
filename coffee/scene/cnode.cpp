@@ -11,7 +11,7 @@ CMat4 _coffee_math_copy_mat4(const CMath::mat4& mat)
 
     for(int i=0;i<4;i++)
         for(int j=0;j<4;j++)
-            ret.m[i][j] = mat[i][j];
+            ret[i][j] = mat[i][j];
 
     return ret;
 }
