@@ -231,8 +231,8 @@ void coffee_audio_listener_set(const CALListener *listener)
     coffee_audio_context_get_error();
     scalar *orient = new scalar[6];
     memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    memcpy(&orient[2],&listener->orientation_forward,sizeof(CVec3));
-//    alListenerfv(AL_ORIENTATION,orient);
+    memcpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
+    alListenerfv(AL_ORIENTATION,orient);
     delete[] orient;
     coffee_audio_context_get_error();
 }
@@ -249,7 +249,7 @@ void coffee_audio_source_transform(
     coffee_audio_context_get_error();
     alSourcefv(source->handle,AL_VELOCITY,(scalar*)&source->velocity);
     coffee_audio_context_get_error();
-//    alSourcefv(source->handle,AL_DIRECTION,(scalar*)&source->direction);
+    alSourcefv(source->handle,AL_DIRECTION,(scalar*)&source->direction);
     coffee_audio_context_get_error();
 }
 
