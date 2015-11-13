@@ -42,7 +42,7 @@ public:
         coffee_audio_context_get_error(&ctxt);
 
         //Set listener properties
-        l.gain = 0.5;
+        l.gain = 1;
         l.position = CVec3(0,0,0);
         l.velocity = CVec3(0,0,0);
         l.orientation_forward = CVec3(0,0,1);
@@ -56,7 +56,7 @@ public:
         //Create audio source
         coffee_audio_alloc(&src);
         coffee_audio_source_transform(&src,CVec3(100,0,0),CVec3(0,0,0),CVec3(0,0,0));
-        coffee_audio_source_setf(&src,CSourceProperty::Gain,0.8f);
+        coffee_audio_source_setf(&src,CSourceProperty::Gain,1.f);
         coffee_audio_source_setf(&src,CSourceProperty::RolloffFactor,1.f);
         coffee_audio_source_setf(&src,CSourceProperty::MaxDist,110.f);
         //Queue our buffer for playback
