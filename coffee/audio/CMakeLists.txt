@@ -1,6 +1,6 @@
 
 set ( CAudio_SRCS
-        ${CMAKE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
+        libs/stb/stb_vorbis.c
         coffee/audio/caudio.cpp
         coffee/audio/openal/copenal.cpp
         )

@@ -1,0 +1,5 @@
+include_subproject(coffee/assimp)
+include_subproject(coffee/audio)
+include_subproject(coffee/blam)
+include_subproject(coffee/core)
+include_subproject(coffee/image)
