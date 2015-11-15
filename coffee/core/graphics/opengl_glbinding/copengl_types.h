@@ -8,6 +8,8 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+struct CGLReport;
+
 typedef int32 CGint;
 typedef uint32 CGuint;
 
@@ -238,6 +240,21 @@ enum class CTexParamOpt : uint16
     RepeatMirror = 9,
     Repeat = 10,
     ClampEdgeMirror = 11,
+};
+
+enum class CCullMode : uint8
+{
+    Front = 1,
+    Back  = 2,
+    Both  = 3,
+};
+
+enum class CDebugSeverity : uint8
+{
+    Notification = 1,
+    Low = 2,
+    Medium = 3,
+    High = 4,
 };
 
 //Misc. data structures

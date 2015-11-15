@@ -1,0 +1,11 @@
+#include "coffee/core/graphics/opengl_glbinding/cbuffer.h"
+#include "coffee/core/graphics/opengl_glbinding/cvertexarrayobject.h"
+#include "coffee/core/graphics/opengl_glbinding/cgraphicswrappers.h"
+
+#include "coffee/core/graphics/opengl_glbinding/cshader.h"
+
+#include "coffee/core/graphics/opengl_glbinding/ctexture.h"
+#include "coffee/core/graphics/opengl_glbinding/ctexture_dxtc.h"
+#include "coffee/core/graphics/opengl_glbinding/cframebuffer.h"
+
+#include "coffee/core/graphics/opengl_glbinding/cuniformtypes.h"

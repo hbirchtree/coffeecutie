@@ -83,7 +83,10 @@ struct CALContext
 /*!
  * \brief An AL buffer containg an audio sample
  */
-using CALBuffer = ALuint;
+struct CALBuffer
+{
+    ALuint handle;
+};
 
 /*!
  * \brief A listener which will receive audio from a source

@@ -14,14 +14,14 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
     _cbasic_tquaternion():
         _cbasic_tvector<T,4>()
     {
-        (*this)[0] = T(2);
+        (*this)[3] = T(1);
     }
     _cbasic_tquaternion(T w,T x,T y,T z)
     {
-        (*this)[0] = w;
-        (*this)[1] = x;
-        (*this)[2] = y;
-        (*this)[3] = z;
+        (*this)[0] = x;
+        (*this)[1] = y;
+        (*this)[2] = z;
+        (*this)[3] = w;
     }
     /*!
      * \brief Converts from euler angles
@@ -46,83 +46,92 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
     {
         _cbasic_tquaternion<T> vnew;
 
-        vnew[0] = (*this)[0]*v[0] - (*this)[1]*v[1] - (*this)[2]*v[2] - (*this)[3]*v[3];
-        vnew[1] = (*this)[0]*v[1] + (*this)[1]*v[0] + (*this)[2]*v[3] - (*this)[3]*v[2];
-        vnew[2] = (*this)[0]*v[2] + (*this)[2]*v[0] + (*this)[3]*v[1] - (*this)[1]*v[3];
-        vnew[3] = (*this)[0]*v[3] + (*this)[3]*v[0] + (*this)[1]*v[2] - (*this)[2]*v[1];
+        vnew.w() = this->w()*v.w() - this->x()*v.x() - this->y()*v.y() - this->z()*v.z();
+        vnew.x() = this->w()*v.x() + this->x()*v.w() + this->y()*v.z() - this->z()*v.y();
+        vnew.y() = this->w()*v.y() - this->x()*v.z() + this->y()*v.w() + this->z()*v.w();
+        vnew.z() = this->w()*v.z() + this->x()*v.y() - this->y()*v.x() + this->z()*v.x();
 
         return vnew;
     }
 
     T& w()
     {
-        return (*this)[0];
+        return (*this)[3];
     }
     T& x()
     {
-        return (*this)[1];
+        return (*this)[0];
     }
     T& y()
     {
-        return (*this)[2];
+        return (*this)[1];
     }
     T& z()
     {
-        return (*this)[3];
+        return (*this)[2];
     }
 
     const T& w() const
     {
-        return (*this)[0];
+        return (*this)[3];
     }
     const T& x() const
     {
-        return (*this)[1];
+        return (*this)[0];
     }
     const T& y() const
     {
-        return (*this)[2];
+        return (*this)[1];
     }
     const T& z() const
     {
-        return (*this)[3];
+        return (*this)[2];
     }
 };
 
-template<typename T> _cbasic_tmatrix<T,4> matrixify(
-        const _cbasic_tquaternion<T>& quaternion)
+template<typename T> _cbasic_tmatrix<T,3> matrixify_mat3(
+        const _cbasic_tquaternion<T>& q)
 {
-    _cbasic_tmatrix<T,4> m;
+    _cbasic_tmatrix<T,3> Result;
 
-    T sqw = quaternion.w();
-    T sqx = quaternion.x();
-    T sqy = quaternion.y();
-    T sqz = quaternion.z();
+    T qxx(q.x() * q.x());
+    T qyy(q.y() * q.y());
+    T qzz(q.z() * q.z());
+    T qxz(q.x() * q.z());
+    T qxy(q.x() * q.y());
+    T qyz(q.y() * q.z());
+    T qwx(q.w() * q.x());
+    T qwy(q.w() * q.y());
+    T qwz(q.w() * q.z());
 
-    T inverse = T(1)/(sqw+sqx+sqy+sqz);
-    m[0][0] = (+sqx-sqy-sqz+sqw)*inverse;
-    m[1][1] = (-sqx+sqy-sqz+sqw)*inverse;
-    m[2][2] = (-sqx-sqy+sqz+sqw)*inverse;
+    Result[0][0] = 1 - 2 * (qyy +  qzz);
+    Result[0][1] = 2 * (qxy + qwz);
+    Result[0][2] = 2 * (qxz - qwy);
 
-    T tmp1 = quaternion.x()*quaternion.y();
-    T tmp2 = quaternion.z()*quaternion.w();
+    Result[1][0] = 2 * (qxy - qwz);
+    Result[1][1] = 1 - 2 * (qxx +  qzz);
+    Result[1][2] = 2 * (qyz + qwx);
 
-    m[1][0] = T(2)*(tmp1+tmp2)*inverse;
-    m[0][1] = T(2)*(tmp1-tmp2)*inverse;
+    Result[2][0] = 2 * (qxz + qwy);
+    Result[2][1] = 2 * (qyz - qwx);
+    Result[2][2] = 1 - 2 * (qxx +  qyy);
 
-    tmp1 = quaternion.x()*quaternion.z();
-    tmp1 = quaternion.y()*quaternion.w();
+    return Result;
+}
 
-    m[2][0] = T(2)*(tmp1+tmp2)*inverse;
-    m[0][2] = T(2)*(tmp1-tmp2)*inverse;
+template<typename T> _cbasic_tmatrix<T,4> matrixify(
+        const _cbasic_tquaternion<T>& q)
+{
+    _cbasic_tmatrix<T,3> m3 = matrixify_mat3(q);
 
-    tmp1 = quaternion.y()*quaternion.z();
-    tmp1 = quaternion.x()*quaternion.w();
+    _cbasic_tmatrix<T,4> res;
 
-    m[2][1] = T(2)*(tmp1+tmp2)*inverse;
-    m[1][2] = T(2)*(tmp1-tmp2)*inverse;
+    for(size_t i=0;i<3;i++)
+        for(size_t j=0;j<3;j++)
+        res[i][j] = m3[i][j];
+    res[3][3] = 1.f;
 
-    return m;
+    return res;
 }
 
 template<typename T> T dot(
@@ -148,7 +157,7 @@ template<typename T> _cbasic_tquaternion<T> normalize(
 {
     T len = length(v);
     if(len <= T(0))
-        return _cbasic_tquaternion<T>(T(1),T(0),T(0),T(0));
+        return _cbasic_tquaternion<T>();
     len = T(1)/len;
     return _cbasic_tquaternion<T>(v.w()*len,v.x()*len,v.y()*len,v.z()*len);
 }

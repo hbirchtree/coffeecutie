@@ -1,10 +1,6 @@
 #include "cdrenderer.h"
 
-//#define LOAD_FILE
-#include "coffee/core/graphics/glbinding.h"
-
-#include <coffee/core/graphics/cframebuffer.h>
-#include <coffee/core/graphics/cgraphics_quirks.h>
+#include <coffee/core/Graphics>
 #include <coffee/assimp/assimpfun.h>
 #include <coffee/core/plat/plat_wm.h>
 #include <coffee/core/input/cinputfunctions.h>
@@ -21,11 +17,7 @@ namespace CDisplay {
 
 CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
-    m_msg_filter = [](CGLReport* r){
-        if(r->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
-            return false;
-        return true;
-    };
+    m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
 }
 
 CDRenderer::~CDRenderer()
@@ -75,13 +67,11 @@ void CDRenderer::run()
 
     showWindow();
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-//    glEnable(GL_CULL_FACE);
-//    glCullFace(GL_FRONT);
+    coffee_graphics_depth(true);
+    coffee_graphics_blend(true);
 
-    glClearColor(0.175f,0.175f,0.175f,1.f);
-    glViewport(0,0,m_properties.size.w,m_properties.size.h);
+    coffee_graphics_set_clearcolor(CVec4(0.175f,0.175f,0.175f,1.f));
+    coffee_graphics_set_viewport(m_properties.size);
 
     bigscalar mtime = 0.0;
     CElapsedTimerMicro* swap = coffee_fun_alloc_timer_micro();
@@ -107,7 +97,7 @@ void CDRenderer::run()
                     game->transforms.transforms.d[0].rotation);
 //        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);
 
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
 
         coffee_render_test(game,deltaT);
 
@@ -161,7 +151,7 @@ void CDRenderer::eventWindowsHandle(const CDEvent *event)
     if(event->type==CDEvent::Resize &&
             m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
         const CDResizeEvent* resize = (const CDResizeEvent*)&event[1];
-        glViewport(0,0,resize->w,resize->h);
+        coffee_graphics_set_viewport(*resize);
 
         game->transforms.cameras.d[0].aspect =
                 (float)resize->w/(float)resize->h;

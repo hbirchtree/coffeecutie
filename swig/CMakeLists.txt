@@ -5,6 +5,8 @@ set( CMAKE_VERBOSE_MAKEFILE on )
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
+link_directories(${COFFEE_LIB_DIR})
+
 include_directories(
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/..
@@ -19,7 +21,7 @@ set(CMAKE_SWIG_FLAGS "")
 
 link_directories( ${CMAKE_BINARY_DIR})
 
-set(COFFEE_LINKING CoffeeCore CAudio CBlam CImage CoffeeTestLib)
+set(COFFEE_LINKING CoffeeCore CAudio CBlam CoffeeTestLib)
 
 set_source_files_properties(${CFILE} PROPERTIES CPLUSPLUS ON)
 set_property(SOURCE ${CFILE} PROPERTY SWIG_FLAGS "-includeall" "-ignoremissing")

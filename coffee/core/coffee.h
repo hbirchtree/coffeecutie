@@ -1,5 +1,5 @@
-#ifndef COFFEE
-#define COFFEE
+#ifndef COFFEE_H
+#define COFFEE_H
 
 #include "coffee_types.h"
 #include "coffee_macros.h"
@@ -11,6 +11,9 @@
 #include <functional>
 
 namespace Coffee{
+
+constexpr cstring build_date = __DATE__;
+constexpr cstring build_time = __TIME__;
 
 /*!
  * \brief This function handles initial program startup
@@ -75,4 +78,4 @@ namespace CScripting{}
 
 using namespace Coffee::CFunctional;
 
-#endif // COFFEE
+#endif // COFFEE_H

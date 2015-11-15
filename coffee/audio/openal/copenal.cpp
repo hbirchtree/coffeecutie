@@ -102,7 +102,7 @@ void coffee_audio_alloc(CALBuffer *buffer, CAudioSample *sample)
 {
     coffee_audio_alloc(buffer);
     alBufferData(
-                *buffer,AL_FORMAT_MONO16,
+                buffer->handle,AL_FORMAT_MONO16,
                 sample->data,
                 sample->fmt.samples*sample->fmt.channels*sizeof(sample->data[0]),
                 sample->fmt.samplerate);
@@ -111,7 +111,7 @@ void coffee_audio_alloc(CALBuffer *buffer, CAudioSample *sample)
 
 void coffee_audio_alloc(CALBuffer *buffer)
 {
-    alGenBuffers(1,buffer);
+    alGenBuffers(1,&buffer->handle);
     coffee_audio_context_get_error();
 }
 
@@ -130,9 +130,9 @@ void coffee_audio_free(CALSource *source)
 
 void coffee_audio_free(CALBuffer *buffer)
 {
-    alDeleteBuffers(1,buffer);
+    alDeleteBuffers(1,&buffer->handle);
     coffee_audio_context_get_error();
-    buffer = 0;
+    buffer->handle = 0;
 }
 
 int32 coffee_audio_source_get_offset_seconds(const CALSource *source)
@@ -259,14 +259,14 @@ void coffee_audio_source_transform(
 void coffee_audio_source_queue_buffers(
         CALSource *source, szptr numBuffers, CALBuffer **buffers)
 {
-    alSourceQueueBuffers(source->handle,numBuffers,*buffers);
+    alSourceQueueBuffers(source->handle,numBuffers,(const ALuint*)(*buffers));
     coffee_audio_context_get_error();
 }
 
 void coffee_audio_source_dequeue_buffers(
         CALSource *source, szptr numBuffers, CALBuffer **buffers)
 {
-    alSourceUnqueueBuffers(source->handle,numBuffers,*buffers);
+    alSourceUnqueueBuffers(source->handle,numBuffers,(ALuint*)(*buffers));
     coffee_audio_context_get_error();
 }
 

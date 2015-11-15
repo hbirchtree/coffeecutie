@@ -7,7 +7,7 @@
 using namespace Coffee;
 using namespace Coffee::CDisplay;
 
-int main(int,char**)
+int32 coffee_main(int32,byte**)
 {
     Coffee::CoffeeInit();
 
@@ -64,3 +64,5 @@ int main(int,char**)
     delete renderer;
     return 0;
 }
+
+COFFEE_APPLICATION_MAIN(coffee_main)

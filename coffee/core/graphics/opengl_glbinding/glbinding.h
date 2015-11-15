@@ -1,8 +1,8 @@
-#ifndef GLBINDING
-#define GLBINDING
+#ifndef COFFEE_GRAPHICS_GLBINDING_H
+#define COFFEE_GRAPHICS_GLBINDING_H
 
 #include "coffee/core/coffee_types.h"
-#include "coffee/core/graphics/copengl_types.h"
+#include "coffee/core/graphics_apis/OpenGL"
 
 #include <glbinding/gl/gl.h>
 
@@ -252,8 +252,14 @@ constexpr coffeetype_mapping<CFBAttachment,GLenum> cfbattch_map[4] = {
     {CFBAttachment::DepthStencil,GL_DEPTH_STENCIL_ATTACHMENT},
 };
 
+constexpr coffeetype_mapping<CCullMode,GLenum> cculling_map[3] = {
+    {CCullMode::Back,GL_BACK},
+    {CCullMode::Front,GL_FRONT},
+    {CCullMode::Both,GL_FRONT_AND_BACK},
+};
+
 }
 }
 
-#endif // GLBINDING
+#endif // COFFEE_GRAPHICS_GLBINDING_H
 

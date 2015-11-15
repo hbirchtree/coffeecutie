@@ -160,6 +160,23 @@ struct _cbasic_vec4 : CVectors::_cbasic_tvector<T,4>
     {
         return (*this)[3];
     }
+
+    const T& r() const
+    {
+        return (*this)[0];
+    }
+    const T& g() const
+    {
+        return (*this)[1];
+    }
+    const T& b() const
+    {
+        return (*this)[2];
+    }
+    const T& a() const
+    {
+        return (*this)[3];
+    }
 };
 
 template<typename T> using _cbasic_quat = CVectors::_cbasic_tquaternion<T>;

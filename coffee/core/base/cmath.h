@@ -59,6 +59,12 @@ inline static scalar cfrand(const scalar& min, const scalar& max)
     return dist(rand_gen);
 }
 
+template<typename T>
+inline static T radians(const T& degrees)
+{
+    return degrees*CMath::pi/T(180);
+}
+
 }
 }
 

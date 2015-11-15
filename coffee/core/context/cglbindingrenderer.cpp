@@ -1,5 +1,5 @@
 #include "cglbindingrenderer.h"
-#include "coffee/core/graphics/cgraphicswrappers.h"
+#include "coffee/core/graphics_apis/OpenGL"
 
 #include <glbinding/ContextInfo.h>
 #include <glbinding/Version.h>
@@ -7,7 +7,7 @@
 #include <glbinding/Binding.h>
 #include <glbinding/Meta.h>
 
-#include "coffee/core/graphics/glbinding.h"
+#include "coffee/core/graphics/opengl_glbinding/glbinding.h"
 
 using namespace gl;
 using namespace Coffee::CDisplay;

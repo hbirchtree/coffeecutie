@@ -2,7 +2,7 @@
 #include <coffee/core/Graphics>
 #include <coffee/core/plat/application_start.h>
 
-#include "coffee/core/graphics/glbinding.h"
+#include <coffee/core/base/cmath_glm.h>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -268,8 +268,8 @@ public:
 
         coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
 
-        coffee_graphics_enable_blend(true);
-        coffee_graphics_enable_depth(true);
+        coffee_graphics_blend(true);
+        coffee_graphics_depth(true);
 
         int transform_index = 0;
 
@@ -278,44 +278,48 @@ public:
         drawcall.instanceCount = 1;
 
         CFramebuffer cfb;
-        coffee_graphics_alloc(&cfb);
-        cfb.size.w = 1280;
-        cfb.size.h = 720;
-
-        CTextureTools::CTextureData filler;
-        CTextureTools::coffee_create_texturesize(&filler,1280,720);
-        filler.format = CTexIntFormat::Depth;
-        filler.datatype = CDataType::UByte;
-
         CTexture dtex;
-        dtex.format = CTexFormat::Depth;
-        dtex.levels = 1;
-        dtex.textureType = CTexType::Tex2D;
-        coffee_graphics_alloc(&dtex);
-        coffee_graphics_activate(&dtex);
-        CTextureTools::coffee_graphics_tex_2d_define(&dtex,&filler);
-
         CTexture ctex;
-        ctex.format = CTexFormat::RGBA;
-        ctex.levels = 1;
-        ctex.textureType = CTexType::Tex2D;
-        coffee_graphics_alloc(&ctex);
-        coffee_graphics_activate(&ctex);
-        filler.format = CTexIntFormat::RGBA8;
-        CTextureTools::coffee_graphics_tex_2d_define(&ctex,&filler);
-
         CFramebufferAttachment fbatt;
-        fbatt.texture = &dtex;
-        fbatt.attachLevel = 0;
-        fbatt.level = 0;
-        fbatt.target = CFBAttachment::Depth;
-        coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
 
-        fbatt.texture = &ctex;
-        fbatt.attachLevel = 0;
-        fbatt.level = 0;
-        fbatt.target = CFBAttachment::Color;
-        coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+        {
+            coffee_graphics_alloc(&cfb);
+            cfb.size.w = 1280;
+            cfb.size.h = 720;
+
+            CTextureTools::CTextureData filler;
+            CTextureTools::coffee_create_texturesize(&filler,1280,720);
+            filler.format = CTexIntFormat::Depth;
+            filler.datatype = CDataType::UByte;
+
+            dtex.format = CTexFormat::Depth;
+            dtex.levels = 1;
+            dtex.textureType = CTexType::Tex2D;
+            coffee_graphics_alloc(&dtex);
+            coffee_graphics_activate(&dtex);
+            CTextureTools::coffee_graphics_tex_2d_define(&dtex,&filler);
+
+            ctex.format = CTexFormat::RGBA;
+            ctex.levels = 1;
+            ctex.textureType = CTexType::Tex2D;
+            coffee_graphics_alloc(&ctex);
+            coffee_graphics_activate(&ctex);
+            filler.format = CTexIntFormat::RGBA8;
+            CTextureTools::coffee_graphics_tex_2d_define(&ctex,&filler);
+
+            fbatt.texture = &dtex;
+            fbatt.attachLevel = 0;
+            fbatt.level = 0;
+            fbatt.target = CFBAttachment::Depth;
+            coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+
+            fbatt.texture = &ctex;
+            fbatt.attachLevel = 0;
+            fbatt.level = 0;
+            fbatt.target = CFBAttachment::Color;
+            coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+
+        }
 
         coffee_graphics_bind(&cfb);
 
@@ -384,19 +388,6 @@ private:
 
 int32 coffee_main(int32 argc, byte** argv)
 {
-    CMath::mat4 tmat;
-
-    CMath::quat q;
-
-    tmat = CMath::perspective(60.f,1.6f,0.1f,100.f);
-    tmat *= CMath::mat4_cast(q);
-    tmat = CMath::translate(tmat,CMath::vec3(1,2,3));
-
-    CGCamera cam;
-    cam.aspect = 1.6;
-
-    CMat4 cam_mat = coffee_graphics_gen_matrix_perspective(&cam);
-
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
     props.contextProperties.flags |= CGLContextProperties::GLDebug;

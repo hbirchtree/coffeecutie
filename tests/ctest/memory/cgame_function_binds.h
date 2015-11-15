@@ -1,8 +1,7 @@
 #ifndef CGAME_FUNCTION_BINDS
 #define CGAME_FUNCTION_BINDS
 
-#include <coffee/core/graphics/cbuffer.h>
-#include <coffee/core/graphics/ctexture.h>
+#include <coffee/core/graphics_apis/OpenGL>
 #include "tests/ctest/rendering/cmultidrawgraph.h"
 
 namespace Coffee{

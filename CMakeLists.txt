@@ -2,7 +2,9 @@ project( CoffeeCore )
 cmake_minimum_required( VERSION 3.1 )
 set ( CMAKE_BUILD_TYPE Debug )
 
-set ( COFFEE_BUILD_STATIC false )
+set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
+
+set ( COFFEE_BUILD_STATIC true )
 
 MACRO(GENERATE_DOCUMENTATION DOXYGEN_CONFIG_FILE)
 FIND_PACKAGE(Doxygen)
@@ -63,18 +65,19 @@ set ( CoffeeCore_SRCS
 
         coffee/core/functional/cqueuerunner.cpp
 
-        coffee/core/graphics/cbuffer.cpp
-        coffee/core/graphics/cshader.cpp
-        coffee/core/graphics/cframebuffer.cpp
         coffee/core/graphics/cgraphicsdata.cpp
-        coffee/core/graphics/cgraphicswrappers.cpp
-        coffee/core/graphics/cvertexarrayobject.cpp
-        coffee/core/graphics/ctexture.cpp
-        coffee/core/graphics/ctexture_dxtc.cpp
         coffee/core/graphics/cgraphics_quirks.cpp
-        coffee/core/graphics/glbinding.cpp
-        coffee/core/graphics/copengl_types.cpp
-        coffee/core/graphics/cuniformtypes.cpp
+
+        coffee/core/graphics/opengl_glbinding/cbuffer.cpp
+        coffee/core/graphics/opengl_glbinding/cshader.cpp
+        coffee/core/graphics/opengl_glbinding/cframebuffer.cpp
+        coffee/core/graphics/opengl_glbinding/cgraphicswrappers.cpp
+        coffee/core/graphics/opengl_glbinding/cvertexarrayobject.cpp
+        coffee/core/graphics/opengl_glbinding/ctexture.cpp
+        coffee/core/graphics/opengl_glbinding/ctexture_dxtc.cpp
+        coffee/core/graphics/opengl_glbinding/glbinding.cpp
+        coffee/core/graphics/opengl_glbinding/copengl_types.cpp
+        coffee/core/graphics/opengl_glbinding/cuniformtypes.cpp
 
         coffee/core/jobs/ctasksystem.cpp
 
@@ -122,11 +125,14 @@ set ( CBlamTesting_SRCS
         tests/cblam-testing/main.cpp
         )
 
-set ( CoffeeTest_SRCS
-        tests/ctest/main.cpp
+set ( CoffeeTestLib_SRCS
         tests/ctest/rendering/cmultidrawgraph.cpp
         tests/ctest/base_case.cpp
         tests/ctest/cdrenderer.cpp
+        )
+
+set ( CoffeeTest_SRCS
+        tests/ctest/main.cpp
         )
 
 set ( CoffeeTestHud_SRCS
@@ -157,7 +163,7 @@ add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
 add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})
 add_library( CAssimp ${COFFEE_LINK_OPT} ${CAssimp_SRCS})
 add_library( CImage ${COFFEE_LINK_OPT} ${CImage_SRCS})
-add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTest_SRCS} )
+add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTestLib_SRCS} )
 
 add_executable ( CBlamTesting ${CBlamTesting_SRCS} )
 add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
@@ -207,10 +213,7 @@ CAudio
 CAssimp
 )
 target_link_libraries ( CoffeeTest
-CoffeeCore
-CBlam
-CAudio
-CAssimp
+CoffeeTestLib
 )
 target_link_libraries ( CoffeeTestHud
 CoffeeCore

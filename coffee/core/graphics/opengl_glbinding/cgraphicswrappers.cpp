@@ -59,7 +59,7 @@ void coffee_graphics_multidraw(const CPrimitiveMode &mode, const CBuffer *buf)
                 sizeof(CGLDrawCall));
 }
 
-void coffee_graphics_enable_depth(bool enable)
+void coffee_graphics_depth(bool enable)
 {
     if(enable)
         glEnable(GL_DEPTH_TEST);
@@ -67,7 +67,7 @@ void coffee_graphics_enable_depth(bool enable)
         glDisable(GL_DEPTH_TEST);
 }
 
-void coffee_graphics_enable_blend(bool enable,bool additive)
+void coffee_graphics_blend(bool enable,bool additive)
 {
     if(enable)
     {
@@ -78,6 +78,39 @@ void coffee_graphics_enable_blend(bool enable,bool additive)
             glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     }else
         glDisable(GL_BLEND);
+}
+
+void coffee_graphics_culling(bool enable, CCullMode mode)
+{
+    if(enable)
+    {
+        glEnable(GL_CULL_FACE);
+        glCullFace(CG_GET(mode,cculling_map));
+    }
+    else
+        glDisable(GL_CULL_FACE);
+}
+
+void coffee_graphics_set_clearcolor(const CVec4 &color)
+{
+    glClearColor(color.r(),color.g(),color.b(),color.a());
+}
+
+void coffee_graphics_set_viewport(const CRectF &view)
+{
+    glViewport(view.x,view.y,view.w,view.h);
+}
+
+bool coffee_graphics_debug_filter_ignore_notifications(CGLReport *rep)
+{
+    if(rep->severity==GL_DEBUG_SEVERITY_NOTIFICATION)
+        return false;
+    return true;
+}
+
+bool coffee_graphics_debug_filter_all(CGLReport*)
+{
+    return true;
 }
 
 }

@@ -1,8 +1,7 @@
 #include "base_case.h"
 
-#include <coffee/core/graphics/cgraphics_quirks.h>
+#include <coffee/core/Graphics>
 #include <coffee/assimp/assimpfun.h>
-#include <coffee/core/graphics/ctexture_dxtc.h>
 
 namespace Coffee{
 namespace CRendering{
@@ -395,11 +394,11 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
             (&ctxt->renderdata.bufferbindings,1);
 
     CGCamera* cam = &ctxt->transforms.cameras.d[0];
-    cam->rotation.w() = 2;
+    cam->rotation.w() = 1;
     cam->fieldOfView = 60.f;
     cam->aspect = 1.6f;
     cam->zVals.far = 100.f;
-    cam->zVals.near = 0.1f;
+    cam->zVals.near = 1.f;
     coffee_graphics_gen_matrix_perspective(cam);
 
     CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];

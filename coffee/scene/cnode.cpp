@@ -33,7 +33,12 @@ CMath::mat4 _coffee_node_get_transform(const CNode* node)
 
 CMat4 coffee_node_get_transform(const CNode *node)
 {
-    return _coffee_math_copy_mat4(_coffee_node_get_transform(node));
+    if(!node || !node->transform)
+        return CMat4(1);
+
+    return coffee_node_get_transform(node->parent) * (*node->transform);
+
+//    return _coffee_math_copy_mat4(_coffee_node_get_transform(node));
 }
 
 }
