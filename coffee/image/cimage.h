@@ -1,8 +1,7 @@
 #ifndef CIMAGE_LIB
 #define CIMAGE_LIB
 
-#include <coffee/core/coffee_types.h>
-#include <coffee/core/base/cfiles.h>
+#include <coffee/core/Base>
 
 namespace Coffee{
 namespace CStbImageLib{

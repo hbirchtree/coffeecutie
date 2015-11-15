@@ -1,7 +1,8 @@
 #ifndef COFFEE_THREADING
 #define COFFEE_THREADING
 
-#include "coffee/core/coffee_types.h"
+#include "coffee/core/Types"
+
 #include <thread>
 #include <functional>
 #include <future>

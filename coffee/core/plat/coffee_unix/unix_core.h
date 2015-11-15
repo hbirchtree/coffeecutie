@@ -11,7 +11,7 @@
  *
  */
 
-#include "coffee/core/coffee_types.h"
+#include "coffee/core/Types"
 
 #include <sys/mman.h>
 #include <sys/stat.h>

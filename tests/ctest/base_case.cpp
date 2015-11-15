@@ -521,7 +521,7 @@ bool coffee_test_load(game_context *ctxt)
             coffee_file_memmap(&bitmfile);
             coffee_file_memmap(&mapfile);
             const CBlam::blam_file_header* map =
-                    CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version_pc);
+                    CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version::pc);
             CBlam::blam_tag_index tags = CBlam::blam_tag_index_get(map);
 
             const CBlam::blam_index_item* base_idx = CBlam::blam_tag_index_get_items(map);

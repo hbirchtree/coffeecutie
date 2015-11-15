@@ -1,7 +1,7 @@
 #ifndef CBLAM_STRUCTURES
 #define CBLAM_STRUCTURES
 
-#include <coffee/core/coffee_types.h>
+#include <coffee/core/Types>
 
 namespace Coffee{
 namespace CBlam{
@@ -14,20 +14,20 @@ typedef byte bl_footer[4];
 /*!
  * \brief Blam maptypes. Names being obvious, the UI type does not give a playable map.
  */
-enum blam_maptype
+enum class blam_maptype : int32
 {
-    blam_maptype_singleplayer  = 0, /*!< A single-player map, typically with cutscenes and AI*/
-    blam_maptype_multiplayer   = 1, /*!< A multi-player map, typically with up to 16 players*/
-    blam_maptype_ui            = 2, /*!< A UI map, used only in the main menu*/
+    singleplayer = 0, /*!< A single-player map, typically with cutscenes and AI*/
+    multiplayer  = 1, /*!< A multi-player map, typically with up to 16 players*/
+    ui           = 2, /*!< A UI map, used only in the main menu*/
 };
 
 /*!
  * \brief Possible Blam versions which we may encounter. The different formats work in different ways. For instance, Xbox stores bitmaps and other data in a single file while PC spreads it across "bitmaps.map" and "sounds.map". Both ways are necessary for parsing to happen correctly.
  */
-enum blam_versions
+enum class blam_version : int32
 {
-    blam_version_xbox   = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
-    blam_version_pc     = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
+    xbox   = 5, /*!< The 2001 version of Halo: Combat Evolved for Xbox*/
+    pc     = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
 };
 
 constexpr cstring blam_index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
@@ -39,7 +39,7 @@ constexpr cstring blam_header_head = "deah"; /*!< Header of file header*/
 constexpr cstring blam_header_foot = "toof"; /*!< Footer of file header*/
 
 constexpr int32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
-constexpr struct mapnames { byte inname[32]; byte outname[32];} blam_map_names[28] = {
+constexpr _cbasic_static_map<bl_string,bl_string,28> blam_map_names = {
     //Single player maps
 {"a10", "Pillar of Autumn"},
 {"a30", "Halo"},
@@ -79,7 +79,7 @@ constexpr struct mapnames { byte inname[32]; byte outname[32];} blam_map_names[2
 struct blam_file_header
 {
     bl_header id; /*!< Header value, should correspond with specific data*/
-    int32   version; /*!< Version of Halo, determines the process*/
+    blam_version version; /*!< Version of Halo, determines the process*/
     int32   decomp_len; /*!< Decompressed length, for Xbox where format is compressed. PC is uncompressed*/
     int32   unknown1;
     int32   tagIndexOffset; /*!< Offset to tag index*/
@@ -87,7 +87,7 @@ struct blam_file_header
     int32   reserved_1[2];
     bl_string name; /*!< Name identifier for map*/
     bl_string buildDate; /*!< Build date for the map file*/
-    int32   mapType; /*!< Type of map, determines whether it is playable*/
+    blam_maptype mapType; /*!< Type of map, determines whether it is playable*/
     int32   unknown_4;
     int32   reserved_2[485];
     bl_footer footer; /*!< Footer value, should correspond with specific data*/
@@ -98,16 +98,16 @@ struct blam_file_header
  */
 struct blam_tag_index
 {
-    int32   index_magic; /*! A magic number used to configure the pointers to data*/
-    int32   baseTag; /*! Base tag from which all tag IDs start from for this index*/
-    int32   vertexSize; /*! Size of vertex data*/
-    int32   tagCount; /*! Number of tags starting from the base tag*/
-    int32   vertexObjectCount; /*! Number of vertex objects*/
-    uint32  vertexOffset; /*! Offset to vertex data*/
-    int32   indicesObjectCount; /*! Number of index objects*/
-    uint32  indicesOffset; /*! Offset to index objects*/
-    int32   modelRawDataSize; /*! Raw model data size*/
-    int32   tagStart; /*! ???*/
+    int32   index_magic; /*!< A magic number used to configure the pointers to data*/
+    int32   baseTag; /*!< Base tag from which all tag IDs start from for this index*/
+    int32   vertexSize; /*!< Size of vertex data*/
+    int32   tagCount; /*!< Number of tags starting from the base tag*/
+    int32   vertexObjectCount; /*!< Number of vertex objects*/
+    uint32  vertexOffset; /*!< Offset to vertex data*/
+    int32   indicesObjectCount; /*!< Number of index objects*/
+    uint32  indicesOffset; /*!< Offset to index objects*/
+    int32   modelRawDataSize; /*!< Raw model data size*/
+    int32   tagStart; /*!< ???*/
 };
 
 /*!
@@ -115,10 +115,10 @@ struct blam_tag_index
  */
 struct blam_index_item
 {
-    bl_tag  tagclass[3]; /*! Strings which identify its class*/
-    int32   tagId; /*! A number representing its ID, only used for enumeration*/
+    bl_tag  tagclass[3]; /*!< Strings which identify its class*/
+    int32   tagId; /*!< A number representing its ID, only used for enumeration*/
     uint32  string_offset; /*! Magic data offset to a full string for the item*/
-    int32   offset; /*! A byte offset to associated data*/
+    int32   offset; /*!< A byte offset to associated data*/
     int32   zeroes[2];
 };
 
@@ -128,8 +128,8 @@ struct blam_index_item
 template<typename T>
 struct blam_reflexive
 {
-    int32 count; /*! Size of data*/
-    int32 offset; /*! Offset to data within file (this will only refer to data within the map file)*/
+    int32 count; /*!< Size of data*/
+    int32 offset; /*!< Offset to data within file (this will only refer to data within the map file)*/
     int32 zero;
 
     /*!

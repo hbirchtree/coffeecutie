@@ -1,7 +1,7 @@
 #ifndef COPENAL_HEADER
 #define COPENAL_HEADER
 
-#include <coffee/core/coffee_types.h>
+#include <coffee/core/Types>
 #include <coffee/core/coffee_macros.h>
 #include <coffee/core/base/cdebug.h>
 #include <coffee/audio/caudio.h>

@@ -8,14 +8,14 @@ cstring blam_file_header_full_mapname(
 {
     for(int32 i=0;i<blam_num_map_names;i++)
     {
-        if(c_strcmp(map->name,blam_map_names[i].inname))
-            return blam_map_names[i].outname;
+        if(c_strcmp(map->name,blam_map_names[i].key))
+            return blam_map_names[i].value;
     }
     return "";
 }
 
 blam_file_header *blam_file_header_get(
-        void *baseptr, int32 expectedVersion)
+        void *baseptr, blam_version expectedVersion)
 {
     blam_file_header* fh = (blam_file_header*)baseptr;
     if(

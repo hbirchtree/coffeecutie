@@ -3,9 +3,9 @@
 
 #include <type_traits>
 #include <cmath>
-#include "types/vectors.h"
-#include "types/matrices.h"
-#include "types/quaternion.h"
+#include "vectors.h"
+#include "matrices.h"
+#include "quaternion.h"
 
 namespace Coffee{
 

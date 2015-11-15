@@ -5,10 +5,10 @@
 #include <map>
 #include <vector>
 
-#include "plat/cmemory.h"
-#include "coffee_vector_types.h"
-#include "coffee_composite_types.h"
-#include "plat/plat_timers.h"
+#include "coffee/core/plat/cmemory.h"
+#include "vector_types.h"
+#include "composite_types.h"
+#include "coffee/core/plat/plat_timers.h"
 
 namespace Coffee{
 

@@ -1,7 +1,7 @@
 #ifndef COFFEE_DEBUG_CLASS_FRAMECOUNTER_H
 #define COFFEE_DEBUG_CLASS_FRAMECOUNTER_H
 
-#include "coffee/core/coffee_types.h"
+#include "coffee/core/Types"
 
 namespace Coffee{
 namespace CFunctional{

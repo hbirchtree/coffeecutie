@@ -1,7 +1,7 @@
 #ifndef ENVIRONMENT_DETAILS
 #define ENVIRONMENT_DETAILS
 
-#include "../coffee_types.h"
+#include "coffee/core/Types"
 #include "platform_detect.h"
 #include "argument_parse.h"
 #include <stdlib.h>

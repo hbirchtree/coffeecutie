@@ -2,7 +2,8 @@
 #define COFFEE_COMPOSITE_TYPES_H
 
 #include <cmath>
-#include "coffee_basetypes.h"
+#include "basetypes.h"
+#include "map.h"
 
 namespace Coffee{
 

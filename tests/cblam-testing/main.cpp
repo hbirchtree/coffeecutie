@@ -22,7 +22,7 @@ int coffee_main(int32 argv,byte** argc)
     coffee_file_memmap(&bitmfile);
     coffee_file_memmap(&mapfile);
     const blam_file_header* map =
-            blam_file_header_get(mapfile.data,blam_version_pc);
+            blam_file_header_get(mapfile.data,blam_version::pc);
     blam_tag_index tags = blam_tag_index_get(map);
 
     const blam_scenario* scn = blam_scn_get(map,&tags);

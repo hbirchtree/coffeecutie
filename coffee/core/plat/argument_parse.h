@@ -6,7 +6,7 @@
 
 #include "coffee/core/plat/platform_detect.h"
 #include "coffee/core/coffee_macros.h"
-#include "coffee/core/coffee_types.h"
+#include "coffee/core/Types"
 #include <vector>
 
 using namespace Coffee;

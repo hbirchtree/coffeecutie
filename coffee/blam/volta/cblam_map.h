@@ -1,7 +1,7 @@
 #ifndef CBLAM_MAP
 #define CBLAM_MAP
 
-#include <coffee/core/coffee_types.h>
+#include <coffee/core/Types>
 #include "cblam_structures.h"
 
 namespace Coffee{
@@ -21,8 +21,7 @@ extern cstring blam_file_header_full_mapname(
  * \param expectedVersion Expected version of Halo to be parsed. If version does not match, fail.
  * \return Returns a casted pointer on success, nullptr on failure
  */
-extern blam_file_header* blam_file_header_get(
-        void* baseptr, int32 expectedVersion);
+extern blam_file_header* blam_file_header_get(void* baseptr, blam_version expectedVersion);
 
 /*!
  * \brief Sets index magic for a tag index and modifies it with the correct magic number.

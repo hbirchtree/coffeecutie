@@ -1,7 +1,7 @@
 #ifndef CBLAM_MAP
 #define CBLAM_MAP
 
-#include <coffee/core/coffee_types.h>
+#include <coffee/core/Types>
 
 namespace Coffee{
 

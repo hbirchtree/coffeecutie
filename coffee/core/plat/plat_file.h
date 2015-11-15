@@ -1,7 +1,7 @@
 #ifndef COFFEE_PLAT_FILE_H
 #define COFFEE_PLAT_FILE_H
 
-#include "coffee/core/coffee_basetypes.h"
+#include "coffee/core/types/basetypes.h"
 
 namespace Coffee{
 namespace CResources{
