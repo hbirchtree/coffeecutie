@@ -92,37 +92,30 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
 
     void operator*=(const _cbasic_tmatrix<T,Size>& matrix)
     {
-        _cbasic_tmatrix<T,Size> tmat(0);
-
-        for(size_t i=0;i<Size;i++)
-            for(size_t j=0;j<Size;j++)
-                for(size_t k=0;k<Size;k++)
-                    tmat[i][j] += (*this)[i][k] * matrix[k][j];
-
-        *this = tmat;
+        *this = (*this) * matrix;
     }
-    void operator/=(const _cbasic_tmatrix<T,Size>& matrix)
-    {
-        for(size_t y=0;y<Size;y++)
-            for(size_t x=0;x<Size;x++)
-                (*this)[x][y] /= matrix[x][y];
-    }
-    _cbasic_tmatrix<T,Size> operator*(const _cbasic_tmatrix<T,Size>& matrix)
-    {
-        _cbasic_tmatrix<T,Size> newmat(*this);
+//    void operator/=(const _cbasic_tmatrix<T,Size>& matrix)
+//    {
+//        for(size_t y=0;y<Size;y++)
+//            for(size_t x=0;x<Size;x++)
+//                (*this)[x][y] /= matrix[x][y];
+//    }
+//    _cbasic_tmatrix<T,Size> operator*(const _cbasic_tmatrix<T,Size>& matrix)
+//    {
+//        _cbasic_tmatrix<T,Size> newmat(*this);
 
-        newmat *= matrix;
+//        newmat *= matrix;
 
-        return newmat;
-    }
-    _cbasic_tmatrix<T,Size> operator/(const _cbasic_tmatrix<T,Size>& matrix)
-    {
-        _cbasic_tmatrix<T,4> newmat(*this);
+//        return newmat;
+//    }
+//    _cbasic_tmatrix<T,Size> operator/(const _cbasic_tmatrix<T,Size>& matrix)
+//    {
+//        _cbasic_tmatrix<T,4> newmat(*this);
 
-        newmat /= matrix;
+//        newmat /= matrix;
 
-        return newmat;
-    }
+//        return newmat;
+//    }
 
     void operator*=(const T& val)
     {
@@ -155,6 +148,34 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
 
     _cbasic_tvector<T,Size> d[Size];
 };
+
+template<typename T>
+_cbasic_tmatrix<T,4> operator*(_cbasic_tmatrix<T,4> const& m1, _cbasic_tmatrix<T,4> const& m2)
+{
+    _cbasic_tmatrix<T,4> res(0);
+
+    res[0] = m1[0]*m2[0][0]
+            + m1[1]*m2[0][1]
+            + m1[2]*m2[0][2]
+            + m1[3]*m2[0][3];
+
+    res[1] = m1[0]*m2[1][0]
+            + m1[1]*m2[1][1]
+            + m1[2]*m2[1][2]
+            + m1[3]*m2[1][3];
+
+    res[2] = m1[0]*m2[2][0]
+            + m1[1]*m2[2][1]
+            + m1[2]*m2[2][2]
+            + m1[3]*m2[2][3];
+
+    res[3] = m1[0]*m2[3][0]
+            + m1[1]*m2[3][1]
+            + m1[2]*m2[3][2]
+            + m1[3]*m2[3][3];
+
+    return res;
+}
 
 template<typename T> _cbasic_tmatrix<T,4> translation(
         const _cbasic_tmatrix<T,4>& mat,

@@ -96,5 +96,10 @@ void coffee_graphics_unbind(const CVertexArrayObject*)
     glBindVertexArray(0);
 }
 
+void coffee_graphics_vao_attribute_index_buffer(CVertexArrayObject *vao, const CBuffer *ibuffer)
+{
+    glVertexArrayElementBuffer(vao->handle,ibuffer->handle);
+}
+
 }
 }

@@ -1,4 +1,4 @@
-set (COFFEE_EXAMPLE_DIR tests)
+set (COFFEE_EXAMPLE_DIR examples)
 
 include_subproject (${COFFEE_EXAMPLE_DIR}/caudio-test)
 include_subproject (${COFFEE_EXAMPLE_DIR}/cblam-testing)

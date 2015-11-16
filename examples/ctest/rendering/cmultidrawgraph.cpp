@@ -76,7 +76,7 @@ void coffee_multidraw_load_buffer(
 
 void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &desc)
 {
-    coffee_graphics_bind(set.vao);
+    coffee_graphics_activate(set.vao);
     for(CVertexAttribute& attr : desc.attributes){
         coffee_graphics_vao_attribute_buffer(set.vao,attr,*attr.bnd);
         coffee_graphics_vao_attribute_format(set.vao,attr,*attr.fmt);
@@ -84,9 +84,8 @@ void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &des
         coffee_graphics_vao_attribute_bind_buffer(set.vao,*attr.bnd);
         set.bindings.push_back(attr.bnd);
     }
-
-    coffee_graphics_bind(set.index->buffer);
-    coffee_graphics_unbind(set.vao);
+    coffee_graphics_activate(set.index->buffer);
+    coffee_graphics_vao_attribute_index_buffer(set.vao,set.index->buffer);
 }
 
 bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)

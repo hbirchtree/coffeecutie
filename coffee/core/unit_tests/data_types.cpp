@@ -5,6 +5,7 @@
 #include "coffee/core/base/cmath.h"
 #include "coffee/core/base/cmath_glm.h"
 #include "coffee/core/graphics/cgraphicsdata.h"
+#include "coffee/scene/cnode.h"
 
 #include <glbinding/gl/gl.h>
 
@@ -123,6 +124,30 @@ void matrix_tests()
         glm_mat = CMath::translate(glm_mat,glm::vec3(1,2,3));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
+    }
+
+    //Test node transformations
+    {
+        CGraphicsData::CTransform t1,t2;
+
+        t1.position = CVec3(1,2,3);
+        t2.position = CVec3(3,4,5);
+
+        t1.scale = CVec3(3);
+        t2.scale = CVec3(0.5);
+
+        CGraphicsData::coffee_graphics_gen_matrix(&t1);
+        CGraphicsData::coffee_graphics_gen_matrix(&t2);
+
+        CGraphicsData::CNode root;
+        root.transform = &t1.matrix;
+        CGraphicsData::CNode inherited;
+        inherited.transform = &t2.matrix;
+
+        CMat4 d1 = CGraphicsData::coffee_node_get_transform(&inherited);
+        CMat4 d2 = CGraphicsData::coffee_node_glm_get_transform(&inherited);
+
+        CASSERT_MEM(&d1,&d2,sizeof(CMat4));
     }
 }
 

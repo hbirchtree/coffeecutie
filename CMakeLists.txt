@@ -27,5 +27,5 @@ else()
 endif()
 
 include_subproject(coffee)
-include_subproject(tests)
+include_subproject(examples)
 include_subproject(docs)

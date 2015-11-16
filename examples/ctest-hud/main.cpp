@@ -84,7 +84,7 @@ public:
             "} vdata;"
             "void main(){"
             "   vec4 smp = texture(diffsamp,vdata.vtex);"
-//            "   vec4 smp = vec4(1.0);"
+//            "   vec4 smp = vec4(1.0,0,0,1.0);"
             "   Out_color = smp;"
             "}"
         };
@@ -108,99 +108,104 @@ public:
         CBuffer texcoords;
         CBuffer indices;
         CBuffer transforms[3];
-        texcoords.type = CBufferType::Array;
-        vertices.type = CBufferType::Array;
-        indices.type = CBufferType::Index;
-        coffee_graphics_alloc(&vertices);
-        coffee_graphics_alloc(&texcoords);
-        coffee_graphics_alloc(&indices);
-        coffee_graphics_alloc(3,CBufferType::Array,(CBuffer*)transforms);
 
-        coffee_graphics_activate(&texcoords);
-        coffee_graphics_activate(&vertices);
-        coffee_graphics_activate(&indices);
-
-        coffee_graphics_buffer_store(&vertices,
-                                     vertexdata,
-                                     sizeof(vertexdata),
-                                     CBufferUsage::StaticDraw);
-        coffee_graphics_buffer_store(&texcoords,
-                                     texdata,
-                                     sizeof(texdata),
-                                     CBufferUsage::StaticDraw);
-        coffee_graphics_buffer_store(&indices,
-                                     indexdata,
-                                     sizeof(indexdata),
-                                     CBufferUsage::StaticDraw);
-
-        CVertexArrayObject vao;
-        coffee_graphics_alloc(&vao);
-        coffee_graphics_bind(&vao);
-
-        CVertexBufferBinding vrt_bind;
-        vrt_bind.buffer = &vertices;
-        vrt_bind.stride = sizeof(CVec3);
-
-        CVertexBufferBinding tex_bind;
-        tex_bind.buffer = &texcoords;
-        tex_bind.stride = sizeof(CVec2);
-
-        CVertexFormat vrt_fmt;
-        vrt_fmt.offset = 0;
-        vrt_fmt.size = 3;
-        vrt_fmt.type = CDataType::Scalar;
-
-        CVertexFormat tex_fmt;
-        tex_fmt.offset = 0;
-        tex_fmt.size = 2;
-        tex_fmt.type = CDataType::Scalar;
-
-        CVertexAttribute vrt_att;
-        vrt_att.attribIdx = 0;
-        vrt_att.bnd = &vrt_bind;
-        vrt_att.fmt = &vrt_fmt;
-
-        CVertexAttribute tex_att;
-        tex_att.attribIdx = 1;
-        tex_att.bnd = &tex_bind;
-        tex_att.fmt = &tex_fmt;
-
-        coffee_graphics_vao_attribute_format(&vao,vrt_att,vrt_fmt);
-        coffee_graphics_vao_attribute_buffer(&vao,vrt_att,vrt_bind);
-        coffee_graphics_vao_attribute_bind_buffer(&vao,vrt_bind);
-
-        coffee_graphics_vao_attribute_format(&vao,tex_att,tex_fmt);
-        coffee_graphics_vao_attribute_buffer(&vao,tex_att,tex_bind);
-        coffee_graphics_vao_attribute_bind_buffer(&vao,tex_bind);
-
-        CVertexFormat mat_fmt;
-        mat_fmt.offset = 0;
-        mat_fmt.size = 4;
-        mat_fmt.type = CDataType::Scalar;
-
-        CVertexBufferBinding mat_bnd[4];
-
-        for(int i=0;i<4;i++)
         {
-            CVertexBufferBinding* bnd = &mat_bnd[i];
-            bnd->binding = 2+i;
-            bnd->buffer = &transforms[0];
-            bnd->offset = sizeof(CVec4)*i;
-            bnd->stride = sizeof(CMat4);
-            bnd->divisor = 1;
-            CVertexAttribute attr;
-            attr.attribIdx = 2+i;
-            attr.bnd = bnd;
-            attr.fmt = &mat_fmt;
+            texcoords.type = CBufferType::Array;
+            vertices.type = CBufferType::Array;
+            indices.type = CBufferType::Index;
+            coffee_graphics_alloc(&vertices);
+            coffee_graphics_alloc(&texcoords);
+            coffee_graphics_alloc(&indices);
+            coffee_graphics_alloc(3,CBufferType::Array,(CBuffer*)transforms);
 
-            coffee_graphics_vao_attribute_format(&vao,attr,mat_fmt);
-            coffee_graphics_vao_attribute_buffer(&vao,attr,*bnd);
+            coffee_graphics_activate(&texcoords);
+            coffee_graphics_activate(&vertices);
+            coffee_graphics_activate(&indices);
+
+            coffee_graphics_buffer_store(&vertices,
+                                         vertexdata,
+                                         sizeof(vertexdata),
+                                         CBufferUsage::StaticDraw);
+            coffee_graphics_buffer_store(&texcoords,
+                                         texdata,
+                                         sizeof(texdata),
+                                         CBufferUsage::StaticDraw);
+            coffee_graphics_buffer_store(&indices,
+                                         indexdata,
+                                         sizeof(indexdata),
+                                         CBufferUsage::StaticDraw);
         }
 
-        coffee_graphics_bind(&indices);
+        CVertexArrayObject vao;
+        CVertexBufferBinding tex_bind;
+        CVertexBufferBinding vrt_bind;
+        CVertexFormat mat_fmt;
+        CVertexBufferBinding mat_bnd[4];
+
+        {
+            coffee_graphics_alloc(&vao);
+            coffee_graphics_bind(&vao);
+
+            vrt_bind.buffer = &vertices;
+            vrt_bind.stride = sizeof(CVec3);
+
+            tex_bind.buffer = &texcoords;
+            tex_bind.stride = sizeof(CVec2);
+
+            CVertexFormat vrt_fmt;
+            vrt_fmt.offset = 0;
+            vrt_fmt.size = 3;
+            vrt_fmt.type = CDataType::Scalar;
+
+            CVertexFormat tex_fmt;
+            tex_fmt.offset = 0;
+            tex_fmt.size = 2;
+            tex_fmt.type = CDataType::Scalar;
+
+            CVertexAttribute vrt_att;
+            vrt_att.attribIdx = 0;
+            vrt_att.bnd = &vrt_bind;
+            vrt_att.fmt = &vrt_fmt;
+
+            CVertexAttribute tex_att;
+            tex_att.attribIdx = 1;
+            tex_att.bnd = &tex_bind;
+            tex_att.fmt = &tex_fmt;
+
+            coffee_graphics_vao_attribute_format(&vao,vrt_att,vrt_fmt);
+            coffee_graphics_vao_attribute_buffer(&vao,vrt_att,vrt_bind);
+            coffee_graphics_vao_attribute_bind_buffer(&vao,vrt_bind);
+
+            coffee_graphics_vao_attribute_format(&vao,tex_att,tex_fmt);
+            coffee_graphics_vao_attribute_buffer(&vao,tex_att,tex_bind);
+            coffee_graphics_vao_attribute_bind_buffer(&vao,tex_bind);
+
+            mat_fmt.offset = 0;
+            mat_fmt.size = 4;
+            mat_fmt.type = CDataType::Scalar;
+
+
+            for(int i=0;i<4;i++)
+            {
+                CVertexBufferBinding* bnd = &mat_bnd[i];
+                bnd->binding = 2+i;
+                bnd->buffer = &transforms[0];
+                bnd->offset = sizeof(CVec4)*i;
+                bnd->stride = sizeof(CMat4);
+                bnd->divisor = 1;
+                CVertexAttribute attr;
+                attr.attribIdx = 2+i;
+                attr.bnd = bnd;
+                attr.fmt = &mat_fmt;
+
+                coffee_graphics_vao_attribute_format(&vao,attr,mat_fmt);
+                coffee_graphics_vao_attribute_buffer(&vao,attr,*bnd);
+            }
+            coffee_graphics_vao_attribute_index_buffer(&vao,&indices);
+        }
 
         CTransform root;
-        root.position = CVec3(0,-0.5,0);
+        root.position = CVec3(0,0,0);
 
         CGCamera camera;
         camera.aspect = 1.6f;
@@ -218,6 +223,14 @@ public:
 
         CMat4 wt = coffee_node_get_transform(&worldNode);
         CMat4 rt = coffee_node_get_transform(&rootNode);
+
+//        glm::mat4 matrix = glm::perspective(60.f,1.6f,1.0f,100.f);
+//        matrix *= glm::mat4_cast(glm::quat(2,0,0,0));
+//        matrix = glm::translate(matrix,glm::vec3(0,0,-3));
+
+//        matrix = glm::scale(matrix,glm::vec3(1,1,1));
+//        matrix *= glm::mat4_cast(glm::quat(2,0,0,0));
+//        matrix = glm::translate(matrix,glm::vec3(0));
 
         for(int i=0;i<3;i++)
         {
@@ -240,33 +253,36 @@ public:
         CStbImageLib::CStbImage ptext;
         CStbImageLib::coffee_stb_image_load(&ptext,&texture);
 
-        CTexture gltext;
-        gltext.textureType = CTexType::Tex2D;
-        gltext.format = CTexFormat::RGBA;
-        coffee_graphics_alloc(&gltext);
-        coffee_graphics_activate(&gltext);
-        CTextureTools::CTextureData gtexdata;
-        gtexdata.data = ptext.data;
-        gtexdata.datatype = CDataType::UByte;
-        CTextureTools::coffee_create_texturesize(&gtexdata,ptext.size.w,ptext.size.h);
-        gtexdata.format = CTexIntFormat::RGBA8;
-
-        CTextureTools::coffee_graphics_tex_define(&gltext,&gtexdata);
-        CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
-
-        CStbImageLib::coffee_stb_image_free(&ptext);
-
-        coffee_graphics_tex_mipmap(&gltext);
-
-        coffee_graphics_tex_get_handle(&gltext);
-        coffee_graphics_tex_make_resident(&gltext);
-
         CUniform texuni;
-        texuni.object_name = "diffsamp";
+        CTexture gltext;
 
-        coffee_graphics_uniform_get(&fragshader,&texuni);
+        {
+            gltext.textureType = CTexType::Tex2D;
+            gltext.format = CTexFormat::RGBA;
+            coffee_graphics_alloc(&gltext);
+            coffee_graphics_activate(&gltext);
+            CTextureTools::CTextureData gtexdata;
+            gtexdata.data = ptext.data;
+            gtexdata.datatype = CDataType::UByte;
+            CTextureTools::coffee_create_texturesize(&gtexdata,ptext.size.w,ptext.size.h);
+            gtexdata.format = CTexIntFormat::RGBA8;
 
-        coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
+            CTextureTools::coffee_graphics_tex_define(&gltext,&gtexdata);
+            CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
+
+            CStbImageLib::coffee_stb_image_free(&ptext);
+
+            coffee_graphics_tex_mipmap(&gltext);
+
+            coffee_graphics_tex_get_handle(&gltext);
+            coffee_graphics_tex_make_resident(&gltext);
+
+            texuni.object_name = "diffsamp";
+
+            coffee_graphics_uniform_get(&fragshader,&texuni);
+
+            coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
+        }
 
         coffee_graphics_blend(true);
         coffee_graphics_depth(true);
@@ -321,7 +337,7 @@ public:
 
         }
 
-        coffee_graphics_bind(&cfb);
+//        coffee_graphics_bind(&cfb);
 
         this->showWindow();
         while(!closeFlag())
@@ -340,7 +356,7 @@ public:
             this->swapBuffers();
             this->pollEvents();
         }
-        coffee_graphics_unbind(&cfb);
+//        coffee_graphics_unbind(&cfb);
 
         coffee_graphics_tex_dump(&dtex,"depth.png");
 
@@ -383,8 +399,6 @@ public:
 private:
     CQuat t;
 };
-
-#include <coffee/core/base/cmath_glm.h>
 
 int32 coffee_main(int32 argc, byte** argv)
 {

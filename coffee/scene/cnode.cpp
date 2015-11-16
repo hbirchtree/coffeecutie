@@ -24,21 +24,24 @@ CMat4 _coffee_math_copy_mat4(const CMath::mat4& mat)
 CMath::mat4 _coffee_node_get_transform(const CNode* node)
 {
     if(!node || !node->transform)
-        return CMath::mat4(1);
+        return CMath::mat4();
 
     CMath::mat4* matrix = (CMath::mat4*)node->transform;
 
-    return _coffee_node_get_transform(node->parent)*(*matrix);
+    return (*matrix)*_coffee_node_get_transform(node->parent);
 }
 
 CMat4 coffee_node_get_transform(const CNode *node)
 {
     if(!node || !node->transform)
-        return CMat4(1);
+        return CMat4();
 
-    return coffee_node_get_transform(node->parent) * (*node->transform);
+    return (*node->transform)*coffee_node_get_transform(node->parent);
+}
 
-//    return _coffee_math_copy_mat4(_coffee_node_get_transform(node));
+CMat4 coffee_node_glm_get_transform(const CNode *node)
+{
+    return _coffee_math_copy_mat4(_coffee_node_get_transform(node));
 }
 
 }

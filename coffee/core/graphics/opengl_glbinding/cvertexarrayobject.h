@@ -100,6 +100,14 @@ extern void coffee_graphics_vao_attribute_buffer(
         CVertexArrayObject* vao, const CVertexAttribute &attr,
         const CVertexBufferBinding& buf);
 /*!
+ * \brief Attach index buffer to vertex array object
+ * \param vao
+ * \param ibuffer
+ */
+extern void coffee_graphics_vao_attribute_index_buffer(
+        CVertexArrayObject* vao,
+        const CBuffer* ibuffer);
+/*!
  * \brief Bind buffer for VAO. This is done before a VAO is rendered
  * \param vao VAO to bind with
  * \param buf Buffer binding to bind
