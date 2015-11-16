@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdexcept>
 
+#define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
+
 constexpr Coffee::cstring print_color_debug = "\033[1m\033[44m";
 constexpr Coffee::cstring print_color_warning = "\033[1m\033[43m";
 constexpr Coffee::cstring print_color_stub = "\033[1m\033[42m";
@@ -19,6 +21,7 @@ constexpr Coffee::cstring print_color_reset = "\033[0m";
  */
 inline static void C_UNUSED(...)
 {
+    (void)0;
 }
 
 /*!
