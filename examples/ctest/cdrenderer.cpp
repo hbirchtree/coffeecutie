@@ -92,7 +92,7 @@ void CDRenderer::run()
         //Rendering part
 
         game->transforms.transforms.d[0].rotation =
-                CVectors::normalize(
+                CVectors::normalize_quat(
                     CQuat(2,0,-0.1*deltaT,0)*
                     game->transforms.transforms.d[0].rotation);
 //        game->transforms.cameras.d[0].position.z = CMath::fmod(contextTime()*4,90.0);

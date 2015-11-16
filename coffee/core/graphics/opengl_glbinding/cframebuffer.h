@@ -28,7 +28,11 @@ struct CFramebufferAttachment
     CGint level;
 };
 
-static const CFramebuffer coffee_default_framebuffer;
+/*!
+ * \brief Get the object representing the default framebuffer
+ * \return A pointer to the default framebuffer
+ */
+extern const CFramebuffer &coffee_graphics_framebuffer_get_default();
 
 /*!
  * \brief Allocate framebuffer object
@@ -81,7 +85,7 @@ extern bool coffee_graphics_framebuffer_check_valid_safe(const CFramebuffer* fb)
  * \param attachment
  */
 extern void coffee_graphics_framebuffer_attach_texture(
-        const CFramebuffer *fb,
+        CFramebuffer *fb,
         const CFramebufferAttachment* attachment);
 /*!
  * \brief Attach 2D texture to framebuffer for rendering
@@ -89,7 +93,7 @@ extern void coffee_graphics_framebuffer_attach_texture(
  * \param attachment
  */
 extern void coffee_graphics_framebuffer_attach_texture_safe(
-        const CFramebuffer *fb,
+        CFramebuffer *fb,
         const CFramebufferAttachment* attachment);
 
 /*!

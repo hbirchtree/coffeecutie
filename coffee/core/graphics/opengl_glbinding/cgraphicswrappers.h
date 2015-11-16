@@ -8,6 +8,11 @@ namespace Coffee{
 namespace CGraphicsWrappers{
 
 /*!
+ * \brief The default buffer to which graphics are rendered
+ */
+constexpr CGhnd opengl_default_framebuffer = 0;
+
+/*!
  * \brief GL multidraw indirect call used to put triangles on the screen
  */
 struct CGLDrawCall

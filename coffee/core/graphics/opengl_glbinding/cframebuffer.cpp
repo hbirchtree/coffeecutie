@@ -6,6 +6,16 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+static CFramebuffer fb_default;
+
+const CFramebuffer& coffee_graphics_framebuffer_get_default()
+{
+    fb_default.handle = opengl_default_framebuffer;
+    fb_default.target = CFBType::Draw;
+
+    return fb_default;
+}
+
 CFramebuffer::CFramebuffer():
     handle(0),
     size(0,0),
@@ -75,7 +85,7 @@ bool coffee_graphics_framebuffer_check_valid_safe(const CFramebuffer *fb)
 }
 
 void coffee_graphics_framebuffer_attach_texture(
-        const CFramebuffer *fb,
+        CFramebuffer *fb,
         const CFramebufferAttachment* attachment)
 {
     uint32 offset = (attachment->target == CFBAttachment::Color)
@@ -89,7 +99,7 @@ void coffee_graphics_framebuffer_attach_texture(
 }
 
 void coffee_graphics_framebuffer_attach_texture_safe(
-        const CFramebuffer *fb,
+        CFramebuffer *fb,
         const CFramebufferAttachment *attachment)
 {
     uint32 offset = (attachment->target == CFBAttachment::Color)

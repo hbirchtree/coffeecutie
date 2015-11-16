@@ -32,8 +32,8 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
         _cbasic_tvector<T,3> c,s;
         for(size_t i=0;i<3;i++)
         {
-            c[i] = CMath::cos(euler[i]*T(0.5));
-            s[i] = CMath::sin(euler[i]*T(0.5));
+            c[i] += CMath::cos(euler[i]*T(0.5));
+            s[i] += CMath::sin(euler[i]*T(0.5));
         }
         (*this)[0] = c[0]*c[1]*c[2] + s[0]*s[1]*s[2];
         (*this)[1] = s[0]*c[1]*c[2] - c[0]*s[1]*s[2];
@@ -152,7 +152,7 @@ template<typename T> T length(
     return sqrt(dot(v,v));
 }
 
-template<typename T> _cbasic_tquaternion<T> normalize(
+template<typename T> _cbasic_tquaternion<T> normalize_quat(
         const _cbasic_tquaternion<T>& v)
 {
     T len = length(v);

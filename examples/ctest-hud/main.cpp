@@ -84,7 +84,6 @@ public:
             "} vdata;"
             "void main(){"
             "   vec4 smp = texture(diffsamp,vdata.vtex);"
-//            "   vec4 smp = vec4(1.0,0,0,1.0);"
             "   Out_color = smp;"
             "}"
         };
@@ -350,6 +349,8 @@ public:
                             mat_bnd[i],
                             &transforms[transform_index]);
 
+            transform_index = (transform_index+1)%3;
+
             counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
 
@@ -358,7 +359,7 @@ public:
         }
 //        coffee_graphics_unbind(&cfb);
 
-        coffee_graphics_tex_dump(&dtex,"depth.png");
+//        coffee_graphics_tex_dump(&dtex,"depth.png");
 
         coffee_graphics_free(&vao);
         coffee_graphics_free(&gltext);
