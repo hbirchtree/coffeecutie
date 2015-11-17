@@ -15,22 +15,22 @@ namespace CMath{
 using namespace std;
 
 template<typename T>
-inline static bool power2(T n)
+bool power2(T n)
 {
     return n!=0&&(n&(n-1))==0;
 }
 
-static constexpr bigscalar pi = M_PI;
-static constexpr bigscalar e = M_E;
+constexpr bigscalar pi = M_PI;
+constexpr bigscalar e = M_E;
 
 template<typename T>
-inline static T max(T v1, T v2)
+T max(T v1, T v2)
 {
     return (v1>v2) ? v1 : v2;
 }
 
 template<typename T>
-inline static T min(T v1, T v2)
+T min(T v1, T v2)
 {
     return (v1<v2) ? v1 : v2;
 }
@@ -60,7 +60,7 @@ inline static scalar cfrand(const scalar& min, const scalar& max)
 }
 
 template<typename T>
-inline static T radians(const T& degrees)
+T radians(const T& degrees)
 {
     return degrees*CMath::pi/T(180);
 }
