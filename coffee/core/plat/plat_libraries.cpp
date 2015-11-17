@@ -5,6 +5,7 @@
 #elif defined(COFFEE_WIN32)
 #include <Windows.h>
 #include <WinUser.h>
+#include <WinDef.h>
 #endif
 
 namespace Coffee{
