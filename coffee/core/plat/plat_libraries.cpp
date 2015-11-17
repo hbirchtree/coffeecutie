@@ -61,7 +61,7 @@ void* _coffee_get_funptr(CNativeObject* object)
 struct CNativeObject
 {
     HINSTANCE hinstLib;
-    MYPROC procedure;
+    void* procedure;
 };
 
 CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction)
