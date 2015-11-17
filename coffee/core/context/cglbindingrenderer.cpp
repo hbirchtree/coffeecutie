@@ -8,6 +8,7 @@
 #include <glbinding/Meta.h>
 
 #include "coffee/core/graphics/opengl_glbinding/glbinding.h"
+#include "coffee/core/graphics/cgraphics_quirks.h"
 
 using namespace gl;
 using namespace Coffee::CDisplay;
@@ -128,6 +129,9 @@ void CGLBindingRenderer::bindingPreInit()
 
 void CGLBindingRenderer::bindingPostInit()
 {
+    fetchGLExtensions();
+    CGraphicsQuirks::coffee_quirks_set_global(this->m_extensions);
+
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug&&
             m_properties.contextProperties.flags&CGLContextProperties::GLPrintExtensions){
         printExtensions(true);

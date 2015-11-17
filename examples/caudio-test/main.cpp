@@ -59,7 +59,7 @@ public:
         coffee_audio_alloc(&src);
         coffee_audio_source_transform(&src,CVec3(100,0,0),CVec3(0,0,0),CVec3(0,0,0));
         coffee_audio_source_setf(&src,CSourceProperty::Gain,1.f);
-        coffee_audio_source_setf(&src,CSourceProperty::Pitch,0.2f);
+        coffee_audio_source_setf(&src,CSourceProperty::Pitch,0.08f);
         coffee_audio_source_setf(&src,CSourceProperty::RolloffFactor,1.f);
         coffee_audio_source_setf(&src,CSourceProperty::MaxDist,110.f);
         coffee_audio_source_setf(&src,CSourceProperty::ReferenceDistance,50.f);
@@ -105,6 +105,8 @@ public:
 
 int32 coffee_main(int32 argc, byte** argv)
 {
+    CResources::coffee_file_set_resource_prefix("sample_data/");
+
     CDRendererBase *renderer = new CDRenderer();
     renderer->init(coffee_get_default_visual());
     renderer->run();

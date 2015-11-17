@@ -399,8 +399,10 @@ private:
     CQuat t;
 };
 
-int32 coffee_main(int32 argc, byte** argv)
+int32 coffee_main(int32, byte**)
 {
+    CResources::coffee_file_set_resource_prefix("sample_data/");
+
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
     props.contextProperties.flags |= CGLContextProperties::GLDebug;

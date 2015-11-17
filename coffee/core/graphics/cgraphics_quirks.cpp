@@ -5,6 +5,8 @@
 namespace Coffee{
 namespace CGraphicsQuirks{
 
+static CFeatureSet _coffee_global_features;
+
 bool _quirk_extension(cstring extension, cstring allexts)
 {
     if(strstr(allexts,extension)){
@@ -42,7 +44,18 @@ void coffee_quirks_set(CFeatureSet *featureset)
                 featureset->extensions);
 
 //    featureset->ext_bindless_texture = false;
-//    featureset->ext_ssbo_support = false;
+    //    featureset->ext_ssbo_support = false;
+}
+
+const CFeatureSet &coffee_quirks_get_global()
+{
+    return _coffee_global_features;
+}
+
+void coffee_quirks_set_global(cstring extensions)
+{
+    _coffee_global_features.extensions = extensions;
+    coffee_quirks_set(&_coffee_global_features);
 }
 
 }

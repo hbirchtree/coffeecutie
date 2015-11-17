@@ -12,8 +12,8 @@
 
 namespace Coffee{
 
-constexpr cstring build_date = __DATE__;
-constexpr cstring build_time = __TIME__;
+constexpr cstring _coffee_build_date = __DATE__;
+constexpr cstring _coffee_build_time = __TIME__;
 
 /*!
  * \brief This function handles initial program startup

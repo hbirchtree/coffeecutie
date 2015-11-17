@@ -44,8 +44,18 @@ extern bool coffee_quirks_query_extension(
 extern void coffee_quirks_set(
         CFeatureSet* featureset);
 
-}
+/*!
+ * \brief Initialize the global set of graphics-quirks
+ */
+extern void coffee_quirks_set_global(cstring extensions);
 
+/*!
+ * \brief Acquire global quirk set
+ * \return A reference to the global set of quirks to the graphical system
+ */
+extern const CFeatureSet& coffee_quirks_get_global();
+
+}
 } //Coffee
 
 #endif
