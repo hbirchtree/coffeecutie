@@ -14,34 +14,61 @@
 namespace Coffee{
 namespace CLibraryLoader{
 
-struct CLoadedLibrary
+struct CNativeObject;
+
+template<typename LibInterface>
+struct CObjectLoader
 {
-    void* object;
+    typedef LibInterface*(*LoaderFunction)();
+
+    CNativeObject* native;
+    LoaderFunction loader;
 };
 
-#if defined(COFFEE_LINUX)
-template<typename LibInterface>
-LibInterface* coffee_get_lib(cstring file)
+/*!
+ * \brief Acquire function pointer from a loaded native library object
+ * \param object
+ * \return
+ */
+extern void* _coffee_get_funptr(CNativeObject* object);
+/*!
+ * \brief Loads library object from file to memory, allowing it to be used. Will resolve all symbols if platform allows it.
+ * \param file
+ * \param loaderFunction
+ * \return Valid pointer if object was successfully loaded, null if it failed
+ */
+extern CNativeObject *_coffee_get_library(cstring file, cstring loaderFunction);
+extern void _coffee_close_library(CNativeObject* object);
+
+template<typename LibInterface, cstring loaderFunction = nullptr>
+CObjectLoader<LibInterface>* coffee_get_lib(cstring file)
 {
-    void* object = dlopen(file,RTLD_LAZY);
-    if(!object)
-    {
-	cFatal("Failed to load library from file: %s",file);
-    }
-    byte* error = nullptr;
-    LibInterface* (*loader)() = dlsym(object,"CoffeeLoader");
-    if((error == dlerror()) != NULL)
-    {
-	cFatal("Error while loading library: %s",error);
-    }
+    typedef LibInterface*(*LoaderFunction)();
+
+    CNativeObject* obj = _coffee_get_library(
+                file,
+                loaderFunction ? loaderFunction : "CoffeeLoader");
+
+    if(!obj)
+        return nullptr;
+
+    CObjectLoader<LibInterface>* lc = new CObjectLoader<LibInterface>;
+
+    lc->native = obj;
+    lc->loader = (LoaderFunction)_coffee_get_funptr(obj);
+
+    return lc;
 }
 
-void coffee_close_lib(void* object)
+/*!
+ * \brief Closes the library. Be aware that it might have an effect on running code.
+ */
+template<typename LibInterface> void coffee_close_lib(
+        CObjectLoader<LibInterface>* library)
 {
-    dlclose(object);
+    _coffee_close_library(library->native);
+    delete library;
 }
-
-#endif
 
 }
 }

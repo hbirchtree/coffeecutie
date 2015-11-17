@@ -58,6 +58,7 @@ set ( CoffeeCore_SRCS
         plat/plat_file.cpp
         plat/plat_timers.cpp
         plat/cmemory.cpp
+        plat/plat_libraries.cpp
         )
 
 add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )

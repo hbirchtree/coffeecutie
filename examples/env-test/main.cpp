@@ -1,6 +1,12 @@
 #include <coffee/Core>
 #include <coffee/core/plat/application_start.h>
 
+#include <coffee/core/plat/plat_libraries.h>
+
+#include "library.h"
+
+using namespace CLibraryLoader;
+
 int32 coffee_main(int32, byte**)
 {
     cstring_w cfg_dir  = coffee_get_userdata_dir(
@@ -19,6 +25,15 @@ int32 coffee_main(int32, byte**)
     free(cfg_dir);
     free(app_dir);
     free(exe_name);
+
+    CObjectLoader<TestClass>* libtest = coffee_get_lib<TestClass>("libtest.so");
+
+    if(libtest)
+    {
+        TestClass* impl = libtest->loader();
+        impl->printHello();
+        coffee_close_lib(libtest);
+    }
 
     return 0;
 }
