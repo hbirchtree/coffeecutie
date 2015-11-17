@@ -56,6 +56,22 @@ namespace CFunctional {
     class CElapsedTimerD : public _coffee_stub_timer<double> {};
 }
 
+namespace CResources{
+namespace CFiles{
+
+inline static bool coffee_file_mkdir(cstring dname, bool createParent = false)
+{
+    if(!createParent)
+    {
+        return CreateDirectory(dname,NULL);
+    }else{
+        return false;
+    }
+}
+
+}
+}
+
 
 }
 
