@@ -2,10 +2,8 @@
 
 #if defined(COFFEE_LINUX)
 #include <dlfcn.h>
-#elif defined(COFFEE_WIN32)
+#elif defined(COFFEE_WINDOWS)
 #include <Windows.h>
-#include <WinUser.h>
-#include <WinDef.h>
 #endif
 
 namespace Coffee{
