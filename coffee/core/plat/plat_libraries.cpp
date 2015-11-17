@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #elif defined(COFFEE_WIN32)
 #include <Windows.h>
+#include <WinUser.h>
 #endif
 
 namespace Coffee{
