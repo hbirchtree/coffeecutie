@@ -5,7 +5,7 @@
 #include "coffee/core/base/cmath.h"
 #include "coffee/core/base/cmath_glm.h"
 #include "coffee/core/graphics/cgraphicsdata.h"
-#include "coffee/scene/cnode.h"
+#include "coffee/core/scene/cnode.h"
 
 #include <glbinding/gl/gl.h>
 

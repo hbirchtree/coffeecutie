@@ -1,6 +1,6 @@
-#include "graphics_apis/OpenGL"
+#include "graphics_apis/COpenGL"
 
 #include "coffee/core/graphics/cgraphics_quirks.h"
 #include "coffee/core/graphics/cgraphicsdata.h"
 
-#include "coffee/scene/cnode.h"
+#include "coffee/core/scene/cnode.h"

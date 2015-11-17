@@ -2,7 +2,7 @@
 #define COFFEE_MISC_EMU_GAMEBOY_H
 
 #include "cgameboy_structures.h"
-#include <coffee/core/Base>
+#include <coffee/core/CBase>
 
 namespace Coffee{
 namespace CMisc{

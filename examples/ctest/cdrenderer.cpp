@@ -1,6 +1,6 @@
 #include "cdrenderer.h"
 
-#include <coffee/core/Graphics>
+#include <coffee/core/CGraphics>
 #include <coffee/assimp/assimpfun.h>
 #include <coffee/core/plat/plat_wm.h>
 #include <coffee/core/input/cinputfunctions.h>

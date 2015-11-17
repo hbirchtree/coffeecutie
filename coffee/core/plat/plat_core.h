@@ -3,7 +3,7 @@
 
 #include "platform_detect.h"
 #include "coffee/core/coffee_macros.h"
-#include "coffee/core/Types"
+#include "coffee/core/CTypes"
 
 #ifdef COFFEE_UNIXPLAT
 #include "coffee_unix/unix_core.h"

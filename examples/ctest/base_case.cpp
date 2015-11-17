@@ -1,6 +1,7 @@
 #include "base_case.h"
 
-#include <coffee/core/Graphics>
+#include <coffee/CImage>
+#include <coffee/core/CGraphics>
 #include <coffee/assimp/assimpfun.h>
 
 namespace Coffee{

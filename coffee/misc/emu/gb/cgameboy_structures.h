@@ -1,8 +1,8 @@
 #ifndef COFFEE_MISC_EMU_GAMEBOY_STRUCTURES_H
 #define COFFEE_MISC_EMU_GAMEBOY_STRUCTURES_H
 
-#include <coffee/core/Base>
-#include <coffee/core/Types>
+#include <coffee/core/CBase>
+#include <coffee/core/CTypes>
 
 namespace Coffee{
 namespace CMisc{

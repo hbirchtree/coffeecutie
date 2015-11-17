@@ -3,7 +3,7 @@
 
 #include <bitset>
 
-#include "coffee/core/ctypes/basetypes.h"
+#include "coffee/core/types/basetypes.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{

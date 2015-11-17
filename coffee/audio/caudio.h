@@ -1,7 +1,7 @@
 #ifndef CAUDIO_FUN
 #define CAUDIO_FUN
 
-#include <coffee/core/Types>
+#include <coffee/core/CTypes>
 #include <coffee/core/base/cfiles.h>
 
 namespace Coffee{

@@ -1,5 +1,5 @@
 #include <coffee/CCore>
-#include <coffee/core/Graphics>
+#include <coffee/core/CGraphics>
 #include <coffee/core/plat/application_start.h>
 #include <coffee/audio/openal/copenal.h>
 #include <coffee/core/base/cfiles.h>

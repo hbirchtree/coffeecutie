@@ -1,5 +1,7 @@
 #include "cimage.h"
 
+#include <coffee/core/graphics/opengl_glbinding/glbinding.h>
+
 #include <coffee/core/base/cdebug.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -98,6 +100,42 @@ void coffee_stb_error()
 void coffee_stb_image_free(CStbImage *img)
 {
     c_free(img->data);
+}
+
+
+void coffee_graphics_tex_dump(
+        const CTexture *tex, cstring filename)
+{
+    CStbImageLib::CStbImage img;
+
+    img.bpp = 4;
+    img.size.w = 1280;
+    img.size.h = 720;
+
+    coffee_graphics_tex_download_texture(
+                tex,0,img.bpp*img.size.w*img.size.h,
+                tex->format,&img);
+
+
+    CResources::CResource fl(filename);
+    CStbImageLib::coffee_stb_image_save_png(&fl,&img);
+    coffee_file_commit(&fl);
+    coffee_file_free(&fl);
+
+    c_free(img.data);
+}
+
+void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
+        CGsize size, CTexFormat format,
+        CStbImageLib::CStbImage *img)
+{
+    img->data = (ubyte*)c_alloc(size);
+    glGetTextureImage(
+                tex->handle,
+                level,
+                CG_GET(format,ctexfmt_map),
+                GL_UNSIGNED_BYTE,
+                size,img->data);
 }
 
 }

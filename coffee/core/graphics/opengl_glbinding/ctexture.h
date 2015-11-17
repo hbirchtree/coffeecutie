@@ -3,7 +3,6 @@
 
 #include "copengl_types.h"
 #include "coffee/core/coffee.h"
-#include "coffee/image/cimage.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
@@ -322,26 +321,6 @@ extern void     coffee_graphics_tex_unload(const CTexture* tex);
  * \brief Unload texture, old variant with GL_TEXTURE* units
  */
 extern void     coffee_graphics_tex_unload_safe(const CTexture*);
-
-/*!
- * \brief Download GL texture to an image, sets image's properties
- * \param tex Texture to download
- * \param level Mipmap level to download
- * \param size Expected size of buffer (is allocated)
- * \param format Format of data
- * \param img Target image
- */
-extern void     coffee_graphics_tex_download_texture(
-        const CTexture* tex, CGint level,
-        CGsize size, CTexFormat format, CStbImageLib::CStbImage* img);
-
-/*!
- * \brief Debug function for dumping texture to file
- * \param tex
- * \param filename
- */
-extern void     coffee_graphics_tex_dump(
-        const CTexture* tex, cstring filename);
 
 }
 }

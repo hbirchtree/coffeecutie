@@ -17,4 +17,9 @@ add_library ( CBlam ${COFFEE_LINK_OPT}
             ${CBlamElegy_SRCS}
             )
 
+target_link_libraries( CBlam
+    CoffeeCore
+    CImage
+    )
+
 target_compile_features(CBlam PRIVATE cxx_variadic_templates)

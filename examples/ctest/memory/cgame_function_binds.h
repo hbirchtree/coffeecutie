@@ -1,7 +1,7 @@
 #ifndef CGAME_FUNCTION_BINDS
 #define CGAME_FUNCTION_BINDS
 
-#include <coffee/core/graphics_apis/OpenGL>
+#include <coffee/core/graphics_apis/COpenGL>
 #include "../rendering/cmultidrawgraph.h"
 
 namespace Coffee{

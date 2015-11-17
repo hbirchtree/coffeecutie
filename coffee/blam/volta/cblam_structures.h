@@ -1,7 +1,7 @@
 #ifndef CBLAM_STRUCTURES
 #define CBLAM_STRUCTURES
 
-#include <coffee/core/Types>
+#include <coffee/core/CTypes>
 
 namespace Coffee{
 namespace CBlam{

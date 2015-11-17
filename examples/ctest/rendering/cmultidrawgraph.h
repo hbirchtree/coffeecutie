@@ -3,7 +3,7 @@
 
 #include <coffee/assimp/cassimpimporters.h>
 #include <coffee/core/graphics/cgraphicsdata.h>
-#include <coffee/core/graphics_apis/OpenGL>
+#include <coffee/core/graphics_apis/COpenGL>
 #include <iterator>
 
 namespace Coffee {

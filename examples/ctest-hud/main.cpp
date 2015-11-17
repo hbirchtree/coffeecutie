@@ -1,5 +1,6 @@
 #include <coffee/CCore>
-#include <coffee/core/Graphics>
+#include <coffee/core/CGraphics>
+#include <coffee/CImage>
 #include <coffee/core/plat/application_start.h>
 
 using namespace Coffee;

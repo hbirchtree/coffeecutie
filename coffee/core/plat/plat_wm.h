@@ -2,7 +2,7 @@
 #define COFFEE_PLAT_WM
 
 #include "coffee/core/plat/platform_detect.h"
-#include "coffee/core/Types"
+#include "coffee/core/CTypes"
 
 #if defined(COFFEE_LINUX)
 #include "coffee_linux/linux_wm.h"

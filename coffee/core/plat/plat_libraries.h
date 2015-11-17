@@ -1,8 +1,8 @@
 #ifndef COFFEE_PLAT_LIBRARIES_H
 #define COFFEE_PLAT_LIBRARIES_H
 
-#include "coffee/core/Base"
-#include "coffee/core/Types"
+#include "coffee/core/CBase"
+#include "coffee/core/CTypes"
 #include "platform_detect.h"
 
 #if defined(COFFEE_LINUX)

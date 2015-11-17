@@ -1,5 +1,5 @@
 #include "cglbindingrenderer.h"
-#include "coffee/core/graphics_apis/OpenGL"
+#include "coffee/core/graphics_apis/COpenGL"
 
 #include <glbinding/ContextInfo.h>
 #include <glbinding/Version.h>

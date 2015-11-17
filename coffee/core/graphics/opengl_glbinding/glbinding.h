@@ -1,8 +1,8 @@
 #ifndef COFFEE_GRAPHICS_GLBINDING_H
 #define COFFEE_GRAPHICS_GLBINDING_H
 
-#include "coffee/core/Types"
-#include "coffee/core/graphics_apis/OpenGL"
+#include "coffee/core/CTypes"
+#include "coffee/core/graphics_apis/COpenGL"
 
 #include <glbinding/gl/gl.h>
 

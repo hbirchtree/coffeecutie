@@ -2,13 +2,14 @@ if(NOT DEFINED GLBINDING_INCLUDE_DIR)
     set (GLBINDING_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/glbinding/source/glbinding/include)
 endif()
 
+include_directories (
+                    ${GLBINDING_INCLUDE_DIR}
+                    )
+
 if(NOT DEFINED GLBINDING_LIBRARY_DIR)
     set (GLBINDING_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib )
 endif()
 
-include_directories (
-                    ${GLBINDING_INCLUDE_DIR}
-                    )
 
 find_library(GLBINDING_LIBRARY NAMES "glbinding" PATHS ${GLBINDING_LIBRARY_DIR} )
 
@@ -52,7 +53,7 @@ set ( CoffeeCore_SRCS
 
         input/cinputfunctions.cpp
 
-        ../scene/cnode.cpp
+        scene/cnode.cpp
 
         plat/coffee_windows/win_core.cpp
         plat/plat_file.cpp
@@ -82,7 +83,6 @@ ${GLBINDING_LIBRARY}
 ${LIBUNWIND_LIBRARIES}
 ${X11_LIBRARIES}
 ${M_LIB_LIBRARIES}
-CImage
 )
 
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)

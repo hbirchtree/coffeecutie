@@ -75,19 +75,6 @@ void coffee_graphics_tex_make_nonresident(const CTexture* tex)
     glMakeTextureHandleNonResidentARB(tex->bhandle);
 }
 
-void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
-        CGsize size, CTexFormat format,
-        CStbImageLib::CStbImage *img)
-{
-    img->data = (ubyte*)c_alloc(size);
-    glGetTextureImage(
-                tex->handle,
-                level,
-                CG_GET(format,ctexfmt_map),
-                GL_UNSIGNED_BYTE,
-                size,img->data);
-}
-
 void coffee_graphics_tex_use(
         const CTexture *tex)
 {
@@ -287,27 +274,6 @@ void CTextureTools::coffee_graphics_tex_free_texdata(CTextureTools::CTextureData
 {
     c_free(tex->lengths);
     tex->lengths = nullptr;
-}
-
-void coffee_graphics_tex_dump(const CTexture *tex, cstring filename)
-{
-    CStbImageLib::CStbImage img;
-
-    img.bpp = 4;
-    img.size.w = 1280;
-    img.size.h = 720;
-
-    coffee_graphics_tex_download_texture(
-                tex,0,img.bpp*img.size.w*img.size.h,
-                tex->format,&img);
-
-
-    CResources::CResource fl(filename);
-    CStbImageLib::coffee_stb_image_save_png(&fl,&img);
-    coffee_file_commit(&fl);
-    coffee_file_free(&fl);
-
-    c_free(img.data);
 }
 
 void coffee_graphics_tex_paramf(const CTexture *tex, CTexParam param, scalar val)
