@@ -4,7 +4,9 @@
 #define C_FLAGS(type,utype) \
     inline type operator&(type lhs, type rhs){return (type)(((utype)lhs)&((utype)rhs));} \
     inline type operator|(type lhs, type rhs){return (type)(((utype)lhs)|((utype)rhs));} \
-    inline type operator~(type val){return (type)(~((utype)val));}
+    inline type operator~(type val){return (type)(~((utype)val));} \
+    inline type operator&=(type lhs, type rhs){return (type)(((utype)lhs)&((utype)rhs));} \
+    inline type operator|=(type lhs, type rhs){return (type)(((utype)lhs)|((utype)rhs));}
 
 #include <string>
 #include <stdexcept>

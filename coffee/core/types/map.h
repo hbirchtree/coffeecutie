@@ -34,7 +34,7 @@ public:
     }
     /*!
      * \brief Reserve st amount of elements
-     * \param elements
+     * \param st
      */
     _cbasic_map(size_t st)
     {

@@ -2,8 +2,6 @@
 #include <coffee/core/Graphics>
 #include <coffee/core/plat/application_start.h>
 
-#include <coffee/core/base/cmath_glm.h>
-
 using namespace Coffee;
 using namespace CDisplay;
 using namespace CGraphicsData;

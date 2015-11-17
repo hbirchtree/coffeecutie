@@ -20,14 +20,14 @@ public:
         this->showWindow();
         while(!closeFlag())
         {
-            glClear(GL_COLOR_BUFFER_BIT);
-            
+            coffee_graphics_clear(CClearFlag::Color);
+
             //Write code here
 
             this->pollEvents();
             this->swapBuffers();
         }
-        
+
         //Write code here
     }
     void eventWindowsHandle(const CDisplay::CDEvent *e)
