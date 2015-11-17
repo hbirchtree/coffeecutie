@@ -9,7 +9,7 @@ namespace CResources{
 
 static CString _coffee_resource_prefix = "./";
 
-cstring coffee_file_set_resource_prefix(cstring prefix)
+void coffee_file_set_resource_prefix(cstring prefix)
 {
     _coffee_resource_prefix = prefix;
 }

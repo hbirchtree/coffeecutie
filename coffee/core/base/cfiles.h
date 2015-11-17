@@ -11,7 +11,7 @@ namespace CResources{
  * \param prefix
  * \return
  */
-extern cstring coffee_file_set_resource_prefix(cstring prefix);
+extern void coffee_file_set_resource_prefix(cstring prefix);
 
 struct CResourceUrl
 {
