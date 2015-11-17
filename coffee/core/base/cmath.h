@@ -24,15 +24,15 @@ static constexpr bigscalar pi = M_PI;
 static constexpr bigscalar e = M_E;
 
 template<typename T>
-inline static T max(T a, T b)
+inline static T max(T v1, T v2)
 {
-    return (a>b) ? a : b;
+    return (v1>v2) ? v1 : v2;
 }
 
 template<typename T>
-inline static T min(T a, T b)
+inline static T min(T v1, T v2)
 {
-    return (a<b) ? a : b;
+    return (v1<v2) ? v1 : v2;
 }
 
 /*!
