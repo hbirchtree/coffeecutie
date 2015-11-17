@@ -5,12 +5,6 @@
 #include "coffee/core/CTypes"
 #include "platform_detect.h"
 
-#if defined(COFFEE_LINUX)
-#include <dlfcn.h>
-#elif defined(COFFEE_WIN32)
-
-#endif
-
 namespace Coffee{
 namespace CLibraryLoader{
 

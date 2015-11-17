@@ -3,7 +3,7 @@
 #include "coffee/core/plat/platform_detect.h"
 
 #ifdef COFFEE_WINDOWS
-
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 namespace Coffee{
