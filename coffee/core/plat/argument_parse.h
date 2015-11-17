@@ -9,6 +9,17 @@
 #include "coffee/core/CTypes"
 #include <vector>
 
+#if defined(COFFEE_WINDOWS)
+
+#include <Windows.h>
+#include <WinUser.h>
+
+#elif defined(COFFEE_LINUX)
+
+#include <stdlib.h>
+
+#endif
+
 using namespace Coffee;
 
 namespace Coffee{
@@ -77,8 +88,6 @@ static void coffee_args_get_all(
 
 #if defined(COFFEE_LINUX)
 
-#include <stdlib.h>
-
 static cstring_w coffee_executable_name(cstring_w n = nullptr)
 {
     C_UNUSED(n);
@@ -86,9 +95,6 @@ static cstring_w coffee_executable_name(cstring_w n = nullptr)
 }
 
 #elif defined(COFFEE_WINDOWS)
-
-#include <Windows.h>
-#include <WinUser.h>
 
 static cstring_w coffee_executable_name(cstring_w path = nullptr)
 {

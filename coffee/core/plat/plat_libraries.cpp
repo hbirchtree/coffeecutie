@@ -3,7 +3,6 @@
 #if defined(COFFEE_LINUX)
 #include <dlfcn.h>
 #elif defined(COFFEE_WIN32)
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #endif
 
