@@ -1,9 +1,12 @@
-#ifdef _WIN32
-
 #ifndef WIN_CORE
 #define WIN_CORE
 
 #include "coffee/core/plat/platform_detect.h"
+
+#ifdef COFFEE_WINDOWS
+
+#include <Windows.h>
+
 #include "coffee/core/types/types.h"
 #include "coffee/core/base/cdebug.h"
 
@@ -75,6 +78,5 @@ inline static bool coffee_file_mkdir(cstring dname, bool createParent = false)
 
 }
 
-#endif //WIN_CORE
-
 #endif //_WIN32
+#endif //WIN_CORE
