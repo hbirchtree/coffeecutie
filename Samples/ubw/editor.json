@@ -1,4 +1,0 @@
-{
-	"stylesheet": "selection-background-color: rgb(255, 99, 99);\nselection-color: rgb(255,255,255);\ngridline-color: rgb(55, 55, 55);\nalternate-background-color: rgb(70, 70, 70);\nbackground-color: rgb(55, 55, 55);\nborder-color: rgb(55, 55, 55);\ncolor: rgb(255,255,255);\n\nQLineEdit {\n	background-color: rgb(255, 255, 255);\n}\nQToolBox::tab {\nbackground: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,\nstop: 0 #E1E1E1, stop: 0.4 #DDDDDD,\nstop: 0.5 #D8D8D8, stop: 1.0 #D3D3D3);\nborder-radius: 5px;\ncolor: darkgray;\n}\n\nQToolBox::tab:selected { /* italicize selected tabs */\nfont: italic;\n    color: white;\n}"
-
-}

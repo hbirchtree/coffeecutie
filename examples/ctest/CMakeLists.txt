@@ -1,11 +1,11 @@
 set ( CoffeeTestLib_SRCS
-        ${COFFEE_EXAMPLE_DIR}/ctest/rendering/cmultidrawgraph.cpp
-        ${COFFEE_EXAMPLE_DIR}/ctest/base_case.cpp
-        ${COFFEE_EXAMPLE_DIR}/ctest/cdrenderer.cpp
+        rendering/cmultidrawgraph.cpp
+        base_case.cpp
+        cdrenderer.cpp
         )
 
 set ( CoffeeTest_SRCS
-        ${COFFEE_EXAMPLE_DIR}/ctest/main.cpp
+        main.cpp
         )
 
 add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTestLib_SRCS} )

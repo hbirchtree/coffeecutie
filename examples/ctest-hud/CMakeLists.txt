@@ -1,5 +1,5 @@
 set ( CoffeeTestHud_SRCS
-        ${COFFEE_EXAMPLE_DIR}/ctest-hud/main.cpp
+        main.cpp
         )
 
 add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )

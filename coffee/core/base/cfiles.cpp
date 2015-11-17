@@ -7,6 +7,19 @@
 namespace Coffee{
 namespace CResources{
 
+static CString _coffee_resource_prefix = "./";
+
+cstring coffee_file_set_resource_prefix(cstring prefix)
+{
+    _coffee_resource_prefix = prefix;
+}
+
+CString coffee_file_get_dereferenced_path(cstring suffix)
+{
+    //We will NOT try to add any '/' in there.
+    return _coffee_resource_prefix + suffix;
+}
+
 CResourceUrl::CResourceUrl():
     flags(0),
     url(nullptr)
@@ -87,12 +100,16 @@ bool coffee_file_commit(const CResource *resc, bool append)
     return stat;
 }
 
-CResource::CResource(cstring rsrc):
+CResource::CResource(cstring rsrc, bool absolute):
     flags(0),
     size(0),
     data(nullptr),
-    m_resource(rsrc)
+    m_resource()
 {
+    if(absolute)
+        m_resource = rsrc;
+    else
+        m_resource = coffee_file_get_dereferenced_path(rsrc);
 }
 
 cstring CResource::resource() const

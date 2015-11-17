@@ -1,5 +1,5 @@
 set ( CBlamTesting_SRCS
-        ${COFFEE_EXAMPLE_DIR}/cblam-testing/main.cpp
+        main.cpp
         )
 
 add_executable ( CBlamTesting ${CBlamTesting_SRCS} )

@@ -1,5 +1,5 @@
 if(NOT DEFINED ASSIMP_INCLUDE_DIR)
-    set (ASSIMP_INCLUDE_DIR libs/assimp/include)
+    set (ASSIMP_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/assimp/include)
 endif()
 
 if(NOT DEFINED ASSIMP_LIBRARY_DIR)
@@ -12,11 +12,9 @@ include_directories (
 
 find_library(ASSIMP_LIBRARY NAMES "assimp" PATHS ${ASSIMP_LIBRARY_DIR} )
 
-message("Assimp location: ${ASSIMP_LIBRARY}")
-
 set ( CAssimp_SRCS
-        coffee/assimp/cassimpimporters.cpp
-        coffee/assimp/assimpfun.cpp
+        cassimpimporters.cpp
+        assimpfun.cpp
         )
 
 add_library( CAssimp ${COFFEE_LINK_OPT} ${CAssimp_SRCS})

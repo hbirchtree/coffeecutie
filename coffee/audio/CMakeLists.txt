@@ -1,8 +1,8 @@
 
 set ( CAudio_SRCS
-        libs/stb/stb_vorbis.c
-        coffee/audio/caudio.cpp
-        coffee/audio/openal/copenal.cpp
+        ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
+        caudio.cpp
+        openal/copenal.cpp
         )
 
 add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})

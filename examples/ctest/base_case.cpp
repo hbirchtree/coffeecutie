@@ -491,13 +491,13 @@ bool coffee_test_load(game_context *ctxt)
     {
         game_shader_program_desc d;
         d.shader_dump = "basic_dump.shdr";
-        d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight_ssbo.fs";
-        d.shader_v = "ubw/shaders/vertex/vsh_instanced_ssbo.vs";
+        d.shader_f = "ctest/basic_shader.ssbo.fs";
+        d.shader_v = "ctest/instancing.ssbo.vs";
 
         if(!ctxt->features->ext_ssbo_support)
         {
-            d.shader_f = "ubw/shaders/fragment/direct/fsh_nolight.fs";
-            d.shader_v = "ubw/shaders/vertex/vsh_instanced.vs";
+            d.shader_f = "ctest/basic_shader.fs";
+            d.shader_v = "ctest/instancing.vs";
         }
 
         coffee_shader_program_load(d,ctxt);
@@ -516,8 +516,8 @@ bool coffee_test_load(game_context *ctxt)
         coffee_test_def_transforms(ctxt,numGears);
 
         {
-            CResources::CResource mapfile("bloodgulch.map");
-            CResources::CResource bitmfile("bitmaps.map");
+            CResources::CResource mapfile("cblam_data/bloodgulch.map");
+            CResources::CResource bitmfile("cblam_data/bitmaps.map");
             coffee_file_memmap(&bitmfile);
             coffee_file_memmap(&mapfile);
             const CBlam::blam_file_header* map =

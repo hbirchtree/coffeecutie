@@ -6,6 +6,13 @@
 namespace Coffee{
 namespace CResources{
 
+/*!
+ * \brief Easy redirection of all resources in the application. :)
+ * \param prefix
+ * \return
+ */
+extern cstring coffee_file_set_resource_prefix(cstring prefix);
+
 struct CResourceUrl
 {
     enum ResourceFlags{
@@ -32,7 +39,12 @@ struct CResourceUrl
  * \brief A data resource which location cannot be changed.
  */
 struct CResource{
-    CResource(cstring rsrc = nullptr);
+    /*!
+     * \brief Constructs a resource
+     * \param rsrc Path to resource
+     * \param absolute False by default, true to not use global file redirection
+     */
+    CResource(cstring rsrc = nullptr, bool absolute = false);
 
     uint8 flags; /*!< Resource flags*/
     szptr size; /*!< Data size*/

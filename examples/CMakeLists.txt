@@ -1,9 +1,9 @@
-set (COFFEE_EXAMPLE_DIR examples)
+add_subdirectory (caudio-test)
+add_subdirectory (cblam-testing)
+add_subdirectory (ctest)
+add_subdirectory (ctest-hud)
 
-include_subproject (${COFFEE_EXAMPLE_DIR}/caudio-test)
-include_subproject (${COFFEE_EXAMPLE_DIR}/cblam-testing)
-include_subproject (${COFFEE_EXAMPLE_DIR}/ctest)
-include_subproject (${COFFEE_EXAMPLE_DIR}/ctest-hud)
+add_subdirectory (env-test)
 
 #Experimental
-include_subproject (${COFFEE_EXAMPLE_DIR}/cgb-test)
+add_subdirectory (cgb-test)

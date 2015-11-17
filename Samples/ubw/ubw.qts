@@ -1,6 +1,0 @@
-#inc "scripts/var-defs.qts"
-
-// and tests galore!
-#inc "scripts/testing.qts"
-
-graph.setRenderer(renderer);

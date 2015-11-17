@@ -1,5 +1,5 @@
 set ( CImage_SRCS
-        coffee/image/cimage.cpp
+        cimage.cpp
         )
 
 add_library( CImage ${COFFEE_LINK_OPT} ${CImage_SRCS})

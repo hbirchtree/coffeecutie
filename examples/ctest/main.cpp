@@ -9,21 +9,7 @@ using namespace Coffee::CDisplay;
 
 int32 coffee_main(int32,byte**)
 {
-    Coffee::CoffeeInit();
-
-    cstring_w cfg_dir = coffee_get_userdata_dir("hbirchtree","Best Coffee of All Time");
-    cstring_w app_dir = coffee_get_application_dir();
-    cstring_w exe_name = coffee_executable_name();
-
-    cDebug("Settings directory: %s",cfg_dir);
-    cDebug("Program directory:  %s",app_dir);
-    cDebug("Launching from      %s",exe_name);
-
-    CResources::coffee_file_mkdir(cfg_dir,true);
-
-    free(cfg_dir);
-    free(app_dir);
-    free(exe_name);
+    CResources::coffee_file_set_resource_prefix("sample_data/");
 
     CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
     timer->start();

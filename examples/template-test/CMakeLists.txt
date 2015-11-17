@@ -1,5 +1,5 @@
 set ( TemplateTest_SRCS
-        ${COFFEE_EXAMPLE_DIR}/template-test/main.cpp
+        main.cpp
         )
 
 add_executable ( TemplateTest ${TemplateTest_SRCS} )

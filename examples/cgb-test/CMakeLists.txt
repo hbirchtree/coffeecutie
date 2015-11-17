@@ -1,5 +1,5 @@
 set ( TemplateTest_SRCS
-        ${COFFEE_EXAMPLE_DIR}/cgb-test/main.cpp
+        main.cpp
         )
 
 add_executable ( CGameBoyTest ${TemplateTest_SRCS} )

@@ -14,11 +14,13 @@ using namespace CBlam;
  */
 int coffee_main(int32 argv,byte** argc)
 {
+    CResources::coffee_file_set_resource_prefix("sample_data/");
+
     cstring mapstring = coffee_args_get_arg(argv,argc,"halomap");
     if(!mapstring)
         return 1;
     CResource mapfile(mapstring);
-    CResource bitmfile("bitmaps.map");
+    CResource bitmfile("cblam_data/bitmaps.map");
     coffee_file_memmap(&bitmfile);
     coffee_file_memmap(&mapfile);
     const blam_file_header* map =

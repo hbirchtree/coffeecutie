@@ -1,5 +1,5 @@
 set ( CoffeeAudioTest_SRCS
-        ${COFFEE_EXAMPLE_DIR}/caudio-test/main.cpp
+        main.cpp
         )
 
 add_executable ( CoffeeAudioTest ${CoffeeAudioTest_SRCS} )

@@ -1,5 +1,5 @@
 if(NOT DEFINED GLBINDING_INCLUDE_DIR)
-    set (GLBINDING_INCLUDE_DIR libs/glbinding/source/glbinding/include)
+    set (GLBINDING_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/glbinding/source/glbinding/include)
 endif()
 
 if(NOT DEFINED GLBINDING_LIBRARY_DIR)
@@ -12,54 +12,52 @@ include_directories (
 
 find_library(GLBINDING_LIBRARY NAMES "glbinding" PATHS ${GLBINDING_LIBRARY_DIR} )
 
-message("GLBinding location: ${GLBINDING_LIBRARY}")
-
 set ( CoffeeCore_SRCS
 
-        coffee/core/coffee.cpp
-        coffee/core/base/counter.cpp
-        coffee/core/base/cdebug.cpp
-        coffee/core/base/cdisplay.cpp
-        coffee/core/base/cfiles.cpp
-        coffee/core/base/cobject.cpp
-        coffee/core/base/cregex.cpp
+        coffee.cpp
+        base/counter.cpp
+        base/cdebug.cpp
+        base/cdisplay.cpp
+        base/cfiles.cpp
+        base/cobject.cpp
+        base/cregex.cpp
 
-        coffee/core/base/cdrendererbase.cpp
+        base/cdrendererbase.cpp
 
-        coffee/core/context/cglbindingrenderer.cpp
+        context/cglbindingrenderer.cpp
 
-        coffee/core/display/csdl2renderer.cpp
-        coffee/core/display/coffeesdl2/sdl2eventhandlers.cpp
-        coffee/core/display/coffeesdl2/sdl2helpers.cpp
+        display/csdl2renderer.cpp
+        display/coffeesdl2/sdl2eventhandlers.cpp
+        display/coffeesdl2/sdl2helpers.cpp
 
-        coffee/core/functional/cqueuerunner.cpp
+        functional/cqueuerunner.cpp
 
-        coffee/core/graphics/cgraphicsdata.cpp
-        coffee/core/graphics/cgraphics_quirks.cpp
+        graphics/cgraphicsdata.cpp
+        graphics/cgraphics_quirks.cpp
 
-        coffee/core/graphics/opengl_glbinding/cbuffer.cpp
-        coffee/core/graphics/opengl_glbinding/cshader.cpp
-        coffee/core/graphics/opengl_glbinding/cframebuffer.cpp
-        coffee/core/graphics/opengl_glbinding/cgraphicswrappers.cpp
-        coffee/core/graphics/opengl_glbinding/cvertexarrayobject.cpp
-        coffee/core/graphics/opengl_glbinding/ctexture.cpp
-        coffee/core/graphics/opengl_glbinding/ctexture_dxtc.cpp
-        coffee/core/graphics/opengl_glbinding/glbinding.cpp
-        coffee/core/graphics/opengl_glbinding/copengl_types.cpp
-        coffee/core/graphics/opengl_glbinding/cuniformtypes.cpp
+        graphics/opengl_glbinding/cbuffer.cpp
+        graphics/opengl_glbinding/cshader.cpp
+        graphics/opengl_glbinding/cframebuffer.cpp
+        graphics/opengl_glbinding/cgraphicswrappers.cpp
+        graphics/opengl_glbinding/cvertexarrayobject.cpp
+        graphics/opengl_glbinding/ctexture.cpp
+        graphics/opengl_glbinding/ctexture_dxtc.cpp
+        graphics/opengl_glbinding/glbinding.cpp
+        graphics/opengl_glbinding/copengl_types.cpp
+        graphics/opengl_glbinding/cuniformtypes.cpp
 
-        coffee/core/jobs/ctasksystem.cpp
+        jobs/ctasksystem.cpp
 
-        coffee/core/unit_tests/data_types.cpp
+        unit_tests/data_types.cpp
 
-        coffee/core/input/cinputfunctions.cpp
+        input/cinputfunctions.cpp
 
-        coffee/scene/cnode.cpp
+        ../scene/cnode.cpp
 
-        coffee/core/plat/coffee_windows/win_core.cpp
-        coffee/core/plat/plat_file.cpp
-        coffee/core/plat/plat_timers.cpp
-        coffee/core/plat/cmemory.cpp
+        plat/coffee_windows/win_core.cpp
+        plat/plat_file.cpp
+        plat/plat_timers.cpp
+        plat/cmemory.cpp
         )
 
 add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )

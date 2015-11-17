@@ -244,7 +244,7 @@ public:
                         CBufferAccess::WriteBit);
         }
 
-        CResources::CResource texture("ubw/models/textures/particle_fx.png");
+        CResources::CResource texture("ctest_hud/particle_sprite.png");
         CResources::coffee_file_pull(&texture);
 
         CStbImageLib::CStbImage ptext;
