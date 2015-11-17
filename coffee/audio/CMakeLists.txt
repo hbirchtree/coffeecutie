@@ -1,4 +1,3 @@
-
 set ( CAudio_SRCS
         ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
         caudio.cpp
@@ -6,11 +5,6 @@ set ( CAudio_SRCS
         )
 
 add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})
-
-find_package(OpenAL REQUIRED)
-include_directories(
-    ${OPENAL_INCLUDE_DIR}
-    )
 
 target_link_libraries ( CAudio
     ${OPENAL_LIBRARY}

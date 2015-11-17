@@ -24,6 +24,11 @@ else()
     set(COFFEE_LINK_OPT SHARED)
 endif()
 
+find_package(OpenAL REQUIRED)
+include_directories(
+    ${OPENAL_INCLUDE_DIR}
+    )
+
 #Assimp currently needs to be included in the global namespace.
 #But not for long.
 if(NOT DEFINED ASSIMP_INCLUDE_DIR)
