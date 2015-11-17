@@ -1,7 +1,7 @@
 #ifndef COFFEE_H
 #define COFFEE_H
 
-#include "types/types.h"
+#include "ctypes/types.h"
 #include "coffee_macros.h"
 
 #include "plat/platform_detect.h"

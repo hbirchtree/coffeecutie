@@ -1,7 +1,7 @@
 #ifndef CFILES_H
 #define CFILES_H
 
-#include "coffee/core/types/basetypes.h"
+#include "coffee/core/ctypes/basetypes.h"
 
 namespace Coffee{
 namespace CResources{

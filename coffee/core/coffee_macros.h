@@ -1,7 +1,7 @@
 #ifndef COFFEE_MACROS
 #define COFFEE_MACROS
 
-#include "types/types.h"
+#include "ctypes/types.h"
 #include <stdio.h>
 #include <stdexcept>
 

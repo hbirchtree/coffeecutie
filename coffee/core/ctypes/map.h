@@ -1,7 +1,7 @@
 #ifndef COFFEE_TYPES_MAP_H
 #define COFFEE_TYPES_MAP_H
 
-#include "coffee/core/types/basetypes.h"
+#include "coffee/core/ctypes/basetypes.h"
 
 namespace Coffee{
 

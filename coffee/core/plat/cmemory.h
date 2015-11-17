@@ -1,7 +1,7 @@
 #ifndef COFFEE_PLAT_MEMORY_H
 #define COFFEE_PLAT_MEMORY_H
 
-#include "coffee/core/types/basetypes.h"
+#include "coffee/core/ctypes/basetypes.h"
 
 namespace Coffee{
 namespace CMem{

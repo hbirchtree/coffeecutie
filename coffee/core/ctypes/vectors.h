@@ -2,7 +2,7 @@
 #define COFFEE_CORE_VECTORS_H
 
 #include "coffee/core/base/cmath.h"
-#include "coffee/core/types/basetypes.h"
+#include "coffee/core/ctypes/basetypes.h"
 
 namespace Coffee{
 namespace CVectors{

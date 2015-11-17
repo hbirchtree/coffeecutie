@@ -5,7 +5,7 @@
 #include <glm/glm/gtc/type_ptr.hpp>
 #include <glm/glm/gtc/matrix_transform.hpp>
 
-#include "coffee/core/types/vector_types.h"
+#include "coffee/core/ctypes/vector_types.h"
 
 namespace Coffee{
 namespace CMath{
