@@ -8,10 +8,12 @@ set ( CAudio_SRCS
 add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})
 
 find_package(OpenAL REQUIRED)
-target_include_directories(CAudio SYSTEM PRIVATE "${OPENAL_INCLUDE_DIR}")
+include_directories(
+    ${OPENAL_INCLUDE_DIR}
+    )
 
 target_link_libraries ( CAudio
-${OPENAL_LIBRARY}
-)
+    ${OPENAL_LIBRARY}
+    )
 
 target_compile_features(CAudio PRIVATE cxx_variadic_templates)

@@ -65,7 +65,9 @@ set ( CoffeeCore_SRCS
 add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
 
 find_package(SDL2 REQUIRED)
-target_include_directories(CoffeeCore SYSTEM PRIVATE "${SDL2_INCLUDE_DIR}")
+include_directories(
+    ${SDL2_INCLUDE_DIR}
+    )
 
 #Libraries for X11 and Linux
 if(NOT WIN32)
