@@ -23,14 +23,12 @@ bool power2(T n)
 constexpr bigscalar pi = M_PI;
 constexpr bigscalar e = M_E;
 
-template<typename T>
-T max(T v1, T v2)
+template<typename T> T max(T v1, T v2)
 {
     return (v1>v2) ? v1 : v2;
 }
 
-template<typename T>
-T min(T v1, T v2)
+template<typename T> T min(T v1, T v2)
 {
     return (v1<v2) ? v1 : v2;
 }
@@ -38,7 +36,7 @@ T min(T v1, T v2)
 /*!
  * \brief Random number generator, static variable for use in crand()
  */
-static thread_local std::mt19937 rand_gen;
+static std::mt19937 rand_gen;
 
 inline static void csrand(uint64 seed)
 {
