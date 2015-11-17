@@ -68,7 +68,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction)
 {
     CNativeObject* e = new CNativeObject;
 
-    e->hinstLib = LoadLibrary(TEXT(file));
+    e->hinstLib = LoadLibrary(file);
 
     if(!e->hinstLib)
     {
