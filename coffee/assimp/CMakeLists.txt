@@ -20,6 +20,7 @@ set ( CAssimp_SRCS
 add_library( CAssimp ${COFFEE_LINK_OPT} ${CAssimp_SRCS})
 
 target_link_libraries ( CAssimp
+CoffeeCore
 ${ASSIMP_LIBRARY}
 )
 
