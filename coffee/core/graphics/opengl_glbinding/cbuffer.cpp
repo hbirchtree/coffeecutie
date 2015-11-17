@@ -268,13 +268,14 @@ void coffee_graphics_free(int count, CBuffer *buf)
 
 void coffee_graphics_alloc(int count, CBufferType type, CBuffer *buf)
 {
-    GLuint handles[count];
+    GLuint *handles = new GLuint[count];
     glGenBuffers(count,handles);
     for(int i=0;i<count;i++)
     {
         buf[i].handle = handles[i];
         buf[i].type = type;
     }
+    delete[] handles;
 }
 
 }
