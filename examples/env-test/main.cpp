@@ -1,4 +1,4 @@
-#include <coffee/Core>
+#include <coffee/CCore>
 #include <coffee/core/plat/application_start.h>
 
 #include <coffee/core/plat/plat_libraries.h>
