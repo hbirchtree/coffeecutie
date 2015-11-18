@@ -21,7 +21,7 @@ enum blam_versions
  */
 struct blam_file_header_h2
 {
-    byte    header[4];
+    byte_t    header[4];
     uint32  version;
     uint32  filesize;
     uint32  unknown2;
@@ -30,20 +30,20 @@ struct blam_file_header_h2
     int32   tagdata_size;
     int32   meta_size;
     uint32  meta_offset_mask;
-    byte    reserved1[264];
-    byte    buildDate[32];
+    byte_t    reserved1[264];
+    byte_t    buildDate[32];
     int32   maptype;
-    byte    unknown3[28];
+    byte_t    unknown3[28];
     int32   strings_block_offset;
     int32   strings_table_count;
     int32   strings_table_size;
     uint32  strings_indextable_offset;
     uint32  strings_table_offset;
-    byte    unknown4[32];
+    byte_t    unknown4[32];
     uint32  unknown8;
-    byte    name[32];
+    byte_t    name[32];
     uint32  unknown7;
-    byte    scenario[260];
+    byte_t    scenario[260];
     uint32  file_table_count;
     uint32  file_table_offset;
     int32   file_table_size;
@@ -54,9 +54,9 @@ struct blam_file_header_h2
     uint32  map_checksum;
     uint32  unknown6;
 
-    byte    reserved2[1284];
+    byte_t    reserved2[1284];
 
-    byte    footer[4];
+    byte_t    footer[4];
 };
 
 }

@@ -68,10 +68,10 @@ void coffee_multidraw_load_indices(
 }
 
 void coffee_multidraw_load_buffer(
-        CBuffer *buffer, const std::vector<byte> &data, const CBufferFunctionBinds& bfun)
+        CBuffer *buffer, const std::vector<byte_t> &data, const CBufferFunctionBinds& bfun)
 {
     buffer->type = CBufferType::Array;
-    _coffee_bufferload_vector<byte>(data,buffer,bfun);
+    _coffee_bufferload_vector<byte_t>(data,buffer,bfun);
 }
 
 void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &desc)
@@ -152,9 +152,9 @@ void coffee_mesh_free_matrix_attribs(std::vector<CVertexAttribute>::iterator sta
     }
 }
 
-void coffee_mesh_fill_vertexdata(std::vector<byte> &data, const void *rsrc, szptr roffset, szptr size)
+void coffee_mesh_fill_vertexdata(std::vector<byte_t> &data, const void *rsrc, szptr roffset, szptr size)
 {
-    const byte* bytes = (const byte*)rsrc;
+    const byte_t* bytes = (const byte_t*)rsrc;
 
     std::copy(&bytes[roffset],&bytes[roffset+size],std::back_inserter(data));
 }

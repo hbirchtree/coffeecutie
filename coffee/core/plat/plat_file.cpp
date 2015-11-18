@@ -33,17 +33,17 @@ szptr coffee_file_size(CFile *file)
 cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool textmode)
 {
     szptr esize = CFiles::coffee_file_size(file);
-    szptr msize = esize*sizeof(byte);
+    szptr msize = esize*sizeof(byte_t);
 
     //Extra byte for null terminator
     if(textmode)
         msize+=1;
 
-    byte* data = (byte*)c_realloc(ptr,msize);
-    *size = fread(data,sizeof(byte),esize,file->handle);
+    byte_t* data = (byte_t*)c_realloc(ptr,msize);
+    *size = fread(data,sizeof(byte_t),esize,file->handle);
     //In text mode, we terminate the array
     if(textmode)
-        data[esize*sizeof(byte)] = '\0';
+        data[esize*sizeof(byte_t)] = '\0';
 
     if(*size<esize)
         cFatal("Read error: expected %ld bytes, got %ld",esize,*size);
@@ -53,7 +53,7 @@ cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool textmode)
 
 bool coffee_file_write(CFile *file, c_cptr data, szptr size)
 {
-    szptr wsize = fwrite(data,sizeof(byte),size,file->handle);
+    szptr wsize = fwrite(data,sizeof(byte_t),size,file->handle);
 
     if(wsize<size)
         return false;

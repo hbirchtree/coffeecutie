@@ -7,7 +7,7 @@
 namespace Coffee{
 namespace CBlam{
 
-typedef byte blam_scn_chunk[100];
+typedef byte_t blam_scn_chunk[100];
 
 /*!
  * \brief The blam_bounding_box struct
@@ -137,19 +137,19 @@ struct blam_scn_profile_placement
     scalar shields;
     bl_tag primarytag;
     int32 primaryrawfilename;
-    byte zero1[4];
+    byte_t zero1[4];
     int32 primaryidentifier;
     int16 primaryclip;
     int16 primarytotal;
     bl_tag secondarytag;
     int32 secondaryfilename;
-    byte zero2[4];
+    byte_t zero2[4];
     int32 secondaryidentifier;
     int16 secondaryclip;
     int16 secondarytotal;
     int16 fraggrencount;
     int16 plasmagrencount;
-    byte zero3[20];
+    byte_t zero3[20];
 };
 
 
@@ -178,7 +178,7 @@ struct blam_scn_multiplayer_equipment
 struct blam_scn_player_starting_profile
 {
     uint32 unk1_offset;
-    byte name[28];
+    byte_t name[28];
     uint16 padding1;
     uint32 unk2_offset;
     blam_tagref weapon1;
@@ -191,7 +191,7 @@ struct blam_scn_player_starting_profile
 
 struct blam_scn_device_group
 {
-    byte unk[52];
+    byte_t unk[52];
 };
 
 struct blam_scn_bsp_trigger
@@ -201,8 +201,8 @@ struct blam_scn_bsp_trigger
 
 struct blam_scn_move_positions
 {
-    byte unk1[32];
-    byte unk2[4];
+    byte_t unk1[32];
+    byte_t unk2[4];
     uint32 Offset;
     uint32 unk[5];
 };
@@ -278,12 +278,12 @@ struct blam_scn_references
 
 struct blam_scn_encounter
 {
-    byte text[16];
+    byte_t text[16];
     uint32 unk[28];
-    blam_reflexive<byte> squads;
-    blam_reflexive<byte> platoons;
-    blam_reflexive<byte> firingPositions;
-    blam_reflexive<byte> playerStartLocations;
+    blam_reflexive<byte_t> squads;
+    blam_reflexive<byte_t> platoons;
+    blam_reflexive<byte_t> firingPositions;
+    blam_reflexive<byte_t> playerStartLocations;
 };
 
 struct blam_scn_encounter_squad
@@ -305,7 +305,7 @@ struct blam_scn_encounter_squad
     int16 NormalDiffCount;
     int16 InsaneDiffCount;
     uint32  unk3[20];
-    blam_reflexive<byte> StartLocations;
+    blam_reflexive<byte_t> StartLocations;
     uint32  unk4[3];
 };
 
@@ -319,12 +319,12 @@ struct blam_scn_encounter_squad_spawn
 
 struct blam_scn_encounter_info
 {
-    byte text[16];
+    byte_t text[16];
     blam_scn_encounter_squad *pSquads;
     blam_scn_encounter_squad **ppSquadSpawns;
-    blam_reflexive<byte> Platoons;
-    blam_reflexive<byte> FiringPositions;
-    blam_reflexive<byte> PlayerStartLocations;
+    blam_reflexive<byte_t> Platoons;
+    blam_reflexive<byte_t> FiringPositions;
+    blam_reflexive<byte_t> PlayerStartLocations;
 };
 
 struct blam_scn_decal
@@ -360,31 +360,31 @@ struct blam_scn_starting_equip
 {
     uint32 unknown1; /*!< Sometimes 1? */
     uint32 index;
-    ubyte padding2[51];
+    ubyte_t padding2[51];
     blam_tagref items[6];
-    ubyte padding3[45];
+    ubyte_t padding3[45];
 };
 
 struct blam_scn_control
 {
     int16 unk1;
     int16 unk2;
-    ubyte unk3[4];
+    ubyte_t unk3[4];
     CVec3 pos;
     uint32 tag_id;
-    ubyte unk[40];
+    ubyte_t unk[40];
 };
 
 struct blam_scn_light_fixture
 {
     blam_rgba ambient;
-    ubyte unk1[4];
+    ubyte_t unk1[4];
     CVec3 pos;
-    ubyte unk2[12];
+    ubyte_t unk2[12];
     blam_rgba specular;
     int32 zero1;
     blam_rgba color;
-    ubyte unk3[40];
+    ubyte_t unk3[40];
 };
 
 struct blam_scn_sbsp
@@ -417,9 +417,9 @@ struct blam_scn_bsp_header
  */
 struct blam_scenario
 {
-    byte unk_str1[16];
-    byte unk_str2[16];
-    byte unk_str3[16];
+    byte_t unk_str1[16];
+    byte_t unk_str2[16];
+    byte_t unk_str3[16];
     blam_reflexive<blam_scn_skybox> skybox;
     uint32 zero1;
     blam_reflexive<blam_tagref> child_scenarios;

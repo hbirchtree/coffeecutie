@@ -265,7 +265,7 @@ inline static void coffee_sdl2_eventhandle_drop(
     szptr textsz = strlen(drop.file)+1;
     CIDropEvent* d = (CIDropEvent*)c_alloc(sizeof(CIDropEvent)+textsz);
     d->size = textsz;
-    c_memcpy((byte*)&d->text_data.text,drop.file,d->size);
+    c_memcpy((byte_t*)&d->text_data.text,drop.file,d->size);
     d->type = CIDropEvent::File;
 
     coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),d,sizeof(CIDropEvent)+textsz);
@@ -344,9 +344,9 @@ inline static void coffee_sdl2_eventhandle_controller_device(
     CIControllerAtomicUpdateEvent *c = (CIControllerAtomicUpdateEvent*)c_calloc(1,evsize);
 
     if(name)
-        c_memcpy((byte*)&c->name,name,strlen(name)+1);
+        c_memcpy((byte_t*)&c->name,name,strlen(name)+1);
     else
-        c_memclear((byte*)&c->name,1);
+        c_memclear((byte_t*)&c->name,1);
 
     c->connected = false;
     c->remapped = false;

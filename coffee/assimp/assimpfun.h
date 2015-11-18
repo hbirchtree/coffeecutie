@@ -40,17 +40,17 @@ extern CAssimpMesh* importMesh(
  * \brief Transforms data of type Element to type OutType, returning the size of data written
  */
 template<typename Element>
-using AssimpTransformFun = szptr(const Element&,byte*);
+using AssimpTransformFun = szptr(const Element&,byte_t*);
 
-extern szptr _assimp_face_transform(const aiFace& v,byte* d);
-extern szptr _assimp_vec_transform(const aiVector3D& v,byte* d);
-extern szptr _assimp_col_transform(const aiColor4D& v, byte* d);
+extern szptr _assimp_face_transform(const aiFace& v,byte_t* d);
+extern szptr _assimp_vec_transform(const aiVector3D& v,byte_t* d);
+extern szptr _assimp_col_transform(const aiColor4D& v, byte_t* d);
 
-extern byte* coffee_assimp_get_reflexive_ptr(void* baseptr, const assimp_reflexive* ref);
+extern byte_t* coffee_assimp_get_reflexive_ptr(void* baseptr, const assimp_reflexive* ref);
 
 template<typename Element>
 void coffee_assimp_mesh_attribute_process(
-        Element* input, szptr numElements, byte* basePtr,
+        Element* input, szptr numElements, byte_t* basePtr,
         AssimpTransformFun<Element> fun)
 {
     szptr offset = 0;

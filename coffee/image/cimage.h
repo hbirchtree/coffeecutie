@@ -14,7 +14,7 @@ using namespace CResources;
  */
 struct CStbImage
 {
-    ubyte* data = nullptr; /*!< Pointer to image data*/
+    ubyte_t* data = nullptr; /*!< Pointer to image data*/
     CSize size; /*!< Image resolution*/
     int bpp = 0; /*!< Describes image format according to STB*/
 };
@@ -24,7 +24,7 @@ struct CStbImage
  */
 struct CStbImageConst
 {
-    const ubyte* data = nullptr; /*!< const pointer to image data*/
+    const ubyte_t* data = nullptr; /*!< const pointer to image data*/
     CSize size; /*!< Image resolution*/
     int bpp = 0; /*!< Describes image format according to STB*/
 };

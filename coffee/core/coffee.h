@@ -18,7 +18,7 @@ constexpr cstring _coffee_build_time = __TIME__;
 /*!
  * \brief This function handles initial program startup
  */
-extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte** argc);
+extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t** argc);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.

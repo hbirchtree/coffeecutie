@@ -159,8 +159,8 @@ void int_tests()
     CASSERT((sizeof(gl::GLuint)==sizeof(uint32)));
     CASSERT((sizeof(gl::GLuint64)==sizeof(uint64)));
 
-    CASSERT((sizeof(byte)==sizeof(gl::GLbyte)));
-    CASSERT((sizeof(byte)==sizeof(gl::GLchar)));
+    CASSERT((sizeof(byte_t)==sizeof(gl::GLbyte)));
+    CASSERT((sizeof(byte_t)==sizeof(gl::GLchar)));
 
     CASSERT((sizeof(uint32)==sizeof(int)));
     CASSERT((sizeof(uint64)==sizeof(unsigned long long)));

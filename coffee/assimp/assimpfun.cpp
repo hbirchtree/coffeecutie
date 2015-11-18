@@ -115,7 +115,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     szptr bufferCount;
     szptr offset = 0;
     szptr bufsize;
-    byte* buffer;
+    byte_t* buffer;
 
     {
         bufsize = coffee_assimp_mesh_approx_size(meshdata,&bufferCount);
@@ -123,7 +123,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
         bufsize+=bufferCount*sizeof(assimp_reflexive)-sizeof(assimp_reflexive);
         bufsize+=strlen(meshdata->mName.C_Str())+1;
 
-        buffer = (byte*)c_calloc(sizeof(byte),bufsize);
+        buffer = (byte_t*)c_calloc(sizeof(byte_t),bufsize);
     }
 
     CAssimpMesh* mesh = (CAssimpMesh*)(&buffer[0]);
@@ -256,13 +256,13 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     return mesh;
 }
 
-szptr _assimp_face_transform(const aiFace &v, byte *d)
+szptr _assimp_face_transform(const aiFace &v, byte_t *d)
 {
     c_memcpy(d,v.mIndices,sizeof(v.mIndices[0])*v.mNumIndices);
     return sizeof(v.mIndices[0])*v.mNumIndices;
 }
 
-szptr _assimp_vec_transform(const aiVector3D &v, byte *d)
+szptr _assimp_vec_transform(const aiVector3D &v, byte_t *d)
 {
     CVec3* o = (CVec3*)d;
     o->x() = v.x;
@@ -271,7 +271,7 @@ szptr _assimp_vec_transform(const aiVector3D &v, byte *d)
     return sizeof(CVec3);
 }
 
-szptr _assimp_col_transform(const aiColor4D &v, byte *d)
+szptr _assimp_col_transform(const aiColor4D &v, byte_t *d)
 {
     CVec4* o = (CVec4*)d;
     o->r() = v.r;
@@ -281,14 +281,14 @@ szptr _assimp_col_transform(const aiColor4D &v, byte *d)
     return sizeof(CVec4);
 }
 
-byte *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *ref)
+byte_t *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *ref)
 {
-    return &((byte*)baseptr)[ref->offset];
+    return &((byte_t*)baseptr)[ref->offset];
 }
 
 cstring assimp_reflexive_string_get(const void* basePtr, const assimp_reflexive &ref)
 {
-    const byte* b_ptr = (const byte*)basePtr;
+    const byte_t* b_ptr = (const byte_t*)basePtr;
     return &b_ptr[ref.offset];
 }
 

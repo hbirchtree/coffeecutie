@@ -33,7 +33,7 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
                     i,
                     CG_GET(rsc->internalFormat,ctexint_map),
                     res.w,res.h,0,size,
-                    ((ubyte*)rsc->data)+offset);
+                    ((ubyte_t*)rsc->data)+offset);
 
         offset+=size;
         res.w >>= 1;

@@ -61,7 +61,7 @@ extern void coffee_multidraw_load_indices(
         const CMultiDrawDataSet& set, const CBufferFunctionBinds& bfun);
 //Load buffer data into GPU memory
 extern void coffee_multidraw_load_buffer(CBuffer* buffer,
-        const std::vector<byte>& data, const CBufferFunctionBinds &bfun);
+        const std::vector<byte_t>& data, const CBufferFunctionBinds &bfun);
 //Load up VAO
 extern void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescriptor& desc);
 //Copy indices, create drawcall
@@ -74,7 +74,7 @@ extern void coffee_mesh_define_matrix_attribs(CBuffer* instanceBuffer,
                                               uint16 baseBind);
 extern void coffee_mesh_free_matrix_attribs(std::vector<CVertexAttribute>::iterator start, std::vector<CVertexAttribute>::iterator end);
 //Copy mesh data
-extern void coffee_mesh_fill_vertexdata(std::vector<byte>& data, const void* rsrc,
+extern void coffee_mesh_fill_vertexdata(std::vector<byte_t>& data, const void* rsrc,
                                         szptr roffset, szptr size);
 
 } // namespace CRendering

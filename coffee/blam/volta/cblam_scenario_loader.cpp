@@ -18,7 +18,7 @@ const blam_scenario* blam_scn_get(
            blam_index_item_get_string(base,map,tags),
            base->offset-tags->index_magic);
 
-    const byte* b_ptr = (const byte*)map;
+    const byte_t* b_ptr = (const byte_t*)map;
     return (const blam_scenario*)(b_ptr+base->offset-tags->index_magic);
 }
 

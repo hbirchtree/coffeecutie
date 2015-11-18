@@ -54,7 +54,7 @@ bool coffee_graphics_restore(
     }
     GLenum format = GL_NONE;
     c_memcpy(&format,rsc->data,sizeof(GLenum));
-    const byte* bytes = (const byte*)rsc->data;
+    const byte_t* bytes = (const byte_t*)rsc->data;
     coffee_graphics_alloc(prg);
     glProgramBinary(prg->handle,format,&bytes[sizeof(GLenum)],rsc->size-sizeof(GLenum));
     return coffee_program_link_checklog(prg->handle);
@@ -67,7 +67,7 @@ void coffee_graphics_store(CShaderProgram *prg, CResources::CResource *rsc)
     rsc->data = c_alloc(psize+sizeof(GLenum));
     rsc->size = psize+sizeof(GLenum);
     GLenum format = GL_NONE;
-    byte* data = (byte*)(rsc->data);
+    byte_t* data = (byte_t*)(rsc->data);
     glGetProgramBinary(prg->handle,psize,nullptr,&format,&data[sizeof(GLenum)]);
     c_memcpy(data,&format,sizeof(GLenum));
 }

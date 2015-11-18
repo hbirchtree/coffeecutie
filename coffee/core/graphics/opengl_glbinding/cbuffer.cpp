@@ -233,7 +233,7 @@ void *coffee_graphics_buffer_sub_data(CSubBuffer *buf)
 {
     if(!buf->parent->data)
         return nullptr;
-    return &((byte*)(buf->parent->data))[buf->offset];
+    return &((byte_t*)(buf->parent->data))[buf->offset];
 }
 
 void coffee_graphics_buffer_sub_bind(

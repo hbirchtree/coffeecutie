@@ -325,8 +325,8 @@ void coffee_test_load_meshes(game_context* ctxt, CMultiDrawDataSet* multidraw)
         CBuffer* tbuffer = &ctxt->renderdata.buffers.d[6];
 
         //Temporary storage for data
-        std::vector<byte> *vertexdata = new std::vector<byte>();
-        std::vector<byte> *texcdata = new std::vector<byte>();
+        std::vector<byte_t> *vertexdata = new std::vector<byte_t>();
+        std::vector<byte_t> *texcdata = new std::vector<byte_t>();
 
         std::function<void(CAssimpMesh*)> lmesh = [=](CAssimpMesh* mesh){
 

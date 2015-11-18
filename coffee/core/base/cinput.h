@@ -66,7 +66,7 @@ struct CIKeyEvent
  */
 struct CITextEvent
 {
-    byte character  = 0;
+    byte_t character  = 0;
 };
 
 /*!
@@ -117,7 +117,7 @@ struct CIScrollEvent
  */
 struct CIWriteEvent
 {
-    byte text[ci_max_text_edit_size]; /*! Submitted text*/
+    byte_t text[ci_max_text_edit_size]; /*! Submitted text*/
 };
 
 /*!
@@ -127,7 +127,7 @@ struct CIWEditEvent
 {
     int32 cursor; /*!< Cursor position*/
     int32 len; /*!< Text length*/
-    byte text[ci_max_text_edit_size]; /*!< Current text*/
+    byte_t text[ci_max_text_edit_size]; /*!< Current text*/
 };
 
 /*!
@@ -181,7 +181,7 @@ struct CIControllerAtomicUpdateEvent
     uint8 controller:4;
     bool connected:1;
     bool remapped:1;
-    byte name[];
+    byte_t name[];
 };
 
 /*!
@@ -200,7 +200,7 @@ struct CIHapticEvent
         struct
         {
             uint8 index;
-            byte name[];
+            byte_t name[];
         } rumble_device;
     };
 };
@@ -226,7 +226,7 @@ struct CIDropEvent
         void* data = 0;
         struct
         {
-            byte text[];
+            byte_t text[];
         } text_data;
     };
 };

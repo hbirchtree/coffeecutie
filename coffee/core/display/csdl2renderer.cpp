@@ -400,7 +400,7 @@ CIEvent* sdl2_controller_get_haptic(
                                        +strlen(hname)-6);
         ev->type = CIEvent::HapticDev;
         CIHapticEvent *h = (CIHapticEvent*)&ev[1];
-        c_memcpy((byte*)&h->rumble_device.name,
+        c_memcpy((byte_t*)&h->rumble_device.name,
                hname,
                strlen(hname)+1);
         h->rumble_device.index = index;

@@ -6,10 +6,10 @@
 namespace Coffee{
 namespace CBlam{
 
-typedef byte bl_tag[4];
-typedef byte bl_string[32];
-typedef byte bl_header[4];
-typedef byte bl_footer[4];
+typedef byte_t bl_tag[4];
+typedef byte_t bl_string[32];
+typedef byte_t bl_header[4];
+typedef byte_t bl_footer[4];
 
 /*!
  * \brief Blam maptypes. Names being obvious, the UI type does not give a playable map.
@@ -142,7 +142,7 @@ struct blam_reflexive
     {
         if(zero != 0)
             return nullptr;
-        const byte* b_basePtr = (const byte*)basePtr;
+        const byte_t* b_basePtr = (const byte_t*)basePtr;
         return (const T*)(b_basePtr+offset-magic);
     }
 };
@@ -167,7 +167,7 @@ typedef _cbasic_point<int16> blam_point;
 /*!
  * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
  */
-typedef uint32 (*BlamBitmProcess)(uint32,uint16,byte);
+typedef uint32 (*BlamBitmProcess)(uint32,uint16,byte_t);
 
 typedef CRGBA blam_rgba;
 

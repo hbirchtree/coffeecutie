@@ -20,7 +20,7 @@ void CoffeeInit()
 #endif
 }
 
-int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte **argc)
+int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
 {
 #ifndef NDEBUG
     cDebug("Build date: %s, %s",_coffee_build_date,_coffee_build_time);

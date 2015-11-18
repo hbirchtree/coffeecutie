@@ -84,7 +84,7 @@ inline static void* coffee_memory_map_file(cstring filename, szptr offset, szptr
 
     szptr pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE)-1);
     int fd = open(filename,O_RDONLY);
-    byte* addr = (byte*)mmap(NULL,offset+size-pa_offset,PROT_READ,MAP_PRIVATE,fd,pa_offset);
+    byte_t* addr = (byte_t*)mmap(NULL,offset+size-pa_offset,PROT_READ,MAP_PRIVATE,fd,pa_offset);
     if(addr == MAP_FAILED)
         return nullptr;
     return addr;
@@ -131,7 +131,7 @@ inline static cstring_w* coffee_callstack(szptr *length,uint32 stackreduce = 0)
 
     //Allocate buffer for symbol
     bool success;
-    byte sym[256];
+    byte_t sym[256];
     while(unw_step(&cur)>0){
         //Unwinding stuff here
         unw_word_t offset,pc;

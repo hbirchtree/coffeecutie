@@ -45,27 +45,27 @@ struct _cgb_core{
 struct _cgb_bios
 {
     szptr size;
-    byte* data;
+    byte_t* data;
     bool in_bios;
 };
 
 struct _cgb_rom
 {
     szptr size;
-    byte* data;
+    byte_t* data;
 };
 
 struct _cgb_gpu
 {
-    byte* memory;
-    byte* object_attribute_mem;
+    byte_t* memory;
+    byte_t* object_attribute_mem;
 };
 
 struct _cgb_memory_unit
 {
-    byte* eram;
-    byte* wram;
-    byte* zram;
+    byte_t* eram;
+    byte_t* wram;
+    byte_t* zram;
 };
 
 /*!

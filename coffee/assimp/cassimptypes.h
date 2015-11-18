@@ -16,7 +16,7 @@ struct assimp_reflexive
 {
     szptr offset;
     szptr size;
-    byte  type;
+    byte_t  type;
 };
 
 /*!

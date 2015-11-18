@@ -23,30 +23,30 @@ static cstring const blam_header_foot = "foot"; /*!< Character string for footer
  */
 struct blam_file_header_h3
 {
-    byte    header[4];
+    byte_t    header[4];
     int32  version;
     uint32  filesize;
-    byte    unknown1[4];
+    byte_t    unknown1[4];
     uint32  index_header_addr;
     uint32  index_offset_string_size;
     uint32  virt_size;
-    byte    reserved1[256];
-    byte    buildDate[32];
+    byte_t    reserved1[256];
+    byte_t    buildDate[32];
     int16   maptype;
-    byte    unknown3[24];
+    byte_t    unknown3[24];
     int32   string_table_count;
     int32   string_table_size;
     int32   string_index_table_offset;
     int32   string_table_offset;
-    byte    unknown4[36];
-    byte    name[32];
+    byte_t    unknown4[36];
+    byte_t    name[32];
     uint32  unknown6;
-    byte    scenario[260];
+    byte_t    scenario[260];
     int32   file_table_count;
     int32   file_table_offset;
     int32   file_table_size;
     int32   file_index_table_offset;
-    byte    unknown5[36];
+    byte_t    unknown5[36];
     uint32  virt_base_addr;
     uint32  xdk_ver;
     struct {

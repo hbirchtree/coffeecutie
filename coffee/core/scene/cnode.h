@@ -18,7 +18,7 @@ struct CNode
 
     CMat4* transform;
     CNode* parent;
-    byte   name[32];
+    byte_t   name[32];
 };
 
 /*!

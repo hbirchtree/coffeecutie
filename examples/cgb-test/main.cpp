@@ -6,7 +6,7 @@
 
 using namespace Coffee::CMisc::CGameBoy;
 
-int32 coffee_main(int32 argc, byte** argv)
+int32 coffee_main(int32 argc, byte_t** argv)
 {
     _cgb_core core;
     _cgb_mmu mmu;

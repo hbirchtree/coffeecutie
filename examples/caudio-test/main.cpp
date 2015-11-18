@@ -103,7 +103,7 @@ public:
     }
 };
 
-int32 coffee_main(int32 argc, byte** argv)
+int32 coffee_main(int32 argc, byte_t** argv)
 {
     CResources::coffee_file_set_resource_prefix("sample_data/");
 

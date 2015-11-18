@@ -7,7 +7,7 @@
 using namespace Coffee;
 using namespace Coffee::CDisplay;
 
-int32 coffee_main(int32,byte**)
+int32 coffee_main(int32,byte_t**)
 {
     CResources::coffee_file_set_resource_prefix("sample_data/");
 
@@ -21,9 +21,9 @@ int32 coffee_main(int32,byte**)
 
     props.contextProperties.flags |= CGLContextProperties::GLDebug;
 
-    std::atomic<ubyte> atomic;
+    std::atomic<ubyte_t> atomic;
     atomic.store(0);
-    CThreading::CThreadWorker<ubyte> worker(atomic);
+    CThreading::CThreadWorker<ubyte_t> worker(atomic);
     std::future<void> ret = worker.run([=](){
         try{
             renderer->run(props);

@@ -12,7 +12,7 @@ namespace CBlam{
 
 blam_bitm_header _bitm_get_header(const void* base, int32 offset)
 {
-    const blam_bitm_header* ptr = (const blam_bitm_header*)(((const byte*)base)+offset);
+    const blam_bitm_header* ptr = (const blam_bitm_header*)(((const byte_t*)base)+offset);
     blam_bitm_header hdr;
     c_memcpy(&hdr,ptr,sizeof(blam_bitm_header));
     return hdr;
@@ -30,7 +30,7 @@ const blam_bitm_image *coffee_bitm_get(
     hdr.offset_first -= magic;
     hdr.imageOffset -= magic;
 
-    const blam_bitm_image* img = (const blam_bitm_image*)(((const byte*)map)+hdr.imageOffset);
+    const blam_bitm_image* img = (const blam_bitm_image*)(((const byte_t*)map)+hdr.imageOffset);
 
     return img;
 }
@@ -42,7 +42,7 @@ uint32 *coffee_bitm_decode_micro(
     int16 w = img->isize.w;
     int16 h = img->isize.h;
 
-    const ubyte* src = ((const ubyte*)map)+img->offset;
+    const ubyte_t* src = ((const ubyte_t*)map)+img->offset;
     uint32* out = (uint32*)c_calloc(w*h,sizeof(uint32));
 
     for(int16 x=0;x<w;x++)
@@ -104,7 +104,7 @@ void coffee_bitm_dump(
         return;
 
     CStbImageLib::CStbImageConst stb;
-    stb.data = (ubyte*)data;
+    stb.data = (ubyte_t*)data;
     stb.bpp = 4;
     stb.size.w = img->isize.w;
     stb.size.h = img->isize.h;
@@ -147,7 +147,7 @@ blam_bitm_texture_def coffee_bitm_get_texture(const blam_bitm_image *img, const 
     case blam_bitm_format_DXT1:
     case blam_bitm_format_DXT2AND3:
     case blam_bitm_format_DXT4AND5:{
-        def.data = ((ubyte*)bitmfile)+img->offset;
+        def.data = ((ubyte_t*)bitmfile)+img->offset;
         break;
     }
     default:

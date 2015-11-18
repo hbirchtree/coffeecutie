@@ -20,7 +20,7 @@ struct game_vertex_description
 
 struct game_vertexdata_chunk
 {
-    chunk_mem<chunk_mem<byte>>  buffers;
+    chunk_mem<chunk_mem<byte_t>>  buffers;
     chunk_mem<CAssimpData*>     data;
     game_vertex_description     descriptor;
 };

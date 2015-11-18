@@ -36,7 +36,7 @@ void blam_tag_index_magic(
 const blam_tag_index *blam_tag_index_ptr(
         const blam_file_header *file)
 {
-    return (const blam_tag_index*)&((const byte*)file)[file->tagIndexOffset];
+    return (const blam_tag_index*)&((const byte_t*)file)[file->tagIndexOffset];
 }
 
 blam_tag_index blam_tag_index_get(
@@ -58,7 +58,7 @@ const blam_index_item *blam_tag_index_get_items(
 
 const void *blam_mptr(const void *base, int32 magic, int32 offset)
 {
-    const byte* ptr = ((const byte*)base)+offset-magic;
+    const byte_t* ptr = ((const byte_t*)base)+offset-magic;
     return (ptr < base) ? nullptr : ptr;
 }
 
@@ -67,7 +67,7 @@ cstring blam_index_item_get_string(
         const blam_file_header *map,
         const blam_tag_index *tagindex)
 {
-    return (const byte*)blam_mptr(map,tagindex->index_magic,idx->string_offset);
+    return (const byte_t*)blam_mptr(map,tagindex->index_magic,idx->string_offset);
 }
 
 const blam_index_item *blam_tag_index_get_item(

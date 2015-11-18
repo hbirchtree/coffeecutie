@@ -43,7 +43,7 @@ struct blam_shader_desc
 
 struct blam_mod2_region_permutation
 {
-    byte name[32];
+    byte_t name[32];
     uint32 flags[8];
     int16 meshindex_lod[5];
     int16 reserved[7];
@@ -51,21 +51,21 @@ struct blam_mod2_region_permutation
 
 struct blam_mod2_region
 {
-    byte name[64];
+    byte_t name[64];
     blam_reflexive<blam_mod2_region_permutation> permutations;
 };
 
 struct blam_mod2_geometry_header
 {
     uint32 unknown[9];
-    blam_reflexive<byte> mesh_headers;
+    blam_reflexive<byte_t> mesh_headers;
 };
 
 struct blam_mod2_marker
 {
-    byte name[32];
+    byte_t name[32];
     uint32 unknown[5];
-    blam_reflexive<byte> chunk;
+    blam_reflexive<byte_t> chunk;
 };
 
 /*!
@@ -97,7 +97,7 @@ struct blam_mod2_header
     uint32 unknown2[29];
 
     blam_reflexive<blam_mod2_marker> markers;
-    blam_reflexive<byte> nodes;
+    blam_reflexive<byte_t> nodes;
     blam_reflexive<blam_mod2_region> regions;
     blam_reflexive<blam_mod2_geometry_header> geometries;
     blam_reflexive<blam_shader_desc> shaders;
@@ -108,7 +108,7 @@ struct blam_mod2_header
  */
 struct blam_mod2_bsp_header
 {
-    byte data[500];
+    byte_t data[500];
 //    blam_tagref lightmaps_tag;
 //    uint32 unknown1[37];
 //    blam_reflexive<byte> shaders;

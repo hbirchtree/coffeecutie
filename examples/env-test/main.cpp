@@ -7,7 +7,7 @@
 
 using namespace CLibraryLoader;
 
-int32 coffee_main(int32, byte**)
+int32 coffee_main(int32, byte_t**)
 {
     cstring_w cfg_dir  = coffee_get_userdata_dir(
                 "hbirchtree",

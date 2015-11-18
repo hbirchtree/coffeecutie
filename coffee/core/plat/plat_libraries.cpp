@@ -31,7 +31,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction)
         return nullptr;
     }
 
-    byte* error = nullptr;
+    byte_t* error = nullptr;
     e->funptr = dlsym(e->handle,loaderFunction);
     if((error = dlerror()) != NULL)
     {

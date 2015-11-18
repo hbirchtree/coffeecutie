@@ -57,7 +57,7 @@ private:
     std::atomic<DataType>* thread_ptr = nullptr;
 };
 
-typedef CThreadWorker<ubyte> CThreadUbyteWorker;
+typedef CThreadWorker<ubyte_t> CThreadUbyteWorker;
 
 }
 }

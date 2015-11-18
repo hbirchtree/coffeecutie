@@ -126,11 +126,11 @@ static void core_reset(_cgb_core* core, _cgb_mmu* mmu)
 
     c_free(mmu->rom.data);
 
-    mmu->gpu.memory = (byte*)c_alloc(8*1024);
+    mmu->gpu.memory = (byte_t*)c_alloc(8*1024);
 
-    mmu->mem.eram = (byte*)c_alloc(8*1024);
-    mmu->mem.wram = (byte*)c_alloc(8*1024);
-    mmu->mem.zram = (byte*)c_alloc(128);
+    mmu->mem.eram = (byte_t*)c_alloc(8*1024);
+    mmu->mem.wram = (byte_t*)c_alloc(8*1024);
+    mmu->mem.zram = (byte_t*)c_alloc(128);
 
     mmu->bios.in_bios = 1;
     c_free(mmu->bios.data);
@@ -147,7 +147,7 @@ static void core_install_bios(
     CResources::CResource bios_file(file);
     CResources::coffee_file_pull(&bios_file);
 
-    mmu->bios.data = (byte*)bios_file.data;
+    mmu->bios.data = (byte_t*)bios_file.data;
     mmu->bios.size = bios_file.size;
 }
 
@@ -158,7 +158,7 @@ static void core_load_rom(cstring file,
     CResources::CResource rom_file(file);
     CResources::coffee_file_pull(&rom_file);
 
-    mmu->rom.data = (byte*)rom_file.data;
+    mmu->rom.data = (byte_t*)rom_file.data;
     mmu->rom.size = rom_file.size;
 }
 

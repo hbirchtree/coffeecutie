@@ -12,7 +12,7 @@ using namespace CBlam;
  * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
  *   The purpose of this is platform abstraction such that the rest of the code works consistently across platforms.
  */
-int coffee_main(int32 argv,byte** argc)
+int coffee_main(int32 argv,byte_t** argc)
 {
     CResources::coffee_file_set_resource_prefix("sample_data/");
 

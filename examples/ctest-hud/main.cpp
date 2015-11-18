@@ -57,7 +57,7 @@ public:
             3, 4, 5
         };
 
-        const byte vshader_src[] = {
+        const byte_t vshader_src[] = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
             "layout(location = 1) in vec2 texcoord;"
@@ -74,7 +74,7 @@ public:
             "}"
         };
 
-        const byte fshader_src[] = {
+        const byte_t fshader_src[] = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "uniform sampler2D diffsamp;"
@@ -400,7 +400,7 @@ private:
     CQuat t;
 };
 
-int32 coffee_main(int32, byte**)
+int32 coffee_main(int32, byte_t**)
 {
     CResources::coffee_file_set_resource_prefix("sample_data/");
 

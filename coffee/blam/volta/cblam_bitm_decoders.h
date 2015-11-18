@@ -23,7 +23,7 @@ inline static uint32 blam_rgba_to_int(const blam_rgba &c)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a8(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_a8(uint32 d, uint16 s,byte_t b)
 {
     return b << 24;
 }
@@ -34,7 +34,7 @@ inline static uint32 coffee_bitm_decode_m_a8(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba col;
     col.a = 0;
@@ -48,7 +48,7 @@ inline static uint32 coffee_bitm_decode_m_p8_y8(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba col;
     col.r = col.g = col.b = col.a = b;
@@ -61,7 +61,7 @@ inline static uint32 coffee_bitm_decode_m_ay8(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba col;
     col.a = s & 0xFF;
@@ -75,7 +75,7 @@ inline static uint32 coffee_bitm_decode_m_a8y8(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba c;
     c.r = (((s >> 11) & 0x1F) * 0xFF) / 31;
@@ -91,7 +91,7 @@ inline static uint32 coffee_bitm_decode_m_r5g6b5(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba c;
     c.a = (  s >> 15)         * 0xFF;
@@ -107,7 +107,7 @@ inline static uint32 coffee_bitm_decode_m_a1r5g5b5(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba c;
     c.a = (( s >> 12)         * 0xFF) / 15;
@@ -123,7 +123,7 @@ inline static uint32 coffee_bitm_decode_m_a4r4g4b4(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba col;
     col.a = (d >> 24);
@@ -139,7 +139,7 @@ inline static uint32 coffee_bitm_decode_m_a8r8g8b8(uint32 d, uint16 s,byte b)
  * \param b
  * \return
  */
-inline static uint32 coffee_bitm_decode_m_x8r8g8b8(uint32 d, uint16 s,byte b)
+inline static uint32 coffee_bitm_decode_m_x8r8g8b8(uint32 d, uint16 s,byte_t b)
 {
     blam_rgba col;
     col.a = 0;

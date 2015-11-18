@@ -11,7 +11,7 @@ namespace CStbAudio{
 void coffee_stb_audio_vorbis_load(CAudio::CAudioSample *smp, CResources::CResource *src)
 {
     smp->fmt.samples = stb_vorbis_decode_memory(
-                (ubyte*)src->data,src->size,
+                (ubyte_t*)src->data,src->size,
                 &smp->fmt.channels,&smp->fmt.samplerate,&smp->data);
     smp->fmt.bitdepth = smp->fmt.samples/smp->fmt.samplerate*smp->fmt.channels;
 }
