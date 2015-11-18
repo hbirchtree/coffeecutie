@@ -7,7 +7,7 @@
 
 #include <Windows.h>
 
-#include "coffee/core/types/types.h"
+#include "coffee/core/CTypes"
 #include "coffee/core/base/cdebug.h"
 
 namespace Coffee{
@@ -85,6 +85,32 @@ inline static bool coffee_file_mkdir(cstring dname, bool createParent = false)
     {
         return CreateDirectory(dname,NULL);
     }else{
+		cstring_w path = c_cpy_string(dname);
+		szptr bufsize = c_strlen(path) + 2;
+		path = (cstring_w)c_realloc(path,bufsize);
+
+		path[bufsize - 2] = '\\';
+		path[bufsize - 1] = 0;
+
+		//Beware of magic cookies!
+		cstring_w folder = (cstring_w)c_calloc(sizeof(byte),255);
+		cstring_w end;
+
+		end = strchr(path, L'\\');
+		while (end != NULL)
+		{
+			strncpy(folder,path,end-path+1);
+			if (!CreateDirectory(folder, NULL))
+			{
+				DWORD err = GetLastError();
+				if (err != ERROR_ALREADY_EXISTS)
+					cWarning("Error while creating directories: %i",err);
+			}
+			end = strchr(++end, L'\\');
+		}
+
+		c_free(folder);
+		c_free(path);
         return false;
     }
 }
