@@ -40,10 +40,10 @@ typedef uint8               ubyte_t; /*!< System unsigned byte*/
 
 typedef uint16              ushort;
 
-typedef const byte_t*         cstring; /*!< Typical C-string*/
-typedef byte_t*               cstring_w; /*!< Writable C-string*/
-typedef const int16*        cwstring; /*!< Wide C-string*/
-typedef int16*              cwstring_w; /*!< Wide, writable C-string*/
+typedef const byte_t*       cstring; /*!< Typical C-string*/
+typedef byte_t*             cstring_w; /*!< Writable C-string*/
+typedef const wchar_t*      cwstring; /*!< Wide C-string*/
+typedef wchar_t*            cwstring_w; /*!< Wide, writable C-string*/
 
 typedef size_t              szptr; /*!< Usable as offset into data*/
 
