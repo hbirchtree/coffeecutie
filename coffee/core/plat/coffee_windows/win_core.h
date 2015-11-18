@@ -42,10 +42,12 @@ namespace CFunctional {
                                          NULL,
                                          NULL,
                                          0);
+            cwstring clock_fmt = c_str_wideconvert("%H:%M:%S");
             cwstring_w wstr = (cwstring_w)c_calloc(sizeof(int16),len);
             GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
                             TIME_FORCE24HOURFORMAT,
                             NULL,
+                            clock_fmt,
                             wstr,
                             0);
             cstring_w str = c_str_narrowconvert(wstr);
