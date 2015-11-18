@@ -46,7 +46,7 @@ namespace CFunctional {
             GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
                             TIME_FORCE24HOURFORMAT,
                             NULL,
-                            str,
+                            wstr,
                             0);
             cstring_w str = c_str_narrowconvert(wstr);
             c_free(wstr);
