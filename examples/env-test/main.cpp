@@ -5,6 +5,8 @@
 
 #include "library.h"
 
+using namespace Coffee;
+
 using namespace CLibraryLoader;
 
 int32 coffee_main(int32, byte_t**)

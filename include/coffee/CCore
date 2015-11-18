@@ -7,3 +7,4 @@
 #include <coffee/core/coffee_macros.h>
 
 #include <coffee/core/plat/environment_details.h>
+#include <coffee/core/plat/argument_parse.h>

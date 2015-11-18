@@ -4,6 +4,7 @@
 #include <coffee/misc/emu/gb/cgameboy.h>
 #include <coffee/misc/emu/gb/operators.h>
 
+using namespace Coffee;
 using namespace Coffee::CMisc::CGameBoy;
 
 int32 coffee_main(int32 argc, byte_t** argv)
