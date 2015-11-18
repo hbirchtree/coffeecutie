@@ -1,6 +1,7 @@
 #ifndef COFFEE_MACROS
 #define COFFEE_MACROS
 
+#include "coffee/core/plat/platform_detect.h"
 #include "types/types.h"
 #include <stdio.h>
 #include <stdexcept>
