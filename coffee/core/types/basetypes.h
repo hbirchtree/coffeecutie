@@ -8,6 +8,9 @@
     inline type operator&=(type lhs, type rhs){return (type)(((utype)lhs)&((utype)rhs));} \
     inline type operator|=(type lhs, type rhs){return (type)(((utype)lhs)|((utype)rhs));}
 
+#undef far
+#undef near
+
 #include <string>
 #include <stdexcept>
 
