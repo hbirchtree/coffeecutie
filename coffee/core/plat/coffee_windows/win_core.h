@@ -51,7 +51,7 @@ namespace CFunctional {
                             NULL,
                             clock_fmt,
                             wstr,
-                            0);
+                            len);
             cstring_w str = c_str_narrowconvert(wstr);
             c_free(wstr);
             return str;
