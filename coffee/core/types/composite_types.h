@@ -7,8 +7,7 @@
 
 namespace Coffee{
 
-template<typename T>
-class _cbasic_timer
+template<typename T> class _cbasic_timer
 {
 public:
     virtual ~_cbasic_timer(){}
@@ -33,8 +32,7 @@ struct CRGBA
 /*!
  * \brief Describes the clipping distance of a GL scene
  */
-template<typename T>
-struct _cbasic_zfield
+template<typename T> struct _cbasic_zfield
 {
     _cbasic_zfield()
         : near(0.1),
@@ -59,8 +57,8 @@ template<typename T> struct _cbasic_size
     _cbasic_size(T wd,T hg) : w(wd),h(hg){}
     _cbasic_size(){}
 
-    T w = 0;
-    T h = 0;
+    T w;
+    T h;
 
     T area()
     {
