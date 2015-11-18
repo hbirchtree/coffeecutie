@@ -71,6 +71,7 @@ cstring_w c_str_narrowconvert(cwstring str)
     size_t sz = wcslen(str)+1;
     cstring_w out = (cstring_w)c_calloc(sizeof(int8),sz);
     wcstombs(out,str,sz);
+    out[sz-1] = 0;
     return out;
 }
 
