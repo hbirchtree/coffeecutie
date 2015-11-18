@@ -32,7 +32,7 @@ namespace CFunctional {
         inline static cstring_w* coffee_callstack(szptr* len, uint32 stackreduce = 0)
         {
             C_STUBBED("Callstack dumping");
-            len = 0;
+            *len = 0;
             return nullptr;
         }
         inline static cstring_w coffee_clock_string()
