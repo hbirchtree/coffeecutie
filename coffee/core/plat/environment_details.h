@@ -11,13 +11,26 @@
 #include <libgen.h>
 #include <unistd.h>
 
+#elif defined(COFFEE_WINDOWS)
+
+#include <Windows.h>
+
 #endif
 
 namespace Coffee{
 
 static cstring_w coffee_get_env_variable(cstring var)
 {
+#if defined(COFFEE_LINUX)
     return getenv(var);
+#elif defined(COFFEE_WINDOWS)
+	int32 envSize = GetEnvironmentVariable(var,nullptr,0);
+	if (envSize == 0)
+		return nullptr;
+	cstring_w env_var = (cstring_w)c_alloc(envSize+1);
+	GetEnvironmentVariable(var,env_var,envSize+1);
+	return env_var;
+#endif
 }
 
 static cstring coffee_get_path_sep()
