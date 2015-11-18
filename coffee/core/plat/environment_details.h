@@ -11,13 +11,28 @@
 #include <libgen.h>
 #include <unistd.h>
 
+#elif defined(COFFEE_WINDOWS)
+
+#include <Windows.h>
+#include <direct.h>
+#include <PathCch.h>
+
 #endif
 
 namespace Coffee{
 
 static cstring_w coffee_get_env_variable(cstring var)
 {
+#if defined(COFFEE_LINUX)
     return getenv(var);
+#elif defined(COFFEE_WINDOWS)
+	int32 envSize = GetEnvironmentVariable(var,nullptr,0);
+	if (envSize == 0)
+		return nullptr;
+	cstring_w env_var = (cstring_w)c_alloc(envSize+1);
+	GetEnvironmentVariable(var,env_var,envSize+1);
+	return env_var;
+#endif
 }
 
 static cstring coffee_get_path_sep()
@@ -84,8 +99,12 @@ static cstring_w coffee_get_application_dir()
 {
 #if defined(COFFEE_LINUX)
     return dirname(coffee_executable_name());
-#else
-    return "";
+#elif defined(COFFEE_WINDOWS)
+	cstring_w path = coffee_executable_name();
+	cwstring_w pathw = c_wideconvert(path);
+	if (PathCchRemoveFileSpec(pathw, strlen(path) + 1) != S_OK)
+		return nullptr;
+
 #endif
 }
 
@@ -94,8 +113,9 @@ inline static cstring_w coffee_get_current_dir()
 #if defined(COFFEE_LINUX)
     cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
     return getcwd(cwd,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
-#else
-    return "";
+#elif defined(COFFEE_WINDOWS)
+	cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+	return _getcwd(cwd, COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 #endif
 }
 
