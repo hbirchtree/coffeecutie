@@ -57,5 +57,13 @@ void c_free(c_ptr data)
     free(data);
 }
 
+cwstring_w c_str_wideconvert(cstring str)
+{
+    size_t sz = strlen(str)+1;
+    cwstring_w out = (cwstring_w)c_calloc(sizeof(int16),sz);
+    mbstowcs(out,str,sz);
+    return out;
+}
+
 }
 }

@@ -26,6 +26,8 @@ extern int c_strlen(cstring s);
 
 extern cstring_w c_cpy_string(cstring str);
 
+extern cwstring_w c_str_wideconvert(cstring str);
+
 }
 
 using namespace CMem;
