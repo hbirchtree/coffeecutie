@@ -30,7 +30,7 @@ CMat4 _coffee_gen_perspective(scalar fov, scalar aspect, const CZField& zfield)
 {
     CMat4 matrix(0);
     CMath::mat4* tmat = (CMath::mat4*)&matrix;
-    *tmat = CMath::perspective(CMath::radians(fov),aspect,zfield.near,zfield.far);
+    *tmat = CMath::perspective(CMath::radians(fov),aspect,zfield.fnear,zfield.ffar);
     return matrix;
 }
 
@@ -40,7 +40,7 @@ CMat4 _coffee_gen_ortho(const CRectF& viewrect, const CZField& zfield)
     CMath::mat4* tmat = (CMath::mat4*)&matrix;
     *tmat = CMath::ortho(viewrect.left(),viewrect.right(),
                          viewrect.bottom(),viewrect.top(),
-                         zfield.near,zfield.far);
+                         zfield.fnear,zfield.ffar);
     return matrix;
 }
 

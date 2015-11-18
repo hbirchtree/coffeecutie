@@ -72,9 +72,9 @@ coffee_graphics_gen_perspective(
 
     matrix[0][0] = T(1)/(aspect*thalffov);
     matrix[1][1] = T(1)/(thalffov);
-    matrix[2][2] = (-zfield.far-zfield.near)/(zfield.far-zfield.near);
+    matrix[2][2] = (-zfield.ffar-zfield.fnear)/(zfield.ffar-zfield.fnear);
     matrix[2][3] = T(-1);
-    matrix[3][2] = (T(-2)*zfield.far*zfield.near)/(zfield.far-zfield.near);
+    matrix[3][2] = (T(-2)*zfield.ffar*zfield.fnear)/(zfield.ffar-zfield.fnear);
 
     return matrix;
 }

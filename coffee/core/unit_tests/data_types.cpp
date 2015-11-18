@@ -89,7 +89,7 @@ void matrix_tests()
                     camera.zVals);
         glm::mat4 glm_matrix = glm::perspective(glm::radians(camera.fieldOfView),
                                                 camera.aspect,
-                                                camera.zVals.near,camera.zVals.far);
+                                                camera.zVals.fnear,camera.zVals.ffar);
 
         CASSERT_MEM(&glm_matrix,&my_matrix,sizeof(CMat4));
 
