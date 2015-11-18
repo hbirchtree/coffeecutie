@@ -26,12 +26,12 @@ static cstring_w coffee_get_env_variable(cstring var)
 #if defined(COFFEE_LINUX)
     return getenv(var);
 #elif defined(COFFEE_WINDOWS)
-	int32 envSize = GetEnvironmentVariable(var,nullptr,0);
-	if (envSize == 0)
-		return nullptr;
-	cstring_w env_var = (cstring_w)c_alloc(envSize+1);
-	GetEnvironmentVariable(var,env_var,envSize+1);
-	return env_var;
+        int32 envSize = GetEnvironmentVariable(var,nullptr,0);
+        if (envSize == 0)
+                return nullptr;
+        cstring_w env_var = (cstring_w)c_alloc(envSize+1);
+        GetEnvironmentVariable(var,env_var,envSize+1);
+        return env_var;
 #endif
 }
 
@@ -47,13 +47,13 @@ static cstring coffee_get_path_sep()
 
 static cstring_w coffee_concat_plat_path(cstring_w target, cstring v2)
 {
-    szptr len = ((target) ? strlen(target)+1 : 0)+strlen(v2)+1;
+    szptr len = ((target) ? c_strlen(target)+1 : 0)+c_strlen(v2)+1;
     cstring_w p = (cstring_w)c_realloc(target,len);
     if(target) //In the case where we start out with an empty buffer
-        strcat(p,coffee_get_path_sep());
+        c_strcat(p,coffee_get_path_sep());
     else
         p[0] = '\0';
-    return strcat(p,v2);
+    return c_strcat(p,v2);
 }
 
 static cstring_w coffee_get_user_home_dir()
@@ -100,14 +100,14 @@ static cstring_w coffee_get_application_dir()
 #if defined(COFFEE_LINUX)
     return dirname(coffee_executable_name());
 #elif defined(COFFEE_WINDOWS)
-	cstring_w path = coffee_executable_name();
-	cwstring_w pathw = c_str_wideconvert(path);
-	if (PathCchRemoveFileSpec(pathw, strlen(path) + 1) != S_OK)
-		return nullptr;
-	c_free(path);
-	path = c_str_narrowconvert(pathw);
-	c_free(pathw);
-	return path;
+        cstring_w path = coffee_executable_name();
+        cwstring_w pathw = c_str_wideconvert(path);
+        if (PathCchRemoveFileSpec(pathw, strlen(path) + 1) != S_OK)
+                return nullptr;
+        c_free(path);
+        path = c_str_narrowconvert(pathw);
+        c_free(pathw);
+        return path;
 #endif
 }
 
@@ -117,8 +117,8 @@ inline static cstring_w coffee_get_current_dir()
     cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
     return getcwd(cwd,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 #elif defined(COFFEE_WINDOWS)
-	cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
-	return _getcwd(cwd, COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+        cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+        return _getcwd(cwd, COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 #endif
 }
 

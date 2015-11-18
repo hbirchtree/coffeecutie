@@ -188,7 +188,7 @@ void floating_tests()
     CASSERT((sizeof(double)==sizeof(gl::GLdouble)));
 }
 
-void run_tests(bool silent)
+void run_type_tests(bool silent)
 {
     if(!silent)
         cMsg("Coffee Unit Tests","Matrix tests starting");

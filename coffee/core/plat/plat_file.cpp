@@ -1,5 +1,8 @@
 #include "plat_file.h"
 
+#include "platform_detect.h"
+#include "environment_details.h"
+
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/base/cdebug.h"
 
@@ -15,10 +18,22 @@ struct CFile
     FILE* handle;
 };
 
+CString _coffee_file_get_plat_name(cstring fname)
+{
+    CString filename = fname;
+
+#if defined(COFFEE_WINDOWS)
+    filename = c_str_replace(fname,"/","\\\\");
+#endif
+
+    return filename;
+}
+
 CFile *coffee_file_open(cstring fname, cstring mode)
 {
     CFile* f = new CFile;
-    f->handle = fopen(fname,mode);
+    CString plat_fname = _coffee_file_get_plat_name(fname);
+    f->handle = fopen(plat_fname.c_str(),mode);
     return f;
 }
 

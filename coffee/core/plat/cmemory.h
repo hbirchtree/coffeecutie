@@ -22,12 +22,17 @@ extern void* c_calloc(szptr unit, szptr num);
 
 extern bool c_strcmp(cstring s1, cstring s2);
 
+extern cstring_w c_strcat(cstring_w s1, cstring s2);
+
 extern int c_strlen(cstring s);
 
 extern cstring_w c_cpy_string(cstring str);
 
 extern cwstring_w c_str_wideconvert(cstring str);
+
 extern cstring_w c_str_narrowconvert(cwstring str);
+
+extern cstring_w c_str_replace(cstring target, cstring query, cstring replacement);
 
 }
 

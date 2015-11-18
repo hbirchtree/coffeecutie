@@ -3,6 +3,7 @@
 #include "base/cdebug.h"
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/unit_tests/data_types.h"
+#include "coffee/core/unit_tests/memory_operations.h"
 #include "graphics/cgraphics_quirks.h"
 
 static bool coffee_initialized = false;
@@ -16,7 +17,8 @@ void CoffeeInit()
     coffee_enable_core_dump();
 #ifndef NDEBUG
     //Run unit tests, ensuring that the system and compilation is sane
-    CoffeeTests::run_tests();
+    CoffeeTests::run_type_tests();
+    CoffeeTests::run_memory_tests();
 #endif
 }
 

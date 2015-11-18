@@ -74,5 +74,30 @@ cstring_w c_str_narrowconvert(cwstring str)
     return out;
 }
 
+cstring_w c_str_replace(cstring target, cstring query, cstring replacement)
+{
+    CString starget = target;
+    CString squery = query;
+    CString srepl = replacement;
+
+    for(size_t pos=0;;pos+=srepl.length())
+    {
+        pos = starget.find(query,pos);
+        if(pos==std::string::npos)
+            break;
+        starget.erase(pos,squery.length());
+        starget.insert(pos,srepl);
+    }
+    cstring_w out = (cstring_w)c_alloc(starget.size()+1);
+    starget.copy(out,starget.size());
+    out[starget.size()] = 0;
+    return out;
+}
+
+cstring_w c_strcat(cstring_w s1, cstring s2)
+{
+    return strcat(s1,s2);
+}
+
 }
 }

@@ -110,6 +110,7 @@ CResource::CResource(cstring rsrc, bool absolute):
         m_resource = rsrc;
     else
         m_resource = coffee_file_get_dereferenced_path(rsrc);
+
 }
 
 cstring CResource::resource() const
