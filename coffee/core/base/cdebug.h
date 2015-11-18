@@ -44,7 +44,7 @@ static CString cStringFormat(cstring fmt, Arg... args)
     return fmt::sprintf(fmt,args...);
 #else
     CString str;
-    str.reserve(snprintf(NULL,0,fmt,args...));
+    str.resize(snprintf(NULL,0,fmt,args...));
     sprintf(&str[0],fmt,args...);
     str[str.size()-1] = 0;
     return str;
