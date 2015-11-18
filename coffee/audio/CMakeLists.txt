@@ -7,6 +7,7 @@ set ( CAudio_SRCS
 add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})
 
 target_link_libraries ( CAudio
+    CoffeeCore
     ${OPENAL_LIBRARY}
     )
 

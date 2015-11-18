@@ -13,7 +13,7 @@ set ( CImage_SRCS
 add_library( CImage ${COFFEE_LINK_OPT} ${CImage_SRCS})
 
 target_link_libraries( CImage
-CoffeeCore
-)
+    CoffeeCore
+    )
 
 target_compile_features(CImage PRIVATE cxx_variadic_templates)
