@@ -35,21 +35,21 @@ struct CRGBA
 template<typename T> struct _cbasic_zfield
 {
     _cbasic_zfield()
-        : znear(0.1),
-          zfar(10)
+        : near(0.1),
+          far(10)
     {
     }
     _cbasic_zfield(T vnear, T vfar)
-        : znear(vnear),
-          zfar(vfar)
+        : near(vnear),
+          far(vfar)
     {
     }
 
     //Why fnear and ffar?
     //Because Windows is a piece of shit. :)
 
-    T znear;
-    T zfar;
+    T near;
+    T far;
 };
 
 /*!
