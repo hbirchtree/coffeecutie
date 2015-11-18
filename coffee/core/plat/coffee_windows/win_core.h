@@ -37,11 +37,24 @@ namespace CFunctional {
         }
         inline static cstring_w coffee_clock_string()
         {
-            C_STUBBED("Clock strings");
-            return "STUBBED";
+            size_t len = GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
+                                         TIME_FORCE24HOURFORMAT,
+                                         NULL,
+                                         NULL,
+                                         0);
+            cwstring_w wstr = (cwstring_w)c_calloc(sizeof(int16),len);
+            GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
+                            TIME_FORCE24HOURFORMAT,
+                            NULL,
+                            str,
+                            0);
+            cstring_w str = c_str_narrowconvert(wstr);
+            c_free(wstr);
+            return str;
         }
         inline static void coffee_clock_free(cstring_w arg)
         {
+            c_free(arg);
         }
     }
 
