@@ -50,11 +50,14 @@ void coffee_file_close(CResource *resc)
 bool coffee_file_memmap(CResource *resc)
 {
     resc->size = coffee_file_get_size(resc->resource());
+    int err = 0;
     resc->data = CMemoryManagement::coffee_memory_map_file(
                 resc->resource(),
-                0,resc->size);
+                0,resc->size,
+                &err);
     if(!resc->data)
     {
+        cWarning("Failed to map file: %s",strerror(err));
         resc->size = 0;
         return false;
     }

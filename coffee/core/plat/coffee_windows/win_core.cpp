@@ -45,13 +45,16 @@ szptr _winapi_file_get_size(CWinFile *fp)
 }
 }
 namespace CMemoryManagement{
-void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
+void* coffee_memory_map_file(cstring filename, szptr offset, szptr size, int*)
 {
     CResources::CWinFile* fp = CResources::_winapi_open_file_read(filename);
     szptr len = CResources::_winapi_file_get_size(fp);
 
     HANDLE map = CreateFileMapping(fp, NULL, PAGE_READONLY, 0, 0, 0);
-    if (map == 0)return nullptr;
+    if (map == NULL)
+    {
+        return nullptr;
+    }
 
     void* ptr = MapViewOfFile(map, FILE_MAP_READ, 0, 0, size);
 

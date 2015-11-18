@@ -34,7 +34,9 @@ CFile *coffee_file_open(cstring fname, cstring mode)
     CFile* f = new CFile;
     CString plat_fname = _coffee_file_get_plat_name(fname);
     f->handle = fopen(plat_fname.c_str(),mode);
-	perror("Error!");
+    int err = errno;
+    if(!f->handle)
+        cWarning("Native file error: %s",strerror(err));
     return f;
 }
 

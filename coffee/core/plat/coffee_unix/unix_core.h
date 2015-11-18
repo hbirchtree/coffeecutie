@@ -77,16 +77,26 @@ inline static szptr coffee_file_get_size(cstring file)
 
 namespace CMemoryManagement{
 
-inline static void* coffee_memory_map_file(cstring filename, szptr offset, szptr size)
+inline static void* coffee_memory_map_file(
+        cstring filename, szptr offset, szptr size, int* error)
 {
-    if(size<1)
-        return nullptr;
-
     szptr pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE)-1);
     int fd = open(filename,O_RDONLY);
-    byte_t* addr = (byte_t*)mmap(NULL,offset+size-pa_offset,PROT_READ,MAP_PRIVATE,fd,pa_offset);
-    if(addr == MAP_FAILED)
+    if(fd < 0)
+    {
+        *error = errno;
         return nullptr;
+    }
+    byte_t* addr = (byte_t*)mmap(
+                NULL,
+                offset+size-pa_offset,
+                PROT_READ,MAP_PRIVATE,
+                fd,pa_offset);
+    if(addr == MAP_FAILED)
+    {
+        *error = errno;
+        return nullptr;
+    }
     return addr;
 }
 
