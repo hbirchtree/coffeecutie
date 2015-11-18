@@ -2,6 +2,7 @@
 
 #include <malloc.h>
 #include <cstring>
+#include <cwchar>
 
 namespace Coffee{
 namespace CMem{
@@ -62,6 +63,14 @@ cwstring_w c_str_wideconvert(cstring str)
     size_t sz = strlen(str)+1;
     cwstring_w out = (cwstring_w)c_calloc(sizeof(int16),sz);
     mbstowcs(out,str,sz);
+    return out;
+}
+
+cstring_w c_str_narrowconvert(cwstring str)
+{
+    size_t sz = wcslen(str)+1;
+    cstring_w out = (cstring_w)c_calloc(sizeof(int8),sz);
+    wcstombs(out,str,sz);
     return out;
 }
 
