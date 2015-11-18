@@ -14,7 +14,7 @@ namespace Coffee{
 namespace CMath{
 using namespace std;
 
-template<typename T> bool power2(T n)
+template<typename T> bool power2(T const& n)
 {
     return n!=0&&(n&(n-1))==0;
 }
