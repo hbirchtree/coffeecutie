@@ -54,11 +54,26 @@ static cstring_w coffee_concat_plat_path(cstring_w target, cstring v2)
     return strcat(p,v2);
 }
 
+static cstring_w coffee_get_user_home_dir()
+{
+#if defined(COFFEE_LINUX)
+    return coffee_get_env_variable("HOME");
+#elif defined(COFFEE_WINDOWS)
+    cstring_w homedrive = coffee_get_env_variable("HOMEDRIVE");
+    cstring_w homepath = coffee_get_env_variable("HOMEPATH");
+    cstring_w homedir = coffee_concat_plat_path(homedrive,homepath);
+    c_free(homepath);
+    return homedir;
+#else
+    return nullptr;
+#endif
+}
+
 static cstring_w coffee_get_userdata_dir(cstring orgname, cstring appname)
 {
     cstring_w base = coffee_concat_plat_path(
                 nullptr,
-                coffee_get_env_variable("HOME"));
+                coffee_get_user_home_dir());
 #if defined(COFFEE_LINUX)
     base = coffee_concat_plat_path(
                 base,
