@@ -14,8 +14,7 @@ namespace Coffee{
 namespace CMath{
 using namespace std;
 
-template<typename T>
-bool power2(T n)
+template<typename T> bool power2(T n)
 {
     return n!=0&&(n&(n-1))==0;
 }
@@ -23,14 +22,12 @@ bool power2(T n)
 constexpr bigscalar pi = M_PI;
 constexpr bigscalar e = M_E;
 
-template<typename T>
-T max(T const& v1, T const& v2)
+template<typename T> T max(T const& v1, T const& v2)
 {
     return (v1>v2) ? v1 : v2;
 }
 
-template<typename T>
-T min(T const& v1, T const& v2)
+template<typename T> T min(T const& v1, T const& v2)
 {
     return (v1<v2) ? v1 : v2;
 }
@@ -59,8 +56,7 @@ inline scalar cfrand(const scalar& min, const scalar& max)
     return dist(rand_gen);
 }
 
-template<typename T>
-T radians(const T& degrees)
+template<typename T> T radians(const T& degrees)
 {
     return degrees*CMath::pi/T(180);
 }
