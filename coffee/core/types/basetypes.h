@@ -47,11 +47,11 @@ typedef int16*              cwstring_w; /*!< Wide, writable C-string*/
 
 typedef size_t              szptr; /*!< Usable as offset into data*/
 
-typedef const void* c_cptr;
-typedef void* c_ptr;
-
 typedef std::string         CString; /*!< Typical string object */
 typedef std::runtime_error  CStdFault; /*!< Exception to be thrown by default */
+
+typedef const void* c_cptr;
+typedef void*       c_ptr;
 
 /*!
  * \brief A prototype for Coffee-managed main functions. Benefits to this is that Coffee will abstract away any platform-specific quirks to the main function, such as difference in arguments. (Eg. some platforms do not include the main executable while others do)

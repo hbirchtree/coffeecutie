@@ -9,22 +9,11 @@
 #include "coffee/core/CTypes"
 #include <vector>
 
-#if defined(COFFEE_WINDOWS)
-
-#include <Windows.h>
-#include <WinUser.h>
-
-#elif defined(COFFEE_LINUX)
-
-#include <stdlib.h>
-
-#endif
-
 using namespace Coffee;
 
 namespace Coffee{
 
-static cstring_w coffee_executable_name(cstring_w n);
+extern cstring_w coffee_executable_name(cstring_w n = nullptr);
 
 static cstring _switch_short(cstring in)
 {
@@ -85,32 +74,6 @@ static void coffee_args_get_all(
         out_argv[i] = coffee_args_get_arg(argc,argv,in_argv[i]);
     }
 }
-
-#if defined(COFFEE_LINUX)
-
-static cstring_w coffee_executable_name(cstring_w n = nullptr)
-{
-    C_UNUSED(n);
-    return realpath("/proc/self/exe",nullptr);
-}
-
-#elif defined(COFFEE_WINDOWS)
-
-static cstring_w coffee_executable_name(cstring_w path = nullptr)
-{
-        if(!path)
-                path = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
-
-        DWORD size = GetModuleFileNameA(NULL,path,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
-        path[size] = '\0';
-        return path;
-}
-
-#elif defined(COFFEE_APPLE)
-
-//TODO: Implement this
-
-#endif
 
 }
 

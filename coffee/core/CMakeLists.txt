@@ -56,6 +56,7 @@ set ( CoffeeCore_SRCS
         scene/cnode.cpp
 
         plat/coffee_windows/win_core.cpp
+        plat/argument_parse.cpp
         plat/plat_file.cpp
         plat/plat_timers.cpp
         plat/cmemory.cpp
