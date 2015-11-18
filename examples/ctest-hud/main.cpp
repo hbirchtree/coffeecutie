@@ -31,8 +31,8 @@ public:
     {
         CFunctional::CFrameCounter counter(framefun);
         counter.interval = 1000000;
-        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
-        clock->start();
+//        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
+//        clock->start();
 
         const CVec3 vertexdata[] = {
             CVec3(-1.f, -1.f, 0.f), //2
@@ -350,7 +350,7 @@ public:
 
             transform_index = (transform_index+1)%3;
 
-            counter.update(clock->elapsed());
+            //counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
 
             this->swapBuffers();
