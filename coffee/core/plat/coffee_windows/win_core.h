@@ -37,7 +37,7 @@ namespace CFunctional {
         }
         inline static cstring_w coffee_clock_string()
         {
-            constexpr cwstring clock_fmt = c_str_wideconvert("%H:%M:%S");
+            cwstring clock_fmt = c_str_wideconvert("%H:%M:%S");
 
             size_t len = GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
                                          TIME_FORCE24HOURFORMAT,
