@@ -398,8 +398,8 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     cam->rotation.w() = 1;
     cam->fieldOfView = 60.f;
     cam->aspect = 1.6f;
-    cam->zVals.ffar = 100.f;
-    cam->zVals.fnear = 1.f;
+    cam->zVals.zfar = 100.f;
+    cam->zVals.znear = 1.f;
     coffee_graphics_gen_matrix_perspective(cam);
 
     CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
