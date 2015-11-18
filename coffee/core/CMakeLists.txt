@@ -88,5 +88,11 @@ ${X11_LIBRARIES}
 ${M_LIB_LIBRARIES}
 )
 
+if(WIN32)
+    target_link_libraries ( CoffeeCore
+        pathcch
+        )
+endif()
+
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)
