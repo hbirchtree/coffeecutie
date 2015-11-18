@@ -31,17 +31,25 @@ extern void* _coffee_get_funptr(CNativeObject* object);
  * \param loaderFunction
  * \return Valid pointer if object was successfully loaded, null if it failed
  */
-extern CNativeObject *_coffee_get_library(cstring file, cstring loaderFunction);
+extern CNativeObject *_coffee_get_library(cstring file, cstring loaderFunction, _cbasic_version<int32> const* libver);
 extern void _coffee_close_library(CNativeObject* object);
 
 template<typename LibInterface, cstring loaderFunction = nullptr>
-CObjectLoader<LibInterface>* coffee_get_lib(cstring file)
+/*!
+ * \brief If successful, loads a library into the program.
+ * \param file Name of the library without platform-specific appendages such as file extensions or "lib"
+ * \return Valid pointer if it succeeded, null if it failed
+ */
+CObjectLoader<LibInterface>* coffee_get_lib(
+        cstring file,
+        _cbasic_version<int32> const* libver = nullptr)
 {
     typedef LibInterface*(*LoaderFunction)();
 
     CNativeObject* obj = _coffee_get_library(
                 file,
-                loaderFunction ? loaderFunction : "CoffeeLoader");
+                loaderFunction ? loaderFunction : "CoffeeLoader",
+                libver);
 
     if(!obj)
         return nullptr;

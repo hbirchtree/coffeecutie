@@ -19,11 +19,24 @@ struct CNativeObject
     void* funptr;
 };
 
-CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction)
+CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _cbasic_version<int32> *libver)
 {
     CNativeObject *e = new CNativeObject;
 
-    e->handle = dlopen(file,RTLD_NOW);
+    CString plat_file_name = "lib";
+    plat_file_name += file;
+    plat_file_name += ".so";
+
+    if(libver)
+    {
+        plat_file_name.append(cStringFormat(
+                    ".%i.%i.%i",
+                    libver->major,
+                    libver->minor,
+                    libver->revision));
+    }
+
+    e->handle = dlopen(plat_file_name.c_str(),RTLD_NOW);
     if(!e->handle)
     {
         cWarning(lib_load_error_format,dlerror());
@@ -64,15 +77,18 @@ struct CNativeObject
     void* procedure;
 };
 
-CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction)
+CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _cbasic_version<int32> *libver)
 {
     CNativeObject* e = new CNativeObject;
 
-    e->hinstLib = LoadLibrary(file);
+    CString plat_file_name = file;
+    plat_file_name += ".dll";
+
+    e->hinstLib = LoadLibrary(plat_file_name.c_str());
 
     if(!e->hinstLib)
     {
-        cWarning(lib_load_error_format,file);
+        cWarning(lib_load_error_format,plat_file_name.c_str());
         _coffee_close_library(e);
         return nullptr;
     }
@@ -81,7 +97,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction)
 
     if(!e->procedure)
     {
-        cWarning(lib_symb_error_format,file);
+        cWarning(lib_symb_error_format,plat_file_name.c_str());
         _coffee_close_library(e);
         return nullptr;
     }

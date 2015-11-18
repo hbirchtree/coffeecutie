@@ -26,7 +26,11 @@ int32 coffee_main(int32, byte_t**)
     free(app_dir);
     free(exe_name);
 
-    CObjectLoader<TestClass>* libtest = coffee_get_lib<TestClass>("libtest.so");
+    _cbasic_version<int32> libver;
+    libver.major = 1;
+    libver.minor = 0;
+    libver.revision = 0;
+    CObjectLoader<TestClass>* libtest = coffee_get_lib<TestClass>("test",&libver);
 
     if(libtest)
     {
