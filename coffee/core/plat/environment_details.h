@@ -101,10 +101,13 @@ static cstring_w coffee_get_application_dir()
     return dirname(coffee_executable_name());
 #elif defined(COFFEE_WINDOWS)
 	cstring_w path = coffee_executable_name();
-	cwstring_w pathw = c_wideconvert(path);
+	cwstring_w pathw = c_str_wideconvert(path);
 	if (PathCchRemoveFileSpec(pathw, strlen(path) + 1) != S_OK)
 		return nullptr;
-
+	c_free(path);
+	path = c_str_narrowconvert(pathw);
+	c_free(pathw);
+	return path;
 #endif
 }
 
