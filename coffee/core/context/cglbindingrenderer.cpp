@@ -58,10 +58,10 @@ void CGLBindingRenderer::fetchGLExtensions()
     CString tmp;
 
     for(GLint i=0;i<exts;i++){
-		byte_t* str = (byte_t*)glGetStringi(GL_EXTENSIONS, i);
+		const ubyte_t* str = glGetStringi(GL_EXTENSIONS, i);
 		if (!str)
 			continue;
-        tmp.append(str);
+        tmp.append((cstring)str);
         if(i<exts-1)
             tmp.push_back('\n');
     }
