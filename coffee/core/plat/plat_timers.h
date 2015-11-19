@@ -7,19 +7,19 @@ namespace Coffee{
 namespace CFunctional{
 
 /*!
- * \brief Will return a concealed, platform-dependent, general-purpose timer.
+ * \brief Will return a millisecond timer
  * \return A pointer to said timer
  */
 extern CElapsedTimer* coffee_fun_alloc_timer();
 
 /*!
- * \brief Will return a concealed, platform-dependent, accurate timer, with varying accuracy based on hardware.
+ * \brief Will return a micro-second timer
  * \return A pointer to said timer
  */
 extern CElapsedTimerMicro* coffee_fun_alloc_timer_micro();
 
 /*!
- * \brief Will return a concealed, platform-dependent, general-purpose timer with double format.
+ * \brief Will return a microsecond timer in double format, where 1.0 is equivalent to 1 second
  * \return A pointer to said timer
  */
 extern CElapsedTimerD* coffee_fun_alloc_timerd();

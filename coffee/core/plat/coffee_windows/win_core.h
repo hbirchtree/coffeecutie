@@ -63,17 +63,51 @@ namespace CFunctional {
     }
 
 
-    //Stub for timers
+	extern uint64 _win_api_get_time();
+
     template<typename T>
-    class _coffee_stub_timer
-    {
-    public:
-        void start() {}
-        T elapsed() { return 0; }
-    };
-    class CElapsedTimer : public _coffee_stub_timer<uint64> {};
-    class CElapsedTimerMicro : public _coffee_stub_timer<uint64> {};
-    class CElapsedTimerD : public _coffee_stub_timer<double> {};
+	class _cbasic_windows_timer : public _cbasic_timer<T>
+	{
+	public:
+		virtual ~_cbasic_windows_timer() {}
+		void start()
+		{
+			_start = _curr_time();
+		}
+		T elapsed()
+		{
+			return _curr_time() - _start;
+		}
+	protected:
+		virtual T _curr_time() = 0;
+	private:
+		T _start = 0;
+	};
+
+	class _windows_CElapsedTimer : public _cbasic_windows_timer<uint64>
+	{
+	protected:
+		uint64 _curr_time()
+		{
+			return _win_api_get_time()/1000;
+		}
+	};
+	class _windows_CElapsedTimerMicro : public _cbasic_windows_timer<uint64>
+	{
+	protected:
+		uint64 _curr_time()
+		{
+			return _win_api_get_time();
+		}
+	};
+	class _windows_CElapsedTimerD : public _cbasic_windows_timer<bigscalar>
+	{
+	protected:
+		bigscalar _curr_time()
+		{
+			return ((bigscalar)_win_api_get_time())/1000000.0;
+		}
+	};
 }
 
 namespace CResources{
@@ -117,6 +151,7 @@ inline static bool coffee_file_mkdir(cstring dname, bool createParent = false)
 
 }
 }
+
 
 
 }

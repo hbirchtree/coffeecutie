@@ -1,6 +1,8 @@
 #include "win_core.h"
 
 #include "coffee/core/plat/platform_detect.h"
+#include <mutex>
+#include <atomic>
 
 #ifdef COFFEE_WINDOWS
 #define WIN32_LEAN_AND_MEAN
@@ -17,7 +19,8 @@ struct CWinFile
 
 CWinFile* _winapi_open_file_read(cstring file){
     CWinFile *f = new CWinFile;
-    f->hd = CreateFile(file, GENERIC_READ,
+	cstring wfname = c_str_replace(file, "/", "\\");
+    f->hd = CreateFile(wfname, GENERIC_READ,
                       FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     return f;
@@ -66,6 +69,30 @@ bool coffee_memory_unmap_file(void* ptr, szptr size)
     return UnmapViewOfFile(ptr);
 }
 
+}
+
+namespace CFunctional {
+
+	struct WindowsPerformanceCounterData {
+		WindowsPerformanceCounterData()
+		{
+			QueryPerformanceFrequency(&freq);
+		}
+
+		std::mutex perf_lock;
+		LARGE_INTEGER freq;
+		std::atomic_bool loaded;
+	};
+
+	static WindowsPerformanceCounterData _win_perfcounter_data;
+
+	uint64 _win_api_get_time()
+	{
+		LARGE_INTEGER tmp;
+		QueryPerformanceCounter(&tmp);
+		uint64 tick = tmp.QuadPart;
+		return (tick*1000000)/_win_perfcounter_data.freq.QuadPart;
+	}
 }
 }
 
