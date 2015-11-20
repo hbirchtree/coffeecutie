@@ -10,6 +10,45 @@
 
 namespace Coffee{
 namespace CResources{
+namespace CFiles{
+
+bool coffee_file_mkdir(cstring dname, bool createParent)
+{
+    if(!createParent)
+    {
+        return CreateDirectory(dname,NULL);
+    }else{
+        cstring_w path = c_cpy_string(dname);
+        szptr bufsize = c_strlen(path) + 2;
+        path = (cstring_w)c_realloc(path,bufsize);
+
+        path[bufsize - 2] = '\\';
+        path[bufsize - 1] = 0;
+
+        //Beware of magic cookies!
+        cstring_w folder = (cstring_w)c_calloc(sizeof(byte),255);
+        cstring_w end;
+
+        end = strchr(path, L'\\');
+        while (end != NULL)
+        {
+            strncpy(folder,path,end-path+1);
+            if (!CreateDirectory(folder, NULL))
+            {
+                DWORD err = GetLastError();
+                if (err != ERROR_ALREADY_EXISTS)
+                    cWarning("Error while creating directories: %i",err);
+            }
+            end = strchr(++end, L'\\');
+        }
+
+        c_free(folder);
+        c_free(path);
+        return false;
+    }
+}
+
+}
 
 struct CWinFile
 {
@@ -19,7 +58,7 @@ struct CWinFile
 
 CWinFile* _winapi_open_file_read(cstring file){
     CWinFile *f = new CWinFile;
-	cstring wfname = c_str_replace(file, "/", "\\");
+    cstring wfname = c_str_replace(file, "/", "\\");
     f->hd = CreateFile(wfname, GENERIC_READ,
                       FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -72,27 +111,54 @@ bool coffee_memory_unmap_file(void* ptr, szptr size)
 }
 
 namespace CFunctional {
+    namespace CDebugHelpers{
+        cstring_w coffee_clock_string()
+        {
+            cwstring clock_fmt = c_str_wideconvert("HH:mm:ss");
 
-	struct WindowsPerformanceCounterData {
-		WindowsPerformanceCounterData()
-		{
-			QueryPerformanceFrequency(&freq);
-		}
+            size_t len = GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
+                                         TIME_FORCE24HOURFORMAT,
+                                         NULL,
+                                         clock_fmt,
+                                         NULL,
+                                         0);
+            cwstring_w wstr = (cwstring_w)c_calloc(sizeof(int16),len);
+            GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT,
+                            TIME_FORCE24HOURFORMAT,
+                            NULL,
+                            clock_fmt,
+                            wstr,
+                            len);
+            cstring_w str = c_str_narrowconvert(wstr);
+            c_free(wstr);
+            return str;
+        }
+        void coffee_clock_free(cstring_w arg)
+        {
+            c_free(arg);
+        }
+    }
 
-		std::mutex perf_lock;
-		LARGE_INTEGER freq;
-		std::atomic_bool loaded;
-	};
+    struct WindowsPerformanceCounterData {
+        WindowsPerformanceCounterData()
+        {
+            QueryPerformanceFrequency(&freq);
+        }
 
-	static WindowsPerformanceCounterData _win_perfcounter_data;
+        std::mutex perf_lock;
+        LARGE_INTEGER freq;
+        std::atomic_bool loaded;
+    };
 
-	uint64 _win_api_get_time()
-	{
-		LARGE_INTEGER tmp;
-		QueryPerformanceCounter(&tmp);
-		uint64 tick = tmp.QuadPart;
-		return (tick*1000000)/_win_perfcounter_data.freq.QuadPart;
-	}
+    static WindowsPerformanceCounterData _win_perfcounter_data;
+
+    uint64 _win_api_get_time()
+    {
+        LARGE_INTEGER tmp;
+        QueryPerformanceCounter(&tmp);
+        uint64 tick = tmp.QuadPart;
+        return (tick*1000000)/_win_perfcounter_data.freq.QuadPart;
+    }
 }
 }
 
