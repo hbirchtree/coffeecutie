@@ -8,6 +8,7 @@
 #include "coffee/core/plat/cmemory.h"
 #include "vector_types.h"
 #include "composite_types.h"
+#include "graphics_types.h"
 #include "coffee/core/plat/plat_timers.h"
 
 namespace Coffee{

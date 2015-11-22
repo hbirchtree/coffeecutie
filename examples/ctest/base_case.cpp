@@ -400,7 +400,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     cam->aspect = 1.6f;
     cam->zVals.far = 100.f;
     cam->zVals.near = 1.f;
-    coffee_graphics_gen_matrix_perspective(cam);
+    coffee_graphics_gen_perspective(cam);
 
     CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
     ubuffer->type = CBufferType::Uniform;
@@ -434,7 +434,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
         ublock->buffer = camBuffer;
         ublock->object_name = "MatrixBlock";
         void* data = ctxt->funptrs.buffers.subdata(camBuffer);
-        memcpy(data,&cam->matrix,sizeof(CMat4));
+//        c_memcpy(data,&cam->matrix,sizeof(CMat4));
         bind->binding = 0;
         //GL calls
         coffee_graphics_shader_uniform_block_get(
@@ -456,25 +456,27 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 
         mod->position.x() = 5.f;
 
+        CMat4 tmat;
+
         std::vector<CMat4> transform;
         transform.reserve(numGears);
         for(szptr i=1;i<numGears-2;i++){
             mod->position.z() = (float)(-i);
             mod->position.y() = (float)((i%11)/2);
-            coffee_graphics_gen_matrix(mod);
-            transform.push_back(mod->matrix);
+            tmat = coffee_graphics_gen_transform(mod);
+            transform.push_back(tmat);
         }
 
         mod->position.x() = mod->position.y() = 0.f;
         mod->position.z() = -1.f;
 
-        coffee_graphics_gen_matrix(mod);
+        tmat = coffee_graphics_gen_transform(mod);
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
-        transform.push_back(mod->matrix);
-        transform.push_back(mod->matrix);
+        transform.push_back(tmat);
+        transform.push_back(tmat);
 
-        memcpy(mbuffer->data,
+        c_memcpy(mbuffer->data,
                transform.data(),
                transform.size()*sizeof(transform.data()[0]));
         transform.resize(0);
@@ -605,15 +607,19 @@ void coffee_prepare_test(game_context *ctxt)
 void coffee_render_test(game_context *ctxt, double delta)
 {
     //Generate our matrices
-    coffee_graphics_gen_matrix(&ctxt->transforms.transforms.d[0]);
-    coffee_graphics_gen_matrix_perspective(&ctxt->transforms.cameras.d[0]);
+    CMat4 mtransform =
+            coffee_graphics_gen_transform(
+                &ctxt->transforms.transforms.d[0]);
+    CMat4 mcamera =
+            coffee_graphics_gen_perspective(
+                &ctxt->transforms.cameras.d[0]);
 
     //Copy memory into GL
-    memcpy(ctxt->renderdata.buffers.d[4].data,
-            &ctxt->transforms.cameras.d[0].matrix,
+    c_memcpy(ctxt->renderdata.buffers.d[4].data,
+            &mcamera,
             sizeof(CMat4));
-    memcpy(ctxt->renderdata.buffers.d[2].data,
-            &ctxt->transforms.transforms.d[0].matrix,
+    c_memcpy(ctxt->renderdata.buffers.d[2].data,
+            &mtransform,
             sizeof(CMat4));
 
     //Send it off

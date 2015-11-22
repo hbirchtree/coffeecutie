@@ -128,7 +128,7 @@ template<typename T> _cbasic_tmatrix<T,4> matrixify(
 
     for(size_t i=0;i<3;i++)
         for(size_t j=0;j<3;j++)
-        res[i][j] = m3[i][j];
+            res[i][j] = m3[i][j];
     res[3][3] = 1.f;
 
     return res;

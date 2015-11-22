@@ -9,6 +9,8 @@
 
 namespace Coffee{
 
+constexpr bool coffee_vectors_use_glm_operations = false;
+
 template<typename T>
 struct _cbasic_vec2 : CVectors::_cbasic_tvector<T,2>
 {

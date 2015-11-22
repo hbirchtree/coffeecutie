@@ -3,6 +3,8 @@
 #include <coffee/CImage>
 #include <coffee/core/plat/application_start.h>
 
+#include <coffee/core/base/cmath_glm.h>
+
 using namespace Coffee;
 using namespace CDisplay;
 using namespace CGraphicsData;
@@ -54,7 +56,6 @@ public:
 
         const uint32 indexdata[] = {
             0, 1, 2,
-            3, 4, 5
         };
 
         const byte_t vshader_src[] = {
@@ -209,26 +210,24 @@ public:
         camera.aspect = 1.6f;
         camera.position = CVec3(0,0,-3);
 
-        coffee_graphics_gen_matrix(&root);
-        coffee_graphics_gen_matrix_perspective(&camera);
+        CMat4 rtf = coffee_graphics_gen_transform(&root);
+        CMat4 wtf = coffee_graphics_gen_perspective(&camera);
 
         CNode worldNode;
-        worldNode.transform = (CMat4*)&camera.matrix;
+        worldNode.transform = &wtf;
 
         CNode rootNode;
         rootNode.parent = &worldNode;
-        rootNode.transform = (CMat4*)&root.matrix;
+        rootNode.transform = &rtf;
 
-        CMat4 wt = coffee_node_get_transform(&worldNode);
-        CMat4 rt = coffee_node_get_transform(&rootNode);
+//        CMat4 wt = coffee_node_get_transform(&worldNode);
+//        CMat4 rt = coffee_node_get_transform(&rootNode);
 
-//        glm::mat4 matrix = glm::perspective(60.f,1.6f,1.0f,100.f);
-//        matrix *= glm::mat4_cast(glm::quat(2,0,0,0));
-//        matrix = glm::translate(matrix,glm::vec3(0,0,-3));
-
-//        matrix = glm::scale(matrix,glm::vec3(1,1,1));
-//        matrix *= glm::mat4_cast(glm::quat(2,0,0,0));
-//        matrix = glm::translate(matrix,glm::vec3(0));
+        CMat4 rt = wtf
+                * coffee_graphics_gen_transform(CVec3(0,0,-3),
+                                                CVec3(1),
+                                                CQuat())
+                * rtf;
 
         for(int i=0;i<3;i++)
         {
@@ -335,12 +334,24 @@ public:
 
         }
 
+        CVec3 camera_pos(0,0,-3);
+
 //        coffee_graphics_bind(&cfb);
 
         this->showWindow();
         while(!closeFlag())
         {
             coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
+
+            camera_pos.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
+
+            rt = wtf
+                    * (coffee_graphics_gen_transform(camera_pos,
+                                                    CVec3(1),
+                                                    CQuat())
+                    * rtf);
+
+            c_memcpy(transforms[transform_index].data,&rt,sizeof(rt));
 
             for(int i=0;i<4;i++)
                 coffee_graphics_vao_attribute_bind_buffer(
@@ -393,7 +404,6 @@ public:
         }else if(e->type==CIEvent::MouseMove)
         {
             const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
-
         }
     }
 private:

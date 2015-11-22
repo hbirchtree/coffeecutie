@@ -28,8 +28,6 @@ struct CNode
  */
 extern CMat4 coffee_node_get_transform(const CNode* node);
 
-extern CMat4 coffee_node_glm_get_transform(const CNode* node);
-
 }
 }
 

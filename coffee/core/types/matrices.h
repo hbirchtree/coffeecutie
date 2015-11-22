@@ -183,8 +183,11 @@ template<typename T> _cbasic_tmatrix<T,4> translation(
 {
     _cbasic_tmatrix<T,4> newmat(mat);
 
+    newmat[3] = _cbasic_tvector<T,4>(T(0));
+
     for(size_t i=0;i<3;i++)
         newmat[3] += mat[i]*vector[i];
+    newmat[3] += mat[3];
 
     return newmat;
 }
@@ -196,6 +199,7 @@ template<typename T> _cbasic_tmatrix<T,4> scale(
     _cbasic_tmatrix<T,4> newmat(matrix);
     for(size_t i=0;i<3;i++)
         newmat[i] *= vector[i];
+    newmat[3] = matrix[3];
     return newmat;
 }
 

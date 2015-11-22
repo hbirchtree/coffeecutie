@@ -1,9 +1,3 @@
-[submodule "libs/bullet"]
-	path = libs/bullet
-	url = https://github.com/hbirchtree/bullet3
-[submodule "libs/glfw"]
-	path = libs/glfw
-	url = https://github.com/hbirchtree/glfw
 [submodule "libs/glbinding"]
 	path = libs/glbinding
 	url = https://github.com/hbirchtree/glbinding
@@ -16,6 +10,3 @@
 [submodule "libs/stb"]
 	path = libs/stb
 	url = https://github.com/nothings/stb.git
-[submodule "libs/cppformat"]
-	path = libs/cppformat
-	url = https://github.com/hbirchtree/cppformat.git
