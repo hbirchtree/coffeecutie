@@ -1,12 +1,3 @@
-[submodule "libs/glbinding"]
-	path = libs/glbinding
-	url = https://github.com/hbirchtree/glbinding
-[submodule "libs/glm"]
-	path = libs/glm
-	url = https://github.com/hbirchtree/glm.git
-[submodule "libs/assimp"]
-	path = libs/assimp
-	url = https://github.com/hbirchtree/assimp.git
 [submodule "libs/stb"]
 	path = libs/stb
 	url = https://github.com/nothings/stb.git
