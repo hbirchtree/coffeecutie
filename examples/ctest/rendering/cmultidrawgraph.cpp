@@ -1,7 +1,5 @@
 #include "cmultidrawgraph.h"
 
-#include <coffee/assimp/assimpfun.h>
-
 namespace Coffee {
 namespace CRendering {
 

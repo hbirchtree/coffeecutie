@@ -1,7 +1,6 @@
 #include "cdrenderer.h"
 
 #include <coffee/core/CGraphics>
-#include <coffee/assimp/assimpfun.h>
 #include <coffee/core/plat/plat_wm.h>
 #include <coffee/core/input/cinputfunctions.h>
 #include "base_case.h"
@@ -62,8 +61,8 @@ void CDRenderer::run()
     if(!coffee_test_load(game))
         return;
 
-    CResourceTypes::coffee_assimp_free(d2);
-    CResourceTypes::coffee_assimp_free(d1);
+    CResourceTypes::CAssimp::coffee_assimp_free(d2);
+    CResourceTypes::CAssimp::coffee_assimp_free(d1);
 
     showWindow();
 

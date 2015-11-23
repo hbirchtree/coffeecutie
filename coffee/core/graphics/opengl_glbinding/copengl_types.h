@@ -8,8 +8,10 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+//Opaque types
 struct CGLReport;
 
+//Type definitions
 typedef int32 CGint;
 typedef uint32 CGuint;
 
@@ -27,6 +29,20 @@ typedef uint32 CGhnd;
  * \brief An index retrieved from GL or to be used in GL
  */
 typedef uint32 CGidx;
+
+/*!
+ * \brief GL multidraw indirect call used to put triangles on the screen
+ */
+struct CGLDrawCall
+{
+    CGLDrawCall();
+
+    CGuint count; /*!< Number of indices*/
+    CGuint instanceCount; /*!< Number of instances*/
+    CGuint firstIndex; /*!< First index in buffer*/
+    CGuint baseVertex; /*!< First vertex in buffer*/
+    CGuint baseInstance; /*!< First instance to render*/
+};
 
 //Misc. flags
 

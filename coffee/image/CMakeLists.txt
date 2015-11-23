@@ -3,7 +3,7 @@ if(NOT DEFINED GLBINDING_INCLUDE_DIR)
 endif()
 
 include_directories (
-                    ${GLBINDING_INCLUDE_DIR}
+                    ${GLBINDING_INCLUDE_DIRS}
                     )
 
 set ( CImage_SRCS

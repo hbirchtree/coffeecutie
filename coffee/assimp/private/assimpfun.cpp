@@ -9,6 +9,10 @@ namespace Coffee{
 namespace CResourceTypes{
 namespace CAssimp{
 
+szptr _assimp_face_transform(const aiFace &v, byte_t *d);
+szptr _assimp_vec_transform(const aiVector3D &v, byte_t *d);
+szptr _assimp_col_transform(const aiColor4D &v, byte_t *d);
+
 szptr coffee_assimp_mesh_approx_size(const aiMesh* mesh, szptr* numBuffers)
 {
     szptr size = 0;
@@ -281,46 +285,6 @@ szptr _assimp_col_transform(const aiColor4D &v, byte_t *d)
     return sizeof(CVec4);
 }
 
-byte_t *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *ref)
-{
-    return &((byte_t*)baseptr)[ref->offset];
 }
-
-cstring assimp_reflexive_string_get(const void* basePtr, const assimp_reflexive &ref)
-{
-    const byte_t* b_ptr = (const byte_t*)basePtr;
-    return &b_ptr[ref.offset];
-}
-
-}
-
-bool coffee_assimp_dump_mesh(CAssimp::CAssimpMesh *mesh, CResources::CResource *resource)
-{
-    bool success = false;
-
-    coffee_file_free(resource);
-
-    resource->size = mesh->byteSize;
-    resource->data = c_alloc(resource->size);
-
-    c_memcpy(resource->data,mesh,resource->size);
-
-    if(!coffee_file_commit(resource))
-        cWarning("Failed to store mesh data");
-    else success = true;
-
-    coffee_file_free(resource);
-
-    return success;
-}
-
-void coffee_assimp_free(CAssimp::CAssimpData *data)
-{
-    szptr i;
-    for(i=0;i<data->numMeshes;i++)
-        c_free(data->meshes[i]);
-    c_free(data->meshes);
-}
-
 }
 }

@@ -2,7 +2,6 @@
 
 #include <coffee/CImage>
 #include <coffee/core/CGraphics>
-#include <coffee/assimp/assimpfun.h>
 
 namespace Coffee{
 namespace CRendering{
@@ -334,7 +333,7 @@ void coffee_test_load_meshes(game_context* ctxt, CMultiDrawDataSet* multidraw)
                                    "ubw/%s.mesh",
                                    assimp_reflexive_string_get(mesh,mesh->name))
                                .c_str());
-            CResourceTypes::coffee_assimp_dump_mesh(mesh,&meshtest);
+            CResourceTypes::CAssimp::coffee_assimp_dump_mesh(mesh,&meshtest);
 
             szptr voffset = 0;
             const assimp_reflexive* ref;
@@ -606,13 +605,16 @@ void coffee_prepare_test(game_context *ctxt)
 
 void coffee_render_test(game_context *ctxt, double delta)
 {
+    CGCamera* camera = &ctxt->transforms.cameras.d[0];
     //Generate our matrices
     CMat4 mtransform =
             coffee_graphics_gen_transform(
                 &ctxt->transforms.transforms.d[0]);
     CMat4 mcamera =
             coffee_graphics_gen_perspective(
-                &ctxt->transforms.cameras.d[0]);
+                camera)
+            * coffee_graphics_gen_transform(
+                camera->position,CVec3(1),camera->rotation);
 
     //Copy memory into GL
     c_memcpy(ctxt->renderdata.buffers.d[4].data,
@@ -642,7 +644,7 @@ void coffee_unload_test(game_context *ctxt)
     for(i=0;i<ctxt->vertexdata.descriptor.arrays.size;i++)
         coffee_graphics_free(&ctxt->vertexdata.descriptor.arrays.d[i]);
     for(i=0;i<ctxt->vertexdata.data.size;i++)
-        CResourceTypes::coffee_assimp_free(ctxt->vertexdata.data.d[i]);
+        CResourceTypes::CAssimp::coffee_assimp_free(ctxt->vertexdata.data.d[i]);
 
     for(i=0;i<ctxt->shaders.pipelines.size;i++)
         coffee_graphics_free(&ctxt->shaders.pipelines.d[i]);

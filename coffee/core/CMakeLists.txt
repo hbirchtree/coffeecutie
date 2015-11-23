@@ -1,17 +1,4 @@
-if(NOT DEFINED GLBINDING_INCLUDE_DIR)
-    set (GLBINDING_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/glbinding/source/glbinding/include)
-endif()
-
-include_directories (
-                    ${GLBINDING_INCLUDE_DIR}
-                    )
-
-if(NOT DEFINED GLBINDING_LIBRARY_DIR)
-    set (GLBINDING_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/lib )
-endif()
-
-
-find_library(GLBINDING_LIBRARY NAMES "glbinding" PATHS ${GLBINDING_LIBRARY_DIR} )
+find_package(glbinding)
 
 set ( CoffeeCore_SRCS
 
@@ -65,12 +52,12 @@ set ( CoffeeCore_SRCS
         plat/plat_libraries.cpp
         )
 
-add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
+set(DL_LIBRARY "")
+if(NOT WIN32)
+        list(APPEND DL_LIBRARY dl)
+endif()
 
-find_package(SDL2 REQUIRED)
-include_directories(
-    ${SDL2_INCLUDE_DIR}
-    )
+add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
 
 #Libraries for X11 and Linux
 if(NOT WIN32)
@@ -82,12 +69,17 @@ if(NOT WIN32)
 endif()
 ############################
 
+find_package(SDL2 REQUIRED)
+include_directories(
+    ${SDL2_INCLUDE_DIR}
+    ${GLBINDING_INCLUDE_DIRS}
+    )
+
 target_link_libraries ( CoffeeCore
 ${SDL2_LIBRARY}
-${GLBINDING_LIBRARY}
+${GLBINDING_LIBRARIES}
 ${LIBUNWIND_LIBRARIES}
-${X11_LIBRARIES}
-${M_LIB_LIBRARIES}
+${DL_LIBRARY}
 )
 
 if(WIN32)

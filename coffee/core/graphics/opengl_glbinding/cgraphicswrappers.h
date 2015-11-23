@@ -3,6 +3,9 @@
 
 #include "cvertexarrayobject.h"
 #include "cuniformtypes.h"
+#include "cbuffer.h"
+#include "cframebuffer.h"
+#include "crenderfence.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
@@ -11,20 +14,6 @@ namespace CGraphicsWrappers{
  * \brief The default buffer to which graphics are rendered
  */
 constexpr CGhnd opengl_default_framebuffer = 0;
-
-/*!
- * \brief GL multidraw indirect call used to put triangles on the screen
- */
-struct CGLDrawCall
-{
-    CGLDrawCall();
-
-    CGuint count; /*!< Number of indices*/
-    CGuint instanceCount; /*!< Number of instances*/
-    CGuint firstIndex; /*!< First index in buffer*/
-    CGuint baseVertex; /*!< First vertex in buffer*/
-    CGuint baseInstance; /*!< First instance to render*/
-};
 
 extern void coffee_graphics_set_viewport(const CRectF& view);
 

@@ -9,3 +9,5 @@
 #include "coffee/core/graphics/opengl_glbinding/cframebuffer.h"
 
 #include "coffee/core/graphics/opengl_glbinding/cuniformtypes.h"
+
+#include "coffee/core/graphics/opengl_glbinding/crenderfence.h"
