@@ -30,6 +30,7 @@ set ( CoffeeCore_SRCS
         graphics/opengl_glbinding/cvertexarrayobject.cpp
         graphics/opengl_glbinding/ctexture.cpp
         graphics/opengl_glbinding/ctexture_dxtc.cpp
+        graphics/opengl_glbinding/crenderfence.cpp
         graphics/opengl_glbinding/glbinding.cpp
         graphics/opengl_glbinding/copengl_types.cpp
         graphics/opengl_glbinding/cuniformtypes.cpp

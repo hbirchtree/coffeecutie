@@ -603,6 +603,8 @@ void coffee_prepare_test(game_context *ctxt)
     }
 }
 
+static CGSync* sync_object = nullptr;
+
 void coffee_render_test(game_context *ctxt, double delta)
 {
     CGCamera* camera = &ctxt->transforms.cameras.d[0];
@@ -624,8 +626,16 @@ void coffee_render_test(game_context *ctxt, double delta)
             &mtransform,
             sizeof(CMat4));
 
+    if(sync_object)
+    {
+        bool status = coffee_graphics_fence_wait(sync_object,1);
+        if(!status)
+            cDebug("Too early");
+        coffee_graphics_free(sync_object);
+    }
     //Send it off
     ctxt->funptrs.renderfun(ctxt->renderdata.datasets.d[0]);
+    sync_object = coffee_graphics_fence_create();
 }
 
 void coffee_unload_test(game_context *ctxt)
