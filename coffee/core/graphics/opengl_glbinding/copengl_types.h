@@ -240,6 +240,9 @@ enum class CTexParam : uint16
     SwizzleRGBA = 14,
 
     MipmapBaseLevel = 15,
+
+    SparseTexture = 16,
+    VirtualTexture = 16,
 };
 
 enum class CTexParamOpt : uint16
@@ -256,6 +259,9 @@ enum class CTexParamOpt : uint16
     RepeatMirror = 9,
     Repeat = 10,
     ClampEdgeMirror = 11,
+
+    Enable = 12,
+    Disable = 13,
 };
 
 enum class CCullMode : uint8

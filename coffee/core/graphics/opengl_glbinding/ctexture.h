@@ -322,6 +322,8 @@ extern void     coffee_graphics_tex_unload(const CTexture* tex);
  */
 extern void     coffee_graphics_tex_unload_safe(const CTexture*);
 
+extern void coffee_graphics_tex_sparsify(CTexture* tex, bool enable);
+
 }
 }
 

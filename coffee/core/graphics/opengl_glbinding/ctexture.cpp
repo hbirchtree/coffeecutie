@@ -316,5 +316,16 @@ CTexture::CTexture():
 {
 }
 
+void coffee_graphics_tex_sparsify(CTexture *tex, bool enable)
+{
+    CGint v;
+    if(enable)
+        v = 1;
+    else
+        v = 0;
+
+    coffee_graphics_tex_param(tex,CTexParam::SparseTexture,v);
+}
+
 }
 }

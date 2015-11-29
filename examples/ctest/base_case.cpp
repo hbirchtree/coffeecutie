@@ -629,8 +629,6 @@ void coffee_render_test(game_context *ctxt, double delta)
     if(sync_object)
     {
         bool status = coffee_graphics_fence_wait(sync_object,1);
-        if(!status)
-            cDebug("Too early");
         coffee_graphics_free(sync_object);
     }
     //Send it off

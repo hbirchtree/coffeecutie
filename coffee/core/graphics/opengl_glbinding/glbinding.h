@@ -179,7 +179,7 @@ static const _cbasic_static_map<CTexType,GLenum,9> ctextp_map = {
     {CTexType::CubeMap,GL_TEXTURE_CUBE_MAP},
 };
 
-static const _cbasic_static_map<CTexParam,GLenum,15> ctexparm_map = {
+static const _cbasic_static_map<CTexParam,GLenum,17> ctexparm_map = {
     {CTexParam::MipmapBaseLevel,GL_TEXTURE_BASE_LEVEL},
     {CTexParam::MipmapLodBias,GL_TEXTURE_LOD_BIAS},
     {CTexParam::MipmapMinLod,GL_TEXTURE_MIN_LOD},
@@ -197,6 +197,9 @@ static const _cbasic_static_map<CTexParam,GLenum,15> ctexparm_map = {
     {CTexParam::SwizzleB,GL_TEXTURE_SWIZZLE_B},
     {CTexParam::SwizzleA,GL_TEXTURE_SWIZZLE_A},
     {CTexParam::SwizzleRGBA,GL_TEXTURE_SWIZZLE_RGBA},
+
+    {CTexParam::SparseTexture,GL_TEXTURE_SPARSE_ARB},
+    {CTexParam::VirtualTexture,GL_TEXTURE_SPARSE_ARB},
 };
 
 static const _cbasic_static_map<CTexParamOpt,GLenum,11> ctexparmopt_map = {
