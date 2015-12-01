@@ -144,29 +144,47 @@ void matrix_tests()
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
     }
 
-//    //Test node transformations
-//    {
-//        CGraphicsData::CTransform t1,t2;
+    //Test node transformations
+    {
+        CGraphicsData::CTransform t1,t2,t3;
 
-//        t1.position = CVec3(1,2,3);
-//        t2.position = CVec3(3,4,5);
+        t1.position = CVec3(1,2,3);
+        t2.position = CVec3(4,5,6);
+        t3.position = CVec3(7,8,9);
 
-//        t1.scale = CVec3(3);
-//        t2.scale = CVec3(0.5);
+        t1.scale = CVec3(3);
+        t2.scale = CVec3(0.5);
+        t3.scale = CVec3(5);
 
-//        CGraphicsData::coffee_graphics_gen_matrix(&t1);
-//        CGraphicsData::coffee_graphics_gen_matrix(&t2);
+        CMat4 t1m = CGraphicsData::coffee_graphics_gen_transform(&t1);
+        CMat4 t2m = CGraphicsData::coffee_graphics_gen_transform(&t2);
+        CMat4 t3m = CGraphicsData::coffee_graphics_gen_transform(&t3);
 
-//        CGraphicsData::CNode root;
-//        root.transform = &t1.matrix;
-//        CGraphicsData::CNode inherited;
-//        inherited.transform = &t2.matrix;
+        CGraphicsData::CNode root;
+        root.transform = &t1m;
+        CGraphicsData::CNode inherited;
+        inherited.transform = &t2m;
+        CGraphicsData::CNode inherited2;
+        inherited2.transform = &t3m;
 
-//        CMat4 d1 = CGraphicsData::coffee_node_get_transform(&inherited);
-//        CMat4 d2 = CGraphicsData::coffee_node_glm_get_transform(&inherited);
+        CMat4 d1 = CGraphicsData::coffee_node_get_transform(&inherited2);
 
-//        CASSERT_MEM(&d1,&d2,sizeof(CMat4));
-//    }
+        glm::vec3 p1(1,2,3);
+        glm::vec3 p2(4,5,6);
+        glm::vec3 p3(7,8,9);
+
+        glm::vec3 s1(3);
+        glm::vec3 s2(0.5);
+        glm::vec3 s3(5);
+
+        glm::mat4 m1 = glm::scale(glm::mat4(),s1) * glm::translate(glm::mat4(),p1);
+        glm::mat4 m2 = glm::scale(glm::mat4(),s2) * glm::translate(glm::mat4(),p2);
+        glm::mat4 m3 = glm::scale(glm::mat4(),s3) * glm::translate(glm::mat4(),p3);
+
+        glm::mat4 d2 = m1 * m2 * m3;
+
+        CASSERT_MEM(&d1,&d2,sizeof(CMat4));
+    }
 }
 
 void int_tests()

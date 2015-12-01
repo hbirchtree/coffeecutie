@@ -26,9 +26,6 @@ void coffee_multidraw_bind_states(const CMultiDrawDataSet &set)
 void coffee_multidraw_render(const CMultiDrawDataSet &set)
 {
     coffee_graphics_multidraw(CPrimitiveMode::Triangles,set.drawcalls->drawbuffer);
-//    glMultiDrawElementsIndirect(GL_TRIANGLES,GL_UNSIGNED_INT,
-//                                0,set.drawcalls->drawcalls.size(),
-//                                sizeof(CGLDrawCall));
 }
 
 void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
@@ -38,14 +35,6 @@ void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
         if(call.count<1)
             continue;
         coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&call);
-//        glDrawElementsInstancedBaseVertexBaseInstance(
-//                    GL_TRIANGLES,
-//                    call.count,
-//                    GL_UNSIGNED_INT,
-//                    (void*)(sizeof(GLuint)*call.firstIndex),
-//                    call.instanceCount,
-//                    call.baseVertex,
-//                    call.baseInstance);
     }
 }
 
