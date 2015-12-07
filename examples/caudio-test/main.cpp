@@ -30,25 +30,30 @@ public:
         CALSource src;
         CALListener l;
 
-        //Set error callback
+        //Create the context, acquire possible errors
         CALContext* ctxt = coffee_audio_context_create();
 
+        coffee_audio_context_get_error(ctxt);
+
+        //Set error callback in case of errors
         coffee_audio_context_set_debug_callback(ctxt,[](CALReport* r){
             cDebug("%s",r->message);
         });
 
-        int32 odev,idev;
-        cstring* odevs = coffee_audio_context_devices_output(&odev);
-        cstring* idevs = coffee_audio_context_devices_input(&idev);
+        //Create a capture device for testing
+        int32 idevn;
+        cstring* idevs = coffee_audio_context_devices_input(&idevn);
 
-        for(int i=0;i<odev;i++)
-            cDebug("Output device: %s",odevs[i]);
-        for(int i=0;i<idev;i++)
-            cDebug("Input device: %s",idevs[i]);
+        CAudioFormat cfmt;
+        cfmt.bitdepth = 16;
+        cfmt.channels = 1;
+        cfmt.samplerate = 44100;
+        cfmt.samples = 1024;
+        CALCaptureDevice* cdev = coffee_audio_capture_create(ctxt,idevs[0],cfmt);
 
-        //Create the context, acquire possible errors
-        coffee_audio_context_get_error(ctxt);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 
+        //Set distance model for context
         coffee_audio_context_set_distance_model(CDistanceModel::LinearDistanceClamped);
 
         //Set listener properties
@@ -62,6 +67,7 @@ public:
         coffee_audio_listener_set(&l);
         //Create audio buffer, free the data
         coffee_audio_alloc(buf,&smp);
+        cDebug("Snippet length: %f",coffee_audio_sample_get_length(smp));
         free(smp.data);
         //Create audio source
         coffee_audio_alloc(&src);
@@ -75,18 +81,29 @@ public:
         //Queue our buffer for playback
         coffee_audio_source_queue_buffers(&src,1,&buf);
         //Start playing
-        coffee_audio_source_set_state(&src,CALPlaybackState::Playing);
+
+
+        smp.fmt.samples = 128;
 
         this->showWindow();
         while(!closeFlag())
         {
+            coffee_audio_capture_grab_samples(cdev,smp);
+            coffee_audio_capture_stop(cdev);
+            coffee_audio_buffer_data(buf,&smp);
+            coffee_audio_source_set_offset_bytes(&src,0);
+            coffee_audio_source_set_state(&src,CALPlaybackState::Playing);
+            coffee_audio_capture_start(cdev);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             coffee_graphics_clear(CClearFlag::Color);
-
             this->pollEvents();
             this->swapBuffers();
+            coffee_audio_source_set_state(&src,CALPlaybackState::Stopped);
         }
 
+
         //Free the AL context
+        coffee_audio_capture_free(cdev);
         coffee_audio_context_destroy(ctxt);
         delete buf;
     }

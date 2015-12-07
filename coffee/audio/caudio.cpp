@@ -26,5 +26,15 @@ CAudioFormat::CAudioFormat():
 {
 }
 
+bigscalar coffee_audio_sample_get_length(CAudioSample const& smp)
+{
+    return (bigscalar)smp.fmt.samples/(bigscalar)smp.fmt.samplerate;
+}
+
+szptr coffee_audio_sample_get_datasize(const CAudioFormat &fmt, szptr samples)
+{
+    return fmt.samplerate*fmt.channels*samples*CMath::max(1,fmt.bitdepth/8);
+}
+
 }
 }

@@ -14,7 +14,10 @@ struct CAudioFormat
 {
     CAudioFormat();
 
-    int samplerate; /*!< Samplerate, typically 44.1kHz*/
+    union{
+        int samplerate; /*!< Samplerate, typically 44.1kHz*/
+        int frequency;
+    };
     int samples;
     int channels; /*!< Audio channels, typically 2 or 4*/
     int bitdepth;
@@ -28,6 +31,10 @@ struct CAudioSample
     CAudioFormat fmt; /*!< Format specification*/
     short* data = nullptr; /*!< Pointer to audio data*/
 };
+
+extern bigscalar coffee_audio_sample_get_length(const CAudioSample &smp);
+
+extern szptr coffee_audio_sample_get_datasize(CAudioFormat const& fmt, szptr samples);
 
 namespace CStbAudio{
 

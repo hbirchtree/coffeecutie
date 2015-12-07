@@ -15,6 +15,8 @@ namespace CAudio{
 namespace COpenAL{
 
 struct CALhnd;
+struct CALCaptureDevice;
+typedef _cbasic_version<int32> CALVersion;
 
 enum class CALPlaybackState : uint8
 {
@@ -117,15 +119,13 @@ struct CALSource
     uint16 state; /*!< Source state*/
 };
 
-typedef _cbasic_version<int32> CALVersion;
-
 extern CALVersion coffee_audio_context_version(CALContext *ctxt);
 
 /*!
  * \brief Create an OpenAL context
  * \param context Context object to be bound with the new context
  */
-extern CALContext* coffee_audio_context_create();
+extern CALContext* coffee_audio_context_create(cstring device = nullptr);
 /*!
  * \brief Set error callback for the OpenAL context
  * \param callback
@@ -158,6 +158,26 @@ extern bool coffee_audio_context_check_extension(
  */
 extern void coffee_audio_context_get_error(
         const CALContext* context = nullptr);
+
+/*!
+ * \brief Create an audio capture device and initialize it with codec information. OpenAL does the rest.
+ * \param context
+ * \param device
+ * \param fmt
+ * \return A valid pointer if the function succeeded
+ */
+extern CALCaptureDevice* coffee_audio_capture_create(
+        CALContext* context, cstring device,
+        const CAudioFormat &fmt);
+/*!
+ * \brief Free the audio capture device when you are done with it.
+ * \param dev
+ */
+extern void coffee_audio_capture_free(CALCaptureDevice *dev);
+
+extern void coffee_audio_capture_start(CALCaptureDevice* dev);
+extern void coffee_audio_capture_grab_samples(CALCaptureDevice* dev, CAudioSample &sample);
+extern void coffee_audio_capture_stop(CALCaptureDevice* dev);
 
 /*!
  * \brief Allocate audio buffer with sample data

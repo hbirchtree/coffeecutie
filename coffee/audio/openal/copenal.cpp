@@ -27,6 +27,11 @@ struct CALContext
     std::thread::id context_thread; /*!< Which thread the context is currently located on*/
 };
 
+struct CALCaptureDevice
+{
+    ALCdevice* capdevice;
+};
+
 static CALCallback error_callback = nullptr;
 
 constexpr _cbasic_static_map<CSourceProperty,ALenum,18> al_source_prop_map = {
@@ -52,6 +57,37 @@ constexpr _cbasic_static_map<CSourceProperty,ALenum,18> al_source_prop_map = {
 
 };
 
+CALContext::CALContext():
+    context(nullptr),
+    device(nullptr),
+    callback(nullptr),
+    context_thread()
+{
+}
+
+CALListener::CALListener():
+    orientation_forward(0,0,0),
+    orientation_up(0,0,0),
+    position(0,0,0),
+    velocity(0,0,0),
+    gain(0)
+{
+}
+
+CALSource::CALSource():
+    position(0,0,0),
+    velocity(0,0,0),
+    direction(0,0,0),
+    handle(nullptr),
+    state(AL_STOPPED)
+{
+}
+
+CALBuffer::CALBuffer():
+    handle(nullptr)
+{
+}
+
 ALenum _al_get_model(const CDistanceModel& m)
 {
     return AL_DISTANCE_MODEL + (uint32)m;
@@ -64,14 +100,38 @@ ALuint _al_get_handle(const CALSource* b)
 {
     return b->handle->handle;
 }
+ALenum _al_get_fmt(CAudioFormat const& fmt)
+{
+    ALenum ofmt;
+    switch(fmt.bitdepth)
+    {
+    case 8:
+        if(fmt.channels == 1)
+            ofmt = AL_FORMAT_MONO8;
+        else
+            ofmt = AL_FORMAT_STEREO8;
+        break;
 
-CALContext *coffee_audio_context_create()
+    case 16:
+        if(fmt.channels == 1)
+            ofmt = AL_FORMAT_MONO16;
+        else
+            ofmt = AL_FORMAT_STEREO16;
+        break;
+    default:
+        ofmt = AL_FORMAT_MONO16;
+    }
+    return ofmt;
+}
+
+CALContext *coffee_audio_context_create(cstring device)
 {
     CALContext* context = new CALContext;
 
-    const ALCchar* defaultDev = alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
+    if(!device)
+        device = coffee_audio_context_device_default();
 
-    context->device = alcOpenDevice(defaultDev);
+    context->device = alcOpenDevice(device);
     if(!context->device)
     {
         cWarning("Failed to open ALC device");
@@ -114,6 +174,9 @@ void coffee_audio_context_destroy(CALContext *context)
 
 bool coffee_audio_context_make_current(CALContext *context)
 {
+    if(std::this_thread::get_id()==context->context_thread)
+        return true;
+
     ALCboolean b = alcMakeContextCurrent(context->context);
     if(b==ALC_FALSE)
         return false;
@@ -289,24 +352,7 @@ void coffee_audio_source_set_states(
 
 void coffee_audio_buffer_data(CALBuffer *buffer, const CAudioSample *sample)
 {
-    ALenum fmt = AL_FORMAT_MONO16;
-
-    switch(sample->fmt.bitdepth)
-    {
-    case 8:
-        if(sample->fmt.channels == 1)
-            fmt = AL_FORMAT_MONO8;
-        else
-            fmt = AL_FORMAT_STEREO8;
-        break;
-
-    case 16:
-        if(sample->fmt.channels == 1)
-            fmt = AL_FORMAT_MONO16;
-        else
-            fmt = AL_FORMAT_STEREO16;
-        break;
-    }
+    ALenum fmt = _al_get_fmt(sample->fmt);
 
     alBufferData(
                 _al_get_handle(buffer),fmt,
@@ -356,37 +402,6 @@ void coffee_audio_source_transform(
                              (const scalar*)&source->velocity);
     coffee_audio_source_setf(source,CSourceProperty::Direction,
                              (const scalar*)&source->direction);
-}
-
-CALContext::CALContext():
-    context(nullptr),
-    device(nullptr),
-    callback(nullptr),
-    context_thread()
-{
-}
-
-CALListener::CALListener():
-    orientation_forward(0,0,0),
-    orientation_up(0,0,0),
-    position(0,0,0),
-    velocity(0,0,0),
-    gain(0)
-{
-}
-
-CALSource::CALSource():
-    position(0,0,0),
-    velocity(0,0,0),
-    direction(0,0,0),
-    handle(nullptr),
-    state(AL_STOPPED)
-{
-}
-
-CALBuffer::CALBuffer():
-    handle(nullptr)
-{
 }
 
 void coffee_audio_source_seti(
@@ -458,6 +473,47 @@ cstring *coffee_audio_context_devices_input(int32* numDevices)
 cstring coffee_audio_context_device_default()
 {
     return alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
+}
+
+CALCaptureDevice *coffee_audio_capture_create(
+        CALContext *context, cstring device,
+        CAudioFormat const& fmt)
+{
+    coffee_audio_context_make_current(context);
+
+    CALCaptureDevice* cdev = new CALCaptureDevice;
+
+    cdev->capdevice = alcCaptureOpenDevice(
+                device,
+                fmt.samplerate,
+                _al_get_fmt(fmt),
+                fmt.samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels);
+
+    cDebug("Creating AL capture device: %s,fq=%i,buffer=%i",
+           device,fmt.samplerate,fmt.samples*(fmt.bitdepth/8)*fmt.channels);
+
+    return cdev;
+}
+
+void coffee_audio_capture_free(CALCaptureDevice* dev)
+{
+    alcCaptureCloseDevice(dev->capdevice);
+    delete dev;
+}
+
+void coffee_audio_capture_start(CALCaptureDevice *dev)
+{
+    alcCaptureStart(dev->capdevice);
+}
+
+void coffee_audio_capture_stop(CALCaptureDevice *dev)
+{
+    alcCaptureStop(dev->capdevice);
+}
+
+void coffee_audio_capture_grab_samples(CALCaptureDevice *dev, CAudioSample &sample)
+{
+    alcCaptureSamples(dev->capdevice,sample.data,sample.fmt.samples);
 }
 
 }
