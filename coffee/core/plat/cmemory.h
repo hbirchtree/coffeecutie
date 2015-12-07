@@ -26,6 +26,8 @@ extern cstring_w c_strcat(cstring_w s1, cstring s2);
 
 extern int c_strlen(cstring s);
 
+extern int c_strlen(cwstring s);
+
 extern cstring_w c_cpy_string(cstring str);
 
 extern cwstring_w c_str_wideconvert(cstring str);

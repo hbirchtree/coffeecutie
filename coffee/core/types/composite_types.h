@@ -4,6 +4,7 @@
 #include <cmath>
 #include "basetypes.h"
 #include "map.h"
+#include "translatable_string.h"
 
 namespace Coffee{
 

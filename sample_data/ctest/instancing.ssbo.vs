@@ -32,7 +32,7 @@ void main() {
     Out.texCoord = vertTexCoord;
     Out.normal = normalize(model * vec4(vertNormal,0.0)).xyz;
     Out.wNormal = normalize((cameraVP * model * vec4(vertNormal,0.0)).xyz);
-	vec4 worldVert_t = camera * model * vec4(vert,1);
+	vec4 worldVert_t = camera * model * vec4(vert,1.0);
     Out.vert = worldVert_t.xyz;
     Out.wTangent = (camera * model * vec4(vertTangent,0.0)).xyz;
     Out.mVert = model * vec4(vert,1.0);

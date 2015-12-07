@@ -1,12 +1,35 @@
 #include "copenal.h"
 
+#include <AL/al.h>
+#include <AL/alc.h>
+
+#include <coffee/core/coffee_macros.h>
+#include <coffee/core/base/cdebug.h>
+
+#include <thread>
+
 namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
 
+struct CALhnd
+{
+    ALuint handle;
+};
+
+struct CALContext
+{
+    CALContext();
+
+    ALCcontext *context;
+    ALCdevice *device;
+    CALCallback callback; /*!< Callback to be called on error*/
+    std::thread::id context_thread; /*!< Which thread the context is currently located on*/
+};
+
 static CALCallback error_callback = nullptr;
 
-constexpr struct {CSourceProperty k; ALenum v;} al_source_prop_map[12] = {
+constexpr _cbasic_static_map<CSourceProperty,ALenum,18> al_source_prop_map = {
 {CSourceProperty::Pitch,AL_PITCH},
 {CSourceProperty::Gain,AL_GAIN},
 {CSourceProperty::MinGain,AL_MIN_GAIN},
@@ -19,25 +42,32 @@ constexpr struct {CSourceProperty k; ALenum v;} al_source_prop_map[12] = {
 {CSourceProperty::ConeInnerAngle,AL_CONE_INNER_ANGLE},
 {CSourceProperty::Relative,AL_SOURCE_RELATIVE},
 {CSourceProperty::Looping,AL_LOOPING},
-};
 
-ALenum _al_get_prop(const CSourceProperty& p)
-{
-    for(size_t i=0;i<12;i++)
-        if(al_source_prop_map[i].k==p)
-            return al_source_prop_map[i].v;
-    return AL_NONE;
-}
+    {CSourceProperty::Position,AL_POSITION},
+    {CSourceProperty::Velocity,AL_VELOCITY},
+    {CSourceProperty::Direction,AL_DIRECTION},
+    {CSourceProperty::OffsetBytes,AL_BYTE_OFFSET},
+    {CSourceProperty::OffsetSamples,AL_SAMPLE_OFFSET},
+    {CSourceProperty::OffsetSeconds,AL_SEC_OFFSET},
+
+};
 
 ALenum _al_get_model(const CDistanceModel& m)
 {
     return AL_DISTANCE_MODEL + (uint32)m;
 }
-
-bool coffee_audio_context_create(CALContext *context)
+ALuint _al_get_handle(const CALBuffer* b)
 {
-    cDebug("AL enumeration support: %i",
-           coffee_audio_context_check_extension(context,"ALC_ENUMERATION_EXT"));
+    return b->handle->handle;
+}
+ALuint _al_get_handle(const CALSource* b)
+{
+    return b->handle->handle;
+}
+
+CALContext *coffee_audio_context_create()
+{
+    CALContext* context = new CALContext;
 
     const ALCchar* defaultDev = alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
 
@@ -45,7 +75,8 @@ bool coffee_audio_context_create(CALContext *context)
     if(!context->device)
     {
         cWarning("Failed to open ALC device");
-        return false;
+        delete context;
+        return nullptr;
     }
 
     cMsg("ALC","Initialized, using device: %s",
@@ -55,13 +86,21 @@ bool coffee_audio_context_create(CALContext *context)
 
     coffee_audio_context_make_current(context);
 
-    return true;
+    CALVersion ver = coffee_audio_context_version(context);
+    cMsg("ALC","Context version: %i.%i",ver.major,ver.minor);
+
+    return context;
+}
+
+void coffee_audio_context_set_distance_model(CDistanceModel const& m)
+{
+    alDistanceModel(_al_get_model(m));
 }
 
 void coffee_audio_context_destroy(CALContext *context)
 {
     if(context->context_thread==std::this_thread::get_id())
-        alcMakeContextCurrent(nullptr);
+        alcMakeContextCurrent(context->context);
 
     alcDestroyContext(context->context);
     if(alcCloseDevice(context->device)!=ALC_TRUE)
@@ -69,6 +108,8 @@ void coffee_audio_context_destroy(CALContext *context)
     context->context = nullptr;
     context->device = nullptr;
     cMsg("ALC","Destroyed");
+
+    delete context;
 }
 
 bool coffee_audio_context_make_current(CALContext *context)
@@ -88,6 +129,7 @@ void coffee_audio_context_get_error(const CALContext *context)
     if(err!=ALC_NO_ERROR&&error_callback)
     {
         CALReport* rep = new CALReport;
+        rep->message = alGetString(err);
         error_callback(rep);
         delete rep;
     }
@@ -98,47 +140,38 @@ bool coffee_audio_context_check_extension(const CALContext *context, cstring ext
     return alcIsExtensionPresent(context->device,extension)==ALC_TRUE;
 }
 
-void coffee_audio_alloc(CALBuffer *buffer, CAudioSample *sample)
-{
-    coffee_audio_alloc(buffer);
-    alBufferData(
-                buffer->handle,AL_FORMAT_MONO16,
-                sample->data,
-                sample->fmt.samples*sample->fmt.channels*sizeof(sample->data[0]),
-                sample->fmt.samplerate);
-    coffee_audio_context_get_error();
-}
-
 void coffee_audio_alloc(CALBuffer *buffer)
 {
-    alGenBuffers(1,&buffer->handle);
+    buffer->handle = new CALhnd;
+    alGenBuffers(1,&(buffer->handle->handle));
     coffee_audio_context_get_error();
 }
 
 void coffee_audio_alloc(CALSource *source)
 {
-    alGenSources(1,&source->handle);
+    source->handle = new CALhnd;
+    alGenSources(1,&(source->handle->handle));
     coffee_audio_context_get_error();
 }
 
 void coffee_audio_free(CALSource *source)
 {
-    alDeleteSources(1,&source->handle);
+    alDeleteSources(1,&(source->handle->handle));
     coffee_audio_context_get_error();
-    source->handle = 0;
+    source->handle = nullptr;
 }
 
 void coffee_audio_free(CALBuffer *buffer)
 {
-    alDeleteBuffers(1,&buffer->handle);
+    alDeleteBuffers(1,&(buffer->handle->handle));
     coffee_audio_context_get_error();
-    buffer->handle = 0;
+    buffer->handle = nullptr;
 }
 
 int32 coffee_audio_source_get_offset_seconds(const CALSource *source)
 {
     int32 i;
-    alGetSourcei(source->handle,AL_SEC_OFFSET,&i);
+    alGetSourcei(_al_get_handle(source),AL_SEC_OFFSET,&i);
     coffee_audio_context_get_error();
     return i;
 }
@@ -146,7 +179,7 @@ int32 coffee_audio_source_get_offset_seconds(const CALSource *source)
 int32 coffee_audio_source_get_offset_samples(const CALSource *source)
 {
     int32 i;
-    alGetSourcei(source->handle,AL_SAMPLE_OFFSET,&i);
+    alGetSourcei(_al_get_handle(source),AL_SAMPLE_OFFSET,&i);
     coffee_audio_context_get_error();
     return i;
 }
@@ -154,26 +187,57 @@ int32 coffee_audio_source_get_offset_samples(const CALSource *source)
 int32 coffee_audio_source_get_offset_bytes(const CALSource *source)
 {
     int32 i;
-    alGetSourcei(source->handle,AL_BYTE_OFFSET,&i);
+    alGetSourcei(_al_get_handle(source),AL_BYTE_OFFSET,&i);
     coffee_audio_context_get_error();
     return i;
 }
 
-void coffee_audio_source_set_offset_seconds(CALSource *source, int32 off)
+void coffee_audio_listener_set(const CALListener *listener)
 {
-    alSourcei(source->handle,AL_SEC_OFFSET,off);
+    alListenerf(AL_GAIN,listener->gain);
+    coffee_audio_context_get_error();
+
+    alListenerfv(AL_POSITION,(scalar*)&listener->position);
+    coffee_audio_context_get_error();
+    alListenerfv(AL_VELOCITY,(scalar*)&listener->velocity);
+    coffee_audio_context_get_error();
+    scalar *orient = new scalar[6];
+    c_memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
+    c_memcpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
+    alListenerfv(AL_ORIENTATION,orient);
+    delete[] orient;
     coffee_audio_context_get_error();
 }
 
-void coffee_audio_source_set_offset_samples(CALSource *source, int32 off)
+void coffee_audio_source_queue_buffers(
+        CALSource *source, szptr numBuffers, CALBuffer **buffers)
 {
-    alSourcei(source->handle,AL_SAMPLE_OFFSET,off);
+    ALuint* handles = new ALuint[numBuffers];
+    for(szptr i=0;i<numBuffers;i++)
+        handles[i] = buffers[i]->handle->handle;
+    alSourceQueueBuffers(_al_get_handle(source),numBuffers,handles);
+    delete[] handles;
     coffee_audio_context_get_error();
 }
 
-void coffee_audio_source_set_offset_bytes(CALSource *source, int32 off)
+void coffee_audio_source_dequeue_buffers(
+        CALSource *source, szptr numBuffers, CALBuffer **buffers)
 {
-    alSourcei(source->handle,AL_BYTE_OFFSET,off);
+    alSourceUnqueueBuffers(_al_get_handle(source),numBuffers,(ALuint*)(*buffers));
+    coffee_audio_context_get_error();
+}
+
+void coffee_audio_source_seti(
+        CALSource *source, CSourceProperty const& prop, const int32 *val)
+{
+    alSourceiv(_al_get_handle(source),coffee_get_value(prop,al_source_prop_map),val);
+    coffee_audio_context_get_error();
+}
+
+void coffee_audio_source_setf(
+        CALSource *source, CSourceProperty const& prop, const scalar* val)
+{
+    alSourcefv(_al_get_handle(source),coffee_get_value(prop,al_source_prop_map),val);
     coffee_audio_context_get_error();
 }
 
@@ -182,16 +246,16 @@ void coffee_audio_source_set_state(CALSource *source, CALPlaybackState state)
     switch(state)
     {
     case CALPlaybackState::Stopped:
-        alSourceStop(source->handle);
+        alSourceStop(_al_get_handle(source));
         break;
     case CALPlaybackState::Playing:
-        alSourcePlay(source->handle);
+        alSourcePlay(_al_get_handle(source));
         break;
     case CALPlaybackState::Paused:
-        alSourcePause(source->handle);
+        alSourcePause(_al_get_handle(source));
         break;
     case CALPlaybackState::Rewind:
-        alSourceRewind(source->handle);
+        alSourceRewind(_al_get_handle(source));
         break;
     }
     coffee_audio_context_get_error();
@@ -202,7 +266,7 @@ void coffee_audio_source_set_states(
 {
     ALuint *src = new ALuint[numSources];
     for(szptr i=0;i<numSources;i++)
-        src[i] = sources[i]->handle;
+        src[i] = _al_get_handle(sources[i]);
 
     switch(state)
     {
@@ -223,21 +287,59 @@ void coffee_audio_source_set_states(
     delete[] src;
 }
 
-void coffee_audio_listener_set(const CALListener *listener)
+void coffee_audio_buffer_data(CALBuffer *buffer, const CAudioSample *sample)
 {
-    alListenerf(AL_GAIN,listener->gain);
-    coffee_audio_context_get_error();
+    ALenum fmt = AL_FORMAT_MONO16;
 
-    alListenerfv(AL_POSITION,(scalar*)&listener->position);
+    switch(sample->fmt.bitdepth)
+    {
+    case 8:
+        if(sample->fmt.channels == 1)
+            fmt = AL_FORMAT_MONO8;
+        else
+            fmt = AL_FORMAT_STEREO8;
+        break;
+
+    case 16:
+        if(sample->fmt.channels == 1)
+            fmt = AL_FORMAT_MONO16;
+        else
+            fmt = AL_FORMAT_STEREO16;
+        break;
+    }
+
+    alBufferData(
+                _al_get_handle(buffer),fmt,
+                sample->data,
+                sample->fmt.samples*sample->fmt.channels*sizeof(sample->data[0]),
+            sample->fmt.samplerate);
+}
+
+void coffee_audio_context_set_debug_callback(CALContext *context, CALCallback callback)
+{
+    context->callback = callback;
+}
+
+void coffee_audio_alloc(CALBuffer *buffer, const CAudioSample *sample)
+{
+    coffee_audio_alloc(buffer);
+    coffee_audio_buffer_data(buffer,sample);
     coffee_audio_context_get_error();
-    alListenerfv(AL_VELOCITY,(scalar*)&listener->velocity);
-    coffee_audio_context_get_error();
-    scalar *orient = new scalar[6];
-    c_memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    c_memcpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
-    alListenerfv(AL_ORIENTATION,orient);
-    delete[] orient;
-    coffee_audio_context_get_error();
+}
+
+void coffee_audio_source_set_offset_seconds(CALSource *source, int32 const& off)
+{
+    coffee_audio_source_seti(source,CSourceProperty::OffsetSeconds,&off);
+}
+
+void coffee_audio_source_set_offset_samples(CALSource *source, int32 const& off)
+{
+    coffee_audio_source_seti(source,CSourceProperty::OffsetSamples,&off);
+}
+
+void coffee_audio_source_set_offset_bytes(CALSource *source, int32 const& off)
+{
+    coffee_audio_source_seti(source,CSourceProperty::OffsetBytes,&off);
 }
 
 void coffee_audio_source_transform(
@@ -248,38 +350,12 @@ void coffee_audio_source_transform(
     source->velocity = velocity;
     source->direction = direction;
 
-    alSourcefv(source->handle,AL_POSITION,(scalar*)&source->position);
-    coffee_audio_context_get_error();
-    alSourcefv(source->handle,AL_VELOCITY,(scalar*)&source->velocity);
-    coffee_audio_context_get_error();
-    alSourcefv(source->handle,AL_DIRECTION,(scalar*)&source->direction);
-    coffee_audio_context_get_error();
-}
-
-void coffee_audio_source_queue_buffers(
-        CALSource *source, szptr numBuffers, CALBuffer **buffers)
-{
-    alSourceQueueBuffers(source->handle,numBuffers,(const ALuint*)(*buffers));
-    coffee_audio_context_get_error();
-}
-
-void coffee_audio_source_dequeue_buffers(
-        CALSource *source, szptr numBuffers, CALBuffer **buffers)
-{
-    alSourceUnqueueBuffers(source->handle,numBuffers,(ALuint*)(*buffers));
-    coffee_audio_context_get_error();
-}
-
-void coffee_audio_source_seti(CALSource *source, CSourceProperty prop, int32 val)
-{
-    alSourcei(source->handle,_al_get_prop(prop),val);
-    coffee_audio_context_get_error();
-}
-
-void coffee_audio_source_setf(CALSource *source, CSourceProperty prop, scalar val)
-{
-    alSourcef(source->handle,_al_get_prop(prop),val);
-    coffee_audio_context_get_error();
+    coffee_audio_source_setf(source,CSourceProperty::Position,
+                             (const scalar*)&source->position);
+    coffee_audio_source_setf(source,CSourceProperty::Velocity,
+                             (const scalar*)&source->velocity);
+    coffee_audio_source_setf(source,CSourceProperty::Direction,
+                             (const scalar*)&source->direction);
 }
 
 CALContext::CALContext():
@@ -303,14 +379,85 @@ CALSource::CALSource():
     position(0,0,0),
     velocity(0,0,0),
     direction(0,0,0),
-    handle(0),
+    handle(nullptr),
     state(AL_STOPPED)
 {
 }
 
-void coffee_audio_context_set_distance_model(CDistanceModel m)
+CALBuffer::CALBuffer():
+    handle(nullptr)
 {
-    alDistanceModel(_al_get_model(m));
+}
+
+void coffee_audio_source_seti(
+        CALSource *source, CSourceProperty const& prop, const int32 &val)
+{
+    coffee_audio_source_seti(source,prop,&val);
+}
+
+void coffee_audio_source_setf(
+        CALSource *source, CSourceProperty const& prop, const scalar &val)
+{
+    coffee_audio_source_setf(source,prop,&val);
+}
+
+CALVersion coffee_audio_context_version(CALContext* ctxt)
+{
+    CALVersion v;
+    alcGetIntegerv(ctxt->device,ALC_MAJOR_VERSION,1,&v.major);
+    alcGetIntegerv(ctxt->device,ALC_MINOR_VERSION,1,&v.minor);
+    return v;
+}
+
+cstring *coffee_audio_context_devices_output(int32* numDevices)
+{
+    *numDevices = 0;
+
+    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
+        return nullptr;
+
+    const ALCchar* devices = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
+
+    cstring* arrdev = (cstring*)c_alloc(sizeof(cstring));
+
+    while(*devices)
+    {
+        if(!(*numDevices))
+            arrdev = (cstring*)c_realloc(arrdev,sizeof(cstring)*(*numDevices+1));
+        arrdev[*numDevices] = devices;
+        devices += c_strlen(devices)+1;
+        (*numDevices)++;
+    }
+
+    return arrdev;
+}
+
+cstring *coffee_audio_context_devices_input(int32* numDevices)
+{
+    *numDevices = 0;
+
+    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
+        return nullptr;
+
+    const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
+
+    cstring* arrdev = (cstring*)c_alloc(sizeof(cstring));
+
+    while(*cdevices)
+    {
+        if(!(*numDevices))
+            arrdev = (cstring*)c_realloc(arrdev,sizeof(cstring)*(*numDevices+1));
+        arrdev[*numDevices] = cdevices;
+        cdevices += c_strlen(cdevices)+1;
+        (*numDevices)++;
+    }
+
+    return arrdev;
+}
+
+cstring coffee_audio_context_device_default()
+{
+    return alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
 }
 
 }

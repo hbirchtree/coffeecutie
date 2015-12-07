@@ -26,20 +26,28 @@ public:
         CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
         coffee_file_free(&rsc);
 
-        CALContext ctxt;
-
         CALBuffer *buf = new CALBuffer;
         CALSource src;
         CALListener l;
 
         //Set error callback
-        ctxt.callback = [](CALReport* r){
+        CALContext* ctxt = coffee_audio_context_create();
+
+        coffee_audio_context_set_debug_callback(ctxt,[](CALReport* r){
             cDebug("%s",r->message);
-        };
+        });
+
+        int32 odev,idev;
+        cstring* odevs = coffee_audio_context_devices_output(&odev);
+        cstring* idevs = coffee_audio_context_devices_input(&idev);
+
+        for(int i=0;i<odev;i++)
+            cDebug("Output device: %s",odevs[i]);
+        for(int i=0;i<idev;i++)
+            cDebug("Input device: %s",idevs[i]);
 
         //Create the context, acquire possible errors
-        coffee_audio_context_create(&ctxt);
-        coffee_audio_context_get_error(&ctxt);
+        coffee_audio_context_get_error(ctxt);
 
         coffee_audio_context_set_distance_model(CDistanceModel::LinearDistanceClamped);
 
@@ -57,9 +65,9 @@ public:
         free(smp.data);
         //Create audio source
         coffee_audio_alloc(&src);
-        coffee_audio_source_transform(&src,CVec3(100,0,0),CVec3(0,0,0),CVec3(0,0,0));
+        coffee_audio_source_transform(&src,CVec3(10,0,0),CVec3(0,0,0),CVec3(0,0,0));
         coffee_audio_source_setf(&src,CSourceProperty::Gain,1.f);
-        coffee_audio_source_setf(&src,CSourceProperty::Pitch,0.9f);
+        coffee_audio_source_setf(&src,CSourceProperty::Pitch,1.f);
         coffee_audio_source_setf(&src,CSourceProperty::RolloffFactor,1.f);
         coffee_audio_source_setf(&src,CSourceProperty::MaxDist,110.f);
         coffee_audio_source_setf(&src,CSourceProperty::ReferenceDistance,50.f);
@@ -79,7 +87,7 @@ public:
         }
 
         //Free the AL context
-        coffee_audio_context_destroy(&ctxt);
+        coffee_audio_context_destroy(ctxt);
         delete buf;
     }
     void eventWindowsHandle(const CDisplay::CDEvent *e)

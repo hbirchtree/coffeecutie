@@ -2,8 +2,8 @@
 #define COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 
 #include "copengl_types.h"
+#include "cuniformtypes.h"
 
-#include "cgraphicswrappers.h"
 #include "coffee/core/base/cfiles.h"
 
 namespace Coffee {

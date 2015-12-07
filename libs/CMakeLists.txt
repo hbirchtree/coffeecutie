@@ -7,22 +7,26 @@ include(ExternalProject)
 if(COFFEE_BUILD_STATIC)
 set(GLBINDING_CFG_FLAGS
                 "-DOPTION_PORTABLE_INSTALL=ON"
+		"-DCMAKE_BUILD_TYPE=Release"
                 "-DOPTION_BUILD_STATIC=ON"
                 "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
         )
 set(ASSIMP_CFG_FLAGS
                 "-DASSIMP_BUILD_TESTS=OFF"
+		"-DCMAKE_BUILD_TYPE=Release"
                 "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
                 "-DBUILD_SHARED_LIBS=OFF"
         )
 else()
 set(GLBINDING_CFG_FLAGS
                 "-DOPTION_PORTABLE_INSTALL=ON"
+		"-DCMAKE_BUILD_TYPE=Release"
                 "-DOPTION_BUILD_STATIC=OFF"
                 "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
         )
 set(ASSIMP_CFG_FLAGS
                 "-DASSIMP_BUILD_TESTS=OFF"
+		"-DCMAKE_BUILD_TYPE=Release"
                 "-DBUILD_SHARED_LIBS=ON"
                 "-DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}"
         )

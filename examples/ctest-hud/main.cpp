@@ -33,16 +33,13 @@ public:
     {
         CFunctional::CFrameCounter counter(framefun);
         counter.interval = 1000000;
-//        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
-//        clock->start();
+        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
+        clock->start();
 
         const CVec3 vertexdata[] = {
-            CVec3(-1.f, -1.f, 0.f), //2
+            CVec3( 1.f, -1.f, 0.f), //2
             CVec3( 1.f, -1.f, 0.f), //1
-            CVec3(-1.f,  1.f, 0.f), //4
-            CVec3( 1.f, -1.f, 0.f), //1
-            CVec3( 1.f,  1.f, 0.f), //3
-            CVec3(-1.f,  1.f, 0.f), //4
+            CVec3( 1.f, -1.f, 0.f), //4
         };
 
         const CVec2 texdata[] = {
@@ -58,7 +55,7 @@ public:
             0, 1, 2,
         };
 
-        const byte_t vshader_src[] = {
+        constexpr byte_t vshader_src[] = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
             "layout(location = 1) in vec2 texcoord;"
@@ -75,7 +72,7 @@ public:
             "}"
         };
 
-        const byte_t fshader_src[] = {
+        constexpr byte_t fshader_src[] = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "uniform sampler2D diffsamp;"
@@ -213,6 +210,11 @@ public:
         CMat4 rtf = coffee_graphics_gen_transform(&root);
         CMat4 wtf = coffee_graphics_gen_perspective(&camera);
 
+        glm::mat4 g_wtf = glm::perspective(60.f,1.6f,1.f,10.f);
+        glm::mat4 g_rtf = glm::mat4();
+
+        glm::mat4 g_rt = glm::scale(glm::mat4(),glm::vec3(1)) * glm::translate(glm::mat4(),glm::vec3(0,0,-3));
+
         CNode worldNode;
         worldNode.transform = &wtf;
 
@@ -228,6 +230,8 @@ public:
                                                 CVec3(1),
                                                 CQuat())
                 * rtf;
+
+        glm::mat4 g_rtv = g_wtf * g_rt * g_rtf;
 
         for(int i=0;i<3;i++)
         {
@@ -247,13 +251,13 @@ public:
         CResources::CResource texture("ctest_hud/particle_sprite.png");
         CResources::coffee_file_pull(&texture);
 
-        CStbImageLib::CStbImage ptext;
-        CStbImageLib::coffee_stb_image_load(&ptext,&texture);
-
         CUniform texuni;
         CTexture gltext;
 
         {
+            CStbImageLib::CStbImage ptext;
+            CStbImageLib::coffee_stb_image_load(&ptext,&texture);
+
             gltext.textureType = CTexType::Tex2D;
             gltext.format = CTexFormat::RGBA;
             coffee_graphics_alloc(&gltext);
@@ -268,6 +272,7 @@ public:
             CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
 
             CStbImageLib::coffee_stb_image_free(&ptext);
+            CResources::coffee_file_free(&texture);
 
             coffee_graphics_tex_mipmap(&gltext);
 
@@ -345,13 +350,15 @@ public:
 
             camera_pos.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
 
-            rt = wtf
-                    * (coffee_graphics_gen_transform(camera_pos,
-                                                    CVec3(1),
-                                                    CQuat())
-                    * rtf);
+            g_rtv = (g_wtf * (glm::mat4_cast(glm::quat())*glm::translate(glm::mat4(),glm::vec3(CMath::fmod(this->contextTime(),3.0)-1.5,0,-2)))) * g_rtf;
 
-            c_memcpy(transforms[transform_index].data,&rt,sizeof(rt));
+//            rt = wtf
+//                    * coffee_graphics_gen_transform(camera_pos,
+//                                                     CVec3(1),
+//                                                     CQuat(1,0,0,0))
+//                    * rtf;
+
+            c_memcpy(transforms[transform_index].data,&g_rtv,sizeof(rt));
 
             for(int i=0;i<4;i++)
                 coffee_graphics_vao_attribute_bind_buffer(
@@ -361,7 +368,7 @@ public:
 
             transform_index = (transform_index+1)%3;
 
-            //counter.update(clock->elapsed());
+            counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
 
             this->swapBuffers();

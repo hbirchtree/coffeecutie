@@ -12,4 +12,3 @@ namespace CGraphicsWrappers{
 }
 
 #endif // CTRANSFORMCOMPUTER
-

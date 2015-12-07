@@ -2,8 +2,6 @@
 #define CBUFFER
 
 #include "coffee/core/coffee.h"
-#include "coffee/core/base/cdebug.h"
-#include "cuniformtypes.h"
 #include "copengl_types.h"
 
 namespace Coffee{

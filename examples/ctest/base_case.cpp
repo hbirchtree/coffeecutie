@@ -229,7 +229,10 @@ void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
         mbuffer->type = CBufferType::Array;
-        mbuffer->flags = CBufferStorage::Coherent|CBufferStorage::Persistent|CBufferStorage::WriteBit;
+        mbuffer->flags = CBufferStorage::Coherent|
+                CBufferStorage::Persistent|
+                CBufferStorage::WriteBit|
+                CBufferStorage::Dynamic;
         //GL calls
         coffee_graphics_alloc(mbuffer);
         coffee_graphics_activate(mbuffer);
@@ -395,7 +398,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 
     CGCamera* cam = &ctxt->transforms.cameras.d[0];
     cam->rotation.w() = 1;
-    cam->fieldOfView = 60.f;
+    cam->fieldOfView = 90.f;
     cam->aspect = 1.6f;
     cam->zVals.far = 100.f;
     cam->zVals.near = 1.f;
@@ -613,10 +616,8 @@ void coffee_render_test(game_context *ctxt, double delta)
             coffee_graphics_gen_transform(
                 &ctxt->transforms.transforms.d[0]);
     CMat4 mcamera =
-            coffee_graphics_gen_perspective(
-                camera)
-            * coffee_graphics_gen_transform(
-                camera->position,CVec3(1),camera->rotation);
+            coffee_graphics_gen_perspective(camera)
+            * coffee_graphics_gen_transform(camera->position,CVec3(1),camera->rotation);
 
     //Copy memory into GL
     c_memcpy(ctxt->renderdata.buffers.d[4].data,
@@ -628,7 +629,7 @@ void coffee_render_test(game_context *ctxt, double delta)
 
     if(sync_object)
     {
-        bool status = coffee_graphics_fence_wait(sync_object,1);
+        bool status = coffee_graphics_fence_wait(sync_object,10);
         coffee_graphics_free(sync_object);
     }
     //Send it off

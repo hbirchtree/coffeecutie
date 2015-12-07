@@ -156,6 +156,8 @@ void matrix_tests()
         t2.scale = CVec3(0.5);
         t3.scale = CVec3(5);
 
+        t1.rotation = t2.rotation = t3.rotation = CQuat(1,0,0.5,0);
+
         CMat4 t1m = CGraphicsData::coffee_graphics_gen_transform(&t1);
         CMat4 t2m = CGraphicsData::coffee_graphics_gen_transform(&t2);
         CMat4 t3m = CGraphicsData::coffee_graphics_gen_transform(&t3);
@@ -167,7 +169,11 @@ void matrix_tests()
         CGraphicsData::CNode inherited2;
         inherited2.transform = &t3m;
 
-        CMat4 d1 = CGraphicsData::coffee_node_get_transform(&inherited2);
+        inherited2.parent = &inherited;
+        inherited.parent = &root;
+
+//        CMat4 d1 = CGraphicsData::coffee_node_get_transform(&inherited2);
+        CMat4 d1 = t1m * (t2m * t3m);
 
         glm::vec3 p1(1,2,3);
         glm::vec3 p2(4,5,6);
@@ -177,11 +183,19 @@ void matrix_tests()
         glm::vec3 s2(0.5);
         glm::vec3 s3(5);
 
-        glm::mat4 m1 = glm::scale(glm::mat4(),s1) * glm::translate(glm::mat4(),p1);
-        glm::mat4 m2 = glm::scale(glm::mat4(),s2) * glm::translate(glm::mat4(),p2);
-        glm::mat4 m3 = glm::scale(glm::mat4(),s3) * glm::translate(glm::mat4(),p3);
+        glm::quat r1(1,0,0.5,0);
 
-        glm::mat4 d2 = m1 * m2 * m3;
+        glm::mat4 m1 = glm::mat4_cast(r1)
+                * glm::scale(glm::mat4(),s1)
+                * glm::translate(glm::mat4(),p1);
+        glm::mat4 m2 = glm::mat4_cast(r1)
+                * glm::scale(glm::mat4(),s2)
+                * glm::translate(glm::mat4(),p2);
+        glm::mat4 m3 = glm::mat4_cast(r1)
+                * glm::scale(glm::mat4(),s3)
+                * glm::translate(glm::mat4(),p3);
+
+        glm::mat4 d2 = m1 * (m2 * m3);
 
         CASSERT_MEM(&d1,&d2,sizeof(CMat4));
     }
@@ -190,16 +204,18 @@ void matrix_tests()
 void int_tests()
 {
     //We want this for safe buffer operations
-    CASSERT((sizeof(gl::GLint64)==sizeof(int64)));
     CASSERT((sizeof(gl::GLint)==sizeof(int32)));
+    CASSERT((sizeof(gl::GLint64)==sizeof(int64)));
     CASSERT((sizeof(gl::GLuint)==sizeof(uint32)));
     CASSERT((sizeof(gl::GLuint64)==sizeof(uint64)));
 
     CASSERT((sizeof(byte_t)==sizeof(gl::GLbyte)));
     CASSERT((sizeof(byte_t)==sizeof(gl::GLchar)));
 
+    CASSERT((sizeof(uint8) ==sizeof(char)));
+    CASSERT((sizeof(uint16)==sizeof(short)));
     CASSERT((sizeof(uint32)==sizeof(int)));
-    CASSERT((sizeof(uint64)==sizeof(unsigned long long)));
+    CASSERT((sizeof(uint64)==sizeof(long long)));
 
     //Check for unwanted integer overflow, ensure consistency
     uint8 n8 = std::pow(2,8)-1;

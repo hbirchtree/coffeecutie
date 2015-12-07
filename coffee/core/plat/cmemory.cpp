@@ -53,6 +53,11 @@ int c_strlen(cstring s)
     return strlen(s);
 }
 
+int c_strlen(cwstring s)
+{
+    return wcslen(s);
+}
+
 void c_free(c_ptr data)
 {
     free(data);

@@ -1,9 +1,7 @@
 #ifndef CUNIFORMTYPES
 #define CUNIFORMTYPES
 
-#include "coffee/core/coffee.h"
 #include "copengl_types.h"
-#include "cbuffer.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{

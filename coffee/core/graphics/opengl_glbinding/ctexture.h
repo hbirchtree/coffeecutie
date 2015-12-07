@@ -2,10 +2,93 @@
 #define CTEXTURE
 
 #include "copengl_types.h"
-#include "coffee/core/coffee.h"
+#include "coffee/core/plat/cmemory.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
+
+enum class CTexParam : uint16
+{
+    MipmapMaxLevel = 1,
+    MipmapMinFilter = 2,
+    MipmapMagFilter = 3,
+
+    MipmapMinLod = 4,
+    MipmapLodBias = 5,
+    MipmapMaxLod = 6,
+
+    WrapS = 7,
+    WrapT = 8,
+    WrapR = 9,
+
+    SwizzleR = 10,
+    SwizzleG = 11,
+    SwizzleB = 12,
+    SwizzleA = 13,
+    SwizzleRGBA = 14,
+
+    MipmapBaseLevel = 15,
+
+    SparseTexture = 16,
+    VirtualTexture = 16,
+};
+
+enum class CTexParamOpt : uint16
+{
+    Nearest = 1,
+    Linear = 2,
+    LinearMipmapLinear = 3,
+    LinearMipmapNearest = 4,
+    NearestMipmapNearest = 5,
+    NearestMipmapLinear = 6,
+
+    ClampEdge = 7,
+    ClampBorder = 8,
+    RepeatMirror = 9,
+    Repeat = 10,
+    ClampEdgeMirror = 11,
+
+    Enable = 12,
+    Disable = 13,
+};
+
+enum class CTexIntFormat : CGint
+{
+    None = 0,
+    RGBA8 = 1,
+    RED8 = 2,
+    Depth = 3,
+    Stencil = 4,
+
+    RG8 = 5,
+    RGB8 = 6,
+
+    RGBA32F = 7,
+
+    DXT1 = 8,
+    DXT3 = 9,
+    DXT5 = 10,
+
+    DepthStencil = 11,
+};
+
+enum class CTexFormat : uint16
+{
+    None = 0,
+    RGBA = 1,
+    BGRA = 2,
+
+    RG = 3,
+    RGB = 4,
+
+    RED = 5,
+    GREEN = 6,
+    BLUE = 7,
+
+    Depth = 8,
+    Stencil = 9,
+    DepthStencil = 10,
+};
 
 struct CTexture
 {

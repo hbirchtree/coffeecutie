@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_OPENGL_FENCE_H
 #define COFFEE_GRAPHICS_OPENGL_FENCE_H
 
-#include "coffee/core/CTypes"
+#include "coffee/core/types/basetypes.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{

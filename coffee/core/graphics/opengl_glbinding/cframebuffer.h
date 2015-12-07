@@ -2,9 +2,32 @@
 #define CFRAMEBUFFER
 
 #include "ctexture.h"
+#include "copengl_enums.h"
+#include "coffee/core/types/composite_types.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
+
+enum class CFBType : uint8
+{
+    All = 1,
+    Draw = 2,
+    Read = 3,
+};
+
+enum class CFBAttachment : uint8
+{
+    Color = 1,
+    Depth = 2,
+    Stencil = 3,
+    DepthStencil = 4,
+};
+
+enum class CFBFilter : uint8
+{
+    Nearest = 1,
+    Linear = 2,
+};
 
 struct CFramebuffer
 {
