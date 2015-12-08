@@ -6,6 +6,33 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+enum class CMemoryBarrier : uint8
+{
+    ElementArray,
+    VertexAttribArray,
+    Uniform,
+
+    ShaderImage,
+
+    Command,
+
+    PixelBuffer,
+    TextureUpdate,
+    TextureFetch,
+
+    BufferUpdate,
+
+    Framebuffer,
+
+    TransformFeedback,
+
+    AtomicCounter,
+
+    ShaderStorage,
+};
+
+C_FLAGS(CMemoryBarrier,uint8);
+
 enum class CClearFlag : uint8
 {
     Depth = 0x1,
@@ -27,6 +54,9 @@ enum class CBufferType : uint16
     TransformFeedback = 6,
     Texture = 7,
     Query = 8,
+
+    PixelUnpack = 9,
+    PixelPack = 10,
 };
 
 enum class CTexType : uint16

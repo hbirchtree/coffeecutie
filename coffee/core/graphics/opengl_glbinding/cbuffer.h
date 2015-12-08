@@ -17,6 +17,9 @@ struct CSubBuffer : _cbasic_graphics_buffer_section
     CSubBuffer();
 };
 
+template<size_t Size>
+using CNBuffer = _cbasic_nbuffer<CBuffer,Size>;
+
 /*!
  * \brief Allocation in this context is the creation of the object. It will not have defined content unless something is stored in it.
  * \param buf Buffer to be allocated
@@ -27,7 +30,7 @@ extern void coffee_graphics_alloc(CBuffer* buf);
  * \param count
  * \param buf
  */
-extern void coffee_graphics_alloc(int count, CBuffer *buf);
+extern void coffee_graphics_free(int count, CBuffer *buf);
 /*!
  * \brief Any mapped buffer, content or similar is no longer valid after this.
  * \param buf Buffer to be freed

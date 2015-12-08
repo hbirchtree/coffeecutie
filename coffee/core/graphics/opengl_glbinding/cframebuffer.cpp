@@ -36,25 +36,25 @@ void coffee_graphics_free(CFramebuffer* fb)
 
 void coffee_graphics_bind(const CFramebuffer* fb)
 {
-    glBindFramebuffer(CG_GET(fb->target,cfbtype_map),
+    glBindFramebuffer(gl_get(fb->target),
                       fb->handle);
 }
 
 void coffee_graphics_unbind(const CFramebuffer* fb)
 {
-    glBindFramebuffer(CG_GET(fb->target,cfbtype_map),
+    glBindFramebuffer(gl_get(fb->target),
                       0);
 }
 
 void coffee_graphics_bind(const CFramebuffer* fb, const CFBType &target)
 {
-    glBindFramebuffer(CG_GET(target,cfbtype_map),
+    glBindFramebuffer(gl_get(target),
                       fb->handle);
 }
 
 void coffee_graphics_unbind(const CFramebuffer*, const CFBType &target)
 {
-    glBindFramebuffer(CG_GET(target,cfbtype_map),
+    glBindFramebuffer(gl_get(target),
                       0);
 }
 
@@ -71,7 +71,7 @@ bool coffee_graphics_framebuffer_check_valid(const CFramebuffer *fb)
 {
     GLenum value = glCheckNamedFramebufferStatus(
                 fb->handle,
-                CG_GET(fb->target,cfbtype_map));
+                gl_get(fb->target));
     return _coffee_graphics_framebuffer_check_status(value);
 }
 
@@ -79,7 +79,7 @@ bool coffee_graphics_framebuffer_check_valid_safe(const CFramebuffer *fb)
 {
     coffee_graphics_bind(fb);
     GLenum value = glCheckFramebufferStatus(
-                CG_GET(fb->target,cfbtype_map));
+                gl_get(fb->target));
     coffee_graphics_unbind(fb);
     return _coffee_graphics_framebuffer_check_status(value);
 }
@@ -93,7 +93,7 @@ void coffee_graphics_framebuffer_attach_texture(
 
     glNamedFramebufferTexture(
                 fb->handle,
-                CG_GETI(attachment->target,cfbattch_map,offset),
+                gl_geti(attachment->target,offset),
                 attachment->texture->handle,
                 attachment->level);
 }
@@ -107,8 +107,8 @@ void coffee_graphics_framebuffer_attach_texture_safe(
 
     coffee_graphics_bind(fb);
     glFramebufferTexture(
-                CG_GET(fb->target,cfbtype_map),
-                CG_GETI(attachment->target,cfbattch_map,offset),
+                gl_get(fb->target),
+                gl_geti(attachment->target,offset),
                 attachment->texture->handle,
                 attachment->level);
     coffee_graphics_unbind(fb);
@@ -122,8 +122,8 @@ void coffee_graphics_framebuffer_blit(const CFramebuffer *srcFb, const CFramebuf
                 srcFb->handle, trgFb->handle,
                 srcRect.left(), srcRect.bottom(), srcRect.right(), srcRect.top(),
                 trgRect.left(), trgRect.bottom(), trgRect.right(), trgRect.top(),
-                CG_GETF(mask,cclearflag_map),
-                CG_GET(filter,cfbfilt_map));
+                gl_getf(mask),
+                gl_get(filter));
 }
 
 void coffee_graphics_framebuffer_blit_safe(const CFramebuffer *srcFb, const CFramebuffer *trgFb,
@@ -135,8 +135,8 @@ void coffee_graphics_framebuffer_blit_safe(const CFramebuffer *srcFb, const CFra
     glBlitFramebuffer(
                 srcRect.left(), srcRect.bottom(), srcRect.right(), srcRect.top(),
                 trgRect.left(), trgRect.bottom(), trgRect.right(), trgRect.top(),
-                CG_GETF(mask,cclearflag_map),
-                CG_GET(filter,cfbfilt_map));
+                gl_getf(mask),
+                gl_get(filter));
     coffee_graphics_unbind(srcFb,CFBType::Read);
     coffee_graphics_unbind(trgFb,CFBType::Draw);
 }

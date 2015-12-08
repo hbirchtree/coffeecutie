@@ -29,9 +29,9 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
         size = ((res.w+3)/4)*((res.h+3)/4)*rsc->blockSize;
 
         glCompressedTexImage2D(
-                    CG_GET(tex->textureType,ctextp_map),
+                    gl_get(tex->textureType),
                     i,
-                    CG_GET(rsc->internalFormat,ctexint_map),
+                    gl_get(rsc->internalFormat),
                     res.w,res.h,0,size,
                     ((ubyte_t*)rsc->data)+offset);
 

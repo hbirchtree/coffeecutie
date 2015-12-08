@@ -27,11 +27,11 @@ void coffee_test_fun_set(game_context *ctxt)
 
     if(ctxt->features->ext_texture_storage)
     {
-        ctxt->funptrs.textures.define = CTextureTools::coffee_graphics_tex_define;
-        ctxt->funptrs.textures.store = CTextureTools::coffee_graphics_tex_store;
+        ctxt->funptrs.textures.define = coffee_graphics_tex_define;
+        ctxt->funptrs.textures.store = coffee_graphics_tex_store;
     }else{
-        ctxt->funptrs.textures.define = CTextureTools::coffee_graphics_tex_define_safe;
-        ctxt->funptrs.textures.store = CTextureTools::coffee_graphics_tex_store_safe;
+        ctxt->funptrs.textures.define = coffee_graphics_tex_define_safe;
+        ctxt->funptrs.textures.store = coffee_graphics_tex_store_safe;
     }
 
     if(ctxt->features->ext_direct_state_access)
@@ -148,12 +148,13 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
     CStbImageLib::CStbImage img;
     CStbImageLib::coffee_stb_image_load(&img,textureres);
 
-    CTextureTools::CTextureData dt;
+    CTextureData dt;
     dt.data = img.data;
     dt.datatype = CDataType::UByte;
     dt.format = CTexIntFormat::RGBA8;
 
-    CTextureTools::coffee_create_texturesize(&dt,img.size.w,img.size.h);
+    dt.size.w = img.size.w;
+    dt.size.h = img.size.h;
 
     tex->textureType = CTexType::Tex2D;
     tex->levels = 1;
@@ -164,7 +165,6 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
     ctxt->funptrs.textures.define(tex,&dt);
     ctxt->funptrs.textures.store(tex,&dt,0);
     //
-    CTextureTools::coffee_graphics_tex_free_texdata(&dt);
     CStbImageLib::coffee_stb_image_free(&img);
 
     return tex;
@@ -178,12 +178,13 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
     switch(tex.format)
     {
     case CBlam::blam_bitm_tex_RGBA:{
-        CTextureTools::CTextureData dt;
+        CTextureData dt;
         coffee_graphics_alloc(t);
         dt.data = tex.data;
         dt.datatype = CDataType::UByte;
         dt.format = CTexIntFormat::RGBA8;
-        CTextureTools::coffee_create_texturesize(&dt,tex.resolution.w,tex.resolution.h);
+        dt.size.w = tex.resolution.w;
+        dt.size.h = tex.resolution.h;
 
         t->textureType = (tex.type==CBlam::blam_bitm_type_2D) ? CTexType::Tex2D : CTexType::Tex3D;
         t->levels = tex.mipmaps;

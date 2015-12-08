@@ -91,6 +91,40 @@ template<typename T> struct _cbasic_point
 };
 
 /*!
+ * \brief Allows for buffering of any type of object, texture, buffer, etc. according to conditions.
+ */
+template<typename T, size_t BufferSize>
+struct _cbasic_nbuffer
+{
+    _cbasic_nbuffer()
+    {
+        ptr = 0;
+    }
+
+    T data[BufferSize];
+    size_t ptr;
+
+    virtual void advance()
+    {
+        ptr = next_idx();
+    }
+    T& current()
+    {
+        return data[ptr];
+    }
+    T& next()
+    {
+        return data[next_idx()];
+    }
+
+
+    virtual size_t next_idx()
+    {
+        return (ptr+1)%BufferSize;
+    }
+};
+
+/*!
  * \brief Template for rectangle types, used for window rectangle positioning and orthographic view
  */
 template<typename T> struct _cbasic_rect

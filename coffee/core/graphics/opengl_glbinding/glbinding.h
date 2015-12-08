@@ -6,20 +6,15 @@
 
 #include <glbinding/gl/gl.h>
 
-//We are using macros here because it preserves the size of static arrays
-#define CG_GET(val,arr) coffee_get_value(val,arr)
-#define CG_GETI(val,arr,offset) coffee_get_value_texindex(val,arr,offset)
-#define CG_GETF(val,arr) coffee_get_flags(val,arr)
-
 using namespace gl;
 
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-C_FLAGS(UseProgramStageMask,uint32)
-C_FLAGS(BufferAccessMask,uint32)
-C_FLAGS(BufferStorageMask,uint32)
-C_FLAGS(ClearBufferMask,uint32)
+//C_FLAGS(UseProgramStageMask,uint32)
+//C_FLAGS(BufferAccessMask,uint32)
+//C_FLAGS(BufferStorageMask,uint32)
+//C_FLAGS(ClearBufferMask,uint32)
 
 /*!
  * \brief Contains a GL message from the binding layer
@@ -58,7 +53,7 @@ static const _cbasic_static_map<CClearFlag,ClearBufferMask,4> cclearflag_map = {
     {CClearFlag::Stencil, GL_STENCIL_BUFFER_BIT},
 };
 
-static const _cbasic_static_map<CBufferType,GLenum,8> cbuffertype_map = {
+static const _cbasic_static_map<CBufferType,GLenum,10> cbuffertype_map = {
     {CBufferType::Array, GL_ARRAY_BUFFER},
     {CBufferType::Index, GL_ELEMENT_ARRAY_BUFFER},
     {CBufferType::Uniform, GL_UNIFORM_BUFFER},
@@ -67,6 +62,9 @@ static const _cbasic_static_map<CBufferType,GLenum,8> cbuffertype_map = {
     {CBufferType::TransformFeedback, GL_TRANSFORM_FEEDBACK_BUFFER},
     {CBufferType::Texture, GL_TEXTURE_BUFFER},
     {CBufferType::Query, GL_QUERY_BUFFER},
+
+    {CBufferType::PixelUnpack, GL_PIXEL_UNPACK_BUFFER},
+    {CBufferType::PixelPack, GL_PIXEL_PACK_BUFFER},
 };
 
 static const _cbasic_static_map<CBufferAccess,BufferAccessMask,4> cbufferaccess_map = {
@@ -240,6 +238,111 @@ static const _cbasic_static_map<CCullMode,GLenum,3> cculling_map = {
     {CCullMode::Front,GL_FRONT},
     {CCullMode::Both,GL_FRONT_AND_BACK},
 };
+
+static const _cbasic_static_map<CMemoryBarrier,MemoryBarrierMask,13> cmbarrier_map = {
+    {CMemoryBarrier::AtomicCounter,GL_ATOMIC_COUNTER_BARRIER_BIT},
+    {CMemoryBarrier::BufferUpdate,GL_BUFFER_UPDATE_BARRIER_BIT},
+    {CMemoryBarrier::Command,GL_COMMAND_BARRIER_BIT},
+    {CMemoryBarrier::ElementArray,GL_ELEMENT_ARRAY_BARRIER_BIT},
+    {CMemoryBarrier::Framebuffer,GL_FRAMEBUFFER_BARRIER_BIT},
+    {CMemoryBarrier::PixelBuffer,GL_PIXEL_BUFFER_BARRIER_BIT},
+    {CMemoryBarrier::ShaderImage,GL_SHADER_IMAGE_ACCESS_BARRIER_BIT},
+    {CMemoryBarrier::ShaderStorage,GL_SHADER_STORAGE_BARRIER_BIT},
+    {CMemoryBarrier::TextureUpdate,GL_TEXTURE_UPDATE_BARRIER_BIT},
+    {CMemoryBarrier::TextureFetch,GL_TEXTURE_FETCH_BARRIER_BIT},
+    {CMemoryBarrier::TransformFeedback,GL_TRANSFORM_FEEDBACK_BARRIER_BIT},
+    {CMemoryBarrier::Uniform,GL_UNIFORM_BARRIER_BIT},
+    {CMemoryBarrier::VertexAttribArray,GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT},
+};
+
+//Textures
+inline GLenum gl_get(CTexType const& prm)
+{
+    return coffee_get_value(prm,ctextp_map);
+}
+inline GLenum gl_get(CTexParam const& prm)
+{
+    return coffee_get_value(prm,ctexparm_map);
+}
+inline GLenum gl_get(CTexParamOpt const& prm)
+{
+    return coffee_get_value(prm,ctexparmopt_map);
+}
+inline GLenum gl_get(CTexIntFormat f)
+{
+    return coffee_get_value(f,ctexint_map);
+}
+inline GLenum gl_get(CTexFormat f)
+{
+    return coffee_get_value(f,ctexfmt_map);
+}
+inline GLenum gl_get(CFBType c)
+{
+    return coffee_get_value(c,cfbtype_map);
+}
+inline GLenum gl_geti(CFBAttachment c, int32 offset)
+{
+    return (GLenum)(((int32)coffee_get_value(c,cfbattch_map))+offset);
+}
+
+
+
+//Buffers
+inline GLenum gl_get(CBufferType d)
+{
+    return coffee_get_value(d,cbuffertype_map);
+}
+inline GLenum gl_get(CBufferUsage c)
+{
+    return coffee_get_value(c,cbufusage_map);
+}
+inline BufferAccessMask gl_get(CBufferAccess c)
+{
+    return coffee_get_flags(c,cbufferaccess_map);
+}
+inline BufferStorageMask gl_get(CBufferStorage c)
+{
+    return coffee_get_flags(c,cbufferstore_map);
+}
+
+
+
+//General pipeline
+inline GLenum gl_get(CDataType d)
+{
+    return coffee_get_value(d,cdtypes_map);
+}
+inline GLenum gl_get(CPrimitiveMode p)
+{
+    return coffee_get_value(p,cpritype_map);
+}
+inline GLenum gl_get(CCullMode c)
+{
+    return coffee_get_value(c,cculling_map);
+}
+inline ClearBufferMask gl_getf(CClearFlag c)
+{
+    return coffee_get_flags(c,cclearflag_map);
+}
+inline GLenum gl_get(CFBFilter c)
+{
+    return coffee_get_value(c,cfbfilt_map);
+}
+inline MemoryBarrierMask gl_getf(CMemoryBarrier c)
+{
+    return coffee_get_flags(c,cmbarrier_map);
+}
+
+
+//Shaders
+inline GLenum gl_get(CProgramStage c)
+{
+    return coffee_get_value(c,cshader_map);
+}
+inline UseProgramStageMask gl_getf(CProgramStage c)
+{
+    return coffee_get_flags(c,cprogmask_map);
+}
 
 }
 }

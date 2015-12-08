@@ -262,14 +262,14 @@ public:
             gltext.format = CTexFormat::RGBA;
             coffee_graphics_alloc(&gltext);
             coffee_graphics_activate(&gltext);
-            CTextureTools::CTextureData gtexdata;
+            CTextureData gtexdata;
             gtexdata.data = ptext.data;
             gtexdata.datatype = CDataType::UByte;
-            CTextureTools::coffee_create_texturesize(&gtexdata,ptext.size.w,ptext.size.h);
+            gtexdata.size.w = ptext.size.w; gtexdata.size.h = ptext.size.h;
             gtexdata.format = CTexIntFormat::RGBA8;
 
-            CTextureTools::coffee_graphics_tex_define(&gltext,&gtexdata);
-            CTextureTools::coffee_graphics_tex_store(&gltext,&gtexdata,0);
+            coffee_graphics_tex_define(&gltext,&gtexdata);
+            coffee_graphics_tex_store(&gltext,&gtexdata,0);
 
             CStbImageLib::coffee_stb_image_free(&ptext);
             CResources::coffee_file_free(&texture);
@@ -305,8 +305,9 @@ public:
             cfb.size.w = 1280;
             cfb.size.h = 720;
 
-            CTextureTools::CTextureData filler;
-            CTextureTools::coffee_create_texturesize(&filler,1280,720);
+            CTextureData filler;
+            filler.size.w = 1280;
+            filler.size.h = 720;
             filler.format = CTexIntFormat::Depth;
             filler.datatype = CDataType::UByte;
 
@@ -315,7 +316,7 @@ public:
             dtex.textureType = CTexType::Tex2D;
             coffee_graphics_alloc(&dtex);
             coffee_graphics_activate(&dtex);
-            CTextureTools::coffee_graphics_tex_2d_define(&dtex,&filler);
+            coffee_graphics_tex_2d_define(&dtex,&filler);
 
             ctex.format = CTexFormat::RGBA;
             ctex.levels = 1;
@@ -323,7 +324,7 @@ public:
             coffee_graphics_alloc(&ctex);
             coffee_graphics_activate(&ctex);
             filler.format = CTexIntFormat::RGBA8;
-            CTextureTools::coffee_graphics_tex_2d_define(&ctex,&filler);
+            coffee_graphics_tex_2d_define(&ctex,&filler);
 
             fbatt.texture = &dtex;
             fbatt.attachLevel = 0;

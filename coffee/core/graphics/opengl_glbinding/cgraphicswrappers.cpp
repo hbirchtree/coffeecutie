@@ -41,9 +41,9 @@ void coffee_graphics_clear(CClearFlag flg)
 void coffee_graphics_draw_indexed(const CPrimitiveMode &mode, const CGLDrawCall *drawcall)
 {
     glDrawElementsInstancedBaseVertexBaseInstance(
-                CG_GET(mode,cpritype_map),
+                gl_get(mode),
                 drawcall->count,
-                CG_GET(CDataType::UInt,cdtypes_map),
+                gl_get(CDataType::UInt),
                 (void*)(sizeof(CGint)*drawcall->firstIndex),
                 drawcall->instanceCount,
                 drawcall->baseVertex,
@@ -53,8 +53,8 @@ void coffee_graphics_draw_indexed(const CPrimitiveMode &mode, const CGLDrawCall 
 void coffee_graphics_multidraw(const CPrimitiveMode &mode, const CBuffer *buf)
 {
     glMultiDrawElementsIndirect(
-                CG_GET(mode,cpritype_map),
-                CG_GET(CDataType::UInt,cdtypes_map),
+                gl_get(mode),
+                gl_get(CDataType::UInt),
                 0, buf->size/sizeof(CGLDrawCall),
                 sizeof(CGLDrawCall));
 }
@@ -85,7 +85,7 @@ void coffee_graphics_culling(bool enable, CCullMode mode)
     if(enable)
     {
         glEnable(GL_CULL_FACE);
-        glCullFace(CG_GET(mode,cculling_map));
+        glCullFace(gl_get(mode));
     }
     else
         glDisable(GL_CULL_FACE);

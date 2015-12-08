@@ -1,5 +1,5 @@
-#include <coffee/Core>
-#include <coffee/core/Graphics>
+#include <coffee/CCore>
+#include <coffee/core/CGraphics>
 #include <coffee/core/plat/application_start.h>
 
 using namespace Coffee;
@@ -51,7 +51,7 @@ public:
     }
 };
 
-int32 coffee_main(int32 argc, byte** argv)
+int32 coffee_main(int32 argc, byte_t** argv)
 {
     CDRendererBase *renderer = new CDRenderer();
     renderer->init(coffee_get_default_visual());

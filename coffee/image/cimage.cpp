@@ -133,7 +133,7 @@ void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
     glGetTextureImage(
                 tex->handle,
                 level,
-                CG_GET(format,ctexfmt_map),
+                gl_get(format),
                 GL_UNSIGNED_BYTE,
                 size,img->data);
 }

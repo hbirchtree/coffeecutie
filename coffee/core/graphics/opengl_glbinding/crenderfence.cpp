@@ -30,5 +30,10 @@ bool coffee_graphics_fence_wait(CGSync* snc, uint64 timeout)
     return (status!=GL_WAIT_FAILED)&&(status==GL_CONDITION_SATISFIED);
 }
 
+void coffee_graphics_memory_barrier(CMemoryBarrier bits)
+{
+    glMemoryBarrier(gl_getf(bits));
+}
+
 }
 }

@@ -46,13 +46,13 @@ void coffee_graphics_activate(CBuffer *buf)
 
 void coffee_graphics_bind(CBuffer *buf)
 {
-    glBindBuffer(CG_GET(buf->type,cbuffertype_map),
+    glBindBuffer(gl_get(buf->type),
                  buf->handle);
 }
 
 void coffee_graphics_unbind(CBuffer *buf)
 {
-    glBindBuffer(CG_GET(buf->type,cbuffertype_map),
+    glBindBuffer(gl_get(buf->type),
                  0);
 }
 
@@ -61,7 +61,7 @@ void *coffee_graphics_buffer_map(CBuffer *buf, CBufferAccess mask)
     buf->mapflags = mask;
     buf->data = glMapNamedBufferRange(
                 buf->handle,0,buf->size,
-                CG_GETF(mask,cbufferaccess_map));
+                gl_get(mask));
     return buf->data;
 }
 
@@ -78,9 +78,9 @@ void *coffee_graphics_buffer_map_safe(CBuffer *buf, CBufferAccess mask)
 {
     buf->mapflags = mask;
     coffee_graphics_bind(buf);
-    glMapBufferRange(CG_GET(buf->type,cbuffertype_map),
+    glMapBufferRange(gl_get(buf->type),
                      0,buf->size,
-                     CG_GETF(mask,cbufferaccess_map));
+                     gl_get(mask));
     coffee_graphics_unbind(buf);
     return buf->data;
 }
@@ -90,7 +90,7 @@ bool coffee_graphics_buffer_unmap_safe(CBuffer *buf)
     if(!buf->data)
         return true;
     coffee_graphics_bind(buf);
-    GLboolean b = glUnmapBuffer(CG_GET(buf->type,cbuffertype_map));
+    GLboolean b = glUnmapBuffer(gl_get(buf->type));
     buf->data = nullptr;
     coffee_graphics_unbind(buf);
     return b == GL_TRUE;
@@ -108,7 +108,7 @@ void* coffee_graphics_buffer_download_buffer_safe(CBuffer *buf, CGszptr offset, 
     void* data = c_alloc(size);
     coffee_graphics_bind(buf);
     glGetBufferSubData(
-                CG_GET(buf->type,cbuffertype_map),
+                gl_get(buf->type),
                 offset,size,data);
     coffee_graphics_unbind(buf);
     return data;
@@ -122,7 +122,7 @@ void coffee_graphics_buffer_store(
     buf->size = size;
     glNamedBufferData(
                 buf->handle,size,data,
-                CG_GET(usage,cbufusage_map));
+                gl_get(usage));
 }
 
 void coffee_graphics_buffer_store_safe(CBuffer *buf,
@@ -132,9 +132,9 @@ void coffee_graphics_buffer_store_safe(CBuffer *buf,
     buf->size = size;
     coffee_graphics_bind(buf);
     glBufferData(
-                CG_GET(buf->type,cbuffertype_map),
+                gl_get(buf->type),
                 size,data,
-                CG_GET(usage,cbufusage_map));
+                gl_get(usage));
     coffee_graphics_unbind(buf);
 }
 
@@ -149,7 +149,7 @@ void coffee_graphics_buffer_substore_safe(CBuffer *buf, const void *data,
 {
     coffee_graphics_bind(buf);
     glBufferSubData(
-                CG_GET(buf->type,cbuffertype_map),
+                gl_get(buf->type),
                 offset,size,data);
     coffee_graphics_unbind(buf);
 }
@@ -215,7 +215,7 @@ void coffee_graphics_buffer_store_immutable(CBuffer *buf, const void *data, CGsi
     coffee_graphics_activate(buf);
     buf->size = size;
     glNamedBufferStorage(buf->handle,size,data,
-                         CG_GETF(usage,cbufferstore_map));
+                         gl_get(usage));
 }
 
 void coffee_graphics_buffer_store_immutable_safe(
@@ -225,9 +225,9 @@ void coffee_graphics_buffer_store_immutable_safe(
     buf->size = size;
     coffee_graphics_bind(buf);
     glBufferStorage(
-                CG_GET(buf->type,cbuffertype_map),
+                gl_get(buf->type),
                 size,data,
-                CG_GETF(usage,cbufferstore_map));
+                gl_get(usage));
     coffee_graphics_unbind(buf);
 }
 
@@ -243,7 +243,7 @@ void coffee_graphics_buffer_sub_bind(
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
     glBindBufferRange(
-                CG_GET(buf->type,cbuffertype_map),
+                gl_get(buf->type),
                 binding->index,buf->parent->handle,buf->offset,buf->size);
 }
 
@@ -252,7 +252,7 @@ void coffee_graphics_buffer_sub_unbind(
         const _cbasic_graphics_buffer_resource_desc* binding)
 {
     glBindBufferRange(
-                CG_GET(buf->type,cbuffertype_map),
+                gl_get(buf->type),
                 binding->index,0,0,0);
 }
 
