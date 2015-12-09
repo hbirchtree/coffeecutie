@@ -89,6 +89,7 @@ enum class CBufferAccess : uint16
     ReadBit = 0x2, /*!< Enable reading from the buffer*/
     Persistent = 0x4, /*!< Make the buffer mapping persistent*/
     Coherent = 0x8, /*!< Make buffer contents coherent across draws*/
+    Invalidate = 0x10,
 };
 
 C_FLAGS(CBufferAccess,uint16);

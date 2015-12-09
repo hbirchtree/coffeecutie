@@ -33,9 +33,11 @@ extern bool coffee_graphics_tex_cube_store(
         CGint level);
 
 extern bool coffee_graphics_tex_2d_define(
-        const CTexture* texture, const CTextureData* data);
+        const CTexture* texture);
 extern bool coffee_graphics_tex_3d_define(
-        const CTexture* texture, const CTextureData* data);
+        const CTexture* texture);
+
+extern void coffee_graphics_tex_2d_define_mutable(const CTexture* texture, const CTextureData *data);
 
 /*!
  * \brief Defines texture storage, used before storing
@@ -44,7 +46,7 @@ extern bool coffee_graphics_tex_3d_define(
  * \return Whether or not the process succeeded
  */
 extern bool coffee_graphics_tex_define(
-        const CTexture* tex, const CTextureData* data);
+        const CTexture* tex);
 /*!
  * \brief Defines texture storage, used before storing, old variant
  * \param tex Texture to define for
@@ -52,7 +54,7 @@ extern bool coffee_graphics_tex_define(
  * \return Whether or not the process succeeded
  */
 extern bool coffee_graphics_tex_define_safe(
-        const CTexture* tex, const CTextureData* data);
+        const CTexture* tex);
 
 /*!
  * \brief Store texture data into texture

@@ -58,9 +58,9 @@ void CGLBindingRenderer::fetchGLExtensions()
     CString tmp;
 
     for(GLint i=0;i<exts;i++){
-		const ubyte_t* str = glGetStringi(GL_EXTENSIONS, i);
-		if (!str)
-			continue;
+        const ubyte_t* str = glGetStringi(GL_EXTENSIONS, i);
+        if (!str)
+            continue;
         tmp.append((cstring)str);
         if(i<exts-1)
             tmp.push_back('\n');
@@ -122,7 +122,6 @@ bool CGLBindingRenderer::printExtensions(bool doFetch)
 
 void CGLBindingRenderer::bindingPreInit()
 {
-    //Check for extensions! Quick!
 //    cMsg("glbinding","Initializing glbinding");
     glbinding::Binding::initialize(true);
 
@@ -132,6 +131,7 @@ void CGLBindingRenderer::bindingPreInit()
 
 void CGLBindingRenderer::bindingPostInit()
 {
+    //Check for extensions! Quick!
     fetchGLExtensions();
     CGraphicsQuirks::coffee_quirks_set_global(this->m_extensions);
 
@@ -162,7 +162,7 @@ void CGLBindingRenderer::bindingPostInit()
 
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback((gl::GLDEBUGPROC)glbindingCallbackDirect,this);
+        glDebugMessageCallback((GLDEBUGPROC)glbindingCallbackDirect,this);
     }
 }
 
@@ -184,6 +184,11 @@ void CGLBindingRenderer::bindingCallback(void *report) const
 cstring CGLBindingRenderer::extensions()
 {
     return m_extensions;
+}
+
+bool glbinding_default_filter(CGLReport* report)
+{
+    return !(report->severity==GL_DEBUG_SEVERITY_NOTIFICATION);
 }
 
 } // namespace CDisplay

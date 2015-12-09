@@ -8,8 +8,12 @@
     inline type operator&=(type lhs, type rhs){return (type)(((utype)lhs)&((utype)rhs));} \
     inline type operator|=(type lhs, type rhs){return (type)(((utype)lhs)|((utype)rhs));}
 
+//Thanks, Windows. Thanks.
 #undef far
 #undef near
+
+#undef minor
+#undef major
 
 #include <string>
 #include <stdexcept>

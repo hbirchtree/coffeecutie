@@ -67,11 +67,12 @@ static const _cbasic_static_map<CBufferType,GLenum,10> cbuffertype_map = {
     {CBufferType::PixelPack, GL_PIXEL_PACK_BUFFER},
 };
 
-static const _cbasic_static_map<CBufferAccess,BufferAccessMask,4> cbufferaccess_map = {
+static const _cbasic_static_map<CBufferAccess,BufferAccessMask,5> cbufferaccess_map = {
     {CBufferAccess::WriteBit, GL_MAP_WRITE_BIT},
     {CBufferAccess::ReadBit, GL_MAP_READ_BIT},
     {CBufferAccess::Coherent, GL_MAP_COHERENT_BIT},
     {CBufferAccess::Persistent, GL_MAP_PERSISTENT_BIT},
+    {CBufferAccess::Invalidate, GL_MAP_INVALIDATE_BUFFER_BIT},
 };
 
 static const _cbasic_static_map<CBufferStorage,BufferStorageMask,6> cbufferstore_map = {
@@ -157,12 +158,13 @@ static const _cbasic_static_map<CTexIntFormat,GLenum,10> ctexint_map = {
     {CTexIntFormat::DXT5,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT},
 };
 
-static const _cbasic_static_map<CTexFormat,GLenum,9> ctexfmt_map = {
+static const _cbasic_static_map<CTexFormat,GLenum,10> ctexfmt_map = {
     {CTexFormat::Depth,GL_DEPTH_COMPONENT},
     {CTexFormat::DepthStencil,GL_DEPTH_STENCIL},
     {CTexFormat::Stencil,GL_STENCIL_INDEX},
 
     {CTexFormat::RGBA,GL_RGBA},
+    {CTexFormat::BGRA,GL_BGRA},
     {CTexFormat::RGB,GL_RGB},
     {CTexFormat::RG,GL_RG},
 

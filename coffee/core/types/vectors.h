@@ -45,11 +45,11 @@ template<typename T, size_t Size> struct _cbasic_tvector
 //    }
     T& operator[](size_t i)
     {
-        return d[i];
+        return data[i];
     }
     const T& operator[](size_t i) const
     {
-        return d[i];
+        return data[i];
     }
     bool operator==(
             const _cbasic_tvector<T,Size>& v) const
@@ -150,8 +150,8 @@ template<typename T, size_t Size> struct _cbasic_tvector
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v;
     }
-
-    T d[Size];
+private:
+    T data[Size];
 };
 
 template<typename T,size_t Size> T length(
@@ -159,7 +159,7 @@ template<typename T,size_t Size> T length(
 {
     T sum = 0;
     for(int i=0;i<Size;i++)
-        sum += pow(v.d[i],(T)2);
+        sum += pow(v[i],(T)2);
     return sqrt(sum);
 }
 
@@ -169,7 +169,7 @@ template<typename T,size_t Size> T dot(
 {
     T sum = 0;
     for(int i=0;i<Size;i++)
-        sum += v1.d[i]*v2.d[i];
+        sum += v1[i]*v2[i];
     return sum;
 }
 

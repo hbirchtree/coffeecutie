@@ -56,10 +56,11 @@ template<typename T> struct _cbasic_zfield
 /*!
  * \brief A template for sizes
  */
-template<typename T> struct _cbasic_size
+template<typename T> struct _cbasic_size_2d
 {
-    _cbasic_size(T wd,T hg) : w(wd),h(hg){}
-    _cbasic_size(){}
+    _cbasic_size_2d(T wd,T hg) : w(wd),h(hg){}
+    _cbasic_size_2d(): w(0),h(0)
+    {}
 
     T w;
     T h;
@@ -67,6 +68,25 @@ template<typename T> struct _cbasic_size
     T area()
     {
         return w*h;
+    }
+};
+
+template<typename T> struct _cbasic_size_3d
+{
+    _cbasic_size_3d(T w, T h, T d):
+        w(w),h(h),d(d)
+    {
+    }
+    _cbasic_size_3d():
+        w(0),h(0),d(0)
+    {
+    }
+
+    T w,h,d;
+
+    T volume()
+    {
+        return w*h*d;
     }
 };
 
@@ -101,6 +121,7 @@ struct _cbasic_nbuffer
         ptr = 0;
     }
 
+    static constexpr size_t size = BufferSize;
     T data[BufferSize];
     size_t ptr;
 
@@ -179,21 +200,44 @@ template<typename T> struct _cbasic_rect
     }
 };
 
+template<typename T>
+/*!
+ * \brief Allows for RAII-consistent objects. The destructor should be specific to each specialization such that it behaves properly.
+ */
+class _cbasic_raii_container
+{
+protected:
+    T* m_data;
+public:
+    _cbasic_raii_container(T* d):
+        m_data(d)
+    {
+    }
+    virtual ~_cbasic_raii_container()
+    {
+    }
+
+    T *data()
+    {
+        return m_data;
+    }
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
-struct CSize : public  _cbasic_size<int32>
+struct CSize : public  _cbasic_size_2d<int32>
 {
-    using _cbasic_size::_cbasic_size;
+    using _cbasic_size_2d::_cbasic_size_2d;
 };
 /*!
  * \brief Size for inaccurate measurements
  */
-typedef _cbasic_size<scalar> CSizeF;
+typedef _cbasic_size_2d<scalar> CSizeF;
 /*!
  * \brief Size of accurate measurements
  */
-typedef _cbasic_size<bigscalar> CSizeD;
+typedef _cbasic_size_2d<bigscalar> CSizeD;
 
 /*!
  * \brief Used for window rectangles

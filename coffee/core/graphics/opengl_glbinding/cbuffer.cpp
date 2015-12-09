@@ -280,5 +280,18 @@ void coffee_graphics_alloc(int count, CBufferType type, CBuffer *buf)
     delete[] handles;
 }
 
+void coffee_graphics_buffer_map_memcpy(
+        CBuffer *buffer, szptr offset, szptr size, c_cptr data)
+{
+    coffee_graphics_buffer_map(
+                buffer,
+                CBufferAccess::Invalidate|CBufferAccess::WriteBit);
+
+    ubyte_t* dptr = &(((ubyte_t*)buffer->data)[offset]);
+    c_memcpy(dptr,data,size);
+
+    coffee_graphics_buffer_unmap(buffer);
+}
+
 }
 }

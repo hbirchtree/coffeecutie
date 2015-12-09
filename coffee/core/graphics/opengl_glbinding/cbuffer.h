@@ -20,6 +20,10 @@ struct CSubBuffer : _cbasic_graphics_buffer_section
 template<size_t Size>
 using CNBuffer = _cbasic_nbuffer<CBuffer,Size>;
 
+static const CBufferAccess CBuffer_PersistentBufferFlags =
+        CBufferAccess::Persistent|CBufferAccess::Coherent|
+        CBufferAccess::WriteBit;
+
 /*!
  * \brief Allocation in this context is the creation of the object. It will not have defined content unless something is stored in it.
  * \param buf Buffer to be allocated
@@ -284,6 +288,16 @@ extern void coffee_graphics_buffer_sub_unbind(
  * \return A pointer to this subbuffer's data
  */
 extern void* coffee_graphics_buffer_sub_data(CSubBuffer* buf);
+
+/*!
+ * \brief A typical discarding transfer to a buffer.
+ * \param buffer
+ * \param offset
+ * \param size
+ * \param data
+ */
+extern void coffee_graphics_buffer_map_memcpy(
+        CBuffer* buffer, szptr offset, szptr size, c_cptr data);
 
 
 typedef void* (*SubBufferData)(CSubBuffer*);

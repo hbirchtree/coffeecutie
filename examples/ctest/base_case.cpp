@@ -139,40 +139,31 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
 
 CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
 {
-    coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
+    coffee_mem_expand_array(&ctxt->texstorage,1);
     CTexture *tex = &ctxt->texstorage.d[ctxt->texstorage.size-1];
     //GL call
     coffee_graphics_alloc(tex);
     //
 
-    CStbImageLib::CStbImage img;
-    CStbImageLib::coffee_stb_image_load(&img,textureres);
-
-    CTextureData dt;
-    dt.data = img.data;
-    dt.datatype = CDataType::UByte;
-    dt.format = CTexIntFormat::RGBA8;
-
-    dt.size.w = img.size.w;
-    dt.size.h = img.size.h;
+    CTextureData* dt = coffee_graphics_tex_create_texdata(*textureres,nullptr);
 
     tex->textureType = CTexType::Tex2D;
     tex->levels = 1;
-    tex->format = CTexFormat::RGBA;
+    tex->format = CTexIntFormat::RGBA8;
     //GL calls
     coffee_graphics_bind(tex);
     coffee_graphics_unbind(tex);
-    ctxt->funptrs.textures.define(tex,&dt);
-    ctxt->funptrs.textures.store(tex,&dt,0);
+    ctxt->funptrs.textures.define(tex);
+    ctxt->funptrs.textures.store(tex,dt,0);
     //
-    CStbImageLib::coffee_stb_image_free(&img);
+    coffee_graphics_tex_free_texdata(dt);
 
     return tex;
 }
 
 CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_context* ctxt)
 {
-    coffee_mem_expand_array<CTexture>(&ctxt->texstorage,1);
+    coffee_mem_expand_array(&ctxt->texstorage,1);
     CTexture* t = &ctxt->texstorage.d[ctxt->texstorage.size-1];
 
     switch(tex.format)
@@ -182,15 +173,15 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         coffee_graphics_alloc(t);
         dt.data = tex.data;
         dt.datatype = CDataType::UByte;
-        dt.format = CTexIntFormat::RGBA8;
+        dt.format = CTexFormat::RGBA;
         dt.size.w = tex.resolution.w;
         dt.size.h = tex.resolution.h;
 
         t->textureType = (tex.type==CBlam::blam_bitm_type_2D) ? CTexType::Tex2D : CTexType::Tex3D;
         t->levels = tex.mipmaps;
-        t->format = CTexFormat::RGBA;
+        t->format = CTexIntFormat::RGBA8;
         coffee_graphics_activate(t);
-        ctxt->funptrs.textures.define(t,&dt);
+        ctxt->funptrs.textures.define(t);
         ctxt->funptrs.textures.store(t,&dt,0);
         break;
     }
@@ -583,13 +574,6 @@ void coffee_prepare_test(game_context *ctxt)
 
     if(ctxt->features->ext_bindless_texture)
         coffee_graphics_tex_get_handle(&ctxt->texstorage.d[texIndex]);
-
-    coffee_graphics_tex_param(
-                &ctxt->texstorage.d[0],
-            CTexParam::MipmapMagFilter,CTexParamOpt::Linear);
-    coffee_graphics_tex_param(
-                &ctxt->texstorage.d[0],
-            CTexParam::MipmapMinFilter,CTexParamOpt::LinearMipmapLinear);
 
     ctxt->texstorage.d[texIndex].unit = 0;
     ctxt->funptrs.textures.load(&ctxt->texstorage.d[texIndex]);

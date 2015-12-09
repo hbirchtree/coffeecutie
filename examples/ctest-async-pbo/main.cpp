@@ -20,7 +20,7 @@ public:
 
         testTex.textureType = CTexType::Tex2D;
         testTex.levels = 1;
-        testTex.format = CTexFormat::RED;
+        testTex.format = CTexIntFormat::RED8;
 
         CTextureSize size;
         size.w = 1024;
@@ -29,7 +29,7 @@ public:
         CTextureData testdata;
         testdata.size = size;
 
-        cstring_w imgdata = (cstring_w)c_alloc(1024*1024*sizeof(uint32));
+        cstring_w imgdata = (cstring_w)c_calloc(1,1024*1024*sizeof(uint32));
 
         coffee_graphics_alloc(2,CBufferType::PixelUnpack,buffers.data);
         coffee_graphics_alloc(&testTex);
@@ -49,7 +49,7 @@ public:
         }
 
         coffee_graphics_activate(&testTex);
-        coffee_graphics_tex_define(&testTex,&testdata);
+        coffee_graphics_tex_define(&testTex);
 
         CTextureRegion reg = {};
         reg.w = size.w;
@@ -64,10 +64,15 @@ public:
 
             coffee_graphics_tex_pbo_upload(
                         &testTex,&buffers.current(),
-                        CTexIntFormat::RED8,reg,CDataType::UByte,1);
+                        CTexFormat::RGBA,reg,CDataType::UByte,1);
             coffee_graphics_memory_barrier(CMemoryBarrier::PixelBuffer);
 
-            //Do fancy stuff here
+            {
+                CRGBA* texture = (CRGBA*)buffers.next().data;
+                for(size_t i=0;i<size.w;i++)
+                    for(size_t j=0;j<size.h;j++)
+                        texture[j*size.h + i].r++;
+            }
 
             buffers.advance();
             this->pollEvents();

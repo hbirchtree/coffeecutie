@@ -54,6 +54,17 @@ struct CVertexAttribute
     CVertexBufferBinding* bnd; /*!< Vertex buffer binding for attribute*/
 };
 
+struct CVertexSpecification
+{
+    std::vector<CVertexFormat> formats;
+    std::vector<CVertexAttribute> attributes;
+};
+
+struct CVertexDataSet
+{
+    std::vector<CVertexBufferBinding> bindings;
+};
+
 /*!
  * \brief Allocate a vertex array object
  * \param vao

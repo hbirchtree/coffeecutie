@@ -8,20 +8,20 @@ namespace CGraphicsWrappers{
 
 
 bool coffee_graphics_tex_2d_define(
-        const CTexture *texture, const CTextureData *data)
+        const CTexture *texture)
 {
     glTextureStorage2D(texture->handle,texture->levels,
-                       gl_get(data->format),
-                       data->size.w,data->size.h);
+                       gl_get(texture->format),
+                       texture->size.w,texture->size.h);
     return true;
 }
 
 bool coffee_graphics_tex_3d_define(
-        const CTexture *texture, const CTextureData *data)
+        const CTexture *texture)
 {
     glTextureStorage3D(texture->handle,texture->levels,
                        gl_get(texture->format),
-                       data->size.w,data->size.h,data->size.d);
+                       texture->size.w,texture->size.h,texture->size.d);
     return true;
 }
 
@@ -30,7 +30,7 @@ bool coffee_graphics_tex_cube_store(
 {
     glTextureSubImage3D(texture->handle,level,0,0,0,
                         data->size.w,data->size.h,data->size.d,
-            gl_get(texture->format),
+            gl_get(data->format),
             gl_get(data->datatype),
             data->data);
     return true;
@@ -41,7 +41,7 @@ bool coffee_graphics_tex_2d_store(
 {
     glTextureSubImage2D(texture->handle,level,0,0,
                         data->size.w,data->size.h,
-            gl_get(texture->format),
+            gl_get(data->format),
             gl_get(data->datatype),
             data->data);
     return true;
@@ -55,7 +55,7 @@ bool coffee_graphics_tex_3d_store(
                  (CGint)data->format,
                  data->size.w,data->size.h,data->size.d,
                  0,
-                 gl_get(texture->format),
+                 gl_get(data->format),
                  gl_get(data->datatype),
                  data->data);
     return true;
@@ -100,47 +100,47 @@ bool coffee_graphics_tex_cube_store_safe(
 }
 
 bool coffee_graphics_tex_2d_define_safe(
-        const CTexture *texture, const CTextureData *data)
+        const CTexture *texture)
 {
     coffee_graphics_bind(texture);
     glTexStorage2D(gl_get(texture->textureType),
                    texture->levels,
                    gl_get(texture->format),
-                       data->size.w,data->size.h);
+                   texture->size.w,texture->size.h);
     coffee_graphics_unbind(texture);
     return true;
 }
 
 bool coffee_graphics_tex_3d_define_safe(
-        const CTexture *texture, const CTextureData *data)
+        const CTexture *texture)
 {
     coffee_graphics_bind(texture);
     glTexStorage3D(gl_get(texture->textureType),
                    texture->levels,
                    gl_get(texture->format),
-                       data->size.w,data->size.h,data->size.d);
+                   texture->size.w,texture->size.h,texture->size.d);
     coffee_graphics_unbind(texture);
     return true;
 }
 
 bool coffee_graphics_tex_define(
-        const CTexture *tex, const CTextureData *data)
+        const CTexture *tex)
 {
-    switch(data->size.dimensions())
+    switch(tex->size.dimensions())
     {
-    case 2: return coffee_graphics_tex_2d_define(tex,data);
-    case 3: return coffee_graphics_tex_3d_define(tex,data);
+    case 2: return coffee_graphics_tex_2d_define(tex);
+    case 3: return coffee_graphics_tex_3d_define(tex);
     }
     return false;
 }
 
 bool coffee_graphics_tex_define_safe(
-        const CTexture *tex, const CTextureData *data)
+        const CTexture *tex)
 {
-    switch(data->size.dimensions())
+    switch(tex->size.dimensions())
     {
-    case 2: return coffee_graphics_tex_2d_define_safe(tex,data);
-    case 3: return coffee_graphics_tex_3d_define_safe(tex,data);
+    case 2: return coffee_graphics_tex_2d_define_safe(tex);
+    case 3: return coffee_graphics_tex_3d_define_safe(tex);
     }
     return false;
 }
@@ -165,6 +165,22 @@ bool coffee_graphics_tex_store_safe(
     case 3: return coffee_graphics_tex_3d_store_safe(tex,data,level);
     }
     return false;
+}
+
+void coffee_graphics_tex_2d_define_mutable(const CTexture *texture, const CTextureData* data)
+{
+    coffee_graphics_bind(texture);
+
+    glTexImage2D(gl_get(texture->textureType),
+                 0,
+                 (GLint)gl_get(texture->format),
+                 data->size.w,data->size.h,
+                 0,
+                 gl_get(data->format),
+                 gl_get(data->datatype),
+                 data->data);
+
+    coffee_graphics_unbind(texture);
 }
 
 

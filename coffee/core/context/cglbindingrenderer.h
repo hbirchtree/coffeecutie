@@ -16,6 +16,8 @@ namespace CDisplay{
  */
 typedef std::function<bool(CGLReport*)> CGLMessageFilter;
 
+bool glbinding_default_filter(CGLReport *report);
+
 class CGLBindingRenderer : public CSDL2Renderer
 {
 public:

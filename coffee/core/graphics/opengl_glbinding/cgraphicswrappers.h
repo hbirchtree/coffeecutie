@@ -39,7 +39,7 @@ extern void coffee_graphics_set_viewport(const CRectF& view);
 
 template<typename T>
 void coffee_graphics_set_viewport(
-        const _cbasic_size<T>& view)
+        const _cbasic_size_2d<T>& view)
 {
     coffee_graphics_set_viewport(CRectF(0,0,view.w,view.h));
 }

@@ -158,7 +158,7 @@ struct blam_tagref
 /*!
  * \brief Blam, at least for Halo 1, uses int16 to store bitmap sizes
  */
-typedef _cbasic_size<int16> blam_size;
+typedef _cbasic_size_2d<int16> blam_size;
 /*!
  * \brief As with blam_size, int16 is standard size for Halo 1.
  */

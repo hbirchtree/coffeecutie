@@ -145,7 +145,7 @@ CTexture::CTexture():
     textureType(CTexType::Tex2D),
     handle(0),
     levels(1),
-    format(CTexFormat::None),
+    format(CTexIntFormat::None),
     unit(-1),
     bhandle(0)
 {

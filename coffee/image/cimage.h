@@ -41,7 +41,7 @@ extern void coffee_stb_error();
  */
 extern bool coffee_stb_image_load(
         CStbImage* target,
-        CResource* src);
+        const CResource* src);
 /*!
  * \brief Function used by STB to write data into resource. Allocates and copies data into resource.
  * \param ctxt Context pointer, CResource in our case
@@ -71,7 +71,7 @@ extern bool coffee_stb_image_resize(
  */
 extern bool coffee_stb_image_save_png(
         CResource* target,
-        CStbImageConst* src);
+        const CStbImageConst* src);
 /*!
  * \brief Save STB image to PNG file
  * \param target Target resource
@@ -80,7 +80,7 @@ extern bool coffee_stb_image_save_png(
  */
 extern bool coffee_stb_image_save_png(
         CResource* target,
-        CStbImage* src);
+        const CStbImage* src);
 /*!
  * \brief Save STB image to TGA file
  * \param target Target resource
@@ -89,7 +89,7 @@ extern bool coffee_stb_image_save_png(
  */
 extern bool coffee_stb_image_save_tga(
         CResource* target,
-        CStbImage* src);
+        const CStbImage* src);
 
 /*!
  * \brief Flip image vertically, allocates and frees memory
@@ -108,6 +108,10 @@ extern void coffee_stb_image_flip_horizontal(
  * \param img
  */
 extern void coffee_stb_image_free(CStbImage* img);
+
+} //CStbImageLib
+
+namespace CGraphicsWrappers{
 
 /*!
  * \brief Debug function for dumping texture to file
@@ -129,7 +133,35 @@ extern void     coffee_graphics_tex_download_texture(
         const CTexture* tex, CGint level,
         CGsize size, CTexFormat format, CStbImageLib::CStbImage* img);
 
-} //CStbImageLib
+/*!
+ * \brief The simple way to load a texture
+ * \param resource
+ * \param location
+ * \return Null if operation failed, valid pointer if success
+ */
+extern CTextureData* coffee_graphics_tex_create_texdata(
+        const CResources::CResource &resource, c_ptr location);
+/*!
+ * \brief Free the texture data (correctly)
+ * \param texd
+ */
+extern void coffee_graphics_tex_free_texdata(CTextureData* texd);
+
+class CImportedTexture : public _cbasic_raii_container<CTextureData>
+{
+public:
+    using _cbasic_raii_container::_cbasic_raii_container;
+    virtual ~CImportedTexture()
+    {
+        coffee_graphics_tex_free_texdata(m_data);
+    }
+};
+
+extern CImportedTexture coffee_graphics_tex_create_rtexdata(
+        const CResources::CResource &resource);
+
+}
+
 } //Coffee
 
 #endif

@@ -1,6 +1,8 @@
 #ifndef COFFEE_GRAPHICS_OPENGL_TEXTURE_TYPES_H
 #define COFFEE_GRAPHICS_OPENGL_TEXTURE_TYPES_H
 
+#include "coffee/core/types/vector_types.h"
+#include "coffee/core/types/composite_types.h"
 #include "copengl_types.h"
 
 namespace Coffee{
@@ -89,17 +91,12 @@ enum class CTexFormat : uint16
     DepthStencil = 10,
 };
 
-struct CTextureRegion
+struct CTextureRegion : _cbasic_size_3d<int32>,CVectors::_cbasic_tvector<int32,3>
 {
-    int32 w,dx;
-    int32 h,dy;
-    int32 d,dz;
 };
 
-struct CTextureSize
+struct CTextureSize : _cbasic_size_3d<int32>
 {
-    int32 w,h,d;
-
     size_t dimensions() const
     {
         if(w == 0)
@@ -119,9 +116,10 @@ struct CTexture
     CTexType textureType; /*!< Texture type, defines texture target */
     CGhnd handle; /*!< Texture handle */
     CGsize levels; /*!< Mipmap levels */
-    CTexFormat format; /*!< Texture format */
+    CTexIntFormat format; /*!< Texture format */
     int32 unit; /*!< GL_TEXTURE* unit */
     CGuint64 bhandle; /*!< Bindless texture handle */
+    CTextureSize size;
 };
 
 /*!
@@ -129,8 +127,8 @@ struct CTexture
  */
 struct CTextureData
 {
-    const void* data; /*!< Pointer to data */
-    CTexIntFormat format; /*!< The format of the image, often GL_RGBA */
+    void* data; /*!< Pointer to data */
+    CTexFormat format; /*!< The format of the image data, often GL_RGBA8 */
     CDataType datatype; /*!< Which datatype, most likely unsigned byte */
     CTextureSize size;
 };
@@ -148,8 +146,7 @@ typedef void (*TexUnloadFun)(const CTexture* tex);
  * \brief Define texture storage, mutable storage
  */
 typedef bool (*TexDefineFun)(
-        const CTexture* tex,
-        const CTextureData* data);
+        const CTexture* tex);
 /*!
  * \brief Store texture data
  */

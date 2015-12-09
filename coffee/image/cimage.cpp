@@ -14,7 +14,7 @@
 namespace Coffee{
 namespace CStbImageLib{
 
-bool coffee_stb_image_load(CStbImage *target, CResource *src)
+bool coffee_stb_image_load(CStbImage *target, const CResource *src)
 {
     target->data = stbi_load_from_memory(
                 (const ubyte_t*)src->data,src->size,
@@ -43,17 +43,17 @@ bool coffee_stb_image_resize(CStbImage *img, const CSize &target, int channels)
     return img->data;
 }
 
-bool coffee_stb_image_save_png(CResource *target, CStbImageConst *src)
+bool coffee_stb_image_save_png(CResource *target, const CStbImageConst *src)
 {
     return stbi_write_png_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data,src->size.w*4);
 }
 
-bool coffee_stb_image_save_png(CResource *target, CStbImage *src)
+bool coffee_stb_image_save_png(CResource *target, const CStbImage *src)
 {
     return stbi_write_png_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data,src->size.w*4);
 }
 
-bool coffee_stb_image_save_tga(CResource *target, CStbImage *src)
+bool coffee_stb_image_save_tga(CResource *target, const CStbImage *src)
 {
     return stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
 }
@@ -109,12 +109,12 @@ void coffee_graphics_tex_dump(
     CStbImageLib::CStbImage img;
 
     img.bpp = 4;
-    img.size.w = 1280;
-    img.size.h = 720;
+    img.size.w = tex->size.w;
+    img.size.h = tex->size.h;
 
     coffee_graphics_tex_download_texture(
                 tex,0,img.bpp*img.size.w*img.size.h,
-                tex->format,&img);
+                CTexFormat::RGBA,&img);
 
 
     CResources::CResource fl(filename);
@@ -124,6 +124,11 @@ void coffee_graphics_tex_dump(
 
     c_free(img.data);
 }
+
+
+}
+
+namespace CGraphicsWrappers{
 
 void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
         CGsize size, CTexFormat format,
@@ -138,5 +143,57 @@ void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
                 size,img->data);
 }
 
+CTextureData *coffee_graphics_tex_create_texdata(
+        CResources::CResource const& resource, c_ptr location)
+{
+    CStbImageLib::CStbImage img;
+    if(!coffee_stb_image_load(&img,&resource))
+        return nullptr;
+
+    CTextureData* ptr;
+    if(location)
+        new (location) CTextureData;
+    else
+        ptr = new CTextureData;
+
+    ptr->data = img.data;
+    ptr->size.w = img.size.w;
+    ptr->size.h = img.size.h;
+
+    switch(img.bpp)
+    {
+    case 4:
+        ptr->format = CTexFormat::RGBA;
+        break;
+    case 3:
+        ptr->format = CTexFormat::RGB;
+        break;
+    case 2:
+        ptr->format = CTexFormat::RG;
+        break;
+    case 1:
+        ptr->format = CTexFormat::RED;
+        break;
+    default:
+        ptr->format = CTexFormat::RGBA;
+    }
+
+    ptr->datatype = CDataType::UByte;
+
+    return ptr;
 }
+
+void coffee_graphics_tex_free_texdata(CTextureData *texd)
+{
+    free(texd->data);
+    delete texd;
+}
+
+CImportedTexture coffee_graphics_tex_create_rtexdata(const CResources::CResource &resource)
+{
+    return CImportedTexture(coffee_graphics_tex_create_texdata(resource,nullptr));
+}
+
+}
+
 }

@@ -7,7 +7,7 @@ namespace CGraphicsWrappers{
 
 void coffee_graphics_tex_pbo_upload(
         CTexture *texture, CBuffer *buffer,
-        CTexIntFormat const& fmt, CTextureRegion const& region,
+        CTexFormat const& fmt, CTextureRegion const& region,
         CDataType const& type, CGint const& level)
 {
     buffer->type = CBufferType::PixelUnpack;

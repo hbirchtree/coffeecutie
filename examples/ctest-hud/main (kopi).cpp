@@ -14,13 +14,19 @@ void framefun(uint32 t, const void*)
     cDebug("Framerate: %i",t);
 }
 
+bool _glmessagefilter(CGLReport* report)
+{
+//    return !(report->severity==GL_DEBUG_SEVERITY_NOTIFICATION);
+    return true;
+}
+
 class CDHudRenderer : public Coffee::CDisplay::CGLBindingRenderer
 {
 public:
     CDHudRenderer()
         : CGLBindingRenderer(0)
     {
-        m_msg_filter = glbinding_default_filter;
+        m_msg_filter = _glmessagefilter;
     }
 
     void run()
@@ -97,7 +103,7 @@ public:
         CBuffer vertices;
         CBuffer texcoords;
         CBuffer indices;
-        CNBuffer<3> transforms;
+        CBuffer transforms[3];
 
         {
             texcoords.type = CBufferType::Array;
@@ -106,7 +112,7 @@ public:
             coffee_graphics_alloc(&vertices);
             coffee_graphics_alloc(&texcoords);
             coffee_graphics_alloc(&indices);
-            coffee_graphics_alloc(3,CBufferType::Array,transforms.data);
+            coffee_graphics_alloc(3,CBufferType::Array,(CBuffer*)transforms);
 
             coffee_graphics_activate(&texcoords);
             coffee_graphics_activate(&vertices);
@@ -179,7 +185,7 @@ public:
             {
                 CVertexBufferBinding* bnd = &mat_bnd[i];
                 bnd->binding = 2+i;
-                bnd->buffer = &transforms.current();
+                bnd->buffer = &transforms[0];
                 bnd->offset = sizeof(CVec4)*i;
                 bnd->stride = sizeof(CMat4);
                 bnd->divisor = 1;
@@ -202,8 +208,12 @@ public:
         camera.position = CVec3(0,0,-3);
 
         CMat4 rtf = coffee_graphics_gen_transform(&root);
-        CMat4 wtf = coffee_graphics_gen_perspective(&camera)
-                * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
+        CMat4 wtf = coffee_graphics_gen_perspective(&camera);
+
+        glm::mat4 g_wtf = glm::perspective(60.f,1.6f,1.f,10.f);
+        glm::mat4 g_rtf = glm::mat4();
+
+        glm::mat4 g_rt = glm::scale(glm::mat4(),glm::vec3(1)) * glm::translate(glm::mat4(),glm::vec3(0,0,-3));
 
         CNode worldNode;
         worldNode.transform = &wtf;
@@ -212,22 +222,30 @@ public:
         rootNode.parent = &worldNode;
         rootNode.transform = &rtf;
 
-        CMat4 rt = coffee_node_get_transform(&rootNode);
+//        CMat4 wt = coffee_node_get_transform(&worldNode);
+//        CMat4 rt = coffee_node_get_transform(&rootNode);
 
-        for(int i=0;i<transforms.size;i++)
+        CMat4 rt = wtf
+                * coffee_graphics_gen_transform(CVec3(0,0,-3),
+                                                CVec3(1),
+                                                CQuat())
+                * rtf;
+
+        glm::mat4 g_rtv = g_wtf * g_rt * g_rtf;
+
+        for(int i=0;i<3;i++)
         {
-            coffee_graphics_activate(&transforms.current());
+            coffee_graphics_activate(&transforms[i]);
             coffee_graphics_buffer_store_immutable(
-                        &transforms.current(),&rt,sizeof(CMat4),
+                        &transforms[i],&rt,sizeof(CMat4),
                         CBufferStorage::Coherent|
                         CBufferStorage::Persistent|
                         CBufferStorage::WriteBit);
             coffee_graphics_buffer_map(
-                        &transforms.current(),
+                        &transforms[i],
                         CBufferAccess::Coherent|
                         CBufferAccess::Persistent|
                         CBufferAccess::WriteBit);
-            transforms.advance();
         }
 
         CResources::CResource texture("ctest_hud/particle_sprite.png");
@@ -237,30 +255,35 @@ public:
         CTexture gltext;
 
         {
-            texuni.object_name = "diffsamp";
+            CStbImageLib::CStbImage ptext;
+            CStbImageLib::coffee_stb_image_load(&ptext,&texture);
 
-            coffee_graphics_uniform_get(&fragshader,&texuni);
-        }
-
-        {
             gltext.textureType = CTexType::Tex2D;
-            gltext.format = CTexIntFormat::RGBA8;
+            gltext.format = CTexFormat::RGBA;
             coffee_graphics_alloc(&gltext);
             coffee_graphics_activate(&gltext);
+            CTextureData gtexdata;
+            gtexdata.data = ptext.data;
+            gtexdata.datatype = CDataType::UByte;
+            gtexdata.size.w = ptext.size.w; gtexdata.size.h = ptext.size.h;
+            gtexdata.format = CTexIntFormat::RGBA8;
 
-            CImportedTexture gtexdata = coffee_graphics_tex_create_rtexdata(texture);
+            coffee_graphics_tex_define(&gltext,&gtexdata);
+            coffee_graphics_tex_store(&gltext,&gtexdata,0);
 
-            gltext.size = gtexdata.data()->size;
-
-            coffee_graphics_tex_define(&gltext);
-            coffee_graphics_tex_store(&gltext,gtexdata.data(),0);
-
+            CStbImageLib::coffee_stb_image_free(&ptext);
             CResources::coffee_file_free(&texture);
 
             coffee_graphics_tex_mipmap(&gltext);
 
             coffee_graphics_tex_get_handle(&gltext);
             coffee_graphics_tex_make_resident(&gltext);
+
+            texuni.object_name = "diffsamp";
+
+            coffee_graphics_uniform_get(&fragshader,&texuni);
+
+            coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
         }
 
         coffee_graphics_blend(true);
@@ -272,9 +295,54 @@ public:
         drawcall.count = sizeof(indexdata)/sizeof(uint32);
         drawcall.instanceCount = 1;
 
+        CFramebuffer cfb;
+        CTexture dtex;
+        CTexture ctex;
+        CFramebufferAttachment fbatt;
+
+        {
+            coffee_graphics_alloc(&cfb);
+            cfb.size.w = 1280;
+            cfb.size.h = 720;
+
+            CTextureData filler;
+            filler.size.w = 1280;
+            filler.size.h = 720;
+            filler.format = CTexIntFormat::Depth;
+            filler.datatype = CDataType::UByte;
+
+            dtex.format = CTexFormat::Depth;
+            dtex.levels = 1;
+            dtex.textureType = CTexType::Tex2D;
+            coffee_graphics_alloc(&dtex);
+            coffee_graphics_activate(&dtex);
+            coffee_graphics_tex_2d_define(&dtex,&filler);
+
+            ctex.format = CTexFormat::RGBA;
+            ctex.levels = 1;
+            ctex.textureType = CTexType::Tex2D;
+            coffee_graphics_alloc(&ctex);
+            coffee_graphics_activate(&ctex);
+            filler.format = CTexIntFormat::RGBA8;
+            coffee_graphics_tex_2d_define(&ctex,&filler);
+
+            fbatt.texture = &dtex;
+            fbatt.attachLevel = 0;
+            fbatt.level = 0;
+            fbatt.target = CFBAttachment::Depth;
+            coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+
+            fbatt.texture = &ctex;
+            fbatt.attachLevel = 0;
+            fbatt.level = 0;
+            fbatt.target = CFBAttachment::Color;
+            coffee_graphics_framebuffer_attach_texture(&cfb,&fbatt);
+
+        }
+
         CVec3 camera_pos(0,0,-3);
 
-        coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
+//        coffee_graphics_bind(&cfb);
 
         this->showWindow();
         while(!closeFlag())
@@ -283,31 +351,42 @@ public:
 
             camera_pos.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
 
-            rt = coffee_node_get_transform(&rootNode);
+            g_rtv = (g_wtf * (glm::mat4_cast(glm::quat())*glm::translate(glm::mat4(),glm::vec3(CMath::fmod(this->contextTime(),3.0)-1.5,0,-2)))) * g_rtf;
 
-            c_memcpy(transforms.current().data,&rt,sizeof(rt));
+//            rt = wtf
+//                    * coffee_graphics_gen_transform(camera_pos,
+//                                                     CVec3(1),
+//                                                     CQuat(1,0,0,0))
+//                    * rtf;
+
+            c_memcpy(transforms[transform_index].data,&g_rtv,sizeof(rt));
 
             for(int i=0;i<4;i++)
                 coffee_graphics_vao_attribute_bind_buffer(
                             &vao,
                             mat_bnd[i],
-                            &transforms.current());
+                            &transforms[transform_index]);
 
             transform_index = (transform_index+1)%3;
 
             counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
 
-
             this->swapBuffers();
             this->pollEvents();
         }
+//        coffee_graphics_unbind(&cfb);
+
+//        coffee_graphics_tex_dump(&dtex,"depth.png");
 
         coffee_graphics_free(&vao);
         coffee_graphics_free(&gltext);
         coffee_graphics_free(&vertices);
         coffee_graphics_free(&texcoords);
-        coffee_graphics_free(transforms.size,transforms.data);
+        for(int i=0;i<4;i++)
+        {
+            coffee_graphics_free(&transforms[i]);
+        }
         coffee_graphics_free(&basePipeline);
         coffee_graphics_free(&vertshader);
         coffee_graphics_free(&fragshader);
