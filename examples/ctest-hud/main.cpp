@@ -226,8 +226,6 @@ public:
         drawcall.count = sizeof(indexdata)/sizeof(uint32);
         drawcall.instanceCount = 1;
 
-        CVec3 camera_pos(0,0,-3);
-
         //Set uniform, a texture handle
         coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,gltext.bhandle);
 
@@ -236,8 +234,9 @@ public:
         {
             coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
 
-            camera_pos.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
+            camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
 
+            wtf = coffee_graphics_gen_perspective(&camera) * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
             rt = coffee_node_get_transform(&rootNode);
 
             c_memcpy(transforms.current().data,&rt,sizeof(rt));
