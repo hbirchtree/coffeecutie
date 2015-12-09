@@ -33,22 +33,21 @@ public:
         clock->start();
 
         const CVec3 vertexdata[] = {
-            CVec3( 1.f, -1.f, 0.f), //2
-            CVec3( 1.f, -1.f, 0.f), //1
-            CVec3( 1.f, -1.f, 0.f), //4
+            CVec3(-1.f, 1.f, 0.f),
+            CVec3( 1.f, 1.f, 0.f),
+            CVec3(-1.f,-1.f, 0.f),
+            CVec3( 1.f,-1.f, 0.f),
         };
 
         const CVec2 texdata[] = {
             CVec2(0.f, 0.f), //1
             CVec2(1.f, 0.f), //2
             CVec2(0.f, 1.f), //3
-            CVec2(1.f, 0.f), //2
             CVec2(1.f, 1.f), //4
-            CVec2(0.f, 1.f), //3
         };
 
         const uint32 indexdata[] = {
-            0, 1, 2,
+            0, 1, 2, 1, 2, 3,
         };
 
         constexpr byte_t vshader_src[] = {
@@ -151,6 +150,7 @@ public:
         //Creating transforms
         CTransform root;
         root.position = CVec3(0,0,0);
+        root.scale = CVec3(0.5);
 
         CGCamera camera;
         camera.aspect = 1.6f;
