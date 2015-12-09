@@ -156,9 +156,9 @@ public:
         camera.aspect = 1.6f;
         camera.position = CVec3(0,0,-3);
 
-        rtf = coffee_graphics_gen_transform(&root);
-        wtf = coffee_graphics_gen_perspective(&camera)
-                * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
+        rtf = coffee_graphics_gen_transform(root);
+        wtf = coffee_graphics_gen_perspective(camera)
+                * coffee_graphics_gen_transform(camera);
 
         CNode worldNode;
         worldNode.transform = &wtf;
@@ -189,6 +189,7 @@ public:
 
         CUniform texuni;
         CTexture gltext;
+        CTextureSampler glsamp;
 
         {
             texuni.object_name = "diffsamp";
@@ -213,8 +214,10 @@ public:
 
             coffee_graphics_tex_mipmap(&gltext);
 
-            coffee_graphics_tex_get_handle(&gltext);
-            coffee_graphics_tex_make_resident(&gltext);
+            coffee_graphics_alloc(&glsamp);
+
+            coffee_graphics_tex_get_handle(gltext,glsamp);
+            coffee_graphics_tex_make_resident(glsamp);
         }
 
         //Enable some states
@@ -227,7 +230,7 @@ public:
         drawcall.instanceCount = 1;
 
         //Set uniform, a texture handle
-        coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,gltext.bhandle);
+        coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,glsamp.bhandle);
 
         this->showWindow();
         while(!closeFlag())
@@ -236,7 +239,8 @@ public:
 
             camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
 
-            wtf = coffee_graphics_gen_perspective(&camera) * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
+            wtf = coffee_graphics_gen_perspective(camera)
+                    * coffee_graphics_gen_transform(camera);
             rt = coffee_node_get_transform(&rootNode);
 
             c_memcpy(transforms.current().data,&rt,sizeof(rt));
@@ -282,9 +286,6 @@ public:
             const CIKeyEvent* kev = (const CIKeyEvent*)&e[1];
             if(kev->key == CK_Escape)
                 this->closeWindow();
-        }else if(e->type==CIEvent::MouseMove)
-        {
-            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
         }
     }
 private:

@@ -53,30 +53,40 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
 
 template<typename T>
 _cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
-        _cbasic_graphics_camera<T> const* camera)
+        _cbasic_graphics_camera<T> const& camera)
 {
     return coffee_graphics_gen_orthographic(
-                camera->orthoview);
+                camera.orthoview);
 }
 
 template<typename T>
 _cbasic_tmatrix<T,4> coffee_graphics_gen_perspective(
-        _cbasic_graphics_camera<T> const* camera)
+        _cbasic_graphics_camera<T> const& camera)
 {
     return coffee_graphics_gen_perspective(
-                camera->fieldOfView,
-                camera->aspect,
-                camera->zVals);
+                camera.fieldOfView,
+                camera.aspect,
+                camera.zVals);
 }
 
 template<typename T>
 _cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
-        _cbasic_graphics_transform<T> const* transform)
+        _cbasic_graphics_transform<T> const& transform)
 {
     return coffee_graphics_gen_transform(
-                transform->position,
-                transform->scale,
-                transform->rotation);
+                transform.position,
+                transform.scale,
+                transform.rotation);
+}
+
+template<typename T>
+_cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
+        _cbasic_graphics_camera<T> const& camera)
+{
+    return coffee_graphics_gen_transform(
+                camera.position,
+                CVec3(1.0),
+                camera.rotation);
 }
 
 }

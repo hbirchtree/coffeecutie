@@ -26,6 +26,7 @@ typedef int64 CGszptr;
  * \brief A handle for a GL resource
  */
 typedef uint32 CGhnd;
+typedef uint64 CGhnd64;
 /*!
  * \brief An index retrieved from GL or to be used in GL
  */

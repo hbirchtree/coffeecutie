@@ -34,6 +34,7 @@ set ( CoffeeCore_SRCS
         graphics/opengl_glbinding/glbinding.cpp
         graphics/opengl_glbinding/copengl_types.cpp
         graphics/opengl_glbinding/ctexture_storage.cpp
+        graphics/opengl_glbinding/ctexture_sampler.cpp
         graphics/opengl_glbinding/ctexture_pbo.cpp
         graphics/opengl_glbinding/cuniformtypes.cpp
 

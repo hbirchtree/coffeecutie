@@ -26,7 +26,7 @@ struct CNode
  * \param node
  * \return This node's complete matrix unless the pointer is NULL
  */
-extern CMat4 coffee_node_get_transform(const CNode* node);
+extern CMat4 coffee_node_get_transform(const CNode *node);
 
 }
 }

@@ -156,9 +156,9 @@ public:
         camera.aspect = 1.6f;
         camera.position = CVec3(0,0,-3);
 
-        rtf = coffee_graphics_gen_transform(&root);
-        wtf = coffee_graphics_gen_perspective(&camera)
-                * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
+        rtf = coffee_graphics_gen_transform(root);
+        wtf = coffee_graphics_gen_perspective(camera)
+                * coffee_graphics_gen_transform(camera);
 
         CNode worldNode;
         worldNode.transform = &wtf;
@@ -186,6 +186,7 @@ public:
         //Creating texture
 
         CUniform texuni;
+        CTextureSampler glsamp;
         CTexture gltext;
         CTextureSize texsize = {};
         CTextureRegion texreg = {};
@@ -212,7 +213,7 @@ public:
                     texstorage_1[j*texsize.h + i].r = 255;
 
                     texstorage_2[j*texsize.h + i].a = 255;
-                    texstorage_2[j*texsize.h + i].g = 255;
+                    texstorage_2[j*texsize.h + i].r = 200;
                 }
 
             coffee_graphics_alloc(pbos.size,CBufferType::PixelUnpack,pbos.data);
@@ -241,8 +242,10 @@ public:
                         &gltext,&pbos.current(),
                         CTexFormat::RGBA,texreg,CDataType::UByte,0);
 
-            coffee_graphics_tex_get_handle(&gltext);
-            coffee_graphics_tex_make_resident(&gltext);
+            coffee_graphics_alloc(&glsamp);
+
+            coffee_graphics_tex_get_handle(gltext,glsamp);
+            coffee_graphics_tex_make_resident(glsamp);
         }
 
         //Enable some states
@@ -255,7 +258,7 @@ public:
         drawcall.instanceCount = 1;
 
         //Set uniform, a texture handle
-        coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,gltext.bhandle);
+        coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,glsamp.bhandle);
 
         bool flop = false;
 
@@ -266,7 +269,8 @@ public:
 
             camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
 
-            wtf = coffee_graphics_gen_perspective(&camera) * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
+            wtf = coffee_graphics_gen_perspective(camera)
+                    * coffee_graphics_gen_transform(camera);
             rt = coffee_node_get_transform(&rootNode);
 
             c_memcpy(transforms.current().data,&rt,sizeof(rt));
@@ -280,9 +284,12 @@ public:
                             &transforms.current());
             }
 
+            pbos.awaitCurrent();
+
             coffee_graphics_tex_pbo_upload(
                         &gltext,&pbos.current(),
                         CTexFormat::RGBA,texreg,CDataType::UByte,0);
+
 
             {
                 CRGBA* tex = (CRGBA*)pbos.next().data;
@@ -297,11 +304,12 @@ public:
                 c_memcpy(tex,d,sizeof(CRGBA)*texsize.w*texsize.h);
             }
 
-            pbos.advance();
 
             counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
+            pbos.lockCurrent();
 
+            pbos.advance();
 
             this->swapBuffers();
             this->pollEvents();
@@ -331,9 +339,6 @@ public:
             const CIKeyEvent* kev = (const CIKeyEvent*)&e[1];
             if(kev->key == CK_Escape)
                 this->closeWindow();
-        }else if(e->type==CIEvent::MouseMove)
-        {
-            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
         }
     }
 private:

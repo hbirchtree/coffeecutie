@@ -158,9 +158,9 @@ void matrix_tests()
 
         t1.rotation = t2.rotation = t3.rotation = CQuat(1,0,0.5,0);
 
-        CMat4 t1m = CGraphicsData::coffee_graphics_gen_transform(&t1);
-        CMat4 t2m = CGraphicsData::coffee_graphics_gen_transform(&t2);
-        CMat4 t3m = CGraphicsData::coffee_graphics_gen_transform(&t3);
+        CMat4 t1m = CGraphicsData::coffee_graphics_gen_transform(t1);
+        CMat4 t2m = CGraphicsData::coffee_graphics_gen_transform(t2);
+        CMat4 t3m = CGraphicsData::coffee_graphics_gen_transform(t3);
 
         CGraphicsData::CNode root;
         root.transform = &t1m;

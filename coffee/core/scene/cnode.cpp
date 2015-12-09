@@ -33,15 +33,10 @@ CMath::mat4 _coffee_node_get_transform(const CNode* node)
 
 CMat4 coffee_node_get_transform(const CNode *node)
 {
-    if(coffee_vectors_use_glm_operations)
-    {
-        return _coffee_math_copy_mat4(_coffee_node_get_transform(node));
-    }else{
-        if(!node || !node->transform)
-            return CMat4();
+    if(!node || !node->transform)
+        return CMat4();
 
-        return (*node->transform)*coffee_node_get_transform(node->parent);
-    }
+    return (*node->transform)*coffee_node_get_transform(node->parent);
 }
 
 }

@@ -18,10 +18,10 @@ void coffee_test_fun_set(game_context *ctxt)
 
     if(ctxt->features->ext_bindless_texture)
     {
-        ctxt->funptrs.textures.load = coffee_graphics_tex_use;
+        ctxt->funptrs.textures.load = coffee_graphics_tex_load;
         ctxt->funptrs.textures.unload = coffee_graphics_tex_unload;
     }else{
-        ctxt->funptrs.textures.load = coffee_graphics_tex_use_safe;
+        ctxt->funptrs.textures.load = coffee_graphics_tex_load_safe;
         ctxt->funptrs.textures.unload = coffee_graphics_tex_unload_safe;
     }
 
@@ -140,12 +140,15 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
 CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
 {
     coffee_mem_expand_array(&ctxt->texstorage,1);
+    coffee_mem_expand_array(&ctxt->texsamplerstorage,1);
     CTexture *tex = &ctxt->texstorage.d[ctxt->texstorage.size-1];
+    CTextureSampler* ts = &ctxt->texsamplerstorage.d[ctxt->texsamplerstorage.size-1];
     //GL call
     coffee_graphics_alloc(tex);
+    coffee_graphics_alloc(ts);
     //
 
-    CTextureData* dt = coffee_graphics_tex_create_texdata(*textureres,nullptr);
+    CImportedTexture dt = coffee_graphics_tex_create_rtexdata(*textureres);
 
     tex->textureType = CTexType::Tex2D;
     tex->levels = 1;
@@ -154,9 +157,11 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
     coffee_graphics_bind(tex);
     coffee_graphics_unbind(tex);
     ctxt->funptrs.textures.define(tex);
-    ctxt->funptrs.textures.store(tex,dt,0);
+    ctxt->funptrs.textures.store(tex,dt.data(),0);
     //
-    coffee_graphics_tex_free_texdata(dt);
+
+    if(ctxt->features->ext_bindless_texture)
+        coffee_graphics_tex_get_handle(*tex,*ts);
 
     return tex;
 }
@@ -164,7 +169,11 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
 CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_context* ctxt)
 {
     coffee_mem_expand_array(&ctxt->texstorage,1);
+    coffee_mem_expand_array(&ctxt->texsamplerstorage,1);
     CTexture* t = &ctxt->texstorage.d[ctxt->texstorage.size-1];
+    CTextureSampler* ts = &ctxt->texsamplerstorage.d[ctxt->texsamplerstorage.size-1];
+
+    coffee_graphics_alloc(ts);
 
     switch(tex.format)
     {
@@ -204,6 +213,9 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         break;
     }
     }
+
+    if(ctxt->features->ext_bindless_texture)
+        coffee_graphics_tex_get_handle(*t,*ts);
 
     return t;
 }
@@ -394,7 +406,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     cam->aspect = 1.6f;
     cam->zVals.far = 100.f;
     cam->zVals.near = 1.f;
-    coffee_graphics_gen_perspective(cam);
+    coffee_graphics_gen_perspective(*cam);
 
     CBuffer* ubuffer = &ctxt->renderdata.buffers.d[4];
     ubuffer->type = CBufferType::Uniform;
@@ -457,14 +469,14 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
         for(szptr i=1;i<numGears-2;i++){
             mod->position.z() = (float)(-i);
             mod->position.y() = (float)((i%11)/2);
-            tmat = coffee_graphics_gen_transform(mod);
+            tmat = coffee_graphics_gen_transform(*mod);
             transform.push_back(tmat);
         }
 
         mod->position.x() = mod->position.y() = 0.f;
         mod->position.z() = -1.f;
 
-        tmat = coffee_graphics_gen_transform(mod);
+        tmat = coffee_graphics_gen_transform(*mod);
         CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
 
         transform.push_back(tmat);
@@ -572,22 +584,19 @@ void coffee_prepare_test(game_context *ctxt)
 
     szptr texIndex = rand()%ctxt->texstorage.size;
 
-    if(ctxt->features->ext_bindless_texture)
-        coffee_graphics_tex_get_handle(&ctxt->texstorage.d[texIndex]);
-
-    ctxt->texstorage.d[texIndex].unit = 0;
-    ctxt->funptrs.textures.load(&ctxt->texstorage.d[texIndex]);
+    ctxt->funptrs.textures.load(ctxt->texsamplerstorage.d[texIndex],
+                                ctxt->texstorage.d[texIndex]);
     if(ctxt->features->ext_bindless_texture)
     {
         coffee_graphics_uniform_set_texhandle(
                     &ctxt->shaders.programs.d[0],
                 &texuni,
-                ctxt->texstorage.d[texIndex].bhandle);
+                ctxt->texsamplerstorage.d[texIndex].bhandle);
     }else{
         coffee_graphics_uniform_set_texhandle_safe(
                     &ctxt->shaders.programs.d[0],
                 &texuni,
-                ctxt->texstorage.d[texIndex].unit);
+                ctxt->texsamplerstorage.d[texIndex].unit);
     }
 }
 
@@ -598,11 +607,10 @@ void coffee_render_test(game_context *ctxt, double delta)
     CGCamera* camera = &ctxt->transforms.cameras.d[0];
     //Generate our matrices
     CMat4 mtransform =
-            coffee_graphics_gen_transform(
-                &ctxt->transforms.transforms.d[0]);
+            coffee_graphics_gen_transform(ctxt->transforms.transforms.d[0]);
     CMat4 mcamera =
-            coffee_graphics_gen_perspective(camera)
-            * coffee_graphics_gen_transform(camera->position,CVec3(1),camera->rotation);
+            coffee_graphics_gen_perspective(*camera)
+            * coffee_graphics_gen_transform(*camera);
 
     //Copy memory into GL
     c_memcpy(ctxt->renderdata.buffers.d[4].data,

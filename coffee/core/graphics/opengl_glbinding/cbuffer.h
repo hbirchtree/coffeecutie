@@ -3,6 +3,7 @@
 
 #include "coffee/core/coffee.h"
 #include "copengl_types.h"
+#include "crenderfence.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
@@ -18,7 +19,40 @@ struct CSubBuffer : _cbasic_graphics_buffer_section
 };
 
 template<size_t Size>
-using CNBuffer = _cbasic_nbuffer<CBuffer,Size>;
+class CNBuffer : public _cbasic_nbuffer<CBuffer,Size>
+{
+    using _cbasic_nbuffer<CBuffer,Size>::current_idx;
+    using _cbasic_nbuffer<CBuffer,Size>::next_idx;
+public:
+    CNBuffer()
+    {
+        for(size_t i=0;i<Size;i++)
+            fences[i] = nullptr;
+    }
+
+    virtual bool isCurrentLocked()
+    {
+        return coffee_graphics_fence_wait(fences[current_idx()],0);
+    }
+    virtual void lockCurrent()
+    {
+        fences[current_idx()] = coffee_graphics_fence_create();
+    }
+    virtual bool awaitCurrent(uint64 max_timeout = 10)
+    {
+        if(!fences[current_idx()])
+            return true;
+        bool status = coffee_graphics_fence_wait(fences[current_idx()],max_timeout);
+        if(status)
+        {
+            coffee_graphics_free(fences[current_idx()]);
+            fences[current_idx()] = nullptr;
+        }
+        return status;
+    }
+protected:
+    CGSync* fences[Size];
+};
 
 static const CBufferAccess CBuffer_PersistentBufferFlags =
         CBufferAccess::Persistent|CBufferAccess::Coherent|

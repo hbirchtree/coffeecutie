@@ -91,7 +91,7 @@ enum class CTexFormat : uint16
     DepthStencil = 10,
 };
 
-struct CTextureRegion : _cbasic_size_3d<int32>,CVectors::_cbasic_tvector<int32,3>
+struct CTextureRegion : _cbasic_size_3d<int32>,_cbasic_vec3<int32>
 {
 };
 
@@ -117,9 +117,17 @@ struct CTexture
     CGhnd handle; /*!< Texture handle */
     CGsize levels; /*!< Mipmap levels */
     CTexIntFormat format; /*!< Texture format */
-    int32 unit; /*!< GL_TEXTURE* unit */
-    CGuint64 bhandle; /*!< Bindless texture handle */
     CTextureSize size;
+};
+
+/*!
+ * \brief An OpenGL sampler for textures
+ */
+struct CTextureSampler
+{
+    CGhnd64 bhandle;
+    CGhnd handle;
+    int32 unit; /*!< GL_TEXTURE* unit */
 };
 
 /*!
@@ -136,11 +144,11 @@ struct CTextureData
 /*!
  * \brief Load a texture for rendering
  */
-typedef void (*TexLoadFun)(const CTexture* tex);
+typedef void (*TexLoadFun)(const CTextureSampler&,const CTexture& tex);
 /*!
  * \brief Unload a texture after finished rendering
  */
-typedef void (*TexUnloadFun)(const CTexture* tex);
+typedef void (*TexUnloadFun)(const CTextureSampler&,const CTexture& tex);
 
 /*!
  * \brief Define texture storage, mutable storage
@@ -155,10 +163,6 @@ typedef bool (*TexStoreFun)(
         const CTextureData* data,
         CGint level);
 
-typedef void (*TexParamEnumFun)(const CTexture*,CTexParam param,CTexParamOpt val);
-typedef void (*TexParamFun)(const CTexture*,CTexParam param,CGint val);
-typedef void (*TexParamFunF)(const CTexture*,CTexParam param,scalar val);
-
 typedef void (*TexMipmapFun)(const CTexture* tex);
 
 struct CTextureFunctionBinds
@@ -170,10 +174,6 @@ struct CTextureFunctionBinds
 
     TexDefineFun    define;
     TexStoreFun     store;
-
-    TexParamEnumFun param_e;
-    TexParamFun     param;
-    TexParamFunF    paramf;
 
     TexMipmapFun    mipmap;
 };

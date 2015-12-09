@@ -131,17 +131,20 @@ struct _cbasic_nbuffer
     }
     T& current()
     {
-        return data[ptr];
+        return data[current_idx()];
     }
     T& next()
     {
         return data[next_idx()];
     }
 
-
-    virtual size_t next_idx()
+    size_t next_idx()
     {
         return (ptr+1)%BufferSize;
+    }
+    size_t current_idx()
+    {
+        return ptr;
     }
 };
 

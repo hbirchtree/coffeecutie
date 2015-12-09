@@ -9,8 +9,6 @@
 
 namespace Coffee{
 
-constexpr bool coffee_vectors_use_glm_operations = false;
-
 template<typename T>
 struct _cbasic_vec2 : CVectors::_cbasic_tvector<T,2>
 {
@@ -95,19 +93,6 @@ struct _cbasic_vec3 : CVectors::_cbasic_tvector<T,3>
         return (*this)[1];
     }
     T& b()
-    {
-        return (*this)[2];
-    }
-
-    T& u()
-    {
-        return (*this)[0];
-    }
-    T& v()
-    {
-        return (*this)[1];
-    }
-    T& w()
     {
         return (*this)[2];
     }

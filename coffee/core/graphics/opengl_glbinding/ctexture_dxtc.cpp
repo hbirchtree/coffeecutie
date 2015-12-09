@@ -41,9 +41,6 @@ CTexture *coffee_graphics_tex_dxtc_load(const CDXTCHeader *rsc)
     }
     coffee_graphics_unbind(tex);
 
-    coffee_graphics_tex_param(tex,CTexParam::MipmapBaseLevel,0);
-    coffee_graphics_tex_param(tex,CTexParam::MipmapMaxLevel,rsc->mipmaps-1);
-
     return tex;
 }
 

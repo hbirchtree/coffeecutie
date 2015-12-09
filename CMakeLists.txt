@@ -1,7 +1,7 @@
 project( CoffeeCore C CXX )
 cmake_minimum_required( VERSION 3.1 )
 
-option ( COFFEE_BUILD_STATIC "Build staticallylink binaries" ON )
+option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 set ( CMAKE_BUILD_TYPE Debug )
