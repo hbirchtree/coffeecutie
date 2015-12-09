@@ -8,6 +8,9 @@ namespace CVectors{
 
 template<typename T,size_t Size> struct _cbasic_tmatrix
 {
+    typedef _cbasic_tvector<T,Size> col_type;
+    static constexpr size_t size = Size*Size;
+
     _cbasic_tvector<T,Size> d[Size];
 
     /*!

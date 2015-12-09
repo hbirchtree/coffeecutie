@@ -1,6 +1,8 @@
 #ifndef COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 #define COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 
+#include "coffee/core/types/composite_types.h"
+
 #include "copengl_types.h"
 #include "cuniformtypes.h"
 
@@ -156,6 +158,39 @@ extern void coffee_graphics_shader_uniform_block_set(CShaderProgram* prg, const 
  * \return Uniform value location
  */
 extern CGhnd coffee_graphics_shader_uniform_value_get(CShaderProgram* prg, cstring name);
+
+/*!
+ * \brief For quick and simple shader setup
+ */
+class CSimplePipeline : public _cbasic_raii_container<CPipeline>
+{
+public:
+    CSimplePipeline():
+        _cbasic_raii_container(new CPipeline)
+    {
+    }
+    virtual ~CSimplePipeline()
+    {
+        coffee_graphics_free(&vert);
+        coffee_graphics_free(&frag);
+        coffee_graphics_free(m_data);
+        delete m_data;
+    }
+
+    void create(cstring vshader, cstring fshader)
+    {
+        coffee_graphics_alloc(m_data);
+
+        coffee_graphics_shader_compile(&vert,vshader,CProgramStage::Vertex);
+        coffee_graphics_shader_compile(&frag,fshader,CProgramStage::Fragment);
+
+        coffee_graphics_shader_attach(m_data,&vert,CProgramStage::Vertex);
+        coffee_graphics_shader_attach(m_data,&frag,CProgramStage::Fragment);
+    }
+
+    CShaderStageProgram vert;
+    CShaderStageProgram frag;
+};
 
 } // namespace CGraphicsWrappers
 } // namespace Coffee

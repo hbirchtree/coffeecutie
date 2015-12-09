@@ -3,6 +3,8 @@
 #include <coffee/CImage>
 #include <coffee/core/plat/application_start.h>
 
+#include <coffee/core/graphics/cvertexspecification.h>
+
 #include <coffee/core/base/cmath_glm.h>
 
 using namespace Coffee;
@@ -79,20 +81,10 @@ public:
             "}"
         };
 
-        CPipeline basePipeline;
-        CShaderStageProgram vertshader;
-        CShaderStageProgram fragshader;
-        coffee_graphics_alloc(&basePipeline);
-        coffee_graphics_shader_compile(&vertshader,
-                                       vshader_src,CProgramStage::Vertex);
-        coffee_graphics_shader_compile(&fragshader,
-                                       fshader_src,CProgramStage::Fragment);
-        coffee_graphics_shader_attach(&basePipeline,&vertshader,
-                                      CProgramStage::Vertex);
-        coffee_graphics_shader_attach(&basePipeline,&fragshader,
-                                      CProgramStage::Fragment);
-
-        coffee_graphics_bind(&basePipeline);
+        //Creating a shader pipeline
+        CSimplePipeline basePipeline;
+        basePipeline.create(vshader_src,fshader_src);
+        coffee_graphics_bind(basePipeline.data());
 
         CBuffer vertices;
         CBuffer texcoords;
@@ -106,7 +98,7 @@ public:
             coffee_graphics_alloc(&vertices);
             coffee_graphics_alloc(&texcoords);
             coffee_graphics_alloc(&indices);
-            coffee_graphics_alloc(3,CBufferType::Array,transforms.data);
+            coffee_graphics_alloc(transforms.size,CBufferType::Array,transforms.data);
 
             coffee_graphics_activate(&texcoords);
             coffee_graphics_activate(&vertices);
@@ -126,74 +118,37 @@ public:
                                          CBufferUsage::StaticDraw);
         }
 
+        CMat4 rtf,wtf,rt;
+
+        //Vertex specification
         CVertexArrayObject vao;
-        CVertexBufferBinding tex_bind;
-        CVertexBufferBinding vrt_bind;
-        CVertexFormat mat_fmt;
-        CVertexBufferBinding mat_bnd[4];
+        CVertexDescription vao_desc;
 
+        coffee_graphics_alloc(&vao);
+        coffee_graphics_bind(&vao);
+
+        vao_desc.addAttribute<scalar,3,CDataType::Scalar>(0,vertexdata);
+        vao_desc.addAttribute<scalar,2,CDataType::Scalar>(1,texdata);
+
+        vao_desc.getBinding(0)->binding = 0;
+        vao_desc.getBinding(0)->buffer = &vertices;
+        vao_desc.getBinding(1)->binding = 1;
+        vao_desc.getBinding(1)->buffer = &texcoords;
+
+        vao_desc.addAttributeMatrix(2,&rt);
+
+        for(size_t i=0;i<4;i++)
         {
-            coffee_graphics_alloc(&vao);
-            coffee_graphics_bind(&vao);
-
-            vrt_bind.buffer = &vertices;
-            vrt_bind.stride = sizeof(CVec3);
-
-            tex_bind.buffer = &texcoords;
-            tex_bind.stride = sizeof(CVec2);
-
-            CVertexFormat vrt_fmt;
-            vrt_fmt.offset = 0;
-            vrt_fmt.size = 3;
-            vrt_fmt.type = CDataType::Scalar;
-
-            CVertexFormat tex_fmt;
-            tex_fmt.offset = 0;
-            tex_fmt.size = 2;
-            tex_fmt.type = CDataType::Scalar;
-
-            CVertexAttribute vrt_att;
-            vrt_att.attribIdx = 0;
-            vrt_att.bnd = &vrt_bind;
-            vrt_att.fmt = &vrt_fmt;
-
-            CVertexAttribute tex_att;
-            tex_att.attribIdx = 1;
-            tex_att.bnd = &tex_bind;
-            tex_att.fmt = &tex_fmt;
-
-            coffee_graphics_vao_attribute_format(&vao,vrt_att,vrt_fmt);
-            coffee_graphics_vao_attribute_buffer(&vao,vrt_att,vrt_bind);
-            coffee_graphics_vao_attribute_bind_buffer(&vao,vrt_bind);
-
-            coffee_graphics_vao_attribute_format(&vao,tex_att,tex_fmt);
-            coffee_graphics_vao_attribute_buffer(&vao,tex_att,tex_bind);
-            coffee_graphics_vao_attribute_bind_buffer(&vao,tex_bind);
-
-            mat_fmt.offset = 0;
-            mat_fmt.size = 4;
-            mat_fmt.type = CDataType::Scalar;
-
-
-            for(int i=0;i<4;i++)
-            {
-                CVertexBufferBinding* bnd = &mat_bnd[i];
-                bnd->binding = 2+i;
-                bnd->buffer = &transforms.current();
-                bnd->offset = sizeof(CVec4)*i;
-                bnd->stride = sizeof(CMat4);
-                bnd->divisor = 1;
-                CVertexAttribute attr;
-                attr.attribIdx = 2+i;
-                attr.bnd = bnd;
-                attr.fmt = &mat_fmt;
-
-                coffee_graphics_vao_attribute_format(&vao,attr,mat_fmt);
-                coffee_graphics_vao_attribute_buffer(&vao,attr,*bnd);
-            }
-            coffee_graphics_vao_attribute_index_buffer(&vao,&indices);
+            vao_desc.getBinding(2+i)->binding = 2+i;
+            vao_desc.getBinding(2+i)->divisor = 1;
+            vao_desc.getBinding(2+i)->buffer = &transforms.current();
         }
+        coffee_graphics_vao_attribute_index_buffer(&vao,&indices);
 
+        vao_desc.applyAttributes(&vao);
+        vao_desc.bindAttributes(&vao);
+
+        //Creating transforms
         CTransform root;
         root.position = CVec3(0,0,0);
 
@@ -201,8 +156,8 @@ public:
         camera.aspect = 1.6f;
         camera.position = CVec3(0,0,-3);
 
-        CMat4 rtf = coffee_graphics_gen_transform(&root);
-        CMat4 wtf = coffee_graphics_gen_perspective(&camera)
+        rtf = coffee_graphics_gen_transform(&root);
+        wtf = coffee_graphics_gen_perspective(&camera)
                 * coffee_graphics_gen_transform(camera.position,CVec3(1),camera.rotation);
 
         CNode worldNode;
@@ -212,9 +167,9 @@ public:
         rootNode.parent = &worldNode;
         rootNode.transform = &rtf;
 
-        CMat4 rt = coffee_node_get_transform(&rootNode);
+        rt = coffee_node_get_transform(&rootNode);
 
-        for(int i=0;i<transforms.size;i++)
+        for(uint32 i=0;i<transforms.size;i++)
         {
             coffee_graphics_activate(&transforms.current());
             coffee_graphics_buffer_store_immutable(
@@ -224,12 +179,11 @@ public:
                         CBufferStorage::WriteBit);
             coffee_graphics_buffer_map(
                         &transforms.current(),
-                        CBufferAccess::Coherent|
-                        CBufferAccess::Persistent|
-                        CBufferAccess::WriteBit);
+                        CBuffer_PersistentBufferFlags);
             transforms.advance();
         }
 
+        //Creating texture
         CResources::CResource texture("ctest_hud/particle_sprite.png");
         CResources::coffee_file_pull(&texture);
 
@@ -239,7 +193,7 @@ public:
         {
             texuni.object_name = "diffsamp";
 
-            coffee_graphics_uniform_get(&fragshader,&texuni);
+            coffee_graphics_uniform_get(&basePipeline.frag,&texuni);
         }
 
         {
@@ -263,18 +217,19 @@ public:
             coffee_graphics_tex_make_resident(&gltext);
         }
 
+        //Enable some states
         coffee_graphics_blend(true);
         coffee_graphics_depth(true);
 
-        int transform_index = 0;
-
+        //Create a drawcall
         CGLDrawCall drawcall;
         drawcall.count = sizeof(indexdata)/sizeof(uint32);
         drawcall.instanceCount = 1;
 
         CVec3 camera_pos(0,0,-3);
 
-        coffee_graphics_uniform_set_texhandle(&fragshader,&texuni,gltext.bhandle);
+        //Set uniform, a texture handle
+        coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,gltext.bhandle);
 
         this->showWindow();
         while(!closeFlag())
@@ -288,12 +243,13 @@ public:
             c_memcpy(transforms.current().data,&rt,sizeof(rt));
 
             for(int i=0;i<4;i++)
+            {
+                CVertexBufferBinding* bind = vao_desc.getBinding(2+i);
                 coffee_graphics_vao_attribute_bind_buffer(
                             &vao,
-                            mat_bnd[i],
+                            *bind,
                             &transforms.current());
-
-            transform_index = (transform_index+1)%3;
+            }
 
             counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
@@ -308,9 +264,6 @@ public:
         coffee_graphics_free(&vertices);
         coffee_graphics_free(&texcoords);
         coffee_graphics_free(transforms.size,transforms.data);
-        coffee_graphics_free(&basePipeline);
-        coffee_graphics_free(&vertshader);
-        coffee_graphics_free(&fragshader);
         coffee_graphics_free(&indices);
     }
     void eventWindowsHandle(const CDisplay::CDEvent *e)

@@ -9,6 +9,8 @@ namespace CVectors{
 
 template<typename T, size_t Size> struct _cbasic_tvector
 {
+    static constexpr size_t size = Size;
+
     _cbasic_tvector()
     {
         for(size_t i=0;i<Size;i++)

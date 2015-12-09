@@ -29,11 +29,10 @@ constexpr Coffee::cstring print_color_reset = "\033[0m";
 //#define C_UNUSED(v) do{(void)(v);}while(0);
 
 /*!
- * \brief Use this to mark variables as unused to avoid compiler warnings
+ * \brief Use this to mark variables as unused to avoid compiler warnings. We can get away with this.
  */
 inline static void C_UNUSED(...)
 {
-    (void)0;
 }
 
 /*!

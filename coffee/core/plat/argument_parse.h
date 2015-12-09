@@ -63,7 +63,7 @@ inline static cstring coffee_args_get_arg(
  * \param in_argv Contains null-terminated strings with names of switches
  * \param out_argv
  */
-static void coffee_args_get_all(
+inline void coffee_args_get_all(
         int argc, cstring_w* argv,
         int get_argc, cstring const* in_argv,
         cstring* out_argv)

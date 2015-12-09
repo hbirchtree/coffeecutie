@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <map>
 #include <vector>
+#include <list>
 
 #include "coffee/core/plat/cmemory.h"
 #include "vector_types.h"
