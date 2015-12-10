@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-option (COFFEE_BUILD_STATIC "Build libraries statically" ON)
+option (COFFEE_BUILD_STATIC "Build libraries statically" OFF)
 
 include(ExternalProject)
 
