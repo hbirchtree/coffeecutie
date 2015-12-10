@@ -14,19 +14,19 @@ namespace CBlam{
  */
 enum blam_bitm_formats
 {
-    blam_bitm_format_A8         = 0x00, /*!< Alpha only*/
-    blam_bitm_format_Y8         = 0x01, /*!< Luminance*/
-    blam_bitm_format_AY8        = 0x02, /*!< Same bits all over*/
-    blam_bitm_format_A8Y8       = 0x03, /*!< Alpha+luminance*/
-    blam_bitm_format_R5G6B5     = 0x06, /*!< Short RGB format*/
-    blam_bitm_format_A1R5G5B5   = 0x08, /*!< RGB + alpha-bit*/
-    blam_bitm_format_A4R4G4B4   = 0x09, /*!< Short RGBA*/
-    blam_bitm_format_X8R8G8B8   = 0x0A, /*!< RGB + extra bits*/
-    blam_bitm_format_A8R8G8B8   = 0x0B, /*!< RGBA*/
-    blam_bitm_format_DXT1       = 0x0E, /*!< S3TC format*/
-    blam_bitm_format_DXT2AND3   = 0x0F, /*!< S3TC format*/
-    blam_bitm_format_DXT4AND5   = 0x10, /*!< S3TC format*/
-    blam_bitm_format_P8         = 0x11, /*!< Same as Y8, with a different name*/
+    blam_bitm_format_A8         = 0x00, /*!< 000A -> GL_RED + GL_UNSIGNED_BYTE*/
+    blam_bitm_format_Y8         = 0x01, /*!< LLL0 -> GL_RED + GL_UNSIGNED_BYTE*/
+    blam_bitm_format_AY8        = 0x02, /*!< LLLL -> GL_RED + GL_UNSIGNED_BYTE*/
+    blam_bitm_format_A8Y8       = 0x03, /*!< LLLA1 -> GL_RG + GL_UNSIGNED_BYTE*/
+    blam_bitm_format_R5G6B5     = 0x06, /*!< R5G6B5 -> GL_RGB + GL_UNSIGNED_BYTE_5_6_5*/
+    blam_bitm_format_A1R5G5B5   = 0x08, /*!< RGB5A1 -> GL_RGB + GL_UNSIGNED_SHORT_5_5_5_1*/
+    blam_bitm_format_A4R4G4B4   = 0x09, /*!< RGBA4 -> GL_RGB + GL_UNSIGNED_SHORT_4_4_4_4*/
+    blam_bitm_format_X8R8G8B8   = 0x0A, /*!< RGBX8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
+    blam_bitm_format_A8R8G8B8   = 0x0B, /*!< RGBA8 -> GL_RGBA + GL_UNSIGNED_BYTE*/
+    blam_bitm_format_DXT1       = 0x0E, /*!< DXT1*/
+    blam_bitm_format_DXT2AND3   = 0x0F, /*!< DXT3*/
+    blam_bitm_format_DXT4AND5   = 0x10, /*!< DXT5*/
+    blam_bitm_format_P8         = 0x11, /*!< LLL01 (See A8)*/
 };
 
 /*!

@@ -45,33 +45,33 @@ C_FLAGS(CClearFlag,uint8);
 
 enum class CBufferType : uint16
 {
-    None = 0,
-    Array = 1,
-    Index = 2,
-    Uniform = 3,
-    ShaderStorage = 4,
-    DrawIndirect = 5,
-    TransformFeedback = 6,
-    Texture = 7,
-    Query = 8,
+    None,
+    Array,
+    Index,
+    Uniform,
+    ShaderStorage,
+    DrawIndirect,
+    TransformFeedback,
+    Texture,
+    Query,
 
-    PixelUnpack = 9,
-    PixelPack = 10,
+    PixelUnpack,
+    PixelPack,
 };
 
-enum class CTexType : uint16
+enum class CTexType : uint8
 {
-    Array1D = 1,
-    Array2D = 2,
-    Array3D = 3,
-    ArrayCubeMap = 4,
-    CubeMap = 5,
-    Tex2D = 6,
-    Tex3D = 7,
-    TexBuffer = 8,
+    Array1D,
+    Array2D,
+    Array3D,
+    ArrayCubeMap,
+    CubeMap,
+    Tex2D,
+    Tex3D,
+    TexBuffer,
 };
 
-enum class CProgramStage : uint16
+enum class CProgramStage : uint8
 {
     None = 0x0,
     Vertex = 0x1,
@@ -83,7 +83,7 @@ enum class CProgramStage : uint16
 
 C_FLAGS(CProgramStage,uint16);
 
-enum class CBufferAccess : uint16
+enum class CBufferAccess : uint8
 {
     WriteBit = 0x1, /*!< Enable writing to the buffer*/
     ReadBit = 0x2, /*!< Enable reading from the buffer*/
@@ -94,7 +94,7 @@ enum class CBufferAccess : uint16
 
 C_FLAGS(CBufferAccess,uint16);
 
-enum class CBufferStorage : uint16
+enum class CBufferStorage : uint8
 {
     WriteBit = 0x1,
     ReadBit = 0x2,
@@ -109,33 +109,44 @@ C_FLAGS(CBufferStorage,uint16);
 /*!
  * \brief Specifies buffer storage parameters in coffee_graphics_buffer_store(). Stream* specifies data modified once and drawn few times, static is modified once and drawn many times, dynamic is modified often and drawn many times. *Draw specifies data used for GL drawing, *Read specifies data read from the GL, *Copy specifies data is used for both reading and drawing operations.
  */
-enum class CBufferUsage : uint16
+enum class CBufferUsage : uint8
 {
-    Default = 0,
+    Default,
 
-    StreamDraw = 1,
-    StreamRead = 2,
-    StreamCopy = 3,
+    StreamDraw,
+    StreamRead,
+    StreamCopy,
 
-    StaticDraw = 4,
-    StaticRead = 5,
-    StaticCopy = 6,
+    StaticDraw,
+    StaticRead,
+    StaticCopy,
 
-    DynamicDraw = 7,
-    DynamicRead = 8,
-    DynamicCopy = 9,
+    DynamicDraw,
+    DynamicRead,
+    DynamicCopy,
 };
 
-enum class CDataType : uint16
+enum class CDataType : uint8
 {
-    None = 0,
-    Scalar = 1,
-    BigScalar = 2,
-    UInt = 3,
-    Int = 4,
-    UInt64 = 5,
-    Byte = 7,
-    UByte = 8,
+    None,
+
+    Scalar, BigScalar,
+
+    Byte,   UByte,
+    Short,  UShort,
+    Int,    UInt,
+    Int64,  UInt64,
+
+    //Texture data types, don't worry
+    UByte3_3_2,     UByte2_3_3_Rev,
+
+    UShort5_6_5,    UShort5_6_5_Rev,
+    UShort4_4_4_4,  UShort4_4_4_4_Rev,
+    UShort5_5_5_1,  UShort1_5_5_5_Rev,
+
+    UInt8_8_8_8,    UInt8_8_8_8_Rev,
+    UInt10_10_10_1, UInt1_10_10_10_Rev,
+    UInt2_10_10_10, UInt2_10_10_10_Rev,
 };
 
 enum class CDebugSeverity : uint8

@@ -1,7 +1,8 @@
 #ifndef CGLBINDINGRENDERER_H
 #define CGLBINDINGRENDERER_H
 
-#include "coffee/core/display/csdl2renderer.h"
+#include <graphics_apis/opengl/wrappers/cgraphicswrappers.h>
+#include <coffee/core/display/csdl2renderer.h>
 
 namespace Coffee{
 
@@ -14,7 +15,7 @@ namespace CDisplay{
 /*!
  * \brief Returns true if message is accepted, false is discarded
  */
-typedef std::function<bool(CGLReport*)> CGLMessageFilter;
+typedef std::function<bool(CGLDebugMessage const&)> CGLMessageFilter;
 
 bool glbinding_default_filter(CGLReport *report);
 

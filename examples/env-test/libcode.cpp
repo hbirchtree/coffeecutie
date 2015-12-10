@@ -1,4 +1,8 @@
 #include "library.h"
+
+#include <coffee/core/CBase>
+#include <coffee/core/plat/cmemory.h>
+
 #include <stdio.h>
 
 class TestImplementation : public TestClass
@@ -6,7 +10,13 @@ class TestImplementation : public TestClass
 public:
     void printHello()
     {
-        printf("Hello!\n");
+        cDebug("Hello there!");
+
+        cWarning("Okay, I'll try calling a Coffee function now.");
+        void* ptr = Coffee::c_alloc(1024*1024*1024);
+        Coffee::c_free(ptr);
+
+        cDebug("Byte!");
     }
 };
 

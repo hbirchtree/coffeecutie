@@ -10,8 +10,11 @@ target_link_libraries ( EnvTest
 
 target_compile_features(EnvTest PRIVATE cxx_variadic_templates)
 
+#Testing an external library
 set ( EnvLibraryLoadTester_SRCS
         libcode.cpp
         )
 
 add_library( EnvLibraryLoadTester SHARED ${EnvLibraryLoadTester_SRCS} )
+
+target_compile_features(EnvLibraryLoadTester PRIVATE cxx_variadic_templates)

@@ -183,6 +183,25 @@ void coffee_graphics_tex_2d_define_mutable(const CTexture *texture, const CTextu
     coffee_graphics_unbind(texture);
 }
 
+void coffee_graphics_tex_readpixels(
+        const CTexture &tex, const CGint &level,
+        const CTexFormat &fmt,
+        const CDataType &dType, c_ptr dPtr)
+{
+    glGetTextureImage(tex.handle,level,gl_get(fmt),gl_get(dType),0,dPtr);
+}
+
+void coffee_graphics_tex_readpixels_safe(
+        const CTexture &tex, const CGint &level,
+        const CTexFormat &fmt,
+        const CDataType &dType, c_ptr dPtr)
+{
+    coffee_graphics_bind(&tex);
+
+    glGetTexImage(gl_get(tex.textureType),level,gl_get(fmt),gl_get(dType),dPtr);
+
+    coffee_graphics_unbind(&tex);
+}
 
 }
 }

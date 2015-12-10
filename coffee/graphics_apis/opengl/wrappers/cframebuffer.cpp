@@ -126,7 +126,8 @@ void coffee_graphics_framebuffer_blit(const CFramebuffer *srcFb, const CFramebuf
                 gl_get(filter));
 }
 
-void coffee_graphics_framebuffer_blit_safe(const CFramebuffer *srcFb, const CFramebuffer *trgFb,
+void coffee_graphics_framebuffer_blit_safe(
+        const CFramebuffer *srcFb, const CFramebuffer *trgFb,
         const CRectF &srcRect, const CRectF &trgRect,
         CClearFlag mask, CFBFilter filter)
 {
@@ -139,6 +140,15 @@ void coffee_graphics_framebuffer_blit_safe(const CFramebuffer *srcFb, const CFra
                 gl_get(filter));
     coffee_graphics_unbind(srcFb,CFBType::Read);
     coffee_graphics_unbind(trgFb,CFBType::Draw);
+}
+
+void coffee_graphics_framebuffer_readpixels(
+        const CFramebuffer *tex, const CDataType &dType,
+        CTexFormat const& fmt, c_ptr dPtr,
+        CFBAttachment const& attachment, CGint const& colorIndex)
+{
+    glReadBuffer(gl_geti(attachment,colorIndex));
+    glReadPixels(0,0,tex->size.w,tex->size.h,gl_get(fmt),gl_get(dType),dPtr);
 }
 
 CFramebufferAttachment::CFramebufferAttachment():

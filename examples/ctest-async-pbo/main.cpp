@@ -22,7 +22,7 @@ public:
     CDHudRenderer()
         : CGLBindingRenderer(0)
     {
-        m_msg_filter = glbinding_default_filter;
+        m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
     }
 
     void run()
@@ -243,8 +243,8 @@ public:
             }
 
             coffee_graphics_tex_pbo_upload(
-                        &gltext,&pbos.current(),
-                        CTexFormat::RGBA,texreg,CDataType::UByte,0);
+                        gltext,pbos.current(),
+                        CTexFormat::RGBA,CDataType::UByte,0);
 
             coffee_graphics_alloc(&glsamp);
 
@@ -291,8 +291,8 @@ public:
             pbos.awaitCurrent();
 
             coffee_graphics_tex_pbo_upload(
-                        &gltext,&pbos.current(),
-                        CTexFormat::RGBA,texreg,CDataType::UByte,0);
+                        gltext,pbos.current(),
+                        CTexFormat::RGBA,CDataType::UByte,0);
 
 
             {

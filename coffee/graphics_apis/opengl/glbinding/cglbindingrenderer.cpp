@@ -16,7 +16,7 @@ using namespace Coffee::CDisplay;
 namespace Coffee {
 namespace CDisplay {
 
-void glbinding_default_callback(CGLReport const& report, void* userPtr)
+void glbinding_default_callback(CGLDebugMessage const& report, void* userPtr)
 {
     CGLBindingRenderer* ptr = (CGLBindingRenderer*)userPtr;
     ptr->bindingCallback(&report);
@@ -24,8 +24,7 @@ void glbinding_default_callback(CGLReport const& report, void* userPtr)
 
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
     CSDL2Renderer(parent),
-    m_msg_filter(nullptr),
-    m_extensions(nullptr)
+    m_msg_filter(nullptr)
 {
 }
 
@@ -45,12 +44,12 @@ void CGLBindingRenderer::bindingPreInit()
 void CGLBindingRenderer::bindingPostInit()
 {
     //Check for extensions! Quick!
-    m_extensions = coffee_graphics_get_extensions(nullptr);
-    CGraphicsQuirks::coffee_quirks_set_global(this->m_extensions.data());
+    CString m_extensions = coffee_graphics_get_extensions(nullptr);
+    CGraphicsQuirks::coffee_quirks_set_global(m_extensions.data());
 
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug&&
             m_properties.contextProperties.flags&CGLContextProperties::GLPrintExtensions){
-        printExtensions(true);
+//        printExtensions(true);
     }
 
     try{
@@ -84,18 +83,11 @@ void CGLBindingRenderer::bindingTerminate()
 
 void CGLBindingRenderer::bindingCallback(const void *report) const
 {
-    CGLReport* rep = (CGLReport*)report;
+    CGLDebugMessage const& rep = *((CGLDebugMessage*)report);
     if(!m_msg_filter(rep))
         return;
-    CString out = _glbinding_get_string(rep->type)+":"
-            +_glbinding_get_string(rep->severity)+":"
-            +_glbinding_get_string(rep->source)+": "+rep->message;
+    CString out = "";
     cWarning("OpenGL: %s",out.c_str());
-}
-
-CString CGLBindingRenderer::extensions()
-{
-    return m_extensions;
 }
 
 } // namespace CDisplay

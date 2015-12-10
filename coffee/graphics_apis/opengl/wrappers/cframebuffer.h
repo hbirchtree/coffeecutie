@@ -149,6 +149,16 @@ extern void coffee_graphics_framebuffer_blit_safe(const CFramebuffer* srcFb,
         const CRectF& trgRect,
         CClearFlag mask, CFBFilter filter);
 
+/*!
+ * \brief Intended for use with PBOs! Don't abuse this with copying to host memory!
+ * \param tex
+ * \param dType
+ * \param dPtr
+ */
+extern void coffee_graphics_framebuffer_readpixels(
+        CTexture const& tex, CDataType const& dType,
+        const CTexFormat &fmt, c_ptr dPtr);
+
 }
 }
 

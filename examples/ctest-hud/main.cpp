@@ -20,7 +20,7 @@ public:
     CDHudRenderer()
         : CGLBindingRenderer(0)
     {
-        m_msg_filter = glbinding_default_filter;
+        m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
     }
 
     void run()

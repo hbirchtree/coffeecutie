@@ -74,6 +74,17 @@ extern bool coffee_graphics_tex_store(
  */
 extern bool coffee_graphics_tex_store_safe(
         const CTexture* tex, const CTextureData* data, CGint level);
+
+extern void coffee_graphics_tex_readpixels(
+        const CTexture& tex, const CGint& level,
+        const CTexFormat& fmt,
+        const CDataType& dType, c_ptr dPtr);
+
+extern void coffee_graphics_tex_readpixels_safe(
+        const CTexture& tex, const CGint& level,
+        const CTexFormat& fmt,
+        const CDataType& dType, c_ptr dPtr);
+
 }
 }
 

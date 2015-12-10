@@ -9,10 +9,17 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-//Opaque types
-struct CGLReport;
+//Debug stuff
+struct CGLDebugMessage
+{
+    CDebugSeverity severity;
+    CDebugSource source;
+    CDebugType type;
+    uint32 id;
+    CString message;
+};
 
-typedef void(*CDebugCallback)(CGLReport const&,void* userPtr);
+typedef void(*CDebugCallback)(CGLDebugMessage const&,void*);
 
 //Type definitions
 typedef int32 CGint;
@@ -34,14 +41,6 @@ typedef uint64 CGhnd64;
  */
 typedef uint32 CGidx;
 
-struct CGLDebugMessage
-{
-    CDebugSeverity severity;
-    CDebugSource source;
-    CDebugType type;
-    uint32 id;
-    CString message;
-};
 
 /*!
  * \brief GL multidraw indirect call used to put triangles on the screen
@@ -56,6 +55,7 @@ struct CGLDrawCall
     CGuint baseVertex; /*!< First vertex in buffer*/
     CGuint baseInstance; /*!< First instance to render*/
 };
+
 
 //Misc. data structures
 

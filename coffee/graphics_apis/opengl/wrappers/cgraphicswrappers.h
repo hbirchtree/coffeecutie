@@ -91,12 +91,12 @@ extern void coffee_graphics_multidraw(
  * \param rep
  * \return
  */
-extern bool coffee_graphics_debug_filter_ignore_notifications(CGLReport* rep);
+extern bool coffee_graphics_debug_filter_ignore_notifications(CGLDebugMessage const& rep);
 /*!
- * \brief Debug filter that ignores all messages. It's better to disable debugging, but...
+ * \brief Debug filter that allows all messages
  * \return
  */
-extern bool coffee_graphics_debug_filter_all(CGLReport*);
+extern bool coffee_graphics_debug_filter_all(const CGLDebugMessage &);
 /*!
  * \brief coffee_graphics_enable_debug_context
  * \param enable
@@ -107,13 +107,6 @@ extern bool coffee_graphics_debug_context(
         bool enable,
         CDebugCallback userFunction = nullptr,
         void *userPtr = nullptr);
-
-/*!
- * \brief Translates a CGLReport* into a user-readable representation. CGLReport should not be used outside of Core.
- * \param report
- * \return
- */
-extern CGLDebugMessage coffee_graphics_debug_report(CGLReport const* report);
 
 /*!
  * \brief Acquire a string containing all GL extensions
