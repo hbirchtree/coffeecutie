@@ -1,7 +1,7 @@
 #ifndef COFFEE_CDISPLAY_CDRENDERER_H
 #define COFFEE_CDISPLAY_CDRENDERER_H
 
-#include <coffee/core/context/cglbindingrenderer.h>
+#include <coffee/graphics_apis/COpenGL>
 
 namespace Coffee {
 

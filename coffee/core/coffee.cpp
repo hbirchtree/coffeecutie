@@ -4,7 +4,6 @@
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/unit_tests/data_types.h"
 #include "coffee/core/unit_tests/memory_operations.h"
-#include "graphics/cgraphics_quirks.h"
 
 static bool coffee_initialized = false;
 

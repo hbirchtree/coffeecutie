@@ -1,6 +1,6 @@
 #include "cdrenderer.h"
 
-#include <coffee/core/CGraphics>
+#include <coffee/CGraphics>
 #include <coffee/core/plat/plat_wm.h>
 #include <coffee/core/input/cinputfunctions.h>
 #include "base_case.h"
@@ -25,11 +25,12 @@ CDRenderer::~CDRenderer()
 
 void CDRenderer::run()
 {
-    fetchGLExtensions();
-
     CGraphicsQuirks::CFeatureSet quirks;
-    quirks.extensions = extensions();
-    CGraphicsQuirks::coffee_quirks_set(&quirks);
+    {
+        CString extensions = coffee_graphics_get_extensions();
+        quirks.extensions = extensions.data();
+        CGraphicsQuirks::coffee_quirks_set(&quirks);
+    }
 
     double delta = contextTime();
     double deltaT = 0;

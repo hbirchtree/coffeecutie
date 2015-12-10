@@ -1,9 +1,9 @@
 #include <coffee/CCore>
-#include <coffee/core/CGraphics>
+#include <coffee/CGraphics>
 #include <coffee/CImage>
 #include <coffee/core/plat/application_start.h>
 
-#include <coffee/core/graphics/cvertexspecification.h>
+#include <coffee/graphics_apis/opengl/cvertexspecification.h>
 
 #include <coffee/core/base/cmath_glm.h>
 

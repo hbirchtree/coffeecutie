@@ -1,7 +1,7 @@
 #include "base_case.h"
 
 #include <coffee/CImage>
-#include <coffee/core/CGraphics>
+#include <coffee/CGraphics>
 
 namespace Coffee{
 namespace CRendering{

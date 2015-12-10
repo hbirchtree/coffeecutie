@@ -8,6 +8,8 @@ set ( CoffeeTest_SRCS
         main.cpp
         )
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTestLib_SRCS} )
 
 add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
@@ -17,6 +19,7 @@ CoffeeCore
 CBlam
 CAudio
 CAssimp
+CoffeeOpenGL
 )
 target_link_libraries ( CoffeeTest
 CoffeeTestLib

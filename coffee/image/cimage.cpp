@@ -1,7 +1,5 @@
 #include "cimage.h"
 
-#include <coffee/core/graphics/opengl_glbinding/glbinding.h>
-
 #include <coffee/core/base/cdebug.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -102,98 +100,5 @@ void coffee_stb_image_free(CStbImage *img)
     c_free(img->data);
 }
 
-
-void coffee_graphics_tex_dump(
-        const CTexture *tex, cstring filename)
-{
-    CStbImageLib::CStbImage img;
-
-    img.bpp = 4;
-    img.size.w = tex->size.w;
-    img.size.h = tex->size.h;
-
-    coffee_graphics_tex_download_texture(
-                tex,0,img.bpp*img.size.w*img.size.h,
-                CTexFormat::RGBA,&img);
-
-
-    CResources::CResource fl(filename);
-    CStbImageLib::coffee_stb_image_save_png(&fl,&img);
-    coffee_file_commit(&fl);
-    coffee_file_free(&fl);
-
-    c_free(img.data);
 }
-
-
-}
-
-namespace CGraphicsWrappers{
-
-void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
-        CGsize size, CTexFormat format,
-        CStbImageLib::CStbImage *img)
-{
-    img->data = (ubyte_t*)c_alloc(size);
-    glGetTextureImage(
-                tex->handle,
-                level,
-                gl_get(format),
-                GL_UNSIGNED_BYTE,
-                size,img->data);
-}
-
-CTextureData *coffee_graphics_tex_create_texdata(
-        CResources::CResource const& resource, c_ptr location)
-{
-    CStbImageLib::CStbImage img;
-    if(!coffee_stb_image_load(&img,&resource))
-        return nullptr;
-
-    CTextureData* ptr;
-    if(location)
-        new (location) CTextureData;
-    else
-        ptr = new CTextureData;
-
-    ptr->data = img.data;
-    ptr->size.w = img.size.w;
-    ptr->size.h = img.size.h;
-
-    switch(img.bpp)
-    {
-    case 4:
-        ptr->format = CTexFormat::RGBA;
-        break;
-    case 3:
-        ptr->format = CTexFormat::RGB;
-        break;
-    case 2:
-        ptr->format = CTexFormat::RG;
-        break;
-    case 1:
-        ptr->format = CTexFormat::RED;
-        break;
-    default:
-        ptr->format = CTexFormat::RGBA;
-    }
-
-    ptr->datatype = CDataType::UByte;
-
-    return ptr;
-}
-
-void coffee_graphics_tex_free_texdata(CTextureData *texd)
-{
-    free(texd->data);
-    delete texd;
-}
-
-CImportedTexture coffee_graphics_tex_create_rtexdata(const CResources::CResource &resource)
-{
-    return CImportedTexture(coffee_graphics_tex_create_texdata(resource,nullptr));
-}
-
-}
-
 }

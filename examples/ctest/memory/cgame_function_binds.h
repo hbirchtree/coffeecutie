@@ -1,8 +1,8 @@
 #ifndef CGAME_FUNCTION_BINDS
 #define CGAME_FUNCTION_BINDS
 
-#include <coffee/core/graphics_apis/COpenGL>
-#include "../rendering/cmultidrawgraph.h"
+#include <coffee/graphics_apis/COpenGL>
+#include "rendering/cmultidrawgraph.h"
 
 namespace Coffee{
 namespace CMemoryManagement{

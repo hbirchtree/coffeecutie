@@ -4,7 +4,6 @@
 #include <coffee/core/base/cfiles.h>
 #include <coffee/image/cimage.h>
 #include <coffee/core/base/cmath.h>
-#include <coffee/core/graphics_apis/COpenGL>
 #include "cblam_bitm_decoders.h"
 
 namespace Coffee{

@@ -1,9 +1,9 @@
 #ifndef COFFEE_CRENDERING_CMULTIDRAWGRAPH_H
 #define COFFEE_CRENDERING_CMULTIDRAWGRAPH_H
 
+#include <coffee/graphics_apis/COpenGL>
 #include <coffee/assimp/cassimpimporters.h>
-#include <coffee/core/graphics/cgraphicsdata.h>
-#include <coffee/core/graphics_apis/COpenGL>
+
 #include <iterator>
 
 namespace Coffee {

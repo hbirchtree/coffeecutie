@@ -3,7 +3,7 @@
 
 #include "cgame_function_binds.h"
 #include <coffee/assimp/cassimptypes.h>
-#include <coffee/core/CGraphics>
+#include <coffee/CGraphics>
 
 namespace Coffee{
 using namespace CGraphicsWrappers;

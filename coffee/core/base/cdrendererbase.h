@@ -237,16 +237,10 @@ public:
     virtual void eventHapticHandle(const CIHapticEvent* e) = 0;
 
     /*!
-     * \brief Function for querying context or the GL whether an extension is supported or not
-     * \param e
-     * \return True if extension is supported
-     */
-    virtual bool requestGLExtension(cstring e) = 0;
-    /*!
      * \brief Callback for GL errors and messages, implemented by the user.
      * \param d A pointer to the system's OpenGL report format. For the time being this is the CGLReport structure. The given data is freed when the function exits.
      */
-    virtual void bindingCallback(const void* d) const = 0;
+    virtual void bindingCallback(const void*) const = 0;
     /*!
      * \brief Function called to initialize binding library like glbinding, called before context is created
      */
