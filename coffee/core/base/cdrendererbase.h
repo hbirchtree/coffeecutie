@@ -246,7 +246,7 @@ public:
      * \brief Callback for GL errors and messages, implemented by the user.
      * \param d A pointer to the system's OpenGL report format. For the time being this is the CGLReport structure. The given data is freed when the function exits.
      */
-    virtual void bindingCallback(void* d) const = 0;
+    virtual void bindingCallback(const void* d) const = 0;
     /*!
      * \brief Function called to initialize binding library like glbinding, called before context is created
      */

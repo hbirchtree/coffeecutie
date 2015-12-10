@@ -140,10 +140,27 @@ enum class CDataType : uint16
 
 enum class CDebugSeverity : uint8
 {
-    Notification = 1,
-    Low = 2,
-    Medium = 3,
-    High = 4,
+    Notification,
+    Low,
+    Medium,
+    High,
+};
+
+enum class CDebugSource : uint8
+{
+    API,
+    Other,
+    WindowManager,
+    Application,
+    ShaderCompiler,
+};
+
+enum class CDebugType : uint8
+{
+    Error,
+    Other,
+    Marker,
+    Performance,
 };
 
 }

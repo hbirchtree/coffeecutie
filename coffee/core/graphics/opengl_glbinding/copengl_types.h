@@ -12,6 +12,8 @@ namespace CGraphicsWrappers{
 //Opaque types
 struct CGLReport;
 
+typedef void(*CDebugCallback)(CGLReport const&,void* userPtr);
+
 //Type definitions
 typedef int32 CGint;
 typedef uint32 CGuint;
@@ -31,6 +33,13 @@ typedef uint64 CGhnd64;
  * \brief An index retrieved from GL or to be used in GL
  */
 typedef uint32 CGidx;
+
+struct CGLDebugMessage
+{
+    CDebugSeverity severity;
+    CDebugSource source;
+    uint32 id;
+};
 
 /*!
  * \brief GL multidraw indirect call used to put triangles on the screen

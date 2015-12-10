@@ -16,22 +16,10 @@ using namespace Coffee::CDisplay;
 namespace Coffee {
 namespace CDisplay {
 
-void glbindingCallbackDirect(GLenum source, GLenum type,GLuint id, GLenum severity,GLsizei length, const GLchar* msg,const void* userPtr);
-
-void glbindingCallbackDirect(GLenum source, GLenum type,
-                                             GLuint id, GLenum severity,
-                                             GLsizei length, const GLchar* msg,
-                                             const void* userPtr)
+void glbinding_default_callback(CGLReport const& report, void* userPtr)
 {
-    const CGLBindingRenderer* renderer = static_cast<const CGLBindingRenderer*>(userPtr);
-    CGLReport *report = (CGLReport*)c_alloc(sizeof(CGLReport));
-    report->source = source;
-    report->type = type;
-    report->id = id;
-    report->message = msg;
-    report->severity = severity;
-    renderer->bindingCallback(report);
-    c_free(report);
+    CGLBindingRenderer* ptr = (CGLBindingRenderer*)userPtr;
+    ptr->bindingCallback(&report);
 }
 
 CGLBindingRenderer::CGLBindingRenderer(Coffee::CObject *parent) :
@@ -161,8 +149,7 @@ void CGLBindingRenderer::bindingPostInit()
 //    });
 
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback((GLDEBUGPROC)glbindingCallbackDirect,this);
+        coffee_graphics_debug_context(true,glbinding_default_callback,this);
     }
 }
 
@@ -170,7 +157,7 @@ void CGLBindingRenderer::bindingTerminate()
 {
 }
 
-void CGLBindingRenderer::bindingCallback(void *report) const
+void CGLBindingRenderer::bindingCallback(const void *report) const
 {
     CGLReport* rep = (CGLReport*)report;
     if(!m_msg_filter(rep))

@@ -35,23 +35,48 @@ enum class CCullMode : uint8
  */
 constexpr CGhnd opengl_default_framebuffer = 0;
 
+/*!
+ * \brief Set the GL viewport
+ * \param view
+ */
 extern void coffee_graphics_set_viewport(const CRectF& view);
 
 template<typename T>
+/*!
+ * \brief Convenience function for other kinds of sizes
+ * \param view
+ */
 void coffee_graphics_set_viewport(
         const _cbasic_size_2d<T>& view)
 {
     coffee_graphics_set_viewport(CRectF(0,0,view.w,view.h));
 }
-
+/*!
+ * \brief Enable face culling
+ * \param enable
+ * \param mode
+ */
 extern void coffee_graphics_culling(bool enable, CCullMode mode);
-
+/*!
+ * \brief Enable blending
+ * \param enable
+ * \param additive
+ */
 extern void coffee_graphics_blend(bool enable, bool additive = false);
-
+/*!
+ * \brief Enable depth testing
+ * \param enable
+ */
 extern void coffee_graphics_depth(bool enable);
-
+/*!
+ * \brief Set framebuffer clear-color
+ * \param color
+ */
 extern void coffee_graphics_set_clearcolor(const CVec4& color);
-
+/*!
+ * \brief Clear framebuffer bits
+ * \param flg
+ */
 extern void coffee_graphics_clear(CClearFlag flg);
 
 extern void coffee_graphics_draw_indexed(
@@ -61,10 +86,27 @@ extern void coffee_graphics_draw_indexed(
 extern void coffee_graphics_multidraw(
         const CPrimitiveMode& mode,
         const CBuffer* buf);
-
+/*!
+ * \brief Debug filter that ignores notifications.
+ * \param rep
+ * \return
+ */
 extern bool coffee_graphics_debug_filter_ignore_notifications(CGLReport* rep);
-
+/*!
+ * \brief Debug filter that ignores all messages. It's better to disable debugging, but...
+ * \return
+ */
 extern bool coffee_graphics_debug_filter_all(CGLReport*);
+/*!
+ * \brief coffee_graphics_enable_debug_context
+ * \param enable
+ * \param userPointer
+ * \return
+ */
+extern bool coffee_graphics_debug_context(
+        bool enable,
+        CDebugCallback userFunction = nullptr,
+        void *userPtr = nullptr);
 
 }
 }

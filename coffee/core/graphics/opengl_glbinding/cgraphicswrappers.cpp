@@ -113,5 +113,58 @@ bool coffee_graphics_debug_filter_all(CGLReport*)
     return true;
 }
 
+struct cg_debug_data
+{
+    CDebugCallback function;
+    void* userPtr;
+};
+
+void coffee_graphics_debug_director(
+        GLenum source,
+        GLenum type,
+        GLuint id,
+        GLenum severity,
+        GLsizei,
+        const GLchar* msg,
+        void* userPtr)
+{
+    if(!userPtr)
+        return;
+
+    CGLReport report;
+    report.source = source;
+    report.type = type;
+    report.id = id;
+    report.message = msg;
+    report.severity = severity;
+
+    cg_debug_data* data = (cg_debug_data*)userPtr;
+
+    if(data->function)
+        data->function(report,data->userPtr);
+}
+
+static cg_debug_data coffee_dbg_data;
+
+bool coffee_graphics_debug_context(bool enable, CDebugCallback userFunction, void* userPtr)
+{
+    if(!glDebugMessageCallback)
+        return false;
+
+    if(enable)
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    else{
+        glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        return true;
+    }
+
+    coffee_dbg_data.function = userFunction;
+    coffee_dbg_data.userPtr = userPtr;
+
+    glDebugMessageCallback((GLDEBUGPROC)coffee_graphics_debug_director,&coffee_dbg_data);
+
+    return true;
+}
+
 }
 }

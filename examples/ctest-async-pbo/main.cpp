@@ -230,8 +230,12 @@ public:
             for(size_t i=0;i<pbos.size;i++)
             {
                 coffee_graphics_activate(&pbos.current());
-                coffee_graphics_buffer_store_immutable(&pbos.current(),texstorage_1,texsize.w*texsize.h*sizeof(CRGBA),
-                                                       CBufferStorage::WriteBit|CBufferStorage::Persistent|CBufferStorage::Coherent);
+                coffee_graphics_buffer_store_immutable(
+                            &pbos.current(),
+                            texstorage_1,texsize.w*texsize.h*sizeof(CRGBA),
+                            CBufferStorage::WriteBit|
+                            CBufferStorage::Persistent|
+                            CBufferStorage::Coherent);
                 coffee_graphics_buffer_map(&pbos.current(),
                                            CBuffer_PersistentBufferFlags);
 
@@ -351,7 +355,8 @@ int32 coffee_main(int32, byte_t**)
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
-    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+//    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags |= CGLContextProperties::GLVSync;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();

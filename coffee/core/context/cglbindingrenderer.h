@@ -34,7 +34,7 @@ public:
 
     bool printExtensions(bool doFetch = false);
 
-    virtual void bindingCallback(void* report) const;
+    virtual void bindingCallback(const void* report) const;
 
 protected:
     CGLBindingRenderer(CObject* parent);
