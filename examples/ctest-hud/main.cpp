@@ -38,10 +38,10 @@ public:
         };
 
         const CVec2 texdata[] = {
-            CVec2(0.f, 0.f), //1
-            CVec2(1.f, 0.f), //2
-            CVec2(0.f, 1.f), //3
-            CVec2(1.f, 1.f), //4
+            CVec2(0.f, 0.f),
+            CVec2(1.f, 0.f),
+            CVec2(0.f, 1.f),
+            CVec2(1.f, 1.f),
         };
 
         const uint32 indexdata[] = {
@@ -81,7 +81,7 @@ public:
         //Creating a shader pipeline
         CSimplePipeline basePipeline;
         basePipeline.create(vshader_src,fshader_src);
-        coffee_graphics_bind(basePipeline.data());
+        coffee_graphics_bind(basePipeline.data_ref());
 
         CBuffer vertices;
         CBuffer texcoords;
@@ -92,24 +92,24 @@ public:
             texcoords.type = CBufferType::Array;
             vertices.type = CBufferType::Array;
             indices.type = CBufferType::Index;
-            coffee_graphics_alloc(&vertices);
-            coffee_graphics_alloc(&texcoords);
-            coffee_graphics_alloc(&indices);
-            coffee_graphics_alloc(transforms.size,CBufferType::Array,transforms.data);
+            coffee_graphics_alloc(vertices);
+            coffee_graphics_alloc(texcoords);
+            coffee_graphics_alloc(indices);
+            coffee_graphics_alloc(transforms.size,transforms.data,CBufferType::Array);
 
-            coffee_graphics_activate(&texcoords);
-            coffee_graphics_activate(&vertices);
-            coffee_graphics_activate(&indices);
+            coffee_graphics_activate(texcoords);
+            coffee_graphics_activate(vertices);
+            coffee_graphics_activate(indices);
 
-            coffee_graphics_buffer_store(&vertices,
+            coffee_graphics_buffer_store(vertices,
                                          vertexdata,
                                          sizeof(vertexdata),
                                          CBufferUsage::StaticDraw);
-            coffee_graphics_buffer_store(&texcoords,
+            coffee_graphics_buffer_store(texcoords,
                                          texdata,
                                          sizeof(texdata),
                                          CBufferUsage::StaticDraw);
-            coffee_graphics_buffer_store(&indices,
+            coffee_graphics_buffer_store(indices,
                                          indexdata,
                                          sizeof(indexdata),
                                          CBufferUsage::StaticDraw);
@@ -121,8 +121,8 @@ public:
         CVertexArrayObject vao;
         CVertexDescription vao_desc;
 
-        coffee_graphics_alloc(&vao);
-        coffee_graphics_bind(&vao);
+        coffee_graphics_alloc(vao);
+        coffee_graphics_bind(vao);
 
         vao_desc.addAttribute<scalar,3,CDataType::Scalar>(0,vertexdata);
         vao_desc.addAttribute<scalar,2,CDataType::Scalar>(1,texdata);
@@ -140,10 +140,10 @@ public:
             vao_desc.getBinding(2+i)->divisor = 1;
             vao_desc.getBinding(2+i)->buffer = &transforms.current();
         }
-        coffee_graphics_vao_attribute_index_buffer(&vao,&indices);
+        coffee_graphics_vao_attribute_index_buffer(vao,indices);
 
-        vao_desc.applyAttributes(&vao);
-        vao_desc.bindAttributes(&vao);
+        vao_desc.applyAttributes(vao);
+        vao_desc.bindAttributes(vao);
 
         //Creating transforms
         CTransform root;
@@ -169,14 +169,14 @@ public:
 
         for(uint32 i=0;i<transforms.size;i++)
         {
-            coffee_graphics_activate(&transforms.current());
+            coffee_graphics_activate(transforms.current());
             coffee_graphics_buffer_store_immutable(
-                        &transforms.current(),&rt,sizeof(CMat4),
+                        transforms.current(),&rt,sizeof(CMat4),
                         CBufferStorage::Coherent|
                         CBufferStorage::Persistent|
                         CBufferStorage::WriteBit);
             coffee_graphics_buffer_map(
-                        &transforms.current(),
+                        transforms.current(),
                         CBuffer_PersistentBufferFlags);
             transforms.advance();
         }
@@ -192,27 +192,27 @@ public:
         {
             texuni.object_name = "diffsamp";
 
-            coffee_graphics_uniform_get(&basePipeline.frag,&texuni);
+            coffee_graphics_uniform_get(basePipeline.frag,texuni);
         }
 
         {
             gltext.textureType = CTexType::Tex2D;
             gltext.format = CTexIntFormat::RGBA8;
-            coffee_graphics_alloc(&gltext);
-            coffee_graphics_activate(&gltext);
+            coffee_graphics_alloc(gltext);
+            coffee_graphics_activate(gltext);
 
             CImportedTexture gtexdata = coffee_graphics_tex_create_rtexdata(texture);
 
             gltext.size = gtexdata.data()->size;
 
-            coffee_graphics_tex_define(&gltext);
-            coffee_graphics_tex_store(&gltext,gtexdata.data(),0);
+            coffee_graphics_tex_define(gltext);
+            coffee_graphics_tex_store(gltext,gtexdata.data_ref(),0);
 
             CResources::coffee_file_free(&texture);
 
-            coffee_graphics_tex_mipmap(&gltext);
+            coffee_graphics_tex_mipmap(gltext);
 
-            coffee_graphics_alloc(&glsamp);
+            coffee_graphics_alloc(glsamp);
 
             coffee_graphics_tex_get_handle(gltext,glsamp);
             coffee_graphics_tex_make_resident(glsamp);
@@ -228,7 +228,7 @@ public:
         drawcall.instanceCount = 1;
 
         //Set uniform, a texture handle
-        coffee_graphics_uniform_set_texhandle(&basePipeline.frag,&texuni,glsamp.bhandle);
+        coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,glsamp.bhandle);
 
         this->showWindow();
         while(!closeFlag())
@@ -236,6 +236,7 @@ public:
             coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
 
             camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
+            camera.rotation = t;
 
             wtf = coffee_graphics_gen_perspective(camera)
                     * coffee_graphics_gen_transform(camera);
@@ -247,9 +248,9 @@ public:
             {
                 CVertexBufferBinding* bind = vao_desc.getBinding(2+i);
                 coffee_graphics_vao_attribute_bind_buffer(
-                            &vao,
+                            vao,
                             *bind,
-                            &transforms.current());
+                            transforms.current());
             }
 
             counter.update(clock->elapsed());
@@ -260,12 +261,12 @@ public:
             this->pollEvents();
         }
 
-        coffee_graphics_free(&vao);
-        coffee_graphics_free(&gltext);
-        coffee_graphics_free(&vertices);
-        coffee_graphics_free(&texcoords);
+        coffee_graphics_free(vao);
+        coffee_graphics_free(gltext);
+        coffee_graphics_free(vertices);
+        coffee_graphics_free(texcoords);
         coffee_graphics_free(transforms.size,transforms.data);
-        coffee_graphics_free(&indices);
+        coffee_graphics_free(indices);
     }
     void eventWindowsHandle(const CDisplay::CDEvent *e)
     {
@@ -279,11 +280,28 @@ public:
     void eventInputHandle(const CIEvent *e)
     {
         CSDL2Renderer::eventInputHandle(e);
-        if(e->type==CIEvent::Keyboard)
+        switch(e->type)
+        {
+        case CIEvent::Keyboard:
         {
             const CIKeyEvent* kev = (const CIKeyEvent*)&e[1];
             if(kev->key == CK_Escape)
                 this->closeWindow();
+            break;
+        }
+        case CIEvent::MouseButton:
+        {
+            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
+            break;
+        }
+        case CIEvent::MouseMove:
+        {
+            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
+            t = CVectors::normalize_quat(CQuat(1,mev->rel.y*0.1,mev->rel.x*0.1,0) * t);
+            break;
+        }
+        default:
+            break;
         }
     }
 private:

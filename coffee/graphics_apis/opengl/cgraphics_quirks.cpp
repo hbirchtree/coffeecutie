@@ -1,5 +1,7 @@
 #include "cgraphics_quirks.h"
 
+#include <cstring>
+
 #include "coffee/core/base/cdebug.h"
 
 namespace Coffee{

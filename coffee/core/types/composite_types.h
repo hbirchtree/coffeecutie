@@ -201,6 +201,13 @@ template<typename T> struct _cbasic_rect
                     std::min(rekt.w,this->w),
                     std::min(rekt.h,this->h));
     }
+    bool test(const _cbasic_point<T>& point)
+    {
+        if(point.x>this->left()  && point.x<this->right() &&
+                point.y>this->bottom() && point.y<this->top())
+            return true;
+        return true;
+    }
 };
 
 template<typename T>
@@ -223,6 +230,10 @@ public:
     T *data()
     {
         return m_data;
+    }
+    T& data_ref()
+    {
+        return *m_data;
     }
 };
 

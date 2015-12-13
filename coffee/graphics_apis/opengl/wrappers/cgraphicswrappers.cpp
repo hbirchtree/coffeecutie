@@ -99,7 +99,7 @@ void coffee_graphics_set_clearcolor(const CVec4 &color)
 
 void coffee_graphics_set_viewport(const CRectF &view)
 {
-    glViewport(view.x,view.y,view.w,view.h);
+    coffee_graphics_viewport_set(&view,0,1);
 }
 
 bool coffee_graphics_debug_filter_ignore_notifications(CGLDebugMessage const& rep)

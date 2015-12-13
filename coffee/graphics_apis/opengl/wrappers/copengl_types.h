@@ -98,34 +98,34 @@ struct _cbasic_graphics_resource_desc
 {
     _cbasic_graphics_resource_desc();
 
+    /*!
+     * \brief Object name or identifier
+     */
     cstring object_name;
-    CGhnd index;
-};
-
-struct _cbasic_graphics_buffer_resource_desc
-{
-    _cbasic_graphics_buffer_resource_desc();
-
-    cstring object_name;
-    _cbasic_graphics_buffer_section* buffer;
+    /*!
+     * \brief Object index
+     */
     CGhnd index;
 };
 
 template<typename T>
 struct _cbasic_graphics_resource_binding
 {
-    _cbasic_graphics_resource_binding():
-        object(nullptr),
-        binding(0)
-    {
-    }
+    _cbasic_graphics_resource_binding();
 
-    T* object;
-    CGhnd binding;
+    /*!
+     * \brief Descriptor of the resource or its destination
+     */
+    _cbasic_graphics_resource_desc* desc;
+    /*!
+     * \brief Resource to be bound
+     */
+    T* resource;
+    /*!
+     * \brief Binding index for the resource
+     */
+    CGidx index;
 };
-
-typedef _cbasic_graphics_resource_binding<_cbasic_graphics_buffer_resource_desc>
-    _cbasic_graphics_resource_binding_generic;
 
 }
 }

@@ -31,7 +31,7 @@ public:
     CDContextBits context();
 
     uint32 windowState() const;
-    void setWindowState(uint32 state);
+    void setWindowState(const CDWindowProperties::State &state);
 
     bool screensaverMode();
     void setScreensaverMode(bool);
@@ -45,7 +45,7 @@ public:
     bool closeFlag();
 
     int swapInterval() const;
-    void setSwapInterval(int interval);
+    void setSwapInterval(const int &interval);
 
     CSize framebufferSize() const;
     CSize windowSize() const;

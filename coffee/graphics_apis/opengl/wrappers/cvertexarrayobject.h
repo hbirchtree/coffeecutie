@@ -58,28 +58,39 @@ struct CVertexAttribute
  * \brief Allocate a vertex array object
  * \param vao
  */
-extern void coffee_graphics_alloc(CVertexArrayObject* vao);
+extern void coffee_graphics_alloc(size_t count, CVertexArrayObject* vao);
+
+inline void coffee_graphics_alloc(CVertexArrayObject& obj)
+{
+    coffee_graphics_alloc(1,&obj);
+}
+
 /*!
  * \brief Free a vertex array object
  * \param vao
  */
-extern void coffee_graphics_free(CVertexArrayObject* vao);
+extern void coffee_graphics_free(size_t count, CVertexArrayObject* vao);
+
+inline void coffee_graphics_free(CVertexArrayObject& obj)
+{
+    coffee_graphics_free(1,&obj);
+}
 
 /*!
  * \brief Bind and unbind vertex array object, convenience function
  * \param vao
  */
-extern void coffee_graphics_activate(const CVertexArrayObject* vao);
+extern void coffee_graphics_activate(const CVertexArrayObject& vao);
 
 /*!
  * \brief Bind vertex array object
  * \param vao
  */
-extern void coffee_graphics_bind(const CVertexArrayObject* vao);
+extern void coffee_graphics_bind(const CVertexArrayObject &vao);
 /*!
  * \brief Unbind vertex array object, takes arbitrary VAO object to select the overload
  */
-extern void coffee_graphics_unbind(const CVertexArrayObject*);
+extern void coffee_graphics_unbind(const CVertexArrayObject &);
 
 /*!
  * \brief Set format for a VAO attribute. This is used initally to specify the vertex attribute
@@ -88,7 +99,7 @@ extern void coffee_graphics_unbind(const CVertexArrayObject*);
  * \param fmt Format to set
  */
 extern void coffee_graphics_vao_attribute_format(
-        CVertexArrayObject *vao, const CVertexAttribute& attr,
+        CVertexArrayObject &vao, const CVertexAttribute& attr,
         const CVertexFormat &fmt);
 /*!
  * \brief Set vertex buffer binding for a VAO attribute. This is done after defining the format of a vertex attribute
@@ -97,7 +108,7 @@ extern void coffee_graphics_vao_attribute_format(
  * \param buf Buffer binding
  */
 extern void coffee_graphics_vao_attribute_buffer(
-        CVertexArrayObject* vao, const CVertexAttribute &attr,
+        CVertexArrayObject& vao, const CVertexAttribute &attr,
         const CVertexBufferBinding& buf);
 /*!
  * \brief Attach index buffer to vertex array object
@@ -105,15 +116,15 @@ extern void coffee_graphics_vao_attribute_buffer(
  * \param ibuffer
  */
 extern void coffee_graphics_vao_attribute_index_buffer(
-        CVertexArrayObject* vao,
-        const CBuffer* ibuffer);
+        CVertexArrayObject& vao,
+        const CBuffer &ibuffer);
 /*!
  * \brief Bind buffer for VAO. This is done before a VAO is rendered
  * \param vao VAO to bind with
  * \param buf Buffer binding to bind
  */
 extern void coffee_graphics_vao_attribute_bind_buffer(
-        const CVertexArrayObject* vao,
+        const CVertexArrayObject& vao,
         const CVertexBufferBinding& buf);
 /*!
  * \brief Bind a specified buffer to a binding point on a VAO, useful for swapping vertex buffers
@@ -122,9 +133,9 @@ extern void coffee_graphics_vao_attribute_bind_buffer(
  * \param buffer
  */
 extern void coffee_graphics_vao_attribute_bind_buffer(
-        const CVertexArrayObject *vao,
+        const CVertexArrayObject &vao,
         const CVertexBufferBinding &buf,
-        const CBuffer* buffer);
+        const CBuffer& buffer);
 
 }
 }

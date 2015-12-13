@@ -55,22 +55,28 @@ enum class CTexParamOpt : uint16
 
 enum class CTexIntFormat : CGint
 {
-    None = 0,
-    RGBA8 = 1,
-    RED8 = 2,
-    Depth = 3,
-    Stencil = 4,
+    None,
+    RGBA8,
+    RED8,
+    Depth,
+    Stencil,
 
-    RG8 = 5,
-    RGB8 = 6,
+    RG8,
+    RGB8,
 
-    RGBA32F = 7,
+    RGBA32F,
 
-    DXT1 = 8,
-    DXT3 = 9,
-    DXT5 = 10,
+    DepthStencil,
 
-    DepthStencil = 11,
+    DXT1,
+    DXT1_NoAlpha,
+    DXT3,
+    DXT5,
+
+    BPTC_RGBA_UNORM,
+    BPTC_SRGB_ALPHA_UNORM,
+    BPTC_RGB_SFLOAT,
+    BPTC_RGB_UFLOAT,
 };
 
 enum class CTexFormat : uint16
@@ -141,41 +147,37 @@ struct CTextureData
     CTextureSize size;
 };
 
-/*!
- * \brief Load a texture for rendering
- */
-typedef void (*TexLoadFun)(const CTextureSampler&,const CTexture& tex);
-/*!
- * \brief Unload a texture after finished rendering
- */
-typedef void (*TexUnloadFun)(const CTextureSampler&,const CTexture& tex);
+using CTextureSingletonPFN = void(*)(CTexture&);
 
-/*!
- * \brief Define texture storage, mutable storage
- */
-typedef bool (*TexDefineFun)(
-        const CTexture* tex);
-/*!
- * \brief Store texture data
- */
-typedef bool (*TexStoreFun)(
-        const CTexture* tex,
-        const CTextureData* data,
-        CGint level);
+using CTextureSubstorePFN = void(*)(
+CTexture&,CTextureData const&,CGint const&,CTextureRegion const&);
 
-typedef void (*TexMipmapFun)(const CTexture* tex);
+using CTextureStorePFN = void(*)(
+CTexture&,CTextureData const&,CGint const&);
 
-struct CTextureFunctionBinds
+using CTextureReadTexelRegionPFN = void(*)(
+CTexture const&,CTextureRegion const&,CGint const&,CTexFormat const&,CDataType const&,c_ptr);
+
+using CTextureReadTexelsPFN = void(*)(
+CTexture const&,CGint const&,CTexFormat const&,CDataType const&,c_ptr);
+
+using CTextureLoadPFN = void(*)(
+CTextureSampler const&,CTexture const&);
+
+struct CTexturePFN
 {
-    CTextureFunctionBinds();
+    CTextureSingletonPFN mipmap;
 
-    TexLoadFun      load;
-    TexUnloadFun    unload;
+    CTextureSingletonPFN define;
 
-    TexDefineFun    define;
-    TexStoreFun     store;
+    CTextureStorePFN store;
+    CTextureSubstorePFN substore;
 
-    TexMipmapFun    mipmap;
+    CTextureReadTexelRegionPFN read_region;
+    CTextureReadTexelsPFN read_all;
+
+    CTextureLoadPFN load;
+    CTextureLoadPFN unload;
 };
 
 }

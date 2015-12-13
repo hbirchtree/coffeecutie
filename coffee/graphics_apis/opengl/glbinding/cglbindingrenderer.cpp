@@ -41,6 +41,8 @@ void CGLBindingRenderer::bindingPreInit()
 
 }
 
+std::set<CString> functions;
+
 void CGLBindingRenderer::bindingPostInit()
 {
     //Check for extensions! Quick!
@@ -62,15 +64,13 @@ void CGLBindingRenderer::bindingPostInit()
         cMsg("glbinding","Failed to acquire GL details");
     }
 
-//    cMsg("glbinding","Obtained context information");
-
     cMsg("glbinding","Currently running OpenGL revision: %i",m_libraryRevision);
 
-//    glbinding::setCallbackMask(glbinding::CallbackMask::After);
+    glbinding::setCallbackMask(glbinding::CallbackMask::After);
 
-//    glbinding::setAfterCallback([](const glbinding::FunctionCall& call){
-//        printf("GL call: %s\n",call.function->name());
-//    });
+    glbinding::setAfterCallback([](const glbinding::FunctionCall& call){
+        functions.insert(CString(call.function->name()));
+    });
 
     if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
         coffee_graphics_debug_context(true,glbinding_default_callback,this);
@@ -79,6 +79,9 @@ void CGLBindingRenderer::bindingPostInit()
 
 void CGLBindingRenderer::bindingTerminate()
 {
+    cDebug("Functions: ");
+    for(const CString &str : functions)
+        cBasicPrint("%s",str.c_str());
 }
 
 void CGLBindingRenderer::bindingCallback(const void *report) const

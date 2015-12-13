@@ -5,202 +5,64 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-
-
-bool coffee_graphics_tex_2d_define(
-        const CTexture *texture)
+void coffee_graphics_tex_defimmutable_1d(CTexture &tex)
 {
-    glTextureStorage2D(texture->handle,texture->levels,
-                       gl_get(texture->format),
-                       texture->size.w,texture->size.h);
-    return true;
+    glTextureStorage1D(tex.handle,tex.levels,
+                       gl_get(tex.format),
+                       tex.size.w);
 }
 
-bool coffee_graphics_tex_3d_define(
-        const CTexture *texture)
+void coffee_graphics_tex_defimmutable_2d(CTexture &tex)
 {
-    glTextureStorage3D(texture->handle,texture->levels,
-                       gl_get(texture->format),
-                       texture->size.w,texture->size.h,texture->size.d);
-    return true;
+    glTextureStorage2D(tex.handle,tex.levels,
+                       gl_get(tex.format),
+                       tex.size.w,tex.size.h);
 }
 
-bool coffee_graphics_tex_cube_store(
-        const CTexture *texture, const CTextureData *data, CGint level)
+void coffee_graphics_tex_defimmutable_3d(CTexture &tex)
 {
-    glTextureSubImage3D(texture->handle,level,0,0,0,
-                        data->size.w,data->size.h,data->size.d,
-            gl_get(data->format),
-            gl_get(data->datatype),
-            data->data);
-    return true;
+    glTextureStorage3D(tex.handle,tex.levels,
+                       gl_get(tex.format),
+                       tex.size.w,tex.size.h,tex.size.d);
 }
 
-bool coffee_graphics_tex_2d_store(
-        const CTexture *texture, const CTextureData *data, CGint level)
+void coffee_graphics_tex_substore_1d(CTexture &tex, const CTextureData &data, const CGint &level, const CTextureRegion &reg)
 {
-    glTextureSubImage2D(texture->handle,level,0,0,
-                        data->size.w,data->size.h,
-            gl_get(data->format),
-            gl_get(data->datatype),
-            data->data);
-    return true;
+    glTextureSubImage1D(tex.handle,level,
+                        reg.x(),
+                        reg.w,
+                        gl_get(data.format),gl_get(data.datatype),
+                        data.data);
 }
 
-bool coffee_graphics_tex_3d_store(
-        const CTexture *texture, const CTextureData *data, CGint level)
+void coffee_graphics_tex_substore_2d(CTexture &tex, const CTextureData &data, const CGint &level, const CTextureRegion &reg)
 {
-    glTexImage3D(gl_get(texture->textureType),
-                 level,
-                 (CGint)data->format,
-                 data->size.w,data->size.h,data->size.d,
-                 0,
-                 gl_get(data->format),
-                 gl_get(data->datatype),
-                 data->data);
-    return true;
+    glTextureSubImage2D(tex.handle,level,
+                        reg.x(),reg.y(),
+                        reg.w,reg.h,
+                        gl_get(data.format),gl_get(data.datatype),
+                        data.data);
 }
 
-bool coffee_graphics_tex_2d_store_safe(
-        const CTexture *texture, const CTextureData *data, CGint level)
+void coffee_graphics_tex_substore_3d(CTexture &tex, const CTextureData &data, const CGint &level, const CTextureRegion &reg)
 {
-    coffee_graphics_bind(texture);
-    glTexSubImage2D(
-                gl_get(texture->textureType),
-                level,0,0,
-                data->size.w,data->size.h,
-                gl_get(texture->format),
-                gl_get(data->datatype),
-                data->data);
-    coffee_graphics_unbind(texture);
-    return true;
+    glTextureSubImage3D(tex.handle,level,
+                        reg.x(),reg.y(),reg.z(),
+                        reg.w,reg.h,reg.d,
+                        gl_get(data.format),gl_get(data.datatype),
+                        data.data);
 }
 
-bool coffee_graphics_tex_3d_store_safe(
-        const CTexture *texture, const CTextureData *data,
-        CGint level)
+void coffee_graphics_tex_readtexelregion(
+        const CTexture& tex, const CTextureRegion& reg,
+        const CGint& level, const CTexFormat& fmt,
+        const CDataType& dType, c_ptr dPtr)
 {
-    coffee_graphics_bind(texture);
-    glTexSubImage3D(gl_get(texture->textureType),
-                    level,0,0,0,
-                    data->size.w,data->size.h,data->size.d,
-            gl_get(texture->format),
-            gl_get(data->datatype),
-            data->data);
-    coffee_graphics_unbind(texture);
-    return true;
-}
-
-bool coffee_graphics_tex_cube_store_safe(
-        const CTexture *texture, const CTextureData *data,
-        CGint level)
-{
-    coffee_graphics_tex_3d_store_safe(texture,data,level);
-    return false;
-}
-
-bool coffee_graphics_tex_2d_define_safe(
-        const CTexture *texture)
-{
-    coffee_graphics_bind(texture);
-    glTexStorage2D(gl_get(texture->textureType),
-                   texture->levels,
-                   gl_get(texture->format),
-                   texture->size.w,texture->size.h);
-    coffee_graphics_unbind(texture);
-    return true;
-}
-
-bool coffee_graphics_tex_3d_define_safe(
-        const CTexture *texture)
-{
-    coffee_graphics_bind(texture);
-    glTexStorage3D(gl_get(texture->textureType),
-                   texture->levels,
-                   gl_get(texture->format),
-                   texture->size.w,texture->size.h,texture->size.d);
-    coffee_graphics_unbind(texture);
-    return true;
-}
-
-bool coffee_graphics_tex_define(
-        const CTexture *tex)
-{
-    switch(tex->size.dimensions())
-    {
-    case 2: return coffee_graphics_tex_2d_define(tex);
-    case 3: return coffee_graphics_tex_3d_define(tex);
-    }
-    return false;
-}
-
-bool coffee_graphics_tex_define_safe(
-        const CTexture *tex)
-{
-    switch(tex->size.dimensions())
-    {
-    case 2: return coffee_graphics_tex_2d_define_safe(tex);
-    case 3: return coffee_graphics_tex_3d_define_safe(tex);
-    }
-    return false;
-}
-
-bool coffee_graphics_tex_store(
-        const CTexture *tex, const CTextureData *data, CGint level)
-{
-    switch(data->size.dimensions())
-    {
-    case 2: return coffee_graphics_tex_2d_store(tex,data,level);
-    case 3: return coffee_graphics_tex_3d_store(tex,data,level);
-    }
-    return false;
-}
-
-bool coffee_graphics_tex_store_safe(
-        const CTexture *tex, const CTextureData *data, CGint level)
-{
-    switch(data->size.dimensions())
-    {
-    case 2: return coffee_graphics_tex_2d_store_safe(tex,data,level);
-    case 3: return coffee_graphics_tex_3d_store_safe(tex,data,level);
-    }
-    return false;
-}
-
-void coffee_graphics_tex_2d_define_mutable(const CTexture *texture, const CTextureData* data)
-{
-    coffee_graphics_bind(texture);
-
-    glTexImage2D(gl_get(texture->textureType),
-                 0,
-                 (GLint)gl_get(texture->format),
-                 data->size.w,data->size.h,
-                 0,
-                 gl_get(data->format),
-                 gl_get(data->datatype),
-                 data->data);
-
-    coffee_graphics_unbind(texture);
-}
-
-void coffee_graphics_tex_readpixels(
-        const CTexture &tex, const CGint &level,
-        const CTexFormat &fmt,
-        const CDataType &dType, c_ptr dPtr)
-{
-    glGetTextureImage(tex.handle,level,gl_get(fmt),gl_get(dType),0,dPtr);
-}
-
-void coffee_graphics_tex_readpixels_safe(
-        const CTexture &tex, const CGint &level,
-        const CTexFormat &fmt,
-        const CDataType &dType, c_ptr dPtr)
-{
-    coffee_graphics_bind(&tex);
-
-    glGetTexImage(gl_get(tex.textureType),level,gl_get(fmt),gl_get(dType),dPtr);
-
-    coffee_graphics_unbind(&tex);
+    glGetTextureSubImage(tex.handle,level,
+                         reg.x(),reg.y(),reg.z(),
+                         reg.w,reg.h,reg.d,
+                         gl_get(fmt),gl_get(dType),
+                         0, dPtr);
 }
 
 }

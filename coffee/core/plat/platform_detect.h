@@ -2,6 +2,11 @@
 
 #define COFFEE_LINUX
 
+//For the sake of upcoming window systems
+#define COFFEE_X11
+//#define COFFEE_WAYLAND
+//#define COFFEE_MIR
+
 #endif
 
 #ifdef _WIN32

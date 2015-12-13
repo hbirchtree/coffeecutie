@@ -38,7 +38,7 @@ CDWindowProperties coffee_get_default_visual()
 }
 
 CDWindowProperties::CDWindowProperties():
-    flags(0),
+    flags(),
     monitor(0),
     size(0,0),
     contextProperties(),

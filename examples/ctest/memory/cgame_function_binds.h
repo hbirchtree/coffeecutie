@@ -15,8 +15,8 @@ struct game_function_binds
 {
     RenderFun renderfun = nullptr;
 
-    CTextureFunctionBinds textures;
-    CBufferFunctionBinds  buffers;
+    CTexturePFN textures;
+    CBufferPFN  buffers;
 };
 
 }

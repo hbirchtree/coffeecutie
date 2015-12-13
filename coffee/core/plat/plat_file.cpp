@@ -1,5 +1,7 @@
 #include "plat_file.h"
 
+#include <cstring>
+
 #include "platform_detect.h"
 #include "environment_details.h"
 

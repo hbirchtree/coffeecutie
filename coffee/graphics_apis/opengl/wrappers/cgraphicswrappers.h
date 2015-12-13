@@ -6,29 +6,10 @@
 #include "cbuffer.h"
 #include "cframebuffer.h"
 #include "crenderfence.h"
+#include "cviewport_array.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{
-
-enum class CPrimitiveMode : uint16
-{
-    Triangles = 0,
-    Points = 1,
-    Line = 2,
-    TriangleStrip = 3,
-    TriangleFan = 4,
-    TriangleStripAdjacency = 5,
-    TrianglesAdjacency = 6,
-    LineStrip = 7,
-    LineLoop = 8,
-};
-
-enum class CCullMode : uint8
-{
-    Front = 1,
-    Back  = 2,
-    Both  = 3,
-};
 
 /*!
  * \brief The default buffer to which graphics are rendered

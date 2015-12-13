@@ -34,11 +34,11 @@ CVertexArrayObject::CVertexArrayObject():
 }
 
 void coffee_graphics_vao_attribute_format(
-        CVertexArrayObject *vao, const CVertexAttribute& attr,
+        CVertexArrayObject &vao, const CVertexAttribute& attr,
         const CVertexFormat &fmt)
 {
     glVertexArrayAttribFormat(
-                vao->handle,
+                vao.handle,
                 attr.attribIdx,
                 fmt.size,
                 gl_get(fmt.type),
@@ -46,59 +46,71 @@ void coffee_graphics_vao_attribute_format(
                 fmt.offset);
 }
 
-void coffee_graphics_vao_attribute_buffer(
-        CVertexArrayObject *vao, const CVertexAttribute& attr,
+void coffee_graphics_vao_attribute_buffer(CVertexArrayObject &vao, const CVertexAttribute& attr,
         const CVertexBufferBinding &buf)
 {
-    glEnableVertexArrayAttrib(vao->handle,attr.attribIdx);
-    glVertexArrayAttribBinding(vao->handle,attr.attribIdx,buf.binding);
-    glVertexArrayBindingDivisor(vao->handle,buf.binding,buf.divisor);
+    glEnableVertexArrayAttrib(vao.handle,attr.attribIdx);
+    glVertexArrayAttribBinding(vao.handle,attr.attribIdx,buf.binding);
+    glVertexArrayBindingDivisor(vao.handle,buf.binding,buf.divisor);
 }
 
 void coffee_graphics_vao_attribute_bind_buffer(
-        const CVertexArrayObject *vao,
+        const CVertexArrayObject &vao,
         const CVertexBufferBinding &buf)
 {
-    glVertexArrayVertexBuffer(vao->handle,buf.binding,buf.buffer->handle,buf.offset,buf.stride);
+    glVertexArrayVertexBuffer(vao.handle,buf.binding,buf.buffer->handle,buf.offset,buf.stride);
 }
 
-void coffee_graphics_vao_attribute_bind_buffer(
-        const CVertexArrayObject *vao,
+void coffee_graphics_vao_attribute_bind_buffer(const CVertexArrayObject &vao,
         const CVertexBufferBinding &buf,
-        const CBuffer* buffer)
+        const CBuffer &buffer)
 {
-    glVertexArrayVertexBuffer(vao->handle,buf.binding,buffer->handle,buf.offset,buf.stride);
+    glVertexArrayVertexBuffer(vao.handle,buf.binding,buffer.handle,buf.offset,buf.stride);
 }
 
-void coffee_graphics_alloc(CVertexArrayObject *vao)
+void coffee_graphics_alloc(size_t count, CVertexArrayObject *vao)
 {
-    glGenVertexArrays(1,&vao->handle);
+    CGuint *handles = new CGuint[count];
+    glGenVertexArrays(count,handles);
+    for(size_t i=0;i<count;i++)
+    {
+        vao[i].handle = handles[i];
+    }
+    delete[] handles;
 }
 
-void coffee_graphics_free(CVertexArrayObject *vao)
+void coffee_graphics_free(size_t count, CVertexArrayObject *vao)
 {
-    glDeleteVertexArrays(1,&vao->handle);
+    CGuint *handles = new CGuint[count];
+    for(size_t i=0;i<count;i++)
+    {
+        handles[i] = vao[i].handle;
+        vao[i].handle = 0;
+    }
+    glDeleteVertexArrays(count,handles);
+    delete[] handles;
 }
 
-void coffee_graphics_activate(const CVertexArrayObject *vao)
+void coffee_graphics_activate(const CVertexArrayObject &vao)
 {
     coffee_graphics_bind(vao);
     coffee_graphics_unbind(vao);
 }
 
-void coffee_graphics_bind(const CVertexArrayObject *vao)
+void coffee_graphics_bind(const CVertexArrayObject &vao)
 {
-    glBindVertexArray(vao->handle);
+    glBindVertexArray(vao.handle);
 }
 
-void coffee_graphics_unbind(const CVertexArrayObject*)
+void coffee_graphics_unbind(const CVertexArrayObject&)
 {
     glBindVertexArray(0);
 }
 
-void coffee_graphics_vao_attribute_index_buffer(CVertexArrayObject *vao, const CBuffer *ibuffer)
+void coffee_graphics_vao_attribute_index_buffer(
+        CVertexArrayObject &vao, const CBuffer &ibuffer)
 {
-    glVertexArrayElementBuffer(vao->handle,ibuffer->handle);
+    glVertexArrayElementBuffer(vao.handle,ibuffer.handle);
 }
 
 }

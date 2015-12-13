@@ -20,7 +20,7 @@ void coffee_multidraw_free(CMultiDrawDataSet *md){
 void coffee_multidraw_bind_states(const CMultiDrawDataSet &set)
 {
     for(CVertexBufferBinding* bnd : set.bindings)
-        coffee_graphics_vao_attribute_bind_buffer(set.vao,*bnd);
+        coffee_graphics_vao_attribute_bind_buffer(*set.vao,*bnd);
 }
 
 void coffee_multidraw_render(const CMultiDrawDataSet &set)
@@ -39,40 +39,40 @@ void coffee_multidraw_render_safe(const CMultiDrawDataSet &set)
 }
 
 void coffee_multidraw_load_drawcalls(
-        const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
+        const CMultiDrawDataSet &set, const CBufferPFN& bfun)
 {
     set.drawcalls->drawbuffer->type = CBufferType::DrawIndirect;
-    _coffee_bufferload_vector<CGLDrawCall>(
-                set.drawcalls->drawcalls,
-                set.drawcalls->drawbuffer,bfun);
+    _coffee_bufferload_vector<CGLDrawCall>(set.drawcalls->drawcalls,
+                                           *set.drawcalls->drawbuffer,
+                                           bfun);
 }
 
 void coffee_multidraw_load_indices(
-        const CMultiDrawDataSet &set, const CBufferFunctionBinds& bfun)
+        const CMultiDrawDataSet &set, const CBufferPFN& bfun)
 {
     set.index->buffer->type = CBufferType::Index;
-    _coffee_bufferload_vector<CGuint>(set.index->indices,set.index->buffer,bfun);
+    _coffee_bufferload_vector<CGuint>(set.index->indices,*set.index->buffer,bfun);
 }
 
 void coffee_multidraw_load_buffer(
-        CBuffer *buffer, const std::vector<byte_t> &data, const CBufferFunctionBinds& bfun)
+        CBuffer *buffer, const std::vector<byte_t> &data, const CBufferPFN& bfun)
 {
     buffer->type = CBufferType::Array;
-    _coffee_bufferload_vector<byte_t>(data,buffer,bfun);
+    _coffee_bufferload_vector<byte_t>(data,*buffer,bfun);
 }
 
 void coffee_multidraw_load_vao(CMultiDrawDataSet &set, CMultiDrawDescriptor &desc)
 {
-    coffee_graphics_activate(set.vao);
+    coffee_graphics_activate(*set.vao);
     for(CVertexAttribute& attr : desc.attributes){
-        coffee_graphics_vao_attribute_buffer(set.vao,attr,*attr.bnd);
-        coffee_graphics_vao_attribute_format(set.vao,attr,*attr.fmt);
+        coffee_graphics_vao_attribute_buffer(*set.vao,attr,*attr.bnd);
+        coffee_graphics_vao_attribute_format(*set.vao,attr,*attr.fmt);
 
-        coffee_graphics_vao_attribute_bind_buffer(set.vao,*attr.bnd);
+        coffee_graphics_vao_attribute_bind_buffer(*set.vao,*attr.bnd);
         set.bindings.push_back(attr.bnd);
     }
-    coffee_graphics_activate(set.index->buffer);
-    coffee_graphics_vao_attribute_index_buffer(set.vao,set.index->buffer);
+    coffee_graphics_activate(*set.index->buffer);
+    coffee_graphics_vao_attribute_index_buffer(*set.vao,*set.index->buffer);
 }
 
 bool coffee_multidraw_create_call(CMultiDrawDataSet &set, CAssimpMesh *mesh)

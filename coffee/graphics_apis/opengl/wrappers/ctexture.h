@@ -16,51 +16,62 @@ namespace CGraphicsWrappers{
  * \brief Allocate texture
  * \param tex
  */
-extern void     coffee_graphics_alloc(CTexture* tex);
+extern void coffee_graphics_alloc(size_t count, CTexture* tex);
 /*!
  * \brief Free texture
  * \param tex
  */
-extern void     coffee_graphics_free(CTexture* tex);
+extern void coffee_graphics_free(size_t count, CTexture* tex);
+
+inline void coffee_graphics_alloc(CTexture& tex)
+{
+    coffee_graphics_alloc(1,&tex);
+}
+
+inline void coffee_graphics_free(CTexture& tex)
+{
+    coffee_graphics_free(1,&tex);
+}
 
 /*!
  * \brief Bind texture to its texture target
  * \param tex
  */
-extern void     coffee_graphics_bind(
-        const CTexture* tex);
+extern void coffee_graphics_bind(CTexture const& tex);
+/*!
+ * \brief Bind texture for ARB_shader_image_load_store operations
+ */
+extern void coffee_graphics_tex_bind_image(
+        const CTexture& tex, const CGuint& unit, const CGint& level,
+        bool layered, const CGint& layer, const CTextureAccess& access);
 /*!
  * \brief Unbind texture from its texture target
  * \param tex
  */
-extern void     coffee_graphics_unbind(
-        const CTexture* tex);
+extern void coffee_graphics_unbind(CTexture const& tex);
 /*!
  * \brief Generate mipmapping for texture
  * \param tex
  */
-extern void     coffee_graphics_tex_mipmap(
-        const CTexture* tex);
+extern void coffee_graphics_tex_mipmap(CTexture& tex);
 /*!
  * \brief Generate mipmapping for texture, old variant
  * \param tex
  */
-extern void     coffee_graphics_tex_mipmap_safe(
-        const CTexture* tex);
+extern void coffee_graphics_tex_mipmap_safe(CTexture& tex);
 
 /*!
  * \brief Binds and unbinds texture, used for bindless textures among others, only for convenience
  * \param tex
  */
-extern void     coffee_graphics_activate(
-        const CTexture* tex);
+extern void coffee_graphics_activate(CTexture &tex);
 
 /*!
  * \brief Make a given texture sparse, allowing virtual addressing of texture space
  * \param tex
  * \param enable
  */
-extern void coffee_graphics_tex_sparsify(CTexture* tex, bool enable);
+extern void coffee_graphics_tex_sparsify(CTexture& tex, bool enable);
 
 /*!
  * \brief Set all data of texture to the specified data
@@ -100,20 +111,8 @@ extern void coffee_graphics_tex_memset_region(
  * \param tex
  * \param filename
  */
-extern void     coffee_graphics_tex_dump(
-        const CTexture* tex, cstring filename);
-
-/*!
- * \brief Download GL texture to an image, sets image's properties
- * \param tex Texture to download
- * \param level Mipmap level to download
- * \param size Expected size of buffer (is allocated)
- * \param format Format of data
- * \param img Target image
- */
-extern void     coffee_graphics_tex_download_texture(
-        const CTexture* tex, CGint level,
-        CGsize size, CTexFormat format, CStbImageLib::CStbImage* img);
+extern void coffee_graphics_tex_dump(
+        const CTexture& tex, cstring filename);
 
 /*!
  * \brief The simple way to load a texture

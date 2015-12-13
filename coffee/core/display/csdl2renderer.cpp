@@ -2,7 +2,6 @@
 
 #include "coffeesdl2/sdl2helpers.h"
 #include "coffeesdl2/sdl2eventhandlers.h"
-#include "coffee/core/plat/plat_wm.h"
 #include "coffee/core/base/cfiles.h"
 
 namespace Coffee{
@@ -91,8 +90,6 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
 
     setMouseGrabbing(false);
 
-    setSwapInterval(0);
-
     cMsg("SDL2","Running %s",m_contextString.c_str());
 
     bindingPostInit();
@@ -172,15 +169,7 @@ CDMonitor CSDL2Renderer::monitor()
 
 CDWindow* CSDL2Renderer::window()
 {
-    CDWindow* win = new CDWindow;
-
-    SDL_GetWindowSize(m_context->window,&win->screenArea.w,&win->screenArea.h);
-    SDL_GetWindowPosition(m_context->window,&win->screenArea.x,&win->screenArea.y);
-
-    win->title = SDL_GetWindowTitle(m_context->window);
-    coffee_sdl2_get_window_ptr(m_context->window,win);
-
-    return win;
+    return coffee_sdl2_get_window(m_context->window);
 }
 
 CDContextBits CSDL2Renderer::context()
@@ -193,7 +182,7 @@ uint32 CSDL2Renderer::windowState() const
     return coffee_sdl2_get_winflags(m_context->window);
 }
 
-void CSDL2Renderer::setWindowState(uint32 state)
+void CSDL2Renderer::setWindowState(const CDWindowProperties::State &state)
 {
     coffee_sdl2_set_winflags(m_context->window,state);
 }
@@ -251,7 +240,7 @@ int CSDL2Renderer::swapInterval() const
     return SDL_GL_GetSwapInterval();
 }
 
-void CSDL2Renderer::setSwapInterval(int interval)
+void CSDL2Renderer::setSwapInterval(const int &interval)
 {
     SDL_GL_SetSwapInterval(interval);
 }

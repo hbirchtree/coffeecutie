@@ -44,8 +44,8 @@ struct game_memory_chunk
     chunk_mem<CBuffer>    buffers;
     chunk_mem<CSubBuffer> subbuffers;
 
-    chunk_mem<_cbasic_graphics_buffer_resource_desc> storageblocks;
-    chunk_mem<_cbasic_graphics_resource_binding_generic> bufferbindings;
+    chunk_mem<_cbasic_graphics_resource_desc> storageblocks;
+    chunk_mem<_cbasic_graphics_resource_binding<_cbasic_graphics_buffer_section>> bufferbindings;
 };
 
 struct game_transform_chunk

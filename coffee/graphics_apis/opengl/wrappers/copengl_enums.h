@@ -6,6 +6,26 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+enum class CPrimitiveMode : uint8
+{
+    Triangles,
+    Points,
+    Line,
+    TriangleStrip,
+    TriangleFan,
+    TriangleStripAdjacency,
+    TrianglesAdjacency,
+    LineStrip,
+    LineLoop,
+};
+
+enum class CCullMode : uint8
+{
+    Front,
+    Back,
+    Both,
+};
+
 enum class CMemoryBarrier : uint8
 {
     ElementArray,
@@ -43,13 +63,14 @@ enum class CClearFlag : uint8
 
 C_FLAGS(CClearFlag,uint8);
 
-enum class CBufferType : uint16
+enum class CBufferType : uint8
 {
     None,
     Array,
     Index,
     Uniform,
     ShaderStorage,
+    AtomicCounter,
     DrawIndirect,
     TransformFeedback,
     Texture,
@@ -63,12 +84,22 @@ enum class CTexType : uint8
 {
     Array1D,
     Array2D,
-    Array3D,
     ArrayCubeMap,
+
     CubeMap,
+    Tex1D,
     Tex2D,
     Tex3D,
+
     TexBuffer,
+};
+
+enum class CTextureAccess : uint8
+{
+    None,
+    ReadOnly,
+    ReadWrite,
+    WriteOnly,
 };
 
 enum class CProgramStage : uint8
@@ -81,7 +112,7 @@ enum class CProgramStage : uint8
     TessellationControl = 0x10,
 };
 
-C_FLAGS(CProgramStage,uint16);
+C_FLAGS(CProgramStage,uint8);
 
 enum class CBufferAccess : uint8
 {
@@ -92,7 +123,7 @@ enum class CBufferAccess : uint8
     Invalidate = 0x10,
 };
 
-C_FLAGS(CBufferAccess,uint16);
+C_FLAGS(CBufferAccess,uint8);
 
 enum class CBufferStorage : uint8
 {
@@ -104,7 +135,7 @@ enum class CBufferStorage : uint8
     ClientStorage = 0x20, /*!< Read from client memory*/
 };
 
-C_FLAGS(CBufferStorage,uint16);
+C_FLAGS(CBufferStorage,uint8);
 
 /*!
  * \brief Specifies buffer storage parameters in coffee_graphics_buffer_store(). Stream* specifies data modified once and drawn few times, static is modified once and drawn many times, dynamic is modified often and drawn many times. *Draw specifies data used for GL drawing, *Read specifies data read from the GL, *Copy specifies data is used for both reading and drawing operations.
@@ -126,6 +157,30 @@ enum class CBufferUsage : uint8
     DynamicCopy,
 };
 
+enum class CAttributeMode : uint8
+{
+    Interleaved, /*!< Packed in buffer*/
+    Separate,    /*!< Each attribute has its own buffer*/
+};
+
+enum class CQueryType : uint8
+{
+    TimeElapsed,
+
+    SamplesPassed,
+    AnySamplesPassed,
+
+    PrimitivesGenerated,
+    XFBPrimitivesWritten,
+};
+
+enum class CQueryResultType : uint8
+{
+    ResultAvailable,
+    ResultWait,
+    Result,
+};
+
 enum class CDataType : uint8
 {
     None,
@@ -145,8 +200,7 @@ enum class CDataType : uint8
     UShort5_5_5_1,  UShort1_5_5_5_Rev,
 
     UInt8_8_8_8,    UInt8_8_8_8_Rev,
-    UInt10_10_10_1, UInt1_10_10_10_Rev,
-    UInt2_10_10_10, UInt2_10_10_10_Rev,
+    UInt10_10_10_2, UInt2_10_10_10_Rev,
 };
 
 enum class CDebugSeverity : uint8

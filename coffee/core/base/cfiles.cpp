@@ -1,5 +1,7 @@
 #include "cfiles.h"
 
+#include <cstring>
+
 #include "coffee/core/plat/plat_file.h"
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/base/cdebug.h"

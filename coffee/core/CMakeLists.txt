@@ -12,39 +12,17 @@ set ( CoffeeCore_SRCS
 
         base/cdrendererbase.cpp
 
-#        context/cglbindingrenderer.cpp
-
         display/csdl2renderer.cpp
         display/coffeesdl2/sdl2eventhandlers.cpp
         display/coffeesdl2/sdl2helpers.cpp
 
         functional/cqueuerunner.cpp
 
-#        graphics/cgraphicsdata.cpp
-#        graphics/cgraphics_quirks.cpp
-
-#        graphics/opengl_glbinding/cbuffer.cpp
-#        graphics/opengl_glbinding/cshader.cpp
-#        graphics/opengl_glbinding/cframebuffer.cpp
-#        graphics/opengl_glbinding/cgraphicswrappers.cpp
-#        graphics/opengl_glbinding/cvertexarrayobject.cpp
-#        graphics/opengl_glbinding/ctexture.cpp
-#        graphics/opengl_glbinding/ctexture_dxtc.cpp
-#        graphics/opengl_glbinding/crenderfence.cpp
-#        graphics/opengl_glbinding/glbinding.cpp
-#        graphics/opengl_glbinding/copengl_types.cpp
-#        graphics/opengl_glbinding/ctexture_storage.cpp
-#        graphics/opengl_glbinding/ctexture_sampler.cpp
-#        graphics/opengl_glbinding/ctexture_pbo.cpp
-#        graphics/opengl_glbinding/cuniformtypes.cpp
-
         jobs/ctasksystem.cpp
 
         unit_tests/data_types.cpp
 
         input/cinputfunctions.cpp
-
-#        scene/cnode.cpp
 
         plat/coffee_windows/win_core.cpp
         plat/coffee_unix/unix_core.cpp
@@ -54,6 +32,8 @@ set ( CoffeeCore_SRCS
         plat/plat_timers.cpp
         plat/cmemory.cpp
         plat/plat_libraries.cpp
+
+        ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
         )
 
 set(DL_LIBRARY "")

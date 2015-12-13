@@ -1,51 +1,47 @@
 #ifndef COFFEE_PLAT_WM
 #define COFFEE_PLAT_WM
 
-#include "coffee/core/plat/platform_detect.h"
 #include "coffee/core/CTypes"
 
-#if defined(COFFEE_LINUX)
-#include "coffee_linux/linux_wm.h"
-#elif defined(COFFEE_WINDOWS)
-#include "coffee_windows/win_wm.h"
-#elif defined(COFFEE_APPLE)
-
-#else
 namespace Coffee{
 namespace CDisplay{
 
-struct CDNativeWindowInfo
+struct CDWindowBitmap
 {
+    CSize resolution;
+    CRGBA *pixels;
 };
 
-} //CDisplay
-} //Coffee
-
-#endif
-
-namespace Coffee{
-namespace CDisplay{
-
-struct CDWindow{
-
-    union {
-#ifdef __COFFEE_X11
-        struct {
-            Window window;
-            Display* display;
-        } x11;
-#endif
-#ifdef _WIN32
-        struct {
-
-        } win32;
-#endif
-
-    } wininfo;
-
-    cstring             title       = nullptr;
-    CRect               screenArea;
-};
+struct CDWindow;
+/*!
+ * \brief Enable or disable window decoration
+ * \param window
+ * \param enabled
+ */
+extern void coffee_window_set_decorated(CDWindow* window, bool enabled);
+/*!
+ * \brief Set window to be on top
+ * \param window
+ * \param enabled
+ */
+extern void coffee_window_set_on_top(CDWindow* window, bool enabled);
+/*!
+ * \brief Set window icon
+ * \param window
+ * \param icon
+ */
+extern void coffee_window_set_icon(CDWindow* window, const CDWindowBitmap& icon);
+/*!
+ * \brief Send a program notification
+ * \param window
+ */
+extern void coffee_window_notify(CDWindow* window);
+/*!
+ * \brief Send a system notification, notify-osd on Linux
+ * \param window
+ * \param msg
+ */
+extern void coffee_windowmanager_notification(CDWindow* window, cstring msg);
 
 }
 }

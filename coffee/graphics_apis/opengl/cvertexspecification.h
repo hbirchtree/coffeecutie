@@ -85,7 +85,7 @@ public:
         return nullptr;
     }
 
-    void applyAttributes(CVertexArrayObject* vao)
+    void applyAttributes(CVertexArrayObject& vao)
     {
         for(CVertexAttribute const& attr : m_spec.attributes)
         {
@@ -94,7 +94,7 @@ public:
         }
     }
 
-    void bindAttributes(CVertexArrayObject* vao)
+    void bindAttributes(CVertexArrayObject& vao)
     {
         for(CVertexAttribute const& attr : m_spec.attributes)
             coffee_graphics_vao_attribute_bind_buffer(vao,*attr.bnd);

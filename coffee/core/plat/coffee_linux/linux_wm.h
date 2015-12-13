@@ -10,7 +10,7 @@
 
 #include <stdlib.h> //for getenv()
 #include <X11/Xlib.h>
-#include "X11/X.h"
+#include <X11/X.h>
 #include <X11/Xatom.h>
 
 #define _NET_WM_STATE_REMOVE        0    /* remove/unset property */
@@ -35,7 +35,7 @@ typedef struct {
     unsigned long   status;
 } Hints;
 
-inline static void set_decorations(Display* disp, Window target,bool enable = false)
+inline void set_decorations(Display* disp, Window target,bool enable = false)
 {
     Hints   w_hints;
     Atom    prop;
@@ -47,7 +47,7 @@ inline static void set_decorations(Display* disp, Window target,bool enable = fa
     XChangeProperty(disp,target,prop,prop,32,PropModeReplace,(unsigned char*)&w_hints,5);
 }
 
-inline static void set_alwaysontop(Display* disp, Window target, bool enable)
+inline void set_alwaysontop(Display* disp, Window target, bool enable)
 {
     XEvent ev;
 

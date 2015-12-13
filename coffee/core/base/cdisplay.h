@@ -134,17 +134,18 @@ struct CGLContextProperties
 {
     CGLContextProperties();
 
-    enum ContextProperties{
+    enum Flags : uint8{
         GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
-        GLVSync		    = 0x02, /*!< Set GL vertical sync*/
-        GLDebug		    = 0x04, /*!< Set GL debug context*/
+        GLVSync             = 0x02, /*!< Set GL vertical sync*/
+        GLDebug             = 0x04, /*!< Set GL debug context*/
         GLAutoResize	    = 0x08, /*!< Set GL auto resize of context*/
-        GLRobust	    = 0x10, /*!< Set GL robustness*/
+        GLRobust            = 0x10, /*!< Set GL robustness*/
         GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
+        GLES                = 0x40, /*!< Request that only GLES features are used*/
     };
-    uint16              flags; /*!< Context flags*/
     CGLContextVersion   version; /*!< Context version*/
     CDContextBits       bits; /*!< Context bits*/
+    Flags               flags; /*!< Context flags*/
 };
 /*!
  * \brief Window properties to set on start-up
@@ -153,7 +154,7 @@ struct CDWindowProperties
 {
     CDWindowProperties();
 
-    enum WindowState{
+    enum State : uint16{
         FullScreen          = 0x001, /*!< Exclusive fullscreen mode*/
         WindowedFullScreen  = 0x002, /*!< Windowed fullscreen mode*/
         Windowed            = 0x004, /*!< Regular window mode*/
@@ -171,15 +172,20 @@ struct CDWindowProperties
         HighDPI             = 0x400, /*!< HighDPI mode for platforms that support it (not Windows)*/
 
         Foreign             = 0x800, /*!< For windows not created by context manager*/
+
+        Normal              = 0x1000, /*!< In SDL2, this restores the window*/
     };
 
-    uint16                  flags; /*!< Window flags*/
+    State                   flags; /*!< Window flags*/
     uint16                  monitor; /*!< Monitor to use with fullscreen*/
     CSize                   size; /*!< Size of window*/
     CGLContextProperties    contextProperties; /*!< Context properties to set*/
     cstring                 title; /*!< Window title to start with*/
     CDWindow*               window; /*!< If applicable, contains data about a window*/
 };
+
+C_FLAGS(CDWindowProperties::State,uint16);
+C_FLAGS(CGLContextProperties::Flags,uint8);
 
 extern CDWindowProperties coffee_get_default_visual();
 

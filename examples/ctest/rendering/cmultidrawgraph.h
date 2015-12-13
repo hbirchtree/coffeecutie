@@ -48,20 +48,20 @@ extern void coffee_multidraw_render_safe(const CMultiDrawDataSet& set);
 
 template<typename DataType>
 static void _coffee_bufferload_vector(
-        const std::vector<DataType>& source, CBuffer* buffer,
-        const CBufferFunctionBinds& fun){
+        const std::vector<DataType>& source, CBuffer& buffer,
+        const CBufferPFN& fun){
     szptr datasz = source.size()*sizeof(DataType);
-    fun.store_immutable(buffer,source.data(),datasz,buffer->flags);
+    fun.store_immutable(buffer,source.data(),datasz,buffer.flags);
 }
 //Load drawcalls into GPU memory
 extern void coffee_multidraw_load_drawcalls(
-        const CMultiDrawDataSet& set, const CBufferFunctionBinds& bfun);
+        const CMultiDrawDataSet& set, const CBufferPFN& bfun);
 //Load indices into GPU memory
 extern void coffee_multidraw_load_indices(
-        const CMultiDrawDataSet& set, const CBufferFunctionBinds& bfun);
+        const CMultiDrawDataSet& set, const CBufferPFN& bfun);
 //Load buffer data into GPU memory
 extern void coffee_multidraw_load_buffer(CBuffer* buffer,
-        const std::vector<byte_t>& data, const CBufferFunctionBinds &bfun);
+        const std::vector<byte_t>& data, const CBufferPFN &bfun);
 //Load up VAO
 extern void coffee_multidraw_load_vao(CMultiDrawDataSet& set, CMultiDrawDescriptor& desc);
 //Copy indices, create drawcall

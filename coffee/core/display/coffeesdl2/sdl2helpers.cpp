@@ -1,5 +1,7 @@
 #include "sdl2helpers.h"
 
+#include "sdl2windowsystem.h"
+
 #include "coffee/core/base/cdebug.h"
 
 namespace Coffee{
@@ -28,7 +30,7 @@ void _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GLattr attr, uint8* target)
 
 //Exported functions
 
-Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
+Uint32 coffee_sdl2_interpret_winflags(CDWindowProperties::State const& flags)
 {
     Uint32 res = 0;
 
@@ -37,14 +39,20 @@ Uint32 coffee_sdl2_interpret_winflags(uint32 flags)
     else
         res|=SDL_WINDOW_HIDDEN;
 
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Undecorated,SDL_WINDOW_BORDERLESS);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDWindowProperties::State::Undecorated,SDL_WINDOW_BORDERLESS);
 
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::FullScreen,SDL_WINDOW_FULLSCREEN);
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::WindowedFullScreen,SDL_WINDOW_FULLSCREEN_DESKTOP);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDWindowProperties::State::FullScreen,SDL_WINDOW_FULLSCREEN);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDWindowProperties::State::WindowedFullScreen,SDL_WINDOW_FULLSCREEN_DESKTOP);
 
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Resizable,SDL_WINDOW_RESIZABLE);
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Minimized,SDL_WINDOW_MINIMIZED);
-    res |= _coffee_sdl2_toggle_flag(flags&CDWindowProperties::Maximized,SDL_WINDOW_MAXIMIZED);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDWindowProperties::State::Resizable,SDL_WINDOW_RESIZABLE);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDWindowProperties::State::Minimized,SDL_WINDOW_MINIMIZED);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDWindowProperties::State::Maximized,SDL_WINDOW_MAXIMIZED);
 
     return res;
 }
@@ -67,15 +75,15 @@ void coffee_sdl2_set_context_properties(const CGLContextProperties &props)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,props.version.major);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,props.version.minor);
 
-    if(props.flags&CGLContextProperties::GLCoreProfile)
+    if(props.flags&CGLContextProperties::Flags::GLCoreProfile)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
 
     int32 cflags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 
-    if(props.flags&CGLContextProperties::GLDebug)
+    if(props.flags&CGLContextProperties::Flags::GLDebug)
         cflags|=SDL_GL_CONTEXT_DEBUG_FLAG;
 
-    if(props.flags&CGLContextProperties::GLRobust)
+    if(props.flags&CGLContextProperties::Flags::GLRobust)
         cflags|=SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
@@ -111,50 +119,17 @@ CGLContextProperties coffee_sdl2_get_context_properties()
     return props;
 }
 
-void coffee_sdl2_get_window_ptr(SDL_Window *window, CDWindow *win)
-{
-    SDL_SysWMinfo info;
-
-    SDL_VERSION(&info.version)
-
-            if(SDL_GetWindowWMInfo(window,&info)){
-        switch(info.subsystem){
-#ifdef COFFEE_LINUX
-        case SDL_SYSWM_X11:
-            win->wininfo.x11.window = info.info.x11.window;
-            win->wininfo.x11.display = info.info.x11.display;
-            break;
-#endif
-#ifdef COFFEE_WINDOWS
-        case SDL_SYSWM_WINDOWS:
-            break;
-#endif
-#ifdef COFFEE_APPLE
-        case SDL_SYSWM_COCOA:
-            break;
-        case SDL_SYSWM_UIKIT:
-            break;
-#endif
-        default:
-            break;
-        }
-    }else{
-        cDebug("Failed to acquire information on window: %s",SDL_GetError());
-    }
-}
-
-uint32 coffee_sdl2_get_winflags(SDL_Window *win)
+CDWindowProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
 {
     Uint32 flags = SDL_GetWindowFlags(win);
-    uint32 res = 0;
+    CDWindowProperties::State res = CDWindowProperties::State(0);
 
     if(flags&SDL_WINDOW_BORDERLESS)
-        res^=CDWindowProperties::Undecorated;
-    else
         res|=CDWindowProperties::Undecorated;
 
     if(flags&SDL_WINDOW_FULLSCREEN)
         res|=CDWindowProperties::FullScreen;
+
     else if(flags&SDL_WINDOW_FULLSCREEN_DESKTOP)
         res|=CDWindowProperties::WindowedFullScreen;
     else
@@ -180,8 +155,42 @@ uint32 coffee_sdl2_get_winflags(SDL_Window *win)
     return res;
 }
 
-void coffee_sdl2_set_winflags(SDL_Window*,uint32)
+void coffee_sdl2_set_winflags(SDL_Window* window,CDWindowProperties::State const& state)
 {
+    if(!state&CDWindowProperties::Undecorated)
+        SDL_SetWindowBordered(window,SDL_TRUE);
+    else
+        SDL_SetWindowBordered(window,SDL_FALSE);
+
+    if(state&CDWindowProperties::FullScreen)
+        SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN);
+    else if(state&CDWindowProperties::WindowedFullScreen)
+        SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN_DESKTOP);
+    else
+        SDL_SetWindowFullscreen(window,0);
+
+    if(state&CDWindowProperties::Minimized)
+        SDL_MinimizeWindow(window);
+    if(state&CDWindowProperties::Normal)
+        SDL_RestoreWindow(window);
+    if(state&CDWindowProperties::Maximized)
+        SDL_MaximizeWindow(window);
+
+    if(state&CDWindowProperties::Focused)
+        SDL_RaiseWindow(window);
+}
+
+CDWindow *coffee_sdl2_get_window(SDL_Window *window)
+{
+    CDWindow* cwin = new CDWindow;
+
+    SDL_GetWindowSize(window,&cwin->screenArea.w,&cwin->screenArea.h);
+    SDL_GetWindowPosition(window,&cwin->screenArea.x,&cwin->screenArea.y);
+
+    cwin->title = SDL_GetWindowTitle(window);
+    coffee_sdl2_get_window_ptr(window,cwin);
+
+    return cwin;
 }
 
 }

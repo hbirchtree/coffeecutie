@@ -15,10 +15,9 @@
 #include <stdexcept>
 
 //C libraries
-#include <ctime>
-#include <string.h>
 #include <stdio.h>
 
+#include "cdebug_print.h"
 #include "coffee/core/coffee_macros.h"
 
 #include "coffee/core/coffee.h"
@@ -31,33 +30,12 @@ extern cstring_w coffee_debug_get_clock_string();
 extern void coffee_debug_clear_clock_string(cstring_w str);
 extern cstring_w* coffee_debug_get_callstack(szptr *cs_length, uint32 stackreduce);
 
-template<typename... Arg>
-/*!
- * \brief Should not be used for debug printing, it's slower than using printf
- * \param fmt
- * \param args
- * \return A readily formatted string
- */
-static CString cStringFormat(cstring fmt, Arg... args)
-{
-#ifdef CPPFORMAT_PRINTING
-    return fmt::sprintf(fmt,args...);
-#else
-    CString str;
-    str.resize(snprintf(NULL,0,fmt,args...)+1);
-    sprintf(&str[0],fmt,args...);
-    str[str.size()-1] = 0;
-    return str;
-#endif
-}
-
 template<typename... Args>
-static void cfprintf(FILE* stream, cstring format, Args... args)
+inline void cfprintf(FILE* stream, cstring format, Args... args)
 {
     try{
         CString formatted = cStringFormat(format,args...);
         fputs(formatted.c_str(),stream);
-//        fmt::fprintf(stream,format,args...);
     }
     catch(std::exception e)
     {
@@ -66,7 +44,7 @@ static void cfprintf(FILE* stream, cstring format, Args... args)
 }
 
 namespace CDebugHelpers{
-static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
+inline void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
     cfprintf(stderr,header);
     for(szptr i=0;i<stacksize;i++){
@@ -76,7 +54,7 @@ static void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* c
     c_free(callstack);
 }
 
-static void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
+inline void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
 {
     for(szptr i=0;i<stacksize;i++)
         c_free(callstack[i]);
@@ -104,7 +82,7 @@ template<typename... Arg>
  * \param str Format string to print with
  * \param args Variadic arguments to string format
  */
-static void cDebugPrint(
+inline void cDebugPrint(
         uint8 severity,
         uint32 stackreduce,
         cstring str,
@@ -118,7 +96,6 @@ static void cDebugPrint(
     FILE* strm = stdout;
     bool fail = false;
     timestring = coffee_debug_get_clock_string();
-
 
     //Get call stack
     cstring_w* callstack = nullptr;
@@ -159,7 +136,9 @@ static void cDebugPrint(
              cStringFormat(str,args...).c_str());
 
     if(fail){
-        CDebugHelpers::coffee_print_callstack("Callstack before crash: \n","-> %s\n",callstack,cs_length);
+        CDebugHelpers::coffee_print_callstack(
+                    "Callstack before crash: \n","-> %s\n",
+                    callstack,cs_length);
         throw std::runtime_error(cStringFormat(str,args...));
     }
 
@@ -173,11 +152,11 @@ template<typename... Arg>
  * \param str
  * \param args
  */
-static void cBasicPrint(cstring str, Arg... args)
+inline void cBasicPrint(cstring str, Arg... args)
 {
-    cstring_w fmt = cstring_w(c_alloc(strlen(str)+2));
-    strcpy(fmt,str);
-    strcat(fmt,"\n");
+    cstring_w fmt = c_cpy_string(str);
+    c_realloc(fmt,c_strlen(str)+2);
+    c_strcat(fmt,"\n");
     cfprintf(stderr,fmt,args...);
     c_free(fmt);
 }
@@ -188,7 +167,7 @@ template<typename... Arg>
  * \param str
  * \param args
  */
-static void cDebug(cstring str, Arg... args)
+inline void cDebug(cstring str, Arg... args)
 {
     cDebugPrint(1,1,str,args...);
 }
@@ -199,7 +178,7 @@ template<typename... Arg>
  * \param str
  * \param args
  */
-static void cWarning(cstring str, Arg... args)
+inline void cWarning(cstring str, Arg... args)
 {
     cDebugPrint(2,1,str,args...);
 }
@@ -210,7 +189,7 @@ template<typename... Arg>
  * \param str
  * \param args
  */
-static void cFatal(cstring str, Arg... args)
+inline void cFatal(cstring str, Arg... args)
 {
     cDebugPrint(3,1,str,args...);
 }
@@ -222,14 +201,10 @@ template<typename... Arg>
  * \param msg
  * \param args
  */
-static void cMsg(cstring src, cstring msg, Arg... args)
+inline void cMsg(cstring src, cstring msg, Arg... args)
 {
-    cstring_w str = cstring_w(c_alloc(strlen(src)+strlen(msg)+2));
-    c_memcpy(str,src,strlen(src)+1);
-    strcat(str,":");
-    strcat(str,msg);
-    cDebugPrint(0,1,str,args...);
-    c_free(str);
+    CString msg_out = cStringFormat(msg,args...);
+    cDebugPrint(0,1,"%s: %s",src,msg_out.c_str());
 }
 
 }

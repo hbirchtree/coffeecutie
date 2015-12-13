@@ -48,7 +48,7 @@ static const _cbasic_static_map<CClearFlag,ClearBufferMask,4> cclearflag_map = {
     {CClearFlag::Stencil, GL_STENCIL_BUFFER_BIT},
 };
 
-static const _cbasic_static_map<CBufferType,GLenum,10> cbuffertype_map = {
+constexpr _cbasic_static_map<CBufferType,GLenum,10> cbuffertype_map = {
     {CBufferType::Array, GL_ARRAY_BUFFER},
     {CBufferType::Index, GL_ELEMENT_ARRAY_BUFFER},
     {CBufferType::Uniform, GL_UNIFORM_BUFFER},
@@ -79,7 +79,7 @@ static const _cbasic_static_map<CBufferStorage,BufferStorageMask,6> cbufferstore
     {CBufferStorage::ClientStorage, GL_CLIENT_STORAGE_BIT},
 };
 
-static const _cbasic_static_map<CProgramStage,UseProgramStageMask,5> cprogmask_map = {
+constexpr _cbasic_static_map<CProgramStage,UseProgramStageMask,5> cprogmask_map = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER_BIT},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER_BIT},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER_BIT},
@@ -88,7 +88,7 @@ static const _cbasic_static_map<CProgramStage,UseProgramStageMask,5> cprogmask_m
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER_BIT},
 };
 
-static const _cbasic_static_map<CProgramStage,GLenum,5> cshader_map = {
+constexpr _cbasic_static_map<CProgramStage,GLenum,5> cshader_map = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER},
@@ -97,20 +97,44 @@ static const _cbasic_static_map<CProgramStage,GLenum,5> cshader_map = {
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER},
 };
 
-static const _cbasic_static_map<CDataType,GLenum,7> cdtypes_map = {
+constexpr _cbasic_static_map<CDataType,GLenum,22> cdtypes_map = {
     {CDataType::Scalar,GL_FLOAT},
     {CDataType::BigScalar,GL_DOUBLE},
+
+    {CDataType::UByte,GL_UNSIGNED_BYTE},
+    {CDataType::Byte,GL_BYTE},
+
+    {CDataType::UShort,GL_UNSIGNED_SHORT},
+    {CDataType::Short,GL_SHORT},
 
     {CDataType::UInt,GL_UNSIGNED_INT},
     {CDataType::Int,GL_INT},
 
     {CDataType::UInt64,GL_UNSIGNED_INT64_ARB},
+    {CDataType::Int64,GL_INT64_ARB},
 
-    {CDataType::UByte,GL_UNSIGNED_BYTE},
-    {CDataType::Byte,GL_BYTE},
+    //Texture data types below
+
+    {CDataType::UByte3_3_2,GL_UNSIGNED_BYTE_3_3_2},
+    {CDataType::UByte2_3_3_Rev,GL_UNSIGNED_BYTE_2_3_3_REV},
+
+    {CDataType::UShort5_6_5,GL_UNSIGNED_SHORT_5_6_5},
+    {CDataType::UShort5_6_5_Rev,GL_UNSIGNED_SHORT_5_6_5_REV},
+
+    {CDataType::UShort5_5_5_1,GL_UNSIGNED_SHORT_5_5_5_1},
+    {CDataType::UShort1_5_5_5_Rev,GL_UNSIGNED_SHORT_1_5_5_5_REV},
+
+    {CDataType::UShort4_4_4_4,GL_UNSIGNED_SHORT_4_4_4_4},
+    {CDataType::UShort4_4_4_4_Rev,GL_UNSIGNED_SHORT_4_4_4_4_REV},
+
+    {CDataType::UInt8_8_8_8,GL_UNSIGNED_INT_8_8_8_8},
+    {CDataType::UInt8_8_8_8_Rev,GL_UNSIGNED_INT_8_8_8_8_REV},
+
+    {CDataType::UInt10_10_10_2,GL_UNSIGNED_INT_10_10_10_2},
+    {CDataType::UInt2_10_10_10_Rev,GL_UNSIGNED_INT_2_10_10_10_REV},
 };
 
-static const _cbasic_static_map<CBufferUsage,GLenum,10> cbufusage_map = {
+constexpr _cbasic_static_map<CBufferUsage,GLenum,10> cbufusage_map = {
     {CBufferUsage::Default,GL_NONE},
 
     {CBufferUsage::DynamicCopy,GL_DYNAMIC_COPY},
@@ -126,7 +150,7 @@ static const _cbasic_static_map<CBufferUsage,GLenum,10> cbufusage_map = {
     {CBufferUsage::StreamCopy,GL_STREAM_DRAW},
 };
 
-static const _cbasic_static_map<CPrimitiveMode,GLenum,9> cpritype_map = {
+constexpr _cbasic_static_map<CPrimitiveMode,GLenum,9> cpritype_map = {
     {CPrimitiveMode::Triangles,GL_TRIANGLES},
     {CPrimitiveMode::Points,GL_POINTS},
     {CPrimitiveMode::Line,GL_LINES},
@@ -138,7 +162,7 @@ static const _cbasic_static_map<CPrimitiveMode,GLenum,9> cpritype_map = {
     {CPrimitiveMode::LineLoop,GL_LINE_LOOP},
 };
 
-static const _cbasic_static_map<CTexIntFormat,GLenum,10> ctexint_map = {
+constexpr _cbasic_static_map<CTexIntFormat,GLenum,15> ctexint_map = {
     {CTexIntFormat::Depth,GL_DEPTH_COMPONENT24},
     {CTexIntFormat::DepthStencil,GL_DEPTH24_STENCIL8},
     {CTexIntFormat::Stencil,GL_STENCIL_INDEX8},
@@ -149,11 +173,17 @@ static const _cbasic_static_map<CTexIntFormat,GLenum,10> ctexint_map = {
     {CTexIntFormat::RED8,GL_RED},
 
     {CTexIntFormat::DXT1,GL_COMPRESSED_RGBA_S3TC_DXT1_EXT},
+    {CTexIntFormat::DXT1_NoAlpha,GL_COMPRESSED_RGB_S3TC_DXT1_EXT},
     {CTexIntFormat::DXT3,GL_COMPRESSED_RGBA_S3TC_DXT3_EXT},
     {CTexIntFormat::DXT5,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT},
+
+    {CTexIntFormat::BPTC_RGBA_UNORM,GL_COMPRESSED_RGBA_BPTC_UNORM},
+    {CTexIntFormat::BPTC_SRGB_ALPHA_UNORM,GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM},
+    {CTexIntFormat::BPTC_RGB_SFLOAT,GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT},
+    {CTexIntFormat::BPTC_RGB_UFLOAT,GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT},
 };
 
-static const _cbasic_static_map<CTexFormat,GLenum,10> ctexfmt_map = {
+constexpr _cbasic_static_map<CTexFormat,GLenum,10> ctexfmt_map = {
     {CTexFormat::Depth,GL_DEPTH_COMPONENT},
     {CTexFormat::DepthStencil,GL_DEPTH_STENCIL},
     {CTexFormat::Stencil,GL_STENCIL_INDEX},
@@ -168,13 +198,20 @@ static const _cbasic_static_map<CTexFormat,GLenum,10> ctexfmt_map = {
     {CTexFormat::BLUE,GL_BLUE},
 };
 
-static const _cbasic_static_map<CTexType,GLenum,9> ctextp_map = {
+constexpr _cbasic_static_map<CTexType,GLenum,8> ctextp_map = {
+    {CTexType::Tex1D,GL_TEXTURE_1D},
     {CTexType::Tex2D,GL_TEXTURE_2D},
     {CTexType::Tex3D,GL_TEXTURE_3D},
     {CTexType::CubeMap,GL_TEXTURE_CUBE_MAP},
+
+    {CTexType::Array1D,GL_TEXTURE_1D_ARRAY},
+    {CTexType::Array2D,GL_TEXTURE_2D_ARRAY},
+    {CTexType::ArrayCubeMap,GL_TEXTURE_CUBE_MAP_ARRAY},
+
+    {CTexType::TexBuffer,GL_TEXTURE_BUFFER},
 };
 
-static const _cbasic_static_map<CTexParam,GLenum,17> ctexparm_map = {
+constexpr _cbasic_static_map<CTexParam,GLenum,17> ctexparm_map = {
     {CTexParam::MipmapBaseLevel,GL_TEXTURE_BASE_LEVEL},
     {CTexParam::MipmapLodBias,GL_TEXTURE_LOD_BIAS},
     {CTexParam::MipmapMinLod,GL_TEXTURE_MIN_LOD},
@@ -197,7 +234,7 @@ static const _cbasic_static_map<CTexParam,GLenum,17> ctexparm_map = {
     {CTexParam::VirtualTexture,GL_TEXTURE_SPARSE_ARB},
 };
 
-static const _cbasic_static_map<CTexParamOpt,GLenum,11> ctexparmopt_map = {
+constexpr _cbasic_static_map<CTexParamOpt,GLenum,11> ctexparmopt_map = {
     {CTexParamOpt::Nearest,GL_NEAREST},
     {CTexParamOpt::Linear,GL_LINEAR},
     {CTexParamOpt::LinearMipmapLinear,GL_LINEAR_MIPMAP_LINEAR},
@@ -212,31 +249,31 @@ static const _cbasic_static_map<CTexParamOpt,GLenum,11> ctexparmopt_map = {
     {CTexParamOpt::ClampEdgeMirror,GL_MIRROR_CLAMP_TO_EDGE},
 };
 
-static const _cbasic_static_map<CFBFilter,GLenum,2> cfbfilt_map = {
+constexpr _cbasic_static_map<CFBFilter,GLenum,2> cfbfilt_map = {
     {CFBFilter::Nearest,GL_NEAREST},
     {CFBFilter::Linear,GL_LINEAR},
 };
 
-static const _cbasic_static_map<CFBType,GLenum,3> cfbtype_map = {
+constexpr _cbasic_static_map<CFBType,GLenum,3> cfbtype_map = {
     {CFBType::All,GL_FRAMEBUFFER},
     {CFBType::Draw,GL_DRAW_FRAMEBUFFER},
     {CFBType::Read,GL_READ_FRAMEBUFFER},
 };
 
-static const _cbasic_static_map<CFBAttachment,GLenum,4> cfbattch_map = {
+constexpr _cbasic_static_map<CFBAttachment,GLenum,4> cfbattch_map = {
     {CFBAttachment::Color,GL_COLOR_ATTACHMENT0},
     {CFBAttachment::Depth,GL_DEPTH_ATTACHMENT},
     {CFBAttachment::Stencil,GL_STENCIL_ATTACHMENT},
     {CFBAttachment::DepthStencil,GL_DEPTH_STENCIL_ATTACHMENT},
 };
 
-static const _cbasic_static_map<CCullMode,GLenum,3> cculling_map = {
+constexpr _cbasic_static_map<CCullMode,GLenum,3> cculling_map = {
     {CCullMode::Back,GL_BACK},
     {CCullMode::Front,GL_FRONT},
     {CCullMode::Both,GL_FRONT_AND_BACK},
 };
 
-static const _cbasic_static_map<CMemoryBarrier,MemoryBarrierMask,13> cmbarrier_map = {
+constexpr _cbasic_static_map<CMemoryBarrier,MemoryBarrierMask,13> cmbarrier_map = {
     {CMemoryBarrier::AtomicCounter,GL_ATOMIC_COUNTER_BARRIER_BIT},
     {CMemoryBarrier::BufferUpdate,GL_BUFFER_UPDATE_BARRIER_BIT},
     {CMemoryBarrier::Command,GL_COMMAND_BARRIER_BIT},
@@ -252,14 +289,14 @@ static const _cbasic_static_map<CMemoryBarrier,MemoryBarrierMask,13> cmbarrier_m
     {CMemoryBarrier::VertexAttribArray,GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT},
 };
 
-static const _cbasic_static_map<GLenum,CDebugSeverity,4> cdbgsev_map = {
+constexpr _cbasic_static_map<GLenum,CDebugSeverity,4> cdbgsev_map = {
     {GL_DEBUG_SEVERITY_NOTIFICATION,CDebugSeverity::Notification},
     {GL_DEBUG_SEVERITY_LOW,CDebugSeverity::Low},
     {GL_DEBUG_SEVERITY_MEDIUM,CDebugSeverity::Medium},
     {GL_DEBUG_SEVERITY_HIGH,CDebugSeverity::High},
 };
 
-static const _cbasic_static_map<GLenum,CDebugSource,5> cdbgsrc_map = {
+constexpr _cbasic_static_map<GLenum,CDebugSource,5> cdbgsrc_map = {
     {GL_DEBUG_SOURCE_API,CDebugSource::API},
     {GL_DEBUG_SOURCE_SHADER_COMPILER,CDebugSource::ShaderCompiler},
     {GL_DEBUG_SOURCE_APPLICATION,CDebugSource::Application},
@@ -267,11 +304,38 @@ static const _cbasic_static_map<GLenum,CDebugSource,5> cdbgsrc_map = {
     {GL_DEBUG_SOURCE_OTHER,CDebugSource::Other},
 };
 
-static const _cbasic_static_map<GLenum,CDebugType,4> cdbgtype_map = {
+constexpr _cbasic_static_map<GLenum,CDebugType,4> cdbgtype_map = {
     {GL_DEBUG_TYPE_ERROR,CDebugType::Error},
     {GL_DEBUG_TYPE_PERFORMANCE,CDebugType::Performance},
     {GL_DEBUG_TYPE_MARKER,CDebugType::Marker},
     {GL_DEBUG_TYPE_OTHER,CDebugType::Other},
+};
+
+constexpr _cbasic_static_map<CTextureAccess,GLenum,3> ctexaccess_map = {
+    {CTextureAccess::ReadOnly,GL_READ_ONLY},
+    {CTextureAccess::WriteOnly,GL_WRITE_ONLY},
+    {CTextureAccess::ReadWrite,GL_READ_WRITE},
+};
+
+constexpr _cbasic_static_map<CAttributeMode,GLenum,2> cattrmode_map = {
+    {CAttributeMode::Interleaved,GL_INTERLEAVED_ATTRIBS},
+    {CAttributeMode::Separate,GL_SEPARATE_ATTRIBS},
+};
+
+constexpr _cbasic_static_map<CQueryType,GLenum,5> cquerymode_map = {
+    {CQueryType::AnySamplesPassed,GL_ANY_SAMPLES_PASSED},
+    {CQueryType::SamplesPassed,GL_SAMPLES_PASSED},
+
+    {CQueryType::TimeElapsed,GL_TIME_ELAPSED},
+
+    {CQueryType::PrimitivesGenerated,GL_PRIMITIVES_GENERATED},
+    {CQueryType::XFBPrimitivesWritten,GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN},
+};
+
+constexpr _cbasic_static_map<CQueryResultType,GLenum,3> cqueryresmode_map = {
+    {CQueryResultType::Result,GL_QUERY_RESULT_NO_WAIT},
+    {CQueryResultType::ResultWait,GL_QUERY_RESULT},
+    {CQueryResultType::ResultAvailable,GL_QUERY_RESULT_AVAILABLE},
 };
 
 //Textures
@@ -294,6 +358,10 @@ inline GLenum gl_get(CTexIntFormat const& f)
 inline GLenum gl_get(CTexFormat const& f)
 {
     return coffee_get_value(f,ctexfmt_map);
+}
+inline GLenum gl_get(CTextureAccess const& f)
+{
+    return coffee_get_value(f,ctexaccess_map);
 }
 inline GLenum gl_get(CFBType const& c)
 {
@@ -350,11 +418,24 @@ inline MemoryBarrierMask gl_getf(CMemoryBarrier const& c)
     return coffee_get_flags(c,cmbarrier_map);
 }
 
+//Queries
+inline GLenum gl_get(CQueryType const& c)
+{
+    return coffee_get_value(c,cquerymode_map);
+}
+inline GLenum gl_get(CQueryResultType const& c)
+{
+    return coffee_get_value(c,cqueryresmode_map);
+}
 
 //Shaders
 inline GLenum gl_get(CProgramStage const& c)
 {
     return coffee_get_value(c,cshader_map);
+}
+inline GLenum gl_get(CAttributeMode const& c)
+{
+    return coffee_get_value(c,cattrmode_map);
 }
 inline UseProgramStageMask gl_getf(CProgramStage const& c)
 {

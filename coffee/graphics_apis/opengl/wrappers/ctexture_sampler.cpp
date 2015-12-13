@@ -5,14 +5,25 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-void coffee_graphics_alloc(CTextureSampler *sampler)
+void coffee_graphics_alloc(size_t count, CTextureSampler *sampler)
 {
-    glCreateSamplers(1,&sampler->handle);
+    CGuint *handles = new CGuint[count];
+    glCreateSamplers(count,handles);
+    for(size_t i=0;i<count;i++)
+        sampler[i].handle = handles[i];
+    delete[] handles;
 }
 
-void coffee_graphics_free(CTextureSampler *sampler)
+void coffee_graphics_free(size_t count, CTextureSampler *sampler)
 {
-    glDeleteSamplers(1,&sampler->handle);
+    CGuint *handles = new CGuint[count];
+    for(size_t i=0;i<count;i++)
+    {
+        handles[i] = sampler[i].handle;
+        sampler[i].handle = 0;
+    }
+    glDeleteSamplers(count,handles);
+    delete[] handles;
 }
 
 void coffee_graphics_tex_parami(

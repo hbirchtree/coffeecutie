@@ -5,53 +5,52 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-void coffee_graphics_tex_mipmap(
-        const CTexture *tex)
+void coffee_graphics_tex_mipmap(CTexture &tex)
 {
-    glGenerateTextureMipmap(tex->handle);
+    glGenerateTextureMipmap(tex.handle);
 }
 
-void coffee_graphics_tex_mipmap_safe(
-        const CTexture *tex)
+void coffee_graphics_tex_mipmap_safe(CTexture &tex)
 {
     coffee_graphics_bind(tex);
-    glGenerateMipmap(gl_get(tex->textureType));
+    glGenerateMipmap(gl_get(tex.textureType));
     coffee_graphics_unbind(tex);
 }
 
-void coffee_graphics_activate(const CTexture *tex)
+void coffee_graphics_activate(CTexture &tex)
 {
     coffee_graphics_bind(tex);
     coffee_graphics_unbind(tex);
 }
 
-void coffee_graphics_alloc(CTexture *tex)
+void coffee_graphics_alloc(size_t count, CTexture *tex)
 {
     glGenTextures(1,&tex->handle);
 }
 
-void coffee_graphics_free(CTexture *tex)
+void coffee_graphics_free(size_t count, CTexture *tex)
 {
     glDeleteTextures(1,&tex->handle);
 }
 
-void coffee_graphics_bind(const CTexture *tex)
+void coffee_graphics_bind(CTexture const& tex)
 {
-    glBindTexture(gl_get(tex->textureType),tex->handle);
+    glBindTexture(gl_get(tex.textureType),tex.handle);
 }
 
-void coffee_graphics_unbind(const CTexture *tex)
+void coffee_graphics_unbind(CTexture const& tex)
 {
-    glBindTexture(gl_get(tex->textureType),0);
+    glBindTexture(gl_get(tex.textureType),0);
 }
 
-CTextureFunctionBinds::CTextureFunctionBinds():
-    load(nullptr),
-    unload(nullptr),
-    define(nullptr),
-    store(nullptr),
-    mipmap(nullptr)
+void coffee_graphics_tex_bind_image(
+        const CTexture &tex, const CGuint &unit,
+        const CGint &level, bool layered,
+        const CGint &layer, const CTextureAccess &access)
 {
+    glBindImageTexture(unit,tex.handle,level,
+                       layered ? GL_TRUE : GL_FALSE,
+                       layer,gl_get(access),gl_get(tex.format));
 }
 
 CTexture::CTexture():
@@ -62,7 +61,7 @@ CTexture::CTexture():
 {
 }
 
-void coffee_graphics_tex_sparsify(CTexture *tex, bool enable)
+void coffee_graphics_tex_sparsify(CTexture &tex, bool enable)
 {
     CGint v;
     if(enable)
@@ -70,7 +69,7 @@ void coffee_graphics_tex_sparsify(CTexture *tex, bool enable)
     else
         v = 0;
 
-    glTextureParameteri(tex->handle,gl_get(CTexParam::SparseTexture),v);
+    glTextureParameteri(tex.handle,gl_get(CTexParam::SparseTexture),v);
 }
 
 void coffee_graphics_tex_memset(
@@ -84,7 +83,10 @@ void coffee_graphics_tex_memset(
                 data);
 }
 
-void coffee_graphics_tex_memset_region(CTexture &tex, const CGint &level, const CTextureRegion &region, const CDataType &type, c_cptr data)
+void coffee_graphics_tex_memset_region(
+        CTexture &tex, const CGint &level,
+        const CTextureRegion &region,
+        const CDataType &type, c_cptr data)
 {
     glClearTexSubImage(
                 tex.handle, level,
@@ -95,18 +97,17 @@ void coffee_graphics_tex_memset_region(CTexture &tex, const CGint &level, const 
                 data);
 }
 
-void coffee_graphics_tex_dump(
-        const CTexture *tex, cstring filename)
+void coffee_graphics_tex_dump(const CTexture &tex, cstring filename)
 {
     CStbImageLib::CStbImage img;
 
     img.bpp = 4;
-    img.size.w = tex->size.w;
-    img.size.h = tex->size.h;
+    img.size.w = tex.size.w;
+    img.size.h = tex.size.h;
 
-    coffee_graphics_tex_download_texture(
-                tex,0,img.bpp*img.size.w*img.size.h,
-                CTexFormat::RGBA,&img);
+    coffee_graphics_tex_readtexels(
+                tex,0,CTexFormat::RGBA,CDataType::UByte,
+                img.data);
 
 
     CResources::CResource fl(filename);
@@ -115,19 +116,6 @@ void coffee_graphics_tex_dump(
     coffee_file_free(&fl);
 
     c_free(img.data);
-}
-
-void coffee_graphics_tex_download_texture(const CTexture *tex, CGint level,
-        CGsize size, CTexFormat format,
-        CStbImageLib::CStbImage *img)
-{
-    img->data = (ubyte_t*)c_alloc(size);
-    glGetTextureImage(
-                tex->handle,
-                level,
-                gl_get(format),
-                GL_UNSIGNED_BYTE,
-                size,img->data);
 }
 
 CTextureData *coffee_graphics_tex_create_texdata(
