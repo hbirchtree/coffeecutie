@@ -265,13 +265,13 @@ public:
         coffee_graphics_free(transforms.size,transforms.data);
         coffee_graphics_free(indices);
     }
-    void eventHandle(const CDEvent &e, c_cptr data)
+    void eventHandleD(const CDEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventHandle(e,data);
+        CSDL2Renderer::eventHandleD(e,data);
     }
-    void eventHandle(const CIEvent &e, c_cptr data)
+    void eventHandleI(const CIEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventHandle(e,data);
+        CSDL2Renderer::eventHandleI(e,data);
         switch(e.type)
         {
         case CIEvent::Keyboard:

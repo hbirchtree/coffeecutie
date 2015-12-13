@@ -65,9 +65,22 @@ public:
     void setTextArea(const CRect& area);
     void setKeyboardRepeat(bool m);
 
-    void eventHandle(const CIHapticEvent& haptic, c_cptr);
-    void eventHandle(const CIEvent &event, c_cptr data);
-    void eventHandle(const CDEvent &event, c_cptr data);
+    void eventHandleH(const CIHapticEvent& haptic, c_cptr);
+    void eventHandleI(const CIEvent &event, c_cptr data);
+    void eventHandleD(const CDEvent &event, c_cptr data);
+
+    void eventHandle(const CIHapticEvent& haptic, c_cptr data)
+    {
+        this->eventHandleH(haptic,data);
+    }
+    void eventHandle(const CIEvent &event, c_cptr data)
+    {
+        this->eventHandleI(event,data);
+    }
+    void eventHandle(const CDEvent &event, c_cptr data)
+    {
+        this->eventHandleD(event,data);
+    }
 
     void swapBuffers();
     void pollEvents();

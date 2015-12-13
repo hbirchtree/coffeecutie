@@ -9,9 +9,9 @@ namespace CFunctional{
 template<typename... Arg>
 inline CString cStringFormat(cstring fmt, Arg... args)
 {
-    CString str;
-    str.resize(snprintf(NULL,0,fmt,args...)+1);
-    sprintf(&str[0],fmt,args...);
+    CString str = fmt;
+//    str.resize(snprintf(NULL,0,fmt,args...)+1);
+//    sprintf(&str[0],fmt,args...);
     str[str.size()-1] = 0;
     return str;
 }

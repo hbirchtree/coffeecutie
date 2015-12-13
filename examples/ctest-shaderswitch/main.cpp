@@ -281,22 +281,13 @@ public:
         coffee_graphics_free(transforms.size,transforms.data);
         coffee_graphics_free(indices);
     }
-    void eventHandle(const CDisplay::CDEvent &e, c_cptr data)
+    void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {
-        switch(e.type)
-        {
-        case CDEvent::State:
-        {
-            const CDStateEvent* sev = (const CDStateEvent*)data;
-            if(sev->type==CDStateEvent::Closed)
-                this->closeWindow();
-            break;
-        }
-        }
+        CSDL2Renderer::eventHandleD(e,data);
     }
-    void eventHandle(const CIEvent &e, c_cptr data)
+    void eventHandleI(const CIEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventHandle(e,data);
+        CSDL2Renderer::eventHandleI(e,data);
         switch(e.type)
         {
         case CIEvent::Keyboard:
@@ -313,15 +304,11 @@ public:
                 break;
             case CK_Space:
                 m_useShaderMode = (m_useShaderMode+1)%3;
+                cDebug("Shader switch!");
                 break;
             }
             break;
         }
-//        case CIEvent::MouseButton:
-//        {
-//            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
-//            break;
-//        }
         case CIEvent::MouseMove:
         {
             const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;

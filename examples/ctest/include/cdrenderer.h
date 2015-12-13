@@ -31,8 +31,8 @@ public:
 
     using CSDL2Renderer::eventHandle;
 
-    void eventHandle(const CDEvent &event, c_cptr data);
-    void eventHandle(const CIEvent &event, c_cptr data);
+    void eventHandleD(const CDEvent &event, c_cptr data);
+    void eventHandleI(const CIEvent &event, c_cptr data);
 
 private:
     game_context* game = nullptr;

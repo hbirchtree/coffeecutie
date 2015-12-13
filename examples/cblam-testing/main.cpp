@@ -32,9 +32,9 @@ int coffee_main(int32 argv,byte_t** argc)
     for(int i=0;i<scn->struct_bsp.count;i++)
     {
         const blam_scn_bsp_header* s_bsp = &sbsp[i];
-        const blam_scn_chunk* bsp =
-                (const blam_scn_chunk*)
-                blam_mptr(map,0,s_bsp->offset);
+//        const blam_scn_chunk* bsp =
+//                (const blam_scn_chunk*)
+//                blam_mptr(map,0,s_bsp->offset);
         cDebug("Name of BSP: %s",(cstring)blam_mptr(map,tags.index_magic,s_bsp->name_ptr));
     }
 

@@ -164,9 +164,6 @@ static cg_debug_data coffee_dbg_data;
 
 bool coffee_graphics_debug_context(bool enable, CDebugCallback userFunction, void* userPtr)
 {
-    if(!glDebugMessageCallback)
-        return false;
-
     if(enable)
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     else{

@@ -328,7 +328,7 @@ void CSDL2Renderer::setKeyboardRepeat(bool m)
 {
 }
 
-void CSDL2Renderer::eventHandle(const CIHapticEvent &haptic, c_cptr)
+void CSDL2Renderer::eventHandleH(const CIHapticEvent &haptic, c_cptr)
 {
     SDL_HapticRumblePlay(
                 m_context->haptics[haptic.rumble_input.index],
@@ -340,7 +340,7 @@ void CSDL2Renderer::eventHandle(const CIHapticEvent &haptic, c_cptr)
  * \brief A default event handler created to intercept controller connect and disconnect. This is optional, and the user may choose to implement their own methods based on this.
  * \param event
  */
-void CSDL2Renderer::eventHandle(const CIEvent &event, c_cptr data)
+void CSDL2Renderer::eventHandleI(const CIEvent &event, c_cptr data)
 {
     if(event.type==CIEvent::ControllerUpdate)
     {
@@ -350,7 +350,7 @@ void CSDL2Renderer::eventHandle(const CIEvent &event, c_cptr data)
     }
 }
 
-void CSDL2Renderer::eventHandle(const CDEvent &event, c_cptr data)
+void CSDL2Renderer::eventHandleD(const CDEvent &event, c_cptr data)
 {
     if(event.type==CDEvent::State)
     {

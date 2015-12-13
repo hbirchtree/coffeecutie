@@ -146,7 +146,7 @@ void CDRenderer::run(const CDWindowProperties& props)
     cleanup();
 }
 
-void CDRenderer::eventHandle(const CDEvent &event, c_cptr data)
+void CDRenderer::eventHandleD(const CDEvent &event, c_cptr data)
 {
     switch(event.type)
     {
@@ -172,7 +172,7 @@ void CDRenderer::eventHandle(const CDEvent &event, c_cptr data)
     }
 }
 
-void CDRenderer::eventHandle(const CIEvent &event, c_cptr data)
+void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
 {
     CSDL2Renderer::eventHandle(event,data);
     switch(event.type)

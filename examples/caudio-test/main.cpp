@@ -115,23 +115,22 @@ public:
         coffee_audio_context_destroy(ctxt);
         delete buf;
     }
-    void eventHandle(const CDisplay::CDEvent &e, c_cptr data)
+    void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {
-        if(e.type==CDEvent::State)
-        {
-            const CDStateEvent* sev = (const CDStateEvent*)data;
-            if(sev->type==CDStateEvent::Closed)
-                this->closeWindow();
-        }
+        CSDL2Renderer::eventHandleD(e,data);
     }
-    void eventHandle(const CIEvent &e, c_cptr data)
+    void eventHandleI(const CIEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventHandle(e,data);
-        if(e.type==CIEvent::Keyboard)
+        CSDL2Renderer::eventHandleI(e,data);
+        switch(e.type)
+        {
+        case CIEvent::Keyboard:
         {
             const CIKeyEvent* kev = (const CIKeyEvent*)data;
             if(kev->key == CK_Escape)
                 this->closeWindow();
+        }
+        default:break;
         }
     }
 };
