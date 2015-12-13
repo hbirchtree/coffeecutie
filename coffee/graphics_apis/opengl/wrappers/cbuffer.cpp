@@ -14,15 +14,6 @@ CBuffer::CBuffer()
     this->type = CBufferType::None;
 }
 
-CSubBuffer::CSubBuffer()
-{
-    this->handle = 0;
-    this->offset = 0;
-    this->parent = nullptr;
-    this->size = 0;
-    this->type = CBufferType::None;
-}
-
 void coffee_graphics_alloc(size_t count, CBuffer *buf, CBufferType const& type)
 {
     CGuint *handles = new CGuint[count];

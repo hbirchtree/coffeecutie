@@ -89,8 +89,7 @@ void CGLBindingRenderer::bindingCallback(const void *report) const
     CGLDebugMessage const& rep = *((CGLDebugMessage*)report);
     if(!m_msg_filter(rep))
         return;
-    CString out = "";
-    cWarning("OpenGL: %s",out.c_str());
+    cWarning("OpenGL: %s",rep.message.c_str());
 }
 
 } // namespace CDisplay

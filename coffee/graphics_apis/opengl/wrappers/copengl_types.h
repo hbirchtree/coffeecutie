@@ -111,7 +111,12 @@ struct _cbasic_graphics_resource_desc
 template<typename T>
 struct _cbasic_graphics_resource_binding
 {
-    _cbasic_graphics_resource_binding();
+    _cbasic_graphics_resource_binding():
+        desc(nullptr),
+        resource(nullptr),
+        index(0)
+    {
+    }
 
     /*!
      * \brief Descriptor of the resource or its destination

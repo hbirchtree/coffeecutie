@@ -48,7 +48,7 @@ static const _cbasic_static_map<CClearFlag,ClearBufferMask,4> cclearflag_map = {
     {CClearFlag::Stencil, GL_STENCIL_BUFFER_BIT},
 };
 
-constexpr _cbasic_static_map<CBufferType,GLenum,10> cbuffertype_map = {
+constexpr _cbasic_static_map<CBufferType,GLenum,11> cbuffertype_map = {
     {CBufferType::Array, GL_ARRAY_BUFFER},
     {CBufferType::Index, GL_ELEMENT_ARRAY_BUFFER},
     {CBufferType::Uniform, GL_UNIFORM_BUFFER},
@@ -57,6 +57,8 @@ constexpr _cbasic_static_map<CBufferType,GLenum,10> cbuffertype_map = {
     {CBufferType::TransformFeedback, GL_TRANSFORM_FEEDBACK_BUFFER},
     {CBufferType::Texture, GL_TEXTURE_BUFFER},
     {CBufferType::Query, GL_QUERY_BUFFER},
+
+    {CBufferType::ComputeIndirect, GL_DISPATCH_INDIRECT_BUFFER},
 
     {CBufferType::PixelUnpack, GL_PIXEL_UNPACK_BUFFER},
     {CBufferType::PixelPack, GL_PIXEL_PACK_BUFFER},
@@ -79,22 +81,26 @@ static const _cbasic_static_map<CBufferStorage,BufferStorageMask,6> cbufferstore
     {CBufferStorage::ClientStorage, GL_CLIENT_STORAGE_BIT},
 };
 
-constexpr _cbasic_static_map<CProgramStage,UseProgramStageMask,5> cprogmask_map = {
+constexpr _cbasic_static_map<CProgramStage,UseProgramStageMask,6> cprogmask_map = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER_BIT},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER_BIT},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER_BIT},
 
     {CProgramStage::TessellationControl,GL_TESS_CONTROL_SHADER_BIT},
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER_BIT},
+
+    {CProgramStage::Compute,GL_COMPUTE_SHADER_BIT},
 };
 
-constexpr _cbasic_static_map<CProgramStage,GLenum,5> cshader_map = {
+constexpr _cbasic_static_map<CProgramStage,GLenum,6> cshader_map = {
     {CProgramStage::Vertex,GL_VERTEX_SHADER},
     {CProgramStage::Fragment,GL_FRAGMENT_SHADER},
     {CProgramStage::Geometry,GL_GEOMETRY_SHADER},
 
     {CProgramStage::TessellationControl,GL_TESS_CONTROL_SHADER},
     {CProgramStage::TessellationEvaluation,GL_TESS_EVALUATION_SHADER},
+
+    {CProgramStage::Compute,GL_COMPUTE_SHADER},
 };
 
 constexpr _cbasic_static_map<CDataType,GLenum,22> cdtypes_map = {

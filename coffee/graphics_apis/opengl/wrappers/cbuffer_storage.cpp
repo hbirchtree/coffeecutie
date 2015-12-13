@@ -79,5 +79,13 @@ void coffee_graphics_buffer_bind_range(
                       binding.resource->size);
 }
 
+void coffee_graphics_buffer_bind_range(
+        const CBuffer &buffer, const CBufferType &type,
+        const CGszptr &offset, const CGsize &size, const CGuint &index)
+{
+    glBindBufferRange(gl_get(type),index,buffer.handle,
+                      offset,size);
+}
+
 }
 }

@@ -13,10 +13,7 @@ struct CBuffer : _cbasic_graphics_buffer_mappable
     CBuffer();
 };
 
-struct CSubBuffer : _cbasic_graphics_buffer_section
-{
-    CSubBuffer();
-};
+using CSubBuffer = _cbasic_graphics_buffer_section;
 
 template<size_t Size>
 class CNBuffer : public _cbasic_nbuffer<CBuffer,Size>

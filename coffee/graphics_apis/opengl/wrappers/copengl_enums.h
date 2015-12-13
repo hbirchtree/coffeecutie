@@ -76,6 +76,8 @@ enum class CBufferType : uint8
     Texture,
     Query,
 
+    ComputeIndirect,
+
     PixelUnpack,
     PixelPack,
 };
@@ -107,9 +109,13 @@ enum class CProgramStage : uint8
     None = 0x0,
     Vertex = 0x1,
     Fragment = 0x2,
+
     Geometry = 0x4,
+
     TessellationEvaluation = 0x8,
     TessellationControl = 0x10,
+
+    Compute = 0x20,
 };
 
 C_FLAGS(CProgramStage,uint8);

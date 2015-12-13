@@ -93,6 +93,10 @@ extern void coffee_graphics_buffer_invalidate(CBuffer& buf);
 extern void coffee_graphics_buffer_bind_range(
         const _cbasic_graphics_resource_binding<_cbasic_graphics_buffer_section> &binding);
 
+extern void coffee_graphics_buffer_bind_range(
+        const CBuffer& buffer, const CBufferType& type,
+        const CGszptr& offset, const CGsize& size, const CGuint &index);
+
 }
 }
 
