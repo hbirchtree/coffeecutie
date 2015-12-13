@@ -37,9 +37,13 @@ bool coffee_program_link_checklog(GLuint handle){
 void coffee_graphics_alloc(size_t count, CPipeline *pl)
 {
     CGuint *handles = new CGuint[count];
-    glCreateProgramPipelines(count,handles);
+    glGenProgramPipelines(count,handles);
     for(size_t i=0;i<count;i++)
+    {
         pl[i].handle = handles[i];
+        coffee_graphics_bind(pl[i]);
+    }
+    glBindProgramPipeline(0);
     delete[] handles;
 }
 

@@ -8,9 +8,13 @@ namespace CGraphicsWrappers{
 void coffee_graphics_alloc(size_t count, CTextureSampler *sampler)
 {
     CGuint *handles = new CGuint[count];
-    glCreateSamplers(count,handles);
+    glGenSamplers(count,handles);
     for(size_t i=0;i<count;i++)
+    {
         sampler[i].handle = handles[i];
+        glBindSampler(0,sampler[i].handle);
+    }
+    glBindSampler(0,0);
     delete[] handles;
 }
 
