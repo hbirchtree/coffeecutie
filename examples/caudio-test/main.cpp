@@ -1,7 +1,7 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
 #include <coffee/core/plat/application_start.h>
-#include <coffee/audio/openal/copenal.h>
+#include <openal/copenal.h>
 #include <coffee/core/base/cfiles.h>
 
 using namespace Coffee;

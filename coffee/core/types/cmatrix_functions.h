@@ -1,7 +1,8 @@
 #ifndef COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
 #define COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
 
-#include "coffee/core/CTypes"
+#include "coffee/core/coffee_macros.h"
+#include "coffee/core/types/vector_types.h"
 
 namespace Coffee{
 namespace CGraphicsData{

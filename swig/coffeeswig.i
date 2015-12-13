@@ -7,14 +7,6 @@
 
 %include "coffeeswig.h"
 
-using namespace Coffee;
-using namespace Coffee::CFunctional;
-using namespace Coffee::CDisplay;
-using namespace Coffee::CResources;
-
-%ignore Coffee::CGraphicsWrappers::CGLState;
-%ignore Coffee::CGraphicsWrappers::CGLReport;
-
 %ignore Coffee::CFunctional::CThreading::thread_id;
 
 %ignore Coffee::CDisplay::CDQueueRendererBase::contextThread;
@@ -23,8 +15,7 @@ using namespace Coffee::CResources;
 %ignore Coffee::CDisplay::CSDL2Renderer::contextThread;
 %ignore Coffee::CDisplay::CDRenderer::contextThread;
 
-%ignore Coffee::CDisplay::CDQueueRendererBase::CDQueueRendererBase(CObject*);
-%ignore Coffee::CDisplay::CDRendererBase::CDRendererBase(CObject*);
-%ignore Coffee::CDisplay::CGLBindingRenderer::CGLBindingRenderer(CObject*);
-%ignore Coffee::CDisplay::CSDL2Renderer::CSDL2Renderer(CObject*);
+%ignore Coffee::_cbasic_static_map;
+%ignore Coffee::_cbasic_raii_container;
 
+%ignore Coffee::CGraphicsWrappers::CImportedTexture::CImportedTexture;

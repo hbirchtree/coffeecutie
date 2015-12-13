@@ -219,6 +219,10 @@ class _cbasic_raii_container
 protected:
     T* m_data;
 public:
+    _cbasic_raii_container():
+        m_data(new T)
+    {
+    }
     _cbasic_raii_container(T* d):
         m_data(d)
     {

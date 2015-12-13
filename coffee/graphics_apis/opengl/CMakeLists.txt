@@ -1,34 +1,38 @@
 find_package(glbinding)
 
 set ( CoffeeOpenGL_SRCS
+        private/cgraphics_quirks.cpp
+        private/unit_tests.cpp
 
-        glbinding/cglbindingrenderer.cpp
-        glbinding/glbinding.cpp
+        private/glbinding/cglbindingrenderer.cpp
+        private/glbinding/glbinding.cpp
 
-        cgraphics_quirks.cpp
-
-        wrappers/cbuffer.cpp
-        wrappers/cbuffer_storage.cpp
-        wrappers/cbuffer_storage_fallback.cpp
-        wrappers/cshader.cpp
-        wrappers/cframebuffer.cpp
-        wrappers/cgraphicswrappers.cpp
-        wrappers/cvertexarrayobject.cpp
-        wrappers/ctexture.cpp
-        wrappers/ctexture_dxtc.cpp
-        wrappers/crenderfence.cpp
-        wrappers/copengl_types.cpp
-        wrappers/ctexture_storage.cpp
-        wrappers/ctexture_storage_fallback.cpp
-        wrappers/ctexture_sampler.cpp
-        wrappers/ctexture_pbo.cpp
-        wrappers/cuniformtypes.cpp
-        wrappers/cviewport_array.cpp
+        private/wrappers/cbuffer.cpp
+        private/wrappers/cbuffer_storage.cpp
+        private/wrappers/cbuffer_storage_fallback.cpp
+        private/wrappers/cshader.cpp
+        private/wrappers/cframebuffer.cpp
+        private/wrappers/cgraphicswrappers.cpp
+        private/wrappers/cvertexarrayobject.cpp
+        private/wrappers/ctexture.cpp
+        private/wrappers/ctexture_dxtc.cpp
+        private/wrappers/crenderfence.cpp
+        private/wrappers/copengl_types.cpp
+        private/wrappers/ctexture_storage.cpp
+        private/wrappers/ctexture_storage_fallback.cpp
+        private/wrappers/ctexture_sampler.cpp
+        private/wrappers/ctexture_pbo.cpp
+        private/wrappers/cuniformtypes.cpp
+        private/wrappers/cviewport_array.cpp
         )
 
 add_library( CoffeeOpenGL ${COFFEE_LINK_OPT} ${CoffeeOpenGL_SRCS} )
 
-include_directories (${CMAKE_CURRENT_SOURCE_DIR} ${GLBINDING_INCLUDE_DIRS})
+include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+        ${GLBINDING_INCLUDE_DIRS}
+                )
 
 target_link_libraries ( CoffeeOpenGL
                 CoffeeCore

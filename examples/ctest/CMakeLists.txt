@@ -8,7 +8,14 @@ set ( CoffeeTest_SRCS
         main.cpp
         )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/coffee/audio/include
+        ${CMAKE_SOURCE_DIR}/coffee/blam/include
+        ${CMAKE_SOURCE_DIR}/coffee/assimp/include
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/opengl/include
+    )
 
 add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTestLib_SRCS} )
 

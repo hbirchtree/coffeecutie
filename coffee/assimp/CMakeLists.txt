@@ -1,11 +1,12 @@
 find_package(assimp)
 
 set ( CAssimp_SRCS
-        cassimpimporters.cpp
+        private/cassimpimporters.cpp
         private/assimpfun.cpp
         )
 
-include_directories(${ASSIMP_INCLUDE_DIRS})
+include_directories(${ASSIMP_INCLUDE_DIRS}
+		${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_library( CAssimp ${COFFEE_LINK_OPT} ${CAssimp_SRCS})
 

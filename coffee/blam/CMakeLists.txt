@@ -11,6 +11,9 @@ set ( CBlamElegy_SRCS
         elegy/cblam_map.cpp
         )
 
+include_directories(
+    ${CMAKE_SOURCE_DIR}/coffee/image/include)
+
 add_library ( CBlam ${COFFEE_LINK_OPT}
             ${CBlamVolta_SRCS}
             ${CBlamDimeter_SRCS}

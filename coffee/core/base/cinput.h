@@ -181,7 +181,7 @@ struct CIControllerAtomicUpdateEvent
     uint8 controller:4;
     bool connected:1;
     bool remapped:1;
-    byte_t name[];
+    cstring name;
 };
 
 /*!

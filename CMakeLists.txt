@@ -1,12 +1,13 @@
 project( CoffeeCore C CXX )
 cmake_minimum_required( VERSION 3.1 )
 
+option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG C# binding" OFF )
 option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 set ( CMAKE_BUILD_TYPE Debug )
-set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
+set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 
 add_definitions ( -Wall )
 include_directories (
@@ -36,13 +37,12 @@ if(NOT WIN32)
     include_directories("${LIBUNWIND_INCLUDE_DIR}")
 endif()
 
-find_package(OpenAL REQUIRED)
-include_directories(
-    ${OPENAL_INCLUDE_DIR}
-    )
-
 add_subdirectory(coffee)
 add_subdirectory(examples)
 add_subdirectory(docs)
+
+if(COFFEE_BUILD_SWIG_BINDING)
+    add_subdirectory(swig)
+endif()
 
 #add_subdirectory(libs)

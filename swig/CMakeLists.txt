@@ -5,38 +5,32 @@ set( CMAKE_VERBOSE_MAKEFILE on )
 find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
-link_directories(${COFFEE_LIB_DIR})
-
 include_directories(
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/..
-    ${CMAKE_SOURCE_DIR}/../libs/glbinding/source/glbinding/include
-    ${CMAKE_SOURCE_DIR}/../libs/glm
-    ${CMAKE_SOURCE_DIR}/../include)
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_SOURCE_DIR}/libs/glbinding/source/glbinding/include
+        ${CMAKE_SOURCE_DIR}/libs/glm)
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
-set(CFILE "${CMAKE_SOURCE_DIR}/coffeeswig.i")
+set(CFILE "${CMAKE_CURRENT_SOURCE_DIR}/coffeeswig.i")
 set(CMAKE_SWIG_FLAGS "")
 
-link_directories( ${CMAKE_BINARY_DIR})
+link_directories( ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${COFFEE_LIB_DIR})
 
-set(COFFEE_LINKING CoffeeCore CAudio CBlam CoffeeTestLib)
+set(COFFEE_LINKING CoffeeCore CAudio CBlam CoffeeOpenGL CoffeeTestLib)
 
 set_source_files_properties(${CFILE} PROPERTIES CPLUSPLUS ON)
 set_property(SOURCE ${CFILE} PROPERTY SWIG_FLAGS "-includeall" "-ignoremissing")
 
-if(COFFEE_CSHARP)
-#CSharp build
-swig_add_module(Coffee csharp ${CFILE} )
-swig_link_libraries(Coffee ${COFFEE_LINKING} )
+if(COFFEE_PYTHON)
+        #Python build
+        find_package(PythonLibs)
+        include_directories(${PYTHON_INCLUDE_PATH})
 
+        swig_add_module(Coffee python ${CFILE} )
+        swig_link_libraries(Coffee ${COFFEE_LINKING} ${PYTHON_LIBRARIES} )
 else()
-#Python build
-find_package(PythonLibs)
-include_directories(${PYTHON_INCLUDE_PATH})
-
-swig_add_module(Coffee python ${CFILE} )
-swig_link_libraries(Coffee ${COFFEE_LINKING} ${PYTHON_LIBRARIES} )
-
+        #CSharp build
+        swig_add_module(Coffee csharp ${CFILE} )
+        swig_link_libraries(Coffee ${COFFEE_LINKING} )
 endif()

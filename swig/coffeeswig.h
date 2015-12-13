@@ -1,7 +1,6 @@
-#include <coffee/Core>
-#include <coffee/CAudio>
 #include <coffee/CAssimp>
-#include <coffee/core/Graphics>
+#include <coffee/CAudio>
+#include <coffee/CCore>
+#include <coffee/CGraphics>
 #include <coffee/CImage>
-#include <coffee/CBlam>
 #include <coffeetest/CTest>

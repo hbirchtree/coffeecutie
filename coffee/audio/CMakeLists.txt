@@ -1,7 +1,13 @@
+find_package(OpenAL REQUIRED)
+include_directories(
+    ${OPENAL_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
 set ( CAudio_SRCS
         ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
-        caudio.cpp
-        openal/copenal.cpp
+        private/caudio.cpp
+        private/openal/copenal.cpp
         )
 
 add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})

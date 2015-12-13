@@ -2,7 +2,7 @@
 
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/base/cfiles.h>
-#include <coffee/image/cimage.h>
+#include <cimage.h>
 #include <coffee/core/base/cmath.h>
 #include "cblam_bitm_decoders.h"
 

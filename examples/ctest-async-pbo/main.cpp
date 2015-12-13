@@ -3,8 +3,6 @@
 #include <coffee/CImage>
 #include <coffee/core/plat/application_start.h>
 
-#include <coffee/graphics_apis/opengl/cvertexspecification.h>
-
 #include <coffee/core/base/cmath_glm.h>
 
 using namespace Coffee;

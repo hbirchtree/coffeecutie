@@ -11,7 +11,8 @@ CDWindowProperties coffee_get_default_visual()
             CDWindowProperties::Resizable |
             CDWindowProperties::Windowed;
 
-    props.contextProperties.flags |= CGLContextProperties::GLAutoResize;
+    props.contextProperties.flags =
+            props.contextProperties.flags|CGLContextProperties::GLAutoResize;
 
     props.title = "CoffeeCore";
 
