@@ -13,7 +13,7 @@ void coffee_graphics_tex_mipmap(CTexture &tex)
 void coffee_graphics_tex_mipmap_safe(CTexture &tex)
 {
     coffee_graphics_bind(tex);
-    glGenerateMipmap(gl_get(tex.textureType));
+    glGenerateMipmap(gl_get(tex.type));
     coffee_graphics_unbind(tex);
 }
 
@@ -35,12 +35,12 @@ void coffee_graphics_free(size_t count, CTexture *tex)
 
 void coffee_graphics_bind(CTexture const& tex)
 {
-    glBindTexture(gl_get(tex.textureType),tex.handle);
+    glBindTexture(gl_get(tex.type),tex.handle);
 }
 
 void coffee_graphics_unbind(CTexture const& tex)
 {
-    glBindTexture(gl_get(tex.textureType),0);
+    glBindTexture(gl_get(tex.type),0);
 }
 
 void coffee_graphics_tex_bind_image(
@@ -54,7 +54,7 @@ void coffee_graphics_tex_bind_image(
 }
 
 CTexture::CTexture():
-    textureType(CTexType::Tex2D),
+    type(CTexType::Tex2D),
     handle(0),
     levels(1),
     format(CTexIntFormat::None)

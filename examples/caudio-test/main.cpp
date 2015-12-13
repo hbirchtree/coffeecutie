@@ -1,8 +1,6 @@
+#include <coffee/CAudio>
 #include <coffee/CCore>
 #include <coffee/CGraphics>
-#include <coffee/core/plat/application_start.h>
-#include <openal/copenal.h>
-#include <coffee/core/base/cfiles.h>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -117,21 +115,21 @@ public:
         coffee_audio_context_destroy(ctxt);
         delete buf;
     }
-    void eventWindowsHandle(const CDisplay::CDEvent *e)
+    void eventHandle(const CDisplay::CDEvent &e, c_cptr data)
     {
-        if(e->type==CDEvent::State)
+        if(e.type==CDEvent::State)
         {
-            const CDStateEvent* sev = (const CDStateEvent*)&e[1];
+            const CDStateEvent* sev = (const CDStateEvent*)data;
             if(sev->type==CDStateEvent::Closed)
                 this->closeWindow();
         }
     }
-    void eventInputHandle(const CIEvent *e)
+    void eventHandle(const CIEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventInputHandle(e);
-        if(e->type==CIEvent::Keyboard)
+        CSDL2Renderer::eventHandle(e,data);
+        if(e.type==CIEvent::Keyboard)
         {
-            const CIKeyEvent* kev = (const CIKeyEvent*)&e[1];
+            const CIKeyEvent* kev = (const CIKeyEvent*)data;
             if(kev->key == CK_Escape)
                 this->closeWindow();
         }

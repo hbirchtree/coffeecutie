@@ -224,17 +224,17 @@ public:
      * \brief Function for handling window events, implemented by the user.
      * \param e
      */
-    virtual void eventWindowsHandle(const CDEvent* e) = 0;
+    virtual void eventHandleD(const CDEvent& e, c_cptr data) = 0;
     /*!
      * \brief Function for handling input events, implemented by the user.
      * \param e
      */
-    virtual void eventInputHandle(const CIEvent* e) = 0;
+    virtual void eventHandleI(const CIEvent& e, c_cptr data) = 0;
     /*!
      * \brief Function for handling haptic events. A user will call this with a constructed event e and have it play in a fire-and-forget.
      * \param e
      */
-    virtual void eventHapticHandle(const CIHapticEvent* e) = 0;
+    virtual void eventHandleH(const CIHapticEvent& e, c_cptr data) = 0;
 
     /*!
      * \brief Callback for GL errors and messages, implemented by the user.

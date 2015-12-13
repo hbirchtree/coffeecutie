@@ -4,55 +4,6 @@
 namespace Coffee{
 namespace CSDL2Types{
 
-inline static void coffee_sdl2_send_atomic_ievent(
-        CSDL2Renderer* ctxt,
-        uint8 type)
-{
-    CIEvent e;
-    e.type = type;
-    ctxt->eventInputHandle(&e);
-}
-
-inline static void coffee_sdl2_send_atomic_wevent(
-        CSDL2Renderer* ctxt,
-        uint8 type)
-{
-    CDEvent e;
-    e.type = type;
-    ctxt->eventWindowsHandle(&e);
-}
-
-inline static void coffee_sdl2_send_full_ievent(
-        CSDL2Renderer* ctxt,
-        const void* base,
-        szptr baseSize,
-        const void* data,
-        szptr dataSize)
-{
-    void* payload = c_alloc(baseSize+dataSize);
-    c_memcpy(payload,base,baseSize);
-    c_memcpy(&((char*)payload)[baseSize],data,dataSize);
-
-
-    ctxt->eventInputHandle((CIEvent*)payload);
-    c_free(payload);
-}
-
-inline static void coffee_sdl2_send_full_wevent(
-        CSDL2Renderer* ctxt,
-        const void* base,
-        szptr baseSize,
-        const void* data,
-        szptr dataSize)
-{
-    void* payload = c_alloc(baseSize+dataSize);
-    c_memcpy(payload,base,baseSize);
-    c_memcpy(&((char*)payload)[baseSize],data,dataSize);
-
-    ctxt->eventWindowsHandle((CDEvent*)payload);
-    c_free(payload);
-}
-
 inline static uint8 coffee_sdl2_translate_mouse_btn(
         Uint8 code)
 {
@@ -103,7 +54,7 @@ inline static void coffee_sdl2_eventhandle_mouse_wheel(
     s.delta.x = wheel.x;
     s.delta.y = wheel.y;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&s,sizeof(s));
+    coffee_sdl2_eventpack(ctxt,&e,&s);
 }
 
 inline static void coffee_sdl2_eventhandle_mouse_motion(
@@ -125,7 +76,7 @@ inline static void coffee_sdl2_eventhandle_mouse_motion(
     m.rel.y = motion.yrel;
     m.btn = coffee_sdl2_translate_mouse_btnmask(motion.state);
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&m,sizeof(m));
+    coffee_sdl2_eventpack(ctxt,&e,&m);
 }
 
 inline static void coffee_sdl2_eventhandle_mouse_btn(
@@ -149,7 +100,7 @@ inline static void coffee_sdl2_eventhandle_mouse_btn(
     m.pos.y = btn.y;
     m.btn = coffee_sdl2_translate_mouse_btn(btn.button);
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&m,sizeof(m));
+    coffee_sdl2_eventpack(ctxt,&e,&m);
 }
 
 inline static int32 coffee_sdl2_interpret_key_modifier(
@@ -252,7 +203,7 @@ inline static void coffee_sdl2_eventhandle_keys(
 
     k.scan = key.keysym.scancode;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&k,sizeof(k));
+    coffee_sdl2_eventpack(ctxt,&e,&k);
 }
 
 inline static void coffee_sdl2_eventhandle_drop(
@@ -262,13 +213,13 @@ inline static void coffee_sdl2_eventhandle_drop(
     CIEvent e;
     e.type = CIEvent::Drop;
     e.ts = drop.timestamp;
-    szptr textsz = strlen(drop.file)+1;
-    CIDropEvent* d = (CIDropEvent*)c_alloc(sizeof(CIDropEvent)+textsz);
-    d->size = textsz;
-    c_memcpy((byte_t*)&d->text_data.text,drop.file,d->size);
-    d->type = CIDropEvent::File;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),d,sizeof(CIDropEvent)+textsz);
+    CIDropEvent d;
+    d.size = c_strlen(drop.file)+1;
+    d.type = CIDropEvent::File;
+    d.text_data.text = drop.file;
+
+    coffee_sdl2_eventpack(ctxt,&e,&d);
 }
 
 inline static void coffee_sdl2_eventhandle_input(
@@ -278,10 +229,11 @@ inline static void coffee_sdl2_eventhandle_input(
     CIEvent e;
     e.type = CIEvent::TextInput;
     e.ts = input.timestamp;
-    CIWriteEvent w;
-    c_memcpy(w.text,input.text,ci_max_text_edit_size);
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
+    CIWriteEvent w;
+    w.text = input.text;
+
+    coffee_sdl2_eventpack(ctxt,&e,&w);
 }
 
 inline static void coffee_sdl2_eventhandle_inputedit( //Note: Yet to be tested
@@ -293,11 +245,11 @@ inline static void coffee_sdl2_eventhandle_inputedit( //Note: Yet to be tested
     e.ts = edit.timestamp;
 
     CIWEditEvent w;
-    c_memcpy(w.text,edit.text,ci_max_text_edit_size);
+    w.text = edit.text;
     w.cursor = edit.start;
     w.len = edit.length;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&w,sizeof(w));
+    coffee_sdl2_eventpack(ctxt,&e,&w);
 }
 
 inline static void coffee_sdl2_eventhandle_controller_input(
@@ -317,14 +269,13 @@ inline static void coffee_sdl2_eventhandle_controller_input(
         c.axis = true;
         c.index = axis.axis;
         c.value = axis.value;
-
     }else{
         c.axis = false;
         c.index = btn.button;
         c.button_state = btn.state;
     }
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),&c,sizeof(c));
+    coffee_sdl2_eventpack(ctxt,&e,&c);
 }
 
 inline static void coffee_sdl2_eventhandle_controller_device(
@@ -337,45 +288,38 @@ inline static void coffee_sdl2_eventhandle_controller_device(
 
     cstring name = SDL_GameControllerNameForIndex(dev.which);
 
-    szptr evsize = sizeof(CIControllerAtomicUpdateEvent);
-    if(name)
-        evsize += strlen(name)+1;
+    CIControllerAtomicUpdateEvent c;
 
-    CIControllerAtomicUpdateEvent *c = (CIControllerAtomicUpdateEvent*)c_calloc(1,evsize);
+    c.name = name;
+    c.connected = false;
+    c.remapped = false;
 
-    if(name)
-        c_memcpy((byte_t*)&c->name,name,strlen(name)+1);
-    else
-        c_memclear((byte_t*)&c->name,1);
-
-    c->connected = false;
-    c->remapped = false;
     switch(dev.type){
     case SDL_CONTROLLERDEVICEREMAPPED:
-        c->remapped = true;
+        c.remapped = true;
     case SDL_CONTROLLERDEVICEADDED:{
-        c->connected = true;
+        c.connected = true;
         break;
         }
     }
 
-    c->controller = dev.which;
+    c.controller = dev.which;
 
-    coffee_sdl2_send_full_ievent(ctxt,&e,sizeof(e),c,evsize);
+    coffee_sdl2_eventpack(ctxt,&e,&c);
 }
 
 inline static void coffee_sdl2_eventhandle_window_state(
         CSDL2Renderer* ctxt,
         Uint32 ts,
-        uint8 state)
+        CDStateEvent::StateChange state)
 {
     CDEvent e;
-    CDStateEvent s;
     e.type = CDEvent::State;
     e.ts = ts;
+    CDStateEvent s;
     s.type = state;
 
-    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+    coffee_sdl2_eventpack(ctxt,&e,&s);
 }
 
 inline static void coffee_sdl2_eventhandle_window_focus(
@@ -384,10 +328,11 @@ inline static void coffee_sdl2_eventhandle_window_focus(
         Uint8 type)
 {
     CDEvent e;
-    CDFocusEvent s;
     e.type = CDEvent::Focus;
     e.ts = ts;
-    s.mod = 0;
+
+    CDFocusEvent s;
+    s.mod = CDFocusEvent::FocusMask();
 
     switch(type){
     case SDL_WINDOWEVENT_ENTER: s.mod |= CDFocusEvent::Mouse | CDFocusEvent::Enter; break;
@@ -396,7 +341,7 @@ inline static void coffee_sdl2_eventhandle_window_focus(
     case SDL_WINDOWEVENT_FOCUS_GAINED: s.mod |= CDFocusEvent::Enter; break;
     }
 
-    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+    coffee_sdl2_eventpack(ctxt,&e,&s);
 }
 
 inline static void coffee_sdl2_eventhandle_window_resize(
@@ -406,13 +351,14 @@ inline static void coffee_sdl2_eventhandle_window_resize(
         int32 h)
 {
     CDEvent e;
-    CDResizeEvent s;
     e.type = CDEvent::Resize;
     e.ts = ts;
+
+    CDResizeEvent s;
     s.w = w;
     s.h = h;
 
-    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+    coffee_sdl2_eventpack(ctxt,&e,&s);
 }
 
 inline static void coffee_sdl2_eventhandle_window_move(
@@ -422,13 +368,14 @@ inline static void coffee_sdl2_eventhandle_window_move(
         int32 y)
 {
     CDEvent e;
-    CDMoveEvent s;
     e.type = CDEvent::Move;
     e.ts = ts;
+
+    CDMoveEvent s;
     s.x = x;
     s.y = y;
 
-    coffee_sdl2_send_full_wevent(ctxt,&e,sizeof(e),&s,sizeof(s));
+    coffee_sdl2_eventpack(ctxt,&e,&s);
 }
 
 inline static void coffee_sdl2_eventhandle_window(
@@ -479,12 +426,12 @@ inline static void coffee_sdl2_eventhandle_window(
     }
 }
 
-void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev){
-
+void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev)
+{
     switch(ev->type){
 
     case SDL_QUIT:{
-        coffee_sdl2_send_atomic_ievent(ctxt,CIEvent::QuitSign);
+        coffee_sdl2_eventatomic<CIEvent>(ctxt,CIEvent::QuitSign);
         break;
     }
 

@@ -49,19 +49,19 @@ CDWindowProperties::CDWindowProperties():
 }
 
 CGLContextProperties::CGLContextProperties():
-    flags(GLCoreProfile),
     version(3,3),
-    bits()
+    bits(),
+    flags(GLCoreProfile)
 {
 }
 
 CDFocusEvent::CDFocusEvent():
-    mod(0)
+    mod()
 {
 }
 
 CDStateEvent::CDStateEvent():
-    type(0)
+    type()
 {
 }
 
@@ -76,7 +76,7 @@ CGLContextVersion::CGLContextVersion(uint8 maj, uint8 min)
 }
 
 CDEvent::CDEvent():
-    type(0),
+    type(),
     ts(0)
 {
 }

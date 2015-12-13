@@ -26,6 +26,8 @@ public:
 
     virtual void bindingCallback(const void* report) const;
 
+    using CSDL2Renderer::eventHandle;
+
 protected:
     CGLBindingRenderer(CObject* parent);
 

@@ -146,55 +146,79 @@ void CDRenderer::run(const CDWindowProperties& props)
     cleanup();
 }
 
-void CDRenderer::eventWindowsHandle(const CDEvent *event)
+void CDRenderer::eventHandle(const CDEvent &event, c_cptr data)
 {
-    if(event->type==CDEvent::Resize &&
-            m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
-        const CDResizeEvent* resize = (const CDResizeEvent*)&event[1];
-        coffee_graphics_set_viewport(*resize);
+    switch(event.type)
+    {
+    case CDEvent::Resize:
+    {
+        if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
+            const CDResizeEvent* resize = (const CDResizeEvent*)data;
+            coffee_graphics_set_viewport(*resize);
 
-        game->transforms.cameras.d[0].aspect =
-                (float)resize->w/(float)resize->h;
-    }else if(event->type==CDEvent::State){
-        const CDStateEvent* ste = (const CDStateEvent*)&event[1];
+            game->transforms.cameras.d[0].aspect =
+                    (float)resize->w/(float)resize->h;
+        }
+        break;
+    }
+    case CDEvent::State:
+    {
+        const CDStateEvent* ste = (const CDStateEvent*)data;
         if(ste->type == CDStateEvent::Closed)
             closeWindow();
+        break;
+    }
+    default:break;
     }
 }
 
-void CDRenderer::eventInputHandle(const CIEvent *event)
+void CDRenderer::eventHandle(const CIEvent &event, c_cptr data)
 {
-    CSDL2Renderer::eventInputHandle(event);
-    if(event->type==CIEvent::Keyboard){
-        const CIKeyEvent* kev = (const CIKeyEvent*)&event[1];
-//        cDebug("Key event: key=%i,mods=%i,scan=%i,char=%s",
-//               kev->key,kev->mod,kev->scan,&kev->key);
-        if(kev->key==CK_Escape)
-            this->closeWindow();
-        else if(kev->key==CK_Up&&kev->mod&CIKeyEvent::PressedModifier)
-            game->transforms.cameras.d[0].position.y() -= 0.05;
-        else if(kev->key==CK_Down&&kev->mod&CIKeyEvent::PressedModifier)
-            game->transforms.cameras.d[0].position.y() += 0.05;
-    }
-    else if(event->type==CIEvent::MouseMove)
+    CSDL2Renderer::eventHandle(event,data);
+    switch(event.type)
     {
-        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&event[1];
+    case CIEvent::Keyboard:
+    {
+        const CIKeyEvent* kev = (const CIKeyEvent*)data;
+        switch(kev->key)
+        {
+        case CK_Escape:
+            this->closeWindow();
+            break;
+        case CK_Up:
+            if(!(kev->mod&CIKeyEvent::PressedModifier))
+                break;
+            game->transforms.cameras.d[0].position.y() -= 0.05;
+            break;
+        case CK_Down:
+            if(!(kev->mod&CIKeyEvent::PressedModifier))
+                break;
+            game->transforms.cameras.d[0].position.y() += 0.05;
+            break;
+        }
+        break;
+    }
+    case CIEvent::MouseMove:
+    {
+        const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
         if(relativeMouse())
         {
             coffee_input_mouse_rotate(&(game->transforms.cameras.d[0].rotation),mev);
         }
+        break;
     }
-    else if(event->type==CIEvent::MouseButton)
+    case CIEvent::MouseButton:
     {
-        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)&event[1];
+        const CIMouseButtonEvent* mev = (const CIMouseButtonEvent*)data;
         if(mev->btn == CIMouseButtonEvent::LeftButton)
             setRelativeMouse(true);
         else if(mev->btn == CIMouseButtonEvent::RightButton)
             setRelativeMouse(false);
+        break;
     }
-    else if(event->type==CIEvent::Controller)
+    case CIEvent::Controller:
     {
-        const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)&event[1];
+        const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)data;
         if(jev->axis)
         {
             CIAxisFilter& filter = (jev->index == CK_AXIS_RIGHT_X)
@@ -213,16 +237,20 @@ void CDRenderer::eventInputHandle(const CIEvent *event)
                 test.rumble_input.duration = 180;
                 test.rumble_input.index = 0;
                 test.rumble_input.strength = 0.6f;
-                eventHapticHandle(&test);
+                eventHandle(test,nullptr);
                 break;
             }
             }
         }
+        break;
     }
-    else if(event->type==CIEvent::Drop)
+    case CIEvent::Drop:
     {
-        const CIDropEvent* dev = (const CIDropEvent*)&event[1];
+        const CIDropEvent* dev = (const CIDropEvent*)data;
         cDebug("File: %s",dev->text_data.text);
+        break;
+    }
+    default:break;
     }
 }
 

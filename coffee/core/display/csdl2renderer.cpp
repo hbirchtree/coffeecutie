@@ -328,25 +328,35 @@ void CSDL2Renderer::setKeyboardRepeat(bool m)
 {
 }
 
-void CSDL2Renderer::eventHapticHandle(const CIHapticEvent *haptic)
+void CSDL2Renderer::eventHandle(const CIHapticEvent &haptic, c_cptr)
 {
     SDL_HapticRumblePlay(
-                m_context->haptics[haptic->rumble_input.index],
-            haptic->rumble_input.strength,
-            haptic->rumble_input.duration);
+                m_context->haptics[haptic.rumble_input.index],
+            haptic.rumble_input.strength,
+            haptic.rumble_input.duration);
 }
 
 /*!
  * \brief A default event handler created to intercept controller connect and disconnect. This is optional, and the user may choose to implement their own methods based on this.
  * \param event
  */
-void CSDL2Renderer::eventInputHandle(const CIEvent *event)
+void CSDL2Renderer::eventHandle(const CIEvent &event, c_cptr data)
 {
-    if(event->type==CIEvent::ControllerUpdate)
+    if(event.type==CIEvent::ControllerUpdate)
     {
         const CIControllerAtomicUpdateEvent* jev =
-                (const CIControllerAtomicUpdateEvent*)&event[1];
+                (const CIControllerAtomicUpdateEvent*)data;
         _sdl2_controllers_handle(jev);
+    }
+}
+
+void CSDL2Renderer::eventHandle(const CDEvent &event, c_cptr data)
+{
+    if(event.type==CDEvent::State)
+    {
+        const CDStateEvent* sev = (const CDStateEvent*)data;
+        if(sev->type==CDStateEvent::Closed)
+            this->closeWindow();
     }
 }
 
@@ -421,7 +431,7 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
         {
             cMsg("SDL2","Controller %i with rumble connected: %s",ev->controller,ev->name);
             m_context->haptics[ev->controller] = hdev;
-            eventInputHandle(hev);
+            eventHandle(*hev,nullptr);
             c_free(hev);
         }else
             cMsg("SDL2","Controller %i connected: %s",ev->controller,ev->name);

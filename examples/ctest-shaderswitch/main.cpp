@@ -2,6 +2,9 @@
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 
+//Don't do this at home, please! I am a trained professional.
+#include <coffee/graphics_apis/opengl/include/glfunctions.h>
+
 using namespace Coffee;
 using namespace CDisplay;
 using namespace CGraphicsData;
@@ -35,10 +38,10 @@ public:
         };
 
         const CVec2 texdata[] = {
-            CVec2(0.f, 0.f), //1
-            CVec2(1.f, 0.f), //2
-            CVec2(0.f, 1.f), //3
-            CVec2(1.f, 1.f), //4
+            CVec2(0.f, 0.f),
+            CVec2(1.f, 0.f),
+            CVec2(0.f, 1.f),
+            CVec2(1.f, 1.f),
         };
 
         const uint32 indexdata[] = {
@@ -179,15 +182,12 @@ public:
         }
 
         //Creating texture
+        CResources::CResource texture("ctest_hud/particle_sprite.png");
+        CResources::coffee_file_pull(&texture);
 
         CUniform texuni;
-        CTextureSampler glsamp;
         CTexture gltext;
-        CTextureSize texsize = {};
-        CTextureRegion texreg = {};
-        CNBuffer<2> pbos;
-        CRGBA* texstorage_1;
-        CRGBA* texstorage_2;
+        CTextureSampler glsamp;
 
         {
             texuni.object_name = "diffsamp";
@@ -196,50 +196,21 @@ public:
         }
 
         {
-            texsize.w = texsize.h = texreg.w = texreg.h = 1024;
-
-            texstorage_1 = (CRGBA*)c_calloc(sizeof(CRGBA),texsize.w*texsize.h);
-            texstorage_2 = (CRGBA*)c_calloc(sizeof(CRGBA),texsize.w*texsize.h);
-
-            for(int32 i=0;i<texsize.w;i++)
-                for(int32 j=0;j<texsize.h;j++)
-                {
-                    texstorage_1[j*texsize.h + i].a = 255;
-                    texstorage_1[j*texsize.h + i].r = 255;
-
-                    texstorage_2[j*texsize.h + i].a = 255;
-                    texstorage_2[j*texsize.h + i].r = 200;
-                }
-
-            coffee_graphics_alloc(pbos.size,pbos.data,CBufferType::PixelUnpack);
-
             gltext.type = CTexType::Tex2D;
             gltext.format = CTexIntFormat::RGBA8;
-            gltext.levels = 1;
-            gltext.size = texsize;
             coffee_graphics_alloc(gltext);
             coffee_graphics_activate(gltext);
 
-            coffee_graphics_tex_defimmutable_2d(gltext);
+            CImportedTexture gtexdata = coffee_graphics_tex_create_rtexdata(texture);
 
-            for(size_t i=0;i<pbos.size;i++)
-            {
-                coffee_graphics_activate(pbos.current());
-                coffee_graphics_buffer_store_immutable(
-                            pbos.current(),
-                            texstorage_1,texsize.w*texsize.h*sizeof(CRGBA),
-                            CBufferStorage::WriteBit|
-                            CBufferStorage::Persistent|
-                            CBufferStorage::Coherent);
-                coffee_graphics_buffer_map(pbos.current(),
-                                           CBuffer_PersistentBufferFlags);
+            gltext.size = gtexdata.data()->size;
 
-                pbos.advance();
-            }
+            coffee_graphics_tex_define(gltext);
+            coffee_graphics_tex_store(gltext,gtexdata.data_ref(),0);
 
-            coffee_graphics_tex_pbo_upload(
-                        gltext,pbos.current(),
-                        CTexFormat::RGBA,CDataType::UByte,0);
+            CResources::coffee_file_free(&texture);
+
+            coffee_graphics_tex_mipmap(gltext);
 
             coffee_graphics_alloc(glsamp);
 
@@ -259,14 +230,26 @@ public:
         //Set uniform, a texture handle
         coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,glsamp.bhandle);
 
-        bool flop = false;
-
         this->showWindow();
         while(!closeFlag())
         {
+            switch(m_useShaderMode)
+            {
+            case 0:
+                break;
+            case 1:
+                coffee_graphics_bind(basePipeline.data_ref());
+                break;
+            case 2:
+                glUseProgram(0);
+                coffee_graphics_bind(basePipeline.data_ref());
+                break;
+            }
+
             coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
 
             camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
+            camera.rotation = t;
 
             wtf = coffee_graphics_gen_perspective(camera)
                     * coffee_graphics_gen_transform(camera);
@@ -283,32 +266,9 @@ public:
                             transforms.current());
             }
 
-            pbos.awaitCurrent();
-
-            coffee_graphics_tex_pbo_upload(
-                        gltext,pbos.current(),
-                        CTexFormat::RGBA,CDataType::UByte,0);
-
-
-            {
-                CRGBA* tex = (CRGBA*)pbos.next().data;
-
-                CRGBA* d;
-                if(flop)
-                    d = texstorage_1;
-                else
-                    d = texstorage_2;
-                flop = !flop;
-
-                c_memcpy(tex,d,sizeof(CRGBA)*texsize.w*texsize.h);
-            }
-
-
             counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
-            pbos.lockCurrent();
 
-            pbos.advance();
 
             this->swapBuffers();
             this->pollEvents();
@@ -323,20 +283,58 @@ public:
     }
     void eventHandle(const CDisplay::CDEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventHandle(e,data);
+        switch(e.type)
+        {
+        case CDEvent::State:
+        {
+            const CDStateEvent* sev = (const CDStateEvent*)data;
+            if(sev->type==CDStateEvent::Closed)
+                this->closeWindow();
+            break;
+        }
+        }
     }
     void eventHandle(const CIEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandle(e,data);
-        if(e.type==CIEvent::Keyboard)
+        switch(e.type)
+        {
+        case CIEvent::Keyboard:
         {
             const CIKeyEvent* kev = (const CIKeyEvent*)data;
-            if(kev->key == CK_Escape)
+
+            if(kev->mod&CIKeyEvent::PressedModifier)
+                break;
+
+            switch(kev->key)
+            {
+            case CK_Escape:
                 this->closeWindow();
+                break;
+            case CK_Space:
+                m_useShaderMode = (m_useShaderMode+1)%3;
+                break;
+            }
+            break;
+        }
+//        case CIEvent::MouseButton:
+//        {
+//            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
+//            break;
+//        }
+        case CIEvent::MouseMove:
+        {
+            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
+            t = CVectors::normalize_quat(CQuat(1,mev->rel.y*0.1,mev->rel.x*0.1,0) * t);
+            break;
+        }
+        default:
+            break;
         }
     }
 private:
     CQuat t;
+    uint8 m_useShaderMode = false;
 };
 
 int32 coffee_main(int32, byte_t**)
@@ -345,9 +343,7 @@ int32 coffee_main(int32, byte_t**)
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
-    props.contextProperties.flags |=
-            CGLContextProperties::GLDebug|
-            CGLContextProperties::GLVSync;
+    props.contextProperties.flags |= CGLContextProperties::GLDebug;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();

@@ -1,2 +1,2 @@
-#include "coffee/audio/caudio.h"
-#include "coffee/audio/openal/copenal.h"
+#include "coffee/audio/include/caudio.h"
+#include "coffee/audio/include/openal/copenal.h"

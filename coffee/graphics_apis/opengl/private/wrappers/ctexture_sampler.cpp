@@ -81,7 +81,7 @@ void coffee_graphics_tex_unload(CTextureSampler const& tex, const CTexture &)
 void coffee_graphics_tex_load_safe(CTextureSampler const& sampler, const CTexture &tex)
 {
     glActiveTexture(GL_TEXTURE0+sampler.unit);
-    glBindTexture(gl_get(tex.textureType),tex.handle);
+    glBindTexture(gl_get(tex.type),tex.handle);
     glBindSampler(sampler.unit,sampler.handle);
 }
 

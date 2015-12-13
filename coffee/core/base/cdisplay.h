@@ -61,7 +61,7 @@ struct CDMonitor{
 struct CDEvent{
     CDEvent();
 
-    enum EventType
+    enum EventType : uint8
     {
         Refresh = 0x1,
         Move    = 0x2,
@@ -70,7 +70,7 @@ struct CDEvent{
 
         Focus   = 0x6,
     };
-    uint8   type; /*!< Event type*/
+    EventType type; /*!< Event type*/
     uint32  ts; /*!< Event timestamp*/
 };
 
@@ -98,7 +98,7 @@ struct CDStateEvent
 {
     CDStateEvent();
 
-    enum StateChange{
+    enum StateChange : uint8{
         Minimized   = 0x01,
         Maximized   = 0x02,
         Restored    = 0x03,
@@ -108,7 +108,7 @@ struct CDStateEvent
         Hidden      = 0x05,
         Shown       = 0x06,
     };
-    uint8   type; /*!< Type of window state event*/
+    StateChange type; /*!< Type of window state event*/
 };
 
 /*!
@@ -118,14 +118,16 @@ struct CDFocusEvent
 {
     CDFocusEvent();
 
-    enum FocusMask
+    enum FocusMask : uint8
     {
         Mouse   = 0x1,
         Enter   = 0x2,
         Exposed = 0x4,
     };
-    uint8   mod; /*!< Type of focus event*/
+    FocusMask mod; /*!< Type of focus event*/
 };
+
+C_FLAGS(CDFocusEvent::FocusMask,uint8);
 
 /*!
  * \brief GL context properties to set on start-up

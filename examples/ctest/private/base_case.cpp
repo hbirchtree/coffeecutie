@@ -150,7 +150,7 @@ CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
 
     CImportedTexture dt = coffee_graphics_tex_create_rtexdata(*textureres);
 
-    tex.textureType = CTexType::Tex2D;
+    tex.type = CTexType::Tex2D;
     tex.levels = 1;
     tex.format = CTexIntFormat::RGBA8;
     //GL calls
@@ -186,7 +186,7 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
         dt.size.w = tex.resolution.w;
         dt.size.h = tex.resolution.h;
 
-        t.textureType = (tex.type==CBlam::blam_bitm_type_2D) ? CTexType::Tex2D : CTexType::Tex3D;
+        t.type = (tex.type==CBlam::blam_bitm_type_2D) ? CTexType::Tex2D : CTexType::Tex3D;
         t.levels = tex.mipmaps;
         t.format = CTexIntFormat::RGBA8;
         coffee_graphics_activate(t);

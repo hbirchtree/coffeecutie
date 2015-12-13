@@ -1,9 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
 #include <coffee/CImage>
-#include <coffee/core/plat/application_start.h>
-
-#include <coffee/core/base/cmath_glm.h>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -196,7 +193,7 @@ public:
         }
 
         {
-            gltext.textureType = CTexType::Tex2D;
+            gltext.type = CTexType::Tex2D;
             gltext.format = CTexIntFormat::RGBA8;
             coffee_graphics_alloc(gltext);
             coffee_graphics_activate(gltext);
@@ -268,35 +265,25 @@ public:
         coffee_graphics_free(transforms.size,transforms.data);
         coffee_graphics_free(indices);
     }
-    void eventWindowsHandle(const CDisplay::CDEvent *e)
+    void eventHandle(const CDEvent &e, c_cptr data)
     {
-        if(e->type==CDEvent::State)
-        {
-            const CDStateEvent* sev = (const CDStateEvent*)&e[1];
-            if(sev->type==CDStateEvent::Closed)
-                this->closeWindow();
-        }
+        CSDL2Renderer::eventHandle(e,data);
     }
-    void eventInputHandle(const CIEvent *e)
+    void eventHandle(const CIEvent &e, c_cptr data)
     {
-        CSDL2Renderer::eventInputHandle(e);
-        switch(e->type)
+        CSDL2Renderer::eventHandle(e,data);
+        switch(e.type)
         {
         case CIEvent::Keyboard:
         {
-            const CIKeyEvent* kev = (const CIKeyEvent*)&e[1];
+            const CIKeyEvent* kev = (const CIKeyEvent*)data;
             if(kev->key == CK_Escape)
                 this->closeWindow();
             break;
         }
-        case CIEvent::MouseButton:
-        {
-            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
-            break;
-        }
         case CIEvent::MouseMove:
         {
-            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)&e[1];
+            const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
             t = CVectors::normalize_quat(CQuat(1,mev->rel.y*0.1,mev->rel.x*0.1,0) * t);
             break;
         }

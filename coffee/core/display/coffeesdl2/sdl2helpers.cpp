@@ -157,7 +157,7 @@ CDWindowProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
 
 void coffee_sdl2_set_winflags(SDL_Window* window,CDWindowProperties::State const& state)
 {
-    if(!state&CDWindowProperties::Undecorated)
+    if(!(state&CDWindowProperties::Undecorated))
         SDL_SetWindowBordered(window,SDL_TRUE);
     else
         SDL_SetWindowBordered(window,SDL_FALSE);

@@ -8,3 +8,4 @@
 
 #include <coffee/core/plat/environment_details.h>
 #include <coffee/core/plat/argument_parse.h>
+#include <coffee/core/plat/application_start.h>

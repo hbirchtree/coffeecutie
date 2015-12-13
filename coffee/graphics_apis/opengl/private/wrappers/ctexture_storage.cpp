@@ -64,5 +64,14 @@ void coffee_graphics_tex_readtexelregion(
                          0, dPtr);
 }
 
+void coffee_graphics_tex_sparse_commit(
+        CTexture &tex, bool commit, const CGint &level, const CTextureRegion &reg)
+{
+    glTexturePageCommitmentEXT(tex.handle,level,
+                               reg.x(),reg.y(),reg.z(),
+                               reg.w,reg.h,reg.d,
+                               (commit) ? GL_TRUE : GL_FALSE);
+}
+
 }
 }

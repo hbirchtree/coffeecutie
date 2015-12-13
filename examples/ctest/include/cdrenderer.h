@@ -29,8 +29,10 @@ public:
      */
     void run(const CDWindowProperties &props);
 
-    void eventWindowsHandle(const CDEvent *event);
-    void eventInputHandle(const CIEvent *event);
+    using CSDL2Renderer::eventHandle;
+
+    void eventHandle(const CDEvent &event, c_cptr data);
+    void eventHandle(const CIEvent &event, c_cptr data);
 
 private:
     game_context* game = nullptr;

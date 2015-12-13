@@ -12,17 +12,19 @@ set ( CBlamElegy_SRCS
         )
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/coffee/image/include)
+        ${COFFEE_IMAGE_INCLUDE_DIR}
+        ${COFFEE_CORE_INCLUDE_DIR}
+    )
 
 add_library ( CBlam ${COFFEE_LINK_OPT}
-            ${CBlamVolta_SRCS}
-            ${CBlamDimeter_SRCS}
-            ${CBlamElegy_SRCS}
-            )
+        ${CBlamVolta_SRCS}
+        ${CBlamDimeter_SRCS}
+        ${CBlamElegy_SRCS}
+    )
 
 target_link_libraries( CBlam
-    CoffeeCore
-    CImage
+        CoffeeCore
+        CImage
     )
 
 target_compile_features(CBlam PRIVATE cxx_variadic_templates)

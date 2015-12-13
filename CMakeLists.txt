@@ -11,11 +11,19 @@ set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 
 add_definitions ( -Wall )
 include_directories (
-                ${CMAKE_SOURCE_DIR}
-                ${CMAKE_BINARY_DIR}/libs/include
-                include
-                libs
-                coffee)
+        ${CMAKE_SOURCE_DIR}
+        ${CMAKE_BINARY_DIR}/libs/include
+        include
+        coffee
+    )
+
+include_directories ( SYSTEM
+        libs
+    )
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+endif()
 
 link_directories(
     ${CMAKE_BINARY_DIR}/libs/
@@ -37,7 +45,38 @@ if(NOT WIN32)
     include_directories("${LIBUNWIND_INCLUDE_DIR}")
 endif()
 
+#Include directories; I'm putting them here temporarily
+set (
+    COFFEE_ASSIMP_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/assimp/include
+    )
+set (
+    COFFEE_AUDIO_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/audio/include
+    )
+set (
+    COFFEE_BLAM_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/blam/include
+    )
+set (
+    COFFEE_CORE_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/core/include
+    )
+set (
+    COFFEE_GRAPHICS_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+    )
+set (
+    COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/opengl/include
+    )
+set (
+    COFFEE_IMAGE_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/image/include
+    )
+
 add_subdirectory(coffee)
+
 add_subdirectory(examples)
 add_subdirectory(docs)
 

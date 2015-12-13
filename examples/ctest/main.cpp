@@ -1,8 +1,5 @@
-#include "cdrenderer.h"
-
-#include <coffee/core/plat/environment_details.h>
-#include <coffee/core/plat/application_start.h>
-#include <coffee/core/base/cfiles.h>
+#include <coffee/CCore>
+#include <cdrenderer.h>
 
 using namespace Coffee;
 using namespace Coffee::CDisplay;

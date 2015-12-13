@@ -1,8 +1,5 @@
-#include <coffee/blam/cblam.h>
-#include <coffee/core/base/cfiles.h>
-#include <coffee/core/plat/application_start.h>
-#include <coffee/core/plat/argument_parse.h>
-#include <coffee/core/base/cdebug.h>
+#include <coffee/CBlam>
+#include <coffee/CCore>
 
 using namespace Coffee;
 using namespace CResources;

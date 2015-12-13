@@ -119,7 +119,7 @@ struct CTexture
 {
     CTexture();
 
-    CTexType textureType; /*!< Texture type, defines texture target */
+    CTexType type; /*!< Texture type, defines texture target */
     CGhnd handle; /*!< Texture handle */
     CGsize levels; /*!< Mipmap levels */
     CTexIntFormat format; /*!< Texture format */

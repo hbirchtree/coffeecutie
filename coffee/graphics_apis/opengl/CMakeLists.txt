@@ -24,15 +24,16 @@ set ( CoffeeOpenGL_SRCS
         private/wrappers/ctexture_pbo.cpp
         private/wrappers/cuniformtypes.cpp
         private/wrappers/cviewport_array.cpp
-        )
+    )
 
 add_library( CoffeeOpenGL ${COFFEE_LINK_OPT} ${CoffeeOpenGL_SRCS} )
 
 include_directories (
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+        ${COFFEE_GRAPHICS_INCLUDE_DIR}
+        ${COFFEE_IMAGE_INCLUDE_DIR}
         ${GLBINDING_INCLUDE_DIRS}
-                )
+    )
 
 target_link_libraries ( CoffeeOpenGL
                 CoffeeCore

@@ -1,7 +1,7 @@
 set ( CoffeeTestLib_SRCS
-        rendering/cmultidrawgraph.cpp
-        base_case.cpp
-        cdrenderer.cpp
+        private/rendering/cmultidrawgraph.cpp
+        private/base_case.cpp
+        private/cdrenderer.cpp
         )
 
 set ( CoffeeTest_SRCS
@@ -9,28 +9,27 @@ set ( CoffeeTest_SRCS
         )
 
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/coffee/audio/include
-        ${CMAKE_SOURCE_DIR}/coffee/blam/include
-        ${CMAKE_SOURCE_DIR}/coffee/assimp/include
-        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
-        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/opengl/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+
+        ${COFFEE_GRAPHICS_INCLUDE_DIR}
+        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+        ${COFFEE_AUDIO_INCLUDE_DIR}
+        ${COFFEE_ASSIMP_INCLUDE_DIR}
+        ${COFFEE_BLAM_INCLUDE_DIR}
     )
 
 add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTestLib_SRCS} )
-
 add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 
 target_link_libraries ( CoffeeTestLib
-CoffeeCore
-CBlam
-CAudio
-CAssimp
-CoffeeOpenGL
-)
+        CoffeeCore
+        CBlam
+        CAssimp
+        CoffeeOpenGL
+    )
 target_link_libraries ( CoffeeTest
-CoffeeTestLib
-)
+        CoffeeTestLib
+    )
 
 target_compile_features(CoffeeTestLib PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeTest PRIVATE cxx_variadic_templates)

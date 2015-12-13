@@ -15,7 +15,7 @@ CTexture *coffee_graphics_tex_dxtc_load(const CBlamDXTCHeader &rsc, c_ptr constr
         tex = new (constructLocation) CTexture;
     coffee_graphics_alloc(*tex);
 
-    tex->textureType = CTexType::Tex2D;
+    tex->type = CTexType::Tex2D;
     tex->levels = rsc.mipmaps;
 
     CTextureSize res = rsc.resolution;
@@ -33,7 +33,7 @@ CTexture *coffee_graphics_tex_dxtc_load(const CBlamDXTCHeader &rsc, c_ptr constr
         size = ((res.w+3)/4)*((res.h+3)/4)*rsc.blockSize;
 
         glCompressedTexImage2D(
-                    gl_get(tex->textureType),
+                    gl_get(tex->type),
                     i,
                     gl_get(rsc.internalFormat),
                     res.w,res.h,0,size,
@@ -72,7 +72,7 @@ void coffee_graphics_tex_compressed_load(
     {
     case 3:
         glCompressedTexImage3D(
-                    gl_get(tex.textureType),
+                    gl_get(tex.type),
                     level,gl_get(fmt),
                     tex.size.w,tex.size.h,tex.size.d,
                     tex.size.w*tex.size.h*tex.size.d*pixelSize,
@@ -80,7 +80,7 @@ void coffee_graphics_tex_compressed_load(
         break;
     case 2:
         glCompressedTexImage2D(
-                    gl_get(tex.textureType),
+                    gl_get(tex.type),
                     level,gl_get(fmt),
                     tex.size.w,tex.size.h,
                     tex.size.w*tex.size.h*pixelSize,
@@ -88,7 +88,7 @@ void coffee_graphics_tex_compressed_load(
         break;
     case 1:
         glCompressedTexImage1D(
-                    gl_get(tex.textureType),
+                    gl_get(tex.type),
                     level, gl_get(fmt),
                     tex.size.w, tex.size.w*pixelSize,
                     0, data);

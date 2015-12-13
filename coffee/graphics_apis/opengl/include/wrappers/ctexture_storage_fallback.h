@@ -41,6 +41,16 @@ extern void coffee_graphics_tex_substore_3d_safe(
         CTexture& tex, const CTextureData& data, const CGint& level, const CTextureRegion& reg);
 
 /*!
+ * \brief Define page commitment of sparse texture
+ * \param tex
+ * \param commit
+ * \param level
+ * \param reg
+ */
+extern void coffee_graphics_tex_sparse_commit_safe(
+        CTexture& tex, bool commit, const CGint& level, const CTextureRegion& reg);
+
+/*!
  * \brief Store texture data in a 1D texture. This is a fallback.
  * \param tex
  */

@@ -1,10 +1,6 @@
-if(NOT DEFINED GLBINDING_INCLUDE_DIR)
-    set (GLBINDING_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/glbinding/source/glbinding/include)
-endif()
-
-include_directories (${GLBINDING_INCLUDE_DIRS}
-		${CMAKE_CURRENT_SOURCE_DIR}/include
-		)
+include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
 
 set ( CImage_SRCS
         private/cimage.cpp
@@ -13,7 +9,7 @@ set ( CImage_SRCS
 add_library( CImage ${COFFEE_LINK_OPT} ${CImage_SRCS})
 
 target_link_libraries( CImage
-    CoffeeCore
+        CoffeeCore
     )
 
 target_compile_features(CImage PRIVATE cxx_variadic_templates)

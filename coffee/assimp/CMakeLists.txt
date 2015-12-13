@@ -5,14 +5,17 @@ set ( CAssimp_SRCS
         private/assimpfun.cpp
         )
 
-include_directories(${ASSIMP_INCLUDE_DIRS}
-		${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(
+        ${COFFEE_CORE_INCLUDE_DIR}
+        ${ASSIMP_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
 
 add_library( CAssimp ${COFFEE_LINK_OPT} ${CAssimp_SRCS})
 
 target_link_libraries ( CAssimp
-CoffeeCore
-${assimp_LIBRARIES}
-)
+    CoffeeCore
+    ${assimp_LIBRARIES}
+    )
 
 target_compile_features(CAssimp PRIVATE cxx_variadic_templates)

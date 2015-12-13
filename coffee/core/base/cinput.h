@@ -14,7 +14,8 @@ constexpr szptr ci_max_text_edit_size = 32;
  */
 struct CIEvent
 {
-    enum EventType {
+    enum EventType : uint8 {
+        NoneType     = 0x0,
         MouseMove    = 0x1,/*!< Mouse motion events*/
         Keyboard     = 0x2,/*!< Keyboard events*/
         Controller   = 0x3,/*!< Controller input events*/
@@ -28,8 +29,8 @@ struct CIEvent
         HapticDev    = 0xb,/*!< Sent when a new haptic device is connected or disconnected*/
         Haptic       = 0xc,/*!< Transmitted when user wants to create a rumble event*/
     };
-    uint32  ts    = 0; /*!< Event timestamp*/
-    uint8   type  = 0; /*!< Event type*/
+    uint32 ts = 0; /*!< Event timestamp*/
+    EventType type = NoneType; /*!< Event type*/
 };
 
 /*!
@@ -117,7 +118,7 @@ struct CIScrollEvent
  */
 struct CIWriteEvent
 {
-    byte_t text[ci_max_text_edit_size]; /*! Submitted text*/
+    cstring text; /*! Submitted text*/
 };
 
 /*!
@@ -127,7 +128,7 @@ struct CIWEditEvent
 {
     int32 cursor; /*!< Cursor position*/
     int32 len; /*!< Text length*/
-    byte_t text[ci_max_text_edit_size]; /*!< Current text*/
+    cstring text; /*!< Current text*/
 };
 
 /*!
@@ -226,7 +227,7 @@ struct CIDropEvent
         void* data = 0;
         struct
         {
-            byte_t text[];
+            cstring text;
         } text_data;
     };
 };

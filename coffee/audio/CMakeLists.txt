@@ -1,7 +1,9 @@
 find_package(OpenAL REQUIRED)
+
 include_directories(
-    ${OPENAL_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${OPENAL_INCLUDE_DIR}
+        ${COFFEE_CORE_INCLUDE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
 set ( CAudio_SRCS

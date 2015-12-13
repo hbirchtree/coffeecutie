@@ -55,6 +55,7 @@ endif()
 
 find_package(SDL2 REQUIRED)
 include_directories(
+    ${COFFEE_CORE_INCLUDE_DIR}
     ${SDL2_INCLUDE_DIR}
     ${GLBINDING_INCLUDE_DIRS}
     )

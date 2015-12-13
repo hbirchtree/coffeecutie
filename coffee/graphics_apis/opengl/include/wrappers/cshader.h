@@ -193,8 +193,8 @@ public:
         coffee_graphics_shader_compile(vert,vshader,CProgramStage::Vertex);
         coffee_graphics_shader_compile(frag,fshader,CProgramStage::Fragment);
 
-        coffee_graphics_shader_attach(*m_data,vert,CProgramStage::Vertex);
-        coffee_graphics_shader_attach(*m_data,frag,CProgramStage::Fragment);
+        coffee_graphics_shader_attach(data_ref(),vert,CProgramStage::Vertex);
+        coffee_graphics_shader_attach(data_ref(),frag,CProgramStage::Fragment);
     }
 
     CShaderStageProgram vert;
