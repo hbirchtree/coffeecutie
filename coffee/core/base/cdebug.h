@@ -131,13 +131,13 @@ inline void cDebugPrint(
     }
     }
 
-    cfprintf(strm,"%s%s:%s:%s%s: %s\n",
+    cfprintf(strm,"{0}{1}:{2}:{3}{4}: {5}\n",
              col,timestring,sevstring,callstring,print_color_reset,
              cStringFormat(str,args...).c_str());
 
     if(fail){
         CDebugHelpers::coffee_print_callstack(
-                    "Callstack before crash: \n","-> %s\n",
+                    "Callstack before crash: \n","-> {0}\n",
                     callstack,cs_length);
         throw std::runtime_error(cStringFormat(str,args...));
     }

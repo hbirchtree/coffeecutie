@@ -16,9 +16,9 @@ int32 coffee_main(int32, byte_t**)
     cstring_w app_dir  = coffee_get_application_dir();
     cstring_w exe_name = coffee_executable_name();
 
-    cDebug("Settings directory: %s",cfg_dir);
-    cDebug("Program directory:  %s",app_dir);
-    cDebug("Launching from      %s",exe_name);
+    cDebug("Settings directory: {0}",cfg_dir);
+    cDebug("Program directory:  {0}",app_dir);
+    cDebug("Launching from      {0}",exe_name);
 
     CResources::coffee_file_mkdir(cfg_dir,true);
 

@@ -80,23 +80,26 @@ cstring_w c_str_narrowconvert(cwstring str)
     return out;
 }
 
-cstring_w c_str_replace(cstring target, cstring query, cstring replacement)
+CString c_str_replace(const CString &target, const CString &query, const CString &replacement)
 {
-    CString starget = target;
-    CString squery = query;
-    CString srepl = replacement;
-
-    for(size_t pos=0;;pos+=srepl.length())
+    CString out = target;
+    for(size_t pos=0;;pos+=replacement.length())
     {
-        pos = starget.find(query,pos);
+        pos = out.find(query,pos);
         if(pos==std::string::npos)
             break;
-        starget.erase(pos,squery.length());
-        starget.insert(pos,srepl);
+        out.erase(pos,query.length());
+        out.insert(pos,replacement);
     }
-    cstring_w out = (cstring_w)c_alloc(starget.size()+1);
-    starget.copy(out,starget.size());
-    out[starget.size()] = 0;
+    return out;
+}
+
+cstring_w c_str_replace(cstring target, cstring query, cstring replacement)
+{
+    CString res = c_str_replace(CString(target),CString(query),CString(replacement));
+    cstring_w out = (cstring_w)c_alloc(res.size()+1);
+    res.copy(out,res.size());
+    out[res.size()] = 0;
     return out;
 }
 

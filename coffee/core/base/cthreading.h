@@ -59,6 +59,11 @@ private:
 
 typedef CThreadWorker<ubyte_t> CThreadUbyteWorker;
 
+inline uint64 coffee_thread_get_id()
+{
+    return (uint64)100;
+}
+
 }
 }
 }

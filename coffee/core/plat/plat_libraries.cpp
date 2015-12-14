@@ -9,8 +9,8 @@
 namespace Coffee{
 namespace CLibraryLoader{
 
-constexpr cstring lib_load_error_format = "Native library loading error: %s";
-constexpr cstring lib_symb_error_format = "Native library symbol resolution error: %s";
+constexpr cstring lib_load_error_format = "Native library loading error: {0}";
+constexpr cstring lib_symb_error_format = "Native library symbol resolution error: {0}";
 
 #if defined(COFFEE_LINUX)
 struct CNativeObject
@@ -30,7 +30,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _
     if(libver)
     {
         plat_file_name.append(cStringFormat(
-                    ".%i.%i.%i",
+                    ".{0}.{1}.{2}",
                     libver->major,
                     libver->minor,
                     libver->revision));

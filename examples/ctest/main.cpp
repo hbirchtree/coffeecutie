@@ -27,7 +27,7 @@ int32 coffee_main(int32,byte_t**)
         }catch(std::runtime_error exc){
             cDebug(
                         "Caught exception in thread: 0x%llx, message: %s",
-                        std::this_thread::get_id(),
+                        coffee_thread_get_id(),
                         exc.what());
             worker.dataPtr()->store(1);
             renderer->cleanup();
