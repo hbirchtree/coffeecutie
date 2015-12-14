@@ -225,8 +225,6 @@ void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
             switch(jev->index)
             {
             case CK_BUTTON_RB:{
-                if(!jev->button_state)
-                    break;
                 CIHapticEvent test;
                 test.rumble_input.duration = 180;
                 test.rumble_input.index = 0;
