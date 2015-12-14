@@ -25,10 +25,9 @@ int32 coffee_main(int32,byte_t**)
         try{
             renderer->run(props);
         }catch(std::runtime_error exc){
-            cDebug(
-                        "Caught exception in thread: 0x%llx, message: %s",
-                        coffee_thread_get_id(),
-                        exc.what());
+            cDebug("Caught exception in thread: 0x%llx, message: {0}",
+                   coffee_thread_get_id(),
+                   exc.what());
             worker.dataPtr()->store(1);
             renderer->cleanup();
         }
@@ -43,7 +42,7 @@ int32 coffee_main(int32,byte_t**)
            ? "Renderer exited with failure"
            : "Renderer exited normally");
 
-    cDebug("Time: %lldus",timer->elapsed());
+    cDebug("Time: {0}us",timer->elapsed());
 
     ret.get();
 

@@ -204,7 +204,7 @@ template<typename... Arg>
 inline void cMsg(cstring src, cstring msg, Arg... args)
 {
     CString msg_out = cStringFormat(msg,args...);
-    cDebugPrint(0,1,"%s: %s",src,msg_out.c_str());
+    cDebugPrint(0,1,"{0}: {1}",src,msg_out.c_str());
 }
 
 }

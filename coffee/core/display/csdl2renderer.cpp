@@ -37,7 +37,7 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
 
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
     {
-        cFatal("Failed to initialize SDL2 context: %s",SDL_GetError());
+        cFatal("Failed to initialize SDL2 context: {0}",SDL_GetError());
     }
     cMsg("SDL2","Initialized");
 
@@ -65,19 +65,19 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
                              flags);
 
     if(!m_context->window){
-        cFatal("Failed to create SDL2 window: %s",SDL_GetError());
+        cFatal("Failed to create SDL2 window: {0}",SDL_GetError());
     }
 
     m_context->context = SDL_GL_CreateContext(m_context->window);
 
     if(SDL_GL_MakeCurrent(m_context->window,m_context->context))
     {
-        cFatal("Failed to create SDL2 OpenGL context: %s",SDL_GetError());
+        cFatal("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
     }
 
     SDL_version ver;
     SDL_GetVersion(&ver);
-    m_contextString = cStringFormat("SDL %i.%i.%i",ver.major,ver.minor,ver.patch);
+    m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
     //For consistent behavior
     if(props.contextProperties.flags&CGLContextProperties::GLVSync)
@@ -90,7 +90,7 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
 
     setMouseGrabbing(false);
 
-    cMsg("SDL2","Running %s",m_contextString.c_str());
+    cMsg("SDL2","Running {0}",m_contextString.c_str());
 
     bindingPostInit();
 
@@ -150,7 +150,7 @@ CDMonitor CSDL2Renderer::monitor()
 
     SDL_DisplayMode dm;
     if(SDL_GetCurrentDisplayMode(m_properties.monitor,&dm)<0)
-        cDebug("Failed to get monitor information: %s",SDL_GetError());
+        cDebug("Failed to get monitor information: {0}",SDL_GetError());
     else{
 
         mon.refresh = dm.refresh_rate;
@@ -226,13 +226,13 @@ bool CSDL2Renderer::hideWindow()
 
 bool CSDL2Renderer::closeWindow()
 {
-    m_context->contextFlags |= 0b1;
+    m_context->contextFlags |= 0x1;
     return true;
 }
 
 bool CSDL2Renderer::closeFlag()
 {
-    return m_context->contextFlags&0b1;
+    return m_context->contextFlags&0x1;
 }
 
 int CSDL2Renderer::swapInterval() const
@@ -249,7 +249,6 @@ CSize CSDL2Renderer::framebufferSize() const
 {
     CSize sz;
     SDL_GL_GetDrawableSize(m_context->window,&sz.w,&sz.h);
-    cDebug("Framebuffer size: %ix%i",sz.w,sz.h);
     return sz;
 }
 
@@ -360,6 +359,43 @@ void CSDL2Renderer::eventHandleD(const CDEvent &event, c_cptr data)
     }
 }
 
+CIControllerState CSDL2Renderer::getControllerState(size_t index)
+{
+    SDL_GameController* gc = m_context->controllers[index];
+    CIControllerState state;
+
+    state.axes.l_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTX);
+    state.axes.l_y = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTY);
+
+    state.axes.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTX);
+    state.axes.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTY);
+
+    state.axes.t_l = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+    state.axes.t_r = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+
+    state.buttons.a = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_A);
+    state.buttons.b = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_B);
+    state.buttons.x = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_X);
+    state.buttons.y = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_Y);
+
+    state.buttons.back = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_BACK);
+    state.buttons.guide = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_GUIDE);
+    state.buttons.start = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_START);
+
+    state.buttons.s_l = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_LEFTSTICK);
+    state.buttons.s_r = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+
+    state.buttons.b_l = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+    state.buttons.b_r = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+
+    state.buttons.p_up = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_UP);
+    state.buttons.p_down = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+    state.buttons.p_left = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+    state.buttons.p_right = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+
+    return state;
+}
+
 void CSDL2Renderer::swapBuffers()
 {
     SDL_GL_SwapWindow(m_context->window);
@@ -419,7 +455,7 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
             return;
 
         if(ev->remapped){
-            cMsg("SDL2","Controller remapped: %i",ev->controller);
+            cMsg("SDL2","Controller remapped: {0}",ev->controller);
             SDL_GameControllerClose(m_context->controllers.at(ev->controller));
         }
         SDL_GameController* gc = SDL_GameControllerOpen(ev->controller);
@@ -429,12 +465,15 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
         CIEvent* hev = sdl2_controller_get_haptic(gc,ev->controller,hdev);
         if(hev)
         {
-            cMsg("SDL2","Controller %i with rumble connected: %s",ev->controller,ev->name);
+            cMsg("SDL2","Controller {0} with rumble connected: {1}",
+                 ev->controller,
+                 ev->name);
+
             m_context->haptics[ev->controller] = hdev;
             eventHandle(*hev,nullptr);
             c_free(hev);
         }else
-            cMsg("SDL2","Controller %i connected: %s",ev->controller,ev->name);
+            cMsg("SDL2","Controller {0} connected: {1}",ev->controller,ev->name);
     }else{
         if(!m_context->controllers[ev->controller])
             return;
@@ -443,7 +482,7 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
         m_context->controllers.erase(ev->controller);
         SDL_HapticClose(m_context->haptics[ev->controller]);
         m_context->haptics.erase(ev->controller);
-        cMsg("SDL2","Controller %i disconnected",ev->controller);
+        cMsg("SDL2","Controller {0} disconnected",ev->controller);
     }
 }
 

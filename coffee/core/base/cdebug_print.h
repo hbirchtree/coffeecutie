@@ -32,14 +32,6 @@ inline CString cStringReplace(
     return cStrReplace(fmt,index,"0x"+rep);
 }
 
-template<class T>
-inline CString cStringReplace(
-        CString fmt, size_t index,
-        typename std::enable_if<!std::is_arithmetic<T>::value>::type arg)
-{
-    return cStrReplace(fmt,index,std::to_string(arg));
-}
-
 inline CString cStringReplace(
         CString fmt, size_t index,
         cstring arg)
@@ -54,12 +46,21 @@ inline CString cStringReplace(
     return cStrReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
+template<typename T>
 inline CString cStringReplace(
         CString fmt, size_t index,
-        const uint8 &arg)
+        const T& arg)
 {
     return cStrReplace(fmt,index,std::to_string(arg));
 }
+
+//template<typename T>
+//inline CString cStringReplace(
+//        CString fmt, size_t index,
+//        const T &arg)
+//{
+//    return cStrReplace(fmt,index,std::to_string(arg));
+//}
 
 //template<typename T>
 //inline CString cStringReplace(

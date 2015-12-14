@@ -8,7 +8,7 @@ using namespace CGraphicsData;
 
 void framefun(uint32 t, const void*)
 {
-    cDebug("Framerate: %i",t);
+    cDebug("Framerate: {0}",t);
 }
 
 class CDHudRenderer : public Coffee::CDisplay::CGLBindingRenderer

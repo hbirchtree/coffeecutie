@@ -69,6 +69,8 @@ public:
     void eventHandleI(const CIEvent &event, c_cptr data);
     void eventHandleD(const CDEvent &event, c_cptr data);
 
+    CIControllerState getControllerState(size_t index);
+
     void eventHandle(const CIHapticEvent& haptic, c_cptr data)
     {
         this->eventHandleH(haptic,data);

@@ -64,7 +64,7 @@ void CGLBindingRenderer::bindingPostInit()
         cMsg("glbinding","Failed to acquire GL details");
     }
 
-    cMsg("glbinding","Currently running OpenGL revision: %i",m_libraryRevision);
+    cMsg("glbinding","Currently running OpenGL revision: {0}",m_libraryRevision);
 
 //    glbinding::setCallbackMask(glbinding::CallbackMask::After);
 
@@ -81,7 +81,7 @@ void CGLBindingRenderer::bindingTerminate()
 {
     cDebug("Functions: ");
     for(const CString &str : functions)
-        cBasicPrint("%s",str.c_str());
+        cBasicPrint("{0}",str.c_str());
 }
 
 void CGLBindingRenderer::bindingCallback(const void *report) const
@@ -89,7 +89,7 @@ void CGLBindingRenderer::bindingCallback(const void *report) const
     CGLDebugMessage const& rep = *((CGLDebugMessage*)report);
     if(!m_msg_filter(rep))
         return;
-    cWarning("OpenGL: %s",rep.message.c_str());
+    cWarning("OpenGL: {0}",rep.message.c_str());
 }
 
 } // namespace CDisplay

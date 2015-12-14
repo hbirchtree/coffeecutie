@@ -77,7 +77,7 @@ void CDRenderer::run()
     CElapsedTimerMicro* swap = coffee_fun_alloc_timer_micro();
 
     setSwapInterval(0);
-    cMsg("Coffee","Init time: %fs",contextTime());
+    cMsg("Coffee","Init time: {0}s",(double)contextTime());
 
     coffee_prepare_test(game);
 
@@ -120,8 +120,8 @@ void CDRenderer::run()
         //Info
         deltaT = contextTime()-delta;
         if(contextTime()>mtime){
-            cDebug("Render time: %lldus, swap time: %lldus, "
-                   "input: %lldus, queue: %lldus, frames: %lld, frametime: %lldus",
+            cDebug("Render time: {0}us, swap time: {1}us, "
+                   "input: {2}us, queue: {3}us, frames: {4}, frametime: {5}us",
                    rendertime,swaptime,
                    inputtime,qtime,frames-1,
                    rendertime+swaptime+inputtime+qtime);
@@ -136,7 +136,7 @@ void CDRenderer::run()
 
     hideWindow();
 
-    cMsg("Coffee","Termination time: %lldus",swap->elapsed());
+    cMsg("Coffee","Termination time: {0}us",swap->elapsed());
 }
 
 void CDRenderer::run(const CDWindowProperties& props)
@@ -148,6 +148,7 @@ void CDRenderer::run(const CDWindowProperties& props)
 
 void CDRenderer::eventHandleD(const CDEvent &event, c_cptr data)
 {
+    CSDL2Renderer::eventHandleD(event,data);
     switch(event.type)
     {
     case CDEvent::Resize:
@@ -161,20 +162,13 @@ void CDRenderer::eventHandleD(const CDEvent &event, c_cptr data)
         }
         break;
     }
-    case CDEvent::State:
-    {
-        const CDStateEvent* ste = (const CDStateEvent*)data;
-        if(ste->type == CDStateEvent::Closed)
-            closeWindow();
-        break;
-    }
     default:break;
     }
 }
 
 void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
 {
-    CSDL2Renderer::eventHandle(event,data);
+    CSDL2Renderer::eventHandleI(event,data);
     switch(event.type)
     {
     case CIEvent::Keyboard:
@@ -244,10 +238,20 @@ void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
         }
         break;
     }
+    case CIEvent::ControllerUpdate:
+    {
+        const CIControllerAtomicUpdateEvent* jev = (const CIControllerAtomicUpdateEvent*)data;
+        CIHapticEvent hev;
+        hev.rumble_input.index = jev->controller;
+        hev.rumble_input.duration = 100;
+        hev.rumble_input.strength = 0.5;
+        eventHandleH(hev,nullptr);
+        break;
+    }
     case CIEvent::Drop:
     {
         const CIDropEvent* dev = (const CIDropEvent*)data;
-        cDebug("File: %s",dev->text_data.text);
+        cDebug("File: {0}",dev->text_data.text);
         break;
     }
     default:break;

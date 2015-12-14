@@ -1,6 +1,7 @@
 #ifndef SDL2DATATYPES
 #define SDL2DATATYPES
 
+#include <mutex>
 #include <thread>
 #include "coffee/core/base/cdisplay.h"
 #include <SDL2/SDL.h>
@@ -23,6 +24,7 @@ struct CSDL2Context{
 
     std::thread::id thread;
 
+    std::mutex controller_access;
     std::map<uint8,SDL_GameController*> controllers;
     std::map<uint8,SDL_Haptic*> haptics;
 };
