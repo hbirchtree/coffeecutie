@@ -50,7 +50,7 @@ bool coffee_file_memmap(CResource &resc)
                 &err);
     if(!resc.data)
     {
-        cWarning("Failed to map file: %s",strerror(err));
+        cWarning("Failed to map file: {0}",strerror(err));
         resc.size = 0;
         return false;
     }

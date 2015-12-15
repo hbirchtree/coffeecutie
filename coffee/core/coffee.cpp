@@ -31,15 +31,17 @@ void sighandle(int sig)
 void CoffeeInit()
 {
     coffee_initialized = true;
+
     //Allow core dump by default
     coffee_enable_core_dump();
 
+    //Set up signal handlers, make the process more well-behaved
     signal(SIGINT,sighandle);
     signal(SIGKILL,sighandle);
     signal(SIGTERM,sighandle);
 
 #ifndef NDEBUG
-    //Run unit tests, ensuring that the system and compilation is sane
+    //Run unit tests, ensuring that the system and compilation process is sane
     CoffeeTests::run_type_tests();
     CoffeeTests::run_memory_tests();
 #endif
