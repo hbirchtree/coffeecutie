@@ -117,8 +117,7 @@ CFFVideoPlayer *coffee_ffmedia_create_player(const CResource &source)
     if(video->video)
     {
         ubyte_t* buffer = (ubyte_t*)av_malloc(coffee_ffmedia_video_framesize(video));
-        av_image_fill_arrays(buffer,AV_PIX_FMT_BGRA,
-                       video->video->context->width,video->video->context->height);
+        av_image_fill_arrays(buffer,AV_PIX_FMT_BGRA,video->video->context->width,video->video->context->height);
     }
 
     return video;
