@@ -2,7 +2,7 @@
 #define COPENAL_HEADER
 
 #include <coffee/core/CTypes>
-#include <caudio.h>
+#include "../caudio.h"
 #include <functional>
 
 namespace Coffee{
