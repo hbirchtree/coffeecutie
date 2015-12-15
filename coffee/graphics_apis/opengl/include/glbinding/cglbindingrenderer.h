@@ -45,6 +45,8 @@ protected:
 private:
 };
 
+extern std::map<CString, CString> coffee_glbinding_get_graphics_feature_level();
+
 }
 }
 

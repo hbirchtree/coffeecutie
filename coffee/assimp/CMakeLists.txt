@@ -1,6 +1,6 @@
 find_package(assimp)
 
-set ( CAssimp_SRCS
+set ( CoffeeAssimp_SRCS
         private/cassimpimporters.cpp
         private/assimpfun.cpp
         )
@@ -11,12 +11,12 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
-add_library( CAssimp ${COFFEE_LINK_OPT} ${CAssimp_SRCS})
+add_library( CoffeeAssimp ${COFFEE_LINK_OPT} ${CoffeeAssimp_SRCS})
 
-target_link_libraries ( CAssimp
+target_link_libraries ( CoffeeAssimp
     CoffeeCore
     ${assimp_LIBRARIES}
     )
 
-set_property(TARGET CAssimp PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CAssimp PRIVATE cxx_variadic_templates)
+set_property(TARGET CoffeeAssimp PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_compile_features(CoffeeAssimp PRIVATE cxx_variadic_templates)

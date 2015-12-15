@@ -11,7 +11,7 @@ add_executable ( CoffeeAudioTest ${CoffeeAudioTest_SRCS} )
 
 target_link_libraries ( CoffeeAudioTest
         CoffeeCore
-        CAudio
+        CoffeeAudio
         CoffeeOpenGL
     )
 

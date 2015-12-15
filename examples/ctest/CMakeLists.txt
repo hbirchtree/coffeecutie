@@ -23,8 +23,8 @@ add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
 
 target_link_libraries ( CoffeeTestLib
         CoffeeCore
-        CBlam
-        CAssimp
+        CoffeeBlam
+        CoffeeAssimp
         CoffeeOpenGL
     )
 target_link_libraries ( CoffeeTest

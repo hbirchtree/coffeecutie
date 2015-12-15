@@ -100,18 +100,18 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
 
     CResource v(desc.shader_v); //Vertex shader
     CResource f(desc.shader_f); //Fragment shader
-    if(!coffee_file_exists(&v)||!coffee_file_exists(&f))
+    if(!coffee_file_exists(v)||!coffee_file_exists(f))
         cFatal("Failed to locate shaders");
-    coffee_file_pull(&v,true);
-    coffee_file_pull(&f,true);
+    coffee_file_pull(v,true);
+    coffee_file_pull(f,true);
 
     //GL calls
     coffee_graphics_shader_compile(*vshdr,v,CProgramStage::Vertex);
     coffee_graphics_shader_compile(*fshdr,f,CProgramStage::Fragment);
     //
 
-    coffee_file_free(&v);
-    coffee_file_free(&f);
+    coffee_file_free(v);
+    coffee_file_free(f);
 
     //GL calls separable programs
     coffee_graphics_alloc(*p,true);
@@ -130,9 +130,9 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
     //GL call
     coffee_graphics_store(*p,dmp);
     //
-    if(!coffee_file_commit(&dmp))
+    if(!coffee_file_commit(dmp))
         cDebug("Failed to save shader to file!");
-    coffee_file_free(&dmp);
+    coffee_file_free(dmp);
 
     return pl;
 }
@@ -519,8 +519,8 @@ bool coffee_test_load(game_context *ctxt)
         {
             CResources::CResource mapfile("cblam_data/bloodgulch.map");
             CResources::CResource bitmfile("cblam_data/bitmaps.map");
-            coffee_file_memmap(&bitmfile);
-            coffee_file_memmap(&mapfile);
+            coffee_file_memmap(bitmfile);
+            coffee_file_memmap(mapfile);
             const CBlam::blam_file_header* map =
                     CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version::pc);
             CBlam::blam_tag_index tags = CBlam::blam_tag_index_get(map);
@@ -549,8 +549,8 @@ bool coffee_test_load(game_context *ctxt)
                     cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
                 }
             }
-            coffee_file_memunmap(&bitmfile);
-            coffee_file_memunmap(&mapfile);
+            coffee_file_memunmap(bitmfile);
+            coffee_file_memunmap(mapfile);
         }
 
     }

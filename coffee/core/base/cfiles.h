@@ -56,37 +56,34 @@ private:
     CString m_resource; /*!< URL for the resource*/
 };
 
-extern bool coffee_file_exists(const CResource* resc);
-
-extern void coffee_file_open(CResource* resc);
-extern void coffee_file_close(CResource* resc);
+extern bool coffee_file_exists(const CResource& resc);
 
 /*!
  * \brief Memory map file as buffer
  * \return True if success
  */
-extern bool coffee_file_memmap(CResource* resc);
+extern bool coffee_file_memmap(CResource& resc);
 /*!
  * \brief Unmap file
  * \return True if success
  */
-extern bool coffee_file_memunmap(CResource* resc);
+extern bool coffee_file_memunmap(CResource& resc);
 
 /*!
  * \brief Free data pointer
  */
-extern void coffee_file_free(CResource* resc);
-extern bool coffee_file_pull(CResource* resc, bool textmode = false);
+extern void coffee_file_free(CResource &resc);
+extern bool coffee_file_pull(CResource &resc, bool textmode = false);
 /*!
  * \brief Save data to file
  * \return
  */
-extern bool coffee_file_commit(const CResource* resc, bool append = false);
+extern bool coffee_file_commit(CResource& resc, bool append = false);
 /*!
  * \brief Save data to file, append null-terminator
  * \return
  */
-extern void coffee_file_commit_textmode(const CResource* resc, bool append = false);
+extern void coffee_file_commit_textmode(const CResource& resc, bool append = false);
 
 /*!
  * \brief Create a directory

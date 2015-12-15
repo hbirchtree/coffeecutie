@@ -136,7 +136,7 @@ struct CGLContextProperties
 {
     CGLContextProperties();
 
-    enum Flags : uint8{
+    enum Flags : uint16{
         GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
         GLVSync             = 0x02, /*!< Set GL vertical sync*/
         GLDebug             = 0x04, /*!< Set GL debug context*/
@@ -144,6 +144,8 @@ struct CGLContextProperties
         GLRobust            = 0x10, /*!< Set GL robustness*/
         GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
         GLES                = 0x40, /*!< Request that only GLES features are used*/
+
+        GLFeatureLevelProfile = 0x80,
     };
     CGLContextVersion   version; /*!< Context version*/
     CDContextBits       bits; /*!< Context bits*/

@@ -16,16 +16,16 @@ include_directories(
         ${COFFEE_CORE_INCLUDE_DIR}
     )
 
-add_library ( CBlam ${COFFEE_LINK_OPT}
+add_library ( CoffeeBlam ${COFFEE_LINK_OPT}
         ${CBlamVolta_SRCS}
         ${CBlamDimeter_SRCS}
         ${CBlamElegy_SRCS}
     )
 
-target_link_libraries( CBlam
+target_link_libraries( CoffeeBlam
         CoffeeCore
-        CImage
+        CoffeeImage
     )
 
-set_property(TARGET CBlam PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CBlam PRIVATE cxx_variadic_templates)
+set_property(TARGET CoffeeBlam PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_compile_features(CoffeeBlam PRIVATE cxx_variadic_templates)

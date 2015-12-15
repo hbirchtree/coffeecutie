@@ -1,4 +1,5 @@
 #include <coffee/CCore>
+#include <coffee/core/CDataStorage>
 
 #include "library.h"
 

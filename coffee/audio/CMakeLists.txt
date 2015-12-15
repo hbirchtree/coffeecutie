@@ -6,18 +6,18 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
-set ( CAudio_SRCS
+set ( CoffeeAudio_SRCS
         ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
         private/caudio.cpp
         private/openal/copenal.cpp
         )
 
-add_library( CAudio ${COFFEE_LINK_OPT} ${CAudio_SRCS})
+add_library( CoffeeAudio ${COFFEE_LINK_OPT} ${CoffeeAudio_SRCS})
 
-target_link_libraries ( CAudio
+target_link_libraries ( CoffeeAudio
     CoffeeCore
     ${OPENAL_LIBRARY}
     )
 
-set_property(TARGET CAudio PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CAudio PRIVATE cxx_variadic_templates)
+set_property(TARGET CoffeeAudio PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_compile_features(CoffeeAudio PRIVATE cxx_variadic_templates)

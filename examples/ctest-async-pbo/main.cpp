@@ -174,7 +174,7 @@ public:
                         CBufferStorage::WriteBit);
             coffee_graphics_buffer_map(
                         transforms.current(),
-                        CBuffer_PersistentBufferFlags);
+                        CBufferConstants::PersistentAccessFlags());
             transforms.advance();
         }
 
@@ -228,11 +228,9 @@ public:
                 coffee_graphics_buffer_store_immutable(
                             pbos.current(),
                             texstorage_1,texsize.w*texsize.h*sizeof(CRGBA),
-                            CBufferStorage::WriteBit|
-                            CBufferStorage::Persistent|
-                            CBufferStorage::Coherent);
+                            CBufferConstants::PersistentStorageFlags());
                 coffee_graphics_buffer_map(pbos.current(),
-                                           CBuffer_PersistentBufferFlags);
+                                           CBufferConstants::PersistentAccessFlags());
 
                 pbos.advance();
             }

@@ -42,12 +42,12 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     cMsg("SDL2","Initialized");
 
     CResources::CResource mapping("gamecontrollerdb.txt");
-    if(coffee_file_exists(&mapping))
+    if(coffee_file_exists(mapping))
     {
         cMsg("SDL2","Found game controller mappings");
-        coffee_file_pull(&mapping,true);
+        coffee_file_pull(mapping,true);
         SDL_GameControllerAddMappingsFromRW(SDL_RWFromConstMem(mapping.data,mapping.size),0);
-        coffee_file_free(&mapping);
+        coffee_file_free(mapping);
     }
 
 

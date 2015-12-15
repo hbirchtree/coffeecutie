@@ -8,6 +8,7 @@ add_subdirectory (ctest-shaderswitch)
 add_subdirectory (dynamic-test)
 
 add_subdirectory (env-test)
+add_subdirectory (media-test)
 
 #Experimental
 add_subdirectory (cgb-test)

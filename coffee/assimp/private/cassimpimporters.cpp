@@ -112,18 +112,18 @@ bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, CResource *resource)
 {
     bool success = false;
 
-    coffee_file_free(resource);
+    coffee_file_free(*resource);
 
     resource->size = mesh->byteSize;
     resource->data = c_alloc(resource->size);
 
     c_memcpy(resource->data,mesh,resource->size);
 
-    if(!coffee_file_commit(resource))
+    if(!coffee_file_commit(*resource))
         cWarning("Failed to store mesh data");
     else success = true;
 
-    coffee_file_free(resource);
+    coffee_file_free(*resource);
 
     return success;
 }

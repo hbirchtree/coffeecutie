@@ -12,6 +12,16 @@
 
 namespace Coffee{
 
+enum CoffeeExitCode
+{
+    CoffeeExit_UnknownBad  = 100,
+
+    CoffeeExit_Termination = 120,
+    CoffeeExit_Interrupt   = 121,
+
+    CoffeeExit_Kill        = 122,
+};
+
 constexpr cstring _coffee_build_date = __DATE__;
 constexpr cstring _coffee_build_time = __TIME__;
 

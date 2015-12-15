@@ -32,76 +32,67 @@ namespace CFiles{
 
 }
 
-bool coffee_file_exists(const CResource *resc)
+bool coffee_file_exists(const CResource &resc)
 {
-    FILE *f = fopen(resc->resource(),"r");
+    FILE *f = fopen(resc.resource(),"r");
     if(f)
         fclose(f);
     return f;
 }
 
-void coffee_file_open(CResource *resc)
+bool coffee_file_memmap(CResource &resc)
 {
-}
-
-void coffee_file_close(CResource *resc)
-{
-
-}
-
-bool coffee_file_memmap(CResource *resc)
-{
-    resc->size = coffee_file_get_size(resc->resource());
+    resc.size = coffee_file_get_size(resc.resource());
     int err = 0;
-    resc->data = CMemoryManagement::coffee_memory_map_file(
-                resc->resource(),
-                0,resc->size,
+    resc.data = CMemoryManagement::coffee_memory_map_file(
+                resc.resource(),
+                0,resc.size,
                 &err);
-    if(!resc->data)
+    if(!resc.data)
     {
         cWarning("Failed to map file: %s",strerror(err));
-        resc->size = 0;
+        resc.size = 0;
         return false;
     }
     return true;
 }
 
-bool coffee_file_memunmap(CResource *resc)
+bool coffee_file_memunmap(CResource &resc)
 {
-    bool s = CMemoryManagement::coffee_memory_unmap_file(resc->data,resc->size);
-    resc->data = nullptr;
-    resc->size = 0;
+    bool s = CMemoryManagement::coffee_memory_unmap_file(resc.data,resc.size);
+    resc.data = nullptr;
+    resc.size = 0;
     return s;
 }
 
-void coffee_file_free(CResource *resc)
+void coffee_file_free(CResource &resc)
 {
-    c_free(resc->data);
-    resc->data = nullptr;
-    resc->size = 0;
+    c_free(resc.data);
+    resc.data = nullptr;
+    resc.size = 0;
 }
 
-bool coffee_file_pull(CResource *resc, bool textmode)
+bool coffee_file_pull(CResource &resc, bool textmode)
 {
-    CFiles::CFile *fp = CFiles::coffee_file_open(resc->resource(),"rb");
+    CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),"rb");
 
     if(!fp){
-        cWarning("Failed to read file: %s",resc->resource());
+        cWarning("Failed to read file: %s",resc.resource());
         return false;
     }
 
-    resc->data = CFiles::coffee_file_read(fp,resc->data,&resc->size,textmode);
+    resc.data = CFiles::coffee_file_read(fp,resc.data,&resc.size,textmode);
     if(CFiles::coffee_file_close(fp))
-        cWarning("Failed to close file: %s",resc->resource());
+        cWarning("Failed to close file: %s",resc.resource());
     return true;
 }
 
-bool coffee_file_commit(const CResource *resc, bool append)
+bool coffee_file_commit(CResource &resc, bool append)
 {
-    CFiles::CFile *fp = CFiles::coffee_file_open(resc->resource(),(append) ? "ab+" : "wb");
-    bool stat = CFiles::coffee_file_write(fp,resc->data,resc->size);
+    CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),(append) ? "ab+" : "wb");
+    bool stat = CFiles::coffee_file_write(fp,resc.data,resc.size);
     if(CFiles::coffee_file_close(fp))
-        cWarning("Failed to close file: %s",resc->resource());
+        cWarning("Failed to close file: %s",resc.resource());
     return stat;
 }
 

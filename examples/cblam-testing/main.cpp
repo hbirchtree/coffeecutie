@@ -18,8 +18,8 @@ int coffee_main(int32 argv,byte_t** argc)
         return 1;
     CResource mapfile(mapstring);
     CResource bitmfile("cblam_data/bitmaps.map");
-    coffee_file_memmap(&bitmfile);
-    coffee_file_memmap(&mapfile);
+    coffee_file_memmap(bitmfile);
+    coffee_file_memmap(mapfile);
     const blam_file_header* map =
             blam_file_header_get(mapfile.data,blam_version::pc);
     blam_tag_index tags = blam_tag_index_get(map);

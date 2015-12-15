@@ -5,7 +5,7 @@ option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG C# binding" OFF )
 option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-set ( CMAKE_BUILD_TYPE Debug )
+set ( CMAKE_BUILD_TYPE Release )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 
@@ -26,7 +26,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 link_directories(
-    ${CMAKE_BINARY_DIR}/libs/
+    ${CMAKE_BINARY_DIR}/libs/lib/
     )
 
 if (COFFEE_BUILD_STATIC)

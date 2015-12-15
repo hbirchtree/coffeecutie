@@ -20,9 +20,9 @@ public:
         CAudioSample smp;
         //Read audio sample from file
         CResources::CResource rsc("caudio_test/monosample.ogg");
-        coffee_file_pull(&rsc);
+        coffee_file_pull(rsc);
         CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
-        coffee_file_free(&rsc);
+        coffee_file_free(rsc);
 
         CALBuffer *buf = new CALBuffer;
         CALSource src;

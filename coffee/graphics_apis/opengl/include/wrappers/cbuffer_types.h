@@ -51,9 +51,32 @@ protected:
     CGSync* fences[Size];
 };
 
-static const CBufferAccess CBuffer_PersistentBufferFlags =
-        CBufferAccess::Persistent|CBufferAccess::Coherent|
-        CBufferAccess::WriteBit;
+struct CBufferConstants
+{
+    /*!
+     * \brief Persistently mapped buffers are cool. Let's make it easy to use.
+     * \return
+     */
+    static constexpr CBufferAccess PersistentAccessFlags()
+    {
+        return static_cast<CBufferAccess>(
+                    static_cast<int>(CBufferAccess::Persistent)|
+                    static_cast<int>(CBufferAccess::Coherent)|
+                    static_cast<int>(CBufferAccess::WriteBit));
+    }
+
+    /*!
+     * \brief Persistently mapped buffers are cool. Let's make it easy to use.
+     * \return
+     */
+    static constexpr CBufferStorage PersistentStorageFlags()
+    {
+        return static_cast<CBufferStorage>(
+                    static_cast<int>(CBufferStorage::Persistent)|
+                    static_cast<int>(CBufferStorage::Coherent)|
+                    static_cast<int>(CBufferStorage::WriteBit));
+    }
+};
 
 using SubBufferData = void*(*)(CSubBuffer&);
 using BufferCopy = void(*)(CBuffer const&,CBuffer&,CGszptr const&,CGszptr const&,CGsize const&);

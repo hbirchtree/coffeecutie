@@ -27,8 +27,8 @@ target_link_libraries ( DynamicLib
         CoffeeCore
         CoffeeOpenGL
         CoffeeGraphicsMisc
-        CImage
-        CAudio
+        CoffeeImage
+        CoffeeAudio
     )
 
 target_compile_features(DynamicTest PRIVATE cxx_variadic_templates)

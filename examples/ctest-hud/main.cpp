@@ -169,18 +169,16 @@ public:
             coffee_graphics_activate(transforms.current());
             coffee_graphics_buffer_store_immutable(
                         transforms.current(),&rt,sizeof(CMat4),
-                        CBufferStorage::Coherent|
-                        CBufferStorage::Persistent|
-                        CBufferStorage::WriteBit);
+                        CBufferConstants::PersistentStorageFlags());
             coffee_graphics_buffer_map(
                         transforms.current(),
-                        CBuffer_PersistentBufferFlags);
+                        CBufferConstants::PersistentAccessFlags());
             transforms.advance();
         }
 
         //Creating texture
         CResources::CResource texture("ctest_hud/particle_sprite.png");
-        CResources::coffee_file_pull(&texture);
+        CResources::coffee_file_pull(texture);
 
         CUniform texuni;
         CTexture gltext;
@@ -205,7 +203,7 @@ public:
             coffee_graphics_tex_define(gltext);
             coffee_graphics_tex_store(gltext,gtexdata.data_ref(),0);
 
-            CResources::coffee_file_free(&texture);
+            CResources::coffee_file_free(texture);
 
             coffee_graphics_tex_mipmap(gltext);
 
@@ -301,10 +299,16 @@ int32 coffee_main(int32, byte_t**)
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
-    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags =
+            props.contextProperties.flags|
+            CGLContextProperties::GLDebug|
+            CGLContextProperties::GLFeatureLevelProfile;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();
+
+    coffee_glbinding_get_graphics_feature_level();
+
     delete renderer;
 
     return 0;

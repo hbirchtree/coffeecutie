@@ -466,6 +466,7 @@ void coffee_sdl2_eventhandle_all(CSDL2Renderer *ctxt, const SDL_Event *ev)
                 ? SDL_CONTROLLERDEVICEADDED
                 : SDL_CONTROLLERDEVICEREMOVED;
         dev.which = ev->jdevice.which;
+        dev.timestamp = ev->jdevice.timestamp;
         coffee_sdl2_eventhandle_controller_device(ctxt,dev);
         break;
     }

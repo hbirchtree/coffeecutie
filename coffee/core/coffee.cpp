@@ -1,5 +1,7 @@
 #include "coffee.h"
 
+#include <signal.h>
+
 #include "base/cdebug.h"
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/unit_tests/data_types.h"
@@ -9,11 +11,33 @@ static bool coffee_initialized = false;
 
 namespace Coffee{
 
+void sighandle(int sig)
+{
+    switch(sig)
+    {
+    case SIGINT:
+        exit(CoffeeExit_Interrupt);
+        break;
+    case SIGTERM:
+        exit(CoffeeExit_Termination);
+        break;
+    case SIGKILL:
+        exit(CoffeeExit_Kill);
+    default:
+        exit(CoffeeExit_UnknownBad);
+    }
+}
+
 void CoffeeInit()
 {
     coffee_initialized = true;
     //Allow core dump by default
     coffee_enable_core_dump();
+
+    signal(SIGINT,sighandle);
+    signal(SIGKILL,sighandle);
+    signal(SIGTERM,sighandle);
+
 #ifndef NDEBUG
     //Run unit tests, ensuring that the system and compilation is sane
     CoffeeTests::run_type_tests();

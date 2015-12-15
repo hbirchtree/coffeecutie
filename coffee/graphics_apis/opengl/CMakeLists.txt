@@ -37,7 +37,7 @@ include_directories (
 
 target_link_libraries ( CoffeeOpenGL
                 CoffeeCore
-                CImage
+                CoffeeImage
                 ${GLBINDING_LIBRARIES}
         )
 
