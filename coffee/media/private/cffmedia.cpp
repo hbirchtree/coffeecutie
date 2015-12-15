@@ -40,9 +40,13 @@ struct CFFDecodeContext
         AVRational frame_rate;
         SwsContext* sws_ctxt;
         AVFrame* frame;
+        AVFrame* tFrame;
+        uint8* frameData;
+        CSize resolution;
     } v;
     struct{
         AVFrame* frame;
+        AVFrame* tFrame;
     } a;
 
     AVPacket packet;
@@ -217,6 +221,13 @@ size_t coffee_ffmedia_video_framesize(CFFVideoPlayer *video)
                                     8);
 }
 
+size_t coffee_ffmedia_video_framesize(const CSize &video)
+{
+    return av_image_get_buffer_size(AV_PIX_FMT_BGRA,
+                                    video.w,video.h,
+                                    8);
+}
+
 size_t coffee_ffmedia_audio_framesize(CFFVideoPlayer *)
 {
     return 0;
@@ -231,17 +242,22 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
     {
         CFFStream* strm = video->video;
         dCtxt->v.sws_ctxt = sws_getContext(
-                    strm->context->width, strm->context->height, strm->context->pix_fmt,
+                    strm->context->width, strm->context->height,
+                    strm->context->pix_fmt,
                     videores.w, videores.h, AV_PIX_FMT_BGRA,
                     SWS_BILINEAR, NULL, NULL, NULL);
     }
 
     dCtxt->v.frame = av_frame_alloc();
+    dCtxt->v.tFrame = av_frame_alloc();
     dCtxt->a.frame = av_frame_alloc();
+    dCtxt->a.tFrame = av_frame_alloc();
 
     dCtxt->v.tb = video->video->stream->time_base;
     dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,video->video->stream,
                                               NULL);
+
+    dCtxt->v.resolution = videores;
 
     return dCtxt;
 }
@@ -252,6 +268,9 @@ void coffee_ffmedia_free_decodecontext(CFFDecodeContext *dCtxt)
 
     av_frame_free(&dCtxt->v.frame);
     av_frame_free(&dCtxt->a.frame);
+
+    av_frame_free(&dCtxt->v.tFrame);
+    av_frame_free(&dCtxt->a.tFrame);
     delete dCtxt;
 }
 
@@ -259,26 +278,45 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                                  CFFDecodeContext* dCtxt,
                                  CFFVideoTarget* dTrgt)
 {
-//    cDebug("Framerate: {0}, time_base: {1}",dCtxt->v.frame_rate.num,dCtxt->v.tb.num);
+    if(av_read_frame(video->fmtContext,&dCtxt->packet)<0)
+        return false;
 
-    av_read_frame(video->fmtContext,&dCtxt->packet);
+    int gotFrame = 0;
     if(dCtxt->packet.stream_index == video->video->index)
     {
-        int gotFrame = 0;
         avcodec_decode_video2(video->video->context,
                               dCtxt->v.frame,
                               &gotFrame,
                               &dCtxt->packet);
 
-        sws_scale(dCtxt->v.sws_ctxt,
-                  (uint8 const* const*)dCtxt->v.frame->data,
-                  dCtxt->v.frame->linesize,
-                  0,
-                  video->video->context->height,
-                  (uint8* const*)dTrgt->v.location,
-                  dCtxt->v.frame->linesize);
+        if(gotFrame)
+        {
+            av_image_fill_arrays(dCtxt->v.tFrame->data,
+                                 dCtxt->v.tFrame->linesize,
+                                 (uint8*)dTrgt->v.location,
+                                 AV_PIX_FMT_BGRA,
+                                 dCtxt->v.resolution.w,dCtxt->v.resolution.h,
+                                 8);
 
-        av_frame_unref(dCtxt->v.frame);
+            sws_scale(dCtxt->v.sws_ctxt,
+                      dCtxt->v.frame->data,
+                      dCtxt->v.frame->linesize,
+                      0,
+                      video->video->context->height,
+                      dCtxt->v.tFrame->data,
+                      dCtxt->v.tFrame->linesize);
+            av_frame_unref(dCtxt->v.frame);
+        }
+
+    }else if(dCtxt->packet.stream_index == video->audio->index){
+        avcodec_decode_audio4(video->audio->context,
+                              dCtxt->a.frame,
+                              &gotFrame,
+                              &dCtxt->packet);
+        if(gotFrame)
+        {
+            av_frame_unref(dCtxt->a.frame);
+        }
     }
     av_packet_unref(&dCtxt->packet);
 

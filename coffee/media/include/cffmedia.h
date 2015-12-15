@@ -35,6 +35,7 @@ extern CFFVideoPlayer* coffee_ffmedia_create_player(const CResource& source);
 extern void coffee_ffmedia_free_player(CFFVideoPlayer* vplayer);
 
 extern size_t coffee_ffmedia_video_framesize(CFFVideoPlayer* video);
+extern size_t coffee_ffmedia_video_framesize(const CSize& video);
 
 extern size_t coffee_ffmedia_audio_framesize(CFFVideoPlayer* video);
 
@@ -45,8 +46,7 @@ extern CFFDecodeContext *coffee_ffmedia_create_decodecontext(
 extern void coffee_ffmedia_free_decodecontext(CFFDecodeContext* dCtxt);
 
 extern bool coffee_ffmedia_decode_frame(
-        const CFFVideoPlayer* video, CFFDecodeContext* dCtxt,
-        CFFVideoTarget *dTrgt);
+        const CFFVideoPlayer* video, CFFDecodeContext* dCtxt, CFFVideoTarget *dTrgt);
 
 }
 }
