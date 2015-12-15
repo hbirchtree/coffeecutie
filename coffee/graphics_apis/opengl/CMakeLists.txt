@@ -41,4 +41,5 @@ target_link_libraries ( CoffeeOpenGL
                 ${GLBINDING_LIBRARIES}
         )
 
+set_property(TARGET CoffeeOpenGL PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CoffeeOpenGL PRIVATE cxx_variadic_templates)

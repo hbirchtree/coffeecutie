@@ -1,5 +1,6 @@
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/base/cfiles.h>
+#include <coffee/core/base/cfilewatcher.h>
 #include <coffee/core/base/cdisplay.h>
 #include <coffee/core/base/cinput.h>
 #include <coffee/core/base/cinput_keymap.h>

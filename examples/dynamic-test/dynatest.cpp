@@ -39,13 +39,13 @@ public:
     }
 };
 
-int32 coffee_main(int32 argc, byte_t** argv)
-{
-    CDRendererBase *renderer = new CDRenderer();
-    renderer->init(coffee_get_default_visual());
-    renderer->run();
-    renderer->cleanup();
-    return 0;
+extern "C"{
+
+CDRendererBase* CoffeeLoader();
+
 }
 
-COFFEE_APPLICATION_MAIN(coffee_main)
+CDRendererBase* CoffeeLoader()
+{
+    return new CDRenderer();
+}

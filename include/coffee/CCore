@@ -2,6 +2,7 @@
 #include <coffee/core/CContext>
 #include <coffee/core/CDisplay>
 #include <coffee/core/CFunctional>
+#include <coffee/core/CPlatform>
 
 #include "coffee/core/CTypes"
 #include <coffee/core/coffee_macros.h>

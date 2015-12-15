@@ -5,6 +5,8 @@ add_subdirectory (ctest-hud)
 add_subdirectory (ctest-async-pbo)
 add_subdirectory (ctest-shaderswitch)
 
+add_subdirectory (dynamic-test)
+
 add_subdirectory (env-test)
 
 #Experimental

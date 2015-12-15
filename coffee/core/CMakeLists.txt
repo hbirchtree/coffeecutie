@@ -7,6 +7,7 @@ set ( CoffeeCore_SRCS
         base/cdebug.cpp
         base/cdisplay.cpp
         base/cfiles.cpp
+        base/cfilewatcher.cpp
         base/cobject.cpp
         base/cregex.cpp
 
@@ -73,5 +74,6 @@ if(WIN32)
         )
 endif()
 
+set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CoffeeCore PRIVATE cxx_variadic_templates)
 target_compile_features(CoffeeCore PRIVATE cxx_constexpr)

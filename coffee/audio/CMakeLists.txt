@@ -19,4 +19,5 @@ target_link_libraries ( CAudio
     ${OPENAL_LIBRARY}
     )
 
+set_property(TARGET CAudio PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CAudio PRIVATE cxx_variadic_templates)

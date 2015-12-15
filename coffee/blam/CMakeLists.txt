@@ -27,4 +27,5 @@ target_link_libraries( CBlam
         CImage
     )
 
+set_property(TARGET CBlam PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CBlam PRIVATE cxx_variadic_templates)

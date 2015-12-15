@@ -36,7 +36,7 @@ extern void _coffee_close_library(CNativeObject* object);
 
 template<typename LibInterface, cstring loaderFunction = nullptr>
 /*!
- * \brief If successful, loads a library into the program.
+ * \brief If successful, loads a library implementation into the program.
  * \param file Name of the library without platform-specific appendages such as file extensions or "lib"
  * \return Valid pointer if it succeeded, null if it failed
  */

@@ -12,4 +12,5 @@ target_link_libraries( CImage
         CoffeeCore
     )
 
+set_property(TARGET CImage PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CImage PRIVATE cxx_variadic_templates)

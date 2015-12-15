@@ -18,4 +18,5 @@ target_link_libraries ( CAssimp
     ${assimp_LIBRARIES}
     )
 
+set_property(TARGET CAssimp PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CAssimp PRIVATE cxx_variadic_templates)

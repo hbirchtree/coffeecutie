@@ -264,6 +264,20 @@ protected:
     CDRendererBase(CObject* parent);
 };
 
+inline std::future<void> coffee_display_start_async(
+        std::atomic_bool *startAtomic,
+        CDRendererBase* obj,
+        CDWindowProperties const& properties)
+{
+    std::function<void()> display_task = [=](){
+        obj->init(properties);
+        startAtomic->store(true);
+        obj->run();
+        obj->cleanup();
+    };
+    return CThreading::runAsync(display_task);
+}
+
 } // namespace CDisplay
 } // namespace Coffee
 

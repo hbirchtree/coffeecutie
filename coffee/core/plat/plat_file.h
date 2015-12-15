@@ -7,6 +7,8 @@ namespace Coffee{
 namespace CResources{
 namespace CFiles{
 
+//
+
 struct CFile;
 
 extern CFile *coffee_file_open(cstring fname, cstring mode);
@@ -18,6 +20,8 @@ extern cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool text
 extern bool coffee_file_write(CFile *file, c_cptr data, szptr size);
 
 extern int coffee_file_close(CFile *file);
+
+//
 
 }
 }
