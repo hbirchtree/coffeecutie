@@ -15,14 +15,19 @@ void sighandle(int sig)
 {
     switch(sig)
     {
+    case SIGILL:
+        exit(CoffeeExit_Termination);
+        break;
     case SIGINT:
         exit(CoffeeExit_Interrupt);
         break;
     case SIGTERM:
         exit(CoffeeExit_Termination);
         break;
+#if defined(COFFEE_LINUX)
     case SIGKILL:
         exit(CoffeeExit_Kill);
+#endif
     default:
         exit(CoffeeExit_UnknownBad);
     }

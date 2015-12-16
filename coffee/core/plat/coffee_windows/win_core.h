@@ -13,7 +13,7 @@
 namespace Coffee{
 namespace CFunctional {
     namespace CDebugHelpers {
-        inline static cstring_w* coffee_callstack(szptr* len, uint32 stackreduce = 0)
+        inline static cstring_w* coffee_callstack(szptr* len, uint32 stackreduce)
         {
             C_STUBBED("Callstack dumping");
             *len = 0;
