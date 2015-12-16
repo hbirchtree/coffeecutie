@@ -17,4 +17,8 @@ set ( EnvLibraryLoadTester_SRCS
 
 add_library( EnvLibraryLoadTester SHARED ${EnvLibraryLoadTester_SRCS} )
 
+target_link_libraries(EnvLibraryLoadTester
+        CoffeeCore
+    )
+
 target_compile_features(EnvLibraryLoadTester PRIVATE cxx_variadic_templates)
