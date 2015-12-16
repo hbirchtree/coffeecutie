@@ -43,7 +43,7 @@ namespace CFunctional {
         T _start = 0;
     };
 
-    class _windows_CElapsedTimer : public _cbasic_windows_timer<uint64>
+    class _plat_timer_ll_milli : public _cbasic_windows_timer<uint64>
     {
     protected:
         uint64 _curr_time()
@@ -51,7 +51,7 @@ namespace CFunctional {
             return _win_api_get_time()/1000;
         }
     };
-    class _windows_CElapsedTimerMicro : public _cbasic_windows_timer<uint64>
+    class _plat_timer_ll_micro : public _cbasic_windows_timer<uint64>
     {
     protected:
         uint64 _curr_time()
@@ -59,7 +59,7 @@ namespace CFunctional {
             return _win_api_get_time();
         }
     };
-    class _windows_CElapsedTimerD : public _cbasic_windows_timer<bigscalar>
+    class _plat_timer_scalar_micro : public _cbasic_windows_timer<bigscalar>
     {
     protected:
         bigscalar _curr_time()
