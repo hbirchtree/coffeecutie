@@ -11,6 +11,17 @@ using namespace gl;
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+#ifdef COFFEE_WINDOWS
+
+C_FLAGS(gl::BufferAccessMask,uint32);
+C_FLAGS(gl::BufferStorageMask,uint32);
+
+C_FLAGS(gl::ClearBufferMask,uint32);
+C_FLAGS(gl::MemoryBarrierMask,uint32);
+C_FLAGS(gl::UseProgramStageMask,uint32);
+
+#endif
+
 /*!
  * \brief Contains a GL message from the binding layer
  */
