@@ -1,5 +1,7 @@
 #include "unix_core.h"
 
+#ifdef COFFEE_UNIXPLAT
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -178,8 +180,7 @@ void coffee_clock_free(cstring_w arg)
 
 }
 
-
-
+#endif
 
 
 
