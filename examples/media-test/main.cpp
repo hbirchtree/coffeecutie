@@ -167,7 +167,7 @@ public:
 
         c_free(initTexture.data);
 
-        coffee_graphics_tex_load(texture.sampler(),texture.texture());
+        coffee_graphics_tex_load_safe(texture.sampler(),texture.texture());
 
         //
 
@@ -197,8 +197,8 @@ public:
 
         CMat4 final_transform = coffee_node_get_transform(&quad);
 
-        coffee_graphics_uniform_set_texhandle(pipeline.frag,texuni,
-                                              texture.sampler().bhandle);
+        coffee_graphics_uniform_set_texhandle_safe(pipeline.frag,texuni,
+                                                   texture.sampler().unit);
         glProgramUniformMatrix4fv(pipeline.vert.handle,matrixuni.index,
                                   1,GL_FALSE,(scalar*)&final_transform);
         //
@@ -243,6 +243,11 @@ public:
         coffee_ffmedia_free_decodecontext(dCtxt);
         coffee_ffmedia_free_player(video);
         coffee_file_free(testfile);
+
+        for(const std::pair<CString,CString>& ft : CDisplay::coffee_glbinding_get_graphics_feature_level())
+        {
+            cBasicPrint("{0} : {1}",ft.first.c_str(),ft.second.c_str());
+        }
     }
 
     void eventHandleI(const CIEvent &e, c_cptr data)
@@ -267,6 +272,7 @@ int32 coffee_main(int32, byte_t**)
     CDisplay::CDWindowProperties props = CDisplay::coffee_get_default_visual();
     props.contextProperties.flags = props.contextProperties.flags|
             CDisplay::CGLContextProperties::GLDebug|
+            CDisplay::CGLContextProperties::GLFeatureLevelProfile|
             CDisplay::CGLContextProperties::GLAutoResize/*|
             CDisplay::CGLContextProperties::GLVSync*/;
     props.flags = CDisplay::CDWindowProperties::Resizable;
