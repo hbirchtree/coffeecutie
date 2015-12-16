@@ -32,6 +32,7 @@ struct CFFStreamTarget
 {
     void* location;
     size_t max_size;
+    bool updated;
 };
 
 struct CFFVideoTarget

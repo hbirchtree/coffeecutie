@@ -313,6 +313,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                       dCtxt->v.tFrame->data,
                       dCtxt->v.tFrame->linesize);
             av_frame_unref(dCtxt->v.frame);
+            dTrgt->v.updated = true;
         }
 
     }else if(dCtxt->packet.stream_index == video->audio->index){
@@ -323,6 +324,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
         if(gotFrame)
         {
             av_frame_unref(dCtxt->a.frame);
+            dTrgt->a.updated = true;
         }
     }
     av_packet_unref(&dCtxt->packet);

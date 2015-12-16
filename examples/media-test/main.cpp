@@ -24,7 +24,7 @@ public:
         coffee_ffmedia_init(nullptr,false);
 
         //Open video file
-        CResource testfile("test.mp4");
+        CResource testfile("test.webm");
         coffee_file_pull(testfile);
         //Create a video player for the data
         CFFVideoPlayer* video = coffee_ffmedia_create_player(testfile);
@@ -219,9 +219,11 @@ public:
 
             //FFMPEG
             trg.v.location = texture.buffers().current().data;
+            trg.v.updated = false;
             coffee_ffmedia_decode_frame(video,dCtxt,&trg);
 
-            texture.uploadData(CTexFormat::RGBA,0);
+            if(trg.v.updated)
+                texture.uploadData(CTexFormat::RGBA,0);
             //
 
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
@@ -272,9 +274,9 @@ int32 coffee_main(int32, byte_t**)
     CDisplay::CDWindowProperties props = CDisplay::coffee_get_default_visual();
     props.contextProperties.flags = props.contextProperties.flags|
             CDisplay::CGLContextProperties::GLDebug|
-            CDisplay::CGLContextProperties::GLFeatureLevelProfile|
-            CDisplay::CGLContextProperties::GLAutoResize/*|
-            CDisplay::CGLContextProperties::GLVSync*/;
+//            CDisplay::CGLContextProperties::GLFeatureLevelProfile|
+            CDisplay::CGLContextProperties::GLVSync|
+            CDisplay::CGLContextProperties::GLAutoResize;
     props.flags = CDisplay::CDWindowProperties::Resizable;
 
     std::future<void> status = CDisplay::coffee_display_start_async(&sync,renderer,props);
