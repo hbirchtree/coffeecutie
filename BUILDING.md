@@ -7,6 +7,16 @@
  3. Build the application, providing paths to Assimp, GLBinding and others if applicable.
  4. If all goes well, binaries are output to {build directory}/bin, readily linked and ready to go
 
+As a list of commands:
+
+        mkdir build && cd build
+        mkdir libs && cd libs
+        cmake "${PROJECT_DIR}/libs" -G "Ninja"
+        ninja
+        cd ..
+        cmake "${PROJECT_DIR}" -Dassimp_LIBRARIES=libs/lib/libassimp.so -DGLBINDING_LIBRARIES=libs/lib/libglbinding.so -DGLBINDING_INCLUDE_DIR=libs/include
+        ninja
+
 Some applications have sample data, sourced from the sample_data directory in the root of the project directory. Some applications will crash without these files.
 
 **NB**: Note that Windows is not fully supported or tested at all times.
