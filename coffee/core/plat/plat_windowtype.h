@@ -3,7 +3,10 @@
 
 #include "coffee/core/CTypes"
 #include "coffee/core/plat/platform_detect.h"
+
+#if defined(COFFEE_LINUX) && defined(COFFEE_X11)
 #include <X11/Xlib.h>
+#endif
 
 namespace Coffee{
 namespace CDisplay{

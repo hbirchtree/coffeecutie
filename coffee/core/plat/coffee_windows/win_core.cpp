@@ -64,16 +64,6 @@ CWinFile* _winapi_open_file_read(cstring file){
                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     return f;
 }
-szptr coffee_file_get_size(cstring file)
-{
-    CWinFile* fp = _winapi_open_file_read(file);
-
-    szptr ret = _winapi_file_get_size(fp);
-
-    CloseHandle(fp->hd);
-    delete fp;
-    return ret;
-}
 szptr _winapi_file_get_size(CWinFile *fp)
 {
     if (fp->hd == INVALID_HANDLE_VALUE)
@@ -83,6 +73,16 @@ szptr _winapi_file_get_size(CWinFile *fp)
     szptr ret = 0;
     if (GetFileSizeEx(fp->hd, &sz))
         ret = (sz.LowPart | sz.HighPart << 32);
+    return ret;
+}
+szptr coffee_file_get_size(cstring file)
+{
+    CWinFile* fp = _winapi_open_file_read(file);
+
+    szptr ret = _winapi_file_get_size(fp);
+
+    CloseHandle(fp->hd);
+    delete fp;
     return ret;
 }
 }
