@@ -62,11 +62,11 @@ extern void coffee_graphics_clear(CClearFlag flg);
 
 extern void coffee_graphics_draw_indexed(
         const CPrimitiveMode& mode,
-        const CGLDrawCall* drawcall);
+        const CGLDrawCall& drawcall);
 
 extern void coffee_graphics_multidraw(
         const CPrimitiveMode& mode,
-        const CBuffer* buf);
+        const CBuffer &buf);
 /*!
  * \brief Debug filter that ignores notifications.
  * \param rep

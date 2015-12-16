@@ -265,7 +265,7 @@ public:
             }
 
             counter.update(clock->elapsed());
-            coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
+            coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,drawcall);
 
 
             this->swapBuffers();

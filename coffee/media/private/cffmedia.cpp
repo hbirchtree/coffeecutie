@@ -43,7 +43,6 @@ struct CFFDecodeContext
         SwsContext* sws_ctxt;
         AVFrame* frame;
         AVFrame* tFrame;
-        uint8* frameData;
         CSize resolution;
     } v;
     struct{
@@ -52,6 +51,16 @@ struct CFFDecodeContext
     } a;
 
     AVPacket packet;
+};
+
+struct CFFEncodeContext
+{
+    struct{
+        CSize resolution;
+    } v;
+    struct{
+
+    } a;
 };
 
 void coffee_ffmedia_init(CFFMessageCallback callback, bool silent)

@@ -220,13 +220,17 @@ public:
             //FFMPEG
             trg.v.location = texture.buffers().current().data;
             trg.v.updated = false;
-            coffee_ffmedia_decode_frame(video,dCtxt,&trg);
 
-            if(trg.v.updated)
-                texture.uploadData(CTexFormat::RGBA,0);
+            while(!trg.v.updated&&coffee_ffmedia_decode_frame(video,dCtxt,&trg));
+
+            texture.uploadData(CTexFormat::RGBA,0);
+
+            while(!trg.v.updated&&coffee_ffmedia_decode_frame(video,dCtxt,&trg));
+
+            texture.uploadData(CTexFormat::RGBA,0);
             //
 
-            coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
+            coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,drawcall);
             texture.advance();
 
             counter++;
