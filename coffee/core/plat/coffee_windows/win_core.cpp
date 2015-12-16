@@ -1,6 +1,7 @@
 #include "win_core.h"
 
 #include "coffee/core/plat/platform_detect.h"
+#include "coffee/core/coffee_macros.h"
 #include <mutex>
 #include <atomic>
 
@@ -9,6 +10,13 @@
 #include <Windows.h>
 
 namespace Coffee{
+
+void coffee_enable_core_dump()
+{
+    C_STUBBED("Core dumping");
+    //We don't support this yet.
+}
+
 namespace CResources{
 namespace CFiles{
 
