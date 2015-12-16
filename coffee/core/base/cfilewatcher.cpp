@@ -1,6 +1,5 @@
 #include "cfilewatcher.h"
 
-#include "coffee/core/plat/platform_detect.h"
 #include "coffee/core/base/cdebug.h"
 
 #if defined(COFFEE_LINUX)
@@ -43,6 +42,7 @@ std::mutex coffee_inotify_access;
  *
 **/
 
+#if defined(COFFEE_LINUX)
 constexpr _cbasic_static_map<CFileWatchParameters,int,13> infy_flags = {
     {CFileWatchParameters::FileAppear,IN_MOVED_TO},
     {CFileWatchParameters::FileDisappear,IN_MOVED_FROM},
@@ -96,6 +96,7 @@ int inotify_translate_flags(CFileWatchParameters flags)
 {
     return coffee_get_flags(flags,infy_flags);
 }
+#endif
 
 bool coffee_file_watch_init()
 {
@@ -154,6 +155,7 @@ CFilesystemWatcher *coffee_file_watch_add(
 
 void coffee_file_watch_process_events(size_t numEvents)
 {
+#if defined(COFFEE_LINUX)
     uint32 queue_size = 0;
     ioctl(coffee_inotify_instance,FIONREAD,&queue_size);
 
@@ -192,24 +194,30 @@ void coffee_file_watch_process_events(size_t numEvents)
     coffee_inotify_access.unlock(); //Unlock access
 
     delete[] buffer;
+#endif
 }
 
 void coffee_file_watch_set_data(CFilesystemWatcher *watch, const void *data)
 {
+#if defined(COFFEE_LINUX)
     coffee_inotify_access.lock(); //Lock access
     watch->data = data;
     coffee_inotify_access.unlock(); //Unlock access
+#endif
 }
 
 void coffee_file_watch_set_callback(CFilesystemWatcher *watch, CFileWatchCallback callback)
 {
+#if defined(COFFEE_LINUX)
     coffee_inotify_access.lock(); //Lock access
     watch->callback = callback;
     coffee_inotify_access.unlock(); //Unlock access
+#endif
 }
 
 bool coffee_file_watch_remove(CFilesystemWatcher *watch)
 {
+#if defined(COFFEE_LINUX)
     coffee_inotify_access.lock(); //Lock access
     if(inotify_rm_watch(coffee_inotify_instance,watch->fd))
     {
@@ -219,17 +227,20 @@ bool coffee_file_watch_remove(CFilesystemWatcher *watch)
         return true;
     }
     coffee_inotify_access.unlock(); //Unlock access
+#endif
     return false;
 }
 
 void coffee_file_watch_deinit()
 {
+#if defined(COFFEE_LINUX)
     coffee_inotify_access.lock();
 
     close(coffee_inotify_instance);
     coffee_inotify_instance = -1;
 
     coffee_inotify_access.unlock();
+#endif
 }
 
 CFileWatchTask::CFileWatchTask():
