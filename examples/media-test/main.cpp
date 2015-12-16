@@ -164,7 +164,11 @@ public:
         CBufferedTexture<2> texture;
         texture.createTexture(v_fmt.video.size,CTexIntFormat::RGBA8,
                               CTexType::Tex2D,1,initTexture,CTexFormat::RGBA);
+
+        c_free(initTexture.data);
+
         coffee_graphics_tex_load(texture.sampler(),texture.texture());
+
         //
 
         //Bind a pipeline
@@ -181,6 +185,7 @@ public:
 
         CTransform quad_trans;
         quad_trans.position = CVec3(0,0,0);
+        quad_trans.scale = CVec3(1.6,1.0,1.0);
 
         CMat4 quad_matrix = coffee_graphics_gen_transform(quad_trans);
 
@@ -203,20 +208,32 @@ public:
         drawcall.count = sizeof(indexdata)/sizeof(indexdata[0]);
         drawcall.instanceCount = 1;
 
+        double timeout = this->contextTime();
+        int counter;
+
         this->showWindow();
         while(!this->closeFlag())
         {
             coffee_graphics_clear(CClearFlag::Color);
 
-            texture.uploadData(CTexFormat::RGBA,0);
 
             //FFMPEG
-            trg.v.location = texture.buffers().next().data;
+            trg.v.location = texture.buffers().current().data;
             coffee_ffmedia_decode_frame(video,dCtxt,&trg);
+
+            texture.uploadData(CTexFormat::RGBA,0);
             //
 
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
             texture.advance();
+
+            counter++;
+            if((this->contextTime()-timeout)>=1.0)
+            {
+                timeout = this->contextTime();
+                cDebug("Framerate: {0}",counter);
+                counter=0;
+            }
 
             this->swapBuffers();
             this->pollEvents();
@@ -249,7 +266,10 @@ int32 coffee_main(int32, byte_t**)
     sync.store(false);
     CDisplay::CDWindowProperties props = CDisplay::coffee_get_default_visual();
     props.contextProperties.flags = props.contextProperties.flags|
-            CDisplay::CGLContextProperties::GLDebug;
+            CDisplay::CGLContextProperties::GLDebug|
+            CDisplay::CGLContextProperties::GLAutoResize/*|
+            CDisplay::CGLContextProperties::GLVSync*/;
+    props.flags = CDisplay::CDWindowProperties::Resizable;
 
     std::future<void> status = CDisplay::coffee_display_start_async(&sync,renderer,props);
 

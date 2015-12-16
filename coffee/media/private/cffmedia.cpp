@@ -13,6 +13,8 @@ extern "C"
 namespace Coffee{
 namespace CFFMedia{
 
+constexpr AVPixelFormat default_pixfmt = AV_PIX_FMT_RGBA;
+
 struct CFFStream
 {
     AVStream* stream;
@@ -215,7 +217,7 @@ void coffee_ffmedia_free_player(CFFVideoPlayer *vplayer)
 
 size_t coffee_ffmedia_video_framesize(CFFVideoPlayer *video)
 {
-    return av_image_get_buffer_size(AV_PIX_FMT_BGRA,
+    return av_image_get_buffer_size(default_pixfmt,
                                     video->video->context->width,
                                     video->video->context->height,
                                     8);
@@ -223,14 +225,19 @@ size_t coffee_ffmedia_video_framesize(CFFVideoPlayer *video)
 
 size_t coffee_ffmedia_video_framesize(const CSize &video)
 {
-    return av_image_get_buffer_size(AV_PIX_FMT_BGRA,
+    return av_image_get_buffer_size(default_pixfmt,
                                     video.w,video.h,
-                                    8);
+                                    1);
 }
 
-size_t coffee_ffmedia_audio_framesize(CFFVideoPlayer *)
+size_t coffee_ffmedia_audio_samplesize(CFFVideoPlayer *video)
 {
-    return 0;
+    return av_samples_get_buffer_size(
+                nullptr,
+                video->audio->context->channels,
+                1,
+                video->audio->stream->codec->sample_fmt,
+                1);
 }
 
 CFFDecodeContext* coffee_ffmedia_create_decodecontext(
@@ -243,7 +250,7 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
         dCtxt->v.sws_ctxt = sws_getContext(
                     strm->context->width, strm->context->height,
                     strm->context->pix_fmt,
-                    fmt.video.size.w, fmt.video.size.h, AV_PIX_FMT_BGRA,
+                    fmt.video.size.w, fmt.video.size.h, default_pixfmt,
                     SWS_BILINEAR, NULL, NULL, NULL);
     }
 
@@ -294,7 +301,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             av_image_fill_arrays(dCtxt->v.tFrame->data,
                                  dCtxt->v.tFrame->linesize,
                                  (uint8*)dTrgt->v.location,
-                                 AV_PIX_FMT_BGRA,
+                                 default_pixfmt,
                                  dCtxt->v.resolution.w,dCtxt->v.resolution.h,
                                  8);
 
