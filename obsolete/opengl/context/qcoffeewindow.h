@@ -1,5 +1,0 @@
-#ifndef QCOFFEEWINDOW_H
-#define QCOFFEEWINDOW_H
-
-
-#endif // QCOFFEEWINDOW_H
