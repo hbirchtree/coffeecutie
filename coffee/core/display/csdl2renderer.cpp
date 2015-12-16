@@ -364,34 +364,34 @@ CIControllerState CSDL2Renderer::getControllerState(size_t index)
     SDL_GameController* gc = m_context->controllers[index];
     CIControllerState state;
 
-    state.axes.l_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTX);
-    state.axes.l_y = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTY);
+    state.axes.e.l_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTX);
+    state.axes.e.l_y = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTY);
 
-    state.axes.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTX);
-    state.axes.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTY);
+    state.axes.e.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTX);
+    state.axes.e.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTY);
 
-    state.axes.t_l = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-    state.axes.t_r = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+    state.axes.e.t_l = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+    state.axes.e.t_r = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 
-    state.buttons.a = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_A);
-    state.buttons.b = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_B);
-    state.buttons.x = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_X);
-    state.buttons.y = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_Y);
+    state.buttons.e.a = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_A);
+    state.buttons.e.b = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_B);
+    state.buttons.e.x = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_X);
+    state.buttons.e.y = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_Y);
 
-    state.buttons.back = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_BACK);
-    state.buttons.guide = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_GUIDE);
-    state.buttons.start = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_START);
+    state.buttons.e.back = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_BACK);
+    state.buttons.e.guide = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_GUIDE);
+    state.buttons.e.start = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_START);
 
-    state.buttons.s_l = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_LEFTSTICK);
-    state.buttons.s_r = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+    state.buttons.e.s_l = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_LEFTSTICK);
+    state.buttons.e.s_r = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_RIGHTSTICK);
 
-    state.buttons.b_l = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-    state.buttons.b_r = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+    state.buttons.e.b_l = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+    state.buttons.e.b_r = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
 
-    state.buttons.p_up = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_UP);
-    state.buttons.p_down = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-    state.buttons.p_left = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-    state.buttons.p_right = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+    state.buttons.e.p_up = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_UP);
+    state.buttons.e.p_down = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+    state.buttons.e.p_left = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+    state.buttons.e.p_right = SDL_GameControllerGetButton(gc,SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
 
     return state;
 }

@@ -195,7 +195,7 @@ struct CIControllerState
             int16 r_y;
             int16 t_l;
             int16 t_r;
-        };
+        } e;
         int16 d[6];
     } axes;
     union{
@@ -220,7 +220,7 @@ struct CIControllerState
             bool p_down:1;
             bool p_left:1;
             bool p_right:1;
-        };
+        } e;
     } buttons;
 };
 
