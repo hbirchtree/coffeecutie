@@ -9,7 +9,12 @@ set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 
-add_definitions ( -Wall )
+if (NOT WIN32)
+    add_definitions ( -Wall )
+else()
+    add_definitions ( -W4 )
+endif()
+
 include_directories (
         ${CMAKE_SOURCE_DIR}
         ${CMAKE_BINARY_DIR}/libs/include
