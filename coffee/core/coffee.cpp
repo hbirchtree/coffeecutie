@@ -41,8 +41,11 @@ void CoffeeInit()
     coffee_enable_core_dump();
 
     //Set up signal handlers, make the process more well-behaved
+    signal(SIGILL,sighandle);
     signal(SIGINT,sighandle);
+#if defined(COFFEE_LINUX)
     signal(SIGKILL,sighandle);
+#endif
     signal(SIGTERM,sighandle);
 
 #ifndef NDEBUG
