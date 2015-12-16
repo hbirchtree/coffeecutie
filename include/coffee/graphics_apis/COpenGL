@@ -11,6 +11,7 @@
 #include <coffee/graphics_apis/opengl/include/wrappers/cvertexarrayobject.h>
 #include <coffee/graphics_apis/opengl/include/wrappers/cviewport_array.h>
 
+#include <coffee/graphics_apis/opengl/include/cbufferedtexture.h>
 #include <coffee/graphics_apis/opengl/include/cvertexspecification.h>
 
 #include <coffee/graphics_apis/opengl/include/glbinding/cglbindingrenderer.h>

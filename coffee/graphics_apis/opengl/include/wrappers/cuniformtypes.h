@@ -1,6 +1,7 @@
 #ifndef CUNIFORMTYPES
 #define CUNIFORMTYPES
 
+#include <coffee/core/types/vector_types.h>
 #include "copengl_types.h"
 
 namespace Coffee{

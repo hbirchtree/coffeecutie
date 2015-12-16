@@ -4,6 +4,7 @@
 #include <coffee/core/CBase>
 #include <coffee/core/CTypes>
 #include <coffee/CAudio>
+#include <coffee/graphics_apis/COpenGL>
 
 namespace Coffee{
 namespace CFFMedia{
@@ -15,6 +16,17 @@ using CFFMessageCallback = void(*)(void*,int,cstring,va_list);
 
 struct CFFDecodeContext;
 struct CFFVideoPlayer;
+
+struct CFFVideoFormat
+{
+    CTextureSize size;
+};
+
+struct CFFVideoDescriptor
+{
+    CAudioFormat audio;
+    CFFVideoFormat video;
+};
 
 struct CFFStreamTarget
 {
@@ -40,8 +52,7 @@ extern size_t coffee_ffmedia_video_framesize(const CSize& video);
 extern size_t coffee_ffmedia_audio_framesize(CFFVideoPlayer* video);
 
 extern CFFDecodeContext *coffee_ffmedia_create_decodecontext(
-        const CFFVideoPlayer* video, const CSize& videores,
-        const CAudioFormat&);
+        const CFFVideoPlayer* video, const CFFVideoDescriptor& fmt);
 
 extern void coffee_ffmedia_free_decodecontext(CFFDecodeContext* dCtxt);
 

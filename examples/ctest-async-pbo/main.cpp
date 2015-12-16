@@ -8,7 +8,7 @@ using namespace CGraphicsData;
 
 void framefun(uint32 t, const void*)
 {
-    cDebug("Framerate: %i",t);
+    cDebug("Framerate: {0}",t);
 }
 
 class CDHudRenderer : public Coffee::CDisplay::CGLBindingRenderer
@@ -181,69 +181,39 @@ public:
         //Creating texture
 
         CUniform texuni;
-        CTextureSampler glsamp;
-        CTexture gltext;
-        CTextureSize texsize = {};
-        CTextureRegion texreg = {};
-        CNBuffer<2> pbos;
-        CRGBA* texstorage_1;
-        CRGBA* texstorage_2;
-
         {
             texuni.object_name = "diffsamp";
 
             coffee_graphics_uniform_get(basePipeline.frag,texuni);
         }
 
+        CTextureSize texsize = {};
+        texsize.w = texsize.h = 1024;
+        CByteData initTexData;
+        initTexData.size = coffee_graphics_tex_get_size(texsize,CTexFormat::RGBA);
+        initTexData.data = (byte_t*)c_alloc(initTexData.size);
+        CByteData texstorage_2;
+        texstorage_2.size = initTexData.size;
+        texstorage_2.data = (byte_t*)c_alloc(texstorage_2.size);
+
         {
-            texsize.w = texsize.h = texreg.w = texreg.h = 1024;
+            CRGBA* d1 = (CRGBA*)initTexData.data;
+            CRGBA* d2 = (CRGBA*)texstorage_2.data;
 
-            texstorage_1 = (CRGBA*)c_calloc(sizeof(CRGBA),texsize.w*texsize.h);
-            texstorage_2 = (CRGBA*)c_calloc(sizeof(CRGBA),texsize.w*texsize.h);
-
-            for(int32 i=0;i<texsize.w;i++)
-                for(int32 j=0;j<texsize.h;j++)
-                {
-                    texstorage_1[j*texsize.h + i].a = 255;
-                    texstorage_1[j*texsize.h + i].r = 255;
-
-                    texstorage_2[j*texsize.h + i].a = 255;
-                    texstorage_2[j*texsize.h + i].r = 200;
-                }
-
-            coffee_graphics_alloc(pbos.size,pbos.data,CBufferType::PixelUnpack);
-
-            gltext.type = CTexType::Tex2D;
-            gltext.format = CTexIntFormat::RGBA8;
-            gltext.levels = 1;
-            gltext.size = texsize;
-            coffee_graphics_alloc(gltext);
-            coffee_graphics_activate(gltext);
-
-            coffee_graphics_tex_defimmutable_2d(gltext);
-
-            for(size_t i=0;i<pbos.size;i++)
+            for(int64 i=0;i<texsize.w*texsize.h;i++)
             {
-                coffee_graphics_activate(pbos.current());
-                coffee_graphics_buffer_store_immutable(
-                            pbos.current(),
-                            texstorage_1,texsize.w*texsize.h*sizeof(CRGBA),
-                            CBufferConstants::PersistentStorageFlags());
-                coffee_graphics_buffer_map(pbos.current(),
-                                           CBufferConstants::PersistentAccessFlags());
+                d1[i].r = 255;
+                d2[i].r = 127;
 
-                pbos.advance();
+                d1[i].a = 255;
+                d2[i].a = 255;
             }
-
-            coffee_graphics_tex_pbo_upload(
-                        gltext,pbos.current(),
-                        CTexFormat::RGBA,CDataType::UByte,0);
-
-            coffee_graphics_alloc(glsamp);
-
-            coffee_graphics_tex_get_handle(gltext,glsamp);
-            coffee_graphics_tex_make_resident(glsamp);
         }
+
+        CBufferedTexture<2> texture;
+        texture.createTexture(texsize,CTexIntFormat::RGBA8,CTexType::Tex2D,
+                              1,initTexData,CTexFormat::RGBA);
+        coffee_graphics_tex_load(texture.sampler(),texture.texture());
 
         //Enable some states
         coffee_graphics_blend(true);
@@ -255,7 +225,8 @@ public:
         drawcall.instanceCount = 1;
 
         //Set uniform, a texture handle
-        coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,glsamp.bhandle);
+        coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,
+                                              texture.sampler().bhandle);
 
         bool flop = false;
 
@@ -264,56 +235,48 @@ public:
         {
             coffee_graphics_clear(CClearFlag::Color|CClearFlag::Depth);
 
-            camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
-
-            wtf = coffee_graphics_gen_perspective(camera)
-                    * coffee_graphics_gen_transform(camera);
-            rt = coffee_node_get_transform(&rootNode);
-
-            c_memcpy(transforms.current().data,&rt,sizeof(rt));
-
-            for(int i=0;i<4;i++)
             {
-                CVertexBufferBinding* bind = vao_desc.getBinding(2+i);
-                coffee_graphics_vao_attribute_bind_buffer(
-                            vao,
-                            *bind,
-                            transforms.current());
+                camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
+
+                wtf = coffee_graphics_gen_perspective(camera)
+                        * coffee_graphics_gen_transform(camera);
+                rt = coffee_node_get_transform(&rootNode);
+
+                c_memcpy(transforms.current().data,&rt,sizeof(rt));
+
+                for(int i=0;i<4;i++)
+                {
+                    CVertexBufferBinding* bind = vao_desc.getBinding(2+i);
+                    coffee_graphics_vao_attribute_bind_buffer(
+                                vao,
+                                *bind,
+                                transforms.current());
+                }
+
             }
 
-            pbos.awaitCurrent();
-
-            coffee_graphics_tex_pbo_upload(
-                        gltext,pbos.current(),
-                        CTexFormat::RGBA,CDataType::UByte,0);
-
-
             {
-                CRGBA* tex = (CRGBA*)pbos.next().data;
+                texture.uploadData(CTexFormat::RGBA,0);
 
-                CRGBA* d;
+                CByteData* dSrc;
                 if(flop)
-                    d = texstorage_1;
+                    dSrc = &initTexData;
                 else
-                    d = texstorage_2;
+                    dSrc = &texstorage_2;
                 flop = !flop;
 
-                c_memcpy(tex,d,sizeof(CRGBA)*texsize.w*texsize.h);
+                texture.prefillBuffer(*dSrc);
             }
-
 
             counter.update(clock->elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,&drawcall);
-            pbos.lockCurrent();
-
-            pbos.advance();
+            texture.advance();
 
             this->swapBuffers();
             this->pollEvents();
         }
 
         coffee_graphics_free(vao);
-        coffee_graphics_free(gltext);
         coffee_graphics_free(vertices);
         coffee_graphics_free(texcoords);
         coffee_graphics_free(transforms.size,transforms.data);
@@ -348,9 +311,9 @@ int32 coffee_main(int32, byte_t**)
 
     CDRendererBase *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
-    props.contextProperties.flags |=
-            CGLContextProperties::GLDebug|
-            CGLContextProperties::GLVSync;
+    props.contextProperties.flags =
+            props.contextProperties.flags|
+            CGLContextProperties::GLDebug;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();

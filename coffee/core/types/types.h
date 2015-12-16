@@ -25,6 +25,23 @@ struct chunk_mem
     T* d = nullptr;
 };
 
+template<typename T>
+struct _cbasic_data_chunk
+{
+    /*!
+     * \brief Size in bytes
+     */
+    szptr size;
+    /*!
+     * \brief Pointer to data
+     */
+    T* data;
+    /*!
+     * \brief Number of elements, if applicable
+     */
+    szptr elements;
+};
+
 /*!
  * \brief A template for version structures
  */
@@ -48,6 +65,9 @@ template<typename T> static void coffee_mem_expand_array(
     mem->d = (T*)c_realloc(mem->d,sizeof(T)*mem->size);
     c_memclear(&mem->d[osize],sizeof(T)*(mem->size-osize));
 }
+
+typedef _cbasic_data_chunk<void> CVoidData;
+typedef _cbasic_data_chunk<byte_t> CByteData;
 
 }
 

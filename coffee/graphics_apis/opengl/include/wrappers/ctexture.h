@@ -2,7 +2,7 @@
 #define CTEXTURE
 
 #include <coffee/core/plat/cmemory.h>
-#include <coffee/image/include//cimage.h>
+#include <coffee/image/include/cimage.h>
 
 #include "ctexture_pbo.h"
 #include "ctexture_types.h"
@@ -11,6 +11,20 @@
 
 namespace Coffee{
 namespace CGraphicsWrappers{
+
+/*!
+ * \brief Get buffer size for texture
+ * \param size
+ * \param fmt
+ * \return
+ */
+extern size_t coffee_graphics_tex_get_size(
+        const CTextureSize& size, const CTexFormat& fmt);
+
+inline size_t coffee_graphics_tex_get_size(const CTexture& tex, const CTexFormat& fmt)
+{
+    return coffee_graphics_tex_get_size(tex.size,fmt);
+}
 
 /*!
  * \brief Allocate texture

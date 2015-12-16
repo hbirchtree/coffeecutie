@@ -5,6 +5,35 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
+size_t coffee_graphics_tex_get_size(
+        const CTextureSize &size, const CTexFormat &fmt)
+{
+    size_t psize = 0;
+    switch(fmt)
+    {
+    case CTexFormat::BGRA:
+    case CTexFormat::RGBA:
+    case CTexFormat::DepthStencil:
+        psize = 4;
+        break;
+    case CTexFormat::RGB:
+    case CTexFormat::Depth:
+        psize = 3;
+        break;
+    case CTexFormat::RG:
+        psize = 2;
+        break;
+    case CTexFormat::RED:
+    case CTexFormat::BLUE:
+    case CTexFormat::GREEN:
+    case CTexFormat::Stencil:
+        psize = 1;
+        break;
+    default:break;
+    }
+    return CMath::max(1,size.w)*CMath::max(1,size.h)*CMath::max(1,size.d)*psize;
+}
+
 void coffee_graphics_tex_mipmap(CTexture &tex)
 {
     glGenerateTextureMipmap(tex.handle);

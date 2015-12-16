@@ -234,8 +234,7 @@ size_t coffee_ffmedia_audio_framesize(CFFVideoPlayer *)
 }
 
 CFFDecodeContext* coffee_ffmedia_create_decodecontext(
-        const CFFVideoPlayer *video, const CSize &videores,
-        const CAudioFormat &)
+        const CFFVideoPlayer *video, const CFFVideoDescriptor &fmt)
 {
     CFFDecodeContext* dCtxt = new CFFDecodeContext;
 
@@ -244,7 +243,7 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
         dCtxt->v.sws_ctxt = sws_getContext(
                     strm->context->width, strm->context->height,
                     strm->context->pix_fmt,
-                    videores.w, videores.h, AV_PIX_FMT_BGRA,
+                    fmt.video.size.w, fmt.video.size.h, AV_PIX_FMT_BGRA,
                     SWS_BILINEAR, NULL, NULL, NULL);
     }
 
@@ -257,7 +256,8 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
     dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,video->video->stream,
                                               NULL);
 
-    dCtxt->v.resolution = videores;
+    dCtxt->v.resolution.w = fmt.video.size.w;
+    dCtxt->v.resolution.h = fmt.video.size.h;
 
     return dCtxt;
 }
