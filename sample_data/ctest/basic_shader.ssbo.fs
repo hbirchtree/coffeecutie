@@ -20,5 +20,6 @@ layout(location = 0) out vec4 Out_color;
 
 void main() {
 	vec4 col = texture(diffuseSampler,In.texCoord);
-    Out_color = vec4(col.xyz*(1.0/1.3),col.a);
+//    Out_color = vec4(col.xyz*(1.0/1.3),col.a);
+	Out_color = vec4(1.0);
 }

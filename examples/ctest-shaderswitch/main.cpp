@@ -11,7 +11,7 @@ using namespace CGraphicsData;
 
 void framefun(uint32 t, const void*)
 {
-    cDebug("Framerate: %i",t);
+    cDebug("Framerate: {0}",t);
 }
 
 class CDHudRenderer : public Coffee::CDisplay::CGLBindingRenderer
@@ -236,10 +236,12 @@ public:
             case 0:
                 break;
             case 1:
-                coffee_graphics_bind(basePipeline.data_ref());
+                for(int i=0;i<100;i++)
+                    coffee_graphics_bind(basePipeline.data_ref());
                 break;
             case 2:
-                glUseProgram(0);
+                for(int i=0;i<100;i++)
+                    glUseProgram(0);
                 coffee_graphics_bind(basePipeline.data_ref());
                 break;
             }

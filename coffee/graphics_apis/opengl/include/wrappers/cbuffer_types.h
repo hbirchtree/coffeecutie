@@ -26,6 +26,12 @@ public:
         for(size_t i=0;i<Size;i++)
             fences[i] = nullptr;
     }
+    ~CNBuffer()
+    {
+        for(size_t i=0;i<Size;i++)
+            if(fences[i])
+                coffee_graphics_free(fences[i]);
+    }
 
     virtual bool isCurrentLocked()
     {
@@ -33,6 +39,8 @@ public:
     }
     virtual void lockCurrent()
     {
+        if(fences[current_idx()])
+            coffee_graphics_free(fences[current_idx()]);
         fences[current_idx()] = coffee_graphics_fence_create();
     }
     virtual bool awaitCurrent(uint64 max_timeout = 10)

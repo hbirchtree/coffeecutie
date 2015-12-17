@@ -35,6 +35,13 @@ inline void coffee_graphics_free(CBuffer& buf)
  * \param buf The buffer to be "activated"
  */
 extern void coffee_graphics_activate(CBuffer& buf);
+
+inline void coffee_graphics_activate(size_t count, CBuffer* buf)
+{
+    for(size_t i=0;i<count;i++)
+        coffee_graphics_activate(buf[i]);
+}
+
 /*!
  * \brief Bind a buffer to buffer's target
  * \param buf Buffer to be bound to the buffer structure's buffer target
@@ -45,18 +52,6 @@ extern void coffee_graphics_bind(CBuffer& buf);
  * \param buf Provides buffer target for unbinding
  */
 extern void coffee_graphics_unbind(CBuffer& buf);
-
-/*!
- * \brief This operation will create a new buffer, copy the specified data and delete the old buffer.
- * \param buf Target buffer
- * \param oldOffset Offset for data in old buffer
- * \param oldSize Size of data in old buffer
- * \param targetOffset Offset for old data in new buffer (end of data should be within buffer)
- * \param newSize Size of the new buffer
- */
-extern void coffee_graphics_buffer_resize(CBuffer &buf,
-        const CGszptr &oldOffset, const CGsize &oldSize,
-        const CGszptr &targetOffset, const CGsize &newSize);
 
 /*!
  * \brief If parent is a mapped buffer, return an offset pointer
@@ -70,16 +65,6 @@ inline void* coffee_graphics_buffer_sub_dataptr(CSubBuffer& buf)
     byte_t* dPtr = (byte_t*)buf.parent->data;
     return &dPtr[buf.offset];
 }
-
-/*!
- * \brief A typical discarding transfer to a buffer.
- * \param buffer
- * \param offset
- * \param size
- * \param data
- */
-extern void coffee_graphics_buffer_map_memcpy(
-        CBuffer* buffer, szptr offset, szptr size, c_cptr data);
 
 }
 }

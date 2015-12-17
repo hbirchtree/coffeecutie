@@ -152,6 +152,7 @@ void coffee_test_def_vao(game_context* ctxt)
         CVertexArrayObject& vao = ctxt->vertexdata.descriptor.arrays.d[v_idx];
 
         coffee_graphics_alloc(6,&psbuffer);
+        coffee_graphics_activate(6,&psbuffer);
         coffee_graphics_alloc(vao);
         coffee_graphics_bind(vao);
 
@@ -194,7 +195,7 @@ void coffee_test_load_meshes(game_context* ctxt)
     {
         CAssimpMesh* mesh = meshes[i];
         CGLDrawCall call;
-        call.baseInstance = drawcalls.size();
+        call.baseInstance = drawcalls.size()*10;
         call.instanceCount = 10;
         call.baseVertex = positions.size();
         call.firstIndex = indices.size();
@@ -211,6 +212,7 @@ void coffee_test_load_meshes(game_context* ctxt)
             }
         }
         call.count = indices.size()-call.firstIndex;
+        drawcalls.push_back(call);
     }
 
     CBuffer& drawbuffer = ctxt->renderdata.buffers.d[5];
@@ -269,6 +271,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 
     blbind.desc = new CUniformBlock;
     blbind.desc->object_name = "MatrixBlock";
+    blbind.desc->index = -1;
     blbind.resource = new CSubBuffer;
     blbind.resource->parent = &camera_buffer;
     blbind.resource->type = CBufferType::Uniform;
@@ -290,7 +293,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
                                            CBufferConstants::PersistentStorageFlags());
     coffee_graphics_buffer_map(camera_buffer,CBufferConstants::PersistentAccessFlags());
 
-    blbind.index = 4;
+    blbind.index = 0;
 
     coffee_graphics_buffer_bind_range(camera_buffer,CBufferType::Uniform,0,sizeof(CMat4),
                                       blbind.index);
@@ -418,7 +421,7 @@ void coffee_render_test(game_context *ctxt, double)
         coffee_graphics_free(sync_object);
     }
     //Send it off
-
+    coffee_graphics_multidraw(CPrimitiveMode::Triangles,ctxt->renderdata.buffers.d[5]);
     //
     sync_object = coffee_graphics_fence_create();
 }

@@ -228,6 +228,11 @@ public:
         coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,
                                               texture.sampler().bhandle);
 
+        CTextureData texture_data;
+        texture_data.datatype = CDataType::UByte;
+        texture_data.format = CTexFormat::RGBA;
+        texture_data.size = texture.texture().size;
+
         bool flop = false;
 
         this->showWindow();
@@ -256,7 +261,8 @@ public:
             }
 
             {
-                texture.uploadData(CTexFormat::RGBA,0);
+                if(!texstore_operations)
+                    texture.uploadData(CTexFormat::RGBA,0);
 
                 CByteData* dSrc;
                 if(flop)
@@ -265,7 +271,15 @@ public:
                     dSrc = &texstorage_2;
                 flop = !flop;
 
-                texture.prefillBuffer(*dSrc);
+                if(!texstore_operations)
+                    texture.prefillBuffer(*dSrc);
+                else
+                {
+                    texture_data.data = dSrc->data;
+                    coffee_graphics_tex_store_2d(texture.texture(),
+                                                 texture_data,
+                                                 0);
+                }
             }
 
             counter.update(clock->elapsed());
@@ -276,12 +290,18 @@ public:
             this->pollEvents();
         }
 
+        c_free(initTexData.data);
+        c_free(texstorage_2.data);
+
         coffee_graphics_free(vao);
         coffee_graphics_free(vertices);
         coffee_graphics_free(texcoords);
         coffee_graphics_free(transforms.size,transforms.data);
         coffee_graphics_free(indices);
+
+        coffee_fun_free(clock);
     }
+
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleD(e,data);
@@ -296,12 +316,18 @@ public:
             const CIKeyEvent* kev = (const CIKeyEvent*)data;
             if(kev->key == CK_Escape)
                 this->closeWindow();
+            else if(kev->key == CK_Space && (kev->mod&CIKeyEvent::PressedModifier))
+            {
+                cDebug("Switching operation mode");
+                texstore_operations = !texstore_operations;
+            }
             break;
         }
         default:break;
         }
     }
 private:
+    bool texstore_operations = false;
     CQuat t;
 };
 
@@ -323,3 +349,4 @@ int32 coffee_main(int32, byte_t**)
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)
+

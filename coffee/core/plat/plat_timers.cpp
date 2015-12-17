@@ -16,3 +16,13 @@ Coffee::CElapsedTimer *Coffee::CFunctional::coffee_fun_alloc_timer()
 {
     return new _plat_timer_ll_milli;
 }
+
+void Coffee::CFunctional::coffee_fun_free(Coffee::CElapsedTimer *timer)
+{
+    delete timer;
+}
+
+void Coffee::CFunctional::coffee_fun_free(Coffee::CElapsedTimerD *timer)
+{
+    delete timer;
+}

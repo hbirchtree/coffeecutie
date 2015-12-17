@@ -46,7 +46,9 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     {
         cMsg("SDL2","Found game controller mappings");
         coffee_file_pull(mapping,true);
-        SDL_GameControllerAddMappingsFromRW(SDL_RWFromConstMem(mapping.data,mapping.size),0);
+        SDL_RWops* fsrc = SDL_RWFromConstMem(mapping.data,mapping.size);
+        SDL_GameControllerAddMappingsFromRW(fsrc,0);
+        SDL_FreeRW(fsrc);
         coffee_file_free(mapping);
     }
 

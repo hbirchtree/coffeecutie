@@ -23,6 +23,13 @@ public:
     CVertexDescription()
     {
     }
+    ~CVertexDescription()
+    {
+        for(CVertexBufferBinding* bnd : m_dataset.bindings)
+            delete bnd;
+        for(CVertexFormat* fmt : m_spec.formats)
+            delete fmt;
+    }
 
     CVertexFormat* getFormat(CDataType type, CGszptr offset, CGsize size)
     {

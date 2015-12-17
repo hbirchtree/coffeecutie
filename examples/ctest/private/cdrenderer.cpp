@@ -16,7 +16,7 @@ namespace CDisplay {
 
 CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
-    m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
+    m_msg_filter = coffee_graphics_debug_filter_all;
 }
 
 CDRenderer::~CDRenderer()

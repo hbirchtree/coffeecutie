@@ -56,9 +56,9 @@ void CGLBindingRenderer::bindingPostInit()
     }
 
     try{
-        m_rendererString        = glbinding::ContextInfo::renderer();
-        m_vendorString          = glbinding::ContextInfo::vendor();
-        m_versionString         = glbinding::ContextInfo::version().toString();
+//        m_rendererString        = glbinding::ContextInfo::renderer();
+//        m_vendorString          = glbinding::ContextInfo::vendor();
+//        m_versionString         = glbinding::ContextInfo::version().toString();
         m_libraryRevision       = glbinding::Meta::glRevision();
     }
     catch(std::logic_error e){

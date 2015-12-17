@@ -24,6 +24,10 @@ extern CElapsedTimerMicro* coffee_fun_alloc_timer_micro();
  */
 extern CElapsedTimerD* coffee_fun_alloc_timerd();
 
+extern void coffee_fun_free(CElapsedTimer* timer);
+
+extern void coffee_fun_free(CElapsedTimerD* timer);
+
 }
 }
 
