@@ -88,6 +88,9 @@ szptr coffee_shader_program_load(const game_shader_program_desc &desc, game_cont
 
     ppl.create((cstring)v.data,(cstring)f.data);
 
+    coffee_file_free(v);
+    coffee_file_free(f);
+
     return pl_idx;
 }
 
@@ -440,6 +443,11 @@ void coffee_unload_test(game_context *ctxt)
 
     for(i=0;i<ctxt->texstorage.size;i++)
         coffee_graphics_free(ctxt->texstorage.d[i]);
+    for(i=0;i<ctxt->texsamplerstorage.size;i++)
+        coffee_graphics_free(ctxt->texsamplerstorage.d[i]);
+
+    free(ctxt->texsamplerstorage.d);
+    free(ctxt->texstorage.d);
 
     free(ctxt->vertexdata.buffers.d);
     free(ctxt->vertexdata.data.d);
