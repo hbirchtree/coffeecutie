@@ -1,15 +1,15 @@
-#include "cblam_scenario_loader.h"
+#include <volta/cblam_scenario_loader.h>
 
 #include <coffee/core/base/cdebug.h>
-#include "cblam_map.h"
+#include <volta/cblam_map.h>
 
 namespace Coffee{
 namespace CBlam{
 
 const blam_scenario* blam_scn_get(
-        const blam_file_header *map, const blam_tag_index* tags)
+        const file_header_t *map, const tag_index_t* tags)
 {
-    const blam_index_item* base = blam_tag_index_get_items(map);
+    const index_item_t* base = blam_tag_index_get_items(map);
 
     if(!c_memcmp(blam_index_item_type_scnr,base->tagclass[0],4))
         return nullptr;

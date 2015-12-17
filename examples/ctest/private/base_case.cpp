@@ -1,5 +1,6 @@
-#include "base_case.h"
+#include <base_case.h>
 
+#include <vector>
 #include <coffee/CImage>
 #include <coffee/CGraphics>
 
@@ -68,35 +69,11 @@ void coffee_test_fun_set(game_context *ctxt)
     }
 }
 
-CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game_context *ctxt)
+szptr coffee_shader_program_load(const game_shader_program_desc &desc, game_context *ctxt)
 {
     szptr pl_idx = ctxt->shaders.pipelines.size;
-    szptr pr_idx = ctxt->shaders.shaders.size;
-    szptr sh_idx = ctxt->shaders.programs.size;
 
-    coffee_mem_expand_array<CShader>(&ctxt->shaders.shaders,2);
-    coffee_mem_expand_array<CShaderProgram>(&ctxt->shaders.programs,1);
-    coffee_mem_expand_array<CPipeline>(&ctxt->shaders.pipelines,1);
-
-    CPipeline* pl = &ctxt->shaders.pipelines.d[pl_idx];
-    CShaderProgram* p = &ctxt->shaders.programs.d[pr_idx];
-    CShader* vshdr = &ctxt->shaders.shaders.d[sh_idx];
-    CShader* fshdr = &ctxt->shaders.shaders.d[sh_idx+1];
-
-    p->stages = CProgramStage::Vertex|CProgramStage::Fragment;
-
-    CResource dmp(desc.shader_dump);
-
-    //    if(dmp.exists())
-    //    {
-    //        dmp.read_data();
-    //        if(p->fetchProgram(&dmp)){
-    //            dmp.free_data();
-    //            pl->attachProgram(p,p->stages);
-    //            cDebug("Shader loaded from file");
-    //            return pl;
-    //        }
-    //    }
+    coffee_mem_expand_array(&ctxt->shaders.pipelines,1);
 
     CResource v(desc.shader_v); //Vertex shader
     CResource f(desc.shader_f); //Fragment shader
@@ -105,111 +82,49 @@ CPipeline *coffee_shader_program_load(const game_shader_program_desc &desc, game
     coffee_file_pull(v,true);
     coffee_file_pull(f,true);
 
-    //GL calls
-    coffee_graphics_shader_compile(*vshdr,v,CProgramStage::Vertex);
-    coffee_graphics_shader_compile(*fshdr,f,CProgramStage::Fragment);
-    //
+    CSimplePipeline& ppl = ctxt->shaders.pipelines.d[pl_idx];
 
-    coffee_file_free(v);
-    coffee_file_free(f);
+    new (&ppl) CSimplePipeline;
 
-    //GL calls separable programs
-    coffee_graphics_alloc(*p,true);
-    if(p->handle==0)
-        cFatal("Failed to create ShaderProgram");
-    coffee_graphics_shader_attach(*p,*vshdr);
-    coffee_graphics_shader_attach(*p,*fshdr);
-    coffee_graphics_shader_link(*p);
-    //
+    ppl.create((cstring)v.data,(cstring)f.data);
 
-    coffee_graphics_alloc(*pl);
-    if(pl->handle==0)
-        cFatal("Failed to create Pipeline");
-    coffee_graphics_shader_attach(*pl,*p,p->stages);
-
-    //GL call
-    coffee_graphics_store(*p,dmp);
-    //
-    if(!coffee_file_commit(dmp))
-        cDebug("Failed to save shader to file!");
-    coffee_file_free(dmp);
-
-    return pl;
+    return pl_idx;
 }
 
-CTexture *coffee_texture_2d_load(CResource *textureres, game_context *ctxt)
-{
-    coffee_mem_expand_array(&ctxt->texstorage,1);
-    coffee_mem_expand_array(&ctxt->texsamplerstorage,1);
-    CTexture& tex = ctxt->texstorage.d[ctxt->texstorage.size-1];
-    CTextureSampler& ts = ctxt->texsamplerstorage.d[ctxt->texsamplerstorage.size-1];
-    //GL call
-    coffee_graphics_alloc(tex);
-    coffee_graphics_alloc(ts);
-    //
-
-    CImportedTexture dt = coffee_graphics_tex_create_rtexdata(*textureres);
-
-    tex.type = CTexType::Tex2D;
-    tex.levels = 1;
-    tex.format = CTexIntFormat::RGBA8;
-    //GL calls
-    coffee_graphics_bind(tex);
-    coffee_graphics_unbind(tex);
-    ctxt->funptrs.textures.define(tex);
-    ctxt->funptrs.textures.store(tex,dt.data_ref(),0);
-    //
-
-    if(ctxt->features->ext_bindless_texture)
-        coffee_graphics_tex_get_handle(tex,ts);
-
-    return &tex;
-}
-
-CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_context* ctxt)
+CTexture* coffee_texture_2d_load(const CBlam::bitm_texture_t& tex, game_context* ctxt)
 {
     coffee_mem_expand_array(&ctxt->texstorage,1);
     coffee_mem_expand_array(&ctxt->texsamplerstorage,1);
     CTexture& t = ctxt->texstorage.d[ctxt->texstorage.size-1];
     CTextureSampler& ts = ctxt->texsamplerstorage.d[ctxt->texsamplerstorage.size-1];
 
+    coffee_graphics_alloc(t);
     coffee_graphics_alloc(ts);
 
-    switch(tex.format)
+    if(tex.format==CTexFormat::None && tex.dformat == CDataType::None)
     {
-    case CBlam::blam_bitm_tex_RGBA:{
-        CTextureData dt;
-        coffee_graphics_alloc(t);
-        dt.data = tex.data;
-        dt.datatype = CDataType::UByte;
-        dt.format = CTexFormat::RGBA;
-        dt.size.w = tex.resolution.w;
-        dt.size.h = tex.resolution.h;
-
-        t.type = (tex.type==CBlam::blam_bitm_type_2D) ? CTexType::Tex2D : CTexType::Tex3D;
+        t.format = tex.cformat;
         t.levels = tex.mipmaps;
-        t.format = CTexIntFormat::RGBA8;
-        coffee_graphics_activate(t);
+        t.size = tex.resolution;
+        t.type = tex.type;
+
+        coffee_graphics_tex_dxtc_load(
+                    t,
+                    (tex.cformat == CTexIntFormat::DXT1) ? 8 : 16,
+                    tex.data);
+
+    }else{
+        CTextureData tdata = {};
+        tdata.datatype = tex.dformat;
+        tdata.format = tex.format;
+        tdata.size = tex.resolution;
+        tdata.data = tex.data;
+        t.size = tex.resolution;
+        t.levels = tex.mipmaps;
+        t.format = tex.cformat;
+
         ctxt->funptrs.textures.define(t);
-        ctxt->funptrs.textures.store(t,dt,0);
-        break;
-    }
-    default:{
-        CBlamDXTCHeader dx;
-        dx.data = tex.data;
-        dx.blockSize = (tex.format == CBlam::blam_bitm_tex_DXT1) ? 8 : 16;
-        dx.mipmaps = tex.mipmaps;
-        dx.resolution.w = tex.resolution.w;
-        dx.resolution.h = tex.resolution.h;
-
-        for(int i=0;i<blam_dxtc_tex_mapping_count;i++)
-            if(tex.format==blam_dxtc_tex_mapping[i].in)
-                dx.internalFormat = blam_dxtc_tex_mapping[i].out;
-
-        coffee_graphics_tex_dxtc_load(dx,&t);
-
-        break;
-    }
+        ctxt->funptrs.textures.store(t,tdata,0);
     }
 
     if(ctxt->features->ext_bindless_texture)
@@ -218,276 +133,170 @@ CTexture* coffee_texture_2d_load(const CBlam::blam_bitm_texture_def& tex, game_c
     return &t;
 }
 
-void coffee_test_def_vao(game_context* ctxt, CMultiDrawDataSet* multidraw, szptr numGears)
+void coffee_test_def_vao(game_context* ctxt)
 {
     //We have two formats
-    coffee_mem_expand_array<CVertexFormat>(&ctxt->vertexdata.descriptor.formats,3);
-    coffee_mem_expand_array<CVertexBufferBinding>(&ctxt->vertexdata.descriptor.bindings,2);
-    coffee_mem_expand_array<CBuffer>(&ctxt->renderdata.buffers,7);
-    coffee_mem_expand_array<CVertexArrayObject>(&ctxt->vertexdata.descriptor.arrays,1);
+    szptr b_idx = ctxt->renderdata.buffers.size;
+    szptr v_idx = ctxt->renderdata.buffers.size;
+    coffee_mem_expand_array(&ctxt->renderdata.buffers,6);
+    coffee_mem_expand_array(&ctxt->vertexdata.descriptor.arrays,1);
     {
-        CBuffer& vbuffer = ctxt->renderdata.buffers.d[0];
-        CBuffer& tbuffer = ctxt->renderdata.buffers.d[6];
-        CBuffer& mbuffer = ctxt->renderdata.buffers.d[2];
+        CBuffer& psbuffer = ctxt->renderdata.buffers.d[b_idx];
+        CBuffer& txbuffer = ctxt->renderdata.buffers.d[b_idx+1];
+        CBuffer& mxbuffer = ctxt->renderdata.buffers.d[b_idx+2];
+        CBuffer& ixbuffer = ctxt->renderdata.buffers.d[b_idx+3];
 
-        mbuffer.type = CBufferType::Array;
-        mbuffer.flags = CBufferStorage::Coherent|
-                CBufferStorage::Persistent|
-                CBufferStorage::WriteBit|
-                CBufferStorage::Dynamic;
-        //GL calls
-        coffee_graphics_alloc(mbuffer);
-        coffee_graphics_activate(mbuffer);
-        ctxt->funptrs.buffers.store_immutable(
-                    mbuffer,nullptr,sizeof(CMat4)*numGears,
-                    mbuffer.flags);
-        ctxt->funptrs.buffers.map(mbuffer,CBufferAccess::Coherent|
-                                  CBufferAccess::Persistent|
-                                  CBufferAccess::WriteBit);
+        CVertexArrayObject& vao = ctxt->vertexdata.descriptor.arrays.d[v_idx];
 
-        coffee_graphics_alloc(vbuffer);
-        coffee_graphics_alloc(tbuffer);
+        coffee_graphics_alloc(6,&psbuffer);
+        coffee_graphics_alloc(vao);
+        coffee_graphics_bind(vao);
 
+        ixbuffer.type = CBufferType::Index;
+
+        CVertexDescription vdesc;
+        vdesc.addAttribute<scalar,3,CDataType::Scalar>(0,nullptr);
+        vdesc.addAttribute<scalar,2,CDataType::Scalar>(1,nullptr);
+        vdesc.addAttributeMatrix<scalar,4>(2,nullptr);
+
+        for(size_t i=0;i<4;i++)
         {
-            CBuffer& sbuffer = ctxt->renderdata.buffers.d[5];
-            sbuffer.type = CBufferType::ShaderStorage;
-            coffee_graphics_alloc(sbuffer);
-
-            CBuffer& ibuffer = ctxt->renderdata.buffers.d[1];
-            CBuffer& dbuffer = ctxt->renderdata.buffers.d[3];
-
-            multidraw->drawcalls->drawbuffer = &dbuffer;
-            multidraw->index->buffer = &ibuffer;
-
-            CVertexArrayObject& vao = ctxt->vertexdata.descriptor.arrays.d[0];
-            multidraw->vao = &vao;
-
-            coffee_graphics_alloc(vao);
-            coffee_graphics_alloc(dbuffer);
-
-            coffee_graphics_alloc(ibuffer);
-            ibuffer.type = CBufferType::Index;
+            vdesc.getBinding(2+i)->binding = 2+i;
+            vdesc.getBinding(2+i)->divisor = 1;
+            vdesc.getBinding(2+i)->buffer = &mxbuffer;
         }
-        //
+        vdesc.getBinding(0)->binding = 0;
+        vdesc.getBinding(0)->buffer = &psbuffer;
+        vdesc.getBinding(1)->binding = 1;
+        vdesc.getBinding(1)->buffer = &txbuffer;
 
-        CVertexFormat* stdFmt = &ctxt->vertexdata.descriptor.formats.d[0];
-        stdFmt->offset = 0;
-        stdFmt->size = 3;
-        stdFmt->type = CDataType::Scalar;
+        vdesc.applyAttributes(vao);
+        vdesc.bindAttributes(vao);
 
-        CVertexFormat* texFmt = &ctxt->vertexdata.descriptor.formats.d[2];
-        texFmt->offset = 0;
-        texFmt->size = 2;
-        texFmt->type = CDataType::Scalar;
-
-        CVertexFormat* matFmt = &ctxt->vertexdata.descriptor.formats.d[1];
-        matFmt->offset = 0;
-        matFmt->size = 4;
-        matFmt->type = CDataType::Scalar;
-
-        CVertexBufferBinding* posBnd = &ctxt->vertexdata.descriptor.bindings.d[0];
-        posBnd->binding = 0;
-        posBnd->buffer = &vbuffer;
-        posBnd->divisor = 0;
-        posBnd->offset = 0;
-        posBnd->stride = sizeof(CVec3);
-
-        CVertexBufferBinding* texBnd = &ctxt->vertexdata.descriptor.bindings.d[1];
-        texBnd->binding = 1;
-        texBnd->buffer = &tbuffer;
-        texBnd->divisor = 0;
-        texBnd->offset = 0;
-        texBnd->stride = sizeof(CVec2);
-
-        CVertexAttribute texAtt;
-        texAtt.attribIdx = 1;
-        texAtt.bnd = texBnd;
-        texAtt.fmt = texFmt;
-
-        CVertexAttribute posAtt;
-        posAtt.attribIdx = 0;
-        posAtt.bnd = posBnd;
-        posAtt.fmt = stdFmt;
-
-        CMultiDrawDescriptor desc;
-
-        desc.attributes.push_back(posAtt);
-        desc.attributes.push_back(texAtt);
-
-        //GL calls
-        coffee_mesh_define_matrix_attribs(&mbuffer,*matFmt,desc,5,2);
-        coffee_multidraw_load_vao(*multidraw,desc);
-        //
+        coffee_graphics_vao_attribute_index_buffer(vao,ixbuffer);
     }
 }
 
-void coffee_test_load_meshes(game_context* ctxt, CMultiDrawDataSet* multidraw)
+void coffee_test_load_meshes(game_context* ctxt)
 {
-    //Load mesh
+    std::vector<CAssimpMesh*>& meshes = ctxt->meshes;
+
+    std::vector<CGLDrawCall> drawcalls;
+
+    std::vector<CVec3> positions;
+    std::vector<CVec2> texcoords;
+    std::vector<uint32> indices;
+
+    for(size_t i=0;i<meshes.size();i++)
     {
-        CBuffer* vbuffer = &ctxt->renderdata.buffers.d[0];
-        CBuffer* tbuffer = &ctxt->renderdata.buffers.d[6];
-
-        //Temporary storage for data
-        std::vector<byte_t> *vertexdata = new std::vector<byte_t>();
-        std::vector<byte_t> *texcdata = new std::vector<byte_t>();
-
-        std::function<void(CAssimpMesh*)> lmesh = [=](CAssimpMesh* mesh){
-
-            CResource meshtest(cStringFormat(
-                                   "ubw/%s.mesh",
-                                   assimp_reflexive_string_get(mesh,mesh->name))
-                               .c_str());
-            CResourceTypes::CAssimp::coffee_assimp_dump_mesh(mesh,&meshtest);
-
-            szptr voffset = 0;
-            const assimp_reflexive* ref;
-            for(int i=0;i<mesh->numBuffers;i++){
-                ref = &mesh->buffers[i];
-                if(ref->type==CAssimpMesh::PositionType)
-                {
-                    coffee_mesh_fill_vertexdata(
-                                *vertexdata,
-                                CResourceTypes::CAssimp::
-                                    coffee_assimp_get_reflexive_ptr(mesh,ref),
-                            0,ref->size);
-                    voffset=ref->size;
-                }
-                if(ref->type==CAssimpMesh::TextCoordType)
-                    coffee_mesh_fill_vertexdata(
-                                *texcdata,
-                                CResourceTypes::CAssimp::
-                                    coffee_assimp_get_reflexive_ptr(mesh,ref),
-                                0,ref->size);
-            }
-            //Store indices and create the drawcall
-            coffee_multidraw_create_call(*multidraw,mesh);
-            multidraw->drawcalls->vertexoffset = voffset;
-        };
-
-        szptr i = 0;
-        for(CAssimpMesh* mesh : ctxt->meshes)
+        CAssimpMesh* mesh = meshes[i];
+        CGLDrawCall call;
+        call.baseInstance = drawcalls.size();
+        call.instanceCount = 10;
+        call.baseVertex = positions.size();
+        call.firstIndex = indices.size();
+        for(size_t j=0;j<mesh->numBuffers;j++)
         {
-            lmesh(mesh);
-            ctxt->mesh_indices.push_back(i);
-            i++;
+            byte_t* data = coffee_assimp_get_reflexive_ptr(mesh,&mesh->buffers[j]);
+            if(mesh->buffers[j].type == CAssimpMesh::PositionType)
+            {
+                positions.insert(positions.end(),data,&data[mesh->buffers[j].size]);
+            }else if(mesh->buffers[j].type == CAssimpMesh::TextCoordType){
+                texcoords.insert(texcoords.end(),data,&data[mesh->buffers[j].size]);
+            }else if(mesh->buffers[j].type == CAssimpMesh::IndexType){
+                indices.insert(indices.end(),data,&data[mesh->buffers[j].size]);
+            }
         }
-
-        //GL calls
-        coffee_multidraw_load_buffer(vbuffer,*vertexdata,ctxt->funptrs.buffers);
-        coffee_multidraw_load_buffer(tbuffer,*texcdata,ctxt->funptrs.buffers);
-
-        if(ctxt->features->ext_multi_draw_indirect)
-            coffee_multidraw_load_drawcalls(*multidraw,ctxt->funptrs.buffers);
-        coffee_multidraw_load_indices(*multidraw,ctxt->funptrs.buffers);
-        //
-        vertexdata->resize(0);
-        texcdata->resize(0);
-        delete vertexdata;
-        delete texcdata;
+        call.count = indices.size()-call.firstIndex;
     }
+
+    CBuffer& drawbuffer = ctxt->renderdata.buffers.d[5];
+    CBuffer& posbuffer = ctxt->renderdata.buffers.d[0];
+    CBuffer& texbuffer = ctxt->renderdata.buffers.d[1];
+    CBuffer& idxbuffer = ctxt->renderdata.buffers.d[3];
+
+    coffee_graphics_buffer_store(drawbuffer,drawcalls.data(),
+                                 drawcalls.size()*sizeof(CGLDrawCall),
+                                 CBufferUsage::StaticDraw);
+
+    coffee_graphics_buffer_store(posbuffer,positions.data(),positions.size()*sizeof(CVec3),
+                                 CBufferUsage::StaticDraw);
+    coffee_graphics_buffer_store(texbuffer,texcoords.data(),texcoords.size()*sizeof(CVec2),
+                                 CBufferUsage::StaticDraw);
+    coffee_graphics_buffer_store(idxbuffer,indices.data(),indices.size()*sizeof(uint32),
+                                 CBufferUsage::StaticDraw);
 }
 
 void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
 {
-    coffee_mem_expand_array(&ctxt->transforms.cameras,1);
-    coffee_mem_expand_array(&ctxt->renderdata.subbuffers,2);
+    szptr c_idx = ctxt->transforms.cameras.size;
+    szptr t_idx = ctxt->transforms.transforms.size;
+    szptr bn_idx = ctxt->renderdata.bufferbindings.size;
+
     coffee_mem_expand_array(&ctxt->transforms.transforms,1);
-    coffee_mem_expand_array(&ctxt->renderdata.storageblocks,1);
+    coffee_mem_expand_array(&ctxt->transforms.cameras,1);
     coffee_mem_expand_array(&ctxt->renderdata.bufferbindings,1);
 
-    CGCamera& cam = ctxt->transforms.cameras.d[0];
-    cam.rotation.w() = 1;
-    cam.fieldOfView = 90.f;
-    cam.aspect = 1.6f;
-    cam.zVals.far = 100.f;
-    cam.zVals.near = 1.f;
-    coffee_graphics_gen_perspective(cam);
+    CBuffer& matrix_buffer = ctxt->renderdata.buffers.d[2];
+    CTransform& my_transform = ctxt->transforms.transforms.d[t_idx];
 
-    CBuffer& ubuffer = ctxt->renderdata.buffers.d[4];
-    ubuffer.type = CBufferType::Uniform;
-    ubuffer.flags = CBufferStorage::Coherent|CBufferStorage::Persistent|CBufferStorage::WriteBit;
+    CTransform transform_dummy;
+    std::vector<CMat4> matrix_data;
 
-
-    CSubBuffer& camBuffer = ctxt->renderdata.subbuffers.d[0];
-    camBuffer.parent = &ubuffer;
-    camBuffer.offset = 0;
-    camBuffer.size = sizeof(CMat4)*2;
-    camBuffer.type = CBufferType::Uniform;
-
-    CSubBuffer& matBuffer = ctxt->renderdata.subbuffers.d[1];
-    matBuffer.type = CBufferType::ShaderStorage;
-    matBuffer.parent = &ubuffer;
-    matBuffer.size = sizeof(CGuint)*numGears+sizeof(CVec3)*numGears;
-    matBuffer.offset = camBuffer.size;
-
-    //GL calls
-    coffee_graphics_alloc(ubuffer);
-    ctxt->funptrs.buffers.store_immutable(
-                ubuffer,nullptr,
-                matBuffer.size+camBuffer.size,ubuffer.flags);
-    ctxt->funptrs.buffers.map(ubuffer,CBufferAccess::Coherent|CBufferAccess::Persistent|CBufferAccess::WriteBit);
-    //
-
+    for(size_t i=0;i<numGears;i++)
     {
-        CUniformBlock &ublock = ctxt->renderdata.storageblocks.d[0];
-        CUniformBlockBinding& bind = ctxt->renderdata.bufferbindings.d[0];
-
-        bind.desc = &ublock;
-        bind.resource = &camBuffer;
-        bind.index = 0;
-
-        ublock.object_name = "MatrixBlock";
-
-        //GL calls
-        coffee_graphics_uniform_block_get(ctxt->shaders.programs.d[0],ublock);
-        coffee_graphics_uniform_block_set(ctxt->shaders.programs.d[0],bind);
-        //
+        transform_dummy.position = CVec3(0,0,i/2);
+        transform_dummy.scale = CVec3(1);
+        matrix_data.push_back(coffee_graphics_gen_transform(transform_dummy));
     }
+    transform_dummy.position = CVec3(0,0,-3);
+    my_transform = transform_dummy;
 
+    coffee_graphics_buffer_store_immutable(matrix_buffer,matrix_data.data(),
+                                           matrix_data.size()*sizeof(CMat4),
+                                           CBufferConstants::PersistentStorageFlags());
+    coffee_graphics_buffer_map(matrix_buffer,
+                               CBufferConstants::PersistentAccessFlags());
 
-    {
-        CTransform* mod = &ctxt->transforms.transforms.d[0];
-        mod->position.z() = -1.f;
-        mod->scale.x() = mod->scale.y() = mod->scale.z() = 1.f;
-        mod->rotation.w() = 2.f;
+    CBuffer& camera_buffer = ctxt->renderdata.buffers.d[4];
+    CGCamera& my_camera = ctxt->transforms.cameras.d[c_idx];
+    CUniformBlockBinding& blbind = ctxt->renderdata.bufferbindings.d[bn_idx];
 
-        mod->position.x() = 5.f;
+    camera_buffer.type = CBufferType::Uniform;
 
-        CMat4 tmat;
+    blbind.desc = new CUniformBlock;
+    blbind.desc->object_name = "MatrixBlock";
+    blbind.resource = new CSubBuffer;
+    blbind.resource->parent = &camera_buffer;
+    blbind.resource->type = CBufferType::Uniform;
+    blbind.resource->size = sizeof(CMat4);
 
-        std::vector<CMat4> transform;
-        transform.reserve(numGears);
-        for(szptr i=1;i<numGears-2;i++){
-            mod->position.z() = (float)(-i);
-            mod->position.y() = (float)((i%11)/2);
-            tmat = coffee_graphics_gen_transform(*mod);
-            transform.push_back(tmat);
-        }
+    coffee_graphics_uniform_block_get(ctxt->shaders.pipelines.d[0].vert,*blbind.desc);
 
-        mod->position.x() = mod->position.y() = 0.f;
-        mod->position.z() = -1.f;
+    my_camera.aspect = 1.6f;
+    my_camera.fieldOfView = 90.f;
+    my_camera.position = CVec3(0);
+    my_camera.rotation = CQuat();
+    my_camera.zVals.far = 100.f;
+    my_camera.zVals.near = 1.f;
 
-        tmat = coffee_graphics_gen_transform(*mod);
-        CBuffer* mbuffer = &ctxt->renderdata.buffers.d[2];
+    CMat4 cam_matrix = coffee_graphics_gen_perspective(my_camera)
+            * coffee_graphics_gen_transform(my_camera);
 
-        transform.push_back(tmat);
-        transform.push_back(tmat);
+    coffee_graphics_buffer_store_immutable(camera_buffer,&cam_matrix,sizeof(CMat4),
+                                           CBufferConstants::PersistentStorageFlags());
+    coffee_graphics_buffer_map(camera_buffer,CBufferConstants::PersistentAccessFlags());
 
-        c_memcpy(mbuffer->data,
-               transform.data(),
-               transform.size()*sizeof(transform.data()[0]));
-        transform.resize(0);
-    }
+    blbind.index = 4;
+
+    coffee_graphics_buffer_bind_range(camera_buffer,CBufferType::Uniform,0,sizeof(CMat4),
+                                      blbind.index);
+
+    coffee_graphics_uniform_block_set(ctxt->shaders.pipelines.d[0].vert,blbind);
 }
 
 bool coffee_test_load(game_context *ctxt)
 {
-    //Create multidraw object
-    coffee_mem_expand_array<CMultiDrawDataSet>(&ctxt->renderdata.datasets,1);
-    CMultiDrawDataSet* multidraw = &ctxt->renderdata.datasets.d[0];
-    *multidraw = coffee_multidraw_create();
-
     //Load basic shader
     {
         game_shader_program_desc d;
@@ -504,73 +313,63 @@ bool coffee_test_load(game_context *ctxt)
         coffee_shader_program_load(d,ctxt);
     }
 
+    coffee_graphics_bind(ctxt->shaders.pipelines.d[0].data_ref());
+
     //Specify VAO for vertex data, we will only use one for now
 
     szptr numGears = 100;
 
-    coffee_test_def_vao(ctxt,multidraw,numGears);
+    coffee_test_def_vao(ctxt);
 
-    coffee_test_load_meshes(ctxt,multidraw);
+    coffee_test_load_meshes(ctxt);
 
-    //Define instance matrices and camera matrix
+    coffee_test_def_transforms(ctxt,numGears);
+
     {
-        coffee_test_def_transforms(ctxt,numGears);
+        CResources::CResource mapfile("cblam_data/bloodgulch.map");
+        CResources::CResource bitmfile("cblam_data/bitmaps.map");
+        coffee_file_memmap(bitmfile);
+        coffee_file_memmap(mapfile);
+        const CBlam::file_header_t* map =
+                CBlam::blam_file_header_get(mapfile.data,CBlam::version_t::pc);
+        CBlam::tag_index_t tags = CBlam::blam_tag_index_get(map);
 
+        const CBlam::index_item_t* base_idx = CBlam::blam_tag_index_get_items(map);
+        const CBlam::index_item_t* idx = nullptr;
+        for(int32 i=0;i<tags.tagCount;i++)
         {
-            CResources::CResource mapfile("cblam_data/bloodgulch.map");
-            CResources::CResource bitmfile("cblam_data/bitmaps.map");
-            coffee_file_memmap(bitmfile);
-            coffee_file_memmap(mapfile);
-            const CBlam::blam_file_header* map =
-                    CBlam::blam_file_header_get(mapfile.data,CBlam::blam_version::pc);
-            CBlam::blam_tag_index tags = CBlam::blam_tag_index_get(map);
-
-            const CBlam::blam_index_item* base_idx = CBlam::blam_tag_index_get_items(map);
-            const CBlam::blam_index_item* idx = nullptr;
-            for(int32 i=0;i<tags.tagCount;i++)
+            idx = &base_idx[i];
+            if(c_memcmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
             {
-                idx = &base_idx[i];
-                if(c_memcmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
-                {
-                    int32 num = 0;
-                    const CBlam::blam_bitm_image* img =
-                            CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
-                    cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
-                    CBlam::blam_bitm_texture_def tex =
-                            CBlam::coffee_bitm_get_texture(img,bitmfile.data);
+                int32 num = 0;
+                const CBlam::bitm_image_t* img =
+                        CBlam::coffee_bitm_get(idx,map,tags.index_magic,&num);
+//                cstring t = CBlam::blam_index_item_get_string(idx,map,&tags);
+                CBlam::bitm_texture_t tex =
+                        CBlam::coffee_bitm_get_texture(img,bitmfile.data);
 
-                    if(tex.type==CBlam::blam_bitm_type_2D)
-                    {
-                        coffee_texture_2d_load(tex,ctxt);
-                        break;
-                    }
-                    else
-                        cWarning("Unsupported format: 3D and cube!");
-                    cDebug("Image: %s,d=%i,f=%i",t,img->depth,img->format);
-                }
+                coffee_texture_2d_load(tex,ctxt);
+//                cDebug("Image: {0},d={1},f={2}",t,img->depth,(uint16)img->format);
             }
-            coffee_file_memunmap(bitmfile);
-            coffee_file_memunmap(mapfile);
         }
-
+        coffee_file_memunmap(bitmfile);
+        coffee_file_memunmap(mapfile);
     }
+
     return true;
 }
 
 void coffee_prepare_test(game_context *ctxt)
 {
-    coffee_multidraw_bind_states(ctxt->renderdata.datasets.d[0]);
-    coffee_graphics_bind(ctxt->renderdata.buffers.d[2]);
-    coffee_graphics_buffer_bind_range(ctxt->renderdata.bufferbindings.d[0]);
-    coffee_graphics_bind(ctxt->shaders.pipelines.d[0]);
-    coffee_graphics_bind(*ctxt->renderdata.datasets.d[0].vao);
-    coffee_graphics_bind(*ctxt->renderdata.datasets.d[0].drawcalls->drawbuffer);
+    //Bind drawcall buffer
+    CBuffer& drawcalls = ctxt->renderdata.buffers.d[5];
+
+    drawcalls.type = CBufferType::DrawIndirect;
+    coffee_graphics_bind(drawcalls);
 
     CUniform texuni;
     texuni.object_name = "diffuseSampler";
-    coffee_graphics_uniform_get(
-                ctxt->shaders.programs.d[0],
-            texuni);
+    coffee_graphics_uniform_get(ctxt->shaders.pipelines.d[0].frag,texuni);
 
     szptr texIndex = rand()%ctxt->texstorage.size;
 
@@ -579,12 +378,12 @@ void coffee_prepare_test(game_context *ctxt)
     if(ctxt->features->ext_bindless_texture)
     {
         coffee_graphics_uniform_set_texhandle(
-                    ctxt->shaders.programs.d[0],
+                    ctxt->shaders.pipelines.d[0].frag,
                 texuni,
                 ctxt->texsamplerstorage.d[texIndex].bhandle);
     }else{
         coffee_graphics_uniform_set_texhandle_safe(
-                    ctxt->shaders.programs.d[0],
+                    ctxt->shaders.pipelines.d[0].frag,
                 texuni,
                 ctxt->texsamplerstorage.d[texIndex].unit);
     }
@@ -592,15 +391,15 @@ void coffee_prepare_test(game_context *ctxt)
 
 static CGSync* sync_object = nullptr;
 
-void coffee_render_test(game_context *ctxt, double delta)
+void coffee_render_test(game_context *ctxt, double)
 {
-    CGCamera* camera = &ctxt->transforms.cameras.d[0];
+    CGCamera& camera = ctxt->transforms.cameras.d[0];
+    CTransform& transform = ctxt->transforms.transforms.d[0];
+
     //Generate our matrices
-    CMat4 mtransform =
-            coffee_graphics_gen_transform(ctxt->transforms.transforms.d[0]);
-    CMat4 mcamera =
-            coffee_graphics_gen_perspective(*camera)
-            * coffee_graphics_gen_transform(*camera);
+    CMat4 mtransform = coffee_graphics_gen_transform(transform);
+    CMat4 mcamera = coffee_graphics_gen_perspective(camera)
+            * coffee_graphics_gen_transform(camera);
 
     //Copy memory into GL
     c_memcpy(ctxt->renderdata.buffers.d[4].data,
@@ -616,7 +415,8 @@ void coffee_render_test(game_context *ctxt, double delta)
         coffee_graphics_free(sync_object);
     }
     //Send it off
-    ctxt->funptrs.renderfun(ctxt->renderdata.datasets.d[0]);
+
+    //
     sync_object = coffee_graphics_fence_create();
 }
 
@@ -638,16 +438,6 @@ void coffee_unload_test(game_context *ctxt)
     for(i=0;i<ctxt->vertexdata.data.size;i++)
         CResourceTypes::CAssimp::coffee_assimp_free(ctxt->vertexdata.data.d[i]);
 
-    for(i=0;i<ctxt->shaders.pipelines.size;i++)
-        coffee_graphics_free(ctxt->shaders.pipelines.d[i]);
-    for(i=0;i<ctxt->shaders.shaders.size;i++)
-        coffee_graphics_free(ctxt->shaders.shaders.d[i]);
-    for(i=0;i<ctxt->shaders.programs.size;i++)
-        coffee_graphics_free(ctxt->shaders.programs.d[i]);
-
-    for(i=0;i<ctxt->renderdata.datasets.size;i++)
-        coffee_multidraw_free(&ctxt->renderdata.datasets.d[i]);
-
     for(i=0;i<ctxt->texstorage.size;i++)
         coffee_graphics_free(ctxt->texstorage.d[i]);
 
@@ -658,7 +448,6 @@ void coffee_unload_test(game_context *ctxt)
     free(ctxt->vertexdata.descriptor.formats.d);
 
     free(ctxt->renderdata.buffers.d);
-    free(ctxt->renderdata.datasets.d);
     free(ctxt->renderdata.subbuffers.d);
     free(ctxt->renderdata.bufferbindings.d);
     free(ctxt->renderdata.storageblocks.d);
@@ -666,8 +455,6 @@ void coffee_unload_test(game_context *ctxt)
     free(ctxt->resources.d);
 
     free(ctxt->shaders.pipelines.d);
-    free(ctxt->shaders.programs.d);
-    free(ctxt->shaders.shaders.d);
 
     free(ctxt->transforms.cameras.d);
     free(ctxt->transforms.transforms.d);

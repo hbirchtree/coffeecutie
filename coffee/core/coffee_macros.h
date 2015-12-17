@@ -58,7 +58,18 @@ inline void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
  */
 inline void C_STUBBED(cstring name)
 {
-    fprintf(stderr,"%sCOFFEE:CORE:STUB%s: %s\n",print_color_fatal,print_color_reset,name);
+    fprintf(stderr,"%sCOFFEE:CORE:STUB%s: %s\n",
+            print_color_fatal,
+            print_color_reset,
+            name);
+}
+
+inline void C_FIXME(cstring identifier)
+{
+    fprintf(stderr,"%sCOFFEE:CORE:FIXME%s: %s\n",
+            print_color_fatal,
+            print_color_reset,
+            identifier);
 }
 
 /*!
@@ -67,7 +78,10 @@ inline void C_STUBBED(cstring name)
  */
 inline void C_BADERROR(cstring name)
 {
-    fprintf(stderr,"%sCOFFEE:CORE:FTAL%s: %s\n",print_color_fatal,print_color_reset,name);
+    fprintf(stderr,"%sCOFFEE:CORE:FTAL%s: %s\n",
+            print_color_fatal,
+            print_color_reset,
+            name);
 }
 }
 

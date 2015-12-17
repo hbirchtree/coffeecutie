@@ -189,7 +189,7 @@ CTextureData *coffee_graphics_tex_create_texdata(
 
 void coffee_graphics_tex_free_texdata(CTextureData *texd)
 {
-    free(texd->data);
+    free((void*)(*(&texd->data)));
     delete texd;
 }
 

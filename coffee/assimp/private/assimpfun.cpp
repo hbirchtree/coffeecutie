@@ -1,7 +1,5 @@
 #include "assimpfun.h"
 
-//#define ASSIMP_PARSE_MULTICORE
-
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/base/cthreading.h>
 
@@ -146,8 +144,6 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
 
     coffee_assimp_mesh_get_offsets(meshdata,bufferArray,offset);
 
-    std::vector<std::future<void>> futures;
-
     szptr numUVs = 0,numCols = 0;
 
     assimp_reflexive* buf;
@@ -157,105 +153,51 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
         switch(buf->type)
         {
         case CAssimpMesh::PositionType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mVertices,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             break;
         }
         case CAssimpMesh::NormalType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mNormals,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             break;
         }
         case CAssimpMesh::TangentType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mTangents,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             break;
         }
         case CAssimpMesh::BitanType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mBitangents,meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             break;
         }
         case CAssimpMesh::IndexType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiFace>(
                             meshdata->mFaces,meshdata->mNumFaces,
                             &buffer[buf->offset],_assimp_face_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             break;
         }
         case CAssimpMesh::VColorType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiColor4D>(
                             meshdata->mColors[numCols],meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_col_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             numCols++;
             break;
         }
         case CAssimpMesh::TextCoordType:{
-#ifdef ASSIMP_PARSE_MULTICORE
-            futures.push_back(CThreading::runAsync<void>(
-                                  [=](){
-#endif
                 coffee_assimp_mesh_attribute_process<aiVector3D>(
                             meshdata->mTextureCoords[numUVs],meshdata->mNumVertices,
                             &buffer[buf->offset],_assimp_vec_transform);
-#ifdef ASSIMP_PARSE_MULTICORE
-            }));
-#endif
             numUVs++;
             break;
         }
         }
     }
-
-#ifdef ASSIMP_PARSE_MULTICORE
-    for(std::future<void>& f : futures)
-        f.get();
-#endif
 
     return mesh;
 }

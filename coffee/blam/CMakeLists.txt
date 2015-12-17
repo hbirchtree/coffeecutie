@@ -1,18 +1,20 @@
 set ( CBlamVolta_SRCS
-        volta/cblam_bitm.cpp
-        volta/cblam_map.cpp
-        volta/cblam_mod2.cpp
-        volta/cblam_scenario_loader.cpp
+        private/volta/cblam_bitm.cpp
+        private/volta/cblam_map.cpp
+        private/volta/cblam_mod2.cpp
+        private/volta/cblam_scenario_loader.cpp
         )
 set ( CBlamDimeter_SRCS
-        dimeter/cblam_map.cpp
+        private/dimeter/cblam_map.cpp
         )
 set ( CBlamElegy_SRCS
-        elegy/cblam_map.cpp
+        private/elegy/cblam_map.cpp
         )
 
 include_directories(
+        ${COFFEE_BLAM_INCLUDE_DIR}
         ${COFFEE_IMAGE_INCLUDE_DIR}
+        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
         ${COFFEE_CORE_INCLUDE_DIR}
     )
 
@@ -25,6 +27,7 @@ add_library ( CoffeeBlam ${COFFEE_LINK_OPT}
 target_link_libraries( CoffeeBlam
         CoffeeCore
         CoffeeImage
+        CoffeeOpenGL
     )
 
 set_property(TARGET CoffeeBlam PROPERTY POSITION_INDEPENDENT_CODE ON)

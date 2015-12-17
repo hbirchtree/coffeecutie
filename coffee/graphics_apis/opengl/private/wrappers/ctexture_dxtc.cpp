@@ -6,60 +6,39 @@
 namespace Coffee{
 namespace CGraphicsWrappers{
 
-CTexture *coffee_graphics_tex_dxtc_load(const CBlamDXTCHeader &rsc, c_ptr constructLocation)
+void coffee_graphics_tex_dxtc_load(CTexture& texture, const CGint &blocksize, c_cptr data)
 {
-    CTexture* tex;
-    if(!constructLocation)
-        tex = new CTexture;
-    else
-        tex = new (constructLocation) CTexture;
-    coffee_graphics_alloc(*tex);
-
-    tex->type = CTexType::Tex2D;
-    tex->levels = rsc.mipmaps;
-
-    CTextureSize res = rsc.resolution;
-    szptr i;
+    CTextureSize res = texture.size;
+    int32 i;
     szptr size;
     szptr offset = 0;
-    coffee_graphics_bind(*tex);
-    for(i=0; i < rsc.mipmaps && (res.w || res.h);i++)
+    coffee_graphics_bind(texture);
+    for(i=0; i < texture.levels && (res.w || res.h);i++)
     {
         if(res.w == 0)
             res.w = 1;
         if(res.h == 0)
             res.h = 1;
 
-        size = ((res.w+3)/4)*((res.h+3)/4)*rsc.blockSize;
+        size = ((res.w+3)/4)*((res.h+3)/4)*blocksize;
 
         glCompressedTexImage2D(
-                    gl_get(tex->type),
+                    gl_get(texture.type),
                     i,
-                    gl_get(rsc.internalFormat),
+                    gl_get(texture.format),
                     res.w,res.h,0,size,
-                    ((ubyte_t*)rsc.data)+offset);
+                    ((ubyte_t*)data)+offset);
 
         offset+=size;
         res.w >>= 1;
         res.h >>= 1;
     }
-    coffee_graphics_unbind(*tex);
-
-    return tex;
+    coffee_graphics_unbind(texture);
 }
 
 void coffee_graphics_tex_compressed_store(const CTexture &tex, CResources::CResource &res)
 {
     glGetCompressedTextureImage(tex.handle,0,res.size,res.data);
-}
-
-CBlamDXTCHeader::CBlamDXTCHeader():
-    data(nullptr),
-    mipmaps(0),
-    blockSize(0),
-    internalFormat(CTexIntFormat::DXT1)
-{
-
 }
 
 void coffee_graphics_tex_compressed_load(

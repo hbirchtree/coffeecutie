@@ -141,8 +141,8 @@ struct CTextureSampler
  */
 struct CTextureData
 {
-    void* data; /*!< Pointer to data */
-    CTexFormat format; /*!< The format of the image data, often GL_RGBA8 */
+    const void* data;   /*!< Pointer to data */
+    CTexFormat format;  /*!< The format of the image data, often GL_RGBA8 */
     CDataType datatype; /*!< Which datatype, most likely unsigned byte */
     CTextureSize size;
 };

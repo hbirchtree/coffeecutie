@@ -66,7 +66,7 @@ public:
     void prefillBuffer(const CByteData& data)
     {
         c_memcpy(m_buffers.next().data,data.data,
-                 CMath::min((CGsize)data.size,m_buffers.next().size));
+                 CMath::min<CGsize>(data.size,m_buffers.next().size));
     }
 
     void uploadData(const CTexFormat& fmt, const CGint& level)

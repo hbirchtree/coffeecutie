@@ -30,8 +30,8 @@ template<typename T>
  */
 struct blam_reflex_group
 {
-    blam_reflexive<T> base;
-    blam_reflexive<T> ref;
+    reflexive_t<T> base;
+    reflexive_t<T> ref;
 };
 
 struct blam_scn_biped
@@ -181,9 +181,9 @@ struct blam_scn_player_starting_profile
     byte_t name[28];
     uint16 padding1;
     uint32 unk2_offset;
-    blam_tagref weapon1;
+    tagref_t weapon1;
     uint32 unk3;
-    blam_tagref weapon2;
+    tagref_t weapon2;
     uint32 unk4;
     uint32 unk5;
     uint32 padding2[5];
@@ -280,10 +280,10 @@ struct blam_scn_encounter
 {
     byte_t text[16];
     uint32 unk[28];
-    blam_reflexive<byte_t> squads;
-    blam_reflexive<byte_t> platoons;
-    blam_reflexive<byte_t> firingPositions;
-    blam_reflexive<byte_t> playerStartLocations;
+    reflexive_t<byte_t> squads;
+    reflexive_t<byte_t> platoons;
+    reflexive_t<byte_t> firingPositions;
+    reflexive_t<byte_t> playerStartLocations;
 };
 
 struct blam_scn_encounter_squad
@@ -305,7 +305,7 @@ struct blam_scn_encounter_squad
     int16 NormalDiffCount;
     int16 InsaneDiffCount;
     uint32  unk3[20];
-    blam_reflexive<byte_t> StartLocations;
+    reflexive_t<byte_t> StartLocations;
     uint32  unk4[3];
 };
 
@@ -322,9 +322,9 @@ struct blam_scn_encounter_info
     byte_t text[16];
     blam_scn_encounter_squad *pSquads;
     blam_scn_encounter_squad **ppSquadSpawns;
-    blam_reflexive<byte_t> Platoons;
-    blam_reflexive<byte_t> FiringPositions;
-    blam_reflexive<byte_t> PlayerStartLocations;
+    reflexive_t<byte_t> Platoons;
+    reflexive_t<byte_t> FiringPositions;
+    reflexive_t<byte_t> PlayerStartLocations;
 };
 
 struct blam_scn_decal
@@ -361,7 +361,7 @@ struct blam_scn_starting_equip
     uint32 unknown1; /*!< Sometimes 1? */
     uint32 index;
     ubyte_t padding2[51];
-    blam_tagref items[6];
+    tagref_t items[6];
     ubyte_t padding3[45];
 };
 
@@ -377,13 +377,13 @@ struct blam_scn_control
 
 struct blam_scn_light_fixture
 {
-    blam_rgba ambient;
+    bl_rgba_t ambient;
     ubyte_t unk1[4];
     CVec3 pos;
     ubyte_t unk2[12];
-    blam_rgba specular;
+    bl_rgba_t specular;
     int32 zero1;
-    blam_rgba color;
+    bl_rgba_t color;
     ubyte_t unk3[40];
 };
 
@@ -420,9 +420,9 @@ struct blam_scenario
     byte_t unk_str1[16];
     byte_t unk_str2[16];
     byte_t unk_str3[16];
-    blam_reflexive<blam_scn_skybox> skybox;
+    reflexive_t<blam_scn_skybox> skybox;
     uint32 zero1;
-    blam_reflexive<blam_tagref> child_scenarios;
+    reflexive_t<tagref_t> child_scenarios;
 
     uint32 reserved1[46];
 
@@ -434,61 +434,61 @@ struct blam_scenario
     uint32 ptr_to_index_end;
     uint32 reserved3[57];
 
-    blam_reflexive<blam_scn_object_name> object_names;
+    reflexive_t<blam_scn_object_name> object_names;
     blam_reflex_group<blam_scn_scenery_spawn> scenery;
     blam_reflex_group<blam_scn_biped> biped;
     blam_reflex_group<blam_scn_vehicle_spawn> vehicle;
     blam_reflex_group<blam_scn_equip> equip;
     blam_reflex_group<blam_scn_weapon_spawn> weap;
-    blam_reflexive<blam_scn_device_group> device_groups;
+    reflexive_t<blam_scn_device_group> device_groups;
     blam_reflex_group<blam_scn_machine> machine;
     blam_reflex_group<blam_scn_control> control;
     blam_reflex_group<blam_scn_light_fixture> light_fixture;
     blam_reflex_group<blam_scn_sound_scenery> snd_scenery;
 
-    blam_reflexive<blam_scn_chunk> unknown_4[7];
+    reflexive_t<blam_scn_chunk> unknown_4[7];
 
-    blam_reflexive<blam_scn_player_starting_profile> player_start_profile;
-    blam_reflexive<blam_scn_player_spawn> player_spawn;
-    blam_reflexive<blam_scn_trigger_volume> trigger_volume;
-    blam_reflexive<blam_scn_chunk> animation;
-    blam_reflexive<blam_scn_multiplayer_flag> multiplayer_flags;
-    blam_reflexive<blam_scn_multiplayer_equipment> multiplayer_equipment;
-    blam_reflexive<blam_scn_starting_equip> starting_equipment;
-    blam_reflexive<blam_scn_bsp_trigger> bsp_switch_trigger;
+    reflexive_t<blam_scn_player_starting_profile> player_start_profile;
+    reflexive_t<blam_scn_player_spawn> player_spawn;
+    reflexive_t<blam_scn_trigger_volume> trigger_volume;
+    reflexive_t<blam_scn_chunk> animation;
+    reflexive_t<blam_scn_multiplayer_flag> multiplayer_flags;
+    reflexive_t<blam_scn_multiplayer_equipment> multiplayer_equipment;
+    reflexive_t<blam_scn_starting_equip> starting_equipment;
+    reflexive_t<blam_scn_bsp_trigger> bsp_switch_trigger;
     blam_reflex_group<blam_scn_decal> decals;
-    blam_reflexive<blam_scn_chunk> detail_obj_collision_ref;
-    blam_reflexive<blam_scn_chunk> unknown_5[7];
-    blam_reflexive<blam_scn_actor_variant_ref> actor_variant_ref;
-    blam_reflexive<blam_scn_encounter> encounters;
+    reflexive_t<blam_scn_chunk> detail_obj_collision_ref;
+    reflexive_t<blam_scn_chunk> unknown_5[7];
+    reflexive_t<blam_scn_actor_variant_ref> actor_variant_ref;
+    reflexive_t<blam_scn_encounter> encounters;
 
-    blam_reflexive<blam_scn_chunk> command_lists;
-    blam_reflexive<blam_scn_chunk> unknown_6;
-    blam_reflexive<blam_scn_chunk> starting_locations;
-    blam_reflexive<blam_scn_chunk> platoons;
-    blam_reflexive<blam_scn_chunk> ai_conversations;
+    reflexive_t<blam_scn_chunk> command_lists;
+    reflexive_t<blam_scn_chunk> unknown_6;
+    reflexive_t<blam_scn_chunk> starting_locations;
+    reflexive_t<blam_scn_chunk> platoons;
+    reflexive_t<blam_scn_chunk> ai_conversations;
     uint32 script_syntax_data_size;
     uint32 unknown_7;
-    blam_reflexive<blam_scn_chunk> scripts;
-    blam_reflexive<blam_scn_chunk> commands;
-    blam_reflexive<blam_scn_chunk> points;
-    blam_reflexive<blam_scn_ai_animation_ref> ai_animation_refs;
-    blam_reflexive<blam_scn_globals> globals;
-    blam_reflexive<blam_scn_ai_recording_ref> ai_recording_refs;
-    blam_reflexive<blam_scn_chunk> unknown_8;
-    blam_reflexive<blam_scn_chunk> participants;
-    blam_reflexive<blam_scn_chunk> lines;
-    blam_reflexive<blam_scn_script_triggers> script_triggers;
-    blam_reflexive<blam_scn_chunk> cutscenes_verify;
-    blam_reflexive<blam_scn_chunk> cutscene_titles_verify;
-    blam_reflexive<blam_scn_chunk> source_files;
-    blam_reflexive<blam_scn_chunk> cutscene_flags;
-    blam_reflexive<blam_scn_chunk> cutscene_camera_poi;
-    blam_reflexive<blam_scn_chunk> cutscene_titles;
-    blam_reflexive<blam_scn_chunk> unknown_9[8];
+    reflexive_t<blam_scn_chunk> scripts;
+    reflexive_t<blam_scn_chunk> commands;
+    reflexive_t<blam_scn_chunk> points;
+    reflexive_t<blam_scn_ai_animation_ref> ai_animation_refs;
+    reflexive_t<blam_scn_globals> globals;
+    reflexive_t<blam_scn_ai_recording_ref> ai_recording_refs;
+    reflexive_t<blam_scn_chunk> unknown_8;
+    reflexive_t<blam_scn_chunk> participants;
+    reflexive_t<blam_scn_chunk> lines;
+    reflexive_t<blam_scn_script_triggers> script_triggers;
+    reflexive_t<blam_scn_chunk> cutscenes_verify;
+    reflexive_t<blam_scn_chunk> cutscene_titles_verify;
+    reflexive_t<blam_scn_chunk> source_files;
+    reflexive_t<blam_scn_chunk> cutscene_flags;
+    reflexive_t<blam_scn_chunk> cutscene_camera_poi;
+    reflexive_t<blam_scn_chunk> cutscene_titles;
+    reflexive_t<blam_scn_chunk> unknown_9[8];
     uint32 zero2;
     uint32 unknown_10;
-    blam_reflexive<blam_scn_bsp_header> struct_bsp;
+    reflexive_t<blam_scn_bsp_header> struct_bsp;
 };
 
 }

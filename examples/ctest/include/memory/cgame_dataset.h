@@ -27,9 +27,7 @@ struct game_vertexdata_chunk
 
 struct game_shader_manager
 {
-    chunk_mem<CShader>        shaders;
-    chunk_mem<CShaderProgram> programs;
-    chunk_mem<CPipeline>      pipelines;
+    chunk_mem<CSimplePipeline>      pipelines;
 };
 
 typedef chunk_mem<CTexture> game_texture_storage;
@@ -39,8 +37,6 @@ typedef chunk_mem<CResource> game_resource_chunk;
 
 struct game_memory_chunk
 {
-    chunk_mem<CMultiDrawDataSet> datasets;
-
     chunk_mem<CBuffer>    buffers;
     chunk_mem<CSubBuffer> subbuffers;
 

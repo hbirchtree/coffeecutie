@@ -52,20 +52,20 @@ struct blam_mod2_region_permutation
 struct blam_mod2_region
 {
     byte_t name[64];
-    blam_reflexive<blam_mod2_region_permutation> permutations;
+    reflexive_t<blam_mod2_region_permutation> permutations;
 };
 
 struct blam_mod2_geometry_header
 {
     uint32 unknown[9];
-    blam_reflexive<byte_t> mesh_headers;
+    reflexive_t<byte_t> mesh_headers;
 };
 
 struct blam_mod2_marker
 {
     byte_t name[32];
     uint32 unknown[5];
-    blam_reflexive<byte_t> chunk;
+    reflexive_t<byte_t> chunk;
 };
 
 /*!
@@ -96,11 +96,11 @@ struct blam_mod2_header
 
     uint32 unknown2[29];
 
-    blam_reflexive<blam_mod2_marker> markers;
-    blam_reflexive<byte_t> nodes;
-    blam_reflexive<blam_mod2_region> regions;
-    blam_reflexive<blam_mod2_geometry_header> geometries;
-    blam_reflexive<blam_shader_desc> shaders;
+    reflexive_t<blam_mod2_marker> markers;
+    reflexive_t<byte_t> nodes;
+    reflexive_t<blam_mod2_region> regions;
+    reflexive_t<blam_mod2_geometry_header> geometries;
+    reflexive_t<blam_shader_desc> shaders;
 };
 
 /*!
@@ -125,8 +125,8 @@ struct blam_mod2_bsp_header
  * \return A valid pointer to the referenced model, or NULL if it is invalid
  */
 extern const blam_mod2_header* blam_mod2_get_header(
-        const blam_index_item* item,
-        const blam_file_header* map,
+        const index_item_t* item,
+        const file_header_t* map,
         int32 magic);
 
 }

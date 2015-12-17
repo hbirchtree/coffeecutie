@@ -20,9 +20,9 @@ int coffee_main(int32 argv,byte_t** argc)
     CResource bitmfile("cblam_data/bitmaps.map");
     coffee_file_memmap(bitmfile);
     coffee_file_memmap(mapfile);
-    const blam_file_header* map =
-            blam_file_header_get(mapfile.data,blam_version::pc);
-    blam_tag_index tags = blam_tag_index_get(map);
+    const file_header_t* map =
+            blam_file_header_get(mapfile.data,version_t::pc);
+    tag_index_t tags = blam_tag_index_get(map);
 
     const blam_scenario* scn = blam_scn_get(map,&tags);
 
