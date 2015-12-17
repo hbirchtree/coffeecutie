@@ -342,10 +342,15 @@ int32 coffee_main(int32, byte_t**)
     CDWindowProperties props = coffee_get_default_visual();
     props.contextProperties.flags =
             props.contextProperties.flags|
+//            CGLContextProperties::GLFeatureLevelProfile|
             CGLContextProperties::GLDebug;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();
+
+    for(const std::pair<CString,CString>& ft : coffee_glbinding_get_graphics_feature_level())
+        cBasicPrint("{1} : {0}",ft.first.c_str(),ft.second.c_str());
+
     delete renderer;
 
     return 0;

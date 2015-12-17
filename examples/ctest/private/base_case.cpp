@@ -104,13 +104,20 @@ CTexture* coffee_texture_2d_load(const CBlam::bitm_texture_t& tex, game_context*
     coffee_graphics_alloc(t);
     coffee_graphics_alloc(ts);
 
+    t.type = tex.type;
+    t.levels = tex.mipmaps;
+    t.format = tex.cformat;
+    t.size = tex.resolution;
+
+    coffee_graphics_activate(t);
+
+    coffee_graphics_tex_sampler_parame(ts,CTexParam::MipmapMinFilter,
+                                       CTexParamOpt::LinearMipmapLinear);
+    coffee_graphics_tex_sampler_parame(ts,CTexParam::MipmapMagFilter,
+                                       CTexParamOpt::Linear);
+
     if(tex.format==CTexFormat::None && tex.dformat == CDataType::None)
     {
-        t.format = tex.cformat;
-        t.levels = tex.mipmaps;
-        t.size = tex.resolution;
-        t.type = tex.type;
-
         coffee_graphics_tex_dxtc_load(
                     t,
                     (tex.cformat == CTexIntFormat::DXT1) ? 8 : 16,
@@ -122,9 +129,6 @@ CTexture* coffee_texture_2d_load(const CBlam::bitm_texture_t& tex, game_context*
         tdata.format = tex.format;
         tdata.size = tex.resolution;
         tdata.data = tex.data;
-        t.size = tex.resolution;
-        t.levels = tex.mipmaps;
-        t.format = tex.cformat;
 
         ctxt->funptrs.textures.define(t);
         ctxt->funptrs.textures.store(t,tdata,0);

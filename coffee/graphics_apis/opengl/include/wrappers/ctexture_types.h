@@ -10,7 +10,6 @@ namespace CGraphicsWrappers{
 
 enum class CTexParam : uint16
 {
-    MipmapMaxLevel = 1,
     MipmapMinFilter = 2,
     MipmapMagFilter = 3,
 
@@ -109,7 +108,7 @@ struct CTextureSize : _cbasic_size_3d<int32>
             return 0;
         if(h == 0)
             return 1;
-        if(d == 0)
+        if(d<2)
             return 2;
         return 3;
     }

@@ -238,7 +238,6 @@ constexpr _cbasic_static_map<CTexParam,GLenum,17> ctexparm_map = {
     {CTexParam::MipmapMaxLod,GL_TEXTURE_MAX_LOD},
     {CTexParam::MipmapMinFilter,GL_TEXTURE_MIN_FILTER},
     {CTexParam::MipmapMagFilter,GL_TEXTURE_MAG_FILTER},
-    {CTexParam::MipmapMaxLevel,GL_TEXTURE_MAX_LEVEL},
 
     {CTexParam::WrapS,GL_TEXTURE_WRAP_S},
     {CTexParam::WrapT,GL_TEXTURE_WRAP_T},

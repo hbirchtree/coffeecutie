@@ -15,30 +15,17 @@ public:
     CDRenderer():
         CGLBindingRenderer(0)
     {
-        m_msg_filter = coffee_graphics_debug_filter_all;
+        m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
     }
 
     void run()
     {
-        //FFMPEG stuff here
-        coffee_ffmedia_init(nullptr,false);
+        //Create an FFMPEG player
+        CResource video_file("test.webm");
+        coffee_file_pull(video_file);
 
-        //Open video file
-        CResource testfile("test.webm");
-        coffee_file_pull(testfile);
-        //Create a video player for the data
-        CFFVideoPlayer* video = coffee_ffmedia_create_player(testfile);
-
-        if(!video)
-            return;
-
-        //Define video format
-        CFFVideoDescriptor v_fmt;
-        v_fmt.video.size.w = 1280;
-        v_fmt.video.size.h = 720;
-        //Create a decoding context
-        CFFDecodeContext* dCtxt = coffee_ffmedia_create_decodecontext(video,v_fmt);
-        //
+        CFFPlayer player(video_file);
+        player.createDecoder();
 
         //OpenGL stuff
 
@@ -144,28 +131,29 @@ public:
         coffee_graphics_uniform_get(pipeline.vert,matrixuni);
 
         //Create a video target
+        player.output().video.size.w = 1280;
+        player.output().video.size.h = 720;
+
         CByteData initTexture;
-        initTexture.size = coffee_ffmedia_video_framesize(CSize(v_fmt.video.size.w,
-                                                                v_fmt.video.size.h));
+        initTexture.size = coffee_ffmedia_video_framesize(CSize(player.output().video.size.w,
+                                                                player.output().video.size.h));
         initTexture.data = (byte_t*)c_alloc(initTexture.size);
 
-        CRGBA* pixels = (CRGBA*)initTexture.data;
+        player.videoTarget().v.location = initTexture.data;
+        player.videoTarget().v.max_size = initTexture.size;
 
-        C_UNUSED(pixels);
+        player.createDecoder();
 
-        CFFVideoTarget trg = {};
-        trg.v.location = initTexture.data;
-
-        bool status = coffee_ffmedia_decode_frame(video,dCtxt,&trg);
-
-        C_UNUSED(status);
+        CASSERT(player.startDecoder());
 
         //Define output texture
         CBufferedTexture<2> texture;
-        texture.createTexture(v_fmt.video.size,CTexIntFormat::RGBA8,
+        texture.createTexture(player.output().video.size,CTexIntFormat::RGBA8,
                               CTexType::Tex2D,1,initTexture,CTexFormat::RGBA);
 
         c_free(initTexture.data);
+
+        texture.sampler().unit = 0;
 
         coffee_graphics_tex_load_safe(texture.sampler(),texture.texture());
 
@@ -208,8 +196,16 @@ public:
         drawcall.count = sizeof(indexdata)/sizeof(indexdata[0]);
         drawcall.instanceCount = 1;
 
+        //Create a dummy buffer for audio
+        CByteData audiobuf;
+        audiobuf.size = coffee_ffmedia_audio_samplesize(player.player())*48000*4;
+        audiobuf.data = (byte_t*)c_alloc(audiobuf.size);
+
+        player.videoTarget().a.location = audiobuf.data;
+        player.videoTarget().a.max_size = audiobuf.size;
+
         double timeout = this->contextTime();
-        int counter;
+        int counter = 0;
 
         this->showWindow();
         while(!this->closeFlag())
@@ -218,20 +214,22 @@ public:
 
 
             //FFMPEG
-            trg.v.location = texture.buffers().current().data;
-            trg.v.updated = false;
+            if(player.isDisplayTime())
+            {
+                player.videoTarget().v.location = texture.buffers().current().data;
 
-            while(!trg.v.updated&&coffee_ffmedia_decode_frame(video,dCtxt,&trg));
+                player.awaitFrames();
 
-            texture.uploadData(CTexFormat::RGBA,0);
-
-            while(!trg.v.updated&&coffee_ffmedia_decode_frame(video,dCtxt,&trg));
-
-            texture.uploadData(CTexFormat::RGBA,0);
+                if(player.checkTimer())
+                    texture.uploadData(CTexFormat::RGBA,0);
+            }
             //
 
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,drawcall);
-            texture.advance();
+            if(player.checkTimerLast())
+            {
+                texture.advance();
+            }
 
             counter++;
             if((this->contextTime()-timeout)>=1.0)
@@ -243,12 +241,13 @@ public:
 
             this->swapBuffers();
             this->pollEvents();
+
+            if(player.finished())
+                this->closeWindow();
         }
 
         //Free all the FFMPEG data
-        coffee_ffmedia_free_decodecontext(dCtxt);
-        coffee_ffmedia_free_player(video);
-        coffee_file_free(testfile);
+        coffee_file_free(video_file);
 
         for(const std::pair<CString,CString>& ft : CDisplay::coffee_glbinding_get_graphics_feature_level())
         {
@@ -279,7 +278,7 @@ int32 coffee_main(int32, byte_t**)
     props.contextProperties.flags = props.contextProperties.flags|
             CDisplay::CGLContextProperties::GLDebug|
 //            CDisplay::CGLContextProperties::GLFeatureLevelProfile|
-            CDisplay::CGLContextProperties::GLVSync|
+//            CDisplay::CGLContextProperties::GLVSync|
             CDisplay::CGLContextProperties::GLAutoResize;
     props.flags = CDisplay::CDWindowProperties::Resizable;
 

@@ -21,7 +21,6 @@ const bitm_image_t *coffee_bitm_get(
         const index_item_t *item,
         const file_header_t *map,
         int32 magic,
-
         int32* numImages)
 {
     bitm_header_t hdr = _bitm_get_header(map,item->offset-magic);

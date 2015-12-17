@@ -13,6 +13,8 @@ extern "C"
 namespace Coffee{
 namespace CFFMedia{
 
+static thread_local bool cffmedia_context_created = false;
+
 constexpr AVPixelFormat default_pixfmt = AV_PIX_FMT_RGBA;
 
 struct CFFStream
@@ -32,7 +34,7 @@ struct CFFVideoPlayer
 
     CFFStream* audio;
     CFFStream* video;
-
+    CFFStream* subtitles;
 };
 
 struct CFFDecodeContext
@@ -49,8 +51,13 @@ struct CFFDecodeContext
         AVFrame* frame;
         AVFrame* tFrame;
     } a;
+    struct{
+        AVSubtitle* subtitle;
+    } s;
 
     AVPacket packet;
+
+    bool eos; /*!< Flag for end of stream*/
 };
 
 struct CFFEncodeContext
@@ -65,6 +72,9 @@ struct CFFEncodeContext
 
 void coffee_ffmedia_init(CFFMessageCallback callback, bool silent)
 {
+    if(cffmedia_context_created)
+        return;
+
     if(callback)
         av_log_set_callback(callback);
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -79,6 +89,8 @@ void coffee_ffmedia_init(CFFMessageCallback callback, bool silent)
     avcodec_register_all();
     avdevice_register_all();
     av_register_all();
+
+    cffmedia_context_created = true;
 }
 
 CFFStream* ff_open_stream(AVFormatContext* fCtxt, AVMediaType type)
@@ -224,7 +236,7 @@ void coffee_ffmedia_free_player(CFFVideoPlayer *vplayer)
     delete vplayer;
 }
 
-size_t coffee_ffmedia_video_framesize(CFFVideoPlayer *video)
+size_t coffee_ffmedia_video_framesize(const CFFVideoPlayer *video)
 {
     return av_image_get_buffer_size(default_pixfmt,
                                     video->video->context->width,
@@ -239,7 +251,7 @@ size_t coffee_ffmedia_video_framesize(const CSize &video)
                                     1);
 }
 
-size_t coffee_ffmedia_audio_samplesize(CFFVideoPlayer *video)
+size_t coffee_ffmedia_audio_samplesize(const CFFVideoPlayer *video)
 {
     return av_samples_get_buffer_size(
                 nullptr,
@@ -294,12 +306,21 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                                  CFFDecodeContext* dCtxt,
                                  CFFVideoTarget* dTrgt)
 {
-    if(av_read_frame(video->fmtContext,&dCtxt->packet)<0)
+    //If we have come to the end of the stream, just stop.
+    if(dCtxt->eos)
         return false;
+    //We query FFMPEG for a new frame in the form of a packet
+    if(av_read_frame(video->fmtContext,&dCtxt->packet)<0)
+    {
+        dCtxt->eos = true;
+        return false;
+    }else
+        dCtxt->eos = false;
 
     int gotFrame = 0;
-    if(dCtxt->packet.stream_index == video->video->index)
+    if(dCtxt->packet.stream_index == video->video->index && dTrgt->v.location)
     {
+        //Decode the video packet in this case
         avcodec_decode_video2(video->video->context,
                               dCtxt->v.frame,
                               &gotFrame,
@@ -307,6 +328,10 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
 
         if(gotFrame)
         {
+            //We got a frame! Now process it!
+
+            //We redirect the video stream to our determined location
+            //This location is most likely GL memory
             av_image_fill_arrays(dCtxt->v.tFrame->data,
                                  dCtxt->v.tFrame->linesize,
                                  (uint8*)dTrgt->v.location,
@@ -314,6 +339,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                                  dCtxt->v.resolution.w,dCtxt->v.resolution.h,
                                  8);
 
+            //Scale the video frame
             sws_scale(dCtxt->v.sws_ctxt,
                       dCtxt->v.frame->data,
                       dCtxt->v.frame->linesize,
@@ -321,24 +347,70 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                       video->video->context->height,
                       dCtxt->v.tFrame->data,
                       dCtxt->v.tFrame->linesize);
-            av_frame_unref(dCtxt->v.frame);
-            dTrgt->v.updated = true;
-        }
 
-    }else if(dCtxt->packet.stream_index == video->audio->index){
-        avcodec_decode_audio4(video->audio->context,
-                              dCtxt->a.frame,
-                              &gotFrame,
-                              &dCtxt->packet);
+            dTrgt->v.pts = dCtxt->packet.pts;
+            dTrgt->v.updated = true;
+
+            //Free the frame
+            av_frame_unref(dCtxt->v.frame);
+        }
+    }else if(dCtxt->packet.stream_index == video->audio->index && dTrgt->a.location)
+    {
+        //Packet might contain several audio frames, loop over it so we can capture them all
+        int pkt_size = dCtxt->packet.size;
+        int pkt_offset = 0;
+        uint8* pkt_data = dCtxt->packet.data;
+        while(pkt_size > 0)
+        {
+            //Decode audio packet
+            int len = avcodec_decode_audio4(video->audio->context,
+                                  dCtxt->a.frame,
+                                  &gotFrame,
+                                  &dCtxt->packet);
+
+            if(len < 0)
+            {
+                break;
+            }
+
+            if(gotFrame)
+            {
+                size_t sample_size = coffee_ffmedia_audio_samplesize(video);
+                c_memcpy(&((uint8*)dTrgt->a.location)[pkt_offset],
+                         dCtxt->a.frame->data[0],
+                        CMath::min<size_t>(sample_size,dTrgt->a.max_size-pkt_offset));
+
+                dTrgt->v.pts = dCtxt->packet.pts;
+                dTrgt->a.updated = true;
+
+                //Free the audio frame
+                av_frame_unref(dCtxt->a.frame);
+            }
+
+            pkt_offset += len;
+            pkt_data += len;
+            pkt_size -= len;
+        }
+    }else if(false && dCtxt->packet.stream_index == video->subtitles->index && dTrgt->s.location)
+    {
+        //TODO: Implement FFMPEG subtitles
+//        avcodec_decode_subtitle2(video->subtitles->context,
+//                                 dCtxt->s.subtitle,
+//                                 &gotFrame,
+//                                 &dCtxt->packet);
         if(gotFrame)
         {
-            av_frame_unref(dCtxt->a.frame);
-            dTrgt->a.updated = true;
         }
     }
+    //Free the packet
     av_packet_unref(&dCtxt->packet);
 
     return true;
+}
+
+bool coffee_ffmedia_decode_is_eos(const CFFDecodeContext *dCtxt)
+{
+    return dCtxt->eos;
 }
 
 }

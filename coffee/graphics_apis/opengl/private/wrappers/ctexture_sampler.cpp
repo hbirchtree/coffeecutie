@@ -29,7 +29,7 @@ void coffee_graphics_free(size_t count, CTextureSampler *sampler)
     delete[] handles;
 }
 
-void coffee_graphics_tex_parami(
+void coffee_graphics_tex_sampler_parami(
         CTextureSampler &tex, CTexParam const& param, CGint const& val)
 {
     glSamplerParameteri(tex.handle,
@@ -37,7 +37,7 @@ void coffee_graphics_tex_parami(
                         val);
 }
 
-void coffee_graphics_tex_paramf(
+void coffee_graphics_tex_sampler_paramf(
         CTextureSampler &tex, CTexParam const& param, scalar const& val)
 {
     glSamplerParameterf(
@@ -46,10 +46,10 @@ void coffee_graphics_tex_paramf(
                 val);
 }
 
-void coffee_graphics_tex_param(
+void coffee_graphics_tex_sampler_parame(
         CTextureSampler &tex, CTexParam const& param, CTexParamOpt const& val)
 {
-    coffee_graphics_tex_parami(tex,param,(CGint)gl_get(val));
+    coffee_graphics_tex_sampler_parami(tex,param,(CGint)gl_get(val));
 }
 
 CGhnd64 coffee_graphics_tex_get_handle(CTexture const& texture,CTextureSampler &samp)

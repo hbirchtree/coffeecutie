@@ -180,6 +180,8 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
 
     CResources::coffee_file_free(glxml);
 
+    delete doc;
+
     return features;
 }
 

@@ -16,7 +16,8 @@ int32 coffee_main(int32,byte_t**)
     //Magic happens here
     CDWindowProperties props = coffee_get_default_visual();
 
-    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    props.contextProperties.flags = props.contextProperties.flags|
+            CGLContextProperties::GLDebug;
 
     std::atomic_bool status;
     std::future<void> ret = coffee_display_start_async(&status,renderer,props);

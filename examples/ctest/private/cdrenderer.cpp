@@ -16,7 +16,7 @@ namespace CDisplay {
 
 CDRenderer::CDRenderer(CObject *parent) : CGLBindingRenderer(parent)
 {
-    m_msg_filter = coffee_graphics_debug_filter_all;
+    m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
 }
 
 CDRenderer::~CDRenderer()
@@ -66,6 +66,8 @@ void CDRenderer::run()
     CResourceTypes::CAssimp::coffee_assimp_free(d1);
 
     showWindow();
+
+    coffee_graphics_clear((CClearFlag)100);
 
     coffee_graphics_depth(true);
     coffee_graphics_blend(true);
