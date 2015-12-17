@@ -225,8 +225,11 @@ public:
         drawcall.instanceCount = 1;
 
         //Set uniform, a texture handle
-        coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,
-                                              texture.sampler().bhandle);
+        coffee_graphics_tex_load_safe(texture.sampler(),texture.texture());
+        coffee_graphics_uniform_set_texhandle_safe(basePipeline.frag,texuni,
+                                                   texture.sampler().unit);
+//        coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,
+//                                              texture.sampler().bhandle);
 
         CTextureData texture_data;
         texture_data.datatype = CDataType::UByte;
