@@ -139,7 +139,7 @@ CALContext *coffee_audio_context_create(cstring device)
         return nullptr;
     }
 
-    cMsg("ALC","Initialized, using device: %s",
+    cMsg("ALC","Initialized, using device: {0}",
          alcGetString(context->device,ALC_DEVICE_SPECIFIER));
 
     context->context = alcCreateContext(context->device,NULL);
@@ -147,7 +147,7 @@ CALContext *coffee_audio_context_create(cstring device)
     coffee_audio_context_make_current(context);
 
     CALVersion ver = coffee_audio_context_version(context);
-    cMsg("ALC","Context version: %i.%i",ver.major,ver.minor);
+    cMsg("ALC","Context version: {0}.{1}",ver.major,ver.minor);
 
     return context;
 }
@@ -273,7 +273,7 @@ void coffee_audio_listener_set(const CALListener *listener)
 }
 
 void coffee_audio_source_queue_buffers(
-        CALSource *source, szptr numBuffers, CALBuffer **buffers)
+        CALSource *source, szptr numBuffers, const CALBuffer * const *buffers)
 {
     ALuint* handles = new ALuint[numBuffers];
     for(szptr i=0;i<numBuffers;i++)
@@ -284,9 +284,13 @@ void coffee_audio_source_queue_buffers(
 }
 
 void coffee_audio_source_dequeue_buffers(
-        CALSource *source, szptr numBuffers, CALBuffer **buffers)
+        CALSource *source, szptr numBuffers, const CALBuffer * const *buffers)
 {
-    alSourceUnqueueBuffers(_al_get_handle(source),numBuffers,(ALuint*)(*buffers));
+    ALuint* handles = new ALuint[numBuffers];
+    for(szptr i=0;i<numBuffers;i++)
+        handles[i] = buffers[i]->handle->handle;
+    alSourceUnqueueBuffers(_al_get_handle(source),numBuffers,handles);
+    delete[] handles;
     coffee_audio_context_get_error();
 }
 
@@ -489,7 +493,7 @@ CALCaptureDevice *coffee_audio_capture_create(
                 _al_get_fmt(fmt),
                 fmt.samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels);
 
-    cDebug("Creating AL capture device: %s,fq=%i,buffer=%i",
+    cDebug("Creating AL capture device: {0},fq={1},buffer={2}",
            device,fmt.samplerate,fmt.samples*(fmt.bitdepth/8)*fmt.channels);
 
     return cdev;

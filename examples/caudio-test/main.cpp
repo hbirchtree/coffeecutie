@@ -17,6 +17,10 @@ public:
 
     void run()
     {
+        CSoundMixer::CAudioMixer *test = new CSoundMixer::CAudioMixer;
+
+        delete test;
+
         CAudioSample smp;
         //Read audio sample from file
         CResources::CResource rsc("caudio_test/monosample.ogg");
@@ -35,7 +39,7 @@ public:
 
         //Set error callback in case of errors
         coffee_audio_context_set_debug_callback(ctxt,[](CALReport* r){
-            cDebug("%s",r->message);
+            cDebug("{0}",r->message);
         });
 
         //Create a capture device for testing
@@ -68,7 +72,7 @@ public:
 
             //Create audio buffer, free the data
             coffee_audio_alloc(buf,&smp);
-            cDebug("Snippet length: %f",coffee_audio_sample_get_length(smp));
+            cDebug("Snippet length: {0}",coffee_audio_sample_get_length(smp));
             free(smp.data);
 
             //Create audio source
@@ -83,6 +87,8 @@ public:
 
             //Queue our buffer for playback
             coffee_audio_source_queue_buffers(&src,1,&buf);
+
+            coffee_audio_source_set_state(&src,CALPlaybackState::Playing);
         }
 
         //Start playing
@@ -90,23 +96,9 @@ public:
         this->showWindow();
         while(!closeFlag())
         {
-            //Grab samples from capture device
-            coffee_audio_capture_grab_samples(cdev,smp);
-            coffee_audio_capture_stop(cdev);
-            //Upload to audio buffer
-            coffee_audio_buffer_data(buf,&smp);
-            //Reset pointer
-            coffee_audio_source_set_offset_bytes(&src,0);
-            //Play
-            coffee_audio_source_set_state(&src,CALPlaybackState::Playing);
-            //Start recording
-            coffee_audio_capture_start(cdev);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             coffee_graphics_clear(CClearFlag::Color);
             this->pollEvents();
             this->swapBuffers();
-            //Stop playing
-            coffee_audio_source_set_state(&src,CALPlaybackState::Stopped);
         }
 
 

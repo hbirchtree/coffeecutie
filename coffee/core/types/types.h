@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <list>
+#include <mutex>
 
 #include "coffee/core/plat/cmemory.h"
 #include "vector_types.h"

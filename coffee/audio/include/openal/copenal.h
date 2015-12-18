@@ -287,7 +287,7 @@ extern void coffee_audio_listener_set(const CALListener* listener);
  * \param buffers
  */
 extern void coffee_audio_source_queue_buffers(
-        CALSource* source, szptr numBuffers, CALBuffer** buffers);
+        CALSource* source, szptr numBuffers, const CALBuffer * const* buffers);
 /*!
  * \brief Dequeue buffers if it has not been played yet
  * \param source
@@ -295,7 +295,7 @@ extern void coffee_audio_source_queue_buffers(
  * \param buffers
  */
 extern void coffee_audio_source_dequeue_buffers(
-        CALSource* source, szptr numBuffers, CALBuffer** buffers);
+        CALSource* source, szptr numBuffers, const CALBuffer * const* buffers);
 
 /*!
  * \brief Set integer property of source
