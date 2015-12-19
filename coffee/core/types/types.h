@@ -1,13 +1,6 @@
 #ifndef COFFEE_TYPES
 #define COFFEE_TYPES
 
-#include <stdint.h>
-#include <map>
-#include <vector>
-#include <queue>
-#include <list>
-#include <mutex>
-
 #include "coffee/core/plat/cmemory.h"
 #include "vector_types.h"
 #include "composite_types.h"

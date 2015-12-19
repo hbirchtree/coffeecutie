@@ -26,9 +26,9 @@ public:
     {
         return m_player;
     }
-    CFFVideoDescriptor& output()
+    CFFVideoDescriptor& descriptor()
     {
-        return m_output;
+        return m_descriptor;
     }
     CFFDecodeContext* decodeContext()
     {
@@ -45,7 +45,7 @@ public:
     }
     void createDecoder()
     {
-        m_dcontext = coffee_ffmedia_create_decodecontext(m_player,m_output);
+        m_dcontext = coffee_ffmedia_create_decodecontext(m_player,m_descriptor);
     }
     bool decodeFrame()
     {
@@ -113,7 +113,7 @@ private:
     //FFMPEG components
     CFFVideoTarget m_target;
     CFFVideoPlayer* m_player;
-    CFFVideoDescriptor m_output;
+    CFFVideoDescriptor m_descriptor;
     CFFDecodeContext* m_dcontext;
 
     //Timing

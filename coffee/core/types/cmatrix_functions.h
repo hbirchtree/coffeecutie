@@ -11,9 +11,19 @@ using namespace CVectors;
 
 template<typename T>
 _cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
-        _cbasic_rect<T> const& view)
+        _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
 {
-    return _cbasic_tmatrix<T,4>();
+    _cbasic_tmatrix<T,4> mat;
+
+    mat[0][0] = T(2)/(view.right()-view.left());
+    mat[1][1] = T(2)/(view.top()-view.bottom());
+    mat[2][2] = T(2)/(zfield.far-zfield.near);
+
+    mat[3][0] = -(view.right()+view.left())/(view.right()-view.left());
+    mat[3][1] = -(view.top()+view.bottom())/(view.top()-view.bottom());
+    mat[3][2] = -(zfield.far+zfield.near)/(zfield.far-zfield.near);
+
+    return mat;
 }
 
 template<typename T>
@@ -57,7 +67,7 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
         _cbasic_graphics_camera<T> const& camera)
 {
     return coffee_graphics_gen_orthographic(
-                camera.orthoview);
+                camera.orthoview,camera.zVals);
 }
 
 template<typename T>

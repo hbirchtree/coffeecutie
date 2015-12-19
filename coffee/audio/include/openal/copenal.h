@@ -166,9 +166,8 @@ extern void coffee_audio_context_get_error(
  * \param fmt
  * \return A valid pointer if the function succeeded
  */
-extern CALCaptureDevice* coffee_audio_capture_create(
-        CALContext* context, cstring device,
-        const CAudioFormat &fmt);
+extern CALCaptureDevice* coffee_audio_capture_create(CALContext* context, cstring device,
+        const CAudioFormat &fmt, uint32 samples);
 /*!
  * \brief Free the audio capture device when you are done with it.
  * \param dev
@@ -330,8 +329,8 @@ extern void coffee_audio_buffer_data(
 
 extern void coffee_audio_context_set_distance_model(const CDistanceModel &m);
 
-extern cstring* coffee_audio_context_devices_output(int32 *numDevices);
-extern cstring* coffee_audio_context_devices_input(int32 *numDevices);
+extern cstring* coffee_audio_context_devices_output(uint32 *numDevices);
+extern cstring* coffee_audio_context_devices_input(uint32 *numDevices);
 extern cstring coffee_audio_context_device_default();
 
 }

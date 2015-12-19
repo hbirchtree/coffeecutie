@@ -3,7 +3,7 @@
 
 #include <bitset>
 
-#include "coffee/core/types/basetypes.h"
+#include "coffee/core/types/types.h"
 #include "copengl_enums.h"
 
 namespace Coffee{
@@ -18,6 +18,8 @@ struct CGLDebugMessage
     uint32 id;
     CString message;
 };
+
+typedef _cbasic_version<int32> CGLVersion;
 
 typedef void(*CDebugCallback)(CGLDebugMessage const&,void*);
 

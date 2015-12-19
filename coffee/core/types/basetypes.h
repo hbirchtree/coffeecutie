@@ -15,6 +15,12 @@
 #undef minor
 #undef major
 
+#include <stdint.h>
+#include <map>
+#include <vector>
+#include <queue>
+#include <list>
+#include <mutex>
 #include <string>
 #include <stdexcept>
 

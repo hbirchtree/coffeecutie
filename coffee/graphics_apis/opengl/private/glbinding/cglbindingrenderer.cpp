@@ -35,10 +35,7 @@ CGLBindingRenderer::~CGLBindingRenderer()
 
 void CGLBindingRenderer::bindingPreInit()
 {
-//    cMsg("glbinding","Initializing glbinding");
     glbinding::Binding::initialize(true);
-
-//    cMsg("glbinding","Initialized");
 
 }
 
@@ -50,21 +47,20 @@ void CGLBindingRenderer::bindingPostInit()
     CString m_extensions = coffee_graphics_get_extensions(nullptr);
     CGraphicsQuirks::coffee_quirks_set_global(m_extensions.data());
 
-    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug&&
-            m_properties.contextProperties.flags&CGLContextProperties::GLPrintExtensions){
-//        printExtensions(true);
-    }
-
     try{
-//        m_rendererString        = glbinding::ContextInfo::renderer();
-//        m_vendorString          = glbinding::ContextInfo::vendor();
-//        m_versionString         = glbinding::ContextInfo::version().toString();
+        m_rendererString        = coffee_graphics_context_get_renderer();
+        m_vendorString          = coffee_graphics_context_get_vendor();
+        m_versionString         = coffee_graphics_context_get_version_string();
         m_libraryRevision       = glbinding::Meta::glRevision();
     }
     catch(std::logic_error e){
         cMsg("glbinding","Failed to acquire GL details");
     }
 
+    cMsg("glbinding","Renderer={0}, vendor={1}, version={2}",
+         m_rendererString.c_str(),
+         m_vendorString.c_str(),
+         m_versionString.c_str());
     cMsg("glbinding","Currently running OpenGL revision: {0}",m_libraryRevision);
 
     if(m_properties.contextProperties.flags&CGLContextProperties::GLFeatureLevelProfile)

@@ -361,7 +361,7 @@ void coffee_audio_buffer_data(CALBuffer *buffer, const CAudioSample *sample)
     alBufferData(
                 _al_get_handle(buffer),fmt,
                 sample->data,
-                sample->fmt.samples*sample->fmt.channels*sizeof(sample->data[0]),
+                sample->samples*sample->fmt.channels*sizeof(sample->data[0]),
             sample->fmt.samplerate);
 }
 
@@ -428,7 +428,7 @@ CALVersion coffee_audio_context_version(CALContext* ctxt)
     return v;
 }
 
-cstring *coffee_audio_context_devices_output(int32* numDevices)
+cstring *coffee_audio_context_devices_output(uint32* numDevices)
 {
     *numDevices = 0;
 
@@ -451,7 +451,7 @@ cstring *coffee_audio_context_devices_output(int32* numDevices)
     return arrdev;
 }
 
-cstring *coffee_audio_context_devices_input(int32* numDevices)
+cstring *coffee_audio_context_devices_input(uint32* numDevices)
 {
     *numDevices = 0;
 
@@ -481,7 +481,7 @@ cstring coffee_audio_context_device_default()
 
 CALCaptureDevice *coffee_audio_capture_create(
         CALContext *context, cstring device,
-        CAudioFormat const& fmt)
+        CAudioFormat const& fmt, uint32 samples)
 {
     coffee_audio_context_make_current(context);
 
@@ -491,10 +491,10 @@ CALCaptureDevice *coffee_audio_capture_create(
                 device,
                 fmt.samplerate,
                 _al_get_fmt(fmt),
-                fmt.samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels);
+                samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels);
 
     cDebug("Creating AL capture device: {0},fq={1},buffer={2}",
-           device,fmt.samplerate,fmt.samples*(fmt.bitdepth/8)*fmt.channels);
+           device,fmt.samplerate,samples*(fmt.bitdepth/8)*fmt.channels);
 
     return cdev;
 }
@@ -517,7 +517,7 @@ void coffee_audio_capture_stop(CALCaptureDevice *dev)
 
 void coffee_audio_capture_grab_samples(CALCaptureDevice *dev, CAudioSample &sample)
 {
-    alcCaptureSamples(dev->capdevice,sample.data,sample.fmt.samples);
+    alcCaptureSamples(dev->capdevice,sample.data,sample.samples);
 }
 
 }

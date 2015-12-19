@@ -10,6 +10,7 @@ set ( CoffeeAudio_SRCS
         ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
         private/caudio.cpp
         private/openal/copenal.cpp
+        private/openal/copenalabstract.cpp
         )
 
 add_library( CoffeeAudio ${COFFEE_LINK_OPT} ${CoffeeAudio_SRCS})

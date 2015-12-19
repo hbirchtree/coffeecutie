@@ -241,6 +241,31 @@ public:
     }
 };
 
+template<typename T>
+/*!
+ * \brief Locks access to a resource, unlocks on destruction.
+ */
+class _cbasic_cookie_container
+{
+    std::mutex& _access;
+    T& _cookie;
+public:
+    _cbasic_cookie_container(std::mutex& acc, T& cookie):
+        _access(acc),
+        _cookie(cookie)
+    {
+        _access.lock();
+    }
+    ~_cbasic_cookie_container()
+    {
+        _access.unlock();
+    }
+    T& object()
+    {
+        return _cookie;
+    }
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */

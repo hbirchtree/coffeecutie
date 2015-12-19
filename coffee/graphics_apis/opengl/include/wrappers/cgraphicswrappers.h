@@ -97,6 +97,14 @@ extern CString coffee_graphics_get_extensions(int32 *numExtensions_p = nullptr);
 
 extern bool coffee_graphics_check_extension(cstring ext, cstring source);
 
+extern CGLVersion coffee_graphics_context_get_version();
+
+extern cstring coffee_graphics_context_get_version_string();
+
+extern cstring coffee_graphics_context_get_vendor();
+
+extern cstring coffee_graphics_context_get_renderer();
+
 }
 }
 

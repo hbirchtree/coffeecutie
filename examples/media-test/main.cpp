@@ -25,6 +25,11 @@ public:
         coffee_file_pull(video_file);
 
         CFFPlayer player(video_file);
+
+        //Set output descriptor
+        player.descriptor().video.size.w = 1280;
+        player.descriptor().video.size.h = 720;
+
         player.createDecoder();
 
         //OpenGL stuff
@@ -75,9 +80,24 @@ public:
             "   Out_color = smp;"
             "}"
         };
+
+        constexpr byte_t fshader_blank_src[] = {
+            "#version 330\n"
+            "layout(location = 0) out vec4 Out_color;"
+            "in VData {"
+            "   vec2 vtex;"
+            "} vdata;"
+            "void main(){"
+            "   Out_color = vec4(1.0);"
+            "}"
+        };
+
         //Construct a shader pipeline
         CSimplePipeline pipeline;
         pipeline.create(vshader_src,fshader_src);
+
+        CShaderStageProgram blankshader;
+        coffee_graphics_shader_compile(blankshader,fshader_blank_src,CProgramStage::Fragment);
 
         //Define buffers
         CBuffer vertexbuffer;
@@ -131,12 +151,10 @@ public:
         coffee_graphics_uniform_get(pipeline.vert,matrixuni);
 
         //Create a video target
-        player.output().video.size.w = 1280;
-        player.output().video.size.h = 720;
 
         CByteData initTexture;
-        initTexture.size = coffee_ffmedia_video_framesize(CSize(player.output().video.size.w,
-                                                                player.output().video.size.h));
+        initTexture.size = coffee_ffmedia_video_framesize(CSize(player.descriptor().video.size.w,
+                                                                player.descriptor().video.size.h));
         initTexture.data = (byte_t*)c_alloc(initTexture.size);
 
         player.videoTarget().v.location = initTexture.data;
@@ -148,7 +166,7 @@ public:
 
         //Define output texture
         CBufferedTexture<2> texture;
-        texture.createTexture(player.output().video.size,CTexIntFormat::RGBA8,
+        texture.createTexture(player.descriptor().video.size,CTexIntFormat::RGBA8,
                               CTexType::Tex2D,1,initTexture,CTexFormat::RGBA);
 
         c_free(initTexture.data);
@@ -171,9 +189,14 @@ public:
         CMat4 cam_matrix = coffee_graphics_gen_perspective(camera)
                 * coffee_graphics_gen_transform(camera);
 
+        camera.orthoview.w = 1280;
+        camera.orthoview.h = 720;
+        camera.orthoview.x = 0;
+        camera.orthoview.y = 0;
+
         CTransform quad_trans;
         quad_trans.position = CVec3(0,0,0);
-        quad_trans.scale = CVec3(1.6,1.0,1.0);
+        quad_trans.scale = CVec3(1.6f,1.f,1.f);
 
         CMat4 quad_matrix = coffee_graphics_gen_transform(quad_trans);
 
@@ -207,9 +230,12 @@ public:
         double timeout = this->contextTime();
         int counter = 0;
 
+        CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
+
         this->showWindow();
         while(!this->closeFlag())
         {
+            timer->start();
             coffee_graphics_clear(CClearFlag::Color);
 
 
@@ -231,16 +257,16 @@ public:
                 texture.advance();
             }
 
+            this->swapBuffers();
+            this->pollEvents();
+
             counter++;
             if((this->contextTime()-timeout)>=1.0)
             {
                 timeout = this->contextTime();
-                cDebug("Framerate: {0}",counter);
+                cDebug("framerate={0}/s, frametime={1}us",counter,timer->elapsed());
                 counter=0;
             }
-
-            this->swapBuffers();
-            this->pollEvents();
 
             if(player.finished())
                 this->closeWindow();

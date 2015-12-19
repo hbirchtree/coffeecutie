@@ -2,190 +2,117 @@
 #define COFFEE_AUDIO_MIXER_H
 
 #include <coffee/core/CBase>
-#include "openal/copenal.h"
-#include "caudio.h"
 
 namespace Coffee{
 namespace CAudio{
-namespace CSoundMixer{
+namespace CSoundAbstraction{
 
-using namespace COpenAL;
+class CSoundDevice;
 
-struct CSoundDescriptor
-{
-    enum Flags : uint8
-    {
-        Loops = 0x1,
-    };
-
-    Flags flags;
-    scalar gain;
-    scalar pitch;
-
-    scalar maxDist;
-    scalar refDist;
-
-    scalar rolloff;
-
-    CVec3 position;
-    CVec3 velocity;
-    CVec3 direction;
-};
-
-struct CSoundByte
-{
-    CSoundDescriptor desc;
-    CAudioSample sample;
-    uint64 pts; //usecs
-    uint64 length; //msecs
-    uint8 track;
-};
-
-class CAudioMixer
+class CSoundFormat
 {
 public:
-    CAudioMixer()
+    virtual uint32 sampleSize() = 0;
+    virtual uint32 samplerate() = 0;
+    virtual uint16 channels() = 0;
+    virtual uint8 bitDepth() = 0;
+
+    virtual void setSamplerate(const uint32& smrt) = 0;
+    virtual void setChannels(const uint16& chans) = 0;
+    virtual void setBitDepth(const uint8& bitd) = 0;
+};
+
+class CSoundBuffer : public CObject
+{
+public:
+    virtual const CSoundDevice& device() = 0;
+
+    virtual szptr size() const = 0;
+
+    virtual CSoundFormat& format() = 0;
+    virtual void setFormat(CSoundFormat& fmt) = 0;
+
+    virtual void fillBuffer(c_cptr data, const szptr& size) = 0;
+};
+
+class CSoundSample : public CObject
+{
+public:
+    virtual CSoundBuffer& buffer() = 0;
+    virtual CSoundFormat& format() = 0;
+    virtual uint64 samples() = 0;
+
+    virtual uint64 pts() = 0;
+    virtual void setPts() = 0;
+};
+
+/*!
+ * \brief Responsible for queueing up sound samples and playing them back
+ */
+class CSoundTrack : public CObject
+{
+public:
+    virtual const CSoundDevice& device() = 0;
+
+    virtual void queueSample(const CSoundSample& sample) = 0;
+    virtual void updateTrack(uint64 ts) = 0;
+};
+
+class CSoundStream : public CObject
+{
+public:
+    virtual const CSoundDevice& device() = 0;
+
+    virtual CSoundBuffer& buffer() = 0;
+    virtual void setSoundBuffer(CSoundBuffer& dest) = 0;
+
+    virtual bool isInputStream() = 0;
+};
+
+class CSoundMixer : public CObject
+{
+public:
+    virtual uint64 createTrack() = 0;
+    virtual CSoundTrack& soundtrack(const uint64& track) = 0;
+};
+
+class CSoundDeviceIdentifier
+{
+public:
+    virtual szptr deviceIndex() const = 0;
+    virtual cstring stringIdentifier() const
     {
-        m_quit_flag.store(false);
-        m_running.store(false);
-        m_al_clock = coffee_fun_alloc_timer_micro();
-
-        std::function<void()> audio_kickstart = [=]()
-        {
-            m_al_context = coffee_audio_context_create();
-
-            if(!m_al_context)
-                m_quit_flag.store(true);
-
-            m_running.store(true);
-
-            uint64 start_pts = m_al_clock->elapsed();
-            uint64 curr_pts = 0;
-
-            while(!m_quit_flag.load())
-            {
-                curr_pts = m_al_clock->elapsed();
-
-                //Process newly added audio bytes
-
-                m_queue_mutex.lock();
-                for(const CSoundByte& sb : m_queued_sounds)
-                {
-                    _amix_soundbyte sbi;
-                    sbi.size = coffee_audio_sample_get_datasize(sb.sample.fmt,
-                                                                sb.sample.fmt.samples);
-                    sbi.sbyte = sb;
-
-                    //Calculate start PTS and end PTS
-                    sbi.playing = false;
-                    sbi.start_pts = curr_pts-start_pts+sb.pts;
-                    sbi.end_pts = sbi.start_pts+sb.length*1000;
-
-                    //Create a buffer
-                    CALBuffer* buffer = new CALBuffer;
-                    coffee_audio_alloc(buffer);
-                    coffee_audio_buffer_data(buffer,&sb.sample);
-                    m_al_buffers.push_back(buffer);
-                    sbi.buffer = buffer;
-
-                    //Create a source
-                    CALSource* src = new CALSource;
-                    coffee_audio_alloc(src);
-                    coffee_audio_source_seti(src,CSourceProperty::Looping,
-                                             (sb.desc.flags) ? 1 : 0);
-                    coffee_audio_source_setf(src,CSourceProperty::Gain,
-                                             sb.desc.gain);
-                    coffee_audio_source_setf(src,CSourceProperty::Pitch,
-                                             sb.desc.pitch);
-                    coffee_audio_source_setf(src,CSourceProperty::MaxDist,
-                                             sb.desc.maxDist);
-                    coffee_audio_source_setf(src,CSourceProperty::ReferenceDistance,
-                                             sb.desc.refDist);
-                    coffee_audio_source_setf(src,CSourceProperty::RolloffFactor,
-                                             sb.desc.rolloff);
-
-                    m_al_sources.push_back(src);
-                    sbi.source = src;
-
-                    m_internal_queue.push_back(sbi);
-                }
-                m_queue_mutex.unlock();
-
-                //Process what is going to be sent to speakers
-                curr_pts = m_al_clock->elapsed();
-                for(const _amix_soundbyte& mix : m_internal_queue)
-                {
-                    //If
-                    if(curr_pts >= mix.start_pts && curr_pts < mix.end_pts)
-                    {
-                        if(!mix.playing)
-                        {
-                            coffee_audio_source_queue_buffers(
-                                        mix.source,1,&mix.buffer);
-                        }
-                    }else if(curr_pts > mix.end_pts)
-                    {
-                        coffee_audio_free(mix.buffer);
-                        coffee_audio_free(mix.source);
-                    }
-                }
-            }
-
-            for(CALBuffer* buff : m_al_buffers)
-                coffee_audio_free(buff);
-            for(CALSource* src : m_al_sources)
-                coffee_audio_free(src);
-            coffee_audio_context_destroy(m_al_context);
-        };
-        m_audio_thread = CThreading::runAsync(audio_kickstart);
+        return nullptr;
     }
-    ~CAudioMixer()
+    virtual uint64 numericIdentifier() const
     {
-        m_quit_flag.store(true);
-        m_audio_thread.get();
-        coffee_fun_free(m_al_clock);
+        return 0;
     }
-    void addQueue(const CSoundByte& soundbyte)
-    {
-        m_queue_mutex.lock();
-        m_queued_sounds.push_back(soundbyte);
-        m_queue_mutex.unlock();
-    }
+};
 
-private:
-    std::future<void> m_audio_thread;
+class CSoundDevice : public CObject
+{
+public:
+    virtual CSoundMixer& mixer() = 0;
+    virtual CSoundFormat& outputFormat() = 0;
 
-    //Foreign data
-    std::mutex m_queue_mutex;
-    std::vector<CSoundByte> m_queued_sounds;
+    virtual bool isCaptureDevice() = 0;
+    virtual CSoundStream& captureStreamer() = 0;
+};
 
-    //Internal data
-    CALContext* m_al_context;
-    CALListener m_al_listener;
-    CElapsedTimerMicro* m_al_clock;
+class CSoundManager
+{
+public:
+    virtual CSoundDeviceIdentifier& defaultSoundDevice() = 0;
 
-    std::mutex m_observer_access;
-    std::atomic_bool m_quit_flag;
-    std::atomic_bool m_running;
+    virtual uint32 numberSoundDevices() = 0;
+    virtual uint32 numberSoundInputDevices() = 0;
 
-    std::vector<CALBuffer*> m_al_buffers;
-    std::vector<CALSource*> m_al_sources;
+    virtual CSoundDeviceIdentifier& soundDevice(const szptr& devEnum) = 0;
+    virtual CSoundDeviceIdentifier& soundInputDevice(const szptr& devEnum) = 0;
 
-    struct _amix_soundbyte
-    {
-        CSoundByte sbyte;
-        CALBuffer* buffer;
-        CALSource* source;
-        szptr offset;
-        szptr size;
-
-        uint64 start_pts;
-        uint64 end_pts;
-
-        bool playing;
-    };
-
-    std::vector<_amix_soundbyte> m_internal_queue;
+    virtual CSoundDevice* createDevice(const CSoundDeviceIdentifier& id) = 0;
+    virtual CSoundDevice* createInputDevice(const CSoundDeviceIdentifier& id) = 0;
 };
 
 }

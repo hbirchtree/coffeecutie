@@ -48,7 +48,7 @@ CObjectLoader<LibInterface>* coffee_get_lib(
 
     CNativeObject* obj = _coffee_get_library(
                 file,
-                loaderFunction ? loaderFunction : "CoffeeLoader",
+                ((bool)loaderFunction) ? loaderFunction : "CoffeeLoader",
                 libver);
 
     if(!obj)

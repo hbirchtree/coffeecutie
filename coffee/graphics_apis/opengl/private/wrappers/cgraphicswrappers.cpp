@@ -209,7 +209,29 @@ bool coffee_graphics_check_extension(cstring ext, cstring source)
     return strstr(source,ext);
 }
 
+CGLVersion coffee_graphics_context_get_version()
+{
+    CGLVersion ver;
+    glGetIntegerv(GL_MAJOR_VERSION,&ver.major);
+    glGetIntegerv(GL_MINOR_VERSION,&ver.minor);
+    ver.revision = 0;
+    return ver;
+}
 
+cstring coffee_graphics_context_get_vendor()
+{
+    return (cstring)glGetString(GL_VENDOR);
+}
+
+cstring coffee_graphics_context_get_renderer()
+{
+    return (cstring)glGetString(GL_RENDERER);
+}
+
+cstring coffee_graphics_context_get_version_string()
+{
+    return (cstring)glGetString(GL_VERSION);
+}
 
 }
 }

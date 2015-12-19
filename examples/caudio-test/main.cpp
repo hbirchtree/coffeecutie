@@ -17,9 +17,6 @@ public:
 
     void run()
     {
-        CSoundMixer::CAudioMixer *test = new CSoundMixer::CAudioMixer;
-
-        delete test;
 
         CAudioSample smp;
         //Read audio sample from file
@@ -45,15 +42,14 @@ public:
         //Create a capture device for testing
         CALCaptureDevice* cdev;
         {
-            int32 idevn;
+            uint32 idevn;
             cstring* idevs = coffee_audio_context_devices_input(&idevn);
 
             CAudioFormat cfmt;
             cfmt.bitdepth = 16;
             cfmt.channels = 1;
             cfmt.samplerate = 44100;
-            cfmt.samples = 1024;
-            cdev = coffee_audio_capture_create(ctxt,idevs[0],cfmt);
+            cdev = coffee_audio_capture_create(ctxt,idevs[0],cfmt,cfmt.samplerate*4*2);
         }
 
         //Set distance model for context
