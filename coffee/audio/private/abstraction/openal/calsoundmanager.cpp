@@ -1,4 +1,4 @@
-#include <openal/copenalabstract.h>
+#include "calsoundmanager.h"
 
 namespace Coffee{
 namespace CAudio{
@@ -54,52 +54,6 @@ CSoundDevice* CALSoundManager::createDevice(const CSoundDeviceIdentifier &id)
 CSoundDevice* CALSoundManager::createInputDevice(const CSoundDeviceIdentifier &id)
 {
     return new CALSoundDevice(id,true);
-}
-
-CALSoundDeviceIdentifier::CALSoundDeviceIdentifier(const szptr &idx, cstring sid):
-    i_idx(idx),
-    s_id(sid)
-{
-}
-szptr CALSoundDeviceIdentifier::deviceIndex() const
-{
-    return i_idx;
-}
-cstring CALSoundDeviceIdentifier::stringIdentifier() const
-{
-    return s_id;
-}
-
-CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier& dev, bool input):
-    b_input(input)
-{
-    m_ctxt = coffee_audio_context_create(dev.stringIdentifier());
-}
-
-CSoundMixer &CALSoundDevice::mixer()
-{
-    return m_mixer;
-}
-
-CSoundFormat &CALSoundDevice::outputFormat()
-{
-    return m_format;
-}
-
-bool CALSoundDevice::isCaptureDevice()
-{
-    return b_input;
-}
-
-CSoundStream &CALSoundDevice::captureStreamer()
-{
-    if(!b_input)
-        throw std::logic_error("This is not an input device!");
-    return m_inputstream;
-}
-
-CALSoundFormat::CALSoundFormat()
-{
 }
 
 }
