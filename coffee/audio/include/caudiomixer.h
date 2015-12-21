@@ -18,22 +18,22 @@ public:
      * \brief The size of one sample with this format
      * \return
      */
-    virtual uint32 sampleSize() = 0;
+    virtual uint32 sampleSize() const = 0;
     /*!
      * \brief Samplerate/frequency of sound
      * \return
      */
-    virtual uint32 samplerate() = 0;
+    virtual uint32 samplerate() const = 0;
     /*!
      * \brief Number of channels in buffer
      * \return
      */
-    virtual uint16 channels() = 0;
+    virtual uint16 channels() const = 0;
     /*!
      * \brief Bit-depth of buffer data
      * \return
      */
-    virtual uint8 bitDepth() = 0;
+    virtual uint8 bitDepth() const = 0;
 
     virtual void setSamplerate(const uint32& smrt) = 0;
     virtual void setChannels(const uint16& chans) = 0;
@@ -154,7 +154,7 @@ public:
      * \brief If this is a capture stream, this is true and there will be no use of the soundbuffer. Any data will be collected with collectSamples() function.
      * \return
      */
-    virtual bool isInputStream() = 0;
+    virtual bool isInputStream() const = 0;
     /*!
      * \brief Collect audio samples from capture device into pointer
      * \param data
@@ -220,7 +220,15 @@ public:
     virtual CSoundDeviceIdentifier& soundInputDevice(const szptr& devEnum) = 0;
 
     virtual CSoundDevice<ST,BT>* createDevice(const CSoundDeviceIdentifier& id) = 0;
-    virtual CSoundDevice<ST,BT>* createInputDevice(const CSoundDeviceIdentifier& id) = 0;
+    /*!
+     * \brief Create a capture device
+     * \param p_id Parent device, if applicable
+     * \param id Capture device
+     * \return
+     */
+    virtual CSoundDevice<ST,BT>* createInputDevice(
+            const CSoundDeviceIdentifier& p_id,
+            const CSoundDeviceIdentifier& id) = 0;
 };
 
 }

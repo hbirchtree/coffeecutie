@@ -14,7 +14,11 @@ class CALSoundDevice : public CSoundDevice<CALSource,CALBuffer>
     _cal_devdata* m_data;
 
 public:
-    CALSoundDevice(const CSoundDeviceIdentifier &dev, bool input);
+    CALSoundDevice(const CSoundDeviceIdentifier &dev);
+    CALSoundDevice(const CSoundDeviceIdentifier &card,
+                   const CSoundDeviceIdentifier &capdev,
+                   const CSoundFormat &fmt);
+    ~CALSoundDevice();
 
     CSoundMixer<CALSource,CALBuffer> &mixer();
     CSoundFormat &outputFormat();

@@ -30,7 +30,9 @@ public:
     CSoundDeviceIdentifier &soundDevice(const szptr &devEnum);
     CSoundDeviceIdentifier &soundInputDevice(const szptr &devEnum);
     CSoundDevice<CALSource,CALBuffer> *createDevice(const CSoundDeviceIdentifier &id);
-    CSoundDevice<CALSource,CALBuffer> *createInputDevice(const CSoundDeviceIdentifier &id);
+    CSoundDevice<CALSource,CALBuffer> *createInputDevice(
+            const CSoundDeviceIdentifier &p_id,
+            const CSoundDeviceIdentifier &id);
 };
 
 }

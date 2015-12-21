@@ -17,6 +17,8 @@ set ( CoffeeAudio_SRCS
         private/abstraction/openal/calsoundmanager.cpp
         private/abstraction/openal/calsoundformat.cpp
         private/abstraction/openal/calsoundstream.cpp
+        private/abstraction/openal/calsoundtrack.cpp
+        private/abstraction/openal/calsoundsample.cpp
         )
 
 add_library( CoffeeAudio ${COFFEE_LINK_OPT} ${CoffeeAudio_SRCS})

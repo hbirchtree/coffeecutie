@@ -11,7 +11,11 @@ namespace COpenAL{
 struct _cal_devdata
 {
     _cal_devdata():
-        m_ctxt(nullptr)
+        m_ctxt(nullptr),
+        b_input(false),
+        m_mixer(nullptr),
+        m_format(nullptr),
+        m_inputstream(nullptr)
     {
     }
 
@@ -22,12 +26,29 @@ struct _cal_devdata
     CALSoundStream* m_inputstream;
 };
 
-CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier& dev, bool input):
+CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier& dev):
     CSoundDevice(0)
 {
     m_data = new _cal_devdata;
-    m_data->b_input = input;
+    m_data->b_input = false;
     m_data->m_ctxt = coffee_audio_context_create(dev.stringIdentifier());
+}
+
+CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier &card,
+                               const CSoundDeviceIdentifier &capdev,
+                               const CSoundFormat& fmt):
+    CSoundDevice(0)
+{
+    m_data = new _cal_devdata;
+    m_data->b_input = true;
+    m_data->m_ctxt = coffee_audio_context_create(card.stringIdentifier());
+    m_data->m_inputstream = new CALSoundStream(*this,capdev,fmt,4);
+}
+
+CALSoundDevice::~CALSoundDevice()
+{
+    coffee_audio_context_destroy(m_data->m_ctxt);
+    delete m_data;
 }
 
 CSoundMixer<CALSource,CALBuffer> &CALSoundDevice::mixer()

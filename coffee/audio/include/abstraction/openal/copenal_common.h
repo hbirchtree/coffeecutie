@@ -17,6 +17,8 @@ class CALSoundDevice;
 class CALSoundMixer;
 class CALSoundStream;
 class CALSoundManager;
+class CALSoundTrack;
+class CALSoundSample;
 
 }
 }

@@ -6,20 +6,20 @@ namespace CAudio{
 namespace COpenAL{
 
 CALSoundStream::CALSoundStream(CALSoundDevice &device,
-                               CSoundDeviceIdentifier& inputId,
+                               const CSoundDeviceIdentifier& inputId,
+                               const CSoundFormat& fmt,
                                const int32 &bufferMultiplier):
     CSoundStream(&device)
 {
     b_inputStream = true;
-    CSoundFormat& sfmt = device.outputFormat();
-    m_capFmt.bitdepth = sfmt.bitDepth();
-    m_capFmt.channels = sfmt.channels();
-    m_capFmt.samplerate = sfmt.samplerate();
+    m_capFmt.bitdepth = fmt.bitDepth();
+    m_capFmt.channels = fmt.channels();
+    m_capFmt.samplerate = fmt.samplerate();
     m_capDev = coffee_audio_capture_create(
                 device.alContext(),
                 inputId.stringIdentifier(),
                 m_capFmt,
-                sfmt.sampleSize()*bufferMultiplier);
+                fmt.sampleSize()*bufferMultiplier);
 }
 
 CALSoundStream::CALSoundStream(CALSoundDevice &device,
@@ -30,6 +30,9 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
     m_dev = &device;
     m_soundSource = new CALSource;
     coffee_audio_alloc(m_soundSource);
+    m_capFmt.bitdepth = fmt.bitDepth();
+    m_capFmt.channels = fmt.channels();
+    m_capFmt.frequency = fmt.samplerate();
 }
 
 const CSoundDevice<CALSource,CALBuffer> &CALSoundStream::device()
@@ -37,7 +40,7 @@ const CSoundDevice<CALSource,CALBuffer> &CALSoundStream::device()
     return *m_dev;
 }
 
-bool CALSoundStream::isInputStream()
+bool CALSoundStream::isInputStream() const
 {
     return b_inputStream;
 }
@@ -68,6 +71,11 @@ void CALSoundStream::feedBuffer(CSoundBuffer<CALSource, CALBuffer> &buffer)
 {
     CALBuffer* p_buf = buffer.object();
     coffee_audio_source_queue_buffers(m_soundSource,1,&p_buf);
+}
+
+CALSource *CALSoundStream::object()
+{
+    return m_soundSource;
 }
 
 

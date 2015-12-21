@@ -3,6 +3,7 @@
 #include <openal/copenal.h>
 #include <abstraction/openal/calsounddeviceidentifier.h>
 #include <abstraction/openal/calsounddevice.h>
+#include <abstraction/openal/calsoundformat.h>
 
 namespace Coffee{
 namespace CAudio{
@@ -52,12 +53,18 @@ CSoundDeviceIdentifier &CALSoundManager::soundInputDevice(const szptr &devEnum)
 
 CSoundDevice<CALSource,CALBuffer>* CALSoundManager::createDevice(const CSoundDeviceIdentifier &id)
 {
-    return new CALSoundDevice(id,false);
+    return new CALSoundDevice(id);
 }
 
-CSoundDevice<CALSource, CALBuffer> *CALSoundManager::createInputDevice(const CSoundDeviceIdentifier &id)
+CSoundDevice<CALSource, CALBuffer> *CALSoundManager::createInputDevice(
+        const CSoundDeviceIdentifier &p_id,
+        const CSoundDeviceIdentifier &id)
 {
-    return new CALSoundDevice(id,true);
+    CALSoundFormat fmt;
+    fmt.setBitDepth(16);
+    fmt.setChannels(1);
+    fmt.setSamplerate(44100);
+    return new CALSoundDevice(p_id,id,fmt);
 }
 
 }

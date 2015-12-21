@@ -16,10 +16,10 @@ class CALSoundFormat : public CSoundFormat
 public:
     CALSoundFormat();
 
-    uint32 sampleSize();
-    uint32 samplerate();
-    uint16 channels();
-    uint8 bitDepth();
+    uint32 sampleSize() const;
+    uint32 samplerate() const;
+    uint16 channels() const;
+    uint8 bitDepth() const;
     void setSamplerate(const uint32 &smrt);
     void setChannels(const uint16 &chans);
     void setBitDepth(const uint8 &bitd);
