@@ -7,11 +7,11 @@ namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
 
-class CALSoundMixer : public CSoundMixer
+class CALSoundMixer : public CSoundMixer<CALSource,CALBuffer>
 {
 public:
     uint64 createTrack();
-    CSoundTrack &soundtrack(const uint64 &track);
+    CSoundTrack<CALSource,CALBuffer> &soundtrack(const uint64 &track);
 };
 
 }

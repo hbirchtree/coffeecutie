@@ -166,7 +166,9 @@ extern void coffee_audio_context_get_error(
  * \param fmt
  * \return A valid pointer if the function succeeded
  */
-extern CALCaptureDevice* coffee_audio_capture_create(CALContext* context, cstring device,
+extern CALCaptureDevice* coffee_audio_capture_create(
+        CALContext* context,
+        cstring device,
         const CAudioFormat &fmt, uint32 samples);
 /*!
  * \brief Free the audio capture device when you are done with it.

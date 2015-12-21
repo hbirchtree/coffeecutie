@@ -10,6 +10,14 @@ namespace COpenAL{
 
 using namespace CSoundAbstraction;
 
+class CALSoundBuffer;
+class CALSoundFormat;
+class CALSoundDeviceIdentifier;
+class CALSoundDevice;
+class CALSoundMixer;
+class CALSoundStream;
+class CALSoundManager;
+
 }
 }
 }

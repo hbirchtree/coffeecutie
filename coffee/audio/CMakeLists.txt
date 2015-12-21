@@ -10,7 +10,13 @@ set ( CoffeeAudio_SRCS
         ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c
         private/caudio.cpp
         private/openal/copenal.cpp
-        private/abstraction/openal/copenalabstract.cpp
+        private/abstraction/openal/calsoundbuffer.cpp
+        private/abstraction/openal/calsounddevice.cpp
+        private/abstraction/openal/calsounddeviceidentifier.cpp
+        private/abstraction/openal/calsoundmixer.cpp
+        private/abstraction/openal/calsoundmanager.cpp
+        private/abstraction/openal/calsoundformat.cpp
+        private/abstraction/openal/calsoundstream.cpp
         )
 
 add_library( CoffeeAudio ${COFFEE_LINK_OPT} ${CoffeeAudio_SRCS})

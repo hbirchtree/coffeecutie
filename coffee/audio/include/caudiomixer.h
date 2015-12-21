@@ -7,14 +7,32 @@ namespace Coffee{
 namespace CAudio{
 namespace CSoundAbstraction{
 
+//ST = stream/track/source type, BT = buffer type
+template<class ST,class BT>
 class CSoundDevice;
 
 class CSoundFormat
 {
 public:
+    /*!
+     * \brief The size of one sample with this format
+     * \return
+     */
     virtual uint32 sampleSize() = 0;
+    /*!
+     * \brief Samplerate/frequency of sound
+     * \return
+     */
     virtual uint32 samplerate() = 0;
+    /*!
+     * \brief Number of channels in buffer
+     * \return
+     */
     virtual uint16 channels() = 0;
+    /*!
+     * \brief Bit-depth of buffer data
+     * \return
+     */
     virtual uint8 bitDepth() = 0;
 
     virtual void setSamplerate(const uint32& smrt) = 0;
@@ -22,58 +40,142 @@ public:
     virtual void setBitDepth(const uint8& bitd) = 0;
 };
 
+template<class ST,class BT>
 class CSoundBuffer : public CObject
 {
 public:
-    virtual const CSoundDevice& device() = 0;
+    CSoundBuffer(CObject* parent):
+        CObject(parent)
+    {
+    }
 
+    /*!
+     * \brief Get the owner sound device
+     * \return
+     */
+    virtual const CSoundDevice<ST,BT>& device() = 0;
+    /*!
+     * \brief Get size of buffer
+     * \return
+     */
     virtual szptr size() const = 0;
 
+    /*!
+     * \brief Get current sound format of buffered data
+     * \return
+     */
     virtual CSoundFormat& format() = 0;
+    /*!
+     * \brief Set a new format for the data of the buffer
+     * \param fmt
+     */
     virtual void setFormat(CSoundFormat& fmt) = 0;
 
+    /*!
+     * \brief Insert data into the buffer
+     * \param data
+     * \param size
+     */
     virtual void fillBuffer(c_cptr data, const szptr& size) = 0;
-};
 
+    virtual BT* object() = 0;
+};
+template<class ST,class BT>
 class CSoundSample : public CObject
 {
 public:
-    virtual CSoundBuffer& buffer() = 0;
+    CSoundSample(CObject* parent):
+        CObject(parent)
+    {
+    }
+    /*!
+     * \brief Get the owner sound device
+     * \return
+     */
+    virtual const CSoundDevice<ST,BT>& device() = 0;
+
+    virtual CSoundBuffer<ST,BT>& buffer() = 0;
     virtual CSoundFormat& format() = 0;
     virtual uint64 samples() = 0;
 
     virtual uint64 pts() = 0;
     virtual void setPts() = 0;
 };
-
+template<class ST,class BT>
 /*!
  * \brief Responsible for queueing up sound samples and playing them back
  */
 class CSoundTrack : public CObject
 {
 public:
-    virtual const CSoundDevice& device() = 0;
+    CSoundTrack(CObject* parent):
+        CObject(parent)
+    {
+    }
 
-    virtual void queueSample(const CSoundSample& sample) = 0;
+    virtual const CSoundDevice<ST,BT>& device() = 0;
+    /*!
+     * \brief Queue a sound sample for playback
+     * \param sample
+     */
+    virtual void queueSample(const CSoundSample<ST,BT>& sample) = 0;
+    /*!
+     * \brief Progress and garbage-collect the sound track
+     * \param ts
+     */
     virtual void updateTrack(uint64 ts) = 0;
-};
 
+    virtual ST* object() = 0;
+};
+template<class ST,class BT>
 class CSoundStream : public CObject
 {
 public:
-    virtual const CSoundDevice& device() = 0;
+    CSoundStream(CObject* parent):
+        CObject(parent)
+    {
+    }
 
-    virtual CSoundBuffer& buffer() = 0;
-    virtual void setSoundBuffer(CSoundBuffer& dest) = 0;
+    virtual const CSoundDevice<ST,BT>& device() = 0;
+    /*!
+     * \brief Insert data into sound stream. Implementation decides how the data is queued.
+     * \param data
+     * \param fmt
+     * \param samples
+     */
+    virtual void feedData(c_cptr data,const CSoundFormat& fmt,const szptr& samples) = 0;
+    /*!
+     * \brief Insert sound buffer into stream. Will always queue after previous invocations.
+     * \param buffer
+     */
+    virtual void feedBuffer(CSoundBuffer<ST,BT>& buffer) = 0;
 
+    /*!
+     * \brief If this is a capture stream, this is true and there will be no use of the soundbuffer. Any data will be collected with collectSamples() function.
+     * \return
+     */
     virtual bool isInputStream() = 0;
-};
+    /*!
+     * \brief Collect audio samples from capture device into pointer
+     * \param data
+     * \param max_samples
+     * \return
+     */
+    virtual szptr collectSamples(c_ptr data, const szptr& max_samples) = 0;
 
+    virtual ST* object() = 0;
+};
+template<class ST,class BT>
 class CSoundMixer : public CObject
 {
 public:
+    CSoundMixer(CObject* parent):
+        CObject(parent)
+    {
+    }
+
     virtual uint64 createTrack() = 0;
-    virtual CSoundTrack& soundtrack(const uint64& track) = 0;
+    virtual CSoundTrack<ST,BT>& soundtrack(const uint64& track) = 0;
 };
 
 class CSoundDeviceIdentifier
@@ -89,17 +191,23 @@ public:
         return 0;
     }
 };
-
+template<class ST,class BT>
 class CSoundDevice : public CObject
 {
 public:
-    virtual CSoundMixer& mixer() = 0;
+    CSoundDevice(CObject* parent):
+        CObject(parent)
+    {
+    }
+
+    virtual CSoundMixer<ST,BT>& mixer() = 0;
     virtual CSoundFormat& outputFormat() = 0;
 
     virtual bool isCaptureDevice() = 0;
-    virtual CSoundStream& captureStreamer() = 0;
+    virtual CSoundStream<ST,BT>& captureStreamer() = 0;
 };
 
+template<class ST,class BT>
 class CSoundManager
 {
 public:
@@ -111,8 +219,8 @@ public:
     virtual CSoundDeviceIdentifier& soundDevice(const szptr& devEnum) = 0;
     virtual CSoundDeviceIdentifier& soundInputDevice(const szptr& devEnum) = 0;
 
-    virtual CSoundDevice* createDevice(const CSoundDeviceIdentifier& id) = 0;
-    virtual CSoundDevice* createInputDevice(const CSoundDeviceIdentifier& id) = 0;
+    virtual CSoundDevice<ST,BT>* createDevice(const CSoundDeviceIdentifier& id) = 0;
+    virtual CSoundDevice<ST,BT>* createInputDevice(const CSoundDeviceIdentifier& id) = 0;
 };
 
 }

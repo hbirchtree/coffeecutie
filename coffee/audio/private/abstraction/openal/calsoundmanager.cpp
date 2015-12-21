@@ -1,4 +1,8 @@
-#include "calsoundmanager.h"
+#include <abstraction/openal/calsoundmanager.h>
+
+#include <openal/copenal.h>
+#include <abstraction/openal/calsounddeviceidentifier.h>
+#include <abstraction/openal/calsounddevice.h>
 
 namespace Coffee{
 namespace CAudio{
@@ -46,12 +50,12 @@ CSoundDeviceIdentifier &CALSoundManager::soundInputDevice(const szptr &devEnum)
     return v_idevices[devEnum];
 }
 
-CSoundDevice* CALSoundManager::createDevice(const CSoundDeviceIdentifier &id)
+CSoundDevice<CALSource,CALBuffer>* CALSoundManager::createDevice(const CSoundDeviceIdentifier &id)
 {
     return new CALSoundDevice(id,false);
 }
 
-CSoundDevice* CALSoundManager::createInputDevice(const CSoundDeviceIdentifier &id)
+CSoundDevice<CALSource, CALBuffer> *CALSoundManager::createInputDevice(const CSoundDeviceIdentifier &id)
 {
     return new CALSoundDevice(id,true);
 }

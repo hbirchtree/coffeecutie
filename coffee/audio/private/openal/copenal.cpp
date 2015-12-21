@@ -515,7 +515,8 @@ void coffee_audio_capture_stop(CALCaptureDevice *dev)
     alcCaptureStop(dev->capdevice);
 }
 
-void coffee_audio_capture_grab_samples(CALCaptureDevice *dev, CAudioSample &sample)
+void coffee_audio_capture_grab_samples(CALCaptureDevice *dev,
+                                       CAudioSample &sample)
 {
     alcCaptureSamples(dev->capdevice,sample.data,sample.samples);
 }

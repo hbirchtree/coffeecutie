@@ -1,14 +1,16 @@
-#ifndef COFFEE_AUDIO_OPENAL_SOUNDDEVID_H
-#define COFFEE_AUDIO_OPENAL_SOUNDDEVID_H
+#ifndef COFFEE_AUDIO_OPENAL_SOUNDMANAGER_H
+#define COFFEE_AUDIO_OPENAL_SOUNDMANAGER_H
 
-#include "copenal_common.h"
-#include "calsounddeviceidentifier.h"
+#include <caudiomixer.h>
+#include <abstraction/openal/calsounddeviceidentifier.h>
 
 namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
 
-class CALSoundManager : public CSoundManager
+using namespace CSoundAbstraction;
+
+class CALSoundManager : public CSoundManager<CALSource,CALBuffer>
 {
     uint32 d_idx = 0;
 
@@ -27,8 +29,8 @@ public:
     uint32 numberSoundInputDevices();
     CSoundDeviceIdentifier &soundDevice(const szptr &devEnum);
     CSoundDeviceIdentifier &soundInputDevice(const szptr &devEnum);
-    CSoundDevice *createDevice(const CSoundDeviceIdentifier &id);
-    CSoundDevice *createInputDevice(const CSoundDeviceIdentifier &id);
+    CSoundDevice<CALSource,CALBuffer> *createDevice(const CSoundDeviceIdentifier &id);
+    CSoundDevice<CALSource,CALBuffer> *createInputDevice(const CSoundDeviceIdentifier &id);
 };
 
 }

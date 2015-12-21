@@ -2,18 +2,35 @@
 #define COFFEE_AUDIO_OPENAL_SOUNDSTREAM_H
 
 #include <abstraction/openal/copenal_common.h>
+#include <abstraction/openal/calsounddevice.h>
 
 namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
 
-class CALSoundStream : public CSoundStream
+class CALSoundStream : public CSoundStream<CALSource,CALBuffer>
 {
+    CALSoundDevice* m_dev;
+
+    CALCaptureDevice* m_capDev;
+    CAudioFormat m_capFmt;
+
+    CALSource* m_soundSource;
+    bool b_inputStream;
 public:
-    const CSoundDevice &device();
-    CSoundBuffer &buffer();
-    void setSoundBuffer(CSoundBuffer &dest);
+    CALSoundStream(CALSoundDevice &device,
+                   CSoundDeviceIdentifier &inputId,
+                   const int32& bufferMultiplier);
+    CALSoundStream(CALSoundDevice& device,
+                   const CSoundFormat &fmt);
+
+    const CSoundDevice<CALSource,CALBuffer> &device();
+
     bool isInputStream();
+    szptr collectSamples(c_ptr data, const szptr &max_samples);
+
+    void feedData(c_cptr data, const CSoundFormat &fmt, const szptr &samples);
+    void feedBuffer(CSoundBuffer<CALSource,CALBuffer> &buffer);
 };
 
 }

@@ -1,11 +1,14 @@
 #ifndef COFFEE_AUDIO_OPENAL_SOUNDDEVID_H
 #define COFFEE_AUDIO_OPENAL_SOUNDDEVID_H
 
-#include <abstraction/openal/copenal_common.h>
+#include <caudiomixer.h>
+#include <openal/copenal.h>
 
 namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
+
+using namespace CSoundAbstraction;
 
 class CALSoundDeviceIdentifier : public CSoundDeviceIdentifier
 {
