@@ -58,8 +58,6 @@ public:
         //Queue sample for playback
         track.queueSample(samp);
 
-        //Start playing
-
         this->showWindow();
         while(!closeFlag())
         {

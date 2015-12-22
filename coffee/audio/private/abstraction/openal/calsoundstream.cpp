@@ -25,7 +25,8 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
 
 CALSoundStream::CALSoundStream(CALSoundDevice &device,
                                const CSoundFormat& fmt):
-    CSoundStream(&device)
+    CSoundStream(&device),
+    m_capDev(nullptr)
 {
     b_inputStream = false;
     m_dev = &device;
@@ -92,6 +93,7 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
     coffee_audio_buffer_data(p_buf,&samp);
 
     coffee_audio_source_queue_buffers(m_soundSource,1,&p_buf);
+    coffee_audio_source_set_state(m_soundSource,CALPlaybackState::Playing);
 }
 
 void CALSoundStream::feedBuffer(CSoundBuffer<CALSource, CALBuffer> &buffer)
