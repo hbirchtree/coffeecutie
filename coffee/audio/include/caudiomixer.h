@@ -96,10 +96,10 @@ public:
 
     virtual CSoundBuffer<ST,BT>& buffer() = 0;
     virtual CSoundFormat& format() = 0;
-    virtual uint64 samples() = 0;
+    virtual uint64 samples() const = 0;
 
-    virtual uint64 pts() = 0;
-    virtual void setPts() = 0;
+    virtual uint64 pts() const = 0;
+    virtual void setPts(const uint64& pts) = 0;
 };
 template<class ST,class BT>
 /*!
@@ -118,7 +118,7 @@ public:
      * \brief Queue a sound sample for playback
      * \param sample
      */
-    virtual void queueSample(const CSoundSample<ST,BT>& sample) = 0;
+    virtual void queueSample(CSoundSample<ST,BT>& sample) = 0;
     /*!
      * \brief Progress and garbage-collect the sound track
      * \param ts

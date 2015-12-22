@@ -64,6 +64,19 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
 {
     CALBuffer buf;
     CALBuffer* p_buf = &buf;
+
+    coffee_audio_alloc(p_buf);
+
+    CAudioSample samp;
+    samp.data = (int16*)data;
+    samp.fmt.bitdepth = fmt.bitDepth();
+    samp.fmt.channels = fmt.channels();
+    samp.fmt.frequency = fmt.samplerate();
+
+    samp.samples = samples;
+
+    coffee_audio_buffer_data(p_buf,&samp);
+
     coffee_audio_source_queue_buffers(m_soundSource,1,&p_buf);
 }
 
