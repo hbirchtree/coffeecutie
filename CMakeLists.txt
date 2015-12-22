@@ -90,3 +90,12 @@ if(COFFEE_BUILD_SWIG_BINDING)
 endif()
 
 #add_subdirectory(libs)
+
+#PCL extension
+
+set (
+    COFFEE_EXT_PCL_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/ext/pcl-shim/include
+    )
+    
+add_subdirectory(ext)
