@@ -4,7 +4,7 @@
 namespace Coffee{
 namespace CSDL2Types{
 
-inline static uint8 coffee_sdl2_translate_mouse_btn(
+inline static CIMouseButtonEvent::MouseButton coffee_sdl2_translate_mouse_btn(
         Uint8 code)
 {
     switch(code){
@@ -15,7 +15,7 @@ inline static uint8 coffee_sdl2_translate_mouse_btn(
     case SDL_BUTTON_X2: return CIMouseButtonEvent::X2Button;
 
     //Any remaining buttons will map to the range 17-255
-    default: return code+11;
+    default: return (CIMouseButtonEvent::MouseButton)(code+11);
     }
 }
 
@@ -93,9 +93,9 @@ inline static void coffee_sdl2_eventhandle_mouse_btn(
     CIMouseButtonEvent m;
 
     if(btn.state==SDL_PRESSED)
-        m.mod|=CIMouseButtonEvent::Pressed;
+        m.mod = m.mod|CIMouseButtonEvent::Pressed;
     if(btn.clicks==2)
-        m.mod|=CIMouseButtonEvent::DoubleClick;
+        m.mod = m.mod|CIMouseButtonEvent::DoubleClick;
     m.pos.x = btn.x;
     m.pos.y = btn.y;
     m.btn = coffee_sdl2_translate_mouse_btn(btn.button);
@@ -103,31 +103,31 @@ inline static void coffee_sdl2_eventhandle_mouse_btn(
     coffee_sdl2_eventpack(ctxt,&e,&m);
 }
 
-inline static int32 coffee_sdl2_interpret_key_modifier(
+inline static CIKeyEvent::KeyModifiers coffee_sdl2_interpret_key_modifier(
         Uint16 mod)
 {
-    int32 res = 0;
+    CIKeyEvent::KeyModifiers res = CIKeyEvent::NoneModifier;
     if(mod&KMOD_LSHIFT)
-        res|=CIKeyEvent::LShiftModifier;
+        res = res|CIKeyEvent::LShiftModifier;
     if(mod&KMOD_LCTRL)
-        res|=CIKeyEvent::LCtrlModifier;
+        res = res|CIKeyEvent::LCtrlModifier;
     if(mod&KMOD_LALT)
-        res|=CIKeyEvent::LAltModifier;
+        res = res|CIKeyEvent::LAltModifier;
 
     if(mod&KMOD_RSHIFT)
-        res|=CIKeyEvent::RShiftModifier;
+        res = res|CIKeyEvent::RShiftModifier;
     if(mod&KMOD_RCTRL)
-        res|=CIKeyEvent::RCtrlModifier;
+        res = res|CIKeyEvent::RCtrlModifier;
     if(mod&KMOD_RALT)
-        res|=CIKeyEvent::RAltModifier;
+        res = res|CIKeyEvent::RAltModifier;
 
     if(mod&KMOD_GUI)
-        res|=CIKeyEvent::SuperModifier;
+        res = res|CIKeyEvent::SuperModifier;
 
     if(mod&KMOD_MODE)
-        res|=CIKeyEvent::AltGrModifier;
+        res = res|CIKeyEvent::AltGrModifier;
 
-        return res;
+    return res;
 }
 
 inline static uint32 coffee_sdl2_interpret_symbol(
@@ -191,10 +191,10 @@ inline static void coffee_sdl2_eventhandle_keys(
     e.ts = key.timestamp;
 
     if(key.repeat)
-        k.mod|=CIKeyEvent::RepeatedModifier;
+        k.mod = k.mod|CIKeyEvent::RepeatedModifier;
     if(key.type==SDL_KEYDOWN)
-        k.mod|=CIKeyEvent::PressedModifier;
-    k.mod|=coffee_sdl2_interpret_key_modifier(key.keysym.mod);
+        k.mod = k.mod|CIKeyEvent::PressedModifier;
+    k.mod = k.mod|coffee_sdl2_interpret_key_modifier(key.keysym.mod);
 
     if(key.keysym.sym<256)
         k.key = key.keysym.sym; //SDL uses Latin-1 (mostly, except for keypad)

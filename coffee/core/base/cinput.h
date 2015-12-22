@@ -38,28 +38,30 @@ struct CIEvent
  */
 struct CIKeyEvent
 {
-    enum KeyModifiers
+    enum KeyModifiers : uint16
     {
+        NoneModifier = 0x0,
+
         LShiftModifier    = 0x1,
         LCtrlModifier     = 0x2,
         LAltModifier      = 0x4,
         SuperModifier     = 0x8,
+
+        RepeatedModifier  = 0x10,
+        PressedModifier   = 0x20,
 
         RShiftModifier    = 0x040,
         RCtrlModifier     = 0x080,
         RAltModifier      = 0x100,
 
         CapsLockModifier  = 0x200,
-        NumLockModifier   = 0x200,
-        AltGrModifier     = 0x400,
-
-        RepeatedModifier  = 0x10,
-        PressedModifier   = 0x20,
+        NumLockModifier   = 0x400,
+        AltGrModifier     = 0x800,
     };
 
     uint32 key  = 0; /*!< A keycode, use this to identify keys*/
     uint32 scan = 0; /*!< System scancode*/
-    uint32 mod = 0; /*!< Modifier keys*/
+    KeyModifiers mod = NoneModifier; /*!< Modifier keys*/
 };
 
 /*!
@@ -85,13 +87,17 @@ struct CIMouseMoveEvent
  */
 struct CIMouseButtonEvent
 {
-    enum ButtonModifier
+    enum ButtonModifier : uint8
     {
+        NoneModifier = 0x0,
+
         DoubleClick = 0x1,
         Pressed     = 0x2,
     };
-    enum MouseButton
+    enum MouseButton : uint8
     {
+        NoneBtn = 0x0,
+
         LeftButton      = 0x01,
         MiddleButton    = 0x02,
         RightButton     = 0x04,
@@ -100,8 +106,8 @@ struct CIMouseButtonEvent
     };
 
     CPointF pos; /*!< Mouse position*/
-    uint8 mod       = 0; /*!< Modifier for event*/
-    uint8 btn       = 0; /*!< Button*/
+    ButtonModifier mod = NoneModifier; /*!< Modifier for event*/
+    MouseButton btn = NoneBtn; /*!< Button*/
 };
 
 /*!
@@ -158,25 +164,6 @@ struct CIControllerAtomicEvent
  */
 struct CIControllerAtomicUpdateEvent
 {
-    /*!
-     * \brief Masks used to extract state
-     */
-    enum Masks
-    {
-        StateMask       = 0x0003, /*!< Shifted 0,  2 bits*/
-        ButtonMask      = 0x007c, /*!< Shifted 2,  5 bits*/
-        AxisMask        = 0x0f80, /*!< Shifted 7,  5 bits*/
-        ControllerMask  = 0xf000, /*!< Shifted 12, 4 bits*/
-    };
-    /*!
-     * \brief State for controller
-     */
-    enum States
-    {
-        Connected   = 0x1,
-        Remapped    = 0x2,
-    };
-
     uint8 button:5;
     uint8 axis:5;
     uint8 controller:4;
@@ -253,7 +240,7 @@ struct CIDropEvent
     /*!
      * \brief Data type for event
      */
-    enum DataType
+    enum DataType : uint8
     {
         Link     = 0x1, /*!< Link to resource, internet or file*/
         File     = 0x2, /*!< File path*/
@@ -261,7 +248,7 @@ struct CIDropEvent
     };
 
     uint32  size:24; /*!< Size of data*/
-    uint8   type; /*!< Event type*/
+    DataType type; /*!< Event type*/
     union{
         void* data = 0;
         struct
@@ -294,6 +281,10 @@ struct CISensorEvent
         bigscalar   dvalue; /*!< Floating-point value for input*/
     };
 };
+
+C_FLAGS(CIKeyEvent::KeyModifiers,uint16);
+C_FLAGS(CIMouseButtonEvent::ButtonModifier,uint8);
+C_FLAGS(CIMouseButtonEvent::MouseButton,uint8);
 
 }
 }

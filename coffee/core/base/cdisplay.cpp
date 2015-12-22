@@ -7,7 +7,7 @@ CDWindowProperties coffee_get_default_visual()
 {
     CDWindowProperties props;
 
-    props.flags |=
+    props.flags =
             CDWindowProperties::Resizable |
             CDWindowProperties::Windowed;
 
