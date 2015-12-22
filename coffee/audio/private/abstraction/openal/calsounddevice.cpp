@@ -55,11 +55,20 @@ CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier &card,
 
 CALSoundDevice::~CALSoundDevice()
 {
-    coffee_audio_context_destroy(m_data->m_ctxt);
+    for(CALSoundSample* sample : m_data->m_samples)
+        delete sample;
+    for(CALSoundStream* stream : m_data->m_streams)
+        delete stream;
+    for(CALSoundBuffer* buffer : m_data->m_buffers)
+        delete buffer;
+
     if(m_data->m_mixer)
         delete m_data->m_mixer;
     if(m_data->m_inputstream)
         delete m_data->m_inputstream;
+
+    coffee_audio_context_destroy(m_data->m_ctxt);
+
     delete m_data;
 }
 

@@ -26,6 +26,12 @@ CALSoundManager::CALSoundManager()
         v_idevices.push_back(CALSoundDeviceIdentifier(i,a_odevices[i]));
 }
 
+CALSoundManager::~CALSoundManager()
+{
+    c_free(a_idevices);
+    c_free(a_odevices);
+}
+
 CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
 {
     return v_odevices[d_idx];

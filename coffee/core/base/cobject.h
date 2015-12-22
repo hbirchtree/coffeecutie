@@ -26,6 +26,8 @@ protected:
     std::thread::id m_thread;
 
 private:
+    void removeChild(CObject* child);
+
     std::vector<CObject*> m_children;
     CObject* m_parent;
     CString m_objectName;

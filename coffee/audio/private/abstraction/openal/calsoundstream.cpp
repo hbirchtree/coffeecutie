@@ -9,7 +9,8 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
                                const CSoundDeviceIdentifier& inputId,
                                const CSoundFormat& fmt,
                                const int32 &bufferMultiplier):
-    CSoundStream(&device)
+    CSoundStream(&device),
+    m_soundSource(nullptr)
 {
     b_inputStream = true;
     m_capFmt.bitdepth = fmt.bitDepth();
@@ -33,6 +34,19 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
     m_capFmt.bitdepth = fmt.bitDepth();
     m_capFmt.channels = fmt.channels();
     m_capFmt.frequency = fmt.samplerate();
+}
+
+CALSoundStream::~CALSoundStream()
+{
+    if(m_soundSource)
+    {
+        coffee_audio_free(m_soundSource);
+        delete m_soundSource;
+    }
+    if(m_capDev)
+    {
+        coffee_audio_capture_free(m_capDev);
+    }
 }
 
 const CSoundDevice<CALSource,CALBuffer> &CALSoundStream::device()

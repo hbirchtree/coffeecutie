@@ -26,27 +26,36 @@ public:
         CStbAudio::coffee_stb_audio_vorbis_load(&smp,&rsc);
         coffee_file_free(rsc);
 
+        //Acquire an audio device, create a soundtrack
         CALSoundManager man;
         CSoundDevice<CALSource,CALBuffer>* dev = man.createDevice(man.defaultSoundDevice());
         CSoundMixer<CALSource,CALBuffer>& mixer = dev->mixer();
         uint64 trackId = mixer.createTrack();
         CSoundTrack<CALSource,CALBuffer>& track = mixer.soundtrack(trackId);
 
+        //Set a sample format
         CALSoundFormat fmt;
         fmt.setBitDepth(smp.fmt.bitdepth);
         fmt.setChannels(smp.fmt.channels);
         fmt.setSamplerate(smp.fmt.samplerate);
 
+        //Create an audio buffer with said format
         CSoundBuffer<CALSource,CALBuffer>& buf = dev->genBuffer();
         buf.setFormat(fmt);
+        //Fill buffer with audio data
+        buf.fillBuffer(smp.data,smp.samples);
 
+        //Create an audio sample
         CSoundSample<CALSource,CALBuffer>& samp = dev->genSample(buf,fmt);
         samp.setPts(0);
-        buf.fillBuffer(smp.data,smp.samples);
+
+        //Free sample data from source
+        c_free(smp.data);
 
         m_track = &track;
         m_sample = &samp;
 
+        //Queue sample for playback
         track.queueSample(samp);
 
         //Start playing
@@ -60,12 +69,7 @@ public:
             this->swapBuffers();
         }
 
-        c_free(smp.data);
-
-        //Free the AL context and devices
-//        coffee_audio_capture_free(cdev);
-//        coffee_audio_context_destroy(ctxt);
-//        delete buf;
+        delete dev;
     }
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {

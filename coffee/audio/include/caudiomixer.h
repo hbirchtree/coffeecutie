@@ -14,6 +14,9 @@ class CSoundDevice;
 class CSoundFormat
 {
 public:
+    virtual ~CSoundFormat()
+    {
+    }
     /*!
      * \brief The size of one sample with this format
      * \return
@@ -46,6 +49,9 @@ class CSoundBuffer : public CObject
 public:
     CSoundBuffer(CObject* parent):
         CObject(parent)
+    {
+    }
+    virtual ~CSoundBuffer()
     {
     }
 
@@ -88,6 +94,9 @@ public:
         CObject(parent)
     {
     }
+    virtual ~CSoundSample()
+    {
+    }
     /*!
      * \brief Get the owner sound device
      * \return
@@ -112,6 +121,9 @@ public:
         CObject(parent)
     {
     }
+    virtual ~CSoundTrack()
+    {
+    }
 
     virtual const CSoundDevice<ST,BT>& device() = 0;
     /*!
@@ -133,6 +145,9 @@ class CSoundStream : public CObject
 public:
     CSoundStream(CObject* parent):
         CObject(parent)
+    {
+    }
+    virtual ~CSoundStream()
     {
     }
 
@@ -173,6 +188,9 @@ public:
         CObject(parent)
     {
     }
+    virtual ~CSoundMixer()
+    {
+    }
 
     virtual uint64 createTrack() = 0;
     virtual CSoundTrack<ST,BT>& soundtrack(const uint64& track) = 0;
@@ -199,6 +217,9 @@ public:
         CObject(parent)
     {
     }
+    virtual ~CSoundDevice()
+    {
+    }
 
     virtual CSoundMixer<ST,BT>& mixer() = 0;
     virtual CSoundFormat& outputFormat() = 0;
@@ -216,6 +237,13 @@ template<class ST,class BT>
 class CSoundManager
 {
 public:
+    CSoundManager()
+    {
+    }
+    virtual ~CSoundManager()
+    {
+    }
+
     virtual CSoundDeviceIdentifier& defaultSoundDevice() = 0;
 
     virtual uint32 numberSoundDevices() = 0;

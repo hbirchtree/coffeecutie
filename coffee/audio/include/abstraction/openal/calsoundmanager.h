@@ -22,6 +22,7 @@ class CALSoundManager : public CSoundManager<CALSource,CALBuffer>
 
 public:
     CALSoundManager();
+    ~CALSoundManager();
 
     CSoundDeviceIdentifier &defaultSoundDevice();
     uint32 numberSoundDevices();

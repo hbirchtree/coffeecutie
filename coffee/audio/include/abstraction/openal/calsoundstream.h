@@ -25,6 +25,8 @@ public:
     CALSoundStream(CALSoundDevice& device,
                    const CSoundFormat &fmt);
 
+    ~CALSoundStream();
+
     const CSoundDevice<CALSource,CALBuffer> &device();
 
     bool isInputStream() const;

@@ -7,16 +7,19 @@ CObject::CObject()
     m_thread = std::this_thread::get_id();
 }
 
-CObject::CObject(CObject *parent) : CObject()
+CObject::CObject(CObject *parent):
+    CObject()
 {
+    m_parent = parent;
     if(parent){
         parent->m_children.push_back(this);
-        this->m_parent = parent;
     }
 }
 
 CObject::~CObject()
 {
+    if(m_parent)
+        m_parent->removeChild(this);
     for(CObject* child : m_children)
         delete child;
 }
@@ -49,6 +52,16 @@ cstring CObject::objectName()
 void CObject::setObjectName(cstring name)
 {
     this->m_objectName = name;
+}
+
+void CObject::removeChild(CObject *child)
+{
+    for(auto it=m_children.begin();it!=m_children.end();it++)
+        if(*it == child)
+        {
+            m_children.erase(it);
+            break;
+        }
 }
 
 } // namespace Coffee
