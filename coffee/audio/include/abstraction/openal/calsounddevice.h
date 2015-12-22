@@ -26,6 +26,11 @@ public:
     CSoundStream<CALSource,CALBuffer> &captureStreamer();
 
     CALContext* alContext();
+
+    CSoundBuffer<CALSource,CALBuffer> &genBuffer();
+    CSoundSample<CALSource,CALBuffer> &genSample(CSoundBuffer<CALSource, CALBuffer> &buf,
+                            CSoundFormat &fmt);
+    CSoundStream<CALSource, CALBuffer> &genStream(CSoundFormat &fmt);
 };
 
 }

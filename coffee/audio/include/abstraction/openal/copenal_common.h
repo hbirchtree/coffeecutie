@@ -1,5 +1,5 @@
-#ifndef COFFEE_AUDIO_OPENAL_SOUNDDEVID_H
-#define COFFEE_AUDIO_OPENAL_SOUNDDEVID_H
+#ifndef COFFEE_AUDIO_OPENAL_SOUNDCOMMON_H
+#define COFFEE_AUDIO_OPENAL_SOUNDCOMMON_H
 
 #include <caudiomixer.h>
 #include <openal/copenal.h>

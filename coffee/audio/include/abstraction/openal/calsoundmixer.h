@@ -14,6 +14,7 @@ class CALSoundMixer : public CSoundMixer<CALSource,CALBuffer>
     std::vector<CSoundTrack<CALSource,CALBuffer>*> m_tracks;
 public:
     CALSoundMixer(CSoundDevice<CALSource,CALBuffer>& dev);
+    ~CALSoundMixer();
 
     uint64 createTrack();
     CSoundTrack<CALSource,CALBuffer> &soundtrack(const uint64 &track);

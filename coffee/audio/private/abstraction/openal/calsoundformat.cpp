@@ -4,6 +4,14 @@ namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
 
+CALSoundFormat::CALSoundFormat():
+    i_samrate(0),
+    i_channels(0),
+    i_bitd(0)
+{
+
+}
+
 uint32 CALSoundFormat::sampleSize() const
 {
     return i_samrate*i_channels*(i_bitd/8);

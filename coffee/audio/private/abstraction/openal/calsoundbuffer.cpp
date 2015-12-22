@@ -52,6 +52,11 @@ void CALSoundBuffer::fillBuffer(c_cptr data, const szptr &size)
     coffee_audio_buffer_data(m_buffer,&smp);
 }
 
+CALBuffer *CALSoundBuffer::object()
+{
+    return m_buffer;
+}
+
 }
 }
 }

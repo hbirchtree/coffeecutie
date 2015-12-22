@@ -205,6 +205,11 @@ public:
 
     virtual bool isCaptureDevice() = 0;
     virtual CSoundStream<ST,BT>& captureStreamer() = 0;
+
+    virtual CSoundBuffer<ST,BT>& genBuffer() = 0;
+    virtual CSoundSample<ST,BT>& genSample(CSoundBuffer<ST,BT> &buf,
+                                           CSoundFormat &fmt) = 0;
+    virtual CSoundStream<ST,BT>& genStream(CSoundFormat& fmt) = 0;
 };
 
 template<class ST,class BT>

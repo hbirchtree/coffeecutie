@@ -12,6 +12,12 @@ CALSoundMixer::CALSoundMixer(CSoundDevice<CALSource, CALBuffer> &dev):
 {
 }
 
+CALSoundMixer::~CALSoundMixer()
+{
+    for(CSoundTrack<CALSource,CALBuffer>* trck : m_tracks)
+        delete trck;
+}
+
 uint64 CALSoundMixer::createTrack()
 {
     m_tracks.push_back(new CALSoundTrack(*m_dev));

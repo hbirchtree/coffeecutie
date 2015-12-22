@@ -1,8 +1,7 @@
 #ifndef COFFEE_AUDIO_OPENAL_SOUNDMANAGER_H
 #define COFFEE_AUDIO_OPENAL_SOUNDMANAGER_H
 
-#include <caudiomixer.h>
-#include <abstraction/openal/calsounddeviceidentifier.h>
+#include <abstraction/openal/copenal_common.h>
 
 namespace Coffee{
 namespace CAudio{

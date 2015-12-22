@@ -27,6 +27,8 @@ public:
     void setFormat(CSoundFormat &fmt);
 
     void fillBuffer(c_cptr data, const szptr &size);
+
+    CALBuffer* object();
 };
 
 }
