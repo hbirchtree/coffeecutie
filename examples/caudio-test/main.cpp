@@ -49,6 +49,9 @@ public:
         CSoundSample<CALSource,CALBuffer>& samp = dev->genSample(buf,fmt);
         samp.setPts(0);
 
+        CSoundStream<CALSource,CALBuffer>& strm = dev->genStream(fmt);
+        strm.feedData(smp.data,fmt,smp.samples);
+
         //Free sample data from source
         c_free(smp.data);
 

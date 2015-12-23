@@ -12,4 +12,4 @@ add_subdirectory (media-test)
 
 #Experimental
 add_subdirectory (cgb-test)
-add_subdirectory (pcl-test)
+#add_subdirectory (pcl-test)

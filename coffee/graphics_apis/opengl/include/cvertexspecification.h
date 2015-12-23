@@ -49,7 +49,7 @@ public:
     }
 
     template<typename T, size_t Size,CDataType MType>
-    void addAttribute(int32 attrIdx, CVectors::_cbasic_tvector<T,Size> const*)
+    void addAttribute(int32 attrIdx, CVectors::_cbasic_tvector<T,Size> const* = nullptr)
     {
         CVertexAttribute attr = {};
         attr.attribIdx = attrIdx;

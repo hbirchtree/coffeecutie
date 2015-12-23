@@ -22,6 +22,8 @@ void coffee_graphics_alloc(size_t count, CBuffer *buf, CBufferType const& type)
     {
         buf[i].handle = handles[i];
         buf[i].type = type;
+
+        coffee_graphics_activate(buf[i]);
     }
     delete[] handles;
 }

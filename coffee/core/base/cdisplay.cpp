@@ -3,7 +3,7 @@
 namespace Coffee{
 namespace CDisplay{
 
-CDWindowProperties coffee_get_default_visual()
+CDWindowProperties coffee_get_default_visual(const int32 &ctxtMajorVer, const int32 &ctxtMinorVer)
 {
     CDWindowProperties props;
 
@@ -20,8 +20,8 @@ CDWindowProperties coffee_get_default_visual()
     props.size.h = 720;
     props.monitor = 0;
 
-    props.contextProperties.version.major = 3;
-    props.contextProperties.version.minor = 3;
+    props.contextProperties.version.major = ctxtMajorVer;
+    props.contextProperties.version.minor = ctxtMinorVer;
 
     props.contextProperties.bits.alpha = 8;
     props.contextProperties.bits.red = 8;

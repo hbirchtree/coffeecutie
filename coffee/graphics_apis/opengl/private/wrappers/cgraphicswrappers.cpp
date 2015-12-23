@@ -60,6 +60,12 @@ void coffee_graphics_multidraw(const CPrimitiveMode &mode, const CBuffer &buf)
                 sizeof(CGLDrawCall));
 }
 
+void coffee_graphics_draw_arrays(const CPrimitiveMode &mode,
+                                 const CGint& first, const CGint& count)
+{
+    glDrawArrays(gl_get(mode),first,count);
+}
+
 void coffee_graphics_depth(bool enable)
 {
     if(enable)

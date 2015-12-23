@@ -60,6 +60,9 @@ extern void coffee_graphics_set_clearcolor(const CVec4& color);
  */
 extern void coffee_graphics_clear(CClearFlag flg);
 
+extern void coffee_graphics_draw_arrays(const CPrimitiveMode& mode,
+                                        const CGint &first, const CGint &count);
+
 extern void coffee_graphics_draw_indexed(
         const CPrimitiveMode& mode,
         const CGLDrawCall& drawcall);

@@ -376,6 +376,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             if(gotFrame)
             {
                 size_t sample_size = coffee_ffmedia_audio_samplesize(video);
+
                 c_memcpy(&((uint8*)dTrgt->a.location)[pkt_offset],
                          dCtxt->a.frame->data[0],
                         CMath::min<size_t>(sample_size,dTrgt->a.max_size-pkt_offset));

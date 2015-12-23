@@ -2,17 +2,21 @@ set ( TemplateTest_SRCS
         main.cpp
         )
 
+find_package(PCL 1.7 REQUIRED COMPONENTS common io registration recognition keypoints modeler)
+
 include_directories(
         ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
+        ${PCL_INCLUDE_DIRS}
     )
 
-add_executable ( TemplateTest ${TemplateTest_SRCS} )
+add_executable ( PCLTest ${TemplateTest_SRCS} )
 
-target_link_libraries ( TemplateTest
-		CoffeeCore
+target_link_libraries ( PCLTest
+        CoffeeCore
         CoffeeGraphicsMisc
         CoffeeOpenGL
-	)
+        CoffeePCL
+    )
 
-target_compile_features(TemplateTest PRIVATE cxx_variadic_templates)
+target_compile_features(PCLTest PRIVATE cxx_variadic_templates)

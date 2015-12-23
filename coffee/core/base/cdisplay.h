@@ -191,7 +191,8 @@ struct CDWindowProperties
 C_FLAGS(CDWindowProperties::State,uint16);
 C_FLAGS(CGLContextProperties::Flags,uint8);
 
-extern CDWindowProperties coffee_get_default_visual();
+extern CDWindowProperties coffee_get_default_visual(const int32& ctxtMajorVer = 3,
+                                                    const int32& ctxtMinorVer = 3);
 
 }
 }

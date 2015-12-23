@@ -97,5 +97,5 @@ set (
     COFFEE_EXT_PCL_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/ext/pcl-shim/include
     )
-    
-add_subdirectory(ext)
+
+#add_subdirectory(ext)

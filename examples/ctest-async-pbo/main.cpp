@@ -94,10 +94,6 @@ public:
             coffee_graphics_alloc(indices);
             coffee_graphics_alloc(transforms.size,transforms.data,CBufferType::Array);
 
-            coffee_graphics_activate(texcoords);
-            coffee_graphics_activate(vertices);
-            coffee_graphics_activate(indices);
-
             coffee_graphics_buffer_store(vertices,
                                          vertexdata,
                                          sizeof(vertexdata),
