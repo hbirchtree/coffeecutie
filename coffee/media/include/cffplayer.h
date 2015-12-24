@@ -54,8 +54,6 @@ public:
     void awaitFrames()
     {
         m_target.v.updated = false;
-        m_target.a.updated = false;
-        m_target.s.updated = false;
         while(!m_target.v.updated&&coffee_ffmedia_decode_frame(m_player,m_dcontext,&m_target));
     }
 

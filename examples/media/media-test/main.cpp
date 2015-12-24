@@ -1,5 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
+#include <coffee/CAudio>
 #include <coffee/CFFMedia>
 
 #include <coffee/graphics_apis/opengl/include/glfunctions.h>
@@ -8,6 +9,8 @@ using namespace Coffee;
 using namespace Coffee::CGraphicsData;
 using namespace Coffee::CGraphicsWrappers;
 using namespace Coffee::CFFMedia;
+using namespace COpenAL;
+using namespace CSoundAbstraction;
 
 class CDRenderer : public CDisplay::CGLBindingRenderer
 {
@@ -21,7 +24,7 @@ public:
     void run()
     {
         //Create an FFMPEG player
-        CResource video_file("test.webm");
+        CResource video_file("test-.webm");
         coffee_file_pull(video_file);
 
         CFFPlayer player(video_file);
@@ -224,13 +227,21 @@ public:
         audiobuf.size = coffee_ffmedia_audio_samplesize(player.player())*48000*4;
         audiobuf.data = (byte_t*)c_alloc(audiobuf.size);
 
-        player.videoTarget().a.location = audiobuf.data;
-        player.videoTarget().a.max_size = audiobuf.size;
-
         double timeout = this->contextTime();
         int counter = 0;
 
         CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
+
+        CALSoundManager snd_man;
+        CSoundDevice<CALSource,CALBuffer>* snd_dev =
+                snd_man.createDevice(snd_man.defaultSoundDevice());
+
+        CALSoundFormat snd_fmt;
+        snd_fmt.setBitDepth(16);
+        snd_fmt.setChannels(2);
+        snd_fmt.setSamplerate(48000);
+
+        CSoundStream<CALSource,CALBuffer>& snd_streamer = snd_dev->genStream(snd_fmt);
 
         this->showWindow();
         while(!this->closeFlag())
@@ -248,6 +259,22 @@ public:
 
                 if(player.checkTimer())
                     texture.uploadData(CTexFormat::RGBA,0);
+
+                while(player.videoTarget().a.packet_queue.size())
+                {
+                    CFFAudioPacket& pckt = player.videoTarget().a.packet_queue.front();
+
+                    CALSoundFormat fmt;
+                    fmt.setBitDepth(pckt.bitdepth);
+                    fmt.setChannels(pckt.channels);
+                    fmt.setSamplerate(pckt.frequency);
+
+                    snd_streamer.feedData(pckt.data,fmt,pckt.samples);
+
+                    c_free(pckt.data);
+
+                    player.videoTarget().a.packet_queue.pop();
+                }
             }
             //
 

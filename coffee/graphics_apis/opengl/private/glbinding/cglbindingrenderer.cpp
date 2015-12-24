@@ -11,7 +11,6 @@
 
 #include <glfunctions.h>
 
-using namespace gl;
 using namespace Coffee::CDisplay;
 
 namespace Coffee {
@@ -36,7 +35,6 @@ CGLBindingRenderer::~CGLBindingRenderer()
 void CGLBindingRenderer::bindingPreInit()
 {
     glbinding::Binding::initialize(true);
-
 }
 
 std::set<CString> functions;
@@ -72,7 +70,8 @@ void CGLBindingRenderer::bindingPostInit()
         });
     }
 
-    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug){
+    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug)
+    {
         coffee_graphics_debug_context(true,glbinding_default_callback,this);
     }
 }

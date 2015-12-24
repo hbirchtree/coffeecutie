@@ -152,6 +152,7 @@ public:
     }
 
     virtual const CSoundDevice<ST,BT>& device() = 0;
+
     /*!
      * \brief Insert data into sound stream. Implementation decides how the data is queued.
      * \param data
@@ -164,6 +165,13 @@ public:
      * \param buffer
      */
     virtual void feedBuffer(CSoundBuffer<ST,BT>& buffer) = 0;
+
+    //TODO: Add PTS processing to sound streams
+    virtual void feedDataTimed(c_cptr data, const CSoundFormat& fmt,
+                               const szptr& samples, const uint64& pts)
+    {
+        C_STUBBED("Timed data streaming");
+    }
 
     /*!
      * \brief If this is a capture stream, this is true and there will be no use of the soundbuffer. Any data will be collected with collectSamples() function.

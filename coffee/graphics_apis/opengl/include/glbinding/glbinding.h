@@ -129,7 +129,7 @@ constexpr _cbasic_static_map<CDataType,GLenum,22> cdtypes_map = {
 
     {CDataType::UInt64,GL_UNSIGNED_INT64_ARB},
     #ifdef COFFEE_UNIXPLAT
-    //Why? Because Windows is worse than I though.
+    //Why? Because Windows is worse than I thought.
     {CDataType::Int64,GL_INT64_ARB},
     #endif
 

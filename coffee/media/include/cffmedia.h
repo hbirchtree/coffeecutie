@@ -28,6 +28,26 @@ struct CFFVideoDescriptor
     CFFVideoFormat video;
 };
 
+struct CFFAudioPacket
+{
+    int32 frequency;
+    int16 channels;
+    int16 bitdepth;
+
+    int32 samples;
+
+    uint64 pts;
+
+    int16* data;
+};
+
+template<typename PacketT>
+struct CFFPacketTarget
+{
+    std::queue<PacketT> packet_queue;
+    std::mutex queue_mutex;
+};
+
 struct CFFStreamTarget
 {
     void* location;
@@ -36,11 +56,25 @@ struct CFFStreamTarget
     int64 pts;
 };
 
+struct CFFSubtitleRect
+{
+    CRect rect;
+    cstring text;
+
+    uint64 b_pts;
+    uint64 e_pts;
+};
+
+struct CFFSubtitleTarget
+{
+    std::vector<CFFSubtitleRect> subtitles;
+};
+
 struct CFFVideoTarget
 {
-    CFFStreamTarget a;
+    CFFPacketTarget<CFFAudioPacket> a;
     CFFStreamTarget v;
-    CFFStreamTarget s;
+    CFFSubtitleTarget s;
 };
 
 extern void coffee_ffmedia_init(CFFMessageCallback callback = nullptr, bool silent = true);

@@ -1,15 +1,24 @@
-add_subdirectory (caudio-test)
-add_subdirectory (cblam-testing)
-add_subdirectory (ctest)
-add_subdirectory (ctest-hud)
-add_subdirectory (ctest-async-pbo)
-add_subdirectory (ctest-shaderswitch)
+#Examples of CAudio API through OpenAL and Coffee audio abstraction layer
+add_subdirectory (audio/caudio-test)
 
-add_subdirectory (dynamic-test)
+#Examples of the CBlam API and its import of Blam engine data
+add_subdirectory (blam/cblam-testing)
 
-add_subdirectory (env-test)
-add_subdirectory (media-test)
+#Examples of core functionality such as dynamic library loading and information about system environment
+add_subdirectory (core/dynamic-test)
+add_subdirectory (core/env-test)
 
-#Experimental
-add_subdirectory (cgb-test)
-#add_subdirectory (pcl-test)
+#Examples of media playback and capture through CFFMedia, powered by FFMPEG
+add_subdirectory (media/media-test)
+
+#Examples of graphics rendering through OpenGL with several different techniques in use
+add_subdirectory (opengl/ctest)
+add_subdirectory (opengl/ctest-hud)
+add_subdirectory (opengl/ctest-async-pbo)
+add_subdirectory (opengl/ctest-shaderswitch)
+
+#Experimental code
+add_subdirectory (experiments/cgb-test)
+
+#Manipulation of point cloud data through PCL
+#add_subdirectory (pcl/pcl-test)

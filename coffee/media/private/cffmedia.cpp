@@ -52,7 +52,7 @@ struct CFFDecodeContext
         AVFrame* tFrame;
     } a;
     struct{
-        AVSubtitle* subtitle;
+        AVSubtitle subtitle;
     } s;
 
     AVPacket packet;
@@ -354,7 +354,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             //Free the frame
             av_frame_unref(dCtxt->v.frame);
         }
-    }else if(dCtxt->packet.stream_index == video->audio->index && dTrgt->a.location)
+    }else if(dCtxt->packet.stream_index == video->audio->index)
     {
         //Packet might contain several audio frames, loop over it so we can capture them all
         int pkt_size = dCtxt->packet.size;
@@ -375,14 +375,29 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
 
             if(gotFrame)
             {
-                size_t sample_size = coffee_ffmedia_audio_samplesize(video);
+                dTrgt->a.queue_mutex.lock();
 
-                c_memcpy(&((uint8*)dTrgt->a.location)[pkt_offset],
-                         dCtxt->a.frame->data[0],
-                        CMath::min<size_t>(sample_size,dTrgt->a.max_size-pkt_offset));
+                dTrgt->a.packet_queue.push(CFFAudioPacket());
 
-                dTrgt->v.pts = dCtxt->packet.pts;
-                dTrgt->a.updated = true;
+                CFFAudioPacket &p = dTrgt->a.packet_queue.back();
+
+                p.pts = dCtxt->a.frame->pts;
+                p.channels = dCtxt->a.frame->channels;
+                p.frequency = dCtxt->a.frame->sample_rate;
+                p.bitdepth = 8;
+                p.samples = dCtxt->a.frame->nb_samples;
+
+                int data_size = av_samples_get_buffer_size(nullptr,
+                                                           video->audio->context->channels,
+                                                           dCtxt->a.frame->nb_samples,
+                                                           video->audio->context->sample_fmt,
+                                                           1);
+
+                p.data = (int16*)c_alloc(data_size);
+
+                c_memcpy(p.data,dCtxt->a.frame->data[0],data_size);
+
+                dTrgt->a.queue_mutex.unlock();
 
                 //Free the audio frame
                 av_frame_unref(dCtxt->a.frame);
@@ -392,15 +407,17 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             pkt_data += len;
             pkt_size -= len;
         }
-    }else if(false && dCtxt->packet.stream_index == video->subtitles->index && dTrgt->s.location)
+    }else if(dCtxt->packet.stream_index == video->subtitles->index )
     {
         //TODO: Implement FFMPEG subtitles
-//        avcodec_decode_subtitle2(video->subtitles->context,
-//                                 dCtxt->s.subtitle,
-//                                 &gotFrame,
-//                                 &dCtxt->packet);
+        avcodec_decode_subtitle2(video->subtitles->context,
+                                 &dCtxt->s.subtitle,
+                                 &gotFrame,
+                                 &dCtxt->packet);
         if(gotFrame)
         {
+            for(szptr i=0;i<dCtxt->s.subtitle.num_rects;i++)
+                cDebug("Subtitle text: {0}",dCtxt->s.subtitle.rects[i]->text);
         }
     }
     //Free the packet
