@@ -28,28 +28,20 @@ struct CGL_GL45 : CGL_GL43
 
     /* Allocations */
     static bool TexAlloc(size_t,CGenum,CGhnd*){return false;}
-    static bool TexFree(size_t,CGenum,CGhnd*){return false;}
 
     static bool BufAlloc(size_t,CGhnd*){return false;}
-    static bool BufFree(size_t,CGhnd*){return false;}
 
     static bool FBAlloc(size_t,CGenum,CGhnd*){return false;}
-    static bool FBFree(size_t,CGenum,CGhnd*){return false;}
 
     static bool XFBAlloc(size_t,CGhnd*){return false;}
-    static bool XFBFree(size_t,CGhnd*){return false;}
 
     static bool RenderBufferAlloc(size_t,CGhnd*){return false;}
-    static bool RenderBufferFree(size_t,CGhnd*){return false;}
 
     static bool SamplerAlloc(size_t,CGhnd*){return false;}
-    static bool SamplerFree(size_t,CGhnd*){return false;}
 
     static bool QueryAlloc(size_t,CGenum,CGhnd*){return false;}
-    static bool QueryFree(size_t,CGenum,CGhnd*){return false;}
 
     static bool VAOAlloc(size_t,CGhnd*){return false;}
-    static bool VAOFree(size_t,CGhnd*){return false;}
 
     /* Textures */
     static void TexBind(){}
