@@ -9,9 +9,26 @@
 
 namespace Coffee{
 namespace CFunctional{
+namespace CThreading{
 
-namespace CThreading
+struct CThreadId
 {
+    CThreadId():
+        m_id(std::this_thread::get_id())
+    {
+    }
+    bool operator==(const CThreadId& thd) const
+    {
+        return m_id == thd.m_id;
+    }
+    uint64 hash()
+    {
+        //TODO: Implement hash of thread IDs
+        return 0;
+    }
+private:
+    const std::thread::id m_id;
+};
 
 /*!
  * \brief Launch a task to run independently. Used as fire-and-forget, never to return.
@@ -58,11 +75,6 @@ private:
 };
 
 typedef CThreadWorker<ubyte_t> CThreadUbyteWorker;
-
-inline uint64 coffee_thread_get_id()
-{
-    return (uint64)100;
-}
 
 }
 }

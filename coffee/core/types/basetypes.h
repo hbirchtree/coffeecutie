@@ -68,6 +68,82 @@ typedef void*       c_ptr;
  */
 typedef int32 (*CoffeeMainWithArgs)(int32,byte_t**);
 
+enum class ResourceAccess : uint16
+{
+    ExclusiveLocking,
+    ReadOnly,
+    WriteOnly,
+    ReadWrite,
+    Persistent,
+};
+
+enum class ResourceStorageClass : uint16
+{
+    Streaming = 0x1,
+    Static = 0x2,
+    Dynamic = 0x4,
+
+    Write = 0x8,
+    Read = 0x10,
+    Copy = 0x18,
+};
+
+enum class TypeEnum : uint16
+{
+    UByte, Byte,
+    UShort, Short,
+    UInt, Int,
+    ULL, LL,
+};
+
+enum class BitDivision : uint16
+{
+    Byte_2, Byte_2R,
+    Byte_332, Byte_233R,
+
+    Short_565, Short_565R,
+    Short_4, Short_4R,
+    Short_5551, Short_1555R,
+
+    Int_8, Int_8R,
+    Int_1010102, Int_2101010R,
+
+    LL_16, LL_16R,
+    LL_32, LL_32R,
+    LL_8, LL_8R,
+};
+
+enum class Severity : uint8
+{
+    Information,
+    Debug,
+
+    Low,
+    Medium,
+    High,
+
+    Critical,
+    Fatal,
+};
+
+enum class DebugType : uint8
+{
+    Information,
+    Performance,
+    Compliance,
+    Compatibility,
+};
+
+enum class DebugComponent : uint16
+{
+    Core,
+    GraphicsAPI,
+    Audio,
+    Interface,
+    LibraryLoader,
+    Media,
+};
+
 }
 
 #endif
