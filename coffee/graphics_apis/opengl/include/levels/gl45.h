@@ -5,7 +5,6 @@
 
 namespace Coffee{
 namespace CGL{
-
 /*!
  * \brief OpenGL 4.5 compliance model
  */

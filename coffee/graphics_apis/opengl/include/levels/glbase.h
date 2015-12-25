@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
-#include <coffee/core/types/basetypes.h>
+#include <coffee/core/CTypes>
 
 namespace Coffee{
 namespace CGL{
@@ -27,6 +27,96 @@ struct CGL_Context
 
 struct CGL_Implementation
 {
+    enum class Primitive
+    {
+        Point,
+        Line,
+        Triangle,
+    };
+
+    enum class PrimitiveCreation
+    {
+        Explicit = 0x1,
+        Strip = 0x2,
+        Fan = 0x4,
+        Loop = 0x8,
+        Adjacency = 0x10,
+    };
+
+    enum class Face
+    {
+        Front,
+        Back,
+        Both,
+    };
+
+    enum class BufferBit
+    {
+        Color,
+        Depth,
+        Stencil,
+    };
+
+    enum class AttribMode
+    {
+        Interleaved,
+        Separate,
+    };
+
+    enum class ShaderStage
+    {
+        Vertex,
+        Fragment,
+
+        Compute,
+        Geometry,
+
+        TessEval,
+        TessControl,
+    };
+
+    enum class DataType
+    {
+        ArrayData,
+        ElementData,
+        UniformData,
+        ShaderData,
+        AtomicData,
+        QueryData,
+        XFBData,
+        DrawcallData,
+        ComputecallData,
+        PixelData,
+    };
+
+    enum class OperationType
+    {
+        PixelTransfer,
+        ShaderBufferTransfer,
+
+        BufferDataTransfer,
+
+        TextureTransfer,
+
+        CommandCompletion,
+        XFBCompletion,
+
+        ImageCompletion,
+
+        UniformCompletion,
+        VertexAttributeCompletion,
+        VertexElementCompletion,
+
+        FramebufferCompletion,
+    };
+
+    enum class RetrieveStrategy
+    {
+        Await,
+        NoWait,
+        Value,
+    };
+
     typedef uint32 CGenum;
     typedef uint32 CGuint;
     typedef int32 CGint;

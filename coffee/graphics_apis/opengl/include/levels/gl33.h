@@ -21,10 +21,10 @@ struct CGL_GL3 : CGL_Implementation
     static void Disable(){}
 
     static void Clear(){}
-    static void ClearColor(){}
+    static void ClearColor(CVec4){}
 
-    static void ClearDepth(){}
-    static void ClearStencil(){}
+    static void ClearDepth(scalar){}
+    static void ClearStencil(scalar){}
 
     static void ClearBuffer(){}
     static void ClearBufferfi(){}
