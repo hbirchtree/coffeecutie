@@ -2,9 +2,9 @@
 #define COFFEE_CORE_MATRICES_H
 
 #include "vectors.h"
+#include "mnmatrix.h"
 
 namespace Coffee{
-namespace CVectors{
 
 template<typename T,size_t Size> struct _cbasic_tmatrix
 {
@@ -212,7 +212,6 @@ template<typename T> _cbasic_tmatrix<T,4> rotate(
     _cbasic_tvector<T,3> temp((T(1) - c)*axis);
 }
 
-}
 }
 
 #endif

@@ -67,7 +67,7 @@ void matrix_tests()
     {
         //Test quaternion conversion
 
-        CMat4 my_quat = CVectors::matrixify(CVectors::normalize_quat(CQuat(1,0.2,0.2,0.2)));
+        CMat4 my_quat = matrixify(normalize_quat(CQuat(1,0.2,0.2,0.2)));
         glm::mat4 glm_quat = glm::mat4_cast(glm::normalize(glm::quat(1,0.2,0.2,0.2)));
 
         CASSERT_MEM(&glm_quat,&my_quat,sizeof(CMat4));
@@ -94,7 +94,7 @@ void matrix_tests()
         //Test translation
 
         glm_matrix = glm::translate(glm_matrix,glm::vec3(4,5,6));
-        my_matrix = CVectors::translation(my_matrix,camera.position);
+        my_matrix = translation(my_matrix,camera.position);
 
         CASSERT_MEM(&glm_matrix,&my_matrix,sizeof(CMat4));
 
@@ -119,17 +119,17 @@ void matrix_tests()
 
     //Test model transforms
     {
-        CMat4 my_mat = CVectors::scale(CMat4(),CVec3(1.2,1.2,1.2));
+        CMat4 my_mat = scale(CMat4(),CVec3(1.2,1.2,1.2));
         glm::mat4 glm_mat = CMath::scale(glm::mat4(),glm::vec3(1.2,1.2,1.2));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
 
-        my_mat *= CVectors::matrixify(CQuat(1,0.0,0.5,0.0));
+        my_mat *= matrixify(CQuat(1,0.0,0.5,0.0));
         glm_mat *= CMath::mat4_cast(glm::quat(1,0.0,0.5,0.0));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
 
-        my_mat = CVectors::translation(my_mat,CVec3(1,2,3));
+        my_mat = translation(my_mat,CVec3(1,2,3));
         glm_mat = CMath::translate(glm_mat,glm::vec3(1,2,3));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));

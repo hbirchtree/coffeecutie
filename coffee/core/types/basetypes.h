@@ -68,7 +68,7 @@ typedef void*       c_ptr;
  */
 typedef int32 (*CoffeeMainWithArgs)(int32,byte_t**);
 
-enum class ResourceAccess : uint16
+enum class ResourceAccess : uint8
 {
     ExclusiveLocking,
     ReadOnly,
@@ -77,7 +77,7 @@ enum class ResourceAccess : uint16
     Persistent,
 };
 
-enum class ResourceStorageClass : uint16
+enum class ResourceStorageClass : uint8
 {
     Streaming = 0x1,
     Static = 0x2,
@@ -88,15 +88,16 @@ enum class ResourceStorageClass : uint16
     Copy = 0x18,
 };
 
-enum class TypeEnum : uint16
+enum class TypeEnum : uint8
 {
     UByte, Byte,
     UShort, Short,
     UInt, Int,
     ULL, LL,
+    Scalar, BigScalar,
 };
 
-enum class BitDivision : uint16
+enum class BitFormat : uint8
 {
     Byte_2, Byte_2R,
     Byte_332, Byte_233R,
@@ -134,7 +135,7 @@ enum class DebugType : uint8
     Compatibility,
 };
 
-enum class DebugComponent : uint16
+enum class DebugComponent : uint8
 {
     Core,
     GraphicsAPI,
@@ -142,6 +143,15 @@ enum class DebugComponent : uint16
     Interface,
     LibraryLoader,
     Media,
+};
+
+enum class PixelFormat : uint8
+{
+    BGRA,
+    RGBA,
+    RGB,
+    RG,
+    RED,
 };
 
 }

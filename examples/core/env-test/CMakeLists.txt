@@ -4,6 +4,10 @@ set ( EnvTest_SRCS
 
 add_executable ( EnvTest ${EnvTest_SRCS} )
 
+include_directories(
+        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+    )
+
 target_link_libraries ( EnvTest
         CoffeeCore
         )

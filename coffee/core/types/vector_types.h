@@ -10,14 +10,14 @@
 namespace Coffee{
 
 template<typename T>
-struct _cbasic_vec2 : CVectors::_cbasic_tvector<T,2>
+struct _cbasic_vec2 : _cbasic_tvector<T,2>
 {
     _cbasic_vec2():
-        CVectors::_cbasic_tvector<T,2>::_cbasic_tvector()
+        _cbasic_tvector<T,2>::_cbasic_tvector()
     {
     }
 
-    using CVectors::_cbasic_tvector<T,2>::_cbasic_tvector;
+    using _cbasic_tvector<T,2>::_cbasic_tvector;
     _cbasic_vec2(T x,T y)
     {
         this->x() = x;
@@ -44,13 +44,13 @@ struct _cbasic_vec2 : CVectors::_cbasic_tvector<T,2>
 };
 
 template<typename T>
-struct _cbasic_vec3 : CVectors::_cbasic_tvector<T,3>
+struct _cbasic_vec3 : _cbasic_tvector<T,3>
 {
     _cbasic_vec3():
-        CVectors::_cbasic_tvector<T,3>::_cbasic_tvector()
+        _cbasic_tvector<T,3>::_cbasic_tvector()
     {
     }
-    using CVectors::_cbasic_tvector<T,3>::_cbasic_tvector;
+    using _cbasic_tvector<T,3>::_cbasic_tvector;
     _cbasic_vec3(T x,T y,T z)
     {
         this->x() = x;
@@ -99,13 +99,13 @@ struct _cbasic_vec3 : CVectors::_cbasic_tvector<T,3>
 };
 
 template<typename T>
-struct _cbasic_vec4 : CVectors::_cbasic_tvector<T,4>
+struct _cbasic_vec4 : _cbasic_tvector<T,4>
 {
     _cbasic_vec4():
-        CVectors::_cbasic_tvector<T,4>::_cbasic_tvector()
+        _cbasic_tvector<T,4>::_cbasic_tvector()
     {
     }
-    using CVectors::_cbasic_tvector<T,4>::_cbasic_tvector;
+    using _cbasic_tvector<T,4>::_cbasic_tvector;
     _cbasic_vec4(T x,T y,T z,T w)
     {
         this->x() = x;
@@ -166,9 +166,9 @@ struct _cbasic_vec4 : CVectors::_cbasic_tvector<T,4>
     }
 };
 
-template<typename T> using _cbasic_quat = CVectors::_cbasic_tquaternion<T>;
+template<typename T> using _cbasic_quat = _cbasic_tquaternion<T>;
 
-template<typename T,size_t Size> using _cbasic_matrix_n = CVectors::_cbasic_tmatrix<T,Size>;
+template<typename T,size_t Size> using _cbasic_matrix_n = _cbasic_tmatrix<T,Size>;
 
 typedef _cbasic_vec2<scalar> CVec2;
 typedef _cbasic_vec3<scalar> CVec3;

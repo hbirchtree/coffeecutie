@@ -32,7 +32,7 @@ template<typename T> struct _cbasic_graphics_camera
     T fieldOfView;
 
     _cbasic_vec3<T> position;
-    CVectors::_cbasic_tquaternion<T> rotation;
+    _cbasic_tquaternion<T> rotation;
 
     _cbasic_rect<T> orthoview;
 };
@@ -46,7 +46,7 @@ template<typename T> struct _cbasic_graphics_transform
     {
     }
 
-    CVectors::_cbasic_tquaternion<T> rotation;
+    _cbasic_tquaternion<T> rotation;
     _cbasic_vec3<T> position;
     _cbasic_vec3<T> scale;
 };

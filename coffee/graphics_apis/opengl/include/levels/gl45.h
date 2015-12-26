@@ -8,9 +8,9 @@ namespace CGL{
 /*!
  * \brief OpenGL 4.5 compliance model
  */
-struct CGL_GL45 : CGL_GL43
+struct CGL45 : CGL43
 {
-    typedef CGuint64 CGhnd64;
+    typedef uint64 CGhnd64;
 
     static bool DirectStateSupported(){return false;}
 
@@ -25,14 +25,14 @@ struct CGL_GL45 : CGL_GL43
      *
      */
 
-    /* Allocations */
+    /* Allocations, initializing variants */
     static bool TexAlloc(size_t,CGenum,CGhnd*){return false;}
 
     static bool BufAlloc(size_t,CGhnd*){return false;}
 
     static bool FBAlloc(size_t,CGenum,CGhnd*){return false;}
 
-    static bool XFBAlloc(size_t,CGhnd*){return false;}
+    static bool XFAlloc(size_t,CGhnd*){return false;}
 
     static bool RenderBufferAlloc(size_t,CGhnd*){return false;}
 
@@ -42,47 +42,94 @@ struct CGL_GL45 : CGL_GL43
 
     static bool VAOAlloc(size_t,CGhnd*){return false;}
 
+    static bool PipelineAlloc(size_t,CGhnd*){return false;}
+
     /* Textures */
-    static void TexBind(){}
+    static bool TexStorage2D(CGhnd,int64,CGenum,int64,int64){return false;}
+    static bool TexStorage3D(CGhnd,int64,CGenum,int64,int64){return false;}
 
-    static void TexImage2D(){}
-    static void TexImage3D(){}
+    static void TexSubImage2D(CGhnd,int32,int32,int32,
+                              int64,int64,CGenum,CGenum,c_cptr){}
+    static void TexSubImage3D(CGhnd,int32,int32,int32,int32,
+                              int64,int64,int64,CGenum,CGenum,c_cptr){}
 
-    static void TexSubImage2D(){}
-    static void TexSubImage3D(){}
+    static void TexImageCompressed2D(CGhnd,int32,CGenum,int64,int64,int32,c_cptr){}
+    static void TexImageCompressed3D(CGhnd,int32,CGenum,int64,int64,int64,int32,c_cptr){}
 
-    static bool TexGetImage(){return false;}
+    static void TexSubImageCompressed2D(CGhnd,int32,int32,int32,int64,int64,
+                                        CGhnd,size_t,c_cptr){}
+    static void TexSubImageCompressed3D(CGhnd,int32,int32,int32,int32,int64,int64,int64,
+                                        CGhnd,size_t,c_cptr){}
+
+    static void TexCopyImage2D(CGhnd,int32,CGenum,int32,int32,
+                               int64,int64,int32){}
+    static void TexCopySubImage2D(CGhnd,int32,CGenum,int32,int32,
+                                  int32,int32,
+                                  int64,int64,int32){}
+
+    static void TexGetImage(CGhnd,int32,CGenum,CGenum,c_ptr){}
+    static void TexGetImageCompressed(CGhnd,int32,c_ptr){}
+
+    static void TexGenMipmap(CGhnd){}
+
+    /* Texture handles/bindless handles */
+    static CGhnd64 TexGetImageHandle(CGhnd,int32,bool,int32,CGenum){return 0;}
+
+    static void TexMakeHandleResident(CGhnd64){}
+    static void TexMakeHandleNonResident(CGhnd64){}
+
+    static void ImgMakeHandleResident(CGhnd64,CGenum){}
+    static void ImgMakeHandleNonResident(CGhnd64){}
+
+    static bool IsTexHandleResident(CGhnd64){return false;}
+    static bool IsImgHandleResident(CGhnd64){return false;}
 
     /* Samplers */
-    static void SamplerBind(){}
+    static CGhnd64 TexGetSamplerHandle(CGhnd,CGhnd){return 0;}
 
-    static void SamplerParameteri(){}
-    static void SamplerParameterf(){}
+    /* Uniforms */
+    static void UniformHandlei64(CGhnd,int32,CGhnd64);
+    static void UniformHandlei64v(CGhnd,int32,size_t,const CGhnd64*);
 
     /* Buffers */
-    static void BufBind(){}
+    static void BufStorage(CGhnd,int64,c_cptr,CGenum){}
 
-    static void BufStorage(){}
+    static void BufData(CGenum,size_t,c_cptr,CGenum){}
+    static void BufSubData(CGenum,size_t,size_t,c_cptr){}
+    static void BufGetSubData(CGenum,size_t,size_t,c_ptr){}
+    static void BufCopySubData(CGenum,CGenum,size_t,size_t,size_t){}
+
+    static void BufBindRange(CGenum,uint32,size_t,size_t){}
+    static void BufMapRange(CGenum,size_t,size_t,CGenum){}
+    static void BufUnmap(CGenum){}
 
     /* FB */
-    static void FBBind(){}
-
-    static bool FBCheckComplete(){return false;}
+    static bool FBCheckComplete(CGhnd){return false;}
 
     /* VAO */
-    static void VAOBind(){}
+    static void VAOAttribFormat(CGhnd,uint32,int32,CGenum,bool,uint32){}
+    static void VAOAttribFormatI(CGhnd,uint32,int32,CGenum,uint32){}
+    static void VAOAttribFormatL(CGhnd,uint32,int32,CGenum,uint32){}
 
-    static void VAOAttribFormat(){}
-    static void VAOAttribFormatI(){}
-    static void VAOAttribFormatL(){}
+    static void VAOBindingDivisor(CGhnd,uint32,uint32){}
+    static void VAOAttribBinding(CGhnd,uint32,uint32){}
 
-    static void VAOElementBuffer(){}
+    static void VAOElementBuffer(CGhnd,CGhnd){}
 
-    static void VAOBindingDivisor(){}
-    static void VAOVertexBuffer(){}
-    static void VAOVertexBuffers(){}
+    static void VAOBindVertexBuffer(CGhnd,uint32,CGhnd,int64,int64){}
+    static void VAOBindVertexBuffers(CGhnd,uint32,CGhnd,int64,int64){}
 
-    /* XFB */
+    /* Queries */
+    static void QueryBufferGetiv(CGhnd,CGhnd,CGenum,int64){}
+    static void QueryBufferGeti64v(CGhnd,CGhnd,CGenum,int64){}
+    static void QueryBufferGetui64v(CGhnd,CGhnd,CGenum,int64){}
+    static void QueryBufferGetuiv(CGhnd,CGhnd,CGenum,int64){}
+
+    /* DSA disabling */
+    static void FBBind(){}
+    static void BufBind(){}
+    static void TexBind(){}
+    static void SamplerBind(){}
     static void XFBind(){}
 };
 

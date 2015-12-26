@@ -5,7 +5,6 @@
 #include "matrices.h"
 
 namespace Coffee{
-namespace CVectors{
 
 template<typename T>
 struct _cbasic_tquaternion : _cbasic_tvector<T,4>
@@ -162,7 +161,6 @@ template<typename T> _cbasic_tquaternion<T> normalize_quat(
     return _cbasic_tquaternion<T>(v.w()*len,v.x()*len,v.y()*len,v.z()*len);
 }
 
-}
 }
 
 #endif

@@ -5,7 +5,6 @@
 #include "coffee/core/types/basetypes.h"
 
 namespace Coffee{
-namespace CVectors{
 
 template<typename T, size_t Size> struct _cbasic_tvector
 {
@@ -202,7 +201,6 @@ template<typename T,size_t Size> T distance(
     return length(v1-v2);
 }
 
-}
 }
 
 #endif

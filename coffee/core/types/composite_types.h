@@ -266,6 +266,31 @@ public:
     }
 };
 
+template<typename DimT> struct CBitmap
+{
+    CBitmap(DimT w, DimT h):
+        size(w,h)
+    {
+        m_px = (CRGBA*)c_calloc(sizeof(CRGBA),w*h);
+    }
+    ~CBitmap()
+    {
+        c_free(m_px);
+    }
+
+    const _cbasic_size_2d<DimT> size;
+    CRGBA* data()
+    {
+        return m_px;
+    }
+    const CRGBA* data() const
+    {
+        return m_px;
+    }
+private:
+    CRGBA* m_px;
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
@@ -286,6 +311,8 @@ typedef _cbasic_size_2d<bigscalar> CSizeD;
  * \brief Used for window rectangles
  */
 typedef _cbasic_rect<int32> CRect;
+
+typedef _cbasic_rect<int64> CRect64;
 /*!
  * \brief Used for orthographic view rectangle
  */
@@ -312,6 +339,8 @@ typedef _cbasic_point<bigscalar> CPointD;
  * \brief Standard clipping type
  */
 typedef _cbasic_zfield<scalar> CZField;
+
+typedef _cbasic_zfield<scalar> CZField64;
 
 typedef _cbasic_timer<uint64> CElapsedTimer;
 

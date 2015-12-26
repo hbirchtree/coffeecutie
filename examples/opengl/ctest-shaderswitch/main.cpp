@@ -312,7 +312,7 @@ public:
         case CIEvent::MouseMove:
         {
             const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
-            t = CVectors::normalize_quat(CQuat(1,mev->rel.y*0.1,mev->rel.x*0.1,0) * t);
+            t = normalize_quat(CQuat(1,mev->rel.y*0.1,mev->rel.x*0.1,0) * t);
             break;
         }
         default:

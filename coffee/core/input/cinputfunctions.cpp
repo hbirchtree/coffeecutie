@@ -16,7 +16,7 @@ void coffee_input_mouse_rotate(CQuat *cqt, const CIMouseMoveEvent *evsrc)
 //                quat(vec3(0.01*evsrc->rel.y,0,0))
 //                *quat(vec3(0,0.01*evsrc->rel.x,0))
 //                *(*qt));
-    *cqt = CVectors::normalize_quat(
+    *cqt = normalize_quat(
                 CQuat(1,0.01*evsrc->rel.y,0,0)
                 * CQuat(1,0,0.01*evsrc->rel.x,0)
                 * (*cqt));

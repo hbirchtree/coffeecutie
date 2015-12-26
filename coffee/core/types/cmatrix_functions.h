@@ -7,8 +7,6 @@
 namespace Coffee{
 namespace CGraphicsData{
 
-using namespace CVectors;
-
 template<typename T>
 _cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
         _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
@@ -34,7 +32,7 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_perspective(
 {
     CASSERT(CMath::abs(aspect - CMath::numeric_limits<T>::epsilon()) > T(0));
 
-    CVectors::_cbasic_tmatrix<T,4> matrix(0);
+    _cbasic_tmatrix<T,4> matrix(0);
 
     T thalffov = CMath::tan(CMath::radians(fov)/T(2));
 
@@ -55,9 +53,9 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
 {
     _cbasic_tmatrix<T,4> mat;
 
-    mat = CVectors::matrixify(rot);
-    mat = CVectors::scale(mat,scl);
-    mat = CVectors::translation(mat,pos);
+    mat = matrixify(rot);
+    mat = scale(mat,scl);
+    mat = translation(mat,pos);
 
     return mat;
 }

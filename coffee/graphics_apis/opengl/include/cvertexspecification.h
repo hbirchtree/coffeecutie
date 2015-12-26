@@ -49,14 +49,14 @@ public:
     }
 
     template<typename T, size_t Size,CDataType MType>
-    void addAttribute(int32 attrIdx, CVectors::_cbasic_tvector<T,Size> const* = nullptr)
+    void addAttribute(int32 attrIdx, _cbasic_tvector<T,Size> const* = nullptr)
     {
         CVertexAttribute attr = {};
         attr.attribIdx = attrIdx;
         attr.fmt = getFormat(MType,0,Size);
 
         CVertexBufferBinding *bnd = new CVertexBufferBinding;
-        bnd->stride = sizeof(CVectors::_cbasic_tvector<T,Size>);
+        bnd->stride = sizeof(_cbasic_tvector<T,Size>);
 
         m_dataset.bindings.push_back(bnd);
         attr.bnd = bnd;
@@ -65,7 +65,7 @@ public:
     }
 
     template<typename T, size_t Size>
-    void addAttributeMatrix(int32 attribIdxBase, CVectors::_cbasic_tmatrix<T,Size> const*)
+    void addAttributeMatrix(int32 attribIdxBase, _cbasic_tmatrix<T,Size> const*)
     {
         CVertexFormat* fmt = getFormat(CDataType::Scalar,0,Size);
         for(size_t i=0;i<Size;i++)
@@ -75,8 +75,8 @@ public:
             attr.attribIdx = attribIdxBase+i;
 
             CVertexBufferBinding *bnd = new CVertexBufferBinding;
-            bnd->offset = sizeof(typename CVectors::_cbasic_tmatrix<T,Size>::col_type)*i;
-            bnd->stride = sizeof(CVectors::_cbasic_tmatrix<T,Size>);
+            bnd->offset = sizeof(typename _cbasic_tmatrix<T,Size>::col_type)*i;
+            bnd->stride = sizeof(_cbasic_tmatrix<T,Size>);
             m_dataset.bindings.push_back(bnd);
             attr.bnd = bnd;
 

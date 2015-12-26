@@ -8,7 +8,7 @@ namespace CGL{
 /*!
  * \brief OpenGL 4.3 compliance model
  */
-struct CGL_GL43 : CGL_GL3
+struct CGL43 : CGL33
 {
     static bool TexStorageSupported(){return false;}
 
@@ -24,7 +24,7 @@ struct CGL_GL43 : CGL_GL3
 
     static bool ComputeShaderSupported(){return false;}
 
-    static bool InstancedXFBSupported(){return false;}
+    static bool InstancedXFSupported(){return false;}
 
     static bool MultiDrawIndirectSupported(){return false;}
 
@@ -32,179 +32,178 @@ struct CGL_GL43 : CGL_GL3
 
     /* Base */
     /* Use gl*Indexed gl*Arrayv */
-    static void ViewportSet(){}
-    static void ViewportArrayv(){}
+    static void ViewportSet(uint32,CRect const*){}
+    static void ViewportArrayv(uint32,size_t,CRect const*){}
 
-    static void ScissorSet(){}
-    static void ScissorArrayv(){}
+    static void ScissorSet(uint32,CRect const*){}
+    static void ScissorArrayv(uint32,size_t,CRect const*){}
 
-    static void DepthSet(){}
-    static void DepthArrayv(){}
-
-    static void FrontFace(){}
-
-    static void PointSize(){}
-    static void PointParameteriv(){}
-    static void PointParameterfv(){}
-
-    static void LineWidth(){}
-
-    static void PolyMode(){}
-    static void PolyOffset(){}
+    static void DepthSet(uint32,CZField64 const*){}
+    static void DepthArrayv(uint32,size_t,CZField64 const*){}
 
     /* Resource allocation */
     static bool PipelineAlloc(size_t,CGhnd*){return false;}
     static bool PipelineFree(size_t,CGhnd*){return false;}
 
     /* Shaders */
-    static void ShaderGetPrecisionFormat(){}
+    static void ShaderGetPrecisionFormat(CGenum,CGenum,int32*,int32*){}
     static void ShaderReleaseCompiler(){}
-    static void ShaderBinary(){}
+    static void ShaderBinary(size_t,const CGhnd*,CGenum,c_cptr,int64){}
 
-    static void ShaderGetiv(){}
+    static void ShaderGetiv(CGhnd,CGenum,int32*){}
 
     /* Programs */
-    static void ProgramBinary(){}
-    static void ProgramGetBinary(){}
+    static void ProgramBinary(CGhnd,CGenum,c_cptr){}
+    static void ProgramGetBinary(CGhnd,int64,int64*,CGenum*,c_ptr){}
 
-    static void ProgramGetInterfaceiv(){}
-    static void ProgramGetResourceiv(){}
+    static void ProgramGetInterfaceiv(CGhnd,CGenum,CGenum,int32*){}
 
-    static void ProgramGetResourceIdx(){}
-    static void ProgramGetResourceName(){}
-    static void ProgramGetResourceLoc(){}
-    static void ProgramGetResourceLocIdx(){}
+    static uint32 ProgramGetResourceIdx(CGhnd,CGenum,cstring){return 0;}
+    static cstring_w ProgramGetResourceName(CGhnd,CGenum,uint32){return nullptr;}
+    static uint32 ProgramGetResourceLoc(CGhnd,CGenum,cstring){return 0;}
+    static uint32 ProgramGetResourceLocIdx(CGhnd,CGenum,cstring){return 0;}
 
-    static CGhnd ProgramCreate(){return 0;}
-    static void ProgramParameter(){}
+    static CGhnd ProgramCreate(CGenum,size_t,cstring const*){return 0;}
+    static void ProgramParameter(CGhnd,CGenum,int32){}
 
-    static void ProgramGetiv(){}
-
-    static void ProgramValidate(){}
-
-    static CGint ProgramGetFragDataLoc(){return 0;}
-    static CGint ProgramGetFragDataIdx(){return 0;}
-    static void ProgramBindFragData(){}
-    static void ProgramBindFragDataIndexed(){}
+    static bool ProgramValidate(CGhnd){return false;}
 
     /* Pipelines */
-    static void PipelineBind(){}
+    static void PipelineBind(CGhnd){}
     static bool PipelineUseStages(){return false;}
-    static void PipelineActive(){}
+    static void PipelineActive(CGhnd,CGenum,CGhnd){}
 
-    static void PipelineValidate(){}
+    static void PipelineGetiv(CGhnd,CGenum,int32*){}
+    static cstring_w PipelineGetLog(CGhnd){return nullptr;}
+
+    static bool PipelineValidate(CGhnd){return false;}
 
     /* Textures */
-    static void TexView(){}
+    static void TexView(CGhnd,CGenum,CGhnd,CGenum,uint32,uint32,uint32,uint32){}
 
-    static bool TexStorage2D(){return false;}
-    static bool TexStorage3D(){return false;}
+    static bool TexStorage2D(CGenum,int64,CGenum,int64,int64){return false;}
+    static bool TexStorage3D(CGenum,int64,CGenum,int64,int64){return false;}
 
-    static void ImageBindTexture(){}
-    static bool ImageCopyData(){return false;}
-    static bool ImageCopySubData(){return false;}
+    static void ImageBindTexture(CGhnd,CGhnd,int32,bool,int32,CGenum,CGenum){}
+    static bool ImageCopySubData(CGhnd,CGenum,int32,int32,int32,int32,
+                                 CGhnd,CGenum,int32,int32,int32,int32,
+                                 int64,int64,int64){return false;}
 
     /* Buffers */
-    static void BufClearData(){}
-    static void BufClearSubData(){}
+    static void BufClearData(CGenum,CGenum,CGenum,TypeEnum,c_cptr){}
+    static void BufClearSubData(CGenum,CGenum,int64,int64,CGenum,TypeEnum,c_cptr){}
 
-    static void BufInvalidateData(){}
-    static void BufInvalidateSubData(){}
+    static void BufInvalidateData(CGhnd){}
+    static void BufInvalidateSubData(CGhnd,int64,int64){}
 
     /* Shader buffer */
-    static void SBufBind(){}
+    static void SBufBind(CGhnd,uint32,uint32){}
 
     /* Queries */
-    static void QueryGeti64v(){}
-    static void QueryCounter(){}
+    static void QueryIndexedBegin(CGenum,uint32,CGhnd){}
+    static void QueryIndexedEnd(CGenum,uint32){}
+
+    static void QueryIndexedGetiv(CGenum,uint32,CGenum,int32*){}
 
     /* VAO */
-    static void VAOAttribFormat(){}
-    static void VAOAttribFormatI(){}
-    static void VAOAttribFormatL(){}
+    static void VAOAttribFormat(uint32,int32,CGenum,bool,uint32){}
+    static void VAOAttribFormatI(uint32,int32,CGenum,uint32){}
+    static void VAOAttribFormatL(uint32,int32,CGenum,uint32){}
 
-    static void VAOElementBuffer(){}
+    static void VAOBindingDivisor(uint32,uint32){}
+    static void VAOAttribBinding(uint32,uint32){}
+    static void VAOBindVertexBuffer(uint32,CGhnd,int64,int64){}
 
-    static void VAOBindingDivisor(){}
-    static void VAOAttribBinding(){}
-    static void VAOBindVertexBuffer(){}
+    static void VAOPrimitiveRestart(uint32){}
 
-    static void VAOPrimitiveRestart(){}
+    /* Just to hide and disable outdated functionality */
+    static void VAOAttribPointer(){}
+    static void VAOAttribIPointer(){}
+    static void VAOAttribLPointer(){}
+    static void VAODivisor(){}
+
+    /* Buffers */
+    static void BufStorage(CGenum,int64,c_cptr,CGenum){}
+
+    /* Framebuffer */
+    static void FBInvalidate(CGenum,size_t,const CGenum*){}
 
     /* XFB */
+    static void XFBind(CGhnd){}
+
     static void XFPause(){}
     static void XFResume(){}
 
     /* ProgramUniform* functions */
-    static void Uniform1fv(){}
-    static void Uniform2fv(){}
-    static void Uniform3fv(){}
-    static void Uniform4fv(){}
+    static void Uniformfv(CGhnd,int32,size_t,const scalar*){}
+    static void Uniformiv(CGhnd,int32,size_t,const int32*){}
 
-    static void Uniform1iv(){}
-    static void Uniform2iv(){}
-    static void Uniform3iv(){}
-    static void Uniform4iv(){}
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_vec2<scalar>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_vec2<int32>*){}
 
-    static void Uniform1uiv(){}
-    static void Uniform2uiv(){}
-    static void Uniform3uiv(){}
-    static void Uniform4uiv(){}
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_vec3<scalar>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_vec3<int32>*){}
 
-    static void UniformMatrix2fv(){}
-    static void UniformMatrix2x3fv(){}
-    static void UniformMatrix3fv(){}
-    static void UniformMatrix3x2fv(){}
-    static void UniformMatrix3x4fv(){}
-    static void UniformMatrix4fv(){}
-    static void UniformMatrix4x2fv(){}
-    static void UniformMatrix4x3fv(){}
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_vec4<scalar>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_vec4<int32>*){}
 
-    static void UniformMatrix2iv(){}
-    static void UniformMatrix2x3iv(){}
-    static void UniformMatrix3iv(){}
-    static void UniformMatrix3x2iv(){}
-    static void UniformMatrix3x4iv(){}
-    static void UniformMatrix4iv(){}
-    static void UniformMatrix4x2iv(){}
-    static void UniformMatrix4x3iv(){}
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmatrix<scalar,2>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmatrix<int32,2>*){}
 
-    static void UniformMatrix2uiv(){}
-    static void UniformMatrix2x3uiv(){}
-    static void UniformMatrix3uiv(){}
-    static void UniformMatrix3x2uiv(){}
-    static void UniformMatrix3x4uiv(){}
-    static void UniformMatrix4uiv(){}
-    static void UniformMatrix4x2uiv(){}
-    static void UniformMatrix4x3uiv(){}
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<scalar,2,3>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<int32,2,3>*){}
+
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmatrix<scalar,3>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmatrix<int32,3>*){}
+
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<scalar,3,2>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<int32,3,2>*){}
+
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<scalar,3,4>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<int32,3,4>*){}
+
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmatrix<scalar,4>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmatrix<int32,4>*){}
+
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<scalar,4,3>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<int32,4,3>*){}
+
+    static void Uniformfv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<scalar,4,2>*){}
+    static void Uniformiv(CGhnd,int32,size_t,const _cbasic_tmnmatrix<int32,4,2>*){}
 
     /* Memory barrier */
-    static void MemoryBarrier(){}
+    static void MemoryBarrier(CGenum){}
 
     /* Tessellation */
-    static void PatchParamterfv(){}
+    static void PatchParamteri(CGenum,int32){}
+    static void PatchParamterfv(CGenum,const scalar*){}
 
     /* Drawing */
-    static void DrawArraysIndirect(){}
-    static void DrawArraysInstancedBaseInstance(){}
+    static void DrawArraysIndirect(Primitive,PrimitiveCreation,uint64){}
+    static void DrawArraysInstancedBaseInstance(Primitive,PrimitiveCreation,int32,
+                                                int64,int64,uint32){}
 
-    static void DrawElementsIndirect(){}
-    static void DrawElementsInstancedBaseInstance(){}
-    static void DrawElementsInstancedBaseVertexBaseInstance(){}
+    static void DrawElementsIndirect(Primitive,PrimitiveCreation,TypeEnum,uint64,int64,int64){}
+    static void DrawElementsInstancedBaseInstance(Primitive,PrimitiveCreation,int64,
+                                                  TypeEnum,uint64,int64,int64){}
+    static void DrawElementsInstancedBaseVertexBaseInstance(Primitive,PrimitiveCreation,int64,
+                                                            TypeEnum,uint64,int64,int64,
+                                                            int32,int32){}
 
-    static void DrawRangeElements(){}
+    static void DrawRangeElements(Primitive,PrimitiveCreation,uint32,uint32,int64,TypeEnum,uint64){}
 
-    static void DrawMultiArraysIndirect(){}
-    static void DrawMultiElementsIndirect(){}
+    static void DrawMultiArraysIndirect(Primitive,PrimitiveCreation,uint64,int64,int64){}
+    static void DrawMultiElementsIndirect(Primitive,PrimitiveCreation,TypeEnum,uint64,int64,int64){}
 
-    static void DrawXFB(){}
-    static void DrawXFBInstanced(){}
-    static void DrawXFBStream(){}
-    static void DrawXFBStreamInstanced(){}
+    static void DrawXF(Primitive,PrimitiveCreation,CGhnd){}
+    static void DrawXFStream(Primitive,PrimitiveCreation,CGhnd,uint32){}
+
+    static void DrawXFInstanced(Primitive,PrimitiveCreation,CGhnd,int64){}
+    static void DrawXFStreamInstanced(Primitive,PrimitiveCreation,CGhnd,uint32,int64){}
 
     /* Compute */
-    static void ComputeDispatch(){}
-    static void ComputeDispatchIndirect(){}
+    static void ComputeDispatch(uint32,uint32,uint32){}
+    static void ComputeDispatchIndirect(int64){}
 };
 
 }
