@@ -1,6 +1,7 @@
 #ifndef CSDL2RENDERER_H
 #define CSDL2RENDERER_H
 
+#include <graphics_apis/opengl/include/levels/gltypes.h>
 #include "coffee/core/functional/cqueuerunner.h"
 #include "coffee/core/base/cdebug.h"
 #include <mutex>
@@ -86,6 +87,10 @@ public:
 
     void swapBuffers();
     void pollEvents();
+
+    CGL::CGL_Context* glContext();
+
+    CGL::CGL_ScopedContext scopedContext();
 
 protected:
     CSDL2Renderer(CObject* parent);

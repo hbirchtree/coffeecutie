@@ -16,6 +16,14 @@ struct CGL33 : CGL_Implementation
 
     static bool CubemapSeamlessSupported(){return false;}
 
+    static bool ASTCSupported(){return false;}
+
+    static bool BPTCSupported(){return false;}
+
+    static bool RGTCSupported(){return false;}
+
+    static bool DXTCSupported(){return false;}
+
     /* Base */
     static void Enable(CGenum){}
     static void Disable(CGenum){}

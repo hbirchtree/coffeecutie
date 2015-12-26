@@ -9,6 +9,38 @@ namespace CDisplay{
 
 using namespace Coffee::CSDL2Types;
 
+struct CGL_SDL_GL_Context : CGL::CGL_Context
+{
+    CGL_SDL_GL_Context(SDL_Window* win):
+        m_window(win)
+    {
+        m_context = SDL_GL_CreateContext(win);
+        acquireContext();
+    }
+    ~CGL_SDL_GL_Context()
+    {
+        SDL_GL_DeleteContext(m_context);
+    }
+    bool acquireContext()
+    {
+        new (&m_threadId) CThreadId;
+        return SDL_GL_MakeCurrent(m_window,m_context)==0;
+    }
+    bool releaseContext()
+    {
+        return SDL_GL_MakeCurrent(nullptr,nullptr)==0;
+    }
+    const CThreadId &currentThread()
+    {
+        return m_threadId;
+    }
+protected:
+    CThreadId m_threadId;
+private:
+    SDL_Window* m_window;
+    SDL_GLContext m_context;
+};
+
 CSDL2Renderer::CSDL2Renderer(Coffee::CObject *parent) :
     CDQueueRendererBase(parent)
 {
@@ -70,9 +102,9 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
         cFatal("Failed to create SDL2 window: {0}",SDL_GetError());
     }
 
-    m_context->context = SDL_GL_CreateContext(m_context->window);
+    m_context->context = new CGL_SDL_GL_Context(m_context->window);
 
-    if(SDL_GL_MakeCurrent(m_context->window,m_context->context))
+    if(!m_context->context->acquireContext())
     {
         cFatal("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
     }
@@ -120,7 +152,7 @@ void CSDL2Renderer::cleanup()
             SDL_GameControllerClose(m_context->controllers[con.first]);
         }
 
-        SDL_GL_DeleteContext(m_context->context);
+        delete m_context->context;
         SDL_DestroyWindow(m_context->window);
         SDL_Quit();
         delete m_context;
@@ -407,6 +439,16 @@ void CSDL2Renderer::pollEvents()
 {
     while(SDL_PollEvent(&m_context->eventhandle))
         coffee_sdl2_eventhandle_all(this,&m_context->eventhandle);
+}
+
+CGL::CGL_Context *CSDL2Renderer::glContext()
+{
+    return m_context->context;
+}
+
+CGL::CGL_ScopedContext CSDL2Renderer::scopedContext()
+{
+    return CGL::CGL_ScopedContext(m_context->context);
 }
 
 /*!

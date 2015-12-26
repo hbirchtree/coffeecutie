@@ -1,56 +1,15 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
+#include "gltypes.h"
 #include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cthreading.h>
 #include <coffee/core/CTypes>
+
 #include <glcore/glcorearb.h>
+#include <glcore/glext.h>
 
 namespace Coffee{
 namespace CGL{
-
-/*!
- * \brief An objectified OpenGL context
- */
-struct CGL_Context
-{
-    virtual bool acquireContext() = 0;
-    virtual bool releaseContext() = 0;
-    virtual const CFunctional::CThreading::CThreadId &currentThread() = 0;
-};
-/*!
- * \brief A static object
- */
-struct CGL_Layer
-{
-    using InterceptFunction = void(*)(cstring);
-
-    static bool Initialize(){return false;}
-    static bool Terminate(){return false;}
-
-    static void InsertCallInterceptPre(InterceptFunction){}
-    static void InsertCallInterceptPost(InterceptFunction){}
-
-    static CGL_Context* CreateContext(){return nullptr;}
-    static bool DeleteContext(CGL_Context*){return false;}
-};
-/*!
- * \brief A thread-local scoped OpenGL context, acquired on creation and released on deletion
- */
-struct CGL_ScopedContext
-{
-    CGL_ScopedContext(CGL_Context* ctxt):
-        m_ctxt(ctxt)
-    {
-        m_ctxt->acquireContext();
-    }
-    virtual ~CGL_ScopedContext()
-    {
-        m_ctxt->releaseContext();
-    }
-protected:
-    CGL_Context* m_ctxt;
-};
 
 struct CGL_Implementation
 {
