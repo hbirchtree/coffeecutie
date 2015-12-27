@@ -24,9 +24,9 @@ set ( CoffeeOpenGL_SRCS
         private/wrappers/ctexture_pbo.cpp
         private/wrappers/cuniformtypes.cpp
         private/wrappers/cviewport_array.cpp
-    )
 
-add_library( CoffeeOpenGL ${COFFEE_LINK_OPT} ${CoffeeOpenGL_SRCS} )
+        private/glad/glad.c
+    )
 
 include_directories (
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -34,6 +34,9 @@ include_directories (
         ${COFFEE_IMAGE_INCLUDE_DIR}
         ${GLBINDING_INCLUDE_DIRS}
     )
+
+add_library( CoffeeOpenGL ${COFFEE_LINK_OPT} ${CoffeeOpenGL_SRCS} )
+
 
 target_link_libraries ( CoffeeOpenGL
                 CoffeeCore

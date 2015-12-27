@@ -5,8 +5,8 @@
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/CTypes>
 
-#include <glcore/glcorearb.h>
-#include <glcore/glext.h>
+#include <glad/glad.h>
+#include <KHR/khrplatform.h>
 
 namespace Coffee{
 namespace CGL{
@@ -130,10 +130,11 @@ struct CGL_Implementation
 
     /* Type definitions */
 
-    typedef uint32 CGenum;
+    using CGenum = uint32;
+    using CGflag = uint32;
 
     /* Shorthand for GL object handles, we will treat them differently */
-    typedef uint32 CGhnd;
+    using CGhnd = uint32;
 
     /* Feature support */
 
@@ -211,6 +212,10 @@ struct CGL_Implementation
 
         static bool InternalFormatSupport(CGenum){return false;}
     };
+
+    static void LoadBinding()
+    {
+    }
 };
 
 }

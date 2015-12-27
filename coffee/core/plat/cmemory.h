@@ -17,7 +17,12 @@ extern void c_memclear(c_ptr start, szptr len);
 extern void* c_alloc(szptr datasize);
 
 extern void* c_realloc(c_ptr ptr, szptr datasize);
-
+/*!
+ * \brief Should provide a 0-initialized chunk of memory
+ * \param unit
+ * \param num
+ * \return
+ */
 extern void* c_calloc(szptr unit, szptr num);
 
 extern bool c_strcmp(cstring s1, cstring s2);

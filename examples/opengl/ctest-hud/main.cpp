@@ -2,6 +2,8 @@
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 
+#include <graphics_apis/opengl/include/levels/gl33.h>
+
 using namespace Coffee;
 using namespace CDisplay;
 using namespace CGraphicsData;

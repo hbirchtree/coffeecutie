@@ -10,7 +10,7 @@ namespace CGL{
  */
 struct CGL45 : CGL43
 {
-    typedef uint64 CGhnd64;
+    using CGhnd64 = uint64;
 
     static bool DirectStateSupported(){return false;}
 

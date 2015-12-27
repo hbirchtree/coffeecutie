@@ -45,6 +45,9 @@ struct CGL43 : CGL33
     static bool PipelineAlloc(size_t,CGhnd*){return false;}
     static bool PipelineFree(size_t,CGhnd*){return false;}
 
+    static bool XFAlloc(size_t l,CGhnd* d){glGenTransformFeedbacks(l,d); return false;}
+    static bool XFFree(size_t l,CGhnd* d){glDeleteTransformFeedbacks(l,d); return false;}
+
     /* Shaders */
     static void ShaderGetPrecisionFormat(CGenum,CGenum,int32*,int32*){}
     static void ShaderReleaseCompiler(){}
@@ -127,6 +130,8 @@ struct CGL43 : CGL33
 
     /* Framebuffer */
     static void FBInvalidate(CGenum,size_t,const CGenum*){}
+    static void FBParameteri(CGenum t,CGenum p,int32 d)
+    {glFramebufferParameteri(t,p,d);}
 
     /* XFB */
     static void XFBind(CGhnd){}

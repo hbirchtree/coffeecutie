@@ -207,6 +207,13 @@ inline void cMsg(cstring src, cstring msg, Arg... args)
     cDebugPrint(0,1,"{0}: {1}",src,msg_out.c_str());
 }
 
+template<typename...Arg>
+inline void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
+{
+    CString msg_out = cStringFormat(msg,args...);
+    cDebugPrint(0,1,"LOGGER:{0}:{3}:{1}: {2}",file,id,msg_out.c_str(),line);
+}
+
 }
 }
 

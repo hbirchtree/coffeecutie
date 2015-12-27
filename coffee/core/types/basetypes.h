@@ -36,12 +36,12 @@ inline bool flag_eval(T flagcombo)
 typedef char                int8;
 typedef short               int16;
 typedef int                 int32;
-typedef long long           int64;
+typedef long int            int64;
 
 typedef unsigned char       uint8;
 typedef unsigned short      uint16;
 typedef unsigned int        uint32;
-typedef unsigned long long  uint64;
+typedef unsigned long int   uint64;
 
 typedef float               scalar; /*!< Low-precision float value*/
 typedef double              bigscalar; /*!< High-precision float value*/
