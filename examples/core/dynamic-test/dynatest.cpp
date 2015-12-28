@@ -3,6 +3,7 @@
 
 using namespace Coffee;
 using namespace CDisplay;
+using namespace CGraphicsWrappers;
 
 class CDRenderer : public Coffee::CDisplay::CGLBindingRenderer
 {

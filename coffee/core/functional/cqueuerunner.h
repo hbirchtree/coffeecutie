@@ -1,11 +1,12 @@
 #ifndef COFFEE_CFUNCTIONAL_CQUEUERUNNER_H
 #define COFFEE_CFUNCTIONAL_CQUEUERUNNER_H
 
-#include "coffee/core/coffee.h"
 #include "coffee/core/base/cdrendererbase.h"
-#include <mutex>
 
 namespace Coffee {
+
+using QueueFunction = std::function<void()>;
+
 namespace CFunctional {
 
 class CQueueRunner

@@ -6,6 +6,7 @@ using namespace Coffee;
 using namespace CDisplay;
 using namespace CAudio;
 using namespace COpenAL;
+using namespace CGraphicsWrappers;
 
 class CDRenderer : public Coffee::CDisplay::CGLBindingRenderer
 {

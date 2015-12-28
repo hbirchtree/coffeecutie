@@ -19,7 +19,7 @@ struct CFFVideoPlayer;
 
 struct CFFVideoFormat
 {
-    CTextureSize size;
+    CGraphicsWrappers::CTextureSize size;
 };
 
 struct CFFVideoDescriptor

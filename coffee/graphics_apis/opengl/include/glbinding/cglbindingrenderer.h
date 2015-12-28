@@ -6,18 +6,12 @@
 
 namespace Coffee{
 
-namespace CGraphicsWrappers{
-struct CGLReport;
-}
-
 namespace CDisplay{
 
 /*!
  * \brief Returns true if message is accepted, false is discarded
  */
-typedef std::function<bool(CGLDebugMessage const&)> CGLMessageFilter;
-
-bool glbinding_default_filter(CGLReport *report);
+using CGLMessageFilter = std::function<bool(CGraphicsWrappers::CGLDebugMessage const&)>;
 
 class CGLBindingRenderer : public CSDL2Renderer
 {

@@ -6,6 +6,7 @@
 
 #include "plat/platform_detect.h"
 #include "plat/cmemory.h"
+#include "base/cdebug.h"
 
 #include <thread>
 #include <functional>
@@ -22,8 +23,12 @@ enum CoffeeExitCode
     CoffeeExit_Kill        = 122,
 };
 
-constexpr cstring _coffee_build_date = __DATE__;
-constexpr cstring _coffee_build_time = __TIME__;
+constexpr cstring cbuild_string = C_CONSTRUCT_BUILD_STRING("01.00",__CBDATETIME__);
+
+inline void print_builddate()
+{
+    cDebug("Build date: {0}",cbuild_string);
+}
 
 /*!
  * \brief This function handles initial program startup
@@ -35,57 +40,15 @@ extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t** argc);
  */
 extern void CoffeeInit();
 
+extern void CoffeeTerminate();
+
 //A simpler implementation of QObject
 class CObject;
 
-namespace CDisplay{
-//Required for some things!
-struct CDWindow;
-}
+namespace CFunctional{}
 
-//Wrappers for GL features
-namespace CGraphicsWrappers{}
-
-//Physics-related types
-namespace CPhysicsSystem{}
-
-//Misc. resources in engine, should not interface with GL directly
-namespace CResourceTypes{}
-
-//Core classes
-namespace CFunctional{
-class CQueueRunner;
-
-namespace CThreading{
-typedef std::thread::id thread_id;
-}
-
-template<typename RType, typename... AType>
-class CRFunction;
-
-//These are queued up, run and deleted
-typedef std::function<void()> QueueFunction;
-}
-
-//Input classes
-namespace CInput{
-//Rest of it is in "coffee/cinput.h"
-typedef CFunctional::CRFunction<void,void*,uint32> CInputHandlerFunction;
-}
-
-//Windowing and rendering contexts
-namespace CDisplay{
-typedef CFunctional::CRFunction<void> RenderFunction;
-}
-
-//File management
-namespace CResources{}
-
-//Scripting
-namespace CScripting{}
+using namespace CFunctional;
 
 } //Coffee
-
-using namespace Coffee::CFunctional;
 
 #endif // COFFEE_H

@@ -9,12 +9,19 @@ set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 
+#Build time strings
+string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
+add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
+#add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
+
+#Warning flags
 if (NOT WIN32)
     add_definitions ( -Wall )
 else()
     add_definitions ( -W4 )
 endif()
 
+#Includes
 include_directories (
         ${CMAKE_SOURCE_DIR}
         ${CMAKE_BINARY_DIR}/libs/include
@@ -26,14 +33,17 @@ include_directories ( SYSTEM
         libs
     )
 
+#Mark warnings as errors (GCC)
 if(CMAKE_COMPILER_IS_GNUCXX)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
 
+#Add automatic linking directory
 link_directories(
     ${CMAKE_BINARY_DIR}/libs/lib/
     )
 
+#Static builds
 if (COFFEE_BUILD_STATIC)
     set(COFFEE_LINK_OPT STATIC)
 else()

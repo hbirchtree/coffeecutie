@@ -9,9 +9,6 @@
 using namespace Coffee::CInput;
 
 namespace Coffee {
-
-using namespace Coffee::CGraphicsWrappers;
-
 namespace CDisplay {
 
 /*!
@@ -275,7 +272,7 @@ inline std::future<void> coffee_display_start_async(
         obj->run();
         obj->cleanup();
     };
-    return CThreading::runAsync(display_task);
+    return CFunctional::CThreading::runAsync(display_task);
 }
 
 } // namespace CDisplay

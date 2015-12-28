@@ -5,6 +5,9 @@
 
 #include <stdio.h>
 
+using namespace Coffee;
+using namespace CDebugPrint;
+
 class TestImplementation : public TestClass
 {
 public:

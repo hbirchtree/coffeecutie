@@ -16,6 +16,8 @@ using namespace Coffee::CDisplay;
 namespace Coffee {
 namespace CDisplay {
 
+using namespace CGraphicsWrappers;
+
 void glbinding_default_callback(CGLDebugMessage const& report, void* userPtr)
 {
     CGLBindingRenderer* ptr = (CGLBindingRenderer*)userPtr;

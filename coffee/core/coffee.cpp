@@ -57,13 +57,21 @@ void CoffeeInit()
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
 {
+    CoffeeInit();
 #ifndef NDEBUG
-    cDebug("Build date: {0}, {1}",_coffee_build_date,_coffee_build_time);
+    print_builddate();
 #endif
     if(!coffee_initialized)
         cWarning("CoffeeInit was not called");
     cDebug("CoffeeMain is in use");
-    return mainfun(argv,argc);
+    int32 r = mainfun(argv,argc);
+    CoffeeTerminate();
+    return r;
+}
+
+void CoffeeTerminate()
+{
+
 }
 
 }

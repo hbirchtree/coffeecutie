@@ -20,11 +20,10 @@
 #include "cdebug_print.h"
 #include "coffee/core/coffee_macros.h"
 
-#include "coffee/core/coffee.h"
 #include "counter.h"
 
 namespace Coffee{
-namespace CFunctional{
+namespace CDebugPrint{
 
 extern cstring_w coffee_debug_get_clock_string();
 extern void coffee_debug_clear_clock_string(cstring_w str);
@@ -207,11 +206,16 @@ inline void cMsg(cstring src, cstring msg, Arg... args)
 template<typename...Arg>
 inline void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
 {
+#ifndef NDEBUG
     CString msg_out = cStringFormat(msg,args...);
     cBasicPrint("LOGR:{0}:{3}:{1}: {2}",file,id,msg_out.c_str(),line);
+#endif
 }
 
 }
+
+using namespace Coffee::CDebugPrint;
+
 }
 
 #endif // COFFEE_DEBUG

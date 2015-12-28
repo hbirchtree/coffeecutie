@@ -7,7 +7,7 @@
 #include "coffee/core/types/basetypes.h"
 
 namespace Coffee{
-namespace CFunctional{
+namespace CDebugPrint{
 
 inline CString cStringResolve(CString fmt, size_t)
 {
@@ -53,22 +53,6 @@ inline CString cStringReplace(
 {
     return cStrReplace(fmt,index,std::to_string(arg));
 }
-
-//template<typename T>
-//inline CString cStringReplace(
-//        CString fmt, size_t index,
-//        const T &arg)
-//{
-//    return cStrReplace(fmt,index,std::to_string(arg));
-//}
-
-//template<typename T>
-//inline CString cStringReplace(
-//        CString fmt, size_t index,
-//        const T &arg)
-//{
-//    return cStrReplace(fmt,index,"{?}");
-//}
 
 template<typename T>
 inline CString cStringResolve(CString fmt, size_t index, const T& arg)

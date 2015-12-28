@@ -7,6 +7,7 @@
 using namespace Coffee;
 using namespace CDisplay;
 using namespace CGraphicsData;
+using namespace CGraphicsWrappers;
 
 void framefun(uint32 t, const void*)
 {
