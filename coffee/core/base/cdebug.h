@@ -154,11 +154,8 @@ template<typename... Arg>
  */
 inline void cBasicPrint(cstring str, Arg... args)
 {
-    cstring_w fmt = c_cpy_string(str);
-    c_realloc(fmt,c_strlen(str)+2);
-    c_strcat(fmt,"\n");
-    cfprintf(stderr,fmt,args...);
-    c_free(fmt);
+    CString out = cStringFormat(str,args...);
+    cfprintf(stderr,"{0}\n",out.c_str());
 }
 
 template<typename... Arg>
@@ -211,7 +208,7 @@ template<typename...Arg>
 inline void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
 {
     CString msg_out = cStringFormat(msg,args...);
-    cDebugPrint(0,1,"LOGGER:{0}:{3}:{1}: {2}",file,id,msg_out.c_str(),line);
+    cBasicPrint("LOGR:{0}:{3}:{1}: {2}",file,id,msg_out.c_str(),line);
 }
 
 }

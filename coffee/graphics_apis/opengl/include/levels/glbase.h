@@ -80,10 +80,29 @@ struct CGL_Implementation
         T2D,
         T3D,
         Cubemap,
+        Rect,
 
         T2DArray,
         T3DArray,
         CubemapArray,
+
+        CubeX_P,
+        CubeX_N,
+        CubeY_P,
+        CubeY_N,
+        CubeZ_P,
+        CubeZ_N,
+
+        Proxy2D,
+        Proxy3D,
+        ProxyCube,
+        ProxyRect,
+    };
+
+    enum class InternalFormat
+    {
+        RGBA8,
+        RGBA32F,
     };
 
     enum class OperationType
@@ -105,6 +124,32 @@ struct CGL_Implementation
         VertexElementCompletion,
 
         FramebufferCompletion,
+    };
+
+    enum class Feature
+    {
+        Blend,
+
+        DepthClamp,
+        DepthTest,
+        Dither,
+
+        FramebufferSRGB,
+
+        LineSmooth,
+        PolygonSmooth,
+
+        PrimitiveRestart,
+        PrimitiveRestartFixedIdx,
+
+        SampleAlphaToCoverage,
+        SampleShading,
+        SampleMask,
+
+        ScissorTest,
+        StencilTest,
+
+        PointSize,
     };
 
     enum class RetrieveStrategy

@@ -1,8 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/core/CDataStorage>
-
 #include "library.h"
-#include <coffee/graphics_apis/opengl/include/levels/gl45.h>
 
 using namespace Coffee;
 

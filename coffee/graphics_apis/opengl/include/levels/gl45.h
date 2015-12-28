@@ -127,7 +127,6 @@ struct CGL45 : CGL43
 
     /* DSA disabling */
     static void FBBind(){}
-    static void BufBind(){}
     static void TexBind(){}
     static void SamplerBind(){}
     static void XFBind(){}

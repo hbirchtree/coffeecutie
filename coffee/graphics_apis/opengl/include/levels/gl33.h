@@ -33,16 +33,19 @@ struct CGL33 : CGL_Implementation
     static void Enable(CGenum e){glEnable(e);}
     static void Disable(CGenum e){glDisable(e);}
 
+    static void Enablei(CGenum e,uint32 i){glEnablei(e,i);}
+    static void Disablei(CGenum e,uint32 i){glDisablei(e,i);}
+
     static void Clear(CGflag f){glClear(f);}
     static void ClearColor(CVec4 c){glClearColor(c.x(),c.y(),c.z(),c.w());}
 
     static void ClearDepth(scalar f){glClearDepthf(f);}
-    static void ClearStencil(scalar f){glClearStencil(f);}
+    static void ClearStencil(int32 f){glClearStencil(f);}
 
     static void ClearBufferiv(CGenum f,int32 i,const int32* d){glClearBufferiv(f,i,d);}
     static void ClearBufferuiv(CGenum f,int32 i,const uint32* d){glClearBufferuiv(f,i,d);}
     static void ClearBufferfv(CGenum f,int32 i,const scalar* d){glClearBufferfv(f,i,d);}
-    static void ClearBufferfi(CGenum f,int32 i,scalar d1,scalar d2){glClearBufferfi(f,i,d1,d2);}
+    static void ClearBufferfi(CGenum f,int32 i,scalar d1,int32 d2){glClearBufferfi(f,i,d1,d2);}
 
     static void FrontFace(Face v)
     {
@@ -109,26 +112,26 @@ struct CGL33 : CGL_Implementation
     static void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
 
     /* Allocations */
-    static bool TexAlloc(size_t l,CGhnd* d){glGenTextures(l,d); return true;}
-    static bool TexFree(size_t l,CGhnd* d){glDeleteTextures(l,d); return true;}
+    static bool TexAlloc(int32 l,CGhnd* d){glGenTextures(l,d); return true;}
+    static bool TexFree(int32 l,CGhnd* d){glDeleteTextures(l,d); return true;}
 
-    static bool FBAlloc(size_t l,CGhnd* d){glGenFramebuffers(l,d); return true;}
-    static bool FBFree(size_t l,CGhnd* d){glDeleteFramebuffers(l,d); return true;}
+    static bool FBAlloc(int32 l,CGhnd* d){glGenFramebuffers(l,d); return true;}
+    static bool FBFree(int32 l,CGhnd* d){glDeleteFramebuffers(l,d); return true;}
 
-    static bool RenderBufferAlloc(size_t l,CGhnd* d){glGenRenderbuffers(l,d); return true;}
-    static bool RenderBufferFree(size_t l,CGhnd* d){glDeleteRenderbuffers(l,d); return true;}
+    static bool RenderBufferAlloc(int32 l,CGhnd* d){glGenRenderbuffers(l,d); return true;}
+    static bool RenderBufferFree(int32 l,CGhnd* d){glDeleteRenderbuffers(l,d); return true;}
 
-    static bool SamplerAlloc(size_t l,CGhnd* d){glGenSamplers(l,d); return true;}
-    static bool SamplerFree(size_t l,CGhnd* d){glDeleteSamplers(l,d); return true;}
+    static bool SamplerAlloc(int32 l,CGhnd* d){glGenSamplers(l,d); return true;}
+    static bool SamplerFree(int32 l,CGhnd* d){glDeleteSamplers(l,d); return true;}
 
-    static bool BufAlloc(size_t l,CGhnd* d){glGenBuffers(l,d); return true;}
-    static bool BufFree(size_t l,CGhnd* d){glDeleteBuffers(l,d); return true;}
+    static bool BufAlloc(int32 l,CGhnd* d){glGenBuffers(l,d); return true;}
+    static bool BufFree(int32 l,CGhnd* d){glDeleteBuffers(l,d); return true;}
 
-    static bool VAOAlloc(size_t l,CGhnd* d){glGenVertexArrays(l,d); return true;}
-    static bool VAOFree(size_t l,CGhnd* d){glDeleteVertexArrays(l,d); return true;}
+    static bool VAOAlloc(int32 l,CGhnd* d){glGenVertexArrays(l,d); return true;}
+    static bool VAOFree(int32 l,CGhnd* d){glDeleteVertexArrays(l,d); return true;}
 
-    static bool QueryAlloc(size_t l,CGhnd* d){glGenQueries(l,d); return true;}
-    static bool QueryFree(size_t l,CGhnd* d){glDeleteQueries(l,d); return true;}
+    static bool QueryAlloc(int32 l,CGhnd* d){glGenQueries(l,d); return true;}
+    static bool QueryFree(int32 l,CGhnd* d){glDeleteQueries(l,d); return true;}
 
     static bool ProgramAlloc(size_t l,CGhnd* d)
     {
@@ -360,57 +363,55 @@ struct CGL33 : CGL_Implementation
     }
     static uint32 ProgramSubRtGetLoc(CGhnd h,CGenum s,cstring n){return glGetSubroutineIndex(h,s,n);}
     /* Binds all subroutine uniforms */
-    static void ProgramSubRtBind(CGenum s,size_t n,const uint32* d){glUniformSubroutinesuiv(s,n,d);}
+    static void ProgramSubRtBind(CGenum s,int32 n,const uint32* d){glUniformSubroutinesuiv(s,n,d);}
 
     /* Textures */
     static void TexBind(CGenum t,CGhnd h){glBindTexture(t,h);}
     static void TexActive(uint32 i){glActiveTexture(GL_TEXTURE0+i);}
 
     static void TexImage2D(CGenum t,int32 level,CGenum ifmt,
-                           int64 w,int64 h,int32 border,CGenum fmt,CGenum dt,c_cptr p)
-    {glTexImage2D(t,level,ifmt,w,h,border,fmt,dt,p);}
+                           int32 w,int32 h,int32 border,CGenum fmt,CGenum dt,c_cptr p)
+    {glTexImage2D(t,level,(int32)ifmt,w,h,border,fmt,dt,p);}
     static void TexImage3D(CGenum t,int32 level,CGenum ifmt,
-                           int64 w,int64 h,uint64 d,int32 border,CGenum fmt,CGenum dt,c_cptr p)
-    {glTexImage3D(t,level,ifmt,w,h,d,border,fmt,dt,p);}
+                           int32 w,int32 h,int32 d,int32 border,CGenum fmt,CGenum dt,c_cptr p)
+    {glTexImage3D(t,level,(int32)ifmt,w,h,d,border,fmt,dt,p);}
 
     static void TexSubImage2D(CGenum t,int32 level,int32 x,int32 y,
-                              int64 w,int64 h,CGenum fmt,CGenum dt,c_cptr p)
+                              int32 w,int32 h,CGenum fmt,CGenum dt,c_cptr p)
     {glTexSubImage2D(t,level,x,y,w,h,fmt,dt,p);}
     static void TexSubImage3D(CGenum t,int32 level,int32 x,int32 y,int32 z,
-                              int64 w,int64 h,uint64 d,CGenum fmt,CGenum dt,c_cptr p)
+                              int32 w,int32 h,int32 d,CGenum fmt,CGenum dt,c_cptr p)
     {glTexSubImage3D(t,level,x,y,z,w,h,d,fmt,dt,p);}
 
     static void TexImageCompressed2D(CGenum t,int32 level,CGenum ifmt,
-                                     int64 w,int64 h,int32 border,int64 sz,c_cptr p)
+                                     int32 w,int32 h,int32 border,int32 sz,c_cptr p)
     {glCompressedTexImage2D(t,level,ifmt,w,h,border,sz,p);}
     static void TexImageCompressed3D(CGenum t,int32 level,CGenum ifmt,
-                                     int64 w,int64 h,int64 d,int32 border,int64 sz,c_cptr p)
+                                     int32 w,int32 h,int32 d,int32 border,int32 sz,c_cptr p)
     {glCompressedTexImage3D(t,level,ifmt,w,h,d,border,sz,p);}
 
     static void TexSubImageCompressed2D(CGenum t,int32 level,int32 x,int32 y,
-                                        int64 w,int64 h,CGenum fmt,int64 sz,c_cptr p)
+                                        int32 w,int32 h,CGenum fmt,int32 sz,c_cptr p)
     {glCompressedTexSubImage2D(t,level,x,y,w,h,fmt,sz,p);}
     static void TexSubImageCompressed3D(CGenum t,int32 level,int32 x,int32 y,int32 z,
-                                        int64 w,int64 h,int64 d,CGenum fmt,int64 sz,c_cptr p)
+                                        int32 w,int32 h,int32 d,CGenum fmt,int32 sz,c_cptr p)
     {glCompressedTexSubImage3D(t,level,x,y,z,w,h,d,fmt,sz,p);}
 
     static void TexCopyImage2D(CGenum t,int32 level,CGenum fmt,int32 x,int32 y,
-                               int64 w,int64 h,int32 border)
+                               int32 w,int32 h,int32 border)
     {glCopyTexImage2D(t,level,fmt,x,y,w,h,border);}
 
     static void TexCopySubImage2D(CGenum t,int32 level,int32 xo,int32 yo,
                                   int32 x,int32 y,
-                                  int64 w,int64 h)
+                                  int32 w,int32 h)
     {glCopyTexSubImage2D(t,level,xo,yo,x,y,w,h);}
     static void TexCopySubImage3D(CGenum t,int32 level,int32 xo,int32 yo,int32 zo,
                                   int32 x,int32 y,
-                                  int64 w,int64 h)
+                                  int32 w,int32 h)
     {glCopyTexSubImage3D(t,level,xo,yo,zo,x,y,w,h);}
 
-    static void TexGetImage(CGenum t,int32 level,CGenum fmt,CGenum dt,c_ptr p)
-    {glGetTexImage(t,level,fmt,dt,p);}
-    static void TexGetImageCompressed(CGenum t,int32 level,c_ptr p)
-    {glGetCompressedTexImage(t,level,p);}
+    static void TexGetImage(CGenum t,int32 level,CGenum fmt,CGenum dt,c_ptr p){glGetTexImage(t,level,fmt,dt,p);}
+    static void TexGetImageCompressed(CGenum t,int32 level,c_ptr p){glGetCompressedTexImage(t,level,p);}
 
     static void TexGenMipmap(CGenum t){glGenerateMipmap(t);}
 
@@ -418,29 +419,23 @@ struct CGL33 : CGL_Implementation
     static void SamplerBind(uint32 i,CGhnd h){glBindSampler(i,h);}
 
     static void SamplerParameteriv(CGhnd h,CGenum f,const int32* d){glSamplerParameteriv(h,f,d);}
-    static void SamplerParameteruiv(CGhnd h,CGenum f,const uint32* d)
-    {glSamplerParameterIuiv(h,f,d);}
+    static void SamplerParameteruiv(CGhnd h,CGenum f,const uint32* d){glSamplerParameterIuiv(h,f,d);}
     static void SamplerParameterfv(CGhnd h,CGenum f,const scalar* d){glSamplerParameterfv(h,f,d);}
 
     static void SamplerGetParameteriv(CGhnd h,CGenum f,int32* d){glGetSamplerParameteriv(h,f,d);}
-    static void SamplerGetParameteruiv(CGhnd h,CGenum f,uint32* d)
-    {glGetSamplerParameterIuiv(h,f,d);}
+    static void SamplerGetParameteruiv(CGhnd h,CGenum f,uint32* d){glGetSamplerParameterIuiv(h,f,d);}
     static void SamplerGetParameterfv(CGhnd h,CGenum f,scalar* d){glGetSamplerParameterfv(h,f,d);}
 
     /* Buffers */
     static void BufBind(CGenum t,CGhnd h){glBindBuffer(t,h);}
 
     static void BufData(CGenum t,uint64 sz,c_cptr p,CGenum a){glBufferData(t,sz,p,a);}
-    static void BufSubData(CGenum t,int64 off,uint64 sz,c_cptr p){glBufferSubData(t,off,sz,p);}
-    static void BufGetSubData(CGenum t,int64 off,uint64 sz,c_ptr p)
-    {glGetBufferSubData(t,off,sz,p);}
-    static void BufCopySubData(CGenum t1,CGenum t2,int64 off1,int64 off2,uint64 sz)
-    {glCopyBufferSubData(t1,t2,off1,off2,sz);}
+    static void BufSubData(CGenum t,int64 off,uint32 sz,c_cptr p){glBufferSubData(t,off,sz,p);}
+    static void BufGetSubData(CGenum t,int64 off,uint32 sz,c_ptr p){glGetBufferSubData(t,off,sz,p);}
+    static void BufCopySubData(CGenum t1,CGenum t2,int64 off1,int64 off2,uint32 sz){glCopyBufferSubData(t1,t2,off1,off2,sz);}
 
-    static void BufBindRange(CGenum t,uint32 i,CGhnd b,int64 off,uint64 sz)
-    {glBindBufferRange(t,i,b,off,sz);}
-    static void BufMapRange(CGenum t,int64 off,uint64 sz,CGflag a)
-    {glMapBufferRange(t,off,sz,a);}
+    static void BufBindRange(CGenum t,uint32 i,CGhnd b,int64 off,uint32 sz){glBindBufferRange(t,i,b,off,sz);}
+    static void BufMapRange(CGenum t,int64 off,uint32 sz,CGflag a){glMapBufferRange(t,off,sz,a);}
     static void BufUnmap(CGenum t){glUnmapBuffer(t);}
 
     /* Queries */
@@ -461,8 +456,7 @@ struct CGL33 : CGL_Implementation
     static void FBBind(CGenum t,CGhnd h){glBindFramebuffer(t,h);}
     static void RBufBind(CGenum t,CGhnd h){glBindRenderbuffer(t,h);}
 
-    static void RBufStorage(CGenum t,CGenum ifmt,int64 w,int64 h)
-    {glRenderbufferStorage(t,ifmt,w,h);}
+    static void RBufStorage(CGenum t,CGenum ifmt,int32 w,int32 h){glRenderbufferStorage(t,ifmt,w,h);}
 
     static bool FBCheckComplete(CGenum t)
     {
@@ -473,41 +467,29 @@ struct CGL33 : CGL_Implementation
         return f==GL_FRAMEBUFFER_COMPLETE;
     }
 
-    static void FBGetAttachParameter(CGenum t,CGenum att,CGenum p,int32* d)
-    {glGetFramebufferAttachmentParameteriv(t,att,p,d);}
+    static void FBGetAttachParameter(CGenum t,CGenum att,CGenum p,int32* d){glGetFramebufferAttachmentParameteriv(t,att,p,d);}
 
-    static void FBAttachTexture(CGenum t,CGenum att,CGhnd h,int32 level)
-    {glFramebufferTexture(t,att,h,level);}
+    static void FBAttachTexture(CGenum t,CGenum att,CGhnd h,int32 level){glFramebufferTexture(t,att,h,level);}
 
-    static void FBAttachTexture2D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level)
-    {glFramebufferTexture2D(t,att,textrg,h,level);}
-    static void FBAttachTexture3D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level,int32 z)
-    {glFramebufferTexture3D(t,att,textrg,h,level,z);}
-    static void FBAttachTextureLayer(CGenum t,CGenum att,CGhnd h,int32 level,int32 layer)
-    {glFramebufferTextureLayer(t,att,h,level,layer);}
-    static void FBAttachRenderBuffer(CGenum t,CGenum att,CGenum rtrg,CGhnd h)
-    {glFramebufferRenderbuffer(t,att,rtrg,h);}
+    static void FBAttachTexture2D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level){glFramebufferTexture2D(t,att,textrg,h,level);}
+    static void FBAttachTexture3D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level,int32 z){glFramebufferTexture3D(t,att,textrg,h,level,z);}
+    static void FBAttachTextureLayer(CGenum t,CGenum att,CGhnd h,int32 level,int32 layer){glFramebufferTextureLayer(t,att,h,level,layer);}
+    static void FBAttachRenderBuffer(CGenum t,CGenum att,CGenum rtrg,CGhnd h){glFramebufferRenderbuffer(t,att,rtrg,h);}
 
-    static void FBBlit(const CRect& s, const CRect& d,
-                       CGflag m,CGenum f)
-    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, m,f);}
+    static void FBBlit(const CRect& s, const CRect& d,CGflag m,CGenum f){glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, m,f);}
 
     static void RBufGetParameteri(CGenum t,CGenum p,int32* d){glGetRenderbufferParameteriv(t,p,d);}
 
-    static void FBDrawBuffers(size_t n,const CGenum* d){glDrawBuffers(n,d);}
+    static void FBDrawBuffers(int32 n,const CGenum* d){glDrawBuffers(n,d);}
     static void FBReadBuffer(CGenum b){glReadBuffer(b);}
 
-    static void FBReadPixels(int32 x,int32 y,int32 w,int32 h,CGenum fmt,CGenum dt,c_ptr p)
-    {
-        glReadPixels(x,y,w,h,fmt,dt,p);
-    }
+    static void FBReadPixels(int32 x,int32 y,int32 w,int32 h,CGenum fmt,CGenum dt,c_ptr p){glReadPixels(x,y,w,h,fmt,dt,p);}
 
     /* XFB */
     static void XFBegin(CGenum p){glBeginTransformFeedback(p);}
     static void XFEnd(){glEndTransformFeedback();}
 
-    static void XFVaryings(CGhnd h,size_t n,cstring* names,CGenum a)
-    {glTransformFeedbackVaryings(h,n,names,a);}
+    static void XFVaryings(CGhnd h,int32 n,cstring* names,CGenum a){glTransformFeedbackVaryings(h,n,names,a);}
     static void XFGetVaryings(CGhnd h,size_t* n,cstring_w** names,CGenum** type, int32** size)
     {
         int32 num = 0;
@@ -523,6 +505,7 @@ struct CGL33 : CGL_Implementation
 
         for(int32 i=0;i<num;i++)
             glGetTransformFeedbackVarying(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
+        *n = num;
     }
 
     /* Include RASTERIZER_DISCARD */
@@ -531,10 +514,8 @@ struct CGL33 : CGL_Implementation
     static void VAOBind(CGhnd h){glBindVertexArray(h);}
 
     static void VAOEnableAttrib(uint32 i){glEnableVertexAttribArray(i);}
-    static void VAOAttribPointer(uint32 i,int32 s,CGenum t,bool n,int64 stride,int64 offset)
-    {glVertexAttribPointer(i,s,t,(n) ? GL_TRUE : GL_FALSE,stride,(void*)offset);}
-    static void VAOAttribIPointer(uint32 i,int32 s,CGenum t,int64 stride,int64 offset)
-    {glVertexAttribIPointer(i,s,t,stride,(void*)offset);}
+    static void VAOAttribPointer(uint32 i,int32 s,CGenum t,bool n,int64 stride,int64 offset){glVertexAttribPointer(i,s,t,(n) ? GL_TRUE : GL_FALSE,stride,(void*)offset);}
+    static void VAOAttribIPointer(uint32 i,int32 s,CGenum t,int64 stride,int64 offset){glVertexAttribIPointer(i,s,t,stride,(void*)offset);}
     static void VAODivisor(uint32 i,uint32 d){glVertexAttribDivisor(i,d);}
 
     /* Sync */
@@ -546,80 +527,55 @@ struct CGL33 : CGL_Implementation
             *r = status;
         return status!=GL_TIMEOUT_EXPIRED;
     }
-    static bool FenceServerAwait(CGsync s)
-    {
-        glWaitSync((GLsync)s,0,0);
-        return false;
-    }
+    static void FenceServerAwait(CGsync s){glWaitSync((GLsync)s,0,0);}
 
     static void FenceGetiv(CGsync s,CGenum p,int32* d){glGetSynciv((GLsync)s,p,1,nullptr,d);}
 
     /* Using Uniform* */
-    static void Uniformfv(int32,size_t,const scalar*){}
-    static void Uniformiv(int32,size_t,const int32*){}
+    static void Uniformfv(int32 l,int32 c,const scalar* d){glUniform1fv(l,c,d);}
+    static void Uniformiv(int32 l,int32 c,const int32* d){glUniform1iv(l,c,d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_vec2<scalar>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_vec2<int32>*){}
+    static void Uniformfv(int32 l,int32 c,const _cbasic_vec2<scalar>* d){glUniform2fv(l,c,(scalar*)d);}
+    static void Uniformiv(int32 l,int32 c,const _cbasic_vec2<int32>* d){glUniform2iv(l,c,(int32*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_vec3<scalar>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_vec3<int32>*){}
+    static void Uniformfv(int32 l,int32 c,const _cbasic_vec3<scalar>* d){glUniform3fv(l,c,(scalar*)d);}
+    static void Uniformiv(int32 l,int32 c,const _cbasic_vec3<int32>* d){glUniform3iv(l,c,(int32*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_vec4<scalar>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_vec4<int32>*){}
+    static void Uniformfv(int32 l,int32 c,const _cbasic_vec4<scalar>* d){glUniform4fv(l,c,(scalar*)d);}
+    static void Uniformiv(int32 l,int32 c,const _cbasic_vec4<int32>* d){glUniform4iv(l,c,(int32*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmatrix<scalar,2>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmatrix<int32,2>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmatrix<scalar,2>* d){glUniformMatrix2fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmnmatrix<scalar,2,3>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmnmatrix<int32,2,3>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmnmatrix<scalar,2,3>* d){glUniformMatrix2x3fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmatrix<scalar,3>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmatrix<int32,3>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmatrix<scalar,3>* d){glUniformMatrix3fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmnmatrix<scalar,3,2>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmnmatrix<int32,3,2>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmnmatrix<scalar,3,2>* d){glUniformMatrix3x2fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmnmatrix<scalar,3,4>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmnmatrix<int32,3,4>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmnmatrix<scalar,3,4>* d){glUniformMatrix3x4fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmatrix<scalar,4>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmatrix<int32,4>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmatrix<scalar,4>* d){glUniformMatrix4fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmnmatrix<scalar,4,3>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmnmatrix<int32,4,3>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmnmatrix<scalar,4,3>* d){glUniformMatrix4x3fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
-    static void Uniformfv(int32,size_t,const _cbasic_tmnmatrix<scalar,4,2>*){}
-    static void Uniformiv(int32,size_t,const _cbasic_tmnmatrix<int32,4,2>*){}
+    static void Uniformfv(int32 l,int32 c,bool t,const _cbasic_tmnmatrix<scalar,4,2>* d){glUniformMatrix4x2fv(l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
     /* Drawing */
     static void DrawArrays(CGenum p,int32 f,int64 c){glDrawArrays(p,f,c);}
-    static void DrawArraysInstanced(CGenum p,int32 f,int32 c,int32 ic)
-    {glDrawArraysInstanced(p,f,c,ic);}
+    static void DrawArraysInstanced(CGenum p,int32 f,int32 c,int32 ic){glDrawArraysInstanced(p,f,c,ic);}
 
-    static void DrawElements(CGenum p,int32 c,CGenum t,int64 off)
-    {glDrawElements(p,c,t,(void*)off);}
-    static void DrawElementsInstanced(CGenum p,int32 c,CGenum t,int64 off,uint64 pc)
-    {glDrawElementsInstanced(p,c,t,(void*)off,pc);}
-    static void DrawElementsBaseVertex(CGenum p,int32 c,CGenum t,int64 off,int32 bv)
-    {glDrawElementsBaseVertex(p,c,t,(void*)off,bv);}
-    static void DrawElementsInstancedBaseVertex(CGenum p,int32 c,CGenum t,
-                                                int64 off,int32 pc,int32 bv)
-    {glDrawElementsInstancedBaseVertex(p,c,t,(void*)off,pc,bv);}
+    static void DrawElements(CGenum p,int32 c,CGenum t,int64 off){glDrawElements(p,c,t,(void*)off);}
+    static void DrawElementsInstanced(CGenum p,int32 c,CGenum t,int64 off,uint64 pc){glDrawElementsInstanced(p,c,t,(void*)off,pc);}
+    static void DrawElementsBaseVertex(CGenum p,int32 c,CGenum t,int64 off,int32 bv){glDrawElementsBaseVertex(p,c,t,(void*)off,bv);}
+    static void DrawElementsInstancedBaseVertex(CGenum p,int32 c,CGenum t,int64 off,int32 pc,int32 bv){glDrawElementsInstancedBaseVertex(p,c,t,(void*)off,pc,bv);}
 
-    static void DrawRangeElements(CGenum p,uint32 f,uint32 e,int32 c,CGenum t,int64 off)
-    {glDrawRangeElements(p,f,e,c,t,(void*)off);}
-    static void DrawRangeElementsBaseVertex(CGenum p,uint32 f,uint32 e,
-                                            int32 c,CGenum t,int64 off,int32 bv)
-    {glDrawRangeElementsBaseVertex(p,f,e,c,t,(void*)off,bv);}
+    static void DrawRangeElements(CGenum p,uint32 f,uint32 e,int32 c,CGenum t,int64 off){glDrawRangeElements(p,f,e,c,t,(void*)off);}
+    static void DrawRangeElementsBaseVertex(CGenum p,uint32 f,uint32 e,int32 c,CGenum t,int64 off,int32 bv){glDrawRangeElementsBaseVertex(p,f,e,c,t,(void*)off,bv);}
 
-    static void DrawMultiArrays(CGenum p,const int32* f,const int32* c, int32 dc)
-    {glMultiDrawArrays(p,f,c,dc);}
+    static void DrawMultiArrays(CGenum p,const int32* f,const int32* c, int32 dc){glMultiDrawArrays(p,f,c,dc);}
 
-    static void DrawMultiElements(CGenum p,const int32* f,CGenum t,const int64* off,int32 dc)
-    {glMultiDrawElements(p,f,t,(const void**)&off,dc);}
-    static void DrawMultiElementsBaseVertex(CGenum p,const int32* c,CGenum t,const int64* off,
-                                            int32 dc,const int32* bv)
-    {glMultiDrawElementsBaseVertex(p,c,t,(const void**)&off,dc,bv);}
+    static void DrawMultiElements(CGenum p,const int32* f,CGenum t,const int64* off,int32 dc){glMultiDrawElements(p,f,t,(const void**)&off,dc);}
+    static void DrawMultiElementsBaseVertex(CGenum p,const int32* c,CGenum t,const int64* off,int32 dc,const int32* bv){glMultiDrawElementsBaseVertex(p,c,t,(const void**)&off,dc,bv);}
 };
 
 }

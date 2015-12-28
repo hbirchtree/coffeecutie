@@ -10,7 +10,7 @@ namespace Coffee{
 namespace CLibraryLoader{
 
 constexpr cstring lib_load_error_format = "Native library loading error: {0}";
-constexpr cstring lib_symb_error_format = "Native library symbol resolution error: {0}";
+constexpr cstring lib_symb_error_format = "Native symbol resolution error: {0}";
 
 #if defined(COFFEE_LINUX)
 struct CNativeObject
@@ -19,7 +19,18 @@ struct CNativeObject
     void* funptr;
 };
 
-CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _cbasic_version<int32> *libver)
+void* _coffee_dlopen(cstring fname)
+{
+    void* handle = dlopen(fname,RTLD_NOW);
+    if(!handle)
+    {
+        cLog(__FILE__,__LINE__,"CObjectLoader",lib_load_error_format,fname);
+    }
+    return handle;
+}
+
+CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction,
+                                   const _cbasic_version<int32> *libver)
 {
     CNativeObject *e = new CNativeObject;
 
@@ -27,20 +38,21 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _
     plat_file_name += file;
     plat_file_name += ".so";
 
-    if(libver)
+    e->handle = _coffee_dlopen(plat_file_name.c_str());
+
+    if(libver&&!e->handle)
     {
         plat_file_name.append(cStringFormat(
                     ".{0}.{1}.{2}",
                     libver->major,
                     libver->minor,
                     libver->revision));
+        e->handle = _coffee_dlopen(plat_file_name.c_str());
     }
 
-    e->handle = dlopen(plat_file_name.c_str(),RTLD_NOW);
     if(!e->handle)
     {
-        cWarning(lib_load_error_format,dlerror());
-        _coffee_close_library(e);
+        delete e;
         return nullptr;
     }
 
@@ -48,7 +60,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _
     e->funptr = dlsym(e->handle,loaderFunction);
     if((error = dlerror()) != NULL)
     {
-        cWarning(lib_symb_error_format,error);
+        cLog(__FILE__,__LINE__,"CObjectLoader",lib_symb_error_format,error);
         _coffee_close_library(e);
         return nullptr;
     }
@@ -77,7 +89,8 @@ struct CNativeObject
     void* procedure;
 };
 
-CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction, const _cbasic_version<int32> *libver)
+CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction,
+                                   const _cbasic_version<int32> *libver)
 {
     CNativeObject* e = new CNativeObject;
 

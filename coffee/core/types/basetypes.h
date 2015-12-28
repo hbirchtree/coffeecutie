@@ -68,6 +68,22 @@ typedef void*       c_ptr;
  */
 typedef int32 (*CoffeeMainWithArgs)(int32,byte_t**);
 
+struct uint24
+{
+    uint32 d:24;
+
+    static uint32 to_int(uint24 const& t)
+    {
+        return t.d;
+    }
+    static uint24 from_int(uint32 const& i)
+    {
+        uint24 r;
+        r.d = i;
+        return r;
+    }
+};
+
 enum class ResourceAccess : uint8
 {
     ExclusiveLocking,
@@ -152,6 +168,16 @@ enum class PixelFormat : uint8
     RGB,
     RG,
     RED,
+
+    BGRA_i,
+    RGBA_i,
+    RGB_i,
+    RG_i,
+    RED_i,
+
+    Stencil,
+    Depth,
+    DepthStencil,
 };
 
 }

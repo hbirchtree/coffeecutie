@@ -10,6 +10,36 @@ namespace CGL{
  */
 struct CGL43 : CGL33
 {
+
+    enum class Feature
+    {
+        Blend,
+
+        DebugOutput,
+        DebugOutputSynchronous,
+
+        DepthClamp,
+        DepthTest,
+        Dither,
+
+        FramebufferSRGB,
+
+        LineSmooth,
+        PolygonSmooth,
+
+        PrimitiveRestart,
+        PrimitiveRestartFixedIdx,
+
+        SampleAlphaToCoverage,
+        SampleShading,
+        SampleMask,
+
+        ScissorTest,
+        StencilTest,
+
+        PointSize,
+    };
+
     static bool TexStorageSupported(){return false;}
 
     static bool TexViewSupported(){return false;}
@@ -42,11 +72,11 @@ struct CGL43 : CGL33
     static void DepthArrayv(uint32,size_t,CZField64 const*){}
 
     /* Resource allocation */
-    static bool PipelineAlloc(size_t,CGhnd*){return false;}
-    static bool PipelineFree(size_t,CGhnd*){return false;}
+    static bool PipelineAlloc(int32,CGhnd*){return false;}
+    static bool PipelineFree(int32,CGhnd*){return false;}
 
-    static bool XFAlloc(size_t l,CGhnd* d){glGenTransformFeedbacks(l,d); return false;}
-    static bool XFFree(size_t l,CGhnd* d){glDeleteTransformFeedbacks(l,d); return false;}
+    static bool XFAlloc(int32 l,CGhnd* d){glGenTransformFeedbacks(l,d); return false;}
+    static bool XFFree(int32 l,CGhnd* d){glDeleteTransformFeedbacks(l,d); return false;}
 
     /* Shaders */
     static void ShaderGetPrecisionFormat(CGenum,CGenum,int32*,int32*){}
