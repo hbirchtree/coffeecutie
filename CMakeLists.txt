@@ -108,4 +108,4 @@ set (
         ${CMAKE_SOURCE_DIR}/ext/pcl-shim/include
     )
 
-#add_subdirectory(ext)
+add_subdirectory(ext)

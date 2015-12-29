@@ -22,3 +22,6 @@ add_subdirectory (experiments/cgb-test)
 
 #Manipulation of point cloud data through PCL
 #add_subdirectory (pcl/pcl-test)
+
+#Qt widgets and etc.
+add_subdirectory(qt/node-editor-test)
