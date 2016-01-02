@@ -130,10 +130,13 @@ enum class Severity : uint8
 
 enum class DebugType : uint8
 {
+    UndefinedBehavior,
     Information,
     Performance,
     Compliance,
+    Deprecated,
     Compatibility,
+    Marker,
 };
 
 enum class DebugComponent : uint8
@@ -142,6 +145,7 @@ enum class DebugComponent : uint8
     GraphicsAPI,
     Audio,
     Interface,
+    ShaderCompiler,
     LibraryLoader,
     Media,
 };

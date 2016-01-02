@@ -108,5 +108,10 @@ cstring_w c_strcat(cstring_w s1, cstring s2)
     return strcat(s1,s2);
 }
 
+bool c_strstr(cstring s1, cstring s2)
+{
+    return strstr(s1,s2);
+}
+
 }
 }

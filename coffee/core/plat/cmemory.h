@@ -29,6 +29,8 @@ extern bool c_strcmp(cstring s1, cstring s2);
 
 extern cstring_w c_strcat(cstring_w s1, cstring s2);
 
+extern bool c_strstr(cstring s1,cstring s2);
+
 extern int c_strlen(cstring s);
 
 extern int c_strlen(cwstring s);

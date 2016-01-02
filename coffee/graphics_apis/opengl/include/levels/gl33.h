@@ -10,8 +10,6 @@ namespace CGL{
  */
 struct CGL33 : CGL_Implementation
 {
-    using CGsync = void*;
-
     static bool LoadBinding()
     {
         return gladLoadGL();
@@ -28,6 +26,8 @@ struct CGL33 : CGL_Implementation
     static bool RGTCSupported(){return false;}
 
     static bool DXTCSupported(){return false;}
+
+    static bool DebuggingSupported(){return Debug::CheckExtensionSupported("GL_KHR_debug");}
 
     /* Base */
     static void Enable(CGenum e){glEnable(e);}

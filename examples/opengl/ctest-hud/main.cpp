@@ -20,7 +20,7 @@ public:
     CDHudRenderer()
         : CGLBindingRenderer(0)
     {
-        m_msg_filter = coffee_graphics_debug_filter_ignore_notifications;
+        m_msg_filter = coffee_graphics_debug_filter_all;
     }
 
     void run()
@@ -307,6 +307,12 @@ int32 coffee_main(int32, byte_t**)
             CGLContextProperties::GLDebug|
             CGLContextProperties::GLFeatureLevelProfile;
     renderer->init(props);
+
+    CGL::CGL33::LoadBinding();
+    CGL::CGL33::Debug::GetExtensions();
+    cDebug("Graphics debugging: {0}",CGL::CGL33::DebuggingSupported());
+    CGL::CGL33::Debug::DebugMessage(Severity::Information,DebugType::Performance,"Nothing!");
+
     renderer->run();
     renderer->cleanup();
 

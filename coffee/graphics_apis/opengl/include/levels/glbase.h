@@ -143,13 +143,25 @@ struct CGL_Implementation
         PrimitiveRestartFixedIdx,
 
         SampleAlphaToCoverage,
+        SampleAlphaToOne,
+        SampleCoverage,
         SampleShading,
         SampleMask,
+
+        RasterizerDiscard,
 
         ScissorTest,
         StencilTest,
 
         PointSize,
+
+        SeamlessCubemap,
+
+        Multisample,
+
+        PolygonOffsetFill,
+        PolygonOffsetPoint,
+        PolygonOffsetLine,
     };
 
     enum class RetrieveStrategy
@@ -163,6 +175,7 @@ struct CGL_Implementation
     {
         Framebuffer,
         Texture,
+        RenderBuffer,
         Buffer,
         Query,
         XFB,
@@ -174,94 +187,330 @@ struct CGL_Implementation
     };
 
     /* Type definitions */
-
     using CGenum = uint32;
     using CGflag = uint32;
+    using CGcallback = GLDEBUGPROC;
+    using CGsync = void*;
 
     /* Shorthand for GL object handles, we will treat them differently */
     using CGhnd = uint32;
 
-    /* Feature support */
+    static CGenum to_enum(Feature f)
+    {
+        switch(f)
+        {
+        case Feature::Blend:
+            return GL_BLEND;
+        case Feature::DepthTest:
+            return GL_DEPTH_TEST;
+        case Feature::DepthClamp:
+            return GL_DEPTH_CLAMP;
+        case Feature::Dither:
+            return GL_DITHER;
+        case Feature::FramebufferSRGB:
+            return GL_FRAMEBUFFER_SRGB;
+        case Feature::LineSmooth:
+            return GL_LINE_SMOOTH;
+        case Feature::Multisample:
+            return GL_MULTISAMPLE;
+        case Feature::PointSize:
+            return GL_PROGRAM_POINT_SIZE;
+        case Feature::PolygonOffsetFill:
+            return GL_POLYGON_OFFSET_FILL;
+        case Feature::PolygonOffsetLine:
+            return GL_POLYGON_OFFSET_LINE;
+        case Feature::PolygonOffsetPoint:
+            return GL_POLYGON_OFFSET_POINT;
+        case Feature::PolygonSmooth:
+            return GL_POLYGON_SMOOTH;
+        case Feature::PrimitiveRestart:
+            return GL_PRIMITIVE_RESTART;
+        case Feature::PrimitiveRestartFixedIdx:
+            return GL_PRIMITIVE_RESTART_FIXED_INDEX;
+        case Feature::RasterizerDiscard:
+            return GL_RASTERIZER_DISCARD;
+        case Feature::SampleAlphaToCoverage:
+            return GL_SAMPLE_ALPHA_TO_COVERAGE;
+        case Feature::SampleAlphaToOne:
+            return GL_SAMPLE_ALPHA_TO_ONE;
+        case Feature::SampleCoverage:
+            return GL_SAMPLE_COVERAGE;
+        case Feature::SampleMask:
+            return GL_SAMPLE_MASK;
+        case Feature::SampleShading:
+            return GL_SAMPLE_SHADING;
+        case Feature::ScissorTest:
+            return GL_SCISSOR_TEST;
+        case Feature::StencilTest:
+            return GL_STENCIL_TEST;
+        case Feature::SeamlessCubemap:
+            return GL_TEXTURE_CUBE_MAP_SEAMLESS;
+        }
+    }
 
     struct Debug
     {
+        static CGenum to_enum(Severity s)
+        {
+            switch(s)
+            {
+            case Severity::High:
+                return GL_DEBUG_SEVERITY_HIGH;
+            case Severity::Medium:
+                return GL_DEBUG_SEVERITY_MEDIUM;
+            case Severity::Low:
+                return GL_DEBUG_SEVERITY_LOW;
+            case Severity::Information:
+                return GL_DEBUG_SEVERITY_NOTIFICATION;
+            default:
+                return GL_NONE;
+            }
+        }
+        static CGenum to_enum(DebugType t)
+        {
+            switch(t)
+            {
+            case DebugType::Compatibility:
+                return GL_DEBUG_TYPE_PORTABILITY;
+                break;
+            case DebugType::Compliance:
+                return GL_DEBUG_TYPE_PORTABILITY;
+                break;
+            case DebugType::Deprecated:
+                return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
+                break;
+            case DebugType::Performance:
+                return GL_DEBUG_TYPE_PERFORMANCE;
+                break;
+            case DebugType::Marker:
+                return GL_DEBUG_TYPE_MARKER;
+                break;
+            case DebugType::UndefinedBehavior:
+                return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
+                break;
+            default:
+                return GL_NONE;
+            }
+        }
+        static CGenum to_enum(Object t)
+        {
+            CGenum type;
+            switch(t)
+            {
+            case Object::Shader:
+                type = GL_SHADER;
+                break;
+            case Object::Program:
+                type = GL_PROGRAM;
+                break;
+            case Object::VAO:
+                type = GL_VERTEX_ARRAY;
+                break;
+            case Object::Buffer:
+                type = GL_BUFFER;
+                break;
+            case Object::Texture:
+                type = GL_TEXTURE;
+                break;
+            case Object::XFB:
+                type = GL_TRANSFORM_FEEDBACK;
+                break;
+            case Object::Sampler:
+                type = GL_SAMPLER;
+                break;
+            case Object::Query:
+                type = GL_QUERY;
+                break;
+            case Object::Framebuffer:
+                type = GL_FRAMEBUFFER;
+                break;
+            case Object::RenderBuffer:
+                type = GL_RENDERBUFFER;
+                break;
+            }
+            return type;
+        }
+
+
+        static void GetExtensions()
+        {
+            int32 numExtensions = GetInteger(GL_NUM_EXTENSIONS);
+            s_ExtensionList = std::string();
+            s_ExtensionList.reserve(numExtensions*20);
+            for(int32 i=0;i<numExtensions;i++)
+            {
+                cstring str = GetStringi(GL_EXTENSIONS,i);
+                s_ExtensionList.append(str);
+                if(i<numExtensions-1)
+                s_ExtensionList.push_back(' ');
+            }
+        }
+
+        static bool CheckExtensionSupported(cstring id)
+        {
+            return c_strstr(s_ExtensionList.c_str(),id);
+        }
+
         //Variables
         static bool b_isDebugging;
+        static CString s_ExtensionList;
 
         /* Strictly debugging */
 
         static void InitDebugFlag(){b_isDebugging = false;}
-        static void SetDebugLevel(Severity){}
 
-        static void SetObjectLabel(Object,uint32,cstring){}
+        static void SetDebugMode(bool enabled)
+        {
+            if(enabled)
+                glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            else
+                glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        }
 
-        static void SetDebugGroup(cstring){}
-        static void UnsetDebugGroup(){}
+        static void SetDebugLevel(Severity s,bool e)
+        {
+            glDebugMessageControl(GL_DONT_CARE,GL_DONT_CARE,
+                                  to_enum(s),0,nullptr,(e)?GL_TRUE:GL_FALSE);
+        }
 
-        static void DebugMessage(cstring){}
+        static void SetObjectLabel(Object t,CGhnd h,cstring s)
+        {
+            glObjectLabel(to_enum(t),h,-1,s);
+        }
 
-        static void DebugSetCallback(){}
+        static void SetDebugGroup(cstring n, uint32 id)
+        {
+            glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
+        }
+        static void UnsetDebugGroup(){glPopDebugGroup();}
 
-        static void IsEnabledi(){}
+        static void DebugMessage(Severity s,DebugType t,cstring n)
+        {
+            glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
+                                 to_enum(t),0,
+                                 to_enum(s),
+                                 -1,n);
+        }
 
-        static cstring GetString(CGenum){return nullptr;}
-        static cstring GetStringi(CGenum,uint32){return nullptr;}
+        static void DebugSetCallback(CGcallback c, void* param)
+        {
+            glDebugMessageCallback(c,param);
+        }
+
+        static void IsEnabledi(Feature f,int32 i){
+            glIsEnabledi(CGL::CGL_Implementation::to_enum(f),i);}
+
+        static cstring GetString(CGenum e){return (cstring)glGetString(e);}
+        static cstring GetStringi(CGenum e,uint32 i){return (cstring)glGetStringi(e,i);}
 
         /* Get*v */
 
-        static int32 GetInteger(CGenum){return 0;}
-        static uint32 GetUInteger(CGenum){return 0;}
+        static int32 GetInteger(CGenum e)
+        {
+            int32 i;
+            glGetIntegerv(e,&i);
+            return i;
+        }
 
-        static int64 GetIntegerLL(CGenum){return 0;}
-        static uint64 GetUIntegerLL(CGenum){return 0;}
+        static int64 GetIntegerLL(CGenum e)
+        {
+            int64 i;
+            glGetInteger64v(e,&i);
+            return i;
+        }
 
-        static scalar GetScalar(CGenum){return 0;}
-        static bigscalar GetScalarLL(CGenum){return 0;}
+        static scalar GetScalar(CGenum e)
+        {
+            scalar i;
+            glGetFloatv(e,&i);
+            return i;
+        }
+        static bigscalar GetScalarLL(CGenum e)
+        {
+            bigscalar i;
+            glGetDoublev(e,&i);
+            return i;
+        }
 
-        static bool GetBooleanv(CGenum){return false;}
+        static bool GetBooleanv(CGenum e)
+        {
+            GLboolean i;
+            glGetBooleanv(e,&i);
+            return i==GL_TRUE;
+        }
 
         /* Get*i_v */
 
-        static int32 GetIntegerI(CGenum,uint32){return 0;}
-        static uint32 GetUIntegerI(CGenum,uint32){return 0;}
+        static int32 GetIntegerI(CGenum e,uint32 i)
+        {
+            int32 v;
+            glGetIntegeri_v(e,i,&v);
+            return v;
+        }
 
-        static int64 GetIntegerLLI(CGenum,uint32){return 0;}
-        static uint64 GetUIntegerLLI(CGenum,uint32){return 0;}
+        static int64 GetIntegerLLI(CGenum e,uint32 i)
+        {
+            int64 v;
+            glGetInteger64i_v(e,i,&v);
+            return v;
+        }
 
-        static scalar GetScalarI(CGenum,uint32){return 0;}
-        static bigscalar GetScalarLLI(CGenum,uint32){return 0;}
+        static scalar GetScalarI(CGenum e,uint32 i)
+        {
+            scalar v;
+            glGetFloati_v(e,i,&v);
+            return v;
+        }
+        static bigscalar GetScalarLLI(CGenum e,uint32 i)
+        {
+            bigscalar v;
+            glGetDoublei_v(e,i,&v);
+            return v;
+        }
 
-        static bool GetBooleanvI(CGenum,uint32){return false;}
+        static bool GetBooleanvI(CGenum e,uint32 i)
+        {
+            GLboolean v;
+            glGetBooleani_v(e,i,&v);
+            return v==GL_TRUE;
+        }
 
         /* Is* */
 
-        static bool IsBuffer(CGhnd){return false;}
-        static bool IsVAO(CGhnd){return false;}
+        static bool IsBuffer(CGhnd h){return glIsBuffer(h)==GL_TRUE;}
+        static bool IsVAO(CGhnd h){return glIsVertexArray(h)==GL_TRUE;}
 
-        static bool IsFramebuffer(CGhnd){return false;}
-        static bool IsRenderbuffer(CGhnd){return false;}
+        static bool IsFramebuffer(CGhnd h){return glIsFramebuffer(h)==GL_TRUE;}
+        static bool IsRenderbuffer(CGhnd h){return glIsRenderbuffer(h)==GL_TRUE;}
 
-        static bool IsPipeline(CGhnd){return false;}
-        static bool IsShader(CGhnd){return false;}
-        static bool IsProgram(CGhnd){return false;}
+        static bool IsPipeline(CGhnd h){return glIsProgramPipeline(h)==GL_TRUE;}
+        static bool IsShader(CGhnd h){return glIsShader(h)==GL_TRUE;}
+        static bool IsProgram(CGhnd h){return glIsProgram(h)==GL_TRUE;}
 
-        static bool IsSync(CGhnd){return false;}
-        static bool IsQuery(CGhnd&){return false;}
+        static bool IsSync(CGsync h){return glIsSync((GLsync)h)==GL_TRUE;}
+        static bool IsQuery(CGhnd h){return glIsQuery(h)==GL_TRUE;}
 
-        static bool IsTexture(CGhnd){return false;}
-        static bool IsSampler(CGhnd){return false;}
+        static bool IsTexture(CGhnd h){return glIsTexture(h)==GL_TRUE;}
+        static bool IsSampler(CGhnd h){return glIsSampler(h)==GL_TRUE;}
 
-        static bool IsXF(CGhnd){return false;}
+        static bool IsXF(CGhnd h){return glIsTransformFeedback(h)==GL_TRUE;}
 
         /* Internal format information */
 
-        static bool InternalFormatSupport(CGenum){return false;}
+        static int32* InternalFormatSupport(CGenum tt, CGenum t, CGenum prop,int32 n)
+        {
+            int32* i = new int32[n];
+            glGetInternalformativ(tt,t,prop,n*sizeof(i[0]),i);
+            return i;
+        }
     };
 
     static void LoadBinding()
     {
     }
 };
+
+CString CGL_Implementation::Debug::s_ExtensionList = "";
 
 }
 }
