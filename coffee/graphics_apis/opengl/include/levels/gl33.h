@@ -12,104 +12,33 @@ struct CGL33 : CGL_Implementation
 {
     static bool LoadBinding()
     {
+        Debug::GetExtensions();
         return gladLoadGL();
     }
 
-    static bool GeometryShaderSupported(){return false;}
+    static bool InstancedGeometryShaderSupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_geometry_shader4");}
 
-    static bool CubemapSeamlessSupported(){return false;}
+    static bool CubemapSeamlessSupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_seamless_cube_map");}
 
-    static bool ASTCSupported(){return false;}
+    static bool CubemapArraySupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_texture_cube_map_array");}
 
-    static bool BPTCSupported(){return false;}
+    static bool ASTCSupported()
+    {return Debug::CheckExtensionSupported("GL_KHR_texture_compression_astc_hdr");}
 
-    static bool RGTCSupported(){return false;}
+    static bool BPTCSupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_texture_compression_bptc");}
 
-    static bool DXTCSupported(){return false;}
+    static bool RGTCSupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_texture_compression_rgtc");}
 
-    static bool DebuggingSupported(){return Debug::CheckExtensionSupported("GL_KHR_debug");}
+    static bool DXTCSupported()
+    {return Debug::CheckExtensionSupported("GL_EXT_texture_compression_s3tc");}
 
-    /* Base */
-    static void Enable(CGenum e){glEnable(e);}
-    static void Disable(CGenum e){glDisable(e);}
-
-    static void Enablei(CGenum e,uint32 i){glEnablei(e,i);}
-    static void Disablei(CGenum e,uint32 i){glDisablei(e,i);}
-
-    static void Clear(CGflag f){glClear(f);}
-    static void ClearColor(CVec4 c){glClearColor(c.x(),c.y(),c.z(),c.w());}
-
-    static void ClearDepth(scalar f){glClearDepthf(f);}
-    static void ClearStencil(int32 f){glClearStencil(f);}
-
-    static void ClearBufferiv(CGenum f,int32 i,const int32* d){glClearBufferiv(f,i,d);}
-    static void ClearBufferuiv(CGenum f,int32 i,const uint32* d){glClearBufferuiv(f,i,d);}
-    static void ClearBufferfv(CGenum f,int32 i,const scalar* d){glClearBufferfv(f,i,d);}
-    static void ClearBufferfi(CGenum f,int32 i,scalar d1,int32 d2){glClearBufferfi(f,i,d1,d2);}
-
-    static void FrontFace(Face v)
-    {
-        GLenum f;
-        switch(v)
-        {
-        case Face::Back:
-            f = GL_BACK;
-            break;
-        case Face::Front:
-            f = GL_FRONT;
-            break;
-        default:return;
-        }
-        glFrontFace(f);
-    }
-    static void CullMode(Face v)
-    {
-        GLenum f;
-        switch(v)
-        {
-        case Face::Back:
-            f = GL_BACK;
-            break;
-        case Face::Front:
-            f = GL_FRONT;
-            break;
-        case Face::Both:
-            f = GL_FRONT_AND_BACK;
-            break;
-        }
-        glCullFace(f);
-    }
-
-    static void BlendFuncSep(CGenum v1,CGenum v2,CGenum v3,CGenum v4)
-    {glBlendFuncSeparate(v1,v2,v3,v4);}
-    static void BlendEqSep(CGenum v1,CGenum v2){glBlendEquationSeparate(v1,v2);}
-
-    static void DepthFunc(CGenum f){glDepthFunc(f);}
-    static void DepthMask(bool v){glDepthMask((v) ? GL_TRUE : GL_FALSE);}
-
-    static void StencilFuncSep(CGenum v1,CGenum v2,int32 d1,uint32 d2){glStencilFuncSeparate(v1,v2,d1,d2);}
-    static void StencilOpSep(CGenum v1,CGenum v2,CGenum v3,CGenum v4){glStencilOpSeparate(v1,v2,v3,v4);}
-    static void StencilMaskSep(CGenum f,uint32 d){glStencilMaskSeparate(f,d);}
-
-    static void ViewportSet(CRect64 const* r){glViewport(r->x,r->y,r->w,r->h);}
-    static void ScissorSet(CRect64 const* r){glScissor(r->x,r->y,r->w,r->h);}
-    static void DepthSet(CZField64 const* d){glDepthRange(d->near,d->far);}
-
-    static void Flush(){glFlush();}
-    static void Finish(){glFinish();}
-
-    static void PointParameteriv(CGenum f,const int32* d){glPointParameteriv(f,d);}
-    static void PointParameterfv(CGenum f,const scalar* d){glPointParameterfv(f,d);}
-    static void PointSize(scalar f){glPointSize(f);}
-
-    static void LineWidth(scalar f){glLineWidth(f);}
-
-    static void PolyMode(CGenum f1,CGenum f2){glPolygonMode(f1,f2);}
-    static void PolyOffset(scalar f1,scalar f2){glPolygonOffset(f1,f2);}
-
-    /* SAMPLE_ALPHA_TO_COVERAGE,SAMPLE_ALPHA_TO_ONE */
-    static void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
-    static void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
+    static bool DebuggingSupported()
+    {return Debug::CheckExtensionSupported("GL_KHR_debug");}
 
     /* Allocations */
     static bool TexAlloc(int32 l,CGhnd* d){glGenTextures(l,d); return true;}
