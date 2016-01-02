@@ -10,10 +10,14 @@ namespace CGL{
  */
 struct CGL33 : CGL_Implementation
 {
-    static bool LoadBinding()
+    static bool LoadBinding(CGL_Context* ctxt)
     {
+        if(!ctxt->acquireContext())
+            return false;
+        if(!gladLoadGL())
+            return false;
         Debug::GetExtensions();
-        return gladLoadGL();
+        return true;
     }
 
     static bool InstancedGeometryShaderSupported()

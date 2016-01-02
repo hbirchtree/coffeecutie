@@ -300,7 +300,7 @@ int32 coffee_main(int32, byte_t**)
 {
     CResources::coffee_file_set_resource_prefix("sample_data/");
 
-    CDRendererBase *renderer = new CDHudRenderer();
+    CSDL2Renderer *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
     props.contextProperties.flags =
             props.contextProperties.flags|
@@ -308,7 +308,7 @@ int32 coffee_main(int32, byte_t**)
             CGLContextProperties::GLFeatureLevelProfile;
     renderer->init(props);
 
-    CGL::CGL33::LoadBinding();
+    CGL::CGL33::LoadBinding(renderer->glContext());
     CGL::CGL33::Debug::GetExtensions();
     cDebug("Graphics debugging: {0}",CGL::CGL33::DebuggingSupported());
     CGL::CGL33::Debug::DebugMessage(Severity::Information,DebugType::Performance,"Nothing!");
