@@ -15,6 +15,7 @@
 #include <sys/time.h>
 
 namespace Coffee{
+
 namespace CFunctional{
 
 template<typename T>

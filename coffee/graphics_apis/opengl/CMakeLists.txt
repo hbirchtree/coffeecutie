@@ -32,6 +32,7 @@ include_directories (
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
         ${COFFEE_IMAGE_INCLUDE_DIR}
+        ${COFFEE_SDL2_INCLUDE_DIR}
         ${GLBINDING_INCLUDE_DIRS}
     )
 
@@ -41,6 +42,7 @@ add_library( CoffeeOpenGL ${COFFEE_LINK_OPT} ${CoffeeOpenGL_SRCS} )
 target_link_libraries ( CoffeeOpenGL
                 CoffeeCore
                 CoffeeImage
+                CoffeeSDL2
                 ${GLBINDING_LIBRARIES}
         )
 

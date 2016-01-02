@@ -1,5 +1,7 @@
 #include "unix_core.h"
 
+#include <core/plat/plat_core.h>
+
 #ifdef COFFEE_UNIXPLAT
 
 #include <sys/mman.h>
@@ -8,6 +10,7 @@
 #include <unistd.h>
 
 #include <sys/resource.h>
+#include <sys/sysinfo.h>
 #include <cstdlib>
 #include <malloc.h>
 #include <cstring>
@@ -18,6 +21,72 @@
 #include <libunwind.h>  //For retrieving the callstack
 
 namespace Coffee{
+
+uint32 SysInfo::sys_cpu_count()
+{
+    return sysconf(_SC_NPROCESSORS_ONLN);
+}
+
+uint32 SysInfo::sys_cpu_core_count()
+{
+    return sysconf(_SC_NPROCESSORS_ONLN);
+}
+
+bool SysInfo::sys_mem_virtual_available()
+{
+    return true;
+}
+
+int64 SysInfo::sys_mem_total()
+{
+    struct sysinfo inf;
+    sysinfo(&inf);
+    return inf.totalram*inf.mem_unit;
+}
+
+int64 SysInfo::sys_mem_available()
+{
+    struct sysinfo inf;
+    sysinfo(&inf);
+    return inf.freeram*inf.mem_unit;
+}
+
+int64 SysInfo::sys_swap_total()
+{
+    struct sysinfo inf;
+    sysinfo(&inf);
+    return inf.totalswap*inf.mem_unit;
+}
+
+int64 SysInfo::sys_swap_available()
+{
+    struct sysinfo inf;
+    sysinfo(&inf);
+    return inf.freeswap*inf.mem_unit;
+}
+
+int64 SysInfo::process_pid()
+{
+    return getpid();
+}
+
+int64 SysInfo::process_mem_resident(int64 pid)
+{
+    rusage s;
+    if(getrusage(pid,&s)!=0)
+        return 0;
+    return s.ru_idrss+s.ru_isrss;
+}
+
+int64 SysInfo::process_mem_virtual(int64)
+{
+    return 0;
+}
+
+int32 SysInfo::process_cpu_usage(int64)
+{
+    return 0;
+}
 
 void coffee_enable_core_dump()
 {

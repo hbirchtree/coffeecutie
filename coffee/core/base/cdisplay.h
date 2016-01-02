@@ -21,6 +21,7 @@ struct CDColorSpace
     uint8 red     = 0;
     uint8 green   = 0;
     uint8 blue    = 0;
+    uint8 extra   = 0;
 };
 
 /*!
@@ -30,6 +31,8 @@ struct CDContextBits
 {
     CDContextBits();
 
+    CRGBA accum;
+
     uint8 red;
     uint8 green;
     uint8 blue;
@@ -37,8 +40,6 @@ struct CDContextBits
 
     uint8 depth;
     uint8 stencil;
-
-    CRGBA accum;
 };
 
 /*!
@@ -47,12 +48,12 @@ struct CDContextBits
 struct CDMonitor{
     CDMonitor();
 
-    uint16          index; /*!< Real monitor index*/
-    CDColorSpace    colorBits; /*!< Color depth bits*/
     CRect           screenArea; /*!< Area occupied in window manager*/
     cstring         name; /*!< Name of monitor*/
     CSize           phySize; /*!< Physical size of monitor*/
-    int32           refresh;/*!< Refresh rate*/
+    CDColorSpace    colorBits; /*!< Color depth bits*/
+    int32           refresh:24;/*!< Refresh rate*/
+    uint8           index; /*!< Real monitor index*/
 };
 
 /*!
@@ -136,7 +137,7 @@ struct CGLContextProperties
 {
     CGLContextProperties();
 
-    enum Flags : uint16{
+    enum Flags : uint32{
         GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
         GLVSync             = 0x02, /*!< Set GL vertical sync*/
         GLDebug             = 0x04, /*!< Set GL debug context*/
@@ -147,9 +148,9 @@ struct CGLContextProperties
 
         GLFeatureLevelProfile = 0x80,
     };
-    CGLContextVersion   version; /*!< Context version*/
     CDContextBits       bits; /*!< Context bits*/
     Flags               flags; /*!< Context flags*/
+    CGLContextVersion   version; /*!< Context version*/
 };
 /*!
  * \brief Window properties to set on start-up

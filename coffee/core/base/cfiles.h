@@ -31,14 +31,17 @@ struct CResourceUrl
 
     CResourceUrl();
 
-    uint8 flags;
     cstring url;
+    uint8 flags;
 };
 
 /*!
  * \brief A data resource which location cannot be changed.
  */
 struct CResource{
+private:
+    CString m_resource; /*!< URL for the resource*/
+public:
     /*!
      * \brief Constructs a resource
      * \param rsrc Path to resource
@@ -46,14 +49,11 @@ struct CResource{
      */
     CResource(cstring rsrc = nullptr, bool absolute = false);
 
-    uint8 flags; /*!< Resource flags*/
-    szptr size; /*!< Data size*/
     void* data; /*!< Data pointer*/
+    uint64 size; /*!< Data size*/
 
     cstring resource() const;
 
-private:
-    CString m_resource; /*!< URL for the resource*/
 };
 
 extern bool coffee_file_exists(const CResource& resc);

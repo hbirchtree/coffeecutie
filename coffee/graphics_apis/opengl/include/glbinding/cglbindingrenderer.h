@@ -2,7 +2,7 @@
 #define CGLBINDINGRENDERER_H
 
 #include <wrappers/cgraphicswrappers.h>
-#include <coffee/core/display/csdl2renderer.h>
+#include <csdl2renderer.h>
 
 namespace Coffee{
 

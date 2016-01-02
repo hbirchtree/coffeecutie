@@ -1,12 +1,18 @@
 #ifndef COFFEE_COMPOSITE_TYPES_H
 #define COFFEE_COMPOSITE_TYPES_H
 
+#include "core/coffee_macros.h"
 #include <cmath>
 #include "basetypes.h"
 #include "map.h"
 #include "translatable_string.h"
 
 namespace Coffee{
+
+struct C_FORCE_PACKING uint24
+{
+    uint32 d:24;
+};
 
 template<typename T> class _cbasic_timer
 {
@@ -289,6 +295,100 @@ template<typename DimT> struct CBitmap
     }
 private:
     CRGBA* m_px;
+};
+
+template<class ClassName,typename FReturnType,typename... FArgumentTypes>
+struct CFunctionSlot
+{
+    using ClassType = ClassName;
+    using FunctionReturn = FReturnType;
+    using Function = FunctionReturn(ClassType::*)(FArgumentTypes...);
+    using FunctionConst = FunctionReturn(ClassType::*)(FArgumentTypes...) const;
+
+    CFunctionSlot(ClassType* c, Function f):
+        instance(c),n(f)
+    {
+    }
+    CFunctionSlot(ClassType* c, FunctionConst f):
+        instance(c),c(f)
+    {
+    }
+
+    FunctionReturn call(FArgumentTypes... arg)
+    {
+        return (instance->*n)(arg...);
+    }
+
+    FunctionReturn call(FArgumentTypes... arg) const
+    {
+        return (instance->*c)(arg...);
+    }
+
+    ClassName* instance;
+    union{
+        Function n;
+        FunctionConst c;
+    };
+};
+
+template<class ClassName, typename FReturnType, typename... FArgumentTypes>
+/*!
+ * \brief Can be extended for indirect calls to functions, either depending on thread or whatever.
+ */
+struct CFunctionSignal
+{
+    using ClassType = ClassName;
+    using FunctionReturn = FReturnType;
+    using Function = FunctionReturn(ClassType::*)(FArgumentTypes...);
+
+    virtual FunctionReturn call(CFunctionSlot<ClassType,FReturnType,FArgumentTypes...> f,
+                        FArgumentTypes... args)
+    {
+        f.call(args...);
+    }
+};
+
+template<typename FReturnType,typename... FArgumentTypes>
+struct CStaticFunctionBinding
+{
+    using FunctionReturn = FReturnType;
+    using Function = FunctionReturn(*)(FArgumentTypes...);
+
+    CStaticFunctionBinding(Function f):
+        function(f)
+    {
+    }
+
+    FunctionReturn call(FArgumentTypes... arg)
+    {
+        return function(arg...);
+    }
+
+    Function function;
+};
+
+struct CMimeData
+{
+    CMimeData(cstring id, void* data, const szptr& size, bool doClean = false):
+        b_doClean(doClean),
+        m_data(data),
+        m_size(size),
+        m_id(id)
+    {
+    }
+    ~CMimeData()
+    {
+        if(b_doClean)
+            free(m_data);
+    }
+    const CString& id(){return m_id;}
+    const void* data(){return m_data;}
+    const szptr& dataSize(){return m_size;}
+private:
+    bool b_doClean;
+    void* m_data;
+    szptr m_size;
+    CString m_id;
 };
 
 /*!

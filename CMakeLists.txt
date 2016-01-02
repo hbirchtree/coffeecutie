@@ -16,7 +16,10 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 
 #Warning flags
 if (NOT WIN32)
-    add_definitions ( -Wall )
+    add_definitions (
+        -Wall
+#        -Wpadded
+    )
 else()
     add_definitions ( -W4 )
 endif()
@@ -64,14 +67,19 @@ endif()
 set (
     COFFEE_ASSIMP_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/assimp/include
+        ${CMAKE_SOURCE_DIR}/coffee/core/include
     )
 set (
     COFFEE_AUDIO_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/audio/include
+        ${CMAKE_SOURCE_DIR}/coffee/core/include
     )
 set (
     COFFEE_BLAM_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/blam/include
+        ${CMAKE_SOURCE_DIR}/coffee/core/include
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/opengl/include
+        ${CMAKE_SOURCE_DIR}/coffee/image/include
     )
 set (
     COFFEE_CORE_INCLUDE_DIR
@@ -79,15 +87,23 @@ set (
     )
 set (
     COFFEE_GRAPHICS_INCLUDE_DIR
-        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+        ${CMAKE_SOURCE_DIR}/coffee/image/include
     )
 set (
     COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/opengl/include
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+        ${CMAKE_SOURCE_DIR}/coffee/image/include
+        ${CMAKE_SOURCE_DIR}/coffee/sdl2/include
+        ${CMAKE_SOURCE_DIR}/coffee/core/include
     )
 set (
     COFFEE_IMAGE_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/image/include
+    )
+set (
+    COFFEE_SDL2_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/sdl2/include
     )
 
 add_subdirectory(coffee)

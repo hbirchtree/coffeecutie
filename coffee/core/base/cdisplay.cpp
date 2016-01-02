@@ -49,9 +49,9 @@ CDWindowProperties::CDWindowProperties():
 }
 
 CGLContextProperties::CGLContextProperties():
-    version(3,3),
     bits(),
-    flags(GLCoreProfile)
+    flags(GLCoreProfile),
+    version(3,3)
 {
 }
 
@@ -82,23 +82,23 @@ CDEvent::CDEvent():
 }
 
 CDMonitor::CDMonitor():
-    index(0),
-    colorBits(),
     screenArea(),
     name(nullptr),
     phySize(0,0),
-    refresh(0)
+    colorBits(),
+    refresh(0),
+    index(0)
 {
 }
 
 CDContextBits::CDContextBits():
+    accum(),
     red(0),
     green(0),
     blue(0),
     alpha(0),
     depth(0),
-    stencil(0),
-    accum()
+    stencil(0)
 {
 }
 

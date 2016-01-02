@@ -1,6 +1,5 @@
 #include <coffee/core/CBase>
 #include <coffee/core/CContext>
-#include <coffee/core/CDisplay>
 #include <coffee/core/CFunctional>
 #include <coffee/core/CPlatform>
 

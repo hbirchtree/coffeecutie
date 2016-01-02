@@ -15,6 +15,7 @@
 #undef minor
 #undef major
 
+#include <typeinfo>
 #include <stdint.h>
 #include <map>
 #include <vector>
@@ -67,22 +68,6 @@ typedef void*       c_ptr;
  * \brief A prototype for Coffee-managed main functions. Benefits to this is that Coffee will abstract away any platform-specific quirks to the main function, such as difference in arguments. (Eg. some platforms do not include the main executable while others do)
  */
 typedef int32 (*CoffeeMainWithArgs)(int32,byte_t**);
-
-struct uint24
-{
-    uint32 d:24;
-
-    static uint32 to_int(uint24 const& t)
-    {
-        return t.d;
-    }
-    static uint24 from_int(uint32 const& i)
-    {
-        uint24 r;
-        r.d = i;
-        return r;
-    }
-};
 
 enum class ResourceAccess : uint8
 {
@@ -179,6 +164,12 @@ enum class PixelFormat : uint8
     Depth,
     DepthStencil,
 };
+
+template<typename T>
+cstring ctypename(const T& t)
+{
+    return typeid(t).name();
+}
 
 }
 

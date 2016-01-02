@@ -13,9 +13,9 @@ class CALSoundStream : public CSoundStream<CALSource,CALBuffer>
     CALSoundDevice* m_dev;
 
     CALCaptureDevice* m_capDev;
-    CAudioFormat m_capFmt;
 
     CALSource* m_soundSource;
+    CAudioFormat m_capFmt;
     bool b_inputStream;
 public:
     CALSoundStream(CALSoundDevice &device,

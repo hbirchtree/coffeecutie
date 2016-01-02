@@ -1,28 +1,83 @@
-#ifdef __linux__
-
+/* Linux macro, also defines window system target */
+#if defined(__linux__)
+#define C_SYSTEM_STRING "Linux"
 #define COFFEE_LINUX
-
-//For the sake of upcoming window systems
 #define COFFEE_X11
 //#define COFFEE_WAYLAND
 //#define COFFEE_MIR
-
 #endif
 
-#ifdef _WIN32
+#if defined(__ANDROID)
+#define C_SYSTEM_STRING "Android API level " __ANDROID_API__
+#endif
 
+/* Windows macro, only one for now */
+#if defined(_WIN32)
+#define C_SYSTEM_STRING "Windows"
 #define COFFEE_WINDOWS
-
 #endif
 
+/* Mac OS X macro, not iOS */
 #if defined(__APPLE__) && defined(__MACH__)
-
+#define C_SYSTEM_STRING "Mac OS X"
 #define COFFEE_APPLE
-
 #endif
 
-#ifdef __unix__
-
+/* Generic UNIX, mostly for POSIX libraries */
+#if defined(__unix__)
 #define COFFEE_UNIXPLAT
+#endif
+
+#define STR_UNREDIR(s) #s
+#define STR_REDIR(s) STR_UNREDIR(s)
+
+#define C_COMPILER_DEFINE_STRING(name,maj,min,lev) name " " STR_REDIR(maj) "." STR_REDIR(min) "." STR_REDIR(lev)
+
+#undef C_COMPILER_NAME
+#define C_COMPILER_NAME "Unknown"
+
+/* GCC compiler identification */
+#if defined(__GNUC__) && defined(__cplusplus)
+#define COFFEE_GCC
+
+#undef C_COMPILER_NAME
+#undef C_COMPILER_VER_MAJ
+#undef C_COMPILER_VER_MIN
+#undef C_COMPILER_VER_REV
+
+#define C_COMPILER_NAME "GCC/G++"
+#define C_COMPILER_VER_MAJ __GNUC__
+#define C_COMPILER_VER_MIN __GNUC_MINOR__
+#define C_COMPILER_VER_REV __GNUC_PATCHLEVEL__
+#endif
+
+#if defined(__clang__) && defined(__cplusplus)
+#undef COFFEE_GCC
+#define COFFEE_CLANG
+
+#undef C_COMPILER_NAME
+#undef C_COMPILER_VER_MAJ
+#undef C_COMPILER_VER_MIN
+#undef C_COMPILER_VER_REV
+
+#define C_COMPILER_NAME "Clang"
+#define C_COMPILER_VER_MAJ __clang_major__
+#define C_COMPILER_VER_MIN __clang_minor__
+#define C_COMPILER_VER_REV __clang_patchlevel__
+#endif
+
+#if defined(__MSC_VER) && defined(__cplusplus)
+#define COFFEE_MSVCXX
+#define C_COMPILER_STRING "MSVC++" _MSC_VER
+
+#undef C_COMPILER_NAME
+#undef C_COMPILER_VER_MAJ
+#undef C_COMPILER_VER_MIN
+#undef C_COMPILER_VER_REV
+
+#define C_COMPILER_NAME "MSVC++"
+#define C_COMPILER_VER_MAJ _MSC_FULL_VER
+#define C_COMPILER_VER_MIN _MSC_BUILD
+#define C_COMPILER_VER_REV x
 
 #endif

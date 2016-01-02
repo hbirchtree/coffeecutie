@@ -3,7 +3,7 @@
 
 #include "coffee/core/plat/platform_detect.h"
 #include "plat/cmemory.h"
-#include "types/types.h"
+#include "types/basetypes.h"
 #include <stdio.h>
 #include <stdexcept>
 
@@ -17,6 +17,15 @@
 
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
 
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#define C_FORCE_PACKING __attribute__((packed))
+#elif defined(COFFEE_MSVCXX)
+#include <windef.h>
+#define C_FORCE_PACKING UNALIGNED
+#else
+#define C_FORCE_PACKING
+#endif
+
 namespace Coffee{
 #if defined(COFFEE_WINDOWS)
 
@@ -28,12 +37,12 @@ constexpr Coffee::cstring print_color_fatal = "";
 constexpr Coffee::cstring print_color_reset = "";
 
 #else
-constexpr Coffee::cstring print_color_debug = "\033[1m\033[44m";
-constexpr Coffee::cstring print_color_warning = "\033[1m\033[43m";
-constexpr Coffee::cstring print_color_stub = "\033[1m\033[42m";
-constexpr Coffee::cstring print_color_fatal = "\033[1m\033[41m";
+constexpr cstring print_color_debug = "\033[1m\033[44m";
+constexpr cstring print_color_warning = "\033[1m\033[43m";
+constexpr cstring print_color_stub = "\033[1m\033[42m";
+constexpr cstring print_color_fatal = "\033[1m\033[41m";
 
-constexpr Coffee::cstring print_color_reset = "\033[0m";
+constexpr cstring print_color_reset = "\033[0m";
 #endif
 
 

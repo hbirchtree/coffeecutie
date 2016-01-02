@@ -13,10 +13,6 @@ set ( CoffeeCore_SRCS
 
         base/cdrendererbase.cpp
 
-        display/csdl2renderer.cpp
-        display/coffeesdl2/sdl2eventhandlers.cpp
-        display/coffeesdl2/sdl2helpers.cpp
-
         functional/cqueuerunner.cpp
 
         jobs/ctasksystem.cpp
@@ -39,7 +35,7 @@ set ( CoffeeCore_SRCS
 
 set(DL_LIBRARY "")
 if(NOT WIN32)
-        list(APPEND DL_LIBRARY dl)
+        list(APPEND DL_LIBRARY dl pthread)
 endif()
 
 add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
@@ -54,19 +50,15 @@ if(NOT WIN32)
 endif()
 ############################
 
-find_package(SDL2 REQUIRED)
 include_directories(
     ${COFFEE_CORE_INCLUDE_DIR}
     ${SDL2_INCLUDE_DIR}
-    ${GLBINDING_INCLUDE_DIRS}
     )
 
 target_link_libraries ( CoffeeCore
-${SDL2_LIBRARY}
-${GLBINDING_LIBRARIES}
-${LIBUNWIND_LIBRARIES}
-${DL_LIBRARY}
-)
+		${LIBUNWIND_LIBRARIES}
+		${DL_LIBRARY}
+	)
 
 if(WIN32)
     target_link_libraries ( CoffeeCore

@@ -23,11 +23,15 @@ enum CoffeeExitCode
     CoffeeExit_Kill        = 122,
 };
 
-constexpr cstring cbuild_string = C_CONSTRUCT_BUILD_STRING("01.00",__CBDATETIME__);
+constexpr cstring CoffeeBuildString = C_CONSTRUCT_BUILD_STRING("01.00",__CBDATETIME__);
+constexpr cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
+                                                                  C_COMPILER_VER_MAJ,
+                                                                  C_COMPILER_VER_MIN,
+                                                                  C_COMPILER_VER_REV);
 
 inline void print_builddate()
 {
-    cDebug("Build date: {0}",cbuild_string);
+    cDebug("Build string: {0}",CoffeeBuildString);
 }
 
 /*!

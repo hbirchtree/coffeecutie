@@ -23,8 +23,8 @@ CString coffee_file_get_dereferenced_path(cstring suffix)
 }
 
 CResourceUrl::CResourceUrl():
-    flags(0),
-    url(nullptr)
+    url(nullptr),
+    flags(0)
 {
 }
 
@@ -97,10 +97,9 @@ bool coffee_file_commit(CResource &resc, bool append)
 }
 
 CResource::CResource(cstring rsrc, bool absolute):
-    flags(0),
-    size(0),
+    m_resource(),
     data(nullptr),
-    m_resource()
+    size(0)
 {
     if(absolute)
         m_resource = rsrc;

@@ -5,9 +5,9 @@ namespace Coffee{
 namespace CGraphicsWrappers{
 
 CVertexAttribute::CVertexAttribute():
-    attribIdx(0),
     fmt(nullptr),
-    bnd(nullptr)
+    bnd(nullptr),
+    attribIdx(0)
 {
 }
 
@@ -21,8 +21,8 @@ CVertexBufferBinding::CVertexBufferBinding():
 }
 
 CVertexFormat::CVertexFormat():
-    size(0),
     offset(0),
+    size(0),
     type(CDataType::None),
     normalized(false)
 {

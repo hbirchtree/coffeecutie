@@ -1,5 +1,4 @@
 #include <coffee/CCore>
-#include <coffee/core/CDataStorage>
 #include "library.h"
 
 using namespace Coffee;
@@ -37,6 +36,14 @@ int32 coffee_main(int32, byte_t**)
         impl->printHello();
         coffee_close_lib(libtest);
     }
+
+    cDebug("Compiler: {0}",CoffeeCompilerString);
+
+    CRect t(0,0,10,10);
+    CFunctionSlot<CRect,int32> b(&t,&CRect::area);
+    cDebug("Character: {0}",b.call());
+
+    coffee_sys_command("ls");
 
     return 0;
 }

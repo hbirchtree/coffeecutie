@@ -16,21 +16,21 @@ struct _cal_devdata
 {
     _cal_devdata():
         m_ctxt(nullptr),
-        b_input(false),
         m_mixer(nullptr),
         m_format(nullptr),
-        m_inputstream(nullptr)
+        m_inputstream(nullptr),
+        b_input(false)
     {
     }
 
-    CALContext* m_ctxt;
-    bool b_input;
-    CALSoundMixer* m_mixer;
-    CALSoundFormat* m_format;
-    CALSoundStream* m_inputstream;
     std::vector<CALSoundStream*> m_streams;
     std::vector<CALSoundSample*> m_samples;
     std::vector<CALSoundBuffer*> m_buffers;
+    CALContext* m_ctxt;
+    CALSoundMixer* m_mixer;
+    CALSoundFormat* m_format;
+    CALSoundStream* m_inputstream;
+    bool b_input;
 };
 
 CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier& dev):

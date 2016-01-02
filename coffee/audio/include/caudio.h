@@ -27,8 +27,8 @@ struct CAudioFormat
  */
 struct CAudioSample
 {
-    CAudioFormat fmt; /*!< Format specification*/
     short* data = nullptr; /*!< Pointer to audio data*/
+    CAudioFormat fmt; /*!< Format specification*/
     int samples;
 };
 

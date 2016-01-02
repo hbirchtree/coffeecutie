@@ -22,8 +22,8 @@ struct CVertexFormat
 {
     CVertexFormat();
 
-    CGsize size; /*!< Amount of values of type*/
     CGszptr offset; /*!< Offset in vertex buffer, used for interleaved attribute*/
+    CGsize size; /*!< Amount of values of type*/
     CDataType type; /*!< Data type*/
     bool normalized; /*!< Whether it is normalized or not*/
 };
@@ -49,9 +49,9 @@ struct CVertexAttribute
 {
     CVertexAttribute();
 
-    CGidx attribIdx; /*!< Attribute index to shader*/
     CVertexFormat* fmt; /*!< Vertex format for attribute*/
     CVertexBufferBinding* bnd; /*!< Vertex buffer binding for attribute*/
+    CGidx attribIdx; /*!< Attribute index to shader*/
 };
 
 /*!
