@@ -7,12 +7,12 @@ using namespace CLibraryLoader;
 
 int32 coffee_main(int32, byte_t**)
 {
-    cstring_w cfg_dir  = coffee_get_userdata_dir(
+    cstring_w cfg_dir  = env_get_user_data(
                 "hbirchtree",
                 "Best Coffee of All Time");
 
-    cstring_w app_dir  = coffee_get_application_dir();
-    cstring_w exe_name = coffee_executable_name();
+    cstring_w app_dir  = env_get_application_dir();
+    cstring_w exe_name = executable_name();
 
     cDebug("Settings directory: {0}",cfg_dir);
     cDebug("Program directory:  {0}",app_dir);
@@ -41,9 +41,23 @@ int32 coffee_main(int32, byte_t**)
 
     CRect t(0,0,10,10);
     CFunctionSlot<CRect,int32> b(&t,&CRect::area);
-    cDebug("Character: {0}",b.call());
 
-    coffee_sys_command("ls");
+    CFunctionSignal<CRect,int32> sigtest;
+    cDebug("Signal return: {0}",sigtest.call(b));
+
+    cDebug("Interactive: {0}",interactive_cmd());
+
+    std::string ts;
+    ts.resize(100);
+
+    clear_screen();
+    while(!c_strcmp(&ts[0],"quit\n"))
+    {
+        ts.clear();
+        fprintf(stderr,"Type something: ");
+        read_string(&ts[0],99,stdin);
+        cDebug("You wrote: {0}",ts.c_str());
+    }
 
     return 0;
 }

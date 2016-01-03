@@ -13,7 +13,7 @@
 
 namespace Coffee{
 #if defined(COFFEE_LINUX)
-cstring_w coffee_executable_name(cstring_w n)
+cstring_w executable_name(cstring_w n)
 {
     C_UNUSED(n);
     return realpath("/proc/self/exe",nullptr);

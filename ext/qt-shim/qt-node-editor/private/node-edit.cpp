@@ -51,7 +51,7 @@ void CQNodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
     //We align in vertically to the center and to the left, no wrapping allowed
     QTextOption opts;
-    opts.setAlignment(Qt::AlignVCenter|Qt::AlignLeft);
+//    opts.setAlignment(Qt::AlignVCenter|Qt::AlignLeft);
     opts.setWrapMode(QTextOption::NoWrap);
     opts.setUseDesignMetrics(true);
 

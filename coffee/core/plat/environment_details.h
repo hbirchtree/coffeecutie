@@ -5,19 +5,25 @@
 
 namespace Coffee{
 
-extern cstring_w coffee_get_env_variable(cstring var);
+extern cstring_w env_get_variable(cstring var);
 
-extern cstring coffee_get_path_sep();
+extern bool env_set_variable(cstring var, cstring value);
 
-extern cstring_w coffee_concat_plat_path(cstring_w target, cstring v2);
+extern bool env_unset_variable(cstring var);
 
-extern cstring_w coffee_get_user_home_dir();
+extern bool env_clear_all();
 
-extern cstring_w coffee_get_userdata_dir(cstring orgname, cstring appname);
+extern cstring env_get_path_separator();
 
-extern cstring_w coffee_get_application_dir();
+extern cstring_w env_concatenate_path(cstring_w target, cstring v2);
 
-extern cstring_w coffee_get_current_dir();
+extern cstring_w env_get_user_home();
+
+extern cstring_w env_get_user_data(cstring orgname, cstring appname);
+
+extern cstring_w env_get_application_dir();
+
+extern cstring_w env_get_current_dir();
 
 } //Coffee
 

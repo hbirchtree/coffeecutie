@@ -1,4 +1,4 @@
-#include <wrappers/cvertexarrayobject.h>
+#include <glbinding/wrappers/cvertexarrayobject.h>
 #include <glfunctions.h>
 
 namespace Coffee{

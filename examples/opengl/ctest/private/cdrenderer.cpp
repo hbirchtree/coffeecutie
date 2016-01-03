@@ -5,7 +5,7 @@
 #include <coffee/core/input/cinputfunctions.h>
 #include "base_case.h"
 
-static CIAxisFilter m_axisFilter[2];
+static Coffee::CInput::CIAxisFilter m_axisFilter[2];
 
 using namespace Coffee::CResources;
 using namespace Coffee::CGraphicsWrappers;

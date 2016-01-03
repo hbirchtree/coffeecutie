@@ -2,6 +2,8 @@
 #include <node-edit.h>
 #include "mainwindowtester.h"
 
+using namespace Coffee;
+
 int32 coffee_main(int32 a, byte_t** c)
 {
     QApplication mn(a,c);

@@ -1,18 +1,18 @@
-#include <coffee/graphics_apis/opengl/include/wrappers/cbuffer.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cframebuffer.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cgraphicswrappers.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cqueryobject.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/crenderfence.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cshader.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/ctexture.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/ctexture_dxtc.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/ctransformcomputer.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cuniformtypes.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cvertexarrayobject.h>
-#include <coffee/graphics_apis/opengl/include/wrappers/cviewport_array.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cbuffer.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cframebuffer.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cgraphicswrappers.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cqueryobject.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/crenderfence.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cshader.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/ctexture.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/ctexture_dxtc.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/ctransformcomputer.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cuniformtypes.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cvertexarrayobject.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cviewport_array.h>
 
 #include <coffee/graphics_apis/opengl/include/cbufferedtexture.h>
 #include <coffee/graphics_apis/opengl/include/cvertexspecification.h>
 
 #include <coffee/graphics_apis/opengl/include/glbinding/cglbindingrenderer.h>
-#include <coffee/graphics_apis/opengl/include/cgraphics_quirks.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/cgraphics_quirks.h>

@@ -1,4 +1,4 @@
-#include <wrappers/ctexture_storage.h>
+#include <glbinding/wrappers/ctexture_storage.h>
 #include <glfunctions.h>
 
 namespace Coffee{

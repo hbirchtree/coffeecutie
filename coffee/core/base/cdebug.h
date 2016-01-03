@@ -7,16 +7,6 @@
 #include <cppformat/format.h>
 #endif
 
-//C++ headers
-#include <sstream>
-#include <iostream>
-#include <vector>
-#include <string>
-#include <stdexcept>
-
-//C libraries
-#include <stdio.h>
-
 #include "cdebug_print.h"
 #include "coffee/core/coffee_macros.h"
 
@@ -34,7 +24,7 @@ inline void cfprintf(FILE* stream, cstring format, Args... args)
 {
     try{
         CString formatted = cStringFormat(format,args...);
-        fputs(formatted.c_str(),stream);
+        c_puts(stream,formatted.c_str());
     }
     catch(std::exception e)
     {

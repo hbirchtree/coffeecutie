@@ -1,4 +1,4 @@
-#include <wrappers/ctexture_sampler.h>
+#include <glbinding/wrappers/ctexture_sampler.h>
 #include <glfunctions.h>
 
 namespace Coffee{

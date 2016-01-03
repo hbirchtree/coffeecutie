@@ -1,4 +1,4 @@
-#include <wrappers/cframebuffer.h>
+#include <glbinding/wrappers/cframebuffer.h>
 
 #include <glfunctions.h>
 #include <coffee/core/base/cdebug.h>

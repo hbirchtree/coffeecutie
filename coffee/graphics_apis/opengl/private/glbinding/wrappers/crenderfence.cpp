@@ -1,4 +1,4 @@
-#include <wrappers/crenderfence.h>
+#include <glbinding/wrappers/crenderfence.h>
 #include <glfunctions.h>
 
 namespace Coffee{

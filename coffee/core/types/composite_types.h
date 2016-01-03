@@ -344,7 +344,7 @@ struct CFunctionSignal
     virtual FunctionReturn call(CFunctionSlot<ClassType,FReturnType,FArgumentTypes...> f,
                         FArgumentTypes... args)
     {
-        f.call(args...);
+        return f.call(args...);
     }
 };
 

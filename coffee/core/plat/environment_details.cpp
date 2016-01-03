@@ -19,7 +19,7 @@
 
 namespace Coffee{
 
-cstring_w coffee_get_env_variable(cstring var)
+cstring_w env_get_variable(cstring var)
 {
 #if defined(COFFEE_LINUX)
     return getenv(var);
@@ -33,21 +33,48 @@ cstring_w coffee_get_env_variable(cstring var)
 #endif
 }
 
-cstring_w coffee_concat_plat_path(cstring_w target, cstring v2)
+bool env_set_variable(cstring var, cstring value)
+{
+#if defined(COFFEE_UNIXPLAT)
+    return setenv(var,value,0)==0;
+#elif defined(COFFEE_WINDOWS)
+    return false;
+#endif
+}
+
+bool env_unset_variable(cstring var)
+{
+#if defined(COFFEE_UNIXPLAT)
+    return unsetenv(var)==0;
+#elif defined(COFFEE_WINDOWS)
+    return false;
+#endif
+}
+
+bool env_clear_all()
+{
+#if defined(COFFEE_UNIXPLAT)
+    return clearenv()==0;
+#elif defined(COFFEE_WINDOWS)
+    return false;
+#endif
+}
+
+cstring_w env_concatenate_path(cstring_w target, cstring v2)
 {
     szptr len = ((target) ? c_strlen(target)+1 : 0)+c_strlen(v2)+1;
     cstring_w p = (cstring_w)c_realloc(target,len);
     if(target) //In the case where we start out with an empty buffer
-        c_strcat(p,coffee_get_path_sep());
+        c_strcat(p,env_get_path_separator());
     else
         p[0] = '\0';
     return c_strcat(p,v2);
 }
 
-cstring_w coffee_get_user_home_dir()
+cstring_w env_get_user_home()
 {
 #if defined(COFFEE_LINUX)
-    return coffee_get_env_variable("HOME");
+    return env_get_variable("HOME");
 #elif defined(COFFEE_WINDOWS)
     cstring_w homedrive = coffee_get_env_variable("HOMEDRIVE");
     cstring_w homepath = coffee_get_env_variable("HOMEPATH");
@@ -59,7 +86,7 @@ cstring_w coffee_get_user_home_dir()
 #endif
 }
 
-cstring coffee_get_path_sep()
+cstring env_get_path_separator()
 {
     //Assuming that Windows is the only platform using
 #if defined(COFFEE_WINDOWS)
@@ -69,13 +96,13 @@ cstring coffee_get_path_sep()
 #endif
 }
 
-cstring_w coffee_get_userdata_dir(cstring orgname, cstring appname)
+cstring_w env_get_user_data(cstring orgname, cstring appname)
 {
-    cstring_w base = coffee_concat_plat_path(
+    cstring_w base = env_concatenate_path(
                 nullptr,
-                coffee_get_user_home_dir());
+                env_get_user_home());
 #if defined(COFFEE_LINUX)
-    base = coffee_concat_plat_path(
+    base = env_concatenate_path(
                 base,
                 ".local/share");
 #elif defined(COFFEE_WINDOWS)
@@ -87,16 +114,16 @@ cstring_w coffee_get_userdata_dir(cstring orgname, cstring appname)
                 base,
                 "Library/Application Support");
 #endif
-    base = coffee_concat_plat_path(
+    base = env_concatenate_path(
                 base,
                 orgname);
-    return coffee_concat_plat_path(base,appname);
+    return env_concatenate_path(base,appname);
 }
 
-cstring_w coffee_get_application_dir()
+cstring_w env_get_application_dir()
 {
 #if defined(COFFEE_LINUX)
-    return dirname(coffee_executable_name());
+    return dirname(executable_name());
 #elif defined(COFFEE_WINDOWS)
     cstring_w path = coffee_executable_name();
     cwstring_w pathw = c_str_wideconvert(path);
@@ -109,7 +136,7 @@ cstring_w coffee_get_application_dir()
 #endif
 }
 
-cstring_w coffee_get_current_dir()
+cstring_w env_get_current_dir()
 {
 #if defined(COFFEE_LINUX)
     cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);

@@ -1,4 +1,4 @@
-#include "cgraphics_quirks.h"
+#include <glbinding/cgraphics_quirks.h>
 
 #include <cstring>
 

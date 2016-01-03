@@ -7,23 +7,23 @@ set ( CoffeeOpenGL_SRCS
         private/glbinding/cglbindingrenderer.cpp
         private/glbinding/glbinding.cpp
 
-        private/wrappers/cbuffer.cpp
-        private/wrappers/cbuffer_storage.cpp
-        private/wrappers/cbuffer_storage_fallback.cpp
-        private/wrappers/cshader.cpp
-        private/wrappers/cframebuffer.cpp
-        private/wrappers/cgraphicswrappers.cpp
-        private/wrappers/cvertexarrayobject.cpp
-        private/wrappers/ctexture.cpp
-        private/wrappers/ctexture_dxtc.cpp
-        private/wrappers/crenderfence.cpp
-        private/wrappers/copengl_types.cpp
-        private/wrappers/ctexture_storage.cpp
-        private/wrappers/ctexture_storage_fallback.cpp
-        private/wrappers/ctexture_sampler.cpp
-        private/wrappers/ctexture_pbo.cpp
-        private/wrappers/cuniformtypes.cpp
-        private/wrappers/cviewport_array.cpp
+        private/glbinding/wrappers/cbuffer.cpp
+        private/glbinding/wrappers/cbuffer_storage.cpp
+        private/glbinding/wrappers/cbuffer_storage_fallback.cpp
+        private/glbinding/wrappers/cshader.cpp
+        private/glbinding/wrappers/cframebuffer.cpp
+        private/glbinding/wrappers/cgraphicswrappers.cpp
+        private/glbinding/wrappers/cvertexarrayobject.cpp
+        private/glbinding/wrappers/ctexture.cpp
+        private/glbinding/wrappers/ctexture_dxtc.cpp
+        private/glbinding/wrappers/crenderfence.cpp
+        private/glbinding/wrappers/copengl_types.cpp
+        private/glbinding/wrappers/ctexture_storage.cpp
+        private/glbinding/wrappers/ctexture_storage_fallback.cpp
+        private/glbinding/wrappers/ctexture_sampler.cpp
+        private/glbinding/wrappers/ctexture_pbo.cpp
+        private/glbinding/wrappers/cuniformtypes.cpp
+        private/glbinding/wrappers/cviewport_array.cpp
 
         private/glad/glad.c
     )

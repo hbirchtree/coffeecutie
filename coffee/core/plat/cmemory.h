@@ -6,6 +6,10 @@
 namespace Coffee{
 namespace CMem{
 
+extern cstring c_gets(cstring_w target, int32 size, FILE* strm);
+
+extern void c_puts(FILE* strm, cstring output);
+
 extern void c_free(c_ptr data);
 
 extern bool c_memcmp(c_cptr target, c_cptr cmp, szptr len);

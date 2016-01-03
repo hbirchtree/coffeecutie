@@ -1,4 +1,4 @@
-#ifndef CMATH_GLM_H
+#if !defined(CMATH_GLM_H) || defined(USE_GLM_MATH_LIB)
 #define CMATH_GLM_H
 
 #include <glm/glm/glm.hpp>

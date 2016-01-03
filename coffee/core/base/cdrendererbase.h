@@ -6,10 +6,12 @@
 #include "coffee/core/base/cdisplay.h"
 #include "coffee/core/base/cinput.h"
 
-using namespace Coffee::CInput;
-
 namespace Coffee {
+
+using namespace CInput;
+
 namespace CDisplay {
+
 
 /*!
  * \brief The base class for creating a rendering context. It will handle window events, input events and creating a GL context for the user. The user will then work on top of this stack with Coffee-defined events and classes.

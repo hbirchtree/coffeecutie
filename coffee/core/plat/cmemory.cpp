@@ -7,6 +7,11 @@
 namespace Coffee{
 namespace CMem{
 
+cstring c_gets(cstring_w target, int32 size, FILE *strm)
+{
+    return fgets(target,size,strm);
+}
+
 bool c_memcmp(c_cptr target, c_cptr cmp, szptr len)
 {
     return memcmp(target,cmp,len)==0;
@@ -111,6 +116,11 @@ cstring_w c_strcat(cstring_w s1, cstring s2)
 bool c_strstr(cstring s1, cstring s2)
 {
     return strstr(s1,s2);
+}
+
+void c_puts(FILE *strm, cstring output)
+{
+    fputs(output,strm);
 }
 
 }

@@ -108,10 +108,115 @@ struct CGL_Implementation
         ProxyRect,
     };
 
-    enum class InternalFormat
+    enum InternalFormat
     {
-        RGBA8,
-        RGBA32F,
+        //R formats
+        CG_RED8I = GL_R8I,
+        CG_RED8UI = GL_R8UI,
+        CG_RED16I = GL_R16I,
+        CG_RED16UI = GL_R16UI,
+        CG_RED16F = GL_R16F,
+        CG_RED32I = GL_R32I,
+        CG_RED32UI = GL_R32UI,
+        CG_RED32F = GL_R32F,
+
+        //RG formats
+        CG_RG8I = GL_RG8I,
+        CG_RG8UI = GL_RG8UI,
+        CG_RG16I = GL_RG16I,
+        CG_RG16UI = GL_RG16UI,
+        CG_RG16F = GL_RG16F,
+
+        //RGB formats
+        CG_R3G3B2 = GL_R3_G3_B2,
+        CG_RGB5 = GL_RGB5,
+        CG_RGB8 = GL_RGB8,
+        CG_RGB10 = GL_RGB10,
+        CG_RGB12 = GL_RGB12,
+        CG_RGB16I = GL_RGB16I,
+        CG_RGB16UI = GL_RGB16UI,
+        CG_RGB16F = GL_RGB16F,
+        CG_RGB32I = GL_RGB32I,
+        CG_RGB32UI = GL_RGB32UI,
+        CG_RGB32F = GL_RGB32F,
+
+        //Special RGB formats
+        CG_RGB9E5 = GL_RGB9_E5,
+        CG_R11G11B10F = GL_R11F_G11F_B10F,
+
+        //SRGB formats
+        CG_SRGB8 = GL_SRGB8,
+        CG_SRGB8A8 = GL_SRGB8_ALPHA8,
+
+        //RGBA formats
+        CG_RGBA2 = GL_RGBA2,
+        CG_RGBA4 = GL_RGBA4,
+        CG_RGBA8I = GL_RGBA8I,
+        CG_RGBA8UI = GL_RGBA8UI,
+        CG_RGBA12 = GL_RGBA12,
+        CG_RGBA16I = GL_RGBA16I,
+        CG_RGBA16UI = GL_RGBA16UI,
+        CG_RGBA16F = GL_RGBA16F,
+        CG_RGBA32I = GL_RGBA32I,
+        CG_RGBA32UI = GL_RGBA32UI,
+        CG_RGBA32F = GL_RGBA32F,
+
+        //Special RGBA formats
+        CG_RGB5A1 = GL_RGB5_A1,
+        CG_RGB10A2 = GL_RGB10_A2,
+        CG_RGB10A2UI = GL_RGB10_A2UI,
+
+        //Compressed formats
+        CG_RGTC_RUI = GL_COMPRESSED_RED_RGTC1,
+        CG_RGTC_RI = GL_COMPRESSED_SIGNED_RED_RGTC1,
+        CG_RGTC_RGUI = GL_COMPRESSED_RG_RGTC2,
+        CG_RGTC_RGI = GL_COMPRESSED_SIGNED_RG_RGTC2,
+
+#ifdef GL_EXT_texture_compression_s3tc
+        CG_DXT1 = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+        CG_DXT1NoAlpha = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
+        CG_DXT3 = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+        CG_DXT5 = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+#endif
+
+#ifdef GL_ARB_texture_compression_bptc
+        CG_BPTC_RGBA_UNORM = GL_COMPRESSED_RGBA_BPTC_UNORM,
+        CG_BPTC_SRGBA_UNORM = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
+        CG_BPTC_RGB_SFLOAT = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
+        CG_BPTC_RGB_UFLOAT = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
+#endif
+
+#ifdef GL_KHR_texture_compression_astc_hdr
+        CG_ASTC_RGBA_4x4 = GL_COMPRESSED_RGBA_ASTC_4x4_KHR,
+        CG_ASTC_RGBA_5x4 = GL_COMPRESSED_RGBA_ASTC_5x4_KHR,
+        CG_ASTC_RGBA_5x5 = GL_COMPRESSED_RGBA_ASTC_5x5_KHR,
+        CG_ASTC_RGBA_6x5 = GL_COMPRESSED_RGBA_ASTC_6x5_KHR,
+        CG_ASTC_RGBA_6x6 = GL_COMPRESSED_RGBA_ASTC_6x6_KHR,
+        CG_ASTC_RGBA_8x5 = GL_COMPRESSED_RGBA_ASTC_8x5_KHR,
+        CG_ASTC_RGBA_8x6 = GL_COMPRESSED_RGBA_ASTC_8x6_KHR,
+        CG_ASTC_RGBA_8x8 = GL_COMPRESSED_RGBA_ASTC_8x8_KHR,
+        CG_ASTC_RGBA_10x5 = GL_COMPRESSED_RGBA_ASTC_10x5_KHR,
+        CG_ASTC_RGBA_10x6 = GL_COMPRESSED_RGBA_ASTC_10x6_KHR,
+        CG_ASTC_RGBA_10x8 = GL_COMPRESSED_RGBA_ASTC_10x8_KHR,
+        CG_ASTC_RGBA_10x10 = GL_COMPRESSED_RGBA_ASTC_10x10_KHR,
+        CG_ASTC_RGBA_12x10 = GL_COMPRESSED_RGBA_ASTC_12x10_KHR,
+        CG_ASTC_RGBA_12x12 = GL_COMPRESSED_RGBA_ASTC_12x12_KHR,
+
+        CG_ASTC_SRGB8A8_4x4 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
+        CG_ASTC_SRGB8A8_5x4 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
+        CG_ASTC_SRGB8A8_5x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
+        CG_ASTC_SRGB8A8_6x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
+        CG_ASTC_SRGB8A8_6x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
+        CG_ASTC_SRGB8A8_8x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
+        CG_ASTC_SRGB8A8_8x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
+        CG_ASTC_SRGB8A8_8x8 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
+        CG_ASTC_SRGB8A8_10x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
+        CG_ASTC_SRGB8A8_10x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
+        CG_ASTC_SRGB8A8_10x8 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
+        CG_ASTC_SRGB8A8_10x10 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
+        CG_ASTC_SRGB8A8_12x10 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
+        CG_ASTC_SRGB8A8_12x12 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
+#endif
     };
 
     enum class OperationType
@@ -362,14 +467,8 @@ struct CGL_Implementation
     static void ClearDepth(scalar f){glClearDepthf(f);}
     static void ClearStencil(int32 f){glClearStencil(f);}
 
-    static void FrontFace(Face v)
-    {
-        glFrontFace(to_enum(v));
-    }
-    static void CullMode(Face v)
-    {
-        glCullFace(to_enum(v));
-    }
+    static void FrontFace(Face v){glFrontFace(to_enum(v));}
+    static void CullMode(Face v){glCullFace(to_enum(v));}
 
     static void Flush(){glFlush();}
     static void Finish(){glFinish();}

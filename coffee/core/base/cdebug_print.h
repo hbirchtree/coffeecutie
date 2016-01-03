@@ -2,6 +2,7 @@
 #define COFFEE_CORE_DEBUG_PRINT_H
 
 #include <iomanip>
+#include <sstream>
 #include "coffee/core/coffee_macros.h"
 #include "coffee/core/plat/cmemory.h"
 #include "coffee/core/types/basetypes.h"

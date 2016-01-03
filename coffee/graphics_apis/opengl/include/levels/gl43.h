@@ -61,6 +61,8 @@ struct CGL43 : CGL33
     static bool BufferStorageSupported(){return false;}
 
     /* Base */
+    static void MemoryBarrier(GLbitfield f){glMemoryBarrier(f);}
+
     /* Use gl*Indexed gl*Arrayv */
     static void ViewportSet(uint32,CRect const*){}
     static void ViewportArrayv(uint32,size_t,CRect const*){}

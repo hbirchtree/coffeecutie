@@ -1,4 +1,4 @@
-#include <wrappers/cbuffer_storage_fallback.h>
+#include <glbinding/wrappers/cbuffer_storage_fallback.h>
 
 #include <glfunctions.h>
 

@@ -1,4 +1,4 @@
-#include <wrappers/cbuffer_storage.h>
+#include <glbinding/wrappers/cbuffer_storage.h>
 
 #include "glfunctions.h"
 

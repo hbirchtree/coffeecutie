@@ -1,4 +1,4 @@
-#include <wrappers/cgraphicswrappers.h>
+#include <glbinding/wrappers/cgraphicswrappers.h>
 
 #include <glfunctions.h>
 

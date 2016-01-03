@@ -24,6 +24,7 @@ struct CGL45 : CGL43
      * Most functions here should use DSA
      *
      */
+    static void MemoryBarrierByRegion(GLbitfield f){glMemoryBarrierByRegion(f);}
 
     /* Allocations, initializing variants */
     static bool TexAlloc(size_t,CGenum,CGhnd*){return false;}

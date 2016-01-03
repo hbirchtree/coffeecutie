@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_OPENGL_VERTEX_SPECIFICATION_H
 #define COFFEE_GRAPHICS_OPENGL_VERTEX_SPECIFICATION_H
 
-#include "wrappers/cvertexarrayobject.h"
+#include "glbinding/wrappers/cvertexarrayobject.h"
 
 namespace Coffee{
 namespace CGraphicsWrappers{

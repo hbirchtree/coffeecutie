@@ -1,4 +1,4 @@
-#include <wrappers/cviewport_array.h>
+#include <glbinding/wrappers/cviewport_array.h>
 #include <glfunctions.h>
 
 namespace Coffee{

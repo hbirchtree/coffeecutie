@@ -1,4 +1,4 @@
-#include <wrappers/ctexture_storage_fallback.h>
+#include <glbinding/wrappers/ctexture_storage_fallback.h>
 
 #include <glfunctions.h>
 

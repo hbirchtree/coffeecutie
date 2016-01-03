@@ -1,7 +1,6 @@
 #include "cinputfunctions.h"
 
 #include "coffee/core/base/cmath.h"
-#include "coffee/core/base/cmath_glm.h"
 
 namespace Coffee{
 namespace CInput{
@@ -22,9 +21,10 @@ void coffee_input_mouse_rotate(CQuat *cqt, const CIMouseMoveEvent *evsrc)
                 * (*cqt));
 }
 
-void coffee_input_controller_rotate(CQuat *cqt, const CIControllerAtomicEvent *jev, CIAxisFilter& filter)
+void coffee_input_controller_rotate(
+        CQuat *cqt, const CIControllerAtomicEvent *jev, CIAxisFilter& filter)
 {
-    CMath::quat* qt = (CMath::quat*)cqt;
+    CQuat* qt = cqt;
 
     if(CMath::fabs(jev->value)<0.1)
         return;
@@ -45,9 +45,9 @@ void coffee_input_controller_rotate(CQuat *cqt, const CIControllerAtomicEvent *j
         return;
     }
 
-    *qt = normalize(
-                quat(vec3(v.y()*0.1,0,0))
-                *quat(vec3(0,v.x()*0.1,0))
+    *qt = normalize_quat(
+                CQuat(CVec3(v.y()*0.1,0,0))
+                *CQuat(CVec3(0,v.x()*0.1,0))
                 *(*qt));
 }
 

@@ -1,4 +1,4 @@
-#include <wrappers/ctexture.h>
+#include <glbinding/wrappers/ctexture.h>
 
 #include <glfunctions.h>
 

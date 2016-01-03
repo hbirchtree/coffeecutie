@@ -6,14 +6,11 @@
 
 #include "coffee/core/plat/platform_detect.h"
 #include "coffee/core/coffee_macros.h"
-#include "coffee/core/CTypes"
-#include <vector>
-
-using namespace Coffee;
+#include <coffee/core/CTypes>
 
 namespace Coffee{
 
-extern cstring_w coffee_executable_name(cstring_w n = nullptr);
+extern cstring_w executable_name(cstring_w n = nullptr);
 
 static cstring _switch_short(cstring in)
 {
