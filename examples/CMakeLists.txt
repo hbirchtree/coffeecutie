@@ -25,3 +25,5 @@ add_subdirectory (experiments/cgb-test)
 
 #Qt widgets and etc.
 add_subdirectory(qt/node-editor-test)
+
+add_subdirectory(rsread)

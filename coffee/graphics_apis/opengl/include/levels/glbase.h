@@ -261,10 +261,7 @@ struct CGL_Implementation
     static CGenum to_enum(Operator f);
     static CGenum to_enum(Texture f);
 
-    static CGpixfmt get_fmt(PixelFormat e, bool rev)
-    {
-        return {GL_NONE,GL_NONE};
-    }
+    static CGpixfmt get_fmt(PixelFormat e, bool rev);
 
     /* Base OpenGL, all implemented in GL3.3 */
     static void Enable(Feature e){glEnable(to_enum(e));}
@@ -908,15 +905,15 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     case PixelFormat::R11G11B10F:
         return GL_R11F_G11F_B10F;
 
-    case PixelFormat::R3G3B2:
+    case PixelFormat::R3G3B2UI:
         return GL_R3_G3_B2;
-    case PixelFormat::RGB4:
+    case PixelFormat::RGB4UI:
         return GL_RGB4;
-    case PixelFormat::RGB5:
+    case PixelFormat::RGB5UI:
         return GL_RGB5;
-    case PixelFormat::RGB565:
+    case PixelFormat::RGB565UI:
         return GL_RGB565;
-    case PixelFormat::RGB9E5:
+    case PixelFormat::RGB9E5UI:
         return GL_RGB9_E5;
     case PixelFormat::RGB10:
         return GL_RGB10;
@@ -925,13 +922,13 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
 
     case PixelFormat::RGBA2:
         return GL_RGBA2;
-    case PixelFormat::RGB10A2:
+    case PixelFormat::RGB10A2I:
         return GL_RGB10_A2;
     case PixelFormat::RGB10A2UI:
         return GL_RGB10_A2UI;
     case PixelFormat::RGBA12:
         return GL_RGBA12;
-    case PixelFormat::RGB5A1:
+    case PixelFormat::RGB5A1UI:
         return GL_RGB5_A1;
 
     case PixelFormat::SRGB8A8:
@@ -1050,6 +1047,94 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
 CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::Texture f)
 {
     return (CGenum)f;
+}
+
+CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, bool rev)
+{
+    switch(e)
+    {
+    case PixelFormat::RGB8UI:
+            return {GL_UNSIGNED_BYTE,GL_RGB};
+    case PixelFormat::RGB8I:
+            return {GL_BYTE,GL_RGB};
+    case PixelFormat::RGB16UI:
+            return {GL_UNSIGNED_SHORT,GL_RGB};
+    case PixelFormat::RGB16I:
+            return {GL_SHORT,GL_RGB};
+    case PixelFormat::RGB32UI:
+            return {GL_UNSIGNED_INT,GL_RGB};
+    case PixelFormat::RGB32I:
+            return {GL_INT,GL_RGB};
+
+    case PixelFormat::RGBA8UI:
+        if(rev)
+            return {GL_UNSIGNED_INT_8_8_8_8_REV,GL_RGBA};
+        else
+            return {GL_UNSIGNED_INT_8_8_8_8,GL_RGBA};
+    case PixelFormat::RGBA8I:
+            return {GL_BYTE,GL_RGBA};
+    case PixelFormat::RGBA16UI:
+            return {GL_UNSIGNED_SHORT,GL_RGBA};
+    case PixelFormat::RGBA16I:
+            return {GL_SHORT,GL_RGBA};
+    case PixelFormat::RGBA32UI:
+            return {GL_UNSIGNED_INT,GL_RGBA};
+    case PixelFormat::RGBA32I:
+            return {GL_INT,GL_RGBA};
+
+    case PixelFormat::R3G3B2UI:
+        if(rev)
+            return {GL_UNSIGNED_BYTE_2_3_3_REV,GL_RGB};
+        else
+            return {GL_UNSIGNED_BYTE_3_3_2,GL_RGB};
+    case PixelFormat::RGB4UI:
+        if(rev)
+            return {GL_UNSIGNED_SHORT_4_4_4_4_REV,GL_RGB};
+        else
+            return {GL_UNSIGNED_SHORT_4_4_4_4,GL_RGB};
+    case PixelFormat::RGB565UI:
+        if(rev)
+            return {GL_UNSIGNED_SHORT_5_6_5_REV,GL_RGB};
+        else
+            return {GL_UNSIGNED_SHORT_5_6_5,GL_RGB};
+
+    case PixelFormat::RGB5A1UI:
+        if(rev)
+            return {GL_UNSIGNED_SHORT_1_5_5_5_REV,GL_RGBA};
+        else
+            return {GL_UNSIGNED_SHORT_5_5_5_1,GL_RGBA};
+    case PixelFormat::RGB9E5UI:
+        if(rev)
+            return {GL_UNSIGNED_INT_5_9_9_9_REV,GL_RGBA};
+        else
+            break;
+
+    case PixelFormat::RGB10A2I:
+        if(rev)
+            return {GL_INT_2_10_10_10_REV,GL_RGBA};
+        else
+            break;
+    case PixelFormat::RGB10A2UI:
+        if(rev)
+            return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
+        else
+            return {GL_UNSIGNED_INT_10_10_10_2,GL_RGBA};
+    case PixelFormat::R11G11B10F:
+        return {GL_UNSIGNED_INT_10F_11F_11F_REV,GL_RGB};
+
+    case PixelFormat::R32F:
+        return {GL_FLOAT,GL_RED};
+    case PixelFormat::RG32F:
+        return {GL_FLOAT,GL_RG};
+    case PixelFormat::RGB32F:
+        return {GL_FLOAT,GL_RGB};
+    case PixelFormat::RGBA32F:
+        return {GL_FLOAT,GL_RGBA};
+
+    default:
+        break;
+    }
+    return {GL_NONE,GL_NONE};
 }
 
 }

@@ -103,6 +103,7 @@ enum class BitFormat : uint8
     Short_5551, Short_1555R,
 
     Int_8, Int_8R,
+    Int_5999R,
     Int_1010102, Int_2101010R,
 
     LL_8, LL_8R,
@@ -151,59 +152,59 @@ enum class PixelFormat
 
     /* Irregular formats */
 
-    RGB4,       /*  12-bit integer,          4-bit per channel*/
-    RGB5,       /*  15-bit integer,          5-bit per channel*/
-    RGB10,      /*  30-bit integer,         10-bit per channel*/
-    RGB12,      /*  36-bit integer,         12-bit per channel*/
+    RGB4UI,     /*  12-bit,          4-bit per channel*/
+    RGB5UI,     /*  15-bit,          5-bit per channel*/
+    RGB10,      /*  30-bit,         10-bit per channel*/
+    RGB12,      /*  36-bit,         12-bit per channel*/
 
-    RGBA2,      /*   8-bit integer,          2-bit per channel */
-    RGB5A1,     /*  16-bit integer,          5-bit per channel, 1-bit alpha*/
-    RGB10A2,    /*  32-bit integer,         10-bit per channel, 2-bit alpha*/
-    RGB10A2UI,  /*  32-bit integer,         10-bit unsigned per channel, 2-bit unsigned alpha*/
-    RGBA12,     /*  48-bit integer,         12-bit per channel */
+    RGBA2,      /*   8-bit,          2-bit per channel */
+    RGB5A1UI,   /*  16-bit,          5-bit per channel, 1-bit alpha*/
+    RGB10A2I,   /*  32-bit,         10-bit per channel, 2-bit alpha*/
+    RGB10A2UI,  /*  32-bit,         10-bit ui per channel, 2-bit ui alpha*/
+    RGBA12,     /*  48-bit,         12-bit per channel */
 
-    R3G3B2,     /*   8-bit integer,          3-bit R, 3-bit G, 2-bit B */
-    RGB565,     /*  16-bit integer,          5-bit R, 6-bit G, 5-bit B */
-    RGB9E5,     /*  32-bit integer,          9-bit integer channel RGB, 5-bit extra */
-    R11G11B10F, /*  11-bit float R, 11-bit float G, 10-bit float B */
+    R3G3B2UI,   /*   8-bit,          3-bit R, 3-bit G, 2-bit B */
+    RGB565UI,   /*  16-bit,          5-bit R, 6-bit G, 5-bit B */
+    RGB9E5UI,   /*  32-bit,          9-bit special fp RGB, 5-bit ui extra */
+    R11G11B10F, /*  31-bit,         11-bit fp RG, 10-bit fp B*/
 
     /* Regular formats, R, RG, RGB, RGBA */
 
-    R8I,        /*   8-bit integer */
-    R8UI,       /*   8-bit unsigned integer */
-    R16I,       /*  16-bit integer */
-    R16UI,      /*  16-bit unsigned integer */
-    R16F,       /*  16-bit floating-point */
-    R32I,       /*  32-bit integer */
-    R32UI,      /*  32-bit unsigned integer */
-    R32F,       /*  32-bit floating-point */
+    R8I,        /*   8-bit i*/
+    R8UI,       /*   8-bit ui*/
+    R16I,       /*  16-bit i */
+    R16UI,      /*  16-bit ui */
+    R16F,       /*  16-bit fp */
+    R32I,       /*  32-bit i */
+    R32UI,      /*  32-bit ui */
+    R32F,       /*  32-bit fp */
 
-    RG8I,       /*  16-bit integer,          8-bit integer channels */
-    RG8UI,      /*  16-bit unsigned integer, 8-bit unsigned integer channels */
-    RG16I,      /*  32-bit integer,         16-bit integer channels */
-    RG16UI,     /*  32-bit unsigned integer,16-bit unsigned integer channels */
-    RG16F,      /*  32-bit floating-point,  16-bit floating-point channels */
-    RG32I,      /*  64-bit integer,         32-bit integer channels */
-    RG32UI,     /*  64-bit unsigned integer,32-bit unsigned integer channels */
-    RG32F,      /*  64-bit floating-point,  32-bit floating-point channels */
+    RG8I,       /*  16-bit,          8-bit i channels */
+    RG8UI,      /*  16-bit,          8-bit ui channels */
+    RG16I,      /*  32-bit,         16-bit i channels */
+    RG16UI,     /*  32-bit,         16-bit ui channels */
+    RG16F,      /*  32-bit,         16-bit fp channels */
+    RG32I,      /*  64-bit,         32-bit i channels */
+    RG32UI,     /*  64-bit,         32-bit ui channels */
+    RG32F,      /*  64-bit,         32-bit fp channels */
 
-    RGB8I,       /* 24-bit integer,          8-bit integer channels */
-    RGB8UI,      /* 24-bit integer,          8-bit unsigned integer channels */
-    RGB16I,      /* 48-bit integer,         16-bit integer channels */
-    RGB16UI,     /* 48-bit unsigned integer,16-bit unsigned integer channels */
-    RGB16F,      /* 48-bit floating-point,  16-bit floating-point channels */
-    RGB32I,      /* 96-bit integer,         32-bit integer channels */
-    RGB32UI,     /* 96-bit unsigned integer,32-bit unsigned integer channels */
-    RGB32F,      /* 96-bit floating-point,  32-bit floating-point channels */
+    RGB8I,      /*  24-bit,          8-bit i channels */
+    RGB8UI,     /*  24-bit,          8-bit ui channels */
+    RGB16I,     /*  48-bit,         16-bit i channels */
+    RGB16UI,    /*  48-bit,         16-bit ui channels */
+    RGB16F,     /*  48-bit,         16-bit fp channels */
+    RGB32I,     /*  96-bit,         32-bit i channels */
+    RGB32UI,    /*  96-bit,         32-bit ui channels */
+    RGB32F,     /*  96-bit,         32-bit fp channels */
 
-    RGBA8I,     /*  16-bit integer,          8-bit integer channels */
-    RGBA8UI,    /*  16-bit unsigned integer, 8-bit unsigned integer channels */
-    RGBA16I,    /*  64-bit integer,         16-bit integer channels */
-    RGBA16UI,   /*  64-bit unsigned integer,16-bit unsigned integer channels */
-    RGBA16F,    /*  64-bit floating-point,  16-bit floating-point channels */
-    RGBA32I,    /* 128-bit integer,         32-bit integer channels */
-    RGBA32UI,   /* 128-bit unsigned integer,32-bit unsigned integer channels */
-    RGBA32F,    /* 128-bit floating-point,  32-bit floating-point channels */
+    RGBA8I,     /*  16-bit,          8-bit i channels */
+    RGBA8UI,    /*  16-bit,          8-bit ui channels */
+    RGBA16I,    /*  64-bit,         16-bit i channels */
+    RGBA16UI,   /*  64-bit,         16-bit ui channels */
+    RGBA16F,    /*  64-bit,         16-bit fp channels */
+    RGBA32I,    /* 128-bit,         32-bit i channels */
+    RGBA32UI,   /* 128-bit,         32-bit ui channels */
+    RGBA32F,    /* 128-bit,         32-bit fp channels */
 
     /* Compressed/nonlinear formats, use flags for further details */
     SRGB8,      /*  24-bit SRGB data*/
