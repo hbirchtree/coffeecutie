@@ -56,12 +56,99 @@ public:
             "out gl_PerVertex {"
             "   vec4 gl_Position;"
             "};"
-            "out VData {"
+            "out VS_Data {"
             "   vec2 vtex;"
-            "} vdata;"
+            "   mat4 tf;"
+            "} vs_data;"
             "void main(){"
-            "   vdata.vtex = texcoord;"
+            "   vs_data.vtex = texcoord;"
+            "   vs_data.tf = transform;"
             "   gl_Position = transform * vec4(position,1.0);"
+            "}"
+        };
+
+        constexpr byte_t tcshader_src[] = {
+            "#version 450 core\n"
+            "layout(vertices = 3) out;"
+            ""
+            "in VS_Data {"
+            "   vec2 vtex;"
+            "   mat4 tf;"
+            "} vs_data[];"
+            ""
+            "out TC_Data {"
+            "   vec2 vtex;"
+            "   mat4 tf;"
+            "} tc_data[];"
+            ""
+            "in gl_PerVertex"
+            "{"
+            "   vec4 gl_Position;"
+            "   float gl_PointSize;"
+            "   float gl_ClipDistance[];"
+            "} gl_in[gl_MaxPatchVertices];"
+            ""
+            "out gl_PerVertex"
+            "{"
+            "   vec4 gl_Position;"
+            "   float gl_PointSize;"
+            "   float gl_ClipDistance[];"
+            "} gl_out[];"
+            ""
+            "patch out float gl_TessLevelOuter[4];"
+            "patch out float gl_TessLevelInner[2];"
+            ""
+            "void main(void)"
+            "{"
+            "   if(gl_InvocationID == 0)"
+            "   {"
+            "       gl_TessLevelInner[0] = 5.0;"
+            "       gl_TessLevelOuter[0] = 5.0;"
+            "       gl_TessLevelOuter[1] = 5.0;"
+            "       gl_TessLevelOuter[2] = 5.0;"
+            "       gl_TessLevelOuter[3] = 5.0;"
+            "   }"
+            "   gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;"
+            "   tc_data[gl_InvocationID].vtex = vs_data[gl_InvocationID].vtex;"
+            "   tc_data[gl_InvocationID].tf = vs_data[gl_InvocationID].tf;"
+            "}"
+        };
+
+        constexpr byte_t teshader_src[] = {
+            "#version 450 core\n"
+            "layout(triangles,equal_spacing,cw) in;"
+            ""
+            "in TC_Data {"
+            "   vec2 vtex;"
+            "   mat4 tf;"
+            "} tc_data;"
+            ""
+            "in vec3 gl_TessCoord[gl_MaxPatchVertices];"
+            ""
+            "in gl_PerVertex"
+            "{"
+            "   vec4 gl_Position;"
+            "   float gl_PointSize;"
+            "   float gl_ClipDistance[];"
+            "} gl_in[gl_MaxPatchVertices];"
+            ""
+            "out gl_PerVertex {"
+            "   vec4 gl_Position;"
+            "   float gl_PointSize;"
+            "   float gl_ClipDistance[];"
+            "};"
+            ""
+            "out TE_Data {"
+            "   vec2 vtex;"
+            "} te_data;"
+            ""
+            "void main(void)"
+            "{"
+            ""
+            "   for(int i=0;i<3;i++) te_data[i].vtex = tc_data[i].vtex;"
+            "   gl_Position = (vec4(tc_data.tf * (gl_TessCoord.x * gl_in[0].gl_Position)) +"
+            "                  vec4(tc_data.tf * (gl_TessCoord.y * gl_in[1].gl_Position)) +"
+            "                  vec4(tc_data.tf * (gl_TessCoord.z * gl_in[2].gl_Position)));"
             "}"
         };
 
@@ -69,18 +156,24 @@ public:
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "uniform sampler2D diffsamp;"
-            "in VData {"
+            "in TE_Data {"
             "   vec2 vtex;"
-            "} vdata;"
+            "} te_data;"
             "void main(){"
-            "   vec4 smp = texture(diffsamp,vdata.vtex);"
+            "   vec4 smp = texture(diffsamp,te_data.vtex);"
             "   Out_color = smp;"
             "}"
         };
 
         //Creating a shader pipeline
+        CShaderStageProgram tcshader;
+        CShaderStageProgram teshader;
         CSimplePipeline basePipeline;
         basePipeline.create(vshader_src,fshader_src);
+//        coffee_graphics_shader_compile(tcshader,tcshader_src,CProgramStage::TessellationControl);
+//        coffee_graphics_shader_attach(basePipeline.data_ref(),tcshader,CProgramStage::TessellationControl);
+//        coffee_graphics_shader_compile(teshader,teshader_src,CProgramStage::TessellationEvaluation);
+//        coffee_graphics_shader_attach(basePipeline.data_ref(),teshader,CProgramStage::TessellationEvaluation);
         coffee_graphics_bind(basePipeline.data_ref());
 
         CBuffer vertices;
@@ -228,6 +321,9 @@ public:
         //Set uniform, a texture handle
         coffee_graphics_uniform_set_texhandle(basePipeline.frag,texuni,glsamp.bhandle);
 
+//        glPatchParameteri(GL_PATCH_VERTICES,32);
+//        glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
         this->showWindow();
         while(!closeFlag())
         {
@@ -252,6 +348,7 @@ public:
             }
 
             counter.update(clock->elapsed());
+//            coffee_graphics_draw_indexed(CPrimitiveMode::Patches,drawcall);
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,drawcall);
 
 
@@ -284,6 +381,7 @@ public:
         }
         case CIEvent::MouseMove:
         {
+            return; //NOTE: Disabled MouseMove
             const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
             t = normalize_quat(CQuat(1,mev->rel.y*0.1,mev->rel.x*0.1,0) * t);
             break;
@@ -302,6 +400,7 @@ int32 coffee_main(int32, byte_t**)
 
     CSDL2Renderer *renderer = new CDHudRenderer();
     CDWindowProperties props = coffee_get_default_visual();
+    props.contextProperties.version.major = 4;
     props.contextProperties.flags =
             props.contextProperties.flags|
             CGLContextProperties::GLDebug|

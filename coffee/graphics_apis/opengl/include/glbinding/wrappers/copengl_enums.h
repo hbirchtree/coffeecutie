@@ -17,6 +17,8 @@ enum class CPrimitiveMode : uint8
     TrianglesAdjacency,
     LineStrip,
     LineLoop,
+
+    Patches,
 };
 
 enum class CCullMode : uint8

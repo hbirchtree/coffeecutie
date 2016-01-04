@@ -1,93 +1,183 @@
 #ifndef COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
 #define COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
 
+#include <coffee/core/CTypes>
+
 namespace Coffee{
 namespace CRHI{
 
+struct CGraphicsProfiler
+{
+    /*!
+     * \brief Queries the API for performance information, begins and ends
+     */
+    struct PerfQuery
+    {
+        PerfQuery(ProfilingTerm term);
+
+        void begin();
+        void end();
+
+        int64 getResult();
+    };
+};
+
 struct CGraphicsAPI
 {
-    struct VertexDescription;
+    /*!
+     * \brief A singular command for the GPU command queue
+     */
+    struct GPUCommand : _cbasic_threadrunner_command
+    {
+    };
+    /*!
+     * \brief A queue which executes commands on the GPU thread
+     */
+    struct GPUCommandQueue : _cbasic_threadrunner_queue
+    {
+        void insertCmd(GPUCommand*){}
+    };
+    /*!
+     * \brief Contains state such as whether it should output to screen, culling, etc.
+     */
+    struct RasterizerState
+    {
+        bool rasterize(){}
+        bool culling(){}
+        bool wireframeRender(){}
+        bool polygonSmooth(){}
+        bool dither(){}
+        bool clampDepth(){}
+        bool testScissor(){}
+    };
 
-    struct VertexBuffer;
-    struct IndexBuffer;
-    struct UniformBuffer;
-    struct ShaderBuffer;
+    struct BlendState
+    {
+        bool blend(){}
+        bool additive(){}
+        bool sampleAlphaCoverage(){}
+    };
 
-    struct IndirectBuffer;
+    struct DepthStencilState
+    {
+        bool testDepth(){}
+        bool testStencil(){}
+    };
 
-    struct Program;
-    struct Shader;
+    struct PixelProcessState
+    {
+        bool swapEndiannes(){}
+        bool lsbFirst(){}
+        int32 rowLength(){}
+        int32 imgHeight(){}
+        int32 alignment(){}
+    };
 
-    struct OccludeQuery;
-    struct PerfQuery;
+    struct DebugMessage
+    {
+        DebugComponent component(){}
+        DebugType type(){}
+        Severity severity(){}
+        CString message(){}
+    };
 
-    struct Texture2D;
-    struct VolumeTexture;
+    struct VertexDescription
+    {
+        static void addAttribute(VertexDescription& desc,uint32 offset,uint32 stride,TypeEnum type,bool normalized){}
+    };
 
-    struct Texture2DArray;
-    struct VolumeTextureArray;
+    /*!
+     * \brief Base of all buffers, can contain vertices and etc.
+     */
+    struct VertexBuffer
+    {
+        VertexBuffer(ResourceAccess access, uint32 size){}
 
-    struct RenderView; /* Contains framebuffer and viewport information for resizing */
+        void commitMemory();
+    };
+    /*!
+     * \brief Contains mesh indices for ordering of vertices
+     */
+    struct IndexBuffer : public VertexBuffer
+    {
 
-    void cgAlloc(); /* Allocates n objects */
-    void cgFree();
+    };
+    /*!
+     * \brief Contains data which will be read by a shader
+     */
+    struct UniformBuffer : public VertexBuffer
+    {
+        UniformBuffer(uint32 stride, uint32 size){}
+    };
+    /*!
+     * \brief Contains data which will be modified by a shader, SSBO, transformed data, compute data
+     */
+    struct ShaderBuffer : public VertexBuffer
+    {
 
-    void cgClearBuffer();
+    };
+    /*!
+     * \brief Contains a packed struct of parameters
+     */
+    struct IndirectBuffer : public VertexBuffer
+    {
 
-    void cgViewportResize();
-    void cgScissorResize();
-    void cgDepthResize();
+    };
+    /*!
+     * \brief Describes a particular uniform value, either inside a uniform block or separately
+     */
+    struct UniformDescriptor
+    {
+    };
 
-    void cgBufferStorage(); /* For non-DSA, use hidden state tracking */
-    void cgBufferUpload();
-    void cgBufferMap();
-    void cgBufferUnmap();
-    void cgBufferBind(); /* Binds buffer to binding point/index */
+    /*!
+     * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader
+     */
+    struct Pipeline
+    {
+    };
+    /*!
+     * \brief Contains a single shader, fragment and etc.
+     */
+    struct Shader
+    {
 
-    void cgTextureStorage();
-    void cgTextureClear(); /* Clears texture data to value */
-    void cgTextureUpload();
-    void cgTextureDownload();
-    void cgTextureMipmap();
-    void cgTextureSetParam();
+    };
 
-    void cgTextureImport(); /* Import from binary format */
-    void cgTextureDump(); /* Dump texture to data location, should report data size when nullptr */
+    /*!
+     * \brief Can be included in a drawcall to determine whether or not to render. Calls begin() before rendering occlusion shapes
+     */
+    struct OccludeQuery
+    {
+        void begin(){}
+        void end(){}
 
-    void cgSamplerTexture(); /* Attaches texture to sampler */
-    void cgSamplerMakeResident(); /* For non-bindless, bind and set active texture, alternative for sparse textures */
-    void cgSamplerMakeNonResident();
-    void cgSamplerSetParam();
-    void cgSamplerGetParam();
+        int64 getResult(){}
+    };
 
-    void cgFramebufferDefault();
+    /*!
+     * \brief Rendering surface, can be rendered to by RenderTarget or used as texture. Should support PBO upload for OpenGL
+     */
+    struct Surface
+    {
+        Surface(PixelFormat fmt, bool isArray, uint32 arraySize, uint32 mips, int32 flags, ResourceAccess cl, const CBitmap& bitm);
+    };
 
-    void cgFramebufferBlit();
-    void cgFramebufferTexture();
-    void cgFramebufferRenderbuffer();
+    struct Texture2D; /* Simple 2D texture */
+    struct VolumeTexture; /* 3D texture */
+    struct Cubemap; /* Cube texture */
 
-    void cgSync();
-    void cgSyncAwait();
-    void cgSyncCheck();
+    struct Texture2DArray; /* Layered 2D texture*/
+    struct CubemapArray; /* Layered cubemap */
 
-    void cgMemoryBarrier();
-
-    void cgProgramImport();
-    void cgProgramExport();
-
-    void cgProgramGetData();
-
-    void cgProgramAttribBind();
-    void cgProgramUBlockBind();
-    void cgProgramUniform();
-
-    void cgPipelineBind();
-
-    void cgShaderBind();
-    void cgShaderCompile();
-
-    void cgOccludeQueryBegin();
-    void cgOccludeQueryEnd();
+    /*!
+     * \brief Contains framebuffer and viewport information for resizing, used for screen rendering and shadow maps
+     */
+    struct RenderTarget
+    {
+        void attachSurface(){}
+        void attachDepthStencilSurface(){}
+    };
 };
 
 }

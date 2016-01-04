@@ -11,15 +11,16 @@ template<typename T>
 _cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
         _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
 {
-    _cbasic_tmatrix<T,4> mat;
+    _cbasic_tmatrix<T,4> mat(T(0));
 
     mat[0][0] = T(2)/(view.right()-view.left());
     mat[1][1] = T(2)/(view.top()-view.bottom());
     mat[2][2] = T(2)/(zfield.far-zfield.near);
+    mat[3][3] = T(1);
 
-    mat[3][0] = -(view.right()+view.left())/(view.right()-view.left());
-    mat[3][1] = -(view.top()+view.bottom())/(view.top()-view.bottom());
-    mat[3][2] = -(zfield.far+zfield.near)/(zfield.far-zfield.near);
+    mat[3][0] = (view.right()+view.left())/(view.left()-view.right());
+    mat[3][1] = (view.top()+view.bottom())/(view.bottom()-view.top());
+    mat[3][2] = (zfield.far+zfield.near)/(zfield.far-zfield.near);
 
     return mat;
 }
@@ -94,8 +95,29 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
 {
     return coffee_graphics_gen_transform(
                 camera.position,
-                CVec3(1.0),
+                _cbasic_vec3<T>(1.0),
                 camera.rotation);
+}
+
+template<typename T>
+_cbasic_tmatrix<T,3> coffee_graphics_gen_lookat(
+        const _cbasic_tvector<T,3>& observer,
+        const _cbasic_tvector<T,3>& up,
+        const _cbasic_tvector<T,3>& subject)
+{
+    typedef _cbasic_tvector<T,3> tvec3;
+    typedef _cbasic_tmatrix<T,4> tmat3;
+
+    tvec3 dir = normalize(subject-observer);
+    tvec3 side = cross(dir,up);
+    tvec3 dup = cross(side,dir);
+
+    tmat3 mat;
+    mat[0] = side;
+    mat[1] = dup;
+    mat[2] = dir;
+
+    return mat;
 }
 
 }

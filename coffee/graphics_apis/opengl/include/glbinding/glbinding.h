@@ -170,7 +170,7 @@ constexpr _cbasic_static_map<CBufferUsage,GLenum,10> cbufusage_map = {
     {CBufferUsage::StreamCopy,GL_STREAM_DRAW},
 };
 
-constexpr _cbasic_static_map<CPrimitiveMode,GLenum,9> cpritype_map = {
+constexpr _cbasic_static_map<CPrimitiveMode,GLenum,10> cpritype_map = {
     {CPrimitiveMode::Triangles,GL_TRIANGLES},
     {CPrimitiveMode::Points,GL_POINTS},
     {CPrimitiveMode::Line,GL_LINES},
@@ -180,6 +180,8 @@ constexpr _cbasic_static_map<CPrimitiveMode,GLenum,9> cpritype_map = {
     {CPrimitiveMode::TriangleStripAdjacency,GL_TRIANGLE_STRIP_ADJACENCY},
     {CPrimitiveMode::LineStrip,GL_LINE_STRIP},
     {CPrimitiveMode::LineLoop,GL_LINE_LOOP},
+
+    {CPrimitiveMode::Patches,GL_PATCHES},
 };
 
 constexpr _cbasic_static_map<CTexIntFormat,GLenum,15> ctexint_map = {

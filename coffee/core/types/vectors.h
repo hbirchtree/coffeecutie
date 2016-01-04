@@ -1,6 +1,7 @@
 #ifndef COFFEE_CORE_VECTORS_H
 #define COFFEE_CORE_VECTORS_H
 
+#include "coffee/core/coffee_macros.h"
 #include "coffee/core/base/cmath.h"
 #include "coffee/core/types/basetypes.h"
 
@@ -44,15 +45,15 @@ template<typename T, size_t Size> struct _cbasic_tvector
 //        for(size_t i=0;i<Size;i++)
 //            this[i] = T(0);
 //    }
-    T& operator[](size_t i)
+    inline C_FORCE_INLINE T& operator[](size_t i)
     {
         return data[i];
     }
-    const T& operator[](size_t i) const
+    inline C_FORCE_INLINE const T& operator[](size_t i) const
     {
         return data[i];
     }
-    bool operator==(
+    inline C_FORCE_INLINE bool operator==(
             const _cbasic_tvector<T,Size>& v) const
     {
         for(size_t i=0;i<Size;i++)
@@ -60,37 +61,37 @@ template<typename T, size_t Size> struct _cbasic_tvector
                 return false;
         return true;
     }
-    void operator=(
+    inline C_FORCE_INLINE void operator=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] = v[i];
     }
-    void operator+=(
+    inline void operator+=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] += v[i];
     }
-    void operator-=(
+    inline C_FORCE_INLINE void operator-=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] += v[i];
     }
-    void operator*=(
+    inline C_FORCE_INLINE void operator*=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] *= v[i];
     }
-    void operator/=(
+    inline C_FORCE_INLINE void operator/=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v[i];
     }
-    _cbasic_tvector<T,Size> operator+(
+    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator+(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -98,7 +99,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             vnew[i] = (*this)[i]+v[i];
         return vnew;
     }
-    _cbasic_tvector<T,Size> operator-(
+    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator-(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -106,7 +107,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             vnew[i] = (*this)[i]-v[i];
         return vnew;
     }
-    _cbasic_tvector<T,Size> operator*(
+    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator*(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -114,7 +115,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             vnew[i] = (*this)[i]*v[i];
         return vnew;
     }
-    _cbasic_tvector<T,Size> operator/(
+    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator/(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -123,30 +124,26 @@ template<typename T, size_t Size> struct _cbasic_tvector
         return vnew;
     }
 
-    template<typename I>
-    _cbasic_tvector<T,Size> operator*(const T& v) const
+    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator*(const T& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]*v;
         return vnew;
     }
-    template<typename I>
-    _cbasic_tvector<T,Size> operator/(const T& v) const
+    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator/(const T& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]/v;
         return vnew;
     }
-    template<typename I>
-    void operator*=(const T& v)
+    inline C_FORCE_INLINE void operator*=(const T& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] *= v;
     }
-    template<typename I>
-    void operator/=(const T& v)
+    inline C_FORCE_INLINE void operator/=(const T& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v;
@@ -155,7 +152,8 @@ private:
     T data[Size];
 };
 
-template<typename T,size_t Size> T length(
+template<typename T,size_t Size>
+inline C_FORCE_INLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
     T sum = 0;
@@ -164,7 +162,8 @@ template<typename T,size_t Size> T length(
     return sqrt(sum);
 }
 
-template<typename T,size_t Size> T dot(
+template<typename T,size_t Size>
+inline C_FORCE_INLINE T dot(
         const _cbasic_tvector<T,Size>& v1,
         const _cbasic_tvector<T,Size>& v2)
 {
@@ -174,7 +173,8 @@ template<typename T,size_t Size> T dot(
     return sum;
 }
 
-template<typename T,size_t Size> _cbasic_tvector<T,Size> normalize(
+template<typename T,size_t Size>
+inline C_FORCE_INLINE _cbasic_tvector<T,Size> normalize(
         const _cbasic_tvector<T,Size>& v)
 {
     _cbasic_tvector<T,Size> vnew;
@@ -183,7 +183,8 @@ template<typename T,size_t Size> _cbasic_tvector<T,Size> normalize(
     return vnew;
 }
 
-template<typename T> _cbasic_tvector<T,3> cross(
+template<typename T>
+inline C_FORCE_INLINE _cbasic_tvector<T,3> cross(
         const _cbasic_tvector<T,3>& v1,
         const _cbasic_tvector<T,3>& v2)
 {
@@ -194,11 +195,43 @@ template<typename T> _cbasic_tvector<T,3> cross(
     return vnew;
 }
 
-template<typename T,size_t Size> T distance(
+template<typename T,size_t Size>
+inline C_FORCE_INLINE T distance(
         const _cbasic_tvector<T,Size>& v1,
         const _cbasic_tvector<T,Size>& v2)
 {
     return length(v1-v2);
+}
+
+template<typename T,size_t Size>
+inline C_FORCE_INLINE T reflect(
+        const _cbasic_tvector<T,Size>& v,
+        const _cbasic_tvector<T,Size>& n)
+{
+    return v-((n*T(2))*v)*n;
+}
+
+template<typename T,size_t Size>
+inline C_FORCE_INLINE T refract(
+        const _cbasic_tvector<T,Size>& v,
+        const _cbasic_tvector<T,Size>& n,
+        const T& c)
+{
+    T k = T(1)-CMath::pow(c,2)*(T(1)-CMath::pow(n*v,2));
+
+    if(k < T(0))
+        return T(0);
+    else
+        return v*c-(c*(n*v)+CMath::sqrt(k))*n;
+}
+
+template<typename T,size_t Size>
+inline C_FORCE_INLINE _cbasic_tvector<T,Size> mix(
+        const _cbasic_tvector<T,Size>& v1,
+        const _cbasic_tvector<T,Size>& v2,
+        const T& f)
+{
+    return _cbasic_tvector<T,Size>(v1*(T(1)-f)+v2*f);
 }
 
 }

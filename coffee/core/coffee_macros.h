@@ -26,6 +26,15 @@
 #define C_FORCE_PACKING
 #endif
 
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#define C_FORCE_INLINE __attribute__((always_inline))
+#elif defined(COFFEE_MSVCXX)
+#include <windef.h>
+#define C_FORCE_INLINE __forceinline
+#else
+#define C_FORCE_INLINE
+#endif
+
 namespace Coffee{
 #if defined(COFFEE_WINDOWS)
 

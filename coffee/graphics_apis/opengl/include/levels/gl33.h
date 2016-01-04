@@ -79,10 +79,10 @@ struct CGL33 : CGL_Implementation
         return true;
     }
 
-    static bool ShaderAlloc(size_t l,CGenum t,CGhnd* d)
+    static bool ShaderAlloc(size_t l,ShaderStage t,CGhnd* d)
     {
         for(size_t i=0;i<l;i++)
-            d[i] = glCreateShader(t);
+            d[i] = glCreateShader(to_enum1(t));
         return true;
     }
     static bool ShaderFree(size_t l,CGhnd* d)
@@ -268,7 +268,7 @@ struct CGL33 : CGL_Implementation
     static void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i){glUniformBlockBinding(h,l,i);}
 
     /* Subroutines */
-    static void ProgramSubRtGet(CGhnd h,CGenum s,size_t* n,
+    static void ProgramSubRtGet(CGhnd h,ShaderStage s,size_t* n,
                                 cstring_w** names,int32** rtSize,int32*** rt)
     {
         int32 num = 0;
@@ -287,41 +287,43 @@ struct CGL33 : CGL_Implementation
         for(uint32 i=0;i<num;i++)
         {
             int32 namelen = 0;
-            glGetActiveSubroutineUniformiv(h,s,i,GL_UNIFORM_NAME_LENGTH,&namelen);
-            glGetActiveSubroutineUniformName(h,s,i,namelen,nullptr,names[0][i]);
-            glGetActiveSubroutineUniformiv(h,s,i,GL_NUM_COMPATIBLE_SUBROUTINES,&rtSize[0][i]);
+            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_UNIFORM_NAME_LENGTH,&namelen);
+            glGetActiveSubroutineUniformName(h,to_enum1(s),i,namelen,nullptr,names[0][i]);
+            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_NUM_COMPATIBLE_SUBROUTINES,&rtSize[0][i]);
             rt[0][i] = new int32[rtSize[0][i]];
-            glGetActiveSubroutineUniformiv(h,s,i,GL_COMPATIBLE_SUBROUTINES,rt[0][i]);
+            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_COMPATIBLE_SUBROUTINES,rt[0][i]);
         }
     }
-    static uint32 ProgramSubRtGetLoc(CGhnd h,CGenum s,cstring n){return glGetSubroutineIndex(h,s,n);}
+    static uint32 ProgramSubRtGetLoc(CGhnd h,ShaderStage s,cstring n)
+    {return glGetSubroutineIndex(h,to_enum1(s),n);}
     /* Binds all subroutine uniforms */
-    static void ProgramSubRtBind(CGenum s,int32 n,const uint32* d){glUniformSubroutinesuiv(s,n,d);}
+    static void ProgramSubRtBind(ShaderStage s,int32 n,const uint32* d)
+    {glUniformSubroutinesuiv(to_enum1(s),n,d);}
 
     /* Textures */
-    static void TexBind(CGenum t,CGhnd h){glBindTexture(t,h);}
+    static void TexBind(Texture t,CGhnd h){glBindTexture(to_enum(t),h);}
     static void TexActive(uint32 i){glActiveTexture(GL_TEXTURE0+i);}
 
-    static void TexImage2D(CGenum t,int32 level,CGenum ifmt,
+    static void TexImage2D(Texture t,int32 level,CGenum ifmt,
                            int32 w,int32 h,int32 border,CGenum fmt,CGenum dt,c_cptr p)
-    {glTexImage2D(t,level,(int32)ifmt,w,h,border,fmt,dt,p);}
-    static void TexImage3D(CGenum t,int32 level,CGenum ifmt,
+    {glTexImage2D(to_enum(t),level,(int32)ifmt,w,h,border,fmt,dt,p);}
+    static void TexImage3D(Texture t,int32 level,CGenum ifmt,
                            int32 w,int32 h,int32 d,int32 border,CGenum fmt,CGenum dt,c_cptr p)
-    {glTexImage3D(t,level,(int32)ifmt,w,h,d,border,fmt,dt,p);}
+    {glTexImage3D(to_enum(t),level,(int32)ifmt,w,h,d,border,fmt,dt,p);}
 
-    static void TexSubImage2D(CGenum t,int32 level,int32 x,int32 y,
+    static void TexSubImage2D(Texture t,int32 level,int32 x,int32 y,
                               int32 w,int32 h,CGenum fmt,CGenum dt,c_cptr p)
-    {glTexSubImage2D(t,level,x,y,w,h,fmt,dt,p);}
-    static void TexSubImage3D(CGenum t,int32 level,int32 x,int32 y,int32 z,
-                              int32 w,int32 h,int32 d,CGenum fmt,CGenum dt,c_cptr p)
-    {glTexSubImage3D(t,level,x,y,z,w,h,d,fmt,dt,p);}
+    {glTexSubImage2D(to_enum(t),level,x,y,w,h,fmt,dt,p);}
+    static void TexSubImage3D(Texture t,int32 level,int32 x,int32 y,int32 z,
+                              int32 w,int32 h,int32 d,PixelFormat fmt,CGenum dt,c_cptr p)
+    {glTexSubImage3D(to_enum(t),level,x,y,z,w,h,d,to_enum(fmt),dt,p);}
 
-    static void TexImageCompressed2D(CGenum t,int32 level,CGenum ifmt,
+    static void TexImageCompressed2D(Texture t,int32 level,PixelFormat ifmt,
                                      int32 w,int32 h,int32 border,int32 sz,c_cptr p)
-    {glCompressedTexImage2D(t,level,ifmt,w,h,border,sz,p);}
-    static void TexImageCompressed3D(CGenum t,int32 level,CGenum ifmt,
+    {glCompressedTexImage2D(to_enum(t),level,to_enum(ifmt),w,h,border,sz,p);}
+    static void TexImageCompressed3D(Texture t,int32 level,PixelFormat ifmt,
                                      int32 w,int32 h,int32 d,int32 border,int32 sz,c_cptr p)
-    {glCompressedTexImage3D(t,level,ifmt,w,h,d,border,sz,p);}
+    {glCompressedTexImage3D(to_enum(t),level,to_enum(ifmt),w,h,d,border,sz,p);}
 
     static void TexSubImageCompressed2D(CGenum t,int32 level,int32 x,int32 y,
                                         int32 w,int32 h,CGenum fmt,int32 sz,c_cptr p)

@@ -186,15 +186,20 @@ public:
         delete m_data;
     }
 
-    void create(cstring vshader, cstring fshader)
+    void create(cstring vshader = nullptr, cstring fshader = nullptr, cstring gshader = nullptr, cstring tcshader = nullptr, cstring teshader = nullptr, cstring cshader = nullptr)
     {
         coffee_graphics_alloc(*m_data);
 
-        coffee_graphics_shader_compile(vert,vshader,CProgramStage::Vertex);
-        coffee_graphics_shader_compile(frag,fshader,CProgramStage::Fragment);
-
-        coffee_graphics_shader_attach(data_ref(),vert,CProgramStage::Vertex);
-        coffee_graphics_shader_attach(data_ref(),frag,CProgramStage::Fragment);
+        if(vshader)
+        {
+            coffee_graphics_shader_compile(vert,vshader,CProgramStage::Vertex);
+            coffee_graphics_shader_attach(data_ref(),vert,CProgramStage::Vertex);
+        }
+        if(fshader)
+        {
+            coffee_graphics_shader_compile(frag,fshader,CProgramStage::Fragment);
+            coffee_graphics_shader_attach(data_ref(),frag,CProgramStage::Fragment);
+        }
     }
 
     CShaderStageProgram vert;

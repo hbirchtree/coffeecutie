@@ -18,6 +18,11 @@ struct CGL_Implementation
     using CGflag = uint32;
     using CGcallback = GLDEBUGPROC;
     using CGsync = void*;
+    struct CGpixfmt
+    {
+        CGenum type;
+        CGenum fmt;
+    };
 
     /* Shorthand for GL object handles, we will treat them differently */
     using CGhnd = uint32;
@@ -27,15 +32,23 @@ struct CGL_Implementation
         Point,
         Line,
         Triangle,
+        Patch,
+    };
+
+    enum class PaintingMode
+    {
+        Point = GL_POINT,
+        Line = GL_LINE,
+        Fill = GL_FILL,
     };
 
     enum class PrimitiveCreation
     {
-        Explicit = 0x1,
-        Strip = 0x2,
-        Fan = 0x4,
-        Loop = 0x8,
-        Adjacency = 0x10,
+        Explicit = 0x0,
+        Strip = 0x1,
+        Fan = 0x2,
+        Loop = 0x4,
+        Adjacency = 0x8,
     };
 
     enum class BufferBit : int32
@@ -54,8 +67,8 @@ struct CGL_Implementation
 
     enum class AttribMode
     {
-        Interleaved,
-        Separate,
+        Interleaved = GL_INTERLEAVED_ATTRIBS,
+        Separate = GL_SEPARATE_ATTRIBS,
     };
 
     enum class ShaderStage
@@ -68,6 +81,30 @@ struct CGL_Implementation
 
         TessEval = 0x10,
         TessControl = 0x20,
+    };
+
+    enum CompressionFlags
+    {
+        CompressionNone,
+
+        ASTC_4x4,
+        ASTC_5x4,
+        ASTC_5x5,
+        ASTC_6x5,
+        ASTC_6x6,
+        ASTC_8x5,
+        ASTC_8x6,
+        ASTC_8x8,
+        ASTC_10x5,
+        ASTC_10x6,
+        ASTC_10x8,
+        ASTC_10x10,
+        ASTC_12x10,
+        ASTC_12x12,
+
+        S3TC_1,
+        S3TC_3,
+        S3TC_5,
     };
 
     enum class DataType
@@ -86,137 +123,28 @@ struct CGL_Implementation
 
     enum class Texture
     {
-        T2D,
-        T3D,
-        Cubemap,
-        Rect,
+        T2D = GL_TEXTURE_2D,
+        T3D = GL_TEXTURE_3D,
+        Cubemap = GL_TEXTURE_CUBE_MAP,
+        Rect = GL_TEXTURE_RECTANGLE,
 
-        T2DArray,
-        T3DArray,
-        CubemapArray,
+        T2DArray = GL_TEXTURE_2D_ARRAY,
+        CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
 
-        CubeX_P,
-        CubeX_N,
-        CubeY_P,
-        CubeY_N,
-        CubeZ_P,
-        CubeZ_N,
+        CubeX_P = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
+        CubeX_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
+        CubeY_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Y,
+        CubeY_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        CubeZ_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+        CubeZ_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 
-        Proxy2D,
-        Proxy3D,
-        ProxyCube,
-        ProxyRect,
-    };
+        Proxy2D = GL_PROXY_TEXTURE_2D,
+        Proxy3D = GL_PROXY_TEXTURE_3D,
+        ProxyCubemap = GL_PROXY_TEXTURE_CUBE_MAP,
+        ProxyRect = GL_PROXY_TEXTURE_RECTANGLE,
 
-    enum InternalFormat
-    {
-        //R formats
-        CG_RED8I = GL_R8I,
-        CG_RED8UI = GL_R8UI,
-        CG_RED16I = GL_R16I,
-        CG_RED16UI = GL_R16UI,
-        CG_RED16F = GL_R16F,
-        CG_RED32I = GL_R32I,
-        CG_RED32UI = GL_R32UI,
-        CG_RED32F = GL_R32F,
-
-        //RG formats
-        CG_RG8I = GL_RG8I,
-        CG_RG8UI = GL_RG8UI,
-        CG_RG16I = GL_RG16I,
-        CG_RG16UI = GL_RG16UI,
-        CG_RG16F = GL_RG16F,
-
-        //RGB formats
-        CG_R3G3B2 = GL_R3_G3_B2,
-        CG_RGB5 = GL_RGB5,
-        CG_RGB8 = GL_RGB8,
-        CG_RGB10 = GL_RGB10,
-        CG_RGB12 = GL_RGB12,
-        CG_RGB16I = GL_RGB16I,
-        CG_RGB16UI = GL_RGB16UI,
-        CG_RGB16F = GL_RGB16F,
-        CG_RGB32I = GL_RGB32I,
-        CG_RGB32UI = GL_RGB32UI,
-        CG_RGB32F = GL_RGB32F,
-
-        //Special RGB formats
-        CG_RGB9E5 = GL_RGB9_E5,
-        CG_R11G11B10F = GL_R11F_G11F_B10F,
-
-        //SRGB formats
-        CG_SRGB8 = GL_SRGB8,
-        CG_SRGB8A8 = GL_SRGB8_ALPHA8,
-
-        //RGBA formats
-        CG_RGBA2 = GL_RGBA2,
-        CG_RGBA4 = GL_RGBA4,
-        CG_RGBA8I = GL_RGBA8I,
-        CG_RGBA8UI = GL_RGBA8UI,
-        CG_RGBA12 = GL_RGBA12,
-        CG_RGBA16I = GL_RGBA16I,
-        CG_RGBA16UI = GL_RGBA16UI,
-        CG_RGBA16F = GL_RGBA16F,
-        CG_RGBA32I = GL_RGBA32I,
-        CG_RGBA32UI = GL_RGBA32UI,
-        CG_RGBA32F = GL_RGBA32F,
-
-        //Special RGBA formats
-        CG_RGB5A1 = GL_RGB5_A1,
-        CG_RGB10A2 = GL_RGB10_A2,
-        CG_RGB10A2UI = GL_RGB10_A2UI,
-
-        //Compressed formats
-        CG_RGTC_RUI = GL_COMPRESSED_RED_RGTC1,
-        CG_RGTC_RI = GL_COMPRESSED_SIGNED_RED_RGTC1,
-        CG_RGTC_RGUI = GL_COMPRESSED_RG_RGTC2,
-        CG_RGTC_RGI = GL_COMPRESSED_SIGNED_RG_RGTC2,
-
-#ifdef GL_EXT_texture_compression_s3tc
-        CG_DXT1 = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
-        CG_DXT1NoAlpha = GL_COMPRESSED_RGB_S3TC_DXT1_EXT,
-        CG_DXT3 = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
-        CG_DXT5 = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
-#endif
-
-#ifdef GL_ARB_texture_compression_bptc
-        CG_BPTC_RGBA_UNORM = GL_COMPRESSED_RGBA_BPTC_UNORM,
-        CG_BPTC_SRGBA_UNORM = GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM,
-        CG_BPTC_RGB_SFLOAT = GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT,
-        CG_BPTC_RGB_UFLOAT = GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT,
-#endif
-
-#ifdef GL_KHR_texture_compression_astc_hdr
-        CG_ASTC_RGBA_4x4 = GL_COMPRESSED_RGBA_ASTC_4x4_KHR,
-        CG_ASTC_RGBA_5x4 = GL_COMPRESSED_RGBA_ASTC_5x4_KHR,
-        CG_ASTC_RGBA_5x5 = GL_COMPRESSED_RGBA_ASTC_5x5_KHR,
-        CG_ASTC_RGBA_6x5 = GL_COMPRESSED_RGBA_ASTC_6x5_KHR,
-        CG_ASTC_RGBA_6x6 = GL_COMPRESSED_RGBA_ASTC_6x6_KHR,
-        CG_ASTC_RGBA_8x5 = GL_COMPRESSED_RGBA_ASTC_8x5_KHR,
-        CG_ASTC_RGBA_8x6 = GL_COMPRESSED_RGBA_ASTC_8x6_KHR,
-        CG_ASTC_RGBA_8x8 = GL_COMPRESSED_RGBA_ASTC_8x8_KHR,
-        CG_ASTC_RGBA_10x5 = GL_COMPRESSED_RGBA_ASTC_10x5_KHR,
-        CG_ASTC_RGBA_10x6 = GL_COMPRESSED_RGBA_ASTC_10x6_KHR,
-        CG_ASTC_RGBA_10x8 = GL_COMPRESSED_RGBA_ASTC_10x8_KHR,
-        CG_ASTC_RGBA_10x10 = GL_COMPRESSED_RGBA_ASTC_10x10_KHR,
-        CG_ASTC_RGBA_12x10 = GL_COMPRESSED_RGBA_ASTC_12x10_KHR,
-        CG_ASTC_RGBA_12x12 = GL_COMPRESSED_RGBA_ASTC_12x12_KHR,
-
-        CG_ASTC_SRGB8A8_4x4 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR,
-        CG_ASTC_SRGB8A8_5x4 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR,
-        CG_ASTC_SRGB8A8_5x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR,
-        CG_ASTC_SRGB8A8_6x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR,
-        CG_ASTC_SRGB8A8_6x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR,
-        CG_ASTC_SRGB8A8_8x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR,
-        CG_ASTC_SRGB8A8_8x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR,
-        CG_ASTC_SRGB8A8_8x8 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR,
-        CG_ASTC_SRGB8A8_10x5 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR,
-        CG_ASTC_SRGB8A8_10x6 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR,
-        CG_ASTC_SRGB8A8_10x8 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR,
-        CG_ASTC_SRGB8A8_10x10 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR,
-        CG_ASTC_SRGB8A8_12x10 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR,
-        CG_ASTC_SRGB8A8_12x12 = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR,
-#endif
+        Proxy2DArray = GL_PROXY_TEXTURE_2D_ARRAY,
+        ProxyCubemapArray = GL_PROXY_TEXTURE_CUBE_MAP_ARRAY,
     };
 
     enum class OperationType
@@ -305,153 +233,37 @@ struct CGL_Implementation
         static _cbasic_static_map<BufferBit,GLenum,3> bufferbit_map;
     };
 
-    static CGenum to_enum(Severity s)
+    static CGenum to_enum(Severity s);
+    static CGenum to_enum(DebugType t);
+    static CGenum to_enum(Object t);
+    static CGenum to_enum(Feature f);
+    static CGenum to_enum(Face f);
+    static CGenum to_enum(BufferBit f);
+    static CGenum to_enum(Primitive p,PrimitiveCreation c);
+    static CGenum to_enum(PaintingMode f);
+    static CGenum to_enum(bool pack, PixelOperation f);
+    static CGenum to_enum(PixelFormat f, PixelFlags e = PixelFlags::None,
+                          CompressionFlags d = CompressionNone);
+    /*!
+     * \brief Returns GL_*_SHADER enum
+     * \param f
+     * \return
+     */
+    static CGenum to_enum1(ShaderStage f);
+    /*!
+     * \brief Returns GL_*_SHADER_BIT enum
+     * \param f
+     * \return
+     */
+    static CGenum to_enum2(ShaderStage f);
+    static CGenum to_enum(ValueHandling f);
+    static CGenum to_enum(ValueComparison f);
+    static CGenum to_enum(Operator f);
+    static CGenum to_enum(Texture f);
+
+    static CGpixfmt get_fmt(PixelFormat e, bool rev)
     {
-        switch(s)
-        {
-        case Severity::High:
-            return GL_DEBUG_SEVERITY_HIGH;
-        case Severity::Medium:
-            return GL_DEBUG_SEVERITY_MEDIUM;
-        case Severity::Low:
-            return GL_DEBUG_SEVERITY_LOW;
-        case Severity::Information:
-            return GL_DEBUG_SEVERITY_NOTIFICATION;
-        default:
-            return GL_NONE;
-        }
-    }
-    static CGenum to_enum(DebugType t)
-    {
-        switch(t)
-        {
-        case DebugType::Compatibility:
-            return GL_DEBUG_TYPE_PORTABILITY;
-            break;
-        case DebugType::Compliance:
-            return GL_DEBUG_TYPE_PORTABILITY;
-            break;
-        case DebugType::Deprecated:
-            return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
-            break;
-        case DebugType::Performance:
-            return GL_DEBUG_TYPE_PERFORMANCE;
-            break;
-        case DebugType::Marker:
-            return GL_DEBUG_TYPE_MARKER;
-            break;
-        case DebugType::UndefinedBehavior:
-            return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
-            break;
-        default:
-            return GL_NONE;
-        }
-    }
-    static CGenum to_enum(Object t)
-    {
-        CGenum type;
-        switch(t)
-        {
-        case Object::Shader:
-            type = GL_SHADER;
-            break;
-        case Object::Program:
-            type = GL_PROGRAM;
-            break;
-        case Object::VAO:
-            type = GL_VERTEX_ARRAY;
-            break;
-        case Object::Buffer:
-            type = GL_BUFFER;
-            break;
-        case Object::Texture:
-            type = GL_TEXTURE;
-            break;
-        case Object::XFB:
-            type = GL_TRANSFORM_FEEDBACK;
-            break;
-        case Object::Sampler:
-            type = GL_SAMPLER;
-            break;
-        case Object::Query:
-            type = GL_QUERY;
-            break;
-        case Object::Framebuffer:
-            type = GL_FRAMEBUFFER;
-            break;
-        case Object::RenderBuffer:
-            type = GL_RENDERBUFFER;
-            break;
-        }
-        return type;
-    }
-    static CGenum to_enum(Feature f)
-    {
-        switch(f)
-        {
-        case Feature::Blend:
-            return GL_BLEND;
-        case Feature::DepthTest:
-            return GL_DEPTH_TEST;
-        case Feature::DepthClamp:
-            return GL_DEPTH_CLAMP;
-        case Feature::Dither:
-            return GL_DITHER;
-        case Feature::FramebufferSRGB:
-            return GL_FRAMEBUFFER_SRGB;
-        case Feature::LineSmooth:
-            return GL_LINE_SMOOTH;
-        case Feature::Multisample:
-            return GL_MULTISAMPLE;
-        case Feature::PointSize:
-            return GL_PROGRAM_POINT_SIZE;
-        case Feature::PolygonOffsetFill:
-            return GL_POLYGON_OFFSET_FILL;
-        case Feature::PolygonOffsetLine:
-            return GL_POLYGON_OFFSET_LINE;
-        case Feature::PolygonOffsetPoint:
-            return GL_POLYGON_OFFSET_POINT;
-        case Feature::PolygonSmooth:
-            return GL_POLYGON_SMOOTH;
-        case Feature::PrimitiveRestart:
-            return GL_PRIMITIVE_RESTART;
-        case Feature::PrimitiveRestartFixedIdx:
-            return GL_PRIMITIVE_RESTART_FIXED_INDEX;
-        case Feature::RasterizerDiscard:
-            return GL_RASTERIZER_DISCARD;
-        case Feature::SampleAlphaToCoverage:
-            return GL_SAMPLE_ALPHA_TO_COVERAGE;
-        case Feature::SampleAlphaToOne:
-            return GL_SAMPLE_ALPHA_TO_ONE;
-        case Feature::SampleCoverage:
-            return GL_SAMPLE_COVERAGE;
-        case Feature::SampleMask:
-            return GL_SAMPLE_MASK;
-        case Feature::SampleShading:
-            return GL_SAMPLE_SHADING;
-        case Feature::ScissorTest:
-            return GL_SCISSOR_TEST;
-        case Feature::StencilTest:
-            return GL_STENCIL_TEST;
-        case Feature::SeamlessCubemap:
-            return GL_TEXTURE_CUBE_MAP_SEAMLESS;
-        }
-    }
-    static CGenum to_enum(Face f)
-    {
-        switch(f)
-        {
-        case Face::Front:
-            return GL_FRONT;
-        case Face::Back:
-            return GL_BACK;
-        case Face::Both:
-            return GL_FRONT_AND_BACK;
-        }
-    }
-    static CGenum to_enum(BufferBit f)
-    {
-        return coffee_get_flags(f,CGL_TypeMapBase::bufferbit_map);
+        return {GL_NONE,GL_NONE};
     }
 
     /* Base OpenGL, all implemented in GL3.3 */
@@ -460,9 +272,6 @@ struct CGL_Implementation
 
     static void Enablei(Feature e,uint32 i){glEnablei(to_enum(e),i);}
     static void Disablei(Feature e,uint32 i){glDisablei(to_enum(e),i);}
-
-    static void Clear(BufferBit f){glClear(to_enum(f));}
-    static void ClearColor(CVec4 c){glClearColor(c.x(),c.y(),c.z(),c.w());}
 
     static void ClearDepth(scalar f){glClearDepthf(f);}
     static void ClearStencil(int32 f){glClearStencil(f);}
@@ -473,23 +282,24 @@ struct CGL_Implementation
     static void Flush(){glFlush();}
     static void Finish(){glFinish();}
 
-    static void ClearBufferiv(CGenum f,int32 i,const int32* d){glClearBufferiv(f,i,d);}
-    static void ClearBufferuiv(CGenum f,int32 i,const uint32* d){glClearBufferuiv(f,i,d);}
-    static void ClearBufferfv(CGenum f,int32 i,const scalar* d){glClearBufferfv(f,i,d);}
-    static void ClearBufferfi(CGenum f,int32 i,scalar d1,int32 d2){glClearBufferfi(f,i,d1,d2);}
+    static void ClearBufferiv(const int32* d){glClearBufferiv(GL_STENCIL,0,d);}
+//    static void ClearBufferuiv(CGenum f,int32 i,const uint32* d){glClearBufferuiv(f,i,d);}
+    static void ClearBufferfv(bool color,int32 i,const scalar* d){glClearBufferfv((color) ? GL_COLOR : GL_DEPTH,i,d);}
+    static void ClearBufferfi(scalar d,int32 s){glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);}
 
     static void BlendFuncSep(CGenum v1,CGenum v2,CGenum v3,CGenum v4)
     {glBlendFuncSeparate(v1,v2,v3,v4);}
-    static void BlendEqSep(CGenum v1,CGenum v2){glBlendEquationSeparate(v1,v2);}
+    static void BlendEqSep(Operator v1,Operator v2)
+    {glBlendEquationSeparate(to_enum(v1),to_enum(v2));}
 
-    static void DepthFunc(CGenum f){glDepthFunc(f);}
+    static void DepthFunc(ValueComparison f){glDepthFunc(to_enum(f));}
     static void DepthMask(bool v){glDepthMask((v) ? GL_TRUE : GL_FALSE);}
 
-    static void StencilFuncSep(CGenum v1,CGenum v2,int32 d1,uint32 d2)
-    {glStencilFuncSeparate(v1,v2,d1,d2);}
-    static void StencilOpSep(CGenum v1,CGenum v2,CGenum v3,CGenum v4)
-    {glStencilOpSeparate(v1,v2,v3,v4);}
-    static void StencilMaskSep(CGenum f,uint32 d){glStencilMaskSeparate(f,d);}
+    static void StencilFuncSep(Face v1,ValueComparison v2,int32 d1,uint32 d2)
+    {glStencilFuncSeparate(to_enum(v1),to_enum(v2),d1,d2);}
+    static void StencilOpSep(Face v1,ValueHandling sfail,ValueHandling dfail,ValueHandling dsfail)
+    {glStencilOpSeparate(to_enum(v1),to_enum(sfail),to_enum(dfail),to_enum(dsfail));}
+    static void StencilMaskSep(Face f,uint32 d){glStencilMaskSeparate(to_enum(f),d);}
 
     static void ViewportSet(CRect64 const* r){glViewport(r->x,r->y,r->w,r->h);}
     static void ScissorSet(CRect64 const* r){glScissor(r->x,r->y,r->w,r->h);}
@@ -501,12 +311,15 @@ struct CGL_Implementation
 
     static void LineWidth(scalar f){glLineWidth(f);}
 
-    static void PolyMode(CGenum f1,CGenum f2){glPolygonMode(f1,f2);}
+    static void PolyMode(Face f1,PaintingMode f2){glPolygonMode(to_enum(f1),to_enum(f2));}
     static void PolyOffset(scalar f1,scalar f2){glPolygonOffset(f1,f2);}
 
     /* SAMPLE_ALPHA_TO_COVERAGE,SAMPLE_ALPHA_TO_ONE */
     static void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
     static void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
+
+    static void PixelStore(bool pack, PixelOperation op, int32 v)
+    {glPixelStorei(to_enum(pack,op),v);}
 
     struct Debug
     {
@@ -683,12 +496,11 @@ struct CGL_Implementation
         }
     };
 
-    static void LoadBinding()
-    {
-    }
+    static void LoadBinding(){}
 };
 
 C_FLAGS(CGL_Implementation::BufferBit,int32);
+C_FLAGS(CGL_Implementation::PrimitiveCreation,int32);
 
 CString CGL_Implementation::Debug::s_ExtensionList = "";
 
@@ -698,6 +510,547 @@ CGL_Implementation::CGL_TypeMapBase::bufferbit_map = {
     {BufferBit::Depth,GL_DEPTH_BUFFER_BIT},
     {BufferBit::Stencil,GL_STENCIL_BUFFER_BIT},
 };
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        Severity s)
+{
+    switch(s)
+    {
+    case Severity::High:
+        return GL_DEBUG_SEVERITY_HIGH;
+    case Severity::Medium:
+        return GL_DEBUG_SEVERITY_MEDIUM;
+    case Severity::Low:
+        return GL_DEBUG_SEVERITY_LOW;
+    case Severity::Information:
+        return GL_DEBUG_SEVERITY_NOTIFICATION;
+    default:
+        return GL_NONE;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        DebugType t)
+{
+    switch(t)
+    {
+    case DebugType::Compatibility:
+        return GL_DEBUG_TYPE_PORTABILITY;
+        break;
+    case DebugType::Compliance:
+        return GL_DEBUG_TYPE_PORTABILITY;
+        break;
+    case DebugType::Deprecated:
+        return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
+        break;
+    case DebugType::Performance:
+        return GL_DEBUG_TYPE_PERFORMANCE;
+        break;
+    case DebugType::Marker:
+        return GL_DEBUG_TYPE_MARKER;
+        break;
+    case DebugType::UndefinedBehavior:
+        return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
+        break;
+    default:
+        return GL_NONE;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        CGL_Implementation::Object t)
+{
+    CGenum type;
+    switch(t)
+    {
+    case Object::Shader:
+        type = GL_SHADER;
+        break;
+    case Object::Program:
+        type = GL_PROGRAM;
+        break;
+    case Object::VAO:
+        type = GL_VERTEX_ARRAY;
+        break;
+    case Object::Buffer:
+        type = GL_BUFFER;
+        break;
+    case Object::Texture:
+        type = GL_TEXTURE;
+        break;
+    case Object::XFB:
+        type = GL_TRANSFORM_FEEDBACK;
+        break;
+    case Object::Sampler:
+        type = GL_SAMPLER;
+        break;
+    case Object::Query:
+        type = GL_QUERY;
+        break;
+    case Object::Framebuffer:
+        type = GL_FRAMEBUFFER;
+        break;
+    case Object::RenderBuffer:
+        type = GL_RENDERBUFFER;
+        break;
+    }
+    return type;
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        CGL_Implementation::Feature f)
+{
+    switch(f)
+    {
+    case Feature::Blend:
+        return GL_BLEND;
+    case Feature::DepthTest:
+        return GL_DEPTH_TEST;
+    case Feature::DepthClamp:
+        return GL_DEPTH_CLAMP;
+    case Feature::Dither:
+        return GL_DITHER;
+    case Feature::FramebufferSRGB:
+        return GL_FRAMEBUFFER_SRGB;
+    case Feature::LineSmooth:
+        return GL_LINE_SMOOTH;
+    case Feature::Multisample:
+        return GL_MULTISAMPLE;
+    case Feature::PointSize:
+        return GL_PROGRAM_POINT_SIZE;
+    case Feature::PolygonOffsetFill:
+        return GL_POLYGON_OFFSET_FILL;
+    case Feature::PolygonOffsetLine:
+        return GL_POLYGON_OFFSET_LINE;
+    case Feature::PolygonOffsetPoint:
+        return GL_POLYGON_OFFSET_POINT;
+    case Feature::PolygonSmooth:
+        return GL_POLYGON_SMOOTH;
+    case Feature::PrimitiveRestart:
+        return GL_PRIMITIVE_RESTART;
+    case Feature::PrimitiveRestartFixedIdx:
+        return GL_PRIMITIVE_RESTART_FIXED_INDEX;
+    case Feature::RasterizerDiscard:
+        return GL_RASTERIZER_DISCARD;
+    case Feature::SampleAlphaToCoverage:
+        return GL_SAMPLE_ALPHA_TO_COVERAGE;
+    case Feature::SampleAlphaToOne:
+        return GL_SAMPLE_ALPHA_TO_ONE;
+    case Feature::SampleCoverage:
+        return GL_SAMPLE_COVERAGE;
+    case Feature::SampleMask:
+        return GL_SAMPLE_MASK;
+    case Feature::SampleShading:
+        return GL_SAMPLE_SHADING;
+    case Feature::ScissorTest:
+        return GL_SCISSOR_TEST;
+    case Feature::StencilTest:
+        return GL_STENCIL_TEST;
+    case Feature::SeamlessCubemap:
+        return GL_TEXTURE_CUBE_MAP_SEAMLESS;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        CGL_Implementation::Face f)
+{
+    switch(f)
+    {
+    case Face::Front:
+        return GL_FRONT;
+    case Face::Back:
+        return GL_BACK;
+    case Face::Both:
+        return GL_FRONT_AND_BACK;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        CGL_Implementation::BufferBit f)
+{
+    return coffee_get_flags(f,CGL_TypeMapBase::bufferbit_map);
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        CGL_Implementation::Primitive p,
+        CGL_Implementation::PrimitiveCreation c)
+{
+    switch(p)
+    {
+    case Primitive::Line:
+        if(feval(c&(PrimitiveCreation::Adjacency|PrimitiveCreation::Strip)))
+            return GL_LINE_STRIP_ADJACENCY;
+        switch(c)
+        {
+        case PrimitiveCreation::Explicit:
+            return GL_LINES;
+        case PrimitiveCreation::Adjacency:
+            return GL_LINE_STRIP_ADJACENCY;
+        case PrimitiveCreation::Strip:
+            return GL_LINE_STRIP;
+        case PrimitiveCreation::Loop:
+            return GL_LINE_LOOP;
+        default:
+            return GL_NONE;
+        }
+    case Primitive::Point:
+        return GL_POINTS;
+    case Primitive::Triangle:
+        if(feval(c&(PrimitiveCreation::Adjacency|PrimitiveCreation::Strip)))
+            return GL_TRIANGLE_STRIP_ADJACENCY;
+        switch(c)
+        {
+        case PrimitiveCreation::Explicit:
+            return GL_TRIANGLES;
+        case PrimitiveCreation::Adjacency:
+            return GL_TRIANGLES_ADJACENCY;
+        case PrimitiveCreation::Strip:
+            return GL_TRIANGLE_STRIP;
+        case PrimitiveCreation::Fan:
+            return GL_TRIANGLE_FAN;
+        default:
+            return GL_TRIANGLES;
+        }
+    case Primitive::Patch:
+        if(c!=PrimitiveCreation::Explicit)
+            return GL_NONE;
+        else
+            return GL_PATCHES;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        CGL_Implementation::PaintingMode f)
+{
+    switch(f)
+    {
+    case PaintingMode::Fill:
+        return GL_FILL;
+    case PaintingMode::Line:
+        return GL_LINE;
+    case PaintingMode::Point:
+        return GL_POINT;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        bool pack, PixelOperation f)
+{
+    switch(f)
+    {
+    case PixelOperation::Alignment:
+        if(pack)
+            return GL_PACK_ALIGNMENT;
+        else
+            return GL_UNPACK_ALIGNMENT;
+    case PixelOperation::SwapEndiannes:
+        if(pack)
+            return GL_PACK_SWAP_BYTES;
+        else
+            return GL_PACK_SWAP_BYTES;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        PixelFormat f, PixelFlags e,
+        CGL_Implementation::CompressionFlags d)
+{
+    switch(f)
+    {
+    case PixelFormat::ASTC:{
+        CGenum out = 0;
+        if(feval(e&PixelFlags::SRGBA))
+            out = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
+        else if(feval(e&PixelFlags::RGBA))
+            out = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+        else
+            return GL_NONE;
+        switch(d)
+        {
+        case ASTC_4x4:
+            out += 0;
+        case ASTC_5x4:
+            out += 1;
+        case ASTC_5x5:
+            out += 2;
+        case ASTC_6x5:
+            out += 3;
+        case ASTC_6x6:
+            out += 4;
+        case ASTC_8x5:
+            out += 5;
+        case ASTC_8x6:
+            out += 6;
+        case ASTC_8x8:
+            out += 7;
+        case ASTC_10x5:
+            out += 8;
+        case ASTC_10x6:
+            out += 9;
+        case ASTC_10x8:
+            out += 10;
+        case ASTC_10x10:
+            out += 11;
+        case ASTC_12x10:
+            out += 12;
+        case ASTC_12x12:
+            out += 13;
+        default:
+            return GL_NONE;
+        }
+        return out;
+    }
+    case PixelFormat::BPTC:
+        if(feval(e&(PixelFlags::RGBA|PixelFlags::Unormalized)))
+            return GL_COMPRESSED_RGBA_BPTC_UNORM;
+        if(feval(e&(PixelFlags::SRGBA|PixelFlags::Unormalized)))
+            return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint)))
+            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint|PixelFlags::Unsigned)))
+            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+        return GL_NONE;
+    case PixelFormat::RGTC:
+        if(feval(e&PixelFlags::R|PixelFlags::Unsigned))
+            return GL_COMPRESSED_RED_RGTC1;
+        if(feval(e&PixelFlags::R|PixelFlags::Signed))
+            return GL_COMPRESSED_SIGNED_RED_RGTC1;
+        if(feval(e&PixelFlags::RG|PixelFlags::Unsigned))
+            return GL_COMPRESSED_RG_RGTC2;
+        if(feval(e&PixelFlags::RG|PixelFlags::Signed))
+            return GL_COMPRESSED_SIGNED_RG_RGTC2;
+        return GL_NONE;
+    case PixelFormat::S3TC:
+        if(feval(e&(PixelFlags::RGB))&&feval(d&S3TC_1))
+            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_1))
+            return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_3))
+            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_5))
+            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+
+    case PixelFormat::Depth:
+        return GL_DEPTH_COMPONENT;
+    case PixelFormat::DepthStencil:
+        return GL_DEPTH_STENCIL;
+    case PixelFormat::Stencil:
+        return GL_NONE; //TODO: Fix stencil stuff
+
+    case PixelFormat::R8I:
+        return GL_R8I;
+    case PixelFormat::R8UI:
+        return GL_R8UI;
+    case PixelFormat::R16I:
+        return GL_R16I;
+    case PixelFormat::R16UI:
+        return GL_R16UI;
+    case PixelFormat::R32I:
+        return GL_R32I;
+    case PixelFormat::R32UI:
+        return GL_R32UI;
+    case PixelFormat::R16F:
+        return GL_R16F;
+    case PixelFormat::R32F:
+        return GL_R32F;
+
+    case PixelFormat::RG8I:
+        return GL_RG8I;
+    case PixelFormat::RG8UI:
+        return GL_RG8UI;
+    case PixelFormat::RG16I:
+        return GL_RG16I;
+    case PixelFormat::RG16UI:
+        return GL_RG16UI;
+    case PixelFormat::RG32I:
+        return GL_RG32I;
+    case PixelFormat::RG32UI:
+        return GL_RG32UI;
+    case PixelFormat::RG16F:
+        return GL_RG16F;
+    case PixelFormat::RG32F:
+        return GL_RG32F;
+
+    case PixelFormat::RGB8I:
+        return GL_RGB8I;
+    case PixelFormat::RGB8UI:
+        return GL_RGB8UI;
+    case PixelFormat::RGB16I:
+        return GL_RGB16I;
+    case PixelFormat::RGB16UI:
+        return GL_RGB16UI;
+    case PixelFormat::RGB32I:
+        return GL_RGB32I;
+    case PixelFormat::RGB32UI:
+        return GL_RGB32UI;
+    case PixelFormat::RGB16F:
+        return GL_RGB16F;
+    case PixelFormat::RGB32F:
+        return GL_RGB32F;
+
+    case PixelFormat::RGBA8I:
+        return GL_RGBA8I;
+    case PixelFormat::RGBA8UI:
+        return GL_RGBA8UI;
+    case PixelFormat::RGBA16I:
+        return GL_RGBA16I;
+    case PixelFormat::RGBA16UI:
+        return GL_RGBA16UI;
+    case PixelFormat::RGBA32I:
+        return GL_RGBA32I;
+    case PixelFormat::RGBA32UI:
+        return GL_RGBA32UI;
+    case PixelFormat::RGBA16F:
+        return GL_RGBA16F;
+    case PixelFormat::RGBA32F:
+        return GL_RGBA32F;
+
+    case PixelFormat::R11G11B10F:
+        return GL_R11F_G11F_B10F;
+
+    case PixelFormat::R3G3B2:
+        return GL_R3_G3_B2;
+    case PixelFormat::RGB4:
+        return GL_RGB4;
+    case PixelFormat::RGB5:
+        return GL_RGB5;
+    case PixelFormat::RGB565:
+        return GL_RGB565;
+    case PixelFormat::RGB9E5:
+        return GL_RGB9_E5;
+    case PixelFormat::RGB10:
+        return GL_RGB10;
+    case PixelFormat::RGB12:
+        return GL_RGB12;
+
+    case PixelFormat::RGBA2:
+        return GL_RGBA2;
+    case PixelFormat::RGB10A2:
+        return GL_RGB10_A2;
+    case PixelFormat::RGB10A2UI:
+        return GL_RGB10_A2UI;
+    case PixelFormat::RGBA12:
+        return GL_RGBA12;
+    case PixelFormat::RGB5A1:
+        return GL_RGB5_A1;
+
+    case PixelFormat::SRGB8A8:
+        return GL_SRGB8_ALPHA8;
+    case PixelFormat::SRGB8:
+        return GL_SRGB8;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum1(
+        CGL_Implementation::ShaderStage f)
+{
+    switch(f)
+    {
+    case ShaderStage::Vertex:
+        return GL_VERTEX_SHADER;
+    case ShaderStage::TessControl:
+        return GL_TESS_CONTROL_SHADER;
+    case ShaderStage::TessEval:
+        return GL_TESS_EVALUATION_SHADER;
+    case ShaderStage::Geometry:
+        return GL_GEOMETRY_SHADER;
+    case ShaderStage::Fragment:
+        return GL_FRAGMENT_SHADER;
+    case ShaderStage::Compute:
+        return GL_COMPUTE_SHADER;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum2(
+        CGL_Implementation::ShaderStage f)
+{
+    switch(f)
+    {
+    case ShaderStage::Vertex:
+        return GL_VERTEX_SHADER_BIT;
+    case ShaderStage::TessControl:
+        return GL_TESS_CONTROL_SHADER_BIT;
+    case ShaderStage::TessEval:
+        return GL_TESS_EVALUATION_SHADER_BIT;
+    case ShaderStage::Geometry:
+        return GL_GEOMETRY_SHADER_BIT;
+    case ShaderStage::Fragment:
+        return GL_FRAGMENT_SHADER_BIT;
+    case ShaderStage::Compute:
+        return GL_COMPUTE_SHADER_BIT;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        ValueHandling f)
+{
+    switch(f)
+    {
+    case ValueHandling::Keep:
+        return GL_KEEP;
+    case ValueHandling::Increment:
+        return GL_INCR;
+    case ValueHandling::Decrement:
+        return GL_DECR;
+    case ValueHandling::Invert:
+        return GL_INVERT;
+    case ValueHandling::Replace:
+        return GL_REPLACE;
+    case ValueHandling::WrapIncrement:
+        return GL_INCR_WRAP;
+    case ValueHandling::WrapDecrement:
+        return GL_DECR_WRAP;
+    case ValueHandling::Zero:
+        return GL_ZERO;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        ValueComparison f)
+{
+    switch(f)
+    {
+    case ValueComparison::Always:
+        return GL_ALWAYS;
+    case ValueComparison::Equal:
+        return GL_EQUAL;
+    case ValueComparison::GEqual:
+        return GL_GEQUAL;
+    case ValueComparison::Greater:
+        return GL_GREATER;
+    case ValueComparison::LEqual:
+        return GL_LEQUAL;
+    case ValueComparison::Less:
+        return GL_LESS;
+    case ValueComparison::NEqual:
+        return GL_NOTEQUAL;
+    case ValueComparison::Never:
+        return GL_NEVER;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(
+        Operator f)
+{
+    switch(f)
+    {
+    case Operator::Add:
+        return GL_FUNC_ADD;
+    case Operator::Sub:
+        return GL_FUNC_SUBTRACT;
+    case Operator::RevSub:
+        return GL_FUNC_REVERSE_SUBTRACT;
+    case Operator::Min:
+        return GL_MIN;
+    case Operator::Max:
+        return GL_MAX;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::Texture f)
+{
+    return (CGenum)f;
+}
 
 }
 }

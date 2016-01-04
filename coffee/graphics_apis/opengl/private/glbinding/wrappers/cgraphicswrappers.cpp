@@ -27,13 +27,13 @@ void coffee_graphics_clear(CClearFlag flg)
 {
     auto clearflags = GL_COLOR_BUFFER_BIT;
 
-    if(flag_eval(flg&CClearFlag::Depth))
+    if(feval(flg&CClearFlag::Depth))
         clearflags = clearflags|GL_DEPTH_BUFFER_BIT;
-    if(flag_eval(flg&CClearFlag::Color))
+    if(feval(flg&CClearFlag::Color))
         clearflags = clearflags|GL_COLOR_BUFFER_BIT;
-    if(flag_eval(flg&CClearFlag::Stencil))
+    if(feval(flg&CClearFlag::Stencil))
         clearflags = clearflags|GL_STENCIL_BUFFER_BIT;
-    if(flag_eval(flg&CClearFlag::Accum))
+    if(feval(flg&CClearFlag::Accum))
         clearflags = clearflags|GL_ACCUM_BUFFER_BIT;
 
     glClear(clearflags);

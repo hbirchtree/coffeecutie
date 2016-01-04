@@ -49,7 +49,7 @@ ValueType coffee_get_flags(
     ValueType val = ValueType();
 
     for(size_t i=0;i<Size;i++)
-        if(flag_eval(map[i].key & key))
+        if(feval(map[i].key & key))
             val = val|map[i].value;
 
     return val;

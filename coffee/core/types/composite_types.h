@@ -391,6 +391,64 @@ private:
     CString m_id;
 };
 
+class _cbasic_threadrunner_command
+{
+public:
+    static inline C_FORCE_INLINE void perform(_cbasic_threadrunner_command*){}
+    static inline C_FORCE_INLINE void await(_cbasic_threadrunner_command*,uint64){}
+};
+
+class _cbasic_threadrunner_queue
+{
+public:
+    virtual void processEvents() = 0;
+    void insertCmd(_cbasic_threadrunner_command*){}
+};
+
+class CThreadCommand : public _cbasic_threadrunner_command
+{
+public:
+    CThreadCommand(std::function<void()> f):m_cmd(f){}
+    static inline C_FORCE_INLINE void perform(CThreadCommand* c)
+    {
+        c->m_cmd();
+    }
+    virtual bool await(uint64 = 0)
+    {
+        return m_stat.load();
+    }
+protected:
+    std::function<void()> m_cmd;
+    std::atomic_bool m_stat;
+};
+
+/*!
+ * \brief Event loop for inserting commands from multiple threads, reimplement for
+ */
+class CEventLoop
+{
+public:
+    virtual void processEvents()
+    {
+        m_cmdlistaccess.lock();
+        while(!m_cmds.empty())
+        {
+            CThreadCommand::perform(m_cmds.front());
+            m_cmds.pop();
+        }
+        m_cmdlistaccess.unlock();
+    }
+    void insertCmd(CThreadCommand* c)
+    {
+        m_cmdlistaccess.lock();
+        m_cmds.push(c);
+        m_cmdlistaccess.unlock();
+    }
+protected:
+    std::mutex m_cmdlistaccess;
+    std::queue<CThreadCommand*> m_cmds;
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
