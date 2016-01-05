@@ -108,7 +108,7 @@ struct CALListener
 /*!
  * \brief A source which will play a sample from a buffer
  */
-struct C_FORCE_PACKING CALSource
+struct CALSource
 {
     CALSource();
 

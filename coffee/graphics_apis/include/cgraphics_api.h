@@ -42,13 +42,30 @@ struct CGraphicsAPI
      */
     struct RasterizerState
     {
-        bool rasterize(){}
+        bool discard(){}
         bool culling(){}
         bool wireframeRender(){}
         bool polygonSmooth(){}
         bool dither(){}
         bool clampDepth(){}
         bool testScissor(){}
+    };
+
+    struct TessellatorState
+    {
+        int32 patchCount(){}
+    };
+
+    /*!
+     * \brief Set viewport arrays. We will use this for VR rendering later. (Geometry shader way)
+     */
+    struct ViewportState
+    {
+        bool multiview(){}
+        int32 viewCount(){}
+        CRect view(int32){}
+        CZField64 depth(int32){}
+        CRect scissor(int32){}
     };
 
     struct BlendState
@@ -66,7 +83,7 @@ struct CGraphicsAPI
 
     struct PixelProcessState
     {
-        bool swapEndiannes(){}
+        bool swapEndianness(){}
         bool lsbFirst(){}
         int32 rowLength(){}
         int32 imgHeight(){}
@@ -83,7 +100,9 @@ struct CGraphicsAPI
 
     struct VertexDescription
     {
-        static void addAttribute(VertexDescription& desc,uint32 offset,uint32 stride,TypeEnum type,bool normalized){}
+        void addAttribute(uint32 idx,uint32 offset,uint32 stride,uint32 flags,TypeEnum type,bool normalized){}
+        bool interleaved(){}
+        int32 stride(){}
     };
 
     /*!
@@ -100,7 +119,7 @@ struct CGraphicsAPI
      */
     struct IndexBuffer : public VertexBuffer
     {
-
+        IndexBuffer(TypeEnum itype, uint32 size){}
     };
     /*!
      * \brief Contains data which will be read by a shader
@@ -114,34 +133,48 @@ struct CGraphicsAPI
      */
     struct ShaderBuffer : public VertexBuffer
     {
-
+        ShaderBuffer(uint32 stride, uint32 size){}
     };
     /*!
-     * \brief Contains a packed struct of parameters
+     * \brief Contains a packed struct of parameters. Not applicable to GL3.3
      */
     struct IndirectBuffer : public VertexBuffer
     {
-
+        IndirectBuffer(uint32 flags, uint32 stride, uint32 size){}
     };
     /*!
      * \brief Describes a particular uniform value, either inside a uniform block or separately
      */
     struct UniformDescriptor
     {
+        uint32 index(){}
+        cstring name(){}
+        uint32 flags(){}
     };
 
     /*!
-     * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader
+     * \brief Use compute shaders when applicable, transform feedback + geometry shader otherwise (GL3.3). Data-specification is depending on implementation.
+     */
+    struct ComputePipeline
+    {
+        void dispatch(){}
+    };
+
+    /*!
+     * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader (for GL3.3, just slap a program in there and put tighter restrictions on attaching)
      */
     struct Pipeline
     {
+        Pipeline(uint32 flags){}
+        void begin(){}
+        void end(){}
     };
     /*!
      * \brief Contains a single shader, fragment and etc.
      */
     struct Shader
     {
-
+        Shader(uint32 flags,cstring* src,int32 numSources){}
     };
 
     /*!
@@ -160,7 +193,13 @@ struct CGraphicsAPI
      */
     struct Surface
     {
-        Surface(PixelFormat fmt, bool isArray, uint32 arraySize, uint32 mips, int32 flags, ResourceAccess cl, const CBitmap& bitm);
+        Surface(PixelFormat fmt, bool isArray, uint32 arraySize, uint32 mips, uint32 flags, ResourceAccess cl, const CByteData& data);
+
+        int32 size(){}
+        bool isArray(){}
+        uint32 arraySize(){}
+        uint32 mipmaps(){}
+        PixelFormat format(){}
     };
 
     struct Texture2D; /* Simple 2D texture */

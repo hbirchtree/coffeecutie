@@ -1,6 +1,7 @@
 #include "cfiles.h"
 
 #include <cstring>
+#include <byteswap.h>
 
 #include "coffee/core/plat/plat_file.h"
 #include "coffee/core/plat/plat_core.h"
@@ -72,7 +73,7 @@ void coffee_file_free(CResource &resc)
     resc.size = 0;
 }
 
-bool coffee_file_pull(CResource &resc, bool textmode)
+bool coffee_file_pull(CResource &resc, bool textmode, bool)
 {
     CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),"rb");
 
@@ -84,6 +85,7 @@ bool coffee_file_pull(CResource &resc, bool textmode)
     resc.data = CFiles::coffee_file_read(fp,resc.data,&resc.size,textmode);
     if(CFiles::coffee_file_close(fp))
         cWarning("Failed to close file: %s",resc.resource());
+
     return true;
 }
 

@@ -73,7 +73,7 @@ extern bool coffee_file_memunmap(CResource& resc);
  * \brief Free data pointer
  */
 extern void coffee_file_free(CResource &resc);
-extern bool coffee_file_pull(CResource &resc, bool textmode = false);
+extern bool coffee_file_pull(CResource &resc, bool textmode = false, bool bigendian = false);
 /*!
  * \brief Save data to file
  * \return

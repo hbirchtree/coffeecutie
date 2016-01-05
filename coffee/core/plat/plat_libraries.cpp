@@ -1,5 +1,7 @@
 #include "plat_libraries.h"
 
+#include "coffee/core/coffee_strings.h"
+
 #if defined(COFFEE_LINUX)
 #include <dlfcn.h>
 #elif defined(COFFEE_WINDOWS)
@@ -8,9 +10,6 @@
 
 namespace Coffee{
 namespace CLibraryLoader{
-
-constexpr cstring lib_load_error_format = "Native library loading error: {0}";
-constexpr cstring lib_symb_error_format = "Native symbol resolution error: {0}";
 
 #if defined(COFFEE_LINUX)
 struct CNativeObject
@@ -24,7 +23,7 @@ void* _coffee_dlopen(cstring fname)
     void* handle = dlopen(fname,RTLD_NOW);
     if(!handle)
     {
-        cLog(__FILE__,__LINE__,"CObjectLoader",lib_load_error_format,fname);
+        cLog(__FILE__,__LINE__,"CObjectLoader",CFStrings::Lib_load_error_format,fname);
     }
     return handle;
 }
@@ -60,7 +59,8 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction,
     e->funptr = dlsym(e->handle,loaderFunction);
     if((error = dlerror()) != NULL)
     {
-        cLog(__FILE__,__LINE__,"CObjectLoader",lib_symb_error_format,error);
+        cLog(__FILE__,__LINE__,CFStrings::Lib_Identifier,
+             CFStrings::Lib_symb_error_format,error);
         _coffee_close_library(e);
         return nullptr;
     }
@@ -101,7 +101,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction,
 
     if(!e->hinstLib)
     {
-        cWarning(lib_load_error_format,plat_file_name.c_str());
+        cWarning(CFStrings::Lib_load_error_format,plat_file_name.c_str());
         _coffee_close_library(e);
         return nullptr;
     }
@@ -110,7 +110,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction,
 
     if(!e->procedure)
     {
-        cWarning(lib_symb_error_format,plat_file_name.c_str());
+        cWarning(CFStrings::Lib_symb_error_format,plat_file_name.c_str());
         _coffee_close_library(e);
         return nullptr;
     }

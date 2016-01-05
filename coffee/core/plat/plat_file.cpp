@@ -7,6 +7,7 @@
 
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/base/cdebug.h"
+#include "coffee/core/coffee_strings.h"
 
 namespace Coffee{
 namespace CResources{
@@ -38,7 +39,7 @@ CFile *coffee_file_open(cstring fname, cstring mode)
     f->handle = fopen(plat_fname.c_str(),mode);
     int err = errno;
     if(!f->handle)
-        cWarning("Native file error: %s",strerror(err));
+        cWarning(CFStrings::Plat_File_Native_Error,strerror(err));
     return f;
 }
 
@@ -63,10 +64,10 @@ cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool textmode)
     *size = fread(data,sizeof(byte_t),esize,file->handle);
     //In text mode, we terminate the array
     if(textmode)
-        data[esize*sizeof(byte_t)] = '\0';
+        data[esize*sizeof(byte_t)] = 0;
 
     if(*size<esize)
-        cFatal("Read error: expected %ld bytes, got %ld",esize,*size);
+        cFatal(CFStrings::Plat_File_Native_SizeErr,esize,*size);
 
     return data;
 }
