@@ -119,30 +119,30 @@ struct CALSource
     uint16 state; /*!< Source state*/
 };
 
-extern CALVersion coffee_audio_context_version(CALContext *ctxt);
+extern CALVersion context_version(CALContext *ctxt);
 
 /*!
  * \brief Create an OpenAL context
  * \param context Context object to be bound with the new context
  */
-extern CALContext* coffee_audio_context_create(cstring device = nullptr);
+extern CALContext* context_create(cstring device = nullptr);
 /*!
  * \brief Set error callback for the OpenAL context
  * \param callback
  */
-extern void coffee_audio_context_set_debug_callback(
+extern void context_set_debug_callback(
         CALContext *context, CALCallback callback);
 /*!
  * \brief Destroy an OpenAL context
  * \param context Context object to destroy
  */
-extern void coffee_audio_context_destroy(
+extern void context_destroy(
         CALContext* context);
 /*!
  * \brief Make the context current to this thread
  * \param context Context to make current
  */
-extern bool coffee_audio_context_make_current(
+extern bool context_make_current(
         CALContext* context);
 /*!
  * \brief Check if an extension is supported
@@ -150,13 +150,13 @@ extern bool coffee_audio_context_make_current(
  * \param extension
  * \return True if supported
  */
-extern bool coffee_audio_context_check_extension(
+extern bool context_check_extension(
         const CALContext* context, cstring extension);
 /*!
  * \brief Check if error is present. If it is, call context's callback
  * \param context
  */
-extern void coffee_audio_context_get_error(
+extern void context_get_error(
         const CALContext* context = nullptr);
 
 /*!
@@ -166,7 +166,7 @@ extern void coffee_audio_context_get_error(
  * \param fmt
  * \return A valid pointer if the function succeeded
  */
-extern CALCaptureDevice* coffee_audio_capture_create(
+extern CALCaptureDevice* capture_create(
         CALContext* context,
         cstring device,
         const CAudioFormat &fmt, uint32 samples);
@@ -174,60 +174,60 @@ extern CALCaptureDevice* coffee_audio_capture_create(
  * \brief Free the audio capture device when you are done with it.
  * \param dev
  */
-extern void coffee_audio_capture_free(CALCaptureDevice *dev);
+extern void capture_free(CALCaptureDevice *dev);
 
-extern void coffee_audio_capture_start(CALCaptureDevice* dev);
-extern void coffee_audio_capture_grab_samples(CALCaptureDevice* dev, CAudioSample &sample);
-extern void coffee_audio_capture_stop(CALCaptureDevice* dev);
+extern void capture_start(CALCaptureDevice* dev);
+extern void capture_grab_samples(CALCaptureDevice* dev, CAudioSample &sample);
+extern void capture_stop(CALCaptureDevice* dev);
 
 /*!
  * \brief Allocate audio buffer with sample data
  * \param buffer
  * \param sample
  */
-extern void coffee_audio_alloc(
+extern void alAlloc(
         CALBuffer* buffer, const CAudioSample* sample);
 /*!
  * \brief Allocate audio buffer
  * \param buffer
  */
-extern void coffee_audio_alloc(CALBuffer* buffer);
+extern void alAlloc(CALBuffer* buffer);
 /*!
  * \brief Allocate audio source
  * \param source
  */
-extern void coffee_audio_alloc(CALSource* source);
+extern void alAlloc(CALSource* source);
 /*!
  * \brief Free an AL source
  * \param source
  */
-extern void coffee_audio_free(CALSource* source);
+extern void alFree(CALSource* source);
 /*!
  * \brief Free an AL buffer
  * \param buffer
  */
-extern void coffee_audio_free(CALBuffer* buffer);
+extern void alFree(CALBuffer* buffer);
 
 /*!
  * \brief Get second offset into buffer
  * \param source
  * \return
  */
-extern int32 coffee_audio_source_get_offset_seconds(
+extern int32 source_get_offset_seconds(
         const CALSource* source);
 /*!
  * \brief Get sample offset into buffer
  * \param source
  * \return
  */
-extern int32 coffee_audio_source_get_offset_samples(
+extern int32 source_get_offset_samples(
         const CALSource* source);
 /*!
  * \brief Get byte offset into buffer
  * \param source
  * \return
  */
-extern int32 coffee_audio_source_get_offset_bytes(
+extern int32 source_get_offset_bytes(
         const CALSource* source);
 
 /*!
@@ -235,21 +235,21 @@ extern int32 coffee_audio_source_get_offset_bytes(
  * \param source
  * \param off
  */
-extern void coffee_audio_source_set_offset_seconds(
+extern void source_set_offset_seconds(
         CALSource* source, int32 const& off);
 /*!
  * \brief Set sample offset into buffer
  * \param source
  * \param off
  */
-extern void coffee_audio_source_set_offset_samples(
+extern void source_set_offset_samples(
         CALSource* source, int32 const& off);
 /*!
  * \brief Set byte offset into buffer
  * \param source
  * \param off
  */
-extern void coffee_audio_source_set_offset_bytes(
+extern void source_set_offset_bytes(
         CALSource* source, const int32 &off);
 
 /*!
@@ -257,10 +257,10 @@ extern void coffee_audio_source_set_offset_bytes(
  * \param source
  * \param state
  */
-extern void coffee_audio_source_set_state(
+extern void source_set_state(
         CALSource* source, CALPlaybackState state);
 
-extern void coffee_audio_source_transform(
+extern void source_transform(
         CALSource* source, const CVec3 &position,
         const CVec3 &velocity, const CVec3 &direction);
 
@@ -270,7 +270,7 @@ extern void coffee_audio_source_transform(
  * \param numSources Number of sources to process
  * \param state
  */
-extern void coffee_audio_source_set_states(
+extern void source_set_states(
         const CALSource **sources,
         szptr numSources,
         CALPlaybackState state);
@@ -279,7 +279,7 @@ extern void coffee_audio_source_set_states(
  * \brief Set AL listener properties
  * \param listener
  */
-extern void coffee_audio_listener_set(const CALListener* listener);
+extern void listener_set(const CALListener* listener);
 
 /*!
  * \brief Queue buffers for playback
@@ -287,7 +287,7 @@ extern void coffee_audio_listener_set(const CALListener* listener);
  * \param numBuffers
  * \param buffers
  */
-extern void coffee_audio_source_queue_buffers(
+extern void source_queue_buffers(
         CALSource* source, szptr numBuffers, const CALBuffer * const* buffers);
 /*!
  * \brief Dequeue buffers if it has not been played yet
@@ -295,7 +295,7 @@ extern void coffee_audio_source_queue_buffers(
  * \param numBuffers
  * \param buffers
  */
-extern void coffee_audio_source_dequeue_buffers(
+extern void source_dequeue_buffers(
         CALSource* source, szptr numBuffers, const CALBuffer * const* buffers);
 
 /*!
@@ -304,7 +304,7 @@ extern void coffee_audio_source_dequeue_buffers(
  * \param prop
  * \param val
  */
-extern void coffee_audio_source_seti(
+extern void source_seti(
         CALSource* source, CSourceProperty const& prop, const int32* val);
 /*!
  * \brief Set scalar property of source
@@ -312,13 +312,13 @@ extern void coffee_audio_source_seti(
  * \param prop
  * \param val
  */
-extern void coffee_audio_source_setf(
+extern void source_setf(
         CALSource* source, CSourceProperty const& prop, const scalar *val);
 
 
-extern void coffee_audio_source_seti(
+extern void source_seti(
         CALSource* source, CSourceProperty const& prop, int32 const& val);
-extern void coffee_audio_source_setf(
+extern void source_setf(
         CALSource* source, CSourceProperty const& prop, scalar const& val);
 
 /*!
@@ -326,14 +326,14 @@ extern void coffee_audio_source_setf(
  * \param buffer
  * \param sample
  */
-extern void coffee_audio_buffer_data(
+extern void buffer_data(
         CALBuffer* buffer, const CAudioSample* sample);
 
-extern void coffee_audio_context_set_distance_model(const CDistanceModel &m);
+extern void context_set_distance_model(const CDistanceModel &m);
 
-extern cstring* coffee_audio_context_devices_output(uint32 *numDevices);
-extern cstring* coffee_audio_context_devices_input(uint32 *numDevices);
-extern cstring coffee_audio_context_device_default();
+extern cstring* context_devices_output(uint32 *numDevices);
+extern cstring* context_devices_input(uint32 *numDevices);
+extern cstring context_device_default();
 
 }
 }

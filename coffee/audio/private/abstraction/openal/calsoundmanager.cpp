@@ -11,10 +11,10 @@ namespace COpenAL{
 
 CALSoundManager::CALSoundManager()
 {
-    this->a_idevices = coffee_audio_context_devices_input(&idevices);
-    this->a_odevices = coffee_audio_context_devices_output(&odevices);
+    this->a_idevices = context_devices_input(&idevices);
+    this->a_odevices = context_devices_output(&odevices);
 
-    cstring def_str = coffee_audio_context_device_default();
+    cstring def_str = context_device_default();
 
     for(uint32 i=0;i<odevices;i++)
     {

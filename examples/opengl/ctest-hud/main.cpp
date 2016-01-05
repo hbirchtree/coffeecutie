@@ -3,6 +3,8 @@
 #include <coffee/CImage>
 
 #include <graphics_apis/opengl/include/levels/gl33.h>
+#include <graphics_apis/opengl/include/levels/gl43.h>
+#include <graphics_apis/opengl/include/levels/gl45.h>
 
 using namespace Coffee;
 using namespace CDisplay;

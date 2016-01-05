@@ -16,7 +16,7 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
     m_capFmt.bitdepth = fmt.bitDepth();
     m_capFmt.channels = fmt.channels();
     m_capFmt.samplerate = fmt.samplerate();
-    m_capDev = coffee_audio_capture_create(
+    m_capDev = capture_create(
                 device.alContext(),
                 inputId.stringIdentifier(),
                 m_capFmt,
@@ -31,7 +31,7 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
     b_inputStream = false;
     m_dev = &device;
     m_soundSource = new CALSource;
-    coffee_audio_alloc(m_soundSource);
+    alAlloc(m_soundSource);
     m_capFmt.bitdepth = fmt.bitDepth();
     m_capFmt.channels = fmt.channels();
     m_capFmt.frequency = fmt.samplerate();
@@ -41,12 +41,12 @@ CALSoundStream::~CALSoundStream()
 {
     if(m_soundSource)
     {
-        coffee_audio_free(m_soundSource);
+        alFree(m_soundSource);
         delete m_soundSource;
     }
     if(m_capDev)
     {
-        coffee_audio_capture_free(m_capDev);
+        capture_free(m_capDev);
     }
 }
 
@@ -70,7 +70,7 @@ szptr CALSoundStream::collectSamples(c_ptr data, const szptr &max_samples)
     smp.samples = max_samples;
     smp.fmt = m_capFmt;
 
-    coffee_audio_capture_grab_samples(m_capDev,smp);
+    capture_grab_samples(m_capDev,smp);
 
     return max_samples;
 }
@@ -80,7 +80,7 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
     CALBuffer buf;
     CALBuffer* p_buf = &buf;
 
-    coffee_audio_alloc(p_buf);
+    alAlloc(p_buf);
 
     CAudioSample samp;
     samp.data = (int16*)data;
@@ -90,16 +90,16 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
 
     samp.samples = samples;
 
-    coffee_audio_buffer_data(p_buf,&samp);
+    buffer_data(p_buf,&samp);
 
-    coffee_audio_source_queue_buffers(m_soundSource,1,&p_buf);
-    coffee_audio_source_set_state(m_soundSource,CALPlaybackState::Playing);
+    source_queue_buffers(m_soundSource,1,&p_buf);
+    source_set_state(m_soundSource,CALPlaybackState::Playing);
 }
 
 void CALSoundStream::feedBuffer(CSoundBuffer<CALSource, CALBuffer> &buffer)
 {
     CALBuffer* p_buf = buffer.object();
-    coffee_audio_source_queue_buffers(m_soundSource,1,&p_buf);
+    source_queue_buffers(m_soundSource,1,&p_buf);
 }
 
 CALSource *CALSoundStream::object()

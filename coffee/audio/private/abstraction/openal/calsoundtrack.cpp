@@ -10,12 +10,12 @@ CALSoundTrack::CALSoundTrack(CSoundDevice<CALSource,CALBuffer>& dev):
     m_dev(&dev)
 {
     m_source = new CALSource;
-    coffee_audio_alloc(m_source);
+    alAlloc(m_source);
 }
 
 CALSoundTrack::~CALSoundTrack()
 {
-    coffee_audio_free(m_source);
+    alFree(m_source);
     delete m_source;
 }
 
@@ -41,8 +41,8 @@ void CALSoundTrack::updateTrack(uint64 ts)
     {
         if(ts >= smp.b_pts)
         {
-            coffee_audio_source_queue_buffers(m_source,1,&smp.buf);
-            coffee_audio_source_set_state(m_source,CALPlaybackState::Playing);
+            source_queue_buffers(m_source,1,&smp.buf);
+            source_set_state(m_source,CALPlaybackState::Playing);
             removal.push_back(&smp);
         }
     }

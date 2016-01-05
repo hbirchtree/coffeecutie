@@ -78,10 +78,10 @@ enum class ResourceAccess : uint16
 
     ReadOnly = 0x10,
     WriteOnly = 0x20,
-    ReadWrite = 0x40,
+    ReadWrite = 0x30,
 
-    Persistent = 0x80,
-    Streaming = 0x100,
+    Persistent = 0x40,
+    Streaming = 0x80,
 };
 
 enum class TypeEnum : uint8
@@ -242,6 +242,8 @@ enum class PixelFlags
 enum class PixelComponents
 {
     R,
+    G,
+    B,
     RG,
     RGB,
     RGBA,
@@ -266,6 +268,24 @@ enum class Operator
     RevSub,
     Min,
     Max,
+};
+
+enum class LogicOp
+{
+    CLEAR0 = 0x1,
+    CLEAR1 = 0x2,
+
+    AND = 0x4,
+    NAND = 0x8,
+    OR = 0x10,
+    XOR = 0x20,
+    NOR = 0x40,
+
+    SRC_INVERSE = 0x80, /*Invert source*/
+    DST_INVERSE = 0x100, /*Invert destination*/
+
+    COPY = 0x200, /* Copy source */
+    NOOP = 0x400, /* Copy destination */
 };
 
 enum class ValueComparison
@@ -295,7 +315,9 @@ enum class ValueHandling
 enum class ProfilingTerm
 {
     ElapsedTime,
-    ThroughputMetric,
+    ScreenSamples,
+    Primitives,
+    TransformedPrimitives,
 };
 
 template<typename T>
@@ -311,6 +333,7 @@ int64 ctypehash(const T& t)
 
 C_FLAGS(PixelFlags,uint32);
 C_FLAGS(ResourceAccess,uint32);
+C_FLAGS(LogicOp,uint32);
 
 }
 

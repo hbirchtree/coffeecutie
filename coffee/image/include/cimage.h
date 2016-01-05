@@ -31,14 +31,14 @@ struct CStbImageConst
 /*!
  * \brief Print any potential STB errors
  */
-extern void coffee_stb_error();
+extern void error();
 /*!
  * \brief Load STB image from file
  * \param target Target to load into
  * \param src Source to load from
  * \return True if success
  */
-extern bool coffee_stb_image_load(
+extern bool load_data(
         CStbImage* target,
         const CResource* src);
 /*!
@@ -58,7 +58,7 @@ extern void _stbi_write_data(
  * \param channels Amount of channels
  * \return True if success
  */
-extern bool coffee_stb_image_resize(
+extern bool resize(
         CStbImage* img,
         const CSize& target,
         int channels);
@@ -68,7 +68,7 @@ extern bool coffee_stb_image_resize(
  * \param src STB image to save
  * \return
  */
-extern bool coffee_stb_image_save_png(
+extern bool save_png(
         CResource* target,
         const CStbImageConst* src);
 /*!
@@ -77,7 +77,7 @@ extern bool coffee_stb_image_save_png(
  * \param src STB image to save
  * \return
  */
-extern bool coffee_stb_image_save_png(
+extern bool save_png(
         CResource* target,
         const CStbImage* src);
 /*!
@@ -86,7 +86,7 @@ extern bool coffee_stb_image_save_png(
  * \param src STB image to save
  * \return
  */
-extern bool coffee_stb_image_save_tga(
+extern bool save_tga(
         CResource* target,
         const CStbImage* src);
 
@@ -94,21 +94,36 @@ extern bool coffee_stb_image_save_tga(
  * \brief Flip image vertically, allocates and frees memory
  * \param src
  */
-extern void coffee_stb_image_flip_vertical(
+extern void flip_vertical(
         CStbImage* src);
 /*!
  * \brief Flip image horizontally, allocates and frees memory
  * \param src
  */
-extern void coffee_stb_image_flip_horizontal(
+extern void flip_horizontal(
         CStbImage* src);
 /*!
  * \brief Free image data
  * \param img
  */
-extern void coffee_stb_image_free(CStbImage* img);
+extern void image_free(CStbImage* img);
 
 } //CStbImageLib
+
+namespace CImage{
+
+/*!
+ * \brief Only saves RGB data, R, RG and RGBA won't work
+ * \param resolution
+ * \param imgData
+ * \param outdata
+ */
+extern void save_tga(const CSize &resolution,
+                     const CByteData &imgData,
+                     CByteData &outdata);
+
+}
+
 } //Coffee
 
 #endif

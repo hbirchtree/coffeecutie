@@ -32,9 +32,9 @@ struct CAudioSample
     int samples;
 };
 
-extern bigscalar coffee_audio_sample_get_length(const CAudioSample &smp);
+extern bigscalar sample_get_length(const CAudioSample &smp);
 
-extern szptr coffee_audio_sample_get_datasize(CAudioFormat const& fmt, szptr samples);
+extern szptr sample_get_datasize(CAudioFormat const& fmt, szptr samples);
 
 namespace CStbAudio{
 
@@ -43,7 +43,7 @@ namespace CStbAudio{
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern void coffee_stb_audio_vorbis_load(CAudioSample* smp, CResources::CResource* src);
+extern void vorbis_load(CAudioSample* smp, CResources::CResource* src);
 
 }
 

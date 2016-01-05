@@ -479,6 +479,15 @@ protected:
     std::queue<CThreadCommand*> m_cmds;
 };
 
+struct CColorMask
+{
+    bool r:1;
+    bool g:1;
+    bool b:1;
+    bool a:1;
+    uint8 padding:4;
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */

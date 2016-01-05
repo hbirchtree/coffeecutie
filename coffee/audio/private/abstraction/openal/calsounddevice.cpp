@@ -38,7 +38,7 @@ CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier& dev):
 {
     m_data = new _cal_devdata;
     m_data->b_input = false;
-    m_data->m_ctxt = coffee_audio_context_create(dev.stringIdentifier());
+    m_data->m_ctxt = context_create(dev.stringIdentifier());
     m_data->m_mixer = new CALSoundMixer(*this);
 }
 
@@ -49,7 +49,7 @@ CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier &card,
 {
     m_data = new _cal_devdata;
     m_data->b_input = true;
-    m_data->m_ctxt = coffee_audio_context_create(card.stringIdentifier());
+    m_data->m_ctxt = context_create(card.stringIdentifier());
     m_data->m_inputstream = new CALSoundStream(*this,capdev,fmt,4);
 }
 
@@ -67,7 +67,7 @@ CALSoundDevice::~CALSoundDevice()
     if(m_data->m_inputstream)
         delete m_data->m_inputstream;
 
-    coffee_audio_context_destroy(m_data->m_ctxt);
+    context_destroy(m_data->m_ctxt);
 
     delete m_data;
 }

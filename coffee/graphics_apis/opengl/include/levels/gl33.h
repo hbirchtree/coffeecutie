@@ -1,6 +1,7 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_33_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_33_H
 
+#include <cgraphics_api.h>
 #include "glbase.h"
 
 namespace Coffee{
@@ -45,56 +46,56 @@ struct CGL33 : CGL_Implementation
     {return Debug::CheckExtensionSupported("GL_KHR_debug");}
 
     /* Allocations */
-    static bool TexAlloc(int32 l,CGhnd* d){glGenTextures(l,d); return true;}
-    static bool TexFree(int32 l,CGhnd* d){glDeleteTextures(l,d); return true;}
+    static bool TexAlloc(uint32 l,CGhnd* d){glGenTextures(l,d); return true;}
+    static bool TexFree(uint32 l,CGhnd* d){glDeleteTextures(l,d); return true;}
 
-    static bool FBAlloc(int32 l,CGhnd* d){glGenFramebuffers(l,d); return true;}
-    static bool FBFree(int32 l,CGhnd* d){glDeleteFramebuffers(l,d); return true;}
+    static bool FBAlloc(uint32 l,CGhnd* d){glGenFramebuffers(l,d); return true;}
+    static bool FBFree(uint32 l,CGhnd* d){glDeleteFramebuffers(l,d); return true;}
 
-    static bool RenderBufferAlloc(int32 l,CGhnd* d){glGenRenderbuffers(l,d); return true;}
-    static bool RenderBufferFree(int32 l,CGhnd* d){glDeleteRenderbuffers(l,d); return true;}
+    static bool RenderBufferAlloc(uint32 l,CGhnd* d){glGenRenderbuffers(l,d); return true;}
+    static bool RenderBufferFree(uint32 l,CGhnd* d){glDeleteRenderbuffers(l,d); return true;}
 
-    static bool SamplerAlloc(int32 l,CGhnd* d){glGenSamplers(l,d); return true;}
-    static bool SamplerFree(int32 l,CGhnd* d){glDeleteSamplers(l,d); return true;}
+    static bool SamplerAlloc(uint32 l,CGhnd* d){glGenSamplers(l,d); return true;}
+    static bool SamplerFree(uint32 l,CGhnd* d){glDeleteSamplers(l,d); return true;}
 
-    static bool BufAlloc(int32 l,CGhnd* d){glGenBuffers(l,d); return true;}
-    static bool BufFree(int32 l,CGhnd* d){glDeleteBuffers(l,d); return true;}
+    static bool BufAlloc(uint32 l,CGhnd* d){glGenBuffers(l,d); return true;}
+    static bool BufFree(uint32 l,CGhnd* d){glDeleteBuffers(l,d); return true;}
 
-    static bool VAOAlloc(int32 l,CGhnd* d){glGenVertexArrays(l,d); return true;}
-    static bool VAOFree(int32 l,CGhnd* d){glDeleteVertexArrays(l,d); return true;}
+    static bool VAOAlloc(uint32 l,CGhnd* d){glGenVertexArrays(l,d); return true;}
+    static bool VAOFree(uint32 l,CGhnd* d){glDeleteVertexArrays(l,d); return true;}
 
-    static bool QueryAlloc(int32 l,CGhnd* d){glGenQueries(l,d); return true;}
-    static bool QueryFree(int32 l,CGhnd* d){glDeleteQueries(l,d); return true;}
+    static bool QueryAlloc(uint32 l,CGhnd* d){glGenQueries(l,d); return true;}
+    static bool QueryFree(uint32 l,CGhnd* d){glDeleteQueries(l,d); return true;}
 
-    static bool ProgramAlloc(size_t l,CGhnd* d)
+    static bool ProgramAlloc(uint32 l,CGhnd* d)
     {
-        for(size_t i=0;i<l;i++)
+        for(uint32 i=0;i<l;i++)
             d[i] = glCreateProgram();
         return true;
     }
-    static bool ProgramFree(size_t l,CGhnd* d)
+    static bool ProgramFree(uint32 l,CGhnd* d)
     {
-        for(size_t i=0;i<l;i++)
+        for(uint32 i=0;i<l;i++)
             glDeleteProgram(d[i]);
         return true;
     }
 
-    static bool ShaderAlloc(size_t l,ShaderStage t,CGhnd* d)
+    static bool ShaderAlloc(uint32 l,ShaderStage t,CGhnd* d)
     {
-        for(size_t i=0;i<l;i++)
+        for(uint32 i=0;i<l;i++)
             d[i] = glCreateShader(to_enum1(t));
         return true;
     }
-    static bool ShaderFree(size_t l,CGhnd* d)
+    static bool ShaderFree(uint32 l,CGhnd* d)
     {
-        for(size_t i=0;i<l;i++)
+        for(uint32 i=0;i<l;i++)
             glDeleteShader(d[i]);
         return true;
     }
 
-    static bool FenceFree(size_t l,CGsync* d)
+    static bool FenceFree(uint32 l,CGsync* d)
     {
-        for(size_t i=0;i<l;i++)
+        for(uint32 i=0;i<l;i++)
             glDeleteSync((GLsync)d[i]);
         return true;
     }
@@ -111,10 +112,10 @@ struct CGL33 : CGL_Implementation
         s[len] = 0;
         return s;
     }
-    static void ShaderSource(CGhnd h,size_t n,cstring* src)
+    static void ShaderSource(CGhnd h,uint32 n,cstring* src)
     {
         int32* lens = new int32[n];
-        for(size_t i=0;i<n;i++)
+        for(uint32 i=0;i<n;i++)
             lens[i] = c_strlen(src[i]+1);
         glShaderSource(h,n,src,lens);
         delete[] lens;
@@ -141,7 +142,7 @@ struct CGL33 : CGL_Implementation
         return status==GL_TRUE;
     }
 
-    static void ProgramGetAttached(CGhnd p,size_t* n,CGhnd** h)
+    static void ProgramGetAttached(CGhnd p,uint32* n,CGhnd** h)
     {
         int32 num = 0;
         ProgramGetiv(p,GL_ATTACHED_SHADERS,&num);
@@ -189,7 +190,7 @@ struct CGL33 : CGL_Implementation
     }
 
     /* Attributes */
-    static void ProgramAttribGet(CGhnd h,size_t* n,cstring_w** names,CGenum** type,int32** size)
+    static void ProgramAttribGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_ACTIVE_ATTRIBUTES,&num);
@@ -213,7 +214,7 @@ struct CGL33 : CGL_Implementation
     static void ProgramAttribBind(CGhnd h,uint32 i,cstring n){glBindAttribLocation(h,i,n);}
 
     /* Uniforms */
-    static void ProgramUnifGet(CGhnd h,size_t* n,cstring_w** names,CGenum** type,int32** size)
+    static void ProgramUnifGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORMS,&num);
@@ -237,7 +238,7 @@ struct CGL33 : CGL_Implementation
 
     /* Uniform blocks */
     /* Return name, binding, active uniform indices and size */
-    static void ProgramUnifBlockGet(CGhnd h,size_t* n,cstring_w** names,int32** indexSize,int32*** index,int32** size)
+    static void ProgramUnifBlockGet(CGhnd h,uint32* n,cstring_w** names,int32** indexSize,int32*** index,int32** size)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORM_BLOCKS,&num);
@@ -268,7 +269,7 @@ struct CGL33 : CGL_Implementation
     static void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i){glUniformBlockBinding(h,l,i);}
 
     /* Subroutines */
-    static void ProgramSubRtGet(CGhnd h,ShaderStage s,size_t* n,
+    static void ProgramSubRtGet(CGhnd h,ShaderStage s,uint32* n,
                                 cstring_w** names,int32** rtSize,int32*** rt)
     {
         int32 num = 0;
@@ -310,6 +311,13 @@ struct CGL33 : CGL_Implementation
     static void TexImage3D(Texture t,int32 level,CGenum ifmt,
                            int32 w,int32 h,int32 d,int32 border,CGenum fmt,CGenum dt,c_cptr p)
     {glTexImage3D(to_enum(t),level,(int32)ifmt,w,h,d,border,fmt,dt,p);}
+
+    static void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
+                           uint32 w,uint32 h)
+    {glTexImage2DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,GL_FALSE);}
+    static void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
+                           uint32 w,uint32 h,uint32 d)
+    {glTexImage3DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,d,GL_FALSE);}
 
     static void TexSubImage2D(Texture t,int32 level,int32 x,int32 y,
                               int32 w,int32 h,CGenum fmt,CGenum dt,c_cptr p)
@@ -391,7 +399,10 @@ struct CGL33 : CGL_Implementation
     static void FBBind(CGenum t,CGhnd h){glBindFramebuffer(t,h);}
     static void RBufBind(CGenum t,CGhnd h){glBindRenderbuffer(t,h);}
 
-    static void RBufStorage(CGenum t,CGenum ifmt,int32 w,int32 h){glRenderbufferStorage(t,ifmt,w,h);}
+    static void RBufStorage(PixelFormat ifmt,uint32 w,uint32 h)
+    {glRenderbufferStorage(GL_RENDERBUFFER,to_enum(ifmt),w,h);}
+    static void RBufStorageMS(PixelFormat ifmt,uint32 samples,uint32 w,uint32 h)
+    {glRenderbufferStorageMultisample(GL_RENDERBUFFER,samples,to_enum(ifmt),w,h);}
 
     static bool FBCheckComplete(CGenum t)
     {
@@ -402,30 +413,40 @@ struct CGL33 : CGL_Implementation
         return f==GL_FRAMEBUFFER_COMPLETE;
     }
 
-    static void FBGetAttachParameter(CGenum t,CGenum att,CGenum p,int32* d){glGetFramebufferAttachmentParameteriv(t,att,p,d);}
+    static void FBGetAttachParameter(CGenum t,CGenum att,CGenum p,int32* d)
+    {glGetFramebufferAttachmentParameteriv(t,att,p,d);}
 
-    static void FBAttachTexture(CGenum t,CGenum att,CGhnd h,int32 level){glFramebufferTexture(t,att,h,level);}
+    static void FBAttachTexture(CGenum t,CGenum att,CGhnd h,int32 level)
+    {glFramebufferTexture(t,att,h,level);}
 
-    static void FBAttachTexture2D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level){glFramebufferTexture2D(t,att,textrg,h,level);}
-    static void FBAttachTexture3D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level,int32 z){glFramebufferTexture3D(t,att,textrg,h,level,z);}
-    static void FBAttachTextureLayer(CGenum t,CGenum att,CGhnd h,int32 level,int32 layer){glFramebufferTextureLayer(t,att,h,level,layer);}
-    static void FBAttachRenderBuffer(CGenum t,CGenum att,CGenum rtrg,CGhnd h){glFramebufferRenderbuffer(t,att,rtrg,h);}
+    static void FBAttachTexture2D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level)
+    {glFramebufferTexture2D(t,att,textrg,h,level);}
+    static void FBAttachTexture3D(CGenum t,CGenum att,CGenum textrg,CGhnd h,int32 level,int32 z)
+    {glFramebufferTexture3D(t,att,textrg,h,level,z);}
+    static void FBAttachTextureLayer(CGenum t,CGenum att,CGhnd h,int32 level,int32 layer)
+    {glFramebufferTextureLayer(t,att,h,level,layer);}
+    static void FBAttachRenderBuffer(CGenum t,CGenum att,CGenum rtrg,CGhnd h)
+    {glFramebufferRenderbuffer(t,att,rtrg,h);}
 
-    static void FBBlit(const CRect& s, const CRect& d,CGflag m,CGenum f){glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, m,f);}
+    static void FBBlit(const CRect& s, const CRect& d,CGflag m,CGenum f)
+    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, m,f);}
 
-    static void RBufGetParameteri(CGenum t,CGenum p,int32* d){glGetRenderbufferParameteriv(t,p,d);}
+    static void RBufGetParameteri(CGenum p,int32* d)
+    {glGetRenderbufferParameteriv(GL_RENDERBUFFER,p,d);}
 
-    static void FBDrawBuffers(int32 n,const CGenum* d){glDrawBuffers(n,d);}
+    static void FBDrawBuffers(uint32 n,const CGenum* d){glDrawBuffers(n,d);}
     static void FBReadBuffer(CGenum b){glReadBuffer(b);}
 
-    static void FBReadPixels(int32 x,int32 y,int32 w,int32 h,CGenum fmt,CGenum dt,c_ptr p){glReadPixels(x,y,w,h,fmt,dt,p);}
+    static void FBReadPixels(int32 x,int32 y,uint32 w,uint32 h,
+                             PixelComponents fmt,TypeEnum dt,c_ptr p)
+    {glReadPixels(x,y,w,h,to_enum(fmt),to_enum(dt),p);}
 
     /* XFB */
     static void XFBegin(CGenum p){glBeginTransformFeedback(p);}
     static void XFEnd(){glEndTransformFeedback();}
 
     static void XFVaryings(CGhnd h,int32 n,cstring* names,CGenum a){glTransformFeedbackVaryings(h,n,names,a);}
-    static void XFGetVaryings(CGhnd h,size_t* n,cstring_w** names,CGenum** type, int32** size)
+    static void XFGetVaryings(CGhnd h,uint32* n,cstring_w** names,CGenum** type, int32** size)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_TRANSFORM_FEEDBACK_VARYINGS,&num);
@@ -464,6 +485,7 @@ struct CGL33 : CGL_Implementation
     }
     static void FenceServerAwait(CGsync s){glWaitSync((GLsync)s,0,0);}
 
+    //TODO: Create FenceProperty enum
     static void FenceGetiv(CGsync s,CGenum p,int32* d){glGetSynciv((GLsync)s,p,1,nullptr,d);}
 
     /* Using Uniform* */

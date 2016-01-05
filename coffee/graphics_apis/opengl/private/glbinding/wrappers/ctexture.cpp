@@ -140,7 +140,7 @@ void coffee_graphics_tex_dump(const CTexture &tex, cstring filename)
 
 
     CResources::CResource fl(filename);
-    CStbImageLib::coffee_stb_image_save_png(&fl,&img);
+    CStbImageLib::save_png(&fl,&img);
     coffee_file_commit(fl);
     coffee_file_free(fl);
 
@@ -151,7 +151,7 @@ CTextureData *coffee_graphics_tex_create_texdata(
         CResources::CResource const& resource, c_ptr location)
 {
     CStbImageLib::CStbImage img;
-    if(!coffee_stb_image_load(&img,&resource))
+    if(!CStbImageLib::load_data(&img,&resource))
         return nullptr;
 
     CTextureData* ptr;

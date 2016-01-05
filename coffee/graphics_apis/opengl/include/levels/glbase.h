@@ -81,6 +81,8 @@ struct CGL_Implementation
 
         TessEval = 0x10,
         TessControl = 0x20,
+
+        All = 0x3F,
     };
 
     enum CompressionFlags
@@ -109,16 +111,17 @@ struct CGL_Implementation
 
     enum class DataType
     {
-        ArrayData,
-        ElementData,
-        UniformData,
-        ShaderData,
-        AtomicData,
-        QueryData,
-        XFBData,
-        DrawcallData,
-        ComputecallData,
-        PixelData,
+        ArrayData = GL_ARRAY_BUFFER,
+        ElementData = GL_ELEMENT_ARRAY_BUFFER,
+        UniformData = GL_UNIFORM_BUFFER,
+        ShaderData = GL_SHADER_STORAGE_BUFFER,
+        AtomicData = GL_ATOMIC_COUNTER_BUFFER,
+        QueryData = GL_QUERY_BUFFER,
+        XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
+        DrawcallData = GL_DRAW_INDIRECT_BUFFER,
+        ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
+        PixelUData = GL_PIXEL_UNPACK_BUFFER,
+        PixelPData = GL_PIXEL_PACK_BUFFER,
     };
 
     enum class Texture
@@ -145,6 +148,12 @@ struct CGL_Implementation
 
         Proxy2DArray = GL_PROXY_TEXTURE_2D_ARRAY,
         ProxyCubemapArray = GL_PROXY_TEXTURE_CUBE_MAP_ARRAY,
+
+        T2DMS = GL_TEXTURE_2D_MULTISAMPLE,
+        T2DArrayMS = GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
+
+        Proxy2DMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE,
+        Proxy2DArrayMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY,
     };
 
     enum class OperationType
@@ -260,6 +269,15 @@ struct CGL_Implementation
     static CGenum to_enum(ValueComparison f);
     static CGenum to_enum(Operator f);
     static CGenum to_enum(Texture f);
+    static CGenum to_enum(LogicOp op);
+    static CGenum to_enum(DataType f);
+
+    static CGenum to_enum1(ResourceAccess acc);
+    static CGenum to_enum2(ResourceAccess acc);
+    static CGenum to_enum3(ResourceAccess acc);
+
+    static CGenum to_enum(PixelComponents f);
+    static CGenum to_enum(TypeEnum f);
 
     static CGpixfmt get_fmt(PixelFormat e, bool rev);
 
@@ -288,6 +306,9 @@ struct CGL_Implementation
     {glBlendFuncSeparate(v1,v2,v3,v4);}
     static void BlendEqSep(Operator v1,Operator v2)
     {glBlendEquationSeparate(to_enum(v1),to_enum(v2));}
+
+    static void ColorMaski(uint32 i, CColorMask op){glColorMaski(i,op.r,op.g,op.b,op.a);}
+    static void ColorLogicOp(LogicOp op){glLogicOp(to_enum(op));}
 
     static void DepthFunc(ValueComparison f){glDepthFunc(to_enum(f));}
     static void DepthMask(bool v){glDepthMask((v) ? GL_TRUE : GL_FALSE);}
@@ -496,8 +517,9 @@ struct CGL_Implementation
     static void LoadBinding(){}
 };
 
-C_FLAGS(CGL_Implementation::BufferBit,int32);
-C_FLAGS(CGL_Implementation::PrimitiveCreation,int32);
+C_FLAGS(CGL_Implementation::BufferBit,uint32);
+C_FLAGS(CGL_Implementation::PrimitiveCreation,uint32);
+C_FLAGS(CGL_Implementation::ShaderStage,uint32);
 
 CString CGL_Implementation::Debug::s_ExtensionList = "";
 
@@ -955,27 +977,32 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum1(
         return GL_FRAGMENT_SHADER;
     case ShaderStage::Compute:
         return GL_COMPUTE_SHADER;
+    default:
+        return GL_NONE;
     }
 }
 
 CGL_Implementation::CGenum CGL_Implementation::to_enum2(
         CGL_Implementation::ShaderStage f)
 {
-    switch(f)
-    {
-    case ShaderStage::Vertex:
-        return GL_VERTEX_SHADER_BIT;
-    case ShaderStage::TessControl:
-        return GL_TESS_CONTROL_SHADER_BIT;
-    case ShaderStage::TessEval:
-        return GL_TESS_EVALUATION_SHADER_BIT;
-    case ShaderStage::Geometry:
-        return GL_GEOMETRY_SHADER_BIT;
-    case ShaderStage::Fragment:
-        return GL_FRAGMENT_SHADER_BIT;
-    case ShaderStage::Compute:
-        return GL_COMPUTE_SHADER_BIT;
-    }
+    CGenum o = 0;
+
+    if(feval(f&ShaderStage::Vertex))
+        o |= GL_VERTEX_SHADER_BIT;
+    if(feval(f&ShaderStage::TessControl))
+        o |= GL_TESS_CONTROL_SHADER_BIT;
+    if(feval(f&ShaderStage::TessEval))
+        o |= GL_TESS_EVALUATION_SHADER_BIT;
+    if(feval(f&ShaderStage::Geometry))
+        o |= GL_GEOMETRY_SHADER_BIT;
+    if(feval(f&ShaderStage::Fragment))
+        o |= GL_FRAGMENT_SHADER_BIT;
+    if(feval(f&ShaderStage::Compute))
+        o |= GL_COMPUTE_SHADER_BIT;
+    if(feval(f&ShaderStage::All))
+        o = GL_ALL_SHADER_BITS;
+
+    return o;
 }
 
 CGL_Implementation::CGenum CGL_Implementation::to_enum(
@@ -1047,6 +1074,173 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
 CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::Texture f)
 {
     return (CGenum)f;
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
+{
+    if(feval(op&(LogicOp::COPY)))
+        return GL_COPY;
+    if(feval(op&(LogicOp::COPY|LogicOp::SRC_INVERSE)))
+        return GL_COPY_INVERTED;
+    if(feval(op&(LogicOp::CLEAR0)))
+        return GL_CLEAR;
+    if(feval(op&(LogicOp::CLEAR1)))
+        return GL_SET;
+
+    if(feval(op&(LogicOp::AND)))
+        return GL_AND;
+    if(feval(op&(LogicOp::NAND)))
+        return GL_NAND;
+    if(feval(op&(LogicOp::AND|LogicOp::DST_INVERSE)))
+        return GL_AND_REVERSE;
+    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
+        return GL_AND_INVERTED;
+
+    if(feval(op&(LogicOp::OR)))
+        return GL_OR;
+    if(feval(op&(LogicOp::NOR)))
+        return GL_NOR;
+    if(feval(op&(LogicOp::XOR)))
+        return GL_XOR;
+    if(feval(op&(LogicOp::OR|LogicOp::DST_INVERSE)))
+        return GL_OR_REVERSE;
+    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
+        return GL_OR_INVERTED;
+
+    if(feval(op&(LogicOp::NOOP|LogicOp::DST_INVERSE)))
+        return GL_INVERT;
+
+    if(feval(op&(LogicOp::XOR|LogicOp::SRC_INVERSE|LogicOp::DST_INVERSE)))
+        return GL_XOR;
+
+    return GL_NONE;
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::DataType f)
+{
+    return (CGenum)f;
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess acc)
+{
+    CGenum f = GL_NONE;
+    if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Persistent)))
+        f = GL_DYNAMIC_READ;
+    if(feval(acc&(ResourceAccess::WriteOnly|ResourceAccess::Persistent)))
+        f = GL_DYNAMIC_DRAW;
+    if(feval(acc&(ResourceAccess::ReadWrite|ResourceAccess::Persistent)))
+        f = GL_DYNAMIC_COPY;
+
+    if(f != GL_NONE)
+        return f;
+
+    if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Streaming)))
+        f = GL_STREAM_READ;
+    if(feval(acc&(ResourceAccess::WriteOnly|ResourceAccess::Streaming)))
+        f = GL_STREAM_DRAW;
+    if(feval(acc&(ResourceAccess::ReadWrite|ResourceAccess::Streaming)))
+        f = GL_STREAM_COPY;
+
+    if(f != GL_NONE)
+        return f;
+
+    if(feval(acc&(ResourceAccess::ReadOnly)))
+        f = GL_STATIC_READ;
+    if(feval(acc&(ResourceAccess::WriteOnly)))
+        f = GL_STATIC_DRAW;
+    if(feval(acc&(ResourceAccess::ReadWrite)))
+        f = GL_STATIC_COPY;
+
+    return f;
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess acc)
+{
+    CGenum f = 0;
+    if(feval(acc&ResourceAccess::Persistent))
+        f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
+    if(feval(acc&ResourceAccess::ReadOnly))
+        f |= GL_MAP_READ_BIT;
+    if(feval(acc&ResourceAccess::WriteOnly))
+        f |= GL_MAP_WRITE_BIT;
+    if(feval(acc&ResourceAccess::ReadWrite))
+        f |= GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+    if(feval(acc&ResourceAccess::Streaming))
+        f |= GL_DYNAMIC_STORAGE_BIT;
+    return f;
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess acc)
+{
+    switch(acc)
+    {
+    case ResourceAccess::WriteOnly:
+        return GL_WRITE_ONLY;
+    case ResourceAccess::ReadOnly:
+        return GL_READ_ONLY;
+    case ResourceAccess::ReadWrite:
+        return GL_READ_WRITE;
+    default:
+        return GL_NONE;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
+{
+    switch(f)
+    {
+    case PixelComponents::R:
+        return GL_RED;
+    case PixelComponents::G:
+        return GL_GREEN;
+    case PixelComponents::B:
+        return GL_BLUE;
+    case PixelComponents::RG:
+        return GL_RG;
+    case PixelComponents::RGB:
+        return GL_RGB;
+    case PixelComponents::BGR:
+        return GL_BGR;
+    case PixelComponents::RGBA:
+        return GL_RGBA;
+    case PixelComponents::BGRA:
+        return GL_BGRA;
+    case PixelComponents::Depth:
+        return GL_DEPTH_COMPONENT;
+    case PixelComponents::DepthStencil:
+        return GL_DEPTH_STENCIL;
+    case PixelComponents::Stencil:
+        return GL_STENCIL;
+    }
+}
+
+CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
+{
+    switch(f)
+    {
+    case TypeEnum::Byte:
+        return GL_BYTE;
+    case TypeEnum::UByte:
+        return GL_UNSIGNED_BYTE;
+
+    case TypeEnum::Short:
+        return GL_SHORT;
+    case TypeEnum::UShort:
+        return GL_UNSIGNED_SHORT;
+
+    case TypeEnum::Int:
+        return GL_INT;
+    case TypeEnum::UInt:
+        return GL_UNSIGNED_INT;
+
+    case TypeEnum::BigScalar:
+        return GL_DOUBLE;
+    case TypeEnum::Scalar:
+        return GL_FLOAT;
+
+    default:
+        return GL_NONE;
+    }
 }
 
 CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, bool rev)

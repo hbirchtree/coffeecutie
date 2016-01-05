@@ -9,12 +9,12 @@ CALSoundBuffer::CALSoundBuffer(CALSoundDevice &dev):
     m_dev(dev)
 {
     m_buffer = new CALBuffer;
-    coffee_audio_alloc(m_buffer);
+    alAlloc(m_buffer);
 }
 
 CALSoundBuffer::~CALSoundBuffer()
 {
-    coffee_audio_free(m_buffer);
+    alFree(m_buffer);
     delete m_buffer;
 }
 
@@ -49,7 +49,7 @@ void CALSoundBuffer::fillBuffer(c_cptr data, const szptr &size)
     smp.samples = size;
     smp.data = (int16*)data;
 
-    coffee_audio_buffer_data(m_buffer,&smp);
+    buffer_data(m_buffer,&smp);
 }
 
 CALBuffer *CALSoundBuffer::object()
