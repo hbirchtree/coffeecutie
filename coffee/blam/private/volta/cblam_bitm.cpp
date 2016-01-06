@@ -52,9 +52,9 @@ bitm_texture_t coffee_bitm_get_texture(const bitm_image_t *img, const void *bitm
         def.type = CTexType::CubeMap;
         break;
     }
-    def.resolution.w = img->isize.w;
-    def.resolution.h = img->isize.h;
-    def.resolution.d = img->depth;
+    def.resolution.width = img->isize.w;
+    def.resolution.height = img->isize.h;
+    def.resolution.depth = img->depth;
     def.data = ((ubyte_t*)bitmfile)+img->offset;
 
     def.cformat = CTexIntFormat::None;

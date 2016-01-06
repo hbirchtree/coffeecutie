@@ -13,16 +13,16 @@ void coffee_graphics_tex_dxtc_load(CTexture& texture, const CGint &blocksize, c_
     szptr size;
     szptr offset = 0;
     coffee_graphics_bind(texture);
-    for(i=0; i < texture.levels && (res.w || res.h || res.d);i++)
+    for(i=0; i < texture.levels && (res.width || res.height || res.depth);i++)
     {
-        if(res.w == 0)
-            res.w = 1;
-        if(res.h == 0)
-            res.h = 1;
-        if(res.d == 0)
-            res.d = 1;
+        if(res.width == 0)
+            res.width = 1;
+        if(res.height == 0)
+            res.height = 1;
+        if(res.depth == 0)
+            res.depth = 1;
 
-        size = ((res.w+3)/4)*((res.h+3)/4)*((res.d+3)/4)*blocksize;
+        size = ((res.width+3)/4)*((res.height+3)/4)*((res.depth+3)/4)*blocksize;
 
         switch(texture.size.dimensions())
         {
@@ -30,30 +30,30 @@ void coffee_graphics_tex_dxtc_load(CTexture& texture, const CGint &blocksize, c_
             glCompressedTexImage1D(
                         gl_get(texture.type),i,
                         gl_get(texture.format),
-                        res.w,0,size,
+                        res.width,0,size,
                         ((ubyte_t*)data)+offset);
             break;
         case 2:
             glCompressedTexImage2D(
                         gl_get(texture.type),i,
                         gl_get(texture.format),
-                        res.w,res.h,0,size,
+                        res.width,res.height,0,size,
                         ((ubyte_t*)data)+offset);
             break;
         case 3:
             glCompressedTexImage3D(
                         gl_get(texture.type),i,
                         gl_get(texture.format),
-                        res.w,res.h,res.d,
+                        res.width,res.height,res.depth,
                         0,size,
                         ((ubyte_t*)data)+offset);
             break;
         }
 
         offset+=size;
-        res.w >>= 1;
-        res.h >>= 1;
-        res.d >>= 1;
+        res.width >>= 1;
+        res.height >>= 1;
+        res.depth >>= 1;
     }
     coffee_graphics_unbind(texture);
 }
@@ -75,23 +75,23 @@ void coffee_graphics_tex_compressed_load(
         glCompressedTexImage3D(
                     gl_get(tex.type),
                     level,gl_get(fmt),
-                    tex.size.w,tex.size.h,tex.size.d,
-                    tex.size.w*tex.size.h*tex.size.d*pixelSize,
+                    tex.size.width,tex.size.height,tex.size.depth,
+                    tex.size.width*tex.size.height*tex.size.depth*pixelSize,
                     0, data);
         break;
     case 2:
         glCompressedTexImage2D(
                     gl_get(tex.type),
                     level,gl_get(fmt),
-                    tex.size.w,tex.size.h,
-                    tex.size.w*tex.size.h*pixelSize,
+                    tex.size.width,tex.size.height,
+                    tex.size.width*tex.size.height*pixelSize,
                     0, data);
         break;
     case 1:
         glCompressedTexImage1D(
                     gl_get(tex.type),
                     level, gl_get(fmt),
-                    tex.size.w, tex.size.w*pixelSize,
+                    tex.size.width, tex.size.width*pixelSize,
                     0, data);
         break;
     }

@@ -1,7 +1,6 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_33_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_33_H
 
-#include <cgraphics_api.h>
 #include "glbase.h"
 
 namespace Coffee{
@@ -18,6 +17,7 @@ struct CGL33 : CGL_Implementation
         if(!gladLoadGL())
             return false;
         Debug::GetExtensions();
+        Debug::InitDebugFlag();
         return true;
     }
 
@@ -41,9 +41,6 @@ struct CGL33 : CGL_Implementation
 
     static bool DXTCSupported()
     {return Debug::CheckExtensionSupported("GL_EXT_texture_compression_s3tc");}
-
-    static bool DebuggingSupported()
-    {return Debug::CheckExtensionSupported("GL_KHR_debug");}
 
     /* Allocations */
     static bool TexAlloc(uint32 l,CGhnd* d){glGenTextures(l,d); return true;}

@@ -3,6 +3,7 @@ set ( ShaderSwitch_SRCS
         )
 
 include_directories(
+        ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
         ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
     )

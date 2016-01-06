@@ -98,6 +98,14 @@ set (
         ${CMAKE_SOURCE_DIR}/coffee/core/include
     )
 set (
+    COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/gleam/include
+        ${CMAKE_SOURCE_DIR}/coffee/graphics_apis/include
+        ${CMAKE_SOURCE_DIR}/coffee/image/include
+        ${CMAKE_SOURCE_DIR}/coffee/sdl2/include
+        ${CMAKE_SOURCE_DIR}/coffee/core/include
+    )
+set (
     COFFEE_IMAGE_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/image/include
     )

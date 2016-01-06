@@ -24,8 +24,6 @@ set ( CoffeeOpenGL_SRCS
         private/glbinding/wrappers/ctexture_pbo.cpp
         private/glbinding/wrappers/cuniformtypes.cpp
         private/glbinding/wrappers/cviewport_array.cpp
-
-        private/glad/glad.c
     )
 
 include_directories (

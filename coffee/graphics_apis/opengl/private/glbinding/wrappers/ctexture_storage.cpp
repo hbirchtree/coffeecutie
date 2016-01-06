@@ -8,28 +8,28 @@ void coffee_graphics_tex_defimmutable_1d(CTexture &tex)
 {
     glTextureStorage1D(tex.handle,tex.levels,
                        gl_get(tex.format),
-                       tex.size.w);
+                       tex.size.width);
 }
 
 void coffee_graphics_tex_defimmutable_2d(CTexture &tex)
 {
     glTextureStorage2D(tex.handle,tex.levels,
                        gl_get(tex.format),
-                       tex.size.w,tex.size.h);
+                       tex.size.width,tex.size.height);
 }
 
 void coffee_graphics_tex_defimmutable_3d(CTexture &tex)
 {
     glTextureStorage3D(tex.handle,tex.levels,
                        gl_get(tex.format),
-                       tex.size.w,tex.size.h,tex.size.d);
+                       tex.size.width,tex.size.height,tex.size.depth);
 }
 
 void coffee_graphics_tex_substore_1d(CTexture &tex, const CTextureData &data, const CGint &level, const CTextureRegion &reg)
 {
     glTextureSubImage1D(tex.handle,level,
                         reg.x(),
-                        reg.w,
+                        reg.width,
                         gl_get(data.format),gl_get(data.datatype),
                         data.data);
 }
@@ -38,7 +38,7 @@ void coffee_graphics_tex_substore_2d(CTexture &tex, const CTextureData &data, co
 {
     glTextureSubImage2D(tex.handle,level,
                         reg.x(),reg.y(),
-                        reg.w,reg.h,
+                        reg.width,reg.height,
                         gl_get(data.format),gl_get(data.datatype),
                         data.data);
 }
@@ -47,7 +47,7 @@ void coffee_graphics_tex_substore_3d(CTexture &tex, const CTextureData &data, co
 {
     glTextureSubImage3D(tex.handle,level,
                         reg.x(),reg.y(),reg.z(),
-                        reg.w,reg.h,reg.d,
+                        reg.width,reg.height,reg.depth,
                         gl_get(data.format),gl_get(data.datatype),
                         data.data);
 }
@@ -59,7 +59,7 @@ void coffee_graphics_tex_readtexelregion(
 {
     glGetTextureSubImage(tex.handle,level,
                          reg.x(),reg.y(),reg.z(),
-                         reg.w,reg.h,reg.d,
+                         reg.width,reg.height,reg.depth,
                          gl_get(fmt),gl_get(dType),
                          0, dPtr);
 }
@@ -69,7 +69,7 @@ void coffee_graphics_tex_sparse_commit(
 {
     glTexturePageCommitmentEXT(tex.handle,level,
                                reg.x(),reg.y(),reg.z(),
-                               reg.w,reg.h,reg.d,
+                               reg.width,reg.height,reg.depth,
                                (commit) ? GL_TRUE : GL_FALSE);
 }
 

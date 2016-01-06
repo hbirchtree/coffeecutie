@@ -1,5 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
+#include <coffee/graphics_apis/COpenGL>
 #include <coffee/CImage>
 
 //Don't do this at home, please! I am a trained professional.

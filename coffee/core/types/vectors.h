@@ -26,6 +26,27 @@ template<typename T, size_t Size> struct _cbasic_tvector
         for(size_t i=0;i<Size;i++)
             (*this)[i] = vector[i];
     }
+    template<class = typename std::enable_if<Size==2>>
+    _cbasic_tvector(const T& x, const T& y)
+    {
+        this->x() = x;
+        this->y() = y;
+    }
+    template<class = typename std::enable_if<Size==3>>
+    _cbasic_tvector(const T& x, const T& y,const T& z)
+    {
+        this->x() = x;
+        this->y() = y;
+        this->z() = z;
+    }
+    template<class = typename std::enable_if<Size==4>>
+    _cbasic_tvector(const T& x, const T& y,const T& z,const T& w)
+    {
+        this->x() = x;
+        this->y() = y;
+        this->z() = z;
+        this->w() = w;
+    }
 
     _cbasic_tvector(
             const _cbasic_tvector<T,Size-1>& v,
@@ -36,15 +57,107 @@ template<typename T, size_t Size> struct _cbasic_tvector
             this[i] = v[i];
         this[Size-1] = c;
     }
-    //This horrible crime against the laws of nature should not be put to use.
-//    template<typename... I>
-//    _cbasic_tvector(
-//            typename std::enable_if<std::is_convertible<I,T>::value && Size == sizeof...(I),T>::type... args)
-//    {
-//        fprintf(stderr,"Sizes: %i, %i",sizeof...(args),Size);
-//        for(size_t i=0;i<Size;i++)
-//            this[i] = T(0);
-//    }
+
+    T& x()
+    {
+        return (*this)[0];
+    }
+    template<class = typename std::enable_if<Size>=2>>
+    T& y()
+    {
+        return (*this)[1];
+    }
+    template<class = typename std::enable_if<Size>=3>>
+    T& z()
+    {
+        return (*this)[2];
+    }
+    template<class = typename std::enable_if<Size>=4>>
+    T& w()
+    {
+        return (*this)[3];
+    }
+
+    const T& x() const
+    {
+        return (*this)[0];
+    }
+    template<class = typename std::enable_if<Size>=2>>
+    const T& y() const
+    {
+        return (*this)[1];
+    }
+    template<class = typename std::enable_if<Size>=3>>
+    const T& z() const
+    {
+        return (*this)[2];
+    }
+    template<class = typename std::enable_if<Size>=4>>
+    const T& w() const
+    {
+        return (*this)[3];
+    }
+
+    T& r()
+    {
+        return (*this)[0];
+    }
+    template<class = typename std::enable_if<Size>=2>>
+    T& g()
+    {
+        return (*this)[1];
+    }
+    template<class = typename std::enable_if<Size>=3>>
+    T& b()
+    {
+        return (*this)[2];
+    }
+    template<class = typename std::enable_if<Size>=4>>
+    T& a()
+    {
+        return (*this)[3];
+    }
+
+    const T& r() const
+    {
+        return (*this)[0];
+    }
+    template<class = typename std::enable_if<Size>=2>>
+    const T& g() const
+    {
+        return (*this)[1];
+    }
+    template<class = typename std::enable_if<Size>=3>>
+    const T& b() const
+    {
+        return (*this)[2];
+    }
+    template<class = typename std::enable_if<Size>=4>>
+    const T& a() const
+    {
+        return (*this)[3];
+    }
+
+    T& u()
+    {
+        return (*this)[0];
+    }
+    template<class = typename std::enable_if<Size==2>>
+    T& v()
+    {
+        return (*this)[1];
+    }
+
+    const T& u() const
+    {
+        return (*this)[0];
+    }
+    template<class = typename std::enable_if<Size==2>>
+    const T& v() const
+    {
+        return (*this)[1];
+    }
+
     inline C_FORCE_INLINE T& operator[](size_t i)
     {
         return data[i];

@@ -271,7 +271,7 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
         dCtxt->v.sws_ctxt = sws_getContext(
                     strm->context->width, strm->context->height,
                     strm->context->pix_fmt,
-                    fmt.video.size.w, fmt.video.size.h, default_pixfmt,
+                    fmt.video.size.width, fmt.video.size.height, default_pixfmt,
                     SWS_BILINEAR, NULL, NULL, NULL);
     }
 
@@ -284,8 +284,8 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
     dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,video->video->stream,
                                               NULL);
 
-    dCtxt->v.resolution.w = fmt.video.size.w;
-    dCtxt->v.resolution.h = fmt.video.size.h;
+    dCtxt->v.resolution.w = fmt.video.size.width;
+    dCtxt->v.resolution.h = fmt.video.size.height;
 
     return dCtxt;
 }

@@ -1,5 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
+#include <coffee/graphics_apis/COpenGL>
 #include <coffee/CAudio>
 #include <coffee/CFFMedia>
 
@@ -30,8 +31,8 @@ public:
         CFFPlayer player(video_file);
 
         //Set output descriptor
-        player.descriptor().video.size.w = 1280;
-        player.descriptor().video.size.h = 720;
+        player.descriptor().video.size.width = 1280;
+        player.descriptor().video.size.height = 720;
 
         player.createDecoder();
 
@@ -156,8 +157,8 @@ public:
         //Create a video target
 
         CByteData initTexture;
-        initTexture.size = coffee_ffmedia_video_framesize(CSize(player.descriptor().video.size.w,
-                                                                player.descriptor().video.size.h));
+        initTexture.size = coffee_ffmedia_video_framesize(CSize(player.descriptor().video.size.width,
+                                                                player.descriptor().video.size.height));
         initTexture.data = (byte_t*)c_alloc(initTexture.size);
 
         player.videoTarget().v.location = initTexture.data;

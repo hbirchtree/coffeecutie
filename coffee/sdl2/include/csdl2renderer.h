@@ -1,7 +1,7 @@
 #ifndef CSDL2RENDERER_H
 #define CSDL2RENDERER_H
 
-#include <graphics_apis/opengl/include/levels/gltypes.h>
+#include <graphics_apis/include/gltypes.h>
 #include "coffee/core/functional/cqueuerunner.h"
 #include "coffee/core/base/cdebug.h"
 #include <mutex>

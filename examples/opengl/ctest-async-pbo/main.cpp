@@ -1,5 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
+#include <coffee/graphics_apis/COpenGL>
 #include <coffee/CImage>
 
 using namespace Coffee;
@@ -185,7 +186,7 @@ public:
         }
 
         CTextureSize texsize = {};
-        texsize.w = texsize.h = 1024;
+        texsize.width = texsize.height = 1024;
         CByteData initTexData;
         initTexData.size = coffee_graphics_tex_get_size(texsize,CTexFormat::RGBA);
         initTexData.data = (byte_t*)c_alloc(initTexData.size);
@@ -197,7 +198,7 @@ public:
             CRGBA* d1 = (CRGBA*)initTexData.data;
             CRGBA* d2 = (CRGBA*)texstorage_2.data;
 
-            for(int64 i=0;i<texsize.w*texsize.h;i++)
+            for(int64 i=0;i<texsize.width*texsize.height;i++)
             {
                 d1[i].r = 255;
                 d2[i].r = 127;

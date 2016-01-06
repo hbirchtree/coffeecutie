@@ -51,7 +51,7 @@ struct CGraphicsAPI
         bool clampDepth(){return 0;}
         bool testScissor(){return 0;}
 
-        uint32 colorOp(){}
+        LogicOp colorOp(){}
         CColorMask colorMask(){}
         bool depthMask(){}
     };

@@ -21,6 +21,94 @@ inline CString cStrReplace(CString fmt, size_t index, CString replace)
     return c_str_replace(fmt,subfmt,replace);
 }
 
+//TODO: Make these constexpr (C++14)
+inline cstring cStringify(DebugComponent comp)
+{
+    switch(comp)
+    {
+    case DebugComponent::Audio:
+        return "Debug::Audio";
+    case DebugComponent::Core:
+        return "Debug::Core";
+    case DebugComponent::GraphicsAPI:
+        return "Debug::GraphicsAPI";
+    case DebugComponent::Interface:
+        return "Debug::Interface";
+    case DebugComponent::LibraryLoader:
+        return "Debug::LibraryLoader";
+    case DebugComponent::Media:
+        return "Debug::Media";
+    case DebugComponent::ShaderCompiler:
+        return "Debug::ShaderCompiler";
+    }
+}
+inline cstring cStringify(DebugType type)
+{
+    switch(type)
+    {
+    case DebugType::Compatibility:
+        return "Compatibility";
+    case DebugType::Compliance:
+        return "Compliance";
+    case DebugType::Deprecated:
+        return "Deprecated";
+    case DebugType::Information:
+        return "Information";
+    case DebugType::Marker:
+        return "Marker";
+    case DebugType::Performance:
+        return "Performance";
+    case DebugType::UndefinedBehavior:
+        return "Undefined behavior";
+
+    }
+}
+inline cstring cStringify(Severity sev)
+{
+    switch(sev)
+    {
+    case Severity::Critical:
+        return "Critical";
+    case Severity::Fatal:
+        return "Fatal";
+    case Severity::Debug:
+        return "Debug";
+    case Severity::High:
+        return "High";
+    case Severity::Medium:
+        return "Medium";
+    case Severity::Low:
+        return "Low";
+    case Severity::Information:
+        return "Information";
+    }
+}
+
+/* Extension resolvers */
+
+inline CString cStringReplace(
+        CString fmt, size_t index,
+        DebugComponent arg)
+{
+    return cStrReplace(fmt,index,cStringify(arg));
+}
+
+inline CString cStringReplace(
+        CString fmt, size_t index,
+        DebugType arg)
+{
+    return cStrReplace(fmt,index,cStringify(arg));
+}
+
+inline CString cStringReplace(
+        CString fmt, size_t index,
+        Severity arg)
+{
+    return cStrReplace(fmt,index,cStringify(arg));
+}
+
+/* Core string resolution */
+
 template<typename T>
 inline CString cStringReplace(
         CString fmt, size_t index,

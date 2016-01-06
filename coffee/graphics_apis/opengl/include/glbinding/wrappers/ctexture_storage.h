@@ -69,7 +69,7 @@ inline void coffee_graphics_tex_store_1d(
         CTexture& tex, const CTextureData& data, const CGint& level)
 {
     CTextureRegion reg = {};
-    reg.w = tex.size.w;
+    reg.width = tex.size.width;
     coffee_graphics_tex_substore_1d(tex,data,level,reg);
 }
 /*!
@@ -82,8 +82,8 @@ inline void coffee_graphics_tex_store_2d(
         CTexture& tex, const CTextureData& data, const CGint& level)
 {
     CTextureRegion reg = {};
-    reg.w = tex.size.w;
-    reg.h = tex.size.h;
+    reg.width = tex.size.width;
+    reg.height = tex.size.height;
     coffee_graphics_tex_substore_2d(tex,data,level,reg);
 }
 /*!
@@ -96,9 +96,9 @@ inline void coffee_graphics_tex_store_3d(
         CTexture& tex, const CTextureData& data, const CGint& level)
 {
     CTextureRegion reg = {};
-    reg.w = tex.size.w;
-    reg.h = tex.size.h;
-    reg.d = tex.size.d;
+    reg.width = tex.size.width;
+    reg.height = tex.size.height;
+    reg.depth = tex.size.depth;
     coffee_graphics_tex_substore_3d(tex,data,level,reg);
 }
 
@@ -163,9 +163,9 @@ inline void coffee_graphics_tex_readtexels(
         c_ptr dPtr)
 {
     CTextureRegion reg = {};
-    reg.w = tex.size.w;
-    reg.h = tex.size.h;
-    reg.d = tex.size.d;
+    reg.width = tex.size.width;
+    reg.height = tex.size.height;
+    reg.depth = tex.size.depth;
     coffee_graphics_tex_readtexelregion(tex,reg,level,fmt,dType,dPtr);
 }
 

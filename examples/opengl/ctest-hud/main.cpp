@@ -1,10 +1,11 @@
 #include <coffee/CCore>
 #include <coffee/CGraphics>
+#include <coffee/graphics_apis/COpenGL>
 #include <coffee/CImage>
 
-#include <graphics_apis/opengl/include/levels/gl33.h>
-#include <graphics_apis/opengl/include/levels/gl43.h>
-#include <graphics_apis/opengl/include/levels/gl45.h>
+#include <graphics_apis/gleam/include/levels/gl33.h>
+#include <graphics_apis/gleam/include/levels/gl43.h>
+#include <graphics_apis/gleam/include/levels/gl45.h>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -68,7 +69,7 @@ public:
             "   gl_Position = transform * vec4(position,1.0);"
             "}"
         };
-
+/*
         constexpr byte_t tcshader_src[] = {
             "#version 450 core\n"
             "layout(vertices = 3) out;"
@@ -153,7 +154,7 @@ public:
             "                  vec4(tc_data.tf * (gl_TessCoord.z * gl_in[2].gl_Position)));"
             "}"
         };
-
+*/
         constexpr byte_t fshader_src[] = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"

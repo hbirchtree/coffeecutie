@@ -39,6 +39,7 @@ protected:
 private:
 };
 
+//TODO: Externalize this to a glxml library for introspection of GL features
 extern std::map<CString, CString> coffee_glbinding_get_graphics_feature_level();
 
 }

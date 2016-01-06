@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
-#include "gltypes.h"
+#include <coffee/graphics_apis/include/gltypes.h>
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/CTypes>
 
@@ -239,7 +239,11 @@ struct CGL_Implementation
 
     struct CGL_TypeMapBase
     {
-        static _cbasic_static_map<BufferBit,GLenum,3> bufferbit_map;
+        constexpr static _cbasic_static_map<BufferBit,GLenum,3> bufferbit_map = {
+            {BufferBit::Color,GL_COLOR_BUFFER_BIT},
+            {BufferBit::Depth,GL_DEPTH_BUFFER_BIT},
+            {BufferBit::Stencil,GL_STENCIL_BUFFER_BIT},
+        };
     };
 
     static CGenum to_enum(Severity s);
@@ -299,7 +303,10 @@ struct CGL_Implementation
 
     static void ClearBufferiv(const int32* d){glClearBufferiv(GL_STENCIL,0,d);}
 //    static void ClearBufferuiv(CGenum f,int32 i,const uint32* d){glClearBufferuiv(f,i,d);}
-    static void ClearBufferfv(bool color,int32 i,const scalar* d){glClearBufferfv((color) ? GL_COLOR : GL_DEPTH,i,d);}
+    static void ClearBufferfv(bool color,int32 i,const scalar* d)
+    {glClearBufferfv((color) ? GL_COLOR : GL_DEPTH,i,d);}
+    static void ClearBufferfv(bool color,int32 i,const CVec4& d)
+    {glClearBufferfv((color) ? GL_COLOR : GL_DEPTH,i,(scalar*)&d);}
     static void ClearBufferfi(scalar d,int32 s){glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);}
 
     static void BlendFuncSep(CGenum v1,CGenum v2,CGenum v3,CGenum v4)
@@ -339,6 +346,9 @@ struct CGL_Implementation
     static void PixelStore(bool pack, PixelOperation op, int32 v)
     {glPixelStorei(to_enum(pack,op),v);}
 
+    static bool DebuggingSupported()
+    {return Debug::CheckExtensionSupported("GL_KHR_debug");}
+
     struct Debug
     {
         static void GetExtensions()
@@ -370,10 +380,18 @@ struct CGL_Implementation
 
         static void SetDebugMode(bool enabled)
         {
+            if(enabled == b_isDebugging)
+                return;
             if(enabled)
+            {
                 glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+                b_isDebugging = true;
+            }
             else
+            {
                 glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+                b_isDebugging = true;
+            }
         }
 
         static void SetDebugLevel(Severity s,bool e)
@@ -521,16 +539,7 @@ C_FLAGS(CGL_Implementation::BufferBit,uint32);
 C_FLAGS(CGL_Implementation::PrimitiveCreation,uint32);
 C_FLAGS(CGL_Implementation::ShaderStage,uint32);
 
-CString CGL_Implementation::Debug::s_ExtensionList = "";
-
-_cbasic_static_map<CGL_Implementation::BufferBit,GLenum,3>
-CGL_Implementation::CGL_TypeMapBase::bufferbit_map = {
-    {BufferBit::Color,GL_COLOR_BUFFER_BIT},
-    {BufferBit::Depth,GL_DEPTH_BUFFER_BIT},
-    {BufferBit::Stencil,GL_STENCIL_BUFFER_BIT},
-};
-
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         Severity s)
 {
     switch(s)
@@ -548,7 +557,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         DebugType t)
 {
     switch(t)
@@ -576,7 +585,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::Object t)
 {
     CGenum type;
@@ -616,7 +625,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     return type;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::Feature f)
 {
     switch(f)
@@ -670,7 +679,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::Face f)
 {
     switch(f)
@@ -684,13 +693,13 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::BufferBit f)
 {
     return coffee_get_flags(f,CGL_TypeMapBase::bufferbit_map);
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::Primitive p,
         CGL_Implementation::PrimitiveCreation c)
 {
@@ -738,7 +747,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::PaintingMode f)
 {
     switch(f)
@@ -752,7 +761,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         bool pack, PixelOperation f)
 {
     switch(f)
@@ -770,7 +779,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         PixelFormat f, PixelFlags e,
         CGL_Implementation::CompressionFlags d)
 {
@@ -960,7 +969,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum1(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(
         CGL_Implementation::ShaderStage f)
 {
     switch(f)
@@ -982,7 +991,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum1(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum2(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(
         CGL_Implementation::ShaderStage f)
 {
     CGenum o = 0;
@@ -1005,7 +1014,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum2(
     return o;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         ValueHandling f)
 {
     switch(f)
@@ -1029,7 +1038,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         ValueComparison f)
 {
     switch(f)
@@ -1053,7 +1062,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         Operator f)
 {
     switch(f)
@@ -1071,12 +1080,12 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::Texture f)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::Texture f)
 {
     return (CGenum)f;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
 {
     if(feval(op&(LogicOp::COPY)))
         return GL_COPY;
@@ -1116,12 +1125,12 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
     return GL_NONE;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::DataType f)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::DataType f)
 {
     return (CGenum)f;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess acc)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess acc)
 {
     CGenum f = GL_NONE;
     if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Persistent)))
@@ -1154,7 +1163,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess acc)
     return f;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess acc)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess acc)
 {
     CGenum f = 0;
     if(feval(acc&ResourceAccess::Persistent))
@@ -1170,7 +1179,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess acc)
     return f;
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess acc)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess acc)
 {
     switch(acc)
     {
@@ -1185,7 +1194,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess acc)
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
 {
     switch(f)
     {
@@ -1214,7 +1223,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
     }
 }
 
-CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
+inline CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
 {
     switch(f)
     {
@@ -1243,7 +1252,7 @@ CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
     }
 }
 
-CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, bool rev)
+inline CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, bool rev)
 {
     switch(e)
     {

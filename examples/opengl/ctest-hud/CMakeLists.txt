@@ -4,6 +4,7 @@ set ( CoffeeTestHud_SRCS
 
 include_directories(
         ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+        ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
     )
 
@@ -13,6 +14,7 @@ target_link_libraries ( CoffeeTestHud
         CoffeeCore
         CoffeeGraphicsMisc
         CoffeeOpenGL
+        CoffeeGLeam
     )
 
 target_compile_features(CoffeeTestHud PRIVATE cxx_variadic_templates)

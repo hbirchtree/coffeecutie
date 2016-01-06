@@ -104,11 +104,11 @@ struct CTextureSize : _cbasic_size_3d<int32>
 {
     size_t dimensions() const
     {
-        if(w == 0)
+        if(width == 0)
             return 0;
-        if(h == 0)
+        if(height == 0)
             return 1;
-        if(d<2)
+        if(depth<2)
             return 2;
         return 3;
     }

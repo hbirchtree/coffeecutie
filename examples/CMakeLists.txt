@@ -27,3 +27,5 @@ add_subdirectory (experiments/cgb-test)
 add_subdirectory(qt/node-editor-test)
 
 add_subdirectory(rsread)
+
+add_subdirectory(gleam/base-test)

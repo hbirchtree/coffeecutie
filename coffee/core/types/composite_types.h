@@ -110,19 +110,19 @@ template<typename T> struct _cbasic_size_2d
 template<typename T> struct _cbasic_size_3d
 {
     _cbasic_size_3d(T w, T h, T d):
-        w(w),h(h),d(d)
+        width(w),height(h),depth(d)
     {
     }
     _cbasic_size_3d():
-        w(0),h(0),d(0)
+        width(0),height(0),depth(0)
     {
     }
 
-    T w,h,d;
+    T width,height,depth;
 
     T volume()
     {
-        return w*h*d;
+        return width*height*depth;
     }
 };
 

@@ -7,7 +7,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_syswm.h>
-#include <graphics_apis/opengl/include/levels/gltypes.h>
+#include <graphics_apis/include/gltypes.h>
 
 namespace Coffee{
 namespace CSDL2Types{

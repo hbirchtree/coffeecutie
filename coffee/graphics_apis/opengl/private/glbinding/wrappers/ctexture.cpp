@@ -31,7 +31,7 @@ size_t coffee_graphics_tex_get_size(
         break;
     default:break;
     }
-    return CMath::max(1,size.w)*CMath::max(1,size.h)*CMath::max(1,size.d)*psize;
+    return CMath::max(1,size.width)*CMath::max(1,size.height)*CMath::max(1,size.depth)*psize;
 }
 
 void coffee_graphics_tex_mipmap(CTexture &tex)
@@ -120,7 +120,7 @@ void coffee_graphics_tex_memset_region(
     glClearTexSubImage(
                 tex.handle, level,
                 region.x(),region.y(),region.z(),
-                region.w,region.h,region.d,
+                region.width,region.height,region.depth,
                 gl_get(tex.format),
                 gl_get(type),
                 data);
@@ -131,8 +131,8 @@ void coffee_graphics_tex_dump(const CTexture &tex, cstring filename)
     CStbImageLib::CStbImage img;
 
     img.bpp = 4;
-    img.size.w = tex.size.w;
-    img.size.h = tex.size.h;
+    img.size.w = tex.size.width;
+    img.size.h = tex.size.height;
 
     coffee_graphics_tex_readtexels(
                 tex,0,CTexFormat::RGBA,CDataType::UByte,
@@ -161,8 +161,8 @@ CTextureData *coffee_graphics_tex_create_texdata(
         ptr = new CTextureData;
 
     ptr->data = img.data;
-    ptr->size.w = img.size.w;
-    ptr->size.h = img.size.h;
+    ptr->size.width = img.size.w;
+    ptr->size.height = img.size.h;
 
     switch(img.bpp)
     {
