@@ -7,3 +7,4 @@ find_package(Qt5Widgets)
 set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_RELEASE} -fprofile-arcs -ftest-coverage")
 
 add_subdirectory(qt-node-editor)
+add_subdirectory(qt-dialogs)

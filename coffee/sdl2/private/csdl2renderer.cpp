@@ -24,19 +24,19 @@ struct CGL_SDL_GL_Context : CGL::CGL_Context
     }
     bool acquireContext()
     {
-        new (&m_threadId) CThreadId;
+        new (&m_threadId) ThreadId_t;
         return SDL_GL_MakeCurrent(m_window,m_context)==0;
     }
     bool releaseContext()
     {
         return SDL_GL_MakeCurrent(nullptr,nullptr)==0;
     }
-    const CThreadId &currentThread()
+    const ThreadId_t &currentThread()
     {
         return m_threadId;
     }
 protected:
-    CThreadId m_threadId;
+    ThreadId_t m_threadId;
 private:
     SDL_Window* m_window;
     SDL_GLContext m_context;
@@ -558,6 +558,21 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
         m_context->haptics.erase(ev->controller);
         cMsg("SDL2","Controller {0} disconnected",ev->controller);
     }
+}
+
+void SDL2Dialog::ErrorMessage(cstring title, cstring message)
+{
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,title,message,NULL);
+}
+
+void SDL2Dialog::WarningMessage(cstring title, cstring message)
+{
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,title,message,NULL);
+}
+
+void SDL2Dialog::InformationMessage(cstring title, cstring message)
+{
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title,message,NULL);
 }
 
 }

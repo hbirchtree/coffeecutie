@@ -149,6 +149,18 @@ inline void cBasicPrint(cstring str, Arg... args)
 
 template<typename... Arg>
 /*!
+ * \brief Prints message with newline, nothing else
+ * \param str
+ * \param args
+ */
+inline void cBasicPrintNoNL(cstring str, Arg... args)
+{
+    CString out = cStringFormat(str,args...);
+    cfprintf(stderr,"{0}",out.c_str());
+}
+
+template<typename... Arg>
+/*!
  * \brief Debug message
  * \param str
  * \param args

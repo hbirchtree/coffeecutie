@@ -12,12 +12,12 @@ inline bool interactive_cmd()
     return false;
 }
 
-inline cstring read_string(cstring_w target, int32 size, FILE* strm)
+inline cstring ReadString(cstring_w target, int32 size, FILE* strm)
 {
     return CGets(target,size,strm);
 }
 
-inline void clear_screen()
+inline void ClearScreen()
 {
 #if defined(COFFEE_UNIXPLAT)
     printf("\e[1;1H\e[2J");

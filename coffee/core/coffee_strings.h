@@ -26,6 +26,16 @@ const constexpr cstring Graphics_GLeam_Library_Name = "GLeamShim";
 const constexpr cstring Graphics_GLeam_Library_CoreVersionError =
         "Unsuitable core version detected: {0}, target was {1}";
 
+const constexpr cstring Graphics_VR_Library_Name = "COpenVR";
+const constexpr cstring Graphics_VR_Library_InitError =
+        "Failed to initialize VR runtime: {0}";
+const constexpr cstring Graphics_VR_Library_RModelsError =
+        "Failed to acquire render model interface: {0}";
+const constexpr cstring Graphics_VR_Library_CurrencyError =
+        "Cannot replace existing thread context, please acquire the existing one first";
+const constexpr cstring Graphics_VR_Library_CompositeError =
+        "Failed to initialize compositor, see SteamVR logs for details";
+
 }
 
 #endif

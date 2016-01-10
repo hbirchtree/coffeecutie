@@ -16,12 +16,13 @@ struct CHMD_Binding
 
     struct Device
     {
-        CString identifier() const{}
+        CString identifier() const{return CString();}
+        CString firmware() const{return CString();}
 
-        CMat4 view(Eye) const{}
+        CMat4 view(Eye) const{return CMat4();}
 
-        CVec3 radianVelocity() const{}
-        CVec3 velocity() const{}
+        CVec3 radianVelocity() const{return CVec3();}
+        CVec3 velocity() const{return CVec3();}
 
         bool isConnected() const{return false;}
     };
@@ -31,8 +32,8 @@ struct CHMD_Binding
         _cbasic_tmnmatrix<bigscalar,3,2> distortion; /*Why MN-matrix? Allows scaling of all components in one function.*/
     };
 
-    static bool InitializeBinding(){}
-    static bool InitializeHMD(Device*){}
+    static bool InitializeBinding(){return false;}
+    static bool InitializeHMD(Device*){return false;}
 
     static void Shutdown(){}
 

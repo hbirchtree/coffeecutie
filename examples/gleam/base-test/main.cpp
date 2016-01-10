@@ -184,6 +184,7 @@ int32 coffee_main(int32, byte_t**)
     CDProperties props = coffee_get_default_visual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 4;
+
     renderer->init(props);
     cDebug("Init renderer: {0}",timer->elapsed());
     renderer->run();

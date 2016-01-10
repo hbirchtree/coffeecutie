@@ -79,12 +79,12 @@ int32 coffee_main(int32, byte_t**)
         std::string ts;
         ts.resize(100);
 
-        clear_screen();
+        ClearScreen();
         while(!CStrCmp(&ts[0],"quit\n"))
         {
             ts.clear();
-            fprintf(stderr,"Type something: ");
-            read_string(&ts[0],99,stdin);
+            cBasicPrintNoNL(stderr,"Type something: ");
+            ReadString(&ts[0],99,stdin);
             cDebug("You wrote: {0}",ts.c_str());
         }
     }

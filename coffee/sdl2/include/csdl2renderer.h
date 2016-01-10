@@ -12,6 +12,13 @@ namespace CSDL2Types{
 }
 namespace CDisplay{
 
+struct SDL2Dialog : public DialogInterface
+{
+    static void ErrorMessage(cstring title,cstring message);
+    static void WarningMessage(cstring title,cstring message);
+    static void InformationMessage(cstring title,cstring message);
+};
+
 class CSDL2Renderer : public CDQueueRendererBase
 {
 public:

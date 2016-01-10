@@ -149,6 +149,13 @@ inline CString cStringReplace(
     return cStrReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
+inline CString cStringReplace(
+        CString fmt, size_t index,
+        const CString& arg)
+{
+    return cStrReplace(fmt,index,arg.c_str());
+}
+
 template<typename T>
 inline CString cStringReplace(
         CString fmt, size_t index,

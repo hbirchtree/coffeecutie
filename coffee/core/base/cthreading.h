@@ -11,13 +11,13 @@ namespace Coffee{
 namespace CFunctional{
 namespace CThreading{
 
-struct CThreadId
+struct ThreadId_t
 {
-    CThreadId():
+    ThreadId_t():
         m_id(std::this_thread::get_id())
     {
     }
-    bool operator==(const CThreadId& thd) const
+    bool operator==(const ThreadId_t& thd) const
     {
         return m_id == thd.m_id;
     }
@@ -78,6 +78,9 @@ typedef CThreadWorker<ubyte_t> CThreadUbyteWorker;
 
 }
 }
+
+using ThreadId = CFunctional::CThreading::ThreadId_t;
+
 }
 
 #endif //COFFEE_THREADING
