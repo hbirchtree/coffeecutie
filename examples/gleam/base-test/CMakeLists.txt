@@ -5,12 +5,14 @@ set ( GLeamBaseTest_SRCS
 include_directories(
         ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
+        ${COFFEE_OPENVR_INCLUDE_DIR}
     )
 
 add_executable ( GLeamBaseTest ${GLeamBaseTest_SRCS} )
 
 target_link_libraries ( GLeamBaseTest
         CoffeeCore
+        CoffeeVR
         CoffeeGraphicsMisc
         CoffeeGLeam
     )

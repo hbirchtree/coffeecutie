@@ -1,4 +1,5 @@
 #include <copenvr.h>
+#include <openvr.h>
 
 #include <coffee/core/coffee_strings.h>
 
@@ -95,11 +96,11 @@ bool OVRImpl::PollDevices(uint32* lastValidIndex)
     return true;
 }
 
-void OVRImpl::SubmitTextures(vr::Texture_t *left, vr::Texture_t *right)
-{
-    vr::VRCompositor()->Submit(vr::Eye_Left,left);
-    vr::VRCompositor()->Submit(vr::Eye_Right,right);
-}
+//void OVRImpl::SubmitTextures(vr::Texture_t *left, vr::Texture_t *right)
+//{
+//    vr::VRCompositor()->Submit(vr::Eye_Left,left);
+//    vr::VRCompositor()->Submit(vr::Eye_Right,right);
+//}
 
 void OVRImpl::Shutdown()
 {

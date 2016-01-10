@@ -83,7 +83,7 @@ int32 coffee_main(int32, byte_t**)
         while(!CStrCmp(&ts[0],"quit\n"))
         {
             ts.clear();
-            cBasicPrintNoNL(stderr,"Type something: ");
+            cBasicPrintNoNL("Type something: ");
             ReadString(&ts[0],99,stdin);
             cDebug("You wrote: {0}",ts.c_str());
         }

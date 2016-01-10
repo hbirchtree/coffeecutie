@@ -3,7 +3,6 @@
 
 #include <coffee/core/base/cdebug.h>
 #include <coffee/graphics_apis/include/chmd_api.h>
-#include <openvr.h>
 
 namespace Coffee{
 namespace OpenVR{
@@ -27,15 +26,13 @@ struct OVRImpl : HMD::CHMD_Binding{
         bool isConnected() const;
     private:
         uint32 m_dIndex;
-        vr::IVRSystem* m_sys;
     };
 
     static bool InitializeBinding();
-    static bool InitializeHMD(Device* dev);
 
     static bool PollDevices(uint32 *lastValidIndex = nullptr);
 
-    static void SubmitTextures(vr::Texture_t* left, vr::Texture_t* right);
+//    static void SubmitTextures(vr::Texture_t* left, vr::Texture_t* right);
 
     static void Shutdown();
 

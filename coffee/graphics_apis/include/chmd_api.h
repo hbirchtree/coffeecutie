@@ -33,7 +33,6 @@ struct CHMD_Binding
     };
 
     static bool InitializeBinding(){return false;}
-    static bool InitializeHMD(Device*){return false;}
 
     static void Shutdown(){}
 

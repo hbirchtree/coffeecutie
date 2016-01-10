@@ -20,8 +20,9 @@ set ( CoffeeVR_SRCS
 add_library( CoffeeVR ${COFFEE_LINK_OPT} ${CoffeeVR_SRCS})
 
 target_link_libraries( CoffeeVR
+                ${OPENVR_LIBRARY}
                 CoffeeGLeam
-        CoffeeCore
+                CoffeeCore
     )
 
 set_property(TARGET CoffeeVR PROPERTY POSITION_INDEPENDENT_CODE ON)

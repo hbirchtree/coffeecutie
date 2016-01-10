@@ -1,5 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/graphics_apis/CGLeam>
+#include <coffee/COpenVR>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -177,6 +178,13 @@ public:
 
 int32 coffee_main(int32, byte_t**)
 {
+    if(!OpenVRDev::InitializeBinding())
+    {
+        cDebug("No VR 4 u!");
+    }else{
+        cDebug("By the gods... So it was true! The time of the VR-born has come!");
+    }
+
     CElapsedTimerD* timer = coffee_fun_alloc_timerd();
     timer->start();
     CSDL2Renderer *renderer = new CDRenderer();
