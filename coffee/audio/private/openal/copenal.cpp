@@ -265,8 +265,8 @@ void listener_set(const CALListener *listener)
     alListenerfv(AL_VELOCITY,(scalar*)&listener->velocity);
     context_get_error();
     scalar *orient = new scalar[6];
-    c_memcpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    c_memcpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
+    CMemCpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
+    CMemCpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
     alListenerfv(AL_ORIENTATION,orient);
     delete[] orient;
     context_get_error();
@@ -437,14 +437,14 @@ cstring *context_devices_output(uint32* numDevices)
 
     const ALCchar* devices = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
 
-    cstring* arrdev = (cstring*)c_alloc(sizeof(cstring));
+    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
 
     while(*devices)
     {
         if(!(*numDevices))
-            arrdev = (cstring*)c_realloc(arrdev,sizeof(cstring)*(*numDevices+1));
+            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
         arrdev[*numDevices] = devices;
-        devices += c_strlen(devices)+1;
+        devices += CStrLen(devices)+1;
         (*numDevices)++;
     }
 
@@ -460,14 +460,14 @@ cstring *context_devices_input(uint32* numDevices)
 
     const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
 
-    cstring* arrdev = (cstring*)c_alloc(sizeof(cstring));
+    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
 
     while(*cdevices)
     {
         if(!(*numDevices))
-            arrdev = (cstring*)c_realloc(arrdev,sizeof(cstring)*(*numDevices+1));
+            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
         arrdev[*numDevices] = cdevices;
-        cdevices += c_strlen(cdevices)+1;
+        cdevices += CStrLen(cdevices)+1;
         (*numDevices)++;
     }
 

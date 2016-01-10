@@ -24,7 +24,7 @@ inline void cfprintf(FILE* stream, cstring format, Args... args)
 {
     try{
         CString formatted = cStringFormat(format,args...);
-        c_puts(stream,formatted.c_str());
+        CPuts(stream,formatted.c_str());
     }
     catch(std::exception e)
     {
@@ -38,16 +38,16 @@ inline void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* c
     cfprintf(stderr,header);
     for(szptr i=0;i<stacksize;i++){
         cfprintf(stderr,callfmt,callstack[i]);
-        c_free(callstack[i]);
+        CFree(callstack[i]);
     }
-    c_free(callstack);
+    CFree(callstack);
 }
 
 inline void coffee_free_callstack(cstring_w* callstack, szptr stacksize)
 {
     for(szptr i=0;i<stacksize;i++)
-        c_free(callstack[i]);
-    c_free(callstack);
+        CFree(callstack[i]);
+    CFree(callstack);
 }
 
 }
@@ -198,7 +198,7 @@ inline void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
 {
 #ifndef NDEBUG
     CString msg_out = cStringFormat(msg,args...);
-    cBasicPrint("LOGR:{0}:{3}:{1}: {2}",file,id,msg_out.c_str(),line);
+    cBasicPrint("LOGR:{0}@{3}:{1}: {2}",file,id,msg_out.c_str(),line);
 #endif
 }
 

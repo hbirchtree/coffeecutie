@@ -51,7 +51,7 @@ public:
      * \brief Initialize context manager with necessary details, should not be overridden by the user.
      * \param props Hints for creating the context
      */
-    virtual void init(const CDWindowProperties& props) = 0;
+    virtual void init(const CDProperties& props) = 0;
     /*!
      * \brief Function driving the render loop
      */
@@ -97,7 +97,7 @@ public:
      * \brief Set new window state according
      * \param s
      */
-    virtual void setWindowState(const CDWindowProperties::State &s) = 0;
+    virtual void setWindowState(const CDProperties::State &s) = 0;
 
     /*!
      * \brief Get current window position
@@ -259,6 +259,8 @@ public:
      */
     virtual double contextTime() = 0;
 
+    virtual void popErrorMessage(Severity s, cstring title, cstring msg) = 0;
+
 protected:
     CDRendererBase(CObject* parent);
 };
@@ -266,7 +268,7 @@ protected:
 inline std::future<void> coffee_display_start_async(
         std::atomic_bool *startAtomic,
         CDRendererBase* obj,
-        CDWindowProperties const& properties)
+        CDProperties const& properties)
 {
     std::function<void()> display_task = [=](){
         obj->init(properties);

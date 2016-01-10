@@ -30,7 +30,7 @@ bool coffee_graphics_buffer_unmap_safe(CBuffer &buf)
 void* coffee_graphics_buffer_download_buffer_safe(
         CBuffer &buf, const CGszptr &offset, const CGsize &size)
 {
-    void* data = c_alloc(size);
+    void* data = Alloc(size);
     coffee_graphics_bind(buf);
     glGetBufferSubData(
                 gl_get(buf.type),

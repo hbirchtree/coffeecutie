@@ -44,6 +44,59 @@ template<typename T> struct _cbasic_version
     T major;
     T minor;
     T revision;
+
+    inline bool operator>=(const _cbasic_version<T>& v)
+    {
+        if(this->major>v.major)
+            return true;
+        if(this->major==v.major)
+        {
+            if(this->minor>v.minor)
+                return true;
+            if(this->minor==v.minor)
+            {
+                if(this->revision>=v.revision)
+                    return true;
+                else
+                    return false;
+            }else
+                return false;
+        }else
+            return false;
+    }
+    inline bool operator<(const _cbasic_version<T>& v)
+    {
+        return !((*this)>=v);
+    }
+    inline bool operator<=(const _cbasic_version<T>& v)
+    {
+        if(this->major<v.major)
+            return true;
+        if(this->major==v.major)
+        {
+            if(this->minor<v.minor)
+                return true;
+            if(this->minor==v.minor)
+            {
+                if(this->revision<=v.revision)
+                    return true;
+                else
+                    return false;
+            }else
+                return false;
+        }else
+            return false;
+    }
+    inline bool operator>(const _cbasic_version<T>& v)
+    {
+        return !((*this)<=v);
+    }
+    inline bool operator==(const _cbasic_version<T>& v)
+    {
+        return this->major==v.major
+                &&this->minor==v.minor
+                &&this->revision==v.revision;
+    }
 };
 
 /*!
@@ -56,8 +109,8 @@ template<typename T> static void coffee_mem_expand_array(
 {
     szptr osize = mem->size;
     mem->size += size;
-    mem->d = (T*)c_realloc(mem->d,sizeof(T)*mem->size);
-    c_memclear(&mem->d[osize],sizeof(T)*(mem->size-osize));
+    mem->d = (T*)CRealloc(mem->d,sizeof(T)*mem->size);
+    CMemClear(&mem->d[osize],sizeof(T)*(mem->size-osize));
 }
 
 typedef _cbasic_data_chunk<void> CVoidData;

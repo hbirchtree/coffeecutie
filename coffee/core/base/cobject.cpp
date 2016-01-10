@@ -46,7 +46,7 @@ void CObject::setParent(CObject *parent)
 
 cstring CObject::objectName()
 {
-    return c_cpy_string(m_objectName.c_str());
+    return CCpyStr(m_objectName.c_str());
 }
 
 void CObject::setObjectName(cstring name)

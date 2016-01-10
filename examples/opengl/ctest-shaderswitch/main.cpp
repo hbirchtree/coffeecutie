@@ -156,9 +156,9 @@ public:
         camera.aspect = 1.6f;
         camera.position = CVec3(0,0,-3);
 
-        rtf = coffee_graphics_gen_transform(root);
-        wtf = coffee_graphics_gen_perspective(camera)
-                * coffee_graphics_gen_transform(camera);
+        rtf = GenTransform(root);
+        wtf = GenPerspective(camera)
+                * GenTransform(camera);
 
         CNode worldNode;
         worldNode.transform = &wtf;
@@ -183,7 +183,7 @@ public:
 
         //Creating texture
         CResources::CResource texture("ctest_hud/particle_sprite.png");
-        CResources::coffee_file_pull(texture);
+        CResources::FilePull(texture);
 
         CUniform texuni;
         CTexture gltext;
@@ -208,7 +208,7 @@ public:
             coffee_graphics_tex_define(gltext);
             coffee_graphics_tex_store(gltext,gtexdata.data_ref(),0);
 
-            CResources::coffee_file_free(texture);
+            CResources::FileFree(texture);
 
             coffee_graphics_tex_mipmap(gltext);
 
@@ -253,11 +253,11 @@ public:
             camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
             camera.rotation = t;
 
-            wtf = coffee_graphics_gen_perspective(camera)
-                    * coffee_graphics_gen_transform(camera);
+            wtf = GenPerspective(camera)
+                    * GenTransform(camera);
             rt = coffee_node_get_transform(&rootNode);
 
-            c_memcpy(transforms.current().data,&rt,sizeof(rt));
+            CMemCpy(transforms.current().data,&rt,sizeof(rt));
 
             for(int i=0;i<4;i++)
             {
@@ -328,11 +328,11 @@ private:
 
 int32 coffee_main(int32, byte_t**)
 {
-    CResources::coffee_file_set_resource_prefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/");
 
     CDRendererBase *renderer = new CDHudRenderer();
-    CDWindowProperties props = coffee_get_default_visual();
-    props.contextProperties.flags |= CGLContextProperties::GLDebug;
+    CDProperties props = coffee_get_default_visual();
+    props.gl.flags |= GLProperties::GLDebug;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();

@@ -131,10 +131,10 @@ struct C_FORCE_PACKING RSItemConfig
 
 int32 coffee_main(int32, byte_t**)
 {
-    coffee_file_set_resource_prefix("sample_data/runescape-data/");
+    FileResourcePrefix("sample_data/runescape-data/");
 
     CResource idxfile("main_file_cache.idx0");
-    coffee_file_pull(idxfile);
+    FilePull(idxfile);
 
     RSCacheSectorHeader* t1 = (RSCacheSectorHeader*)idxfile.data;
     RSCacheSector* t3 = (RSCacheSector*)&t1[1];
@@ -142,7 +142,7 @@ int32 coffee_main(int32, byte_t**)
     cDebug("Test {0}",t1->cacheNumber);
     cDebug("Test {0}",t3->data[0]);
 
-    coffee_file_free(idxfile);
+    FileFree(idxfile);
 
     return 0;
 }

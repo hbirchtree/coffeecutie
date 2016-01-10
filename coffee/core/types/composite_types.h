@@ -105,6 +105,24 @@ template<typename T> struct _cbasic_size_2d
     {
         return w*h;
     }
+
+    _cbasic_size_2d<T> operator/(const T& d)
+    {
+        return _cbasic_size_2d<T>(this->w/d,this->h/d);
+    }
+    _cbasic_size_2d<T> operator*(const T& d)
+    {
+        return _cbasic_size_2d<T>(this->w*d,this->h*d);
+    }
+
+    _cbasic_size_2d<T>& operator/=(const T& d)
+    {
+        (*this) = (*this)/d;
+    }
+    _cbasic_size_2d<T>& operator*=(const T& d)
+    {
+        (*this) = (*this)*d;
+    }
 };
 
 template<typename T> struct _cbasic_size_3d
@@ -307,11 +325,11 @@ template<typename DimT> struct CBitmap
     CBitmap(DimT w, DimT h):
         size(w,h)
     {
-        m_px = (CRGBA*)c_calloc(sizeof(CRGBA),w*h);
+        m_px = (CRGBA*)CCalloc(sizeof(CRGBA),w*h);
     }
     ~CBitmap()
     {
-        c_free(m_px);
+        CFree(m_px);
     }
 
     const _cbasic_size_2d<DimT> size;
@@ -409,7 +427,7 @@ struct CMimeData
     ~CMimeData()
     {
         if(b_doClean)
-            free(m_data);
+            CFree(m_data);
     }
     const CString& id(){return m_id;}
     const void* data(){return m_data;}
@@ -491,10 +509,7 @@ struct CColorMask
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
-struct CSize : public  _cbasic_size_2d<int32>
-{
-    using _cbasic_size_2d::_cbasic_size_2d;
-};
+using CSize = _cbasic_size_2d<int32>;
 /*!
  * \brief Size for inaccurate measurements
  */

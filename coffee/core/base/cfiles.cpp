@@ -12,7 +12,7 @@ namespace CResources{
 
 static CString _coffee_resource_prefix = "./";
 
-void coffee_file_set_resource_prefix(cstring prefix)
+void FileResourcePrefix(cstring prefix)
 {
     _coffee_resource_prefix = prefix;
 }
@@ -33,7 +33,7 @@ namespace CFiles{
 
 }
 
-bool coffee_file_exists(const CResource &resc)
+bool FileExists(const CResource &resc)
 {
     FILE *f = fopen(resc.resource(),"r");
     if(f)
@@ -41,7 +41,7 @@ bool coffee_file_exists(const CResource &resc)
     return f;
 }
 
-bool coffee_file_memmap(CResource &resc)
+bool FileMap(CResource &resc)
 {
     resc.size = coffee_file_get_size(resc.resource());
     int err = 0;
@@ -58,7 +58,7 @@ bool coffee_file_memmap(CResource &resc)
     return true;
 }
 
-bool coffee_file_memunmap(CResource &resc)
+bool FileUnmap(CResource &resc)
 {
     bool s = CMemoryManagement::coffee_memory_unmap_file(resc.data,resc.size);
     resc.data = nullptr;
@@ -66,14 +66,14 @@ bool coffee_file_memunmap(CResource &resc)
     return s;
 }
 
-void coffee_file_free(CResource &resc)
+void FileFree(CResource &resc)
 {
-    c_free(resc.data);
+    CFree(resc.data);
     resc.data = nullptr;
     resc.size = 0;
 }
 
-bool coffee_file_pull(CResource &resc, bool textmode, bool)
+bool FilePull(CResource &resc, bool textmode, bool)
 {
     CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),"rb");
 
@@ -89,7 +89,7 @@ bool coffee_file_pull(CResource &resc, bool textmode, bool)
     return true;
 }
 
-bool coffee_file_commit(CResource &resc, bool append)
+bool FileCommit(CResource &resc, bool append)
 {
     CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),(append) ? "ab+" : "wb");
     bool stat = CFiles::coffee_file_write(fp,resc.data,resc.size);
@@ -115,7 +115,7 @@ cstring CResource::resource() const
     return m_resource.c_str();
 }
 
-bool coffee_file_mkdir(cstring dirname, bool recursive)
+bool FileMkdir(cstring dirname, bool recursive)
 {
     return CFiles::coffee_file_mkdir(dirname,recursive);
 }

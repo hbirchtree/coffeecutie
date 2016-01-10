@@ -19,7 +19,12 @@ const constexpr cstring Lib_load_error_format = "Native library loading error: {
 const constexpr cstring Lib_symb_error_format = "Native symbol resolution error: {0}";
 
 const constexpr cstring Graphics_GLeam_Renderer_Name = "GLeamRenderer";
-const constexpr cstring Graphics_GLeam_Renderer_FailLoad = "Failed to load OpenGL function pointers! Prepare to crash!";
+const constexpr cstring Graphics_GLeam_Renderer_FailLoad =
+        "Failed to load OpenGL function pointers! Prepare to crash!";
+
+const constexpr cstring Graphics_GLeam_Library_Name = "GLeamShim";
+const constexpr cstring Graphics_GLeam_Library_CoreVersionError =
+        "Unsuitable core version detected: {0}, target was {1}";
 
 }
 

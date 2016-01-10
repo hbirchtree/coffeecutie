@@ -19,7 +19,7 @@ public:
 
     virtual std::thread::id contextThread();
 
-    void init(const CDWindowProperties &);
+    void init(const CDProperties &);
     void cleanup();
 
     CString windowTitle() const;
@@ -32,7 +32,7 @@ public:
     CDContextBits context();
 
     uint32 windowState() const;
-    void setWindowState(const CDWindowProperties::State &state);
+    void setWindowState(const CDProperties::State &state);
 
     bool screensaverMode();
     void setScreensaverMode(bool);
@@ -89,8 +89,9 @@ public:
     void pollEvents();
 
     CGL::CGL_Context* glContext();
-
     CGL::CGL_ScopedContext scopedContext();
+
+    void popErrorMessage(Severity s, cstring title, cstring msg);
 
 protected:
     CSDL2Renderer(CObject* parent);
@@ -100,11 +101,10 @@ protected:
      */
     void _sdl2_controllers_handle(const CIControllerAtomicUpdateEvent* ev);
 
-    CDWindowProperties m_properties;
+    CDProperties m_properties;
     CString m_contextString;
 private:
     CSDL2Types::CSDL2Context* m_context = nullptr;
-
 };
 
 }

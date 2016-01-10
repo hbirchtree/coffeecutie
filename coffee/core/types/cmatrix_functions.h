@@ -8,7 +8,7 @@ namespace Coffee{
 namespace CGraphicsData{
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
         _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
 {
     _cbasic_tmatrix<T,4> mat(T(0));
@@ -26,14 +26,14 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
 }
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_perspective(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenPerspective(
         const T& fov,
         const T& aspect,
         const _cbasic_zfield<T>& zfield)
 {
     CASSERT(CMath::abs(aspect - CMath::numeric_limits<T>::epsilon()) > T(0));
 
-    _cbasic_tmatrix<T,4> matrix(0);
+    _cbasic_tmatrix<T,4> matrix;
 
     T thalffov = CMath::tan(CMath::radians(fov)/T(2));
 
@@ -47,7 +47,7 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_perspective(
 }
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_vec3<T> const& pos,
         _cbasic_vec3<T> const& scl,
         _cbasic_tquaternion<T> const& rot)
@@ -62,45 +62,45 @@ _cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
 }
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_orthographic(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
         _cbasic_graphics_camera<T> const& camera)
 {
-    return coffee_graphics_gen_orthographic(
+    return GenOrthographic(
                 camera.orthoview,camera.zVals);
 }
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_perspective(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenPerspective(
         _cbasic_graphics_camera<T> const& camera)
 {
-    return coffee_graphics_gen_perspective(
+    return GenPerspective(
                 camera.fieldOfView,
                 camera.aspect,
                 camera.zVals);
 }
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_transform<T> const& transform)
 {
-    return coffee_graphics_gen_transform(
+    return GenTransform(
                 transform.position,
                 transform.scale,
                 transform.rotation);
 }
 
 template<typename T>
-_cbasic_tmatrix<T,4> coffee_graphics_gen_transform(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_camera<T> const& camera)
 {
-    return coffee_graphics_gen_transform(
+    return GenTransform(
                 camera.position,
                 _cbasic_vec3<T>(1.0),
                 camera.rotation);
 }
 
 template<typename T>
-_cbasic_tmatrix<T,3> coffee_graphics_gen_lookat(
+inline C_FORCE_INLINE _cbasic_tmatrix<T,3> GenLookat(
         const _cbasic_tvector<T,3>& observer,
         const _cbasic_tvector<T,3>& up,
         const _cbasic_tvector<T,3>& subject)

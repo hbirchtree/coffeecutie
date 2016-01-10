@@ -10,6 +10,21 @@ namespace CGL{
  */
 struct CGL43 : CGL33
 {
+    static bool LoadBinding(CGL_Context *ctxt)
+    {
+        bool status = CGL33::LoadBinding(ctxt);
+        CDisplay::CGLVersion targetVer(4,3);
+        CDisplay::CGLVersion ver = Debug::ContextVersion();
+        if(ver<targetVer)
+        {
+            _cbasic_version<uint8>& rv = ver;
+            _cbasic_version<uint8>& tv = targetVer;
+            cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Library_Name,
+                 CFStrings::Graphics_GLeam_Library_CoreVersionError,
+                 rv,tv);
+        }
+        return status;
+    }
 
     enum class Feature
     {
@@ -39,6 +54,8 @@ struct CGL43 : CGL33
 
         PointSize,
     };
+
+    //TODO: Add more extensions to check for, and check for them in functions
 
     static bool TexStorageSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_texture_storage");}
@@ -101,6 +118,7 @@ struct CGL43 : CGL33
     static bool XFAlloc(uint32 l,CGhnd* d){glGenTransformFeedbacks(l,d); return true;}
     static bool XFFree(uint32 l,CGhnd* d){glDeleteTransformFeedbacks(l,d); return true;}
 
+    //TODO: Create off-thread program compiler when binary storage is available
     static CGhnd ProgramCreate(ShaderStage t,uint32 c,cstring* d)
     {return glCreateShaderProgramv(to_enum1(t),c,d);}
 
@@ -226,10 +244,10 @@ struct CGL43 : CGL33
     }
 
     /* Buffers */
-    static void BufClearData(DataType t,PixelFormat ifmt,TypeEnum dtb,
+    static void BufClearData(BufType t,PixelFormat ifmt,TypeEnum dtb,
                              TypeEnum dts,c_cptr d)
     {glClearBufferData(to_enum(t),to_enum(ifmt),to_enum(dtb),to_enum(dts),d);}
-    static void BufClearSubData(DataType t,PixelFormat ifmt,int64 offset,uint32 size,
+    static void BufClearSubData(BufType t,PixelFormat ifmt,int64 offset,uint32 size,
                                 PixelFormat df,TypeEnum dt,c_cptr d)
     {glClearBufferSubData(to_enum(t),to_enum(ifmt),offset,size,to_enum(df),to_enum(dt),d);}
 
@@ -238,24 +256,34 @@ struct CGL43 : CGL33
     {glInvalidateBufferSubData(h,offset,size);}
 
     /* Shader buffer */
-    static void SBufBind(CGhnd h,uint32 i,uint32 b){glShaderStorageBlockBinding(h,i,b);}
+    static void SBufBind(CGhnd h,uint32 i,uint32 b)
+    {glShaderStorageBlockBinding(h,i,b);}
 
     /* Queries */
-    static void QueryIndexedBegin(CGenum,uint32,CGhnd){}
-    static void QueryIndexedEnd(CGenum,uint32){}
-
-    static void QueryIndexedGetiv(CGenum,uint32,CGenum,int32*){}
+    static void QueryIndexedBegin(QueryT t,uint32 i,CGhnd h)
+    {glBeginQueryIndexed(to_enum(t),i,h);}
+    static void QueryIndexedEnd(QueryT t,uint32 i){glEndQueryIndexed(to_enum(t),i);}
+    //TODO: Create QueryProperty enum
+    static void QueryIndexedGetiv(QueryT t,uint32 i,CGenum e,int32* v)
+    {glGetQueryIndexediv(to_enum(t),i,e,v);}
 
     /* VAO */
-    static void VAOAttribFormat(uint32,int32,CGenum,bool,uint32){}
-    static void VAOAttribFormatI(uint32,int32,CGenum,uint32){}
-    static void VAOAttribFormatL(uint32,int32,CGenum,uint32){}
+    static void VAOAttribFormat(uint32 i,int32 s,TypeEnum t,bool n,uint32 off)
+    {glVertexAttribFormat(i,s,to_enum(t),(n)?GL_TRUE:GL_FALSE,off);}
+    static void VAOAttribFormatI(uint32 i,int32 s,TypeEnum t,uint32 off)
+    {glVertexAttribIFormat(i,s,to_enum(t),off);}
+    static void VAOAttribFormatL(uint32 i,int32 s,TypeEnum t,uint32 off)
+    {glVertexAttribLFormat(i,s,to_enum(t),off);}
 
-    static void VAOBindingDivisor(uint32,uint32){}
-    static void VAOAttribBinding(uint32,uint32){}
-    static void VAOBindVertexBuffer(uint32,CGhnd,int64,int64){}
-
-    static void VAOPrimitiveRestart(uint32){}
+    static void VAOBindingDivisor(uint32 attr,uint32 div)
+    {glVertexBindingDivisor(attr,div);}
+    static void VAOAttribBinding(uint32 attr,uint32 idx)
+    {glVertexAttribBinding(attr,idx);}
+    static void VAOBindVertexBuffer(uint32 idx,CGhnd h,uint64 off,int32 stride)
+    {glBindVertexBuffer(idx,h,off,stride);}
+    static void VAOBindVertexBuffers(uint32 idx_f, uint32 c,const CGhnd* h,
+                                     const int64* off, const int32* stride)
+    {glBindVertexBuffers(idx_f,c,h,off,stride);}
 
     /* Just to hide and disable outdated functionality */
     static void VAOAttribPointer(){}
@@ -264,7 +292,8 @@ struct CGL43 : CGL33
     static void VAODivisor(){}
 
     /* Buffers */
-    static void BufStorage(CGenum,int64,c_cptr,CGenum){}
+    static void BufStorage(BufType t,int64 o,c_cptr d,ResourceAccess a)
+    {glBufferStorage(to_enum(t),o,d,to_enum2(a));}
 
     /* Framebuffer */
     static void FBInvalidate(CGenum,size_t,const CGenum*){}
@@ -272,10 +301,10 @@ struct CGL43 : CGL33
     {glFramebufferParameteri(t,p,d);}
 
     /* XFB */
-    static void XFBind(CGhnd){}
+    static void XFBind(CGhnd h){glBindTransformFeedback(GL_TRANSFORM_FEEDBACK,h);}
 
-    static void XFPause(){}
-    static void XFResume(){}
+    static void XFPause(){glPauseTransformFeedback();}
+    static void XFResume(){glResumeTransformFeedback();}
 
     /* ProgramUniform* functions */
     static void Uniformfv(CGhnd h,int32 l,int32 c,const scalar* d)
@@ -323,35 +352,37 @@ struct CGL43 : CGL33
     {glProgramUniformMatrix4x2fv(h,l,c,(t)?GL_TRUE:GL_FALSE,(scalar*)d);}
 
     /* Tessellation */
-    static void PatchParamteri(CGenum,int32){}
-    static void PatchParamterfv(CGenum,const scalar*){}
+    static void PatchParameteri(PatchProperty p,int32 v)
+    {glPatchParameteri(to_enum(p),v);}
+    static void PatchParameterfv(PatchProperty p,const scalar* v)
+    {glPatchParameterfv(to_enum(p),v);}
 
     /* Drawing */
-    static void DrawArraysIndirect(Primitive,PrimitiveCreation,uint64){}
-    static void DrawArraysInstancedBaseInstance(Primitive,PrimitiveCreation,int32,
+    static void DrawArraysIndirect(Prim,PrimCre,uint64){}
+    static void DrawArraysInstancedBaseInstance(Prim,PrimCre,int32,
                                                 int64,int64,uint32){}
 
-    static void DrawElementsIndirect(Primitive,PrimitiveCreation,TypeEnum,uint64,int64,int64){}
-    static void DrawElementsInstancedBaseInstance(Primitive,PrimitiveCreation,int64,
+    static void DrawElementsIndirect(Prim,PrimCre,TypeEnum,uint64,int64,int64){}
+    static void DrawElementsInstancedBaseInstance(Prim,PrimCre,int64,
                                                   TypeEnum,uint64,int64,int64){}
-    static void DrawElementsInstancedBaseVertexBaseInstance(Primitive,PrimitiveCreation,int64,
+    static void DrawElementsInstancedBaseVertexBaseInstance(Prim,PrimCre,int64,
                                                             TypeEnum,uint64,int64,int64,
                                                             int32,int32){}
 
-    static void DrawRangeElements(Primitive,PrimitiveCreation,uint32,uint32,int64,TypeEnum,uint64){}
+    static void DrawRangeElements(Prim,PrimCre,uint32,uint32,int64,TypeEnum,uint64){}
 
-    static void DrawMultiArraysIndirect(Primitive,PrimitiveCreation,uint64,int64,int64){}
-    static void DrawMultiElementsIndirect(Primitive,PrimitiveCreation,TypeEnum,uint64,int64,int64){}
+    static void DrawMultiArraysIndirect(Prim,PrimCre,uint64,int64,int64){}
+    static void DrawMultiElementsIndirect(Prim,PrimCre,TypeEnum,uint64,int64,int64){}
 
-    static void DrawXF(Primitive,PrimitiveCreation,CGhnd){}
-    static void DrawXFStream(Primitive,PrimitiveCreation,CGhnd,uint32){}
+    static void DrawXF(Prim,PrimCre,CGhnd){}
+    static void DrawXFStream(Prim,PrimCre,CGhnd,uint32){}
 
-    static void DrawXFInstanced(Primitive,PrimitiveCreation,CGhnd,int64){}
-    static void DrawXFStreamInstanced(Primitive,PrimitiveCreation,CGhnd,uint32,int64){}
+    static void DrawXFInstanced(Prim,PrimCre,CGhnd,int64){}
+    static void DrawXFStreamInstanced(Prim,PrimCre,CGhnd,uint32,int64){}
 
     /* Compute */
-    static void ComputeDispatch(uint32,uint32,uint32){}
-    static void ComputeDispatchIndirect(int64){}
+    static void ComputeDispatch(uint32 x,uint32 y,uint32 z){glDispatchCompute(x,y,z);}
+    static void ComputeDispatchIndirect(int64 o){glDispatchComputeIndirect(o);}
 };
 
 }

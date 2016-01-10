@@ -14,7 +14,7 @@ inline bool interactive_cmd()
 
 inline cstring read_string(cstring_w target, int32 size, FILE* strm)
 {
-    return c_gets(target,size,strm);
+    return CGets(target,size,strm);
 }
 
 inline void clear_screen()

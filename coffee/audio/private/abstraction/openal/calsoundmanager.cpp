@@ -18,7 +18,7 @@ CALSoundManager::CALSoundManager()
 
     for(uint32 i=0;i<odevices;i++)
     {
-        if(c_strcmp(a_odevices[i],def_str))
+        if(CStrCmp(a_odevices[i],def_str))
             d_idx = i;
         v_odevices.push_back(CALSoundDeviceIdentifier(i,a_odevices[i]));
     }
@@ -28,8 +28,8 @@ CALSoundManager::CALSoundManager()
 
 CALSoundManager::~CALSoundManager()
 {
-    c_free(a_idevices);
-    c_free(a_odevices);
+    CFree(a_idevices);
+    CFree(a_odevices);
 }
 
 CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()

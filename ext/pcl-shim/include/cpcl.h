@@ -3,43 +3,48 @@
 
 #include <coffee/CCore>
 
-/*! TODO: These ugly includes! */
-//#include <pcl/point_types.h>
-//#include <pcl/point_cloud.h>
-//#include <pcl/point_representation.h>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_representation.h>
 
-//#include <pcl/io/pcd_io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_io.h>
 
-//#include <pcl/filters/voxel_grid.h>
-//#include <pcl/filters/filter.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
-//#include <pcl/features/normal_3d.h>
+#include <pcl/features/normal_3d.h>
 
-//#include <pcl/registration/icp.h>
-//#include <pcl/registration/icp_nl.h>
-//#include <pcl/registration/transforms.h>
+#include <pcl/surface/gp3.h>
 
-//#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/cloud_viewer.h>
 
 namespace CoffeeExt{
 namespace CPCL{
 
-//struct CPCLImplementation
-//{
-//    static pcl::PointCloud<pcl::PointXYZRGB>* gen_pointcloud(
-//            const CVec3* points,
-//            const CVec3* cPoints,
-//            const szptr& numPoints,
-//            const CSize& cloudSize);
+using namespace pcl;
+using namespace Coffee;
 
-//    static pcl::PointCloud<pcl::PointXYZRGB> *merge_clouds(
-//            const pcl::PointCloud<pcl::PointXYZRGB>* c1,
-//            const pcl::PointCloud<pcl::PointXYZRGB>* c2);
+struct CPCLImplementation
+{
+    static PointCloud<PointXYZRGB>* GenPointCloud(const CVec3* points,
+                                                  const CRGBA *cPoints,
+                                                  const szptr& numPoints,
+                                                  const CSize& cloudSize);
 
-//    static void io_save_pcdfile(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-//                                cstring fname);
-//    static pcl::PointCloud<pcl::PointXYZRGB>* io_load_pcdfile(cstring fname);
-//};
+    static PointCloud<PointXYZ>* ExtractXYZCloud(const PointCloud<PointXYZRGB>* colorcloud);
+
+    static void DenoiseCloud(PointCloud<PointXYZ>* cloud);
+
+    static PointCloud<PointXYZRGB> *MergeClouds(
+            const PointCloud<PointXYZRGB>* c1,
+            const PointCloud<PointXYZRGB>* c2);
+
+    static PolygonMesh* CreatePolygonMesh(const PointCloud<PointXYZ> *cloud);
+
+    static void SavePCDFile(const PointCloud<PointXYZRGB>& cloud,
+                                cstring fname);
+    static PointCloud<PointXYZRGB>* LoadPCDFile(cstring fname);
+};
 
 }
 }

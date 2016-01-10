@@ -5,10 +5,12 @@
 #include <sstream>
 #include "coffee/core/coffee_macros.h"
 #include "coffee/core/plat/cmemory.h"
-#include "coffee/core/types/basetypes.h"
+#include "coffee/core/types/types.h"
 
 namespace Coffee{
 namespace CDebugPrint{
+
+template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
 
 inline CString cStringResolve(CString fmt, size_t)
 {
@@ -18,7 +20,7 @@ inline CString cStringResolve(CString fmt, size_t)
 inline CString cStrReplace(CString fmt, size_t index, CString replace)
 {
     CString subfmt = "{" + std::to_string(index) + "}";
-    return c_str_replace(fmt,subfmt,replace);
+    return CStrReplace(fmt,subfmt,replace);
 }
 
 //TODO: Make these constexpr (C++14)
@@ -83,6 +85,11 @@ inline cstring cStringify(Severity sev)
         return "Information";
     }
 }
+template<typename T>
+inline CString cStringify(const _cbasic_version<T>& ver)
+{
+    return cStringFormat("{0}.{1}.{2}",ver.major,ver.minor,ver.revision);
+}
 
 /* Extension resolvers */
 
@@ -103,6 +110,13 @@ inline CString cStringReplace(
 inline CString cStringReplace(
         CString fmt, size_t index,
         Severity arg)
+{
+    return cStrReplace(fmt,index,cStringify(arg));
+}
+
+inline CString cStringReplace(
+        CString fmt, size_t index,
+        const _cbasic_version<uint8>& arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }

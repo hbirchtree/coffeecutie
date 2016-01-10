@@ -215,7 +215,7 @@ inline static void coffee_sdl2_eventhandle_drop(
     e.ts = drop.timestamp;
 
     CIDropEvent d;
-    d.size = c_strlen(drop.file)+1;
+    d.size = CStrLen(drop.file)+1;
     d.type = CIDropEvent::File;
     d.text_data.text = drop.file;
 

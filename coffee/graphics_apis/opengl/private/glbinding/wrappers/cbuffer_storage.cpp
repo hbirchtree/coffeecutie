@@ -26,7 +26,7 @@ bool coffee_graphics_buffer_unmap(CBuffer &buf)
 void *coffee_graphics_buffer_download_buffer(
         CBuffer &buf, const CGszptr &offset, const CGsize &size)
 {
-    void* data = c_alloc(size);
+    void* data = Alloc(size);
     glGetNamedBufferSubData(buf.handle,offset,size,data);
     return data;
 }

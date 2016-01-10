@@ -3,16 +3,18 @@
 namespace Coffee{
 namespace CDisplay{
 
-CDWindowProperties coffee_get_default_visual(const int32 &ctxtMajorVer, const int32 &ctxtMinorVer)
+CDProperties coffee_get_default_visual(const int32 &ctxtMajorVer, const int32 &ctxtMinorVer)
 {
-    CDWindowProperties props;
+    CDProperties props;
 
     props.flags =
-            CDWindowProperties::Resizable |
-            CDWindowProperties::Windowed;
+            CDProperties::Resizable |
+            CDProperties::Windowed  |
+            CDProperties::Visible;
 
-    props.contextProperties.flags =
-            props.contextProperties.flags|CGLContextProperties::GLAutoResize;
+    props.gl.flags =
+            GLProperties::GLAutoResize|
+            GLProperties::GLCoreProfile;
 
     props.title = "CoffeeCore";
 
@@ -20,35 +22,35 @@ CDWindowProperties coffee_get_default_visual(const int32 &ctxtMajorVer, const in
     props.size.h = 720;
     props.monitor = 0;
 
-    props.contextProperties.version.major = ctxtMajorVer;
-    props.contextProperties.version.minor = ctxtMinorVer;
+    props.gl.version.major = ctxtMajorVer;
+    props.gl.version.minor = ctxtMinorVer;
 
-    props.contextProperties.bits.alpha = 8;
-    props.contextProperties.bits.red = 8;
-    props.contextProperties.bits.blue = 8;
-    props.contextProperties.bits.green = 8;
-    props.contextProperties.bits.depth = 24;
-    props.contextProperties.bits.stencil = 8;
+    props.gl.bits.alpha = 8;
+    props.gl.bits.red = 8;
+    props.gl.bits.blue = 8;
+    props.gl.bits.green = 8;
+    props.gl.bits.depth = 24;
+    props.gl.bits.stencil = 8;
 
-    props.contextProperties.bits.accum.r = 8;
-    props.contextProperties.bits.accum.g = 8;
-    props.contextProperties.bits.accum.b = 8;
-    props.contextProperties.bits.accum.a = 8;
+    props.gl.bits.accum.r = 8;
+    props.gl.bits.accum.g = 8;
+    props.gl.bits.accum.b = 8;
+    props.gl.bits.accum.a = 8;
 
     return props;
 }
 
-CDWindowProperties::CDWindowProperties():
+CDProperties::CDProperties():
     flags(),
     monitor(0),
     size(0,0),
-    contextProperties(),
+    gl(),
     title(nullptr),
     window(nullptr)
 {
 }
 
-CGLContextProperties::CGLContextProperties():
+GLProperties::GLProperties():
     bits(),
     flags(GLCoreProfile),
     version(3,3)
@@ -65,11 +67,11 @@ CDStateEvent::CDStateEvent():
 {
 }
 
-CGLContextVersion::CGLContextVersion()
+CGLVersion::CGLVersion()
 {
 }
 
-CGLContextVersion::CGLContextVersion(uint8 maj, uint8 min)
+CGLVersion::CGLVersion(uint8 maj, uint8 min)
 {
     this->major = maj;
     this->minor = min;

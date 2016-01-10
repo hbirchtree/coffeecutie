@@ -183,7 +183,7 @@ cstring_w *coffee_callstack(szptr *length, uint32 stackreduce)
 {
     //Initial values, create a valid ptr for callstack
     szptr callstack_ptr = 0;
-    cstring_w* callstack = (cstring_w*)c_alloc(0);
+    cstring_w* callstack = (cstring_w*)Alloc(0);
     //Set up for unwind
     unw_cursor_t cur;
     unw_context_t ctx;
@@ -209,13 +209,13 @@ cstring_w *coffee_callstack(szptr *length, uint32 stackreduce)
             //Increment the callstack pointer, also known as length of the array
             callstack_ptr++;
             //Resize the callstack array
-            callstack = (cstring_w*)c_realloc(callstack,callstack_ptr*sizeof(cstring_w));
+            callstack = (cstring_w*)CRealloc(callstack,callstack_ptr*sizeof(cstring_w));
             if(success){
                 //If demangling succeeded, we created a new cstring which we can bring with us
                 callstack[callstack_ptr-1] = fname;
             }else{
                 //If demangling failed, we copy the string and move on
-                cstring_w str = (cstring_w)c_alloc(strlen(fname)+1);
+                cstring_w str = (cstring_w)Alloc(strlen(fname)+1);
                 strcpy(str,fname);
                 callstack[callstack_ptr-1] = str;
             }
@@ -227,7 +227,7 @@ cstring_w *coffee_callstack(szptr *length, uint32 stackreduce)
 
 cstring_w coffee_clock_string()
 {
-    cstring_w time_val = (cstring_w)c_alloc(17);
+    cstring_w time_val = (cstring_w)Alloc(17);
     time_t t;
     struct tm *tm;
     time(&t);
@@ -241,7 +241,7 @@ cstring_w coffee_clock_string()
 
 void coffee_clock_free(cstring_w arg)
 {
-    c_free(arg);
+    CFree(arg);
 }
 
 }

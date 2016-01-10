@@ -136,7 +136,7 @@ void coffee_mesh_free_matrix_attribs(std::vector<CVertexAttribute>::iterator sta
 {
     for(auto it=start; it!=end; it++)
     {
-        free((*it).bnd);
+        CFree((*it).bnd);
     }
 }
 

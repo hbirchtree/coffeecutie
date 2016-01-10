@@ -63,7 +63,7 @@ void CGLBindingRenderer::bindingPostInit()
          m_versionString.c_str());
     cMsg("glbinding","Currently running OpenGL revision: {0}",m_libraryRevision);
 
-    if(m_properties.contextProperties.flags&CGLContextProperties::GLFeatureLevelProfile)
+    if(m_properties.gl.flags&GLProperties::GLFeatureLevelProfile)
     {
         glbinding::setCallbackMask(glbinding::CallbackMask::After);
 
@@ -72,7 +72,7 @@ void CGLBindingRenderer::bindingPostInit()
         });
     }
 
-    if(m_properties.contextProperties.flags&CGLContextProperties::GLDebug)
+    if(m_properties.gl.flags&GLProperties::GLDebug)
     {
         coffee_graphics_debug_context(true,glbinding_default_callback,this);
     }
@@ -94,10 +94,10 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
 {
     CResources::CResource glxml("gl.xml");
 
-    if(!CResources::coffee_file_exists(glxml))
+    if(!CResources::FileExists(glxml))
         return std::map<CString,CString>();
 
-    CResources::coffee_file_pull(glxml);
+    CResources::FilePull(glxml);
 
     const CDataStorage::CTextStorage::XMLDocument* doc =
             CDataStorage::CTextStorage::coffee_xml_read(glxml);
@@ -124,7 +124,7 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
             {
                 for(const CString& f : functions)
                     if(!feature_levels[f])
-                        if(c_strcmp(command->Attribute("name"),f.c_str()))
+                        if(CStrCmp(command->Attribute("name"),f.c_str()))
                         {
                             feature_levels[f] = query->Attribute("name");
                         }
@@ -157,7 +157,7 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
                 {
                     for(const CString& f : functions)
                         if(!feature_levels[f])
-                            if(c_strcmp(itm->Attribute("name"),f.c_str()))
+                            if(CStrCmp(itm->Attribute("name"),f.c_str()))
                             {
                                 feature_levels[f] = ext->Attribute("name");
                             }
@@ -175,7 +175,7 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
         features[ft.first] = ft.second;
     }
 
-    CResources::coffee_file_free(glxml);
+    CResources::FileFree(glxml);
 
     delete doc;
 

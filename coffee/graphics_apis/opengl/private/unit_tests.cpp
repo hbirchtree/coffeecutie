@@ -51,11 +51,11 @@ void matrix_tests()
 
     //Test perspective generation
     {
-        CMat4 glm_perspective = CGraphicsData::coffee_graphics_gen_perspective(
+        CMat4 glm_perspective = CGraphicsData::GenPerspective(
                     camera.fieldOfView,
                     camera.aspect,
                     camera.zVals);
-        CMat4 my_perspective = CGraphicsData::coffee_graphics_gen_perspective(
+        CMat4 my_perspective = CGraphicsData::GenPerspective(
                     camera.fieldOfView,
                     camera.aspect,
                     camera.zVals);
@@ -74,7 +74,7 @@ void matrix_tests()
 
         //Test projection matrices
 
-        CMat4 my_matrix = CGraphicsData::coffee_graphics_gen_perspective(
+        CMat4 my_matrix = CGraphicsData::GenPerspective(
                     camera.fieldOfView,
                     camera.aspect,
                     camera.zVals);
@@ -100,7 +100,7 @@ void matrix_tests()
 
         //Test model matrix
 
-        CMat4 md_mat = CGraphicsData::coffee_graphics_gen_transform(
+        CMat4 md_mat = CGraphicsData::GenTransform(
                     CVec3(1,2,3),CVec3(0.1,0.1,0.1),CQuat(1,0,0,0));
 
         glm::mat4 gmd_mat = glm::scale(glm::mat4(),glm::vec3(0.1));
@@ -149,9 +149,9 @@ void matrix_tests()
 
         t1.rotation = t2.rotation = t3.rotation = CQuat(1,0,0.5,0);
 
-        CMat4 t1m = CGraphicsData::coffee_graphics_gen_transform(t1);
-        CMat4 t2m = CGraphicsData::coffee_graphics_gen_transform(t2);
-        CMat4 t3m = CGraphicsData::coffee_graphics_gen_transform(t3);
+        CMat4 t1m = CGraphicsData::GenTransform(t1);
+        CMat4 t2m = CGraphicsData::GenTransform(t2);
+        CMat4 t3m = CGraphicsData::GenTransform(t3);
 
         CGraphicsData::CNode root;
         root.transform = &t1m;

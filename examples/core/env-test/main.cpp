@@ -20,11 +20,11 @@ int32 coffee_main(int32, byte_t**)
         cDebug("Program directory:  {0}",app_dir);
         cDebug("Launching from      {0}",exe_name);
 
-        CResources::coffee_file_mkdir(cfg_dir,true);
+        CResources::FileMkdir(cfg_dir,true);
 
-        free(cfg_dir);
-        free(app_dir);
-        free(exe_name);
+        CFree(cfg_dir);
+        CFree(app_dir);
+        CFree(exe_name);
     }
 
     {
@@ -80,7 +80,7 @@ int32 coffee_main(int32, byte_t**)
         ts.resize(100);
 
         clear_screen();
-        while(!c_strcmp(&ts[0],"quit\n"))
+        while(!CStrCmp(&ts[0],"quit\n"))
         {
             ts.clear();
             fprintf(stderr,"Type something: ");

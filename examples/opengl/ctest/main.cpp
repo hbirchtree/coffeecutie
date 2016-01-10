@@ -6,7 +6,7 @@ using namespace Coffee::CDisplay;
 
 int32 coffee_main(int32,byte_t**)
 {
-    CResources::coffee_file_set_resource_prefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/");
 
     CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
     timer->start();
@@ -14,10 +14,10 @@ int32 coffee_main(int32,byte_t**)
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     //Magic happens here
-    CDWindowProperties props = coffee_get_default_visual();
+    CDProperties props = coffee_get_default_visual();
 
-    props.contextProperties.flags = props.contextProperties.flags|
-            CGLContextProperties::GLDebug;
+    props.gl.flags = props.gl.flags|
+            GLProperties::GLDebug;
 
     std::atomic_bool status;
     std::future<void> ret = coffee_display_start_async(&status,renderer,props);

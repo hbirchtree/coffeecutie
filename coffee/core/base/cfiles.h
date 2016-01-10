@@ -11,7 +11,7 @@ namespace CResources{
  * \param prefix
  * \return
  */
-extern void coffee_file_set_resource_prefix(cstring prefix);
+extern void FileResourcePrefix(cstring prefix);
 
 struct CResourceUrl
 {
@@ -56,34 +56,34 @@ public:
 
 };
 
-extern bool coffee_file_exists(const CResource& resc);
+extern bool FileExists(const CResource& resc);
 
 /*!
  * \brief Memory map file as buffer
  * \return True if success
  */
-extern bool coffee_file_memmap(CResource& resc);
+extern bool FileMap(CResource& resc);
 /*!
  * \brief Unmap file
  * \return True if success
  */
-extern bool coffee_file_memunmap(CResource& resc);
+extern bool FileUnmap(CResource& resc);
 
 /*!
  * \brief Free data pointer
  */
-extern void coffee_file_free(CResource &resc);
-extern bool coffee_file_pull(CResource &resc, bool textmode = false, bool bigendian = false);
+extern void FileFree(CResource &resc);
+extern bool FilePull(CResource &resc, bool textmode = false, bool bigendian = false);
 /*!
  * \brief Save data to file
  * \return
  */
-extern bool coffee_file_commit(CResource& resc, bool append = false);
+extern bool FileCommit(CResource& resc, bool append = false);
 /*!
  * \brief Save data to file, append null-terminator
  * \return
  */
-extern void coffee_file_commit_textmode(const CResource& resc, bool append = false);
+extern void FileCommitTextmode(const CResource& resc, bool append = false);
 
 /*!
  * \brief Create a directory
@@ -91,7 +91,7 @@ extern void coffee_file_commit_textmode(const CResource& resc, bool append = fal
  * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
  * \return True if process succeeded
  */
-extern bool coffee_file_mkdir(cstring dirname, bool recursive);
+extern bool FileMkdir(cstring dirname, bool recursive);
 
 }
 }

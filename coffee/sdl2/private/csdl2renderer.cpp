@@ -19,6 +19,7 @@ struct CGL_SDL_GL_Context : CGL::CGL_Context
     }
     ~CGL_SDL_GL_Context()
     {
+        releaseContext();
         SDL_GL_DeleteContext(m_context);
     }
     bool acquireContext()
@@ -56,16 +57,18 @@ std::thread::id CSDL2Renderer::contextThread()
     return m_context->thread;
 }
 
-void CSDL2Renderer::init(const CDWindowProperties &props)
+void CSDL2Renderer::init(const CDProperties &props)
 {
     m_properties = props;
 
     m_context = new CSDL2Context;
     m_context->thread = std::this_thread::get_id();
 
-//    cMsg("SDL2","Starting");
-
     bindingPreInit();
+
+    SDL_version ver;
+    SDL_GetVersion(&ver);
+    m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
     {
@@ -74,14 +77,14 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
     cMsg("SDL2","Initialized");
 
     CResources::CResource mapping("gamecontrollerdb.txt");
-    if(coffee_file_exists(mapping))
+    if(FileExists(mapping))
     {
         cMsg("SDL2","Found game controller mappings");
-        coffee_file_pull(mapping,true);
+        FilePull(mapping,true);
         SDL_RWops* fsrc = SDL_RWFromConstMem(mapping.data,mapping.size);
         SDL_GameControllerAddMappingsFromRW(fsrc,0);
         SDL_FreeRW(fsrc);
-        coffee_file_free(mapping);
+        FileFree(mapping);
     }
 
 
@@ -90,7 +93,7 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
 
     flags|=SDL_WINDOW_OPENGL;
 
-    coffee_sdl2_set_context_properties(props.contextProperties);
+    coffee_sdl2_set_context_properties(props.gl);
 
     m_context->window =
             SDL_CreateWindow(props.title,
@@ -102,24 +105,25 @@ void CSDL2Renderer::init(const CDWindowProperties &props)
         cFatal("Failed to create SDL2 window: {0}",SDL_GetError());
     }
 
+    if(m_properties.flags&CDProperties::Visible)
+        showWindow();
+
     m_context->context = new CGL_SDL_GL_Context(m_context->window);
 
     if(!m_context->context->acquireContext())
     {
-        cFatal("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
+        CString err = cStringFormat("Failed to create SDL2 OpenGL context:\n{0}",SDL_GetError());
+        this->popErrorMessage(Severity::Fatal,"GL init failure",err.c_str());
+        cFatal("{0}",err.c_str());
     }
 
-    SDL_version ver;
-    SDL_GetVersion(&ver);
-    m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
-
     //For consistent behavior
-    if(props.contextProperties.flags&CGLContextProperties::GLVSync)
+    if(props.gl.flags&GLProperties::GLVSync)
         setSwapInterval(1);
     else
         setSwapInterval(0);
 
-    if(props.flags&CDWindowProperties::Windowed)
+    if(props.flags&CDProperties::Windowed)
         SDL_SetWindowFullscreen(m_context->window,0);
 
     setMouseGrabbing(false);
@@ -216,7 +220,7 @@ uint32 CSDL2Renderer::windowState() const
     return coffee_sdl2_get_winflags(m_context->window);
 }
 
-void CSDL2Renderer::setWindowState(const CDWindowProperties::State &state)
+void CSDL2Renderer::setWindowState(const CDProperties::State &state)
 {
     coffee_sdl2_set_winflags(m_context->window,state);
 }
@@ -451,6 +455,32 @@ CGL::CGL_ScopedContext CSDL2Renderer::scopedContext()
     return CGL::CGL_ScopedContext(m_context->context);
 }
 
+void CSDL2Renderer::popErrorMessage(Severity s, cstring title, cstring msg)
+{
+    Uint32 flags = 0;
+
+    switch(s)
+    {
+    case Severity::Critical:
+    case Severity::Fatal:
+    case Severity::High:
+        flags |= SDL_MESSAGEBOX_ERROR;
+        break;
+    case Severity::Low:
+    case Severity::Medium:
+        flags |= SDL_MESSAGEBOX_WARNING;
+        break;
+    case Severity::Information:
+        flags |= SDL_MESSAGEBOX_INFORMATION;
+        break;
+    case Severity::Debug:
+        flags |= SDL_MESSAGEBOX_INFORMATION;
+        break;
+    }
+
+    SDL_ShowSimpleMessageBox(flags,title,msg,NULL);
+}
+
 /*!
  * \brief Opens and acquires a haptic device for a joystick
  * \param controller Controller for which we acquire a haptic device
@@ -474,19 +504,19 @@ CIEvent* sdl2_controller_get_haptic(
     {
         int idx = SDL_HapticIndex(dev);
         cstring hname = SDL_HapticName(idx);
-        CIEvent* ev = (CIEvent*)c_calloc(1,sizeof(CIEvent)
+        CIEvent* ev = (CIEvent*)CCalloc(1,sizeof(CIEvent)
                                        +sizeof(CIHapticEvent)
                                        +strlen(hname)-6);
         ev->type = CIEvent::HapticDev;
         CIHapticEvent *h = (CIHapticEvent*)&ev[1];
-        c_memcpy((byte_t*)&h->rumble_device.name,
+        CMemCpy((byte_t*)&h->rumble_device.name,
                hname,
                strlen(hname)+1);
         h->rumble_device.index = index;
 
         if(SDL_HapticRumbleInit(dev)==0)
             return ev;
-        c_free(ev);
+        CFree(ev);
         SDL_HapticClose(dev);
     }
     return nullptr;
@@ -515,7 +545,7 @@ void CSDL2Renderer::_sdl2_controllers_handle(const CIControllerAtomicUpdateEvent
 
             m_context->haptics[ev->controller] = hdev;
             eventHandle(*hev,nullptr);
-            c_free(hev);
+            CFree(hev);
         }else
             cMsg("SDL2","Controller {0} connected: {1}",ev->controller,ev->name);
     }else{

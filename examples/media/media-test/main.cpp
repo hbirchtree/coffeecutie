@@ -26,7 +26,7 @@ public:
     {
         //Create an FFMPEG player
         CResource video_file("test-.webm");
-        coffee_file_pull(video_file);
+        FilePull(video_file);
 
         CFFPlayer player(video_file);
 
@@ -159,7 +159,7 @@ public:
         CByteData initTexture;
         initTexture.size = coffee_ffmedia_video_framesize(CSize(player.descriptor().video.size.width,
                                                                 player.descriptor().video.size.height));
-        initTexture.data = (byte_t*)c_alloc(initTexture.size);
+        initTexture.data = (byte_t*)Alloc(initTexture.size);
 
         player.videoTarget().v.location = initTexture.data;
         player.videoTarget().v.max_size = initTexture.size;
@@ -173,7 +173,7 @@ public:
         texture.createTexture(player.descriptor().video.size,CTexIntFormat::RGBA8,
                               CTexType::Tex2D,1,initTexture,CTexFormat::RGBA);
 
-        c_free(initTexture.data);
+        CFree(initTexture.data);
 
         texture.sampler().unit = 0;
 
@@ -190,8 +190,8 @@ public:
         camera.fieldOfView = 60.f;
         camera.position = CVec3(0,0,-3);
 
-        CMat4 cam_matrix = coffee_graphics_gen_perspective(camera)
-                * coffee_graphics_gen_transform(camera);
+        CMat4 cam_matrix = GenPerspective(camera)
+                * GenTransform(camera);
 
         camera.orthoview.w = 1280;
         camera.orthoview.h = 720;
@@ -202,7 +202,7 @@ public:
         quad_trans.position = CVec3(0,0,0);
         quad_trans.scale = CVec3(1.6f,1.f,1.f);
 
-        CMat4 quad_matrix = coffee_graphics_gen_transform(quad_trans);
+        CMat4 quad_matrix = GenTransform(quad_trans);
 
         CNode root;
         root.transform = &cam_matrix;
@@ -226,7 +226,7 @@ public:
         //Create a dummy buffer for audio
         CByteData audiobuf;
         audiobuf.size = coffee_ffmedia_audio_samplesize(player.player())*48000*4;
-        audiobuf.data = (byte_t*)c_alloc(audiobuf.size);
+        audiobuf.data = (byte_t*)Alloc(audiobuf.size);
 
         double timeout = this->contextTime();
         int counter = 0;
@@ -272,7 +272,7 @@ public:
 
                     snd_streamer.feedData(pckt.data,fmt,pckt.samples);
 
-                    c_free(pckt.data);
+                    CFree(pckt.data);
 
                     player.videoTarget().a.packet_queue.pop();
                 }
@@ -301,7 +301,7 @@ public:
         }
 
         //Free all the FFMPEG data
-        coffee_file_free(video_file);
+        FileFree(video_file);
 
         for(const std::pair<CString,CString>& ft : CDisplay::coffee_glbinding_get_graphics_feature_level())
         {
@@ -323,18 +323,18 @@ public:
 
 int32 coffee_main(int32, byte_t**)
 {
-    coffee_file_set_resource_prefix("sample_data/");
+    FileResourcePrefix("sample_data/");
 
     CDisplay::CDRendererBase* renderer = new CDRenderer;
     std::atomic_bool sync;
     sync.store(false);
-    CDisplay::CDWindowProperties props = CDisplay::coffee_get_default_visual();
-    props.contextProperties.flags = props.contextProperties.flags|
-            CDisplay::CGLContextProperties::GLDebug|
+    CDisplay::CDProperties props = CDisplay::coffee_get_default_visual();
+    props.gl.flags = props.gl.flags|
+            CDisplay::GLProperties::GLDebug|
 //            CDisplay::CGLContextProperties::GLFeatureLevelProfile|
 //            CDisplay::CGLContextProperties::GLVSync|
-            CDisplay::CGLContextProperties::GLAutoResize;
-    props.flags = CDisplay::CDWindowProperties::Resizable;
+            CDisplay::GLProperties::GLAutoResize;
+    props.flags = CDisplay::CDProperties::Resizable;
 
     std::future<void> status = CDisplay::coffee_display_start_async(&sync,renderer,props);
 

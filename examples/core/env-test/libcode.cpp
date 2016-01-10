@@ -16,8 +16,8 @@ public:
         cDebug("Hello there!");
 
         cWarning("Okay, I'll try calling a Coffee function now.");
-        void* ptr = Coffee::c_alloc(1024*1024*1024);
-        Coffee::c_free(ptr);
+        void* ptr = Coffee::Alloc(1024*1024*1024);
+        Coffee::CFree(ptr);
 
         cDebug("Byte!");
     }

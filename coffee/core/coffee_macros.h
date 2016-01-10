@@ -1,9 +1,10 @@
 #ifndef COFFEE_MACROS
 #define COFFEE_MACROS
 
-#include "coffee/core/plat/platform_detect.h"
-#include "plat/cmemory.h"
 #include "types/basetypes.h"
+#include "plat/cmemory.h"
+#include "coffee_mem_macros.h"
+#include "coffee/core/plat/platform_detect.h"
 #include <stdio.h>
 #include <stdexcept>
 
@@ -14,26 +15,6 @@
 #endif
 
 #define C_CONSTRUCT_BUILD_STRING(ver,datetime) ver "." datetime
-
-#define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
-
-#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
-#define C_FORCE_PACKING __attribute__((packed))
-#elif defined(COFFEE_MSVCXX)
-#include <windef.h>
-#define C_FORCE_PACKING UNALIGNED
-#else
-#define C_FORCE_PACKING
-#endif
-
-#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
-#define C_FORCE_INLINE __attribute__((always_inline))
-#elif defined(COFFEE_MSVCXX)
-#include <windef.h>
-#define C_FORCE_INLINE __forceinline
-#else
-#define C_FORCE_INLINE
-#endif
 
 namespace Coffee{
 #if defined(COFFEE_WINDOWS)
@@ -58,7 +39,7 @@ constexpr cstring print_color_reset = "\033[0m";
 /*!
  * \brief Use this to mark variables as unused to avoid compiler warnings. We can get away with this.
  */
-inline static void C_UNUSED(...)
+inline C_FORCE_INLINE void C_UNUSED(...)
 {
 }
 
@@ -66,23 +47,22 @@ inline static void C_UNUSED(...)
  * \brief Assertion method for core values and unit tests
  * \param expr Expression which triggers an exception on failure
  */
-inline void CASSERT(bool expr)
+inline C_FORCE_INLINE void CASSERT(bool expr)
 {
     if(!expr)
         throw std::runtime_error("Assert failed");
 }
 
-
-inline void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
+inline C_FORCE_INLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
 {
-    CASSERT(c_memcmp(m1,m2,size));
+    CASSERT(CMemCmp(m1,m2,size));
 }
 
 /*!
  * \brief This is used for marking functionality as stubbed, used for smaller, less important features.
  * \param name
  */
-inline void C_STUBBED(cstring name)
+inline C_FORCE_INLINE void C_STUBBED(cstring name)
 {
     fprintf(stderr,"%sCOFFEE:CORE:STUB%s: %s\n",
             print_color_fatal,
@@ -90,7 +70,7 @@ inline void C_STUBBED(cstring name)
             name);
 }
 
-inline void C_FIXME(cstring identifier)
+inline C_FORCE_INLINE void C_FIXME(cstring identifier)
 {
     fprintf(stderr,"%sCOFFEE:CORE:FIXME%s: %s\n",
             print_color_fatal,
@@ -102,7 +82,7 @@ inline void C_FIXME(cstring identifier)
  * \brief For reporting fatal lack of functionality in platform layer, used for features such as file mapping if it is unsupported on a platform.
  * \param name
  */
-inline void C_BADERROR(cstring name)
+inline C_FORCE_INLINE void C_BADERROR(cstring name)
 {
     fprintf(stderr,"%sCOFFEE:CORE:FTAL%s: %s\n",
             print_color_fatal,

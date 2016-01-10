@@ -147,7 +147,7 @@ void ff_close_stream(CFFStream* strm)
 
 int ff_read_data(void* opaque, uint8* buf, int buf_size)
 {
-    memcpy(buf,opaque,buf_size);
+    CMemCpy(buf,opaque,buf_size);
     return buf_size;
 }
 
@@ -170,17 +170,17 @@ AVFormatContext* ff_open_data(
     AVProbeData probe_data;
     probe_data.buf_size = (data_size < probe_size) ? data_size : probe_size;
     probe_data.filename = "stream";
-    probe_data.buf = (uint8*)c_alloc(probe_data.buf_size);
+    probe_data.buf = (uint8*)Alloc(probe_data.buf_size);
     probe_data.mime_type = nullptr;
 
-    memcpy(probe_data.buf,data,probe_data.buf_size);
+    CMemCpy(probe_data.buf,data,probe_data.buf_size);
 
     AVInputFormat* infmt = av_probe_input_format(&probe_data,1);
 
     if(!infmt)
         infmt = av_probe_input_format(&probe_data,0);
 
-    free(probe_data.buf);
+    CFree(probe_data.buf);
     probe_data.buf = nullptr;
 
     if(!infmt)
@@ -393,9 +393,9 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                                                            video->audio->context->sample_fmt,
                                                            1);
 
-                p.data = (int16*)c_alloc(data_size);
+                p.data = (int16*)Alloc(data_size);
 
-                c_memcpy(p.data,dCtxt->a.frame->data[0],data_size);
+                CMemCpy(p.data,dCtxt->a.frame->data[0],data_size);
 
                 dTrgt->a.queue_mutex.unlock();
 

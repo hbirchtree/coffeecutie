@@ -96,19 +96,25 @@ enum class TypeEnum : uint8
 enum class BitFormat : uint8
 {
     Byte_2, Byte_2R,
-    Byte_332, Byte_233R,
+    UByte_2, UByte_2R,
+    UByte_332, UByte_233R,
 
-    Short_565, Short_565R,
     Short_4, Short_4R,
-    Short_5551, Short_1555R,
+    UShort_4, UShort_4R,
+    UShort_565, UShort_565R,
+    UShort_5551, UShort_1555R,
 
     Int_8, Int_8R,
-    Int_5999R,
-    Int_1010102, Int_2101010R,
+    UInt_8, UInt_8R,
+    UInt_5999R,
+    UInt_1010102, UInt_2101010R,
 
-    LL_8, LL_8R,
-    LL_16, LL_16R,
-    LL_32, LL_32R,
+    Scalar_16,
+    Scalar_32,
+    Scalar_64,
+    Scalar_11_11_10,
+
+    Scalar_32_Int_24_8,
 };
 
 enum class Severity : uint8
@@ -316,7 +322,7 @@ enum class ProfilingTerm
 {
     ElapsedTime,
     ScreenSamples,
-    Primitives,
+    ScreenPrimitives,
     TransformedPrimitives,
 };
 

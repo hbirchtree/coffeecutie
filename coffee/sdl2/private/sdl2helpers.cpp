@@ -30,34 +30,36 @@ void _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GLattr attr, uint8* target)
 
 //Exported functions
 
-Uint32 coffee_sdl2_interpret_winflags(CDWindowProperties::State const& flags)
+Uint32 coffee_sdl2_interpret_winflags(CDProperties::State const& flags)
 {
     Uint32 res = 0;
 
-    if(flags&CDWindowProperties::Visible)
+    if(flags&CDProperties::Visible)
         res|=SDL_WINDOW_SHOWN;
     else
         res|=SDL_WINDOW_HIDDEN;
 
     res |= _coffee_sdl2_toggle_flag(
-                flags&CDWindowProperties::State::Undecorated,SDL_WINDOW_BORDERLESS);
+                flags&CDProperties::State::Undecorated,SDL_WINDOW_BORDERLESS);
 
     res |= _coffee_sdl2_toggle_flag(
-                flags&CDWindowProperties::State::FullScreen,SDL_WINDOW_FULLSCREEN);
+                flags&CDProperties::State::FullScreen,SDL_WINDOW_FULLSCREEN);
     res |= _coffee_sdl2_toggle_flag(
-                flags&CDWindowProperties::State::WindowedFullScreen,SDL_WINDOW_FULLSCREEN_DESKTOP);
+                flags&CDProperties::State::WindowedFullScreen,SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     res |= _coffee_sdl2_toggle_flag(
-                flags&CDWindowProperties::State::Resizable,SDL_WINDOW_RESIZABLE);
+                flags&CDProperties::State::Resizable,SDL_WINDOW_RESIZABLE);
     res |= _coffee_sdl2_toggle_flag(
-                flags&CDWindowProperties::State::Minimized,SDL_WINDOW_MINIMIZED);
+                flags&CDProperties::State::Minimized,SDL_WINDOW_MINIMIZED);
     res |= _coffee_sdl2_toggle_flag(
-                flags&CDWindowProperties::State::Maximized,SDL_WINDOW_MAXIMIZED);
+                flags&CDProperties::State::Maximized,SDL_WINDOW_MAXIMIZED);
+    res |= _coffee_sdl2_toggle_flag(
+                flags&CDProperties::State::Visible,SDL_WINDOW_SHOWN);
 
     return res;
 }
 
-void coffee_sdl2_set_context_properties(const CGLContextProperties &props)
+void coffee_sdl2_set_context_properties(const GLProperties &props)
 {
     SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE,props.bits.accum.r);
     SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE,props.bits.accum.g);
@@ -75,23 +77,23 @@ void coffee_sdl2_set_context_properties(const CGLContextProperties &props)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION,props.version.major);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,props.version.minor);
 
-    if(props.flags&CGLContextProperties::Flags::GLCoreProfile)
+    if(props.flags&GLProperties::Flags::GLCoreProfile)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
 
     int32 cflags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 
-    if(props.flags&CGLContextProperties::Flags::GLDebug)
+    if(props.flags&GLProperties::Flags::GLDebug)
         cflags|=SDL_GL_CONTEXT_DEBUG_FLAG;
 
-    if(props.flags&CGLContextProperties::Flags::GLRobust)
+    if(props.flags&GLProperties::Flags::GLRobust)
         cflags|=SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
 }
 
-CGLContextProperties coffee_sdl2_get_context_properties()
+GLProperties coffee_sdl2_get_context_properties()
 {
-    CGLContextProperties props;
+    GLProperties props;
 
     _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GL_RED_SIZE,&props.bits.red);
     _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GL_GREEN_SIZE,&props.bits.green);
@@ -107,76 +109,76 @@ CGLContextProperties coffee_sdl2_get_context_properties()
             _coffee_sdl2_get_gl_attribute(SDL_GL_CONTEXT_MINOR_VERSION);
 
     if(_coffee_sdl2_get_gl_attribute(SDL_GL_CONTEXT_PROFILE_MASK)==SDL_GL_CONTEXT_PROFILE_CORE)
-        props.flags|=CGLContextProperties::GLCoreProfile;
+        props.flags|=GLProperties::GLCoreProfile;
 
     int32 cflags = _coffee_sdl2_get_gl_attribute(SDL_GL_CONTEXT_FLAGS);
 
     if(cflags&SDL_GL_CONTEXT_DEBUG_FLAG)
-        props.flags|=CGLContextProperties::GLDebug;
+        props.flags|=GLProperties::GLDebug;
     if(cflags&SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG)
-        props.flags|=CGLContextProperties::GLRobust;
+        props.flags|=GLProperties::GLRobust;
 
     return props;
 }
 
-CDWindowProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
+CDProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
 {
     Uint32 flags = SDL_GetWindowFlags(win);
-    CDWindowProperties::State res = CDWindowProperties::State(0);
+    CDProperties::State res = CDProperties::State(0);
 
     if(flags&SDL_WINDOW_BORDERLESS)
-        res|=CDWindowProperties::Undecorated;
+        res|=CDProperties::Undecorated;
 
     if(flags&SDL_WINDOW_FULLSCREEN)
-        res|=CDWindowProperties::FullScreen;
+        res|=CDProperties::FullScreen;
 
     else if(flags&SDL_WINDOW_FULLSCREEN_DESKTOP)
-        res|=CDWindowProperties::WindowedFullScreen;
+        res|=CDProperties::WindowedFullScreen;
     else
-        res|=CDWindowProperties::Windowed;
+        res|=CDProperties::Windowed;
 
     if(flags&SDL_WINDOW_RESIZABLE)
-        res|=CDWindowProperties::Resizable;
+        res|=CDProperties::Resizable;
 
     if(flags&SDL_WINDOW_MINIMIZED)
-        res|=CDWindowProperties::Minimized;
+        res|=CDProperties::Minimized;
     if(flags&SDL_WINDOW_MAXIMIZED)
-        res|=CDWindowProperties::Maximized;
+        res|=CDProperties::Maximized;
 
     if(flags&SDL_WINDOW_SHOWN)
-        res|=CDWindowProperties::Visible;
+        res|=CDProperties::Visible;
 
     if(flags&SDL_WINDOW_INPUT_FOCUS)
-        res|=CDWindowProperties::Focused;
+        res|=CDProperties::Focused;
 
     if(flags&SDL_WINDOW_FOREIGN)
-        res|=CDWindowProperties::Foreign;
+        res|=CDProperties::Foreign;
 
     return res;
 }
 
-void coffee_sdl2_set_winflags(SDL_Window* window,CDWindowProperties::State const& state)
+void coffee_sdl2_set_winflags(SDL_Window* window,CDProperties::State const& state)
 {
-    if(!(state&CDWindowProperties::Undecorated))
+    if(!(state&CDProperties::Undecorated))
         SDL_SetWindowBordered(window,SDL_TRUE);
     else
         SDL_SetWindowBordered(window,SDL_FALSE);
 
-    if(state&CDWindowProperties::FullScreen)
+    if(state&CDProperties::FullScreen)
         SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN);
-    else if(state&CDWindowProperties::WindowedFullScreen)
+    else if(state&CDProperties::WindowedFullScreen)
         SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN_DESKTOP);
     else
         SDL_SetWindowFullscreen(window,0);
 
-    if(state&CDWindowProperties::Minimized)
+    if(state&CDProperties::Minimized)
         SDL_MinimizeWindow(window);
-    if(state&CDWindowProperties::Normal)
+    if(state&CDProperties::Normal)
         SDL_RestoreWindow(window);
-    if(state&CDWindowProperties::Maximized)
+    if(state&CDProperties::Maximized)
         SDL_MaximizeWindow(window);
 
-    if(state&CDWindowProperties::Focused)
+    if(state&CDProperties::Focused)
         SDL_RaiseWindow(window);
 }
 

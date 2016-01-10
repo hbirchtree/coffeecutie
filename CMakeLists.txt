@@ -4,6 +4,11 @@ cmake_minimum_required( VERSION 3.1 )
 option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG C# binding" OFF )
 option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
+#TODO: Make these options functional
+option ( COFFEE_BUILD_GLBINDING "Build with GLBinding library" ON)
+option ( COFFEE_BUILD_OPENAL "Build with OpenAL" ON)
+option ( COFFEE_BUILD_OPENAL "Build with OpenAL" ON)
+
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
@@ -112,6 +117,10 @@ set (
 set (
     COFFEE_SDL2_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/coffee/sdl2/include
+    )
+set (
+    COFFEE_OPENVR_INCLUDE_DIR
+        ${CMAKE_SOURCE_DIR}/coffee/openvr/include
     )
 
 add_subdirectory(coffee)

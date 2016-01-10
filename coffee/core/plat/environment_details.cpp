@@ -62,13 +62,13 @@ bool env_clear_all()
 
 cstring_w env_concatenate_path(cstring_w target, cstring v2)
 {
-    szptr len = ((target) ? c_strlen(target)+1 : 0)+c_strlen(v2)+1;
-    cstring_w p = (cstring_w)c_realloc(target,len);
+    szptr len = ((target) ? CStrLen(target)+1 : 0)+CStrLen(v2)+1;
+    cstring_w p = (cstring_w)CRealloc(target,len);
     if(target) //In the case where we start out with an empty buffer
-        c_strcat(p,env_get_path_separator());
+        CStrCat(p,env_get_path_separator());
     else
         p[0] = '\0';
-    return c_strcat(p,v2);
+    return CStrCat(p,v2);
 }
 
 cstring_w env_get_user_home()
@@ -139,7 +139,7 @@ cstring_w env_get_application_dir()
 cstring_w env_get_current_dir()
 {
 #if defined(COFFEE_LINUX)
-    cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+    cstring_w cwd = (cstring_w)Alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
     return getcwd(cwd,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 #elif defined(COFFEE_WINDOWS)
     cstring_w cwd = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);

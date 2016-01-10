@@ -31,7 +31,7 @@ struct CStbImageConst
 /*!
  * \brief Print any potential STB errors
  */
-extern void error();
+extern void Error();
 /*!
  * \brief Load STB image from file
  * \param target Target to load into
@@ -58,7 +58,7 @@ extern void _stbi_write_data(
  * \param channels Amount of channels
  * \return True if success
  */
-extern bool resize(
+extern bool Resize(
         CStbImage* img,
         const CSize& target,
         int channels);
@@ -68,7 +68,7 @@ extern bool resize(
  * \param src STB image to save
  * \return
  */
-extern bool save_png(
+extern bool SavePNG(
         CResource* target,
         const CStbImageConst* src);
 /*!
@@ -77,7 +77,7 @@ extern bool save_png(
  * \param src STB image to save
  * \return
  */
-extern bool save_png(
+extern bool SavePNG(
         CResource* target,
         const CStbImage* src);
 /*!
@@ -86,7 +86,7 @@ extern bool save_png(
  * \param src STB image to save
  * \return
  */
-extern bool save_tga(
+extern bool SaveTGA(
         CResource* target,
         const CStbImage* src);
 
@@ -94,19 +94,19 @@ extern bool save_tga(
  * \brief Flip image vertically, allocates and frees memory
  * \param src
  */
-extern void flip_vertical(
+extern void FlipVertical(
         CStbImage* src);
 /*!
  * \brief Flip image horizontally, allocates and frees memory
  * \param src
  */
-extern void flip_horizontal(
+extern void FlipHorizontal(
         CStbImage* src);
 /*!
  * \brief Free image data
  * \param img
  */
-extern void image_free(CStbImage* img);
+extern void ImageFree(CStbImage* img);
 
 } //CStbImageLib
 
@@ -118,7 +118,7 @@ namespace CImage{
  * \param imgData
  * \param outdata
  */
-extern void save_tga(const CSize &resolution,
+extern void SaveTGA(const CSize &resolution,
                      const CByteData &imgData,
                      CByteData &outdata);
 

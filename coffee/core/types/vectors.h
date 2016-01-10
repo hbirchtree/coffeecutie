@@ -53,7 +53,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             const T& c)
     {
         static_assert((Size-1) > 1,"Invalid vector combination!");
-        for(size_t i=0;i<(Size-1);i++)
+        for(size_t i=0;i<Size-1;i++)
             this[i] = v[i];
         this[Size-1] = c;
     }
@@ -138,6 +138,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
         return (*this)[3];
     }
 
+    template<class = typename std::enable_if<Size==2>>
     T& u()
     {
         return (*this)[0];
@@ -148,6 +149,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
         return (*this)[1];
     }
 
+    template<class = typename std::enable_if<Size==2>>
     const T& u() const
     {
         return (*this)[0];
@@ -157,6 +159,21 @@ template<typename T, size_t Size> struct _cbasic_tvector
     {
         return (*this)[1];
     }
+
+    /*Swizzling operators!*/
+
+    template<class = typename std::enable_if<Size==4>>
+    _cbasic_tvector<T,Size-1> xyz() const
+    {
+        return _cbasic_tvector<T,Size-1>(*this);
+    }
+    template<class = typename std::enable_if<Size==3>>
+    _cbasic_tvector<T,Size-1> xy() const
+    {
+        return _cbasic_tvector<T,Size-1>(*this);
+    }
+
+    /*No more swizzles*/
 
     inline C_FORCE_INLINE T& operator[](size_t i)
     {

@@ -46,18 +46,18 @@ void CDRenderer::run()
     coffee_test_fun_set(game);
 
     CResource gdata("ubw/ubw.blend");
-    coffee_file_pull(gdata);
+    FilePull(gdata);
     CAssimpData* d2 = CAssimpImporters::importResource(&gdata,gdata.resource());
     for(szptr i=0;i<d2->numMeshes;i++)
         game->meshes.push_back(d2->meshes[i]);
-    coffee_file_free(gdata);
+    FileFree(gdata);
 
     CResource zdata("ubw/zelda_1.fbx");
-    coffee_file_pull(zdata);
+    FilePull(zdata);
     CAssimpData* d1 = CAssimpImporters::importResource(&zdata,zdata.resource());
     for(szptr i=0;i<d1->numMeshes;i++)
         game->meshes.push_back(d1->meshes[i]);
-    coffee_file_free(zdata);
+    FileFree(zdata);
 
     if(!coffee_test_load(game))
         return;
@@ -141,7 +141,7 @@ void CDRenderer::run()
     cMsg("Coffee","Termination time: {0}us",swap->elapsed());
 }
 
-void CDRenderer::run(const CDWindowProperties& props)
+void CDRenderer::run(const CDProperties& props)
 {
     init(props);
     run();
@@ -155,7 +155,7 @@ void CDRenderer::eventHandleD(const CDEvent &event, c_cptr data)
     {
     case CDEvent::Resize:
     {
-        if(m_properties.contextProperties.flags&CGLContextProperties::GLAutoResize){
+        if(m_properties.gl.flags&GLProperties::GLAutoResize){
             const CDResizeEvent* resize = (const CDResizeEvent*)data;
             coffee_graphics_set_viewport(*resize);
 

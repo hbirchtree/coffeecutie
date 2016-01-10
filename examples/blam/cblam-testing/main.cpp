@@ -11,15 +11,15 @@ using namespace CBlam;
  */
 int coffee_main(int32 argv,byte_t** argc)
 {
-    CResources::coffee_file_set_resource_prefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/");
 
     cstring mapstring = coffee_args_get_arg(argv,argc,"halomap");
     if(!mapstring)
         return 1;
     CResource mapfile(mapstring);
     CResource bitmfile("cblam_data/bitmaps.map");
-    coffee_file_memmap(bitmfile);
-    coffee_file_memmap(mapfile);
+    FileMap(bitmfile);
+    FileMap(mapfile);
     const file_header_t* map =
             blam_file_header_get(mapfile.data,version_t::pc);
     tag_index_t tags = blam_tag_index_get(map);

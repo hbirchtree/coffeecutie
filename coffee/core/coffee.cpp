@@ -64,6 +64,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
     if(!coffee_initialized)
         cWarning("CoffeeInit was not called");
     cDebug("CoffeeMain is in use");
+    cDebug("Running on {0}",CoffeeCompilerString);
     int32 r = mainfun(argv,argc);
     CoffeeTerminate();
     return r;

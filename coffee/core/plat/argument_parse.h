@@ -14,7 +14,7 @@ extern cstring_w executable_name(cstring_w n = nullptr);
 
 static cstring _switch_short(cstring in)
 {
-    if(c_strlen(in)<2)
+    if(CStrLen(in)<2)
         return in;
     if(in[0]!=COFFEE_ARG_SWITCH)
         return in;
@@ -23,17 +23,17 @@ static cstring _switch_short(cstring in)
 static cstring _switch_long(cstring in)
 {
     //Very crude, indeed
-    if(c_strlen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
+    if(CStrLen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
         return in;
     return &in[2];
 }
 static bool _cmp_short_switch(cstring in, cstring sw)
 {
-    return c_strcmp(_switch_short(in),sw)==0;
+    return CStrCmp(_switch_short(in),sw)==0;
 }
 static bool _cmp_long_switch(cstring in, cstring sw)
 {
-    return c_strcmp(_switch_long(in),sw)==0;
+    return CStrCmp(_switch_long(in),sw)==0;
 }
 inline static bool coffee_args_check_switch(
         int argc, cstring_w* argv, cstring sw)

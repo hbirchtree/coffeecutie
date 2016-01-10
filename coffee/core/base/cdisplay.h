@@ -86,10 +86,10 @@ typedef CSize CDResizeEvent;
 /*!
  * \brief GL context version
  */
-struct CGLContextVersion : public _cbasic_version<uint8>
+struct CGLVersion : public _cbasic_version<uint8>
 {
-    CGLContextVersion();
-    CGLContextVersion(uint8 maj, uint8 min);
+    CGLVersion();
+    CGLVersion(uint8 maj, uint8 min);
 };
 
 /*!
@@ -133,9 +133,9 @@ C_FLAGS(CDFocusEvent::FocusMask,uint8);
 /*!
  * \brief GL context properties to set on start-up
  */
-struct CGLContextProperties
+struct GLProperties
 {
-    CGLContextProperties();
+    GLProperties();
 
     enum Flags : uint32{
         GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
@@ -150,14 +150,14 @@ struct CGLContextProperties
     };
     CDContextBits       bits; /*!< Context bits*/
     Flags               flags; /*!< Context flags*/
-    CGLContextVersion   version; /*!< Context version*/
+    CGLVersion   version; /*!< Context version*/
 };
 /*!
  * \brief Window properties to set on start-up
  */
-struct CDWindowProperties
+struct CDProperties
 {
-    CDWindowProperties();
+    CDProperties();
 
     enum State : uint16{
         FullScreen          = 0x001, /*!< Exclusive fullscreen mode*/
@@ -184,15 +184,15 @@ struct CDWindowProperties
     State                   flags; /*!< Window flags*/
     uint16                  monitor; /*!< Monitor to use with fullscreen*/
     CSize                   size; /*!< Size of window*/
-    CGLContextProperties    contextProperties; /*!< Context properties to set*/
+    GLProperties    gl; /*!< Context properties to set*/
     cstring                 title; /*!< Window title to start with*/
     CDWindow*               window; /*!< If applicable, contains data about a window*/
 };
 
-C_FLAGS(CDWindowProperties::State,uint16);
-C_FLAGS(CGLContextProperties::Flags,uint8);
+C_FLAGS(CDProperties::State,uint16);
+C_FLAGS(GLProperties::Flags,uint8);
 
-extern CDWindowProperties coffee_get_default_visual(const int32& ctxtMajorVer = 3,
+extern CDProperties coffee_get_default_visual(const int32& ctxtMajorVer = 3,
                                                     const int32& ctxtMinorVer = 3);
 
 }

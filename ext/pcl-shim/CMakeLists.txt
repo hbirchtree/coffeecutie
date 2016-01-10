@@ -2,7 +2,7 @@ set ( CPointClouds_SRCS
         private/cpcl.cpp
     )
 
-find_package(PCL 1.7 REQUIRED COMPONENTS common io registration recognition keypoints modeler visualization)
+find_package(PCL 1.7 REQUIRED COMPONENTS common io registration recognition surface keypoints modeler visualization)
 
 include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -23,6 +23,7 @@ target_link_libraries( CoffeePCL
         ${PCL_COMMON_LIBRARIES}
         ${PCL_IO_LIBRARIES}
         ${PCL_REGISTRATION_LIBRARIES}
+        ${PCL_SURFACE_LIBRARIES}
         ${PCL_RECOGNITION_LIBRARIES}
         ${PCL_KEYPOINTS_LIBRARIES}
         ${PCL_MODELER_LIBRARIES}

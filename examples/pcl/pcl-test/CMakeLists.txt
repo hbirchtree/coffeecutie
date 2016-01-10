@@ -14,8 +14,8 @@ add_executable ( PCLTest ${TemplateTest_SRCS} )
 
 target_link_libraries ( PCLTest
         CoffeeCore
+        CoffeeImage
         CoffeeGraphicsMisc
-        CoffeeOpenGL
         CoffeePCL
     )
 

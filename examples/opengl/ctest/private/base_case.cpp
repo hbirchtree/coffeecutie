@@ -77,10 +77,10 @@ szptr coffee_shader_program_load(const game_shader_program_desc &desc, game_cont
 
     CResource v(desc.shader_v); //Vertex shader
     CResource f(desc.shader_f); //Fragment shader
-    if(!coffee_file_exists(v)||!coffee_file_exists(f))
+    if(!FileExists(v)||!FileExists(f))
         cFatal("Failed to locate shaders");
-    coffee_file_pull(v,true);
-    coffee_file_pull(f,true);
+    FilePull(v,true);
+    FilePull(f,true);
 
     CSimplePipeline& ppl = ctxt->shaders.pipelines.d[pl_idx];
 
@@ -88,8 +88,8 @@ szptr coffee_shader_program_load(const game_shader_program_desc &desc, game_cont
 
     ppl.create((cstring)v.data,(cstring)f.data);
 
-    coffee_file_free(v);
-    coffee_file_free(f);
+    FileFree(v);
+    FileFree(f);
 
     return pl_idx;
 }
@@ -256,7 +256,7 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     {
         transform_dummy.position = CVec3(0,0,i/2);
         transform_dummy.scale = CVec3(1);
-        matrix_data.push_back(coffee_graphics_gen_transform(transform_dummy));
+        matrix_data.push_back(GenTransform(transform_dummy));
     }
     transform_dummy.position = CVec3(0,0,-3);
     my_transform = transform_dummy;
@@ -290,8 +290,8 @@ void coffee_test_def_transforms(game_context* ctxt, szptr numGears)
     my_camera.zVals.far = 100.f;
     my_camera.zVals.near = 1.f;
 
-    CMat4 cam_matrix = coffee_graphics_gen_perspective(my_camera)
-            * coffee_graphics_gen_transform(my_camera);
+    CMat4 cam_matrix = GenPerspective(my_camera)
+            * GenTransform(my_camera);
 
     coffee_graphics_buffer_store_immutable(camera_buffer,&cam_matrix,sizeof(CMat4),
                                            CBufferConstants::PersistentStorageFlags());
@@ -338,8 +338,8 @@ bool coffee_test_load(game_context *ctxt)
     {
         CResources::CResource mapfile("cblam_data/bloodgulch.map");
         CResources::CResource bitmfile("cblam_data/bitmaps.map");
-        coffee_file_memmap(bitmfile);
-        coffee_file_memmap(mapfile);
+        FileMap(bitmfile);
+        FileMap(mapfile);
         const CBlam::file_header_t* map =
                 CBlam::blam_file_header_get(mapfile.data,CBlam::version_t::pc);
         CBlam::tag_index_t tags = CBlam::blam_tag_index_get(map);
@@ -349,7 +349,7 @@ bool coffee_test_load(game_context *ctxt)
         for(int32 i=0;i<tags.tagCount;i++)
         {
             idx = &base_idx[i];
-            if(c_memcmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
+            if(CMemCmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
             {
                 int32 num = 0;
                 const CBlam::bitm_image_t* img =
@@ -362,8 +362,8 @@ bool coffee_test_load(game_context *ctxt)
 //                cDebug("Image: {0},d={1},f={2}",t,img->depth,(uint16)img->format);
             }
         }
-        coffee_file_memunmap(bitmfile);
-        coffee_file_memunmap(mapfile);
+        FileUnmap(bitmfile);
+        FileUnmap(mapfile);
     }
 
     return true;
@@ -407,15 +407,15 @@ void coffee_render_test(game_context *ctxt, double)
     CTransform& transform = ctxt->transforms.transforms.d[0];
 
     //Generate our matrices
-    CMat4 mtransform = coffee_graphics_gen_transform(transform);
-    CMat4 mcamera = coffee_graphics_gen_perspective(camera)
-            * coffee_graphics_gen_transform(camera);
+    CMat4 mtransform = GenTransform(transform);
+    CMat4 mcamera = GenPerspective(camera)
+            * GenTransform(camera);
 
     //Copy memory into GL
-    c_memcpy(ctxt->renderdata.buffers.d[4].data,
+    CMemCpy(ctxt->renderdata.buffers.d[4].data,
             &mcamera,
             sizeof(CMat4));
-    c_memcpy(ctxt->renderdata.buffers.d[2].data,
+    CMemCpy(ctxt->renderdata.buffers.d[2].data,
             &mtransform,
             sizeof(CMat4));
 
@@ -453,26 +453,26 @@ void coffee_unload_test(game_context *ctxt)
     for(i=0;i<ctxt->texsamplerstorage.size;i++)
         coffee_graphics_free(ctxt->texsamplerstorage.d[i]);
 
-    free(ctxt->texsamplerstorage.d);
-    free(ctxt->texstorage.d);
+    CFree(ctxt->texsamplerstorage.d);
+    CFree(ctxt->texstorage.d);
 
-    free(ctxt->vertexdata.buffers.d);
-    free(ctxt->vertexdata.data.d);
-    free(ctxt->vertexdata.descriptor.arrays.d);
-    free(ctxt->vertexdata.descriptor.bindings.d);
-    free(ctxt->vertexdata.descriptor.formats.d);
+    CFree(ctxt->vertexdata.buffers.d);
+    CFree(ctxt->vertexdata.data.d);
+    CFree(ctxt->vertexdata.descriptor.arrays.d);
+    CFree(ctxt->vertexdata.descriptor.bindings.d);
+    CFree(ctxt->vertexdata.descriptor.formats.d);
 
-    free(ctxt->renderdata.buffers.d);
-    free(ctxt->renderdata.subbuffers.d);
-    free(ctxt->renderdata.bufferbindings.d);
-    free(ctxt->renderdata.storageblocks.d);
+    CFree(ctxt->renderdata.buffers.d);
+    CFree(ctxt->renderdata.subbuffers.d);
+    CFree(ctxt->renderdata.bufferbindings.d);
+    CFree(ctxt->renderdata.storageblocks.d);
 
-    free(ctxt->resources.d);
+    CFree(ctxt->resources.d);
 
-    free(ctxt->shaders.pipelines.d);
+    CFree(ctxt->shaders.pipelines.d);
 
-    free(ctxt->transforms.cameras.d);
-    free(ctxt->transforms.transforms.d);
+    CFree(ctxt->transforms.cameras.d);
+    CFree(ctxt->transforms.transforms.d);
 }
 
 }

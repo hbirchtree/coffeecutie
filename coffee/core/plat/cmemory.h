@@ -1,57 +1,136 @@
 #ifndef COFFEE_PLAT_MEMORY_H
 #define COFFEE_PLAT_MEMORY_H
 
+#include <malloc.h>
+#include <cstring>
+#include <cwchar>
+
+#include "coffee/core/coffee_mem_macros.h"
 #include "coffee/core/types/basetypes.h"
 
 namespace Coffee{
 namespace CMem{
 
-extern cstring c_gets(cstring_w target, int32 size, FILE* strm);
+inline C_FORCE_INLINE cstring CGets(cstring_w target, int32 size, FILE* strm)
+{
+    return fgets(target,size,strm);
+}
 
-extern void c_puts(FILE* strm, cstring output);
+inline C_FORCE_INLINE void CPuts(FILE* strm, cstring output)
+{
+    fputs(output,strm);
+}
 
-extern void c_free(c_ptr data);
+inline C_FORCE_INLINE void CFree(c_ptr data)
+{
+    free(data);
+}
 
-extern bool c_memcmp(c_cptr target, c_cptr cmp, szptr len);
+inline C_FORCE_INLINE bool CMemCmp(c_cptr target, c_cptr cmp, szptr len)
+{
+    return memcmp(target,cmp,len)==0;
+}
 
-extern void c_memcpy(c_ptr dest, c_cptr source, szptr len);
+inline C_FORCE_INLINE void CMemCpy(c_ptr dest, c_cptr source, szptr len)
+{
+    memcpy(dest,source,len);
+}
 
-extern void c_memclear(c_ptr start, szptr len);
+inline C_FORCE_INLINE void CMemClear(c_ptr start, szptr len)
+{
+    memset(start,0,len);
+}
 
-extern void* c_alloc(szptr datasize);
+inline C_FORCE_INLINE void* Alloc(szptr datasize)
+{
+    return malloc(datasize);
+}
 
-extern void* c_realloc(c_ptr ptr, szptr datasize);
-/*!
- * \brief Should provide a 0-initialized chunk of memory
- * \param unit
- * \param num
- * \return
- */
-extern void* c_calloc(szptr unit, szptr num);
+inline C_FORCE_INLINE void* CRealloc(c_ptr ptr, szptr datasize)
+{
+    return realloc(ptr,datasize);
+}
 
-extern bool c_strcmp(cstring s1, cstring s2);
+inline C_FORCE_INLINE void* CCalloc(szptr unit, szptr num)
+{
+    return calloc(unit,num);
+}
 
-extern cstring_w c_strcat(cstring_w s1, cstring s2);
+inline C_FORCE_INLINE bool CStrCmp(cstring s1, cstring s2)
+{
+    return strcmp(s1,s2)==0;
+}
 
-extern bool c_strstr(cstring s1,cstring s2);
+inline C_FORCE_INLINE cstring_w CStrCat(cstring_w s1, cstring s2)
+{
+    return strcat(s1,s2);
+}
 
-extern int c_strlen(cstring s);
+inline C_FORCE_INLINE bool CStrFind(cstring s1,cstring s2)
+{
+    return strstr(s1,s2);
+}
 
-extern int c_strlen(cwstring s);
+inline C_FORCE_INLINE int CStrLen(cstring s)
+{
+    return strlen(s);
+}
 
-extern cstring_w c_cpy_string(cstring str);
+inline C_FORCE_INLINE int CStrLen(cwstring s)
+{
+    return wcslen(s);
+}
 
-extern cwstring_w c_str_wideconvert(cstring str);
+inline C_FORCE_INLINE cstring_w CCpyStr(cstring str)
+{
+    cstring_w buf = (cstring_w)(Alloc(strlen(str)+1));
+    strcpy(buf,str);
+    return buf;
+}
 
-extern cstring_w c_str_narrowconvert(cwstring str);
+inline C_FORCE_INLINE cwstring_w CStrWConvert(cstring str)
+{
+    size_t sz = strlen(str)+1;
+    cwstring_w out = (cwstring_w)CCalloc(sizeof(int16),sz);
+    mbstowcs(out,str,sz);
+    return out;
+}
 
-extern cstring_w c_str_replace(
-        cstring target, cstring query,
-        cstring replacement);
+inline C_FORCE_INLINE cstring_w CStrNConvert(cwstring str)
+{
+    size_t sz = wcslen(str)+1;
+    cstring_w out = (cstring_w)CCalloc(sizeof(int8),sz);
+    wcstombs(out,str,sz);
+    out[sz-1] = 0;
+    return out;
+}
 
-extern CString c_str_replace(
+inline C_FORCE_INLINE CString CStrReplace(
         const CString &target, const CString &query,
-        const CString &replacement);
+        const CString &replacement)
+{
+    CString out = target;
+    for(size_t pos=0;;pos+=replacement.length())
+    {
+        pos = out.find(query,pos);
+        if(pos==std::string::npos)
+            break;
+        out.erase(pos,query.length());
+        out.insert(pos,replacement);
+    }
+    return out;
+}
+
+inline C_FORCE_INLINE cstring_w CStrReplace(
+        cstring target, cstring query,
+        cstring replacement)
+{
+    CString res = CStrReplace(CString(target),CString(query),CString(replacement));
+    cstring_w out = (cstring_w)Alloc(res.size()+1);
+    res.copy(out,res.size());
+    out[res.size()] = 0;
+    return out;
+}
 
 }
 

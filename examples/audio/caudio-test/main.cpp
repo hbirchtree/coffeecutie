@@ -24,9 +24,9 @@ public:
         CAudioSample smp;
         //Read audio sample from file
         CResources::CResource rsc("caudio_test/monosample.ogg");
-        coffee_file_pull(rsc);
+        FilePull(rsc);
         CStbAudio::vorbis_load(&smp,&rsc);
-        coffee_file_free(rsc);
+        FileFree(rsc);
 
         //Acquire an audio device, create a soundtrack
         CALSoundManager man;
@@ -55,7 +55,7 @@ public:
         strm.feedData(smp.data,fmt,smp.samples);
 
         //Free sample data from source
-        c_free(smp.data);
+        CFree(smp.data);
 
         m_track = &track;
         m_sample = &samp;
@@ -103,7 +103,7 @@ public:
 
 int32 coffee_main(int32 argc, byte_t** argv)
 {
-    CResources::coffee_file_set_resource_prefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/");
 
     CDRendererBase *renderer = new CDRenderer();
     renderer->init(coffee_get_default_visual());

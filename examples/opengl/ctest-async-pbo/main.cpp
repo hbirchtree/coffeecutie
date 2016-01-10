@@ -149,9 +149,9 @@ public:
         camera.aspect = 1.6f;
         camera.position = CVec3(0,0,-3);
 
-        rtf = coffee_graphics_gen_transform(root);
-        wtf = coffee_graphics_gen_perspective(camera)
-                * coffee_graphics_gen_transform(camera);
+        rtf = GenTransform(root);
+        wtf = GenPerspective(camera)
+                * GenTransform(camera);
 
         CNode worldNode;
         worldNode.transform = &wtf;
@@ -189,10 +189,10 @@ public:
         texsize.width = texsize.height = 1024;
         CByteData initTexData;
         initTexData.size = coffee_graphics_tex_get_size(texsize,CTexFormat::RGBA);
-        initTexData.data = (byte_t*)c_alloc(initTexData.size);
+        initTexData.data = (byte_t*)Alloc(initTexData.size);
         CByteData texstorage_2;
         texstorage_2.size = initTexData.size;
-        texstorage_2.data = (byte_t*)c_alloc(texstorage_2.size);
+        texstorage_2.data = (byte_t*)Alloc(texstorage_2.size);
 
         {
             CRGBA* d1 = (CRGBA*)initTexData.data;
@@ -244,11 +244,11 @@ public:
             {
                 camera.position.x() = CMath::fmod(this->contextTime(),3.0)-1.5;
 
-                wtf = coffee_graphics_gen_perspective(camera)
-                        * coffee_graphics_gen_transform(camera);
+                wtf = GenPerspective(camera)
+                        * GenTransform(camera);
                 rt = coffee_node_get_transform(&rootNode);
 
-                c_memcpy(transforms.current().data,&rt,sizeof(rt));
+                CMemCpy(transforms.current().data,&rt,sizeof(rt));
 
                 for(int i=0;i<4;i++)
                 {
@@ -291,8 +291,8 @@ public:
             this->pollEvents();
         }
 
-        c_free(initTexData.data);
-        c_free(texstorage_2.data);
+        CFree(initTexData.data);
+        CFree(texstorage_2.data);
 
         coffee_graphics_free(vao);
         coffee_graphics_free(vertices);
@@ -334,14 +334,14 @@ private:
 
 int32 coffee_main(int32, byte_t**)
 {
-    CResources::coffee_file_set_resource_prefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/");
 
     CDRendererBase *renderer = new CDHudRenderer();
-    CDWindowProperties props = coffee_get_default_visual();
-    props.contextProperties.flags =
-            props.contextProperties.flags|
+    CDProperties props = coffee_get_default_visual();
+    props.gl.flags =
+            props.gl.flags|
 //            CGLContextProperties::GLFeatureLevelProfile|
-            CGLContextProperties::GLDebug;
+            GLProperties::GLDebug;
     renderer->init(props);
     renderer->run();
     renderer->cleanup();

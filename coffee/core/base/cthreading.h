@@ -24,7 +24,7 @@ struct CThreadId
     uint64 hash()
     {
         //TODO: Implement hash of thread IDs
-        return 0;
+        return std::hash<std::thread::id>()(m_id);
     }
 private:
     const std::thread::id m_id;

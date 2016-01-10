@@ -72,7 +72,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
 
     {
         data->numMeshes = meshes.size();
-        data->meshes    = (CAssimpMesh**)c_calloc(
+        data->meshes    = (CAssimpMesh**)CCalloc(
                     meshes.size(),
                     sizeof(CAssimpMesh*));
         i=0;
@@ -93,8 +93,8 @@ void coffee_assimp_free(CAssimp::CAssimpData *data)
 {
     szptr i;
     for(i=0;i<data->numMeshes;i++)
-        c_free(data->meshes[i]);
-    c_free(data->meshes);
+        CFree(data->meshes[i]);
+    CFree(data->meshes);
 }
 
 byte_t *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *ref)
@@ -112,18 +112,18 @@ bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, CResource *resource)
 {
     bool success = false;
 
-    coffee_file_free(*resource);
+    FileFree(*resource);
 
     resource->size = mesh->byteSize;
-    resource->data = c_alloc(resource->size);
+    resource->data = Alloc(resource->size);
 
-    c_memcpy(resource->data,mesh,resource->size);
+    CMemCpy(resource->data,mesh,resource->size);
 
-    if(!coffee_file_commit(*resource))
+    if(!FileCommit(*resource))
         cWarning("Failed to store mesh data");
     else success = true;
 
-    coffee_file_free(*resource);
+    FileFree(*resource);
 
     return success;
 }

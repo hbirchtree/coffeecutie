@@ -20,6 +20,8 @@ struct CSDL2Context{
 
     CGL::CGL_Context* context;
 
+    std::vector<CGL::CGL_Context*> m_subcontexts;
+
     SDL_Event eventhandle;
     uint8 contextFlags = 0;
 
