@@ -2,6 +2,7 @@
 
 #include <signal.h>
 
+#include "coffee/core/plat/platform_detect.h"
 #include "base/cdebug.h"
 #include "coffee/core/plat/plat_core.h"
 #include "coffee/core/unit_tests/data_types.h"
@@ -57,6 +58,7 @@ void CoffeeInit()
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
 {
+    //TODO: Handle the Windows case of not including the application name
     CoffeeInit();
 #ifndef NDEBUG
     print_builddate();

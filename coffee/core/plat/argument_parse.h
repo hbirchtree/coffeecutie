@@ -35,7 +35,7 @@ static bool _cmp_long_switch(cstring in, cstring sw)
 {
     return CStrCmp(_switch_long(in),sw)==0;
 }
-inline static bool coffee_args_check_switch(
+inline static bool CheckSwitch(
         int argc, cstring_w* argv, cstring sw)
 {
     for(int i=0;i<argc;i++)
@@ -43,7 +43,7 @@ inline static bool coffee_args_check_switch(
             return true;
     return false;
 }
-inline static cstring coffee_args_get_arg(
+inline static cstring GetArgument(
         int argc, cstring_w* argv, cstring sw)
 {
     for(int i=0;i<argc-1;i++)
@@ -68,7 +68,7 @@ inline void coffee_args_get_all(
     /*TODO: Write a better implementation that maps from argv to in_argv*/
     for(int i=0;i<get_argc;i++)
     {
-        out_argv[i] = coffee_args_get_arg(argc,argv,in_argv[i]);
+        out_argv[i] = GetArgument(argc,argv,in_argv[i]);
     }
 }
 

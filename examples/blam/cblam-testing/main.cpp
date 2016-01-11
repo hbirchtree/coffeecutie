@@ -13,20 +13,22 @@ int coffee_main(int32 argv,byte_t** argc)
 {
     CResources::FileResourcePrefix("sample_data/");
 
-    cstring mapstring = coffee_args_get_arg(argv,argc,"halomap");
+//    cstring mapstring = GetArgument(argv,argc,"halomap");
+    cstring mapstring = "cblam_data/bloodgulch.map";
     if(!mapstring)
         return 1;
     CResource mapfile(mapstring);
+    if(!FileExists(mapfile))
+        return 2;
     CResource bitmfile("cblam_data/bitmaps.map");
     FileMap(bitmfile);
-    FileMap(mapfile);
+    if(!FileMap(mapfile))
+        return 3;
     const file_header_t* map =
             blam_file_header_get(mapfile.data,version_t::pc);
     tag_index_t tags = blam_tag_index_get(map);
 
     const blam_scenario* scn = blam_scn_get(map,&tags);
-
-
 
     const blam_scn_bsp_header* sbsp = scn->struct_bsp.data(map,tags.index_magic);
     for(int i=0;i<scn->struct_bsp.count;i++)
@@ -35,7 +37,8 @@ int coffee_main(int32 argv,byte_t** argc)
 //        const blam_scn_chunk* bsp =
 //                (const blam_scn_chunk*)
 //                blam_mptr(map,0,s_bsp->offset);
-        cDebug("Name of BSP: %s",(cstring)blam_mptr(map,tags.index_magic,s_bsp->name_ptr));
+        cDebug("Name of BSP: {0}",(cstring)blam_mptr(map,tags.index_magic,
+                                                    s_bsp->name_ptr));
     }
 
     return 0;

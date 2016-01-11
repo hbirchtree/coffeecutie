@@ -5,7 +5,8 @@
 using namespace Coffee;
 using namespace CDisplay;
 
-using GL = CGL::CGL43;
+using GL = CGL::CGL33;
+using GLEXT = CGL::CGL43;
 
 class CDRenderer : public Coffee::CDisplay::CGLeamRenderer
 {
@@ -37,8 +38,8 @@ public:
         GL::CGhnd pbobuf;
         GL::BufAlloc(1,&pbobuf);
 
-        GL::ViewportSet(0,&leftEye);
-        GL::ViewportSet(1,&rightEye);
+        GLEXT::ViewportSet(0,&leftEye);
+        GLEXT::ViewportSet(1,&rightEye);
 
         cstring vshader = {
             "#version 430 core\n"
@@ -106,36 +107,36 @@ public:
 
         GL::VAOBind(vao);
 
-        GL::CGhnd vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
+        GL::CGhnd vprogram = GLEXT::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
         if(!GL::ProgramValidate(vprogram))
             cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
 
-        GL::CGhnd gprogram = GL::ProgramCreate(GL::ShaderStage::Geometry,1,&gshader);
+        GL::CGhnd gprogram = GLEXT::ProgramCreate(GL::ShaderStage::Geometry,1,&gshader);
         if(!GL::ProgramValidate(gprogram))
             cDebug("Compilation log: {0}",GL::ProgramGetLog(gprogram));
 
-        GL::CGhnd fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&fshader);
+        GL::CGhnd fprogram = GLEXT::ProgramCreate(GL::ShaderStage::Fragment,1,&fshader);
         if(!GL::ProgramValidate(fprogram))
             cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
 
         GL::CGhnd pipeline;
-        GL::PipelineAlloc(1,&pipeline);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
+        GLEXT::PipelineAlloc(1,&pipeline);
+        GLEXT::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
 //        GL::PipelineUseStages(pipeline,GL::ShaderStage::Geometry,gprogram);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
+        GLEXT::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
 
-        GL::PipelineBind(pipeline);
+        GLEXT::PipelineBind(pipeline);
 
         GL::CGhnd cube;
         GL::TexAlloc(1,&cube);
         GL::TexBind(GL::Texture::Cubemap,cube);
-        GL::TexStorage2D(GL::Texture::Cubemap,1,PixelFormat::RGBA8UI,512,512);
+        GLEXT::TexStorage2D(GL::Texture::Cubemap,1,PixelFormat::RGBA8UI,512,512);
 
         for(int32 i=0;i<6;i++)
         {
 //            GL::TexSubImage2D(GL::Texture::CubeX_N,0,0,0,512,512,
 //                              PixelComponents::RGBA,BitFormat::Byte_2,0);
-            GL::MemoryBarrier(GL_PIXEL_BUFFER_BARRIER_BIT);
+            GLEXT::MemoryBarrier(GL_PIXEL_BUFFER_BARRIER_BIT);
         }
 
         while(!closeFlag())
