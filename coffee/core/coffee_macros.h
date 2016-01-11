@@ -36,10 +36,11 @@ constexpr cstring print_color_reset = "\033[0m";
 #endif
 
 
+template<typename... Args>
 /*!
  * \brief Use this to mark variables as unused to avoid compiler warnings. We can get away with this.
  */
-inline C_FORCE_INLINE void C_UNUSED(...)
+inline C_FORCE_INLINE void C_UNUSED(Args...)
 {
 }
 

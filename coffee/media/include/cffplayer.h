@@ -77,7 +77,7 @@ public:
         bool status = true;
 
         if(m_vclock)
-            status = m_vclock->elapsed()>=last_timestamp;
+	    status = m_vclock->elapsed()>=(uint64)last_timestamp;
 
         last_check_timer = status;
         return status;

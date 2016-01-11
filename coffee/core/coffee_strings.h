@@ -20,7 +20,7 @@ const constexpr cstring Lib_symb_error_format = "Native symbol resolution error:
 
 const constexpr cstring Graphics_GLeam_Renderer_Name = "GLeamRenderer";
 const constexpr cstring Graphics_GLeam_Renderer_FailLoad =
-        "Failed to load OpenGL function pointers! Prepare to crash!";
+	"Failed to load OpenGL function pointers! Printer on fire! Prepare to crash!";
 
 const constexpr cstring Graphics_GLeam_Library_Name = "GLeamShim";
 const constexpr cstring Graphics_GLeam_Library_CoreVersionError =

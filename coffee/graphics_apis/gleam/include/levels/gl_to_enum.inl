@@ -299,13 +299,13 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
             return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
         return GL_NONE;
     case PixelFormat::RGTC:
-        if(feval(e&PixelFlags::R|PixelFlags::Unsigned))
+	if(feval(e&(PixelFlags::R|PixelFlags::Unsigned)))
             return GL_COMPRESSED_RED_RGTC1;
-        if(feval(e&PixelFlags::R|PixelFlags::Signed))
+	if(feval(e&(PixelFlags::R|PixelFlags::Signed)))
             return GL_COMPRESSED_SIGNED_RED_RGTC1;
-        if(feval(e&PixelFlags::RG|PixelFlags::Unsigned))
+	if(feval(e&(PixelFlags::RG|PixelFlags::Unsigned)))
             return GL_COMPRESSED_RG_RGTC2;
-        if(feval(e&PixelFlags::RG|PixelFlags::Signed))
+	if(feval(e&(PixelFlags::RG|PixelFlags::Signed)))
             return GL_COMPRESSED_SIGNED_RG_RGTC2;
         return GL_NONE;
     case PixelFormat::S3TC:
@@ -426,6 +426,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         return GL_SRGB8_ALPHA8;
     case PixelFormat::SRGB8:
         return GL_SRGB8;
+    default:
+	return GL_NONE;
     }
 }
 

@@ -123,7 +123,10 @@ void CGLeamRenderer::bindingPostInit()
     {
         cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
              CFStrings::Graphics_GLeam_Renderer_FailLoad);
-        /*Context on fire? Just get out!*/
+        this->popErrorMessage(Severity::Fatal,
+                              CFStrings::Graphics_GLeam_Renderer_Name,
+                              CFStrings::Graphics_GLeam_Renderer_FailLoad);
+        /*Context or graphics card on fire? Just get out!*/
         throw std::runtime_error(CFStrings::Graphics_GLeam_Renderer_Name);
     }
     if(GL::DebuggingSupported())

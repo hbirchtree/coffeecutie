@@ -392,6 +392,11 @@ struct CGL_Implementation
 
     struct Debug
     {
+	static bool VerifyInit()
+	{
+	    return (bool)glEnable;
+	}
+
         static void GetExtensions()
         {
             int32 numExtensions = GetInteger(GL_NUM_EXTENSIONS);

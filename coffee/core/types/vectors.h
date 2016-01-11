@@ -287,7 +287,7 @@ inline C_FORCE_INLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
     T sum = 0;
-    for(int i=0;i<Size;i++)
+    for(size_t i=0;i<Size;i++)
         sum += pow(v[i],(T)2);
     return sqrt(sum);
 }
@@ -298,7 +298,7 @@ inline C_FORCE_INLINE T dot(
         const _cbasic_tvector<T,Size>& v2)
 {
     T sum = 0;
-    for(int i=0;i<Size;i++)
+    for(size_t i=0;i<Size;i++)
         sum += v1[i]*v2[i];
     return sum;
 }

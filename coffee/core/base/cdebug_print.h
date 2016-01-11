@@ -43,6 +43,7 @@ inline C_FORCE_INLINE cstring cStringify(DebugComponent comp)
     case DebugComponent::ShaderCompiler:
         return "Debug::ShaderCompiler";
     }
+    return "";
 }
 inline C_FORCE_INLINE cstring cStringify(DebugType type)
 {
@@ -64,6 +65,7 @@ inline C_FORCE_INLINE cstring cStringify(DebugType type)
         return "Undefined behavior";
 
     }
+    return "";
 }
 inline C_FORCE_INLINE cstring cStringify(Severity sev)
 {
@@ -84,6 +86,7 @@ inline C_FORCE_INLINE cstring cStringify(Severity sev)
     case Severity::Information:
         return "Information";
     }
+    return "";
 }
 
 /* Extension resolvers */

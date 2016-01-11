@@ -85,7 +85,7 @@ bool OVRImpl::PollDevices(uint32* lastValidIndex)
     if(lastValidIndex)
     {
         *lastValidIndex = -1;
-        for(int32 i=0;i<vr::k_unMaxTrackedDeviceCount;++i)
+        for(uint32 i=0;i<vr::k_unMaxTrackedDeviceCount;++i)
             if(m_Context->devicePoses[i].bPoseIsValid)
             {
                 *lastValidIndex = i;

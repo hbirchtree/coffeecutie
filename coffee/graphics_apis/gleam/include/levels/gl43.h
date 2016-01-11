@@ -13,12 +13,14 @@ struct CGL43 : CGL33
     static bool LoadBinding(CGL_Context *ctxt)
     {
         bool status = CGL33::LoadBinding(ctxt);
-        CDisplay::CGLVersion targetVer(4,3);
+	if(!status)
+	    return false;
+	const CDisplay::CGLVersion targetVer(4,3);
         CDisplay::CGLVersion ver = Debug::ContextVersion();
         if(ver<targetVer)
         {
-            _cbasic_version<uint8>& rv = ver;
-            _cbasic_version<uint8>& tv = targetVer;
+	    const _cbasic_version<uint8>& rv = ver;
+	    const _cbasic_version<uint8>& tv = targetVer;
             cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Library_Name,
                  CFStrings::Graphics_GLeam_Library_CoreVersionError,
                  rv,tv);

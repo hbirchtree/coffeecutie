@@ -22,6 +22,10 @@ struct CGL33 : CGL_Implementation
             return false;
         if(!gladLoadGL())
             return false;
+
+	if(!Debug::VerifyInit())
+	    return false;
+
         Debug::GetExtensions();
         Debug::InitDebugFlag();
         return true;
@@ -261,7 +265,7 @@ struct CGL33 : CGL_Implementation
         size[0] = new int32[num];
         for(int32 i=0;i<num;i++)
             names[0][i] = new int8[namelen];
-        for(uint32 i=0;i<num;i++)
+	for(uint32 i=0;i<(uint32)num;i++)
         {
             glGetActiveUniformBlockName(h,i,namelen,nullptr,names[0][i]);
             glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_DATA_SIZE,&size[0][i]);
@@ -290,7 +294,7 @@ struct CGL33 : CGL_Implementation
         names[0] = new cstring_w[num];
         rtSize[0] = new int32[num];
         rt[0] = new int32*[num];
-        for(uint32 i=0;i<num;i++)
+	for(uint32 i=0;i<(uint32)num;i++)
         {
             int32 namelen = 0;
             glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_UNIFORM_NAME_LENGTH,&namelen);
