@@ -1,6 +1,7 @@
 #include <coffee/CCore>
 #include <coffee/graphics_apis/CGLeam>
 #include <coffee/COpenVR>
+#include <coffee/CGraphics>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -52,14 +53,16 @@ public:
             "   vec3 tc;"
             "} vs_out;"
             ""
+            "uniform mat4 transform;"
+            ""
             "void main(void)"
             "{"
             "   const vec3[4] vertices = vec3[4](vec3(-1.0,-1.0,1.0),"
-            "                              vec3( 1.0,-1.0,1.0),"
-            "                              vec3(-1.0, 1.0,1.0),"
-            "                              vec3( 1.0, 1.0,1.0));"
+            "                                    vec3( 1.0,-1.0,1.0),"
+            "                                    vec3(-1.0, 1.0,1.0),"
+            "                                    vec3( 1.0, 1.0,1.0));"
             "   "
-            "   gl_Position = vec4(vertices[gl_VertexID],1.0);"
+            "   gl_Position = transform*vec4(vertices[gl_VertexID],1.0);"
             "}"
         };
         cstring gshader = {
@@ -98,7 +101,7 @@ public:
             ""
             "void main(void)"
             "{"
-            "   color = vec4(1.0,0.0,0.0,1.0);"
+            "   color = vec4(1.0);"
             "}"
         };
 
@@ -138,6 +141,15 @@ public:
 //                              PixelComponents::RGBA,BitFormat::Byte_2,0);
             GLEXT::MemoryBarrier(GL_PIXEL_BUFFER_BARRIER_BIT);
         }
+
+        CGraphicsData::CGCamera cam;
+        cam.aspect = 1.6;
+        cam.fieldOfView = 70.f;
+        cam.position = CVec3(0,0,-3);
+        GLEXT::CGhnd cam_unif = GLEXT::ProgramGetResourceLoc(vprogram,GLEXT::ShaderStage::Vertex,"transfom");
+        CMat4 cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
+
+        GLEXT::Uniformfv(vprogram,cam_unif,1,false,&cam_mat);
 
         while(!closeFlag())
         {
