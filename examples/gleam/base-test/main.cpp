@@ -19,6 +19,9 @@ public:
 
     void run()
     {
+        CElapsedTimerD* timer = AllocTimerD();
+        timer->start();
+
         CSize winSize = this->windowSize();
         winSize.w = winSize.w/2;
         CRectF leftEye;
@@ -146,10 +149,15 @@ public:
         cam.aspect = 1.6;
         cam.fieldOfView = 70.f;
         cam.position = CVec3(0,0,-3);
-        GLEXT::CGhnd cam_unif = GLEXT::ProgramGetResourceLoc(vprogram,GLEXT::ShaderStage::Vertex,"transfom");
+        GLEXT::CGhnd cam_unif =
+                GLEXT::ProgramGetResourceLoc(vprogram,
+                                             GL_UNIFORM,
+                                             "transfom");
         CMat4 cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
 
         GLEXT::Uniformfv(vprogram,cam_unif,1,false,&cam_mat);
+
+        cDebug("Setup time: {0}",timer->elapsed());
 
         while(!closeFlag())
         {

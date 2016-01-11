@@ -69,12 +69,16 @@ CDStateEvent::CDStateEvent():
 
 CGLVersion::CGLVersion()
 {
+    this->major = 0;
+    this->minor = 0;
+    this->revision = 0;
 }
 
 CGLVersion::CGLVersion(uint8 maj, uint8 min)
 {
     this->major = maj;
     this->minor = min;
+    this->revision = 0;
 }
 
 CDEvent::CDEvent():
