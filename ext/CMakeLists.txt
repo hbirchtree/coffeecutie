@@ -5,7 +5,7 @@ add_subdirectory(pcl-shim)
 add_subdirectory(qt-shim)
 
 #Retro frontend support, GPL code, might be tricky to implement
-add_subdirectory(retro-shim)
+#add_subdirectory(retro-shim)
 
 #Freenect2 binding
 add_subdirectory(kinect-shim)
