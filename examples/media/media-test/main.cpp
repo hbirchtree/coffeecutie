@@ -328,7 +328,7 @@ int32 coffee_main(int32, byte_t**)
     CDisplay::CDRendererBase* renderer = new CDRenderer;
     std::atomic_bool sync;
     sync.store(false);
-    CDisplay::CDProperties props = CDisplay::coffee_get_default_visual();
+    CDisplay::CDProperties props = CDisplay::GetDefaultVisual();
     props.gl.flags = props.gl.flags|
             CDisplay::GLProperties::GLDebug|
 //            CDisplay::CGLContextProperties::GLFeatureLevelProfile|

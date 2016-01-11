@@ -14,11 +14,9 @@ struct CHMD_Binding
         Left,Right,
     };
 
-    struct Device
+    struct Device : HWDeviceInfo
     {
-        CString identifier() const{return CString();}
-        CString firmware() const{return CString();}
-
+        Device(CString model, CString firmware):HWDeviceInfo(model,firmware){}
         CMat4 view(Eye) const{return CMat4();}
 
         CVec3 radianVelocity() const{return CVec3();}

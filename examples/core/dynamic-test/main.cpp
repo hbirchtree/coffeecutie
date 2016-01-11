@@ -28,7 +28,7 @@ int32 coffee_main(int32 argc, byte_t** argv)
 
     coffee_display_start_async(&started,
                                renderer,
-                               coffee_get_default_visual());
+                               GetDefaultVisual());
 
     return 0;
 }

@@ -140,6 +140,8 @@ bool OVRImpl::SetContext(OVR_Context *context)
 }
 
 OVRImpl::OVRDevice::OVRDevice(uint32 index):
+    Device(VRGetTrackedDevString(index,vr::Prop_TrackingSystemName_String),
+           VRGetTrackedDevString(index,vr::Prop_TrackingFirmwareVersion_String)),
     m_dIndex(index)
 {
 }

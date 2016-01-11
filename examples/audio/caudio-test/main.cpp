@@ -106,7 +106,7 @@ int32 coffee_main(int32 argc, byte_t** argv)
     CResources::FileResourcePrefix("sample_data/");
 
     CDRendererBase *renderer = new CDRenderer();
-    renderer->init(coffee_get_default_visual());
+    renderer->init(GetDefaultVisual());
     renderer->run();
     renderer->cleanup();
     delete renderer;

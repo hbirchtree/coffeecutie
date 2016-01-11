@@ -337,7 +337,7 @@ int32 coffee_main(int32, byte_t**)
     CResources::FileResourcePrefix("sample_data/");
 
     CDRendererBase *renderer = new CDHudRenderer();
-    CDProperties props = coffee_get_default_visual();
+    CDProperties props = GetDefaultVisual();
     props.gl.flags =
             props.gl.flags|
 //            CGLContextProperties::GLFeatureLevelProfile|

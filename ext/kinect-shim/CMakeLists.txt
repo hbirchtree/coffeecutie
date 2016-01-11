@@ -1,6 +1,6 @@
 if(NOT DEFINED FREENECT2_INCLUDE_DIR)
-		message(SEND_ERROR "Freenect2 include directory not found!")
-endif()
+    message("-- Freenect2 include directory not found, will not build CoffeeNect")
+else()
 
 set ( CNect_SRCS
         private/cnect.cpp
@@ -29,3 +29,5 @@ target_link_libraries( CoffeeNect
 
 set_property(TARGET CoffeeNect PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(CoffeeNect PRIVATE cxx_variadic_templates)
+
+endif()

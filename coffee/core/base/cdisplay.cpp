@@ -3,7 +3,7 @@
 namespace Coffee{
 namespace CDisplay{
 
-CDProperties coffee_get_default_visual(const int32 &ctxtMajorVer, const int32 &ctxtMinorVer)
+CDProperties GetDefaultVisual(const int32 &ctxtMajorVer, const int32 &ctxtMinorVer)
 {
     CDProperties props;
 

@@ -56,18 +56,6 @@ struct OVRImpl : HMD::CHMD_Binding{
 
 using OpenVRDev = OpenVR::OVRImpl;
 
-namespace CDebugPrint{
-
-inline CString cStringReplace(
-        CString fmt, size_t index,
-        OpenVRDev::OVRDevice* arg)
-{
-    return cStrReplace(fmt,index,cStringFormat("{0} {1}",
-                                               arg->make(),
-                                               arg->firmware()));
-}
-}
-
 }
 
 #endif

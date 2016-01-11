@@ -14,7 +14,7 @@ int32 coffee_main(int32,byte_t**)
     CDRenderer* renderer = new CDRenderer(nullptr);
 
     //Magic happens here
-    CDProperties props = coffee_get_default_visual();
+    CDProperties props = GetDefaultVisual();
 
     props.gl.flags = props.gl.flags|
             GLProperties::GLDebug;

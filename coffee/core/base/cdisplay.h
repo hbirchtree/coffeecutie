@@ -192,7 +192,7 @@ struct CDProperties
 C_FLAGS(CDProperties::State,uint16);
 C_FLAGS(GLProperties::Flags,uint8);
 
-extern CDProperties coffee_get_default_visual(const int32& ctxtMajorVer = 3,
+extern CDProperties GetDefaultVisual(const int32& ctxtMajorVer = 3,
                                                     const int32& ctxtMinorVer = 3);
 
 }

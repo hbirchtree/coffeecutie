@@ -12,19 +12,19 @@ namespace CDebugPrint{
 
 template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
 
-inline CString cStringResolve(CString fmt, size_t)
+inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t)
 {
     return fmt;
 }
 
-inline CString cStrReplace(CString fmt, size_t index, CString replace)
+inline C_FORCE_INLINE CString cStrReplace(CString fmt, size_t index, CString replace)
 {
     CString subfmt = "{" + std::to_string(index) + "}";
     return CStrReplace(fmt,subfmt,replace);
 }
 
 //TODO: Make these constexpr (C++14)
-inline cstring cStringify(DebugComponent comp)
+inline C_FORCE_INLINE cstring cStringify(DebugComponent comp)
 {
     switch(comp)
     {
@@ -44,7 +44,7 @@ inline cstring cStringify(DebugComponent comp)
         return "Debug::ShaderCompiler";
     }
 }
-inline cstring cStringify(DebugType type)
+inline C_FORCE_INLINE cstring cStringify(DebugType type)
 {
     switch(type)
     {
@@ -65,7 +65,7 @@ inline cstring cStringify(DebugType type)
 
     }
 }
-inline cstring cStringify(Severity sev)
+inline C_FORCE_INLINE cstring cStringify(Severity sev)
 {
     switch(sev)
     {
@@ -85,46 +85,52 @@ inline cstring cStringify(Severity sev)
         return "Information";
     }
 }
-template<typename T>
-inline CString cStringify(const _cbasic_version<T>& ver)
-{
-    return cStringFormat("{0}.{1}.{2}",ver.major,ver.minor,ver.revision);
-}
 
 /* Extension resolvers */
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         DebugComponent arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         DebugType arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         Severity arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         const _cbasic_version<uint8>& arg)
 {
-    return cStrReplace(fmt,index,cStringify(arg));
+    return cStrReplace(fmt,index,cStringFormat("{0}.{1}.{2}",
+                                               arg.major,arg.minor,
+                                               arg.revision));
+}
+
+inline C_FORCE_INLINE CString cStringReplace(
+        CString fmt, size_t index,
+        HWDeviceInfo const& arg)
+{
+    return cStrReplace(fmt,index,cStringFormat("{0} {1}",
+                                               arg.model,
+                                               arg.firmware));
 }
 
 /* Core string resolution */
 
 template<typename T>
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         const T* const& ptr)
 {
@@ -135,21 +141,21 @@ inline CString cStringReplace(
     return cStrReplace(fmt,index,"0x"+rep);
 }
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         cstring arg)
 {
     return cStrReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         char* const arg)
 {
     return cStrReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         const CString& arg)
 {
@@ -157,7 +163,7 @@ inline CString cStringReplace(
 }
 
 template<typename T>
-inline CString cStringReplace(
+inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         const T& arg)
 {
@@ -165,21 +171,21 @@ inline CString cStringReplace(
 }
 
 template<typename T>
-inline CString cStringResolve(CString fmt, size_t index, const T& arg)
+inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T& arg)
 {
     CString str = cStringReplace(fmt,index,arg);
     return cStringResolve(str,++index);
 }
 
 template<typename... Args, typename T>
-inline CString cStringResolve(CString fmt, size_t index, const T& arg, Args... args)
+inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T& arg, Args... args)
 {
     CString str = cStringReplace(fmt,index,arg);
     return cStringResolve(str,++index,args...);
 }
 
 template<typename... Arg>
-inline CString cStringFormat(cstring fmt, Arg... args)
+inline C_FORCE_INLINE CString cStringFormat(cstring fmt, Arg... args)
 {
     CString str = cStringResolve(fmt,0,args...);
 //    str.resize(snprintf(NULL,0,fmt,args...)+1);

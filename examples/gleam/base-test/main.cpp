@@ -17,7 +17,8 @@ public:
 
     void run()
     {
-        CSize winSize = this->windowSize()/2;
+        CSize winSize = this->windowSize();
+        winSize.w = winSize.w/2;
         CRectF leftEye;
         CRectF rightEye;
         leftEye.x = 0;
@@ -43,15 +44,16 @@ public:
             "#version 430 core\n"
             ""
             ""
-            "out gl_PerVertex"
-            "{"
+            "out gl_PerVertex{"
             "   vec4 gl_Position;"
-            "   vec3 tc;"
             "};"
+            "out VS_OUT{"
+            "   vec3 tc;"
+            "} vs_out;"
             ""
             "void main(void)"
             "{"
-            "   vec3[4] vertices = vec3[4](vec3(-1.0,-1.0,1.0),"
+            "   const vec3[4] vertices = vec3[4](vec3(-1.0,-1.0,1.0),"
             "                              vec3( 1.0,-1.0,1.0),"
             "                              vec3(-1.0, 1.0,1.0),"
             "                              vec3( 1.0, 1.0,1.0));"
@@ -65,6 +67,10 @@ public:
             "in int gl_InvocationID;"
             "out int gl_ViewportIndex;"
             ""
+            "out VS_OUT{"
+            "   vec4 gl_Position;"
+            "   vec3 tc;"
+            "} gs_in[];"
             "out GS_OUT{"
             "   vec3 tc;"
             "} gs_out;"
@@ -76,7 +82,9 @@ public:
             "       gs_out.tc = gs_in[i].tc;"
             "       gl_Position = gs_in[i].gl_Position;"
             "       gl_ViewportIndex = gl_InvocationID;"
-            "   }"
+            "       EmitVertex();"
+            "   }."
+            "   EndPrimitive();"
             "}"
         };
         cstring fshader = {
@@ -107,13 +115,13 @@ public:
             cDebug("Compilation log: {0}",GL::ProgramGetLog(gprogram));
 
         GL::CGhnd fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&fshader);
-        if(!GL::ProgramValidate(vprogram))
+        if(!GL::ProgramValidate(fprogram))
             cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
 
         GL::CGhnd pipeline;
         GL::PipelineAlloc(1,&pipeline);
         GL::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::Geometry,gprogram);
+//        GL::PipelineUseStages(pipeline,GL::ShaderStage::Geometry,gprogram);
         GL::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
 
         GL::PipelineBind(pipeline);
@@ -183,13 +191,20 @@ int32 coffee_main(int32, byte_t**)
         cDebug("No VR 4 u!");
     }else{
         cDebug("By the gods... So it was true! The time of the VR-born has come!");
+        uint32 devs;
+        if(!OpenVRDev::PollDevices(&devs))
+        {
+            cDebug("No devices found? What?");
+        }
+        OpenVRDev::OVRDevice* dev = OpenVRDev::GetDevice(0);
+        cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
     }
 
     CElapsedTimerD* timer = coffee_fun_alloc_timerd();
     timer->start();
     CSDL2Renderer *renderer = new CDRenderer();
     cDebug("Allocated renderer: {0}",timer->elapsed());
-    CDProperties props = coffee_get_default_visual();
+    CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 4;
 

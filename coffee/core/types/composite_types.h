@@ -506,6 +506,16 @@ struct CColorMask
     uint8 padding:4;
 };
 
+struct HWDeviceInfo
+{
+    HWDeviceInfo(CString model, CString firmware):
+        model(model),
+        firmware(firmware)
+    {}
+    const CString model;
+    const CString firmware;
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
