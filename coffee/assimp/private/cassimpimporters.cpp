@@ -44,7 +44,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
 //             scene->mNumAnimations,scene->mNumTextures);
     }
 
-    CElapsedTimer* timer = coffee_fun_alloc_timer();
+    CElapsedTimer* timer = AllocTimer();
     timer->start();
 
     std::vector<CAssimpMesh*> meshes;

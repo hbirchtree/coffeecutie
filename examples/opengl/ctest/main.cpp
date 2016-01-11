@@ -8,7 +8,7 @@ int32 coffee_main(int32,byte_t**)
 {
     CResources::FileResourcePrefix("sample_data/");
 
-    CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
+    CElapsedTimerMicro* timer = AllocTimerMicro();
     timer->start();
 
     CDRenderer* renderer = new CDRenderer(nullptr);

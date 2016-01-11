@@ -76,7 +76,7 @@ void CDRenderer::run()
     coffee_graphics_set_viewport(m_properties.size);
 
     bigscalar mtime = 0.0;
-    CElapsedTimerMicro* swap = coffee_fun_alloc_timer_micro();
+    CElapsedTimerMicro* swap = AllocTimerMicro();
 
     setSwapInterval(0);
     cMsg("Coffee","Init time: {0}s",(double)contextTime());

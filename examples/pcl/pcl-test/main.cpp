@@ -87,7 +87,7 @@ int32 coffee_main(int32, byte_t**)
 
     CResources::FileFree(color);
 
-    CElapsedTimerD* timer = coffee_fun_alloc_timerd();
+    CElapsedTimerD* timer = AllocTimerD();
     timer->start();
 
     CPCL::PointCloud<CPCL::PointXYZ>* pcl_xyz = CPCLI::ExtractXYZCloud(pcl);

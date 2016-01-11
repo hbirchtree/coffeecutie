@@ -2,27 +2,27 @@
 
 #include "plat_core.h"
 
-Coffee::CElapsedTimerD *Coffee::CFunctional::coffee_fun_alloc_timerd()
+Coffee::CElapsedTimerD *Coffee::CFunctional::AllocTimerD()
 {
     return new _plat_timer_scalar_micro;
 }
 
-Coffee::CElapsedTimerMicro *Coffee::CFunctional::coffee_fun_alloc_timer_micro()
+Coffee::CElapsedTimerMicro *Coffee::CFunctional::AllocTimerMicro()
 {
     return new _plat_timer_ll_micro;
 }
 
-Coffee::CElapsedTimer *Coffee::CFunctional::coffee_fun_alloc_timer()
+Coffee::CElapsedTimer *Coffee::CFunctional::AllocTimer()
 {
     return new _plat_timer_ll_milli;
 }
 
-void Coffee::CFunctional::coffee_fun_free(Coffee::CElapsedTimer *timer)
+void Coffee::CFunctional::FreeTimer(Coffee::CElapsedTimer *timer)
 {
     delete timer;
 }
 
-void Coffee::CFunctional::coffee_fun_free(Coffee::CElapsedTimerD *timer)
+void Coffee::CFunctional::FreeTimer(Coffee::CElapsedTimerD *timer)
 {
     delete timer;
 }

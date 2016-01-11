@@ -200,7 +200,7 @@ int32 coffee_main(int32, byte_t**)
         cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
     }
 
-    CElapsedTimerD* timer = coffee_fun_alloc_timerd();
+    CElapsedTimerD* timer = AllocTimerD();
     timer->start();
     CSDL2Renderer *renderer = new CDRenderer();
     cDebug("Allocated renderer: {0}",timer->elapsed());

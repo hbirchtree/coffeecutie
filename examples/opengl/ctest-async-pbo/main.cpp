@@ -26,7 +26,7 @@ public:
     {
         CFunctional::CFrameCounter counter(framefun);
         counter.interval = 1000000;
-        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
+        CElapsedTimerMicro* clock = AllocTimerMicro();
         clock->start();
 
         const CVec3 vertexdata[] = {
@@ -300,7 +300,7 @@ public:
         coffee_graphics_free(transforms.size,transforms.data);
         coffee_graphics_free(indices);
 
-        coffee_fun_free(clock);
+        FreeTimer(clock);
     }
 
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)

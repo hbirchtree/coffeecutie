@@ -231,7 +231,7 @@ public:
         double timeout = this->contextTime();
         int counter = 0;
 
-        CElapsedTimerMicro* timer = coffee_fun_alloc_timer_micro();
+        CElapsedTimerMicro* timer = AllocTimerMicro();
 
         CALSoundManager snd_man;
         CSoundDevice<CALSource,CALBuffer>* snd_dev =

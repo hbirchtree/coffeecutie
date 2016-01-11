@@ -30,7 +30,7 @@ public:
     {
         CFunctional::CFrameCounter counter(framefun);
         counter.interval = 1000000;
-        CElapsedTimerMicro* clock = coffee_fun_alloc_timer_micro();
+        CElapsedTimerMicro* clock = AllocTimerMicro();
         clock->start();
 
         const CVec3 vertexdata[] = {
