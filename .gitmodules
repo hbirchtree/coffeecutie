@@ -19,3 +19,6 @@
 [submodule "libs/openvr"]
 	path = libs/openvr
 	url = https://github.com/ValveSoftware/openvr.git
+[submodule "libs/asio"]
+	path = libs/asio
+	url = https://github.com/chriskohlhoff/asio.git

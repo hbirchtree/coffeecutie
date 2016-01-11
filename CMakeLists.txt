@@ -7,7 +7,8 @@ option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 #TODO: Make these options functional
 option ( COFFEE_BUILD_GLBINDING "Build with GLBinding library" ON)
 option ( COFFEE_BUILD_OPENAL "Build with OpenAL" ON)
-option ( COFFEE_BUILD_OPENAL "Build with OpenAL" ON)
+option ( COFFEE_BUILD_PCL "Build with PCL" OFF)
+option ( COFFEE_BUILD_QT "Build with Qt support" ON)
 
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 set ( CMAKE_BUILD_TYPE Debug )

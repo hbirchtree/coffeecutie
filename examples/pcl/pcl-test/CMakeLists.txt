@@ -1,4 +1,6 @@
-set ( TemplateTest_SRCS
+if(COFFEE_BUILD_PCL)
+
+set ( PCLTest_SRCS
         main.cpp
         )
 
@@ -10,7 +12,7 @@ include_directories(
         ${PCL_INCLUDE_DIRS}
     )
 
-add_executable ( PCLTest ${TemplateTest_SRCS} )
+add_executable ( PCLTest ${PCLTest_SRCS} )
 
 target_link_libraries ( PCLTest
         CoffeeCore
@@ -20,3 +22,5 @@ target_link_libraries ( PCLTest
     )
 
 target_compile_features(PCLTest PRIVATE cxx_variadic_templates)
+
+endif()

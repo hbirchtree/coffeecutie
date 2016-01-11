@@ -29,3 +29,7 @@ add_subdirectory(qt/node-editor-test)
 add_subdirectory(rsread)
 
 add_subdirectory(gleam/base-test)
+
+#ASIO examples
+#add_subdirectory(asio/base-client)
+#add_subdirectory(asio/base-server)
