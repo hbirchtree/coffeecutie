@@ -1,28 +1,18 @@
-set ( EnvTest_SRCS
+set ( AsioClientTest_SRCS
         main.cpp
-        )
+)
 
-add_executable ( EnvTest ${EnvTest_SRCS} )
+add_definitions("-DASIO_STANDALONE")
+
+add_executable ( AsioClientTest ${AsioClientTest_SRCS} )
 
 include_directories(
         ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+        ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include
     )
 
-target_link_libraries ( EnvTest
+target_link_libraries ( AsioClientTest
         CoffeeCore
         )
 
-target_compile_features(EnvTest PRIVATE cxx_variadic_templates)
-
-#Testing an external library
-set ( EnvLibraryLoadTester_SRCS
-        libcode.cpp
-        )
-
-add_library( EnvLibraryLoadTester SHARED ${EnvLibraryLoadTester_SRCS} )
-
-target_link_libraries(EnvLibraryLoadTester
-        CoffeeCore
-    )
-
-target_compile_features(EnvLibraryLoadTester PRIVATE cxx_variadic_templates)
+target_compile_features(AsioClientTest PRIVATE cxx_variadic_templates)

@@ -180,7 +180,7 @@ CMat4 OVRImpl::OVRDevice::view(HMD::CHMD_Binding::Eye e) const
     return mat;
 }
 
-CVec3 OVRImpl::OVRDevice::radianVelocity() const
+CVec3 OVRImpl::OVRDevice::angularVelocity() const
 {
     if(!m_Context||!isConnected())
         return CVec3();

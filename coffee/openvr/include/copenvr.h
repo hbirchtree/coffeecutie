@@ -20,7 +20,7 @@ struct OVRImpl : HMD::CHMD_Binding{
         CString firmware() const;
         CMat4 view(Eye e) const;
 
-        CVec3 radianVelocity() const;
+        CVec3 angularVelocity() const;
         CVec3 velocity() const;
 
         bool isConnected() const;
