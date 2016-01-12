@@ -153,6 +153,10 @@ public:
 
     virtual const CSoundDevice<ST,BT>& device() = 0;
 
+    virtual void startStream() = 0;
+    virtual void stopStream() = 0;
+    virtual void pauseStream() = 0;
+
     /*!
      * \brief Insert data into sound stream. Implementation decides how the data is queued.
      * \param data

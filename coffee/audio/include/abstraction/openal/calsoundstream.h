@@ -17,6 +17,10 @@ class CALSoundStream : public CSoundStream<CALSource,CALBuffer>
     CALSource* m_soundSource;
     CAudioFormat m_capFmt;
     bool b_inputStream;
+
+    std::queue<CALBuffer*> m_available;
+    std::vector<CALBuffer*> m_expended;
+
 public:
     CALSoundStream(CALSoundDevice &device,
                    const CSoundDeviceIdentifier &inputId,
@@ -36,6 +40,12 @@ public:
     void feedBuffer(CSoundBuffer<CALSource,CALBuffer> &buffer);
 
     CALSource* object();
+
+    void startStream();
+    void stopStream();
+    void pauseStream();
+private:
+    void collectBuffers();
 };
 
 }

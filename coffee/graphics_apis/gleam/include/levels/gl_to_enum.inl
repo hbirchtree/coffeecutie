@@ -871,9 +871,3 @@ inline CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, b
     }
     return {GL_NONE,GL_NONE};
 }
-
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::PatchProperty f)
-{
-    return (CGenum)f;
-}

@@ -1,4 +1,5 @@
 #include <cffmedia.h>
+#include <coffee/core/coffee_strings.h>
 
 extern "C"
 {
@@ -50,6 +51,16 @@ struct CFFDecodeContext
     struct{
         AVFrame* frame;
         AVFrame* tFrame;
+        SwrContext* swr_ctxt;
+
+        AVSampleFormat sfmt;
+        int32 srate;
+        int16 bitdepth;
+        int32 channels;
+        int64 chlayout;
+
+        uint8** data;
+        int32 linesize;
     } a;
     struct{
         AVSubtitle subtitle;
@@ -274,6 +285,41 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
                     fmt.video.size.width, fmt.video.size.height, default_pixfmt,
                     SWS_BILINEAR, NULL, NULL, NULL);
     }
+    {
+        dCtxt->a.swr_ctxt = nullptr;
+
+        dCtxt->a.chlayout = AV_CH_LAYOUT_STEREO;
+        dCtxt->a.channels = fmt.audio.channels;
+        dCtxt->a.sfmt = AV_SAMPLE_FMT_S16;
+        dCtxt->a.srate = fmt.audio.samplerate;
+        dCtxt->a.bitdepth = 16;
+
+        SwrContext* ctxt = swr_alloc();
+        swr_alloc_set_opts(ctxt,
+                           dCtxt->a.chlayout,
+                           dCtxt->a.sfmt,dCtxt->a.srate,
+                           video->audio->context->channel_layout,
+                           video->audio->context->sample_fmt,
+                           video->audio->context->sample_rate,
+                           0,
+                           NULL);
+        int error_code = swr_init(ctxt);
+        if(error_code!=0)
+        {
+            cLog(__FILE__,__LINE__,
+                 CFStrings::Media_FF_Name,
+                 CFStrings::Media_FF_SWR_InitError,
+                 error_code);
+        }else{
+            dCtxt->a.swr_ctxt = ctxt;
+        }
+        int32 samples = av_rescale_rnd(1,dCtxt->a.srate,
+                                       video->audio->context->sample_rate,
+                                       AV_ROUND_UP);
+        av_samples_alloc_array_and_samples(&dCtxt->a.data,&dCtxt->a.linesize,
+                                           dCtxt->a.channels,samples,
+                                           dCtxt->a.sfmt,0);
+    }
 
     dCtxt->v.frame = av_frame_alloc();
     dCtxt->v.tFrame = av_frame_alloc();
@@ -293,6 +339,11 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
 void coffee_ffmedia_free_decodecontext(CFFDecodeContext *dCtxt)
 {
     sws_freeContext(dCtxt->v.sws_ctxt);
+
+    swr_close(dCtxt->a.swr_ctxt);
+    swr_free(&dCtxt->a.swr_ctxt);
+
+    av_freep(&dCtxt->a.data[0]);
 
     av_frame_free(&dCtxt->v.frame);
     av_frame_free(&dCtxt->a.frame);
@@ -373,7 +424,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                 break;
             }
 
-            if(gotFrame)
+            if(gotFrame&&dCtxt->a.swr_ctxt)
             {
                 dTrgt->a.queue_mutex.lock();
 
@@ -382,20 +433,39 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                 CFFAudioPacket &p = dTrgt->a.packet_queue.back();
 
                 p.pts = dCtxt->a.frame->pts;
-                p.channels = dCtxt->a.frame->channels;
-                p.frequency = dCtxt->a.frame->sample_rate;
-                p.bitdepth = 8;
-                p.samples = dCtxt->a.frame->nb_samples;
+                p.channels = dCtxt->a.channels;
+                p.frequency = dCtxt->a.srate;
+                p.bitdepth = dCtxt->a.bitdepth;
 
-                int data_size = av_samples_get_buffer_size(nullptr,
-                                                           video->audio->context->channels,
+                /* av_samples_get_buffer_size(nullptr,
+                                                           2,
                                                            dCtxt->a.frame->nb_samples,
-                                                           video->audio->context->sample_fmt,
+                                                           AV_SAMPLE_FMT_S16,
                                                            1);
+                 */
+
+                uint32 nb_samples = av_rescale_rnd(swr_get_delay(dCtxt->a.swr_ctxt,
+                                                               video->audio->context->sample_rate)
+                                                   +video->audio->context->sample_rate,
+                                                   dCtxt->a.srate,
+                                                   video->audio->context->sample_rate,
+                                                   AV_ROUND_UP);
+
+                av_freep(&dCtxt->a.data[0]);
+                int32 data_size = av_samples_alloc(dCtxt->a.data,
+                                                    &dCtxt->a.linesize,
+                                                    dCtxt->a.channels,
+                                                    nb_samples,dCtxt->a.sfmt,1);
 
                 p.data = (int16*)Alloc(data_size);
 
-                CMemCpy(p.data,dCtxt->a.frame->data[0],data_size);
+                nb_samples = swr_convert(dCtxt->a.swr_ctxt,dCtxt->a.data,nb_samples,
+                            (const uint8**)dCtxt->a.frame->data,
+                            dCtxt->a.frame->nb_samples);
+
+                p.samples = nb_samples;
+
+                CMemCpy(p.data,dCtxt->a.data[0],data_size);
 
                 dTrgt->a.queue_mutex.unlock();
 

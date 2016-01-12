@@ -52,6 +52,10 @@ enum class CSourceProperty : uint8
     OffsetSeconds,
     OffsetSamples,
     OffsetBytes,
+
+    PlaybackState,
+
+    BuffersProcessed,
 };
 
 enum class CDistanceModel : uint8
@@ -209,6 +213,12 @@ extern void alFree(CALSource* source);
 extern void alFree(CALBuffer* buffer);
 
 /*!
+ * \brief Set AL listener properties
+ * \param listener
+ */
+extern void listener_set(const CALListener* listener);
+
+/*!
  * \brief Get second offset into buffer
  * \param source
  * \return
@@ -260,6 +270,8 @@ extern void source_set_offset_bytes(
 extern void source_set_state(
         CALSource* source, CALPlaybackState state);
 
+extern bool source_playing(CALSource* source);
+
 extern void source_transform(
         CALSource* source, const CVec3 &position,
         const CVec3 &velocity, const CVec3 &direction);
@@ -274,12 +286,6 @@ extern void source_set_states(
         const CALSource **sources,
         szptr numSources,
         CALPlaybackState state);
-
-/*!
- * \brief Set AL listener properties
- * \param listener
- */
-extern void listener_set(const CALListener* listener);
 
 /*!
  * \brief Queue buffers for playback
@@ -320,6 +326,11 @@ extern void source_seti(
         CALSource* source, CSourceProperty const& prop, int32 const& val);
 extern void source_setf(
         CALSource* source, CSourceProperty const& prop, scalar const& val);
+
+extern int32 source_geti(
+        CALSource* source, CSourceProperty const& prop);
+extern scalar source_getf(
+        CALSource* source, CSourceProperty const& prop);
 
 /*!
  * \brief Fill buffer with data, sets full buffer

@@ -264,13 +264,6 @@ struct CGL_Implementation
         TimeElapsed = GL_TIME_ELAPSED,
     };
 
-    enum class PatchProperty
-    {
-        Vertices = GL_PATCH_VERTICES,
-        DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,
-        DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,
-    };
-
     struct CGL_TypeMapBase
     {
         constexpr static _cbasic_static_map<BufBit,GLenum,3> bufferbit_map = {
@@ -322,7 +315,6 @@ struct CGL_Implementation
     static CGenum to_enum(FramebufferT f);
 
     static CGenum to_enum(AttribMode f);
-    static CGenum to_enum(PatchProperty f);
 
     static CGpixfmt get_fmt(PixelFormat e, bool rev);
 

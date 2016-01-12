@@ -33,6 +33,9 @@ public:
         //Set output descriptor
         player.descriptor().video.size.width = 1280;
         player.descriptor().video.size.height = 720;
+        player.descriptor().audio.bitdepth = 16;
+        player.descriptor().audio.channels = 2;
+        player.descriptor().audio.frequency = 44100;
 
         player.createDecoder();
 
@@ -223,11 +226,6 @@ public:
         drawcall.count = sizeof(indexdata)/sizeof(indexdata[0]);
         drawcall.instanceCount = 1;
 
-        //Create a dummy buffer for audio
-        CByteData audiobuf;
-        audiobuf.size = coffee_ffmedia_audio_samplesize(player.player())*48000*4;
-        audiobuf.data = (byte_t*)Alloc(audiobuf.size);
-
         double timeout = this->contextTime();
         int counter = 0;
 
@@ -240,9 +238,11 @@ public:
         CALSoundFormat snd_fmt;
         snd_fmt.setBitDepth(16);
         snd_fmt.setChannels(2);
-        snd_fmt.setSamplerate(48000);
+        snd_fmt.setSamplerate(44100);
 
         CSoundStream<CALSource,CALBuffer>& snd_streamer = snd_dev->genStream(snd_fmt);
+
+        bool audio_sync = false;
 
         this->showWindow();
         while(!this->closeFlag())
@@ -271,6 +271,11 @@ public:
                     fmt.setSamplerate(pckt.frequency);
 
                     snd_streamer.feedData(pckt.data,fmt,pckt.samples);
+                    if(!audio_sync)
+                    {
+                        audio_sync = true;
+                        snd_streamer.startStream();
+                    }
 
                     CFree(pckt.data);
 
@@ -302,6 +307,8 @@ public:
 
         //Free all the FFMPEG data
         FileFree(video_file);
+
+        delete snd_dev;
 
         for(const std::pair<CString,CString>& ft : CDisplay::coffee_glbinding_get_graphics_feature_level())
         {

@@ -9,7 +9,7 @@ int32 coffee_main(int32, byte_t**)
     asio::io_service service;
     asio::ip::tcp::resolver resolver(service);
 
-    asio::ip::tcp::resolver::query query("httpbin.org","http");
+    asio::ip::tcp::resolver::query query("tmi.twitch.tv","https");
 
     auto it = resolver.resolve(query);
 
@@ -18,10 +18,10 @@ int32 coffee_main(int32, byte_t**)
 
     asio::streambuf request;
     std::ostream req_stream(&request);
-    req_stream << "GET " << "/ip" << "HTTP/1.0\r\n";
-    req_stream << "Host: " << "httpbin.org" << "\r\n";
+    req_stream << "GET " << "/get" << "HTTP/1.0\r\n";
+    req_stream << "Host: " << "tmi.twitch.tv" << "\r\n";
     req_stream << "Accept: */*\r\n";
-    req_stream << "Connection: close\r\n";
+    req_stream << "Connection: close\r\n\r\n";
 
     asio::write(sock,request);
 

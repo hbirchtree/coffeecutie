@@ -57,6 +57,20 @@ struct CGL43 : CGL33
         PointSize,
     };
 
+    enum class PatchProperty
+    {
+        Vertices = GL_PATCH_VERTICES,
+        DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,
+        DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,
+    };
+
+    using CGL::CGL33::to_enum;
+
+    inline static CGenum to_enum(PatchProperty f)
+    {
+        return (CGenum)f;
+    }
+
     //TODO: Add more extensions to check for, and check for them in functions
 
     static bool TexStorageSupported()
@@ -360,31 +374,169 @@ struct CGL43 : CGL33
     {glPatchParameterfv(to_enum(p),v);}
 
     /* Drawing */
-    static void DrawArraysIndirect(Prim,PrimCre,uint64){}
-    static void DrawArraysInstancedBaseInstance(Prim,PrimCre,int32,
-                                                int64,int64,uint32){}
+    /*!
+     * \brief DrawArraysIndirect
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param off Offset into buffer
+     */
+    static void DrawArraysIndirect(Prim p,PrimCre c,uint64 off)
+    {glDrawArraysIndirect(to_enum(p,c),(c_cptr)off);}
+    /*!
+     * \brief DrawArraysInstancedBaseInstance
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param vf First vertex
+     * \param vc Number of vertices
+     * \param ic Number of instances
+     * \param bi Index of first instance to draw
+     */
+    static void DrawArraysInstancedBaseInstance(Prim p,PrimCre c,int32 vf,
+                                                uint32 vc,uint32 ic,uint32 bi)
+    {glDrawArraysInstancedBaseInstance(to_enum(p,c),vf,vc,ic,bi);}
 
-    static void DrawElementsIndirect(Prim,PrimCre,TypeEnum,uint64,int64,int64){}
-    static void DrawElementsInstancedBaseInstance(Prim,PrimCre,int64,
-                                                  TypeEnum,uint64,int64,int64){}
-    static void DrawElementsInstancedBaseVertexBaseInstance(Prim,PrimCre,int64,
-                                                            TypeEnum,uint64,int64,int64,
-                                                            int32,int32){}
+    /*!
+     * \brief DrawElementsIndirect
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param d Element data type
+     * \param off Offset into indirect buffer
+     */
+    static void DrawElementsIndirect(Prim p,PrimCre c,
+                                     TypeEnum d,
+                                     uint64 off)
+    {glDrawElementsIndirect(to_enum(p,c),to_enum(d),(c_cptr)off);}
+    /*!
+     * \brief DrawElementsInstancedBaseInstance
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param ec Number of elements to draw per instance
+     * \param d Element data type
+     * \param off Offset into element buffer
+     * \param bc Number of instances to draw
+     * \param bi Base instance applied to all instances for attribute fetching
+     */
+    static void DrawElementsInstancedBaseInstance(
+            Prim p,PrimCre c,uint32 ec,TypeEnum d,uint64 off,uint32 bc,uint32 bi)
+    {glDrawElementsInstancedBaseInstance(to_enum(p,c),ec,to_enum(d),(c_cptr)off,bc,bi);}
+    /*!
+     * \brief DrawElementsInstancedBaseVertexBaseInstance
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param ec Number of elements to draw
+     * \param d Element data type
+     * \param off Offset into element buffer
+     * \param ic Number of instances to draw from base instance
+     * \param bv Value added to each element in the element buffer for this call
+     * \param bi Index of first instance to draw
+     */
+    static void DrawElementsInstancedBaseVertexBaseInstance(
+            Prim p,PrimCre c,uint32 ec,TypeEnum d,uint64 off,uint32 ic,uint32 bv,uint32 bi)
+    {glDrawElementsInstancedBaseVertexBaseInstance(to_enum(p,c),ec,to_enum(d),
+                                                   (c_cptr)off,ic,bv,bi);}
 
-    static void DrawRangeElements(Prim,PrimCre,uint32,uint32,int64,TypeEnum,uint64){}
+    /*!
+     * \brief DrawRangeElements
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param f First element in range to draw
+     * \param e Last element in range to draw
+     * \param vc Number of elements to draw
+     * \param d Element data type
+     * \param off Offset into index buffer
+     */
+    static void DrawRangeElements(
+            Prim p,PrimCre c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off)
+    {glDrawRangeElements(to_enum(p,c),f,e,vc,to_enum(d),(c_cptr)off);}
+    /*!
+     * \brief DrawRangeElementsBaseVertex
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param f First element in range to draw
+     * \param e Last element in range to draw
+     * \param vc Number of elements to draw
+     * \param d Element data type
+     * \param off Offset into index buffer
+     * \param bv Index of first vertex to draw
+     */
+    static void DrawRangeElementsBaseVertex(
+            Prim p,PrimCre c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off,int32 bv)
+    {glDrawRangeElementsBaseVertex(to_enum(p,c),f,e,vc,to_enum(d),(c_cptr)off,bv);}
 
-    static void DrawMultiArraysIndirect(Prim,PrimCre,uint64,int64,int64){}
-    static void DrawMultiElementsIndirect(Prim,PrimCre,TypeEnum,uint64,int64,int64){}
+    /*!
+     * \brief DrawMultiArraysIndirect
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param off Offset into indirect buffer
+     * \param dc Number of indirect calls to process
+     * \param s Stride of draw parameter structure
+     */
+    static void DrawMultiArraysIndirect(Prim p,PrimCre c,uint64 off,uint32 dc,uint64 s)
+    {glMultiDrawArraysIndirect(to_enum(p,c),(c_cptr)off,dc,s);}
+    /*!
+     * \brief DrawMultiElementsIndirect
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param d Element data type
+     * \param off Offset into indirect buffer
+     * \param dc Number of indirect calls to process
+     * \param s Stride of draw parameter structure
+     */
+    static void DrawMultiElementsIndirect(
+            Prim p,PrimCre c,TypeEnum d,uint64 off,uint32 dc,uint32 s)
+    {glMultiDrawElementsIndirect(to_enum(p,c),to_enum(d),(c_cptr)off,dc,s);}
 
-    static void DrawXF(Prim,PrimCre,CGhnd){}
-    static void DrawXFStream(Prim,PrimCre,CGhnd,uint32){}
+    /*!
+     * \brief DrawXF
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param h Transform feedback handle
+     */
+    static void DrawXF(Prim p,PrimCre c,CGhnd h)
+    {glDrawTransformFeedback(to_enum(p,c),h);}
+    /*!
+     * \brief DrawXFStream
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param h Transform feedback handle
+     * \param s Stream index
+     */
+    static void DrawXFStream(Prim p,PrimCre c,CGhnd h,uint32 s)
+    {glDrawTransformFeedbackStream(to_enum(p,c),h,s);}
 
-    static void DrawXFInstanced(Prim,PrimCre,CGhnd,int64){}
-    static void DrawXFStreamInstanced(Prim,PrimCre,CGhnd,uint32,int64){}
+    /*!
+     * \brief DrawXFInstanced
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param h Transform feedback handle
+     * \param ic Instance count
+     */
+    static void DrawXFInstanced(Prim p,PrimCre c,CGhnd h,uint32 ic)
+    {glDrawTransformFeedbackInstanced(to_enum(p,c),h,ic);}
+    /*!
+     * \brief DrawXFStreamInstanced
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param h Transform feedback handle
+     * \param s Stream index
+     * \param ic Instance count
+     */
+    static void DrawXFStreamInstanced(Prim p,PrimCre c,CGhnd h,uint32 s,uint32 ic)
+    {glDrawTransformFeedbackStreamInstanced(to_enum(p,c),h,s,ic);}
 
     /* Compute */
+    /*!
+     * \brief ComputeDispatch
+     * \param x Number of X workgroups
+     * \param y Number of Y workgroups
+     * \param z Number of Z workgroups
+     */
     static void ComputeDispatch(uint32 x,uint32 y,uint32 z){glDispatchCompute(x,y,z);}
-    static void ComputeDispatchIndirect(int64 o){glDispatchComputeIndirect(o);}
+    /*!
+     * \brief ComputeDispatchIndirect
+     * \param o Offset into dispatch buffer for command
+     */
+    static void ComputeDispatchIndirect(uint64 o){glDispatchComputeIndirect(o);}
 };
 
 }

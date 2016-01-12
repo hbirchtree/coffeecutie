@@ -36,6 +36,9 @@ const constexpr cstring Graphics_VR_Library_CurrencyError =
 const constexpr cstring Graphics_VR_Library_CompositeError =
         "Failed to initialize compositor, see SteamVR logs for details";
 
+const constexpr cstring Media_FF_Name = "CFFMedia";
+const constexpr cstring Media_FF_SWR_InitError = "Failed to initialize software resampler: {0}";
+
 }
 
 #endif

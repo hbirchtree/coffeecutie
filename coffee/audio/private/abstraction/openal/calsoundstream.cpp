@@ -77,10 +77,16 @@ szptr CALSoundStream::collectSamples(c_ptr data, const szptr &max_samples)
 
 void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr &samples)
 {
-    CALBuffer buf;
-    CALBuffer* p_buf = &buf;
-
-    alAlloc(p_buf);
+    CALBuffer* buf;
+    if(m_available.size()<1)
+    {
+        buf = new CALBuffer;
+        alAlloc(buf);
+    }else{
+        buf = m_available.front();
+        m_available.pop();
+    }
+    CALBuffer* p_buf = buf;
 
     CAudioSample samp;
     samp.data = (int16*)data;
@@ -92,8 +98,11 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
 
     buffer_data(p_buf,&samp);
 
+    collectBuffers();
     source_queue_buffers(m_soundSource,1,&p_buf);
-    source_set_state(m_soundSource,CALPlaybackState::Playing);
+    if(!source_playing(m_soundSource))
+        source_set_state(m_soundSource,CALPlaybackState::Playing);
+    m_expended.push_back(p_buf);
 }
 
 void CALSoundStream::feedBuffer(CSoundBuffer<CALSource, CALBuffer> &buffer)
@@ -105,6 +114,35 @@ void CALSoundStream::feedBuffer(CSoundBuffer<CALSource, CALBuffer> &buffer)
 CALSource *CALSoundStream::object()
 {
     return m_soundSource;
+}
+
+void CALSoundStream::startStream()
+{
+    source_set_state(m_soundSource,CALPlaybackState::Playing);
+}
+
+void CALSoundStream::stopStream()
+{
+    source_set_state(m_soundSource,CALPlaybackState::Stopped);
+}
+
+void CALSoundStream::pauseStream()
+{
+    source_set_state(m_soundSource,CALPlaybackState::Paused);
+}
+
+void CALSoundStream::collectBuffers()
+{
+    int32 procd = source_geti(m_soundSource,CSourceProperty::BuffersProcessed);
+    CALBuffer* buffer;
+    while(procd>0&&m_expended.size()>0)
+    {
+        buffer = m_expended.front();
+        m_expended.erase(m_expended.begin());
+        source_dequeue_buffers(m_soundSource,1,&buffer);
+        m_available.push(buffer);
+        procd--;
+    }
 }
 
 
