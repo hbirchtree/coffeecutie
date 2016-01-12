@@ -7,12 +7,12 @@ namespace CPCL{
 
 pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::GenPointCloud(
         const CVec3 *points, const CRGBA *cPoints,
-        const szptr &numPoints, const CSize &cloudSize)
+        const szptr &numPoints)
 {
     pcl::PointCloud<pcl::PointXYZRGB>* pcloud = new pcl::PointCloud<pcl::PointXYZRGB>;
 
-    pcloud->width = cloudSize.w;
-    pcloud->height = cloudSize.h;
+    pcloud->width = numPoints;
+    pcloud->height = 1;
 
     pcloud->points.resize(numPoints);
 
@@ -34,9 +34,9 @@ pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::GenPointCloud(
     return pcloud;
 }
 
-PointCloud<PointXYZ> *CPCLImplementation::ExtractXYZCloud(const PointCloud<PointXYZRGB> *colorcloud)
+PointCloud<PointXYZ>::Ptr CPCLImplementation::ExtractXYZCloud(const PointCloud<PointXYZRGB> *colorcloud)
 {
-    PointCloud<PointXYZ>* out = new PointCloud<PointXYZ>;
+    PointCloud<PointXYZ>::Ptr out = PointCloud<PointXYZ>::Ptr(new PointCloud<PointXYZ>);
 
     out->points.resize(colorcloud->points.size());
     out->height = colorcloud->height;
@@ -52,7 +52,7 @@ PointCloud<PointXYZ> *CPCLImplementation::ExtractXYZCloud(const PointCloud<Point
     return out;
 }
 
-void CPCLImplementation::DenoiseCloud(PointCloud<PointXYZ> *cloud)
+void CPCLImplementation::DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud)
 {
     PointCloud<PointXYZ> cloud_filter_tmp;
 
@@ -64,9 +64,11 @@ void CPCLImplementation::DenoiseCloud(PointCloud<PointXYZ> *cloud)
     filter.setStddevMulThresh(1.0);
     filter.filter(cloud_filter_tmp);
 
+    cloud->points.clear();
     cloud->points.insert(cloud->points.begin(),
                          cloud_filter_tmp.points.begin(),
                          cloud_filter_tmp.points.end());
+    cloud->width = cloud->points.size();
 }
 
 pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::MergeClouds(
@@ -75,7 +77,7 @@ pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::MergeClouds(
     return nullptr;
 }
 
-PolygonMesh *CPCLImplementation::CreatePolygonMesh(const PointCloud<PointXYZ> *cloud)
+PolygonMesh *CPCLImplementation::CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud)
 {
 
     NormalEstimation<PointXYZ,pcl::Normal> n;

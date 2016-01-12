@@ -1,5 +1,9 @@
 add_subdirectory(opengl)
-add_subdirectory(gleam)
+if(COFFEE_ANDROID_BUILD)
+    add_subdirectory(gleames)
+else()
+    add_subdirectory(gleam)
+endif()
 
 set ( CoffeeGraphicsMisc_SRCS
         private/scene/cnode.cpp

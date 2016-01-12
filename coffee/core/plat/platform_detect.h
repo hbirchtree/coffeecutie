@@ -81,3 +81,36 @@
 #define C_COMPILER_VER_REV x
 
 #endif
+
+//AMD64 string
+#if defined(__amd64__)
+#define COFFEE_ARCH "AMD64"
+
+#elif defined(__i386__) || defined(_X86_)
+#if defined(__i686__)
+#define COFFEE_ARCH "i686"
+#elif defined(__i586__)
+#define COFFEE_ARCH "i586"
+#elif defined(__i486__)
+#define COFFEE_ARCH "i486"
+#else
+#define COFFEE_ARCH "i386"
+#endif
+
+#elif defined(__aarch64__)
+#define COFFEE_ARCH "ARMv8-64"
+
+#elif defined(__arm__)
+#if defined(__ARM_ARCH_5__)
+#define COFFEE_ARCH "ARMv5"
+#elif defined(__ARM_ARCH_7A__)
+#define COFFEE_ARCH "ARMv7a"
+#elif defined(__thumb__)
+#define COFFEE_ARCH "ARM Thumb mode"
+#else
+#define COFFEE_ARCH "ARM"
+#endif
+
+#else
+#define COFFEE_ARCH "Unknown"
+#endif

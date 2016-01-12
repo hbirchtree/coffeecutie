@@ -28,18 +28,17 @@ struct CPCLImplementation
 {
     static PointCloud<PointXYZRGB>* GenPointCloud(const CVec3* points,
                                                   const CRGBA *cPoints,
-                                                  const szptr& numPoints,
-                                                  const CSize& cloudSize);
+                                                  const szptr& numPoints);
 
-    static PointCloud<PointXYZ>* ExtractXYZCloud(const PointCloud<PointXYZRGB>* colorcloud);
+    static PointCloud<PointXYZ>::Ptr ExtractXYZCloud(const PointCloud<PointXYZRGB>* colorcloud);
 
-    static void DenoiseCloud(PointCloud<PointXYZ>* cloud);
+    static void DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud);
 
     static PointCloud<PointXYZRGB> *MergeClouds(
             const PointCloud<PointXYZRGB>* c1,
             const PointCloud<PointXYZRGB>* c2);
 
-    static PolygonMesh* CreatePolygonMesh(const PointCloud<PointXYZ> *cloud);
+    static PolygonMesh* CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud);
 
     static void SavePCDFile(const PointCloud<PointXYZRGB>& cloud,
                                 cstring fname);

@@ -111,9 +111,9 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
     buffer_data(p_buf,&samp);
 
     collectBuffers();
-    source_queue_buffers(m_soundSource,1,&p_buf);
     if(!source_playing(m_soundSource))
         source_set_state(m_soundSource,CALPlaybackState::Playing);
+    source_queue_buffers(m_soundSource,1,&p_buf);
     m_expended.push_back(p_buf);
 }
 

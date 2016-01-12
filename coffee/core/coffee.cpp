@@ -61,12 +61,11 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
     //TODO: Handle the Windows case of not including the application name
     CoffeeInit();
 #ifndef NDEBUG
-    print_builddate();
+    cDebug("Build string: {0}",CoffeeBuildString);
 #endif
     if(!coffee_initialized)
         cWarning("CoffeeInit was not called");
-    cDebug("CoffeeMain is in use");
-    cDebug("Running on {0}",CoffeeCompilerString);
+    cDebug("Running on {0} ({1})",CoffeeCompilerString,CoffeeArchString);
     int32 r = mainfun(argv,argc);
     CoffeeTerminate();
     return r;

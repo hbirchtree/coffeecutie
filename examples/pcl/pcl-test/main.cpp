@@ -36,7 +36,7 @@ int32 coffee_main(int32, byte_t**)
         CResources::FileFree(texturedump);
     }
 
-    CVec3* posdata = (CVec3*)CCalloc(sizeof(CVec3),depth_size.area());
+    std::vector<CVec3> posdata;
 
     {
         CGraphicsData::CGCamera camera;
@@ -56,42 +56,46 @@ int32 coffee_main(int32, byte_t**)
             for(int32 x=0;x<depth_size.w;x++)
             {
                 scalar depth_val = depth_data[y*depth_size.w+x];
+                if(depth_val <= 0.0)
+                    continue;
 
-                CVec3* vec = &posdata[y*depth_size.w+x];
-                vec->x() = (scalar)x/(scalar)depth_size.w;
-                vec->y() = (scalar)(depth_size.h/2-y)/(scalar)depth_size.h;
-                vec->z() = depth_val;
+                CVec3 vec;
+                vec.x() = (scalar)x/(scalar)depth_size.w;
+                vec.y() = (scalar)(depth_size.h/2-y)/(scalar)depth_size.h;
+                vec.z() = depth_val;
 
-                *vec = (*vec)*pos_mul;
+                vec = vec*pos_mul;
 
                 CVec4 tmp;
-                tmp.x() = vec->x();
-                tmp.y() = vec->y();
-                tmp.z() = vec->z();
+                tmp.x() = vec.x();
+                tmp.y() = vec.y();
+                tmp.z() = vec.z();
                 tmp.w() = 1.0;
 
                 tmp = inverse_project*tmp;
-                vec->x() = tmp.x();
-                vec->y() = tmp.y();
-                vec->z() = tmp.z();
+                vec.x() = tmp.x();
+                vec.y() = tmp.y();
+                vec.z() = tmp.z();
+
+                //Not optimal, but avoids adding empty points
+                posdata.push_back(vec);
             }
     }
 
     CResources::FileFree(depth);
 
     CPCL::PointCloud<CPCL::PointXYZRGB>* pcl =
-            CPCLI::GenPointCloud(posdata,
+            CPCLI::GenPointCloud(posdata.data(),
                                  color_data,
-                                 depth_size.area(),
-                                 depth_size);
+                                 posdata.size());
 
     CResources::FileFree(color);
 
     CElapsedTimerD* timer = AllocTimerD();
     timer->start();
 
-    CPCL::PointCloud<CPCL::PointXYZ>* pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
-//    CPCLI::DenoiseCloud(pcl_xyz);
+    CPCL::PointCloud<CPCL::PointXYZ>::Ptr pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
+    CPCLI::DenoiseCloud(pcl_xyz);
     CPCL::PolygonMesh* mesh = CPCLI::CreatePolygonMesh(pcl_xyz);
     cDebug("Mesh processing time: {0}",timer->elapsed());
 
@@ -105,8 +109,6 @@ int32 coffee_main(int32, byte_t**)
         continue;
 
     CPCL::CPCLImplementation::SavePCDFile(*pcl,"depthdata.pcd");
-
-    CFree(posdata);
 
     return 0;
 }
