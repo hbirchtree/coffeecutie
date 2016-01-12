@@ -297,7 +297,7 @@ public:
             if((this->contextTime()-timeout)>=1.0)
             {
                 timeout = this->contextTime();
-                cDebug("framerate={0}/s, frametime={1}us",counter,timer->elapsed());
+                cDebug("frames={0}, frametime={1}us",counter,timer->elapsed());
                 counter=0;
             }
 

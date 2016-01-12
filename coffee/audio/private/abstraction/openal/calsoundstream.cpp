@@ -39,6 +39,18 @@ CALSoundStream::CALSoundStream(CALSoundDevice &device,
 
 CALSoundStream::~CALSoundStream()
 {
+    source_set_state(m_soundSource,CALPlaybackState::Stopped);
+    source_dequeue_buffers(m_soundSource,m_expended.size(),
+                           m_expended.data());
+    for(CALBuffer* b : m_expended)
+        alFree(b);
+    while(m_available.size())
+    {
+        CALBuffer* b = m_available.front();
+        m_available.pop();
+        alFree(b);
+    }
+
     if(m_soundSource)
     {
         alFree(m_soundSource);
