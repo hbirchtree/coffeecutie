@@ -5,14 +5,25 @@
 #include <coffee/graphics_apis/opengl/include/glfunctions.h>
 
 #include <ext/pcl-shim/include/cpcl.h>
+#include <ext/kinect-shim/include/cnect.h>
 
 using namespace Coffee;
 using namespace CoffeeExt;
 
+using CNect = Freenect::FreenectImplementation;
 using CPCLI = CPCL::CPCLImplementation;
 
 int32 coffee_main(int32, byte_t**)
 {
+    CNect::FreenectContext* c = nullptr;
+    try{
+        c = CNect::Alloc();
+    }catch(std::runtime_error ex){
+        cDebug("Failed to initialize Freenect: {0}",ex.what());
+    }
+    if(c)
+        CNect::Free(c);
+
     CResources::CResource depth("dframe.raw");
     CResources::FilePull(depth);
 
@@ -50,7 +61,7 @@ int32 coffee_main(int32, byte_t**)
 
         CVec3 pos_mul(-camera.aspect,
                       1.f,
-                      1.f);
+                      5.f);
 
         for(int32 y=0;y<depth_size.h;y++)
             for(int32 x=0;x<depth_size.w;x++)
@@ -72,7 +83,7 @@ int32 coffee_main(int32, byte_t**)
                 tmp.z() = vec.z();
                 tmp.w() = 1.0;
 
-                tmp = inverse_project*tmp;
+                tmp = project*tmp;
                 vec.x() = tmp.x();
                 vec.y() = tmp.y();
                 vec.z() = tmp.z();

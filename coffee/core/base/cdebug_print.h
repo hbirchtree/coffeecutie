@@ -32,6 +32,8 @@ inline C_FORCE_INLINE cstring cStringify(DebugComponent comp)
         return "Debug::Audio";
     case DebugComponent::Core:
         return "Debug::Core";
+    case DebugComponent::Extension:
+        return "Debug::Extension";
     case DebugComponent::GraphicsAPI:
         return "Debug::GraphicsAPI";
     case DebugComponent::Interface:

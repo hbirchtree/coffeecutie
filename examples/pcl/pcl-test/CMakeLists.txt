@@ -19,6 +19,7 @@ target_link_libraries ( PCLTest
         CoffeeImage
         CoffeeGraphicsMisc
         CoffeePCL
+        CoffeeNect
     )
 
 target_compile_features(PCLTest PRIVATE cxx_variadic_templates)

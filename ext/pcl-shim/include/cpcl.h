@@ -34,9 +34,9 @@ struct CPCLImplementation
 
     static void DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud);
 
-    static PointCloud<PointXYZRGB> *MergeClouds(
+    static void MergeClouds(
             const PointCloud<PointXYZRGB>* c1,
-            const PointCloud<PointXYZRGB>* c2);
+            PointCloud<PointXYZRGB>* c2);
 
     static PolygonMesh* CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud);
 

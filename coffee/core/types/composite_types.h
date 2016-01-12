@@ -320,30 +320,35 @@ public:
     }
 };
 
-template<typename DimT> struct CBitmap
+template<typename PixelType,typename DimT>
+struct _cbasic_bitmap_base
 {
-    CBitmap(DimT w, DimT h):
+    _cbasic_bitmap_base(DimT w, DimT h):
         size(w,h)
     {
-        m_px = (CRGBA*)CCalloc(sizeof(CRGBA),w*h);
+        m_pixels = (PixelType*)CCalloc(sizeof(PixelType),w*h);
     }
-    ~CBitmap()
+    ~_cbasic_bitmap_base()
     {
-        CFree(m_px);
+        CFree(m_pixels);
     }
 
     const _cbasic_size_2d<DimT> size;
-    CRGBA* data()
+
+    PixelType* data()
     {
-        return m_px;
+        return m_pixels;
     }
-    const CRGBA* data() const
+    const PixelType* data() const
     {
-        return m_px;
+        return m_pixels;
     }
 private:
-    CRGBA* m_px;
+    PixelType* m_pixels;
 };
+
+template<typename DimT>
+using CBitmap = _cbasic_bitmap_base<CRGBA,DimT>;
 
 template<class ClassName,typename FReturnType,typename... FArgumentTypes>
 struct CFunctionSlot

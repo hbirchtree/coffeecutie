@@ -150,6 +150,8 @@ enum class DebugComponent : uint8
     ShaderCompiler,
     LibraryLoader,
     Media,
+
+    Extension,
 };
 
 enum class PixelFormat

@@ -71,10 +71,10 @@ void CPCLImplementation::DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud)
     cloud->width = cloud->points.size();
 }
 
-pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::MergeClouds(
-        const pcl::PointCloud<pcl::PointXYZRGB> *c1, const pcl::PointCloud<pcl::PointXYZRGB> *c2)
+void CPCLImplementation::MergeClouds(
+        const pcl::PointCloud<pcl::PointXYZRGB> *c1,
+        pcl::PointCloud<pcl::PointXYZRGB> *c2)
 {
-    return nullptr;
 }
 
 PolygonMesh *CPCLImplementation::CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud)
