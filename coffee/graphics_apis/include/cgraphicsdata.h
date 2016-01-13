@@ -2,8 +2,8 @@
 #define CGRAPHICSDATA_H
 
 #include <coffee/core/CTypes>
-#include <coffee/core/base/cmath.h>
-#include <coffee/core/types/cmatrix_functions.h>
+#include <base/cmath.h>
+#include <types/cmatrix_functions.h>
 
 namespace Coffee{
 namespace CGraphicsData{

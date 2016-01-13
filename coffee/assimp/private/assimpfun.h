@@ -4,7 +4,7 @@
 #include <thread>
 #include <stdint.h>
 
-#include <coffee/core/coffee.h>
+#include <coffee.h>
 #include "cassimptypes.h"
 
 #include <assimp/Importer.hpp>

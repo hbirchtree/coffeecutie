@@ -2,7 +2,7 @@
 #define COFFEE_SCENE_CNODE_H
 
 #include <coffee/core/CTypes>
-#include "../cgraphicsdata.h"
+#include <cgraphicsdata.h>
 
 namespace Coffee{
 namespace CGraphicsData{

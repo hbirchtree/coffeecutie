@@ -1,8 +1,8 @@
 #ifndef CASSIMPTYPES
 #define CASSIMPTYPES
 
-#include <coffee/core/coffee.h>
-#include <coffee/core/base/cfiles.h>
+#include <coffee.h>
+#include <base/cfiles.h>
 
 namespace Coffee {
 namespace CResourceTypes {

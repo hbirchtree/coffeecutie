@@ -6,9 +6,23 @@ find_package(SWIG REQUIRED)
 include(${SWIG_USE_FILE})
 
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/libs/glbinding/source/glbinding/include
-        ${CMAKE_SOURCE_DIR}/libs/glm)
+        ${CMAKE_SOURCE_DIR}/../
+        
+        ${CMAKE_SOURCE_DIR}/../coffee/assimp/include
+        ${CMAKE_SOURCE_DIR}/../coffee/audio/include
+        ${CMAKE_SOURCE_DIR}/../coffee/blam/include
+        ${CMAKE_SOURCE_DIR}/../coffee/core
+        ${CMAKE_SOURCE_DIR}/../coffee/core/base
+        ${CMAKE_SOURCE_DIR}/../coffee/core/plat
+        ${CMAKE_SOURCE_DIR}/../coffee/graphics_apis/include
+        ${CMAKE_SOURCE_DIR}/../coffee/graphics_apis/gleam/include
+        ${CMAKE_SOURCE_DIR}/../coffee/image/include
+        ${CMAKE_SOURCE_DIR}/../coffee/media/include
+        ${CMAKE_SOURCE_DIR}/../coffee/openvr/include
+        ${CMAKE_SOURCE_DIR}/../coffee/sdl2/include
+        
+        ${CMAKE_SOURCE_DIR}/../include
+        ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
@@ -20,7 +34,7 @@ link_directories( ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${COFFEE_LIB_D
 set(COFFEE_LINKING CoffeeCore CAudio CBlam CoffeeOpenGL CoffeeTestLib)
 
 set_source_files_properties(${CFILE} PROPERTIES CPLUSPLUS ON)
-set_property(SOURCE ${CFILE} PROPERTY SWIG_FLAGS "-includeall" "-ignoremissing")
+set_property(SOURCE ${CFILE} PROPERTY SWIG_FLAGS "-ignoremissing")
 
 if(COFFEE_PYTHON)
         #Python build

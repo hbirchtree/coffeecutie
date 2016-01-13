@@ -1,8 +1,8 @@
 #ifndef COFFEE_CRESOURCETYPES_CASSIMP_CASSIMPIMPORTERS_H
 #define COFFEE_CRESOURCETYPES_CASSIMP_CASSIMPIMPORTERS_H
 
-#include <coffee/core/coffee.h>
-#include <coffee/core/base/cfiles.h>
+#include <coffee.h>
+#include <base/cfiles.h>
 #include "cassimptypes.h"
 
 namespace Coffee {

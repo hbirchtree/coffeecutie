@@ -10,6 +10,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 include_directories(
+        ${COFFEE_CORE_INCLUDE_DIR}
         ${CMAKE_SOURCE_DIR}/ext/qt-shim/qt-node-editor/include
         qt5
     )

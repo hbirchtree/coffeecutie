@@ -1,5 +1,8 @@
-add_subdirectory(opengl)
-if(COFFEE_ANDROID_BUILD)
+if(COFFEE_BUILD_GLBINDING)
+    add_subdirectory(opengl)
+endif()
+
+if(COFFEE_BUILD_GLES)
     add_subdirectory(gleames)
 else()
     add_subdirectory(gleam)
@@ -12,7 +15,7 @@ set ( CoffeeGraphicsMisc_SRCS
 add_library( CoffeeGraphicsMisc ${COFFEE_LINK_OPT} ${CoffeeGraphicsMisc_SRCS} )
 
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${COFFEE_GRAPHICS_INCLUDE_DIR}
     )
 
 target_link_libraries ( CoffeeGraphicsMisc

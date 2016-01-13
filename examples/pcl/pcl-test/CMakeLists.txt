@@ -1,4 +1,4 @@
-if(COFFEE_BUILD_PCL)
+if(COFFEE_BUILD_PCL AND COFFEE_BUILD_NECT)
 
 set ( PCLTest_SRCS
         main.cpp
@@ -9,6 +9,7 @@ find_package(PCL 1.7 REQUIRED COMPONENTS common io registration recognition keyp
 include_directories(
         ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
+        ${COFFEE_EXT_FREENECT2_INCLUDE_DIR}
         ${PCL_INCLUDE_DIRS}
     )
 

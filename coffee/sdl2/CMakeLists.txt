@@ -10,7 +10,10 @@ set ( CoffeeSDL2_SRCS
 
 find_package(SDL2 REQUIRED)
 
-include_directories(${SDL2_INCLUDE_DIR})
+include_directories(
+    ${SDL2_INCLUDE_DIR}
+    ${COFFEE_SDL2_INCLUDE_DIR}
+    )
 
 add_library( CoffeeSDL2 ${COFFEE_LINK_OPT} ${CoffeeSDL2_SRCS})
 

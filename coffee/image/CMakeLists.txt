@@ -1,5 +1,5 @@
 include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${COFFEE_IMAGE_INCLUDE_DIR}
     )
 
 set ( CoffeeImage_SRCS

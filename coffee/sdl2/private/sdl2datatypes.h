@@ -3,7 +3,7 @@
 
 #include <mutex>
 #include <thread>
-#include "coffee/core/base/cdisplay.h"
+#include <base/cdisplay.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_syswm.h>

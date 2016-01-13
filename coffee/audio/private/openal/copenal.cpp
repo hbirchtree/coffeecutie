@@ -3,8 +3,8 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 
-#include <coffee/core/coffee_macros.h>
-#include <coffee/core/base/cdebug.h>
+#include <coffee_macros.h>
+#include <base/cdebug.h>
 
 #include <thread>
 

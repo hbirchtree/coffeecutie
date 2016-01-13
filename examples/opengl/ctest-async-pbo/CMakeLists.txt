@@ -1,3 +1,4 @@
+if(COFFEE_BUILD_GLBINDING)
 set ( AsyncPbo_SRCS
         main.cpp
         )
@@ -17,3 +18,4 @@ target_link_libraries ( AsyncPbo
     )
 
 target_compile_features(AsyncPbo PRIVATE cxx_variadic_templates)
+endif()

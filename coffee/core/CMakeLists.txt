@@ -1,34 +1,36 @@
-find_package(glbinding)
+include_directories(
+    ${COFFEE_CORE_INCLUDE_DIR}
+    )
 
 set ( CoffeeCore_SRCS
 
-        coffee.cpp
-        base/counter.cpp
-        base/cdebug.cpp
-        base/cdisplay.cpp
-        base/cfiles.cpp
-        base/cfilewatcher.cpp
-        base/cobject.cpp
-        base/cregex.cpp
+        private/coffee.cpp
+        private/base/counter.cpp
+        private/base/cdebug.cpp
+        private/base/cdisplay.cpp
+        private/base/cfiles.cpp
+        private/base/cfilewatcher.cpp
+        private/base/cobject.cpp
+        private/base/cregex.cpp
 
-        base/cdrendererbase.cpp
+        private/base/cdrendererbase.cpp
 
-        functional/cqueuerunner.cpp
+        private/functional/cqueuerunner.cpp
 
-        jobs/ctasksystem.cpp
+        private/jobs/ctasksystem.cpp
 
-        unit_tests/data_types.cpp
+        private/unit_tests/data_types.cpp
 
-        input/cinputfunctions.cpp
+        private/input/cinputfunctions.cpp
 
-        plat/coffee_windows/win_core.cpp
-        plat/coffee_unix/unix_core.cpp
-        plat/argument_parse.cpp
-        plat/environment_details.cpp
-        plat/plat_file.cpp
-        plat/plat_timers.cpp
-        plat/cmemory.cpp
-        plat/plat_libraries.cpp
+        private/plat/argument_parse.cpp
+        private/plat/environment_details.cpp
+        private/plat/cmemory.cpp
+        private/plat/plat_file.cpp
+        private/plat/plat_libraries.cpp
+        private/plat/plat_timers.cpp
+        private/plat/windows/win_core.cpp
+        private/plat/unix/unix_core.cpp
 
         ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
         )
@@ -42,7 +44,6 @@ add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
 
 #Libraries for X11 and Linux
 if(NOT WIN32)
-    find_package(X11)
     find_library(M_LIB m)
 
     find_package(Unwind)
@@ -50,10 +51,6 @@ if(NOT WIN32)
 endif()
 ############################
 
-include_directories(
-    ${COFFEE_CORE_INCLUDE_DIR}
-    ${SDL2_INCLUDE_DIR}
-    )
 
 target_link_libraries ( CoffeeCore
 		${LIBUNWIND_LIBRARIES}
