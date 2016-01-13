@@ -2,7 +2,7 @@
 
 #include "sdl2helpers.h"
 #include "sdl2eventhandlers.h"
-#include <coffee/core/base/cfiles.h>
+#include <base/cfiles.h>
 
 namespace Coffee{
 namespace CDisplay{

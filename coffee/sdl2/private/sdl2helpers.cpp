@@ -2,7 +2,7 @@
 
 #include "sdl2windowsystem.h"
 
-#include "coffee/core/base/cdebug.h"
+#include <base/cdebug.h>
 
 namespace Coffee{
 namespace CSDL2Types{

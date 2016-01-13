@@ -4,9 +4,9 @@
 #define SDL2_WINDOWING
 
 #include "sdl2datatypes.h"
-#include "coffee/core/plat/plat_wm.h"
-#include "coffee/core/plat/platform_detect.h"
-#include "coffee/core/base/cdisplay.h"
+#include <plat/plat_wm.h>
+#include <plat/platform_detect.h>
+#include <base/cdisplay.h>
 
 namespace Coffee{
 namespace CSDL2Types{

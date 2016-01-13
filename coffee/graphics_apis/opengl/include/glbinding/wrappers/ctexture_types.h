@@ -1,8 +1,8 @@
 #ifndef COFFEE_GRAPHICS_OPENGL_TEXTURE_TYPES_H
 #define COFFEE_GRAPHICS_OPENGL_TEXTURE_TYPES_H
 
-#include "coffee/core/types/vector_types.h"
-#include "coffee/core/types/composite_types.h"
+#include <types/vector_types.h>
+#include <types/composite_types.h>
 #include "copengl_types.h"
 
 namespace Coffee{

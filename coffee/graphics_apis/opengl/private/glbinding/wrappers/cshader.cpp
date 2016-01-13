@@ -1,7 +1,7 @@
 #include <glbinding/wrappers/cshader.h>
 
 #include <glfunctions.h>
-#include "coffee/core/base/cdebug.h"
+#include <base/cdebug.h>
 
 namespace Coffee {
 namespace CGraphicsWrappers {

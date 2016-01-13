@@ -2,8 +2,8 @@
 #define CSDL2RENDERER_H
 
 #include <graphics_apis/include/gltypes.h>
-#include "coffee/core/functional/cqueuerunner.h"
-#include "coffee/core/base/cdebug.h"
+#include <functional/cqueuerunner.h>
+#include <base/cdebug.h>
 #include <mutex>
 
 namespace Coffee{

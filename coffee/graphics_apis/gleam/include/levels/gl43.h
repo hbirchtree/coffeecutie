@@ -79,6 +79,9 @@ struct CGL43 : CGL33
     static bool TexViewSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_texture_view");}
 
+    static bool ViewportArraySupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_viewport_array");}
+
     static bool SeparableShaderSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_separate_shader_objects");}
 

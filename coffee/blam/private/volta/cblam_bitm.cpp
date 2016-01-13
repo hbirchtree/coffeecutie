@@ -1,9 +1,9 @@
 #include <volta/cblam_bitm.h>
 
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cfiles.h>
+#include <base/cdebug.h>
+#include <base/cfiles.h>
 #include <cimage.h>
-#include <coffee/core/base/cmath.h>
+#include <base/cmath.h>
 #include <volta/cblam_bitm_decoders.h>
 
 namespace Coffee{

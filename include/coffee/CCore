@@ -3,9 +3,9 @@
 #include <coffee/core/CFunctional>
 #include <coffee/core/CPlatform>
 
-#include "coffee/core/CTypes"
-#include <coffee/core/coffee_macros.h>
+#include <coffee/core/CTypes>
+#include <coffee_macros.h>
 
-#include <coffee/core/plat/environment_details.h>
-#include <coffee/core/plat/argument_parse.h>
-#include <coffee/core/plat/application_start.h>
+#include <plat/environment_details.h>
+#include <plat/argument_parse.h>
+#include <plat/application_start.h>

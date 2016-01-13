@@ -1,10 +1,10 @@
 #include <unit_tests.h>
 
-#include <coffee/graphics_apis/include/scene/cnode.h>
-#include <coffee/graphics_apis/include/cgraphicsdata.h>
-#include <coffee/core/coffee_macros.h>
-#include <coffee/core/base/cmath.h>
-#include <coffee/core/base/cmath_glm.h>
+#include <scene/cnode.h>
+#include <cgraphicsdata.h>
+#include <coffee_macros.h>
+#include <base/cmath.h>
+#include <base/cmath_glm.h>
 namespace CoffeeTests{
 
 using namespace Coffee;

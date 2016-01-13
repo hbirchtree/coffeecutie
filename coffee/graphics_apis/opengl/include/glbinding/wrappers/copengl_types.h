@@ -3,7 +3,7 @@
 
 #include <bitset>
 
-#include "coffee/core/types/types.h"
+#include <types/types.h>
 #include "copengl_enums.h"
 
 namespace Coffee{

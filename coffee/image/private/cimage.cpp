@@ -1,6 +1,6 @@
 #include "cimage.h"
 
-#include <coffee/core/base/cdebug.h>
+#include <base/cdebug.h>
 
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #include <stb/stb_image_resize.h>

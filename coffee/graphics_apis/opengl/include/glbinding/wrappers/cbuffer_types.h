@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_BUFFER_TYPES_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_BUFFER_TYPES_H
 
-#include "coffee/core/types/composite_types.h"
+#include <types/composite_types.h>
 #include "copengl_types.h"
 #include "crenderfence.h"
 

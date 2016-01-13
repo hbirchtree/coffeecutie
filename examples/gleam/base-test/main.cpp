@@ -231,6 +231,12 @@ int32 coffee_main(int32, byte_t**)
 
     renderer->init(props);
     cDebug("Init renderer: {0}",timer->elapsed());
+
+    if(!GLEXT::SeparableShaderSupported())
+        return 1;
+    if(!GLEXT::ViewportArraySupported())
+        return 1;
+
     renderer->run();
     timer->start();
     renderer->cleanup();

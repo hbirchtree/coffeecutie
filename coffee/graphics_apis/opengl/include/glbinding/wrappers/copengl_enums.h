@@ -1,7 +1,7 @@
 #ifndef COFFEE_OPENGL_ENUMS_H
 #define COFFEE_OPENGL_ENUMS_H
 
-#include "coffee/core/types/basetypes.h"
+#include <types/basetypes.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

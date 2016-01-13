@@ -1,8 +1,8 @@
 #ifndef CTEXTURE
 #define CTEXTURE
 
-#include <coffee/core/plat/cmemory.h>
-#include <coffee/image/include/cimage.h>
+#include <plat/cmemory.h>
+#include <cimage.h>
 
 #include "ctexture_pbo.h"
 #include "ctexture_types.h"

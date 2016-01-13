@@ -2,7 +2,7 @@
 #define COFFEE_CORE_PLAT_WINDOWTYPE_H
 
 #include "coffee/core/CTypes"
-#include "coffee/core/plat/platform_detect.h"
+#include <plat/platform_detect.h>
 
 #if defined(COFFEE_LINUX) && defined(COFFEE_X11)
 #include <X11/Xlib.h>

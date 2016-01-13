@@ -1,2 +1,2 @@
-#include <coffee/core/datastorage/text/xml/cxmlparser.h>
-#include <coffee/core/datastorage/text/json/cjsonparser.h>
+#include <datastorage/text/xml/cxmlparser.h>
+#include <datastorage/text/json/cjsonparser.h>

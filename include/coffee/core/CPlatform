@@ -1,3 +1,3 @@
-#include <coffee/core/plat/plat_libraries.h>
-#include <coffee/core/plat/plat_core.h>
-#include <coffee/core/plat/cmd_interface.h>
+#include <plat/plat_libraries.h>
+#include <plat/plat_core.h>
+#include <plat/cmd_interface.h>

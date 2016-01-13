@@ -1,8 +1,8 @@
 #ifndef COFFEE_OPENVR_OPENVR_H
 #define COFFEE_OPENVR_OPENVR_H
 
-#include <coffee/core/base/cdebug.h>
-#include <coffee/graphics_apis/include/chmd_api.h>
+#include <base/cdebug.h>
+#include <chmd_api.h>
 
 namespace Coffee{
 namespace OpenVR{
