@@ -25,7 +25,7 @@ public:
     void run()
     {
         //Create an FFMPEG player
-        CResource video_file("test-.webm");
+        CResource video_file("test.mp4");
         FilePull(video_file);
 
         CFFPlayer player(video_file);

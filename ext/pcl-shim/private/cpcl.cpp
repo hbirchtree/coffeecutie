@@ -79,7 +79,6 @@ void CPCLImplementation::MergeClouds(
 
 PolygonMesh *CPCLImplementation::CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud)
 {
-
     NormalEstimation<PointXYZ,pcl::Normal> n;
     PointCloud<Normal> normals;
     PointCloud<PointXYZ>::ConstPtr cloud_ptr(cloud);

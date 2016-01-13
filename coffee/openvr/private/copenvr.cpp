@@ -77,6 +77,7 @@ bool OVRImpl::InitializeBinding()
 
 bool OVRImpl::PollDevices(uint32* lastValidIndex)
 {
+    *lastValidIndex = -1;
     if(!m_Context)
         return false;
     vr::VRCompositor()->WaitGetPoses(m_Context->devicePoses,
