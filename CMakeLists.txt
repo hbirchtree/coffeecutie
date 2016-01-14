@@ -14,6 +14,9 @@ option ( COFFEE_BUILD_PCL "Build with PCL" OFF)
 option ( COFFEE_BUILD_NECT "Build with Kinect support" OFF)
 option ( COFFEE_BUILD_QT "Build with Qt support" ON)
 
+set ( ANDROID_SDK_ROOT "$ENV{ANDROID_SDK_ROOT}" )
+set ( ANDROID_NDK_ROOT "$ENV{ANDROID_NDK_ROOT}" )
+
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)

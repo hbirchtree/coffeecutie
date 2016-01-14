@@ -1,22 +1,52 @@
-*.map
-obj
-*.user
+# General
 *~
-*.dll
-*.o
-*.so
-*.exe
-*.mdb
 *.userprefs
-*.a
-*.lib
+*.user
+
+# Directories
+bin
+build
+
+# JetBrains/CLion
+.idea
+
+# CMake files
+CMakeCache.txt
+CMakeFiles
+
+# Ninja files
 .ninja_deps
 .ninja_log
 .ninja
-CMakeCache.txt
-CMakeFiles
-bin
-build
+
+# Resources
+*.map
+#
 *.mesh
 *.tex
 *.snd
+#
+*.mp4
+*.webm
+*.mkv
+#
+*.ogg
+*.flac
+*.mp3
+*.wav
+
+# Windows compilation files
+*.obj
+*.dll
+*.exe
+*.mdb
+*.lib
+
+# OS X compilation files
+*.dylib
+
+# Linux compilation files
+*.o
+*.so
+*.a
+*.out
