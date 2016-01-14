@@ -25,6 +25,7 @@ CMakeFiles
 *.mesh
 *.tex
 *.snd
+*.shdr
 #
 *.mp4
 *.webm
@@ -34,6 +35,8 @@ CMakeFiles
 *.flac
 *.mp3
 *.wav
+#
+gamecontrollerdb.txt*
 
 # Windows compilation files
 *.obj
