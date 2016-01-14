@@ -1,4 +1,5 @@
 #include <coffee/CCore>
+#include <coffee/CImage>
 #include "library.h"
 
 using namespace Coffee;
@@ -68,6 +69,15 @@ int32 coffee_main(int32, byte_t**)
         cDebug("Mantissa: {0}, {1}, {2}, {3}",
                t1_d->mantissa,t2_d->mantissa,
                t3_d->mantissa,t4_d->mantissa);
+    }
+
+    {
+        cDebug("Perlin values: ");
+        for(scalar x=0;x<8;x+=0.1)
+        {
+            cBasicPrintNoNL("{0} ",NoiseGen::Perlin(CVec3(x,0,0)));
+        }
+        cBasicPrint("");
     }
 
     CSize tsize = TerminalSize();

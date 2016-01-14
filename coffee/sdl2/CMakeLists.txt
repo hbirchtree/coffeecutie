@@ -1,25 +1,25 @@
-include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-
 set ( CoffeeSDL2_SRCS
-        private/csdl2renderer.cpp
-        private/sdl2eventhandlers.cpp
-        private/sdl2helpers.cpp
-        )
+    private/csdl2renderer.cpp
+    private/sdl2eventhandlers.cpp
+    private/sdl2helpers.cpp
+    )
 
 find_package(SDL2 REQUIRED)
 
-include_directories(
+include_directories(SYSTEM
     ${SDL2_INCLUDE_DIR}
+    )
+
+include_directories(
     ${COFFEE_SDL2_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
 add_library( CoffeeSDL2 ${COFFEE_LINK_OPT} ${CoffeeSDL2_SRCS})
 
 target_link_libraries( CoffeeSDL2
-        CoffeeCore
-        ${SDL2_LIBRARY}
+    CoffeeCore
+    ${SDL2_LIBRARY}
     )
 
 set_property(TARGET CoffeeSDL2 PROPERTY POSITION_INDEPENDENT_CODE ON)

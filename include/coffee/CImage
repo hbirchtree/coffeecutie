@@ -1,1 +1,2 @@
 #include <coffee/image/include/cimage.h>
+#include <coffee/image/include/cnoise-gen.h>
