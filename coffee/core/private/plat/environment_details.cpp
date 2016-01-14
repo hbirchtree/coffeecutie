@@ -3,7 +3,9 @@
 #include <plat/platform_detect.h>
 #include <plat/argument_parse.h>
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID)
+#include "android/jni_props.h"
+#elif defined(COFFEE_LINUX)
 
 #include <libgen.h>
 #include <unistd.h>
@@ -101,7 +103,15 @@ cstring_w env_get_user_data(cstring orgname, cstring appname)
     cstring_w base = env_concatenate_path(
                 nullptr,
                 env_get_user_home());
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID)
+    /*
+     * We define Android before Linux as an override.
+     * Android identifies as both Android and Linux, thus we are overriding it here.
+    */
+
+    base = "";
+
+#elif defined(COFFEE_LINUX)
     base = env_concatenate_path(
                 base,
                 ".local/share");

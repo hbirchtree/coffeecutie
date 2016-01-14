@@ -9,6 +9,7 @@
 
 #if defined(__ANDROID)
 #define C_SYSTEM_STRING "Android API level " __ANDROID_API__
+#define COFFEE_ANDROID
 #endif
 
 /* Windows macro, only one for now */
