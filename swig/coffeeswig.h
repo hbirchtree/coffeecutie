@@ -1,4 +1,3 @@
-#include <coffee/CAssimp>
 #include <coffee/CAudio>
 #include <coffee/CCore>
 #include <coffee/CGraphics>

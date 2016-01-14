@@ -15,6 +15,9 @@ namespace Coffee{
 
 enum CoffeeExitCode
 {
+    CoffeeExit_Normal       = 0,
+    CoffeeExit_GeneralError = 1,
+
     CoffeeExit_UnknownBad  = 100,
 
     CoffeeExit_Termination = 120,

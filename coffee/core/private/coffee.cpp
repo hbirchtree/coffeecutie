@@ -7,6 +7,7 @@
 #include <plat/plat_core.h>
 #include <unit_tests/data_types.h>
 #include <unit_tests/memory_operations.h>
+#include <plat/cmd_interface.h>
 
 static bool coffee_initialized = false;
 
@@ -14,23 +15,25 @@ namespace Coffee{
 
 void sighandle(int sig)
 {
+    /* If we use an alternate buffer, switch back to primary */
+    ResetScreen();
     switch(sig)
     {
     case SIGILL:
-        exit(CoffeeExit_Termination);
+        Exit(CoffeeExit_Termination);
         break;
     case SIGINT:
-        exit(CoffeeExit_Interrupt);
+        Exit(CoffeeExit_Interrupt);
         break;
     case SIGTERM:
-        exit(CoffeeExit_Termination);
+        Exit(CoffeeExit_Termination);
         break;
 #if defined(COFFEE_LINUX)
     case SIGKILL:
-        exit(CoffeeExit_Kill);
+        Exit(CoffeeExit_Kill);
 #endif
     default:
-        exit(CoffeeExit_UnknownBad);
+        Exit(CoffeeExit_UnknownBad);
     }
 }
 
@@ -73,7 +76,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
 
 void CoffeeTerminate()
 {
-
+    ResetScreen();
 }
 
 }

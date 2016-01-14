@@ -141,7 +141,7 @@ add_subdirectory(coffee)
 add_subdirectory(examples)
 add_subdirectory(docs)
 
-if(COFFEE_BUILD_SWIG_BINDING)
+if(COFFEE_BUILD_SWIG_BINDING_)
     add_subdirectory(swig)
 endif()
 

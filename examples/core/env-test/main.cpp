@@ -7,6 +7,7 @@ using namespace CLibraryLoader;
 
 int32 coffee_main(int32, byte_t**)
 {
+    AltScreen();
     {
         /* Check out system directory strings and user data directories */
         cstring_w cfg_dir  = env_get_user_data(
@@ -43,9 +44,6 @@ int32 coffee_main(int32, byte_t**)
         }
     }
 
-    /* Just printing the compiler string */
-    cDebug("Compiler: {0}",CoffeeCompilerString);
-
     {
         /* Testing function slot/signal classes */
         CRect t(0,0,10,10);
@@ -72,14 +70,14 @@ int32 coffee_main(int32, byte_t**)
                t3_d->mantissa,t4_d->mantissa);
     }
 
+    CSize tsize = TerminalSize();
+    cDebug("Terminal size: {0}x{1}",tsize.w,tsize.h);
+
     {
         /* Testing interactive command line */
-        cDebug("Interactive: {0}",interactive_cmd());
-
         std::string ts;
         ts.resize(100);
 
-        ClearScreen();
         while(!CStrCmp(&ts[0],"quit\n"))
         {
             ts.clear();
@@ -88,6 +86,7 @@ int32 coffee_main(int32, byte_t**)
             cDebug("You wrote: {0}",ts.c_str());
         }
     }
+    ResetScreen();
 
     return 0;
 }

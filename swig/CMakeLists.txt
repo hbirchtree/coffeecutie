@@ -11,7 +11,7 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/../coffee/assimp/include
         ${CMAKE_SOURCE_DIR}/../coffee/audio/include
         ${CMAKE_SOURCE_DIR}/../coffee/blam/include
-        ${CMAKE_SOURCE_DIR}/../coffee/core
+        ${CMAKE_SOURCE_DIR}/../coffee/core/include
         ${CMAKE_SOURCE_DIR}/../coffee/core/base
         ${CMAKE_SOURCE_DIR}/../coffee/core/plat
         ${CMAKE_SOURCE_DIR}/../coffee/graphics_apis/include
