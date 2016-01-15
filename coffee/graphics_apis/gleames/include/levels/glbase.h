@@ -47,9 +47,9 @@ struct CGL_Implementation
 
     enum class DrawMode
     {
-        Point = GL_POINT,
-        Line = GL_LINE,
-        Fill = GL_FILL,
+//        Point = GL_POINT,
+//        Line = GL_LINE,
+//        Fill = GL_FILL,
     };
 
     enum class PrimCre
@@ -75,7 +75,7 @@ struct CGL_Implementation
         Both = 0x3,
     };
 
-    enum class AttribMode
+    enum class AttribMode : CGenum
     {
         Interleaved = GL_INTERLEAVED_ATTRIBS,
         Separate = GL_SEPARATE_ATTRIBS,
@@ -124,12 +124,12 @@ struct CGL_Implementation
         ArrayData = GL_ARRAY_BUFFER,
         ElementData = GL_ELEMENT_ARRAY_BUFFER,
         UniformData = GL_UNIFORM_BUFFER,
-        ShaderData = GL_SHADER_STORAGE_BUFFER,
-        AtomicData = GL_ATOMIC_COUNTER_BUFFER,
-        QueryData = GL_QUERY_BUFFER,
+//        ShaderData = GL_SHADER_STORAGE_BUFFER,
+//        AtomicData = GL_ATOMIC_COUNTER_BUFFER,
+//        QueryData = GL_QUERY_BUFFER,
         XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
-        DrawcallData = GL_DRAW_INDIRECT_BUFFER,
-        ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
+//        DrawcallData = GL_DRAW_INDIRECT_BUFFER,
+//        ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
         PixelUData = GL_PIXEL_UNPACK_BUFFER,
         PixelPData = GL_PIXEL_PACK_BUFFER,
     };
@@ -139,10 +139,9 @@ struct CGL_Implementation
         T2D = GL_TEXTURE_2D,
         T3D = GL_TEXTURE_3D,
         Cubemap = GL_TEXTURE_CUBE_MAP,
-        Rect = GL_TEXTURE_RECTANGLE,
 
-        T2DArray = GL_TEXTURE_2D_ARRAY,
-        CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
+//        T2DArray = GL_TEXTURE_2D_ARRAY,
+//        CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
 
         CubeX_P = GL_TEXTURE_CUBE_MAP_POSITIVE_X,
         CubeX_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_X,
@@ -151,19 +150,8 @@ struct CGL_Implementation
         CubeZ_P = GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
         CubeZ_N = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z,
 
-        Proxy2D = GL_PROXY_TEXTURE_2D,
-        Proxy3D = GL_PROXY_TEXTURE_3D,
-        ProxyCubemap = GL_PROXY_TEXTURE_CUBE_MAP,
-        ProxyRect = GL_PROXY_TEXTURE_RECTANGLE,
-
-        Proxy2DArray = GL_PROXY_TEXTURE_2D_ARRAY,
-        ProxyCubemapArray = GL_PROXY_TEXTURE_CUBE_MAP_ARRAY,
-
-        T2DMS = GL_TEXTURE_2D_MULTISAMPLE,
-        T2DArrayMS = GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
-
-        Proxy2DMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE,
-        Proxy2DArrayMS = GL_PROXY_TEXTURE_2D_MULTISAMPLE_ARRAY,
+//        T2DMS = GL_TEXTURE_2D_MULTISAMPLE,
+//        T2DArrayMS = GL_TEXTURE_2D_MULTISAMPLE_ARRAY,
     };
 
     enum class OpType
@@ -258,10 +246,10 @@ struct CGL_Implementation
     {
         AnySamples = GL_ANY_SAMPLES_PASSED,
         AnySamplesCon = GL_ANY_SAMPLES_PASSED_CONSERVATIVE,
-        Samples = GL_SAMPLES_PASSED,
-        PrimGen = GL_PRIMITIVES_GENERATED,
+//        Samples = GL_SAMPLES_PASSED,
+//        PrimGen = GL_PRIMITIVES_GENERATED,
         XFGen = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
-        TimeElapsed = GL_TIME_ELAPSED,
+//        TimeElapsed = GL_TIME_ELAPSED,
     };
 
     struct CGL_TypeMapBase
@@ -322,9 +310,6 @@ struct CGL_Implementation
     static void Enable(Feature e){glEnable(to_enum(e));}
     static void Disable(Feature e){glDisable(to_enum(e));}
 
-    static void Enablei(Feature e,uint32 i){glEnablei(to_enum(e),i);}
-    static void Disablei(Feature e,uint32 i){glDisablei(to_enum(e),i);}
-
     static void ClearDepth(scalar f){glClearDepthf(f);}
     static void ClearStencil(int32 f){glClearStencil(f);}
 
@@ -347,9 +332,6 @@ struct CGL_Implementation
     static void BlendEqSep(Operator v1,Operator v2)
     {glBlendEquationSeparate(to_enum(v1),to_enum(v2));}
 
-    static void ColorMaski(uint32 i, CColorMask op){glColorMaski(i,op.r,op.g,op.b,op.a);}
-    static void ColorLogicOp(LogicOp op){glLogicOp(to_enum(op));}
-
     static void DepthFunc(ValueComparison f){glDepthFunc(to_enum(f));}
     static void DepthMask(bool v){glDepthMask((v) ? GL_TRUE : GL_FALSE);}
 
@@ -361,20 +343,13 @@ struct CGL_Implementation
 
     static void ViewportSet(CRect64 const* r){glViewport(r->x,r->y,r->w,r->h);}
     static void ScissorSet(CRect64 const* r){glScissor(r->x,r->y,r->w,r->h);}
-    static void DepthSet(CZField64 const* d){glDepthRange(d->near,d->far);}
-
-    static void PointParameteriv(CGenum f,const int32* d){glPointParameteriv(f,d);}
-    static void PointParameterfv(CGenum f,const scalar* d){glPointParameterfv(f,d);}
-    static void PointSize(scalar f){glPointSize(f);}
 
     static void LineWidth(scalar f){glLineWidth(f);}
 
-    static void PolyMode(Face f1,DrawMode f2){glPolygonMode(to_enum(f1),to_enum(f2));}
     static void PolyOffset(scalar f1,scalar f2){glPolygonOffset(f1,f2);}
 
     /* SAMPLE_ALPHA_TO_COVERAGE,SAMPLE_ALPHA_TO_ONE */
     static void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
-    static void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
 
     static void PixelStore(bool pack, PixelOperation op, int32 v)
     {glPixelStorei(to_enum(pack,op),v);}
@@ -418,52 +393,52 @@ struct CGL_Implementation
 
         static void SetDebugMode(bool enabled)
         {
-            if(enabled == b_isDebugging)
-                return;
-            if(enabled)
-            {
-                glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-                b_isDebugging = true;
-            }
-            else
-            {
-                glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-                b_isDebugging = true;
-            }
+//            if(enabled == b_isDebugging)
+//                return;
+//            if(enabled)
+//            {
+//                glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+//                b_isDebugging = true;
+//            }
+//            else
+//            {
+//                glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+//                b_isDebugging = false;
+//            }
         }
 
         static void SetDebugLevel(Severity s,bool e)
         {
-            glDebugMessageControl(GL_DONT_CARE,GL_DONT_CARE,
-                                  to_enum(s),0,nullptr,(e)?GL_TRUE:GL_FALSE);
+//            glDebugMessageControl(GL_DONT_CARE,GL_DONT_CARE,
+//                                  to_enum(s),0,nullptr,(e)?GL_TRUE:GL_FALSE);
         }
 
         static void SetObjectLabel(Object t,CGhnd h,cstring s)
         {
-            glObjectLabel(to_enum(t),h,-1,s);
+//            glObjectLabel(to_enum(t),h,-1,s);
         }
 
         static void SetDebugGroup(cstring n, uint32 id)
         {
-            glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
+//            glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
         }
-        static void UnsetDebugGroup(){glPopDebugGroup();}
+        static void UnsetDebugGroup(){/*glPopDebugGroup();*/}
 
         static void DebugMessage(Severity s,DebugType t,cstring n)
         {
-            glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
-                                 to_enum(t),0,
-                                 to_enum(s),
-                                 -1,n);
+//            glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
+//                                 to_enum(t),0,
+//                                 to_enum(s),
+//                                 -1,n);
         }
 
         static void DebugSetCallback(CGcallback c, void* param)
         {
-            glDebugMessageCallback(c,param);
+//            glDebugMessageCallback(c,param);
         }
 
-        static void IsEnabledi(Feature f,int32 i){
-            glIsEnabledi(CGL::CGL_Implementation::to_enum(f),i);}
+        static void IsEnabled(Feature f){
+            glIsEnabled(to_enum(f));}
 
         static cstring GetString(CGenum e){return (cstring)glGetString(e);}
         static cstring GetStringi(CGenum e,uint32 i){return (cstring)glGetStringi(e,i);}
@@ -490,12 +465,6 @@ struct CGL_Implementation
             glGetFloatv(e,&i);
             return i;
         }
-        static bigscalar GetScalarLL(CGenum e)
-        {
-            bigscalar i;
-            glGetDoublev(e,&i);
-            return i;
-        }
 
         static bool GetBooleanv(CGenum e)
         {
@@ -520,26 +489,6 @@ struct CGL_Implementation
             return v;
         }
 
-        static scalar GetScalarI(CGenum e,uint32 i)
-        {
-            scalar v;
-            glGetFloati_v(e,i,&v);
-            return v;
-        }
-        static bigscalar GetScalarLLI(CGenum e,uint32 i)
-        {
-            bigscalar v;
-            glGetDoublei_v(e,i,&v);
-            return v;
-        }
-
-        static bool GetBooleanvI(CGenum e,uint32 i)
-        {
-            GLboolean v;
-            glGetBooleani_v(e,i,&v);
-            return v==GL_TRUE;
-        }
-
         /* Is* */
 
         static bool IsBuffer(CGhnd h){return glIsBuffer(h)==GL_TRUE;}
@@ -548,7 +497,7 @@ struct CGL_Implementation
         static bool IsFramebuffer(CGhnd h){return glIsFramebuffer(h)==GL_TRUE;}
         static bool IsRenderbuffer(CGhnd h){return glIsRenderbuffer(h)==GL_TRUE;}
 
-        static bool IsPipeline(CGhnd h){return glIsProgramPipeline(h)==GL_TRUE;}
+//        static bool IsPipeline(CGhnd h){return glIsProgramPipeline(h)==GL_TRUE;}
         static bool IsShader(CGhnd h){return glIsShader(h)==GL_TRUE;}
         static bool IsProgram(CGhnd h){return glIsProgram(h)==GL_TRUE;}
 

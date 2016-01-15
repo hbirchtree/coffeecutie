@@ -235,7 +235,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         if(pack)
             return GL_PACK_SWAP_BYTES;
         else
-            return GL_PACK_SWAP_BYTES;
+            return GL_UNPACK_SWAP_BYTES;
     }
 }
 

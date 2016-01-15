@@ -133,3 +133,7 @@
 #if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
 #define COFFEE_USE_IOCTL_TERM_SIZE
 #endif
+
+#if defined(COFFEE_ANDROID)
+#define COFFEE_USE_LONGLONG_INT64
+#endif

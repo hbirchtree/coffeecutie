@@ -31,27 +31,6 @@ struct CGLES30 : CGL_Implementation
         return true;
     }
 
-    static bool InstancedGeometryShaderSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_geometry_shader4");}
-
-    static bool CubemapSeamlessSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_seamless_cube_map");}
-
-    static bool CubemapArraySupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_texture_cube_map_array");}
-
-    static bool ASTCSupported()
-    {return Debug::CheckExtensionSupported("GL_KHR_texture_compression_astc_hdr");}
-
-    static bool BPTCSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_texture_compression_bptc");}
-
-    static bool RGTCSupported()
-    {return Debug::CheckExtensionSupported("GL_ARB_texture_compression_rgtc");}
-
-    static bool DXTCSupported()
-    {return Debug::CheckExtensionSupported("GL_EXT_texture_compression_s3tc");}
-
     /* Allocations */
     static bool TexAlloc(uint32 l,CGhnd* d){glGenTextures(l,d); return true;}
     static bool TexFree(uint32 l,CGhnd* d){glDeleteTextures(l,d); return true;}
@@ -191,12 +170,6 @@ struct CGLES30 : CGL_Implementation
     static void ProgramGetiv(CGhnd h,CGenum f,int32* d){glGetProgramiv(h,f,d);}
 
     static int32 ProgramGetFragDataLoc(CGhnd h,cstring n){return glGetFragDataLocation(h,n);}
-    static int32 ProgramGetFragDataIdx(CGhnd h,cstring n){return glGetFragDataIndex(h,n);}
-    static void ProgramBindFragData(CGhnd h,uint32 l,cstring n){glBindFragDataLocation(h,l,n);}
-    static void ProgramBindFragDataIndexed(CGhnd h,uint32 i,uint32 l,cstring n)
-    {
-        glBindFragDataLocationIndexed(h,l,i,n);
-    }
 
     /* Attributes */
     static void ProgramAttribGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
@@ -277,39 +250,6 @@ struct CGLES30 : CGL_Implementation
     static uint32 ProgramUnifBlockGetLoc(CGhnd h,cstring n){return glGetUniformBlockIndex(h,n);}
     static void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i){glUniformBlockBinding(h,l,i);}
 
-    /* Subroutines */
-    static void ProgramSubRtGet(CGhnd h,ShaderStage s,uint32* n,
-                                cstring_w** names,int32** rtSize,int32*** rt)
-    {
-        int32 num = 0;
-        ProgramGetiv(h,GL_ACTIVE_SUBROUTINE_UNIFORMS,&num);
-        if(num<=0)
-        {
-            *n = 0;
-            return;
-        }
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
-
-        names[0] = new cstring_w[num];
-        rtSize[0] = new int32[num];
-        rt[0] = new int32*[num];
-	for(uint32 i=0;i<(uint32)num;i++)
-        {
-            int32 namelen = 0;
-            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_UNIFORM_NAME_LENGTH,&namelen);
-            glGetActiveSubroutineUniformName(h,to_enum1(s),i,namelen,nullptr,names[0][i]);
-            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_NUM_COMPATIBLE_SUBROUTINES,&rtSize[0][i]);
-            rt[0][i] = new int32[rtSize[0][i]];
-            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_COMPATIBLE_SUBROUTINES,rt[0][i]);
-        }
-    }
-    static uint32 ProgramSubRtGetLoc(CGhnd h,ShaderStage s,cstring n)
-    {return glGetSubroutineIndex(h,to_enum1(s),n);}
-    /* Binds all subroutine uniforms */
-    static void ProgramSubRtBind(ShaderStage s,int32 n,const uint32* d)
-    {glUniformSubroutinesuiv(to_enum1(s),n,d);}
-
     /* Textures */
     static void TexBind(Texture t,CGhnd h){glBindTexture(to_enum(t),h);}
     static void TexActive(uint32 i){glActiveTexture(GL_TEXTURE0+i);}
@@ -323,12 +263,6 @@ struct CGLES30 : CGL_Implementation
                            PixelComponents fmt,BitFormat dt,c_cptr p)
     {glTexImage3D(to_enum(t),level,(int32)ifmt,w,h,d,border,to_enum(fmt),to_enum(dt),p);}
 
-    static void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
-                           uint32 w,uint32 h)
-    {glTexImage2DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,GL_FALSE);}
-    static void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
-                           uint32 w,uint32 h,uint32 d)
-    {glTexImage3DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,d,GL_FALSE);}
 
     static void TexSubImage2D(Texture t,uint32 level,int32 x,int32 y,
                               uint32 w,uint32 h,PixelComponents fmt,BitFormat dt,c_cptr p)
@@ -375,10 +309,8 @@ struct CGLES30 : CGL_Implementation
                                   uint32 w,uint32 h)
     {glCopyTexSubImage3D(to_enum(t),level,xo,yo,zo,x,y,w,h);}
 
-    static void TexGetImage(Texture t,uint32 level,PixelComponents fmt,BitFormat dt,c_ptr p)
-    {glGetTexImage(to_enum(t),level,to_enum(fmt),to_enum(dt),p);}
-    static void TexGetImageCompressed(Texture t,uint32 level,c_ptr p)
-    {glGetCompressedTexImage(to_enum(t),level,p);}
+//    static void TexGetImageCompressed(Texture t,uint32 level,c_ptr p)
+//    {glGetCompressedTexImage(to_enum(t),level,p);}
 
     static void TexGenMipmap(Texture t){glGenerateMipmap(to_enum(t));}
 
@@ -387,11 +319,9 @@ struct CGLES30 : CGL_Implementation
 
     /*TODO: Create SamplerProperty enum*/
     static void SamplerParameteriv(CGhnd h,CGenum f,const int32* d){glSamplerParameteriv(h,f,d);}
-    static void SamplerParameteruiv(CGhnd h,CGenum f,const uint32* d){glSamplerParameterIuiv(h,f,d);}
     static void SamplerParameterfv(CGhnd h,CGenum f,const scalar* d){glSamplerParameterfv(h,f,d);}
 
     static void SamplerGetParameteriv(CGhnd h,CGenum f,int32* d){glGetSamplerParameteriv(h,f,d);}
-    static void SamplerGetParameteruiv(CGhnd h,CGenum f,uint32* d){glGetSamplerParameterIuiv(h,f,d);}
     static void SamplerGetParameterfv(CGhnd h,CGenum f,scalar* d){glGetSamplerParameterfv(h,f,d);}
 
     /* Buffers */
@@ -401,8 +331,6 @@ struct CGLES30 : CGL_Implementation
     {glBufferData(to_enum(t),sz,p,to_enum1(a));}
     static void BufSubData(BufType t,int64 off,uint32 sz,c_cptr p)
     {glBufferSubData(to_enum(t),off,sz,p);}
-    static void BufGetSubData(BufType t,int64 off,uint32 sz,c_ptr p)
-    {glGetBufferSubData(to_enum(t),off,sz,p);}
     static void BufCopySubData(BufType t1,BufType t2,int64 off1,int64 off2,uint32 sz)
     {glCopyBufferSubData(to_enum(t1),to_enum(t2),off1,off2,sz);}
 
@@ -413,20 +341,11 @@ struct CGLES30 : CGL_Implementation
     static void BufUnmap(BufType t){glUnmapBuffer(to_enum(t));}
 
     /* Queries */
-    static void ConditionalRenderBegin(CGhnd h,QueryT m)
-    {glBeginConditionalRender(h,to_enum(m));}
-    static void ConditionalRenderEnd(){glEndConditionalRender();}
-
     static void QueryBegin(QueryT t,CGhnd h){glBeginQuery(to_enum(t),h);}
     static void QueryEnd(QueryT t){glEndQuery(to_enum(t));}
 
     /*Create QueryProperty enum*/
-    static void QueryGetObjectiv(CGhnd h,CGenum f,int32* d){glGetQueryObjectiv(h,f,d);}
     static void QueryGetObjectuiv(CGhnd h,CGenum f,uint32* d){glGetQueryObjectuiv(h,f,d);}
-    static void QueryGetObjecti64v(CGhnd h,CGenum f,int64* d){glGetQueryObjecti64v(h,f,d);}
-    static void QueryGetObjectui64v(CGhnd h,CGenum f,uint64* d){glGetQueryObjectui64v(h,f,d);}
-
-    static void QueryCounter(CGhnd h,CGenum t){glQueryCounter(h,t);}
 
     /* FB */
     static void FBBind(FramebufferT t,CGhnd h){glBindFramebuffer(to_enum(t),h);}
@@ -450,14 +369,8 @@ struct CGLES30 : CGL_Implementation
     static void FBGetAttachParameter(FramebufferT t,CGenum att,CGenum p,int32* d)
     {glGetFramebufferAttachmentParameteriv(to_enum(t),att,p,d);}
 
-    static void FBAttachTexture(FramebufferT t,CGenum att,CGhnd h,int32 level)
-    {glFramebufferTexture(to_enum(t),att,h,level);}
-
     static void FBAttachTexture2D(FramebufferT t,CGenum att,Texture textrg,CGhnd h,int32 level)
     {glFramebufferTexture2D(to_enum(t),att,to_enum(textrg),h,level);}
-    static void FBAttachTexture3D(FramebufferT t,CGenum att,Texture textrg,CGhnd h,
-                                  int32 level,int32 z)
-    {glFramebufferTexture3D(to_enum(t),att,to_enum(textrg),h,level,z);}
     static void FBAttachTextureLayer(FramebufferT t,CGenum att,CGhnd h,int32 level,int32 layer)
     {glFramebufferTextureLayer(to_enum(t),att,h,level,layer);}
     static void FBAttachRenderBuffer(FramebufferT t,CGenum att,CGhnd h)
@@ -507,12 +420,6 @@ struct CGLES30 : CGL_Implementation
     static void VAOAttribPointer(uint32 i,int32 s,CGenum t,bool n,int64 stride,int64 offset){glVertexAttribPointer(i,s,t,(n) ? GL_TRUE : GL_FALSE,stride,(void*)offset);}
     static void VAOAttribIPointer(uint32 i,int32 s,CGenum t,int64 stride,int64 offset){glVertexAttribIPointer(i,s,t,stride,(void*)offset);}
     static void VAODivisor(uint32 i,uint32 d){glVertexAttribDivisor(i,d);}
-
-    static void VAOPrimitiveRestart(uint32 idx)
-    {
-        glPrimitiveRestartIndex(idx);
-        Enable(Feature::PrimitiveRestart);
-    }
 
     /* Sync */
     static CGsync FenceCreate(){return glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);}
@@ -567,23 +474,9 @@ struct CGLES30 : CGL_Implementation
     {glDrawElements(p,c,t,(void*)off);}
     static void DrawElementsInstanced(CGenum p,int32 c,TypeEnum t,int64 off,uint64 pc)
     {glDrawElementsInstanced(p,c,to_enum(t),(void*)off,pc);}
-    static void DrawElementsBaseVertex(CGenum p,int32 c,TypeEnum t,int64 off,int32 bv)
-    {glDrawElementsBaseVertex(p,c,to_enum(t),(void*)off,bv);}
-    static void DrawElementsInstancedBaseVertex(CGenum p,int32 c,TypeEnum t,int64 off,int32 pc,int32 bv)
-    {glDrawElementsInstancedBaseVertex(p,c,to_enum(t),(void*)off,pc,bv);}
 
     static void DrawRangeElements(CGenum p,uint32 f,uint32 e,int32 c,TypeEnum t,int64 off)
     {glDrawRangeElements(p,f,e,c,to_enum(t),(void*)off);}
-    static void DrawRangeElementsBaseVertex(CGenum p,uint32 f,uint32 e,int32 c,TypeEnum t,int64 off,int32 bv)
-    {glDrawRangeElementsBaseVertex(p,f,e,c,to_enum(t),(void*)off,bv);}
-
-    static void DrawMultiArrays(CGenum p,const int32* f,const int32* c, int32 dc)
-    {glMultiDrawArrays(p,f,c,dc);}
-
-    static void DrawMultiElements(CGenum p,const int32* f,TypeEnum t,const int64* off,int32 dc)
-    {glMultiDrawElements(p,f,to_enum(t),(const void**)&off,dc);}
-    static void DrawMultiElementsBaseVertex(CGenum p,const int32* c,TypeEnum t,const int64* off,int32 dc,const int32* bv)
-    {glMultiDrawElementsBaseVertex(p,c,to_enum(t),(const void**)&off,dc,bv);}
 };
 
 }

@@ -14,81 +14,9 @@ void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GL
 {
     const CGLeamRenderer* renderer = (const CGLeamRenderer*)param;
     CGL::CGL_Implementation::CGDbgMsg cmsg;
-    switch(src)
-    {
-    case GL_DEBUG_SOURCE_API:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    case GL_DEBUG_SOURCE_APPLICATION:
-        cmsg.comp = DebugComponent::Core;
-        break;
-    case GL_DEBUG_SOURCE_OTHER:
-        cmsg.comp = DebugComponent::Interface;
-        break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER:
-        cmsg.comp = DebugComponent::ShaderCompiler;
-        break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    default:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    }
-    switch(type)
-    {
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        cmsg.type = DebugType::Deprecated;
-        break;
-    case GL_DEBUG_TYPE_ERROR:
-        cmsg.type = DebugType::UndefinedBehavior;
-        break;
-    case GL_DEBUG_TYPE_MARKER:
-        cmsg.type = DebugType::Marker;
-        break;
-    case GL_DEBUG_TYPE_OTHER:
-        cmsg.type = DebugType::UndefinedBehavior;
-        break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        cmsg.type = DebugType::Performance;
-        break;
-    case GL_DEBUG_TYPE_PORTABILITY:
-        cmsg.type = DebugType::Compliance;
-        break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        cmsg.type = DebugType::UndefinedBehavior;
-        break;
-    case GL_DEBUG_TYPE_POP_GROUP:
-        cmsg.type = DebugType::Information;
-        break;
-    case GL_DEBUG_TYPE_PUSH_GROUP:
-        cmsg.type = DebugType::Information;
-        break;
-    default:
-        cmsg.type = DebugType::Information;
-        break;
-    }
-    switch(sev)
-    {
-    case GL_DEBUG_SEVERITY_HIGH:
-        cmsg.sev = Severity::High;
-        break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        cmsg.sev = Severity::Medium;
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-        cmsg.sev = Severity::Low;
-        break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        cmsg.sev = Severity::Information;
-        break;
-    default:
-        cmsg.sev = Severity::Information;
-        break;
-    }
+//    cmsg.comp = CGL::CGL_Implementation::to_enum(src);
+//    cmsg.type = CGL::CGL_Implementation::to_enum(type);
+//    cmsg.sev = CGL::CGL_Implementation::to_enum(sev);
     cmsg.id = id;
     cmsg.msg = msg;
     renderer->bindingCallback(&cmsg);

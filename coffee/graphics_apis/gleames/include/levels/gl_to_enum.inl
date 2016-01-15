@@ -4,14 +4,14 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 {
     switch(s)
     {
-    case Severity::High:
-        return GL_DEBUG_SEVERITY_HIGH;
-    case Severity::Medium:
-        return GL_DEBUG_SEVERITY_MEDIUM;
-    case Severity::Low:
-        return GL_DEBUG_SEVERITY_LOW;
-    case Severity::Information:
-        return GL_DEBUG_SEVERITY_NOTIFICATION;
+    //    case Severity::High:
+    //        return GL_DEBUG_SEVERITY_HIGH;
+    //    case Severity::Medium:
+    //        return GL_DEBUG_SEVERITY_MEDIUM;
+    //    case Severity::Low:
+    //        return GL_DEBUG_SEVERITY_LOW;
+    //    case Severity::Information:
+    //        return GL_DEBUG_SEVERITY_NOTIFICATION;
     default:
         return GL_NONE;
     }
@@ -22,24 +22,24 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 {
     switch(t)
     {
-    case DebugType::Compatibility:
-        return GL_DEBUG_TYPE_PORTABILITY;
-        break;
-    case DebugType::Compliance:
-        return GL_DEBUG_TYPE_PORTABILITY;
-        break;
-    case DebugType::Deprecated:
-        return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
-        break;
-    case DebugType::Performance:
-        return GL_DEBUG_TYPE_PERFORMANCE;
-        break;
-    case DebugType::Marker:
-        return GL_DEBUG_TYPE_MARKER;
-        break;
-    case DebugType::UndefinedBehavior:
-        return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
-        break;
+    //    case DebugType::Compatibility:
+    //        return GL_DEBUG_TYPE_PORTABILITY;
+    //        break;
+    //    case DebugType::Compliance:
+    //        return GL_DEBUG_TYPE_PORTABILITY;
+    //        break;
+    //    case DebugType::Deprecated:
+    //        return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
+    //        break;
+    //    case DebugType::Performance:
+    //        return GL_DEBUG_TYPE_PERFORMANCE;
+    //        break;
+    //    case DebugType::Marker:
+    //        return GL_DEBUG_TYPE_MARKER;
+    //        break;
+    //    case DebugType::UndefinedBehavior:
+    //        return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
+    //        break;
     default:
         return GL_NONE;
     }
@@ -51,36 +51,38 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     CGenum type;
     switch(t)
     {
-    case Object::Shader:
-        type = GL_SHADER;
-        break;
-    case Object::Program:
-        type = GL_PROGRAM;
-        break;
-    case Object::VAO:
-        type = GL_VERTEX_ARRAY;
-        break;
-    case Object::Buffer:
-        type = GL_BUFFER;
-        break;
-    case Object::Texture:
-        type = GL_TEXTURE;
-        break;
-    case Object::XFB:
-        type = GL_TRANSFORM_FEEDBACK;
-        break;
-    case Object::Sampler:
-        type = GL_SAMPLER;
-        break;
-    case Object::Query:
-        type = GL_QUERY;
-        break;
-    case Object::Framebuffer:
-        type = GL_FRAMEBUFFER;
-        break;
-    case Object::RenderBuffer:
-        type = GL_RENDERBUFFER;
-        break;
+//    case Object::Shader:
+//        type = GL_SHADER;
+//        break;
+//    case Object::Program:
+//        type = GL_PROGRAM;
+//        break;
+//    case Object::VAO:
+//        type = GL_VERTEX_ARRAY;
+//        break;
+//    case Object::Buffer:
+//        type = GL_BUFFER;
+//        break;
+//    case Object::Texture:
+//        type = GL_TEXTURE;
+//        break;
+//    case Object::XFB:
+//        type = GL_TRANSFORM_FEEDBACK;
+//        break;
+//    case Object::Sampler:
+//        type = GL_SAMPLER;
+//        break;
+//    case Object::Query:
+//        type = GL_QUERY;
+//        break;
+//    case Object::Framebuffer:
+//        type = GL_FRAMEBUFFER;
+//        break;
+//    case Object::RenderBuffer:
+//        type = GL_RENDERBUFFER;
+//        break;
+    default:
+        return GL_NONE;
     }
     return type;
 }
@@ -94,48 +96,50 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         return GL_BLEND;
     case Feature::DepthTest:
         return GL_DEPTH_TEST;
-    case Feature::DepthClamp:
-        return GL_DEPTH_CLAMP;
+//    case Feature::DepthClamp:
+//        return GL_DEPTH_CLAMP;
     case Feature::Dither:
         return GL_DITHER;
-    case Feature::FramebufferSRGB:
-        return GL_FRAMEBUFFER_SRGB;
-    case Feature::LineSmooth:
-        return GL_LINE_SMOOTH;
-    case Feature::Multisample:
-        return GL_MULTISAMPLE;
-    case Feature::PointSize:
-        return GL_PROGRAM_POINT_SIZE;
+//    case Feature::FramebufferSRGB:
+//        return GL_FRAMEBUFFER_SRGB;
+//    case Feature::LineSmooth:
+//        return GL_LINE_SMOOTH;
+//    case Feature::Multisample:
+//        return GL_MULTISAMPLE;
+//    case Feature::PointSize:
+//        return GL_PROGRAM_POINT_SIZE;
     case Feature::PolygonOffsetFill:
         return GL_POLYGON_OFFSET_FILL;
-    case Feature::PolygonOffsetLine:
-        return GL_POLYGON_OFFSET_LINE;
-    case Feature::PolygonOffsetPoint:
-        return GL_POLYGON_OFFSET_POINT;
-    case Feature::PolygonSmooth:
-        return GL_POLYGON_SMOOTH;
-    case Feature::PrimitiveRestart:
-        return GL_PRIMITIVE_RESTART;
+//    case Feature::PolygonOffsetLine:
+//        return GL_POLYGON_OFFSET_LINE;
+//    case Feature::PolygonOffsetPoint:
+//        return GL_POLYGON_OFFSET_POINT;
+//    case Feature::PolygonSmooth:
+//        return GL_POLYGON_SMOOTH;
+//    case Feature::PrimitiveRestart:
+//        return GL_PRIMITIVE_RESTART;
     case Feature::PrimitiveRestartFixedIdx:
         return GL_PRIMITIVE_RESTART_FIXED_INDEX;
     case Feature::RasterizerDiscard:
         return GL_RASTERIZER_DISCARD;
     case Feature::SampleAlphaToCoverage:
         return GL_SAMPLE_ALPHA_TO_COVERAGE;
-    case Feature::SampleAlphaToOne:
-        return GL_SAMPLE_ALPHA_TO_ONE;
+//    case Feature::SampleAlphaToOne:
+//        return GL_SAMPLE_ALPHA_TO_ONE;
     case Feature::SampleCoverage:
         return GL_SAMPLE_COVERAGE;
-    case Feature::SampleMask:
-        return GL_SAMPLE_MASK;
-    case Feature::SampleShading:
-        return GL_SAMPLE_SHADING;
+//    case Feature::SampleMask:
+//        return GL_SAMPLE_MASK;
+//    case Feature::SampleShading:
+//        return GL_SAMPLE_SHADING;
     case Feature::ScissorTest:
         return GL_SCISSOR_TEST;
     case Feature::StencilTest:
         return GL_STENCIL_TEST;
-    case Feature::SeamlessCubemap:
-        return GL_TEXTURE_CUBE_MAP_SEAMLESS;
+//    case Feature::SeamlessCubemap:
+//        return GL_TEXTURE_CUBE_MAP_SEAMLESS;
+    default:
+        return GL_NONE;
     }
 }
 
@@ -166,14 +170,12 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     switch(p)
     {
     case Prim::Line:
-        if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
-            return GL_LINE_STRIP_ADJACENCY;
+//        if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
+//            return GL_LINE_STRIP_ADJACENCY;
         switch(c)
         {
         case PrimCre::Explicit:
             return GL_LINES;
-        case PrimCre::Adjacency:
-            return GL_LINE_STRIP_ADJACENCY;
         case PrimCre::Strip:
             return GL_LINE_STRIP;
         case PrimCre::Loop:
@@ -184,14 +186,14 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     case Prim::Point:
         return GL_POINTS;
     case Prim::Triangle:
-        if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
-            return GL_TRIANGLE_STRIP_ADJACENCY;
+//        if(feval(c&(PrimCre::Adjacency|PrimCre::Strip)))
+//            return GL_TRIANGLE_STRIP_ADJACENCY;
         switch(c)
         {
         case PrimCre::Explicit:
             return GL_TRIANGLES;
-        case PrimCre::Adjacency:
-            return GL_TRIANGLES_ADJACENCY;
+//        case PrimCre::Adjacency:
+//            return GL_TRIANGLES_ADJACENCY;
         case PrimCre::Strip:
             return GL_TRIANGLE_STRIP;
         case PrimCre::Fan:
@@ -199,11 +201,13 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         default:
             return GL_TRIANGLES;
         }
-    case Prim::Patch:
-        if(c!=PrimCre::Explicit)
-            return GL_NONE;
-        else
-            return GL_PATCHES;
+//    case Prim::Patch:
+//        if(c!=PrimCre::Explicit)
+//            return GL_NONE;
+//        else
+//            return GL_PATCHES;
+    default:
+        return GL_NONE;
     }
 }
 
@@ -212,12 +216,14 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 {
     switch(f)
     {
-    case DrawMode::Fill:
-        return GL_FILL;
-    case DrawMode::Line:
-        return GL_LINE;
-    case DrawMode::Point:
-        return GL_POINT;
+    //    case DrawMode::Fill:
+    //        return GL_FILL;
+    //    case DrawMode::Line:
+    //        return GL_LINE;
+    //    case DrawMode::Point:
+    //        return GL_POINT;
+    default:
+        return GL_NONE;
     }
 }
 
@@ -231,11 +237,13 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
             return GL_PACK_ALIGNMENT;
         else
             return GL_UNPACK_ALIGNMENT;
-    case PixelOperation::SwapEndiannes:
-        if(pack)
-            return GL_PACK_SWAP_BYTES;
-        else
-            return GL_PACK_SWAP_BYTES;
+//    case PixelOperation::SwapEndiannes:
+//        if(pack)
+//            return GL_PACK_SWAP_BYTES;
+//        else
+//            return GL_UNPACK_SWAP_BYTES;
+    default:
+        return GL_NONE;
     }
 }
 
@@ -245,78 +253,78 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 {
     switch(f)
     {
-    case PixelFormat::ASTC:{
-        CGenum out = 0;
-        if(feval(e&PixelFlags::SRGBA))
-            out = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
-        else if(feval(e&PixelFlags::RGBA))
-            out = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
-        else
-            return GL_NONE;
-        switch(d)
-        {
-        case ASTC_4x4:
-            out += 0;
-        case ASTC_5x4:
-            out += 1;
-        case ASTC_5x5:
-            out += 2;
-        case ASTC_6x5:
-            out += 3;
-        case ASTC_6x6:
-            out += 4;
-        case ASTC_8x5:
-            out += 5;
-        case ASTC_8x6:
-            out += 6;
-        case ASTC_8x8:
-            out += 7;
-        case ASTC_10x5:
-            out += 8;
-        case ASTC_10x6:
-            out += 9;
-        case ASTC_10x8:
-            out += 10;
-        case ASTC_10x10:
-            out += 11;
-        case ASTC_12x10:
-            out += 12;
-        case ASTC_12x12:
-            out += 13;
-        default:
-            return GL_NONE;
-        }
-        return out;
-    }
-    case PixelFormat::BPTC:
-        if(feval(e&(PixelFlags::RGBA|PixelFlags::Unormalized)))
-            return GL_COMPRESSED_RGBA_BPTC_UNORM;
-        if(feval(e&(PixelFlags::SRGBA|PixelFlags::Unormalized)))
-            return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
-        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint)))
-            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
-        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint|PixelFlags::Unsigned)))
-            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
-        return GL_NONE;
-    case PixelFormat::RGTC:
-	if(feval(e&(PixelFlags::R|PixelFlags::Unsigned)))
-            return GL_COMPRESSED_RED_RGTC1;
-	if(feval(e&(PixelFlags::R|PixelFlags::Signed)))
-            return GL_COMPRESSED_SIGNED_RED_RGTC1;
-	if(feval(e&(PixelFlags::RG|PixelFlags::Unsigned)))
-            return GL_COMPRESSED_RG_RGTC2;
-	if(feval(e&(PixelFlags::RG|PixelFlags::Signed)))
-            return GL_COMPRESSED_SIGNED_RG_RGTC2;
-        return GL_NONE;
-    case PixelFormat::S3TC:
-        if(feval(e&(PixelFlags::RGB))&&feval(d&S3TC_1))
-            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_1))
-            return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_3))
-            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_5))
-            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+//    case PixelFormat::ASTC:{
+//        CGenum out = 0;
+//        if(feval(e&PixelFlags::SRGBA))
+//            out = GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
+//        else if(feval(e&PixelFlags::RGBA))
+//            out = GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+//        else
+//            return GL_NONE;
+//        switch(d)
+//        {
+//        case ASTC_4x4:
+//            out += 0;
+//        case ASTC_5x4:
+//            out += 1;
+//        case ASTC_5x5:
+//            out += 2;
+//        case ASTC_6x5:
+//            out += 3;
+//        case ASTC_6x6:
+//            out += 4;
+//        case ASTC_8x5:
+//            out += 5;
+//        case ASTC_8x6:
+//            out += 6;
+//        case ASTC_8x8:
+//            out += 7;
+//        case ASTC_10x5:
+//            out += 8;
+//        case ASTC_10x6:
+//            out += 9;
+//        case ASTC_10x8:
+//            out += 10;
+//        case ASTC_10x10:
+//            out += 11;
+//        case ASTC_12x10:
+//            out += 12;
+//        case ASTC_12x12:
+//            out += 13;
+//        default:
+//            return GL_NONE;
+//        }
+//        return out;
+//    }
+//    case PixelFormat::BPTC:
+//        if(feval(e&(PixelFlags::RGBA|PixelFlags::Unormalized)))
+//            return GL_COMPRESSED_RGBA_BPTC_UNORM;
+//        if(feval(e&(PixelFlags::SRGBA|PixelFlags::Unormalized)))
+//            return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+//        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint)))
+//            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+//        if(feval(e&(PixelFlags::RGB|PixelFlags::FloatingPoint|PixelFlags::Unsigned)))
+//            return GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT;
+//        return GL_NONE;
+//    case PixelFormat::RGTC:
+//        if(feval(e&(PixelFlags::R|PixelFlags::Unsigned)))
+//            return GL_COMPRESSED_RED_RGTC1;
+//        if(feval(e&(PixelFlags::R|PixelFlags::Signed)))
+//            return GL_COMPRESSED_SIGNED_RED_RGTC1;
+//        if(feval(e&(PixelFlags::RG|PixelFlags::Unsigned)))
+//            return GL_COMPRESSED_RG_RGTC2;
+//        if(feval(e&(PixelFlags::RG|PixelFlags::Signed)))
+//            return GL_COMPRESSED_SIGNED_RG_RGTC2;
+//        return GL_NONE;
+//    case PixelFormat::S3TC:
+//        if(feval(e&(PixelFlags::RGB))&&feval(d&S3TC_1))
+//            return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+//        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_1))
+//            return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+//        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_3))
+//            return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+//        if(feval(e&(PixelFlags::RGBA))&&feval(d&S3TC_5))
+//            return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 
     case PixelFormat::Depth:
         return GL_DEPTH_COMPONENT;
@@ -396,29 +404,29 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     case PixelFormat::R11G11B10F:
         return GL_R11F_G11F_B10F;
 
-    case PixelFormat::R3G3B2UI:
-        return GL_R3_G3_B2;
-    case PixelFormat::RGB4UI:
-        return GL_RGB4;
-    case PixelFormat::RGB5UI:
-        return GL_RGB5;
+//    case PixelFormat::R3G3B2UI:
+//        return GL_R3_G3_B2;
+//    case PixelFormat::RGB4UI:
+//        return GL_RGB4;
+//    case PixelFormat::RGB5UI:
+//        return GL_RGB5;
     case PixelFormat::RGB565UI:
         return GL_RGB565;
     case PixelFormat::RGB9E5UI:
         return GL_RGB9_E5;
-    case PixelFormat::RGB10:
-        return GL_RGB10;
-    case PixelFormat::RGB12:
-        return GL_RGB12;
+//    case PixelFormat::RGB10:
+//        return GL_RGB10;
+//    case PixelFormat::RGB12:
+//        return GL_RGB12;
 
-    case PixelFormat::RGBA2:
-        return GL_RGBA2;
+//    case PixelFormat::RGBA2:
+//        return GL_RGBA2;
     case PixelFormat::RGB10A2I:
         return GL_RGB10_A2;
     case PixelFormat::RGB10A2UI:
         return GL_RGB10_A2UI;
-    case PixelFormat::RGBA12:
-        return GL_RGBA12;
+//    case PixelFormat::RGBA12:
+//        return GL_RGBA12;
     case PixelFormat::RGB5A1UI:
         return GL_RGB5_A1;
 
@@ -427,7 +435,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     case PixelFormat::SRGB8:
         return GL_SRGB8;
     default:
-	return GL_NONE;
+        return GL_NONE;
     }
 }
 
@@ -438,16 +446,16 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(
     {
     case ShaderStage::Vertex:
         return GL_VERTEX_SHADER;
-    case ShaderStage::TessControl:
-        return GL_TESS_CONTROL_SHADER;
-    case ShaderStage::TessEval:
-        return GL_TESS_EVALUATION_SHADER;
-    case ShaderStage::Geometry:
-        return GL_GEOMETRY_SHADER;
+//    case ShaderStage::TessControl:
+//        return GL_TESS_CONTROL_SHADER;
+//    case ShaderStage::TessEval:
+//        return GL_TESS_EVALUATION_SHADER;
+//    case ShaderStage::Geometry:
+//        return GL_GEOMETRY_SHADER;
     case ShaderStage::Fragment:
         return GL_FRAGMENT_SHADER;
-    case ShaderStage::Compute:
-        return GL_COMPUTE_SHADER;
+//    case ShaderStage::Compute:
+//        return GL_COMPUTE_SHADER;
     default:
         return GL_NONE;
     }
@@ -458,20 +466,20 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(
 {
     CGenum o = 0;
 
-    if(feval(f&ShaderStage::Vertex))
-        o |= GL_VERTEX_SHADER_BIT;
-    if(feval(f&ShaderStage::TessControl))
-        o |= GL_TESS_CONTROL_SHADER_BIT;
-    if(feval(f&ShaderStage::TessEval))
-        o |= GL_TESS_EVALUATION_SHADER_BIT;
-    if(feval(f&ShaderStage::Geometry))
-        o |= GL_GEOMETRY_SHADER_BIT;
-    if(feval(f&ShaderStage::Fragment))
-        o |= GL_FRAGMENT_SHADER_BIT;
-    if(feval(f&ShaderStage::Compute))
-        o |= GL_COMPUTE_SHADER_BIT;
-    if(feval(f&ShaderStage::All))
-        o = GL_ALL_SHADER_BITS;
+//    if(feval(f&ShaderStage::Vertex))
+//        o |= GL_VERTEX_SHADER_BIT;
+//    if(feval(f&ShaderStage::TessControl))
+//        o |= GL_TESS_CONTROL_SHADER_BIT;
+//    if(feval(f&ShaderStage::TessEval))
+//        o |= GL_TESS_EVALUATION_SHADER_BIT;
+//    if(feval(f&ShaderStage::Geometry))
+//        o |= GL_GEOMETRY_SHADER_BIT;
+//    if(feval(f&ShaderStage::Fragment))
+//        o |= GL_FRAGMENT_SHADER_BIT;
+//    if(feval(f&ShaderStage::Compute))
+//        o |= GL_COMPUTE_SHADER_BIT;
+//    if(feval(f&ShaderStage::All))
+//        o = GL_ALL_SHADER_BITS;
 
     return o;
 }
@@ -549,40 +557,40 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation
 
 inline CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
 {
-    if(feval(op&(LogicOp::COPY)))
-        return GL_COPY;
-    if(feval(op&(LogicOp::COPY|LogicOp::SRC_INVERSE)))
-        return GL_COPY_INVERTED;
-    if(feval(op&(LogicOp::CLEAR0)))
-        return GL_CLEAR;
-    if(feval(op&(LogicOp::CLEAR1)))
-        return GL_SET;
+//    if(feval(op&(LogicOp::COPY)))
+//        return GL_COPY;
+//    if(feval(op&(LogicOp::COPY|LogicOp::SRC_INVERSE)))
+//        return GL_COPY_INVERTED;
+//    if(feval(op&(LogicOp::CLEAR0)))
+//        return GL_CLEAR;
+//    if(feval(op&(LogicOp::CLEAR1)))
+//        return GL_SET;
 
-    if(feval(op&(LogicOp::AND)))
-        return GL_AND;
-    if(feval(op&(LogicOp::NAND)))
-        return GL_NAND;
-    if(feval(op&(LogicOp::AND|LogicOp::DST_INVERSE)))
-        return GL_AND_REVERSE;
-    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
-        return GL_AND_INVERTED;
+//    if(feval(op&(LogicOp::AND)))
+//        return GL_AND;
+//    if(feval(op&(LogicOp::NAND)))
+//        return GL_NAND;
+//    if(feval(op&(LogicOp::AND|LogicOp::DST_INVERSE)))
+//        return GL_AND_REVERSE;
+//    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
+//        return GL_AND_INVERTED;
 
-    if(feval(op&(LogicOp::OR)))
-        return GL_OR;
-    if(feval(op&(LogicOp::NOR)))
-        return GL_NOR;
-    if(feval(op&(LogicOp::XOR)))
-        return GL_XOR;
-    if(feval(op&(LogicOp::OR|LogicOp::DST_INVERSE)))
-        return GL_OR_REVERSE;
-    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
-        return GL_OR_INVERTED;
+//    if(feval(op&(LogicOp::OR)))
+//        return GL_OR;
+//    if(feval(op&(LogicOp::NOR)))
+//        return GL_NOR;
+//    if(feval(op&(LogicOp::XOR)))
+//        return GL_XOR;
+//    if(feval(op&(LogicOp::OR|LogicOp::DST_INVERSE)))
+//        return GL_OR_REVERSE;
+//    if(feval(op&(LogicOp::AND|LogicOp::SRC_INVERSE)))
+//        return GL_OR_INVERTED;
 
-    if(feval(op&(LogicOp::NOOP|LogicOp::DST_INVERSE)))
-        return GL_INVERT;
+//    if(feval(op&(LogicOp::NOOP|LogicOp::DST_INVERSE)))
+//        return GL_INVERT;
 
-    if(feval(op&(LogicOp::XOR|LogicOp::SRC_INVERSE|LogicOp::DST_INVERSE)))
-        return GL_XOR;
+//    if(feval(op&(LogicOp::XOR|LogicOp::SRC_INVERSE|LogicOp::DST_INVERSE)))
+//        return GL_XOR;
 
     return GL_NONE;
 }
@@ -628,16 +636,16 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess ac
 inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess acc)
 {
     CGenum f = 0;
-    if(feval(acc&ResourceAccess::Persistent))
-        f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
-    if(feval(acc&ResourceAccess::ReadOnly))
-        f |= GL_MAP_READ_BIT;
-    if(feval(acc&ResourceAccess::WriteOnly))
-        f |= GL_MAP_WRITE_BIT;
-    if(feval(acc&ResourceAccess::ReadWrite))
-        f |= GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
-    if(feval(acc&ResourceAccess::Streaming))
-        f |= GL_DYNAMIC_STORAGE_BIT;
+//    if(feval(acc&ResourceAccess::Persistent))
+//        f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
+//    if(feval(acc&ResourceAccess::ReadOnly))
+//        f |= GL_MAP_READ_BIT;
+//    if(feval(acc&ResourceAccess::WriteOnly))
+//        f |= GL_MAP_WRITE_BIT;
+//    if(feval(acc&ResourceAccess::ReadWrite))
+//        f |= GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+//    if(feval(acc&ResourceAccess::Streaming))
+//        f |= GL_DYNAMIC_STORAGE_BIT;
     return f;
 }
 
@@ -645,12 +653,12 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess ac
 {
     switch(acc)
     {
-    case ResourceAccess::WriteOnly:
-        return GL_WRITE_ONLY;
-    case ResourceAccess::ReadOnly:
-        return GL_READ_ONLY;
-    case ResourceAccess::ReadWrite:
-        return GL_READ_WRITE;
+//    case ResourceAccess::WriteOnly:
+//        return GL_WRITE_ONLY;
+//    case ResourceAccess::ReadOnly:
+//        return GL_READ_ONLY;
+//    case ResourceAccess::ReadWrite:
+//        return GL_READ_WRITE;
     default:
         return GL_NONE;
     }
@@ -670,18 +678,16 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
         return GL_RG;
     case PixelComponents::RGB:
         return GL_RGB;
-    case PixelComponents::BGR:
-        return GL_BGR;
     case PixelComponents::RGBA:
         return GL_RGBA;
-    case PixelComponents::BGRA:
-        return GL_BGRA;
     case PixelComponents::Depth:
         return GL_DEPTH_COMPONENT;
     case PixelComponents::DepthStencil:
         return GL_DEPTH_STENCIL;
     case PixelComponents::Stencil:
         return GL_STENCIL;
+    default:
+        return GL_NONE;
     }
 }
 
@@ -704,8 +710,6 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
     case TypeEnum::UInt:
         return GL_UNSIGNED_INT;
 
-    case TypeEnum::BigScalar:
-        return GL_DOUBLE;
     case TypeEnum::Scalar:
         return GL_FLOAT;
 
@@ -727,19 +731,11 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(BitFormat f)
 
     case BitFormat::UByte_2:
         return GL_UNSIGNED_BYTE;
-    case BitFormat::UByte_233R:
-        return GL_UNSIGNED_BYTE_2_3_3_REV;
-    case BitFormat::UByte_332:
-        return GL_UNSIGNED_BYTE_3_3_2;
 
     case BitFormat::UShort_4:
         return GL_UNSIGNED_SHORT;
     case BitFormat::UShort_565:
         return GL_UNSIGNED_SHORT_5_6_5;
-    case BitFormat::UShort_565R:
-        return GL_UNSIGNED_SHORT_5_6_5_REV;
-    case BitFormat::UShort_1555R:
-        return GL_UNSIGNED_SHORT_1_5_5_5_REV;
     case BitFormat::UShort_5551:
         return GL_UNSIGNED_SHORT_5_5_5_1;
 
@@ -747,8 +743,6 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(BitFormat f)
         return GL_UNSIGNED_INT;
     case BitFormat::UInt_5999R:
         return GL_UNSIGNED_INT_5_9_9_9_REV;
-    case BitFormat::UInt_1010102:
-        return GL_UNSIGNED_INT_10_10_10_2;
     case BitFormat::UInt_2101010R:
         return GL_UNSIGNED_INT_2_10_10_10_REV;
 
@@ -781,7 +775,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation
 
 inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::AttribMode f)
 {
-    return (CGenum)f;
+    return static_cast<CGenum>(f);
 }
 
 inline CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, bool rev)
@@ -789,60 +783,46 @@ inline CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, b
     switch(e)
     {
     case PixelFormat::RGB8UI:
-            return {GL_UNSIGNED_BYTE,GL_RGB};
+        return {GL_UNSIGNED_BYTE,GL_RGB};
     case PixelFormat::RGB8I:
-            return {GL_BYTE,GL_RGB};
+        return {GL_BYTE,GL_RGB};
     case PixelFormat::RGB16UI:
-            return {GL_UNSIGNED_SHORT,GL_RGB};
+        return {GL_UNSIGNED_SHORT,GL_RGB};
     case PixelFormat::RGB16I:
-            return {GL_SHORT,GL_RGB};
+        return {GL_SHORT,GL_RGB};
     case PixelFormat::RGB32UI:
-            return {GL_UNSIGNED_INT,GL_RGB};
+        return {GL_UNSIGNED_INT,GL_RGB};
     case PixelFormat::RGB32I:
-            return {GL_INT,GL_RGB};
+        return {GL_INT,GL_RGB};
 
     case PixelFormat::RGBA8UI:
-        if(rev)
-            return {GL_UNSIGNED_INT_8_8_8_8_REV,GL_RGBA};
-        else
-            return {GL_UNSIGNED_INT_8_8_8_8,GL_RGBA};
+        return {GL_UNSIGNED_INT,GL_RGBA};
     case PixelFormat::RGBA8I:
-            return {GL_BYTE,GL_RGBA};
+        return {GL_BYTE,GL_RGBA};
     case PixelFormat::RGBA16UI:
-            return {GL_UNSIGNED_SHORT,GL_RGBA};
+        return {GL_UNSIGNED_SHORT,GL_RGBA};
     case PixelFormat::RGBA16I:
-            return {GL_SHORT,GL_RGBA};
+        return {GL_SHORT,GL_RGBA};
     case PixelFormat::RGBA32UI:
-            return {GL_UNSIGNED_INT,GL_RGBA};
+        return {GL_UNSIGNED_INT,GL_RGBA};
     case PixelFormat::RGBA32I:
-            return {GL_INT,GL_RGBA};
+        return {GL_INT,GL_RGBA};
 
-    case PixelFormat::R3G3B2UI:
-        if(rev)
-            return {GL_UNSIGNED_BYTE_2_3_3_REV,GL_RGB};
-        else
-            return {GL_UNSIGNED_BYTE_3_3_2,GL_RGB};
+//    case PixelFormat::R3G3B2UI:
+//        if(rev)
+//            return {GL_UNSIGNED_BYTE_2_3_3_REV,GL_RGB};
+//        else
+//            return {GL_UNSIGNED_BYTE_3_3_2,GL_RGB};
     case PixelFormat::RGB4UI:
         if(rev)
-            return {GL_UNSIGNED_SHORT_4_4_4_4_REV,GL_RGB};
+            break;
         else
             return {GL_UNSIGNED_SHORT_4_4_4_4,GL_RGB};
     case PixelFormat::RGB565UI:
-        if(rev)
-            return {GL_UNSIGNED_SHORT_5_6_5_REV,GL_RGB};
-        else
             return {GL_UNSIGNED_SHORT_5_6_5,GL_RGB};
 
     case PixelFormat::RGB5A1UI:
-        if(rev)
-            return {GL_UNSIGNED_SHORT_1_5_5_5_REV,GL_RGBA};
-        else
             return {GL_UNSIGNED_SHORT_5_5_5_1,GL_RGBA};
-    case PixelFormat::RGB9E5UI:
-        if(rev)
-            return {GL_UNSIGNED_INT_5_9_9_9_REV,GL_RGBA};
-        else
-            break;
 
     case PixelFormat::RGB10A2I:
         if(rev)
@@ -850,10 +830,7 @@ inline CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, b
         else
             break;
     case PixelFormat::RGB10A2UI:
-        if(rev)
-            return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
-        else
-            return {GL_UNSIGNED_INT_10_10_10_2,GL_RGBA};
+        return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
     case PixelFormat::R11G11B10F:
         return {GL_UNSIGNED_INT_10F_11F_11F_REV,GL_RGB};
 

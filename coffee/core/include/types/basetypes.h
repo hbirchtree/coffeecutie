@@ -15,6 +15,8 @@
 #undef minor
 #undef major
 
+#include <plat/platform_detect.h>
+
 #include <typeinfo>
 #include <stdint.h>
 #include <map>
@@ -40,7 +42,11 @@ inline bool feval(T flagcombo)
 typedef char                int8;
 typedef short               int16;
 typedef int                 int32;
+#if defined(COFFEE_USE_LONGLONG_INT64)
+typedef long long int       int64;
+#else
 typedef long int            int64;
+#endif
 
 typedef unsigned char       uint8;
 typedef unsigned short      uint16;

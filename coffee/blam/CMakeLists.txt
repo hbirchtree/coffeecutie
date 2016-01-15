@@ -27,7 +27,6 @@ add_library ( CoffeeBlam ${COFFEE_LINK_OPT}
 target_link_libraries( CoffeeBlam
         CoffeeCore
         CoffeeImage
-        CoffeeOpenGL
     )
 
 set_property(TARGET CoffeeBlam PROPERTY POSITION_INDEPENDENT_CODE ON)
