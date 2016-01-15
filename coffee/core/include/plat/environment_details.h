@@ -1,7 +1,7 @@
 #ifndef ENVIRONMENT_DETAILS
 #define ENVIRONMENT_DETAILS
 
-#include "coffee/core/CTypes"
+#include <coffee/core/CTypes>
 
 namespace Coffee{
 

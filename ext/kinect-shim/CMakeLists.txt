@@ -1,7 +1,6 @@
 if(NOT DEFINED FREENECT2_INCLUDE_DIR)
     message("-- Freenect2 include directory not found, will not build CoffeeNect")
 else()
-    if(COFFEE_BUILD_NECT)
         message("-- Configuring Freenect2 extension lib")
 
         set ( CNect_SRCS
@@ -25,6 +24,5 @@ else()
             )
 
         set_property(TARGET CoffeeNect PROPERTY POSITION_INDEPENDENT_CODE ON)
-        target_compile_features(CoffeeNect PRIVATE cxx_variadic_templates)
-    endif()
+        target_enable_cxx11(CoffeeNect)
 endif()

@@ -9,4 +9,4 @@ add_library(CoffeeQtDialogs STATIC ${NodeEdit_SRCS})
 
 target_link_libraries(CoffeeQtDialogs Qt5::Widgets)
 
-target_compile_features(CoffeeQtDialogs PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeQtDialogs)

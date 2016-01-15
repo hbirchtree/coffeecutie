@@ -2,9 +2,9 @@
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
 #include <coffee/graphics_apis/include/gltypes.h>
-#include <coffee/core/coffee_strings.h>
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cdisplay.h>
+#include <coffee_strings.h>
+#include <base/cdebug.h>
+#include <base/cdisplay.h>
 #include <coffee/core/CTypes>
 
 #include <glad/glad.h>

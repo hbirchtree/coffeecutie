@@ -24,4 +24,4 @@ target_link_libraries( CoffeeFFMedia
     )
 
 set_property(TARGET CoffeeFFMedia PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeFFMedia PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeFFMedia)

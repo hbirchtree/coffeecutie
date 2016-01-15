@@ -29,4 +29,4 @@ target_link_libraries ( CoffeeAudio
     )
 
 set_property(TARGET CoffeeAudio PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeAudio PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeAudio)

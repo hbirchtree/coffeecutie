@@ -1,21 +1,19 @@
-if(COFFEE_BUILD_GLBINDING)
-    set ( ShaderSwitch_SRCS
-        main.cpp
-        )
+set ( ShaderSwitch_SRCS
+    main.cpp
+    )
 
-    include_directories(
-        ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
-        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-        ${COFFEE_GRAPHICS_INCLUDE_DIR}
-        )
+include_directories(
+    ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
+    ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+    ${COFFEE_GRAPHICS_INCLUDE_DIR}
+    )
 
-    add_executable ( ShaderSwitch ${ShaderSwitch_SRCS} )
+add_executable ( ShaderSwitch ${ShaderSwitch_SRCS} )
 
-    target_link_libraries ( ShaderSwitch
-        CoffeeCore
-        CoffeeGraphicsMisc
-        CoffeeOpenGL
-        )
+target_link_libraries ( ShaderSwitch
+    CoffeeCore
+    CoffeeGraphicsMisc
+    CoffeeOpenGL
+    )
 
-    target_compile_features(ShaderSwitch PRIVATE cxx_variadic_templates)
-endif()
+target_enable_cxx11(ShaderSwitch)

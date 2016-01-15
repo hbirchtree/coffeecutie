@@ -54,7 +54,7 @@ void CoffeeInit()
 
 #ifndef NDEBUG
     //Run unit tests, ensuring that the system and compilation process is sane
-    CoffeeTests::run_type_tests();
+//    CoffeeTests::run_type_tests();
     CoffeeTests::run_memory_tests();
 #endif
 }

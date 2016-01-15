@@ -1,6 +1,6 @@
 set ( AsioClientTest_SRCS
-        main.cpp
-)
+    main.cpp
+    )
 
 add_definitions("-DASIO_STANDALONE")
 
@@ -11,7 +11,7 @@ include_directories( ${COFFEE_CORE_INCLUDE_DIR} )
 include_directories( SYSTEM ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include )
 
 target_link_libraries ( AsioClientTest
-        CoffeeCore
-        )
+    CoffeeCore
+    )
 
-target_compile_features(AsioClientTest PRIVATE cxx_variadic_templates)
+target_enable_cxx11(AsioClientTest)

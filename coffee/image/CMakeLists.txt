@@ -13,4 +13,4 @@ target_link_libraries( CoffeeImage
     )
 
 set_property(TARGET CoffeeImage PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeImage PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeImage)

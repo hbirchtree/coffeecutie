@@ -128,7 +128,7 @@ void CSDL2Renderer::init(const CDProperties &props)
 
     setMouseGrabbing(false);
 
-    cMsg("SDL2","Running {0}",m_contextString.c_str());
+    cMsg("SDL2","Running {0}",m_contextString);
 
     bindingPostInit();
 

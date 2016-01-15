@@ -18,18 +18,18 @@ option ( COFFEE_BUILD_GLES "Build with GLES 3.0 renderer instead of desktop GL")
 option ( COFFEE_BUILD_FFMEDIA "Build with FFMPEG library" ON)
 #Whether we should build the legacy GLBinding module for OpenGL abstraction.
 option ( COFFEE_BUILD_GLBINDING "Build with GLBinding library" ON)
+
+option ( COFFEE_BUILD_ASSIMP "Build with Assimp loader" ON)
 #Whether we should build the OpenAL-dependent audio module
 option ( COFFEE_BUILD_OPENAL "Build with OpenAL" ON)
+#Whether we should build with OpenVR support
+option ( COFFEE_BUILD_OPENVR "Build with OpenVR" ON)
 #Whether we should build with support for the PCL extension
 option ( COFFEE_BUILD_PCL "Build with PCL" OFF)
 #Whether we should build with support for the Kinect extension
 option ( COFFEE_BUILD_NECT "Build with Kinect support" OFF)
 #Whether we should build with support for the Qt extension
 option ( COFFEE_BUILD_QT "Build with Qt support" ON)
-
-#For Android builds, we define these variables
-set ( ANDROID_SDK_ROOT "$ENV{ANDROID_SDK_ROOT}" )
-set ( ANDROID_NDK_ROOT "$ENV{ANDROID_NDK_ROOT}" )
 
 #This is used inside modules to refer to libraries
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
@@ -42,11 +42,19 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 #Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
+macro(TARGET_ENABLE_CXX11 TARGET)
+    if(ANDROID)
+        add_definitions("-std=c++11")
+    else()
+        target_compile_features(${TARGET} PRIVATE cxx_constexpr)
+    endif()
+endmacro()
+
 #Fiddle with warning flags
 if (NOT WIN32)
     #These are effectively used by Clang and GCC, descriptive names
     add_definitions (
-        -Wall
+#        -Wall
 #        -Werror
 #        -Wpadded
         )
@@ -81,15 +89,6 @@ if (COFFEE_BUILD_STATIC)
     set(COFFEE_LINK_OPT STATIC)
 else()
     set(COFFEE_LINK_OPT SHARED)
-endif()
-
-if(NOT WIN32)
-    #For some reason we need libm.so in here. Oh well.
-    find_library(M_LIB m)
-
-    #Libunwind is used to print function names at runtime
-    find_package(Unwind)
-    include_directories("${LIBUNWIND_INCLUDE_DIR}")
 endif()
 
 #Core include directories; I'm putting them here temporarily

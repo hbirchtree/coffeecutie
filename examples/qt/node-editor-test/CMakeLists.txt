@@ -1,8 +1,3 @@
-set ( NodeEditorTest_SRCS
-        main.cpp
-        mainwindowtester.cpp
-    )
-
 find_package(Qt5Widgets REQUIRED)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -10,16 +5,21 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 include_directories(
-        ${COFFEE_CORE_INCLUDE_DIR}
-        ${CMAKE_SOURCE_DIR}/ext/qt-shim/qt-node-editor/include
-        qt5
+    ${COFFEE_CORE_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/ext/qt-shim/qt-node-editor/include
+    qt5
+    )
+
+set ( NodeEditorTest_SRCS
+    main.cpp
+    mainwindowtester.cpp
     )
 
 add_executable ( NodeEditorTest ${NodeEditorTest_SRCS} )
 
 target_link_libraries ( NodeEditorTest
-                CoffeeCore
-                CoffeeQtNodeEditor
-        )
+    CoffeeCore
+    CoffeeQtNodeEditor
+    )
 
 target_compile_features(NodeEditorTest PRIVATE cxx_variadic_templates)

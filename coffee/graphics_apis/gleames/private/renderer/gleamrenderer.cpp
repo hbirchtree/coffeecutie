@@ -1,5 +1,5 @@
 #include <renderer/gleamrenderer.h>
-#include <coffee/core/coffee_strings.h>
+#include <coffee_strings.h>
 #include <levels/gles30.h>
 #include <glad/glad.h>
 #include <SDL2/SDL_video.h>

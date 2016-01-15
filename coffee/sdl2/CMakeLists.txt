@@ -23,4 +23,4 @@ target_link_libraries( CoffeeSDL2
     )
 
 set_property(TARGET CoffeeSDL2 PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeSDL2 PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeSDL2)

@@ -16,17 +16,15 @@ void coffee_sdl2_get_window_ptr(SDL_Window *window, CDWindow *win)
 
             if(SDL_GetWindowWMInfo(window,&info)){
         switch(info.subsystem){
-#ifdef COFFEE_LINUX
+#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
         case SDL_SYSWM_X11:
             win->wininfo.x11.window = info.info.x11.window;
             win->wininfo.x11.display = info.info.x11.display;
             break;
-#endif
-#ifdef COFFEE_WINDOWS
+#elif defined(COFFEE_WINDOWS)
         case SDL_SYSWM_WINDOWS:
             break;
-#endif
-#ifdef COFFEE_APPLE
+#elif defined(COFFEE_APPLE)
         case SDL_SYSWM_COCOA:
             break;
         case SDL_SYSWM_UIKIT:

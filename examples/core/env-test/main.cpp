@@ -29,6 +29,11 @@ int32 coffee_main(int32, byte_t**)
         CFree(exe_name);
     }
 
+    cDebug("uint64 size: {0}",sizeof(uint64));
+    cDebug("int64 size: {0}",sizeof(int64));
+    cDebug("uint32 size: {0}",sizeof(uint32));
+    cDebug("int32 size: {0}",sizeof(int32));
+
     {
         /* Try loading a shared library, remember to clean up! */
         _cbasic_version<int32> libver;
@@ -36,6 +41,8 @@ int32 coffee_main(int32, byte_t**)
         libver.minor = 0;
         libver.revision = 0;
         CObjectLoader<TestClass>* libtest = coffee_get_lib<TestClass>("test",&libver);
+
+        cDebug("Libpointer: {0}",(const void* const&)libtest);
 
         if(libtest)
         {

@@ -1,13 +1,18 @@
 /* Linux macro, also defines window system target */
 #if defined(__linux__)
+#undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "Linux"
 #define COFFEE_LINUX
+
+#if !defined(__ANDROID__)
 #define COFFEE_X11
 //#define COFFEE_WAYLAND
 //#define COFFEE_MIR
 #endif
+#endif
 
-#if defined(__ANDROID)
+#if defined(__ANDROID__)
+#undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "Android API level " __ANDROID_API__
 #define COFFEE_ANDROID
 #endif
@@ -114,4 +119,17 @@
 
 #else
 #define COFFEE_ARCH "Unknown"
+#endif
+
+#if !defined(COFFEE_ANDROID)
+#define COFFEE_USE_STL_TO_STRING
+#endif
+
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_ANDROID)
+#define COFFEE_USE_UNWIND
+#define COFFEE_USE_TERMINAL_CTL
+#endif
+
+#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
+#define COFFEE_USE_IOCTL_TERM_SIZE
 #endif

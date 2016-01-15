@@ -4,7 +4,7 @@
 #include "environment_details.h"
 #include <coffee/core/CTypes>
 
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_USE_TERMINAL_CTL)
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
@@ -24,7 +24,7 @@ inline C_FORCE_INLINE cstring ReadString(cstring_w target, int32 size, FILE* str
 
 inline C_FORCE_INLINE void ClearScreen()
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_USE_TERMINAL_CTL)
     cBasicPrintNoNL("\e[1;1H\e[2J");
 #endif
 }
@@ -34,7 +34,7 @@ inline C_FORCE_INLINE void ClearScreen()
  */
 inline C_FORCE_INLINE void AltScreen()
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_USE_TERMINAL_CTL)
     cBasicPrintNoNL("\033[?1049h\033[H");
 #endif
 }
@@ -44,17 +44,19 @@ inline C_FORCE_INLINE void AltScreen()
  */
 inline C_FORCE_INLINE void ResetScreen()
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_USE_TERMINAL_CTL)
     cBasicPrintNoNL("\033[?1049l");
 #endif
 }
 
 inline C_FORCE_INLINE CSize TerminalSize()
 {
-#if defined(COFFEE_LINUX)
-    struct winsize w;
-    ioctl(STDOUT_FILENO,TIOCGWINSZ,&w);
-    return CSize(w.ws_col,w.ws_row);
+#if defined(COFFEE_ANDROID)
+    return CSize(0,0);
+//#elif defined(COFFEE_LINUX)
+//    struct winsize w;
+//    ioctl(STDOUT_FILENO,TIOCGWINSZ,&w);
+//    return CSize(w.ws_col,w.ws_row);
 #else
     return CSize();
 #endif

@@ -16,9 +16,11 @@
 #include <cstring>
 #include <ctime>
 
+#if defined(COFFEE_USE_UNWIND)
 #define UNW_LOCAL_ONLY
 #include <cxxabi.h>     //Demangling function names
 #include <libunwind.h>  //For retrieving the callstack
+#endif
 
 namespace Coffee{
 
@@ -167,6 +169,7 @@ namespace CFunctional{
 namespace CDebugHelpers{
 cstring_w _coffee_posix_demangle_symbol(cstring_w sym, bool *success)
 {
+#if defined(COFFEE_USE_UNWIND)
     int32 stat = 0;
     cstring_w demangled = abi::__cxa_demangle(sym,nullptr,nullptr,&stat);
     if(stat == 0){
@@ -177,10 +180,14 @@ cstring_w _coffee_posix_demangle_symbol(cstring_w sym, bool *success)
         std::free(demangled);
         return sym;
     }
+#else
+    return nullptr;
+#endif
 }
 
 cstring_w *coffee_callstack(szptr *length, uint32 stackreduce)
 {
+#if defined(COFFEE_USE_UNWIND)
     //Initial values, create a valid ptr for callstack
     szptr callstack_ptr = 0;
     cstring_w* callstack = (cstring_w*)Alloc(0);
@@ -223,6 +230,10 @@ cstring_w *coffee_callstack(szptr *length, uint32 stackreduce)
     }
     *length = callstack_ptr;
     return callstack;
+#else
+    *length = 0;
+    return nullptr;
+#endif
 }
 
 cstring_w coffee_clock_string()

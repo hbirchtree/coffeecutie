@@ -19,4 +19,4 @@ target_link_libraries ( CoffeeAssimp
     )
 
 set_property(TARGET CoffeeAssimp PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeAssimp PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeAssimp)

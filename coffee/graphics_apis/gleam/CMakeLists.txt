@@ -21,4 +21,4 @@ target_link_libraries ( CoffeeGLeam
         )
 
 set_property(TARGET CoffeeGLeam PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeGLeam PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeGLeam)

@@ -12,7 +12,7 @@
 
 namespace CoffeeTests{
 
-extern void run_type_tests(bool silent = true);
+//extern void run_type_tests(bool silent = true);
 
 
 } //CoffeeTests

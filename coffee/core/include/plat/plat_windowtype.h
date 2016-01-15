@@ -4,7 +4,7 @@
 #include "coffee/core/CTypes"
 #include <plat/platform_detect.h>
 
-#if defined(COFFEE_LINUX) && defined(COFFEE_X11)
+#if defined(COFFEE_X11)
 #include <X11/Xlib.h>
 #endif
 
@@ -14,7 +14,7 @@ namespace CDisplay{
 struct CDWindow{
 
     union {
-#if defined(COFFEE_LINUX) && defined(COFFEE_X11)
+#if defined(COFFEE_X11)
         struct {
             Window window;
             Display* display;

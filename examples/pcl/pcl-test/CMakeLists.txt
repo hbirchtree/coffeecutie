@@ -1,28 +1,24 @@
-if(COFFEE_BUILD_PCL AND COFFEE_BUILD_NECT)
-
 set ( PCLTest_SRCS
-        main.cpp
-        )
+    main.cpp
+    )
 
 find_package(PCL 1.7 REQUIRED COMPONENTS common io registration recognition keypoints modeler)
 
 include_directories(
-        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-        ${COFFEE_GRAPHICS_INCLUDE_DIR}
-        ${COFFEE_EXT_FREENECT2_INCLUDE_DIR}
-        ${PCL_INCLUDE_DIRS}
+    ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+    ${COFFEE_GRAPHICS_INCLUDE_DIR}
+    ${COFFEE_EXT_FREENECT2_INCLUDE_DIR}
+    ${PCL_INCLUDE_DIRS}
     )
 
 add_executable ( PCLTest ${PCLTest_SRCS} )
 
 target_link_libraries ( PCLTest
-        CoffeeCore
-        CoffeeImage
-        CoffeeGraphicsMisc
-        CoffeePCL
-        CoffeeNect
+    CoffeeCore
+    CoffeeImage
+    CoffeeGraphicsMisc
+    CoffeePCL
+    CoffeeNect
     )
 
-target_compile_features(PCLTest PRIVATE cxx_variadic_templates)
-
-endif()
+target_enable_cxx11(PCLTest)

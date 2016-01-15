@@ -1,6 +1,8 @@
 #ifndef COFFEE_CORE_DEBUG_PRINT_H
 #define COFFEE_CORE_DEBUG_PRINT_H
 
+#include <iostream>
+#include <string>
 #include <iomanip>
 #include <sstream>
 #include <coffee_macros.h>
@@ -10,6 +12,26 @@
 namespace Coffee{
 namespace CDebugPrint{
 
+namespace conversion{
+
+#if defined(COFFEE_USE_STL_TO_STRING)
+using namespace std;
+#else
+#endif
+template<typename T>
+inline C_FORCE_INLINE std::string to_string(const T& v)
+{
+//    CString rep;
+//    std::stringstream ss;
+//    ss << (T)v;
+//    ss >> rep;
+//    return rep;
+    /* It's broken! */
+    return "";
+}
+
+}
+
 template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
 
 inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t)
@@ -17,13 +39,14 @@ inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t)
     return fmt;
 }
 
-inline C_FORCE_INLINE CString cStrReplace(CString fmt, size_t index, CString replace)
+inline C_FORCE_INLINE CString cStrReplace(const CString& fmt,
+                                          size_t index,
+                                          const CString& replace)
 {
-    CString subfmt = "{" + std::to_string(index) + "}";
+    CString subfmt = "{" + conversion::to_string(index) + "}";
     return CStrReplace(fmt,subfmt,replace);
 }
 
-//TODO: Make these constexpr (C++14)
 inline C_FORCE_INLINE cstring cStringify(DebugComponent comp)
 {
     switch(comp)
@@ -164,7 +187,7 @@ inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         const CString& arg)
 {
-    return cStrReplace(fmt,index,arg.c_str());
+    return cStrReplace(fmt,index,arg);
 }
 
 template<typename T>
@@ -172,7 +195,7 @@ inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
         const T& arg)
 {
-    return cStrReplace(fmt,index,std::to_string(arg));
+    return cStrReplace(fmt,index,conversion::to_string(arg));
 }
 
 template<typename T>
@@ -192,10 +215,7 @@ inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T&
 template<typename... Arg>
 inline C_FORCE_INLINE CString cStringFormat(cstring fmt, Arg... args)
 {
-    CString str = cStringResolve(fmt,0,args...);
-//    str.resize(snprintf(NULL,0,fmt,args...)+1);
-//    sprintf(&str[0],fmt,args...);
-    return str;
+    return cStringResolve(fmt,0,args...);
 }
 
 }

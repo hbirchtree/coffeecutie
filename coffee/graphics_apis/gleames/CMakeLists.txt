@@ -1,12 +1,15 @@
+find_package(SDL2 REQUIRED)
+
 include_directories (
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
         ${COFFEE_IMAGE_INCLUDE_DIR}
         ${COFFEE_SDL2_INCLUDE_DIR}
+        ${SDL2_INCLUDE_DIR}
     )
 
 set ( CoffeeGLeamES_SRCS
-                private/renderer/GLeamESrenderer.cpp
+                private/renderer/gleamrenderer.cpp
                 private/levels/glbase.cpp
 
                 private/glad/glad.c
@@ -21,4 +24,4 @@ target_link_libraries ( CoffeeGLeam
         )
 
 set_property(TARGET CoffeeGLeam PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeGLeam PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeGLeam)

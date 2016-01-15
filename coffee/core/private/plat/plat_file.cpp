@@ -51,7 +51,7 @@ szptr coffee_file_size(CFile *file)
     return fsize;
 }
 
-cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool textmode)
+cstring_w coffee_file_read(CFile *file, c_ptr ptr, uint64 *size, bool textmode)
 {
     szptr esize = CFiles::coffee_file_size(file);
     szptr msize = esize*sizeof(byte_t);
@@ -72,7 +72,7 @@ cstring_w coffee_file_read(CFile *file, c_ptr ptr, szptr *size, bool textmode)
     return data;
 }
 
-bool coffee_file_write(CFile *file, c_cptr data, szptr size)
+bool coffee_file_write(CFile *file, c_cptr data, uint64 size)
 {
     szptr wsize = fwrite(data,sizeof(byte_t),size,file->handle);
 

@@ -4,7 +4,7 @@
 #include <plat/argument_parse.h>
 
 #if defined(COFFEE_ANDROID)
-#include "android/jni_props.h"
+//#include "android/jni_props.h"
 #elif defined(COFFEE_LINUX)
 
 #include <libgen.h>
@@ -37,7 +37,9 @@ cstring_w env_get_variable(cstring var)
 
 bool env_set_variable(cstring var, cstring value)
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_ANDROID)
+    return false;
+#elif defined(COFFEE_UNIXPLAT)
     return setenv(var,value,0)==0;
 #elif defined(COFFEE_WINDOWS)
     return false;
@@ -46,7 +48,9 @@ bool env_set_variable(cstring var, cstring value)
 
 bool env_unset_variable(cstring var)
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_ANDROID)
+    return false;
+#elif defined(COFFEE_UNIXPLAT)
     return unsetenv(var)==0;
 #elif defined(COFFEE_WINDOWS)
     return false;
@@ -55,7 +59,9 @@ bool env_unset_variable(cstring var)
 
 bool env_clear_all()
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_ANDROID)
+    return false;
+#elif defined(COFFEE_UNIXPLAT)
     return clearenv()==0;
 #elif defined(COFFEE_WINDOWS)
     return false;
@@ -75,7 +81,9 @@ cstring_w env_concatenate_path(cstring_w target, cstring v2)
 
 cstring_w env_get_user_home()
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID)
+    return nullptr;
+#elif defined(COFFEE_LINUX)
     return env_get_variable("HOME");
 #elif defined(COFFEE_WINDOWS)
     cstring_w homedrive = coffee_get_env_variable("HOMEDRIVE");
@@ -132,7 +140,9 @@ cstring_w env_get_user_data(cstring orgname, cstring appname)
 
 cstring_w env_get_application_dir()
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID)
+    return nullptr;
+#elif defined(COFFEE_LINUX)
     return dirname(executable_name());
 #elif defined(COFFEE_WINDOWS)
     cstring_w path = coffee_executable_name();
@@ -148,7 +158,9 @@ cstring_w env_get_application_dir()
 
 cstring_w env_get_current_dir()
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID)
+    return nullptr;
+#elif defined(COFFEE_LINUX)
     cstring_w cwd = (cstring_w)Alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
     return getcwd(cwd,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 #elif defined(COFFEE_WINDOWS)

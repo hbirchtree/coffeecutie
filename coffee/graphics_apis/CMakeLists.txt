@@ -23,4 +23,4 @@ target_link_libraries ( CoffeeGraphicsMisc
     )
 
 set_property(TARGET CoffeeGraphicsMisc PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_compile_features(CoffeeGraphicsMisc PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeGraphicsMisc)

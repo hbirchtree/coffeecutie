@@ -1,19 +1,19 @@
 set ( CoffeeAudioTest_SRCS
-        main.cpp
+    main.cpp
     )
 
 include_directories(
-        ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
-        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-        ${COFFEE_AUDIO_INCLUDE_DIR}
+    ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
+    ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
+    ${COFFEE_AUDIO_INCLUDE_DIR}
     )
 
 add_executable ( CoffeeAudioTest ${CoffeeAudioTest_SRCS} )
 
 target_link_libraries ( CoffeeAudioTest
-        CoffeeCore
-        CoffeeAudio
-        CoffeeOpenGL
+    CoffeeCore
+    CoffeeAudio
+    CoffeeOpenGL
     )
 
-target_compile_features(CoffeeAudioTest PRIVATE cxx_variadic_templates)
+target_enable_cxx11(CoffeeAudioTest)
