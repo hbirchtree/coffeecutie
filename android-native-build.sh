@@ -15,7 +15,7 @@ AL_INCLUDE_DIR="$BUILD_DIR/libs/openal-soft/jni/OpenAL/include/"
 ANDROID_TOOLCHAIN_FILE="$PROJECT_DIR/cmake/Toolchains/android.toolchain.cmake"
 #This is the only reasonable STL implementation that works with C++11 features. The others are dead to me.
 ANDROID_STL_IMPL="gnustl_static"
-#KitKat will work with 5.x+ as well as 4.4.2 and below. Why would anyone consider using API level 20?
+#API level 19 works with all Android version past and current. Levels 20+ don't because of kernel/ABI changes
 ANDROID_TARGET="19"
 
 #Import Android build environment
