@@ -8,7 +8,7 @@ include_directories(
     ${COFFEE_GRAPHICS_INCLUDE_DIR}
     )
 
-add_executable ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
+coffee_add_example ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
 
 target_link_libraries ( CoffeeTestHud
     CoffeeCore
@@ -16,5 +16,3 @@ target_link_libraries ( CoffeeTestHud
     CoffeeOpenGL
     CoffeeGLeam
     )
-
-target_enable_cxx11(CoffeeTestHud)

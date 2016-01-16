@@ -8,7 +8,7 @@ set ( CoffeeFFMedia_SRCS
         private/cffmedia.cpp
         )
 
-add_library( CoffeeFFMedia ${COFFEE_LINK_OPT} ${CoffeeFFMedia_SRCS})
+coffee_add_library ( CoffeeFFMedia "${CoffeeFFMedia_SRCS}" )
 
 target_link_libraries( CoffeeFFMedia
         CoffeeCore
@@ -22,6 +22,3 @@ target_link_libraries( CoffeeFFMedia
         avformat
         avdevice
     )
-
-set_property(TARGET CoffeeFFMedia PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeFFMedia)

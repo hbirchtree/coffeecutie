@@ -1,8 +1,10 @@
-project( CoffeeCore C CXX )
+project( Coffee C CXX )
 cmake_minimum_required( VERSION 3.1 )
 
 #We set some general options for building
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
+set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
@@ -44,10 +46,30 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 
 macro(TARGET_ENABLE_CXX11 TARGET)
     if(ANDROID)
-        add_definitions("-std=c++11")
+        set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
     else()
         target_compile_features(${TARGET} PRIVATE cxx_constexpr)
     endif()
+endmacro()
+
+macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
+    add_library(${TARGET} ${LINKOPT} "${SOURCES}")
+    set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
+    target_enable_cxx11(${TARGET})
+endmacro()
+
+macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
+    coffee_add_elibrary(${TARGET} ${COFFEE_LINK_OPT} "${SOURCES}")
+endmacro()
+
+macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
+    if(ANDROID OR COFFEE_BUILD_STATIC)
+        add_library(${TARGET} SHARED ${SOURCES})
+        set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
+    else()
+        add_executable(${TARGET} ${SOURCES})
+    endif()
+    target_enable_cxx11(${TARGET})
 endmacro()
 
 #Fiddle with warning flags
@@ -62,6 +84,7 @@ else()
     #For Windows, we disable most annoying warnings to save compilation time.
     #These include system headers (which are constantly giving off warnings)
     #  as well as small warnings for padding and etc.
+    #Microsoft makes the worst headers of them all.
     add_definitions (
         -W4
         )

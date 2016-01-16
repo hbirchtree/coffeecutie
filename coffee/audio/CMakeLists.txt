@@ -21,12 +21,9 @@ set ( CoffeeAudio_SRCS
         private/abstraction/openal/calsoundsample.cpp
         )
 
-add_library( CoffeeAudio ${COFFEE_LINK_OPT} ${CoffeeAudio_SRCS})
+coffee_add_library ( CoffeeAudio "${CoffeeAudio_SRCS}" )
 
 target_link_libraries ( CoffeeAudio
     CoffeeCore
     ${OPENAL_LIBRARY}
     )
-
-set_property(TARGET CoffeeAudio PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeAudio)

@@ -15,11 +15,9 @@ set ( NodeEditorTest_SRCS
     mainwindowtester.cpp
     )
 
-add_executable ( NodeEditorTest ${NodeEditorTest_SRCS} )
+coffee_add_example ( NodeEditorTest "${NodeEditorTest_SRCS}" )
 
 target_link_libraries ( NodeEditorTest
     CoffeeCore
     CoffeeQtNodeEditor
     )
-
-target_compile_features(NodeEditorTest PRIVATE cxx_variadic_templates)

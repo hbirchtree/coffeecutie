@@ -12,13 +12,10 @@ set ( CoffeeGLeam_SRCS
                 private/glad/glad.c
     )
 
-add_library( CoffeeGLeam ${COFFEE_LINK_OPT} ${CoffeeGLeam_SRCS} )
+coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" )
 
 target_link_libraries ( CoffeeGLeam
                 CoffeeCore
                 CoffeeImage
                 CoffeeSDL2
         )
-
-set_property(TARGET CoffeeGLeam PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeGLeam)

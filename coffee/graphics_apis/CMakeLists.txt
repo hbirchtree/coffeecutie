@@ -12,7 +12,7 @@ set ( CoffeeGraphicsMisc_SRCS
         private/scene/cnode.cpp
     )
 
-add_library( CoffeeGraphicsMisc ${COFFEE_LINK_OPT} ${CoffeeGraphicsMisc_SRCS} )
+coffee_add_library ( CoffeeGraphicsMisc "${CoffeeGraphicsMisc_SRCS}" )
 
 include_directories(
         ${COFFEE_GRAPHICS_INCLUDE_DIR}
@@ -21,6 +21,3 @@ include_directories(
 target_link_libraries ( CoffeeGraphicsMisc
         CoffeeCore
     )
-
-set_property(TARGET CoffeeGraphicsMisc PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeGraphicsMisc)

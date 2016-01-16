@@ -34,7 +34,7 @@ include_directories (
     ${GLBINDING_INCLUDE_DIRS}
     )
 
-add_library( CoffeeOpenGL ${COFFEE_LINK_OPT} ${CoffeeOpenGL_SRCS} )
+coffee_add_library ( CoffeeOpenGL "${CoffeeOpenGL_SRCS}" )
 
 
 target_link_libraries ( CoffeeOpenGL
@@ -43,6 +43,3 @@ target_link_libraries ( CoffeeOpenGL
     CoffeeSDL2
     ${GLBINDING_LIBRARIES}
     )
-
-set_property(TARGET CoffeeOpenGL PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeOpenGL)

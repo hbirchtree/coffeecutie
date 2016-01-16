@@ -17,7 +17,6 @@ namespace conversion{
 #if defined(COFFEE_USE_STL_TO_STRING)
 using namespace std;
 #else
-#endif
 template<typename T>
 inline C_FORCE_INLINE std::string to_string(const T& v)
 {
@@ -29,6 +28,7 @@ inline C_FORCE_INLINE std::string to_string(const T& v)
     /* It's broken! */
     return "";
 }
+#endif
 
 }
 

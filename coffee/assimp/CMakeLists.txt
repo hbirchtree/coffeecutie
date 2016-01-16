@@ -11,12 +11,9 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
-add_library( CoffeeAssimp ${COFFEE_LINK_OPT} ${CoffeeAssimp_SRCS})
+coffee_add_library ( CoffeeAssimp "${CoffeeAssimp_SRCS}" )
 
 target_link_libraries ( CoffeeAssimp
     CoffeeCore
     ${assimp_LIBRARIES}
     )
-
-set_property(TARGET CoffeeAssimp PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeAssimp)

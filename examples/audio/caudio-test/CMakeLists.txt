@@ -8,12 +8,10 @@ include_directories(
     ${COFFEE_AUDIO_INCLUDE_DIR}
     )
 
-add_executable ( CoffeeAudioTest ${CoffeeAudioTest_SRCS} )
+coffee_add_example ( CoffeeAudioTest ${CoffeeAudioTest_SRCS} )
 
 target_link_libraries ( CoffeeAudioTest
     CoffeeCore
     CoffeeAudio
     CoffeeOpenGL
     )
-
-target_enable_cxx11(CoffeeAudioTest)

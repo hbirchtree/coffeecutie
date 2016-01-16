@@ -8,7 +8,7 @@ include_directories(
     ${COFFEE_OPENVR_INCLUDE_DIR}
     )
 
-add_executable ( GLeamBaseTest ${GLeamBaseTest_SRCS} )
+coffee_add_example ( GLeamBaseTest ${GLeamBaseTest_SRCS} )
 
 target_link_libraries ( GLeamBaseTest
     CoffeeCore
@@ -16,5 +16,3 @@ target_link_libraries ( GLeamBaseTest
     CoffeeGraphicsMisc
     CoffeeGLeam
     )
-
-target_enable_cxx11(GLeamBaseTest)

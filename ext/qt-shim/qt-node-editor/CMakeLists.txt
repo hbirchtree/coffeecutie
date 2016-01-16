@@ -5,7 +5,7 @@ include_directories(
     ${COFFEE_CORE_INCLUDE_DIR}
     )
 
-add_library(CoffeeQtNodeEditor STATIC ${NodeEdit_SRCS})
+add_library(CoffeeQtNodeEditor ${COFFEE_LINK_OPT} ${NodeEdit_SRCS})
 
 target_link_libraries(CoffeeQtNodeEditor Qt5::Widgets)
 

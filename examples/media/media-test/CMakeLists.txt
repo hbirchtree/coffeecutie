@@ -8,7 +8,7 @@ include_directories(
     ${COFFEE_AUDIO_INCLUDE_DIR}
     )
 
-add_executable ( MediaTest ${MediaTest_SRCS} )
+coffee_add_example ( MediaTest ${MediaTest_SRCS} )
 
 target_link_libraries ( MediaTest
     CoffeeCore
@@ -16,5 +16,3 @@ target_link_libraries ( MediaTest
     CoffeeGraphicsMisc
     CoffeeFFMedia
     )
-
-target_enable_cxx11(MediaTest)

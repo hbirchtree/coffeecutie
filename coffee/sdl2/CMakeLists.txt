@@ -15,12 +15,9 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
-add_library( CoffeeSDL2 ${COFFEE_LINK_OPT} ${CoffeeSDL2_SRCS})
+coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
 
 target_link_libraries( CoffeeSDL2
     CoffeeCore
     ${SDL2_LIBRARY}
     )
-
-set_property(TARGET CoffeeSDL2 PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeSDL2)

@@ -17,13 +17,10 @@ set ( CoffeeVR_SRCS
     private/copenvr.cpp
     )
 
-add_library( CoffeeVR ${COFFEE_LINK_OPT} ${CoffeeVR_SRCS})
+coffee_add_library ( CoffeeVR "${CoffeeVR_SRCS}" )
 
 target_link_libraries( CoffeeVR
     ${OPENVR_LIBRARY}
     CoffeeGLeam
     CoffeeCore
     )
-
-set_property(TARGET CoffeeVR PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeVR)

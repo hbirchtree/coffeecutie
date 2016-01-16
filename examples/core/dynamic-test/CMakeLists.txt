@@ -15,11 +15,8 @@ include_directories (
     ${COFFEE_IMAGE_INCLUDE_DIR}
     )
 
-add_library ( DynamicLib SHARED ${DynamicLib_SRCS} )
-
-set_property(TARGET DynamicLib PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-add_executable ( DynamicTest ${DynamicTest_SRCS} )
+coffee_add_elibrary ( DynamicLib SHARED ${DynamicLib_SRCS} )
+coffee_add_example ( DynamicTest ${DynamicTest_SRCS} )
 
 target_link_libraries ( DynamicTest
     CoffeeCore
@@ -31,6 +28,3 @@ target_link_libraries ( DynamicLib
     CoffeeImage
     CoffeeAudio
     )
-
-target_enable_cxx11(DynamicTest)
-target_enable_cxx11(DynamicLib)

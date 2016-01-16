@@ -19,8 +19,8 @@ include_directories(
     ${COFFEE_BLAM_INCLUDE_DIR}
     )
 
-add_library( CoffeeTestLib ${COFFEE_LINK_OPT} ${CoffeeTestLib_SRCS} )
-add_executable ( CoffeeTest ${CoffeeTest_SRCS} )
+coffee_add_elibrary ( CoffeeTestLib ${COFFEE_LINK_OPT} "${CoffeeTestLib_SRCS}" )
+coffee_add_example ( CoffeeTest "${CoffeeTest_SRCS}" )
 
 target_link_libraries ( CoffeeTestLib
     CoffeeCore
@@ -31,6 +31,3 @@ target_link_libraries ( CoffeeTestLib
 target_link_libraries ( CoffeeTest
     CoffeeTestLib
     )
-
-target_enable_cxx11(CoffeeTest)
-target_enable_cxx11(CoffeeTestLib)

@@ -51,7 +51,7 @@ if(NOT WIN32)
     endif()
 endif()
 
-add_library( CoffeeCore ${COFFEE_LINK_OPT} ${CoffeeCore_SRCS} )
+coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
 
 target_link_libraries ( CoffeeCore
     ${LIBUNWIND_LIBRARIES}
@@ -63,6 +63,3 @@ if(WIN32)
         pathcch
         )
 endif()
-
-set_property(TARGET CoffeeCore PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_enable_cxx11(CoffeeCore)

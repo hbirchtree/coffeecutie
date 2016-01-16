@@ -8,12 +8,10 @@ include_directories(
     ${COFFEE_GRAPHICS_INCLUDE_DIR}
     )
 
-add_executable ( ShaderSwitch ${ShaderSwitch_SRCS} )
+coffee_add_example ( ShaderSwitch ${ShaderSwitch_SRCS} )
 
 target_link_libraries ( ShaderSwitch
     CoffeeCore
     CoffeeGraphicsMisc
     CoffeeOpenGL
     )
-
-target_enable_cxx11(ShaderSwitch)
