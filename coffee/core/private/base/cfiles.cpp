@@ -54,7 +54,7 @@ bool FileExists(const CResource &resc)
 bool FileMap(CResource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
-    resc.size = coffee_file_get_size(resc.resource());
+    resc.size = FileGetSize(resc.resource());
     int err = 0;
     resc.data = CMemoryManagement::coffee_memory_map_file(
                 resc.resource(),
@@ -144,7 +144,7 @@ cstring CResource::resource() const
 bool FileMkdir(cstring dirname, bool recursive)
 {
 #if defined(COFFEE_C_FILE_API)
-    return CFiles::coffee_file_mkdir(dirname,recursive);
+    return CFiles::MkDir(dirname,recursive);
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
 #endif

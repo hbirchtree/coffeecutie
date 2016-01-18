@@ -1,5 +1,7 @@
 #include <plat/unix/unix_core.h>
 
+#include <base/cdebug.h>
+#include <coffee_strings.h>
 #include <plat/plat_core.h>
 
 #ifdef COFFEE_UNIXPLAT
@@ -90,17 +92,33 @@ int32 SysInfo::process_cpu_usage(int64)
     return 0;
 }
 
-void coffee_enable_core_dump()
+void CoreDumpEnable()
 {
     struct rlimit core_limits;
     core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
     setrlimit(RLIMIT_CORE,&core_limits);
 }
 
+void CoreAffinity(std::thread& thread, uint32 core)
+{
+    cpu_set_t t;
+    CPU_ZERO(&t);
+    CPU_SET(core,&t);
+    int out = pthread_setaffinity_np(thread.native_handle(),
+                                     sizeof(cpu_set_t),
+                                     &t);
+    if(out!=0)
+    {
+        cLog(__FILE__,__LINE__,
+             CFStrings::Plat_Unix_Core_Lib,
+             CFStrings::Plat_Cpu_Affinity_Error);
+    }
+}
+
 namespace CResources{
 namespace CFiles{
 
-bool coffee_file_mkdir(cstring dname, bool createParent)
+bool MkDir(cstring dname, bool createParent)
 {
     if(!createParent)
         return mkdir(dname,S_IRWXU|S_IRWXG)==0;
@@ -124,7 +142,7 @@ bool coffee_file_mkdir(cstring dname, bool createParent)
 }
 
 }
-szptr coffee_file_get_size(cstring file)
+szptr FileGetSize(cstring file)
 {
     struct stat sb;
     int fd = open(file,O_RDONLY);

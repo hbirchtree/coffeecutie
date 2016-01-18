@@ -110,7 +110,13 @@ inline int coffee_sys_command(cstring cmd)
 /*!
  * \brief Initializes core dumping for the process, useful for information on crashes
  */
-extern void coffee_enable_core_dump();
+extern void CoreDumpEnable();
+/*!
+ * \brief Idea from: http://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/
+ * \param thread
+ * \param core
+ */
+extern void CoreAffinity(std::thread& thread, uint32 core);
 
 namespace CResources{
 namespace CFiles{
@@ -121,7 +127,7 @@ namespace CFiles{
  * \param createParent Whether it should work recursively
  * \return True on success, false on failure. Failure means that the creation of the directory cannot be guaranteed in any way. Any file operation should cease at that point.
  */
-extern bool coffee_file_mkdir(cstring dname, bool createParent = false);
+extern bool MkDir(cstring dname, bool createParent = false);
 
 } //CFiles
 
@@ -130,7 +136,7 @@ extern bool coffee_file_mkdir(cstring dname, bool createParent = false);
  * \param file
  * \return
  */
-extern szptr coffee_file_get_size(cstring file);
+extern szptr FileGetSize(cstring file);
 
 } //CResources
 

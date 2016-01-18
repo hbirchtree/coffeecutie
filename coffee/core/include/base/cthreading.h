@@ -23,7 +23,6 @@ struct ThreadId_t
     }
     uint64 hash()
     {
-        //TODO: Implement hash of thread IDs
         return std::hash<std::thread::id>()(m_id);
     }
 private:
@@ -80,7 +79,7 @@ private:
 
 template<typename InUnit,typename OutUnit>
 /*!
- * \brief Basic data transform function. Will take one value as input and output a certain other value, may produce more or less data than input. Buffers must be sufficiently big, and sizes or not checked! This is the user's responsibility.
+ * \brief Basic data transform function. Will take one value as input and output a certain other value, may produce more or less data than input. Buffers must be sufficiently big, sizes are not checked! This is the user's responsibility.
  * \param processor
  * \param input
  * \param output

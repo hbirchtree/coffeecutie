@@ -42,7 +42,7 @@ void CoffeeInit()
     coffee_initialized = true;
 
     //Allow core dump by default
-    coffee_enable_core_dump();
+    CoreDumpEnable();
 
     //Set up signal handlers, make the process more well-behaved
     signal(SIGILL,sighandle);

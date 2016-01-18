@@ -19,6 +19,8 @@ public:
 
     void run()
     {
+        glContext()->acquireContext();
+
         CElapsedTimerD* timer = AllocTimerD();
         timer->start();
 
@@ -56,7 +58,7 @@ public:
             "   ivec2 size = imageSize(target);"
             "   if(pix.x>=size.x || pix.y>=size.y)"
             "       return;"
-            "   imageStore(target,pix,vec4(1.0,1.0,1.0,1.0));"
+            "   imageStore(target,pix,vec4(1.0,1.0,0.0,1.0));"
             "}"
         };
 
@@ -120,6 +122,9 @@ public:
 
         cDebug("Setup time: {0}",timer->elapsed());
 
+        GL::ComputeDispatch(64,64,1);
+        GL::MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
         while(!closeFlag())
         {
             clearCol.r() = CMath::sin(this->contextTime()+0.5);
@@ -130,11 +135,7 @@ public:
 
             GL::ClearBufferfv(true,0,clearCol);
 
-            GL::ComputeDispatch(1024,1024,1);
-            GL::MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
             GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
-
 
             this->pollEvents();
             this->swapBuffers();
@@ -180,29 +181,8 @@ int32 coffee_main(int32, byte_t**)
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 4;
 
-    CBitmap* icon_bitm = nullptr;
-
-//    {
-//        CResources::CResource icon_file(
-//                    "/home/havard/Bilder/Always invite the Hero of Time.png",
-//                    true);
-//        CResources::FilePull(icon_file);
-//        CStbImageLib::CStbImage icon_img;
-//        CStbImageLib::LoadData(&icon_img,&icon_file);
-//        CResources::FileFree(icon_file);
-
-//        icon_bitm = new CBitmap(icon_img.size.w,icon_img.size.h);
-//        szptr data_size = icon_img.size.area()*4;
-//        CMemCpy(icon_bitm->data(),icon_img.data,data_size);
-//        CStbImageLib::ImageFree(&icon_img);
-//    }
-
-    props.icon = icon_bitm;
-
     renderer->init(props);
     cDebug("Init renderer: {0}",timer->elapsed());
-    if(icon_bitm)
-        delete icon_bitm;
 
     renderer->run();
     timer->start();

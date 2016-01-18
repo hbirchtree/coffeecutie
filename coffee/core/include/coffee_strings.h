@@ -10,6 +10,9 @@ namespace CFStrings
 
 using namespace Coffee;
 
+const constexpr cstring Plat_Unix_Core_Lib = "UNIX core";
+const constexpr cstring Plat_Cpu_Affinity_Error = "Failed to set thread affinity!";
+
 const constexpr cstring Plat_File_Open_Error = "Failed to open file: {0}";
 const constexpr cstring Plat_File_Native_Error = "Native file error: {0}";
 const constexpr cstring Plat_File_Native_SizeErr = "Read error: expected {0} bytes, got {1}";
