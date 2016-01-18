@@ -51,3 +51,6 @@ endif()
 #ASIO examples
 add_subdirectory(asio/base-client)
 #add_subdirectory(asio/base-server)
+
+#Experimental code
+add_subdirectory(gleam/raytrace-test)

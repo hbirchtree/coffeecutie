@@ -13,6 +13,8 @@ using namespace Coffee::CFFMedia;
 using namespace COpenAL;
 using namespace CSoundAbstraction;
 
+static CString video_file_name = "";
+
 class CDRenderer : public CDisplay::CGLBindingRenderer
 {
 public:
@@ -25,7 +27,7 @@ public:
     void run()
     {
         //Create an FFMPEG player
-        CResource video_file("test-.webm");
+        CResource video_file(video_file_name.c_str(),true);
         FilePull(video_file);
 
         CFFPlayer player(video_file);
@@ -328,9 +330,16 @@ public:
     }
 };
 
-int32 coffee_main(int32, byte_t**)
+int32 coffee_main(int32 n, byte_t** s)
 {
-    FileResourcePrefix("sample_data/");
+    cstring fn = GetArgument(n,s,"video");
+
+    cDebug("File name: {0}",fn);
+
+    if(!fn)
+        return 1;
+
+    video_file_name = fn;
 
     CDisplay::CDRendererBase* renderer = new CDRenderer;
     std::atomic_bool sync;

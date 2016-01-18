@@ -2,6 +2,8 @@ include_directories(
     ${COFFEE_CORE_INCLUDE_DIR}
     )
 
+find_package(SDL2 QUIET)
+
 if(NOT WIN32)
     #Libunwind is used to print function names at runtime
     if(NOT ANDROID) #Bionic does not grant access to unwind, even though it is there
@@ -57,6 +59,12 @@ target_link_libraries ( CoffeeCore
     ${LIBUNWIND_LIBRARIES}
     ${DL_LIBRARY}
     )
+
+if(ANDROID AND SDL2_FOUND)
+    include_directories(${SDL2_INCLUDE_DIR})
+    target_link_libraries(CoffeeCore
+        ${SDL2_LIBRARY})
+endif()
 
 if(WIN32)
     target_link_libraries ( CoffeeCore

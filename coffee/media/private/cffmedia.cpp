@@ -237,8 +237,10 @@ CFFVideoPlayer *coffee_ffmedia_create_player(const CResource &source)
 
 void coffee_ffmedia_free_player(CFFVideoPlayer *vplayer)
 {
-    ff_close_stream(vplayer->audio);
-    ff_close_stream(vplayer->video);
+    if(vplayer->audio)
+        ff_close_stream(vplayer->audio);
+    if(vplayer->video)
+        ff_close_stream(vplayer->video);
 
     avformat_close_input(&vplayer->fmtContext);
 
@@ -277,6 +279,9 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
 {
     CFFDecodeContext* dCtxt = new CFFDecodeContext;
 
+    CMemClear(dCtxt,sizeof(CFFDecodeContext));
+
+    if(video->video)
     {
         CFFStream* strm = video->video;
         dCtxt->v.sws_ctxt = sws_getContext(
@@ -284,7 +289,18 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
                     strm->context->pix_fmt,
                     fmt.video.size.width, fmt.video.size.height, default_pixfmt,
                     SWS_BILINEAR, NULL, NULL, NULL);
+
+        dCtxt->v.frame = av_frame_alloc();
+        dCtxt->v.tFrame = av_frame_alloc();
+
+        dCtxt->v.tb = video->video->stream->time_base;
+        dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,video->video->stream,
+                                                  NULL);
+
+        dCtxt->v.resolution.w = fmt.video.size.width;
+        dCtxt->v.resolution.h = fmt.video.size.height;
     }
+    if(video->audio)
     {
         dCtxt->a.swr_ctxt = nullptr;
 
@@ -319,37 +335,35 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
         av_samples_alloc_array_and_samples(&dCtxt->a.data,&dCtxt->a.linesize,
                                            dCtxt->a.channels,samples,
                                            dCtxt->a.sfmt,0);
+
+        dCtxt->a.frame = av_frame_alloc();
+        dCtxt->a.tFrame = av_frame_alloc();
     }
-
-    dCtxt->v.frame = av_frame_alloc();
-    dCtxt->v.tFrame = av_frame_alloc();
-    dCtxt->a.frame = av_frame_alloc();
-    dCtxt->a.tFrame = av_frame_alloc();
-
-    dCtxt->v.tb = video->video->stream->time_base;
-    dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,video->video->stream,
-                                              NULL);
-
-    dCtxt->v.resolution.w = fmt.video.size.width;
-    dCtxt->v.resolution.h = fmt.video.size.height;
 
     return dCtxt;
 }
 
 void coffee_ffmedia_free_decodecontext(CFFDecodeContext *dCtxt)
 {
-    sws_freeContext(dCtxt->v.sws_ctxt);
+    if(dCtxt->v.sws_ctxt)
+    {
+        sws_freeContext(dCtxt->v.sws_ctxt);
 
-    swr_close(dCtxt->a.swr_ctxt);
-    swr_free(&dCtxt->a.swr_ctxt);
+        av_frame_free(&dCtxt->v.frame);
+        av_frame_free(&dCtxt->v.tFrame);
+    }
 
-    av_freep(&dCtxt->a.data[0]);
+    if(dCtxt->a.swr_ctxt)
+    {
+        swr_close(dCtxt->a.swr_ctxt);
+        swr_free(&dCtxt->a.swr_ctxt);
 
-    av_frame_free(&dCtxt->v.frame);
-    av_frame_free(&dCtxt->a.frame);
+        av_freep(&dCtxt->a.data[0]);
 
-    av_frame_free(&dCtxt->v.tFrame);
-    av_frame_free(&dCtxt->a.tFrame);
+        av_frame_free(&dCtxt->a.frame);
+        av_frame_free(&dCtxt->a.tFrame);
+    }
+
     delete dCtxt;
 }
 
@@ -369,7 +383,9 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
         dCtxt->eos = false;
 
     int gotFrame = 0;
-    if(dCtxt->packet.stream_index == video->video->index && dTrgt->v.location)
+    if(dCtxt->packet.stream_index == video->video->index
+            && dTrgt->v.location
+            && dCtxt->v.sws_ctxt)
     {
         //Decode the video packet in this case
         avcodec_decode_video2(video->video->context,
@@ -405,7 +421,8 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             //Free the frame
             av_frame_unref(dCtxt->v.frame);
         }
-    }else if(dCtxt->packet.stream_index == video->audio->index)
+    }else if(dCtxt->packet.stream_index == video->audio->index
+             && dCtxt->a.swr_ctxt)
     {
         //Packet might contain several audio frames, loop over it so we can capture them all
         int pkt_size = dCtxt->packet.size;
@@ -477,7 +494,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             pkt_data += len;
             pkt_size -= len;
         }
-    }else if(dCtxt->packet.stream_index == video->subtitles->index )
+    }else if(dCtxt->packet.stream_index == video->subtitles->index)
     {
         //TODO: Implement FFMPEG subtitles
         avcodec_decode_subtitle2(video->subtitles->context,

@@ -10,7 +10,7 @@ using namespace Coffee;
 
 struct FreenectImplementation
 {
-    using CNectRGB = CBitmap<uint32>;
+    using CNectRGB = CBitmap;
     using CNectDepth = _cbasic_bitmap_base<scalar,uint32>;
     using FreenectFrameProcessor = void(*)(CNectRGB const&,CNectDepth const&);
 

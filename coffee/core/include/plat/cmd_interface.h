@@ -36,6 +36,7 @@ inline C_FORCE_INLINE void AltScreen()
 {
 #if defined(COFFEE_USE_TERMINAL_CTL)
     cBasicPrintNoNL("\033[?1049h\033[H");
+    TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
 #endif
 }
 
@@ -45,18 +46,19 @@ inline C_FORCE_INLINE void AltScreen()
 inline C_FORCE_INLINE void ResetScreen()
 {
 #if defined(COFFEE_USE_TERMINAL_CTL)
+    if(!TermScreen::UsingAlternateBuffer)
+        return;
     cBasicPrintNoNL("\033[?1049l");
+    TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
 #endif
 }
 
 inline C_FORCE_INLINE CSize TerminalSize()
 {
-#if defined(COFFEE_ANDROID)
-    return CSize(0,0);
-//#elif defined(COFFEE_LINUX)
-//    struct winsize w;
-//    ioctl(STDOUT_FILENO,TIOCGWINSZ,&w);
-//    return CSize(w.ws_col,w.ws_row);
+#if defined(COFFEE_USE_IOCTL_TERM_SIZE)
+    struct winsize w;
+    ioctl(STDOUT_FILENO,TIOCGWINSZ,&w);
+    return CSize(w.ws_col,w.ws_row);
 #else
     return CSize();
 #endif

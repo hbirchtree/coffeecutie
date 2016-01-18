@@ -64,6 +64,19 @@ struct CRGBA
             uint8 r,g,b,a;
         };
     };
+    uint32 rgba() const
+    {
+#if defined(COFFEE_LIL_ENDIAN)
+        CRGBA t;
+        t.r = b;
+        t.g = g;
+        t.b = r;
+        t.a = a;
+        return t.i;
+#elif defined(COFFEE_BIG_ENDIAN)
+        return i;
+#endif
+    }
 };
 
 /*!
@@ -347,8 +360,7 @@ private:
     PixelType* m_pixels;
 };
 
-template<typename DimT>
-using CBitmap = _cbasic_bitmap_base<CRGBA,DimT>;
+using CBitmap = _cbasic_bitmap_base<CRGBA,int32>;
 
 template<class ClassName,typename FReturnType,typename... FArgumentTypes>
 struct CFunctionSlot

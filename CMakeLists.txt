@@ -8,19 +8,27 @@ set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules)
 
+set ( CMAKE_CXX_FLAGS "-O3 ${CMAKE_CXX_FLAGS}")
+
+#Language bindings
 #Deprecated, used to make SWIG C# binding, doesn't work so well
-option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG CSharp binding" ON )
+option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG CSharp binding" OFF )
+#D language bindings, builds a module
+option ( COFFEE_BUILD_DLANG_BINDING "Build D-language binding" OFF)
+###
+
 #Builds core,audio,media,sdl2 and etc. as static libraries which are recommended for ease of use.
 option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
 #Whether we should opt for the GLES renderer or not. This will switch the GL implementation as well, making OpenGL 3.3, 4.3 and 4.5 unavailable.
 option ( COFFEE_BUILD_GLES "Build with GLES 3.0 renderer instead of desktop GL")
 
+#External libraries
 #Whether we should build FFMPEG-dependent modules, notably media
 option ( COFFEE_BUILD_FFMEDIA "Build with FFMPEG library" ON)
 #Whether we should build the legacy GLBinding module for OpenGL abstraction.
 option ( COFFEE_BUILD_GLBINDING "Build with GLBinding library" ON)
-
+#Whether we should build with Assimp support
 option ( COFFEE_BUILD_ASSIMP "Build with Assimp loader" ON)
 #Whether we should build the OpenAL-dependent audio module
 option ( COFFEE_BUILD_OPENAL "Build with OpenAL" ON)
@@ -32,6 +40,7 @@ option ( COFFEE_BUILD_PCL "Build with PCL" OFF)
 option ( COFFEE_BUILD_NECT "Build with Kinect support" OFF)
 #Whether we should build with support for the Qt extension
 option ( COFFEE_BUILD_QT "Build with Qt support" ON)
+###
 
 #This is used inside modules to refer to libraries
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
@@ -44,6 +53,7 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 #Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
+#Android's compiler doesn't support target_compile_features :(
 macro(TARGET_ENABLE_CXX11 TARGET)
     if(ANDROID)
         set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
@@ -52,18 +62,21 @@ macro(TARGET_ENABLE_CXX11 TARGET)
     endif()
 endmacro()
 
+#Because it's hard to write these three commands over and over again
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
     add_library(${TARGET} ${LINKOPT} "${SOURCES}")
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_enable_cxx11(${TARGET})
 endmacro()
 
+#Just a little simplification
 macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
     coffee_add_elibrary(${TARGET} ${COFFEE_LINK_OPT} "${SOURCES}")
 endmacro()
 
+#Android only uses shared libraries which are loaded, all else uses typical executables
 macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
-    if(ANDROID OR COFFEE_BUILD_STATIC)
+    if(ANDROID)
         add_library(${TARGET} SHARED ${SOURCES})
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     else()
@@ -180,7 +193,10 @@ add_subdirectory(docs)
 
 #SWIG build, not functional anymore
 if(COFFEE_BUILD_SWIG_BINDING_)
-    add_subdirectory(swig)
+    add_subdirectory(bindings/swig)
+endif()
+if(COFFEE_BUILD_DLANG_BINDING)
+	add_subdirectory(bindings/dlang)
 endif()
 
 #Extension include directories

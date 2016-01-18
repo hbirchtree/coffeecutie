@@ -181,12 +181,13 @@ struct CDProperties
         Normal              = 0x1000, /*!< In SDL2, this restores the window*/
     };
 
-    State                   flags; /*!< Window flags*/
-    uint16                  monitor; /*!< Monitor to use with fullscreen*/
-    CSize                   size; /*!< Size of window*/
     GLProperties    gl; /*!< Context properties to set*/
-    cstring                 title; /*!< Window title to start with*/
-    CDWindow*               window; /*!< If applicable, contains data about a window*/
+    cstring         title; /*!< Window title to start with*/
+    CDWindow*       window; /*!< If applicable, contains data about a window*/
+    CBitmap*        icon;
+    CSize           size; /*!< Size of window*/
+    State           flags; /*!< Window flags*/
+    uint16          monitor; /*!< Monitor to use with fullscreen*/
 };
 
 C_FLAGS(CDProperties::State,uint16);

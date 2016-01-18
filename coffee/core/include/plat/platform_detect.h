@@ -137,3 +137,15 @@
 #if defined(COFFEE_ANDROID)
 #define COFFEE_USE_LONGLONG_INT64
 #endif
+
+#if defined(COFFEE_ANDROID)
+#define COFFEE_ANDROID_FILE_ASSET_API
+#else
+#define COFFEE_C_FILE_API
+#endif
+
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define COFFEE_BIG_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define COFFEE_LIL_ENDIAN
+#endif

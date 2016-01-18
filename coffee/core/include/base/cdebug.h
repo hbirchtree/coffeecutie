@@ -15,6 +15,11 @@
 namespace Coffee{
 namespace CDebugPrint{
 
+struct DebuggingState
+{
+    static std::mutex PrinterLock;
+};
+
 extern cstring_w coffee_debug_get_clock_string();
 extern void coffee_debug_clear_clock_string(cstring_w str);
 extern cstring_w* coffee_debug_get_callstack(szptr *cs_length, uint32 stackreduce);
@@ -22,14 +27,18 @@ extern cstring_w* coffee_debug_get_callstack(szptr *cs_length, uint32 stackreduc
 template<typename... Args>
 inline void cfprintf(FILE* stream, cstring format, Args... args)
 {
-    try{
-        CString formatted = cStringFormat(format,args...);
-        CPuts(stream,formatted.c_str());
-    }
-    catch(std::exception e)
-    {
-        fprintf(stderr,"Failed to print message: %s\n",e.what());
-    }
+    bool locking = false;
+
+    /* If printing to file, don't lock IO */
+    if(stream==stdout||stream==stderr)
+        locking = true;
+
+    CString formatted = cStringFormat(format,args...);
+    if(locking)
+        DebuggingState::PrinterLock.lock();
+    CPuts(stream,formatted.c_str());
+    if(locking)
+        DebuggingState::PrinterLock.unlock();
 }
 
 namespace CDebugHelpers{

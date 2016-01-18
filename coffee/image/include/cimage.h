@@ -38,7 +38,7 @@ extern void Error();
  * \param src Source to load from
  * \return True if success
  */
-extern bool load_data(
+extern bool LoadData(
         CStbImage* target,
         const CResource* src);
 /*!

@@ -259,7 +259,27 @@ public:
      */
     virtual double contextTime() = 0;
 
+    /*!
+     * \brief General function used when an error occurs and there is a need to notify the user.
+     * \param s Severity of message, may change its looks
+     * \param title Title of the message box
+     * \param msg Messaing in the message box
+     */
     virtual void popErrorMessage(Severity s, cstring title, cstring msg) = 0;
+
+    /*!
+     * \brief Alternative way of querying controls, will grab all state. Requires more calls than event-based polling.
+     * \param index
+     * \return
+     */
+    virtual CIControllerState getControllerState(uint16 index) = 0;
+
+    /*!
+     * \brief Set the window's icon for display in window manager and etc.
+     * \param icon The bitmap which is to be set. Not using const& because some surface creation methods require this.
+     * \return False on failure
+     */
+    virtual bool setWindowIcon(CBitmap& icon) = 0;
 
 protected:
     CDRendererBase(CObject* parent);
@@ -276,7 +296,7 @@ inline std::future<void> coffee_display_start_async(
         obj->run();
         obj->cleanup();
     };
-    return CFunctional::CThreading::runAsync(display_task);
+    return CFunctional::CThreading::RunAsync(display_task);
 }
 
 } // namespace CDisplay

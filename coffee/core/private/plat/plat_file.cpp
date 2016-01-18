@@ -39,7 +39,10 @@ CFile *coffee_file_open(cstring fname, cstring mode)
     f->handle = fopen(plat_fname.c_str(),mode);
     int err = errno;
     if(!f->handle)
+    {
+        cWarning(CFStrings::Plat_File_Open_Error,fname);
         cWarning(CFStrings::Plat_File_Native_Error,strerror(err));
+    }
     return f;
 }
 

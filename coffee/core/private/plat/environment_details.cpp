@@ -21,6 +21,8 @@
 
 namespace Coffee{
 
+bool TermScreen::UsingAlternateBuffer = false;
+
 cstring_w env_get_variable(cstring var)
 {
 #if defined(COFFEE_LINUX)

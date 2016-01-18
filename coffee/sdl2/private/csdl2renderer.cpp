@@ -61,21 +61,26 @@ void CSDL2Renderer::init(const CDProperties &props)
 {
     m_properties = props;
 
+    /* Allocate context objects, will hold SDL-specific state so that SDL won't litter the external namespace */
     m_context = new CSDL2Context;
     m_context->thread = std::this_thread::get_id();
 
+    /* Run pre-init for GL binding, for modularity reasons */
     bindingPreInit();
 
+    /* Get current SDL version */
     SDL_version ver;
     SDL_GetVersion(&ver);
     m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
+    /* Initialize SDL and its components */
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
     {
         cFatal("Failed to initialize SDL2 context: {0}",SDL_GetError());
     }
     cMsg("SDL2","Initialized");
 
+    /* If found, load game controller mappings from file */
     CResources::CResource mapping("gamecontrollerdb.txt");
     if(FileExists(mapping))
     {
@@ -87,29 +92,41 @@ void CSDL2Renderer::init(const CDProperties &props)
         FileFree(mapping);
     }
 
-
+    /* Translate window flags and apply them */
     Uint32 flags = 0;
     flags = coffee_sdl2_interpret_winflags(props.flags);
 
+    /* Special flag for SDL to enable OpenGL context */
     flags|=SDL_WINDOW_OPENGL;
 
     coffee_sdl2_set_context_properties(props.gl);
 
+    /* Create the platform window */
     m_context->window =
             SDL_CreateWindow(props.title,
                              SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,
                              props.size.w,props.size.h,
                              flags);
 
+    /* Validate the window pointer, may have failed */
     if(!m_context->window){
         cFatal("Failed to create SDL2 window: {0}",SDL_GetError());
     }
 
+    /* If an icon pointer is present, use it */
+    if(m_properties.icon)
+    {
+        setWindowIcon(*m_properties.icon);
+    }
+
+    /* Show window if requested */
     if(m_properties.flags&CDProperties::Visible)
         showWindow();
 
+    /* Acquire the OpenGL context */
     m_context->context = new CGL_SDL_GL_Context(m_context->window);
 
+    /* Make the GL context current to this thread */
     if(!m_context->context->acquireContext())
     {
         CString err = cStringFormat("Failed to create SDL2 OpenGL context:\n{0}",SDL_GetError());
@@ -117,21 +134,25 @@ void CSDL2Renderer::init(const CDProperties &props)
         cFatal("{0}",err.c_str());
     }
 
-    //For consistent behavior
+    /* Enable VSync if requested */
     if(props.gl.flags&GLProperties::GLVSync)
         setSwapInterval(1);
     else
         setSwapInterval(0);
 
+    /* Set windowed fullscreen if requested */
     if(props.flags&CDProperties::Windowed)
         SDL_SetWindowFullscreen(m_context->window,0);
 
+    /* Disable mouse grabbing in the start, up to the user to enable it */
     setMouseGrabbing(false);
 
     cMsg("SDL2","Running {0}",m_contextString);
 
+    /* Run binding post-init, fetches GL extensions and etc. */
     bindingPostInit();
 
+    /* WORKAROUND: Sometimes, haptic and joystick devices are not closed properly. This part ensures that they are indeed closed before starting. Everything else should be fine. */
     for(int i=0;i<SDL_NumHaptics();i++)
     {
         SDL_Haptic* h = SDL_HapticOpen(i);
@@ -147,22 +168,32 @@ void CSDL2Renderer::init(const CDProperties &props)
 void CSDL2Renderer::cleanup()
 {
     if(m_context){
+        /* Acquire GL context first, ensures that destructor won't fail on different thread */
+        m_context->context->acquireContext();
+
+        /* Run binding termination if needed, should clean up any allocated data */
         bindingTerminate();
+
         cMsg("SDL2","Cleaning up context");
 
+        /* Close haptic devices and game controllers */
         for(std::pair<uint8,SDL_GameController*> con : m_context->controllers)
         {
             SDL_HapticClose(m_context->haptics[con.first]);
             SDL_GameControllerClose(m_context->controllers[con.first]);
         }
 
+        /* Delete GL context object */
         delete m_context->context;
+        /* Delete window */
         SDL_DestroyWindow(m_context->window);
+        /* De-initialize SDL */
         SDL_Quit();
         delete m_context;
         m_context = nullptr;
         cMsg("SDL2","Terminated");
     }else{
+        /* This happens if cleanup has happened before destruction, or if cleanup is called multiple times. Either way is fine. */
         cMsg("SDL2","Already cleaned up");
     }
 }
@@ -397,7 +428,7 @@ void CSDL2Renderer::eventHandleD(const CDEvent &event, c_cptr data)
     }
 }
 
-CIControllerState CSDL2Renderer::getControllerState(size_t index)
+CIControllerState CSDL2Renderer::getControllerState(uint16 index)
 {
     SDL_GameController* gc = m_context->controllers[index];
     CIControllerState state;
@@ -453,6 +484,20 @@ CGL::CGL_Context *CSDL2Renderer::glContext()
 CGL::CGL_ScopedContext CSDL2Renderer::scopedContext()
 {
     return CGL::CGL_ScopedContext(m_context->context);
+}
+
+bool CSDL2Renderer::setWindowIcon(CBitmap &icon)
+{
+
+    SDL_Surface* sdl_icon = SDL_CreateRGBSurfaceFrom(icon.data(),
+                                                     icon.size.w,icon.size.h,
+                                                     32,sizeof(CRGBA),
+                                                     0,0,0,0);
+    if(!sdl_icon)
+        return false;
+    SDL_SetWindowIcon(m_context->window,sdl_icon);
+    SDL_FreeSurface(sdl_icon);
+    return true;
 }
 
 void CSDL2Renderer::popErrorMessage(Severity s, cstring title, cstring msg)

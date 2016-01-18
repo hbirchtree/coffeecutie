@@ -77,7 +77,7 @@ public:
     void eventHandleI(const CIEvent &event, c_cptr data);
     void eventHandleD(const CDEvent &event, c_cptr data);
 
-    CIControllerState getControllerState(size_t index);
+    CIControllerState getControllerState(uint16 index);
 
     void eventHandle(const CIHapticEvent& haptic, c_cptr data)
     {
@@ -95,10 +95,12 @@ public:
     void swapBuffers();
     void pollEvents();
 
+    void popErrorMessage(Severity s, cstring title, cstring msg);
+
     CGL::CGL_Context* glContext();
     CGL::CGL_ScopedContext scopedContext();
 
-    void popErrorMessage(Severity s, cstring title, cstring msg);
+    bool setWindowIcon(CBitmap& icon);
 
 protected:
     CSDL2Renderer(CObject* parent);

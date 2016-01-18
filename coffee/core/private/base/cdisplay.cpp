@@ -41,12 +41,13 @@ CDProperties GetDefaultVisual(const int32 &ctxtMajorVer, const int32 &ctxtMinorV
 }
 
 CDProperties::CDProperties():
-    flags(),
-    monitor(0),
-    size(0,0),
     gl(),
     title(nullptr),
-    window(nullptr)
+    window(nullptr),
+    icon(nullptr),
+    size(0,0),
+    flags(),
+    monitor(0)
 {
 }
 

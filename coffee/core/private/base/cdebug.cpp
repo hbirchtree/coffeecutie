@@ -5,6 +5,8 @@
 namespace Coffee{
 namespace CDebugPrint{
 
+std::mutex DebuggingState::PrinterLock;
+
 using namespace CFunctional::CDebugHelpers;
 
 cstring_w coffee_debug_get_clock_string()

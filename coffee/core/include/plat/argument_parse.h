@@ -46,7 +46,7 @@ inline static bool CheckSwitch(
 inline static cstring GetArgument(
         int argc, cstring_w* argv, cstring sw)
 {
-    for(int i=0;i<argc-1;i++)
+    for(int i=1;i<argc-1;i++)
         if(_cmp_short_switch(argv[i],sw)||_cmp_long_switch(argv[i],sw))
             return argv[i+1];
     return nullptr;

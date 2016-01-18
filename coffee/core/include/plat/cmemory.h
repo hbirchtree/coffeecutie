@@ -1,6 +1,7 @@
 #ifndef COFFEE_PLAT_MEMORY_H
 #define COFFEE_PLAT_MEMORY_H
 
+#include <arpa/inet.h>
 #include <malloc.h>
 #include <cstring>
 #include <cwchar>
@@ -11,6 +12,28 @@
 namespace Coffee{
 namespace CMem{
 
+/* Endian conversion */
+inline C_FORCE_INLINE uint32 ForeignEndian32(uint32 i)
+{
+    return htonl(i);
+}
+
+inline C_FORCE_INLINE uint16 ForeignEndian16(uint16 i)
+{
+    return htons(i);
+}
+
+inline C_FORCE_INLINE uint32 NativeEndian32(uint32 i)
+{
+    return ntohl(i);
+}
+
+inline C_FORCE_INLINE uint16 NativeEndian16(uint16 i)
+{
+    return ntohs(i);
+}
+
+/* Input/output */
 inline C_FORCE_INLINE cstring CGets(cstring_w target, int32 size, FILE* strm)
 {
     return fgets(target,size,strm);
@@ -21,6 +44,7 @@ inline C_FORCE_INLINE void CPuts(FILE* strm, cstring output)
     fputs(output,strm);
 }
 
+/* Memory management */
 inline C_FORCE_INLINE void CFree(c_ptr data)
 {
     free(data);
@@ -56,6 +80,7 @@ inline C_FORCE_INLINE void* CCalloc(szptr unit, szptr num)
     return calloc(unit,num);
 }
 
+/* String utilities, includes wide strings */
 inline C_FORCE_INLINE bool CStrCmp(cstring s1, cstring s2)
 {
     return strcmp(s1,s2)==0;
@@ -105,6 +130,7 @@ inline C_FORCE_INLINE cstring_w CStrNConvert(cwstring str)
     return out;
 }
 
+/* Higher-level string utilities */
 inline C_FORCE_INLINE CString CStrReplace(
         const CString &target, const CString &query,
         const CString &replacement)

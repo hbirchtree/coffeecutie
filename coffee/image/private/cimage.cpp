@@ -12,7 +12,7 @@
 namespace Coffee{
 namespace CStbImageLib{
 
-bool load_data(CStbImage *target, const CResource *src)
+bool LoadData(CStbImage *target, const CResource *src)
 {
     target->data = stbi_load_from_memory(
                 (const ubyte_t*)src->data,src->size,

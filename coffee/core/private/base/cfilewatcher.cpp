@@ -267,7 +267,7 @@ CFileWatchTask::CFileWatchTask():
         coffee_file_watch_deinit();
     };
 
-    m_watcherHandle = CFunctional::CThreading::runAsync(watcherFunction);
+    m_watcherHandle = CFunctional::CThreading::RunAsync(watcherFunction);
 }
 
 CFileWatchTask::~CFileWatchTask()

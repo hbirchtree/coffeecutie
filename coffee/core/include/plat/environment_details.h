@@ -5,6 +5,11 @@
 
 namespace Coffee{
 
+struct TermScreen
+{
+    static bool UsingAlternateBuffer;
+};
+
 extern cstring_w env_get_variable(cstring var);
 
 extern bool env_set_variable(cstring var, cstring value);

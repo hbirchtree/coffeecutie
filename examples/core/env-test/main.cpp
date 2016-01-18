@@ -35,14 +35,17 @@ int32 coffee_main(int32, byte_t**)
     cDebug("int32 size: {0}",sizeof(int32));
 
     {
+        int64 ptr = 123;
+        cDebug("Pointer: {0}",(const void* const&)ptr);
+    }
+
+    {
         /* Try loading a shared library, remember to clean up! */
         _cbasic_version<int32> libver;
         libver.major = 1;
         libver.minor = 0;
         libver.revision = 0;
         CObjectLoader<TestClass>* libtest = coffee_get_lib<TestClass>("test",&libver);
-
-        cDebug("Libpointer: {0}",(const void* const&)libtest);
 
         if(libtest)
         {
@@ -90,20 +93,40 @@ int32 coffee_main(int32, byte_t**)
     CSize tsize = TerminalSize();
     cDebug("Terminal size: {0}x{1}",tsize.w,tsize.h);
 
-    {
-        /* Testing interactive command line */
-        std::string ts;
-        ts.resize(100);
+//    {
+//        /* Testing interactive command line */
+//        std::string ts;
+//        ts.resize(100);
 
-        while(!CStrCmp(&ts[0],"quit\n"))
-        {
-            ts.clear();
-            cBasicPrintNoNL("Type something: ");
-            ReadString(&ts[0],99,stdin);
-            cDebug("You wrote: {0}",ts.c_str());
-        }
-    }
+//        while(!CStrCmp(&ts[0],"quit\n"))
+//        {
+//            ts.clear();
+//            cBasicPrintNoNL("Type something: ");
+//            ReadString(&ts[0],99,stdin);
+//            cDebug("You wrote: {0}",ts.c_str());
+//        }
+//    }
     ResetScreen();
+
+    {
+        cDebug("Testing multithread + printing, should be mutex-locked");
+        std::function<void()> message_test = [](){
+            int64 msgs = 0;
+            ThreadId thread;
+
+            while(msgs<10)
+            {
+                cDebug("{0}: Spam! Messages! Yes!",thread.hash());
+                msgs++;
+            }
+        };
+
+        auto t1 = CThreading::RunAsync(message_test);
+        auto t2 = CThreading::RunAsync(message_test);
+
+        t1.get();
+        t2.get();
+    }
 
     return 0;
 }

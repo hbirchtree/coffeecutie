@@ -1,8 +1,8 @@
 #include <cnect.h>
 
-#include <coffee/core/plat/cmemory.h>
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cthreading.h>
+#include <plat/cmemory.h>
+#include <base/cdebug.h>
+#include <base/cthreading.h>
 
 #include <libfreenect2/libfreenect2.hpp>
 #include <libfreenect2/logger.h>
@@ -43,7 +43,7 @@ FreenectImplementation::FreenectContext::FreenectContext() :
     if(devices <= 0)
         throw std::runtime_error("No devices detected! Cannot continue!");
     cDebug("Number of Kinect 2 devices detected: {0}",devices);
-    std::string serial = manager.getDefaultDeviceSerialNumber();
+    std::string serial /*= manager.getDefaultDeviceSerialNumber()*/;
     cDebug("Serial of device: {0}",serial);
     device = manager.openDevice(serial);
     listener = new libfreenect2::SyncMultiFrameListener(

@@ -151,7 +151,7 @@ CTextureData *coffee_graphics_tex_create_texdata(
         CResources::CResource const& resource, c_ptr location)
 {
     CStbImageLib::CStbImage img;
-    if(!CStbImageLib::load_data(&img,&resource))
+    if(!CStbImageLib::LoadData(&img,&resource))
         return nullptr;
 
     CTextureData* ptr;
