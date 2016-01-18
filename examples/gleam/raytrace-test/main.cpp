@@ -41,6 +41,8 @@ public:
         cstring cshader = {
             "#version 430 core\n"
             ""
+            "layout(local_size_x=8,local_size_y=8) in;"
+            ""
             "layout(binding = 0,rgba32f) uniform image2D target;"
             ""
             "uniform vec3 cPos;"
@@ -51,23 +53,37 @@ public:
             ""
             "void main(void){"
             "   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);"
+            "   ivec2 size = imageSize(target);"
+            "   if(pix.x>=size.x || pix.y>=size.y)"
+            "       return;"
             "   imageStore(target,pix,vec4(1.0,1.0,0.0,1.0));"
             "}"
         };
 
-        GL::CGhnd cprogram = GL::ProgramCreate(GL::ShaderStage::Compute,1,&cshader);
+        GL::CGhnd cprogram = GL::ProgramCreate(GL::ShaderStage::Compute,
+                                               1,&cshader);
+
+        cDebug("Program log: {0}",GL::ProgramGetLog(cprogram));
+
         if(!GL::ProgramValidate(cprogram))
-            cDebug("Compilation log: {0}",GL::ProgramGetLog(cprogram));
+            return;
 
         GL::CGhnd pipeline;
         GL::PipelineAlloc(1,&pipeline);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::Compute,cprogram);
+        GL::PipelineUseStages(pipeline,GL::ShaderStage::All,cprogram);
+
+        if(!GL::PipelineValidate(pipeline))
+        {
+            cDebug("Invalid pipeline!");
+            return;
+        }
 
         GL::PipelineBind(pipeline);
 
         /* Create our image target */
         GL::CGhnd tex;
-        GL::CGhnd imageUnit = 1;
+        int32 imageUnit = 1;
+        GL::CGhnd fb;
 
         GL::TexAlloc(1,&tex);
         GL::TexBind(GL::Texture::T2D,tex);
@@ -77,9 +93,22 @@ public:
                              ResourceAccess::WriteOnly,
                              PixelFormat::RGBA32F);
 
-        /* Set up uniforms */
+        /* Create dummy framebuffer to blit from */
+        GL::FBAlloc(1,&fb);
+        GL::FBBind(GL::FramebufferT::All,fb);
+        GL::FBAttachTexture(GL::FramebufferT::All,GL_COLOR_ATTACHMENT0,tex,0);
 
-        /* Missing! */
+        if(!GL::FBValidate(GL::FramebufferT::All))
+        {
+            cDebug("Invalid FB config!");
+            return;
+        }
+
+        GL::FBBind(GL::FramebufferT::All,0);
+
+        /* Set up uniforms */
+        GL::CGhnd imguni = GL::ProgramUnifGetLoc(cprogram,"target");
+        GL::Uniformiv(cprogram,imguni,1,&imageUnit);
 
         cDebug("Setup time: {0}",timer->elapsed());
 
@@ -141,20 +170,20 @@ int32 coffee_main(int32, byte_t**)
 
     CBitmap* icon_bitm = nullptr;
 
-    {
-        CResources::CResource icon_file(
-                    "/home/havard/Bilder/Always invite the Hero of Time.png",
-                    true);
-        CResources::FilePull(icon_file);
-        CStbImageLib::CStbImage icon_img;
-        CStbImageLib::LoadData(&icon_img,&icon_file);
-        CResources::FileFree(icon_file);
+//    {
+//        CResources::CResource icon_file(
+//                    "/home/havard/Bilder/Always invite the Hero of Time.png",
+//                    true);
+//        CResources::FilePull(icon_file);
+//        CStbImageLib::CStbImage icon_img;
+//        CStbImageLib::LoadData(&icon_img,&icon_file);
+//        CResources::FileFree(icon_file);
 
-        icon_bitm = new CBitmap(icon_img.size.w,icon_img.size.h);
-        szptr data_size = icon_img.size.area()*4;
-        CMemCpy(icon_bitm->data(),icon_img.data,data_size);
-        CStbImageLib::ImageFree(&icon_img);
-    }
+//        icon_bitm = new CBitmap(icon_img.size.w,icon_img.size.h);
+//        szptr data_size = icon_img.size.area()*4;
+//        CMemCpy(icon_bitm->data(),icon_img.data,data_size);
+//        CStbImageLib::ImageFree(&icon_img);
+//    }
 
     props.icon = icon_bitm;
 

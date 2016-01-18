@@ -437,7 +437,7 @@ struct CGL33 : CGL_Implementation
     static void RBufStorageMS(PixelFormat ifmt,uint32 samples,uint32 w,uint32 h)
     {glRenderbufferStorageMultisample(GL_RENDERBUFFER,samples,to_enum(ifmt),w,h);}
 
-    static bool FBCheckComplete(FramebufferT t)
+    static bool FBValidate(FramebufferT t)
     {
         CGenum f = glCheckFramebufferStatus(to_enum(t));
         if(f!=GL_FRAMEBUFFER_COMPLETE)

@@ -105,7 +105,7 @@ struct CGL45 : CGL43
     static void BufUnmap(CGenum){}
 
     /* FB */
-    static bool FBCheckComplete(CGhnd){return false;}
+    static bool FBValidate(CGhnd){return false;}
 
     /* VAO */
     static void VAOAttribFormat(CGhnd,uint32,int32,CGenum,bool,uint32){}

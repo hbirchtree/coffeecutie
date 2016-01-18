@@ -182,6 +182,7 @@ struct CGL43 : CGL33
 
     static bool ProgramValidate(CGhnd h)
     {
+	/*WARNING: Do not use this with shader programs! */
         glValidateProgram(h);
         int32 outStat;
         ProgramGetiv(h,GL_VALIDATE_STATUS,&outStat);
@@ -249,10 +250,10 @@ struct CGL43 : CGL33
         return TexStorageSupported();
     }
 
-    static void ImageBindTexture(uint32 tx,CGhnd t,uint32 lev,bool lay,
+    static void ImageBindTexture(int32 tx,CGhnd t,uint32 lev,bool lay,
                                  uint32 ln,ResourceAccess acc,PixelFormat fmt)
     {glBindImageTexture(tx,t,lev,lay,ln,to_enum3(acc),to_enum(fmt));}
-    static void ImageBindTextures(uint32 f,uint32 c, const CGhnd* h)
+    static void ImageBindTextures(int32 f,uint32 c, const CGhnd* h)
     {glBindImageTextures(f,c,h);}
     static bool ImageCopySubData(CGhnd s,Texture st,uint32 sl,int32 sx,int32 sy,int32 sz,
                                  CGhnd d,Texture dt,uint32 dl,int32 dx,int32 dy,int32 dz,
