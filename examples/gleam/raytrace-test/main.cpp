@@ -45,7 +45,7 @@ public:
             ""
             "layout(local_size_x=8,local_size_y=8) in;"
             ""
-            "layout(binding = 0,rgba32f) uniform image2D target;"
+            "layout(binding=1,rgba32f) uniform image2D fbTarget;"
             ""
             "uniform vec3 cPos;"
             "uniform vec3 rayBL; //0,0"
@@ -84,16 +84,12 @@ public:
 
         /* Create our image target */
         GL::CGhnd tex;
-        int32 imageUnit = 1;
+        uint32 imageUnit = 1;
         GL::CGhnd fb;
 
         GL::TexAlloc(1,&tex);
         GL::TexBind(GL::Texture::T2D,tex);
         GL::TexStorage2D(GL::Texture::T2D,1,PixelFormat::RGBA32F,1024,1024);
-
-        GL::ImageBindTexture(imageUnit,tex,0,false,0,
-                             ResourceAccess::WriteOnly,
-                             PixelFormat::RGBA32F);
 
         /* Create dummy framebuffer to blit from */
         GL::FBAlloc(1,&fb);
@@ -110,8 +106,9 @@ public:
         GL::FBBind(GL::FramebufferT::Read,fb);
 
         /* Set up uniforms */
-        GL::CGhnd imguni = GL::ProgramUnifGetLoc(cprogram,"target");
-        GL::Uniformiv(cprogram,imguni,1,&imageUnit);
+        GL::ImageBindTexture(imageUnit,tex,0,false,0,ResourceAccess::WriteOnly,
+                             PixelFormat::RGBA32F);
+        /**/
 
         CRect blit_source;
         blit_source.w = 1024;
