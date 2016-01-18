@@ -56,7 +56,7 @@ public:
             "   ivec2 size = imageSize(target);"
             "   if(pix.x>=size.x || pix.y>=size.y)"
             "       return;"
-            "   imageStore(target,pix,vec4(1.0,1.0,0.0,1.0));"
+            "   imageStore(target,pix,vec4(1.0,1.0,1.0,1.0));"
             "}"
         };
 
@@ -105,10 +105,18 @@ public:
         }
 
         GL::FBBind(GL::FramebufferT::All,0);
+        GL::FBBind(GL::FramebufferT::Read,fb);
 
         /* Set up uniforms */
         GL::CGhnd imguni = GL::ProgramUnifGetLoc(cprogram,"target");
         GL::Uniformiv(cprogram,imguni,1,&imageUnit);
+
+        CRect blit_source;
+        blit_source.w = 1024;
+        blit_source.h = 720;
+        CRect blit_target;
+        blit_target.w = 1024;
+        blit_target.h = 720;
 
         cDebug("Setup time: {0}",timer->elapsed());
 
@@ -122,7 +130,11 @@ public:
 
             GL::ClearBufferfv(true,0,clearCol);
 
-            GL::ComputeDispatch(16,16,1);
+            GL::ComputeDispatch(1024,1024,1);
+            GL::MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+            GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
+
 
             this->pollEvents();
             this->swapBuffers();
