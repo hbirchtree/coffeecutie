@@ -40,7 +40,7 @@ void CALSoundBuffer::setFormat(CSoundFormat &fmt)
 
 void CALSoundBuffer::fillBuffer(c_cptr data, const szptr &size)
 {
-    CAudioSample smp;
+    AudioSample smp;
 
     smp.fmt.bitdepth = m_fmt->bitDepth();
     smp.fmt.channels = m_fmt->channels();

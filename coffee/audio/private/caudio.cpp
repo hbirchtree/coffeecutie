@@ -8,7 +8,7 @@ namespace Coffee{
 namespace CAudio{
 namespace CStbAudio{
 
-void vorbis_load(CAudio::CAudioSample *smp, CResources::CResource *src)
+void vorbis_load(CAudio::AudioSample *smp, CResources::CResource *src)
 {
     smp->samples = stb_vorbis_decode_memory(
                 (ubyte_t*)src->data,src->size,
@@ -18,19 +18,19 @@ void vorbis_load(CAudio::CAudioSample *smp, CResources::CResource *src)
 
 }
 
-CAudioFormat::CAudioFormat():
+AudioFormat::AudioFormat():
     samplerate(0),
     channels(0),
     bitdepth(0)
 {
 }
 
-bigscalar sample_get_length(CAudioSample const& smp)
+bigscalar sample_get_length(AudioSample const& smp)
 {
     return (bigscalar)smp.samples/(bigscalar)smp.fmt.samplerate;
 }
 
-szptr sample_get_datasize(const CAudioFormat &fmt, szptr samples)
+szptr sample_get_datasize(const AudioFormat &fmt, szptr samples)
 {
     return fmt.samplerate*fmt.channels*samples*CMath::max(1,fmt.bitdepth/8);
 }

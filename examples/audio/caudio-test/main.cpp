@@ -21,7 +21,7 @@ public:
 
     void run()
     {
-        CAudioSample smp;
+        AudioSample smp;
         //Read audio sample from file
         CResources::CResource rsc("caudio_test/monosample.ogg");
         FilePull(rsc);

@@ -15,7 +15,7 @@ class CALSoundStream : public CSoundStream<CALSource,CALBuffer>
     CALCaptureDevice* m_capDev;
 
     CALSource* m_soundSource;
-    CAudioFormat m_capFmt;
+    AudioFormat m_capFmt;
     bool b_inputStream;
 
     std::queue<CALBuffer*> m_available;

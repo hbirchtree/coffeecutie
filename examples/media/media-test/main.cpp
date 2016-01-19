@@ -35,9 +35,8 @@ public:
         //Set output descriptor
         player.descriptor().video.size.width = 1280;
         player.descriptor().video.size.height = 720;
-        player.descriptor().audio.bitdepth = 16;
-        player.descriptor().audio.channels = 2;
-        player.descriptor().audio.frequency = 44100;
+        player.descriptor().audio.format = SampleFormat::I16S;
+        player.descriptor().audio.samplerate = 44100;
 
         player.createDecoder();
 

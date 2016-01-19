@@ -77,7 +77,7 @@ szptr CALSoundStream::collectSamples(c_ptr data, const szptr &max_samples)
     if(!b_inputStream)
         return 0;
 
-    CAudioSample smp;
+    AudioSample smp;
     smp.data = (int16*)data;
     smp.samples = max_samples;
     smp.fmt = m_capFmt;
@@ -100,7 +100,7 @@ void CALSoundStream::feedData(c_cptr data, const CSoundFormat &fmt, const szptr 
     }
     CALBuffer* p_buf = buf;
 
-    CAudioSample samp;
+    AudioSample samp;
     samp.data = (int16*)data;
     samp.fmt.bitdepth = fmt.bitDepth();
     samp.fmt.channels = fmt.channels();
@@ -145,7 +145,7 @@ void CALSoundStream::pauseStream()
 
 void CALSoundStream::collectBuffers()
 {
-    int32 procd = source_geti(m_soundSource,CSourceProperty::BuffersProcessed);
+    int32 procd = source_geti(m_soundSource,CSourceProperty::BuffersProcessed)-1;
     CALBuffer* buffer;
     while(procd>0&&m_expended.size()>0)
     {

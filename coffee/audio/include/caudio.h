@@ -7,12 +7,27 @@
 namespace Coffee{
 namespace CAudio{
 
+enum class SampleFormat
+{
+    U8M,
+    U8S,
+    U8Q,
+
+    I16M,
+    I16S,
+    I16Q,
+
+    F32M,
+    F32S,
+    F32Q,
+};
+
 /*!
  * \brief Format structure for audio
  */
-struct CAudioFormat
+struct AudioFormat
 {
-    CAudioFormat();
+    AudioFormat();
 
     union{
         int samplerate; /*!< Samplerate, typically 44.1kHz*/
@@ -25,16 +40,16 @@ struct CAudioFormat
 /*!
  * \brief An audio sample
  */
-struct CAudioSample
+struct AudioSample
 {
     short* data = nullptr; /*!< Pointer to audio data*/
-    CAudioFormat fmt; /*!< Format specification*/
+    AudioFormat fmt; /*!< Format specification*/
     int samples;
 };
 
-extern bigscalar sample_get_length(const CAudioSample &smp);
+extern bigscalar sample_get_length(const AudioSample &smp);
 
-extern szptr sample_get_datasize(CAudioFormat const& fmt, szptr samples);
+extern szptr sample_get_datasize(AudioFormat const& fmt, szptr samples);
 
 namespace CStbAudio{
 
@@ -43,7 +58,7 @@ namespace CStbAudio{
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern void vorbis_load(CAudioSample* smp, CResources::CResource* src);
+extern void vorbis_load(AudioSample* smp, CResources::CResource* src);
 
 }
 

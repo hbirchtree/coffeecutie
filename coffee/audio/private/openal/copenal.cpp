@@ -103,7 +103,7 @@ ALuint _al_get_handle(const CALSource* b)
 {
     return b->handle->handle;
 }
-ALenum _al_get_fmt(CAudioFormat const& fmt)
+ALenum _al_get_fmt(AudioFormat const& fmt)
 {
     ALenum ofmt;
     switch(fmt.bitdepth)
@@ -206,7 +206,7 @@ bool context_check_extension(const CALContext *context, cstring extension)
     return alcIsExtensionPresent(context->device,extension)==ALC_TRUE;
 }
 
-uint32 context_max_sources(const CALContext *context)
+uint32 context_max_sources(CALContext *context)
 {
     context_make_current(context);
 }
@@ -488,7 +488,7 @@ scalar source_getf(CALSource *source, const CSourceProperty &prop)
     return v;
 }
 
-void buffer_data(CALBuffer *buffer, const CAudioSample *sample)
+void buffer_data(CALBuffer *buffer, const AudioSample *sample)
 {
     ALenum fmt = _al_get_fmt(sample->fmt);
 
@@ -499,7 +499,7 @@ void buffer_data(CALBuffer *buffer, const CAudioSample *sample)
             sample->fmt.samplerate);
 }
 
-void alAlloc(CALBuffer *buffer, const CAudioSample *sample)
+void alAlloc(CALBuffer *buffer, const AudioSample *sample)
 {
     alAlloc(buffer);
     buffer_data(buffer,sample);
@@ -508,7 +508,7 @@ void alAlloc(CALBuffer *buffer, const CAudioSample *sample)
 
 CALCaptureDevice *capture_create(
         CALContext *context, cstring device,
-        CAudioFormat const& fmt, uint32 samples)
+        AudioFormat const& fmt, uint32 samples)
 {
     context_make_current(context);
 
@@ -543,7 +543,7 @@ void capture_stop(CALCaptureDevice *dev)
 }
 
 void capture_grab_samples(CALCaptureDevice *dev,
-                                       CAudioSample &sample)
+                                       AudioSample &sample)
 {
     alcCaptureSamples(dev->capdevice,sample.data,sample.samples);
 }

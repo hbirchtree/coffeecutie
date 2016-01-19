@@ -2,7 +2,7 @@
 #define COPENAL_HEADER
 
 #include <coffee/core/CTypes>
-#include "../caudio.h"
+#include <caudio.h>
 #include <functional>
 
 namespace Coffee{
@@ -11,6 +11,7 @@ namespace CAudio{
 struct OpenAL
 {
     struct ALContext;
+    struct ALdev;
     struct ALhnd;
     struct ALcapdevice;
 
@@ -27,10 +28,14 @@ struct OpenAL
         Rewind,
     };
 
-    enum class SoundProperty
+    enum class SourceProperty
     {
-        Pitch,
+	None,
 
+	Relative,
+	Looping,
+
+        Pitch,
         Gain,
         MinGain,
         MaxGain,
@@ -43,9 +48,6 @@ struct OpenAL
         ConeInnerAngle,
         ConeOuterAngle,
 
-        Relative,
-        Looping,
-
         Position,
         Velocity,
         Direction,
@@ -57,6 +59,7 @@ struct OpenAL
 
     enum class Attenuation
     {
+	None	 = 0,
         /*Inverse, Linear and Exponent cannot be combined.*/
         Inverse  = 1,
         Linear   = 2,
@@ -67,15 +70,29 @@ struct OpenAL
 
     enum class ContextProperty
     {
+	DevSpecifier,
+	CaptureDevSpecifier,
+	DefaultDev,
 
-    };
+	Version,
+	Renderer,
+	Vendor,
+	Extensions,
 
-    enum class SourceProperty
-    {
-
+	Doppler,
+	SpeedOfSound,
+	AttenuationModl,
     };
 
     enum class ListenerProperty
+    {
+	Gain,
+	Position,
+	Velocity,
+	Orientation,
+    };
+
+    enum class Feature
     {
 
     };
@@ -83,6 +100,9 @@ struct OpenAL
     static ALContext* CreateContext();
     static void DeleteContext(ALContext* ctxt);
     static void ContextCurrent(ALContext* ctxt);
+
+    static void Enable();
+    static void Disable();
 
     static void ContextSetAttenuation(Attenuation m);
 
@@ -92,11 +112,16 @@ struct OpenAL
     static ALbuffer* BufAlloc();
     static void BufFree(ALbuffer* b);
     static void BufData();
+    static ALbuffer* BufCreate();
 
     static ALsource* SrcAlloc();
     static void SrcFree(ALsource* s);
 
     static void SrcState(ALsource** s,PlaybackState m);
+
+    static void SrcSetBuffer(ALsource& s, const ALbuffer& b);
+    static void SrcQueueBuffers(ALsource& s, uint32 n, const ALbuffer** b);
+    static void SrcDequeueBuffers(ALsource& s, uint32 n, const ALbuffer** b);
 
     static void SrcGeti();
     static void SrcGetf();
@@ -114,6 +139,16 @@ struct OpenAL
         static void ProcessError(ALContext* ctxt);
 
         static ALVersion ContextVersion(ALContext* ctxt);
+
+	static bool IsEnabled();
+	static bool IsBuffer();
+	static bool IsSource();
+
+	static void GetBool(ALdev* d, ContextProperty p, bool* v);
+	static void GetInt(ALdev* d, ContextProperty p, int32* v);
+	static void GetScalar(ALdev* d, ContextProperty p, scalar* v);
+	static void GetBigScalar(ALdev* d, ContextProperty p, bigscalar* v);
+	static cstring GetString(ALdev* d, ContextProperty p);
     };
 };
 
@@ -286,7 +321,7 @@ extern uint32 context_max_sources(const CALContext* context = nullptr);
 extern CALCaptureDevice* capture_create(
         CALContext* context,
         cstring device,
-        const CAudioFormat &fmt, uint32 samples);
+	const AudioFormat &fmt, uint32 samples);
 /*!
  * \brief Free the audio capture device when you are done with it.
  * \param dev
@@ -294,7 +329,7 @@ extern CALCaptureDevice* capture_create(
 extern void capture_free(CALCaptureDevice *dev);
 
 extern void capture_start(CALCaptureDevice* dev);
-extern void capture_grab_samples(CALCaptureDevice* dev, CAudioSample &sample);
+extern void capture_grab_samples(CALCaptureDevice* dev, AudioSample &sample);
 extern void capture_stop(CALCaptureDevice* dev);
 
 /*!
@@ -303,7 +338,7 @@ extern void capture_stop(CALCaptureDevice* dev);
  * \param sample
  */
 extern void alAlloc(
-        CALBuffer* buffer, const CAudioSample* sample);
+	CALBuffer* buffer, const AudioSample* sample);
 /*!
  * \brief Allocate audio buffer
  * \param buffer
@@ -451,7 +486,7 @@ extern scalar source_getf(
  * \param sample
  */
 extern void buffer_data(
-        CALBuffer* buffer, const CAudioSample* sample);
+	CALBuffer* buffer, const AudioSample* sample);
 
 extern void context_set_distance_model(const CDistanceModel &m);
 

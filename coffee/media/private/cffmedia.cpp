@@ -81,6 +81,82 @@ struct CFFEncodeContext
     } a;
 };
 
+inline C_FORCE_INLINE void ff_get_sampleformat(SampleFormat fmt,
+                                               int64* ch_layout,
+                                               AVSampleFormat* sfmt,
+                                               int32* channels,
+                                               int16* bits)
+{
+    switch(fmt)
+    {
+    case SampleFormat::U8M:{
+        *ch_layout = AV_CH_LAYOUT_MONO;
+        *channels = 1;
+        *sfmt = AV_SAMPLE_FMT_U8;
+        *bits = 8;
+        break;
+    }
+    case SampleFormat::U8S:{
+        *ch_layout = AV_CH_LAYOUT_STEREO;
+        *channels = 2;
+        *sfmt = AV_SAMPLE_FMT_U8;
+        *bits = 8;
+        break;
+    }
+    case SampleFormat::U8Q:{
+        *ch_layout = AV_CH_LAYOUT_4POINT0;
+        *channels = 4;
+        *sfmt = AV_SAMPLE_FMT_U8;
+        *bits = 8;
+        break;
+    }
+
+    case SampleFormat::I16M:{
+        *ch_layout = AV_CH_LAYOUT_MONO;
+        *channels = 1;
+        *sfmt = AV_SAMPLE_FMT_S16;
+        *bits = 16;
+        break;
+    }
+    case SampleFormat::I16S:{
+        *ch_layout = AV_CH_LAYOUT_STEREO;
+        *channels = 2;
+        *sfmt = AV_SAMPLE_FMT_S16;
+        *bits = 16;
+        break;
+    }
+    case SampleFormat::I16Q:{
+        *ch_layout = AV_CH_LAYOUT_4POINT0;
+        *channels = 4;
+        *sfmt = AV_SAMPLE_FMT_S16;
+        *bits = 16;
+        break;
+    }
+
+    case SampleFormat::F32M:{
+        *ch_layout = AV_CH_LAYOUT_MONO;
+        *channels = 1;
+        *sfmt = AV_SAMPLE_FMT_FLT;
+        *bits = 16;
+        break;
+    }
+    case SampleFormat::F32S:{
+        *ch_layout = AV_CH_LAYOUT_STEREO;
+        *channels = 2;
+        *sfmt = AV_SAMPLE_FMT_FLT;
+        *bits = 32;
+        break;
+    }
+    case SampleFormat::F32Q:{
+        *ch_layout = AV_CH_LAYOUT_4POINT0;
+        *channels = 4;
+        *sfmt = AV_SAMPLE_FMT_FLT;
+        *bits = 32;
+        break;
+    }
+    }
+}
+
 void coffee_ffmedia_init(CFFMessageCallback callback, bool silent)
 {
     if(cffmedia_context_created)
@@ -304,11 +380,10 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
     {
         dCtxt->a.swr_ctxt = nullptr;
 
-        dCtxt->a.chlayout = AV_CH_LAYOUT_STEREO;
-        dCtxt->a.channels = fmt.audio.channels;
-        dCtxt->a.sfmt = AV_SAMPLE_FMT_S16;
+        /* Magic magic to get sample format properties from enum */
+        ff_get_sampleformat(fmt.audio.format,&dCtxt->a.chlayout,&dCtxt->a.sfmt,&dCtxt->a.channels,&dCtxt->a.bitdepth);
+
         dCtxt->a.srate = fmt.audio.samplerate;
-        dCtxt->a.bitdepth = 16;
 
         SwrContext* ctxt = swr_alloc();
         swr_alloc_set_opts(ctxt,

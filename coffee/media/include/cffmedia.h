@@ -24,7 +24,11 @@ struct CFFVideoFormat
 
 struct CFFVideoDescriptor
 {
-    CAudioFormat audio;
+    struct
+    {
+	SampleFormat format;
+	uint32 samplerate;
+    } audio;
     CFFVideoFormat video;
 };
 
