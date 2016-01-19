@@ -8,6 +8,117 @@
 namespace Coffee{
 namespace CAudio{
 
+struct OpenAL
+{
+    struct ALContext;
+    struct ALhnd;
+    struct ALcapdevice;
+
+    using ALCallback = void(*)(Severity,cstring);
+    using ALVersion = _cbasic_version<int32>;
+    using ALbuffer = ALhnd;
+    using ALsource = ALhnd;
+
+    enum class PlaybackState
+    {
+        Stopped,
+        Playing,
+        Paused,
+        Rewind,
+    };
+
+    enum class SoundProperty
+    {
+        Pitch,
+
+        Gain,
+        MinGain,
+        MaxGain,
+
+        MaxDist,
+        RolloffFactor,
+        ReferenceDistance,
+
+        ConeOuterGain,
+        ConeInnerAngle,
+        ConeOuterAngle,
+
+        Relative,
+        Looping,
+
+        Position,
+        Velocity,
+        Direction,
+
+        OffsetSeconds,
+        OffsetSamples,
+        OffsetBytes,
+    };
+
+    enum class Attenuation
+    {
+        /*Inverse, Linear and Exponent cannot be combined.*/
+        Inverse  = 1,
+        Linear   = 2,
+        Exponent = 3,
+
+        Clamped  = 0x10,
+    };
+
+    enum class ContextProperty
+    {
+
+    };
+
+    enum class SourceProperty
+    {
+
+    };
+
+    enum class ListenerProperty
+    {
+
+    };
+
+    static ALContext* CreateContext();
+    static void DeleteContext(ALContext* ctxt);
+    static void ContextCurrent(ALContext* ctxt);
+
+    static void ContextSetAttenuation(Attenuation m);
+
+    static void ContextGeti();
+    static void ContextGetf();
+
+    static ALbuffer* BufAlloc();
+    static void BufFree(ALbuffer* b);
+    static void BufData();
+
+    static ALsource* SrcAlloc();
+    static void SrcFree(ALsource* s);
+
+    static void SrcState(ALsource** s,PlaybackState m);
+
+    static void SrcGeti();
+    static void SrcGetf();
+
+    static void ListenerGeti();
+    static void ListenerGetf();
+    static void ListenerSeti();
+    static void ListenerSetf();
+
+    struct Debug
+    {
+        static void CheckExtension(ALContext* ctxt, cstring ext);
+
+        static void SetDebugCallback(ALContext* ctxt, ALCallback c);
+        static void ProcessError(ALContext* ctxt);
+
+        static ALVersion ContextVersion(ALContext* ctxt);
+    };
+};
+
+C_FLAGS(OpenAL::Attenuation,uint32);
+
 /*!
  * \brief Basic wrapping for OpenAL, nothing extensive
  *
@@ -162,6 +273,8 @@ extern bool context_check_extension(
  */
 extern void context_get_error(
         const CALContext* context = nullptr);
+
+extern uint32 context_max_sources(const CALContext* context = nullptr);
 
 /*!
  * \brief Create an audio capture device and initialize it with codec information. OpenAL does the rest.

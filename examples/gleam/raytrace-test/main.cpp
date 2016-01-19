@@ -33,6 +33,13 @@ public:
         CVec4 clearCol;
         clearCol.a() = 1.0;
 
+        CRect blit_source;
+        blit_source.w = 1024;
+        blit_source.h = 720;
+        CRect blit_target;
+        blit_target.w = 1024;
+        blit_target.h = 720;
+
         /* Creating a VAO just in case */
         GL::CGhnd vao;
         GL::VAOAlloc(1,&vao);
@@ -58,7 +65,7 @@ public:
             "   ivec2 size = imageSize(target);"
             "   if(pix.x>=size.x || pix.y>=size.y)"
             "       return;"
-            "   imageStore(target,pix,vec4(1.0,1.0,0.0,1.0));"
+            "   imageStore(target,pix,vec4(0.0,1.0,0.0,1.0));"
             "}"
         };
 
@@ -76,7 +83,7 @@ public:
 
         if(!GL::PipelineValidate(pipeline))
         {
-            cDebug("Invalid pipeline!");
+            cDebug("Pipeline log: {0}",GL::PipelineGetLog(pipeline));
             return;
         }
 
@@ -102,7 +109,7 @@ public:
             return;
         }
 
-        GL::FBBind(GL::FramebufferT::All,0);
+        GL::FBBind(GL::FramebufferT::Draw,0);
         GL::FBBind(GL::FramebufferT::Read,fb);
 
         /* Set up uniforms */
@@ -110,17 +117,8 @@ public:
                              PixelFormat::RGBA32F);
         /**/
 
-        CRect blit_source;
-        blit_source.w = 1024;
-        blit_source.h = 720;
-        CRect blit_target;
-        blit_target.w = 1024;
-        blit_target.h = 720;
-
         cDebug("Setup time: {0}",timer->elapsed());
 
-        GL::ComputeDispatch(64,64,1);
-        GL::MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
         while(!closeFlag())
         {
@@ -132,7 +130,11 @@ public:
 
             GL::ClearBufferfv(true,0,clearCol);
 
+            GL::ComputeDispatch(64,64,1);
+            GL::MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
             GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
+            GL::MemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT);
 
             this->pollEvents();
             this->swapBuffers();

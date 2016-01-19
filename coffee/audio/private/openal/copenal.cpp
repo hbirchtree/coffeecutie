@@ -206,6 +206,75 @@ bool context_check_extension(const CALContext *context, cstring extension)
     return alcIsExtensionPresent(context->device,extension)==ALC_TRUE;
 }
 
+uint32 context_max_sources(const CALContext *context)
+{
+    context_make_current(context);
+}
+
+CALVersion context_version(CALContext* ctxt)
+{
+    CALVersion v;
+    alcGetIntegerv(ctxt->device,ALC_MAJOR_VERSION,1,&v.major);
+    alcGetIntegerv(ctxt->device,ALC_MINOR_VERSION,1,&v.minor);
+    return v;
+}
+
+void context_set_debug_callback(CALContext *context, CALCallback callback)
+{
+    context->callback = callback;
+}
+
+cstring *context_devices_output(uint32* numDevices)
+{
+    *numDevices = 0;
+
+    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
+        return nullptr;
+
+    const ALCchar* devices = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
+
+    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
+
+    while(*devices)
+    {
+        if(!(*numDevices))
+            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
+        arrdev[*numDevices] = devices;
+        devices += CStrLen(devices)+1;
+        (*numDevices)++;
+    }
+
+    return arrdev;
+}
+
+cstring *context_devices_input(uint32* numDevices)
+{
+    *numDevices = 0;
+
+    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
+        return nullptr;
+
+    const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
+
+    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
+
+    while(*cdevices)
+    {
+        if(!(*numDevices))
+            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
+        arrdev[*numDevices] = cdevices;
+        cdevices += CStrLen(cdevices)+1;
+        (*numDevices)++;
+    }
+
+    return arrdev;
+}
+
+cstring context_device_default()
+{
+    return alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
+}
+
 void alAlloc(CALBuffer *buffer)
 {
     buffer->handle = new CALhnd;
@@ -430,75 +499,11 @@ void buffer_data(CALBuffer *buffer, const CAudioSample *sample)
             sample->fmt.samplerate);
 }
 
-void context_set_debug_callback(CALContext *context, CALCallback callback)
-{
-    context->callback = callback;
-}
-
 void alAlloc(CALBuffer *buffer, const CAudioSample *sample)
 {
     alAlloc(buffer);
     buffer_data(buffer,sample);
     context_get_error();
-}
-
-CALVersion context_version(CALContext* ctxt)
-{
-    CALVersion v;
-    alcGetIntegerv(ctxt->device,ALC_MAJOR_VERSION,1,&v.major);
-    alcGetIntegerv(ctxt->device,ALC_MINOR_VERSION,1,&v.minor);
-    return v;
-}
-
-cstring *context_devices_output(uint32* numDevices)
-{
-    *numDevices = 0;
-
-    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
-        return nullptr;
-
-    const ALCchar* devices = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
-
-    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
-
-    while(*devices)
-    {
-        if(!(*numDevices))
-            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
-        arrdev[*numDevices] = devices;
-        devices += CStrLen(devices)+1;
-        (*numDevices)++;
-    }
-
-    return arrdev;
-}
-
-cstring *context_devices_input(uint32* numDevices)
-{
-    *numDevices = 0;
-
-    if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
-        return nullptr;
-
-    const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
-
-    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
-
-    while(*cdevices)
-    {
-        if(!(*numDevices))
-            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
-        arrdev[*numDevices] = cdevices;
-        cdevices += CStrLen(cdevices)+1;
-        (*numDevices)++;
-    }
-
-    return arrdev;
-}
-
-cstring context_device_default()
-{
-    return alcGetString(NULL,ALC_DEFAULT_DEVICE_SPECIFIER);
 }
 
 CALCaptureDevice *capture_create(
