@@ -55,14 +55,22 @@ public:
             "uniform writeonly image2D fbTarget;\n"
             ""
             "uniform vec3 cPos;\n"
-            "uniform vec3 rayBL; //0,0\n"
-            "uniform vec3 rayTL; //0,1\n"
-            "uniform vec3 rayBR; //1,0\n"
-            "uniform vec3 rayTR; //1,1\n"
+            "uniform vec3 rayBL; /*0,0*/\n"
+            "uniform vec3 rayTL; /*0,1*/\n"
+            "uniform vec3 rayBR; /*1,0*/\n"
+            "uniform vec3 rayTR; /*1,1*/\n"
             ""
             "void main(void){\n"
             "   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);\n"
-            "   imageStore(fbTarget,pix,vec4(0.0,1.0,0.0,1.0));\n"
+            "   vec4 color = vec4(1.0);"
+            "   if(pix.x%10==0)"
+            "   {"
+            "       color.g = 0.0;"
+            "       color.b = 0.5;"
+            "   }else{"
+            "       color.r = 0.0;"
+            "   }"
+            "   imageStore(fbTarget,pix,color);\n"
             "}\n"
         };
 
@@ -109,7 +117,7 @@ public:
         GL::FBBind(GL::FramebufferT::All,0);
 
         GL::FBBind(GL::FramebufferT::Draw,0);
-//        GL::FBBind(GL::FramebufferT::Read,fb);
+        GL::FBBind(GL::FramebufferT::Read,fb);
 
         /* Set up uniforms */
         GL::ImageBindTexture(imageUnit,tex,0,false,0,ResourceAccess::WriteOnly,
@@ -132,7 +140,7 @@ public:
             GL::ProgramUse(cprogram);
             GL::ComputeDispatch(1024/16,1024/16,1);
 
-//            GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
+            GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
 
             this->pollEvents();
             this->swapBuffers();
