@@ -261,7 +261,7 @@ public:
         rootNode.parent = &worldNode;
         rootNode.transform = &rtf;
 
-        rt = coffee_node_get_transform(&rootNode);
+        rt = AccumulateTransform(&rootNode);
 
         for(uint32 i=0;i<transforms.size;i++)
         {
@@ -337,7 +337,7 @@ public:
 
             wtf = GenPerspective(camera)
                     * GenTransform(camera);
-            rt = coffee_node_get_transform(&rootNode);
+            rt = AccumulateTransform(&rootNode);
 
             CMemCpy(transforms.current().data,&rt,sizeof(rt));
 

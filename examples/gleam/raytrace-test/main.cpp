@@ -50,9 +50,9 @@ public:
         cstring cshader = {
             "#version 430 core\n"
             ""
-            "layout(local_size_x=8,local_size_y=8) in;"
+            "layout(local_size_x=16,local_size_y=16) in;"
             ""
-            "layout(binding=1,rgba32f) uniform image2D fbTarget;"
+            "uniform writeonly image2D fbTarget;"
             ""
             "uniform vec3 cPos;"
             "uniform vec3 rayBL; //0,0"
@@ -60,12 +60,9 @@ public:
             "uniform vec3 rayBR; //1,0"
             "uniform vec3 rayTR; //1,1"
             ""
-            "void main(void){"
+            "void main(void){d"
             "   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);"
-            "   ivec2 size = imageSize(target);"
-            "   if(pix.x>=size.x || pix.y>=size.y)"
-            "       return;"
-            "   imageStore(target,pix,vec4(0.0,1.0,0.0,1.0));"
+            "   imageStore(fbTarget,pix,vec4(0.0,1.0,0.0,1.0));"
             "}"
         };
 
@@ -91,7 +88,7 @@ public:
 
         /* Create our image target */
         GL::CGhnd tex;
-        uint32 imageUnit = 1;
+        uint32 imageUnit = 0;
         GL::CGhnd fb;
 
         GL::TexAlloc(1,&tex);
@@ -109,8 +106,10 @@ public:
             return;
         }
 
+        GL::FBBind(GL::FramebufferT::All,0);
+
         GL::FBBind(GL::FramebufferT::Draw,0);
-        GL::FBBind(GL::FramebufferT::Read,fb);
+//        GL::FBBind(GL::FramebufferT::Read,fb);
 
         /* Set up uniforms */
         GL::ImageBindTexture(imageUnit,tex,0,false,0,ResourceAccess::WriteOnly,
@@ -130,15 +129,16 @@ public:
 
             GL::ClearBufferfv(true,0,clearCol);
 
-            GL::ComputeDispatch(64,64,1);
-            GL::MemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            GL::ProgramUse(cprogram);
+            GL::ComputeDispatch(1024/16,1024/16,1);
 
-            GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
-            GL::MemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT);
+//            GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
 
             this->pollEvents();
             this->swapBuffers();
         }
+
+        CGL::CGLUtil::DumpTexture(GL::Texture::T2D,tex,0,"raytrace.png");
 
         //Write code here
     }
@@ -188,6 +188,26 @@ int32 coffee_main(int32, byte_t**)
     renderer->cleanup();
     delete renderer;
     cDebug("Cleanup renderer: {0}",timer->elapsed());
+
+//    CRGBA* img = (CRGBA*)Alloc(256*256*4);
+
+//    for(uint32 x=0;x<256;x++)
+//        for(uint32 y=0;y<256;y++)
+//        {
+//            img[y*256+x].r = img[y*256+x].g = img[y*256+x].b =
+//                    NoiseGen::Perlin(CVec3(x,y,1),_cbasic_vec3<int32>(256));
+//            img[y*256+x].a = 255;
+//        }
+
+//    CStbImageLib::CStbImageConst img_c;
+//    img_c.size = CSize(256,256);
+//    img_c.data = (ubyte_t*)img;
+//    img_c.bpp = 4;
+
+//    CResources::CResource img_f("dump.png");
+
+//    CStbImageLib::SavePNG(&img_f,&img_c);
+//    CResources::FileCommit(img_f);
 
     return 0;
 }

@@ -191,22 +191,15 @@ public:
         //Set uniforms
         CGCamera camera;
         camera.aspect = 1.6f;
-        camera.fieldOfView = 60.f;
+        camera.fieldOfView = 27.f;
         camera.position = CVec3(0,0,-3);
-
-        CMat4 cam_matrix = GenPerspective(camera)
-                * GenTransform(camera);
-
-        camera.orthoview.w = 1280;
-        camera.orthoview.h = 720;
-        camera.orthoview.x = 0;
-        camera.orthoview.y = 0;
 
         CTransform quad_trans;
         quad_trans.position = CVec3(0,0,0);
-        quad_trans.scale = CVec3(1.6f,1.f,1.f);
 
-        CMat4 quad_matrix = GenTransform(quad_trans);
+        CMat4 cam_matrix;
+        CMat4 quad_matrix;
+        CMat4 final_transform;
 
         CNode root;
         root.transform = &cam_matrix;
@@ -214,12 +207,8 @@ public:
         quad.parent = &root;
         quad.transform = &quad_matrix;
 
-        CMat4 final_transform = coffee_node_get_transform(&quad);
-
         coffee_graphics_uniform_set_texhandle_safe(pipeline.frag,texuni,
                                                    texture.sampler().unit);
-        glProgramUniformMatrix4fv(pipeline.vert.handle,matrixuni.index,
-                                  1,GL_FALSE,(scalar*)&final_transform);
         //
 
         //Create a drawcall
@@ -251,6 +240,13 @@ public:
             timer->start();
             coffee_graphics_clear(CClearFlag::Color);
 
+            cam_matrix = GenPerspective(camera)*GenTransform(camera);
+            quad_trans.scale = CVec3(window_aspect,1.f,1.f);
+            quad_matrix = GenTransform(quad_trans);
+            final_transform = AccumulateTransform(&quad);
+
+            glProgramUniformMatrix4fv(pipeline.vert.handle,matrixuni.index,
+                                      1,GL_FALSE,(scalar*)&final_transform);
 
             //FFMPEG
             if(player.isDisplayTime())
@@ -317,6 +313,9 @@ public:
         }
     }
 
+    /* Runtime properties */
+    scalar window_aspect = 1.6f;
+
     void eventHandleI(const CIEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleI(e,data);
@@ -325,6 +324,15 @@ public:
             const CIKeyEvent* kev = (const CIKeyEvent*)data;
             if(kev->key == CK_Escape)
                 this->closeWindow();
+        }
+    }
+    void eventHandleD(const CDisplay::CDEvent& e, c_cptr data)
+    {
+        CSDL2Renderer::eventHandleD(e,data);
+        if(e.type==CDisplay::CDEvent::Resize)
+        {
+            auto rev = (const CDisplay::CDResizeEvent*)data;
+            coffee_graphics_set_viewport(*rev);
         }
     }
 };

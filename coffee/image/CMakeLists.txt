@@ -4,6 +4,7 @@ include_directories (
 
 set ( CoffeeImage_SRCS
         private/cimage.cpp
+        private/cnoise-gen.cpp
         )
 
 coffee_add_library ( CoffeeImage "${CoffeeImage_SRCS}" )

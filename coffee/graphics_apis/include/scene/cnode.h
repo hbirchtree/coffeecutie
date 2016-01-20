@@ -22,11 +22,11 @@ struct CNode
 };
 
 /*!
- * \brief Get complete translation of this node
+ * \brief Get complete translation of this node. It is up to the user to check that the hierarchy does not contain loops.
  * \param node
  * \return This node's complete matrix unless the pointer is NULL
  */
-extern CMat4 coffee_node_get_transform(const CNode *node);
+extern CMat4 AccumulateTransform(const CNode *node);
 
 }
 }

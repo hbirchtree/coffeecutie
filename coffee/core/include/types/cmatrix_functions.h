@@ -2,7 +2,7 @@
 #define COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
 
 #include <coffee_macros.h>
-#include <types/vector_types.h>
+#include <coffee/core/CTypes>
 
 namespace Coffee{
 namespace CGraphicsData{
@@ -11,16 +11,18 @@ template<typename T>
 inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
         _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
 {
-    _cbasic_tmatrix<T,4> mat(T(0));
+    _cbasic_tmatrix<T,4> mat;
 
     mat[0][0] = T(2)/(view.right()-view.left());
     mat[1][1] = T(2)/(view.top()-view.bottom());
-    mat[2][2] = T(2)/(zfield.far-zfield.near);
-    mat[3][3] = T(1);
+    mat[2][2] = -T(2)/(zfield.far-zfield.near);
 
-    mat[3][0] = (view.right()+view.left())/(view.left()-view.right());
-    mat[3][1] = (view.top()+view.bottom())/(view.bottom()-view.top());
-    mat[3][2] = (zfield.far+zfield.near)/(zfield.far-zfield.near);
+    mat[3][0] = -(view.right()+view.left())
+                /(view.right()-view.left());
+    mat[3][1] = -(view.top()+view.bottom())
+                /(view.top()-view.bottom());
+    mat[3][2] = -(zfield.far+zfield.near)
+                /(zfield.far-zfield.near);
 
     return mat;
 }

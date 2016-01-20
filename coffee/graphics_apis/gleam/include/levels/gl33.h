@@ -5,6 +5,7 @@
 
 namespace Coffee{
 namespace CGL{
+
 /*!
  * \brief OpenGL 3.3 compliance model
  */
@@ -150,21 +151,7 @@ struct CGL33 : CGL_Implementation
         return status==GL_TRUE;
     }
 
-    static void ProgramGetAttached(CGhnd p,uint32* n,CGhnd** h)
-    {
-        int32 num = 0;
-        ProgramGetiv(p,GL_ATTACHED_SHADERS,&num);
-        if(num<=0)
-        {
-            *n = 0;
-            return;
-        }
-        CGhnd* attached = new CGhnd[num];
-        glGetAttachedShaders(p,num,nullptr,attached);
-
-        *n = num;
-        *h = attached;
-    }
+    static void ProgramGetAttached(CGhnd p,uint32* n,CGhnd** h);
     static bool ProgramLink(CGhnd p)
     {
         glLinkProgram(p);
@@ -172,16 +159,7 @@ struct CGL33 : CGL_Implementation
         ProgramGetiv(p,GL_LINK_STATUS,&status);
         return status==GL_TRUE;
     }
-    static cstring_w ProgramGetLog(CGhnd h)
-    {
-        int32 len = 0;
-        ProgramGetiv(h,GL_INFO_LOG_LENGTH,&len);
-        if(len<=0)
-            return nullptr;
-        cstring_w s = new int8[len+1];
-        glGetProgramInfoLog(h,len,nullptr,s);
-        return s;
-    }
+    static cstring_w ProgramGetLog(CGhnd h);
     static void ProgramUse(CGhnd h)
     {
         glUseProgram(h);
@@ -199,111 +177,23 @@ struct CGL33 : CGL_Implementation
     }
 
     /* Attributes */
-    static void ProgramAttribGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
-    {
-        int32 num = 0;
-        ProgramGetiv(h,GL_ACTIVE_ATTRIBUTES,&num);
-        if(num<=0)
-        {
-            *n = 0;
-            return;
-        }
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,&namelen);
-
-        names[0] = new cstring_w[num];
-        type[0] = new CGenum[num];
-        size[0] = new int32[num];
-        for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
-        for(int32 i=0;i<num;i++)
-            glGetActiveAttrib(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
-    }
+    static void ProgramAttribGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size);
     static int32 ProgramAttribLoc(CGhnd h,cstring n){return glGetAttribLocation(h,n);}
     static void ProgramAttribBind(CGhnd h,uint32 i,cstring n){glBindAttribLocation(h,i,n);}
 
     /* Uniforms */
-    static void ProgramUnifGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
-    {
-        int32 num = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORMS,&num);
-        if(num<=0)
-        {
-            *n = 0;
-            return;
-        }
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
-
-        names[0] = new cstring_w[num];
-        type[0] = new CGenum[num];
-        size[0] = new int32[num];
-        for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
-        for(int32 i=0;i<num;i++)
-            glGetActiveUniform(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
-    }
+    static void ProgramUnifGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size);
     static int32 ProgramUnifGetLoc(CGhnd h,cstring n){return glGetUniformLocation(h,n);}
 
     /* Uniform blocks */
     /* Return name, binding, active uniform indices and size */
-    static void ProgramUnifBlockGet(CGhnd h,uint32* n,cstring_w** names,int32** indexSize,int32*** index,int32** size)
-    {
-        int32 num = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORM_BLOCKS,&num);
-        if(num<=0)
-        {
-            *n = 0;
-            return;
-        }
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
-
-        names[0] = new cstring_w[num];
-        indexSize[0] = new int32[num];
-        index[0] = new int32*[num];
-        size[0] = new int32[num];
-        for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
-	for(uint32 i=0;i<(uint32)num;i++)
-        {
-            glGetActiveUniformBlockName(h,i,namelen,nullptr,names[0][i]);
-            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_DATA_SIZE,&size[0][i]);
-            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,&indexSize[0][i]);
-            index[0][i] = new int32[indexSize[0][i]];
-            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,index[0][i]);
-        }
-    }
+    static void ProgramUnifBlockGet(CGhnd h,uint32* n,cstring_w** names,int32** indexSize,int32*** index,int32** size);
     static uint32 ProgramUnifBlockGetLoc(CGhnd h,cstring n){return glGetUniformBlockIndex(h,n);}
     static void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i){glUniformBlockBinding(h,l,i);}
 
     /* Subroutines */
     static void ProgramSubRtGet(CGhnd h,ShaderStage s,uint32* n,
-                                cstring_w** names,int32** rtSize,int32*** rt)
-    {
-        int32 num = 0;
-        ProgramGetiv(h,GL_ACTIVE_SUBROUTINE_UNIFORMS,&num);
-        if(num<=0)
-        {
-            *n = 0;
-            return;
-        }
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
-
-        names[0] = new cstring_w[num];
-        rtSize[0] = new int32[num];
-        rt[0] = new int32*[num];
-	for(uint32 i=0;i<(uint32)num;i++)
-        {
-            int32 namelen = 0;
-            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_UNIFORM_NAME_LENGTH,&namelen);
-            glGetActiveSubroutineUniformName(h,to_enum1(s),i,namelen,nullptr,names[0][i]);
-            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_NUM_COMPATIBLE_SUBROUTINES,&rtSize[0][i]);
-            rt[0][i] = new int32[rtSize[0][i]];
-            glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_COMPATIBLE_SUBROUTINES,rt[0][i]);
-        }
-    }
+                                cstring_w** names,int32** rtSize,int32*** rt);
     static uint32 ProgramSubRtGetLoc(CGhnd h,ShaderStage s,cstring n)
     {return glGetSubroutineIndex(h,to_enum1(s),n);}
     /* Binds all subroutine uniforms */
@@ -313,6 +203,11 @@ struct CGL33 : CGL_Implementation
     /* Textures */
     static void TexBind(Texture t,CGhnd h){glBindTexture(to_enum(t),h);}
     static void TexActive(uint32 i){glActiveTexture(GL_TEXTURE0+i);}
+
+    static void TexGetLevelParami(Texture t, uint32 l, CGenum p, int32* v)
+    {glGetTexLevelParameteriv(to_enum(t),l,p,v);}
+    static void TexGetLevelParamf(Texture t, uint32 l, CGenum p, scalar* v)
+    {glGetTexLevelParameterfv(to_enum(t),l,p,v);}
 
     static void TexImage2D(Texture t,uint32 level,PixelFormat ifmt,
                            uint32 w,uint32 h,int32 border,PixelComponents fmt,
@@ -437,14 +332,7 @@ struct CGL33 : CGL_Implementation
     static void RBufStorageMS(PixelFormat ifmt,uint32 samples,uint32 w,uint32 h)
     {glRenderbufferStorageMultisample(GL_RENDERBUFFER,samples,to_enum(ifmt),w,h);}
 
-    static bool FBValidate(FramebufferT t)
-    {
-        CGenum f = glCheckFramebufferStatus(to_enum(t));
-        if(f!=GL_FRAMEBUFFER_COMPLETE)
-            cLog(__FILE__,__LINE__,"GL33","Incomplete framebuffer",f);
-
-        return f==GL_FRAMEBUFFER_COMPLETE;
-    }
+    static bool FBValidate(FramebufferT t);
 
     /*TODO: Create FramebufAttProp enum*/
     static void FBGetAttachParameter(FramebufferT t,CGenum att,CGenum p,int32* d)
@@ -482,23 +370,7 @@ struct CGL33 : CGL_Implementation
 
     static void XFVaryings(CGhnd h,int32 n,cstring* names,AttribMode a)
     {glTransformFeedbackVaryings(h,n,names,to_enum(a));}
-    static void XFGetVaryings(CGhnd h,uint32* n,cstring_w** names,CGenum** type, int32** size)
-    {
-        int32 num = 0;
-        ProgramGetiv(h,GL_TRANSFORM_FEEDBACK_VARYINGS,&num);
-
-        type[0] = new CGenum[num];
-        size[0] = new int32[num];
-        names[0] = new cstring_w[num];
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH,&namelen);
-        for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
-
-        for(int32 i=0;i<num;i++)
-            glGetTransformFeedbackVarying(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
-        *n = num;
-    }
+    static void XFGetVaryings(CGhnd h,uint32* n,cstring_w** names,CGenum** type, int32** size);
 
     /* VAO */
     static void VAOBind(CGhnd h){glBindVertexArray(h);}
@@ -508,21 +380,11 @@ struct CGL33 : CGL_Implementation
     static void VAOAttribIPointer(uint32 i,int32 s,CGenum t,int64 stride,int64 offset){glVertexAttribIPointer(i,s,t,stride,(void*)offset);}
     static void VAODivisor(uint32 i,uint32 d){glVertexAttribDivisor(i,d);}
 
-    static void VAOPrimitiveRestart(uint32 idx)
-    {
-        glPrimitiveRestartIndex(idx);
-        Enable(Feature::PrimitiveRestart);
-    }
+    static void VAOPrimitiveRestart(uint32 idx);
 
     /* Sync */
     static CGsync FenceCreate(){return glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);}
-    static bool FenceAwait(CGsync s,uint64 t,CGenum *r = nullptr)
-    {
-        CGenum status = glClientWaitSync((GLsync)s,0,t);
-        if(r)
-            *r = status;
-        return status!=GL_TIMEOUT_EXPIRED;
-    }
+    static bool FenceAwait(CGsync s,uint64 t,CGenum *r = nullptr);
     static void FenceServerAwait(CGsync s){glWaitSync((GLsync)s,0,0);}
 
     //TODO: Create FenceProperty enum
@@ -585,6 +447,207 @@ struct CGL33 : CGL_Implementation
     static void DrawMultiElementsBaseVertex(CGenum p,const int32* c,TypeEnum t,const int64* off,int32 dc,const int32* bv)
     {glMultiDrawElementsBaseVertex(p,c,to_enum(t),(const void**)&off,dc,bv);}
 };
+
+struct CGLUtil
+{
+    /*!
+     * \brief Dump texture to file. Dirties texture binding.
+     * \param t
+     * \param h
+     * \param fn
+     */
+    static void DumpTexture(CGL_Implementation::Texture t, CGL_Implementation::CGhnd h,
+                            uint32 l, cstring fn)
+    {
+        CSize tsize;
+        CGL33::TexGetLevelParami(t,l,GL_TEXTURE_WIDTH,&tsize.w);
+        CGL33::TexGetLevelParami(t,l,GL_TEXTURE_HEIGHT,&tsize.h);
+
+        szptr data_size = tsize.area()*4;
+        ubyte_t* data = (ubyte_t*)Alloc(data_size);
+
+        CGL33::TexBind(t,h);
+        CGL33::TexGetImage(t,0,PixelComponents::RGBA,BitFormat::Byte_2,data);
+        CGL33::TexBind(t,0);
+
+        CResources::CResource rsc(fn);
+
+        CStbImageLib::CStbImageConst img;
+        img.bpp = 4;
+        img.data = data;
+        img.size = tsize;
+
+        CStbImageLib::SavePNG(&rsc,&img);
+
+        CResources::FileCommit(rsc);
+        CResources::FileFree(rsc);
+        CFree(data);
+    }
+};
+
+inline C_FORCE_INLINE void CGL33::ProgramGetAttached(CGL_Implementation::CGhnd p, uint32 *n, CGL_Implementation::CGhnd **h)
+{
+    int32 num = 0;
+    ProgramGetiv(p,GL_ATTACHED_SHADERS,&num);
+    if(num<=0)
+    {
+        *n = 0;
+        return;
+    }
+    CGhnd* attached = new CGhnd[num];
+    glGetAttachedShaders(p,num,nullptr,attached);
+
+    *n = num;
+    *h = attached;
+}
+
+inline C_FORCE_INLINE cstring_w CGL33::ProgramGetLog(CGL_Implementation::CGhnd h)
+{
+    int32 len = 0;
+    ProgramGetiv(h,GL_INFO_LOG_LENGTH,&len);
+    if(len<=0)
+        return nullptr;
+    cstring_w s = new int8[len+1];
+    glGetProgramInfoLog(h,len,nullptr,s);
+    return s;
+}
+
+inline C_FORCE_INLINE void CGL33::ProgramAttribGet(CGL_Implementation::CGhnd h, uint32 *n, cstring_w **names, CGL_Implementation::CGenum **type, int32 **size)
+{
+    int32 num = 0;
+    ProgramGetiv(h,GL_ACTIVE_ATTRIBUTES,&num);
+    if(num<=0)
+    {
+        *n = 0;
+        return;
+    }
+    int32 namelen = 0;
+    ProgramGetiv(h,GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,&namelen);
+
+    names[0] = new cstring_w[num];
+    type[0] = new CGenum[num];
+    size[0] = new int32[num];
+    for(int32 i=0;i<num;i++)
+        names[0][i] = new int8[namelen];
+    for(int32 i=0;i<num;i++)
+        glGetActiveAttrib(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
+}
+
+inline C_FORCE_INLINE void CGL33::ProgramUnifGet(CGL_Implementation::CGhnd h, uint32 *n, cstring_w **names, CGL_Implementation::CGenum **type, int32 **size)
+{
+    int32 num = 0;
+    ProgramGetiv(h,GL_ACTIVE_UNIFORMS,&num);
+    if(num<=0)
+    {
+        *n = 0;
+        return;
+    }
+    int32 namelen = 0;
+    ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
+
+    names[0] = new cstring_w[num];
+    type[0] = new CGenum[num];
+    size[0] = new int32[num];
+    for(int32 i=0;i<num;i++)
+        names[0][i] = new int8[namelen];
+    for(int32 i=0;i<num;i++)
+        glGetActiveUniform(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
+}
+
+inline C_FORCE_INLINE void CGL33::ProgramUnifBlockGet(CGL_Implementation::CGhnd h, uint32 *n, cstring_w **names, int32 **indexSize, int32 ***index, int32 **size)
+{
+    int32 num = 0;
+    ProgramGetiv(h,GL_ACTIVE_UNIFORM_BLOCKS,&num);
+    if(num<=0)
+    {
+        *n = 0;
+        return;
+    }
+    int32 namelen = 0;
+    ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
+
+    names[0] = new cstring_w[num];
+    indexSize[0] = new int32[num];
+    index[0] = new int32*[num];
+    size[0] = new int32[num];
+    for(int32 i=0;i<num;i++)
+        names[0][i] = new int8[namelen];
+    for(uint32 i=0;i<(uint32)num;i++)
+    {
+        glGetActiveUniformBlockName(h,i,namelen,nullptr,names[0][i]);
+        glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_DATA_SIZE,&size[0][i]);
+        glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,&indexSize[0][i]);
+        index[0][i] = new int32[indexSize[0][i]];
+        glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,index[0][i]);
+    }
+}
+
+inline C_FORCE_INLINE void CGL33::ProgramSubRtGet(CGL_Implementation::CGhnd h, CGL_Implementation::ShaderStage s, uint32 *n, cstring_w **names, int32 **rtSize, int32 ***rt)
+{
+    int32 num = 0;
+    ProgramGetiv(h,GL_ACTIVE_SUBROUTINE_UNIFORMS,&num);
+    if(num<=0)
+    {
+        *n = 0;
+        return;
+    }
+    int32 namelen = 0;
+    ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
+
+    names[0] = new cstring_w[num];
+    rtSize[0] = new int32[num];
+    rt[0] = new int32*[num];
+    for(uint32 i=0;i<(uint32)num;i++)
+    {
+        int32 namelen = 0;
+        glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_UNIFORM_NAME_LENGTH,&namelen);
+        glGetActiveSubroutineUniformName(h,to_enum1(s),i,namelen,nullptr,names[0][i]);
+        glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_NUM_COMPATIBLE_SUBROUTINES,&rtSize[0][i]);
+        rt[0][i] = new int32[rtSize[0][i]];
+        glGetActiveSubroutineUniformiv(h,to_enum1(s),i,GL_COMPATIBLE_SUBROUTINES,rt[0][i]);
+    }
+}
+
+inline C_FORCE_INLINE bool CGL33::FBValidate(CGL_Implementation::FramebufferT t)
+{
+    CGenum f = glCheckFramebufferStatus(to_enum(t));
+    if(f!=GL_FRAMEBUFFER_COMPLETE)
+        cLog(__FILE__,__LINE__,"GL33","Incomplete framebuffer",f);
+
+    return f==GL_FRAMEBUFFER_COMPLETE;
+}
+
+inline C_FORCE_INLINE void CGL33::XFGetVaryings(CGL_Implementation::CGhnd h, uint32 *n, cstring_w **names, CGL_Implementation::CGenum **type, int32 **size)
+{
+    int32 num = 0;
+    ProgramGetiv(h,GL_TRANSFORM_FEEDBACK_VARYINGS,&num);
+
+    type[0] = new CGenum[num];
+    size[0] = new int32[num];
+    names[0] = new cstring_w[num];
+    int32 namelen = 0;
+    ProgramGetiv(h,GL_TRANSFORM_FEEDBACK_VARYING_MAX_LENGTH,&namelen);
+    for(int32 i=0;i<num;i++)
+        names[0][i] = new int8[namelen];
+
+    for(int32 i=0;i<num;i++)
+        glGetTransformFeedbackVarying(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
+    *n = num;
+}
+
+inline C_FORCE_INLINE void CGL33::VAOPrimitiveRestart(uint32 idx)
+{
+    glPrimitiveRestartIndex(idx);
+    Enable(Feature::PrimitiveRestart);
+}
+
+inline C_FORCE_INLINE bool CGL33::FenceAwait(CGL_Implementation::CGsync s, uint64 t, CGL_Implementation::CGenum *r)
+{
+    CGenum status = glClientWaitSync((GLsync)s,0,t);
+    if(r)
+        *r = status;
+    return status!=GL_TIMEOUT_EXPIRED;
+}
 
 }
 }

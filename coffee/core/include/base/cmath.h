@@ -63,6 +63,11 @@ template<typename T> T radians(const T& degrees)
     return degrees*CMath::pi/T(180);
 }
 
+template<typename T> T mix(T a, T b, T f)
+{
+    return a*(T(1)-f)+b*f;
+}
+
 }
 }
 

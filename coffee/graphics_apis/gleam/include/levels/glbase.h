@@ -6,6 +6,7 @@
 #include <base/cdebug.h>
 #include <base/cdisplay.h>
 #include <coffee/core/CTypes>
+#include <coffee/CImage>
 
 #include <glad/glad.h>
 #include <KHR/khrplatform.h>

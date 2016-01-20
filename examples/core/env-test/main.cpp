@@ -85,7 +85,7 @@ int32 coffee_main(int32, byte_t**)
         cDebug("Perlin values: ");
         for(scalar x=0;x<8;x+=0.1)
         {
-            cBasicPrintNoNL("{0} ",NoiseGen::Perlin(CVec3(x,0,0)));
+            cBasicPrintNoNL("{0} ",NoiseGen::Perlin<scalar,int32,3>(CVec3(x,0,0)));
         }
         cBasicPrint("");
     }

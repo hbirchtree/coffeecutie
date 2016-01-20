@@ -10,7 +10,7 @@ namespace CAudio{
 
 struct OpenAL
 {
-    struct ALContext;
+    struct ALcontext;
     struct ALdev;
     struct ALhnd;
     struct ALcapdevice;
@@ -72,7 +72,9 @@ struct OpenAL
     {
 	DevSpecifier,
 	CaptureDevSpecifier,
+
 	DefaultDev,
+        DefaultCapDev,
 
 	Version,
 	Renderer,
@@ -97,58 +99,83 @@ struct OpenAL
 
     };
 
-    static ALContext* CreateContext();
-    static void DeleteContext(ALContext* ctxt);
-    static void ContextCurrent(ALContext* ctxt);
+    static ALcontext* CreateContext();
+    static void DeleteContext(ALcontext* ctxt);
+    static void ContextCurrent(ALcontext* ctxt);
 
-    static void Enable();
-    static void Disable();
+    static void ContextSuspend(ALcontext* ctxt);
+    static void ContextProcess(ALcontext* ctxt);
+
+    static ALdev* DeviceGet(cstring id);
+    static ALdev* CaptureDeviceGet(cstring id, SampleFormat f);
+
+    static void DeviceClose(ALdev* d);
+    static void CaptureDeviceClose(ALdev* d);
+
+    static void Enable(Feature f);
+    static void Disable(Feature f);
 
     static void ContextSetAttenuation(Attenuation m);
 
-    static void ContextGeti();
-    static void ContextGetf();
+    static void ContextGeti(ContextProperty p, int32* v);
+    static void ContextGetf(ContextProperty p, scalar* v);
+    static void ContextSeti(ContextProperty p, const int32* v);
+    static void ContextSetf(ContextProperty p, const scalar* v);
 
     static ALbuffer* BufAlloc();
     static void BufFree(ALbuffer* b);
-    static void BufData();
-    static ALbuffer* BufCreate();
+    static void BufData(ALbuffer* b, SampleFormat f, const CByteData& d);
+    static ALbuffer* BufCreate(SampleFormat f, const CByteData& d);
 
     static ALsource* SrcAlloc();
     static void SrcFree(ALsource* s);
 
     static void SrcState(ALsource** s,PlaybackState m);
 
-    static void SrcSetBuffer(ALsource& s, const ALbuffer& b);
-    static void SrcQueueBuffers(ALsource& s, uint32 n, const ALbuffer** b);
-    static void SrcDequeueBuffers(ALsource& s, uint32 n, const ALbuffer** b);
+    static void SrcSetBuffer(ALsource* s, const ALbuffer& b);
+    static void SrcQueueBuffers(ALsource* s, uint32 n, const ALbuffer** b);
+    static void SrcDequeueBuffers(ALsource* s, uint32 n, const ALbuffer** b);
 
-    static void SrcGeti();
-    static void SrcGetf();
+    static void SrcGeti(ALsource* s, SourceProperty p, int32* v);
+    static void SrcGetf(ALsource* s, SourceProperty p, scalar* v);
+    static void SrcSeti(ALsource* s, SourceProperty p, const int32* v);
+    static void SrcSetf(ALsource* s, SourceProperty p, const scalar* v);
 
-    static void ListenerGeti();
-    static void ListenerGetf();
-    static void ListenerSeti();
-    static void ListenerSetf();
+    static void ListenerGeti(ListenerProperty p, int32* v);
+    static void ListenerGetf(ListenerProperty p, scalar* v);
+    static void ListenerSeti(ListenerProperty p, const int32* v);
+    static void ListenerSetf(ListenerProperty p, const scalar* v);
+
+    static void CaptureState(ALdev* d, bool start = true);
+    static void CaptureCollect(ALdev* d, CByteData& target);
 
     struct Debug
     {
-        static void CheckExtension(ALContext* ctxt, cstring ext);
+        static void CheckExtension(ALcontext* ctxt, cstring ext);
 
-        static void SetDebugCallback(ALContext* ctxt, ALCallback c);
-        static void ProcessError(ALContext* ctxt);
+        static void SetDebugCallback(ALcontext* ctxt, ALCallback c);
+        static void ProcessError(ALcontext* ctxt);
+        static void ProcessContextError(ALcontext* ctxt);
 
-        static ALVersion ContextVersion(ALContext* ctxt);
+        static ALVersion ContextVersion(ALcontext* ctxt);
 
-	static bool IsEnabled();
-	static bool IsBuffer();
-	static bool IsSource();
+        static bool IsEnabled(Feature f);
+        static bool IsBuffer(ALbuffer* b);
+        static bool IsSource(ALsource* s);
 
 	static void GetBool(ALdev* d, ContextProperty p, bool* v);
 	static void GetInt(ALdev* d, ContextProperty p, int32* v);
 	static void GetScalar(ALdev* d, ContextProperty p, scalar* v);
 	static void GetBigScalar(ALdev* d, ContextProperty p, bigscalar* v);
 	static cstring GetString(ALdev* d, ContextProperty p);
+
+        static cstring* GetDevices(ALcontext* d);
+        static cstring* GetCaptureDevices(ALcontext* d);
+    };
+
+    struct EAX
+    {
+        /* ??? */
     };
 };
 

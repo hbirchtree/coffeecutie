@@ -1,4 +1,4 @@
-#include "openal/copenal.h"
+#include <openal/copenal.h>
 
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -204,11 +204,6 @@ void context_get_error(const CALContext *context)
 bool context_check_extension(const CALContext *context, cstring extension)
 {
     return alcIsExtensionPresent(context->device,extension)==ALC_TRUE;
-}
-
-uint32 context_max_sources(CALContext *context)
-{
-    context_make_current(context);
 }
 
 CALVersion context_version(CALContext* ctxt)
@@ -543,7 +538,7 @@ void capture_stop(CALCaptureDevice *dev)
 }
 
 void capture_grab_samples(CALCaptureDevice *dev,
-                                       AudioSample &sample)
+                          AudioSample &sample)
 {
     alcCaptureSamples(dev->capdevice,sample.data,sample.samples);
 }

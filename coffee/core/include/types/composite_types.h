@@ -241,13 +241,13 @@ template<typename T> struct _cbasic_rect
     {
         return x+w;
     }
-    T bottom() const
-    {
-        return y;
-    }
     T top() const
     {
         return y+h;
+    }
+    T bottom() const
+    {
+        return y;
     }
 
     T area() const
