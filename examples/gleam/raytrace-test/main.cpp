@@ -47,12 +47,27 @@ public:
         GL::VAOBind(vao);
 
         /* Shader specification */
-        cstring cshader = {
+        static cstring cshader = {
             "#version 430 core\n"
+            ""
+            "const int tree_size = 16;"
             ""
             "layout(local_size_x=16,local_size_y=16) in;\n"
             ""
             "uniform writeonly image2D fbTarget;\n"
+            ""
+            "layout(std430,binding=0) buffer IndexContainerL1\n"
+            "{\n"
+            "    uint idx[];\n"
+            "} indices_l1;\n"
+            "layout(std430,binding=1) buffer IndexContainerL2\n"
+            "{\n"
+            "    uint idx[];\n"
+            "} indices_l2;\n"
+            "layout(std430,binding=2) buffer ArrayContainer\n"
+            "{\n"
+            "    float val[];\n"
+            "} array_l0;\n"
             ""
             "uniform vec3 cPos;\n"
             "uniform vec3 rayBL; /*0,0*/\n"
@@ -60,18 +75,37 @@ public:
             "uniform vec3 rayBR; /*1,0*/\n"
             "uniform vec3 rayTR; /*1,1*/\n"
             ""
+            "float lookup(in ivec3 p)"
+            "{"
+            "   int idx0_ = p.z*tree_size*tree_size + p.y*tree_size + p.x;"
+            "   int idx1_ = int(indices_l1.idx[idx0_])-1;"
+            "   int idx2_ = int(indices_l2.idx[idx0_+idx1_])-1;"
+            "   return array_l0.val[idx0_+idx1_+idx2_];"
+            "}"
+            ""
             "void main(void){\n"
             "   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);\n"
-            "   vec4 color = vec4(1.0);"
-            "   if(pix.x%10==0)"
-            "   {"
-            "       color.g = 0.0;"
-            "       color.b = 0.5;"
-            "   }else{"
-            "       color.r = 0.0;"
-            "   }"
+            "   int index = indices_l1.idx[pix.x];\n"
+            "   vec4 color = vec4(vec3(lookup(ivec3(pix,0))),1.0);\n"
             "   imageStore(fbTarget,pix,color);\n"
             "}\n"
+        };
+
+        static uint32 indices_data_l1[4096] = {
+            0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
+        };
+
+        static uint32 indices_data_l2[4096] = {
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+        };
+
+        static uint32* indices_pointers[] = {
+            indices_data_l1,
+            indices_data_l2,
+        };
+
+        static scalar array_data_l0[] = {
+            1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,
         };
 
         GL::CGhnd cprogram = GL::ProgramCreate(GL::ShaderStage::Compute,
@@ -81,6 +115,22 @@ public:
 
         if(!GL::ProgramValidate(cprogram))
             return;
+
+        uint32 num_levels = 2;
+        GL::CGhnd indices_levels[num_levels];
+        GL::BufAlloc(num_levels,indices_levels);
+        for(uint32 i=0;i<num_levels;i++)
+        {
+            GL::BufBind(GL::BufType::ShaderData,indices_levels[i]);
+            GL::BufData(GL::BufType::ShaderData,4096*4,indices_pointers[i],ResourceAccess::ReadOnly);
+            GL::BufBindRange(GL::BufType::ShaderData,i,indices_levels[i],0,4096*4);
+        }
+
+        GL::CGhnd array_data;
+        GL::BufAlloc(1,&array_data);
+        GL::BufBind(GL::BufType::ShaderData,array_data);
+        GL::BufData(GL::BufType::ShaderData,sizeof(array_data_l0),array_data_l0,ResourceAccess::ReadOnly);
+        GL::BufBindRange(GL::BufType::ShaderData,num_levels,array_data,0,sizeof(array_data_l0));
 
         GL::CGhnd pipeline;
         GL::PipelineAlloc(1,&pipeline);
@@ -187,6 +237,7 @@ int32 coffee_main(int32, byte_t**)
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 4;
+    props.gl.version.minor = 3;
 
     renderer->init(props);
     cDebug("Init renderer: {0}",timer->elapsed());

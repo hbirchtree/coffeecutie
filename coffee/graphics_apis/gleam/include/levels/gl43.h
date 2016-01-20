@@ -312,8 +312,8 @@ struct CGL43 : CGL33
     static void VAODivisor(){}
 
     /* Buffers */
-    static void BufStorage(BufType t,int64 o,c_cptr d,ResourceAccess a)
-    {glBufferStorage(to_enum(t),o,d,to_enum2(a));}
+    static void BufStorage(BufType t,int64 s,c_cptr d,ResourceAccess a)
+    {glBufferStorage(to_enum(t),s,d,to_enum2(a));}
 
     /* Framebuffer */
     static void FBInvalidate(CGenum,size_t,const CGenum*){}

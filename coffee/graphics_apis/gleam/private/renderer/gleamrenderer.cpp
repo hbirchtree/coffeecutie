@@ -112,12 +112,12 @@ void CGLeamRenderer::bindingPostInit()
 
     bool status = false;
 
-    if(m_properties.gl.version==v33)
-        status = CGL::CGL33::LoadBinding(this->glContext());
-    if(m_properties.gl.version==v43)
-        status = CGL::CGL43::LoadBinding(this->glContext());
-    if(m_properties.gl.version==v45)
+    if(m_properties.gl.version>=v45)
         status = CGL::CGL45::LoadBinding(this->glContext());
+    if(m_properties.gl.version>=v43)
+        status = CGL::CGL43::LoadBinding(this->glContext());
+    if(m_properties.gl.version>=v33)
+        status = CGL::CGL33::LoadBinding(this->glContext());
 
     if(!status)
     {

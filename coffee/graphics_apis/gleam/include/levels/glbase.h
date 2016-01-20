@@ -14,6 +14,16 @@
 namespace Coffee{
 namespace CGL{
 
+struct CGLXML
+{
+    static void LoadData(cstring fn);
+
+    static void FindExtension(cstring begin);
+
+    static void GetFunctionCoreVersion(cstring fun);
+    static void GetFunctionExtension(cstring fun);
+};
+
 struct CGL_Implementation
 {
     /* Type definitions */
