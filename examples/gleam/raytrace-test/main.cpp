@@ -35,9 +35,9 @@ public:
 
         CRect blit_source;
         blit_source.w = 1024;
-        blit_source.h = 720;
+        blit_source.h = 1024;
         CRect blit_target;
-        blit_target.w = 1024;
+        blit_target.w = 720;
         blit_target.h = 720;
 
         /* Creating a VAO just in case */
@@ -49,13 +49,13 @@ public:
         /* Shader specification */
         static cstring cshader = {
             "#version 430 core\n"
-            ""
-            "const int tree_size = 16;"
-            ""
+            "\n"
+            "const int tree_size = 16;\n"
+            "\n"
             "layout(local_size_x=16,local_size_y=16) in;\n"
-            ""
+            "\n"
             "uniform writeonly image2D fbTarget;\n"
-            ""
+            "\n"
             "layout(std430,binding=0) buffer IndexContainerL1\n"
             "{\n"
             "    uint idx[];\n"
@@ -68,24 +68,27 @@ public:
             "{\n"
             "    float val[];\n"
             "} array_l0;\n"
-            ""
+            "\n"
             "uniform vec3 cPos;\n"
             "uniform vec3 rayBL; /*0,0*/\n"
             "uniform vec3 rayTL; /*0,1*/\n"
             "uniform vec3 rayBR; /*1,0*/\n"
             "uniform vec3 rayTR; /*1,1*/\n"
-            ""
-            "float lookup(in ivec3 p)"
+            "\n"
+            "float lookup(in ivec3 p)\n"
             "{"
-            "   int idx0_ = p.z*tree_size*tree_size + p.y*tree_size + p.x;"
-            "   int idx1_ = int(indices_l1.idx[idx0_])-1;"
-            "   int idx2_ = int(indices_l2.idx[idx0_+idx1_])-1;"
-            "   return array_l0.val[idx0_+idx1_+idx2_];"
-            "}"
-            ""
+            "   int idx0_ = p.z*tree_size*tree_size + p.y*tree_size + p.x;\n"
+            "   int idx1_ = int(indices_l1.idx[idx0_])-1;\n"
+            "   if(idx1_==-1)\n"
+            "       return 0.0;\n"
+            "   int idx2_ = int(indices_l2.idx[idx0_+idx1_])-1;\n"
+            "   if(idx2_==-1)\n"
+            "       return 0.0;\n"
+            "   return array_l0.val[idx0_+idx1_+idx2_];\n"
+            "}\n"
+            "\n"
             "void main(void){\n"
             "   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);\n"
-            "   int index = indices_l1.idx[pix.x];\n"
             "   vec4 color = vec4(vec3(lookup(ivec3(pix,0))),1.0);\n"
             "   imageStore(fbTarget,pix,color);\n"
             "}\n"
@@ -96,7 +99,7 @@ public:
         };
 
         static uint32 indices_data_l2[4096] = {
-            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+            1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         };
 
         static uint32* indices_pointers[] = {
@@ -115,6 +118,8 @@ public:
 
         if(!GL::ProgramValidate(cprogram))
             return;
+
+        GL::ProgramUse(cprogram);
 
         uint32 num_levels = 2;
         GL::CGhnd indices_levels[num_levels];
