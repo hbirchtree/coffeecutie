@@ -49,7 +49,7 @@ template<typename ReturnType,
  * \return A future object for return value
  */
 inline C_FORCE_INLINE std::future<ReturnType> RunAsync(
-        std::function<ReturnType()> function, Args... a)
+	std::function<ReturnType(Args...)> function, Args... a)
 {
     return std::async(std::launch::async,function,a...);
 }

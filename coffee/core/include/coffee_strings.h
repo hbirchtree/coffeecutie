@@ -43,6 +43,9 @@ const constexpr cstring Graphics_VR_Library_CompositeError =
 const constexpr cstring Media_FF_Name = "CFFMedia";
 const constexpr cstring Media_FF_SWR_InitError = "Failed to initialize software resampler: {0}";
 
+const constexpr cstring ASIO_Library_Name = "CASIO";
+const constexpr cstring ASIO_Library_MakeCurrent_Error = "Failed to set thread context: Existing context in place";
+
 }
 
 #endif
