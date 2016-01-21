@@ -28,7 +28,7 @@ public:
         CGraphicsData::CGCamera cam;
         cam.aspect = 1.6;
         cam.fieldOfView = 70.f;
-        cam.position = CVec3(0,0,-3);
+        cam.position = CVec3(0.5,0.5,-10);
 
         CVec4 clearCol;
         clearCol.a() = 1.0;
@@ -46,53 +46,11 @@ public:
 
         GL::VAOBind(vao);
 
+        CResources::CResource shader_file("cshader.glsl");
+        CResources::FilePull(shader_file,true);
+
         /* Shader specification */
-        static cstring cshader = {
-            "#version 430 core\n"
-            "\n"
-            "const int tree_size = 16;\n"
-            "\n"
-            "layout(local_size_x=16,local_size_y=16) in;\n"
-            "\n"
-            "uniform writeonly image2D fbTarget;\n"
-            "\n"
-            "layout(std430,binding=0) buffer IndexContainerL1\n"
-            "{\n"
-            "    uint idx[];\n"
-            "} indices_l1;\n"
-            "layout(std430,binding=1) buffer IndexContainerL2\n"
-            "{\n"
-            "    uint idx[];\n"
-            "} indices_l2;\n"
-            "layout(std430,binding=2) buffer ArrayContainer\n"
-            "{\n"
-            "    float val[];\n"
-            "} array_l0;\n"
-            "\n"
-            "uniform vec3 cPos;\n"
-            "uniform vec3 rayBL; /*0,0*/\n"
-            "uniform vec3 rayTL; /*0,1*/\n"
-            "uniform vec3 rayBR; /*1,0*/\n"
-            "uniform vec3 rayTR; /*1,1*/\n"
-            "\n"
-            "float lookup(in ivec3 p)\n"
-            "{"
-            "   int idx0_ = p.z*tree_size*tree_size + p.y*tree_size + p.x;\n"
-            "   int idx1_ = int(indices_l1.idx[idx0_])-1;\n"
-            "   if(idx1_==-1)\n"
-            "       return 0.0;\n"
-            "   int idx2_ = int(indices_l2.idx[idx0_+idx1_])-1;\n"
-            "   if(idx2_==-1)\n"
-            "       return 0.0;\n"
-            "   return array_l0.val[idx0_+idx1_+idx2_];\n"
-            "}\n"
-            "\n"
-            "void main(void){\n"
-            "   ivec2 pix = ivec2(gl_GlobalInvocationID.xy);\n"
-            "   vec4 color = vec4(vec3(lookup(ivec3(pix,0))),1.0);\n"
-            "   imageStore(fbTarget,pix,color);\n"
-            "}\n"
-        };
+
 
         static uint32 indices_data_l1[4096] = {
             0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20
@@ -112,7 +70,7 @@ public:
         };
 
         GL::CGhnd cprogram = GL::ProgramCreate(GL::ShaderStage::Compute,
-                                               1,&cshader);
+                                               1,(cstring*)&shader_file.data);
 
         cDebug("Program log: {0}",GL::ProgramGetLog(cprogram));
 
@@ -151,12 +109,29 @@ public:
 
         /* Create our image target */
         GL::CGhnd tex;
+        GL::CGhnd treedata;
         uint32 imageUnit = 0;
         GL::CGhnd fb;
 
         GL::TexAlloc(1,&tex);
+        GL::TexAlloc(1,&treedata);
         GL::TexBind(GL::Texture::T2D,tex);
         GL::TexStorage2D(GL::Texture::T2D,1,PixelFormat::RGBA32F,1024,1024);
+        GL::TexBind(GL::Texture::T3D,treedata);
+
+        int32* data = (int32*)Alloc(CMath::pow<int32>(512,3)*4);
+
+//        for(szptr i=0;i<512;i++)
+//            for(szptr j=0;j<512;j++)
+//                for(szptr k=0;k<512;k++)
+//                    data[i+j*512+512*512*k] = (i-256)*(i-256)+(j-256)*(j-256)+(k-256)*(k-256) < 200*200;
+
+//        GL::TexImage3D(GL::Texture::T3D,1,PixelFormat::R32I,512,512,512,
+//                       0,PixelComponents::R,BitFormat::Int_8,data);
+
+//        glTexImage3D(GL_TEXTURE_3D,1,GL_R32I,512,512,512,0,GL_RED,GL_FLOAT,data);
+
+        CFree(data);
 
         /* Create dummy framebuffer to blit from */
         GL::FBAlloc(1,&fb);
@@ -177,6 +152,12 @@ public:
         /* Set up uniforms */
         GL::ImageBindTexture(imageUnit,tex,0,false,0,ResourceAccess::WriteOnly,
                              PixelFormat::RGBA32F);
+
+        int32 unifTreeLoc = GL::ProgramUnifGetLoc(cprogram,"treeSource");
+
+        int32 unifcamPos = GL::ProgramUnifGetLoc(cprogram,"cPos");
+        GL::Uniformfv(cprogram,unifcamPos,1,&cam.position);
+
         /**/
 
         cDebug("Setup time: {0}",timer->elapsed());
@@ -235,6 +216,8 @@ public:
 
 int32 coffee_main(int32, byte_t**)
 {
+    CResources::FileResourcePrefix("sample_data/");
+
     CElapsedTimerD* timer = AllocTimerD();
     timer->start();
     CSDL2Renderer *renderer = new CDRenderer();
