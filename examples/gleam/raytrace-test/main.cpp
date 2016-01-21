@@ -108,7 +108,7 @@ public:
         };
 
         static scalar array_data_l0[] = {
-            1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,
+            1.f,
         };
 
         GL::CGhnd cprogram = GL::ProgramCreate(GL::ShaderStage::Compute,
