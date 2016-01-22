@@ -18,6 +18,9 @@ int32 coffee_main(int32, byte_t**)
 
     JSON::Document doc = JSON::Read(t.payload.c_str());
 
+    if(doc.IsNull())
+        return 1;
+
     cDebug("{0} chatters",doc["chatter_count"].GetInt());
     for(int32 i=0;i<doc["chatters"]["moderators"].Capacity();i++)
     {
