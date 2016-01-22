@@ -99,13 +99,13 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
 
     CResources::FilePull(glxml);
 
-    const CDataStorage::CTextStorage::XMLDocument* doc =
-            CDataStorage::CTextStorage::coffee_xml_read(glxml);
+    const XML::Document* doc =
+            XML::XMLRead(glxml);
 
-    const CDataStorage::CTextStorage::XMLElement* feature =
+    const XML::Element* feature =
             doc->RootElement()->FirstChildElement("feature");
 
-    const CDataStorage::CTextStorage::XMLElement* extension =
+    const XML::Element* extension =
             doc->RootElement()
             ->FirstChildElement("extensions")
             ->FirstChildElement("extension");

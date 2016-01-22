@@ -7,18 +7,31 @@
 namespace Coffee{
 namespace CDataStorage{
 namespace CTextStorage{
+namespace XML{
 
 using namespace tinyxml2;
 
-const XMLDocument* coffee_xml_read(const CResources::CResource& source)
+struct TinyXML2
 {
-    XMLDocument* doc = new XMLDocument;
-    doc->Parse((cstring)source.data,source.size);
-    return doc;
-}
+    using Document = XMLDocument;
+    using Element = XMLElement;
+
+    inline C_FORCE_INLINE static const XMLDocument* XMLRead(
+	    const CResources::CResource& source)
+    {
+	XMLDocument* doc = new XMLDocument;
+	doc->Parse((cstring)source.data,source.size);
+	return doc;
+    }
+
+};
 
 }
 }
+}
+
+using XML = CDataStorage::CTextStorage::XML::TinyXML2;
+
 }
 
 #endif

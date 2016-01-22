@@ -135,9 +135,9 @@ struct RestClientImpl{
 
         std::ostringstream ss;
 	if(res.size()>0)
-        {
-            ss << &res;
-            resp.payload.append(ss.str());
+	{
+	    ss << &res;
+	    resp.payload.append(ss.str());
         }
 
         try{
