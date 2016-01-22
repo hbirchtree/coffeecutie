@@ -12,7 +12,7 @@ int32 coffee_main(int32, byte_t**)
                                     "/group/user/esl/chatters");
 
     cDebug("Status: {0}",t.status);
-    fprintf(stderr,"Header: \n%s\n",t.header.c_str());
+    cDebug("Header: {0}",t.header);
     cDebug("Message: {0}",t.message);
     cDebug("Payload: {0}",t.payload);
 
