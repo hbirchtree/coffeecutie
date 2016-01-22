@@ -84,7 +84,7 @@ struct RestClientImpl{
 	case HTTPS:
 	    protocol = "https";
 	    break;
-	}
+        }
 
 	asio::ip::tcp::resolver::query q(h,protocol);
 
@@ -129,19 +129,22 @@ struct RestClientImpl{
 
 	std::string header;
 	while(std::getline(res_s,header)&&header!="\r")
-	    resp.header.append(header);
+        {
+            cDebug("Header: {0}",header);
+        }
 
+        std::ostringstream ss;
 	if(res.size()>0)
-	{
-	    res_s >> resp.payload;
-	}
+        {
+            ss << &res;
+            resp.payload.append(ss.str());
+        }
 
-	try{
-	    std::string ct;
-	    while(std::read(s,res,asio::transfer_at_least(1)))
+        try{
+            while(asio::read(s,res,asio::transfer_at_least(1)))
 	    {
-		res_s >> ct;
-		resp.payload.append(ct);
+                ss << &res;
+                resp.payload.append(ss.str());
 	    }
 	}
 	catch(std::system_error)
@@ -158,6 +161,9 @@ private:
 thread_local RestClientImpl::RestContext* RestClientImpl::t_context = nullptr;
 
 }
+
+using RestClient = CASIO::RestClientImpl;
+
 }
 
 #endif
