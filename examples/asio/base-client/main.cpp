@@ -14,7 +14,18 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("Status: {0}",t.status);
     cDebug("Header: {0}",t.header);
     cDebug("Message: {0}",t.message);
-    cDebug("Payload: {0}",t.payload);
+    cDebug("Payload: \n{0}",t.payload);
+
+    JSON::Document doc = JSON::Read(t.payload.c_str());
+
+    if(doc.IsNull())
+        return 1;
+
+    cDebug("{0} chatters",doc["chatter_count"].GetInt());
+    for(int32 i=0;i<doc["chatters"]["moderators"].Capacity();i++)
+    {
+        cBasicPrint("{0}",doc["chatters"]["moderators"][i].GetString());
+    }
 
     return 0;
 }
