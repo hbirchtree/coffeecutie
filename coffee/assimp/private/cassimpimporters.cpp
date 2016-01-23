@@ -103,7 +103,7 @@ byte_t *coffee_assimp_get_reflexive_ptr(void *baseptr, const assimp_reflexive *r
 
 cstring assimp_reflexive_string_get(const void* basePtr, const assimp_reflexive &ref)
 {
-    const byte_t* b_ptr = (const byte_t*)basePtr;
+    cstring b_ptr = (cstring)basePtr;
     return &b_ptr[ref.offset];
 }
 

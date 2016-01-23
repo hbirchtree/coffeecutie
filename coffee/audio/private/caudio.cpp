@@ -11,7 +11,7 @@ namespace CStbAudio{
 void vorbis_load(CAudio::AudioSample *smp, CResources::CResource *src)
 {
     smp->samples = stb_vorbis_decode_memory(
-                (ubyte_t*)src->data,src->size,
+                (byte_t*)src->data,src->size,
                 &smp->fmt.channels,&smp->fmt.samplerate,&smp->data);
     smp->fmt.bitdepth = smp->samples/smp->fmt.samplerate*smp->fmt.channels;
 }

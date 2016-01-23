@@ -39,6 +39,21 @@ void sighandle(int sig)
 
 void CoffeeInit()
 {
+    static_assert(sizeof(uint8)==1,"uint8 size is inconsistent");
+    static_assert(sizeof(int8) ==1, "int8 size is inconsistent");
+
+    static_assert(sizeof(uint16)==2,"uint16 size is inconsistent");
+    static_assert(sizeof(int16) ==2, "int16 size is inconsistent");
+
+    static_assert(sizeof(uint32)==4,"uint32 size is inconsistent");
+    static_assert(sizeof(int32) ==4, "int32 size is inconsistent");
+
+    static_assert(sizeof(uint64)==8,"uint64 size is inconsistent");
+    static_assert(sizeof(int64) ==8, "int64 size is inconsistent");
+
+    static_assert(sizeof(scalar)    ==4, "scalar size is inconsistent");
+    static_assert(sizeof(bigscalar) ==8, "bigscalar size is inconsistent");
+
     coffee_initialized = true;
 
     //Allow core dump by default
@@ -59,7 +74,7 @@ void CoffeeInit()
 #endif
 }
 
-int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t **argc)
+int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 {
     //TODO: Handle the Windows case of not including the application name
     CoffeeInit();

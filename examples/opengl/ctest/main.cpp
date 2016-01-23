@@ -4,7 +4,7 @@
 using namespace Coffee;
 using namespace Coffee::CDisplay;
 
-int32 coffee_main(int32,byte_t**)
+int32 coffee_main(int32,cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
 

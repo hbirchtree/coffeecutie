@@ -63,7 +63,7 @@ cstring_w coffee_file_read(CFile *file, c_ptr ptr, uint64 *size, bool textmode)
     if(textmode)
         msize+=1;
 
-    byte_t* data = (byte_t*)CRealloc(ptr,msize);
+    cstring_w data = (cstring_w)CRealloc(ptr,msize);
     *size = fread(data,sizeof(byte_t),esize,file->handle);
     //In text mode, we terminate the array
     if(textmode)

@@ -13,7 +13,7 @@ using namespace CoffeeExt;
 using CNect = Freenect::FreenectImplementation;
 using CPCLI = CPCL::CPCLImplementation;
 
-int32 coffee_main(int32, byte_t**)
+int32 coffee_main(int32, cstring_w*)
 {
     CNect::FreenectContext* c = nullptr;
     try{

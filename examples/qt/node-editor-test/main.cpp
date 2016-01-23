@@ -4,7 +4,7 @@
 
 using namespace Coffee;
 
-int32 coffee_main(int32 a, byte_t** c)
+int32 coffee_main(int32 a, cstring_w* c)
 {
     QApplication mn(a,c);
 

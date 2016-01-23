@@ -360,31 +360,31 @@ struct blam_scn_starting_equip
 {
     uint32 unknown1; /*!< Sometimes 1? */
     uint32 index;
-    ubyte_t padding2[51];
+    byte_t padding2[51];
     tagref_t items[6];
-    ubyte_t padding3[45];
+    byte_t padding3[45];
 };
 
 struct blam_scn_control
 {
     int16 unk1;
     int16 unk2;
-    ubyte_t unk3[4];
+    byte_t unk3[4];
     CVec3 pos;
     uint32 tag_id;
-    ubyte_t unk[40];
+    byte_t unk[40];
 };
 
 struct blam_scn_light_fixture
 {
     bl_rgba_t ambient;
-    ubyte_t unk1[4];
+    byte_t unk1[4];
     CVec3 pos;
-    ubyte_t unk2[12];
+    byte_t unk2[12];
     bl_rgba_t specular;
     int32 zero1;
     bl_rgba_t color;
-    ubyte_t unk3[40];
+    byte_t unk3[40];
 };
 
 struct blam_scn_sbsp

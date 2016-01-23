@@ -28,7 +28,7 @@ CString VRGetTrackedDevString(vr::TrackedDeviceIndex_t index,
     uint32 size = sys->GetStringTrackedDeviceProperty(index,prop,NULL,0,err_p);
     if(size == 0)
         return "";
-    byte_t* c_string = new byte_t[size];
+    cstring_w c_string = new sbyte_t[size];
     sys->GetStringTrackedDeviceProperty(index,prop,c_string,size,err_p);
     CString out = c_string;
     delete[] c_string;

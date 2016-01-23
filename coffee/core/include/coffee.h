@@ -40,7 +40,7 @@ inline C_FORCE_INLINE void print_builddate()
 /*!
  * \brief This function handles initial program startup
  */
-extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, byte_t** argc);
+extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w *argc);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.

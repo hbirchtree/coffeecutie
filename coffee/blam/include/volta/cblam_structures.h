@@ -9,10 +9,10 @@ namespace CBlam{
 
 using namespace CGraphicsWrappers;
 
-typedef byte_t bl_tag[4];
-typedef byte_t bl_string[32];
-typedef byte_t bl_header[4];
-typedef byte_t bl_footer[4];
+typedef sbyte_t bl_tag[4];
+typedef sbyte_t bl_string[32];
+typedef sbyte_t bl_header[4];
+typedef sbyte_t bl_footer[4];
 
 /*!
  * \brief Blam maptypes. Names being obvious, the UI type does not give a playable map.

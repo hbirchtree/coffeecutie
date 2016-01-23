@@ -55,13 +55,14 @@ typedef unsigned long int   uint64;
 
 typedef float               scalar; /*!< Low-precision float value*/
 typedef double              bigscalar; /*!< High-precision float value*/
-typedef int8                byte_t; /*!< System byte*/
-typedef uint8               ubyte_t; /*!< System unsigned byte*/
+typedef uint8               byte_t;  /*!< System byte*/
+typedef byte_t              ubyte_t; /*!< System byte*/
+typedef int8                sbyte_t; /*!< System unsigned byte*/
 
 typedef uint16              ushort;
 
-typedef const byte_t*       cstring; /*!< Typical C-string*/
-typedef byte_t*             cstring_w; /*!< Writable C-string*/
+typedef const sbyte_t*      cstring; /*!< Typical C-string*/
+typedef sbyte_t*            cstring_w; /*!< Writable C-string*/
 typedef const wchar_t*      cwstring; /*!< Wide C-string*/
 typedef wchar_t*            cwstring_w; /*!< Wide, writable C-string*/
 
@@ -76,7 +77,7 @@ typedef void*       c_ptr;
 /*!
  * \brief A prototype for Coffee-managed main functions. Benefits to this is that Coffee will abstract away any platform-specific quirks to the main function, such as difference in arguments. (Eg. some platforms do not include the main executable while others do)
  */
-typedef int32 (*CoffeeMainWithArgs)(int32,byte_t**);
+typedef int32 (*CoffeeMainWithArgs)(int32,cstring_w*);
 
 enum class ResourceAccess : uint16
 {

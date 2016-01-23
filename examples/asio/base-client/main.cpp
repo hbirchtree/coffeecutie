@@ -3,7 +3,7 @@
 
 using namespace Coffee;
 
-int32 coffee_main(int32, byte_t**)
+int32 coffee_main(int32, cstring_w*)
 {
     RestClient::InitService();
     RestClient::RestResponse t =

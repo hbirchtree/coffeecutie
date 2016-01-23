@@ -129,7 +129,7 @@ struct C_FORCE_PACKING RSItemConfig
     int originalModelColors[256];
 };
 
-int32 coffee_main(int32, byte_t**)
+int32 coffee_main(int32, cstring_w*)
 {
     FileResourcePrefix("sample_data/runescape-data/");
 

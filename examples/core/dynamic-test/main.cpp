@@ -10,7 +10,7 @@ void coffee_callback(CFilesystemWatcher const*,cstring fn,const void*,CFileWatch
     cDebug("Woop woop!: {0}, {1}",fn,(uint16)flags);
 }
 
-int32 coffee_main(int32 argc, byte_t** argv)
+int32 coffee_main(int32 argc, cstring_w* argv)
 {
     CFileWatchTask watcher;
 

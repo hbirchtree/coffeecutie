@@ -105,7 +105,7 @@ inline C_FORCE_INLINE std::future<bool> TransformData(
     return RunAsync(workThread,processor,input,output);
 }
 
-typedef CThreadWorker<ubyte_t> CThreadUbyteWorker;
+typedef CThreadWorker<byte_t> CThreadByteWorker;
 
 }
 }

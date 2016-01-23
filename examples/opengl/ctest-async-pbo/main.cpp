@@ -47,7 +47,7 @@ public:
             0, 1, 2, 1, 2, 3,
         };
 
-        constexpr byte_t vshader_src[] = {
+        constexpr cstring vshader_src = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
             "layout(location = 1) in vec2 texcoord;"
@@ -64,7 +64,7 @@ public:
             "}"
         };
 
-        constexpr byte_t fshader_src[] = {
+        constexpr cstring fshader_src = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "uniform sampler2D diffsamp;"
@@ -332,7 +332,7 @@ private:
     CQuat t;
 };
 
-int32 coffee_main(int32, byte_t**)
+int32 coffee_main(int32, cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
 

@@ -5,7 +5,7 @@ using namespace Coffee;
 
 using namespace CLibraryLoader;
 
-int32 coffee_main(int32, byte_t**)
+int32 coffee_main(int32, cstring_w*)
 {
     {
         /* Check out system directory strings and user data directories */

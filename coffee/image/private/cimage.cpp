@@ -15,7 +15,7 @@ namespace CStbImageLib{
 bool LoadData(CStbImage *target, const CResource *src)
 {
     target->data = stbi_load_from_memory(
-                (const ubyte_t*)src->data,src->size,
+                (const byte_t*)src->data,src->size,
                 &target->size.w,&target->size.h,
                 &target->bpp,STBI_rgb_alpha);
     return true;
@@ -31,7 +31,7 @@ void _stbi_write_data(void *ctxt, void *data, int size)
 
 bool Resize(CStbImage *img, const CSize &target, int channels)
 {
-    ubyte_t* data = (ubyte_t*)Alloc(img->bpp*img->size.h*img->size.w*channels);
+    byte_t* data = (byte_t*)Alloc(img->bpp*img->size.h*img->size.w*channels);
     stbir_resize_uint8(img->data,img->size.w,img->size.h,0,
                        data,target.w,target.h,0,
                        channels);
@@ -63,7 +63,7 @@ void FlipVertical(CStbImage *src)
     int32 wdt = src->size.w;
     szptr siz = src->bpp*src->size.w*src->size.h;
 
-    ubyte_t* data = (ubyte_t*)Alloc(siz);
+    byte_t* data = (byte_t*)Alloc(siz);
 
     for(szptr i=0;i<siz;i+=wdt*src->bpp)
     {
@@ -80,7 +80,7 @@ void FlipHorizontal(CStbImage *src)
     int32 wdt = src->size.w;
     szptr siz = src->bpp*src->size.w*src->size.h;
 
-    ubyte_t* data = (ubyte_t*)Alloc(siz);
+    byte_t* data = (byte_t*)Alloc(siz);
 
     for(int32 i=0;i<bot;i++)
         for(int32 j=0;j<wdt;j++)

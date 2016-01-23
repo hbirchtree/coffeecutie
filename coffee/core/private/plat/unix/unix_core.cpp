@@ -221,7 +221,7 @@ cstring_w *coffee_callstack(szptr *length, uint32 stackreduce)
 
     //Allocate buffer for symbol
     bool success;
-    byte_t sym[256];
+    sbyte_t sym[256];
     while(unw_step(&cur)>0){
         //Unwinding stuff here
         unw_word_t offset,pc;

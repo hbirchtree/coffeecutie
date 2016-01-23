@@ -59,7 +59,7 @@ public:
         constexpr uint32 indexdata[] = {
             0, 1, 2, 1, 2, 3,
         };
-        constexpr byte_t vshader_src[] = {
+        constexpr cstring vshader_src = {
             "#version 330\n"
             "layout(location = 0) in vec3 position;"
             "layout(location = 1) in vec2 texcoord;"
@@ -76,7 +76,7 @@ public:
             "}"
         };
 
-        constexpr byte_t fshader_src[] = {
+        constexpr cstring fshader_src = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "uniform sampler2D diffsamp;"
@@ -89,7 +89,7 @@ public:
             "}"
         };
 
-        constexpr byte_t fshader_blank_src[] = {
+        constexpr cstring fshader_blank_src = {
             "#version 330\n"
             "layout(location = 0) out vec4 Out_color;"
             "in VData {"
@@ -337,7 +337,7 @@ public:
     }
 };
 
-int32 coffee_main(int32 n, byte_t** s)
+int32 coffee_main(int32 n, cstring_w* s)
 {
     cstring fn = GetArgument(n,s,"video");
 
