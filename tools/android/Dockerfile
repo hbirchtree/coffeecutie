@@ -1,3 +1,8 @@
+#
+# This Dockerfile will construct an Android build environment fit to support building CoffeeCutie.
+# The Android SDK, NDK and its dependencies will be installed and usable with the attached android-native-build.sh script
+#
+
 # Stick with an LTS release, it has the appropriate CMake version
 FROM ubuntu:xenial
 MAINTAINER H. Birch Tree
