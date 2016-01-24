@@ -225,7 +225,7 @@ struct CGL_Implementation
         TessEval = 0x10,
         TessControl = 0x20,
 
-        All = 0x3F,
+        All = 0x40,
     };
 
     enum CompFlags
@@ -565,10 +565,10 @@ struct CGL_Implementation
             }
         }
 
-        static void SetDebugLevel(Severity s,bool e)
+        static void SetDebugLevel(Severity s,bool enabled)
         {
             glDebugMessageControl(GL_DONT_CARE,GL_DONT_CARE,
-                                  to_enum(s),0,nullptr,(e)?GL_TRUE:GL_FALSE);
+                                  to_enum(s),0,nullptr,(enabled)?GL_TRUE:GL_FALSE);
         }
 
         static void SetObjectLabel(Object t,CGhnd h,cstring s)

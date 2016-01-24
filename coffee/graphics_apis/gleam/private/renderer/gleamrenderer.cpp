@@ -130,7 +130,12 @@ void CGLeamRenderer::bindingPostInit()
         throw std::runtime_error(CFStrings::Graphics_GLeam_Renderer_Name);
     }
     if(GL::DebuggingSupported())
+    {
+        GL::Debug::SetDebugMode(true);
+        GL::Debug::SetDebugLevel(Severity::Debug,false);
+        GL::Debug::SetDebugLevel(Severity::Information,false);
         GL::Debug::DebugSetCallback(gleamcallback,this);
+    }
 }
 
 void CGLeamRenderer::bindingTerminate()
