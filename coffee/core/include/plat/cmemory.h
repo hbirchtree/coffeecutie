@@ -158,6 +158,28 @@ inline C_FORCE_INLINE cstring_w CStrReplace(
     return out;
 }
 
+namespace Convert
+{
+/*TODO: Add more conversions!*/
+inline C_FORCE_INLINE int32 strtoint(cstring n)
+{
+    return atoi(n);
+}
+inline C_FORCE_INLINE int64 strtoll(cstring n)
+{
+    return atoll(n);
+}
+inline C_FORCE_INLINE bigscalar strtoscalar(cstring n)
+{
+    return atof(n);
+}
+}
+
+namespace StrUtil
+{
+/*TODO: Add strok() and other string processing utilities here. They are nice to have.*/
+}
+
 }
 
 using namespace CMem;

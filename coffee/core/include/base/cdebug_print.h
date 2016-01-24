@@ -148,6 +148,24 @@ inline C_FORCE_INLINE CString cStringReplace(
 
 inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
+        const _cbasic_version<int32>& arg)
+{
+    return cStrReplace(fmt,index,cStringFormat("{0}.{1}.{2}",
+                                               arg.major,arg.minor,
+                                               arg.revision));
+}
+
+inline C_FORCE_INLINE CString cStringReplace(
+        CString fmt, size_t index,
+        const _cbasic_version<uint32>& arg)
+{
+    return cStrReplace(fmt,index,cStringFormat("{0}.{1}.{2}",
+                                               arg.major,arg.minor,
+                                               arg.revision));
+}
+
+inline C_FORCE_INLINE CString cStringReplace(
+        CString fmt, size_t index,
         HWDeviceInfo const& arg)
 {
     return cStrReplace(fmt,index,cStringFormat("{0} {1}",

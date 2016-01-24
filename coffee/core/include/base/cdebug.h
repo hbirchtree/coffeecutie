@@ -17,7 +17,7 @@ namespace CDebugPrint{
 
 struct DebuggingState
 {
-    static std::mutex PrinterLock;
+    static Mutex PrinterLock;
 };
 
 extern cstring_w coffee_debug_get_clock_string();

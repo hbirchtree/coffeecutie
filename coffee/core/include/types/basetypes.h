@@ -39,45 +39,48 @@ inline bool feval(T flagcombo)
 }
 
 //Integer types
-typedef char                int8;
-typedef short               int16;
-typedef int                 int32;
+using int8  = char;
+using int16 = short;
+using int32 = int;
 #if defined(COFFEE_USE_LONGLONG_INT64)
-typedef long long int       int64;
+using int64 = long long int;
 #else
-typedef long int            int64;
+using int64 = long int;
 #endif
 
-typedef unsigned char       uint8;
-typedef unsigned short      uint16;
-typedef unsigned int        uint32;
-typedef unsigned long int   uint64;
+using uint8  = unsigned char;
+using uint16 = unsigned short;
+using uint32 = unsigned int;
+using uint64 = unsigned long int;
 
-typedef float               scalar; /*!< Low-precision float value*/
-typedef double              bigscalar; /*!< High-precision float value*/
-typedef uint8               byte_t;  /*!< System byte*/
-typedef byte_t              ubyte_t; /*!< System byte*/
-typedef int8                sbyte_t; /*!< System unsigned byte*/
+using scalar    = float;  /*!< Low-precision float value*/
+using bigscalar = double; /*!< High-precision float value*/
+using byte_t    = uint8;  /*!< System byte*/
+using ubyte_t   = byte_t; /*!< System byte*/
+using sbyte_t   = int8;   /*!< System unsigned byte*/
 
-typedef uint16              ushort;
+using ushort = uint16;
 
-typedef const sbyte_t*      cstring; /*!< Typical C-string*/
-typedef sbyte_t*            cstring_w; /*!< Writable C-string*/
-typedef const wchar_t*      cwstring; /*!< Wide C-string*/
-typedef wchar_t*            cwstring_w; /*!< Wide, writable C-string*/
+using cstring    = const sbyte_t*; /*!< Typical C-string*/
+using cstring_w  = sbyte_t*; /*!< Writable C-string*/
+using cwstring   = const wchar_t*; /*!< Wide C-string*/
+using cwstring_w = wchar_t*; /*!< Wide, writable C-string*/
 
-typedef size_t              szptr; /*!< Usable as offset into data*/
+using szptr = size_t; /*!< Usable as offset into data*/
 
-typedef std::string         CString; /*!< Typical string object */
-typedef std::runtime_error  CStdFault; /*!< Exception to be thrown by default */
+using CString   = std::string; /*!< Typical string object */
+using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
-typedef const void* c_cptr;
-typedef void*       c_ptr;
+using c_cptr = const void*;
+using c_ptr  = void*;
+
+using Mutex = std::mutex;
+using Lock  = std::lock_guard<Mutex>;
 
 /*!
  * \brief A prototype for Coffee-managed main functions. Benefits to this is that Coffee will abstract away any platform-specific quirks to the main function, such as difference in arguments. (Eg. some platforms do not include the main executable while others do)
  */
-typedef int32 (*CoffeeMainWithArgs)(int32,cstring_w*);
+using CoffeeMainWithArgs = int32(*)(int32,cstring_w*);
 
 enum class ResourceAccess : uint16
 {

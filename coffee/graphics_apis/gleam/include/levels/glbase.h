@@ -6,6 +6,7 @@
 #include <base/cdebug.h>
 #include <base/cdisplay.h>
 #include <coffee/core/CTypes>
+#include <coffee/core/CDataStorage>
 #include <coffee/CImage>
 
 #include <glad/glad.h>
@@ -16,12 +17,133 @@ namespace CGL{
 
 struct CGLXML
 {
-    static void LoadData(cstring fn);
+    using CoreVer = _cbasic_version<int32>;
+    using Extension = CString;
 
-    static void FindExtension(cstring begin);
+    static inline C_FORCE_INLINE bool LoadData(cstring fn)
+    {
+        Lock lock(doc_mutex);
 
-    static void GetFunctionCoreVersion(cstring fun);
-    static void GetFunctionExtension(cstring fun);
+        CResources::CResource xml(fn);
+        if(!CResources::FileExists(xml))
+            return false;
+        CResources::FilePull(xml,true);
+
+        doc = XML::XMLRead(xml);
+
+        CResources::FileFree(xml);
+
+        if(!doc)
+            return false;
+
+        return false;
+    }
+    static inline C_FORCE_INLINE bool UnloadData()
+    {
+        Lock lock(doc_mutex);
+        if(doc)
+        {
+            delete doc;
+            return true;
+        }
+        return false;
+    }
+    static inline C_FORCE_INLINE std::vector<Extension> FindExtensions(cstring part)
+    {
+        std::vector<Extension> exts;
+
+        auto query = doc->RootElement()
+                ->FirstChildElement("extensions")
+                ->FirstChildElement("extension");
+        while(query)
+        {
+            cstring extname = query->Attribute("name");
+            if(CStrFind(extname,part))
+                exts.push_back(CString(extname));
+            query = query->NextSiblingElement("extension");
+        }
+
+        return exts;
+    }
+    static inline C_FORCE_INLINE CoreVer ExtractCoreVer(cstring s)
+    {
+        CoreVer out;
+        out.major = 0;
+        out.minor = 0;
+        out.revision = 0;
+
+        std::vector<CRegexMatch> match = RegexMatch(".*_([0-9])_([0-9])",s,true);
+        if(match.size()!=3)
+            return out;
+
+        out.major = Convert::strtoint(match.at(1).s_match.front().c_str());
+        out.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
+
+        return out;
+    }
+    static inline C_FORCE_INLINE CoreVer GetFunctionCoreVersion(cstring fun)
+    {
+        CoreVer out;
+        out.major = 0;
+        out.minor = 0;
+        out.revision = 0;
+
+        auto query = doc->RootElement()->FirstChildElement("feature");
+        while(query)
+        {
+            auto req = query->FirstChildElement("require");
+            while(req)
+            {
+                auto cmd = req->FirstChildElement("command");
+                while(cmd)
+                {
+                    if(CStrCmp(cmd->Attribute("name"),fun))
+                        return ExtractCoreVer(query->Attribute("name"));
+                    cmd = cmd->NextSiblingElement("command");
+                }
+                req = req->NextSiblingElement("require");
+            }
+            query = query->NextSiblingElement("feature");
+        }
+
+        return out;
+    }
+    static inline C_FORCE_INLINE Extension GetFunctionExtension(cstring fun)
+    {
+        auto query = doc->RootElement()
+                ->FirstChildElement("extensions")
+                ->FirstChildElement("extension");
+        while(query)
+        {
+            auto req = query->FirstChildElement("require");
+            while(req)
+            {
+                auto cmd = req->FirstChildElement("command");
+                while(cmd)
+                {
+                    if(CStrCmp(cmd->Attribute("name"),fun))
+                        return Extension(query->Attribute("name"));
+                    cmd = cmd->NextSiblingElement("command");
+                }
+                req = req->NextSiblingElement("require");
+            }
+            query = query->NextSiblingElement("extension");
+        }
+
+        return Extension();
+    }
+    static inline C_FORCE_INLINE std::vector<Extension> GetCoreExtensions(CoreVer ver)
+    {
+        std::vector<Extension> exts;
+        if(ver.major<=3&&ver.minor<3)
+            return exts;
+
+
+        return exts;
+    }
+private:
+    static XML::Document* doc;
+    static Mutex doc_mutex;
 };
 
 struct CGL_Implementation

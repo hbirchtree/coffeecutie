@@ -13,7 +13,7 @@ endif()
 add_subdirectory (core/env-test)
 
 #Examples of media playback and capture through CFFMedia, powered by FFMPEG
-if(COFFEE_BUILD_FFMEDIA)
+if(COFFEE_BUILD_FFMEDIA AND COFFEE_BUILD_GLBINDING)
     add_subdirectory (media/media-test)
 endif()
 

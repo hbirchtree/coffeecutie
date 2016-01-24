@@ -173,7 +173,7 @@ struct CGL43 : CGL33
     }
     static int32 ProgramGetResourceLoc(CGhnd h,CGenum e,cstring n)
     {return glGetProgramResourceLocation(h,e,n);}
-    static uint32 ProgramGetResourceLocIdx(CGhnd h,CGenum e,cstring n)
+    static int32 ProgramGetResourceLocIdx(CGhnd h,CGenum e,cstring n)
     {return glGetProgramResourceLocationIndex(h,e,n);}
 
     //TODO: Create ProgramParameter enum

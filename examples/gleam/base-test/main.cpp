@@ -39,11 +39,29 @@ public:
         CVec4 clearcol(0.0);
         clearcol.a() = 1.0;
 
-        GL::CGhnd pbobuf;
-        GL::BufAlloc(1,&pbobuf);
+        //        GLEXT::ViewportSet(0,&leftEye);
+        //        GLEXT::ViewportSet(1,&rightEye);
 
-        GLEXT::ViewportSet(0,&leftEye);
-        GLEXT::ViewportSet(1,&rightEye);
+        cstring textures[3] = {"eye-normal.tga","eye-weird.tga","eye-alpha.tga"};
+
+        GL::CGhnd pbobuf[3] = {};
+        GL::BufAlloc(3,pbobuf);
+
+        for(uint32 i=0;i<3;i++)
+        {
+            CResources::CResource rsc(textures[i]);
+            CResources::FileMap(rsc);
+
+            CStbImageLib::CStbImage img;
+            CStbImageLib::LoadData(&img,&rsc);
+
+            GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
+            GLEXT::BufStorage(GL::BufType::PixelUData,
+                              img.size.area()*img.bpp,
+                              img.data,ResourceAccess::ReadOnly);
+
+            CResources::FileUnmap(rsc);
+        }
 
         cstring vshader = {
             "#version 430 core\n"
@@ -68,35 +86,9 @@ public:
             "   gl_Position = transform*vec4(vertices[gl_VertexID],1.0);"
             "}"
         };
-        cstring gshader = {
-            "#version 430 core\n"
-            ""
-            "in int gl_InvocationID;"
-            "out int gl_ViewportIndex;"
-            ""
-            "out VS_OUT{"
-            "   vec4 gl_Position;"
-            "   vec3 tc;"
-            "} gs_in[];"
-            "out GS_OUT{"
-            "   vec3 tc;"
-            "} gs_out;"
-            ""
-            "void main(void)"
-            "{"
-            "   for(int i=0;i<gl_in.length();i++)"
-            "   {"
-            "       gs_out.tc = gs_in[i].tc;"
-            "       gl_Position = gs_in[i].gl_Position;"
-            "       gl_ViewportIndex = gl_InvocationID;"
-            "       EmitVertex();"
-            "   }."
-            "   EndPrimitive();"
-            "}"
-        };
         cstring fshader = {
             "#version 430 core\n"
-            "in GS_OUT{"
+            "in VS_OUT{"
             "   vec3 tc;"
             "} fs_in;"
             ""
@@ -114,46 +106,49 @@ public:
         GL::VAOBind(vao);
 
         GL::CGhnd vprogram = GLEXT::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
+        cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
         if(!GL::ProgramValidate(vprogram))
-            cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
-
-        GL::CGhnd gprogram = GLEXT::ProgramCreate(GL::ShaderStage::Geometry,1,&gshader);
-        if(!GL::ProgramValidate(gprogram))
-            cDebug("Compilation log: {0}",GL::ProgramGetLog(gprogram));
+            return;
 
         GL::CGhnd fprogram = GLEXT::ProgramCreate(GL::ShaderStage::Fragment,1,&fshader);
+        cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
         if(!GL::ProgramValidate(fprogram))
-            cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
+            return;
 
         GL::CGhnd pipeline;
         GLEXT::PipelineAlloc(1,&pipeline);
         GLEXT::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
-//        GL::PipelineUseStages(pipeline,GL::ShaderStage::Geometry,gprogram);
         GLEXT::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
 
         GLEXT::PipelineBind(pipeline);
 
-        GL::CGhnd cube;
-        GL::TexAlloc(1,&cube);
-        GL::TexBind(GL::Texture::Cubemap,cube);
-        GLEXT::TexStorage2D(GL::Texture::Cubemap,1,PixelFormat::RGBA8UI,512,512);
-
-        for(int32 i=0;i<6;i++)
+        GL::CGhnd texture_array;
+        GL::TexAlloc(1,&texture_array);
+        GL::TexBind(GL::Texture::T2DArray,texture_array);
+        GLEXT::TexStorage3D(GL::Texture::T2DArray,3,PixelFormat::RGBA32F,1024,1024,3);
+        for(uint32 i=0;i<3;i++)
         {
-//            GL::TexSubImage2D(GL::Texture::CubeX_N,0,0,0,512,512,
-//                              PixelComponents::RGBA,BitFormat::Byte_2,0);
-            GLEXT::MemoryBarrier(GL_PIXEL_BUFFER_BARRIER_BIT);
+
         }
+        GLEXT::TexGenMipmap(GL::Texture::T2DArray);
 
         CGraphicsData::CGCamera cam;
         cam.aspect = 1.6;
         cam.fieldOfView = 70.f;
         cam.position = CVec3(0,0,-3);
-        GLEXT::CGhnd cam_unif =
+
+        CGraphicsData::CTransform obj;
+        obj.position = CVec3(0,0,0);
+        obj.scale = CVec3(1);
+
+        int32 cam_unif =
                 GLEXT::ProgramGetResourceLoc(vprogram,
                                              GL_UNIFORM,
-                                             "transfom");
-        CMat4 cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
+                                             "transform");
+
+        CMat4 cam_mat = CGraphicsData::GenPerspective(cam)
+                *CGraphicsData::GenTransform(cam)
+                *CGraphicsData::GenTransform(obj);
 
         GLEXT::Uniformfv(vprogram,cam_unif,1,false,&cam_mat);
 
@@ -209,17 +204,21 @@ int32 coffee_main(int32, cstring_w*)
 {
     if(!OpenVRDev::InitializeBinding())
     {
-        cDebug("No VR 4 u!");
+        cDebug("Move on, there is nothing to see here.");
     }else{
-        cDebug("By the gods... So it was true! The time of the VR-born has come!");
+        cDebug("By the gods... So it was true! You must be the hero of Kvatch!");
+        cDebug("[HERE BE DRAGONS]");
         uint32 devs;
         if(!OpenVRDev::PollDevices(&devs))
         {
-            cDebug("No devices found? What?");
+            cDebug("I used to be a reality tripper like you,"
+                   " until I took a cyberkick to the knee.");
         }
         OpenVRDev::OVRDevice* dev = OpenVRDev::GetDevice(0);
         cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
     }
+
+    CResources::FileResourcePrefix("sample_data/");
 
     CElapsedTimerD* timer = AllocTimerD();
     timer->start();
@@ -228,6 +227,7 @@ int32 coffee_main(int32, cstring_w*)
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 4;
+    props.gl.version.minor = 3;
 
     renderer->init(props);
     cDebug("Init renderer: {0}",timer->elapsed());
@@ -235,6 +235,8 @@ int32 coffee_main(int32, cstring_w*)
     if(!GLEXT::SeparableShaderSupported())
         return 1;
     if(!GLEXT::ViewportArraySupported())
+        return 1;
+    if(!GLEXT::BufferStorageSupported())
         return 1;
 
     renderer->run();

@@ -16,7 +16,7 @@ struct TinyXML2
     using Document = XMLDocument;
     using Element = XMLElement;
 
-    inline C_FORCE_INLINE static const XMLDocument* XMLRead(
+    inline C_FORCE_INLINE static XMLDocument* XMLRead(
 	    const CResources::CResource& source)
     {
 	XMLDocument* doc = new XMLDocument;
