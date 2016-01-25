@@ -126,8 +126,8 @@ public:
 //                for(szptr k=0;k<512;k++)
 //                    data[i+j*512+512*512*k] = (i-256)*(i-256)+(j-256)*(j-256)+(k-256)*(k-256) < 200*200;
 
-//        GL::TexImage3D(GL::Texture::T3D,1,PixelFormat::R32I,512,512,512,
-//                       0,PixelComponents::R,BitFormat::Int_8,data);
+        GL::TexStorage3D(GL::Texture::T3D,1,PixelFormat::R32I,512,512,512);
+        glTexSubImage3D(GL_TEXTURE_3D,0,0,0,0,512,512,512,GL_RED_INTEGER,GL_INT,data);
 
         CFree(data);
 
