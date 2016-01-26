@@ -79,7 +79,7 @@ public:
             "   vec4 gl_Position;"
             "};"
             "out VS_OUT{"
-            "   vec3 tc;"
+            "   vec2 tc;"
             "   flat int instance;"
             "} vs_out;"
             ""
@@ -92,25 +92,28 @@ public:
             "                                    vec3(-1.0, 1.0,1.0),"
             "                                    vec3( 1.0, 1.0,1.0));"
             "   vs_out.instance = gl_InstanceID;"
+            "   vs_out.tc = vec2(0.5);"
             "   gl_Position = transform[gl_InstanceID]*vec4(vertices[gl_VertexID],1.0);"
             "}"
         };
         cstring fshader = {
             "#version 430 core\n"
             "in VS_OUT{"
-            "   vec3 tc;"
+            "   vec2 tc;"
             "   flat int instance;"
             "} fs_in;"
             ""
             "layout(location = 0) out vec4 color;"
             "uniform float mx;"
             ""
-            "layout(binding=0)uniform sampler2DArray texdata;"
+            "uniform sampler2DArray texdata;"
             ""
             "void main(void)"
             "{"
-            "   color = texture(texdata,vec3(0.4,0.4,floor(float(fs_in.instance))));"
-            "   /*color = vec4(fs_in.instance);*/"
+            "   vec4 c1 = texture(texdata,vec3(fs_in.tc,0));"
+            "   vec4 c2 = texture(texdata,vec3(fs_in.tc,1));"
+            "   vec4 a1 = texture(texdata,vec3(fs_in.tc,2));"
+            "   color = mix(c1,c2,vec4(mx));"
             "}"
         };
 
@@ -169,6 +172,10 @@ public:
                 GL::ProgramGetResourceLoc(fprogram,
                                           GL_UNIFORM,
                                           "texdata");
+        int32 tim_unif =
+                GL::ProgramGetResourceLoc(fprogram,
+                                          GL_UNIFORM,
+                                          "mx");
 
         int32 tex_bind = 0;
 
@@ -190,6 +197,9 @@ public:
             clearcol.r() = CMath::sin(this->contextTime()+0.5);
             clearcol.g() = CMath::sin(this->contextTime()+5.0);
             clearcol.b() = CMath::sin(this->contextTime()+50.0);
+
+            scalar time = CMath::fmod(CMath::sin(this->contextTime()),1.0);
+            GL::Uniformfv(fprogram,tim_unif,1,&time);
 
             clearcol = normalize(clearcol);
 
