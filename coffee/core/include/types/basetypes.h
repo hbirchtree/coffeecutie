@@ -105,17 +105,17 @@ enum class TypeEnum : uint8
 
 enum class BitFormat : uint8
 {
-    Byte_2, Byte_2R,
-    UByte_2, UByte_2R,
+    Byte, ByteR,
+    UByte, UByteR,
     UByte_332, UByte_233R,
 
-    Short_4, Short_4R,
-    UShort_4, UShort_4R,
+    Short, ShortR,
+    UShort, UShortR,
     UShort_565, UShort_565R,
     UShort_5551, UShort_1555R,
 
-    Int_8, Int_8R,
-    UInt_8, UInt_8R,
+    Int, IntR,
+    UInt, UIntR,
     UInt_5999R,
     UInt_1010102, UInt_2101010R,
 

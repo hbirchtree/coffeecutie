@@ -92,6 +92,10 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     {
     case Feature::Blend:
         return GL_BLEND;
+    case Feature::DebugOutput:
+        return GL_DEBUG_OUTPUT;
+    case Feature::DebugOutputSynchronous:
+        return GL_DEBUG_OUTPUT_SYNCHRONOUS;
     case Feature::DepthTest:
         return GL_DEPTH_TEST;
     case Feature::DepthClamp:
@@ -718,21 +722,21 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(BitFormat f)
 {
     switch(f)
     {
-    case BitFormat::Byte_2:
+    case BitFormat::Byte:
         return GL_BYTE;
-    case BitFormat::Short_4:
+    case BitFormat::Short:
         return GL_SHORT;
-    case BitFormat::Int_8:
+    case BitFormat::Int:
         return GL_INT;
 
-    case BitFormat::UByte_2:
+    case BitFormat::UByte:
         return GL_UNSIGNED_BYTE;
     case BitFormat::UByte_233R:
         return GL_UNSIGNED_BYTE_2_3_3_REV;
     case BitFormat::UByte_332:
         return GL_UNSIGNED_BYTE_3_3_2;
 
-    case BitFormat::UShort_4:
+    case BitFormat::UShort:
         return GL_UNSIGNED_SHORT;
     case BitFormat::UShort_565:
         return GL_UNSIGNED_SHORT_5_6_5;
@@ -743,7 +747,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(BitFormat f)
     case BitFormat::UShort_5551:
         return GL_UNSIGNED_SHORT_5_5_5_1;
 
-    case BitFormat::UInt_8:
+    case BitFormat::UInt:
         return GL_UNSIGNED_INT;
     case BitFormat::UInt_5999R:
         return GL_UNSIGNED_INT_5_9_9_9_REV;

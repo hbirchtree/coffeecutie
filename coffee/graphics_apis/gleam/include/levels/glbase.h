@@ -324,6 +324,9 @@ struct CGL_Implementation
     {
         Blend,
 
+        DebugOutput,
+        DebugOutputSynchronous,
+
         DepthClamp,
         DepthTest,
         Dither,
@@ -595,8 +598,8 @@ struct CGL_Implementation
             glDebugMessageCallback(c,param);
         }
 
-        static void IsEnabledi(Feature f,int32 i){
-            glIsEnabledi(CGL::CGL_Implementation::to_enum(f),i);}
+        static bool IsEnabledi(Feature f,int32 i){
+            return glIsEnabledi(CGL::CGL_Implementation::to_enum(f),i)==GL_TRUE;}
 
         static cstring GetString(CGenum e){return (cstring)glGetString(e);}
         static cstring GetStringi(CGenum e,uint32 i){return (cstring)glGetStringi(e,i);}

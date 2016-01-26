@@ -467,7 +467,7 @@ struct CGLUtil
         ubyte_t* data = (ubyte_t*)Alloc(data_size);
 
         CGL33::TexBind(t,h);
-        CGL33::TexGetImage(t,0,PixelComponents::RGBA,BitFormat::Byte_2,data);
+        CGL33::TexGetImage(t,0,PixelComponents::RGBA,BitFormat::Byte,data);
         CGL33::TexBind(t,0);
 
         CResources::CResource rsc(fn);

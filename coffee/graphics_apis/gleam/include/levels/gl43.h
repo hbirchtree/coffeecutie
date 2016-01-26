@@ -28,35 +28,6 @@ struct CGL43 : CGL33
         return status;
     }
 
-    enum class Feature
-    {
-        Blend,
-
-        DebugOutput,
-        DebugOutputSynchronous,
-
-        DepthClamp,
-        DepthTest,
-        Dither,
-
-        FramebufferSRGB,
-
-        LineSmooth,
-        PolygonSmooth,
-
-        PrimitiveRestart,
-        PrimitiveRestartFixedIdx,
-
-        SampleAlphaToCoverage,
-        SampleShading,
-        SampleMask,
-
-        ScissorTest,
-        StencilTest,
-
-        PointSize,
-    };
-
     enum class PatchProperty
     {
         Vertices = GL_PATCH_VERTICES,
@@ -108,6 +79,8 @@ struct CGL43 : CGL33
 
     /* Base */
     static void MemoryBarrier(GLbitfield f){glMemoryBarrier(f);}
+
+    /*Reimplemented, GL4.3 has new features*/
 
     /* Use gl*Indexed gl*Arrayv */
     static void ViewportArrayv(uint32 i,size_t c,CRectF const* v)

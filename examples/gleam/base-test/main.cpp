@@ -41,6 +41,9 @@ public:
         //        GLEXT::ViewportSet(0,&leftEye);
         //        GLEXT::ViewportSet(1,&rightEye);
 
+        GL::Enable(GL::Feature::Blend);
+//        GL::Enable(GL::Feature::DepthTest);
+
         const cstring textures[3] = {"eye-normal.tga","eye-weird.tga","eye-alpha.tga"};
 
         GL::CGhnd pbobuf[3] = {};
@@ -59,6 +62,12 @@ public:
                               img.size.area()*img.bpp,
                               img.data,ResourceAccess::ReadOnly);
 
+            CResources::CResource out("test.png");
+            CStbImageLib::SavePNG(&out,&img);
+
+            CResources::FileCommit(out);
+            CResources::FileFree(out);
+            CStbImageLib::ImageFree(&img);
             CResources::FileUnmap(rsc);
         }
 
@@ -100,8 +109,8 @@ public:
             ""
             "void main(void)"
             "{"
-            "   /*color = texture(texdata,vec3(0.3,0.3,fs_in.instance));*/"
-            "   color = vec4(fs_in.instance);"
+            "   color = texture(texdata,vec3(0.4,0.4,floor(float(fs_in.instance))));"
+            "   /*color = vec4(fs_in.instance);*/"
             "}"
         };
 
@@ -134,13 +143,13 @@ public:
         GL::TexAlloc(1,&texture_array);
         GL::TexActive(0);
         GL::TexBind(GL::Texture::T2DArray,texture_array);
-        GL::TexStorage3D(GL::Texture::T2DArray,3,PixelFormat::RGBA32F,1024,1024,3);
+        GL::TexStorage3D(GL::Texture::T2DArray,1,PixelFormat::RGBA32F,1024,1024,3);
         for(uint32 i=0;i<3;i++)
         {
             GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
             GL::TexSubImage3D(GL::Texture::T2DArray,0,
                               0,0,i,1024,1024,1,
-                              PixelComponents::RGBA,BitFormat::Byte_2,nullptr);
+                              PixelComponents::RGBA,BitFormat::UByte,nullptr);
         }
 
         CGraphicsData::CGCamera cam;
