@@ -139,8 +139,8 @@ public:
 
         GL::VAOBind(vao);
 
-        glEnableVertexAttribArray(0);
-        glEnableVertexAttribArray(1);
+        GL::VAOEnableAttrib(0);
+        GL::VAOEnableAttrib(1);
 
         GL::VAOAttribFormat(0,3,TypeEnum::Scalar,false,0);
         GL::VAOAttribFormat(1,2,TypeEnum::Scalar,false,0);
