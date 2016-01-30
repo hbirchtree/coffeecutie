@@ -84,7 +84,9 @@ public:
         GL::CGhnd vertbuf;
         GL::BufAlloc(1,&vertbuf);
         GL::BufBind(GL::BufType::ArrayData,vertbuf);
-        GL::BufData(GL::BufType::ArrayData,sizeof(vertexdata),vertexdata,ResourceAccess::ReadOnly);
+        GL::BufStorage(GL::BufType::ArrayData,
+                       sizeof(vertexdata),vertexdata,
+                       ResourceAccess::ReadOnly);
 
         cstring vshader = {
             "#version 430 core\n"
@@ -314,11 +316,10 @@ int32 coffee_main(int32, cstring_w*)
     renderer->init(props);
     cDebug("Init renderer: {0}",timer->elapsed());
 
-    if(!GL::SeparableShaderSupported())
-        return 1;
-    if(!GL::ViewportArraySupported())
-        return 1;
-    if(!GL::BufferStorageSupported())
+    if(!(GL::SeparableShaderSupported()
+         ||GL::VertexAttribBinding()
+         ||GL::ViewportArraySupported()
+         ||GL::BufferStorageSupported()))
         return 1;
 
     renderer->run();

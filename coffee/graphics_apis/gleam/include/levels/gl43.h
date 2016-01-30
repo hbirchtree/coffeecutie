@@ -53,6 +53,9 @@ struct CGL43 : CGL33
     static bool ViewportArraySupported()
     {return Debug::CheckExtensionSupported("GL_ARB_viewport_array");}
 
+    static bool VertexAttribBinding()
+    {return Debug::CheckExtensionSupported("GL_ARB_vertex_attrib_binding");}
+
     static bool SeparableShaderSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_separate_shader_objects");}
 
