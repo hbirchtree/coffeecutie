@@ -71,9 +71,26 @@ public:
             CResources::FileUnmap(rsc);
         }
 
+        const scalar vertexdata[] = {
+            -1.f, -1.f,  1.f,    0.f,  0.f,
+             1.f, -1.f,  1.f,   -1.f,  0.f,
+            -1.f,  1.f,  1.f,    0.f, -1.f,
+
+            -1.f,  1.f,  1.f,    0.f, -1.f,
+             1.f,  1.f,  1.f,   -1.f, -1.f,
+             1.f, -1.f,  1.f,   -1.f,  0.f,
+        };
+
+        GL::CGhnd vertbuf;
+        GL::BufAlloc(1,&vertbuf);
+        GL::BufBind(GL::BufType::ArrayData,vertbuf);
+        GL::BufData(GL::BufType::ArrayData,sizeof(vertexdata),vertexdata,ResourceAccess::ReadOnly);
+
         cstring vshader = {
             "#version 430 core\n"
             ""
+            "layout(location=0)in vec3 pos;"
+            "layout(location=1)in vec2 tex;"
             ""
             "out gl_PerVertex{"
             "   vec4 gl_Position;"
@@ -84,16 +101,13 @@ public:
             "} vs_out;"
             ""
             "uniform mat4 transform[2];"
+            "uniform vec2 tex_mul[2];"
             ""
             "void main(void)"
             "{"
-            "   const vec3[4] vertices = vec3[4](vec3(-1.0,-1.0,1.0),"
-            "                                    vec3( 1.0,-1.0,1.0),"
-            "                                    vec3(-1.0, 1.0,1.0),"
-            "                                    vec3( 1.0, 1.0,1.0));"
             "   vs_out.instance = gl_InstanceID;"
-            "   vs_out.tc = vec2(0.5);"
-            "   gl_Position = transform[gl_InstanceID]*vec4(vertices[gl_VertexID],1.0);"
+            "   vs_out.tc = tex*tex_mul[gl_InstanceID];"
+            "   gl_Position = transform[gl_InstanceID]*vec4(pos,1.0);"
             "}"
         };
         cstring fshader = {
@@ -112,8 +126,11 @@ public:
             "{"
             "   vec4 c1 = texture(texdata,vec3(fs_in.tc,0));"
             "   vec4 c2 = texture(texdata,vec3(fs_in.tc,1));"
-            "   vec4 a1 = texture(texdata,vec3(fs_in.tc,2));"
-            "   color = mix(c1,c2,vec4(mx));"
+            "   float a1 = texture(texdata,vec3(fs_in.tc,2)).a;"
+            "   if(mx>a1)"
+            "       color = c1;"
+            "   else"
+            "       color = c2;"
             "}"
         };
 
@@ -122,15 +139,23 @@ public:
 
         GL::VAOBind(vao);
 
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+
+        GL::VAOAttribFormat(0,3,TypeEnum::Scalar,false,0);
+        GL::VAOAttribFormat(1,2,TypeEnum::Scalar,false,0);
+
+        GL::VAOBindVertexBuffer(0,vertbuf,0,sizeof(CVec3)+sizeof(CVec2));
+        GL::VAOBindVertexBuffer(1,vertbuf,sizeof(CVec3),sizeof(CVec3)+sizeof(CVec2));
+
+        GL::VAOAttribBinding(0,0);
+        GL::VAOAttribBinding(1,1);
+
         GL::CGhnd vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
         cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
-//        if(!GL::ProgramValidate(vprogram))
-//            return;
 
         GL::CGhnd fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&fshader);
         cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
-//        if(!GL::ProgramValidate(fprogram))
-//            return;
 
         GL::CGhnd pipeline;
         GL::PipelineAlloc(1,&pipeline);
@@ -138,6 +163,8 @@ public:
         GL::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
 
         GL::PipelineBind(pipeline);
+
+        GL::ShaderReleaseCompiler();
 
         if(!GL::PipelineValidate(pipeline))
             return;
@@ -164,21 +191,12 @@ public:
         obj.position = CVec3(-1,0,0);
         obj.scale = CVec3(1);
 
-        int32 cam_unif =
-                GL::ProgramGetResourceLoc(vprogram,
-                                          GL_UNIFORM,
-                                          "transform");
-        int32 tex_unif =
-                GL::ProgramGetResourceLoc(fprogram,
-                                          GL_UNIFORM,
-                                          "texdata");
-        int32 tim_unif =
-                GL::ProgramGetResourceLoc(fprogram,
-                                          GL_UNIFORM,
-                                          "mx");
+        int32 cam_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"transform");
+        int32 texm_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"tex_mul");
+        int32 tex_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"texdata");
+        int32 tim_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"mx");
 
         int32 tex_bind = 0;
-
         CMat4 cam_mat = CGraphicsData::GenPerspective(cam)
                 *CGraphicsData::GenTransform(cam);
 
@@ -187,16 +205,27 @@ public:
         obj.position = CVec3(1,0,0);
         objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
 
+        CVec2 tex_mul[2] = {};
+        tex_mul[0] = CVec2(1,1);
+        tex_mul[1] = CVec2(-1,1);
+
         GL::Uniformfv(vprogram,cam_unif,2,false,objects);
+        GL::Uniformfv(vprogram,texm_unif,2,tex_mul);
         GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
 
         cDebug("Setup time: {0}",timer->elapsed());
 
+        scalar depth_zero = 0.f;
+        bool cycle_color = false;
+
         while(!closeFlag())
         {
-            clearcol.r() = CMath::sin(this->contextTime()+0.5);
-            clearcol.g() = CMath::sin(this->contextTime()+5.0);
-            clearcol.b() = CMath::sin(this->contextTime()+50.0);
+            if(cycle_color)
+            {
+                clearcol.r() = CMath::sin(this->contextTime()+0.5);
+                clearcol.g() = CMath::sin(this->contextTime()+5.0);
+                clearcol.b() = CMath::sin(this->contextTime()+50.0);
+            }
 
             scalar time = CMath::fmod(CMath::sin(this->contextTime()),1.0);
             GL::Uniformfv(fprogram,tim_unif,1,&time);
@@ -204,8 +233,9 @@ public:
             clearcol = normalize(clearcol);
 
             GL::ClearBufferfv(true,0,clearcol);
+            GL::ClearBufferfv(false,0,&depth_zero);
 
-            GL::DrawArraysInstanced(GL_TRIANGLES,0,4,2);
+            GL::DrawArraysInstanced(GL_TRIANGLES,0,6,2);
 
             this->pollEvents();
             this->swapBuffers();
