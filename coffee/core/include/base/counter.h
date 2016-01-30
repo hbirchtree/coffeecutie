@@ -6,18 +6,15 @@
 namespace Coffee{
 namespace CFunctional{
 
-typedef void (*CFrameCounterFun)(uint32,const void*);
-
-struct CFrameCounter
+struct FrameCounter
 {
-private:
-    uint64 m_timestamp;
-    CFrameCounterFun m_fun;
 public:
+    using FrameCounterFun = void(*)(uint32,const void*);
+
     const void* ptr;
     uint32 interval;
 
-    CFrameCounter(CFrameCounterFun fun):
+    FrameCounter(FrameCounterFun fun):
         m_timestamp(0),
         m_fun(fun),
         interval(0),
@@ -29,6 +26,8 @@ public:
 
 private:
     uint32 m_frames;
+    uint64 m_timestamp;
+    FrameCounterFun m_fun;
 };
 
 }

@@ -3,7 +3,7 @@
 namespace Coffee{
 namespace CFunctional{
 
-void CFrameCounter::update(uint64 time)
+void FrameCounter::update(uint64 time)
 {
     m_frames++;
     if(time > m_timestamp)
@@ -14,7 +14,7 @@ void CFrameCounter::update(uint64 time)
     }
 }
 
-uint32 CFrameCounter::frames()
+uint32 FrameCounter::frames()
 {
     return m_frames;
 }

@@ -24,7 +24,7 @@ public:
 
     void run()
     {
-        CFunctional::CFrameCounter counter(framefun);
+        CFunctional::FrameCounter counter(framefun);
         counter.interval = 1000000;
         CElapsedTimerMicro* clock = AllocTimerMicro();
         clock->start();

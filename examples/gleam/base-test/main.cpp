@@ -6,6 +6,11 @@
 using namespace Coffee;
 using namespace CDisplay;
 
+void framecount_fun(uint32 t, c_cptr)
+{
+    cDebug("Frames: {0}",t);
+}
+
 using GL = CGL::CGL43;
 
 class CDRenderer : public Coffee::CDisplay::CGLeamRenderer
@@ -19,7 +24,11 @@ public:
     void run()
     {
         CElapsedTimerD* timer = AllocTimerD();
+        CElapsedTimer* ftimer = AllocTimer();
         timer->start();
+
+        FrameCounter fcounter(framecount_fun);
+        fcounter.interval = 1000;
 
         CSize winSize = this->windowSize();
         winSize.w = winSize.w/2;
@@ -220,16 +229,19 @@ public:
         scalar depth_zero = 0.f;
         bool cycle_color = false;
 
+        ftimer->start();
         while(!closeFlag())
         {
+            scalar time = this->contextTime();
+
             if(cycle_color)
             {
-                clearcol.r() = CMath::sin(this->contextTime()+0.5);
-                clearcol.g() = CMath::sin(this->contextTime()+5.0);
-                clearcol.b() = CMath::sin(this->contextTime()+50.0);
+                clearcol.r() = CMath::sin(time+0.5);
+                clearcol.g() = CMath::sin(time+5.0);
+                clearcol.b() = CMath::sin(time+50.0);
             }
 
-            scalar time = CMath::fmod(CMath::sin(this->contextTime()),1.0);
+            time = (CMath::sin(time)+CMath::sin(time*0.5)+1.0)/2.0;
             GL::Uniformfv(fprogram,tim_unif,1,&time);
 
             clearcol = normalize(clearcol);
@@ -238,6 +250,8 @@ public:
             GL::ClearBufferfv(false,0,&depth_zero);
 
             GL::DrawArraysInstanced(GL_TRIANGLES,0,6,2);
+
+            fcounter.update(ftimer->elapsed());
 
             this->pollEvents();
             this->swapBuffers();
@@ -310,7 +324,7 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("Allocated renderer: {0}",timer->elapsed());
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
-    props.gl.version.major = 4;
+    props.gl.version.major = 3;
     props.gl.version.minor = 3;
 
     renderer->init(props);
