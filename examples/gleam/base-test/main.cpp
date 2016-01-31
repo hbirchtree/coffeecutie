@@ -90,13 +90,13 @@ public:
             "   flat int instance;"
             "} vs_out;"
             ""
-            "uniform mat4 transform[2];"
+            "uniform mat4 transform[102];"
             "uniform vec2 tex_mul[2];"
             ""
             "void main(void)"
             "{"
             "   vs_out.instance = gl_InstanceID;"
-            "   vs_out.tc = tex*tex_mul[gl_InstanceID];"
+            "   vs_out.tc = tex*tex_mul[gl_InstanceID%3];"
             "   gl_Position = transform[gl_InstanceID]*vec4(pos,1.0);"
             "}"
         };
@@ -116,7 +116,8 @@ public:
             "{"
             "   vec4 c1 = texture(texdata,vec3(fs_in.tc,0));"
             "   vec4 c2 = texture(texdata,vec3(fs_in.tc,1));"
-            "   float a1 = texture(texdata,vec3(fs_in.tc,2)).a;"
+            "   vec4 amask = texture(texdata,vec3(fs_in.tc,2));"
+            "   float a1 = amask.a;"
             "   if(mx>a1)"
             "       color = c1;"
             "   else"
@@ -197,17 +198,23 @@ public:
 
             CGraphicsData::CTransform obj;
             obj.scale = CVec3(1);
-            CMat4 objects[2] = {};
+            CMat4 objects[102] = {};
             obj.position = CVec3(-1,0,0);
             objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
             obj.position = CVec3(1,0,0);
             objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
 
+            for(uint32 i=2;i<102;i++)
+            {
+                obj.position = CVec3(-2,0,i/2.0);
+                objects[i] = cam_mat*CGraphicsData::GenTransform(obj);
+            }
+
             CVec2 tex_mul[2] = {};
             tex_mul[0] = CVec2(1,1);
             tex_mul[1] = CVec2(-1,1);
 
-            GL::Uniformfv(vprogram,cam_unif,2,false,objects);
+            GL::Uniformfv(vprogram,cam_unif,102,false,objects);
             GL::Uniformfv(vprogram,texm_unif,2,tex_mul);
             GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
         }
@@ -221,6 +228,7 @@ public:
         bool cycle_color = false;
 
         GL::Enable(GL::Feature::Blend);
+//        GL::Enable(GL::Feature::DepthTest);
 
         ftimer.start();
         while(!closeFlag())
@@ -307,6 +315,26 @@ int32 coffee_main(int32, cstring_w*)
         }
         OpenVRDev::OVRDevice* dev = OpenVRDev::GetDevice(0);
         cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
+    }
+
+    {
+        CResources::CResource fonttest("/home/havard/.fonts/Final Fantasy.ttf",true);
+        CResources::FileMap(fonttest);
+        CByteData fontdesc = CResources::FileGetDescriptor(fonttest);
+        FontRenderer::FontData* fontdata = FontRenderer::LoadFontConfig(fontdesc);
+        FontRenderer::FontProperties p;
+        FontRenderer::GetFontProperties(fontdata,64,&p);
+
+        cDebug("Font name: {0}",FontRenderer::GetFontName(fontdata));
+        uint32 size = 0;
+        CRect bound;
+        FontRenderer::CalcTextSize(fontdata,p,"test-string",&bound,&size);
+        cDebug("Font size: {0}+{1} {2}x{3}",bound.x,bound.y,bound.w,bound.h);
+
+        FontRenderer::RenderText(fontdata,p,"test-string");
+
+        FontRenderer::UnloadFontConfig(fontdata);
+        CResources::FileUnmap(fonttest);
     }
 
     CResources::FileResourcePrefix("sample_data/");

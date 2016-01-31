@@ -97,6 +97,14 @@ inline C_FORCE_INLINE bool FileMkdir(cstring dirname, bool recursive)
     return DirFun::MkDir(dirname,recursive);
 }
 
+inline C_FORCE_INLINE CByteData FileGetDescriptor(CResource& resc)
+{
+    CByteData d;
+    d.data = (byte_t*)resc.data;
+    d.size = resc.size;
+    return d;
+}
+
 }
 }
 

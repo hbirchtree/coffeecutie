@@ -258,7 +258,7 @@ template<typename T> struct _cbasic_rect
     {
         return w*h;
     }
-    _cbasic_rect<T>& intersection(const _cbasic_rect<T>& rekt)
+    _cbasic_rect<T> intersection(const _cbasic_rect<T>& rekt)
     {
         if(!( rekt.left() < this->right() &&
               rekt.right() > this->left() &&
@@ -278,6 +278,20 @@ template<typename T> struct _cbasic_rect
                 point.y>this->bottom() && point.y<this->top())
             return true;
         return true;
+    }
+    _cbasic_rect<T> unite(const _cbasic_rect<T>& rekt)
+    {
+        return _cbasic_rect<T>(
+                    std::min(rekt.x,this->x),
+                    std::min(rekt.y,this->y),
+                    std::max(rekt.w,this->w),
+                    std::max(rekt.h,this->h));
+    }
+    _cbasic_rect<T> offset(const _cbasic_point<T>& point)
+    {
+        return _cbasic_rect<T>(this->x+point.x,
+                               this->y+point.y,
+                               this->w,this->h);
     }
 };
 
