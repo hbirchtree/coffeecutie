@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include <plat/platform_detect.h>
-#include <plat/environment_details.h>
+#include <plat/environment/environment_details.h>
 
 #include <plat/plat_core.h>
 #include <base/cdebug.h>

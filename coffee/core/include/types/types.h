@@ -1,11 +1,11 @@
 #ifndef COFFEE_TYPES
 #define COFFEE_TYPES
 
-#include <plat/cmemory.h>
+#include <plat/plat_memory.h>
 #include "vector_types.h"
 #include "composite_types.h"
 #include "graphics_types.h"
-#include <plat/plat_timers.h>
+#include <plat/plat_timing.h>
 
 namespace Coffee{
 

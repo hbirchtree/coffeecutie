@@ -44,6 +44,10 @@ struct C_FORCE_PACKING scalar10
     uint8 mantissa:5;
 };
 
+using Timestamp = uint64;
+
+using DateTime = tm;
+
 template<typename T> class _cbasic_timer
 {
 public:
@@ -581,11 +585,11 @@ typedef _cbasic_zfield<scalar> CZField;
 
 typedef _cbasic_zfield<scalar> CZField64;
 
-typedef _cbasic_timer<uint64> CElapsedTimer;
+//typedef _cbasic_timer<uint64> CElapsedTimer;
 
-typedef _cbasic_timer<uint64> CElapsedTimerMicro;
+//typedef _cbasic_timer<uint64> CElapsedTimerMicro;
 
-typedef _cbasic_timer<bigscalar> CElapsedTimerD;
+//typedef _cbasic_timer<bigscalar> CElapsedTimerD;
 }
 
 #endif

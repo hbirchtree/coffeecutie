@@ -4,7 +4,7 @@
 #define SDL2_WINDOWING
 
 #include "sdl2datatypes.h"
-#include <plat/plat_wm.h>
+#include <plat/windowmanager/plat_wm.h>
 #include <plat/platform_detect.h>
 #include <base/cdisplay.h>
 

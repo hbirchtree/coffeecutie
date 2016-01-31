@@ -1,7 +1,7 @@
 #include "cdrenderer.h"
 
 #include <coffee/CGraphics>
-#include <plat/plat_wm.h>
+#include <plat/windowmanager/plat_wm.h>
 #include <input/cinputfunctions.h>
 #include "base_case.h"
 
@@ -76,7 +76,7 @@ void CDRenderer::run()
     coffee_graphics_set_viewport(m_properties.size);
 
     bigscalar mtime = 0.0;
-    CElapsedTimerMicro* swap = AllocTimerMicro();
+    CElapsedTimerMicro swap;
 
     setSwapInterval(0);
     cMsg("Coffee","Init time: {0}s",(double)contextTime());
@@ -89,7 +89,7 @@ void CDRenderer::run()
     while(!closeFlag()){
         delta = contextTime();
 
-        swap->start();
+        swap.start();
 
         //Rendering part
 
@@ -104,19 +104,19 @@ void CDRenderer::run()
         coffee_render_test(game,deltaT);
 
         // END Rendering part
-        rendertime = swap->elapsed();
+        rendertime = swap.elapsed();
 
         //Event handling
-        swap->start();
+        swap.start();
         executeRunQueue();
-        qtime = swap->elapsed();
-        swap->start();
+        qtime = swap.elapsed();
+        swap.start();
         pollEvents();
-        inputtime = swap->elapsed();
+        inputtime = swap.elapsed();
         //Buffer swapping
-        swap->start();
+        swap.start();
         swapBuffers();
-        swaptime = swap->elapsed();
+        swaptime = swap.elapsed();
         frames++;
 
         //Info
@@ -132,13 +132,13 @@ void CDRenderer::run()
         }
     }
 
-    swap->start();
+    swap.start();
     coffee_unload_test(game);
     delete game;
 
     hideWindow();
 
-    cMsg("Coffee","Termination time: {0}us",swap->elapsed());
+    cMsg("Coffee","Termination time: {0}us",swap.elapsed());
 }
 
 void CDRenderer::run(const CDProperties& props)

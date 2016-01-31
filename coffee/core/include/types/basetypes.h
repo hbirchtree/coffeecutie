@@ -92,6 +92,8 @@ enum class ResourceAccess : uint16
 
     Persistent = 0x40,
     Streaming = 0x80,
+
+    Append = 0x100,
 };
 
 enum class TypeEnum : uint8

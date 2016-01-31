@@ -1,4 +1,4 @@
-#include <plat/plat_libraries.h>
+#include <plat/linking/libraries.h>
 
 #include <coffee_strings.h>
 

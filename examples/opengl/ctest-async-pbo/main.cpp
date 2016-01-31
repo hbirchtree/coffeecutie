@@ -26,8 +26,8 @@ public:
     {
         CFunctional::FrameCounter counter(framefun);
         counter.interval = 1000000;
-        CElapsedTimerMicro* clock = AllocTimerMicro();
-        clock->start();
+        CElapsedTimerMicro clock;
+        clock.start();
 
         const CVec3 vertexdata[] = {
             CVec3(-1.f, 1.f, 0.f),
@@ -283,7 +283,7 @@ public:
                 }
             }
 
-            counter.update(clock->elapsed());
+            counter.update(clock.elapsed());
             coffee_graphics_draw_indexed(CPrimitiveMode::Triangles,drawcall);
             texture.advance();
 
@@ -299,8 +299,6 @@ public:
         coffee_graphics_free(texcoords);
         coffee_graphics_free(transforms.size,transforms.data);
         coffee_graphics_free(indices);
-
-        FreeTimer(clock);
     }
 
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)

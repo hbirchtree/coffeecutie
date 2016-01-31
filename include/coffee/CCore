@@ -7,6 +7,6 @@
 #include <coffee/core/CTypes>
 #include <coffee_macros.h>
 
-#include <plat/environment_details.h>
-#include <plat/argument_parse.h>
-#include <plat/application_start.h>
+#include <plat/environment/environment_details.h>
+#include <plat/environment/argument_parse.h>
+#include <plat/environment/application_start.h>

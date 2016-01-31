@@ -37,7 +37,7 @@ set ( CoffeeCore_SRCS
     private/plat/environment_details.cpp
     private/plat/cmemory.cpp
     private/plat/plat_file.cpp
-    private/plat/plat_libraries.cpp
+    private/plat/linking/libraries.cpp
     private/plat/plat_timers.cpp
     private/plat/windows/win_core.cpp
     private/plat/unix/unix_core.cpp

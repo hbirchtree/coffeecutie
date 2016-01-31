@@ -59,7 +59,7 @@ public:
 
     void startVideoTimer()
     {
-        m_vclock = AllocTimer();
+        m_vclock = new CElapsedTimer;
         m_vclock->start();
         last_pts = 0;
         m_video_delay = 0;

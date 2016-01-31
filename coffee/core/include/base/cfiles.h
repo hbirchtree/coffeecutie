@@ -2,6 +2,7 @@
 #define CFILES_H
 
 #include <types/basetypes.h>
+#include "../plat/plat_file.h"
 
 namespace Coffee{
 namespace CResources{
@@ -62,7 +63,7 @@ extern bool FileExists(const CResource& resc);
  * \brief Memory map file as buffer
  * \return True if success
  */
-extern bool FileMap(CResource& resc);
+extern bool FileMap(CResource& resc, ResourceAccess acc = ResourceAccess::ReadOnly);
 /*!
  * \brief Unmap file
  * \return True if success
@@ -91,7 +92,10 @@ extern void FileCommitTextmode(const CResource& resc, bool append = false);
  * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
  * \return True if process succeeded
  */
-extern bool FileMkdir(cstring dirname, bool recursive);
+inline C_FORCE_INLINE bool FileMkdir(cstring dirname, bool recursive)
+{
+    return DirFun::MkDir(dirname,recursive);
+}
 
 }
 }

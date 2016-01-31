@@ -3,7 +3,7 @@
 
 #include "coffee/core/CBase"
 #include "coffee/core/CTypes"
-#include "platform_detect.h"
+#include "../platform_detect.h"
 
 namespace Coffee{
 namespace CLibraryLoader{

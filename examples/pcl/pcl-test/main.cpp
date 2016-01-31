@@ -102,13 +102,13 @@ int32 coffee_main(int32, cstring_w*)
 
     CResources::FileFree(color);
 
-    CElapsedTimerD* timer = AllocTimerD();
-    timer->start();
+    CElapsedTimerD timer;
+    timer.start();
 
     CPCL::PointCloud<CPCL::PointXYZ>::Ptr pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
     CPCLI::DenoiseCloud(pcl_xyz);
     CPCL::PolygonMesh* mesh = CPCLI::CreatePolygonMesh(pcl_xyz);
-    cDebug("Mesh processing time: {0}",timer->elapsed());
+    cDebug("Mesh processing time: {0}",timer.elapsed());
 
     CPCL::io::saveVTKFile("mesh.vtk",*mesh);
 

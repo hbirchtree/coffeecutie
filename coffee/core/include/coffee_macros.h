@@ -2,7 +2,7 @@
 #define COFFEE_MACROS
 
 #include "types/basetypes.h"
-#include "plat/cmemory.h"
+#include <plat/plat_memory.h>
 #include "coffee_mem_macros.h"
 #include <plat/platform_detect.h>
 #include <stdio.h>

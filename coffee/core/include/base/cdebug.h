@@ -7,13 +7,14 @@
 #include <cppformat/format.h>
 #endif
 
-#include "cdebug_print.h"
+#include "debug/cdebug_print.h"
+#include "debug/debugprinter.h"
 #include <coffee_macros.h>
 
 #include "counter.h"
 
 namespace Coffee{
-namespace CDebugPrint{
+namespace DebugFun{
 
 struct DebuggingState
 {
@@ -81,11 +82,12 @@ template<typename... Arg>
  * \param args Variadic arguments to string format
  */
 inline void cDebugPrint(
-        uint8 severity,
+        Severity severity,
         uint32 stackreduce,
         cstring str,
         Arg... args)
 {
+    /*
     cstring sevstring = nullptr;
     cstring_w timestring = nullptr;
     cstring callstring = nullptr;
@@ -142,6 +144,7 @@ inline void cDebugPrint(
 
     CDebugHelpers::coffee_free_callstack(callstack,cs_length);
     coffee_debug_clear_clock_string(timestring);
+    */
 }
 
 template<typename... Arg>
@@ -176,7 +179,7 @@ template<typename... Arg>
  */
 inline void cDebug(cstring str, Arg... args)
 {
-    cDebugPrint(1,1,str,args...);
+    DebugPrinter::cDebug(str,args...);
 }
 
 template<typename... Arg>
@@ -187,7 +190,7 @@ template<typename... Arg>
  */
 inline void cWarning(cstring str, Arg... args)
 {
-    cDebugPrint(2,1,str,args...);
+    DebugPrinter::cWarning(str,args...);
 }
 
 template<typename... Arg>
@@ -198,7 +201,7 @@ template<typename... Arg>
  */
 inline void cFatal(cstring str, Arg... args)
 {
-    cDebugPrint(3,1,str,args...);
+    DebugPrinter::cFatal(str,args...);
 }
 
 template<typename... Arg>
@@ -211,7 +214,8 @@ template<typename... Arg>
 inline void cMsg(cstring src, cstring msg, Arg... args)
 {
     CString msg_out = cStringFormat(msg,args...);
-    cDebugPrint(0,1,"{0}: {1}",src,msg_out.c_str());
+    cDebugPrint(Severity::Information,
+                1,"{0}: {1}",src,msg_out.c_str());
 }
 
 template<typename...Arg>
@@ -225,7 +229,7 @@ inline void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
 
 }
 
-using namespace Coffee::CDebugPrint;
+using namespace Coffee::DebugFun;
 
 }
 

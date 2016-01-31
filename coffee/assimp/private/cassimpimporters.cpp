@@ -44,8 +44,8 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
 //             scene->mNumAnimations,scene->mNumTextures);
     }
 
-    CElapsedTimer* timer = AllocTimer();
-    timer->start();
+    CElapsedTimer timer;
+    timer.start();
 
     std::vector<CAssimpMesh*> meshes;
 #ifdef CASSIMP_MULTITHREAD

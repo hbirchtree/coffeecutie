@@ -51,13 +51,16 @@ bool FileExists(const CResource &resc)
 #endif
 }
 
-bool FileMap(CResource &resc)
+bool FileMap(CResource &resc, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
-    resc.size = FileGetSize(resc.resource());
+    FileFun::FileHandle* h = FileFun::Open(resc.resource(),ResourceAccess::ReadOnly);
+    resc.size = FileFun::Size(h);
+    FileFun::Close(h);
     int err = 0;
-    resc.data = CMemoryManagement::coffee_memory_map_file(
+    resc.data = FileFun::Map(
                 resc.resource(),
+                acc,
                 0,resc.size,
                 &err);
     if(!resc.data)
@@ -75,7 +78,7 @@ bool FileMap(CResource &resc)
 bool FileUnmap(CResource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
-    bool s = CMemoryManagement::coffee_memory_unmap_file(resc.data,resc.size);
+    bool s = FileFun::Unmap(resc.data,resc.size);
     resc.data = nullptr;
     resc.size = 0;
     return s;
@@ -94,16 +97,18 @@ void FileFree(CResource &resc)
 bool FilePull(CResource &resc, bool textmode, bool)
 {
 #if defined(COFFEE_C_FILE_API)
-    CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),"rb");
+    FileFun::FileHandle *fp = FileFun::Open(resc.resource(),ResourceAccess::ReadOnly);
 
     if(!fp){
-        cWarning("Failed to read file: %s",resc.resource());
+        cWarning("Failed to read file: {0}",resc.resource());
         return false;
     }
 
-    resc.data = CFiles::coffee_file_read(fp,resc.data,&resc.size,textmode);
-    if(CFiles::coffee_file_close(fp))
-        cWarning("Failed to close file: %s",resc.resource());
+    CByteData data = FileFun::Read(fp,-1,textmode);
+    resc.data = data.data;
+    resc.size = data.size;
+    if(!FileFun::Close(fp))
+        cWarning("Failed to close file: {0}",resc.resource());
 
     return true;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
@@ -114,10 +119,14 @@ bool FilePull(CResource &resc, bool textmode, bool)
 bool FileCommit(CResource &resc, bool append)
 {
 #if defined(COFFEE_C_FILE_API)
-    CFiles::CFile *fp = CFiles::coffee_file_open(resc.resource(),(append) ? "ab+" : "wb");
-    bool stat = CFiles::coffee_file_write(fp,resc.data,resc.size);
-    if(CFiles::coffee_file_close(fp))
-        cWarning("Failed to close file: %s",resc.resource());
+    FileFun::FileHandle *fp = FileFun::Open(resc.resource(),
+                                            (append) ? ResourceAccess::Append|ResourceAccess::WriteOnly : ResourceAccess::WriteOnly);
+    CByteData d;
+    d.data = (byte_t*)resc.data;
+    d.size = resc.size;
+    bool stat = FileFun::Write(fp,d,false);
+    if(!FileFun::Close(fp))
+        cWarning("Failed to close file: {0}",resc.resource());
     return stat;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
@@ -139,15 +148,6 @@ CResource::CResource(cstring rsrc, bool absolute):
 cstring CResource::resource() const
 {
     return m_resource.c_str();
-}
-
-bool FileMkdir(cstring dirname, bool recursive)
-{
-#if defined(COFFEE_C_FILE_API)
-    return CFiles::MkDir(dirname,recursive);
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return false;
-#endif
 }
 
 }

@@ -3,7 +3,7 @@
 
 #include <coffee/core/CBase>
 #include <coffee/core/CTypes>
-#include <plat/cmemory.h>
+#include <plat/plat_memory.h>
 
 namespace CoffeeTests{
 

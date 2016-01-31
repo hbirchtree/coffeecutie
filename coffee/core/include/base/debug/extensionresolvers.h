@@ -1,17 +1,16 @@
-#ifndef COFFEE_CORE_DEBUG_PRINT_H
-#define COFFEE_CORE_DEBUG_PRINT_H
+#ifndef COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
+#define COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
 
 #include <iostream>
 #include <string>
 #include <iomanip>
 #include <sstream>
 #include <coffee_macros.h>
-#include <plat/cmemory.h>
+#include <plat/plat_memory.h>
 #include <types/types.h>
 
 namespace Coffee{
-namespace CDebugPrint{
-
+namespace DebugFun{
 namespace conversion{
 
 #if defined(COFFEE_USE_STL_TO_STRING)
@@ -173,8 +172,6 @@ inline C_FORCE_INLINE CString cStringReplace(
                                                arg.firmware));
 }
 
-/* Core string resolution */
-
 template<typename T>
 inline C_FORCE_INLINE CString cStringReplace(
         CString fmt, size_t index,
@@ -206,34 +203,6 @@ inline C_FORCE_INLINE CString cStringReplace(
         const CString& arg)
 {
     return cStrReplace(fmt,index,arg);
-}
-
-template<typename T>
-inline C_FORCE_INLINE CString cStringReplace(
-        CString fmt, size_t index,
-        const T& arg)
-{
-    return cStrReplace(fmt,index,conversion::to_string(arg));
-}
-
-template<typename T>
-inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T& arg)
-{
-    CString str = cStringReplace(fmt,index,arg);
-    return cStringResolve(str,++index);
-}
-
-template<typename... Args, typename T>
-inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T& arg, Args... args)
-{
-    CString str = cStringReplace(fmt,index,arg);
-    return cStringResolve(str,++index,args...);
-}
-
-template<typename... Arg>
-inline C_FORCE_INLINE CString cStringFormat(cstring fmt, Arg... args)
-{
-    return cStringResolve(fmt,0,args...);
 }
 
 }

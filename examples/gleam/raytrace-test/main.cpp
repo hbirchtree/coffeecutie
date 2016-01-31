@@ -21,8 +21,8 @@ public:
     {
         glContext()->acquireContext();
 
-        CElapsedTimerD* timer = AllocTimerD();
-        timer->start();
+        CElapsedTimerD timer;
+        timer.start();
 
         /* Data definition and declaration */
         CGraphicsData::CGCamera cam;
@@ -158,7 +158,7 @@ public:
 
         /**/
 
-        cDebug("Setup time: {0}",timer->elapsed());
+        cDebug("Setup time: {0}",timer.elapsed());
 
 
         while(!closeFlag())
@@ -216,23 +216,23 @@ int32 coffee_main(int32, cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
 
-    CElapsedTimerD* timer = AllocTimerD();
-    timer->start();
+    CElapsedTimerD timer;
+    timer.start();
     CSDL2Renderer *renderer = new CDRenderer();
-    cDebug("Allocated renderer: {0}",timer->elapsed());
+    cDebug("Allocated renderer: {0}",timer.elapsed());
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 4;
     props.gl.version.minor = 3;
 
     renderer->init(props);
-    cDebug("Init renderer: {0}",timer->elapsed());
+    cDebug("Init renderer: {0}",timer.elapsed());
 
     renderer->run();
-    timer->start();
+    timer.start();
     renderer->cleanup();
     delete renderer;
-    cDebug("Cleanup renderer: {0}",timer->elapsed());
+    cDebug("Cleanup renderer: {0}",timer.elapsed());
 
 //    CRGBA* img = (CRGBA*)Alloc(256*256*4);
 

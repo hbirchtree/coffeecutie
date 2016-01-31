@@ -8,8 +8,8 @@ int32 coffee_main(int32,cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
 
-    CElapsedTimerMicro* timer = AllocTimerMicro();
-    timer->start();
+    CElapsedTimerMicro timer;
+    timer.start();
 
     CDRenderer* renderer = new CDRenderer(nullptr);
 
@@ -22,7 +22,7 @@ int32 coffee_main(int32,cstring_w*)
     std::atomic_bool status;
     std::future<void> ret = coffee_display_start_async(&status,renderer,props);
 
-    cDebug("Launch time: {0}us, main thread is now free",timer->elapsed());
+    cDebug("Launch time: {0}us, main thread is now free",timer.elapsed());
 
     ret.get();
 

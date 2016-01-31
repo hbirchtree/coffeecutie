@@ -1,7 +1,7 @@
 #ifndef COFFEE_TYPES_TRANSLATABLE_STRING_H
 #define COFFEE_TYPES_TRANSLATABLE_STRING_H
 
-#include <plat/cmemory.h>
+#include <plat/plat_memory.h>
 #include "basetypes.h"
 
 namespace Coffee{

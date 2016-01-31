@@ -219,7 +219,7 @@ public:
         double timeout = this->contextTime();
         int counter = 0;
 
-        CElapsedTimerMicro* timer = AllocTimerMicro();
+        CElapsedTimerMicro timer;
 
         CALSoundManager snd_man;
         CSoundDevice<CALSource,CALBuffer>* snd_dev =
@@ -237,7 +237,7 @@ public:
         this->showWindow();
         while(!this->closeFlag())
         {
-            timer->start();
+            timer.start();
             coffee_graphics_clear(CClearFlag::Color);
 
             cam_matrix = GenPerspective(camera)*GenTransform(camera);
@@ -294,7 +294,7 @@ public:
             if((this->contextTime()-timeout)>=1.0)
             {
                 timeout = this->contextTime();
-                cDebug("frames={0}, frametime={1}us",counter,timer->elapsed());
+                cDebug("frames={0}, frametime={1}us",counter,timer.elapsed());
                 counter=0;
             }
 

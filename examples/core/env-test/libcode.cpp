@@ -1,12 +1,12 @@
 #include "library.h"
 
 #include <coffee/core/CBase>
-#include <plat/cmemory.h>
+#include <plat/plat_memory.h>
 
 #include <stdio.h>
 
 using namespace Coffee;
-using namespace CDebugPrint;
+using namespace DebugFun;
 
 class TestImplementation : public TestClass
 {

@@ -2,12 +2,13 @@
 
 #include <signal.h>
 
-#include <plat/platform_detect.h>
+#include "plat/platform_detect.h"
 #include "base/cdebug.h"
-#include <plat/plat_core.h>
-#include <unit_tests/data_types.h>
-#include <unit_tests/memory_operations.h>
-#include <plat/cmd_interface.h>
+#include "plat/plat_core.h"
+#include "unit_tests/data_types.h"
+#include "unit_tests/memory_operations.h"
+#include "plat/memory/cmd_interface.h"
+#include "plat/environment/process_def.h"
 
 static bool coffee_initialized = false;
 
@@ -57,7 +58,7 @@ void CoffeeInit()
     coffee_initialized = true;
 
     //Allow core dump by default
-    CoreDumpEnable();
+    ProcessProperty::CoreDumpEnable();
 
     //Set up signal handlers, make the process more well-behaved
     signal(SIGILL,sighandle);

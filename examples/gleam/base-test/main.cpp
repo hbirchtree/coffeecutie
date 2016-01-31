@@ -23,35 +23,12 @@ public:
 
     void run()
     {
-        CElapsedTimerD* timer = AllocTimerD();
-        CElapsedTimer* ftimer = AllocTimer();
-        timer->start();
+        CElapsedTimerD timer;
+        CElapsedTimer ftimer;
+        timer.start();
 
         FrameCounter fcounter(framecount_fun);
         fcounter.interval = 1000;
-
-        CSize winSize = this->windowSize();
-        winSize.w = winSize.w/2;
-        CRectF leftEye;
-        CRectF rightEye;
-        leftEye.x = 0;
-        leftEye.y = 0;
-        leftEye.w = winSize.w;
-        leftEye.h = winSize.h;
-
-        rightEye.x = winSize.w;
-        rightEye.y = 0;
-        rightEye.w = winSize.w;
-        rightEye.h = winSize.h;
-
-        CVec4 clearcol(0.0);
-        clearcol.a() = 1.0;
-
-        //        GLEXT::ViewportSet(0,&leftEye);
-        //        GLEXT::ViewportSet(1,&rightEye);
-
-        GL::Enable(GL::Feature::Blend);
-//        GL::Enable(GL::Feature::DepthTest);
 
         const cstring textures[3] = {"eye-normal.tga","eye-weird.tga","eye-alpha.tga"};
 
@@ -91,11 +68,13 @@ public:
         };
 
         GL::CGhnd vertbuf;
-        GL::BufAlloc(1,&vertbuf);
-        GL::BufBind(GL::BufType::ArrayData,vertbuf);
-        GL::BufStorage(GL::BufType::ArrayData,
-                       sizeof(vertexdata),vertexdata,
-                       ResourceAccess::ReadOnly);
+        {
+            GL::BufAlloc(1,&vertbuf);
+            GL::BufBind(GL::BufType::ArrayData,vertbuf);
+            GL::BufStorage(GL::BufType::ArrayData,
+                           sizeof(vertexdata),vertexdata,
+                           ResourceAccess::ReadOnly);
+        }
 
         cstring vshader = {
             "#version 430 core\n"
@@ -146,21 +125,23 @@ public:
         };
 
         GL::CGhnd vao;
-        GL::VAOAlloc(1,&vao);
+        {
+            GL::VAOAlloc(1,&vao);
 
-        GL::VAOBind(vao);
+            GL::VAOBind(vao);
 
-        GL::VAOEnableAttrib(0);
-        GL::VAOEnableAttrib(1);
+            GL::VAOEnableAttrib(0);
+            GL::VAOEnableAttrib(1);
 
-        GL::VAOAttribFormat(0,3,TypeEnum::Scalar,false,0);
-        GL::VAOAttribFormat(1,2,TypeEnum::Scalar,false,0);
+            GL::VAOAttribFormat(0,3,TypeEnum::Scalar,false,0);
+            GL::VAOAttribFormat(1,2,TypeEnum::Scalar,false,0);
 
-        GL::VAOBindVertexBuffer(0,vertbuf,0,sizeof(CVec3)+sizeof(CVec2));
-        GL::VAOBindVertexBuffer(1,vertbuf,sizeof(CVec3),sizeof(CVec3)+sizeof(CVec2));
+            GL::VAOBindVertexBuffer(0,vertbuf,0,sizeof(CVec3)+sizeof(CVec2));
+            GL::VAOBindVertexBuffer(1,vertbuf,sizeof(CVec3),sizeof(CVec3)+sizeof(CVec2));
 
-        GL::VAOAttribBinding(0,0);
-        GL::VAOAttribBinding(1,1);
+            GL::VAOAttribBinding(0,0);
+            GL::VAOAttribBinding(1,1);
+        }
 
         GL::CGhnd vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
         cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
@@ -169,67 +150,79 @@ public:
         cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
 
         GL::CGhnd pipeline;
-        GL::PipelineAlloc(1,&pipeline);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
-
-        GL::PipelineBind(pipeline);
-
-        GL::ShaderReleaseCompiler();
-
-        if(!GL::PipelineValidate(pipeline))
-            return;
-
-        GL::CGhnd texture_array;
-        GL::TexAlloc(1,&texture_array);
-        GL::TexActive(0);
-        GL::TexBind(GL::Texture::T2DArray,texture_array);
-        GL::TexStorage3D(GL::Texture::T2DArray,1,PixelFormat::RGBA32F,1024,1024,3);
-        for(uint32 i=0;i<3;i++)
         {
-            GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
-            GL::TexSubImage3D(GL::Texture::T2DArray,0,
-                              0,0,i,1024,1024,1,
-                              PixelComponents::RGBA,BitFormat::UByte,nullptr);
+            GL::PipelineAlloc(1,&pipeline);
+            GL::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
+            GL::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
+
+            GL::PipelineBind(pipeline);
+
+            GL::ShaderReleaseCompiler();
+
+            if(!GL::PipelineValidate(pipeline))
+                return;
         }
 
-        CGraphicsData::CGCamera cam;
-        cam.aspect = 1.6;
-        cam.fieldOfView = 70.f;
-        cam.position = CVec3(0,0,-3);
+        GL::CGhnd texture_array;
+        {
+            GL::TexAlloc(1,&texture_array);
+            GL::TexActive(0);
+            GL::TexBind(GL::Texture::T2DArray,texture_array);
+            GL::TexStorage3D(GL::Texture::T2DArray,1,PixelFormat::RGBA32F,1024,1024,3);
+            for(uint32 i=0;i<3;i++)
+            {
+                GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
+                GL::TexSubImage3D(GL::Texture::T2DArray,0,
+                                  0,0,i,1024,1024,1,
+                                  PixelComponents::RGBA,BitFormat::UByte,nullptr);
+            }
+        }
 
-        CGraphicsData::CTransform obj;
-        obj.position = CVec3(-1,0,0);
-        obj.scale = CVec3(1);
+        int32 tim_unif;
+        {
+            CGraphicsData::CGCamera cam;
+            cam.aspect = 1.6;
+            cam.fieldOfView = 70.f;
+            cam.position = CVec3(0,0,-3);
 
-        int32 cam_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"transform");
-        int32 texm_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"tex_mul");
-        int32 tex_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"texdata");
-        int32 tim_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"mx");
 
-        int32 tex_bind = 0;
-        CMat4 cam_mat = CGraphicsData::GenPerspective(cam)
-                *CGraphicsData::GenTransform(cam);
+            int32 cam_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"transform");
+            int32 texm_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"tex_mul");
+            int32 tex_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"texdata");
+            tim_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"mx");
 
-        CMat4 objects[2] = {};
-        objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
-        obj.position = CVec3(1,0,0);
-        objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
+            int32 tex_bind = 0;
+            CMat4 cam_mat = CGraphicsData::GenPerspective(cam)
+                    *CGraphicsData::GenTransform(cam);
 
-        CVec2 tex_mul[2] = {};
-        tex_mul[0] = CVec2(1,1);
-        tex_mul[1] = CVec2(-1,1);
+            CGraphicsData::CTransform obj;
+            obj.scale = CVec3(1);
+            CMat4 objects[2] = {};
+            obj.position = CVec3(-1,0,0);
+            objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
+            obj.position = CVec3(1,0,0);
+            objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
 
-        GL::Uniformfv(vprogram,cam_unif,2,false,objects);
-        GL::Uniformfv(vprogram,texm_unif,2,tex_mul);
-        GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
+            CVec2 tex_mul[2] = {};
+            tex_mul[0] = CVec2(1,1);
+            tex_mul[1] = CVec2(-1,1);
 
-        cDebug("Setup time: {0}",timer->elapsed());
+            GL::Uniformfv(vprogram,cam_unif,2,false,objects);
+            GL::Uniformfv(vprogram,texm_unif,2,tex_mul);
+            GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
+        }
+
+        cDebug("Setup time: {0}",timer.elapsed());
+
+        CVec4 clearcol(0.0);
+        clearcol.a() = 1.0;
 
         scalar depth_zero = 0.f;
         bool cycle_color = false;
 
-        ftimer->start();
+        GL::Enable(GL::Feature::Blend);
+
+        ftimer.start();
         while(!closeFlag())
         {
             scalar time = this->contextTime();
@@ -251,7 +244,7 @@ public:
 
             GL::DrawArraysInstanced(GL_TRIANGLES,0,6,2);
 
-            fcounter.update(ftimer->elapsed());
+            fcounter.update(ftimer.elapsed());
 
             this->pollEvents();
             this->swapBuffers();
@@ -318,29 +311,30 @@ int32 coffee_main(int32, cstring_w*)
 
     CResources::FileResourcePrefix("sample_data/");
 
-    CElapsedTimerD* timer = AllocTimerD();
-    timer->start();
+    CElapsedTimerD timer;
+    timer.start();
     CSDL2Renderer *renderer = new CDRenderer();
-    cDebug("Allocated renderer: {0}",timer->elapsed());
+    cDebug("Allocated renderer: {0}",timer.elapsed());
+    timer.start();
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 3;
     props.gl.version.minor = 3;
 
     renderer->init(props);
-    cDebug("Init renderer: {0}",timer->elapsed());
+    cDebug("Init renderer: {0}",timer.elapsed());
 
-    if(!(GL::SeparableShaderSupported()
+    if(!(  GL::SeparableShaderSupported()
          ||GL::VertexAttribBinding()
          ||GL::ViewportArraySupported()
          ||GL::BufferStorageSupported()))
         return 1;
 
     renderer->run();
-    timer->start();
+    timer.start();
     renderer->cleanup();
     delete renderer;
-    cDebug("Cleanup renderer: {0}",timer->elapsed());
+    cDebug("Cleanup renderer: {0}",timer.elapsed());
 
     return 0;
 }

@@ -1,6 +1,6 @@
 #include <cnect.h>
 
-#include <plat/cmemory.h>
+#include <plat/memory/cmemory.h>
 #include <base/cdebug.h>
 #include <base/cthreading.h>
 

@@ -1,7 +1,7 @@
 #ifndef CTEXTURE
 #define CTEXTURE
 
-#include <plat/cmemory.h>
+#include <plat/memory/cmemory.h>
 #include <cimage.h>
 
 #include "ctexture_pbo.h"
