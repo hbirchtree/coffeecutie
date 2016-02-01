@@ -94,6 +94,8 @@ enum class ResourceAccess : uint16
     Streaming = 0x80,
 
     Append = 0x100,
+
+    Virtual = 0x200,
 };
 
 enum class TypeEnum : uint8

@@ -28,7 +28,7 @@ public:
     {
         //Create an FFMPEG player
         CResource video_file(video_file_name.c_str(),true);
-        FilePull(video_file);
+        FileMap(video_file,ResourceAccess::ReadWrite);
 
         CFFPlayer player(video_file);
 
@@ -303,7 +303,7 @@ public:
         }
 
         //Free all the FFMPEG data
-        FileFree(video_file);
+        FileUnmap(video_file);
 
         delete snd_dev;
 

@@ -20,15 +20,38 @@ struct LinuxFileFun : PlatFileFun
     {
         szptr pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE)-1);
 
+        /*Translate access flags*/
         int oflags = 0;
+        int prot = 0;
+        int mapping = 0;
 
         if(feval(acc&(ResourceAccess::ReadWrite)))
+        {
             oflags = O_RDWR;
+            prot = PROT_READ|PROT_WRITE;
+        }
         else if(feval(acc&(ResourceAccess::ReadOnly)))
+        {
             oflags = O_RDONLY;
+            prot = PROT_WRITE;
+        }
         else if(feval(acc&(ResourceAccess::WriteOnly)))
+        {
             oflags = O_WRONLY;
+            prot = PROT_WRITE;
+        }
+        if(feval(acc&(ResourceAccess::Persistent)))
+        {
+            mapping = MAP_SHARED;
+        }else{
+            mapping = MAP_PRIVATE;
+        }
+        if(feval(acc&(ResourceAccess::Streaming)))
+        {
+            mapping |= MAP_POPULATE|MAP_NONBLOCK;
+        }
 
+        /*... and then actually open it*/
         int fd = open(filename,oflags);
         if(fd < 0)
         {
@@ -38,7 +61,7 @@ struct LinuxFileFun : PlatFileFun
         byte_t* addr = (byte_t*)mmap(
                     NULL,
                     offset+size-pa_offset,
-                    PROT_READ,MAP_PRIVATE,
+                    prot,MAP_PRIVATE,
                     fd,pa_offset);
         if(addr == MAP_FAILED)
         {

@@ -23,7 +23,7 @@ struct FontRendererDef
     static cstring GetFontName(FontData*){return nullptr;}
     static bool GetFontProperties(FontData*,scalar,FontProperties*){return false;}
 
-    static bool CalcTextSize(FontData*,FontProperties const&,cstring,CRect*,uint32*){}
+    static bool CalcTextSize(FontData*,FontProperties const&,cstring,CRect*,uint32*){return false;}
     static bool RenderText(FontData*,FontProperties const&,cstring){return false;}
 };
 

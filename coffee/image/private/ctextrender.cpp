@@ -80,7 +80,7 @@ bool StbFontRenderer::CalcTextSize(FontData *d, const FontProperties &p,
 
 bool StbFontRenderer::RenderText(FontData *d, const FontProperties &p, cstring t)
 {
-    ubyte_t* data = Alloc(512*128);
+    ubyte_t* data = (ubyte_t*)Alloc(512*128);
     int32 x = 0;
     for(uint32 i=0;i<CStrLen(t);i++)
     {

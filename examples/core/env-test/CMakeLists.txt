@@ -10,6 +10,7 @@ include_directories(
 
 target_link_libraries ( EnvTest
     CoffeeCore
+    CoffeeImage
     )
 
 #Testing an external library

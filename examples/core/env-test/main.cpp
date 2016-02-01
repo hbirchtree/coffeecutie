@@ -83,11 +83,22 @@ int32 coffee_main(int32, cstring_w*)
 
     {
         cDebug("Perlin values: ");
-        for(scalar x=0;x<8;x+=0.1)
-        {
-            cBasicPrintNoNL("{0} ",NoiseGen::Perlin<scalar,int32,3>(CVec3(x,0,0)));
-        }
-        cBasicPrint("");
+        uint8* d = (uint8*)Alloc(256*256);
+        for(uint32 x=0;x<256;x++)
+            for(uint32 y=0;y<256;y++)
+            {
+                d[y*255+x] =
+                        NoiseGen::Linearize(NoiseGen::Perlin(CVec3(x,y,0)));
+            }
+        CStbImageLib::CStbImage img;
+        img.data = d;
+        img.bpp = 1;
+        img.size.w = 255;
+        img.size.h = 255;
+        CResources::CResource resc("perlin.png");
+        CStbImageLib::SavePNG(&resc,&img);
+        CResources::FileCommit(resc);
+        CResources::FileFree(resc);
     }
 
     CSize tsize = TerminalSize();
