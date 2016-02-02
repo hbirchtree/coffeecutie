@@ -25,15 +25,18 @@ int32 coffee_main(int32, cstring_w*)
         CNect::Free(c);
 
     CResources::CResource depth("dframe.raw");
-    CResources::FilePull(depth);
+    CResources::FileMap(depth);
 
     CResources::CResource color("cframe.raw");
-    CResources::FilePull(color);
+    CResources::FileMap(color);
 
     CSize depth_size(512,424);
 
     const scalar* depth_data = (const scalar*)depth.data;
     const CRGBA* color_data = (const CRGBA*)color.data;
+
+    if(!depth_data || !color_data)
+        return 1;
 
     {
         /* Just dump a texture */
@@ -93,14 +96,10 @@ int32 coffee_main(int32, cstring_w*)
             }
     }
 
-    CResources::FileFree(depth);
-
     CPCL::PointCloud<CPCL::PointXYZRGB>* pcl =
             CPCLI::GenPointCloud(posdata.data(),
                                  color_data,
                                  posdata.size());
-
-    CResources::FileFree(color);
 
     CElapsedTimerD timer;
     timer.start();

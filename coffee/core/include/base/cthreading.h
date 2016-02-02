@@ -98,6 +98,7 @@ inline C_FORCE_INLINE std::future<bool> TransformData(
         szptr out_ptr = 0;
         for(szptr i=0;i<input->elements;i++)
         {
+	    CASSERT(out_ptr<output->elements);
             out_ptr += processor->call(input[i],&output[out_ptr]);
         }
         return false;
