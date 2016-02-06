@@ -77,7 +77,7 @@ public:
         }
 
         cstring vshader = {
-            "#version 430 core\n"
+            "#version 330 core\n"
             ""
             "layout(location=0)in vec3 pos;"
             "layout(location=1)in vec2 tex;"
@@ -101,7 +101,7 @@ public:
             "}"
         };
         cstring fshader = {
-            "#version 430 core\n"
+            "#version 330 core\n"
             "in VS_OUT{"
             "   vec2 tc;"
             "   flat int instance;"
@@ -258,7 +258,13 @@ public:
             this->swapBuffers();
         }
 
-        //Write code here
+        GL::ProgramFree(1,&vprogram);
+        GL::ProgramFree(1,&fprogram);
+        GL::BufFree(3,pbobuf);
+        GL::BufFree(1,&vertbuf);
+        GL::VAOFree(1,&vao);
+        GL::TexFree(1,&texture_array);
+        GL::PipelineFree(1,&pipeline);
     }
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {
@@ -315,26 +321,6 @@ int32 coffee_main(int32, cstring_w*)
         }
         OpenVRDev::OVRDevice* dev = OpenVRDev::GetDevice(0);
         cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
-    }
-
-    {
-        CResources::CResource fonttest("/home/havard/.fonts/Final Fantasy.ttf",true);
-        CResources::FileMap(fonttest);
-        CByteData fontdesc = CResources::FileGetDescriptor(fonttest);
-        FontRenderer::FontData* fontdata = FontRenderer::LoadFontConfig(fontdesc);
-        FontRenderer::FontProperties p;
-        FontRenderer::GetFontProperties(fontdata,64,&p);
-
-        cDebug("Font name: {0}",FontRenderer::GetFontName(fontdata));
-        uint32 size = 0;
-        CRect bound;
-        FontRenderer::CalcTextSize(fontdata,p,"test-string",&bound,&size);
-        cDebug("Font size: {0}+{1} {2}x{3}",bound.x,bound.y,bound.w,bound.h);
-
-        FontRenderer::RenderText(fontdata,p,"test-string");
-
-        FontRenderer::UnloadFontConfig(fontdata);
-        CResources::FileUnmap(fonttest);
     }
 
     CResources::FileResourcePrefix("sample_data/");
