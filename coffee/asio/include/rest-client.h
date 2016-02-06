@@ -70,7 +70,7 @@ struct RestClientImpl{
 	    Protocol p, Host h, Request r)
     {
 	std::function<RestResponse(Protocol,Host,Request)> fun = RestRequest;
-	return CThreading::RunAsync(fun,p,h,r);
+	return Threads::RunAsync(fun,p,h,r);
     }
 
     static inline C_FORCE_INLINE RestResponse RestRequest(Protocol p, Host h, Request r)

@@ -20,10 +20,10 @@
 #endif
 
 namespace Coffee{
-
+namespace Env{
 bool TermScreen::UsingAlternateBuffer = false;
 
-cstring_w env_get_variable(cstring var)
+cstring_w GetVar(cstring var)
 {
 #if defined(COFFEE_LINUX)
     return getenv(var);
@@ -37,7 +37,7 @@ cstring_w env_get_variable(cstring var)
 #endif
 }
 
-bool env_set_variable(cstring var, cstring value)
+bool SetVar(cstring var, cstring value)
 {
 #if defined(COFFEE_ANDROID)
     return false;
@@ -48,7 +48,7 @@ bool env_set_variable(cstring var, cstring value)
 #endif
 }
 
-bool env_unset_variable(cstring var)
+bool UnsetVar(cstring var)
 {
 #if defined(COFFEE_ANDROID)
     return false;
@@ -59,7 +59,7 @@ bool env_unset_variable(cstring var)
 #endif
 }
 
-bool env_clear_all()
+bool ClearEnv()
 {
 #if defined(COFFEE_ANDROID)
     return false;
@@ -70,23 +70,23 @@ bool env_clear_all()
 #endif
 }
 
-cstring_w env_concatenate_path(cstring_w target, cstring v2)
+cstring_w ConcatPath(cstring_w target, cstring v2)
 {
     szptr len = ((target) ? CStrLen(target)+1 : 0)+CStrLen(v2)+1;
     cstring_w p = (cstring_w)CRealloc(target,len);
     if(target) //In the case where we start out with an empty buffer
-        CStrCat(p,env_get_path_separator());
+        CStrCat(p,GetPathSep());
     else
         p[0] = '\0';
     return CStrCat(p,v2);
 }
 
-cstring_w env_get_user_home()
+cstring_w GetUserHome()
 {
 #if defined(COFFEE_ANDROID)
     return nullptr;
 #elif defined(COFFEE_LINUX)
-    return env_get_variable("HOME");
+    return GetVar("HOME");
 #elif defined(COFFEE_WINDOWS)
     cstring_w homedrive = coffee_get_env_variable("HOMEDRIVE");
     cstring_w homepath = coffee_get_env_variable("HOMEPATH");
@@ -98,7 +98,7 @@ cstring_w env_get_user_home()
 #endif
 }
 
-cstring env_get_path_separator()
+cstring GetPathSep()
 {
     //Assuming that Windows is the only platform using
 #if defined(COFFEE_WINDOWS)
@@ -108,11 +108,11 @@ cstring env_get_path_separator()
 #endif
 }
 
-cstring_w env_get_user_data(cstring orgname, cstring appname)
+cstring_w GetUserData(cstring orgname, cstring appname)
 {
-    cstring_w base = env_concatenate_path(
+    cstring_w base = ConcatPath(
                 nullptr,
-                env_get_user_home());
+                GetUserHome());
 #if defined(COFFEE_ANDROID)
     /*
      * We define Android before Linux as an override.
@@ -122,7 +122,7 @@ cstring_w env_get_user_data(cstring orgname, cstring appname)
     base = "";
 
 #elif defined(COFFEE_LINUX)
-    base = env_concatenate_path(
+    base = ConcatPath(
                 base,
                 ".local/share");
 #elif defined(COFFEE_WINDOWS)
@@ -134,18 +134,18 @@ cstring_w env_get_user_data(cstring orgname, cstring appname)
                 base,
                 "Library/Application Support");
 #endif
-    base = env_concatenate_path(
+    base = ConcatPath(
                 base,
                 orgname);
-    return env_concatenate_path(base,appname);
+    return ConcatPath(base,appname);
 }
 
-cstring_w env_get_application_dir()
+cstring_w ApplicationDir()
 {
 #if defined(COFFEE_ANDROID)
     return nullptr;
 #elif defined(COFFEE_LINUX)
-    return dirname(executable_name());
+    return dirname(ExecutableName());
 #elif defined(COFFEE_WINDOWS)
     cstring_w path = coffee_executable_name();
     cwstring_w pathw = c_str_wideconvert(path);
@@ -158,7 +158,7 @@ cstring_w env_get_application_dir()
 #endif
 }
 
-cstring_w env_get_current_dir()
+cstring_w CurrentDir()
 {
 #if defined(COFFEE_ANDROID)
     return nullptr;
@@ -171,4 +171,5 @@ cstring_w env_get_current_dir()
 #endif
 }
 
+}
 }

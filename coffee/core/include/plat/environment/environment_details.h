@@ -4,32 +4,33 @@
 #include <coffee/core/CTypes>
 
 namespace Coffee{
-
+namespace Env{
 struct TermScreen
 {
     static bool UsingAlternateBuffer;
 };
 
-extern cstring_w env_get_variable(cstring var);
+extern cstring_w GetVar(cstring var);
 
-extern bool env_set_variable(cstring var, cstring value);
+extern bool SetVar(cstring var, cstring value);
 
-extern bool env_unset_variable(cstring var);
+extern bool UnsetVar(cstring var);
 
-extern bool env_clear_all();
+extern bool ClearEnv();
 
-extern cstring env_get_path_separator();
+extern cstring GetPathSep();
 
-extern cstring_w env_concatenate_path(cstring_w target, cstring v2);
+extern cstring_w ConcatPath(cstring_w target, cstring v2);
 
-extern cstring_w env_get_user_home();
+extern cstring_w GetUserHome();
 
-extern cstring_w env_get_user_data(cstring orgname, cstring appname);
+extern cstring_w GetUserData(cstring orgname, cstring appname);
 
-extern cstring_w env_get_application_dir();
+extern cstring_w ApplicationDir();
 
-extern cstring_w env_get_current_dir();
+extern cstring_w CurrentDir();
 
+}
 } //Coffee
 
 #endif

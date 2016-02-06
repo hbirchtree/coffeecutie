@@ -55,7 +55,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
     szptr i;
     for(i=0;i<scene->mNumMeshes;i++){
 #ifdef CASSIMP_MULTITHREAD
-        meshes_future.push_back(CThreading::RunAsync(fun,scene->mMeshes[i]));
+        meshes_future.push_back(Threads::RunAsync(fun,scene->mMeshes[i]));
 #else
         meshes.push_back(importMesh(scene->mMeshes[i]));
 #endif

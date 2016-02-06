@@ -6,7 +6,7 @@
 
 namespace Coffee {
 
-using namespace CFunctional::CThreading;
+using namespace CFunctional::Threads;
 
 class CObject
 {

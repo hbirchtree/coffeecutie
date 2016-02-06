@@ -17,24 +17,24 @@ namespace Coffee{
 void sighandle(int sig)
 {
     /* If we use an alternate buffer, switch back to primary */
-    ResetScreen();
+    Cmd::ResetScreen();
     switch(sig)
     {
     case SIGILL:
-        Exit(CoffeeExit_Termination);
+        Cmd::Exit(CoffeeExit_Termination);
         break;
     case SIGINT:
-        Exit(CoffeeExit_Interrupt);
+        Cmd::Exit(CoffeeExit_Interrupt);
         break;
     case SIGTERM:
-        Exit(CoffeeExit_Termination);
+        Cmd::Exit(CoffeeExit_Termination);
         break;
 #if defined(COFFEE_LINUX)
     case SIGKILL:
-        Exit(CoffeeExit_Kill);
+        Cmd::Exit(CoffeeExit_Kill);
 #endif
     default:
-        Exit(CoffeeExit_UnknownBad);
+        Cmd::Exit(CoffeeExit_UnknownBad);
     }
 }
 
@@ -92,7 +92,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 
 void CoffeeTerminate()
 {
-    ResetScreen();
+    Cmd::ResetScreen();
 }
 
 }

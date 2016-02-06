@@ -10,7 +10,7 @@
 
 namespace Coffee{
 
-extern cstring_w executable_name(cstring_w n = nullptr);
+extern cstring_w ExecutableName(cstring_w n = nullptr);
 
 static cstring _switch_short(cstring in)
 {

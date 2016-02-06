@@ -8,15 +8,15 @@ using namespace CLibraryLoader;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    AltScreen();
+    Cmd::AltScreen();
     {
         /* Check out system directory strings and user data directories */
-        cstring_w cfg_dir  = env_get_user_data(
+        cstring_w cfg_dir  = Env::GetUserData(
                     "hbirchtree",
                     "Best Coffee of All Time");
 
-        cstring_w app_dir  = env_get_application_dir();
-        cstring_w exe_name = executable_name();
+        cstring_w app_dir  = Env::ApplicationDir();
+        cstring_w exe_name = ExecutableName();
 
         cDebug("Settings directory: {0}",cfg_dir);
         cDebug("Program directory:  {0}",app_dir);
@@ -101,7 +101,7 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileFree(resc);
     }
 
-    CSize tsize = TerminalSize();
+    CSize tsize = Cmd::TerminalSize();
     cDebug("Terminal size: {0}x{1}",tsize.w,tsize.h);
 
 //    {
@@ -117,7 +117,8 @@ int32 coffee_main(int32, cstring_w*)
 //            cDebug("You wrote: {0}",ts.c_str());
 //        }
 //    }
-    ResetScreen();
+
+    Cmd::ResetScreen();
 
     {
         cDebug("Testing multithread + printing, should be mutex-locked");
@@ -132,8 +133,8 @@ int32 coffee_main(int32, cstring_w*)
             }
         };
 
-        auto t1 = CThreading::RunAsync(message_test);
-        auto t2 = CThreading::RunAsync(message_test);
+        auto t1 = Threads::RunAsync(message_test);
+        auto t2 = Threads::RunAsync(message_test);
 
         t1.get();
         t2.get();

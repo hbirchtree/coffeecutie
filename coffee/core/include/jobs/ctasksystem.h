@@ -7,7 +7,7 @@
 
 namespace Coffee{
 namespace CFunctional{
-namespace CThreading{
+namespace Threads{
 
 struct CTask;
 

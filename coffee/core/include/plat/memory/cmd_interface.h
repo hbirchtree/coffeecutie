@@ -10,6 +10,9 @@
 #endif
 
 namespace Coffee{
+namespace Cmd{
+
+using TermScreen = Env::TermScreen;
 
 inline C_FORCE_INLINE bool interactive_cmd()
 {
@@ -70,6 +73,7 @@ inline C_FORCE_INLINE void Exit(int code)
     exit(code);
 }
 
+}
 }
 
 #endif

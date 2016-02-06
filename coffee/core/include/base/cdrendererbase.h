@@ -296,7 +296,7 @@ inline std::future<void> coffee_display_start_async(
         obj->run();
         obj->cleanup();
     };
-    return CFunctional::CThreading::RunAsync(display_task);
+    return CFunctional::Threads::RunAsync(display_task);
 }
 
 } // namespace CDisplay

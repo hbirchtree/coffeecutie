@@ -2,7 +2,7 @@
 
 namespace Coffee{
 namespace CFunctional{
-namespace CThreading{
+namespace Threads{
 
 CTask *coffee_jobs_create_task(CTaskFunction fun, CTask* parent)
 {

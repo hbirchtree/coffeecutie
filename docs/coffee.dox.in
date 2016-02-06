@@ -743,7 +743,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @CMAKE_SOURCE_DIR@/coffee @CMAKE_SOURCE_DIR@/tests
+INPUT                  = @CMAKE_SOURCE_DIR@/coffee @CMAKE_SOURCE_DIR@/include @CMAKE_SOURCE_DIR@/ext @CMAKE_SOURCE_DIR@/examples
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1250,14 +1250,14 @@ TOC_EXPAND             = NO
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-GENERATE_QHP           = NO
+GENERATE_QHP           = YES
 
 # If the QHG_LOCATION tag is specified, the QCH_FILE tag can be used to specify
 # the file name of the resulting .qch file. The path specified is relative to
 # the HTML output folder.
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
-QCH_FILE               =
+QCH_FILE               = Coffee.qch
 
 # The QHP_NAMESPACE tag specifies the namespace to use when generating Qt Help
 # Project output. For more information please see Qt Help Project / Namespace
@@ -1265,7 +1265,7 @@ QCH_FILE               =
 # The default value is: org.doxygen.Project.
 # This tag requires that the tag GENERATE_QHP is set to YES.
 
-QHP_NAMESPACE          = org.doxygen.Project
+QHP_NAMESPACE          = org.hbirchtree.Coffee
 
 # The QHP_VIRTUAL_FOLDER tag specifies the namespace to use when generating Qt
 # Help Project output. For more information please see Qt Help Project / Virtual

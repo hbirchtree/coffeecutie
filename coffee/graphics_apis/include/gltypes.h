@@ -14,7 +14,7 @@ struct CGL_Context
     virtual ~CGL_Context(){}
     virtual bool acquireContext() = 0;
     virtual bool releaseContext() = 0;
-    virtual const CFunctional::CThreading::ThreadId_t &currentThread() = 0;
+    virtual const CFunctional::Threads::ThreadId_t &currentThread() = 0;
 };
 /*!
  * \brief A static object

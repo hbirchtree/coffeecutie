@@ -9,7 +9,7 @@
 
 namespace Coffee{
 namespace CFunctional{
-namespace CThreading{
+namespace Threads{
 
 struct ThreadId_t
 {
@@ -111,7 +111,7 @@ typedef CThreadWorker<byte_t> CThreadByteWorker;
 }
 }
 
-using ThreadId = CFunctional::CThreading::ThreadId_t;
+using ThreadId = CFunctional::Threads::ThreadId_t;
 
 }
 
