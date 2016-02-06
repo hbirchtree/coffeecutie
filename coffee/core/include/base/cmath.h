@@ -14,7 +14,7 @@ namespace Coffee{
 namespace CMath{
 using namespace std;
 
-template<typename T> bool power2(T const& n)
+template<typename T> bool IsPower2(T const& n)
 {
     return n!=0&&(n&(n-1))==0;
 }
@@ -60,7 +60,7 @@ inline scalar cfrand(const scalar& min, const scalar& max)
 
 template<typename T> T radians(const T& degrees)
 {
-    return degrees*CMath::pi/T(180);
+    return (degrees*CMath::pi)/T(180);
 }
 
 template<typename T> T mix(T a, T b, T f)

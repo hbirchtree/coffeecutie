@@ -11,22 +11,18 @@ int32 coffee_main(int32, cstring_w*)
     Cmd::AltScreen();
     {
         /* Check out system directory strings and user data directories */
-        cstring_w cfg_dir  = Env::GetUserData(
+        CString cfg_dir  = Env::GetUserData(
                     "hbirchtree",
                     "Best Coffee of All Time");
 
-        cstring_w app_dir  = Env::ApplicationDir();
-        cstring_w exe_name = ExecutableName();
+        CString app_dir  = Env::ApplicationDir();
+        CString exe_name = Env::ExecutableName();
 
         cDebug("Settings directory: {0}",cfg_dir);
         cDebug("Program directory:  {0}",app_dir);
         cDebug("Launching from      {0}",exe_name);
 
-        CResources::FileMkdir(cfg_dir,true);
-
-        CFree(cfg_dir);
-        CFree(app_dir);
-        CFree(exe_name);
+        CResources::FileMkdir(cfg_dir.c_str(),true);
     }
 
     cDebug("uint64 size: {0}",sizeof(uint64));
@@ -99,6 +95,7 @@ int32 coffee_main(int32, cstring_w*)
         CStbImageLib::SavePNG(&resc,&img);
         CResources::FileCommit(resc);
         CResources::FileFree(resc);
+        CFree(d);
     }
 
     CSize tsize = Cmd::TerminalSize();

@@ -4,33 +4,55 @@
 #include <coffee/core/CTypes>
 
 namespace Coffee{
-namespace Env{
-struct TermScreen
+
+struct EnvInterface
 {
-    static bool UsingAlternateBuffer;
+    struct TermScreen
+    {
+	static bool UsingAlternateBuffer;
+    };
+
+    static CString ExecutableName(cstring_w);
+    static CString GetVar(cstring);
+    static bool SetVar(cstring, cstring);
+    static bool UnsetVar(cstring);
+    static bool ClearEnv();
+
+    static CString GetPathSep();
+    static CString ConcatPath(cstring, cstring);
+    static CString GetUserHome();
+
+    static CString GetUserData(cstring, cstring);
+
+    static CString ApplicationDir();
+    static CString CurrentDir();
 };
 
-extern cstring_w GetVar(cstring var);
+//namespace Env{
 
-extern bool SetVar(cstring var, cstring value);
+//extern cstring_w GetVar(cstring var);
 
-extern bool UnsetVar(cstring var);
+//extern bool SetVar(cstring var, cstring value);
 
-extern bool ClearEnv();
+//extern bool UnsetVar(cstring var);
 
-extern cstring GetPathSep();
+//extern bool ClearEnv();
 
-extern cstring_w ConcatPath(cstring_w target, cstring v2);
+//extern cstring GetPathSep();
 
-extern cstring_w GetUserHome();
+//extern cstring_w ConcatPath(cstring_w target, cstring v2);
 
-extern cstring_w GetUserData(cstring orgname, cstring appname);
+//extern cstring_w GetUserHome();
 
-extern cstring_w ApplicationDir();
+//extern cstring_w GetUserData(cstring orgname, cstring appname);
 
-extern cstring_w CurrentDir();
+//extern cstring_w ApplicationDir();
 
-}
+//extern cstring_w CurrentDir();
+
+//}
 } //Coffee
 
 #endif
+
+#include "unix/environment.h"

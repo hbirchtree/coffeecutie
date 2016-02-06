@@ -21,4 +21,6 @@
 #define C_FORCE_INLINE
 #endif
 
+#define STATICINLINE inline C_FORCE_INLINE static
+
 #endif

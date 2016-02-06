@@ -20,6 +20,10 @@
 #endif
 
 namespace Coffee{
+
+bool EnvInterface::TermScreen::UsingAlternateBuffer = false;
+
+#ifdef OLD_ENVIMPL
 namespace Env{
 bool TermScreen::UsingAlternateBuffer = false;
 
@@ -172,4 +176,5 @@ cstring_w CurrentDir()
 }
 
 }
+#endif
 }
