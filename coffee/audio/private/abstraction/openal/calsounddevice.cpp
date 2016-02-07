@@ -1,12 +1,12 @@
-#include <abstraction/openal/calsounddevice.h>
+#include <coffee/audio/abstraction/openal/calsounddevice.h>
 
-#include <abstraction/openal/calsoundmixer.h>
-#include <abstraction/openal/calsoundformat.h>
-#include <abstraction/openal/calsoundstream.h>
+#include <coffee/audio/abstraction/openal/calsoundmixer.h>
+#include <coffee/audio/abstraction/openal/calsoundformat.h>
+#include <coffee/audio/abstraction/openal/calsoundstream.h>
 
-#include <abstraction/openal/calsoundstream.h>
-#include <abstraction/openal/calsoundbuffer.h>
-#include <abstraction/openal/calsoundsample.h>
+#include <coffee/audio/abstraction/openal/calsoundstream.h>
+#include <coffee/audio/abstraction/openal/calsoundbuffer.h>
+#include <coffee/audio/abstraction/openal/calsoundsample.h>
 
 namespace Coffee{
 namespace CAudio{

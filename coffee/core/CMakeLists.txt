@@ -1,17 +1,3 @@
-include_directories(
-    ${COFFEE_CORE_INCLUDE_DIR}
-    )
-
-find_package(SDL2 QUIET)
-
-if(NOT WIN32)
-    #Libunwind is used to print function names at runtime
-    if(NOT ANDROID) #Bionic does not grant access to unwind, even though it is there
-        find_package(Unwind)
-        include_directories(${LIBUNWIND_INCLUDE_DIR})
-    endif()
-endif()
-
 set ( CoffeeCore_SRCS
 
     private/coffee.cpp
@@ -42,32 +28,52 @@ set ( CoffeeCore_SRCS
     private/plat/windows/win_core.cpp
     private/plat/unix/unix_core.cpp
 
+    # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
     )
 
-set(DL_LIBRARY "")
-if(NOT WIN32)
-    list(APPEND DL_LIBRARY dl m)
-    if(NOT ANDROID)
-        list(APPEND DL_LIBRARY pthread)
-    endif()
-endif()
-
-coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
-
-target_link_libraries ( CoffeeCore
-    ${LIBUNWIND_LIBRARIES}
-    ${DL_LIBRARY}
+# OpenSSL used for ASIO networking
+find_package(OpenSSL REQUIRED)
+include_directories ( SYSTEM
+    OPENSSL_INCLUDE_DIR
     )
 
+coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
+target_link_libraries ( CoffeeCore ${OPENSSL_LIBRARIES} )
+
+# Platform-specific target options
+
+if(NOT WIN32)
+    # Necessary for Linux and possibly OS X (latter is untested)
+    target_link_libraries ( CoffeeCore dl m )
+endif()
+
+if(NOT WIN32 AND NOT ANDROID)
+    # Used for thread details
+    target_link_libraries ( CoffeeCore pthread )
+endif()
+
+if(NOT WIN32 AND NOT ANDROID)
+    # Libunwind is used to print function names at runtime
+    # Windows does not support this
+    # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
+    find_package(Unwind)
+    include_directories ( SYSTEM
+        ${LIBUNWIND_INCLUDE_DIR}
+        )
+    target_link_libraries ( CoffeeCore ${LIBUNWIND_LIBRARIES} )
+endif()
+
 if(ANDROID AND SDL2_FOUND)
-    include_directories(${SDL2_INCLUDE_DIR})
-    target_link_libraries(CoffeeCore
-        ${SDL2_LIBRARY})
+    # We use SDL2 for some platform functionality on Android, like file storage
+    find_package(SDL2 REQUIRED)
+    include_directories ( SYSTEM
+        ${SDL2_INCLUDE_DIR}
+        )
+    target_link_libraries ( CoffeeCore ${SDL2_LIBRARY} )
 endif()
 
 if(WIN32)
-    target_link_libraries ( CoffeeCore
-        pathcch
-        )
+    # Don't know what this is, but it's necessary
+    target_link_libraries ( CoffeeCore pathcch )
 endif()

@@ -3,10 +3,8 @@ find_package(PCL QUIET 1.7 COMPONENTS common io registration recognition surface
 if(NOT DEFINED PCL_FOUND)
     message("-- PCL not found, not building pcl-shim!")
 else()
-
     include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${COFFEE_CORE_INCLUDE_DIR}
         )
     include_directories( SYSTEM
         ${PCL_INCLUDE_DIRS}

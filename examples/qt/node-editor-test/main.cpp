@@ -1,5 +1,5 @@
 ﻿#include <coffee/CCore>
-#include <node-edit.h>
+#include <coffee_ext/qt_shim/node_editor/node-edit.h>
 #include "mainwindowtester.h"
 
 using namespace Coffee;

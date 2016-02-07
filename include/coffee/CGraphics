@@ -1,5 +1,2 @@
-//#include "graphics_apis/COpenGL"
-//#include "graphics_apis/CGLeam"
-
-#include <coffee/graphics_apis/include/cgraphicsdata.h>
-#include <coffee/graphics_apis/include/scene/cnode.h>
+#include "graphics_apis/cgraphicsdata.h"
+#include "graphics_apis/scene/cnode.h"

@@ -1,8 +1,8 @@
 #ifndef COFFEE_GRAPHICS_OPENGL_CONVENIENCE_H
 #define COFFEE_GRAPHICS_OPENGL_CONVENIENCE_H
 
-#include <glbinding/wrappers/cbuffer.h>
-#include <glbinding/wrappers/ctexture.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cbuffer.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/ctexture.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

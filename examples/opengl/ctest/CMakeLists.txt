@@ -10,13 +10,6 @@ set ( CoffeeTest_SRCS
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-
-    ${COFFEE_GRAPHICS_INCLUDE_DIR}
-    ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-    ${COFFEE_GRAPHICS_GLEAM_INCLUDE_DIR}
-    ${COFFEE_AUDIO_INCLUDE_DIR}
-    ${COFFEE_ASSIMP_INCLUDE_DIR}
-    ${COFFEE_BLAM_INCLUDE_DIR}
     )
 
 coffee_add_elibrary ( CoffeeTestLib ${COFFEE_LINK_OPT} "${CoffeeTestLib_SRCS}" )

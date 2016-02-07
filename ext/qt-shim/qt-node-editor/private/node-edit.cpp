@@ -1,4 +1,4 @@
-#include <node-edit.h>
+#include <coffee_ext/qt_shim/node_editor/node-edit.h>
 
 namespace Coffee{
 namespace CQt{

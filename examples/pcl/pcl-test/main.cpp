@@ -4,8 +4,8 @@
 
 #include <coffee/graphics_apis/opengl/include/glfunctions.h>
 
-#include <ext/pcl-shim/include/cpcl.h>
-#include <ext/kinect-shim/include/cnect.h>
+#include <coffee_ext/pcl_shim/cpcl.h>
+#include <coffee_ext/kinect_shim/cnect.h>
 
 using namespace Coffee;
 using namespace CoffeeExt;

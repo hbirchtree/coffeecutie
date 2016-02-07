@@ -1,8 +1,8 @@
-#include <glbinding/cgraphics_quirks.h>
+#include <coffee/graphics_apis/opengl/include/glbinding/cgraphics_quirks.h>
 
 #include <cstring>
 
-#include <base/cdebug.h>
+#include <coffee/core/base/cdebug.h>
 
 namespace Coffee{
 namespace CGraphicsQuirks{

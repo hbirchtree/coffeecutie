@@ -2,7 +2,7 @@
 #define COFFEE_GRAPHICS_OPENGL_FENCE_H
 
 #include "copengl_enums.h"
-#include <types/basetypes.h>
+#include <coffee/core/types/basetypes.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

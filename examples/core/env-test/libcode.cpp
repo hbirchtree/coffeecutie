@@ -1,7 +1,6 @@
 #include "library.h"
 
 #include <coffee/core/CBase>
-#include <plat/plat_memory.h>
 
 #include <stdio.h>
 

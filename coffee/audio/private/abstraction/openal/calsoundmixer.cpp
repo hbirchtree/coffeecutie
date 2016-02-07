@@ -1,6 +1,6 @@
-#include <abstraction/openal/calsoundmixer.h>
+#include <coffee/audio/abstraction/openal/calsoundmixer.h>
 
-#include <abstraction/openal/calsoundtrack.h>
+#include <coffee/audio/abstraction/openal/calsoundtrack.h>
 
 namespace Coffee{
 namespace CAudio{

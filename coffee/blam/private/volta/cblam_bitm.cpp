@@ -1,10 +1,10 @@
-#include <volta/cblam_bitm.h>
+#include <coffee/blam/volta/cblam_bitm.h>
 
-#include <base/cdebug.h>
-#include <base/cfiles.h>
-#include <cimage.h>
-#include <base/cmath.h>
-#include <volta/cblam_bitm_decoders.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/core/base/cfiles.h>
+#include <coffee/image/cimage.h>
+#include <coffee/core/base/cmath.h>
+#include <coffee/blam/volta/cblam_bitm_decoders.h>
 
 namespace Coffee{
 namespace CBlam{

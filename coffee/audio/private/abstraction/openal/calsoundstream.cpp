@@ -1,5 +1,5 @@
-#include <abstraction/openal/calsoundstream.h>
-#include <abstraction/openal/calsounddevice.h>
+#include <coffee/audio/abstraction/openal/calsoundstream.h>
+#include <coffee/audio/abstraction/openal/calsounddevice.h>
 
 namespace Coffee{
 namespace CAudio{

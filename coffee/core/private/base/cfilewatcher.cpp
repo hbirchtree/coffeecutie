@@ -1,6 +1,6 @@
-#include <base/cfilewatcher.h>
+#include <coffee/core/base/cfilewatcher.h>
 
-#include <base/cdebug.h>
+#include <coffee/core/base/cdebug.h>
 
 #if defined(COFFEE_LINUX)
 

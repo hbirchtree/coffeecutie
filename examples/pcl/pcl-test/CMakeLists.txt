@@ -5,8 +5,6 @@ set ( PCLTest_SRCS
 find_package(PCL 1.7 REQUIRED COMPONENTS common io registration recognition keypoints modeler)
 
 include_directories(
-    ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-    ${COFFEE_GRAPHICS_INCLUDE_DIR}
     ${COFFEE_EXT_FREENECT2_INCLUDE_DIR}
     ${PCL_INCLUDE_DIRS}
     )

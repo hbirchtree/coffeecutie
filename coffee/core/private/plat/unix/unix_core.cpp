@@ -1,8 +1,8 @@
-#include <plat/unix/unix_core.h>
+#include <coffee/core/plat/unix/unix_core.h>
 
-#include <base/cdebug.h>
-#include <coffee_strings.h>
-#include <plat/plat_core.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/core/coffee_strings.h>
+#include <coffee/core/plat/plat_core.h>
 
 #ifdef COFFEE_UNIXPLAT
 

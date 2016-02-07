@@ -3,7 +3,8 @@
 
 #include "ctexture.h"
 #include "copengl_enums.h"
-#include <types/composite_types.h>
+
+#include <coffee/core/types/composite_types.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

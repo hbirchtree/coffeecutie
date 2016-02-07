@@ -1,7 +1,7 @@
-#include <plat/environment/environment_details.h>
+#include <coffee/core/plat/environment/environment_details.h>
 
-#include <plat/platform_detect.h>
-#include <plat/environment/argument_parse.h>
+#include <coffee/core/plat/platform_detect.h>
+#include <coffee/core/plat/environment/argument_parse.h>
 
 #if defined(COFFEE_ANDROID)
 //#include "android/jni_props.h"

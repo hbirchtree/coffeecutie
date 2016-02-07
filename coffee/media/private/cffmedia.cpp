@@ -1,5 +1,5 @@
-#include <cffmedia.h>
-#include <coffee_strings.h>
+#include <coffee/media/cffmedia.h>
+#include <coffee/core/coffee_strings.h>
 
 extern "C"
 {

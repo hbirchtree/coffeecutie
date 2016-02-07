@@ -1,4 +1,4 @@
-#include "scene/cnode.h"
+#include <coffee/graphics_apis/scene/cnode.h>
 
 namespace Coffee{
 namespace CGraphicsData{

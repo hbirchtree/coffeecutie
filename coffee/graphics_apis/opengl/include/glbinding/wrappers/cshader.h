@@ -1,12 +1,12 @@
 #ifndef COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 #define COFFEE_CGRAPHICSWRAPPERS_CSHADER_H
 
-#include <types/composite_types.h>
+#include <coffee/core/types/composite_types.h>
 
 #include "copengl_types.h"
 #include "cuniformtypes.h"
 
-#include <base/cfiles.h>
+#include <coffee/core/base/cfiles.h>
 
 namespace Coffee {
 namespace CGraphicsWrappers {

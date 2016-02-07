@@ -1,7 +1,7 @@
 #include "assimpfun.h"
 
-#include <base/cdebug.h>
-#include <base/cthreading.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/core/base/cthreading.h>
 
 namespace Coffee{
 namespace CResourceTypes{

@@ -1,4 +1,4 @@
-#include <abstraction/openal/calsoundsample.h>
+#include <coffee/audio/abstraction/openal/calsoundsample.h>
 
 namespace Coffee{
 namespace CAudio{

@@ -9,13 +9,6 @@ set ( CBlam_SRCS
         private/elegy/cblam_map.cpp
         )
 
-include_directories(
-        ${COFFEE_BLAM_INCLUDE_DIR}
-        ${COFFEE_IMAGE_INCLUDE_DIR}
-        ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-        ${COFFEE_CORE_INCLUDE_DIR}
-    )
-
 coffee_add_library ( CoffeeBlam "${CBlam_SRCS}" )
 
 target_link_libraries( CoffeeBlam

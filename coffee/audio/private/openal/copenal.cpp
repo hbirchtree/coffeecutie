@@ -1,10 +1,9 @@
-#include <openal/copenal.h>
+#include <coffee/audio/openal/copenal.h>
 
 #include <AL/al.h>
 #include <AL/alc.h>
 
-#include <coffee_macros.h>
-#include <base/cdebug.h>
+#include <coffee/core/CBase>
 
 #include <thread>
 

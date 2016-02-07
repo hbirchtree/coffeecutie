@@ -1,4 +1,4 @@
-#include <volta/cblam_mod2.h>
+#include <coffee/blam/volta/cblam_mod2.h>
 
 namespace Coffee{
 namespace CBlam{

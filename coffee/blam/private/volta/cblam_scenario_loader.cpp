@@ -1,7 +1,7 @@
-#include <volta/cblam_scenario_loader.h>
+#include <coffee/blam/volta/cblam_scenario_loader.h>
 
-#include <base/cdebug.h>
-#include <volta/cblam_map.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/blam/volta/cblam_map.h>
 
 namespace Coffee{
 namespace CBlam{

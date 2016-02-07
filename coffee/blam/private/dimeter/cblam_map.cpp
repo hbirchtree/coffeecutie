@@ -1,4 +1,4 @@
-#include <dimeter/cblam_map.h>
+#include <coffee/blam/dimeter/cblam_map.h>
 
 namespace Coffee{
 namespace CBlam{

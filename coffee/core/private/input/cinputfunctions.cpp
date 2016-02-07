@@ -1,6 +1,6 @@
-#include <input/cinputfunctions.h>
+#include <coffee/core/input/cinputfunctions.h>
 
-#include <base/cmath.h>
+#include <coffee/core/base/cmath.h>
 
 namespace Coffee{
 namespace CInput{

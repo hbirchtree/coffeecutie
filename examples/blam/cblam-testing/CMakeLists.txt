@@ -2,10 +2,6 @@ set ( CBlamTesting_SRCS
     main.cpp
     )
 
-include_directories(
-    ${COFFEE_BLAM_INCLUDE_DIR}
-    )
-
 coffee_add_example ( CBlamTesting ${CBlamTesting_SRCS} )
 
 target_link_libraries ( CBlamTesting

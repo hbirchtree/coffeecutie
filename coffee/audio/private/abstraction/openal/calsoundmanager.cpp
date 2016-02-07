@@ -1,9 +1,9 @@
-#include <abstraction/openal/calsoundmanager.h>
+#include <coffee/audio/abstraction/openal/calsoundmanager.h>
 
-#include <openal/copenal.h>
-#include <abstraction/openal/calsounddeviceidentifier.h>
-#include <abstraction/openal/calsounddevice.h>
-#include <abstraction/openal/calsoundformat.h>
+#include <coffee/audio/openal/copenal.h>
+#include <coffee/audio/abstraction/openal/calsounddeviceidentifier.h>
+#include <coffee/audio/abstraction/openal/calsounddevice.h>
+#include <coffee/audio/abstraction/openal/calsoundformat.h>
 
 namespace Coffee{
 namespace CAudio{

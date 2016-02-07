@@ -1,12 +1,12 @@
-#include <coffee/core/CBase>
-#include <coffee/core/CContext>
-#include <coffee/core/CDataStorage>
-#include <coffee/core/CFunctional>
-#include <coffee/core/CPlatform>
+#include "core/CBase"
+#include "core/CContext"
+#include "core/CDataStorage"
+#include "core/CFunctional"
+#include "core/CPlatform"
+#include "core/CTypes"
 
-#include <coffee/core/CTypes>
-#include <coffee_macros.h>
+#include "core/coffee_macros.h"
 
-#include <plat/environment/environment_details.h>
-#include <plat/environment/argument_parse.h>
-#include <plat/environment/application_start.h>
+#include "core/plat/environment/environment_details.h"
+#include "core/plat/environment/argument_parse.h"
+#include "core/plat/environment/application_start.h"

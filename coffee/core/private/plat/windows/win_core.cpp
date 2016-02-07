@@ -1,7 +1,7 @@
-#include <plat/windows/win_core.h>
+#include <coffee/core/plat/windows/win_core.h>
 
-#include <plat/platform_detect.h>
-#include <coffee_macros.h>
+#include <coffee/core/plat/platform_detect.h>
+#include <coffee/core/coffee_macros.h>
 #include <mutex>
 #include <atomic>
 

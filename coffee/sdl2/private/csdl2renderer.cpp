@@ -1,8 +1,8 @@
-#include <csdl2renderer.h>
+#include <coffee/sdl2/csdl2renderer.h>
 
 #include "sdl2helpers.h"
 #include "sdl2eventhandlers.h"
-#include <base/cfiles.h>
+#include <coffee/core/base/cfiles.h>
 
 namespace Coffee{
 namespace CDisplay{

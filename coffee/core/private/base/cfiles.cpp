@@ -1,11 +1,11 @@
-#include <base/cfiles.h>
+#include <coffee/core/base/cfiles.h>
 
 #include <cstring>
 #include <byteswap.h>
 
-#include <plat/plat_file.h>
-#include <plat/plat_core.h>
-#include <base/cdebug.h>
+#include <coffee/core/plat/plat_file.h>
+#include <coffee/core/plat/plat_core.h>
+#include <coffee/core/base/cdebug.h>
 
 #include <SDL2/SDL_system.h>
 

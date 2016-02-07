@@ -1,10 +1,6 @@
 find_package(SDL2 REQUIRED)
 
-include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${COFFEE_GRAPHICS_INCLUDE_DIR}
-        ${COFFEE_IMAGE_INCLUDE_DIR}
-        ${COFFEE_SDL2_INCLUDE_DIR}
+include_directories ( SYSTEM
         ${SDL2_INCLUDE_DIR}
     )
 

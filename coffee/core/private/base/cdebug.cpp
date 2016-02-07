@@ -1,6 +1,6 @@
-#include <base/cdebug.h>
+#include <coffee/core/base/cdebug.h>
 
-#include <plat/plat_core.h>
+#include <coffee/core/plat/plat_core.h>
 
 namespace Coffee{
 namespace DebugFun{

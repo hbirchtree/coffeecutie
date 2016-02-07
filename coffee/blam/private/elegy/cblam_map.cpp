@@ -1,4 +1,4 @@
-#include <elegy/cblam_map.h>
+#include <coffee/blam/elegy/cblam_map.h>
 
 namespace Coffee{
 namespace CBlam{

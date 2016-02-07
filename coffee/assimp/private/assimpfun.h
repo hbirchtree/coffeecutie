@@ -4,8 +4,8 @@
 #include <thread>
 #include <stdint.h>
 
-#include <coffee.h>
-#include "cassimptypes.h"
+#include <coffee/core/coffee.h>
+#include <coffee/assimp/cassimptypes.h>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

@@ -14,10 +14,6 @@ set ( CoffeeGraphicsMisc_SRCS
 
 coffee_add_library ( CoffeeGraphicsMisc "${CoffeeGraphicsMisc_SRCS}" )
 
-include_directories(
-        ${COFFEE_GRAPHICS_INCLUDE_DIR}
-    )
-
 target_link_libraries ( CoffeeGraphicsMisc
         CoffeeCore
     )

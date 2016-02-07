@@ -1,6 +1,7 @@
-#include <renderer/gleamrenderer.h>
-#include <coffee_strings.h>
-#include <levels/gl45.h>
+#include <coffee/graphics_apis/gleam/renderer/gleamrenderer.h>
+#include <coffee/core/coffee_strings.h>
+#include <coffee/graphics_apis/gleam/levels/gl45.h>
+
 #include <glad/glad.h>
 
 namespace Coffee{

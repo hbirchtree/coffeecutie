@@ -6,9 +6,7 @@ find_library(OPENVR_LIBRARY NAMES "openvr_api" PATHS
     ${OPENVR_LIBRARY_DIR}
     )
 
-include_directories (
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${COFFEE_GRAPHICS_INCLUDE_DIR}
+include_directories ( SYSTEM
     ${COFFEE_EXT_LIBRARY_DIR}/openvr/headers
     ${OPENVR_INCLUDE_DIR}
     )

@@ -1,8 +1,8 @@
 #ifndef COFFEE_CORE_CONTEXT_SDL2_WINDOWSYSTEM_H
 #define COFFEE_CORE_CONTEXT_SDL2_WINDOWSYSTEM_H
 
-#include <base/cdebug.h>
-#include <plat/windowmanager/plat_windowtype.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/core/plat/windowmanager/plat_windowtype.h>
 #include "sdl2datatypes.h"
 
 namespace Coffee{

@@ -4,10 +4,6 @@ set ( EnvTest_SRCS
 
 coffee_add_example ( EnvTest ${EnvTest_SRCS} )
 
-include_directories(
-    ${COFFEE_GRAPHICS_OPENGL_INCLUDE_DIR}
-    )
-
 target_link_libraries ( EnvTest
     CoffeeCore
     CoffeeImage

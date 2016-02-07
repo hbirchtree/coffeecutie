@@ -1,4 +1,4 @@
-#include <cpcl.h>
+#include <coffee_ext/pcl_shim/cpcl.h>
 
 //TODO: Create PCL binding
 

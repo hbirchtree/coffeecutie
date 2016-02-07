@@ -1,1 +1,1 @@
-#include <coffee/openvr/include/copenvr.h>
+#include <coffee/openvr/copenvr.h>

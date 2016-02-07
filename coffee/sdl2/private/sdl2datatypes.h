@@ -3,11 +3,11 @@
 
 #include <mutex>
 #include <thread>
-#include <base/cdisplay.h>
+#include <coffee/core/base/cdisplay.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_syswm.h>
-#include <graphics_apis/include/gltypes.h>
+#include <coffee/graphics_apis/gltypes.h>
 
 namespace Coffee{
 namespace CSDL2Types{

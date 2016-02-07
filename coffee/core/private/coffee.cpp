@@ -1,14 +1,14 @@
-#include "coffee.h"
+#include <coffee/core/coffee.h>
 
 #include <signal.h>
 
-#include "plat/platform_detect.h"
-#include "base/cdebug.h"
-#include "plat/plat_core.h"
-#include "unit_tests/data_types.h"
-#include "unit_tests/memory_operations.h"
-#include "plat/memory/cmd_interface.h"
-#include "plat/environment/process_def.h"
+#include <coffee/core/plat/platform_detect.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/core/plat/plat_core.h>
+#include <coffee/core/unit_tests/data_types.h>
+#include <coffee/core/unit_tests/memory_operations.h>
+#include <coffee/core/plat/memory/cmd_interface.h>
+#include <coffee/core/plat/environment/process_def.h>
 
 static bool coffee_initialized = false;
 

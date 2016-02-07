@@ -1,6 +1,6 @@
-#include <ctextrender.h>
+#include <coffee/image/ctextrender.h>
 
-#include <plat/plat_memory.h>
+#include <coffee/core/plat/plat_memory.h>
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb/stb_truetype.h>

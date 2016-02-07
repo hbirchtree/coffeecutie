@@ -1,7 +1,7 @@
 #ifndef CBUFFER
 #define CBUFFER
 
-#include <coffee.h>
+#include <coffee/core/coffee.h>
 #include "cbuffer_storage.h"
 
 namespace Coffee{

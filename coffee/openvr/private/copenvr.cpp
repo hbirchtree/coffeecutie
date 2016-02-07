@@ -1,7 +1,7 @@
-#include <copenvr.h>
+#include <coffee/openvr/copenvr.h>
 #include <openvr.h>
 
-#include <coffee_strings.h>
+#include <coffee/core/coffee_strings.h>
 
 namespace Coffee{
 namespace OpenVR{

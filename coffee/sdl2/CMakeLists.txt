@@ -4,15 +4,10 @@ set ( CoffeeSDL2_SRCS
     private/sdl2helpers.cpp
     )
 
-find_package(SDL2 REQUIRED)
+find_package ( SDL2 REQUIRED)
 
-include_directories(SYSTEM
+include_directories ( SYSTEM
     ${SDL2_INCLUDE_DIR}
-    )
-
-include_directories(
-    ${COFFEE_SDL2_INCLUDE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
 
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
