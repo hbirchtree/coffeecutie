@@ -2,20 +2,18 @@
 #define COFFEE_EXT_PCL_SHIM_PCL_H
 
 #include <coffee/CCore>
+#include <coffee/graphics_apis/cgraphicsdata.h>
 
+/* Base headers */
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_representation.h>
 
+/* File export */
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/vtk_io.h>
 
-#include <pcl/filters/statistical_outlier_removal.h>
-
-#include <pcl/features/normal_3d.h>
-
-#include <pcl/surface/gp3.h>
-
+/* Just for testing */
 #include <pcl/visualization/cloud_viewer.h>
 
 namespace CoffeeExt{
@@ -26,23 +24,39 @@ using namespace Coffee;
 
 struct CPCLImplementation
 {
-    static PointCloud<PointXYZRGB>* GenPointCloud(const CVec3* points,
-                                                  const CRGBA *cPoints,
-                                                  const szptr& numPoints);
+    static PointCloud<PointXYZRGB>::Ptr GenPointCloud(const CVec3* points,
+                                                      const CRGBA *cPoints,
+                                                      const szptr& numPoints);
 
-    static PointCloud<PointXYZ>::Ptr ExtractXYZCloud(const PointCloud<PointXYZRGB>* colorcloud);
+    /*!
+     * \brief Extract an XYZ cloud from an XYZRGB one, used for mesh approximation (incompatibility, really)
+     * \param colorcloud
+     * \return
+     */
+    static PointCloud<PointXYZ>::Ptr ExtractXYZCloud(PointCloud<PointXYZRGB>::Ptr colorcloud);
 
+    /*!
+     * \brief Remove statistical outliers from the cloud
+     * \param cloud
+     */
     static void DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud);
 
-    static void MergeClouds(
-            const PointCloud<PointXYZRGB>* c1,
-            PointCloud<PointXYZRGB>* c2);
+    /*!
+     * \brief Merge two point clouds using normal distribution transform
+     * \param c1 Combinable cloud, not modified
+     * \param c2 Target cloud which is aligned with, accumulates
+     * \return Pointer to c2 on success
+     */
+    static PointCloud<PointXYZRGB>::Ptr MergeClouds(
+            PointCloud<PointXYZRGB>::Ptr c1,
+            PointCloud<PointXYZRGB>::Ptr c2,
+            CGraphicsData::CTransform const& transform);
 
     static PolygonMesh* CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud);
 
     static void SavePCDFile(const PointCloud<PointXYZRGB>& cloud,
                                 cstring fname);
-    static PointCloud<PointXYZRGB>* LoadPCDFile(cstring fname);
+    static PointCloud<PointXYZRGB>::Ptr LoadPCDFile(cstring fname);
 };
 
 }

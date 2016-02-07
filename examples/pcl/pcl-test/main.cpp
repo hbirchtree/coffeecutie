@@ -96,10 +96,9 @@ int32 coffee_main(int32, cstring_w*)
             }
     }
 
-    CPCL::PointCloud<CPCL::PointXYZRGB>* pcl =
-            CPCLI::GenPointCloud(posdata.data(),
-                                 color_data,
-                                 posdata.size());
+    CPCL::PointCloud<CPCL::PointXYZRGB>::Ptr pcl = CPCLI::GenPointCloud(posdata.data(),
+                                                                        color_data,
+                                                                        posdata.size());
 
     CElapsedTimerD timer;
     timer.start();

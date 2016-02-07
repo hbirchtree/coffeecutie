@@ -1,15 +1,25 @@
 #include <coffee_ext/pcl_shim/cpcl.h>
 
-//TODO: Create PCL binding
+/* Noise removal */
+#include <pcl/filters/statistical_outlier_removal.h>
+
+/* Mesh creation */
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
+
+/* Registration of point clouds (merging) */
+#include <pcl/registration/ndt.h>
+#include <pcl/filters/approximate_voxel_grid.h>
 
 namespace CoffeeExt{
 namespace CPCL{
 
-pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::GenPointCloud(
+PointCloud<PointXYZRGB>::Ptr CPCLImplementation::GenPointCloud(
         const CVec3 *points, const CRGBA *cPoints,
         const szptr &numPoints)
 {
-    pcl::PointCloud<pcl::PointXYZRGB>* pcloud = new pcl::PointCloud<pcl::PointXYZRGB>;
+    PointCloud<PointXYZRGB>::Ptr pcloud =
+            PointCloud<PointXYZRGB>::Ptr(new PointCloud<PointXYZRGB>);
 
     pcloud->width = numPoints;
     pcloud->height = 1;
@@ -34,7 +44,8 @@ pcl::PointCloud<pcl::PointXYZRGB> *CPCLImplementation::GenPointCloud(
     return pcloud;
 }
 
-PointCloud<PointXYZ>::Ptr CPCLImplementation::ExtractXYZCloud(const PointCloud<PointXYZRGB> *colorcloud)
+PointCloud<PointXYZ>::Ptr CPCLImplementation::ExtractXYZCloud(
+        PointCloud<PointXYZRGB>::Ptr colorcloud)
 {
     PointCloud<PointXYZ>::Ptr out = PointCloud<PointXYZ>::Ptr(new PointCloud<PointXYZ>);
 
@@ -71,15 +82,42 @@ void CPCLImplementation::DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud)
     cloud->width = cloud->points.size();
 }
 
-void CPCLImplementation::MergeClouds(
-        const pcl::PointCloud<pcl::PointXYZRGB> *c1,
-        pcl::PointCloud<pcl::PointXYZRGB> *c2)
+PointCloud<PointXYZRGB>::Ptr CPCLImplementation::MergeClouds(
+        PointCloud<PointXYZRGB>::Ptr c1,
+        PointCloud<PointXYZRGB>::Ptr c2,
+        CGraphicsData::CTransform const& transform)
 {
+    NormalDistributionsTransform<PointXYZRGB,PointXYZRGB> ndt;
+
+    ndt.setTransformationEpsilon(0.01);
+    ndt.setStepSize(0.1);
+    ndt.setResolution(1.0);
+
+    ndt.setMaximumIterations(35);
+    ndt.setInputSource(c1);
+    ndt.setInputTarget(c2);
+
+    Eigen::AngleAxisf rot(transform.rotation.w(),Eigen::Vector3f::UnitZ());
+    Eigen::Translation3f transl(transform.position.x(),
+                                transform.position.y(),
+                                transform.position.z());
+    Eigen::Matrix4f guess = (transl * rot).matrix();
+
+    PointCloud<PointXYZRGB>::Ptr out = PointCloud<PointXYZRGB>::Ptr(new PointCloud<PointXYZRGB>);
+
+    ndt.align(*out,guess);
+
+    cDebug("Has converged: {0}",ndt.hasConverged());
+    cDebug("Fitness: {0}",ndt.getFitnessScore());
+
+    transformPointCloud(*c2,*out,guess);
+
+    return out;
 }
 
 PolygonMesh *CPCLImplementation::CreatePolygonMesh(const PointCloud<PointXYZ>::Ptr &cloud)
 {
-    NormalEstimation<PointXYZ,pcl::Normal> n;
+    NormalEstimation<PointXYZ,Normal> n;
     PointCloud<Normal> normals;
     PointCloud<PointXYZ>::ConstPtr cloud_ptr(cloud);
 
@@ -115,17 +153,17 @@ PolygonMesh *CPCLImplementation::CreatePolygonMesh(const PointCloud<PointXYZ>::P
     return triangles;
 }
 
-void CPCLImplementation::SavePCDFile(const pcl::PointCloud<pcl::PointXYZRGB>& cloud,
-                                         cstring fname)
+void CPCLImplementation::SavePCDFile(
+        const PointCloud<PointXYZRGB>& cloud,
+        cstring fname)
 {
-    pcl::io::savePCDFileASCII(fname,cloud);
+    io::savePCDFileASCII(fname,cloud);
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>* CPCLImplementation::LoadPCDFile(cstring fname)
+PointCloud<PointXYZRGB>::Ptr CPCLImplementation::LoadPCDFile(cstring fname)
 {
-    pcl::PointCloud<pcl::PointXYZRGB>* cloud = new pcl::PointCloud<pcl::PointXYZRGB>;
-    pcl::io::loadPCDFile(fname,*cloud);
-
+    PointCloud<PointXYZRGB>::Ptr cloud = PointCloud<PointXYZRGB>::Ptr(new PointCloud<PointXYZRGB>);
+    io::loadPCDFile(fname,*cloud);
     return cloud;
 }
 
