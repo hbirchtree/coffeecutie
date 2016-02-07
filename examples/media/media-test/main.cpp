@@ -4,7 +4,7 @@
 #include <coffee/CAudio>
 #include <coffee/CFFMedia>
 
-#include <coffee/graphics_apis/opengl/include/glfunctions.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
 
 using namespace Coffee;
 using namespace Coffee::CGraphicsData;
@@ -180,6 +180,9 @@ public:
         CFree(initTexture.data);
 
         texture.sampler().unit = 0;
+
+        glSamplerParameteri(texture.sampler().handle,GL_TEXTURE_MIN_FILTER,(GLint)GL_LINEAR);
+        glSamplerParameteri(texture.sampler().handle,GL_TEXTURE_MAG_FILTER,(GLint)GL_LINEAR);
 
         coffee_graphics_tex_load_safe(texture.sampler(),texture.texture());
 

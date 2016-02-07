@@ -2,7 +2,7 @@
 #define CGAME_DATASET
 
 #include "cgame_function_binds.h"
-#include <cassimptypes.h>
+#include <coffee/assimp/cassimptypes.h>
 #include <coffee/CGraphics>
 
 namespace Coffee{

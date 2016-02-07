@@ -2,7 +2,7 @@
 #define CBLAM_STRUCTURES
 
 #include <coffee/core/CTypes>
-#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/ctexture_types.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture_types.h>
 
 namespace Coffee{
 namespace CBlam{

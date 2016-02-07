@@ -3,9 +3,9 @@
 #include <coffee/graphics_apis/COpenGL>
 #include <coffee/CImage>
 
-#include <graphics_apis/gleam/include/levels/gl33.h>
-#include <graphics_apis/gleam/include/levels/gl43.h>
-#include <graphics_apis/gleam/include/levels/gl45.h>
+#include <coffee/graphics_apis/gleam/levels/gl33.h>
+#include <coffee/graphics_apis/gleam/levels/gl43.h>
+#include <coffee/graphics_apis/gleam/levels/gl45.h>
 
 using namespace Coffee;
 using namespace CDisplay;

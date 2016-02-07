@@ -1,7 +1,7 @@
-#include <glbinding/wrappers/cuniformtypes.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/cuniformtypes.h>
 
-#include <glfunctions.h>
-#include <glbinding/wrappers/cshader.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/cshader.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

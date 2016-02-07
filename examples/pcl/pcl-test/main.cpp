@@ -2,7 +2,7 @@
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 
-#include <coffee/graphics_apis/opengl/include/glfunctions.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
 
 #include <coffee_ext/pcl_shim/cpcl.h>
 #include <coffee_ext/kinect_shim/cnect.h>

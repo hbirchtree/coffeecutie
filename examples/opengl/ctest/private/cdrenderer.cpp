@@ -1,8 +1,8 @@
 #include "cdrenderer.h"
 
 #include <coffee/CGraphics>
-#include <plat/windowmanager/plat_wm.h>
-#include <input/cinputfunctions.h>
+#include <coffee/core/plat/windowmanager/plat_wm.h>
+#include <coffee/core/input/cinputfunctions.h>
 #include "base_case.h"
 
 static Coffee::CInput::CIAxisFilter m_axisFilter[2];

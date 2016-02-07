@@ -1,4 +1,4 @@
-#include <unit_tests.h>
+#include <coffee/graphics_apis/opengl/unit_tests.h>
 
 #include <coffee/graphics_apis/scene/cnode.h>
 #include <coffee/graphics_apis/cgraphicsdata.h>

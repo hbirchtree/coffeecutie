@@ -1,6 +1,6 @@
-#include <glbinding/wrappers/cgraphicswrappers.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/cgraphicswrappers.h>
 
-#include <glfunctions.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

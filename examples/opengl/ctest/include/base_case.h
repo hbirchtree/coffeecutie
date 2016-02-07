@@ -3,7 +3,7 @@
 
 #include <coffee/core/CTypes>
 #include "memory/cgame_dataset.h"
-#include <blam/cblam.h>
+#include <coffee/blam/cblam.h>
 
 namespace Coffee{
 namespace CRendering{

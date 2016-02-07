@@ -1,5 +1,5 @@
-#include <glbinding/wrappers/ctexture_sampler.h>
-#include <glfunctions.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture_sampler.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

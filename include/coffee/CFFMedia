@@ -1,2 +1,2 @@
-#include <coffee/media/include/cffmedia.h>
-#include <coffee/media/include/cffplayer.h>
+#include "media/cffmedia.h"
+#include "media/cffplayer.h"

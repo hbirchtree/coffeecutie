@@ -1,4 +1,4 @@
-#include "glbinding/glbinding.h"
+#include <coffee/graphics_apis/opengl/glbinding/glbinding.h>
 
 #include <glbinding/Meta.h>
 

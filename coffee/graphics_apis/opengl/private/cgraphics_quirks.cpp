@@ -1,4 +1,4 @@
-#include <coffee/graphics_apis/opengl/include/glbinding/cgraphics_quirks.h>
+#include <coffee/graphics_apis/opengl/glbinding/cgraphics_quirks.h>
 
 #include <cstring>
 

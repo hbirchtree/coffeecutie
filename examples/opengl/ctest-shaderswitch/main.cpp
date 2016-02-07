@@ -4,7 +4,7 @@
 #include <coffee/CImage>
 
 //Don't do this at home, please! I am a trained professional.
-#include <coffee/graphics_apis/opengl/include/glfunctions.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
 
 using namespace Coffee;
 using namespace CDisplay;

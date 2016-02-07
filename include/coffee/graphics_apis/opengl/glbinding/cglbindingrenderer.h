@@ -1,7 +1,7 @@
 #ifndef CGLBINDINGRENDERER_H
 #define CGLBINDINGRENDERER_H
 
-#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/cgraphicswrappers.h>
+#include "wrappers/cgraphicswrappers.h"
 #include <coffee/sdl2/csdl2renderer.h>
 
 namespace Coffee{

@@ -2,7 +2,7 @@
 #define COFFEE_CRENDERING_CMULTIDRAWGRAPH_H
 
 #include <coffee/graphics_apis/COpenGL>
-#include <cassimpimporters.h>
+#include <coffee/assimp/cassimpimporters.h>
 
 #include <iterator>
 

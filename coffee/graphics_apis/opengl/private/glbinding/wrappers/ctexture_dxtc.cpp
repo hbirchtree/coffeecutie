@@ -1,7 +1,7 @@
-#include "glbinding/wrappers/ctexture_dxtc.h"
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture_dxtc.h>
 
-#include "glfunctions.h"
-#include "glbinding/wrappers/ctexture.h"
+#include <coffee/graphics_apis/opengl/glfunctions.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

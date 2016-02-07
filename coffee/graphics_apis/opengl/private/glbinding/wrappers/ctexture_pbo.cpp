@@ -1,5 +1,5 @@
-#include <glbinding/wrappers/ctexture_pbo.h>
-#include <glbinding/wrappers/ctexture.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture_pbo.h>
+#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture.h>
 
 namespace Coffee{
 namespace CGraphicsWrappers{

@@ -8,7 +8,7 @@ set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 
 set ( CMAKE_BUILD_TYPE Debug )
 
-set ( CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules")
+set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
 # Language bindings
 # Deprecated, used to make SWIG C# binding, doesn't work so well

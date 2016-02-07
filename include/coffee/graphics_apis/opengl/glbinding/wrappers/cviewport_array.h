@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_VIEWPORT_ARRAY_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_VIEWPORT_ARRAY_H
 
-#include <coffee/graphics_apis/opengl/include/glbinding/wrappers/copengl_types.h>
+#include "copengl_types.h"
 #include <coffee/graphics_apis/cgraphicsdata.h>
 
 namespace Coffee{

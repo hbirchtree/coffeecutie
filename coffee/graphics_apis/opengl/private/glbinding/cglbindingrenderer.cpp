@@ -1,4 +1,4 @@
-#include <glbinding/cglbindingrenderer.h>
+#include <coffee/graphics_apis/opengl/glbinding/cglbindingrenderer.h>
 
 #include <coffee/core/CDataStorage>
 #include <coffee/graphics_apis/COpenGL>
@@ -9,7 +9,7 @@
 #include <glbinding/Binding.h>
 #include <glbinding/Meta.h>
 
-#include <glfunctions.h>
+#include <coffee/graphics_apis/opengl/glfunctions.h>
 
 using namespace Coffee::CDisplay;
 
