@@ -58,7 +58,9 @@ void CoffeeInit()
     coffee_initialized = true;
 
     //Allow core dump by default
+#ifndef NDEBUG
     ProcessProperty::CoreDumpEnable();
+#endif
 
     //Set up signal handlers, make the process more well-behaved
     signal(SIGILL,sighandle);

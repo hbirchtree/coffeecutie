@@ -7,9 +7,9 @@
 #include <coffee/graphics_apis/opengl/glfunctions.h>
 
 using namespace Coffee;
-using namespace Coffee::CGraphicsData;
-using namespace Coffee::CGraphicsWrappers;
-using namespace Coffee::CFFMedia;
+using namespace CGraphicsData;
+using namespace CGraphicsWrappers;
+using namespace CFFMedia;
 using namespace COpenAL;
 using namespace CSoundAbstraction;
 

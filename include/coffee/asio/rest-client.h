@@ -117,14 +117,35 @@ struct RestClientImpl : ASIO_Client
                 resp.payload.append(ss.str());
 	    }
 	}
-	catch(std::system_error)
-	{
-	}
+        catch(std::system_error)
+        {
+        }
 
 	return resp;
     }
 
+    /*!
+     * \brief Retrieve the MIME-type of the REST response, used for strict checking
+     * \return String representing the format
+     */
+    STATICINLINE CString GetContentType(RestResponse const& resp)
+    {
+        CString out;
+        CString query = "Content-Type: ";
 
+        cstring b = CStrFind(resp.header.c_str(),query.c_str());
+        cstring e = nullptr;
+        if(b)
+        {
+            b+=query.size();
+            e = CStrFind(b,"\r\n");
+            if(!e)
+                return out;
+            out.resize(e-b);
+            CMemCpy(&out[0],b,e-b);
+        }
+        return out;
+    }
 
 };
 

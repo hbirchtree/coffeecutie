@@ -15,7 +15,7 @@ struct TCPSocketImpl : ASIO_Client
 
     STATICINLINE Connection ConnectSocket()
     {
-
+        return Connection(new asio::ip::tcp::socket(t_context->service));
     }
 };
 

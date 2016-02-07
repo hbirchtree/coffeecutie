@@ -22,6 +22,6 @@
 #endif
 
 #define STATICINLINE inline C_FORCE_INLINE static
-#define FORCEDINLINE
+#define FORCEDINLINE inline C_FORCE_INLINE
 
 #endif
