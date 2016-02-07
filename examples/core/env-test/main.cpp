@@ -125,7 +125,7 @@ int32 coffee_main(int32, cstring_w*)
 
             while(msgs<10)
             {
-                cDebug("{0}: Spam! Messages! Yes!",thread.hash());
+                cDebug("{0}: Spam! Messages! Yes!",(const void*)thread.hash());
                 msgs++;
             }
         };
@@ -135,6 +135,34 @@ int32 coffee_main(int32, cstring_w*)
 
         t1.get();
         t2.get();
+    }
+
+    {
+        struct DataSet
+        {
+            CSize64 size;
+            uint8* value;
+        } data;
+        data.size.w = 128;
+        data.size.h = 128;
+        data.value = (uint8*)Alloc(data.size.area());
+
+        std::function<void(uint64,DataSet*)> kern = [](uint64 i, DataSet* d)
+        {
+            for(int32 j=0;j<64;j++)
+                d->value[i*64+j] /= 2;
+        };
+
+        CElapsedTimer t;
+        t.start();
+        ParallelFor(kern,data.size.area()/64,&data).get();
+        cDebug("Parallel time: {0}",t.elapsed());
+        t.start();
+        for(uint64 i=0;i<data.size.area();i++)
+        {
+            data.value[i] /= 2;
+        }
+        cDebug("Serial time: {0}",t.elapsed());
     }
 
     return 0;

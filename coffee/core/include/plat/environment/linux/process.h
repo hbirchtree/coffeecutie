@@ -14,13 +14,13 @@ namespace Coffee{
 
 struct ProcessProperty : ProcessPropertyDef
 {
-    static void CoreDumpEnable()
+    STATICINLINE void CoreDumpEnable()
     {
         struct rlimit lim;
         lim.rlim_cur = lim.rlim_max = RLIM_INFINITY;
         setrlimit(RLIMIT_CORE,&lim);
     }
-    static void CoreAffinity(std::thread& thr, uint32 i)
+    STATICINLINE void CoreAffinity(std::thread& thr, uint32 i)
     {
         cpu_set_t t;
         CPU_ZERO(&t);
@@ -36,25 +36,25 @@ struct ProcessProperty : ProcessPropertyDef
         }
     }
 
-    static int64 Pid()
+    STATICINLINE int64 Pid()
     {
         return getpid();
     }
-    static int64 MemResident(int64 pid)
+    STATICINLINE int64 MemResident(int64 pid)
     {
         rusage rs;
         if(getrusage(pid,&rs)!=0)
             return 0;
         return rs.ru_idrss+rs.ru_isrss;
     }
-    static int64 MemVirtual(int64 pid)
+    STATICINLINE int64 MemVirtual(int64 pid)
     {
         rusage rs;
         if(getrusage(pid,&rs)!=0)
             return 0;
         return rs.ru_nvcsw;
     }
-    static int32 CpuUsage(int64)
+    STATICINLINE int32 CpuUsage(int64)
     {
         return 0;
     }

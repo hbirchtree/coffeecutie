@@ -556,6 +556,10 @@ struct HWDeviceInfo
  */
 using CSize = _cbasic_size_2d<int32>;
 /*!
+ * \brief Heavy-duty size structure
+ */
+using CSize64 = _cbasic_size_2d<uint64>;
+/*!
  * \brief Size for inaccurate measurements
  */
 typedef _cbasic_size_2d<scalar> CSizeF;

@@ -3,6 +3,8 @@
 
 #include <coffee/core/CTypes>
 #include <thread>
+#include <future>
+#include <iostream>
 
 namespace Coffee{
 
@@ -25,14 +27,41 @@ struct SysInfoDef
      * \brief CPU core count in total, all CPUs
      * \return
      */
-    static uint32 CpuCoreCount();
+    static uint32 CoreCount();
     /*!
      * \brief CPU thread count in total, all CPUs
      * \return
      */
-    static uint32 CpuThreadCount()
+    STATICINLINE uint64 ThreadCount()
     {
         return std::thread::hardware_concurrency();
+    }
+
+    /*!
+     * \brief Get amount of parallel tasks that can be launched
+     * \return
+     */
+    STATICINLINE uint64 Parallelism()
+    {
+        return ThreadCount()*64;
+    }
+
+    /*!
+     * \brief Calculate a 'smart' amount of tasks to launch based upon amount of tasks
+     * \param worksize Amount of tasks
+     * \param weight Weight given to each tasks. Should only be modified if each task is significant in size.
+     * \return An estimated value for what would be a suitable amount of tasks
+     */
+    STATICINLINE uint64 SmartParallelism(uint64 worksize, uint64 weight = 1)
+    {
+        if(worksize*weight <= ThreadCount())
+        {
+            return 1;
+        }else if(worksize*weight <= CMath::pow<uint64>(Parallelism(),3))
+        {
+            return ThreadCount();
+        }else
+            return Parallelism();
     }
 
     /*!

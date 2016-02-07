@@ -9,43 +9,43 @@ namespace Coffee{
 
 struct PlatSysInfo : SysInfoDef
 {
-    static uint32 CpuCount()
+    STATICINLINE uint32 CpuCount()
     {
         return sysconf(_SC_NPROCESSORS_ONLN);
     }
-    static uint32 CpuCoreCount()
+    STATICINLINE uint32 CoreCount()
     {
         return sysconf(_SC_NPROCESSORS_ONLN);
     }
-    static bool MemVirtualAvailable()
+    STATICINLINE bool MemVirtualAvailable()
     {
         return true;
     }
-    static int64 MemTotal()
+    STATICINLINE int64 MemTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalram*inf.mem_unit;
     }
-    static int64 MemAvailable()
+    STATICINLINE int64 MemAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.freeram*inf.mem_unit;
     }
-    static int64 SwapTotal()
+    STATICINLINE int64 SwapTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalswap*inf.mem_unit;
     }
-    static int64 SwapAvailable()
+    STATICINLINE int64 SwapAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.freeswap*inf.mem_unit;
     }
-    static NetStatusFlags NetStatus()
+    STATICINLINE NetStatusFlags NetStatus()
     {
         return NetStatLocalOnly;
     }

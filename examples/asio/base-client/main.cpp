@@ -6,17 +6,29 @@ using namespace Coffee;
 int32 coffee_main(int32, cstring_w*)
 {
     RestClient::InitService();
-    RestClient::RestResponse t =
-            RestClient::RestRequest(RestClient::HTTP,
-                                    "tmi.twitch.tv",
-                                    "/group/user/esl/chatters");
+    CElapsedTimer tim;
 
-    cDebug("Status: {0}",t.status);
-    cDebug("Header: {0}",t.header);
-    cDebug("Message: {0}",t.message);
-    cDebug("Payload: \n{0}",t.payload);
+    std::future<RestClient::RestResponse> t =
+            RestClient::RestRequestAsync(
+                RestClient::GetContext(),
+                RestClient::HTTPS,
+                "tmi.twitch.tv",
+                "/group/user/esl/chatters");
+    tim.start();
 
-    JSON::Document doc = JSON::Read(t.payload.c_str());
+    cDebug("Launched network task!");
+
+    while(!Threads::FutureAvailable(t));
+    cDebug("Results are here: {0}",tim.elapsed());
+
+    RestClient::RestResponse res = t.get();
+
+    cDebug("Status: {0}",res.status);
+    cDebug("Header: \n{0}",res.header);
+    cDebug("Message: {0}",res.message);
+    cDebug("Payload: \n{0}",res.payload);
+
+    JSON::Document doc = JSON::Read(res.payload.c_str());
 
     if(doc.IsNull())
         return 1;

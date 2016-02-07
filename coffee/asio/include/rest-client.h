@@ -1,34 +1,22 @@
 #ifndef COFFEE_ASIO_REST_CLIENT_H
 #define COFFEE_ASIO_REST_CLIENT_H
 
-#include <coffee/core/CBase>
-#include <coffee/core/CTypes>
-#include <coffee_strings.h>
-#include <asio.hpp>
+#include "asio_data.h"
 #include <iostream>
 
 namespace Coffee{
 namespace CASIO{
 
-struct RestClientImpl{
+struct RestClientImpl : ASIO_Client
+{
     using Host = CString;
     using Request = CString;
 
     enum Protocol
     {
-	HTTP  = 0,
-	HTTPS = 1,
-    };
-
-    struct RestContext
-    {
-	RestContext():
-	    resolver(service)
-	{
-	}
-
-	asio::io_service service;
-	asio::ip::tcp::resolver resolver;
+        Undefined = 0,
+        HTTP  = 1,
+        HTTPS = 2,
     };
 
     struct RestResponse
@@ -42,38 +30,18 @@ struct RestClientImpl{
 	CString payload;
     };
 
-    static inline C_FORCE_INLINE void InitService()
+    STATICINLINE std::future<RestResponse> RestRequestAsync(
+            AsioContext context, Protocol const& p, Host const& h, Request const& r)
     {
-	t_context = new RestContext();
+        std::function<RestResponse()> fun = [context,p,h,r]()
+        {
+            MakeCurrent(context);
+            return RestRequest(p,h,r);
+        };
+        return Threads::RunAsync(fun);
     }
 
-    static inline C_FORCE_INLINE RestContext* GetContext()
-    {
-	RestContext* t = t_context;
-	t_context = nullptr;
-	return t;
-    }
-
-    static inline C_FORCE_INLINE bool MakeCurrent(RestContext* c)
-    {
-	if(t_context)
-	{
-	    cLog(__FILE__,__LINE__,CFStrings::ASIO_Library_Name,
-		 CFStrings::ASIO_Library_MakeCurrent_Error);
-	    return false;
-	}
-	t_context = c;
-	return true;
-    }
-
-    static inline C_FORCE_INLINE std::future<RestResponse> RestRequestAsync(
-	    Protocol p, Host h, Request r)
-    {
-	std::function<RestResponse(Protocol,Host,Request)> fun = RestRequest;
-	return Threads::RunAsync(fun,p,h,r);
-    }
-
-    static inline C_FORCE_INLINE RestResponse RestRequest(Protocol p, Host h, Request r)
+    STATICINLINE RestResponse RestRequest(Protocol p, Host h, Request r)
     {
 	CString protocol = "";
 	switch(p)
@@ -84,6 +52,8 @@ struct RestClientImpl{
 	case HTTPS:
 	    protocol = "https";
 	    break;
+        default:
+            return RestResponse();
         }
 
 	asio::ip::tcp::resolver::query q(h,protocol);
@@ -130,7 +100,7 @@ struct RestClientImpl{
 	std::string header;
 	while(std::getline(res_s,header)&&header!="\r")
         {
-            cDebug("Header: {0}",header);
+            resp.header.append(header+"\n");
         }
 
         std::ostringstream ss;
@@ -154,11 +124,10 @@ struct RestClientImpl{
 	return resp;
     }
 
-private:
-    static thread_local RestContext* t_context;
+
+
 };
 
-thread_local RestClientImpl::RestContext* RestClientImpl::t_context = nullptr;
 
 }
 
