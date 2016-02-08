@@ -8,9 +8,20 @@ int32 coffee_main(int32, cstring_w*)
     RestClient::InitService();
     CElapsedTimer tim;
 
+    CASIO::ASIO_Client::AsioContext c = RestClient::GetContext();
+
+    {
+        std::future<TCPSocket::Connection> conn =
+                TCPSocket::ConnectSocketAsync(c,"google...","80");
+
+        TCPSocket::Connection cn = conn.get();
+
+        TCPSocket::DisconnectSocket(&cn);
+    }
+
     std::future<RestClient::RestResponse> t =
             RestClient::RestRequestAsync(
-                RestClient::GetContext(),
+                c,
                 RestClient::HTTP,
                 "tmi.twitch.tv",
                 "/group/user/tashman91/chatters");

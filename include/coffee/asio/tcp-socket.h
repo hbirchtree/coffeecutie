@@ -10,16 +10,51 @@ namespace CASIO{
 struct TCPSocketImpl : ASIO_Client
 {
     using Host = CString;
+    using Service = CString;
 
     using Connection = std::shared_ptr<asio::ip::tcp::socket>;
 
-    STATICINLINE Connection ConnectSocket()
+    STATICINLINE Connection ConnectSocket(Host host, Service service)
     {
-        return Connection(new asio::ip::tcp::socket(t_context->service));
+	asio::ip::tcp::resolver::query q(host,service);
+	auto resolve_iterator = t_context->resolver.resolve(q);
+	Connection conn(new asio::ip::tcp::socket(t_context->service));
+	asio::connect(*conn,resolve_iterator);
+
+	return conn;
+    }
+
+    STATICINLINE std::future<Connection> ConnectSocketAsync(
+	    AsioContext ctxt, Host const& host, Service const& service)
+    {
+	std::function<Connection()> fun = [ctxt,host,service]()
+	{
+	    MakeCurrent(ctxt);
+	    Connection conn = ConnectSocket(host,service);
+	    GetContext();
+	    return conn;
+	};
+	return RunAsync(fun);
+    }
+
+    STATICINLINE std::future<bool> DisconnectSocket(Connection *c)
+    {
+	std::function<bool()> fun = [c]()
+	{
+	    if(!c->unique())
+		return false;
+	    c->get()->close();
+	    c->reset();
+	    return true;
+	};
+	return RunAsync(fun);
     }
 };
 
 }
+
+using TCPSocket = CASIO::TCPSocketImpl;
+
 }
 
 #endif

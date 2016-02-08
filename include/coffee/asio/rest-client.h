@@ -36,7 +36,9 @@ struct RestClientImpl : ASIO_Client
         std::function<RestResponse()> fun = [context,p,h,r]()
         {
             MakeCurrent(context);
-            return RestRequest(p,h,r);
+	    RestResponse res = RestRequest(p,h,r);
+	    GetContext();
+	    return res;
         };
         return Threads::RunAsync(fun);
     }
