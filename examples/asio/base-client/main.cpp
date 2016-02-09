@@ -12,9 +12,11 @@ int32 coffee_main(int32, cstring_w*)
 
     {
         std::future<TCPSocket::Connection> conn =
-                TCPSocket::ConnectSocketAsync(c,"google...","80");
+                TCPSocket::ConnectSocketAsync(c,"google.com","80");
 
         TCPSocket::Connection cn = conn.get();
+
+        cDebug("Socket: {0}",(const void* const&)cn.get());
 
         TCPSocket::DisconnectSocket(&cn);
     }
@@ -22,9 +24,9 @@ int32 coffee_main(int32, cstring_w*)
     std::future<RestClient::RestResponse> t =
             RestClient::RestRequestAsync(
                 c,
-                RestClient::HTTP,
-                "tmi.twitch.tv",
-                "/group/user/tashman91/chatters");
+                RestClient::HTTPS,
+                "api.guildwars2.com",
+                "/v2");
 
     tim.start();
 
@@ -49,9 +51,9 @@ int32 coffee_main(int32, cstring_w*)
         return 1;
 
     cDebug("{0} chatters",doc["chatter_count"].GetInt());
-    for(int32 i=0;i<doc["chatters"]["moderators"].Capacity();i++)
+    for(int32 i=0;i<doc["chatters"]["viewers"].Capacity();i++)
     {
-        cBasicPrint("{0}",doc["chatters"]["moderators"][i].GetString());
+        cBasicPrint("{0}",doc["chatters"]["viewers"][i].GetString());
     }
 
     return 0;

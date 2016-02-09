@@ -23,9 +23,9 @@ public:
     {
         AudioSample smp;
         //Read audio sample from file
-        CResources::CResource rsc("caudio_test/monosample.ogg");
+        CResources::CResource rsc("caudio_test/healing.ogg");
         FilePull(rsc);
-        CStbAudio::vorbis_load(&smp,&rsc);
+        cDebug("Loading file: {0}",CStbAudio::LoadVorbis(&smp,&rsc));
         FileFree(rsc);
 
         //Acquire an audio device, create a soundtrack
@@ -50,9 +50,6 @@ public:
         //Create an audio sample
         CSoundSample<CALSource,CALBuffer>& samp = dev->genSample(buf,fmt);
         samp.setPts(0);
-
-        CSoundStream<CALSource,CALBuffer>& strm = dev->genStream(fmt);
-        strm.feedData(smp.data,fmt,smp.samples);
 
         //Free sample data from source
         CFree(smp.data);

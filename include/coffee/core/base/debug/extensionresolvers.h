@@ -17,7 +17,7 @@ namespace conversion{
 using namespace std;
 #else
 template<typename T>
-inline C_FORCE_INLINE std::string to_string(const T& v)
+FORCEDINLINE std::string to_string(const T& v)
 {
 //    CString rep;
 //    std::stringstream ss;
@@ -33,12 +33,12 @@ inline C_FORCE_INLINE std::string to_string(const T& v)
 
 template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
 
-inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t)
+FORCEDINLINE CString cStringResolve(CString fmt, size_t)
 {
     return fmt;
 }
 
-inline C_FORCE_INLINE CString cStrReplace(const CString& fmt,
+FORCEDINLINE CString cStrReplace(const CString& fmt,
                                           size_t index,
                                           const CString& replace)
 {
@@ -46,7 +46,7 @@ inline C_FORCE_INLINE CString cStrReplace(const CString& fmt,
     return CStrReplace(fmt,subfmt,replace);
 }
 
-inline C_FORCE_INLINE cstring cStringify(DebugComponent comp)
+FORCEDINLINE cstring cStringify(DebugComponent comp)
 {
     switch(comp)
     {
@@ -69,7 +69,7 @@ inline C_FORCE_INLINE cstring cStringify(DebugComponent comp)
     }
     return "";
 }
-inline C_FORCE_INLINE cstring cStringify(DebugType type)
+FORCEDINLINE cstring cStringify(DebugType type)
 {
     switch(type)
     {
@@ -91,7 +91,7 @@ inline C_FORCE_INLINE cstring cStringify(DebugType type)
     }
     return "";
 }
-inline C_FORCE_INLINE cstring cStringify(Severity sev)
+FORCEDINLINE cstring cStringify(Severity sev)
 {
     switch(sev)
     {
@@ -115,28 +115,28 @@ inline C_FORCE_INLINE cstring cStringify(Severity sev)
 
 /* Extension resolvers */
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         DebugComponent arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         DebugType arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         Severity arg)
 {
     return cStrReplace(fmt,index,cStringify(arg));
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const _cbasic_version<uint8>& arg)
 {
@@ -145,7 +145,7 @@ inline C_FORCE_INLINE CString cStringReplace(
                                                arg.revision));
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const _cbasic_version<int32>& arg)
 {
@@ -154,7 +154,7 @@ inline C_FORCE_INLINE CString cStringReplace(
                                                arg.revision));
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const _cbasic_version<uint32>& arg)
 {
@@ -163,7 +163,7 @@ inline C_FORCE_INLINE CString cStringReplace(
                                                arg.revision));
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         HWDeviceInfo const& arg)
 {
@@ -173,7 +173,7 @@ inline C_FORCE_INLINE CString cStringReplace(
 }
 
 template<typename T>
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const T* const& ptr)
 {
@@ -184,21 +184,28 @@ inline C_FORCE_INLINE CString cStringReplace(
     return cStrReplace(fmt,index,"0x"+rep);
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         cstring arg)
 {
     return cStrReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         char* const arg)
 {
     return cStrReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        bool const& arg)
+{
+    return cStrReplace(fmt,index,(arg) ? "true" : "false");
+}
+
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const CString& arg)
 {

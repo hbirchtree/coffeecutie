@@ -9,7 +9,7 @@ namespace DebugFun{
 /* Core string resolution */
 
 template<typename T>
-inline C_FORCE_INLINE CString cStringReplace(
+FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const T& arg)
 {
@@ -17,21 +17,21 @@ inline C_FORCE_INLINE CString cStringReplace(
 }
 
 template<typename T>
-inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T& arg)
+FORCEDINLINE CString cStringResolve(CString fmt, size_t index, const T& arg)
 {
     CString str = cStringReplace(fmt,index,arg);
     return cStringResolve(str,++index);
 }
 
 template<typename... Args, typename T>
-inline C_FORCE_INLINE CString cStringResolve(CString fmt, size_t index, const T& arg, Args... args)
+FORCEDINLINE CString cStringResolve(CString fmt, size_t index, const T& arg, Args... args)
 {
     CString str = cStringReplace(fmt,index,arg);
     return cStringResolve(str,++index,args...);
 }
 
 template<typename... Arg>
-inline C_FORCE_INLINE CString cStringFormat(cstring fmt, Arg... args)
+FORCEDINLINE CString cStringFormat(cstring fmt, Arg... args)
 {
     return cStringResolve(fmt,0,args...);
 }

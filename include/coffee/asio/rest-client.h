@@ -60,11 +60,12 @@ struct RestClientImpl : ASIO_Client
 
 	asio::ip::tcp::resolver::query q(h,protocol);
 
-	auto it = t_context->resolver.resolve(q);
+        auto it = t_context->resolver.resolve(q);
 
-	asio::ip::tcp::socket s(t_context->service);
+        asio::ip::tcp::socket s(t_context->service);
 	asio::connect(s,it);
 
+        /* Send the HTTP/S request */
 	asio::streambuf req;
 	std::ostream req_s(&req);
 	req_s << "GET " << r << " HTTP/1.0\r\n";
@@ -73,6 +74,7 @@ struct RestClientImpl : ASIO_Client
 
 	asio::write(s,req);
 
+        /* Get the response */
 	asio::streambuf res;
 	asio::read_until(s,res,"\r\n");
 
@@ -81,6 +83,7 @@ struct RestClientImpl : ASIO_Client
 	std::string http_ver;
 	uint32 stat;
 
+        /* Get version of HTTP as well as status code */
 	res_s >> http_ver;
 	res_s >> stat;
 
@@ -88,10 +91,9 @@ struct RestClientImpl : ASIO_Client
 	resp.status = stat;
 	resp.version = http_ver;
 
+        /* Get HTTP message */
 	std::string message;
-
 	std::getline(res_s,message);
-
 	resp.message = message;
 
 	if(!res_s||http_ver.substr(0,5)!="HTTP/")
@@ -99,12 +101,14 @@ struct RestClientImpl : ASIO_Client
 
 	asio::read_until(s,res,"\r\n\r\n");
 
+        /* Read the header */
 	std::string header;
 	while(std::getline(res_s,header)&&header!="\r")
         {
             resp.header.append(header+"\n");
         }
 
+        /* Read full payload */
         std::ostringstream ss;
 	if(res.size()>0)
 	{
@@ -119,6 +123,7 @@ struct RestClientImpl : ASIO_Client
                 resp.payload.append(ss.str());
 	    }
 	}
+        /* We receive an exception on end of stream */
         catch(std::system_error)
         {
         }

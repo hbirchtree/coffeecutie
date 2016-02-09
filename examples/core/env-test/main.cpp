@@ -1,6 +1,7 @@
 #include <coffee/CCore>
 #include <coffee/CImage>
 #include "library.h"
+#include <coffee/core/plat/memory/cmd_interface.h>
 
 using namespace Coffee;
 

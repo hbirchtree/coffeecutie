@@ -11,7 +11,7 @@ namespace DebugFun{
 struct DebugPrinterImpl : DebugPrinterDef
 {
     template<typename... Args>
-    static CString FormatPrintString(Severity sev, uint32 stackoffset,
+    STATICINLINE CString FormatPrintString(Severity sev, uint32 stackoffset,
                                      cstring fmt, Args... args)
     {
         cstring const severity_info = "INFO";
@@ -51,21 +51,21 @@ struct DebugPrinterImpl : DebugPrinterDef
     }
 
     template<typename... Args>
-    static void cDebug(cstring f, Args... a)
+    STATICINLINE void cDebug(cstring f, Args... a)
     {
         CString fmt = FormatPrintString(Severity::Debug,
                                         0,f,a...);
         OutputPrinter::fprintf(stderr,"{0}\n",fmt);
     }
     template<typename... Args>
-    static void cWarning(cstring f, Args... a)
+    STATICINLINE void cWarning(cstring f, Args... a)
     {
         CString fmt = FormatPrintString(Severity::Medium,
                                         0,f,a...);
         OutputPrinter::fprintf(stderr,"{0}\n",fmt);
     }
     template<typename... Args>
-    static void cFatal(cstring f, Args... a)
+    STATICINLINE void cFatal(cstring f, Args... a)
     {
         CString fmt = FormatPrintString(Severity::Fatal,
                                         0,f,a...);
@@ -73,13 +73,13 @@ struct DebugPrinterImpl : DebugPrinterDef
     }
 
     template<typename... Args>
-    static void cBasicPrint(cstring f, Args... a)
+    STATICINLINE void cBasicPrint(cstring f, Args... a)
     {
         CString fmt = cStringFormat(f,a...);
         OutputPrinter::fprintf(stderr,"{0}\n",fmt);
     }
     template<typename... Args>
-    static void cBasicPrintNoNL(cstring f, Args... a)
+    STATICINLINE void cBasicPrintNoNL(cstring f, Args... a)
     {
         OutputPrinter::fprintf(stderr,f,a...);
     }

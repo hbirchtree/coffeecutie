@@ -1,8 +1,10 @@
+#include "../../base/cdebug.h"
+#include "../../coffee_macros.h"
+
 #ifndef COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 #define COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 
 #include "../environment/environment_details.h"
-#include <coffee/core/CTypes>
 
 #if defined(COFFEE_USE_TERMINAL_CTL)
 #include <sys/ioctl.h>

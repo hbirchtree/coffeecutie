@@ -10,11 +10,18 @@ set ( CMAKE_BUILD_TYPE Debug )
 
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
+# Make it verbose
+set( CMAKE_VERBOSE_MAKEFILE on )
+
 # Language bindings
 # Deprecated, used to make SWIG C# binding, doesn't work so well
-option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG CSharp binding" OFF )
+option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG bindings" OFF )
 # D language bindings, builds a module
-option ( COFFEE_BUILD_DLANG_BINDING "Build D-language binding" OFF)
+option ( COFFEE_DLANG "Build D-language binding" OFF)
+# Python bindings
+option ( COFFEE_PYTHON "Build Python binding" OFF)
+# CSharp bindings
+option ( COFFEE_CSHARP "Build C# binding" OFF)
 ###
 
 # Builds core,audio,media,sdl2 and etc. as static libraries which are recommended for ease of use.
@@ -136,11 +143,8 @@ add_subdirectory(examples)
 add_subdirectory(docs)
 
 # SWIG build, not functional anymore
-if(COFFEE_BUILD_SWIG_BINDING_)
+if(COFFEE_BUILD_SWIG_BINDING)
     add_subdirectory(bindings/swig)
-endif()
-if(COFFEE_BUILD_DLANG_BINDING)
-	add_subdirectory(bindings/dlang)
 endif()
 
 # Extension include directories

@@ -57,12 +57,12 @@ void CoffeeInit()
 
     coffee_initialized = true;
 
-    //Allow core dump by default
+    /* Allow core dump by default */
 #ifndef NDEBUG
     ProcessProperty::CoreDumpEnable();
 #endif
 
-    //Set up signal handlers, make the process more well-behaved
+    /* Set up signal handlers, make the process more well-behaved */
     signal(SIGILL,sighandle);
     signal(SIGINT,sighandle);
 #if defined(COFFEE_LINUX)
@@ -71,22 +71,21 @@ void CoffeeInit()
     signal(SIGTERM,sighandle);
 
 #ifndef NDEBUG
-    //Run unit tests, ensuring that the system and compilation process is sane
+    /* Run unit tests, ensuring that the system and compilation process is sane */
 //    CoffeeTests::run_type_tests();
     CoffeeTests::run_memory_tests();
 #endif
+
+#ifndef NDEBUG
+    cDebug("Build string: {0}",CoffeeBuildString);
+#endif
+    cDebug("Running on {0} ({1})",CoffeeCompilerString,CoffeeArchString);
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 {
     //TODO: Handle the Windows case of not including the application name
     CoffeeInit();
-#ifndef NDEBUG
-    cDebug("Build string: {0}",CoffeeBuildString);
-#endif
-    if(!coffee_initialized)
-        cWarning("CoffeeInit was not called");
-    cDebug("Running on {0} ({1})",CoffeeCompilerString,CoffeeArchString);
     int32 r = mainfun(argv,argc);
     CoffeeTerminate();
     return r;

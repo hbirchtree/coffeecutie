@@ -40,7 +40,7 @@ template<typename... Args>
 /*!
  * \brief Use this to mark variables as unused to avoid compiler warnings. We can get away with this.
  */
-inline C_FORCE_INLINE void C_UNUSED(Args...)
+FORCEDINLINE void C_UNUSED(Args...)
 {
 }
 
@@ -48,13 +48,13 @@ inline C_FORCE_INLINE void C_UNUSED(Args...)
  * \brief Assertion method for core values and unit tests
  * \param expr Expression which triggers an exception on failure
  */
-inline C_FORCE_INLINE void CASSERT(bool expr)
+FORCEDINLINE void CASSERT(bool expr)
 {
     if(!expr)
         throw std::runtime_error("Assert failed");
 }
 
-inline C_FORCE_INLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
+FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
 {
     CASSERT(CMemCmp(m1,m2,size));
 }
@@ -63,7 +63,7 @@ inline C_FORCE_INLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
  * \brief This is used for marking functionality as stubbed, used for smaller, less important features.
  * \param name
  */
-inline C_FORCE_INLINE void C_STUBBED(cstring name)
+FORCEDINLINE void C_STUBBED(cstring name)
 {
     fprintf(stderr,"%sCOFFEE:CORE:STUB%s: %s\n",
             print_color_fatal,
@@ -71,7 +71,7 @@ inline C_FORCE_INLINE void C_STUBBED(cstring name)
             name);
 }
 
-inline C_FORCE_INLINE void C_FIXME(cstring identifier)
+FORCEDINLINE void C_FIXME(cstring identifier)
 {
     fprintf(stderr,"%sCOFFEE:CORE:FIXME%s: %s\n",
             print_color_fatal,
@@ -83,7 +83,7 @@ inline C_FORCE_INLINE void C_FIXME(cstring identifier)
  * \brief For reporting fatal lack of functionality in platform layer, used for features such as file mapping if it is unsupported on a platform.
  * \param name
  */
-inline C_FORCE_INLINE void C_BADERROR(cstring name)
+FORCEDINLINE void C_BADERROR(cstring name)
 {
     fprintf(stderr,"%sCOFFEE:CORE:FTAL%s: %s\n",
             print_color_fatal,

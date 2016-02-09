@@ -5,8 +5,5 @@
 #include "core/CPlatform"
 #include "core/CTypes"
 
+#include "core/coffee.h"
 #include "core/coffee_macros.h"
-
-#include "core/plat/environment/environment_details.h"
-#include "core/plat/environment/argument_parse.h"
-#include "core/plat/environment/application_start.h"

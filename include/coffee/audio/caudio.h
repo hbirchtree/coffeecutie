@@ -47,9 +47,9 @@ struct AudioSample
     int samples;
 };
 
-extern bigscalar sample_get_length(const AudioSample &smp);
+extern bigscalar GetSampleLength(const AudioSample &smp);
 
-extern szptr sample_get_datasize(AudioFormat const& fmt, szptr samples);
+extern szptr GetSampleDataSize(AudioFormat const& fmt, szptr samples);
 
 namespace CStbAudio{
 
@@ -58,7 +58,7 @@ namespace CStbAudio{
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern void vorbis_load(AudioSample* smp, CResources::CResource* src);
+extern bool LoadVorbis(AudioSample* smp, CResources::CResource* src);
 
 }
 

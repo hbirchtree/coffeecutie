@@ -1,6 +1,8 @@
 #ifndef COFFEE_CORE_MEM_MACROS_H
 #define COFFEE_CORE_MEM_MACROS_H
 
+#include "plat/platform_detect.h"
+
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
 
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
@@ -23,5 +25,6 @@
 
 #define STATICINLINE inline C_FORCE_INLINE static
 #define FORCEDINLINE inline C_FORCE_INLINE
+#define PACKEDSTRUCT struct C_FORCE_PACKING
 
 #endif

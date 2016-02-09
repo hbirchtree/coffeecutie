@@ -17,9 +17,15 @@ struct TCPSocketImpl : ASIO_Client
     STATICINLINE Connection ConnectSocket(Host host, Service service)
     {
 	asio::ip::tcp::resolver::query q(host,service);
-	auto resolve_iterator = t_context->resolver.resolve(q);
-	Connection conn(new asio::ip::tcp::socket(t_context->service));
-	asio::connect(*conn,resolve_iterator);
+        Connection conn;
+        try{
+            auto resolve_iterator = t_context->resolver.resolve(q);
+            conn = Connection(new asio::ip::tcp::socket(t_context->service));
+            asio::connect(*conn,resolve_iterator);
+        }catch(std::system_error)
+        {
+            conn = Connection();
+        }
 
 	return conn;
     }
