@@ -11,7 +11,7 @@
 #include <windef.h>
 #define C_FORCE_PACKING UNALIGNED
 #else
-#define C_FORCE_PACKING
+#error "Packing of structures not defined! Cannot function correctly!"
 #endif
 
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)

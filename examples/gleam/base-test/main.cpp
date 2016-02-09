@@ -344,6 +344,16 @@ int32 coffee_main(int32, cstring_w*)
          ||GL::BufferStorageSupported()))
         return 1;
 
+    cDebug("Device info: {0}",GL::Debug::Renderer());
+
+    timer.start();
+    cDebug("Processor info: {0}",SysInfo::Processor());
+    cDebug("Frequency: {0}GHz",SysInfo::ProcessorFrequency());
+    cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
+    cDebug("FPU: {1}",SysInfo::HasFPU());
+
+    cDebug("Information processing time: {0}",timer.elapsed());
+
     renderer->run();
     timer.start();
     renderer->cleanup();

@@ -92,6 +92,36 @@ struct SysInfoDef
     static int64 SwapAvailable();
 
     /*!
+     * \brief Info about the system's processor
+     * \return
+     */
+    static HWDeviceInfo Processor();
+
+    /*!
+     * \brief Current processor frequency, allowed to be inaccurate if hardware clocks particular cores differently
+     * \return
+     */
+    static bigscalar ProcessorFrequency();
+
+    /*!
+     * \brief Whether the system has an FPU, has a great impact on floating-point calculations
+     * \return
+     */
+    static bool HasFPU();
+
+    /*!
+     * \brief Cache size can be used to optimize tight loops, or just to make screens look tacky
+     * \return
+     */
+    static int64 ProcessorCacheSize();
+
+    /*!
+     * \brief Useful in correlation to core count
+     * \return
+     */
+    static bool HasHyperThreading();
+
+    /*!
      * \brief Reports networking status
      * \return
      */

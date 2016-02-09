@@ -30,7 +30,7 @@ inline C_FORCE_INLINE cstring ReadString(cstring_w target, int32 size, FILE* str
 inline C_FORCE_INLINE void ClearScreen()
 {
 #if defined(COFFEE_USE_TERMINAL_CTL)
-    fprintf(stderr,"\e[1;1H\e[2J");
+    fprintf(DefaultDebugOutputPipe,"\e[1;1H\e[2J");
 #endif
 }
 
@@ -40,7 +40,7 @@ inline C_FORCE_INLINE void ClearScreen()
 inline C_FORCE_INLINE void AltScreen()
 {
 #if defined(COFFEE_USE_TERMINAL_CTL)
-    fprintf(stderr,"\033[?1049h\033[H");
+    fprintf(DefaultDebugOutputPipe,"\033[?1049h\033[H");
     TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
 #endif
 }
@@ -53,7 +53,7 @@ inline C_FORCE_INLINE void ResetScreen()
 #if defined(COFFEE_USE_TERMINAL_CTL)
     if(!TermScreen::UsingAlternateBuffer)
         return;
-    fprintf(stderr,"\033[?1049l");
+    fprintf(DefaultDebugOutputPipe,"\033[?1049l");
     TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
 #endif
 }

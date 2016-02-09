@@ -1,163 +1,16 @@
 #include <coffee/media/cffmedia.h>
 #include <coffee/core/coffee_strings.h>
 
-extern "C"
-{
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-#include <libavdevice/avdevice.h>
-#include <libavutil/imgutils.h>
-#include <libswresample/swresample.h>
-#include <libswscale/swscale.h>
-}
+#include "ffshimmy.h"
 
 namespace Coffee{
-namespace CFFMedia{
+namespace FFMedia{
 
 static thread_local bool cffmedia_context_created = false;
 
 constexpr AVPixelFormat default_pixfmt = AV_PIX_FMT_RGBA;
 
-struct CFFStream
-{
-    AVStream* stream;
-
-    AVCodecContext* context;
-    AVCodec* codec;
-
-    AVMediaType type;
-    int index;
-};
-
-struct CFFVideoPlayer
-{
-    AVFormatContext* fmtContext;
-
-    CFFStream* audio;
-    CFFStream* video;
-    CFFStream* subtitles;
-};
-
-struct CFFDecodeContext
-{
-    struct{
-        AVRational tb;
-        AVRational frame_rate;
-        SwsContext* sws_ctxt;
-        AVFrame* frame;
-        AVFrame* tFrame;
-        CSize resolution;
-    } v;
-    struct{
-        AVFrame* frame;
-        AVFrame* tFrame;
-        SwrContext* swr_ctxt;
-
-        AVSampleFormat sfmt;
-        int32 srate;
-        int16 bitdepth;
-        int32 channels;
-        int64 chlayout;
-
-        uint8** data;
-        int32 linesize;
-    } a;
-    struct{
-        AVSubtitle subtitle;
-    } s;
-
-    AVPacket packet;
-
-    bool eos; /*!< Flag for end of stream*/
-};
-
-struct CFFEncodeContext
-{
-    struct{
-        CSize resolution;
-    } v;
-    struct{
-
-    } a;
-};
-
-inline C_FORCE_INLINE void ff_get_sampleformat(SampleFormat fmt,
-                                               int64* ch_layout,
-                                               AVSampleFormat* sfmt,
-                                               int32* channels,
-                                               int16* bits)
-{
-    switch(fmt)
-    {
-    case SampleFormat::U8M:{
-        *ch_layout = AV_CH_LAYOUT_MONO;
-        *channels = 1;
-        *sfmt = AV_SAMPLE_FMT_U8;
-        *bits = 8;
-        break;
-    }
-    case SampleFormat::U8S:{
-        *ch_layout = AV_CH_LAYOUT_STEREO;
-        *channels = 2;
-        *sfmt = AV_SAMPLE_FMT_U8;
-        *bits = 8;
-        break;
-    }
-    case SampleFormat::U8Q:{
-        *ch_layout = AV_CH_LAYOUT_4POINT0;
-        *channels = 4;
-        *sfmt = AV_SAMPLE_FMT_U8;
-        *bits = 8;
-        break;
-    }
-
-    case SampleFormat::I16M:{
-        *ch_layout = AV_CH_LAYOUT_MONO;
-        *channels = 1;
-        *sfmt = AV_SAMPLE_FMT_S16;
-        *bits = 16;
-        break;
-    }
-    case SampleFormat::I16S:{
-        *ch_layout = AV_CH_LAYOUT_STEREO;
-        *channels = 2;
-        *sfmt = AV_SAMPLE_FMT_S16;
-        *bits = 16;
-        break;
-    }
-    case SampleFormat::I16Q:{
-        *ch_layout = AV_CH_LAYOUT_4POINT0;
-        *channels = 4;
-        *sfmt = AV_SAMPLE_FMT_S16;
-        *bits = 16;
-        break;
-    }
-
-    case SampleFormat::F32M:{
-        *ch_layout = AV_CH_LAYOUT_MONO;
-        *channels = 1;
-        *sfmt = AV_SAMPLE_FMT_FLT;
-        *bits = 16;
-        break;
-    }
-    case SampleFormat::F32S:{
-        *ch_layout = AV_CH_LAYOUT_STEREO;
-        *channels = 2;
-        *sfmt = AV_SAMPLE_FMT_FLT;
-        *bits = 32;
-        break;
-    }
-    case SampleFormat::F32Q:{
-        *ch_layout = AV_CH_LAYOUT_4POINT0;
-        *channels = 4;
-        *sfmt = AV_SAMPLE_FMT_FLT;
-        *bits = 32;
-        break;
-    }
-    }
-}
-
-void coffee_ffmedia_init(CFFMessageCallback callback, bool silent)
+void FFInit(CFFMessageCallback callback, bool silent)
 {
     if(cffmedia_context_created)
         return;
@@ -180,57 +33,55 @@ void coffee_ffmedia_init(CFFMessageCallback callback, bool silent)
     cffmedia_context_created = true;
 }
 
-CFFStream* ff_open_stream(AVFormatContext* fCtxt, AVMediaType type)
-{
-    AVStream* strm = nullptr;
-    unsigned int index = -1;
-    for(unsigned int i=0;i<fCtxt->nb_streams;i++)
-    {
-        if(fCtxt->streams[i]->codec->codec_type==type)
-        {
-            strm = fCtxt->streams[i];
-            index = i;
-            break;
-        }
-    }
-    if(!strm)
-        return nullptr;
+//FFStream* ff_open_stream(AVFormatContext* fCtxt, AVMediaType type, int streamIndex = 0)
+//{
+//    AVStream* strm = nullptr;
+//    unsigned int index = -1;
+//    unsigned int t_index = 0;
+//    for(unsigned int i=0;i<fCtxt->nb_streams;i++)
+//    {
+//        if(fCtxt->streams[i]->codec->codec_type==type)
+//        {
+//            if(t_index == streamIndex)
+//            {
+//                strm = fCtxt->streams[i];
+//                index = i;
+//                break;
+//            }else
+//                t_index++;
+//        }
+//    }
+//    if(!strm)
+//        return nullptr;
 
-    AVCodecContext* orig = strm->codec;
+//    AVCodecContext* orig = strm->codec;
 
-    AVCodec* codec = avcodec_find_decoder(orig->codec_id);
-    if(!codec)
-        return nullptr;
+//    AVCodec* codec = avcodec_find_decoder(orig->codec_id);
+//    if(!codec)
+//        return nullptr;
 
-    AVCodecContext* copy = avcodec_alloc_context3(codec);
-    if(avcodec_copy_context(copy,orig)!=0)
-    {
-        avcodec_free_context(&copy);
-        return nullptr;
-    }
+//    AVCodecContext* copy = avcodec_alloc_context3(codec);
+//    if(avcodec_copy_context(copy,orig)!=0)
+//    {
+//        avcodec_free_context(&copy);
+//        return nullptr;
+//    }
 
-    if(avcodec_open2(copy,codec,nullptr)<0)
-    {
-        avcodec_free_context(&copy);
-        return nullptr;
-    }
+//    if(avcodec_open2(copy,codec,nullptr)<0)
+//    {
+//        avcodec_free_context(&copy);
+//        return nullptr;
+//    }
 
-    CFFStream* cstrm = new CFFStream;
-    cstrm->codec = codec;
-    cstrm->context = copy;
-    cstrm->stream = strm;
-    cstrm->type = type;
-    cstrm->index = index;
+//    FFStream* cstrm = new FFStream;
+//    cstrm->codec = codec;
+//    cstrm->context = copy;
+//    cstrm->stream = strm;
+//    cstrm->type = type;
+//    cstrm->index = index;
 
-    return cstrm;
-}
-
-void ff_close_stream(CFFStream* strm)
-{
-    avcodec_close(strm->context);
-    avcodec_free_context(&strm->context);
-    delete strm;
-}
+//    return cstrm;
+//}
 
 int ff_read_data(void* opaque, uint8* buf, int buf_size)
 {
@@ -276,8 +127,6 @@ AVFormatContext* ff_open_data(
         return nullptr;
     }
 
-//    infmt->flags |= AVFMT_NOFILE;
-
     int err;
     if((err = avformat_open_input(&ctxt,probe_data.filename,infmt,nullptr))!=0)
     {
@@ -287,7 +136,12 @@ AVFormatContext* ff_open_data(
         return ctxt;
 }
 
-CFFVideoPlayer *coffee_ffmedia_create_player(const CResource &source)
+CFFStreamDescriptor GetStreamData(const CResource &source)
+{
+
+}
+
+FFVideoPlayer *CreatePlayer(const CResource &source)
 {
     AVFormatContext* fmtCtxt = nullptr;
 
@@ -302,82 +156,87 @@ CFFVideoPlayer *coffee_ffmedia_create_player(const CResource &source)
 
 //    av_dump_format(fmtCtxt,0,nullptr,0);
 
-    CFFVideoPlayer* video = new CFFVideoPlayer;
+    FFVideoPlayer* video = new FFVideoPlayer;
     video->fmtContext = fmtCtxt;
 
-    video->audio = ff_open_stream(fmtCtxt,AVMEDIA_TYPE_AUDIO);
-    video->video = ff_open_stream(fmtCtxt,AVMEDIA_TYPE_VIDEO);
+    int vindex = 0;
+    int aindex = 0;
+
+    video->s[0] = ff_fetch_stream(fmtCtxt,AVMEDIA_TYPE_VIDEO,vindex);
+    video->s[1] = ff_fetch_stream(fmtCtxt,AVMEDIA_TYPE_AUDIO,aindex);
+    video->s[2] = nullptr;
 
     return video;
 }
 
-void coffee_ffmedia_free_player(CFFVideoPlayer *vplayer)
+void FreePlayer(FFVideoPlayer *vplayer)
 {
-    if(vplayer->audio)
-        ff_close_stream(vplayer->audio);
-    if(vplayer->video)
-        ff_close_stream(vplayer->video);
+    for(int i=0;i<vplayer->num_streams;i++)
+        if(vplayer->s[i])
+            ff_close_stream(vplayer->s[i]);
 
     avformat_close_input(&vplayer->fmtContext);
-
     avformat_free_context(vplayer->fmtContext);
 
     delete vplayer;
 }
 
-size_t coffee_ffmedia_video_framesize(const CFFVideoPlayer *video)
+size_t GetVideoFramesize(const FFVideoPlayer *video)
 {
-    return av_image_get_buffer_size(default_pixfmt,
-                                    video->video->context->width,
-                                    video->video->context->height,
-                                    8);
+    return av_image_get_buffer_size(
+                default_pixfmt,
+                video->s[0]->context->width,
+                video->s[0]->context->height,
+                8);
 }
 
-size_t coffee_ffmedia_video_framesize(const CSize &video)
+size_t GetVideoFramesize(const CSize &video)
 {
     return av_image_get_buffer_size(default_pixfmt,
                                     video.w,video.h,
                                     1);
 }
 
-size_t coffee_ffmedia_audio_samplesize(const CFFVideoPlayer *video)
+size_t GetAudioSampleSize(const FFVideoPlayer *video)
 {
     return av_samples_get_buffer_size(
                 nullptr,
-                video->audio->context->channels,
+                video->s[1]->context->channels,
                 1,
-                video->audio->stream->codec->sample_fmt,
+                video->s[1]->stream->codec->sample_fmt,
                 1);
 }
 
-CFFDecodeContext* coffee_ffmedia_create_decodecontext(
-        const CFFVideoPlayer *video, const CFFVideoDescriptor &fmt)
+FFDecodeContext* CreateDecodeContext(
+        const FFVideoPlayer *video, const CFFVideoDescriptor &fmt)
 {
-    CFFDecodeContext* dCtxt = new CFFDecodeContext;
+    FFDecodeContext* dCtxt = new FFDecodeContext;
 
-    CMemClear(dCtxt,sizeof(CFFDecodeContext));
+    CMemClear(dCtxt,sizeof(FFDecodeContext));
 
-    if(video->video)
+    if(video->s[0])
     {
-        CFFStream* strm = video->video;
+        FFStream* strm = video->s[0];
         dCtxt->v.sws_ctxt = sws_getContext(
                     strm->context->width, strm->context->height,
                     strm->context->pix_fmt,
-                    fmt.video.size.width, fmt.video.size.height, default_pixfmt,
+                    fmt.video.size.w, fmt.video.size.h, default_pixfmt,
                     SWS_BILINEAR, NULL, NULL, NULL);
 
         dCtxt->v.frame = av_frame_alloc();
         dCtxt->v.tFrame = av_frame_alloc();
 
-        dCtxt->v.tb = video->video->stream->time_base;
-        dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,video->video->stream,
+        dCtxt->v.tb = strm->stream->time_base;
+        dCtxt->v.frame_rate = av_guess_frame_rate(video->fmtContext,strm->stream,
                                                   NULL);
 
-        dCtxt->v.resolution.w = fmt.video.size.width;
-        dCtxt->v.resolution.h = fmt.video.size.height;
+        dCtxt->v.resolution.w = fmt.video.size.w;
+        dCtxt->v.resolution.h = fmt.video.size.h;
     }
-    if(video->audio)
+    if(video->s[1])
     {
+        FFStream* strm = video->s[1];
+
         dCtxt->a.swr_ctxt = nullptr;
 
         /* Magic magic to get sample format properties from enum */
@@ -389,9 +248,9 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
         swr_alloc_set_opts(ctxt,
                            dCtxt->a.chlayout,
                            dCtxt->a.sfmt,dCtxt->a.srate,
-                           video->audio->context->channel_layout,
-                           video->audio->context->sample_fmt,
-                           video->audio->context->sample_rate,
+                           strm->context->channel_layout,
+                           strm->context->sample_fmt,
+                           strm->context->sample_rate,
                            0,
                            NULL);
         int error_code = swr_init(ctxt);
@@ -405,7 +264,7 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
             dCtxt->a.swr_ctxt = ctxt;
         }
         int32 samples = av_rescale_rnd(1,dCtxt->a.srate,
-                                       video->audio->context->sample_rate,
+                                       strm->context->sample_rate,
                                        AV_ROUND_UP);
         av_samples_alloc_array_and_samples(&dCtxt->a.data,&dCtxt->a.linesize,
                                            dCtxt->a.channels,samples,
@@ -418,7 +277,7 @@ CFFDecodeContext* coffee_ffmedia_create_decodecontext(
     return dCtxt;
 }
 
-void coffee_ffmedia_free_decodecontext(CFFDecodeContext *dCtxt)
+void FreeDecodeContext(FFDecodeContext *dCtxt)
 {
     if(dCtxt->v.sws_ctxt)
     {
@@ -442,8 +301,8 @@ void coffee_ffmedia_free_decodecontext(CFFDecodeContext *dCtxt)
     delete dCtxt;
 }
 
-bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
-                                 CFFDecodeContext* dCtxt,
+bool DecodeFrame(const FFVideoPlayer* video,
+                                 FFDecodeContext* dCtxt,
                                  CFFVideoTarget* dTrgt)
 {
     //If we have come to the end of the stream, just stop.
@@ -457,13 +316,17 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
     }else
         dCtxt->eos = false;
 
+    FFStream* vstream = video->s[0];
+    FFStream* astream = video->s[1];
+    FFStream* sstream = video->s[2];
+
     int gotFrame = 0;
-    if(dCtxt->packet.stream_index == video->video->index
+    if(dCtxt->packet.stream_index == vstream->index
             && dTrgt->v.location
             && dCtxt->v.sws_ctxt)
     {
         //Decode the video packet in this case
-        avcodec_decode_video2(video->video->context,
+        avcodec_decode_video2(vstream->context,
                               dCtxt->v.frame,
                               &gotFrame,
                               &dCtxt->packet);
@@ -486,7 +349,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                       dCtxt->v.frame->data,
                       dCtxt->v.frame->linesize,
                       0,
-                      video->video->context->height,
+                      vstream->context->height,
                       dCtxt->v.tFrame->data,
                       dCtxt->v.tFrame->linesize);
 
@@ -496,7 +359,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             //Free the frame
             av_frame_unref(dCtxt->v.frame);
         }
-    }else if(dCtxt->packet.stream_index == video->audio->index
+    }else if(dCtxt->packet.stream_index == astream->index
              && dCtxt->a.swr_ctxt)
     {
         //Packet might contain several audio frames, loop over it so we can capture them all
@@ -506,7 +369,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
         while(pkt_size > 0)
         {
             //Decode audio packet
-            int len = avcodec_decode_audio4(video->audio->context,
+            int len = avcodec_decode_audio4(astream->context,
                                   dCtxt->a.frame,
                                   &gotFrame,
                                   &dCtxt->packet);
@@ -537,10 +400,10 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
                  */
 
                 uint32 nb_samples = av_rescale_rnd(swr_get_delay(dCtxt->a.swr_ctxt,
-                                                               video->audio->context->sample_rate)
-                                                   +video->audio->context->sample_rate,
+                                                               astream->context->sample_rate)
+                                                   +astream->context->sample_rate,
                                                    dCtxt->a.srate,
-                                                   video->audio->context->sample_rate,
+                                                   astream->context->sample_rate,
                                                    AV_ROUND_UP);
 
                 av_freep(&dCtxt->a.data[0]);
@@ -569,10 +432,10 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
             pkt_data += len;
             pkt_size -= len;
         }
-    }else if(dCtxt->packet.stream_index == video->subtitles->index)
+    }else if(dCtxt->packet.stream_index == sstream->index)
     {
         //TODO: Implement FFMPEG subtitles
-        avcodec_decode_subtitle2(video->subtitles->context,
+        avcodec_decode_subtitle2(sstream->context,
                                  &dCtxt->s.subtitle,
                                  &gotFrame,
                                  &dCtxt->packet);
@@ -588,7 +451,7 @@ bool coffee_ffmedia_decode_frame(const CFFVideoPlayer* video,
     return true;
 }
 
-bool coffee_ffmedia_decode_is_eos(const CFFDecodeContext *dCtxt)
+bool DecodeIsEOS(const FFDecodeContext *dCtxt)
 {
     return dCtxt->eos;
 }

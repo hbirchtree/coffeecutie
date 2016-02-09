@@ -41,9 +41,9 @@ FORCEDINLINE void cfprintf(FILE* stream, cstring format, Args... args)
 namespace CDebugHelpers{
 FORCEDINLINE void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
-    cfprintf(stderr,header);
+    cfprintf(DefaultDebugOutputPipe,header);
     for(szptr i=0;i<stacksize;i++){
-        cfprintf(stderr,callfmt,callstack[i]);
+        cfprintf(DefaultDebugOutputPipe,callfmt,callstack[i]);
         CFree(callstack[i]);
     }
     CFree(callstack);
@@ -78,7 +78,7 @@ template<typename... Arg>
 FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
     CString out = cStringFormat(str,args...);
-    cfprintf(stderr,"{0}\n",out.c_str());
+    cfprintf(DefaultDebugOutputPipe,"{0}\n",out.c_str());
 }
 
 template<typename... Arg>
@@ -90,7 +90,7 @@ template<typename... Arg>
 FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
 {
     CString out = cStringFormat(str,args...);
-    cfprintf(stderr,"{0}",out.c_str());
+    cfprintf(DefaultDebugOutputPipe,"{0}",out.c_str());
 }
 
 template<typename... Arg>

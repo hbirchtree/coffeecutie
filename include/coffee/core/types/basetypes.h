@@ -342,6 +342,33 @@ enum class ProfilingTerm
     TransformedPrimitives,
 };
 
+enum class Color
+{
+    Neutral,
+
+    Pink,
+    Red,
+    FireRed,
+    Orange,
+    Yellow,
+    Lime,
+    LeafGreen,
+    Green,
+    Turquoise,
+    Cyan,
+    SkyBlue,
+    Blue,
+    DeepViolet,
+    Purple,
+
+    Brown,
+
+    Black,
+    LightGray,
+    Gray,
+    White,
+};
+
 template<typename T>
 cstring ctypename(const T& t)
 {

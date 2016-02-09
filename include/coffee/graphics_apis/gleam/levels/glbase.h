@@ -154,11 +154,13 @@ struct CGL_Implementation
     using CGflag = uint32;
     using CGcallback = GLDEBUGPROC;
     using CGsync = void*;
+
     struct CGpixfmt
     {
         CGenum type;
         CGenum fmt;
     };
+
     struct CGDbgMsg
     {
         CString msg;
@@ -715,6 +717,15 @@ struct CGL_Implementation
             ver.revision = 0;
 
             return ver;
+        }
+
+        static HWDeviceInfo Renderer()
+        {
+            cstring vendor = GetString(GL_VENDOR);
+            cstring device = GetString(GL_RENDERER);
+            cstring ver = GetString(GL_VERSION);
+
+            return HWDeviceInfo(vendor,device,ver);
         }
     };
 

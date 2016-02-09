@@ -16,6 +16,7 @@ struct WindowsEnvFun : EnvInterface
 
 }
 
+using ColorMap = EnvColorCodes;
 using Env = Environment::WindowsEnvFun;
 
 }

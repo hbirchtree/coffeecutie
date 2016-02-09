@@ -167,7 +167,8 @@ FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         HWDeviceInfo const& arg)
 {
-    return cStrReplace(fmt,index,cStringFormat("{0} {1}",
+    return cStrReplace(fmt,index,cStringFormat("mf={0}, md={1}, fw={2}",
+                                               arg.manufacturer,
                                                arg.model,
                                                arg.firmware));
 }

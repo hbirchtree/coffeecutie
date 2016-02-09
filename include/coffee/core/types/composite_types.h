@@ -542,14 +542,105 @@ struct CColorMask
     uint8 padding:4;
 };
 
+/*!
+ * \brief Describes details of a hardware device, only informative
+ */
 struct HWDeviceInfo
 {
     HWDeviceInfo(CString model, CString firmware):
         model(model),
         firmware(firmware)
     {}
+    HWDeviceInfo(CString manufacturer, CString model, CString firmware):
+        manufacturer(manufacturer),
+        model(model),
+        firmware(firmware)
+    {}
+    const CString manufacturer;
     const CString model;
     const CString firmware;
+};
+
+template<typename PT>
+/*!
+ * \brief Wrapper around std::queue to make it easier to recycle packets in a fast loop
+ */
+class PacketPool
+{
+public:
+    void expand(size_t n)
+    {
+        /* Place lock on data */
+        Lock l(m_lock);
+        C_UNUSED(l);
+
+        for(size_t i=0;i<n;i++)
+        {
+            PT* p = new PT;
+            initPacket(p);
+            m_free.push(p);
+        }
+    }
+    PT* grab()
+    {
+        /* Place lock on data */
+        Lock l(m_lock);
+        C_UNUSED(l);
+
+        PT* p = m_free.front();
+        m_free.pop();
+        return p;
+    }
+    void recycle(PT* p)
+    {
+        /* Place lock on data */
+        Lock l(m_lock);
+        C_UNUSED(l);
+
+        cleanPacket(p);
+        m_occupied.remove(p);
+        m_free.push(p);
+    }
+    void autoRecycle()
+    {
+        /* Place lock on data */
+        Lock l(m_lock);
+        C_UNUSED(l);
+
+        m_tmp_store.clear();
+        for(PT* p : m_occupied)
+            if(isAvailable(p))
+                m_tmp_store.push_back(p);
+
+        for(PT* p : m_tmp_store)
+            recycle(p);
+    }
+protected:
+    virtual void initPacket(PT*)
+    {
+    }
+    virtual bool isAvailable(PT*)
+    {
+        return false;
+    }
+    virtual void cleanPacket(PT*)
+    {
+    }
+
+    Mutex m_lock;
+    std::list<PT*> m_occupied;
+    std::queue<PT*> m_free;
+
+    std::vector<PT*> m_tmp_store;
+};
+
+template<typename PT>
+class PacketProducer
+{
+public:
+    PacketProducer(PacketPool<PT>& pool);
+protected:
+    PacketPool<PT> m_pool;
 };
 
 /*!

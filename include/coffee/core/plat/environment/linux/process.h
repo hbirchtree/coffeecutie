@@ -21,7 +21,7 @@ struct ProcessProperty : ProcessPropertyDef
         lim.rlim_cur = lim.rlim_max = RLIM_INFINITY;
         setrlimit(RLIMIT_CORE,&lim);
     }
-    STATICINLINE void CoreAffinity(std::thread& thr, uint32 i)
+    STATICINLINE bool CoreAffinity(std::thread& thr, uint32 i)
     {
         cpu_set_t t;
         CPU_ZERO(&t);
@@ -29,12 +29,7 @@ struct ProcessProperty : ProcessPropertyDef
         int out = pthread_setaffinity_np(thr.native_handle(),
                                          sizeof(cpu_set_t),
                                          &t);
-        if(out!=0)
-        {
-            cLog(__FILE__,__LINE__,
-                 CFStrings::Plat_Unix_Core_Lib,
-                 CFStrings::Plat_Cpu_Affinity_Error);
-        }
+        return out==0;
     }
 
     STATICINLINE int64 Pid()

@@ -2,6 +2,7 @@
 #define COFFEE_PLAT_MEMORY_H
 
 #include <arpa/inet.h>
+#include <algorithm>
 #include <malloc.h>
 #include <cstring>
 #include <cwchar>
@@ -10,6 +11,10 @@
 #include "../../types/basetypes.h"
 
 namespace Coffee{
+
+static FILE* DefaultDebugOutputPipe = stderr;
+static FILE* DefaultPrintOutputPipe = stderr;
+
 namespace CMem{
 
 /* Endian conversion */
@@ -84,6 +89,11 @@ FORCEDINLINE void* CCalloc(szptr unit, szptr num)
 FORCEDINLINE bool CStrCmp(cstring s1, cstring s2)
 {
     return strcmp(s1,s2)==0;
+}
+
+FORCEDINLINE int CStrCompare(cstring s1, cstring s2)
+{
+    return strcmp(s1,s2);
 }
 
 FORCEDINLINE cstring_w CStrCat(cstring_w s1, cstring s2)
@@ -177,6 +187,39 @@ FORCEDINLINE cstring_w WideNarrow(cwstring str)
 namespace StrUtil
 {
 /*TODO: Add strok() and other string processing utilities here. They are nice to have.*/
+
+/* Reference: http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring */
+FORCEDINLINE CString& ltrim(CString& s)
+{
+    s.erase(s.begin(),
+            std::find_if(
+                s.begin(),
+                s.end(),
+                std::not1(
+                    std::ptr_fun<int,int>(std::isspace)
+                    )
+                )
+            );
+    return s;
+}
+FORCEDINLINE CString& rtrim(CString& s)
+{
+    s.erase(std::find_if(
+                s.rbegin(),
+                s.rend(),
+                std::not1(
+                    std::ptr_fun<int,int>(std::isspace)
+                    )
+                ).base(),
+            s.end()
+            );
+    return s;
+}
+FORCEDINLINE CString& trim(CString& s)
+{
+    return ltrim(rtrim(s));
+}
+
 }
 
 }

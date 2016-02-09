@@ -4,25 +4,25 @@
 #include "cffmedia.h"
 
 namespace Coffee{
-namespace CFFMedia{
+namespace FFMedia{
 
 class CFFPlayer
 {
 public:
     CFFPlayer(CResource& vsource)
     {
-        coffee_ffmedia_init(nullptr,false);
-        m_player = coffee_ffmedia_create_player(vsource);
+        FFInit(nullptr,false);
+        m_player = CreatePlayer(vsource);
         m_vclock = nullptr;
         CASSERT(m_player);
     }
     ~CFFPlayer()
     {
-        coffee_ffmedia_free_decodecontext(m_dcontext);
-        coffee_ffmedia_free_player(m_player);
+        FreeDecodeContext(m_dcontext);
+        FreePlayer(m_player);
     }
 
-    CFFVideoPlayer* player()
+    FFVideoPlayer* player()
     {
         return m_player;
     }
@@ -30,7 +30,7 @@ public:
     {
         return m_descriptor;
     }
-    CFFDecodeContext* decodeContext()
+    FFDecodeContext* decodeContext()
     {
         return m_dcontext;
     }
@@ -41,20 +41,20 @@ public:
 
     bool startDecoder()
     {
-        return coffee_ffmedia_decode_frame(m_player,m_dcontext,&m_target);
+        return DecodeFrame(m_player,m_dcontext,&m_target);
     }
     void createDecoder()
     {
-        m_dcontext = coffee_ffmedia_create_decodecontext(m_player,m_descriptor);
+        m_dcontext = CreateDecodeContext(m_player,m_descriptor);
     }
     bool decodeFrame()
     {
-        return coffee_ffmedia_decode_frame(m_player,m_dcontext,&m_target);
+        return DecodeFrame(m_player,m_dcontext,&m_target);
     }
     void awaitFrames()
     {
         m_target.v.updated = false;
-        while(!m_target.v.updated&&coffee_ffmedia_decode_frame(m_player,m_dcontext,&m_target));
+        while(!m_target.v.updated&&DecodeFrame(m_player,m_dcontext,&m_target));
     }
 
     void startVideoTimer()
@@ -104,15 +104,15 @@ public:
     }
     bool finished()
     {
-        return coffee_ffmedia_decode_is_eos(m_dcontext);
+        return DecodeIsEOS(m_dcontext);
     }
 
 private:
     //FFMPEG components
     CFFVideoTarget m_target;
-    CFFVideoPlayer* m_player;
+    FFVideoPlayer* m_player;
     CFFVideoDescriptor m_descriptor;
-    CFFDecodeContext* m_dcontext;
+    FFDecodeContext* m_dcontext;
 
     //Timing
     CElapsedTimer* m_vclock;

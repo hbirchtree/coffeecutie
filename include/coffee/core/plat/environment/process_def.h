@@ -10,13 +10,13 @@ struct ProcessPropertyDef
     /*!
      * \brief Initializes core dumping for the process, useful for information on crashes
      */
-    static void CoreDumpEnable(){}
+    static void CoreDumpEnable();
     /*!
     * \brief Idea from: http://eli.thegreenplace.net/2016/c11-threads-affinity-and-hyperthreading/
     * \param thread
     * \param core
     */
-    static void CoreAffinity(std::thread&, uint32){}
+    static bool CoreAffinity(std::thread&, uint32);
 
     /*!
      * \brief Current process PID

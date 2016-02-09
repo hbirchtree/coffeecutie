@@ -102,6 +102,16 @@ struct CTextureRegion : _cbasic_size_3d<int32>,_cbasic_vec3<int32>
 
 struct CTextureSize : _cbasic_size_3d<int32>
 {
+    CTextureSize()
+    {
+    }
+    CTextureSize(const CSize& s)
+    {
+        width = s.w;
+        height = s.h;
+        depth = 1;
+    }
+
     size_t dimensions() const
     {
         if(width == 0)

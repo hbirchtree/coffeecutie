@@ -19,18 +19,18 @@
 namespace Coffee{
 #if defined(COFFEE_WINDOWS)
 
-constexpr Coffee::cstring print_color_debug = "";
-constexpr Coffee::cstring print_color_warning = "";
-constexpr Coffee::cstring print_color_stub = "";
-constexpr Coffee::cstring print_color_fatal = "";
+constexpr cstring print_color_debug = "";
+constexpr cstring print_color_warning = "";
+constexpr cstring print_color_stub = "";
+constexpr cstring print_color_fatal = "";
 
-constexpr Coffee::cstring print_color_reset = "";
+constexpr cstring print_color_reset = "";
 
 #else
-constexpr cstring print_color_debug = "\033[1m\033[44m";
+constexpr cstring print_color_debug =   "\033[1m\033[44m";
 constexpr cstring print_color_warning = "\033[1m\033[43m";
-constexpr cstring print_color_stub = "\033[1m\033[42m";
-constexpr cstring print_color_fatal = "\033[1m\033[41m";
+constexpr cstring print_color_stub =    "\033[1m\033[42m";
+constexpr cstring print_color_fatal =   "\033[1m\033[41m";
 
 constexpr cstring print_color_reset = "\033[0m";
 #endif
@@ -65,7 +65,7 @@ FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
  */
 FORCEDINLINE void C_STUBBED(cstring name)
 {
-    fprintf(stderr,"%sCOFFEE:CORE:STUB%s: %s\n",
+    fprintf(DefaultDebugOutputPipe,"%sCOFFEE:CORE:STUB%s: %s\n",
             print_color_fatal,
             print_color_reset,
             name);
@@ -73,10 +73,15 @@ FORCEDINLINE void C_STUBBED(cstring name)
 
 FORCEDINLINE void C_FIXME(cstring identifier)
 {
-    fprintf(stderr,"%sCOFFEE:CORE:FIXME%s: %s\n",
+    fprintf(DefaultDebugOutputPipe,"%sCOFFEE:CORE:FIXME%s: %s\n",
             print_color_fatal,
             print_color_reset,
             identifier);
+}
+
+FORCEDINLINE void C_PERFWARN(cstring file, int line, cstring msg)
+{
+    fprintf(DefaultDebugOutputPipe,"Perf warning:%s@%i: %s\n",file,line,msg);
 }
 
 /*!
@@ -85,7 +90,7 @@ FORCEDINLINE void C_FIXME(cstring identifier)
  */
 FORCEDINLINE void C_BADERROR(cstring name)
 {
-    fprintf(stderr,"%sCOFFEE:CORE:FTAL%s: %s\n",
+    fprintf(DefaultDebugOutputPipe,"%sCOFFEE:CORE:FTAL%s: %s\n",
             print_color_fatal,
             print_color_reset,
             name);

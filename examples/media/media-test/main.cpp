@@ -9,7 +9,7 @@
 using namespace Coffee;
 using namespace CGraphicsData;
 using namespace CGraphicsWrappers;
-using namespace CFFMedia;
+using namespace FFMedia;
 using namespace COpenAL;
 using namespace CSoundAbstraction;
 
@@ -33,8 +33,8 @@ public:
         CFFPlayer player(video_file);
 
         //Set output descriptor
-        player.descriptor().video.size.width = 1280;
-        player.descriptor().video.size.height = 720;
+        player.descriptor().video.size.w = 1280;
+        player.descriptor().video.size.h = 720;
         player.descriptor().audio.format = SampleFormat::I16S;
         player.descriptor().audio.samplerate = 44100;
 
@@ -161,8 +161,9 @@ public:
         //Create a video target
 
         CByteData initTexture;
-        initTexture.size = coffee_ffmedia_video_framesize(CSize(player.descriptor().video.size.width,
-                                                                player.descriptor().video.size.height));
+        initTexture.size = GetVideoFramesize(
+                    CSize(player.descriptor().video.size.w,
+                          player.descriptor().video.size.h));
         initTexture.data = (byte_t*)Alloc(initTexture.size);
 
         player.videoTarget().v.location = initTexture.data;
@@ -174,7 +175,7 @@ public:
 
         //Define output texture
         CBufferedTexture<2> texture;
-        texture.createTexture(player.descriptor().video.size,CTexIntFormat::RGBA8,
+        texture.createTexture(CTextureSize(player.descriptor().video.size),CTexIntFormat::RGBA8,
                               CTexType::Tex2D,1,initTexture,CTexFormat::RGBA);
 
         CFree(initTexture.data);
