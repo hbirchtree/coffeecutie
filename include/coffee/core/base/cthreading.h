@@ -126,11 +126,12 @@ template<typename Ctxt,typename IterType>
 FORCEDINLINE std::future<void> ParallelFor(
         std::function<void(IterType,Ctxt)> kernel,
         IterType iterations,
-        Ctxt context)
+        Ctxt context,
+        IterType weight = 1)
 {
-    std::function<void()> worker = [kernel,context,iterations]()
+    std::function<void()> worker = [kernel,context,iterations,weight]()
     {
-        uint32 thrcount = SysInfo::SmartParallelism(iterations);
+        uint32 thrcount = SysInfo::SmartParallelism(iterations,weight);
 
         std::vector<std::future<void>> tasks;
 

@@ -47,7 +47,11 @@ public:
         GL::VAOBind(vao);
 
         CResources::CResource shader_file("cshader.glsl");
-        CResources::FilePull(shader_file,true);
+        CResources::FileMap(shader_file);
+
+        if(!shader_file.data)
+            return;
+
 
         /* Shader specification */
 
@@ -121,10 +125,32 @@ public:
 
         int32* data = (int32*)Alloc(CMath::pow<int32>(512,3)*4);
 
-        for(szptr i=0;i<512;i++)
-            for(szptr j=0;j<512;j++)
-                for(szptr k=0;k<512;k++)
-                    data[i+j*512+512*512*k] = (i-256)*(i-256)+(j-256)*(j-256)+(k-256)*(k-256) < 200*200;
+        {
+            CElapsedTimerMicro timer;
+            timer.start();
+            bool parallel_sphere_creation = true;
+
+            if(parallel_sphere_creation)
+            {
+                std::function<void(szptr,int32*)> sphere_fun = [](szptr i, int32* data)
+                {
+                    for(szptr j=0;j<512;j++)
+                        for(szptr k=0;k<512;k++)
+                            data[i+j*512+512*512*k] = (i-256)*(i-256)+(j-256)*(j-256)+(k-256)*(k-256) < 200*200;
+                };
+
+                std::future<void> sphere_task = ParallelFor(sphere_fun,(szptr)512,data,(szptr)512);
+
+                sphere_task.get();
+            }else{
+                for(szptr i=0;i<512;i++)
+                    for(szptr j=0;j<512;j++)
+                        for(szptr k=0;k<512;k++)
+                            data[i+j*512+512*512*k] = (i-256)*(i-256)+(j-256)*(j-256)+(k-256)*(k-256) < 200*200;
+            }
+
+            cDebug("Sphere creation time: {0}",timer.elapsed());
+        }
 
         GL::TexStorage3D(GL::Texture::T3D,1,PixelFormat::R32I,512,512,512);
         glTexSubImage3D(GL_TEXTURE_3D,0,0,0,0,512,512,512,GL_RED_INTEGER,GL_INT,data);
