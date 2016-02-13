@@ -146,7 +146,12 @@ FORCEDINLINE void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... a
 {
 #ifndef NDEBUG
     CString msg_out = cStringFormat(msg,args...);
-    cBasicPrint("LOGR:{0}@{3}:{1}: {2}",file,id,msg_out.c_str(),line);
+    msg_out = cStringFormat("LOGR:{0}:{1}@{2}: {3}",id,file,line,msg_out.c_str());
+    msg_out = DebugPrinter::Colorize(
+                msg_out,
+                Color::Blue,
+                Color::Red);
+    cBasicPrint("{0}",msg_out);
 #endif
 }
 

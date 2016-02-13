@@ -14,8 +14,8 @@ set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 set( CMAKE_VERBOSE_MAKEFILE on )
 
 # Language bindings
-# Deprecated, used to make SWIG C# binding, doesn't work so well
 option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG bindings" OFF )
+
 # D language bindings, builds a module
 option ( COFFEE_DLANG "Build D-language binding" OFF)
 # Python bindings

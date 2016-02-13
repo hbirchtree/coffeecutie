@@ -20,7 +20,7 @@ struct FreenectImplementation
      * \brief Allocates a Freenect device context, manages all Kinect 2 device state, throws a chair if no devices are found.
      * \return Valid pointer if succeeded, nullptr if failure
      */
-    static FreenectContext* Alloc();
+    static FreenectContext* Alloc(int index);
     static void Free(FreenectContext* c);
 
     /*!
@@ -28,6 +28,14 @@ struct FreenectImplementation
      * \param c
      */
     static void LaunchAsync(FreenectContext* c);
+
+    /*!
+     * \brief Allows user to check if the context is currently active in an async manner
+     * \param c
+     * \return True if the context is running async
+     */
+    static bool RunningAsync(FreenectContext* c);
+
     /*!
      * \brief Ask the context to process a frame
      * \param c
@@ -40,6 +48,23 @@ struct FreenectImplementation
      * \param c
      */
     static void ShutdownAsync(FreenectContext* c);
+
+    class FContext
+    {
+    public:
+        FContext(FreenectContext* f):
+            m_val(f)
+        {
+        }
+        ~FContext()
+        {
+            if(RunningAsync(m_val))
+                ShutdownAsync(m_val);
+            Free(m_val);
+        }
+    private:
+        FreenectContext* m_val;
+    };
 };
 
 }

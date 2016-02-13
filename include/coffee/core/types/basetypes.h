@@ -77,6 +77,9 @@ using c_ptr  = void*;
 using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
 
+template<typename T>
+using ShPtr = std::shared_ptr<T>;
+
 /*!
  * \brief A prototype for Coffee-managed main functions. Benefits to this is that Coffee will abstract away any platform-specific quirks to the main function, such as difference in arguments. (Eg. some platforms do not include the main executable while others do)
  */

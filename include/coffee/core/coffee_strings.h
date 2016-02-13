@@ -46,6 +46,15 @@ const constexpr cstring Media_FF_SWR_InitError = "Failed to initialize software 
 const constexpr cstring ASIO_Library_Name = "CASIO";
 const constexpr cstring ASIO_Library_MakeCurrent_Error = "Failed to set thread context: Existing context in place";
 
+const constexpr cstring CNect_Library_Name = "CNect";
+const constexpr cstring CNect_Loaded = "Opened device with ID {0}";
+const constexpr cstring CNect_Log_Msg = "{0}";
+const constexpr cstring CNect_NumDevices = "Number of devices: {0}";
+const constexpr cstring CNect_NoDevs = "No devices detected";
+const constexpr cstring CNect_IndexFlt = "Invalid device index";
+const constexpr cstring CNect_AsyncStart = "CNect loop started";
+const constexpr cstring CNect_AsyncStop = "CNect loop closed";
+
 }
 
 #endif

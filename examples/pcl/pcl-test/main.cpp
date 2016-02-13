@@ -2,27 +2,25 @@
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 
-#include <coffee/graphics_apis/opengl/glfunctions.h>
-
 #include <coffee_ext/pcl_shim/cpcl.h>
-#include <coffee_ext/kinect_shim/cnect.h>
+//#include <coffee_ext/kinect_shim/cnect.h>
 
 using namespace Coffee;
 using namespace CoffeeExt;
 
-using CNect = Freenect::FreenectImplementation;
+//using CNect = Freenect::FreenectImplementation;
 using CPCLI = CPCL::CPCLImplementation;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    CNect::FreenectContext* c = nullptr;
-    try{
-        c = CNect::Alloc();
-    }catch(std::runtime_error ex){
-        cDebug("Failed to initialize Freenect: {0}",ex.what());
-    }
-    if(c)
-        CNect::Free(c);
+//    CNect::FreenectContext* c = nullptr;
+//    try{
+//        c = CNect::Alloc(0);
+//    }catch(std::runtime_error ex){
+//        cDebug("Failed to initialize Freenect: {0}",ex.what());
+//    }
+//    if(c)
+//        CNect::Free(c);<
 
     CResources::CResource depth("dframe.raw");
     CResources::FileMap(depth);

@@ -22,6 +22,8 @@ struct OutputPrinterDef
 
 struct DebugPrinterDef
 {
+    static CString& Colorize(CString&, Color, Color);
+
     template<typename... Args>
     static CString FormatPrintString(cstring, Args...){}
 

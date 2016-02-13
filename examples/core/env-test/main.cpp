@@ -144,8 +144,8 @@ int32 coffee_main(int32, cstring_w*)
             CSize64 size;
             uint8* value;
         } data;
-        data.size.w = 128;
-        data.size.h = 128;
+        data.size.w = 10240;
+        data.size.h = 10240;
         data.value = (uint8*)Alloc(data.size.area());
 
         std::function<void(uint64,DataSet*)> kern = [](uint64 i, DataSet* d)
