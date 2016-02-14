@@ -80,7 +80,7 @@ void coffee_graphics_uniform_subroutine_set(
         const CShaderSubroutine &routine,
         const CUniformSubroutine &routineUniform)
 {
-    C_UNUSED(shader,routine,routineUniform);
+    C_UNUSED(shader);C_UNUSED(routine);C_UNUSED(routineUniform);
     cWarning("Still nothing here!");
 }
 

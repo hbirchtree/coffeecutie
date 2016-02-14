@@ -10,9 +10,9 @@ using namespace Coffee;
 
 struct FreenectImplementation
 {
-    using CNectRGB = CBitmap;
-    using CNectDepth = _cbasic_bitmap_base<scalar,uint32>;
-    using FreenectFrameProcessor = void(*)(CNectRGB const&,CNectDepth const&);
+    using NectRGB = CBitmap;
+    using NectDepth = _cbasic_bitmap_base<scalar,uint32>;
+    using FreenectFrameProcessor = void(*)(NectRGB const&,NectDepth const&);
 
     struct FreenectContext;
 
@@ -52,8 +52,8 @@ struct FreenectImplementation
     class FContext
     {
     public:
-        FContext(FreenectContext* f):
-            m_val(f)
+        FContext(int index):
+            m_val(Alloc(index))
         {
         }
         ~FContext()
@@ -61,6 +61,10 @@ struct FreenectImplementation
             if(RunningAsync(m_val))
                 ShutdownAsync(m_val);
             Free(m_val);
+        }
+        FreenectContext* context()
+        {
+            return m_val;
         }
     private:
         FreenectContext* m_val;

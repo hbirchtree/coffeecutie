@@ -1,28 +1,24 @@
-if(NOT DEFINED FREENECT2_INCLUDE_DIR)
-    message("-- Freenect2 include directory not found, will not build CoffeeNect")
-else()
-        message("-- Configuring Freenect2 extension lib")
+message("-- Configuring Freenect2 extension lib")
 
-        set ( CNect_SRCS
-            private/cnect.cpp
-            )
+set ( CNect_SRCS
+    private/cnect.cpp
+    )
 
-        include_directories(
-            ${COFFEE_EXT_FREENECT2_INCLUDE_DIR}
-            ${FREENECT2_INCLUDE_DIR}
-            )
+include_directories(
+    ${COFFEE_EXT_FREENECT2_INCLUDE_DIR}
+    ${FREENECT2_INCLUDE_DIR}
+    )
 
-        find_library(FREENECT2_LIBRARY NAMES "freenect2" PATHS ${CMAKE_CURRENT_BINARY_DIR}/libs/lib)
+find_library(FREENECT2_LIBRARY NAMES "freenect2" PATHS ${CMAKE_CURRENT_BINARY_DIR}/libs/lib)
 
-        add_library ( CoffeeNect ${COFFEE_LINK_OPT}
-            ${CNect_SRCS}
-            )
+add_library ( CoffeeNect ${COFFEE_LINK_OPT}
+    ${CNect_SRCS}
+    )
 
-        target_link_libraries( CoffeeNect
-            CoffeeCore
-            ${FREENECT2_LIBRARY}
-            )
+target_link_libraries( CoffeeNect
+    CoffeeCore
+    ${FREENECT2_LIBRARY}
+    )
 
-        set_property(TARGET CoffeeNect PROPERTY POSITION_INDEPENDENT_CODE ON)
-        target_enable_cxx11(CoffeeNect)
-endif()
+set_property(TARGET CoffeeNect PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_enable_cxx11(CoffeeNect)

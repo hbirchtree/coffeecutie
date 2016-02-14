@@ -104,6 +104,17 @@ struct CRGBA
     }
 };
 
+struct CRGB
+{
+    union{
+        uint24 i;
+        struct
+        {
+            uint8 r,g,b;
+        };
+    };
+};
+
 /*!
  * \brief Describes the clipping distance of a GL scene
  */
@@ -379,10 +390,19 @@ struct _cbasic_bitmap_base
         size(w,h)
     {
         m_pixels = (PixelType*)CCalloc(sizeof(PixelType),w*h);
+        m_internal_data = true;
     }
+    _cbasic_bitmap_base(DimT w, DimT h, PixelType* data):
+        size(w,h)
+    {
+        m_pixels = data;
+        m_internal_data = false;
+    }
+
     ~_cbasic_bitmap_base()
     {
-        CFree(m_pixels);
+        if(m_internal_data)
+            CFree(m_pixels);
     }
 
     const _cbasic_size_2d<DimT> size;
@@ -397,6 +417,7 @@ struct _cbasic_bitmap_base
     }
 private:
     PixelType* m_pixels;
+    bool m_internal_data;
 };
 
 using CBitmap = _cbasic_bitmap_base<CRGBA,int32>;
@@ -588,11 +609,15 @@ template<typename PT>
 class PacketPool
 {
 public:
+    ~PacketPool()
+    {
+
+    }
+
     void expand(size_t n)
     {
         /* Place lock on data */
         Lock l(m_lock);
-        C_UNUSED(l);
 
         for(size_t i=0;i<n;i++)
         {
@@ -603,9 +628,17 @@ public:
     }
     PT* grab()
     {
+        autoRecycle();
+
+        m_lock.lock();
+        size_t numfree = m_free.size();
+        m_lock.unlock();
+
+        if(numfree<1)
+            expand(1);
+
         /* Place lock on data */
         Lock l(m_lock);
-        C_UNUSED(l);
 
         PT* p = m_free.front();
         m_free.pop();
@@ -625,15 +658,14 @@ public:
     {
         /* Place lock on data */
         Lock l(m_lock);
-        C_UNUSED(l);
 
-        m_tmp_store.clear();
         for(PT* p : m_occupied)
             if(isAvailable(p))
                 m_tmp_store.push_back(p);
 
         for(PT* p : m_tmp_store)
             recycle(p);
+        m_tmp_store.clear();
     }
 protected:
     virtual void initPacket(PT*)
@@ -646,6 +678,9 @@ protected:
     virtual void cleanPacket(PT*)
     {
     }
+    virtual void freePacket(PT*)
+    {
+    }
 
     Mutex m_lock;
     std::list<PT*> m_occupied;
@@ -655,12 +690,52 @@ protected:
 };
 
 template<typename PT>
+class PacketConsumer
+{
+public:
+    PacketConsumer()
+    {
+    }
+    virtual void processPacket(PT* packet) = 0;
+};
+
+template<typename PT>
 class PacketProducer
 {
 public:
-    PacketProducer(PacketPool<PT>& pool);
+    PacketProducer(PacketPool<PT>& pool):
+        m_pool(&pool)
+    {
+    }
+
+    void registerConsumer(PacketConsumer<PT>* c)
+    {
+        Lock l(m_consumer_mutex);
+        m_consumers.push_back(c);
+    }
+    void removeConsumer(PacketConsumer<PT>* c)
+    {
+        Lock l(m_consumer_mutex);
+        m_consumers.remove(c);
+    }
+
+    PT* getPacket()
+    {
+        return m_pool->grab();
+    }
+    void usePacket(PT* p)
+    {
+        Lock l(m_consumer_mutex);
+        for(PacketConsumer<PT>* pc : m_consumers)
+            pc->processPacket(p);
+        m_pool->recycle(p);
+    }
+
 protected:
-    PacketPool<PT> m_pool;
+    PacketPool<PT>* m_pool;
+
+    Mutex m_consumer_mutex;
+    std::list<PacketConsumer<PT>*> m_consumers;
 };
 
 /*!

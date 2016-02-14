@@ -10,21 +10,27 @@ using namespace CoffeeExt;
 using CNect = Freenect::FreenectImplementation;
 using FContext = CNect::FContext;
 
+void frame_fun(CNect::NectRGB const&,CNect::NectDepth const&)
+{
+}
+
 int32 coffee_main(int32, cstring_w*)
 {
     ShPtr<FContext> c;
-    CNect::FreenectContext* context = nullptr;
     try{
-        context = CNect::Alloc(0);
-        c = ShPtr<FContext>(new FContext(context));
+        c = ShPtr<FContext>(0);
     }catch(std::runtime_error ex){
         cDebug("Failed to initialize Freenect: {0}",ex.what());
     }
 
-    CNect::LaunchAsync(context);
+    if(!c->context())
+        return 1;
+
+    CNect::LaunchAsync(c->context());
 
     while(true)
     {
+        CNect::ProcessFrame(c->context(),frame_fun,0);
     }
 
     return 0;

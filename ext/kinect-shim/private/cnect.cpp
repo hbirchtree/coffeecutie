@@ -15,12 +15,111 @@
 namespace CoffeeExt{
 namespace Freenect{
 
+class NectLogger : public libfreenect2::Logger
+{
+public:
+    NectLogger()
+    {
+    }
+
+    void log(Level level, const std::__cxx11::string &message)
+    {
+        cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,
+             "{0}:{1}",this->level2str(level),message);
+    }
+};
+
 struct FramePacket
 {
+    bool expended;
     libfreenect2::Frame* color;
     libfreenect2::Frame* depth;
 
+    libfreenect2::FrameMap raw_frames;
+
     Mutex access;
+};
+
+class NectPacketPool : public Coffee::PacketPool<FramePacket>
+{
+public:
+    NectPacketPool(CSize const&)
+    {
+        m_dsize = CSize(512,424);
+        m_csize = CSize(1920,1080);
+    }
+protected:
+    void initPacket(FramePacket *p)
+    {
+        Lock l(p->access);
+        p->color = new libfreenect2::Frame(m_csize.w,m_csize.h,4);
+        p->depth = new libfreenect2::Frame(m_dsize.w,m_dsize.h,4);
+    }
+    bool isAvailable(FramePacket *p)
+    {
+        Lock l(p->access);
+        return p->expended;
+    }
+    void cleanPacket(FramePacket *p)
+    {
+        p->expended = false;
+    }
+    void freePacket(FramePacket *p)
+    {
+        delete p->color;
+        delete p->depth;
+        delete p;
+    }
+
+    CSize m_dsize;
+    CSize m_csize;
+};
+
+class NectPacketProducer : public Coffee::PacketProducer<FramePacket>
+{
+public:
+    NectPacketProducer(CSize framesize):
+        m_ppool(framesize),
+        PacketProducer(m_ppool)
+    {
+    }
+protected:
+    NectPacketPool m_ppool;
+};
+
+class NectPacketConsumer : public Coffee::PacketConsumer<FramePacket>
+{
+public:
+    NectPacketConsumer()
+    {
+    }
+    ~NectPacketConsumer()
+    {
+    }
+
+    virtual void processPacket(FramePacket *packet)
+    {
+        Lock l(m_packets_mutex);
+        C_UNUSED(l);
+
+        m_packets_queue.push(packet);
+    }
+
+    FramePacket* getPacket()
+    {
+        Lock l(m_packets_mutex);
+        C_UNUSED(l);
+
+        if(m_packets_queue.size()<1)
+            return nullptr;
+        FramePacket* p = m_packets_queue.front();
+        m_packets_queue.pop();
+        return p;
+    }
+
+protected:
+    Mutex m_packets_mutex;
+    std::queue<FramePacket*> m_packets_queue;
 };
 
 struct FreenectImplementation::FreenectContext
@@ -34,25 +133,22 @@ struct FreenectImplementation::FreenectContext
     libfreenect2::SyncMultiFrameListener* listener;
     libfreenect2::Registration* regist;
 
-    libfreenect2::FrameMap frames;
-
-    std::mutex frame_mutex;
-
-    FramePacket* kframes;
-
-    FramePacket* frame_ready;
+    NectPacketProducer packets;
+    NectPacketConsumer consumer;
 
     std::atomic_bool active;
-    std::atomic_bool new_frame;
 
     std::future<void> exit_fun;
+
+    NectLogger logger;
 };
 
 FreenectImplementation::FreenectContext::FreenectContext(int index) :
+    packets(CSize(512,424)),
     device(NULL)
 {
-    libfreenect2::setGlobalLogger(
-                libfreenect2::createConsoleLogger(libfreenect2::Logger::Debug));
+    libfreenect2::setGlobalLogger(&logger);
+
     int devices = manager.enumerateDevices();
     cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,CFStrings::CNect_NumDevices,devices);
     if(devices <= 0)
@@ -87,36 +183,33 @@ FreenectImplementation::FreenectContext::~FreenectContext()
 
 FreenectImplementation::FreenectContext *FreenectImplementation::Alloc(int index)
 {
-    FreenectImplementation::FreenectContext *c =
-            new FreenectImplementation::FreenectContext(index);
-    return c;
+    return new FreenectImplementation::FreenectContext(index);
 }
 
 void FreenectImplementation::LaunchAsync(FreenectImplementation::FreenectContext *c)
 {
-    c->kframes = new FramePacket[3];
     c->active.store(true);
 
     c->exit_fun = std::async(std::launch::async,[=](){
+
         cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,
              CFStrings::CNect_AsyncStart);
 
-        size_t curr_packet = 0;
-
         while(c->active.load())
         {
-            c->listener->waitForNewFrame(c->frames);
+            /* Get a packet handle */
+            FramePacket* p = c->packets.getPacket();
 
-            {
+            /* Grab a set of frames */
+            c->listener->waitForNewFrame(p->raw_frames);
 
-            }
+            /* Transform the frames */
+            c->regist->apply(p->raw_frames[libfreenect2::Frame::Color],
+                             p->raw_frames[libfreenect2::Frame::Depth],
+                             p->color,p->depth);
 
-            {
-                Lock l(c->kframes[curr_packet].access);
-                C_UNUSED(l);
-
-                c->frame_ready = c->kframes[curr_packet];
-            }
+            /* Queue it for use on different thread */
+            c->consumer.processPacket(p);
         }
     });
 }
@@ -127,42 +220,37 @@ bool FreenectImplementation::RunningAsync(FreenectImplementation::FreenectContex
 }
 
 void FreenectImplementation::ProcessFrame(FreenectImplementation::FreenectContext *c,
-                                          FreenectImplementation::FreenectFrameProcessor p,
+                                          FreenectImplementation::FreenectFrameProcessor fun,
                                           size_t n)
 {
     if(!c->active.load())
         return;
 
-    if(!c->frame_ready)
+    /* Retrieve a frame */
+    FramePacket* p = c->consumer.getPacket();
+
+    /* If p is NULL, there is no frame ready */
+    if(!p)
         return;
 
-    FramePacket* packet = c->frame_ready;
+    /* Create wrapper frames */
+    NectDepth depthframe(p->depth->width,p->depth->height,(scalar*)p->depth->data);
+    NectRGB colorframe(p->color->width,p->color->height,(CRGBA*)p->color->data);
 
-    Lock l(c->kframes[curr_packet].access);
-    C_UNUSED(l);
+    /* Hand it over to user */
+    fun(colorframe,depthframe);
 
-    CNectRGB rgb(packet->color->width,packet->color->height);
-    CNectDepth dep(packet->depth->width,packet->depth->height);
-
-
-
-    p(rgb,dep);
-
-    c->new_frame.store(false);
-
-    //We launch an async task to delete the frames, using a mutex to ensure we don't stomp on other data
-    std::async(std::launch::async,[=](){
-        c->frame_mutex.lock();
-        c->listener->release(c->frames);
-        c->frame_mutex.unlock();
-    });
+    /* Recycle it */
+    p->expended = true;
+    c->packets.usePacket(p);
 }
 
 void FreenectImplementation::ShutdownAsync(FreenectContext *c)
 {
+    /* Set atomic flag to quit */
     c->active.store(false);
+    /* Wait for async job to stop */
     c->exit_fun.get();
-    delete[] c->kframes;
     cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,
          CFStrings::CNect_AsyncStop);
 }

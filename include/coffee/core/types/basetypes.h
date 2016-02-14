@@ -78,6 +78,13 @@ using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
 
 template<typename T>
+using Queue = std::queue<T>;
+template<typename T>
+using LinkList = std::list<T>;
+template<typename T>
+using Vector = std::vector<T>;
+
+template<typename T>
 using ShPtr = std::shared_ptr<T>;
 
 /*!
