@@ -3,13 +3,14 @@
 #include "library.h"
 #include <coffee/core/plat/memory/cmd_interface.h>
 
+#include <coffee/core/unit_tests/micro_tests.h>
+
 using namespace Coffee;
 
 using namespace CLibraryLoader;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    Cmd::AltScreen();
     {
         /* Check out system directory strings and user data directories */
         CString cfg_dir  = Env::GetUserData(
@@ -25,6 +26,9 @@ int32 coffee_main(int32, cstring_w*)
 
         CResources::FileMkdir(cfg_dir.c_str(),true);
     }
+
+    CoffeeTests::FunctionCallTest();
+    CoffeeTests::PrintCallTest();
 
     cDebug("uint64 size: {0}",sizeof(uint64));
     cDebug("int64 size: {0}",sizeof(int64));
@@ -115,8 +119,6 @@ int32 coffee_main(int32, cstring_w*)
 //            cDebug("You wrote: {0}",ts.c_str());
 //        }
 //    }
-
-    Cmd::ResetScreen();
 
     {
         cDebug("Testing multithread + printing, should be mutex-locked");

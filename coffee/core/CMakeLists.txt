@@ -16,6 +16,7 @@ set ( CoffeeCore_SRCS
     private/jobs/ctasksystem.cpp
 
     private/unit_tests/data_types.cpp
+    private/unit_tests/micro_tests.cpp
 
     private/input/cinputfunctions.cpp
 

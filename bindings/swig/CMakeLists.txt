@@ -44,31 +44,7 @@ target_link_libraries ( CoffeeSwigShim
 
 # Link with some libraries
 set(COFFEE_LINKING CoffeeAudio CoffeeBlam CoffeeSwigShim )
-CONFIG_SWIG_BUILD(${CFILE_DLANG})
-CONFIG_SWIG_BUILD(${CFILE_PYTHON})
-CONFIG_SWIG_BUILD(${CFILE_SHARP})
 
-if(COFFEE_DLANG)
-    # DLang build
-    swig_add_module(CoffeeDLang d ${CFILE_DLANG})
-    swig_link_libraries(CoffeeDLang ${COFFEE_LINKING} )
-endif()
-
-if(COFFEE_PYTHON)
-    # Python build
-    find_package(PythonLibs)
-    include_directories ( SYSTEM
-        ${PYTHON_INCLUDE_PATH}
-        )
-
-    set_property(SOURCE ${CFILE_PYTHON} PROPERTY SWIG_FLAGS "-importall" )
-
-    swig_add_module(CoffeePython python ${CFILE_PYTHON} )
-    swig_link_libraries(CoffeePython ${COFFEE_LINKING} ${PYTHON_LIBRARIES} )
-endif()
-
-if(COFFEE_CSHARP)
-    # CSharp build
-    swig_add_module(CoffeeSharp csharp ${CFILE_SHARP} )
-    swig_link_libraries(CoffeeSharp ${COFFEE_LINKING} )
-endif()
+add_subdirectory(csharp)
+add_subdirectory(dlang)
+add_subdirectory(python)
