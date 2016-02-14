@@ -10,40 +10,60 @@
 
 namespace Coffee{
 
-struct C_FORCE_PACKING uint24
+PACKEDSTRUCT uint24
 {
     uint32 d:24;
 };
 
-struct C_FORCE_PACKING bigscalar_dissect
+PACKEDSTRUCT bigscalar_dissect
 {
-    uint8 sign:1;
-    uint16 exponent:11;
-    uint64 mantissa:52;
+    union
+    {
+        struct{
+            uint8 sign:1;
+            uint16 exponent:11;
+            uint64 mantissa:52;
+        };
+        bigscalar v;
+    };
 };
-struct C_FORCE_PACKING scalar_dissect
+PACKEDSTRUCT scalar_dissect
 {
-    uint8 sign:1;
-    uint8 exponent:8;
-    uint32 mantissa:24;
+    union
+    {
+        struct{
+            uint8 sign:1;
+            uint8 exponent:8;
+            uint32 mantissa:24;
+        };
+        scalar v;
+    };
 };
-struct C_FORCE_PACKING half_dissect
+PACKEDSTRUCT half_dissect
 {
-    uint8 sign:1;
-    uint8 exponent:5;
-    uint16 mantissa:10;
+    union
+    {
+        struct{
+            uint8 sign:1;
+            uint8 exponent:5;
+            uint16 mantissa:10;
+        };
+        uint16 v;
+    };
 };
 
-struct C_FORCE_PACKING scalar11
-{
-    uint8 exponent:6;
-    uint8 mantissa:5;
-};
-struct C_FORCE_PACKING scalar10
-{
-    uint8 exponent:5;
-    uint8 mantissa:5;
-};
+/* The below floating-point formats are used in OpenGL */
+//struct C_FORCE_PACKING scalar11
+//{
+//    uint8 exponent:6;
+//    uint8 mantissa:5;
+//};
+//struct C_FORCE_PACKING scalar10
+//{
+//    uint8 exponent:5;
+//    uint8 mantissa:5;
+//};
+/**/
 
 using Timestamp = uint64;
 

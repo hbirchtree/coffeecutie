@@ -50,7 +50,7 @@ void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GL
         cmsg.type = DebugType::Marker;
         break;
     case GL_DEBUG_TYPE_OTHER:
-        cmsg.type = DebugType::UndefinedBehavior;
+        cmsg.type = DebugType::Other;
         break;
     case GL_DEBUG_TYPE_PERFORMANCE:
         cmsg.type = DebugType::Performance;
@@ -133,8 +133,8 @@ void CGLeamRenderer::bindingPostInit()
     if(GL::DebuggingSupported())
     {
         GL::Debug::SetDebugMode(true);
-        GL::Debug::SetDebugLevel(Severity::Debug,false);
-        GL::Debug::SetDebugLevel(Severity::Information,false);
+//        GL::Debug::SetDebugLevel(Severity::Debug,false);
+//        GL::Debug::SetDebugLevel(Severity::Information,false);
         GL::Debug::DebugSetCallback(gleamcallback,this);
     }
 }

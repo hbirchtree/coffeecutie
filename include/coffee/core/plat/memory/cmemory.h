@@ -219,6 +219,20 @@ FORCEDINLINE CString& trim(CString& s)
 {
     return ltrim(rtrim(s));
 }
+FORCEDINLINE CString& zeroltrim(CString& s)
+{
+    s.erase(0,s.find_first_not_of('0'));
+    return s;
+}
+FORCEDINLINE CString& zerortrim(CString& s)
+{
+    s.erase(s.find_last_not_of('0')+1,s.size());
+    return s;
+}
+FORCEDINLINE CString& zerotrim(CString& s)
+{
+    return zeroltrim(zerortrim(s));
+}
 
 }
 

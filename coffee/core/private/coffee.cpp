@@ -8,8 +8,10 @@
 #include <coffee/core/unit_tests/data_types.h>
 #include <coffee/core/unit_tests/memory_operations.h>
 #include <coffee/core/plat/memory/cmd_interface.h>
+
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/environment/sysinfo_def.h>
+#include <coffee/core/plat/timing/profiling.h>
 
 static bool coffee_initialized = false;
 
@@ -102,5 +104,9 @@ void CoffeeTerminate()
 namespace Coffee{
 /* Don't mind this, just some string storage */
 thread_local CString LinuxSysInfo::cached_cpuinfo_string;
+
+std::list<Profiler::DataPoint> Profiler::datapoints;
+std::list<CString> Profiler::context_stack;
+Mutex Profiler::data_access_mutex;
 
 }

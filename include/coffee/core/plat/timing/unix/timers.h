@@ -64,11 +64,21 @@ private:
 
 struct UnixTime : TimeDef
 {
-    static Timestamp CurrentTimestamp()
+    STATICINLINE uint64 Microsecond()
+    {
+        struct timeval t;
+        gettimeofday(&t,0);
+        return t.tv_usec;
+    }
+    STATICINLINE Timestamp CurrentTimestamp()
     {
         return std::time(NULL);
     }
-    static DateTime GetDateTime(Timestamp ts)
+    STATICINLINE uint64 CurrentMicroTimestamp()
+    {
+        return CurrentTimestamp()*1000000+Microsecond();
+    }
+    STATICINLINE DateTime GetDateTime(Timestamp ts)
     {
         DateTime t;
 
@@ -80,7 +90,7 @@ struct UnixTime : TimeDef
         return t;
     }
 
-    static CString StringDate(cstring fmt,DateTime t)
+    STATICINLINE CString StringDate(cstring fmt,DateTime t)
     {
         CString out;
         out.resize(40);
@@ -90,7 +100,7 @@ struct UnixTime : TimeDef
         return out;
     }
 
-    static CString ClockString()
+    STATICINLINE CString ClockString()
     {
         Timestamp ts = CurrentTimestamp();
         DateTime dt = GetDateTime(ts);

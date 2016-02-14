@@ -98,7 +98,7 @@ struct SysInfoDef
     static HWDeviceInfo Processor();
 
     /*!
-     * \brief Current processor frequency, allowed to be inaccurate if hardware clocks particular cores differently
+     * \brief Current processor frequency in GHz, allowed to be inaccurate if hardware clocks particular cores differently
      * \return
      */
     static bigscalar ProcessorFrequency();

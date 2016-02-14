@@ -87,7 +87,8 @@ FORCEDINLINE cstring cStringify(DebugType type)
         return "Performance";
     case DebugType::UndefinedBehavior:
         return "Undefined behavior";
-
+    case DebugType::Other:
+        return "Other";
     }
     return "";
 }

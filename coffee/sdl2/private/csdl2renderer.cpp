@@ -59,6 +59,8 @@ std::thread::id CSDL2Renderer::contextThread()
 
 void CSDL2Renderer::init(const CDProperties &props)
 {
+    Profiler::PushContext("SDL2");
+
     m_properties = props;
 
     /* Allocate context objects, will hold SDL-specific state so that SDL won't litter the external namespace */
@@ -73,11 +75,16 @@ void CSDL2Renderer::init(const CDProperties &props)
     SDL_GetVersion(&ver);
     m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
+    Profiler::Profile();
+
     /* Initialize SDL and its components */
     if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
     {
         cFatal("Failed to initialize SDL2 context: {0}",SDL_GetError());
     }
+
+    Profiler::Profile();
+
     cMsg("SDL2","Initialized");
 
     /* If found, load game controller mappings from file */
@@ -91,6 +98,8 @@ void CSDL2Renderer::init(const CDProperties &props)
         SDL_FreeRW(fsrc);
         FileFree(mapping);
     }
+
+    Profiler::Profile();
 
     /* Translate window flags and apply them */
     Uint32 flags = 0;
@@ -107,6 +116,8 @@ void CSDL2Renderer::init(const CDProperties &props)
                              SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,
                              props.size.w,props.size.h,
                              flags);
+
+    Profiler::Profile();
 
     /* Validate the window pointer, may have failed */
     if(!m_context->window){
@@ -126,6 +137,8 @@ void CSDL2Renderer::init(const CDProperties &props)
     /* Acquire the OpenGL context */
     m_context->context = new CGL_SDL_GL_Context(m_context->window);
 
+    Profiler::Profile();
+
     /* Make the GL context current to this thread */
     if(!m_context->context->acquireContext())
     {
@@ -133,6 +146,8 @@ void CSDL2Renderer::init(const CDProperties &props)
         this->popErrorMessage(Severity::Fatal,"GL init failure",err.c_str());
         cFatal("{0}",err.c_str());
     }
+
+    Profiler::Profile();
 
     /* Enable VSync if requested */
     if(props.gl.flags&GLProperties::GLVSync)
@@ -149,8 +164,12 @@ void CSDL2Renderer::init(const CDProperties &props)
 
     cMsg("SDL2","Running {0}",m_contextString);
 
+    Profiler::Profile();
+
     /* Run binding post-init, fetches GL extensions and etc. */
     bindingPostInit();
+
+    Profiler::Profile();
 
     /* WORKAROUND: Sometimes, haptic and joystick devices are not closed properly. This part ensures that they are indeed closed before starting. Everything else should be fine. */
     for(int i=0;i<SDL_NumHaptics();i++)
@@ -163,6 +182,8 @@ void CSDL2Renderer::init(const CDProperties &props)
         SDL_Joystick* h = SDL_JoystickOpen(i);
         SDL_JoystickClose(h);
     }
+
+    Profiler::PopContext();
 }
 
 void CSDL2Renderer::cleanup()

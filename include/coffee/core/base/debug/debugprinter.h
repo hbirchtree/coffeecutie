@@ -86,7 +86,8 @@ struct DebugPrinterImpl : DebugPrinterDef
             break;
         }
 
-        CString clock = Time::ClockString();
+        CString cclock = Time::ClockString();
+        CString clock = cStringFormat("{0}.{1}",cclock,Time::Microsecond()/1000);
         CString prefix = cStringFormat("{0}:{1}:{2}",
                                        clock.c_str(),
                                        severity_str,

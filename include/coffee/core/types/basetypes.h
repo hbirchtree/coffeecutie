@@ -156,6 +156,7 @@ enum class DebugType : uint8
     Deprecated,
     Compatibility,
     Marker,
+    Other,
 };
 
 enum class DebugComponent : uint8

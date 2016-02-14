@@ -152,7 +152,7 @@ struct LinuxSysInfo : SysInfoDef
         result.insert(0,res,end-res);
         StrUtil::trim(result);
 
-        return Convert::strtoscalar(result.c_str());
+        return CMath::floor(Convert::strtoscalar(result.c_str()))/1000;
     }
 
     STATICINLINE bool HasFPU()

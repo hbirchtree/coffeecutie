@@ -3,54 +3,6 @@
 namespace Coffee{
 namespace CDisplay{
 
-CDProperties GetDefaultVisual(const int32 &ctxtMajorVer, const int32 &ctxtMinorVer)
-{
-    CDProperties props;
-
-    props.flags =
-            CDProperties::Resizable |
-            CDProperties::Windowed  |
-            CDProperties::Visible;
-
-    props.gl.flags =
-            GLProperties::GLAutoResize|
-            GLProperties::GLCoreProfile;
-
-    props.title = "CoffeeCore";
-
-    props.size.w = 1280;
-    props.size.h = 720;
-    props.monitor = 0;
-
-    props.gl.version.major = ctxtMajorVer;
-    props.gl.version.minor = ctxtMinorVer;
-
-    props.gl.bits.alpha = 8;
-    props.gl.bits.red = 8;
-    props.gl.bits.blue = 8;
-    props.gl.bits.green = 8;
-    props.gl.bits.depth = 24;
-    props.gl.bits.stencil = 8;
-
-    props.gl.bits.accum.r = 8;
-    props.gl.bits.accum.g = 8;
-    props.gl.bits.accum.b = 8;
-    props.gl.bits.accum.a = 8;
-
-    return props;
-}
-
-CDProperties::CDProperties():
-    gl(),
-    title(nullptr),
-    window(nullptr),
-    icon(nullptr),
-    size(0,0),
-    flags(),
-    monitor(0)
-{
-}
-
 GLProperties::GLProperties():
     bits(),
     flags(GLCoreProfile),

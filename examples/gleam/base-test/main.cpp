@@ -23,9 +23,8 @@ public:
 
     void run()
     {
-        CElapsedTimerD timer;
+        Profiler::PushContext("Renderer");
         CElapsedTimer ftimer;
-        timer.start();
 
         FrameCounter fcounter(framecount_fun);
         fcounter.interval = 1000;
@@ -34,6 +33,8 @@ public:
 
         GL::CGhnd pbobuf[3] = {};
         GL::BufAlloc(3,pbobuf);
+
+        Profiler::Profile();
 
         for(uint32 i=0;i<3;i++)
         {
@@ -48,14 +49,11 @@ public:
                               img.size.area()*img.bpp,
                               img.data,ResourceAccess::ReadOnly);
 
-            CResources::CResource out("test.png");
-            CStbImageLib::SavePNG(&out,&img);
-
-            CResources::FileCommit(out);
-            CResources::FileFree(out);
             CStbImageLib::ImageFree(&img);
             CResources::FileUnmap(rsc);
         }
+
+        Profiler::Profile();
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  1.f,    0.f,  0.f,
@@ -75,6 +73,8 @@ public:
                            sizeof(vertexdata),vertexdata,
                            ResourceAccess::ReadOnly);
         }
+
+        Profiler::Profile();
 
         cstring vshader = {
             "#version 330 core\n"
@@ -144,6 +144,8 @@ public:
             GL::VAOAttribBinding(1,1);
         }
 
+        Profiler::Profile();
+
         GL::CGhnd vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
         cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
 
@@ -164,6 +166,8 @@ public:
                 return;
         }
 
+        Profiler::Profile();
+
         GL::CGhnd texture_array;
         {
             GL::TexAlloc(1,&texture_array);
@@ -178,6 +182,8 @@ public:
                                   PixelComponents::RGBA,BitFormat::UByte,nullptr);
             }
         }
+
+        Profiler::Profile();
 
         int32 tim_unif;
         {
@@ -219,7 +225,7 @@ public:
             GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
         }
 
-        cDebug("Setup time: {0}",timer.elapsed());
+        Profiler::PopContext();
 
         CVec4 clearcol(0.0);
         clearcol.a() = 1.0;
@@ -258,6 +264,8 @@ public:
             this->swapBuffers();
         }
 
+        Profiler::PushContext("Renderer cleanup");
+
         GL::ProgramFree(1,&vprogram);
         GL::ProgramFree(1,&fprogram);
         GL::BufFree(3,pbobuf);
@@ -265,6 +273,10 @@ public:
         GL::VAOFree(1,&vao);
         GL::TexFree(1,&texture_array);
         GL::PipelineFree(1,&pipeline);
+
+        Profiler::Profile();
+
+        Profiler::PopContext();
     }
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {
@@ -307,6 +319,7 @@ public:
 
 int32 coffee_main(int32, cstring_w*)
 {
+    Profiler::PushContext("Root");
     if(!OpenVRDev::InitializeBinding())
     {
         cDebug("Move on, there is nothing to see here.");
@@ -328,15 +341,17 @@ int32 coffee_main(int32, cstring_w*)
     CElapsedTimerD timer;
     timer.start();
     CSDL2Renderer *renderer = new CDRenderer();
-    cDebug("Allocated renderer: {0}",timer.elapsed());
-    timer.start();
+
+    Profiler::Profile();
+
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
     props.gl.version.major = 3;
     props.gl.version.minor = 3;
 
     renderer->init(props);
-    cDebug("Init renderer: {0}",timer.elapsed());
+
+    Profiler::Profile();
 
     if(!(  GL::SeparableShaderSupported()
          ||GL::VertexAttribBinding()
@@ -344,21 +359,34 @@ int32 coffee_main(int32, cstring_w*)
          ||GL::BufferStorageSupported()))
         return 1;
 
+    Profiler::Profile();
+
     cDebug("Device info: {0}",GL::Debug::Renderer());
 
-    timer.start();
+    Profiler::Profile();
+
     cDebug("Processor info: {0}",SysInfo::Processor());
     cDebug("Frequency: {0}GHz",SysInfo::ProcessorFrequency());
     cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
-    cDebug("FPU: {1}",SysInfo::HasFPU());
+    cDebug("FPU: {0}",SysInfo::HasFPU());
 
-    cDebug("Information processing time: {0}",timer.elapsed());
+    Profiler::Profile();
 
     renderer->run();
-    timer.start();
+
+    Profiler::Profile();
+
     renderer->cleanup();
     delete renderer;
-    cDebug("Cleanup renderer: {0}",timer.elapsed());
+
+    Profiler::Profile();
+
+    Profiler::PopContext();
+
+    for(Profiler::DataPoint const& p : Profiler::datapoints)
+    {
+        cDebug("Type: {0}, timestamp: {1}, name: {2}",p.tp,p.ts,p.name);
+    }
 
     return 0;
 }
