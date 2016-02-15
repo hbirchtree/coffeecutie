@@ -19,6 +19,8 @@ static bool coffee_initialized = false;
 
 namespace Coffee{
 
+static ExitCallback exit_handle = nullptr;
+
 void sighandle(int sig)
 {
     /* If we use an alternate buffer, switch back to primary */
@@ -29,11 +31,19 @@ void sighandle(int sig)
         Cmd::Exit(CoffeeExit_Termination);
         break;
     case SIGINT:
+    {
+        if(exit_handle)
+            exit_handle();
         Cmd::Exit(CoffeeExit_Interrupt);
         break;
+    }
     case SIGTERM:
+    {
+        if(exit_handle)
+            exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
         break;
+    }
 #if defined(COFFEE_LINUX)
     case SIGKILL:
         Cmd::Exit(CoffeeExit_Kill);
@@ -41,6 +51,11 @@ void sighandle(int sig)
     default:
         Cmd::Exit(CoffeeExit_UnknownBad);
     }
+}
+
+void SetExitFunction(ExitCallback f)
+{
+    exit_handle = f;
 }
 
 void CoffeeInit()

@@ -123,6 +123,8 @@ bool FileCommit(CResource &resc, bool append)
     CByteData d;
     d.data = (byte_t*)resc.data;
     d.size = resc.size;
+    if(!append)
+        FileFun::Seek(fp,0);
     bool stat = FileFun::Write(fp,d,false);
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());

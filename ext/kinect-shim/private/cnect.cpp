@@ -1,7 +1,5 @@
 #include <coffee_ext/kinect_shim/cnect.h>
 
-#include <coffee/core/base/cthreading.h>
-
 #include <coffee/core/plat/memory/cmemory.h>
 #include <coffee/core/base/cdebug.h>
 #include <coffee/core/base/cthreading.h>
@@ -22,7 +20,7 @@ public:
     {
     }
 
-    void log(Level level, const std::__cxx11::string &message)
+    void log(Level level, const std::string &message)
     {
         cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,
              "{0}:{1}",this->level2str(level),message);
@@ -46,7 +44,7 @@ public:
     NectPacketPool(CSize const&)
     {
         m_dsize = CSize(512,424);
-        m_csize = CSize(1920,1080);
+        m_csize = CSize(512,424);
     }
 protected:
     void initPacket(FramePacket *p)
@@ -165,9 +163,9 @@ FreenectImplementation::FreenectContext::FreenectContext(int index) :
     device->setColorFrameListener(listener);
     device->setIrAndDepthFrameListener(listener);
 
-    regist = new libfreenect2::Registration(device->getIrCameraParams(),device->getColorCameraParams());
-
     device->start();
+
+    regist = new libfreenect2::Registration(device->getIrCameraParams(),device->getColorCameraParams());
 }
 
 FreenectImplementation::FreenectContext::~FreenectContext()
@@ -186,6 +184,11 @@ FreenectImplementation::FreenectContext *FreenectImplementation::Alloc(int index
     return new FreenectImplementation::FreenectContext(index);
 }
 
+const CRGBA& SampleImage(FreenectImplementation::NectRGB const& img, const scalar& x, const scalar& y)
+{
+    return img.data()[(uint32)(CMath::floor(y)*img.size.h*img.size.w)+(uint32)(CMath::floor(x)*img.size.w)];
+}
+
 void FreenectImplementation::LaunchAsync(FreenectImplementation::FreenectContext *c)
 {
     c->active.store(true);
@@ -195,6 +198,7 @@ void FreenectImplementation::LaunchAsync(FreenectImplementation::FreenectContext
         cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,
              CFStrings::CNect_AsyncStart);
 
+        Profiler::PushContext("Kinect loop");
         while(c->active.load())
         {
             /* Get a packet handle */
@@ -203,14 +207,23 @@ void FreenectImplementation::LaunchAsync(FreenectImplementation::FreenectContext
             /* Grab a set of frames */
             c->listener->waitForNewFrame(p->raw_frames);
 
+            libfreenect2::Frame* cf = p->raw_frames[libfreenect2::Frame::Color];
+            libfreenect2::Frame* df = p->raw_frames[libfreenect2::Frame::Depth];
+
             /* Transform the frames */
-            c->regist->apply(p->raw_frames[libfreenect2::Frame::Color],
-                             p->raw_frames[libfreenect2::Frame::Depth],
-                             p->color,p->depth);
+            Profiler::Profile("Waiting for frame");
+
+            c->regist->apply(cf,df,p->depth,p->color);
+
+            p->depth = df;
+            p->color = cf;
 
             /* Queue it for use on different thread */
             c->consumer.processPacket(p);
+
+            Profiler::Profile("Processing frame");
         }
+        Profiler::PopContext();
     });
 }
 
@@ -219,23 +232,29 @@ bool FreenectImplementation::RunningAsync(FreenectImplementation::FreenectContex
     return c->active.load();
 }
 
-void FreenectImplementation::ProcessFrame(FreenectImplementation::FreenectContext *c,
+bool FreenectImplementation::ProcessFrame(FreenectImplementation::FreenectContext *c,
                                           FreenectImplementation::FreenectFrameProcessor fun,
                                           size_t n)
 {
     if(!c->active.load())
-        return;
+        return false;
 
     /* Retrieve a frame */
     FramePacket* p = c->consumer.getPacket();
 
     /* If p is NULL, there is no frame ready */
     if(!p)
-        return;
+    {
+        return false;
+    }
 
     /* Create wrapper frames */
     NectDepth depthframe(p->depth->width,p->depth->height,(scalar*)p->depth->data);
     NectRGB colorframe(p->color->width,p->color->height,(CRGBA*)p->color->data);
+
+    const CRGBA& value = colorframe.data()[500];
+
+    cDebug("Pixel value: {0},{1},{2}",value.r,value.g,value.b);
 
     /* Hand it over to user */
     fun(colorframe,depthframe);
@@ -243,6 +262,8 @@ void FreenectImplementation::ProcessFrame(FreenectImplementation::FreenectContex
     /* Recycle it */
     p->expended = true;
     c->packets.usePacket(p);
+
+    return true;
 }
 
 void FreenectImplementation::ShutdownAsync(FreenectContext *c)

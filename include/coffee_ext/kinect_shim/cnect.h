@@ -42,7 +42,7 @@ struct FreenectImplementation
      * \param p
      * \param n
      */
-    static void ProcessFrame(FreenectContext* c, FreenectFrameProcessor p, size_t n);
+    static bool ProcessFrame(FreenectContext* c, FreenectFrameProcessor p, size_t n);
     /*!
      * \brief Closes the asynchronous thread, called from main thread
      * \param c
