@@ -109,7 +109,7 @@ thread_local CString LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
 #ifdef COFFEE_WINDOWS
-CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
+static CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
 std::list<Profiler::DataPoint> Profiler::datapoints;
