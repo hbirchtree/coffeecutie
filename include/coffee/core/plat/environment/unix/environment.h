@@ -1,6 +1,6 @@
 #include "../../platform_detect.h"
 
-#ifdef COFFEE_UNIXPLAT
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS)
 #ifndef COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
 #define COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
 
