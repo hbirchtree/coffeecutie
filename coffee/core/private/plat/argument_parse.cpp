@@ -24,7 +24,7 @@ cstring_w ExecutableName(cstring_w n)
 cstring_w ExecutableName(cstring_w path)
 {
     if(!path)
-        path = (cstring_w)c_alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
+        path = (cstring_w)Alloc(COFFEE_MAX_FILEPATH_BUFFER_SIZE);
 
     DWORD size = GetModuleFileNameA(NULL,path,COFFEE_MAX_FILEPATH_BUFFER_SIZE);
         path[size] = '\0';
