@@ -383,10 +383,7 @@ int32 coffee_main(int32, cstring_w*)
 
     Profiler::PopContext();
 
-    for(Profiler::DataPoint const& p : Profiler::datapoints)
-    {
-        cDebug("Type: {0}, timestamp: {1}, name: {2}",p.tp,p.ts,p.name);
-    }
+    cDebug("Function name: {0}",Stacktracer::GetStackframeName(0));
 
     return 0;
 }

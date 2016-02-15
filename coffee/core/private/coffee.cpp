@@ -9,6 +9,7 @@
 #include <coffee/core/unit_tests/memory_operations.h>
 #include <coffee/core/plat/memory/cmd_interface.h>
 
+#include <coffee/core/plat/environment/stacktrace_def.h>
 #include <coffee/core/plat/timing/timing_def.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/environment/sysinfo_def.h>
@@ -108,8 +109,12 @@ namespace Coffee{
 thread_local CString LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
+#if defined(COFFEE_USE_UNWIND)
+unw_context_t* LinuxStacktracer::unwind_context = nullptr;
+#endif
+
 #ifdef COFFEE_WINDOWS
-static CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
+CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
 std::list<Profiler::DataPoint> Profiler::datapoints;

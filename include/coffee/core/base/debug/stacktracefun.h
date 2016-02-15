@@ -2,6 +2,7 @@
 #define COFFEE_CORE_BASE_DEBUG_STACKTRACE_H
 
 #include "debug_interface.h"
+#include "../../plat/environment/stacktrace_def.h"
 
 namespace Coffee{
 namespace DebugFun{
