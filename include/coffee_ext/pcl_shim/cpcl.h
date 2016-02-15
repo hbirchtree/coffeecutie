@@ -24,6 +24,7 @@ using namespace Coffee;
 
 struct CPCLImplementation
 {
+
     static PointCloud<PointXYZRGB>::Ptr GenPointCloud(const CVec3* points,
                                                       const CRGBA *cPoints,
                                                       const szptr& numPoints);
@@ -41,13 +42,17 @@ struct CPCLImplementation
      */
     static void DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud);
 
+    static PointCloud<PointXYZRGB>::Ptr MergeCloudsICP(
+            PointCloud<PointXYZRGB>::Ptr c1,
+            PointCloud<PointXYZRGB>::Ptr c2);
+
     /*!
      * \brief Merge two point clouds using normal distribution transform
      * \param c1 Combinable cloud, not modified
      * \param c2 Target cloud which is aligned with, accumulates
      * \return Pointer to c2 on success
      */
-    static PointCloud<PointXYZRGB>::Ptr MergeClouds(
+    static PointCloud<PointXYZRGB>::Ptr MergeCloudsNormals(
             PointCloud<PointXYZRGB>::Ptr c1,
             PointCloud<PointXYZRGB>::Ptr c2,
             CGraphicsData::CTransform const& transform);

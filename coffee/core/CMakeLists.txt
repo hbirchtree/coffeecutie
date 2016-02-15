@@ -54,15 +54,15 @@ if(NOT WIN32 AND NOT ANDROID)
     target_link_libraries ( CoffeeCore pthread )
 endif()
 
-if(NOT WIN32 AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "CYGWIN" AND NOT ANDROID)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
-    #find_package(Unwind QUIET)
-    #include_directories ( SYSTEM
-    #    ${LIBUNWIND_INCLUDE_DIR}
-    #    )
-    #target_link_libraries ( CoffeeCore ${LIBUNWIND_LIBRARIES} )
+    find_package(Unwind QUIET)
+    include_directories ( SYSTEM
+        ${LIBUNWIND_INCLUDE_DIR}
+        )
+    target_link_libraries ( CoffeeCore ${LIBUNWIND_LIBRARIES} )
 endif()
 
 if(ANDROID AND SDL2_FOUND)

@@ -30,6 +30,8 @@
 #include <string>
 #include <stdexcept>
 
+#include <stdint.h>
+
 namespace Coffee{
 
 template<typename T>
@@ -40,22 +42,14 @@ inline bool feval(T flagcombo)
 
 //Integer types
 using int8  = char;
-using int16 = short;
-using int32 = int;
-#if defined(COFFEE_USE_LONGLONG_INT64)
-using int64 = long long int;
-#else
-using int64 = long int;
-#endif
+using int16 = int16_t;
+using int32 = int32_t;
+using int64 = int64_t;
 
-using uint8  = unsigned char;
-using uint16 = unsigned short;
-using uint32 = unsigned int;
-#if defined(COFFEE_WINDOWS)
-using uint64 = unsigned long long;
-#else
-using uint64 = unsigned long int;
-#endif
+using uint8  = uint8_t;
+using uint16 = uint16_t;
+using uint32 = uint32_t;
+using uint64 = uint64_t;
 
 using scalar    = float;  /*!< Low-precision float value*/
 using bigscalar = double; /*!< High-precision float value*/

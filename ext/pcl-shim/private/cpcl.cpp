@@ -1,5 +1,7 @@
 #include <coffee_ext/pcl_shim/cpcl.h>
 
+#include <pcl/filters/filter.h>
+
 /* Noise removal */
 #include <pcl/filters/statistical_outlier_removal.h>
 
@@ -82,7 +84,14 @@ void CPCLImplementation::DenoiseCloud(PointCloud<PointXYZ>::Ptr cloud)
     cloud->width = cloud->points.size();
 }
 
-PointCloud<PointXYZRGB>::Ptr CPCLImplementation::MergeClouds(
+PointCloud<PointXYZRGB>::Ptr CPCLImplementation::MergeCloudsICP(
+        PointCloud<PointXYZRGB>::Ptr c1,
+        PointCloud<PointXYZRGB>::Ptr c2)
+{
+
+}
+
+PointCloud<PointXYZRGB>::Ptr CPCLImplementation::MergeCloudsNormals(
         PointCloud<PointXYZRGB>::Ptr c1,
         PointCloud<PointXYZRGB>::Ptr c2,
         CGraphicsData::CTransform const& transform)
