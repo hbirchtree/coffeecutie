@@ -20,16 +20,23 @@ void d_exit_handle()
     }
 }
 
-void frame_fun(CNect::NectRGB const& c,CNect::NectDepth const& d)
+void frame_fun(CNect::NectRGB const& c,CNect::NectDepth const& d,
+               CNect::NectCloud const& cloud)
 {
+    CResources::CResource cl_raw("cloudframe.raw");
+
     CResources::CResource d_raw("dframe.raw");
     CResources::CResource c_raw("cframe.raw");
 
+    cl_raw.data = (void*)&cloud[0];
+    cl_raw.size = cloud.size()*sizeof(cloud[0]);
+
     d_raw.data = (void*)&d.data()[0];
-    c_raw.data = (void*)&c.data()[0];
     d_raw.size = d.size.area()*sizeof(scalar);
+    c_raw.data = (void*)&c.data()[0];
     c_raw.size = c.size.area()*sizeof(CRGBA);
 
+    CResources::FileCommit(cl_raw);
     CResources::FileCommit(d_raw);
     CResources::FileCommit(c_raw);
 

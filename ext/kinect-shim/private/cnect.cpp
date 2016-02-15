@@ -251,10 +251,27 @@ bool FreenectImplementation::ProcessFrame(FreenectImplementation::FreenectContex
 
     const CRGBA& value = colorframe.data()[500];
 
+    NectCloud points;
+    points.resize(depthframe.size.area());
+
+    for(uint32 x=0;x<depthframe.size.w;x++)
+        for(uint32 y=0;y<depthframe.size.h;y++)
+        {
+            ColorVec3& v = points[y*depthframe.size.w+x];
+            c->regist->getPointXYZRGB(p->depth,p->color,x,y,
+                                      v.p.x(),v.p.y(),v.p.z(),
+                                      (scalar&)v.color.i);
+            uint8 r = v.color.r;
+            uint8 b = v.color.b;
+
+            v.color.r = b;
+            v.color.b = r;
+        }
+
     cDebug("Pixel value: {0},{1},{2}",value.r,value.g,value.b);
 
     /* Hand it over to user */
-    fun(colorframe,depthframe);
+    fun(colorframe,depthframe,points);
 
     /* Recycle it */
     p->expended = true;
