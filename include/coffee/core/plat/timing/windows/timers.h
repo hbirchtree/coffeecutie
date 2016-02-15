@@ -29,8 +29,6 @@ namespace CFunctional {
         std::atomic_bool loaded;
     };
 
-    static WindowsPerformanceCounterData _win_perfcounter_data;
-
     inline C_FORCE_INLINE uint64 _win_api_get_time()
     {
         LARGE_INTEGER tmp;

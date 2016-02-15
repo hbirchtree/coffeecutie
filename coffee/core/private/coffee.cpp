@@ -9,6 +9,7 @@
 #include <coffee/core/unit_tests/memory_operations.h>
 #include <coffee/core/plat/memory/cmd_interface.h>
 
+#include <coffee/core/plat/timing/timing_def.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/environment/sysinfo_def.h>
 #include <coffee/core/plat/timing/profiling.h>
@@ -105,6 +106,10 @@ namespace Coffee{
 /* Don't mind this, just some string storage */
 #ifdef COFFEE_LINUX
 thread_local CString LinuxSysInfo::cached_cpuinfo_string;
+#endif
+
+#ifdef COFFEE_WINDOWS
+static CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
 std::list<Profiler::DataPoint> Profiler::datapoints;
