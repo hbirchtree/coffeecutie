@@ -49,6 +49,7 @@ public:
 protected:
     void initPacket(FramePacket *p)
     {
+        cDebug("Intializing new packet");
         Lock l(p->access);
         p->color = new libfreenect2::Frame(m_csize.w,m_csize.h,4);
         p->depth = new libfreenect2::Frame(m_dsize.w,m_dsize.h,4);
@@ -209,14 +210,10 @@ void FreenectImplementation::LaunchAsync(FreenectImplementation::FreenectContext
 
             libfreenect2::Frame* cf = p->raw_frames[libfreenect2::Frame::Color];
             libfreenect2::Frame* df = p->raw_frames[libfreenect2::Frame::Depth];
-
-            /* Transform the frames */
             Profiler::Profile("Waiting for frame");
 
+            /* Transform the frames */
             c->regist->apply(cf,df,p->depth,p->color);
-
-            p->depth = df;
-            p->color = cf;
 
             /* Queue it for use on different thread */
             c->consumer.processPacket(p);

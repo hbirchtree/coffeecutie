@@ -13,15 +13,6 @@ using CPCLI = CPCL::CPCLImplementation;
 
 int32 coffee_main(int32, cstring_w*)
 {
-//    CNect::FreenectContext* c = nullptr;
-//    try{
-//        c = CNect::Alloc(0);
-//    }catch(std::runtime_error ex){
-//        cDebug("Failed to initialize Freenect: {0}",ex.what());
-//    }
-//    if(c)
-//        CNect::Free(c);<
-
     CResources::CResource depth("dframe.raw");
     CResources::FileMap(depth);
 
@@ -29,6 +20,7 @@ int32 coffee_main(int32, cstring_w*)
     CResources::FileMap(color);
 
     CSize depth_size(512,424);
+    CSize color_size(512,424);
 
     const scalar* depth_data = (const scalar*)depth.data;
     const CRGBA* color_data = (const CRGBA*)color.data;
@@ -41,7 +33,7 @@ int32 coffee_main(int32, cstring_w*)
         CStbImageLib::CStbImageConst texturestb;
         texturestb.bpp = 4;
         texturestb.data = (const ubyte_t*)color.data;
-        texturestb.size = CSize(1920,1080);
+        texturestb.size = color_size;
         CResources::CResource texturedump("image.png");
         CStbImageLib::SavePNG(&texturedump,&texturestb);
         CResources::FileCommit(texturedump);

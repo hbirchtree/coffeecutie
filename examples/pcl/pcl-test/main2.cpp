@@ -22,35 +22,47 @@ void d_exit_handle()
 
 void frame_fun(CNect::NectRGB const& c,CNect::NectDepth const& d)
 {
-    return;
+    CResources::CResource d_raw("dframe.raw");
+    CResources::CResource c_raw("cframe.raw");
+
+    d_raw.data = (void*)&d.data()[0];
+    c_raw.data = (void*)&c.data()[0];
+    d_raw.size = d.size.area()*sizeof(scalar);
+    c_raw.size = c.size.area()*sizeof(CRGBA);
+
+    CResources::FileCommit(d_raw);
+    CResources::FileCommit(c_raw);
+
+    CResources::CResource outfile2("outdata_color.png");
 
     CStbImageLib::CStbImageConst img;
     img.data = (const byte_t*)c.data();
     img.size = c.size;
     img.bpp = 4;
 
-    cDebug("Frame received");
+    CStbImageLib::SavePNG(&outfile2,&img);
+    CResources::FileCommit(outfile2,false);
+    CResources::FileFree(outfile2);
 
     CResources::CResource outfile("outdata.png");
 
-    CStbImageLib::SavePNG(&outfile,&img);
-//    CResources::FileCommit(outfile,false);
-    CResources::FileFree(outfile);
-
-    CStbImageLib::CStbImage img2;
-    uint8* fval = (uint8*)Alloc(d.size.area()*sizeof(uint8));
+    CStbImageLib::CStbImageConst img2;
+    CRGBA* fval = (CRGBA*)CCalloc(1,d.size.area()*sizeof(CRGBA));
     img2.data = (byte_t*)fval;
     img2.size.w = d.size.w;
     img2.size.h = d.size.h;
-    img.bpp = 1;
+    img2.bpp = 4;
 
     for(uint32 i=0;i<d.size.area();i++)
     {
-        fval[i] = (uint8)(d.data()[i]/4000);
+        const scalar& vf = d.data()[i];
+        uint8 v = (vf/4000.0)*255;
+        fval[i].r = v;
+        fval[i].a = 255;
     }
 
     CStbImageLib::SavePNG(&outfile,&img2);
-//    CResources::FileCommit(outfile,false);
+    CResources::FileCommit(outfile,false);
     CResources::FileFree(outfile);
 
     CFree(fval);
@@ -73,12 +85,9 @@ int32 coffee_main(int32, cstring_w*)
 
     CNect::LaunchAsync(c->context());
 
-    uint64 tmp;
     while(true)
     {
-        tmp = Time::CurrentMicroTimestamp();
         CNect::ProcessFrame(c->context(),frame_fun,0);
-        cDebug("Processtime : {0}",Time::CurrentMicroTimestamp()-tmp);
     }
 
     return 0;

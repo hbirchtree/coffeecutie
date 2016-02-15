@@ -13,6 +13,7 @@ target_link_libraries ( PCLTest
     CoffeeImage
     CoffeeGraphicsMisc
     CoffeePCL
+    CoffeeNect
     )
 
 target_link_libraries ( CNectTest
