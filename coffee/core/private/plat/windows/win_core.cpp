@@ -5,7 +5,7 @@
 #include <mutex>
 #include <atomic>
 
-#ifdef COFFEE_WINDOWS
+#ifdef COFFEE_WINDOWS____
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -157,8 +157,6 @@ namespace CFunctional {
         LARGE_INTEGER freq;
         std::atomic_bool loaded;
     };
-
-    static WindowsPerformanceCounterData _win_perfcounter_data;
 
     uint64 _win_api_get_time()
     {
