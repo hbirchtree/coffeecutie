@@ -24,7 +24,7 @@ struct PlatFileFun : FileFunDef
     {
         CString temp = fn;
 #if defined(COFFEE_WINDOWS)
-        temp = c_str_replace(fn,"/","\\");
+        temp = CStrReplace(fn,"/","\\");
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
         return "";
 #endif

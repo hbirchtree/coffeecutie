@@ -11,7 +11,7 @@
 
 #include <glad/glad.h>
 
-#include <KHR/khrplatform.h>
+#include <glad/KHR/khrplatform.h>
 
 namespace Coffee{
 namespace CGL{

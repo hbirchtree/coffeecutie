@@ -1,11 +1,20 @@
 #ifndef COFFEE_PLAT_MEMORY_H
 #define COFFEE_PLAT_MEMORY_H
 
+#include "../platform_detect.h"
+
+#ifndef COFFEE_WINDOWS
 #include <arpa/inet.h>
+#else
+#include <WinSock2.h>
+#endif
+
+#include <cctype>
 #include <algorithm>
 #include <malloc.h>
 #include <cstring>
 #include <cwchar>
+#include <cstdio>
 
 #include "../../coffee_mem_macros.h"
 #include "../../types/basetypes.h"

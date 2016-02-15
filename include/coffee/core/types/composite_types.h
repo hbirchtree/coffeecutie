@@ -8,6 +8,9 @@
 #include "map.h"
 #include "translatable_string.h"
 
+#undef near
+#undef far
+
 namespace Coffee{
 
 PACKEDSTRUCT uint24

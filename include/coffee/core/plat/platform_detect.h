@@ -19,9 +19,10 @@
 #endif
 
 /* Windows macro, only one for now */
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(WIN32)
 #define C_SYSTEM_STRING "Windows"
 #define COFFEE_WINDOWS
+#undef COFFEE_LINUX
 #endif
 
 /* Mac OS X macro, not iOS */
@@ -85,7 +86,7 @@
 #endif
 
 /* This wasn't so hard, really. */
-#if defined(__MSC_VER) && defined(__cplusplus)
+#if defined(_MSC_VER) && defined(__cplusplus)
 #define COFFEE_MSVCXX
 #define C_COMPILER_STRING "MSVC++" _MSC_VER
 

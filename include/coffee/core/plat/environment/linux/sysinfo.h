@@ -1,3 +1,6 @@
+#include "../../platform_detect.h"
+
+#ifdef COFFEE_LINUX
 #ifndef COFFEE_CORE_PLAT_ENV_SYSINFO_H
 #define COFFEE_CORE_PLAT_ENV_SYSINFO_H
 
@@ -202,4 +205,5 @@ using SysInfo = LinuxSysInfo;
 
 }
 
+#endif
 #endif

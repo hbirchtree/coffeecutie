@@ -103,7 +103,9 @@ void CoffeeTerminate()
 
 namespace Coffee{
 /* Don't mind this, just some string storage */
+#ifdef COFFEE_LINUX
 thread_local CString LinuxSysInfo::cached_cpuinfo_string;
+#endif
 
 std::list<Profiler::DataPoint> Profiler::datapoints;
 std::list<CString> Profiler::context_stack;

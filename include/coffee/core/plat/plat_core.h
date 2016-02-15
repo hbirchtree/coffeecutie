@@ -14,7 +14,7 @@ namespace Coffee{
 #if defined(COFFEE_UNIXPLAT)
 #include "unix/unix_core.h"
 #elif defined(COFFEE_WINDOWS)
-#include "coffee_windows/win_core.h"
+#include "windows/win_core.h"
 #elif defined(__APPLE__) && defined(__MACH__)
 
 #else

@@ -133,3 +133,4 @@ struct SysInfoDef
 #endif
 
 #include "linux/sysinfo.h"
+#include "windows/sysinfo.h"

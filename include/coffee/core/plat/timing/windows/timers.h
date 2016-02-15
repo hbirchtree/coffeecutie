@@ -82,7 +82,27 @@ namespace CFunctional {
             return ((bigscalar)_win_api_get_time())/1000000.0;
         }
     };
+
+
 }
+
+struct WindowsTime
+{
+	static uint64 Microsecond() { return 0; }
+
+	static Timestamp CurrentTimestamp() { return 0; }
+	static uint64 CurrentMicroTimestamp() { return 0; }
+
+	static DateTime GetDateTime(Timestamp) { return DateTime(); }
+
+	static CString StringDate(cstring, DateTime) { return ""; }
+	static CString ClockString() { return ""; }
+};
+
+using Time = WindowsTime;
+using CElapsedTimer = CFunctional::_plat_timer_ll_milli;
+using CElapsedTimerMicro = CFunctional::_plat_timer_ll_micro;
+using CElapsedTimerD = CFunctional::_plat_timer_scalar_micro;
 
 }
 

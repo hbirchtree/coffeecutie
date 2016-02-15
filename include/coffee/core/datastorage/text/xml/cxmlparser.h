@@ -11,17 +11,17 @@ namespace XML{
 
 using namespace tinyxml2;
 
-struct TinyXML2
+struct TinyXML2Impl
 {
     using Document = XMLDocument;
     using Element = XMLElement;
 
-    inline C_FORCE_INLINE static XMLDocument* XMLRead(
+    inline C_FORCE_INLINE static Document* XMLRead(
 	    const CResources::CResource& source)
     {
-	XMLDocument* doc = new XMLDocument;
-	doc->Parse((cstring)source.data,source.size);
-	return doc;
+		Document* doc = new Document;
+		doc->Parse((cstring)source.data,source.size);
+		return doc;
     }
 
 };
@@ -30,7 +30,7 @@ struct TinyXML2
 }
 }
 
-using XML = CDataStorage::CTextStorage::XML::TinyXML2;
+using XML = CDataStorage::CTextStorage::XML::TinyXML2Impl;
 
 }
 

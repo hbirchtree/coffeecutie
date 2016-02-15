@@ -51,7 +51,11 @@ using int64 = long int;
 using uint8  = unsigned char;
 using uint16 = unsigned short;
 using uint32 = unsigned int;
+#if defined(COFFEE_WINDOWS)
+using uint64 = unsigned long long;
+#else
 using uint64 = unsigned long int;
+#endif
 
 using scalar    = float;  /*!< Low-precision float value*/
 using bigscalar = double; /*!< High-precision float value*/
