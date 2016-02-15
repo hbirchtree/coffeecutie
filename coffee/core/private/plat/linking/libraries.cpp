@@ -106,7 +106,7 @@ CNativeObject* _coffee_get_library(cstring file, cstring loaderFunction,
         return nullptr;
     }
 
-    e->procedure = GetProcAddress(e->hinstLib,loaderFunction);
+    e->procedure = (void*)GetProcAddress(e->hinstLib,loaderFunction);
 
     if(!e->procedure)
     {
