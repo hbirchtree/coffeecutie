@@ -6,7 +6,7 @@
 
 namespace Coffee{
 
-struct Profiler
+struct SimpleProfilerImpl
 {
     struct DataPoint
     {
@@ -77,6 +77,8 @@ struct Profiler
 protected:
     static std::list<CString> context_stack;
 };
+
+using Profiler = SimpleProfilerImpl;
 
 }
 

@@ -104,10 +104,48 @@ void CoffeeInit()
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 {
-    //TODO: Handle the Windows case of not including the application name
+
+    /*TODO: Handle the Windows case of not including the application name*/
+
+    Profiler::PushContext("CoffeeMain");
+
     CoffeeInit();
+
+    Profiler::Profile("Init");
+
     int32 r = mainfun(argv,argc);
+
+    Profiler::Profile("Runtime");
+
     CoffeeTerminate();
+
+    Profiler::Profile("Termination");
+
+    Profiler::PopContext();
+
+#ifndef NDEBUG
+    cBasicPrint("Profiling information:");
+
+    std::list<uint64> base;
+    for(Profiler::DataPoint const& p : Profiler::datapoints)
+    {
+        if(p.tp==Profiler::DataPoint::Profile)
+        {
+            cBasicPrint("Time: {0}, label: {1}",p.ts-base.front(),p.name);
+        }
+        else if(p.tp==Profiler::DataPoint::Push)
+        {
+            base.push_front(p.ts);
+            cBasicPrint("Enter scope: {0}",p.name,p.ts);
+        }
+        else if(p.tp==Profiler::DataPoint::Pop)
+        {
+            base.pop_front();
+            cBasicPrint("Exit scope: {0}",p.name,p.ts);
+        }
+    }
+#endif
+
     return r;
 }
 

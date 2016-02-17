@@ -59,8 +59,8 @@ set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 
-#The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
-#Be wary of this. In most cases you would do this for relatively long-term builds
+# The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
+# Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
 macro(TARGET_ENABLE_CXX11 TARGET)

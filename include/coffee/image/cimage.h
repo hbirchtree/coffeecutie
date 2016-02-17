@@ -38,9 +38,9 @@ extern void Error();
  * \param src Source to load from
  * \return True if success
  */
-extern bool LoadData(
-        CStbImage* target,
-        const CResource* src);
+extern bool LoadData(CStbImage* target,
+                     const CResource* src,
+                     PixelComponents comp = PixelComponents::RGBA);
 /*!
  * \brief Function used by STB to write data into resource. Allocates and copies data into resource.
  * \param ctxt Context pointer, CResource in our case
