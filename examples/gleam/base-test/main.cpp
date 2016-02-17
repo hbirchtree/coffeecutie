@@ -337,7 +337,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         CStbImageLib::LoadData(&img,&resc);
 
         Splash::SetSize(splash,img.size);
-        Splash::SetBitmap(splash,PixelFormat::RGBA8I,img.size,img.data);
+        Splash::SetBitmap(splash,PixelFormat::RGBA8UI,img.size,img.data);
 
 //        CStbImageLib::ImageFree(&img);
         CResources::FileFree(resc);
