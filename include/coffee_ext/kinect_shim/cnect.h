@@ -10,9 +10,17 @@ using namespace Coffee;
 
 struct FreenectImplementation
 {
+    struct ColorVec3
+    {
+	CVec3 p;
+	CRGBA color;
+    };
+
+    using NectCloud = std::vector<ColorVec3>;
     using NectRGB = CBitmap;
     using NectDepth = _cbasic_bitmap_base<scalar,uint32>;
-    using FreenectFrameProcessor = void(*)(NectRGB const&,NectDepth const&);
+
+    using FreenectFrameProcessor = void(*)(NectRGB const&,NectDepth const&,NectCloud const&);
 
     struct FreenectContext;
 
@@ -42,7 +50,7 @@ struct FreenectImplementation
      * \param p
      * \param n
      */
-    static void ProcessFrame(FreenectContext* c, FreenectFrameProcessor p, size_t n);
+    static bool ProcessFrame(FreenectContext* c, FreenectFrameProcessor p, size_t n);
     /*!
      * \brief Closes the asynchronous thread, called from main thread
      * \param c

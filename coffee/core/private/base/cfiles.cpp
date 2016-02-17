@@ -28,16 +28,6 @@ CString coffee_file_get_dereferenced_path(cstring suffix)
 #endif
 }
 
-CResourceUrl::CResourceUrl():
-    url(nullptr),
-    flags(0)
-{
-}
-
-namespace CFiles{
-
-}
-
 bool FileExists(const CResource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
@@ -68,6 +58,9 @@ bool FileMap(CResource &resc, ResourceAccess acc)
         resc.size = 0;
         return false;
     }
+
+    resc.flags = resc.flags|CResource::Mapped;
+
     return true;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
@@ -77,9 +70,15 @@ bool FileMap(CResource &resc, ResourceAccess acc)
 bool FileUnmap(CResource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
+    if(!(resc.flags&CResource::Mapped))
+        return false;
+
     bool s = FileFun::Unmap(resc.data,resc.size);
     resc.data = nullptr;
     resc.size = 0;
+
+    resc.flags ^= CResource::Mapped;
+
     return s;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
@@ -88,6 +87,9 @@ bool FileUnmap(CResource &resc)
 
 void FileFree(CResource &resc)
 {
+    if(!(resc.flags&CResource::FileIO))
+        return;
+
     CFree(resc.data);
     resc.data = nullptr;
     resc.size = 0;
@@ -109,6 +111,8 @@ bool FilePull(CResource &resc, bool textmode, bool)
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
 
+    resc.flags = resc.flags|CResource::FileIO;
+
     return true;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
@@ -123,6 +127,8 @@ bool FileCommit(CResource &resc, bool append)
     CByteData d;
     d.data = (byte_t*)resc.data;
     d.size = resc.size;
+    if(!append)
+        FileFun::Seek(fp,0);
     bool stat = FileFun::Write(fp,d,false);
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());

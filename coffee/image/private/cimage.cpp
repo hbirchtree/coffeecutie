@@ -12,12 +12,32 @@
 namespace Coffee{
 namespace CStbImageLib{
 
-bool LoadData(CStbImage *target, const CResource *src)
+bool LoadData(CStbImage *target, const CResource *src, PixelComponents comp)
 {
+    int scomp = STBI_rgb_alpha;
+
+    switch(comp)
+    {
+    case PixelComponents::R:
+        scomp = STBI_grey;
+        break;
+    case PixelComponents::RG:
+        scomp = STBI_grey_alpha;
+        break;
+    case PixelComponents::RGB:
+        scomp = STBI_rgb;
+        break;
+    case PixelComponents::RGBA:
+        scomp = STBI_rgb_alpha;
+        break;
+    default:
+        return false;
+    }
+
     target->data = stbi_load_from_memory(
                 (const byte_t*)src->data,src->size,
                 &target->size.w,&target->size.h,
-                &target->bpp,STBI_rgb_alpha);
+                &target->bpp,scomp);
     return true;
 }
 

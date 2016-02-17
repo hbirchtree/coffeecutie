@@ -17,7 +17,7 @@ else()
     set ( CPointClouds_SRCS
         private/cpcl.cpp
         )
-    add_library ( CoffeePCL ${COFFEE_LINK_OPT}
+    coffee_add_library ( CoffeePCL
         ${CPointClouds_SRCS}
         )
     target_link_libraries( CoffeePCL

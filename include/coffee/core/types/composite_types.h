@@ -153,7 +153,7 @@ template<typename T> struct _cbasic_size_2d
     T w;
     T h;
 
-    T area()
+    T area() const
     {
         return w*h;
     }

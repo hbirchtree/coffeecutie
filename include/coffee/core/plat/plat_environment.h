@@ -3,3 +3,4 @@
 #include "environment/environment_details.h"
 #include "environment/process_def.h"
 #include "environment/sysinfo_def.h"
+#include "environment/stacktrace_def.h"

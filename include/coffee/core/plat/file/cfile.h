@@ -44,7 +44,7 @@ struct PlatFileFun : FileFunDef
         else if(feval(ac&(ResourceAccess::ReadOnly)))
             mode = "r";
         else if(feval(ac&(ResourceAccess::WriteOnly)))
-            mode = "w";
+            mode = "w+";
         else if(feval(ac&(ResourceAccess::ReadWrite)))
             mode = "r+";
 

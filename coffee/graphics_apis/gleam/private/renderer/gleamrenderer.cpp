@@ -105,7 +105,11 @@ void CGLeamRenderer::bindingPreInit()
 
 void CGLeamRenderer::bindingPostInit()
 {
+    Profiler::PushContext("GLeam");
+
     this->glContext()->acquireContext();
+
+    Profiler::Profile("Context acquisition");
 
     const static CGLVersion v33(3,3);
     const static CGLVersion v43(4,3);
@@ -119,6 +123,8 @@ void CGLeamRenderer::bindingPostInit()
         status = CGL::CGL43::LoadBinding(this->glContext());
     if(m_properties.gl.version>=v33)
         status = CGL::CGL33::LoadBinding(this->glContext());
+
+    Profiler::Profile("Loading GL function pointers");
 
     if(!status)
     {
@@ -137,6 +143,10 @@ void CGLeamRenderer::bindingPostInit()
 //        GL::Debug::SetDebugLevel(Severity::Information,false);
         GL::Debug::DebugSetCallback(gleamcallback,this);
     }
+
+    Profiler::Profile("Debug setup");
+
+    Profiler::PopContext();
 }
 
 void CGLeamRenderer::bindingTerminate()

@@ -8,39 +8,11 @@ namespace Coffee{
 namespace CResources{
 
 /*!
- * \brief Easy redirection of all resources in the application. :)
- * \param prefix
- * \return
- */
-extern void FileResourcePrefix(cstring prefix);
-
-struct CResourceUrl
-{
-    enum ResourceFlags{
-        /*! Resource is in a remote location, internet and etc.*/
-        Remote      = 0x1,
-        /*! Resource is read-only*/
-        ReadOnly    = 0x2,
-        /*! Resource is read-write*/
-        ReadWrite   = 0x4,
-        /*! Resource is write-only*/
-        WriteOnly   = 0x8,
-
-        /*! Resource is mapped or streamed*/
-        Streaming   = 0x10,
-    };
-
-    CResourceUrl();
-
-    cstring url;
-    uint8 flags;
-};
-
-/*!
  * \brief A data resource which location cannot be changed.
  */
 struct CResource{
 private:
+
     CString m_resource; /*!< URL for the resource*/
 public:
     /*!
@@ -55,7 +27,24 @@ public:
 
     cstring resource() const;
 
+    enum FileFlags
+    {
+        Undefined,
+        FileIO,
+        Mapped,
+    };
+
+    FileFlags flags;
 };
+
+C_FLAGS(CResource::FileFlags,int);
+
+/*!
+ * \brief Easy redirection of all resources in the application. :)
+ * \param prefix
+ * \return
+ */
+extern void FileResourcePrefix(cstring prefix);
 
 extern bool FileExists(const CResource& resc);
 

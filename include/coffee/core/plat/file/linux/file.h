@@ -61,7 +61,7 @@ struct LinuxFileFun : PlatFileFun
         byte_t* addr = (byte_t*)mmap(
                     NULL,
                     offset+size-pa_offset,
-                    prot,MAP_PRIVATE,
+                    prot,mapping,
                     fd,pa_offset);
         if(addr == MAP_FAILED)
         {

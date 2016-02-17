@@ -23,25 +23,35 @@ PointCloud<PointXYZRGB>::Ptr CPCLImplementation::GenPointCloud(
     PointCloud<PointXYZRGB>::Ptr pcloud =
             PointCloud<PointXYZRGB>::Ptr(new PointCloud<PointXYZRGB>);
 
-    pcloud->width = numPoints;
     pcloud->height = 1;
 
     pcloud->points.resize(numPoints);
 
+    szptr pi = 0;
+
     for(szptr i=0;i<numPoints;i++)
     {
-        pcloud->points[i].x = points[i].x();
-        pcloud->points[i].y = points[i].y();
-        pcloud->points[i].z = points[i].z();
+        const CVec3& v = points[i];
+        if(CMath::isnan(v.x())||CMath::isnan(v.y())||CMath::isnan(v.z()))
+            continue;
+
+        pcloud->points[pi].x = points[i].x();
+        pcloud->points[pi].y = points[i].y();
+        pcloud->points[pi].z = points[i].z();
 
         if(cPoints)
         {
-            pcloud->points[i].r = cPoints[i].r;
-            pcloud->points[i].g = cPoints[i].g;
-            pcloud->points[i].b = cPoints[i].b;
-            pcloud->points[i].a = 1.0;
+            pcloud->points[pi].r = cPoints[i].r;
+            pcloud->points[pi].g = cPoints[i].g;
+            pcloud->points[pi].b = cPoints[i].b;
+            pcloud->points[pi].a = 1.0;
         }
+        pi++;
     }
+
+    pcloud->width = pi;
+
+    pcloud->points.resize(pi);
 
     return pcloud;
 }

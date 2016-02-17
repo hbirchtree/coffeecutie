@@ -11,102 +11,48 @@ using namespace CoffeeExt;
 //using CNect = Freenect::FreenectImplementation;
 using CPCLI = CPCL::CPCLImplementation;
 
+struct ColorVec3
+{
+    CVec3 p;
+    CRGBA c;
+};
+
 int32 coffee_main(int32, cstring_w*)
 {
-//    CNect::FreenectContext* c = nullptr;
-//    try{
-//        c = CNect::Alloc(0);
-//    }catch(std::runtime_error ex){
-//        cDebug("Failed to initialize Freenect: {0}",ex.what());
-//    }
-//    if(c)
-//        CNect::Free(c);<
-
-    CResources::CResource depth("dframe.raw");
+    CResources::CResource depth("cloudframe.raw");
     CResources::FileMap(depth);
 
-    CResources::CResource color("cframe.raw");
-    CResources::FileMap(color);
-
     CSize depth_size(512,424);
+    CSize color_size(512,424);
 
-    const scalar* depth_data = (const scalar*)depth.data;
-    const CRGBA* color_data = (const CRGBA*)color.data;
+    const ColorVec3* depth_comp_data = (ColorVec3*)depth.data;
 
-    if(!depth_data || !color_data)
+    CVec3* depth_data = (CVec3*)Alloc(depth_size.area()*sizeof(CVec3));
+    CRGBA* color_data = (CRGBA*)Alloc(color_size.area()*sizeof(CRGBA));
+
+    if(!depth_comp_data)
         return 1;
 
+    for(uint32 i=0;i<color_size.area();i++)
     {
-        /* Just dump a texture */
-        CStbImageLib::CStbImageConst texturestb;
-        texturestb.bpp = 4;
-        texturestb.data = (const ubyte_t*)color.data;
-        texturestb.size = CSize(1920,1080);
-        CResources::CResource texturedump("image.png");
-        CStbImageLib::SavePNG(&texturedump,&texturestb);
-        CResources::FileCommit(texturedump);
-        CResources::FileFree(texturedump);
+        color_data[i] = depth_comp_data[i].c;
+        depth_data[i] = depth_comp_data[i].p;
     }
 
-    std::vector<CVec3> posdata;
-
-    {
-        CGraphicsData::CGCamera camera;
-        camera.fieldOfView = 90.f;
-        camera.aspect = (scalar)depth_size.w/(scalar)depth_size.h;
-        camera.zVals.near = 0.f;
-        camera.zVals.far = 1.f;
-
-        CMat4 project = CGraphicsData::GenPerspective(camera);
-        CMat4 inverse_project = Coffee::inverse(project);
-
-        CVec3 pos_mul(-camera.aspect,
-                      1.f,
-                      5.f);
-
-        for(int32 y=0;y<depth_size.h;y++)
-            for(int32 x=0;x<depth_size.w;x++)
-            {
-                scalar depth_val = depth_data[y*depth_size.w+x];
-                if(depth_val <= 0.0)
-                    continue;
-
-                CVec3 vec;
-                vec.x() = (scalar)x/(scalar)depth_size.w;
-                vec.y() = (scalar)(depth_size.h/2-y)/(scalar)depth_size.h;
-                vec.z() = depth_val;
-
-                vec = vec*pos_mul;
-
-                CVec4 tmp;
-                tmp.x() = vec.x();
-                tmp.y() = vec.y();
-                tmp.z() = vec.z();
-                tmp.w() = 1.0;
-
-                tmp = project*tmp;
-                vec.x() = tmp.x();
-                vec.y() = tmp.y();
-                vec.z() = tmp.z();
-
-                //Not optimal, but avoids adding empty points
-                posdata.push_back(vec);
-            }
-    }
-
-    CPCL::PointCloud<CPCL::PointXYZRGB>::Ptr pcl = CPCLI::GenPointCloud(posdata.data(),
-                                                                        color_data,
-                                                                        posdata.size());
+    CPCL::PointCloud<CPCL::PointXYZRGB>::Ptr pcl =
+            CPCLI::GenPointCloud(depth_data,
+                                 color_data,
+                                 depth_size.area());
 
     CElapsedTimerD timer;
     timer.start();
 
-    CPCL::PointCloud<CPCL::PointXYZ>::Ptr pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
-    CPCLI::DenoiseCloud(pcl_xyz);
-    CPCL::PolygonMesh* mesh = CPCLI::CreatePolygonMesh(pcl_xyz);
-    cDebug("Mesh processing time: {0}",timer.elapsed());
+//    CPCL::PointCloud<CPCL::PointXYZ>::Ptr pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
+//    CPCLI::DenoiseCloud(pcl_xyz);
+//    CPCL::PolygonMesh* mesh = CPCLI::CreatePolygonMesh(pcl_xyz);
+//    cDebug("Mesh processing time: {0}",timer.elapsed());
 
-    CPCL::io::saveVTKFile("mesh.vtk",*mesh);
+//    CPCL::io::saveVTKFile("mesh.vtk",*mesh);
 
     CPCL::PointCloud<CPCL::PointXYZRGB>::Ptr pcl_ptr(pcl);
 

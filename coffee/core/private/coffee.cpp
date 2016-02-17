@@ -9,6 +9,7 @@
 #include <coffee/core/unit_tests/memory_operations.h>
 #include <coffee/core/plat/memory/cmd_interface.h>
 
+#include <coffee/core/plat/environment/stacktrace_def.h>
 #include <coffee/core/plat/timing/timing_def.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/plat/environment/sysinfo_def.h>
@@ -17,6 +18,8 @@
 static bool coffee_initialized = false;
 
 namespace Coffee{
+
+static ExitCallback exit_handle = nullptr;
 
 void sighandle(int sig)
 {
@@ -28,11 +31,19 @@ void sighandle(int sig)
         Cmd::Exit(CoffeeExit_Termination);
         break;
     case SIGINT:
+    {
+        if(exit_handle)
+            exit_handle();
         Cmd::Exit(CoffeeExit_Interrupt);
         break;
+    }
     case SIGTERM:
+    {
+        if(exit_handle)
+            exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
         break;
+    }
 #if defined(COFFEE_LINUX)
     case SIGKILL:
         Cmd::Exit(CoffeeExit_Kill);
@@ -40,6 +51,11 @@ void sighandle(int sig)
     default:
         Cmd::Exit(CoffeeExit_UnknownBad);
     }
+}
+
+void SetExitFunction(ExitCallback f)
+{
+    exit_handle = f;
 }
 
 void CoffeeInit()
@@ -88,10 +104,48 @@ void CoffeeInit()
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 {
-    //TODO: Handle the Windows case of not including the application name
+
+    /*TODO: Handle the Windows case of not including the application name*/
+
+    Profiler::PushContext("CoffeeMain");
+
     CoffeeInit();
+
+    Profiler::Profile("Init");
+
     int32 r = mainfun(argv,argc);
+
+    Profiler::Profile("Runtime");
+
     CoffeeTerminate();
+
+    Profiler::Profile("Termination");
+
+    Profiler::PopContext();
+
+#ifndef NDEBUG
+    cBasicPrint("Profiling information:");
+
+    std::list<uint64> base;
+    for(Profiler::DataPoint const& p : Profiler::datapoints)
+    {
+        if(p.tp==Profiler::DataPoint::Profile)
+        {
+            cBasicPrint("Time: {0}, label: {1}",p.ts-base.front(),p.name);
+        }
+        else if(p.tp==Profiler::DataPoint::Push)
+        {
+            base.push_front(p.ts);
+            cBasicPrint("Enter scope: {0}",p.name,p.ts);
+        }
+        else if(p.tp==Profiler::DataPoint::Pop)
+        {
+            base.pop_front();
+            cBasicPrint("Exit scope: {0}",p.name,p.ts);
+        }
+    }
+#endif
+
     return r;
 }
 
@@ -108,12 +162,16 @@ namespace Coffee{
 thread_local CString LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
-#ifdef COFFEE_WINDOWS
-//CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
+#if defined(COFFEE_USE_UNWIND)
+unw_context_t* LinuxStacktracer::unwind_context = nullptr;
 #endif
 
-std::list<Profiler::DataPoint> Profiler::datapoints;
-std::list<CString> Profiler::context_stack;
-Mutex Profiler::data_access_mutex;
+#ifdef COFFEE_WINDOWS
+CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
+#endif
+
+thread_local std::list<Profiler::DataPoint> Profiler::datapoints;
+thread_local std::list<CString> Profiler::context_stack;
+thread_local Mutex Profiler::data_access_mutex;
 
 }

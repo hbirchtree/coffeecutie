@@ -13,6 +13,8 @@
 
 namespace Coffee{
 
+using ExitCallback = void(*)();
+
 enum CoffeeExitCode
 {
     CoffeeExit_Normal       = 0,
@@ -36,6 +38,8 @@ const constexpr cstring CoffeeArchString = COFFEE_ARCH;
 inline C_FORCE_INLINE void print_builddate()
 {
 }
+
+extern void SetExitFunction(ExitCallback f);
 
 /*!
  * \brief This function handles initial program startup

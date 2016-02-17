@@ -44,9 +44,7 @@ endif()
 add_subdirectory(rsread)
 
 #GLeam
-if(COFFEE_BUILD_OPENVR)
-    add_subdirectory(gleam/base-test)
-endif()
+add_subdirectory(gleam/base-test)
 
 #ASIO examples
 add_subdirectory(asio/base-client)
@@ -54,3 +52,5 @@ add_subdirectory(asio/base-client)
 
 #Experimental code
 add_subdirectory(gleam/raytrace-test)
+
+add_subdirectory(vr/base-test)

@@ -2,7 +2,7 @@
 #define COFFEE_CORE_DIALOGS_FUNCTIONAL_H
 
 #include "../coffee_macros.h"
-#include "../types/basetypes.h"
+#include "../types/types.h"
 
 namespace Coffee{
 
@@ -11,14 +11,41 @@ namespace Coffee{
  */
 struct DialogInterface
 {
-    static void ErrorMessage(cstring title,cstring message){C_UNUSED(title);C_UNUSED(message);}
-    static void WarningMessage(cstring title,cstring message){C_UNUSED(title);C_UNUSED(message);}
-    static void InformationMessage(cstring title,cstring message){C_UNUSED(title);C_UNUSED(message);}
+    struct WinHnd;
+    struct MsgWinHnd;
 
-    static void InfiniteLoadingMessage(cstring title,cstring message){C_UNUSED(title);C_UNUSED(message);}
+    static WinHnd* CreateWindow(cstring title, WinHnd* parent = nullptr);
+    static MsgWinHnd* CreateMessageDialog(cstring title, WinHnd* parent = nullptr);
 
-    static void InputDialog(cstring title,cstring message,cstring_w output,szptr max_size)
-    {C_UNUSED(title);C_UNUSED(message);C_UNUSED(output);C_UNUSED(max_size);}
+    static void SetDialogSeverity(MsgWinHnd*, Severity);
+
+    static void ShowDialog(WinHnd*);
+    static void ShowDialog(MsgWinHnd*);
+
+    static void HideDialog(WinHnd*);
+    static void HideDialog(MsgWinHnd*);
+
+    static void DestroyWindow(WinHnd*);
+    static void DestroyMessageDialog(MsgWinHnd*);
+};
+
+struct SplashInterface
+{
+    struct SplashHandle;
+
+    static SplashHandle* CreateSplash();
+
+    static void ShowSplash(SplashHandle*);
+    static void HideSplash(SplashHandle*);
+
+    static void SetSize(SplashHandle*,CSize const&);
+
+    static void SetTitle(SplashHandle*,CString);
+    static void SetSubText(SplashHandle*,CString);
+
+    static bool SetBitmap(SplashHandle*,PixelFormat,CSize const&,const byte_t*);
+
+    static void DestroySplash(SplashHandle*);
 };
 
 }

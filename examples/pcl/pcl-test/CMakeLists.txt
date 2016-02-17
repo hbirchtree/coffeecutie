@@ -5,14 +5,15 @@ include_directories(
     ${PCL_INCLUDE_DIRS}
     )
 
-add_executable ( PCLTest main.cpp )
-add_executable ( CNectTest main2.cpp )
+coffee_add_example ( PCLTest main.cpp )
+coffee_add_example ( CNectTest main2.cpp )
 
 target_link_libraries ( PCLTest
     CoffeeCore
     CoffeeImage
     CoffeeGraphicsMisc
     CoffeePCL
+    CoffeeNect
     )
 
 target_link_libraries ( CNectTest

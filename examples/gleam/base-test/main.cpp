@@ -3,6 +3,8 @@
 #include <coffee/COpenVR>
 #include <coffee/CGraphics>
 
+#include <coffee_ext/qt_shim/dialogs/dialogs.h>
+
 using namespace Coffee;
 using namespace CDisplay;
 
@@ -34,7 +36,7 @@ public:
         GL::CGhnd pbobuf[3] = {};
         GL::BufAlloc(3,pbobuf);
 
-        Profiler::Profile();
+        Profiler::Profile("Create PBO buffers");
 
         for(uint32 i=0;i<3;i++)
         {
@@ -53,7 +55,7 @@ public:
             CResources::FileUnmap(rsc);
         }
 
-        Profiler::Profile();
+        Profiler::Profile("Pre-load textures");
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  1.f,    0.f,  0.f,
@@ -74,7 +76,7 @@ public:
                            ResourceAccess::ReadOnly);
         }
 
-        Profiler::Profile();
+        Profiler::Profile("Create vertex buffers");
 
         cstring vshader = {
             "#version 330 core\n"
@@ -144,7 +146,7 @@ public:
             GL::VAOAttribBinding(1,1);
         }
 
-        Profiler::Profile();
+        Profiler::Profile("Specify vertex format");
 
         GL::CGhnd vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
         cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
@@ -166,7 +168,7 @@ public:
                 return;
         }
 
-        Profiler::Profile();
+        Profiler::Profile("Compile shaders");
 
         GL::CGhnd texture_array;
         {
@@ -183,7 +185,7 @@ public:
             }
         }
 
-        Profiler::Profile();
+        Profiler::Profile("Create textures");
 
         int32 tim_unif;
         {
@@ -225,6 +227,8 @@ public:
             GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
         }
 
+        Profiler::Profile("Create uniform data");
+
         Profiler::PopContext();
 
         CVec4 clearcol(0.0);
@@ -260,6 +264,7 @@ public:
 
             fcounter.update(ftimer.elapsed());
 
+            CoffeeExt::QtDialogs::QtProcessEvents(100);
             this->pollEvents();
             this->swapBuffers();
         }
@@ -317,32 +322,49 @@ public:
     }
 };
 
-int32 coffee_main(int32, cstring_w*)
+int32 coffee_main(int32 argc, cstring_w* argv)
 {
-    Profiler::PushContext("Root");
-    if(!OpenVRDev::InitializeBinding())
-    {
-        cDebug("Move on, there is nothing to see here.");
-    }else{
-        cDebug("By the gods... So it was true! You must be the hero of Kvatch!");
-        cDebug("[HERE BE DRAGONS]");
-        uint32 devs;
-        if(!OpenVRDev::PollDevices(&devs))
-        {
-            cDebug("I used to be a reality tripper like you,"
-                   " until I took a cyberkick to the knee.");
-        }
-        OpenVRDev::OVRDevice* dev = OpenVRDev::GetDevice(0);
-        cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
-    }
-
     CResources::FileResourcePrefix("sample_data/");
 
-    CElapsedTimerD timer;
-    timer.start();
+    Profiler::PushContext("Splashscreen creation");
+
+    /*Required to start Qt GUI applications*/
+    CoffeeExt::QtDialogs::QtInitApplication(argc,argv);
+    Profiler::Profile("Initialization");
+
+    /*Testing out Qt splashscreen support*/
+    Splash::SplashHandle* splash = Splash::CreateSplash();
+    Profiler::Profile("Creation of object");
+
+    {
+        CResources::CResource resc("eye-normal.tga");
+        CResources::FileMap(resc);
+        CStbImageLib::CStbImage img;
+        Profiler::Profile("File load");
+
+        CStbImageLib::LoadData(&img,&resc,PixelComponents::RGBA);
+        Profiler::Profile("Load image");
+
+        Splash::SetSize(splash,img.size);
+        Splash::SetBitmap(splash,PixelFormat::RGBA8UI,img.size,img.data);
+        Profiler::Profile("Apply image");
+
+        CStbImageLib::ImageFree(&img);
+        CResources::FileFree(resc);
+        Profiler::Profile("Free data");
+    }
+
+    Splash::ShowSplash(splash);
+    Profiler::Profile("Show splash");
+
+    Profiler::PopContext();
+
+    /*Moving on to regular rendering*/
+    Profiler::PushContext("Root");
+
     CSDL2Renderer *renderer = new CDRenderer();
 
-    Profiler::Profile();
+    Profiler::Profile("Object creation");
 
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
@@ -350,43 +372,40 @@ int32 coffee_main(int32, cstring_w*)
     props.gl.version.minor = 3;
 
     renderer->init(props);
-
-    Profiler::Profile();
+    Profiler::Profile("Initialize renderer");
 
     if(!(  GL::SeparableShaderSupported()
          ||GL::VertexAttribBinding()
          ||GL::ViewportArraySupported()
          ||GL::BufferStorageSupported()))
         return 1;
-
-    Profiler::Profile();
+    Profiler::Profile("Get GL requirements");
 
     cDebug("Device info: {0}",GL::Debug::Renderer());
-
-    Profiler::Profile();
+    Profiler::Profile("Get renderer info");
 
     cDebug("Processor info: {0}",SysInfo::Processor());
     cDebug("Frequency: {0}GHz",SysInfo::ProcessorFrequency());
     cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
     cDebug("FPU: {0}",SysInfo::HasFPU());
-
-    Profiler::Profile();
+    Profiler::Profile("Get system info");
 
     renderer->run();
 
-    Profiler::Profile();
+    Profiler::Profile("Runtime");
 
     renderer->cleanup();
     delete renderer;
 
-    Profiler::Profile();
+    Profiler::Profile("Cleanup");
 
     Profiler::PopContext();
 
-    for(Profiler::DataPoint const& p : Profiler::datapoints)
-    {
-        cDebug("Type: {0}, timestamp: {1}, name: {2}",p.tp,p.ts,p.name);
-    }
+    cDebug("Function name: {0}",Stacktracer::GetStackframeName(0));
+
+    Splash::DestroySplash(splash);
+
+    CoffeeExt::QtDialogs::QtExitApplication();
 
     return 0;
 }

@@ -11,7 +11,27 @@ set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
 # Make it verbose
-set( CMAKE_VERBOSE_MAKEFILE on )
+set ( CMAKE_VERBOSE_MAKEFILE on )
+
+# Fiddle with warning flags
+if (NOT WIN32)
+    # These are effectively used by Clang and GCC, descriptive names
+    add_definitions (
+#        -Wall
+#        -Werror
+#        -Wpadded
+        )
+else()
+    # For Windows, we disable most annoying warnings to save compilation time.
+    # These include system headers (which are constantly giving off warnings)
+    #  as well as small warnings for padding and etc.
+    # Microsoft makes the worst headers of them all.
+    add_definitions (
+        -W4
+        )
+endif()
+
+option ( COFFEE_DOCS "Generate documentation" OFF )
 
 # Language bindings
 option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG bindings" OFF )
@@ -57,8 +77,8 @@ set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 
-#The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
-#Be wary of this. In most cases you would do this for relatively long-term builds
+# The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
+# Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
@@ -75,6 +95,15 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
     add_library(${TARGET} ${LINKOPT} "${SOURCES}")
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_enable_cxx11(${TARGET})
+
+    install(
+        TARGETS
+        ${TARGET}
+
+        DESTINATION
+        lib
+        )
+
 endmacro()
 
 macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
@@ -91,25 +120,15 @@ macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
         add_executable(${TARGET} ${SOURCES})
     endif()
     target_enable_cxx11(${TARGET})
-endmacro()
 
-# Fiddle with warning flags
-if (NOT WIN32)
-    # These are effectively used by Clang and GCC, descriptive names
-    add_definitions (
-#        -Wall
-#        -Werror
-#        -Wpadded
+    install(
+        TARGETS
+        ${TARGET}
+
+        DESTINATION
+        bin
         )
-else()
-    # For Windows, we disable most annoying warnings to save compilation time.
-    # These include system headers (which are constantly giving off warnings)
-    #  as well as small warnings for padding and etc.
-    # Microsoft makes the worst headers of them all.
-    add_definitions (
-        -W4
-        )
-endif()
+endmacro()
 
 # General include directories
 include_directories ( SYSTEM
