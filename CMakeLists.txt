@@ -13,6 +13,24 @@ set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 # Make it verbose
 set ( CMAKE_VERBOSE_MAKEFILE on )
 
+# Fiddle with warning flags
+if (NOT WIN32)
+    # These are effectively used by Clang and GCC, descriptive names
+    add_definitions (
+#        -Wall
+#        -Werror
+#        -Wpadded
+        )
+else()
+    # For Windows, we disable most annoying warnings to save compilation time.
+    # These include system headers (which are constantly giving off warnings)
+    #  as well as small warnings for padding and etc.
+    # Microsoft makes the worst headers of them all.
+    add_definitions (
+        -W4
+        )
+endif()
+
 option ( COFFEE_DOCS "Generate documentation" OFF )
 
 # Language bindings
@@ -111,25 +129,6 @@ macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
         bin
         )
 endmacro()
-
-# Fiddle with warning flags
-if (NOT WIN32)
-    # These are effectively used by Clang and GCC, descriptive names
-    add_definitions (
-        -O3
-#        -Wall
-#        -Werror
-#        -Wpadded
-        )
-else()
-    # For Windows, we disable most annoying warnings to save compilation time.
-    # These include system headers (which are constantly giving off warnings)
-    #  as well as small warnings for padding and etc.
-    # Microsoft makes the worst headers of them all.
-    add_definitions (
-        -W4
-        )
-endif()
 
 # General include directories
 include_directories ( SYSTEM
