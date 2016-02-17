@@ -9,4 +9,5 @@ target_link_libraries ( GLeamBaseTest
     CoffeeVR
     CoffeeGraphicsMisc
     CoffeeGLeam
+    CoffeeQtDialogs
     )

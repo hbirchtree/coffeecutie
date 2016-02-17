@@ -3,6 +3,8 @@
 #include <coffee/COpenVR>
 #include <coffee/CGraphics>
 
+#include <coffee_ext/qt_shim/dialogs/dialogs.h>
+
 using namespace Coffee;
 using namespace CDisplay;
 
@@ -260,6 +262,7 @@ public:
 
             fcounter.update(ftimer.elapsed());
 
+            CoffeeExt::QtDialogs::QtProcessEvents(100);
             this->pollEvents();
             this->swapBuffers();
         }
@@ -317,8 +320,31 @@ public:
     }
 };
 
-int32 coffee_main(int32, cstring_w*)
+int32 coffee_main(int32 argc, cstring_w* argv)
 {
+    CResources::FileResourcePrefix("sample_data/");
+
+    /*Required to start Qt GUI applications*/
+    CoffeeExt::QtDialogs::QtInitApplication(argc,argv);
+
+    Splash::SplashHandle* splash = Splash::CreateSplash();
+
+    {
+        CResources::CResource resc("eye-normal.tga");
+        CResources::FileMap(resc);
+        CStbImageLib::CStbImage img;
+
+        CStbImageLib::LoadData(&img,&resc);
+
+        Splash::SetSize(splash,img.size);
+        Splash::SetBitmap(splash,PixelFormat::RGBA8I,img.size,img.data);
+
+//        CStbImageLib::ImageFree(&img);
+        CResources::FileFree(resc);
+    }
+
+    Splash::ShowSplash(splash);
+
     Profiler::PushContext("Root");
     if(!OpenVRDev::InitializeBinding())
     {
@@ -336,7 +362,6 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
     }
 
-    CResources::FileResourcePrefix("sample_data/");
 
     CElapsedTimerD timer;
     timer.start();
@@ -384,6 +409,10 @@ int32 coffee_main(int32, cstring_w*)
     Profiler::PopContext();
 
     cDebug("Function name: {0}",Stacktracer::GetStackframeName(0));
+
+    Splash::DestroySplash(splash);
+
+    CoffeeExt::QtDialogs::QtExitApplication();
 
     return 0;
 }

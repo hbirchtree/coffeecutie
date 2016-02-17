@@ -11,7 +11,9 @@ set ( CMAKE_BUILD_TYPE Debug )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
 # Make it verbose
-set( CMAKE_VERBOSE_MAKEFILE on )
+set ( CMAKE_VERBOSE_MAKEFILE on )
+
+option ( COFFEE_DOCS "Generate documentation" OFF )
 
 # Language bindings
 option ( COFFEE_BUILD_SWIG_BINDING "Build SWIG bindings" OFF )
@@ -75,6 +77,15 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
     add_library(${TARGET} ${LINKOPT} "${SOURCES}")
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_enable_cxx11(${TARGET})
+
+    install(
+        TARGETS
+        ${TARGET}
+
+        DESTINATION
+        lib
+        )
+
 endmacro()
 
 macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
@@ -91,6 +102,14 @@ macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
         add_executable(${TARGET} ${SOURCES})
     endif()
     target_enable_cxx11(${TARGET})
+
+    install(
+        TARGETS
+        ${TARGET}
+
+        DESTINATION
+        bin
+        )
 endmacro()
 
 # Fiddle with warning flags
