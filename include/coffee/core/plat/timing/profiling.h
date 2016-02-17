@@ -71,11 +71,11 @@ struct SimpleProfilerImpl
 #endif
     }
 
-    static Mutex data_access_mutex;
-    static std::list<DataPoint> datapoints;
+    thread_local static Mutex data_access_mutex;
+    thread_local static std::list<DataPoint> datapoints;
 
 protected:
-    static std::list<CString> context_stack;
+    thread_local static std::list<CString> context_stack;
 };
 
 using Profiler = SimpleProfilerImpl;

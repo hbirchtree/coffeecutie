@@ -170,8 +170,8 @@ unw_context_t* LinuxStacktracer::unwind_context = nullptr;
 CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
-std::list<Profiler::DataPoint> Profiler::datapoints;
-std::list<CString> Profiler::context_stack;
-Mutex Profiler::data_access_mutex;
+thread_local std::list<Profiler::DataPoint> Profiler::datapoints;
+thread_local std::list<CString> Profiler::context_stack;
+thread_local Mutex Profiler::data_access_mutex;
 
 }
