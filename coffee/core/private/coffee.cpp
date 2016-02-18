@@ -104,6 +104,7 @@ void CoffeeInit()
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 {
+    Profiler::InitProfiler();
 
     /*TODO: Handle the Windows case of not including the application name*/
 
@@ -127,7 +128,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
     cBasicPrint("Profiling information:");
 
     std::list<uint64> base;
-    for(Profiler::DataPoint const& p : Profiler::datapoints)
+    for(Profiler::DataPoint const& p : *Profiler::datapoints)
     {
         if(p.tp==Profiler::DataPoint::Profile)
         {
@@ -145,6 +146,8 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
         }
     }
 #endif
+
+    Profiler::DestroyProfiler();
 
     return r;
 }
@@ -170,8 +173,8 @@ unw_context_t* LinuxStacktracer::unwind_context = nullptr;
 CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
-thread_local std::list<Profiler::DataPoint> Profiler::datapoints;
-thread_local std::list<CString> Profiler::context_stack;
-thread_local Mutex Profiler::data_access_mutex;
+thread_local std::list<Profiler::DataPoint>* Profiler::datapoints = nullptr;
+thread_local std::list<CString>* Profiler::context_stack = nullptr;
+thread_local Mutex* Profiler::data_access_mutex = nullptr;
 
 }

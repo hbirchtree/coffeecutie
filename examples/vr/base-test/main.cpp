@@ -29,12 +29,6 @@ int32 coffee_main(int32, cstring_w*)
 
     Profiler::PopContext();
 
-    for(Profiler::DataPoint const& p : Profiler::datapoints)
-    {
-        if(p.tp==Profiler::DataPoint::Profile)
-            cDebug("Time: {0}, label: {1}",p.ts,p.name);
-    }
-
     return 0;
 }
 
