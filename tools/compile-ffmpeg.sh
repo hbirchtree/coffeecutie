@@ -1,0 +1,1 @@
+../configure --enable-shared --disable-outdevs --disable-programs --prefix=.. --cc=/usr/bin/clang-3.7

@@ -44,7 +44,7 @@ target_link_libraries ( CoffeeCore ${OPENSSL_LIBRARIES} )
 
 # Platform-specific target options
 
-if(NOT WIN32)
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS)
     # Necessary for Linux and possibly OS X (latter is untested)
     target_link_libraries ( CoffeeCore dl m )
 endif()
