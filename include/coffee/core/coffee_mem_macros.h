@@ -8,7 +8,8 @@
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_FORCE_PACKING __attribute__((packed))
 #elif defined(COFFEE_MSVCXX)
-#include <windef.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #define C_FORCE_PACKING UNALIGNED
 #else
 #error "Packing of structures not defined! Cannot function correctly!"
@@ -17,7 +18,8 @@
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_FORCE_INLINE __attribute__((always_inline))
 #elif defined(COFFEE_MSVCXX)
-#include <windef.h>
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #define C_FORCE_INLINE __forceinline
 #else
 #define C_FORCE_INLINE
