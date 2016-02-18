@@ -86,11 +86,11 @@ namespace CFunctional {
 
 }
 
-struct WindowsTime
+struct WindowsTime : TimeDef
 {
-	static uint64 Microsecond() { return 0; }
+        static uint64 Microsecond() { return CFunctional::_win_api_get_time(); }
 
-	static Timestamp CurrentTimestamp() { return 0; }
+        static Timestamp CurrentTimestamp() { return CFunctional::_win_api_get_time()/1000000; }
 	static uint64 CurrentMicroTimestamp() { return 0; }
 
 	static DateTime GetDateTime(Timestamp) { return DateTime(); }

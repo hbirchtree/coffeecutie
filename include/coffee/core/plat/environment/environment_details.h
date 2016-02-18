@@ -12,7 +12,7 @@ struct EnvInterface
 	static bool UsingAlternateBuffer;
     };
 
-    static CString ExecutableName(cstring_w);
+    static CString ExecutableName(cstring_w = nullptr);
     static CString GetVar(cstring);
     static bool SetVar(cstring, cstring);
     static bool UnsetVar(cstring);

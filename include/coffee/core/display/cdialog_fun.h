@@ -14,7 +14,7 @@ struct DialogInterface
     struct WinHnd;
     struct MsgWinHnd;
 
-    static WinHnd* CreateWindow(cstring title, WinHnd* parent = nullptr);
+    static WinHnd* CreateDWindow(cstring title, WinHnd* parent = nullptr);
     static MsgWinHnd* CreateMessageDialog(cstring title, WinHnd* parent = nullptr);
 
     static void SetDialogSeverity(MsgWinHnd*, Severity);

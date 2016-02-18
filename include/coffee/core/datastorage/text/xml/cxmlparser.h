@@ -13,8 +13,8 @@ using namespace tinyxml2;
 
 struct TinyXML2Impl
 {
-    using Document = XMLDocument;
-    using Element = XMLElement;
+    using Document = tinyxml2::XMLDocument;
+    using Element = tinyxml2::XMLElement;
 
     inline C_FORCE_INLINE static Document* XMLRead(
 	    const CResources::CResource& source)

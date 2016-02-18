@@ -170,7 +170,7 @@ unw_context_t* LinuxStacktracer::unwind_context = nullptr;
 #endif
 
 #ifdef COFFEE_WINDOWS
-CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
+//CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
 thread_local std::list<Profiler::DataPoint>* Profiler::datapoints = nullptr;

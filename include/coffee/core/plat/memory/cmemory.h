@@ -6,7 +6,7 @@
 #ifndef COFFEE_WINDOWS
 #include <arpa/inet.h>
 #else
-#include <WinSock2.h>
+//#include <WinSock2.h>
 #endif
 
 #include <cctype>
@@ -27,6 +27,7 @@ static FILE* DefaultPrintOutputPipe = stderr;
 namespace CMem{
 
 /* Endian conversion */
+#ifndef COFFEE_WINDOWS
 FORCEDINLINE uint32 ForeignEndian32(uint32 i)
 {
     return htonl(i);
@@ -46,6 +47,7 @@ FORCEDINLINE uint16 NativeEndian16(uint16 i)
 {
     return ntohs(i);
 }
+#endif
 
 /* Input/output */
 FORCEDINLINE cstring CGets(cstring_w target, int32 size, FILE* strm)
