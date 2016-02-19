@@ -1,15 +1,10 @@
 #ifndef COFFEE_H
 #define COFFEE_H
 
-#include "types/types.h"
+#include "types/basetypes.h"
 #include "coffee_macros.h"
 
 #include "plat/platform_detect.h"
-#include "plat/plat_memory.h"
-#include "base/cdebug.h"
-
-#include <thread>
-#include <functional>
 
 namespace Coffee{
 
@@ -34,10 +29,6 @@ const constexpr cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPIL
                                                                   C_COMPILER_VER_MIN,
                                                                   C_COMPILER_VER_REV);
 const constexpr cstring CoffeeArchString = COFFEE_ARCH;
-
-inline C_FORCE_INLINE void print_builddate()
-{
-}
 
 extern void SetExitFunction(ExitCallback f);
 

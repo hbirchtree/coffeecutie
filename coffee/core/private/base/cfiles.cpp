@@ -54,7 +54,7 @@ bool FileMap(CResource &resc, ResourceAccess acc)
                 &err);
     if(!resc.data)
     {
-        cWarning("Failed to map file: {0}",strerror(err));
+        cWarning("Failed to map file {1}: {0}",strerror(err),resc.resource());
         resc.size = 0;
         return false;
     }

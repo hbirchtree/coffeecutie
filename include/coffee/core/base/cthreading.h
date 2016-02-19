@@ -5,8 +5,9 @@
 #include <functional>
 #include <future>
 
-#include "coffee/core/CTypes"
-#include "../plat/plat_environment.h"
+#include "../types/basetypes.h"
+#include "../coffee_macros.h"
+#include "../plat/environment/sysinfo_def.h"
 
 namespace Coffee{
 namespace CFunctional{

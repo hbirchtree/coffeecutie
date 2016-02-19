@@ -1,7 +1,7 @@
 #ifndef COFFEE_CORE_PLAT_TIMING_DEF_H
 #define COFFEE_CORE_PLAT_TIMING_DEF_H
 
-#include <coffee/core/CTypes>
+#include "../../types/composite_types.h"
 
 namespace Coffee{
 

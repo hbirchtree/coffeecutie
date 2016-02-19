@@ -1,7 +1,8 @@
 #ifndef CINPUT_H
 #define CINPUT_H
 
-#include "../coffee.h"
+#include "../types/composite_types.h"
+#include "../types/vector_types.h"
 #include "cinput_keymap.h"
 
 namespace Coffee{

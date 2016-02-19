@@ -1,7 +1,8 @@
 #ifndef COFFEE_CORE_UNIT_TESTS_MICRO_TESTS_H
 #define COFFEE_CORE_UNIT_TESTS_MICRO_TESTS_H
 
-#include "../coffee.h"
+#include "../types/composite_types.h"
+#include "../base/cdebug.h"
 
 namespace CoffeeTests
 {
