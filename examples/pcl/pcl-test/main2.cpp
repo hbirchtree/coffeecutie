@@ -14,7 +14,7 @@ uint64 base_timestamp = 0;
 
 void d_exit_handle()
 {
-    for(const Profiler::DataPoint& p : Profiler::datapoints)
+    for(const Profiler::DataPoint& p : *Profiler::datapoints)
     {
         cDebug("Type: {0}, name: {1}, time: {2}",p.tp,p.name,p.ts-base_timestamp);
     }
@@ -78,7 +78,9 @@ void frame_fun(CNect::NectRGB const& c,CNect::NectDepth const& d,
 int32 coffee_main(int32, cstring_w*)
 {
     base_timestamp = Time::CurrentMicroTimestamp();
+
     SetExitFunction(d_exit_handle);
+    Profiler::Profile("Set exit handle");
 
     ShPtr<FContext> c;
     try{
@@ -86,11 +88,13 @@ int32 coffee_main(int32, cstring_w*)
     }catch(std::runtime_error ex){
         cDebug("Failed to initialize Freenect: {0}",ex.what());
     }
+    Profiler::Profile("Create context");
 
     if(!c)
         return 1;
 
     CNect::LaunchAsync(c->context());
+    Profiler::Profile("Launch task");
 
     while(true)
     {
