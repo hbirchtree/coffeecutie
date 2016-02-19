@@ -1,5 +1,5 @@
 # Base it on good ol' trusty
-FROM ubuntu:trusty
+FROM ubuntu:xenial
 MAINTAINER hbirch
 
 # List of system dependencies, rest come from git
@@ -21,7 +21,8 @@ RUN apt-get -y install \
 	libboost-chrono-dev \
 	libboost-program-options-dev \
 	libboost-filesystem-dev \
-	libusb-1.0-0-dev
+	libusb-1.0-0-dev \
+	ninja-build
 
 RUN useradd -m bob
 
@@ -32,14 +33,9 @@ WORKDIR /home/bob
 RUN git clone --recursive https://github.com/OSVR/OSVR-Core.git
 RUN git clone --recursive https://github.com/OSVR/libfunctionality.git
 RUN git clone --recursive https://github.com/VRPN/jsoncpp
+RUN git clone --recursive https://github.com/OSVR/OSVR-Oculus-Rift.git
 
 USER root
-RUN add-apt-repository "ppa:george-edison55/cmake-3.x"
-
-RUN apt-get update
-RUN apt-get -y install cmake
-
-USER bob
 
 # Building JSONCPP
 RUN mkdir /home/bob/json-build
@@ -47,28 +43,27 @@ WORKDIR /home/bob/json-build
 RUN cmake ../jsoncpp/ -DJSONCPP_WITH_CMAKE_PACKAGE=ON -DJSONCPP_LIB_BUILD_SHARED=OFF -DCMAKE_CXX_FLAGS=-fPIC
 RUN make
 # Deploying JSONCPP to /usr/local
-USER root
 RUN make install
 
 # Building libfunctionality
-USER bob
 RUN mkdir /home/bob/libfun-build
 WORKDIR /home/bob/libfun-build
-RUN cmake ../libfunctionality/
+RUN cmake ../libfunctionality/ -DBUILD_SHARED_LIBS=OFF -DCMAKE_CXX_FLAGS=-fPIC
 RUN make
 # Deploying libfunctionality to /usr/local
-RUN cmake ../libfunctionality/ -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
 RUN make install
-USER root
-RUN cmake ../libfunctionality/
-RUN make install
-
-# Extra pass... Just a secret!
-USER bob
 
 # At last, building OSVR-Core
-USER bob
 RUN mkdir /home/bob/osvr-build
 WORKDIR /home/bob/osvr-build
-RUN cmake ../OSVR-Core -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
+RUN cmake ../OSVR-Core -DCMAKE_CXX_FLAGS=-fPIC
+RUN make
+RUN make install
+RUN cmake ../OSVR-Core -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/ -DCMAKE_CXX_FLAGS=-fPIC
+RUN make install
+
+# Build Oculus Rift support
+RUN mkdir /home/bob/osvr-ovr-build
+WORKDIR /home/bob/osvr-ovr-build
+RUN cmake ../OSVR-Oculus-Rift -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
 RUN make install
