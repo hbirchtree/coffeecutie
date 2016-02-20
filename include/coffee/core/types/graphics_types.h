@@ -1,7 +1,7 @@
 #ifndef COFFEE_TYPES_GRAPHICS_TYPES_H
 #define COFFEE_TYPES_GRAPHICS_TYPES_H
 
-#include "composite_types.h"
+#include "cdef/geometry.h"
 #include "vector_types.h"
 
 namespace Coffee{

@@ -4,6 +4,12 @@
 #include "types/basetypes.h"
 #include "plat/plat_memory.h"
 #include "coffee_mem_macros.h"
+
+#undef major
+#undef minor
+#undef far
+#undef near
+
 #include "plat/platform_detect.h"
 #include <stdio.h>
 #include <stdexcept>
@@ -65,17 +71,17 @@ FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
  */
 FORCEDINLINE void C_STUBBED(cstring name)
 {
-    fprintf(DefaultDebugOutputPipe,"%sCOFFEE:CORE:STUB%s: %s\n",
-            print_color_fatal,
-            print_color_reset,
+    fprintf(DefaultDebugOutputPipe,"STUB:%s@%i: %s\n",
+            __FILE__,
+            __LINE__,
             name);
 }
 
 FORCEDINLINE void C_FIXME(cstring identifier)
 {
-    fprintf(DefaultDebugOutputPipe,"%sCOFFEE:CORE:FIXME%s: %s\n",
-            print_color_fatal,
-            print_color_reset,
+    fprintf(DefaultDebugOutputPipe,"FIXME:%s@%i: %s\n",
+            __FILE__,
+            __LINE__,
             identifier);
 }
 
@@ -90,10 +96,15 @@ FORCEDINLINE void C_PERFWARN(cstring file, int line, cstring msg)
  */
 FORCEDINLINE void C_BADERROR(cstring name)
 {
-    fprintf(DefaultDebugOutputPipe,"%sCOFFEE:CORE:FTAL%s: %s\n",
-            print_color_fatal,
-            print_color_reset,
+    fprintf(DefaultDebugOutputPipe,"FATAL:%s@%i: %s\n",
+            __FILE__,
+            __LINE__,
             name);
+}
+
+FORCEDINLINE void C_DEPRECATED()
+{
+    fprintf(DefaultDebugOutputPipe,"Deprecated function in use");
 }
 }
 

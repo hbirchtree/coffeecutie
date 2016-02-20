@@ -1,7 +1,6 @@
 #ifndef COFFEE_VECTOR_TYPES_H
 #define COFFEE_VECTOR_TYPES_H
 
-#include <type_traits>
 #include <cmath>
 #include "vectors.h"
 #include "matrices.h"

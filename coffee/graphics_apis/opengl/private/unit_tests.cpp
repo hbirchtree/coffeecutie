@@ -120,17 +120,17 @@ void matrix_tests()
     //Test model transforms
     {
         CMat4 my_mat = scale(CMat4(),CVec3(1.2,1.2,1.2));
-        glm::mat4 glm_mat = CMath::scale(glm::mat4(),glm::vec3(1.2,1.2,1.2));
+        glm::mat4 glm_mat = glm::scale(glm::mat4(),glm::vec3(1.2,1.2,1.2));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
 
         my_mat *= matrixify(CQuat(1,0.0,0.5,0.0));
-        glm_mat *= CMath::mat4_cast(glm::quat(1,0.0,0.5,0.0));
+        glm_mat *= glm::mat4_cast(glm::quat(1,0.0,0.5,0.0));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
 
         my_mat = translation(my_mat,CVec3(1,2,3));
-        glm_mat = CMath::translate(glm_mat,glm::vec3(1,2,3));
+        glm_mat = glm::translate(glm_mat,glm::vec3(1,2,3));
 
         CASSERT_MEM(&glm_mat,&my_mat,sizeof(CMat4));
     }

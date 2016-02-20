@@ -3,79 +3,95 @@
 
 #include <regex>
 
-#include "../coffee.h"
+#include "../coffee_mem_macros.h"
+#include "../types/tdef/stltypes.h"
+#include "../types/tdef/integertypes.h"
 
 namespace Coffee{
-namespace CFunctional{
-
-/*!
- * \brief Regex matches
- */
-struct CRegexMatch
+namespace RegexImplementation
 {
-    std::vector<CString> s_match; /*!< Matching strings*/
-    bool b_match; /*!< True if match was found*/
+struct RegexDef
+{
+    struct RegMatch;
+    class Pattern;
+
+    static Pattern Compile(const CString& patt);
+
+    static Vector<RegMatch> Match(
+            const Pattern& pattern,
+            const Vector<CString>& data,
+            bool capture = false);
+
+    static Vector<RegMatch> Match(
+            const Pattern& pattern,
+            const CString& data,
+            bool capture = false);
 };
 
-/*!
- * \brief Match pattern in multiple strings
- * \param pattern Pattern to apply
- * \param data Data set
- * \param capture Whether to capture
- * \return Array with same size as data containing results
- */
-inline C_FORCE_INLINE std::vector<CRegexMatch> RegexMatchMulti(
-        const CString& pattern, const std::vector<CString>& data,
-        bool capture = false)
+struct StdRegexImpl : RegexDef
 {
-    std::regex rgx(pattern);
-    std::smatch mch;
+    struct RegMatch
+    {
+        Vector<CString> s_match; /*!< Matching strings*/
+        bool b_match; /*!< True if match was found*/
+    };
 
-    std::vector<CRegexMatch> matches;
+    using Pattern = std::regex;
 
-    for(const CString& string : data){
-        CRegexMatch m;
-        m.b_match = false;
-        if(std::regex_match(string,mch,rgx)){
+    STATICINLINE Pattern Compile(const CString& patt)
+    {
+        return Pattern(patt);
+    }
+
+    STATICINLINE Vector<RegMatch> Match(
+            const Pattern& rgx,
+            const Vector<CString>& data,
+            bool capture = false)
+    {
+        std::smatch mch;
+
+        Vector<RegMatch> matches;
+
+        for(const CString& string : data){
+            RegMatch m;
+            m.b_match = false;
+            if(std::regex_match(string,mch,rgx)){
+                for(szptr i=0;i<mch.size();i++){
+                    std::ssub_match smch = mch[i];
+                    m.b_match = true;
+                    if(capture)
+                        m.s_match.push_back(smch.str());
+                }
+            }
+            matches.push_back(m);
+        }
+        return matches;
+    }
+
+    STATICINLINE Vector<RegMatch> Match(
+            const Pattern& rgx,
+            const CString& data,
+            bool capture = false)
+    {
+        std::smatch mch;
+        Vector<RegMatch> matches;
+        if(std::regex_match(data,mch,rgx)){
             for(szptr i=0;i<mch.size();i++){
                 std::ssub_match smch = mch[i];
-                m.b_match = true;
+                RegMatch e;
+                e.b_match = true;
                 if(capture)
-                    m.s_match.push_back(smch.str());
+                    e.s_match.push_back(smch.str());
+                matches.push_back(e);
             }
         }
-        matches.push_back(m);
+        return matches;
     }
-    return matches;
-}
-
-/*!
- * \brief Match pattern in single string
- * \param pattern Pattern to apply
- * \param data String to test
- * \param capture Whether to capture
- * \return Struct with results
- */
-inline C_FORCE_INLINE std::vector<CRegexMatch> RegexMatch(
-        CString pattern, const CString& data,
-        bool capture = false)
-{
-    std::regex rgx(pattern);
-    std::smatch mch;
-    std::vector<CRegexMatch> m;
-    if(std::regex_match(data,mch,rgx)){
-        for(szptr i=0;i<mch.size();i++){
-            std::ssub_match smch = mch[i];
-            CRegexMatch e;
-            e.b_match = true;
-            if(capture)
-                e.s_match.push_back(smch.str());
-            m.push_back(e);
-        }
-    }
-    return m;
-}
+};
 
 }
+
+using Regex = RegexImplementation::StdRegexImpl;
+
 }
 #endif // CREGEX_H

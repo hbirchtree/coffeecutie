@@ -7,10 +7,4 @@
 #include "graphics_types.h"
 #include "../plat/plat_timing.h"
 
-namespace Coffee{
-
-
-
-}
-
 #endif

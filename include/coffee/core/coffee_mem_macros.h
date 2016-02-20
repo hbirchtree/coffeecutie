@@ -30,3 +30,8 @@
 #define PACKEDSTRUCT struct C_FORCE_PACKING
 
 #endif
+
+#undef major
+#undef minor
+#undef far
+#undef near
