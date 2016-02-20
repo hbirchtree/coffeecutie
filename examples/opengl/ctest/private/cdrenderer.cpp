@@ -199,7 +199,7 @@ void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
         const CIMouseMoveEvent* mev = (const CIMouseMoveEvent*)data;
         if(relativeMouse())
         {
-            coffee_input_mouse_rotate(&(game->transforms.cameras.d[0].rotation),mev);
+            MouseRotate(game->transforms.cameras.d[0].rotation,mev);
         }
         break;
     }

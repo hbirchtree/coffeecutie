@@ -1,7 +1,7 @@
 #ifndef CGRAPHICSDATA_H
 #define CGRAPHICSDATA_H
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/graphics_types.h>
 #include <coffee/core/base/cmath.h>
 #include <coffee/core/types/cmatrix_functions.h>
 

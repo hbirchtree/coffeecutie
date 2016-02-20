@@ -343,7 +343,7 @@ public:
 
 int32 coffee_main(int32 n, cstring_w* s)
 {
-    cstring fn = GetArgument(n,s,"video");
+    cstring fn = ArgParse::Get(n,s,"video");
 
     cDebug("File name: {0}",fn);
 
@@ -363,7 +363,7 @@ int32 coffee_main(int32 n, cstring_w* s)
             CDisplay::GLProperties::GLAutoResize;
     props.flags = CDisplay::CDProperties::Resizable;
 
-    std::future<void> status = CDisplay::coffee_display_start_async(&sync,renderer,props);
+    std::future<void> status = CDisplay::LaunchAsync(renderer,props);
 
     status.get();
 

@@ -1,14 +1,13 @@
 #ifndef COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
 #define COFFEE_GRAPHICS_FUNCTIONS_MATRICES_H
 
-#include <coffee/core/coffee_macros.h>
-#include <coffee/core/CTypes>
+#include <coffee/core/types/composite_types.h>
 
 namespace Coffee{
 namespace CGraphicsData{
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenOrthographic(
         _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
 {
     _cbasic_tmatrix<T,4> mat;
@@ -28,7 +27,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenPerspective(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
         const T& fov,
         const T& aspect,
         const _cbasic_zfield<T>& zfield)
@@ -49,7 +48,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenPerspective(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_vec3<T> const& pos,
         _cbasic_vec3<T> const& scl,
         _cbasic_tquaternion<T> const& rot)
@@ -64,7 +63,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenOrthographic(
         _cbasic_graphics_camera<T> const& camera)
 {
     return GenOrthographic(
@@ -72,7 +71,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenOrthographic(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenPerspective(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
         _cbasic_graphics_camera<T> const& camera)
 {
     return GenPerspective(
@@ -82,7 +81,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenPerspective(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_transform<T> const& transform)
 {
     return GenTransform(
@@ -92,7 +91,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
+FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
         _cbasic_graphics_camera<T> const& camera)
 {
     return GenTransform(
@@ -102,7 +101,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> GenTransform(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,3> GenLookat(
+FORCEDINLINE _cbasic_tmatrix<T,3> GenLookat(
         const _cbasic_tvector<T,3>& observer,
         const _cbasic_tvector<T,3>& up,
         const _cbasic_tvector<T,3>& subject)

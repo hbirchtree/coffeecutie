@@ -141,7 +141,8 @@ bool FileCommit(CResource &resc, bool append)
 CResource::CResource(cstring rsrc, bool absolute):
     m_resource(),
     data(nullptr),
-    size(0)
+    size(0),
+    flags(Undefined)
 {
     if(absolute)
         m_resource = rsrc;

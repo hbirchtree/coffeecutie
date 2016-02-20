@@ -1,7 +1,7 @@
 #ifndef COFFEE_GRAPHICS_APIS_HMD_API_H
 #define COFFEE_GRAPHICS_APIS_HMD_API_H
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/graphics_types.h>
 #include "gltypes.h"
 
 namespace Coffee{

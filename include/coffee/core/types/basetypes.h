@@ -68,6 +68,22 @@ using cwstring_w = wchar_t*; /*!< Wide, writable C-string*/
 
 using szptr = size_t; /*!< Usable as offset into data*/
 
+constexpr int8 Int8_Max = (INT8_MAX-1);
+constexpr int8 Int8_Min = (INT8_MIN+1);
+constexpr uint8 UInt8_Max = (UINT8_MAX-1);
+
+constexpr int16 Int16_Max = (INT16_MAX-1);
+constexpr int16 Int16_Min = (INT16_MIN+1);
+constexpr uint16 UInt16_Max = (UINT16_MAX-1);
+
+constexpr int32 Int32_Max = (INT32_MAX-1);
+constexpr int32 Int32_Min = (INT32_MIN+1);
+constexpr uint32 UInt32_Max = (UINT32_MAX-1);
+
+constexpr int64 Int64_Max = (INT64_MAX-1);
+constexpr int64 Int64_Min = (INT64_MIN+1);
+constexpr uint64 UInt64_Max = (UINT64_MAX-1);
+
 using CString   = std::string; /*!< Typical string object */
 using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 

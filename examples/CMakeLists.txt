@@ -45,6 +45,7 @@ add_subdirectory(rsread)
 
 #GLeam
 add_subdirectory(gleam/base-test)
+add_subdirectory(gleam/shadow-test)
 
 #ASIO examples
 add_subdirectory(asio/base-client)

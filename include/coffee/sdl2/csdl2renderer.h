@@ -1,11 +1,9 @@
 #ifndef CSDL2RENDERER_H
 #define CSDL2RENDERER_H
 
-#include <mutex>
-
 #include <coffee/graphics_apis/gltypes.h>
 #include <coffee/core/functional/cqueuerunner.h>
-#include <coffee/core/base/cdebug.h>
+#include <coffee/core/display/cdialog_fun.h>
 
 namespace Coffee{
 namespace CSDL2Types{

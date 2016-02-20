@@ -9,7 +9,7 @@ namespace CGraphicsData{
 
 template<typename T> struct _cbasic_graphics_camera
 {
-    _cbasic_graphics_camera():
+    FORCEDINLINE _cbasic_graphics_camera():
         flags(CameraFlags::Perspective),
         aspect(T(1)),
         zVals(T(1),T(100)),
@@ -39,7 +39,7 @@ template<typename T> struct _cbasic_graphics_camera
 
 template<typename T> struct _cbasic_graphics_transform
 {
-    _cbasic_graphics_transform():
+    FORCEDINLINE _cbasic_graphics_transform():
         rotation(),
         position(0),
         scale(1.0)

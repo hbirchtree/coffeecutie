@@ -366,41 +366,41 @@ struct _cbasic_nbuffer
  */
 template<typename T> struct _cbasic_rect
 {
-    _cbasic_rect(T x,T y,T w,T h){
+    FORCEDINLINE _cbasic_rect(T x,T y,T w,T h){
         this->x = x;
         this->y = y;
         this->w = w;
         this->h = h;
     }
-    _cbasic_rect(){}
+    FORCEDINLINE _cbasic_rect(){}
 
     T x = 0;
     T y = 0;
     T w = 0;
     T h = 0;
 
-    T left() const
+    FORCEDINLINE T left() const
     {
         return x;
     }
-    T right() const
+    FORCEDINLINE T right() const
     {
         return x+w;
     }
-    T top() const
+    FORCEDINLINE T top() const
     {
         return y+h;
     }
-    T bottom() const
+    FORCEDINLINE T bottom() const
     {
         return y;
     }
 
-    T area() const
+    FORCEDINLINE T area() const
     {
         return w*h;
     }
-    _cbasic_rect<T> intersection(const _cbasic_rect<T>& rekt)
+    FORCEDINLINE _cbasic_rect<T> intersection(const _cbasic_rect<T>& rekt)
     {
         if(!( rekt.left() < this->right() &&
               rekt.right() > this->left() &&
@@ -414,14 +414,14 @@ template<typename T> struct _cbasic_rect
                     std::min(rekt.w,this->w),
                     std::min(rekt.h,this->h));
     }
-    bool test(const _cbasic_point<T>& point)
+    FORCEDINLINE bool test(const _cbasic_point<T>& point)
     {
         if(point.x>this->left()  && point.x<this->right() &&
                 point.y>this->bottom() && point.y<this->top())
             return true;
         return true;
     }
-    _cbasic_rect<T> unite(const _cbasic_rect<T>& rekt)
+    FORCEDINLINE _cbasic_rect<T> unite(const _cbasic_rect<T>& rekt)
     {
         return _cbasic_rect<T>(
                     std::min(rekt.x,this->x),
@@ -429,7 +429,7 @@ template<typename T> struct _cbasic_rect
                     std::max(rekt.w,this->w),
                     std::max(rekt.h,this->h));
     }
-    _cbasic_rect<T> offset(const _cbasic_point<T>& point)
+    FORCEDINLINE _cbasic_rect<T> offset(const _cbasic_point<T>& point)
     {
         return _cbasic_rect<T>(this->x+point.x,
                                this->y+point.y,
@@ -446,11 +446,11 @@ class _cbasic_raii_container
 protected:
     T* m_data;
 public:
-    _cbasic_raii_container():
+    FORCEDINLINE _cbasic_raii_container():
         m_data(new T)
     {
     }
-    _cbasic_raii_container(T* d):
+    FORCEDINLINE _cbasic_raii_container(T* d):
         m_data(d)
     {
     }
@@ -458,11 +458,11 @@ public:
     {
     }
 
-    T *data()
+    FORCEDINLINE T *data()
     {
         return m_data;
     }
-    T& data_ref()
+    FORCEDINLINE T& data_ref()
     {
         return *m_data;
     }
@@ -477,17 +477,17 @@ class _cbasic_cookie_container
     std::mutex& _access;
     T& _cookie;
 public:
-    _cbasic_cookie_container(std::mutex& acc, T& cookie):
+    FORCEDINLINE _cbasic_cookie_container(std::mutex& acc, T& cookie):
         _access(acc),
         _cookie(cookie)
     {
         _access.lock();
     }
-    ~_cbasic_cookie_container()
+    FORCEDINLINE ~_cbasic_cookie_container()
     {
         _access.unlock();
     }
-    T& object()
+    FORCEDINLINE T& object()
     {
         return _cookie;
     }
@@ -496,20 +496,20 @@ public:
 template<typename PixelType,typename DimT>
 struct _cbasic_bitmap_base
 {
-    _cbasic_bitmap_base(DimT w, DimT h):
+    FORCEDINLINE _cbasic_bitmap_base(DimT w, DimT h):
         size(w,h)
     {
         m_pixels = (PixelType*)CCalloc(sizeof(PixelType),w*h);
         m_internal_data = true;
     }
-    _cbasic_bitmap_base(DimT w, DimT h, PixelType* data):
+    FORCEDINLINE _cbasic_bitmap_base(DimT w, DimT h, PixelType* data):
         size(w,h)
     {
         m_pixels = data;
         m_internal_data = false;
     }
 
-    ~_cbasic_bitmap_base()
+    FORCEDINLINE ~_cbasic_bitmap_base()
     {
         if(m_internal_data)
             CFree(m_pixels);
@@ -517,11 +517,11 @@ struct _cbasic_bitmap_base
 
     const _cbasic_size_2d<DimT> size;
 
-    PixelType* data()
+    FORCEDINLINE PixelType* data()
     {
         return m_pixels;
     }
-    const PixelType* data() const
+    FORCEDINLINE const PixelType* data() const
     {
         return m_pixels;
     }
@@ -540,21 +540,21 @@ struct CFunctionSlot
     using Function = FunctionReturn(ClassType::*)(FArgumentTypes...);
     using FunctionConst = FunctionReturn(ClassType::*)(FArgumentTypes...) const;
 
-    CFunctionSlot(ClassType* c, Function f):
+    FORCEDINLINE CFunctionSlot(ClassType* c, Function f):
         instance(c),n(f)
     {
     }
-    CFunctionSlot(ClassType* c, FunctionConst f):
+    FORCEDINLINE CFunctionSlot(ClassType* c, FunctionConst f):
         instance(c),c(f)
     {
     }
 
-    FunctionReturn call(FArgumentTypes... arg)
+    FORCEDINLINE FunctionReturn call(FArgumentTypes... arg)
     {
         return (instance->*n)(arg...);
     }
 
-    FunctionReturn call(FArgumentTypes... arg) const
+    FORCEDINLINE FunctionReturn call(FArgumentTypes... arg) const
     {
         return (instance->*c)(arg...);
     }
@@ -576,8 +576,9 @@ struct CFunctionSignal
     using FunctionReturn = FReturnType;
     using Function = FunctionReturn(ClassType::*)(FArgumentTypes...);
 
-    virtual FunctionReturn call(CFunctionSlot<ClassType,FReturnType,FArgumentTypes...> f,
-                        FArgumentTypes... args)
+    virtual FunctionReturn call(
+            CFunctionSlot<ClassType,FReturnType,FArgumentTypes...> f,
+            FArgumentTypes... args)
     {
         return f.call(args...);
     }
@@ -589,12 +590,12 @@ struct CStaticFunctionBinding
     using FunctionReturn = FReturnType;
     using Function = FunctionReturn(*)(FArgumentTypes...);
 
-    CStaticFunctionBinding(Function f):
+    FORCEDINLINE CStaticFunctionBinding(Function f):
         function(f)
     {
     }
 
-    FunctionReturn call(FArgumentTypes... arg)
+    FORCEDINLINE FunctionReturn call(FArgumentTypes... arg)
     {
         return function(arg...);
     }
@@ -604,21 +605,23 @@ struct CStaticFunctionBinding
 
 struct CMimeData
 {
-    CMimeData(cstring id, void* data, const szptr& size, bool doClean = false):
+    FORCEDINLINE CMimeData(cstring id, void* data,
+                           const szptr& size,
+                           bool doClean = false):
         b_doClean(doClean),
         m_data(data),
         m_size(size),
         m_id(id)
     {
     }
-    ~CMimeData()
+    FORCEDINLINE ~CMimeData()
     {
         if(b_doClean)
             CFree(m_data);
     }
-    const CString& id(){return m_id;}
-    const void* data(){return m_data;}
-    const szptr& dataSize(){return m_size;}
+    FORCEDINLINE const CString& id(){return m_id;}
+    FORCEDINLINE const void* data(){return m_data;}
+    FORCEDINLINE const szptr& dataSize(){return m_size;}
 private:
     bool b_doClean;
     void* m_data;
@@ -629,8 +632,8 @@ private:
 class _cbasic_threadrunner_command
 {
 public:
-    static inline C_FORCE_INLINE void perform(_cbasic_threadrunner_command*){}
-    static inline C_FORCE_INLINE void await(_cbasic_threadrunner_command*,uint64){}
+    STATICINLINE void perform(_cbasic_threadrunner_command*){}
+    STATICINLINE void await(_cbasic_threadrunner_command*,uint64){}
 };
 
 class _cbasic_threadrunner_queue
@@ -644,7 +647,7 @@ class CThreadCommand : public _cbasic_threadrunner_command
 {
 public:
     CThreadCommand(std::function<void()> f):m_cmd(f){}
-    static inline C_FORCE_INLINE void perform(CThreadCommand* c)
+    STATICINLINE void perform(CThreadCommand* c)
     {
         c->m_cmd();
     }
@@ -673,7 +676,7 @@ public:
         }
         m_cmdlistaccess.unlock();
     }
-    void insertCmd(CThreadCommand* c)
+    FORCEDINLINE void insertCmd(CThreadCommand* c)
     {
         m_cmdlistaccess.lock();
         m_cmds.push(c);
@@ -698,11 +701,14 @@ struct CColorMask
  */
 struct HWDeviceInfo
 {
-    HWDeviceInfo(CString model, CString firmware):
+    FORCEDINLINE HWDeviceInfo(CString model,
+                              CString firmware):
         model(model),
         firmware(firmware)
     {}
-    HWDeviceInfo(CString manufacturer, CString model, CString firmware):
+    FORCEDINLINE HWDeviceInfo(CString manufacturer,
+                              CString model,
+                              CString firmware):
         manufacturer(manufacturer),
         model(model),
         firmware(firmware)
@@ -724,7 +730,7 @@ public:
 
     }
 
-    void expand(size_t n)
+    FORCEDINLINE void expand(size_t n)
     {
         /* Place lock on data */
         Lock l(m_lock);
@@ -736,7 +742,7 @@ public:
             m_free.push(p);
         }
     }
-    PT* grab()
+    FORCEDINLINE PT* grab()
     {
         autoRecycle();
 
@@ -754,7 +760,7 @@ public:
         m_free.pop();
         return p;
     }
-    void recycle(PT* p)
+    FORCEDINLINE void recycle(PT* p)
     {
         /* Place lock on data */
         Lock l(m_lock);
@@ -764,7 +770,7 @@ public:
         m_occupied.remove(p);
         m_free.push(p);
     }
-    void autoRecycle()
+    FORCEDINLINE void autoRecycle()
     {
         /* Place lock on data */
         Lock l(m_lock);
@@ -803,7 +809,7 @@ template<typename PT>
 class PacketConsumer
 {
 public:
-    PacketConsumer()
+    FORCEDINLINE PacketConsumer()
     {
     }
     virtual void processPacket(PT* packet) = 0;
@@ -813,27 +819,27 @@ template<typename PT>
 class PacketProducer
 {
 public:
-    PacketProducer(PacketPool<PT>& pool):
+    FORCEDINLINE PacketProducer(PacketPool<PT>& pool):
         m_pool(&pool)
     {
     }
 
-    void registerConsumer(PacketConsumer<PT>* c)
+    FORCEDINLINE void registerConsumer(PacketConsumer<PT>* c)
     {
         Lock l(m_consumer_mutex);
         m_consumers.push_back(c);
     }
-    void removeConsumer(PacketConsumer<PT>* c)
+    FORCEDINLINE void removeConsumer(PacketConsumer<PT>* c)
     {
         Lock l(m_consumer_mutex);
         m_consumers.remove(c);
     }
 
-    PT* getPacket()
+    FORCEDINLINE PT* getPacket()
     {
         return m_pool->grab();
     }
-    void usePacket(PT* p)
+    FORCEDINLINE void usePacket(PT* p)
     {
         Lock l(m_consumer_mutex);
         for(PacketConsumer<PT>* pc : m_consumers)
@@ -899,12 +905,6 @@ typedef _cbasic_point<bigscalar> CPointD;
 typedef _cbasic_zfield<scalar> CZField;
 
 typedef _cbasic_zfield<scalar> CZField64;
-
-//typedef _cbasic_timer<uint64> CElapsedTimer;
-
-//typedef _cbasic_timer<uint64> CElapsedTimerMicro;
-
-//typedef _cbasic_timer<bigscalar> CElapsedTimerD;
 }
 
 #endif

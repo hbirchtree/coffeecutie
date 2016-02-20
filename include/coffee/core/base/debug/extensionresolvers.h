@@ -7,7 +7,8 @@
 
 #include "../../coffee_macros.h"
 #include "../../plat/plat_memory.h"
-#include "../../types/types.h"
+#include "../../types/composite_types.h"
+#include "../../types/vector_types.h"
 
 namespace Coffee{
 namespace DebugFun{
@@ -172,6 +173,38 @@ FORCEDINLINE CString cStringReplace(
                                                arg.manufacturer,
                                                arg.model,
                                                arg.firmware));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        CQuat const& v)
+{
+    return cStrReplace(fmt,index,cStringFormat("q({0}:{1},{2},{3})",
+                                               v.w(),v.x(),v.y(),v.z()));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        CVec4 const& v)
+{
+    return cStrReplace(fmt,index,cStringFormat("v({0},{1},{2},{3})",
+                                               v.x(),v.y(),v.z(),v.w()));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        CVec3 const& v)
+{
+    return cStrReplace(fmt,index,cStringFormat("v({0},{1},{2})",
+                                               v.x(),v.y(),v.z()));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        CVec2 const& v)
+{
+    return cStrReplace(fmt,index,cStringFormat("v({0},{1})",
+                                               v.x(),v.y()));
 }
 
 template<typename T>

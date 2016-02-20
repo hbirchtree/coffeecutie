@@ -1,7 +1,8 @@
 #ifndef COFFEE_CORE_DATASTORAGE_TEXT_XML_H
 #define COFFEE_CORE_DATASTORAGE_TEXT_XML_H
 
-#include <coffee/core/CBase>
+#include "../../../types/composite_types.h"
+#include "../../../base/cfiles.h"
 #include <tinyxml2/tinyxml2.h>
 
 namespace Coffee{
@@ -16,7 +17,7 @@ struct TinyXML2Impl
     using Document = tinyxml2::XMLDocument;
     using Element = tinyxml2::XMLElement;
 
-    inline C_FORCE_INLINE static Document* XMLRead(
+    STATICINLINE Document* XMLRead(
 	    const CResources::CResource& source)
     {
 		Document* doc = new Document;

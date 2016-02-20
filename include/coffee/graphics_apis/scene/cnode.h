@@ -1,15 +1,14 @@
 #ifndef COFFEE_SCENE_CNODE_H
 #define COFFEE_SCENE_CNODE_H
 
-#include <coffee/core/CTypes>
-#include <coffee/graphics_apis/cgraphicsdata.h>
+#include <coffee/core/types/vector_types.h>
 
 namespace Coffee{
 namespace CGraphicsData{
 
 struct CNode
 {
-    CNode():
+    FORCEDINLINE CNode():
         transform(nullptr),
         parent(nullptr)
     {
@@ -18,7 +17,7 @@ struct CNode
 
     CMat4* transform;
     CNode* parent;
-    byte_t   name[32];
+    byte_t name[32];
 };
 
 /*!
@@ -26,7 +25,13 @@ struct CNode
  * \param node
  * \return This node's complete matrix unless the pointer is NULL
  */
-extern CMat4 AccumulateTransform(const CNode *node);
+static CMat4 AccumulateTransform(const CNode *node)
+{
+    if(!node || !node->transform)
+        return CMat4();
+
+    return (*node->transform)*AccumulateTransform(node->parent);
+}
 
 }
 }

@@ -15,43 +15,20 @@ namespace Threads{
 
 struct ThreadId_t
 {
-    ThreadId_t():
+    FORCEDINLINE ThreadId_t():
         m_id(std::this_thread::get_id())
     {
     }
-    bool operator==(const ThreadId_t& thd) const
+    FORCEDINLINE bool operator==(const ThreadId_t& thd) const
     {
         return m_id == thd.m_id;
     }
-    uint64 hash()
+    FORCEDINLINE uint64 hash()
     {
         return std::hash<std::thread::id>()(m_id);
     }
 private:
     const std::thread::id m_id;
-};
-
-template<typename DataType>
-/*!
- * \brief Contains a reference to an atomic pointer to be used with async worker
- */
-struct CThreadWorker
-{
-    CThreadWorker(std::atomic<DataType>& atomic_ptr){
-        thread_ptr = &atomic_ptr;
-    }
-    template<typename RType>
-    std::future<RType> run(std::function<RType()> fun){
-        return std::async(std::launch::async,fun);
-    }
-    std::future<void> run(std::function<void()> fun){
-        return std::async(std::launch::async,fun);
-    }
-    std::atomic<DataType>* dataPtr() const{
-        return thread_ptr;
-    }
-private:
-    std::atomic<DataType>* thread_ptr = nullptr;
 };
 
 template<typename T>
@@ -165,8 +142,6 @@ FORCEDINLINE std::future<void> ParallelFor(
     };
     return RunAsync(worker);
 }
-
-typedef CThreadWorker<byte_t> CThreadByteWorker;
 
 }
 }

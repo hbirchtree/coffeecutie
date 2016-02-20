@@ -2,7 +2,7 @@
 #define COFFEE_CORE_DIALOGS_FUNCTIONAL_H
 
 #include "../coffee_macros.h"
-#include "../types/types.h"
+#include "../types/composite_types.h"
 
 namespace Coffee{
 

@@ -1,7 +1,8 @@
 #ifndef COFFEE_DEBUG_CLASS_FRAMECOUNTER_H
 #define COFFEE_DEBUG_CLASS_FRAMECOUNTER_H
 
-#include "coffee/core/CTypes"
+#include "../coffee_macros.h"
+#include "../types/basetypes.h"
 
 namespace Coffee{
 namespace CFunctional{
@@ -14,15 +15,28 @@ public:
     const void* ptr;
     uint32 interval;
 
-    FrameCounter(FrameCounterFun fun):
+    FORCEDINLINE FrameCounter(FrameCounterFun fun, uint32 interval = 1000):
+        ptr(nullptr),
+        interval(interval),
         m_timestamp(0),
         m_fun(fun),
-        interval(0),
         m_frames(0)
     {
     }
-    void update(uint64 time);
-    uint32 frames();
+    FORCEDINLINE void update(uint64 time)
+    {
+        m_frames++;
+        if(time > m_timestamp)
+        {
+            m_timestamp = time+interval;
+            this->m_fun(m_frames,ptr);
+            m_frames = 0;
+        }
+    }
+    FORCEDINLINE uint32 frames()
+    {
+        return m_frames;
+    }
 
 private:
     uint32 m_frames;

@@ -23,12 +23,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     CDRendererBase *renderer = renderer_loader->loader();
 
-    std::atomic_bool started;
-    started.store(false);
+    std::future<void> rendertask = LaunchAsync(renderer,GetDefaultVisual());
 
-    coffee_display_start_async(&started,
-                               renderer,
-                               GetDefaultVisual());
+    rendertask.get();
 
     return 0;
 }

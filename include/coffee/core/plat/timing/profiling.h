@@ -11,7 +11,7 @@ struct SimpleProfilerImpl
 {
     struct DataPoint
     {
-        DataPoint():
+        FORCEDINLINE DataPoint():
             thread()
         {
 

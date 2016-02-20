@@ -1,7 +1,6 @@
 #ifndef CDISPLAY_H
 #define CDISPLAY_H
 
-#include <coffee/core/coffee.h>
 #include "../types/composite_types.h"
 
 namespace Coffee{

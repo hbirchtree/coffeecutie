@@ -19,10 +19,7 @@ int32 coffee_main(int32,cstring_w*)
     props.gl.flags = props.gl.flags|
             GLProperties::GLDebug;
 
-    std::atomic_bool status;
-    std::future<void> ret = coffee_display_start_async(&status,renderer,props);
-
-    cDebug("Launch time: {0}us, main thread is now free",timer.elapsed());
+    std::future<void> ret = LaunchAsync(renderer,props);
 
     ret.get();
 
