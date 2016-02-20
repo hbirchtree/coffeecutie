@@ -207,6 +207,26 @@ FORCEDINLINE CString cStringReplace(
                                                v.x(),v.y()));
 }
 
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        CMat4 const& v)
+{
+    return cStrReplace(
+                fmt,index,
+                cStringFormat("m({0},{1},{2},{3}})",
+                              v[0],v[1],v[2],v[3]));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString fmt, size_t index,
+        CMat3 const& v)
+{
+    return cStrReplace(
+                fmt,index,
+                cStringFormat("m({0},{1},{2}})",
+                              v[0],v[1],v[2]));
+}
+
 template<typename T>
 FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
