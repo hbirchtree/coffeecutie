@@ -21,6 +21,8 @@ struct QtSplash : Coffee::SplashInterface
 
     static void SetProgress(SplashHandle*, scalar);
 
+    static void Repaint(SplashHandle*);
+
     static bool SetBitmap(SplashHandle *s, PixelFormat, const CSize &size, const byte_t *data);
 
     static void DestroySplash(SplashHandle* s);

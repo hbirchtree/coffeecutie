@@ -1,8 +1,17 @@
 #include <coffee/graphics_apis/gleam/renderer/gleamrenderer.h>
 #include <coffee/core/coffee_strings.h>
-#include <coffee/graphics_apis/gleam/levels/gl45.h>
 
-#include <glad/glad.h>
+#include <coffee/graphics_apis/gleam/gleam.h>
+
+#ifdef COFFEE_GLEAM_DESKTOP
+#include <coffee/graphics_apis/gleam/levels/desktop/gl45.h>
+#else
+#include <coffee/graphics_apis/gleam/levels/es/gles30.h>
+#endif
+
+#include <SDL2/SDL_video.h>
+
+#include "conversion.h"
 
 namespace Coffee{
 namespace CDisplay{
@@ -14,81 +23,11 @@ void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GL
 {
     const CGLeamRenderer* renderer = (const CGLeamRenderer*)param;
     CGL::CGL_Implementation::CGDbgMsg cmsg;
-    switch(src)
-    {
-    case GL_DEBUG_SOURCE_API:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    case GL_DEBUG_SOURCE_APPLICATION:
-        cmsg.comp = DebugComponent::Core;
-        break;
-    case GL_DEBUG_SOURCE_OTHER:
-        cmsg.comp = DebugComponent::Interface;
-        break;
-    case GL_DEBUG_SOURCE_SHADER_COMPILER:
-        cmsg.comp = DebugComponent::ShaderCompiler;
-        break;
-    case GL_DEBUG_SOURCE_THIRD_PARTY:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    default:
-        cmsg.comp = DebugComponent::GraphicsAPI;
-        break;
-    }
-    switch(type)
-    {
-    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-        cmsg.type = DebugType::Deprecated;
-        break;
-    case GL_DEBUG_TYPE_ERROR:
-        cmsg.type = DebugType::UndefinedBehavior;
-        break;
-    case GL_DEBUG_TYPE_MARKER:
-        cmsg.type = DebugType::Marker;
-        break;
-    case GL_DEBUG_TYPE_OTHER:
-        cmsg.type = DebugType::Other;
-        break;
-    case GL_DEBUG_TYPE_PERFORMANCE:
-        cmsg.type = DebugType::Performance;
-        break;
-    case GL_DEBUG_TYPE_PORTABILITY:
-        cmsg.type = DebugType::Compliance;
-        break;
-    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-        cmsg.type = DebugType::UndefinedBehavior;
-        break;
-    case GL_DEBUG_TYPE_POP_GROUP:
-        cmsg.type = DebugType::Information;
-        break;
-    case GL_DEBUG_TYPE_PUSH_GROUP:
-        cmsg.type = DebugType::Information;
-        break;
-    default:
-        cmsg.type = DebugType::Information;
-        break;
-    }
-    switch(sev)
-    {
-    case GL_DEBUG_SEVERITY_HIGH:
-        cmsg.sev = Severity::High;
-        break;
-    case GL_DEBUG_SEVERITY_MEDIUM:
-        cmsg.sev = Severity::Medium;
-        break;
-    case GL_DEBUG_SEVERITY_LOW:
-        cmsg.sev = Severity::Low;
-        break;
-    case GL_DEBUG_SEVERITY_NOTIFICATION:
-        cmsg.sev = Severity::Information;
-        break;
-    default:
-        cmsg.sev = Severity::Information;
-        break;
-    }
+#ifdef COFFEE_GLEAM_DESKTOP
+    cmsg.sev = gl_convertsev(sev);
+    cmsg.type = gl_converttype(type);
+    cmsg.comp = gl_convertcomp(src);
+#endif
     cmsg.id = id;
     cmsg.msg = msg;
     renderer->bindingCallback(&cmsg);
@@ -111,11 +50,12 @@ void CGLeamRenderer::bindingPostInit()
 
     Profiler::Profile("Context acquisition");
 
+    bool status = false;
+
+#ifdef COFFEE_GLEAM_DESKTOP
     const static CGLVersion v33(3,3);
     const static CGLVersion v43(4,3);
     const static CGLVersion v45(4,5);
-
-    bool status = false;
 
     if(m_properties.gl.version>=v45)
         status = CGL::CGL45::LoadBinding(this->glContext());
@@ -123,6 +63,12 @@ void CGLeamRenderer::bindingPostInit()
         status = CGL::CGL43::LoadBinding(this->glContext());
     if(m_properties.gl.version>=v33)
         status = CGL::CGL33::LoadBinding(this->glContext());
+#else
+    const static CGLVersion v30es(3,0);
+
+    if(m_properties.gl.version==v30es)
+        status = CGL::CGLES30::LoadBinding(this->glContext(),SDL_GL_GetProcAddress);
+#endif
 
     Profiler::Profile("Loading GL function pointers");
 
@@ -136,13 +82,13 @@ void CGLeamRenderer::bindingPostInit()
         /*Context or graphics card on fire? Just get out!*/
         throw std::runtime_error(CFStrings::Graphics_GLeam_Renderer_Name);
     }
+#ifdef COFFEE_GLEAM_DESKTOP
     if(GL::DebuggingSupported())
     {
         GL::Debug::SetDebugMode(true);
-//        GL::Debug::SetDebugLevel(Severity::Debug,false);
-//        GL::Debug::SetDebugLevel(Severity::Information,false);
         GL::Debug::DebugSetCallback(gleamcallback,this);
     }
+#endif
 
     Profiler::Profile("Debug setup");
 

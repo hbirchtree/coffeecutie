@@ -89,6 +89,25 @@ struct SimpleDrawingStyle : DrawingStyleDef
 
         painter->setBrush(brush);
         painter->drawRect(bar);
+
+        qreal right = bar.right();
+        bar.setLeft(right-height*2);
+        bar.setRight(right);
+
+        QLinearGradient grad2(bar.bottomLeft(),bar.bottomRight());
+        QColor glow1 = color.light();
+        QColor glow2 = glow1;
+        QColor glow3 = glow1;
+        glow2.setAlpha(0);
+        glow3.setAlpha(50);
+
+        grad2.setColorAt(1.0,glow1);
+        grad2.setColorAt(0.4,glow3);
+        grad2.setColorAt(0.0,glow2);
+        QBrush brush2(grad2);
+        painter->setBrush(brush2);
+
+        painter->drawRect(bar);
     }
     STATICINLINE void DrawBackdrop(QPainter* painter,
                                    QRect const& win,

@@ -6,7 +6,6 @@
 #include <QPixmap>
 
 #include <QDesktopWidget>
-#include <QScreen>
 
 namespace CoffeeExt{
 namespace QtDialogs{
@@ -61,18 +60,20 @@ void QtSplash::SetSize(SplashHandle *s, const CSize &size)
 void QtSplash::SetTitle(SplashHandle *s, const Title &title)
 {
     new(&(s->splash->m_title)) Title(title);
-    s->splash->repaint();
 }
 
 void QtSplash::SetSubText(SplashHandle *s, const Title &title)
 {
     new(&(s->splash->m_subtext)) Title(title);
-    s->splash->repaint();
 }
 
 void QtSplash::SetProgress(QtSplash::SplashHandle *s, scalar p)
 {
     s->splash->percentage = p;
+}
+
+void QtSplash::Repaint(QtSplash::SplashHandle *s)
+{
     s->splash->repaint();
 }
 

@@ -37,6 +37,26 @@ FORCEDINLINE void StopSubsystem()
     SSys::Deinit();
 }
 
+template<typename Sys>
+class SubsystemWrapper
+{
+public:
+    template<typename... Args>
+    SubsystemWrapper(Args... arg)
+    {
+        Sys::Init(arg...);
+    }
+    ~SubsystemWrapper()
+    {
+        Sys::Deinit();
+    }
+    template<typename... Args>
+    void process(Args... arg)
+    {
+        Sys::Process(arg...);
+    }
+};
+
 }
 
 #endif

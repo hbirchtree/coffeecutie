@@ -5,7 +5,11 @@
 using namespace Coffee;
 using namespace CDisplay;
 
+#ifdef COFFEE_GLEAM_DESKTOP
 using GL = CGL::CGL43;
+#else
+using GL = CGL::CGLES30;
+#endif
 
 class CDRenderer : public Coffee::CDisplay::CGLeamRenderer
 {
@@ -27,7 +31,7 @@ public:
     {
         CSDL2Renderer::eventHandleD(e,data);
 
-        EventHandlers::ResizeWindow<CGL::CGL33>(e,data);
+        EventHandlers::ResizeWindow<GL>(e,data);
     }
     void eventHandleI(const CIEvent &e, c_cptr data)
     {

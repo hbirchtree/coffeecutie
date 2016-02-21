@@ -84,10 +84,17 @@ CGL::CGL_Context *GetContext(CGLWindow *p)
 }
 
 namespace CGL{
+
+#ifdef COFFEE_GLEAM_DESKTOP
+using GL = CGL33;
+#else
+using GL = CGLES30;
+#endif
+
 void ClearBuffer(float dep, float color[4])
 {
-    CGL33::ClearBufferfv(false,0,&dep);
-    CGL33::ClearBufferfv(true,0,color);
+    GL::ClearBufferfv(false,0,&dep);
+    GL::ClearBufferfv(true,0,color);
 }
 
 }

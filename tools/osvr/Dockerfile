@@ -37,13 +37,16 @@ RUN wget https://static.oculus.com/sdk-downloads/ovr_sdk_linux_0.5.0.1.tar.xz
 RUN tar xvf ovr*.xz
 WORKDIR /home/bob/ovr_sdk_linux_0.5.0.1
 RUN sh ConfigureDebian.sh
-RUN make
+RUN make install
 
 # Cloning repos
 RUN git clone --recursive https://github.com/OSVR/OSVR-Core.git
 RUN git clone --recursive https://github.com/OSVR/libfunctionality.git
 RUN git clone --recursive https://github.com/VRPN/jsoncpp
 RUN git clone --recursive https://github.com/OSVR/OSVR-Oculus-Rift.git
+
+WORKDIR /home/bob/OSVR-Core/vendor/vrpn
+RUN git checkout feature/oculus-rift
 
 USER root
 
@@ -81,6 +84,6 @@ RUN make install
 # Build Oculus Rift support
 RUN mkdir /home/bob/osvr-ovr-build
 WORKDIR /home/bob/osvr-ovr-build
-RUN cmake ../OSVR-Oculus-Rift -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
+RUN cmake ../OSVR-Oculus-Rift -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/ -DVRPN_USE_OVR=1
 RUN make
 RUN make install

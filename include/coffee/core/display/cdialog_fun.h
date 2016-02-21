@@ -3,6 +3,7 @@
 
 #include "../coffee_macros.h"
 #include "../types/composite_types.h"
+#include "../base/cthreading.h"
 
 namespace Coffee{
 
@@ -70,6 +71,7 @@ struct SplashInterface
     static void SetSubText(SplashHandle*,Title const&);
 
     static void SetProgress(SplashHandle*, scalar);
+    static void Repaint(SplashHandle*);
 
     static bool SetBitmap(SplashHandle*,PixelFormat,CSize const&,const byte_t*);
 

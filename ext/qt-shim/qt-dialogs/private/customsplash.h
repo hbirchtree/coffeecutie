@@ -33,8 +33,8 @@ protected:
         QFont base_font = painter->font();
         QRect space = this->contentsRect();
         int prog_height = base_font.pointSize();
-        QColor prog_color = QColor(255,127,0);
-        QColor base_color = QColor(255,127,0,70).dark();
+        QColor prog_color = QColor(0,127,50);
+        QColor base_color = QColor(0,127,50,70).dark();
 
         /*HACKY HACKY*/
         QPainter::CompositionMode cmode = painter->compositionMode();

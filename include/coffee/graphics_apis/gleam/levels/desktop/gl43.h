@@ -89,6 +89,11 @@ struct CGL43 : CGL33
     STATICINLINE void ViewportArrayv(uint32 i,size_t c,CRectF const* v)
     {glViewportArrayv(i,c,(scalar*)v);}
     STATICINLINE void ViewportSet(uint32 i,CRectF const* v){ViewportArrayv(i,1,v);}
+    STATICINLINE void ViewportSet(CRect64 const* v)
+    {
+        CRectF r(v->x,v->y,v->w,v->h);
+        ViewportSet(0,&r);
+    }
 
     STATICINLINE void ScissorArrayv(uint32 i,size_t c,CRect const* v)
     {glScissorArrayv(i,c,(int32*)v);}

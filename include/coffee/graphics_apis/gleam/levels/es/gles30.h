@@ -6,7 +6,7 @@
 namespace Coffee{
 namespace CGL{
 /*!
- * \brief OpenGL 3.3 compliance model
+ * \brief OpenGL ES 3.0 compliance model
  */
 struct CGLES30 : CGL_Implementation
 {

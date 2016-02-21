@@ -334,14 +334,16 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::PushContext("Splashscreen creation");
 
     /*Required to start Qt GUI applications*/
-    CoffeeExt::QtSystem::Init(argc,argv);
+    SubsystemWrapper<CoffeeExt::QtSystem> qt(argc,argv);
+    C_UNUSED(qt);
     Profiler::Profile("Initialization");
 
     /*Testing out Qt splashscreen support*/
-    splash = Splash::CreateSplash();
-    Profiler::Profile("Creation of object");
-
     {
+
+        splash = Splash::CreateSplash();
+        Profiler::Profile("Creation of object");
+
         CResources::CResource resc("eye-normal.tga");
         CResources::FileMap(resc);
         CStbImageLib::CStbImage img;
@@ -360,12 +362,12 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         CStbImageLib::ImageFree(&img);
         CResources::FileFree(resc);
         Profiler::Profile("Free data");
+
+        Splash::ShowSplash(splash);
+        Profiler::Profile("Show splash");
+
+        Profiler::PopContext();
     }
-
-    Splash::ShowSplash(splash);
-    Profiler::Profile("Show splash");
-
-    Profiler::PopContext();
 
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
@@ -374,33 +376,38 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     Profiler::Profile("Object creation");
 
-    CDProperties props = GetDefaultVisual();
-    props.gl.flags = props.gl.flags|GLProperties::GLDebug;
-    props.gl.version.major = 3;
-    props.gl.version.minor = 3;
+    {
+        CDProperties props = GetDefaultVisual();
 
-    renderer->init(props);
-    Profiler::Profile("Initialize renderer");
+        renderer->init(props);
+        Profiler::Profile("Initialize renderer");
 
-    if(!(  GL::SeparableShaderSupported()
-         ||GL::VertexAttribBinding()
-         ||GL::ViewportArraySupported()
-         ||GL::BufferStorageSupported()))
-        return 1;
-    Profiler::Profile("Get GL requirements");
+        if(!(  GL::SeparableShaderSupported()
+               ||GL::VertexAttribBinding()
+               ||GL::ViewportArraySupported()
+               ||GL::BufferStorageSupported()))
+            return 1;
+        Profiler::Profile("Get GL requirements");
 
-    cDebug("Device info: {0}",GL::Debug::Renderer());
-    Profiler::Profile("Get renderer info");
+        cDebug("Device info: {0}",GL::Debug::Renderer());
+        Profiler::Profile("Get renderer info");
+    }
 
-    cDebug("Processor info: {0}",SysInfo::Processor());
-    cDebug("Frequency: {0}GHz",SysInfo::ProcessorFrequency());
-    cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
-    cDebug("FPU: {0}",SysInfo::HasFPU());
-    Profiler::Profile("Get system info");
+    std::function<void()> splash_updater = [=]()
+    {
+        while(!renderer->closeFlag())
+        {
+            Splash::Repaint(splash);
+        }
+    };
+
+    std::future<void> splash_f = Threads::RunAsync(splash_updater);
 
     renderer->run();
 
     Profiler::Profile("Runtime");
+
+    splash_f.get();
 
     renderer->cleanup();
     delete renderer;
@@ -412,8 +419,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     cDebug("Function name: {0}",Stacktracer::GetStackframeName(0));
 
     Splash::DestroySplash(splash);
-
-    CoffeeExt::QtSystem::Deinit();
 
     return 0;
 }

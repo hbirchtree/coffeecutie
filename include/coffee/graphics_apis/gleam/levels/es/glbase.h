@@ -1,14 +1,14 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
-#include <coffee/graphics_apis/include/gltypes.h>
-#include <coffee_strings.h>
-#include <base/cdebug.h>
-#include <base/cdisplay.h>
-#include <coffee/core/CTypes>
+#include <coffee/graphics_apis/gltypes.h>
+#include <coffee/core/coffee_strings.h>
+#include <coffee/core/base/cdebug.h>
+#include <coffee/core/base/cdisplay.h>
+#include <coffee/core/types/composite_types.h>
 
-#include <glad/glad.h>
-#include <KHR/khrplatform.h>
+#include <glad_es/glad.h>
+#include <glad_es/KHR/khrplatform.h>
 
 namespace Coffee{
 namespace CGL{
@@ -537,9 +537,9 @@ C_FLAGS(CGL_Implementation::BufBit,uint32);
 C_FLAGS(CGL_Implementation::PrimCre,uint32);
 C_FLAGS(CGL_Implementation::ShaderStage,uint32);
 
-#include "gl_to_enum.inl"
-
 }
 }
 
 #endif
+
+#include "../gl_to_enum.inl"

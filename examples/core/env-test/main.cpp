@@ -35,6 +35,11 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("uint32 size: {0}",sizeof(uint32));
     cDebug("int32 size: {0}",sizeof(int32));
 
+    cDebug("Processor info: {0}",SysInfo::Processor());
+    cDebug("Frequency: {0}GHz",SysInfo::ProcessorFrequency());
+    cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
+    cDebug("FPU: {0}",SysInfo::HasFPU());
+
     {
         int64 ptr = 123;
         cDebug("Pointer: {0}",(const void* const&)ptr);
