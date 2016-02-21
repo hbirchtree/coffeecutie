@@ -1,38 +1,20 @@
 #include <coffee_ext/qt_shim/dialogs/dialogs.h>
-#include <QGuiApplication>
-#include <QApplication>
-#include <QSplashScreen>
+
+#include "customsplash.h"
 
 #include <QImage>
 #include <QPixmap>
 
+#include <QDesktopWidget>
+#include <QScreen>
+
 namespace CoffeeExt{
 namespace QtDialogs{
-
-thread_local QApplication* dialog_application = nullptr;
-
-void QtInitApplication(int &argc, char** argv)
-{
-    if(!dialog_application)
-    {
-        dialog_application = new QApplication(argc,argv);
-    }
-}
-
-void QtExitApplication()
-{
-    delete dialog_application;
-}
-
-void QtProcessEvents(int timeout)
-{
-    QApplication::processEvents();
-}
 
 struct QtSplash::SplashHandle
 {
     SplashHandle():
-        splash(new QSplashScreen)
+        splash(new CustomSplashScreen)
     {
     }
     ~SplashHandle()
@@ -40,7 +22,8 @@ struct QtSplash::SplashHandle
         splash->deleteLater();
     }
 
-    QSplashScreen* splash;
+    QDesktopWidget w;
+    CustomSplashScreen* splash;
     QImage pimg;
     QPixmap pixm;
 };
@@ -48,9 +31,6 @@ struct QtSplash::SplashHandle
 QtSplash::SplashHandle *QtSplash::CreateSplash()
 {
     SplashHandle* s = new SplashHandle;
-
-    s->splash->setFixedSize(800,600);
-
     return s;
 }
 
@@ -67,10 +47,33 @@ void QtSplash::HideSplash(SplashHandle *s)
 void QtSplash::SetSize(SplashHandle *s, const CSize &size)
 {
     s->splash->setFixedSize(size.w,size.h);
+
+    QRect geo = s->w.availableGeometry(s->w.primaryScreen());
+    QRect optimal;
+    optimal.setLeft(geo.center().x()-optimal.width()/2);
+    optimal.setTop(geo.center().y()-optimal.height()/2);
+    optimal.setRight(optimal.left()+size.w);
+    optimal.setBottom(optimal.top()+size.h);
+
+    s->splash->setGeometry(optimal);
 }
 
-void QtSplash::SetTitle(SplashHandle *s, CString title)
+void QtSplash::SetTitle(SplashHandle *s, const Title &title)
 {
+    new(&(s->splash->m_title)) Title(title);
+    s->splash->repaint();
+}
+
+void QtSplash::SetSubText(SplashHandle *s, const Title &title)
+{
+    new(&(s->splash->m_subtext)) Title(title);
+    s->splash->repaint();
+}
+
+void QtSplash::SetProgress(QtSplash::SplashHandle *s, scalar p)
+{
+    s->splash->percentage = p;
+    s->splash->repaint();
 }
 
 bool QtSplash::SetBitmap(SplashHandle *s, PixelFormat fmt, const CSize &size, const byte_t *data)
@@ -99,7 +102,6 @@ bool QtSplash::SetBitmap(SplashHandle *s, PixelFormat fmt, const CSize &size, co
     }
 
     s->pimg = QImage(data,size.w,size.h,qfmt);
-
     s->splash->setPixmap(QPixmap::fromImage(s->pimg));
 
     return true;

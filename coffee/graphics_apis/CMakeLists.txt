@@ -9,7 +9,6 @@ else()
 endif()
 
 set ( CoffeeGraphicsMisc_SRCS
-        private/scene/cnode.cpp
     )
 
 coffee_add_library ( CoffeeGraphicsMisc "${CoffeeGraphicsMisc_SRCS}" )

@@ -4,9 +4,12 @@
 #include <coffee/CGraphics>
 
 #include <coffee_ext/qt_shim/dialogs/dialogs.h>
+#include <coffee_ext/qt_shim/qtinit.h>
 
 using namespace Coffee;
 using namespace CDisplay;
+
+Splash::SplashHandle* splash;
 
 void framecount_fun(uint32 t, c_cptr)
 {
@@ -245,6 +248,8 @@ public:
         {
             scalar time = this->contextTime();
 
+            Splash::SetProgress(splash,CMath::fmod(time,10.f)/10.f);
+
             if(cycle_color)
             {
                 clearcol.r() = CMath::sin(time+0.5);
@@ -264,7 +269,7 @@ public:
 
             fcounter.update(ftimer.elapsed());
 
-            CoffeeExt::QtDialogs::QtProcessEvents(100);
+            CoffeeExt::QtSystem::Process(100);
             this->pollEvents();
             this->swapBuffers();
         }
@@ -329,11 +334,11 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::PushContext("Splashscreen creation");
 
     /*Required to start Qt GUI applications*/
-    CoffeeExt::QtDialogs::QtInitApplication(argc,argv);
+    CoffeeExt::QtSystem::Init(argc,argv);
     Profiler::Profile("Initialization");
 
     /*Testing out Qt splashscreen support*/
-    Splash::SplashHandle* splash = Splash::CreateSplash();
+    splash = Splash::CreateSplash();
     Profiler::Profile("Creation of object");
 
     {
@@ -345,8 +350,11 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         CStbImageLib::LoadData(&img,&resc,PixelComponents::RGBA);
         Profiler::Profile("Load image");
 
-        Splash::SetSize(splash,img.size);
+        Splash::SetSize(splash,img.size/2);
         Splash::SetBitmap(splash,PixelFormat::RGBA8UI,img.size,img.data);
+        Splash::SetTitle(splash,Splash::Title("Hello world!",Color::Red,
+                                              AlignHCenter|AlignBottom,
+                                              36));
         Profiler::Profile("Apply image");
 
         CStbImageLib::ImageFree(&img);
@@ -405,7 +413,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     Splash::DestroySplash(splash);
 
-    CoffeeExt::QtDialogs::QtExitApplication();
+    CoffeeExt::QtSystem::Deinit();
 
     return 0;
 }

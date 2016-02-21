@@ -5,11 +5,6 @@ namespace QtDialogs{
 
 using namespace Coffee;
 
-void QtInitApplication(int &argc, char** argv);
-void QtExitApplication();
-
-void QtProcessEvents(int timeout = 20);
-
 struct QtSplash : Coffee::SplashInterface
 {
     struct SplashHandle;
@@ -21,8 +16,10 @@ struct QtSplash : Coffee::SplashInterface
 
     static void SetSize(SplashHandle* s,CSize const&size);
 
-    static void SetTitle(SplashHandle* s,CString title);
-    static void SetSubText(SplashHandle* s,CString subtxt);
+    static void SetTitle(SplashHandle*,Title const& title);
+    static void SetSubText(SplashHandle*,Title const& title);
+
+    static void SetProgress(SplashHandle*, scalar);
 
     static bool SetBitmap(SplashHandle *s, PixelFormat, const CSize &size, const byte_t *data);
 

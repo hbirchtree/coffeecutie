@@ -3,10 +3,6 @@ set ( CBlam_SRCS
         private/volta/cblam_map.cpp
         private/volta/cblam_mod2.cpp
         private/volta/cblam_scenario_loader.cpp
-
-        private/dimeter/cblam_map.cpp
-
-        private/elegy/cblam_map.cpp
         )
 
 coffee_add_library ( CoffeeBlam "${CBlam_SRCS}" )

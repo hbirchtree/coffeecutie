@@ -15,4 +15,28 @@
 #include "cdef/pixtypes.h"
 #include "cdef/timetypes.h"
 
+namespace Coffee{
+
+struct Subsystem
+{
+    static void Init();
+    static void Deinit();
+
+    static void Process();
+};
+
+template<typename SSys>
+FORCEDINLINE void StartSubsystem()
+{
+    SSys::Init();
+}
+
+template<typename SSys>
+FORCEDINLINE void StopSubsystem()
+{
+    SSys::Deinit();
+}
+
+}
+
 #endif

@@ -1,13 +1,11 @@
 set ( CoffeeCore_SRCS
 
     private/coffee.cpp
-    private/base/counter.cpp
     private/base/cdebug.cpp
     private/base/cdisplay.cpp
     private/base/cfiles.cpp
     private/base/cfilewatcher.cpp
     private/base/cobject.cpp
-    private/base/cregex.cpp
 
     private/base/cdrendererbase.cpp
 
@@ -20,12 +18,9 @@ set ( CoffeeCore_SRCS
 
     private/input/cinputfunctions.cpp
 
-    private/plat/argument_parse.cpp
     private/plat/environment_details.cpp
-    private/plat/cmemory.cpp
     private/plat/plat_file.cpp
     private/plat/linking/libraries.cpp
-    private/plat/plat_timers.cpp
     private/plat/windows/win_core.cpp
     private/plat/unix/unix_core.cpp
 

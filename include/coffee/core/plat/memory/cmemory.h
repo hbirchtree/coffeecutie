@@ -16,6 +16,10 @@
 #include <cwchar>
 #include <cstdio>
 
+#include <iomanip>
+#include <sstream>
+#include <string>
+
 #include "../../coffee_mem_macros.h"
 #include "../../types/basetypes.h"
 
@@ -243,6 +247,16 @@ FORCEDINLINE CString& zerortrim(CString& s)
 FORCEDINLINE CString& zerotrim(CString& s)
 {
     return zeroltrim(zerortrim(s));
+}
+
+template<typename T>
+FORCEDINLINE CString spacepad(T const& s, uint32 padding = 1)
+{
+    CString out;
+    std::stringstream ss;
+    ss << std::setw(padding) << std::to_string(s);
+    ss >> out;
+    return out;
 }
 
 }
