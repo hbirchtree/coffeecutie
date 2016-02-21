@@ -50,6 +50,7 @@ RUN git clone --recursive https://github.com/OSVR/OSVR-Oculus-Rift.git
 WORKDIR /home/bob/OSVR-Core/vendor/vrpn
 RUN git checkout feature/oculus-rift
 
+WORKDIR /home/bob
 USER root
 
 # Building JSONCPP
