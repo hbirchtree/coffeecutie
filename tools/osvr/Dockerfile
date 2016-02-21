@@ -23,7 +23,7 @@ RUN apt-get -y install \
 	libboost-filesystem-dev \
 	libusb-1.0-0-dev \
         libudev-dev \
-        libmesa-dev \
+        libgl1-mesa-dev \
         ninja-build \
         wget
 
@@ -38,6 +38,8 @@ RUN tar xvf ovr*.xz
 WORKDIR /home/bob/ovr_sdk_linux_0.5.0.1
 RUN sh ConfigureDebian.sh
 RUN make install
+
+WORKDIR /home/bob
 
 # Cloning repos
 RUN git clone --recursive https://github.com/OSVR/OSVR-Core.git
