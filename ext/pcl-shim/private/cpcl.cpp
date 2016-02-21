@@ -53,6 +53,9 @@ PointCloud<PointXYZRGB>::Ptr CPCLImplementation::GenPointCloud(
 
     pcloud->points.resize(pi);
 
+    std::vector<int> indices;
+    pcl::removeNaNFromPointCloud(*pcloud,*pcloud,indices);
+
     return pcloud;
 }
 

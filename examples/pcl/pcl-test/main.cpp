@@ -20,12 +20,14 @@ struct ColorVec3
 int32 coffee_main(int32, cstring_w*)
 {
     CResources::CResource depth("cloudframe.raw");
-    CResources::FileMap(depth);
+    CResources::FileMap(depth,ResourceAccess::ReadOnly|ResourceAccess::Streaming);
 
     CSize depth_size(512,424);
     CSize color_size(512,424);
 
     const ColorVec3* depth_comp_data = (ColorVec3*)depth.data;
+
+    depth_comp_data += depth_size.area()*5;
 
     CVec3* depth_data = (CVec3*)Alloc(depth_size.area()*sizeof(CVec3));
     CRGBA* color_data = (CRGBA*)Alloc(color_size.area()*sizeof(CRGBA));
@@ -47,19 +49,19 @@ int32 coffee_main(int32, cstring_w*)
     CElapsedTimerD timer;
     timer.start();
 
-//    CPCL::PointCloud<CPCL::PointXYZ>::Ptr pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
-//    CPCLI::DenoiseCloud(pcl_xyz);
-//    CPCL::PolygonMesh* mesh = CPCLI::CreatePolygonMesh(pcl_xyz);
-//    cDebug("Mesh processing time: {0}",timer.elapsed());
+    CPCL::PointCloud<CPCL::PointXYZ>::Ptr pcl_xyz = CPCLI::ExtractXYZCloud(pcl);
+    CPCLI::DenoiseCloud(pcl_xyz);
+    CPCL::PolygonMesh* mesh = CPCLI::CreatePolygonMesh(pcl_xyz);
+    cDebug("Mesh processing time: {0}",timer.elapsed());
 
-//    CPCL::io::saveVTKFile("mesh.vtk",*mesh);
+    CPCL::io::saveVTKFile("mesh.vtk",*mesh);
 
     CPCL::PointCloud<CPCL::PointXYZRGB>::Ptr pcl_ptr(pcl);
 
     CPCL::visualization::CloudViewer viewer("CloudView");
     viewer.showCloud(pcl_ptr);
-    while(!viewer.wasStopped())
-        continue;
+
+    while(!viewer.wasStopped());
 
     CPCL::CPCLImplementation::SavePCDFile(*pcl,"depthdata.pcd");
 

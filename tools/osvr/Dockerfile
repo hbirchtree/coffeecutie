@@ -59,7 +59,7 @@ WORKDIR /home/bob/osvr-build
 RUN cmake ../OSVR-Core -DCMAKE_CXX_FLAGS=-fPIC
 RUN make
 RUN make install
-RUN cmake ../OSVR-Core -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/ -DCMAKE_CXX_FLAGS=-fPIC
+RUN cmake ../OSVR-Core -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
 RUN make install
 
 # Build Oculus Rift support
