@@ -2,6 +2,8 @@
 FROM ubuntu:xenial
 MAINTAINER hbirch
 
+ADD vrpn-patch.p /vrpn-patch.patch
+
 # List of system dependencies, rest come from git
 RUN apt-get -y install software-properties-common
 
@@ -37,8 +39,13 @@ RUN wget https://static.oculus.com/sdk-downloads/ovr_sdk_linux_0.5.0.1.tar.xz
 RUN tar xvf ovr*.xz
 WORKDIR /home/bob/ovr_sdk_linux_0.5.0.1
 RUN sh ConfigureDebian.sh
+RUN make
+USER root
 RUN make install
 
+RUN ln -s /home/bob/ovr_sdk_linux_0.5.0.1/LibOVRKernel/Src/Kernel /usr/include/
+
+USER bob
 WORKDIR /home/bob
 
 # Cloning repos
@@ -46,9 +53,12 @@ RUN git clone --recursive https://github.com/OSVR/OSVR-Core.git
 RUN git clone --recursive https://github.com/OSVR/libfunctionality.git
 RUN git clone --recursive https://github.com/VRPN/jsoncpp
 RUN git clone --recursive https://github.com/OSVR/OSVR-Oculus-Rift.git
+RUN git clone --recursive https://github.com/vrpn/vrpn.git
 
-WORKDIR /home/bob/OSVR-Core/vendor/vrpn
+WORKDIR /home/bob/vrpn
 RUN git checkout feature/oculus-rift
+
+RUN bash -c "patch -p1 < /vrpn-patch.patch"
 
 WORKDIR /home/bob
 USER root
@@ -81,7 +91,7 @@ RUN make install
 # For some reason, VRPN must be built twice
 RUN mkdir /home/bob/vrpn-build
 WORKDIR /home/bob/vrpn-build
-RUN cmake ../OSVR-Core/vendor/vrpn
+RUN cmake ../vrpn -DVRPN_USE_OVR=1
 RUN make install
 
 # Build Oculus Rift support
