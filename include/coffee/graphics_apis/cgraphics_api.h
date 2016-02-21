@@ -6,7 +6,7 @@
 namespace Coffee{
 namespace CRHI{
 
-struct CGraphicsProfiler
+struct GraphicsProfiler
 {
     /*!
      * \brief Queries the API for performance information, begins and ends
@@ -22,7 +22,7 @@ struct CGraphicsProfiler
     };
 };
 
-struct CGraphicsAPI
+struct GraphicsAPI
 {
     /*!
      * \brief A singular command for the GPU command queue
@@ -103,10 +103,12 @@ struct CGraphicsAPI
         CString message(){}
     };
 
-    struct VertexDescription
+    struct VertexAttribute
     {
         bool interleaved(){return 0;}
+        int32 offset(){return 0;}
         int32 stride(){return 0;}
+        TypeEnum type(){return 0;}
     };
 
     /*!
@@ -116,6 +118,7 @@ struct CGraphicsAPI
     {
         VertexBuffer(ResourceAccess access, uint32 size):m_access(access),m_size(size){}
 
+        void* data();
         void commitMemory();
     protected:
         ResourceAccess m_access;
@@ -124,10 +127,10 @@ struct CGraphicsAPI
 
     struct VertexBufferBinding
     {
-        VertexBufferBinding(VertexBuffer* buf, VertexDescription* desc):m_buffer(buf),m_descr(desc){}
+        VertexBufferBinding(VertexBuffer* buf, VertexAttribute* desc):m_buffer(buf),m_descr(desc){}
     protected:
         VertexBuffer* m_buffer;
-        VertexDescription* m_descr;
+        VertexAttribute* m_descr;
     };
 
     /*!
@@ -187,6 +190,8 @@ struct CGraphicsAPI
 
     /*!
      * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader (for GL3.3, just slap a program in there and put tighter restrictions on attaching)
+     * On GL3.3, this will be a program object
+     * On GL4.3+ this will be a pipeline object with separable shaderprogram objects
      */
     struct Pipeline
     {
@@ -198,6 +203,8 @@ struct CGraphicsAPI
     };
     /*!
      * \brief Contains a single shader, fragment and etc.
+     * On GL3.3 this will be a shader object
+     * On GL4.3+ this will be a separable shaderprogram object
      */
     struct Shader
     {
@@ -222,16 +229,24 @@ struct CGraphicsAPI
      */
     struct Surface
     {
-        Surface(PixelFormat fmt, bool isArray, uint32 arraySize, uint32 mips, uint32 flags, ResourceAccess cl)
-            :m_pixfmt(fmt),b_array(isArray),m_arrsize(arraySize),m_mips(mips),m_flags(flags),m_access(cl)
+        Surface(PixelFormat fmt, bool isArray = false, uint32 arraySize = 0,
+                uint32 mips = 1, uint32 flags = 0,
+                ResourceAccess cl = ResourceAccess::ReadOnly)
+            :m_pixfmt(fmt),
+              b_array(isArray),
+              m_arrsize(arraySize),
+              m_mips(mips),
+              m_flags(flags),
+              m_access(cl)
         {}
 
-        uint32 size(){return 0;}
-        bool isArray(){return 0;}
-        uint32 arraySize(){return 0;}
-        uint32 mipmaps(){return 0;}
-        PixelFormat format(){return (PixelFormat)0;}
-    protected:
+        uint32 size() const {return 0;}
+        bool isArray() const {return 0;}
+        uint32 arraySize() const {return 0;}
+        uint32 mipmaps() const {return 0;}
+        PixelFormat format() const {return (PixelFormat)0;}
+
+    private:
         PixelFormat m_pixfmt;
         bool b_array;
         uint32 m_arrsize;
@@ -256,14 +271,25 @@ struct CGraphicsAPI
         void attachDepthStencilSurface(){}
     };
 
-    struct APIDrawCall
+    struct DrawCall
     {
         bool indexed(){return 0;}
         bool instanced(){return 0;}
 
+        uint32 vertices(){return 0;}
+        uint32 elements(){return 0;}
+        uint32 instances(){return 0;}
+
         int32 vertexOffset(){return 0;}
         int32 indexOffset(){return 0;}
         int32 instanceOffset(){return 0;}
+    };
+
+    static void Draw(DrawCall const&);
+
+    struct Util
+    {
+        static void DumpTexture(Surface const& s);
     };
 };
 
