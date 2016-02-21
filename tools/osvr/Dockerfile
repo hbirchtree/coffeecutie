@@ -22,12 +22,22 @@ RUN apt-get -y install \
 	libboost-program-options-dev \
 	libboost-filesystem-dev \
 	libusb-1.0-0-dev \
-	ninja-build
+        libudev-dev \
+        libmesa-dev \
+        ninja-build \
+        wget
 
 RUN useradd -m bob
 
 USER bob
 WORKDIR /home/bob
+
+# Download Oculus Rift SDK
+RUN wget https://static.oculus.com/sdk-downloads/ovr_sdk_linux_0.5.0.1.tar.xz
+RUN tar xvf ovr*.xz
+WORKDIR /home/bob/ovr_sdk_linux_0.5.0.1
+RUN sh ConfigureDebian.sh
+RUN make
 
 # Cloning repos
 RUN git clone --recursive https://github.com/OSVR/OSVR-Core.git
@@ -62,8 +72,15 @@ RUN make install
 RUN cmake ../OSVR-Core -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
 RUN make install
 
+# For some reason, VRPN must be built twice
+RUN mkdir /home/bob/vrpn-build
+WORKDIR /home/bob/vrpn-build
+RUN cmake ../OSVR-Core/vendor/vrpn
+RUN make install
+
 # Build Oculus Rift support
 RUN mkdir /home/bob/osvr-ovr-build
 WORKDIR /home/bob/osvr-ovr-build
 RUN cmake ../OSVR-Oculus-Rift -DCMAKE_INSTALL_PREFIX=/home/bob/osvr-bin/
+RUN make
 RUN make install
