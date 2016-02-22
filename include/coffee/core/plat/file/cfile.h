@@ -17,6 +17,15 @@ struct PlatFileFun : FileFunDef
 {
     struct FileHandle
     {
+        FileHandle():
+            handle(nullptr)
+        {
+        }
+        ~FileHandle()
+        {
+            if(handle)
+                fclose(handle);
+        }
         FILE* handle;
     };
 
@@ -37,14 +46,17 @@ struct PlatFileFun : FileFunDef
 
         cstring mode = "";
 
-        if(feval(ac&(ResourceAccess::ReadWrite|ResourceAccess::Append)))
+        /* Because of the way masks work, feval must be run on each individual flag */
+        if(feval(ac&ResourceAccess::ReadWrite) &&
+                feval(ac&ResourceAccess::Append))
             mode = "a+";
-        else if(feval(ac&(ResourceAccess::WriteOnly|ResourceAccess::Append)))
+        else if(feval(ac&ResourceAccess::WriteOnly) &&
+                feval(ac&ResourceAccess::Append))
             mode = "a";
         else if(feval(ac&(ResourceAccess::ReadOnly)))
             mode = "r";
         else if(feval(ac&(ResourceAccess::WriteOnly)))
-            mode = "w+";
+            mode = "w";
         else if(feval(ac&(ResourceAccess::ReadWrite)))
             mode = "r+";
 
@@ -61,9 +73,6 @@ struct PlatFileFun : FileFunDef
     }
     static bool Close(FileHandle* fh)
     {
-        int status = fclose(fh->handle);
-        if(status!=0)
-            return false;
         delete fh;
         return true;
     }
@@ -90,7 +99,7 @@ struct PlatFileFun : FileFunDef
     }
     static bool Seek(FileHandle* fh,uint64 off)
     {
-        return fseek(fh->handle,off,SEEK_END)==0;
+        return fseek(fh->handle,off,SEEK_SET)==0;
     }
     static bool Write(FileHandle* fh,CByteData const& d,bool)
     {
@@ -112,7 +121,7 @@ struct PlatFileFun : FileFunDef
         szptr offset = ftell(fh->handle);
         fseek(fh->handle,0,SEEK_END);
         szptr fsize = ftell(fh->handle);
-        fseek(fh->handle,offset,SEEK_END);
+        fseek(fh->handle,offset,SEEK_SET);
         return fsize;
     }
     static bool Rm(cstring)

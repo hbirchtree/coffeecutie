@@ -263,13 +263,16 @@ struct GraphicsAPI
     struct CubemapArray; /* Layered cubemap */
 
     /*!
-     * \brief Contains framebuffer and viewport information for resizing, used for screen rendering and shadow maps
+     * \brief Contains framebuffer and viewport information for resizing,
+     *  used for screen rendering and shadow maps
      */
     struct RenderTarget
     {
         void attachSurface(){}
         void attachDepthStencilSurface(){}
     };
+
+    static void SetRenderTarget(RenderTarget const&);
 
     struct DrawCall
     {
@@ -284,7 +287,6 @@ struct GraphicsAPI
         int32 indexOffset(){return 0;}
         int32 instanceOffset(){return 0;}
     };
-
     static void Draw(DrawCall const&);
 
     struct Util

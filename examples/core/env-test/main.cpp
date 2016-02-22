@@ -62,6 +62,14 @@ int32 coffee_main(int32, cstring_w*)
     }
 
     {
+        CResources::CResource res("test.file");
+        res.size = 1024;
+        res.data = Alloc(res.size);
+        CResources::FileCommit(res,false);
+        CResources::FileFree(res);
+    }
+
+    {
         /* Testing function slot/signal classes */
         CRect t(0,0,10,10);
         CFunctionSlot<CRect,int32> b(&t,&CRect::area);

@@ -122,13 +122,14 @@ bool FilePull(CResource &resc, bool textmode, bool)
 bool FileCommit(CResource &resc, bool append)
 {
 #if defined(COFFEE_C_FILE_API)
-    FileFun::FileHandle *fp = FileFun::Open(resc.resource(),
-                                            (append) ? ResourceAccess::Append|ResourceAccess::WriteOnly : ResourceAccess::WriteOnly);
+    FileFun::FileHandle *fp = FileFun::Open(
+                resc.resource(),
+                (append) ?
+                    ResourceAccess::Append|ResourceAccess::WriteOnly
+                  : ResourceAccess::WriteOnly);
     CByteData d;
     d.data = (byte_t*)resc.data;
     d.size = resc.size;
-    if(!append)
-        FileFun::Seek(fp,0);
     bool stat = FileFun::Write(fp,d,false);
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
