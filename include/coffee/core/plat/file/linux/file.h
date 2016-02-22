@@ -16,7 +16,7 @@ namespace CResources{
 
 struct LinuxFileFun : PlatFileFun
 {
-    static void* Map(cstring filename, ResourceAccess acc, szptr offset, szptr size, int* error)
+    STATICINLINE void* Map(cstring filename, ResourceAccess acc, szptr offset, szptr size, int* error)
     {
         szptr pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE)-1);
 
@@ -70,7 +70,7 @@ struct LinuxFileFun : PlatFileFun
         }
         return addr;
     }
-    static bool  Unmap(void* ptr, szptr size)
+    STATICINLINE bool  Unmap(void* ptr, szptr size)
     {
         return munmap(ptr,size);
     }
@@ -78,7 +78,7 @@ struct LinuxFileFun : PlatFileFun
 
 struct LinuxDirFun : DirFunDef
 {
-    static bool MkDir(cstring dname, bool createParent)
+    STATICINLINE bool MkDir(cstring dname, bool createParent)
     {
         if(!createParent)
             return mkdir(dname,S_IRWXU|S_IRWXG)==0;
@@ -100,7 +100,7 @@ struct LinuxDirFun : DirFunDef
             }
         return mkdir(tmp,S_IRWXU)==0;
     }
-    static bool RmDir(cstring)
+    STATICINLINE bool RmDir(cstring)
     {
         /*TODO: Implement RmDir function*/
         return false;

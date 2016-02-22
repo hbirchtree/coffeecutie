@@ -13,7 +13,7 @@ FORCEDINLINE CString cStringReplace(
         CString fmt, size_t index,
         const T& arg)
 {
-    return cStrReplace(fmt,index,conversion::to_string(arg));
+    return extArgReplace(fmt,index,conversion::to_string(arg));
 }
 
 template<typename T>

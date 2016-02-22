@@ -29,7 +29,7 @@ struct PlatFileFun : FileFunDef
         FILE* handle;
     };
 
-    static CString NativePath(cstring fn)
+    STATICINLINE CString NativePath(cstring fn)
     {
         CString temp = fn;
 #if defined(COFFEE_WINDOWS)
@@ -40,7 +40,7 @@ struct PlatFileFun : FileFunDef
         return temp;
     }
 
-    static FileHandle* Open(cstring fn, ResourceAccess ac)
+    STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
     {
         FileHandle* fh = new FileHandle;
 
@@ -71,13 +71,13 @@ struct PlatFileFun : FileFunDef
 
         return fh;
     }
-    static bool Close(FileHandle* fh)
+    STATICINLINE bool Close(FileHandle* fh)
     {
         delete fh;
         return true;
     }
 
-    static CByteData Read(FileHandle* fh, uint64 size,bool nterminate)
+    STATICINLINE CByteData Read(FileHandle* fh, uint64 size,bool nterminate)
     {
         CByteData data;
         data.elements = 0;
@@ -97,26 +97,26 @@ struct PlatFileFun : FileFunDef
 //            cLog(CFStrings::Plat_File_Native_SizeErr,esize,rsize);
         return data;
     }
-    static bool Seek(FileHandle* fh,uint64 off)
+    STATICINLINE bool Seek(FileHandle* fh,uint64 off)
     {
         return fseek(fh->handle,off,SEEK_SET)==0;
     }
-    static bool Write(FileHandle* fh,CByteData const& d,bool)
+    STATICINLINE bool Write(FileHandle* fh,CByteData const& d,bool)
     {
         szptr wsize = fwrite(d.data,sizeof(byte_t),d.size,fh->handle);
         return wsize==d.size;
     }
 
-    static void* Map(cstring, ResourceAccess, szptr, szptr, int*)
+    STATICINLINE void* Map(cstring, ResourceAccess, szptr, szptr, int*)
     {
         return nullptr;
     }
-    static bool Unmap(void*, szptr)
+    STATICINLINE bool Unmap(void*, szptr)
     {
         return false;
     }
 
-    static szptr Size(FileHandle* fh)
+    STATICINLINE szptr Size(FileHandle* fh)
     {
         szptr offset = ftell(fh->handle);
         fseek(fh->handle,0,SEEK_END);
@@ -124,7 +124,7 @@ struct PlatFileFun : FileFunDef
         fseek(fh->handle,offset,SEEK_SET);
         return fsize;
     }
-    static bool Rm(cstring)
+    STATICINLINE bool Rm(cstring)
     {
         return false;
     }

@@ -40,7 +40,7 @@ template<typename LibInterface, cstring loaderFunction = nullptr>
  * \param file Name of the library without platform-specific appendages such as file extensions or "lib"
  * \return Valid pointer if it succeeded, null if it failed
  */
-CObjectLoader<LibInterface>* coffee_get_lib(
+CObjectLoader<LibInterface>* GetLib(
         cstring file,
         _cbasic_version<int32> const* libver = nullptr)
 {

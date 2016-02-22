@@ -19,7 +19,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
                     coffee_callback,nullptr);
 
     CObjectLoader<CDRendererBase>* renderer_loader =
-            coffee_get_lib<CDRendererBase>("DynamicLib",nullptr);
+            GetLib<CDRendererBase>("DynamicLib",nullptr);
 
     CDRendererBase *renderer = renderer_loader->loader();
 

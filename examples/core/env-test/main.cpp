@@ -27,18 +27,25 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileMkdir(cfg_dir.c_str(),true);
     }
 
-    CoffeeTests::FunctionCallTest();
-    CoffeeTests::PrintCallTest();
+//    CoffeeTests::FunctionCallTest();
+//    CoffeeTests::PrintCallTest();
 
     cDebug("uint64 size: {0}",sizeof(uint64));
     cDebug("int64 size: {0}",sizeof(int64));
     cDebug("uint32 size: {0}",sizeof(uint32));
     cDebug("int32 size: {0}",sizeof(int32));
 
+    cDebug("System memory: {0:1}GB",
+           SysInfo::MemTotal()/CMath::pow<bigscalar>(1024,3));
+    cDebug("Available system memory: {0:1}GB",
+           SysInfo::MemAvailable()/CMath::pow<bigscalar>(1024,3));
+
     cDebug("Processor info: {0}",SysInfo::Processor());
-    cDebug("Frequency: {0}GHz",SysInfo::ProcessorFrequency());
+    cDebug("Frequency: {0:2}GHz",SysInfo::ProcessorFrequency());
     cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
     cDebug("FPU: {0}",SysInfo::HasFPU());
+
+    return 0;
 
     {
         int64 ptr = 123;
@@ -51,7 +58,7 @@ int32 coffee_main(int32, cstring_w*)
         libver.major = 1;
         libver.minor = 0;
         libver.revision = 0;
-        CObjectLoader<TestClass>* libtest = coffee_get_lib<TestClass>("test",&libver);
+        CObjectLoader<TestClass>* libtest = GetLib<TestClass>("test",&libver);
 
         if(libtest)
         {
