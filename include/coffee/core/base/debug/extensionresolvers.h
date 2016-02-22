@@ -35,14 +35,14 @@ FORCEDINLINE std::string to_string(const T& v)
 
 template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
 
-FORCEDINLINE CString cStringResolve(CString fmt, size_t)
+FORCEDINLINE CString cStringResolve(CString const& fmt, size_t)
 {
     return fmt;
 }
 
-FORCEDINLINE CString extArgReplace(const CString& fmt,
-                                   size_t index,
-                                   const CString& replace)
+FORCEDINLINE CString extArgReplace(CString const& fmt,
+                                   size_t const& index,
+                                   CString const& replace)
 {
     CString subfmt = "{" + conversion::to_string(index) + "}";
     return CStrReplace(fmt,subfmt,replace);
@@ -55,7 +55,7 @@ FORCEDINLINE CString extArgReplacePhrase(const CString& fmt,
     return CStrReplace(fmt,phrase,replace);
 }
 
-FORCEDINLINE cstring cStringify(DebugComponent comp)
+FORCEDINLINE cstring cStringify(DebugComponent const& comp)
 {
     switch(comp)
     {
@@ -78,7 +78,7 @@ FORCEDINLINE cstring cStringify(DebugComponent comp)
     }
     return "";
 }
-FORCEDINLINE cstring cStringify(DebugType type)
+FORCEDINLINE cstring cStringify(DebugType const& type)
 {
     switch(type)
     {
@@ -101,7 +101,7 @@ FORCEDINLINE cstring cStringify(DebugType type)
     }
     return "";
 }
-FORCEDINLINE cstring cStringify(Severity sev)
+FORCEDINLINE cstring cStringify(Severity const& sev)
 {
     switch(sev)
     {
@@ -126,28 +126,28 @@ FORCEDINLINE cstring cStringify(Severity sev)
 /* Extension resolvers */
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
-        DebugComponent arg)
+        CString const& fmt, size_t const& index,
+        DebugComponent const& arg)
 {
     return extArgReplace(fmt,index,cStringify(arg));
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
-        DebugType arg)
+        CString const& fmt, size_t const& index,
+        DebugType const& arg)
 {
     return extArgReplace(fmt,index,cStringify(arg));
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
-        Severity arg)
+        CString const& fmt, size_t const& index,
+        Severity const& arg)
 {
     return extArgReplace(fmt,index,cStringify(arg));
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         const _cbasic_version<uint8>& arg)
 {
     return extArgReplace(fmt,index,cStringFormat("{0}.{1}.{2}",
@@ -156,7 +156,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         const _cbasic_version<int32>& arg)
 {
     return extArgReplace(fmt,index,cStringFormat("{0}.{1}.{2}",
@@ -165,7 +165,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         const _cbasic_version<uint32>& arg)
 {
     return extArgReplace(fmt,index,cStringFormat("{0}.{1}.{2}",
@@ -174,7 +174,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         HWDeviceInfo const& arg)
 {
     return extArgReplace(fmt,index,cStringFormat("mf={0}, md={1}, fw={2}",
@@ -184,7 +184,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         CQuat const& v)
 {
     return extArgReplace(fmt,index,cStringFormat("q({0}:{1},{2},{3})",
@@ -192,7 +192,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         CVec4 const& v)
 {
     return extArgReplace(fmt,index,cStringFormat("v({0},{1},{2},{3})",
@@ -200,7 +200,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         CVec3 const& v)
 {
     return extArgReplace(fmt,index,cStringFormat("v({0},{1},{2})",
@@ -208,7 +208,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         CVec2 const& v)
 {
     return extArgReplace(fmt,index,cStringFormat("v({0},{1})",
@@ -216,7 +216,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         CMat4 const& v)
 {
     return extArgReplace(
@@ -226,7 +226,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         CMat3 const& v)
 {
     return extArgReplace(
@@ -237,7 +237,7 @@ FORCEDINLINE CString cStringReplace(
 
 template<typename T>
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         const T* const& ptr)
 {
     CString rep;
@@ -248,36 +248,36 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         cstring arg)
 {
     return extArgReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         char* const arg)
 {
     return extArgReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         bool const& arg)
 {
     return extArgReplace(fmt,index,(arg) ? "true" : "false");
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
+        CString const& fmt, size_t const& index,
         const CString& arg)
 {
     return extArgReplace(fmt,index,arg);
 }
 
 FORCEDINLINE CString cStringReplace(
-        CString fmt, size_t index,
-        const bigscalar& arg)
+        CString const& fmt, size_t const& index,
+        bigscalar const& arg)
 {
     /* Regexes, man, these fucking regexes */
     Regex::Pattern patt = Regex::Compile(".*?(\\{\\d+:(\\d+)\\}).*");
@@ -296,6 +296,13 @@ FORCEDINLINE CString cStringReplace(
     }
     else
         return extArgReplace(fmt,index,conversion::to_string(arg));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        scalar const& arg)
+{
+    return cStringReplace(fmt,index,(bigscalar)arg);
 }
 
 }
