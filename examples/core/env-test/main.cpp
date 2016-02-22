@@ -45,12 +45,12 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
     cDebug("FPU: {0}",SysInfo::HasFPU());
 
-    return 0;
-
     {
         int64 ptr = 123;
         cDebug("Pointer: {0}",(const void* const&)ptr);
     }
+
+    return 0;
 
     {
         /* Try loading a shared library, remember to clean up! */
