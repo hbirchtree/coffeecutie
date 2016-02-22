@@ -283,7 +283,7 @@ FORCEDINLINE CString cStringReplace(
     Regex::Pattern patt = Regex::Compile(".*?(\\{\\d+:(\\d+)\\}).*");
     auto match = Regex::Match(patt,fmt,true);
 
-    if(match.size()>=2)
+    if(match.size()>=3)
     {
         int32 prec = Convert::strtoint(match[2].s_match[0].c_str());
 
