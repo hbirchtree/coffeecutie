@@ -1,5 +1,9 @@
 find_package(assimp)
 
+if(NOT DEFINED assimp_LIBRARIES OR NOT DEFINED assimp_INCLUDE_DIRS)
+    message(FATAL_ERROR "Failed to locate Assimp")
+endif()
+
 set ( CoffeeAssimp_SRCS
         private/cassimpimporters.cpp
         private/assimpfun.cpp

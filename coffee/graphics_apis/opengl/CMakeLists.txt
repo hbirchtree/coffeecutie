@@ -1,5 +1,9 @@
 find_package(glbinding)
 
+if(NOT DEFINED GLBINDING_LIBRARIES OR NOT DEFINED GLBINDING_INCLUDE_DIRS)
+    message(FATAL_ERROR "Failed to locate GLBinding")
+endif()
+
 set ( CoffeeOpenGL_SRCS
     private/cgraphics_quirks.cpp
     private/unit_tests.cpp

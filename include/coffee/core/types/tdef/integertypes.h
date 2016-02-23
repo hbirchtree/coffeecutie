@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstddef>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "../../coffee_mem_macros.h"
@@ -30,7 +30,7 @@ using cstring_w  = sbyte_t*; /*!< Writable C-string*/
 using cwstring   = const wchar_t*; /*!< Wide C-string*/
 using cwstring_w = wchar_t*; /*!< Wide, writable C-string*/
 
-using szptr = std::size_t; /*!< Usable as offset into data*/
+using szptr = size_t; /*!< Usable as offset into data*/
 
 constexpr int8 Int8_Max = (INT8_MAX-1);
 constexpr int8 Int8_Min = (INT8_MIN+1);

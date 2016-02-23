@@ -9,6 +9,8 @@ namespace HMD{
 
 struct CHMD_Binding
 {
+    struct Context;
+
     enum class Eye
     {
         Left,Right,
@@ -16,26 +18,92 @@ struct CHMD_Binding
 
     struct Device : HWDeviceInfo
     {
-        Device(CString model, CString firmware):HWDeviceInfo(model,firmware){}
-        CMat4 view(Eye) const{return CMat4();}
+        Device(CString model, CString firmware,
+               CString manuf = ""):
+            HWDeviceInfo(manuf,model,firmware){}
 
-        CVec3 radianVelocity() const{return CVec3();}
-        CVec3 velocity() const{return CVec3();}
+        /*!
+         * \brief Acquire view transform per-eye
+         * \return
+         */
+        CMat4 view(Eye) const;
 
-        bool isConnected() const{return false;}
+        /*!
+         * \brief Acquire angular velocity of user body
+         * \return
+         */
+        CVec3 angularVelocity() const;
+        /*!
+         * \brief Acquire positional velocity of user body
+         * \return
+         */
+        CVec3 velocity() const;
+
+        /*!
+         * \brief Connection state of device, changes upon disconnection
+         * \return
+         */
+        bool isConnected() const;
     };
 
     struct Lens
     {
-        _cbasic_tmnmatrix<bigscalar,3,2> distortion; /*Why MN-matrix? Allows scaling of all components in one function.*/
+        /*Why MN-matrix? Allows scaling of all components in one function.*/
+        _cbasic_tmnmatrix<bigscalar,3,2> distortion;
     };
 
-    static bool InitializeBinding(){return false;}
+    /*!
+     * \brief Initializes a thread-local context for the VR system
+     * \return
+     */
+    static bool InitializeBinding();
+    /*!
+     * \brief Polls for updates on devices (if necessary) and returns some state to the user
+     * \param lastValidIndex Represents the amount of valid devices
+     * \return
+     */
+    static bool PollDevices(int32 *lastValidIndex = nullptr);
+    /*!
+     * \brief Shuts down the VR context on the current thread gracefully, resetting state and etc.
+     */
+    static void Shutdown();
 
-    static void Shutdown(){}
+    /*!
+     * \brief Compile-time driver, if applicable
+     * \return
+     */
+    static SWVersionInfo GetDriverInfo();
+    /*!
+     * \brief Runtime driver, if applicable
+     * \return
+     */
+    static SWVersionInfo GetRuntimeInfo();
 
-    static Device* GetDevice(int32 id){return nullptr;}
-    static Device* GetDefaultDevice(){return nullptr;}
+    /*!
+     * \brief Get a device with a certain index
+     * \param id Index of the device in question
+     * \return Valid pointer on success, nullptr on failure
+     */
+    static Device* GetDevice(int32 id);
+    /*!
+     * \brief Acquire a handle for the default device, quite often device 0
+     * \return Valid pointer on success, nullptr on failure (eg. no VR devices)
+     */
+    static Device* GetDefaultDevice();
+
+    /* Because we make it thread_local for more verbosity when something gets f***ed */
+    static const Context* GetConstContext();
+    /*!
+     * \brief Remove context from this thread
+     * \return
+     */
+    static Context* GetContext();
+    /*!
+     * \brief Set this context into this thread. Make sure there is not one there already!
+     * \param context
+     * \return
+     */
+    static bool SetContext(Context* context);
 };
 
 }

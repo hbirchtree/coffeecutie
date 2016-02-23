@@ -2,11 +2,8 @@ if(COFFEE_BUILD_GLBINDING)
     add_subdirectory(opengl)
 endif()
 
-if(COFFEE_BUILD_GLES)
-    add_subdirectory(gleames)
-else()
-    add_subdirectory(gleam)
-endif()
+# GLeam requires no dependencies outside of SDL2
+add_subdirectory(gleam)
 
 set ( CoffeeGraphicsMisc_SRCS
     )

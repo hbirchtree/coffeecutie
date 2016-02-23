@@ -12,7 +12,7 @@ if(COFFEE_PYTHON)
 
     file(GLOB PYTHON_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.py)
 
-    message("Python files: ${PYTHON_FILES}")
+#    message("Python files: ${PYTHON_FILES}")
 
     install(
         FILES

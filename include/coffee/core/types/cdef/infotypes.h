@@ -2,6 +2,7 @@
 
 #include "../../coffee_mem_macros.h"
 #include "../tdef/stltypes.h"
+#include "../tdef/integertypes.h"
 
 namespace Coffee{
 
@@ -25,6 +26,44 @@ struct HWDeviceInfo
     const CString manufacturer;
     const CString model;
     const CString firmware;
+};
+
+struct SWVersionInfo
+{
+    FORCEDINLINE SWVersionInfo(CString const& name,
+                               uint32 major,
+                               uint32 minor):
+        name(name),
+        product(0),
+        major(major),
+        minor(minor),
+        patch(0),
+        build("")
+    {
+    }
+
+    FORCEDINLINE SWVersionInfo(CString const& name,
+                               uint32 prod,
+                               uint32 major,
+                               uint32 minor,
+                               uint32 patch,
+                               CString const& build):
+        name(name),
+        product(prod),
+        major(major),
+        minor(minor),
+        patch(patch),
+        build(build)
+    {
+    }
+
+    const CString name;
+
+    const uint32 product;
+    const uint32 major;
+    const uint32 minor;
+    const uint32 patch;
+    const CString build;
 };
 
 /*!

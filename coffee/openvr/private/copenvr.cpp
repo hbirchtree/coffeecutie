@@ -6,7 +6,7 @@
 namespace Coffee{
 namespace OpenVR{
 
-struct OVR_Context
+struct OVRImpl::Context
 {
     vr::TrackedDevicePose_t devicePoses[vr::k_unMaxTrackedDeviceCount];
 
@@ -14,7 +14,7 @@ struct OVR_Context
     vr::IVRRenderModels* m_RModels;
 };
 
-thread_local OVR_Context *m_Context = nullptr;
+thread_local OVRImpl::Context *m_Context = nullptr;
 
 CString VRGetTrackedDevString(vr::TrackedDeviceIndex_t index,
                               vr::ETrackedDeviceProperty prop,
@@ -68,16 +68,17 @@ bool OVRImpl::InitializeBinding()
              CFStrings::Graphics_VR_Library_CompositeError);
     }
 
-    m_Context = new OVR_Context;
+    m_Context = new Context;
     m_Context->m_HMD = sys;
     m_Context->m_RModels = models;
 
     return true;
 }
 
-bool OVRImpl::PollDevices(uint32* lastValidIndex)
+bool OVRImpl::PollDevices(int32* lastValidIndex)
 {
-    *lastValidIndex = -1;
+    if(lastValidIndex)
+        *lastValidIndex = -1;
     if(!m_Context)
         return false;
     vr::VRCompositor()->WaitGetPoses(m_Context->devicePoses,
@@ -108,24 +109,24 @@ void OVRImpl::Shutdown()
     vr::VR_Shutdown();
 }
 
-OVRImpl::OVRDevice *OVRImpl::GetDevice(uint32 idx)
+OVRImpl::Device *OVRImpl::GetDevice(uint32 idx)
 {
-    return new OVRDevice(idx);
+    return new Device(idx);
 }
 
-const OVR_Context *OVRImpl::GetConstContext()
+const OVRImpl::Context *OVRImpl::GetConstContext()
 {
     return m_Context;
 }
 
-OVR_Context *OVRImpl::GetContext()
+OVRImpl::Context *OVRImpl::GetContext()
 {
-    OVR_Context* ptr = m_Context;
+    Context* ptr = m_Context;
     m_Context = nullptr;
     return ptr;
 }
 
-bool OVRImpl::SetContext(OVR_Context *context)
+bool OVRImpl::SetContext(Context *context)
 {
     if(!m_Context)
     {
@@ -140,14 +141,15 @@ bool OVRImpl::SetContext(OVR_Context *context)
     }
 }
 
-OVRImpl::OVRDevice::OVRDevice(uint32 index):
-    Device(VRGetTrackedDevString(index,vr::Prop_TrackingSystemName_String),
-           VRGetTrackedDevString(index,vr::Prop_TrackingFirmwareVersion_String)),
+OVRImpl::Device::Device(uint32 index):
+    HMD::CHMD_Binding::Device(
+        VRGetTrackedDevString(index,vr::Prop_TrackingSystemName_String),
+        VRGetTrackedDevString(index,vr::Prop_TrackingFirmwareVersion_String)),
     m_dIndex(index)
 {
 }
 
-CString OVRImpl::OVRDevice::make() const
+CString OVRImpl::Device::make() const
 {
     if(!m_Context)
         return "";
@@ -155,7 +157,7 @@ CString OVRImpl::OVRDevice::make() const
                                  vr::Prop_TrackingSystemName_String);
 }
 
-CString OVRImpl::OVRDevice::firmware() const
+CString OVRImpl::Device::firmware() const
 {
     if(!m_Context)
         return "";
@@ -163,7 +165,7 @@ CString OVRImpl::OVRDevice::firmware() const
                                  vr::Prop_TrackingFirmwareVersion_String);
 }
 
-CMat4 OVRImpl::OVRDevice::view(HMD::CHMD_Binding::Eye e) const
+CMat4 OVRImpl::Device::view(HMD::CHMD_Binding::Eye e) const
 {
     if(!m_Context||!isConnected())
         return CMat4();
@@ -181,7 +183,7 @@ CMat4 OVRImpl::OVRDevice::view(HMD::CHMD_Binding::Eye e) const
     return mat;
 }
 
-CVec3 OVRImpl::OVRDevice::angularVelocity() const
+CVec3 OVRImpl::Device::angularVelocity() const
 {
     if(!m_Context||!isConnected())
         return CVec3();
@@ -190,7 +192,7 @@ CVec3 OVRImpl::OVRDevice::angularVelocity() const
     return CVec3(angle.v[0],angle.v[1],angle.v[2]);
 }
 
-CVec3 OVRImpl::OVRDevice::velocity() const
+CVec3 OVRImpl::Device::velocity() const
 {
     if(!m_Context||!isConnected())
         return CVec3();
@@ -199,7 +201,7 @@ CVec3 OVRImpl::OVRDevice::velocity() const
     return CVec3(vel.v[0],vel.v[1],vel.v[2]);
 }
 
-bool OVRImpl::OVRDevice::isConnected() const
+bool OVRImpl::Device::isConnected() const
 {
     if(!m_Context)
         return false;

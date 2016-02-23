@@ -6,6 +6,10 @@ set ( CoffeeSDL2_SRCS
 
 find_package ( SDL2 REQUIRED)
 
+if(NOT SDL2_FOUND)
+    message(FATAL_ERROR "Failed to locate SDL2")
+endif()
+
 include_directories ( SYSTEM
     ${SDL2_INCLUDE_DIR}
     )

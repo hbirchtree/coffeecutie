@@ -7,7 +7,7 @@ if(COFFEE_CSHARP)
 
     file(GLOB CSHARP_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.cs)
 
-    message("C# files: ${CSHARP_FILES}")
+#    message("C# files: ${CSHARP_FILES}")
 
     install(
         FILES

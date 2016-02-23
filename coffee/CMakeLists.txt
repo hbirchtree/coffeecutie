@@ -1,15 +1,34 @@
+# Core libraries, no external dependencies
+add_subdirectory(blam)
+add_subdirectory(core)
+add_subdirectory(image)
+
+# More here!
+add_subdirectory(graphics_apis)
+
+# Requires OpenAL
+if(COFFEE_BUILD_OPENAL)
+    add_subdirectory(audio)
+endif()
+# Requires SDL2
+if(COFFEE_BUILD_SDL2)
+    add_subdirectory(sdl2)
+endif()
+
+# Compiled by user
 if(COFFEE_BUILD_ASSIMP)
     add_subdirectory(assimp)
 endif()
-add_subdirectory(audio)
-add_subdirectory(blam)
-add_subdirectory(core)
-add_subdirectory(graphics_apis)
-add_subdirectory(image)
+# Should be user-compiled for license reasons
 if(COFFEE_BUILD_FFMEDIA)
     add_subdirectory(media)
 endif()
+
+# Requires OpenVR libraries from Valve
 if(COFFEE_BUILD_OPENVR)
     add_subdirectory(openvr)
 endif()
-add_subdirectory(sdl2)
+# Requires Oculus SDK
+if(COFFEE_BUILD_OCULUSVR)
+    add_subdirectory(oculusvr)
+endif()

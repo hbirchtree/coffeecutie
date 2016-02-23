@@ -7,12 +7,15 @@
 namespace Coffee{
 namespace OpenVR{
 
-struct OVR_Context;
+struct Context;
 
-struct OVRImpl : HMD::CHMD_Binding{
-    struct OVRDevice : Device
+struct OVRImpl : HMD::CHMD_Binding
+{
+    struct Context;
+
+    struct Device : HMD::CHMD_Binding::Device
     {
-        OVRDevice(uint32 index);
+        Device(uint32 index);
 
         bool updateState();
 
@@ -29,28 +32,21 @@ struct OVRImpl : HMD::CHMD_Binding{
     };
 
     static bool InitializeBinding();
-
-    static bool PollDevices(uint32 *lastValidIndex = nullptr);
-
-//    static void SubmitTextures(vr::Texture_t* left, vr::Texture_t* right);
-
+    static bool PollDevices(int32 *lastValidIndex = nullptr);
     static void Shutdown();
 
-    static OVRDevice *GetDevice(uint32 idx);
+    static SWVersionInfo GetDriverInfo();
+    static SWVersionInfo GetRuntimeInfo();
 
-    /* Because we make it thread_local for more verbosity when something gets f***ed */
-    static const OVR_Context* GetConstContext();
-    /*!
-     * \brief Remove context from this thread
-     * \return
-     */
-    static OVR_Context* GetContext();
-    /*!
-     * \brief Set this context into this thread. Make sure there is not one there already!
-     * \param context
-     * \return
-     */
-    static bool SetContext(OVR_Context* context);
+    static Device *GetDevice(uint32 idx);
+    STATICINLINE Device *GetDefaultDevice()
+    {
+        return GetDevice(0);
+    }
+
+    static const Context* GetConstContext();
+    static Context* GetContext();
+    static bool SetContext(Context* context);
 };
 }
 

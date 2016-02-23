@@ -7,7 +7,7 @@ if(COFFEE_DLANG)
 
     file(GLOB DLANG_FILES ${CMAKE_CURRENT_BINARY_DIR}/*.d)
 
-    message("DLang files: ${DLANG_FILES}")
+#    message("DLang files: ${DLANG_FILES}")
 
     install(
         FILES
