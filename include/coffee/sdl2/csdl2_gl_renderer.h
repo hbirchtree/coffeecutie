@@ -1,0 +1,33 @@
+#pragma once
+
+#include <coffee/core/base/renderer/glapplication.h>
+#include "csdl2_context.h"
+
+namespace Coffee{
+namespace CDisplay{
+
+class SDL2GLRenderer : public GLApplication,
+        public virtual SDL2ContextUser
+{
+public:
+    virtual ~SDL2GLRenderer()
+    {
+    }
+
+    void swapBuffers();
+    CSize framebufferSize() const;
+    int swapInterval() const;
+    void setSwapInterval(const int &i);
+    CDContextBits context();
+    ThreadId contextThread();
+    CGL::CGL_Context *glContext();
+    CGL::CGL_ScopedContext scopedContext();
+
+    void contextPreInit(const GLProperties& props);
+    void contextInit(const GLProperties &props);
+    void contextPostInit(const GLProperties& props);
+    void contextTerminate();
+};
+
+}
+}
