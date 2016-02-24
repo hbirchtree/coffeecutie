@@ -12,70 +12,55 @@
 #endif
 
 namespace Coffee{
-namespace Cmd{
+namespace CmdInterface{
 
 using TermScreen = Env::TermScreen;
 
-inline C_FORCE_INLINE bool interactive_cmd()
+struct CmdDef
 {
-    //TODO: Find way of detecting interactive session
-    return false;
+    /* Indicate whether we are using a proper terminal */
+    static bool Interactive();
+
+    /* Basic command line actions */
+    static cstring ReadString(cstring_w target, int32 size, FILE* strm);
+    static void Wait();
+    static void Exit(int code);
+
+    /* Terminal screens */
+    static void ClearScreen();
+    static void AltScreen();
+    static void ResetScreen();
+    static CSize TerminalSize();
+};
+
+struct BasicTerm : CmdDef
+{
+    STATICINLINE cstring ReadString(cstring_w target, int32 size, FILE* strm)
+    {
+        return CGets(target,size,strm);
+    }
+
+    STATICINLINE void Wait()
+    {
+        getchar();
+    }
+
+    STATICINLINE void Exit(int code)
+    {
+        cBasicPrint("Exiting with code: {0}",code);
+        exit(code);
+    }
+};
+
+}
 }
 
-inline C_FORCE_INLINE cstring ReadString(cstring_w target, int32 size, FILE* strm)
-{
-    return CGets(target,size,strm);
-}
-
-inline C_FORCE_INLINE void ClearScreen()
-{
-#if defined(COFFEE_USE_TERMINAL_CTL)
-    fprintf(DefaultDebugOutputPipe,"\e[1;1H\e[2J");
 #endif
-}
 
-/*!
- * \brief Enable alternate buffer for xterm
- */
-inline C_FORCE_INLINE void AltScreen()
-{
+#undef COFFEE_CMD_INTERFACE_STRUCT
+
 #if defined(COFFEE_USE_TERMINAL_CTL)
-    fprintf(DefaultDebugOutputPipe,"\033[?1049h\033[H");
-    TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
-#endif
-}
-
-/*!
- * \brief Disable alternate buffer for xterm
- */
-inline C_FORCE_INLINE void ResetScreen()
-{
-#if defined(COFFEE_USE_TERMINAL_CTL)
-    if(!TermScreen::UsingAlternateBuffer)
-        return;
-    fprintf(DefaultDebugOutputPipe,"\033[?1049l");
-    TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
-#endif
-}
-
-inline C_FORCE_INLINE CSize TerminalSize()
-{
-#if defined(COFFEE_USE_IOCTL_TERM_SIZE)
-    struct winsize w;
-    ioctl(STDOUT_FILENO,TIOCGWINSZ,&w);
-    return CSize(w.ws_col,w.ws_row);
+#include "cmd_unixterm.h"
 #else
-    return CSize();
-#endif
-}
-
-inline C_FORCE_INLINE void Exit(int code)
-{
-    cBasicPrint("Exiting with code: {0}",code);
-    exit(code);
-}
-
-}
-}
-
+#include "cmd_dummy.h"
 #endif

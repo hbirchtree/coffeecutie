@@ -8,8 +8,7 @@
 
 namespace Coffee{
 namespace CDisplay{
-namespace EventHandlers
-{
+namespace EventHandlers{
 
 using namespace CInput;
 

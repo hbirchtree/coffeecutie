@@ -1,8 +1,10 @@
-#include <coffee/CCore>
+#include <coffee/core/CApplication>
 #include <coffee/graphics_apis/CGLeam>
 #include <coffee/COpenVR>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
+
+#include <coffee/core/input/eventhandlers.h>
 
 #include <coffee_ext/qt_shim/dialogs/dialogs.h>
 #include <coffee_ext/qt_shim/qtinit.h>
@@ -292,39 +294,15 @@ public:
     void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleD(e,data);
-        if(e.type==CDisplay::CDEvent::Resize)
-        {
-            auto rev = (const CDisplay::CDResizeEvent*)data;
-            CRectF view;
-            view.x = 0;
-            view.y = 0;
-            view.w = rev->w;
-            view.h = rev->h;
 
-            GL::ViewportSet(0,&view);
-        }
+        EventHandlers::WindowManagerCloseWindow(this,e,data);
+        EventHandlers::ResizeWindow<GL>(e,data);
     }
     void eventHandleI(const CIEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleI(e,data);
-        switch(e.type)
-        {
-        case CIEvent::Keyboard:
-        {
-            const CIKeyEvent* kev = (const CIKeyEvent*)data;
-            switch(kev->key)
-            {
-            case CK_Escape:
-                this->closeWindow();
-                break;
-            default:
-                break;
-            }
-            break;
-        }
-        default:
-            break;
-        }
+
+        EventHandlers::EscapeCloseWindow(this,e,data);
     }
 };
 
