@@ -6,21 +6,25 @@ namespace CoffeeExt{
 
 thread_local QApplication* dialog_application = nullptr;
 
-void QtSystem::Init(int& argc, char** argv)
+bool QtSystem::Init(int& argc, char** argv)
 {
     if(!dialog_application)
     {
         dialog_application = new QApplication(argc,argv);
+        return true;
     }
+    return false;
 }
-void QtSystem::Deinit()
+bool QtSystem::Deinit()
 {
     delete dialog_application;
+    return true;
 }
 
-void QtSystem::Process(int timeout)
+bool QtSystem::Process(int timeout)
 {
-    QApplication::processEvents();
+    QApplication::processEvents(QEventLoop::AllEvents,timeout);
+    return true;
 }
 
 }

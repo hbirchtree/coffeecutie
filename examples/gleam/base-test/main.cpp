@@ -2,6 +2,7 @@
 #include <coffee/graphics_apis/CGLeam>
 #include <coffee/COpenVR>
 #include <coffee/CGraphics>
+#include <coffee/CSDL2>
 
 #include <coffee_ext/qt_shim/dialogs/dialogs.h>
 #include <coffee_ext/qt_shim/qtinit.h>
@@ -337,6 +338,10 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     SubsystemWrapper<CoffeeExt::QtSystem> qt(argc,argv);
     C_UNUSED(qt);
     Profiler::Profile("Initialization");
+
+    /*Required for SDL2 applications*/
+    SubsystemWrapper<SDL2::SDL2> sdl2;
+    C_UNUSED(sdl2);
 
     /*Testing out Qt splashscreen support*/
     {

@@ -3,8 +3,6 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/base/files/cfiles.h>
 
-#include "windowing/sdl2helpers.h"
-
 namespace Coffee{
 namespace CDisplay{
 
@@ -55,21 +53,6 @@ void CSDL2Renderer::cleanup()
         /* This happens if cleanup has happened before destruction, or if cleanup is called multiple times. Either way is fine. */
         cMsg("SDL2","Already cleaned up");
     }
-}
-
-void SDL2Dialog::ErrorMessage(cstring title, cstring message)
-{
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,title,message,NULL);
-}
-
-void SDL2Dialog::WarningMessage(cstring title, cstring message)
-{
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING,title,message,NULL);
-}
-
-void SDL2Dialog::InformationMessage(cstring title, cstring message)
-{
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title,message,NULL);
 }
 
 }

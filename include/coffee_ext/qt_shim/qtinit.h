@@ -11,10 +11,10 @@ struct QtSystem : Coffee::Subsystem
         int v = 0;
         Init(v,nullptr);
     }
-    static void Init(int& argc, char** argv);
-    static void Deinit();
+    static bool Init(int& argc, char** argv);
+    static bool Deinit();
 
-    static void Process(int timeout = 20);
+    static bool Process(int timeout = 20);
 };
 
 }

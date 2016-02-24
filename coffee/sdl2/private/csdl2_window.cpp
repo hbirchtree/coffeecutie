@@ -24,13 +24,6 @@ void SDL2Window::windowPreInit(const CDProperties& p)
 
 void SDL2Window::windowInit(const CDProperties& p)
 {
-    /* Initialize SDL2 library, takes some time */
-    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
-    {
-        cFatal("Failed to initialize SDL2 context: {0}",SDL_GetError());
-    }
-    cMsg("SDL2","Initialized");
-
     Profiler::Profile("Initialization");
 
     /* Translate window flags and apply them */
@@ -78,13 +71,13 @@ void SDL2Window::windowPostInit(const CDProperties& p)
 
 void SDL2Window::windowTerminate()
 {
+    if(!getSDL2Context())
+        return;
     cMsg("SDL2","Cleaning up context");
-
 
     /* Delete window */
     SDL_DestroyWindow(getSDL2Context()->window);
     /* De-initialize SDL */
-    SDL_Quit();
     delete getSDL2Context();
     setSDL2Context(nullptr);
     cMsg("SDL2","Terminated");

@@ -8,7 +8,7 @@ namespace CFStrings
 
 //TODO: Move all library strings here
 
-using namespace Coffee;
+using Coffee::cstring;
 
 const constexpr cstring Plat_Unix_Core_Lib = "UNIX core";
 const constexpr cstring Plat_Cpu_Affinity_Error = "Failed to set thread affinity!";
@@ -54,6 +54,9 @@ const constexpr cstring CNect_NoDevs = "No devices detected";
 const constexpr cstring CNect_IndexFlt = "Invalid device index";
 const constexpr cstring CNect_AsyncStart = "CNect loop started";
 const constexpr cstring CNect_AsyncStop = "CNect loop closed";
+
+const constexpr cstring SDL2_Library_Name = "SDL2";
+const constexpr cstring SDL2_Library_FailureInit = "Failed to initialize SDL2 context: {0}";
 
 }
 

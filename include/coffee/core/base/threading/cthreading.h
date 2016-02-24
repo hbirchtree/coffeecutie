@@ -8,6 +8,8 @@
 #include "../../types/basetypes.h"
 #include "../../coffee_mem_macros.h"
 #include "../../plat/environment/sysinfo_def.h"
+#include "../../types/cdef/funtypes.h"
+#include "../../types/cdef/memtypes.h"
 
 namespace Coffee{
 namespace Threads{
