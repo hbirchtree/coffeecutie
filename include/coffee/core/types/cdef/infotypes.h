@@ -76,7 +76,7 @@ struct _cbasic_version
     T minor;
     T revision;
 
-    inline bool operator>=(const _cbasic_version<T>& v)
+    inline bool operator>=(const _cbasic_version<T>& v) const
     {
         if(this->major>v.major)
             return true;
@@ -95,11 +95,11 @@ struct _cbasic_version
         }else
             return false;
     }
-    inline bool operator<(const _cbasic_version<T>& v)
+    inline bool operator<(const _cbasic_version<T>& v) const
     {
         return !((*this)>=v);
     }
-    inline bool operator<=(const _cbasic_version<T>& v)
+    inline bool operator<=(const _cbasic_version<T>& v) const
     {
         if(this->major<v.major)
             return true;
@@ -118,11 +118,11 @@ struct _cbasic_version
         }else
             return false;
     }
-    inline bool operator>(const _cbasic_version<T>& v)
+    inline bool operator>(const _cbasic_version<T>& v) const
     {
         return !((*this)<=v);
     }
-    inline bool operator==(const _cbasic_version<T>& v)
+    inline bool operator==(const _cbasic_version<T>& v) const
     {
         return this->major==v.major
                 &&this->minor==v.minor

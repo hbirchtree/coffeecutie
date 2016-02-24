@@ -2,9 +2,11 @@
 
 #include <coffee/graphics_apis/scene/cnode.h>
 #include <coffee/graphics_apis/cgraphicsdata.h>
+
 #include <coffee/core/coffee_macros.h>
-#include <coffee/core/base/cmath.h>
-#include <coffee/core/base/cmath_glm.h>
+
+#include <coffee/core/CMath>
+#include <coffee/core/base/math/cmath_glm.h>
 namespace CoffeeTests{
 
 using namespace Coffee;

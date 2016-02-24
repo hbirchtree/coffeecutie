@@ -1,9 +1,9 @@
 #include <coffee/assimp/cassimpimporters.h>
 
-#include <coffee/core/base/cregex.h>
-#include <coffee/core/base/cthreading.h>
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cfiles.h>
+#include <coffee/core/CRegex>
+#include <coffee/core/CThreading>
+#include <coffee/core/CDebug>
+#include <coffee/core/CFiles>
 
 #include "assimpfun.h"
 

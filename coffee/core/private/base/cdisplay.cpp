@@ -1,4 +1,4 @@
-#include <coffee/core/base/cdisplay.h>
+#include <coffee/core/CDisplay>
 
 namespace Coffee{
 namespace CDisplay{

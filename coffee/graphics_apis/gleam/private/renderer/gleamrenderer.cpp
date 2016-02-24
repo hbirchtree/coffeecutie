@@ -38,11 +38,15 @@ CGLeamRenderer::CGLeamRenderer(CObject* parent):
 {
 }
 
-void CGLeamRenderer::bindingPreInit()
+void CGLeamRenderer::bindingPreInit(const GLProperties&)
 {
 }
 
-void CGLeamRenderer::bindingPostInit()
+void CGLeamRenderer::bindingInit(const GLProperties&)
+{
+}
+
+void CGLeamRenderer::bindingPostInit(const GLProperties& p)
 {
     Profiler::PushContext("GLeam");
 
@@ -57,16 +61,16 @@ void CGLeamRenderer::bindingPostInit()
     const static CGLVersion v43(4,3);
     const static CGLVersion v45(4,5);
 
-    if(m_properties.gl.version>=v45)
+    if(p.version>=v45)
         status = CGL::CGL45::LoadBinding(this->glContext());
-    if(m_properties.gl.version>=v43)
+    if(p.version>=v43)
         status = CGL::CGL43::LoadBinding(this->glContext());
-    if(m_properties.gl.version>=v33)
+    if(p.version>=v33)
         status = CGL::CGL33::LoadBinding(this->glContext());
 #else
     const static CGLVersion v30es(3,0);
 
-    if(m_properties.gl.version==v30es)
+    if(p.version==v30es)
         status = CGL::CGLES30::LoadBinding(this->glContext(),SDL_GL_GetProcAddress);
 #endif
 

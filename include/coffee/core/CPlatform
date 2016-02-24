@@ -1,4 +1,3 @@
-#include "plat/plat_core.h"
 #include "plat/plat_environment.h"
 #include "plat/plat_file.h"
 #include "plat/plat_linking.h"

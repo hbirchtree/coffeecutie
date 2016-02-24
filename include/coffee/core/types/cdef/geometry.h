@@ -2,7 +2,7 @@
 
 #include "../../coffee_mem_macros.h"
 #include "../tdef/integertypes.h"
-#include "../../base/cmath.h"
+#include <coffee/core/CMath>
 
 namespace Coffee{
 

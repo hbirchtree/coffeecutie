@@ -1,8 +1,10 @@
 #pragma once
 
-#include "../base/cdisplay.h"
-#include "../base/cinput.h"
+#include "../base/types/cdisplay.h"
+#include "../base/input/cinput.h"
 #include "cinputfunctions.h"
+
+#include "../base/renderer/windowapplication.h"
 
 namespace Coffee{
 namespace CDisplay{
@@ -22,13 +24,24 @@ FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
     }
 }
 
-FORCEDINLINE void CloseWindow(CDRendererBase *r,
-                              const CIEvent& e, c_cptr data)
+FORCEDINLINE void EscapeCloseWindow(WindowApplication *r,
+                                    const CIEvent& e, c_cptr data)
 {
     if(e.type==CIEvent::Keyboard)
     {
         auto kev = (const CIKeyEvent*)data;
         if(kev->key==CK_Escape)
+            r->closeWindow();
+    }
+}
+
+FORCEDINLINE void WindowManagerCloseWindow(WindowApplication* r,
+                                           const CDEvent& event, c_cptr data)
+{
+    if(event.type==CDEvent::State)
+    {
+        const CDStateEvent* sev = (const CDStateEvent*)data;
+        if(sev->type==CDStateEvent::Closed)
             r->closeWindow();
     }
 }

@@ -34,14 +34,18 @@ CGLBindingRenderer::~CGLBindingRenderer()
 {
 }
 
-void CGLBindingRenderer::bindingPreInit()
+void CGLBindingRenderer::bindingPreInit(const GLProperties&)
 {
     glbinding::Binding::initialize(true);
 }
 
+void CGLBindingRenderer::bindingInit(const GLProperties&)
+{
+}
+
 std::set<CString> functions;
 
-void CGLBindingRenderer::bindingPostInit()
+void CGLBindingRenderer::bindingPostInit(const GLProperties & p)
 {
     //Check for extensions! Quick!
     CString m_extensions = coffee_graphics_get_extensions(nullptr);
@@ -63,7 +67,7 @@ void CGLBindingRenderer::bindingPostInit()
          m_versionString.c_str());
     cMsg("glbinding","Currently running OpenGL revision: {0}",m_libraryRevision);
 
-    if(m_properties.gl.flags&GLProperties::GLFeatureLevelProfile)
+    if(p.flags&GLProperties::GLFeatureLevelProfile)
     {
         glbinding::setCallbackMask(glbinding::CallbackMask::After);
 
@@ -72,7 +76,7 @@ void CGLBindingRenderer::bindingPostInit()
         });
     }
 
-    if(m_properties.gl.flags&GLProperties::GLDebug)
+    if(p.flags&GLProperties::GLDebug)
     {
         coffee_graphics_debug_context(true,glbinding_default_callback,this);
     }

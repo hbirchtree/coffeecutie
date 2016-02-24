@@ -37,7 +37,7 @@ public:
     {
         CSDL2Renderer::eventHandleI(e,data);
 
-        EventHandlers::CloseWindow(this,e,data);
+        EventHandlers::EscapeCloseWindow(this,e,data);
         EventHandlers::RotateView(r_view,e,data);
     }
 

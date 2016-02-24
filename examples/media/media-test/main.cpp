@@ -352,7 +352,7 @@ int32 coffee_main(int32 n, cstring_w* s)
 
     video_file_name = fn;
 
-    CDisplay::CDRendererBase* renderer = new CDRenderer;
+    CDRenderer* renderer = new CDRenderer;
     std::atomic_bool sync;
     sync.store(false);
     CDisplay::CDProperties props = CDisplay::GetDefaultVisual();

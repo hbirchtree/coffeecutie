@@ -2,7 +2,7 @@
 #define CASSIMPTYPES
 
 #include <coffee/core/coffee.h>
-#include <coffee/core/base/cfiles.h>
+#include <coffee/core/base/files/cfiles.h>
 
 namespace Coffee {
 namespace CResourceTypes {

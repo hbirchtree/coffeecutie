@@ -1,8 +1,8 @@
 #include <coffee_ext/kinect_shim/cnect.h>
 
 #include <coffee/core/plat/memory/cmemory.h>
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cthreading.h>
+#include <coffee/core/CDebug>
+#include <coffee/core/CThreading>
 
 #include <libfreenect2/libfreenect2.hpp>
 #include <libfreenect2/logger.h>

@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "../../coffee_macros.h"
-#include "../cregex.h"
+#include "../textprocessing/cregex.h"
 #include "../../plat/plat_memory.h"
 #include "../../types/composite_types.h"
 #include "../../types/vector_types.h"

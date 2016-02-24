@@ -25,8 +25,9 @@ public:
 protected:
     CGLBindingRenderer(CObject* parent);
 
-    void bindingPreInit();
-    void bindingPostInit();
+    void bindingPreInit(const GLProperties&);
+    void bindingInit(const GLProperties&);
+    void bindingPostInit(const GLProperties&p);
     void bindingTerminate();
 
     CString m_rendererString;

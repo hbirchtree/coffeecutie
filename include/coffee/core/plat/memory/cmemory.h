@@ -21,7 +21,8 @@
 #include <string>
 
 #include "../../coffee_mem_macros.h"
-#include "../../types/basetypes.h"
+#include "../../types/tdef/integertypes.h"
+#include "../../types/tdef/stltypes.h"
 
 namespace Coffee{
 

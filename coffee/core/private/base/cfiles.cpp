@@ -1,12 +1,11 @@
-#include <coffee/core/base/cfiles.h>
-
-#include <cstring>
+#include <coffee/core/CFiles>
 
 #include <coffee/core/plat/plat_file.h>
-#include <coffee/core/plat/plat_core.h>
-#include <coffee/core/base/cdebug.h>
+#include <coffee/core/CDebug>
 
+#if defined(COFFEE_ANDROID_FILE_ASSET_API)
 #include <SDL2/SDL_system.h>
+#endif
 
 namespace Coffee{
 namespace CResources{

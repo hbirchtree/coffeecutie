@@ -2,7 +2,7 @@
 #define CGRAPHICSDATA_H
 
 #include <coffee/core/types/graphics_types.h>
-#include <coffee/core/base/cmath.h>
+#include <coffee/core/CMath>
 #include <coffee/core/types/cmatrix_functions.h>
 
 namespace Coffee{

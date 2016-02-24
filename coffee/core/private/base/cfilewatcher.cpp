@@ -1,6 +1,6 @@
-#include <coffee/core/base/cfilewatcher.h>
+#include <coffee/core/CFileWatcher>
 
-#include <coffee/core/base/cdebug.h>
+#include <coffee/core/CDebug>
 
 #if defined(COFFEE_LINUX)
 
@@ -267,7 +267,7 @@ CFileWatchTask::CFileWatchTask():
         coffee_file_watch_deinit();
     };
 
-    m_watcherHandle = CFunctional::Threads::RunAsync(watcherFunction);
+    m_watcherHandle = Threads::RunAsync(watcherFunction);
 }
 
 CFileWatchTask::~CFileWatchTask()

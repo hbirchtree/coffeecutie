@@ -2,7 +2,7 @@
 #define COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
 
 #include "../../coffee_macros.h"
-#include "../../base/cmath.h"
+#include "../../base/math/cmath.h"
 #include "../../types/composite_types.h"
 #include <thread>
 #include <future>

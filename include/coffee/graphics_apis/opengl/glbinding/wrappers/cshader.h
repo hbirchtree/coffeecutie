@@ -6,7 +6,7 @@
 #include "copengl_types.h"
 #include "cuniformtypes.h"
 
-#include <coffee/core/base/cfiles.h>
+#include <coffee/core/CFiles>
 
 namespace Coffee {
 namespace CGraphicsWrappers {

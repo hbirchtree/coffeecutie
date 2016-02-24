@@ -1,7 +1,12 @@
 set ( CoffeeSDL2_SRCS
     private/csdl2renderer.cpp
-    private/sdl2eventhandlers.cpp
-    private/sdl2helpers.cpp
+
+    private/csdl2_gl_renderer.cpp
+    private/csdl2_eventhandler.cpp
+    private/csdl2_window.cpp
+
+    private/evhandlers/sdl2eventhandlers.cpp
+    private/windowing/sdl2helpers.cpp
     )
 
 find_package ( SDL2 REQUIRED)

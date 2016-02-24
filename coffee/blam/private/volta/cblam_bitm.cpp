@@ -1,9 +1,9 @@
 #include <coffee/blam/volta/cblam_bitm.h>
 
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cfiles.h>
-#include <coffee/image/cimage.h>
-#include <coffee/core/base/cmath.h>
+#include <coffee/core/CDebug>
+#include <coffee/core/CFiles>
+#include <coffee/CImage>
+#include <coffee/core/CMath>
 #include <coffee/blam/volta/cblam_bitm_decoders.h>
 
 namespace Coffee{

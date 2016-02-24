@@ -3,7 +3,8 @@
 
 #include "../../../gltypes.h"
 #include <coffee/core/coffee_strings.h>
-#include <coffee/core/base/cdebug.h>
+
+#include <coffee/core/CDebug>
 #include <coffee/core/types/composite_types.h>
 #include <coffee/CImage>
 

@@ -1,6 +1,6 @@
 #include <coffee/oculusvr/oculusrift.h>
 
-#include <coffee/core/base/cdebug.h>
+#include <coffee/core/CDebug>
 
 /* Oculus VR headers */
 #include <OVR_CAPI.h>

@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include <coffee/core/base/cdebug.h>
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 namespace CGraphicsQuirks{

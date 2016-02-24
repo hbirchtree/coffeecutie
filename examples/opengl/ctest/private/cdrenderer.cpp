@@ -108,7 +108,6 @@ void CDRenderer::run()
 
         //Event handling
         swap.start();
-        executeRunQueue();
         qtime = swap.elapsed();
         swap.start();
         pollEvents();
@@ -245,7 +244,7 @@ void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
         hev.rumble_input.index = jev->controller;
         hev.rumble_input.duration = 100;
         hev.rumble_input.strength = 0.5;
-        eventHandleH(hev,nullptr);
+        hapticInsert(hev,nullptr);
         break;
     }
     case CIEvent::Drop:

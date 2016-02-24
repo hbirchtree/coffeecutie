@@ -2,7 +2,7 @@
 #define COFFEE_CORE_UNIT_TESTS_MICRO_TESTS_H
 
 #include "../types/composite_types.h"
-#include "../base/cdebug.h"
+#include <coffee/core/CDebug>
 
 namespace CoffeeTests
 {

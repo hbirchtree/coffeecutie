@@ -1,8 +1,8 @@
 #ifndef CAUDIO_FUN
 #define CAUDIO_FUN
 
-#include <coffee/core/CTypes>
-#include <coffee/core/base/cfiles.h>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/base/files/cfiles.h>
 
 namespace Coffee{
 namespace CAudio{

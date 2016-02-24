@@ -1,7 +1,7 @@
 #ifndef CINPUTFUNCTIONS_H
 #define CINPUTFUNCTIONS_H
 
-#include "../base/cinput.h"
+#include "../base/input/cinput.h"
 
 namespace Coffee{
 namespace CInput{

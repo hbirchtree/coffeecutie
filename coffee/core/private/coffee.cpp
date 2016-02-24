@@ -3,8 +3,7 @@
 #include <signal.h>
 
 #include <coffee/core/plat/platform_detect.h>
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/plat/plat_core.h>
+#include <coffee/core/CDebug>
 #include <coffee/core/unit_tests/data_types.h>
 #include <coffee/core/unit_tests/memory_operations.h>
 #include <coffee/core/plat/memory/cmd_interface.h>

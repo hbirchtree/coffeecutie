@@ -1,10 +1,9 @@
-#include <coffee/core/base/cobject.h>
+#include <coffee/core/CObject>
 
 namespace Coffee {
 
 CObject::CObject()
 {
-    m_thread = std::this_thread::get_id();
 }
 
 CObject::CObject(CObject *parent):

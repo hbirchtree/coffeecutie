@@ -1,5 +1,5 @@
-#include "../../base/cdebug.h"
-#include "../../coffee_macros.h"
+#include "../../CDebug"
+#include "../../coffee_mem_macros.h"
 
 #ifndef COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 #define COFFEE_CORE_PLAT_COMMAND_INTERFACE_H

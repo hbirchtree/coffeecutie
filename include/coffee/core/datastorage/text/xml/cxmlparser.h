@@ -1,8 +1,8 @@
 #ifndef COFFEE_CORE_DATASTORAGE_TEXT_XML_H
 #define COFFEE_CORE_DATASTORAGE_TEXT_XML_H
 
-#include "../../../types/composite_types.h"
-#include "../../../base/cfiles.h"
+#include "../../../types/tdef/integertypes.h"
+#include "../../../base/files/cfiles.h"
 #include <tinyxml2/tinyxml2.h>
 
 namespace Coffee{

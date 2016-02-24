@@ -1,7 +1,7 @@
 #ifndef CTEXTURE_DXTC
 #define CTEXTURE_DXTC
 
-#include <coffee/core/base/cfiles.h>
+#include <coffee/core/CDebug>
 #include <coffee/core/types/composite_types.h>
 
 #include "ctexture.h"

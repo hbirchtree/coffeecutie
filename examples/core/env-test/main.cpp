@@ -178,7 +178,7 @@ int32 coffee_main(int32, cstring_w*)
 
         CElapsedTimer t;
         t.start();
-        ParallelFor(kern,data.size.area()/64,&data).get();
+        Threads::ParallelFor(kern,data.size.area()/64,&data).get();
         cDebug("Parallel time: {0}",t.elapsed());
         t.start();
         for(uint64 i=0;i<data.size.area();i++)

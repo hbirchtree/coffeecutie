@@ -363,7 +363,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         CResources::FileFree(resc);
         Profiler::Profile("Free data");
 
-        Splash::ShowSplash(splash);
+//        Splash::ShowSplash(splash);
         Profiler::Profile("Show splash");
 
         Profiler::PopContext();

@@ -40,7 +40,7 @@ struct TCPSocketImpl : ASIO_Client
 	    GetContext();
 	    return conn;
 	};
-	return RunAsync(fun);
+        return Threads::RunAsync(fun);
     }
 
     STATICINLINE std::future<bool> DisconnectSocket(Connection *c)
@@ -53,7 +53,7 @@ struct TCPSocketImpl : ASIO_Client
 	    c->reset();
 	    return true;
 	};
-	return RunAsync(fun);
+        return Threads::RunAsync(fun);
     }
 };
 

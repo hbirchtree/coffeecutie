@@ -1,7 +1,7 @@
 #ifndef COFFEE_MACROS
 #define COFFEE_MACROS
 
-#include "types/basetypes.h"
+#include "types/tdef/integertypes.h"
 #include "plat/plat_memory.h"
 #include "coffee_mem_macros.h"
 

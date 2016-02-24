@@ -139,7 +139,7 @@ public:
                             data[i+j*512+512*512*k] = (i-256)*(i-256)+(j-256)*(j-256)+(k-256)*(k-256) < 200*200;
                 };
 
-                std::future<void> sphere_task = ParallelFor(sphere_fun,(szptr)512,data,(szptr)512);
+                std::future<void> sphere_task = Threads::ParallelFor(sphere_fun,(szptr)512,data,(szptr)512);
 
                 sphere_task.get();
             }else{
@@ -153,7 +153,9 @@ public:
         }
 
         GL::TexStorage3D(GL::Texture::T3D,1,PixelFormat::R32I,512,512,512);
-        glTexSubImage3D(GL_TEXTURE_3D,0,0,0,0,512,512,512,GL_RED_INTEGER,GL_INT,data);
+        GL::TexSubImage3D(GL::Texture::T3D,0,0,0,0,512,512,512,
+                          PixelComponents::R,
+                          BitFormat::Int,data);
 
         CFree(data);
 
