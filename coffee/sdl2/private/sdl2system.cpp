@@ -1,0 +1,32 @@
+#include <coffee/sdl2/sdl2system.h>
+
+#include <coffee/core/coffee_strings.h>
+#include <coffee/core/CDebug>
+#include "types/sdl2datatypes.h"
+
+namespace Coffee{
+namespace SDL2{
+
+bool SDL2::Init()
+{
+    /* Initialize SDL2 library, takes some time */
+    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
+    {
+        cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
+             CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        return false;
+    }
+    return true;
+}
+
+bool SDL2::Deinit()
+{
+    SDL_Quit();
+}
+
+bool SDL2::Process()
+{
+}
+
+}
+}
