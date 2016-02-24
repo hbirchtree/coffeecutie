@@ -11,6 +11,8 @@ struct CHMD_Binding
 {
     struct Context;
 
+    static const constexpr cstring SystemName = "Generic";
+
     enum class Eye
     {
         Left,Right,

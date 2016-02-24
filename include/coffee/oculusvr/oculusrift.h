@@ -7,6 +7,8 @@ namespace OculusRift{
 
 struct OculusVR : HMD::CHMD_Binding
 {
+    static const constexpr cstring SystemName = "Oculus Rift";
+
     struct Context;
 
     struct Device : HMD::CHMD_Binding::Device

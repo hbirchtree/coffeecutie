@@ -184,6 +184,17 @@ FORCEDINLINE CString cStringReplace(
 }
 
 FORCEDINLINE CString cStringReplace(
+	CString const& fmt, size_t const& index,
+	SWVersionInfo const& arg)
+{
+    return extArgReplace(fmt,index,
+			 cStringFormat("sw={0}, ver={1}.{2}.{3}.{4}.{5}",
+				       arg.name,
+				       arg.product,arg.major,arg.minor,
+				       arg.patch,arg.build));
+}
+
+FORCEDINLINE CString cStringReplace(
         CString const& fmt, size_t const& index,
         CQuat const& v)
 {

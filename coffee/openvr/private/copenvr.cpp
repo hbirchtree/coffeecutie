@@ -4,7 +4,7 @@
 #include <coffee/core/coffee_strings.h>
 
 namespace Coffee{
-namespace OpenVR{
+namespace OpenVRFun{
 
 struct OVRImpl::Context
 {
@@ -81,6 +81,7 @@ bool OVRImpl::PollDevices(int32* lastValidIndex)
         *lastValidIndex = -1;
     if(!m_Context)
         return false;
+    return false;
     vr::VRCompositor()->WaitGetPoses(m_Context->devicePoses,
                                      vr::k_unMaxTrackedDeviceCount,
                                      nullptr,0);

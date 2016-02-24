@@ -8,17 +8,20 @@
 
 using namespace Coffee;
 
-using VR = OpenVRDev;
-using OVR = OculusRift::OculusVR;
+using VR = OculusRift::OculusVR;
+//using VR = OpenVR;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    Profiler::PushContext("OpenVR");
+    cDebug("Testing with driver: {0}",VR::GetDriverInfo());
+
+    Profiler::PushContext(VR::SystemName);
     if(!VR::InitializeBinding())
     {
-        cDebug("Failed to initialize OpenVR device");
+        cDebug("Failed to initialize {0} device",VR::SystemName);
     }else{
         Profiler::Profile("VR init");
+
 
         cDebug("By the gods... So it was true! You must be the hero of Kvatch!");
         cDebug("[HERE BE DRAGONS]");
@@ -34,34 +37,9 @@ int32 coffee_main(int32, cstring_w*)
             Profiler::Profile("Device acquisition");
 
             if(dev)
-                cDebug("What you got: {0}",(const HWDeviceInfo&)*dev);
-        }
-        VR::Shutdown();
-    }
-    Profiler::PopContext();
-
-    Profiler::PushContext("OculusVR");
-    if(!OVR::InitializeBinding())
-    {
-        cDebug("Failed to initialize OculusVR device");
-        return 1;
-    }else{
-        Profiler::Profile("VR init");
-
-        int32 devs;
-        if(!OVR::PollDevices(&devs))
-        {
-            cDebug("Failed to poll Oculus devices");
-        }else{
-            Profiler::Profile("Device poll");
-
-            OVR::Device* dev = OVR::GetDefaultDevice();
-            Profiler::Profile("Device acquisition");
-
-            if(dev)
                 cDebug("Your device: {0}",(const HWDeviceInfo&)*dev);
         }
-        OVR::Shutdown();
+        VR::Shutdown();
     }
     Profiler::PopContext();
 

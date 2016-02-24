@@ -41,6 +41,9 @@ thread_local OculusVR::Context* OculusContext = nullptr;
 
 bool OculusVR::InitializeBinding()
 {
+    static_assert(!ovrFalse,"Falsity of ovrFalse");
+    static_assert(ovrTrue,"Truth of ovrTrue");
+
     cDebug("OculusVR runtime version: {0}.{1}.{2}.{3}.{4}",
            OVR_PRODUCT_VERSION,
            OVR_MAJOR_VERSION,
@@ -51,7 +54,9 @@ bool OculusVR::InitializeBinding()
     ovrInitParams flags = {};
     flags.LogCallback = ovr_log_callback;
 
-    if(!ovr_Initialize(&flags))
+    ovrBool res = ovr_Initialize(&flags);
+
+    if(!res)
     {
         return false;
     }
@@ -87,7 +92,7 @@ SWVersionInfo OculusVR::GetDriverInfo()
                          OVR_MAJOR_VERSION,
                          OVR_MINOR_VERSION,
                          OVR_PATCH_VERSION,
-                         OVR_BUILD_NUMBER);
+                         conversion::to_string(OVR_BUILD_NUMBER));
 }
 
 SWVersionInfo OculusVR::GetRuntimeInfo()

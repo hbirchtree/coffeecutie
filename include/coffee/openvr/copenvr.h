@@ -5,12 +5,14 @@
 #include <coffee/graphics_apis/chmd_api.h>
 
 namespace Coffee{
-namespace OpenVR{
+namespace OpenVRFun{
 
 struct Context;
 
 struct OVRImpl : HMD::CHMD_Binding
 {
+    static const constexpr cstring SystemName = "OpenVR";
+
     struct Context;
 
     struct Device : HMD::CHMD_Binding::Device
@@ -50,7 +52,7 @@ struct OVRImpl : HMD::CHMD_Binding
 };
 }
 
-using OpenVRDev = OpenVR::OVRImpl;
+using OpenVR = OpenVRFun::OVRImpl;
 
 }
 
