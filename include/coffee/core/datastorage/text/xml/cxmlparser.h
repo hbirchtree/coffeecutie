@@ -14,6 +14,8 @@ using namespace tinyxml2;
 
 struct TinyXML2Impl
 {
+    using Node = tinyxml2::XMLNode;
+    using Attribute = tinyxml2::XMLAttribute;
     using Document = tinyxml2::XMLDocument;
     using Element = tinyxml2::XMLElement;
 

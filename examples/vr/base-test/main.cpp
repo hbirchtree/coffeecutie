@@ -37,9 +37,28 @@ int32 coffee_main(int32, cstring_w*)
             Profiler::Profile("Device acquisition");
 
             if(dev)
+            {
+                VR::Device* dev2 = VR::GetDefaultDevice();
+                Profiler::Profile("Device acquisition");
+
+                VR::PollDevices();
+                Profiler::Profile("Device poll");
+
                 cDebug("Your device: {0}",(const HWDeviceInfo&)*dev);
+
+                CVec3 angvel = dev->angularVelocity();
+                Profiler::Profile("Pose acquisition");
+                CVec3 linvel = dev->velocity();
+                Profiler::Profile("Pose acquisition");
+                CMat4 t = dev->head();
+                Profiler::Profile("Pose acquisition");
+
+                cDebug("Values: angvel={0}, linvel={1}",angvel,linvel);
+                cDebug("Head transform: {0}",t);
+            }
         }
         VR::Shutdown();
+        Profiler::Profile("VR shutdown");
     }
     Profiler::PopContext();
 

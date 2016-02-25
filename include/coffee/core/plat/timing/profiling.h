@@ -6,7 +6,7 @@
 #include "../../base/threading/cthreading.h"
 
 namespace Coffee{
-
+namespace Profiling{
 struct SimpleProfilerImpl
 {
     struct DataPoint
@@ -100,8 +100,9 @@ struct SimpleProfilerImpl
 protected:
     static std::list<CString> *context_stack;
 };
+}
 
-using Profiler = SimpleProfilerImpl;
+using Profiler = Profiling::SimpleProfilerImpl;
 
 }
 

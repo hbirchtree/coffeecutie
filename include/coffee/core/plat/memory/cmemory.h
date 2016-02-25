@@ -255,7 +255,7 @@ FORCEDINLINE CString spacepad(T const& s, uint32 padding = 1)
 {
     CString out;
     std::stringstream ss;
-    ss << std::setw(padding) << std::to_string(s);
+    ss << std::setw(padding) << s;
     ss >> out;
     return out;
 }

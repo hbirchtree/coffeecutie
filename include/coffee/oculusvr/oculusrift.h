@@ -19,7 +19,8 @@ struct OculusVR : HMD::CHMD_Binding
 
         void reset();
 
-        CMat4 view(Eye) const;
+	CMat4 head() const;
+	CMat4 view(Eye e) const;
 
         CVec3 angularVelocity() const;
         CVec3 velocity() const;

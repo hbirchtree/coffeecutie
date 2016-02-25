@@ -44,13 +44,6 @@ bool OculusVR::InitializeBinding()
     static_assert(!ovrFalse,"Falsity of ovrFalse");
     static_assert(ovrTrue,"Truth of ovrTrue");
 
-    cDebug("OculusVR runtime version: {0}.{1}.{2}.{3}.{4}",
-           OVR_PRODUCT_VERSION,
-           OVR_MAJOR_VERSION,
-           OVR_MINOR_VERSION,
-           OVR_PATCH_VERSION,
-           OVR_BUILD_NUMBER);
-
     ovrInitParams* fptr = 0;
 
     ovrInitParams flags = {};
@@ -73,16 +66,6 @@ bool OculusVR::InitializeBinding()
     {
         return false;
     }
-
-    cDebug("Oculus version string: {0}",ovr_GetVersionString());
-
-    ovrHmd c = ovrHmd_Create(0);
-
-    ovrTrackingState s = ovrHmd_GetTrackingState(c,0);
-    cDebug("Accelerometer values: {0},{1},{2}",
-           s.RawSensorData.Accelerometer.x,
-           s.RawSensorData.Accelerometer.y,
-           s.RawSensorData.Accelerometer.z);
 
     return true;
 }
@@ -134,7 +117,8 @@ OculusVR::Device::Device(uint32 idx, bool dontcare):
         cStringFormat("{0}.{1}",
                       OculusContext->devices[idx]->FirmwareMajor,
                       OculusContext->devices[idx]->FirmwareMinor),
-        OculusContext->devices[idx]->Manufacturer),
+        OculusContext->devices[idx]->Manufacturer,
+        OculusContext->devices[idx]->SerialNumber),
     m_idx(idx)
 {
     uint32 s_caps =
@@ -157,6 +141,39 @@ SWVersionInfo OculusVR::Device::GetFirmwareInfo()
 void OculusVR::Device::reset()
 {
     ovrHmd_RecenterPose(OculusContext->devices[m_idx]);
+}
+
+CMat4 OculusVR::Device::head() const
+{
+    ovrTrackingState t = ovrHmd_GetTrackingState(
+                OculusContext->devices[m_idx],
+                0);
+    ovrVector3f p = t.HeadPose.ThePose.Position;
+    ovrQuatf q = t.HeadPose.ThePose.Orientation;
+    CMat4 m = translation(CMat4(),CVec3(p.x,p.y,p.z));
+    m *= matrixify(CQuat(q.w,q.x,q.y,q.z));
+    return m;
+}
+
+CMat4 OculusVR::Device::view(HMD::CHMD_Binding::Eye e) const
+{
+    return CMat4();
+}
+
+CVec3 OculusVR::Device::angularVelocity() const
+{
+    ovrTrackingState v = ovrHmd_GetTrackingState(OculusContext->devices[m_idx],0);
+    return CVec3(v.HeadPose.AngularVelocity.x,
+                 v.HeadPose.AngularVelocity.y,
+                 v.HeadPose.AngularVelocity.z);
+}
+
+CVec3 OculusVR::Device::velocity() const
+{
+    ovrTrackingState v = ovrHmd_GetTrackingState(OculusContext->devices[m_idx],0);
+    return CVec3(v.HeadPose.LinearVelocity.x,
+                 v.HeadPose.LinearVelocity.y,
+                 v.HeadPose.LinearVelocity.z);
 }
 
 bool OculusVR::Device::isConnected() const
