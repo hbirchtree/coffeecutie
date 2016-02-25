@@ -21,8 +21,8 @@ struct CHMD_Binding
     struct Device : HWDeviceInfo
     {
         Device(CString model, CString firmware,
-               CString manuf = ""):
-            HWDeviceInfo(manuf,model,firmware){}
+	       CString manuf = "", CString serial = ""):
+	    HWDeviceInfo(manuf,model,firmware,serial){}
 
         /*!
          * \brief Acquire view transform per-eye

@@ -51,12 +51,16 @@ bool OculusVR::InitializeBinding()
            OVR_PATCH_VERSION,
            OVR_BUILD_NUMBER);
 
+    ovrInitParams* fptr = 0;
+
     ovrInitParams flags = {};
     flags.LogCallback = ovr_log_callback;
 
-    ovrBool res = ovr_Initialize(&flags);
+#ifndef NDEBUG
+    fptr = &flags;
+#endif
 
-    if(!res)
+    if(!ovr_Initialize(fptr))
     {
         return false;
     }
@@ -64,7 +68,21 @@ bool OculusVR::InitializeBinding()
     OculusContext = new Context;
     OculusContext->iparams = flags;
 
+
+    if(!PollDevices(nullptr))
+    {
+        return false;
+    }
+
     cDebug("Oculus version string: {0}",ovr_GetVersionString());
+
+    ovrHmd c = ovrHmd_Create(0);
+
+    ovrTrackingState s = ovrHmd_GetTrackingState(c,0);
+    cDebug("Accelerometer values: {0},{1},{2}",
+           s.RawSensorData.Accelerometer.x,
+           s.RawSensorData.Accelerometer.y,
+           s.RawSensorData.Accelerometer.z);
 
     return true;
 }
@@ -74,8 +92,10 @@ bool OculusVR::PollDevices(int32 *lastValidIndex)
     if(!OculusContext)
         return false;
 
+    int count = ovrHmd_Detect();
+
     if(lastValidIndex)
-        *lastValidIndex = ovrHmd_Detect();
+        *lastValidIndex = count;
 
     return true;
 }
@@ -104,12 +124,17 @@ OculusVR::Device* OculusVR::GetDevice(int32 id)
 {
     if(id >= ovrHmd_Detect())
         return nullptr;
-    ovrHmd_Create(id);
+    OculusContext->devices[id] = ovrHmd_Create(id);
     return new Device(id);
 }
 
 OculusVR::Device::Device(uint32 idx, bool dontcare):
-    HMD::CHMD_Binding::Device("Oculus Rift",""),
+    HMD::CHMD_Binding::Device(
+        OculusContext->devices[idx]->ProductName,
+        cStringFormat("{0}.{1}",
+                      OculusContext->devices[idx]->FirmwareMajor,
+                      OculusContext->devices[idx]->FirmwareMinor),
+        OculusContext->devices[idx]->Manufacturer),
     m_idx(idx)
 {
     uint32 s_caps =
@@ -117,7 +142,16 @@ OculusVR::Device::Device(uint32 idx, bool dontcare):
     uint32 r_caps =
             ovrTrackingCap_Orientation|
             ovrTrackingCap_Position;
-    ovrHmd_ConfigureTracking(OculusContext->devices[m_idx],s_caps,(dontcare) ? 0 : r_caps);
+    ovrHmd_ConfigureTracking(OculusContext->devices[m_idx],
+                             s_caps,(dontcare) ? 0 : r_caps);
+}
+
+SWVersionInfo OculusVR::Device::GetFirmwareInfo()
+{
+    ovrHmd dev = OculusContext->devices[m_idx];
+    return SWVersionInfo(dev->ProductName,
+                         dev->FirmwareMajor,
+                         dev->FirmwareMinor);
 }
 
 void OculusVR::Device::reset()

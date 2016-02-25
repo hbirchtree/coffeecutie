@@ -15,6 +15,8 @@ struct OculusVR : HMD::CHMD_Binding
     {
         Device(uint32 idx, bool dontcare = false);
 
+	SWVersionInfo GetFirmwareInfo();
+
         void reset();
 
         CMat4 view(Eye) const;
