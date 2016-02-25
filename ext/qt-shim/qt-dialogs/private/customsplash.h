@@ -19,6 +19,7 @@ public:
     {
         setCursor(Qt::WaitCursor);
     }
+
     QtSplash::Title m_subtext;
     QtSplash::Title m_title;
     float percentage = 0;

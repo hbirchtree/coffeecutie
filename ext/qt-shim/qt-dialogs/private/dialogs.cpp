@@ -4,7 +4,6 @@
 
 #include <QImage>
 #include <QPixmap>
-
 #include <QDesktopWidget>
 
 namespace CoffeeExt{
@@ -30,6 +29,8 @@ struct QtSplash::SplashHandle
 QtSplash::SplashHandle *QtSplash::CreateSplash()
 {
     SplashHandle* s = new SplashHandle;
+    s->splash->setFixedSize(800,600);
+    s->splash->show();
     return s;
 }
 
@@ -49,8 +50,8 @@ void QtSplash::SetSize(SplashHandle *s, const CSize &size)
 
     QRect geo = s->w.availableGeometry(s->w.primaryScreen());
     QRect optimal;
-    optimal.setLeft(geo.center().x()-optimal.width()/2);
-    optimal.setTop(geo.center().y()-optimal.height()/2);
+    optimal.setLeft(geo.center().x()-size.w/2);
+    optimal.setTop(geo.center().y()-size.h/2);
     optimal.setRight(optimal.left()+size.w);
     optimal.setBottom(optimal.top()+size.h);
 

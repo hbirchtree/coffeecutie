@@ -273,6 +273,7 @@ public:
             fcounter.update(ftimer.elapsed());
 
             CoffeeExt::QtSystem::Process(100);
+            Splash::Repaint(splash);
             this->pollEvents();
             this->swapBuffers();
         }
@@ -336,6 +337,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         Profiler::Profile("Load image");
 
         Splash::SetSize(splash,img.size/2);
+
         Splash::SetBitmap(splash,PixelFormat::RGBA8UI,img.size,img.data);
         Splash::SetTitle(splash,Splash::Title("Hello world!",Color::Red,
                                               AlignHCenter|AlignBottom,
@@ -346,7 +348,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         CResources::FileFree(resc);
         Profiler::Profile("Free data");
 
-//        Splash::ShowSplash(splash);
+        Splash::ShowSplash(splash);
         Profiler::Profile("Show splash");
 
         Profiler::PopContext();
@@ -376,21 +378,21 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         Profiler::Profile("Get renderer info");
     }
 
-    std::function<void()> splash_updater = [=]()
-    {
-        while(!renderer->closeFlag())
-        {
-            Splash::Repaint(splash);
-        }
-    };
+//    std::function<void()> splash_updater = [=]()
+//    {
+//        while(!renderer->closeFlag())
+//        {
+//            Splash::Repaint(splash);
+//        }
+//    };
 
-    std::future<void> splash_f = Threads::RunAsync(splash_updater);
+//    std::future<void> splash_f = Threads::RunAsync(splash_updater);
 
     renderer->run();
 
     Profiler::Profile("Runtime");
 
-    splash_f.get();
+//    splash_f.get();
 
     renderer->cleanup();
     delete renderer;
