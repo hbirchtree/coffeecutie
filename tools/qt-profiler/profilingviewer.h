@@ -7,6 +7,8 @@ namespace Ui {
 class ProfilingViewer;
 }
 
+class QTreeWidget;
+
 class ProfilingViewer : public QMainWindow
 {
     Q_OBJECT
@@ -16,7 +18,7 @@ public:
     ~ProfilingViewer();
 
 protected:
-    void setupTreeWidget();
+    void setupTreeWidget(QTreeWidget* tree);
 
 private slots:
     void on_actionAbout_Qt_triggered();

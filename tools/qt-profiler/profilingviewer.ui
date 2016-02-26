@@ -55,17 +55,17 @@
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
-      <property name="selectionMode">
-       <enum>QAbstractItemView::SingleSelection</enum>
-      </property>
       <property name="rootIsDecorated">
+       <bool>true</bool>
+      </property>
+      <property name="uniformRowHeights">
        <bool>true</bool>
       </property>
       <property name="animated">
        <bool>true</bool>
       </property>
       <property name="columnCount">
-       <number>5</number>
+       <number>6</number>
       </property>
       <column>
        <property name="text">
@@ -90,6 +90,11 @@
       <column>
        <property name="text">
         <string notr="true">5</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string notr="true">6</string>
        </property>
       </column>
      </widget>
