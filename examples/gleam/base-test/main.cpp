@@ -311,6 +311,10 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 {
     CResources::FileResourcePrefix("sample_data/");
 
+    /*Required for SDL2 applications*/
+    SubsystemWrapper<SDL2::SDL2> sdl2;
+    C_UNUSED(sdl2);
+
     Profiler::PushContext("Splashscreen creation");
 
     /*Required to start Qt GUI applications*/
@@ -318,9 +322,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     C_UNUSED(qt);
     Profiler::Profile("Initialization");
 
-    /*Required for SDL2 applications*/
-    SubsystemWrapper<SDL2::SDL2> sdl2;
-    C_UNUSED(sdl2);
 
     /*Testing out Qt splashscreen support*/
     {

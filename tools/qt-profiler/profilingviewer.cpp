@@ -129,7 +129,7 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
 	return;
     }
 
-    CResources::FilePull(rsc);
+    CResources::FilePull(rsc,true);
 
     XML::Document* doc = XML::XMLRead(rsc);
 

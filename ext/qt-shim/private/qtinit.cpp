@@ -1,5 +1,6 @@
 #include <coffee_ext/qt_shim/qtinit.h>
 
+#include <coffee/core/CProfiling>
 #include <QApplication>
 
 namespace CoffeeExt{
@@ -8,11 +9,15 @@ thread_local QApplication* dialog_application = nullptr;
 
 bool QtSystem::Init(int& argc, char** argv)
 {
+    Coffee::Profiler::PushContext("Qt Init");
     if(!dialog_application)
     {
         dialog_application = new QApplication(argc,argv);
+        Coffee::Profiler::Profile("QApplication startup");
+        Coffee::Profiler::PopContext();
         return true;
     }
+    Coffee::Profiler::PopContext();
     return false;
 }
 bool QtSystem::Deinit()
