@@ -7,10 +7,12 @@
 
 using namespace Coffee;
 
-int32 coffee_main(int32,cstring_w*)
+int32 coffee_main(int32 argc,cstring_w* argv)
 {
     auto qt = SubsystemWrapper<CoffeeExt::QtSystem>();
     C_UNUSED(qt);
+
+    CoffeeExt::QtSystem::SetApplicationName("Coffee Profiler");
 
     ProfilingViewer viewer;
     viewer.show();

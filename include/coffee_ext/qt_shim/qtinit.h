@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/composite_types.h>
+#include <coffee/core/plat/environment/environment_details.h>
 
 namespace CoffeeExt{
 
@@ -8,8 +9,10 @@ struct QtSystem : Coffee::Subsystem
 {
     STATICINLINE void Init()
     {
-        int v = 0;
-        Init(v,nullptr);
+	int v = 1;
+	Coffee::CString execname = Coffee::Env::ExecutableName();
+	Coffee::cstring exec_c = execname.c_str();
+	Init(v,(char**)&exec_c);
     }
     static bool Init(int& argc, char** argv);
     static bool Deinit();
@@ -17,6 +20,8 @@ struct QtSystem : Coffee::Subsystem
     static bool Process(int timeout = 20);
 
     static int Exec();
+
+    static void SetApplicationName(Coffee::cstring name, Coffee::cstring orgname = nullptr);
 };
 
 }

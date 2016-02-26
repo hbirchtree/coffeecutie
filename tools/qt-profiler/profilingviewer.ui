@@ -38,7 +38,7 @@
          <x>0</x>
          <y>0</y>
          <width>794</width>
-         <height>216</height>
+         <height>214</height>
         </rect>
        </property>
       </widget>
@@ -107,7 +107,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuAbout">
@@ -118,7 +118,7 @@
    </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>&amp;File</string>
     </property>
     <addaction name="actionOpen_file"/>
     <addaction name="separator"/>
@@ -130,17 +130,17 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionAbout_Qt">
    <property name="text">
-    <string>About Qt</string>
+    <string>&amp;About Qt</string>
    </property>
   </action>
   <action name="actionOpen_file">
    <property name="text">
-    <string>Open file</string>
+    <string>&amp;Open file</string>
    </property>
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
   </action>
  </widget>

@@ -12,15 +12,18 @@ using namespace Coffee;
 #include <QXmlStreamReader>
 #include <QMessageBox>
 #include <QDebug>
+#include <QFileDialog>
 
-QVector<QTreeWidgetItem*> treeitems;
+const constexpr cstring BaseTitle = "Espresso";
 
 ProfilingViewer::ProfilingViewer(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::ProfilingViewer)
+    ui(new Ui::ProfilingViewer),
+    m_dlg(this)
 {
     ui->setupUi(this);
 
+    this->setWindowTitle(tr(BaseTitle));
     setupTreeWidget(ui->profileTree);
 }
 
@@ -75,7 +78,7 @@ quint64 buildProfileTree(QTreeWidget* troot,
         QTreeWidgetItem* ci = new QTreeWidgetItem;
         ci->setText(LabelIndex,c->Attribute(token_label));
         ci->setText(TimeSecIndex,c->Attribute(token_timestamp));
-//        ci->setText(EvTimeIndex,QString::number(base+ts));
+	ci->setText(EvTimeIndex,QString::number(ts));
         p->addChild(ci);
 
         if(CStrCmp(c->Name(),token_context))
@@ -107,10 +110,36 @@ void ProfilingViewer::setupTreeWidget(QTreeWidget* tree)
 
     tree->setHeaderLabels(headers);
 
-    CResources::CResource rsc("GLeamBaseTest-profile.xml");
+//    loadProfileLog("GLeamBaseTest-profile.xml",tree);
+}
+
+void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
+{
+    /* Reset widgets and their states */
+    tree->clear();
+
+    CResources::CResource rsc(fname,true);
+
+    if(!CResources::FileExists(rsc))
+    {
+	QMessageBox::warning(
+		    this,tr("File error"),
+		    tr("Could not locate file: %1")
+		    .arg(rsc.resource()));
+	return;
+    }
+
     CResources::FilePull(rsc);
 
     XML::Document* doc = XML::XMLRead(rsc);
+
+    if(!doc)
+    {
+	QMessageBox::warning(this,tr("Error parsing XML"),
+			     tr("Please verify file contents of %1")
+			     .arg(rsc.resource()));
+	return;
+    }
 
     CResources::FileFree(rsc);
 
@@ -118,6 +147,19 @@ void ProfilingViewer::setupTreeWidget(QTreeWidget* tree)
     QMap<QString,QTreeWidgetItem*> thread_items;
 
     XML::Element* xdat = doc->FirstChildElement("profile");
+
+    if(!xdat)
+    {
+	QMessageBox::warning(this,tr("Error parsing XML"),
+			     tr("Failed to locate profiling document root: %1")
+			     .arg(rsc.resource()));
+	return;
+    }
+
+    QString title = QString("%1 - %2")
+	    .arg(BaseTitle)
+	    .arg(xdat->Attribute("start2"));
+    this->setWindowTitle(title);
 
     quint64 base = QString(xdat->Attribute("start1")).toULongLong();
     base = 0;
@@ -132,5 +174,13 @@ void ProfilingViewer::on_actionAbout_Qt_triggered()
 
 void ProfilingViewer::on_actionOpen_file_triggered()
 {
+    QString l = QFileDialog::getOpenFileName(
+		this,tr("Choose a captured profile"),
+		QString(),"*.xml");
+    fileDialogOpenFile(l);
+}
 
+void ProfilingViewer::fileDialogOpenFile(QString const& fn)
+{
+    loadProfileLog(fn.toStdString().c_str(),ui->profileTree);
 }

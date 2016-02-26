@@ -32,4 +32,11 @@ int QtSystem::Exec()
     return dialog_application->exec();
 }
 
+void QtSystem::SetApplicationName(Coffee::cstring name, Coffee::cstring orgname)
+{
+    QCoreApplication::setApplicationName(name);
+    if(orgname)
+        QCoreApplication::setOrganizationName(orgname);
+}
+
 }
