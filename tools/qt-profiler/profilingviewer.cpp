@@ -29,11 +29,49 @@ ProfilingViewer::~ProfilingViewer()
     delete ui;
 }
 
-struct _tmp_val
+quint64 buildProfileTree(QTreeWidget* troot,
+                         QTreeWidgetItem* rt,
+                         QSet<QString>& threads,
+                         QMap<QString,QTreeWidgetItem*>& thread_items,
+                         XML::Element* el)
 {
-    quint64 ts;
-    QString name;
-};
+    quint64 cost = 0;
+
+    XML::Element* c = el->FirstChildElement();
+    while(c)
+    {
+        QString thread_id = c->Attribute("thread");
+        if(!threads.contains(thread_id))
+        {
+            threads.insert(thread_id);
+            thread_items.insert(thread_id,new QTreeWidgetItem);
+            thread_items[thread_id]->setText(0,thread_id);
+            troot->addTopLevelItem(thread_items[thread_id]);
+        }
+
+        QTreeWidgetItem* p;
+        if(rt)
+            p = rt;
+        else
+            p = thread_items[thread_id];
+
+        QTreeWidgetItem* ci = new QTreeWidgetItem;
+        ci->setText(1,c->Attribute("label"));
+        ci->setText(2,c->Attribute("ts"));
+        p->addChild(ci);
+
+        if(CStrCmp(c->Name(),"context"))
+            cost += buildProfileTree(troot,ci,threads,thread_items,c);
+        c = c->NextSiblingElement();
+    }
+
+    if(rt)
+    {
+        rt->setText(2,QString::number(cost));
+        return cost;
+    }else
+        return 0;
+}
 
 void ProfilingViewer::setupTreeWidget()
 {
@@ -57,28 +95,11 @@ void ProfilingViewer::setupTreeWidget()
     CResources::FileFree(rsc);
 
     QSet<QString> thread_id;
+    QMap<QString,QTreeWidgetItem*> thread_items;
 
     XML::Element* xdat = doc->FirstChildElement("profile");
-    XML::Element* tmp = xdat->FirstChildElement();
-    while(tmp)
-    {
-        cstring tid = tmp->Attribute("thread");
-        if(tid)
-        {
-            QString trd = QString::fromLocal8Bit(tid).trimmed();
-            if(!thread_id.contains(trd))
-            {
-                /* Create thread item */
-                QTreeWidgetItem* m = new QTreeWidgetItem;
-                m->setText(0,trd);
-                tree->insertTopLevelItem(0,m);
 
-                thread_id.insert(trd);
-            }
-        }
-
-        tmp = tmp->NextSiblingElement();
-    }
+    buildProfileTree(tree,nullptr,thread_id,thread_items,xdat);
 }
 
 void ProfilingViewer::on_actionAbout_Qt_triggered()
