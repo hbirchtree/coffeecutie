@@ -1,14 +1,21 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CMD>
+#include <coffee_ext/qt_shim/qtinit.h>
+
+#include <QApplication>
+#include "profilingviewer.h"
 
 using namespace Coffee;
 
 int32 coffee_main(int32,cstring_w*)
 {
-    cDebug("Press any key to exit");
-    Cmd::ReadString(nullptr,0,stdin);
-    getchar();
-    return 0;
+    auto qt = SubsystemWrapper<CoffeeExt::QtSystem>();
+    C_UNUSED(qt);
+
+    ProfilingViewer viewer;
+    viewer.show();
+
+    return CoffeeExt::QtSystem::Exec();
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

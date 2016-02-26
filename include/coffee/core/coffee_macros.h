@@ -56,8 +56,13 @@ FORCEDINLINE void C_UNUSED(T const&)
  */
 FORCEDINLINE void CASSERT(bool expr)
 {
+#ifdef COFFEE_USE_EXCEPTIONS
     if(!expr)
         throw std::runtime_error("Assert failed");
+#else
+    if(!expr)
+        abort();
+#endif
 }
 
 FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)

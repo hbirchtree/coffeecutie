@@ -15,6 +15,8 @@ struct QtSystem : Coffee::Subsystem
     static bool Deinit();
 
     static bool Process(int timeout = 20);
+
+    static int Exec();
 };
 
 }

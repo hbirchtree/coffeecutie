@@ -5,12 +5,15 @@
 #define COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
 
 #include "../environment_details.h"
+#include "../../memory/cmemory.h"
 
 #include <libgen.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+
+extern char** environ;
 
 namespace Coffee{
 namespace Environment{
@@ -71,6 +74,31 @@ struct PosixEnvironmentFun : EnvInterface
 	dir.resize(PATH_MAX);
 	getcwd(&dir[0],PATH_MAX);
 	return dir;
+    }
+    STATICINLINE Variables Environment()
+    {
+        Variables e;
+        char* envar = environ[0];
+        CString v1,v2;
+        szptr vn = 0;
+        cstring q;
+        while(envar)
+        {
+            q = CStrFind(envar,"=");
+            if(!q)
+                continue;
+            v1.insert(0,(cstring)envar,q-envar);
+            v2.insert(0,(cstring)q+1,CStrLen(q+1));
+
+            e.insert(VarPair(v1,v2));
+
+            v1.clear();
+            v2.clear();
+
+            vn++;
+            envar = environ[vn];
+        }
+        return e;
     }
 };
 

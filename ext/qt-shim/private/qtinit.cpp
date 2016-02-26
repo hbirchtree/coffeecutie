@@ -27,4 +27,9 @@ bool QtSystem::Process(int timeout)
     return true;
 }
 
+int QtSystem::Exec()
+{
+    return dialog_application->exec();
+}
+
 }

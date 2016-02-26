@@ -1,6 +1,8 @@
 #ifndef COFFEE_H
 #define COFFEE_H
 
+#include <signal.h>
+
 #include "types/basetypes.h"
 #include "coffee_macros.h"
 
@@ -12,15 +14,18 @@ using ExitCallback = void(*)();
 
 enum CoffeeExitCode
 {
-    CoffeeExit_Normal       = 0,
+    CoffeeExit_Normal       = SIGQUIT,
     CoffeeExit_GeneralError = 1,
 
     CoffeeExit_UnknownBad  = 100,
 
-    CoffeeExit_Termination = 120,
-    CoffeeExit_Interrupt   = 121,
+    CoffeeExit_IllegalOp   = SIGILL,
+    CoffeeExit_Termination = SIGTERM,
+    CoffeeExit_Interrupt   = SIGINT,
 
-    CoffeeExit_Kill        = 122,
+    CoffeeExit_Kill        = SIGKILL,
+
+    CoffeeExit_Pooped       = SIGSEGV,
 };
 
 const constexpr cstring CoffeeBuildString = C_CONSTRUCT_BUILD_STRING("01.00",__CBDATETIME__);
@@ -35,7 +40,7 @@ extern void SetExitFunction(ExitCallback f);
 /*!
  * \brief This function handles initial program startup
  */
-extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w *argc);
+extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w *argv);
 
 /*!
  * \brief Initializes process state before running. Mainly core dumping.

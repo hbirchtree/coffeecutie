@@ -1,9 +1,6 @@
 #ifndef ASSIMPFUN
 #define ASSIMPFUN
 
-#include <thread>
-#include <stdint.h>
-
 #include <coffee/core/coffee.h>
 #include <coffee/assimp/cassimptypes.h>
 
@@ -48,8 +45,6 @@ void coffee_assimp_mesh_attribute_process(
 }
 
 }
-
-
 
 }
 }

@@ -24,7 +24,7 @@ struct ThreadId_t
     {
         return m_id == thd.m_id;
     }
-    FORCEDINLINE uint64 hash()
+    FORCEDINLINE uint64 hash() const
     {
         return std::hash<std::thread::id>()(m_id);
     }

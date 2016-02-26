@@ -1,7 +1,10 @@
 #ifndef COFFEE_CORE_PLAT_FILE_DEF_H
 #define COFFEE_CORE_PLAT_FILE_DEF_H
 
-#include <coffee/core/CTypes>
+#include "../../types/tdef/integertypes.h"
+#include "../../types/tdef/stltypes.h"
+#include "../../types/cdef/memtypes.h"
+#include "../../types/edef/resenum.h"
 
 namespace Coffee{
 namespace CResources{

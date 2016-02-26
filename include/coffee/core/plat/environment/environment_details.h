@@ -1,12 +1,16 @@
 #ifndef ENVIRONMENT_DETAILS
 #define ENVIRONMENT_DETAILS
 
-#include <coffee/core/CTypes>
+#include "../../types/tdef/integertypes.h"
+#include "../../types/tdef/stltypes.h"
 
 namespace Coffee{
 
 struct EnvInterface
 {
+    using Variables = Map<CString,CString>;
+    using VarPair = std::pair<CString,CString>;
+
     struct TermScreen
     {
 	static bool UsingAlternateBuffer;
@@ -26,6 +30,11 @@ struct EnvInterface
 
     static CString ApplicationDir();
     static CString CurrentDir();
+
+    static Variables Environment()
+    {
+        return Variables();
+    }
 };
 
 struct EnvColorCodes

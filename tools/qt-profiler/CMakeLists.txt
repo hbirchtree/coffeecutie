@@ -1,5 +1,14 @@
 include ( QtIncludes )
 
-coffee_add_example ( CoffeeProfiler main.cpp )
+set ( CoffeeProfiler_SRCS
+    main.cpp
+    profilingviewer.cpp
+    )
 
-target_link_libraries ( CoffeeProfiler CoffeeCore Qt5::Widgets )
+coffee_add_example ( CoffeeProfiler "${CoffeeProfiler_SRCS}" )
+
+target_link_libraries ( CoffeeProfiler
+    CoffeeCore
+    Qt5::Xml
+    QtShimCore
+    )

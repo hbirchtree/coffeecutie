@@ -1,6 +1,8 @@
 #ifndef COFFEE_CORE_MEM_MACROS_H
 #define COFFEE_CORE_MEM_MACROS_H
 
+//#define COFFEE_USE_EXCEPTIONS
+
 #include "plat/platform_detect.h"
 
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete

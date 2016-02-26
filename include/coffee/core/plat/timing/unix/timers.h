@@ -106,6 +106,13 @@ struct UnixTime : TimeDef
         DateTime dt = GetDateTime(ts);
         return StringDate("%H:%M:%S",dt);
     }
+
+    STATICINLINE CString FormattedCurrentTime(cstring fmt)
+    {
+        Timestamp ts = CurrentTimestamp();
+        DateTime dt = GetDateTime(ts);
+        return StringDate(fmt,dt);
+    }
 };
 
 using Time = UnixTime;

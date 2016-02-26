@@ -1,6 +1,5 @@
 #include <coffee/core/coffee.h>
 
-#include <signal.h>
 
 #include <coffee/core/plat/platform_detect.h>
 #include <coffee/core/CDebug>
@@ -16,8 +15,6 @@
 
 #include <coffee/core/profiler/profiling-export.h>
 
-static bool coffee_initialized = false;
-
 namespace Coffee{
 
 static ExitCallback exit_handle = nullptr;
@@ -28,22 +25,23 @@ void sighandle(int sig)
     Cmd::ResetScreen();
     switch(sig)
     {
+    case SIGSEGV:
+        Cmd::Exit(CoffeeExit_Pooped);
+    case SIGABRT:
+        Cmd::Exit(CoffeeExit_Pooped);
     case SIGILL:
         Cmd::Exit(CoffeeExit_Termination);
-        break;
     case SIGINT:
     {
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Interrupt);
-        break;
     }
     case SIGTERM:
     {
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
-        break;
     }
 #if defined(COFFEE_LINUX)
     case SIGKILL:
@@ -76,8 +74,6 @@ void CoffeeInit()
     static_assert(sizeof(scalar)    ==4, "scalar size is inconsistent");
     static_assert(sizeof(bigscalar) ==8, "bigscalar size is inconsistent");
 
-    coffee_initialized = true;
-
     /* Allow core dump by default */
 #ifndef NDEBUG
     ProcessProperty::CoreDumpEnable();
@@ -103,7 +99,7 @@ void CoffeeInit()
     cDebug("Running on {0} ({1})",CoffeeCompilerString,CoffeeArchString);
 }
 
-int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
+int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
     Profiler::InitProfiler();
 
@@ -116,7 +112,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
     Profiler::Profile("Init");
 
     Profiler::PushContext("main()");
-    int32 r = mainfun(argv,argc);
+    int32 r = mainfun(argc,argv);
     Profiler::PopContext();
 
     Profiler::Profile("Runtime");
@@ -127,7 +123,9 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argv, cstring_w*argc)
 
     Profiler::PopContext();
 
-    Profiling::PrintProfilerData();
+//    Profiling::PrintProfilerData();
+    CString profile_log_name = cStringFormat("{0}-profile.xml",Env::ExecutableName());
+    Profiling::ExportProfilerData(profile_log_name.c_str(),argc,argv);
 
     Profiler::DestroyProfiler();
 
@@ -158,5 +156,6 @@ unw_context_t* LinuxStacktracer::unwind_context = nullptr;
 std::list<Profiler::DataPoint>* Profiler::datapoints = nullptr;
 std::list<CString>* Profiler::context_stack = nullptr;
 Mutex* Profiler::data_access_mutex = nullptr;
+Timestamp* Profiler::start_time = nullptr;
 
 }

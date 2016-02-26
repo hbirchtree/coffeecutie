@@ -28,6 +28,7 @@ namespace Coffee{
 
 static FILE* DefaultDebugOutputPipe = stderr;
 static FILE* DefaultPrintOutputPipe = stderr;
+static FILE* DefaultInputPipe = stdin;
 
 namespace CMem{
 
@@ -256,6 +257,15 @@ FORCEDINLINE CString spacepad(T const& s, uint32 padding = 1)
     CString out;
     std::stringstream ss;
     ss << std::setw(padding) << s;
+    ss >> out;
+    return out;
+}
+
+FORCEDINLINE CString hexify(uint64 i)
+{
+    CString out;
+    std::stringstream ss;
+    ss << std::hex << i;
     ss >> out;
     return out;
 }

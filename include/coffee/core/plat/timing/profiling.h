@@ -14,7 +14,6 @@ struct SimpleProfilerImpl
         FORCEDINLINE DataPoint():
             thread()
         {
-
         }
 
         enum Type
@@ -28,7 +27,7 @@ struct SimpleProfilerImpl
 
         Type tp;
         CString name;
-        uint64 ts;
+        Timestamp ts;
 
         CString label;
         uint32 line;
@@ -36,16 +35,23 @@ struct SimpleProfilerImpl
 
     STATICINLINE void InitProfiler()
     {
+#ifndef NDEBUG
+        start_time = new Timestamp(Time::CurrentMicroTimestamp());
+
         data_access_mutex = new Mutex;
         datapoints = new std::list<DataPoint>;
         context_stack = new std::list<CString>;
+#endif
     }
 
     STATICINLINE void DestroyProfiler()
     {
+#ifndef NDEBUG
         delete data_access_mutex;
         delete datapoints;
         delete context_stack;
+        delete start_time;
+#endif
     }
 
     STATICINLINE void Profile(cstring name = nullptr)
@@ -94,6 +100,7 @@ struct SimpleProfilerImpl
 #endif
     }
 
+    static Timestamp *start_time;
     static Mutex *data_access_mutex;
     static std::list<DataPoint> *datapoints;
 
