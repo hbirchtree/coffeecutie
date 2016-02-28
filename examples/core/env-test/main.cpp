@@ -2,6 +2,7 @@
 #include <coffee/CImage>
 #include "library.h"
 #include <coffee/core/plat/memory/cmd_interface.h>
+#include <coffee/core/datastorage/text/ini/ciniparser.h>
 
 #include <coffee/core/unit_tests/micro_tests.h>
 
@@ -11,6 +12,7 @@ using namespace CLibraryLoader;
 
 int32 coffee_main(int32, cstring_w*)
 {
+    CResources::FileResourcePrefix("sample_data/");
     {
         /* Check out system directory strings and user data directories */
         CString cfg_dir  = Env::GetUserData(
@@ -27,27 +29,67 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileMkdir(cfg_dir.c_str(),true);
     }
 
-//    CoffeeTests::FunctionCallTest();
-//    CoffeeTests::PrintCallTest();
+//    {
+//        CoffeeTests::FunctionCallTest();
+//        CoffeeTests::PrintCallTest();
+//    }
 
-    cDebug("uint64 size: {0}",sizeof(uint64));
-    cDebug("int64 size: {0}",sizeof(int64));
-    cDebug("uint32 size: {0}",sizeof(uint32));
-    cDebug("int32 size: {0}",sizeof(int32));
+    {
+        cDebug("uint64 size: {0}",sizeof(uint64));
+        cDebug("int64 size: {0}",sizeof(int64));
+        cDebug("uint32 size: {0}",sizeof(uint32));
+        cDebug("int32 size: {0}",sizeof(int32));
+    }
 
-    cDebug("System memory: {0:1}GB",
-           SysInfo::MemTotal()/CMath::pow<bigscalar>(1024,3));
-    cDebug("Available system memory: {0:1}GB",
-           SysInfo::MemAvailable()/CMath::pow<bigscalar>(1024,3));
+    {
+        cDebug("System memory: {0:1}GB",
+               SysInfo::MemTotal()/CMath::pow<bigscalar>(1024,3));
+        cDebug("Available system memory: {0:1}GB",
+               SysInfo::MemAvailable()/CMath::pow<bigscalar>(1024,3));
 
-    cDebug("Processor info: {0}",SysInfo::Processor());
-    cDebug("Frequency: {0:2}GHz",SysInfo::ProcessorFrequency());
-    cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
-    cDebug("FPU: {0}",SysInfo::HasFPU());
+        cDebug("Processor info: {0}",SysInfo::Processor());
+        cDebug("Frequency: {0:2}GHz",SysInfo::ProcessorFrequency());
+        cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
+        cDebug("FPU: {0}",SysInfo::HasFPU());
+    }
 
     {
         int64 ptr = 123;
         cDebug("Pointer: {0}",(const void* const&)ptr);
+    }
+
+    /* Try creating an INI document */
+    {
+        INI::Document doc;
+
+        INI::Section t1 = doc.newSection();
+        INI::Section t2 = doc.newSection();
+
+        doc.insertSection("Test",t1);
+        doc.insertSection("Rest",t2);
+
+        INI::Variant v1 = doc.newString("Hello test string");
+        INI::Variant v2 = doc.newBool(false);
+        INI::Variant v3 = doc.newInteger(100);
+
+        t1->insertValue("hello1",v1);
+        t1->insertValue("hello2",v2);
+        t1->insertValue("hello3",v3);
+
+        cDebug("test {0}, {1}, {2}",v1->getString(),v2->getBool(),v3->getInteger());
+
+    }
+    /* Parsing an INI document */
+    {
+
+        CResources::CResource testfile("test.ini");
+        CResources::FileMap(testfile);
+
+        INI::Document doc2 = INI::Read(testfile);
+
+        cDebug("{0}",doc2.section("Hello there")->value("Value_1")->getInteger());
+
+        CResources::FileUnmap(testfile);
     }
 
     return 0;

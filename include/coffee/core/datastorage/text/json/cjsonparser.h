@@ -15,7 +15,7 @@ struct RapidJson
 {
     using Document = rapidjson::Document;
 
-    inline C_FORCE_INLINE static rapidjson::Document Read(cstring data)
+    STATICINLINE rapidjson::Document Read(cstring data)
     {
 	Document doc;
 	doc.Parse(data);
