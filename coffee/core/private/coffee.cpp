@@ -26,7 +26,7 @@ void sighandle(int sig)
     switch(sig)
     {
     case SIGFPE:
-        cDebug("FPE occurred");
+        cBasicPrint("FPE occurred");
         break;
     case SIGSEGV:
         if(exit_handle)
@@ -52,13 +52,18 @@ void sighandle(int sig)
             exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
     }
-#if defined(COFFEE_LINUX)
-    case SIGKILL:
-        Cmd::Exit(CoffeeExit_Kill);
-#endif
     default:
         Cmd::Exit(CoffeeExit_UnknownBad);
     }
+
+    /* Implementation detail: SIGKILL might
+     *  leave system with dirty state for certain hardware devices:
+     *  - Input devices such as controllers
+     *  - Haptic devices
+     *  - Kinect devices (if using CNect)
+     *
+     * If any abnormal behavior occurs after
+     *  a SIGKILL shutdown has happened, this is likely the cause.*/
 }
 
 void SetExitFunction(ExitCallback f)
@@ -68,20 +73,32 @@ void SetExitFunction(ExitCallback f)
 
 void CoffeeInit()
 {
-    static_assert(sizeof(uint8)==1,"uint8 size is inconsistent");
-    static_assert(sizeof(int8) ==1, "int8 size is inconsistent");
+    /* We make certain assumptions about the system
+     *  which must be fulfilled for proper execution */
+    static_assert(sizeof(uint8)==1,
+                  "uint8 size is inconsistent");
+    static_assert(sizeof(int8)==1,
+                  "int8 size is inconsistent");
 
-    static_assert(sizeof(uint16)==2,"uint16 size is inconsistent");
-    static_assert(sizeof(int16) ==2, "int16 size is inconsistent");
+    static_assert(sizeof(uint16)==2,
+                  "uint16 size is inconsistent");
+    static_assert(sizeof(int16)==2,
+                  "int16 size is inconsistent");
 
-    static_assert(sizeof(uint32)==4,"uint32 size is inconsistent");
-    static_assert(sizeof(int32) ==4, "int32 size is inconsistent");
+    static_assert(sizeof(uint32)==4,
+                  "uint32 size is inconsistent");
+    static_assert(sizeof(int32)==4,
+                  "int32 size is inconsistent");
 
-    static_assert(sizeof(uint64)==8,"uint64 size is inconsistent");
-    static_assert(sizeof(int64) ==8, "int64 size is inconsistent");
+    static_assert(sizeof(uint64)==8,
+                  "uint64 size is inconsistent");
+    static_assert(sizeof(int64)==8,
+                  "int64 size is inconsistent");
 
-    static_assert(sizeof(scalar)    ==4, "scalar size is inconsistent");
-    static_assert(sizeof(bigscalar) ==8, "bigscalar size is inconsistent");
+    static_assert(sizeof(scalar)==4,
+                  "scalar size is inconsistent");
+    static_assert(sizeof(bigscalar)==8,
+                  "bigscalar size is inconsistent");
 
     /* Allow core dump by default */
 #ifndef NDEBUG
@@ -102,8 +119,8 @@ void CoffeeInit()
     signal(SIGTERM,sighandle);
 
 #ifndef NDEBUG
-    /* Run unit tests, ensuring that the system and compilation process is sane */
-//    CoffeeTests::run_type_tests();
+    /* Run unit tests, ensuring that the system
+     *  and compilation process is sane */
     CoffeeTests::run_memory_tests();
 #endif
 
