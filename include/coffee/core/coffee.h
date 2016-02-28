@@ -26,6 +26,7 @@ enum CoffeeExitCode
     CoffeeExit_Kill        = SIGKILL,
 
     CoffeeExit_Pooped       = SIGSEGV,
+    CoffeeExit_PoopedABit   = SIGABRT,
 };
 
 const constexpr cstring CoffeeBuildString = C_CONSTRUCT_BUILD_STRING("01.00",__CBDATETIME__);

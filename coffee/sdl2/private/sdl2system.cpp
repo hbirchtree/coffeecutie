@@ -11,7 +11,7 @@ bool SDL2::Init()
 {
     /* Initialize SDL2 library, takes some time */
     Profiler::PushContext("SDL2 Init");
-    if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)<0)
+    if(SDL_Init(0)<0)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());

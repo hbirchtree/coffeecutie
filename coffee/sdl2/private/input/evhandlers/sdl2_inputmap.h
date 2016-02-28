@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../types/sdl2datatypes.h"
+#include "../../types/sdl2datatypes.h"
 #include <coffee/core/CInput>
 
 namespace Coffee{

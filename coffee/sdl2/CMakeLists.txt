@@ -3,12 +3,12 @@ set ( CoffeeSDL2_SRCS
 
     private/sdl2system.cpp
 
-    private/csdl2_dialogs.cpp
-    private/csdl2_gl_renderer.cpp
-    private/csdl2_eventhandler.cpp
-    private/csdl2_window.cpp
+    private/windowing/csdl2_dialogs.cpp
+    private/graphics/csdl2_gl_renderer.cpp
+    private/input/csdl2_eventhandler.cpp
+    private/windowing/csdl2_window.cpp
 
-    private/evhandlers/sdl2eventhandlers.cpp
+    private/input/evhandlers/sdl2eventhandlers.cpp
     private/windowing/sdl2helpers.cpp
     )
 

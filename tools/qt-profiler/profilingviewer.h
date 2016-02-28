@@ -31,6 +31,8 @@ private slots:
 
     void on_actionOpen_file_triggered();
 
+    void on_actionClose_file_triggered();
+
 private:
     Ui::ProfilingViewer *ui;
     QFileDialog m_dlg;

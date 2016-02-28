@@ -23,24 +23,6 @@
 #define C_CONSTRUCT_BUILD_STRING(ver,datetime) ver "." datetime
 
 namespace Coffee{
-#if defined(COFFEE_WINDOWS)
-
-constexpr cstring print_color_debug = "";
-constexpr cstring print_color_warning = "";
-constexpr cstring print_color_stub = "";
-constexpr cstring print_color_fatal = "";
-
-constexpr cstring print_color_reset = "";
-
-#else
-constexpr cstring print_color_debug =   "\033[1m\033[44m";
-constexpr cstring print_color_warning = "\033[1m\033[43m";
-constexpr cstring print_color_stub =    "\033[1m\033[42m";
-constexpr cstring print_color_fatal =   "\033[1m\033[41m";
-
-constexpr cstring print_color_reset = "\033[0m";
-#endif
-
 
 template<typename T>
 /*!
@@ -76,7 +58,7 @@ FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
  */
 FORCEDINLINE void C_STUBBED(cstring name)
 {
-    fprintf(DefaultDebugOutputPipe,"STUB:%s@%i: %s\n",
+    fprintf(DefaultDebugOutputPipe,"STUBD:%s@%i: %s\n",
             __FILE__,
             __LINE__,
             name);
@@ -92,7 +74,7 @@ FORCEDINLINE void C_FIXME(cstring identifier)
 
 FORCEDINLINE void C_PERFWARN(cstring file, int line, cstring msg)
 {
-    fprintf(DefaultDebugOutputPipe,"Perf warning:%s@%i: %s\n",file,line,msg);
+    fprintf(DefaultDebugOutputPipe,"PERFW:%s@%i: %s\n",file,line,msg);
 }
 
 /*!
@@ -109,7 +91,7 @@ FORCEDINLINE void C_BADERROR(cstring name)
 
 FORCEDINLINE void C_DEPRECATED()
 {
-    fprintf(DefaultDebugOutputPipe,"Deprecated function in use");
+    fprintf(DefaultDebugOutputPipe,"DEPRECATED");
 }
 }
 

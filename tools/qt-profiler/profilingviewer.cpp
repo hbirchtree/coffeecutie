@@ -117,6 +117,10 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
 {
     /* Reset widgets and their states */
     tree->clear();
+    this->setWindowTitle(BaseTitle);
+
+    if(!fname||CStrCmp(fname,""))
+        return;
 
     CResources::CResource rsc(fname,true);
 
@@ -150,21 +154,49 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
 
     if(!xdat)
     {
-	QMessageBox::warning(this,tr("Error parsing XML"),
-			     tr("Failed to locate profiling document root: %1")
-			     .arg(rsc.resource()));
-	return;
+        QMessageBox::warning(this,tr("Error parsing XML"),
+                             tr("Failed to locate profiling document root: %1")
+                             .arg(rsc.resource()));
+        return;
     }
 
-    QString title = QString("%1 - %2")
-	    .arg(BaseTitle)
-	    .arg(xdat->Attribute("start2"));
-    this->setWindowTitle(title);
+    /* Grab datapoints */
+    {
+        XML::Element* datap = xdat->FirstChildElement("datapoints");
 
-    quint64 base = QString(xdat->Attribute("start1")).toULongLong();
-    base = 0;
+        QString title = QString("%1 - %2")
+                .arg(BaseTitle)
+                .arg(datap->Attribute("start2"));
+        this->setWindowTitle(title);
 
-    buildProfileTree(tree,nullptr,thread_id,thread_items,xdat,base);
+        quint64 base = QString(datap->Attribute("start1")).toULongLong();
+        base = 0;
+
+        buildProfileTree(tree,nullptr,thread_id,thread_items,datap,base);
+    }
+
+    /* Set thread names if found */
+    {
+        XML::Element* threadlist = doc->FirstChildElement("threads");
+        if(threadlist)
+        {
+            QMap<QString,QString> threadmap;
+            XML::Element* tid = threadlist->FirstChildElement("thread");
+            while(tid)
+            {
+                threadmap.insert(tid->Attribute("id"),tid->Attribute("name"));
+                tid = tid->NextSiblingElement("thread");
+            }
+            for(int i=0;i<tree->topLevelItemCount();i++)
+            {
+                QTreeWidgetItem* it = tree->topLevelItem(i);
+                if(threadmap.contains(it->text(0)))
+                {
+                    it->setText(0,threadmap[it->text(0)]);
+                }
+            }
+        }
+    }
 }
 
 void ProfilingViewer::on_actionAbout_Qt_triggered()
@@ -183,4 +215,9 @@ void ProfilingViewer::on_actionOpen_file_triggered()
 void ProfilingViewer::fileDialogOpenFile(QString const& fn)
 {
     loadProfileLog(fn.toStdString().c_str(),ui->profileTree);
+}
+
+void ProfilingViewer::on_actionClose_file_triggered()
+{
+    loadProfileLog(nullptr,ui->profileTree);
 }

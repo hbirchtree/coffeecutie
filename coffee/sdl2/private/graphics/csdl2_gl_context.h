@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/graphics_apis/gltypes.h>
-#include "types/sdl2datatypes.h"
+#include "../types/sdl2datatypes.h"
 
 namespace Coffee{
 namespace CDisplay{

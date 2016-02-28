@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../types/sdl2datatypes.h"
+#include "../../types/sdl2datatypes.h"
 #include "sdl2eventhandlers.h"
 #include "sdl2_inputmap.h"
 #include <coffee/core/CInput>

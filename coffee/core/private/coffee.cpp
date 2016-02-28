@@ -25,11 +25,20 @@ void sighandle(int sig)
     Cmd::ResetScreen();
     switch(sig)
     {
+    case SIGFPE:
+        cDebug("FPE occurred");
+        break;
     case SIGSEGV:
+        if(exit_handle)
+            exit_handle();
         Cmd::Exit(CoffeeExit_Pooped);
     case SIGABRT:
-        Cmd::Exit(CoffeeExit_Pooped);
+        if(exit_handle)
+            exit_handle();
+        Cmd::Exit(CoffeeExit_PoopedABit);
     case SIGILL:
+        if(exit_handle)
+            exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
     case SIGINT:
     {
@@ -80,6 +89,11 @@ void CoffeeInit()
 #endif
 
     /* Set up signal handlers, make the process more well-behaved */
+    signal(SIGABRT,sighandle);
+    signal(SIGSEGV,sighandle);
+
+    signal(SIGFPE,sighandle);
+
     signal(SIGILL,sighandle);
     signal(SIGINT,sighandle);
 #if defined(COFFEE_LINUX)
@@ -101,32 +115,26 @@ void CoffeeInit()
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
+    /* Fix argument format on Windows */
+
     Profiler::InitProfiler();
-
-    /*TODO: Handle the Windows case of not including the application name*/
-
+    Profiler::LabelThread("Main");
     Profiler::PushContext("CoffeeMain");
 
     CoffeeInit();
-
     Profiler::Profile("Init");
 
     Profiler::PushContext("main()");
     int32 r = mainfun(argc,argv);
     Profiler::PopContext();
-
     Profiler::Profile("Runtime");
 
     CoffeeTerminate();
-
     Profiler::Profile("Termination");
-
     Profiler::PopContext();
 
-//    Profiling::PrintProfilerData();
     CString profile_log_name = cStringFormat("{0}-profile.xml",Env::ExecutableName());
     Profiling::ExportProfilerData(profile_log_name.c_str(),argc,argv);
-
     Profiler::DestroyProfiler();
 
     return r;
@@ -153,9 +161,12 @@ unw_context_t* LinuxStacktracer::unwind_context = nullptr;
 //CFunctional::WindowsPerformanceCounterData CFunctional::_win_perfcounter_data;
 #endif
 
-std::list<Profiler::DataPoint>* Profiler::datapoints = nullptr;
-std::list<CString>* Profiler::context_stack = nullptr;
+/* Storage for profiler data */
+LinkList<Profiler::DataPoint>* Profiler::datapoints = nullptr;
+thread_local LinkList<CString>* Profiler::context_stack = nullptr;
 Mutex* Profiler::data_access_mutex = nullptr;
 Timestamp* Profiler::start_time = nullptr;
+Profiler::ThreadListing* Profiler::threadnames = nullptr;
+std::atomic_int *Profiler::global_init = nullptr;
 
 }

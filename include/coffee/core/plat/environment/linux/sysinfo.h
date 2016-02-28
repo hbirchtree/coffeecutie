@@ -38,11 +38,11 @@ struct LinuxSysInfo : SysInfoDef
 
     STATICINLINE std::vector<CString> CPUFlags()
     {
-        const CString query = "flags";
+        const cstring query = "flags";
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query.c_str());
+        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
 
         res = CStrFind(res,":")+1;
         cstring end = CStrFind(res,"\n");
@@ -72,11 +72,48 @@ struct LinuxSysInfo : SysInfoDef
 
     STATICINLINE uint32 CpuCount()
     {
-        return sysconf(_SC_NPROCESSORS_ONLN);
+        const cstring query = "physical id";
+
+        CPUInfoString();
+
+        cstring src = cached_cpuinfo_string.c_str();
+
+        uint32 count = 0;
+        cstring res = CStrFind(src,query);
+        while(res)
+        {
+            res = CStrFind(res,":")+1;
+            cstring end = CStrFind(res,"\n");
+
+            CString result;
+            result.insert(0,res,end-res);
+            StrUtil::trim(result);
+
+            uint32 c = Convert::strtoint(result.c_str())+1;
+            count = CMath::max(count,c);
+
+            src = end;
+            res = CStrFind(src,query);
+        }
+
+        return count;
     }
     STATICINLINE uint32 CoreCount()
     {
-        return sysconf(_SC_NPROCESSORS_ONLN);
+        const cstring query = "cpu cores";
+
+        CPUInfoString();
+
+        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+
+        res = CStrFind(res,":")+1;
+        cstring end = CStrFind(res,"\n");
+
+        CString result;
+        result.insert(0,res,end-res);
+        StrUtil::trim(result);
+
+        return Convert::strtoll(result.c_str());
     }
     STATICINLINE bool MemVirtualAvailable()
     {
@@ -111,15 +148,15 @@ struct LinuxSysInfo : SysInfoDef
     {
         CString mk,md,fw;
 
-        const CString mk_query = "vendor_id";
-        const CString md_query = "model name";
-        const CString fw_query = "microcode";
+        const cstring mk_query = "vendor_id";
+        const cstring md_query = "model name";
+        const cstring fw_query = "microcode";
 
         CPUInfoString();
 
-        cstring mk_str = CStrFind(cached_cpuinfo_string.c_str(),mk_query.c_str())+mk_query.size();
-        cstring md_str = CStrFind(cached_cpuinfo_string.c_str(),md_query.c_str())+md_query.size();
-        cstring fw_str = CStrFind(cached_cpuinfo_string.c_str(),fw_query.c_str())+fw_query.size();
+        cstring mk_str = CStrFind(cached_cpuinfo_string.c_str(),mk_query);
+        cstring md_str = CStrFind(cached_cpuinfo_string.c_str(),md_query);
+        cstring fw_str = CStrFind(cached_cpuinfo_string.c_str(),fw_query);
 
         mk_str = CStrFind(mk_str,":")+1;
         md_str = CStrFind(md_str,":")+1;
@@ -160,11 +197,29 @@ struct LinuxSysInfo : SysInfoDef
 
     STATICINLINE bool HasFPU()
     {
-        const CString query = "fpu";
+        const cstring query = "fpu";
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query.c_str());
+        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+
+        res = CStrFind(res,":")+1;
+        cstring end = CStrFind(res,"\n");
+
+        CString result;
+        result.insert(0,res,end-res);
+        StrUtil::trim(result);
+
+        return CStrCmp(result.c_str(),"yes");
+    }
+
+    STATICINLINE bool HasFPUExceptions()
+    {
+        const cstring query = "fpu_exception";
+
+        CPUInfoString();
+
+        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
 
         res = CStrFind(res,":")+1;
         cstring end = CStrFind(res,"\n");
@@ -178,7 +233,23 @@ struct LinuxSysInfo : SysInfoDef
 
     STATICINLINE int64 ProcessorCacheSize()
     {
+        const cstring query = "cache size";
 
+        CPUInfoString();
+
+        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+
+        res = CStrFind(res,":")+1;
+        cstring end = CStrFind(res,"\n");
+
+        CString result;
+        result.insert(0,res,end-res);
+        StrUtil::trim(result);
+
+        szptr e = result.find(" ");
+        result.erase(e,result.size()-e);
+
+        return Convert::strtoll(result.c_str());
     }
 
     STATICINLINE bool HasHyperThreading()

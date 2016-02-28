@@ -1,5 +1,5 @@
-#include <coffee/sdl2/csdl2_dialogs.h>
-#include "types/sdl2datatypes.h"
+#include <coffee/sdl2/windowing/csdl2_dialogs.h>
+#include "../types/sdl2datatypes.h"
 
 namespace Coffee{
 namespace CDisplay{

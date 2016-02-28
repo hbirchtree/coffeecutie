@@ -1,7 +1,7 @@
-#include <coffee/sdl2/csdl2_gl_renderer.h>
+#include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
 
 #include <coffee/core/CDebug>
-#include "windowing/sdl2helpers.h"
+#include "../windowing/sdl2helpers.h"
 #include "csdl2_gl_context.h"
 
 namespace Coffee{
@@ -53,6 +53,7 @@ void SDL2GLRenderer::contextPreInit(const GLProperties& props)
 {
     m_window_flags |= SDL_WINDOW_OPENGL;
     CSDL2Types::coffee_sdl2_set_context_properties(props);
+    Profiler::Profile("Set context properties");
 }
 
 void SDL2GLRenderer::contextInit(const GLProperties& props)

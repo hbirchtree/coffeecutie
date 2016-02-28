@@ -2,11 +2,11 @@
 #define CSDL2RENDERER_H
 
 #include <coffee/core/CDRendererBase>
-#include "csdl2_dialogs.h"
+#include "windowing/csdl2_dialogs.h"
 
-#include "csdl2_gl_renderer.h"
-#include "csdl2_window.h"
-#include "csdl2_eventhandler.h"
+#include "graphics/csdl2_gl_renderer.h"
+#include "windowing/csdl2_window.h"
+#include "input/csdl2_eventhandler.h"
 
 namespace Coffee{
 namespace CSDL2Types{

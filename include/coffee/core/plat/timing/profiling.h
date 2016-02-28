@@ -31,26 +31,57 @@ struct SimpleProfilerImpl
 
         CString label;
         uint32 line;
+
+        bool operator<(DataPoint const& t1)
+        {
+            return this->thread.hash()<t1.thread.hash();
+        }
     };
+
+    using ThreadListing = Map<ShPtr<ThreadId>,CString>;
+    using ThreadItem = std::pair<ShPtr<ThreadId>,CString>;
+    using ThreadPtr = ShPtr<ThreadId>;
 
     STATICINLINE void InitProfiler()
     {
 #ifndef NDEBUG
-        start_time = new Timestamp(Time::CurrentMicroTimestamp());
+        context_stack = new LinkList<CString>;
 
-        data_access_mutex = new Mutex;
-        datapoints = new std::list<DataPoint>;
-        context_stack = new std::list<CString>;
+        if(!global_init)
+        {
+            global_init = new std::atomic_int(0);
+        }
+
+        if(global_init->load()<1)
+        {
+            start_time = new Timestamp(Time::CurrentMicroTimestamp());
+            data_access_mutex = new Mutex;
+            datapoints = new LinkList<DataPoint>;
+            threadnames = new ThreadListing;
+        }
+
+        global_init->fetch_add(1);
 #endif
     }
 
     STATICINLINE void DestroyProfiler()
     {
 #ifndef NDEBUG
-        delete data_access_mutex;
-        delete datapoints;
         delete context_stack;
-        delete start_time;
+        if(!global_init->fetch_sub(1))
+        {
+            delete data_access_mutex;
+            delete datapoints;
+            delete start_time;
+            delete threadnames;
+        }
+#endif
+    }
+
+    STATICINLINE void LabelThread(cstring name)
+    {
+#ifndef NDEBUG
+        threadnames->insert(ThreadItem(ThreadPtr(new ThreadId()),CString(name)));
 #endif
     }
 
@@ -102,10 +133,12 @@ struct SimpleProfilerImpl
 
     static Timestamp *start_time;
     static Mutex *data_access_mutex;
-    static std::list<DataPoint> *datapoints;
+    static LinkList<DataPoint> *datapoints;
+    static ThreadListing *threadnames;
 
 protected:
-    static std::list<CString> *context_stack;
+    static std::atomic_int *global_init;
+    thread_local static LinkList<CString> *context_stack;
 };
 }
 

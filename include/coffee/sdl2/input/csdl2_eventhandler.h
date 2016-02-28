@@ -2,7 +2,7 @@
 
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/renderer/hapticapplication.h>
-#include "csdl2_context.h"
+#include "../csdl2_context.h"
 
 namespace Coffee{
 namespace CDisplay{

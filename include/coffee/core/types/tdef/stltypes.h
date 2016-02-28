@@ -26,6 +26,18 @@ using Lock  = std::lock_guard<Mutex>;
 template<typename T>
 using Atomic = std::atomic<T>;
 
+using AtomicInt8 = std::atomic_int_fast8_t;
+using AtomicInt16 = std::atomic_int_fast16_t;
+using AtomicInt32 = std::atomic_int_fast32_t;
+using AtomicInt64 = std::atomic_int_fast64_t;
+
+using AtomicUInt8 = std::atomic_uint_fast8_t;
+using AtomicUInt16 = std::atomic_uint_fast16_t;
+using AtomicUInt32 = std::atomic_uint_fast32_t;
+using AtomicUInt64 = std::atomic_uint_fast64_t;
+
+using AtomicBool = std::atomic_bool;
+
 template<typename T>
 using Queue = std::queue<T>;
 

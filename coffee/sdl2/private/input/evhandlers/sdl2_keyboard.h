@@ -1,9 +1,11 @@
 #pragma once
 
-#include "../types/sdl2datatypes.h"
+#include <coffee/core/CInput>
+
+#include "../../types/sdl2datatypes.h"
+
 #include "sdl2_inputmap.h"
 #include "sdl2eventhandlers.h"
-#include <coffee/core/CInput>
 
 namespace Coffee{
 namespace CSDL2Types{

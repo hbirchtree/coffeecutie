@@ -355,6 +355,34 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         Profiler::PopContext();
     }
 
+    std::future<void> l;
+    {
+        std::function<void()> fun = []()
+        {
+            Profiler::InitProfiler();
+            Profiler::LabelThread("Worker thread");
+            Profiler::PushContext("Testing context");
+
+            uint64 t = 1;
+
+            uint64 count = 1024;
+            for(uint64 i=1;i<count;i++)
+                for(uint64 j=1;j<count;j++)
+                    for(uint64 k=1;k<count;k++)
+                    {
+                        t*=i*j*k;
+                    }
+
+            cDebug("Product: {0}",t);
+            cDebug("Error: {0}",10.f/0.f);
+
+            Profiler::Profile("Data!");
+            Profiler::PopContext();
+            Profiler::DestroyProfiler();
+        };
+        l = Threads::RunAsync(fun);
+    }
+
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
 
@@ -379,21 +407,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         Profiler::Profile("Get renderer info");
     }
 
-//    std::function<void()> splash_updater = [=]()
-//    {
-//        while(!renderer->closeFlag())
-//        {
-//            Splash::Repaint(splash);
-//        }
-//    };
-
-//    std::future<void> splash_f = Threads::RunAsync(splash_updater);
-
     renderer->run();
 
     Profiler::Profile("Runtime");
-
-//    splash_f.get();
 
     renderer->cleanup();
     delete renderer;
@@ -401,10 +417,16 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Cleanup");
 
     Profiler::PopContext();
+    Profiler::Profile();
+
+    l.get();
+    Profiler::Profile("Function retrieval");
 
     cDebug("Function name: {0}",Stacktracer::GetStackframeName(0));
+    Profiler::Profile("Function name retrieval");
 
     Splash::DestroySplash(splash);
+    Profiler::Profile("Splash destruction");
 
     return 0;
 }

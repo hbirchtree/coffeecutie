@@ -1,13 +1,26 @@
-#include <coffee/sdl2/csdl2_eventhandler.h>
+#include <coffee/sdl2/input/csdl2_eventhandler.h>
 
 #include <coffee/core/CFiles>
 #include "evhandlers/sdl2eventhandlers.h"
-#include "input/sdl2inputfun.h"
+#include "sdl2inputfun.h"
 
 namespace Coffee{
 namespace CDisplay{
 
 void SDL2EventHandler::inputPreInit()
+{
+    /* Load input systems */
+    if(SDL_InitSubSystem(SDL_INIT_EVENTS|
+                         SDL_INIT_GAMECONTROLLER|
+                         SDL_INIT_HAPTIC)<0)
+    {
+        cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
+             CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+    }
+    Profiler::Profile("SDL2 input initializtion");
+}
+
+void SDL2EventHandler::inputInit()
 {
     /* If found, load game controller mappings from file */
     CResources::CResource mapping("gamecontrollerdb.txt");
@@ -21,10 +34,6 @@ void SDL2EventHandler::inputPreInit()
         FileFree(mapping);
     }
     Profiler::Profile("Load controller mapping");
-}
-
-void SDL2EventHandler::inputInit()
-{
 }
 
 void SDL2EventHandler::inputPostInit()
@@ -53,6 +62,9 @@ void SDL2EventHandler::inputTerminate()
         SDL_HapticClose(getSDL2Context()->haptics[con.first]);
         SDL_GameControllerClose(getSDL2Context()->controllers[con.first]);
     }
+    SDL_QuitSubSystem(SDL_INIT_EVENTS|
+                      SDL_INIT_GAMECONTROLLER|
+                      SDL_INIT_HAPTIC);
 }
 
 void SDL2EventHandler::eventHandleD(const CDEvent &, c_cptr)

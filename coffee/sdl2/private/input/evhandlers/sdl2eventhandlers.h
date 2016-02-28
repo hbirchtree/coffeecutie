@@ -1,8 +1,9 @@
 #ifndef SDL2EVENTHANDLERS
 #define SDL2EVENTHANDLERS
 
-#include "../types/sdl2datatypes.h"
 #include <coffee/sdl2/csdl2renderer.h>
+
+#include "../../types/sdl2datatypes.h"
 
 namespace Coffee{
 namespace CSDL2Types{

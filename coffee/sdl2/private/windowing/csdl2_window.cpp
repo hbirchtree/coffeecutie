@@ -1,8 +1,9 @@
-#include <coffee/sdl2/csdl2_window.h>
+#include <coffee/sdl2/windowing/csdl2_window.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
-#include "windowing/sdl2helpers.h"
+
+#include "sdl2helpers.h"
 
 namespace Coffee{
 namespace CDisplay{
@@ -10,6 +11,12 @@ namespace CDisplay{
 void SDL2Window::windowPreInit(const CDProperties& p)
 {
     m_window_flags = 0;
+
+    if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0)
+    {
+        cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
+             CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+    }
 
     /* Create SDL2 context object */
     setSDL2Context(new Context);
@@ -19,13 +26,11 @@ void SDL2Window::windowPreInit(const CDProperties& p)
     SDL_GetVersion(&ver);
     m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
-    Profiler::Profile("Pre-init");
+    Profiler::Profile("Create SDL2 context");
 }
 
 void SDL2Window::windowInit(const CDProperties& p)
 {
-    Profiler::Profile("Initialization");
-
     /* Translate window flags and apply them */
     m_window_flags |= CSDL2Types::coffee_sdl2_interpret_winflags(p.flags);
 
@@ -66,21 +71,18 @@ void SDL2Window::windowPostInit(const CDProperties& p)
     cMsg("SDL2","Running {0}",m_contextString);
 
     Profiler::Profile("Set window properties");
-
 }
 
 void SDL2Window::windowTerminate()
 {
     if(!getSDL2Context())
         return;
-    cMsg("SDL2","Cleaning up context");
 
     /* Delete window */
     SDL_DestroyWindow(getSDL2Context()->window);
-    /* De-initialize SDL */
     delete getSDL2Context();
     setSDL2Context(nullptr);
-    cMsg("SDL2","Terminated");
+    SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }
 
 CSize SDL2Window::windowSize() const

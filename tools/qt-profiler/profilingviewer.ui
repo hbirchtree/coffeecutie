@@ -14,89 +14,92 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout" rowstretch="2,3">
+   <layout class="QGridLayout" name="gridLayout">
     <property name="leftMargin">
      <number>2</number>
     </property>
     <property name="topMargin">
-     <number>2</number>
+     <number>0</number>
     </property>
     <property name="rightMargin">
      <number>2</number>
     </property>
     <property name="bottomMargin">
-     <number>2</number>
+     <number>0</number>
     </property>
     <item row="0" column="0">
-     <widget class="QScrollArea" name="scrollArea">
-      <property name="widgetResizable">
-       <bool>true</bool>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QWidget" name="scrollAreaWidgetContents">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>794</width>
-         <height>214</height>
-        </rect>
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="widgetResizable">
+        <bool>true</bool>
        </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>794</width>
+          <height>147</height>
+         </rect>
+        </property>
+       </widget>
       </widget>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QTreeWidget" name="profileTree">
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
-      </property>
-      <property name="showDropIndicator" stdset="0">
-       <bool>false</bool>
-      </property>
-      <property name="alternatingRowColors">
-       <bool>true</bool>
-      </property>
-      <property name="rootIsDecorated">
-       <bool>true</bool>
-      </property>
-      <property name="uniformRowHeights">
-       <bool>true</bool>
-      </property>
-      <property name="animated">
-       <bool>true</bool>
-      </property>
-      <property name="columnCount">
-       <number>6</number>
-      </property>
-      <column>
-       <property name="text">
-        <string notr="true">1</string>
+      <widget class="QTreeWidget" name="profileTree">
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
        </property>
-      </column>
-      <column>
-       <property name="text">
-        <string notr="true">2</string>
+       <property name="showDropIndicator" stdset="0">
+        <bool>false</bool>
        </property>
-      </column>
-      <column>
-       <property name="text">
-        <string notr="true">3</string>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
        </property>
-      </column>
-      <column>
-       <property name="text">
-        <string notr="true">4</string>
+       <property name="rootIsDecorated">
+        <bool>true</bool>
        </property>
-      </column>
-      <column>
-       <property name="text">
-        <string notr="true">5</string>
+       <property name="uniformRowHeights">
+        <bool>true</bool>
        </property>
-      </column>
-      <column>
-       <property name="text">
-        <string notr="true">6</string>
+       <property name="animated">
+        <bool>true</bool>
        </property>
-      </column>
+       <property name="columnCount">
+        <number>6</number>
+       </property>
+       <column>
+        <property name="text">
+         <string notr="true">1</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">2</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">3</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">4</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">5</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string notr="true">6</string>
+        </property>
+       </column>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -107,7 +110,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuAbout">
@@ -121,6 +124,7 @@
      <string>&amp;File</string>
     </property>
     <addaction name="actionOpen_file"/>
+    <addaction name="actionClose_file"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -141,6 +145,11 @@
   <action name="actionQuit">
    <property name="text">
     <string>&amp;Quit</string>
+   </property>
+  </action>
+  <action name="actionClose_file">
+   <property name="text">
+    <string>Close file</string>
    </property>
   </action>
  </widget>

@@ -20,7 +20,7 @@ CSDL2Renderer::~CSDL2Renderer()
 
 void CSDL2Renderer::init(const CDProperties &props)
 {
-    Profiler::PushContext("SDL2");
+    Profiler::PushContext("SDL2 renderer");
 
     m_properties = props;
 

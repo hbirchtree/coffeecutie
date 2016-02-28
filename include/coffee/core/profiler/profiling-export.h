@@ -6,6 +6,7 @@
 #include <coffee/core/CXmlParser>
 
 #include "../coffee_mem_macros.h"
+#include "../coffee.h"
 
 #include "../plat/file/file_def.h"
 
@@ -50,13 +51,18 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
 {
     XML::Document doc;
 
+    XML::Element* root = doc.NewElement("profile");
+    doc.InsertFirstChild(root);
+
+    /* Save environment variables */
     {
         XML::Element* envdata = doc.NewElement("environment");
-        doc.InsertFirstChild(envdata);
+        root->InsertEndChild(envdata);
 
         Env::Variables vars = Env::Environment();
 
         XML::Element* p;
+        /* TODO: Make variable whitelist instead of including all of them, for privacy */
         for(Env::VarPair const& v : vars)
         {
             p = doc.NewElement("v");
@@ -64,87 +70,167 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
             p->SetAttribute("value",v.second.c_str());
             envdata->InsertEndChild(p);
         }
-
     }
 
-    XML::Element* curr = doc.NewElement("profile");
-    doc.InsertFirstChild(curr);
-
-    /**/
-    CString st = cStringFormat("{0}",*Profiler::start_time);
-
-    /* Create a nice date string */
-    CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
-    date = cStringFormat("{0}+{1}",date,Time::Microsecond());
-
-    CString cmdline;
-    for(int32 i=0;i<argc;i++)
+    /* Store list of threads we've bumped into or labeled */
     {
-        cmdline.append(argv[i]);
-        if(i<argc-1)
-            cmdline.append(" ");
+        XML::Element* threaddata = doc.NewElement("threads");
+        root->InsertEndChild(threaddata);
+
+        XML::Element* e;
+        for(Profiler::ThreadItem const& p : *Profiler::threadnames)
+        {
+            e = doc.NewElement("thread");
+            threaddata->InsertEndChild(e);
+
+            CString id = cStringFormat("0x{0}",StrUtil::hexify(p.first->hash()));
+            e->SetAttribute("id",id.c_str());
+            e->SetAttribute("name",p.second.c_str());
+        }
     }
 
-    CString cwd = Env::CurrentDir();
-
-    curr->SetAttribute("start1",st.c_str());
-    curr->SetAttribute("start2",date.c_str());
-    curr->SetAttribute("command",cmdline.c_str());
-    curr->SetAttribute("cwd",cwd.c_str());
-
-
-    LinkList<Timestamp> base;
-    LinkList<Timestamp> lt;
-
-    base.push_front(*Profiler::start_time);
-
-    for(Profiler::DataPoint const& p : *Profiler::datapoints)
+    /* Store data about runtime */
     {
-        switch(p.tp)
+        XML::Element* rundata = doc.NewElement("runtime");
+        root->InsertEndChild(rundata);
+
+        /* Launch commandline */
+        XML::Element* argument;
+        for(int32 i=0;i<argc;i++)
         {
-        case Profiler::DataPoint::Profile:
-        {
-            uint64 ts = (p.ts-base.front()-lt.front());
+            argument = doc.NewElement("argument");
+            rundata->InsertEndChild(argument);
 
-            XML::Element* n = doc.NewElement("dpoint");
-
-            CString tsf = cStringFormat("{0}",ts);
-            CString tid = cStringFormat(
-                        "0x{0}",StrUtil::hexify(p.thread.hash()));
-
-            n->SetAttribute("ts",tsf.c_str());
-            n->SetAttribute("label",p.name.c_str());
-            n->SetAttribute("thread",tid.c_str());
-
-            curr->InsertEndChild(n);
-
-            lt.front() = p.ts-base.front();
-            break;
+            argument->SetText(argv[i]);
         }
-        case Profiler::DataPoint::Push:
+
+        /* Current working directory,
+         * most likely application directory
+         *  or home directory */
+        CString cwd = Env::CurrentDir();
+        rundata->SetAttribute("cwd",cwd.c_str());
+
+        rundata->SetAttribute("version",CoffeeBuildString);
+        rundata->SetAttribute("compiler",CoffeeCompilerString);
+    }
+
+    /* Store system information */
+    {
+        XML::Element* sysdata = doc.NewElement("sysinfo");
+        root->InsertEndChild(sysdata);
+
+        CString tmp = cStringFormat("{0}",(int32)SysInfo::NetStatus());
+        sysdata->SetAttribute("sys.net",tmp.c_str());
+
+        tmp = cStringFormat("{0}",SysInfo::MemTotal());
+        sysdata->SetAttribute("sys.memory",tmp.c_str());
+
         {
-            XML::Element* n = doc.NewElement("context");
+            HWDeviceInfo pinfo = SysInfo::Processor();
 
-            CString tsf = cStringFormat("{0}",p.ts-base.front());
-            CString tid = cStringFormat(
-                        "0x{0}",StrUtil::hexify(p.thread.hash()));
+            tmp = cStringFormat("{0}",pinfo.manufacturer);
+            sysdata->SetAttribute("proc.manufacturer",tmp.c_str());
 
-            n->SetAttribute("ts",tsf.c_str());
-            n->SetAttribute("label",p.name.c_str());
-            n->SetAttribute("thread",tid.c_str());
+            tmp = cStringFormat("{0}",pinfo.model);
+            sysdata->SetAttribute("proc.model",tmp.c_str());
 
-            curr->InsertEndChild(n);
-            curr = n;
-
-            base.push_front(p.ts);
-            lt.push_front(0);
-            break;
+            tmp = cStringFormat("{0}",pinfo.firmware);
+            sysdata->SetAttribute("proc.firmware",tmp.c_str());
         }
-        case Profiler::DataPoint::Pop:
+
+        tmp = cStringFormat("{0}",SysInfo::ProcessorCacheSize());
+        sysdata->SetAttribute("proc.cache",tmp.c_str());
+
+        tmp = cStringFormat("{0}",SysInfo::ProcessorFrequency());
+        sysdata->SetAttribute("proc.freq",tmp.c_str());
+
         {
-            curr = curr->Parent()->ToElement();
-            break;
+            tmp = cStringFormat("{0}",SysInfo::CpuCount());
+            sysdata->SetAttribute("proc.count",tmp.c_str());
+
+            tmp = cStringFormat("{0}",SysInfo::CoreCount());
+            sysdata->SetAttribute("proc.cores",tmp.c_str());
+
+            tmp = cStringFormat("{0}",SysInfo::ThreadCount());
+            sysdata->SetAttribute("proc.threads",tmp.c_str());
         }
+
+        tmp = cStringFormat("{0}",SysInfo::HasHyperThreading());
+        sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
+    }
+
+    /* Store datapoints */
+    {
+        XML::Element* curr = doc.NewElement("datapoints");
+        root->InsertEndChild(curr);
+
+        /* Store information about runtime */
+        CString st = cStringFormat("{0}",*Profiler::start_time);
+
+        /* Create a nice date string */
+        CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
+        date = cStringFormat("{0}+{1}",date,Time::Microsecond());
+
+        curr->SetAttribute("start1",st.c_str());
+        curr->SetAttribute("start2",date.c_str());
+
+        /* Some parsing information */
+        LinkList<Timestamp> base;
+        LinkList<Timestamp> lt;
+
+        base.push_front(*Profiler::start_time);
+
+        Profiler::datapoints->sort();
+
+        /* Finally, smash data points into XML format */
+        for(Profiler::DataPoint const& p : *Profiler::datapoints)
+        {
+            switch(p.tp)
+            {
+            case Profiler::DataPoint::Profile:
+            {
+                uint64 ts = (p.ts-base.front()-lt.front());
+
+                XML::Element* n = doc.NewElement("dpoint");
+
+                CString tsf = cStringFormat("{0}",ts);
+                CString tid = cStringFormat(
+                            "0x{0}",StrUtil::hexify(p.thread.hash()));
+
+                n->SetAttribute("ts",tsf.c_str());
+                n->SetAttribute("label",p.name.c_str());
+                n->SetAttribute("thread",tid.c_str());
+
+                curr->InsertEndChild(n);
+
+                lt.front() = p.ts-base.front();
+                break;
+            }
+            case Profiler::DataPoint::Push:
+            {
+                XML::Element* n = doc.NewElement("context");
+
+                CString tsf = cStringFormat("{0}",p.ts-base.front());
+                CString tid = cStringFormat(
+                            "0x{0}",StrUtil::hexify(p.thread.hash()));
+
+                n->SetAttribute("ts",tsf.c_str());
+                n->SetAttribute("label",p.name.c_str());
+                n->SetAttribute("thread",tid.c_str());
+
+                curr->InsertEndChild(n);
+                curr = n;
+
+                base.push_front(p.ts);
+                lt.push_front(0);
+                break;
+            }
+            case Profiler::DataPoint::Pop:
+            {
+                curr = curr->Parent()->ToElement();
+                break;
+            }
+            }
         }
     }
 
