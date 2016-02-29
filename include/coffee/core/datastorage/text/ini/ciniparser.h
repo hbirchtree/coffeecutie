@@ -300,7 +300,7 @@ struct SimpleIniParser : IniParserDef
                 }
                 }
                 ref = t1+1;
-            }
+	    }
         }
 
         return doc;

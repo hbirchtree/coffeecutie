@@ -17,6 +17,9 @@
 
 namespace Coffee{
 
+int32 startup_argc = 0;
+cstring_w* startup_argv = nullptr;
+
 static ExitCallback exit_handle = nullptr;
 
 void sighandle(int sig)
@@ -42,12 +45,14 @@ void sighandle(int sig)
         Cmd::Exit(CoffeeExit_Termination);
     case SIGINT:
     {
+        Profiling::ExitRoutine(startup_argc,startup_argv);
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Interrupt);
     }
     case SIGTERM:
     {
+        Profiling::ExitRoutine(startup_argc,startup_argv);
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
@@ -131,6 +136,9 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
     /* Fix argument format on Windows */
 
+    startup_argc = argc;
+    startup_argv = argv;
+
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
     Profiler::PushContext("CoffeeMain");
@@ -147,9 +155,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiler::Profile("Termination");
     Profiler::PopContext();
 
-    CString profile_log_name = cStringFormat("{0}-profile.xml",Env::ExecutableName());
-    Profiling::ExportProfilerData(profile_log_name.c_str(),argc,argv);
-    Profiler::DestroyProfiler();
+    Profiling::ExitRoutine(startup_argc,startup_argv);
 
     return r;
 }

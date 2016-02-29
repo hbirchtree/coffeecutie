@@ -273,7 +273,7 @@ public:
             fcounter.update(ftimer.elapsed());
 
             CoffeeExt::QtSystem::Process(100);
-            Splash::Repaint(splash);
+//            Splash::Repaint(splash);
             this->pollEvents();
             this->swapBuffers();
         }

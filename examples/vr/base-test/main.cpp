@@ -1,10 +1,6 @@
-#include <coffee/CCore>
-#include <coffee/graphics_apis/CGLeam>
 #include <coffee/COpenVR>
 #include <coffee/COculusRift>
-#include <coffee/CGraphics>
-
-#include <coffee_ext/qt_shim/dialogs/dialogs.h>
+#include <coffee/core/CMD>
 
 using namespace Coffee;
 
@@ -38,6 +34,8 @@ int32 coffee_main(int32, cstring_w*)
 
             if(dev)
             {
+                /* We do this to detect whether the default constructor
+                 *  will poison the well, change pointers, close devices etc. */
                 VR::Device* dev2 = VR::GetDefaultDevice();
                 Profiler::Profile("Device acquisition");
 
@@ -46,17 +44,23 @@ int32 coffee_main(int32, cstring_w*)
 
                 cDebug("Your device: {0}",(const HWDeviceInfo&)*dev);
 
-                CVec3 angvel = dev->angularVelocity();
-                Profiler::Profile("Pose acquisition");
-                CVec3 linvel = dev->velocity();
-                Profiler::Profile("Pose acquisition");
-                CMat4 t = dev->head();
-                Profiler::Profile("Pose acquisition");
+                while(true)
+                {
+                    CVec3 angvel = dev->angularVelocity();
+                    Profiler::Profile("Pose acquisition");
+                    CVec3 linvel = dev->velocity();
+                    Profiler::Profile("Pose acquisition");
+                    CMat4 t = dev->head();
+                    Profiler::Profile("Pose acquisition");
 
-                cDebug("Values: angvel={0}, linvel={1}",angvel,linvel);
-                cDebug("Head transform: {0}",t);
+                    cDebug("Values: angvel={0}, linvel={1}",angvel,linvel);
+                    cDebug("Head transform: {0}",t);
+
+                    Cmd::Wait();
+                }
             }
         }
+        cDebug("Shutting down VR systems");
         VR::Shutdown();
         Profiler::Profile("VR shutdown");
     }

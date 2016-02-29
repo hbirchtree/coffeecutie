@@ -150,17 +150,20 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
     {
         XML::Element* datap = xdat->FirstChildElement("datapoints");
 
-        QString title = QString("%1 - %2")
-                .arg(BaseTitle)
-                .arg(datap->Attribute("start2"));
-        this->setWindowTitle(title);
+	if(datap)
+	{
+	    QString title = QString("%1 - %2")
+		    .arg(BaseTitle)
+		    .arg(datap->Attribute("start2"));
+	    this->setWindowTitle(title);
 
-        quint64 base = QString(datap->Attribute("start1")).toULongLong();
-        base = 0;
+	    quint64 base = QString(datap->Attribute("start1")).toULongLong();
+	    base = 0;
 
-        buildProfileTree(tree,nullptr,thread_id,thread_items,datap,base);
+	    buildProfileTree(tree,nullptr,thread_id,thread_items,datap,base);
 
-//        ui->profileView->setModel(GenerateProfileTree(datap,this));
+	    //        ui->profileView->setModel(GenerateProfileTree(datap,this));
+	}
     }
 
     /* Set thread names if found */
