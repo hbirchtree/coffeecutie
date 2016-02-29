@@ -170,18 +170,61 @@ FORCEDINLINE cstring_w CStrReplace(
 
 namespace Convert
 {
-/*TODO: Add more conversions!*/
-FORCEDINLINE int32 strtoint(cstring n)
+FORCEDINLINE int32 strtoint(cstring n,int base = 10, bool* ok = nullptr)
 {
-    return atoi(n);
+    if(!ok)
+        return std::strtol(n,nullptr,base);
+    char* t = nullptr;
+    int32 v = std::strtol(n,&t,base);
+    *ok = t>n;
+    return v;
 }
-FORCEDINLINE int64 strtoll(cstring n)
+FORCEDINLINE uint32 strtouint(cstring n,int base = 10, bool* ok = nullptr)
 {
-    return atoll(n);
+    if(!ok)
+        return std::strtoul(n,nullptr,base);
+    char* t = nullptr;
+    uint32 v = std::strtoul(n,&t,base);
+    *ok = t>n;
+    return v;
 }
-FORCEDINLINE bigscalar strtoscalar(cstring n)
+
+FORCEDINLINE int64 strtoll(cstring n,int base = 10, bool* ok = nullptr)
 {
-    return atof(n);
+    if(!ok)
+        return std::strtoll(n,nullptr,base);
+    char* t = nullptr;
+    int64 v = std::strtoll(n,&t,base);
+    *ok = t>n;
+    return v;
+}
+FORCEDINLINE uint64 strtoull(cstring n,int base = 10, bool* ok = nullptr)
+{
+    if(!ok)
+        return std::strtoull(n,nullptr,base);
+    char* t = nullptr;
+    uint64 v = std::strtoull(n,&t,base);
+    *ok = t>n;
+    return v;
+}
+
+FORCEDINLINE scalar strtofscalar(cstring n, bool* ok = nullptr)
+{
+    if(!ok)
+        return std::strtof(n,nullptr);
+    char* t = nullptr;
+    scalar v = std::strtof(n,&t);
+    *ok = t>n;
+    return v;
+}
+FORCEDINLINE bigscalar strtoscalar(cstring n, bool* ok = nullptr)
+{
+    if(!ok)
+        return std::strtod(n,nullptr);
+    char* t = nullptr;
+    bigscalar v = std::strtod(n,&t);
+    *ok = t>n;
+    return v;
 }
 
 FORCEDINLINE cwstring_w NarrowWide(cstring str)

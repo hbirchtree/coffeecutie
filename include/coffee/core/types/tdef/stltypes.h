@@ -50,6 +50,9 @@ using Vector = std::vector<T>;
 template<typename T1, typename T2>
 using Map = std::map<T1,T2>;
 
+template<typename T1, typename T2>
+using MultiMap = std::multimap<T1,T2>;
+
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
 

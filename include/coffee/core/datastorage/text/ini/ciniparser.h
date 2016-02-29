@@ -110,16 +110,17 @@ struct SimpleIniParser : IniParserDef
             }
             Variant* value(cstring name)
             {
-                if(m_values.find(name)==m_values.end())
+                auto it = m_values.find(name);
+                if(it==m_values.end())
                     return nullptr;
-                return m_values[name];
+                return it->second;
             }
 
         protected:
             Section()
             {
             }
-            Map<CString,Variant*> m_values;
+            MultiMap<CString,Variant*> m_values;
         };
 
         /* Section creation */
@@ -158,9 +159,10 @@ struct SimpleIniParser : IniParserDef
         }
         Section* section(cstring name)
         {
-            if(valuesections.find(name)==valuesections.end())
+            auto it = valuesections.find(name);
+            if(it==valuesections.end())
                 return nullptr;
-            return valuesections[name];
+            return it->second;
         }
         /* Global values */
         void insertValue(cstring name, Variant* v)
@@ -169,9 +171,10 @@ struct SimpleIniParser : IniParserDef
         }
         Variant* value(cstring name)
         {
-            if(valuevariants.find(name)==valuevariants.end())
+            auto it = valuevariants.find(name);
+            if(it==valuevariants.end())
                 return nullptr;
-            return valuevariants[name];
+            return it->second;
         }
 
     protected:
@@ -180,8 +183,8 @@ struct SimpleIniParser : IniParserDef
         LinkList<Section> sections;
         LinkList<Variant> variantvalues;
 
-        Map<CString,Variant*> valuevariants;
-        Map<CString,Section*> valuesections;
+        MultiMap<CString,Variant*> valuevariants;
+        MultiMap<CString,Section*> valuesections;
     };
 
     using Section = Document::Section*;
@@ -247,7 +250,7 @@ struct SimpleIniParser : IniParserDef
                     {
                         /* Extract value name */
                         tname.clear();
-                        tname.insert(0,ref,t2-1-ref);
+                        tname.insert(0,ref,t2-ref);
                         StrUtil::trim(tname);
 
                         /* Extract value, create variant */
@@ -256,7 +259,34 @@ struct SimpleIniParser : IniParserDef
                         tvalu.clear();
                         tvalu.insert(0,t2,t1-t2);
                         StrUtil::trim(tvalu);
-                        cval = doc.newString(tvalu.c_str());
+                        bool eval;
+
+                        int64 itype = Convert::strtoll(tvalu.c_str(),10,&eval);
+                        if(eval)
+                        {
+                            cval = doc.newInteger(itype);
+                        }else
+                        {
+                            bigscalar dtype = Convert::strtoscalar(tvalu.c_str(),&eval);
+                            if(eval)
+                            {
+                                cval = doc.newFloat(dtype);
+                            }else{
+                                eval = true;
+                                bool btype;
+                                if(tvalu=="false")
+                                    btype = false;
+                                else if(tvalu=="true")
+                                    btype = true;
+                                else
+                                    eval = false;
+                                if(eval)
+                                {
+                                    cval = doc.newBool(btype);
+                                }else
+                                    cval = doc.newString(tvalu.c_str());
+                            }
+                        }
 
                         /* If a section has been found previously, put it in there */
                         if(csec/*&&cval*/)

@@ -53,11 +53,6 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("FPU: {0}",SysInfo::HasFPU());
     }
 
-    {
-        int64 ptr = 123;
-        cDebug("Pointer: {0}",(const void* const&)ptr);
-    }
-
     /* Try creating an INI document */
     {
         INI::Document doc;
@@ -115,14 +110,6 @@ int32 coffee_main(int32, cstring_w*)
     }
 
     {
-        CResources::CResource res("test.file");
-        res.size = 1024;
-        res.data = Alloc(res.size);
-        CResources::FileCommit(res,false);
-        CResources::FileFree(res);
-    }
-
-    {
         /* Testing function slot/signal classes */
         CRect t(0,0,10,10);
         CFunctionSlot<CRect,int32> b(&t,&CRect::area);
@@ -130,47 +117,6 @@ int32 coffee_main(int32, cstring_w*)
         CFunctionSignal<CRect,int32> sigtest;
         cDebug("Signal return: {0}",sigtest.call(b));
     }
-
-    {
-        /* Try dissecting a couple of floating-point numbers */
-        scalar t1 = 1.0;
-        scalar t2 = 0.0;
-        scalar t3 = 1.2048295;
-        scalar t4 = 1832.2048295;
-
-        scalar_dissect* t1_d = (scalar_dissect*)&t1;
-        scalar_dissect* t2_d = (scalar_dissect*)&t2;
-        scalar_dissect* t3_d = (scalar_dissect*)&t3;
-        scalar_dissect* t4_d = (scalar_dissect*)&t4;
-
-        cDebug("Mantissa: {0}, {1}, {2}, {3}",
-               t1_d->mantissa,t2_d->mantissa,
-               t3_d->mantissa,t4_d->mantissa);
-    }
-
-    {
-        cDebug("Perlin values: ");
-        uint8* d = (uint8*)Alloc(256*256);
-        for(uint32 x=0;x<256;x++)
-            for(uint32 y=0;y<256;y++)
-            {
-                d[y*255+x] =
-                        NoiseGen::Linearize(NoiseGen::Perlin(CVec3(x,y,0)));
-            }
-        CStbImageLib::CStbImage img;
-        img.data = d;
-        img.bpp = 1;
-        img.size.w = 255;
-        img.size.h = 255;
-        CResources::CResource resc("perlin.png");
-        CStbImageLib::SavePNG(&resc,&img);
-        CResources::FileCommit(resc);
-        CResources::FileFree(resc);
-        CFree(d);
-    }
-
-    CSize tsize = Cmd::TerminalSize();
-    cDebug("Terminal size: {0}x{1}",tsize.w,tsize.h);
 
 //    {
 //        /* Testing interactive command line */
