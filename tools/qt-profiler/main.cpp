@@ -9,7 +9,7 @@ using namespace Coffee;
 
 int32 coffee_main(int32 argc,cstring_w* argv)
 {
-    auto qt = SubsystemWrapper<CoffeeExt::QtSystem>();
+    auto qt = SubsystemWrapper<CoffeeExt::QtSystem>(argc,argv);
     C_UNUSED(qt);
 
     CoffeeExt::QtSystem::SetApplicationName("Coffee Profiler");

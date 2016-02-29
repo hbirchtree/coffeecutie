@@ -192,6 +192,7 @@ struct SimpleIniParser : IniParserDef
         const constexpr cstring sec_ld = "[";
         const constexpr cstring sec_rd = "]";
         const constexpr cstring del_ct = ";";
+        const constexpr cstring del_vl = "=";
 
         cstring t1,t2,t3,t4; /* Temporaries */
 
@@ -209,7 +210,8 @@ struct SimpleIniParser : IniParserDef
 
         /* Find all sections, global values and comments */
         Document::Section* csec = nullptr; /* Current section */
-        CString secname;
+        CString tname;
+        CString tvalu;
         Document::Variant* cval = nullptr;
         Vector<cstring> cmtlines;
         t2 = nullptr,t3 = nullptr,t4 = nullptr;
@@ -220,28 +222,49 @@ struct SimpleIniParser : IniParserDef
             {
                 switch(ref[0])
                 {
-                /* Sections */
+                    /* Sections */
                 case sec_ld[0]:
-                    /* Create new section, insert name */
                     t2 = CStrFind(ref,sec_rd);
                     if(t2&&t2<t1)
                     {
+                        /* Create new section, insert name */
                         csec = doc.newSection();
-                        secname.clear();
-                        secname.insert(0,ref+1,t2-1-ref);
-                        doc.insertSection(secname.c_str(),csec);
+                        tname.clear();
+                        tname.insert(0,ref+1,t2-1-ref); /* Remove square brackets */
+                        doc.insertSection(tname.c_str(),csec);
                     }
                     break;
                     /* Comments */
                 case del_ct[0]:
                     cmtlines.push_back(ref);
                     break;
-                    /* Nothing else matches? Must be a value! */
+                    /* Values */
                 default:
                 {
-                    if(csec)
+                    /* Find name-value delimiter */
+                    t2 = CStrFind(ref,del_vl);
+                    if(t2&&t2<t1)
                     {
-                    }else{
+                        /* Extract value name */
+                        tname.clear();
+                        tname.insert(0,ref,t2-1-ref);
+                        StrUtil::trim(tname);
+
+                        /* Extract value, create variant */
+                        cval = nullptr;
+                        t2 += 1;
+                        tvalu.clear();
+                        tvalu.insert(0,t2,t1-t2);
+                        StrUtil::trim(tvalu);
+                        cval = doc.newString(tvalu.c_str());
+
+                        /* If a section has been found previously, put it in there */
+                        if(csec/*&&cval*/)
+                        {
+                            csec->insertValue(tname.c_str(),cval);
+                        }else if(cval){
+                            doc.insertValue(tname.c_str(),cval);
+                        }
                     }
                     break;
                 }

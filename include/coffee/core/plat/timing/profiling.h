@@ -67,13 +67,18 @@ struct SimpleProfilerImpl
     STATICINLINE void DestroyProfiler()
     {
 #ifndef NDEBUG
-        delete context_stack;
-        if(!global_init->fetch_sub(1))
+        if(context_stack)
+        {
+            delete context_stack;
+            context_stack = nullptr;
+        }
+        if(global_init&&std::atomic_fetch_sub(global_init,1)<2)
         {
             delete data_access_mutex;
             delete datapoints;
             delete start_time;
             delete threadnames;
+            delete global_init;
         }
 #endif
     }

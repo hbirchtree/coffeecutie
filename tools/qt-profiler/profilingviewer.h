@@ -2,7 +2,6 @@
 #define PROFILINGVIEWER_H
 
 #include <QMainWindow>
-#include <QFileDialog>
 
 namespace Ui {
 class ProfilingViewer;
@@ -35,7 +34,6 @@ private slots:
 
 private:
     Ui::ProfilingViewer *ui;
-    QFileDialog m_dlg;
 };
 
 #endif // PROFILINGVIEWER_H

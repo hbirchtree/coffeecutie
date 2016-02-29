@@ -22,7 +22,10 @@ struct PosixEnvironmentFun : EnvInterface
 {
     STATICINLINE CString ExecutableName(cstring_w = nullptr)
     {
-	return realpath("/proc/self/exe",nullptr);
+        cstring_w p = realpath("/proc/self/exe",nullptr);
+        CString v = p;
+        CFree(p);
+        return v;
     }
 
     STATICINLINE CString GetVar(cstring var)

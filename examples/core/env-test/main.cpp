@@ -79,15 +79,19 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("test {0}, {1}, {2}",v1->getString(),v2->getBool(),v3->getInteger());
 
     }
+
     /* Parsing an INI document */
     {
+        CElapsedTimerMicro t;
 
         CResources::CResource testfile("test.ini");
         CResources::FileMap(testfile);
 
+        t.start();
         INI::Document doc2 = INI::Read(testfile);
+        cDebug("Parsing time: {0}",t.elapsed());
 
-        cDebug("{0}",doc2.section("Hello there")->value("Value_1")->getInteger());
+//        cDebug("{0}",doc2.section("Hello there")->value("Value_1")->getString());
 
         CResources::FileUnmap(testfile);
     }

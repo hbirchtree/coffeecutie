@@ -42,7 +42,7 @@
           <x>0</x>
           <y>0</y>
           <width>794</width>
-          <height>147</height>
+          <height>68</height>
          </rect>
         </property>
        </widget>
@@ -58,7 +58,7 @@
         <bool>true</bool>
        </property>
        <property name="rootIsDecorated">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="uniformRowHeights">
         <bool>true</bool>
@@ -100,6 +100,22 @@
         </property>
        </column>
       </widget>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QTreeView" name="profileView">
+      <property name="editTriggers">
+       <set>QAbstractItemView::NoEditTriggers</set>
+      </property>
+      <property name="showDropIndicator" stdset="0">
+       <bool>false</bool>
+      </property>
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="animated">
+       <bool>true</bool>
+      </property>
      </widget>
     </item>
    </layout>

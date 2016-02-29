@@ -1,15 +1,11 @@
 #include "profilingviewer.h"
 #include "ui_profilingviewer.h"
 
-#include <coffee/core/CXmlParser>
-#include <coffee/core/plat/environment/sysinfo_def.h>
-
-using namespace Coffee;
+#include "profilemodel.h"
 
 #include <QApplication>
-#include <QFile>
 #include <QTreeWidget>
-#include <QXmlStreamReader>
+#include <QTreeView>
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
@@ -18,8 +14,7 @@ const constexpr cstring BaseTitle = "Espresso";
 
 ProfilingViewer::ProfilingViewer(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::ProfilingViewer),
-    m_dlg(this)
+    ui(new Ui::ProfilingViewer)
 {
     ui->setupUi(this);
 
@@ -38,13 +33,6 @@ const constexpr int EvTimeIndex = 2;
 const constexpr int TimeSecIndex = 3;
 const constexpr int TimePrcIndex = 4;
 const constexpr int BarItemIndex = 5;
-
-const constexpr cstring token_thread = "thread";
-const constexpr cstring token_label = "label";
-const constexpr cstring token_timestamp = "ts";
-
-const constexpr cstring token_context = "context";
-const constexpr cstring token_datapoint = "dpoint";
 
 quint64 buildProfileTree(QTreeWidget* troot,
                          QTreeWidgetItem* rt,
@@ -109,8 +97,6 @@ void ProfilingViewer::setupTreeWidget(QTreeWidget* tree)
     headers << tr("");
 
     tree->setHeaderLabels(headers);
-
-//    loadProfileLog("GLeamBaseTest-profile.xml",tree);
 }
 
 void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
@@ -173,6 +159,8 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
         base = 0;
 
         buildProfileTree(tree,nullptr,thread_id,thread_items,datap,base);
+
+//        ui->profileView->setModel(GenerateProfileTree(datap,this));
     }
 
     /* Set thread names if found */
@@ -197,6 +185,8 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
             }
         }
     }
+
+    delete doc;
 }
 
 void ProfilingViewer::on_actionAbout_Qt_triggered()

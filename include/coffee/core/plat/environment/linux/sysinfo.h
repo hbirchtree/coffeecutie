@@ -29,6 +29,8 @@ struct LinuxSysInfo : SysInfoDef
         while(getdelim(&arg,&size,0,cpuinfo)!=-1)
             data.append(arg);
 
+        CFree(arg);
+
         fclose(cpuinfo);
 
         cached_cpuinfo_string = data;
