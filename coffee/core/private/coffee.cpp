@@ -20,7 +20,7 @@ namespace Coffee{
 int32 startup_argc = 0;
 cstring_w* startup_argv = nullptr;
 
-static ExitCallback exit_handle = nullptr;
+ExitCallback exit_handle = nullptr;
 
 void sighandle(int sig)
 {

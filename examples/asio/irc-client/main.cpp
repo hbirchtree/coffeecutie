@@ -3,57 +3,57 @@
 
 using namespace Coffee;
 
+const constexpr cstring quit_message = "Leaving";
+
+asio::ip::tcp::iostream irc_stream;
+
+void ExitFun()
+{
+    irc_stream << "QUIT :" << quit_message << "\r\n";
+
+    CString tmp;
+    while(std::getline(irc_stream,tmp))
+        if(tmp.find("ERROR")==0)
+            break;
+
+    irc_stream.flush();
+    irc_stream.close();
+}
+
 int32 coffee_main(int32, cstring_w*)
 {
-    RestClient::InitService();
-    CElapsedTimer tim;
+    SetExitFunction(ExitFun);
 
-    CASIO::ASIO_Client::AsioContext c = RestClient::GetContext();
+    CString user = "testuser";
+    CString channel = "#test";
 
+    irc_stream.connect("localhost","6667");
+
+    irc_stream << "NICK " << user << "\r\n";
+    irc_stream << "USER " << user << " 8 * : Sumthing\r\n";
+
+    CString tmp;
+    while(std::getline(irc_stream,tmp))
+        if(tmp.find("004")>=0)
+        {
+            cDebug("Logged in");
+            break;
+        }else if(tmp.find("433")>=0)
+        {
+            cDebug("Username is taken");
+            return 1;
+        }
+
+    irc_stream << "JOIN " << channel << "\r\n";
+
+    while(std::getline(irc_stream,tmp))
     {
-        std::future<TCPSocket::Connection> conn =
-                TCPSocket::ConnectSocketAsync(c,"google.com","80");
-
-        TCPSocket::Connection cn = conn.get();
-
-        cDebug("Socket: {0}",(const void* const&)cn.get());
-
-        TCPSocket::DisconnectSocket(&cn);
-    }
-
-    std::future<RestClient::RestResponse> t =
-            RestClient::RestRequestAsync(
-                c,
-                RestClient::HTTPS,
-                "api.guildwars2.com",
-                "/v2");
-
-    tim.start();
-
-    cDebug("Launched network task!");
-
-    while(!Threads::FutureAvailable(t));
-    cDebug("Results are here: {0}",tim.elapsed());
-
-    RestClient::RestResponse res = t.get();
-
-    cDebug("Content type: {0}",RestClient::GetContentType(res));
-
-    cDebug("Status: {0}",res.status);
-    cDebug("Header: \n{0}",res.header);
-    cDebug("Message: {0}",res.message);
-    cDebug("Payload: \n{0}",res.payload);
-
-
-    JSON::Document doc = JSON::Read(res.payload.c_str());
-
-    if(doc.IsNull())
-        return 1;
-
-    cDebug("{0} chatters",doc["chatter_count"].GetInt());
-    for(int32 i=0;i<doc["chatters"]["viewers"].Capacity();i++)
-    {
-        cBasicPrint("{0}",doc["chatters"]["viewers"][i].GetString());
+        if(tmp.find("PING ")==0)
+        {
+            irc_stream << "PONG " << tmp.substr(5) << "\r\n";
+        }else{
+            cDebug("{0}",tmp);
+        }
     }
 
     return 0;

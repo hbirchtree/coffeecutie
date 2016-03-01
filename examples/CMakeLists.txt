@@ -50,6 +50,7 @@ add_subdirectory(gleam/shadow-test)
 # ASIO examples
 add_subdirectory(asio/base-client)
 #add_subdirectory(asio/base-server)
+add_subdirectory(asio/irc-client)
 
 # Experimental code
 add_subdirectory(gleam/raytrace-test)
