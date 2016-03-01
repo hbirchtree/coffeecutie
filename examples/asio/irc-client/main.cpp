@@ -11,11 +11,6 @@ void ExitFun()
 {
     irc_stream << "QUIT :" << quit_message << "\r\n";
 
-    CString tmp;
-    while(std::getline(irc_stream,tmp))
-        if(tmp.find("ERROR")==0)
-            break;
-
     irc_stream.flush();
     irc_stream.close();
 }
