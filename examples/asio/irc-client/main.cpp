@@ -21,15 +21,12 @@ int32 coffee_main(int32, cstring_w*)
         TCPSocket::DisconnectSocket(&cn);
     }
 
-    CString host = "api.twitch.tv";
-    CString rq = "/kraken/streams";
-
     std::future<RestClient::RestResponse> t =
             RestClient::RestRequestAsync(
                 c,
                 RestClient::HTTPS,
-                host,
-                rq);
+                "api.guildwars2.com",
+                "/v2");
 
     tim.start();
 
@@ -47,7 +44,6 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("Message: {0}",res.message);
     cDebug("Payload: \n{0}",res.payload);
 
-    return 0;
 
     JSON::Document doc = JSON::Read(res.payload.c_str());
 

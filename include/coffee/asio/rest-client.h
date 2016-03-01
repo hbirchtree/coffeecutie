@@ -1,8 +1,7 @@
 #ifndef COFFEE_ASIO_REST_CLIENT_H
 #define COFFEE_ASIO_REST_CLIENT_H
 
-#include "asio_data.h"
-#include <iostream>
+#include "rest_request_builder.h"
 
 namespace Coffee{
 namespace CASIO{
@@ -21,6 +20,11 @@ struct RestClientImpl : ASIO_Client
 
     struct RestResponse
     {
+        RestResponse():
+            status(0)
+        {
+        }
+
 	uint32 status;
 	CString version;
 	CString mimetype;
@@ -45,90 +49,59 @@ struct RestClientImpl : ASIO_Client
 
     STATICINLINE RestResponse RestRequest(Protocol p, Host h, Request r)
     {
-	CString protocol = "";
-	switch(p)
-	{
-	case HTTP:
-	    protocol = "http";
-	    break;
-	case HTTPS:
-	    protocol = "https";
-	    break;
-        default:
+        if(p==HTTP)
+            return RestRequestHTTP(h,r);
+        else
+            return RestRequestHTTPS(h,r);
+    }
+
+    STATICINLINE RestResponse RestRequestHTTP(Host h, Request r)
+    {
+        asio::ip::tcp::iostream s;
+        s.connect(h,"http");
+
+        GenerateRestRequest(s,h,r);
+
+        RestResponse resp;
+
+        if(!ExtractResponse(s,resp))
             return RestResponse();
-        }
+        else
+            return resp;
+    }
 
-	asio::ip::tcp::resolver::query q(h,protocol);
+    STATICINLINE RestResponse RestRequestHTTPS(Host h, Request r)
+    {
+        asio::ssl::stream<asio::ip::tcp::socket> socket(t_context->service,
+                                                        t_context->sslctxt);
 
+        asio::ip::tcp::resolver::query q(h,"https");
         auto it = t_context->resolver.resolve(q);
 
-        asio::ip::tcp::socket s(t_context->service);
-	asio::connect(s,it);
+        asio::connect(socket.next_layer(),it);
 
-        /* Send the HTTP/S request */
-	asio::streambuf req;
-	std::ostream req_s(&req);
-	req_s << "GET " << r << " HTTP/1.0\r\n";
-	req_s << "HOST: " << h << "\r\n";
-	req_s << "CONNECTION: close\r\n\r\n";
+        socket.handshake(asio::ssl::stream_base::client);
 
-	asio::write(s,req);
+        asio::streambuf trans;
+        std::ostream os(&trans);
+        GenerateRestRequest(os,h,r);
+        os.flush();
+        asio::write(socket,trans);
 
-        /* Get the response */
-	asio::streambuf res;
-	asio::read_until(s,res,"\r\n");
-
-	std::istream res_s(&res);
-
-	std::string http_ver;
-	uint32 stat;
-
-        /* Get version of HTTP as well as status code */
-	res_s >> http_ver;
-	res_s >> stat;
-
-	RestResponse resp;
-	resp.status = stat;
-	resp.version = http_ver;
-
-        /* Get HTTP message */
-	std::string message;
-	std::getline(res_s,message);
-	resp.message = message;
-
-	if(!res_s||http_ver.substr(0,5)!="HTTP/")
-	    return resp;
-
-	asio::read_until(s,res,"\r\n\r\n");
-
-        /* Read the header */
-	std::string header;
-	while(std::getline(res_s,header)&&header!="\r")
-        {
-            resp.header.append(header+"\n");
-        }
-
-        /* Read full payload */
-        std::ostringstream ss;
-	if(res.size()>0)
-	{
-	    ss << &res;
-	    resp.payload.append(ss.str());
-        }
-
+        asio::streambuf recp;
+        std::istream is(&recp);
         try{
-            while(asio::read(s,res,asio::transfer_at_least(1)))
-	    {
-                ss << &res;
-                resp.payload.append(ss.str());
-	    }
-	}
-        /* We receive an exception on end of stream */
-        catch(std::system_error)
+            asio::read(socket,recp);
+        }catch(std::system_error)
         {
         }
 
-	return resp;
+        RestResponse resp;
+
+        if(!ExtractResponse(is,resp))
+            return RestResponse();
+        else
+            return resp;
     }
 
     /*!
