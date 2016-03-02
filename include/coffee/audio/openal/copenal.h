@@ -1,7 +1,6 @@
 #ifndef COPENAL_HEADER
 #define COPENAL_HEADER
 
-#include <coffee/core/CTypes>
 #include <coffee/audio/caudio.h>
 
 namespace Coffee{

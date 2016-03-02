@@ -49,4 +49,17 @@ extern void ClearBuffer(float dep, float color[4]);
 
 }
 
+namespace Profiling{
+
+extern void exPrintProfilerData();
+
+extern void exExportProfilerData(const char* out);
+
+extern void Perf_PushContext(const char* name);
+extern void Perf_PopContext();
+extern void Perf_Profile(const char* name);
+extern void Perf_LabelThread(const char* name);
+
+}
+
 }

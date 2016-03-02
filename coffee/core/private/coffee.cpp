@@ -17,8 +17,8 @@
 
 namespace Coffee{
 
-int32 startup_argc = 0;
-cstring_w* startup_argv = nullptr;
+int32 Startup_argc = 0;
+cstring_w* Startup_argv = nullptr;
 
 ExitCallback exit_handle = nullptr;
 
@@ -45,14 +45,14 @@ void sighandle(int sig)
         Cmd::Exit(CoffeeExit_Termination);
     case SIGINT:
     {
-        Profiling::ExitRoutine(startup_argc,startup_argv);
+        Profiling::ExitRoutine(Startup_argc,Startup_argv);
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Interrupt);
     }
     case SIGTERM:
     {
-        Profiling::ExitRoutine(startup_argc,startup_argv);
+        Profiling::ExitRoutine(Startup_argc,Startup_argv);
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
@@ -76,34 +76,40 @@ void SetExitFunction(ExitCallback f)
     exit_handle = f;
 }
 
-void CoffeeInit()
+/* We make certain assumptions about the system
+ *  which must be fulfilled for proper execution */
+static_assert(sizeof(uint8)==1,
+              "uint8 size is inconsistent");
+static_assert(sizeof(int8)==1,
+              "int8 size is inconsistent");
+
+static_assert(sizeof(uint16)==2,
+              "uint16 size is inconsistent");
+static_assert(sizeof(int16)==2,
+              "int16 size is inconsistent");
+
+static_assert(sizeof(uint32)==4,
+              "uint32 size is inconsistent");
+static_assert(sizeof(int32)==4,
+              "int32 size is inconsistent");
+
+static_assert(sizeof(uint64)==8,
+              "uint64 size is inconsistent");
+static_assert(sizeof(int64)==8,
+              "int64 size is inconsistent");
+
+static_assert(sizeof(scalar)==4,
+              "scalar size is inconsistent");
+static_assert(sizeof(bigscalar)==8,
+              "bigscalar size is inconsistent");
+
+void CoffeeInit(bool profiler_init)
 {
-    /* We make certain assumptions about the system
-     *  which must be fulfilled for proper execution */
-    static_assert(sizeof(uint8)==1,
-                  "uint8 size is inconsistent");
-    static_assert(sizeof(int8)==1,
-                  "int8 size is inconsistent");
-
-    static_assert(sizeof(uint16)==2,
-                  "uint16 size is inconsistent");
-    static_assert(sizeof(int16)==2,
-                  "int16 size is inconsistent");
-
-    static_assert(sizeof(uint32)==4,
-                  "uint32 size is inconsistent");
-    static_assert(sizeof(int32)==4,
-                  "int32 size is inconsistent");
-
-    static_assert(sizeof(uint64)==8,
-                  "uint64 size is inconsistent");
-    static_assert(sizeof(int64)==8,
-                  "int64 size is inconsistent");
-
-    static_assert(sizeof(scalar)==4,
-                  "scalar size is inconsistent");
-    static_assert(sizeof(bigscalar)==8,
-                  "bigscalar size is inconsistent");
+    if(profiler_init)
+    {
+        Profiler::InitProfiler();
+        Profiler::LabelThread("Main");
+    }
 
     /* Allow core dump by default */
 #ifndef NDEBUG
@@ -136,32 +142,36 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
     /* Fix argument format on Windows */
 
-    startup_argc = argc;
-    startup_argv = argv;
+    Startup_argc = argc;
+    Startup_argv = argv;
 
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
+
     Profiler::PushContext("CoffeeMain");
 
     CoffeeInit();
     Profiler::Profile("Init");
+
 
     Profiler::PushContext("main()");
     int32 r = mainfun(argc,argv);
     Profiler::PopContext();
     Profiler::Profile("Runtime");
 
-    CoffeeTerminate();
+    CoffeeTerminate(false);
     Profiler::Profile("Termination");
     Profiler::PopContext();
 
-    Profiling::ExitRoutine(startup_argc,startup_argv);
+    Profiling::ExitRoutine(Startup_argc,Startup_argv);
 
     return r;
 }
 
-void CoffeeTerminate()
+void CoffeeTerminate(bool profiler_destroy)
 {
+    if(profiler_destroy)
+        Profiler::DestroyProfiler();
     Cmd::ResetScreen();
 }
 

@@ -34,7 +34,11 @@ const constexpr cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPIL
                                                                   C_COMPILER_VER_MAJ,
                                                                   C_COMPILER_VER_MIN,
                                                                   C_COMPILER_VER_REV);
+
 const constexpr cstring CoffeeArchString = COFFEE_ARCH;
+
+extern int32 Startup_argc;
+extern cstring_w* Startup_argv;
 
 extern void SetExitFunction(ExitCallback f);
 
@@ -46,9 +50,9 @@ extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w *argv)
 /*!
  * \brief Initializes process state before running. Mainly core dumping.
  */
-extern void CoffeeInit();
+extern void CoffeeInit(bool profiler_init = true);
 
-extern void CoffeeTerminate();
+extern void CoffeeTerminate(bool profiler_destroy = true);
 
 //A simpler implementation of QObject
 class CObject;

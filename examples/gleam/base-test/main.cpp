@@ -1,6 +1,6 @@
 #include <coffee/core/CApplication>
 #include <coffee/graphics_apis/CGLeam>
-#include <coffee/COpenVR>
+#include <coffee/COculusRift>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
 
@@ -11,6 +11,8 @@
 
 using namespace Coffee;
 using namespace CDisplay;
+
+using VR = OculusRift::OculusVR;
 
 Splash::SplashHandle* splash;
 
@@ -194,41 +196,35 @@ public:
         Profiler::Profile("Create textures");
 
         int32 tim_unif;
+        int32 cam_unif;
+        CGraphicsData::CTransform obj;
+        CMat4 objects[2] = {};
+        CMat4 cam_mat;
+        CGraphicsData::CGCamera cam;
+
         {
-            CGraphicsData::CGCamera cam;
             cam.aspect = 1.6;
             cam.fieldOfView = 70.f;
             cam.position = CVec3(0,0,-3);
 
-
-            int32 cam_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"transform");
+            /* Acquire texture uniforms */
+            cam_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"transform");
             int32 texm_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"tex_mul");
             int32 tex_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"texdata");
             tim_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"mx");
 
             int32 tex_bind = 0;
-            CMat4 cam_mat = CGraphicsData::GenPerspective(cam)
+
+            /**/
+            cam_mat = CGraphicsData::GenPerspective(cam)
                     *CGraphicsData::GenTransform(cam);
 
-            CGraphicsData::CTransform obj;
             obj.scale = CVec3(1);
-            CMat4 objects[102] = {};
-            obj.position = CVec3(-1,0,0);
-            objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
-            obj.position = CVec3(1,0,0);
-            objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
-
-            for(uint32 i=2;i<102;i++)
-            {
-                obj.position = CVec3(-2,0,i/2.0);
-                objects[i] = cam_mat*CGraphicsData::GenTransform(obj);
-            }
 
             CVec2 tex_mul[2] = {};
             tex_mul[0] = CVec2(1,1);
             tex_mul[1] = CVec2(-1,1);
 
-            GL::Uniformfv(vprogram,cam_unif,102,false,objects);
             GL::Uniformfv(vprogram,texm_unif,2,tex_mul);
             GL::Uniformiv(fprogram,tex_unif,1,&tex_bind);
         }
@@ -247,12 +243,27 @@ public:
 //        GL::Enable(GL::Feature::DepthTest);
 
         ftimer.start();
+
+        /* Head pose value */
+        CMat4 testmat;
+
+        Profiler::PushContext("Oculus setup");
+        VR::Device* dev = nullptr;
+        {
+            int32 devcount;
+            if(VR::InitializeBinding())
+            {
+                if(VR::PollDevices(&devcount))
+                dev = VR::GetDefaultDevice();
+            }
+        }
+        Profiler::PopContext();
+
         while(!closeFlag())
         {
             scalar time = this->contextTime();
 
-            Splash::SetProgress(splash,CMath::fmod(time,10.f)/10.f);
-
+            /* Cycle eye color that is displayed */
             if(cycle_color)
             {
                 clearcol.r() = CMath::sin(time+0.5);
@@ -261,19 +272,36 @@ public:
             }
 
             time = (CMath::sin(time)+CMath::sin(time*0.5)+1.0)/2.0;
+
+            /* Update matrices */
+            if(dev)
+                testmat = dev->head();
+
+            cam_mat =
+                    CGraphicsData::GenPerspective(cam)
+                    *CGraphicsData::GenTransform(cam)
+                    *testmat;
+
+            obj.position = CVec3(-1,0,0);
+            objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
+            obj.position = CVec3(1,0,0);
+            objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
+
+            GL::Uniformfv(vprogram,cam_unif,2,false,objects);
             GL::Uniformfv(fprogram,tim_unif,1,&time);
 
+            /* Clear buffer */
             clearcol = normalize(clearcol);
 
             GL::ClearBufferfv(true,0,clearcol);
             GL::ClearBufferfv(false,0,&depth_zero);
 
+            /* Draw objects */
             GL::DrawArraysInstanced(GL_TRIANGLES,0,6,2);
 
+            /* Update framecounter, print frames */
             fcounter.update(ftimer.elapsed());
 
-            CoffeeExt::QtSystem::Process(100);
-//            Splash::Repaint(splash);
             this->pollEvents();
             this->swapBuffers();
         }
@@ -289,6 +317,9 @@ public:
         GL::PipelineFree(1,&pipeline);
 
         Profiler::Profile();
+
+        if(dev)
+            VR::Shutdown();
 
         Profiler::PopContext();
     }
@@ -315,74 +346,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     SubsystemWrapper<SDL2::SDL2> sdl2;
     C_UNUSED(sdl2);
 
-    Profiler::PushContext("Splashscreen creation");
-
-    /*Required to start Qt GUI applications*/
-    SubsystemWrapper<CoffeeExt::QtSystem> qt(argc,argv);
-    C_UNUSED(qt);
-    Profiler::Profile("Initialization");
-
-
-    /*Testing out Qt splashscreen support*/
-    {
-
-        splash = Splash::CreateSplash();
-        Profiler::Profile("Creation of object");
-
-        CResources::CResource resc("eye-normal.tga");
-        CResources::FileMap(resc);
-        CStbImageLib::CStbImage img;
-        Profiler::Profile("File load");
-
-        CStbImageLib::LoadData(&img,&resc,PixelComponents::RGBA);
-        Profiler::Profile("Load image");
-
-        Splash::SetSize(splash,img.size/2);
-
-        Splash::SetBitmap(splash,PixelFormat::RGBA8UI,img.size,img.data);
-        Splash::SetTitle(splash,Splash::Title("Hello world!",Color::Red,
-                                              AlignHCenter|AlignBottom,
-                                              36));
-        Profiler::Profile("Apply image");
-
-        CStbImageLib::ImageFree(&img);
-        CResources::FileFree(resc);
-        Profiler::Profile("Free data");
-
-        Splash::ShowSplash(splash);
-        Profiler::Profile("Show splash");
-
-        Profiler::PopContext();
-    }
-
-    std::future<void> l;
-    {
-        std::function<void()> fun = []()
-        {
-            Profiler::InitProfiler();
-            Profiler::LabelThread("Worker thread");
-            Profiler::PushContext("Testing context");
-
-            uint64 t = 1;
-
-            uint64 count = 1024;
-            for(uint64 i=1;i<count;i++)
-                for(uint64 j=1;j<count;j++)
-                    for(uint64 k=1;k<count;k++)
-                    {
-                        t*=i*j*k;
-                    }
-
-            cDebug("Product: {0}",t);
-            cDebug("Error: {0}",10.f/0.f);
-
-            Profiler::Profile("Data!");
-            Profiler::PopContext();
-            Profiler::DestroyProfiler();
-        };
-        l = Threads::RunAsync(fun);
-    }
-
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
 
@@ -390,22 +353,20 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     Profiler::Profile("Object creation");
 
-    {
-        CDProperties props = GetDefaultVisual();
+    CDProperties props = GetDefaultVisual();
 
-        renderer->init(props);
-        Profiler::Profile("Initialize renderer");
+    renderer->init(props);
+    Profiler::Profile("Initialize renderer");
 
-        if(!(  GL::SeparableShaderSupported()
-               ||GL::VertexAttribBinding()
-               ||GL::ViewportArraySupported()
-               ||GL::BufferStorageSupported()))
-            return 1;
-        Profiler::Profile("Get GL requirements");
+    if(!(  GL::SeparableShaderSupported()
+           ||GL::VertexAttribBinding()
+           ||GL::ViewportArraySupported()
+           ||GL::BufferStorageSupported()))
+        return 1;
+    Profiler::Profile("Get GL requirements");
 
-        cDebug("Device info: {0}",GL::Debug::Renderer());
-        Profiler::Profile("Get renderer info");
-    }
+    cDebug("Device info: {0}",GL::Debug::Renderer());
+    Profiler::Profile("Get renderer info");
 
     renderer->run();
 
@@ -417,16 +378,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Cleanup");
 
     Profiler::PopContext();
-    Profiler::Profile();
-
-    l.get();
-    Profiler::Profile("Function retrieval");
-
-    cDebug("Function name: {0}",Stacktracer::GetStackframeName(0));
-    Profiler::Profile("Function name retrieval");
-
-    Splash::DestroySplash(splash);
-    Profiler::Profile("Splash destruction");
 
     return 0;
 }

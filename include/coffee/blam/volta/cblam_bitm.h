@@ -1,9 +1,6 @@
 #ifndef CBLAM_BITM
 #define CBLAM_BITM
 
-#include <functional>
-
-#include <coffee/core/CTypes>
 #include <coffee/core/coffee_macros.h>
 #include "cblam_structures.h"
 

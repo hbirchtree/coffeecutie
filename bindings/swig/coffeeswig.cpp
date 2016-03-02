@@ -1,4 +1,5 @@
 #include <coffee/CCore>
+#include <coffee/core/profiler/profiling-export.h>
 #include <coffee/CSDL2>
 #include <coffee/graphics_apis/CGLeam>
 
@@ -95,6 +96,40 @@ void ClearBuffer(float dep, float color[4])
 {
     GL::ClearBufferfv(false,0,&dep);
     GL::ClearBufferfv(true,0,color);
+}
+
+}
+
+namespace Profiling{
+
+void exPrintProfilerData()
+{
+    PrintProfilerData();
+}
+
+void exExportProfilerData(const char* outfile)
+{
+    ExportProfilerData(outfile,Startup_argc,Startup_argv);
+}
+
+void Perf_PushContext(const char *name)
+{
+    Profiler::PushContext(name);
+}
+
+void Perf_PopContext()
+{
+    Profiler::PopContext();
+}
+
+void Perf_Profile(const char *name)
+{
+    Profiler::Profile(name);
+}
+
+void Perf_LabelThread(const char *name)
+{
+    Profiler::LabelThread(name);
 }
 
 }

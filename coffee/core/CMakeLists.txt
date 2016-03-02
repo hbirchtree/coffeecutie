@@ -11,7 +11,7 @@ set ( CoffeeCore_SRCS
 
     private/functional/cqueuerunner.cpp
 
-    private/jobs/ctasksystem.cpp
+    private/profiler/profiling-export.cpp
 
     private/unit_tests/data_types.cpp
     private/unit_tests/micro_tests.cpp
