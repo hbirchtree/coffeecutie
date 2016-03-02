@@ -255,6 +255,9 @@ public:
             {
                 if(VR::PollDevices(&devcount))
                 dev = VR::GetDefaultDevice();
+                if(dev)
+                    cDebug("Here's Johnny!");
+                VR::PollDevices();
             }
         }
         Profiler::PopContext();

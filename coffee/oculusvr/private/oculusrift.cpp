@@ -130,7 +130,7 @@ OculusVR::Device::Device(uint32 idx, bool dontcare):
                              s_caps,(dontcare) ? 0 : r_caps);
 }
 
-SWVersionInfo OculusVR::Device::GetFirmwareInfo()
+SWVersionInfo OculusVR::Device::GetFirmwareInfo() const
 {
     ovrHmd dev = OculusContext->devices[m_idx];
     return SWVersionInfo(dev->ProductName,
@@ -143,6 +143,11 @@ void OculusVR::Device::reset()
     ovrHmd_RecenterPose(OculusContext->devices[m_idx]);
 }
 
+CSize OculusVR::Device::resolution(Eye e) const
+{
+
+}
+
 CMat4 OculusVR::Device::head() const
 {
     ovrTrackingState t = ovrHmd_GetTrackingState(
@@ -150,14 +155,32 @@ CMat4 OculusVR::Device::head() const
                 0);
     ovrVector3f p = t.HeadPose.ThePose.Position;
     ovrQuatf q = t.HeadPose.ThePose.Orientation;
-    CMat4 m = translation(CMat4(),CVec3(p.x,p.y,p.z));
-    m *= matrixify(CQuat(q.w,q.x,q.y,q.z));
+    CMat4 m = translation(CMat4(),CVec3(p.x,p.y,p.z)*CVec3(6)*CVec3(1,1,1));
+    m *= matrixify(CQuat(q.w,q.x*-1.0,q.y*-1.0,q.z));
     return m;
 }
 
 CMat4 OculusVR::Device::view(HMD::CHMD_Binding::Eye e) const
 {
-    return CMat4();
+    ovrPosef m;
+    ovrEyeType t;
+    if(e==Eye::Left)
+        t = ovrEye_Left;
+    else
+        t = ovrEye_Right;
+    m = ovrHmd_GetHmdPosePerEye(OculusContext->devices[m_idx],t);
+    CMat4 mt =
+            translation(
+                CMat4(),
+                CVec3(m.Position.x,
+                      m.Position.y,
+                      m.Position.z)
+                *CVec3(6));
+    mt *= matrixify(CQuat(m.Orientation.w,
+                          m.Orientation.x*-1.0,
+                          m.Orientation.y*-1.0,
+                          m.Orientation.z));
+    return mt;
 }
 
 CVec3 OculusVR::Device::angularVelocity() const
