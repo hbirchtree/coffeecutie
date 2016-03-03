@@ -5,7 +5,7 @@ using namespace Coffee;
 
 const constexpr cstring quit_message = "Leaving";
 
-asio::ip::tcp::iostream irc_stream;
+TCP::Socket irc_stream;
 
 void ExitFun()
 {

@@ -22,6 +22,8 @@ struct TCPSocketImpl : ASIO_Client
         sock_t socket;
 
         SSLSocket(asio::io_service &serv, asio::ssl::context& ctxt):
+            recvp(),
+            trans(),
             std::istream(&recvp),
             std::ostream(&trans),
             socket(serv,ctxt)
