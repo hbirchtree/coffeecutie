@@ -11,14 +11,35 @@ int32 coffee_main(int32, cstring_w*)
     CASIO::ASIO_Client::AsioContext c = RestClient::GetContext();
 
     {
-        std::future<TCPSocket::Connection> conn =
-                TCPSocket::ConnectSocketAsync(c,"google.com","80");
+        TCP::SSLSocket cn(c->service,c->sslctxt);
+        cn.connect(c,"example.com","https");
 
-        TCPSocket::Connection cn = conn.get();
+        cn << "GET / HTTP/1.0\r\n";
+        cn << "HOST: example.com\r\n";
+        cn << "CONNECTION: close\r\n\r\n";
 
-        cDebug("Socket: {0}",(const void* const&)cn.get());
+        CString data;
 
-        TCPSocket::DisconnectSocket(&cn);
+        CString tmp;
+
+        cn.pull();
+
+        std::getline(cn,tmp);
+        cDebug("Response: {0}",tmp);
+        if(tmp.substr(0,5) == "HTTP/")
+        {
+            while(std::getline(cn,tmp) && tmp != "\r")
+                cDebug("{0}",tmp);
+
+            while(std::getline(cn,tmp) && tmp != "\r\n")
+            {
+                data.append(tmp);
+            }
+
+            cDebug("Payload: {0}",data);
+        }else{
+            cDebug("Bad mojo");
+        }
     }
 
     CString host = "api.twitch.tv";
@@ -46,8 +67,6 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("Header: \n{0}",res.header);
     cDebug("Message: {0}",res.message);
     cDebug("Payload: \n{0}",res.payload);
-
-    return 0;
 
     JSON::Document doc = JSON::Read(res.payload.c_str());
 

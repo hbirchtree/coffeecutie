@@ -11,55 +11,73 @@ struct TCPSocketImpl : ASIO_Client
 {
     using Host = CString;
     using Service = CString;
+    using Port = uint16;
 
-    using Connection = std::shared_ptr<asio::ip::tcp::socket>;
+    using Socket = asio::ip::tcp::iostream;
 
-    STATICINLINE Connection ConnectSocket(Host host, Service service)
+    struct SSLSocket : std::istream, std::ostream
     {
-	asio::ip::tcp::resolver::query q(host,service);
-        Connection conn;
-        try{
-            auto resolve_iterator = t_context->resolver.resolve(q);
-            conn = Connection(new asio::ip::tcp::socket(t_context->service));
-            asio::connect(*conn,resolve_iterator);
-        }catch(std::system_error)
+        using sock_t = asio::ssl::stream<asio::ip::tcp::socket>;
+
+        sock_t socket;
+
+        SSLSocket(asio::io_service &serv, asio::ssl::context& ctxt):
+            std::istream(&recvp),
+            std::ostream(&trans),
+            socket(serv,ctxt)
         {
-            conn = Connection();
         }
 
-	return conn;
-    }
+        void connect(AsioContext c, Host h, Service p)
+        {
+            asio::ip::tcp::resolver::query q(h,p);
+            auto it = c->resolver.resolve(q);
 
-    STATICINLINE std::future<Connection> ConnectSocketAsync(
-	    AsioContext ctxt, Host const& host, Service const& service)
-    {
-	std::function<Connection()> fun = [ctxt,host,service]()
-	{
-	    MakeCurrent(ctxt);
-	    Connection conn = ConnectSocket(host,service);
-	    GetContext();
-	    return conn;
-	};
-        return Threads::RunAsync(fun);
-    }
+            asio::connect(socket.next_layer(),it);
 
-    STATICINLINE std::future<bool> DisconnectSocket(Connection *c)
-    {
-	std::function<bool()> fun = [c]()
-	{
-	    if(!c->unique())
-		return false;
-	    c->get()->close();
-	    c->reset();
-	    return true;
-	};
-        return Threads::RunAsync(fun);
-    }
+            socket.handshake(asio::ssl::stream_base::client);
+        }
+
+        template<typename T>
+        void operator<<(T const& v)
+        {
+            (std::ostream&)(*this) << v;
+            flush();
+        }
+
+//        template<typename T, typename R>
+//        R& operator>>(T& v)
+//        {
+//            pull();
+//            return (std::istream&)(*this) >> v;
+//        }
+
+        void pull()
+        {
+            try{
+                asio::read(socket,recvp);
+            }catch(std::system_error){}
+        }
+        void flush()
+        {
+            std::ostream::flush();
+            asio::write(socket,trans);
+        }
+
+        void close()
+        {
+            socket.shutdown();
+        }
+
+    private:
+        asio::streambuf recvp;
+        asio::streambuf trans;
+    };
 };
 
 }
 
-using TCPSocket = CASIO::TCPSocketImpl;
+using TCP = CASIO::TCPSocketImpl;
 
 }
 

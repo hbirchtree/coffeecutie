@@ -1,8 +1,7 @@
 #ifndef COFFEE_ASIO_ASIO_DATA_H
 #define COFFEE_ASIO_ASIO_DATA_H
 
-#include <coffee/core/CBase>
-#include <coffee/core/CTypes>
+#include <coffee/core/CDebug>
 #include <coffee/core/coffee_strings.h>
 
 #include <asio.hpp>
