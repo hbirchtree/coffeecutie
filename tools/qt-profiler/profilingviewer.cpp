@@ -69,7 +69,7 @@ quint64 buildProfileTree(QTreeWidget* troot,
 	ci->setText(EvTimeIndex,QString::number(ts));
         p->addChild(ci);
 
-        if(CStrCmp(c->Name(),token_context))
+        if(StrCmp(c->Name(),token_context))
             cost += buildProfileTree(troot,ci,threads,thread_items,c,base+ts);
         else
             cost += ts;
@@ -105,7 +105,7 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
     tree->clear();
     this->setWindowTitle(BaseTitle);
 
-    if(!fname||CStrCmp(fname,""))
+    if(!fname||StrCmp(fname,""))
         return;
 
     CResources::CResource rsc(fname,true);

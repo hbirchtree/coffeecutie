@@ -14,6 +14,7 @@
 
 /*Shit*/
 #include <exception>
+#include <complex>
 
 namespace Coffee{
 
@@ -55,5 +56,8 @@ using MultiMap = std::multimap<T1,T2>;
 
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
+
+template<typename T>
+using Complex = std::complex<T>;
 
 }

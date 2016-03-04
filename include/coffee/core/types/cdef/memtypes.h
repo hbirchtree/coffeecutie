@@ -50,8 +50,8 @@ STATICINLINE void coffee_mem_expand_array(chunk_mem<T> *mem, szptr size)
 {
     szptr osize = mem->size;
     mem->size += size;
-    mem->d = (T*)CRealloc(mem->d,sizeof(T)*mem->size);
-    CMemClear(&mem->d[osize],sizeof(T)*(mem->size-osize));
+    mem->d = (T*)Realloc(mem->d,sizeof(T)*mem->size);
+    MemClear(&mem->d[osize],sizeof(T)*(mem->size-osize));
 }
 
 struct CMimeData

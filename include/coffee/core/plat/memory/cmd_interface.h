@@ -37,7 +37,7 @@ struct BasicTerm : CmdDef
 {
     STATICINLINE cstring ReadString(cstring_w target, int32 size, FILE* strm)
     {
-        return CGets(target,size,strm);
+        return Gets(target,size,strm);
     }
 
     STATICINLINE void Wait()

@@ -12,11 +12,10 @@ using namespace Coffee;
 void run_memory_tests(bool silent = true)
 {
     constexpr cstring final_string = "test\\\\file\\\\name";
-    cstring_w test_string = CStrReplace("test/file/name","/","\\\\");
+    CString test_string = CStrReplace("test/file/name","/","\\\\");
     if(!silent)
         cDebug("String tests:\n %s ?= %s",test_string,final_string);
-    CASSERT(CStrCmp(test_string,final_string));
-    CFree(test_string);
+    CASSERT(StrCmp(test_string.c_str(),final_string));
 }
 
 }

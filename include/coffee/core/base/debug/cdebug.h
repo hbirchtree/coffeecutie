@@ -33,7 +33,7 @@ FORCEDINLINE void cfprintf(FILE* stream, cstring format, Args... args)
     CString formatted = cStringFormat(format,args...);
     if(locking)
         DebuggingState::PrinterLock.lock();
-    CPuts(stream,formatted.c_str());
+    Puts(stream,formatted.c_str());
     if(locking)
         DebuggingState::PrinterLock.unlock();
 }

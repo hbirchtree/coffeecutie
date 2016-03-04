@@ -46,7 +46,7 @@ void _stbi_write_data(void *ctxt, void *data, int size)
     CResource* target = (CResource*)ctxt;
     target->size = size;
     target->data = Alloc(size);
-    CMemCpy(target->data,data,size);
+    MemCpy(target->data,data,size);
 }
 
 bool Resize(CStbImage *img, const CSize &target, int channels)
@@ -87,7 +87,7 @@ void FlipVertical(CStbImage *src)
 
     for(szptr i=0;i<siz;i+=wdt*src->bpp)
     {
-        CMemCpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
+        MemCpy(&data[i],&src->data[siz-wdt*src->bpp-i],wdt*src->bpp);
     }
 
     CFree(src->data);
@@ -105,7 +105,7 @@ void FlipHorizontal(CStbImage *src)
     for(int32 i=0;i<bot;i++)
         for(int32 j=0;j<wdt;j++)
         {
-            CMemCpy(&data[(i*wdt+wdt-j)*src->bpp],&src->data[(i*wdt+j)*src->bpp],src->bpp);
+            MemCpy(&data[(i*wdt+wdt-j)*src->bpp],&src->data[(i*wdt+j)*src->bpp],src->bpp);
         }
 
     CFree(src->data);
@@ -145,7 +145,7 @@ void CImage::SaveTGA(const CSize& resolution,
                       CByteData& outdata)
 {
     tga_header head;
-    CMemClear(&head,sizeof(tga_header));
+    MemClear(&head,sizeof(tga_header));
 
     head.width = resolution.w;
     head.height = resolution.h;
@@ -156,8 +156,8 @@ void CImage::SaveTGA(const CSize& resolution,
     outdata.size = imgData.size+sizeof(tga_header);
     outdata.data = (byte_t*)Alloc(outdata.size);
 
-    CMemCpy(&outdata.data[0],&head,sizeof(head));
-    CMemCpy(&outdata.data[sizeof(tga_header)],imgData.data,imgData.size);
+    MemCpy(&outdata.data[0],&head,sizeof(head));
+    MemCpy(&outdata.data[sizeof(tga_header)],imgData.data,imgData.size);
 }
 
 }

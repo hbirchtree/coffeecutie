@@ -257,7 +257,7 @@ public:
                     * GenTransform(camera);
             rt = AccumulateTransform(&rootNode);
 
-            CMemCpy(transforms.current().data,&rt,sizeof(rt));
+            MemCpy(transforms.current().data,&rt,sizeof(rt));
 
             for(int i=0;i<4;i++)
             {

@@ -87,11 +87,11 @@ struct PosixEnvironmentFun : EnvInterface
         cstring q;
         while(envar)
         {
-            q = CStrFind(envar,"=");
+            q = StrFind(envar,"=");
             if(!q)
                 continue;
             v1.insert(0,(cstring)envar,q-envar);
-            v2.insert(0,(cstring)q+1,CStrLen(q+1));
+            v2.insert(0,(cstring)q+1,StrLen(q+1));
 
             e.insert(VarPair(v1,v2));
 

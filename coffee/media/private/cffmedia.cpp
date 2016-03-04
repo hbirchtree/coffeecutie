@@ -85,7 +85,7 @@ void FFInit(CFFMessageCallback callback, bool silent)
 
 int ff_read_data(void* opaque, uint8* buf, int buf_size)
 {
-    CMemCpy(buf,opaque,buf_size);
+    MemCpy(buf,opaque,buf_size);
     return buf_size;
 }
 
@@ -111,7 +111,7 @@ AVFormatContext* ff_open_data(
     probe_data.buf = (uint8*)Alloc(probe_data.buf_size);
     probe_data.mime_type = nullptr;
 
-    CMemCpy(probe_data.buf,data,probe_data.buf_size);
+    MemCpy(probe_data.buf,data,probe_data.buf_size);
 
     AVInputFormat* infmt = av_probe_input_format(&probe_data,1);
 
@@ -212,7 +212,7 @@ FFDecodeContext* CreateDecodeContext(
 {
     FFDecodeContext* dCtxt = new FFDecodeContext;
 
-    CMemClear(dCtxt,sizeof(FFDecodeContext));
+    MemClear(dCtxt,sizeof(FFDecodeContext));
 
     if(video->s[0])
     {
@@ -420,7 +420,7 @@ bool DecodeFrame(const FFVideoPlayer* video,
 
                 p.samples = nb_samples;
 
-                CMemCpy(p.data,dCtxt->a.data[0],data_size);
+                MemCpy(p.data,dCtxt->a.data[0],data_size);
 
                 dTrgt->a.queue_mutex.unlock();
 

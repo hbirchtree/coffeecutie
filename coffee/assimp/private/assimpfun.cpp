@@ -125,7 +125,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
         bufsize+=bufferCount*sizeof(assimp_reflexive)-sizeof(assimp_reflexive);
         bufsize+=strlen(meshdata->mName.C_Str())+1;
 
-        buffer = (byte_t*)CCalloc(sizeof(byte_t),bufsize);
+        buffer = (byte_t*)Calloc(sizeof(byte_t),bufsize);
     }
 
     CAssimpMesh* mesh = (CAssimpMesh*)(&buffer[0]);
@@ -139,7 +139,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
     cstring mname = meshdata->mName.C_Str();
     mesh->name.offset = offset;
     mesh->name.size = strlen(mname)+1;
-    CMemCpy(&buffer[offset],mname,mesh->name.size);
+    MemCpy(&buffer[offset],mname,mesh->name.size);
     offset+=mesh->name.size;
 
     coffee_assimp_mesh_get_offsets(meshdata,bufferArray,offset);
@@ -204,7 +204,7 @@ CAssimpMesh *importMesh(const aiMesh *meshdata){
 
 szptr _assimp_face_transform(const aiFace &v, byte_t *d)
 {
-    CMemCpy(d,v.mIndices,sizeof(v.mIndices[0])*v.mNumIndices);
+    MemCpy(d,v.mIndices,sizeof(v.mIndices[0])*v.mNumIndices);
     return sizeof(v.mIndices[0])*v.mNumIndices;
 }
 

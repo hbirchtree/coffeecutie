@@ -5,7 +5,7 @@
 #include <math.h>
 #include <random>
 
-#include "../../types/basetypes.h"
+#include "../../types/tdef/integertypes.h"
 
 namespace Coffee{
 /*!

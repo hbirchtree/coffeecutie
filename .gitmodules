@@ -22,3 +22,6 @@
 [submodule "libs/asio"]
 	path = libs/asio
 	url = https://github.com/chriskohlhoff/asio.git
+[submodule "libs/cef"]
+	path = libs/cef
+	url = https://bitbucket.org/chromiumembedded/cef.git

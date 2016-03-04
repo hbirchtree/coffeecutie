@@ -413,7 +413,7 @@ struct CGL_Implementation
 
         STATICINLINE bool CheckExtensionSupported(cstring id)
         {
-            return CStrFind(s_ExtensionList.c_str(),id);
+            return StrFind(s_ExtensionList.c_str(),id);
         }
 
         /*Variables*/

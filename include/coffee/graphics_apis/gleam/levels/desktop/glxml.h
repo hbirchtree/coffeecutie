@@ -55,7 +55,7 @@ struct CGLXML
         while(query)
         {
             cstring extname = query->Attribute("name");
-            if(CStrFind(extname,part))
+            if(StrFind(extname,part))
                 exts.push_back(CString(extname));
             query = query->NextSiblingElement("extension");
         }
@@ -94,7 +94,7 @@ struct CGLXML
                 auto cmd = req->FirstChildElement("command");
                 while(cmd)
                 {
-                    if(CStrCmp(cmd->Attribute("name"),fun))
+                    if(StrCmp(cmd->Attribute("name"),fun))
                         return ExtractCoreVer(query->Attribute("name"));
                     cmd = cmd->NextSiblingElement("command");
                 }
@@ -118,7 +118,7 @@ struct CGLXML
                 auto cmd = req->FirstChildElement("command");
                 while(cmd)
                 {
-                    if(CStrCmp(cmd->Attribute("name"),fun))
+                    if(StrCmp(cmd->Attribute("name"),fun))
                         return Extension(query->Attribute("name"));
                     cmd = cmd->NextSiblingElement("command");
                 }

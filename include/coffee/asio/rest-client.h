@@ -113,16 +113,16 @@ struct RestClientImpl : ASIO_Client
         CString out;
         CString query = "Content-Type: ";
 
-        cstring b = CStrFind(resp.header.c_str(),query.c_str());
+        cstring b = StrFind(resp.header.c_str(),query.c_str());
         cstring e = nullptr;
         if(b)
         {
             b+=query.size();
-            e = CStrFind(b,"\r\n");
+            e = StrFind(b,"\r\n");
             if(!e)
                 return out;
             out.resize(e-b);
-            CMemCpy(&out[0],b,e-b);
+            MemCpy(&out[0],b,e-b);
         }
         return out;
     }
@@ -132,7 +132,7 @@ struct RestClientImpl : ASIO_Client
 
 }
 
-using RestClient = CASIO::RestClientImpl;
+using REST = CASIO::RestClientImpl;
 
 }
 

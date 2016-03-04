@@ -232,9 +232,9 @@ cstring *context_devices_output(uint32* numDevices)
     while(*devices)
     {
         if(!(*numDevices))
-            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
+            arrdev = (cstring*)Realloc(arrdev,sizeof(cstring)*(*numDevices+1));
         arrdev[*numDevices] = devices;
-        devices += CStrLen(devices)+1;
+        devices += StrLen(devices)+1;
         (*numDevices)++;
     }
 
@@ -255,9 +255,9 @@ cstring *context_devices_input(uint32* numDevices)
     while(*cdevices)
     {
         if(!(*numDevices))
-            arrdev = (cstring*)CRealloc(arrdev,sizeof(cstring)*(*numDevices+1));
+            arrdev = (cstring*)Realloc(arrdev,sizeof(cstring)*(*numDevices+1));
         arrdev[*numDevices] = cdevices;
-        cdevices += CStrLen(cdevices)+1;
+        cdevices += StrLen(cdevices)+1;
         (*numDevices)++;
     }
 
@@ -307,8 +307,8 @@ void listener_set(const CALListener *listener)
     alListenerfv(AL_VELOCITY,(scalar*)&listener->velocity);
     context_get_error();
     scalar *orient = new scalar[6];
-    CMemCpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
-    CMemCpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
+    MemCpy(&orient[0],&listener->orientation_forward,sizeof(CVec3));
+    MemCpy(&orient[2],&listener->orientation_up,sizeof(CVec3));
     alListenerfv(AL_ORIENTATION,orient);
     delete[] orient;
     context_get_error();

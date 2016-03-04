@@ -4,7 +4,9 @@
 #ifndef COFFEE_CORE_PLAT_ENV_SYSINFO_H
 #define COFFEE_CORE_PLAT_ENV_SYSINFO_H
 
+#include "../../../coffee_message_macros.h"
 #include "../sysinfo_def.h"
+
 #include <sys/sysinfo.h>
 #include <sys/procfs.h>
 #include <unistd.h>
@@ -44,10 +46,10 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+        cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
-        res = CStrFind(res,":")+1;
-        cstring end = CStrFind(res,"\n");
+        res = StrFind(res,":")+1;
+        cstring end = StrFind(res,"\n");
 
         CString result;
         result.insert(0,res,end-res);
@@ -60,13 +62,13 @@ struct LinuxSysInfo : SysInfoDef
         {
             if(ptr!=&result[0])
                 ptr++;
-            cstring sp = CStrFind(ptr," ");
+            cstring sp = StrFind(ptr," ");
             if(!sp)
                 sp=&result[result.size()-1];
             CString out;
             out.insert(0,ptr,sp-ptr);
             flags.push_back(out);
-            ptr = CStrFind(ptr," ");
+            ptr = StrFind(ptr," ");
         }
 
         return flags;
@@ -81,11 +83,11 @@ struct LinuxSysInfo : SysInfoDef
         cstring src = cached_cpuinfo_string.c_str();
 
         uint32 count = 0;
-        cstring res = CStrFind(src,query);
+        cstring res = StrFind(src,query);
         while(res)
         {
-            res = CStrFind(res,":")+1;
-            cstring end = CStrFind(res,"\n");
+            res = StrFind(res,":")+1;
+            cstring end = StrFind(res,"\n");
 
             CString result;
             result.insert(0,res,end-res);
@@ -95,7 +97,7 @@ struct LinuxSysInfo : SysInfoDef
             count = CMath::max(count,c);
 
             src = end;
-            res = CStrFind(src,query);
+            res = StrFind(src,query);
         }
 
         return count;
@@ -106,10 +108,10 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+        cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
-        res = CStrFind(res,":")+1;
-        cstring end = CStrFind(res,"\n");
+        res = StrFind(res,":")+1;
+        cstring end = StrFind(res,"\n");
 
         CString result;
         result.insert(0,res,end-res);
@@ -156,17 +158,17 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring mk_str = CStrFind(cached_cpuinfo_string.c_str(),mk_query);
-        cstring md_str = CStrFind(cached_cpuinfo_string.c_str(),md_query);
-        cstring fw_str = CStrFind(cached_cpuinfo_string.c_str(),fw_query);
+        cstring mk_str = StrFind(cached_cpuinfo_string.c_str(),mk_query);
+        cstring md_str = StrFind(cached_cpuinfo_string.c_str(),md_query);
+        cstring fw_str = StrFind(cached_cpuinfo_string.c_str(),fw_query);
 
-        mk_str = CStrFind(mk_str,":")+1;
-        md_str = CStrFind(md_str,":")+1;
-        fw_str = CStrFind(fw_str,":")+1;
+        mk_str = StrFind(mk_str,":")+1;
+        md_str = StrFind(md_str,":")+1;
+        fw_str = StrFind(fw_str,":")+1;
 
-        cstring mk_end = CStrFind(mk_str,"\n");
-        cstring md_end = CStrFind(md_str,"\n");
-        cstring fw_end = CStrFind(fw_str,"\n");
+        cstring mk_end = StrFind(mk_str,"\n");
+        cstring md_end = StrFind(md_str,"\n");
+        cstring fw_end = StrFind(fw_str,"\n");
 
         mk.insert(0,mk_str,mk_end-mk_str);
         md.insert(0,md_str,md_end-md_str);
@@ -185,10 +187,10 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query.c_str());
+        cstring res = StrFind(cached_cpuinfo_string.c_str(),query.c_str());
 
-        res = CStrFind(res,":")+1;
-        cstring end = CStrFind(res,"\n");
+        res = StrFind(res,":")+1;
+        cstring end = StrFind(res,"\n");
 
         CString result;
         result.insert(0,res,end-res);
@@ -203,16 +205,16 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+        cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
-        res = CStrFind(res,":")+1;
-        cstring end = CStrFind(res,"\n");
+        res = StrFind(res,":")+1;
+        cstring end = StrFind(res,"\n");
 
         CString result;
         result.insert(0,res,end-res);
         StrUtil::trim(result);
 
-        return CStrCmp(result.c_str(),"yes");
+        return StrCmp(result.c_str(),"yes");
     }
 
     STATICINLINE bool HasFPUExceptions()
@@ -221,16 +223,16 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+        cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
-        res = CStrFind(res,":")+1;
-        cstring end = CStrFind(res,"\n");
+        res = StrFind(res,":")+1;
+        cstring end = StrFind(res,"\n");
 
         CString result;
         result.insert(0,res,end-res);
         StrUtil::trim(result);
 
-        return CStrCmp(result.c_str(),"yes");
+        return StrCmp(result.c_str(),"yes");
     }
 
     STATICINLINE int64 ProcessorCacheSize()
@@ -239,10 +241,10 @@ struct LinuxSysInfo : SysInfoDef
 
         CPUInfoString();
 
-        cstring res = CStrFind(cached_cpuinfo_string.c_str(),query);
+        cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
-        res = CStrFind(res,":")+1;
-        cstring end = CStrFind(res,"\n");
+        res = StrFind(res,":")+1;
+        cstring end = StrFind(res,"\n");
 
         CString result;
         result.insert(0,res,end-res);
@@ -260,7 +262,7 @@ struct LinuxSysInfo : SysInfoDef
 
         for(const CString& flag : flags)
         {
-            if(CStrCmp(flag.c_str(),"ht")||CStrCmp(flag.c_str(),"htt"))
+            if(StrCmp(flag.c_str(),"ht")||StrCmp(flag.c_str(),"htt"))
                 return true;
         }
         return false;

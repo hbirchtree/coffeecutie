@@ -11,7 +11,7 @@ const blam_scenario* blam_scn_get(
 {
     const index_item_t* base = blam_tag_index_get_items(map);
 
-    if(!CMemCmp(blam_index_item_type_scnr,base->tagclass[0],4))
+    if(!MemCmp(blam_index_item_type_scnr,base->tagclass[0],4))
         return nullptr;
 
     cDebug("Scenario name: {0},offset={1}",

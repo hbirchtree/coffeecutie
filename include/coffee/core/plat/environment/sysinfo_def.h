@@ -1,9 +1,10 @@
 #ifndef COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
 #define COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
 
-#include "../../coffee_macros.h"
+#include "../../coffee_mem_macros.h"
 #include "../../base/math/cmath.h"
 #include "../../types/cdef/infotypes.h"
+
 #include <thread>
 #include <future>
 #include <iostream>

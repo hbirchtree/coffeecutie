@@ -5,14 +5,12 @@ using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    RestClient::InitService();
+    REST::InitService();
     CElapsedTimer tim;
 
-    CASIO::ASIO_Client::AsioContext c = RestClient::GetContext();
-
     {
-        TCP::SSLSocket cn(c->service,c->sslctxt);
-        cn.connect(c,"example.com","https");
+        TCP::SSLSocket cn;
+        cn.connect("example.com","https");
 
         cn << "GET / HTTP/1.0\r\n";
         cn << "HOST: example.com\r\n";
@@ -36,21 +34,18 @@ int32 coffee_main(int32, cstring_w*)
                 data.append(tmp);
             }
 
-            cDebug("Payload: {0}",data);
+            cDebug("Payload: \n{0}",data);
         }else{
             cDebug("Bad mojo");
         }
     }
 
+    TCP::AsioContext c = REST::GetContext();
+
     CString host = "api.twitch.tv";
     CString rq = "/kraken/streams";
 
-    std::future<RestClient::RestResponse> t =
-            RestClient::RestRequestAsync(
-                c,
-                RestClient::HTTPS,
-                host,
-                rq);
+    std::future<REST::RestResponse> t = REST::RestRequestAsync(c,REST::HTTPS,host,rq);
 
     tim.start();
 
@@ -59,9 +54,9 @@ int32 coffee_main(int32, cstring_w*)
     while(!Threads::FutureAvailable(t));
     cDebug("Results are here: {0}",tim.elapsed());
 
-    RestClient::RestResponse res = t.get();
+    REST::RestResponse res = t.get();
 
-    cDebug("Content type: {0}",RestClient::GetContentType(res));
+    cDebug("Content type: {0}",REST::GetContentType(res));
 
     cDebug("Status: {0}",res.status);
     cDebug("Header: \n{0}",res.header);

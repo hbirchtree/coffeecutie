@@ -124,7 +124,7 @@ struct CGL33 : CGL_Implementation
     {
         int32* lens = new int32[n];
         for(uint32 i=0;i<n;i++)
-            lens[i] = CStrLen(src[i]+1);
+            lens[i] = StrLen(src[i]+1);
         glShaderSource(h,n,src,lens);
         delete[] lens;
     }

@@ -220,14 +220,14 @@ struct SimpleIniParser : IniParserDef
         t2 = nullptr,t3 = nullptr,t4 = nullptr;
         while(ref&&ref<end)
         {
-            t1 = CStrFind(ref,linesep);
+            t1 = StrFind(ref,linesep);
             if(t1)
             {
                 switch(ref[0])
                 {
                     /* Sections */
                 case sec_ld[0]:
-                    t2 = CStrFind(ref,sec_rd);
+                    t2 = StrFind(ref,sec_rd);
                     if(t2&&t2<t1)
                     {
                         /* Create new section, insert name */
@@ -245,7 +245,7 @@ struct SimpleIniParser : IniParserDef
                 default:
                 {
                     /* Find name-value delimiter */
-                    t2 = CStrFind(ref,del_vl);
+                    t2 = StrFind(ref,del_vl);
                     if(t2&&t2<t1)
                     {
                         /* Extract value name */

@@ -128,7 +128,7 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
             {
                 for(const CString& f : functions)
                     if(!feature_levels[f])
-                        if(CStrCmp(command->Attribute("name"),f.c_str()))
+                        if(StrCmp(command->Attribute("name"),f.c_str()))
                         {
                             feature_levels[f] = query->Attribute("name");
                         }
@@ -161,7 +161,7 @@ std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
                 {
                     for(const CString& f : functions)
                         if(!feature_levels[f])
-                            if(CStrCmp(itm->Attribute("name"),f.c_str()))
+                            if(StrCmp(itm->Attribute("name"),f.c_str()))
                             {
                                 feature_levels[f] = ext->Attribute("name");
                             }

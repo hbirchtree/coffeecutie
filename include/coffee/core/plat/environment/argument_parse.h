@@ -15,7 +15,7 @@ struct ArgParse
 protected:
     STATICINLINE cstring _switch_short(cstring in)
     {
-        if(CStrLen(in)<2)
+        if(StrLen(in)<2)
             return in;
         if(in[0]!=COFFEE_ARG_SWITCH)
             return in;
@@ -23,17 +23,17 @@ protected:
     }
     STATICINLINE cstring _switch_long(cstring in)
     {
-        if(CStrLen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
+        if(StrLen(in)<3||in[0]!=COFFEE_ARG_SWITCH||in[1]!=COFFEE_ARG_SWITCH)
             return in;
         return &in[2];
     }
     STATICINLINE bool _cmp_short_switch(cstring in, cstring sw)
     {
-        return CStrCmp(_switch_short(in),sw)==0;
+        return StrCmp(_switch_short(in),sw)==0;
     }
     STATICINLINE bool _cmp_long_switch(cstring in, cstring sw)
     {
-        return CStrCmp(_switch_long(in),sw)==0;
+        return StrCmp(_switch_long(in),sw)==0;
     }
 
 public:

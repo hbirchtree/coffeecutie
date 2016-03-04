@@ -8,7 +8,7 @@ cstring blam_file_header_full_mapname(
 {
     for(int32 i=0;i<blam_num_map_names;i++)
     {
-        if(CStrCmp(map->name,blam_map_names[i].key))
+        if(StrCmp(map->name,blam_map_names[i].key))
             return blam_map_names[i].value;
     }
     return "";
@@ -20,8 +20,8 @@ file_header_t *blam_file_header_get(
     file_header_t* fh = (file_header_t*)baseptr;
     if(
             fh->version!=expectedVersion&&
-            CMemCmp(&fh->id,blam_header_head,4)&&
-            CMemCmp(&fh->footer,blam_header_foot,4))
+            MemCmp(&fh->id,blam_header_head,4)&&
+            MemCmp(&fh->footer,blam_header_foot,4))
         return nullptr;
     return fh;
 }
@@ -44,7 +44,7 @@ tag_index_t blam_tag_index_get(
 {
     const tag_index_t* tgi = blam_tag_index_ptr(file);
     tag_index_t dupe;
-    CMemCpy(&dupe,tgi,sizeof(tag_index_t));
+    MemCpy(&dupe,tgi,sizeof(tag_index_t));
     blam_tag_index_magic(&dupe,file->tagIndexOffset);
     return dupe;
 }

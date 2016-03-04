@@ -26,7 +26,7 @@ QStandardItem* ParseDataPoints(XML::Element* point, uint64* cost = nullptr)
     XML::Element* c = point->FirstChildElement();
     while(c)
     {
-        if(CStrCmp(c->Name(),token_datapoint))
+        if(StrCmp(c->Name(),token_datapoint))
         {
             QStandardItem* v = new QStandardItem;
             v->setData(c->Attribute(token_thread),1);
@@ -35,7 +35,7 @@ QStandardItem* ParseDataPoints(XML::Element* point, uint64* cost = nullptr)
             if(cost)
                 (*cost) += t;
             v->setData(t,3);
-        }else if(CStrCmp(c->Name(),token_context))
+        }else if(StrCmp(c->Name(),token_context))
         {
             d->setChild(d->rowCount(),ParseDataPoints(c));
         }

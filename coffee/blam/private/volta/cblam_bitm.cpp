@@ -13,7 +13,7 @@ bitm_header_t _bitm_get_header(const void* base, int32 offset)
 {
     const bitm_header_t* ptr = (const bitm_header_t*)(((const byte_t*)base)+offset);
     bitm_header_t hdr;
-    CMemCpy(&hdr,ptr,sizeof(bitm_header_t));
+    MemCpy(&hdr,ptr,sizeof(bitm_header_t));
     return hdr;
 }
 

@@ -5,7 +5,9 @@
 
 #include "plat/platform_detect.h"
 
+#define C_DEFAULT_CONSTRUCTOR(ctype) ctype() = default
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
+#define C_MOVE_CONSTRUCTOR(ctype) ctype(ctype&& x) = default; ctype& operator=(ctype&& a) = default
 
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_FORCE_PACKING __attribute__((packed))

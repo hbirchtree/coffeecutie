@@ -50,7 +50,7 @@ bool StbFontRenderer::GetFontProperties(FontData *d, scalar h, FontProperties *p
 bool StbFontRenderer::CalcTextSize(FontData *d, const FontProperties &p,
                                    cstring t, CRect *b, uint32 *s)
 {
-    uint32 max = CStrLen(t);
+    uint32 max = StrLen(t);
     int32 x = 0;
     for(uint32 i=0;i<max;i++)
     {
@@ -82,7 +82,7 @@ bool StbFontRenderer::RenderText(FontData *d, const FontProperties &p, cstring t
 {
     ubyte_t* data = (ubyte_t*)Alloc(512*128);
     int32 x = 0;
-    for(uint32 i=0;i<CStrLen(t);i++)
+    for(uint32 i=0;i<StrLen(t);i++)
     {
 
     }

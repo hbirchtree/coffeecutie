@@ -71,7 +71,7 @@ CAssimpData *CAssimpImporters::importResource(CResource *source,
 
     {
         data->numMeshes = meshes.size();
-        data->meshes    = (CAssimpMesh**)CCalloc(
+        data->meshes    = (CAssimpMesh**)Calloc(
                     meshes.size(),
                     sizeof(CAssimpMesh*));
         i=0;
@@ -116,7 +116,7 @@ bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, CResource *resource)
     resource->size = mesh->byteSize;
     resource->data = Alloc(resource->size);
 
-    CMemCpy(resource->data,mesh,resource->size);
+    MemCpy(resource->data,mesh,resource->size);
 
     if(!FileCommit(*resource))
         cWarning("Failed to store mesh data");

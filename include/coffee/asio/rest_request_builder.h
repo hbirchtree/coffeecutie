@@ -23,6 +23,8 @@ FORCEDINLINE bool ExtractResponse(SockType& s, TargetType& resp)
     s >> resp.status;
 
     std::getline(s,resp.message);
+    StrUtil::trim(resp.message);
+
     if(resp.version.substr(0,5) != "HTTP/")
         return false;
 

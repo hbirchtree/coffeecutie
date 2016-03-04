@@ -21,7 +21,7 @@ struct OutputPrinterImpl : OutputPrinterDef
         CString formatted = cStringFormat(format,args...);
         if(locking)
             PrinterLock.lock();
-        CPuts(stream,formatted.c_str());
+        Puts(stream,formatted.c_str());
         if(locking)
             PrinterLock.unlock();
     }

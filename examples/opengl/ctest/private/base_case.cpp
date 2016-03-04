@@ -349,7 +349,7 @@ bool coffee_test_load(game_context *ctxt)
         for(int32 i=0;i<tags.tagCount;i++)
         {
             idx = &base_idx[i];
-            if(CMemCmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
+            if(MemCmp(idx->tagclass[0],CBlam::blam_index_item_type_bitm,4))
             {
                 int32 num = 0;
                 const CBlam::bitm_image_t* img =
@@ -412,10 +412,10 @@ void coffee_render_test(game_context *ctxt, double)
             * GenTransform(camera);
 
     //Copy memory into GL
-    CMemCpy(ctxt->renderdata.buffers.d[4].data,
+    MemCpy(ctxt->renderdata.buffers.d[4].data,
             &mcamera,
             sizeof(CMat4));
-    CMemCpy(ctxt->renderdata.buffers.d[2].data,
+    MemCpy(ctxt->renderdata.buffers.d[2].data,
             &mtransform,
             sizeof(CMat4));
 

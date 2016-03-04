@@ -33,14 +33,14 @@ CIEvent* sdl2_controller_get_haptic(
     {
         int idx = SDL_HapticIndex(dev);
         cstring hname = SDL_HapticName(idx);
-        CIEvent* ev = (CIEvent*)CCalloc(1,sizeof(CIEvent)
+        CIEvent* ev = (CIEvent*)Calloc(1,sizeof(CIEvent)
                                        +sizeof(CIHapticEvent)
-                                       +strlen(hname)-6);
+                                       +StrLen(hname)-6);
         ev->type = CIEvent::HapticDev;
         CIHapticEvent *h = (CIHapticEvent*)&ev[1];
-        CMemCpy((byte_t*)&h->rumble_device.name,
+        MemCpy((byte_t*)&h->rumble_device.name,
                hname,
-               strlen(hname)+1);
+               StrLen(hname)+1);
         h->rumble_device.index = index;
 
         if(SDL_HapticRumbleInit(dev)==0)
