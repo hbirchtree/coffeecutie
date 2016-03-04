@@ -1,3 +1,22 @@
+# For the lazy
+This will give you a basic build with OpenGL, OpenAL and SDL2 event support:
+ 0. Install:
+    - Compiler of choice (Clang and GCC recommended)
+    - SDL2
+    - OpenAL
+ 1. Make a build directory
+ 2. Configure cmake with:
+    
+        cmake ${PROJECT_DIR}
+ 3. Build it
+
+# For the really lazy
+Do the above, but adding the following to the cmake commandline:
+
+        -DCOFFEE_BUILD_OPENAL=OFF -DCOFFEE_BUILD_SDL2=OFF
+
+This removes the need for any external dependencies apart from a compiler, but with heavily reduced functionality (command-line only).
+
 # How to build CoffeeCutie
  1. Create a build directory
     1. Create a sub-directory "libs"

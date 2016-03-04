@@ -49,6 +49,6 @@ option ( COFFEE_BUILD_PCL "Build with PCL" OFF)
 # Whether we should build with support for the Kinect extension
 option ( COFFEE_BUILD_NECT "Build with Kinect support" OFF)
 # Whether we should build with support for the Qt extension
-option ( COFFEE_BUILD_QT "Build with Qt support" ON)
+option ( COFFEE_BUILD_QT "Build with Qt support" OFF)
 
 ###
