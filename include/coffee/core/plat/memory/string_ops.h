@@ -33,6 +33,11 @@ FORCEDINLINE int StrLen(cwstring s)
     return wcslen(s);
 }
 
+FORCEDINLINE void StrCpy(cstring_w t, cstring s)
+{
+    strcpy(t,s);
+}
+
 namespace Search{
 /* Low-level, yes! */
 FORCEDINLINE cstring StrFind(cstring s1,cstring s2)

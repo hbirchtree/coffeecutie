@@ -126,6 +126,9 @@ struct SimpleProfilerImpl
         Lock l(*data_access_mutex);
         C_UNUSED(l);
 
+        if(context_stack->size()<1)
+            return;
+
         DataPoint p;
         p.tp = DataPoint::Pop;
         p.ts = Time::CurrentMicroTimestamp();

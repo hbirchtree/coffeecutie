@@ -32,3 +32,7 @@ endif()
 if(COFFEE_BUILD_OCULUSVR)
     add_subdirectory(oculusvr)
 endif()
+
+if(COFFEE_BUILD_CEF)
+    add_subdirectory(cef)
+endif()

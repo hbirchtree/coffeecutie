@@ -4,6 +4,8 @@
 #include "../tdef/stltypes.h"
 #include "../tdef/integertypes.h"
 
+#include "../../plat/memory/string_ops.h"
+
 namespace Coffee{
 
 /*!
@@ -139,5 +141,60 @@ struct _cbasic_version
                 &&this->revision==v.revision;
     }
 };
+
+struct _cbasic_arg_container
+{
+    _cbasic_arg_container():
+        argc(0),
+        argv(nullptr),
+        string_containment(false)
+    {
+    }
+    _cbasic_arg_container(int32& argc, cstring_w* argv):
+        argc(argc),
+        argv(argv),
+        string_containment(false)
+    {
+    }
+
+    FORCEDINLINE void cleanup()
+    {
+        if(string_containment)
+        {
+            for(int32 i=0;i<argc;i++)
+                Mem::CFree(argv[i]);
+            Mem::CFree(argv);
+        }
+    }
+
+    STATICINLINE _cbasic_arg_container Clone(_cbasic_arg_container const& arg)
+    {
+        return Clone(arg.argc,arg.argv);
+    }
+
+    STATICINLINE _cbasic_arg_container Clone(int32 argc, cstring_w* argv)
+    {
+        _cbasic_arg_container arg;
+        arg.argc = argc;
+        arg.argv = Mem::CallocPtrs<cstring_w>(argc);
+        for(int32 i=0;i<argc;i++)
+        {
+            szptr arglen = Mem::StrLen(argv[i]);
+            arg.argv[i] = Mem::AllocT<sbyte_t>(arglen+1);
+            arg.argv[i][arglen] = 0;
+            Mem::StrCpy(arg.argv[i],argv[i]);
+        }
+        arg.string_containment = true;
+        return arg;
+    }
+
+    int32 argc;
+    cstring_w* argv;
+
+private:
+    bool string_containment;
+};
+
+using AppArg = _cbasic_arg_container;
 
 }

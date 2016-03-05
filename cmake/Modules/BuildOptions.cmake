@@ -33,6 +33,8 @@ option ( COFFEE_BUILD_FFMEDIA "Build with FFMPEG library" OFF)
 option ( COFFEE_BUILD_GLBINDING "Build with GLBinding library" OFF)
 # Whether we should build with Assimp support
 option ( COFFEE_BUILD_ASSIMP "Build with Assimp loader" OFF)
+# Chromium Embedded Framework
+option ( COFFEE_BUILD_CEF "Build with CEF" OFF )
 
 # VR
 

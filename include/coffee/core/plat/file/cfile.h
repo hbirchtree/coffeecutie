@@ -18,8 +18,7 @@ struct PlatFileFun : FileFunDef
     struct FileHandle
     {
         FileHandle():
-            handle(nullptr),
-            fd(0)
+            handle(nullptr)
         {
         }
         ~FileHandle()

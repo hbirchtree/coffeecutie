@@ -44,7 +44,9 @@ endif()
 add_subdirectory(rsread)
 
 # GLeam
-add_subdirectory(gleam/base-test)
+if(COFFEE_BUILD_OCULUSVR)
+    add_subdirectory(gleam/base-test)
+endif()
 add_subdirectory(gleam/shadow-test)
 
 # ASIO examples
@@ -58,3 +60,5 @@ add_subdirectory(gleam/raytrace-test)
 if(COFFEE_BUILD_OPENVR AND COFFEE_BUILD_OCULUSVR)
     add_subdirectory(vr/base-test)
 endif()
+
+add_subdirectory(cef/base-test)

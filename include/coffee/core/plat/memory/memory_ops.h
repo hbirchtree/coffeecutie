@@ -30,6 +30,7 @@ FORCEDINLINE void MemClear(c_ptr start, szptr len)
     memset(start,0,len);
 }
 
+/* Memory allocation */
 FORCEDINLINE void* Alloc(szptr datasize)
 {
     return malloc(datasize);
@@ -43,6 +44,30 @@ FORCEDINLINE void* Realloc(c_ptr ptr, szptr datasize)
 FORCEDINLINE void* Calloc(szptr unit, szptr num)
 {
     return calloc(unit,num);
+}
+
+template<typename T>
+FORCEDINLINE T* AllocT(szptr datasize)
+{
+    return (T*)malloc(datasize);
+}
+
+template<typename T>
+FORCEDINLINE T* ReallocT(T* ptr, szptr datasize)
+{
+    return (T*)realloc(ptr,datasize);
+}
+
+template<typename T>
+FORCEDINLINE T* CallocT(szptr unit, szptr num)
+{
+    return (T*)calloc(unit,num);
+}
+
+template<typename T>
+FORCEDINLINE T* CallocPtrs(szptr num)
+{
+    return (T*)calloc(sizeof(T),num);
 }
 
 }

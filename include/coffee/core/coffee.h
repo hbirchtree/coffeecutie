@@ -3,7 +3,8 @@
 
 #include <signal.h>
 
-#include "types/basetypes.h"
+#include "types/cdef/infotypes.h"
+#include "types/tdef/fntypes.h"
 #include "coffee_macros.h"
 
 #include "plat/platform_detect.h"
@@ -41,6 +42,8 @@ extern int32 Startup_argc;
 extern cstring_w* Startup_argv;
 
 extern void SetExitFunction(ExitCallback f);
+
+extern AppArg const& GetInitArgs();
 
 /*!
  * \brief This function handles initial program startup
