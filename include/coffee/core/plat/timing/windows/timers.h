@@ -97,6 +97,7 @@ struct WindowsTime : TimeDef
 
 	static CString StringDate(cstring, DateTime) { return ""; }
 	static CString ClockString() { return ""; }
+	static CString FormattedCurrentTime(cstring){return "";}
 };
 
 using Time = WindowsTime;
