@@ -75,7 +75,7 @@ struct PosixEnvironmentFun : EnvInterface
     {
 	CString dir;
 	dir.resize(PATH_MAX);
-	getcwd(&dir[0],PATH_MAX);
+        char* p = getcwd(&dir[0],PATH_MAX);
 	return dir;
     }
     STATICINLINE Variables Environment()

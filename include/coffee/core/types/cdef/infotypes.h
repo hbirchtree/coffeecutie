@@ -144,13 +144,13 @@ struct _cbasic_version
 
 struct _cbasic_arg_container
 {
-    _cbasic_arg_container():
+    FORCEDINLINE _cbasic_arg_container():
         argc(0),
         argv(nullptr),
         string_containment(false)
     {
     }
-    _cbasic_arg_container(int32& argc, cstring_w* argv):
+    FORCEDINLINE _cbasic_arg_container(int32& argc, cstring_w* argv):
         argc(argc),
         argv(argv),
         string_containment(false)
