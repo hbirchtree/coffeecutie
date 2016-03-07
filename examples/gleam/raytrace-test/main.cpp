@@ -1,6 +1,5 @@
 #include <coffee/CCore>
 #include <coffee/graphics_apis/CGLeam>
-#include <coffee/COpenVR>
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 

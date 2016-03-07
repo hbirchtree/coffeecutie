@@ -1,68 +1,152 @@
-# Examples of CAudio API through OpenAL and Coffee audio abstraction layer
-if(COFFEE_BUILD_GLBINDING AND COFFEE_BUILD_OPENAL)
-    add_subdirectory (audio/caudio-test)
-endif()
+#
+# Here lies examples of code usage
+#
+#
 
-# Examples of the CBlam API and its import of Blam engine data
-add_subdirectory (blam/cblam-testing)
+#
+# Core
+#
 
-# Examples of core functionality such as dynamic library loading and information about system environment
-if(COFFEE_BUILD_GLBINDING)
-    add_subdirectory (core/dynamic-test)
-endif()
 add_subdirectory (core/env-test)
 
+# ASIO examples, we leave this as core
+add_subdirectory(asio/base-client)
+#add_subdirectory(asio/base-server)
+add_subdirectory(asio/irc-client)
+
+# Not going to say.
+add_subdirectory(rsread)
+
+# Casual fun
+add_subdirectory (experiments/cgb-test)
+
+#
+#
+
+#
+# SDL2
+#
+
+if(COFFEE_BUILD_SDL2)
+    # Sprite rendering with SDL2
+    add_subdirectory(sdl_sprite/base-test)
+endif()
+
+#
+#
+
+#
+# GLeam
+#
+
+if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_GLEAM)
+    if(COFFEE_BUILD_OCULUSVR)
+        add_subdirectory(gleam/base-test)
+    endif()
+
+    add_subdirectory(gleam/shadow-test)
+    add_subdirectory(gleam/raytrace-test)
+endif()
+
+#
+#
+
+#
+# CBlam
+#
+
+# Examples of the CBlam API and its import of Blam engine data
+if(COFFEE_BUILD_CBLAM)
+    add_subdirectory (blam/cblam-testing)
+endif()
+
+#
+#
+
+#
+# FFMedia
+#
+
 # Examples of media playback and capture through CFFMedia, powered by FFMPEG
-if(COFFEE_BUILD_FFMEDIA AND COFFEE_BUILD_GLBINDING)
+if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_FFMEDIA AND COFFEE_BUILD_GLBINDING)
     add_subdirectory (media/media-test)
 endif()
 
-# Examples of graphics rendering through OpenGL with several different techniques in use
-if(COFFEE_BUILD_GLBINDING)
-    if(COFFEE_BUILD_ASSIMP)
-        add_subdirectory (opengl/ctest)
-    endif()
-    add_subdirectory (opengl/ctest-hud)
-    add_subdirectory (opengl/ctest-async-pbo)
-    add_subdirectory (opengl/ctest-shaderswitch)
-endif()
+#
+#
 
-# Experimental code
-add_subdirectory (experiments/cgb-test)
+#
+# PCL/Kinect
+#
 
 # Manipulation of point cloud data through PCL
 if(COFFEE_BUILD_PCL AND COFFEE_BUILD_NECT)
     add_subdirectory (pcl/pcl-test)
 endif()
 
+#
+#
+
+#
+# Qt
+#
+
 # Qt widgets and etc.
 if(COFFEE_BUILD_QT)
     add_subdirectory(qt/node-editor-test)
 endif()
 
-# Not going to say.
-add_subdirectory(rsread)
+#
+#
 
-# GLeam
-if(COFFEE_BUILD_OCULUSVR)
-    add_subdirectory(gleam/base-test)
-endif()
-add_subdirectory(gleam/shadow-test)
-
-# ASIO examples
-add_subdirectory(asio/base-client)
-#add_subdirectory(asio/base-server)
-add_subdirectory(asio/irc-client)
-
-# Experimental code
-add_subdirectory(gleam/raytrace-test)
+#
+# VR
+#
 
 if(COFFEE_BUILD_OPENVR AND COFFEE_BUILD_OCULUSVR)
     add_subdirectory(vr/base-test)
 endif()
 
-# Chromium Embedded Framework (cef) offscreen rendering test
-add_subdirectory(cef/base-test)
+#
+#
 
-# Sprite rendering with SDL2
-add_subdirectory(sdl_sprite/base-test)
+
+#
+# Chromium Embedded Framework
+#
+
+# Offscreen rendering test
+if(COFFEE_BUILD_CEF)
+    add_subdirectory(cef/base-test)
+endif()
+
+#
+#
+
+#
+# GLBinding APIs (deprecated)
+#
+
+
+if(COFFEE_BUILD_GLBINDING)
+    if(COFFEE_BUILD_SDL2)
+        # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
+        if(COFFEE_BUILD_OPENAL)
+            add_subdirectory (audio/caudio-test)
+        endif()
+
+        # Library loading and interface implementation
+        add_subdirectory (core/dynamic-test)
+
+        # Examples of graphics rendering through OpenGL with several different techniques in use
+        if(COFFEE_BUILD_ASSIMP)
+            add_subdirectory (opengl/ctest)
+        endif()
+        add_subdirectory (opengl/ctest-hud)
+        add_subdirectory (opengl/ctest-async-pbo)
+        add_subdirectory (opengl/ctest-shaderswitch)
+    endif()
+endif()
+
+#
+#

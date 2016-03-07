@@ -24,6 +24,10 @@ option ( COFFEE_BUILD_GLES "Build with GLES 3.0 renderer instead of desktop GL" 
 option ( COFFEE_BUILD_OPENAL "Build with OpenAL support" ON)
 # Requires SDL2 libraries and headers
 option ( COFFEE_BUILD_SDL2 "Build with SDL2 windowing and input" ON)
+# Requires SDL2 in most cases, unless you love writing window management code
+option ( COFFEE_BUILD_GLEAM "Build GLeam rendering API" ON )
+# Requires... Nothing. Only core library
+option ( COFFEE_BUILD_CBLAM "Build with Blam engine parsing" ON )
 
 # External libraries
 
