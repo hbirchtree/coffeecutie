@@ -50,6 +50,11 @@ if(NOT WIN32 AND NOT ANDROID)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+    find_package(X11 REQUIRED)
+    target_link_libraries ( CoffeeCore ${X11_LIBRARIES} )
+endif()
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!

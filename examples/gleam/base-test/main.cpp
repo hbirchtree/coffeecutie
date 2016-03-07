@@ -3,6 +3,7 @@
 #include <coffee/COculusRift>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
+#include <coffee/core/plat/plat_windowmanager.h>
 
 #include <coffee/core/input/eventhandlers.h>
 
@@ -338,6 +339,20 @@ public:
         CSDL2Renderer::eventHandleI(e,data);
 
         EventHandlers::EscapeCloseWindow(this,e,data);
+
+        if(e.type==CIEvent::Keyboard)
+        {
+            auto kev = (CIKeyEvent const*)data;
+            switch(kev->key)
+            {
+            case CK_F11:
+                this->setWindowState(CDProperties::WindowedFullScreen);
+                break;
+            case CK_F10:
+                this->setWindowState(CDProperties::Windowed);
+                break;
+            }
+        }
     }
 };
 
@@ -360,6 +375,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     renderer->init(props);
     Profiler::Profile("Initialize renderer");
+
+    WM::SetAlwaysTop(renderer->window(),true);
 
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()

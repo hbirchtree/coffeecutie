@@ -33,6 +33,10 @@ protected:
         m_ctxt(context)
     {
     }
+    SDL2ContextUser(SDL2ContextUser* parent):
+        m_ctxt(parent->m_ctxt)
+    {
+    }
 
     void setSDL2Context(Context* context)
     {

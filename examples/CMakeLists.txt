@@ -61,4 +61,8 @@ if(COFFEE_BUILD_OPENVR AND COFFEE_BUILD_OCULUSVR)
     add_subdirectory(vr/base-test)
 endif()
 
+# Chromium Embedded Framework (cef) offscreen rendering test
 add_subdirectory(cef/base-test)
+
+# Sprite rendering with SDL2
+add_subdirectory(sdl_sprite/base-test)

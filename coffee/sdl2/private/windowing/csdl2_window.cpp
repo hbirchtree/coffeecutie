@@ -1,4 +1,4 @@
-#include <coffee/sdl2/windowing/csdl2_window.h>
+﻿#include <coffee/sdl2/windowing/csdl2_window.h>
 
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>

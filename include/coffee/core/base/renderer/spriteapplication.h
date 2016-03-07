@@ -12,15 +12,16 @@ public:
     /* Types */
     using SpriteSource = CRect;
 
-    struct Renderer
-    {
-    };
-    struct Texture
-    {
-    };
+    /*! In-memory texture data, user is given handle */
+    using Texture = uint64;
+    /*! Renderer handle */
+    using Renderer = uint64;
 
+    /*! User-modifiable sprite located in texture */
     struct Sprite
     {
+        SpriteSource rect;
+        Texture source;
     };
 
     /* Initialization */
@@ -31,17 +32,19 @@ public:
     virtual void spritesTerminate() = 0;
 
     /* Rendering */
-    virtual void swapBuffers(Renderer* = nullptr) = 0;
+    virtual void swapBuffers(Renderer const&) = 0;
 
-    virtual Renderer* createRenderer() = 0;
-    virtual void destroyRenderer(Renderer*) = 0;
+    virtual Renderer createRenderer() = 0;
+    virtual void destroyRenderer(Renderer t) = 0;
 
-    virtual void createTexture(int32,Texture**) = 0;
-    virtual void destroyTexture(int32,Texture*) = 0;
+    virtual void createTexture(Renderer r, uint32 c,Texture *t, PixelFormat fmt,
+                               ResourceAccess acc, CSize const& size) = 0;
+    virtual void destroyTexture(uint32,Texture*) = 0;
 
-    virtual Sprite* createSprite(Texture const*,SpriteSource const&) = 0;
+    virtual void createSprite(Texture const&,SpriteSource const&,Sprite*) = 0;
 
-    virtual Vector<Sprite*> createSpriteAtlas(Texture const*,Vector<SpriteSource> const&) = 0;
+    virtual void createSpriteAtlas(Texture const&,Vector<SpriteSource> const&,
+                                   uint32&,Vector<Sprite>&) = 0;
 };
 
 }

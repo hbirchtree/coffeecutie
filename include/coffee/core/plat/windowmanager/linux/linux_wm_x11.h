@@ -1,5 +1,7 @@
 #include "coffee/core/plat/platform_detect.h"
 
+#include "../../../coffee_mem_macros.h"
+
 #ifdef COFFEE_LINUX
 
 #ifndef LINUX_WM_H
@@ -35,7 +37,7 @@ typedef struct {
     unsigned long   status;
 } Hints;
 
-inline void set_decorations(Display* disp, Window target,bool enable = false)
+FORCEDINLINE void set_decorations(Display* disp, Window target,bool enable = false)
 {
     Hints   w_hints;
     Atom    prop;
@@ -47,7 +49,7 @@ inline void set_decorations(Display* disp, Window target,bool enable = false)
     XChangeProperty(disp,target,prop,prop,32,PropModeReplace,(unsigned char*)&w_hints,5);
 }
 
-inline void set_alwaysontop(Display* disp, Window target, bool enable)
+FORCEDINLINE void set_alwaysontop(Display* disp, Window target, bool enable)
 {
     XEvent ev;
 

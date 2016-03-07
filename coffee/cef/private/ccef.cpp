@@ -3,35 +3,23 @@
 #include <coffee/CImage>
 #include <coffee/core/CMD>
 
-#include <include/base/cef_logging.h>
 #include <include/base/cef_scoped_ptr.h>
-#include <include/cef_app.h>
-#include <include/cef_command_line.h>
-#include <include/wrapper/cef_helpers.h>
-
 #include <include/cef_render_handler.h>
 #include <include/cef_base.h>
-#include <include/cef_browser.h>
 #include <include/cef_client.h>
 #include <include/cef_dom.h>
 #include <include/cef_v8.h>
 #include <include/cef_values.h>
-
 #include "include/cef_app.h"
 #include "include/cef_browser.h"
 #include "include/cef_frame.h"
 #include "include/cef_runnable.h"
 
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_render_handler.h>
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_base.h>
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_browser.h>
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_client.h>
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_dom.h>
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_v8.h>
-#include <build/libs/cef_binary_3.2641.1392.ge1aa8cc_linux64/include/cef_values.h>
-
 namespace Coffee{
 namespace CEF{
+
+using namespace CInput;
+using namespace CDisplay;
 
 static AppArg m_args;
 static CefMainArgs cef_args;
@@ -44,16 +32,15 @@ bool CEFSubsystem::Init()
     m_args = AppArg::Clone(GetInitArgs());
     cef_args = CefMainArgs(m_args.argc,m_args.argv);
 
-    int res = CefExecuteProcess(cef_args,nullptr,nullptr);
+    cDebug("CEF init");
 
-    if(res >= 0)
-        Cmd::Exit(0);
-    else if(res == -1)
-    {
-        CefSettings& settings = cef_settings;
+    CefSettings& settings = cef_settings;
+    cef_string_utf16_t path_string = {};
+    cstring subpath = "./CoffeeCefSlave";
+    cef_string_ascii_to_utf16(subpath,StrLen(subpath),&path_string);
+    settings.browser_subprocess_path = path_string;
 
-        return CefInitialize(cef_args,settings,nullptr,nullptr);
-    }
+    return CefInitialize(cef_args,settings,nullptr,nullptr);
 }
 
 bool CEFSubsystem::Deinit()
@@ -77,7 +64,7 @@ public:
 
     bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
     {
-        rect.Set(0,0,800,600);
+        rect.Set(0,0,m_size.width,m_size.height);
         return true;
     }
     void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
@@ -89,15 +76,16 @@ public:
         texture_out.size.h = height;
         texture_out.data = (byte_t*)buffer;
 
-        CResources::CResource browser_bitm("browser.png");
+        CResources::CResource browser_bitm(outfile.c_str());
 
         CStbImageLib::SavePNG(&browser_bitm,&texture_out);
 
         CResources::FileCommit(browser_bitm);
         CResources::FileFree(browser_bitm);
-
-        CStbImageLib::ImageFree(&texture_out);
     }
+
+    CefSize m_size;
+    CString outfile;
 
     CefBrowserSettings bsettings;
 private:
@@ -126,6 +114,7 @@ public:
 
 struct CEFBrowser
 {
+    CEFOffscreenBrowser* renderhandle;
     CEFCoffeeClient* client;
     CefRefPtr<CefBrowser> browser;
 };
@@ -138,16 +127,160 @@ CEFBrowser* CreateBrowser()
     CEFBrowser* b = new CEFBrowser();
     CEFOffscreenBrowser* osr = new CEFOffscreenBrowser();
     osr->bsettings.windowless_frame_rate = 60;
+    osr->m_size.Set(1024,768);
+    osr->outfile = cStringFormat("CEFBrowser_0x{0}.png",(const void* const&)osr);
 
+    osr->bsettings.background_color = CRGBA(255,255,255).rgba();
+
+    b->renderhandle = osr;
     b->client = new CEFCoffeeClient(osr);
     b->browser = CefBrowserHost::CreateBrowserSync(
-                winfo,b->client,"http://example.com",
+                winfo,b->client,"http://www.google.com",
                 b->client->m_handle.get()->bsettings,nullptr);
     return b;
 }
+
 void DestroyBrowser(CEFBrowser* b)
 {
     delete b;
+}
+
+void SetUrl(CEFBrowser *b, cstring url)
+{
+    CefString m;
+    m.FromASCII(url);
+    b->browser->GetMainFrame()->LoadURL(m);
+}
+
+void PerformAction(CEFBrowser *b, BAction action)
+{
+    switch(action)
+    {
+    case BAction::Back:
+        b->browser->GoBack();
+        break;
+    case BAction::Forward:
+        b->browser->GoForward();
+        break;
+    case BAction::Refresh:
+        b->browser->Reload();
+        break;
+    case BAction::Stop:
+        b->browser->StopLoad();
+        break;
+    default:
+        return;
+    }
+}
+
+void ProcessEvent(CEFBrowser *b, const CIEvent &e, c_cptr data)
+{
+    switch(e.type)
+    {
+    case CIEvent::Keyboard:
+    {
+        auto kev = (const CIKeyEvent*)data;
+        CefKeyEvent ev;
+        ev.character = kev->key;
+        ev.type = feval(kev->mod&CIKeyEvent::PressedModifier)
+                ? KEYEVENT_KEYDOWN
+                : KEYEVENT_KEYUP;
+        b->browser->GetHost()->SendKeyEvent(ev);
+        break;
+    }
+    case CIEvent::MouseMove:
+    {
+        auto mev = (const CIMouseMoveEvent*)data;
+        CefMouseEvent ev;
+        ev.x = mev->pos.x;
+        ev.y = mev->pos.y;
+
+        ev.modifiers |= feval(mev->btn&CIMouseButtonEvent::LeftButton)
+                ? EVENTFLAG_LEFT_MOUSE_BUTTON : 0;
+        ev.modifiers |= feval(mev->btn&CIMouseButtonEvent::MiddleButton)
+                ? EVENTFLAG_MIDDLE_MOUSE_BUTTON : 0;
+        ev.modifiers |= feval(mev->btn&CIMouseButtonEvent::RightButton)
+                ? EVENTFLAG_RIGHT_MOUSE_BUTTON : 0;
+
+        b->browser->GetHost()->SendMouseMoveEvent(ev,false);
+        break;
+    }
+    case CIEvent::MouseButton:
+    {
+        auto mev = (const CIMouseButtonEvent*)data;
+        CefMouseEvent ev;
+        ev.x = mev->pos.x;
+        ev.y = mev->pos.y;
+
+        CefBrowserHost::MouseButtonType k = MBT_LEFT;
+
+        if(feval(mev->btn&CIMouseButtonEvent::LeftButton))
+            k = MBT_LEFT;
+        else if(feval(mev->btn&CIMouseButtonEvent::RightButton))
+            k = MBT_RIGHT;
+        else if(feval(mev->btn&CIMouseButtonEvent::MiddleButton))
+            k = MBT_MIDDLE;
+        else break;
+
+        b->browser->GetHost()->SendMouseClickEvent(
+                    ev,k,
+                    feval(mev->mod&CIMouseButtonEvent::Pressed),
+                    1);
+        break;
+    }
+    case CIEvent::Scroll:
+    {
+        auto sev = (const CIScrollEvent*)data;
+
+        CefMouseEvent ev;
+        ev.x = 0;
+        ev.y = 0;
+
+        b->browser->GetHost()->SendMouseWheelEvent(ev,sev->delta.x,sev->delta.y);
+        break;
+    }
+    default:
+        break;
+    }
+
+}
+
+void ProcessEvent(CEFBrowser *b, const CDEvent &e, c_cptr data)
+{
+    switch(e.type)
+    {
+    case CDEvent::Focus:
+    {
+        auto fev = (const CDFocusEvent*)data;
+        b->browser->GetHost()->SendFocusEvent(feval(fev->mod&CDFocusEvent::Enter));
+        break;
+    }
+    case CDEvent::Resize:
+    {
+        auto rev = (const CDResizeEvent*)data;
+        Resize(b,*rev);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+void Resize(CEFBrowser *b, CSize const& size)
+{
+    b->renderhandle->m_size.width = size.w;
+    b->renderhandle->m_size.height = size.h;
+    b->browser->GetHost()->WasResized();
+}
+
+void AwaitLoaded(CEFBrowser *b)
+{
+    while(b->browser->IsLoading());
+}
+
+bool IsLoaded(CEFBrowser *b)
+{
+    return !b->browser->IsLoading();
 }
 
 }

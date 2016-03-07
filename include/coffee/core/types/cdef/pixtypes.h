@@ -11,8 +11,17 @@ namespace Coffee{
  */
 struct CRGBA
 {
+    CRGBA():
+        i(0)
+    {
+    }
+    CRGBA(uint8 r,uint8 g,uint8 b,uint8 a = 255):
+        r(r),g(g),b(b),a(a)
+    {
+    }
+
     union{
-        uint32 i = 0;
+        uint32 i;
         struct
         {
             uint8 r,g,b,a;

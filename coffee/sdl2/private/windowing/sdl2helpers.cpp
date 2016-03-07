@@ -127,32 +127,32 @@ CDProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
     CDProperties::State res = CDProperties::State(0);
 
     if(flags&SDL_WINDOW_BORDERLESS)
-        res|=CDProperties::Undecorated;
+        res=res|CDProperties::Undecorated;
 
     if(flags&SDL_WINDOW_FULLSCREEN)
-        res|=CDProperties::FullScreen;
+        res=res|CDProperties::FullScreen;
 
-    else if(flags&SDL_WINDOW_FULLSCREEN_DESKTOP)
-        res|=CDProperties::WindowedFullScreen;
+    else if(flags&SDL_WINDOW_BORDERLESS)
+        res=res|CDProperties::WindowedFullScreen;
     else
-        res|=CDProperties::Windowed;
+        res=res|CDProperties::Windowed;
 
     if(flags&SDL_WINDOW_RESIZABLE)
-        res|=CDProperties::Resizable;
+        res=res|CDProperties::Resizable;
 
     if(flags&SDL_WINDOW_MINIMIZED)
-        res|=CDProperties::Minimized;
+        res=res|CDProperties::Minimized;
     if(flags&SDL_WINDOW_MAXIMIZED)
-        res|=CDProperties::Maximized;
+        res=res|CDProperties::Maximized;
 
     if(flags&SDL_WINDOW_SHOWN)
-        res|=CDProperties::Visible;
+        res=res|CDProperties::Visible;
 
     if(flags&SDL_WINDOW_INPUT_FOCUS)
-        res|=CDProperties::Focused;
+        res=res|CDProperties::Focused;
 
     if(flags&SDL_WINDOW_FOREIGN)
-        res|=CDProperties::Foreign;
+        res=res|CDProperties::Foreign;
 
     return res;
 }
@@ -169,7 +169,10 @@ void coffee_sdl2_set_winflags(SDL_Window* window,CDProperties::State const& stat
     else if(state&CDProperties::WindowedFullScreen)
         SDL_SetWindowFullscreen(window,SDL_WINDOW_FULLSCREEN_DESKTOP);
     else
+    {
+        SDL_SetWindowBordered(window,SDL_TRUE);
         SDL_SetWindowFullscreen(window,0);
+    }
 
     if(state&CDProperties::Minimized)
         SDL_MinimizeWindow(window);

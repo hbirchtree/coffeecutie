@@ -29,10 +29,10 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileMkdir(cfg_dir.c_str(),true);
     }
 
-//    {
-//        CoffeeTests::FunctionCallTest();
+    {
+        CoffeeTests::FunctionCallTest();
 //        CoffeeTests::PrintCallTest();
-//    }
+    }
 
     {
         cDebug("uint64 size: {0}",sizeof(uint64));
