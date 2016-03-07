@@ -28,30 +28,34 @@ set ( CoffeeCore_SRCS
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
     )
 
+set ( CORE_INCLUDE_DIR )
+set ( CORE_EXTRA_LIBRARIES )
+
 # OpenSSL used for ASIO networking
 find_package(OpenSSL REQUIRED)
-include_directories ( SYSTEM
-    OPENSSL_INCLUDE_DIR
+list ( APPEND CORE_INCLUDE_DIR
+    ${OPENSSL_INCLUDE_DIR}
     )
 
 coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
-target_link_libraries ( CoffeeCore ${OPENSSL_LIBRARIES} )
+
+list ( APPEND CORE_EXTRA_LIBRARIES ${OPENSSL_LIBRARIES} )
 
 # Platform-specific target options
 
 if(NOT WIN32 AND NOT MINGW AND NOT MSYS)
     # Necessary for Linux and possibly OS X (latter is untested)
-    target_link_libraries ( CoffeeCore dl m )
+    list ( APPEND CORE_EXTRA_LIBRARIES dl m )
 endif()
 
 if(NOT WIN32 AND NOT ANDROID)
     # Used for thread details
-    target_link_libraries ( CoffeeCore pthread )
+    list ( APPEND CORE_EXTRA_LIBRARIES pthread )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     find_package(X11 REQUIRED)
-    target_link_libraries ( CoffeeCore ${X11_LIBRARIES} )
+    list ( APPEND CORE_EXTRA_LIBRARIES ${X11_LIBRARIES} )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
@@ -59,22 +63,25 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Windows does not support this
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
     find_package(Unwind QUIET)
-    include_directories ( SYSTEM
+    list ( APPEND CORE_INCLUDE_DIR
         ${LIBUNWIND_INCLUDE_DIR}
         )
-    target_link_libraries ( CoffeeCore ${LIBUNWIND_LIBRARIES} )
+    list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
 endif()
 
 if(ANDROID AND SDL2_FOUND)
     # We use SDL2 for some platform functionality on Android, like file storage
     find_package(SDL2 REQUIRED)
-    include_directories ( SYSTEM
+    list ( APPEND CORE_INCLUDE_DIR
         ${SDL2_INCLUDE_DIR}
         )
-    target_link_libraries ( CoffeeCore ${SDL2_LIBRARY} )
+    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
 
 if(WIN32)
     # Don't know what this is, but it's necessary
-    target_link_libraries ( CoffeeCore pathcch )
+    list ( APPEND CORE_EXTRA_LIBRARIES pathcch )
 endif()
+
+include_directories ( ${CORE_INCLUDE_DIR} )
+target_link_libraries ( CoffeeCore ${CORE_EXTRA_LIBRARIES} )

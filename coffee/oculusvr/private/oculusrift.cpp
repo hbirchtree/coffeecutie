@@ -17,6 +17,7 @@ void ovr_log_callback(int level, const char* msg)
 }
 
 const constexpr int32 OVR_Max_Devices = 8;
+const constexpr int32 OVR_Num_Human_Eyes = 2;
 
 struct OculusVR::Context
 {
@@ -35,6 +36,16 @@ struct OculusVR::Context
     ovrInitParams iparams;
 
     ovrHmd devices[OVR_Max_Devices];
+    ovrRenderAPIConfig apiconfig;
+};
+
+struct OculusVR::Device::ExtraData
+{
+    ovrDistortionMesh d_meshes[OVR_Num_Human_Eyes];
+    ovrFovPort d_fov[OVR_Num_Human_Eyes];
+    ovrEyeRenderDesc d_eyedesc[OVR_Num_Human_Eyes];
+
+    ovrEyeType firstEye;
 };
 
 thread_local OculusVR::Context* OculusContext = nullptr;
@@ -60,6 +71,11 @@ bool OculusVR::InitializeBinding()
 
     OculusContext = new Context;
     OculusContext->iparams = flags;
+
+    if(!PlatformData::IsMobile())
+        OculusContext->apiconfig.Header.API = ovrRenderAPI_OpenGL;
+    else
+        OculusContext->apiconfig.Header.API = ovrRenderAPI_Android_GLES;
 
 
     if(!PollDevices(nullptr))
@@ -111,7 +127,7 @@ OculusVR::Device* OculusVR::GetDevice(int32 id)
     return new Device(id);
 }
 
-OculusVR::Device::Device(uint32 idx, bool dontcare):
+OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
     HMD::CHMD_Binding::Device(
         OculusContext->devices[idx]->ProductName,
         cStringFormat("{0}.{1}",
@@ -119,15 +135,46 @@ OculusVR::Device::Device(uint32 idx, bool dontcare):
                       OculusContext->devices[idx]->FirmwareMinor),
         OculusContext->devices[idx]->Manufacturer,
         OculusContext->devices[idx]->SerialNumber),
-    m_idx(idx)
+    m_idx(idx),
+    m_data(nullptr)
 {
-    uint32 s_caps =
-            ovrTrackingCap_MagYawCorrection;
-    uint32 r_caps =
-            ovrTrackingCap_Orientation|
-            ovrTrackingCap_Position;
-    ovrHmd_ConfigureTracking(OculusContext->devices[m_idx],
-                             s_caps,(dontcare) ? 0 : r_caps);
+    ovrHmd dev = OculusContext->devices[m_idx];
+
+    uint32 devcaps = dev->HmdCaps;
+
+    if(!(devcaps&ovrHmdCap_ExtendDesktop))
+        cDebug("Something is up with the monitor!");
+
+    uint32 s_caps = dev->TrackingCaps;
+    uint32 r_caps = ovrTrackingCap_Orientation|ovrTrackingCap_Position;
+    ovrHmd_ConfigureTracking(dev,s_caps,(dontcare) ? 0 : r_caps);
+
+    ExtraData* data = new ExtraData;
+
+    for(uint32 i=0;i<ovrEye_Count;i++)
+    {
+        data->d_fov[i] = dev->DefaultEyeFov[i];
+        data->d_eyedesc[i] = ovrHmd_GetRenderDesc(dev,(ovrEyeType)i,data->d_fov[i]);
+    }
+
+    ovrDistortionCaps dcaps = ovrDistortionCap_TimeWarp;
+
+    ovrHmd_ConfigureRendering(dev,&OculusContext->apiconfig,
+                              dcaps,data->d_fov,
+                              data->d_eyedesc);
+
+    data->firstEye = dev->EyeRenderOrder[0];
+
+    ovrBool m = ovrTrue;
+    for(uint32 i=0;i<ovrEye_Count;i++)
+        ovrBool m = m&ovrHmd_CreateDistortionMesh(
+                    dev,(ovrEyeType)i,data->d_fov[i],dcaps,&data->d_meshes[i]);
+
+    if(!m)
+    {
+        m_data = data;
+    }else
+        delete data;
 }
 
 SWVersionInfo OculusVR::Device::GetFirmwareInfo() const
@@ -143,9 +190,41 @@ void OculusVR::Device::reset()
     ovrHmd_RecenterPose(OculusContext->devices[m_idx]);
 }
 
-CSize OculusVR::Device::resolution(Eye e) const
+void OculusVR::Device::startFrame()
 {
+    ovrHmd_BeginFrameTiming(OculusContext->devices[m_idx],0);
+}
 
+void OculusVR::Device::endFrame()
+{
+    ovrHmd_EndFrameTiming(OculusContext->devices[m_idx]);
+}
+
+CSize OculusVR::Device::resolution(Eye e, uint32 density) const
+{
+    ovrEyeType t;
+    if(e==Eye::Left)
+        t = ovrEye_Left;
+    else if(e==Eye::Right)
+        t = ovrEye_Right;
+    ovrSizei sz = ovrHmd_GetFovTextureSize(
+                OculusContext->devices[m_idx],
+                t,m_data->d_fov[t],density);
+    return CSize(sz.w,sz.h);
+}
+
+ZField OculusVR::Device::zfield() const
+{
+    ovrHmd dev = OculusContext->devices[m_idx];
+    return ZField(dev->CameraFrustumNearZInMeters,
+                  dev->CameraFrustumFarZInMeters);
+}
+
+FovDetail OculusVR::Device::fov() const
+{
+    ovrHmd dev = OculusContext->devices[m_idx];
+    return FovDetail(dev->CameraFrustumHFovInRadians,
+                     dev->CameraFrustumVFovInRadians);
 }
 
 CMat4 OculusVR::Device::head() const

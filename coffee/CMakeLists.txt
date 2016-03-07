@@ -1,10 +1,13 @@
 # Core libraries, no external dependencies
-add_subdirectory(blam)
 add_subdirectory(core)
 add_subdirectory(image)
 
 # More here!
 add_subdirectory(graphics_apis)
+
+if(COFFEE_BUILD_CBLAM)
+    add_subdirectory(blam)
+endif()
 
 # Requires OpenAL
 if(COFFEE_BUILD_OPENAL)

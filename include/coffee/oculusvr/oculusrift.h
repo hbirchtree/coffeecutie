@@ -13,13 +13,21 @@ struct OculusVR : HMD::CHMD_Binding
 
     struct Device : HMD::CHMD_Binding::Device
     {
-        Device(uint32 idx, bool dontcare = false);
+        struct ExtraData;
+
+        Device(uint32 idx, bool dontcare = false, scalar fov = 90);
 
 	SWVersionInfo GetFirmwareInfo() const;
 
         void reset();
 
-	CSize resolution(Eye e) const;
+        void startFrame();
+        void endFrame();
+
+        CSize resolution(Eye e, uint32 density = 1) const;
+
+        ZField zfield() const;
+        FovDetail fov() const;
 
 	CMat4 head() const;
 	CMat4 view(Eye e) const;
@@ -30,6 +38,7 @@ struct OculusVR : HMD::CHMD_Binding
         bool isConnected() const;
     private:
         uint32 m_idx;
+        ExtraData* m_data; /*!< Oculus data */
     };
 
     static bool InitializeBinding();

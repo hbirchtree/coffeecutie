@@ -369,7 +369,7 @@ struct CGL_Implementation
 
     STATICINLINE void ViewportSet(CRect64 const* r){glViewport(r->x,r->y,r->w,r->h);}
     STATICINLINE void ScissorSet(CRect64 const* r){glScissor(r->x,r->y,r->w,r->h);}
-    STATICINLINE void DepthSet(CZField64 const* d){glDepthRange(d->near,d->far);}
+    STATICINLINE void DepthSet(ZField64 const* d){glDepthRange(d->near,d->far);}
 
     STATICINLINE void PointParameteriv(CGenum f,const int32* d){glPointParameteriv(f,d);}
     STATICINLINE void PointParameterfv(CGenum f,const scalar* d){glPointParameterfv(f,d);}

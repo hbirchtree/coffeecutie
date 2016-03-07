@@ -183,6 +183,24 @@ struct _cbasic_zfield
     T far;
 };
 
+template<typename T>
+struct _cbasic_fov
+{
+    _cbasic_fov():
+        h(0),
+        v(0)
+    {
+    }
+    _cbasic_fov(T h, T v):
+        h(h),
+        v(v)
+    {
+    }
+
+    T h;
+    T v;
+};
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
@@ -231,8 +249,10 @@ typedef _cbasic_point<bigscalar> CPointD;
 /*!
  * \brief Standard clipping type
  */
-typedef _cbasic_zfield<scalar> CZField;
+typedef _cbasic_zfield<scalar> ZField;
 
-typedef _cbasic_zfield<scalar> CZField64;
+typedef _cbasic_zfield<bigscalar> ZField64;
+
+typedef _cbasic_fov<scalar> FovDetail;
 
 }

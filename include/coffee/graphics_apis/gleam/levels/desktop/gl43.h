@@ -99,9 +99,9 @@ struct CGL43 : CGL33
     {glScissorArrayv(i,c,(int32*)v);}
     STATICINLINE void ScissorSet(uint32 i,CRect const* v){ScissorArrayv(i,1,v);}
 
-    STATICINLINE void DepthArrayv(uint32 i,size_t c,CZField64 const* v)
+    STATICINLINE void DepthArrayv(uint32 i,size_t c,ZField64 const* v)
     {glDepthRangeArrayv(i,c,(bigscalar*)v);}
-    STATICINLINE void DepthSet(uint32 i,CZField64 const* v){DepthArrayv(i,1,v);}
+    STATICINLINE void DepthSet(uint32 i,ZField64 const* v){DepthArrayv(i,1,v);}
 
     /* Resource allocation */
     STATICINLINE bool PipelineAlloc(uint32 c,CGhnd* h)

@@ -278,17 +278,15 @@ public:
             time = (CMath::sin(time)+CMath::sin(time*0.5)+1.0)/2.0;
 
             /* Update matrices */
-            if(dev)
-                testmat = dev->head();
-
-            cam_mat =
-                    CGraphicsData::GenPerspective(cam)
-                    *CGraphicsData::GenTransform(cam)
-                    *testmat;
+            cam_mat = CGraphicsData::GenPerspective(cam);
 
             obj.position = CVec3(-1,0,0);
+            if(dev)
+                testmat =dev->view(VR::Eye::Left);
             objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
             obj.position = CVec3(1,0,0);
+            if(dev)
+                testmat =dev->view(VR::Eye::Right);
             objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
 
             GL::Uniformfv(vprogram,cam_unif,2,false,objects);

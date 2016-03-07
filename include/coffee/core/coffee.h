@@ -7,7 +7,7 @@
 #include "types/tdef/fntypes.h"
 #include "coffee_macros.h"
 
-#include "plat/platform_detect.h"
+#include "platform_data.h"
 
 namespace Coffee{
 

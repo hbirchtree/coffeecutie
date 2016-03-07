@@ -43,27 +43,20 @@ public:
     void directfun();
 };
 
+struct TestStaticClass
+{
+    STATICINLINE void StaticClassCall(int32& v1, int32 v2)
+    {
+        v1 += v2;
+    }
+};
+
 STATICINLINE void StaticCall(int32& v1, int32 v2)
 {
     v1 += v2;
 }
 
 extern void ExternCall(int32& v1, int32& v2);
-
-STATICINLINE void StaticDebugPrintCall()
-{
-    cDebug(test_string,1L,2L,3.0);
-}
-
-STATICINLINE void StaticfprintfPrintCall()
-{
-    fprintf(stderr,"Glibber glabber text: %i %i %f\n",1,2,(bigscalar)3.0);
-}
-
-STATICINLINE void StaticBasicPrintCall()
-{
-    cBasicPrint(test_string,1L,2L,3.0);
-}
 
 STATICINLINE void FunctionCallTest()
 {
@@ -74,7 +67,8 @@ STATICINLINE void FunctionCallTest()
     uint64 time_2;
     uint64 time_3_1;
     uint64 time_3_2;
-    uint64 time_4;
+    uint64 time_4_1;
+    uint64 time_4_2;
     uint64 time_5;
 
     {
@@ -117,11 +111,17 @@ STATICINLINE void FunctionCallTest()
             t3.fun();
         time_3_2 = t.elapsed();
 
-        /* Static function, inlined */
+        /* Direct function, inlined */
         t.start();
         for(i=0;i<iterations;i++)
             StaticCall(v1,v2);
-        time_4 = t.elapsed();
+        time_4_1 = t.elapsed();
+
+        /* Static function, inlined */
+        t.start();
+        for(i=0;i<iterations;i++)
+            TestStaticClass::StaticClassCall(v1,v2);
+        time_4_2 = t.elapsed();
 
         /* External function */
         t.start();
@@ -136,8 +136,24 @@ STATICINLINE void FunctionCallTest()
     cBasicPrint("Overridden virtual: {0}",time_2);
     cBasicPrint("External virtual: {0}",time_3_1);
     cBasicPrint("External direct: {0}",time_3_2);
-    cBasicPrint("Static inlined: {0}",time_4);
+    cBasicPrint("Force inlined: {0}",time_4_1);
+    cBasicPrint("Static inlined: {0}",time_4_2);
     cBasicPrint("External: {0}",time_5);
+}
+
+STATICINLINE void StaticDebugPrintCall()
+{
+    cDebug(test_string,1L,2L,3.0);
+}
+
+STATICINLINE void StaticfprintfPrintCall()
+{
+    fprintf(stderr,"Glibber glabber text: %i %i %f\n",1,2,(bigscalar)3.0);
+}
+
+STATICINLINE void StaticBasicPrintCall()
+{
+    cBasicPrint(test_string,1L,2L,3.0);
 }
 
 STATICINLINE void PrintCallTest()

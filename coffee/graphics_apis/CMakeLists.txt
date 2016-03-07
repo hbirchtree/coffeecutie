@@ -3,7 +3,9 @@ if(COFFEE_BUILD_GLBINDING)
 endif()
 
 # GLeam requires no dependencies outside of SDL2
-add_subdirectory(gleam)
+if(COFFEE_BUILD_GLEAM)
+    add_subdirectory(gleam)
+endif()
 
 set ( CoffeeGraphicsMisc_SRCS
     )
