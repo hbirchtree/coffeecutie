@@ -83,7 +83,7 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
             e = doc.NewElement("thread");
             threaddata->InsertEndChild(e);
 
-            CString id = cStringFormat("0x{0}",StrUtil::hexify(p.first->hash()));
+            CString id = StrUtil::pointerify(p.first->hash());
             e->SetAttribute("id",id.c_str());
             e->SetAttribute("name",p.second.c_str());
         }
@@ -119,43 +119,43 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
         XML::Element* sysdata = doc.NewElement("sysinfo");
         root->InsertEndChild(sysdata);
 
-        CString tmp = cStringFormat("{0}",(int32)SysInfo::NetStatus());
+        CString tmp = Convert::inttostring((int32)SysInfo::NetStatus());
         sysdata->SetAttribute("sys.net",tmp.c_str());
 
-        tmp = cStringFormat("{0}",SysInfo::MemTotal());
+        tmp = Convert::inttostring(SysInfo::MemTotal());
         sysdata->SetAttribute("sys.memory",tmp.c_str());
 
         {
             HWDeviceInfo pinfo = SysInfo::Processor();
 
-            tmp = cStringFormat("{0}",pinfo.manufacturer);
+            tmp = pinfo.manufacturer;
             sysdata->SetAttribute("proc.manufacturer",tmp.c_str());
 
-            tmp = cStringFormat("{0}",pinfo.model);
+            tmp = pinfo.model;
             sysdata->SetAttribute("proc.model",tmp.c_str());
 
-            tmp = cStringFormat("{0}",pinfo.firmware);
+            tmp = pinfo.firmware;
             sysdata->SetAttribute("proc.firmware",tmp.c_str());
         }
 
-        tmp = cStringFormat("{0}",SysInfo::ProcessorCacheSize());
+        tmp = Convert::inttostring(SysInfo::ProcessorCacheSize());
         sysdata->SetAttribute("proc.cache",tmp.c_str());
 
-        tmp = cStringFormat("{0}",SysInfo::ProcessorFrequency());
+        tmp = Convert::scalartostring(SysInfo::ProcessorFrequency());
         sysdata->SetAttribute("proc.freq",tmp.c_str());
 
         {
-            tmp = cStringFormat("{0}",SysInfo::CpuCount());
+            tmp = Convert::uinttostring(SysInfo::CpuCount());
             sysdata->SetAttribute("proc.count",tmp.c_str());
 
-            tmp = cStringFormat("{0}",SysInfo::CoreCount());
+            tmp = Convert::uinttostring(SysInfo::CoreCount());
             sysdata->SetAttribute("proc.cores",tmp.c_str());
 
-            tmp = cStringFormat("{0}",SysInfo::ThreadCount());
+            tmp = Convert::uinttostring(SysInfo::ThreadCount());
             sysdata->SetAttribute("proc.threads",tmp.c_str());
         }
 
-        tmp = cStringFormat("{0}",SysInfo::HasHyperThreading());
+        tmp = Convert::booltostring(SysInfo::HasHyperThreading());
         sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
     }
 
@@ -165,7 +165,7 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
         root->InsertEndChild(curr);
 
         /* Store information about runtime */
-        CString st = cStringFormat("{0}",*Profiler::start_time);
+        CString st = Convert::uinttostring(*Profiler::start_time);
 
         /* Create a nice date string */
         CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
@@ -193,9 +193,8 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
 
                 XML::Element* n = doc.NewElement("dpoint");
 
-                CString tsf = cStringFormat("{0}",ts);
-                CString tid = cStringFormat(
-                            "0x{0}",StrUtil::hexify(p.thread.hash()));
+                CString tsf = Convert::uinttostring(ts);
+                CString tid = StrUtil::pointerify(p.thread.hash());
 
                 n->SetAttribute("ts",tsf.c_str());
                 n->SetAttribute("label",p.name.c_str());
@@ -210,9 +209,8 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
             {
                 XML::Element* n = doc.NewElement("context");
 
-                CString tsf = cStringFormat("{0}",p.ts-base.front());
-                CString tid = cStringFormat(
-                            "0x{0}",StrUtil::hexify(p.thread.hash()));
+                CString tsf = Convert::uinttostring(p.ts-base.front());
+                CString tid = StrUtil::pointerify(p.thread.hash());
 
                 n->SetAttribute("ts",tsf.c_str());
                 n->SetAttribute("label",p.name.c_str());

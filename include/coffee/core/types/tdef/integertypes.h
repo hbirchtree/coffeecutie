@@ -19,7 +19,7 @@ using uint64 = uint64_t;
 
 using scalar    = float;  /*!< Low-precision float value*/
 using bigscalar = double; /*!< High-precision float value*/
-using lscalar   = long double; /* Whoops... */
+using lscalar   = long double; /* Whoops... How did this get here? */
 
 using byte_t    = uint8;  /*!< System byte*/
 using ubyte_t   = byte_t; /*!< System byte*/

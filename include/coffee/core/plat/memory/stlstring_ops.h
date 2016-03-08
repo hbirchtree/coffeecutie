@@ -98,6 +98,106 @@ FORCEDINLINE CString hexify(uint64 i)
     return out;
 }
 
+FORCEDINLINE CString pointerify(uint64 const& ptr)
+{
+    CString str = "0x";
+    str += hexify(ptr);
+    return str;
+}
+FORCEDINLINE CString pointerify(const void* const& ptr)
+{
+    return pointerify((uint64 const&)ptr);
+}
+
+}
+
+namespace Convert{
+/* Floating-point conversion */
+FORCEDINLINE CString scalarltostring(lscalar const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%Lf",s));
+    snprintf(&str[0],str.size(),"%Lf",s);
+    return str;
+}
+FORCEDINLINE CString scalartostring(bigscalar const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%f",s));
+    snprintf(&str[0],str.size(),"%f",s);
+    return str;
+}
+FORCEDINLINE CString scalarftostring(scalar const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%f",s));
+    snprintf(&str[0],str.size(),"%f",s);
+    return str;
+}
+/* Unsigned integer conversion */
+FORCEDINLINE CString uinttostring(uint64 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%lu",s));
+    snprintf(&str[0],str.size(),"%lu",s);
+    return str;
+}
+FORCEDINLINE CString uinttostring(uint32 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%u",s));
+    snprintf(&str[0],str.size(),"%u",s);
+    return str;
+}
+FORCEDINLINE CString uinttostring(uint16 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hu",s));
+    snprintf(&str[0],str.size(),"%hu",s);
+    return str;
+}
+FORCEDINLINE CString uinttostring(uint8 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hhu",s));
+    snprintf(&str[0],str.size(),"%hhu",s);
+    return str;
+}
+/* Integer conversion */
+FORCEDINLINE CString inttostring(int64 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%li",s));
+    snprintf(&str[0],str.size(),"%li",s);
+    return str;
+}
+FORCEDINLINE CString inttostring(int32 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%i",s));
+    snprintf(&str[0],str.size(),"%i",s);
+    return str;
+}
+FORCEDINLINE CString inttostring(int16 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hi",s));
+    snprintf(&str[0],str.size(),"%hi",s);
+    return str;
+}
+FORCEDINLINE CString inttostring(int8 const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hhi",s));
+    snprintf(&str[0],str.size(),"%hhi",s);
+    return str;
+}
+
+FORCEDINLINE cstring booltostring(bool i)
+{
+    return (i) ? "true" : "false";
+}
+
 }
 }
 }

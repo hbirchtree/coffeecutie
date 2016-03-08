@@ -122,12 +122,6 @@ FORCEDINLINE bigscalar strtoscalar(cstring n, bool* ok = nullptr)
     return v;
 }
 
-/* To string */
-FORCEDINLINE CString scalartostring(bigscalar const& f)
-{
-
-}
-
 /* C-String conversion */
 FORCEDINLINE cwstring_w NarrowWide(cstring str)
 {

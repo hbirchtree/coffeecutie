@@ -119,7 +119,7 @@ struct CEFBrowser
     CefRefPtr<CefBrowser> browser;
 };
 
-CEFBrowser* CreateBrowser()
+CEFBrowser* CreateBrowser(cstring start_url)
 {
     CefWindowInfo winfo;
     winfo.SetAsWindowless(0,true);
@@ -128,9 +128,7 @@ CEFBrowser* CreateBrowser()
     CEFOffscreenBrowser* osr = new CEFOffscreenBrowser();
     osr->bsettings.windowless_frame_rate = 60;
     osr->m_size.Set(1024,768);
-    osr->outfile = cStringFormat("CEFBrowser_0x{0}.png",(const void* const&)osr);
-
-    osr->bsettings.background_color = CRGBA(255,255,255).rgba();
+    osr->outfile = cStringFormat("CEFBrowser_{0}.png",(const void* const&)osr);
 
     b->renderhandle = osr;
     b->client = new CEFCoffeeClient(osr);

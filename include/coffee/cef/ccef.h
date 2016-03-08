@@ -26,7 +26,7 @@ enum class BAction
     Refresh,Stop,
 };
 
-extern CEFBrowser* CreateBrowser();
+extern CEFBrowser* CreateBrowser(cstring start_url = "google.com");
 
 extern void SetUrl(CEFBrowser* b,cstring url);
 extern void PerformAction(CEFBrowser* b, BAction action);
