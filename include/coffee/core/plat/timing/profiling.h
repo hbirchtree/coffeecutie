@@ -32,9 +32,19 @@ struct SimpleProfilerImpl
         CString label;
         uint32 line;
 
+        /*!
+         * \brief Sort based on thread as well as timestamp
+         * \param t1
+         * \return
+         */
         bool operator<(DataPoint const& t1)
         {
-            return this->thread.hash()<t1.thread.hash();
+            ThreadId::Hash th1 = t1.thread.hash();
+            ThreadId::Hash th2 = this->thread.hash();
+            bool thread_sort = th2<th1;
+            bool samethread = th2==th1;
+            bool ts_sort = this->ts<t1.ts;
+            return (samethread) ? ts_sort : thread_sort;
         }
     };
 
@@ -90,15 +100,24 @@ struct SimpleProfilerImpl
 #endif
     }
 
+    /*
+     * To remove the overhead of container operations from the measurements, timestamps
+     *  are captured as early or as late as possible, depending on which is appropriate.
+     * Linked lists have little insertion time, but we want to be sure.
+     *
+     */
+
     STATICINLINE void Profile(cstring name = nullptr)
     {
 #ifndef NDEBUG
+        uint64 ts = Time::CurrentMicroTimestamp();
+
         Lock l(*data_access_mutex);
         C_UNUSED(l);
 
         DataPoint p;
         p.tp = DataPoint::Profile;
-        p.ts = Time::CurrentMicroTimestamp();
+        p.ts = ts;
         p.name = (name) ? name : context_stack->front();
 
         datapoints->push_back(p);
@@ -111,18 +130,22 @@ struct SimpleProfilerImpl
         Lock l(*data_access_mutex);
         C_UNUSED(l);
 
+        context_stack->push_front(name);
+
         DataPoint p;
         p.tp = DataPoint::Push;
-        p.ts = Time::CurrentMicroTimestamp();
+        p.ts = 0;
         p.name = name;
 
         datapoints->push_back(p);
-        context_stack->push_front(name);
+        datapoints->back().ts = Time::CurrentMicroTimestamp();
 #endif
     }
     STATICINLINE void PopContext()
     {
 #ifndef NDEBUG
+        uint64 ts = Time::CurrentMicroTimestamp();
+
         Lock l(*data_access_mutex);
         C_UNUSED(l);
 
@@ -131,7 +154,7 @@ struct SimpleProfilerImpl
 
         DataPoint p;
         p.tp = DataPoint::Pop;
-        p.ts = Time::CurrentMicroTimestamp();
+        p.ts = ts;
         p.name = context_stack->front();
 
         datapoints->push_back(p);
