@@ -47,16 +47,16 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
      *
      */
 
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size>& operator[](size_t i)
+    FORCEDINLINE _cbasic_tvector<T,Size>& operator[](size_t i)
     {
         return d[i];
     }
-    inline C_FORCE_INLINE const _cbasic_tvector<T,Size>& operator[](size_t i) const
+    FORCEDINLINE const _cbasic_tvector<T,Size>& operator[](size_t i) const
     {
         return d[i];
     }
 
-    inline C_FORCE_INLINE bool operator==(const _cbasic_tmatrix<T,Size>& matrix) const
+    FORCEDINLINE bool operator==(const _cbasic_tmatrix<T,Size>& matrix) const
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
@@ -64,43 +64,43 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
                     return false;
         return true;
     }
-    inline C_FORCE_INLINE _cbasic_tmatrix<T,Size>& operator=(const _cbasic_tmatrix<T,Size>& matrix)
+    FORCEDINLINE _cbasic_tmatrix<T,Size>& operator=(const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] = matrix[x][y];
         return *this;
     }
-    inline C_FORCE_INLINE void operator+=(const _cbasic_tmatrix<T,Size>& matrix)
+    FORCEDINLINE void operator+=(const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] += matrix[x][y];
     }
-    inline C_FORCE_INLINE void operator-=(const _cbasic_tmatrix<T,Size>& matrix)
+    FORCEDINLINE void operator-=(const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] -= matrix[x][y];
     }
-    inline C_FORCE_INLINE void operator*=(const _cbasic_tmatrix<T,Size>& matrix)
+    FORCEDINLINE void operator*=(const _cbasic_tmatrix<T,Size>& matrix)
     {
         *this = (*this) * matrix;
     }
-    inline C_FORCE_INLINE void operator*=(const T& val)
+    FORCEDINLINE void operator*=(const T& val)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] *= val;
     }
-    inline C_FORCE_INLINE void operator/=(const T& val)
+    FORCEDINLINE void operator/=(const T& val)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] /= val;
     }
 
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator*(
+    FORCEDINLINE _cbasic_tvector<T,Size> operator*(
             _cbasic_tvector<T,Size> const& vec)
     {
         _cbasic_tvector<T,Size> out(vec);
@@ -118,7 +118,7 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
  */
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator+(
+FORCEDINLINE _cbasic_tmatrix<T,Size> operator+(
         _cbasic_tmatrix<T,Size> const& src,
         _cbasic_tmatrix<T,Size> const& matrix)
 {
@@ -130,7 +130,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator+(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator-(
+FORCEDINLINE _cbasic_tmatrix<T,Size> operator-(
         _cbasic_tmatrix<T,Size> const& src,
         _cbasic_tmatrix<T,Size> const& matrix)
 {
@@ -142,7 +142,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator-(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator*(
+FORCEDINLINE _cbasic_tmatrix<T,Size> operator*(
         _cbasic_tmatrix<T,Size> const& m1,
         _cbasic_tmatrix<T,Size> const& m2)
 {
@@ -156,7 +156,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator*(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator/(
+FORCEDINLINE _cbasic_tmatrix<T,Size> operator/(
         _cbasic_tmatrix<T,Size> const& src,
         const T& val)
 {
@@ -168,7 +168,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator/(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator*(
+FORCEDINLINE _cbasic_tmatrix<T,Size> operator*(
         _cbasic_tmatrix<T,Size> const& src,
         const T& val)
 {
@@ -185,7 +185,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> operator*(
  */
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> translation(
+FORCEDINLINE _cbasic_tmatrix<T,4> translation(
         const _cbasic_tmatrix<T,4>& mat,
         const _cbasic_tvector<T,3>& vector)
 {
@@ -201,7 +201,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> translation(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> scale(
+FORCEDINLINE _cbasic_tmatrix<T,4> scale(
         const _cbasic_tmatrix<T,4>& matrix,
         const _cbasic_tvector<T,3>& vector)
 {
@@ -213,7 +213,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> scale(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> rotate(
+FORCEDINLINE _cbasic_tmatrix<T,4> rotate(
         const _cbasic_tmatrix<T,4>& matrix,
         const T& angle,
         const _cbasic_tvector<T,3>& vector)
@@ -227,7 +227,7 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> rotate(
 }
 
 template<typename T, size_t Size>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,Size>& m)
+FORCEDINLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,Size>& m)
 {
     _cbasic_tmatrix<T,Size> n;
 
@@ -239,7 +239,14 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)
+FORCEDINLINE _cbasic_tvector<T,4> get_translation(const _cbasic_tmatrix<T,4>& m)
+{
+    return m[3];
+}
+
+
+template<typename T>
+FORCEDINLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)
 {
     _cbasic_tmatrix<T,4> nv(mv);
 
@@ -373,6 +380,8 @@ inline C_FORCE_INLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& m
 
     return nv;
 }
+
+
 
 }
 
