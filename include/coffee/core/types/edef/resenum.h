@@ -14,20 +14,32 @@ enum class TypeEnum : uint8
     Scalar, BigScalar,
 };
 
-enum class ResourceAccess : uint16
+enum class ResourceAccess
 {
-    ExclusiveLocking = 0x1,
+    /* Data access modifiers */
+    ExclusiveLocking = 0x1, /*<! Absolute mutex */
+    SharedLocking    = 0x2, /*<! Mutex with multiple participants */
 
-    ReadOnly = 0x10,
-    WriteOnly = 0x20,
-    ReadWrite = 0x30,
+    /* Caching */
+    NoCache = 0x8, /*<! Avoid caching at all cost, even if it impacts perf */
+    GreedyCache = 0x2000, /*<! Cache it all in */
+    Persistent = 0x40, /*<! If shared, make changes visible for other participants */
+    Streaming  = 0x80, /*<! Streaming, will cache as needed, not greedy */
+    Virtual = 0x200, /*<! Reduce need to load all data */
 
-    Persistent = 0x40,
-    Streaming = 0x80,
+    /* R/W access */
+    ReadOnly   = 0x10,
+    WriteOnly  = 0x20,
+    ReadWrite  = 0x30,
+    Append     = 0x100, /*<! If file exists, append to it */
+    Executable = 0x400, /*<! You should know what this does before you try to use it. */
 
-    Append = 0x100,
+    /* File operations or policies */
+    NewFile = 0x800, /*<! Don't overwrite files that exist */
+    Discard = 0x4, /*<! Truncate data that exists in file */
 
-    Virtual = 0x200,
+    /* Misc. flags */
+    HugeFile = 0x1000, /*<! Sometimes used to indicate a wish for large pages */
 };
 C_FLAGS(ResourceAccess,uint32);
 

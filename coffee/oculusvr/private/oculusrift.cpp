@@ -266,19 +266,26 @@ CMat4 OculusVR::Device::head() const
 
 CMat4 OculusVR::Device::view(HMD::CHMD_Binding::Eye e) const
 {
+    ovrHmd dev = OculusContext->devices[m_idx];
+
     ovrPosef m;
+    ovrVector3f offset;
     ovrEyeType t;
     if(e==Eye::Left)
+    {
         t = ovrEye_Left;
-    else
+        offset = m_data->d_eyedesc[t].HmdToEyeViewOffset;
+    }else{
         t = ovrEye_Right;
-    m = ovrHmd_GetHmdPosePerEye(OculusContext->devices[m_idx],t);
+        offset = m_data->d_eyedesc[t].HmdToEyeViewOffset;
+    }
+    m = ovrHmd_GetHmdPosePerEye(dev,t);
     CMat4 mt =
             translation(
                 CMat4(),
-                CVec3(m.Position.x,
-                      m.Position.y,
-                      m.Position.z)
+                CVec3(m.Position.x+offset.x,
+                      m.Position.y+offset.y,
+                      m.Position.z+offset.z)
                 *CVec3(6));
     mt *= matrixify(CQuat(m.Orientation.w,
                           m.Orientation.x*-1.0,

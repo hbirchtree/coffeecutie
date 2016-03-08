@@ -1,5 +1,6 @@
 #include <coffee/CCore>
 #include <coffee/CImage>
+#include <coffee/CGraphics>
 #include "library.h"
 #include <coffee/core/plat/memory/cmd_interface.h>
 #include <coffee/core/datastorage/text/ini/ciniparser.h>
@@ -28,6 +29,24 @@ int32 coffee_main(int32, cstring_w*)
 
         CResources::FileMkdir(cfg_dir.c_str(),true);
     }
+
+    {
+        CGraphicsData::CTransform testt;
+        testt.position = CVec3(3,3,3);
+        testt.scale = CVec3(1);
+        testt.rotation = CQuat(2,1,1.1,1);
+
+        CMat4 testmat;
+        testmat *= CGraphicsData::GenTransform(testt);
+        testt.position = CVec3(3,2,3);
+        testmat *= CGraphicsData::GenTransform(testt);
+        testt.position = CVec3(3,3,2);
+        testmat *= CGraphicsData::GenTransform(testt);
+
+        cDebug("Translation: {0}",get_translation(testmat));
+    }
+
+    return 0;
 
     {
         CoffeeTests::FunctionCallTest();
