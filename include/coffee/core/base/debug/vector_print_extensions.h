@@ -58,5 +58,18 @@ FORCEDINLINE CString cStringReplace(
                               v[0],v[1],v[2]));
 }
 
+FORCEDINLINE CString cStringReplace(
+	CString const& fmt, size_t const& index,
+	BoundBox const& box)
+{
+    return extArgReplace(
+		fmt,index,
+		cStringFormat(
+		    "b({0}->{1},{2}->{3},{4}->{5})",
+		    box.x1(),box.x2(),
+		    box.y1(),box.y2(),
+		    box.z1(),box.z2()));
+}
+
 }
 }

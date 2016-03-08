@@ -23,11 +23,13 @@ struct OculusVR::Context
 {
     Context()
     {
+        cDebug("Creating Oculus context");
         for(szptr i=0;i<OVR_Max_Devices;i++)
             devices[i] = nullptr;
     }
     ~Context()
     {
+        cDebug("Destroying Oculus context");
         for(szptr i=0;i<OVR_Max_Devices;i++)
             if(devices[i])
                 ovrHmd_Destroy(devices[i]);
@@ -50,10 +52,11 @@ struct OculusVR::Device::ExtraData
 
 thread_local OculusVR::Context* OculusContext = nullptr;
 
+static_assert(!ovrFalse,"Falsity of ovrFalse");
+static_assert(ovrTrue,"Truth of ovrTrue");
+
 bool OculusVR::InitializeBinding()
 {
-    static_assert(!ovrFalse,"Falsity of ovrFalse");
-    static_assert(ovrTrue,"Truth of ovrTrue");
 
     ovrInitParams* fptr = 0;
 
@@ -72,10 +75,12 @@ bool OculusVR::InitializeBinding()
     OculusContext = new Context;
     OculusContext->iparams = flags;
 
+    Context* ctxt = OculusContext;
+
     if(!PlatformData::IsMobile())
-        OculusContext->apiconfig.Header.API = ovrRenderAPI_OpenGL;
+        ctxt->apiconfig.Header.API = ovrRenderAPI_OpenGL;
     else
-        OculusContext->apiconfig.Header.API = ovrRenderAPI_Android_GLES;
+        ctxt->apiconfig.Header.API = ovrRenderAPI_Android_GLES;
 
 
     if(!PollDevices(nullptr))
@@ -140,6 +145,8 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
 {
     ovrHmd dev = OculusContext->devices[m_idx];
 
+    cDebug("Connecting to device: {0}",this->deviceInfo());
+
     uint32 devcaps = dev->HmdCaps;
 
     if(!(devcaps&ovrHmdCap_ExtendDesktop))
@@ -177,12 +184,23 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
         delete data;
 }
 
-SWVersionInfo OculusVR::Device::GetFirmwareInfo() const
+SWVersionInfo OculusVR::Device::firmwareInfo() const
 {
     ovrHmd dev = OculusContext->devices[m_idx];
-    return SWVersionInfo(dev->ProductName,
-                         dev->FirmwareMajor,
-                         dev->FirmwareMinor);
+    return SWVersionInfo(
+                dev->Manufacturer,
+                dev->FirmwareMajor,
+                dev->FirmwareMinor);
+}
+
+HWDeviceInfo OculusVR::Device::deviceInfo() const
+{
+    ovrHmd dev = OculusContext->devices[m_idx];
+    return HWDeviceInfo(
+                dev->Manufacturer,
+                dev->ProductName,
+                cStringFormat("{0}",firmwareInfo()),
+                dev->SerialNumber);
 }
 
 void OculusVR::Device::reset()
@@ -225,6 +243,13 @@ FovDetail OculusVR::Device::fov() const
     ovrHmd dev = OculusContext->devices[m_idx];
     return FovDetail(dev->CameraFrustumHFovInRadians,
                      dev->CameraFrustumVFovInRadians);
+}
+
+BoundBox OculusVR::Device::viewerSpace() const
+{
+    ZField f = zfield();
+    FovDetail a = fov();
+    return BoundBox(a.h,a.v,f.far-f.near);
 }
 
 CMat4 OculusVR::Device::head() const

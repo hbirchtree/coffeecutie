@@ -17,7 +17,8 @@ struct OculusVR : HMD::CHMD_Binding
 
         Device(uint32 idx, bool dontcare = false, scalar fov = 90);
 
-	SWVersionInfo GetFirmwareInfo() const;
+	SWVersionInfo firmwareInfo() const;
+	HWDeviceInfo deviceInfo() const;
 
         void reset();
 
@@ -28,6 +29,8 @@ struct OculusVR : HMD::CHMD_Binding
 
         ZField zfield() const;
         FovDetail fov() const;
+
+	BoundBox viewerSpace() const;
 
 	CMat4 head() const;
 	CMat4 view(Eye e) const;

@@ -159,6 +159,48 @@ template<typename T> struct _cbasic_rect
     }
 };
 
+template<typename T>
+struct _cbasic_boundingbox
+{
+    _cbasic_boundingbox(T w,T h, T d, bool centered = false)
+    {
+	if(centered)
+	{
+	    this->w = w/T(2);
+	    this->h = h/T(2);
+	    this->d = d/T(2);
+
+	    this->x = -w/T(2);
+	    this->y = -h/T(2);
+	    this->z = -d/T(2);
+	}else{
+	    this->w = w;
+	    this->h = h;
+	    this->d = d;
+	}
+    }
+    _cbasic_boundingbox(T x, T y, T z, T w, T h, T d):
+	x(x),
+	y(y),
+	z(z),
+	w(w),
+	h(h),
+	d(d)
+    {
+    }
+
+    T x,y,z;
+    T w,h,d;
+
+    T x1()const{return x;}
+    T x2()const{return x+w;}
+    T y1()const{return y;}
+    T y2()const{return y+h;}
+    T z1()const{return z;}
+    T z2()const{return z+d;}
+
+};
+
 /*!
  * \brief Describes the clipping distance of a GL scene
  */
@@ -254,5 +296,7 @@ typedef _cbasic_zfield<scalar> ZField;
 typedef _cbasic_zfield<bigscalar> ZField64;
 
 typedef _cbasic_fov<scalar> FovDetail;
+
+typedef _cbasic_boundingbox<scalar> BoundBox;
 
 }

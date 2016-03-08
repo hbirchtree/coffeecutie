@@ -16,9 +16,12 @@ using namespace CDisplay;
 using VR = OculusRift::OculusVR;
 
 Splash::SplashHandle* splash;
+VR::Device* dev;
 
 void framecount_fun(uint32 t, c_cptr)
 {
+    if(dev)
+        cDebug("User position: {0}",get_translation(dev->head()));
     cDebug("Frames: {0}",t);
 }
 
@@ -248,20 +251,8 @@ public:
         /* Head pose value */
         CMat4 testmat;
 
-        Profiler::PushContext("Oculus setup");
-        VR::Device* dev = nullptr;
-        {
-            int32 devcount;
-            if(VR::InitializeBinding())
-            {
-                if(VR::PollDevices(&devcount))
-                dev = VR::GetDefaultDevice();
-                if(dev)
-                    cDebug("Here's Johnny!");
-                VR::PollDevices();
-            }
-        }
-        Profiler::PopContext();
+        if(dev)
+            cDebug("User's play area: {0}",dev->viewerSpace());
 
         while(!closeFlag())
         {
@@ -278,16 +269,16 @@ public:
             time = (CMath::sin(time)+CMath::sin(time*0.5)+1.0)/2.0;
 
             /* Update matrices */
-            cam_mat = CGraphicsData::GenPerspective(cam);
+            cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
 
             obj.position = CVec3(-1,0,0);
             if(dev)
-                testmat =dev->view(VR::Eye::Left);
-            objects[0] = cam_mat*CGraphicsData::GenTransform(obj);
+                testmat = dev->view(VR::Eye::Left);
+            objects[0] = cam_mat*testmat*CGraphicsData::GenTransform(obj);
             obj.position = CVec3(1,0,0);
             if(dev)
-                testmat =dev->view(VR::Eye::Right);
-            objects[1] = cam_mat*CGraphicsData::GenTransform(obj);
+                testmat = dev->view(VR::Eye::Right);
+            objects[1] = cam_mat*testmat*CGraphicsData::GenTransform(obj);
 
             GL::Uniformfv(vprogram,cam_unif,2,false,objects);
             GL::Uniformfv(fprogram,tim_unif,1,&time);
@@ -370,6 +361,21 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Object creation");
 
     CDProperties props = GetDefaultVisual();
+
+    Profiler::PushContext("Oculus setup");
+    dev = nullptr;
+    {
+        int32 devcount;
+        if(VR::InitializeBinding())
+        {
+            if(VR::PollDevices(&devcount))
+                dev = VR::GetDefaultDevice();
+            if(dev)
+                cDebug("Here's Johnny!");
+            VR::PollDevices();
+        }
+    }
+    Profiler::PopContext();
 
     renderer->init(props);
     Profiler::Profile("Initialize renderer");

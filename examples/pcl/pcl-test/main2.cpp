@@ -54,7 +54,7 @@ void frame_fun(CNect::NectRGB const& c,CNect::NectDepth const& d,
     CResources::CResource outfile("outdata.png");
 
     CStbImageLib::CStbImageConst img2;
-    CRGBA* fval = (CRGBA*)CCalloc(1,d.size.area()*sizeof(CRGBA));
+    CRGBA* fval = (CRGBA*)Calloc(1,d.size.area()*sizeof(CRGBA));
     img2.data = (byte_t*)fval;
     img2.size.w = d.size.w;
     img2.size.h = d.size.h;
