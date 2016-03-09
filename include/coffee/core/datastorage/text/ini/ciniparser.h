@@ -287,9 +287,9 @@ struct SimpleIniParser : IniParserDef
                             }else{
                                 eval = true;
                                 bool btype;
-                                if(tvalu=="false")
+				if(tvalu=="false"||tvalu=="False")
                                     btype = false;
-                                else if(tvalu=="true")
+				else if(tvalu=="true"||tvalu=="True")
                                     btype = true;
                                 else
                                     eval = false;
