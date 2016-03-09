@@ -16,47 +16,10 @@ namespace CResources{
 
 struct LinuxFileFun : PlatFileFun
 {
-    STATICINLINE void* Map(cstring filename, ResourceAccess acc,
-                           szptr offset, szptr size, int* error)
+private:
+    STATICINLINE int MappingFlags(ResourceAccess acc)
     {
-        szptr pa_offset = offset & ~(sysconf(_SC_PAGE_SIZE)-1);
-
-        /*Translate access flags*/
-        int oflags = 0;
-        int prot = 0;
         int mapping = 0;
-
-        if(feval(acc&(ResourceAccess::ReadWrite)))
-        {
-            oflags = O_RDWR;
-
-            if(feval(acc&ResourceAccess::Discard))
-                oflags |= O_TRUNC;
-
-            prot = PROT_READ|PROT_WRITE;
-        }
-        else if(feval(acc&(ResourceAccess::ReadOnly)))
-        {
-            oflags = O_RDONLY;
-            prot = PROT_WRITE;
-        }
-        else if(feval(acc&(ResourceAccess::WriteOnly))||feval(acc&ResourceAccess::Append))
-        {
-            if(feval(acc&ResourceAccess::Append))
-                oflags = O_APPEND;
-            else
-                oflags = O_WRONLY;
-
-            if(feval(acc&ResourceAccess::Discard))
-                oflags |= O_TRUNC;
-
-            prot = PROT_WRITE;
-        }
-        else if(feval(acc&ResourceAccess::Executable))
-        {
-            oflags = O_RDONLY;
-            prot = PROT_EXEC;
-        }
 
         if(feval(acc&(ResourceAccess::Persistent)))
             mapping = MAP_SHARED;
@@ -70,11 +33,72 @@ struct LinuxFileFun : PlatFileFun
             mapping |= MAP_LOCKED;
 
         if(feval(acc&(ResourceAccess::Streaming)))
-            mapping |= MAP_NONBLOCK;
-        if(feval(acc&ResourceAccess::GreedyCache))
             mapping |= MAP_POPULATE;
+        if(feval(acc&ResourceAccess::GreedyCache))
+            mapping |= MAP_POPULATE|MAP_LOCKED;
         if(feval(acc&ResourceAccess::NoCache))
             mapping |= MAP_NONBLOCK;
+
+        return mapping;
+    }
+    STATICINLINE int ProtFlags(ResourceAccess acc)
+    {
+        int prot = PROT_NONE;
+
+        if(feval(acc&(ResourceAccess::ReadOnly)))
+            prot |= PROT_READ;
+        if(feval(acc&ResourceAccess::WriteOnly))
+            prot |= PROT_WRITE;
+        if(feval(acc&ResourceAccess::Executable))
+            prot |= PROT_EXEC;
+
+        return prot;
+    }
+    STATICINLINE int PosixRscFlags(ResourceAccess acc)
+    {
+        int oflags = 0;
+
+        if(feval(acc&(ResourceAccess::ReadWrite)))
+        {
+            oflags = O_RDWR;
+
+            if(feval(acc&ResourceAccess::Discard))
+                oflags |= O_TRUNC;
+        }
+        else if(feval(acc&ResourceAccess::Executable))
+            oflags = O_RDONLY;
+        else if(feval(acc&(ResourceAccess::ReadOnly)))
+            oflags = O_RDONLY;
+        else if(feval(acc&(ResourceAccess::WriteOnly))||feval(acc&ResourceAccess::Append))
+        {
+            if(feval(acc&ResourceAccess::Append))
+                oflags = O_APPEND;
+            else
+                oflags = O_WRONLY;
+
+            if(feval(acc&ResourceAccess::Discard))
+                oflags |= O_TRUNC;
+        }
+
+        return oflags;
+    }
+
+public:
+
+    STATICINLINE uint32 PageSize()
+    {
+        return sysconf(_SC_PAGE_SIZE)-1;
+    }
+
+    STATICINLINE void* Map(cstring filename, ResourceAccess acc,
+                           szptr offset, szptr size, int* error)
+    {
+        szptr pa_offset = offset & ~(PageSize());
+
+        /*Translate access flags*/
+        int oflags = PosixRscFlags(acc);
+        int prot = ProtFlags(acc);
+        int mapping = MappingFlags(acc);
 
         /*... and then actually open it*/
         int fd = open(filename,oflags);
@@ -127,6 +151,20 @@ struct LinuxFileFun : PlatFileFun
     STATICINLINE bool SuperUncache()
     {
         return munlockall()==0;
+    }
+
+    STATICINLINE void* ScratchBuffer(szptr size, ResourceAccess access)
+    {
+        int proto = ProtFlags(access);
+        int mapflags = MappingFlags(access)|MAP_ANONYMOUS;
+
+        mapflags |= MAP_ANONYMOUS;
+
+        return mmap64(nullptr,size,proto,mapflags,-1,0);
+    }
+    STATICINLINE void ScratchUnmap(void* ptr, szptr size)
+    {
+        munmap(ptr,size);
     }
 };
 

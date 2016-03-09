@@ -56,6 +56,9 @@ struct FileFunDef
      */
     static bool SuperCache();
     static bool SuperUncache();
+
+    static void* ScratchBuffer(szptr size, ResourceAccess access);
+    static void ScratchUnmap(void* ptr, szptr size);
 };
 
 struct DirFunDef

@@ -8,7 +8,16 @@ struct PlatformData
 {
     STATICINLINE bool IsMobile()
     {
-#ifndef COFFEE_ANDROID
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_IOS)
+        return false;
+#else
+        return true;
+#endif
+    }
+
+    STATICINLINE bool IsGLES()
+    {
+#ifdef COFFEE_GLEAM_DESKTOP
         return false;
 #else
         return true;

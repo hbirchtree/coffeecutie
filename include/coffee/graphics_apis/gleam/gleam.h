@@ -1,6 +1,4 @@
-#ifndef COFFEE_ESMODE
-#define COFFEE_GLEAM_DESKTOP
-#endif
+#include <coffee/core/plat/platform_detect.h>
 
 #ifdef COFFEE_GLEAM_DESKTOP
 #include "levels/desktop/gl45.h"
