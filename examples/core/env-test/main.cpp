@@ -46,10 +46,8 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("Translation: {0}",get_translation(testmat));
     }
 
-    return 0;
-
     {
-        CoffeeTests::FunctionCallTest();
+//        CoffeeTests::FunctionCallTest();
 //        CoffeeTests::PrintCallTest();
     }
 
@@ -74,6 +72,9 @@ int32 coffee_main(int32, cstring_w*)
 
     /* Try creating an INI document */
     {
+        CElapsedTimerMicro t;
+
+        t.start();
         INI::Document doc;
 
         INI::Section t1 = doc.newSection();
@@ -90,7 +91,17 @@ int32 coffee_main(int32, cstring_w*)
         t1->insertValue("hello2",v2);
         t1->insertValue("hello3",v3);
 
-        cDebug("test {0}, {1}, {2}",v1->getString(),v2->getBool(),v3->getInteger());
+        cDebug("Document creation: {0}",t.elapsed());
+
+        t.start();
+        CResources::CResource rsc("testoutfile.ini");
+        cDebug("File object: {0}",t.elapsed());
+        INI::Write(doc,rsc);
+        cDebug("Document write: {0}",t.elapsed());
+        CResources::FileCommit(rsc,false,ResourceAccess::Discard);
+        cDebug("File save: {0}",t.elapsed());
+        CResources::FileFree(rsc);
+        cDebug("File free: {0}",t.elapsed());
 
     }
 
@@ -102,7 +113,7 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileMap(testfile);
 
         t.start();
-        INI::Document doc2 = INI::Read(testfile);
+        INI::document_t doc2 = INI::Read(testfile);
         cDebug("Parsing time: {0}",t.elapsed());
 
 //        cDebug("{0}",doc2.section("Hello there")->value("Value_1")->getString());

@@ -68,7 +68,8 @@ extern bool FilePull(CResource &resc, bool textmode = false, bool bigendian = fa
  * \brief Save data to file
  * \return
  */
-extern bool FileCommit(CResource& resc, bool append = false);
+extern bool FileCommit(CResource& resc, bool append = false,
+		       ResourceAccess acc = ResourceAccess::None);
 /*!
  * \brief Save data to file, append null-terminator
  * \return

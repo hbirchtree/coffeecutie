@@ -118,14 +118,14 @@ bool FilePull(CResource &resc, bool textmode, bool)
 #endif
 }
 
-bool FileCommit(CResource &resc, bool append)
+bool FileCommit(CResource &resc, bool append, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
     FileFun::FileHandle *fp = FileFun::Open(
                 resc.resource(),
                 (append) ?
-                    ResourceAccess::Append|ResourceAccess::WriteOnly
-                  : ResourceAccess::WriteOnly);
+                    ResourceAccess::Append|ResourceAccess::WriteOnly|acc
+                  : ResourceAccess::WriteOnly|acc);
     CByteData d;
     d.data = (byte_t*)resc.data;
     d.size = resc.size;

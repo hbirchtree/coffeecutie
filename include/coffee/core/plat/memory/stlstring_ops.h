@@ -112,12 +112,19 @@ FORCEDINLINE CString pointerify(const void* const& ptr)
 }
 
 namespace Convert{
+/*
+ * In the below functions we remove the null-terminator from the strings.
+ * It causes a literal NULL to appear in the strings, which is bad, m'kay?
+ *
+ */
+
 /* Floating-point conversion */
 FORCEDINLINE CString scalarltostring(lscalar const& s)
 {
     CString str;
     str.resize(snprintf(nullptr,0,"%Lf",s));
     snprintf(&str[0],str.size(),"%Lf",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString scalartostring(bigscalar const& s)
@@ -125,6 +132,7 @@ FORCEDINLINE CString scalartostring(bigscalar const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%f",s));
     snprintf(&str[0],str.size(),"%f",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString scalarftostring(scalar const& s)
@@ -132,6 +140,7 @@ FORCEDINLINE CString scalarftostring(scalar const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%f",s));
     snprintf(&str[0],str.size(),"%f",s);
+    str.resize(str.size()-1);
     return str;
 }
 /* Unsigned integer conversion */
@@ -140,6 +149,7 @@ FORCEDINLINE CString uinttostring(uint64 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%lu",s));
     snprintf(&str[0],str.size(),"%lu",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString uinttostring(uint32 const& s)
@@ -147,6 +157,7 @@ FORCEDINLINE CString uinttostring(uint32 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%u",s));
     snprintf(&str[0],str.size(),"%u",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString uinttostring(uint16 const& s)
@@ -154,6 +165,7 @@ FORCEDINLINE CString uinttostring(uint16 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%hu",s));
     snprintf(&str[0],str.size(),"%hu",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString uinttostring(uint8 const& s)
@@ -161,6 +173,7 @@ FORCEDINLINE CString uinttostring(uint8 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%hhu",s));
     snprintf(&str[0],str.size(),"%hhu",s);
+    str.resize(str.size()-1);
     return str;
 }
 /* Integer conversion */
@@ -169,6 +182,7 @@ FORCEDINLINE CString inttostring(int64 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%li",s));
     snprintf(&str[0],str.size(),"%li",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString inttostring(int32 const& s)
@@ -176,6 +190,7 @@ FORCEDINLINE CString inttostring(int32 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%i",s));
     snprintf(&str[0],str.size(),"%i",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString inttostring(int16 const& s)
@@ -183,6 +198,7 @@ FORCEDINLINE CString inttostring(int16 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%hi",s));
     snprintf(&str[0],str.size(),"%hi",s);
+    str.resize(str.size()-1);
     return str;
 }
 FORCEDINLINE CString inttostring(int8 const& s)
@@ -190,6 +206,7 @@ FORCEDINLINE CString inttostring(int8 const& s)
     CString str;
     str.resize(snprintf(nullptr,0,"%hhi",s));
     snprintf(&str[0],str.size(),"%hhi",s);
+    str.resize(str.size()-1);
     return str;
 }
 

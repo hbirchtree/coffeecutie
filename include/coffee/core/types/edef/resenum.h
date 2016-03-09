@@ -16,6 +16,8 @@ enum class TypeEnum : uint8
 
 enum class ResourceAccess
 {
+    None = 0x0,
+
     /* Data access modifiers */
     ExclusiveLocking = 0x1, /*<! Absolute mutex */
     SharedLocking    = 0x2, /*<! Mutex with multiple participants */
