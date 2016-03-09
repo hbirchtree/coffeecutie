@@ -31,9 +31,10 @@ bool FileExists(const CResource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
     FILE *f = fopen(resc.resource(),"r");
+    bool ev = f;
     if(f)
         fclose(f);
-    return f;
+    return ev;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
 #endif

@@ -113,10 +113,13 @@ int32 coffee_main(int32, cstring_w*)
         CResources::FileMap(testfile);
 
         t.start();
-        INI::document_t doc2 = INI::Read(testfile);
+        INI::Document doc2 = INI::Read(testfile);
         cDebug("Parsing time: {0}",t.elapsed());
 
-//        cDebug("{0}",doc2.section("Hello there")->value("Value_1")->getString());
+        CResources::CResource rsc("test.ini.ini");
+        INI::Write(doc2,rsc);
+        CResources::FileCommit(rsc);
+        CResources::FileFree(rsc);
 
         CResources::FileUnmap(testfile);
     }

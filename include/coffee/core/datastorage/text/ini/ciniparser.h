@@ -322,7 +322,7 @@ struct SimpleIniParser : IniParserDef
 
     STATICINLINE bool Write(document_t const& doc,CResources::CResource& target)
     {
-	const constexpr cstring linesep = "\n\n";
+	const constexpr cstring linesep = "\n";
 
 	CString outdata;
 
