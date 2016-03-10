@@ -1,8 +1,4 @@
-find_package(Qt5Widgets REQUIRED)
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
+include ( QtIncludes )
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/ext/qt-shim/qt-node-editor/include

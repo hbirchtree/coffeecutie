@@ -1,10 +1,6 @@
 #ifndef COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
 #define COFFEE_CORE_BASE_DEBUG_EXT_RESOLVERS_H
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-
 #include "../../coffee_macros.h"
 #include "../textprocessing/cregex.h"
 #include "../../plat/plat_memory.h"

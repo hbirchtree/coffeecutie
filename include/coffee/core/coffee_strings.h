@@ -1,7 +1,7 @@
 #ifndef COFFEE_CORE_STRINGS_H
 #define COFFEE_CORE_STRINGS_H
 
-#include "types/basetypes.h"
+#include "types/tdef/integertypes.h"
 
 namespace CFStrings
 {

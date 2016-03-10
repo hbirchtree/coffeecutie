@@ -9,7 +9,7 @@
 
 #include "cdebug_print.h"
 #include "debugprinter.h"
-#include "../../coffee_macros.h"
+#include "../../coffee_mem_macros.h"
 
 #include "../types/counter.h"
 

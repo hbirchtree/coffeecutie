@@ -1,5 +1,7 @@
-#include "../../CDebug"
 #include "../../coffee_mem_macros.h"
+
+#include "../../types/cdef/geometry.h"
+#include "cmemory.h"
 
 #ifndef COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 #define COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
@@ -47,7 +49,9 @@ struct BasicTerm : CmdDef
 
     STATICINLINE void Exit(int code)
     {
-        cBasicPrint("Exiting with code: {0}",code);
+        fprintf(DefaultDebugOutputPipe,
+                "Exiting with code: %i\n",
+                code);
         exit(code);
     }
 };

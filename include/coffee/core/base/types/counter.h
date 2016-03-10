@@ -2,7 +2,7 @@
 #define COFFEE_DEBUG_CLASS_FRAMECOUNTER_H
 
 #include "../../coffee_mem_macros.h"
-#include "../../types/basetypes.h"
+#include "../../types/tdef/integertypes.h"
 
 namespace Coffee{
 namespace CFunctional{

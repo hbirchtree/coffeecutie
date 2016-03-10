@@ -1,5 +1,9 @@
 set ( CoffeeCore_SRCS
 
+    private/extern_storage.cpp
+    private/exit_handling.cpp
+    private/argument_handling.cpp
+
     private/coffee.cpp
     private/base/cdebug.cpp
     private/base/cdisplay.cpp
@@ -8,8 +12,6 @@ set ( CoffeeCore_SRCS
     private/base/cobject.cpp
 
     private/base/cdrendererbase.cpp
-
-    private/functional/cqueuerunner.cpp
 
     private/profiler/profiling-export.cpp
 
@@ -21,8 +23,6 @@ set ( CoffeeCore_SRCS
     private/plat/environment_details.cpp
     private/plat/plat_file.cpp
     private/plat/linking/libraries.cpp
-    private/plat/windows/win_core.cpp
-    private/plat/unix/unix_core.cpp
 
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
