@@ -6,6 +6,13 @@
 FROM ubuntu:xenial
 MAINTAINER H. Birch Tree
 
+RUN dpkg --add-architecture i386
+RUN apt-get -qy update
+
+RUN apt-get -y install software-properties-common
+
+RUN bash -c "add-apt-repository \"deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe multiverse\""
+
 RUN apt-get -qy update
 
 # We use a tier-based installation based. If one step fails, it will still save some of the others.
@@ -14,11 +21,11 @@ RUN apt-get -qy update
 # Base tools
 RUN apt-get -qy install git nano wget
 # Build tools
-RUN apt-get -qy install cmake ninja-build build-essential doxygen clang-3.7:i386
+RUN apt-get -qy install cmake ninja-build build-essential doxygen clang-3.7
 # SWIG, just for giggles
-RUN apt-get -qy install swig3:i386
+RUN apt-get -qy install swig3.0:i386
 # RapidJSON for JSON parsing
-RUN apt-get -qy install rapidjson-dev:i386
+RUN apt-get -qy install rapidjson-dev
 # SDL2 libraries + dependencies
 RUN apt-get -qy install libsdl2-dev:i386
 # OpenAL for audio
@@ -32,7 +39,7 @@ RUN apt-get -qy install libavcodec-dev:i386 libavdevice-dev:i386 libavformat-dev
 # Qt libraries
 RUN apt-get -qy install qt5-default:i386
 # PCL for point cloud data processing
-RUN apt-get -qy install libpcl-dev:i386
+#RUN apt-get -qy install libpcl-dev:i386
 
 #Create user directory + group
 RUN groupadd coffeeusers -g 1000
