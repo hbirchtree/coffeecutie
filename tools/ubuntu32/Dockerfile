@@ -14,25 +14,25 @@ RUN apt-get -qy update
 # Base tools
 RUN apt-get -qy install git nano wget
 # Build tools
-RUN apt-get -qy install cmake ninja-build build-essential doxygen clang-3.7
+RUN apt-get -qy install cmake ninja-build build-essential doxygen clang-3.7:i386
 # SWIG, just for giggles
-RUN apt-get -qy install swig
+RUN apt-get -qy install swig3:i386
 # RapidJSON for JSON parsing
-RUN apt-get -qy install rapidjson-dev
+RUN apt-get -qy install rapidjson-dev:i386
 # SDL2 libraries + dependencies
-RUN apt-get -qy install libsdl2-dev
+RUN apt-get -qy install libsdl2-dev:i386
 # OpenAL for audio
-RUN apt-get -qy install libopenal-dev
+RUN apt-get -qy install libopenal-dev:i386
 # ASIO for networking
-RUN apt-get -qy install libasio-dev 
+RUN apt-get -qy install libasio-dev
 # Unwind for stacktrace information
-RUN apt-get -qy install libunwind-dev
+RUN apt-get -qy install libunwind-dev:i386
 # FFMPEG for media playback/capture
-RUN apt-get -qy install libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev libswscale-dev
+RUN apt-get -qy install libavcodec-dev:i386 libavdevice-dev:i386 libavformat-dev:i386 libswresample-dev:i386 libswscale-dev:i386
 # Qt libraries
-RUN apt-get -qy install qt5-default
+RUN apt-get -qy install qt5-default:i386
 # PCL for point cloud data processing
-RUN apt-get -qy install libpcl-dev
+RUN apt-get -qy install libpcl-dev:i386
 
 #Create user directory + group
 RUN groupadd coffeeusers -g 1000
