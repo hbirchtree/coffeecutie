@@ -2,6 +2,7 @@
 if (NOT WIN32)
     # These are effectively used by Clang and GCC, descriptive names
     add_definitions (
+         -O3
 #        -Wall
 #        -Werror
 #        -Wpadded
