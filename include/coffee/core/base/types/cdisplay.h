@@ -16,7 +16,12 @@ struct CDWindow;
  */
 struct CDColorSpace
 {
-    CDColorSpace();
+    CDColorSpace():
+        red(0),
+        green(0),
+        blue(0)
+    {
+    }
 
     uint8 red     = 0;
     uint8 green   = 0;
@@ -29,7 +34,16 @@ struct CDColorSpace
  */
 struct CDContextBits
 {
-    CDContextBits();
+    CDContextBits():
+        accum(),
+        red(0),
+        green(0),
+        blue(0),
+        alpha(0),
+        depth(0),
+        stencil(0)
+    {
+    }
 
     CRGBA accum;
 
@@ -46,7 +60,15 @@ struct CDContextBits
  * \brief Monitor information
  */
 struct CDMonitor{
-    CDMonitor();
+    CDMonitor():
+        screenArea(),
+        name(nullptr),
+        phySize(0,0),
+        colorBits(),
+        refresh(0),
+        index(0)
+    {
+    }
 
     CRect           screenArea; /*!< Area occupied in window manager*/
     cstring         name; /*!< Name of monitor*/
@@ -60,7 +82,11 @@ struct CDMonitor{
  * \brief Window event
  */
 struct CDEvent{
-    CDEvent();
+    CDEvent():
+        type(),
+        ts(0)
+    {
+    }
 
     enum EventType : uint8
     {
@@ -88,8 +114,18 @@ typedef CSize CDResizeEvent;
  */
 struct CGLVersion : public _cbasic_version<uint8>
 {
-    CGLVersion();
-    CGLVersion(uint8 maj, uint8 min);
+    CGLVersion()
+    {
+        this->major = 0;
+        this->minor = 0;
+        this->revision = 0;
+    }
+    CGLVersion(uint8 maj, uint8 min)
+    {
+        this->major = maj;
+        this->minor = min;
+        this->revision = 0;
+    }
 };
 
 /*!
@@ -97,7 +133,10 @@ struct CGLVersion : public _cbasic_version<uint8>
  */
 struct CDStateEvent
 {
-    CDStateEvent();
+    CDStateEvent():
+        type()
+    {
+    }
 
     enum StateChange : uint8{
         Minimized   = 0x01,
@@ -117,7 +156,10 @@ struct CDStateEvent
  */
 struct CDFocusEvent
 {
-    CDFocusEvent();
+    CDFocusEvent():
+        mod()
+    {
+    }
 
     enum FocusMask : uint8
     {
@@ -135,7 +177,12 @@ C_FLAGS(CDFocusEvent::FocusMask,uint8);
  */
 struct GLProperties
 {
-    GLProperties();
+    GLProperties():
+        bits(),
+        flags(GLCoreProfile),
+        version(3,3)
+    {
+    }
 
     enum Flags : uint32{
         GLCoreProfile	    = 0x01, /*!< Set GL core profile*/

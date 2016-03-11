@@ -6,8 +6,6 @@
 #ifndef COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 #define COFFEE_CORE_PLAT_COMMAND_INTERFACE_H
 
-#include "../environment/environment_details.h"
-
 #if defined(COFFEE_USE_TERMINAL_CTL)
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -15,8 +13,6 @@
 
 namespace Coffee{
 namespace CmdInterface{
-
-using TermScreen = Env::TermScreen;
 
 struct CmdDef
 {

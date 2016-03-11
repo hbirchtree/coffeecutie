@@ -1,4 +1,4 @@
-#include "cblam_bitm_soft.h"
+#include <coffee/blam/volta/cblam_bitm_soft.h>
 
 namespace Coffee{
 namespace CBlam{

@@ -6,12 +6,3 @@ endif()
 if(COFFEE_BUILD_GLEAM)
     add_subdirectory(gleam)
 endif()
-
-set ( CoffeeGraphicsMisc_SRCS
-    )
-
-coffee_add_library ( CoffeeGraphicsMisc "${CoffeeGraphicsMisc_SRCS}" )
-
-target_link_libraries ( CoffeeGraphicsMisc
-        CoffeeCore
-    )

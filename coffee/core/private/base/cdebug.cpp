@@ -1,14 +1,8 @@
-#include <coffee/core/CDebug>
+#include <coffee/core/base/debug/debugprinter.h>
 
 namespace Coffee{
-namespace DebugFun{
 
-/* Defining storage for static variables */
-
-Mutex OutputPrinterDef::PrinterLock;
-Mutex DebuggingState::PrinterLock;
-
-}
+using namespace DebugFun;
 
 /* The below functions are exported to SWIG */
 
@@ -26,7 +20,7 @@ void cFatal(cstring f)
 }
 void cLog(cstring id, cstring msg)
 {
-    cBasicPrint("LOGR_EXTERNAL:{0}: {1}",id,msg);
+    DebugPrinter::cBasicPrint("LOGR_EXTERNAL:{0}: {1}",id,msg);
 }
 
 }

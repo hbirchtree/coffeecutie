@@ -6,6 +6,5 @@ coffee_add_example ( Template ${GLeamBaseTest_SRCS} )
 
 target_link_libraries ( Template
         CoffeeCore
-        CoffeeGraphicsMisc
         CoffeeGLeam
     )

@@ -7,8 +7,6 @@
 namespace Coffee{
 namespace UnixCmd{
 
-using TermScreen = Env::TermScreen;
-
 struct UnixTerm : CmdInterface::BasicTerm
 {
     static bool Interactive()
@@ -24,14 +22,14 @@ struct UnixTerm : CmdInterface::BasicTerm
     static void AltScreen()
     {
         fprintf(DefaultDebugOutputPipe,"\033[?1049h\033[H");
-        TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
+        alternate_buffer = !alternate_buffer;
     }
     static void ResetScreen()
     {
-        if(!TermScreen::UsingAlternateBuffer)
+        if(!alternate_buffer)
             return;
         fprintf(DefaultDebugOutputPipe,"\033[?1049l");
-        TermScreen::UsingAlternateBuffer = !TermScreen::UsingAlternateBuffer;
+        alternate_buffer = !alternate_buffer;
     }
     static CSize TerminalSize()
     {
@@ -39,6 +37,8 @@ struct UnixTerm : CmdInterface::BasicTerm
         ioctl(STDOUT_FILENO,TIOCGWINSZ,&w);
         return CSize(w.ws_col,w.ws_row);
     }
+private:
+    static bool alternate_buffer;
 };
 
 }

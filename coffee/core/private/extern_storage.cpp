@@ -1,4 +1,5 @@
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/plat/memory/cmd_unixterm.h>
 
 namespace Coffee{
 /* Don't mind this, just some string storage */
@@ -17,5 +18,12 @@ Mutex* Profiler::data_access_mutex = nullptr;
 Timestamp* Profiler::start_time = nullptr;
 Profiler::ThreadListing* Profiler::threadnames = nullptr;
 std::atomic_int *Profiler::global_init = nullptr;
+
+#if defined(COFFEE_USE_TERMINAL_CTL)
+bool UnixCmd::UnixTerm::alternate_buffer = false;
+#endif
+
+Mutex OutputPrinterDef::PrinterLock;
+Mutex DebuggingState::PrinterLock;
 
 }

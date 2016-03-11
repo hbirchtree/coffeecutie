@@ -2,4 +2,4 @@ set(NodeEdit_SRCS private/dialogs.cpp)
 
 coffee_add_library(CoffeeQtDialogs ${NodeEdit_SRCS})
 
-target_link_libraries(CoffeeQtDialogs QtShimCore)
+target_link_libraries(CoffeeQtDialogs CoffeeQtShimCore)

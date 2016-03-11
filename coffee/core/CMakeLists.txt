@@ -1,27 +1,19 @@
 set ( CoffeeCore_SRCS
 
     private/extern_storage.cpp
-    private/exit_handling.cpp
+#    private/exit_handling.cpp
     private/argument_handling.cpp
 
     private/coffee.cpp
     private/base/cdebug.cpp
-    private/base/cdisplay.cpp
     private/base/cfiles.cpp
-    private/base/cfilewatcher.cpp
     private/base/cobject.cpp
-
-    private/base/cdrendererbase.cpp
 
     private/profiler/profiling-export.cpp
 
     private/unit_tests/data_types.cpp
     private/unit_tests/micro_tests.cpp
 
-    private/input/cinputfunctions.cpp
-
-    private/plat/environment_details.cpp
-    private/plat/plat_file.cpp
     private/plat/linking/libraries.cpp
 
     # We slap tinyXML2 in here, just cause
@@ -83,5 +75,5 @@ if(WIN32)
     list ( APPEND CORE_EXTRA_LIBRARIES pathcch )
 endif()
 
-include_directories ( ${CORE_INCLUDE_DIR} )
+include_directories ( SYSTEM ${CORE_INCLUDE_DIR} )
 target_link_libraries ( CoffeeCore ${CORE_EXTRA_LIBRARIES} )

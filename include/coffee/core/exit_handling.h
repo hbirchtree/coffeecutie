@@ -1,6 +1,6 @@
 #pragma once
 
-#include "plat/platform_detect.h"
+#include "plat/plat_primary_identify.h"
 #include <signal.h>
 
 namespace Coffee{

@@ -53,19 +53,20 @@ struct SimpleIniParser : IniParserDef
 
 	int64& operator=(int64 const&v)
 	{
-	    v1 = v;
+            return v1 = v;
 	}
 	bigscalar& operator=(bigscalar const&v)
 	{
-	    v2 = v;
+            return v2 = v;
 	}
 	cstring operator=(cstring v)
 	{
-	    v3 = v;
+            v3 = v;
+            return v3.c_str();
 	}
 	bool& operator=(bool v)
 	{
-	    v4 = v;
+            return v4 = v;
 	}
 
     protected:

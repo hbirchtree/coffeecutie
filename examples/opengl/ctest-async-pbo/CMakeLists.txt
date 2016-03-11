@@ -6,6 +6,5 @@ coffee_add_example ( AsyncPbo ${AsyncPbo_SRCS} )
 
 target_link_libraries ( AsyncPbo
     CoffeeCore
-    CoffeeGraphicsMisc
     CoffeeOpenGL
     )

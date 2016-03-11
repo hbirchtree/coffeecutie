@@ -6,7 +6,6 @@ coffee_add_example ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
 
 target_link_libraries ( CoffeeTestHud
     CoffeeCore
-    CoffeeGraphicsMisc
     CoffeeOpenGL
     CoffeeGLeam
     )

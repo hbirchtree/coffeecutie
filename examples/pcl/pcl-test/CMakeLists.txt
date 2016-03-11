@@ -11,7 +11,6 @@ coffee_add_example ( CNectTest main2.cpp )
 target_link_libraries ( PCLTest
     CoffeeCore
     CoffeeImage
-    CoffeeGraphicsMisc
     CoffeePCL
     CoffeeNect
     )
@@ -19,7 +18,6 @@ target_link_libraries ( PCLTest
 target_link_libraries ( CNectTest
     CoffeeCore
     CoffeeImage
-    CoffeeGraphicsMisc
     CoffeeNect
     )
 

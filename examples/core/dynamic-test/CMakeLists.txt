@@ -15,7 +15,6 @@ target_link_libraries ( DynamicTest
 target_link_libraries ( DynamicLib
     CoffeeCore
     CoffeeOpenGL
-    CoffeeGraphicsMisc
     CoffeeImage
     CoffeeAudio
     )

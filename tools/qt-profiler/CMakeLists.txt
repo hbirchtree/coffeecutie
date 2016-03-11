@@ -9,6 +9,5 @@ coffee_add_example ( CoffeeProfiler "${CoffeeProfiler_SRCS}" )
 
 target_link_libraries ( CoffeeProfiler
     CoffeeCore
-    Qt5::Xml
-    QtShimCore
+    CoffeeQtShimCore
     )

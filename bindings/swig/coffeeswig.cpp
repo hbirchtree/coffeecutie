@@ -109,7 +109,7 @@ void exPrintProfilerData()
 
 void exExportProfilerData(const char* outfile)
 {
-    ExportProfilerData(outfile,Startup_argc,Startup_argv);
+    ExportProfilerData(outfile,GetInitArgs().argc,GetInitArgs().argv);
 }
 
 void Perf_PushContext(const char *name)
