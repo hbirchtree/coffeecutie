@@ -1,4 +1,4 @@
-#version 450 core
+#version 330 core
 
 layout(location=0)in vec3 pos;
 layout(location=1)in vec2 tex;
@@ -27,14 +27,15 @@ void main(void)
     vs_out.tc = tex*tex_mul[eyeId];
     gl_Position = transform[instance]*vec4(pos,1.0);
 
-    const vec4 eyeClipEdge[2] = {vec4(-1.0,0.0,0.0,1.0),vec4(1.0,0.0,0.0,1.0)};
-    const float eyeOffsetScale[2] = {-0.5,0.5};
-
-    vec4 clipPos = gl_Position;
+    const vec4 eyeClipEdge[2] = vec4[](vec4(-1.0,0.0,0.0,1.0),vec4(1.0,0.0,0.0,1.0));
+    const float eyeOffsetScale[2] = float[](-0.5,0.5);
 
     vec4 clipPlane = vec4(0.0);
     clipPlane.x = eyeOffsetScale[eyeId];
 
+    /* This lets us avoid having to fiddle with viewports or viewport arrays */
     gl_ClipDistance[0] = dot(gl_Position,clipPlane);
+
+    /* TODO: Fix culling, this could be important for perf */
     gl_CullDistance[0] = 1.0;
 }

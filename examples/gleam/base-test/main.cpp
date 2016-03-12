@@ -374,12 +374,17 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()
            ||GL::ViewportArraySupported()
-           ||GL::BufferStorageSupported()
-           ||CGL::CGL45::CullDistanceSupported()))
+           ||GL::BufferStorageSupported()))
     {
         cDebug("Unable to start: Required OpenGL extensions not found");
         return 1;
     }
+
+    if(!CGL::CGL45::CullDistanceSupported())
+    {
+        cDebug("Some optional extensions were not found. Your experience might suffer.");
+    }
+
     Profiler::Profile("Get GL requirements");
 
     cDebug("Device info: {0}",GL::Debug::Renderer());
