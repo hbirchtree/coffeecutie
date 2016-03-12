@@ -216,11 +216,11 @@ void CDRenderer::eventHandleI(const CIEvent &event, c_cptr data)
         const CIControllerAtomicEvent* jev = (const CIControllerAtomicEvent*)data;
         if(jev->axis)
         {
-            CIAxisFilter& filter = (jev->index == CK_AXIS_RIGHT_X)
-                    ? m_axisFilter[0] : m_axisFilter[1];
-            coffee_input_controller_rotate(
-                        &(game->transforms.cameras.d[0].rotation),
-                    jev,filter);
+//            CIAxisFilter& filter = (jev->index == CK_AXIS_RIGHT_X)
+//                    ? m_axisFilter[0] : m_axisFilter[1];
+//            coffee_input_controller_rotate(
+//                        &(game->transforms.cameras.d[0].rotation),
+//                    jev,filter);
         }
         else{
             switch(jev->index)
