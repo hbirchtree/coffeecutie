@@ -239,6 +239,7 @@ FORCEDINLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,Size>& m)
 }
 
 template<typename T>
+/* TODO: Fix this function!*/
 FORCEDINLINE _cbasic_tvector<T,4> get_translation(const _cbasic_tmatrix<T,4>& m)
 {
     return m[3];

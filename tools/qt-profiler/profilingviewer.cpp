@@ -10,7 +10,7 @@
 #include <QDebug>
 #include <QFileDialog>
 
-const constexpr cstring BaseTitle = "Espresso";
+#include <coffee_ext/qt_shim/qtinit.h>
 
 ProfilingViewer::ProfilingViewer(QWidget *parent) :
     QMainWindow(parent),
@@ -18,7 +18,8 @@ ProfilingViewer::ProfilingViewer(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    this->setWindowTitle(tr(BaseTitle));
+    CString aname = CoffeeExt::QtSystem::ApplicationName();
+    this->setWindowTitle(aname.c_str());
     setupTreeWidget(ui->profileTree);
 }
 
@@ -103,7 +104,9 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
 {
     /* Reset widgets and their states */
     tree->clear();
-    this->setWindowTitle(BaseTitle);
+
+    CString aname = CoffeeExt::QtSystem::ApplicationName();
+    this->setWindowTitle(aname.c_str());
 
     if(!fname||StrCmp(fname,""))
         return;
@@ -152,8 +155,10 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
 
 	if(datap)
 	{
+        CString aname = CoffeeExt::QtSystem::ApplicationName();
+
 	    QString title = QString("%1 - %2")
-		    .arg(BaseTitle)
+            .arg(aname.c_str())
 		    .arg(datap->Attribute("start2"));
 	    this->setWindowTitle(title);
 

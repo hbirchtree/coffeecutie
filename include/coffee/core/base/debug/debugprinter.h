@@ -91,7 +91,7 @@ struct DebugPrinterImpl : DebugPrinterDef
         CString prefix = cStringFormat("{0}:{1}:{2}",
                                        clock.c_str(),
                                        severity_str,
-                                       "funnystuff(void)");
+                                       Stacktracer::GetStackframeName(0));
 
         Colorize(prefix,Color::Blue,Color::Green);
 

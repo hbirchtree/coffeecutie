@@ -37,6 +37,16 @@ int QtSystem::Exec()
     return dialog_application->exec();
 }
 
+Coffee::CString QtSystem::ApplicationName()
+{
+    return QCoreApplication::applicationName().toStdString();
+}
+
+Coffee::CString QtSystem::OrganizationName()
+{
+    return QCoreApplication::organizationName().toStdString();
+}
+
 void QtSystem::SetApplicationName(Coffee::cstring name, Coffee::cstring orgname)
 {
     QCoreApplication::setApplicationName(name);

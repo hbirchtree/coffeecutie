@@ -196,6 +196,8 @@ struct CGL_Implementation
     {
         Blend,
 
+        ClipDistance,
+
         DebugOutput,
         DebugOutputSynchronous,
 
@@ -284,7 +286,7 @@ struct CGL_Implementation
     STATICINLINE CGenum to_enum(Severity s);
     STATICINLINE CGenum to_enum(DebugType t);
     STATICINLINE CGenum to_enum(Object t);
-    STATICINLINE CGenum to_enum(Feature f);
+    STATICINLINE CGenum to_enum(Feature f, uint32 offset = 0);
     STATICINLINE CGenum to_enum(Face f);
     STATICINLINE CGenum to_enum(BufBit f);
     STATICINLINE CGenum to_enum(Prim p,PrimCre c);
@@ -327,11 +329,11 @@ struct CGL_Implementation
     STATICINLINE CGpixfmt get_fmt(PixelFormat e, bool rev);
 
     /* Base OpenGL, all implemented in GL3.3 */
-    STATICINLINE void Enable(Feature e){glEnable(to_enum(e));}
-    STATICINLINE void Disable(Feature e){glDisable(to_enum(e));}
+    STATICINLINE void Enable(Feature e,uint32 o = 0){glEnable(to_enum(e,o));}
+    STATICINLINE void Disable(Feature e,uint32 o = 0){glDisable(to_enum(e,o));}
 
-    STATICINLINE void Enablei(Feature e,uint32 i){glEnablei(to_enum(e),i);}
-    STATICINLINE void Disablei(Feature e,uint32 i){glDisablei(to_enum(e),i);}
+    STATICINLINE void Enablei(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
+    STATICINLINE void Disablei(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
 
     STATICINLINE void ClearDepth(scalar f){glClearDepthf(f);}
     STATICINLINE void ClearStencil(int32 f){glClearStencil(f);}

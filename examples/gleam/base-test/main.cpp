@@ -90,54 +90,31 @@ public:
 
         Profiler::Profile("Create vertex buffers");
 
-        cstring vshader = {
-            "#version 330 core\n"
-            ""
-            "layout(location=0)in vec3 pos;"
-            "layout(location=1)in vec2 tex;"
-            ""
-            "out gl_PerVertex{"
-            "   vec4 gl_Position;"
-            "};"
-            "out VS_OUT{"
-            "   vec2 tc;"
-            "   flat int instance;"
-            "} vs_out;"
-            ""
-            "uniform mat4 transform[102];"
-            "uniform vec2 tex_mul[2];"
-            ""
-            "void main(void)"
-            "{"
-            "   vs_out.instance = gl_InstanceID;"
-            "   vs_out.tc = tex*tex_mul[gl_InstanceID%3];"
-            "   gl_Position = transform[gl_InstanceID]*vec4(pos,1.0);"
-            "}"
-        };
-        cstring fshader = {
-            "#version 330 core\n"
-            "in VS_OUT{"
-            "   vec2 tc;"
-            "   flat int instance;"
-            "} fs_in;"
-            ""
-            "layout(location = 0) out vec4 color;"
-            "uniform float mx;"
-            ""
-            "uniform sampler2DArray texdata;"
-            ""
-            "void main(void)"
-            "{"
-            "   vec4 c1 = texture(texdata,vec3(fs_in.tc,0));"
-            "   vec4 c2 = texture(texdata,vec3(fs_in.tc,1));"
-            "   vec4 amask = texture(texdata,vec3(fs_in.tc,2));"
-            "   float a1 = amask.a;"
-            "   if(mx>a1)"
-            "       color = c1;"
-            "   else"
-            "       color = c2;"
-            "}"
-        };
+        CString vshader_storage;
+        CString fshader_storage;
+
+        {
+            cstring shader_files[2] = {"vr/vshader.glsl","vr/fshader.glsl"};
+            for(int32 i=0;i<2;i++)
+            {
+                CResources::CResource shader_handle(shader_files[i]);
+                if(!CResources::FileMap(shader_handle))
+                    continue;
+
+                if(i==0)
+                {
+                    vshader_storage.insert(0,(cstring)shader_handle.data,shader_handle.size);
+                }else if(i==1)
+                {
+                    fshader_storage.insert(0,(cstring)shader_handle.data,shader_handle.size);
+                }
+
+                CResources::FileUnmap(shader_handle);
+            }
+        }
+
+        cstring vshader = vshader_storage.c_str();
+        cstring fshader = fshader_storage.c_str();
 
         GL::CGhnd vao;
         {
@@ -254,6 +231,11 @@ public:
         if(dev)
             cDebug("User's play area: {0}",dev->viewerSpace());
 
+        CGraphicsData::CTransform eyeTransform;
+        eyeTransform.scale = CVec3(0.5);
+
+        GL::Enable(GL::Feature::ClipDistance,0);
+
         while(!closeFlag())
         {
             scalar time = this->contextTime();
@@ -274,11 +256,17 @@ public:
             obj.position = CVec3(-1,0,0);
             if(dev)
                 testmat = dev->view(VR::Eye::Left);
-            objects[0] = cam_mat*testmat*CGraphicsData::GenTransform(obj);
+            objects[0] =
+                    cam_mat
+                    *testmat
+                    *CGraphicsData::GenTransform(obj);
             obj.position = CVec3(1,0,0);
             if(dev)
                 testmat = dev->view(VR::Eye::Right);
-            objects[1] = cam_mat*testmat*CGraphicsData::GenTransform(obj);
+            objects[1] =
+                    cam_mat
+                    *testmat
+                    *CGraphicsData::GenTransform(obj);
 
             GL::Uniformfv(vprogram,cam_unif,2,false,objects);
             GL::Uniformfv(fprogram,tim_unif,1,&time);
@@ -361,6 +349,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Object creation");
 
     CDProperties props = GetDefaultVisual();
+    props.gl.flags = props.gl.flags|GLProperties::GLDebug;
 
     Profiler::PushContext("Oculus setup");
     dev = nullptr;
@@ -385,8 +374,12 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()
            ||GL::ViewportArraySupported()
-           ||GL::BufferStorageSupported()))
+           ||GL::BufferStorageSupported()
+           ||CGL::CGL45::CullDistanceSupported()))
+    {
+        cDebug("Unable to start: Required OpenGL extensions not found");
         return 1;
+    }
     Profiler::Profile("Get GL requirements");
 
     cDebug("Device info: {0}",GL::Debug::Renderer());

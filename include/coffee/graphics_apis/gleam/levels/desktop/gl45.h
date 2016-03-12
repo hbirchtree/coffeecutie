@@ -20,6 +20,9 @@ struct CGL45 : CGL43
 
     STATICINLINE bool ImageStoreLoadSupported(){return false;}
 
+    STATICINLINE bool CullDistanceSupported()
+    {return Debug::CheckExtensionSupported("GL_ARB_cull_distance");}
+
     /*
      * Most functions here should use DSA
      *

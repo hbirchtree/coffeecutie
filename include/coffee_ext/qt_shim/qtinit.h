@@ -21,6 +21,8 @@ struct QtSystem : Coffee::Subsystem
 
     static int Exec();
 
+    static Coffee::CString ApplicationName();
+    static Coffee::CString OrganizationName();
     static void SetApplicationName(Coffee::cstring name, Coffee::cstring orgname = nullptr);
 };
 

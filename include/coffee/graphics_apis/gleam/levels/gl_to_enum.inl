@@ -107,7 +107,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 #endif
 
 inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::Feature f)
+        CGL_Implementation::Feature f, uint32 offset)
 {
     switch(f)
     {
@@ -175,6 +175,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     case Feature::SeamlessCubemap:
         return GL_TEXTURE_CUBE_MAP_SEAMLESS;
 #endif
+    case Feature::ClipDistance:
+        return GL_CLIP_DISTANCE0+offset;
     default:
         return GL_NONE;
     }

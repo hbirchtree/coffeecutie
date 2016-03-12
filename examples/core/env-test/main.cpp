@@ -14,22 +14,30 @@ using namespace CLibraryLoader;
 int32 coffee_main(int32, cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
+
+    Profiler::PushContext("Configuration data");
     {
         /* Check out system directory strings and user data directories */
         CString cfg_dir  = Env::GetUserData(
                     "hbirchtree",
                     "Best Coffee of All Time");
+        Profiler::Profile("Get userdata directory");
 
         CString app_dir  = Env::ApplicationDir();
         CString exe_name = Env::ExecutableName();
+        Profiler::Profile("Get application location");
 
         cDebug("Settings directory: {0}",cfg_dir);
         cDebug("Program directory:  {0}",app_dir);
         cDebug("Launching from      {0}",exe_name);
+        Profiler::Profile("Print some data");
 
         CResources::FileMkdir(cfg_dir.c_str(),true);
+        Profiler::Profile("Create directory recursively");
     }
+    Profiler::PopContext();
 
+    Profiler::PushContext("Matrix fun, part 1");
     {
         CGraphicsData::CTransform testt;
         testt.position = CVec3(3,3,3);
@@ -43,21 +51,32 @@ int32 coffee_main(int32, cstring_w*)
         testt.position = CVec3(3,3,2);
         testmat *= CGraphicsData::GenTransform(testt);
 
-        cDebug("Translation: {0}",get_translation(testmat));
-    }
+        CVec4 trans = get_translation(testmat);
+        Profiler::Profile("Acquire matrix translation");
 
+        cDebug("Translation: {0}",trans);
+    }
+    Profiler::PopContext();
+
+    Profiler::PushContext("Mini-benchmarks");
     {
-//        CoffeeTests::FunctionCallTest();
-//        CoffeeTests::PrintCallTest();
+        CoffeeTests::FunctionCallTest();
+        Profiler::Profile("Function calls");
+        CoffeeTests::PrintCallTest();
+        Profiler::Profile("Printing");
     }
+    Profiler::PopContext();
 
+    Profiler::PushContext("Size printing");
     {
         cDebug("uint64 size: {0}",sizeof(uint64));
         cDebug("int64 size: {0}",sizeof(int64));
         cDebug("uint32 size: {0}",sizeof(uint32));
         cDebug("int32 size: {0}",sizeof(int32));
     }
+    Profiler::PopContext();
 
+    Profiler::PushContext("System information");
     {
         cDebug("System memory: {0:1}GB",
                SysInfo::MemTotal()/CMath::pow<bigscalar>(1024,3));
@@ -68,13 +87,35 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("Frequency: {0:2}GHz",SysInfo::ProcessorFrequency());
         cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
         cDebug("FPU: {0}",SysInfo::HasFPU());
+        Profiler::Profile("Get system data");
+    }
+    Profiler::PopContext();
+
+    {
+        const uint32 testing_amount = 100;
+        CElapsedTimerMicro t;
+
+        /* Pushing context */
+        t.start();
+        for(uint32 i=0;i<testing_amount;i++)
+            Profiler::PushContext("Test context");
+        cDebug("Pushing context: {0}",t.elapsed());
+
+        t.start();
+        for(uint32 i=0;i<testing_amount;i++)
+            Profiler::Profile("Value");
+        cDebug("Profiling: {0}",t.elapsed());
+
+        /* Popping context */
+        t.start();
+        for(uint32 i=0;i<testing_amount;i++)
+            Profiler::PopContext();
+        cDebug("Popping context: {0}",t.elapsed());
     }
 
     /* Try creating an INI document */
+    Profiler::PushContext("INI document creation");
     {
-        CElapsedTimerMicro t;
-
-        t.start();
         INI::Document doc;
 
         INI::Section t1 = doc.newSection();
@@ -91,38 +132,39 @@ int32 coffee_main(int32, cstring_w*)
         t1->insertValue("hello2",v2);
         t1->insertValue("hello3",v3);
 
-        cDebug("Document creation: {0}",t.elapsed());
+        Profiler::Profile("Creating and setting values");
 
-        t.start();
         CResources::CResource rsc("testoutfile.ini");
-        cDebug("File object: {0}",t.elapsed());
+        Profiler::Profile("File object");
         INI::Write(doc,rsc);
-        cDebug("Document write: {0}",t.elapsed());
+        Profiler::Profile("Writing object to file");
         CResources::FileCommit(rsc,false,ResourceAccess::Discard);
-        cDebug("File save: {0}",t.elapsed());
+        Profiler::Profile("Committing file");
         CResources::FileFree(rsc);
-        cDebug("File free: {0}",t.elapsed());
-
+        Profiler::Profile("Free'ing file");
     }
+    Profiler::PopContext();
 
     /* Parsing an INI document */
+    Profiler::PushContext("INI document parsing");
     {
-        CElapsedTimerMicro t;
-
         CResources::CResource testfile("test.ini");
         CResources::FileMap(testfile);
+        Profiler::Profile("Mapping time");
 
-        t.start();
         INI::Document doc2 = INI::Read(testfile);
-        cDebug("Parsing time: {0}",t.elapsed());
+        Profiler::Profile("Reading time");
 
         CResources::CResource rsc("test.ini.ini");
         INI::Write(doc2,rsc);
         CResources::FileCommit(rsc);
         CResources::FileFree(rsc);
+        Profiler::Profile("Write-back");
 
         CResources::FileUnmap(testfile);
+        Profiler::Profile("Unmapping");
     }
+    Profiler::PopContext();
 
     return 0;
 

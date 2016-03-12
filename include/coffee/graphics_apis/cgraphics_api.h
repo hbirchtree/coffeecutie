@@ -1,7 +1,19 @@
 #ifndef COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
 #define COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/tdef/integertypes.h>
+
+#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/core/types/cdef/funtypes.h>
+#include <coffee/core/types/cdef/pixtypes.h>
+
+#include <coffee/core/types/cdef/timetypes.h>
+
+#include <coffee/core/types/edef/dbgenum.h>
+#include <coffee/core/types/edef/colorenum.h>
+#include <coffee/core/types/edef/logicenum.h>
+#include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/types/edef/resenum.h>
 
 namespace Coffee{
 namespace CRHI{
@@ -69,7 +81,7 @@ struct GraphicsAPI
         bool multiview(){return 0;}
         uint32 viewCount(){return 0;}
         CRect view(uint32){}
-        CZField64 depth(uint32){}
+        ZField64 depth(uint32){}
         CRect scissor(uint32){}
     };
 
@@ -80,10 +92,25 @@ struct GraphicsAPI
         bool sampleAlphaCoverage(){return 0;}
     };
 
-    struct DepthStencilState
+    struct DepthState
     {
+        using DepthFun = uint32;
+
         bool testDepth(){return 0;}
+        bool mask(){return 0;}
+        DepthFun fun(){return 0;}
+        ZField64 range(){return 0;}
+    };
+
+    struct StencilState
+    {
+        using StencilFunc = uint32;
+        using StencilOp = uint32;
+
         bool testStencil(){return 0;}
+        uint32 mask(){return 0;}
+        StencilFunc func(){return StencilFunc();}
+        StencilOp op(){return StencilOp();}
     };
 
     struct PixelProcessState
@@ -225,7 +252,8 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Rendering surface, can be rendered to by RenderTarget or used as texture. Should support PBO upload for OpenGL
+     * \brief Rendering surface, can be rendered to by RenderTarget or used as texture.
+     *  Should support PBO upload for OpenGL
      */
     struct Surface
     {
@@ -287,7 +315,18 @@ struct GraphicsAPI
         int32 indexOffset(){return 0;}
         int32 instanceOffset(){return 0;}
     };
-    static void Draw(DrawCall const&);
+
+    /*!
+     * \brief Draw primitives regardlessly
+     * \param d
+     */
+    static void Draw(DrawCall const& d);
+    /*!
+     * \brief Draw primitives with occlusion query
+     * \param d
+     * \param c
+     */
+    static void DrawConditional(DrawCall const& d,OccludeQuery const& c);
 
     struct Util
     {

@@ -102,22 +102,6 @@
       </widget>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QTreeView" name="profileView">
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
-      </property>
-      <property name="showDropIndicator" stdset="0">
-       <bool>false</bool>
-      </property>
-      <property name="alternatingRowColors">
-       <bool>true</bool>
-      </property>
-      <property name="animated">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">

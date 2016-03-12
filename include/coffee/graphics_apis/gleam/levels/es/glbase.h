@@ -1,11 +1,12 @@
 #ifndef COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 #define COFFEE_GRAPHICS_APIS_OPENGL_LEVELS_BASE_H
 
-#include <coffee/graphics_apis/gltypes.h>
+#include "../../../gltypes.h"
+
 #include <coffee/core/coffee_strings.h>
-#include <coffee/core/base/cdebug.h>
-#include <coffee/core/base/cdisplay.h>
-#include <coffee/core/types/composite_types.h>
+#include <coffee/core/CDebug>
+#include <coffee/core/plat/memory/cmemory.h>
+#include <coffee/core/base/types/cdisplay.h>
 
 #include <glad_es/glad.h>
 #include <glad_es/KHR/khrplatform.h>
@@ -380,7 +381,7 @@ struct CGL_Implementation
 
         static bool CheckExtensionSupported(cstring id)
         {
-            return CStrFind(s_ExtensionList.c_str(),id);
+            return StrFind(s_ExtensionList.c_str(),id);
         }
 
         //Variables
