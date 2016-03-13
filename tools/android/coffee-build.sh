@@ -11,7 +11,7 @@ else
 fi
 
 if [[ -e "$PROJECT_DIR/CMakeLists.txt" ]]; then
-	echo "Found CMakeLists.txt"
+	true
 else
 	echo "Failed to locate CMakeLists.txt"
 	exit 1
@@ -34,4 +34,5 @@ cmake "$PROJECT_DIR" -G "Ninja" \
 	-DSDL2_LIBRARY="$SDL2_LIBRARY_FILE" \
 	-DSDL2_INCLUDE_DIR="$SDL2_INCLUDE_DIR" \
 	-DCOFFEE_BUILD_GLES=ON \
+	-DCOFFEE_BUILD_OPENSSL=OFF \
 && ninja

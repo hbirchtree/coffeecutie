@@ -33,6 +33,11 @@ then
 	TC_DESTINATION="$OUTDIR/ndk-toolchain-$1-$ARCH/"
 	"$GENERATOR" --platform=android-$1 --install-dir="$TC_DESTINATION" --arch=$ARCH
 	
+	if [ $? -ne 0 ]
+	then
+		exit 1
+	fi
+	
 	echo "NDK_STANDALONE=$TC_DESTINATION" >> "$OUTDIR/linux-android-$1-$ARCH.rc"
 	echo "PATH=\$NDK_STANDALONE/bin:\$PATH" >> "$OUTDIR/linux-android-$1-$ARCH.rc"
 	

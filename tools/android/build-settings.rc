@@ -2,15 +2,15 @@
 
 # Base directories
 PROJECT_DIR="$HOME/project"
-BUILD_DIR="$HOME/build"
+BUILD_DIR="$HOME/android-build"
 
 # Stock SDL2 built for Android. Should have built it manually, but this is temporary.
-SDL2_INCLUDE_DIR="$HOME/lib/SDL2/include"
-SDL2_LIBRARY_FILE="$HOME/lib/SDL2/build/org.libsdl/libs/armeabi-v7a/libSDL2.so"
+SDL2_INCLUDE_DIR="$HOME/libs/include"
+SDL2_LIBRARY_FILE="$HOME/libs/armeabi-v7a/libSDL2.so"
 
 # OpenAL, typically sourced from https://github.com/AerialX/openal-soft-android
-AL_LIBRARY_FILE="$HOME/lib/openal-soft/libs/armeabi/libopenal.so"
-AL_INCLUDE_DIR="$HOME/lib/openal-soft/jni/OpenAL/include/"
+AL_LIBRARY_FILE="$HOME/libs/armeabi-v7a/libopenal.so"
+AL_INCLUDE_DIR="$HOME/libs/include/"
 
 # We are using a custom toolchain made for Android, sourced from https://github.com/taka-no-me/android-cmake
 ANDROID_TOOLCHAIN_FILE="$PROJECT_DIR/cmake/Toolchains/android.toolchain.cmake"

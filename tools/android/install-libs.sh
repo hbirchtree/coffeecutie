@@ -2,18 +2,26 @@
 
 source ./build-settings.rc
 
+basedir="./libs/"
+
+subdirs[0]="lib/armeabi-v7a"
+subdirs[1]="lib/arm64-v8a"
+subdirs[2]="include"
+
+for dr in ${subdirs[@]}
+do
+	mkdir -p "$dr"
+done
+
 ./openal-build.sh
 ./sdl-build.sh
 
-mkdir -p ./libs/
+include_directories[0]="$AL_INCLUDE_DIR"
+include_directories[1]="$SDL2_INCLUDE_DIR"
 
-mkdir -p ./build/libs/lib/
-mkdir -p ./build/libs/include/
-
-cp -r "$AL_INCLUDE_DIR" ./build/libs/include/
-cp -r "$SDL2_INCLUDE_DIR" ./build/libs/include/
-
-cp $HOME/libs/*.so ./build/libs/lib/
-cp $HOME/libs/*.a ./build/libs/lib/
+for inc in ${include_directories[@]}
+do
+	cp -r "$inc" ./libs/include/
+done
 
 exit 0
