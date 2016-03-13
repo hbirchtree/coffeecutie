@@ -17,7 +17,7 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
    - Tons of platform-abstraction, from files to networking (the latter is still WIP)
 
 
-# Platform support tl;dr:
+# Platform support tl;dr
  - Linux support is dandy, always maintained
  - Windows support is continuously broken as new functionality is added
  - Android support is always around the corner. Perpetually. Android is a beach.
