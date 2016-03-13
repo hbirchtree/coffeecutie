@@ -9,11 +9,12 @@ MAINTAINER H. Birch Tree
 
 ARG ndkver="10e"
 ARG sdkver="24.4.1"
+ARG sdktarget="19"
 
 # Install dependencies for Android SDK/NDK as well as build tools
 RUN dpkg --add-architecture i386
 RUN apt-get -qy update
-RUN apt-get -qy install openjdk-7-jdk mercurial git cmake swig usbutils openssl ninja-build make nano libc6:i386 libstdc++6:i386 wget
+RUN apt-get -qy install openjdk-8-jdk-headless mercurial git cmake swig usbutils openssl ninja-build make nano libc6:i386 libstdc++6:i386 wget ant
 
 # Create users for dev
 RUN groupadd coffeeusers -g 1000
@@ -36,7 +37,27 @@ RUN tar xvf android-sdk.tgz
 RUN ["/bin/bash","-c","( sleep 5 && while [ 1 ]; do sleep 1; echo y; done ) | android-sdk-linux/tools/android update sdk -s -u --filter 'tools,build-tools-23.0.2,platform-tools,android-19'"]
 RUN rm android-sdk.tgz
 
+# Install repositories for builds
+RUN mkdir /home/coffee/lib
+WORKDIR /home/coffee/lib
+
+RUN git clone https://github.com/apportable/openal-soft.git
+RUN git clone https://github.com/taka-no-me/android-cmake.git
+RUN hg clone http://hg.libsdl.org/SDL SDL2
+RUN git clone https://github.com/openssl/openssl.git
+
+# Specially for OpenSSL
+# Instructions taken from https://wiki.openssl.org/index.php/Android
+WORKDIR /home/coffee/lib/openssl
+
+ADD ssl-setenv-android.sh /home/coffee/lib/openssl/setenv-android.sh
+USER root
+RUN chmod +x setenv-android.sh
+USER coffee
+
 # Install some script-sauce to create our dev environment
+WORKDIR /home/coffee
+
 RUN ["/bin/bash","-c","echo '' >> .bashrc"]
 RUN ["/bin/bash","-c","echo 'export ANDROID_HOME=$HOME/android-sdk-linux' >> .bashrc"]
 RUN ["/bin/bash","-c","echo 'export ANDROID_SDK=$ANDROID_HOME' >> .bashrc"]
@@ -44,16 +65,26 @@ RUN ["/bin/bash","-c","echo 'export ANDROID_NDK=$HOME/android-ndk-linux' >> .bas
 RUN ["/bin/bash","-c","echo 'export PATH=$ANDROID_NDK:$ANDROID_SDK/tools:$ANDROID_SDK/platform-tools:$PATH' >> .bashrc"]
 RUN ["/bin/bash","-c","echo 'export ANDROID=$(which android)' >> .bashrc"]
 
-RUN mkdir lib
+ADD android-sdk-update.sh /home/coffee/android-sdk-update.sh
+ADD build-settings.rc /home/coffee/build-settings.rc
+# Instructions from: https://wiki.libsdl.org/Android
+ADD sdl-build.sh /home/coffee/sdl-build.sh
+# Instructions from: https://github.com/apportable/openal-soft
+ADD openal-build.sh /home/coffee/openal-build.sh
+ADD coffee-build.sh /home/coffee/coffee-build.sh
+ADD install-libs.sh /home/coffee/install-libs.sh
+ADD generate-toolchain.sh /home/coffee/generate-toolchain.sh
 
-WORKDIR /home/coffee/lib
-
-RUN git clone https://github.com/apportable/openal-soft.git
-RUN git clone https://github.com/taka-no-me/android-cmake.git
-RUN hg clone http://hg.libsdl.org/SDL SDL2
+USER root
+RUN chmod +x *.sh
+USER coffee
 
 # Set the final working directory and user
 WORKDIR /home/coffee
 USER coffee
 
 VOLUME ["/home/coffee/project","/home/coffee/bridge","/home/coffee/build"]
+
+USER root
+RUN chown coffee:coffee /home/coffee/build
+USER coffee
