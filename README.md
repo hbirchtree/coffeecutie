@@ -15,3 +15,20 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
    - Uses SDL2 for window creation, theoretically works on a toaster
    - Some type abstractions for the sake of porting ease (eg. int64 on Android)
    - Tons of platform-abstraction, from files to networking (the latter is still WIP)
+
+
+Platform support tl;dr:
+ - Linux support is dandy, always maintained
+ - Windows support is continuously broken as new functionality is added
+ - Android support is always around the corner. Perpetually. Android is a beach.
+ - OS X support is nowhere to be seen, but it might work with the current POSIX code. Linking with CMake needs to be fixed for threads and OpenGL
+ - iOS support is same as OS X or worse
+ - ReactOS might happen after Windows support
+ - WINE is also a possibility
+ - Wrapper code for Python, D-language and C# are in their early phases, currently support creation of windows and GL contexts, as well as clearing said GL context
+ - Symbian support might happen in a parallel universe where Symbian supports C++11
+ - Maemo crossed my mind months ago, and might happen if it support C++11
+ - Refrigerator port has yet to be realized, contributors appreciated
+ - Toaster edition might follow refrigerator port
+ - coffeecutie on a cob is off the table
+ - Java port will not happen
