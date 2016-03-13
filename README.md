@@ -20,8 +20,8 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
 # Platform support tl;dr
  - Linux support is dandy, always maintained
  - Windows support is continuously broken as new functionality is added
- - Android support is always around the corner. Perpetually. Android is a beach.
- - Android ARMv8 (ARM64) is being worked on in parallel to Android ARMv7
+ - Android support is always around the corner, and will only run with GLES3. Perpetually. Android is a beach.
+ - Android ARMv8 (ARM64) is being worked on in parallel to Android ARMv7.
  - OS X support is nowhere to be seen, but it might work with the current POSIX code. Linking with CMake needs to be fixed for threads and OpenGL
  - iOS support is same as OS X or worse
  - ReactOS might happen after Windows support
