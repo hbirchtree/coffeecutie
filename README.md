@@ -27,7 +27,7 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
  - WINE is also a possibility
  - Wrapper code for Python, D-language and C# are in their early phases, currently support creation of windows and GL contexts, as well as clearing said GL context
  - Symbian support might happen in a parallel universe where Symbian supports C++11
- - Maemo crossed my mind months ago, and might happen if it support C++11
+ - Maemo crossed my mind months ago, and might happen if it supports C++11
  - Refrigerator port has yet to be realized, contributors appreciated
  - Toaster edition might follow refrigerator port
  - coffeecutie on a cob is off the table
