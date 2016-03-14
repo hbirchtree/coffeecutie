@@ -34,7 +34,17 @@ struct RestClientImpl : ASIO_Client
 	CString payload;
     };
 
-    STATICINLINE std::future<RestResponse> RestRequestAsync(
+    STATICINLINE
+    /*!
+     * \brief Make a REST request in an asynchronous manner,
+     *  will run as task in the background
+     * \param context
+     * \param p
+     * \param h
+     * \param r
+     * \return
+     */
+    std::future<RestResponse> RestRequestAsync(
             AsioContext context, Protocol const& p, Host const& h, Request const& r)
     {
         std::function<RestResponse()> fun = [context,p,h,r]()
@@ -49,10 +59,15 @@ struct RestClientImpl : ASIO_Client
 
     STATICINLINE RestResponse RestRequest(Protocol p, Host h, Request r)
     {
+	/* For HTTP/S we use socket streams, because they are simple
+	 *  and neat to work with. Their complexity behind
+	 *  the scenes is no matter. */
         if(p==HTTP)
             return RestRequestHTTP(h,r);
-        else
+	else if(p==HTTPS)
             return RestRequestHTTPS(h,r);
+	else
+	    return RestResponse();
     }
 
     STATICINLINE RestResponse RestRequestHTTP(Host h, Request r)
@@ -111,18 +126,27 @@ struct RestClientImpl : ASIO_Client
     STATICINLINE CString GetContentType(RestResponse const& resp)
     {
         CString out;
-        CString query = "Content-Type: ";
+	/* TODO: Externalize this string
+	 *  and use compile-time string processing from C++14 */
+	CString query = "content-type:";
 
-        cstring b = StrFind(resp.header.c_str(),query.c_str());
+	/* We need to somewhat sanitize our input.
+	 *  We convert carriage return to newlines, for instance. */
+	CString data = Search::CStrReplace(resp.header,"\r","\n");
+	data = StrUtil::lower(data);
+
+	cDebug("Data: {0}",data);
+
+	cstring b = StrFind(data.c_str(),query.c_str());
         cstring e = nullptr;
         if(b)
         {
             b+=query.size();
-            e = StrFind(b,"\r\n");
+	    e = StrFind(b,"\n");
             if(!e)
                 return out;
-            out.resize(e-b);
-            MemCpy(&out[0],b,e-b);
+	    out.insert(0,b,e-b);
+	    StrUtil::trim(out);
         }
         return out;
     }

@@ -177,7 +177,7 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
         ovrBool m = m&ovrHmd_CreateDistortionMesh(
                     dev,(ovrEyeType)i,data->d_fov[i],dcaps,&data->d_meshes[i]);
 
-    if(!m)
+    if(m)
     {
         m_data = data;
     }else
@@ -229,6 +229,14 @@ CSize OculusVR::Device::resolution(Eye e, uint32 density) const
                 OculusContext->devices[m_idx],
                 t,m_data->d_fov[t],density);
     return CSize(sz.w,sz.h);
+}
+
+CRect OculusVR::Device::windowPos() const
+{
+    ovrHmd dev = OculusContext->devices[m_idx];
+    return CRect(dev->WindowsPos.x,dev->WindowsPos.y,
+                 dev->Resolution.w,
+                 dev->Resolution.h);
 }
 
 ZField OculusVR::Device::zfield() const

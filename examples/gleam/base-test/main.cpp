@@ -236,6 +236,14 @@ public:
 
         GL::Enable(GL::Feature::ClipDistance,0);
 
+        if(dev)
+        {
+            WM::SetDecorated(this->window(),false);
+            this->setWindowState(CDProperties::WindowedFullScreen);
+            this->setWindowPosition(dev->windowPos().topleft());
+            this->setWindowSize(dev->windowPos().size());
+        }
+
         while(!closeFlag())
         {
             scalar time = this->contextTime();
@@ -253,16 +261,16 @@ public:
             /* Update matrices */
             cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
 
-            obj.position = CVec3(-1,0,0);
+            obj.position = CVec3(-3,0,0);
             if(dev)
-                testmat = dev->view(VR::Eye::Left);
+                testmat = dev->view(VR::Eye::Left)*3;
             objects[0] =
                     cam_mat
                     *testmat
                     *CGraphicsData::GenTransform(obj);
-            obj.position = CVec3(1,0,0);
+            obj.position = CVec3(3,0,0);
             if(dev)
-                testmat = dev->view(VR::Eye::Right);
+                testmat = dev->view(VR::Eye::Right)*3;
             objects[1] =
                     cam_mat
                     *testmat
@@ -351,6 +359,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
 
+    /* The Oculus SDK configures some OpenGL state, so it needs to be done before any GL context is active */
     Profiler::PushContext("Oculus setup");
     dev = nullptr;
     {

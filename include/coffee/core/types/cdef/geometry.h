@@ -118,6 +118,23 @@ template<typename T> struct _cbasic_rect
         return y;
     }
 
+    FORCEDINLINE _cbasic_point<T> topleft() const
+    {
+	return _cbasic_point<T>(left(),top());
+    }
+    FORCEDINLINE _cbasic_point<T> topright() const
+    {
+	return _cbasic_point<T>(right(),top());
+    }
+    FORCEDINLINE _cbasic_point<T> bottomleft() const
+    {
+	return _cbasic_point<T>(left(),bottom());
+    }
+    FORCEDINLINE _cbasic_point<T> bottomright() const
+    {
+	return _cbasic_point<T>(right(),bottom());
+    }
+
     FORCEDINLINE T area() const
     {
         return w*h;
@@ -156,6 +173,10 @@ template<typename T> struct _cbasic_rect
         return _cbasic_rect<T>(this->x+point.x,
                                this->y+point.y,
                                this->w,this->h);
+    }
+    FORCEDINLINE _cbasic_size_2d<T> size() const
+    {
+	return _cbasic_size_2d<T>(w,h);
     }
 };
 

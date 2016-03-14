@@ -105,10 +105,22 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
     {
         _cbasic_tvector<T,Size> out(vec);
 
-        for(int i=0;i<Size;i++)
+	for(size_t i=0;i<Size;i++)
             out[i] = dot((*this)[i],vec);
 
         return out;
+    }
+
+    FORCEDINLINE _cbasic_tmatrix<T,Size> operator*(
+	    T const& scl)
+    {
+	_cbasic_tmatrix<T,Size> out(*this);
+
+	for(size_t i=0;i<Size;i++)
+	    for(size_t j=0;j<Size;j++)
+		out[i][j] *= scl;
+
+	return out;
     }
 };
 
@@ -244,7 +256,6 @@ FORCEDINLINE _cbasic_tvector<T,4> get_translation(const _cbasic_tmatrix<T,4>& m)
 {
     return m[3];
 }
-
 
 template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)

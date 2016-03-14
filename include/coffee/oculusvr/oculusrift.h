@@ -27,6 +27,8 @@ struct OculusVR : HMD::CHMD_Binding
 
         CSize resolution(Eye e, uint32 density = 1) const;
 
+	CRect windowPos() const;
+
         ZField zfield() const;
         FovDetail fov() const;
 
