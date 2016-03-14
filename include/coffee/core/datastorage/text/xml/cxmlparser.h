@@ -20,7 +20,7 @@ struct TinyXML2Impl
     using Element = tinyxml2::XMLElement;
 
     STATICINLINE Document* XMLRead(
-            const CResources::CResource& source)
+            const CResources::Resource& source)
     {
 		Document* doc = new Document;
 		doc->Parse((cstring)source.data,source.size);

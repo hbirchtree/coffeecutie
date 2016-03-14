@@ -43,7 +43,7 @@ target_link_libraries ( CoffeeSwigShim
     )
 
 # Link with some libraries
-set(COFFEE_LINKING CoffeeAudio CoffeeBlam CoffeeSwigShim )
+set(COFFEE_LINKING CoffeeOpenAL CoffeeBlam CoffeeSwigShim )
 
 add_subdirectory(csharp)
 add_subdirectory(dlang)

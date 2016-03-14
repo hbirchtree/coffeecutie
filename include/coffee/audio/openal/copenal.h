@@ -2,6 +2,9 @@
 #define COPENAL_HEADER
 
 #include <coffee/audio/caudio.h>
+#include <coffee/core/types/edef/dbgenum.h>
+#include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/types/vector_types.h>
 
 namespace Coffee{
 namespace CAudio{

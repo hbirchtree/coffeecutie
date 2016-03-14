@@ -52,7 +52,7 @@ public:
 
         for(uint32 i=0;i<3;i++)
         {
-            CResources::CResource rsc(textures[i]);
+            CResources::Resource rsc(textures[i]);
             CResources::FileMap(rsc);
 
             CStbImageLib::CStbImage img;
@@ -97,7 +97,7 @@ public:
             cstring shader_files[2] = {"vr/vshader.glsl","vr/fshader.glsl"};
             for(int32 i=0;i<2;i++)
             {
-                CResources::CResource shader_handle(shader_files[i]);
+                CResources::Resource shader_handle(shader_files[i]);
                 if(!CResources::FileMap(shader_handle))
                     continue;
 

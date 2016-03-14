@@ -133,7 +133,7 @@ int32 coffee_main(int32, cstring_w*)
 {
     FileResourcePrefix("sample_data/runescape-data/");
 
-    CResource idxfile("main_file_cache.idx0");
+    Resource idxfile("main_file_cache.idx0");
     FilePull(idxfile);
 
     RSCacheSectorHeader* t1 = (RSCacheSectorHeader*)idxfile.data;

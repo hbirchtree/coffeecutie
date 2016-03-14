@@ -8,9 +8,9 @@ namespace FFMedia{
 
 extern void FFInit(CFFMessageCallback callback = nullptr, bool silent = true);
 
-extern CFFStreamDescriptor GetStreamData(const CResource& source);
+extern CFFStreamDescriptor GetStreamData(const Resource& source);
 
-extern FFVideoPlayer* CreatePlayer(const CResource& source);
+extern FFVideoPlayer* CreatePlayer(const Resource& source);
 
 extern void FreePlayer(FFVideoPlayer* vplayer);
 

@@ -58,7 +58,7 @@ namespace CStbAudio{
  * \param smp Sample to load to
  * \param src Resource to load from
  */
-extern bool LoadVorbis(AudioSample* smp, CResources::CResource* src);
+extern bool LoadVorbis(AudioSample* smp, CResources::Resource* src);
 
 }
 

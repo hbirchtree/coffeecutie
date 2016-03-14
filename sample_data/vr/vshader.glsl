@@ -1,5 +1,5 @@
 #version 330 core
-#extension ARB_cull_distance : enable
+#extension GL_ARB_cull_distance : enable
 
 layout(location=0)in vec3 pos;
 layout(location=1)in vec2 tex;
@@ -7,7 +7,7 @@ layout(location=1)in vec2 tex;
 out gl_PerVertex{
     vec4 gl_Position;
     float gl_ClipDistance[1];
-#ifdef ARB_cull_distance
+#ifdef GL_ARB_cull_distance
     float gl_CullDistance[1];
 #endif
 };
@@ -39,8 +39,9 @@ void main(void)
     /* This lets us avoid having to fiddle with viewports or viewport arrays */
     gl_ClipDistance[0] = dot(gl_Position,clipPlane);
 
-#ifdef ARB_cull_distance
+#ifdef GL_ARB_cull_distance
     /* TODO: Fix culling, this could be important for perf */
+    /* For now, write 1.0 to it. This makes it not user-culled */
     gl_CullDistance[0] = 1.0;
 #endif
 }

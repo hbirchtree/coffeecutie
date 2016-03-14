@@ -13,7 +13,7 @@ struct IniParserDef
 {
     struct Document;
 
-    static Document Read(CResources::CResource const& source);
+    static Document Read(CResources::Resource const& source);
 };
 
 struct SimpleIniParser : IniParserDef
@@ -203,7 +203,7 @@ struct SimpleIniParser : IniParserDef
 	MultiMap<CString,section_t*> m_section_map;
     };
 
-    STATICINLINE document_t Read(CResources::CResource const& source,
+    STATICINLINE document_t Read(CResources::Resource const& source,
 			       bool unixmode = true)
     {
         const constexpr cstring sec_ld = "[";
@@ -321,7 +321,7 @@ struct SimpleIniParser : IniParserDef
     }
 
 
-    STATICINLINE bool Write(document_t const& doc,CResources::CResource& target)
+    STATICINLINE bool Write(document_t const& doc,CResources::Resource& target)
     {
 	const constexpr cstring linesep = "\n";
 

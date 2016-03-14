@@ -12,7 +12,7 @@
 namespace Coffee{
 namespace CStbImageLib{
 
-bool LoadData(CStbImage *target, const CResource *src, PixelComponents comp)
+bool LoadData(CStbImage *target, const Resource *src, PixelComponents comp)
 {
     int scomp = STBI_rgb_alpha;
 
@@ -43,7 +43,7 @@ bool LoadData(CStbImage *target, const CResource *src, PixelComponents comp)
 
 void _stbi_write_data(void *ctxt, void *data, int size)
 {
-    CResource* target = (CResource*)ctxt;
+    Resource* target = (Resource*)ctxt;
     target->size = size;
     target->data = Alloc(size);
     MemCpy(target->data,data,size);
@@ -61,19 +61,19 @@ bool Resize(CStbImage *img, const CSize &target, int channels)
     return img->data;
 }
 
-bool SavePNG(CResource *target, const CStbImageConst *src)
+bool SavePNG(Resource *target, const CStbImageConst *src)
 {
     return stbi_write_png_to_func(_stbi_write_data,target,
                                   src->size.w,src->size.h,
                                   src->bpp,src->data,src->size.w*4);
 }
 
-bool SavePNG(CResource *target, const CStbImage *src)
+bool SavePNG(Resource *target, const CStbImage *src)
 {
     return stbi_write_png_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data,src->size.w*4);
 }
 
-bool SaveTGA(CResource *target, const CStbImage *src)
+bool SaveTGA(Resource *target, const CStbImage *src)
 {
     return stbi_write_tga_to_func(_stbi_write_data,target,src->size.w,src->size.h,src->bpp,src->data);
 }

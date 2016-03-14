@@ -45,7 +45,7 @@ public:
 
         GL::VAOBind(vao);
 
-        CResources::CResource shader_file("cshader.glsl");
+        CResources::Resource shader_file("cshader.glsl");
         CResources::FileMap(shader_file);
 
         if(!shader_file.data)

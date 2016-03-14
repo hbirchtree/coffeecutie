@@ -77,7 +77,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Texture creation");
 
     {
-        CResources::CResource texfile("ctest_hud/particle_sprite.png");
+        CResources::Resource texfile("ctest_hud/particle_sprite.png");
         CResources::FileMap(texfile);
 
         CStbImageLib::CStbImage img;

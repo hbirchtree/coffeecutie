@@ -20,7 +20,7 @@ namespace Coffee {
 				return false;
 			}
 		};
-		struct WinFileFun : CResources::PlatFileFun
+                struct WinFileFun : CResources::CPlatFileFun
 		{
 			/*TODO: Implement Windows file mapping functions*/
 			STATICINLINE void* Map(cstring, ResourceAccess, szptr, szptr, int*)

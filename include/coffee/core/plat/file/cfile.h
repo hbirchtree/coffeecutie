@@ -13,12 +13,13 @@
 namespace Coffee{
 namespace CResources{
 
-struct PlatFileFun : FileFunDef
+struct CPlatFileFun : FileFunDef
 {
     struct FileHandle
     {
         FileHandle():
-            handle(nullptr)
+            handle(nullptr),
+            fd(0)
         {
         }
         ~FileHandle()
@@ -27,6 +28,7 @@ struct PlatFileFun : FileFunDef
                 fclose(handle);
         }
         FILE* handle;
+        int fd;
     };
 
     STATICINLINE CString NativePath(cstring fn)
@@ -66,7 +68,7 @@ struct PlatFileFun : FileFunDef
         CString fn_native = NativePath(fn);
         fh->handle = fopen(fn_native.c_str(),mode);
 
-        if(!fh->handle)
+        if(!fh->handle&&fh->fd<1)
         {
             delete fh;
             return nullptr;

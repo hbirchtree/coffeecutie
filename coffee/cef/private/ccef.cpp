@@ -76,7 +76,7 @@ public:
         texture_out.size.h = height;
         texture_out.data = (byte_t*)buffer;
 
-        CResources::CResource browser_bitm(outfile.c_str());
+        CResources::Resource browser_bitm(outfile.c_str());
 
         CStbImageLib::SavePNG(&browser_bitm,&texture_out);
 

@@ -17,10 +17,10 @@ int coffee_main(int32 argv,cstring_w* argc)
     cstring mapstring = "cblam_data/bloodgulch.map";
     if(!mapstring)
         return 1;
-    CResource mapfile(mapstring);
+    Resource mapfile(mapstring);
     if(!FileExists(mapfile))
         return 2;
-    CResource bitmfile("cblam_data/bitmaps.map");
+    Resource bitmfile("cblam_data/bitmaps.map");
     FileMap(bitmfile);
     if(!FileMap(mapfile))
         return 3;

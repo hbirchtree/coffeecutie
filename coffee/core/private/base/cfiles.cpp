@@ -27,7 +27,7 @@ CString coffee_file_get_dereferenced_path(cstring suffix)
 #endif
 }
 
-bool FileExists(const CResource &resc)
+bool FileExists(const Resource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
     FILE *f = fopen(resc.resource(),"r");
@@ -40,10 +40,14 @@ bool FileExists(const CResource &resc)
 #endif
 }
 
-bool FileMap(CResource &resc, ResourceAccess acc)
+bool FileMap(Resource &resc, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
     FileFun::FileHandle* h = FileFun::Open(resc.resource(),ResourceAccess::ReadOnly);
+
+    if(!h)
+        return false;
+
     resc.size = FileFun::Size(h);
     FileFun::Close(h);
     int err = 0;
@@ -59,7 +63,7 @@ bool FileMap(CResource &resc, ResourceAccess acc)
         return false;
     }
 
-    resc.flags = resc.flags|CResource::Mapped;
+    resc.flags = resc.flags|Resource::Mapped;
 
     return true;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
@@ -67,17 +71,17 @@ bool FileMap(CResource &resc, ResourceAccess acc)
 #endif
 }
 
-bool FileUnmap(CResource &resc)
+bool FileUnmap(Resource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
-    if(!(resc.flags&CResource::Mapped))
+    if(!(resc.flags&Resource::Mapped))
         return false;
 
     bool s = FileFun::Unmap(resc.data,resc.size);
     resc.data = nullptr;
     resc.size = 0;
 
-    resc.flags ^= CResource::Mapped;
+    resc.flags ^= Resource::Mapped;
 
     return s;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
@@ -85,9 +89,9 @@ bool FileUnmap(CResource &resc)
 #endif
 }
 
-void FileFree(CResource &resc)
+void FileFree(Resource &resc)
 {
-    if(!(resc.flags&CResource::FileIO))
+    if(!(resc.flags&Resource::FileIO))
         return;
 
     CFree(resc.data);
@@ -95,7 +99,7 @@ void FileFree(CResource &resc)
     resc.size = 0;
 }
 
-bool FilePull(CResource &resc, bool textmode, bool)
+bool FilePull(Resource &resc, bool textmode, bool)
 {
 #if defined(COFFEE_C_FILE_API)
     FileFun::FileHandle *fp = FileFun::Open(resc.resource(),ResourceAccess::ReadOnly);
@@ -111,7 +115,7 @@ bool FilePull(CResource &resc, bool textmode, bool)
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
 
-    resc.flags = resc.flags|CResource::FileIO;
+    resc.flags = resc.flags|Resource::FileIO;
 
     return true;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
@@ -119,7 +123,7 @@ bool FilePull(CResource &resc, bool textmode, bool)
 #endif
 }
 
-bool FileCommit(CResource &resc, bool append, ResourceAccess acc)
+bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
     FileFun::FileHandle *fp = FileFun::Open(
@@ -139,7 +143,7 @@ bool FileCommit(CResource &resc, bool append, ResourceAccess acc)
 #endif
 }
 
-CResource::CResource(cstring rsrc, bool absolute):
+Resource::Resource(cstring rsrc, bool absolute):
     m_resource(),
     data(nullptr),
     size(0),
@@ -152,7 +156,7 @@ CResource::CResource(cstring rsrc, bool absolute):
 
 }
 
-cstring CResource::resource() const
+cstring Resource::resource() const
 {
     return m_resource.c_str();
 }

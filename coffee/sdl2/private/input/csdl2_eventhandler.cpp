@@ -23,7 +23,7 @@ void SDL2EventHandler::inputPreInit()
 void SDL2EventHandler::inputInit()
 {
     /* If found, load game controller mappings from file */
-    CResources::CResource mapping("gamecontrollerdb.txt");
+    CResources::Resource mapping("gamecontrollerdb.txt");
     if(FileExists(mapping))
     {
         cMsg("SDL2","Found game controller mappings");

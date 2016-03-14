@@ -470,7 +470,7 @@ struct CGLUtil
         CGL33::TexGetImage(t,0,PixelComponents::RGBA,BitFormat::Byte,data);
         CGL33::TexBind(t,0);
 
-        CResources::CResource rsc(fn);
+        CResources::Resource rsc(fn);
 
         CStbImageLib::CStbImageConst img;
         img.bpp = 4;

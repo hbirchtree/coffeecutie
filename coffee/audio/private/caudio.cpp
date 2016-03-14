@@ -4,11 +4,13 @@
 #include <stb/stb_vorbis.c>
 #include <stb/stb.h>
 
+#include <coffee/core/CMath>
+
 namespace Coffee{
 namespace CAudio{
 namespace CStbAudio{
 
-bool LoadVorbis(CAudio::AudioSample *smp, CResources::CResource *src)
+bool LoadVorbis(CAudio::AudioSample *smp, CResources::Resource *src)
 {
     /* C is not so good with uint64 used by our resource format*/
     int data_size = src->size;

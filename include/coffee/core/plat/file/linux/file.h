@@ -4,87 +4,13 @@
 #ifndef COFFEE_CORE_PLAT_FILE_H
 #define COFFEE_CORE_PLAT_FILE_H
 
-#include "../cfile.h"
-#include <coffee/core/CTypes>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#include "../unix/file.h"
 
 namespace Coffee{
 namespace CResources{
 
-struct LinuxFileFun : PlatFileFun
+struct LinuxFileFun : PosixFileFun
 {
-private:
-    STATICINLINE int MappingFlags(ResourceAccess acc)
-    {
-        int mapping = 0;
-
-        if(feval(acc&(ResourceAccess::Persistent)))
-            mapping = MAP_SHARED;
-        else
-            mapping = MAP_PRIVATE;
-
-        if(feval(acc&ResourceAccess::HugeFile))
-            mapping |= MAP_HUGETLB;
-
-        if(feval(acc&ResourceAccess::ExclusiveLocking))
-            mapping |= MAP_LOCKED;
-
-        if(feval(acc&(ResourceAccess::Streaming)))
-            mapping |= MAP_POPULATE;
-        if(feval(acc&ResourceAccess::GreedyCache))
-            mapping |= MAP_POPULATE|MAP_LOCKED;
-        if(feval(acc&ResourceAccess::NoCache))
-            mapping |= MAP_NONBLOCK;
-
-        return mapping;
-    }
-    STATICINLINE int ProtFlags(ResourceAccess acc)
-    {
-        int prot = PROT_NONE;
-
-        if(feval(acc&(ResourceAccess::ReadOnly)))
-            prot |= PROT_READ;
-        if(feval(acc&ResourceAccess::WriteOnly))
-            prot |= PROT_WRITE;
-        if(feval(acc&ResourceAccess::Executable))
-            prot |= PROT_EXEC;
-
-        return prot;
-    }
-    STATICINLINE int PosixRscFlags(ResourceAccess acc)
-    {
-        int oflags = 0;
-
-        if(feval(acc&(ResourceAccess::ReadWrite)))
-        {
-            oflags = O_RDWR;
-
-            if(feval(acc&ResourceAccess::Discard))
-                oflags |= O_TRUNC;
-        }
-        else if(feval(acc&ResourceAccess::Executable))
-            oflags = O_RDONLY;
-        else if(feval(acc&(ResourceAccess::ReadOnly)))
-            oflags = O_RDONLY;
-        else if(feval(acc&(ResourceAccess::WriteOnly))||feval(acc&ResourceAccess::Append))
-        {
-            if(feval(acc&ResourceAccess::Append))
-                oflags = O_APPEND;
-            else
-                oflags = O_WRONLY;
-
-            if(feval(acc&ResourceAccess::Discard))
-                oflags |= O_TRUNC;
-        }
-
-        return oflags;
-    }
-
-public:
-
     STATICINLINE uint32 PageSize()
     {
         return sysconf(_SC_PAGE_SIZE)-1;

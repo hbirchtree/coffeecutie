@@ -136,12 +136,12 @@ AVFormatContext* ff_open_data(
         return ctxt;
 }
 
-CFFStreamDescriptor GetStreamData(const CResource &source)
+CFFStreamDescriptor GetStreamData(const Resource &source)
 {
 
 }
 
-FFVideoPlayer *CreatePlayer(const CResource &source)
+FFVideoPlayer *CreatePlayer(const Resource &source)
 {
     AVFormatContext* fmtCtxt = nullptr;
 

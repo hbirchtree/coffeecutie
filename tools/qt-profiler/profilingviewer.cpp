@@ -111,7 +111,7 @@ void ProfilingViewer::loadProfileLog(const char *fname, QTreeWidget* tree)
     if(!fname||StrCmp(fname,""))
         return;
 
-    CResources::CResource rsc(fname,true);
+    CResources::Resource rsc(fname,true);
 
     if(!CResources::FileExists(rsc))
     {

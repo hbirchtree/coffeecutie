@@ -9,7 +9,7 @@ namespace CResources{
 /*!
  * \brief A data resource which location cannot be changed.
  */
-struct CResource{
+struct Resource{
 private:
 
     CString m_resource; /*!< URL for the resource*/
@@ -19,7 +19,7 @@ public:
      * \param rsrc Path to resource
      * \param absolute False by default, true to not use global file redirection
      */
-    CResource(cstring rsrc = nullptr, bool absolute = false);
+    Resource(cstring rsrc = nullptr, bool absolute = false);
 
     void* data; /*!< Data pointer*/
     uint64 size; /*!< Data size*/
@@ -36,7 +36,7 @@ public:
     FileFlags flags;
 };
 
-C_FLAGS(CResource::FileFlags,int);
+C_FLAGS(Resource::FileFlags,int);
 
 /*!
  * \brief Easy redirection of all resources in the application. :)
@@ -45,35 +45,35 @@ C_FLAGS(CResource::FileFlags,int);
  */
 extern void FileResourcePrefix(cstring prefix);
 
-extern bool FileExists(const CResource& resc);
+extern bool FileExists(const Resource& resc);
 
 /*!
  * \brief Memory map file as buffer
  * \return True if success
  */
-extern bool FileMap(CResource& resc, ResourceAccess acc = ResourceAccess::ReadOnly);
+extern bool FileMap(Resource& resc, ResourceAccess acc = ResourceAccess::ReadOnly);
 /*!
  * \brief Unmap file
  * \return True if success
  */
-extern bool FileUnmap(CResource& resc);
+extern bool FileUnmap(Resource& resc);
 
 /*!
  * \brief Free data pointer
  */
-extern void FileFree(CResource &resc);
-extern bool FilePull(CResource &resc, bool textmode = false, bool bigendian = false);
+extern void FileFree(Resource &resc);
+extern bool FilePull(Resource &resc, bool textmode = false, bool bigendian = false);
 /*!
  * \brief Save data to file
  * \return
  */
-extern bool FileCommit(CResource& resc, bool append = false,
+extern bool FileCommit(Resource& resc, bool append = false,
 		       ResourceAccess acc = ResourceAccess::None);
 /*!
  * \brief Save data to file, append null-terminator
  * \return
  */
-extern void FileCommitTextmode(const CResource& resc, bool append = false);
+extern void FileCommitTextmode(const Resource& resc, bool append = false);
 
 /*!
  * \brief Create a directory
@@ -86,7 +86,7 @@ inline C_FORCE_INLINE bool FileMkdir(cstring dirname, bool recursive)
     return DirFun::MkDir(dirname,recursive);
 }
 
-inline C_FORCE_INLINE CByteData FileGetDescriptor(CResource& resc)
+inline C_FORCE_INLINE CByteData FileGetDescriptor(Resource& resc)
 {
     CByteData d;
     d.data = (byte_t*)resc.data;

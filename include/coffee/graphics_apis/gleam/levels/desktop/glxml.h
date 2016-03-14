@@ -18,7 +18,7 @@ struct CGLXML
     {
         Lock lock(doc_mutex);
 
-        CResources::CResource xml(fn);
+        CResources::Resource xml(fn);
         if(!CResources::FileExists(xml))
             return false;
         CResources::FilePull(xml,true);

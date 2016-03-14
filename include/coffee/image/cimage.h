@@ -39,7 +39,7 @@ extern void Error();
  * \return True if success
  */
 extern bool LoadData(CStbImage* target,
-                     const CResource* src,
+                     const Resource* src,
                      PixelComponents comp = PixelComponents::RGBA);
 /*!
  * \brief Function used by STB to write data into resource. Allocates and copies data into resource.
@@ -69,7 +69,7 @@ extern bool Resize(
  * \return
  */
 extern bool SavePNG(
-        CResource* target,
+        Resource* target,
         const CStbImageConst* src);
 /*!
  * \brief Save STB image to PNG file
@@ -78,7 +78,7 @@ extern bool SavePNG(
  * \return
  */
 extern bool SavePNG(
-        CResource* target,
+        Resource* target,
         const CStbImage* src);
 /*!
  * \brief Save STB image to TGA file
@@ -87,7 +87,7 @@ extern bool SavePNG(
  * \return
  */
 extern bool SaveTGA(
-        CResource* target,
+        Resource* target,
         const CStbImage* src);
 
 /*!

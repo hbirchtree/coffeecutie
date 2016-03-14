@@ -134,7 +134,7 @@ int32 coffee_main(int32, cstring_w*)
 
         Profiler::Profile("Creating and setting values");
 
-        CResources::CResource rsc("testoutfile.ini");
+        CResources::Resource rsc("testoutfile.ini");
         Profiler::Profile("File object");
         INI::Write(doc,rsc);
         Profiler::Profile("Writing object to file");
@@ -148,14 +148,14 @@ int32 coffee_main(int32, cstring_w*)
     /* Parsing an INI document */
     Profiler::PushContext("INI document parsing");
     {
-        CResources::CResource testfile("test.ini");
+        CResources::Resource testfile("test.ini");
         CResources::FileMap(testfile);
         Profiler::Profile("Mapping time");
 
         INI::Document doc2 = INI::Read(testfile);
         Profiler::Profile("Reading time");
 
-        CResources::CResource rsc("test.ini.ini");
+        CResources::Resource rsc("test.ini.ini");
         INI::Write(doc2,rsc);
         CResources::FileCommit(rsc);
         CResources::FileFree(rsc);
