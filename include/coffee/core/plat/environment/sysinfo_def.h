@@ -25,12 +25,20 @@ struct SysInfoDef
      * \brief CPU count in total
      * \return
      */
-    static uint32 CpuCount();
+    STATICINLINE uint32 CpuCount()
+    {
+        return 0;
+    }
+
     /*!
      * \brief CPU core count in total, all CPUs
      * \return
      */
-    static uint32 CoreCount();
+    STATICINLINE uint32 CoreCount()
+    {
+        return 0;
+    }
+
     /*!
      * \brief CPU thread count in total, all CPUs
      * \return
@@ -71,69 +79,106 @@ struct SysInfoDef
      * \brief Whether system supports virtual memory
      * \return
      */
-    static bool MemVirtualAvailable();
+    STATICINLINE bool MemVirtualAvailable()
+    {
+        return true;
+    }
+
     /*!
      * \brief Total amount of memory in system
      * \return
      */
-    static int64 MemTotal();
+    STATICINLINE int64 MemTotal()
+    {
+        return 0;
+    }
+
     /*!
      * \brief Available free memory that can be used
      * \return
      */
-    static int64 MemAvailable();
+    STATICINLINE int64 MemAvailable()
+    {
+        return 0;
+    }
 
     /*!
      * \brief Total amount of swap in system
      * \return
      */
-    static int64 SwapTotal();
+    STATICINLINE int64 SwapTotal()
+    {
+        return 0;
+    }
+
     /*!
      * \brief Available free swap space in system, not very useful, system-managed
      * \return
      */
-    static int64 SwapAvailable();
+    STATICINLINE int64 SwapAvailable()
+    {
+        return 0;
+    }
 
     /*!
      * \brief Info about the system's processor
      * \return
      */
-    static HWDeviceInfo Processor();
+    STATICINLINE HWDeviceInfo Processor()
+    {
+        return HWDeviceInfo("Generic Processor","0x0");
+    }
 
     /*!
      * \brief Current processor frequency in GHz, allowed to be inaccurate if hardware clocks particular cores differently
      * \return
      */
-    static bigscalar ProcessorFrequency();
+    STATICINLINE bigscalar ProcessorFrequency()
+    {
+        return 1.0;
+    }
 
     /*!
      * \brief Whether the system has an FPU, has a great impact on floating-point calculations
      * \return
      */
-    static bool HasFPU();
+    STATICINLINE bool HasFPU()
+    {
+        return false;
+    }
 
     /*!
      * \brief Cache size can be used to optimize tight loops, or just to make screens look tacky
      * \return
      */
-    static int64 ProcessorCacheSize();
+    STATICINLINE int64 ProcessorCacheSize()
+    {
+        return 0;
+    }
 
     /*!
      * \brief Useful in correlation to core count
      * \return
      */
-    static bool HasHyperThreading();
+    STATICINLINE bool HasHyperThreading()
+    {
+        return false;
+    }
 
     /*!
      * \brief Reports networking status
      * \return
      */
-    static NetStatusFlags NetStatus();
+    STATICINLINE NetStatusFlags NetStatus()
+    {
+        return NetStatLocalOnly;
+    }
 };
 
 }
 
 #endif
 
+#include "android/sysinfo.h"
 #include "linux/sysinfo.h"
 #include "windows/sysinfo.h"

@@ -1,5 +1,14 @@
 #pragma once
 
+#include "../platform_detect.h"
+
+#ifdef COFFEE_ANDROID
+namespace std{
+#include <stdlib.h>
+}
+#else
+#include <cstdlib>
+#endif
 #include <cstring>
 
 #include "memory_ops.h"

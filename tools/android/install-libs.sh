@@ -10,14 +10,14 @@ subdirs[2]="include"
 
 for dr in ${subdirs[@]}
 do
-	mkdir -p "$dr"
+	mkdir -p "$basedir/$dr"
 done
 
 ./openal-build.sh
 ./sdl-build.sh
 
-include_directories[0]="$AL_INCLUDE_DIR"
-include_directories[1]="$SDL2_INCLUDE_DIR"
+include_directories[0]="$HOME/lib/openal-soft/jni/OpenAL/include/AL"
+include_directories[1]="$HOME/lib/SDL2/include/SDL*.h"
 
 for inc in ${include_directories[@]}
 do

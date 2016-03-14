@@ -16,22 +16,55 @@ struct EnvInterface
 	static bool UsingAlternateBuffer;
     };
 
-    static CString ExecutableName(cstring_w = nullptr);
-    static CString GetVar(cstring);
-    static bool SetVar(cstring, cstring);
-    static bool UnsetVar(cstring);
-    static bool ClearEnv();
+    STATICINLINE CString ExecutableName(cstring_w = nullptr)
+    {
+        return CString();
+    }
+    STATICINLINE CString GetVar(cstring)
+    {
+        return CString();
+    }
+    STATICINLINE bool SetVar(cstring, cstring)
+    {
+        return false;
+    }
+    STATICINLINE bool UnsetVar(cstring)
+    {
+        return false;
+    }
+    STATICINLINE bool ClearEnv()
+    {
+        return false;
+    }
 
-    static CString GetPathSep();
-    static CString ConcatPath(cstring, cstring);
-    static CString GetUserHome();
+    STATICINLINE CString GetPathSep()
+    {
+        return CString();
+    }
+    STATICINLINE CString ConcatPath(cstring, cstring)
+    {
+        return CString();
+    }
+    STATICINLINE CString GetUserHome()
+    {
+        return CString();
+    }
 
-    static CString GetUserData(cstring, cstring);
+    STATICINLINE CString GetUserData(cstring, cstring)
+    {
+        return CString();
+    }
 
-    static CString ApplicationDir();
-    static CString CurrentDir();
+    STATICINLINE CString ApplicationDir()
+    {
+        return CString();
+    }
+    STATICINLINE CString CurrentDir()
+    {
+        return CString();
+    }
 
-    static Variables Environment()
+    STATICINLINE Variables Environment()
     {
         return Variables();
     }
@@ -90,5 +123,6 @@ struct EnvColorCodes
 
 #endif
 
+#include "android/environment.h"
 #include "unix/environment.h"
 #include "windows/environment.h"

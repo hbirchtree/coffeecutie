@@ -1,6 +1,6 @@
 #include "../../platform_detect.h"
 
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
 #ifndef COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
 #define COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
 
@@ -10,7 +10,9 @@
 #include <libgen.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
+
+#include <cstdlib>
+
 #include <limits.h>
 
 extern char** environ;
@@ -30,19 +32,19 @@ struct PosixEnvironmentFun : EnvInterface
 
     STATICINLINE CString GetVar(cstring var)
     {
-	return getenv(var);
+        return std::getenv(var);
     }
     STATICINLINE bool SetVar(cstring var, cstring val)
     {
-	return setenv(var,val,1)==0;
+        return setenv(var,val,1)==0;
     }
     STATICINLINE bool UnsetVar(cstring var)
     {
-	return unsetenv(var)==0;
+        return unsetenv(var)==0;
     }
     STATICINLINE bool ClearEnv()
     {
-	return clearenv()==0;
+        return clearenv()==0;
     }
 
     STATICINLINE CString GetPathSep()

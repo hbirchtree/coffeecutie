@@ -29,9 +29,16 @@
 #define C_FORCE_INLINE
 #endif
 
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#define C_FORCE_NOTINLINE __attribute__((noinline))
+#else
+#define C_FORCE_NOTINLINE
+#endif
+
 #define STATICINLINE inline C_FORCE_INLINE static
 #define FORCEDINLINE inline C_FORCE_INLINE
 #define PACKEDSTRUCT struct C_FORCE_PACKING
+#define DENYINLINE C_FORCE_NOTINLINE
 
 #endif
 

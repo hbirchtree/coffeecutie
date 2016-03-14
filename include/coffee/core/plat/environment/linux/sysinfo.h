@@ -1,6 +1,6 @@
 #include "../../platform_detect.h"
 
-#ifdef COFFEE_LINUX
+#if defined(COFFEE_LINUX)
 #ifndef COFFEE_CORE_PLAT_ENV_SYSINFO_H
 #define COFFEE_CORE_PLAT_ENV_SYSINFO_H
 
@@ -8,7 +8,6 @@
 #include "../sysinfo_def.h"
 
 #include <sys/sysinfo.h>
-#include <sys/procfs.h>
 #include <unistd.h>
 
 namespace Coffee{

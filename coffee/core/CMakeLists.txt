@@ -23,15 +23,14 @@ set ( CoffeeCore_SRCS
 set ( CORE_INCLUDE_DIR )
 set ( CORE_EXTRA_LIBRARIES )
 
-# OpenSSL used for ASIO networking
-find_package(OpenSSL REQUIRED)
-list ( APPEND CORE_INCLUDE_DIR
-    ${OPENSSL_INCLUDE_DIR}
-    )
-
-coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
-
-list ( APPEND CORE_EXTRA_LIBRARIES ${OPENSSL_LIBRARIES} )
+if(COFFEE_BUILD_OPENSSL)
+    # OpenSSL used for ASIO networking
+    find_package(OpenSSL REQUIRED)
+    list ( APPEND CORE_INCLUDE_DIR
+        ${OPENSSL_INCLUDE_DIR}
+        )
+    list ( APPEND CORE_EXTRA_LIBRARIES ${OPENSSL_LIBRARIES} )
+endif()
 
 # Platform-specific target options
 
@@ -75,5 +74,6 @@ if(WIN32)
     list ( APPEND CORE_EXTRA_LIBRARIES pathcch )
 endif()
 
+coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
 include_directories ( SYSTEM ${CORE_INCLUDE_DIR} )
 target_link_libraries ( CoffeeCore ${CORE_EXTRA_LIBRARIES} )
