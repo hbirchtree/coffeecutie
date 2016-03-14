@@ -16,5 +16,5 @@ target_link_libraries ( DynamicLib
     CoffeeCore
     CoffeeOpenGL
     CoffeeImage
-    CoffeeAudio
+    CoffeeOpenAL
     )

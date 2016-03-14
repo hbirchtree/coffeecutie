@@ -3,25 +3,29 @@
 namespace Coffee{
 namespace GenericMedia{
 
-struct MediaDecoderDef
+struct MediaCoderDef
 {
     enum StreamType
     {
+        UndefStream,
         VideoStream,
         AudioStream,
-        SubtitleStream,
+        SubtlStream,
     };
 
     struct Source;
     struct Context;
     struct Stream;
 
+    struct Decoder;
+    struct Encoder;
+
     struct AudioFormat;
-    struct SubtitleFormat;
+    struct SubtlFormat;
     struct VideoFormat;
 
     struct AudioPacket;
-    struct SubtitlePacket;
+    struct SubtlPacket;
     struct VideoPacket;
 };
 

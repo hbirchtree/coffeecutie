@@ -1,9 +1,9 @@
 #ifndef COFFEE_CORE_DIALOGS_FUNCTIONAL_H
 #define COFFEE_CORE_DIALOGS_FUNCTIONAL_H
 
-#include "../coffee_macros.h"
-#include "../types/composite_types.h"
-#include "../base/threading/cthreading.h"
+#include <coffee/core/coffee_macros.h>
+#include <coffee/core/types/composite_types.h>
+#include <coffee/core/base/threading/cthreading.h>
 
 namespace Coffee{
 

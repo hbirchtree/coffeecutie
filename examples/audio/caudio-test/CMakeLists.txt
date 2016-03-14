@@ -2,10 +2,10 @@ set ( CoffeeAudioTest_SRCS
     main.cpp
     )
 
-coffee_add_example ( CoffeeAudioTest ${CoffeeAudioTest_SRCS} )
+coffee_add_example ( OpenALAudioTest ${CoffeeAudioTest_SRCS} )
 
-target_link_libraries ( CoffeeAudioTest
+target_link_libraries ( OpenALAudioTest
     CoffeeCore
-    CoffeeAudio
+    CoffeeOpenAL
     CoffeeOpenGL
     )

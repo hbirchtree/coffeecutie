@@ -1,7 +1,7 @@
 #ifndef COFFEE_AUDIO_OPENAL_SOUNDCOMMON_H
 #define COFFEE_AUDIO_OPENAL_SOUNDCOMMON_H
 
-#include "../../caudiomixer.h"
+#include <coffee/interfaces/caudiomixer_api.h>
 #include "../../openal/copenal.h"
 
 namespace Coffee{

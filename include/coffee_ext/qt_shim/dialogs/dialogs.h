@@ -1,4 +1,4 @@
-#include <coffee/core/display/cdialog_fun.h>
+#include <coffee/interfaces/cdialog_api.h>
 
 namespace CoffeeExt{
 namespace QtDialogs{

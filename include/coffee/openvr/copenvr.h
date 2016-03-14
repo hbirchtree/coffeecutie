@@ -2,7 +2,7 @@
 #define COFFEE_OPENVR_OPENVR_H
 
 #include <coffee/core/CDebug>
-#include <coffee/graphics_apis/chmd_api.h>
+#include <coffee/interfaces/chmd_api.h>
 
 namespace Coffee{
 namespace OpenVRFun{

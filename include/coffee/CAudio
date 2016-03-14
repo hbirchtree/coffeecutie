@@ -1,4 +1,4 @@
 #include "audio/caudio.h"
 #include "audio/openal/copenal.h"
-#include "audio/caudiomixer.h"
+#include <coffee/interfaces/caudiomixer_api.h>
 #include "audio/abstraction/openal/copenalabstract.h"

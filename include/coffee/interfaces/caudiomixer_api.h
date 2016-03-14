@@ -1,7 +1,8 @@
 #ifndef COFFEE_AUDIO_MIXER_H
 #define COFFEE_AUDIO_MIXER_H
 
-#include <coffee/core/CBase>
+#include <coffee/core/CObject>
+#include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
 namespace CAudio{

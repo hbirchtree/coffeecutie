@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/graphics_apis/chmd_api.h>
+#include <coffee/interfaces/chmd_api.h>
 
 namespace Coffee{
 namespace OculusRift{

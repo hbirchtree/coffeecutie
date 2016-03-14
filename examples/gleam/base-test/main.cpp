@@ -190,8 +190,10 @@ public:
 
             /* Acquire texture uniforms */
             cam_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"transform");
-            int32 texm_unif = GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"tex_mul");
-            int32 tex_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"texdata");
+            int32 texm_unif =
+                    GL::ProgramGetResourceLoc(vprogram,GL_UNIFORM,"tex_mul");
+            int32 tex_unif =
+                    GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"texdata");
             tim_unif = GL::ProgramGetResourceLoc(fprogram,GL_UNIFORM,"mx");
 
             int32 tex_bind = 0;
@@ -238,10 +240,10 @@ public:
 
         if(dev)
         {
-            WM::SetDecorated(this->window(),false);
-            this->setWindowState(CDProperties::WindowedFullScreen);
-            this->setWindowPosition(dev->windowPos().topleft());
-            this->setWindowSize(dev->windowPos().size());
+//            WM::SetDecorated(this->window(),false);
+//            this->setWindowState(CDProperties::WindowedFullScreen);
+//            this->setWindowPosition(dev->windowPos().topleft());
+//            this->setWindowSize(dev->windowPos().size());
         }
 
         while(!closeFlag())

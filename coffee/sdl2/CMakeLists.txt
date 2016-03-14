@@ -13,6 +13,12 @@ set ( CoffeeSDL2_SRCS
     private/windowing/sdl2helpers.cpp
     )
 
+set ( CoffeeSDL2Audio_SRCS
+
+    private/audio/csdl2_audio.cpp
+
+    )
+
 find_package ( SDL2 REQUIRED)
 
 if(NOT SDL2_FOUND)
@@ -29,3 +35,5 @@ target_link_libraries( CoffeeSDL2
     CoffeeCore
     ${SDL2_LIBRARY}
     )
+
+coffee_add_library ( CoffeeSDL2Audio "${CoffeeSDL2Audio_SRCS}" )

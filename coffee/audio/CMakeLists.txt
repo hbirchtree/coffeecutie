@@ -23,9 +23,9 @@ set ( CoffeeAudio_SRCS
 
 include_directories(${OPENAL_INCLUDE_DIR})
 
-coffee_add_library ( CoffeeAudio "${CoffeeAudio_SRCS}" )
+coffee_add_library ( CoffeeOpenAL "${CoffeeAudio_SRCS}" )
 
-target_link_libraries ( CoffeeAudio
+target_link_libraries ( CoffeeOpenAL
     CoffeeCore
     ${OPENAL_LIBRARY}
     )

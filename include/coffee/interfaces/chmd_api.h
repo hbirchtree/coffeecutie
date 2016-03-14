@@ -2,7 +2,7 @@
 #define COFFEE_GRAPHICS_APIS_HMD_API_H
 
 #include <coffee/core/types/graphics_types.h>
-#include "gltypes.h"
+#include <coffee/graphics_apis/gltypes.h>
 
 namespace Coffee{
 namespace HMD{
