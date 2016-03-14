@@ -11,36 +11,36 @@ template<typename T, size_t Size> struct _cbasic_tvector
 {
     static constexpr size_t size = Size;
 
-    _cbasic_tvector()
+    FORCEDINLINE _cbasic_tvector()
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] = T(0);
     }
-    _cbasic_tvector(const T& c)
+    FORCEDINLINE _cbasic_tvector(const T& c)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] = c;
     }
-    _cbasic_tvector(const _cbasic_tvector<T,Size>& vector)
+    FORCEDINLINE _cbasic_tvector(const _cbasic_tvector<T,Size>& vector)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] = vector[i];
     }
     template<class = typename std::enable_if<Size==2>>
-    _cbasic_tvector(const T& x, const T& y)
+    FORCEDINLINE _cbasic_tvector(const T& x, const T& y)
     {
         this->x() = x;
         this->y() = y;
     }
     template<class = typename std::enable_if<Size==3>>
-    _cbasic_tvector(const T& x, const T& y,const T& z)
+    FORCEDINLINE _cbasic_tvector(const T& x, const T& y,const T& z)
     {
         this->x() = x;
         this->y() = y;
         this->z() = z;
     }
     template<class = typename std::enable_if<Size==4>>
-    _cbasic_tvector(const T& x, const T& y,const T& z,const T& w)
+    FORCEDINLINE _cbasic_tvector(const T& x, const T& y,const T& z,const T& w)
     {
         this->x() = x;
         this->y() = y;
@@ -48,7 +48,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
         this->w() = w;
     }
 
-    _cbasic_tvector(
+    FORCEDINLINE _cbasic_tvector(
             const _cbasic_tvector<T,Size-1>& v,
             const T& c)
     {
@@ -58,104 +58,104 @@ template<typename T, size_t Size> struct _cbasic_tvector
         this[Size-1] = c;
     }
 
-    T& x()
+    FORCEDINLINE T& x()
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size>=2>>
-    T& y()
+    FORCEDINLINE T& y()
     {
         return (*this)[1];
     }
     template<class = typename std::enable_if<Size>=3>>
-    T& z()
+    FORCEDINLINE T& z()
     {
         return (*this)[2];
     }
     template<class = typename std::enable_if<Size>=4>>
-    T& w()
+    FORCEDINLINE T& w()
     {
         return (*this)[3];
     }
 
-    const T& x() const
+    FORCEDINLINE const T& x() const
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size>=2>>
-    const T& y() const
+    FORCEDINLINE const T& y() const
     {
         return (*this)[1];
     }
     template<class = typename std::enable_if<Size>=3>>
-    const T& z() const
+    FORCEDINLINE const T& z() const
     {
         return (*this)[2];
     }
     template<class = typename std::enable_if<Size>=4>>
-    const T& w() const
+    FORCEDINLINE const T& w() const
     {
         return (*this)[3];
     }
 
-    T& r()
+    FORCEDINLINE T& r()
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size>=2>>
-    T& g()
+    FORCEDINLINE T& g()
     {
         return (*this)[1];
     }
     template<class = typename std::enable_if<Size>=3>>
-    T& b()
+    FORCEDINLINE T& b()
     {
         return (*this)[2];
     }
     template<class = typename std::enable_if<Size>=4>>
-    T& a()
+    FORCEDINLINE T& a()
     {
         return (*this)[3];
     }
 
-    const T& r() const
+    FORCEDINLINE const T& r() const
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size>=2>>
-    const T& g() const
+    FORCEDINLINE const T& g() const
     {
         return (*this)[1];
     }
     template<class = typename std::enable_if<Size>=3>>
-    const T& b() const
+    FORCEDINLINE const T& b() const
     {
         return (*this)[2];
     }
     template<class = typename std::enable_if<Size>=4>>
-    const T& a() const
+    FORCEDINLINE const T& a() const
     {
         return (*this)[3];
     }
 
     template<class = typename std::enable_if<Size==2>>
-    T& u()
+    FORCEDINLINE T& u()
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size==2>>
-    T& v()
+    FORCEDINLINE T& v()
     {
         return (*this)[1];
     }
 
     template<class = typename std::enable_if<Size==2>>
-    const T& u() const
+    FORCEDINLINE const T& u() const
     {
         return (*this)[0];
     }
     template<class = typename std::enable_if<Size==2>>
-    const T& v() const
+    FORCEDINLINE const T& v() const
     {
         return (*this)[1];
     }
@@ -163,27 +163,27 @@ template<typename T, size_t Size> struct _cbasic_tvector
     /*Swizzling operators!*/
 
     template<class = typename std::enable_if<Size==4>>
-    _cbasic_tvector<T,Size-1> xyz() const
+    FORCEDINLINE _cbasic_tvector<T,Size-1> xyz() const
     {
         return _cbasic_tvector<T,Size-1>(*this);
     }
     template<class = typename std::enable_if<Size==3>>
-    _cbasic_tvector<T,Size-1> xy() const
+    FORCEDINLINE _cbasic_tvector<T,Size-1> xy() const
     {
         return _cbasic_tvector<T,Size-1>(*this);
     }
 
     /*No more swizzles*/
 
-    inline C_FORCE_INLINE T& operator[](size_t i)
+    FORCEDINLINE T& operator[](size_t i)
     {
         return data[i];
     }
-    inline C_FORCE_INLINE const T& operator[](size_t i) const
+    FORCEDINLINE const T& operator[](size_t i) const
     {
         return data[i];
     }
-    inline C_FORCE_INLINE bool operator==(
+    FORCEDINLINE bool operator==(
             const _cbasic_tvector<T,Size>& v) const
     {
         for(size_t i=0;i<Size;i++)
@@ -191,7 +191,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
                 return false;
         return true;
     }
-    inline C_FORCE_INLINE void operator=(
+    FORCEDINLINE void operator=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
@@ -203,25 +203,25 @@ template<typename T, size_t Size> struct _cbasic_tvector
         for(size_t i=0;i<Size;i++)
             (*this)[i] += v[i];
     }
-    inline C_FORCE_INLINE void operator-=(
+    FORCEDINLINE void operator-=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] += v[i];
     }
-    inline C_FORCE_INLINE void operator*=(
+    FORCEDINLINE void operator*=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] *= v[i];
     }
-    inline C_FORCE_INLINE void operator/=(
+    FORCEDINLINE void operator/=(
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v[i];
     }
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator+(
+    FORCEDINLINE _cbasic_tvector<T,Size> operator+(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -229,7 +229,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             vnew[i] = (*this)[i]+v[i];
         return vnew;
     }
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator-(
+    FORCEDINLINE _cbasic_tvector<T,Size> operator-(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -237,7 +237,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             vnew[i] = (*this)[i]-v[i];
         return vnew;
     }
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator*(
+    FORCEDINLINE _cbasic_tvector<T,Size> operator*(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -245,7 +245,7 @@ template<typename T, size_t Size> struct _cbasic_tvector
             vnew[i] = (*this)[i]*v[i];
         return vnew;
     }
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator/(
+    FORCEDINLINE _cbasic_tvector<T,Size> operator/(
             const _cbasic_tvector<T,Size>& v) const
     {
         _cbasic_tvector<T,Size> vnew;
@@ -254,26 +254,26 @@ template<typename T, size_t Size> struct _cbasic_tvector
         return vnew;
     }
 
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator*(const T& v) const
+    FORCEDINLINE _cbasic_tvector<T,Size> operator*(const T& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]*v;
         return vnew;
     }
-    inline C_FORCE_INLINE _cbasic_tvector<T,Size> operator/(const T& v) const
+    FORCEDINLINE _cbasic_tvector<T,Size> operator/(const T& v) const
     {
         _cbasic_tvector<T,Size> vnew;
         for(size_t i=0;i<Size;i++)
             vnew[i] = (*this)[i]/v;
         return vnew;
     }
-    inline C_FORCE_INLINE void operator*=(const T& v)
+    FORCEDINLINE void operator*=(const T& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] *= v;
     }
-    inline C_FORCE_INLINE void operator/=(const T& v)
+    FORCEDINLINE void operator/=(const T& v)
     {
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v;
@@ -283,7 +283,7 @@ private:
 };
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE T length(
+FORCEDINLINE T length(
         const _cbasic_tvector<T,Size>& v)
 {
     T sum = 0;
@@ -293,7 +293,7 @@ inline C_FORCE_INLINE T length(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE T dot(
+FORCEDINLINE T dot(
         const _cbasic_tvector<T,Size>& v1,
         const _cbasic_tvector<T,Size>& v2)
 {
@@ -304,7 +304,7 @@ inline C_FORCE_INLINE T dot(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tvector<T,Size> normalize(
+FORCEDINLINE _cbasic_tvector<T,Size> normalize(
         const _cbasic_tvector<T,Size>& v)
 {
     _cbasic_tvector<T,Size> vnew;
@@ -314,7 +314,7 @@ inline C_FORCE_INLINE _cbasic_tvector<T,Size> normalize(
 }
 
 template<typename T>
-inline C_FORCE_INLINE _cbasic_tvector<T,3> cross(
+FORCEDINLINE _cbasic_tvector<T,3> cross(
         const _cbasic_tvector<T,3>& v1,
         const _cbasic_tvector<T,3>& v2)
 {
@@ -326,7 +326,7 @@ inline C_FORCE_INLINE _cbasic_tvector<T,3> cross(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE T distance(
+FORCEDINLINE T distance(
         const _cbasic_tvector<T,Size>& v1,
         const _cbasic_tvector<T,Size>& v2)
 {
@@ -334,7 +334,7 @@ inline C_FORCE_INLINE T distance(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE T reflect(
+FORCEDINLINE T reflect(
         const _cbasic_tvector<T,Size>& v,
         const _cbasic_tvector<T,Size>& n)
 {
@@ -342,7 +342,7 @@ inline C_FORCE_INLINE T reflect(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE T refract(
+FORCEDINLINE T refract(
         const _cbasic_tvector<T,Size>& v,
         const _cbasic_tvector<T,Size>& n,
         const T& c)
@@ -356,7 +356,7 @@ inline C_FORCE_INLINE T refract(
 }
 
 template<typename T,size_t Size>
-inline C_FORCE_INLINE _cbasic_tvector<T,Size> mix(
+FORCEDINLINE _cbasic_tvector<T,Size> mix(
         const _cbasic_tvector<T,Size>& v1,
         const _cbasic_tvector<T,Size>& v2,
         const T& f)

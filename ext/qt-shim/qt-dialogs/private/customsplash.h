@@ -1,4 +1,4 @@
-#include <coffee/core/display/cdialog_fun.h>
+#include <coffee/interfaces/cdialog_api.h>
 
 #include "conversion.h"
 #include "drawingstyles.h"
