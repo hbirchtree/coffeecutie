@@ -6,6 +6,7 @@
 #include <coffee/core/plat/plat_windowmanager.h>
 
 #include <coffee/core/input/eventhandlers.h>
+#include <coffee/graphics_apis/mesh.h>
 
 #include <coffee_ext/qt_shim/dialogs/dialogs.h>
 #include <coffee_ext/qt_shim/qtinit.h>
@@ -406,6 +407,10 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     }
 
     Profiler::Profile("Get GL requirements");
+
+    _cbasic_mesh<uint16> test;
+
+    SerializeMesh(test,"test.msh");
 
     cDebug("Device info: {0}",GL::Debug::Renderer());
     Profiler::Profile("Get renderer info");

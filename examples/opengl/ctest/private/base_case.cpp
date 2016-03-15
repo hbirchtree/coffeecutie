@@ -75,8 +75,8 @@ szptr coffee_shader_program_load(const game_shader_program_desc &desc, game_cont
 
     coffee_mem_expand_array(&ctxt->shaders.pipelines,1);
 
-    CResource v(desc.shader_v); //Vertex shader
-    CResource f(desc.shader_f); //Fragment shader
+    Resource v(desc.shader_v); //Vertex shader
+    Resource f(desc.shader_f); //Fragment shader
     if(!FileExists(v)||!FileExists(f))
         cFatal("Failed to locate shaders");
     FilePull(v,true);
@@ -336,8 +336,8 @@ bool coffee_test_load(game_context *ctxt)
     coffee_test_def_transforms(ctxt,numGears);
 
     {
-        CResources::CResource mapfile("cblam_data/bloodgulch.map");
-        CResources::CResource bitmfile("cblam_data/bitmaps.map");
+        CResources::Resource mapfile("cblam_data/bloodgulch.map");
+        CResources::Resource bitmfile("cblam_data/bitmaps.map");
         FileMap(bitmfile);
         FileMap(mapfile);
         const CBlam::file_header_t* map =

@@ -23,7 +23,7 @@ public:
     {
         AudioSample smp;
         //Read audio sample from file
-        CResources::CResource rsc("caudio_test/healing.ogg");
+        CResources::Resource rsc("caudio_test/healing.ogg");
         FilePull(rsc);
         cDebug("Loading file: {0}",CStbAudio::LoadVorbis(&smp,&rsc));
         FileFree(rsc);

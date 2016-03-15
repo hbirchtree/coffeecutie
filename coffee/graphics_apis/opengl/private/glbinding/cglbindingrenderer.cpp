@@ -96,7 +96,7 @@ void CGLBindingRenderer::bindingCallback(const void *report) const
 
 std::map<CString,CString> coffee_glbinding_get_graphics_feature_level()
 {
-    CResources::CResource glxml("gl.xml");
+    CResources::Resource glxml("gl.xml");
 
     if(!CResources::FileExists(glxml))
         return std::map<CString,CString>();

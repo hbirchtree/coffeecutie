@@ -19,7 +19,7 @@ CAssimpImporters::CAssimpImporters()
 {
 }
 
-CAssimpData *CAssimpImporters::importResource(CResource *source,
+CAssimpData *CAssimpImporters::importResource(Resource *source,
                                               cstring hint)
 {
     Importer importer;
@@ -107,7 +107,7 @@ cstring assimp_reflexive_string_get(const void* basePtr, const assimp_reflexive 
     return &b_ptr[ref.offset];
 }
 
-bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, CResource *resource)
+bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, Resource *resource)
 {
     bool success = false;
 

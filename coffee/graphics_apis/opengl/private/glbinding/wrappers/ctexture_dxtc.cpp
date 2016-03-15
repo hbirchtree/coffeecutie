@@ -58,7 +58,7 @@ void coffee_graphics_tex_dxtc_load(CTexture& texture, const CGint &blocksize, c_
     coffee_graphics_unbind(texture);
 }
 
-void coffee_graphics_tex_compressed_store(const CTexture &tex, CResources::CResource &res)
+void coffee_graphics_tex_compressed_store(const CTexture &tex, CResources::Resource &res)
 {
     glGetCompressedTextureImage(tex.handle,0,res.size,res.data);
 }

@@ -33,7 +33,7 @@ struct game_shader_manager
 typedef chunk_mem<CTexture> game_texture_storage;
 typedef chunk_mem<CTextureSampler> game_texture_sampler_storage;
 
-typedef chunk_mem<CResource> game_resource_chunk;
+typedef chunk_mem<Resource> game_resource_chunk;
 
 struct game_memory_chunk
 {

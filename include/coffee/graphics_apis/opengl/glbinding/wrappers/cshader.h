@@ -97,14 +97,14 @@ inline void coffee_graphics_free(CShaderStageProgram& prg)
  * \return Whether or not it succeeded
  */
 extern bool coffee_graphics_restore(
-        CShaderProgram &prg, const CResources::CResource &rsc);
+	CShaderProgram &prg, const CResources::Resource &rsc);
 /*!
  * \brief Save shader program to file if GL supports it
  * \param prg Program to save from
  * \param rsc Resource to save to
  */
 extern bool coffee_graphics_store(
-        const CShaderProgram &prg, CResources::CResource &rsc);
+	const CShaderProgram &prg, CResources::Resource &rsc);
 
 extern bool coffee_graphics_shader_compile(
         CShader &prg, cstring rsc,
@@ -122,7 +122,7 @@ extern bool coffee_graphics_shader_compile(
  * \return
  */
 extern bool coffee_graphics_shader_compile(
-        CShader &prg, const CResources::CResource &rsc,
+	CShader &prg, const CResources::Resource &rsc,
         const CProgramStage &stage);
 /*!
  * \brief Compile a shader stage program from resource
@@ -132,7 +132,7 @@ extern bool coffee_graphics_shader_compile(
  * \return
  */
 extern bool coffee_graphics_shader_compile(
-        CShaderStageProgram& prg, const CResources::CResource &res,
+	CShaderStageProgram& prg, const CResources::Resource &res,
         CProgramStage const& stage);
 
 /*!

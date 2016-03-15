@@ -9,7 +9,7 @@ namespace FFMedia{
 class CFFPlayer
 {
 public:
-    CFFPlayer(CResource& vsource)
+    CFFPlayer(Resource& vsource)
     {
         FFInit(nullptr,false);
         m_player = CreatePlayer(vsource);

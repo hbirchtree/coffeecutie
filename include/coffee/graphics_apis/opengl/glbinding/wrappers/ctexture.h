@@ -135,7 +135,7 @@ extern void coffee_graphics_tex_dump(
  * \return Null if operation failed, valid pointer if success
  */
 extern CTextureData* coffee_graphics_tex_create_texdata(
-        const CResources::CResource &resource, c_ptr location);
+	const CResources::Resource &resource, c_ptr location);
 /*!
  * \brief Free the texture data (correctly)
  * \param texd
@@ -153,7 +153,7 @@ public:
 };
 
 extern CImportedTexture coffee_graphics_tex_create_rtexdata(
-        const CResources::CResource &resource);
+	const CResources::Resource &resource);
 }
 }
 

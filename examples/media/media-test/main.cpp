@@ -27,7 +27,7 @@ public:
     void run()
     {
         //Create an FFMPEG player
-        CResource video_file(video_file_name.c_str(),true);
+        Resource video_file(video_file_name.c_str(),true);
         FileMap(video_file,ResourceAccess::ReadWrite);
 
         CFFPlayer player(video_file);

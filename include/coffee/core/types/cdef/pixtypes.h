@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../plat/memory/cmemory.h"
 #include "../tdef/integertypes.h"
 #include "../tdef/stltypes.h"
 #include "geometry.h"
@@ -72,7 +73,7 @@ struct _cbasic_bitmap_base
     FORCEDINLINE ~_cbasic_bitmap_base()
     {
         if(m_internal_data)
-            CFree(m_pixels);
+	    CFree(m_pixels);
     }
 
     const _cbasic_size_2d<DimT> size;

@@ -16,7 +16,7 @@ class CAssimpImporters
 private:
     CAssimpImporters();
 public:
-    static CAssimpData* importResource(CResource* source,
+    static CAssimpData* importResource(Resource* source,
                                        cstring hint = nullptr);
 };
 
@@ -27,7 +27,7 @@ extern cstring assimp_reflexive_string_get(
         const assimp_reflexive& ref);
 
 extern bool coffee_assimp_dump_mesh(
-        CAssimp::CAssimpMesh* mesh, CResources::CResource* resource);
+	CAssimp::CAssimpMesh* mesh, CResources::Resource* resource);
 
 extern byte_t* coffee_assimp_get_reflexive_ptr(void* baseptr, const assimp_reflexive* ref);
 

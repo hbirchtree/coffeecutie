@@ -139,7 +139,7 @@ void coffee_graphics_tex_dump(const CTexture &tex, cstring filename)
                 img.data);
 
 
-    CResources::CResource fl(filename);
+    CResources::Resource fl(filename);
     CStbImageLib::SavePNG(&fl,&img);
     FileCommit(fl);
     FileFree(fl);
@@ -147,8 +147,7 @@ void coffee_graphics_tex_dump(const CTexture &tex, cstring filename)
     CFree(img.data);
 }
 
-CTextureData *coffee_graphics_tex_create_texdata(
-        CResources::CResource const& resource, c_ptr location)
+CTextureData *coffee_graphics_tex_create_texdata(const CResources::Resource &resource, c_ptr location)
 {
     CStbImageLib::CStbImage img;
     if(!CStbImageLib::LoadData(&img,&resource))
@@ -193,7 +192,7 @@ void coffee_graphics_tex_free_texdata(CTextureData *texd)
     delete texd;
 }
 
-CImportedTexture coffee_graphics_tex_create_rtexdata(const CResources::CResource &resource)
+CImportedTexture coffee_graphics_tex_create_rtexdata(const CResources::Resource &resource)
 {
     return CImportedTexture(coffee_graphics_tex_create_texdata(resource,nullptr));
 }

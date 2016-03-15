@@ -1,6 +1,9 @@
 #ifndef CFILES_H
 #define CFILES_H
 
+#include "../../types/edef/enumfun.h"
+#include "../../types/tdef/stltypes.h"
+#include "../../types/tdef/integertypes.h"
 #include "../../plat/plat_file.h"
 
 namespace Coffee{

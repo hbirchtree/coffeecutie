@@ -1,6 +1,8 @@
 #include <coffee/oculusvr/oculusrift.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/core/CFiles>
+#include <coffee/graphics_apis/mesh.h>
 
 /* Oculus VR headers */
 #include <OVR_CAPI.h>
@@ -173,9 +175,53 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
     data->firstEye = dev->EyeRenderOrder[0];
 
     ovrBool m = ovrTrue;
+
+    /*
+     * We extract the data required to render with distortion.
+     * This involves offsets for RGB, mapping of coordinates
+     *  and positions on the display.
+     */
+
     for(uint32 i=0;i<ovrEye_Count;i++)
         ovrBool m = m&ovrHmd_CreateDistortionMesh(
                     dev,(ovrEyeType)i,data->d_fov[i],dcaps,&data->d_meshes[i]);
+
+    _cbasic_mesh<uint16> dmeshdata[2];
+
+    const constexpr uint8 MESH_VIGNETTE = 10;
+    const constexpr uint8 MESH_WARP = 11;
+    const constexpr uint8 MESH_R = 12;
+    const constexpr uint8 MESH_G = 13;
+    const constexpr uint8 MESH_B = 14;
+    const constexpr uint8 MESH_NDC = 15;
+
+    for(uint32 i=0;i<ovrEye_Count;i++)
+    {
+        ovrDistortionMesh& mesh = data->d_meshes[i];
+        _cbasic_mesh<uint16>& tmesh = dmeshdata[i];
+
+        tmesh.addAttributeData(Mesh::Indices,
+                               mesh.pIndexData,
+                               mesh.IndexCount);
+
+        /* TODO: Optimize this */
+        for(szptr j=0;j<mesh.VertexCount;j++)
+        {
+            ovrDistortionVertex& vert = mesh.pVertexData[j];
+
+            tmesh.addAttributeData<scalar>(MESH_VIGNETTE,&vert.VignetteFactor,1);
+            tmesh.addAttributeData<scalar>(MESH_WARP,&vert.TimeWarpFactor,1);
+
+            tmesh.addAttributeData<ovrVector2f>(MESH_NDC,&vert.ScreenPosNDC,1);
+
+            tmesh.addAttributeData<ovrVector2f>(MESH_R,&vert.TanEyeAnglesR,1);
+            tmesh.addAttributeData<ovrVector2f>(MESH_G,&vert.TanEyeAnglesG,1);
+            tmesh.addAttributeData<ovrVector2f>(MESH_B,&vert.TanEyeAnglesB,1);
+        }
+    }
+
+    SerializeMesh(dmeshdata[0],"eye_left.msh");
+    SerializeMesh(dmeshdata[1],"eye_right.msh");
 
     if(m)
     {

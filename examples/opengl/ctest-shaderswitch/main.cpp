@@ -182,7 +182,7 @@ public:
         }
 
         //Creating texture
-        CResources::CResource texture("ctest_hud/particle_sprite.png");
+        CResources::Resource texture("ctest_hud/particle_sprite.png");
         CResources::FilePull(texture);
 
         CUniform texuni;

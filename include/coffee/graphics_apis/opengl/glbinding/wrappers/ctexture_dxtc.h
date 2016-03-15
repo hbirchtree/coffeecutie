@@ -23,7 +23,7 @@ extern void coffee_graphics_tex_dxtc_load(
  * \param res Resource to dump the data to
  */
 extern void coffee_graphics_tex_compressed_store(
-        const CTexture& tex, CResources::CResource& res);
+	const CTexture& tex, CResources::Resource& res);
 
 /*!
  * \brief Load a normal compressed image into memory

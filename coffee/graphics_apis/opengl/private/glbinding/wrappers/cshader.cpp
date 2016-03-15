@@ -57,8 +57,7 @@ void coffee_graphics_alloc(size_t count, CShaderProgram *shd, bool separable)
     }
 }
 
-bool coffee_graphics_restore(
-        CShaderProgram &prg, const CResources::CResource &rsc)
+bool coffee_graphics_restore(CShaderProgram &prg, const CResources::Resource &rsc)
 {
     if(rsc.size<sizeof(GLenum)){
         cWarning("Shader program file not found\n");
@@ -72,7 +71,7 @@ bool coffee_graphics_restore(
     return coffee_program_link_checklog(prg.handle);
 }
 
-bool coffee_graphics_store(const CShaderProgram &prg, CResources::CResource &rsc)
+bool coffee_graphics_store(const CShaderProgram &prg, CResources::Resource &rsc)
 {
     GLint psize = 0;
     glGetProgramiv(prg.handle,GL_PROGRAM_BINARY_LENGTH,&psize);
@@ -163,7 +162,7 @@ bool coffee_graphics_shader_compile(
 }
 
 bool coffee_graphics_shader_compile(
-        CShader &prg, const CResources::CResource& res,
+        CShader &prg, const CResources::Resource& res,
         CProgramStage const& stage)
 {
     if(res.size==0)
@@ -174,7 +173,7 @@ bool coffee_graphics_shader_compile(
 }
 
 bool coffee_graphics_shader_compile(
-        CShaderStageProgram &prg, CResources::CResource* rsc,
+        CShaderStageProgram &prg, CResources::Resource* rsc,
         CProgramStage const& stage)
 {
     if(rsc->size==0)
