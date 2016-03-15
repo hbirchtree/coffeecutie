@@ -152,3 +152,14 @@ endif()
 
 #
 #
+
+#
+# SWIG APIs
+#
+
+if(COFFEE_BUILD_SWIG_BINDING)
+    add_subdirectory(wrapper/native-test)
+endif()
+
+#
+#

@@ -35,6 +35,8 @@ public:
     {
     }
 
+    static const constexpr szptr num_textures = 4;
+
     void run()
     {
         Profiler::PushContext("Renderer");
@@ -43,17 +45,24 @@ public:
         FrameCounter fcounter(framecount_fun);
         fcounter.interval = 1000;
 
-        const cstring textures[3] = {"eye-normal.tga","eye-weird.tga","eye-alpha.tga"};
+        const constexpr cstring textures[num_textures] = {
+            "eye-demo/eye-normal.tga", "eye-demo/eye-weird.tga",
+            "eye-demo/eye-alpha.tga", "eye-demo/eye-veins.tga"
+        };
 
-        GL::CGhnd pbobuf[3] = {};
-        GL::BufAlloc(3,pbobuf);
+        GL::CGhnd pbobuf[num_textures] = {};
+        GL::BufAlloc(num_textures,pbobuf);
 
         Profiler::Profile("Create PBO buffers");
 
-        for(uint32 i=0;i<3;i++)
+        for(uint32 i=0;i<num_textures;i++)
         {
             CResources::Resource rsc(textures[i]);
-            CResources::FileMap(rsc);
+            if(!CResources::FileMap(rsc))
+            {
+                /* ABORT! */
+                ABORTEVERYTHINGGOGOGO();
+            }
 
             CStbImageLib::CStbImage img;
             CStbImageLib::LoadData(&img,&rsc);
@@ -164,8 +173,8 @@ public:
             GL::TexAlloc(1,&texture_array);
             GL::TexActive(0);
             GL::TexBind(GL::Texture::T2DArray,texture_array);
-            GL::TexStorage3D(GL::Texture::T2DArray,1,PixelFormat::RGBA32F,1024,1024,3);
-            for(uint32 i=0;i<3;i++)
+            GL::TexStorage3D(GL::Texture::T2DArray,1,PixelFormat::RGBA32F,1024,1024,num_textures);
+            for(uint32 i=0;i<num_textures;i++)
             {
                 GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
                 GL::TexSubImage3D(GL::Texture::T2DArray,0,

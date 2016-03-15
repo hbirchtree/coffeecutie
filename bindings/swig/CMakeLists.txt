@@ -39,11 +39,12 @@ set ( CoffeeSwigShim_SRCS
 
 coffee_add_library(CoffeeSwigShim ${CoffeeSwigShim_SRCS} )
 target_link_libraries ( CoffeeSwigShim
+    CoffeeCore
     CoffeeGLeam
     )
 
 # Link with some libraries
-set(COFFEE_LINKING CoffeeOpenAL CoffeeBlam CoffeeSwigShim )
+set(COFFEE_LINKING CoffeeCore CoffeeOpenAL CoffeeBlam CoffeeSwigShim )
 
 add_subdirectory(csharp)
 add_subdirectory(dlang)

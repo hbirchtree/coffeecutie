@@ -1,7 +1,9 @@
 #ifndef COFFEE_EXT_FREENECT_CNECT_H
 #define COFFEE_EXT_FREENECT_CNECT_H
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/vector_types.h>
+#include <coffee/core/types/cdef/pixtypes.h>
 
 namespace CoffeeExt{
 namespace Freenect{
@@ -16,7 +18,7 @@ struct FreenectImplementation
 	CRGBA color;
     };
 
-    using NectCloud = std::vector<ColorVec3>;
+    using NectCloud = Vector<ColorVec3>;
     using NectRGB = CBitmap;
     using NectDepth = _cbasic_bitmap_base<scalar,uint32>;
 

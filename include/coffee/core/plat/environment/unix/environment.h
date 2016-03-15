@@ -10,9 +10,7 @@
 #include <libgen.h>
 #include <unistd.h>
 #include <stdio.h>
-
 #include <cstdlib>
-
 #include <limits.h>
 
 extern char** environ;
@@ -28,6 +26,22 @@ struct PosixEnvironmentFun : EnvInterface
         CString v = p;
         CFree(p);
         return v;
+    }
+
+    STATICINLINE CString BaseName(CString const& n)
+    {
+        cstring_w cp = AllocT<sbyte_t>(n.size()+1);
+
+        StrCpy(cp,n.c_str());
+        cp[n.size()] = 0;
+
+        cstring_w r = basename(cp);
+
+        CString imm;
+        imm.insert(0,r,StrLen(r));
+
+        CFree(cp);
+        return imm;
     }
 
     STATICINLINE CString GetVar(cstring var)

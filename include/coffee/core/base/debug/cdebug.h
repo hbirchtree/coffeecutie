@@ -145,6 +145,7 @@ FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 template<typename...Arg>
 FORCEDINLINE void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
 {
+    /* TODO: Pipe this to a proper logger */
 #ifndef NDEBUG
     CString msg_out = cStringFormat(msg,args...);
     msg_out = cStringFormat("LOGR:{0}:{1}@{2}: {3}",id,file,line,msg_out.c_str());

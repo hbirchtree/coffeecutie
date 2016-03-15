@@ -11,23 +11,29 @@ namespace Coffee{
  */
 FORCEDINLINE void C_STUBBED(cstring name)
 {
+#ifndef NDEBUG
     fprintf(DefaultDebugOutputPipe,"STUBD:%s@%i: %s\n",
             __FILE__,
             __LINE__,
             name);
+#endif
 }
 
 FORCEDINLINE void C_FIXME(cstring identifier)
 {
+#ifndef NDEBUG
     fprintf(DefaultDebugOutputPipe,"FIXME:%s@%i: %s\n",
             __FILE__,
             __LINE__,
             identifier);
+#endif
 }
 
 FORCEDINLINE void C_PERFWARN(cstring file, int line, cstring msg)
 {
+#ifndef NDEBUG
     fprintf(DefaultDebugOutputPipe,"PERFW:%s@%i: %s\n",file,line,msg);
+#endif
 }
 
 /*!
@@ -36,15 +42,19 @@ FORCEDINLINE void C_PERFWARN(cstring file, int line, cstring msg)
  */
 FORCEDINLINE void C_BADERROR(cstring name)
 {
+#ifndef NDEBUG
     fprintf(DefaultDebugOutputPipe,"FATAL:%s@%i: %s\n",
             __FILE__,
             __LINE__,
             name);
+#endif
 }
 
 FORCEDINLINE void C_DEPRECATED()
 {
+#ifndef NDEBUG
     fprintf(DefaultDebugOutputPipe,"DEPRECATED");
+#endif
 }
 
 }

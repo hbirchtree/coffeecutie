@@ -20,6 +20,12 @@ struct EnvInterface
     {
         return CString();
     }
+
+    STATICINLINE CString BaseName(CString const&)
+    {
+        return CString();
+    }
+
     STATICINLINE CString GetVar(cstring)
     {
         return CString();

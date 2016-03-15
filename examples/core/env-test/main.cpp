@@ -5,6 +5,8 @@
 #include <coffee/core/plat/memory/cmd_interface.h>
 #include <coffee/core/datastorage/text/ini/ciniparser.h>
 
+#include <coffee/core/profiler/profiling-export.h>
+
 #include <coffee/core/unit_tests/micro_tests.h>
 
 using namespace Coffee;
@@ -13,6 +15,8 @@ using namespace CLibraryLoader;
 
 int32 coffee_main(int32, cstring_w*)
 {
+    Profiling::ExitRoutine(0,nullptr);
+
     CResources::FileResourcePrefix("sample_data/");
 
     Profiler::PushContext("Configuration data");

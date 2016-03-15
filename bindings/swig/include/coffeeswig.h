@@ -10,8 +10,8 @@ struct CGL_Context;
 /* Wrapper types */
 class CGLWindow;
 
-extern void CoffeeInit();
-extern void CoffeeTerminate();
+extern void Init();
+extern void Terminate();
 
 /* Logging */
 extern void cDebug(const char* text);
@@ -59,6 +59,41 @@ extern void Perf_PushContext(const char* name);
 extern void Perf_PopContext();
 extern void Perf_Profile(const char* name);
 extern void Perf_LabelThread(const char* name);
+
+}
+
+namespace Freenect{
+
+struct FreenectContext;
+
+struct FNContext
+{
+    FNContext()
+    {
+    }
+    ~FNContext()
+    {
+    }
+
+    void LaunchAsync()
+    {
+    }
+    void MergeAsync()
+    {
+    }
+
+    bool IsRunningAsync()
+    {
+        return false;
+    }
+
+    bool GetFrame()
+    {
+        return false;
+    }
+private:
+    FreenectContext* m_context;
+};
 
 }
 

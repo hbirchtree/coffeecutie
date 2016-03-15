@@ -5,6 +5,17 @@
 
 namespace Coffee{
 
+void Init()
+{
+    CoffeeInit(true);
+}
+
+void Terminate()
+{
+    Profiling::ExitRoutine(0,nullptr);
+    CoffeeTerminate(false);
+}
+
 class CGLWindow : public CDisplay::CGLeamRenderer
 {
 public:
@@ -133,4 +144,5 @@ void Perf_LabelThread(const char *name)
 }
 
 }
+
 }

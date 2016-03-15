@@ -5,19 +5,41 @@
 
 namespace Coffee{
 
+FORCEDINLINE
+void RUNOUTTHEWINDOW()
+{
+    exit(-1);
+}
+
+FORCEDINLINE
+void SHITONTHEFLOOR()
+{
+    throw std::runtime_error("*shit*");
+}
+
+FORCEDINLINE
+/*!
+ * \brief ABORT!
+ */
+void ABORTEVERYTHINGGOGOGO()
+{
+    /* ABORT! */
+#ifdef COFFEE_USE_EXCEPTIONS
+    throw std::runtime_error("Shit! Everything's on a cob! We need to leave!");
+#else
+    /* ABORT! */
+    abort();
+#endif
+}
+
 /*!
  * \brief Assertion method for core values and unit tests
  * \param expr Expression which triggers an exception on failure
  */
 FORCEDINLINE void CASSERT(bool expr)
 {
-#ifdef COFFEE_USE_EXCEPTIONS
     if(!expr)
-        throw std::runtime_error("Assert failed");
-#else
-    if(!expr)
-        abort();
-#endif
+        ABORTEVERYTHINGGOGOGO();
 }
 
 FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
