@@ -5,6 +5,8 @@
 namespace Coffee{
 namespace SMSH{
 
+const constexpr cstring magic_word = "CSMSH";
+
 typedef struct
 {
     szptr content_size;

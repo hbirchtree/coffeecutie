@@ -97,6 +97,9 @@ bool DeserializeMesh(CResources::Resource const& source, _cbasic_mesh* dest)
     smsh_header_t const* header = (smsh_header_t const*)source.data;
     smsh_groups_t const* groups = (smsh_groups_t const*)&header[1];
 
+    if(!StrCmp(header->magic,magic_word))
+        return false;
+
     byte_t const* base = (byte_t const*)source.data;
 
     for(uint32 i=0;i<header->num_groups;i++)
