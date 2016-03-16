@@ -30,11 +30,7 @@ CString coffee_file_get_dereferenced_path(cstring suffix)
 bool FileExists(const Resource &resc)
 {
 #if defined(COFFEE_C_FILE_API)
-    FILE *f = fopen(resc.resource(),"r");
-    bool ev = f;
-    if(f)
-        fclose(f);
-    return ev;
+    return FileFun::Exists(resc.resource());
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
     return false;
 #endif

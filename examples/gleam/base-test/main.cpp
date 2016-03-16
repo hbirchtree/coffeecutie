@@ -6,7 +6,7 @@
 #include <coffee/core/plat/plat_windowmanager.h>
 
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/graphics_apis/mesh.h>
+#include <coffee/graphics_apis/SMesh>
 
 #include <coffee_ext/qt_shim/dialogs/dialogs.h>
 #include <coffee_ext/qt_shim/qtinit.h>
@@ -408,9 +408,20 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     Profiler::Profile("Get GL requirements");
 
-    _cbasic_mesh<uint16> test;
+    {
+        Mesh test;
+        CResources::Resource rsc("eye_left.msh");
+        CResources::FileMap(rsc);
 
-    SerializeMesh(test,"test.msh");
+        SMSH::DeserializeMesh(rsc,&test);
+
+        cDebug("Number of attributes: {0}",test.attributes.size());
+
+        if(test.indexed())
+            cDebug("Indices: {0}",test.indices(sizeof(uint16)));
+
+        CResources::FileUnmap(rsc);
+    }
 
     cDebug("Device info: {0}",GL::Debug::Renderer());
     Profiler::Profile("Get renderer info");

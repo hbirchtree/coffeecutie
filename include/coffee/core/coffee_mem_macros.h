@@ -16,7 +16,7 @@
 #include <windows.h>
 #define C_FORCE_PACKING UNALIGNED
 #else
-#error "Packing of structures not defined! Cannot function correctly!"
+#error "You done diddled it again; there is no packing defined!"
 #endif
 
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
@@ -27,12 +27,14 @@
 #define C_FORCE_INLINE __forceinline
 #else
 #define C_FORCE_INLINE
+#warning "Performance warning: Forced inlining not defined!"
 #endif
 
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_FORCE_NOTINLINE __attribute__((noinline))
 #else
 #define C_FORCE_NOTINLINE
+#warning "Attention: Some functions may be inlined unintentionally because of this undefined macro."
 #endif
 
 #define STATICINLINE inline C_FORCE_INLINE static

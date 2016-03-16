@@ -43,6 +43,11 @@ struct FileFunDef
                            szptr cache_offset, szptr cache_size);
     static bool MapSync(void*,szptr);
 
+    static bool Exists(FileHandle*);
+    static szptr Size(FileHandle*);
+
+    /* We allow checking size of unopened files, convenience */
+    static bool Exists(cstring);
     static szptr Size(cstring);
 
     static bool Touch(NodeType,cstring);

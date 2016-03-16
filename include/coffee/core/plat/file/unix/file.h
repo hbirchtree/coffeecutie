@@ -2,7 +2,9 @@
 
 #include "../cfile.h"
 
+#include <errno.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -23,6 +25,23 @@ struct PosixFileFun : CPlatFileFun
         return fh;
     }
 
+    STATICINLINE szptr Size(cstring fn)
+    {
+        struct stat st = {};
+        stat(fn,&st);
+        return st.st_size;
+    }
+
+    STATICINLINE bool Exists(cstring fn)
+    {
+        struct stat st;
+        bool status = stat(fn,&st)==0;
+        if(status)
+            return true;
+        else
+            return errno==ENOENT|| errno==ENOTDIR;
+    }
+
     STATICINLINE szptr Size(FileHandle* fh)
     {
         struct stat st;
@@ -34,6 +53,15 @@ struct PosixFileFun : CPlatFileFun
             /* We somehow want a filename here. */
             return 0;
         }
+    }
+    STATICINLINE bool Exists(FileHandle* fn)
+    {
+        struct stat st;
+        bool status = fstat(fn->fd,&st)==0;
+        if(status)
+            return true;
+        else
+            return errno==ENOENT|| errno==ENOTDIR;
     }
 
 protected:

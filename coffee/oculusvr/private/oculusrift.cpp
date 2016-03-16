@@ -2,7 +2,7 @@
 
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
-#include <coffee/graphics_apis/mesh.h>
+#include <coffee/graphics_apis/SMesh>
 
 /* Oculus VR headers */
 #include <OVR_CAPI.h>
@@ -186,7 +186,7 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
         ovrBool m = m&ovrHmd_CreateDistortionMesh(
                     dev,(ovrEyeType)i,data->d_fov[i],dcaps,&data->d_meshes[i]);
 
-    _cbasic_mesh<uint16> dmeshdata[2];
+    Mesh dmeshdata[2];
 
     const constexpr uint8 MESH_VIGNETTE = 10;
     const constexpr uint8 MESH_WARP = 11;
@@ -198,7 +198,7 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
     for(uint32 i=0;i<ovrEye_Count;i++)
     {
         ovrDistortionMesh& mesh = data->d_meshes[i];
-        _cbasic_mesh<uint16>& tmesh = dmeshdata[i];
+        Mesh& tmesh = dmeshdata[i];
 
         tmesh.addAttributeData(Mesh::Indices,
                                mesh.pIndexData,
@@ -220,8 +220,8 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
         }
     }
 
-    SerializeMesh(dmeshdata[0],"eye_left.msh");
-    SerializeMesh(dmeshdata[1],"eye_right.msh");
+    SMSH::SerializeMesh(dmeshdata[0],"eye_left.msh");
+    SMSH::SerializeMesh(dmeshdata[1],"eye_right.msh");
 
     if(m)
     {
