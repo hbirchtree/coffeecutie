@@ -23,13 +23,17 @@ struct _cbasic_mesh
 	Tangent, Bitangent,
     };
 
+    using attr_component = byte_t;
+    using attr = Vector<attr_component>;
+
     using AttributeType_t = uint16;
+    using Pair = std::pair<AttributeType_t,attr>;
 
     _cbasic_mesh()
     {
     }
 
-    Map<AttributeType_t,Vector<byte_t>> attributes;
+    Map<AttributeType_t,attr> attributes;
 
     /* Convenience functions for the attributes */
 
@@ -65,10 +69,10 @@ struct _cbasic_mesh
 
     template<typename VT>
     FORCEDINLINE
-    void addAttributeData(AttributeType_t attr, VT const* ptr, szptr num)
+    void addAttributeData(AttributeType_t a, VT const* ptr, szptr num)
     {
-	Vector<byte_t>& data = attributes[attr];
-	data.insert(data.end(),(byte_t*)&ptr[0],(byte_t*)&ptr[num]);
+	attr& data = attributes[a];
+	data.insert(data.end(),(attr_component*)&ptr[0],(attr_component*)&ptr[num]);
     }
     template<typename VT>
     FORCEDINLINE

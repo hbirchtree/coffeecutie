@@ -2,7 +2,6 @@
 
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
-#include <coffee/graphics_apis/SMesh>
 
 /* Oculus VR headers */
 #include <OVR_CAPI.h>
@@ -19,7 +18,7 @@ void ovr_log_callback(int level, const char* msg)
 }
 
 const constexpr int32 OVR_Max_Devices = 8;
-const constexpr int32 OVR_Num_Human_Eyes = 2;
+const constexpr int32 OVR_Num_Human_Eyes = ovrEye_Count;
 
 struct OculusVR::Context
 {
@@ -50,6 +49,8 @@ struct OculusVR::Device::ExtraData
     ovrEyeRenderDesc d_eyedesc[OVR_Num_Human_Eyes];
 
     ovrEyeType firstEye;
+
+    Mesh eyeMeshes[OVR_Num_Human_Eyes];
 };
 
 thread_local OculusVR::Context* OculusContext = nullptr;
@@ -195,33 +196,33 @@ OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
     const constexpr uint8 MESH_B = 14;
     const constexpr uint8 MESH_NDC = 15;
 
-    for(uint32 i=0;i<ovrEye_Count;i++)
-    {
-        ovrDistortionMesh& mesh = data->d_meshes[i];
-        Mesh& tmesh = dmeshdata[i];
+//    for(uint32 i=0;i<ovrEye_Count;i++)
+//    {
+//        ovrDistortionMesh& mesh = data->d_meshes[i];
+//        Mesh& tmesh = dmeshdata[i];
 
-        tmesh.addAttributeData(Mesh::Indices,
-                               mesh.pIndexData,
-                               mesh.IndexCount);
+//        tmesh.addAttributeData(Mesh::Indices,
+//                               mesh.pIndexData,
+//                               mesh.IndexCount);
 
-        /* TODO: Optimize this */
-        for(szptr j=0;j<mesh.VertexCount;j++)
-        {
-            ovrDistortionVertex& vert = mesh.pVertexData[j];
+//        /* TODO: Optimize this */
+//        for(szptr j=0;j<mesh.VertexCount;j++)
+//        {
+//            ovrDistortionVertex& vert = mesh.pVertexData[j];
 
-            tmesh.addAttributeData<scalar>(MESH_VIGNETTE,&vert.VignetteFactor,1);
-            tmesh.addAttributeData<scalar>(MESH_WARP,&vert.TimeWarpFactor,1);
+//            tmesh.addAttributeData<scalar>(MESH_VIGNETTE,&vert.VignetteFactor,1);
+//            tmesh.addAttributeData<scalar>(MESH_WARP,&vert.TimeWarpFactor,1);
 
-            tmesh.addAttributeData<ovrVector2f>(MESH_NDC,&vert.ScreenPosNDC,1);
+//            tmesh.addAttributeData<ovrVector2f>(MESH_NDC,&vert.ScreenPosNDC,1);
 
-            tmesh.addAttributeData<ovrVector2f>(MESH_R,&vert.TanEyeAnglesR,1);
-            tmesh.addAttributeData<ovrVector2f>(MESH_G,&vert.TanEyeAnglesG,1);
-            tmesh.addAttributeData<ovrVector2f>(MESH_B,&vert.TanEyeAnglesB,1);
-        }
-    }
+//            tmesh.addAttributeData<ovrVector2f>(MESH_R,&vert.TanEyeAnglesR,1);
+//            tmesh.addAttributeData<ovrVector2f>(MESH_G,&vert.TanEyeAnglesG,1);
+//            tmesh.addAttributeData<ovrVector2f>(MESH_B,&vert.TanEyeAnglesB,1);
+//        }
+//    }
 
-    SMSH::SerializeMesh(dmeshdata[0],"eye_left.msh");
-    SMSH::SerializeMesh(dmeshdata[1],"eye_right.msh");
+//    SMSH::SerializeMesh(dmeshdata[0],"eye_left.msh");
+//    SMSH::SerializeMesh(dmeshdata[1],"eye_right.msh");
 
     if(m)
     {
@@ -362,6 +363,11 @@ CVec3 OculusVR::Device::velocity() const
     return CVec3(v.HeadPose.LinearVelocity.x,
                  v.HeadPose.LinearVelocity.y,
                  v.HeadPose.LinearVelocity.z);
+}
+
+const Mesh &OculusVR::Device::distortionMesh(HMD::CHMD_Binding::Eye e) const
+{
+    return m_data->eyeMeshes[(uint32)e];
 }
 
 bool OculusVR::Device::isConnected() const

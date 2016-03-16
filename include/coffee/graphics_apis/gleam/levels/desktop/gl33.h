@@ -303,8 +303,8 @@ struct CGL33 : CGL_Implementation
 
     STATICINLINE void BufBindRange(BufType t,uint32 i,CGhnd b,int64 off,uint32 sz)
     {glBindBufferRange(to_enum(t),i,b,off,sz);}
-    STATICINLINE void BufMapRange(BufType t,int64 off,uint32 sz,CGflag a)
-    {glMapBufferRange(to_enum(t),off,sz,a);}
+    STATICINLINE void* BufMapRange(BufType t,int64 off,uint32 sz,ResourceAccess a)
+    {return glMapBufferRange(to_enum(t),off,sz,to_enum2(a));}
     STATICINLINE void BufUnmap(BufType t){glUnmapBuffer(to_enum(t));}
 
     /* Queries */

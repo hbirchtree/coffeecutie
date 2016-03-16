@@ -46,6 +46,22 @@ public:
         FrameCounter fcounter(framecount_fun);
         fcounter.interval = 1000;
 
+        Mesh distortMesh[2];
+
+        {
+            CResources::Resource mesh_src_0("eye_left.msh");
+            CResources::Resource mesh_src_1("eye_right.msh");
+
+            CResources::FileMap(mesh_src_0);
+            CResources::FileMap(mesh_src_1);
+
+            SMSH::DeserializeMesh(mesh_src_0,&distortMesh[0]);
+            SMSH::DeserializeMesh(mesh_src_1,&distortMesh[1]);
+
+            CResources::FileUnmap(mesh_src_0);
+            CResources::FileUnmap(mesh_src_1);
+        }
+
         const constexpr cstring textures[num_textures] = {
             "eye-demo/eye-normal.tga", "eye-demo/eye-weird.tga",
             "eye-demo/eye-alpha.tga", "eye-demo/eye-veins.tga"
@@ -96,6 +112,68 @@ public:
             GL::BufStorage(GL::BufType::ArrayData,
                            sizeof(vertexdata),vertexdata,
                            ResourceAccess::ReadOnly);
+        }
+
+        GL::CGhnd distortVao;
+        GL::CGhnd distortBuf[2];
+        {
+            GL::VAOAlloc(1,&distortVao);
+            GL::BufAlloc(2,distortBuf);
+            GL::BufBind(GL::BufType::ArrayData,distortBuf[0]);
+            GL::BufBind(GL::BufType::ElementData,distortBuf[1]);
+
+            uint64 array_size = 0;
+            uint64 element_size = 0;
+
+            for(szptr i=0;i<2;i++)
+            {
+                Mesh& msh = distortMesh[i];
+                for(Mesh::Pair const& a : msh.attributes)
+                {
+                    if(a.first==Mesh::Indices)
+                        element_size += a.second.size();
+                    else
+                        array_size += a.second.size();
+                }
+            }
+
+            GL::BufStorage(
+                        GL::BufType::ElementData,
+                        element_size,
+                        nullptr,
+                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
+
+            GL::BufStorage(GL::BufType::ArrayData,
+                        array_size,
+                        nullptr,
+                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
+
+            byte_t* array_data = (byte_t*)GL::BufMapRange(
+                        GL::BufType::ArrayData,0,
+                        array_size,
+                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
+            byte_t* element_data = (byte_t*)GL::BufMapRange(
+                        GL::BufType::ElementData,0,
+                        element_size,
+                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
+
+            array_size = 0;
+            element_size = 0;
+
+            for(szptr i=0;i<2;i++)
+            {
+                Mesh& msh = distortMesh[i];
+                for(Mesh::Pair const& a : msh.attributes)
+                    if(a.first==Mesh::Indices)
+                    {
+                        MemCpy(&element_data[element_size],a.second.data(),a.second.size());
+                        element_size += a.second.size();
+                    }
+                    else{
+                        MemCpy(&array_data[array_size],a.second.data(),a.second.size());
+                        array_size += a.second.size();
+                    }
+            }
         }
 
         Profiler::Profile("Create vertex buffers");
@@ -407,21 +485,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     }
 
     Profiler::Profile("Get GL requirements");
-
-    {
-        Mesh test;
-        CResources::Resource rsc("eye_left.msh");
-        CResources::FileMap(rsc);
-
-        SMSH::DeserializeMesh(rsc,&test);
-
-        cDebug("Number of attributes: {0}",test.attributes.size());
-
-        if(test.indexed())
-            cDebug("Indices: {0}",test.indices(sizeof(uint16)));
-
-        CResources::FileUnmap(rsc);
-    }
 
     cDebug("Device info: {0}",GL::Debug::Renderer());
     Profiler::Profile("Get renderer info");

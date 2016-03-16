@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/interfaces/chmd_api.h>
+#include <coffee/graphics_apis/SMesh>
 
 namespace Coffee{
 namespace OculusRift{
@@ -39,6 +40,8 @@ struct OculusVR : HMD::CHMD_Binding
 
         CVec3 angularVelocity() const;
         CVec3 velocity() const;
+
+	Mesh const& distortionMesh(Eye e) const;
 
         bool isConnected() const;
     private:
