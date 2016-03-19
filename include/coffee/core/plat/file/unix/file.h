@@ -12,11 +12,11 @@
 namespace Coffee{
 namespace CResources{
 
-struct PosixFileFun : CPlatFileFun
+struct PosixFileFun : CFILEFileFun
 {
     STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
     {
-        FileHandle* fh = CPlatFileFun::Open(fn,ac);
+        FileHandle* fh = CFILEFileFun::Open(fn,ac);
         if(!fh)
             return nullptr;
 

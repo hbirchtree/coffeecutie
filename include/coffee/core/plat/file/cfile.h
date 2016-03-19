@@ -13,7 +13,21 @@
 namespace Coffee{
 namespace CResources{
 
-struct CPlatFileFun : FileFunDef
+struct CommonFileFun : FileFunDef
+{
+    STATICINLINE CString NativePath(cstring fn)
+    {
+        CString temp = fn;
+#if defined(COFFEE_WINDOWS)
+        temp = CStrReplace(fn,"/","\\");
+#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
+        return "";
+#endif
+        return temp;
+    }
+};
+
+struct CFILEFileFun : CommonFileFun
 {
     struct FileHandle
     {
@@ -30,17 +44,6 @@ struct CPlatFileFun : FileFunDef
         FILE* handle;
         int fd;
     };
-
-    STATICINLINE CString NativePath(cstring fn)
-    {
-        CString temp = fn;
-#if defined(COFFEE_WINDOWS)
-        temp = CStrReplace(fn,"/","\\");
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-        return "";
-#endif
-        return temp;
-    }
 
     STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
     {
