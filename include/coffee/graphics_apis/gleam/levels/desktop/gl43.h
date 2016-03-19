@@ -283,8 +283,10 @@ struct CGL43 : CGL33
     STATICINLINE void VAOBindVertexBuffer(uint32 idx,CGhnd h,uint64 off,int32 stride)
     {glBindVertexBuffer(idx,h,off,stride);}
     STATICINLINE void VAOBindVertexBuffers(uint32 idx_f, uint32 c,const CGhnd* h,
-                                     const int64* off, const int32* stride)
-    {glBindVertexBuffers(idx_f,c,h,off,stride);}
+                                     const intptr* off, const int32* stride)
+    {
+		glBindVertexBuffers(idx_f,c,h,off,stride);
+	}
 
     /* Just to hide and disable outdated functionality */
     STATICINLINE void VAOAttribPointer(){}

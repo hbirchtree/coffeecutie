@@ -111,21 +111,19 @@ FORCEDINLINE CString pointerify(const void* const& ptr)
 
 FORCEDINLINE CString lower(CString const& st)
 {
-    std::locale l;
     CString o;
     o.reserve(st.size());
     for(CString::value_type c : st)
-	o.push_back(std::tolower(c,l));
+	o.push_back(std::tolower(c));
     return o;
 }
 
 FORCEDINLINE CString upper(CString const& st)
 {
-    std::locale l;
     CString o;
     o.reserve(st.size());
     for(CString::value_type c : st)
-	o.push_back(std::toupper(c,l));
+	o.push_back(std::toupper(c));
     return o;
 }
 

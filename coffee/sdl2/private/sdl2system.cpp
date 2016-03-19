@@ -26,10 +26,12 @@ bool SDL2::Init()
 bool SDL2::Deinit()
 {
     SDL_Quit();
+	return true;
 }
 
 bool SDL2::Process()
 {
+	return true;
 }
 
 }

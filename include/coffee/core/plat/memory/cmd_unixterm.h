@@ -2,6 +2,7 @@
 
 #include "../platform_detect.h"
 
+#ifdef COFFEE_UNIXPLAT
 #include "cmd_interface.h"
 
 namespace Coffee{
@@ -46,3 +47,4 @@ private:
 using Cmd = UnixCmd::UnixTerm;
 
 }
+#endif

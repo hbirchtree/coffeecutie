@@ -34,7 +34,7 @@
 #define C_FORCE_NOTINLINE __attribute__((noinline))
 #else
 #define C_FORCE_NOTINLINE
-#warning "Attention: Some functions may be inlined unintentionally because of this undefined macro."
+#pragma message("Warning: Some functions may be inlined unintentionally because of this undefined macro.")
 #endif
 
 #define STATICINLINE inline C_FORCE_INLINE static

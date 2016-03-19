@@ -66,12 +66,12 @@ struct CGL_Implementation
         Adjacency = 0x8,
     };
 
-    enum class BufBit : int32
-    {
-        Color = 0x1,
-        Depth = 0x2,
-        Stencil = 0x4,
-    };
+	enum class BufBit
+	{
+		Color = 0x1,
+		Depth = 0x2,
+		Stencil = 0x3,
+	};
 
     enum class Face
     {

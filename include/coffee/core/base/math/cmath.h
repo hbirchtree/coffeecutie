@@ -1,11 +1,16 @@
 #ifndef CMATH_FUN
 #define CMATH_FUN
 
+#include "../../coffee_mem_macros.h"
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <random>
 
 #include "../../types/tdef/integertypes.h"
+
+#undef min
+#undef max
 
 namespace Coffee{
 /*!
@@ -13,6 +18,20 @@ namespace Coffee{
  */
 namespace CMath{
 using namespace std;
+
+#ifdef COFFEE_WINDOWS
+template<typename T>
+T min(T v1,T v2)
+{
+	return std::min(v1,v2);
+}
+
+template<typename T>
+T max(T v1, T v2)
+{
+	return std::max(v1, v2);
+}
+#endif
 
 template<typename T> bool IsPower2(T const& n)
 {

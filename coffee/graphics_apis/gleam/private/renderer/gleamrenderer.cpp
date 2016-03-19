@@ -89,8 +89,10 @@ void CGLeamRenderer::bindingPostInit(const GLProperties& p)
 #ifdef COFFEE_GLEAM_DESKTOP
     if(GL::DebuggingSupported())
     {
+#ifndef COFFEE_WINDOWS
         GL::Debug::SetDebugMode(true);
         GL::Debug::DebugSetCallback(gleamcallback,this);
+#endif
     }
 #endif
 

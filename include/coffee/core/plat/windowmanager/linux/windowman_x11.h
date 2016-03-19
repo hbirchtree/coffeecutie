@@ -1,5 +1,9 @@
 #pragma once
 
+#include "../../platform_detect.h"
+
+#ifdef COFFEE_LINUX
+
 #include "../windowman.h"
 #include "../plat_windowtype.h"
 #include "linux_wm_x11.h"
@@ -32,3 +36,4 @@ struct X11WindowManImpl : WindowControlDef
 using WM = WindowManager::X11WindowManImpl;
 
 }
+#endif

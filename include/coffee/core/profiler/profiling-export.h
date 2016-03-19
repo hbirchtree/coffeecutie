@@ -8,7 +8,7 @@
 #include "../coffee_mem_macros.h"
 #include "../coffee.h"
 
-#include "../plat/file/file_def.h"
+#include "../plat/plat_file.h"
 
 namespace Coffee{
 namespace Profiling{

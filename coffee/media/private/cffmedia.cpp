@@ -138,7 +138,7 @@ AVFormatContext* ff_open_data(
 
 CFFStreamDescriptor GetStreamData(const Resource &source)
 {
-
+	return CFFStreamDescriptor();
 }
 
 FFVideoPlayer *CreatePlayer(const Resource &source)

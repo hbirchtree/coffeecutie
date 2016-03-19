@@ -31,11 +31,17 @@ namespace Coffee {
 			{
 				return false;
 			}
+			STATICINLINE bool Exists(cstring)
+			{
+				return false;
+			}
 		};
 	}
 
-	using DirFun = Windows::WinDirFun;
-	using FileFun = Windows::WinFileFun;
+	namespace CResources {
+		using DirFun = Windows::WinDirFun;
+		using FileFun = Windows::WinFileFun;
+	}
 }
 
 #endif
