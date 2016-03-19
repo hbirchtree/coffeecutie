@@ -4,7 +4,7 @@
 #pragma once
 
 #include <coffee/core/CTypes>
-#include "../cfile.h"
+#include "../file_def.h"
 
 namespace Coffee {
 	namespace Windows {
@@ -20,8 +20,19 @@ namespace Coffee {
 				return false;
 			}
 		};
-                struct WinFileFun : CResources::CPlatFileFun
+        struct WinFileFun : CResources::FileFunDef
 		{
+			struct FileHandle
+			{
+				HANDLE file;
+				HANDLE mapping;
+			};
+
+			STATICINLINE FileHandle* Open()
+			{
+				return nullptr;
+			}
+
 			/*TODO: Implement Windows file mapping functions*/
 			STATICINLINE void* Map(cstring, ResourceAccess, szptr, szptr, int*)
 			{

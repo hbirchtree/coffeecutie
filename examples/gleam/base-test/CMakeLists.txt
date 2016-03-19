@@ -6,5 +6,10 @@ coffee_add_example ( GLeamBaseTest ${GLeamBaseTest_SRCS} )
 
 target_link_libraries ( GLeamBaseTest
     CoffeeGLeam
-    CoffeeOVR
     )
+
+if(COFFEE_BUILD_OCULUSVR)
+    target_link_libraries ( GLeamBaseTest
+        CoffeeOVR
+        )
+endif()

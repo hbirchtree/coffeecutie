@@ -471,7 +471,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     renderer->init(props);
     Profiler::Profile("Initialize renderer");
 
+#ifndef COFFEE_WINDOWS
     WM::SetAlwaysTop(renderer->window(),true);
+#endif
 
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()
