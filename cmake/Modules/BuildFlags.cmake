@@ -2,10 +2,10 @@
 if (NOT WIN32)
     # These are effectively used by Clang and GCC, descriptive names
     add_definitions (
-         -Winline
-#        -Wall
-#        -Werror
-        -Wpadded
+        -Winline
+        #-Wall
+        #-Werror
+        #-Wpadded
         )
 else()
     # For Windows, we disable most annoying warnings to save compilation time.

@@ -66,12 +66,12 @@ struct CGL_Implementation
         Adjacency = 0x8,
     };
 
-	enum class BufBit
-	{
-		Color = 0x1,
-		Depth = 0x2,
-		Stencil = 0x3,
-	};
+    enum class BufBit
+    {
+        Color = 0x1,
+        Depth = 0x2,
+        Stencil = 0x3,
+    };
 
     enum class Face
     {
@@ -272,15 +272,6 @@ struct CGL_Implementation
         PrimGen = GL_PRIMITIVES_GENERATED,
         XFGen = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
         TimeElapsed = GL_TIME_ELAPSED,
-    };
-
-    struct CGL_TypeMapBase
-    {
-        static constexpr _cbasic_static_map<BufBit,GLenum,3> bufferbit_map = {
-            {BufBit::Color,GL_COLOR_BUFFER_BIT},
-            {BufBit::Depth,GL_DEPTH_BUFFER_BIT},
-            {BufBit::Stencil,GL_STENCIL_BUFFER_BIT},
-        };
     };
 
     STATICINLINE CGenum to_enum(Severity s);

@@ -200,7 +200,21 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         CGL_Implementation::BufBit f)
 {
-    return coffee_get_flags(f,CGL_TypeMapBase::bufferbit_map);
+    switch(f)
+    {
+    case BufBit::Color:
+    {
+        return GL_COLOR_BUFFER_BIT;
+    }
+    case BufBit::Depth:
+    {
+        return GL_DEPTH_BUFFER_BIT;
+    }
+    case BufBit::Stencil:
+    {
+        return GL_STENCIL_BUFFER_BIT;
+    }
+    }
 }
 #endif
 
