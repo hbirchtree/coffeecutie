@@ -21,6 +21,8 @@ public:
 
     void run()
     {
+		cDebug("GL extensions: {0}",GL::Debug::s_ExtensionList);
+
         while(!this->closeFlag())
         {
             this->pollEvents();

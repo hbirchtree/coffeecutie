@@ -88,16 +88,44 @@ namespace CFunctional {
 
 struct WindowsTime : TimeDef
 {
-        static uint64 Microsecond() { return CFunctional::_win_api_get_time(); }
+    static uint64 Microsecond() { return CFunctional::_win_api_get_time(); }
 
-        static Timestamp CurrentTimestamp() { return CFunctional::_win_api_get_time()/1000000; }
-	static uint64 CurrentMicroTimestamp() { return 0; }
+    static Timestamp CurrentTimestamp() { return Microsecond()/1000000; }
+	static uint64 CurrentMicroTimestamp() { return Microsecond(); }
 
-	static DateTime GetDateTime(Timestamp) { return DateTime(); }
+	static DateTime GetDateTime(Timestamp ts)
+	{
+		DateTime t;
 
-	static CString StringDate(cstring, DateTime) { return ""; }
-	static CString ClockString() { return ""; }
-	static CString FormattedCurrentTime(cstring){return "";}
+		time_t ts_t = ts;
+		tm* tmp = localtime(&ts_t);
+
+		memcpy(&t,tmp,sizeof(tm));
+
+		return t;
+	}
+
+	static CString StringDate(cstring fmt, DateTime dt)
+	{
+		CString out;
+		out.resize(40);
+
+		int len = std::strftime(&out[0],out.size(),fmt,&dt);
+
+		return out;
+	}
+	static CString ClockString() 
+	{
+		Timestamp ts = CurrentTimestamp();
+		DateTime dt = GetDateTime(ts);
+		return StringDate("%H:%M:%S",dt);
+	}
+	static CString FormattedCurrentTime(cstring fmt)
+	{
+		Timestamp ts = CurrentTimestamp();
+		DateTime dt = GetDateTime(ts);
+		return StringDate(fmt,dt);
+	}
 };
 
 using Time = WindowsTime;

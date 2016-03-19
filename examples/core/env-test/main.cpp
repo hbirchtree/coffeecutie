@@ -62,9 +62,9 @@ int32 coffee_main(int32, cstring_w*)
 
     Profiler::PushContext("Mini-benchmarks");
     {
-        CoffeeTests::FunctionCallTest();
+        //CoffeeTests::FunctionCallTest();
         Profiler::Profile("Function calls");
-        CoffeeTests::PrintCallTest();
+        //CoffeeTests::PrintCallTest();
         Profiler::Profile("Printing");
     }
     Profiler::PopContext();

@@ -127,6 +127,8 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
                 (append) ?
                     ResourceAccess::Append|ResourceAccess::WriteOnly|acc
                   : ResourceAccess::WriteOnly|acc);
+	if (!fp)
+		return false;
     CByteData d;
     d.data = (byte_t*)resc.data;
     d.size = resc.size;

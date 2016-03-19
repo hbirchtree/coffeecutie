@@ -82,7 +82,7 @@ public:
 
         GL::ProgramUse(cprogram);
 
-        uint32 num_levels = 2;
+        const uint32 num_levels = 2;
         GL::CGhnd indices_levels[num_levels];
         GL::BufAlloc(num_levels,indices_levels);
         for(uint32 i=0;i<num_levels;i++)

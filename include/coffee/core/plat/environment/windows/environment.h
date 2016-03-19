@@ -6,6 +6,7 @@
 
 #include "../environment_details.h"
 #include <windows.h>
+#include <cstdlib>
 
 namespace Coffee{
 namespace Environment{
@@ -23,7 +24,16 @@ struct WindowsEnvFun : EnvInterface
 
         return excname;
     }
-    STATICINLINE CString GetVar(cstring);
+	STATICINLINE CString GetVar(cstring v)
+	{
+		CString out;
+
+		sbyte_t* var = std::getenv(v);
+
+		out = var;
+
+		return out;
+	}
     STATICINLINE bool SetVar(cstring, cstring)
     {
         return false;
@@ -41,13 +51,17 @@ struct WindowsEnvFun : EnvInterface
     {
         return "\\";
     }
-    STATICINLINE CString ConcatPath(cstring, cstring)
+    STATICINLINE CString ConcatPath(cstring f, cstring fv)
     {
-        return "C:\\Users\\";
+		CString out;
+		out += f;
+		out += GetPathSep();
+		out += fv;
+        return out;
     }
     STATICINLINE CString GetUserHome()
     {
-        return "C:\\Users\\";
+        return GetVar("HOME");
     }
 
     STATICINLINE CString GetUserData(cstring, cstring)
