@@ -12,11 +12,28 @@
 namespace Coffee{
 namespace CResources{
 
-struct PosixFileFun : CFILEFileFun
+struct PosixApi
 {
+    struct FileHandle
+    {
+        FileHandle():
+            handle(nullptr),
+            fd(0)
+        {
+        }
+
+        FILE* handle;
+        int fd;
+    };
+};
+
+struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
+{
+    using FileHandle = PosixApi::FileHandle;
+
     STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
     {
-        FileHandle* fh = CFILEFileFun::Open(fn,ac);
+        FileHandle* fh = CFILEFun_def<FileHandle>::Open(fn,ac);
         if(!fh)
             return nullptr;
 

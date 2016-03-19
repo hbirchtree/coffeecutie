@@ -27,13 +27,12 @@ struct CommonFileFun : FileFunDef
     }
 };
 
-struct CFILEFileFun : CommonFileFun
+struct FILEApi
 {
     struct FileHandle
     {
         FileHandle():
-            handle(nullptr),
-            fd(0)
+            handle(nullptr)
         {
         }
         ~FileHandle()
@@ -42,12 +41,17 @@ struct CFILEFileFun : CommonFileFun
                 fclose(handle);
         }
         FILE* handle;
-        int fd;
     };
+};
 
-    STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
+template<typename FH>
+struct CFILEFun_def : CommonFileFun
+{
+    using FileHandle = FILEApi::FileHandle;
+
+    STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
     {
-        FileHandle* fh = new FileHandle;
+        FH* fh = new FH;
 
         cstring mode = "";
 
@@ -79,13 +83,13 @@ struct CFILEFileFun : CommonFileFun
 
         return fh;
     }
-    STATICINLINE bool Close(FileHandle* fh)
+    STATICINLINE bool Close(FH* fh)
     {
         delete fh;
         return true;
     }
 
-    STATICINLINE CByteData Read(FileHandle* fh, uint64 size,bool nterminate)
+    STATICINLINE CByteData Read(FH* fh, uint64 size,bool nterminate)
     {
         CByteData data;
         data.elements = 0;
@@ -105,11 +109,11 @@ struct CFILEFileFun : CommonFileFun
 //            cLog(CFStrings::Plat_File_Native_SizeErr,esize,rsize);
         return data;
     }
-    STATICINLINE bool Seek(FileHandle* fh,uint64 off)
+    STATICINLINE bool Seek(FH* fh,uint64 off)
     {
         return fseek(fh->handle,off,SEEK_SET)==0;
     }
-    STATICINLINE bool Write(FileHandle* fh,CByteData const& d,bool)
+    STATICINLINE bool Write(FH* fh,CByteData const& d,bool)
     {
         szptr wsize = fwrite(d.data,sizeof(byte_t),d.size,fh->handle);
         return wsize==d.size;
@@ -124,7 +128,7 @@ struct CFILEFileFun : CommonFileFun
         return false;
     }
 
-    STATICINLINE szptr Size(FileHandle* fh)
+    STATICINLINE szptr Size(FH* fh)
     {
         szptr offset = ftell(fh->handle);
         fseek(fh->handle,0,SEEK_END);
@@ -137,6 +141,8 @@ struct CFILEFileFun : CommonFileFun
         return false;
     }
 };
+
+using CFILEFileFun = CFILEFun_def<FILEApi::FileHandle>;
 
 }
 }
