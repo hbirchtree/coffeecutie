@@ -122,7 +122,7 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
         CString tmp = Convert::inttostring((int32)SysInfo::NetStatus());
         sysdata->SetAttribute("sys.net",tmp.c_str());
 
-        tmp = Convert::inttostring(SysInfo::MemTotal());
+        tmp = Convert::uinttostring(SysInfo::MemTotal());
         sysdata->SetAttribute("sys.memory",tmp.c_str());
 
         {
@@ -138,7 +138,7 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
             sysdata->SetAttribute("proc.firmware",tmp.c_str());
         }
 
-        tmp = Convert::inttostring(SysInfo::ProcessorCacheSize());
+        tmp = Convert::uinttostring(SysInfo::ProcessorCacheSize());
         sysdata->SetAttribute("proc.cache",tmp.c_str());
 
         tmp = Convert::scalartostring(SysInfo::ProcessorFrequency());

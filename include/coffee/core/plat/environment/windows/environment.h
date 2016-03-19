@@ -7,6 +7,7 @@
 #include "../environment_details.h"
 #include <windows.h>
 #include <cstdlib>
+#include <Pathcch.h>
 
 namespace Coffee{
 namespace Environment{
@@ -17,10 +18,8 @@ struct WindowsEnvFun : EnvInterface
     {
         CString excname;
 
-        HMODULE self = GetModuleHandle(NULL);
-
-        excname.resize(GetModuleFileName(self,NULL,0));
-        GetModuleFileName(self,&excname[0],excname.size());
+        excname.resize(MAX_PATH);
+        GetModuleFileName(nullptr,&excname[0],excname.size());
 
         return excname;
     }
@@ -61,22 +60,52 @@ struct WindowsEnvFun : EnvInterface
     }
     STATICINLINE CString GetUserHome()
     {
-        return GetVar("HOME");
+        return GetVar("USERPROFILE");
     }
 
-    STATICINLINE CString GetUserData(cstring, cstring)
+    STATICINLINE CString GetUserData(cstring org, cstring app)
     {
-        return "C:\\Users\\";
+		CString out;
+		out = GetUserHome();
+		out += GetPathSep();
+		out += org;
+		out += GetPathSep();
+		out += app;
+        return out;
     }
 
     STATICINLINE CString ApplicationDir()
     {
-        return "";
+		return DirName(ExecutableName());
     }
     STATICINLINE CString CurrentDir()
     {
-        return "";
+		CString out;
+
+		out.resize(GetCurrentDirectory(0,nullptr));
+		GetCurrentDirectory(out.size(),&out[0]);
+
+        return out;
     }
+	STATICINLINE CString DirName(CString fn)
+	{
+		std::wstring fn_w(fn.begin(), fn.end());
+		PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
+		CString out(fn_w.begin(),fn_w.end());
+		out.resize(StrLen(out.c_str()));
+		return out;
+	}
+	STATICINLINE CString BaseName(CString fn)
+	{
+		CString sep = GetPathSep();
+		cstring out_f = Search::ChrFindR(fn.c_str(), sep[0]);
+		CString out;
+		if (!out_f)
+			out = fn;
+		else
+			out = out_f+1;
+		return out;
+	}
 };
 
 }
