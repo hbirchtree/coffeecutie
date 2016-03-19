@@ -54,6 +54,8 @@ struct CDContextBits
 
     uint8 depth;
     uint8 stencil;
+
+    uint16 _pad;
 };
 
 /*!

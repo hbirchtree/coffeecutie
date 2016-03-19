@@ -2,6 +2,7 @@
 
 #include <coffee/core/CInput>
 
+#include "sdl2_inputmap.h"
 #include "../../types/sdl2datatypes.h"
 #include "sdl2eventhandlers.h"
 
@@ -46,7 +47,7 @@ FORCEDINLINE void EventHandleMouseMove(
     m.pos.y = motion.y;
     m.rel.x = motion.xrel;
     m.rel.y = motion.yrel;
-    m.btn = coffee_sdl2_translate_mouse_btnmask(motion.state);
+    m.btn = InterpretMouseBtnMask(motion.state);
 
     EventPack(ctxt,&e,&m);
 }
@@ -70,7 +71,7 @@ FORCEDINLINE void EventHandleMouseBtn(
         m.mod = m.mod|CIMouseButtonEvent::DoubleClick;
     m.pos.x = btn.x;
     m.pos.y = btn.y;
-    m.btn = coffee_sdl2_translate_mouse_btn(btn.button);
+    m.btn = InterpretMouseBtn(btn.button);
 
     EventPack(ctxt,&e,&m);
 }

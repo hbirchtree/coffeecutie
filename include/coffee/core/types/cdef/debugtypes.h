@@ -5,7 +5,7 @@
 
 namespace Coffee{
 
-PACKEDSTRUCT bigscalar_dissect
+struct bigscalar_dissect
 {
     union
     {
@@ -17,19 +17,19 @@ PACKEDSTRUCT bigscalar_dissect
         bigscalar v;
     };
 };
-PACKEDSTRUCT scalar_dissect
+struct scalar_dissect
 {
     union
     {
-        struct{
+        PACKEDSTRUCT {
             uint8 sign:1;
             uint8 exponent:8;
-            uint32 mantissa:24;
+            uint32 mantissa1:23;
         };
         scalar v;
     };
 };
-PACKEDSTRUCT half_dissect
+struct half_dissect
 {
     union
     {

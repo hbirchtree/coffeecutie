@@ -15,8 +15,6 @@ using namespace CLibraryLoader;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    Profiling::ExitRoutine(0,nullptr);
-
     CResources::FileResourcePrefix("sample_data/");
 
     Profiler::PushContext("Configuration data");

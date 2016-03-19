@@ -55,8 +55,8 @@ struct SplashInterface
         }
 
         const CString m_title;
-        const Color m_col;
         const Alignment m_align;
+        const Color m_col;
         const int m_size;
     };
 

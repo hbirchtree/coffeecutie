@@ -34,6 +34,9 @@ using cwstring_w = wchar_t*; /*!< Wide, writable C-string*/
 
 using szptr = size_t; /*!< Usable as offset into data*/
 
+using intptr = intptr_t;
+using uintptr = uintptr_t;
+
 #if defined(INT8_MAX) && defined(UINT8_MAX)
 constexpr int8 Int8_Max = (INT8_MAX);
 constexpr int8 Int8_Min = (INT8_MIN);

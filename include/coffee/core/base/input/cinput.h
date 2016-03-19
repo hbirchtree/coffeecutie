@@ -32,6 +32,9 @@ struct CIEvent
     };
     uint32 ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
+
+    uint8 pad1;
+    uint16 pad2;
 };
 
 /*!
@@ -63,6 +66,8 @@ struct CIKeyEvent
     uint32 key  = 0; /*!< A keycode, use this to identify keys*/
     uint32 scan = 0; /*!< System scancode*/
     KeyModifiers mod = NoneModifier; /*!< Modifier keys*/
+
+    uint16 pad1;
 };
 
 /*!
@@ -78,9 +83,12 @@ struct CITextEvent
  */
 struct CIMouseMoveEvent
 {
-    uint8 btn = 0; /*!< Button held down while moved*/
     CPointF pos; /*!< Absolute position*/
     CPointF rel; /*!< Relative movement since last poll*/
+    uint8 btn = 0; /*!< Button held down while moved*/
+
+    uint8 pad1;
+    uint16 pad2;
 };
 
 /*!
@@ -109,6 +117,8 @@ struct CIMouseButtonEvent
     CPointF pos; /*!< Mouse position*/
     ButtonModifier mod = NoneModifier; /*!< Modifier for event*/
     MouseButton btn = NoneBtn; /*!< Button*/
+
+    uint16 pad1;
 };
 
 /*!
@@ -118,6 +128,9 @@ struct CIScrollEvent
 {
     CPointF delta; /*!< Delta for scroll*/
     uint8 mod = 0; /*!< Current mouse modifiers*/
+
+    uint8 pad1;
+    uint16 pad2;
 };
 
 /*!
@@ -165,12 +178,18 @@ struct CIControllerAtomicEvent
  */
 struct CIControllerAtomicUpdateEvent
 {
-    uint8 button:5;
-    uint8 axis:5;
-    uint8 controller:4;
-    bool connected:1;
-    bool remapped:1;
     cstring name;
+    union{
+        struct {
+            uint8 button:5;
+            uint8 axis:5;
+            uint8 controller:4;
+            bool connected:1;
+            bool remapped:1;
+        };
+        uint32 spacer;
+    };
+    uint32 pad1;
 };
 
 struct CIControllerState
@@ -248,8 +267,6 @@ struct CIDropEvent
         Text     = 0x3, /*!< Text*/
     };
 
-    uint32  size:24; /*!< Size of data*/
-    DataType type; /*!< Event type*/
     union{
         void* data = 0;
         struct
@@ -257,6 +274,12 @@ struct CIDropEvent
             cstring text;
         } text_data;
     };
+    PACKEDSTRUCT{
+        uint32  size:24; /*!< Size of data*/
+        uint8 type; /*!< Event type*/
+    };
+
+    uint32 pad1;
 };
 
 /*!

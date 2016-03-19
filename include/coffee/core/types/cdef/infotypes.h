@@ -188,8 +188,8 @@ struct _cbasic_arg_container
         return arg;
     }
 
-    int32 argc;
     cstring_w* argv;
+    int32 argc;
 
 private:
     bool string_containment;

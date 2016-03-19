@@ -74,10 +74,10 @@ struct CMimeData
     FORCEDINLINE const void* data(){return m_data;}
     FORCEDINLINE const szptr& dataSize(){return m_size;}
 private:
-    bool b_doClean;
+    CString m_id;
     void* m_data;
     szptr m_size;
-    CString m_id;
+    bool b_doClean;
 };
 
 /*!

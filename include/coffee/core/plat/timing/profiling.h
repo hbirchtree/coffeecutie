@@ -25,12 +25,13 @@ struct SimpleProfilerImpl
 
         ThreadId thread;
 
-        Type tp;
         CString name;
         Timestamp ts;
 
         CString label;
         uint32 line;
+
+        Type tp;
 
         /*!
          * \brief Sort based on thread as well as timestamp

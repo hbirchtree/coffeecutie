@@ -27,12 +27,12 @@ FORCEDINLINE void EventHandleKeys(
         k.mod = k.mod|CIKeyEvent::RepeatedModifier;
     if(key.type==SDL_KEYDOWN)
         k.mod = k.mod|CIKeyEvent::PressedModifier;
-    k.mod = k.mod|coffee_sdl2_interpret_key_modifier(key.keysym.mod);
+    k.mod = k.mod|InterpretKeyModifier(key.keysym.mod);
 
     if(key.keysym.sym<256)
         k.key = key.keysym.sym; //SDL uses Latin-1 (mostly, except for keypad)
     else
-        k.key = coffee_sdl2_interpret_symbol(key.keysym.sym);
+        k.key = InterpretKeySymbol(key.keysym.sym);
 
     k.scan = key.keysym.scancode;
 

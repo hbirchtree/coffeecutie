@@ -5,7 +5,7 @@ if (NOT WIN32)
          -Winline
 #        -Wall
 #        -Werror
-#        -Wpadded
+        -Wpadded
         )
 else()
     # For Windows, we disable most annoying warnings to save compilation time.

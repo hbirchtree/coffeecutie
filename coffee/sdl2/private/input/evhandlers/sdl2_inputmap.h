@@ -8,7 +8,7 @@ namespace CSDL2Types{
 
 using namespace CInput;
 
-FORCEDINLINE CIMouseButtonEvent::MouseButton coffee_sdl2_translate_mouse_btn(
+FORCEDINLINE CIMouseButtonEvent::MouseButton InterpretMouseBtn(
         Uint8 code)
 {
     switch(code){
@@ -23,7 +23,7 @@ FORCEDINLINE CIMouseButtonEvent::MouseButton coffee_sdl2_translate_mouse_btn(
     }
 }
 
-FORCEDINLINE uint8 coffee_sdl2_translate_mouse_btnmask(
+FORCEDINLINE uint8 InterpretMouseBtnMask(
         Uint32 code)
 {
     uint8 res = 0;
@@ -42,7 +42,7 @@ FORCEDINLINE uint8 coffee_sdl2_translate_mouse_btnmask(
     return res;
 }
 
-FORCEDINLINE CIKeyEvent::KeyModifiers coffee_sdl2_interpret_key_modifier(
+FORCEDINLINE CIKeyEvent::KeyModifiers InterpretKeyModifier(
         Uint16 mod)
 {
     CIKeyEvent::KeyModifiers res = CIKeyEvent::NoneModifier;
@@ -69,7 +69,7 @@ FORCEDINLINE CIKeyEvent::KeyModifiers coffee_sdl2_interpret_key_modifier(
     return res;
 }
 
-FORCEDINLINE uint32 coffee_sdl2_interpret_symbol(
+FORCEDINLINE uint32 InterpretKeySymbol(
         SDL_Keycode key)
 {
     switch(key){
