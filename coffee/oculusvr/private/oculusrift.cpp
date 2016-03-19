@@ -94,15 +94,15 @@ bool OculusVR::InitializeBinding()
     return true;
 }
 
-bool OculusVR::PollDevices(int32 *lastValidIndex)
+bool OculusVR::PollDevices(int32 *count)
 {
     if(!OculusContext)
         return false;
 
-    int count = ovrHmd_Detect();
+    int ccount = ovrHmd_Detect();
 
-    if(lastValidIndex)
-        *lastValidIndex = count;
+    if(count)
+        *count = ccount;
 
     return true;
 }

@@ -8,7 +8,7 @@
 namespace Coffee{
 namespace CSDL2Types{
 
-void coffee_sdl2_get_window_ptr(SDL_Window *window, CDWindow *win)
+void GetWindowPtr(SDL_Window *window, CDWindow *win)
 {
     SDL_SysWMinfo info;
 

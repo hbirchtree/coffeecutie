@@ -1,3 +1,5 @@
+#pragma message ( "Greedy header in use!" )
+
 #include "audio/caudio.h"
 #include "audio/openal/copenal.h"
 #include <coffee/interfaces/caudiomixer_api.h>

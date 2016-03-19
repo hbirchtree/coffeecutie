@@ -247,13 +247,13 @@ public:
 };
 
 template<class ST,class BT>
-class CSoundManager
+class CSoundArbiter
 {
 public:
-    CSoundManager()
+    CSoundArbiter()
     {
     }
-    virtual ~CSoundManager()
+    virtual ~CSoundArbiter()
     {
     }
 
@@ -275,6 +275,29 @@ public:
     virtual CSoundDevice<ST,BT>* createInputDevice(
             const CSoundDeviceIdentifier& p_id,
             const CSoundDeviceIdentifier& id) = 0;
+};
+
+/*!
+ * \brief A simple namespace for all our audio API features
+ */
+template<typename ArbiterT,typename FormatT,typename StreamT,typename BufferT>
+struct AudioAPI
+{
+    using Arbiter = ArbiterT;
+
+    /* Device-mixer API */
+    using Device = CSoundDevice<StreamT,BufferT>;
+    using Mixer = CSoundMixer<StreamT,BufferT>;
+
+    /* Audio track API */
+    using Track = CSoundTrack<StreamT,BufferT>;
+    using Sample = CSoundSample<StreamT,BufferT>;
+    /* Audio stream API */
+    using Stream = CSoundStream<StreamT,BufferT>;
+
+    /* Basic buffers */
+    using Buffer = CSoundBuffer<StreamT,BufferT>;
+    using Format = FormatT;
 };
 
 }

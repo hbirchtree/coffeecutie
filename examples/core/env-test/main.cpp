@@ -89,6 +89,9 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("Frequency: {0:2}GHz",SysInfo::ProcessorFrequency());
         cDebug("Hyper-threading: {0}",SysInfo::HasHyperThreading());
         cDebug("FPU: {0}",SysInfo::HasFPU());
+        cDebug("CPUs: {0}",SysInfo::CpuCount());
+        cDebug("Cores: {0}",SysInfo::CoreCount());
+        cDebug("Threads: {0}",SysInfo::ThreadCount());
         Profiler::Profile("Get system data");
     }
     Profiler::PopContext();

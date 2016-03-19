@@ -8,6 +8,10 @@ namespace CDisplay{
 class EventApplication : public InputApplication
 {
 public:
+
+    using EventHandlerI = void(*)(EventApplication*,const CIEvent&,c_cptr);
+    using EventHandlerD = void(*)(EventApplication*,const CDEvent&,c_cptr);
+
     /*!
      * \brief Function driving the render loop
      */
@@ -17,6 +21,19 @@ public:
      * \brief Function used for polling events
      */
     virtual void pollEvents() = 0;
+
+    /*!
+     * \brief Allow installation of event handlers without implementing the class
+     */
+    virtual void installEventHandler(EventHandlerI)
+    {
+    }
+    /*!
+     * \brief Allow installation of event handlers without implementing the class
+     */
+    virtual void installEventHandler(EventHandlerD)
+    {
+    }
 
     /*!
      * \brief Get current context time, can be returned by the context or the system

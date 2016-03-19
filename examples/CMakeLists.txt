@@ -3,6 +3,16 @@
 #
 #
 
+if(COFFEE_BUILD_OCULUSVR)
+    message ( "-- Examples built with Oculus support" )
+else()
+    message ( "-- Examples built without Oculus support" )
+endif()
+
+if(NOT COFFEE_BUILD_OPENAL)
+    message ( "-- Examples built without OpenAL support" )
+endif()
+
 #
 # Core
 #
@@ -38,13 +48,23 @@ endif()
 #
 
 #
+# OpenAL
+#
+
+# Examples of CAudio API through OpenAL and Coffee audio abstraction layer
+if(COFFEE_BUILD_OPENAL)
+    add_subdirectory (audio/caudio-test)
+endif()
+
+#
+#
+
+#
 # GLeam
 #
 
 if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_GLEAM)
-    if(COFFEE_BUILD_OCULUSVR)
-        add_subdirectory(gleam/base-test)
-    endif()
+    add_subdirectory(gleam/base-test)
 
     add_subdirectory(gleam/shadow-test)
     add_subdirectory(gleam/raytrace-test)
@@ -132,11 +152,6 @@ endif()
 
 if(COFFEE_BUILD_GLBINDING)
     if(COFFEE_BUILD_SDL2)
-        # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
-        if(COFFEE_BUILD_OPENAL)
-            add_subdirectory (audio/caudio-test)
-        endif()
-
         # Library loading and interface implementation
         add_subdirectory (core/dynamic-test)
 

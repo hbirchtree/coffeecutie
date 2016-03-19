@@ -88,7 +88,7 @@ struct SysInfoDef
      * \brief Total amount of memory in system
      * \return
      */
-    STATICINLINE int64 MemTotal()
+    STATICINLINE uint64 MemTotal()
     {
         return 0;
     }
@@ -97,7 +97,7 @@ struct SysInfoDef
      * \brief Available free memory that can be used
      * \return
      */
-    STATICINLINE int64 MemAvailable()
+    STATICINLINE uint64 MemAvailable()
     {
         return 0;
     }
@@ -106,7 +106,7 @@ struct SysInfoDef
      * \brief Total amount of swap in system
      * \return
      */
-    STATICINLINE int64 SwapTotal()
+    STATICINLINE uint64 SwapTotal()
     {
         return 0;
     }
@@ -115,7 +115,7 @@ struct SysInfoDef
      * \brief Available free swap space in system, not very useful, system-managed
      * \return
      */
-    STATICINLINE int64 SwapAvailable()
+    STATICINLINE uint64 SwapAvailable()
     {
         return 0;
     }
@@ -147,11 +147,16 @@ struct SysInfoDef
         return false;
     }
 
+    STATICINLINE bool HasFPUExceptions()
+    {
+        return false;
+    }
+
     /*!
      * \brief Cache size can be used to optimize tight loops, or just to make screens look tacky
      * \return
      */
-    STATICINLINE int64 ProcessorCacheSize()
+    STATICINLINE uint64 ProcessorCacheSize()
     {
         return 0;
     }

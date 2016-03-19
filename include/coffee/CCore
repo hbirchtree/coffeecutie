@@ -1,3 +1,5 @@
+#pragma message ( "Greedy header in use!" )
+
 #include "core/CBase"
 #include "core/CContext"
 #include "core/CDataStorage"

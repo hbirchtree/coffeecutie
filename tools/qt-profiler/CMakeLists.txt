@@ -5,9 +5,9 @@ set ( CoffeeProfiler_SRCS
     profilingviewer.cpp
     )
 
-coffee_add_example ( CoffeeProfiler "${CoffeeProfiler_SRCS}" )
+coffee_add_example ( Profiler "${CoffeeProfiler_SRCS}" )
 
-target_link_libraries ( CoffeeProfiler
+target_link_libraries ( Profiler
     CoffeeCore
     CoffeeQtShimCore
     )

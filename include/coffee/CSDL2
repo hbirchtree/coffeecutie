@@ -1,2 +1,6 @@
-#include "sdl2/csdl2renderer.h"
-#include "sdl2/sdl2system.h"
+#pragma message ( "Greedy header in use!" )
+
+#include "sdl2/CSDL2GLRenderer"
+#include "sdl2/CSDL2SpriteWindow"
+#include "sdl2/CSDL2System"
+#include "sdl2/CSDL2WindowHost"

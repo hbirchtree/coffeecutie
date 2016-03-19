@@ -122,25 +122,25 @@ struct LinuxSysInfo : SysInfoDef
     {
         return true;
     }
-    STATICINLINE int64 MemTotal()
+    STATICINLINE uint64 MemTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalram*inf.mem_unit;
     }
-    STATICINLINE int64 MemAvailable()
+    STATICINLINE uint64 MemAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.freeram*inf.mem_unit;
     }
-    STATICINLINE int64 SwapTotal()
+    STATICINLINE uint64 SwapTotal()
     {
         struct sysinfo inf;
         sysinfo(&inf);
         return inf.totalswap*inf.mem_unit;
     }
-    STATICINLINE int64 SwapAvailable()
+    STATICINLINE uint64 SwapAvailable()
     {
         struct sysinfo inf;
         sysinfo(&inf);
@@ -234,7 +234,7 @@ struct LinuxSysInfo : SysInfoDef
         return StrCmp(result.c_str(),"yes");
     }
 
-    STATICINLINE int64 ProcessorCacheSize()
+    STATICINLINE uint64 ProcessorCacheSize()
     {
         const cstring query = "cache size";
 

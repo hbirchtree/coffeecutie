@@ -88,7 +88,7 @@ void SDL2SpriteRenderer::destroyRenderer(Renderer t)
     m_context->renderers.erase(t);
 }
 
-void SDL2SpriteRenderer::createTexture(
+bool SDL2SpriteRenderer::createTexture(
         Renderer r, uint32 c,Texture *t, PixelFormat fmt,
         ResourceAccess acc, CSize const& size)
 {
@@ -133,6 +133,7 @@ void SDL2SpriteRenderer::createTexture(
                         ctxt));
         t[i] = m_context->texture_counter;
     }
+    return true;
 }
 
 void SDL2SpriteRenderer::destroyTexture(uint32 c, SpriteApplication::Texture *t)
@@ -154,11 +155,21 @@ void SDL2SpriteRenderer::createSpriteAtlas(
 
 }
 
-void SDL2SpriteRenderer::createSprite(const Texture &t,
+bool SDL2SpriteRenderer::createSprite(const Texture &t,
                                       const SpriteSource &r, Sprite *sprite)
 {
+    Uint32 fmt;
+    int acc;
+    int w,h;
+    SDL_QueryTexture(m_context->textures[t].tex,&fmt,&acc,&w,&h);
+
+    if(r.x+r.w > w || r.y+r.h > h)
+        return false;
+
     sprite->rect = r;
     sprite->source = t;
+
+    return true;
 }
 
 bool SDL2SpriteRenderer::uploadTexture(Texture tex,CRect const& region,

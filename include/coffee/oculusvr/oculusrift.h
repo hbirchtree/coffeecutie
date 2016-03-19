@@ -50,7 +50,7 @@ struct OculusVR : HMD::CHMD_Binding
     };
 
     static bool InitializeBinding();
-    static bool PollDevices(int32 *lastValidIndex = nullptr);
+    static bool PollDevices(int32 *count = nullptr);
     static void Shutdown();
 
     static SWVersionInfo GetDriverInfo();

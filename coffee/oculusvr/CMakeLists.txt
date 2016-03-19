@@ -4,8 +4,6 @@ if(NOT OVR_FOUND)
     message(FATAL_ERROR "Failed to locate OVR libraries")
 endif()
 
-add_definitions(-DCOFFEE_OCULUSVR_ENABLED)
-
 include_directories ( SYSTEM
     ${OVR_INCLUDE_DIR}
     )

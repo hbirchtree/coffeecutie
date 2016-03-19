@@ -37,11 +37,11 @@ public:
     virtual Renderer createRenderer() = 0;
     virtual void destroyRenderer(Renderer t) = 0;
 
-    virtual void createTexture(Renderer r, uint32 c,Texture *t, PixelFormat fmt,
+    virtual bool createTexture(Renderer r, uint32 c,Texture *t, PixelFormat fmt,
                                ResourceAccess acc, CSize const& size) = 0;
     virtual void destroyTexture(uint32,Texture*) = 0;
 
-    virtual void createSprite(Texture const&,SpriteSource const&,Sprite*) = 0;
+    virtual bool createSprite(Texture const&,SpriteSource const&,Sprite*) = 0;
 
     virtual void createSpriteAtlas(Texture const&,Vector<SpriteSource> const&,
                                    uint32&,Vector<Sprite>&) = 0;

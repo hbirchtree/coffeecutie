@@ -1,3 +1,4 @@
+#pragma once
 #include <coffee/core/types/subsystem.h>
 
 namespace Coffee{

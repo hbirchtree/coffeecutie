@@ -31,7 +31,7 @@ void SDL2GLRenderer::setSwapInterval(const int &i)
 
 CDContextBits SDL2GLRenderer::context()
 {
-    return CSDL2Types::coffee_sdl2_get_context_properties().bits;
+    return CSDL2Types::GetContextProperties().bits;
 }
 
 ThreadId SDL2GLRenderer::contextThread()
@@ -52,7 +52,7 @@ CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
 void SDL2GLRenderer::contextPreInit(const GLProperties& props)
 {
     m_window_flags |= SDL_WINDOW_OPENGL;
-    CSDL2Types::coffee_sdl2_set_context_properties(props);
+    CSDL2Types::SetContextProperties(props);
     Profiler::Profile("Set context properties");
 }
 

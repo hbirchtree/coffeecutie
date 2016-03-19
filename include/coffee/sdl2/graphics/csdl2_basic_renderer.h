@@ -14,8 +14,13 @@ class SDL2SpriteRenderer : public SpriteApplication,public SDL2ContextUser
 
     // SpriteApplication interface
 public:
+    SDL2SpriteRenderer():
+        m_context(nullptr)
+    {
+    }
     SDL2SpriteRenderer(SDL2ContextUser* parentContext):
-        SDL2ContextUser(parentContext)
+        SDL2ContextUser(parentContext),
+        m_context(nullptr)
     {
     }
 
@@ -25,7 +30,7 @@ public:
         spritesInit();
         spritesPostInit();
     }
-    void terminate()
+    void cleanup()
     {
         spritesTerminate();
     }
@@ -42,11 +47,11 @@ public:
     Renderer createRenderer();
     void destroyRenderer(Renderer t);
 
-    void createTexture(Renderer r, uint32 c,Texture *t, PixelFormat fmt,
+    bool createTexture(Renderer r, uint32 c,Texture *t, PixelFormat fmt,
                        ResourceAccess acc, CSize const& size);
     void destroyTexture(uint32 c, Texture* t);
 
-    void createSprite(Texture const&,SpriteSource const&,Sprite*);
+    bool createSprite(Texture const&,SpriteSource const&,Sprite*);
 
     void createSpriteAtlas(Texture const& t,Vector<SpriteSource> const&,
                            uint32&,Vector<Sprite>&);

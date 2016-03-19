@@ -1,6 +1,5 @@
 #include <coffee/core/CApplication>
 #include <coffee/graphics_apis/CGLeam>
-#include <coffee/COculusRift>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
 #include <coffee/core/plat/plat_windowmanager.h>
@@ -8,15 +7,18 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics_apis/SMesh>
 
-#include <coffee_ext/qt_shim/dialogs/dialogs.h>
-#include <coffee_ext/qt_shim/qtinit.h>
+#include <coffee/dummyplug/hmd-dummy.h>
+#include <coffee/COculusRift>
 
 using namespace Coffee;
 using namespace CDisplay;
 
+#ifdef COFFEE_OCULUSVR_ENABLED
 using VR = OculusRift::OculusVR;
+#else
+using VR = HMD::DummyPlugHMD;
+#endif
 
-Splash::SplashHandle* splash;
 VR::Device* dev;
 
 void framecount_fun(uint32 t, c_cptr)
@@ -449,14 +451,15 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     CDProperties props = GetDefaultVisual();
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
 
-    /* The Oculus SDK configures some OpenGL state, so it needs to be done before any GL context is active */
+    /* The Oculus SDK configures some OpenGL state,
+     *  so it needs to be done before any GL context is active */
     Profiler::PushContext("Oculus setup");
     dev = nullptr;
     {
         int32 devcount;
         if(VR::InitializeBinding())
         {
-            if(VR::PollDevices(&devcount))
+            if(VR::PollDevices(&devcount)&&devcount>0)
                 dev = VR::GetDefaultDevice();
             if(dev)
                 cDebug("Here's Johnny!");

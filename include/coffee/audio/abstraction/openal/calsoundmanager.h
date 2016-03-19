@@ -9,7 +9,7 @@ namespace COpenAL{
 
 using namespace CSoundAbstraction;
 
-class CALSoundManager : public CSoundManager<CALSource,CALBuffer>
+class CALSoundManager : public CSoundArbiter<CALSource,CALBuffer>
 {
     uint32 d_idx = 0;
 
@@ -34,6 +34,8 @@ public:
             const CSoundDeviceIdentifier &p_id,
             const CSoundDeviceIdentifier &id);
 };
+
+using OpenALAPI = AudioAPI<CALSoundManager,CALSoundFormat,CALSource,CALBuffer>;
 
 }
 }

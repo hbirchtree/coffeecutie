@@ -2,7 +2,6 @@
 #define CSDL2RENDERER_H
 
 #include <coffee/core/CDRendererBase>
-#include "windowing/csdl2_dialogs.h"
 
 #include "graphics/csdl2_gl_renderer.h"
 #include "windowing/csdl2_window.h"

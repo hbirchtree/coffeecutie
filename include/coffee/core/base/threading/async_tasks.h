@@ -3,6 +3,7 @@
 #include <future>
 #include <functional>
 #include "../../coffee_mem_macros.h"
+#include "../../types/tdef/integertypes.h"
 
 namespace Coffee{
 namespace Threads{
@@ -41,6 +42,16 @@ template<typename T>
 FORCEDINLINE bool FutureAvailable(std::future<T> const& f)
 {
     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+}
+
+FORCEDINLINE void sleepMicros(uint64 mic)
+{
+    std::this_thread::sleep_for(std::chrono::microseconds(mic));
+}
+
+FORCEDINLINE void sleepMillis(uint64 mll)
+{
+    std::this_thread::sleep_for(std::chrono::milliseconds(mll));
 }
 
 }

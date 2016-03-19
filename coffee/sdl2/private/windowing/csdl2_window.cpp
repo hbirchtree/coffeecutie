@@ -32,7 +32,7 @@ void SDL2Window::windowPreInit(const CDProperties& p)
 void SDL2Window::windowInit(const CDProperties& p)
 {
     /* Translate window flags and apply them */
-    m_window_flags |= CSDL2Types::coffee_sdl2_interpret_winflags(p.flags);
+    m_window_flags |= CSDL2Types::InterpretWindowFlags(p.flags);
 
     /* Create the platform window */
     const CSize& winsize = p.size;
@@ -115,17 +115,17 @@ bool SDL2Window::setWindowIcon(CBitmap &icon)
 
 CDWindow* SDL2Window::window()
 {
-    return CSDL2Types::coffee_sdl2_get_window(getSDL2Context()->window);
+    return CSDL2Types::GetWindow(getSDL2Context()->window);
 }
 
 uint32 SDL2Window::windowState() const
 {
-    return CSDL2Types::coffee_sdl2_get_winflags(getSDL2Context()->window);
+    return CSDL2Types::GetWindowFlags(getSDL2Context()->window);
 }
 
 void SDL2Window::setWindowState(const CDProperties::State &state)
 {
-    CSDL2Types::coffee_sdl2_set_winflags(getSDL2Context()->window,state);
+    CSDL2Types::SetWindowFlags(getSDL2Context()->window,state);
 }
 
 bool SDL2Window::screensaverMode()

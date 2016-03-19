@@ -287,6 +287,7 @@ void alFree(CALSource *source)
 {
     alDeleteSources(1,&(source->handle->handle));
     context_get_error();
+    delete source->handle;
     source->handle = nullptr;
 }
 
@@ -294,6 +295,7 @@ void alFree(CALBuffer *buffer)
 {
     alDeleteBuffers(1,&(buffer->handle->handle));
     context_get_error();
+    delete buffer->handle;
     buffer->handle = nullptr;
 }
 

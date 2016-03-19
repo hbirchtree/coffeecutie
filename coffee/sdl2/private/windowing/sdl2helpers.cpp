@@ -30,7 +30,7 @@ void _coffee_sdl2_get_gl_attribute_to_uint8(SDL_GLattr attr, uint8* target)
 
 //Exported functions
 
-Uint32 coffee_sdl2_interpret_winflags(CDProperties::State const& flags)
+Uint32 InterpretWindowFlags(CDProperties::State const& flags)
 {
     Uint32 res = 0;
 
@@ -59,7 +59,7 @@ Uint32 coffee_sdl2_interpret_winflags(CDProperties::State const& flags)
     return res;
 }
 
-void coffee_sdl2_set_context_properties(const GLProperties &props)
+void SetContextProperties(const GLProperties &props)
 {
     SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE,props.bits.accum.r);
     SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE,props.bits.accum.g);
@@ -91,7 +91,7 @@ void coffee_sdl2_set_context_properties(const GLProperties &props)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
 }
 
-GLProperties coffee_sdl2_get_context_properties()
+GLProperties GetContextProperties()
 {
     GLProperties props;
 
@@ -121,7 +121,7 @@ GLProperties coffee_sdl2_get_context_properties()
     return props;
 }
 
-CDProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
+CDProperties::State GetWindowFlags(SDL_Window *win)
 {
     Uint32 flags = SDL_GetWindowFlags(win);
     CDProperties::State res = CDProperties::State(0);
@@ -157,7 +157,7 @@ CDProperties::State coffee_sdl2_get_winflags(SDL_Window *win)
     return res;
 }
 
-void coffee_sdl2_set_winflags(SDL_Window* window,CDProperties::State const& state)
+void SetWindowFlags(SDL_Window* window,CDProperties::State const& state)
 {
     if(!(state&CDProperties::Undecorated))
         SDL_SetWindowBordered(window,SDL_TRUE);
@@ -185,7 +185,7 @@ void coffee_sdl2_set_winflags(SDL_Window* window,CDProperties::State const& stat
         SDL_RaiseWindow(window);
 }
 
-CDWindow *coffee_sdl2_get_window(SDL_Window *window)
+CDWindow *GetWindow(SDL_Window *window)
 {
     CDWindow* cwin = new CDWindow;
 
@@ -193,7 +193,7 @@ CDWindow *coffee_sdl2_get_window(SDL_Window *window)
     SDL_GetWindowPosition(window,&cwin->screenArea.x,&cwin->screenArea.y);
 
     cwin->title = SDL_GetWindowTitle(window);
-    coffee_sdl2_get_window_ptr(window,cwin);
+    GetWindowPtr(window,cwin);
 
     return cwin;
 }
