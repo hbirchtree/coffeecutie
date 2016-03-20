@@ -16,7 +16,7 @@ struct LinuxFileFun : PosixFileFun
         return sysconf(_SC_PAGE_SIZE)-1;
     }
 
-    STATICINLINE void* Map(cstring filename, ResourceAccess acc,
+    STATICINLINE FileMapping* Map(cstring filename, ResourceAccess acc,
                            szptr offset, szptr size, int* error)
     {
         szptr pa_offset = offset & ~(PageSize());
@@ -43,11 +43,24 @@ struct LinuxFileFun : PosixFileFun
             *error = errno;
             return nullptr;
         }
-        return addr;
+
+        FileMapping* map = new FileMapping;
+        map->ptr = addr;
+        map->size = size;
+        map->acc = acc;
+
+        return map;
     }
-    STATICINLINE bool  Unmap(void* ptr, szptr size)
+    STATICINLINE bool Unmap(FileMapping* mapp)
     {
-        return munmap(ptr,size);
+        void* ptr = mapp->ptr;
+        szptr size = mapp->size;
+        if(munmap(ptr,size)==0)
+        {
+            delete mapp;
+            return true;
+        }else
+            return false;
     }
     STATICINLINE bool MapCache(void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
     {

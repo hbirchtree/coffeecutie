@@ -39,26 +39,26 @@ bool FileExists(const Resource &resc)
 bool FileMap(Resource &resc, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
-    FileFun::FileHandle* h = FileFun::Open(resc.resource(),ResourceAccess::ReadOnly);
+    resc.size = FileFun::Size(resc.resource());
 
-    if(!h)
+    if(resc.size == 0)
         return false;
 
-    resc.size = FileFun::Size(h);
-    FileFun::Close(h);
     int err = 0;
-    resc.data = FileFun::Map(
+    resc.m_mapping = FileFun::Map(
                 resc.resource(),
                 acc,
                 0,resc.size,
                 &err);
-    if(!resc.data)
+
+    if(!resc.m_mapping)
     {
         cWarning("Failed to map file {1}: {0}",strerror(err),resc.resource());
         resc.size = 0;
         return false;
     }
 
+    resc.data = resc.m_mapping->ptr;
     resc.flags = resc.flags|Resource::Mapped;
 
     return true;
@@ -73,11 +73,13 @@ bool FileUnmap(Resource &resc)
     if(!(resc.flags&Resource::Mapped))
         return false;
 
-    bool s = FileFun::Unmap(resc.data,resc.size);
+    bool s = FileFun::Unmap(resc.m_mapping);
     resc.data = nullptr;
     resc.size = 0;
 
     resc.flags ^= Resource::Mapped;
+
+    delete resc.m_mapping;
 
     return s;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)

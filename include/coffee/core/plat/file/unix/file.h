@@ -25,11 +25,13 @@ struct PosixApi
         FILE* handle;
         int fd;
     };
+    using FileMapping = FileFunDef::FileMapping;
 };
 
 struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
 {
     using FileHandle = PosixApi::FileHandle;
+    using FileMapping = PosixApi::FileMapping;
 
     STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
     {

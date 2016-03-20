@@ -14,9 +14,19 @@ namespace CResources{
  */
 struct Resource{
 private:
-
     CString m_resource; /*!< URL for the resource*/
+
+    FileFun::FileMapping* m_mapping;
+    FileFun::FileHandle* m_handle;
+
 public:
+
+    friend bool FilePull(Resource &resc, bool textmode, bool bigendian);
+    friend bool FileCommit(Resource &resc, bool append, ResourceAccess acc);
+
+    friend bool FileMap(Resource &resc, ResourceAccess acc);
+    friend bool FileUnmap(Resource &resc);
+
     /*!
      * \brief Constructs a resource
      * \param rsrc Path to resource
@@ -89,7 +99,7 @@ inline C_FORCE_INLINE bool FileMkdir(cstring dirname, bool recursive)
     return DirFun::MkDir(dirname,recursive);
 }
 
-inline C_FORCE_INLINE CByteData FileGetDescriptor(Resource& resc)
+FORCEDINLINE CByteData FileGetDescriptor(Resource& resc)
 {
     CByteData d;
     d.data = (byte_t*)resc.data;

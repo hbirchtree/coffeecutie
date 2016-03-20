@@ -12,6 +12,12 @@ namespace CResources{
 struct FileFunDef
 {
     struct FileHandle;
+    struct FileMapping
+    {
+        void* ptr;
+        szptr size;
+        ResourceAccess acc;
+    };
 
     enum NodeType
     {
@@ -33,9 +39,9 @@ struct FileFunDef
     static void Seek(FileHandle* h,uint64 off);
     static bool Write(FileHandle* h,CByteData const& d,bool);
 
-    static void* Map(cstring fname, ResourceAccess access,
+    static FileMapping* Map(cstring fname, ResourceAccess access,
                      szptr size, szptr offset, int* err);
-    static bool  Unmap(void* ptr, szptr size);
+    static bool Unmap(FileMapping* mapp);
 
     static bool MapCache(void* mapping_ptr,szptr mapping_size,
                          szptr cache_offset, szptr cache_size);
@@ -43,7 +49,6 @@ struct FileFunDef
                            szptr cache_offset, szptr cache_size);
     static bool MapSync(void*,szptr);
 
-    static bool Exists(FileHandle*);
     static szptr Size(FileHandle*);
 
     /* We allow checking size of unopened files, convenience */
