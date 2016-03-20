@@ -39,6 +39,27 @@ struct FileFunDef
     static void Seek(FileHandle* h,uint64 off);
     static bool Write(FileHandle* h,CByteData const& d,bool);
 
+    /*!
+     * \brief Here's how the resource flags should work:
+     * Must work:
+     *  - ExclusiveLocking : don't allow others to open/write the file
+     *  - SharedLocking : don't allow simultaneous writes (may happen autonomously)
+     *  - Persistent : changes must be visisble to others, eg. flushed once in a while
+     *  - ReadOnly : allow read access
+     *  - WriteOnly : allow write access
+     *  - Executable : allow execute access
+     * Optional (good for perf):
+     *  - NoCache : avoid caching
+     *  - GreedyCache : cache as much as possible
+     *  - Virtual : load sections, but not all (for big files)
+     *  - HugeFile : indicates a wish for large pages
+     * \param fname
+     * \param access
+     * \param size
+     * \param offset
+     * \param err
+     * \return
+     */
     static FileMapping* Map(cstring fname, ResourceAccess access,
                      szptr size, szptr offset, int* err);
     static bool Unmap(FileMapping* mapp);

@@ -52,8 +52,6 @@ bool FileMap(Resource &resc, ResourceAccess acc)
                 0,resc.size,
                 &err);
 
-	fprintf(stderr, "meep\n");
-
     if(!resc.m_mapping)
     {
 #ifndef COFFEE_WINDOWS
@@ -75,8 +73,6 @@ bool FileMap(Resource &resc, ResourceAccess acc)
         return false;
     }
 
-	fprintf(stderr, "meep\n");
-
     resc.data = resc.m_mapping->ptr;
     resc.flags = resc.flags|Resource::Mapped;
 
@@ -93,12 +89,14 @@ bool FileUnmap(Resource &resc)
         return false;
 
     bool s = FileFun::Unmap(resc.m_mapping);
+
+    if(!s)
+        return false;
+
     resc.data = nullptr;
     resc.size = 0;
 
     resc.flags ^= Resource::Mapped;
-
-    delete resc.m_mapping;
 
     return s;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)

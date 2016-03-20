@@ -97,12 +97,6 @@ bool DeserializeMesh(CResources::Resource const& source, _cbasic_mesh* dest)
     smsh_header_t const* header = (smsh_header_t const*)source.data;
     smsh_groups_t const* groups = (smsh_groups_t const*)&header[1];
 
-	{
-		char* p1 = (char*)source.data;
-		char* p2 = (char*)&header->num_groups;
-		cDebug("Distance: {0}",p2-p1);
-	}
-
     if(!StrCmp(header->magic,magic_word))
         return false;
 
