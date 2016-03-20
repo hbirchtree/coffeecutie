@@ -25,9 +25,9 @@ public:
         AudioSample smp;
         //Read audio sample from file
         CResources::Resource rsc("caudio_test/healing.ogg");
-        FilePull(rsc);
+        FileMap(rsc);
         cDebug("Loading file: {0}",CStbAudio::LoadVorbis(&smp,&rsc));
-        FileFree(rsc);
+        FileUnmap(rsc);
 
         //Acquire an audio device, create a soundtrack
         AL::Arbiter man;

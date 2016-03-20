@@ -60,6 +60,6 @@
 #define C_COMPILER_NAME "MSVC++"
 #define C_COMPILER_VER_MAJ _MSC_FULL_VER
 #define C_COMPILER_VER_MIN _MSC_BUILD
-#define C_COMPILER_VER_REV "x"
+#define C_COMPILER_VER_REV 0
 
 #endif
