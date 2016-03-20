@@ -27,7 +27,7 @@
 #define C_FORCE_INLINE __forceinline
 #else
 #define C_FORCE_INLINE
-#warning "Performance warning: Forced inlining not defined!"
+#pragma message("Warning: Forced inlining not defined!")
 #endif
 
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
