@@ -75,7 +75,7 @@ struct CFILEFun_def : CommonFileFun
         CString fn_native = NativePath(fn);
         fh->handle = fopen(fn_native.c_str(),mode);
 
-        if(!fh->handle&&fh->fd<1)
+        if(!fh->handle)
         {
             delete fh;
             return nullptr;

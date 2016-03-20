@@ -39,14 +39,15 @@ bool FileExists(const Resource &resc)
 bool FileMap(Resource &resc, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
-    resc.size = FileFun::Size(resc.resource());
+	CString native_fn = FileFun::NativePath(resc.resource());
+    resc.size = FileFun::Size(native_fn.c_str());
 
     if(resc.size == 0)
         return false;
 
     int err = 0;
     resc.m_mapping = FileFun::Map(
-                resc.resource(),
+				native_fn.c_str(),
                 acc,
                 0,resc.size,
                 &err);
@@ -100,7 +101,8 @@ void FileFree(Resource &resc)
 bool FilePull(Resource &resc, bool textmode, bool)
 {
 #if defined(COFFEE_C_FILE_API)
-    FileFun::FileHandle *fp = FileFun::Open(resc.resource(),ResourceAccess::ReadOnly);
+	CString native_fn = FileFun::NativePath(resc.resource());
+    FileFun::FileHandle *fp = FileFun::Open(native_fn.c_str(),ResourceAccess::ReadOnly);
 
     if(!fp){
         cWarning("Failed to read file: {0}",resc.resource());
@@ -124,8 +126,9 @@ bool FilePull(Resource &resc, bool textmode, bool)
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
+	CString native_fn = FileFun::NativePath(resc.resource());
     FileFun::FileHandle *fp = FileFun::Open(
-                resc.resource(),
+                native_fn.c_str(),
                 (append) ?
                     ResourceAccess::Append|ResourceAccess::WriteOnly|acc
                   : ResourceAccess::WriteOnly|acc);

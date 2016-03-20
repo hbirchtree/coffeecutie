@@ -54,8 +54,8 @@ public:
             CResources::Resource mesh_src_0("eye_left.msh");
             CResources::Resource mesh_src_1("eye_right.msh");
 
-            CResources::FileMap(mesh_src_0);
-            CResources::FileMap(mesh_src_1);
+			if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
+				return;
 
             SMSH::DeserializeMesh(mesh_src_0,&distortMesh[0]);
             SMSH::DeserializeMesh(mesh_src_1,&distortMesh[1]);

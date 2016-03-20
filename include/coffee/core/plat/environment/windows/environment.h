@@ -20,6 +20,7 @@ struct WindowsEnvFun : EnvInterface
 
         excname.resize(MAX_PATH);
         GetModuleFileName(nullptr,&excname[0],excname.size());
+		excname.resize(Search::ChrFind(excname.c_str(),0) - excname.c_str());
 
         return excname;
     }
@@ -84,6 +85,7 @@ struct WindowsEnvFun : EnvInterface
 
 		out.resize(GetCurrentDirectory(0,nullptr));
 		GetCurrentDirectory(out.size(),&out[0]);
+		out.resize(out.size() - 1);
 
         return out;
     }
@@ -92,7 +94,7 @@ struct WindowsEnvFun : EnvInterface
 		std::wstring fn_w(fn.begin(), fn.end());
 		PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
 		CString out(fn_w.begin(),fn_w.end());
-		out.resize(StrLen(out.c_str()));
+		out.resize(StrLen(out.c_str())-1);
 		return out;
 	}
 	STATICINLINE CString BaseName(CString fn)

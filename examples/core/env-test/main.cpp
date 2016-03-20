@@ -32,6 +32,7 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("Settings directory: {0}",cfg_dir);
         cDebug("Program directory:  {0}",app_dir);
         cDebug("Launching from      {0}",exe_name);
+		cDebug("Current directory:  {0}",Env::CurrentDir());
         Profiler::Profile("Print some data");
 
         CResources::FileMkdir(cfg_dir.c_str(),true);
