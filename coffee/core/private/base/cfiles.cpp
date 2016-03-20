@@ -40,7 +40,7 @@ bool FileMap(Resource &resc, ResourceAccess acc)
 {
 #if defined(COFFEE_C_FILE_API)
 	CString native_fn = FileFun::NativePath(resc.resource());
-    resc.size = FileFun::Size(native_fn.c_str());
+    resc.size = FileFun::Size(resc.resource());
 
     if(resc.size == 0)
         return false;
@@ -52,12 +52,30 @@ bool FileMap(Resource &resc, ResourceAccess acc)
                 0,resc.size,
                 &err);
 
+	fprintf(stderr, "meep\n");
+
     if(!resc.m_mapping)
     {
-        cWarning("Failed to map file {1}: {0}",strerror(err),resc.resource());
+#ifndef COFFEE_WINDOWS
+		CString error = strerror(err);
+#else
+		LPSTR msgBuf = nullptr;
+		size_t size = FormatMessage(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER
+			| FORMAT_MESSAGE_FROM_SYSTEM
+			| FORMAT_MESSAGE_IGNORE_INSERTS,
+			nullptr, err,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPSTR)&msgBuf,0,nullptr);
+		CString error(msgBuf, size);
+		LocalFree(msgBuf);
+#endif
+        cWarning("Failed to map file {2}:{0}: {1}",err,error,resc.resource());
         resc.size = 0;
         return false;
     }
+
+	fprintf(stderr, "meep\n");
 
     resc.data = resc.m_mapping->ptr;
     resc.flags = resc.flags|Resource::Mapped;

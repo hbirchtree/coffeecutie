@@ -54,6 +54,13 @@ public:
             CResources::Resource mesh_src_0("eye_left.msh");
             CResources::Resource mesh_src_1("eye_right.msh");
 
+			if (CResources::FileFun::Exists(mesh_src_0.resource()))
+			{
+				CString fn = CResources::FileFun::NativePath(mesh_src_0.resource());
+				uint64 v = CResources::FileFun::Size(fn.c_str());
+				cDebug("File size: {0}", v);
+			}
+
 			if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
 				return;
 

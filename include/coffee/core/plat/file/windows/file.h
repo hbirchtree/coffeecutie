@@ -5,6 +5,8 @@
 
 #include "../cfile.h"
 
+#include <sys/stat.h>
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -49,6 +51,10 @@ namespace Coffee {
 			STATICINLINE FileAccess GetAccess(ResourceAccess acc)
 			{
 				FileAccess f;
+				f.open = 0;
+				f.share = 0;
+				f.create = 0;
+				f.attr = 0;
 
 				if (feval(acc&ResourceAccess::ReadOnly))
 					f.open |= GENERIC_READ;
@@ -127,21 +133,9 @@ namespace Coffee {
 			}
 			STATICINLINE szptr Size(cstring fn)
 			{
-				HANDLE fh = CreateFile(fn,0,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);
-				if (fh != INVALID_HANDLE_VALUE)
-				{
-					DWORD high = 0;
-					DWORD low = GetFileSize(fh, &high);
-					if (low == INVALID_FILE_SIZE)
-					{
-						DWORD err = GetLastError();
-						fprintf(stderr,"Windows Error message: %d",err);
-					}
-					CloseHandle(fh);
-					return (high << 32) + low;
-				}
-				else
-					return 0;
+				struct stat st;
+				stat(fn, &st);
+				return static_cast<szptr>(st.st_size);
 			}
 
 			STATICINLINE bool Touch(NodeType, cstring)
@@ -157,15 +151,16 @@ namespace Coffee {
 				return NodeType::File;
 			}
 
-			STATICINLINE FileMapping* Map(cstring fn, ResourceAccess acc, szptr size, szptr off, int*)
+			STATICINLINE FileMapping* Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err)
 			{
 				if (off + size > Size(fn))
 					return nullptr;
 
 				HANDLE fh = WinFileApi::GetFileHandle(fn, acc);
 
-				if (!fh)
+				if (fh==INVALID_HANDLE_VALUE)
 				{
+					*err = GetLastError();
 					return nullptr;
 				}
 
@@ -199,13 +194,14 @@ namespace Coffee {
 				if (feval(acc&ResourceAccess::Virtual))
 					profl |= SEC_RESERVE;
 
-				DWORD size_high = (off+size) >> 32;
+				DWORD size_high = 0;
 				DWORD size_low = off+size;
 
 				HANDLE mh = CreateFileMapping(fh, nullptr, profl, size_high, size_low, nullptr);
 
 				if (!mh)
 				{
+					*err = GetLastError();
 					CloseHandle(fh);
 					return nullptr;
 				}
@@ -222,13 +218,14 @@ namespace Coffee {
 				else if (feval(acc&ResourceAccess::ReadOnly))
 					view_fl = FILE_MAP_READ;
 
-				DWORD off_high = off >> 32;
+				DWORD off_high = 0;
 				DWORD off_low = off;
 
 				void* ptr = MapViewOfFile(mh, view_fl, off_high, off_low, size);
 
 				if (!ptr)
 				{
+					*err = GetLastError();
 					CloseHandle(fh);
 					CloseHandle(mh);
 					return nullptr;

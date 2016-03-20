@@ -97,6 +97,11 @@ bool DeserializeMesh(CResources::Resource const& source, _cbasic_mesh* dest)
     smsh_header_t const* header = (smsh_header_t const*)source.data;
     smsh_groups_t const* groups = (smsh_groups_t const*)&header[1];
 
+	uint32 v1 = header->num_groups;
+	uint16 v2 = header->num_groups;
+
+	cDebug("Size of group enumerator: {0},value1={1},value2={2}",sizeof(header->num_groups),v1,v2);
+
     if(!StrCmp(header->magic,magic_word))
         return false;
 
