@@ -25,3 +25,6 @@
 [submodule "libs/cef"]
 	path = libs/cef
 	url = https://bitbucket.org/chromiumembedded/cef.git
+[submodule "libs/rapidjson"]
+	path = libs/rapidjson
+	url = https://github.com/miloyip/rapidjson.git

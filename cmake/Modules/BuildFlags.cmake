@@ -32,3 +32,7 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 # The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
 # Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
+
+# RapidJSON is part of the core, and is therefore added as a submodule
+find_package ( RapidJson REQUIRED )
+include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
