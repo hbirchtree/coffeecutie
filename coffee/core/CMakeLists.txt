@@ -30,8 +30,6 @@ if(COFFEE_BUILD_OPENSSL)
         ${OPENSSL_INCLUDE_DIR}
         )
     list ( APPEND CORE_EXTRA_LIBRARIES ${OPENSSL_LIBRARIES} )
-    message ( "-- SSL include dir: ${OPENSSL_INCLUDE_DIR}" )
-    message ( "-- SSL libraries: ${OPENSSL_LIBRARIES}" )
 endif()
 
 # Platform-specific target options
