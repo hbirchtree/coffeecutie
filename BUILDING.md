@@ -2,9 +2,9 @@ General dependencies
 ====================
  - Compiler of choice (but not really on Windows)
 
-     a. Clang (proven and tested!)
+     a. Clang 3.5+ (proven and tested!)
      
-     b. GCC
+     b. GCC 4.9+
      
      c. Visual C++ 2015+ (because Microsoft is slow to catch up on standards)
 
@@ -13,7 +13,7 @@ General dependencies
  - SDL2 development libraries (min. of 2.0.3, 2.0.4 is preferred)
  - An OpenGL driver (duh)
  - CMake 3.0+ (required for C++11 flags)
- - Ninja on Linux and OSX, to help the compile time
+ - Ninja-build on Linux and OSX, to help the compile time
  - Some time
 
 On Linux...
