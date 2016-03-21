@@ -1,11 +1,11 @@
 #ifndef COFFEE_ASIO_ASIO_DATA_H
 #define COFFEE_ASIO_ASIO_DATA_H
 
-#include <coffee/core/CDebug>
-#include <coffee/core/coffee_strings.h>
-
 #include <asio.hpp>
 #include <asio/ssl.hpp>
+
+#include <coffee/core/CDebug>
+#include <coffee/core/coffee_strings.h>
 
 namespace Coffee{
 namespace CASIO{

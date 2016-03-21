@@ -1,5 +1,5 @@
-#include <coffee/CCore>
 #include <coffee/CAsio>
+#include <coffee/CCore>
 
 using namespace Coffee;
 

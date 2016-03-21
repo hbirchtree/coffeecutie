@@ -94,7 +94,7 @@ struct CFILEFun_def : CommonFileFun
         CByteData data;
         data.elements = 0;
         szptr esize = Size(fh);
-        if(size < esize && size != -1)
+        if(size <= esize && size != -1)
             esize = size;
 
         if(nterminate)

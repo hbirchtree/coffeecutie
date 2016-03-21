@@ -27,11 +27,11 @@ void SDL2EventHandler::inputInit()
     if(FileExists(mapping))
     {
         cMsg("SDL2","Found game controller mappings");
-        FilePull(mapping,true);
+        FileMap(mapping);
         SDL_RWops* fsrc = SDL_RWFromConstMem(mapping.data,mapping.size);
         SDL_GameControllerAddMappingsFromRW(fsrc,0);
         SDL_FreeRW(fsrc);
-        FileFree(mapping);
+        FileUnmap(mapping);
     }
     Profiler::Profile("Load controller mapping");
 }
