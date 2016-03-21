@@ -35,14 +35,11 @@ Ubuntu packages (for core functionality):
         apt install libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev libswscale-dev swig3.0 qt5-default
 
  1. Create a build directory
-    1. Create a sub-directory "libs"
-    2. Configure CMakeLists.txt from "libs/" in this directory, build it!
-    3. Configure and deploy ffmpeg to "libs/"
  2. Configure CMakeLists.txt from the root directory in the build directory
  3. Build the application, providing paths to Assimp, GLBinding and others if applicable.
  4. If all goes well, binaries are output to {build directory}/bin, readily linked and ready to go
 
-As a list of commands:
+tl;dr:
 
         mkdir build && cd build
         cmake ${PROJECT_DIR}
