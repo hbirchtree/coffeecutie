@@ -1,4 +1,4 @@
-# For the lazy
+# For the lazy (on Linux)
 This will give you a basic build with OpenGL, OpenAL and SDL2 event support:
  0. Install:
     - Compiler of choice (Clang and GCC recommended)
@@ -10,14 +10,30 @@ This will give you a basic build with OpenGL, OpenAL and SDL2 event support:
         cmake ${PROJECT_DIR}
  3. Build it
 
-# For the really lazy
+# For the really lazy (on Linux)
 Do the above, but adding the following to the cmake commandline:
 
-        -DCOFFEE_BUILD_OPENAL=OFF -DCOFFEE_BUILD_SDL2=OFF
+        -DCOFFEE_BUILD_OPENAL=OFF -DCOFFEE_BUILD_SDL2=OFF -DCOFFEE_BUILD_OPENSSL=OFF
 
 This removes the need for any external dependencies apart from a compiler, but with heavily reduced functionality (command-line only).
 
-# How to build CoffeeCutie
+# How to build CoffeeCutie (on Linux)
+What you will need:
+ - Compiler of choice, Clang and GCC should both work
+ - Ninja (optional, please use this instead of make)
+ - CMake 3.0+
+ - OpenAL dev libs
+ - OpenSSL dev libs
+ - SDL2 dev libs
+
+Ubuntu packages (for core functionality):
+
+        # Core functionality
+        apt install cmake ninja-build build-essential libopenal-dev libsdl2-dev libssl-dev libunwind-dev
+        
+        # Media extensions, language bindings, GUI tools
+        apt install libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev libswscale-dev swig3.0 qt5-default
+
  1. Create a build directory
     1. Create a sub-directory "libs"
     2. Configure CMakeLists.txt from "libs/" in this directory, build it!
@@ -29,15 +45,34 @@ This removes the need for any external dependencies apart from a compiler, but w
 As a list of commands:
 
         mkdir build && cd build
-        mkdir libs && cd libs
-        cmake "${PROJECT_DIR}/libs" -G "Ninja"
-        ninja
-        cd ..
-        cmake "${PROJECT_DIR}" -Dassimp_LIBRARIES=libs/lib/libassimp.so -DGLBINDING_LIBRARIES=libs/lib/libglbinding.so -DGLBINDING_INCLUDE_DIR=libs/include
+        cmake ${PROJECT_DIR}
         ninja
 
 Some applications have sample data, sourced from the sample_data directory in the root of the project directory. Some applications will crash without these files.
 
+# On Windows...
+You will need:
+ - Visual Studio 2015 (tested, needs sufficient C++11 support) or just MSBuild.exe if you are hardcore
+ - CMake 3.0+
+ - OpenAL SDK
+ - OpenSSL libraries and header files
+ - SDL2 libraries and header files
+
+The workflow is as such:
+ 1. Configure with CMake. Just use the dam* GUI and get over with it. You will have to specify a lot of filepaths since Windows has no automatic library directories or include directories.
+ 2. Browse to build directory
+ 3. Either:
+
+    a. Open cmd.exe and execute (assuming MSBuild.exe is in PATH):
+
+        MSBuild.exe Coffee.sln
+
+    b. Open Visual Studio and open Coffee.sln, build from there
+
+
 **NB**: Note that Windows is not fully supported or tested at all times.
+
+# On Mac OS X...
+There is no status on this port.
 
 **NB**: Note that Mac OS X is not supported (yet) and might not work at all.
