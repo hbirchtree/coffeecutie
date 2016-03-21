@@ -16,6 +16,10 @@ General dependencies
  - Ninja-build on Linux and OSX, to help the compile time
  - Some time
 
+        # Tip: use
+        cmake ${PROJECT_DIR} -LH
+        # to get build options
+
 On Linux...
 ==============
 For the lazy (on Linux)
