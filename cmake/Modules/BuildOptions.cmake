@@ -65,3 +65,9 @@ option ( COFFEE_BUILD_QT "Build with Qt support" OFF)
 if(COFFEE_BUILD_OCULUSVR)
     add_definitions(-DCOFFEE_OCULUSVR_ENABLED)
 endif()
+
+# Include SSL if built
+if(COFFEE_BUILD_OPENSSL)
+    find_package ( OpenSSL REQUIRED )
+    include_directories ( ${OPENSSL_INCLUDE_DIR} )
+endif()
