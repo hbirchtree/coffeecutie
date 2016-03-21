@@ -10,6 +10,7 @@ General dependencies
 
  - OpenAL development libraries
  - OpenSSL development libraries
+ - SDL2 development libraries (min. of 2.0.3, 2.0.4 is preferred)
  - An OpenGL driver (duh)
  - CMake 3.0+ (required for C++11 flags)
  - Ninja on Linux and OSX, to help the compile time
