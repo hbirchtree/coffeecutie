@@ -16,15 +16,15 @@ RUN apt-get -qy install git nano wget
 # Build tools
 RUN apt-get -qy install cmake ninja-build build-essential doxygen
 # SWIG, just for giggles
-RUN apt-get -qy install swig
+RUN apt-get -qy install swig3.0
 # RapidJSON for JSON parsing
 RUN apt-get -qy install rapidjson-dev
 # SDL2 libraries + dependencies
 RUN apt-get -qy install libsdl2-dev
 # OpenAL for audio
 RUN apt-get -qy install libopenal-dev
-# ASIO for networking
-RUN apt-get -qy install libasio-dev 
+# SSL for networking
+RUN apt-get -qy install libssl-dev 
 # Unwind for stacktrace information
 RUN apt-get -qy install libunwind-dev
 # FFMPEG for media playback/capture
