@@ -1,3 +1,8 @@
+#
+# This toolchain is used for cross-compiling 32-bit on 64-bit systems
+# This is not used for native compiling!
+#
+
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR "i686")
