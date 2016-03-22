@@ -112,8 +112,7 @@ namespace Coffee {
 							if (st)
 								CFree(st);
 							else
-								st = AllocT<SYSTEM_LOGICAL_PROCESSOR_INFORMATION>(
-									rsize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
+								st = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)Alloc(rsize);
 						}
 						else
 							return {};
@@ -139,7 +138,7 @@ namespace Coffee {
 					case RelationNumaNode:
 						break;
 					case RelationProcessorPackage:
-						if (procc++ == 1)
+						if (++procc == 1)
 							break;
 						info.processors.push_back({});
 						proc = &info.processors.back();
@@ -167,6 +166,8 @@ namespace Coffee {
 					byte_offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
 					ptr++;
 				}
+
+				CFree(st);
 
 				return info;
 			}
