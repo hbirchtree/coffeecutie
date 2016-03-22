@@ -9,7 +9,9 @@
 #include <coffee/graphics_apis/gleam/levels/es/gles30.h>
 #endif
 
+#ifdef COFFEE_ANDROID
 #include <SDL2/SDL_video.h>
+#endif
 
 #include "conversion.h"
 
