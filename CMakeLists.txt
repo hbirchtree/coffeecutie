@@ -12,7 +12,7 @@ set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 set ( CMAKE_VERBOSE_MAKEFILE on )
 
 # This is used inside modules to refer to libraries
-set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs )
+set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_SOURCE_DIR}/libs )
 
 include ( BuildOptions )
 

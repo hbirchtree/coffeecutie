@@ -175,8 +175,10 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     case Feature::SeamlessCubemap:
         return GL_TEXTURE_CUBE_MAP_SEAMLESS;
 #endif
+#ifdef COFFEE_GLEAM_DESKTOP
     case Feature::ClipDistance:
         return GL_CLIP_DISTANCE0+offset;
+#endif
     default:
         return GL_NONE;
     }

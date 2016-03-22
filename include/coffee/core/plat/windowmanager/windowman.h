@@ -43,4 +43,6 @@ struct WindowControlDef
 
 #endif
 
+#include "android/windowman.h"
 #include "linux/windowman.h"
+#include "windows/windowman.h"

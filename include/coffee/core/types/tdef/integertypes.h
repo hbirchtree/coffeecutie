@@ -41,24 +41,40 @@ using uintptr = uintptr_t;
 constexpr int8 Int8_Max = (INT8_MAX);
 constexpr int8 Int8_Min = (INT8_MIN);
 constexpr uint8 UInt8_Max = (UINT8_MAX);
+#else
+constexpr int8 Int8_Max = (127);
+constexpr int8 Int8_Min = (127)-1;
+constexpr uint8 UInt8_Max = (255);
 #endif
 
 #if defined(INT16_MAX) && defined(UINT16_MAX)
 constexpr int16 Int16_Max = (INT16_MAX);
 constexpr int16 Int16_Min = (INT16_MIN);
 constexpr uint16 UInt16_Max = (UINT16_MAX);
+#else
+constexpr int16 Int16_Max = (32767);
+constexpr int16 Int16_Min = (-32767)+1;
+constexpr uint16 UInt16_Max = 65535;
 #endif
 
 #if defined(INT32_MAX) && defined(UINT32_MAX)
 constexpr int32 Int32_Max = (INT32_MAX);
 constexpr int32 Int32_Min = (INT32_MIN);
 constexpr uint32 UInt32_Max = (UINT32_MAX);
+#else
+constexpr int32 Int32_Max = 2147483647;
+constexpr int32 Int32_Min = (-2147483647)-1;
+constexpr uint32 UInt32_Max = 4294967295;
 #endif
 
 #if defined(INT64_MAX) && defined(UINT64_MAX)
 constexpr int64 Int64_Max = (INT64_MAX);
 constexpr int64 Int64_Min = (INT64_MIN);
 constexpr uint64 UInt64_Max = (UINT64_MAX);
+#else
+constexpr int64 Int64_Max = (9223372036854775807LL);
+constexpr int64 Int64_Min = (-9223372036854775807LL)-1;
+constexpr uint64 UInt64_Max = (18446744073709551615ULL);
 #endif
 
 using c_cptr = const void*;

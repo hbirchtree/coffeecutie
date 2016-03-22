@@ -6,9 +6,9 @@
 #include "file_def.h"
 #include "../../coffee_strings.h"
 
-#ifdef COFFEE_ANDROID_FILE_ASSET_API
-#include <SDL2/SDL_system.h>
-#endif
+//#ifdef COFFEE_ANDROID_FILE_ASSET_API
+//#include <SDL2/SDL_system.h>
+//#endif
 
 namespace Coffee{
 namespace CResources{
@@ -20,8 +20,6 @@ struct CommonFileFun : FileFunDef
         CString temp = fn;
 #if defined(COFFEE_WINDOWS)
         temp = CStrReplace(fn,"/","\\");
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-        return "";
 #endif
         return temp;
     }
@@ -142,7 +140,7 @@ struct CFILEFun_def : CommonFileFun
     }
 };
 
-using CFILEFileFun = CFILEFun_def<FILEApi::FileHandle>;
+using CFILEFun = CFILEFun_def<FILEApi::FileHandle>;
 
 }
 }

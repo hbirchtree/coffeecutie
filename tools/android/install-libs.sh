@@ -17,11 +17,17 @@ done
 ./sdl-build.sh
 
 include_directories[0]="$HOME/lib/openal-soft/jni/OpenAL/include/AL"
-include_directories[1]="$HOME/lib/SDL2/include/SDL*.h"
+include_directories[1]="$HOME/lib/SDL2/include"
 
 for inc in ${include_directories[@]}
 do
-	cp -r "$inc" ./libs/include/
+	cp -r "$inc" $basedir/include/
 done
+
+mv $basedir/include/include $basedir/include/SDL2
+
+mkdir -p ${BUILD_DIR}/libs/include
+
+ln -s ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR}/libs/include
 
 exit 0

@@ -1,4 +1,4 @@
-#include "../../unix/unix_core.h"
+#include "../../plat_primary_identify.h"
 
 #ifdef COFFEE_LINUX
 #ifndef COFFEE_CORE_PLAT_ENV_PROCESS_H

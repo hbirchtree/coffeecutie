@@ -3,6 +3,7 @@
 
 #include <coffee/core/CObject>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/coffee_message_macros.h>
 
 namespace Coffee{
 namespace CAudio{

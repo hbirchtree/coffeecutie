@@ -1,5 +1,8 @@
 #include <coffee/core/profiler/profiling-export.h>
+
+#ifdef COFFEE_USE_TERMINAL_CTL
 #include <coffee/core/plat/memory/cmd_unixterm.h>
+#endif
 
 namespace Coffee{
 /* Don't mind this, just some string storage */

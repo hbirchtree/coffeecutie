@@ -16,6 +16,8 @@ set ( CoffeeCore_SRCS
 
     private/plat/linking/libraries.cpp
 
+    private/plat/file/android/file.cpp
+
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
     )
@@ -60,7 +62,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
 endif()
 
-if(ANDROID AND SDL2_FOUND)
+if(ANDROID)
     # We use SDL2 for some platform functionality on Android, like file storage
     find_package(SDL2 REQUIRED)
     list ( APPEND CORE_INCLUDE_DIR

@@ -265,7 +265,7 @@ struct CGL_Implementation
     static CGenum to_enum(Severity s);
     static CGenum to_enum(DebugType t);
     static CGenum to_enum(Object t);
-    static CGenum to_enum(Feature f);
+    static CGenum to_enum(Feature f,uint32 off = 0);
     static CGenum to_enum(Face f);
     static CGenum to_enum(BufBit f);
     static CGenum to_enum(Prim p,PrimCre c);

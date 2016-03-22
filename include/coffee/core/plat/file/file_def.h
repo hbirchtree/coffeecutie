@@ -71,10 +71,13 @@ struct FileFunDef
     static bool Unmap(FileMapping* mapp);
 
     static bool MapCache(void* mapping_ptr,szptr mapping_size,
-                         szptr cache_offset, szptr cache_size);
+                         szptr cache_offset, szptr cache_size)
+    {}
     static bool MapUncache(void* mapping_ptr,szptr mapping_size,
-                           szptr cache_offset, szptr cache_size);
-    static bool MapSync(void*,szptr);
+                           szptr cache_offset, szptr cache_size)
+    {}
+    static bool MapSync(void*,szptr)
+    {}
 
     static szptr Size(FileHandle*);
 
@@ -82,8 +85,8 @@ struct FileFunDef
      * \brief Magically cache your whole application
      * \return
      */
-    static bool SuperCache();
-    static bool SuperUncache();
+    static bool SuperCache(){}
+    static bool SuperUncache(){}
 
     static ScratchBuf* ScratchBuffer(szptr size, ResourceAccess access);
     static void ScratchUnmap(ScratchBuf*);
@@ -108,10 +111,10 @@ struct DirFunDef
 
     using DirList = Vector<DirItem_t>;
 
-    static bool MkDir(cstring dname, bool recurse);
-    static bool RmDir(cstring dname);
+    static bool MkDir(cstring dname, bool recurse){}
+    static bool RmDir(cstring dname){}
 
-    static bool Ls(cstring dname,DirList*);
+    static bool Ls(cstring dname,DirList*){}
 };
 
 }

@@ -2,13 +2,11 @@
 
 #include "../platform_detect.h"
 
-#ifdef COFFEE_ANDROID
-namespace std{
-#include <stdlib.h>
-}
-#else
+//#ifdef COFFEE_ANDROID
+//#include <stdlib.h>
+//#else
 #include <cstdlib>
-#endif
+//#endif
 #include <cstring>
 
 #include "memory_ops.h"
@@ -79,54 +77,54 @@ namespace Convert
 FORCEDINLINE int32 strtoint(cstring n,int base = 10, bool* ok = nullptr)
 {
     if(!ok)
-        return std::strtol(n,nullptr,base);
+        return ::strtol(n,nullptr,base);
     char* t = nullptr;
-    int32 v = std::strtol(n,&t,base);
+    int32 v = ::strtol(n,&t,base);
     *ok = t>n;
     return v;
 }
 FORCEDINLINE uint32 strtouint(cstring n,int base = 10, bool* ok = nullptr)
 {
     if(!ok)
-        return std::strtoul(n,nullptr,base);
+        return ::strtoul(n,nullptr,base);
     char* t = nullptr;
-    uint32 v = std::strtoul(n,&t,base);
+    uint32 v = ::strtoul(n,&t,base);
     *ok = t>n;
     return v;
 }
 FORCEDINLINE int64 strtoll(cstring n,int base = 10, bool* ok = nullptr)
 {
     if(!ok)
-        return std::strtoll(n,nullptr,base);
+        return ::strtoll(n,nullptr,base);
     char* t = nullptr;
-    int64 v = std::strtoll(n,&t,base);
+    int64 v = ::strtoll(n,&t,base);
     *ok = t>n;
     return v;
 }
 FORCEDINLINE uint64 strtoull(cstring n,int base = 10, bool* ok = nullptr)
 {
     if(!ok)
-        return std::strtoull(n,nullptr,base);
+        return ::strtoull(n,nullptr,base);
     char* t = nullptr;
-    uint64 v = std::strtoull(n,&t,base);
+    uint64 v = ::strtoull(n,&t,base);
     *ok = t>n;
     return v;
 }
 FORCEDINLINE scalar strtofscalar(cstring n, bool* ok = nullptr)
 {
     if(!ok)
-        return std::strtof(n,nullptr);
+        return ::strtof(n,nullptr);
     char* t = nullptr;
-    scalar v = std::strtof(n,&t);
+    scalar v = ::strtof(n,&t);
     *ok = t>n;
     return v;
 }
 FORCEDINLINE bigscalar strtoscalar(cstring n, bool* ok = nullptr)
 {
     if(!ok)
-        return std::strtod(n,nullptr);
+        return ::strtod(n,nullptr);
     char* t = nullptr;
-    bigscalar v = std::strtod(n,&t);
+    bigscalar v = ::strtod(n,&t);
     *ok = t>n;
     return v;
 }
