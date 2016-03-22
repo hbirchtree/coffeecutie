@@ -16,7 +16,7 @@ struct Resource{
 private:
     CString m_resource; /*!< URL for the resource*/
 
-    FileFun::FileMapping* m_mapping;
+    FileFun::FileMapping m_mapping;
     FileFun::FileHandle* m_handle;
 
 public:

@@ -16,7 +16,7 @@ struct LinuxFileFun : PosixFileFun
         return sysconf(_SC_PAGE_SIZE)-1;
     }
 
-    STATICINLINE FileMapping* Map(cstring filename, ResourceAccess acc,
+    STATICINLINE FileMapping Map(cstring filename, ResourceAccess acc,
                            szptr offset, szptr size, int* error)
     {
         szptr pa_offset = offset & ~(PageSize());
@@ -31,7 +31,7 @@ struct LinuxFileFun : PosixFileFun
         if(fd < 0)
         {
             *error = errno;
-            return nullptr;
+            return {};
         }
         byte_t* addr = (byte_t*)mmap64(
                     NULL,
@@ -41,13 +41,13 @@ struct LinuxFileFun : PosixFileFun
         if(addr == MAP_FAILED)
         {
             *error = errno;
-            return nullptr;
+            return {};
         }
 
-        FileMapping* map = new FileMapping;
-        map->ptr = addr;
-        map->size = size;
-        map->acc = acc;
+        FileMapping map;
+        map.ptr = addr;
+        map.size = size;
+        map.acc = acc;
 
         return map;
     }
@@ -92,14 +92,22 @@ struct LinuxFileFun : PosixFileFun
         return munlockall()==0;
     }
 
-    STATICINLINE void* ScratchBuffer(szptr size, ResourceAccess access)
+    STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess access)
     {
         int proto = ProtFlags(access);
         int mapflags = MappingFlags(access)|MAP_ANONYMOUS;
 
         mapflags |= MAP_ANONYMOUS;
 
-        return mmap64(nullptr,size,proto,mapflags,-1,0);
+        ScratchBuf buf;
+        buf.ptr = mmap64(nullptr,size,proto,mapflags,-1,0);
+        buf.acc = access;
+        buf.size = size;
+
+        if(!buf.ptr)
+            return {};
+
+        return buf;
     }
     STATICINLINE void ScratchUnmap(void* ptr, szptr size)
     {

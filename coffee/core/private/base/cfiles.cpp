@@ -52,7 +52,7 @@ bool FileMap(Resource &resc, ResourceAccess acc)
                 0,resc.size,
                 &err);
 
-    if(!resc.m_mapping)
+    if(!resc.m_mapping.ptr)
     {
 #ifndef COFFEE_WINDOWS
 		CString error = strerror(err);
@@ -73,7 +73,7 @@ bool FileMap(Resource &resc, ResourceAccess acc)
         return false;
     }
 
-    resc.data = resc.m_mapping->ptr;
+    resc.data = resc.m_mapping.ptr;
     resc.flags = resc.flags|Resource::Mapped;
 
     return true;
@@ -88,7 +88,7 @@ bool FileUnmap(Resource &resc)
     if(!(resc.flags&Resource::Mapped))
         return false;
 
-    bool s = FileFun::Unmap(resc.m_mapping);
+    bool s = FileFun::Unmap(&resc.m_mapping);
 
     if(!s)
         return false;

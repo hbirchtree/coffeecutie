@@ -18,6 +18,12 @@ struct FileFunDef
         szptr size;
         ResourceAccess acc;
     };
+    struct ScratchBuf
+    {
+        void* ptr;
+        szptr size;
+        ResourceAccess acc;
+    };
 
     enum NodeType
     {
@@ -60,7 +66,7 @@ struct FileFunDef
      * \param err
      * \return
      */
-    static FileMapping* Map(cstring fname, ResourceAccess access,
+    static FileMapping Map(cstring fname, ResourceAccess access,
                      szptr size, szptr offset, int* err);
     static bool Unmap(FileMapping* mapp);
 
@@ -72,6 +78,16 @@ struct FileFunDef
 
     static szptr Size(FileHandle*);
 
+    /*!
+     * \brief Magically cache your whole application
+     * \return
+     */
+    static bool SuperCache();
+    static bool SuperUncache();
+
+    static ScratchBuf* ScratchBuffer(szptr size, ResourceAccess access);
+    static void ScratchUnmap(ScratchBuf*);
+
     /* We allow checking size of unopened files, convenience */
     static bool Exists(cstring);
     static szptr Size(cstring);
@@ -80,24 +96,22 @@ struct FileFunDef
     static bool Rm(cstring);
 
     static NodeType Stat(cstring);
-
-    /*!
-     * \brief Magically cache your whole application
-     * \return
-     */
-    static bool SuperCache();
-    static bool SuperUncache();
-
-    static void* ScratchBuffer(szptr size, ResourceAccess access);
-    static void ScratchUnmap(void* ptr, szptr size);
 };
 
 struct DirFunDef
 {
+    typedef struct DirItem
+    {
+        FileFunDef::NodeType type;
+        CString name;
+    } DirItem_t;
+
+    using DirList = Vector<DirItem_t>;
+
     static bool MkDir(cstring dname, bool recurse);
     static bool RmDir(cstring dname);
 
-    static bool Ls(cstring dname,uint32*,FileFunDef::NodeType**,CString**);
+    static bool Ls(cstring dname,DirList*);
 };
 
 }

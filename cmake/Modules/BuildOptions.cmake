@@ -25,13 +25,17 @@ option ( COFFEE_CSHARP "Build C# binding" OFF)
 #
 #
 
+#
+# Build options
+#
+
 # Builds as static libraries which are recommended for ease of use
 option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
 #
 #
 
-# Whether to enable the GLES renderer
+# Whether to enable the GLES renderer, will replace desktop GL renderer
 option ( COFFEE_BUILD_GLES "Build with GLES 3.0 renderer instead of desktop GL" OFF)
 
 #
