@@ -13,8 +13,9 @@
 #define C_FORCE_PACKING __attribute__((packed))
 #elif defined(COFFEE_MSVCXX)
 #define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
 #include <windows.h>
-#define C_FORCE_PACKING UNALIGNED
+#define C_FORCE_PACKING //UNALIGNED
 #else
 #error "You done diddled it again; there is no packing defined!"
 #endif
@@ -23,6 +24,7 @@
 #define C_FORCE_INLINE __attribute__((always_inline))
 #elif defined(COFFEE_MSVCXX)
 #define WIN32_LEAN_AND_MEAN
+#include <WinSock2.h>
 #include <windows.h>
 #define C_FORCE_INLINE __forceinline
 #else

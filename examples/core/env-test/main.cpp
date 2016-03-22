@@ -76,6 +76,8 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("int64 size: {0}",sizeof(int64));
         cDebug("uint32 size: {0}",sizeof(uint32));
         cDebug("int32 size: {0}",sizeof(int32));
+		cDebug("uint24 size: {0}",sizeof(uint24));
+		cDebug("int24 size: {0}", sizeof(uint24));
     }
     Profiler::PopContext();
 

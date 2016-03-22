@@ -64,13 +64,128 @@ namespace Coffee {
 				PendBrk,
 			};
 
+			struct proc_info
+			{
+				struct  cache
+				{
+					uint16 l1;
+					uint16 l2;
+					uint16 l3;
+				};
+				struct proc
+				{
+					cache cache;
+					uint32 cores;
+					uint32 threads;
+				};
+
+				Vector<proc> processors;
+			};
+
+			STATICINLINE uint32 CountThreads(ULONG_PTR bitm)
+			{
+				uint32 bitc = 0;
+				DWORD lshift = sizeof(ULONG_PTR) * 8 - 1;
+				ULONG_PTR bitt = (ULONG_PTR)1 << lshift;
+				
+				for (uint32 i = 0;i <= lshift;++i)
+				{
+					bitc += ((bitm&bitt) ? 1 : 0);
+					bitt /= 2;
+				}
+				return bitc;
+			}
+
+			STATICINLINE proc_info GetProcInfo()
+			{
+				PSYSTEM_LOGICAL_PROCESSOR_INFORMATION st = nullptr;
+				DWORD rsize = 0;
+				BOOL done = false;
+
+				while (!done)
+				{
+					BOOL rc = GetLogicalProcessorInformation(st, &rsize);
+					if (!rc)
+					{
+						if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+						{
+							if (st)
+								CFree(st);
+							else
+								st = AllocT<SYSTEM_LOGICAL_PROCESSOR_INFORMATION>(
+									rsize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
+						}
+						else
+							return {};
+					}
+					else
+						break;
+				}
+
+				PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = st;
+				DWORD byte_offset = 0;
+				PCACHE_DESCRIPTOR cache;
+
+				proc_info info;
+				info.processors.push_back({});
+				proc_info::proc* proc = &info.processors.back();
+
+				uint32 procc = 0;
+
+				while (byte_offset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= rsize)
+				{
+					switch (ptr->Relationship)
+					{
+					case RelationNumaNode:
+						break;
+					case RelationProcessorPackage:
+						if (procc++ == 1)
+							break;
+						info.processors.push_back({});
+						proc = &info.processors.back();
+						break;
+					case RelationProcessorCore:
+						proc->cores++;
+						proc->threads += CountThreads(ptr->ProcessorMask);
+						break;
+					case RelationCache:
+						cache = &ptr->Cache;
+						if (cache->Level == 1)
+						{
+							proc->cache.l1++;
+						}
+						else if (cache->Level == 2)
+						{
+							proc->cache.l2++;
+						}
+						else if (cache->Level == 3)
+						{
+							proc->cache.l3++;
+						}
+						break;
+					}
+					byte_offset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+					ptr++;
+				}
+
+				return info;
+			}
+
 			STATICINLINE uint32 CpuCount()
 			{
-				return 1;
+				proc_info info = GetProcInfo();
+				return info.processors.size();
 			}
 			STATICINLINE uint32 CoreCount()
 			{
-				return 1;
+				uint32 c = 0;
+
+				proc_info info = GetProcInfo();
+
+				for (proc_info::proc const& p : info.processors)
+					c += p.cores;
+
+				return c;
 			}
 			STATICINLINE bool MemVirtualAvailable()
 			{
@@ -79,6 +194,7 @@ namespace Coffee {
 			STATICINLINE uint64 MemTotal()
 			{
 				MEMORYSTATUSEX st;
+				st.dwLength = sizeof(st);
 
 				GlobalMemoryStatusEx(&st);
 
@@ -87,6 +203,7 @@ namespace Coffee {
 			STATICINLINE uint64 MemAvailable()
 			{
 				MEMORYSTATUSEX st;
+				st.dwLength = sizeof(st);
 
 				GlobalMemoryStatusEx(&st);
 
@@ -95,6 +212,7 @@ namespace Coffee {
 			STATICINLINE uint64 SwapTotal()
 			{
 				MEMORYSTATUSEX st;
+				st.dwLength = sizeof(st);
 
 				GlobalMemoryStatusEx(&st);
 
@@ -103,6 +221,7 @@ namespace Coffee {
 			STATICINLINE uint64 SwapAvailable()
 			{
 				MEMORYSTATUSEX st;
+				st.dwLength = sizeof(st);
 
 				GlobalMemoryStatusEx(&st);
 
