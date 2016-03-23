@@ -7,6 +7,10 @@ Windows details
 Where possible, POSIX-dependent code is used, but Win32-code is to be expected in the platform layer. While mostly relying on the core Win32 functions, some external (pathcch for example) are used.
 Apart from these features, the port is quite on par with the Linux port.
 
+UWP
+---
+Since UWP rejects both OpenGL 4.3 and OpenGL ES 2, this will not happen in the close future.
+
 OS X details
 ============
 While it has not been tested, the only parts that require implementation are platform-specific, such as file mapping, linkage, timing and system information. (The latter being optional)
