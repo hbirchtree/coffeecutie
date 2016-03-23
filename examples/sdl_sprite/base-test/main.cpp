@@ -2,6 +2,8 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
 
+#include <coffee/core/plat/plat_file.h>
+
 #include <coffee/CImage>
 
 #include <coffee/sdl2/CSDL2System>

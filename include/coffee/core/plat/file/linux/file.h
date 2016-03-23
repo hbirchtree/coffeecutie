@@ -56,8 +56,7 @@ struct LinuxFileFun : PosixFileFun
         void* ptr = mapp->ptr;
         szptr size = mapp->size;
         if(munmap(ptr,size)==0)
-        {
-            delete mapp;
+	{
             return true;
         }else
             return false;
