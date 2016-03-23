@@ -7,6 +7,10 @@ Windows details
 Where possible, POSIX-dependent code is used, but Win32-code is to be expected in the platform layer. While mostly relying on the core Win32 functions, some external (pathcch for example) are used.
 Apart from these features, the port is quite on par with the Linux port.
 
+OS X details
+============
+While it has not been tested, the only parts that require implementation are platform-specific, such as file mapping, linkage, timing and system information. (The latter being optional)
+
 Android details
 ===============
 This port is pure sorcery. The SDL2 examples for creating an APK were used as a base in order to make it work in the first place, and anything else is hacked on top. A Docker container is used to contain the mess that is the Android SDK and NDK, while also compiling SDL2 and OpenAL for both armeabi-v7a and arm64-v8a. (These core dependencies are needed for a good build, otherwise there is nothing interesting.)
