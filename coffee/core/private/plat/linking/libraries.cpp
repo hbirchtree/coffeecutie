@@ -5,7 +5,7 @@
 #if defined(COFFEE_LINUX)
 #include <dlfcn.h>
 #elif defined(COFFEE_WINDOWS)
-#include <Windows.h>
+#include <coffee/core/plat/plat_windows.h>
 #endif
 
 namespace Coffee{

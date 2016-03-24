@@ -4,8 +4,7 @@
 #ifndef COFFEE_CORE_PLAT_TIMING_TIMERS_H
 #define COFFEE_CORE_PLAT_TIMING_TIMERS_H
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <coffee/core/plat/plat_windows.h>
 
 namespace Coffee{
 namespace CFunctional {
