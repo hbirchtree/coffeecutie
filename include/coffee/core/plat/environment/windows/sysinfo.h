@@ -5,8 +5,7 @@
 
 #include "../sysinfo_def.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <coffee/core/plat/plat_windows.h>
 
 #include "../../memory/cmemory.h"
 #include <intrin.h>

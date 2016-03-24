@@ -393,6 +393,10 @@ struct CGL_Implementation
         STATICINLINE void GetExtensions()
         {
             int32 numExtensions = GetInteger(GL_NUM_EXTENSIONS);
+
+			if (numExtensions <= 0)
+				return;
+
             s_ExtensionList = std::string();
             s_ExtensionList.reserve(numExtensions*20);
             for(int32 i=0;i<numExtensions;i++)
@@ -475,34 +479,34 @@ struct CGL_Implementation
 
         STATICINLINE int32 GetInteger(CGenum e)
         {
-            int32 i;
+            int32 i = 0;
             glGetIntegerv(e,&i);
             return i;
         }
 
         STATICINLINE int64 GetIntegerLL(CGenum e)
         {
-            int64 i;
+            int64 i = 0;
             glGetInteger64v(e,&i);
             return i;
         }
 
         STATICINLINE scalar GetScalar(CGenum e)
         {
-            scalar i;
+            scalar i = 0.f;
             glGetFloatv(e,&i);
             return i;
         }
         STATICINLINE bigscalar GetScalarLL(CGenum e)
         {
-            bigscalar i;
+            bigscalar i = 0.0;
             glGetDoublev(e,&i);
             return i;
         }
 
         STATICINLINE bool GetBooleanv(CGenum e)
         {
-            GLboolean i;
+            GLboolean i = GL_FALSE;
             glGetBooleanv(e,&i);
             return i==GL_TRUE;
         }
@@ -511,34 +515,34 @@ struct CGL_Implementation
 
         STATICINLINE int32 GetIntegerI(CGenum e,uint32 i)
         {
-            int32 v;
+            int32 v = 0;
             glGetIntegeri_v(e,i,&v);
             return v;
         }
 
         STATICINLINE int64 GetIntegerLLI(CGenum e,uint32 i)
         {
-            int64 v;
+            int64 v = 0;
             glGetInteger64i_v(e,i,&v);
             return v;
         }
 
         STATICINLINE scalar GetScalarI(CGenum e,uint32 i)
         {
-            scalar v;
+            scalar v = 0.f;
             glGetFloati_v(e,i,&v);
             return v;
         }
         STATICINLINE bigscalar GetScalarLLI(CGenum e,uint32 i)
         {
-            bigscalar v;
+            bigscalar v = 0.0;
             glGetDoublei_v(e,i,&v);
             return v;
         }
 
         STATICINLINE bool GetBooleanvI(CGenum e,uint32 i)
         {
-            GLboolean v;
+            GLboolean v = GL_FALSE;
             glGetBooleani_v(e,i,&v);
             return v==GL_TRUE;
         }
@@ -579,6 +583,34 @@ struct CGL_Implementation
             ver.major = GetInteger(GL_MAJOR_VERSION);
             ver.minor = GetInteger(GL_MINOR_VERSION);
             ver.revision = 0;
+
+			/* In some cases, we run on drivers that are old or crappy */
+			if (ver.major == 0 && ver.minor == 0)
+			{
+				CString str = GetString(GL_VERSION);
+				if (str.size()<=0)
+					return ver;
+				Regex::Pattern p = Regex::Compile("([0-9]+).([0-9]+)\.([0-9])?([s\S]*)");
+				auto match = Regex::Match(p,str,true);
+				if (match.size() < 3)
+					return ver;
+				ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
+				ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
+				if (match.size() == 4)
+				{
+					bool ok = false;
+					ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str(),10,&ok);
+					if (!ok)
+					{
+						ver.driver = match.at(3).s_match.front();
+					}
+				}
+				else if (match.size() == 5)
+				{
+					ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str());
+					ver.driver = StrUtil::trim(match.at(4).s_match.front());
+				}
+			}
 
             return ver;
         }

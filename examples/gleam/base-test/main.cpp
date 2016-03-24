@@ -478,9 +478,12 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     renderer->init(props);
     Profiler::Profile("Initialize renderer");
 
-#ifndef COFFEE_WINDOWS
     WM::SetAlwaysTop(renderer->window(),true);
-#endif
+
+	cDebug("OpenGL core profile version: {0}",(_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
+
+	cDebug("Device info: {0}", GL::Debug::Renderer());
+	Profiler::Profile("Get renderer info");
 
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()
@@ -497,9 +500,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     }
 
     Profiler::Profile("Get GL requirements");
-
-    cDebug("Device info: {0}",GL::Debug::Renderer());
-    Profiler::Profile("Get renderer info");
 
     renderer->run();
 

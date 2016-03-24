@@ -5,7 +5,7 @@
 #define COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_WINDOWS_H
 
 #include "../environment_details.h"
-#include <windows.h>
+#include "../../plat_windows.h"
 #include <cstdlib>
 #include <Pathcch.h>
 

@@ -234,6 +234,12 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
 
     auto file = CResources::FileFun::Open(out,ResourceAccess::WriteOnly);
 
+	if (!file)
+	{
+		cDebug("Failed to save timing profile");
+		return;
+	}
+
     /* Because fuck dangling file handles */
     try{
         doc.SaveFile(file->handle,false);
