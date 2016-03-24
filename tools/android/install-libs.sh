@@ -19,15 +19,22 @@ done
 include_directories[0]="$HOME/lib/openal-soft/jni/OpenAL/include/AL"
 include_directories[1]="$HOME/lib/SDL2/include"
 
-for inc in ${include_directories[@]}
+include_targets[0]="AL"
+include_targets[1]="SDL2"
+
+num_includes=2
+
+for i in $(seq 0 $(($num_includes-1)) )
 do
-	cp -r "$inc" $basedir/include/
+	inc=${include_directories[$i]}
+	inc_target=${include_targets[$i]}
+	ln -s "$inc" $basedir/include/$inc_target
 done
 
-mv $basedir/include/include $basedir/include/SDL2
+mkdir -p ${BUILD_DIR_32}/libs/include
+mkdir -p ${BUILD_DIR_64}/libs/include
 
-mkdir -p ${BUILD_DIR}/libs/include
-
-ln -s ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR}/libs/include
+ln -s ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR_32}/libs/include
+ln -s ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR_64}/libs/include
 
 exit 0
