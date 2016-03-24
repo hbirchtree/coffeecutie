@@ -4,37 +4,9 @@
 #include <coffee/core/CDebug>
 
 #include <coffee/core/profiler/profiling-export.h>
-#include <coffee/core/unit_tests/memory_operations.h>
 #include <coffee/core/argument_handling.h>
 
 namespace Coffee{
-
-/* We make certain assumptions about the system
- *  which must be fulfilled for proper execution */
-//static_assert(sizeof(uint8)==1,
-//              "uint8 size is inconsistent");
-//static_assert(sizeof(int8)==1,
-//              "int8 size is inconsistent");
-
-//static_assert(sizeof(uint16)==2,
-//              "uint16 size is inconsistent");
-//static_assert(sizeof(int16)==2,
-//              "int16 size is inconsistent");
-
-//static_assert(sizeof(uint32)==4,
-//              "uint32 size is inconsistent");
-//static_assert(sizeof(int32)==4,
-//              "int32 size is inconsistent");
-
-//static_assert(sizeof(uint64)==8,
-//              "uint64 size is inconsistent");
-//static_assert(sizeof(int64)==8,
-//              "int64 size is inconsistent");
-
-//static_assert(sizeof(scalar)==4,
-//              "scalar size is inconsistent");
-//static_assert(sizeof(bigscalar)==8,
-//              "bigscalar size is inconsistent");
 
 void CoffeeInit(bool profiler_init)
 {
@@ -50,12 +22,6 @@ void CoffeeInit(bool profiler_init)
 #endif
 
     InstallSignalHandler();
-
-#ifndef NDEBUG
-    /* Run unit tests, ensuring that the system
-     *  and compilation process is sane */
-    CoffeeTests::run_memory_tests();
-#endif
 
 #ifndef NDEBUG
     cDebug("Build string: {0}",CoffeeBuildString);

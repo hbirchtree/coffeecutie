@@ -250,11 +250,12 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
     CResources::FileFun::Close(file);
 }
 
-FORCEDINLINE void ExitRoutine(int32 argc, cstring_w* argv)
+FORCEDINLINE void ExitRoutine(int32 argc, cstring_w* argv, bool silent = false)
 {
     CString exec = Env::BaseName(Env::ExecutableName());
     CString profile_log_name = cStringFormat("{0}-profile.xml",exec);
-    cDebug("Saving profiler data to: {0}",profile_log_name);
+    if(!silent)
+        cDebug("Saving profiler data to: {0}",profile_log_name);
     Profiling::ExportProfilerData(profile_log_name.c_str(),argc,argv);
     Profiler::DestroyProfiler();
 }

@@ -16,9 +16,9 @@ set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_SOURCE_DIR}/libs )
 
 include ( BuildOptions )
 
-include ( BuildFlags )
-
 include ( BuildFunctions )
+
+include ( BuildFlags )
 
 # Primary includes
 include_directories (

@@ -83,7 +83,7 @@ struct _cgb_mmu
  * \brief The fundamental GameBoy core operator
  */
 //using gb_operator = void(*)(_cgb_core*,_cgb_mmu*);
-using gb_operator = std::function<void(_cgb_core*,_cgb_mmu*)>;
+using gb_operator = Threads::Function<void(_cgb_core*,_cgb_mmu*)>;
 /*!
  * \brief A map from opcode to function pointers
  */

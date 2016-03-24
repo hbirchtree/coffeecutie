@@ -20,7 +20,7 @@ struct LinuxSysInfo : SysInfoDef
         if(!cached_cpuinfo_string.empty()&&!force)
             return cached_cpuinfo_string;
 
-        C_PERFWARN(__FILE__,__LINE__,"Reading from /proc/cpuinfo!");
+//        C_PERFWARN(__FILE__,__LINE__,"Reading from /proc/cpuinfo!");
 
         FILE* cpuinfo = fopen("/proc/cpuinfo","r");
         char* arg = 0;

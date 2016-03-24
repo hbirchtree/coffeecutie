@@ -3,7 +3,7 @@
 #include "../../coffee_mem_macros.h"
 
 #include "../tdef/stltypes.h"
-#include <functional>
+#include "../tdef/stlfunctypes.h"
 
 namespace Coffee{
 
@@ -97,7 +97,7 @@ public:
 class CThreadCommand : public _cbasic_threadrunner_command
 {
 public:
-    CThreadCommand(std::function<void()> f):m_cmd(f){}
+    CThreadCommand(Threads::Function<void()> f):m_cmd(f){}
     STATICINLINE void perform(CThreadCommand* c)
     {
         c->m_cmd();
@@ -107,7 +107,7 @@ public:
         return m_stat.load();
     }
 protected:
-    std::function<void()> m_cmd;
+    Threads::Function<void()> m_cmd;
     std::atomic_bool m_stat;
 };
 

@@ -1,4 +1,4 @@
-﻿#include <coffee/CCore>
+﻿#include <coffee/core/CApplication>
 #include <coffee_ext/qt_shim/node_editor/node-edit.h>
 #include "mainwindowtester.h"
 

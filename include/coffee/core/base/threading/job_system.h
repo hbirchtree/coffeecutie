@@ -16,23 +16,23 @@ template<typename Ctxt,typename IterType>
  * \param context
  * \return
  */
-FORCEDINLINE std::future<void> ParallelFor(
-        std::function<void(IterType,Ctxt)> kernel,
+FORCEDINLINE Future<void> ParallelFor(
+        Function<void(IterType,Ctxt)> kernel,
         IterType iterations,
         Ctxt context,
         IterType weight = 1)
 {
-    std::function<void()> worker = [kernel,context,iterations,weight]()
+    Function<void()> worker = [kernel,context,iterations,weight]()
     {
         uint32 thrcount = SysInfo::SmartParallelism(iterations,weight);
 
-        Vector<std::future<void>> tasks;
+        Vector<Future<void>> tasks;
 
         IterType split = iterations/thrcount;
         IterType rest = iterations&thrcount;
 
-        std::function<void(std::function<void(IterType,Ctxt)>,Ctxt,IterType)> fun = [](
-                std::function<void(IterType,Ctxt)> kern,
+        Function<void(Function<void(IterType,Ctxt)>,Ctxt,IterType)> fun = [](
+                Function<void(IterType,Ctxt)> kern,
                 Ctxt context,
                 IterType count)
         {

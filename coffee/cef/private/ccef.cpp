@@ -2,6 +2,7 @@
 
 #include <coffee/CImage>
 #include <coffee/core/CMD>
+#include <coffee/core/argument_handling.h>
 
 #include <include/base/cef_scoped_ptr.h>
 #include <include/cef_render_handler.h>

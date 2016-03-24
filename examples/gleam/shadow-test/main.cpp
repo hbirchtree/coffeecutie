@@ -1,5 +1,6 @@
-#include <coffee/CCore>
 #include <coffee/graphics_apis/CGLeam>
+#include <coffee/core/CApplication>
+#include <coffee/core/CInput>
 #include <coffee/CGraphics>
 
 using namespace Coffee;

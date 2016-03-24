@@ -1,5 +1,9 @@
+#include <coffee/core/CApplication>
+#include <coffee/core/CInput>
+#include <coffee/core/CDebug>
+
 #include <coffee/CAudio>
-#include <coffee/CCore>
+
 #include <coffee/sdl2/CSDL2WindowHost>
 
 using namespace Coffee;

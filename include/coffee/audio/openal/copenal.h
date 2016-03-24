@@ -4,6 +4,7 @@
 #include <coffee/audio/caudio.h>
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/types/tdef/stlfunctypes.h>
 #include <coffee/core/types/vector_types.h>
 
 namespace Coffee{
@@ -250,7 +251,7 @@ struct CALReport
     cstring message;
 };
 
-typedef std::function<void(CALReport*)> CALCallback;
+typedef Threads::Function<void(CALReport*)> CALCallback;
 
 /*!
  * \brief Presents an OpenAL context in which sound can be played

@@ -2,6 +2,8 @@
 
 namespace Coffee{
 
+/* Move exported functions to common place, not spreading it like this */
+
 using namespace DebugFun;
 
 /* The below functions are exported to SWIG */

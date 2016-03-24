@@ -11,12 +11,11 @@ set ( CoffeeCore_SRCS
 
     private/profiler/profiling-export.cpp
 
-    private/unit_tests/data_types.cpp
-    private/unit_tests/micro_tests.cpp
-
     private/plat/linking/libraries.cpp
 
     private/plat/file/android/file.cpp
+
+    private/plat/environment/application_start.cpp
 
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp

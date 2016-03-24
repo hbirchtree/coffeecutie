@@ -37,7 +37,7 @@ public:
 template<class T>
 FORCEDINLINE std::future<void> LaunchAsync(T* r, CDProperties const& p)
 {
-    std::function<void()> fn = [r,p]()
+    Threads::Function<void()> fn = [r,p]()
     {
         r->init(p);
         r->run();

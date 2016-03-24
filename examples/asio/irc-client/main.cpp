@@ -1,5 +1,6 @@
 #include <coffee/CAsio>
-#include <coffee/CCore>
+#include <coffee/core/CApplication>
+#include <coffee/core/coffee.h>
 
 using namespace Coffee;
 

@@ -1,5 +1,3 @@
-message ("Searching in: ${COFFEE_EXT_LIBRARY_DIR}/rapidjson, ${RAPIDJSON_ROOT_DIR}")
-
 find_path ( RAPIDJSON_INCLUDE_DIR
     rapidjson/rapidjson.h
 

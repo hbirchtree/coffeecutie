@@ -8,14 +8,3 @@ target_link_libraries ( EnvTest
     CoffeeCore
     CoffeeImage
     )
-
-#Testing an external library
-set ( EnvLibraryLoadTester_SRCS
-    libcode.cpp
-    )
-
-coffee_add_elibrary ( EnvLibraryLoadTester SHARED "${EnvLibraryLoadTester_SRCS}" )
-
-target_link_libraries(EnvLibraryLoadTester
-    CoffeeCore
-    )

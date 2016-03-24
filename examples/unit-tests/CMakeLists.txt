@@ -1,0 +1,12 @@
+set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests )
+
+add_subdirectory(cmd-api)
+add_subdirectory(datastorage-api)
+add_subdirectory(function-tests)
+add_subdirectory(link-api)
+add_subdirectory(math-logic)
+add_subdirectory(profiling-api)
+add_subdirectory(size-tests)
+add_subdirectory(string-api)
+add_subdirectory(sysinfo-api)
+add_subdirectory(thread-api)

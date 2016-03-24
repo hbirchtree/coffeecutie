@@ -1,4 +1,5 @@
 #include <coffee/CCore>
+#include <coffee/core/CApplication>
 
 using namespace Coffee;
 using namespace Coffee::CResources;

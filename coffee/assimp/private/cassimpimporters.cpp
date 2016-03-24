@@ -49,8 +49,8 @@ CAssimpData *CAssimpImporters::importResource(Resource *source,
 
     std::vector<CAssimpMesh*> meshes;
 #ifdef CASSIMP_MULTITHREAD
-    std::function<CAssimpMesh*(aiMesh*)> fun = importMesh;
-    std::vector<std::future<CAssimpMesh*> > meshes_future;
+    Threads::Function<CAssimpMesh*(aiMesh*)> fun = importMesh;
+    Vector<std::future<CAssimpMesh*> > meshes_future;
 #endif
     szptr i;
     for(i=0;i<scene->mNumMeshes;i++){
@@ -62,7 +62,7 @@ CAssimpData *CAssimpImporters::importResource(Resource *source,
     }
 
 #ifdef CASSIMP_MULTITHREAD
-    for(std::future<CAssimpMesh*>& future : meshes_future){
+    for(Threads::Future<CAssimpMesh*>& future : meshes_future){
         meshes.push_back(future.get());
     }
 #endif

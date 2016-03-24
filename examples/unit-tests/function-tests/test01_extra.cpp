@@ -1,7 +1,4 @@
-#include <coffee/core/unit_tests/micro_tests.h>
-
-namespace CoffeeTests
-{
+#include "test01_extra.h"
 
 void TestClassExt::fun()
 {
@@ -16,6 +13,4 @@ void TestClassExt::directfun()
 void ExternCall(int32& v1, int32& v2)
 {
     v1 += v2;
-}
-
 }

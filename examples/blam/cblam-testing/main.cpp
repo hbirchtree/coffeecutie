@@ -1,5 +1,7 @@
 #include <coffee/CBlam>
-#include <coffee/CCore>
+#include <coffee/core/CFiles>
+#include <coffee/core/CDebug>
+#include <coffee/core/CApplication>
 
 using namespace Coffee;
 using namespace CResources;

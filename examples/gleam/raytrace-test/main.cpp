@@ -1,4 +1,4 @@
-#include <coffee/CCore>
+#include <coffee/core/CApplication>
 #include <coffee/graphics_apis/CGLeam>
 #include <coffee/CGraphics>
 #include <coffee/CImage>
@@ -131,7 +131,7 @@ public:
 
             if(parallel_sphere_creation)
             {
-                std::function<void(szptr,int32*)> sphere_fun = [](szptr i, int32* data)
+                Threads::Function<void(szptr,int32*)> sphere_fun = [](szptr i, int32* data)
                 {
                     for(szptr j=0;j<512;j++)
                         for(szptr k=0;k<512;k++)

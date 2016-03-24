@@ -1,4 +1,5 @@
 #include <coffee/COpenVR>
+#include <coffee/core/CApplication>
 #include <coffee/COculusRift>
 #include <coffee/core/CMD>
 

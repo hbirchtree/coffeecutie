@@ -1,5 +1,7 @@
 #include <coffee/CAsio>
-#include <coffee/CCore>
+#include <coffee/core/CTiming>
+#include <coffee/core/CJSONParser>
+#include <coffee/core/CApplication>
 
 using namespace Coffee;
 
