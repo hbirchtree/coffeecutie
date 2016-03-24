@@ -34,5 +34,7 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
 # RapidJSON is part of the core, and is therefore added as a submodule
-#find_package ( RapidJson REQUIRED )
-#include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
+if(NOT ANDROID)
+    find_package ( RapidJson REQUIRED )
+    include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
+endif()
