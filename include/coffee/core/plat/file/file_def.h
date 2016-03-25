@@ -27,6 +27,7 @@ struct FileFunDef
 
     enum NodeType
     {
+        None,
         Block,
         Device,
         File,
@@ -72,12 +73,12 @@ struct FileFunDef
 
     static bool MapCache(void* mapping_ptr,szptr mapping_size,
                          szptr cache_offset, szptr cache_size)
-    {}
+    {return false;}
     static bool MapUncache(void* mapping_ptr,szptr mapping_size,
                            szptr cache_offset, szptr cache_size)
-    {}
+    {return false;}
     static bool MapSync(void*,szptr)
-    {}
+    {return false;}
 
     static szptr Size(FileHandle*);
 
@@ -85,8 +86,8 @@ struct FileFunDef
      * \brief Magically cache your whole application
      * \return
      */
-    static bool SuperCache(){}
-    static bool SuperUncache(){}
+    static bool SuperCache(){return false;}
+    static bool SuperUncache(){return false;}
 
     static ScratchBuf* ScratchBuffer(szptr size, ResourceAccess access);
     static void ScratchUnmap(ScratchBuf*);
@@ -95,10 +96,13 @@ struct FileFunDef
     static bool Exists(cstring);
     static szptr Size(cstring);
 
-    static bool Touch(NodeType,cstring);
-    static bool Rm(cstring);
+    static bool Touch(NodeType,cstring)
+    {return false;}
+    static bool Rm(cstring)
+    {return false;}
 
-    static NodeType Stat(cstring);
+    static NodeType Stat(cstring)
+    {return NodeType::None;}
 };
 
 struct DirFunDef
@@ -111,10 +115,10 @@ struct DirFunDef
 
     using DirList = Vector<DirItem_t>;
 
-    static bool MkDir(cstring dname, bool recurse){}
-    static bool RmDir(cstring dname){}
+    static bool MkDir(cstring dname, bool recurse){return false;}
+    static bool RmDir(cstring dname){return false;}
 
-    static bool Ls(cstring dname,DirList*){}
+    static bool Ls(cstring dname,DirList*){return false;}
 };
 
 }

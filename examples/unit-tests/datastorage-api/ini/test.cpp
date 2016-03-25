@@ -59,9 +59,9 @@ bool write_file()
     return CResources::FileFun::Exists("testoutfile.ini");
 }
 
-static const constexpr CoffeeTest::Test _tests[2] = {
-    readwrite_file,
-    write_file,
+const constexpr CoffeeTest::Test _tests[2] = {
+    {readwrite_file},
+    {write_file},
 };
 
 COFFEE_RUN_TESTS(_tests);

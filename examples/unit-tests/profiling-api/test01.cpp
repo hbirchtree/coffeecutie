@@ -45,9 +45,9 @@ bool profile_pushing()
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[2] = {
-    context_pushing,
-    profile_pushing
+const constexpr CoffeeTest::Test _tests[2] = {
+    {context_pushing},
+    {profile_pushing}
 };
 
 COFFEE_RUN_TESTS(_tests);

@@ -33,11 +33,6 @@ struct FILEApi
             handle(nullptr)
         {
         }
-        ~FileHandle()
-        {
-            if(handle)
-                fclose(handle);
-        }
         FILE* handle;
     };
 };
@@ -83,6 +78,7 @@ struct CFILEFun_def : CommonFileFun
     }
     STATICINLINE bool Close(FH* fh)
     {
+        fclose(fh->handle);
         delete fh;
         return true;
     }

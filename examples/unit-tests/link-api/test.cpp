@@ -25,7 +25,7 @@ bool dlopen_test()
     return false;
 }
 
-static const constexpr CoffeeTest::Test _tests[1] = {
+const constexpr CoffeeTest::Test _tests[1] = {
     dlopen_test
 };
 

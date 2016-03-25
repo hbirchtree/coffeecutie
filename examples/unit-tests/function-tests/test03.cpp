@@ -14,8 +14,8 @@ bool signal_test()
     return sigtest.call(b)==t.w*t.h;
 }
 
-static const constexpr CoffeeTest::Test _tests[1] = {
-    signal_test
+const constexpr CoffeeTest::Test _tests[1] = {
+    {signal_test}
 };
 
 COFFEE_RUN_TESTS(_tests);

@@ -1,9 +1,10 @@
 #include <coffee/core/CUnitTesting>
+#include <coffee/core/CMD>
 #include "test01_extra.h"
 
 using namespace Coffee;
 
-static const cstring test_string = "Glibber glabber text: {0}, {1}, {2}";
+const cstring test_string = "Glibber glabber text: {0}, {1}, {2}";
 
 
 
@@ -32,6 +33,8 @@ bool printing_tests()
     uint64 debug_time;
     uint64 basic_time;
 
+    Cmd::AltScreen();
+
     {
         t.start();
         for(i=0;i<iterations;i++)
@@ -49,6 +52,8 @@ bool printing_tests()
         debug_time = t.elapsed();
     }
 
+    Cmd::ResetScreen();
+
     cDebug("Printing overhead times:");
     cBasicPrint("fprintf: {0}",fprint_time);
     cBasicPrint("Basic: {0}",basic_time);
@@ -57,7 +62,7 @@ bool printing_tests()
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[1] = {
+const constexpr CoffeeTest::Test _tests[1] = {
     printing_tests
 };
 

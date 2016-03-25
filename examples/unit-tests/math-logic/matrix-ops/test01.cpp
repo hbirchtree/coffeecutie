@@ -28,7 +28,7 @@ bool matrix_translation_test()
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[1] = {
+const constexpr CoffeeTest::Test _tests[1] = {
     matrix_translation_test
 };
 

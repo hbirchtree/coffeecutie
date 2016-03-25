@@ -32,9 +32,9 @@ bool input_test()
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[2] = {
-    altscreen_test,
-    input_test
+const constexpr CoffeeTest::Test _tests[2] = {
+    {altscreen_test},
+    {input_test}
 };
 
 COFFEE_RUN_TESTS(_tests);

@@ -30,6 +30,12 @@ struct PosixApi
 
 struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
 {
+    STATICINLINE void ErrnoCheck()
+    {
+        if(errno!=0)
+            fprintf(stderr,"ERROR: %s\n",strerror(errno));
+    }
+
     using FileHandle = PosixApi::FileHandle;
     using FileMapping = PosixApi::FileMapping;
 
@@ -43,11 +49,19 @@ struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
 
         return fh;
     }
+    STATICINLINE bool Close(FileHandle* fh)
+    {
+        close(fh->fd);
+        CFILEFun_def<FileHandle>::Close(fh);
+        return true;
+    }
 
     STATICINLINE szptr Size(cstring fn)
     {
         struct stat st = {};
-        stat(fn,&st);
+        if(stat(fn,&st)!=0)
+            ErrnoCheck();
+        errno = 0;
         return st.st_size;
     }
 
@@ -55,10 +69,11 @@ struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
     {
         struct stat st;
         bool status = stat(fn,&st)==0;
+        errno = 0;
         if(status)
             return true;
         else
-            return errno==ENOENT|| errno==ENOTDIR;
+            return errno!=ENOENT||errno==ENOTDIR;
     }
 
     STATICINLINE szptr Size(FileHandle* fh)
@@ -66,7 +81,9 @@ struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
         struct stat st;
         if(fh->fd>0)
         {
-            fstat(fh->fd,&st);
+            if(fstat(fh->fd,&st)!=0)
+                ErrnoCheck();
+            errno = 0;
             return st.st_size;
         }else{
             /* We somehow want a filename here. */
@@ -77,6 +94,7 @@ struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
     {
         struct stat st;
         bool status = fstat(fn->fd,&st)==0;
+        errno = 0;
         if(status)
             return true;
         else

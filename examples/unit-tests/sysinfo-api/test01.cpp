@@ -23,7 +23,7 @@ bool sysinfo_printing()
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[1] = {
+const constexpr CoffeeTest::Test _tests[1] = {
     sysinfo_printing
 };
 

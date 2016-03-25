@@ -16,9 +16,9 @@ bool replace_test()
     return StrCmp(test_string.c_str(),final_string);
 }
 
-static const constexpr CoffeeTest::Test _tests[2] = {
-    compare_test,
-    replace_test
+const constexpr CoffeeTest::Test _tests[2] = {
+    {compare_test,"C-string comparison"},
+    {replace_test,"STL string replacement","Used for resource operations"}
 };
 
 COFFEE_RUN_TESTS(_tests);

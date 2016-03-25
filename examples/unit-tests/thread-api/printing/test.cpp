@@ -1,5 +1,6 @@
 #include <coffee/core/CUnitTesting>
 #include <coffee/core/CDebug>
+#include <coffee/core/CMD>
 #include <coffee/core/CThreading>
 
 using namespace Coffee;
@@ -19,17 +20,23 @@ bool mutex_locking()
         }
     };
 
+    Cmd::AltScreen();
+
     auto t1 = Threads::RunAsync(message_test);
     auto t2 = Threads::RunAsync(message_test);
 
     t1.get();
     t2.get();
 
+    Cmd::Wait();
+
+    Cmd::ResetScreen();
+
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[2] = {
-    mutex_locking
+const constexpr CoffeeTest::Test _tests[2] = {
+    {mutex_locking}
 };
 
 COFFEE_RUN_TESTS(_tests);

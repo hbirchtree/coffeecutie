@@ -30,8 +30,8 @@ bool table_test()
     return true;
 }
 
-static const constexpr CoffeeTest::Test _tests[1] = {
-    table_test
+const constexpr CoffeeTest::Test _tests[1] = {
+    {table_test,"Print a table"}
 };
 
 COFFEE_RUN_TESTS(_tests);

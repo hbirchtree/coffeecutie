@@ -29,6 +29,20 @@ bool basic_tests()
     return true;
 }
 
+bool floating_storage_tests()
+{
+    if(sizeof(scalar)!=4)
+        return false;
+    if(sizeof(bigscalar)!=8)
+        return false;
+    if(sizeof(lscalar)!=16)
+    {
+        cWarning("Size of doubleL found to be {0} bytes",sizeof(lscalar));
+        return false;
+    }
+    return true;
+}
+
 bool wrapping_tests()
 {
     /* Unsigned */
@@ -118,10 +132,20 @@ bool uint24_test()
     return sizeof(uint24)==3;
 }
 
-static const constexpr CoffeeTest::Test _tests[3] = {
-    basic_tests,
-    wrapping_tests,
-    uint24_test
+bool data_unit_tests()
+{
+    cDebug("User-verifiable: ");
+    cDebug("kB: {0}",Unit_kB*500);
+    cDebug("GB: {0}",Unit_GB*500);
+    cDebug("TB: {0}",Unit_TB*500);
+    return true;
+}
+
+const constexpr CoffeeTest::Test _tests[4] = {
+    {basic_tests,"Integer sizes","Checking the storage of integer types"},
+    {floating_storage_tests,"Floating-point sizes","Checking the storage of floating-point types"},
+    {wrapping_tests,"Wrapping tests","Checking that numbers wrap correctly"},
+    {uint24_test,"Unsigned 24-bit integer","Special sauce",false}
 };
 
 COFFEE_RUN_TESTS(_tests);

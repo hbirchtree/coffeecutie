@@ -22,15 +22,24 @@ struct TablePrinter_Basic
      * \param num
      * \return
      */
-    Column GenColumn(T* val, szptr num)
+    Column GenColumn(T const* val, szptr num)
     {
-        Vector<CString> vec;
+        Column vec;
         for(szptr i=0;i<num;i++)
         {
-            T& ref = val[i];
+            T const& ref = val[i];
             CString v = cStringFormat("{0}",ref);
             vec.push_back(v);
         }
+        return vec;
+    }
+
+    template<typename T> STATICINLINE
+    Column GenColumn(Vector<T> const& col)
+    {
+        Column vec;
+        for(T const& v : col)
+            vec.push_back(cStringFormat("{0}",v));
         return vec;
     }
 
