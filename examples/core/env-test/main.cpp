@@ -1,5 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CPlatform>
+#include <coffee/core/CFiles>
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 

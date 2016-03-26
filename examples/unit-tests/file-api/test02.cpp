@@ -28,13 +28,36 @@ bool filemap_test()
 
 const cstring big_map_test = "file_map_large.bin";
 
-//byte_t sample_storage_large[Unit_GB*5] = {
+void* large_data = nullptr;
 
-//};
+bool filewrite_large_test()
+{
+    CResources::Resource rsc(big_map_test);
+    rsc.size = Unit_GB*5;
+    rsc.data = Alloc(rsc.size);
+    large_data = rsc.data;
+    byte_t* data = (byte_t*)large_data;
+    cstring test_string = "I'M THE TRASHMAN!\n";
+    MemCpy(data,test_string,StrLen(test_string));
+    bool stat = CResources::FileCommit(rsc);
+    return stat;
+}
 
-const constexpr CoffeeTest::Test _tests[2] = {
+bool filemap_large_test()
+{
+    CResources::Resource rsc(big_map_test);
+    CResources::FileMap(rsc);
+    bool stat = MemCmp(large_data,rsc.data,rsc.size);
+    CFree(large_data);
+    CResources::FileUnmap(rsc);
+    return stat;
+}
+
+const constexpr CoffeeTest::Test _tests[4] = {
     {filewrite_test,"File writing","Really just prepares for the next test"},
-    {filemap_test,"File mapping"}
+    {filemap_test,"File mapping"},
+    {filewrite_large_test,"Large file writing","Allocates 5GB of data and writes it to disk",true},
+    {filemap_large_test,"Large file mapping","Mapping a large file into memory",true}
 };
 
 COFFEE_RUN_TESTS(_tests);

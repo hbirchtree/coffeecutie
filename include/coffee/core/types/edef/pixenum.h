@@ -3,6 +3,8 @@
 #include "enumfun.h"
 #include "../tdef/integertypes.h"
 
+#undef None
+
 namespace Coffee{
 
 enum class PixelFlags

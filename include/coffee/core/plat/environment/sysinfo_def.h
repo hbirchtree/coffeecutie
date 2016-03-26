@@ -25,7 +25,7 @@ struct SysInfoDef
      * \brief CPU count in total
      * \return
      */
-    STATICINLINE uint32 CpuCount()
+    STATICINLINE CoreCnt CpuCount()
     {
         return 0;
     }
@@ -34,7 +34,7 @@ struct SysInfoDef
      * \brief CPU core count in total, all CPUs
      * \return
      */
-    STATICINLINE uint32 CoreCount()
+    STATICINLINE CoreCnt CoreCount()
     {
         return 0;
     }
@@ -43,7 +43,7 @@ struct SysInfoDef
      * \brief CPU thread count in total, all CPUs
      * \return
      */
-    STATICINLINE uint64 ThreadCount()
+    STATICINLINE ThrdCnt ThreadCount()
     {
         return std::thread::hardware_concurrency();
     }
@@ -52,7 +52,7 @@ struct SysInfoDef
      * \brief Get amount of parallel tasks that can be launched
      * \return
      */
-    STATICINLINE uint64 Parallelism()
+    STATICINLINE ThrdCnt Parallelism()
     {
         return ThreadCount()*64;
     }
@@ -63,7 +63,7 @@ struct SysInfoDef
      * \param weight Weight given to each tasks. Should only be modified if each task is significant in size.
      * \return An estimated value for what would be a suitable amount of tasks
      */
-    STATICINLINE uint64 SmartParallelism(uint64 worksize, uint64 weight = 1)
+    STATICINLINE ThrdCnt SmartParallelism(uint64 worksize, uint64 weight = 1)
     {
         if(worksize*weight <= ThreadCount())
         {
@@ -88,7 +88,7 @@ struct SysInfoDef
      * \brief Total amount of memory in system
      * \return
      */
-    STATICINLINE uint64 MemTotal()
+    STATICINLINE MemUnit MemTotal()
     {
         return 0;
     }
@@ -97,7 +97,7 @@ struct SysInfoDef
      * \brief Available free memory that can be used
      * \return
      */
-    STATICINLINE uint64 MemAvailable()
+    STATICINLINE MemUnit MemAvailable()
     {
         return 0;
     }
@@ -106,7 +106,7 @@ struct SysInfoDef
      * \brief Total amount of swap in system
      * \return
      */
-    STATICINLINE uint64 SwapTotal()
+    STATICINLINE MemUnit SwapTotal()
     {
         return 0;
     }
@@ -115,7 +115,7 @@ struct SysInfoDef
      * \brief Available free swap space in system, not very useful, system-managed
      * \return
      */
-    STATICINLINE uint64 SwapAvailable()
+    STATICINLINE MemUnit SwapAvailable()
     {
         return 0;
     }
@@ -156,7 +156,7 @@ struct SysInfoDef
      * \brief Cache size can be used to optimize tight loops, or just to make screens look tacky
      * \return
      */
-    STATICINLINE uint64 ProcessorCacheSize()
+    STATICINLINE MemUnit ProcessorCacheSize()
     {
         return 0;
     }

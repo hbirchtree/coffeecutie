@@ -1,7 +1,8 @@
 #ifndef COFFEE_CORE_PLAT_WINDOWTYPE_H
 #define COFFEE_CORE_PLAT_WINDOWTYPE_H
 
-#include "coffee/core/CTypes"
+#include "../../types/tdef/integertypes.h"
+#include "../../types/cdef/geometry.h"
 #include "../platform_detect.h"
 
 #if defined(COFFEE_X11)

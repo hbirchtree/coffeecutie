@@ -10,9 +10,6 @@ namespace Coffee{
 
 struct AndroidProcessPropertyApi : ProcessPropertyDef
 {
-    STATICINLINE void CoreDumpEnable()
-    {
-    }
 };
 
 using ProcessProperty = AndroidProcessPropertyApi;

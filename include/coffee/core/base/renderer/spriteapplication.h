@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../types/cdisplay.h"
+#include "../../types/edef/pixenum.h"
+#include "../../types/edef/resenum.h"
 
 namespace Coffee{
 namespace CDisplay{

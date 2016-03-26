@@ -1,6 +1,7 @@
 #ifndef COFFEE_CORE_PLAT_TIMING_DEF_H
 #define COFFEE_CORE_PLAT_TIMING_DEF_H
 
+#include "../../types/tdef/stltypes.h"
 #include "../../types/cdef/timetypes.h"
 
 namespace Coffee{

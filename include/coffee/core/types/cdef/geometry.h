@@ -36,10 +36,12 @@ struct _cbasic_size_2d
     FORCEDINLINE _cbasic_size_2d<T>& operator/=(const T& d)
     {
         (*this) = (*this)/d;
+        return *this;
     }
     FORCEDINLINE _cbasic_size_2d<T>& operator*=(const T& d)
     {
         (*this) = (*this)*d;
+        return *this;
     }
 };
 

@@ -6,9 +6,9 @@
 #define COFFEE_CORE_PLAT_TIMING_TIMERS_H
 
 #include "../timing_def.h"
-#include <coffee/core/CTypes>
 #include <sys/time.h>
 #include <ctime>
+#include <memory.h>
 
 namespace Coffee{
 namespace CFunctional{

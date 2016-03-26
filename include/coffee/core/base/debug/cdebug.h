@@ -93,6 +93,20 @@ FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
     cfprintf(DefaultDebugOutputPipe,"{0}",out.c_str());
 }
 
+template<typename... Arg> FORCEDINLINE
+void cOutputPrint(cstring str, Arg... args)
+{
+    CString out = cStringFormat(str,args...);
+    cfprintf(DefaultPrintOutputPipe,"{0}\n",out.c_str());
+}
+
+template<typename... Arg> FORCEDINLINE
+void cOutputPrintNoNL(cstring str, Arg... args)
+{
+    CString out = cStringFormat(str,args...);
+    cfprintf(DefaultPrintOutputPipe,"{0}",out.c_str());
+}
+
 template<typename... Arg>
 /*!
  * \brief Debug message

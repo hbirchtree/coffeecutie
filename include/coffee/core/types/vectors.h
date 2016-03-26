@@ -1,9 +1,7 @@
 #ifndef COFFEE_CORE_VECTORS_H
 #define COFFEE_CORE_VECTORS_H
 
-#include "../coffee_mem_macros.h"
 #include <coffee/core/CMath>
-#include "basetypes.h"
 
 namespace Coffee{
 

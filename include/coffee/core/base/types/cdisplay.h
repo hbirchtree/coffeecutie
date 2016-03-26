@@ -1,7 +1,9 @@
 #ifndef CDISPLAY_H
 #define CDISPLAY_H
 
-#include "../../types/composite_types.h"
+#include "../../types/cdef/infotypes.h"
+#include "../../types/cdef/pixtypes.h"
+#include "../../types/edef/enumfun.h"
 
 namespace Coffee{
 namespace CDisplay{

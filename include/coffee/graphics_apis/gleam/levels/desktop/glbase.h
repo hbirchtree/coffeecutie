@@ -590,7 +590,7 @@ struct CGL_Implementation
 				CString str = GetString(GL_VERSION);
 				if (str.size()<=0)
 					return ver;
-				Regex::Pattern p = Regex::Compile("([0-9]+).([0-9]+)\.([0-9])?([s\S]*)");
+                                Regex::Pattern p = Regex::Compile("([0-9]+).([0-9]+)\\.([0-9])?([\\s\\S]*)");
 				auto match = Regex::Match(p,str,true);
 				if (match.size() < 3)
 					return ver;

@@ -1,7 +1,6 @@
 #ifndef CBLAM_STRUCTURES
 #define CBLAM_STRUCTURES
 
-#include <coffee/core/CTypes>
 #include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture_types.h>
 
 namespace Coffee{

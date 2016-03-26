@@ -1,6 +1,7 @@
 #ifndef COFFEE_CORE_BASE_DEBUG_DEBUGPRINTER_H
 #define COFFEE_CORE_BASE_DEBUG_DEBUGPRINTER_H
 
+#include "../../plat/plat_timing.h"
 #include "../../plat/plat_environment.h"
 
 #include "debug_interface.h"

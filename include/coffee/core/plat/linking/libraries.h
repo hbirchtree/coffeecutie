@@ -1,8 +1,8 @@
 #ifndef COFFEE_PLAT_LIBRARIES_H
 #define COFFEE_PLAT_LIBRARIES_H
 
-#include "coffee/core/CBase"
-#include "coffee/core/CTypes"
+#include "../../types/tdef/integertypes.h"
+#include "../../types/cdef/infotypes.h"
 #include "../platform_detect.h"
 
 namespace Coffee{

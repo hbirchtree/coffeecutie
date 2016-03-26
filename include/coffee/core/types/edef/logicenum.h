@@ -3,6 +3,8 @@
 #include "enumfun.h"
 #include "../tdef/integertypes.h"
 
+#undef Always
+
 namespace Coffee{
 
 enum class Operator

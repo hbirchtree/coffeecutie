@@ -80,10 +80,14 @@ constexpr uint64 UInt64_Max = (18446744073709551615ULL);
 using c_cptr = const void*;
 using c_ptr  = void*;
 
-constexpr szptr Unit_kB = 1024;
-constexpr szptr Unit_MB = 1024*1024;
-constexpr szptr Unit_GB = 1024*1024*1024;
-constexpr uint64 Unit_TB = 1024ULL*1024ULL*1024ULL*1024ULL;
+using ThrdCnt = uint64;
+using CoreCnt = uint32;
+using MemUnit = uint64;
+
+constexpr MemUnit Unit_kB = 1024;
+constexpr MemUnit Unit_MB = 1024*1024;
+constexpr MemUnit Unit_GB = 1024*1024*1024;
+constexpr MemUnit Unit_TB = 1024ULL*1024ULL*1024ULL*1024ULL;
 
 PACKEDSTRUCT uint24
 {

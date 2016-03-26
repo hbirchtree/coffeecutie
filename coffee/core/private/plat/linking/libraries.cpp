@@ -1,6 +1,7 @@
 #include <coffee/core/plat/linking/libraries.h>
 
 #include <coffee/core/coffee_strings.h>
+#include <coffee/core/CDebug>
 
 #if defined(COFFEE_LINUX)
 #include <dlfcn.h>

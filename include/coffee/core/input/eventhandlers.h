@@ -50,7 +50,8 @@ FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
     if(e.type==CIEvent::Controller)
     {
         auto ev = (const CIControllerAtomicEvent*)data;
-        if(ev->axis && (ev->index == CK_AXIS_RIGHT_X || ev->index == CK_AXIS_RIGHT_Y))
+        if(ev->axis && (   ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_X
+                        || ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_Y))
             ControllerRotate(q,ev);
     }else if(e.type==CIEvent::MouseMove)
     {

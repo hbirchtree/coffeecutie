@@ -1,7 +1,9 @@
 #ifndef COFFEE_IMAGE_TRUETYPE_STB_H
 #define COFFEE_IMAGE_TRUETYPE_STB_H
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/core/types/cdef/memtypes.h>
 
 namespace Coffee{
 namespace CTrueType{

@@ -6,7 +6,6 @@
 
 #include "../../../coffee_strings.h"
 #include "../process_def.h"
-#include <coffee/core/CTypes>
 
 #include <sys/resource.h>
 #include <unistd.h>
@@ -32,25 +31,25 @@ struct ProcessProperty : ProcessPropertyDef
         return out==0;
     }
 
-    STATICINLINE int64 Pid()
+    STATICINLINE PID Pid()
     {
         return getpid();
     }
-    STATICINLINE int64 MemResident(int64 pid)
+    STATICINLINE MemUnit MemResident(PID pid)
     {
         rusage rs;
         if(getrusage(pid,&rs)!=0)
             return 0;
         return rs.ru_idrss+rs.ru_isrss;
     }
-    STATICINLINE int64 MemVirtual(int64 pid)
+    STATICINLINE MemUnit MemVirtual(PID pid)
     {
         rusage rs;
         if(getrusage(pid,&rs)!=0)
             return 0;
         return rs.ru_nvcsw;
     }
-    STATICINLINE int32 CpuUsage(int64)
+    STATICINLINE int32 CpuUsage(PID)
     {
         return 0;
     }

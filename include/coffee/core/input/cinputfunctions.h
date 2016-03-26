@@ -57,7 +57,7 @@ FORCEDINLINE void ControllerRotate(CQuat& cqt,
                                    const CIControllerAtomicEvent* evsrc,
                                    scalar const& sens = 0.01)
 {
-    bool v = evsrc->index == CK_AXIS_RIGHT_X;
+    bool v = evsrc->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_X;
     cqt = normalize_quat(
                 CQuat(1,
                       sens*(evsrc->value/(scalar)Int16_Max)*v,

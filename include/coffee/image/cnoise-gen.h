@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/core/CTypes>
+#include <coffee/core/types/vector_types.h>
 
 namespace Coffee{
 namespace NoiseGen{

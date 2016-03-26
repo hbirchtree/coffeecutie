@@ -37,7 +37,6 @@ bool floating_storage_tests()
         return false;
     if(sizeof(lscalar)!=16)
     {
-        cWarning("Size of doubleL found to be {0} bytes",sizeof(lscalar));
         return false;
     }
     return true;
@@ -128,7 +127,6 @@ bool wrapping_tests()
 
 bool uint24_test()
 {
-    cWarning("This test is likely to fail on Windows!");
     return sizeof(uint24)==3;
 }
 
@@ -141,11 +139,12 @@ bool data_unit_tests()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[4] = {
+const constexpr CoffeeTest::Test _tests[5] = {
     {basic_tests,"Integer sizes","Checking the storage of integer types"},
     {floating_storage_tests,"Floating-point sizes","Checking the storage of floating-point types"},
     {wrapping_tests,"Wrapping tests","Checking that numbers wrap correctly"},
-    {uint24_test,"Unsigned 24-bit integer","Special sauce",false}
+    {uint24_test,"Unsigned 24-bit integer","Special sauce",false},
+    {data_unit_tests,"Verify data units","Special sauce",false}
 };
 
 COFFEE_RUN_TESTS(_tests);

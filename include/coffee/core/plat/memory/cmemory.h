@@ -14,7 +14,7 @@
 namespace Coffee{
 
 static FILE* DefaultDebugOutputPipe = stderr;
-static FILE* DefaultPrintOutputPipe = stderr;
+static FILE* DefaultPrintOutputPipe = stdout;
 static FILE* DefaultInputPipe = stdin;
 
 namespace Mem{
