@@ -7,8 +7,6 @@ if(COFFEE_PYTHON)
         ${PYTHON_INCLUDE_PATH}
         )
 
-    message ( "${PYTHON_LIBRARIES}" )
-
     swig_add_module(CoffeePython python ${CFILE_PYTHON} )
     swig_link_libraries(CoffeePython ${COFFEE_LINKING} ${PYTHON_LIBRARIES} )
 
