@@ -12,27 +12,24 @@ RUN apt-get -qy update
 # It will also be less bad if you cancel one of the installations mid-way
 
 # Base tools
-RUN apt-get -qy install git nano wget
-# Build tools
-RUN apt-get -qy install cmake ninja-build build-essential doxygen
-# SWIG, just for giggles
-RUN apt-get -qy install swig3.0
-# RapidJSON for JSON parsing
-RUN apt-get -qy install rapidjson-dev
-# SDL2 libraries + dependencies
-RUN apt-get -qy install libsdl2-dev
-# OpenAL for audio
-RUN apt-get -qy install libopenal-dev
-# SSL for networking
-RUN apt-get -qy install libssl-dev 
-# Unwind for stacktrace information
-RUN apt-get -qy install libunwind-dev
+RUN apt-get -qy install \
+	git nano wget \
+	cmake ninja-build build-essential \
+	clang-3.8 \
+	doxygen swig3.0 \
+	libsdl2-dev libopenal-dev libssl-dev libunwind-dev
+
 # FFMPEG for media playback/capture
-RUN apt-get -qy install libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev libswscale-dev
+RUN apt-get -qy install \
+	libavcodec-dev libavdevice-dev \
+	libavformat-dev libswresample-dev \
+	libswscale-dev
+
 # Qt libraries
 RUN apt-get -qy install qt5-default
+
 # PCL for point cloud data processing
-RUN apt-get -qy install libpcl-dev
+#RUN apt-get -qy install libpcl-dev
 
 #Create user directory + group
 RUN groupadd coffeeusers -g 1000

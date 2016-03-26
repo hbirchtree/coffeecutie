@@ -4,11 +4,8 @@ find_path ( RAPIDJSON_INCLUDE_DIR
     PATHS
     ${COFFEE_EXT_LIBRARY_DIR}/rapidjson
     ${RAPIDJSON_ROOT_DIR}
-    /usr
-    /usr/local
-    /opt
 
-    SUFFIXES
+    PATH_SUFFIXES
     include
     )
 

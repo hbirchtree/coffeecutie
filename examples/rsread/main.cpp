@@ -1,8 +1,9 @@
-#include <coffee/CCore>
 #include <coffee/core/CApplication>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/CFiles>
 
 using namespace Coffee;
-using namespace Coffee::CResources;
+using namespace CResources;
 
 struct C_FORCE_PACKING RSCacheSectorHeader
 {

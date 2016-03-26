@@ -99,7 +99,7 @@ find_library(OVR_LIBRARY_RELEASE
         PATH_SUFFIXES
         ${OVR_LIBRARY_PATH_SUFFIX}
         ${OVR_LIBRARY_PATH_SUFFIX_START}/Release
-        ${OVR_LIBRARY_PATH_SUFFIX_START}/Release/${_ovr_library_arch})
+        ${OVR_LIBRARY_PATH_SUFFIX_START}/${_ovr_library_arch}/Release)
 
 find_library(OVR_LIBRARY_DEBUG
         NAMES
@@ -114,7 +114,7 @@ find_library(OVR_LIBRARY_DEBUG
         PATH_SUFFIXES
         ${OVR_LIBRARY_PATH_SUFFIX}
         ${OVR_LIBRARY_PATH_SUFFIX_START}/Debug
-        ${OVR_LIBRARY_PATH_SUFFIX_START}/Debug/${_ovr_library_arch})
+        ${OVR_LIBRARY_PATH_SUFFIX_START}/${_ovr_library_arch}/Debug)
 
 include(SelectLibraryConfigurations)
 select_library_configurations(OVR)
@@ -140,7 +140,7 @@ find_path(OVR_INCLUDE_DIR
 
 find_path(OVR_SOURCE_DIR
         NAMES
-        OVR_CAPI.h
+        OVR_CAPI.cpp
         HINTS
         "${_libdir}"
         "${_libdir}/.."
