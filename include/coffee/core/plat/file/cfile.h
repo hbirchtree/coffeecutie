@@ -96,7 +96,7 @@ struct CFILEFun_def : CommonFileFun
         else
             data.size = esize;
         data.data = (byte_t*)Alloc(data.size);
-        szptr rsize = fread(data.data,sizeof(byte_t),esize-1,fh->handle);
+        szptr rsize = fread(data.data,sizeof(byte_t),esize,fh->handle);
         if(nterminate)
             data.data[esize-1] = 0;
 //        if(rsize<esize)
@@ -113,15 +113,6 @@ struct CFILEFun_def : CommonFileFun
         return wsize==d.size;
     }
 
-    STATICINLINE void* Map(cstring, ResourceAccess, szptr, szptr, int*)
-    {
-        return nullptr;
-    }
-    STATICINLINE bool Unmap(void*, szptr)
-    {
-        return false;
-    }
-
     STATICINLINE szptr Size(FH* fh)
     {
         szptr offset = ftell(fh->handle);
@@ -129,10 +120,6 @@ struct CFILEFun_def : CommonFileFun
         szptr fsize = ftell(fh->handle);
         fseek(fh->handle,offset,SEEK_SET);
         return fsize;
-    }
-    STATICINLINE bool Rm(cstring)
-    {
-        return false;
     }
 };
 

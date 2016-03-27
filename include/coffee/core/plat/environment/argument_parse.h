@@ -29,11 +29,11 @@ protected:
     }
     STATICINLINE bool _cmp_short_switch(cstring in, cstring sw)
     {
-        return StrCmp(_switch_short(in),sw)==0;
+        return StrCmp(_switch_short(in),sw);
     }
     STATICINLINE bool _cmp_long_switch(cstring in, cstring sw)
     {
-        return StrCmp(_switch_long(in),sw)==0;
+        return StrCmp(_switch_long(in),sw);
     }
 
 public:

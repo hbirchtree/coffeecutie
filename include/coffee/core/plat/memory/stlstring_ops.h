@@ -33,6 +33,25 @@ FORCEDINLINE CString CStrReplace(
 
 namespace StrUtil{
 
+FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, szptr newline_freq = 0)
+{
+    byte_t const* data = (byte_t const*)ptr;
+    CString out;
+    out.reserve(len*2+len-1);
+
+    for(szptr i=0;i<len;i++)
+    {
+        out.append("  ");
+        sprintf(&out[i*2+i],"%02x",data[i]);
+        if(newline_freq == 0 || (i+1)%newline_freq != 0)
+            out.append(" ");
+        else
+            out.append("\n");
+    }
+
+    return out;
+}
+
 /* Reference: http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring */
 FORCEDINLINE CString& ltrim(CString& s)
 {

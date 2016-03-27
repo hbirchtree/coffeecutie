@@ -24,10 +24,14 @@ bool filedel_test()
 }
 
 const cstring writetest = "writetest.txt";
-byte_t write_data[100] = "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n";
+byte_t write_data[100] = {
+    "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n"
+};
 
 bool filewrite_test()
 {
+    CResources::FileFun::Rm(writetest);
+
     CResources::Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
@@ -38,7 +42,15 @@ bool fileread_test()
 {
     CResources::Resource rsc(writetest);
     CResources::FilePull(rsc);
+    if(sizeof(write_data) != rsc.size)
+    {
+        CResources::FileFree(rsc);
+        return false;
+    }
     bool status = MemCmp(write_data,rsc.data,sizeof(write_data));
+    cDebug("\nTheirs:\n{1}\nMine:\n{0}",
+           StrUtil::hexdump(write_data,sizeof(write_data),10),
+           StrUtil::hexdump(rsc.data,rsc.size,10));
     CResources::FileFree(rsc);
     return status;
 }

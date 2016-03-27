@@ -34,7 +34,7 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     bool json_formatting = false;
 
-    json_formatting = ArgParse::Check(argc,argv,"json-format");
+    json_formatting = ArgParse::Check(argc,argv,"json");
 
     Profiler::InitProfiler();
     CString tmp;
@@ -65,7 +65,8 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
         Profiler::PushContext(tmp.c_str());
 
-        result.push_back(test.test());
+        bool res = test.test();
+        result.push_back(res);
         required.push_back(!test.optional);
 
         Profiler::PopContext();
