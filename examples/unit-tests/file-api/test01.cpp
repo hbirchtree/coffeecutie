@@ -49,8 +49,8 @@ bool fileread_test()
     }
     bool status = MemCmp(write_data,rsc.data,sizeof(write_data));
     cDebug("\nTheirs:\n{1}\nMine:\n{0}",
-           StrUtil::hexdump(write_data,sizeof(write_data),10),
-           StrUtil::hexdump(rsc.data,rsc.size,10));
+           StrUtil::hexdump(write_data,sizeof(write_data),true,10),
+           StrUtil::hexdump(rsc.data,rsc.size,true,10));
     CResources::FileFree(rsc);
     return status;
 }
