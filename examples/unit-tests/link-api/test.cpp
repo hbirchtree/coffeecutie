@@ -4,25 +4,48 @@
 #include "library.h"
 
 using namespace Coffee;
-using namespace CLibraryLoader;
+using namespace Library;
+
+const constexpr cstring TargetLibrary = "EnvLibraryLoadTester";
 
 bool dlopen_test()
 {
     /* Try loading a shared library, remember to clean up! */
-    _cbasic_version<int32> libver;
+    Version libver;
     libver.major = 1;
     libver.minor = 0;
     libver.revision = 0;
-    auto libtest = GetLib<TestClass>("EnvLibraryLoadTester",&libver);
 
-    if(libtest)
+    CString error;
+
+    auto testlib = FunctionLoader::GetLibrary(
+                TargetLibrary,
+                FunctionLoader::NoFlags,
+                &libver,
+                &error);
+
+    if(!testlib)
     {
-        TestClass* impl = libtest->loader();
-        impl->printHello();
-        coffee_close_lib(libtest);
-        return true;
+        cDebug("Failed to load library: {0}",error);
+        return false;
     }
-    return false;
+
+    auto constrct = ObjectLoader::GetConstructor<TestClass>(
+                testlib,
+                DefaultConstructorFunction,
+                &error);
+
+    if(constrct.loader)
+    {
+        TestClass* impl = constrct.loader();
+        impl->printHello();
+        FunctionLoader::UnloadLibrary(testlib);
+        return true;
+    }else
+    {
+        cDebug("Failed to load function pointer: {0}",error);
+        return false;
+    }
 }
 
 const constexpr CoffeeTest::Test _tests[1] = {

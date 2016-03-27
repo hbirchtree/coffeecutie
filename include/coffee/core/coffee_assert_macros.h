@@ -1,5 +1,9 @@
 #pragma once
 
+#include <stdlib.h>
+#include <stdexcept>
+#include "plat/memory/memory_ops.h"
+
 #include "types/tdef/integertypes.h"
 #include "coffee_mem_macros.h"
 
@@ -44,7 +48,7 @@ FORCEDINLINE void CASSERT(bool expr)
 
 FORCEDINLINE void CASSERT_MEM(c_cptr m1, c_cptr m2, szptr size)
 {
-    CASSERT(MemCmp(m1,m2,size));
+    CASSERT(Mem::MemCmp(m1,m2,size));
 }
 
 template<typename T>

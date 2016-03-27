@@ -196,5 +196,6 @@ private:
 };
 
 using AppArg = _cbasic_arg_container;
+using Version = _cbasic_version<uint32>;
 
 }

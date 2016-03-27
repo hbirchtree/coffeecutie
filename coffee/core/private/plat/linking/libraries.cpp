@@ -1,3 +1,4 @@
+/*
 #include <coffee/core/plat/linking/libraries.h>
 
 #include <coffee/core/coffee_strings.h>
@@ -134,3 +135,4 @@ void* _coffee_get_funptr(CNativeObject *object)
 
 }
 }
+*/

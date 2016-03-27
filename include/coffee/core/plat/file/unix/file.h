@@ -11,6 +11,7 @@
 
 namespace Coffee{
 namespace CResources{
+namespace Posix{
 
 struct PosixApi
 {
@@ -169,5 +170,6 @@ protected:
     }
 };
 
+}
 }
 }
