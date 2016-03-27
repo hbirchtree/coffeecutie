@@ -33,7 +33,7 @@ FORCEDINLINE CString CStrReplace(
 
 namespace StrUtil{
 
-FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, szptr newline_freq = 0)
+FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, bool spacing = true, szptr newline_freq = 0)
 {
     byte_t const* data = (byte_t const*)ptr;
     CString out;
@@ -44,8 +44,10 @@ FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, szptr newline_freq = 0)
         out.append("  ");
         sprintf(&out[i*2+i],"%02x",data[i]);
         if(newline_freq == 0 || (i+1)%newline_freq != 0)
-            out.append(" ");
-        else
+        {
+            if(spacing)
+                out.append(" ");
+        }else
             out.append("\n");
     }
 
