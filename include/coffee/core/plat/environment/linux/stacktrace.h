@@ -14,7 +14,7 @@
 #endif
 
 namespace Coffee{
-
+namespace Linux{
 struct LinuxStacktracer : StacktracerDef
 {
     STATICINLINE CString DemangleSymbol(CString const& sym)
@@ -83,8 +83,9 @@ private:
     static unw_context_t* unwind_context;
 #endif
 };
+}
 
-using Stacktracer = LinuxStacktracer;
+using Stacktracer = Linux::LinuxStacktracer;
 
 }
 

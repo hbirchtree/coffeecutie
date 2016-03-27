@@ -7,11 +7,11 @@
 namespace Coffee{
 /* Don't mind this, just some string storage */
 #ifdef COFFEE_LINUX
-thread_local CString LinuxSysInfo::cached_cpuinfo_string;
+thread_local CString Linux::LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
 #if defined(COFFEE_USE_UNWIND)
-unw_context_t* LinuxStacktracer::unwind_context = nullptr;
+unw_context_t* Linux::LinuxStacktracer::unwind_context = nullptr;
 #endif
 
 /* Storage for profiler data */

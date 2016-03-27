@@ -11,8 +11,8 @@
 #include <unistd.h>
 
 namespace Coffee{
-
-struct ProcessProperty : ProcessPropertyDef
+namespace Linux{
+struct LinuxProcessProperty : ProcessPropertyDef
 {
     STATICINLINE void CoreDumpEnable()
     {
@@ -54,6 +54,9 @@ struct ProcessProperty : ProcessPropertyDef
         return 0;
     }
 };
+}
+
+using ProcessProperty = Linux::LinuxProcessProperty;
 
 }
 

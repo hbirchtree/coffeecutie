@@ -14,6 +14,7 @@
 
 namespace Coffee{
 namespace WindowManager{
+namespace Linux{
 
 struct X11WindowManImpl : WindowControlDef
 {
@@ -32,8 +33,9 @@ struct X11WindowManImpl : WindowControlDef
 };
 
 }
+}
 
-using WM = WindowManager::X11WindowManImpl;
+using WM = WindowManager::Linux::X11WindowManImpl;
 
 }
 #endif

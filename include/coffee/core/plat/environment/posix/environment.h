@@ -17,17 +17,10 @@ extern char** environ;
 
 namespace Coffee{
 namespace Environment{
+namespace Posix{
 
 struct PosixEnvironmentFun : EnvInterface
 {
-    STATICINLINE CString ExecutableName(cstring_w = nullptr)
-    {
-        cstring_w p = realpath("/proc/self/exe",nullptr);
-        CString v = p;
-        CFree(p);
-        return v;
-    }
-
     STATICINLINE CString BaseName(CString const& n)
     {
         cstring_w cp = AllocT<sbyte_t>(n.size()+1);
@@ -171,9 +164,7 @@ struct PosixTerminalColorCodes : EnvColorCodes
 };
 
 }
-
-using ColorMap = Environment::PosixTerminalColorCodes;
-using Env = Environment::PosixEnvironmentFun;
+}
 
 }
 

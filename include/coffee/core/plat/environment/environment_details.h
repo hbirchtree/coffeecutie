@@ -5,6 +5,7 @@
 #include "../../types/tdef/stltypes.h"
 
 namespace Coffee{
+namespace Environment{
 
 struct EnvInterface
 {
@@ -125,10 +126,11 @@ struct EnvColorCodes
     static constexpr cstring BgPink = "";
 };
 
+}
 } //Coffee
 
 #endif
 
 #include "android/environment.h"
-#include "unix/environment.h"
+#include "linux/environment.h"
 #include "windows/environment.h"

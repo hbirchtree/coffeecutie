@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 namespace Coffee{
-
+namespace Linux{
 struct LinuxSysInfo : SysInfoDef
 {
     STATICINLINE CString CPUInfoString(bool force = false)
@@ -274,8 +274,9 @@ struct LinuxSysInfo : SysInfoDef
 private:
     thread_local static CString cached_cpuinfo_string;
 };
+}
 
-using SysInfo = LinuxSysInfo;
+using SysInfo = Linux::LinuxSysInfo;
 
 }
 

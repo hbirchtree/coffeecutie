@@ -8,7 +8,7 @@
 
 namespace Coffee{
 namespace CResources{
-
+namespace Linux{
 struct LinuxFileFun : Posix::PosixFileFun
 {
     STATICINLINE uint32 PageSize()
@@ -144,9 +144,10 @@ struct LinuxDirFun : DirFunDef
         return false;
     }
 };
+}
 
-using FileFun = LinuxFileFun;
-using DirFun = LinuxDirFun;
+using FileFun = Linux::LinuxFileFun;
+using DirFun = Linux::LinuxDirFun;
 
 }
 }
