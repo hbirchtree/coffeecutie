@@ -23,6 +23,7 @@ struct Test
     cstring title;
     cstring description;
     bool optional;
+    bool required_sequence;
 };
 
 using TestList = Test*;
@@ -45,6 +46,13 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
     Vector<bool> result;
     Vector<bool> required;
 
+    titles.resize(num);
+    descriptions.resize(num);
+    result.reserve(num);
+    required.reserve(num);
+
+    bool fail = false;
+
     for(uint32 i=0;i<num;i++)
     {
         Test const& test = tests[i];
@@ -60,8 +68,15 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
             continue;
         }
 
-        titles.push_back(test.title);
-        descriptions.push_back(test.description);
+        titles[i] = test.title;
+        descriptions[i] = test.description;
+
+        if(fail)
+        {
+            result.push_back(false);
+            required.push_back(!test.optional);
+            continue;
+        }
 
         Profiler::PushContext(tmp.c_str());
 
@@ -70,7 +85,12 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
         required.push_back(!test.optional);
 
         Profiler::PopContext();
+
+        if(!res && test.required_sequence)
+            fail = true;
     }
+
+    result.resize(num,false);
 
     szptr suc = 0;
     for(bool v : result)
