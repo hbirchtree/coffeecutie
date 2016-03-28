@@ -6,7 +6,7 @@
 #include "../process_def.h"
 
 namespace Coffee{
-
+namespace Environment{
 namespace Windows{
 
 struct WinProcessProperty
@@ -14,8 +14,9 @@ struct WinProcessProperty
 };
 
 }
+}
 
-using ProcessProperty = Windows::WinProcessProperty;
+using ProcessProperty = Environment::Windows::WinProcessProperty;
 
 }
 

@@ -7,12 +7,15 @@
 #include "../process_def.h"
 
 namespace Coffee{
-
+namespace Environment{
+namespace Android{
 struct AndroidProcessPropertyApi : ProcessPropertyDef
 {
 };
+}
+}
 
-using ProcessProperty = AndroidProcessPropertyApi;
+using ProcessProperty = Environment::Android::AndroidProcessPropertyApi;
 
 }
 #endif

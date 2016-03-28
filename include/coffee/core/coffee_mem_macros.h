@@ -41,3 +41,7 @@
 #define DENYINLINE C_FORCE_NOTINLINE
 
 #endif
+
+/* Apparently, a lot of compilers define these shits */
+#undef major
+#undef minor

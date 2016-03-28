@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 namespace Coffee{
+namespace Environment{
 namespace Linux{
 struct LinuxProcessProperty : ProcessPropertyDef
 {
@@ -55,8 +56,9 @@ struct LinuxProcessProperty : ProcessPropertyDef
     }
 };
 }
+}
 
-using ProcessProperty = Linux::LinuxProcessProperty;
+using ProcessProperty = Environment::Linux::LinuxProcessProperty;
 
 }
 

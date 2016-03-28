@@ -5,7 +5,7 @@
 #include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
-
+namespace Environment{
 struct ProcessPropertyDef
 {
     using PID = uint64;
@@ -61,6 +61,7 @@ struct ProcessPropertyDef
     }
 };
 
+}
 }
 
 #endif

@@ -5,15 +5,16 @@
 
 namespace Coffee{
 namespace Environment{
-
+namespace Android{
 struct AndroidEnv : EnvInterface
 {
 };
 
 }
+}
 
-using ColorMap = EnvColorCodes;
-using Env = Environment::AndroidEnv;
+using ColorMap = Environment::EnvColorCodes;
+using Env = Environment::Android::AndroidEnv;
 
 }
 #endif

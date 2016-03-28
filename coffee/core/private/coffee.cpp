@@ -5,6 +5,7 @@
 
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/argument_handling.h>
+#include <coffee/core/plat/environment/process_def.h>
 
 namespace Coffee{
 
