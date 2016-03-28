@@ -3,11 +3,6 @@
 
 #include "plat/plat_memory.h"
 
-#undef major
-#undef minor
-#undef far
-#undef near
-
 #include "plat/platform_detect.h"
 #include <stdio.h>
 #include <stdexcept>

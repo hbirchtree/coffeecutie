@@ -13,5 +13,8 @@
 #undef minor
 #undef major
 
+#undef min
+#undef max
+
 #undef CreateWindow
 #endif

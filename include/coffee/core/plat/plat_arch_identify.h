@@ -1,5 +1,5 @@
 /* AMD64 string, also used for Intel's 64-bit architectures */
-#if defined(__amd64__)
+#if defined(__amd64__) || defined(_M_X64) || defined(_M_AMD64)
 #define COFFEE_ARCH "AMD64"
 
 /* i386 is a weird one */

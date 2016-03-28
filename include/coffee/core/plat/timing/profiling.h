@@ -7,6 +7,7 @@
 
 namespace Coffee{
 namespace Profiling{
+
 struct SimpleProfilerImpl
 {
     struct DataPoint

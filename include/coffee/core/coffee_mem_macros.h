@@ -41,8 +41,3 @@
 #define DENYINLINE C_FORCE_NOTINLINE
 
 #endif
-
-#undef major
-#undef minor
-#undef far
-#undef near

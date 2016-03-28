@@ -2,7 +2,7 @@
 #define COFFEE_CORE_BASE_DEBUG_DEBUGPRINTER_H
 
 #include "../../plat/plat_timing.h"
-#include "../../plat/plat_environment.h"
+#include "../../plat/environment/environment_details.h"
 
 #include "debug_interface.h"
 
@@ -48,6 +48,8 @@ struct DebugPrinterImpl : DebugPrinterDef
         case Color::Green:
             fg = ColorMap::FontDarkGreen;
             break;
+		defualt:
+			break;
         }
 
         s = fg + s;

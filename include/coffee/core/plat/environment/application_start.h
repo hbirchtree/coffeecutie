@@ -1,13 +1,17 @@
 #ifndef CAPPLICATION_START
 #define CAPPLICATION_START
 
+#include "../../types/tdef/fntypes.h"
 
-typedef int(*CoffeeMainWithArgs)(int,char**);
-
-extern "C" int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv);
+int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);
 
 //This is a cheeky little macro that allows us to wrap the main function.
+#ifdef COFFEE_ANDROID
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     extern "C" int main(int argv, char** argc){ return deref_main(mainfun,argv,argc); }
+#else
+#define COFFEE_APPLICATION_MAIN(mainfun) \
+    int main(int argv, char** argc){ return deref_main(mainfun,argv,argc); }
+#endif
 
 #endif

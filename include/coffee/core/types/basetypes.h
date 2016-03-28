@@ -1,16 +1,7 @@
 #ifndef COFFEE_BASETYPES_H
 #define COFFEE_BASETYPES_H
 
-
 #include "../plat/platform_detect.h"
-
-/*Thanks, Windows. Thanks.*/
-#undef far
-#undef near
-
-#undef minor
-#undef major
-/**/
 
 #include "tdef/fntypes.h"
 #include "tdef/integertypes.h"

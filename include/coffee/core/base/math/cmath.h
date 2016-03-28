@@ -9,9 +9,6 @@
 
 #include "../../types/tdef/integertypes.h"
 
-#undef min
-#undef max
-
 namespace Coffee{
 /*!
  * \brief Contains functions related to mathematical operations. This namespace was created to simplify overloading the standard functions if there is a need to.

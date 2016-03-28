@@ -3,6 +3,8 @@
 #include <future>
 #include <functional>
 
+#include "../../base/threading/thread_id.h"
+
 namespace Coffee{
 namespace Threads{
 
@@ -17,4 +19,7 @@ using Function = std::function<FunSignature>;
 using Thread = std::thread;
 
 }
+
+using ThreadId = Threads::ThreadId_t;
+
 }
