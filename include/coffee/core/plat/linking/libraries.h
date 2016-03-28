@@ -30,7 +30,8 @@ struct FunctionLoad_def
     Library* GetLibrary(
             cstring name,
             LoadFlags flags = NoFlags,
-            Version const* ver = nullptr)
+            Version const* ver = nullptr,
+            CString* = nullptr)
     {
         C_UNUSED(name);
         C_UNUSED(flags);
@@ -43,7 +44,8 @@ struct FunctionLoad_def
      * \param lib
      * \return
      */
-    bool UnloadLibrary(Library* lib)
+    bool UnloadLibrary(Library* lib,
+                       CString* = nullptr)
     {
         C_UNUSED(lib);
         return false;
@@ -63,7 +65,8 @@ struct FunctionLoad_def
          */
         Fun GetFunction(
                 Library* lib,
-                cstring funcName)
+                cstring funcName,
+                CString*)
         {
             C_UNUSED(lib);
             C_UNUSED(funcName);
@@ -92,7 +95,8 @@ struct ObjectLoader_def
      */
     ObjConstructor<Obj> GetConstructor(
             typename FunctionLoader::Library* library,
-            cstring constructor)
+            cstring constructor,
+            CString* = nullptr)
     {
         C_UNUSED(library);
         C_UNUSED(constructor);
