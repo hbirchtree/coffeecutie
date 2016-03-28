@@ -109,3 +109,4 @@ const constexpr cstring DefaultConstructorFunction = "CoffeeLoader";
 
 #include "android/loader.h"
 #include "linux/loader.h"
+#include "windows/loader.h"
