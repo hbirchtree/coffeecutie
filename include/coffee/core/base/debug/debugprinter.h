@@ -127,12 +127,12 @@ struct DebugPrinterImpl : DebugPrinterDef
     STATICINLINE void cBasicPrint(cstring f, Args... a)
     {
         CString fmt = cStringFormat(f,a...);
-        OutputPrinter::fprintf(DefaultPrintOutputPipe,"{0}\n",fmt);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
     }
     template<typename... Args>
     STATICINLINE void cBasicPrintNoNL(cstring f, Args... a)
     {
-        OutputPrinter::fprintf(DefaultPrintOutputPipe,f,a...);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,f,a...);
     }
 };
 
