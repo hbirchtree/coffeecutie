@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
 #include <coffee/core/CMD>
 #include <coffee/core/CJSONParser>
@@ -206,8 +207,9 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
 }
 
 #define COFFEE_RUN_TESTS(test_list) \
-    int main(int argc, char** argv){ \
+    int ref_main(int argc, char** argv){ \
     size_t num = sizeof(test_list)/sizeof(CoffeeTest::Test); \
     CoffeeTest::run_tests(num,test_list,argc,argv); \
     return 0; \
-    }
+    } \
+    COFFEE_APPLICATION_MAIN(ref_main)

@@ -5,6 +5,7 @@
 #include <coffee/CImage>
 
 #include <coffee/sdl2/CSDL2System>
+#include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 
 #include <SDL2/SDL_shape.h>
@@ -82,6 +83,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     rend.setClearColor(r,clearCol);
     Profiler::Profile("Renderer state");
     /* Start rendering! */
+
+    SDL2Dialog::InformationMessage("Leaving?","Hello there! Did you press the wrong button?");
+
     while(!test.closeFlag())
     {
         rend.setClearColor(r,clearCol);
@@ -94,6 +98,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         rend.swapBuffers(r);
         test.pollEvents();
     }
+
+
     test.hideWindow();
 
     rend.spritesTerminate();
