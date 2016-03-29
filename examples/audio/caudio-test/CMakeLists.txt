@@ -1,11 +1,3 @@
-set ( CoffeeAudioTest_SRCS
-    main.cpp
-    )
+list (APPEND LIBS CoffeeCore CoffeeOpenAL CoffeeSDL2)
 
-coffee_add_example ( OpenALAudioTest ${CoffeeAudioTest_SRCS} )
-
-target_link_libraries ( OpenALAudioTest
-    CoffeeCore
-    CoffeeOpenAL
-    CoffeeSDL2
-    )
+coffee_add_example ( OpenALAudioTest "OpenAL Audio Test" main.cpp "${LIBS}" )

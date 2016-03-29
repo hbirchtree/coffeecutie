@@ -1,5 +1,1 @@
-coffee_add_example ( EndianFixer main.cpp )
-
-target_link_libraries ( EndianFixer
-    CoffeeCore
-    )
+coffee_add_example ( EndianFixer "Endian Fixer" main.cpp CoffeeCore )

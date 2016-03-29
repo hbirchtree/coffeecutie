@@ -48,6 +48,10 @@ set (
     ${COFFEE_CORE_INCLUDE_DIR}
     )
 
+add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
+add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffee Guy" )
+add_definitions( -DCOFFEE_VERSION_CODE=1 )
+
 # Add subdir for core modules
 add_subdirectory(coffee)
 

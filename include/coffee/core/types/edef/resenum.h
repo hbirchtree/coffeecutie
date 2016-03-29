@@ -23,25 +23,37 @@ enum class ResourceAccess
     SharedLocking    = 0x2, /*<! Mutex with multiple participants */
 
     /* Caching */
-    NoCache = 0x8, /*<! Avoid caching at all cost, even if it impacts perf */
-    GreedyCache = 0x2000, /*<! Cache it all in */
-    Persistent = 0x40, /*<! If shared, make changes visible for other participants */
-    Streaming  = 0x80, /*<! Streaming, will cache as needed, not greedy */
-    Virtual = 0x200, /*<! Reduce need to load all data */
+    NoCache     = 0x4, /*<! Avoid caching at all cost, even if it impacts perf */
+    GreedyCache = 0x8, /*<! Cache it all in */
+    Persistent  = 0x10, /*<! If shared, make changes visible for other participants */
+    Streaming   = 0x20, /*<! Streaming, will cache as needed, not greedy */
+    Virtual     = 0x40, /*<! Reduce need to load all data */
+    HugeFile    = 0x80, /*<! Sometimes used to indicate a wish for large pages */
 
     /* R/W access */
-    ReadOnly   = 0x10,
-    WriteOnly  = 0x20,
-    ReadWrite  = 0x30,
-    Append     = 0x100, /*<! If file exists, append to it */
-    Executable = 0x400, /*<! You should know what this does before you try to use it. */
+    ReadOnly   = 0x100,
+    WriteOnly  = 0x200,
+    ReadWrite  = ReadOnly|WriteOnly,
+    Append     = 0x400, /*<! If file exists, append to it */
+    Executable = 0x800, /*<! You should know what this does before you try to use it. */
 
     /* File operations or policies */
-    NewFile = 0x800, /*<! Don't overwrite files that exist */
-    Discard = 0x4, /*<! Truncate data that exists in file */
+    NewFile = 0x1000, /*<! Don't overwrite files that exist */
+    Discard = 0x2000, /*<! Truncate data that exists in file */
 
-    /* Misc. flags */
-    HugeFile = 0x1000, /*<! Sometimes used to indicate a wish for large pages */
+    /* Tell function to be particular about where to store this file */
+    StorageSpecifier = 0x4000,
+
+    /* Storage types */
+    AssetFile  = 0x8000, /* Packaged in virtual file system, system-specific */
+    ConfigFile = 0x10000, /* Stored in configuration directory, system-specific */
+
+    /* Masks */
+    LockingMask = ExclusiveLocking|SharedLocking,
+    AccessMask  = ReadWrite|Append|Executable,
+    CreateMask  = NewFile|Discard,
+    CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
+    StorageMask = AssetFile|ConfigFile,
 };
 C_FLAGS(ResourceAccess,uint32);
 

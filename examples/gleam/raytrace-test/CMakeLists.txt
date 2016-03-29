@@ -1,11 +1,3 @@
-set ( RaytraceTest_SRCS
-    main.cpp
-    )
+list (APPEND LIBS CoffeeCore CoffeeImage CoffeeGLeam)
 
-coffee_add_example ( RaytraceTest ${RaytraceTest_SRCS} )
-
-target_link_libraries ( RaytraceTest
-    CoffeeCore
-    CoffeeImage
-    CoffeeGLeam
-    )
+coffee_add_example ( RaytraceTest "Raytracing" main.cpp "${LIBS}" )

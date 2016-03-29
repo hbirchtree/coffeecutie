@@ -23,5 +23,10 @@ struct PlatformData
         return true;
 #endif
     }
+
+    STATICINLINE bool UseVirtualFS()
+    {
+        return false;
+    }
 };
 }

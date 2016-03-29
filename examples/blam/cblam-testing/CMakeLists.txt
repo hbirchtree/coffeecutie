@@ -1,10 +1,3 @@
-set ( CBlamTesting_SRCS
-    main.cpp
-    )
+list (APPEND LIBS CoffeeCore CoffeeBlam)
 
-coffee_add_example ( BlamTesting ${CBlamTesting_SRCS} )
-
-target_link_libraries ( BlamTesting
-    CoffeeCore
-    CoffeeBlam
-    )
+coffee_add_example ( BlamTesting "Blam Loader" main.cpp "${LIBS}" )

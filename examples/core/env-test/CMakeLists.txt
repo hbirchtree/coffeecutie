@@ -1,10 +1,3 @@
-set ( EnvTest_SRCS
-    main.cpp
-    )
+list (APPEND LIBS CoffeeCore)
 
-coffee_add_example ( EnvTest ${EnvTest_SRCS} )
-
-target_link_libraries ( EnvTest
-    CoffeeCore
-    CoffeeImage
-    )
+coffee_add_example ( EnvTest "Environment Data" main.cpp CoffeeCore )

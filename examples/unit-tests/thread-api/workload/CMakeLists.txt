@@ -1,5 +1,1 @@
-coffee_add_example ( Unit_Thread_Workload test.cpp )
-
-target_link_libraries ( Unit_Thread_Workload
-    CoffeeCore
-    )
+coffee_add_example ( Unit_Thread_Workload "Cu_MTWorkLoad" test.cpp CoffeeCore )

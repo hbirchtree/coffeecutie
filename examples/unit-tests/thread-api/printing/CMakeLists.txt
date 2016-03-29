@@ -1,5 +1,1 @@
-coffee_add_example ( Unit_Thread_Printing test.cpp )
-
-target_link_libraries ( Unit_Thread_Printing
-    CoffeeCore
-    )
+coffee_add_example ( Unit_Thread_Printing "Cu_MTPrint" test.cpp CoffeeCore )

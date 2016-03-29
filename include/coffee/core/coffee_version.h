@@ -1,9 +1,11 @@
 #pragma once
 
-#include "types/tdef/integertypes.h"
+#include "application_data.h"
 #include "coffee_macros.h"
 
 namespace Coffee{
+
+extern ApplicationData_t CoffeeApplicationData;
 
 const constexpr cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
                                                                   C_COMPILER_VER_MAJ,

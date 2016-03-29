@@ -6,8 +6,12 @@
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/plat/environment/process_def.h>
+#include <coffee/core/types/cdef/infotypes.h>
 
 namespace Coffee{
+
+/* Information that is not otherwise available */
+ApplicationData_t CoffeeApplicationData;
 
 void CoffeeInit(bool profiler_init)
 {

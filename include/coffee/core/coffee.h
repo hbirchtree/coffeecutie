@@ -10,7 +10,6 @@
 
 namespace Coffee{
 
-
 /*!
  * \brief This function handles initial program startup
  */

@@ -1,4 +1,5 @@
 include ( AndroidToolkit )
+include ( AndroidApkBuild )
 
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
@@ -33,7 +34,7 @@ macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
 endmacro()
 
 #Android only uses shared libraries which are loaded, all else uses typical executables
-macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
+macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
     if(ANDROID)
         add_library(${TARGET} SHARED ${ANDROID_SDL_MAIN_UNIT} ${SOURCES} )
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -42,6 +43,10 @@ macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
     endif()
     target_enable_cxx11(${TARGET})
 
+    target_link_libraries ( ${TARGET}
+        ${LIBRARIES}
+        )
+
     install(
         TARGETS
         ${TARGET}
@@ -49,4 +54,36 @@ macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
         DESTINATION
         bin
         )
+
+    if(ANDROID)
+
+        string ( TOLOWER "${TARGET}" PACKAGE_PREFIX )
+
+        set ( DEPENDENCIES )
+
+        foreach(trg ${LIBRARIES})
+            set ( TMP_LIBNAME "$<TARGET_FILE:${trg}>" )
+            get_filename_component ( LIBNAME_EXT "${TMP_LIBNAME}" EXT )
+            if(LIBNAME_EXT MATCHES ".so" )
+                list ( APPEND DEPENDENCIES "${TMP_LIBNAME}" )
+            endif()
+        endforeach()
+
+        package_apk(
+            "${TARGET}"
+            "${TITLE}"
+            "org.coffee.${PACKAGE_PREFIX}"
+            "1" "1.0"
+            "19" "armeabi-v7a"
+            "${DEPENDENCIES}" )
+
+        package_apk(
+            "${TARGET}"
+            "${TITLE}"
+            "org.coffee.${PACKAGE_PREFIX}"
+            "1" "1.0"
+            "21" "arm64-v8a"
+            "${DEPENDENCIES}" )
+
+    endif()
 endmacro()

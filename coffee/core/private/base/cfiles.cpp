@@ -1,5 +1,6 @@
 #include <coffee/core/CFiles>
 
+#include <coffee/core/plat/environment/environment_details.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/CDebug>
 
@@ -17,14 +18,19 @@ void FileResourcePrefix(cstring prefix)
     _coffee_resource_prefix = prefix;
 }
 
-CString DereferencePath(cstring suffix)
+CString DereferencePath(cstring suffix, ResourceAccess storageMask)
 {
-#if defined(COFFEE_C_FILE_API)
     //We will NOT try to add any '/' in there.
-    return _coffee_resource_prefix + suffix;
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return suffix;
-#endif
+    if(!feval(storageMask&ResourceAccess::StorageSpecifier))
+        return _coffee_resource_prefix + suffix;
+    else{
+        if(feval(storageMask&ResourceAccess::ConfigFile))
+            return Env::GetUserData(nullptr,nullptr);
+        else if(feval(storageMask&ResourceAccess::AssetFile))
+            return CString(":/")+suffix;
+        else
+            return suffix;
+    }
 }
 
 bool FileExists(const Resource &resc)
@@ -34,7 +40,7 @@ bool FileExists(const Resource &resc)
 
 bool FileMap(Resource &resc, ResourceAccess acc)
 {
-	CString native_fn = FileFun::NativePath(resc.resource());
+    CString native_fn = FileFun::NativePath(resc.resource());
     resc.size = FileFun::Size(native_fn.c_str());
 
     cDebug("File size: {0}",resc.size);
@@ -150,7 +156,7 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
     return stat;
 }
 
-Resource::Resource(cstring rsrc, bool absolute):
+Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
     m_resource(),
     data(nullptr),
     size(0),
@@ -163,7 +169,7 @@ Resource::Resource(cstring rsrc, bool absolute):
     if(absolute)
         m_resource = rsrc;
     else
-        m_resource = DereferencePath(rsrc);
+        m_resource = DereferencePath(rsrc,acc&ResourceAccess::StorageMask);
 }
 
 cstring Resource::resource() const

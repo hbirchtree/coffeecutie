@@ -32,7 +32,9 @@ public:
      * \param rsrc Path to resource
      * \param absolute False by default, true to not use global file redirection
      */
-    Resource(cstring rsrc = nullptr, bool absolute = false);
+    Resource(cstring rsrc = nullptr,
+             bool absolute = false,
+             ResourceAccess acc = ResourceAccess::None);
 
     void* data; /*!< Data pointer*/
     uint64 size; /*!< Data size*/

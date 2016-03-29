@@ -1,5 +1,1 @@
-coffee_add_example ( Unit_Size_Test01 test01.cpp )
-
-target_link_libraries ( Unit_Size_Test01
-    CoffeeCore
-    )
+coffee_add_example ( Unit_Size_Test01 "Cu_SizeTest" test01.cpp CoffeeCore )

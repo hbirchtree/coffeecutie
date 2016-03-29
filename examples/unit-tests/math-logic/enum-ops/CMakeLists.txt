@@ -1,4 +1,1 @@
-coffee_add_example ( Unit_Math_Enum_Ops test.cpp )
-target_link_libraries ( Unit_Math_Enum_Ops
-    CoffeeCore
-    )
+coffee_add_example ( Unit_Math_Enum_Ops "Cu_Enums" test.cpp CoffeeCore )

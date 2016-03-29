@@ -15,6 +15,7 @@ set ( CoffeeCore_SRCS
     private/plat/linking/libraries.cpp
 
     private/plat/file/android/file.cpp
+    private/plat/environment/android/environment.cpp
 
     private/plat/environment/application_start.cpp
 
