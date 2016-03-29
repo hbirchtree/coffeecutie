@@ -74,7 +74,6 @@ ADD openal-build.sh /home/coffee/openal-build.sh
 ADD coffee-build.sh /home/coffee/coffee-build.sh
 ADD install-libs.sh /home/coffee/install-libs.sh
 ADD generate-toolchain.sh /home/coffee/generate-toolchain.sh
-ADD project /home/coffee/template-project
 
 USER root
 RUN chmod +x *.sh

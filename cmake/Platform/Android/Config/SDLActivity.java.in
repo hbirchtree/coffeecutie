@@ -70,18 +70,14 @@ public class SDLActivity extends Activity {
      */
     protected String[] getLibraries() {
         return new String[] {
-            "SDL2",
-            // "SDL2_image",
-            // "SDL2_mixer",
-            // "SDL2_net",
-            // "SDL2_ttf",
-            "main"
+            @ANDROID_DEPENDENCIES_STRING@
         };
     }
 
     // Load the .so
     public void loadLibraries() {
        for (String lib : getLibraries()) {
+          Log.v(TAG, "Loading library: "+lib);
           System.loadLibrary(lib);
        }
     }

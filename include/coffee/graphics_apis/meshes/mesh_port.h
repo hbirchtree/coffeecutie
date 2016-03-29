@@ -33,7 +33,7 @@ void SerializeMesh(_cbasic_mesh const& mesh,
         sbyte_t build_str[build_str_len];
 
         MemClear(build_str,build_str_len);
-        StrCpy(build_str,CoffeeBuildString);
+        MemCpy(build_str,CoffeeBuildString,build_str_len);
 
         InsertBytes(storage,magic,sizeof(magic));
         InsertBytes(storage,build_str,build_str_len);

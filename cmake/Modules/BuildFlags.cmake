@@ -29,6 +29,10 @@ endif()
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 
+set ( GIT_HASH "00000000" )
+
+add_definitions( -DCOFFEE_BUILD_STRING="01.00.00.${CBUILDTIME}-${GIT_HASH}" )
+
 # The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
 # Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
@@ -38,6 +42,11 @@ add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 if(NOT ANDROID)
     find_package ( RapidJson REQUIRED )
     include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
+endif()
+
+if(ANDROID)
+    find_package(SDL2 REQUIRED)
+    include_directories(${SDL2_INCLUDE_DIR})
 endif()
 
 #This causes ASIO to not use Boost.
