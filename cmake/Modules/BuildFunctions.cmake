@@ -33,7 +33,11 @@ macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
     coffee_add_elibrary(${TARGET} ${COFFEE_LINK_OPT} "${SOURCES}")
 endmacro()
 
-#Android only uses shared libraries which are loaded, all else uses typical executables
+# TODO: Make package name more configurable
+# Android only uses shared libraries which are loaded, all else uses typical executables
+# We do a test to check if a library is a shared library for Android
+# For iOS, everything will be statically linked, which might be used for Android as well.
+# For now, we leave the linking options here for desktop platforms
 macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
     if(ANDROID)
         add_library(${TARGET} SHARED ${ANDROID_SDL_MAIN_UNIT} ${SOURCES} )
@@ -61,11 +65,14 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
 
         set ( DEPENDENCIES )
 
+        list ( APPEND LIBRARIES "${TARGET}" )
+
         foreach(trg ${LIBRARIES})
             set ( TMP_LIBNAME "$<TARGET_FILE:${trg}>" )
             get_filename_component ( LIBNAME_EXT "${TMP_LIBNAME}" EXT )
-            if(LIBNAME_EXT MATCHES ".so" )
+            if(LIBNAME_EXT MATCHES ".*.so" )
                 list ( APPEND DEPENDENCIES "${TMP_LIBNAME}" )
+                message ( "Android Packaging: Adding library ${TMP_LIBNAME} to ${TARGET}" )
             endif()
         endforeach()
 

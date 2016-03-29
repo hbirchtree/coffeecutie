@@ -1,4 +1,4 @@
-package org.coffee.app;
+package @ANDROID_PACKAGE_NAME@;
 
 import org.libsdl.app.SDLActivity;
 
