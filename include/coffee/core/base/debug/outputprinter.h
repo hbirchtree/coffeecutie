@@ -4,6 +4,10 @@
 #include "cdebug_print.h"
 #include "debug_interface.h"
 
+#ifdef COFFEE_ANDROID
+#include <android/log.h>
+#endif
+
 namespace Coffee{
 namespace DebugFun{
 
@@ -21,7 +25,11 @@ struct OutputPrinterImpl : OutputPrinterDef
         CString formatted = cStringFormat(format,args...);
         if(locking)
             PrinterLock.lock();
+#ifndef COFFEE_ANDROID
         Puts(stream,formatted.c_str());
+#else
+        __android_log_print(ANDROID_LOG_DEBUG, "Coffee", formatted.c_str());
+#endif
         if(locking)
             PrinterLock.unlock();
     }

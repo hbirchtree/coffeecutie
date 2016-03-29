@@ -1,7 +1,8 @@
+#pragma once
+
 #include "../../platform_detect.h"
 
 #ifdef COFFEE_WINDOWS
-#pragma once
 
 #include "../cfile.h"
 

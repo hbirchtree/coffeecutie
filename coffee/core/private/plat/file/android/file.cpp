@@ -1,17 +1,31 @@
 #include <coffee/core/plat/file/android/file.h>
+
 #ifdef COFFEE_ANDROID
 
 #include <SDL2/SDL_system.h>
 
 namespace Coffee{
 namespace CResources{
+namespace Android{
 
 CString AndroidFileFun::NativePath(cstring fn)
 {
-    CString temp = fn;
-    return temp;
+    CString prefix;
+    if(!(SDL_AndroidGetExternalStorageState()&SDL_ANDROID_EXTERNAL_STORAGE_READ))
+    {
+        /* Failure! */
+    }
+
+    prefix = SDL_AndroidGetExternalStoragePath();
+
+    if(prefix.size()==0)
+        return CString(fn);
+
+    prefix.append("/");
+    return prefix + fn;
 }
 
+}
 }
 }
 #endif

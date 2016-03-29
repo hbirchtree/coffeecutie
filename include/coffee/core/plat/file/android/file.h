@@ -4,46 +4,63 @@
 
 #ifdef COFFEE_ANDROID
 
-#include "../cfile.h"
+#include "../unix/file.h"
 
 #include "../../../coffee_message_macros.h"
 
 namespace Coffee{
 namespace CResources{
+namespace Android{
 
 struct AndroidFileApi
 {
-    struct FileHandle : FILEApi::FileHandle
-    {
-    };
+    using FileHandle = Posix::PosixApi::FileHandle;
 };
 
-struct AndroidFileFun : CFILEFun_def<AndroidFileApi::FileHandle>
+struct AndroidFileFun : Posix::PosixFileFun
 {
+    using FileHandle = AndroidFileApi::FileHandle;
+    struct FileMapping : FileFunDef::FileMapping
+    {
+        FileHandle* handle;
+        void* ptr_backing;
+    };
+
     static CString NativePath(cstring fn);
 
-    STATICINLINE FileMapping Map(cstring,ResourceAccess,szptr,szptr,int*)
+    STATICINLINE FileMapping Map(cstring fn,ResourceAccess acc,szptr offset,szptr size,int*)
     {
-        C_STUBBED("No file mapping defined!");
-        return {};
+        FileMapping map = {};
+
+        map.handle = Open(fn,acc);
+        CByteData dat = Read(map.handle,size,false);
+
+        if(offset+size > dat.size)
+        {
+            CFree(dat.data);
+            Close(map.handle);
+            return {};
+        }
+
+        byte_t* ptr = (byte_t*)dat.data;
+        map.ptr = &ptr[offset];
+        map.ptr_backing = dat.data;
+        map.size = dat.size;
+        map.acc = acc;
+
+        return map;
     }
-    STATICINLINE bool Unmap(FileMapping*)
+    STATICINLINE bool Unmap(FileMapping* mp)
     {
-        C_STUBBED("No file mapping defined!");
-        return false;
-    }
-    STATICINLINE szptr Size(cstring)
-    {
-        return 0;
-    }
-    STATICINLINE bool Exists(cstring)
-    {
-        return false;
+        CFree(mp->ptr_backing);
+        return true;
     }
 
 };
 
-using FileFun = AndroidFileFun;
+}
+
+using FileFun = Android::AndroidFileFun;
 using DirFun = DirFunDef;
 
 }

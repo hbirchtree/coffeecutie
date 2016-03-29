@@ -7,6 +7,8 @@
 #include <coffee/sdl2/CSDL2System>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 
+#include <SDL2/SDL_shape.h>
+
 using namespace Coffee;
 using namespace CDisplay;
 
@@ -42,7 +44,12 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     {
         /* Map a texture into memory */
         CResources::Resource texfile("ctest_hud/particle_sprite.png");
+
+        cDebug("Opening texture: {0}",texfile.resource());
+
         CResources::FileMap(texfile);
+
+        cDebug("Pointer to texture: {0}",(const byte_t*)texfile.data);
 
         /* Decode file to RGBA data */
         CStbImageLib::CStbImage img;
@@ -68,14 +75,21 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     /* Show the window */
     test.showWindow();
+
+    CRGBA clearCol = CRGBA(255,0,0);
+
     /* Set clear color for buffer */
-    rend.setClearColor(r,CRGBA(0,0,0));
+    rend.setClearColor(r,clearCol);
     Profiler::Profile("Renderer state");
     /* Start rendering! */
     while(!test.closeFlag())
     {
+        rend.setClearColor(r,clearCol);
+
         rend.clearBuffer(r);
         rend.drawSprite(r,CPointF(0,0),CSizeF(1,1),sprite);
+
+//        clearCol.r = (Time::CurrentTimestamp()*255)%255;
 
         rend.swapBuffers(r);
         test.pollEvents();

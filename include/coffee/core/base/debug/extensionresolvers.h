@@ -17,13 +17,11 @@ using namespace std;
 template<typename T>
 FORCEDINLINE std::string to_string(const T& v)
 {
-//    CString rep;
-//    std::stringstream ss;
-//    ss << (T)v;
-//    ss >> rep;
-//    return rep;
-    /* It's broken! */
-    return "";
+    CString rep;
+    std::stringstream ss;
+    ss << v;
+    ss >> rep;
+    return rep;
 }
 #endif
 

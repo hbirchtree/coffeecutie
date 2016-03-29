@@ -48,8 +48,8 @@ struct DebugPrinterImpl : DebugPrinterDef
         case Color::Green:
             fg = ColorMap::FontDarkGreen;
             break;
-		defualt:
-			break;
+        default:
+            break;
         }
 
         s = fg + s;
@@ -90,11 +90,15 @@ struct DebugPrinterImpl : DebugPrinterDef
         }
 
         CString cclock = Time::ClockString();
+#ifndef COFFEE_ANDROID
         CString clock = cStringFormat("{0}.{1}",cclock,Time::Microsecond()/1000);
         CString prefix = cStringFormat("{0}:{1}:{2}",
                                        clock.c_str(),
                                        severity_str,
                                        "???");
+#else
+        CString prefix = severity_str;
+#endif
 
         Colorize(prefix,Color::Blue,Color::Green);
 

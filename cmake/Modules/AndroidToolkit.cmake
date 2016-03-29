@@ -30,6 +30,7 @@ find_program ( ANDROID_NDK_BUILD_PROGRAM
     $ENV{ANDROID_NDK}
     )
 
+set ( ANDROID_SDL_MAIN_UNIT "$ENV{HOME}/lib/SDL2/src/main/android/SDL_android_main.c" )
 set ( ANDROID_ANT_PROGRAM "/usr/bin/ant" )
 set ( ANDROID_SDK_PROGRAM "$ENV{ANDROID_SDK}/tools/android" )
 set ( ANDROID_NDK_BUILD_PROGRAM "$ENV{ANDROID_NDK}/ndk-build" )

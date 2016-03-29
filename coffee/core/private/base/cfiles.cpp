@@ -17,33 +17,32 @@ void FileResourcePrefix(cstring prefix)
     _coffee_resource_prefix = prefix;
 }
 
-CString coffee_file_get_dereferenced_path(cstring suffix)
+CString DereferencePath(cstring suffix)
 {
 #if defined(COFFEE_C_FILE_API)
     //We will NOT try to add any '/' in there.
     return _coffee_resource_prefix + suffix;
 #elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return "";
+    return suffix;
 #endif
 }
 
 bool FileExists(const Resource &resc)
 {
-#if defined(COFFEE_C_FILE_API)
     return FileFun::Exists(resc.resource());
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return false;
-#endif
 }
 
 bool FileMap(Resource &resc, ResourceAccess acc)
 {
-#if defined(COFFEE_C_FILE_API)
 	CString native_fn = FileFun::NativePath(resc.resource());
-    resc.size = FileFun::Size(resc.resource());
+    resc.size = FileFun::Size(native_fn.c_str());
+
+    cDebug("File size: {0}",resc.size);
 
     if(resc.size == 0)
         return false;
+
+    cDebug("Size test passed");
 
     int err = 0;
     resc.m_mapping = FileFun::Map(
@@ -51,6 +50,8 @@ bool FileMap(Resource &resc, ResourceAccess acc)
                 acc,
                 0,resc.size,
                 &err);
+
+    cDebug("File mapping successful");
 
     if(!resc.m_mapping.ptr)
     {
@@ -73,18 +74,16 @@ bool FileMap(Resource &resc, ResourceAccess acc)
         return false;
     }
 
+    cDebug("Acquired file mapping");
+
     resc.data = resc.m_mapping.ptr;
     resc.flags = resc.flags|Resource::Mapped;
 
     return true;
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return false;
-#endif
 }
 
 bool FileUnmap(Resource &resc)
 {
-#if defined(COFFEE_C_FILE_API)
     if(!(resc.flags&Resource::Mapped))
         return false;
 
@@ -99,9 +98,6 @@ bool FileUnmap(Resource &resc)
     resc.flags ^= Resource::Mapped;
 
     return s;
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return false;
-#endif
 }
 
 void FileFree(Resource &resc)
@@ -116,7 +112,6 @@ void FileFree(Resource &resc)
 
 bool FilePull(Resource &resc, bool textmode, bool)
 {
-#if defined(COFFEE_C_FILE_API)
 	CString native_fn = FileFun::NativePath(resc.resource());
     FileFun::FileHandle *fp = FileFun::Open(native_fn.c_str(),ResourceAccess::ReadOnly);
 
@@ -134,14 +129,10 @@ bool FilePull(Resource &resc, bool textmode, bool)
     resc.flags = resc.flags|Resource::FileIO;
 
     return true;
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return false;
-#endif
 }
 
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
-#if defined(COFFEE_C_FILE_API)
 	CString native_fn = FileFun::NativePath(resc.resource());
     FileFun::FileHandle *fp = FileFun::Open(
                 native_fn.c_str(),
@@ -157,9 +148,6 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
     return stat;
-#elif defined(COFFEE_ANDROID_FILE_ASSET_API)
-    return false;
-#endif
 }
 
 Resource::Resource(cstring rsrc, bool absolute):
@@ -168,11 +156,14 @@ Resource::Resource(cstring rsrc, bool absolute):
     size(0),
     flags(Undefined)
 {
+#ifdef COFFEE_ANDROID
+    absolute = false;
+#endif
+
     if(absolute)
         m_resource = rsrc;
     else
-        m_resource = coffee_file_get_dereferenced_path(rsrc);
-
+        m_resource = DereferencePath(rsrc);
 }
 
 cstring Resource::resource() const

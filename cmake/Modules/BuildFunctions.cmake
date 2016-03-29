@@ -1,3 +1,5 @@
+include ( AndroidToolkit )
+
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
@@ -33,7 +35,7 @@ endmacro()
 #Android only uses shared libraries which are loaded, all else uses typical executables
 macro(COFFEE_ADD_EXAMPLE TARGET SOURCES)
     if(ANDROID)
-        add_library(${TARGET} SHARED ${SOURCES})
+        add_library(${TARGET} SHARED ${ANDROID_SDL_MAIN_UNIT} ${SOURCES} )
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     else()
         add_executable(${TARGET} ${SOURCES})

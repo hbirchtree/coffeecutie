@@ -108,6 +108,9 @@ FORCEDINLINE uint32 InterpretKeySymbol(
     case SDLK_UP: return CK_Up;
     case SDLK_DOWN: return CK_Down;
 
+    case SDLK_AC_BACK: return CK_Android_Back;
+    case SDLK_AC_SEARCH: return CK_Android_Menu;
+
     default:break;
     }
     if(key>=SDLK_F1&&key<=SDLK_F12)

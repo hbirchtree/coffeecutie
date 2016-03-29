@@ -1,6 +1,6 @@
 #include "../../platform_detect.h"
 
-#ifdef COFFEE_UNIXPLAT
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_ANDROID)
 
 #ifndef COFFEE_CORE_PLAT_TIMING_TIMERS_H
 #define COFFEE_CORE_PLAT_TIMING_TIMERS_H

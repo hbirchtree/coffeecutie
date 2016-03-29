@@ -125,3 +125,7 @@ struct DirFunDef
 }
 
 #endif
+
+#include "android/file.h"
+#include "linux/file.h"
+#include "windows/file.h"

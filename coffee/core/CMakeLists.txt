@@ -4,6 +4,7 @@ set ( CoffeeCore_SRCS
 #    private/exit_handling.cpp
     private/argument_handling.cpp
 
+
     private/coffee.cpp
     private/base/cdebug.cpp
     private/base/cfiles.cpp
@@ -68,6 +69,11 @@ if(ANDROID)
         ${SDL2_INCLUDE_DIR}
         )
     list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
+endif()
+
+if(ANDROID)
+    # Add the Android logging library
+    list ( APPEND CORE_EXTRA_LIBRARIES log )
 endif()
 
 if(WIN32)

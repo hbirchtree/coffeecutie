@@ -5,6 +5,8 @@
 # Generates Doxygen documentation, requires Doxygen installed in PATH
 option ( COFFEE_DOCS "Generate documentation" OFF )
 
+option ( COFFEE_TESTS "Build unit tests" ON )
+
 #
 #
 

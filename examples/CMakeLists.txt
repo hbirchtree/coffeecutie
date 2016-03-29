@@ -183,7 +183,9 @@ endif()
 # Unit tests
 #
 
-add_subdirectory(unit-tests)
+if(COFFEE_TESTS)
+    add_subdirectory(unit-tests)
+endif()
 
 #
 #

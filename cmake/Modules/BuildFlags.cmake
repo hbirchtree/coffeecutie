@@ -46,7 +46,9 @@ endif()
 
 if(ANDROID)
     find_package(SDL2 REQUIRED)
-    include_directories(${SDL2_INCLUDE_DIR})
+    include_directories(
+        ${SDL2_INCLUDE_DIR}
+        ${SDL2_INCLUDE_DIR}/SDL2)
 endif()
 
 #This causes ASIO to not use Boost.
