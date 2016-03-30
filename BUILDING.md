@@ -82,7 +82,7 @@ The workflow is as such:
 On Android...
 =============
 
-Use the included Docker container in tools/android/. Map the project directory to /home/coffee/project.
+Use the included Docker container in "tools/android/". Map the project directory to "/home/coffee/project".
 When inside, execute:
 
         ./android-sdk-update.sh && ./install-libs.sh && ./coffee-build.sh
