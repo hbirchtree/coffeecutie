@@ -255,7 +255,6 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
             return false;
         fp->file = nullptr;
 
-        delete fp;
         return true;
     }
 };
