@@ -29,14 +29,17 @@ bool basic_tests()
     return true;
 }
 
+const constexpr szptr lscalar_expected = 16;
+
 bool floating_storage_tests()
 {
     if(sizeof(scalar)!=4)
         return false;
     if(sizeof(bigscalar)!=8)
         return false;
-    if(sizeof(lscalar)!=16)
+    if(sizeof(lscalar)!=lscalar_expected)
     {
+		cWarning("Size of Lscalar: {0}, expected {1}",sizeof(lscalar),lscalar_expected);
         return false;
     }
     return true;

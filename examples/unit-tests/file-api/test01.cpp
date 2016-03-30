@@ -35,22 +35,24 @@ bool filewrite_test()
     CResources::Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
-    return CResources::FileCommit(rsc);
+    return CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
 }
 
 bool fileread_test()
 {
     CResources::Resource rsc(writetest);
     CResources::FilePull(rsc);
+	
+	cDebug("\nTheirs:\n{1}\nMine:\n{0}",
+		StrUtil::hexdump(write_data, sizeof(write_data), true, 10),
+		StrUtil::hexdump(rsc.data, rsc.size, true, 10));
+
     if(sizeof(write_data) != rsc.size)
     {
         CResources::FileFree(rsc);
         return false;
     }
     bool status = MemCmp(write_data,rsc.data,sizeof(write_data));
-    cDebug("\nTheirs:\n{1}\nMine:\n{0}",
-           StrUtil::hexdump(write_data,sizeof(write_data),true,10),
-           StrUtil::hexdump(rsc.data,rsc.size,true,10));
     CResources::FileFree(rsc);
     return status;
 }
@@ -59,6 +61,7 @@ bool filesize_test()
 {
     szptr size = CResources::FileFun::Size(writetest);
     szptr target = sizeof(write_data);
+	cDebug("{0}?={1}",size,target);
     return size==target;
 }
 

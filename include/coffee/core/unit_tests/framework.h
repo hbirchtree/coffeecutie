@@ -92,6 +92,7 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
     }
 
     result.resize(num,false);
+	required.resize(num,true);
 
     szptr suc = 0;
     for(bool v : result)

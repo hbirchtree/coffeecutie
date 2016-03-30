@@ -9,6 +9,8 @@ bool mutex_locking()
 {
     cDebug("Testing multithread + printing, should be mutex-locked");
     cDebug("User must verify output");
+
+
     Threads::Function<void()> message_test = [](){
         int64 msgs = 0;
         ThreadId thread;
@@ -20,11 +22,11 @@ bool mutex_locking()
         }
     };
 
+
     Cmd::AltScreen();
 
     auto t1 = Threads::RunAsync(message_test);
     auto t2 = Threads::RunAsync(message_test);
-
     t1.get();
     t2.get();
 
@@ -35,8 +37,8 @@ bool mutex_locking()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
-    {mutex_locking}
+const constexpr CoffeeTest::Test _tests[1] = {
+    {mutex_locking,"Locked printing"}
 };
 
 COFFEE_RUN_TESTS(_tests);

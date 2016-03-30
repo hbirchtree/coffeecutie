@@ -232,7 +232,7 @@ FORCEDINLINE void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* arg
         }
     }
 
-    auto file = CResources::FileFun::Open(out,ResourceAccess::WriteOnly);
+    auto file = CResources::FileFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
 
 	if (!file)
 	{

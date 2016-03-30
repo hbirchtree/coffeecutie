@@ -151,7 +151,7 @@ struct SimpleProfilerImpl
         Lock l(*data_access_mutex);
         C_UNUSED(l);
 
-        if(context_stack->size()<1)
+        if(!context_stack || context_stack->size()<1)
             return;
 
         DataPoint p;

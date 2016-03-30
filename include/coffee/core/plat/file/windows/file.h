@@ -68,7 +68,7 @@ struct WinFileApi
 
         if (feval(acc&ResourceAccess::Discard))
             f.create |= CREATE_ALWAYS;
-        if (feval(acc&ResourceAccess::NewFile))
+        else if (feval(acc&ResourceAccess::NewFile))
             f.create |= CREATE_NEW;
         else
             f.create |= OPEN_EXISTING;
@@ -127,6 +127,14 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
         }else
             return false;
     }
+
+	STATICINLINE bool Write(FileHandle* fh, CByteData const& d, bool)
+	{
+		DWORD size = 0;
+		BOOL stat = WriteFile(fh->file,d.data,d.size,&size,nullptr);
+		BOOL stat2 = FlushFileBuffers(fh->file);
+		return stat && stat2 && size == d.size;
+	}
 
     STATICINLINE szptr Size(FileHandle* fh)
     {
