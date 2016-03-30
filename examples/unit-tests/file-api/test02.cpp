@@ -14,7 +14,7 @@ bool filewrite_test()
     CResources::Resource rsc(small_map_test);
     rsc.data = sample_storage;
     rsc.size = sizeof(sample_storage);
-    return CResources::FileCommit(rsc);
+    return CResources::FileCommit(rsc,false,ResourceAccess::WriteOnly|ResourceAccess::Discard);
 }
 
 bool filemap_test()
@@ -39,7 +39,7 @@ bool filewrite_large_test()
     byte_t* data = (byte_t*)large_data;
     cstring test_string = "I'M THE TRASHMAN!\n";
     MemCpy(data,test_string,StrLen(test_string));
-    bool stat = CResources::FileCommit(rsc);
+    bool stat = CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
     return stat;
 }
 
