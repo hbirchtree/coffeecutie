@@ -95,8 +95,12 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${ANDROID_LIB_OUTPUT_DIRECTORY}
             )
-        get_filename_component ( _LIBNAME ${lib} NAME_WE )
-        string ( REGEX REPLACE "lib" "" _LIBNAME_STRIPPED "${_LIBNAME}" )
+        # Problem: generator strings
+        # Solution: regex
+        string ( REGEX REPLACE "\\$<TARGET_FILE:([A-Za-z0-9_\-]+)>" "\\1" _LIBNAME_STRIPPED "${lib}" )
+        # Some dependencies are file paths, too!
+        get_filename_component ( _LIBNAME_STRIPPED ${_LIBNAME_STRIPPED} NAME_WE )
+        message ( "Library name: ${_LIBNAME_STRIPPED}" )
         string ( CONCAT
             ANDROID_DEPENDENCIES_STRING
             "${ANDROID_DEPENDENCIES_STRING}"
