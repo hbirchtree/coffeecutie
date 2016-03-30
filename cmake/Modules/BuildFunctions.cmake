@@ -33,6 +33,8 @@ macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
     coffee_add_elibrary(${TARGET} ${COFFEE_LINK_OPT} "${SOURCES}")
 endmacro()
 
+include ( GetPrerequisites )
+
 # TODO: Make package name more configurable
 # Android only uses shared libraries which are loaded, all else uses typical executables
 # We do a test to check if a library is a shared library for Android
@@ -61,36 +63,30 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
 
     if(ANDROID)
 
-        string ( TOLOWER "${TARGET}" PACKAGE_PREFIX )
+        # Lowercase the target name ofr package name
+        string ( TOLOWER "${TARGET}" PACKAGE_SUFFIX )
 
         set ( DEPENDENCIES )
 
-        list ( APPEND LIBRARIES "${TARGET}" )
+        list ( APPEND DEPENDENCIES "$<TARGET_FILE:${TARGET}>" )
 
-        foreach(trg ${LIBRARIES})
-            set ( TMP_LIBNAME "$<TARGET_FILE:${trg}>" )
-            get_filename_component ( LIBNAME_EXT "${TMP_LIBNAME}" EXT )
-            if(LIBNAME_EXT MATCHES ".*.so" )
-                list ( APPEND DEPENDENCIES "${TMP_LIBNAME}" )
-                message ( "Android Packaging: Adding library ${TMP_LIBNAME} to ${TARGET}" )
-            endif()
-        endforeach()
+        list ( APPEND DEPENDENCIES "${ARGN}" )
 
         package_apk(
             "${TARGET}"
             "${TITLE}"
-            "org.coffee.${PACKAGE_PREFIX}"
+            "org.coffee.${PACKAGE_SUFFIX}"
             "1" "1.0"
             "19" "armeabi-v7a"
             "${DEPENDENCIES}" )
 
-        package_apk(
-            "${TARGET}"
-            "${TITLE}"
-            "org.coffee.${PACKAGE_PREFIX}"
-            "1" "1.0"
-            "21" "arm64-v8a"
-            "${DEPENDENCIES}" )
+#        package_apk(
+#            "${TARGET}"
+#            "${TITLE}"
+#            "org.coffee.${PACKAGE_SUFFIX}"
+#            "1" "1.0"
+#            "21" "arm64-v8a"
+#            "${DEPENDENCIES}" )
 
     endif()
 endmacro()

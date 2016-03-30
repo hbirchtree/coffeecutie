@@ -8,21 +8,24 @@ BUILD_DIR_64="$HOME/android-build-64"
 ARCH_32="armeabi-v7a"
 ARCH_64="arm64-v8a"
 
-# Stock SDL2 built for Android. Should have built it manually, but this is temporary.
+# SDL2 static library
 SDL2_INCLUDE_DIR="$HOME/libs/include"
-SDL2_LIBRARY_FILE_32="$HOME/libs/lib/$ARCH_32/libSDL2.so"
-SDL2_LIBRARY_FILE_64="$HOME/libs/lib/$ARCH_64/libSDL2.so"
+SDL2_LIBRARY_FILE_32="$HOME/libs/lib/$ARCH_32/libSDL2.a"
+SDL2_LIBRARY_FILE_64="$HOME/libs/lib/$ARCH_64/libSDL2.a"
 
 # OpenAL, typically sourced from https://github.com/AerialX/openal-soft-android
 AL_INCLUDE_DIR="$HOME/libs/include/"
 AL_LIBRARY_FILE_32="$HOME/libs/lib/$ARCH_32/libopenal.so"
 AL_LIBRARY_FILE_64="$HOME/libs/lib/$ARCH_64/libopenal.so"
 
-# We are using a custom toolchain made for Android, sourced from https://github.com/taka-no-me/android-cmake
+# We are using a custom toolchain made for Android,
+#  sourced from https://github.com/taka-no-me/android-cmake
 ANDROID_TOOLCHAIN_FILE="$PROJECT_DIR/cmake/Toolchains/android.toolchain.cmake"
-# This is the only reasonable STL implementation that works with C++11 features. The others are dead to me.
+# This is the only reasonable STL implementation that works with C++11 features.
+# The others are dead to me.
 ANDROID_STL_IMPL="gnustl_static"
-# API level 19 works with all Android version past and current. Levels 20+ don't because of kernel/ABI changes
+# API level 19 works with all Android version past and current.
+# Levels 20+ don't because of kernel/ABI changes
 ANDROID_TARGET_32="19"
 ANDROID_TARGET_64="21"
 

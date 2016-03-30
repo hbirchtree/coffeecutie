@@ -47,6 +47,8 @@ set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
 # Dependency_Libs : libraries which will be added to the APK
 #
 macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs )
+    message ( "APK: Generating ${Pkg_Name} (${Api_Arch})" )
+
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
     set ( ANDROID_ACTIVITY_NAME "${Pkg_Name}.CoffeeActivity" )
@@ -66,8 +68,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     # Where the primary class is found, also decides names of package
     set ( ANDROID_MAIN_PATH )
 
-    message ( "Android Packaging: Package generated: ${ANDROID_PACKAGE_NAME}" )
-    string ( REGEX REPLACE "." "/" ANDROID_MAIN_PATH "${ANDROID_PACKAGE_NAME}" )
+    string ( REGEX REPLACE "\\." "/" ANDROID_MAIN_PATH "${ANDROID_PACKAGE_NAME}" )
 
     # Create build directory
     add_custom_command ( TARGET ${Target_Name}
@@ -129,6 +130,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
         @ONLY
         )
+    message ( "Main activity: ${ANDROID_MAIN_PATH}/CoffeeActivity.java" )
     configure_file (
         "${ANDROID_PROJECT_INPUT}/Config/CoffeeActivity.java.in"
         "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/CoffeeActivity.java"

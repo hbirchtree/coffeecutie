@@ -73,8 +73,8 @@ if(ANDROID)
 endif()
 
 if(ANDROID)
-    # Add the Android logging library
-    list ( APPEND CORE_EXTRA_LIBRARIES log )
+    # Add the Android logging library, as well as android and GLESv*
+    list ( APPEND CORE_EXTRA_LIBRARIES log android GLESv1_CM GLESv2 GLESv3 )
 endif()
 
 if(WIN32)

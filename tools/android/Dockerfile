@@ -44,16 +44,6 @@ WORKDIR /home/coffee/lib
 RUN git clone https://github.com/apportable/openal-soft.git
 RUN git clone https://github.com/taka-no-me/android-cmake.git
 RUN hg clone http://hg.libsdl.org/SDL SDL2
-RUN git clone https://github.com/openssl/openssl.git
-
-# Specially for OpenSSL
-# Instructions taken from https://wiki.openssl.org/index.php/Android
-WORKDIR /home/coffee/lib/openssl
-
-ADD ssl-setenv-android.sh /home/coffee/lib/openssl/setenv-android.sh
-USER root
-RUN chmod +x setenv-android.sh
-USER coffee
 
 # Install some script-sauce to create our dev environment
 WORKDIR /home/coffee
@@ -74,6 +64,10 @@ ADD openal-build.sh /home/coffee/openal-build.sh
 ADD coffee-build.sh /home/coffee/coffee-build.sh
 ADD install-libs.sh /home/coffee/install-libs.sh
 ADD generate-toolchain.sh /home/coffee/generate-toolchain.sh
+
+# Manual modifications, likely to break!
+# Also, static linking of OpenAL is not advisible (licenses)
+ADD openal-soft-static-patch.patch /home/coffee/openal-soft-static-patch.patch
 
 USER root
 RUN chmod +x *.sh

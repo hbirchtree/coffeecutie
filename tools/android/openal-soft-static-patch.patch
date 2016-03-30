@@ -1,0 +1,39 @@
+diff --git a/jni/Android.mk b/jni/Android.mk
+index 5d673be..315c3bf 100644
+--- a/jni/Android.mk
++++ b/jni/Android.mk
+@@ -39,7 +39,7 @@ LOCAL_CFLAGS    +=  -I$(ROOTDIR)/$(OPENAL_DIR) \
+                     -O3 \
+                     -g \
+ 
+-LOCAL_LDLIBS    += -Wl,--build-id -Bsymbolic -shared
++LOCAL_LDLIBS    += -Wl,--build-id -Bsymbolic -static
+ 
+ # Default to Fixed-point math
+ ifeq ($(TARGET_ARCH_ABI),armeabi)
+@@ -84,22 +84,10 @@ LOCAL_SRC_FILES :=  \
+ # If building for versions after FROYO
+ ifeq ($(POST_FROYO), yes)
+   LOCAL_CFLAGS +=   -DPOST_FROYO -I$(ANDROID_NDK_ROOT)/platforms/android-9/arch-arm/usr/include/
+-  LOCAL_LDLIBS += -ldl -L$(ANDROID_NDK_ROOT)/platforms/android-9/arch-arm/usr/lib/
++  LOCAL_LDLIBS += -ldl -llog -L$(ANDROID_NDK_ROOT)/platforms/android-9/arch-arm/usr/lib/
++  LOCAL_EXPORT_LDLIBS := -llog -landroid
+   LOCAL_SRC_FILES += $(OPENAL_DIR)/Alc/opensles.c
+ endif
+ 
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-
+-include $(BUILD_SHARED_LIBRARY)
++include $(BUILD_STATIC_LIBRARY)
+ 
