@@ -29,16 +29,14 @@ struct PosixApi
     using FileMapping = FileFunDef::FileMapping;
 };
 
-struct PosixFileFun : CFILEFun_def<PosixApi::FileHandle>
+template<typename FileHandle>
+struct PosixFileFun_def : CFILEFun_def<FileHandle>
 {
     STATICINLINE void ErrnoCheck()
     {
         if(errno!=0)
             fprintf(stderr,"ERROR: %s\n",strerror(errno));
     }
-
-    using FileHandle = PosixApi::FileHandle;
-    using FileMapping = PosixApi::FileMapping;
 
     STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
     {
@@ -168,6 +166,12 @@ protected:
 
         return oflags;
     }
+};
+
+struct PosixFileFun : PosixFileFun_def<PosixApi::FileHandle>
+{
+    using FileHandle = PosixApi::FileHandle;
+    using FileMapping = PosixApi::FileMapping;
 };
 
 }

@@ -7,9 +7,9 @@
 FROM ubuntu:xenial
 MAINTAINER H. Birch Tree
 
-ARG ndkver="10e"
-ARG sdkver="24.4.1"
-ARG sdktarget="19"
+ENV ndkver="10e"
+ENV sdkver="24.4.1"
+ENV sdktarget="19"
 
 # Install dependencies for Android SDK/NDK as well as build tools
 RUN dpkg --add-architecture i386

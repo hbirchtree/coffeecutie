@@ -98,6 +98,8 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         # Problem: generator strings
         # Solution: regex
         string ( REGEX REPLACE "\\$<TARGET_FILE:([A-Za-z0-9_\-]+)>" "\\1" _LIBNAME_STRIPPED "${lib}" )
+	# Strip off lib* part, to avoid liblib* on Android side
+	string ( REGEX REPLACE "lib([A-Za-z0-9_\-]+)" "\\1" _LIBNAME_STRIPPED "${_LIBNAME_STRIPPED}" )
         # Some dependencies are file paths, too!
         get_filename_component ( _LIBNAME_STRIPPED ${_LIBNAME_STRIPPED} NAME_WE )
         message ( "Library name: ${_LIBNAME_STRIPPED}" )

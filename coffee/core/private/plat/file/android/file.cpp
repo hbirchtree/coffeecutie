@@ -25,6 +25,26 @@ CString AndroidFileFun::NativePath(cstring fn)
     return prefix + fn;
 }
 
+AndroidFileFun::FileHandle *AndroidFileFun::Open(cstring fn, ResourceAccess ac)
+{
+
+}
+
+bool AndroidFileFun::Close(FileHandle *fh)
+{
+
+}
+
+CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
+{
+
+}
+
+CByteData AndroidFileFun::Write(FileHandle *fh, const CByteData &d, bool)
+{
+
+}
+
 }
 }
 }

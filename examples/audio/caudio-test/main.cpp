@@ -30,7 +30,11 @@ public:
         //Read audio sample from file
         CResources::Resource rsc("caudio_test/healing.ogg");
         FileMap(rsc);
-        cDebug("Loading file: {0}",CStbAudio::LoadVorbis(&smp,&rsc));
+        if(!CStbAudio::LoadVorbis(&smp,&rsc))
+        {
+            cDebug("Failed to load audio file: {0}",rsc.resource());
+            return;
+        }
         FileUnmap(rsc);
 
         //Acquire an audio device, create a soundtrack
