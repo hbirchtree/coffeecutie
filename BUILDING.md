@@ -4,7 +4,7 @@ General dependencies
 
      a. Clang 3.5+ (proven and tested!)
      
-     b. GCC 4.9+
+     b. GCC 4.9+ (eh, as long as it supports C++11 well enough)
      
      c. Visual C++ 2015+ (because Microsoft is slow to catch up on standards)
 
@@ -78,6 +78,17 @@ The workflow is as such:
 
 
 **NB**: Note that Windows is not fully supported or tested at all times.
+
+On Android...
+=============
+
+Use the included Docker container in tools/android/. Map the project directory to /home/coffee/project.
+When inside, execute:
+
+        ./android-sdk-update.sh && ./install-libs.sh && ./coffee-build.sh
+
+After which some APK files should be found in directories below deploy/android/.
+Do note that customizing APK files is limited for now.
 
 On Mac OS X...
 ==============
