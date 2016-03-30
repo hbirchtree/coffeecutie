@@ -1,11 +1,7 @@
-set ( CoffeeTestHud_SRCS
-    main.cpp
-    )
-
-coffee_add_example ( CoffeeTestHud ${CoffeeTestHud_SRCS} )
-
-target_link_libraries ( CoffeeTestHud
+list ( APPEND LIBRARIES
     CoffeeCore
     CoffeeOpenGL
     CoffeeGLeam
-    )
+ )
+
+coffee_add_example ( CoffeeTestHud "HUD Rendering Example" main.cpp "${LIBRARIES}" )

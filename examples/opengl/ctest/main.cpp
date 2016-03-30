@@ -1,4 +1,4 @@
-#include <coffee/CCore>
+#include <coffee/core/CApplication>
 #include <cdrenderer.h>
 
 using namespace Coffee;

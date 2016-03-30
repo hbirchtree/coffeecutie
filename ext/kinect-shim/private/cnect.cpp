@@ -3,6 +3,7 @@
 #include <coffee/core/plat/memory/cmemory.h>
 #include <coffee/core/CDebug>
 #include <coffee/core/CThreading>
+#include <coffee/core/coffee_strings.h>
 
 #include <libfreenect2/libfreenect2.hpp>
 #include <libfreenect2/logger.h>

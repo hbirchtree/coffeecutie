@@ -1,4 +1,4 @@
-#include <coffee/CCore>
+#include <coffee/core/CApplication>
 #include <coffee/CGraphics>
 #include <coffee/graphics_apis/COpenGL>
 #include <coffee/CImage>

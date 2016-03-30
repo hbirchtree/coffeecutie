@@ -10,9 +10,12 @@ set ( NodeEditorTest_SRCS
     mainwindowtester.cpp
     )
 
-coffee_add_example ( NodeEditorTest "${NodeEditorTest_SRCS}" )
-
-target_link_libraries ( NodeEditorTest
+list ( APPEND LIBRARIES
     CoffeeCore
     CoffeeQtNodeEditor
+ )
+
+coffee_add_example ( NodeEditorTest "Node Editor Test" "${NodeEditorTest_SRCS}" "${LIBRARIES}" )
+
+target_link_libraries ( NodeEditorTest
     )
