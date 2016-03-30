@@ -147,15 +147,16 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         PRE_BUILD
         WORKING_DIRECTORY ${BUILD_OUTDIR}
         )
-    if(CMAKE_BUILD_TYPE MATCHES Debug)
+    if(CMAKE_BUILD_TYPE MATCHES Release)
         add_custom_command ( TARGET ${Target_Name}
-            COMMAND ${ANDROID_ANT_PROGRAM} debug
+            COMMAND ${ANDROID_ANT_PROGRAM} release
             POST_BUILD
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
+        # TODO: Add the rest of the actions here, like zipalign
     else()
         add_custom_command ( TARGET ${Target_Name}
-            COMMAND ${ANDROID_ANT_PROGRAM} release
+            COMMAND ${ANDROID_ANT_PROGRAM} debug
             POST_BUILD
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
