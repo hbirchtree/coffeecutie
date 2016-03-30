@@ -8,8 +8,6 @@
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 
-#include <SDL2/SDL_shape.h>
-
 using namespace Coffee;
 using namespace CDisplay;
 
