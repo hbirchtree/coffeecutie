@@ -29,6 +29,8 @@ struct CIEvent
         ControllerUpdate = 0xa,/*!< Controller connection or disconnection*/
         HapticDev    = 0xb,/*!< Sent when a new haptic device is connected or disconnected*/
         Haptic       = 0xc,/*!< Transmitted when user wants to create a rumble event*/
+
+        Touch        = 0xd,/*!< Touch event, motion and etc. */
     };
     uint32 ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
@@ -303,6 +305,29 @@ struct CISensorEvent
         } suvec;
         uint64      lvalue; /*!< Integer value for input*/
         bigscalar   dvalue; /*!< Floating-point value for input*/
+    };
+};
+
+struct CITouchEvent
+{
+    enum TouchType
+    {
+        TouchDown = 0x1,
+        TouchUp   = 0x2,
+        TouchMove = 0x3,
+    };
+    CPointF pos;
+    scalar pressure;
+    union{
+        struct{
+            uint16 finger;
+
+            uint8 pad_2;
+            uint8 pad_1:6;
+
+            uint8 type:2;
+        };
+        uint32 evdata;
     };
 };
 

@@ -14,7 +14,7 @@ namespace CSDL2Types{
 void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
 {
     switch(ev->type){
-
+    case SDL_APP_TERMINATING:
     case SDL_QUIT:{
         EventAtomic<CIEvent>(ctxt,CIEvent::QuitSign);
         break;
@@ -80,6 +80,24 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
         EventHandleInput(ctxt,ev->text);
         break;
     }
+
+    case SDL_FINGERDOWN:
+        break;
+    case SDL_FINGERUP:
+        break;
+    case SDL_FINGERMOTION:
+        break;
+
+    case SDL_APP_WILLENTERBACKGROUND:
+        break;
+    case SDL_APP_DIDENTERBACKGROUND:
+        break;
+
+    case SDL_APP_WILLENTERFOREGROUND:
+        break;
+    case SDL_APP_DIDENTERFOREGROUND:
+        break;
+
     default:
     {
         cDebug("Unhandled SDL event: type={0}",ev->type);
