@@ -4,6 +4,8 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/CDebug>
 
+#include "../plat/file/file_abstraction.h"
+
 #if defined(COFFEE_ANDROID_FILE_ASSET_API)
 #include <SDL2/SDL_system.h>
 #endif
@@ -21,16 +23,19 @@ void FileResourcePrefix(cstring prefix)
 CString DereferencePath(cstring suffix, ResourceAccess storageMask)
 {
     //We will NOT try to add any '/' in there.
-    if(!feval(storageMask&ResourceAccess::StorageSpecifier))
-        return _coffee_resource_prefix + suffix;
-    else{
+    if(feval(storageMask&ResourceAccess::StorageSpecifier))
+    {
         if(feval(storageMask&ResourceAccess::ConfigFile))
-            return Env::GetUserData(nullptr,nullptr);
+        {
+            CString cfgDir = Env::GetUserData(nullptr,nullptr);
+            return Env::ConcatPath(cfgDir.c_str(),suffix);
+        }
+#ifdef COFFEE_ANDROID
         else if(feval(storageMask&ResourceAccess::AssetFile))
-            return CString(":/")+suffix;
-        else
-            return suffix;
+            return CString(AssetApi::AssetPrefix)+suffix;
+#endif
     }
+    return _coffee_resource_prefix+suffix;
 }
 
 bool FileExists(const Resource &resc)
@@ -43,12 +48,8 @@ bool FileMap(Resource &resc, ResourceAccess acc)
     CString native_fn = FileFun::NativePath(resc.resource());
     resc.size = FileFun::Size(native_fn.c_str());
 
-    cDebug("File size: {0}",resc.size);
-
     if(resc.size == 0)
         return false;
-
-    cDebug("Size test passed");
 
     int err = 0;
     resc.m_mapping = FileFun::Map(
@@ -57,10 +58,9 @@ bool FileMap(Resource &resc, ResourceAccess acc)
                 0,resc.size,
                 &err);
 
-    cDebug("File mapping successful");
-
     if(!resc.m_mapping.ptr)
     {
+        /* Externalize error checkers */
 #ifndef COFFEE_WINDOWS
 		CString error = strerror(err);
 #else
@@ -79,8 +79,6 @@ bool FileMap(Resource &resc, ResourceAccess acc)
         resc.size = 0;
         return false;
     }
-
-    cDebug("Acquired file mapping");
 
     resc.data = resc.m_mapping.ptr;
     resc.flags = resc.flags|Resource::Mapped;

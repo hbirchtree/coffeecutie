@@ -42,7 +42,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     {
         /* Map a texture into memory */
-        CResources::Resource texfile("ctest_hud/particle_sprite.png");
+        CResources::Resource texfile("ctest_hud/particle_sprite.png",false,
+                                     ResourceAccess::StorageSpecifier
+                                     |ResourceAccess::AssetFile);
 
         cDebug("Opening texture: {0}",texfile.resource());
 

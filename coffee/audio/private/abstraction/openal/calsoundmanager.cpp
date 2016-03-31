@@ -5,6 +5,8 @@
 #include <coffee/audio/abstraction/openal/calsounddevice.h>
 #include <coffee/audio/abstraction/openal/calsoundformat.h>
 
+#include <coffee/core/CDebug>
+
 namespace Coffee{
 namespace CAudio{
 namespace COpenAL{
@@ -34,6 +36,12 @@ CALSoundManager::~CALSoundManager()
 
 CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
 {
+    if(odevices<1)
+    {
+        cWarning("Failed to find any audio output devices!");
+        cWarning("I shall now perform my next trick: RUNOUTTHEWINDOW()");
+        RUNOUTTHEWINDOW();
+    }
     return v_odevices[d_idx];
 }
 

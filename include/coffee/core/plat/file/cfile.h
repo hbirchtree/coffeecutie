@@ -51,19 +51,19 @@ struct CFILEFun_def : CommonFileFun
         /* Because of the way masks work, feval must be run on each individual flag */
         if(feval(ac&ResourceAccess::ReadWrite) &&
                 feval(ac&ResourceAccess::Append))
-            mode = "a+";
+            mode = "ab+";
         else if(feval(ac&ResourceAccess::WriteOnly) &&
                 feval(ac&ResourceAccess::Append))
-            mode = "a";
+            mode = "ab";
         else if(feval(ac&(ResourceAccess::ReadOnly)))
-            mode = "r";
+            mode = "rb";
 	else if(feval(ac&ResourceAccess::WriteOnly)&&
 		feval(ac&ResourceAccess::Discard))
-	    mode = "w+";
+            mode = "wb+";
         else if(feval(ac&(ResourceAccess::WriteOnly)))
-            mode = "w";
+            mode = "wb";
         else if(feval(ac&(ResourceAccess::ReadWrite)))
-            mode = "r+";
+            mode = "rb+";
 
         CString fn_native = NativePath(fn);
         fh->handle = fopen(fn_native.c_str(),mode);

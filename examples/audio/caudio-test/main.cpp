@@ -28,18 +28,35 @@ public:
     {
         AudioSample smp;
         //Read audio sample from file
-        CResources::Resource rsc("caudio_test/healing.ogg");
-        FileMap(rsc);
+        CResources::Resource rsc("caudio_test/healing.ogg",false,
+                                 ResourceAccess::StorageSpecifier
+                                 |ResourceAccess::AssetFile);
+        cDebug("Resource");
+        CResources::FileMap(rsc);
+        cDebug("Mapping file succeeded, size={0},ptr={1}",rsc.size,(uintptr_t)rsc.data);
         if(!CStbAudio::LoadVorbis(&smp,&rsc))
         {
             cDebug("Failed to load audio file: {0}",rsc.resource());
             return;
+        }else{
+            cDebug("Loaded audio file");
         }
-        FileUnmap(rsc);
+        CResources::FileUnmap(rsc);
+        cDebug("Unmapping file");
 
         //Acquire an audio device, create a soundtrack
         AL::Arbiter man;
+        cDebug("Created AL arbiter");
         AL::Device* dev = man.createDevice(man.defaultSoundDevice());
+        if(!dev)
+        {
+            cDebug("Failed to create audio device, descriptor={0}",
+                   man.defaultSoundDevice().stringIdentifier());
+            return;
+        }else{
+            cDebug("AL device={0}",
+                   man.defaultSoundDevice().stringIdentifier());
+        }
         AL::Mixer& mixer = dev->mixer();
         uint64 trackId1 = mixer.createTrack();
         uint64 trackId2 = mixer.createTrack();
@@ -61,8 +78,6 @@ public:
         //Create an audio sample
         AL::Sample& samp1 = dev->genSample(buf,fmt);
         samp1.setPts(0);
-        AL::Sample& samp2 = dev->genSample(buf,fmt);
-        samp2.setPts(0);
 
         //Free sample data from source
         CFree(smp.data);
@@ -70,7 +85,7 @@ public:
         m_track_1 = &track1;
         m_track_2 = &track2;
         m_sample_1 = &samp1;
-        m_sample_2 = &samp2;
+        m_sample_2 = &samp1;
 
         //Queue sample for playback
         track1.queueSample(samp1);
@@ -110,7 +125,19 @@ public:
                 break;
             }
         }
-        default:break;
+        case CIEvent::MouseButton:
+        {
+            const CIMouseButtonEvent& mev = *(const CIMouseButtonEvent*)data;
+            if(mev.mod&CIMouseButtonEvent::Pressed)
+            {
+                m_track_1->queueSample(*m_sample_1);
+            }else{
+                m_track_2->queueSample(*m_sample_2);
+            }
+            break;
+        }
+        default:
+            break;
         }
     }
 };

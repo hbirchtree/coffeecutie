@@ -1,5 +1,7 @@
 #include "sdl2eventhandlers.h"
 
+#include <coffee/core/CDebug>
+
 #include "sdl2_controller.h"
 #include "sdl2_keyboard.h"
 #include "sdl2_misc.h"
@@ -76,6 +78,11 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
     }
     case SDL_TEXTINPUT:{
         EventHandleInput(ctxt,ev->text);
+        break;
+    }
+    default:
+    {
+        cDebug("Unhandled SDL event: type={0}",ev->type);
         break;
     }
     }

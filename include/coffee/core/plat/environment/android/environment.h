@@ -11,6 +11,15 @@ namespace Android{
 struct AndroidEnv : EnvInterface
 {
     static CString GetUserData(cstring,cstring);
+
+    STATICINLINE CString GetPathSep()
+    {
+        return "/";
+    }
+    STATICINLINE CString ConcatPath(cstring v1, cstring v2)
+    {
+        return v1+GetPathSep()+v2;
+    }
 };
 
 }

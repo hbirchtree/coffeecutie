@@ -250,6 +250,9 @@ cstring *context_devices_input(uint32* numDevices)
 
     const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
 
+    if(!cdevices)
+        return nullptr;
+
     cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
 
     while(*cdevices)

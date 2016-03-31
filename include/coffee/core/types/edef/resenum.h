@@ -53,7 +53,7 @@ enum class ResourceAccess
     AccessMask  = ReadWrite|Append|Executable,
     CreateMask  = NewFile|Discard,
     CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
-    StorageMask = AssetFile|ConfigFile,
+    StorageMask = StorageSpecifier|AssetFile|ConfigFile,
 };
 C_FLAGS(ResourceAccess,uint32);
 
