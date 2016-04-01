@@ -144,5 +144,23 @@ FORCEDINLINE CString cStringReplace(
                                        arg.patch,arg.build));
 }
 
+template<typename T>
+FORCEDINLINE CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        _cbasic_point<T> v)
+{
+    return extArgReplace(fmt,index,cStringFormat("p({0},{1})",
+                                               v.x,v.y));
+}
+
+template<typename T>
+FORCEDINLINE CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        _cbasic_size_2d<T> v)
+{
+    return extArgReplace(fmt,index,cStringFormat("sz({0},{1})",
+                                               v.w,v.h));
+}
+
 }
 }

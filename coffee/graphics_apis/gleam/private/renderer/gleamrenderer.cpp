@@ -64,16 +64,26 @@ void CGLeamRenderer::bindingPostInit(const GLProperties& p)
     const static CGLVersion v45(4,5);
 
     if(p.version>=v45)
+    {
+        cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v45);
         status = CGL::CGL45::LoadBinding(this->glContext());
-    if(p.version>=v43)
+    }else if(p.version>=v43)
+    {
+        cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v43);
         status = CGL::CGL43::LoadBinding(this->glContext());
-    if(p.version>=v33)
+    } else if(p.version>=v33)
+    {
+        cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v33);
         status = CGL::CGL33::LoadBinding(this->glContext());
+    }
 #else
     const static CGLVersion v30es(3,0);
 
     if(p.version==v30es)
+    {
+        cDebug("Loading context version: GLES{0}",(_cbasic_version<uint8> const&)v30es);
         status = CGL::CGLES30::LoadBinding(this->glContext(),SDL_GL_GetProcAddress);
+    }
 #endif
 
     Profiler::Profile("Loading GL function pointers");

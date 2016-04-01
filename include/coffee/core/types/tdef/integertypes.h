@@ -17,6 +17,7 @@ using uint16 = uint16_t;
 using uint32 = uint32_t;
 using uint64 = uint64_t;
 
+using hscalar   = int16;
 using scalar    = float;  /*!< Low-precision float value*/
 using bigscalar = double; /*!< High-precision float value*/
 using lscalar   = long double; /* Whoops... How did this get here? */

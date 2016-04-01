@@ -52,7 +52,11 @@ int32 coffee_main(int32, cstring_w*)
     CResources::FileResourcePrefix("sample_data/");
 
     CDRenderer renderer;
+#ifdef COFFEE_GLEAM_DESKTOP
     renderer.init(GetDefaultVisual(3,3));
+#else
+    renderer.init(GetDefaultVisual(3,0));
+#endif
     renderer.run();
     renderer.cleanup();
 

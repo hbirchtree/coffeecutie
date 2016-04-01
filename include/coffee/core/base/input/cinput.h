@@ -16,21 +16,30 @@ constexpr szptr ci_max_text_edit_size = 32;
 struct CIEvent
 {
     enum EventType : uint8 {
-        NoneType     = 0x0,
-        MouseMove    = 0x1,/*!< Mouse motion events*/
-        Keyboard     = 0x2,/*!< Keyboard events*/
-        Controller   = 0x3,/*!< Controller input events*/
-        Scroll       = 0x4,/*!< Scroll events*/
-        Drop         = 0x5,/*!< Drag-and-drop event*/
-        TextInput    = 0x6,/*!< Text input events*/
-        MouseButton  = 0x7,/*!< Mouse button presses and releases*/
-        QuitSign     = 0x8,/*!< Notifies the program, can be ignored or handled*/
-        TextEdit     = 0x9,/*!< Text edit event, cursor position and stuff*/
-        ControllerUpdate = 0xa,/*!< Controller connection or disconnection*/
-        HapticDev    = 0xb,/*!< Sent when a new haptic device is connected or disconnected*/
-        Haptic       = 0xc,/*!< Transmitted when user wants to create a rumble event*/
+        NoneType,
 
-        Touch        = 0xd,/*!< Touch event, motion and etc. */
+        MouseMove,/*!< Mouse motion events*/
+        MouseButton,/*!< Mouse button presses and releases*/
+        Scroll,/*!< Scroll events*/
+
+        Keyboard,/*!< Keyboard events*/
+
+        Controller,/*!< Controller input events*/
+        ControllerUpdate,/*!< Controller connection or disconnection*/
+
+        Drop,/*!< Drag-and-drop event*/
+
+        TextInput,/*!< Text input events*/
+        TextEdit,/*!< Text edit event, cursor position and stuff*/
+        QuitSign,/*!< Notifies the program, can be ignored or handled*/
+
+        HapticDev,/*!< Sent when a new haptic device is connected or disconnected*/
+        Haptic,/*!< Transmitted when user wants to create a rumble event*/
+
+        TouchTap, /*!< Touch event, motion and etc. */
+        TouchMotion, /*!< Touch event, motion and etc. */
+        MultiTouch, /*!< Multi-touch events using several fingers*/
+        Gesture,/*!< Multi-touch events using several fingers*/
     };
     uint32 ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
@@ -85,9 +94,12 @@ struct CITextEvent
  */
 struct CIMouseMoveEvent
 {
-    CPointF pos; /*!< Absolute position*/
-    CPointF rel; /*!< Relative movement since last poll*/
-    uint8 btn = 0; /*!< Button held down while moved*/
+    CPointF origin; /*!< Absolute position*/
+    CPointF delta; /*!< Relative movement since last poll*/
+    union{
+        uint8 btn = 0; /*!< Button held down while moved*/
+        bool hover;
+    };
 
     uint8 pad1;
     uint16 pad2;
@@ -231,6 +243,7 @@ struct CIControllerState
             bool p_right:1;
         } e;
     } buttons;
+    uint16 pad;
 };
 
 /*!
@@ -308,26 +321,65 @@ struct CISensorEvent
     };
 };
 
-struct CITouchEvent
+struct CITouchTapEvent
 {
     enum TouchType
     {
-        TouchDown = 0x1,
-        TouchUp   = 0x2,
-        TouchMove = 0x3,
+        Pressed = 0x1,
     };
     CPointF pos;
-    scalar pressure;
     union{
         struct{
-            uint16 finger;
-
-            uint8 pad_2;
-            uint8 pad_1:6;
-
-            uint8 type:2;
+            uint16 pressure;
+            uint16 finger:15;
+            bool pressed:1;
         };
         uint32 evdata;
+    };
+};
+
+struct CITouchMotionEvent
+{
+    enum TouchType
+    {
+        Hover = 0x1,
+    };
+    CPointF origin;
+    CPointF delta;
+    union{
+        struct{
+            uint16 pressure;
+            uint16 finger:15;
+            bool hover:1;
+        };
+        uint32 evdata;
+    };
+};
+
+struct CIMTouchMotionEvent
+{
+    CPointF origin;
+    union
+    {
+        struct{
+            uint16 fingers;
+            int16 angle;
+            int16 dist;
+        };
+        uint64 evdata;
+    };
+};
+
+struct CIGestureEvent
+{
+    CPointF origin;
+    union{
+        struct{
+            uint32 gesture_id;
+            uint16 error;
+            uint16 fingers;
+        };
+        uint64 evdata;
     };
 };
 

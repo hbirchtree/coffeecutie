@@ -87,7 +87,7 @@ void SDL2Window::windowTerminate()
 
 CSize SDL2Window::windowSize() const
 {
-    CSize size;
+    CSize size = {};
     SDL_GetWindowSize(getSDL2Context()->window,&size.w,&size.h);
     return size;
 }

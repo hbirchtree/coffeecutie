@@ -12,6 +12,13 @@ class SDL2EventHandler :
         public HapticApplication,
         public virtual SDL2ContextUser
 {
+protected:
+    Vector<EventHandlerI> m_eventhandlers_input;
+    Vector<EventHandlerD> m_eventhandlers_windw;
+
+    void internalProcessEvent(CDEvent const& e, c_cptr d);
+    void internalProcessEvent(CIEvent const& e, c_cptr d);
+
     // InputApplication interface
 public:
     void inputPreInit();
@@ -40,18 +47,9 @@ public:
 
     void setTextArea(const CRect &area);
 
-    void eventHandle(const CIHapticEvent& haptic, c_cptr data)
-    {
-        this->hapticInsert(haptic,data);
-    }
-    void eventHandle(const CIEvent &event, c_cptr data)
-    {
-        this->eventHandleI(event,data);
-    }
-    void eventHandle(const CDEvent &event, c_cptr data)
-    {
-        this->eventHandleD(event,data);
-    }
+    void eventHandle(const CIHapticEvent& haptic, c_cptr data);
+    void eventHandle(const CIEvent &event, c_cptr data);
+    void eventHandle(const CDEvent &event, c_cptr data);
 
     // HapticApplication interface
 public:
@@ -62,6 +60,8 @@ public:
     void pollEvents();
     bigscalar contextTime() const;
     bool closeFlag() const;
+    void installEventHandler(EventHandlerI const& e);
+    void installEventHandler(EventHandlerD const& e);
 };
 
 }

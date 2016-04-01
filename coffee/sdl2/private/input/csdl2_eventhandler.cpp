@@ -67,8 +67,9 @@ void SDL2EventHandler::inputTerminate()
                       SDL_INIT_HAPTIC);
 }
 
-void SDL2EventHandler::eventHandleD(const CDEvent &, c_cptr)
+void SDL2EventHandler::eventHandleD(const CDEvent &e, c_cptr d)
 {
+    internalProcessEvent(e,d);
 }
 
 /*!
@@ -83,6 +84,7 @@ void SDL2EventHandler::eventHandleI(const CIEvent &event, c_cptr data)
                 (const CIControllerAtomicUpdateEvent*)data;
         _sdl2_controllers_handle(getSDL2Context(),this,jev);
     }
+    internalProcessEvent(event,data);
 }
 
 void SDL2EventHandler::hapticInsert(const CIHapticEvent &e, c_cptr data)
@@ -103,6 +105,21 @@ void SDL2EventHandler::setTextArea(const CRect &area)
     r.h = area.h;
 
     SDL_SetTextInputRect(&r);
+}
+
+void SDL2EventHandler::eventHandle(const CIHapticEvent &haptic, c_cptr data)
+{
+    this->hapticInsert(haptic,data);
+}
+
+void SDL2EventHandler::eventHandle(const CIEvent &event, c_cptr data)
+{
+    this->eventHandleI(event,data);
+}
+
+void SDL2EventHandler::eventHandle(const CDEvent &event, c_cptr data)
+{
+    this->eventHandleD(event,data);
 }
 
 void SDL2EventHandler::setTextInputMode(bool m)
@@ -205,6 +222,28 @@ bigscalar SDL2EventHandler::contextTime() const
 bool SDL2EventHandler::closeFlag() const
 {
     return getSDL2Context()->contextFlags&0x1;
+}
+
+void SDL2EventHandler::internalProcessEvent(const CDEvent &e, c_cptr d)
+{
+    for(EventHandlerD& eh : m_eventhandlers_windw)
+        eh.func(this,e,d);
+}
+
+void SDL2EventHandler::internalProcessEvent(const CIEvent &e, c_cptr d)
+{
+    for(EventHandlerI& eh : m_eventhandlers_input)
+        eh.func(this,e,d);
+}
+
+void SDL2EventHandler::installEventHandler(const EventApplication::EventHandlerI &e)
+{
+    m_eventhandlers_input.push_back(e);
+}
+
+void SDL2EventHandler::installEventHandler(const EventApplication::EventHandlerD &e)
+{
+    m_eventhandlers_windw.push_back(e);
 }
 
 }

@@ -1,0 +1,1 @@
+/home/havard/Code/coffeecutie/cmake/Platform/Android/Config/CoffeeActivity.java.in

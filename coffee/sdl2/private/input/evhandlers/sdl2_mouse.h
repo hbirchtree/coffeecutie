@@ -43,10 +43,10 @@ FORCEDINLINE void EventHandleMouseMove(
 
     CIMouseMoveEvent m;
 
-    m.pos.x = motion.x;
-    m.pos.y = motion.y;
-    m.rel.x = motion.xrel;
-    m.rel.y = motion.yrel;
+    m.origin.x = motion.x;
+    m.origin.y = motion.y;
+    m.delta.x = motion.xrel;
+    m.delta.y = motion.yrel;
     m.btn = InterpretMouseBtnMask(motion.state);
 
     EventPack(ctxt,&e,&m);

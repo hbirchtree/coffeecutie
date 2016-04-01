@@ -9,8 +9,17 @@ class EventApplication : public InputApplication
 {
 public:
 
-    using EventHandlerI = void(*)(EventApplication*,const CIEvent&,c_cptr);
-    using EventHandlerD = void(*)(EventApplication*,const CDEvent&,c_cptr);
+    template<typename EvType>
+    struct EventHandler
+    {
+        using FPtr = void(*)(void*,EvType const& e, c_cptr);
+
+        FPtr func;
+        cstring name;
+    };
+
+    using EventHandlerI = EventHandler<CIEvent>;
+    using EventHandlerD = EventHandler<CDEvent>;
 
     /*!
      * \brief Function driving the render loop

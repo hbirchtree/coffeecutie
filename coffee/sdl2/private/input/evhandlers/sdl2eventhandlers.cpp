@@ -6,6 +6,7 @@
 #include "sdl2_keyboard.h"
 #include "sdl2_misc.h"
 #include "sdl2_mouse.h"
+#include "sdl2_touch.h"
 #include "sdl2_window.h"
 
 namespace Coffee{
@@ -82,10 +83,20 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
     }
 
     case SDL_FINGERDOWN:
-        break;
     case SDL_FINGERUP:
+        EventHandleTap(ctxt,ev->tfinger);
         break;
     case SDL_FINGERMOTION:
+        EventHandleTMotion(ctxt,ev->tfinger);
+        break;
+
+    case SDL_MULTIGESTURE:
+        EventHandleMultiTouch(ctxt,ev->mgesture);
+        break;
+
+    case SDL_DOLLARGESTURE:
+        break;
+    case SDL_DOLLARRECORD:
         break;
 
     case SDL_APP_WILLENTERBACKGROUND:

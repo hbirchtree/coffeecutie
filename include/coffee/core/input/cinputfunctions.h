@@ -48,8 +48,8 @@ FORCEDINLINE void MouseRotate(CQuat& cqt,
                               scalar const& sens = 0.01)
 {
     cqt = normalize_quat(
-                  CQuat(1,sens*evsrc->rel.y,0,0)
-                * CQuat(1,0,sens*evsrc->rel.x,0)
+                  CQuat(1,sens*evsrc->delta.y,0,0)
+                * CQuat(1,0,sens*evsrc->delta.x,0)
                 * cqt);
 }
 
