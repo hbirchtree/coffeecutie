@@ -27,11 +27,12 @@ endif()
 # Build time strings, embedded within constexpr strings to keep track of when a build was made.
 # Because file timestamps are unreliable.
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
-add_definitions(-D__CBUILDTIME__="${CBUILDTIME}")
 
 set ( GIT_HASH "00000000" )
 
-add_definitions( -DCOFFEE_BUILD_STRING="01.00.00.${CBUILDTIME}-${GIT_HASH}" )
+set ( COFFEE_BUILD_STRING "01.00.00.${CBUILDTIME}-${GIT_HASH}" )
+
+add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 
 # The below will cause a complete rebuild of the library at every compilation, *from the bottom*.
 # Be wary of this. In most cases you would do this for relatively long-term builds

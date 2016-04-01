@@ -76,8 +76,8 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
             "${TARGET}"
             "${TITLE}"
             "org.coffee.${PACKAGE_SUFFIX}"
-            "1" "1.0"
-            "19" "armeabi-v7a"
+	    "1" "${COFFEE_BUILD_STRING}"
+	    "${ANDROID_NATIVE_API_LEVEL}" "${ANDROID_ABI}"
             "${DEPENDENCIES}" )
 
 #        package_apk(

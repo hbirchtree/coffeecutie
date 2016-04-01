@@ -1,12 +1,5 @@
 include ( AndroidToolkit )
 
-set ( ANDROID_DEBUG_MODE )
-if ( CMAKE_BUILD_TYPE MATCHES Debug )
-    set ( ANDROID_DEBUG_MODE "true" )
-else()
-    set ( ANDROID_DEBUG_MODE "false" )
-endif()
-
 set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/cmake/Platform/Android" )
 
 set ( ANDROID_ACTIVITY_NAME "org.coffee.app.CoffeeActivity" )
@@ -149,19 +142,33 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         PRE_BUILD
         WORKING_DIRECTORY ${BUILD_OUTDIR}
         )
-    if(CMAKE_BUILD_TYPE MATCHES Release)
+
+    set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/apk" )
+
+    add_custom_command ( TARGET ${Target_Name}
+	PRE_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${APK_OUTPUT_DIR}"
+	)
+
+    set ( ANDROID_APK_FILE_OUTPUT "${APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${CMAKE_BUILD_TYPE}.apk" )
+
+    set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_custom_command ( TARGET ${Target_Name}
-            COMMAND ${ANDROID_ANT_PROGRAM} release
+	    COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} release
             POST_BUILD
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
-        # TODO: Add the rest of the actions here, like zipalign
+	# TODO: Add the rest of the actions here, like zipalign and signing
     else()
         add_custom_command ( TARGET ${Target_Name}
-            COMMAND ${ANDROID_ANT_PROGRAM} debug
+	    COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} debug
             POST_BUILD
             WORKING_DIRECTORY ${BUILD_OUTDIR}
-            )
+	    )
     endif()
+
+
 
 endmacro()
