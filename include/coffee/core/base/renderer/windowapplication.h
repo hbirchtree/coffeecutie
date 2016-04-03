@@ -41,9 +41,9 @@ public:
      */
     virtual void popErrorMessage(Severity s, cstring title, cstring msg) = 0;
 protected:
-    virtual void windowPreInit(const CDProperties&) = 0;
-    virtual void windowInit(const CDProperties&) = 0;
-    virtual void windowPostInit(const CDProperties&) = 0;
+    virtual bool windowPreInit(const CDProperties&,CString*) = 0;
+    virtual bool windowInit(const CDProperties&,CString*) = 0;
+    virtual bool windowPostInit(const CDProperties&,CString*) = 0;
 
     virtual void windowTerminate() = 0;
 };

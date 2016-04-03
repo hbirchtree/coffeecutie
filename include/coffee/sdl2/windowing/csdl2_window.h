@@ -20,9 +20,9 @@ public:
     void popErrorMessage(Severity s, cstring title, cstring msg);
 
 protected:
-    void windowPreInit(const CDProperties &p);
-    void windowInit(const CDProperties& p);
-    void windowPostInit(const CDProperties& p);
+    bool windowPreInit(const CDProperties &p, CString *err);
+    bool windowInit(const CDProperties& p, CString *err);
+    bool windowPostInit(const CDProperties& p, CString *err);
     void windowTerminate();
 
 public:

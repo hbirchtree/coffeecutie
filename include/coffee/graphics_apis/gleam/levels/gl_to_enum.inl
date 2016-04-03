@@ -15,7 +15,7 @@ namespace Coffee{
 namespace CGL{
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         Severity s)
 {
     switch(s)
@@ -35,7 +35,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 #endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         DebugType t)
 {
     switch(t)
@@ -65,8 +65,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 #endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::Object t)
+inline CGenum to_enum(
+        Object t)
 {
     CGenum type;
     switch(t)
@@ -106,8 +106,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::Feature f, uint32 offset)
+inline CGenum to_enum(
+        Feature f, uint32 offset)
 {
     switch(f)
     {
@@ -116,7 +116,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 #ifdef COFFEE_GLEAM_DESKTOP
     case Feature::DebugOutput:
         return GL_DEBUG_OUTPUT;
-    case Feature::DebugOutputSynchronous:
+    case Feature::DebugOutputSync:
         return GL_DEBUG_OUTPUT_SYNCHRONOUS;
 #endif
     case Feature::DepthTest:
@@ -176,7 +176,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         return GL_TEXTURE_CUBE_MAP_SEAMLESS;
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
-    case Feature::ClipDistance:
+    case Feature::ClipDist:
         return GL_CLIP_DISTANCE0+offset;
 #endif
     default:
@@ -184,8 +184,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::Face f)
+inline CGenum to_enum(
+        Face f)
 {
     switch(f)
     {
@@ -199,8 +199,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::BufBit f)
+inline CGenum to_enum(
+        BufBit f)
 {
     switch(f)
     {
@@ -220,9 +220,9 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::Prim p,
-        CGL_Implementation::PrimCre c)
+inline CGenum to_enum(
+        Prim p,
+        PrimCre c)
 {
     switch(p)
     {
@@ -275,12 +275,14 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
         else
             return GL_PATCHES;
 #endif
+    default:
+        return GL_NONE;
     }
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
-        CGL_Implementation::DrawMode f)
+inline CGenum to_enum(
+        DrawMode f)
 {
     switch(f)
     {
@@ -294,7 +296,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         bool pack, PixelOperation f)
 {
     switch(f)
@@ -316,9 +318,9 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         PixelFormat f, PixelFlags e,
-        CGL_Implementation::CompFlags d)
+        CompFlags d)
 {
     switch(f)
     {
@@ -519,8 +521,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(
-        CGL_Implementation::ShaderStage f)
+inline CGenum to_enum1(
+        ShaderStage f)
 {
     switch(f)
     {
@@ -546,8 +548,8 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(
-        CGL_Implementation::ShaderStage f)
+inline CGenum to_enum2(
+        ShaderStage f)
 {
     CGenum o = 0;
 
@@ -570,7 +572,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         ValueHandling f)
 {
     switch(f)
@@ -594,7 +596,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         ValueComparison f)
 {
     switch(f)
@@ -618,7 +620,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
+inline CGenum to_enum(
         Operator f)
 {
     switch(f)
@@ -636,13 +638,13 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::Texture f)
+inline CGenum to_enum(Texture f)
 {
     return (CGenum)f;
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
+inline CGenum to_enum(LogicOp op)
 {
     if(feval(op&(LogicOp::COPY)))
         return GL_COPY;
@@ -683,12 +685,12 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(LogicOp op)
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::BufType f)
+inline CGenum to_enum(BufType f)
 {
     return (CGenum)f;
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess acc)
+inline CGenum to_enum1(ResourceAccess acc)
 {
     CGenum f = GL_NONE;
     if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Persistent)))
@@ -721,7 +723,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum1(ResourceAccess ac
     return f;
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess acc)
+inline CGenum to_enum2(ResourceAccess acc)
 {
     CGenum f = 0;
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -742,7 +744,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum2(ResourceAccess ac
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess acc)
+inline CGenum to_enum3(ResourceAccess acc)
 {
     switch(acc)
     {
@@ -758,7 +760,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum3(ResourceAccess ac
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
+inline CGenum to_enum(PixelComponents f)
 {
     switch(f)
     {
@@ -788,10 +790,12 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(PixelComponents f)
         return GL_DEPTH_STENCIL;
     case PixelComponents::Stencil:
         return GL_STENCIL;
+    default:
+        return GL_NONE;
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
+inline CGenum to_enum(TypeEnum f)
 {
     switch(f)
     {
@@ -821,7 +825,7 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(TypeEnum f)
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(BitFormat f)
+inline CGenum to_enum(BitFormat f)
 {
     switch(f)
     {
@@ -875,13 +879,13 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(BitFormat f)
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::QueryT f)
+inline CGenum to_enum(QueryT f)
 {
     return (CGenum)f;
 }
 #endif
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::FramebufferT f)
+inline CGenum to_enum(FramebufferT f)
 {
     switch(f)
     {
@@ -894,12 +898,12 @@ inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation
     }
 }
 
-inline CGL_Implementation::CGenum CGL_Implementation::to_enum(CGL_Implementation::AttribMode f)
+inline CGenum to_enum(AttribMode f)
 {
     return (CGenum)f;
 }
 
-inline CGL_Implementation::CGpixfmt CGL_Implementation::get_fmt(PixelFormat e, bool rev)
+inline CGpixfmt get_fmt(PixelFormat e, bool rev)
 {
     switch(e)
     {

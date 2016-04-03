@@ -130,7 +130,7 @@ struct CGLVersion : public _cbasic_version<uint8>
         this->minor = min;
         this->revision = 0;
     }
-	CString driver;
+    CString driver;
 };
 
 /*!

@@ -1,8 +1,6 @@
 #ifndef COFFEE_CORE_MEM_MACROS_H
 #define COFFEE_CORE_MEM_MACROS_H
 
-//#define COFFEE_USE_EXCEPTIONS
-
 #include "plat/platform_detect.h"
 
 #define C_DEFAULT_CONSTRUCTOR(ctype) ctype() = default

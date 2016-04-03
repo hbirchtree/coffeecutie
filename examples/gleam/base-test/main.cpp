@@ -30,11 +30,11 @@ void framecount_fun(uint32 t, c_cptr)
 
 using GL = CGL::CGL43;
 
-class CDRenderer : public Coffee::CDisplay::CGLeamRenderer
+class CDRenderer : public CSDL2Renderer
 {
 public:
     CDRenderer()
-        : CGLeamRenderer(0)
+        : CSDL2Renderer(0)
     {
     }
 
@@ -332,7 +332,7 @@ public:
         CGraphicsData::CTransform eyeTransform;
         eyeTransform.scale = CVec3(0.5);
 
-        GL::Enable(GL::Feature::ClipDistance,0);
+        GL::Enable(GL::Feature::ClipDist,0);
 
         if(dev)
         {
@@ -474,7 +474,13 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     }
     Profiler::PopContext();
 
-    renderer->init(props);
+    CString err;
+
+    if(!renderer->init(props,&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
     Profiler::Profile("Initialize renderer");
 
     WM::SetAlwaysTop(renderer->window(),true);

@@ -1,24 +1,24 @@
 #ifndef COFFEE_GRAPHICS_APIS_GLEAM_RENDERER_RENDERER_H
 #define COFFEE_GRAPHICS_APIS_GLEAM_RENDERER_RENDERER_H
 
-#include <coffee/sdl2/csdl2renderer.h>
+#include <coffee/core/base/renderer/glloader.h>
+#include <coffee/core/base/renderer/glapplication.h>
 
 namespace Coffee{
 namespace CDisplay{
 
-class CGLeamRenderer : public CSDL2Renderer
+class GLeamRenderer : public GLLoader
 {
 public:
-    virtual ~CGLeamRenderer();
+    GLeamRenderer(GLApplication* app);
+    virtual ~GLeamRenderer();
 
     virtual void bindingCallback(const void * report) const;
-    using CSDL2Renderer::eventHandle;
 protected:
-    CGLeamRenderer(CObject*parent);
 
-    void bindingPreInit(const GLProperties&);
-    void bindingInit(const GLProperties&);
-    void bindingPostInit(const GLProperties &p);
+    bool bindingPreInit(const GLProperties&,CString*);
+    bool bindingInit(const GLProperties&,CString*);
+    bool bindingPostInit(const GLProperties &p,CString*);
 
     void bindingTerminate();
 

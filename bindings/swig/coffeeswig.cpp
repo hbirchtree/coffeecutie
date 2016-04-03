@@ -2,6 +2,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/CSDL2>
 #include <coffee/graphics_apis/CGLeam>
+#include <coffee/sdl2/CSDL2GLRenderer>
 
 namespace Coffee{
 
@@ -16,11 +17,11 @@ void Terminate()
     CoffeeTerminate(false);
 }
 
-class CGLWindow : public CDisplay::CGLeamRenderer
+class CGLWindow : public CDisplay::CSDL2Renderer
 {
 public:
     CGLWindow(CObject* p):
-        CGLeamRenderer(p)
+        CSDL2Renderer(p)
     {
     }
     void run()
@@ -41,8 +42,12 @@ CGLWindow* CreateWindow(int w, int h,
     if(debug)
         o.gl.flags = o.gl.flags|CDisplay::GLProperties::GLDebug;
 
+    CString err;
+
     CGLWindow* win = new CGLWindow(p);
-    win->init(o);
+    if(!win->init(o,&err))
+        cDebug("Window creation error: {0}",err);
+
     return win;
 }
 void DestroyWindow(CGLWindow* p)

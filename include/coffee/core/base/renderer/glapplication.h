@@ -9,31 +9,10 @@ namespace CDisplay{
 class GLApplication
 {
 public:
-    virtual void contextPreInit(const GLProperties& props) = 0;
-    virtual void contextInit(const GLProperties& props) = 0;
-    virtual void contextPostInit(const GLProperties& props) = 0;
+    virtual bool contextPreInit(const GLProperties& props,CString*) = 0;
+    virtual bool contextInit(const GLProperties& props,CString*) = 0;
+    virtual bool contextPostInit(const GLProperties& props,CString*) = 0;
     virtual void contextTerminate() = 0;
-
-    /*!
-     * \brief Callback for GL errors and messages, implemented by the user.
-     * \param d A pointer to the system's OpenGL report format, implementation-specific.
-     */
-    virtual void bindingCallback(const void*) const = 0;
-    /*!
-     * \brief Function called to initialize
-     *  binding library like glbinding, called before context is created
-     */
-    virtual void bindingPreInit(const GLProperties&) = 0;
-    virtual void bindingInit(const GLProperties&) = 0;
-    /*!
-     * \brief Function called to initialize binding
-     *  library like glbinding, called after context is created
-     */
-    virtual void bindingPostInit(const GLProperties&) = 0;
-    /*!
-     * \brief Function called to terminate binding library like glbinding
-     */
-    virtual void bindingTerminate() = 0;
 
     /*!
      * \brief Function used for swapping buffers in render loop

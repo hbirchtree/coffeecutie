@@ -9,7 +9,8 @@ namespace CDisplay{
 using namespace Coffee::CSDL2Types;
 
 CSDL2Renderer::CSDL2Renderer(CObject *parent) :
-    CDRendererBase(parent)
+    CDRendererBase(parent),
+    GLeamRenderer(this)
 {
 }
 
@@ -18,35 +19,39 @@ CSDL2Renderer::~CSDL2Renderer()
     cleanup();
 }
 
-void CSDL2Renderer::init(const CDProperties &props)
+bool CSDL2Renderer::init(const CDProperties &props,CString*)
 {
-    Profiler::PushContext("SDL2 renderer");
-
     m_properties = props;
 
-    windowPreInit(initialProperties());
-    contextPreInit(initialProperties().gl);
-    bindingPreInit(initialProperties().gl);
-    inputPreInit();
+    CString err;
 
-    windowInit(initialProperties());
-    contextInit(initialProperties().gl);
-    bindingInit(initialProperties().gl);
-    inputInit();
+    if(!(windowPreInit(initialProperties(),&err) &&
+         contextPreInit(initialProperties().gl,&err) &&
+         bindingPreInit(initialProperties().gl,&err) &&
+         inputPreInit(&err)))
+        return false;
+
+    if(!(windowInit(initialProperties(),&err) &&
+         contextInit(initialProperties().gl,&err) &&
+         bindingInit(initialProperties().gl,&err) &&
+         inputInit(&err)))
+        return false;
 
     /* Run binding post-init, fetches GL extensions and etc. */
-    windowPostInit(initialProperties());
-    contextPostInit(initialProperties().gl);
-    bindingPostInit(initialProperties().gl);
-    inputPostInit();
+    if(!(windowPostInit(initialProperties(),&err) &&
+         contextPostInit(initialProperties().gl,&err) &&
+         bindingPostInit(initialProperties().gl,&err) &&
+         inputPostInit(&err)))
+        return false;
 
-    Profiler::PopContext();
+    return true;
 }
 
 void CSDL2Renderer::cleanup()
 {
     if(getSDL2Context()){
         inputTerminate();
+        bindingTerminate();
         contextTerminate();
         windowTerminate();
     }else{

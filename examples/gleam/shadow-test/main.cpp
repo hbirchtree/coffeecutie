@@ -1,3 +1,4 @@
+#include <coffee/sdl2/CSDL2GLRenderer>
 #include <coffee/graphics_apis/CGLeam>
 #include <coffee/core/CApplication>
 #include <coffee/core/CInput>
@@ -12,11 +13,11 @@ using GL = CGL::CGL43;
 using GL = CGL::CGLES30;
 #endif
 
-class CDRenderer : public Coffee::CDisplay::CGLeamRenderer
+class CDRenderer : public CSDL2Renderer
 {
 public:
-    CDRenderer()
-        : CGLeamRenderer(0)
+    CDRenderer():
+        CSDL2Renderer(0)
     {
     }
 
@@ -51,11 +52,20 @@ int32 coffee_main(int32, cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
 
+    CString err;
     CDRenderer renderer;
 #ifdef COFFEE_GLEAM_DESKTOP
-    renderer.init(GetDefaultVisual(3,3));
+    if(!renderer.init(GetDefaultVisual(3,3),&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
 #else
-    renderer.init(GetDefaultVisual(3,0));
+    if(!renderer.init(GetDefaultVisual(3,0),&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
 #endif
     renderer.run();
     renderer.cleanup();

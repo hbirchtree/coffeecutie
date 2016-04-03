@@ -29,23 +29,29 @@ struct SDL2SpriteRenderer::SDLSpriteContext
     uint64 texture_counter;
 };
 
-void SDL2SpriteRenderer::spritesPreInit()
+bool SDL2SpriteRenderer::spritesPreInit(CString* err)
 {
     if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        if(err)
+            *err = cStringFormat(CFStrings::SDL2_Library_FailureInit,
+                                 SDL_GetError());
     }
     Profiler::Profile("Initialize sprite rendering");
+    return true;
 }
 
-void SDL2SpriteRenderer::spritesInit()
+bool SDL2SpriteRenderer::spritesInit(CString*)
 {
     m_context = new SDLSpriteContext;
+    return true;
 }
 
-void SDL2SpriteRenderer::spritesPostInit()
+bool SDL2SpriteRenderer::spritesPostInit(CString*)
 {
+    return true;
 }
 
 void SDL2SpriteRenderer::spritesTerminate()

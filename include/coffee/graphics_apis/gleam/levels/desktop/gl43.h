@@ -28,20 +28,6 @@ struct CGL43 : CGL33
         return status;
     }
 
-    enum class PatchProperty
-    {
-        Vertices = GL_PATCH_VERTICES,
-        DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,
-        DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,
-    };
-
-    using CGL::CGL33::to_enum;
-
-    STATICINLINE CGenum to_enum(PatchProperty f)
-    {
-        return (CGenum)f;
-    }
-
     //TODO: Add more extensions to check for, and check for them in functions
 
     STATICINLINE bool TexStorageSupported()

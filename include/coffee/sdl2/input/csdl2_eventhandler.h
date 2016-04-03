@@ -21,9 +21,9 @@ protected:
 
     // InputApplication interface
 public:
-    void inputPreInit();
-    void inputInit();
-    void inputPostInit();
+    bool inputPreInit(CString*);
+    bool inputInit(CString*);
+    bool inputPostInit(CString*);
     void inputTerminate();
 
     virtual void eventHandleD(const CDEvent &, c_cptr);

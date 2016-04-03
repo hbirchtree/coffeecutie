@@ -49,14 +49,15 @@ CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
     return CGL::CGL_ScopedContext(getSDL2Context()->context);
 }
 
-void SDL2GLRenderer::contextPreInit(const GLProperties& props)
+bool SDL2GLRenderer::contextPreInit(const GLProperties& props,CString*)
 {
     m_window_flags |= SDL_WINDOW_OPENGL;
     CSDL2Types::SetContextProperties(props);
     Profiler::Profile("Set context properties");
+    return true;
 }
 
-void SDL2GLRenderer::contextInit(const GLProperties& props)
+bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
 {
     /* Acquire the OpenGL context from SDL2 */
     getSDL2Context()->context = new CGL_SDL_GL_Context(getSDL2Context()->window);
@@ -65,28 +66,31 @@ void SDL2GLRenderer::contextInit(const GLProperties& props)
     /* Make the GL context current to this thread */
     if(!glContext()->acquireContext())
     {
-        CString err = cStringFormat("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
-        cFatal("{0}",err.c_str());
+        CString m_err = cStringFormat("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
+        if(err)
+            *err = m_err;
+        return false;
     }
     Profiler::Profile("Acquire context currency");
+    return true;
 }
 
-void SDL2GLRenderer::contextPostInit(const GLProperties& props)
+bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
 {
     /* Enable VSync if requested */
     if(props.flags&GLProperties::GLVSync)
         setSwapInterval(1);
     else
         setSwapInterval(0);
+    return true;
 }
 
 void SDL2GLRenderer::contextTerminate()
 {
+    if(!glContext())
+        return;
     /* Acquire GL context first, ensures that destructor won't fail on different thread */
     glContext()->acquireContext();
-
-    /* Run binding termination if needed, should clean up any allocated data */
-    bindingTerminate();
 
     /* Delete GL context object */
     delete glContext();

@@ -16,16 +16,17 @@ public:
     {
     }
 
-    void init(CDProperties const& props)
+    bool init(CDProperties const& props,CString* err)
     {
-        hostPreInit(props);
-        spritesPreInit();
+        return
+        hostPreInit(props,err) &&
+        spritesPreInit(err) &&
 
-        hostInit(props);
-        spritesInit();
+        hostInit(props,err) &&
+        spritesInit(err) &&
 
-        hostPostInit(props);
-        spritesPostInit();
+        hostPostInit(props,err) &&
+        spritesPostInit(err);
     }
     void cleanup()
     {

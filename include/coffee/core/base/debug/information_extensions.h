@@ -2,6 +2,8 @@
 
 #include "extensionresolvers.h"
 
+#include "../types/cdisplay.h"
+
 namespace Coffee{
 namespace DebugFun{
 
@@ -142,6 +144,14 @@ FORCEDINLINE CString cStringReplace(
                                        arg.name,
                                        arg.product,arg.major,arg.minor,
                                        arg.patch,arg.build));
+}
+
+FORCEDINLINE CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        CDisplay::CGLVersion const& arg)
+{
+    return extArgReplace(fmt,index,cStringFormat("major={0}, minor={1}, extra={2}",
+                                                 arg.major,arg.minor,arg.driver));
 }
 
 template<typename T>

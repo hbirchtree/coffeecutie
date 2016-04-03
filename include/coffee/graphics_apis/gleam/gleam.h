@@ -5,3 +5,5 @@
 #else
 #include "levels/es/gles30.h"
 #endif
+
+#include "levels/gl_shared_util.h"

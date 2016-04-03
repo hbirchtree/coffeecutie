@@ -31,6 +31,7 @@ struct ProcessPropertyDef
      */
     static PID Pid()
     {
+        return 0;
     }
     /*!
      * \brief Return process' resident memory usage, as in used memory within physical storage

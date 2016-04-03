@@ -24,20 +24,20 @@ public:
     {
     }
 
-    void init()
+    bool init(CString* err)
     {
-        spritesPreInit();
-        spritesInit();
-        spritesPostInit();
+        return spritesPreInit(err) &&
+                spritesInit(err) &&
+                spritesPostInit(err);
     }
     void cleanup()
     {
         spritesTerminate();
     }
 
-    void spritesPreInit();
-    void spritesInit();
-    void spritesPostInit();
+    bool spritesPreInit(CString*);
+    bool spritesInit(CString*);
+    bool spritesPostInit(CString*);
     void spritesTerminate();
 
     void setClearColor(Renderer const& r, CRGBA const& color);

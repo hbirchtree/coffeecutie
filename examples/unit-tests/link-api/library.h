@@ -4,6 +4,10 @@
 class TestClass
 {
 public:
+    virtual ~TestClass()
+    {
+    }
+
     virtual void printHello() = 0;
 };
 

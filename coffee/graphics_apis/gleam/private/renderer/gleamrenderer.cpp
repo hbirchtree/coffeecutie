@@ -9,7 +9,7 @@
 #include <coffee/graphics_apis/gleam/levels/es/gles30.h>
 #endif
 
-#ifdef COFFEE_ANDROID
+#ifndef COFFEE_GLEAM_DESKTOP
 #include <SDL2/SDL_video.h>
 #endif
 
@@ -20,11 +20,20 @@ namespace CDisplay{
 
 using GL = CGL::CGL_Implementation;
 
+GLeamRenderer::GLeamRenderer(GLApplication *app):
+    GLLoader(app)
+{
+}
+
+GLeamRenderer::~GLeamRenderer()
+{
+}
+
 void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GLchar* msg,
                    const void* param)
 {
-    const CGLeamRenderer* renderer = (const CGLeamRenderer*)param;
-    CGL::CGL_Implementation::CGDbgMsg cmsg;
+    const GLeamRenderer* renderer = (const GLeamRenderer*)param;
+    CGL::CGDbgMsg cmsg;
 #ifdef COFFEE_GLEAM_DESKTOP
     cmsg.sev = gl_convertsev(sev);
     cmsg.type = gl_converttype(type);
@@ -35,24 +44,30 @@ void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GL
     renderer->bindingCallback(&cmsg);
 }
 
-CGLeamRenderer::CGLeamRenderer(CObject* parent):
-    CSDL2Renderer(parent)
+void GLeamRenderer::bindingCallback(const void *report) const
 {
+    const CGL::CGDbgMsg* msg =
+            (const CGL::CGDbgMsg*)report;
+    cBasicPrint("GL:{0}:{1}:{2}:{3}: {4}",
+                msg->comp,msg->sev,msg->type,
+                msg->id,msg->msg.c_str());
 }
 
-void CGLeamRenderer::bindingPreInit(const GLProperties&)
+bool GLeamRenderer::bindingPreInit(const GLProperties&,CString*)
 {
+    return true;
 }
 
-void CGLeamRenderer::bindingInit(const GLProperties&)
+bool GLeamRenderer::bindingInit(const GLProperties&,CString*)
 {
+    return true;
 }
 
-void CGLeamRenderer::bindingPostInit(const GLProperties& p)
+bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 {
     Profiler::PushContext("GLeam");
 
-    this->glContext()->acquireContext();
+    m_app->glContext()->acquireContext();
 
     Profiler::Profile("Context acquisition");
 
@@ -66,15 +81,15 @@ void CGLeamRenderer::bindingPostInit(const GLProperties& p)
     if(p.version>=v45)
     {
         cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v45);
-        status = CGL::CGL45::LoadBinding(this->glContext());
+        status = CGL::CGL45::LoadBinding(m_app->glContext());
     }else if(p.version>=v43)
     {
         cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v43);
-        status = CGL::CGL43::LoadBinding(this->glContext());
+        status = CGL::CGL43::LoadBinding(m_app->glContext());
     } else if(p.version>=v33)
     {
         cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v33);
-        status = CGL::CGL33::LoadBinding(this->glContext());
+        status = CGL::CGL33::LoadBinding(m_app->glContext());
     }
 #else
     const static CGLVersion v30es(3,0);
@@ -82,7 +97,7 @@ void CGLeamRenderer::bindingPostInit(const GLProperties& p)
     if(p.version==v30es)
     {
         cDebug("Loading context version: GLES{0}",(_cbasic_version<uint8> const&)v30es);
-        status = CGL::CGLES30::LoadBinding(this->glContext(),SDL_GL_GetProcAddress);
+        status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
     }
 #endif
 
@@ -92,12 +107,15 @@ void CGLeamRenderer::bindingPostInit(const GLProperties& p)
     {
         cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
              CFStrings::Graphics_GLeam_Renderer_FailLoad);
-        this->popErrorMessage(Severity::Fatal,
-                              CFStrings::Graphics_GLeam_Renderer_Name,
-                              CFStrings::Graphics_GLeam_Renderer_FailLoad);
         /*Context or graphics card on fire? Just get out!*/
-        throw std::runtime_error(CFStrings::Graphics_GLeam_Renderer_Name);
+        if(err)
+            *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;
+        return false;
     }
+
+    cDebug("GL context version: {0}",GL::Debug::ContextVersion());
+    cDebug("GLSL version: {0}",GL::Debug::ShaderLanguageVersion());
+
 #ifdef COFFEE_GLEAM_DESKTOP
     if(GL::DebuggingSupported())
     {
@@ -109,25 +127,11 @@ void CGLeamRenderer::bindingPostInit(const GLProperties& p)
 #endif
 
     Profiler::Profile("Debug setup");
-
-    Profiler::PopContext();
+    return true;
 }
 
-void CGLeamRenderer::bindingTerminate()
+void GLeamRenderer::bindingTerminate()
 {
-}
-
-CGLeamRenderer::~CGLeamRenderer()
-{
-}
-
-void CGLeamRenderer::bindingCallback(const void *report) const
-{
-    const CGL::CGL_Implementation::CGDbgMsg* msg =
-            (const CGL::CGL_Implementation::CGDbgMsg*)report;
-    cBasicPrint("GL:{0}:{1}:{2}:{3}: {4}",
-                msg->comp,msg->sev,msg->type,
-                msg->id,msg->msg.c_str());
 }
 
 }

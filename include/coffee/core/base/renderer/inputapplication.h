@@ -13,9 +13,9 @@ namespace CDisplay{
 class InputApplication
 {
 public:
-    virtual void inputPreInit() = 0;
-    virtual void inputInit() = 0;
-    virtual void inputPostInit() = 0;
+    virtual bool inputPreInit(CString*) = 0;
+    virtual bool inputInit(CString*) = 0;
+    virtual bool inputPostInit(CString*) = 0;
     virtual void inputTerminate() = 0;
 
     /*!

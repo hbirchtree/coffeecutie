@@ -6,10 +6,6 @@
 
 #include "../plat/file/file_abstraction.h"
 
-#if defined(COFFEE_ANDROID_FILE_ASSET_API)
-#include <SDL2/SDL_system.h>
-#endif
-
 namespace Coffee{
 namespace CResources{
 

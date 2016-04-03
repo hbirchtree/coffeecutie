@@ -23,9 +23,9 @@ public:
     CGL::CGL_Context *glContext();
     CGL::CGL_ScopedContext scopedContext();
 
-    void contextPreInit(const GLProperties& props);
-    void contextInit(const GLProperties &props);
-    void contextPostInit(const GLProperties& props);
+    bool contextPreInit(const GLProperties& props,CString*);
+    bool contextInit(const GLProperties &, CString*err);
+    bool contextPostInit(const GLProperties& props,CString*);
     void contextTerminate();
 };
 

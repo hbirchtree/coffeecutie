@@ -13,7 +13,7 @@ public:
      *  should not be overridden by the user.
      * \param props Hints for creating the context
      */
-    virtual void init(const CDProperties& props) = 0;
+    virtual bool init(const CDProperties& props,CString*) = 0;
     /*!
      * \brief Function for running cleanup, should avoid memory leaks
      */

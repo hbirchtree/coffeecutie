@@ -1,9 +1,5 @@
 find_package(OpenAL REQUIRED)
 
-if(NOT DEFINED OPENAL_INCLUDE_DIR OR NOT DEFINED OPENAL_LIBRARY)
-    message(FATAL_ERROR "Failed to locate OpenAL")
-endif()
-
 set ( CoffeeAudio_SRCS
     # This is the stb_vorbis decoder. Say hello, stb
     ${COFFEE_EXT_LIBRARY_DIR}/stb/stb_vorbis.c

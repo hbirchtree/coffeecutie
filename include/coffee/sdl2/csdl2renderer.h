@@ -6,6 +6,7 @@
 #include "graphics/csdl2_gl_renderer.h"
 #include "windowing/csdl2_window.h"
 #include "input/csdl2_eventhandler.h"
+#include <coffee/graphics_apis/gleam/renderer/gleamrenderer.h>
 
 namespace Coffee{
 namespace CSDL2Types{
@@ -17,12 +18,13 @@ class CSDL2Renderer :
         public CDRendererBase,
         public SDL2Window,
         public SDL2GLRenderer,
-        public SDL2EventHandler
+        public SDL2EventHandler,
+        public GLeamRenderer
 {
 public:
     virtual ~CSDL2Renderer();
 
-    void init(const CDProperties &);
+    bool init(const CDProperties &,CString*);
     void cleanup();
 
 protected:

@@ -27,9 +27,9 @@ public:
     };
 
     /* Initialization */
-    virtual void spritesPreInit() = 0;
-    virtual void spritesInit() = 0;
-    virtual void spritesPostInit() = 0;
+    virtual bool spritesPreInit(CString*) = 0;
+    virtual bool spritesInit(CString*) = 0;
+    virtual bool spritesPostInit(CString*) = 0;
 
     virtual void spritesTerminate() = 0;
 

@@ -2,14 +2,16 @@ include ( AndroidToolkit )
 
 set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/cmake/Platform/Android" )
 
-set ( ANDROID_ACTIVITY_NAME "org.coffee.app.CoffeeActivity" )
-
-set ( ANDROID_API_MIN_TARGET "19" )
-set ( ANDROID_API_TARGET "19" )
+set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/apk" )
 
 # For valid options, see:
 # http://developer.android.com/guide/topics/manifest/activity-element.html
 set ( ANDROID_ORIENTATION_MODE "sensorLandscape" )
+
+set ( ANDROID_ACTIVITY_NAME )
+
+set ( ANDROID_API_MIN_TARGET )
+set ( ANDROID_API_TARGET )
 
 # Name of package in package manager
 set ( ANDROID_PACKAGE_NAME )
@@ -44,7 +46,9 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
-    set ( ANDROID_ACTIVITY_NAME "${Pkg_Name}.CoffeeActivity" )
+    set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
+
+    set ( ANDROID_ACTIVITY_NAME "${Pkg_Name}.${ANDROID_STARTUP_ACTIVITY}" )
 
     set ( ANDROID_APPLICATION_NAME ${App_Name} )
 
@@ -53,6 +57,16 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 
     set ( ANDROID_API_TARGET ${Api_Target} )
     set ( ANDROID_API_MIN_TARGET ${Api_Target} )
+
+    set ( RELEASE_PREFIX )
+
+    if( CMAKE_BUILD_TYPE STREQUAL "Release" )
+        set ( RELEASE_PREFIX "rel" )
+    else()
+        set ( RELEASE_PREFIX "dbg" )
+    endif()
+
+    set ( ANDROID_APK_FILE_OUTPUT "${APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${RELEASE_PREFIX}.apk" )
 
     set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${Target_Name} )
 
@@ -83,7 +97,6 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     # Install dependency libraries
     set ( ANDROID_DEPENDENCIES_STRING )
     foreach(lib ${Dependency_Libs})
-        message ( "Copying ${lib} to ${ANDROID_LIB_OUTPUT_DIRECTORY}" )
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${ANDROID_LIB_OUTPUT_DIRECTORY}
@@ -95,7 +108,6 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 	string ( REGEX REPLACE "lib([A-Za-z0-9_\-]+)" "\\1" _LIBNAME_STRIPPED "${_LIBNAME_STRIPPED}" )
         # Some dependencies are file paths, too!
         get_filename_component ( _LIBNAME_STRIPPED ${_LIBNAME_STRIPPED} NAME_WE )
-        message ( "Library name: ${_LIBNAME_STRIPPED}" )
         string ( CONCAT
             ANDROID_DEPENDENCIES_STRING
             "${ANDROID_DEPENDENCIES_STRING}"
@@ -129,10 +141,9 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
         @ONLY
         )
-    message ( "Main activity: ${ANDROID_MAIN_PATH}/CoffeeActivity.java" )
     configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/CoffeeActivity.java.in"
-        "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/CoffeeActivity.java"
+        "${ANDROID_PROJECT_INPUT}/Config/${ANDROID_STARTUP_ACTIVITY}.java.in"
+        "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/${ANDROID_STARTUP_ACTIVITY}.java"
         @ONLY
         )
 
@@ -143,14 +154,10 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         WORKING_DIRECTORY ${BUILD_OUTDIR}
         )
 
-    set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/apk" )
-
     add_custom_command ( TARGET ${Target_Name}
 	PRE_BUILD
 	COMMAND ${CMAKE_COMMAND} -E make_directory "${APK_OUTPUT_DIR}"
-	)
-
-    set ( ANDROID_APK_FILE_OUTPUT "${APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${CMAKE_BUILD_TYPE}.apk" )
+        )
 
     set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
 

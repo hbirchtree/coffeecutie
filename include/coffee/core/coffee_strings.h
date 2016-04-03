@@ -57,6 +57,7 @@ const constexpr cstring CNect_AsyncStop = "CNect loop closed";
 
 const constexpr cstring SDL2_Library_Name = "SDL2";
 const constexpr cstring SDL2_Library_FailureInit = "Failed to initialize SDL2 context: {0}";
+const constexpr cstring SDL2_Library_FailureWindow = "Failed to create window: {0}";
 
 }
 

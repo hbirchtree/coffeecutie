@@ -18,27 +18,22 @@ public:
     {
     }
 
-    void hostPreInit(const CDProperties &props)
+    bool hostPreInit(const CDProperties &props,CString*err)
     {
-        windowPreInit(props);
-        inputPreInit();
+        return windowPreInit(props,err) && inputPreInit(err);
     }
-    void hostInit(const CDProperties &props)
+    bool hostInit(const CDProperties &props,CString* err)
     {
-        windowInit(props);
-        inputInit();
+        return windowInit(props,err) && inputInit(err);
     }
-    void hostPostInit(const CDProperties &props)
+    bool hostPostInit(const CDProperties &props,CString* err)
     {
-        windowPostInit(props);
-        inputPostInit();
+        return windowPostInit(props,err) && inputPostInit(err);
     }
 
-    void init(const CDProperties &props)
+    bool init(const CDProperties &props,CString* err)
     {
-        hostPreInit(props);
-        hostInit(props);
-        hostPostInit(props);
+        return hostPreInit(props,err) && hostInit(props,err) && hostPostInit(props,err);
     }
     void run()
     {

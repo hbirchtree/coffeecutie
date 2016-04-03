@@ -17,7 +17,7 @@ unw_context_t* Linux::LinuxStacktracer::unwind_context = nullptr;
 
 /* Storage for profiler data */
 LinkList<Profiler::DataPoint>* Profiler::datapoints = nullptr;
-#ifndef COFFEE_ANDROID
+#ifndef ANDROID_RELEASE_MODE
 thread_local LinkList<CString>* Profiling::SimpleProfilerImpl::context_stack = nullptr;
 #endif
 Mutex* Profiler::data_access_mutex = nullptr;

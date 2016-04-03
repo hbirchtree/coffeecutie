@@ -1,5 +1,6 @@
 #include <coffee/core/CApplication>
 #include <coffee/graphics_apis/CGLeam>
+#include <coffee/sdl2/CSDL2GLRenderer>
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 
@@ -8,11 +9,11 @@ using namespace CDisplay;
 
 using GL = CGL::CGL43;
 
-class CDRenderer : public Coffee::CDisplay::CGLeamRenderer
+class CDRenderer : public CSDL2Renderer
 {
 public:
     CDRenderer()
-        : CGLeamRenderer(0)
+        : CSDL2Renderer(0)
     {
     }
 
@@ -207,7 +208,7 @@ public:
             this->swapBuffers();
         }
 
-        CGL::CGLUtil::DumpTexture(GL::Texture::T2D,tex,0,"raytrace.png");
+        CGL::CGLUtil::DumpTexture<GL>(GL::Texture::T2D,tex,0,"raytrace.png");
 
         //Write code here
     }
@@ -252,7 +253,12 @@ int32 coffee_main(int32, cstring_w*)
     props.gl.version.major = 4;
     props.gl.version.minor = 3;
 
-    renderer->init(props);
+    CString err;
+    if(!renderer->init(props,&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
     cDebug("Init renderer: {0}",timer.elapsed());
 
     renderer->run();

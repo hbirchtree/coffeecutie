@@ -7,7 +7,7 @@
 namespace Coffee{
 namespace CDisplay{
 
-void SDL2EventHandler::inputPreInit()
+bool SDL2EventHandler::inputPreInit(CString*)
 {
     /* Load input systems */
     if(SDL_InitSubSystem(SDL_INIT_EVENTS|
@@ -18,9 +18,10 @@ void SDL2EventHandler::inputPreInit()
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
     }
     Profiler::Profile("SDL2 input initializtion");
+    return true;
 }
 
-void SDL2EventHandler::inputInit()
+bool SDL2EventHandler::inputInit(CString*)
 {
     /* If found, load game controller mappings from file */
     CResources::Resource mapping("gamecontrollerdb.txt");
@@ -34,9 +35,10 @@ void SDL2EventHandler::inputInit()
         FileUnmap(mapping);
     }
     Profiler::Profile("Load controller mapping");
+    return true;
 }
 
-void SDL2EventHandler::inputPostInit()
+bool SDL2EventHandler::inputPostInit(CString*)
 {
     /* WORKAROUND: Sometimes, haptic and joystick devices are not closed properly.
      *  This part ensures that they are indeed closed before starting.
@@ -52,6 +54,7 @@ void SDL2EventHandler::inputPostInit()
         SDL_JoystickClose(h);
     }
     Profiler::Profile("Set input device states");
+    return true;
 }
 
 void SDL2EventHandler::inputTerminate()

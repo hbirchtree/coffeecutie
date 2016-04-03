@@ -34,14 +34,16 @@ public:
     /*!
      * \brief Allow installation of event handlers without implementing the class
      */
-    virtual void installEventHandler(EventHandlerI)
+    virtual bool installEventHandler(EventHandlerI)
     {
+        return false;
     }
     /*!
      * \brief Allow installation of event handlers without implementing the class
      */
-    virtual void installEventHandler(EventHandlerD)
+    virtual bool installEventHandler(EventHandlerD)
     {
+        return false;
     }
 
     /*!

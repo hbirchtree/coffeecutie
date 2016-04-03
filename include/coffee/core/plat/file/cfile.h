@@ -6,10 +6,6 @@
 #include "file_def.h"
 #include "../../coffee_strings.h"
 
-//#ifdef COFFEE_ANDROID_FILE_ASSET_API
-//#include <SDL2/SDL_system.h>
-//#endif
-
 namespace Coffee{
 namespace CResources{
 

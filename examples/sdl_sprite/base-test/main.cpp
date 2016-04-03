@@ -94,13 +94,26 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     /* Create a window host for the renderer */
     BasicWindow test;
     auto visual = GetDefaultVisual();
+#ifdef COFFEE_ANDROID
     visual.flags = CDProperties::FullScreen;
-    test.init(visual);
+#endif
+
+    CString err;
+
+    if(!test.init(visual,&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
     Profiler::Profile("Window init");
 
     /* Create a sprite renderer context */
     Sprites rend(&test);
-    rend.init();
+    if(!rend.init(&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
 
     /* Create a renderer handle */
     Sprites::Renderer r = rend.createRenderer();

@@ -147,7 +147,12 @@ int32 coffee_main(int32, cstring_w*)
     CResources::FileResourcePrefix("sample_data/");
 
     CDRendererBase *renderer = new CDRenderer();
-    renderer->init(GetDefaultVisual());
+    CString err;
+    if(!renderer->init(GetDefaultVisual(),&err))
+    {
+        cDebug("Initialization error: {0}",err);
+        return 1;
+    }
     renderer->run();
     renderer->cleanup();
     delete renderer;

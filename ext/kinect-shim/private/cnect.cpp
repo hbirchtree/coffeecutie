@@ -152,9 +152,9 @@ FreenectImplementation::FreenectContext::FreenectContext(int index) :
     int devices = manager.enumerateDevices();
     cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,CFStrings::CNect_NumDevices,devices);
     if(devices <= 0)
-        throw std::runtime_error(CFStrings::CNect_NoDevs);
+        SHITONTHEFLOOR();
     if(index >= devices)
-        throw std::runtime_error(CFStrings::CNect_IndexFlt);
+        SHITONTHEFLOOR();
     std::string serial = manager.getDeviceSerialNumber(index);
     cLog(__FILE__,__LINE__,CFStrings::CNect_Library_Name,CFStrings::CNect_Loaded,serial);
     device = manager.openDevice(serial);

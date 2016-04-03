@@ -61,6 +61,9 @@ Uint32 InterpretWindowFlags(CDProperties::State const& flags)
 
 void SetContextProperties(const GLProperties &props)
 {
+    SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL,SDL_TRUE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,SDL_TRUE);
+
     SDL_GL_SetAttribute(SDL_GL_ACCUM_RED_SIZE,props.bits.accum.r);
     SDL_GL_SetAttribute(SDL_GL_ACCUM_GREEN_SIZE,props.bits.accum.g);
     SDL_GL_SetAttribute(SDL_GL_ACCUM_BLUE_SIZE,props.bits.accum.b);
@@ -78,9 +81,15 @@ void SetContextProperties(const GLProperties &props)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION,props.version.minor);
 
     if(props.flags&GLProperties::Flags::GLCoreProfile)
+    {
+#ifdef COFFEE_GLEAM_DESKTOP
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
+#else
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_ES);
+#endif
+    }
 
-    int32 cflags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+    int32 cflags = 0;
 
     if(props.flags&GLProperties::Flags::GLDebug)
         cflags|=SDL_GL_CONTEXT_DEBUG_FLAG;
@@ -88,7 +97,9 @@ void SetContextProperties(const GLProperties &props)
     if(props.flags&GLProperties::Flags::GLRobust)
         cflags|=SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
+#ifdef COFFEE_GLEAM_DESKTOP
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
+#endif
 }
 
 GLProperties GetContextProperties()

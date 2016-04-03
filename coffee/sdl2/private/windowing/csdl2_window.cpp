@@ -5,10 +5,12 @@
 
 #include "sdl2helpers.h"
 
+#include <SDL2/SDL_opengles2.h>
+
 namespace Coffee{
 namespace CDisplay{
 
-void SDL2Window::windowPreInit(const CDProperties& p)
+bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
 {
     m_window_flags = 0;
 
@@ -16,6 +18,7 @@ void SDL2Window::windowPreInit(const CDProperties& p)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        return false;
     }
 
     /* Create SDL2 context object */
@@ -27,9 +30,10 @@ void SDL2Window::windowPreInit(const CDProperties& p)
     m_contextString = cStringFormat("SDL {0}.{1}.{2}",ver.major,ver.minor,ver.patch);
 
     Profiler::Profile("Create SDL2 context");
+    return true;
 }
 
-void SDL2Window::windowInit(const CDProperties& p)
+bool SDL2Window::windowInit(const CDProperties& p, CString* err)
 {
     /* Translate window flags and apply them */
     m_window_flags |= CSDL2Types::InterpretWindowFlags(p.flags);
@@ -44,15 +48,19 @@ void SDL2Window::windowInit(const CDProperties& p)
                              winsize.w,winsize.h,
                              m_window_flags);
 
+
     /* Validate the window pointer, may have failed */
     if(!getSDL2Context()->window){
-        cFatal("Failed to create SDL2 window: {0}",SDL_GetError());
+        CString err_m = cStringFormat(CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        if(err)
+            *err = err_m;
+        return false;
     }
-
     Profiler::Profile("Create window");
+    return true;
 }
 
-void SDL2Window::windowPostInit(const CDProperties& p)
+bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
 {
     /* If an icon pointer is present, use it */
     if(p.icon)
@@ -71,6 +79,7 @@ void SDL2Window::windowPostInit(const CDProperties& p)
     cMsg("SDL2","Running {0}",m_contextString);
 
     Profiler::Profile("Set window properties");
+    return true;
 }
 
 void SDL2Window::windowTerminate()
@@ -232,3 +241,4 @@ CDMonitor SDL2Window::monitor()
 
 }
 }
+

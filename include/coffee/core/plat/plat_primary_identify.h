@@ -17,7 +17,6 @@
 #define C_SYSTEM_STRING "Android API level " __ANDROID_API__
 #define COFFEE_ANDROID
 #undef COFFEE_LINUX
-#define COFFEE_USE_EXCEPTIONS
 #endif
 
 /* Windows macro, only one for now */
