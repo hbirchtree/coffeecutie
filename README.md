@@ -17,6 +17,19 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
    - Tons of platform-abstraction, from files to networking (the latter is still WIP)
 
 
+# OpenGL support
+ - Linux
+       - OpenGL 3.3+
+       - OpenGL ES 3.0+
+ - Windows
+       - OpenGL 3.3+
+       - OpenGL ES 3.0+
+ - Android
+       - OpenGL ES 2.0 (SDL sprite renderer)
+       - OpenGL ES 3.0 (3D rendering APIs)
+ - (Possible) Mac OS X
+       - OpenGL 3.3 (Next API level is at GL4.3)
+
 # Platform support tl;dr
  - Linux support is dandy, always maintained
  - Windows port is about as good as Linux, some lack in platform layer for non-essential code
