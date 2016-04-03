@@ -2,7 +2,8 @@
 if (NOT WIN32)
     # These are effectively used by Clang and GCC, descriptive names
     add_definitions (
-#        -Winline
+        -fvisibility=hidden
+        #-Winline
         #-Wall
         #-Werror
         #-Wpadded
