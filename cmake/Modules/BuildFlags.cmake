@@ -46,13 +46,6 @@ if(NOT ANDROID)
     message ( "RapidJSON include: ${RAPIDJSON_INCLUDE_DIR}" )
 endif()
 
-if(ANDROID)
-    find_package(SDL2 REQUIRED)
-    include_directories(
-        ${SDL2_INCLUDE_DIR}
-        ${SDL2_INCLUDE_DIR}/SDL2)
-endif()
-
 #This causes ASIO to not use Boost.
 add_definitions("-DASIO_STANDALONE")
 
@@ -71,6 +64,17 @@ if(ANDROID AND CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions("-DANDROID_RELEASE_MODE")
 endif()
 
+# Android requires SDL for asset functionality
+# GLES uses SDL for function loading
+if(ANDROID)
+    find_package(SDL2 REQUIRED)
+    include_directories(
+        ${SDL2_INCLUDE_DIR}
+        ${SDL2_INCLUDE_DIR}/SDL2)
+endif()
+
 if(NOT COFFEE_BUILD_GLES)
     add_definitions("-DCOFFEE_GLEAM_DESKTOP")
+else()
+
 endif()
