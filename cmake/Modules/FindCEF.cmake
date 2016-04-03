@@ -8,6 +8,7 @@
 # Inputs:
 #   CEF_ROOT_DIR
 
+set(CEF_ROOT_DIR "${CEF_ROOT_DIR}" CACHE PATH "Directory to search for CEF")
 
 find_path ( CEF_INCLUDE_DIR
     # Which headers to search for

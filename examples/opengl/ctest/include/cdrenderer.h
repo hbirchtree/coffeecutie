@@ -27,7 +27,7 @@ public:
      * \brief Launches the full context, init, run, cleanup
      * \param props
      */
-    void run(const CDProperties &props);
+    bool run(const CDProperties &props, CString *err);
 
     using CSDL2Renderer::eventHandle;
 

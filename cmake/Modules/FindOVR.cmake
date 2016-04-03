@@ -20,11 +20,7 @@
 # (See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
-set(OVR_ROOT_DIR
-        "${OVR_ROOT_DIR}"
-        CACHE
-        PATH
-        "Directory to search for Oculus SDK")
+set(OVR_ROOT_DIR "${OVR_ROOT_DIR}" CACHE PATH "Directory to search for Oculus SDK (LibOVR)")
 
 # The OVR library is built in a directory tree that varies based on platform,
 # architecture, and compiler.

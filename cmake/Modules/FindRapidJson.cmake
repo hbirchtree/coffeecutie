@@ -1,19 +1,16 @@
+set(RAPIDJSON_INCLUDE_DIR)
+
 find_path ( RAPIDJSON_INCLUDE_DIR
-    rapidjson.h
+
+    rapidjson/rapidjson.h
 
     PATHS
-    ${COFFEE_EXT_LIBRARY_DIR}/rapidjson/include
+    ${COFFEE_EXT_LIBRARY_DIR}/rapidjson
     ${RAPIDJSON_ROOT_DIR}
 
-    PATH_PREFIXES
-    rapidjson/
-
-    NO_DEFAULT_PATH
+    PATH_SUFFIXES
+    include
     )
-
-message ( "FIX THIS SHIT" )
-
-set ( RAPIDJSON_INCLUDE_DIR "${COFFEE_EXT_LIBRARY_DIR}/rapidjson/include" )
 
 if(NOT RAPIDJSON_INCLUDE_DIR)
     message ( FATAL_ERROR "-- Failed to locate RapidJSON include directory" )

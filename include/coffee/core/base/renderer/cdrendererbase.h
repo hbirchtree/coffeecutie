@@ -39,7 +39,8 @@ FORCEDINLINE std::future<void> LaunchAsync(T* r, CDProperties const& p)
 {
     Threads::Function<void()> fn = [r,p]()
     {
-        r->init(p);
+        CString err;
+        r->init(p,&err);
         r->run();
         r->cleanup();
     };

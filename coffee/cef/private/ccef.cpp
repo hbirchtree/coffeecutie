@@ -191,8 +191,8 @@ void ProcessEvent(CEFBrowser *b, const CIEvent &e, c_cptr data)
     {
         auto mev = (const CIMouseMoveEvent*)data;
         CefMouseEvent ev;
-        ev.x = mev->pos.x;
-        ev.y = mev->pos.y;
+        ev.x = mev->origin.x;
+        ev.y = mev->origin.y;
 
         ev.modifiers |= feval(mev->btn&CIMouseButtonEvent::LeftButton)
                 ? EVENTFLAG_LEFT_MOUSE_BUTTON : 0;

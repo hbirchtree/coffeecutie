@@ -44,7 +44,6 @@ add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 if(NOT ANDROID)
     find_package ( RapidJson REQUIRED )
     include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
-    message ( "RapidJSON include: ${RAPIDJSON_INCLUDE_DIR}" )
 endif()
 
 #This causes ASIO to not use Boost.

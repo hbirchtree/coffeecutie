@@ -1,7 +1,7 @@
 #ifndef CGRAPHICS_QUIRKS
 #define CGRAPHICS_QUIRKS
 
-#include "coffee/core/CTypes"
+#include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee
 {

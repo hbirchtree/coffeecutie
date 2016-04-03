@@ -1,3 +1,1 @@
-coffee_add_example ( CEF_Test main.cpp )
-
-target_link_libraries ( CEF_Test CoffeeCEF )
+coffee_add_example ( CEF_Test "CEF Test" main.cpp CoffeeCEF )

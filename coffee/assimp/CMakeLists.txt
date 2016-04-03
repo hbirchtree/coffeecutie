@@ -1,8 +1,4 @@
-find_package(assimp)
-
-if(NOT DEFINED assimp_LIBRARIES OR NOT DEFINED assimp_INCLUDE_DIRS)
-    message(FATAL_ERROR "Failed to locate Assimp")
-endif()
+find_package(assimp REQUIRED)
 
 set ( CoffeeAssimp_SRCS
         private/cassimpimporters.cpp
@@ -10,12 +6,12 @@ set ( CoffeeAssimp_SRCS
         )
 
 include_directories ( SYSTEM
-    ${ASSIMP_INCLUDE_DIRS}
+    ${ASSIMP_INCLUDE_DIR}
     )
 
 coffee_add_library ( CoffeeAssimp "${CoffeeAssimp_SRCS}" )
 
 target_link_libraries ( CoffeeAssimp
     CoffeeCore
-    ${assimp_LIBRARIES}
+    ${ASSIMP_LIBRARIES}
     )

@@ -19,6 +19,8 @@ set ( CoffeeCore_SRCS
 
     private/plat/environment/application_start.cpp
 
+    private/datastorage/compression/libz.cpp
+
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
     )

@@ -140,9 +140,9 @@ void CDRenderer::run()
     cMsg("Coffee","Termination time: {0}us",swap.elapsed());
 }
 
-void CDRenderer::run(const CDProperties& props)
+bool CDRenderer::run(const CDProperties& props,CString* err)
 {
-    init(props);
+    init(props,err);
     run();
     cleanup();
 }

@@ -1,7 +1,7 @@
 # TODO: Write this Find file!
 find_path ( OPENAL_INCLUDE_DIR
-    AL/al.h
-    AL/alc.h
+    al.h
+    alc.h
 
     PATHS
     /usr
@@ -9,7 +9,7 @@ find_path ( OPENAL_INCLUDE_DIR
     ${OPENAL_ROOT}
 
     PATH_SUFFIXES
-    /include
+    /include/AL
 
     )
 
