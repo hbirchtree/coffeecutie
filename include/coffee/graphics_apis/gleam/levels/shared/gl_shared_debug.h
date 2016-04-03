@@ -89,7 +89,12 @@ struct CGL_Shared_Debug
     {
         CDisplay::CGLVersion ver = {};
 
-        CString str = GetString(GL_SHADING_LANGUAGE_VERSION);
+        cstring str_c = GetString(GL_SHADING_LANGUAGE_VERSION);
+
+		if (!str_c)
+			return ver;
+
+		CString str = str_c;
 
         ver.driver = str;
 
