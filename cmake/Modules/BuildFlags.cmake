@@ -51,7 +51,7 @@ add_definitions("-DASIO_STANDALONE")
 
 # Toggle some preprocessor flags
 if(COFFEE_BUILD_OCULUSVR)
-    add_definitions(-DCOFFEE_OCULUSVR_ENABLED)
+    add_definitions("-DCOFFEE_OCULUSVR_ENABLED")
 endif()
 
 # Include SSL if built
