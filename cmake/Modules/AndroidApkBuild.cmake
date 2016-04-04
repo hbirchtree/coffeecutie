@@ -1,5 +1,13 @@
 include ( AndroidToolkit )
 
+# APK signing
+
+set ( ANDROID_APK_SIGN_KEY "~/keystore/key.release" CACHE STRING "Android signing key" )
+
+set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android signing key alias" )
+
+# Misc properties
+
 set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/cmake/Platform/Android" )
 
 set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/apk" )
@@ -49,6 +57,8 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
 
     set ( ANDROID_ACTIVITY_NAME "${Pkg_Name}.${ANDROID_STARTUP_ACTIVITY}" )
+
+    set ( ANDROID_APK_NAME "${Pkg_Name}.${ANDROID_STARTUP_ACTIVITY}-release-unsigned.apk" )
 
     set ( ANDROID_APPLICATION_NAME ${App_Name} )
 
@@ -163,8 +173,18 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_custom_command ( TARGET ${Target_Name}
-	    COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} release
             POST_BUILD
+            COMMAND ${ANDROID_ANT_PROGRAM} release
+            WORKING_DIRECTORY ${BUILD_OUTDIR}
+            )
+        add_custom_command ( TARGET ${Target_Name}
+            POST_BUILD
+            COMMAND jarsigner -verbose -keystore ${ANDROID_APK_SIGN_KEY} -storepass $ENV{ANDROID_APK_SIGN_PASS} bin/${ANDROID_APK_NAME} ${ANDROID_APK_SIGN_ALIAS}
+            WORKING_DIRECTORY ${BUILD_OUTDIR}
+            )
+        add_custom_command ( TARGET ${Target_Name}
+            POST_BUILD
+            COMMAND zipalign -v -f 4 bin/${ANDROID_APK_NAME} bin/${ANDROID_APK_NAME}
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
 	# TODO: Add the rest of the actions here, like zipalign and signing
