@@ -186,32 +186,6 @@ public:
 
         Profiler::Profile("Create vertex buffers");
 
-        CString vshader_storage;
-        CString fshader_storage;
-
-        {
-            cstring shader_files[2] = {"vr/vshader.glsl","vr/fshader.glsl"};
-            for(int32 i=0;i<2;i++)
-            {
-                CResources::Resource shader_handle(shader_files[i]);
-                if(!CResources::FileMap(shader_handle))
-                    continue;
-
-                if(i==0)
-                {
-                    vshader_storage.insert(0,(cstring)shader_handle.data,shader_handle.size);
-                }else if(i==1)
-                {
-                    fshader_storage.insert(0,(cstring)shader_handle.data,shader_handle.size);
-                }
-
-                CResources::FileUnmap(shader_handle);
-            }
-        }
-
-        cstring vshader = vshader_storage.c_str();
-        cstring fshader = fshader_storage.c_str();
-
         GL::CGhnd vao;
         {
             GL::VAOAlloc(1,&vao);
@@ -233,10 +207,35 @@ public:
 
         Profiler::Profile("Specify vertex format");
 
-        GL::CGhnd vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&vshader);
-        cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
+        GL::CGhnd vprogram;
+        GL::CGhnd fprogram;
 
-        GL::CGhnd fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&fshader);
+        {
+            cstring shader_files[2] = {"vr/vshader.glsl","vr/fshader.glsl"};
+            CString tmp;
+            cstring cstr;
+            for(int32 i=0;i<2;i++)
+            {
+                CResources::Resource shader_handle(shader_files[i]);
+                if(!CResources::FileMap(shader_handle))
+                    continue;
+
+                tmp.clear();
+                tmp.insert(0,(sbyte_t*)shader_handle.data,shader_handle.size);
+                cstr = &tmp[0];
+                if(i==0)
+                {
+                     vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&cstr);
+                }else if(i==1)
+                {
+                    fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&cstr);
+                }
+
+                CResources::FileUnmap(shader_handle);
+            }
+        }
+
+        cDebug("Compilation log: {0}",GL::ProgramGetLog(vprogram));
         cDebug("Compilation log: {0}",GL::ProgramGetLog(fprogram));
 
         GL::CGhnd pipeline;
@@ -441,7 +440,8 @@ public:
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-    CResources::FileResourcePrefix("sample_data/");
+    CString prefix = Env::ApplicationDir()+"/sample_data/";
+    CResources::FileResourcePrefix(prefix.c_str());
 
     /*Required for SDL2 applications*/
     SubsystemWrapper<SDL2::SDL2> sdl2;

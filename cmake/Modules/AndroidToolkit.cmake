@@ -34,6 +34,7 @@ set ( ANDROID_SDL_MAIN_UNIT "$ENV{HOME}/lib/SDL2/src/main/android/SDL_android_ma
 set ( ANDROID_ANT_PROGRAM "/usr/bin/ant" )
 set ( ANDROID_SDK_PROGRAM "$ENV{ANDROID_SDK}/tools/android" )
 set ( ANDROID_NDK_BUILD_PROGRAM "$ENV{ANDROID_NDK}/ndk-build" )
+set ( ANDROID_ZIPALIGN $ENV{ZIPALIGN_UTIL} )
 
 if ( NOT ANDROID_SDK_PROGRAM )
     message ( FATAL_ERROR "-- Failed to locate Android SDK, please specify ANDROID_SDK or ANDROID_HOME" )

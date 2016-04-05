@@ -565,7 +565,8 @@ inline CGenum to_enum2(
         o |= GL_FRAGMENT_SHADER_BIT;
     if(feval(f&ShaderStage::Compute))
         o |= GL_COMPUTE_SHADER_BIT;
-    if(feval(f&ShaderStage::All))
+
+    if(f==ShaderStage::All)
         o = GL_ALL_SHADER_BITS;
 
     return o;

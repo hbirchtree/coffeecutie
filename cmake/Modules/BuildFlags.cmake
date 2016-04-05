@@ -40,11 +40,8 @@ add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
 # RapidJSON is part of the core, and is therefore added as a submodule
-# Android does not want to include it properly.
-if(NOT ANDROID)
-    find_package ( RapidJson REQUIRED )
-    include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
-endif()
+find_package ( RapidJson REQUIRED )
+include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
 
 #This causes ASIO to not use Boost.
 add_definitions("-DASIO_STANDALONE")

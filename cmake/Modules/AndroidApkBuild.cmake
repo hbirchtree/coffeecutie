@@ -184,18 +184,15 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
             )
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
-            COMMAND zipalign -v -f 4 bin/${ANDROID_APK_NAME} bin/${ANDROID_APK_NAME}
+            COMMAND ${ANDROID_ZIPALIGN} -v -f 4 bin/${ANDROID_APK_NAME} ${ANDROID_APK_FILE_OUTPUT}
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
-	# TODO: Add the rest of the actions here, like zipalign and signing
     else()
         add_custom_command ( TARGET ${Target_Name}
-	    COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} debug
             POST_BUILD
+            COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} debug
             WORKING_DIRECTORY ${BUILD_OUTDIR}
 	    )
     endif()
-
-
 
 endmacro()

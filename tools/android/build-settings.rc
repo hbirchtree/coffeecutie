@@ -31,3 +31,6 @@ ANDROID_TARGET_64="21"
 
 ANDROID_ABI_32="$ARCH_32"
 ANDROID_ABI_64="$ARCH_64"
+
+# Find zipalign for Android packaging
+ZIPALIGN_UTIL="$(find ~/android-sdk-linux/ -name zipalign|sed -n 1p)"
