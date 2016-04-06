@@ -33,10 +33,6 @@ int32 coffee_main(int32, cstring_w*)
     }
     Profiler::PopContext();
 
-    CString str = Convert::inttostring(0);
-
-    cDebug("{0},s={1}",str,str.size());
-
     return 0;
 }
 
