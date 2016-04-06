@@ -30,11 +30,11 @@ int32 coffee_main(int32, cstring_w*)
 
     CString tmp;
     while(std::getline(irc_stream,tmp))
-        if(tmp.find("004")>=0)
+        if(tmp.find("004")==0)
         {
             cDebug("Logged in");
             break;
-        }else if(tmp.find("433")>=0)
+        }else if(tmp.find("433")==0)
         {
             cDebug("Username is taken");
             return 1;

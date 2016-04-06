@@ -3,6 +3,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CInput>
 #include <coffee/CGraphics>
+#include <coffee/core/coffee.h>
 
 using namespace Coffee;
 using namespace CDisplay;
@@ -54,19 +55,17 @@ int32 coffee_main(int32, cstring_w*)
 
     CString err;
     CDRenderer renderer;
-#ifdef COFFEE_GLEAM_DESKTOP
-    if(!renderer.init(GetDefaultVisual(3,3),&err))
+
+    CDProperties visual = GetDefaultVisual(3,3);
+    if(PlatformData::IsGLES())
+        visual.gl.version.minor = 0;
+
+    if(!renderer.init(visual,&err))
     {
         cDebug("Initialization error: {0}",err);
         return 1;
     }
-#else
-    if(!renderer.init(GetDefaultVisual(3,0),&err))
-    {
-        cDebug("Initialization error: {0}",err);
-        return 1;
-    }
-#endif
+
     renderer.run();
     renderer.cleanup();
 
