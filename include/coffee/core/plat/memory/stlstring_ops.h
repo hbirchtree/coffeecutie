@@ -243,14 +243,18 @@ FORCEDINLINE CString hexify(uint64 inp)
 
     uint8 a;
     uint64 b;
-    for(uint8 i=0;i<64;i++)
+    for(uint8 i=0;i<64;i+=4)
     {
         a = i/4;
         b = inp;
         b = b << (64-(a+1)*4);
         b = b >> (60);
-        out.append(Convert::uinttostring(b));
+        if(b<10)
+            out.append(Convert::uinttostring(b));
+        else
+            out.push_back('a'+b-10);
     }
+    zerotrim(out);
     return out;
 }
 
