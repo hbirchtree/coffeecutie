@@ -2,7 +2,7 @@ include ( AndroidToolkit )
 
 # APK signing
 
-set ( ANDROID_APK_SIGN_KEY "~/keystore/key.release" CACHE STRING "Android signing key" )
+set ( ANDROID_APK_SIGN_KEY "~/keystore/key.release" CACHE FILEPATH "Android signing key" )
 
 set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android signing key alias" )
 
