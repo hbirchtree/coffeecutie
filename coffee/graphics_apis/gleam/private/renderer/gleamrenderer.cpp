@@ -1,5 +1,6 @@
 #include <coffee/graphics_apis/gleam/renderer/gleamrenderer.h>
 #include <coffee/core/coffee_strings.h>
+#include <coffee/core/platform_data.h>
 
 #include <coffee/graphics_apis/gleam/gleam.h>
 
@@ -7,9 +8,6 @@
 #include <coffee/graphics_apis/gleam/levels/desktop/gl45.h>
 #else
 #include <coffee/graphics_apis/gleam/levels/es/gles30.h>
-#endif
-
-#ifndef COFFEE_GLEAM_DESKTOP
 #include <SDL2/SDL_video.h>
 #endif
 
@@ -73,33 +71,42 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     bool status = false;
 
+    cDebug("Attempting to load version: {0}",p.version);
+
+    if(!PlatformData::IsGLES())
+    {
+        const static CGLVersion v33(3,3);
+        const static CGLVersion v43(4,3);
+        const static CGLVersion v45(4,5);
+
+        if(p.version>=v45)
+        {
+            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v45);
 #ifdef COFFEE_GLEAM_DESKTOP
-    const static CGLVersion v33(3,3);
-    const static CGLVersion v43(4,3);
-    const static CGLVersion v45(4,5);
-
-    if(p.version>=v45)
-    {
-        cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v45);
-        status = CGL::CGL45::LoadBinding(m_app->glContext());
-    }else if(p.version>=v43)
-    {
-        cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v43);
-        status = CGL::CGL43::LoadBinding(m_app->glContext());
-    } else if(p.version>=v33)
-    {
-        cDebug("Loading context version: GL{0}",(_cbasic_version<uint8> const&)v33);
-        status = CGL::CGL33::LoadBinding(m_app->glContext());
-    }
-#else
-    const static CGLVersion v30es(3,0);
-
-    if(p.version==v30es)
-    {
-        cDebug("Loading context version: GLES{0}",(_cbasic_version<uint8> const&)v30es);
-        status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
-    }
+            status = CGL::CGL45::LoadBinding(m_app->glContext());
 #endif
+        }else if(p.version>=v43)
+        {
+            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v43);
+#ifdef COFFEE_GLEAM_DESKTOP
+            status = CGL::CGL43::LoadBinding(m_app->glContext());
+#endif
+        } else if(p.version>=v33)
+        {
+            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v33);
+#ifdef COFFEE_GLEAM_DESKTOP
+            status = CGL::CGL33::LoadBinding(m_app->glContext());
+#endif
+        }
+    }else{
+        const static CGLVersion v30es(3,0);
+
+        if(p.version==v30es)
+        {
+            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
+            status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+        }
+    }
 
     Profiler::Profile("Loading GL function pointers");
 
@@ -113,6 +120,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         return false;
     }
 
+    cDebug("GL rendering device: {0}",GL::Debug::Renderer());
     cDebug("GL context version: {0}",GL::Debug::ContextVersion());
     cDebug("GLSL version: {0}",GL::Debug::ShaderLanguageVersion());
 

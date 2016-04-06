@@ -1,5 +1,8 @@
-include ( AndroidToolkit )
-include ( AndroidApkBuild )
+if(ANDROID)
+    include ( AndroidToolkit )
+    include ( AndroidApkBuild )
+    find_package(SDL2main REQUIRED)
+endif()
 
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
@@ -42,7 +45,7 @@ include ( GetPrerequisites )
 # For now, we leave the linking options here for desktop platforms
 macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
     if(ANDROID)
-        add_library(${TARGET} SHARED ${ANDROID_SDL_MAIN_UNIT} ${SOURCES} )
+        add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     else()
         add_executable(${TARGET} ${SOURCES})
@@ -79,14 +82,6 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
 	    "1" "${COFFEE_BUILD_STRING}"
 	    "${ANDROID_NATIVE_API_LEVEL}" "${ANDROID_ABI}"
             "${DEPENDENCIES}" )
-
-#        package_apk(
-#            "${TARGET}"
-#            "${TITLE}"
-#            "org.coffee.${PACKAGE_SUFFIX}"
-#            "1" "1.0"
-#            "21" "arm64-v8a"
-#            "${DEPENDENCIES}" )
 
     endif()
 endmacro()

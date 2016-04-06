@@ -3,6 +3,7 @@
 #include "sdl2windowsystem.h"
 
 #include <coffee/core/CDebug>
+#include <coffee/core/platform_data.h>
 
 namespace Coffee{
 namespace CSDL2Types{
@@ -82,11 +83,10 @@ void SetContextProperties(const GLProperties &props)
 
     if(props.flags&GLProperties::Flags::GLCoreProfile)
     {
-#ifdef COFFEE_GLEAM_DESKTOP
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
-#else
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_ES);
-#endif
+        if(!PlatformData::IsGLES())
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
+        else
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_ES);
     }
 
     int32 cflags = 0;

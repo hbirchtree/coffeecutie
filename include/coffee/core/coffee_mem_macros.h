@@ -1,7 +1,7 @@
 #ifndef COFFEE_CORE_MEM_MACROS_H
 #define COFFEE_CORE_MEM_MACROS_H
 
-#include "plat/platform_detect.h"
+#include "plat/plat_compiler_identify.h"
 
 #define C_DEFAULT_CONSTRUCTOR(ctype) ctype() = default
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete

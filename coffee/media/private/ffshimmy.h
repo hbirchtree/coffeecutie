@@ -184,15 +184,15 @@ AVStream* ff_get_stream(AVFormatContext* ctxt, AVMediaType tp, int index, int* r
 {
     uint32 tp_count = 0;
     for(uint32 i=0;i<ctxt->nb_streams;i++)
-    {
         if(ctxt->streams[i]->codec->codec_type == tp)
+        {
             if(tp_count == index)
             {
                 *real_index = i;
                 return ctxt->streams[i];
             }else
                 tp_count++;
-    }
+        }
     return nullptr;
 }
 

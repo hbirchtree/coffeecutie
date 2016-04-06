@@ -1,8 +1,13 @@
 #pragma once
 
 #include <cctype>
+
+#include "../plat_quirks_toggling.h"
+
 #include <algorithm>
+#ifdef COFFEE_USE_IOSTREAMS
 #include <iomanip>
+#endif
 
 #include "../../types/tdef/integertypes.h"
 #include "../../types/tdef/stltypes.h"
@@ -30,6 +35,138 @@ FORCEDINLINE CString CStrReplace(
     return out;
 }
 }
+
+namespace Convert{
+/*
+ * In the below functions we remove the null-terminator from the strings.
+ * It causes a literal NULL to appear in the strings, which is bad, m'kay?
+ *
+ */
+
+/* Floating-point conversion */
+FORCEDINLINE CString scalarltostring(lscalar const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%Lf",s));
+    snprintf(&str[0],str.size(),"%Lf",s);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString scalartostring(bigscalar const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%f",s));
+    snprintf(&str[0],str.size(),"%f",s);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString scalarftostring(scalar const& s)
+{
+    CString str;
+    str.resize(snprintf(nullptr,0,"%f",s));
+    snprintf(&str[0],str.size(),"%f",s);
+    str.resize(str.size()-1);
+    return str;
+}
+/* Unsigned integer conversion */
+FORCEDINLINE CString uintltostring(uint64 const& s)
+{
+    if(s==0)
+        return "0";
+    // TODO: Find out what the fuck is going on here
+    uint64 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%lu",ss));
+    snprintf(&str[0],str.size(),"%lu",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString uinttostring(uint32 const& s)
+{
+    if(s==0)
+        return "0";
+    uint32 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%u",ss));
+    snprintf(&str[0],str.size(),"%u",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString uintstostring(uint16 const& s)
+{
+    if(s==0)
+        return "0";
+    uint16 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hu",ss));
+    snprintf(&str[0],str.size(),"%hu",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString uintctostring(uint8 const& s)
+{
+    if(s==0)
+        return "0";
+    uint8 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hhu",ss));
+    snprintf(&str[0],str.size(),"%hhu",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+/* Integer conversion */
+FORCEDINLINE CString intltostring(int64 const& s)
+{
+    if(s==0)
+        return "0";
+    int64 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%ld",ss));
+    snprintf(&str[0],str.size(),"%ld",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString inttostring(int32 const& s)
+{
+    if(s==0)
+        return "0";
+    int32 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%d",ss));
+    snprintf(&str[0],str.size(),"%d",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString intstostring(int16 const& s)
+{
+    if(s==0)
+        return "0";
+    int16 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hd",ss));
+    snprintf(&str[0],str.size(),"%hd",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+FORCEDINLINE CString intctostring(int8 const& s)
+{
+    if(s==0)
+        return "0";
+    int8 ss = s*10;
+    CString str;
+    str.resize(snprintf(nullptr,0,"%hhd",ss));
+    snprintf(&str[0],str.size(),"%hhd",ss);
+    str.resize(str.size()-1);
+    return str;
+}
+
+FORCEDINLINE cstring booltostring(bool i)
+{
+    return (i) ? "true" : "false";
+}
+
+}
+
 
 namespace StrUtil{
 
@@ -100,22 +237,20 @@ FORCEDINLINE CString& zerotrim(CString& s)
     return zeroltrim(zerortrim(s));
 }
 
-template<typename T>
-FORCEDINLINE CString spacepad(T const& s, uint32 padding = 1)
+FORCEDINLINE CString hexify(uint64 inp)
 {
     CString out;
-    std::stringstream ss;
-    ss << std::setw(padding) << s;
-    ss >> out;
-    return out;
-}
 
-FORCEDINLINE CString hexify(uint64 i)
-{
-    CString out;
-    std::stringstream ss;
-    ss << std::hex << i;
-    ss >> out;
+    uint8 a;
+    uint64 b;
+    for(uint8 i=0;i<64;i++)
+    {
+        a = i/4;
+        b = inp;
+        b = b << (64-(a+1)*4);
+        b = b >> (60);
+        out.append(Convert::uinttostring(b));
+    }
     return out;
 }
 
@@ -135,7 +270,7 @@ FORCEDINLINE CString lower(CString const& st)
     CString o;
     o.reserve(st.size());
     for(CString::value_type c : st)
-	o.push_back(std::tolower(c));
+        o.push_back(std::tolower(c));
     return o;
 }
 
@@ -144,116 +279,12 @@ FORCEDINLINE CString upper(CString const& st)
     CString o;
     o.reserve(st.size());
     for(CString::value_type c : st)
-	o.push_back(std::toupper(c));
+        o.push_back(std::toupper(c));
     return o;
 }
 
 }
 
-namespace Convert{
-/*
- * In the below functions we remove the null-terminator from the strings.
- * It causes a literal NULL to appear in the strings, which is bad, m'kay?
- *
- */
 
-/* Floating-point conversion */
-FORCEDINLINE CString scalarltostring(lscalar const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%Lf",s));
-    snprintf(&str[0],str.size(),"%Lf",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString scalartostring(bigscalar const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%f",s));
-    snprintf(&str[0],str.size(),"%f",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString scalarftostring(scalar const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%f",s));
-    snprintf(&str[0],str.size(),"%f",s);
-    str.resize(str.size()-1);
-    return str;
-}
-/* Unsigned integer conversion */
-FORCEDINLINE CString uinttostring(uint64 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%lu",s));
-    snprintf(&str[0],str.size(),"%lu",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString uinttostring(uint32 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%u",s));
-    snprintf(&str[0],str.size(),"%u",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString uinttostring(uint16 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%hu",s));
-    snprintf(&str[0],str.size(),"%hu",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString uinttostring(uint8 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%hhu",s));
-    snprintf(&str[0],str.size(),"%hhu",s);
-    str.resize(str.size()-1);
-    return str;
-}
-/* Integer conversion */
-FORCEDINLINE CString inttostring(int64 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%li",s));
-    snprintf(&str[0],str.size(),"%li",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString inttostring(int32 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%i",s));
-    snprintf(&str[0],str.size(),"%i",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString inttostring(int16 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%hi",s));
-    snprintf(&str[0],str.size(),"%hi",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString inttostring(int8 const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%hhi",s));
-    snprintf(&str[0],str.size(),"%hhi",s);
-    str.resize(str.size()-1);
-    return str;
-}
-
-FORCEDINLINE cstring booltostring(bool i)
-{
-    return (i) ? "true" : "false";
-}
-
-}
 }
 }

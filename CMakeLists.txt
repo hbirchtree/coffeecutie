@@ -60,10 +60,7 @@ add_subdirectory(examples)
 # Add documentation directory, not built by default (increases build time)
 add_subdirectory(docs)
 
-# SWIG build, not functional anymore
-if(COFFEE_BUILD_SWIG_BINDING)
-    add_subdirectory(bindings/swig)
-endif()
+add_subdirectory(bindings)
 
 # Tools, includes the GUI profiler
 add_subdirectory(tools)

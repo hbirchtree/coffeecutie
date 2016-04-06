@@ -8,9 +8,11 @@
 # Inputs:
 #   CEF_ROOT_DIR
 
-set(CEF_ROOT_DIR "${CEF_ROOT_DIR}" CACHE PATH "Directory to search for CEF")
+set ( CEF_ROOT_DIR "${CEF_ROOT_DIR}" CACHE PATH "Directory to search for CEF")
+set ( CEF_LIBRARIES "" CACHE FILEPATH "Library file for CEF" )
+set ( CEF_INCLUDE_DIR "" CACHE PATH "Include dir for CEF" )
 
-find_path ( CEF_INCLUDE_DIR
+find_path ( CEF_INCLUDE_DIR_TMP
     # Which headers to search for
 
     include/cef_app.h
@@ -48,21 +50,19 @@ find_library ( CEF_LIBRARY_WRAPPER
 
     )
 
-if (NOT CEF_LIBRARY_DEBUG AND NOT CEF_LIBRARY_RELEASE )
-    message (FATAL_ERROR "Failed to locate CEF library")
-endif()
-if (NOT CEF_INCLUDE_DIR)
-    message (FATAL_ERROR "Failed to locate CEF include directory")
-endif()
-
-set ( CEF_LIBRARIES ${CEF_LIBRARY_WRAPPER} )
-
 if( CEF_LIBRARY_DEBUG AND CMAKE_BUILD_TYPE EQUAL Debug )
     list ( APPEND CEF_LIBRARIES ${CEF_LIBRARY_DEBUG} )
 elseif( CEF_LIBRARY_RELEASE )
     list ( APPEND CEF_LIBRARIES ${CEF_LIBRARY_RELEASE} )
 endif()
 
-set ( CEF_FOUND FOUND )
+if ( CEF_INCLUDE_DIR_TMP )
+    set ( CEF_INCLUDE_DIR "${CEF_INCLUDE_DIR_TMP}" )
+endif()
+
+if ( CEF_INCLUDE_DIR AND CEF_LIBRARIES AND CEF_LIBRARY_WRAPPER )
+    list ( APPEND CEF_LIBRARIES ${CEF_LIBRARY_WRAPPER} )
+    set ( CEF_FOUND FOUND )
+endif()
 
 mark_as_advanced ( CEF_LIBRARIES CEF_INCLUDE_DIR )

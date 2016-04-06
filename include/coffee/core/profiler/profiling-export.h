@@ -26,7 +26,7 @@ FORCEDINLINE void PrintProfilerData()
 	{
             uint64 ts = (p.ts-base_time.front())-curr_timeline.front();
 	    cBasicPrint("Time: {0}, label: {1}",
-			StrUtil::spacepad(ts,10),
+                        ts,
 			p.name);
 
             curr_timeline.front() = p.ts-base_time.front();

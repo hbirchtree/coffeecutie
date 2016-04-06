@@ -1,12 +1,17 @@
 #pragma once
 
 #include "coffee_mem_macros.h"
-#include "plat/platform_detect.h"
+#include "plat/plat_primary_identify.h"
 
 namespace Coffee{
 struct PlatformData
 {
-    STATICINLINE bool IsMobile()
+    STATICINLINE
+    /*!
+     * \brief Defined on mobile devices, phones and tablets mostly
+     * \return
+     */
+    bool IsMobile()
     {
 #if !defined(COFFEE_ANDROID) && !defined(COFFEE_IOS)
         return false;
@@ -15,7 +20,12 @@ struct PlatformData
 #endif
     }
 
-    STATICINLINE bool IsGLES()
+    STATICINLINE
+    /*!
+     * \brief Defined when OpenGL ES is the graphics API
+     * \return
+     */
+    bool IsGLES()
     {
 #ifdef COFFEE_GLEAM_DESKTOP
         return false;
@@ -24,9 +34,18 @@ struct PlatformData
 #endif
     }
 
-    STATICINLINE bool UseVirtualFS()
+    STATICINLINE
+    /*!
+     * \brief Defined for systems where some storage is not file-based, such as Android assets
+     * \return
+     */
+    bool UseVirtualFS()
     {
+#if defined(COFFEE_ANDROID)
+        return true;
+#else
         return false;
+#endif
     }
 };
 }

@@ -53,6 +53,7 @@ bool CEFSubsystem::Deinit()
 bool CEFSubsystem::Process()
 {
     CefDoMessageLoopWork();
+    return true;
 }
 
 class CEFOffscreenBrowser : public CefRenderHandler
@@ -63,14 +64,14 @@ public:
     {
     }
 
-    bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect)
+    bool GetViewRect(CefRefPtr<CefBrowser> browser, CefRect &rect) override
     {
         rect.Set(0,0,m_size.width,m_size.height);
         return true;
     }
     void OnPaint(CefRefPtr<CefBrowser> browser, PaintElementType type,
                  const RectList &dirtyRects, const void *buffer,
-                 int width, int height)
+                 int width, int height) override
     {
         texture_out.bpp = 4;
         texture_out.size.w = width;
@@ -105,12 +106,12 @@ public:
 
     CefRefPtr<CEFOffscreenBrowser> m_handle;
 
-    virtual CefRefPtr<CefRenderHandler> GetRenderHandler()
+    virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override
     {
         return m_handle;
     }
 
-    IMPLEMENT_REFCOUNTING(CEFCoffeeClient);
+    IMPLEMENT_REFCOUNTING(CEFCoffeeClient)
 };
 
 struct CEFBrowser

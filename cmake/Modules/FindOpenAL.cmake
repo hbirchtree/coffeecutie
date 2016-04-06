@@ -1,24 +1,47 @@
-# TODO: Write this Find file!
-find_path ( OPENAL_INCLUDE_DIR
+set ( OPENAL_SEARCH_PATHS
+    /usr
+    /usr/local
+    ${OPENAL_ROOT}
+    )
+
+if(ANDROID)
+    list ( APPEND OPENAL_SEARCH_PATHS
+        /home/coffee/libs
+        )
+endif()
+
+set ( OPENAL_INCLUDE_DIR "" CACHE PATH "OpenAL include directory" )
+set ( OPENAL_LIBRARY "" CACHE FILEPATH "OpenAL library file" )
+
+find_path ( OPENAL_INCLUDE_DIR_TMP
     al.h
     alc.h
 
     PATHS
-    /usr
-    /usr/local
-    ${OPENAL_ROOT}
+    ${OPENAL_SEARCH_PATHS}
 
     PATH_SUFFIXES
-    /include/AL
-
+    include
+    include/AL
     )
 
-find_library( OPENAL_LIBRARY
+find_library( OPENAL_LIBRARY_TMP
     openal
+    OpenAL
 
     PATHS
-    /usr/lib
-    ${OPENAL_ROOT}/lib
+    ${OPENAL_SEARCH_PATHS}
+
+    PATH_SUFFIXES
+    lib
+    lib/${ANDROID_ABI}
     )
+
+if(OPENAL_INCLUDE_DIR_TMP)
+    set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR_TMP}")
+endif()
+if(OPENAL_LIBRARY_TMP)
+    set ( OPENAL_LIBRARY "${OPENAL_LIBRARY_TMP}")
+endif()
 
 mark_as_advanced ( OPENAL_LIBRARY OPENAL_INCLUDE_DIR )
