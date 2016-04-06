@@ -28,9 +28,8 @@ void CoffeeInit(bool profiler_init)
 
     InstallSignalHandler();
 
-#ifndef NDEBUG
     cDebug("Build string: {0}",CoffeeBuildString);
-#endif
+
     cDebug("Running on {0} ({1})",CoffeeCompilerString,CoffeeArchString);
 }
 

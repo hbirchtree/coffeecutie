@@ -1,5 +1,6 @@
 #include <coffee/core/datastorage/compression/libz.h>
 
+#ifdef COFFEE_BUILD_ZLIB
 #include <zlib.h>
 
 namespace Coffee{
@@ -17,3 +18,4 @@ bool LibZCompressor::Decompress(CByteData const& compressed, CByteData* target)
 
 }
 }
+#endif
