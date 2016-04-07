@@ -2,7 +2,6 @@
 #include <coffee/graphics_apis/CGLeam>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
-#include <coffee/core/plat/plat_windowmanager.h>
 
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics_apis/SMesh>
@@ -11,7 +10,7 @@
 #include <coffee/COculusRift>
 
 using namespace Coffee;
-using namespace CDisplay;
+using namespace Display;
 
 #ifdef COFFEE_OCULUSVR_ENABLED
 using VR = OculusRift::OculusVR;
@@ -409,7 +408,7 @@ public:
 
         Profiler::PopContext();
     }
-    void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
+    void eventHandleD(const Display::CDEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleD(e,data);
 
@@ -483,9 +482,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     }
     Profiler::Profile("Initialize renderer");
 
-    WM::SetAlwaysTop(renderer->window(),true);
-
-	cDebug("OpenGL core profile version: {0}",(_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
+        cDebug("OpenGL core profile version: {0}",
+               (_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
 
 	cDebug("Device info: {0}", GL::Debug::Renderer());
 	Profiler::Profile("Get renderer info");

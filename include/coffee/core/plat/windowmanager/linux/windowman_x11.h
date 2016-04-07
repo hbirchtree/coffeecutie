@@ -5,12 +5,7 @@
 #ifdef COFFEE_LINUX
 
 #include "../windowman.h"
-#include "../plat_windowtype.h"
 #include "linux_wm_x11.h"
-
-#define _NET_WM_STATE_REMOVE        0    /* remove/unset property */
-#define _NET_WM_STATE_ADD           1    /* add/set property */
-#define _NET_WM_STATE_TOGGLE        2    /* toggle property  */
 
 namespace Coffee{
 namespace WindowManager{

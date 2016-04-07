@@ -5,7 +5,7 @@
 #include <coffee/CImage>
 
 using namespace Coffee;
-using namespace CDisplay;
+using namespace Display;
 
 using GL = CGL::CGL43;
 
@@ -212,7 +212,7 @@ public:
 
         //Write code here
     }
-    void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
+    void eventHandleD(const Display::CDEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleD(e,data);
     }
