@@ -17,7 +17,7 @@ void Terminate()
     CoffeeTerminate(false);
 }
 
-class CGLWindow : public CDisplay::CSDL2Renderer
+class CGLWindow : public Display::CSDL2Renderer
 {
 public:
     CGLWindow(CObject* p):
@@ -36,11 +36,11 @@ CGLWindow* CreateWindow(int w, int h,
                         bool debug,
                         CObject* p)
 {
-    CDisplay::CDProperties o = CDisplay::GetDefaultVisual(major,minor);
+    Display::CDProperties o = Display::GetDefaultVisual(major,minor);
     o.size.w = w;
     o.size.h = h;
     if(debug)
-        o.gl.flags = o.gl.flags|CDisplay::GLProperties::GLDebug;
+        o.gl.flags = o.gl.flags|Display::GLProperties::GLDebug;
 
     CString err;
 
