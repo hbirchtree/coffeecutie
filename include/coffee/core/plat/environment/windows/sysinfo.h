@@ -239,7 +239,9 @@ namespace Coffee {
 				MemClear(CPUString, 0x20);
 				MemClear(CPUBrandString, 0x40);
 
-				MemCpy(CPUString,&CPUInfo[1],sizeof(int)*3);
+				MemCpy(CPUString + sizeof(int)*0, &CPUInfo[1], sizeof(int));
+				MemCpy(CPUString + sizeof(int)*1, &CPUInfo[3], sizeof(int));
+				MemCpy(CPUString + sizeof(int)*2, &CPUInfo[2], sizeof(int));
 
 				__cpuid(CPUInfo, Extended_Start);
 				int nExIds = CPUInfo[0];
@@ -265,7 +267,13 @@ namespace Coffee {
 					}
 				}
 
-				return HWDeviceInfo(CPUString,CPUBrandString,"0x0");
+				CString brand = CPUBrandString;
+				StrUtil::trim(brand);
+				cstring brand_find = Search::ChrFind(brand.c_str(), 0);
+				if(brand_find)
+					brand.resize(brand_find - brand.c_str());
+
+				return HWDeviceInfo(CPUString,brand,"0x0");
 			}
 			STATICINLINE bigscalar ProcessorFrequency()
 			{
@@ -279,27 +287,9 @@ namespace Coffee {
 			}
 			STATICINLINE uint64 ProcessorCacheSize()
 			{
-				int64 csize = 0;
+				auto info = GetProcInfo();
 
-				int CPUInfo[4];
-
-				__cpuid(CPUInfo, Extended_Start);
-				int nIds = CPUInfo[0];
-
-
-				for (int i = Extended_Start;i < nIds;++i)
-				{
-					if (i > 1)
-						break;
-
-					if (i == CacheSizes)
-					{
-						csize = (CPUInfo[2] >> 16) & 0xffff;
-						csize *= 1024;
-					}
-				}
-
-				return csize;
+				return info.processors.front().cache.l1;
 			}
 			STATICINLINE bool HasHyperThreading()
 			{

@@ -48,7 +48,16 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     else()
+		if(WIN32)
+		add_executable(${TARGET} ${SOURCES} ${CMAKE_SOURCE_DIR}/desktop/windows/winresources.rc )
+		set_target_properties ( ${TARGET}
+			PROPERTIES
+			VERSION ${COFFEE_BUILD_STRING}
+			SOVERSION 1
+			)
+		else()
         add_executable(${TARGET} ${SOURCES})
+		endif()
     endif()
     target_enable_cxx11(${TARGET})
 

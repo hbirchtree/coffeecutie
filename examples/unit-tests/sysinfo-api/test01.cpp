@@ -18,6 +18,7 @@ bool sysinfo_printing()
     cDebug("CPUs: {0}",SysInfo::CpuCount());
     cDebug("Cores: {0}",SysInfo::CoreCount());
     cDebug("Threads: {0}",SysInfo::ThreadCount());
+	cDebug("Processor cache: {0}",SysInfo::ProcessorCacheSize());
     Profiler::Profile("Get system data");
 
     return true;
