@@ -6,11 +6,13 @@
 
 #include "../../../coffee_message_macros.h"
 #include "../sysinfo_def.h"
+#include "../sdlpowerinfo.h"
 
 #include <sys/sysinfo.h>
 #include <unistd.h>
 
 namespace Coffee{
+namespace Environment{
 namespace Linux{
 struct LinuxSysInfo : SysInfoDef
 {
@@ -39,7 +41,7 @@ struct LinuxSysInfo : SysInfoDef
         return data;
     }
 
-    STATICINLINE std::vector<CString> CPUFlags()
+    STATICINLINE Vector<CString> CPUFlags()
     {
         const cstring query = "flags";
 
@@ -274,9 +276,14 @@ struct LinuxSysInfo : SysInfoDef
 private:
     thread_local static CString cached_cpuinfo_string;
 };
+
+using LinuxPowerInfo = _SDLPowerInfo;
+
+}
 }
 
-using SysInfo = Linux::LinuxSysInfo;
+using PowerInfo = Environment::Linux::LinuxPowerInfo;
+using SysInfo = Environment::Linux::LinuxSysInfo;
 
 }
 

@@ -1,6 +1,6 @@
 #include <coffee/core/CFiles>
 
-#include <coffee/core/plat/environment/environment_details.h>
+#include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/CDebug>
 

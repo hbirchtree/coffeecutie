@@ -6,7 +6,7 @@
 #include <coffee/core/coffee.h>
 
 using namespace Coffee;
-using namespace CDisplay;
+using namespace Display;
 
 #ifdef COFFEE_GLEAM_DESKTOP
 using GL = CGL::CGL43;
@@ -32,7 +32,7 @@ public:
             this->swapBuffers();
         }
     }
-    void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
+    void eventHandleD(const Display::CDEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleD(e,data);
 

@@ -5,7 +5,7 @@
 #include "csdl2_gl_context.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 void SDL2GLRenderer::swapBuffers()
 {

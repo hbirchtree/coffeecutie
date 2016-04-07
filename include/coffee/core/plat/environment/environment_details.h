@@ -17,12 +17,12 @@ struct EnvInterface
 	static bool UsingAlternateBuffer;
     };
 
-    STATICINLINE CString ExecutableName(cstring_w = nullptr)
+    STATICINLINE CString ExecutableName()
     {
         return CString();
     }
 
-    STATICINLINE CString BaseName(CString const&)
+    STATICINLINE CString BaseName(CString const& file)
     {
         return CString();
     }
@@ -57,7 +57,7 @@ struct EnvInterface
         return CString();
     }
 
-    STATICINLINE CString GetUserData(cstring, cstring)
+    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
     {
         return CString();
     }
@@ -130,7 +130,3 @@ struct EnvColorCodes
 } //Coffee
 
 #endif
-
-#include "android/environment.h"
-#include "linux/environment.h"
-#include "windows/environment.h"

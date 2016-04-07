@@ -7,12 +7,12 @@
 #include <coffee/sdl2/CSDL2WindowHost>
 
 using namespace Coffee;
-using namespace CDisplay;
+using namespace Display;
 using namespace CAudio;
 
 using AL = COpenAL::OpenALAPI;
 
-class CDRenderer : public Coffee::CDisplay::SDL2WindowHost
+class CDRenderer : public Coffee::Display::SDL2WindowHost
 {
     AL::Sample* m_sample_1;
     AL::Sample* m_sample_2;
@@ -100,7 +100,7 @@ public:
 
         delete dev;
     }
-    void eventHandleD(const CDisplay::CDEvent &e, c_cptr data)
+    void eventHandleD(const Display::CDEvent &e, c_cptr data)
     {
         SDL2WindowHost::eventHandleD(e,data);
         EventHandlers::WindowManagerCloseWindow(this,e,data);

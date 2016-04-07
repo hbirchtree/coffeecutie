@@ -4,7 +4,7 @@
 #include <coffee/core/base/files/cfiles.h>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 using namespace Coffee::CSDL2Types;
 

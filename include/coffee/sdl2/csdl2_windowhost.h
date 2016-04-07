@@ -5,7 +5,7 @@
 #include <coffee/core/CDRendererBase>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SDL2WindowHost :
         public SDL2Window,

@@ -4,8 +4,11 @@ set ( CoffeeCore_SRCS
 #    private/exit_handling.cpp
     private/argument_handling.cpp
 
-
+    # General functions
     private/coffee.cpp
+    private/platform_data.cpp
+
+    # Internal object / debug functions
     private/base/cdebug.cpp
     private/base/cfiles.cpp
     private/base/cobject.cpp
@@ -17,8 +20,14 @@ set ( CoffeeCore_SRCS
     private/plat/file/android/file.cpp
     private/plat/environment/android/environment.cpp
 
-    private/plat/environment/application_start.cpp
+    # Isolation of platform libraries
+    private/plat/environment_wall.cpp
 
+    # Internal platform layer
+    private/plat/environment/application_start.cpp
+    private/plat/environment/sdlpowerinfo.cpp
+
+    # Compression / data storage
     private/datastorage/compression/libz.cpp
 
     # We slap tinyXML2 in here, just cause
@@ -50,13 +59,13 @@ if(NOT WIN32 AND NOT ANDROID)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    find_package(X11 REQUIRED)
+    find_package ( X11 REQUIRED )
     list ( APPEND CORE_EXTRA_LIBRARIES ${X11_LIBRARIES} )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
-    # Windows does not support this
+    # Windows does not support this library
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
     find_package(Unwind QUIET)
     list ( APPEND CORE_INCLUDE_DIR
@@ -65,8 +74,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
 endif()
 
-if(ANDROID)
-    # We use SDL2 for some platform functionality on Android, like file storage
+if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    # We use SDL2 for some platform functionality, like power info
+    # On Android, it is also used to read assets and
+    #  acquiring device info.
     find_package(SDL2 REQUIRED)
     list ( APPEND CORE_INCLUDE_DIR
         ${SDL2_INCLUDE_DIR}

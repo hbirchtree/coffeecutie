@@ -5,7 +5,7 @@
 #include "../csdl2_context.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SDL2EventHandler :
         public virtual EventApplication,

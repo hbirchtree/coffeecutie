@@ -3,7 +3,7 @@
 #include "windowapplication.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class WindowManagerClient : public WindowApplication
 {

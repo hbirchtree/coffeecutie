@@ -3,7 +3,7 @@
 #include <coffee/core/CDialogs>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 struct SDL2Dialog : public DialogInterface
 {

@@ -4,7 +4,7 @@
 #include "glapplication.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class GLLoader
 {

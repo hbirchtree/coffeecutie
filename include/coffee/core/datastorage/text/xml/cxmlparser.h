@@ -6,8 +6,8 @@
 #include <tinyxml2/tinyxml2.h>
 
 namespace Coffee{
-namespace CDataStorage{
-namespace CTextStorage{
+namespace DataStorage{
+namespace TextStorage{
 namespace XML{
 
 using namespace tinyxml2;
@@ -33,7 +33,7 @@ struct TinyXML2Impl
 }
 }
 
-using XML = CDataStorage::CTextStorage::XML::TinyXML2Impl;
+using XML = DataStorage::TextStorage::XML::TinyXML2Impl;
 
 }
 

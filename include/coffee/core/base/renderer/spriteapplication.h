@@ -5,7 +5,7 @@
 #include "../../types/edef/resenum.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SpriteApplication
 {

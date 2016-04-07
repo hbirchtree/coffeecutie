@@ -17,7 +17,8 @@ RUN apt-get -qy install \
 	cmake ninja-build build-essential \
 	clang-3.8 \
 	doxygen swig3.0 \
-	libsdl2-dev libopenal-dev libssl-dev libunwind-dev
+        libsdl2-dev libopenal-dev libssl-dev libunwind-dev \
+        libupower-glib-dev
 
 # FFMPEG for media playback/capture
 RUN apt-get -qy install \

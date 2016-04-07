@@ -8,7 +8,7 @@
 #include <coffee/core/base/renderer/baseapplication.h>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SDL2ContextUser :
         public BaseApplication

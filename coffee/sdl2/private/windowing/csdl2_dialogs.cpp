@@ -2,7 +2,7 @@
 #include "../types/sdl2datatypes.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 void SDL2Dialog::ErrorMessage(cstring title, cstring message)
 {

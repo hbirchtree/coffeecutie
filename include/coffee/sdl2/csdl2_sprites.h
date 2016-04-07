@@ -4,7 +4,7 @@
 #include "csdl2_windowhost.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SimpleSpriteRenderer :
         public SDL2SpriteRenderer,

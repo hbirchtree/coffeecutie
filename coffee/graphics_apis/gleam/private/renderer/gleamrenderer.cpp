@@ -14,7 +14,7 @@
 #include "conversion.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 using GL = CGL::CGL_Implementation;
 

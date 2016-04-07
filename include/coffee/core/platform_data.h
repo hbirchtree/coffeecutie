@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types/tdef/integertypes.h"
 #include "coffee_mem_macros.h"
 #include "plat/plat_primary_identify.h"
 

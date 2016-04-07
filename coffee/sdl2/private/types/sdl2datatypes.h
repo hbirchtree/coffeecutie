@@ -10,7 +10,7 @@
 namespace Coffee{
 namespace CSDL2Types{
 
-using namespace CDisplay;
+using namespace Display;
 
 struct CSDL2Context{
     SDL_Window* window = nullptr;

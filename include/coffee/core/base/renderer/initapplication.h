@@ -3,7 +3,7 @@
 #include "../types/cdisplay.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class InitApplication
 {

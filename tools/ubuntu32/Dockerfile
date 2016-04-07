@@ -19,25 +19,23 @@ RUN apt-get -qy update
 # It will also be less bad if you cancel one of the installations mid-way
 
 # Base tools
-RUN apt-get -qy install git nano wget
-# Build tools
-RUN apt-get -qy install cmake ninja-build build-essential doxygen clang-3.7
-# SWIG, just for giggles
-RUN apt-get -qy install swig3.0:i386
-# RapidJSON for JSON parsing
-RUN apt-get -qy install rapidjson-dev
-# SDL2 libraries + dependencies
-RUN apt-get -qy install libsdl2-dev:i386
-# OpenAL for audio
-RUN apt-get -qy install libopenal-dev:i386
-# ASIO for networking
-RUN apt-get -qy install libasio-dev
-# Unwind for stacktrace information
-RUN apt-get -qy install libunwind-dev:i386
+RUN apt-get -qy install \
+        git nano wget \
+        cmake ninja-build build-essential \
+        clang-3.8 \
+        doxygen swig3.0:i386 \
+        libsdl2-dev libopenal-dev:i386 libssl-dev:i386 libunwind-dev:i386 \
+        libupower-glib-dev:i386
+
 # FFMPEG for media playback/capture
-RUN apt-get -qy install libavcodec-dev:i386 libavdevice-dev:i386 libavformat-dev:i386 libswresample-dev:i386 libswscale-dev:i386
+RUN apt-get -qy install \
+        libavcodec-dev:i386 libavdevice-dev:i386 \
+        libavformat-dev:i386 libswresample-dev:i386 \
+        libswscale-dev:i386
+
 # Qt libraries
 RUN apt-get -qy install qt5-default:i386
+
 # PCL for point cloud data processing
 #RUN apt-get -qy install libpcl-dev:i386
 

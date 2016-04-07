@@ -42,9 +42,9 @@ struct CGL_Shared_Debug
 
     /* Context information */
 
-    STATICINLINE CDisplay::CGLVersion ContextVersion()
+    STATICINLINE Display::CGLVersion ContextVersion()
     {
-        CDisplay::CGLVersion ver = {};
+        Display::CGLVersion ver = {};
 
         ver.major = 0;
         ver.minor = 0;
@@ -84,9 +84,9 @@ struct CGL_Shared_Debug
 
     /* GLSL information */
 
-    STATICINLINE CDisplay::CGLVersion ShaderLanguageVersion()
+    STATICINLINE Display::CGLVersion ShaderLanguageVersion()
     {
-        CDisplay::CGLVersion ver = {};
+        Display::CGLVersion ver = {};
 
         cstring str_c = GetString(GL_SHADING_LANGUAGE_VERSION);
 

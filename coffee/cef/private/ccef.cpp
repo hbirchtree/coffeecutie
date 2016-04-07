@@ -20,7 +20,7 @@ namespace Coffee{
 namespace CEF{
 
 using namespace CInput;
-using namespace CDisplay;
+using namespace Display;
 
 static AppArg m_args;
 static CefMainArgs cef_args;

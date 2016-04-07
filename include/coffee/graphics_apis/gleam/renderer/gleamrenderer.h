@@ -5,7 +5,7 @@
 #include <coffee/core/base/renderer/glapplication.h>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class GLeamRenderer : public GLLoader
 {

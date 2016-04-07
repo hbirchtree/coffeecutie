@@ -8,7 +8,7 @@ namespace Coffee{
 
 using namespace CInput;
 
-namespace CDisplay{
+namespace Display{
 
 class InputApplication
 {

@@ -24,8 +24,8 @@ struct LinuxEnvironmentFun : Posix::PosixEnvironmentFun
 }
 }
 
-using ColorMap = Environment::Posix::PosixTerminalColorCodes;
-using Env = Environment::Linux::LinuxEnvironmentFun;
+using ColorMap_ = Environment::Posix::PosixTerminalColorCodes;
+using Env_ = Environment::Linux::LinuxEnvironmentFun;
 
 }
 

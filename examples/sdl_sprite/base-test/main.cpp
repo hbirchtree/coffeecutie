@@ -9,7 +9,7 @@
 #include <coffee/sdl2/CSDL2SpriteWindow>
 
 using namespace Coffee;
-using namespace CDisplay;
+using namespace Display;
 
 using BasicWindow = SDL2WindowHost;
 using Sprites = SDL2SpriteRenderer;

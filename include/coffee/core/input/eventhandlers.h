@@ -7,7 +7,7 @@
 #include "../base/renderer/windowapplication.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 namespace EventHandlers{
 
 using namespace CInput;

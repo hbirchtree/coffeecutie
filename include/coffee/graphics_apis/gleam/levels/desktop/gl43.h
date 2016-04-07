@@ -15,8 +15,8 @@ struct CGL43 : CGL33
         bool status = CGL33::LoadBinding(ctxt);
 	if(!status)
 	    return false;
-	const CDisplay::CGLVersion targetVer(4,3);
-        CDisplay::CGLVersion ver = Debug::ContextVersion();
+        const Display::CGLVersion targetVer(4,3);
+        Display::CGLVersion ver = Debug::ContextVersion();
         if(ver<targetVer)
         {
 	    const _cbasic_version<uint8>& rv = ver;

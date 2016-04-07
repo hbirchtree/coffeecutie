@@ -36,7 +36,7 @@ extern bool IsLoaded(CEFBrowser* b);
 extern void Resize(CEFBrowser* b, const CSize &size);
 
 extern void ProcessEvent(CEFBrowser* b,CInput::CIEvent const&e,c_cptr data);
-extern void ProcessEvent(CEFBrowser* b, CDisplay::CDEvent const&e, c_cptr data);
+extern void ProcessEvent(CEFBrowser* b, Display::CDEvent const&e, c_cptr data);
 
 extern void DestroyBrowser(CEFBrowser* b);
 

@@ -8,7 +8,7 @@
 namespace Coffee{
 /* Don't mind this, just some string storage */
 #ifdef COFFEE_LINUX
-thread_local CString Linux::LinuxSysInfo::cached_cpuinfo_string;
+thread_local CString Environment::Linux::LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
 #if defined(COFFEE_USE_UNWIND)

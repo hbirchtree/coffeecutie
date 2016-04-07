@@ -4,7 +4,7 @@
 #include "../csdl2_context.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SDL2GLRenderer : public GLApplication,
         public virtual SDL2ContextUser

@@ -148,7 +148,7 @@ FORCEDINLINE CString cStringReplace(
 
 FORCEDINLINE CString cStringReplace(
         CString const& fmt, size_t const& index,
-        CDisplay::CGLVersion const& arg)
+        Display::CGLVersion const& arg)
 {
     return extArgReplace(fmt,index,cStringFormat("major={0}, minor={1}, extra={2}",
                                                  arg.major,arg.minor,arg.driver));

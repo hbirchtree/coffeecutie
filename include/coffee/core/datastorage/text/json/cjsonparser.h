@@ -8,9 +8,10 @@
 #include <rapidjson/prettywriter.h>
 
 namespace Coffee{
-namespace CDataStorage{
-namespace CTextStorage{
+namespace DataStorage{
+namespace TextStorage{
 namespace RJSON{
+
 using namespace rapidjson;
 
 struct RapidJson
@@ -33,7 +34,7 @@ struct RapidJson
 }
 }
 
-using JSON = CDataStorage::CTextStorage::RJSON::RapidJson;
+using JSON = DataStorage::TextStorage::RJSON::RapidJson;
 
 }
 

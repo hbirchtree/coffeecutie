@@ -4,7 +4,7 @@
 #include <coffee/graphics_apis/gltypes.h>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class GLApplication
 {

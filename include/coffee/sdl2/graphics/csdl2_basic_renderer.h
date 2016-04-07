@@ -4,7 +4,7 @@
 #include "../csdl2_context.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SDL2SpriteRenderer : public SpriteApplication,public SDL2ContextUser
 {

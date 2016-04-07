@@ -114,8 +114,8 @@ namespace Environment{
 
 }
 
-using ColorMap = Environment::EnvColorCodes;
-using Env = Environment::Windows::WindowsEnvFun;
+using ColorMap_ = Environment::EnvColorCodes;
+using Env_ = Environment::Windows::WindowsEnvFun;
 
 }
 

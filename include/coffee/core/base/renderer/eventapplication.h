@@ -3,7 +3,7 @@
 #include "inputapplication.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class EventApplication : public InputApplication
 {

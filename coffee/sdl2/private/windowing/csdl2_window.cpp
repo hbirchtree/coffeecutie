@@ -8,7 +8,7 @@
 #include <SDL2/SDL_opengles2.h>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
 {

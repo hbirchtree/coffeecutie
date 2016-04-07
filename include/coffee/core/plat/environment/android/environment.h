@@ -25,8 +25,8 @@ struct AndroidEnv : EnvInterface
 }
 }
 
-using ColorMap = Environment::EnvColorCodes;
-using Env = Environment::Android::AndroidEnv;
+using ColorMap_ = Environment::EnvColorCodes;
+using Env_ = Environment::Android::AndroidEnv;
 
 }
 #endif

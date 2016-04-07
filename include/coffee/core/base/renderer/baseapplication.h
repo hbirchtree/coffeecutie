@@ -3,7 +3,7 @@
 #include <coffee/core/CDisplay>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class BaseApplication
 {

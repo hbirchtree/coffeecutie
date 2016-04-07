@@ -12,7 +12,7 @@ namespace Coffee{
 namespace CSDL2Types{
     struct CSDL2Context;
 }
-namespace CDisplay{
+namespace Display{
 
 class CSDL2Renderer :
         public CDRendererBase,

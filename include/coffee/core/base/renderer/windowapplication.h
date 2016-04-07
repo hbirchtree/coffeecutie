@@ -5,7 +5,7 @@
 #include "../../types/tdef/stltypes.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class WindowApplication
 {

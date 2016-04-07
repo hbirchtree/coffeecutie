@@ -6,7 +6,7 @@
 #include "../../types/edef/enumfun.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 /*!
  * \brief Contains system-dependent window data. Is not allowed in the global namespace.

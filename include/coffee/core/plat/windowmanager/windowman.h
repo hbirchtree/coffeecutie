@@ -5,14 +5,14 @@
 #include "../../types/tdef/integertypes.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 struct CDWindow;
 
 }
 namespace WindowManager{
 
-using Window = CDisplay::CDWindow;
+using Window = Display::CDWindow;
 
 struct WindowControlDef
 {

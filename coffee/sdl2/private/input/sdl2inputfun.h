@@ -6,7 +6,7 @@
 #include "../types/sdl2datatypes.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 using namespace CInput;
 

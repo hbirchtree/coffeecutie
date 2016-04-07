@@ -4,7 +4,7 @@
 #include "../types/sdl2datatypes.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 struct CGL_SDL_GL_Context : CGL::CGL_Context
 {

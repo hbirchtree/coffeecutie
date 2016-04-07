@@ -5,7 +5,7 @@
 #include "sdl2inputfun.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 bool SDL2EventHandler::inputPreInit(CString*)
 {

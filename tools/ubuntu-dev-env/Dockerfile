@@ -11,16 +11,28 @@ RUN apt-get -qy update
 # We use a tier-based installation based. If one step fails, it will still save some of the others.
 # It will also be less bad if you cancel one of the installations mid-way
 
+
 # Base tools
-RUN apt-get -qy install git nano wget cmake ninja-build build-essential doxygen swig3.0
-# Development libraries
-RUN apt-get -qy install libsdl2-dev libopenal-dev libssl-dev libunwind-dev
+RUN apt-get -qy install \
+        git nano wget \
+        cmake ninja-build build-essential \
+        clang-3.8 \
+        doxygen swig3.0 \
+        libsdl2-dev libopenal-dev libssl-dev libunwind-dev \
+        libupower-glib-dev
+
 # FFMPEG for media playback/capture
-RUN apt-get -qy install libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev libswscale-dev
+RUN apt-get -qy install \
+        libavcodec-dev libavdevice-dev \
+        libavformat-dev libswresample-dev \
+        libswscale-dev
+
 # Qt libraries
 RUN apt-get -qy install qt5-default
+
 # PCL for point cloud data processing
-RUN apt-get -qy install libpcl-dev
+#RUN apt-get -qy install libpcl-dev
+
 
 RUN apt-get -qy install qtcreator numix-gtk-theme
 

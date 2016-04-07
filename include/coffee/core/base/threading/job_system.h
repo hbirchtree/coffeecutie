@@ -1,7 +1,7 @@
 #pragma once
 
 #include "async_tasks.h"
-#include "../../plat/environment/sysinfo_def.h"
+#include "../../plat/plat_environment.h"
 #include "../../types/tdef/integertypes.h"
 #include "../../types/tdef/stltypes.h"
 

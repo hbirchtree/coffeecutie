@@ -5,8 +5,8 @@
 #include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
-namespace CDataStorage{
-namespace CTextStorage{
+namespace DataStorage{
+namespace TextStorage{
 namespace CINI{
 
 struct IniParserDef
@@ -388,7 +388,7 @@ protected:
 }
 }
 
-using INI = CDataStorage::CTextStorage::CINI::SimpleIniParser;
+using INI = DataStorage::TextStorage::CINI::SimpleIniParser;
 
 }
 

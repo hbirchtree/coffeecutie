@@ -6,7 +6,7 @@
 #include "../types/sdl2datatypes.h"
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 struct SDL2SpriteRenderer::SDLSpriteContext
 {

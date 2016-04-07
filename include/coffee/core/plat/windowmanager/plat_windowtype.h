@@ -10,15 +10,15 @@
 #endif
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 struct CDWindow{
 
     union {
 #if defined(COFFEE_X11)
         struct {
-            Window window;
-            Display* display;
+            ::Window window;
+            ::Display* display;
         } x11;
 #elif defined(COFFEE_WINDOWS)
         struct {

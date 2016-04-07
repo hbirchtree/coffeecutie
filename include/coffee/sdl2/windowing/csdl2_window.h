@@ -4,7 +4,7 @@
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
 namespace Coffee{
-namespace CDisplay{
+namespace Display{
 
 class SDL2Window :
         public WindowManagerClient,
