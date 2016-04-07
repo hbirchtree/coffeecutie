@@ -104,7 +104,9 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         if(p.version==v30es)
         {
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
+#ifndef COFFEE_GLEAM_DESKTOP
             status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+#endif
         }
     }
 
