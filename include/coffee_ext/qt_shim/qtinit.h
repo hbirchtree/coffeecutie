@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/composite_types.h>
-#include <coffee/core/plat/environment/environment_details.h>
+#include <coffee/core/plat/plat_environment.h>
 
 namespace CoffeeExt{
 
@@ -10,7 +10,7 @@ struct QtSystem : Coffee::Subsystem
     STATICINLINE void Init()
     {
 	int v = 1;
-	Coffee::CString execname = Coffee::Env::ExecutableName();
+        Coffee::CString execname = Coffee::Env::ExecutableName();
 	Coffee::cstring exec_c = execname.c_str();
 	Init(v,(char**)&exec_c);
     }
