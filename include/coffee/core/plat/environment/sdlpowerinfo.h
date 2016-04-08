@@ -2,8 +2,6 @@
 
 #include "sysinfo_def.h"
 
-#undef SDLPowerInfo
-
 namespace Coffee{
 namespace Environment{
 

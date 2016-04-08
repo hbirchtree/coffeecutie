@@ -11,11 +11,6 @@ namespace CResources{
 
 static CString _coffee_resource_prefix = "./";
 
-void FileResourcePrefix(cstring prefix)
-{
-    _coffee_resource_prefix = prefix;
-}
-
 CString DereferencePath(cstring suffix, ResourceAccess storageMask)
 {
     //We will NOT try to add any '/' in there.
@@ -34,6 +29,39 @@ CString DereferencePath(cstring suffix, ResourceAccess storageMask)
     return _coffee_resource_prefix+suffix;
 }
 
+struct Resource::ResourceData
+{
+    FileFun::FileMapping m_mapping;
+    FileFun::FileHandle* m_handle;
+};
+
+Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
+    m_resource(),
+    m_platform_data(new ResourceData),
+    data(nullptr),
+    size(0),
+    flags(Undefined)
+{
+#ifdef COFFEE_ANDROID
+    absolute = false;
+#endif
+
+    if(absolute)
+        m_resource = rsrc;
+    else
+        m_resource = DereferencePath(rsrc,acc&ResourceAccess::StorageMask);
+}
+
+cstring Resource::resource() const
+{
+    return m_resource.c_str();
+}
+
+void FileResourcePrefix(cstring prefix)
+{
+    _coffee_resource_prefix = prefix;
+}
+
 bool FileExists(const Resource &resc)
 {
     return FileFun::Exists(resc.resource());
@@ -48,13 +76,13 @@ bool FileMap(Resource &resc, ResourceAccess acc)
         return false;
 
     int err = 0;
-    resc.m_mapping = FileFun::Map(
+    resc.m_platform_data->m_mapping = FileFun::Map(
 				native_fn.c_str(),
                 acc,
                 0,resc.size,
                 &err);
 
-    if(!resc.m_mapping.ptr)
+    if(!resc.m_platform_data->m_mapping.ptr)
     {
         /* Externalize error checkers */
 #ifndef COFFEE_WINDOWS
@@ -76,7 +104,7 @@ bool FileMap(Resource &resc, ResourceAccess acc)
         return false;
     }
 
-    resc.data = resc.m_mapping.ptr;
+    resc.data = resc.m_platform_data->m_mapping.ptr;
     resc.flags = resc.flags|Resource::Mapped;
 
     return true;
@@ -87,7 +115,7 @@ bool FileUnmap(Resource &resc)
     if(!(resc.flags&Resource::Mapped))
         return false;
 
-    bool s = FileFun::Unmap(&resc.m_mapping);
+    bool s = FileFun::Unmap(&resc.m_platform_data->m_mapping);
 
     if(!s)
         return false;
@@ -150,25 +178,9 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
     return stat;
 }
 
-Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
-    m_resource(),
-    data(nullptr),
-    size(0),
-    flags(Undefined)
+bool FileMkdir(cstring dirname, bool recursive)
 {
-#ifdef COFFEE_ANDROID
-    absolute = false;
-#endif
-
-    if(absolute)
-        m_resource = rsrc;
-    else
-        m_resource = DereferencePath(rsrc,acc&ResourceAccess::StorageMask);
-}
-
-cstring Resource::resource() const
-{
-    return m_resource.c_str();
+    return DirFun::MkDir(dirname,recursive);
 }
 
 }

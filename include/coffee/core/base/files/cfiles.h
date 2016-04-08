@@ -4,7 +4,8 @@
 #include "../../types/edef/enumfun.h"
 #include "../../types/tdef/stltypes.h"
 #include "../../types/tdef/integertypes.h"
-#include "../../plat/plat_file.h"
+#include "../../types/edef/resenum.h"
+#include "../../types/cdef/memtypes.h"
 
 namespace Coffee{
 namespace CResources{
@@ -16,8 +17,9 @@ struct Resource{
 private:
     CString m_resource; /*!< URL for the resource*/
 
-    FileFun::FileMapping m_mapping;
-    FileFun::FileHandle* m_handle;
+    struct ResourceData;
+
+    ResourceData* m_platform_data;
 
 public:
 
@@ -96,10 +98,7 @@ extern void FileCommitTextmode(const Resource& resc, bool append = false);
  * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
  * \return True if process succeeded
  */
-inline C_FORCE_INLINE bool FileMkdir(cstring dirname, bool recursive)
-{
-    return DirFun::MkDir(dirname,recursive);
-}
+extern bool FileMkdir(cstring dirname, bool recursive);
 
 FORCEDINLINE CByteData FileGetDescriptor(Resource& resc)
 {

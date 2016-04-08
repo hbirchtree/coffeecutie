@@ -15,17 +15,14 @@ set ( CoffeeCore_SRCS
 
     private/profiler/profiling-export.cpp
 
+    # TODO: Move Windows library code into new API
     private/plat/linking/libraries.cpp
-
-    private/plat/file/android/file.cpp
-    private/plat/environment/android/environment.cpp
 
     # Isolation of platform libraries
     private/plat/environment_wall.cpp
 
     # Internal platform layer
     private/plat/environment/application_start.cpp
-    private/plat/environment/sdlpowerinfo.cpp
 
     # Compression / data storage
     private/datastorage/compression/libz.cpp
@@ -34,6 +31,24 @@ set ( CoffeeCore_SRCS
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
     )
 
+# Platform-specific code, put it here
+
+# SDL power-management
+if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    list ( APPEND CoffeeCore_SRCS
+	private/plat/environment/sdlpowerinfo.cpp
+	)
+endif()
+
+# Android-specific code
+if(ANDROID)
+    list ( APPEND CoffeeCore_SRCS
+	private/plat/file/android/file.cpp
+	private/plat/environment/android/environment.cpp
+	)
+endif()
+
+# Some variables
 set ( CORE_INCLUDE_DIR )
 set ( CORE_EXTRA_LIBRARIES )
 
