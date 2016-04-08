@@ -12,14 +12,14 @@ struct AndroidSysInfo : SysInfoDef
 {
 };
 
-struct AndroidPowerInfo : SDLPowerInfo
+struct AndroidPowerInfo : _SDLPowerInfo
 {
 };
 
 }
 }
 
-using PowerInfo = Environment::Android::PowerInfo;
+using PowerInfo = Environment::Android::AndroidPowerInfo;
 using SysInfo = Environment::Android::AndroidSysInfo;
 
 }

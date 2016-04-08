@@ -7,8 +7,10 @@ namespace Environment{
 
 bool _SDLPowerInfo::IsPowered()
 {
-    return SDL_GetPowerInfo(nullptr,nullptr)&
-            (SDL_POWERSTATE_CHARGING|SDL_POWERSTATE_NO_BATTERY);
+    SDL_PowerState stat = SDL_GetPowerInfo(nullptr,nullptr);
+    return stat==SDL_POWERSTATE_CHARGING
+            || stat==SDL_POWERSTATE_CHARGED
+            || stat==SDL_POWERSTATE_NO_BATTERY;
 }
 bool _SDLPowerInfo::IsCharging()
 {
