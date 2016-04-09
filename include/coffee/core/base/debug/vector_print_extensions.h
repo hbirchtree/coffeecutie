@@ -6,7 +6,7 @@
 namespace Coffee{
 namespace DebugFun{
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         CQuat const& v)
 {
@@ -14,7 +14,7 @@ FORCEDINLINE CString cStringReplace(
                                                v.w(),v.x(),v.y(),v.z()));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         CVec4 const& v)
 {
@@ -22,7 +22,7 @@ FORCEDINLINE CString cStringReplace(
                                                v.x(),v.y(),v.z(),v.w()));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         CVec3 const& v)
 {
@@ -30,7 +30,7 @@ FORCEDINLINE CString cStringReplace(
                                                v.x(),v.y(),v.z()));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         CVec2 const& v)
 {
@@ -38,7 +38,7 @@ FORCEDINLINE CString cStringReplace(
                                                v.x(),v.y()));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         CMat4 const& v)
 {
@@ -48,7 +48,7 @@ FORCEDINLINE CString cStringReplace(
                               v[0],v[1],v[2],v[3]));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         CMat3 const& v)
 {
@@ -58,7 +58,7 @@ FORCEDINLINE CString cStringReplace(
                               v[0],v[1],v[2]));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
 	CString const& fmt, size_t const& index,
 	BoundBox const& box)
 {

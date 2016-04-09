@@ -26,6 +26,10 @@ set ( CoffeeCore_SRCS
 
     # Compression / data storage
     private/datastorage/compression/libz.cpp
+    private/datastorage/text/ini/ciniparser.cpp
+
+    # Unit testing
+    private/unit_tests/framework.cpp
 
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp

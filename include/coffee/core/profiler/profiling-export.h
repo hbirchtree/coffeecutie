@@ -33,8 +33,7 @@ extern void ExportProfilerData(cstring out, int32 argc = 0, cstring_w* argv = nu
  * \param argv
  * \param silent
  */
-extern void ExitRoutine(int32 argc, cstring_w* argv, bool silent = false)
-;
+extern void ExitRoutine(int32 argc, cstring_w* argv, bool silent = false);
 
 }
 }

@@ -8,7 +8,6 @@ namespace DebugFun{
 
 /* Core string resolution */
 
-#ifdef COFFEE_USE_IOSTREAMS
 template<typename T>
 FORCEDINLINE CString cStringReplace(
         CString const& fmt, size_t const& index,
@@ -16,7 +15,6 @@ FORCEDINLINE CString cStringReplace(
 {
     return extArgReplace(fmt,index,conversion::to_string(arg));
 }
-#endif
 
 template<typename T>
 FORCEDINLINE CString cStringResolve(CString const& fmt, size_t index,

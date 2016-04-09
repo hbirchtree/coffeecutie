@@ -19,6 +19,13 @@ struct LinuxEnvironmentFun : Posix::PosixEnvironmentFun
         CFree(p);
         return v;
     }
+    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
+    {
+        CString homedir = GetUserHome();
+        homedir = ConcatPath(homedir.c_str(),".local/share");
+        homedir = ConcatPath(homedir.c_str(),orgname);
+        return ConcatPath(homedir.c_str(),appname);
+    }
 };
 
 }

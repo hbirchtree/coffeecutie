@@ -1,9 +1,8 @@
 #ifndef COFFEE_EXT_QT_SHIM_QT_NODE_EDITOR_NODE_EDIT_H
 #define COFFEE_EXT_QT_SHIM_QT_NODE_EDITOR_NODE_EDIT_H
 
-#include <coffee/CCore>
-
-#include <iostream>
+#include <coffee/core/types/tdef/stltypes.h>
+#include <coffee/core/types/cdef/memtypes.h>
 
 #include <QtCore/QDebug>
 #include <QtCore/QRectF>
@@ -42,7 +41,7 @@ struct CNodeItem
      * \brief Acquire all backward connections to nodes. (Backward chaining only)
      * \return A constant reference to the list of connections.
      */
-    virtual const std::vector<CConnection>& connections() = 0;
+    virtual const Vector<CConnection>& connections() = 0;
     /*!
      * \brief Label of the node, displayed at top
      * \return

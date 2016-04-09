@@ -4,15 +4,6 @@
 #define COFFEE_ARCH_LLP64
 #endif
 
-/* STL on Android is neutered! */
-#if !defined(COFFEE_ANDROID)
-//#define COFFEE_USE_STL_TO_STRING
-#endif
-
-#if !defined(COFFEE_ANDROID)
-//#define COFFEE_USE_IOSTREAMS
-#endif
-
 /* Unwind and terminal control signals are desktop-only */
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_ANDROID)
 #define COFFEE_USE_UNWIND

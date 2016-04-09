@@ -67,13 +67,6 @@ struct PosixEnvironmentFun : EnvInterface
     {
 	return GetVar("HOME");
     }
-    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
-    {
-	CString homedir = GetUserHome();
-	homedir = ConcatPath(homedir.c_str(),".local/share");
-	homedir = ConcatPath(homedir.c_str(),orgname);
-	return ConcatPath(homedir.c_str(),appname);
-    }
     STATICINLINE CString ApplicationDir()
     {
 	CString tmp = ExecutableName();

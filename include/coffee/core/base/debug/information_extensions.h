@@ -7,7 +7,7 @@
 namespace Coffee{
 namespace DebugFun{
 
-FORCEDINLINE cstring cStringify(DebugComponent const& comp)
+inline cstring cStringify(DebugComponent const& comp)
 {
     switch(comp)
     {
@@ -30,7 +30,7 @@ FORCEDINLINE cstring cStringify(DebugComponent const& comp)
     }
     return "";
 }
-FORCEDINLINE cstring cStringify(DebugType const& type)
+inline cstring cStringify(DebugType const& type)
 {
     switch(type)
     {
@@ -53,7 +53,7 @@ FORCEDINLINE cstring cStringify(DebugType const& type)
     }
     return "";
 }
-FORCEDINLINE cstring cStringify(Severity const& sev)
+inline cstring cStringify(Severity const& sev)
 {
     switch(sev)
     {
@@ -77,28 +77,28 @@ FORCEDINLINE cstring cStringify(Severity const& sev)
 
 /* Extension resolvers */
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         DebugComponent const& arg)
 {
     return extArgReplace(fmt,index,cStringify(arg));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         DebugType const& arg)
 {
     return extArgReplace(fmt,index,cStringify(arg));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         Severity const& arg)
 {
     return extArgReplace(fmt,index,cStringify(arg));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         const _cbasic_version<uint8>& arg)
 {
@@ -107,7 +107,7 @@ FORCEDINLINE CString cStringReplace(
                                                arg.revision));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         const _cbasic_version<int32>& arg)
 {
@@ -116,7 +116,7 @@ FORCEDINLINE CString cStringReplace(
                                                arg.revision));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         const _cbasic_version<uint32>& arg)
 {
@@ -125,7 +125,7 @@ FORCEDINLINE CString cStringReplace(
                                                arg.revision));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         HWDeviceInfo const& arg)
 {
@@ -135,7 +135,7 @@ FORCEDINLINE CString cStringReplace(
                                                arg.firmware));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         SWVersionInfo const& arg)
 {
@@ -146,7 +146,7 @@ FORCEDINLINE CString cStringReplace(
                                        arg.patch,arg.build));
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         Display::CGLVersion const& arg)
 {
@@ -155,7 +155,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 template<typename T>
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         _cbasic_point<T> v)
 {
@@ -164,7 +164,7 @@ FORCEDINLINE CString cStringReplace(
 }
 
 template<typename T>
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         _cbasic_size_2d<T> v)
 {

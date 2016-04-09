@@ -13,65 +13,83 @@ namespace Coffee{
 namespace DebugFun{
 namespace conversion{
 
-#if defined(COFFEE_USE_STL_TO_STRING)
-using namespace std;
-#else
-//FORCEDINLINE CString to_string(const char* const& v)
-//{
-//    return CString(v);
-//}
-//FORCEDINLINE CString to_string(const CString& v)
-//{
-//    return v;
-//}
-//template<typename T>
-//FORCEDINLINE CString to_string(const T* const& v)
-//{
-//    return "0x"+StrUtil::hexify((uintptr)v);
-//}
+inline CString to_string(const char* const& v)
+{
+    return CString(v);
+}
+inline CString to_string(const CString& v)
+{
+    return v;
+}
+template<typename T>
+inline CString to_string(const T* const& v)
+{
+    return "0x"+StrUtil::hexify((uintptr)v);
+}
 
-//FORCEDINLINE CString to_string(const uint8& v)
-//{
-//    return Convert::uinttostring(v);
-//}
-//FORCEDINLINE CString to_string(const int8& v)
-//{
-//    return Convert::inttostring(v);
-//}
-//FORCEDINLINE CString to_string(const uint16& v)
-//{
-//    return Convert::uinttostring(v);
-//}
-//FORCEDINLINE CString to_string(const int16& v)
-//{
-//    return Convert::inttostring(v);
-//}
-//FORCEDINLINE CString to_string(const uint32& v)
-//{
-//    return Convert::uinttostring(v);
-//}
-//FORCEDINLINE CString to_string(const int32& v)
-//{
-//    return Convert::inttostring(v);
-//}
+inline CString to_string(const uint8& v)
+{
+    return Convert::uinttostring(v);
+}
+inline CString to_string(const int8& v)
+{
+    return Convert::inttostring(v);
+}
+inline CString to_string(const uint16& v)
+{
+    return Convert::uinttostring(v);
+}
+inline CString to_string(const int16& v)
+{
+    return Convert::inttostring(v);
+}
+inline CString to_string(const uint32& v)
+{
+    return Convert::uinttostring(v);
+}
+inline CString to_string(const int32& v)
+{
+    return Convert::inttostring(v);
+}
+inline CString to_string(const uint64& v)
+{
+    return Convert::uinttostring(v);
+}
+inline CString to_string(const int64& v)
+{
+    return Convert::inttostring(v);
+}
+inline CString to_string(const scalar& v)
+{
+    return Convert::scalarftostring(v);
+}
+inline CString to_string(const bigscalar& v)
+{
+    return Convert::scalartostring(v);
+}
+#ifdef COFFEE_ARCH_LLP64
+inline CString to_string(const long int& v)
+{
+    return Convert::inttostring(v);
+}
+#endif
 
 template<typename T>
-FORCEDINLINE CString to_string(const T& v)
+inline CString to_string(const T& v)
 {
     return "NUP";
 }
-#endif
 
 }
 
 template<typename... Arg> CString cStringFormat(cstring fmt, Arg... args);
 
-FORCEDINLINE CString cStringResolve(CString const& fmt, size_t)
+inline CString cStringResolve(CString const& fmt, size_t)
 {
     return fmt;
 }
 
-FORCEDINLINE CString extArgReplace(CString const& fmt,
+inline CString extArgReplace(CString const& fmt,
                                    size_t const& index,
                                    CString const& replace)
 {
@@ -79,7 +97,7 @@ FORCEDINLINE CString extArgReplace(CString const& fmt,
     return CStrReplace(fmt,subfmt,replace);
 }
 
-FORCEDINLINE CString extArgReplacePhrase(const CString& fmt,
+inline CString extArgReplacePhrase(const CString& fmt,
                                          const CString& phrase,
                                          const CString& replace)
 {
@@ -87,7 +105,7 @@ FORCEDINLINE CString extArgReplacePhrase(const CString& fmt,
 }
 
 template<typename T>
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         const T* const& ptr)
 {
@@ -95,39 +113,38 @@ FORCEDINLINE CString cStringReplace(
     return extArgReplace(fmt,index,"0x"+rep);
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         cstring arg)
 {
     return extArgReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         char* const arg)
 {
     return extArgReplace(fmt,index,(arg) ? arg : "0x0");
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         bool const& arg)
 {
     return extArgReplace(fmt,index,(arg) ? "true" : "false");
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         const CString& arg)
 {
     return extArgReplace(fmt,index,arg);
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         bigscalar const& arg)
 {
-#ifdef COFFEE_USE_IOSTREAMS
     /* Regexes, man, these fucking regexes */
     Regex::Pattern patt = Regex::Compile(".*?(\\{\\d+:(\\d+)\\}).*");
     auto match = Regex::Match(patt,fmt,true);
@@ -137,20 +154,29 @@ FORCEDINLINE CString cStringReplace(
         int32 prec = Convert::strtoint(match[2].s_match[0].c_str());
 
         CString rep;
+#ifdef COFFEE_USE_IOSTREAMS
         std::stringstream ss;
         ss << std::fixed << std::setprecision(prec) << arg;
         ss >> rep;
+#else
+        rep = Convert::scalartostring(arg);
+        cstring dot1 = Search::ChrFind(rep.c_str(),'.');
+        cstring dot2 = Search::ChrFind(rep.c_str(),',');
+        cstring ptr_start = rep.c_str();
+        cstring ptr_end = rep.c_str()+rep.size();
+        if(dot1)
+            rep.resize(dot1-ptr_start+1+prec,'0');
+        else if(dot2)
+            rep.resize(dot2-ptr_start+1+prec,'0');
+#endif
 
         return extArgReplacePhrase(fmt,match[1].s_match[0],rep);
     }
     else
         return extArgReplace(fmt,index,conversion::to_string(arg));
-#else
-    return extArgReplace(fmt,index,Convert::scalartostring(arg));
-#endif
 }
 
-FORCEDINLINE CString cStringReplace(
+inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         scalar const& arg)
 {
@@ -162,6 +188,5 @@ FORCEDINLINE CString cStringReplace(
 
 #endif
 
-#include "generic_resolvers.h"
 #include "information_extensions.h"
 #include "vector_print_extensions.h"
