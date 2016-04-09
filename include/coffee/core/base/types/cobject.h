@@ -1,7 +1,8 @@
 #ifndef COFFEE_COBJECT_H
 #define COFFEE_COBJECT_H
 
-#include <coffee/core/CThreading>
+#include <coffee/core/types/tdef/stlfunctypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee {
 
@@ -12,11 +13,12 @@ public:
     CObject(CObject* parent);
     ~CObject();
 
+    CObject* parent() const;
     CObject* parent();
     void setParent(CObject* parent);
 
     //Object name, must be freed
-    cstring objectName();
+    cstring objectName() const;
     void setObjectName(cstring name);
 
 protected:
@@ -25,7 +27,7 @@ protected:
 private:
     void removeChild(CObject* child);
 
-    std::vector<CObject*> m_children;
+    Vector<CObject*> m_children;
     CObject* m_parent;
     CString m_objectName;
 };

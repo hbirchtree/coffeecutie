@@ -237,24 +237,27 @@ FORCEDINLINE CString& zerotrim(CString& s)
     return zeroltrim(zerortrim(s));
 }
 
-FORCEDINLINE CString hexify(uint64 inp)
+FORCEDINLINE CString hexify(uint64 inp, bool trim_zero = false)
 {
     CString out;
+    out.resize(16);
 
     uint8 a;
     uint64 b;
     for(uint8 i=0;i<64;i+=4)
     {
-        a = i/4;
+        a = i / 4;
         b = inp;
-        b = b << (64-(a+1)*4);
-        b = b >> (60);
+        b = b << (64 - ( a + 1) * 4);
+        b = b >> 60;
         if(b<10)
-            out.append(Convert::uinttostring(b));
+            out[15-a] = '0'+b;
         else
-            out.push_back('a'+b-10);
+            out[15-a] = 'a'+b-10;
     }
-    zerotrim(out);
+    zeroltrim(out);
+    if(trim_zero)
+        zerortrim(out);
     return out;
 }
 

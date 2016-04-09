@@ -1,8 +1,8 @@
+#pragma once
+
 #include "../../platform_detect.h"
 
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
-#ifndef COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
-#define COFFEE_CORE_PLAT_ENVIRONMENT_DETAILS_LINUX_H
 
 #include "../environment_details.h"
 #include "../../memory/cmemory.h"
@@ -21,21 +21,7 @@ namespace Posix{
 
 struct PosixEnvironmentFun : EnvInterface
 {
-    STATICINLINE CString BaseName(CString const& n)
-    {
-        cstring_w cp = AllocT<sbyte_t>(n.size()+1);
-
-        StrCpy(cp,n.c_str());
-        cp[n.size()] = 0;
-
-        cstring_w r = basename(cp);
-
-        CString imm;
-        imm.insert(0,r,StrLen(r));
-
-        CFree(cp);
-        return imm;
-    }
+    static CString BaseName(CString const& n);
 
     STATICINLINE CString GetVar(cstring var)
     {
@@ -67,45 +53,10 @@ struct PosixEnvironmentFun : EnvInterface
     {
 	return GetVar("HOME");
     }
-    STATICINLINE CString ApplicationDir()
-    {
-	CString tmp = ExecutableName();
-	CString stmp = dirname(&tmp[0]);
-	return stmp;
-    }
-    STATICINLINE CString CurrentDir()
-    {
-	CString dir;
-	dir.resize(PATH_MAX);
-        char* p = getcwd(&dir[0],PATH_MAX);
-        dir.resize(strchr(dir.c_str(),'\0')-dir.c_str());
-	return dir;
-    }
-    STATICINLINE Variables Environment()
-    {
-        Variables e;
-        char* envar = environ[0];
-        CString v1,v2;
-        szptr vn = 0;
-        cstring q;
-        while(envar)
-        {
-            q = StrFind(envar,"=");
-            if(!q)
-                continue;
-            v1.insert(0,(cstring)envar,q-envar);
-            v2.insert(0,(cstring)q+1,StrLen(q+1));
 
-            e.insert(VarPair(v1,v2));
-
-            v1.clear();
-            v2.clear();
-
-            vn++;
-            envar = environ[vn];
-        }
-        return e;
-    }
+    static CString ApplicationDir();
+    static CString CurrentDir();
+    static Variables Environment();
 };
 
 struct PosixTerminalColorCodes : EnvColorCodes
@@ -162,5 +113,4 @@ struct PosixTerminalColorCodes : EnvColorCodes
 
 }
 
-#endif
 #endif

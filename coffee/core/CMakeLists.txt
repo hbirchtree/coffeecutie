@@ -13,6 +13,10 @@ set ( CoffeeCore_SRCS
     private/base/cfiles.cpp
     private/base/cobject.cpp
 
+    # Terminal functions
+    private/terminal/table-print.cpp
+
+    # Profiling
     private/profiler/profiling-export.cpp
 
     # TODO: Move Windows library code into new API
@@ -50,6 +54,27 @@ if(ANDROID)
 	private/plat/file/android/file.cpp
 	private/plat/environment/android/environment.cpp
 	)
+endif()
+
+# Linux-specific code
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+    list ( APPEND CoffeeCore_SRCS
+        private/plat/environment/linux/sysinfo.cpp
+        )
+endif()
+
+# Windows-specific code
+if(WIN32)
+    list ( APPEND CoffeeCore_SRCS
+
+        )
+endif()
+
+# POSIX code
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    list ( APPEND CoffeeCore_SRCS
+        private/plat/environment/posix/environment.cpp
+        )
 endif()
 
 # Some variables

@@ -19,6 +19,8 @@
 namespace Coffee{
 
 using CString   = std::string; /*!< Typical string object */
+using CWString   = std::wstring; /*!< Typical string object suited for interfaces */
+
 using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
 using Mutex = std::mutex;

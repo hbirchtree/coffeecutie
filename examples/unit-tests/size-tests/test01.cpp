@@ -3,6 +3,7 @@
 #include <coffee/core/CInput>
 
 using namespace Coffee;
+using namespace CInput;
 
 bool basic_tests()
 {

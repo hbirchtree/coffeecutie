@@ -24,7 +24,7 @@ inline CString to_string(const CString& v)
 template<typename T>
 inline CString to_string(const T* const& v)
 {
-    return "0x"+StrUtil::hexify((uintptr)v);
+    return "0x"+StrUtil::hexify((uintptr)v,true);
 }
 
 inline CString to_string(const uint8& v)
@@ -61,11 +61,13 @@ inline CString to_string(const int64& v)
 }
 inline CString to_string(const scalar& v)
 {
-    return Convert::scalarftostring(v);
+    CString out = Convert::scalarftostring(v);
+    return StrUtil::zerortrim(out);
 }
 inline CString to_string(const bigscalar& v)
 {
-    return Convert::scalartostring(v);
+    CString out = Convert::scalartostring(v);
+    return StrUtil::zerortrim(out);
 }
 #ifdef COFFEE_ARCH_LLP64
 inline CString to_string(const long int& v)
@@ -109,8 +111,7 @@ inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         const T* const& ptr)
 {
-    CString rep = StrUtil::hexify((uintptr_t)ptr);
-    return extArgReplace(fmt,index,"0x"+rep);
+    return extArgReplace(fmt,index,conversion::to_string(ptr));
 }
 
 inline CString cStringReplace(

@@ -23,6 +23,11 @@ CObject::~CObject()
         delete child;
 }
 
+CObject *CObject::parent() const
+{
+    return m_parent;
+}
+
 CObject *CObject::parent()
 {
     return m_parent;
@@ -43,7 +48,7 @@ void CObject::setParent(CObject *parent)
     }
 }
 
-cstring CObject::objectName()
+cstring CObject::objectName() const
 {
     return m_objectName.c_str();
 }

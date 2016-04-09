@@ -1,5 +1,15 @@
 #include <coffee/core/unit_tests/framework.h>
 
+#include <coffee/core/CDebug>
+#include <coffee/core/CMD>
+#include <coffee/core/CJSONParser>
+#include <coffee/core/CPlatform>
+#include <coffee/core/plat/environment/argument_parse.h>
+#include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/types/cdef/memtypes.h>
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
+
 namespace CoffeeTest{
 
 void run_tests(uint32 num, Test const* tests, int argc, char** argv)
