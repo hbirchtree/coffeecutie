@@ -17,52 +17,42 @@ else
 	exit 1
 fi
 
-# Create build directory
-mkdir -p "$BUILD_DIR_32"
-cd "$BUILD_DIR_32"
 
-# Configure and build
-cmake "$PROJECT_DIR" -G "Ninja" \
-	-DCMAKE_TOOLCHAIN_FILE="$ANDROID_TOOLCHAIN_FILE" \
-	-DANDROID_STL="$ANDROID_STL_IMPL" \
-	-DANDROID_NATIVE_API_LEVEL="$ANDROID_TARGET_32" \
-	-DANDROID_ABI="$ANDROID_ABI_32" \
-	-DOPENAL_LIBRARY="$AL_LIBRARY_FILE_32" \
-	-DOPENAL_INCLUDE_DIR="$AL_INCLUDE_DIR" \
-	-DSDL2_LIBRARY="$SDL2_LIBRARY_FILE_32" \
-	-DSDL2_INCLUDE_DIR="$SDL2_INCLUDE_DIR" \
-	-DCOFFEE_BUILD_GLES=ON \
-	-DCOFFEE_BUILD_OPENSSL=OFF \
-&& ninja
+for arch_idx in $(seq 0 $((6-1)))
+do
+    # Create build directory
+    BUILD_DIR="${BUILD_DIR_PREFIX}_${ARCHITECTURES[${arch_idx}]}"
+    mkdir -p "${BUILD_DIR}"
+    cd "${BUILD_DIR}"
 
-[[ $? != 0 ]] && exit 1
+    API="${ANDROID_TARGET[${arch_idx}]}"
+    ABI="${ANDROID_ABI[${arch_idx}]}"
 
-# Create build directory
-mkdir -p "$BUILD_DIR_64"
-cd "$BUILD_DIR_64"
+    # Configure and build
+    cmake "$PROJECT_DIR" -G "Ninja" \
+        -DCMAKE_TOOLCHAIN_FILE="${ANDROID_TOOLCHAIN_FILE}" \
+        -DANDROID_STL="${ANDROID_STL_IMPL}" \
+        -DANDROID_NATIVE_API_LEVEL="${API}" \
+        -DANDROID_ABI="${ABI}" \
+        -DSDL2_LIBRARY="${LIBRARY_PREFIX}/${ABI}/${AL_LIBRARY_FILE_SO}" \
+        -DOPENAL_INCLUDE_DIR="$AL_INCLUDE_DIR" \
+        -DSDL2_LIBRARY="${LIBRARY_PREFIX}/${ABI}/${SDL2_LIBRARY_FILE_SO}" \
+        -DSDL2_INCLUDE_DIR="$SDL2_INCLUDE_DIR" \
+        -DCOFFEE_BUILD_GLES=ON \
+        -DCOFFEE_BUILD_OPENSSL=OFF \
+    && ninja
 
-# Configure and build
-cmake "$PROJECT_DIR" -G "Ninja" \
-	-DCMAKE_TOOLCHAIN_FILE="$ANDROID_TOOLCHAIN_FILE" \
-	-DANDROID_STL="$ANDROID_STL_IMPL" \
-	-DANDROID_NATIVE_API_LEVEL="$ANDROID_TARGET_64" \
-	-DANDROID_ABI="$ANDROID_ABI_64" \
-	-DOPENAL_LIBRARY="$AL_LIBRARY_FILE_64" \
-	-DOPENAL_INCLUDE_DIR="$AL_INCLUDE_DIR" \
-	-DSDL2_LIBRARY="$SDL2_LIBRARY_FILE_64" \
-	-DSDL2_INCLUDE_DIR="$SDL2_INCLUDE_DIR" \
-	-DCOFFEE_BUILD_GLES=ON \
-	-DCOFFEE_BUILD_OPENSSL=OFF \
-&& ninja
+    [[ $? != 0 ]] && exit 1
 
-[[ $? != 0 ]] && exit 1
+done
 
 echo "Output files:"
 
-echo "32-bit:"
-echo $BUILD_DIR_32/lib/*.so
-
-echo "64-bit:"
-echo $BUILD_DIR_64/lib/*.so
+for arch in $(ARCHITECTURES[@])
+do
+    BUILD_DIR="${BUILD_DIR_PREFIX}_${ARCHITECTURES[${arch_idx}]}"
+    echo "Architecture ${arch}:"
+    echo ${BUILD_DIR}/lib/*.so
+done
 
 exit 0

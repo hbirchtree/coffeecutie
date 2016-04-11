@@ -16,7 +16,72 @@
 #include <coffee/core/types/edef/resenum.h>
 
 namespace Coffee{
-namespace CRHI{
+namespace RHI{
+
+FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
+{
+    szptr pxsz = 0;
+    switch(fmt)
+    {
+    case BitFormat::Byte:
+    case BitFormat::ByteR:
+    case BitFormat::UByte:
+    case BitFormat::UByteR:
+    case BitFormat::UByte_332:
+    case BitFormat::UByte_233R:
+        pxsz = 1;
+        break;
+    case BitFormat::Short:
+    case BitFormat::ShortR:
+    case BitFormat::UShort:
+    case BitFormat::UShortR:
+    case BitFormat::UShort_565:
+    case BitFormat::UShort_565R:
+    case BitFormat::UShort_5551:
+    case BitFormat::UShort_1555R:
+    case BitFormat::Scalar_16:
+        pxsz = 2;
+        break;
+    case BitFormat::Int:
+    case BitFormat::IntR:
+    case BitFormat::UInt:
+    case BitFormat::UIntR:
+    case BitFormat::UInt_5999R:
+    case BitFormat::UInt_1010102:
+    case BitFormat::UInt_2101010R:
+    case BitFormat::Scalar_32:
+    case BitFormat::Scalar_11_11_10:
+        pxsz = 4;
+        break;
+    case BitFormat::Scalar_64:
+    case BitFormat::Scalar_32_Int_24_8:
+        pxsz = 8;
+    }
+    switch(comp)
+    {
+    case PixelComponents::R:
+    case PixelComponents::G:
+    case PixelComponents::B:
+    case PixelComponents::Stencil:
+    case PixelComponents::Depth:
+    case PixelComponents::DepthStencil:
+        pxsz *= 1;
+        break;
+    case PixelComponents::RG:
+        pxsz *= 2;
+        break;
+    case PixelComponents::RGB:
+    case PixelComponents::BGR:
+        pxsz *= 3;
+        break;
+    case PixelComponents::RGBA:
+    case PixelComponents::BGRA:
+        pxsz *= 4;
+        break;
+    }
+
+    return pxsz*pixels;
+}
 
 struct GraphicsProfiler
 {
@@ -55,22 +120,45 @@ struct GraphicsAPI
      */
     struct RasterizerState
     {
-        bool discard(){return 0;}
-        bool culling(){return 0;}
-        bool wireframeRender(){return 0;}
-        bool polygonSmooth(){return 0;}
-        bool dither(){return 0;}
-        bool clampDepth(){return 0;}
-        bool testScissor(){return 0;}
+        RasterizerState():
+            m_discard(false),
+            m_culling(false),
+            m_wireframe(false),
+            m_polysmooth(false),
+            m_dither(false),
+            m_colOp(LogicOp::NOOP),
+            m_colMask()
+        {
+        }
 
-        LogicOp colorOp(){}
-        CColorMask colorMask(){}
-        bool depthMask(){}
+        bool discard(){return m_discard;}
+        bool culling(){return m_culling;}
+        bool wireframeRender(){return m_wireframe;}
+        bool polygonSmooth(){return m_polysmooth;}
+        bool dither(){return m_dither;}
+
+        LogicOp colorOp(){return m_colOp;}
+        CColorMask colorMask(){return m_colMask;}
+
+        bool m_discard;
+        bool m_culling;
+        bool m_wireframe;
+        bool m_polysmooth;
+        bool m_dither;
+        LogicOp m_colOp;
+        CColorMask m_colMask;
     };
 
     struct TessellatorState
     {
-        uint32 patchCount(){return 0;}
+        TessellatorState():
+            m_patches(1)
+        {
+        }
+
+        uint32 patchCount(){return m_patches;}
+
+        uint32 m_patches;
     };
 
     /*!
@@ -78,64 +166,131 @@ struct GraphicsAPI
      */
     struct ViewportState
     {
-        bool multiview(){return 0;}
-        uint32 viewCount(){return 0;}
-        CRect view(uint32){}
-        ZField64 depth(uint32){}
-        CRect scissor(uint32){}
+        using VRect = CRect;
+        using DField = ZField64;
+        using SRect = CRect;
+
+        ViewportState(szptr views):
+            m_mview(false)
+        {
+            m_view.resize(views);
+            m_depth.resize(views);
+            m_scissor.resize(views);
+        }
+
+        bool multiview(){return m_mview;}
+        szptr viewCount(){return m_view.size();}
+        VRect view(uint32 i){return m_view[i];}
+        DField depth(uint32 i){return m_depth[i];}
+        VRect scissor(uint32 i){return m_scissor[i];}
+
+        bool m_mview;
+        Vector<VRect> m_view;
+        Vector<DField> m_depth;
+        Vector<SRect> m_scissor;
     };
 
     struct BlendState
     {
-        bool blend(){return 0;}
-        bool additive(){return 0;}
-        bool sampleAlphaCoverage(){return 0;}
+        BlendState():
+            m_doBlend(true),
+            m_additive(false),
+            m_alphaCoverage(false)
+        {
+        }
+
+        bool blend(){return m_doBlend;}
+        bool additive(){return m_additive;}
+        bool sampleAlphaCoverage(){return m_alphaCoverage;}
+
+        bool m_doBlend;
+        bool m_additive;
+        bool m_alphaCoverage;
     };
 
+    template<typename DepthFun>
     struct DepthState
     {
-        using DepthFun = uint32;
+        DepthState():
+            m_test(true),
+            m_clamp(false),
+            m_mask(false),
+            m_func(),
+            m_range()
+        {
+        }
 
-        bool testDepth(){return 0;}
-        bool mask(){return 0;}
-        DepthFun fun(){return 0;}
-        ZField64 range(){return 0;}
+        bool testDepth(){return m_test;}
+        bool clampDepth(){return m_clamp;}
+        bool mask(){return m_mask;}
+        DepthFun fun(){return m_func;}
+        ZField64 range(){return m_range;}
+
+        bool m_test;
+        bool m_clamp;
+        bool m_mask;
+        DepthFun m_func;
+        ZField64 m_range;
     };
 
+    template<typename StencilFunc,typename StencilOp>
     struct StencilState
     {
-        using StencilFunc = uint32;
-        using StencilOp = uint32;
+        StencilState():
+            m_test(false),
+            m_mask(false),
+            m_func(),
+            m_op()
+        {
+        }
 
         bool testStencil(){return 0;}
         uint32 mask(){return 0;}
         StencilFunc func(){return StencilFunc();}
         StencilOp op(){return StencilOp();}
+
+        bool m_test;
+        uint32 m_mask;
+        StencilFunc m_func;
+        StencilOp m_op;
     };
 
     struct PixelProcessState
     {
-        bool swapEndianness(){return 0;}
-        bool lsbFirst(){return 0;}
-        uint32 rowLength(){return 0;}
-        uint32 imgHeight(){return 0;}
-        uint32 alignment(){return 0;}
+        PixelProcessState():
+            m_swap(false),
+            m_lsbf(false),
+            m_rlen(0),
+            m_imgh(0),
+            m_align(0)
+        {
+        }
+
+        bool swapEndianness(){return m_swap;}
+        bool lsbFirst(){return m_lsbf;}
+        uint32 rowLength(){return m_rlen;}
+        uint32 imgHeight(){return m_imgh;}
+        uint32 alignment(){return m_align;}
+
+        bool m_swap;
+        bool m_lsbf;
+        uint32 m_rlen;
+        uint32 m_imgh;
+        uint32 m_align;
     };
 
     struct DebugMessage
     {
-        DebugComponent component(){}
-        DebugType type(){}
-        Severity severity(){}
-        CString message(){}
-    };
 
-    struct VertexAttribute
-    {
-        bool interleaved(){return 0;}
-        int32 offset(){return 0;}
-        int32 stride(){return 0;}
-        TypeEnum type(){return 0;}
+        DebugComponent component(){return m_comp;}
+        DebugType type(){return m_type;}
+        Severity severity(){return m_sev;}
+        CString& message(){return m_msg;}
+
+        DebugComponent m_comp;
+        DebugType m_type;
+        Severity m_sev;
+        CString m_msg;
     };
 
     /*!
@@ -143,68 +298,131 @@ struct GraphicsAPI
      */
     struct VertexBuffer
     {
-        VertexBuffer(ResourceAccess access, uint32 size):m_access(access),m_size(size){}
+        VertexBuffer(ResourceAccess access, szptr size):m_access(access),m_size(size){}
 
+        /*!
+         * \brief Pointer to data, access restricted to original settings
+         * \return
+         */
         void* data();
-        void commitMemory();
+
     protected:
         ResourceAccess m_access;
-        uint32 m_size;
-    };
-
-    struct VertexBufferBinding
-    {
-        VertexBufferBinding(VertexBuffer* buf, VertexAttribute* desc):m_buffer(buf),m_descr(desc){}
-    protected:
-        VertexBuffer* m_buffer;
-        VertexAttribute* m_descr;
+        szptr m_size;
     };
 
     /*!
      * \brief Contains mesh indices for ordering of vertices
      */
-    struct IndexBuffer : public VertexBuffer
+    struct IndexBuffer : VertexBuffer
     {
-        IndexBuffer(ResourceAccess access, TypeEnum itype, uint32 size):VertexBuffer(access,size),m_itype(itype){}
+        IndexBuffer(ResourceAccess access, TypeEnum itype, szptr size):VertexBuffer(access,size),m_itype(itype){}
     protected:
         TypeEnum m_itype;
     };
     /*!
      * \brief Contains data which will be read by a shader
      */
-    struct UniformBuffer : public VertexBuffer
+    struct UniformBuffer : VertexBuffer
     {
-        UniformBuffer(ResourceAccess access, uint32 stride, uint32 size):VertexBuffer(access,size),m_stride(stride){}
+        UniformBuffer(ResourceAccess access, uint32 stride, szptr size):VertexBuffer(access,size),m_stride(stride){}
     protected:
         uint32 m_stride;
     };
     /*!
      * \brief Contains data which will be modified by a shader, SSBO, transformed data, compute data
      */
-    struct ShaderBuffer : public VertexBuffer
+    struct ShaderBuffer : VertexBuffer
     {
-        ShaderBuffer(ResourceAccess access, uint32 stride, uint32 size):VertexBuffer(access,size),m_stride(stride){}
+        ShaderBuffer(ResourceAccess access, uint32 stride, szptr size):VertexBuffer(access,size),m_stride(stride){}
     protected:
         uint32 m_stride;
     };
+
     /*!
      * \brief Contains a packed struct of parameters. Not applicable to GL3.3
      */
-    struct IndirectBuffer : public VertexBuffer
+    struct IndirectBuffer : VertexBuffer
     {
-        IndirectBuffer(ResourceAccess access, uint32 flags, uint32 stride, uint32 size):VertexBuffer(access,size),m_flags(flags),m_stride(stride){}
+        IndirectBuffer(ResourceAccess access, uint32 flags, uint32 stride, szptr size):VertexBuffer(access,size),m_flags(flags),m_stride(stride){}
     protected:
         uint32 m_flags;
         uint32 m_stride;
     };
+
+    struct VertexAttribute
+    {
+        VertexAttribute():
+            m_boffset(0),
+            m_bassoc(0),
+            m_size(0),
+            m_off(0),
+            m_stride(sizeof(scalar)),
+            m_type(TypeEnum::Scalar)
+        {
+        }
+
+        uint64 bufferOffset()const{return m_boffset;}
+        uint32 bufferAssociation()const{return m_bassoc;}
+        uint32 index()const{return m_idx;}
+        uint32 size()const{return m_size;}
+        uint32 offset()const{return m_off;}
+        uint32 stride()const{return m_stride;}
+        TypeEnum type()const{return m_type;}
+
+        uint64 m_boffset;
+        uint32 m_bassoc;
+        uint32 m_idx;
+        uint32 m_size;
+        uint32 m_off;
+        uint32 m_stride;
+        TypeEnum m_type;
+    };
+
+    struct VertexBufferBinding
+    {
+        VertexBufferBinding(VertexBuffer& buf, VertexAttribute& desc):m_buffer(buf),m_descr(desc){}
+    protected:
+        VertexBuffer& m_buffer;
+        VertexAttribute& m_descr;
+    };
+
+    struct VertexDescriptor
+    {
+        VertexDescriptor()
+        {
+        }
+
+        void addAttribute(VertexAttribute const&){}
+        void setIndexBuffer(IndexBuffer const&){}
+    };
+
     /*!
      * \brief Describes a particular uniform value, either inside a uniform block or separately
      */
     struct UniformDescriptor
     {
-        uint32 index(){return 0;}
-        cstring name(){return 0;}
-        uint32 flags(){return 0;}
+        UniformDescriptor():
+            m_name(),
+            m_flags(0),
+            m_idx(0)
+        {
+        }
+
+        int32 index(){return m_idx;}
+        cstring name(){return m_name.c_str();}
+        uint32 flags(){return m_flags;}
+
+        CString m_name;
+        uint32 m_flags;
+        int32 m_idx;
+    };
+
+    /*!
+     * \brief Keeps track of textures, uniforms and miscellaneous buffers
+     */
+    struct ShaderUniformState
+    {
     };
 
     /*!
@@ -269,12 +487,11 @@ struct GraphicsAPI
         {}
 
         uint32 size() const {return 0;}
-        bool isArray() const {return 0;}
-        uint32 arraySize() const {return 0;}
-        uint32 mipmaps() const {return 0;}
-        PixelFormat format() const {return (PixelFormat)0;}
+        bool isArray() const {return b_array;}
+        uint32 arraySize() const {return m_arrsize;}
+        uint32 mipmaps() const {return m_mips;}
+        PixelFormat format() const {return m_pixfmt;}
 
-    private:
         PixelFormat m_pixfmt;
         bool b_array;
         uint32 m_arrsize;
@@ -283,12 +500,21 @@ struct GraphicsAPI
         ResourceAccess m_access;
     };
 
-    struct Texture2D; /* Simple 2D texture */
-    struct VolumeTexture; /* 3D texture */
-    struct Cubemap; /* Cube texture */
+    struct Surface2D; /* Simple 2D texture */
+    struct Surface3D; /* 3D texture */
+    struct SurfaceCube; /* Cube texture */
 
-    struct Texture2DArray; /* Layered 2D texture*/
-    struct CubemapArray; /* Layered cubemap */
+    struct Surface2DArray; /* Layered 2D texture*/
+    struct SurfaceCubeArray; /* Layered cubemap */
+
+    struct Sampler
+    {
+        Sampler()
+        {
+        }
+
+        void attach(Surface const&);
+    };
 
     /*!
      * \brief Contains framebuffer and viewport information for resizing,
@@ -327,6 +553,15 @@ struct GraphicsAPI
      * \param c
      */
     static void DrawConditional(DrawCall const& d,OccludeQuery const& c);
+
+    static void SetRasterizerState(){}
+    static void SetTessellatorState(){}
+    static void SetViewportState(){}
+    static void SetBlendState(){}
+    static void SetDepthState(){}
+    static void SetStencilState(){}
+    static void SetPixelProcessState(){}
+    static void SetShaderUniformState(){}
 
     struct Util
     {

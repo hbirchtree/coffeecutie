@@ -4,11 +4,15 @@
 #include <asio.hpp>
 #include <asio/ssl.hpp>
 
+#include <coffee/core/types/tdef/stlfunctypes.h>
+
 #include <coffee/core/CDebug>
 #include <coffee/core/coffee_strings.h>
 
 namespace Coffee{
 namespace CASIO{
+
+using namespace Threads;
 
 struct ASIO_Client
 {
@@ -26,7 +30,7 @@ struct ASIO_Client
         asio::ssl::context sslctxt;
     };
 
-    using AsioContext = std::shared_ptr<AsioContext_class>;
+    using AsioContext = ShPtr<AsioContext_class>;
 
     STATICINLINE void InitService()
     {
@@ -52,10 +56,9 @@ struct ASIO_Client
         return true;
     }
 
+protected:
     static thread_local AsioContext t_context;
 };
-
-thread_local ASIO_Client::AsioContext ASIO_Client::t_context = nullptr;
 
 }
 }

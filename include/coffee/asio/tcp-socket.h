@@ -63,11 +63,12 @@ struct TCPSocketImpl : ASIO_Client
             socket.handshake(asio::ssl::stream_base::client);
         }
 
-        template<typename T>
-        void operator<<(T const& v)
+        template<typename T,typename R>
+        R& operator<<(T const& v)
         {
-            (std::ostream&)(*this) << v;
+            std::ostream& r = (std::ostream&)(*this) << v;
             flush();
+            return r;
         }
 
         template<typename T, typename R>

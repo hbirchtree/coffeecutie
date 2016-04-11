@@ -19,6 +19,9 @@ void main(void)
     vec4 c2 = texture(texdata,vec3(fs_in.tc,1)); /* Weird color */
     vec4 c3 = texture(texdata,vec3(fs_in.tc,3)); /* Veiny stuff */
 
+    if(c1.a==0)
+        discard;
+
     float a1 = a1_mask.a;
     if(mx<a1)
         color = c1;

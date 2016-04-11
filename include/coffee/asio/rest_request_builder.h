@@ -7,8 +7,14 @@
 namespace Coffee{
 namespace CASIO{
 
-template<typename T>
-FORCEDINLINE void GenerateRestRequest(T& req_s, CString host, CString request)
+template<typename T> FORCEDINLINE
+/*!
+ * \brief Generate an HTTP REST request, few details
+ * \param req_s
+ * \param host
+ * \param request
+ */
+void GenerateRestRequest(T& req_s, CString host, CString request)
 {
     req_s << "GET " << request << " HTTP/1.0\r\n";
     req_s << "HOST: " << host << "\r\n";
@@ -16,8 +22,14 @@ FORCEDINLINE void GenerateRestRequest(T& req_s, CString host, CString request)
     req_s << "CONNECTION: close\r\n\r\n";
 }
 
-template<typename SockType, typename TargetType>
-FORCEDINLINE bool ExtractResponse(SockType& s, TargetType& resp)
+template<typename SockType, typename TargetType> FORCEDINLINE
+/*!
+ * \brief Extract an HTTP response from a TCP socket
+ * \param s
+ * \param resp
+ * \return
+ */
+bool ExtractResponse(SockType& s, TargetType& resp)
 {
     s >> resp.version;
     s >> resp.status;

@@ -3,6 +3,8 @@
 #include <coffee/core/CMD>
 #include <coffee/core/CDebug>
 
+#include <coffee/core/coffee_version.h>
+
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/plat/environment/process_def.h>
@@ -12,6 +14,12 @@ namespace Coffee{
 
 /* Information that is not otherwise available */
 ApplicationData_t CoffeeApplicationData;
+cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
+                                                        C_COMPILER_VER_MAJ,
+                                                        C_COMPILER_VER_MIN,
+                                                        C_COMPILER_VER_REV);
+cstring CoffeeArchString = COFFEE_ARCH;
+cstring CoffeeBuildString = COFFEE_BUILD_STRING;
 
 void CoffeeInit(bool profiler_init)
 {

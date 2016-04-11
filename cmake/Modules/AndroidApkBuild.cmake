@@ -66,7 +66,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     set ( ANDROID_VERSION_NAME ${Version_Str} )
 
     set ( ANDROID_API_TARGET ${Api_Target} )
-    set ( ANDROID_API_MIN_TARGET ${Api_Target} )
+    set ( ANDROID_API_MIN_TARGET "16" )
 
     set ( RELEASE_PREFIX )
 

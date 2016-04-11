@@ -255,11 +255,11 @@ struct CGL43 : CGL33
     {glGetQueryIndexediv(to_enum(t),i,e,v);}
 
     /* VAO */
-    STATICINLINE void VAOAttribFormat(uint32 i,int32 s,TypeEnum t,bool n,uint32 off)
+    STATICINLINE void VAOAttribFormat(uint32 i,uint32 s,TypeEnum t,bool n,uint32 off)
     {glVertexAttribFormat(i,s,to_enum(t),(n)?GL_TRUE:GL_FALSE,off);}
-    STATICINLINE void VAOAttribFormatI(uint32 i,int32 s,TypeEnum t,uint32 off)
+    STATICINLINE void VAOAttribFormatI(uint32 i,uint32 s,TypeEnum t,uint32 off)
     {glVertexAttribIFormat(i,s,to_enum(t),off);}
-    STATICINLINE void VAOAttribFormatL(uint32 i,int32 s,TypeEnum t,uint32 off)
+    STATICINLINE void VAOAttribFormatL(uint32 i,uint32 s,TypeEnum t,uint32 off)
     {glVertexAttribLFormat(i,s,to_enum(t),off);}
 
     STATICINLINE void VAOBindingDivisor(uint32 attr,uint32 div)
@@ -281,7 +281,7 @@ struct CGL43 : CGL33
     STATICINLINE void VAODivisor(){}
 
     /* Buffers */
-    STATICINLINE void BufStorage(BufType t,int64 s,c_cptr d,ResourceAccess a)
+    STATICINLINE void BufStorage(BufType t,uint64 s,c_cptr d,ResourceAccess a)
     {glBufferStorage(to_enum(t),s,d,to_enum2(a));}
 
     /* Framebuffer */

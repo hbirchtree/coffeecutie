@@ -90,7 +90,11 @@ bool CALSoundDevice::isCaptureDevice()
 CSoundStream<CALSource,CALBuffer> &CALSoundDevice::captureStreamer()
 {
     if(!m_data->b_input)
+#if defined(COFFEE_USE_EXCEPTIONS)
         throw std::logic_error("This is not an input device!");
+#else
+        ABORTEVERYTHINGGOGOGO();
+#endif
     return *m_data->m_inputstream;
 }
 

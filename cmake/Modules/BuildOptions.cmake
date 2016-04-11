@@ -53,6 +53,7 @@ option ( COFFEE_BUILD_OPENAL "Build with OpenAL support" ON)
 option ( COFFEE_BUILD_SDL2 "Build with SDL2 windowing and input" ON)
 # Requires SDL2 in most cases, unless you love writing window management code
 option ( COFFEE_BUILD_GLEAM "Build GLeam rendering API" ON )
+option ( COFFEE_BUILD_GLEAM_RHI "Build GLeam rendering hardware interface" ON )
 # Requires... Nothing. Only core library
 option ( COFFEE_BUILD_CBLAM "Build with Blam engine parsing" ON )
 # Requires OpenSSL on system. I'm looking at you, Android

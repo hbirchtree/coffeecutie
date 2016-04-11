@@ -1,5 +1,5 @@
 #include <coffee/core/CApplication>
-#include <coffee/graphics_apis/CGLeam>
+#include <coffee/graphics_apis/CGLeamRHI>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
 
@@ -8,6 +8,7 @@
 
 #include <coffee/dummyplug/hmd-dummy.h>
 #include <coffee/COculusRift>
+
 
 using namespace Coffee;
 using namespace Display;
@@ -123,6 +124,7 @@ public:
 
         GL::CGhnd distortVao;
         GL::CGhnd distortBuf[2];
+        szptr distort_elements;
         {
             GL::VAOAlloc(1,&distortVao);
             GL::BufAlloc(2,distortBuf);
@@ -132,13 +134,24 @@ public:
             uint64 array_size = 0;
             uint64 element_size = 0;
 
+            const constexpr uint8 MESH_VIGNETTE = 10;
+            const constexpr uint8 MESH_WARP = 11;
+            const constexpr uint8 MESH_R = 12;
+            const constexpr uint8 MESH_G = 13;
+            const constexpr uint8 MESH_B = 14;
+            const constexpr uint8 MESH_NDC = 15;
+
             for(szptr i=0;i<2;i++)
             {
                 Mesh& msh = distortMesh[i];
                 for(Mesh::Pair const& a : msh.attributes)
                 {
+                    cDebug("Vertex attribute: {0}, size={1}",a.first,a.second.size());
                     if(a.first==Mesh::Indices)
+                    {
                         element_size += a.second.size();
+                        distort_elements = element_size/4;
+                    }
                     else
                         array_size += a.second.size();
                 }
@@ -167,6 +180,13 @@ public:
             array_size = 0;
             element_size = 0;
 
+            szptr vignette_offset = 0;
+            szptr warp_offset = 0;
+            szptr r_offset = 0;
+            szptr g_offset = 0;
+            szptr b_offset = 0;
+            szptr ndc_offset = 0;
+
             for(szptr i=0;i<2;i++)
             {
                 Mesh& msh = distortMesh[i];
@@ -178,9 +198,18 @@ public:
                     }
                     else{
                         MemCpy(&array_data[array_size],a.second.data(),a.second.size());
+                        if(a.first==MESH_NDC)
+                            ndc_offset = array_size;
                         array_size += a.second.size();
                     }
             }
+
+            GL::VAOBind(distortVao);
+            GL::VAOEnableAttrib(0);
+            GL::VAOAttribFormat(0,2,TypeEnum::Scalar,false,0);
+            GL::VAOBindVertexBuffer(0,distortBuf[0],ndc_offset,sizeof(CVec2));
+            GL::BufBind(GL::BufType::ElementData,distortBuf[1]);
+            GL::VAOAttribBinding(0,0);
         }
 
         Profiler::Profile("Create vertex buffers");
@@ -206,8 +235,8 @@ public:
 
         Profiler::Profile("Specify vertex format");
 
-        GL::CGhnd vprogram;
-        GL::CGhnd fprogram;
+        GL::CGhnd vprogram = 0;
+        GL::CGhnd fprogram = 0;
 
         {
             cstring shader_files[2] = {"vr/vshader.glsl","vr/fshader.glsl"};
@@ -314,7 +343,7 @@ public:
         clearcol.a() = 1.0;
 
         scalar depth_zero = 0.f;
-        bool cycle_color = false;
+        bool cycle_color = true;
 
         GL::Enable(GL::Feature::Blend);
 //        GL::Enable(GL::Feature::DepthTest);
@@ -323,6 +352,9 @@ public:
 
         /* Head pose value */
         CMat4 testmat;
+        CMat4 testmat_rot;
+
+        CGraphicsData::CTransform test_transform;
 
         if(dev)
             cDebug("User's play area: {0}",dev->viewerSpace());
@@ -355,23 +387,34 @@ public:
             time = (CMath::sin(time)+CMath::sin(time*0.5)+1.0)/2.0;
 
             /* Update matrices */
-            cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
+            CGraphicsData::CTransform test_transform;
+            test_transform.rotation.y() = time;
+            test_transform.rotation = normalize_quat(test_transform.rotation);
+            testmat_rot = CGraphicsData::GenTransform(test_transform);
 
-            obj.position = CVec3(-3,0,0);
+            cam.position.x() = -2;
+            cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
             if(dev)
                 testmat = dev->view(VR::Eye::Left)*3;
+            testmat *= testmat_rot;
+
             objects[0] =
                     cam_mat
                     *testmat
                     *CGraphicsData::GenTransform(obj);
-            obj.position = CVec3(3,0,0);
+
+            cam.position.x() = 2;
+            cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
             if(dev)
                 testmat = dev->view(VR::Eye::Right)*3;
+            testmat *= testmat_rot;
+
             objects[1] =
                     cam_mat
                     *testmat
                     *CGraphicsData::GenTransform(obj);
 
+            /* Upload matrices */
             GL::Uniformfv(vprogram,cam_unif,2,false,objects);
             GL::Uniformfv(fprogram,tim_unif,1,&time);
 
@@ -382,7 +425,11 @@ public:
             GL::ClearBufferfv(false,0,&depth_zero);
 
             /* Draw objects */
+            GL::VAOBind(vao);
             GL::DrawArraysInstanced(GL_TRIANGLES,0,6,2);
+
+            GL::VAOBind(distortVao);
+            GL::DrawElements(GL_TRIANGLES,100,GL_UNSIGNED_INT,0);
 
             /* Update framecounter, print frames */
             fcounter.update(ftimer.elapsed());

@@ -27,7 +27,11 @@ uint64 CALSoundMixer::createTrack()
 CSoundTrack<CALSource, CALBuffer> &CALSoundMixer::soundtrack(const uint64 &track)
 {
     if(track>=m_tracks.size())
+#if defined(COFFEE_USE_EXCEPTIONS)
         throw std::logic_error("Invalid soundtrack index!");
+#else
+        ABORTEVERYTHINGGOGOGO();
+#endif
     return *m_tracks[track];
 }
 

@@ -1007,8 +1007,8 @@ if( BUILD_WITH_ANDROID_NDK )
   set( ANDROID_STL_INCLUDE_DIRS "${ANDROID_NDK}/sources/cxx-stl/stlport/stlport" )
   set( __libstl                 "${ANDROID_NDK}/sources/cxx-stl/stlport/libs/${ANDROID_NDK_ABI_NAME}/libstlport_static.a" )
  elseif( ANDROID_STL MATCHES "gnustl" )
-  set( ANDROID_EXCEPTIONS       ON )
-  set( ANDROID_RTTI             ON )
+  set( ANDROID_EXCEPTIONS       OFF )
+  set( ANDROID_RTTI             OFF )
   if( EXISTS "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/${ANDROID_COMPILER_VERSION}" )
    if( ARMEABI_V7A AND ANDROID_COMPILER_VERSION VERSION_EQUAL "4.7" AND ANDROID_NDK_RELEASE STREQUAL "r8d" )
     # gnustl binary for 4.7 compiler is buggy :(
@@ -1401,8 +1401,8 @@ set( ANDROID_CXX_FLAGS_DEBUG   "${ANDROID_CXX_FLAGS_DEBUG}"   CACHE INTERNAL "An
 set( ANDROID_LINKER_FLAGS      "${ANDROID_LINKER_FLAGS}"      CACHE INTERNAL "Android specific c/c++ linker flags" )
 
 # finish flags
-set( CMAKE_CXX_FLAGS           "${ANDROID_CXX_FLAGS} ${CMAKE_CXX_FLAGS}" )
-set( CMAKE_C_FLAGS             "${ANDROID_CXX_FLAGS} ${CMAKE_C_FLAGS}" )
+set( CMAKE_CXX_FLAGS           "${ANDROID_CXX_FLAGS} -fvisibility=hidden ${CMAKE_CXX_FLAGS}" )
+set( CMAKE_C_FLAGS             "${ANDROID_CXX_FLAGS} -fvisibility=hidden ${CMAKE_C_FLAGS}" )
 set( CMAKE_CXX_FLAGS_RELEASE   "${ANDROID_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_RELEASE}" )
 set( CMAKE_C_FLAGS_RELEASE     "${ANDROID_CXX_FLAGS_RELEASE} ${CMAKE_C_FLAGS_RELEASE}" )
 set( CMAKE_CXX_FLAGS_DEBUG     "${ANDROID_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS_DEBUG}" )

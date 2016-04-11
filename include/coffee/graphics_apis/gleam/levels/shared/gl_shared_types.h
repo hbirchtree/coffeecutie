@@ -17,6 +17,7 @@ using CGsync = void*;
 
 /* Shorthand for GL object handles, we will treat them differently */
 using CGhnd = uint32;
+using CGhnd64 = uint64;
 struct CGpixfmt
 {
     CGenum type;

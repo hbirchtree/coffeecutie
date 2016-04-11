@@ -10,8 +10,6 @@ namespace CGL{
  */
 struct CGL45 : CGL43
 {
-    using CGhnd64 = uint64;
-
     STATICINLINE bool DirectStateSupported(){return false;}
 
     STATICINLINE bool BindlessTextureSupported(){return false;}

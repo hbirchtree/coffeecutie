@@ -48,36 +48,43 @@ struct CGL_Shared_Debug
 
         ver.major = 0;
         ver.minor = 0;
-
-        ver.major = GetInteger(GL_MAJOR_VERSION);
-        ver.minor = GetInteger(GL_MINOR_VERSION);
-
         ver.revision = 0;
 
-        /* In some cases, we run on drivers that are old or crappy */
-        CString str = GetString(GL_VERSION);
-        if (str.size()<=0)
-            return ver;
-        Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
-        auto match = Regex::Match(p,str,true);
-        if (match.size() < 3)
-            return ver;
-        ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
-        ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
-        if (match.size() == 4)
+        /* In most cases, this will work wonders */
+        do
         {
-            bool ok = false;
-            ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str(),10,&ok);
-            if (!ok)
+            ver.major = GetInteger(GL_MAJOR_VERSION);
+            ver.minor = GetInteger(GL_MINOR_VERSION);
+        }while(false);
+
+        /* In some cases, we run on drivers that are old or crappy.
+         * We still want to know what the hardware supports, though. */
+        do
+        {
+            CString str = GetString(GL_VERSION);
+            if (str.size()<=0)
+                break;
+            Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
+            auto match = Regex::Match(p,str,true);
+            if (match.size() < 3)
+                break;
+            ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
+            ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
+            if (match.size() == 4)
             {
-                ver.driver = match.at(3).s_match.front();
+                bool ok = false;
+                ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str(),10,&ok);
+                if (!ok)
+                {
+                    ver.driver = match.at(3).s_match.front();
+                }
             }
-        }
-        else if (match.size() == 5)
-        {
-            ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str());
-            ver.driver = StrUtil::trim(match.at(4).s_match.front());
-        }
+            else if (match.size() == 5)
+            {
+                ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str());
+                ver.driver = StrUtil::trim(match.at(4).s_match.front());
+            }
+        }while(false);
 
         return ver;
     }
@@ -101,7 +108,7 @@ struct CGL_Shared_Debug
             return ver;
 
         if(ver.major == 0 && ver.minor ==0)
-            while(true)
+            do
             {
                 Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+).([\\s\\S]*)");
                 auto match = Regex::Match(p,str,true);
@@ -116,11 +123,11 @@ struct CGL_Shared_Debug
                     break;
 
                 ver.driver = match.at(3).s_match.front().c_str();
-                break;
-            }
+
+            }while(false);
 
         if(ver.major == 0 && ver.minor == 0)
-            while(true)
+            do
             {
                 Regex::Pattern pa = Regex::Compile("([\\s\\S]+) ([0-9]+).([0-9]+)");
                 auto match = Regex::Match(pa,str,true);
@@ -129,6 +136,7 @@ struct CGL_Shared_Debug
                 {
                     ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
                     ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
+                    break;
                 }else if(match.size() ==4)
                 {
                     ver.major = Convert::strtoint(match.at(2).s_match.front().c_str());
@@ -137,8 +145,8 @@ struct CGL_Shared_Debug
                     break;
 
                 ver.driver = match.at(1).s_match.front().c_str();
-                break;
-            }
+
+            }while(false);
 
         return ver;
     }

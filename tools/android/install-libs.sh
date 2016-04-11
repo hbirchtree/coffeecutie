@@ -6,8 +6,9 @@ basedir="./libs"
 
 subdirs[0]="lib/armeabi-v7a"
 subdirs[1]="lib/arm64-v8a"
-subdirs[2]="include"
-subdirs[3]="src"
+subdirs[2]="lib/x86"
+subdirs[3]="lib/x86_64"
+subdirs[4]="include"
 
 for dr in ${subdirs[@]}
 do
@@ -32,12 +33,10 @@ do
         ln -s "${inc}" ${basedir}/include/${inc_target}
 done
 
-mkdir -p ${BUILD_DIR_32}/libs/include
-mkdir -p ${BUILD_DIR_64}/libs/include
-
-ln -s ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR_32}/libs/include
-ln -s ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR_64}/libs/include
-
-ln -s "${HOME}/lib/SDL2/src/main/android/SDL_android_main.c" "${basedir}/src/SDL_android_main.c"
+for arch in ${ANDROID_LIB_ARCH[@]}
+do
+    mkdir -p "${BUILD_DIR_PREFIX}_${arch}/libs"
+    ln -sf ${PROJECT_DIR}/libs/rapidjson/include/rapidjson ${BUILD_DIR_PREFIX}_${arch}/libs/include
+done
 
 exit 0

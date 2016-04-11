@@ -22,11 +22,20 @@ struct RapidJson
     using WriteBuf = rapidjson::StringBuffer;
     using Writer = rapidjson::Writer<rapidjson::StringBuffer>;
 
-    STATICINLINE rapidjson::Document Read(cstring data)
+    STATICINLINE Document Read(cstring data)
     {
 	Document doc;
 	doc.Parse(data);
 	return doc;
+    }
+    STATICINLINE CString Serialize(Document const& doc)
+    {
+        WriteBuf buf;
+        buf.Clear();
+
+        Writer writer(buf);
+        doc.Accept(writer);
+        return buf.GetString();
     }
 };
 

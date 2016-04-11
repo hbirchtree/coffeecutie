@@ -4,10 +4,7 @@
 
 #include <coffee/graphics_apis/gleam/gleam.h>
 
-#ifdef COFFEE_GLEAM_DESKTOP
-#include <coffee/graphics_apis/gleam/levels/desktop/gl45.h>
-#else
-#include <coffee/graphics_apis/gleam/levels/es/gles30.h>
+#ifndef COFFEE_GLEAM_DESKTOP
 #include <SDL2/SDL_video.h>
 #endif
 

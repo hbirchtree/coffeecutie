@@ -1,9 +1,17 @@
 set ( CoffeeGLeam_SRCS
     private/renderer/gleamrenderer.cpp
     private/levels/glbase.cpp
-
-    private/glad/glad.c
     )
+
+if(COFFEE_BUILD_GLEAM_RHI)
+    list(APPEND CoffeeGLeam_SRCS
+        private/rhi/gleam_rhi.cpp
+        private/rhi/gleam_buffer_rhi.cpp
+        private/rhi/gleam_shader_rhi.cpp
+        private/rhi/gleam_surface_rhi.cpp
+        private/rhi/gleam_vertex_rhi.cpp
+        )
+endif()
 
 if(COFFEE_BUILD_GLES)
     add_definitions(-DCOFFEE_ESMODE)

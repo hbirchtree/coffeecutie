@@ -1,4 +1,5 @@
 #include <coffee/CAsio>
+#include <coffee/asio/http_parsing.h>
 #include <coffee/core/CTiming>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CApplication>
@@ -14,31 +15,20 @@ int32 coffee_main(int32, cstring_w*)
         TCP::SSLSocket cn;
         cn.connect("example.com","https");
 
-        cn << "GET / HTTP/1.0\r\n";
-        cn << "HOST: example.com\r\n";
-        cn << "CONNECTION: close\r\n\r\n";
+        HTTP::GenerateRequest(cn,"example.com","/",{});
 
-        CString data;
-
-        CString tmp;
-
+        cn.flush();
         cn.pull();
 
-        std::getline(cn,tmp);
-        cDebug("Response: {0}",tmp);
-        if(tmp.substr(0,5) == "HTTP/")
+        HTTP::Response resp;
+
+        if(!HTTP::ExtractResponse(cn,&resp))
         {
-            while(std::getline(cn,tmp) && tmp != "\r")
-                cDebug("{0}",tmp);
-
-            while(std::getline(cn,tmp) && tmp != "\r\n")
-            {
-                data.append(tmp);
-            }
-
-            cDebug("Payload: \n{0}",data);
-        }else{
             cDebug("Bad mojo");
+        }else{
+            for(std::pair<CString,CString> const& v : resp.values)
+                cDebug("{0} : {1}",v.first,v.second);
+            cDebug("Payload:\n{0}",resp.payload);
         }
     }
 
@@ -47,7 +37,7 @@ int32 coffee_main(int32, cstring_w*)
     CString host = "api.twitch.tv";
     CString rq = "/kraken/streams";
 
-    std::future<REST::RestResponse> t = REST::RestRequestAsync(c,REST::HTTPS,host,rq);
+    Threads::Future<REST::RestResponse> t = REST::RestRequestAsync(c,REST::HTTPS,host,rq);
 
     tim.start();
 
@@ -70,11 +60,7 @@ int32 coffee_main(int32, cstring_w*)
     if(doc.IsNull())
         return 1;
 
-    cDebug("{0} chatters",doc["chatter_count"].GetInt());
-    for(int32 i=0;i<doc["chatters"]["viewers"].Capacity();i++)
-    {
-        cBasicPrint("{0}",doc["chatters"]["viewers"][i].GetString());
-    }
+    cDebug("JSON document:\n{0}",JSON::Serialize(doc));
 
     return 0;
 }

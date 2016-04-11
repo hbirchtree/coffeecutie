@@ -24,7 +24,7 @@ FORCEDINLINE void _setVerInfo()
     extern "C" int main(int argv, char** argc){ _setVerInfo(); return deref_main(mainfun,argv,argc); }
 #else
 #define COFFEE_APPLICATION_MAIN(mainfun) \
-    int main(int argv, char** argc){ return deref_main(mainfun,argv,argc); }
+    int main(int argv, char** argc){ _setVerInfo(); return deref_main(mainfun,argv,argc); }
 #endif
 
 #endif

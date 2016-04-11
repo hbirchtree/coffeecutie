@@ -21,3 +21,14 @@
 #elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define COFFEE_LIL_ENDIAN
 #endif
+
+/* Disabling exceptions and RTTI on Android for size reasons */
+#if !defined(COFFEE_ANDROID)
+#define COFFEE_USE_EXCEPTIONS
+#define COFFEE_USE_RTTI
+#endif
+
+/* For Android, we limit inlining for size reasons */
+#if defined(COFFEE_ANDROID)
+#define COFFEE_LIMIT_INLINE
+#endif

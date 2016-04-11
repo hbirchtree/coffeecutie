@@ -2,6 +2,11 @@
 add_subdirectory(core)
 add_subdirectory(image)
 
+# ASIO networking
+if(COFFEE_BUILD_OPENSSL)
+    add_subdirectory(asio)
+endif()
+
 # More here!
 add_subdirectory(graphics_apis)
 

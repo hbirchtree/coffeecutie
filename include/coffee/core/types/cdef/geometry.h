@@ -76,13 +76,26 @@ template<typename T> struct _cbasic_point
     }
     _cbasic_point(){}
 
-    T x = 0;
-    T y = 0;
+    T x,y;
 
     T distance(const _cbasic_point& p)
     {
         return CMath::sqrt(CMath::pow(this->x-p.x,2)+CMath::pow(this->y-p.y,2));
     }
+};
+
+template<typename T> struct _cbasic_point_3d
+{
+    _cbasic_point_3d(T x, T y, T z):
+        x(x),y(y),z(z)
+    {
+    }
+    _cbasic_point_3d():
+        x(0),y(0),z(0)
+    {
+    }
+
+    T x,y,z;
 };
 
 /*!
@@ -270,6 +283,8 @@ struct _cbasic_fov
  * \brief Typical size, uses integer, should be used for window size
  */
 using CSize = _cbasic_size_2d<int32>;
+
+using CSize3 = _cbasic_size_3d<int32>;
 /*!
  * \brief Heavy-duty size structure
  */
@@ -302,6 +317,8 @@ typedef _cbasic_rect<bigscalar> CRectD;
  * \brief 32-bit integer point
  */
 typedef _cbasic_point<int32> CPoint;
+
+typedef _cbasic_point_3d<int32> CPoint3;
 /*!
  * \brief Single-precision floating-point point
  */

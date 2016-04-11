@@ -1,5 +1,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 
+#include <coffee/core/plat/plat_quirks_toggling.h>
+
 namespace Coffee{
 namespace Profiling{
 
@@ -231,11 +233,15 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
     }
 
     /* Because fuck dangling file handles */
+#if defined(COFFEE_USE_EXCEPTIONS)
     try{
+#endif
         doc.SaveFile(file->handle,false);
+#if defined(COFFEE_USE_EXCEPTIONS)
     }catch(std::exception)
     {
     }
+#endif
 
     CResources::FileFun::Close(file);
 }
