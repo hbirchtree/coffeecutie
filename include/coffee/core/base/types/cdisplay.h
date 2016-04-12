@@ -260,7 +260,7 @@ STATICINLINE CDProperties GetDefaultVisual(
         const int32& ctxtMajorVer = 3,
         const int32& ctxtMinorVer = 3)
 {
-    CDProperties props;
+    CDProperties props = {};
 
     props.flags =
             CDProperties::Resizable |
@@ -287,10 +287,10 @@ STATICINLINE CDProperties GetDefaultVisual(
     props.gl.bits.depth = 24;
     props.gl.bits.stencil = 8;
 
-    props.gl.bits.accum.r = 8;
-    props.gl.bits.accum.g = 8;
-    props.gl.bits.accum.b = 8;
-    props.gl.bits.accum.a = 8;
+//    props.gl.bits.accum.r = 8;
+//    props.gl.bits.accum.g = 8;
+//    props.gl.bits.accum.b = 8;
+//    props.gl.bits.accum.a = 8;
 
     return props;
 }
