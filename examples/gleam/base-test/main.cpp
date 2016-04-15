@@ -372,6 +372,8 @@ public:
 //            this->setWindowSize(dev->windowPos().size());
         }
 
+        CGL::DrwMd mode = {CGL::Prim::Triangle,CGL::PrimCre::Explicit};
+
         while(!closeFlag())
         {
             scalar time = this->contextTime();
@@ -426,10 +428,10 @@ public:
 
             /* Draw objects */
             GL::VAOBind(vao);
-            GL::DrawArraysInstanced(GL_TRIANGLES,0,6,2);
+            GL::DrawArraysInstanced(mode,0,6,2);
 
             GL::VAOBind(distortVao);
-            GL::DrawElements(GL_TRIANGLES,100,GL_UNSIGNED_INT,0);
+            GL::DrawElements(mode,100,TypeEnum::UInt,0);
 
             /* Update framecounter, print frames */
             fcounter.update(ftimer.elapsed());
@@ -501,7 +503,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Object creation");
 
     CDProperties props = GetDefaultVisual();
-    props.gl.flags = props.gl.flags|GLProperties::GLDebug;
+    props.gl.flags |= GLProperties::GLDebug;
+    props.gl.flags |= GLProperties::GLVSync;
 
     /* The Oculus SDK configures some OpenGL state,
      *  so it needs to be done before any GL context is active */

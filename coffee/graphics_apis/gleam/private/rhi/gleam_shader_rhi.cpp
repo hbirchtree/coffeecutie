@@ -1,6 +1,7 @@
 #include <coffee/graphics_apis/gleam/rhi/gleam_shader_rhi.h>
 
 #include <coffee/graphics_apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/graphics_apis/gleam/rhi/gleam_api_rhi.h>
 
 namespace Coffee{
 namespace RHI{
@@ -35,7 +36,7 @@ void GLEAM_Shader::dealloc()
     }
 }
 
-bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader)
+bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader, const ShaderStage &stages)
 {
     if(shader.m_handle==0)
         return false;
@@ -49,7 +50,10 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader)
     {
         if(m_handle==0)
             CGL43::PipelineAlloc(1,&m_handle);
-        return CGL43::PipelineUseStages(m_handle,shader.m_stages,shader.m_handle);
+        bool stat = CGL43::PipelineUseStages(m_handle,shader.m_stages&stages,shader.m_handle);
+        if(stat)
+            m_programs.push_back({&shader,shader.m_stages&stages});
+        return stat;
     }
     return false;
 }
@@ -86,7 +90,7 @@ void GLEAM_Pipeline::unbind()
 }
 
 bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
-                                          const CByteData *data)
+                                          const GLEAM_UniformValue *data)
 {
     if(value.m_idx<0)
         return false;
@@ -106,22 +110,24 @@ bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
 }
 
 bool GLEAM_ShaderUniformState::setUBuffer(const GLEAM_UniformDescriptor &value,
-                                          const GLEAM_UniformBuffer *buf)
+                                          const GLEAM_UniformBuffer *buf,
+                                          GLEAM_BufferSection const& sec)
 {
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_ubuffers[idx] = buf;
+    m_ubuffers[idx] = {sec,buf};
     return true;
 }
 
 bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
-                                          const GLEAM_ShaderBuffer *buf)
+                                          const GLEAM_ShaderBuffer *buf,
+                                          GLEAM_BufferSection const& sec)
 {
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_sbuffers[idx] = buf;
+    m_sbuffers[idx] = {sec,buf};
     return true;
 }
 

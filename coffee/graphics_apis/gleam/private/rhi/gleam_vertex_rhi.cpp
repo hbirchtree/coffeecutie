@@ -35,10 +35,14 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
         buf.bind();
         for(GLEAM_VertAttribute const& attr : m_attributes)
             if(binding == attr.bufferAssociation())
+            {
                 CGL33::VAOAttribPointer(
                             attr.index(),attr.size(),attr.type(),
                             false,attr.stride(),
                             attr.bufferOffset()+attr.offset());
+                if(attr.instanced())
+                    CGL33::VAODivisor(attr.index(),1);
+            }
     }
     else if(GL_CURR_API==GL_4_3)
     {
@@ -49,6 +53,8 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
                                            attr.bufferOffset(),
                                            attr.stride());
                 CGL43::VAOAttribBinding(attr.index(),binding);
+                if(attr.instanced())
+                    CGL43::VAOBindingDivisor(attr.index(),1);
             }
     }
 }

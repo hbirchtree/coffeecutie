@@ -131,17 +131,17 @@ struct GraphicsAPI
         {
         }
 
-        bool discard(){return m_discard;}
-        bool culling(){return m_culling;}
-        bool wireframeRender(){return m_wireframe;}
-        bool polygonSmooth(){return m_polysmooth;}
-        bool dither(){return m_dither;}
+        bool discard()const{return m_discard;}
+        uint32 culling()const{return m_culling;}
+        bool wireframeRender()const{return m_wireframe;}
+        bool polygonSmooth()const{return m_polysmooth;}
+        bool dither()const{return m_dither;}
 
-        LogicOp colorOp(){return m_colOp;}
-        CColorMask colorMask(){return m_colMask;}
+        LogicOp colorOp()const{return m_colOp;}
+        CColorMask colorMask()const{return m_colMask;}
 
         bool m_discard;
-        bool m_culling;
+        uint32 m_culling;
         bool m_wireframe;
         bool m_polysmooth;
         bool m_dither;
@@ -156,7 +156,7 @@ struct GraphicsAPI
         {
         }
 
-        uint32 patchCount(){return m_patches;}
+        uint32 patchCount()const{return m_patches;}
 
         uint32 m_patches;
     };
@@ -178,11 +178,11 @@ struct GraphicsAPI
             m_scissor.resize(views);
         }
 
-        bool multiview(){return m_mview;}
-        szptr viewCount(){return m_view.size();}
-        VRect view(uint32 i){return m_view[i];}
-        DField depth(uint32 i){return m_depth[i];}
-        VRect scissor(uint32 i){return m_scissor[i];}
+        bool multiview()const{return m_mview;}
+        szptr viewCount()const{return m_view.size();}
+        VRect const& view(uint32 i)const{return m_view[i];}
+        DField const& depth(uint32 i)const{return m_depth[i];}
+        VRect const& scissor(uint32 i)const{return m_scissor[i];}
 
         bool m_mview;
         Vector<VRect> m_view;
@@ -199,9 +199,9 @@ struct GraphicsAPI
         {
         }
 
-        bool blend(){return m_doBlend;}
-        bool additive(){return m_additive;}
-        bool sampleAlphaCoverage(){return m_alphaCoverage;}
+        bool blend()const{return m_doBlend;}
+        bool additive()const{return m_additive;}
+        bool sampleAlphaCoverage()const{return m_alphaCoverage;}
 
         bool m_doBlend;
         bool m_additive;
@@ -215,22 +215,19 @@ struct GraphicsAPI
             m_test(true),
             m_clamp(false),
             m_mask(false),
-            m_func(),
-            m_range()
+            m_func()
         {
         }
 
-        bool testDepth(){return m_test;}
-        bool clampDepth(){return m_clamp;}
-        bool mask(){return m_mask;}
-        DepthFun fun(){return m_func;}
-        ZField64 range(){return m_range;}
+        bool testDepth()const{return m_test;}
+        bool clampDepth()const{return m_clamp;}
+        bool mask()const{return m_mask;}
+        DepthFun fun()const{return m_func;}
 
         bool m_test;
         bool m_clamp;
         bool m_mask;
         DepthFun m_func;
-        ZField64 m_range;
     };
 
     template<typename StencilFunc,typename StencilOp>
@@ -244,10 +241,10 @@ struct GraphicsAPI
         {
         }
 
-        bool testStencil(){return 0;}
-        uint32 mask(){return 0;}
-        StencilFunc func(){return StencilFunc();}
-        StencilOp op(){return StencilOp();}
+        bool testStencil()const{return 0;}
+        uint32 mask()const{return 0;}
+        StencilFunc func()const{return StencilFunc();}
+        StencilOp op()const{return StencilOp();}
 
         bool m_test;
         uint32 m_mask;
@@ -266,11 +263,11 @@ struct GraphicsAPI
         {
         }
 
-        bool swapEndianness(){return m_swap;}
-        bool lsbFirst(){return m_lsbf;}
-        uint32 rowLength(){return m_rlen;}
-        uint32 imgHeight(){return m_imgh;}
-        uint32 alignment(){return m_align;}
+        bool swapEndianness()const{return m_swap;}
+        bool lsbFirst()const{return m_lsbf;}
+        uint32 rowLength()const{return m_rlen;}
+        uint32 imgHeight()const{return m_imgh;}
+        uint32 alignment()const{return m_align;}
 
         bool m_swap;
         bool m_lsbf;
@@ -282,10 +279,11 @@ struct GraphicsAPI
     struct DebugMessage
     {
 
-        DebugComponent component(){return m_comp;}
-        DebugType type(){return m_type;}
-        Severity severity(){return m_sev;}
+        DebugComponent component()const{return m_comp;}
+        DebugType type()const{return m_type;}
+        Severity severity()const{return m_sev;}
         CString& message(){return m_msg;}
+        CString const& message()const{return m_msg;}
 
         DebugComponent m_comp;
         DebugType m_type;
@@ -369,6 +367,7 @@ struct GraphicsAPI
         uint32 offset()const{return m_off;}
         uint32 stride()const{return m_stride;}
         TypeEnum type()const{return m_type;}
+        bool instanced()const{return m_instanced;}
 
         uint64 m_boffset;
         uint32 m_bassoc;
@@ -377,6 +376,7 @@ struct GraphicsAPI
         uint32 m_off;
         uint32 m_stride;
         TypeEnum m_type;
+        bool m_instanced;
     };
 
     struct VertexBufferBinding
@@ -530,29 +530,48 @@ struct GraphicsAPI
 
     struct DrawCall
     {
-        bool indexed(){return 0;}
-        bool instanced(){return 0;}
+        bool indexed()const{return m_idxd;}
+        bool instanced()const{return m_inst;}
 
-        uint32 vertices(){return 0;}
-        uint32 elements(){return 0;}
-        uint32 instances(){return 0;}
+        bool m_idxd;
+        bool m_inst;
+    };
 
-        int32 vertexOffset(){return 0;}
-        int32 indexOffset(){return 0;}
-        int32 instanceOffset(){return 0;}
+    struct DrawInstanceData
+    {
+        uint32 vertices()const{return m_verts;}
+        uint32 elements()const{return m_elems;}
+        TypeEnum elementType()const{return m_eltype;}
+        uint32 instances()const{return m_insts;}
+
+        int32 vertexOffset()const{return m_voff;}
+        uint32 indexOffset()const{return m_eoff;}
+        uint32 instanceOffset()const{return m_ioff;}
+
+        uint32 m_verts;
+        uint32 m_elems;
+        uint32 m_insts;
+
+        TypeEnum m_eltype;
+
+        int32 m_voff;
+        uint32 m_eoff;
+        uint32 m_ioff;
     };
 
     /*!
      * \brief Draw primitives regardlessly
-     * \param d
+     * \param d General drawcall settings
+     * \param i Data associated with instance of drawcall
      */
-    static void Draw(DrawCall const& d);
+    static void Draw(DrawCall const& d,DrawInstanceData const& i);
     /*!
      * \brief Draw primitives with occlusion query
      * \param d
-     * \param c
+     * \param i
+     * \param c An occlusion query to be considered in the drawcall
      */
-    static void DrawConditional(DrawCall const& d,OccludeQuery const& c);
+    static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c);
 
     static void SetRasterizerState(){}
     static void SetTessellatorState(){}

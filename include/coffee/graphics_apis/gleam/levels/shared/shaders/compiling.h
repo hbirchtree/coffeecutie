@@ -9,6 +9,15 @@ namespace CGL{
 template<typename CGhnd,typename CGenum>
 struct CGL_Old_ShaderCompiler
 {
+    STATICINLINE bool ProgramValidate(CGhnd h)
+    {
+        /*WARNING: Do not use this with shader programs! */
+        glValidateProgram(h);
+        int32 outStat;
+        ProgramGetiv(h,GL_VALIDATE_STATUS,&outStat);
+        return outStat == GL_TRUE;
+    }
+
     /* Shaders */
 
     STATICINLINE cstring_w ShaderGetSrc(CGhnd h)
@@ -79,7 +88,6 @@ struct CGL_Old_ShaderCompiler
     {
         glUseProgram(h);
     }
-    STATICINLINE bool ProgramValidate(CGhnd h){glValidateProgram(h); return false;}
 
     /*TODO: Create ProgramProperty enum*/
     STATICINLINE void ProgramGetiv(CGhnd h,CGenum f,int32* d){glGetProgramiv(h,f,d);}

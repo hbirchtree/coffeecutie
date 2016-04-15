@@ -59,9 +59,11 @@ enum class BufBit
 
 enum class Face
 {
+    None = 0x0,
     Front = 0x1,
     Back = 0x2,
     Both = 0x3,
+    FaceMask = Front|Back|Both,
 };
 
 enum class AttribMode
@@ -295,6 +297,7 @@ enum class PatchProperty
 C_FLAGS(BufBit,uint32);
 C_FLAGS(PrimCre,uint32);
 C_FLAGS(ShaderStage,uint32);
+C_FLAGS(Face,uint32);
 
 }
 }

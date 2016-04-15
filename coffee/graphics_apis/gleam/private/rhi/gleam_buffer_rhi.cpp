@@ -50,9 +50,14 @@ void GLEAM_VBuffer::unbind() const
     CGL33::BufBind(m_type,0);
 }
 
-void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size)
+void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size) const
 {
     CGL33::BufBindRange(m_type,idx,m_handle,off,size);
+}
+
+void GLEAM_PixelBuffer::setState(bool pack)
+{
+    m_type = (pack) ? BufType::PixelPData : BufType::PixelUData;
 }
 
 }

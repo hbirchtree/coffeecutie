@@ -28,6 +28,8 @@ C_FLAGS(PixelFlags,uint32);
 
 enum class PixelComponents
 {
+    None,
+
     R,
     G,
     B,
@@ -41,6 +43,8 @@ enum class PixelComponents
     Depth,
     DepthStencil,
 };
+
+using PixCmp = PixelComponents;
 
 enum class PixelOperation
 {

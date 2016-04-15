@@ -67,6 +67,8 @@ if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_GLEAM)
     if(NOT COFFEE_BUILD_GLES)
         add_subdirectory(gleam/base-test)
         add_subdirectory(gleam/raytrace-test)
+
+        add_subdirectory(gleam/rhi/base-test)
     endif()
 
     add_subdirectory(gleam/shadow-test)

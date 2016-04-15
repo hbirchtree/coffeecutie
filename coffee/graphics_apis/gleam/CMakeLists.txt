@@ -6,6 +6,7 @@ set ( CoffeeGLeam_SRCS
 if(COFFEE_BUILD_GLEAM_RHI)
     list(APPEND CoffeeGLeam_SRCS
         private/rhi/gleam_rhi.cpp
+        private/rhi/gleam_api_rhi.cpp
         private/rhi/gleam_buffer_rhi.cpp
         private/rhi/gleam_shader_rhi.cpp
         private/rhi/gleam_surface_rhi.cpp

@@ -52,6 +52,9 @@ struct CGL_Shared_Functions
     void ClearBufferfi(scalar d,int32 s){glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);}
 
     STATICINLINE
+    void BlendFunc(CGenum v1,CGenum v2)
+    {glBlendFunc(v1,v2);}
+    STATICINLINE
     void BlendFuncSep(CGenum v1,CGenum v2,CGenum v3,CGenum v4)
     {glBlendFuncSeparate(v1,v2,v3,v4);}
     STATICINLINE
@@ -86,8 +89,11 @@ struct CGL_Shared_Functions
     void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
 
     STATICINLINE
-    void PixelStore(bool pack, PixelOperation op, int32 v)
-    {glPixelStorei(to_enum(pack,op),v);}
+    void PixelStore(PixelOperation op, int32 v)
+    {
+        glPixelStorei(to_enum(false,op),v);
+        glPixelStorei(to_enum(true,op),v);
+    }
 
     /* Core features! */
     STATICINLINE

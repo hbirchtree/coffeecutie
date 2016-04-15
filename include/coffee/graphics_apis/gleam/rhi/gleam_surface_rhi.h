@@ -30,9 +30,14 @@ struct GLEAM_Surface2D : GLEAM_Surface
 
     GLEAM_Surface2D(PixelFormat fmt,uint32 mips = 1,uint32 texflags = 0);
 
+    void allocate(CSize size, PixelComponents c);
+
     void upload(BitFormat fmt, PixelComponents comp,
                 CSize size, c_cptr data,
                 CPoint offset = {}, uint32 mip = 0);
+
+    /*TODO: Add download function */
+
 protected:
     CSize m_size;
 };
@@ -43,9 +48,14 @@ struct GLEAM_Surface2DArray : GLEAM_Surface
 
     GLEAM_Surface2DArray(PixelFormat fmt,uint32 mips = 1,uint32 texflags = 0);
 
+    void allocate(CSize3 size, PixelComponents c);
+
     void upload(BitFormat fmt, PixelComponents comp,
                 CSize3 size, c_cptr data,
                 CPoint3 offset = {}, uint32 mip = 0);
+
+    /*TODO: Add download function */
+
 protected:
     CSize3 m_size;
 };
@@ -54,10 +64,15 @@ struct GLEAM_SamplerHandle
 {
     union
     {
-        CGhnd texture;
+        struct
+        {
+            CGhnd texture;
+            CGhnd m_unit;
+        };
         CGhnd64 texture64;
     };
     CGhnd m_sampler;
+    Texture m_type;
 };
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler

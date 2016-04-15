@@ -1,5 +1,6 @@
 #include <coffee/graphics_apis/gleam/rhi/gleam_surface_rhi.h>
 #include <coffee/graphics_apis/gleam/rhi/gleam_api_rhi.h>
+#include <coffee/graphics_apis/gleam/rhi/gleam_buffer_rhi.h>
 
 #include "gleam_internal_types.h"
 
@@ -21,6 +22,23 @@ GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt,uint32 mips,uint32 texflags):
     GLEAM_Surface(Texture::T2D,fmt,mips,texflags),
     m_size(0,0)
 {
+}
+
+void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
+{
+    GLEAM_Surface::allocate();
+    CGL33::TexBind(m_type,m_handle);
+    if(GL_CURR_API==GL_3_3)
+    {
+        CGL33::TexImage2D(Texture::T2D,0,m_pixfmt,
+                          size.w,size.h,0,c,
+                          BitFormat::UByte,nullptr);
+    }else if(GL_CURR_API==GL_4_3)
+    {
+        CGL43::TexStorage2D(Texture::T2D,m_mips,m_pixfmt,
+                            size.w,size.h);
+    }
+    m_size = size;
 }
 
 void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
@@ -84,6 +102,23 @@ GLEAM_Surface2DArray::GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips, uint32 
 {
 }
 
+void GLEAM_Surface2DArray::allocate(CSize3 size, PixelComponents c)
+{
+    GLEAM_Surface::allocate();
+    CGL33::TexBind(m_type,m_handle);
+    if(GL_CURR_API==GL_3_3)
+    {
+        CGL33::TexImage3D(Texture::T2DArray,0,m_pixfmt,
+                          size.width,size.height,size.depth,0,c,
+                          BitFormat::UByte,nullptr);
+    }else if(GL_CURR_API==GL_4_3)
+    {
+        CGL43::TexStorage3D(Texture::T2DArray,m_mips,m_pixfmt,
+                            size.width,size.height,size.depth);
+    }
+    m_size = size;
+}
+
 void GLEAM_Surface2DArray::upload(BitFormat fmt, PixelComponents comp,
                                   CSize3 size, c_cptr data, CPoint3 offset, uint32 mip)
 {
@@ -137,6 +172,7 @@ void GLEAM_Surface2DArray::upload(BitFormat fmt, PixelComponents comp,
             CGL43::BufBind(BufType::PixelUData,0);
     }
 }
+
 
 void GLEAM_Sampler::alloc()
 {

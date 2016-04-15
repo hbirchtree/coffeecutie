@@ -20,34 +20,38 @@ struct GLEAM_API : GraphicsAPI
 
     enum UniformFlags
     {
-        UBuffer = 0x1,
-        SBuffer = 0x2,
+        UBufferT = 0x1,
+        SBufferT = 0x2,
 
-        Integer = 0x4,
-        UInteger = 0x8,
-        Scalar = 0x10,
-        BigScalar = 0x20,
+        UniformStorageMask = UBufferT|SBufferT,
 
-        Mat2 = 0x40,
-        Mat3 = 0x80,
-        Mat4 = 0x100,
+        IntegerT = 0x4,
+        UIntegerT = 0x8,
+        ScalarT = 0x10,
+        BigScalarT = 0x20,
 
-        Mat2x4 = 0x200,
-        Mat2x3 = 0x400,
+        Mat2T = 0x40,
+        Mat3T = 0x80,
+        Mat4T = 0x100,
 
-        Mat3x2 = 0x800,
-        Mat3x4 = 0x1000,
+        Mat2x4T = 0x200,
+        Mat2x3T = 0x400,
 
-        Mat4x2 = 0x2000,
-        Mat4x3 = 0x4000,
+        Mat3x2T = 0x800,
+        Mat3x4T = 0x1000,
 
-        Vec2 = 0x8000,
-        Vec3 = 0x10000,
-        Vec4 = 0x20000,
+        Mat4x2T = 0x2000,
+        Mat4x3T = 0x4000,
+
+        Vec2T = 0x8000,
+        Vec3T = 0x10000,
+        Vec4T = 0x20000,
     };
 
     using StencilState = GraphicsAPI::StencilState<CGenum,CGenum>;
     using DepthState = GraphicsAPI::DepthState<CGenum>;
+
+    using DrawCall = GraphicsAPI::DrawCall;
 
     /* These access the PBO queue */
     friend struct GLEAM_Surface2D;
@@ -57,30 +61,43 @@ struct GLEAM_API : GraphicsAPI
     friend struct GLEAM_SurfaceCubeArray;
 
     /* Just defining nicer names */
-    using Surface2D = GLEAM_Surface2D;
-    using Surface3D = GLEAM_Surface3D;
-    using SurfaceCube = GLEAM_SurfaceCube;
+    using S_2D = GLEAM_Surface2D;
+    using S_3D = GLEAM_Surface3D;
+    using S_Cube = GLEAM_SurfaceCube;
 
-    using Surface2DArray = GLEAM_Surface2DArray;
-    using SurfaceCubeArray = GLEAM_SurfaceCubeArray;
+    using S_2DA = GLEAM_Surface2DArray;
+    using S_CubeA = GLEAM_SurfaceCubeArray;
 
-    using Sampler2D = GLEAM_Sampler2D;
-    using Sampler3D = GLEAM_Sampler3D;
-    using SamplerCube = GLEAM_SamplerCube;
+    using SM_2D = GLEAM_Sampler2D;
+    using SM_3D = GLEAM_Sampler3D;
+    using SM_Cube = GLEAM_SamplerCube;
 
-    using Sampler2DArray = GLEAM_Sampler2DArray;
-    using SamplerCubeArray = GLEAM_SamplerCubeArray;
+    using SM_2DA = GLEAM_Sampler2DArray;
+    using SM_CubeA = GLEAM_SamplerCubeArray;
 
-    using Shader = GLEAM_Shader;
-    using Pipeline = GLEAM_Pipeline;
+    using SHD = GLEAM_Shader;
+    using PIP = GLEAM_Pipeline;
 
-    using VertexAttribute = GLEAM_VertAttribute;
-    using VertexDescriptor = GLEAM_VertDescriptor;
+    using V_ATTR = GLEAM_VertAttribute;
+    using V_DESC = GLEAM_VertDescriptor;
 
-    using ArrayBuffer = GLEAM_ArrayBuffer;
-    using ElementBuffer = GLEAM_ElementBuffer;
-    using UniformBuffer = GLEAM_UniformBuffer;
-    using ShaderBuffer = GLEAM_ShaderBuffer;
+    using BUF_A = GLEAM_ArrayBuffer;
+    using BUF_E = GLEAM_ElementBuffer;
+    using BUF_U = GLEAM_UniformBuffer;
+    using BUF_S = GLEAM_ShaderBuffer;
+    using BUF_P = GLEAM_PixelBuffer;
+
+    using D_CALL = DrawCall;
+    using D_DATA = DrawInstanceData;
+
+    using USTATE = GLEAM_ShaderUniformState;
+    using RASTSTATE = RasterizerState;
+    using VIEWSTATE = ViewportState;
+    using BLNDSTATE = BlendState;
+    using DEPTSTATE = DepthState;
+    using STENSTATE = StencilState;
+    using TSLRSTATE = TessellatorState;
+    using PIXLSTATE = PixelProcessState;
 
 protected:
     struct GLEAM_Instance_Data;
@@ -89,14 +106,20 @@ protected:
 public:
     static void LoadAPI();
 
-    static void SetRasterizerState(RasterizerState const& rstate);
+    /* i specifies view index for indexed views, 0 for  */
+    static void SetRasterizerState(RasterizerState const& rstate, uint32 i = 0);
+    static void SetViewportState(ViewportState const& vstate, uint32 i = 0);
+    static void SetBlendState(BlendState const& bstate, uint32 i = 0);
+    static void SetDepthState(DepthState const& dstate, uint32 i = 0);
+    static void SetStencilState(StencilState const& sstate, uint32 i = 0);
+
     static void SetTessellatorState(TessellatorState const& tstate);
-    static void SetViewportState(ViewportState const& vstate);
-    static void SetBlendState(BlendState const& bstate);
-    static void SetDepthState(DepthState const& dstate);
-    static void SetStencilState(StencilState const& sstate);
     static void SetPixelProcessState(PixelProcessState const& pstate);
-    static void SetShaderUniformState(GLEAM_ShaderUniformState const& ustate);
+    static void SetShaderUniformState(const GLEAM_Pipeline &pipeline, ShaderStage const& stage,
+                                      GLEAM_ShaderUniformState const& ustate);
+
+    static void Draw(DrawCall const& d,DrawInstanceData const& i);
+    static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c);
 };
 
 }

@@ -8,6 +8,12 @@
 namespace Coffee{
 namespace CGL{
 
+struct DrwMd
+{
+    Prim t;
+    PrimCre c;
+};
+
 #ifdef COFFEE_GLEAM_DESKTOP
 FORCEDINLINE CGenum to_enum(PatchProperty f)
 {
@@ -24,6 +30,10 @@ CGenum to_enum(Object t);
 CGenum to_enum(Face f);
 CGenum to_enum(BufBit f);
 CGenum to_enum(Prim p,PrimCre c);
+FORCEDINLINE CGenum to_enum(DrwMd m)
+{
+    return to_enum(m.t,m.c);
+}
 CGenum to_enum(bool pack, PixelOperation f);
 CGenum to_enum(PixelFormat f, PixelFlags e = PixelFlags::None,
                             CompFlags d = CompressionNone);

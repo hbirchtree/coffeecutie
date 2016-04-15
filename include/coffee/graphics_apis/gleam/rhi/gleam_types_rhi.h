@@ -34,7 +34,11 @@ struct GLEAM_ElementBuffer;
 struct GLEAM_UniformBuffer;
 struct GLEAM_ShaderBuffer;
 
+struct GLEAM_PixelBuffer;
+
 /* Surfaces */
+struct GLEAM_Surface;
+
 struct GLEAM_Surface2D;
 struct GLEAM_Surface3D;
 struct GLEAM_SurfaceCube;

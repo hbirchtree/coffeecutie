@@ -176,6 +176,21 @@ struct CHMD_Binding
 };
 
 }
+
+template<typename VR,typename DevT> FORCEDINLINE
+DevT* QuickLoadHMD()
+{
+    DevT* dev = nullptr;
+    int32 devcount;
+    if(VR::InitializeBinding())
+    {
+        if(VR::PollDevices(&devcount)&&devcount>0)
+            dev = VR::GetDefaultDevice();
+        VR::PollDevices();
+    }
+    return dev;
+}
+
 }
 
 #endif
