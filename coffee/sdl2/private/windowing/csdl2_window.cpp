@@ -51,9 +51,8 @@ bool SDL2Window::windowInit(const CDProperties& p, CString* err)
 
     /* Validate the window pointer, may have failed */
     if(!getSDL2Context()->window){
-        CString err_m = cStringFormat(CFStrings::SDL2_Library_FailureInit,SDL_GetError());
         if(err)
-            *err = err_m;
+            *err = cStringFormat(CFStrings::SDL2_Library_FailureInit,SDL_GetError());
         return false;
     }
     Profiler::Profile("Create window");

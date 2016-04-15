@@ -24,7 +24,7 @@ class CSDL2Renderer :
 public:
     virtual ~CSDL2Renderer();
 
-    bool init(const CDProperties &,CString*);
+    bool init(const CDProperties &, CString*err);
     void cleanup();
 
 protected:

@@ -1,14 +1,15 @@
 #include <coffee/core/CApplication>
 #include <coffee/graphics_apis/CGLeamRHI>
 #include <coffee/CGraphics>
-#include <coffee/CSDL2>
+#include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/sdl2/CSDL2Dialog>
+#include <coffee/sdl2/CSDL2System>
 
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics_apis/SMesh>
 
 #include <coffee/dummyplug/hmd-dummy.h>
 #include <coffee/COculusRift>
-
 
 using namespace Coffee;
 using namespace Display;
@@ -54,14 +55,14 @@ public:
             CResources::Resource mesh_src_0("eye_left.msh");
             CResources::Resource mesh_src_1("eye_right.msh");
 
-			if (CResources::FileFun::Exists(mesh_src_0.resource()))
-			{
-				CString fn = CResources::FileFun::NativePath(mesh_src_0.resource());
+            if (CResources::FileFun::Exists(mesh_src_0.resource()))
+            {
+                CString fn = CResources::FileFun::NativePath(mesh_src_0.resource());
                 uint64 v = CResources::FileFun::Size(fn.c_str());
-			}
+            }
 
-			if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
-				return;
+            if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
+                return;
 
             SMSH::DeserializeMesh(mesh_src_0,&distortMesh[0]);
             SMSH::DeserializeMesh(mesh_src_1,&distortMesh[1]);
@@ -94,8 +95,8 @@ public:
 
             GL::BufBind(GL::BufType::PixelUData,pbobuf[i]);
             GL::BufStorage(GL::BufType::PixelUData,
-                              img.size.area()*img.bpp,
-                              img.data,ResourceAccess::ReadOnly);
+                           img.size.area()*img.bpp,
+                           img.data,ResourceAccess::ReadOnly);
 
             CStbImageLib::ImageFree(&img);
             CResources::FileUnmap(rsc);
@@ -105,12 +106,12 @@ public:
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  1.f,    0.f,  0.f,
-             1.f, -1.f,  1.f,   -1.f,  0.f,
+            1.f, -1.f,  1.f,   -1.f,  0.f,
             -1.f,  1.f,  1.f,    0.f, -1.f,
 
             -1.f,  1.f,  1.f,    0.f, -1.f,
-             1.f,  1.f,  1.f,   -1.f, -1.f,
-             1.f, -1.f,  1.f,   -1.f,  0.f,
+            1.f,  1.f,  1.f,   -1.f, -1.f,
+            1.f, -1.f,  1.f,   -1.f,  0.f,
         };
 
         GL::CGhnd vertbuf;
@@ -164,9 +165,9 @@ public:
                         ResourceAccess::Persistent|ResourceAccess::WriteOnly);
 
             GL::BufStorage(GL::BufType::ArrayData,
-                        array_size,
-                        nullptr,
-                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
+                           array_size,
+                           nullptr,
+                           ResourceAccess::Persistent|ResourceAccess::WriteOnly);
 
             byte_t* array_data = (byte_t*)GL::BufMapRange(
                         GL::BufType::ArrayData,0,
@@ -253,7 +254,7 @@ public:
                 cstr = &tmp[0];
                 if(i==0)
                 {
-                     vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&cstr);
+                    vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&cstr);
                 }else if(i==1)
                 {
                     fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&cstr);
@@ -346,7 +347,7 @@ public:
         bool cycle_color = true;
 
         GL::Enable(GL::Feature::Blend);
-//        GL::Enable(GL::Feature::DepthTest);
+        //        GL::Enable(GL::Feature::DepthTest);
 
         ftimer.start();
 
@@ -366,10 +367,10 @@ public:
 
         if(dev)
         {
-//            WM::SetDecorated(this->window(),false);
-//            this->setWindowState(CDProperties::WindowedFullScreen);
-//            this->setWindowPosition(dev->windowPos().topleft());
-//            this->setWindowSize(dev->windowPos().size());
+            //            WM::SetDecorated(this->window(),false);
+            //            this->setWindowState(CDProperties::WindowedFullScreen);
+            //            this->setWindowPosition(dev->windowPos().topleft());
+            //            this->setWindowSize(dev->windowPos().size());
         }
 
         CGL::DrwMd mode = {CGL::Prim::Triangle,CGL::PrimCre::Explicit};
@@ -527,16 +528,17 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     if(!renderer->init(props,&err))
     {
+        SDL2Dialog::ErrorMessage("Initialization Error",err.c_str());
         cDebug("Initialization error: {0}",err);
         return 1;
     }
     Profiler::Profile("Initialize renderer");
 
-        cDebug("OpenGL core profile version: {0}",
-               (_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
+    cDebug("OpenGL core profile version: {0}",
+           (_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
 
-	cDebug("Device info: {0}", GL::Debug::Renderer());
-	Profiler::Profile("Get renderer info");
+    cDebug("Device info: {0}", GL::Debug::Renderer());
+    Profiler::Profile("Get renderer info");
 
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()
