@@ -119,7 +119,8 @@ struct CGL_Old_ShaderCompiler
     STATICINLINE void ProgramAttribBind(CGhnd h,uint32 i,cstring n){glBindAttribLocation(h,i,n);}
 
     /* Uniforms */
-    STATICINLINE void ProgramUnifGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
+    STATICINLINE
+    void ProgramUnifGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORMS,&num);
@@ -142,8 +143,8 @@ struct CGL_Old_ShaderCompiler
     STATICINLINE int32 ProgramUnifGetLoc(CGhnd h,cstring n){return glGetUniformLocation(h,n);}
 
     /* Uniform blocks */
-    /* Return name, binding, active uniform indices and size */
-    STATICINLINE void ProgramUnifBlockGet(CGhnd h,uint32* n,cstring_w** names,
+    STATICINLINE
+    void ProgramUnifBlockGet(CGhnd h,uint32* n,cstring_w** names,
                                           int32** indexSize,int32*** index,int32** size)
     {
         int32 num = 0;
@@ -171,8 +172,10 @@ struct CGL_Old_ShaderCompiler
             glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,index[0][i]);
         }
     }
-    STATICINLINE uint32 ProgramUnifBlockGetLoc(CGhnd h,cstring n){return glGetUniformBlockIndex(h,n);}
-    STATICINLINE void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i){glUniformBlockBinding(h,l,i);}
+    STATICINLINE uint32 ProgramUnifBlockGetLoc(CGhnd h,cstring n)
+    {return glGetUniformBlockIndex(h,n);}
+    STATICINLINE void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i)
+    {glUniformBlockBinding(h,l,i);}
 };
 
 

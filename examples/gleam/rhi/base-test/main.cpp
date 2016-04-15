@@ -92,7 +92,7 @@ public:
             eyetex.upload(BitFormat::UByte,PixCmp::RGBA,{img.size.w,img.size.h,1},
                           img.data,{0,0,(int32)i});
             CResources::FileUnmap(rsc);
-        }
+	}
 
         GLM::BLNDSTATE blendstate;
         GLM::USTATE unifstate;

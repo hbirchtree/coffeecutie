@@ -131,6 +131,38 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
     return true;
 }
 
+void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms)
+{
+    if(GL_CURR_API==GL_3_3)
+    {
+	CGhnd prog = pipeline.m_handle;
+
+	uint32 num_uniforms;
+	cstring_w* unif_names;
+	uint32* unif_types;
+	int32* unif_sizes;
+	CGL33::ProgramUnifGet(prog,&num_uniforms,&unif_names,
+			      &unif_types,&unif_sizes);
+	if(num_uniforms==0)
+	    return;
+	uniforms->reserve(num_uniforms);
+	for(uint32 i=0;i<num_uniforms;i++)
+	{
+	    GLEAM_UniformDescriptor desc;
+	    desc.m_name = unif_names[i];
+	    desc.m_idx = ProgramUnifGetLoc(prog,desc.m_name.c_str());
+	    uniforms->push_back();
+	    delete[] unif_names[i];
+	}
+
+	delete[] unif_names;
+	delete[] unif_types;
+	delete[] unif_sizes;
+    }else if(GL_CURR_API==GL_4_3){
+
+    }
+}
+
 }
 }
 }
