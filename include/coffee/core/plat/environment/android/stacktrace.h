@@ -5,8 +5,9 @@
 #include "../stacktrace_def.h"
 
 namespace Coffee{
+namespace Environment{
 namespace Android{
-struct AndroidStacktracerDef : StacktracerDef
+struct AndroidStacktracer : StacktracerDef
 {
     STATICINLINE CString GetStackframeName(uint32 = 0)
     {
@@ -18,8 +19,9 @@ struct AndroidStacktracerDef : StacktracerDef
     }
 };
 }
+}
 
-using Stacktracer = Android::AndroidStacktracerDef;
+using Stacktracer = Environment::Android::AndroidStacktracer;
 
 }
 #endif

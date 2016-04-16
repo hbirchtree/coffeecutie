@@ -9,13 +9,13 @@
 namespace Coffee{
 namespace Environment{
 namespace Android{
-struct AndroidProcessPropertyApi : ProcessPropertyDef
+struct AndroidProcessProperty : ProcessPropertyDef
 {
 };
 }
 }
 
-using ProcessProperty = Environment::Android::AndroidProcessPropertyApi;
+using ProcessProperty = Environment::Android::AndroidProcessProperty;
 
 }
 #endif

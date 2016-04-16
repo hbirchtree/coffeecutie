@@ -12,7 +12,7 @@ thread_local CString Environment::Linux::LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
 #if defined(COFFEE_USE_UNWIND)
-unw_context_t* Linux::LinuxStacktracer::unwind_context = nullptr;
+unw_context_t* Environment::Linux::LinuxStacktracer::unwind_context = nullptr;
 #endif
 
 /* Storage for profiler data */

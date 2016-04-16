@@ -14,6 +14,7 @@
 #endif
 
 namespace Coffee{
+namespace Environment{
 namespace Linux{
 struct LinuxStacktracer : StacktracerDef
 {
@@ -84,8 +85,9 @@ private:
 #endif
 };
 }
+}
 
-using Stacktracer = Linux::LinuxStacktracer;
+using Stacktracer = Environment::Linux::LinuxStacktracer;
 
 }
 

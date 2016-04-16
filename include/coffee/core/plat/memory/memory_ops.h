@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstring>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include "../../types/tdef/integertypes.h"
 #include "../../coffee_mem_macros.h"

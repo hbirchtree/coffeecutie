@@ -1,6 +1,11 @@
 #pragma once
 
 #include "../cfile.h"
+#include "../../plat_primary_identify.h"
+
+#if defined(COFFEE_APPLE)
+#include <mach/vm_statistics.h>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -29,7 +34,7 @@ struct PosixApi
     using FileMapping = FileFunDef::FileMapping;
 };
 
-template<typename FileHandle>
+template<typename FileHandle,typename FileMapping,typename ScratchBuf>
 struct PosixFileFun_def : CFILEFun_def<FileHandle>
 {
     STATICINLINE void ErrnoCheck()
@@ -53,6 +58,107 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
         close(fh->fd);
         CFILEFun_def<FileHandle>::Close(fh);
         return true;
+    }
+
+    STATICINLINE FileMapping Map(cstring filename, ResourceAccess acc,
+                    szptr offset, szptr size, int* error)
+    {
+        szptr pa_offset = offset & ~(PageSize());
+
+        /*Translate access flags*/
+        int oflags = PosixRscFlags(acc);
+        int prot = ProtFlags(acc);
+        int mapping = MappingFlags(acc);
+
+        /*... and then actually open it*/
+        int fd = open(filename,oflags);
+        if(fd < 0)
+        {
+            *error = errno;
+            return {};
+        }
+
+        byte_t* addr = nullptr;
+
+#if defined(COFFEE_LINUX)
+        addr = (byte_t*)mmap64(
+                    NULL,
+                    offset+size-pa_offset,
+                    prot,mapping,
+                    fd,pa_offset);
+#else
+        addr = (byte_t*)mmap(
+                    NULL,
+                    offset+size-pa_offset,
+                    prot,mapping,
+                    fd,pa_offset);
+#endif
+
+        if(addr == MAP_FAILED)
+        {
+            *error = errno;
+            return {};
+        }
+
+        FileMapping map;
+        map.ptr = addr;
+        map.size = size;
+        map.acc = acc;
+
+        return map;
+    }
+
+    STATICINLINE bool Unmap(FileMapping* mapp)
+    {
+        void* ptr = mapp->ptr;
+        szptr size = mapp->size;
+        if(munmap(ptr,size)==0)
+        {
+            return true;
+        }else
+            return false;
+    }
+    STATICINLINE bool MapCache(void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
+    {
+        if(r_off+r_size>t_size)
+            return false;
+        byte_t* base = (byte_t*)t_ptr;
+        base += r_off;
+        return mlock(base,r_size)==0;
+    }
+    STATICINLINE bool MapUncache(void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
+    {
+        if(r_off+r_size>t_size)
+            return false;
+        byte_t* base = (byte_t*)t_ptr;
+        base += r_off;
+        return munlock(base,r_size)==0;
+    }
+    STATICINLINE bool MapSync(void* ptr, szptr size)
+    {
+        return msync(ptr,size,MS_SYNC|MS_INVALIDATE);
+    }
+
+    STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess access)
+    {
+        int proto = ProtFlags(access);
+        int mapflags = MappingFlags(access)|MAP_ANONYMOUS;
+
+        mapflags |= MAP_ANONYMOUS;
+
+        ScratchBuf buf;
+        buf.ptr = mmap64(nullptr,size,proto,mapflags,-1,0);
+        buf.acc = access;
+        buf.size = size;
+
+        if(!buf.ptr)
+            return {};
+
+        return buf;
+    }
+    STATICINLINE void ScratchUnmap(void* ptr, szptr size)
+    {
+        munmap(ptr,size);
     }
 
     STATICINLINE szptr Size(cstring fn)
@@ -101,6 +207,15 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
     }
 
 protected:
+    STATICINLINE uint32 PageSize()
+    {
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+        return sysconf(_SC_PAGESIZE)-1;
+#else
+        return 8;
+#endif
+    }
+
     STATICINLINE int MappingFlags(ResourceAccess acc)
     {
         int mapping = 0;
@@ -110,6 +225,15 @@ protected:
         else
             mapping = MAP_PRIVATE;
 
+#if defined(COFFEE_APPLE)
+        if(feval(acc&ResourceAccess::NoCache))
+            mapping |= MAP_NOCACHE;
+
+        if(feval(acc&ResourceAccess::HugeFile))
+            mapping |= VM_FLAGS_SUPERPAGE_SIZE_ANY;
+#endif
+
+#if defined(COFFEE_LINUX)
         if(feval(acc&ResourceAccess::HugeFile))
             mapping |= MAP_HUGETLB;
 
@@ -122,6 +246,7 @@ protected:
             mapping |= MAP_POPULATE|MAP_LOCKED;
         if(feval(acc&ResourceAccess::NoCache))
             mapping |= MAP_NONBLOCK;
+#endif
 
         return mapping;
     }
@@ -168,10 +293,11 @@ protected:
     }
 };
 
-struct PosixFileFun : PosixFileFun_def<PosixApi::FileHandle>
+struct PosixFileFun : PosixFileFun_def<PosixApi::FileHandle,PosixApi::FileMapping,CommonFileFun::ScratchBuf>
 {
     using FileHandle = PosixApi::FileHandle;
     using FileMapping = PosixApi::FileMapping;
+    using ScratchBuf = CommonFileFun::ScratchBuf;
 };
 
 }

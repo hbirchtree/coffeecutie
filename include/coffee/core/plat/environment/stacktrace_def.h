@@ -14,15 +14,20 @@ struct StacktracerDef
      * \param depth
      * \return A string with the name of the stackframe
      */
-    static CString GetStackframeName(uint32 depth = 0);
+    static CString GetStackframeName(uint32 depth = 0)
+    {
+        return {};
+    }
     /*!
      * \brief Dump the full stack
      * \param start
      * \param length
      * \return A vector containing stackframe names
      */
-    static Stacktrace GetFullStack(uint32 start = 0, int32 length = -1);
-
+    static Stacktrace GetFullStack(uint32 start = 0, int32 length = -1)
+    {
+        return {};
+    }
 };
 
 }

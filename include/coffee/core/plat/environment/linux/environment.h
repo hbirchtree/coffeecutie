@@ -10,7 +10,7 @@ namespace Coffee{
 namespace Environment{
 namespace Linux{
 
-struct LinuxEnvironmentFun : Posix::PosixEnvironmentFun
+struct LinuxEnv : Posix::PosixEnvironmentFun
 {
     STATICINLINE CString ExecutableName(cstring_w = nullptr)
     {
@@ -32,7 +32,7 @@ struct LinuxEnvironmentFun : Posix::PosixEnvironmentFun
 }
 
 using ColorMap_ = Environment::Posix::PosixTerminalColorCodes;
-using Env_ = Environment::Linux::LinuxEnvironmentFun;
+using Env_ = Environment::Linux::LinuxEnv;
 
 }
 
