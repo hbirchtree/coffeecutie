@@ -81,6 +81,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${Target_Name} )
 
     set ( ANDROID_LIB_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/libs/${Api_Arch} )
+    set ( ANDROID_ASSET_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/assets )
 
     # Where the primary class is found, also decides names of package
     set ( ANDROID_MAIN_PATH )
@@ -156,6 +157,14 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/${ANDROID_STARTUP_ACTIVITY}.java"
         @ONLY
         )
+
+    # Install asset files
+    foreach (resc ${ARGN})
+        add_custom_command ( TARGET ${Target_Name}
+            PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${resc} ${ANDROID_ASSET_OUTPUT_DIRECTORY}/
+            )
+    endforeach()
 
     # Update Android project files
     add_custom_command ( TARGET ${Target_Name}
