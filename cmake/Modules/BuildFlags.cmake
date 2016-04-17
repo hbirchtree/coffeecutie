@@ -29,9 +29,16 @@ endif()
 # Because file timestamps are unreliable.
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 
+
+set ( COFFEE_VERSION_CODE "001" )
+
+add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
+add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffee Guy" )
+add_definitions( -DCOFFEE_VERSION_CODE=${COFFEE_VERSION_CODE} )
+
 set ( GIT_HASH "00000000" )
 
-set ( COFFEE_BUILD_STRING "01.00.00.${CBUILDTIME}-${GIT_HASH}" )
+set ( COFFEE_BUILD_STRING "${COFFEE_VERSION_CODE}.00.00.${CBUILDTIME}-${GIT_HASH}" )
 
 add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 

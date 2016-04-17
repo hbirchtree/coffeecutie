@@ -9,6 +9,7 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
    - Runs on any Linux distro that supports OpenGL (of which there are many), Dockerfile is provided with all required dependencies in "tools/ubuntu"
    - Windows port is in
    - Android port is in
+   - OS X port is in
  - Current functionality:
    - Lets you create OpenAL contexts for audio playback and streaming with a relatively simple API (see examples)
    - Abstraction layer for OpenGL 3.3 and 4.3 is in place, heavily inlined code, uses enums for a lot of functions, still opens up for using pure OpenGL functions.
@@ -27,15 +28,14 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
  - Android
        - OpenGL ES 2.0 (SDL sprite renderer)
        - OpenGL ES 3.0 (3D rendering APIs)
- - (Possible) Mac OS X
+ - Mac OS X
        - OpenGL 3.3 (Next API level is at GL4.3)
 
 # Platform support tl;dr
  - Linux support is dandy, always maintained
  - Windows port is about as good as Linux, some lack in platform layer for non-essential code
  - Android port is all good, although lacking in some aspects (no scratch buffers), it will work well in time
- - OS X support might happen if the dev feels like it one day, shouldn't be too hard with all this POSIX code around
- - iOS support is same as OS X, also builds off of Android support in spirit
+ - OS X kind of works, with some hiccups in setting it up (eg. needing a newer version of Clang)
  - ReactOS support might happen
  - Wrapper code for Python, D-language and C# are in their early phases, currently support creation of windows and GL contexts, as well as clearing said GL context
  - Symbian support might happen in a parallel universe where Symbian supports C++11
