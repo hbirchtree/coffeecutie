@@ -29,8 +29,7 @@ protected:
 struct GLEAM_Pipeline : GraphicsAPI::Pipeline
 {
     friend struct GLEAM_API;
-    friend void GetShaderUniforms(GLEAM_Pipeline const& pipeline,
-                                  Vector<GLEAM_UniformDescriptor>* uniforms);
+    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms);
 
     GLEAM_Pipeline():
         Pipeline(0),

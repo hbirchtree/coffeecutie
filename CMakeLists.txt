@@ -8,6 +8,10 @@ set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
+if(APPLE)
+SET(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+endif()
+
 # Make it verbose
 set ( CMAKE_VERBOSE_MAKEFILE on )
 
@@ -47,10 +51,6 @@ set (
     ${CMAKE_SOURCE_DIR}/ext/kinect-shim/include
     ${COFFEE_CORE_INCLUDE_DIR}
     )
-
-add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
-add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffee Guy" )
-add_definitions( -DCOFFEE_VERSION_CODE=1 )
 
 # Add subdir for core modules
 add_subdirectory(coffee)

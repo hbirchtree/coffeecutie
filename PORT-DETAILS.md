@@ -13,7 +13,10 @@ Since UWP rejects both OpenGL 4.3 and OpenGL ES 2, this will not happen in the c
 
 OS X details
 ============
-While it has not been tested, the only parts that require implementation are platform-specific, such as file mapping, linkage, timing and system information. (The latter being optional)
+Reuses a lot of the POSIX-compliant code from the Linux version, with minor modifications to some functions. (Such as file mapping, where Linux defines its own rules)
+As of 16-04-17, the following are unimplemented:
+ - Dynamic linking (dyld)
+ - System information
 
 Android details
 ===============

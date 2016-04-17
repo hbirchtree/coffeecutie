@@ -1,10 +1,11 @@
 #pragma once
 
-#include <cctype>
 
 #include "../plat_quirks_toggling.h"
 
 #include <algorithm>
+#include <cctype>
+
 #ifdef COFFEE_USE_IOSTREAMS
 #include <iomanip>
 #endif

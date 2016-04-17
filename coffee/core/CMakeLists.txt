@@ -42,7 +42,7 @@ set ( CoffeeCore_SRCS
 # Platform-specific code, put it here
 
 # SDL power-management
-if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
 	)
@@ -118,7 +118,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
 endif()
 
-if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
     # We use SDL2 for some platform functionality, like power info
     # On Android, it is also used to read assets and
     #  acquiring device info.
