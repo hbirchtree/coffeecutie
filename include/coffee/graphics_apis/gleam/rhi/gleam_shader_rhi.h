@@ -56,6 +56,7 @@ protected:
 
 struct GLEAM_UniformDescriptor : GraphicsAPI::UniformDescriptor
 {
+    ShaderStage stages;
 };
 
 struct GLEAM_UniformValue
@@ -98,6 +99,9 @@ protected:
     Map<uint32,buffer_container<GLEAM_UniformBuffer>> m_ubuffers;
     Map<uint32,buffer_container<GLEAM_ShaderBuffer>> m_sbuffers;
 };
+
+extern void GetShaderUniforms(GLEAM_Pipeline const& pipeline,
+			      Vector<GLEAM_UniformDescriptor>* uniforms);
 
 }
 }
