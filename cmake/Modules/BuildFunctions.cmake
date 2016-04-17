@@ -62,7 +62,7 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
         set ( MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}" )
         set ( MACOSX_BUNDLE_SHORT_VERSION_STRING ${COFFEE_VERSION_CODE} )
 
-        set ( MACOSX_BUNDLE_ICON_FILE "${CMAKE_SOURCE_DIR}/desktop/common/icon_large.png" )
+        set ( MACOSX_BUNDLE_ICON_FILE "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" )
 
         set ( MACOSX_BUNDLE_COPYRIGHT "Some of this code is under the MIT license" )
         set ( MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}" )
