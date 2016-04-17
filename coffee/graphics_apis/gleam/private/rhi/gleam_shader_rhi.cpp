@@ -135,29 +135,30 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
 {
     if(GL_CURR_API==GL_3_3)
     {
-	CGhnd prog = pipeline.m_handle;
+        CGhnd prog = pipeline.m_handle;
 
-	uint32 num_uniforms;
-	cstring_w* unif_names;
-	uint32* unif_types;
-	int32* unif_sizes;
-	CGL33::ProgramUnifGet(prog,&num_uniforms,&unif_names,
-			      &unif_types,&unif_sizes);
-	if(num_uniforms==0)
-	    return;
-	uniforms->reserve(num_uniforms);
-	for(uint32 i=0;i<num_uniforms;i++)
-	{
-	    GLEAM_UniformDescriptor desc;
-	    desc.m_name = unif_names[i];
-	    desc.m_idx = ProgramUnifGetLoc(prog,desc.m_name.c_str());
-	    uniforms->push_back();
-	    delete[] unif_names[i];
-	}
+        uint32 num_uniforms;
+        cstring_w* unif_names;
+        uint32* unif_types;
+        int32* unif_sizes;
+        CGL33::ProgramUnifGet(prog,&num_uniforms,&unif_names,
+                              &unif_types,&unif_sizes);
+        if(num_uniforms==0)
+            return;
+        uniforms->reserve(num_uniforms);
+        for(uint32 i=0;i<num_uniforms;i++)
+        {
+            GLEAM_UniformDescriptor desc;
+            desc.m_name = unif_names[i];
+            desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
+            desc.stages = ShaderStage::All;
+            uniforms->push_back(desc);
+            delete[] unif_names[i];
+        }
 
-	delete[] unif_names;
-	delete[] unif_types;
-	delete[] unif_sizes;
+        delete[] unif_names;
+        delete[] unif_types;
+        delete[] unif_sizes;
     }else if(GL_CURR_API==GL_4_3){
 
     }

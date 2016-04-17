@@ -22,7 +22,7 @@ struct AndroidFileApi
     };
 };
 
-struct AndroidFileFun : Posix::PosixFileFun_def<AndroidFileApi::FileHandle>
+struct AndroidFileFun : Posix::PosixFileFun_def<AndroidFileApi::FileHandle,Posix::PosixApi::FileMapping,CommonFileFun::ScratchBuf>
 {
     using FileHandle = AndroidFileApi::FileHandle;
 
@@ -32,7 +32,7 @@ struct AndroidFileFun : Posix::PosixFileFun_def<AndroidFileApi::FileHandle>
         void* ptr_backing;
     };
 
-    using Ancestor = Posix::PosixFileFun_def<AndroidFileApi::FileHandle>;
+    using Ancestor = Posix::PosixFileFun_def<AndroidFileApi::FileHandle,Posix::PosixApi::FileMapping,CommonFileFun::ScratchBuf>;
 
     static CString NativePath(cstring fn);
 
