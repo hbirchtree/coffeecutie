@@ -1,5 +1,9 @@
 #pragma once
 
+#include "../../plat_primary_identify.h"
+
+#ifdef COFFEE_APPLE
+
 #include "../libraries.h"
 
 namespace Coffee{
@@ -23,3 +27,4 @@ using ObjectLoader = Mac::MacObjectLoader;
 
 }
 }
+#endif

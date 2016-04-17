@@ -162,7 +162,8 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     foreach (resc ${ARGN})
         add_custom_command ( TARGET ${Target_Name}
             PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${resc} ${ANDROID_ASSET_OUTPUT_DIRECTORY}/
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${resc} .
+            WORKING_DIRECTORY ${ANDROID_ASSET_OUTPUT_DIRECTORY}
             )
     endforeach()
 

@@ -89,7 +89,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     C_UNUSED(sys1);
 
     /* Set file prefix, basically a cwd but only for resources */
-    CResources::FileResourcePrefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/ctest_hud");
 
     /* Create a window host for the renderer */
     BasicWindow test;
@@ -126,7 +126,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     {
         /* Map a texture into memory */
-        CResources::Resource texfile("ctest_hud/particle_sprite.png",false,
+        CResources::Resource texfile("particle_sprite.png",false,
                                      ResourceAccess::StorageSpecifier
                                      |ResourceAccess::AssetFile);
 

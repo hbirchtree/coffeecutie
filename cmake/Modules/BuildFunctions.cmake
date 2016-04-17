@@ -46,7 +46,7 @@ include ( GetPrerequisites )
 # We do a test to check if a library is a shared library for Android
 # For iOS, everything will be statically linked, which might be used for Android as well.
 # For now, we leave the linking options here for desktop platforms
-macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
+macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
     if(ANDROID)
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -73,7 +73,7 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
         set ( MACOSX_BUNDLE_INFO_STRING "Coffeecutie Game" )
         set ( MACOSX_BUNDLE_GUI_IDENTIFIER ${TITLE} )
 
-        add_executable(${TARGET} MACOSX_BUNDLE ${ARGN} ${OSX_ICON} ${SOURCES})
+        add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_RSRCS} ${OSX_ICON} ${SOURCES})
     else()
         add_executable(${TARGET} ${SOURCES})
     endif()
@@ -110,7 +110,7 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
 
         list ( APPEND DEPENDENCIES $<TARGET_FILE:${TARGET}> )
 
-        list ( APPEND DEPENDENCIES "${ARGN}" )
+        list ( APPEND DEPENDENCIES "${BUNDLE_LIBS}" )
 
         package_apk(
             "${TARGET}"
@@ -118,7 +118,13 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
             "org.coffee.${PACKAGE_SUFFIX}"
             "${COFFEE_VERSION_CODE}" "${COFFEE_BUILD_STRING}"
             "${ANDROID_NATIVE_API_LEVEL}" "${ANDROID_ABI}"
-            "${DEPENDENCIES}" )
+            "${DEPENDENCIES}"
+            ${BUNDLE_RSRCS}
+            )
 
     endif()
+endmacro()
+
+macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
+    coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
 endmacro()
