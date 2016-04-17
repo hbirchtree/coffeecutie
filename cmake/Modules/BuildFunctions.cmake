@@ -8,8 +8,11 @@ endif()
 
 macro(TARGET_ENABLE_CXX11 TARGET)
     if(ANDROID)
-        #Android's compiler doesn't support target_compile_features :(
+        # Android's compiler doesn't support target_compile_features :(
         set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+    elseif(APPLE)
+        # To get around old Clang versions
+        set(CMAKE_CXX_FLAGS "-stdlib=libc++ -std=c++11 ${CMAKE_CXX_FLAGS}")
     else()
         target_compile_features(${TARGET} PRIVATE cxx_constexpr)
     endif()

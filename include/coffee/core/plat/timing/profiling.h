@@ -33,21 +33,6 @@ struct SimpleProfilerImpl
         uint32 line;
 
         Type tp;
-
-        /*!
-         * \brief Sort based on thread as well as timestamp
-         * \param t1
-         * \return
-         */
-        bool operator<(DataPoint const& t1)
-        {
-            ThreadId::Hash th1 = t1.thread.hash();
-            ThreadId::Hash th2 = this->thread.hash();
-            bool thread_sort = th2<th1;
-            bool samethread = th2==th1;
-            bool ts_sort = this->ts<t1.ts;
-            return (samethread) ? ts_sort : thread_sort;
-        }
     };
 
     using ThreadListing = Map<ShPtr<ThreadId>,CString>;
@@ -173,6 +158,17 @@ protected:
     static std::atomic_int *global_init;
     thread_local static LinkList<CString> *context_stack;
 };
+
+FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1, SimpleProfilerImpl::DataPoint const& t2)
+{
+    ThreadId::Hash th1 = t1.thread.hash();
+    ThreadId::Hash th2 = t1.thread.hash();
+    bool thread_sort = th2<th1;
+    bool samethread = th2==th1;
+    bool ts_sort = t2.ts<t1.ts;
+    return (samethread) ? ts_sort : thread_sort;
+}
+
 }
 
 using Profiler = Profiling::SimpleProfilerImpl;

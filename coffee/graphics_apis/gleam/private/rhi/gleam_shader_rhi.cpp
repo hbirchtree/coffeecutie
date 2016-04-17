@@ -150,8 +150,8 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
 	{
 	    GLEAM_UniformDescriptor desc;
 	    desc.m_name = unif_names[i];
-	    desc.m_idx = ProgramUnifGetLoc(prog,desc.m_name.c_str());
-	    uniforms->push_back();
+            desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
+            uniforms->push_back(desc);
 	    delete[] unif_names[i];
 	}
 

@@ -2,6 +2,7 @@
 *~
 *.userprefs
 *.user
+.DS_Store
 
 # Directories
 bin

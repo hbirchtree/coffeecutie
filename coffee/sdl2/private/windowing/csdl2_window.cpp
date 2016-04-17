@@ -5,8 +5,6 @@
 
 #include "sdl2helpers.h"
 
-#include <SDL2/SDL_opengles2.h>
-
 namespace Coffee{
 namespace Display{
 

@@ -195,6 +195,8 @@ inline CGenum to_enum(
         return GL_BACK;
     case Face::Both:
         return GL_FRONT_AND_BACK;
+    default:
+        return GL_NONE;
     }
 }
 
