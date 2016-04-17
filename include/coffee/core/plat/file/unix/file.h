@@ -63,7 +63,12 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
     STATICINLINE FileMapping Map(cstring filename, ResourceAccess acc,
                     szptr offset, szptr size, int* error)
     {
+        if(error)
+            *error = 0;
         szptr pa_offset = offset & ~(PageSize());
+
+        if(pa_offset!=offset)
+            return {};
 
         /*Translate access flags*/
         int oflags = PosixRscFlags(acc);
@@ -74,7 +79,8 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
         int fd = open(filename,oflags);
         if(fd < 0)
         {
-            *error = errno;
+            if(error)
+                *error = errno;
             return {};
         }
 
