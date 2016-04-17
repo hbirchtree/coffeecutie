@@ -58,11 +58,14 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
             SOVERSION 1
             )
     elseif(APPLE)
+        set ( OSX_ICON "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" )
+
+        set_source_files_properties ( "${OSX_ICON}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources" )
+
         set ( MACOSX_BUNDLE_LONG_VERSION_STRING ${COFFEE_BUILD_STRING} )
         set ( MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}" )
         set ( MACOSX_BUNDLE_SHORT_VERSION_STRING ${COFFEE_VERSION_CODE} )
-
-        set ( MACOSX_BUNDLE_ICON_FILE "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" )
+        set ( MACOSX_BUNDLE_ICON_FILE "Coffee.icns" )
 
         set ( MACOSX_BUNDLE_COPYRIGHT "Some of this code is under the MIT license" )
         set ( MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}" )
@@ -79,13 +82,23 @@ macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
         ${LIBRARIES}
         )
 
-    install(
-        TARGETS
-        ${TARGET}
+    if(APPLE)
+        install(
+            TARGETS
+            ${TARGET}
 
-        DESTINATION
-        bin
-        )
+            DESTINATION
+            app
+            )
+    else()
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            bin
+            )
+    endif()
 
     if(ANDROID)
 
