@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../platform_detect.h"
+#include "../../plat_primary_identify.h"
 
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
 
@@ -37,7 +37,10 @@ struct PosixEnvironmentFun : EnvInterface
     }
     STATICINLINE bool ClearEnv()
     {
+#if !defined(COFFEE_APPLE)
         return clearenv()==0;
+#endif
+        return false;
     }
 
     STATICINLINE CString GetPathSep()

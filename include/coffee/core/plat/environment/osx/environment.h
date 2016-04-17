@@ -13,18 +13,16 @@ namespace Mac{
 
 struct MacEnv : EnvInterface
 {
-
 };
 
 struct MacColorMap : Posix::PosixTerminalColorCodes
 {
-
 };
 
 }
 }
 
-using Env_ = Environment::Mac::MacEnvInfo;
+using Env_ = Environment::Mac::MacEnv;
 using ColorMap_ = Environment::Mac::MacColorMap;
 
 }

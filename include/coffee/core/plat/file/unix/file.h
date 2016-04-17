@@ -148,12 +148,21 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
     STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess access)
     {
         int proto = ProtFlags(access);
-        int mapflags = MappingFlags(access)|MAP_ANONYMOUS;
+        int mapflags = MappingFlags(access);
 
+#if defined(COFFEE_LINUX)
         mapflags |= MAP_ANONYMOUS;
-
+#elif defined(COFFEE_APPLE)
+        mapflags |= MAP_ANON;
+#endif
+        
+        
         ScratchBuf buf;
+#if defined(COFFEE_LINUX)
         buf.ptr = mmap64(nullptr,size,proto,mapflags,-1,0);
+#elif defined(COFFEE_APPLE)
+        buf.ptr = mmap(nullptr,size,proto,mapflags,-1,0);
+#endif
         buf.acc = access;
         buf.size = size;
 
