@@ -104,6 +104,8 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
         rundata->SetAttribute("version",CoffeeBuildString);
         rundata->SetAttribute("compiler",CoffeeCompilerString);
+        rundata->SetAttribute("system",CoffeePlatformString);
+        rundata->SetAttribute("architecture",CoffeeArchString);
     }
 
     /* Store system information */
@@ -221,6 +223,8 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
                 break;
             }
             }
+            if(curr == nullptr)
+                break;
         }
     }
 

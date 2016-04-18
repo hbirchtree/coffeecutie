@@ -60,7 +60,6 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
     elseif(APPLE)
         set ( OSX_ICON "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" )
 
-        set_source_files_properties ( ${ARGN} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources" )
         set_source_files_properties ( ${OSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources" )
 
         set ( MACOSX_BUNDLE_LONG_VERSION_STRING ${COFFEE_BUILD_STRING} )
@@ -73,7 +72,24 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
         set ( MACOSX_BUNDLE_INFO_STRING "Coffeecutie Game" )
         set ( MACOSX_BUNDLE_GUI_IDENTIFIER ${TITLE} )
 
-        add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_RSRCS} ${OSX_ICON} ${SOURCES})
+        set ( BUNDLE_FILES )
+
+        foreach(durr ${BUNDLE_RSRCS})
+            file(GLOB_RECURSE TMP ${durr}/* )
+            foreach(file ${TMP})
+                file ( RELATIVE_PATH file_dir ${durr} ${file} )
+                get_filename_component ( file_dir "${file_dir}" DIRECTORY )
+                get_filename_component ( file_name "${file_dir}" NAME )
+                if(NOT ("${file_name}" STREQUAL ".DS_Store"))
+                    list ( APPEND BUNDLE_FILES ${file} )
+                    set_source_files_properties(${file} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/${file_dir}" )
+                endif()
+            endforeach()
+        endforeach()
+
+        message("Adding files to OS X bundle: ${BUNDLE_FILES}")
+
+        add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${OSX_ICON} ${SOURCES})
     else()
         add_executable(${TARGET} ${SOURCES})
     endif()

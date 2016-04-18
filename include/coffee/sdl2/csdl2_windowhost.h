@@ -52,12 +52,6 @@ public:
     void eventHandleI(const CIEvent& e, c_cptr data)
     {
         SDL2EventHandler::eventHandleI(e,data);
-        if(e.type==CIEvent::Keyboard)
-        {
-            CIKeyEvent const& ev = *(CIKeyEvent const*)data;
-            if(ev.key == CK_Android_Back)
-                exit(0);
-        }
     }
 };
 

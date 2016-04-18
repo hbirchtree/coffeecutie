@@ -63,6 +63,13 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         )
 endif()
 
+# Mac OS X-specific code
+if(APPLE)
+    list ( APPEND CoffeeCore_SRCS
+        private/plat/file/osx/file.cpp
+        )
+endif()
+
 # Windows-specific code
 if(WIN32)
     list ( APPEND CoffeeCore_SRCS
@@ -71,7 +78,7 @@ if(WIN32)
 endif()
 
 # POSIX code
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/posix/environment.cpp
         )

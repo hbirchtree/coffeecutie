@@ -19,10 +19,10 @@ const constexpr szptr num_points = 10;
 CPointF sprite_pos[num_points] = {};
 CSizeF sprite_scale = {1,1};
 
-void TouchInput_1(void* ptr, const CIEvent& e, c_cptr d)
-{
-    SDL2WindowHost* win = (SDL2WindowHost*)ptr;
+bool exit_flag = false;
 
+void TouchInput_1(void*, const CIEvent& e, c_cptr d)
+{
     if(e.type == CIEvent::MultiTouch)
     {
         const CIMTouchMotionEvent& tch = *(const CIMTouchMotionEvent*)d;
@@ -80,6 +80,21 @@ void TouchInput_1(void* ptr, const CIEvent& e, c_cptr d)
             sprite_pos[0].x -= 64;
             sprite_pos[0].y -= 64;
         }
+    }
+}
+
+void ExitHandler_1(void* ptr, const CIEvent& e, c_cptr d)
+{
+    SDL2WindowHost* host = dynamic_cast<SDL2WindowHost*>((SDL2EventHandler*)ptr);
+
+    if(e.type == CIEvent::QuitSign)
+    {
+        host->closeWindow();
+    }else if(e.type==CIEvent::Keyboard)
+    {
+        CIKeyEvent const* kev = (CIKeyEvent const*)d;
+        if(kev->key==CK_Escape)
+            host->closeWindow();
     }
 }
 
@@ -171,6 +186,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     SDL2Dialog::InformationMessage("Leaving?","Hello there! Did you press the wrong button?");
 
     test.installEventHandler({TouchInput_1});
+    test.installEventHandler({ExitHandler_1});
 
     while(!test.closeFlag())
     {

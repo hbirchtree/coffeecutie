@@ -12,7 +12,7 @@ namespace Mac{
 
 struct MacFileFun : Posix::PosixFileFun
 {
-
+    static CString NativePath(cstring fn);
 };
 
 struct MacDirFun : DirFunDef

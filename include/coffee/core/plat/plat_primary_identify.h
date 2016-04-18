@@ -14,7 +14,7 @@
 /* Android: the land of oddities */
 #if defined(__ANDROID__)
 #undef C_SYSTEM_STRING
-#define C_SYSTEM_STRING "Android API level " __ANDROID_API__
+#define C_SYSTEM_STRING "Android (" __ANDROID_API__ ")"
 #define COFFEE_ANDROID
 #undef COFFEE_LINUX
 #endif
@@ -27,9 +27,18 @@
 #endif
 
 /* Mac OS X macro, not iOS */
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__)
 #define C_SYSTEM_STRING "Mac OS X"
 #define COFFEE_APPLE
+
+#if defined(TARGET_OS_MAC)
+#define COFFEE_APPLE_DESKTOP
+#elif defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
+#undef C_SYSTEM_STRING
+#define C_SYSTEM_STRING "iOS"
+#define COFFEE_APPLE_MOBILE
+#endif
+
 #endif
 
 /* Generic UNIX, mostly for POSIX libraries */

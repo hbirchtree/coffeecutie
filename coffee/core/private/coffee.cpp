@@ -21,6 +21,8 @@ cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
 cstring CoffeeArchString = COFFEE_ARCH;
 cstring CoffeeBuildString = COFFEE_BUILD_STRING;
 
+cstring CoffeePlatformString = C_SYSTEM_STRING;
+
 void CoffeeInit(bool profiler_init)
 {
     if(profiler_init)
@@ -38,7 +40,7 @@ void CoffeeInit(bool profiler_init)
 
     cDebug("Build string: {0}",CoffeeBuildString);
 
-    cDebug("Running on {0} ({1})",CoffeeCompilerString,CoffeeArchString);
+    cDebug("Compiled for {0} on {1} ({2})",CoffeePlatformString,CoffeeCompilerString,CoffeeArchString);
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)

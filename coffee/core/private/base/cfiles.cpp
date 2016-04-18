@@ -21,7 +21,7 @@ CString DereferencePath(cstring suffix, ResourceAccess storageMask)
             CString cfgDir = Env::GetUserData(nullptr,nullptr);
             return Env::ConcatPath(cfgDir.c_str(),suffix);
         }
-#ifdef COFFEE_ANDROID
+#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE)
         else if(feval(storageMask&ResourceAccess::AssetFile))
             return CString(AssetApi::AssetPrefix)+suffix;
 #endif
@@ -48,8 +48,9 @@ Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
 
     if(absolute)
         m_resource = rsrc;
-    else
+    else{
         m_resource = DereferencePath(rsrc,acc&ResourceAccess::StorageMask);
+    }
 }
 
 cstring Resource::resource() const
@@ -64,7 +65,8 @@ void FileResourcePrefix(cstring prefix)
 
 bool FileExists(const Resource &resc)
 {
-    return FileFun::Exists(resc.resource());
+    CString native_fn = FileFun::NativePath(resc.resource());
+    return FileFun::Exists(native_fn.c_str());
 }
 
 bool FileMap(Resource &resc, ResourceAccess acc)

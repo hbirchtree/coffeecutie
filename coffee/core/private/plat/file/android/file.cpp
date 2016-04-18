@@ -1,7 +1,5 @@
 #include <coffee/core/plat/file/android/file.h>
 
-#ifdef COFFEE_ANDROID
-
 #include <coffee/core/CDebug>
 #include "../file_abstraction.h"
 
@@ -147,4 +145,3 @@ szptr AndroidFileFun::Size(cstring fn)
 }
 }
 }
-#endif

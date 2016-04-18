@@ -10,5 +10,6 @@ extern ApplicationData_t CoffeeApplicationData;
 extern cstring CoffeeCompilerString;
 extern cstring CoffeeArchString;
 extern cstring CoffeeBuildString;
+extern cstring CoffeePlatformString;
 
 }
