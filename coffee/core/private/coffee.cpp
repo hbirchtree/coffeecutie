@@ -12,6 +12,8 @@
 
 namespace Coffee{
 
+CString plat_tmp_string;
+
 /* Information that is not otherwise available */
 ApplicationData_t CoffeeApplicationData;
 cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
@@ -37,6 +39,11 @@ void CoffeeInit(bool profiler_init)
 #endif
 
     InstallSignalHandler();
+
+#if defined(COFFEE_ANDROID)
+    plat_tmp_string = cStringFormat("Android ({0})",__ANDROID_API__);
+    CoffeePlatformString = plat_tmp_string.c_str();
+#endif
 
     cDebug("Build string: {0}",CoffeeBuildString);
 

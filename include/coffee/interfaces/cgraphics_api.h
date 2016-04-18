@@ -78,6 +78,8 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
     case PixelComponents::BGRA:
         pxsz *= 4;
         break;
+    default:
+        pxsz *= 0;
     }
 
     return pxsz*pixels;

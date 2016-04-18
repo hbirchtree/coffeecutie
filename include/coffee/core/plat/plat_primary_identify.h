@@ -14,7 +14,7 @@
 /* Android: the land of oddities */
 #if defined(__ANDROID__)
 #undef C_SYSTEM_STRING
-#define C_SYSTEM_STRING "Android (" __ANDROID_API__ ")"
+#define C_SYSTEM_STRING "Android"
 #define COFFEE_ANDROID
 #undef COFFEE_LINUX
 #endif

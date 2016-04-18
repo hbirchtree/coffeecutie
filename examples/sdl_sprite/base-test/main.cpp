@@ -19,6 +19,10 @@ const constexpr szptr num_points = 10;
 CPointF sprite_pos[num_points] = {};
 CSizeF sprite_scale = {1,1};
 
+#ifndef COFFEE_USE_RTTI
+SDL2WindowHost* window_host;
+#endif
+
 bool exit_flag = false;
 
 void TouchInput_1(void*, const CIEvent& e, c_cptr d)
@@ -85,7 +89,11 @@ void TouchInput_1(void*, const CIEvent& e, c_cptr d)
 
 void ExitHandler_1(void* ptr, const CIEvent& e, c_cptr d)
 {
+#ifdef COFFEE_USE_RTTI
     SDL2WindowHost* host = dynamic_cast<SDL2WindowHost*>((SDL2EventHandler*)ptr);
+#else
+    SDL2WindowHost* host = window_host;
+#endif
 
     if(e.type == CIEvent::QuitSign)
     {
@@ -104,13 +112,17 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     C_UNUSED(sys1);
 
     /* Set file prefix, basically a cwd but only for resources */
-    CResources::FileResourcePrefix("sample_data/ctest_hud");
+    CResources::FileResourcePrefix("sample_data/ctest_hud/");
 
     /* Create a window host for the renderer */
     BasicWindow test;
     auto visual = GetDefaultVisual();
 #ifdef COFFEE_ANDROID
     visual.flags = CDProperties::FullScreen;
+#endif
+
+#ifndef COFFEE_USE_RTTI
+    window_host = &test;
 #endif
 
     CString err;
