@@ -3,117 +3,145 @@
 
 #include <coffee/core/types/cdef/infotypes.h>
 #include <coffee/core/types/graphics_types.h>
+#include <coffee/graphics_apis/scene/cnode.h>
 
 namespace Coffee{
 namespace HMD{
 
-struct CHMD_Binding
+using Nodes = CGraphicsData::NodeHierarchy<uint32>;
+
+struct LensDetails
+{
+    CSize resolution;
+    FovDetail horizontal;
+    ZField vertical;
+    scalar density;
+};
+
+struct ActorTracker_def
+{
+    enum BodySide
+    {
+        LeftSide,
+        RightSide,
+    };
+
+    enum class Eye
+    {
+        Left,
+        Right,
+    };
+
+    enum BodyParts
+    {
+        Spine,
+
+        LeftEye = 1,
+        RightEye,
+
+        Head = 20,
+
+        LeftHand,
+        RightHand,
+        LeftFoot,
+        RightFoot,
+    };
+
+    bool tracksHead() const;
+    bool tracksHands() const;
+    bool tracksFeet() const;
+
+    /*!
+     * \brief Reset tracking status
+     */
+    void reset();
+
+    /*!
+     * \brief Get projection matrix for eye, with position relative to spine
+     * \param e Which eye
+     * \return
+     */
+    Matf4 camera(Eye e);
+
+    /*!
+     * \brief Root transform of actor
+     * \return
+     */
+    Nodes& spine() const;
+
+    /*!
+     * \brief playSpace
+     * \return
+     */
+    BoundBox playSpace() const;
+
+    /*!
+     * \brief Acquire angular velocity of user body
+     * \return
+     */
+    Vecf3 angularVelocity() const;
+    /*!
+     * \brief Acquire positional velocity of user body
+     * \return
+     */
+    Vecf3 velocity() const;
+};
+
+struct HeadDevice : HWDeviceInfo
+{
+    HeadDevice(CString model, CString firmware,
+           CString manuf = "", CString serial = ""):
+        HWDeviceInfo(manuf,model,firmware,serial){}
+
+    /*!
+     * \brief Retrieve firmware info for device
+     * \return
+     */
+    SWVersionInfo firmwareInfo() const;
+    /*!
+     * \brief Get device model, eg. Oculus DK2
+     * \return
+     */
+    HWDeviceInfo deviceInfo() const;
+
+    /*!
+     * \brief Called at beginning of frame
+     */
+    void startFrame();
+    /*!
+     * \brief Called at end of frame
+     */
+    void endFrame();
+
+    /*!
+     * \brief Window position and size on screen
+     * \return
+     */
+    CRect windowCanvas() const;
+
+    /*!
+     * \brief Connection state of device, changes upon disconnection
+     * \return
+     */
+    bool isConnected() const;
+
+    /*!
+     * \brief Get the actor for this device
+     * \return
+     */
+    ActorTracker_def& actor();
+
+    LensDetails const* getLenses();
+};
+
+struct HeadDisplayDriver_def
 {
     struct Context;
 
     static const constexpr cstring SystemName = "Generic";
 
-    enum class Eye
-    {
-        Left,Right,
-    };
-
-    struct Device : HWDeviceInfo
-    {
-        Device(CString model, CString firmware,
-	       CString manuf = "", CString serial = ""):
-	    HWDeviceInfo(manuf,model,firmware,serial){}
-        /*!
-         * \brief Retrieve firmware info for device
-         * \return
-         */
-        SWVersionInfo firmwareInfo() const;
-        /*!
-         * \brief Get device model, eg. Oculus DK2
-         * \return
-         */
-        HWDeviceInfo deviceInfo() const;
-
-        /*!
-         * \brief Reset tracking status
-         */
-        void reset();
-
-        /*!
-         * \brief Called at beginning of frame
-         */
-        void startFrame();
-        /*!
-         * \brief Called at end of frame
-         */
-        void endFrame();
-
-        /*!
-         * \brief Get resolution of eye framebuffer
-         * \param e
-         * \param density
-         * \return
-         */
-        CSize resolution(Eye e, uint32 density = 1) const;
-
-        /*!
-         * \brief Window position on screen
-         * \return
-         */
-        CRect windowPos() const;
-
-        /*!
-         * \brief Far and near values for user viewport
-         * \return
-         */
-        ZField zfield() const;
-        /*!
-         * \brief Field of view for user viewport
-         * \return
-         */
-        FovDetail fov() const;
-
-        /*!
-         * \brief Bounding box, combination of zvalues and field of view
-         * \return
-         */
-        BoundBox viewerSpace() const;
-
-        /*!
-         * \brief User's head transform
-         * \return
-         */
-        CMat4 head() const;
-
-        /*!
-         * \brief Acquire view transform per-eye
-         * \return
-         */
-        CMat4 view(Eye) const;
-
-        /*!
-         * \brief Acquire angular velocity of user body
-         * \return
-         */
-        CVec3 angularVelocity() const;
-        /*!
-         * \brief Acquire positional velocity of user body
-         * \return
-         */
-        CVec3 velocity() const;
-
-        /*!
-         * \brief Connection state of device, changes upon disconnection
-         * \return
-         */
-        bool isConnected() const;
-    };
-
-    struct Lens
-    {
-        /*Why MN-matrix? Allows scaling of all components in one function.*/
-        _cbasic_tmnmatrix<bigscalar,3,2> distortion;
-    };
+    using Device = HeadDevice;
+    using Actor = ActorTracker_def;
 
     /*!
      * \brief Initializes a thread-local context for the VR system
@@ -172,7 +200,7 @@ struct CHMD_Binding
      * \brief For differentiating a dummy from a real HMD
      * \return
      */
-    static bool IsDummy();
+    static bool IsDummy(){return false;}
 };
 
 }

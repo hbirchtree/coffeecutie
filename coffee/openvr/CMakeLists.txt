@@ -19,6 +19,9 @@ include_directories ( SYSTEM
 
 set ( CoffeeVR_SRCS
     private/copenvr.cpp
+    private/ovrdevice.cpp
+    private/ovractor.cpp
+    private/ovr_private.cpp
     )
 
 coffee_add_library ( CoffeeVR "${CoffeeVR_SRCS}" )

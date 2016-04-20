@@ -6,13 +6,13 @@
 namespace Coffee{
 namespace OculusRift{
 
-struct OculusVR : HMD::CHMD_Binding
+struct OculusVR : HMD::HeadDisplayDriver_def
 {
     static const constexpr cstring SystemName = "Oculus Rift";
 
     struct Context;
 
-    struct Device : HMD::CHMD_Binding::Device
+    struct Device : HMD::HeadDisplayDriver_def::Device
     {
         struct ExtraData;
 
@@ -26,7 +26,7 @@ struct OculusVR : HMD::CHMD_Binding
         void startFrame();
         void endFrame();
 
-        CSize resolution(Eye e, uint32 density = 1) const;
+//        CSize resolution(Eye e, uint32 density = 1) const;
 
 	CRect windowPos() const;
 
@@ -36,12 +36,12 @@ struct OculusVR : HMD::CHMD_Binding
 	BoundBox viewerSpace() const;
 
 	CMat4 head() const;
-	CMat4 view(Eye e) const;
+//	CMat4 view(Eye e) const;
 
         CVec3 angularVelocity() const;
         CVec3 velocity() const;
 
-	Mesh const& distortionMesh(Eye e) const;
+//	Mesh const& distortionMesh(Eye e) const;
 
         bool isConnected() const;
     private:

@@ -136,7 +136,7 @@ OculusVR::Device* OculusVR::GetDevice(int32 id)
 }
 
 OculusVR::Device::Device(uint32 idx, bool dontcare, scalar fov):
-    HMD::CHMD_Binding::Device(
+    HMD::HeadDisplayDriver_def::Device(
         OculusContext->devices[idx]->ProductName,
         cStringFormat("{0}.{1}",
                       OculusContext->devices[idx]->FirmwareMajor,
@@ -265,18 +265,18 @@ void OculusVR::Device::endFrame()
     ovrHmd_EndFrameTiming(OculusContext->devices[m_idx]);
 }
 
-CSize OculusVR::Device::resolution(Eye e, uint32 density) const
-{
-    ovrEyeType t;
-    if(e==Eye::Left)
-        t = ovrEye_Left;
-    else if(e==Eye::Right)
-        t = ovrEye_Right;
-    ovrSizei sz = ovrHmd_GetFovTextureSize(
-                OculusContext->devices[m_idx],
-                t,m_data->d_fov[t],density);
-    return CSize(sz.w,sz.h);
-}
+//CSize OculusVR::Device::resolution(Eye e, uint32 density) const
+//{
+//    ovrEyeType t;
+//    if(e==Eye::Left)
+//        t = ovrEye_Left;
+//    else if(e==Eye::Right)
+//        t = ovrEye_Right;
+//    ovrSizei sz = ovrHmd_GetFovTextureSize(
+//                OculusContext->devices[m_idx],
+//                t,m_data->d_fov[t],density);
+//    return CSize(sz.w,sz.h);
+//}
 
 CRect OculusVR::Device::windowPos() const
 {
@@ -319,35 +319,35 @@ CMat4 OculusVR::Device::head() const
     return m;
 }
 
-CMat4 OculusVR::Device::view(HMD::CHMD_Binding::Eye e) const
-{
-    ovrHmd dev = OculusContext->devices[m_idx];
+//CMat4 OculusVR::Device::view(HMD::HeadDisplayDriver_def::Eye e) const
+//{
+//    ovrHmd dev = OculusContext->devices[m_idx];
 
-    ovrPosef m;
-    ovrVector3f offset;
-    ovrEyeType t;
-    if(e==Eye::Left)
-    {
-        t = ovrEye_Left;
-        offset = m_data->d_eyedesc[t].HmdToEyeViewOffset;
-    }else{
-        t = ovrEye_Right;
-        offset = m_data->d_eyedesc[t].HmdToEyeViewOffset;
-    }
-    m = ovrHmd_GetHmdPosePerEye(dev,t);
-    CMat4 mt =
-            translation(
-                CMat4(),
-                CVec3(m.Position.x+offset.x,
-                      m.Position.y+offset.y,
-                      m.Position.z+offset.z)
-                *CVec3(6));
-    mt *= matrixify(CQuat(m.Orientation.w,
-                          m.Orientation.x*-1.0,
-                          m.Orientation.y*-1.0,
-                          m.Orientation.z));
-    return mt;
-}
+//    ovrPosef m;
+//    ovrVector3f offset;
+//    ovrEyeType t;
+//    if(e==Eye::Left)
+//    {
+//        t = ovrEye_Left;
+//        offset = m_data->d_eyedesc[t].HmdToEyeViewOffset;
+//    }else{
+//        t = ovrEye_Right;
+//        offset = m_data->d_eyedesc[t].HmdToEyeViewOffset;
+//    }
+//    m = ovrHmd_GetHmdPosePerEye(dev,t);
+//    CMat4 mt =
+//            translation(
+//                CMat4(),
+//                CVec3(m.Position.x+offset.x,
+//                      m.Position.y+offset.y,
+//                      m.Position.z+offset.z)
+//                *CVec3(6));
+//    mt *= matrixify(CQuat(m.Orientation.w,
+//                          m.Orientation.x*-1.0,
+//                          m.Orientation.y*-1.0,
+//                          m.Orientation.z));
+//    return mt;
+//}
 
 CVec3 OculusVR::Device::angularVelocity() const
 {
@@ -365,10 +365,10 @@ CVec3 OculusVR::Device::velocity() const
                  v.HeadPose.LinearVelocity.z);
 }
 
-const Mesh &OculusVR::Device::distortionMesh(HMD::CHMD_Binding::Eye e) const
-{
-    return m_data->eyeMeshes[(uint32)e];
-}
+//const Mesh &OculusVR::Device::distortionMesh(HMD::HeadDisplayDriver_def::Eye e) const
+//{
+//    return m_data->eyeMeshes[(uint32)e];
+//}
 
 bool OculusVR::Device::isConnected() const
 {

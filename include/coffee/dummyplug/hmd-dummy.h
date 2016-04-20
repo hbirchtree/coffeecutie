@@ -5,14 +5,14 @@
 namespace Coffee{
 namespace HMD{
 
-struct DummyPlugHMD : CHMD_Binding
+struct DummyPlugHMD : HeadDisplayDriver_def
 {
     static const constexpr cstring SystemName = "DummyPlug";
 
-    struct Device : CHMD_Binding::Device
+    struct Device : HeadDisplayDriver_def::Device
     {
         Device():
-            CHMD_Binding::Device("Dummyplug","1.0")
+            HeadDisplayDriver_def::Device("Dummyplug","1.0")
         {
         }
 
@@ -36,43 +36,6 @@ struct DummyPlugHMD : CHMD_Binding
         {
         }
 
-        CSize resolution(Eye, uint32 density) const
-        {
-            CSize m(960,1080);
-            m *= density;
-            return m;
-        }
-        CRect windowPos() const
-        {
-            return CRect(0,0,1920,1080);
-        }
-
-        ZField zfield() const
-        {
-            return ZField();
-        }
-
-        FovDetail fov() const
-        {
-            return FovDetail(90,90);
-        }
-
-        BoundBox viewerSpace() const
-        {
-            ZField z;
-            FovDetail f;
-            return BoundBox(f.h,f.v,z.far-z.near,true);
-        }
-
-        CMat4 head() const
-        {
-            return CMat4();
-        }
-
-        CMat4 view(Eye) const
-        {
-            return CMat4();
-        }
         CVec3 velocity() const
         {
             return CVec3();
