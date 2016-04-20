@@ -25,7 +25,6 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     Vector<cstring> titles;
     Vector<cstring> descriptions;
-    /* Workaround: Vector<bool> gives void components. What? */
     Vector<bool> result;
     Vector<bool> required;
 

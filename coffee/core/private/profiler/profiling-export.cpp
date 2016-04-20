@@ -173,6 +173,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         LinkList<Timestamp> lt;
 
         base.push_front(*Profiler::start_time);
+		lt.push_front(0);
 
         Profiler::datapoints->sort();
 
@@ -183,7 +184,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             {
             case Profiler::DataPoint::Profile:
             {
-                uint64 ts = (p.ts-base.front()-lt.front());
+                uint64 ts = p.ts-base.front()- lt.front();
 
                 XML::Element* n = doc.NewElement("dpoint");
 

@@ -1,14 +1,6 @@
-find_library(OPENVR_LIBRARY NAMES "openvr_api" PATHS
-    ${COFFEE_EXT_LIBRARY_DIR}/openvr/lib/linux64
-    ${COFFEE_EXT_LIBRARY_DIR}/openvr/lib/osx32
-    ${COFFEE_EXT_LIBRARY_DIR}/openvr/lib/win64
-    ${COFFEE_BINARY_DIR}/libs/lib
-    ${OPENVR_LIBRARY_DIR}
-    )
+find_package(OpenVR)
 
-if(NOT DEFINED OPENVR_LIBRARY)
-    message(FATAL_ERROR "Failed to locate OpenVR")
-endif()
+message (" --OpenVR library: ${OPENVR_LIBRARY}")
 
 add_definitions(-DCOFFEE_OPENVR_ENABLED)
 

@@ -57,6 +57,10 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             VERSION ${COFFEE_BUILD_STRING}
             SOVERSION 1
             )
+		install(
+			FILES ${BUNDLE_LIBS}
+			DESTINATION bin
+			)
     elseif(APPLE)
         set ( OSX_ICON "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" )
 
