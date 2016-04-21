@@ -1,6 +1,8 @@
 find_package ( SDL2 REQUIRED )
 find_package ( OpenVR REQUIRED )
 
+message ( "${SDL2_INCLUDE_DIR}" )
+
 include_directories(
     "${SDL2_INCLUDE_DIR}"
     "${OPENVR_INCLUDE_DIR}"

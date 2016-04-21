@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation ============//
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdio.h>
 #include <string>
 #include <cstdlib>
@@ -15,6 +15,8 @@
 #include "shared/pathtools.h"
 
 #define APIENTRY
+
+extern "C" { FILE __iob_func[3] = { *stdin,*stdout,*stderr }; }
 
 class CGLRenderModel
 {
