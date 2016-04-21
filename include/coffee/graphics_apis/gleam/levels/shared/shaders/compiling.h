@@ -104,6 +104,8 @@ struct CGL_Old_ShaderCompiler
             *n = 0;
             return;
         }
+        *n = num;
+
         int32 namelen = 0;
         ProgramGetiv(h,GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,&namelen);
 
@@ -129,6 +131,8 @@ struct CGL_Old_ShaderCompiler
             *n = 0;
             return;
         }
+        *n = num;
+
         int32 namelen = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
 
@@ -154,6 +158,8 @@ struct CGL_Old_ShaderCompiler
             *n = 0;
             return;
         }
+        *n = num;
+
         int32 namelen = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
 

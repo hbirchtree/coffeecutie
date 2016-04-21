@@ -37,7 +37,7 @@ struct CGL33 :
 
     STATICINLINE bool LoadBinding(CGL_Context* ctxt)
     {
-        if(!ctxt->acquireContext())
+        if(ctxt && !ctxt->acquireContext())
             return false;
         if(!gladLoadGL())
             return false;

@@ -13,64 +13,68 @@ bool OVRImpl::InitializeBinding()
 {
     vr::EVRInitError err = vr::VRInitError_None;
 
-    vr::IVRSystem* sys = vr::VR_Init(&err,vr::VRApplication_Scene);
+    vr::IVRSystem* sys = vr::VR_Init(&err,vr::VRApplication_Overlay);
 
     if(err != vr::VRInitError_None)
-    {
-        cLog(__FILE__,__LINE__,CFStrings::Graphics_VR_Library_Name,
-             CFStrings::Graphics_VR_Library_InitError,
-             vr::VR_GetVRInitErrorAsEnglishDescription(err));
         return false;
-    }
 
-    vr::IVRRenderModels* models =
-            (vr::IVRRenderModels*)vr::VR_GetGenericInterface(vr::IVRRenderModels_Version,&err);
+    m_Context = new OVRImpl::Context;
 
-    if(!models)
+    m_Context->ivrsys = sys;
+
     {
-        cLog(__FILE__,__LINE__,CFStrings::Graphics_VR_Library_Name,
-             CFStrings::Graphics_VR_Library_InitError,
-             vr::VR_GetVRInitErrorAsEnglishDescription(err));
-        Shutdown();
-        return false;
+        CString v1 = VRGetTrackedDevString(vr::k_unTrackedDeviceIndex_Hmd,
+                                           vr::Prop_TrackingSystemName_String,
+                                           nullptr);
+        CString v2 = VRGetTrackedDevString(vr::k_unTrackedDeviceIndex_Hmd,
+                                           vr::Prop_TrackingFirmwareVersion_String,
+                                           nullptr);
+        SWVersionInfo d(v1,1,0,0,0,v2);
+        MemCpy(&m_Context->m_driver,&d,sizeof(d));
     }
-
-    if(!vr::VRCompositor())
     {
-        Shutdown();
-        cLog(__FILE__,__LINE__,CFStrings::Graphics_VR_Library_Name,
-             CFStrings::Graphics_VR_Library_CompositeError);
+        CString v1 = VRGetTrackedDevString(vr::k_unTrackedDeviceIndex_Hmd,
+                                           vr::Prop_ManufacturerName_String,
+                                           nullptr);
+        CString v2 = VRGetTrackedDevString(vr::k_unTrackedDeviceIndex_Hmd,
+                                           vr::Prop_SerialNumber_String,
+                                           nullptr);
+         HWDeviceInfo d(v1,v2);
+         MemCpy(&m_Context->m_unit,&d,sizeof(d));
     }
-
-    m_Context = new Context;
-    m_Context->m_HMD = sys;
-    m_Context->m_RModels = models;
 
     return true;
 }
 
 bool OVRImpl::PollDevices(int32* lastValidIndex)
 {
+    bool stat = m_Context->context.VRSystem();
     if(lastValidIndex)
-        *lastValidIndex = -1;
-    if(!m_Context)
-        return false;
-    return false;
-    vr::VRCompositor()->WaitGetPoses(m_Context->devicePoses,
-                                     vr::k_unMaxTrackedDeviceCount,
-                                     nullptr,0);
-    if(lastValidIndex)
-    {
-        *lastValidIndex = -1;
-        for(uint32 i=0;i<vr::k_unMaxTrackedDeviceCount;++i)
-            if(m_Context->devicePoses[i].bPoseIsValid)
-            {
-                *lastValidIndex = i;
-            }else
-                break;
-    }
+        *lastValidIndex = stat;
+    if(stat)
+        m_Context->m_devices[0] = new OVRDevice(0);
+    return stat;
+}
 
+bool LoadRenderModel(vr::TrackedDeviceIndex_t idx)
+{
     return true;
+}
+
+void OVRImpl::PollEvents()
+{
+    vr::VREvent_t ev;
+    while(m_Context->ivrsys->PollNextEvent(&ev,sizeof(ev)))
+    {
+        switch(ev.eventType)
+        {
+        case vr::VREvent_TrackedDeviceActivated:
+        {
+
+            break;
+        }
+        }
+    }
 }
 
 void OVRImpl::Shutdown()
@@ -80,17 +84,17 @@ void OVRImpl::Shutdown()
 
 SWVersionInfo OVRImpl::GetDriverInfo()
 {
-    return SWVersionInfo("SteamVR",1,0);
+    return SWVersionInfo("OpenVR",1,0);
 }
 
 SWVersionInfo OVRImpl::GetRuntimeInfo()
 {
-    return SWVersionInfo("OpenVR",1,0);
+    return m_Context->m_driver;
 }
 
 OVRImpl::Device *OVRImpl::GetDevice(uint32 idx)
 {
-    return new Device(idx);
+    return m_Context->m_devices[idx];
 }
 
 const OVRImpl::Context *OVRImpl::GetConstContext()
@@ -100,24 +104,14 @@ const OVRImpl::Context *OVRImpl::GetConstContext()
 
 OVRImpl::Context *OVRImpl::GetContext()
 {
-    Context* ptr = m_Context;
+    OVRImpl::Context* ctxt = m_Context;
     m_Context = nullptr;
-    return ptr;
+    return ctxt;
 }
 
 bool OVRImpl::SetContext(OVRImpl::Context *context)
 {
-    if(!m_Context)
-    {
-        m_Context = context;
-        return true;
-    }
-    else
-    {
-        cLog(__FILE__,__LINE__,CFStrings::Graphics_VR_Library_Name,
-             CFStrings::Graphics_VR_Library_CurrencyError);
-        return false;
-    }
+    return m_Context = context;
 }
 
 }

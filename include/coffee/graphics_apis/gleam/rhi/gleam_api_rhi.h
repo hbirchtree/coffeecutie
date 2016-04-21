@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gleam_types_rhi.h"
+#include "gleam_shader_rhi.h"
 
 namespace Coffee{
 namespace RHI{
@@ -20,16 +21,24 @@ struct GLEAM_API : GraphicsAPI
 
     enum UniformFlags
     {
+        UniformT = 0x0,
         UBufferT = 0x1,
         SBufferT = 0x2,
+        SamplerT = 0x3,
+        ImageT = 0x4,
 
-        UniformStorageMask = UBufferT|SBufferT,
+        UniformStorageMask = UBufferT|SBufferT|SamplerT,
 
-        IntegerT = 0x4,
-        UIntegerT = 0x8,
-        ScalarT = 0x10,
+        ScalarT = 0x0,
+        IntegerT = 0x8,
+        UIntegerT = 0x10,
         BigScalarT = 0x20,
 
+        UniformDataMask = IntegerT|UIntegerT|ScalarT|BigScalarT,
+    };
+
+    enum VectorFlags
+    {
         Mat2T = 0x40,
         Mat3T = 0x80,
         Mat4T = 0x100,
@@ -46,6 +55,15 @@ struct GLEAM_API : GraphicsAPI
         Vec2T = 0x8000,
         Vec3T = 0x10000,
         Vec4T = 0x20000,
+    };
+
+    enum SamplerFlags
+    {
+        Sam2D = 0x40,
+        Sam3D = 0x80,
+        Sam2DA = 0x100,
+        SamCube = 0x200,
+        SamCubeA = 0x400,
     };
 
     using StencilState = GraphicsAPI::StencilState<CGenum,CGenum>;
@@ -90,6 +108,9 @@ struct GLEAM_API : GraphicsAPI
     using D_CALL = DrawCall;
     using D_DATA = DrawInstanceData;
 
+    using UNIFDESC = GLEAM_UniformDescriptor;
+    using UNIFVAL = GLEAM_UniformValue;
+
     using USTATE = GLEAM_ShaderUniformState;
     using RASTSTATE = RasterizerState;
     using VIEWSTATE = ViewportState;
@@ -112,6 +133,12 @@ public:
     static void SetBlendState(BlendState const& bstate, uint32 i = 0);
     static void SetDepthState(DepthState const& dstate, uint32 i = 0);
     static void SetStencilState(StencilState const& sstate, uint32 i = 0);
+
+    static void GetShaderUniformState(GLEAM_Pipeline const& pipeline,
+                                      Vector<GLEAM_UniformDescriptor>* uniforms)
+    {
+        GLEAM::GetShaderUniforms(pipeline,uniforms);
+    }
 
     static void SetTessellatorState(TessellatorState const& tstate);
     static void SetPixelProcessState(PixelProcessState const& pstate);

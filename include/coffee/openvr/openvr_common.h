@@ -11,6 +11,7 @@ struct OVRContext;
 
 struct OVRDevice;
 struct OVRActor;
+struct OVRController;
 struct OVRLens;
 struct OVRImpl;
 

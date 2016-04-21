@@ -8,6 +8,7 @@ namespace OpenVRFun{
 struct OVRDevice : HeadDisplayDriver_def::Device
 {
     friend struct OVRActor;
+
     using ActorTracker = OVRActor;
 
 private:
@@ -17,6 +18,9 @@ private:
 
 public:
     OVRDevice(uint32 index);
+    ~OVRDevice();
+
+    C_DELETE_COPY_CONSTRUCTOR(OVRDevice);
 
     SWVersionInfo firmwareInfo() const;
     HWDeviceInfo deviceInfo() const;

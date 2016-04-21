@@ -2,8 +2,8 @@ set ( OPENVR_SEARCH_PATHS
     /usr
     /usr/local
     ${OPENVR_ROOT}
-	${COFFEE_EXT_LIBRARY_DIR}/openvr
-	${CMAKE_BINARY_DIR}/libs
+    ${COFFEE_EXT_LIBRARY_DIR}/openvr
+    ${CMAKE_BINARY_DIR}/libs
     )
 
 if(ANDROID)
@@ -20,12 +20,12 @@ find_path ( OPENVR_INCLUDE_DIR_TMP
     openvr_capi.h
 
     PATHS
-    ${OPENAL_SEARCH_PATHS}
+    ${OPENVR_SEARCH_PATHS}
 
     PATH_SUFFIXES
     include
-	headers
-	Headers
+    headers
+    Headers
     )
 
 set ( TARGET_PATH "lib" )
@@ -51,8 +51,6 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 	set ( TARGET_ARCH "linux32" )
 	endif()
 endif()
-
-message("OpenVR target: ${TARGET_ARCH}")
 
 find_library( OPENVR_LIBRARY_TMP
 	NAMES

@@ -5,8 +5,8 @@
 
 using namespace Coffee;
 
-using VR = OculusRift::OculusVR;
-//using VR = OpenVR;
+//using VR = OculusRift::OculusVR;
+using VR = OpenVR;
 
 int32 coffee_main(int32, cstring_w*)
 {
@@ -47,11 +47,11 @@ int32 coffee_main(int32, cstring_w*)
 
                 while(true)
                 {
-                    CVec3 angvel = dev->angularVelocity();
+                    CVec3 angvel = dev->actor().angularVelocity();
                     Profiler::Profile("Pose acquisition");
-                    CVec3 linvel = dev->velocity();
+                    CVec3 linvel = dev->actor().velocity();
                     Profiler::Profile("Pose acquisition");
-                    CMat4 t = dev->head();
+                    CMat4 t = dev->actor().head();
                     Profiler::Profile("Pose acquisition");
 
                     cDebug("Values: angvel={0}, linvel={1}",angvel,linvel);

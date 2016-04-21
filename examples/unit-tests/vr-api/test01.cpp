@@ -9,6 +9,7 @@ using API = OpenVR;
 
 using Actor = API::Actor;
 using Device = API::Device;
+using Controller = API::Controller;
 
 bool interface_test()
 {
@@ -29,7 +30,7 @@ bool interface_test()
     dev->isConnected();
     dev->windowCanvas();
 
-    Actor actor = dev->actor();
+    Actor& actor = dev->actor();
 
     actor.tracksHead();
     actor.tracksHands();

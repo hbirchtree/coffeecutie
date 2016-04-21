@@ -15,6 +15,11 @@ OVRDevice::OVRDevice(uint32 index):
 {
 }
 
+OVRDevice::~OVRDevice()
+{
+    delete m_actor;
+}
+
 SWVersionInfo OVRDevice::firmwareInfo() const
 {
     return SWVersionInfo("OpenVR",1,0);
@@ -36,22 +41,19 @@ CRect OVRDevice::windowCanvas() const
 
 void OVRDevice::startFrame()
 {
-
 }
 
 void OVRDevice::endFrame()
 {
-
 }
 
 void OVRDevice::reset()
 {
-
 }
 
 bool OVRDevice::isConnected() const
 {
-    return m_Context->m_HMD->IsTrackedDeviceConnected(m_dIndex);
+    return m_Context->ivrsys->IsTrackedDeviceConnected(m_dIndex);
 }
 
 OVRDevice::ActorTracker &OVRDevice::actor()

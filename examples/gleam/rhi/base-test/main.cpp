@@ -45,12 +45,12 @@ public:
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  1.f,    0.f,  0.f,
-             1.f, -1.f,  1.f,   -1.f,  0.f,
+            1.f, -1.f,  1.f,   -1.f,  0.f,
             -1.f,  1.f,  1.f,    0.f, -1.f,
 
             -1.f,  1.f,  1.f,    0.f, -1.f,
-             1.f,  1.f,  1.f,   -1.f, -1.f,
-             1.f, -1.f,  1.f,   -1.f,  0.f,
+            1.f,  1.f,  1.f,   -1.f, -1.f,
+            1.f, -1.f,  1.f,   -1.f,  0.f,
         };
 
         GLM::LoadAPI();
@@ -92,17 +92,47 @@ public:
             eyetex.upload(BitFormat::UByte,PixCmp::RGBA,{img.size.w,img.size.h,1},
                           img.data,{0,0,(int32)i});
             CResources::FileUnmap(rsc);
-	}
+        }
+
+        Bytes transform_data;
+        Bytes mult_data;
+        Bytes time_data;
+
+        GLM::UNIFVAL transforms;
+        GLM::UNIFVAL multipliers;
+        GLM::UNIFVAL timeval;
+        GLM::UNIFVAL textures_array;
+
+        Vector<GLM::UNIFDESC> unifs;
 
         GLM::BLNDSTATE blendstate;
         GLM::USTATE unifstate;
 
+        GLM::GetShaderUniformState(eye_pip,&unifs);
+
+        for(GLM::UNIFDESC const& u : unifs)
+        {
+            if(u.m_name == "transform")
+                unifstate.setUniform(u,&transforms);
+            else if(u.m_name == "tex_mul")
+                unifstate.setUniform(u,&multipliers);
+            else if(u.m_name == "texdata")
+                unifstate.setUniform(u,&textures_array);
+            else if(u.m_name == "mx")
+                unifstate.setUniform(u,&timeval);
+            else
+            {
+                cDebug("Unhandled uniform value: {0}",u.m_name);
+            }
+        }
+
         GLM::SetBlendState(blendstate);
-        GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
-        GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
 
         while(!closeFlag())
         {
+            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
+            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
+
             this->pollEvents();
             this->swapBuffers();
         }

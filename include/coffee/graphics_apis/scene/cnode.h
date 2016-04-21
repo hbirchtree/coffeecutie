@@ -127,14 +127,6 @@ public:
     {
         return m_container[k];
     }
-    Node const& root() const
-    {
-        return *m_root;
-    }
-    Node const& node(Key k) const
-    {
-        return m_container[k];
-    }
 };
 
 /*!

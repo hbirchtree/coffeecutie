@@ -1,7 +1,5 @@
 find_package(OpenVR)
 
-message (" --OpenVR library: ${OPENVR_LIBRARY}")
-
 add_definitions(-DCOFFEE_OPENVR_ENABLED)
 
 include_directories ( SYSTEM

@@ -76,7 +76,7 @@ struct CGL43 : CGL33,
         CGL_XF2,
         CGL_XF3
 {
-    STATICINLINE bool LoadBinding(CGL_Context *ctxt)
+    STATICINLINE bool LoadBinding(CGL_Context *ctxt = nullptr)
     {
         bool status = CGL33::LoadBinding(ctxt);
 	if(!status)

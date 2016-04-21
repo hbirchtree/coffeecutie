@@ -7,8 +7,14 @@
 namespace Coffee{
 namespace OpenVRFun{
 
+OVRController::OVRController(OVRDevice *dev) :
+    HWDeviceInfo("HTC","Vive","1.0","0000")
+{
+}
+
 OVRActor::OVRActor(OVRDevice *dev):
-    m_device(dev)
+    m_device(dev),
+    m_controller(dev)
 {
     m_hierarchy.createNode(Spine,0);
 
@@ -58,7 +64,9 @@ Matf4 OVRActor::camera(ActorTracker_def::Eye e)
 
 BoundBox OVRActor::playSpace() const
 {
-    return BoundBox(1,1,1,true);
+    BoundBox space(0,0,0);
+
+    return space;
 }
 
 Nodes &OVRActor::spine()
@@ -70,6 +78,7 @@ Vecf3 OVRActor::angularVelocity() const
 {
     if(!m_device->isConnected())
         return CVec3();
+
     const vr::HmdVector3_t& angle = m_Context->devicePoses[m_device->m_dIndex].vAngularVelocity;
 
     return CVec3(angle.v[0],angle.v[1],angle.v[2]);
@@ -82,6 +91,16 @@ Vecf3 OVRActor::velocity() const
     const vr::HmdVector3_t& vel = m_Context->devicePoses[m_device->m_dIndex].vVelocity;
 
     return CVec3(vel.v[0],vel.v[1],vel.v[2]);
+}
+
+const OVRController &OVRActor::controller() const
+{
+    return m_controller;
+}
+
+const Matf4 &OVRActor::head()
+{
+    return *m_hierarchy.node(Head).transform;
 }
 
 }

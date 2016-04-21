@@ -26,6 +26,8 @@ struct _cbasic_data_chunk
 using CVoidData = _cbasic_data_chunk<void>;
 using CByteData = _cbasic_data_chunk<byte_t>;
 
+using Bytes = CByteData;
+
 template<typename T>
 /*!
  * \brief For storing arrays

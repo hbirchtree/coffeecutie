@@ -12,11 +12,13 @@ struct OVRImpl : HeadDisplayDriver_def
     using Device = OVRDevice;
     using Context = OVRContext;
     using Actor = OVRActor;
+    using Controller = OVRController;
 
     static const constexpr cstring SystemName = "OpenVR";
 
     static bool InitializeBinding();
     static bool PollDevices(int32 *lastValidIndex = nullptr);
+    static void PollEvents();
     static void Shutdown();
 
     static SWVersionInfo GetDriverInfo();
