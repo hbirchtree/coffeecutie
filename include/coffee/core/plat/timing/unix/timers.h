@@ -113,6 +113,12 @@ struct UnixTime : TimeDef
         DateTime dt = GetDateTime(ts);
         return StringDate(fmt,dt);
     }
+
+    STATICINLINE CString LocalTimeString(Timestamp ts)
+    {
+        DateTime dt = GetDateTime(ts);
+        return StringDate("%c",dt);
+    }
 };
 
 using Time = UnixTime;

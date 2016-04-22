@@ -3,3 +3,7 @@ if(COFFEE_BUILD_QT)
 endif()
 
 add_subdirectory(endian-fixer)
+
+if(COFFEE_BUILD_BOT)
+    add_subdirectory(build-bot)
+endif()

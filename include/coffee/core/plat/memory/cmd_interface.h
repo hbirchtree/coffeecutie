@@ -24,6 +24,9 @@ struct CmdDef
     static void Wait();
     static void Exit(int code);
 
+    static void Execute(cstring cmd);
+    static void Execute(cstring program, uint32 num_args, cstring* args);
+
     /* Terminal screens */
     static void ClearScreen();
     static void AltScreen();

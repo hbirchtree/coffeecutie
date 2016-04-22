@@ -7,6 +7,8 @@ option ( COFFEE_DOCS "Generate documentation" OFF )
 
 option ( COFFEE_TESTS "Build unit tests" ON )
 
+option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
+
 #
 #
 

@@ -46,8 +46,6 @@ CString RestClientImpl::GetContentType(const RestClientImpl::RestResponse &resp)
     CString data = Search::CStrReplace(resp.header,"\r","\n");
     data = StrUtil::lower(data);
 
-    cDebug("Data: {0}",data);
-
     cstring b = StrFind(data.c_str(),query.c_str());
     cstring e = nullptr;
     if(b)
