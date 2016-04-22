@@ -32,6 +32,8 @@ include_directories (
     include
     )
 
+include_directories( SYSTEM ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include )
+
 # General include directories, not ours
 include_directories ( SYSTEM
     ${CMAKE_BINARY_DIR}/libs/include
