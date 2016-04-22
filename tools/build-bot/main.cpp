@@ -6,23 +6,56 @@
 
 using namespace Coffee;
 
+enum FailureCase
+{
+    Nothing,
+
+    NoRepoSpecified  = 0x20,
+    FeedFetchFailed = 0x21,
+
+};
+
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-    cstring dir_ = ArgParse::Get(argc,argv,"directory");
+    cstring builddir_ = ArgParse::Get(argc,argv,"builddirectory");
+    cstring repodir_ = ArgParse::Get(argc,argv,"directory");
     cstring cmd_ = ArgParse::Get(argc,argv,"command");
     cstring timer_ = ArgParse::Get(argc,argv,"interval");
 
-    CString dir,cmd;
+    cstring repo_ = ArgParse::Get(argc,argv,"repo");
+    cstring branch_ = ArgParse::Get(argc,argv,"branch");
+
+    CString builddir,repodir,cmd,repo,branch;
     uint64 interval = 3600;
 
-    if(!dir_)
-        dir = Env::CurrentDir();
+    /* Specify build directory */
+    if(!builddir_)
+	builddir = Env::CurrentDir();
     else
-        dir = dir_;
+	builddir = builddir_;
+    if(!repodir_)
+	repodir = Env::CurrentDir();
+    else
+	repodir = repodir_;
+    /* Specify build command */
     if(!cmd_)
-        cmd = cStringFormat("cmake --build {0}",dir);
+	cmd = cStringFormat("cmake --build {0}",builddir,repodir);
+    else{
+	CString tmp = cStringFormat("{0}",cmd_);
+	cmd = cStringFormat(tmp.c_str(),builddir,repodir);
+    }
+
+    /* Specify repository (/user/repo) */
+    if(!repo_)
+	return NoRepoSpecified;
     else
-        cmd = cmd_;
+	repo = repo_;
+    /* Specify branch */
+    if(!branch_)
+	branch = "master";
+    else
+	branch = branch_;
+
     if(timer_)
     {
         bool ok = false;
@@ -31,20 +64,23 @@ int32 coffee_main(int32 argc, cstring_w* argv)
             interval = t__;
     }
 
-    cBasicPrint("command={0},directory={1},interval={2}",cmd,dir,interval);
+    cBasicPrint("command={0},directory={1},interval={2}",cmd,builddir,interval);
 
     REST::InitService();
 
-    REST::Request request = "/hbirchtree/coffeecutie/commits/master.atom";
+    REST::Request request = cStringFormat("/{0}/commits/{1}.atom",repo,branch);
 
     while(true)
     {
         auto response = REST::RestRequest(REST::HTTPS,"github.com",request);
 
+	if(response.code != 200)
+	    return FeedFetchFailed;
+
         if(REST::GetContentType(response) == "application/atom+xml; charset=utf-8")
         {
             cDebug("Updated repository: {0}");
-            Proc::Execute(cmd.c_str());
+	    Proc::Execute({cmd.c_str()});
         }
 
         cDebug("Sleeping again, waking up at {0}",

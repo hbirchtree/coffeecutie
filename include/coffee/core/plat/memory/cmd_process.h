@@ -6,22 +6,23 @@
 namespace Coffee{
 namespace Environment{
 
+struct Command
+{
+    cstring program;
+    cstring_w const* argv;
+    cstring_w const* envp;
+};
+
 struct CProcess
 {
     using Environment = Env::Variables;
 
-    STATICINLINE int Execute(cstring cmd)
+    STATICINLINE int Execute(Command const& cmd)
     {
-        /*TODO: Replace system()*/
-        return system(cmd);
-    }
-
-    STATICINLINE int Execute(cstring program, cstring_w const* argv, cstring_w const* env)
-    {
-        if(!env)
-            return execvp(program,argv);
+	if(!cmd.envp)
+	    return execvp(cmd.program,cmd.argv);
         else
-            return execvpe(program,argv,env);
+	    return execvpe(cmd.program,cmd.argv,cmd.envp);
     }
 
     STATICINLINE int Execute_s(cstring program, Vector<cstring> const& args, Environment const* env)
@@ -32,12 +33,13 @@ struct CProcess
         /*TODO: Implement functionality for env*/
 
         /*NOTE: The C-cast below is quite triggering */
-        return Execute(program,(cstring_w const*)args.data(),nullptr);
+	return Execute({program,(cstring_w const*)args.data(),nullptr});
     }
 };
 
 }
 
 using Proc = Environment::CProcess;
+using Proc_Cmd = Environment::Command;
 
 }
