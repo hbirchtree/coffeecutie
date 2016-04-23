@@ -2,6 +2,8 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/CMD>
 #include <coffee/core/CArgParser>
+#include <coffee/core/CXmlParser>
+#include <coffee/core/CJSONParser>
 #include <coffee/CAsio>
 
 using namespace Coffee;
@@ -10,85 +12,190 @@ enum FailureCase
 {
     Nothing,
 
-    NoRepoSpecified  = 0x20,
-    FeedFetchFailed = 0x21,
+    NoRepoSpecified = 20,
+    FeedFetchFailed = 21,
 
+    ProcessFailed   = 22,
+    XMLParseFailed  = 23,
 };
+
+enum UpdateSource
+{
+    GithubRSS = 1,
+};
+
+enum BuildTypes
+{
+    CMakeSystem = 1,
+};
+
+struct Repository
+{
+    CString repository;
+    CString branch;
+
+    CString build;
+    CString repodir;
+
+    Vector<Proc_Cmd> command_queue;
+
+    uint64 interval;
+};
+
+struct Repository_tmp
+{
+    REST::Request request;
+    REST::RestResponse response;
+    CString expect_type;
+
+    Timestamp wakeup;
+};
+
+struct DataSet
+{
+    Repository repo;
+    Repository_tmp temp;
+};
+
+DataSet create_item(cstring file)
+{
+    DataSet repo;
+
+    repo.repo.branch = "master";
+    repo.repo.interval = 3600;
+    repo.repo.repodir = Env::CurrentDir();
+    repo.repo.build = Env::CurrentDir();
+
+    CResources::Resource resc(file);
+    CResources::FileMap(resc);
+
+    if(!resc.data)
+        return {};
+
+    CString data_string;
+    data_string.insert(0,(cstring)resc.data,resc.size);
+
+    CResources::FileUnmap(resc);
+
+    CString build_sys = "cmake";
+
+    JSON::Document doc = JSON::Read(data_string.c_str());
+
+    if(doc.HasMember("repository"))
+        repo.repo.repository = doc["repository"].GetString();
+    if(doc.HasMember("branch"))
+        repo.repo.branch = doc["branch"].GetString();
+    if(doc.HasMember("build-dir"))
+        repo.repo.build = doc["build-dir"].GetString();
+    if(doc.HasMember("repo-dir"))
+        repo.repo.repodir = doc["repo-dir"].GetString();
+    if(doc.HasMember("interval"))
+        repo.repo.interval = doc["interval"].GetUint64();
+    if(doc.HasMember("build-type"))
+        build_sys = doc["build-type"].GetString();
+
+    if(build_sys == "cmake")
+    {
+        repo.repo.command_queue.push_back({"git",{"pull"},{}});
+        repo.repo.command_queue.push_back({"cmake",{"--build",repo.repo.build.c_str()},{}});
+    }else{
+        cWarning("Unrecognized build system: {0}",build_sys);
+    }
+
+    repo.temp.expect_type = "application/atom+xml; charset=utf-8";
+    repo.temp.request = cStringFormat("/{0}/commits/{1}.atom",
+                                      repo.repo.repository,repo.repo.branch);
+
+    cBasicPrint("\nConfigured target:\n"
+                "repository = {0}\n"
+                "branch = {5}\n"
+                "repository-dir = {1}"
+                "build-dir = {2}\n"
+                "interval = {3}\n"
+                "build-system = {4}\n",
+                repo.repo.repository,
+                repo.repo.repodir,
+                repo.repo.build,
+                repo.repo.interval,
+                build_sys,
+                repo.repo.branch);
+
+    return repo;
+}
+
+FailureCase update_item(Repository const& data, Repository_tmp* workarea)
+{
+    if(Time::CurrentTimestamp() < workarea->wakeup)
+        return Nothing;
+
+    uint64 const& interval = data.interval;
+    REST::Request const& request = workarea->request;
+    CString const& expect_type = workarea->expect_type;
+
+    CString repo = data.repository;
+    Vector<Proc_Cmd> const command_queue = data.command_queue;
+
+    cBasicPrint("WORKING ON: {0}",repo);
+
+    auto response = REST::RestRequest(REST::HTTPS,"github.com",request);
+
+    if(response.code != 200)
+        return FeedFetchFailed;
+
+    if(REST::GetContentType(response) == expect_type)
+    {
+        cBasicPrint("Updated repository: {0}",repo);
+        CString log;
+        for(Proc_Cmd const& cmd : command_queue)
+            if(Proc::ExecuteLogged(cmd,&log) != 0)
+            {
+                cBasicPrint("Failed with:\n{0}",log);
+                return ProcessFailed;
+            }
+    }else{
+        cWarning("Content mismatch: \"{0}\", expected \"{1}\"",
+                 REST::GetContentType(response),
+                 expect_type);
+        return XMLParseFailed;
+    }
+
+    workarea->wakeup = Time::CurrentTimestamp()+interval;
+
+    cBasicPrint("Sleeping again, waking up at {0}",
+           Time::LocalTimeString(workarea->wakeup));
+
+    cBasicPrint("");
+
+    return Nothing;
+}
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-    cstring builddir_ = ArgParse::Get(argc,argv,"builddirectory");
-    cstring repodir_ = ArgParse::Get(argc,argv,"directory");
-    cstring cmd_ = ArgParse::Get(argc,argv,"command");
-    cstring timer_ = ArgParse::Get(argc,argv,"interval");
+    argc--;
+    argv = &argv[1];
 
-    cstring repo_ = ArgParse::Get(argc,argv,"repo");
-    cstring branch_ = ArgParse::Get(argc,argv,"branch");
+    Vector<DataSet> datasets;
+    Vector<DataSet> complaints;
 
-    CString builddir,repodir,cmd,repo,branch;
-    uint64 interval = 3600;
-
-    /* Specify build directory */
-    if(!builddir_)
-	builddir = Env::CurrentDir();
-    else
-	builddir = builddir_;
-    if(!repodir_)
-	repodir = Env::CurrentDir();
-    else
-	repodir = repodir_;
-    /* Specify build command */
-    if(!cmd_)
-	cmd = cStringFormat("cmake --build {0}",builddir,repodir);
-    else{
-	CString tmp = cStringFormat("{0}",cmd_);
-	cmd = cStringFormat(tmp.c_str(),builddir,repodir);
-    }
-
-    /* Specify repository (/user/repo) */
-    if(!repo_)
-	return NoRepoSpecified;
-    else
-	repo = repo_;
-    /* Specify branch */
-    if(!branch_)
-	branch = "master";
-    else
-	branch = branch_;
-
-    if(timer_)
+    for(int32 i=0;i<argc;i++)
     {
-        bool ok = false;
-        uint64 t__ = Convert::strtoull(timer_,10,&ok);
-        if(ok)
-            interval = t__;
+        datasets.push_back(create_item(argv[i]));
     }
 
-    cBasicPrint("command={0},directory={1},interval={2}",cmd,builddir,interval);
+    if(datasets.size() == 0)
+        return 0;
 
     REST::InitService();
 
-    REST::Request request = cStringFormat("/{0}/commits/{1}.atom",repo,branch);
-
     while(true)
     {
-        auto response = REST::RestRequest(REST::HTTPS,"github.com",request);
-
-	if(response.code != 200)
-	    return FeedFetchFailed;
-
-        if(REST::GetContentType(response) == "application/atom+xml; charset=utf-8")
+        for(DataSet& e : datasets)
         {
-            cDebug("Updated repository: {0}");
-	    Proc::Execute({cmd.c_str()});
+            if(update_item(e.repo,&e.temp)!=Nothing)
+                return 1;
         }
-
-        cDebug("Sleeping again, waking up at {0}",
-               Time::LocalTimeString(Time::CurrentTimestamp()+interval*1000));
-        Threads::sleepMillis(interval*1000);
+        Threads::sleepMillis(250);
     }
-
-    return 0;
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main);

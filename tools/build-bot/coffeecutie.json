@@ -1,0 +1,8 @@
+{
+    "repository": "hbirchtree/coffeecutie",
+    "branch": "master",
+    "build-dir": "/home/havard/Code/coffeecutie/build",
+    "repo-dir": "/home/havard/Code/coffeecutie",
+    "interval": 10,
+    "build-type": "cmake"
+}

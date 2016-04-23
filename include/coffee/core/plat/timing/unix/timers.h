@@ -93,9 +93,10 @@ struct UnixTime : TimeDef
     STATICINLINE CString StringDate(cstring fmt,DateTime t)
     {
         CString out;
-        out.resize(40);
+        out.resize(100);
 
         int len = std::strftime(&out[0],out.size(),fmt,&t);
+        out.resize(len);
 
         return out;
     }
