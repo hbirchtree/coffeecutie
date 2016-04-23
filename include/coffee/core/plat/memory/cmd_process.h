@@ -3,8 +3,38 @@
 #include "cmd_interface.h"
 #include "../plat_environment.h"
 
+#ifndef COFFEE_WINDOWS
 #include <stdio.h>
 #include <sys/wait.h>
+
+#else
+
+#include "../plat_windows.h"
+
+int execvp(const char* path, char* const* argv)
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si,sizeof(si));
+	ZeroMemory(&pi, sizeof(pi));
+
+	AllocConsole();
+
+	if (!CreateProcess(nullptr,path,nullptr,nullptr,TRUE,NORMAL_PRIORITY_CLASS,
+		nullptr,nullptr,&si,&pi))
+		return -1;
+
+	CloseHandle(pi.hThread);
+
+	return WaitForSingleObject(pi.hProcess,INFINITE);
+}
+
+int execvpe(const char* path, char* const* argv, char* const* envp)
+{
+
+}
+
+#endif
 
 namespace Coffee{
 namespace Environment{
