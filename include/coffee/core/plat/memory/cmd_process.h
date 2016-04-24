@@ -77,7 +77,7 @@ struct CProcess
 #endif
     }
 
-    STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out = nullptr, CString* err = nullptr)
+    STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* err = nullptr)
     {
 #if defined(COFFEE_UNIXPLAT)
         CString cmd = cmd_.program;

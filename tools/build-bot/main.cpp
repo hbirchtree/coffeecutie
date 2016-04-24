@@ -101,8 +101,8 @@ DataSet create_item(cstring file)
 
     if(build_sys == "cmake")
     {
-        repo.repo.command_queue.push_back({"git",{"pull"},{}});
-        repo.repo.command_queue.push_back({"cmake",{"--build",repo.repo.build.c_str()},{}});
+        repo.repo.command_queue.push_back({git_program,{"pull"},{}});
+        repo.repo.command_queue.push_back({cmake_program,{"--build",repo.repo.build.c_str()},{}});
     }else{
         cWarning("Unrecognized build system: {0}",build_sys);
     }
@@ -153,6 +153,10 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
         CString log;
 		for (Proc_Cmd const& cmd : command_queue)
 		{
+            cBasicPrintNoNL("Running: {0}",cmd.program);
+            for(cstring a : cmd.argv)
+                cBasicPrintNoNL(" {0}",a);
+            cBasicPrintNoNL("\n");
 			int sig = Proc::ExecuteLogged(cmd, &log);
 			if (sig != 0)
 			{
@@ -179,31 +183,36 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-	if (ArgParse::Get(argc, argv, "gitbin"))
-		git_program = ArgParse::Get(argc, argv, "gitbin");
+    ArgumentCollection args;
 
-	if (ArgParse::Get(argc, argv, "cmakebin"))
-		git_program = ArgParse::Get(argc, argv, "cmakebin");
+    args.registerArgument(ArgumentCollection::Argument,"gitbin");
+    args.registerArgument(ArgumentCollection::Argument,"cmakebin");
 
-	cDebug("Launched BuildBot");
+    args.parseArguments(argc,argv);
 
-    argc--;
-    argv = &argv[1];
-
-	cDebug("Got {0} inputs",argc);
+    cDebug("Launched BuildBot");
 
     Vector<DataSet> datasets;
-    Vector<DataSet> complaints;
 
-    for(int32 i=0;i<argc;i++)
+    szptr num_items = 0;
+    for(cstring it : args.getPositionalArguments())
     {
-        datasets.push_back(create_item(argv[i]));
+        datasets.push_back(create_item(it));
+        num_items++;
+    }
+
+    for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
+    {
+        if(arg.first == "gitbin")
+            git_program = arg.second;
+        else if(arg.first == "cmakebin")
+            cmake_program = arg.second;
     }
 
     if(datasets.size() == 0)
         return 0;
 
-	cDebug("Got {0} datasets",datasets.size());
+    cDebug("Got {0} datasets\n",datasets.size());
 
     REST::InitService();
 

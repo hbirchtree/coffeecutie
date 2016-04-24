@@ -131,8 +131,8 @@ endif()
 
 if(COFFEE_BUILD_OPENVR) # AND COFFEE_BUILD_OCULUSVR
     add_subdirectory(vr/base-test)
-    add_subdirectory(vr/hellovr)
-    add_subdirectory(vr/hellovr-rhi)
+#    add_subdirectory(vr/hellovr)
+#    add_subdirectory(vr/hellovr-rhi)
 endif()
 
 #

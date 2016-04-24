@@ -5,6 +5,7 @@
 #include <queue>
 #include <list>
 #include <vector>
+#include <set>
 #include <map>
 
 /*Memory management*/
@@ -61,5 +62,8 @@ using ShPtr = std::shared_ptr<T>;
 
 template<typename T>
 using Complex = std::complex<T>;
+
+template<typename T>
+using Set = std::set<T>;
 
 }
