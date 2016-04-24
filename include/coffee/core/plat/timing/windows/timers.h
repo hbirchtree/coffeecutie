@@ -116,6 +116,11 @@ struct WindowsTime : TimeDef
 		DateTime dt = GetDateTime(ts);
 		return StringDate(fmt,dt);
 	}
+	static CString LocalTimeString(Timestamp ts)
+	{
+		DateTime dt = GetDateTime(ts);
+		return StringDate("%c", dt);
+	}
 };
 
 using Time = WindowsTime;

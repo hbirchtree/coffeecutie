@@ -4,35 +4,9 @@
 #include "../plat_environment.h"
 
 #ifndef COFFEE_WINDOWS
-#include <stdio.h>
+
 #include <sys/wait.h>
-
-#else
-
-#include "../plat_windows.h"
-
-int execvp(const char* path, char* const* argv)
-{
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&si,sizeof(si));
-	ZeroMemory(&pi, sizeof(pi));
-
-	AllocConsole();
-
-	if (!CreateProcess(nullptr,path,nullptr,nullptr,TRUE,NORMAL_PRIORITY_CLASS,
-		nullptr,nullptr,&si,&pi))
-		return -1;
-
-	CloseHandle(pi.hThread);
-
-	return WaitForSingleObject(pi.hProcess,INFINITE);
-}
-
-int execvpe(const char* path, char* const* argv, char* const* envp)
-{
-
-}
+#include <stdio.h>
 
 #endif
 
@@ -52,8 +26,20 @@ struct CProcess
 {
     using Environment = Env::Variables;
 
+	STATICINLINE int ExecuteSystem(Command const& cmd_)
+	{
+		CString cmd = cmd_.program;
+		for (cstring arg : cmd_.argv)
+		{
+			cmd.push_back(' ');
+			cmd.append(arg);
+		}
+		return system(cmd.c_str());
+	}
+
     STATICINLINE int Execute(Command const& cmd_)
     {
+#if defined(COFFEE_UNIXPLAT)
         Command cmd = cmd_;
 
         pid_t child;
@@ -86,10 +72,14 @@ struct CProcess
         }while(tpid != child);
 
         return child_sig;
+#else
+		return ExecuteSystem(cmd_);
+#endif
     }
 
     STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out = nullptr, CString* err = nullptr)
     {
+#if defined(COFFEE_UNIXPLAT)
         CString cmd = cmd_.program;
         for(cstring arg : cmd_.argv)
         {
@@ -97,9 +87,7 @@ struct CProcess
             cmd.append(arg);
         }
 
-#if defined(COFFEE_UNIXPLAT)
         cmd.append(" 2>&1");
-#endif
 
         out->resize(100);
 
@@ -118,6 +106,9 @@ struct CProcess
         }else{
             return -1;
         }
+#else
+		return ExecuteSystem(cmd_);
+#endif
     }
 };
 

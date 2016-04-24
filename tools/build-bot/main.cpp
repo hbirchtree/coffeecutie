@@ -1,12 +1,15 @@
+#include <coffee/CAsio>
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
 #include <coffee/core/CMD>
 #include <coffee/core/CArgParser>
 #include <coffee/core/CXmlParser>
 #include <coffee/core/CJSONParser>
-#include <coffee/CAsio>
 
 using namespace Coffee;
+
+cstring git_program = "git";
+cstring cmake_program = "cmake";
 
 enum FailureCase
 {
@@ -59,7 +62,9 @@ struct DataSet
 
 DataSet create_item(cstring file)
 {
-    DataSet repo;
+	DataSet repo = {};
+
+	repo.temp = {};
 
     repo.repo.branch = "master";
     repo.repo.interval = 3600;
@@ -109,7 +114,7 @@ DataSet create_item(cstring file)
     cBasicPrint("\nConfigured target:\n"
                 "repository = {0}\n"
                 "branch = {5}\n"
-                "repository-dir = {1}"
+                "repository-dir = {1}\n"
                 "build-dir = {2}\n"
                 "interval = {3}\n"
                 "build-system = {4}\n",
@@ -146,12 +151,15 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
     {
         cBasicPrint("Updated repository: {0}",repo);
         CString log;
-        for(Proc_Cmd const& cmd : command_queue)
-            if(Proc::ExecuteLogged(cmd,&log) != 0)
-            {
-                cBasicPrint("Failed with:\n{0}",log);
-                return ProcessFailed;
-            }
+		for (Proc_Cmd const& cmd : command_queue)
+		{
+			int sig = Proc::ExecuteLogged(cmd, &log);
+			if (sig != 0)
+			{
+				cBasicPrint("Failed with signal {0}:\n{1}", sig, log);
+				return ProcessFailed;
+			}
+		}
     }else{
         cWarning("Content mismatch: \"{0}\", expected \"{1}\"",
                  REST::GetContentType(response),
@@ -171,8 +179,18 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
+	if (ArgParse::Get(argc, argv, "gitbin"))
+		git_program = ArgParse::Get(argc, argv, "gitbin");
+
+	if (ArgParse::Get(argc, argv, "cmakebin"))
+		git_program = ArgParse::Get(argc, argv, "cmakebin");
+
+	cDebug("Launched BuildBot");
+
     argc--;
     argv = &argv[1];
+
+	cDebug("Got {0} inputs",argc);
 
     Vector<DataSet> datasets;
     Vector<DataSet> complaints;
@@ -185,13 +203,16 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     if(datasets.size() == 0)
         return 0;
 
+	cDebug("Got {0} datasets",datasets.size());
+
     REST::InitService();
 
     while(true)
     {
         for(DataSet& e : datasets)
         {
-            if(update_item(e.repo,&e.temp)!=Nothing)
+			int sig = update_item(e.repo, &e.temp);
+			if (sig != Nothing)
                 return 1;
         }
         Threads::sleepMillis(250);

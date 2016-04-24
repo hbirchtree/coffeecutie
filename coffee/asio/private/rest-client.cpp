@@ -66,7 +66,7 @@ RestClientImpl::RestResponse RestClientImpl::RestRequestHTTPS(RestClientImpl::Ho
                                                     t_context->sslctxt);
 
     asio::ip::tcp::resolver::query q(h,"https");
-    auto it = t_context->resolver.resolve(q);
+	auto it = t_context->resolver.resolve(q);
 
     asio::connect(socket.next_layer(),it);
 
