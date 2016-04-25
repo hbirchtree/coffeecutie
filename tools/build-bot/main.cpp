@@ -32,6 +32,17 @@ enum BuildTypes
     CMakeSystem = 1,
 };
 
+struct GitCommit
+{
+    CString hash;
+    Timestamp ts;
+};
+
+bool operator<(GitCommit const& c1, GitCommit const& c2)
+{
+    return c1.ts < c2.ts && c1.hash != c2.hash;
+}
+
 struct Repository
 {
     CString repository;
@@ -51,6 +62,8 @@ struct Repository_tmp
     REST::RestResponse response;
     CString expect_type;
 
+    GitCommit last_commit;
+
     Timestamp wakeup;
 };
 
@@ -60,11 +73,34 @@ struct DataSet
     Repository_tmp temp;
 };
 
+GitCommit ParseEntry(XML::Element const* el)
+{
+    if(!el)
+	return {};
+
+    XML::Element const* cts = el->FirstChildElement("updated");
+    XML::Element const* cid = el->FirstChildElement("id");
+
+    if(!cts || !cid)
+	return {};
+
+    Timestamp ts = Time::ParseTimeStdTime(cts->GetText());
+    Regex::Pattern patt = Regex::Compile(".+Commit\\/([0-9a-fA-F]+)");
+
+    auto cap = Regex::Match(patt,cid->GetText(),true);
+
+    if(cap.size() < 2)
+	return {};
+
+    return {cap[1].s_match[0],ts};
+}
+
 DataSet create_item(cstring file)
 {
-	DataSet repo = {};
+    DataSet repo = {};
 
-	repo.temp = {};
+    repo.temp = {};
+    repo.temp.last_commit = {};
 
     repo.repo.branch = "master";
     repo.repo.interval = 3600;
@@ -75,7 +111,7 @@ DataSet create_item(cstring file)
     CResources::FileMap(resc);
 
     if(!resc.data)
-        return {};
+	return {};
 
     CString data_string;
     data_string.insert(0,(cstring)resc.data,resc.size);
@@ -87,43 +123,43 @@ DataSet create_item(cstring file)
     JSON::Document doc = JSON::Read(data_string.c_str());
 
     if(doc.HasMember("repository"))
-        repo.repo.repository = doc["repository"].GetString();
+	repo.repo.repository = doc["repository"].GetString();
     if(doc.HasMember("branch"))
-        repo.repo.branch = doc["branch"].GetString();
+	repo.repo.branch = doc["branch"].GetString();
     if(doc.HasMember("build-dir"))
-        repo.repo.build = doc["build-dir"].GetString();
+	repo.repo.build = doc["build-dir"].GetString();
     if(doc.HasMember("repo-dir"))
-        repo.repo.repodir = doc["repo-dir"].GetString();
+	repo.repo.repodir = doc["repo-dir"].GetString();
     if(doc.HasMember("interval"))
-        repo.repo.interval = doc["interval"].GetUint64();
+	repo.repo.interval = doc["interval"].GetUint64();
     if(doc.HasMember("build-type"))
-        build_sys = doc["build-type"].GetString();
+	build_sys = doc["build-type"].GetString();
 
     if(build_sys == "cmake")
     {
-        repo.repo.command_queue.push_back({git_program,{"pull"},{}});
-        repo.repo.command_queue.push_back({cmake_program,{"--build",repo.repo.build.c_str()},{}});
+	repo.repo.command_queue.push_back({git_program,{"pull"},{}});
+	repo.repo.command_queue.push_back({cmake_program,{"--build",repo.repo.build.c_str()},{}});
     }else{
-        cWarning("Unrecognized build system: {0}",build_sys);
+	cWarning("Unrecognized build system: {0}",build_sys);
     }
 
     repo.temp.expect_type = "application/atom+xml; charset=utf-8";
     repo.temp.request = cStringFormat("/{0}/commits/{1}.atom",
-                                      repo.repo.repository,repo.repo.branch);
+				      repo.repo.repository,repo.repo.branch);
 
     cBasicPrint("\nConfigured target:\n"
-                "repository = {0}\n"
-                "branch = {5}\n"
-                "repository-dir = {1}\n"
-                "build-dir = {2}\n"
-                "interval = {3}\n"
-                "build-system = {4}\n",
-                repo.repo.repository,
-                repo.repo.repodir,
-                repo.repo.build,
-                repo.repo.interval,
-                build_sys,
-                repo.repo.branch);
+		"repository = {0}\n"
+		"branch = {5}\n"
+		"repository-dir = {1}\n"
+		"build-dir = {2}\n"
+		"interval = {3}\n"
+		"build-system = {4}\n",
+		repo.repo.repository,
+		repo.repo.repodir,
+		repo.repo.build,
+		repo.repo.interval,
+		build_sys,
+		repo.repo.branch);
 
     return repo;
 }
@@ -131,7 +167,7 @@ DataSet create_item(cstring file)
 FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 {
     if(Time::CurrentTimestamp() < workarea->wakeup)
-        return Nothing;
+	return Nothing;
 
     uint64 const& interval = data.interval;
     REST::Request const& request = workarea->request;
@@ -145,36 +181,55 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
     auto response = REST::RestRequest(REST::HTTPS,"github.com",request);
 
     if(response.code != 200)
-        return FeedFetchFailed;
+	return FeedFetchFailed;
 
     if(REST::GetContentType(response) == expect_type)
     {
-        cBasicPrint("Updated repository: {0}",repo);
-        CString log;
-		for (Proc_Cmd const& cmd : command_queue)
+	XML::Document* doc = XML::XMLRead(
+		    BytesConst{response.payload.size(),(byte_t*)response.payload.c_str()});
+
+	XML::Element* feed = doc->FirstChildElement("feed");
+
+	if(!feed)
+	    return XMLParseFailed;
+
+	GitCommit cmt = ParseEntry(feed->FirstChildElement("entry"));
+
+	if(workarea->last_commit < cmt)
+	{
+	    workarea->last_commit = cmt;
+
+	    cBasicPrint("Updated repository: {0}, commit={1}, ts={2}",
+			repo,cmt.hash,cmt.ts);
+	    CString log;
+	    for (Proc_Cmd const& cmd : command_queue)
+	    {
+		cBasicPrintNoNL("Running: {0}",cmd.program);
+		for(cstring a : cmd.argv)
+		    cBasicPrintNoNL(" {0}",a);
+		cBasicPrintNoNL("\n");
+		int sig = Proc::ExecuteLogged(cmd, &log);
+		if (sig != 0)
 		{
-            cBasicPrintNoNL("Running: {0}",cmd.program);
-            for(cstring a : cmd.argv)
-                cBasicPrintNoNL(" {0}",a);
-            cBasicPrintNoNL("\n");
-			int sig = Proc::ExecuteLogged(cmd, &log);
-			if (sig != 0)
-			{
-				cBasicPrint("Failed with signal {0}:\n{1}", sig, log);
-				return ProcessFailed;
-			}
+		    cBasicPrint("Failed with signal {0}:\n{1}", sig, log);
+		    return ProcessFailed;
 		}
+	    }
+	}else{
+	    cWarning("Mismatch commit, latest is commit={0}, ts={1}",
+		     workarea->last_commit.hash,workarea->last_commit.ts);
+	}
     }else{
-        cWarning("Content mismatch: \"{0}\", expected \"{1}\"",
-                 REST::GetContentType(response),
-                 expect_type);
-        return XMLParseFailed;
+	cWarning("Content mismatch: \"{0}\", expected \"{1}\"",
+		 REST::GetContentType(response),
+		 expect_type);
+	return XMLParseFailed;
     }
 
     workarea->wakeup = Time::CurrentTimestamp()+interval;
 
     cBasicPrint("Sleeping again, waking up at {0}",
-           Time::LocalTimeString(workarea->wakeup));
+		Time::LocalTimeString(workarea->wakeup));
 
     cBasicPrint("");
 
@@ -197,20 +252,20 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     szptr num_items = 0;
     for(cstring it : args.getPositionalArguments())
     {
-        datasets.push_back(create_item(it));
-        num_items++;
+	datasets.push_back(create_item(it));
+	num_items++;
     }
 
     for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
     {
-        if(arg.first == "gitbin")
-            git_program = arg.second;
-        else if(arg.first == "cmakebin")
-            cmake_program = arg.second;
+	if(arg.first == "gitbin")
+	    git_program = arg.second;
+	else if(arg.first == "cmakebin")
+	    cmake_program = arg.second;
     }
 
     if(datasets.size() == 0)
-        return 0;
+	return 0;
 
     cDebug("Got {0} datasets\n",datasets.size());
 
@@ -218,13 +273,13 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     while(true)
     {
-        for(DataSet& e : datasets)
-        {
-			int sig = update_item(e.repo, &e.temp);
-			if (sig != Nothing)
-                return 1;
-        }
-        Threads::sleepMillis(250);
+	for(DataSet& e : datasets)
+	{
+	    int sig = update_item(e.repo, &e.temp);
+	    if (sig != Nothing)
+		return 1;
+	}
+	Threads::sleepMillis(250);
     }
 }
 

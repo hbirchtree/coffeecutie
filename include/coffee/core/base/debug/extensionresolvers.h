@@ -29,19 +29,19 @@ inline CString to_string(const T* const& v)
 
 inline CString to_string(const uint8& v)
 {
-    return Convert::uinttostring(v);
+    return Convert::uintctostring(v);
 }
 inline CString to_string(const int8& v)
 {
-    return Convert::inttostring(v);
+    return Convert::intctostring(v);
 }
 inline CString to_string(const uint16& v)
 {
-    return Convert::uinttostring(v);
+    return Convert::uintstostring(v);
 }
 inline CString to_string(const int16& v)
 {
-    return Convert::inttostring(v);
+    return Convert::intstostring(v);
 }
 inline CString to_string(const uint32& v)
 {
@@ -49,15 +49,15 @@ inline CString to_string(const uint32& v)
 }
 inline CString to_string(const int32& v)
 {
-    return Convert::inttostring(v);
+    return Convert::inttostring((int32)v);
 }
 inline CString to_string(const uint64& v)
 {
-    return Convert::uinttostring(v);
+    return Convert::uintltostring(v);
 }
 inline CString to_string(const int64& v)
 {
-    return Convert::inttostring(v);
+    return Convert::intltostring((int64)v);
 }
 inline CString to_string(const scalar& v)
 {

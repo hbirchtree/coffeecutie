@@ -27,6 +27,7 @@ using CVoidData = _cbasic_data_chunk<void>;
 using CByteData = _cbasic_data_chunk<byte_t>;
 
 using Bytes = CByteData;
+using BytesConst = _cbasic_data_chunk<const byte_t>;
 
 template<typename T>
 /*!

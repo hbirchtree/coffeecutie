@@ -100,12 +100,13 @@ extern void FileCommitTextmode(const Resource& resc, bool append = false);
  */
 extern bool FileMkdir(cstring dirname, bool recursive);
 
-FORCEDINLINE CByteData FileGetDescriptor(Resource& resc)
+FORCEDINLINE Bytes FileGetDescriptor(Resource& resc)
 {
-    CByteData d;
-    d.data = (byte_t*)resc.data;
-    d.size = resc.size;
-    return d;
+    return {resc.size,(byte_t*)resc.data};
+}
+FORCEDINLINE BytesConst FileGetDescriptor(const Resource& resc)
+{
+    return {resc.size,(byte_t const*)resc.data};
 }
 
 }
