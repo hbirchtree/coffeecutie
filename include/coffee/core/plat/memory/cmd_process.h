@@ -16,7 +16,7 @@ namespace Environment{
 struct Command
 {
     cstring program;
-    Vector<cstring> argv;
+    Vector<CString> argv;
     Vector<cstring> envp;
 
     cstring workdir;
@@ -29,7 +29,7 @@ struct CProcess
 	STATICINLINE int ExecuteSystem(Command const& cmd_)
 	{
 		CString cmd = cmd_.program;
-		for (cstring arg : cmd_.argv)
+		for (CString const& arg : cmd_.argv)
 		{
 			cmd.push_back(' ');
 			cmd.append(arg);
@@ -81,13 +81,11 @@ struct CProcess
     {
 #if defined(COFFEE_UNIXPLAT)
         CString cmd = cmd_.program;
-        for(cstring arg : cmd_.argv)
+	for(CString const& arg : cmd_.argv)
         {
             cmd.push_back(' ');
             cmd.append(arg);
-        }
-
-        cmd.append(" 2>&1");
+	}
 
         out->resize(100);
 

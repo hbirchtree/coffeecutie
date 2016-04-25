@@ -51,6 +51,8 @@ struct Repository
     CString build;
     CString repodir;
 
+    CString upstream;
+
     Vector<Proc_Cmd> command_queue;
 
     uint64 interval;
@@ -103,6 +105,7 @@ DataSet create_item(cstring file)
     repo.temp.last_commit = {};
 
     repo.repo.branch = "master";
+    repo.repo.upstream = "origin";
     repo.repo.interval = 3600;
     repo.repo.repodir = Env::CurrentDir();
     repo.repo.build = Env::CurrentDir();
@@ -124,6 +127,8 @@ DataSet create_item(cstring file)
 
     if(doc.HasMember("repository"))
 	repo.repo.repository = doc["repository"].GetString();
+    if(doc.HasMember("upstream"))
+	repo.repo.upstream = doc["upstream"].GetString();
     if(doc.HasMember("branch"))
 	repo.repo.branch = doc["branch"].GetString();
     if(doc.HasMember("build-dir"))
@@ -135,9 +140,19 @@ DataSet create_item(cstring file)
     if(doc.HasMember("build-type"))
 	build_sys = doc["build-type"].GetString();
 
+    cDebug("Upstream: {0}",repo.repo.upstream);
+    cDebug("Branch: {0}",repo.repo.branch);
+
     if(build_sys == "cmake")
     {
-	repo.repo.command_queue.push_back({git_program,{"pull"},{}});
+	repo.repo.command_queue.push_back(
+	{git_program,
+	 {"pull",
+	  repo.repo.upstream.c_str(),
+	  repo.repo.branch.c_str()
+	 },
+	 {}
+	});
 	repo.repo.command_queue.push_back({cmake_program,{"--build",repo.repo.build.c_str()},{}});
     }else{
 	cWarning("Unrecognized build system: {0}",build_sys);
@@ -205,7 +220,7 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 	    for (Proc_Cmd const& cmd : command_queue)
 	    {
 		cBasicPrintNoNL("Running: {0}",cmd.program);
-		for(cstring a : cmd.argv)
+		for(CString const& a : cmd.argv)
 		    cBasicPrintNoNL(" {0}",a);
 		cBasicPrintNoNL("\n");
 		int sig = Proc::ExecuteLogged(cmd, &log);
