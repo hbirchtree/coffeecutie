@@ -69,8 +69,14 @@ struct WindowsSysInfo : SysInfoDef
 	struct  cache
 	{
 	    uint16 l1;
+		uint16 l1_d_size;
+		uint16 l1_i_size;
 	    uint16 l2;
+		uint16 l2_d_size;
+		uint16 l2_i_size;
 	    uint16 l3;
+		uint16 l3_d_size;
+		uint16 l3_i_size;
 	};
 	struct proc
 	{
@@ -151,14 +157,26 @@ struct WindowsSysInfo : SysInfoDef
 		cache = &ptr->Cache;
 		if (cache->Level == 1)
 		{
+			if(cache->Type==CacheData)
+				proc->cache.l1_d_size += cache->Size;
+			else if (cache->Type==CacheInstruction)
+				proc->cache.l1_i_size += cache->Size;
 		    proc->cache.l1++;
 		}
 		else if (cache->Level == 2)
 		{
+			if (cache->Type == CacheData)
+				proc->cache.l2_d_size += cache->Size;
+			else if (cache->Type == CacheInstruction)
+				proc->cache.l2_i_size += cache->Size;
 		    proc->cache.l2++;
 		}
 		else if (cache->Level == 3)
 		{
+			if (cache->Type == CacheData)
+				proc->cache.l3_d_size += cache->Size;
+			else if (cache->Type == CacheInstruction)
+				proc->cache.l3_i_size += cache->Size;
 		    proc->cache.l3++;
 		}
 		break;
@@ -290,7 +308,7 @@ struct WindowsSysInfo : SysInfoDef
     {
 	auto info = GetProcInfo();
 
-	return info.processors.front().cache.l1;
+	return info.processors.front().cache.l1_d_size;
     }
     STATICINLINE bool HasHyperThreading()
     {

@@ -76,7 +76,7 @@ namespace CFunctional {
 
 }
 
-struct WindowsTime : TimeDef
+struct WindowsTime : PosixIshTimeDef
 {
     static uint64 Microsecond() { return CFunctional::_win_api_get_time(); }
 

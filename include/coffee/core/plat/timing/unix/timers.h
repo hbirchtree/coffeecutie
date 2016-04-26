@@ -7,8 +7,6 @@
 
 #include "../timing_def.h"
 #include <sys/time.h>
-#include <ctime>
-#include <time.h>
 #include <memory.h>
 
 namespace Coffee{
@@ -63,7 +61,7 @@ private:
 
 }
 
-struct UnixTime : TimeDef
+struct UnixTime : PosixIshTimeDef
 {
     STATICINLINE uint64 Microsecond()
     {
@@ -120,15 +118,6 @@ struct UnixTime : TimeDef
     {
         DateTime dt = GetDateTime(ts);
         return StringDate("%c",dt);
-    }
-
-    STATICINLINE Timestamp ParseTimeStdTime(cstring src)
-    {
-	struct tm time_s = {};
-	if(strptime(src,"%Y-%m-%dT%H:%M:%S",&time_s))
-	    return mktime(&time_s);
-	else
-	    return 0;
     }
 };
 

@@ -32,6 +32,12 @@ enum BuildTypes
     CMakeSystem = 1,
 };
 
+enum BuildSpecs
+{
+	IgnoreFailure = 0x1,
+	CleanAlways   = 0x2,
+};
+
 struct GitCommit
 {
     CString hash;
@@ -56,6 +62,8 @@ struct Repository
     Vector<Proc_Cmd> command_queue;
 
     uint64 interval;
+
+	uint32 flags;
 };
 
 struct Repository_tmp
@@ -143,17 +151,17 @@ DataSet create_item(cstring file)
     cDebug("Upstream: {0}",repo.repo.upstream);
     cDebug("Branch: {0}",repo.repo.branch);
 
+	Vector<Proc_Cmd>& cmd_queue = repo.repo.command_queue;
+
     if(build_sys == "cmake")
     {
-	repo.repo.command_queue.push_back(
-	{git_program,
-	 {"pull",
-	  repo.repo.upstream.c_str(),
-	  repo.repo.branch.c_str()
-	 },
-	 {}
-	});
-	repo.repo.command_queue.push_back({cmake_program,{"--build",repo.repo.build.c_str()},{}});
+		cstring upstream = repo.repo.upstream.c_str();
+		cstring branch = repo.repo.branch.c_str();
+		cstring build_dir = repo.repo.build.c_str();
+
+	cmd_queue.push_back({git_program,{"pull",upstream,branch},{}});
+	cmd_queue.push_back({ cmake_program,{ "--clean",},{} });
+	cmd_queue.push_back({cmake_program,{"--build",build_dir},{}});
     }else{
 	cWarning("Unrecognized build system: {0}",build_sys);
     }
@@ -260,23 +268,21 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     args.parseArguments(argc,argv);
 
+    for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
+    {
+	if(arg.first == "gitbin" && arg.second)
+	    git_program = arg.second;
+	else if(arg.first == "cmakebin" && arg.second)
+	    cmake_program = arg.second;
+    }
+
     cDebug("Launched BuildBot");
 
     Vector<DataSet> datasets;
 
-    szptr num_items = 0;
     for(cstring it : args.getPositionalArguments())
     {
 	datasets.push_back(create_item(it));
-	num_items++;
-    }
-
-    for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
-    {
-	if(arg.first == "gitbin")
-	    git_program = arg.second;
-	else if(arg.first == "cmakebin")
-	    cmake_program = arg.second;
     }
 
     if(datasets.size() == 0)
@@ -292,7 +298,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 	{
 	    int sig = update_item(e.repo, &e.temp);
 	    if (sig != Nothing)
-		return 1;
+		return sig;
 	}
 	Threads::sleepMillis(250);
     }

@@ -144,8 +144,8 @@ private:
             var.data = ArgParse::Get(argc,argv,sw,&idx);
             if(idx>=0)
             {
-                _indices.insert(idx-1);
                 _indices.insert(idx);
+				_indices.insert(idx+1);
             }
         }
     }
