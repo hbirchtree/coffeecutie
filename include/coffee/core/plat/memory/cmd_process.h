@@ -15,11 +15,13 @@ namespace Environment{
 
 struct Command
 {
-    cstring program;
+    CString program;
     Vector<CString> argv;
     Vector<cstring> envp;
 
     cstring workdir;
+
+    Vector<CString> _string_store;
 };
 
 struct CProcess
@@ -56,7 +58,7 @@ struct CProcess
         if(child == 0)
         {
             child_sig = execvpe(
-                        cmd.program,
+                        cmd.program.c_str(),
                         (cstring_w const*)cmd.argv.data(),
 
                         (cmd.envp.size()>0)

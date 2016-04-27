@@ -34,8 +34,8 @@ enum BuildTypes
 
 enum BuildSpecs
 {
-	IgnoreFailure = 0x1,
-	CleanAlways   = 0x2,
+    IgnoreFailure = 0x1,
+    CleanAlways   = 0x2,
 };
 
 struct GitCommit
@@ -63,7 +63,7 @@ struct Repository
 
     uint64 interval;
 
-	uint32 flags;
+    uint32 flags;
 };
 
 struct Repository_tmp
@@ -83,16 +83,23 @@ struct DataSet
     Repository_tmp temp;
 };
 
+cstring JSGetString(JSON::Value const& v, cstring val)
+{
+    if(v.HasMember(val)&&v[val].IsString())
+        return v[val].GetString();
+    return nullptr;
+}
+
 GitCommit ParseEntry(XML::Element const* el)
 {
     if(!el)
-	return {};
+        return {};
 
     XML::Element const* cts = el->FirstChildElement("updated");
     XML::Element const* cid = el->FirstChildElement("id");
 
     if(!cts || !cid)
-	return {};
+        return {};
 
     Timestamp ts = Time::ParseTimeStdTime(cts->GetText());
     Regex::Pattern patt = Regex::Compile(".+Commit\\/([0-9a-fA-F]+)");
@@ -100,9 +107,26 @@ GitCommit ParseEntry(XML::Element const* el)
     auto cap = Regex::Match(patt,cid->GetText(),true);
 
     if(cap.size() < 2)
-	return {};
+        return {};
 
     return {cap[1].s_match[0],ts};
+}
+
+Proc_Cmd GetCommand(JSON::Value const& obj)
+{
+    Proc_Cmd cmd;
+
+    cmd.program = JSGetString(obj,"program");
+    if(obj.HasMember("args")&&obj["args"].IsArray())
+    {
+        for(JSON::Value const& v : obj["args"].GetArray())
+        {
+            if(v.IsString())
+                cmd.argv.push_back(v.GetString());
+        }
+    }
+
+    return cmd;
 }
 
 DataSet create_item(cstring file)
@@ -122,7 +146,7 @@ DataSet create_item(cstring file)
     CResources::FileMap(resc);
 
     if(!resc.data)
-	return {};
+        return {};
 
     CString data_string;
     data_string.insert(0,(cstring)resc.data,resc.size);
@@ -131,58 +155,71 @@ DataSet create_item(cstring file)
 
     CString build_sys = "cmake";
 
+    Proc_Cmd clean_cmd = {};
+
     JSON::Document doc = JSON::Read(data_string.c_str());
 
-    if(doc.HasMember("repository"))
-	repo.repo.repository = doc["repository"].GetString();
-    if(doc.HasMember("upstream"))
-	repo.repo.upstream = doc["upstream"].GetString();
-    if(doc.HasMember("branch"))
-	repo.repo.branch = doc["branch"].GetString();
-    if(doc.HasMember("build-dir"))
-	repo.repo.build = doc["build-dir"].GetString();
-    if(doc.HasMember("repo-dir"))
-	repo.repo.repodir = doc["repo-dir"].GetString();
-    if(doc.HasMember("interval"))
-	repo.repo.interval = doc["interval"].GetUint64();
-    if(doc.HasMember("build-type"))
-	build_sys = doc["build-type"].GetString();
+    if(!doc.IsObject())
+        return {};
 
-    cDebug("Upstream: {0}",repo.repo.upstream);
-    cDebug("Branch: {0}",repo.repo.branch);
+    JSON::Value doc_ = doc.GetObject();
 
-	Vector<Proc_Cmd>& cmd_queue = repo.repo.command_queue;
+    if(doc_.HasMember("cleans")&&doc_["cleans"].GetBool())
+        repo.repo.flags |= CleanAlways;
+    if(doc_.HasMember("nofail")&&doc_["nofail"].GetBool())
+        repo.repo.flags |= IgnoreFailure;
+
+    repo.repo.repository = JSGetString(doc_,"repository");
+    repo.repo.upstream = JSGetString(doc_,"upstream");
+
+    repo.repo.branch = JSGetString(doc_,"branch");
+    repo.repo.build = JSGetString(doc_,"build-dir");
+    repo.repo.repodir = JSGetString(doc_,"repo-dir");
+    build_sys = JSGetString(doc_,"build-type");
+
+    if(doc_.HasMember("interval"))
+        repo.repo.interval = doc_["interval"].GetUint64();
+
+    if((repo.repo.flags&CleanAlways)&&doc_.HasMember("clean-command")&&doc_["clean-command"].IsObject())
+        clean_cmd = GetCommand(doc_["clean-command"].GetObject());
+
+    Vector<Proc_Cmd>& cmd_queue = repo.repo.command_queue;
 
     if(build_sys == "cmake")
     {
-		cstring upstream = repo.repo.upstream.c_str();
-		cstring branch = repo.repo.branch.c_str();
-		cstring build_dir = repo.repo.build.c_str();
+        cstring upstream = repo.repo.upstream.c_str();
+        cstring branch = repo.repo.branch.c_str();
+        cstring build_dir = repo.repo.build.c_str();
 
-	cmd_queue.push_back({git_program,{"pull",upstream,branch},{}});
-	cmd_queue.push_back({ cmake_program,{ "--clean",},{} });
-	cmd_queue.push_back({cmake_program,{"--build",build_dir},{}});
+        cmd_queue.push_back({git_program,{"pull",upstream,branch},{}});
+        if((repo.repo.flags&CleanAlways)&&clean_cmd.program.size())
+            cmd_queue.push_back(clean_cmd);
+        cmd_queue.push_back({cmake_program,{"--build",build_dir},{}});
     }else{
-	cWarning("Unrecognized build system: {0}",build_sys);
+        cWarning("Unrecognized build system: {0}",build_sys);
     }
 
     repo.temp.expect_type = "application/atom+xml; charset=utf-8";
     repo.temp.request = cStringFormat("/{0}/commits/{1}.atom",
-				      repo.repo.repository,repo.repo.branch);
+                                      repo.repo.repository,repo.repo.branch);
 
     cBasicPrint("\nConfigured target:\n"
-		"repository = {0}\n"
-		"branch = {5}\n"
-		"repository-dir = {1}\n"
-		"build-dir = {2}\n"
-		"interval = {3}\n"
-		"build-system = {4}\n",
-		repo.repo.repository,
-		repo.repo.repodir,
-		repo.repo.build,
-		repo.repo.interval,
-		build_sys,
-		repo.repo.branch);
+                "repository = {0}\n"
+                "branch = {5}\n"
+                "upstream = {6}\n"
+                "repository-dir = {1}\n"
+                "build-dir = {2}\n"
+                "interval = {3}\n"
+                "build-system = {4}\n"
+                "build-flags = {7}\n",
+                repo.repo.repository,
+                repo.repo.repodir,
+                repo.repo.build,
+                repo.repo.interval,
+                build_sys,
+                repo.repo.branch,
+                repo.repo.upstream,
+                repo.repo.flags);
 
     return repo;
 }
@@ -190,7 +227,7 @@ DataSet create_item(cstring file)
 FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 {
     if(Time::CurrentTimestamp() < workarea->wakeup)
-	return Nothing;
+        return Nothing;
 
     uint64 const& interval = data.interval;
     REST::Request const& request = workarea->request;
@@ -203,56 +240,61 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 
     auto response = REST::RestRequest(REST::HTTPS,"github.com",request);
 
-    if(response.code != 200)
-	return FeedFetchFailed;
+    if(response.code != 200 && !(data.flags&IgnoreFailure))
+        return FeedFetchFailed;
 
     if(REST::GetContentType(response) == expect_type)
     {
-	XML::Document* doc = XML::XMLRead(
-		    BytesConst{response.payload.size(),(byte_t*)response.payload.c_str()});
+        XML::Document* doc = XML::XMLRead(
+                    BytesConst{response.payload.size(),(byte_t*)response.payload.c_str()});
 
-	XML::Element* feed = doc->FirstChildElement("feed");
+        XML::Element* feed = doc->FirstChildElement("feed");
 
-	if(!feed)
-	    return XMLParseFailed;
+        if(!feed)
+        {
+            if(!(data.flags&IgnoreFailure))
+                return XMLParseFailed;
+        }else{
+            GitCommit cmt = ParseEntry(feed->FirstChildElement("entry"));
 
-	GitCommit cmt = ParseEntry(feed->FirstChildElement("entry"));
+            if(workarea->last_commit < cmt)
+            {
+                workarea->last_commit = cmt;
 
-	if(workarea->last_commit < cmt)
-	{
-	    workarea->last_commit = cmt;
-
-	    cBasicPrint("Updated repository: {0}, commit={1}, ts={2}",
-			repo,cmt.hash,cmt.ts);
-	    CString log;
-	    for (Proc_Cmd const& cmd : command_queue)
-	    {
-		cBasicPrintNoNL("Running: {0}",cmd.program);
-		for(CString const& a : cmd.argv)
-		    cBasicPrintNoNL(" {0}",a);
-		cBasicPrintNoNL("\n");
-		int sig = Proc::ExecuteLogged(cmd, &log);
-		if (sig != 0)
-		{
-		    cBasicPrint("Failed with signal {0}:\n{1}", sig, log);
-		    return ProcessFailed;
-		}
-	    }
-	}else{
-	    cWarning("Mismatch commit, latest is commit={0}, ts={1}",
-		     workarea->last_commit.hash,workarea->last_commit.ts);
-	}
+                cBasicPrint("Updated repository: {0}, commit={1}, ts={2}",
+                            repo,cmt.hash,cmt.ts);
+                CString log;
+                for (Proc_Cmd const& cmd : command_queue)
+                {
+                    cBasicPrintNoNL("Running: {0}",cmd.program);
+                    for(CString const& a : cmd.argv)
+                        cBasicPrintNoNL(" {0}",a);
+                    cBasicPrintNoNL("\n");
+                    int sig = Proc::ExecuteLogged(cmd, &log);
+                    if (sig != 0)
+                    {
+                        cBasicPrint("Failed with signal {0}:\n{1}", sig, log);
+                        if(!(data.flags&IgnoreFailure))
+                            return ProcessFailed;
+                    }
+                }
+            }else{
+                cWarning("Mismatch commit, latest is commit={0}, ts={1}",
+                         workarea->last_commit.hash,workarea->last_commit.ts);
+            }
+        }
+        delete doc;
     }else{
-	cWarning("Content mismatch: \"{0}\", expected \"{1}\"",
-		 REST::GetContentType(response),
-		 expect_type);
-	return XMLParseFailed;
+        cWarning("Content mismatch: \"{0}\", expected \"{1}\"",
+                 REST::GetContentType(response),
+                 expect_type);
+        return XMLParseFailed;
     }
 
     workarea->wakeup = Time::CurrentTimestamp()+interval;
 
     cBasicPrint("Sleeping again, waking up at {0}",
-		Time::LocalTimeString(workarea->wakeup));
+                Time::LocalTimeString(workarea->wakeup));
 
     cBasicPrint("");
 
@@ -270,10 +312,10 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
     {
-	if(arg.first == "gitbin" && arg.second)
-	    git_program = arg.second;
-	else if(arg.first == "cmakebin" && arg.second)
-	    cmake_program = arg.second;
+        if(arg.first == "gitbin" && arg.second)
+            git_program = arg.second;
+        else if(arg.first == "cmakebin" && arg.second)
+            cmake_program = arg.second;
     }
 
     cDebug("Launched BuildBot");
@@ -282,11 +324,11 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     for(cstring it : args.getPositionalArguments())
     {
-	datasets.push_back(create_item(it));
+        datasets.push_back(create_item(it));
     }
 
     if(datasets.size() == 0)
-	return 0;
+        return 0;
 
     cDebug("Got {0} datasets\n",datasets.size());
 
@@ -294,13 +336,13 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     while(true)
     {
-	for(DataSet& e : datasets)
-	{
-	    int sig = update_item(e.repo, &e.temp);
-	    if (sig != Nothing)
-		return sig;
-	}
-	Threads::sleepMillis(250);
+        for(DataSet& e : datasets)
+        {
+            int sig = update_item(e.repo, &e.temp);
+            if (sig != Nothing)
+                return sig;
+        }
+        Threads::sleepMillis(250);
     }
 }
 
