@@ -21,11 +21,11 @@ struct CGL_Old_Textures
     STATICINLINE void TexImage2D(Texture t,uint32 level,PixelFormat ifmt,
                                  uint32 w,uint32 h,int32 border,PixelComponents fmt,
                                  BitFormat dt,c_cptr p)
-    {glTexImage2D(to_enum(t),level,(int32)ifmt,w,h,border,to_enum(fmt),to_enum(dt),p);}
+    {glTexImage2D(to_enum(t),level,to_enum(ifmt),w,h,border,to_enum(fmt),to_enum(dt),p);}
     STATICINLINE void TexImage3D(Texture t,uint32 level,PixelFormat ifmt,
                                  uint32 w,uint32 h,uint32 d,int32 border,
                                  PixelComponents fmt,BitFormat dt,c_cptr p)
-    {glTexImage3D(to_enum(t),level,(int32)ifmt,w,h,d,border,to_enum(fmt),to_enum(dt),p);}
+    {glTexImage3D(to_enum(t),level,to_enum(ifmt),w,h,d,border,to_enum(fmt),to_enum(dt),p);}
 
     /* TexSubImage */
 

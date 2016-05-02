@@ -45,20 +45,51 @@ public:
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  1.f,    0.f,  0.f,
-            1.f, -1.f,  1.f,   -1.f,  0.f,
+             1.f, -1.f,  1.f,   -1.f,  0.f,
             -1.f,  1.f,  1.f,    0.f, -1.f,
 
             -1.f,  1.f,  1.f,    0.f, -1.f,
-            1.f,  1.f,  1.f,   -1.f, -1.f,
-            1.f, -1.f,  1.f,   -1.f,  0.f,
+             1.f,  1.f,  1.f,   -1.f, -1.f,
+             1.f, -1.f,  1.f,   -1.f,  0.f,
         };
 
         GLM::LoadAPI();
+
+        GLM::BUF_A vertbuf(ResourceAccess::ReadOnly,sizeof(vertexdata));
+        GLM::V_DESC vertdesc = {};
+
+        /* Uploading vertex data and creating descriptors */
+        {
+            vertdesc.alloc();
+            vertbuf.alloc();
+
+            vertbuf.commit(sizeof(vertexdata),vertexdata);
+
+            GLM::V_ATTR pos = {};
+            pos.m_idx = 0;
+            pos.m_bassoc = 0;
+            pos.m_size = 3;
+            pos.m_type = TypeEnum::Scalar;
+            pos.m_stride = sizeof(Vecf3);
+            pos.m_off = 0;
+
+            GLM::V_ATTR tc;
+            tc.m_idx = 1;
+            tc.m_bassoc = 1;
+            tc.m_size = 2;
+            tc.m_type = TypeEnum::Scalar;
+            tc.m_stride = sizeof(Vecf2);
+            tc.m_off = sizeof(Vecf3);
+
+            vertdesc.addAttribute(pos);
+            vertdesc.addAttribute(tc);
+        }
 
         GLM::SHD v_shader;
         GLM::SHD f_shader;
         GLM::PIP eye_pip;
 
+        /* Compiling shaders */
         {
             CResources::Resource v_rsc("vr/vshader.glsl");
             CResources::Resource f_rsc("vr/fshader.glsl");
@@ -79,6 +110,7 @@ public:
 
         eye_pip.bind();
 
+        /* Uploading textures */
         GLM::S_2DA eyetex(PixelFormat::RGBA8UI,1,GLM::TextureDMABuffered);
         eyetex.allocate({1024,1024,4},PixCmp::RGBA);
         for(szptr i=0;i<4;i++)
@@ -93,31 +125,55 @@ public:
                           img.data,{0,0,(int32)i});
             CResources::FileUnmap(rsc);
         }
+        GLM::SM_2DA eyesamp;
+        eyesamp.alloc();
+        eyesamp.attach(&eyetex);
 
-        Bytes transform_data;
-        Bytes mult_data;
-        Bytes time_data;
+        Bytes transform_data = {};
+        Bytes mult_data = {};
+        Bytes time_data = {};
 
-        GLM::UNIFVAL transforms;
-        GLM::UNIFVAL multipliers;
-        GLM::UNIFVAL timeval;
-        GLM::UNIFVAL textures_array;
+        Matf4 object_matrices[2] = {};
+        Vecf2 texture_multipliers[2] = {};
+        scalar time_value = 0.f;
+
+        transform_data.size = sizeof(object_matrices);
+        transform_data.data = (byte_t*)object_matrices;
+        mult_data.size = sizeof(texture_multipliers);
+        mult_data.data = (byte_t*)texture_multipliers;
+        time_data.size = sizeof(time_value);
+        time_data.data = (byte_t*)&time_value;
+
+        GLM::UNIFVAL transforms = {};
+        GLM::UNIFVAL multipliers = {};
+        GLM::UNIFVAL timeval = {};
+        GLM::UNIFSMP textures_array = eyesamp.handle();
 
         Vector<GLM::UNIFDESC> unifs;
 
+        GLM::VIEWSTATE viewportstate(1);
         GLM::BLNDSTATE blendstate;
         GLM::USTATE unifstate;
+
+        blendstate.m_doBlend = true;
+        viewportstate.m_view.push_back({
+                                           0,0,
+
+                                           this->windowSize().w,
+                                           this->windowSize().h
+                                       });
 
         GLM::GetShaderUniformState(eye_pip,&unifs);
 
         for(GLM::UNIFDESC const& u : unifs)
         {
-            if(u.m_name == "transform")
+            cDebug("Uniform value: {0}",u.m_name);
+            if(u.m_name == "transform[0]")
                 unifstate.setUniform(u,&transforms);
-            else if(u.m_name == "tex_mul")
+            else if(u.m_name == "tex_mul[0]")
                 unifstate.setUniform(u,&multipliers);
             else if(u.m_name == "texdata")
-                unifstate.setUniform(u,&textures_array);
+                unifstate.setSampler(u,textures_array);
             else if(u.m_name == "mx")
                 unifstate.setUniform(u,&timeval);
             else
@@ -126,14 +182,59 @@ public:
             }
         }
 
+        transforms.data = &transform_data;
+        multipliers.data = &mult_data;
+        timeval.data = &time_data;
+
         GLM::SetBlendState(blendstate);
+
+        GLM::DrawCall call;
+        call.m_idxd = false;
+        call.m_inst = true;
+
+        GLM::DrawInstanceData instdata = {};
+        instdata.m_insts = 2;
+        instdata.m_verts = (sizeof(vertexdata)/sizeof(scalar))/5;
+
+        Vecf4 clear_col = {.1,.1,.1,1.};
+
+        CGCamera camera;
+        camera.aspect = 1.6;
+        camera.fieldOfView = 70.f;
+
+        camera.position.x() = 1.;
+        camera.position.z() = 3.;
+
+        CTransform base_transform;
+        base_transform.scale = Vecf3(1);
+
+        vertdesc.bind();
+        vertdesc.bindBuffer(0,vertbuf);
+        vertdesc.bindBuffer(1,vertbuf);
+
+        eyesamp.bind(0);
 
         while(!closeFlag())
         {
-            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
-            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
+            GL::ClearBufferfv(true,0,clear_col);
 
             this->pollEvents();
+
+            /* Define frame data */
+            time_value = this->contextTime();
+
+            texture_multipliers[0] = Vecf2(1,1);
+            texture_multipliers[1] = Vecf2(-1,1);
+
+            camera.position.x() = -1.;
+            object_matrices[0] = GenPerspective(camera) * GenTransform(camera) * GenTransform(base_transform);
+            camera.position.x() = 1.;
+            object_matrices[1] = GenPerspective(camera) * GenTransform(camera) * GenTransform(base_transform);
+
+            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
+
+            GLM::Draw(call,instdata);
+
             this->swapBuffers();
         }
 

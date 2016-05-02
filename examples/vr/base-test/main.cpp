@@ -19,7 +19,6 @@ int32 coffee_main(int32, cstring_w*)
     }else{
         Profiler::Profile("VR init");
 
-
         cDebug("By the gods... So it was true! You must be the hero of Kvatch!");
         cDebug("[HERE BE DRAGONS]");
         int32 devs;

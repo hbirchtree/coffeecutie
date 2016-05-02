@@ -12,6 +12,7 @@ struct GLEAM_API : GraphicsAPI
     enum TextureFlags
     {
         TextureDMABuffered = 1,
+        TextureAutoMipmapped,
     };
 
     enum BufferFlags
@@ -110,6 +111,7 @@ struct GLEAM_API : GraphicsAPI
 
     using UNIFDESC = GLEAM_UniformDescriptor;
     using UNIFVAL = GLEAM_UniformValue;
+    using UNIFSMP = GLEAM_SamplerHandle;
 
     using USTATE = GLEAM_ShaderUniformState;
     using RASTSTATE = RasterizerState;

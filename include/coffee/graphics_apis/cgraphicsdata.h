@@ -17,6 +17,9 @@ typedef _cbasic_rect<int32> CScissorViewport;
 typedef _cbasic_zfield<bigscalar> CDepthViewport;
 
 } //CGraphicsData
+
+using namespace CGraphicsData;
+
 } //Coffee
 
 #endif // CGRAPHICSDATA_H

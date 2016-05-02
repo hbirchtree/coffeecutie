@@ -196,6 +196,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
     GLEAM_SamplerHandle h = {};
 
     /* TODO: Add bindless */
+    h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
     h.m_sampler = m_handle;
 
@@ -213,6 +214,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 {
     GLEAM_SamplerHandle h = {};
 
+    h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
     h.m_sampler = m_handle;
 

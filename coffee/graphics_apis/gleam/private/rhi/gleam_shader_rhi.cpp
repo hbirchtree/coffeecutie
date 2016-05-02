@@ -90,11 +90,12 @@ void GLEAM_Pipeline::unbind()
 }
 
 bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
-                                          const GLEAM_UniformValue *data)
+                                          GLEAM_UniformValue *data)
 {
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
+    data->flags = value.m_flags;
     m_uniforms[idx] = data;
     return true;
 }
@@ -105,7 +106,7 @@ bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_samplers[idx] = sampler;
+    m_samplers[idx] = &sampler;
     return true;
 }
 
@@ -150,7 +151,10 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
             uniforms->reserve(num_uniforms);
             for(uint32 i=0;i<num_uniforms;i++)
             {
-                GLEAM_UniformDescriptor desc;
+                uniforms->push_back({});
+                GLEAM_UniformDescriptor &desc = uniforms->back();
+                desc.m_flags = 0;
+
                 desc.m_name = unif_names[i];
                 desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
                 desc.stages = ShaderStage::All;
@@ -255,8 +259,21 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
                 case GL_INT_VEC4:
                     desc.m_flags = GLEAM_API::IntegerT|GLEAM_API::Vec4T;
                     break;
+
+                case GL_FLOAT_MAT2:
+                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Mat2T;
+                    break;
+                case GL_FLOAT_MAT3:
+                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Mat3T;
+                    break;
+                case GL_FLOAT_MAT4:
+                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Mat4T;
+                    break;
+
+                default:
+                    cDebug("Unhandled shader type: {0}, uniform={1}",
+                           unif_types[i],unif_names[i]);
                 }
-                uniforms->push_back(desc);
                 delete[] unif_names[i];
             }
             delete[] unif_names;

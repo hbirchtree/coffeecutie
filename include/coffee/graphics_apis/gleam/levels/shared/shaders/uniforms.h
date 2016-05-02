@@ -9,13 +9,16 @@ namespace CGL{
 
 struct CGL_Old_Uniforms
 {
+    STATICINLINE void Uniformi(int32 l,int32 d)
+    {glUniform1i(l,d);}
+
     /* Using Uniform* */
     STATICINLINE void Uniformfv(int32 l,int32 c,const scalar* d)
     {glUniform1fv(l,c,d);}
     STATICINLINE void Uniformiv(int32 l,int32 c,const int32* d)
     {glUniform1iv(l,c,d);}
     STATICINLINE void Uniformuiv(int32 l,int32 c,const uint32* d)
-    {glUniform2uiv(l,c,(uint32*)d);}
+    {glUniform1uiv(l,c,(uint32*)d);}
 
     STATICINLINE void Uniformfv(int32 l,int32 c,const _cbasic_vec2<scalar>* d)
     {glUniform2fv(l,c,(scalar*)d);}
@@ -29,7 +32,7 @@ struct CGL_Old_Uniforms
     STATICINLINE void Uniformiv(int32 l,int32 c,const _cbasic_vec3<int32>* d)
     {glUniform3iv(l,c,(int32*)d);}
     STATICINLINE void Uniformuiv(int32 l,int32 c,const _cbasic_vec3<uint32>* d)
-    {glUniform4uiv(l,c,(uint32*)d);}
+    {glUniform3uiv(l,c,(uint32*)d);}
 
     STATICINLINE void Uniformfv(int32 l,int32 c,const _cbasic_vec4<scalar>* d)
     {glUniform4fv(l,c,(scalar*)d);}

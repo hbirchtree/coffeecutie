@@ -237,6 +237,9 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
     for(auto u : ustate.m_uniforms)
     {
         CByteData const* db = u.second->data;
+        if(!db)
+            continue;
+
         uint32 idx = u.first;
         uint32 fgs = u.second->flags;
 
@@ -282,11 +285,11 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         if(GL_CURR_API==GL_3_3)
         {
             /* Set up texture state */
-            CGL33::TexActive(handle.m_unit);
-            CGL33::SamplerBind(handle.m_unit,handle.m_sampler);
-            CGL33::TexBind(handle.m_type,handle.texture);
+            CGL33::TexActive(handle->m_unit);
+            CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
+            CGL33::TexBind(handle->m_type,handle->texture);
             /* Set texture handle in shader */
-            CGL33::Uniformuiv(s.first,1,&handle.m_unit);
+            CGL33::Uniformi(s.first,handle->m_unit);
         }
         /*TODO: Add bindless textures */
         /*TODO: Add optimized path where BindSamplers is used */

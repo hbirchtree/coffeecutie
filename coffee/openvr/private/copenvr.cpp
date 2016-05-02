@@ -6,8 +6,18 @@
 #include <coffee/core/coffee_strings.h>
 #include <coffee/openvr/ovrdevice.h>
 
+#include <coffee/graphics_apis/gleam/rhi/gleam_vertex_rhi.h>
+#include <coffee/graphics_apis/gleam/rhi/gleam_buffer_rhi.h>
+
 namespace Coffee{
 namespace OpenVRFun{
+
+bool LoadRenderModels(OVRImpl::Context* ctxt)
+{
+    if(!ctxt->context.VRRenderModels()->GetRenderModelCount())
+        return false;
+    return true;
+}
 
 bool OVRImpl::InitializeBinding()
 {
@@ -19,7 +29,6 @@ bool OVRImpl::InitializeBinding()
         return false;
 
     m_Context = new OVRImpl::Context;
-
     m_Context->ivrsys = sys;
 
     {
@@ -39,8 +48,8 @@ bool OVRImpl::InitializeBinding()
         CString v2 = VRGetTrackedDevString(vr::k_unTrackedDeviceIndex_Hmd,
                                            vr::Prop_SerialNumber_String,
                                            nullptr);
-         HWDeviceInfo d(v1,v2);
-         MemCpy(&m_Context->m_unit,&d,sizeof(d));
+        HWDeviceInfo d(v1,v2);
+        MemCpy(&m_Context->m_unit,&d,sizeof(d));
     }
 
     return true;
@@ -54,11 +63,6 @@ bool OVRImpl::PollDevices(int32* lastValidIndex)
     if(stat)
         m_Context->m_devices[0] = new OVRDevice(0);
     return stat;
-}
-
-bool LoadRenderModel(vr::TrackedDeviceIndex_t idx)
-{
-    return true;
 }
 
 void OVRImpl::PollEvents()
@@ -112,6 +116,13 @@ OVRImpl::Context *OVRImpl::GetContext()
 bool OVRImpl::SetContext(OVRImpl::Context *context)
 {
     return m_Context = context;
+}
+
+OVRImpl::RModel *OVRImpl::GetRenderModel(OVRImpl::Device *dev)
+{
+    C_UNUSED(dev);
+
+
 }
 
 }
