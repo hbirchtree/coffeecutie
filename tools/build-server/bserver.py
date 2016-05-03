@@ -8,10 +8,12 @@ from flask import request
 from flask import send_from_directory
 from flask import url_for
 from flask import g
+from flask import jsonify
+from flask import render_template
 
 # Create an instance of Flask
 app = Flask(__name__);
-app.config.from_object(__name__)
+app.config.from_object(__name__);
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
@@ -45,8 +47,9 @@ def query_db(query,args=(),one=False):
     cur.close();
     return (rv[0] if rv else None) if one else rv;
 
-    def enter_report(obj):
-        return;
+def enter_report(obj):
+    query_db("INSERT INTO BUILDREPORTS VALUES(NULL,%s,%s,%s,%s,%s)" % (obj['host'],obj['commit'],obj['platform'],obj['status'],obj['log']));
+    return;
 
 @app.teardown_appcontext
 def close_db(exception):
@@ -60,11 +63,21 @@ def default_route():
     return "Welcome to the Coffee Build Server, where you may read error reports!";
 
 # For servers, get their logs and put them in the database
-@app.route("/logger/data/<arch>/<int:sid>",methods=["POST","GET"])
-def build_log_data(arch,sid):
-    if request.method == "GET":
-        return "Are you lost?";
-    return "You are: plat=%s,server_id=%s,payload=%s" % (arch,sid,request.data);
+@app.route("/logger/data/<arch>",methods=["POST","GET"])
+def build_log_data(arch):
+    if request.method != "POST" or request.mimetype != 'application/json':
+        return Response("Are you lost?",mimetype='text/plain');
+    obj = request.get_json();
+    logdata = ''
+    try:
+        # Truncate log if too long
+        obj['log'] = obj['log'][len(obj['log'])-1000000:len(obj['log'])]
+        obj['platform'] = arch;
+        enter_report(obj);
+    except KeyError:
+        return jsonify({'status':1,'error': 'Malformed request!'});
+    
+    return jsonify({'status':0});
 
 if __name__ == "__main__":
     app.run();
