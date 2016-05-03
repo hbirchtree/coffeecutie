@@ -42,13 +42,15 @@ def init_db():
         db.commit();
 
 def query_db(query,args=(),one=False):
-    cur = open_db().execute(query,args);
-    rd = cur.fetchall();
-    cur.close();
-    return (rv[0] if rv else None) if one else rv;
+    with open_db() as db:
+        cur = db.execute(query,args);
+        rd = cur.fetchall();
+        cur.close();
+        db.commit();
+        return (rd[0] if rd else None) if one else rd;
 
 def enter_report(obj):
-    query_db("INSERT INTO BUILDREPORTS VALUES(NULL,%s,%s,%s,%s,%s)" % (obj['host'],obj['commit'],obj['platform'],obj['status'],obj['log']));
+    query_db("INSERT INTO BUILDREPORTS VALUES(NULL,?,?,?,?,?);",args=(obj['host'],obj['commit'],obj['platform'],obj['status'],obj['log']));
     return;
 
 @app.teardown_appcontext
@@ -80,4 +82,4 @@ def build_log_data(arch):
     return jsonify({'status':0});
 
 if __name__ == "__main__":
-    app.run();
+    app.run(debug=True);
