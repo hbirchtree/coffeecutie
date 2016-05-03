@@ -16,7 +16,7 @@ def default_route():
 def build_log_data(arch,sid):
     if request.method == "GET":
         return "Are you lost?";
-    return "You are: plat=%s,server_id=%s" % (arch,sid);
+    return "You are: plat=%s,server_id=%s,payload=%s" % (arch,sid,request.data);
 
 if __name__ == "__main__":
     app.run();
