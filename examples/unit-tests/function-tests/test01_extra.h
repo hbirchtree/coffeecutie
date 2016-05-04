@@ -51,6 +51,14 @@ struct TestStaticClass
     }
 };
 
+struct TestStaticOverrideClass
+{
+    STATICINLINE void StaticClassCall(int32& v1, int32 v2)
+    {
+        v1 += v2;
+    }
+};
+
 STATICINLINE void StaticCall(int32& v1, int32 v2)
 {
     v1 += v2;

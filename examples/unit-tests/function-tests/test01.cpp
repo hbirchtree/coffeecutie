@@ -15,10 +15,11 @@ bool function_test()
     uint64 time_3_2;
     uint64 time_4_1;
     uint64 time_4_2;
+    uint64 time_4_3;
     uint64 time_5;
 
     {
-        uint32 iterations = 8192*1000*10;
+        uint32 iterations = UInt32_Max;
         uint32 i;
 
         TestClass t1;
@@ -69,6 +70,12 @@ bool function_test()
             TestStaticClass::StaticClassCall(v1,v2);
         time_4_2 = t.elapsed();
 
+        /* Static function, inlined, overridden */
+        t.start();
+        for(i=0;i<iterations;i++)
+            TestStaticOverrideClass::StaticClassCall(v1,v2);
+        time_4_3 = t.elapsed();
+
         /* External function */
         t.start();
         for(i=0;i<iterations;i++)
@@ -99,6 +106,9 @@ bool function_test()
 
     timing.push_back(time_4_2);
     titles.push_back("Static inlined");
+
+    timing.push_back(time_4_3);
+    titles.push_back("Static override inlined");
 
     timing.push_back(time_5);
     titles.push_back("External");
