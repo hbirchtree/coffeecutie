@@ -15,7 +15,12 @@ int32 coffee_main(int32, cstring_w*)
         TCP::SSLSocket cn;
         cn.connect("example.com","https");
 
-        HTTP::GenerateRequest(cn,"example.com","/",{});
+        REST::Request request;
+        HTTP::InitializeRequest(request);
+
+        request.resource = "/";
+
+        HTTP::GenerateRequest(cn,"example.com",request);
 
         cn.flush();
         cn.pull();
@@ -35,9 +40,15 @@ int32 coffee_main(int32, cstring_w*)
     TCP::AsioContext c = REST::GetContext();
 
     CString host = "api.twitch.tv";
-    CString rq = "/kraken/streams";
+    REST::Request rq = {};
 
-    Threads::Future<REST::RestResponse> t = REST::RestRequestAsync(c,REST::HTTPS,host,rq);
+    HTTP::InitializeRequest(rq);
+
+    rq.transp = REST::HTTPS;
+    rq.resource = "/kraken/streams";
+    rq.values["Accept"] = "application/json";
+
+    Threads::Future<REST::RestResponse> t = REST::RestRequestAsync(c,host,rq);
 
     tim.start();
 

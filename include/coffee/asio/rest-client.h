@@ -10,7 +10,7 @@ namespace CASIO{
 struct RestClientImpl : ASIO_Client
 {
     using Host = CString;
-    using Request = CString;
+    using Request = HTTP::_http_request<CString>;
 
     using RestResponse = HTTP::Response;
 
@@ -31,12 +31,12 @@ struct RestClientImpl : ASIO_Client
      * \return
      */
     Future<RestResponse> RestRequestAsync(
-            AsioContext context, Protocol const& p, Host const& h, Request const& r)
+            AsioContext context, Host const& h, Request const& r)
     {
-        Threads::Function<RestResponse()> fun = [context,p,h,r]()
+        Threads::Function<RestResponse()> fun = [=]()
         {
             MakeCurrent(context);
-	    RestResponse res = RestRequest(p,h,r);
+            RestResponse res = RestRequest(h,r);
 	    GetContext();
 	    return res;
         };
@@ -50,18 +50,17 @@ struct RestClientImpl : ASIO_Client
      * \param r
      * \return
      */
-    static RestResponse RestRequest(Protocol p, Host h, Request r);
+    static RestResponse RestRequest(Host h, Request const& r);
 
-    static RestResponse RestRequestHTTP(Host h, const Request &r);
+    static RestResponse RestRequestHTTP(Host h, Request const&r);
 
-    static RestResponse RestRequestHTTPS(Host h, Request r);
+    static RestResponse RestRequestHTTPS(Host h, Request const& r);
 
     /*!
      * \brief Retrieve the MIME-type of the REST response, used for strict checking
      * \return String representing the format
      */
     static CString GetContentType(RestResponse const& resp);
-
 };
 
 

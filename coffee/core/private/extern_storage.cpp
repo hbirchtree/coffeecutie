@@ -1,5 +1,8 @@
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/plat/plat_environment.h>
+#include <coffee/core/plat/timing/profiling.h>
 #include <coffee/core/plat/environment/stacktrace_def.h>
+#include <coffee/core/CDebug>
 
 #ifdef COFFEE_USE_TERMINAL_CTL
 #include <coffee/core/plat/memory/cmd_unixterm.h>

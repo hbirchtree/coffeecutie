@@ -10,6 +10,7 @@ using namespace Coffee;
 
 cstring git_program = "git";
 cstring cmake_program = "cmake";
+cstring buildrep_server = "localhost";
 
 enum FailureCase
 {
@@ -83,6 +84,40 @@ struct DataSet
     Repository_tmp temp;
 };
 
+bool ReportBuildStatus(uint16 status, CString const& commit, CString const& log)
+{
+    ProfContext _m("Build reporting");
+
+    REST::Host dest = buildrep_server;
+    REST::Request req = {};
+
+    HTTP::InitializeRequest(req);
+    req.resource = cStringFormat("/logger/data/{0}",SysInfo::GetSystemString());
+    req.port = 5000;
+    req.reqtype = "POST";
+    req.mimeType = "application/json";
+    req.values["Accept"] = "application/json";
+
+    req.payload = cStringFormat(
+                "{"
+                "\"host\": \"{0}\","
+                "\"status\": {1},"
+                "\"commit\": \"{2}\","
+                "\"log\": \"{3}\""
+                "}",
+                SysInfo::HostName(),status,commit,log);
+
+    Profiler::Profile("Request creation");
+
+    cDebug("Sending error report to {0}, resource={1}",dest,req.resource);
+
+    auto res = REST::RestRequest(dest,req);
+
+    Profiler::Profile("Request sending and receiving");
+
+    return res.code == 200;
+}
+
 cstring JSGetString(JSON::Value const& v, cstring val)
 {
     if(v.HasMember(val)&&v[val].IsString())
@@ -131,58 +166,72 @@ Proc_Cmd GetCommand(JSON::Value const& obj)
 
 DataSet create_item(cstring file)
 {
+    /* Clear all structures */
     DataSet repo = {};
 
     repo.temp = {};
     repo.temp.last_commit = {};
 
+    /* Default, sane values */
     repo.repo.branch = "master";
     repo.repo.upstream = "origin";
     repo.repo.interval = 3600;
     repo.repo.repodir = Env::CurrentDir();
     repo.repo.build = Env::CurrentDir();
-
-    CResources::Resource resc(file);
-    CResources::FileMap(resc);
-
-    if(!resc.data)
-        return {};
-
-    CString data_string;
-    data_string.insert(0,(cstring)resc.data,resc.size);
-
-    CResources::FileUnmap(resc);
-
     CString build_sys = "cmake";
+    Proc_Cmd clean_cmd = {}; /* Some builds (win64) require cleaning sometimes */
 
-    Proc_Cmd clean_cmd = {};
+    JSON::Document doc;
 
-    JSON::Document doc = JSON::Read(data_string.c_str());
+    /* Open source file */
+    {
+        CResources::Resource resc(file);
+        CResources::FileMap(resc);
 
-    if(!doc.IsObject())
-        return {};
+        /* If file not found, no source to add */
+        if(!resc.data)
+            return {};
 
-    JSON::Value doc_ = doc.GetObject();
+        /* Copy data string */
+        {
+            CString data_string;
+            data_string.insert(0,(cstring)resc.data,resc.size);
 
-    if(doc_.HasMember("cleans")&&doc_["cleans"].GetBool())
-        repo.repo.flags |= CleanAlways;
-    if(doc_.HasMember("nofail")&&doc_["nofail"].GetBool())
-        repo.repo.flags |= IgnoreFailure;
+            CResources::FileUnmap(resc);
 
-    repo.repo.repository = JSGetString(doc_,"repository");
-    repo.repo.upstream = JSGetString(doc_,"upstream");
+            /* Open JSON document from file, it contains all the information */
+            doc = JSON::Read(data_string.c_str());
+        }
 
-    repo.repo.branch = JSGetString(doc_,"branch");
-    repo.repo.build = JSGetString(doc_,"build-dir");
-    repo.repo.repodir = JSGetString(doc_,"repo-dir");
-    build_sys = JSGetString(doc_,"build-type");
+        if(!doc.IsObject())
+            return {};
+    }
 
-    if(doc_.HasMember("interval"))
-        repo.repo.interval = doc_["interval"].GetUint64();
+    {
+        /* Extract root object and get the data */
+        JSON::Value doc_ = doc.GetObject();
 
-    if((repo.repo.flags&CleanAlways)&&doc_.HasMember("clean-command")&&doc_["clean-command"].IsObject())
-        clean_cmd = GetCommand(doc_["clean-command"].GetObject());
+        if(doc_.HasMember("cleans")&&doc_["cleans"].GetBool())
+            repo.repo.flags |= CleanAlways;
+        if(doc_.HasMember("nofail")&&doc_["nofail"].GetBool())
+            repo.repo.flags |= IgnoreFailure;
 
+        repo.repo.repository = JSGetString(doc_,"repository");
+        repo.repo.upstream = JSGetString(doc_,"upstream");
+
+        repo.repo.branch = JSGetString(doc_,"branch");
+        repo.repo.build = JSGetString(doc_,"build-dir");
+        repo.repo.repodir = JSGetString(doc_,"repo-dir");
+        build_sys = JSGetString(doc_,"build-type");
+
+        if(doc_.HasMember("interval"))
+            repo.repo.interval = doc_["interval"].GetUint64();
+
+        if((repo.repo.flags&CleanAlways)&&doc_.HasMember("clean-command")&&doc_["clean-command"].IsObject())
+            clean_cmd = GetCommand(doc_["clean-command"].GetObject());
+    }
+
+    /* Create a list of commands based on build system preference */
     Vector<Proc_Cmd>& cmd_queue = repo.repo.command_queue;
 
     if(build_sys == "cmake")
@@ -199,10 +248,17 @@ DataSet create_item(cstring file)
         cWarning("Unrecognized build system: {0}",build_sys);
     }
 
+    /* Create stream and MIME-type preferences */
     repo.temp.expect_type = "application/atom+xml; charset=utf-8";
-    repo.temp.request = cStringFormat("/{0}/commits/{1}.atom",
-                                      repo.repo.repository,repo.repo.branch);
 
+    REST::Request& request = repo.temp.request;
+    {
+        HTTP::InitializeRequest(request);
+        request.values["Accept"] = "application/atom+xml";
+        request.resource = cStringFormat("/{0}/commits/{1}.atom",repo.repo.repository,repo.repo.branch);
+    }
+
+    /* Print preferences back to user */
     cBasicPrint("\nConfigured target:\n"
                 "repository = {0}\n"
                 "branch = {5}\n"
@@ -226,43 +282,53 @@ DataSet create_item(cstring file)
 
 FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 {
+    /* If it is not our time, don't do anything */
     if(Time::CurrentTimestamp() < workarea->wakeup)
         return Nothing;
 
+    /* References for faster typing */
     uint64 const& interval = data.interval;
     REST::Request const& request = workarea->request;
     CString const& expect_type = workarea->expect_type;
 
-    CString repo = data.repository;
+    CString const& repo = data.repository;
     Vector<Proc_Cmd> const command_queue = data.command_queue;
 
     cBasicPrint("WORKING ON: {0}",repo);
 
-    auto response = REST::RestRequest(REST::HTTPS,"github.com",request);
+    /* Make a request for the latest commits */
+    auto response = REST::RestRequest("github.com",request);
 
+    /* If not successful, fail and die */
     if(response.code != 200 && !(data.flags&IgnoreFailure))
         return FeedFetchFailed;
 
+    /* Only proceed if MIME-type is correct */
     if(REST::GetContentType(response) == expect_type)
     {
+        /* Extract Atom feed and find latest commit (first in list, hopefully) */
         XML::Document* doc = XML::XMLRead(
                     BytesConst{response.payload.size(),(byte_t*)response.payload.c_str()});
 
         XML::Element* feed = doc->FirstChildElement("feed");
 
+        /* If failed to get first feed, die */
         if(!feed)
         {
             if(!(data.flags&IgnoreFailure))
                 return XMLParseFailed;
         }else{
+            /* Get information on latest commit in simple format */
             GitCommit cmt = ParseEntry(feed->FirstChildElement("entry"));
 
+            /* If this new commit is later than our current, go ahead and build */
             if(workarea->last_commit < cmt)
             {
                 workarea->last_commit = cmt;
 
                 cBasicPrint("Updated repository: {0}, commit={1}, ts={2}",
                             repo,cmt.hash,cmt.ts);
+                /* Execute command queue, die if error */
                 CString log;
                 for (Proc_Cmd const& cmd : command_queue)
                 {
@@ -291,6 +357,7 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
         return XMLParseFailed;
     }
 
+    /* Find out when to wake up next time */
     workarea->wakeup = Time::CurrentTimestamp()+interval;
 
     cBasicPrint("Sleeping again, waking up at {0}",
@@ -303,8 +370,11 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
+    ReportBuildStatus(0,"0f","hello");
+
     ArgumentCollection args;
 
+    /* Allow customizing path to Git and CMake, for Windows */
     args.registerArgument(ArgumentCollection::Argument,"gitbin");
     args.registerArgument(ArgumentCollection::Argument,"cmakebin");
 
@@ -332,8 +402,10 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     cDebug("Got {0} datasets\n",datasets.size());
 
+    /* Start the REST service */
     REST::InitService();
 
+    /* Initiate blast processing, watch processor burn */
     while(true)
     {
         for(DataSet& e : datasets)

@@ -4,6 +4,9 @@
 
 #define C_COMPILER_DEFINE_STRING(name,maj,min,lev) name " " STR_REDIR(maj) "." STR_REDIR(min) "." STR_REDIR(lev)
 
+#undef C_SYSTEM_BITNESS
+#define C_SYSTEM_BITNESS 0
+
 /* Pre-processors are stupid. Very stupid. They would suffocate with a glass of water in their hand. */
 #undef C_COMPILER_NAME
 #undef C_COMPILER_VER_MAJ
@@ -18,6 +21,15 @@
 
 /* GCC compiler identification */
 #if defined(__GNUC__) && defined(__cplusplus)
+
+#undef C_SYSTEM_BITNESS
+
+#if __x86_64__ || __ppc64__
+#define C_SYSTEM_BITNESS 64
+#else
+#define C_SYSTEM_BITNESS 32
+#endif
+
 #define COFFEE_GCC
 
 #undef C_COMPILER_NAME
@@ -47,8 +59,19 @@
 #define C_COMPILER_VER_REV __clang_patchlevel__
 #endif
 
+#if defined(_WIN32) || defined(_WIN64)
+#undef C_SYSTEM_BITNESS
+#define C_SYSTEM_BITNESS 32
+
+#if defined(_WIN64)
+#undef C_SYSTEM_BITNESS
+#define C_SYSTEM_BITNESS 64
+#endif
+#endif
+
 /* This wasn't so hard, really. */
 #if defined(_MSC_VER) && defined(__cplusplus)
+
 #define COFFEE_MSVCXX
 #define C_COMPILER_STRING "MSVC++" _MSC_VER
 

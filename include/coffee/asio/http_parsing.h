@@ -2,6 +2,7 @@
 
 #include <coffee/core/plat/memory/string_ops.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
+#include <coffee/core/CDebug>
 #include "http_types.h"
 
 namespace Coffee{
@@ -9,37 +10,45 @@ namespace HTTP{
 
 using Host = CString;
 
-template<typename StrmT>
-/*!
- * \brief Generic HTTP header data insertion, re-usable
- * \param stream
- * \param extra
- */
-void GenerateRequestHeader(StrmT& stream,
-                           Request const& extra)
+FORCEDINLINE
+void SendProperty(CString& req_s, CString const& p, CString const& v)
 {
-    for(std::pair<CString,CString> const& v : extra.values)
-    {
-        stream << v.first << ": " << v.second << "\r\n";
-    }
+    CString chunk = cStringFormat("{0}: {1}\r\n",p,v);
+    req_s += chunk;
 }
 
 template<typename StrmT>
-void GenerateRequest(StrmT& stream, Host const& host,
-                     CString const& request,
-                     Request const& extra)
+void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 {
-    CString ver_string = "1.0";
-    if(extra.version.size()>0)
-        ver_string = extra.version;
+    CString header;
 
-    /* Generate common HTTP structure */
-    stream << "GET " << request << " HTTP/" << ver_string << "\r\n";
-    stream << "HOST: " << host << "\r\n";
-    /* Add extra data if applicable, can be reused if in a batch */
-    GenerateRequestHeader(stream,extra);
-    /* Choose what to do with the socket afterwards */
-    stream << "Connection: CLOSE\r\n\r\n";
+    header += cStringFormat("{0} {1} {2}\r\n",r.reqtype,r.resource,r.version);
+
+    SendProperty(header,"Host",host);
+
+    for(std::pair<CString,CString> const& p : r.values)
+    {
+        SendProperty(header,p.first,p.second);
+    }
+
+    if(r.mimeType.size())
+    {
+        SendProperty(header,"Content-Type",r.mimeType);
+    }
+
+    if(r.reqtype == "GET")
+        SendProperty(header,"Connection","close");
+
+
+    if(r.payload.size())
+        SendProperty(header,"Content-Length",Convert::uintltostring(r.payload.size()));
+
+    header += "\r\n";
+
+    if(r.payload.size())
+        header += r.payload;
+
+    req_s << header;
 }
 
 template<typename StrmT>

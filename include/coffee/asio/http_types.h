@@ -13,26 +13,37 @@ enum Transport
     Trans_HTTPS,
 };
 
-template<typename CharType>
-using ValueMapping = Map<CharType,CharType>;
+using PortNum = uint16;
 
-template<typename CharType>
+template<typename StrType>
+using ValueMapping = Map<StrType,StrType>;
+
+template<typename StrType>
 struct _http_request
 {
-    CharType version;
-    ValueMapping<CharType> values;
-    CharType payload;
+    uint32 transp;
+    PortNum port;
+
+    StrType reqtype;
+    StrType resource;
+
+    StrType version;
+    StrType mimeType;
+    ValueMapping<StrType> values;
+    StrType payload;
 };
 
-template<typename CharType>
+template<typename StrType>
 struct _http_response
 {
-    CharType header; /*!< OBSOLETE: Will be removed soon! */
+    StrType header; /*!< OBSOLETE: Will be removed soon! */
 
-    CharType version;
-    CharType message;
-    ValueMapping<CharType> values;
-    CharType payload;
+    StrType reqtype;
+    StrType version;
+    StrType mimeType;
+    StrType message;
+    ValueMapping<StrType> values;
+    StrType payload;
 
     union
     {
@@ -40,6 +51,17 @@ struct _http_response
         uint32 status;
     };
 };
+
+template<typename T>
+void InitializeRequest(_http_request<T>& r)
+{
+    r.transp = Trans_HTTP;
+    r.port = 0;
+    r.reqtype = "GET";
+    r.version = "HTTP/1.0";
+    r.mimeType = "text/plain";
+    r.values.insert({"Accept","*/*"});
+}
 
 using Request = _http_request<CString>;
 using Response = _http_response<CString>;

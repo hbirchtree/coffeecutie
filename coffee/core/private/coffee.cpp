@@ -61,7 +61,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
     Profiler::PushContext("CoffeeMain");
 
-    CoffeeInit();
+    CoffeeInit(false);
     Profiler::Profile("Init");
 
     Profiler::PushContext("main()");

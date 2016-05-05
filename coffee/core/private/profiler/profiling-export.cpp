@@ -1,5 +1,15 @@
 #include <coffee/core/profiler/profiling-export.h>
 
+#include <coffee/core/CProfiling>
+#include <coffee/core/CDebug>
+#include <coffee/core/CFiles>
+#include <coffee/core/CXmlParser>
+
+#include <coffee/core/coffee_mem_macros.h>
+#include <coffee/core/coffee.h>
+
+#include <coffee/core/plat/plat_file.h>
+
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
 namespace Coffee{
@@ -155,8 +165,10 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
     /* Store datapoints */
     {
-        XML::Element* curr = doc.NewElement("datapoints");
-        root->InsertEndChild(curr);
+        XML::Element* curr_r = doc.NewElement("datapoints");
+        root->InsertEndChild(curr_r);
+
+        XML::Element* curr = curr_r;
 
         /* Store information about runtime */
         CString st = Convert::uinttostring(*Profiler::start_time);
@@ -165,8 +177,8 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
         date = cStringFormat("{0}+{1}",date,Time::Microsecond());
 
-        curr->SetAttribute("start1",st.c_str());
-        curr->SetAttribute("start2",date.c_str());
+        curr_r->SetAttribute("start1",st.c_str());
+        curr_r->SetAttribute("start2",date.c_str());
 
         /* Some parsing information */
         LinkList<Timestamp> base;
@@ -221,11 +233,13 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             case Profiler::DataPoint::Pop:
             {
                 curr = curr->Parent()->ToElement();
+                base.pop_front();
+                lt.pop_front();
                 break;
             }
             }
             if(curr == nullptr)
-                break;
+                curr = curr_r;
         }
     }
 

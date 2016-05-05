@@ -1,14 +1,6 @@
 #pragma once
 
-#include <coffee/core/CDebug>
-#include <coffee/core/CFiles>
-#include <coffee/core/CProfiling>
-#include <coffee/core/CXmlParser>
-
-#include "../coffee_mem_macros.h"
 #include "../coffee.h"
-
-#include "../plat/plat_file.h"
 
 namespace Coffee{
 namespace Profiling{

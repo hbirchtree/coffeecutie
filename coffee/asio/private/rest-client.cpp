@@ -1,40 +1,105 @@
 #include <coffee/asio/rest-client.h>
 
-#include <coffee/asio/rest_request_builder.h>
+#include <coffee/asio/http_parsing.h>
 
 namespace Coffee{
 namespace CASIO{
 
 
-RestClientImpl::RestResponse RestClientImpl::RestRequest(RestClientImpl::Protocol p, RestClientImpl::Host h, RestClientImpl::Request r)
+RestClientImpl::RestResponse RestClientImpl::RestRequest(Host h, Request const& r)
 {
     /* For HTTP/S we use socket streams, because they are simple
          *  and neat to work with. Their complexity behind
          *  the scenes is no matter. */
-    if(p==HTTP)
+    if(r.transp==HTTP)
         return RestRequestHTTP(h,r);
-    else if(p==HTTPS)
+    else if(r.transp==HTTPS)
         return RestRequestHTTPS(h,r);
     else
         return RestResponse();
 }
 
-RestClientImpl::RestResponse RestClientImpl::RestRequestHTTP(RestClientImpl::Host h, RestClientImpl::Request const& r)
+RestClientImpl::RestResponse RestClientImpl::RestRequestHTTP(Host h, Request const& r)
 {
-    asio::ip::tcp::iostream s;
-    s.connect(h,"http");
+    ProfContext _m("ASIO request");
 
-    GenerateRestRequest(s,h,r);
+    CString port;
+    switch(r.port)
+    {
+    case 0:
+        port = "http";
+        break;
+    default:
+        port = Convert::uintstostring(r.port);
+        break;
+    }
+
+    asio::ip::tcp::iostream s;
+    s.connect(h,port);
+
+    Profiler::Profile("Connect");
+
+    HTTP::GenerateRequest(s,h,r);
+
+    Profiler::Profile("Request generation");
 
     RestResponse resp;
 
-    if(!ExtractResponse(s,resp))
+    if(!HTTP::ExtractResponse(s,&resp))
+        return RestResponse();
+    else
+    {
+        Profiler::Profile("Response gathering");
+        return resp;
+    }
+}
+
+RestClientImpl::RestResponse RestClientImpl::RestRequestHTTPS(Host h, Request const& r)
+{
+    asio::ssl::stream<asio::ip::tcp::socket> socket(t_context->service,
+                                                    t_context->sslctxt);
+
+    CString port;
+    switch(r.port)
+    {
+    case 0:
+        port = "https";
+        break;
+    default:
+        port = Convert::uintstostring(r.port);
+        break;
+    }
+
+    asio::ip::tcp::resolver::query q(h,port);
+    auto it = t_context->resolver.resolve(q);
+
+    asio::connect(socket.next_layer(),it);
+
+    socket.handshake(asio::ssl::stream_base::client);
+
+    asio::streambuf trans;
+    std::ostream os(&trans);
+    HTTP::GenerateRequest(os,h,r);
+    os.flush();
+    asio::write(socket,trans);
+
+    asio::streambuf recp;
+    std::istream is(&recp);
+    try{
+        asio::read(socket,recp);
+    }catch(std::system_error)
+    {
+    }
+
+    RestResponse resp;
+
+    if(!HTTP::ExtractResponse(is,&resp))
         return RestResponse();
     else
         return resp;
 }
 
-CString RestClientImpl::GetContentType(const RestClientImpl::RestResponse &resp)
+CString RestClientImpl::GetContentType(const RestResponse &resp)
 {
     CString out;
     /* TODO: Externalize this string
@@ -58,40 +123,6 @@ CString RestClientImpl::GetContentType(const RestClientImpl::RestResponse &resp)
         StrUtil::trim(out);
     }
     return out;
-}
-
-RestClientImpl::RestResponse RestClientImpl::RestRequestHTTPS(RestClientImpl::Host h, RestClientImpl::Request r)
-{
-    asio::ssl::stream<asio::ip::tcp::socket> socket(t_context->service,
-                                                    t_context->sslctxt);
-
-    asio::ip::tcp::resolver::query q(h,"https");
-	auto it = t_context->resolver.resolve(q);
-
-    asio::connect(socket.next_layer(),it);
-
-    socket.handshake(asio::ssl::stream_base::client);
-
-    asio::streambuf trans;
-    std::ostream os(&trans);
-    GenerateRestRequest(os,h,r);
-    os.flush();
-    asio::write(socket,trans);
-
-    asio::streambuf recp;
-    std::istream is(&recp);
-    try{
-        asio::read(socket,recp);
-    }catch(std::system_error)
-    {
-    }
-
-    RestResponse resp;
-
-    if(!ExtractResponse(is,resp))
-        return RestResponse();
-    else
-        return resp;
 }
 
 }

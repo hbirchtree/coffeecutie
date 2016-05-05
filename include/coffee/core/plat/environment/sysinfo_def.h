@@ -1,9 +1,13 @@
 #ifndef COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
 #define COFFEE_CORE_PLAT_ENV_SYSINFO_DEF_H
 
+#include "../plat_primary_identify.h"
 #include "../../coffee_mem_macros.h"
 #include "../../base/math/cmath.h"
 #include "../../types/cdef/infotypes.h"
+
+#include "../memory/stlstring_ops.h"
+#include "../memory/string_ops.h"
 
 #include <thread>
 
@@ -18,6 +22,40 @@ struct SysInfoDef
 
         NetStatLocalOnly = 0x2,
     };
+
+    STATICINLINE
+    /*!
+     * \brief Whether this build is 32-bit, 64-bit, 128-bit, blah.
+     * \return
+     */
+    uint32 BitNess()
+    {
+        return C_SYSTEM_BITNESS;
+    }
+
+    STATICINLINE
+    /*!
+     * \brief Get string representing system architecture (eg. win64, lin64, mac64, ios64, and32)
+     * \return
+     */
+    CString GetSystemString()
+    {
+        CString base = C_SYSTEM_STRING;
+        base.resize(3);
+        base = Mem::StrUtil::lower(base);
+        base += Mem::Convert::uinttostring(BitNess());
+        return base;
+    }
+
+    STATICINLINE
+    /*!
+     * \brief Only for use in safe environments, such as internal servers.
+     * \return
+     */
+    CString HostName()
+    {
+        return "localhost";
+    }
 
     STATICINLINE
     /*!

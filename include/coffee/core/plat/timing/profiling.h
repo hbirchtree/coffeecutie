@@ -163,14 +163,28 @@ FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1, SimpleProfi
 {
     ThreadId::Hash th1 = t1.thread.hash();
     ThreadId::Hash th2 = t1.thread.hash();
-    bool thread_sort = th2<th1;
-    bool samethread = th2==th1;
-    bool ts_sort = t2.ts<t1.ts;
+    bool thread_sort = th1<th2;
+    bool samethread = th1==th2;
+    bool ts_sort = t1.ts<t2.ts;
     return (samethread) ? ts_sort : thread_sort;
 }
 
+class SimpleProfilerContext
+{
+public:
+    SimpleProfilerContext(cstring name)
+    {
+        SimpleProfilerImpl::PushContext(name);
+    }
+    ~SimpleProfilerContext()
+    {
+        SimpleProfilerImpl::PopContext();
+    }
+};
+
 }
 
+using ProfContext = Profiling::SimpleProfilerContext;
 using Profiler = Profiling::SimpleProfilerImpl;
 
 }

@@ -20,7 +20,7 @@
 #endif
 
 /* Windows macro, only one for now */
-#if defined(_WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(WIN32)
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(WIN32)
 #define C_SYSTEM_STRING "Windows"
 #define COFFEE_WINDOWS
 #undef COFFEE_LINUX
@@ -28,6 +28,7 @@
 
 /* Mac OS X macro, not iOS */
 #if defined(__APPLE__)
+
 #define C_SYSTEM_STRING "Mac OS X"
 #define COFFEE_APPLE
 
