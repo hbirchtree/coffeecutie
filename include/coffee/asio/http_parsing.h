@@ -74,13 +74,17 @@ bool ExtractResponse(StrmT& stream, Response* response)
     if(response->version.substr(0,5)!="HTTP/")
         return false;
 
-    while(std::getline(stream,tmp)&&tmp!="\r")
+    while(std::getline(stream,tmp) && tmp!="\r")
     {
-        szptr idx = tmp.find(":",0,tmp.size());
+        szptr idx = Search::ChrFind(tmp.c_str(),':')-tmp.c_str();
+        cstring end = Search::ChrFind(tmp.c_str(),'\r');
         if(idx > 0)
         {
-            t1 = tmp.substr(0,idx-1);
+            t1 = tmp.substr(0,idx);
             t2 = tmp.substr(idx+1,tmp.size());
+            if(end)
+                t2.resize(t2.size()-1);
+            StrUtil::trim(t2);
             response->values[t1] = t2;
         }
     }

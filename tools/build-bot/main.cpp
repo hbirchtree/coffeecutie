@@ -84,7 +84,7 @@ struct DataSet
     Repository_tmp temp;
 };
 
-bool ReportBuildStatus(uint16 status, CString const& commit, CString const& log)
+bool ReportBuildStatus(uint16 status, CString const& commit, CString const& log,uint64 btime)
 {
     ProfContext _m("Build reporting");
 
@@ -103,13 +103,14 @@ bool ReportBuildStatus(uint16 status, CString const& commit, CString const& log)
                 "\"host\": \"{0}\","
                 "\"status\": {1},"
                 "\"commit\": \"{2}\","
-                "\"log\": \"{3}\""
+                "\"log\": \"{3}\","
+                "\"build-time\": {4}"
                 "}",
-                SysInfo::HostName(),status,commit,log);
+                SysInfo::HostName(),status,commit,log,btime);
 
     Profiler::Profile("Request creation");
 
-    cDebug("Sending error report to {0}, resource={1}",dest,req.resource);
+    cDebug("Sending status to {0}, resource={1}",dest,req.resource);
 
     auto res = REST::RestRequest(dest,req);
 
@@ -254,6 +255,7 @@ DataSet create_item(cstring file)
     REST::Request& request = repo.temp.request;
     {
         HTTP::InitializeRequest(request);
+        request.transp = REST::HTTPS;
         request.values["Accept"] = "application/atom+xml";
         request.resource = cStringFormat("/{0}/commits/{1}.atom",repo.repo.repository,repo.repo.branch);
     }
@@ -329,7 +331,11 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
                 cBasicPrint("Updated repository: {0}, commit={1}, ts={2}",
                             repo,cmt.hash,cmt.ts);
                 /* Execute command queue, die if error */
+                uint16 signal = 0;
                 CString log;
+
+                uint64 timer = Time::CurrentMicroTimestamp();
+
                 for (Proc_Cmd const& cmd : command_queue)
                 {
                     cBasicPrintNoNL("Running: {0}",cmd.program);
@@ -339,11 +345,15 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
                     int sig = Proc::ExecuteLogged(cmd, &log);
                     if (sig != 0)
                     {
+                        signal = 1;
                         cBasicPrint("Failed with signal {0}:\n{1}", sig, log);
                         if(!(data.flags&IgnoreFailure))
                             return ProcessFailed;
+                        break;
                     }
                 }
+
+                ReportBuildStatus(signal,cmt.hash,log,Time::CurrentMicroTimestamp()-timer);
             }else{
                 cWarning("Mismatch commit, latest is commit={0}, ts={1}",
                          workarea->last_commit.hash,workarea->last_commit.ts);
@@ -370,31 +380,33 @@ FailureCase update_item(Repository const& data, Repository_tmp* workarea)
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-    ReportBuildStatus(0,"0f","hello");
-
-    ArgumentCollection args;
-
-    /* Allow customizing path to Git and CMake, for Windows */
-    args.registerArgument(ArgumentCollection::Argument,"gitbin");
-    args.registerArgument(ArgumentCollection::Argument,"cmakebin");
-
-    args.parseArguments(argc,argv);
-
-    for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
-    {
-        if(arg.first == "gitbin" && arg.second)
-            git_program = arg.second;
-        else if(arg.first == "cmakebin" && arg.second)
-            cmake_program = arg.second;
-    }
-
-    cDebug("Launched BuildBot");
-
     Vector<DataSet> datasets;
 
-    for(cstring it : args.getPositionalArguments())
     {
-        datasets.push_back(create_item(it));
+        ArgumentCollection args;
+
+        /* Allow customizing path to Git and CMake, for Windows */
+        args.registerArgument(ArgumentCollection::Argument,"gitbin");
+        args.registerArgument(ArgumentCollection::Argument,"cmakebin");
+        args.registerArgument(ArgumentCollection::Argument,"server");
+
+        args.parseArguments(argc,argv);
+
+        for(std::pair<CString,cstring> const& arg : args.getArgumentOptions())
+        {
+            if(arg.first == "gitbin" && arg.second)
+                git_program = arg.second;
+            else if(arg.first == "cmakebin" && arg.second)
+                cmake_program = arg.second;
+            else if(arg.first == "server" && arg.second)
+                buildrep_server = arg.second;
+        }
+
+
+        for(cstring it : args.getPositionalArguments())
+        {
+            datasets.push_back(create_item(it));
+        }
     }
 
     if(datasets.size() == 0)
@@ -404,6 +416,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     /* Start the REST service */
     REST::InitService();
+
+    cDebug("Launched BuildBot");
 
     /* Initiate blast processing, watch processor burn */
     while(true)

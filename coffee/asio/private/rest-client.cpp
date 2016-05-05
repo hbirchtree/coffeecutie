@@ -87,9 +87,9 @@ RestClientImpl::RestResponse RestClientImpl::RestRequestHTTPS(Host h, Request co
     std::istream is(&recp);
     try{
         asio::read(socket,recp);
-    }catch(std::system_error)
-    {
     }
+    catch(std::system_error)
+    {}
 
     RestResponse resp;
 
@@ -101,28 +101,24 @@ RestClientImpl::RestResponse RestClientImpl::RestRequestHTTPS(Host h, Request co
 
 CString RestClientImpl::GetContentType(const RestResponse &resp)
 {
-    CString out;
-    /* TODO: Externalize this string
-         *  and use compile-time string processing from C++14 */
-    CString query = "content-type:";
+    constexpr const cstring query = "content-type";
 
-    /* We need to somewhat sanitize our input.
-         *  We convert carriage return to newlines, for instance. */
-    CString data = Search::CStrReplace(resp.header,"\r","\n");
+    CString data;
+
+    CString lowered;
+    for(std::pair<CString,CString> const& v : resp.values)
+    {
+        lowered = StrUtil::lower(v.first);
+        if(lowered == query)
+        {
+            data = v.second;
+            break;
+        }
+    }
+
     data = StrUtil::lower(data);
 
-    cstring b = StrFind(data.c_str(),query.c_str());
-    cstring e = nullptr;
-    if(b)
-    {
-        b+=query.size();
-        e = StrFind(b,"\n");
-        if(!e)
-            return out;
-        out.insert(0,b,e-b);
-        StrUtil::trim(out);
-    }
-    return out;
+    return data;
 }
 
 }
