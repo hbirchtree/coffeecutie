@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>CoffeeCutie Build Status</title>
+    <title>{{ title }} - {{ project }}</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="{{ url_for('static', filename='bower_components/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -43,7 +43,7 @@
         <div id="page-wrapper">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1 class="page-header">CoffeeCutie Build Status</h1>
+                    <h1 class="page-header">Status of {{ project }}</h1>
                 </div>
                 <!-- /.col-lg-12 -->
             </div>
@@ -57,7 +57,8 @@
                                             <th>Platform</th>
                                             <th>Commit</th>
                                             <th>Status</th>
-                                            <th>Logfile reference</th>
+                                            <th>Logfile</th>
+                                            <th>Binaries</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -70,15 +71,22 @@
                                             <td>{{ entry[1] }}</td>
                                             <td>{{ entry[3] }}</td>
                                             <td>{{ entry[2] }}</td>
-                                            <td>{{ entry[4] }}</td>
-                                            <td><a href="logs/{{ entry[0] }}">...</a></td>
+                                            {% if not entry[4] %}
+                                            <td>Success!</td>
+                                            {% else %}
+                                            <td>Failure!</td>
+                                            {% endif %}
+                                            <td><a href="logs/{{ entry[0] }}">(Link)</a></td>
+                                            <td><a href="bin/{{ entry[0] }}">(Link)</a></td>
                                         </tr>
                                         {% else %}
                                         <tr class="info">
-                                            <td>None</td>
+                                            <td>N/A</td>
                                             <td>No builds to display!</td>
-                                            <td>None</td>
-                                            <td>Nothing</td>
+                                            <td>N/A</td>
+                                            <td>N/A</td>
+                                            <td>N/A</td>
+                                            <td>N/A</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>

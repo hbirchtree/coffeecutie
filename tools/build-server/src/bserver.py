@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 
-import os,sys
+import os
 import sqlite3
+import base64
 
 from flask import Flask
 from flask import request
@@ -64,7 +65,7 @@ def close_db(exception):
 @app.route("/")
 def default_route():
     elements = query_db("SELECT * FROM BUILDREPORTS;");
-    return render_template('tables.html',name='index',entries=elements);
+    return render_template('tables.html',name='index',entries=elements,title="CoffeeCutie Build Status",project="Coffee");
 
 # For servers, get their logs and put them in the database
 @app.route("/logger/data/<arch>",methods=["POST","GET"])
@@ -82,6 +83,13 @@ def build_log_data(arch):
         return jsonify({'status':1,'error': 'Malformed request!'});
     
     return jsonify({'status':0});
+
+@app.route("/logs/<bid>")
+def get_build_log(bid):
+    query = query_db("SELECT ERROR_OUTPUT FROM BUILDREPORTS AS B WHERE B.REPORT_ID = ?;",args=(bid,),one=True);
+    if not query:
+        return "";
+    return base64.b64decode(query[0]).replace('\n','</br>');
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',debug=True);
