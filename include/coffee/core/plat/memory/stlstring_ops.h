@@ -168,6 +168,59 @@ FORCEDINLINE cstring booltostring(bool i)
 
 }
 
+namespace Base64
+{
+
+const constexpr cstring b64_char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/* Reference: https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64 */
+FORCEDINLINE CString encode(c_cptr ptr, szptr len)
+{
+    CString out;
+    out.reserve(len/3 + len % 3 > 0);
+
+    byte_t const* data = (byte_t const*)ptr;
+
+    uint32 temp;
+    szptr j = 0;
+    for(szptr i=0;i<len/3; i++)
+    {
+        temp = (data[j++]) << 16;
+        temp += (data[j++]) << 8;
+        temp += (data[j++]);
+        out.append(1,b64_char[(temp & 0x00FC0000) >> 18]);
+        out.append(1,b64_char[(temp & 0x0003F000) >> 12]);
+        out.append(1,b64_char[(temp & 0x00000FC0) >> 6]);
+        out.append(1,b64_char[(temp & 0x0000003F)]);
+    }
+
+    switch(len % 3)
+    {
+    case 1:
+        temp = (data[len-(len%3)+1]);
+        out.append(1,b64_char[(temp & 0x00FC0000) >> 18]);
+        out.append(1,b64_char[(temp & 0x0003F000) >> 12]);
+        out.append(1,'=');
+        break;
+    case 2:
+        temp = (data[len-(len%3)+1]);
+        out.append(1,b64_char[(temp & 0x00FC0000) >> 18]);
+        out.append(1,b64_char[(temp & 0x0003F000) >> 12]);
+        out.append(1,b64_char[(temp & 0x00000FC0) >> 6]);
+        out.append(1,'=');
+        break;
+    }
+
+    return out;
+}
+
+FORCEDINLINE bool decode(byte_t const* i_ptr, szptr i_len,
+                         Vector<byte_t>* out)
+{
+    return false;
+}
+
+}
 
 namespace StrUtil{
 
@@ -175,7 +228,7 @@ FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, bool spacing = true, szptr n
 {
     byte_t const* data = (byte_t const*)ptr;
     CString out;
-    out.reserve(len*2+len-1);
+    out.reserve(len*2 /* Hexadec */ + (len-1)*spacing /* Space */);
 
     for(szptr i=0;i<len;i++)
     {

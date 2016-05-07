@@ -106,7 +106,7 @@ bool ReportBuildStatus(uint16 status, CString const& commit, CString const& log,
                 "\"log\": \"{3}\","
                 "\"build-time\": {4}"
                 "}",
-                SysInfo::HostName(),status,commit,log,btime);
+                SysInfo::HostName(),status,commit,Base64::encode(log.data(),log.size()),btime);
 
     Profiler::Profile("Request creation");
 
