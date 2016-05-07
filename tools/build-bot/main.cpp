@@ -123,7 +123,7 @@ cstring JSGetString(JSON::Value const& v, cstring val)
 {
     if(v.HasMember(val)&&v[val].IsString())
         return v[val].GetString();
-    return nullptr;
+    return "";
 }
 
 GitCommit ParseEntry(XML::Element const* el)
