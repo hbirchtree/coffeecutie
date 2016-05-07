@@ -201,6 +201,7 @@ FORCEDINLINE CString encode(c_cptr ptr, szptr len)
         out.append(1,b64_char[(temp & 0x00FC0000) >> 18]);
         out.append(1,b64_char[(temp & 0x0003F000) >> 12]);
         out.append(1,'=');
+        out.append(1,'=');
         break;
     case 2:
         temp = (data[len-(len%3)+1]);

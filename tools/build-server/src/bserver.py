@@ -89,7 +89,10 @@ def get_build_log(bid):
     query = query_db("SELECT ERROR_OUTPUT FROM BUILDREPORTS AS B WHERE B.REPORT_ID = ?;",args=(bid,),one=True);
     if not query:
         return "";
-    return base64.b64decode(query[0]).replace('\n','</br>');
+    try:
+        return base64.b64decode(query[0]).replace('\n','</br>');
+    except TypeError:
+        return "";
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',debug=True);
