@@ -17,6 +17,8 @@ from flask import Response
 app = Flask(__name__,static_folder='../static',template_folder='../templates');
 app.config.from_object(__name__);
 
+BINARY_DIR = os.path.join(app.root_path,'../bin')
+
 # Load default config and override config from an environment variable
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, '../db/error_reports.db'),
@@ -84,7 +86,7 @@ def build_log_data(arch):
     
     return jsonify({'status':0});
 
-@app.route("/logs/<bid>")
+@app.route("/logs/<int:bid>")
 def get_build_log(bid):
     query = query_db("SELECT ERROR_OUTPUT FROM BUILDREPORTS AS B WHERE B.REPORT_ID = ?;",args=(bid,),one=True);
     if not query:
@@ -93,6 +95,10 @@ def get_build_log(bid):
         return base64.b64decode(query[0]).replace('\n','</br>');
     except TypeError:
         return "";
+
+@app.route("/bin/<int:bid>")
+def get_binary_release(bid):
+    return send_from_directory(BINARY_DIR, 'out.zip',as_attachment=True,attachment_filename="release_%s.zip" % (bid,));
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',debug=True);

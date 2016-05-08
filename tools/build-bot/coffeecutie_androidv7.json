@@ -1,0 +1,19 @@
+{
+    "nofail": true,
+    "repository": "hbirchtree/coffeecutie",
+    "branch": "master",
+    "upstream": "origin.https",
+    "build-dir": "/home/havard/Code/coffeecutie/build_Android_v7a",
+    "repo-dir": "/home/havard/Code/coffeecutie",
+    "interval": 10,
+    "build-type": "cmake",
+    "cleans": false,
+    "clean-command": {
+        "program": "ninja",
+        "args": [
+            "clean",
+            "-C",
+            "/home/havard/Code/coffeecutie/build_Android_v7a"
+        ]
+    }
+}

@@ -11,6 +11,8 @@ using namespace Coffee;
 cstring git_program = "git";
 cstring cmake_program = "cmake";
 cstring buildrep_server = "localhost";
+cstring crosscompiling = nullptr;
+uint16 buildrep_server_port = 5000;
 
 enum FailureCase
 {
@@ -92,8 +94,10 @@ bool ReportBuildStatus(uint16 status, CString const& commit, CString const& log,
     REST::Request req = {};
 
     HTTP::InitializeRequest(req);
-    req.resource = cStringFormat("/logger/data/{0}",SysInfo::GetSystemString());
-    req.port = 5000;
+    req.resource = cStringFormat(
+                "/logger/data/{0}",
+                (crosscompiling) ? crosscompiling : SysInfo::GetSystemString());
+    req.port = buildrep_server_port;
     req.reqtype = "POST";
     req.mimeType = "application/json";
     req.values["Accept"] = "application/json";
@@ -389,6 +393,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         args.registerArgument(ArgumentCollection::Argument,"gitbin");
         args.registerArgument(ArgumentCollection::Argument,"cmakebin");
         args.registerArgument(ArgumentCollection::Argument,"server");
+        args.registerArgument(ArgumentCollection::Argument,"serverport");
+        args.registerArgument(ArgumentCollection::Argument,"crosscompiling");
 
         args.parseArguments(argc,argv);
 
@@ -400,6 +406,15 @@ int32 coffee_main(int32 argc, cstring_w* argv)
                 cmake_program = arg.second;
             else if(arg.first == "server" && arg.second)
                 buildrep_server = arg.second;
+            else if(arg.first == "crosscompiling" && arg.second)
+                crosscompiling = arg.second;
+            else if(arg.first == "serverport" && arg.second)
+            {
+                bool valid = true;
+                uint16 port = Convert::strtouint(arg.second,10,&valid);
+                if(valid)
+                    buildrep_server_port = port;
+            }
         }
 
 

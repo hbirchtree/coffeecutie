@@ -44,6 +44,8 @@ struct SysInfoDef
         base.resize(3);
         base = Mem::StrUtil::lower(base);
         base += Mem::Convert::uinttostring(BitNess());
+        base += "_";
+        base += COFFEE_ARCH;
         return base;
     }
 

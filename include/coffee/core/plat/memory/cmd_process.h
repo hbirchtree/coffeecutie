@@ -7,6 +7,7 @@
 
 #include <sys/wait.h>
 #include <stdio.h>
+#include <string>
 
 #endif
 
@@ -30,6 +31,9 @@ struct CProcess
 
 	STATICINLINE int ExecuteSystem(Command const& cmd_)
 	{
+#if defined(COFFEE_ANDROID)
+        return -1;
+#else
 		CString cmd = cmd_.program;
 		for (CString const& arg : cmd_.argv)
 		{
@@ -37,11 +41,14 @@ struct CProcess
 			cmd.append(arg);
 		}
 		return system(cmd.c_str());
+#endif
 	}
 
     STATICINLINE int Execute(Command const& cmd_)
     {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_ANDROID)
+        return -1;
+#elif defined(COFFEE_UNIXPLAT)
         Command cmd = cmd_;
 
         pid_t child;
@@ -81,7 +88,9 @@ struct CProcess
 
     STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* err = nullptr)
     {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_ANDROID)
+        return -1;
+#elif defined(COFFEE_UNIXPLAT)
         CString cmd = cmd_.program;
 	for(CString const& arg : cmd_.argv)
         {
@@ -92,14 +101,16 @@ struct CProcess
         out->resize(100);
 
         uint64 i = 0;
+        CString tmp;
+        tmp.resize(100);
         FILE* pip = popen(cmd.c_str(),"r");
         if(pip != nullptr)
         {
-            while(!feof(pip))
+            while(fgets(&tmp[0],tmp.capacity(),pip) != nullptr)
             {
-                fread(&(*out)[i++],1,1,pip);
-                if(i >= out->size())
-                    out->resize(out->size()*2);
+                fprintf(stderr,"%s",tmp.c_str());
+                out->insert(out->size(),&tmp[0],StrLen(tmp.c_str()));
+                tmp.clear();
             }
             out->at(i) = 0;
             return pclose(pip);

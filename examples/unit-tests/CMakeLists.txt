@@ -11,4 +11,7 @@ add_subdirectory(size-tests)
 add_subdirectory(string-api)
 add_subdirectory(sysinfo-api)
 add_subdirectory(thread-api)
-add_subdirectory(vr-api)
+
+if(COFFEE_BUILD_OPENVR)
+    add_subdirectory(vr-api)
+endif()
