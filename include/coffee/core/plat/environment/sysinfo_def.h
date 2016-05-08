@@ -11,6 +11,13 @@
 
 #include <thread>
 
+#if defined(COFFEE_UNIXPLAT)
+#include <unistd.h>
+#elif defined(COFFEE_WINDOWS)
+#include "../plat_windows.h"
+#endif
+
+
 namespace Coffee{
 
 struct SysInfoDef
@@ -40,12 +47,14 @@ struct SysInfoDef
      */
     CString GetSystemString()
     {
-        CString base = C_SYSTEM_STRING;
-        base.resize(3);
+        /* Please don't ask about the leading space :) */
+        const constexpr cstring _fmt = "%.3s%u_%s ";
+        int len = snprintf(nullptr,0,_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
+        CString base;
+        base.resize(len);
+        snprintf(&base[0],base.size(),_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
+        base.resize(base.find('\0'));
         base = Mem::StrUtil::lower(base);
-        base += Mem::Convert::uinttostring(BitNess());
-        base += "_";
-        base += COFFEE_ARCH;
         return base;
     }
 
@@ -56,7 +65,16 @@ struct SysInfoDef
      */
     CString HostName()
     {
+#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_WINDOWS)
+        /* For now, we assume this works. We might implement a better one where it retries upon failure. */
+        CString _m;
+        _m.resize(60);
+        gethostname(&_m[0],_m.size());
+        _m.resize(_m.find('\0'));
+        return _m;
+#else
         return "localhost";
+#endif
     }
 
     STATICINLINE
