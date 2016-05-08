@@ -111,6 +111,7 @@ struct CProcess
                 fprintf(stderr,"%s",tmp.c_str());
                 out->insert(out->size(),&tmp[0],StrLen(tmp.c_str()));
                 tmp.clear();
+                tmp.resize(100);
             }
             out->at(i) = 0;
             return pclose(pip);
