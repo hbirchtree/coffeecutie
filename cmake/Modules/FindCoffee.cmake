@@ -1,3 +1,17 @@
+#
+# Coffee will only accept a single include directory for all libraries for now.
+# Anything more is effort.
+#
+
+set ( COFFEE_INCLUDE_DIR    "" CACHE PATH "Coffee include directory" )
+
+set ( COFFEE_CORE_LIBRARY   "" CACHE FILEPATH "Coffee Core library" )
+set ( COFFEE_OCULUS_LIBRARY "" CACHE FILEPATH "Coffee OculusVR library" )
+set ( COFFEE_OPENVR_LIBRARY "" CACHE FILEPATH "Coffee OpenVR library" )
+set ( COFFEE_ASIO_LIBRARY   "" CACHE FILEPATH "Coffee ASIO library" )
+set ( COFFEE_GLEAM_LIBRARY  "" CACHE FILEPATH "Coffee GLeam library" )
+set ( COFFEE_OPENAL_LIBRARY "" CACHE FILEPATH "Coffee OpenAL library" )
+
 set ( COFFEE_SEARCH_PATHS
     /usr/local
     /usr
@@ -5,12 +19,9 @@ set ( COFFEE_SEARCH_PATHS
 
     ~/Library/Frameworks
     /Library/Frameworks
-    /sw # Fink
-    /opt/local # DarwinPorts
-    /opt/csw # Blastwave
     )
 
-find_path ( COFFEE_INCLUDE_DIR
+find_path ( COFFEE_INCLUDE_DIR_TMP
     coffee/core/coffee.h
     coffee/CCore
 
@@ -22,7 +33,7 @@ find_path ( COFFEE_INCLUDE_DIR
     include
     )
 
-find_library ( COFFEE_CORE_LIBRARY
+find_library ( COFFEE_CORE_LIBRARY_TMP
     CoffeeCore
 
     PATHS
@@ -34,7 +45,19 @@ find_library ( COFFEE_CORE_LIBRARY
     lib64
     )
 
-find_library ( COFFEE_OCULUS_LIBRARY
+find_library ( COFFEE_ASIO_LIBRARY_TMP
+    CoffeeASIO
+
+    PATHS
+    ${COFFEE_ROOT_DIR}
+    ${COFFEE_SEARCH_PATHS}
+
+    PATH_SUFFIXES
+    lib
+    lib64
+    )
+
+find_library ( COFFEE_OCULUS_LIBRARY_TMP
     CoffeeOVR
     CoffeeOculusRift
     CoffeeOculusVR
@@ -46,4 +69,78 @@ find_library ( COFFEE_OCULUS_LIBRARY
     PATH_SUFFIXES
     lib
     lib64
+    )
+
+find_library ( COFFEE_OPENVR_LIBRARY_TMP
+    CoffeeOpenVR
+    CoffeeVR
+
+    PATHS
+    ${COFFEE_ROOT_DIR}
+    ${COFFEE_SEARCH_PATHS}
+
+    PATH_SUFFIXES
+    lib
+    lib64
+    )
+
+find_library ( COFFEE_OPENAL_LIBRARY_TMP
+    CoffeeOpenAL
+
+    PATHS
+    ${COFFEE_ROOT_DIR}
+    ${COFFEE_SEARCH_PATHS}
+
+    PATH_SUFFIXES
+    lib
+    lib64
+    )
+
+find_library ( COFFEE_GLEAM_LIBRARY_TMP
+    CoffeeGLeam
+
+    PATHS
+    ${COFFEE_ROOT_DIR}
+    ${COFFEE_SEARCH_PATHS}
+
+    PATH_SUFFIXES
+    lib
+    lib64
+    )
+
+if(COFFEE_INCLUDE_DIR_TMP)
+    set (COFFEE_INCLUDE_DIR "${COFFEE_INCLUDE_DIR_TMP}")
+endif()
+if(COFFEE_CORE_LIBRARY_TMP)
+    set (COFFEE_CORE_LIBRARY "${COFFEE_CORE_LIBRARY_TMP}")
+endif()
+
+if(COFFEE_ASIO_LIBRARY_TMP)
+    set (COFFEE_ASIO_LIBRARY "${COFFEE_ASIO_LIBRARY_TMP}")
+endif()
+
+if(COFFEE_OCULUS_LIBRARY_TMP)
+    set (COFFEE_OCULUS_LIBRARY "${COFFEE_OCULUS_LIBRARY_TMP}")
+endif()
+
+if(COFFEE_OPENVR_LIBRARY_TMP)
+    set (COFFEE_OPENVR_LIBRARY "${COFFEE_OPENVR_LIBRARY_TMP}")
+endif()
+
+if(COFFEE_GLEAM_LIBRARY_TMP)
+    set (COFFEE_GLEAM_LIBRARY "${COFFEE_GLEAM_LIBRARY_TMP}")
+endif()
+
+if(COFFEE_OPENAL_LIBRARY_TMP)
+    set (COFFEE_GLEAM_LIBRARY "${COFFEE_GLEAM_LIBRARY_TMP}")
+endif()
+
+mark_as_advanced(
+    COFFEE_INCLUDE_DIR
+    COFFEE_CORE_LIBRARY
+    COFFEE_ASIO_LIBRARY
+    COFFEE_OCULUS_LIBRARY
+    COFFEE_OPENVR_LIBRARY
+    COFFEE_GLEAM_LIBRARY
+    COFFEE_OPENAL_LIBRARY
     )

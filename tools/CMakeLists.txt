@@ -1,9 +1,9 @@
 if(COFFEE_BUILD_QT)
-    add_subdirectory ( qt-profiler )
+    add_subdirectory ( performance-tools/qt-profiler )
 endif()
 
-add_subdirectory(endian-fixer)
+add_subdirectory(data-management/endian-fixer)
 
 if(COFFEE_BUILD_BOT)
-    add_subdirectory(build-bot)
+    add_subdirectory(build-daemon/build-bot)
 endif()
