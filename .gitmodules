@@ -28,3 +28,6 @@
 [submodule "libs/rapidjson"]
 	path = libs/rapidjson
 	url = https://github.com/miloyip/rapidjson.git
+[submodule "tools/build-daemon"]
+	path = tools/build-daemon
+	url = https://github.com/hbirchtree/coffeecutie-build-daemon.git
