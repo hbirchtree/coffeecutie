@@ -52,8 +52,6 @@ void CoffeeInit(bool profiler_init)
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
-    /* Fix argument format on Windows */
-
     initargs = AppArg(argc,argv);
 
     Profiler::InitProfiler();
