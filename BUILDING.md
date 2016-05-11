@@ -20,9 +20,7 @@ General dependencies
         cmake ${PROJECT_DIR} -LH
         # to get build options
 
-On Linux...
-==============
-For the lazy (on Linux)
+For the lazy
 -----------------------
 This will give you a basic build with OpenGL, OpenAL and SDL2 event support:
  1. Make a build directory
@@ -31,7 +29,7 @@ This will give you a basic build with OpenGL, OpenAL and SDL2 event support:
         cmake ${PROJECT_DIR}
  3. Build it
 
-For the really lazy (on Linux)
+For the really lazy
 ------------------------------
 Do the above, but adding the following to the cmake commandline:
 
@@ -39,15 +37,8 @@ Do the above, but adding the following to the cmake commandline:
 
 This removes the need for any external dependencies apart from a compiler, but with heavily reduced functionality (command-line only).
 
-Really detailed (on Linux)
+Really detailed
 --------------------------
-Ubuntu packages (for core functionality):
-
-        # Core functionality
-        apt install cmake ninja-build build-essential libopenal-dev libsdl2-dev libssl-dev libunwind-dev
-        
-        # Media extensions, language bindings, GUI tools
-        apt install libavcodec-dev libavdevice-dev libavformat-dev libswresample-dev libswscale-dev swig3.0 qt5-default
 
  1. Create a build directory
  2. Configure CMakeLists.txt from the root directory in the build directory
@@ -61,37 +52,3 @@ tl;dr:
         ninja
 
 Some applications have sample data, sourced from the sample_data directory in the root of the project directory. Some applications will crash without these files.
-
-On Windows...
-=============
-
-The workflow is as such:
- 1. Configure with CMake. Just use the dam* GUI and get over with it. You will have to specify a lot of filepaths since Windows has no automatic library directories or include directories.
- 2. Browse to build directory
- 3. Either:
-
-    a. Open cmd.exe and execute (assuming MSBuild.exe is in PATH):
-
-        MSBuild.exe Coffee.sln
-
-    b. Open Visual Studio and open Coffee.sln, build from there
-
-
-**NB**: Note that Windows is not fully supported or tested at all times.
-
-On Android...
-=============
-
-Use the included Docker container in "tools/android/". Map the project directory to "/home/coffee/project".
-When inside, execute:
-
-        ./android-sdk-update.sh && ./install-libs.sh && ./coffee-build.sh
-
-After which some APK files should be found in directories below deploy/android/.
-Do note that customizing APK files is limited for now.
-
-On Mac OS X...
-==============
-There is no status on this port.
-
-**NB**: Note that Mac OS X is not supported (yet) and might not work at all.
