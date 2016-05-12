@@ -105,13 +105,19 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_LIB_OUTPUT_DIRECTORY}"
         )
 
+    add_custom_command ( TARGET ${Target_Name}
+        POST_BUILD
+        COMMAND ${ANDROID_STRIP} "$<TARGET_FILE:${Target_Name}>"
+        )
+
+    add_custom_command ( TARGET ${Target_Name}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${Target_Name}>" ${ANDROID_LIB_OUTPUT_DIRECTORY}
+        )
+
     # Install dependency libraries
     set ( ANDROID_DEPENDENCIES_STRING )
     foreach(lib ${Dependency_Libs})
-        add_custom_command ( TARGET ${Target_Name}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${ANDROID_LIB_OUTPUT_DIRECTORY}
-            )
         # Problem: generator strings
         # Solution: regex
         string ( REGEX REPLACE "\\$<TARGET_FILE:([A-Za-z0-9_\-]+)>" "\\1" _LIBNAME_STRIPPED "${lib}" )
@@ -185,6 +191,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        # In release-mode, we sign and align the APK manually
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
             COMMAND ${ANDROID_ANT_PROGRAM} release
@@ -201,6 +208,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
     else()
+        # Debug mode is quite simple :)
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
             COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} debug
