@@ -22,7 +22,7 @@ fi
 
 cd "$1"
 
-if [[ "$(uname -s)" -eq "Linux" ]]; then
+if [[ "$(uname -s)" == "Linux" ]]; then
     zip -9 -r - "out" | base64 -w 0
 else
     zip -9 -r - "out" | base64
