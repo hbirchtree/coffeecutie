@@ -216,4 +216,12 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 	    )
     endif()
 
+    install (
+        FILES
+        ${ANDROID_APK_FILE_OUTPUT}
+
+        DESTINATION
+        "packaged/apk/"
+        )
+
 endmacro()
