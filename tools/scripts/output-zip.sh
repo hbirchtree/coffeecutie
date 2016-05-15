@@ -22,8 +22,11 @@ fi
 
 cd "$1"
 
+bdata="b64_cache.b64"
+
 if [[ "$(uname -s)" == "Linux" ]]; then
-    zip -9 -r - "out" | base64 -w 0
+    zip -9 -r - "out" | base64 -w 0 > "$bdata"
 else
-    zip -9 -r - "out" | base64
+    zip -9 -r - "out" | base64 > "$bdata"
 fi
+
