@@ -1,5 +1,9 @@
 #!/bin/bash
 
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 function check_input()
 {
     if [[ -z "$1" ]]; then
