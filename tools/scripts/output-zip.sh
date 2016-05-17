@@ -22,11 +22,18 @@ fi
 
 cd "$1"
 
-bdata="b64_cache.b64"
+bdata="file.zip"
 
 if [[ "$(uname -s)" == "Linux" ]]; then
-    zip -9 -r - "out" | base64 -w 0 > "$bdata"
+    zip -9 -r - "out" > "$bdata"
 else
-    zip -9 -r - "out" | base64 > "$bdata"
+    zip -9 -r - "out" > "$bdata"
 fi
 
+server_ip="$2"
+server_port="$3"
+data_arch="$4"
+data_bid="$5"
+data_host="$6"
+
+curl -v -F file=@"$bdata" "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
