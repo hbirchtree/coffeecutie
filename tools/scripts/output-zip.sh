@@ -30,10 +30,14 @@ else
     zip -9 -r - "out" > "$bdata"
 fi
 
+bdata=`realpath "$bdata"`
+
+cd "$COFFEE_REPO_DIR"
+
 server_ip="$2"
 server_port="$3"
 data_arch="$4"
-data_bid="$5"
-data_host="$6"
+data_bid="$(git rev-parse HEAD)"
+data_host="$(hostname)"
 
 curl -v -F file=@"$bdata" "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
