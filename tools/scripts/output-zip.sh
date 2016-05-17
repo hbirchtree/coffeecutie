@@ -1,5 +1,9 @@
 #!/bin/bash
 
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 function check_input()
 {
     if [[ -z "$1" ]]; then
@@ -22,11 +26,22 @@ fi
 
 cd "$1"
 
-bdata="b64_cache.b64"
+bdata="file.zip"
 
 if [[ "$(uname -s)" == "Linux" ]]; then
-    zip -9 -r - "out" | base64 -w 0 > "$bdata"
+    zip -9 -r - "out" > "$bdata"
 else
-    zip -9 -r - "out" | base64 > "$bdata"
+    zip -9 -r - "out" > "$bdata"
 fi
 
+bdata=`realpath "$bdata"`
+
+cd "$COFFEE_REPO_DIR"
+
+server_ip="$2"
+server_port="$3"
+data_arch="$4"
+data_bid="$(git rev-parse HEAD)"
+data_host="$(hostname)"
+
+curl -v -F file=@"$bdata" "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"

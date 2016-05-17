@@ -8,6 +8,8 @@ if(DEFINED ENV{ANDROID_SDK})
     set ( ANDROID_SDK_S "$ENV{ANDROID_SDK}" )
 endif()
 
+message ("Android paths: ${ANDROID_NDK_S} ${ANDROID_SDK_S}")
+
 set ( ANDROID_ANT_PROGRAM NOTFOUND CACHE FILEPATH "ANT build program" )
 set ( ANDROID_SDK_PROGRAM NOTFOUND CACHE FILEPATH "Android SDK android" )
 set ( ANDROID_NDK_BUILD_PROGRAM NOTFOUND CACHE FILEPATH "Android NDK ndk-build" )
@@ -31,11 +33,8 @@ find_program ( ANDROID_SDK_PROGRAM
     android
 
     PATHS
-    ${ANDROID_SDK_S}
-    $ENV{ANDROID_HOME}
-
-    PATH_SUFFIXES
-    tools
+    ${ANDROID_SDK_S}/tools
+    $ENV{ANDROID_HOME}/tools
     )
 
 find_program ( ANDROID_NDK_BUILD_PROGRAM
@@ -52,10 +51,10 @@ file ( GLOB ANDROID_STRIP_CANDIDATES
 set ( ANDROID_STRIP "${ANDROID_STRIP_CANDIDATES}" )
 
 if ( NOT ANDROID_SDK_PROGRAM )
-    message ( FATAL_ERROR "-- Failed to locate Android SDK, please specify ANDROID_SDK or ANDROID_HOME" )
+    message ( FATAL_ERROR "-- Failed to locate Android SDK, please specify ANDROID_SDK or ANDROID_HOME: ${ANDROID_SDK_PROGRAM}" )
 endif()
 if ( NOT ANDROID_NDK_BUILD_PROGRAM )
-    message ( FATAL_ERROR "-- Failed to locate Android NDK, please specify ANDROID_NDK" )
+    message ( FATAL_ERROR "-- Failed to locate Android NDK, please specify ANDROID_NDK: ${ANDROID_NDK_BUILD_PROGRAM}" )
 endif()
 if( NOT ANDROID_ANT_PROGRAM)
     message ( FATAL_ERROR "-- Failed to locate ANT program" )
