@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# OSX needs this apparently
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
@@ -44,4 +45,6 @@ data_arch="$4"
 data_bid="$(git rev-parse HEAD)"
 data_host="$(hostname)"
 
-curl -v -0 -F file=@"$bdata" "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
+cd "$1"
+
+curl -v -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
