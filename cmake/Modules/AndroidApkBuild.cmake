@@ -118,7 +118,11 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     # Install dependency libraries
     set ( ANDROID_DEPENDENCIES_STRING )
     foreach(lib ${Dependency_Libs})
-        # Problem: generator strings
+        add_custom_command ( TARGET ${Target_Name}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy ${lib} ${ANDROID_LIB_OUTPUT_DIRECTORY}
+            )
+	# Problem: generator strings
         # Solution: regex
         string ( REGEX REPLACE "\\$<TARGET_FILE:([A-Za-z0-9_\-]+)>" "\\1" _LIBNAME_STRIPPED "${lib}" )
 	# Strip off lib* part, to avoid liblib* on Android side
@@ -208,7 +212,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
     else()
-        # Debug mode is quite simple :)
+        # Debug mode is quite simple
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
             COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} debug

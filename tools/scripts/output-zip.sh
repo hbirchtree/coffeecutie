@@ -23,6 +23,12 @@ if [[ -f "$1/build.ninja" ]]; then
     ninja -C "$1" install 1>&2
 elif [[ -f "$1/Makefile" ]]; then
     make -C "$1" install 1>&2
+elif [[ "`uname -s`" == *"CYGWIN"* ]]; then
+    cmake_path=`cygpath -w "$1"`
+    echo "$cmake_path"
+    cmake --build "$cmake_path" --target install
+else
+    cmake --build "$1" --target install
 fi
 
 cd "$1"
@@ -47,4 +53,6 @@ data_host="$(hostname)"
 
 cd "$1"
 
-curl -v -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
+echo curl -v -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
+
+curl -v -0 -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"

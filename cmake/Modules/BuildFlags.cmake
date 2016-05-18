@@ -20,8 +20,8 @@ else()
     #  as well as small warnings for padding and etc.
     # Microsoft makes the worst headers of them all.
     add_definitions (
-        -W4
-        )
+	-W1	
+)
 endif()
 
 # Static builds
