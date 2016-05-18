@@ -23,6 +23,12 @@ if [[ -f "$1/build.ninja" ]]; then
     ninja -C "$1" install 1>&2
 elif [[ -f "$1/Makefile" ]]; then
     make -C "$1" install 1>&2
+elif [[ "`uname -s`" == *"CYGWIN"* ]]; then
+    cmake_path=`cygpath -w "$1"`
+    echo "$cmake_path"
+    cmake --build "$cmake_path" --target install
+else
+    cmake --build "$1" --target install
 fi
 
 cd "$1"
