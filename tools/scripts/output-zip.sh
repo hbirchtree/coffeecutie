@@ -44,4 +44,4 @@ data_arch="$4"
 data_bid="$(git rev-parse HEAD)"
 data_host="$(hostname)"
 
-curl -v -F file=@"$bdata" "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
+curl -v -0 -F file=@"$bdata" "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
