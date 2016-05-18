@@ -64,6 +64,7 @@ struct CProcess
 
         if(child == 0)
         {
+#ifndef COFFEE_APPLE
             child_sig = execvpe(
                         cmd.program.c_str(),
                         (cstring_w const*)cmd.argv.data(),
@@ -71,7 +72,7 @@ struct CProcess
                         (cmd.envp.size()>0)
                         ? (cstring_w const*)cmd.envp.data()
                         : environ);
-
+#endif
             exit(0);
         }
 

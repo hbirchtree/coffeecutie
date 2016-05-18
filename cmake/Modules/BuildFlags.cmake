@@ -8,6 +8,12 @@ if (NOT WIN32)
         #-Werror
         #-Wpadded
         )
+    if(APPLE)
+        include_directories ( "/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1" )
+	link_directories("/usr/local/opt/llvm38/lib/llvm-3.8/lib")
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" )
+        set ( CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS}" )
+    endif()
 else()
     # For Windows, we disable most annoying warnings to save compilation time.
     # These include system headers (which are constantly giving off warnings)
