@@ -47,4 +47,6 @@ data_host="$(hostname)"
 
 cd "$1"
 
-curl -v -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
+echo curl -v -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
+
+curl -v -0 -F file=@`basename "$bdata"` "http://$server_ip:$server_port/bin/upload/data/$data_arch/$data_host/$data_bid"
