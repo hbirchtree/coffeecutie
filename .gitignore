@@ -11,6 +11,9 @@ build
 # JetBrains/CLion
 .idea
 
+# Makefiles
+Makefile
+
 # CMake files
 CMakeCache.txt
 CMakeFiles
