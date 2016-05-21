@@ -42,7 +42,7 @@ set ( CoffeeCore_SRCS
 # Platform-specific code, put it here
 
 # SDL power-management
-if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
+if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
 	)
