@@ -1,6 +1,8 @@
 #include "plat_primary_identify.h"
 
-#if defined(COFFEE_ANDROID)
+/* For Android 32-bit, we need this neat little trick. */
+/* This might apply to win32 and lin32 as well, but they don't exist */
+#if defined(COFFEE_ANDROID) && !defined(__aarch64__)
 #define COFFEE_ARCH_LLP64
 #endif
 
