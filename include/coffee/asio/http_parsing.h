@@ -20,6 +20,8 @@ void SendProperty(CString& req_s, CString const& p, CString const& v)
 template<typename StrmT>
 void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 {
+    ProfContext __m("Generating HTTP request");
+
     CString header;
 
     header += cStringFormat("{0} {1} {2}\r\n",r.reqtype,r.resource,r.version);
@@ -45,15 +47,24 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     header += "\r\n";
 
+    Profiler::Profile("Creating header data");
+
     if(r.payload.size())
         header += r.payload;
 
+    Profiler::Profile("Creating payload data");
+    Profiler::Profile("Dud");
+
     req_s << header;
+
+    Profiler::Profile("Transmitting data");
 }
 
 template<typename StrmT>
 bool ExtractResponse(StrmT& stream, Response* response)
 {
+    ProfContext __m("Extracting HTTP response");
+
     CString tmp;
     CString t1,t2;
 
@@ -89,8 +100,12 @@ bool ExtractResponse(StrmT& stream, Response* response)
         }
     }
 
+    Profiler::Profile("Reading header data");
+
     while(std::getline(stream,tmp)&&tmp!="\r\n")
         response->payload.append(tmp);
+
+    Profiler::Profile("Reading payload");
 
     return true;
 }

@@ -48,6 +48,7 @@ include ( GetPrerequisites )
 # For now, we leave the linking options here for desktop platforms
 macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
     if(ANDROID)
+        message( "Android Main: ${SDL2_ANDROID_MAIN_FILE}" )
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     elseif(WIN32)

@@ -102,6 +102,9 @@ struct SimpleProfilerImpl
         Lock l(*data_access_mutex);
         C_UNUSED(l);
 
+        if(!context_stack)
+            return;
+
         DataPoint p;
         p.tp = DataPoint::Profile;
         p.ts = ts;
@@ -111,11 +114,15 @@ struct SimpleProfilerImpl
 #endif
     }
 
-    STATICINLINE void PushContext(CString const& name)
+    STATICINLINE void PushContext(cstring name)
     {
 #ifndef NDEBUG
+
         Lock l(*data_access_mutex);
         C_UNUSED(l);
+
+        if(!context_stack)
+            return;
 
         context_stack->push_front(name);
 
