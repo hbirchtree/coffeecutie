@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Inputs:
+# 1: build directory containing out/ directory
+# 2: server address
+# 3: server port
+# 4: system string
+
 # OSX needs this apparently
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
