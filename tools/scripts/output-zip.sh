@@ -36,9 +36,9 @@ cd "$1"
 bdata="file.zip"
 
 if [[ "$(uname -s)" == "Linux" ]]; then
-    zip -9 -r - "out" > "$bdata"
+    zip -q -9 -r - "out" > "$bdata"
 else
-    zip -9 -r - "out" > "$bdata"
+    zip -q -9 -r - "out" > "$bdata"
 fi
 
 bdata=`realpath "$bdata"`
