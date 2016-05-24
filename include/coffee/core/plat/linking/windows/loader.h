@@ -16,7 +16,7 @@ struct WindowsFunctionLoader : FunctionLoad_def
 
     struct Library
     {
-        HINSTANCE libraryHandle;
+        HMODULE libraryHandle;
     };
 
 	STATICINLINE
@@ -26,18 +26,20 @@ struct WindowsFunctionLoader : FunctionLoad_def
             Version const* ver = nullptr,
             CString* = nullptr)
     {
-        Library* l = new Library;
 
         CString libname = name;
         libname += LIBRARY_SUFFIX;
 
-        HINSTANCE hnd = LoadLibrary(libname.c_str());
+        HMODULE hnd = LoadLibrary(libname.c_str());
 
-        if(!l->libraryHandle)
+        if(!hnd)
         {
-            delete l;
             return nullptr;
         }
+
+		Library* l = new Library;
+
+		l->libraryHandle = hnd;
 
         return l;
     }
@@ -63,9 +65,12 @@ struct WindowsFunctionLoader : FunctionLoad_def
 		Fun GetFunction(
 				Library* lib,
 				cstring funcname,
-				CString* = nullptr)
+				CString* err = nullptr)
 		{
-			return (Fun)GetProcAddress(lib->libraryHandle,funcname);
+			FARPROC proc = GetProcAddress(lib->libraryHandle, funcname);
+			if (!proc && err)
+				*err = win_strerror(GetLastError());
+			return (Fun)proc;
 		}
 	};
 };

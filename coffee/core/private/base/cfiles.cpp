@@ -90,16 +90,7 @@ bool FileMap(Resource &resc, ResourceAccess acc)
 #ifndef COFFEE_WINDOWS
 		CString error = strerror(err);
 #else
-		LPSTR msgBuf = nullptr;
-		size_t size = FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER
-			| FORMAT_MESSAGE_FROM_SYSTEM
-			| FORMAT_MESSAGE_IGNORE_INSERTS,
-			nullptr, err,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-			(LPSTR)&msgBuf,0,nullptr);
-		CString error(msgBuf, size);
-		LocalFree(msgBuf);
+		CString error = win_strerror(err);
 #endif
         cWarning("Failed to map file {2}:{0}: {1}",err,error,resc.resource());
         resc.size = 0;
