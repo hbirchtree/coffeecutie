@@ -8,6 +8,29 @@
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
 #define C_MOVE_CONSTRUCTOR(ctype) ctype(ctype&& x) = default; ctype& operator=(ctype&& a) = default
 
+/* Library export */
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+
+#if !defined(COFFEE_NO_EXPORT)
+#define COFFAPI extern "C" __attribute__((visibility("default")))
+#else
+#define COFFAPI extern "C"
+#endif
+
+#elif defined(COFFEE_MSVCXX)
+
+#if !defined(COFFEE_NO_EXPORT)
+#define COFFAPI extern "C" __declspec(dllexport)
+#else
+#define COFFAPI extern "C"
+#endif
+
+#else
+
+#define COFFAPI extern "C"
+
+#endif
+
 /* Force packing, compiler flags */
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_FORCE_PACKING __attribute__((packed))

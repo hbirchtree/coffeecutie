@@ -22,11 +22,7 @@ public:
     }
 };
 
-extern "C" {
-
-TestClass* CoffeeLoader();
-
-}
+COFFAPI TestClass* CoffeeLoader();
 
 TestClass* CoffeeLoader(){
     return new TestImplementation();
