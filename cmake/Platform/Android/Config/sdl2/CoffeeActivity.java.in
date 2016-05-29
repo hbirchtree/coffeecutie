@@ -21,7 +21,6 @@ import android.graphics.*;
 import android.graphics.drawable.Drawable;
 import android.media.*;
 import android.hardware.*;
-import android.content.pm.ActivityInfo;
 
 public class CoffeeActivity extends SDLActivity
 {
@@ -29,7 +28,5 @@ public class CoffeeActivity extends SDLActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-
-//        setSystemUiVisbility(View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 }

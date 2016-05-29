@@ -77,6 +77,9 @@ endif()
 # Android requires SDL for asset functionality
 # GLES uses SDL for function loading
 if(ANDROID)
+    find_package(AndroidGlue)
+    include_directories (${ANDROID_GLUE_INCLUDE_DIR})
+
     find_package(SDL2 REQUIRED)
     include_directories(
         ${SDL2_INCLUDE_DIR}

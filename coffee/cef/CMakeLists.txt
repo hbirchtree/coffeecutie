@@ -1,7 +1,5 @@
 find_package ( CEF REQUIRED )
 
-message ("${CEF_INCLUDE_DIR} ${CEF_LIBRARIES}")
-
 include_directories ( ${CEF_INCLUDE_DIR} )
 
 coffee_add_library( CoffeeCEF private/ccef.cpp )

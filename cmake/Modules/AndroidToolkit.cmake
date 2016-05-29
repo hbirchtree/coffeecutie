@@ -1,14 +1,6 @@
-set ( ANDROID_NDK_S NOTFOUND CACHE PATH "Android NDK path" )
-set ( ANDROID_SDK_S NOTFOUND CACHE PATH "Android SDK path" )
+find_package ( AndroidSDK )
 
-if(DEFINED ENV{ANDROID_NDK})
-    set ( ANDROID_NDK_S "$ENV{ANDROID_NDK}" )
-endif()
-if(DEFINED ENV{ANDROID_SDK})
-    set ( ANDROID_SDK_S "$ENV{ANDROID_SDK}" )
-endif()
-
-message ("Android paths: ${ANDROID_NDK_S} ${ANDROID_SDK_S}")
+message ("Android paths: NDK=${ANDROID_NDK}, SDK=${ANDROID_SDK}")
 
 set ( ANDROID_ANT_PROGRAM NOTFOUND CACHE FILEPATH "ANT build program" )
 set ( ANDROID_SDK_PROGRAM NOTFOUND CACHE FILEPATH "Android SDK android" )
@@ -33,22 +25,19 @@ find_program ( ANDROID_SDK_PROGRAM
     android
 
     PATHS
-    ${ANDROID_SDK_S}/tools
+    $ENV{ANDROID_SDK}/tools
     $ENV{ANDROID_HOME}/tools
     )
 
 find_program ( ANDROID_NDK_BUILD_PROGRAM
     NAMES
-    ndk-build
+    ndk-build${TOOLS_OS_SUFFIX}
 
     PATHS
-    ${ANDROID_NDK_S}
+    ${ANDROID_NDK_SEARCH_PATHS}
     )
 
-file ( GLOB ANDROID_STRIP_CANDIDATES
-    "${ANDROID_NDK_S}/toolchains/${ANDROID_TOOLCHAIN_NAME}/prebuilt/linux-x86_64/bin/*-strip")
-
-set ( ANDROID_STRIP "${ANDROID_STRIP_CANDIDATES}" )
+set ( ANDROID_STRIP "${ANDROID_TOOLCHAIN_ROOT}/bin/${ANDROID_TOOLCHAIN_MACHINE_NAME}-strip${TOOL_OS_SUFFIX}" )
 
 if ( NOT ANDROID_SDK_PROGRAM )
     message ( FATAL_ERROR "-- Failed to locate Android SDK, please specify ANDROID_SDK or ANDROID_HOME: ${ANDROID_SDK_PROGRAM}" )
@@ -61,3 +50,11 @@ if( NOT ANDROID_ANT_PROGRAM)
 endif()
 
 message ( "Android strip program: ${ANDROID_STRIP}" )
+
+mark_as_advanced (
+    ANDROID_NDK_BUILD_PROGRAM
+    ANDROID_ANT_PROGRAM
+    ANDROID_SDK_PROGRAM
+    ANDROID_STRIP
+    ANDROID_ZIPALIGN
+    )

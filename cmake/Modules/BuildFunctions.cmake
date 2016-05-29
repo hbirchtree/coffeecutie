@@ -1,4 +1,6 @@
 if(ANDROID)
+    find_package ( AndroidGlue )
+    find_package ( CfAndroidMain )
     include ( AndroidToolkit )
     include ( AndroidApkBuild )
     find_package(SDL2main REQUIRED)
@@ -49,7 +51,16 @@ include ( GetPrerequisites )
 macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
     if(ANDROID)
         message( "Android Main: ${SDL2_ANDROID_MAIN_FILE}" )
-        add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
+        if(ANDROID_USE_SDL2_LAUNCH)
+            add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
+        else()
+            message ("Android sources: ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}")
+            add_library(${TARGET} SHARED ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN} )
+
+            target_link_libraries ( ${TARGET}
+                AndroidCore
+                )
+        endif()
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     elseif(WIN32)
         add_executable(${TARGET} ${SOURCES} ${CMAKE_SOURCE_DIR}/desktop/windows/winresources.rc )
@@ -58,10 +69,10 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             VERSION ${COFFEE_BUILD_STRING}
             SOVERSION 1
             )
-		install(
-			FILES ${BUNDLE_LIBS}
-			DESTINATION bin
-			)
+        install(
+            FILES ${BUNDLE_LIBS}
+            DESTINATION bin
+            )
     elseif(APPLE)
         set ( OSX_ICON "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" )
 
@@ -98,6 +109,7 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
     else()
         add_executable(${TARGET} ${SOURCES})
     endif()
+
     target_enable_cxx11(${TARGET})
 
     target_link_libraries ( ${TARGET}

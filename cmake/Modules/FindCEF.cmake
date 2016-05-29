@@ -47,7 +47,6 @@ find_library ( CEF_LIBRARY_WRAPPER
 
     PATHS
     ${CEF_ROOT_DIR}/libcef_dll
-
     )
 
 if( CEF_LIBRARY_DEBUG AND CMAKE_BUILD_TYPE EQUAL Debug )

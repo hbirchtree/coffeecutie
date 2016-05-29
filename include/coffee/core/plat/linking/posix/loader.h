@@ -14,7 +14,7 @@ namespace Coffee{
 namespace Library{
 namespace Linux{
 
-struct LinuxFunctionLoader : FunctionLoad_def
+struct PosixFunctionLoader : FunctionLoad_def
 {
     STATICINLINE
     cstring LinkError()
@@ -99,9 +99,9 @@ struct LinuxFunctionLoader : FunctionLoad_def
     };
 };
 
-struct LinuxObjectLoader : ObjectLoader_def<LinuxFunctionLoader>
+struct PosixObjectLoader : ObjectLoader_def<PosixFunctionLoader>
 {
-    using Loader = LinuxFunctionLoader;
+    using Loader = PosixFunctionLoader;
 
     template<typename Obj,typename... Args> STATICINLINE
     ObjConstructor<Obj> GetConstructor(
@@ -115,8 +115,8 @@ struct LinuxObjectLoader : ObjectLoader_def<LinuxFunctionLoader>
 
 }
 
-using FunctionLoader = Linux::LinuxFunctionLoader;
-using ObjectLoader = Linux::LinuxObjectLoader;
+using FunctionLoader = Linux::PosixFunctionLoader;
+using ObjectLoader = Linux::PosixObjectLoader;
 
 }
 }
