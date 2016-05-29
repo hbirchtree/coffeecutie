@@ -6,7 +6,6 @@
 
 #ifdef COFFEE_ANDROID
 #include <SDL2/SDL.h>
-struct android_app;
 #endif
 
 int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);
