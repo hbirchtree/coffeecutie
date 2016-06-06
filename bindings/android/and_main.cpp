@@ -1,3 +1,5 @@
+#include <coffee/android/android_main.h>
+
 #include <coffee/core/coffee.h>
 #include <coffee/core/coffee_version.h>
 
@@ -8,6 +10,18 @@
 #include <android_native_app_glue.h>
 
 using namespace Coffee;
+
+struct android_app* coffee_app = nullptr;
+
+COFFAPI CString Coffee_GetDataPath()
+{
+    return coffee_app->activity->internalDataPath;
+}
+
+COFFAPI CString Coffee_GetExternalDataPath()
+{
+    return coffee_app->activity->externalDataPath;
+}
 
 extern "C" __attribute__((visibility("default"))) void CoffeeActivity_onCreate(
         ANativeActivity* activity,
@@ -31,11 +45,8 @@ void android_main(struct android_app* state)
     /* According to docs, something something glue check */
     app_dummy();
 
-    cDebug("User data pointer: {0}",(const void* const&)state->userData);
+    coffee_app = state;
 
-    state->userData = state;
-
-    cDebug("Asset manager: {0}",(const void* const&)state->activity->assetManager);
     cDebug("Android API version: {0}",state->activity->sdkVersion);
 
     cDebug("Android data directory: {0}",state->activity->internalDataPath);
@@ -53,6 +64,9 @@ void android_main(struct android_app* state)
         cDebug("Asset text: {0}",data);
 
         AAsset_close(test_ass);
+
+        if(!AAssetManager_open(state->activity->assetManager,"dir/file.tes",AASSET_MODE_BUFFER))
+            cDebug("Ass expected");
     }else{
         cDebug("Failed to open test_ass :(");
     }

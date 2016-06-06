@@ -4,7 +4,7 @@
 #include "../../types/tdef/fntypes.h"
 #include "../../coffee_version.h"
 
-#ifdef COFFEE_ANDROID
+#if defined(COFFEE_ANDROID) && !defined(ANDROID_DONT_USE_SDL2)
 #include <SDL2/SDL.h>
 #endif
 

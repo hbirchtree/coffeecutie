@@ -3,7 +3,10 @@ if(ANDROID)
     find_package ( CfAndroidMain )
     include ( AndroidToolkit )
     include ( AndroidApkBuild )
-    find_package(SDL2main REQUIRED)
+
+    if(ANDROID_USE_SDL2_LAUNCH)
+        find_package(SDL2main REQUIRED)
+    endif()
 endif()
 
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
