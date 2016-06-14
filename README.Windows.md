@@ -17,3 +17,10 @@ The workflow is as such:
 
 
 **NB**: Note that Windows is not fully supported or tested at all times.
+
+# Platform implementation
+Mostly uses Win32 code, because it is "simple" enough to do.
+
+UWP
+---
+No.
