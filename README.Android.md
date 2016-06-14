@@ -1,3 +1,7 @@
+# Port details
+Based on SDL2 Android examples originally, uses it as a base for working at all. Display etc. is mostly handled by SDL2.
+A newer, mostly-native solution will be added in the future in order to boost performance and decrease startup time. Will also be more feature-complete.
+
 # How to operate the Docker container
  1. Build the container (found in tools/Docker/android )
  2. When finished, execute:
