@@ -247,7 +247,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
     if (!file)
     {
-        cDebug("Failed to save timing profile");
+        cWarning("Failed to save timing profile");
         return;
     }
 

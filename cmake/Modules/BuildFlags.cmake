@@ -78,11 +78,13 @@ endif()
 # GLES uses SDL for function loading
 if(ANDROID)
     if(ANDROID_USE_SDL2_LAUNCH)
+        message("-- Building Android project with SDL2 bindings")
         find_package(SDL2 REQUIRED)
         include_directories(
             ${SDL2_INCLUDE_DIR}
             ${SDL2_INCLUDE_DIR}/SDL2)
     else()
+        message("-- Building Android project with NDK bindings")
         add_definitions("-DANDROID_DONT_USE_SDL2")
         find_package(AndroidGlue)
         include_directories (${ANDROID_GLUE_INCLUDE_DIR})

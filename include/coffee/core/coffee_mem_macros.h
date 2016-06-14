@@ -13,8 +13,10 @@
 
 #if !defined(COFFEE_NO_EXPORT)
 #define COFFAPI extern "C" __attribute__((visibility("default")))
+#define COFFAPI_PP extern __attribute__((visibility("default")))
 #else
 #define COFFAPI extern "C"
+#define COFFAPI_PP extern
 #endif
 
 #elif defined(COFFEE_MSVCXX)

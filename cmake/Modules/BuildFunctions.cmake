@@ -1,5 +1,4 @@
 if(ANDROID)
-    find_package ( AndroidGlue )
     find_package ( CfAndroidMain )
     include ( AndroidToolkit )
     include ( AndroidApkBuild )
@@ -58,7 +57,7 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
         else()
             message ("Android sources: ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}")
-            add_library(${TARGET} SHARED ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN} )
+            add_library(${TARGET} SHARED ${SOURCES} )
 
             target_link_libraries ( ${TARGET}
                 AndroidCore

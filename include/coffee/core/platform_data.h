@@ -1,12 +1,40 @@
 #pragma once
 
 #include "types/tdef/integertypes.h"
+#include "types/tdef/stltypes.h"
 #include "coffee_mem_macros.h"
 #include "plat/plat_primary_identify.h"
+#include "plat/plat_arch_identify.h"
+#include "plat/plat_environment.h"
 
 namespace Coffee{
 struct PlatformData
 {
+    STATICINLINE
+    /*!
+     * \brief Displayable string of system and its version
+     */
+    CString SystemDisplayString()
+    {
+        const constexpr cstring _fmt = "%s %s %u-bit (%s ";
+        CString sys_ver = SysInfo::GetSystemVersion();
+        int len = snprintf(nullptr,0,_fmt,
+                           C_SYSTEM_STRING,
+                           sys_ver.c_str(),
+                           C_SYSTEM_BITNESS,
+                           COFFEE_ARCH);
+        CString base;
+        base.resize(len);
+        snprintf(&base[0],base.size(),_fmt,
+                 C_SYSTEM_STRING,
+                 sys_ver.c_str(),
+                 C_SYSTEM_BITNESS,
+                 COFFEE_ARCH);
+        base.resize(base.find('\0'));
+        base.append(")");
+        return base;
+    }
+
     STATICINLINE
     /*!
      * \brief Defined on mobile devices, phones and tablets mostly

@@ -42,7 +42,7 @@ set ( CoffeeCore_SRCS
 # Platform-specific code, put it here
 
 # SDL power-management
-if(NOT ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
+if( ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
 	set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
@@ -52,9 +52,10 @@ endif()
 # Android-specific code
 if(ANDROID)
     list ( APPEND CoffeeCore_SRCS
-	private/plat/file/android/file.cpp
-	private/plat/environment/android/environment.cpp
-	)
+            ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
+            private/plat/file/android/file.cpp
+            private/plat/environment/android/environment.cpp
+    )
 endif()
 
 # Linux-specific code
@@ -126,7 +127,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
 endif()
 
-if( SDL_POWER_PLUGIN_ENABLED )
+if( SDL_POWER_PLUGIN_ENABLED OR ANDROID )
     # We use SDL2 for some platform functionality, like power info
     # On Android, it is also used to read assets and
     #  acquiring device info.
@@ -145,6 +146,7 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
+        # TODO: Make GLES3 optional
         GLESv1_CM GLESv2 GLESv3
         )
 endif()

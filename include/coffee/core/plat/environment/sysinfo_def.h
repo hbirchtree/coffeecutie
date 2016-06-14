@@ -42,6 +42,16 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
+     * \brief Version of the system we run on
+     * \return
+     */
+    CString GetSystemVersion()
+    {
+        return "?";
+    }
+
+    STATICINLINE
+    /*!
      * \brief Get string representing system architecture (eg. win64, lin64, mac64, ios64, and32)
      * \return
      */
@@ -257,7 +267,8 @@ struct PowerInfoDef
 {
     STATICINLINE
     /*!
-     * \brief If device is connected to wall power
+     * \brief If device is connected to wall power, often same as charging status,
+     *   but primarily refers to having little limitation to power usage.
      * \return
      */
     bool IsPowered()
