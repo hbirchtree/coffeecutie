@@ -1,4 +1,4 @@
-# Give me the details
+# Building on Linux
 Ubuntu packages (for core functionality):
 
         # Core functionality
@@ -9,3 +9,5 @@ Ubuntu packages (for core functionality):
         
         # Some Kinect 2-specific can be used with:
         apt install libpcl-dev
+
+Equivalent packages will be needed for Fedora and similar.
