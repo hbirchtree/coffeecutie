@@ -9,9 +9,7 @@ RUN apt-get -y install software-properties-common
 
 RUN bash -c "add-apt-repository \"deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe multiverse\""
 
-RUN apt-get update
-
-RUN apt-get -y install \
+RUN apt-get update && apt-get -y install \
 	git \
 	build-essential \
 	cmake \

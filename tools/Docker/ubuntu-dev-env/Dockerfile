@@ -6,35 +6,25 @@
 FROM ubuntu:xenial
 MAINTAINER H. Birch Tree
 
-RUN apt-get -qy update
-
-# We use a tier-based installation based. If one step fails, it will still save some of the others.
-# It will also be less bad if you cancel one of the installations mid-way
-
-
-# Base tools
-RUN apt-get -qy install \
+RUN apt-get -qy update && apt-get -qy install \
         git nano wget \
         cmake ninja-build build-essential \
         clang-3.8 \
         doxygen swig3.0 \
         libsdl2-dev libopenal-dev libssl-dev libunwind-dev \
-        libupower-glib-dev
-
-# FFMPEG for media playback/capture
-RUN apt-get -qy install \
         libavcodec-dev libavdevice-dev \
         libavformat-dev libswresample-dev \
-        libswscale-dev
-
-# Qt libraries
-RUN apt-get -qy install qt5-default
-
-# PCL for point cloud data processing
-#RUN apt-get -qy install libpcl-dev
-
-
-RUN apt-get -qy install qtcreator numix-gtk-theme
+        libswscale-dev \
+	qt5-default \
+	qtcreator numix-gtk-theme \
+	libxcb-keysyms1-dev libxcb-image0-dev \
+	libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync0-dev libxcb-xfixes0-dev \
+	libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev \
+	libfontconfig1-dev libfreetype6-dev libx11-dev libxext-dev libxfixes-dev \
+	libxi-dev libxrender-dev libxcb1-dev libx11-xcb-dev libxcb-glx0-dev x11vnc \
+	xauth build-essential mesa-common-dev libglu1-mesa-dev libxkbcommon-dev \
+	libxcb-xkb-dev libxslt1-dev libgstreamer-plugins-base0.10-dev \
+	mesa-utils
 
 #RUN gsettings set org.gnome.desktop.interface gtk-theme "Numix"
 
@@ -48,16 +38,6 @@ RUN export uid=1000 gid=1000 && \
     echo "coffee ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/coffee && \
     chmod 0440 /etc/sudoers.d/coffee && \
     chown ${uid}:${gid} -R /home/coffee
-
-RUN apt-get -qy install mesa-utils
-
-RUN apt-get update && apt-get install -y libxcb-keysyms1-dev libxcb-image0-dev \
-    libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync0-dev libxcb-xfixes0-dev \
-    libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev \
-    libfontconfig1-dev libfreetype6-dev libx11-dev libxext-dev libxfixes-dev \
-    libxi-dev libxrender-dev libxcb1-dev libx11-xcb-dev libxcb-glx0-dev x11vnc \
-    xauth build-essential mesa-common-dev libglu1-mesa-dev libxkbcommon-dev \
-    libxcb-xkb-dev libxslt1-dev libgstreamer-plugins-base0.10-dev wget
 
 WORKDIR /home/coffee
 USER coffee

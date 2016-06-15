@@ -13,28 +13,16 @@ RUN apt-get -y install software-properties-common
 
 RUN bash -c "add-apt-repository \"deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) universe multiverse\""
 
-RUN apt-get -qy update
-
-# We use a tier-based installation based. If one step fails, it will still save some of the others.
-# It will also be less bad if you cancel one of the installations mid-way
-
-# Base tools
-RUN apt-get -qy install \
+RUN apt-get -qy update && apt-get -qy install \
         git nano wget \
         cmake ninja-build build-essential \
         clang-3.8 \
         doxygen swig3.0:i386 \
         libsdl2-dev libopenal-dev:i386 libssl-dev:i386 libunwind-dev:i386 \
-        libupower-glib-dev:i386
-
-# FFMPEG for media playback/capture
-RUN apt-get -qy install \
         libavcodec-dev:i386 libavdevice-dev:i386 \
         libavformat-dev:i386 libswresample-dev:i386 \
-        libswscale-dev:i386
-
-# Qt libraries
-RUN apt-get -qy install qt5-default:i386
+        libswscale-dev:i386 \
+	qt5-default:i386
 
 # PCL for point cloud data processing
 #RUN apt-get -qy install libpcl-dev:i386
