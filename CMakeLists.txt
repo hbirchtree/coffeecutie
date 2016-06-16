@@ -1,5 +1,5 @@
 project( Coffee C CXX )
-cmake_minimum_required( VERSION 3.0 )
+cmake_minimum_required( VERSION 2.8.11 )
 
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
