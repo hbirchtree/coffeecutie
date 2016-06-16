@@ -11,9 +11,11 @@ endif()
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
-    if(ANDROID OR (CMAKE_MAJOR_VERSION >= 3 AND CMAKE_MINOR_VERSION >= 1))
-        # Android's compiler doesn't support target_compile_features :(
-        set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+    if(ANDROID)
+        if(CMAKE_MAJOR_VERSION < 3 OR CMAKE_MINOR_VERSION < 1)
+            # Android's compiler doesn't support target_compile_features :(
+            set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+        endif()
     elseif(APPLE)
         # To get around old Clang versions
         set(CMAKE_CXX_FLAGS "-stdlib=libc++ -std=c++11 ${CMAKE_CXX_FLAGS}")
