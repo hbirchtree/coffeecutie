@@ -11,7 +11,7 @@ endif()
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
-    if(ANDROID OR CMAKE_MAJOR_VERSION VERSION_LESS 3 AND CMAKE_MINOR_VERSION VERSION_LESS 1)
+    if(ANDROID OR "${CMAKE_MAJOR_VERSION}" VERSION_LESS 3 AND "${CMAKE_MINOR_VERSION}" VERSION_LESS 1)
         # Android's compiler doesn't support target_compile_features :(
         set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
     elseif(APPLE)
