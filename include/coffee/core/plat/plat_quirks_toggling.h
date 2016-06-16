@@ -8,7 +8,6 @@
 
 /* Unwind and terminal control signals are desktop-only */
 #if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
-#define COFFEE_USE_UNWIND
 #define COFFEE_USE_TERMINAL_CTL
 #endif
 

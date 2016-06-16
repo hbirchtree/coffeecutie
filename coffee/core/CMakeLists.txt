@@ -120,11 +120,14 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this library
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
-    find_package(Unwind QUIET)
-    list ( APPEND CORE_INCLUDE_DIR
-        ${LIBUNWIND_INCLUDE_DIR}
-        )
-    list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
+    find_package(Unwind QUIET )
+    if (LIBUNWIND_FOUND)
+        add_definitions ( -DCOFFEE_USE_UNWIND )
+        list ( APPEND CORE_INCLUDE_DIR
+            ${LIBUNWIND_INCLUDE_DIR}
+            )
+        list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
+    endif()
 endif()
 
 if( SDL_POWER_PLUGIN_ENABLED OR ANDROID )

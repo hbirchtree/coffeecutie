@@ -96,8 +96,11 @@ struct FileFunDef
     static bool Exists(cstring);
     static szptr Size(cstring);
 
-    static bool Touch(NodeType,cstring)
+    static bool Touch(NodeType, cstring){return false;}
+
+    static bool Ln(cstring,cstring)
     {return false;}
+
     static bool Rm(cstring)
     {return false;}
 
@@ -109,8 +112,10 @@ struct DirFunDef
 {
     typedef struct DirItem
     {
-        FileFunDef::NodeType type;
+        using Type = FileFunDef::NodeType;
+
         CString name;
+        Type type;
     } DirItem_t;
 
     using DirList = Vector<DirItem_t>;
@@ -118,7 +123,7 @@ struct DirFunDef
     static bool MkDir(cstring dname, bool recurse){return false;}
     static bool RmDir(cstring dname){return false;}
 
-    static bool Ls(cstring dname,DirList*){return false;}
+    static bool Ls(cstring dname,DirList&){return false;}
 };
 
 }

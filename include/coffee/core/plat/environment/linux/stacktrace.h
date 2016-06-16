@@ -30,10 +30,14 @@ struct LinuxStacktracer : StacktracerDef
 #endif
         return "";
     }
+#if defined(COFFEE_USE_UNWIND)
     STATICINLINE Stacktrace GetRawStackframes(uint32 start = 0, int32 length = 1)
+#else
+    STATICINLINE Stacktrace GetRawStackframes(uint32 = 0, int32 = 1)
+#endif
     {
         Stacktrace t;
-
+#if defined(COFFEE_USE_UNWIND)
         if(!unwind_context)
         {
             unwind_context = new unw_context_t;
@@ -67,13 +71,16 @@ struct LinuxStacktracer : StacktracerDef
             if(length!=(-1) && depth==length)
                 break;
         }
-
+#endif
         return t;
     }
 
     STATICINLINE CString GetStackframeName(uint32 depth = 0)
     {
-        return CString(GetRawStackframes(depth,1)[0]);
+        Stacktrace trace = GetRawStackframes(depth,1);
+        if(!trace.size())
+            return "???";
+        return CString(trace[0]);
     }
     STATICINLINE Stacktrace GetFullStack(uint32 start = 0, int32 length = -1)
     {

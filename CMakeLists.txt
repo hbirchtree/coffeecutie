@@ -1,5 +1,5 @@
 project( Coffee C CXX )
-cmake_minimum_required( VERSION 3.1 )
+cmake_minimum_required( VERSION 3.0 )
 
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
@@ -9,10 +9,6 @@ set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
 message ("-- Building as: ${CMAKE_BUILD_TYPE}")
-
-if(APPLE)
-SET(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-endif()
 
 # Make it verbose
 set ( CMAKE_VERBOSE_MAKEFILE on )

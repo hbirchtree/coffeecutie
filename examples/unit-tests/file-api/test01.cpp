@@ -5,22 +5,26 @@ using namespace Coffee;
 
 const cstring testfile = "fileapi_testfile.txt";
 
+using Resource = CResources::Resource;
+using File = CResources::FileFun;
+
 bool filedel_test()
 {
-    if(CResources::FileFun::Exists(testfile))
+    if(File::Exists(testfile))
     {
         cDebug("Unclean environment! Remove file: {0}",testfile);
         return false;
     }
-    CResources::FileFun::Touch(CResources::FileFun::NodeType::File,testfile);
-
-    if(!CResources::FileFun::Exists(testfile))
+    if(!File::Touch(File::File,testfile))
         return false;
 
-    if(!CResources::FileFun::Rm(testfile))
+    if(!File::Exists(testfile))
         return false;
 
-    return !CResources::FileFun::Exists(testfile);
+    if(!File::Rm(testfile))
+        return false;
+
+    return !File::Exists(testfile);
 }
 
 const cstring writetest = "writetest.txt";
@@ -30,9 +34,9 @@ byte_t write_data[100] = {
 
 bool filewrite_test()
 {
-    CResources::FileFun::Rm(writetest);
+    File::Rm(writetest);
 
-    CResources::Resource rsc(writetest);
+    Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
     return CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
@@ -43,9 +47,9 @@ bool fileread_test()
     CResources::Resource rsc(writetest);
     CResources::FilePull(rsc);
 	
-	cDebug("\nTheirs:\n{1}\nMine:\n{0}",
-		StrUtil::hexdump(write_data, sizeof(write_data), true, 10),
-		StrUtil::hexdump(rsc.data, rsc.size, true, 10));
+    cDebug("\nTheirs:\n{1}\nMine:\n{0}",
+        StrUtil::hexdump(write_data, sizeof(write_data), true, 10),
+        StrUtil::hexdump(rsc.data, rsc.size, true, 10));
 
     if(sizeof(write_data) != rsc.size)
     {
