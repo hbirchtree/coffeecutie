@@ -11,7 +11,7 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   allowPipelineStart(true)
   showTotalBuildTime(true)
   pipelines {
-    component("${PLATFORM_NAME}",'1.0.debug-build')
+    component("${PLATFORM_NAME}","1.0.${PLATFORM_NAME}-debug-build")
   }
 }
 
@@ -66,7 +66,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
 }
 
-job('1.1.${PLATFORM_NAME}-debug-test') {
+job("1.1.${PLATFORM_NAME}-debug-test") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug testing')
@@ -118,7 +118,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
   }
 }
 
-job('2.1.${PLATFORM_NAME}-release-test') {
+job("2.1.${PLATFORM_NAME}-release-test") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release testing')
