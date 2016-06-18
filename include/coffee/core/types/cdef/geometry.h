@@ -292,51 +292,51 @@ using CSize64 = _cbasic_size_2d<uint64>;
 /*!
  * \brief Size for inaccurate measurements
  */
-typedef _cbasic_size_2d<scalar> CSizeF;
+using CSizeF = _cbasic_size_2d<scalar>;
 /*!
  * \brief Size of accurate measurements
  */
-typedef _cbasic_size_2d<bigscalar> CSizeD;
+using CSizeD = _cbasic_size_2d<bigscalar>;
 
 /*!
  * \brief Used for window rectangles
  */
-typedef _cbasic_rect<int32> CRect;
+using CRect = _cbasic_rect<int32>;
 
-typedef _cbasic_rect<int64> CRect64;
+using CRect64 = _cbasic_rect<int64>;
 /*!
  * \brief Used for orthographic view rectangle
  */
-typedef _cbasic_rect<scalar> CRectF;
+using CRectF = _cbasic_rect<scalar>;
 /*!
  * \brief Used for high-accuracy orthographic view rectangle
  */
-typedef _cbasic_rect<bigscalar> CRectD;
+using CRectD = _cbasic_rect<bigscalar>;
 
 /*!
  * \brief 32-bit integer point
  */
-typedef _cbasic_point<int32> CPoint;
+using CPoint = _cbasic_point<int32>;
 
-typedef _cbasic_point_3d<int32> CPoint3;
+using CPoint3 =  _cbasic_point_3d<int32>;
 /*!
  * \brief Single-precision floating-point point
  */
-typedef _cbasic_point<scalar> CPointF;
+using CPointF = _cbasic_point<scalar>;
 /*!
  * \brief Double-precision floating-point point
  */
-typedef _cbasic_point<bigscalar> CPointD;
+using CPointD = _cbasic_point<bigscalar>;
 
 /*!
  * \brief Standard clipping type
  */
-typedef _cbasic_zfield<scalar> ZField;
+using ZField = _cbasic_zfield<scalar>;
 
-typedef _cbasic_zfield<bigscalar> ZField64;
+using ZField64 = _cbasic_zfield<bigscalar>;
 
-typedef _cbasic_fov<scalar> FovDetail;
+using FovDetail = _cbasic_fov<scalar>;
 
-typedef _cbasic_boundingbox<scalar> BoundBox;
+using BoundBox = _cbasic_boundingbox<scalar>;
 
 }

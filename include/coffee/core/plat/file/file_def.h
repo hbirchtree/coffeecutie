@@ -110,20 +110,20 @@ struct FileFunDef
 
 struct DirFunDef
 {
-    typedef struct DirItem
+    struct DirItem_t
     {
         using Type = FileFunDef::NodeType;
 
         CString name;
         Type type;
-    } DirItem_t;
+    };
 
     using DirList = Vector<DirItem_t>;
 
-    static bool MkDir(cstring dname, bool recurse){return false;}
-    static bool RmDir(cstring dname){return false;}
+    static bool MkDir(cstring, bool){return false;}
+    static bool RmDir(cstring){return false;}
 
-    static bool Ls(cstring dname,DirList&){return false;}
+    static bool Ls(cstring,DirList&){return false;}
 };
 
 }

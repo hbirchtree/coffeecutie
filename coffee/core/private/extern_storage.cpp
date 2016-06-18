@@ -28,6 +28,12 @@ Timestamp* Profiler::start_time = nullptr;
 Profiler::ThreadListing* Profiler::threadnames = nullptr;
 std::atomic_int *Profiler::global_init = nullptr;
 
+#ifdef NDEBUG
+bool Profiler::Enabled = false;
+#else
+bool Profiler::Enabled = true;
+#endif
+
 #if defined(COFFEE_USE_TERMINAL_CTL)
 bool UnixCmd::UnixTerm::alternate_buffer = false;
 #endif

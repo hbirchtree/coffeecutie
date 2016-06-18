@@ -122,7 +122,7 @@ OVRImpl::RModel *OVRImpl::GetRenderModel(OVRImpl::Device *dev)
 {
     C_UNUSED(dev);
 
-
+    return nullptr;
 }
 
 }

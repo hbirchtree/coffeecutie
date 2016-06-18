@@ -74,23 +74,6 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         }
     }
 
-    /* Store list of threads we've bumped into or labeled */
-    {
-        XML::Element* threaddata = doc.NewElement("threads");
-        root->InsertEndChild(threaddata);
-
-        XML::Element* e;
-        for(Profiler::ThreadItem const& p : *Profiler::threadnames)
-        {
-            e = doc.NewElement("thread");
-            threaddata->InsertEndChild(e);
-
-            CString id = StrUtil::pointerify(p.first->hash());
-            e->SetAttribute("id",id.c_str());
-            e->SetAttribute("name",p.second.c_str());
-        }
-    }
-
     /* Store data about runtime */
     {
         XML::Element* rundata = doc.NewElement("runtime");
@@ -163,83 +146,103 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
     }
 
-    /* Store datapoints */
-    {
-        XML::Element* curr_r = doc.NewElement("datapoints");
-        root->InsertEndChild(curr_r);
-
-        XML::Element* curr = curr_r;
-
-        /* Store information about runtime */
-        CString st = Convert::uinttostring(*Profiler::start_time);
-
-        /* Create a nice date string */
-        CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
-        date = cStringFormat("{0}+{1}",date,Time::Microsecond());
-
-        curr_r->SetAttribute("start1",st.c_str());
-        curr_r->SetAttribute("start2",date.c_str());
-
-        /* Some parsing information */
-        LinkList<Timestamp> base;
-        LinkList<Timestamp> lt;
-
-        base.push_front(*Profiler::start_time);
-		lt.push_front(0);
-
-        Profiler::datapoints->sort();
-
-        /* Finally, smash data points into XML format */
-        for(Profiler::DataPoint const& p : *Profiler::datapoints)
+    /* Only runs in release mode! */
+    if(Profiler::Enabled){
+        /* Store list of threads we've bumped into or labeled */
         {
-            switch(p.tp)
+            XML::Element* threaddata = doc.NewElement("threads");
+            root->InsertEndChild(threaddata);
+
+            XML::Element* e;
+            for(Profiler::ThreadItem const& p : *Profiler::threadnames)
             {
-            case Profiler::DataPoint::Profile:
+                e = doc.NewElement("thread");
+                threaddata->InsertEndChild(e);
+
+                CString id = StrUtil::pointerify(p.first->hash());
+                e->SetAttribute("id",id.c_str());
+                e->SetAttribute("name",p.second.c_str());
+            }
+        }
+
+        /* Store datapoints */
+        {
+            XML::Element* curr_r = doc.NewElement("datapoints");
+            root->InsertEndChild(curr_r);
+
+            XML::Element* curr = curr_r;
+
+            /* Store information about runtime */
+            CString st = Convert::uinttostring(*Profiler::start_time);
+
+            /* Create a nice date string */
+            CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
+            date = cStringFormat("{0}+{1}",date,Time::Microsecond());
+
+            curr_r->SetAttribute("start1",st.c_str());
+            curr_r->SetAttribute("start2",date.c_str());
+
+            /* Some parsing information */
+            LinkList<Timestamp> base;
+            LinkList<Timestamp> lt;
+
+            base.push_front(*Profiler::start_time);
+            lt.push_front(0);
+
+            Profiler::datapoints->sort();
+
+            /* Finally, smash data points into XML format */
+            for(Profiler::DataPoint const& p : *Profiler::datapoints)
             {
-                uint64 ts = p.ts-base.front()- lt.front();
+                switch(p.tp)
+                {
+                case Profiler::DataPoint::Profile:
+                {
+                    uint64 ts = p.ts-base.front()- lt.front();
 
-                XML::Element* n = doc.NewElement("dpoint");
+                    XML::Element* n = doc.NewElement("dpoint");
 
-                CString tsf = Convert::uinttostring(ts);
-                CString tid = StrUtil::pointerify(p.thread.hash());
+                    CString tsf = Convert::uinttostring(ts);
+                    CString tid = StrUtil::pointerify(p.thread.hash());
 
-                n->SetAttribute("ts",tsf.c_str());
-                n->SetAttribute("label",p.name.c_str());
-                n->SetAttribute("thread",tid.c_str());
+                    n->SetAttribute("ts",tsf.c_str());
+                    n->SetAttribute("label",p.name.c_str());
+                    n->SetAttribute("thread",tid.c_str());
 
-                curr->InsertEndChild(n);
+                    curr->InsertEndChild(n);
 
-                lt.front() = p.ts-base.front();
-                break;
+                    lt.front() = p.ts-base.front();
+                    break;
+                }
+                case Profiler::DataPoint::Push:
+                {
+                    XML::Element* n = doc.NewElement("context");
+
+                    CString tsf = Convert::uinttostring(p.ts-base.front());
+                    CString tid = StrUtil::pointerify(p.thread.hash());
+
+                    n->SetAttribute("ts",tsf.c_str());
+                    n->SetAttribute("label",p.name.c_str());
+                    n->SetAttribute("thread",tid.c_str());
+
+                    curr->InsertEndChild(n);
+                    curr = n;
+
+                    base.push_front(p.ts);
+                    lt.push_front(0);
+                    break;
+                }
+                case Profiler::DataPoint::Pop:
+                {
+                    curr = curr->Parent()->ToElement();
+                    base.pop_front();
+                    lt.pop_front();
+                    break;
+                }
+                }
+                if(curr == nullptr)
+                    curr = curr_r;
             }
-            case Profiler::DataPoint::Push:
-            {
-                XML::Element* n = doc.NewElement("context");
-
-                CString tsf = Convert::uinttostring(p.ts-base.front());
-                CString tid = StrUtil::pointerify(p.thread.hash());
-
-                n->SetAttribute("ts",tsf.c_str());
-                n->SetAttribute("label",p.name.c_str());
-                n->SetAttribute("thread",tid.c_str());
-
-                curr->InsertEndChild(n);
-                curr = n;
-
-                base.push_front(p.ts);
-                lt.push_front(0);
-                break;
-            }
-            case Profiler::DataPoint::Pop:
-            {
-                curr = curr->Parent()->ToElement();
-                base.pop_front();
-                lt.pop_front();
-                break;
-            }
-            }
-            if(curr == nullptr)
-                curr = curr_r;
         }
     }
 

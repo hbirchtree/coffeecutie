@@ -191,7 +191,7 @@ namespace COpenAL{
 
 struct CALhnd;
 struct CALCaptureDevice;
-typedef _cbasic_version<int32> CALVersion;
+using CALVersion = _cbasic_version<int32>;
 
 enum class CALPlaybackState : uint8
 {
@@ -251,7 +251,7 @@ struct CALReport
     cstring message;
 };
 
-typedef Threads::Function<void(CALReport*)> CALCallback;
+using CALCallback = Threads::Function<void(CALReport*)>;
 
 /*!
  * \brief Presents an OpenAL context in which sound can be played

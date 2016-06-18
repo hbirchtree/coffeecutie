@@ -108,11 +108,11 @@ struct CDEvent{
 /*!
  * \brief Window move event
  */
-typedef CPoint CDMoveEvent;
+using CDMoveEvent = CPoint;
 /*!
  * \brief Window resize event
  */
-typedef CSize CDResizeEvent;
+using CDResizeEvent = CSize;
 /*!
  * \brief GL context version
  */
