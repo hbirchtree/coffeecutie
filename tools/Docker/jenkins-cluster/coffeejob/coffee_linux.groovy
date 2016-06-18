@@ -10,13 +10,13 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   allowPipelineStart(true)
   showTotalBuildTime(true)
   pipelines {
-    component("${PLATFORM_NAME}",'1.0.coffeebuild_lin-debug')
+    component("${PLATFORM_NAME}",'1.0.debug-build')
   }
 }
 
-job('1.0.coffeebuild_lin-debug') {
+job('1.0.debug-compile') {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'debug-compilation')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug building')
   
   scm {
     git {
@@ -64,12 +64,12 @@ job('1.0.coffeebuild_lin-debug') {
   }
 }
 
-job('1.1.coffeebuild_lin-debug-test') {
+job('1.1.debug-test') {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'debug-testing')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug testing')
   
   triggers {
-    upstream("1.0.coffeebuild_lin-debug",'SUCCESS')
+    upstream("1.0.debug-compile",'SUCCESS')
   }
   
   publishers {
@@ -84,12 +84,12 @@ job('1.1.coffeebuild_lin-debug-test') {
   }
 }
 
-job("2.0.coffeebuild_lin-release") {
+job("2.0.release-compile") {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'release-compilation')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release building')
   
   triggers {
-    upstream("1.1.coffeebuild_lin-debug-test",'SUCCESS')
+    upstream("1.1.debug-test",'SUCCESS')
   }
   
   properties {
@@ -114,12 +114,12 @@ job("2.0.coffeebuild_lin-release") {
   }
 }
 
-job('2.1.coffeebuild_lin-release-test') {
+job('2.1.release-test') {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'release-testing')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release testing')
   
   triggers {
-    upstream("2.0.coffeebuild_lin-release",'SUCCESS')
+    upstream("2.0.release-compile",'SUCCESS')
   }
   
   publishers {
