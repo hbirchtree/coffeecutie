@@ -2,14 +2,21 @@ WORKSPACE_LOC="/tmp/coffeebuild_lin"
 PROJ_NAME="coffee_lin"
 REPO_URL="https://github.com/hbirchtree/coffeecutie.git"
 REPO_BRANCH="master"
+PLATFORM_NAME="Linux"
 
-deliveryPipelineView('linux-build') {
+PIPELINE_NAME="${PLATFORM_NAME}-pipeline"
+
+deliveryPipelineView("${PIPELINE_NAME}") {
   allowPipelineStart(true)
+  showTotalBuildTime(true)
+  pipelines {
+    component("${PLATFORM_NAME}",'1.0.coffeebuild_lin-debug')
+  }
 }
 
 job('1.0.coffeebuild_lin-debug') {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration('linux-build','debug-compilation')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'debug-compilation')
   
   scm {
     git {
@@ -59,7 +66,7 @@ job('1.0.coffeebuild_lin-debug') {
 
 job('1.1.coffeebuild_lin-debug-test') {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration('linux-build','debug-testing')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'debug-testing')
   
   triggers {
     upstream("1.0.coffeebuild_lin-debug",'SUCCESS')
@@ -79,7 +86,7 @@ job('1.1.coffeebuild_lin-debug-test') {
 
 job("2.0.coffeebuild_lin-release") {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration('linux-build','release-compilation')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'release-compilation')
   
   triggers {
     upstream("1.1.coffeebuild_lin-debug-test",'SUCCESS')
@@ -109,7 +116,7 @@ job("2.0.coffeebuild_lin-release") {
 
 job('2.1.coffeebuild_lin-release-test') {
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration('linux-build','release-testing')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'release-testing')
   
   triggers {
     upstream("2.0.coffeebuild_lin-release",'SUCCESS')
