@@ -18,15 +18,15 @@ job('1.0.coffeebuild_lin-debug') {
         url("${REPO_URL}")
       }
       branch("${REPO_BRANCH}")
-    }
-    extensions {
-      relativeTargetDirectory('src')
-      submoduleOptions {
-        recursive(true)
-        tracking(true)
-      }
-      cloneOptions {
-        shallow(true)
+      extensions {
+        relativeTargetDirectory('src')
+        submoduleOptions {
+          recursive(true)
+          tracking(true)
+        }
+        cloneOptions {
+          shallow(true)
+        }
       }
     }
   }

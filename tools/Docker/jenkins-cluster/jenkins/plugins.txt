@@ -3,6 +3,7 @@ antisamy-markup-formatter:1.1
 cmakebuilder:2.4.2
 credentials:2.1.1
 cvs:2.11
+delivery-pipeline-plugin:0.9.11
 external-monitor-job:1.4
 git:2.4.4
 git-client:1.19.6
