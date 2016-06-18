@@ -15,7 +15,7 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   }
 }
 
-job('1.0.debug-compile') {
+job("1.0.${PLATFORM_NAME}-debug-compile") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug building')
@@ -66,7 +66,7 @@ job('1.0.debug-compile') {
   }
 }
 
-job('1.1.debug-test') {
+job('1.1.${PLATFORM_NAME}-debug-test') {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug testing')
@@ -87,7 +87,7 @@ job('1.1.debug-test') {
   }
 }
 
-job("2.0.release-compile") {
+job("2.0.${PLATFORM_NAME}-release-compile") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release building')
@@ -118,7 +118,7 @@ job("2.0.release-compile") {
   }
 }
 
-job('2.1.release-test') {
+job('2.1.${PLATFORM_NAME}-release-test') {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release testing')
