@@ -2,8 +2,8 @@ WORKSPACE_LOC="/tmp/coffeebuild_lin"
 PROJ_NAME="coffee_lin"
 REPO_URL="https://github.com/hbirchtree/coffeecutie.git"
 REPO_BRANCH="master"
-PLATFORM_NAME="Linux"
-PLAT_LABEL="ubuntu && x64"
+PLATFORM_NAME="Windows"
+PLAT_LABEL="windows && x64"
 
 PIPELINE_NAME="${PLATFORM_NAME}-pipeline"
 
