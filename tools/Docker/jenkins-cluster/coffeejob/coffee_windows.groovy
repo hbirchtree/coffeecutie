@@ -69,19 +69,6 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
 }
 
-job("1.1.${PLATFORM_NAME}-debug-test") {
-  label("${PLAT_LABEL}")
-  customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug testing')
-  
-  triggers {
-  }
-  
-  steps {
-    shell('for test in build-debug/out/bin/Unit_*; do exec $test; done')
-  }
-}
-
 job("2.0.${PLATFORM_NAME}-release-compile") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
@@ -117,18 +104,5 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
       pattern('build-release/out/**')
       onlyIfSuccessful()
     }
-  }
-}
-
-job("2.1.${PLATFORM_NAME}-release-test") {
-  label("${PLAT_LABEL}")
-  customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release testing')
-  
-  triggers {
-  }
-  
-  steps {
-    shell('for test in build-release/out/bin/Unit_*; do exec $test 2>/dev/null; done')
   }
 }
