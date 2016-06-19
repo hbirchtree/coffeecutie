@@ -10,6 +10,14 @@ option ( COFFEE_TESTS "Build unit tests" ON )
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
 #
+# Platform-specific
+#
+
+if(ANDROID)
+    option ( ANDROID_USE_SDL2_LAUNCH "Use traditional SDL2 Android bindings" ON )
+endif()
+
+#
 #
 
 #
@@ -105,3 +113,10 @@ option ( COFFEE_BUILD_NECT "Build with Kinect support" OFF)
 option ( COFFEE_BUILD_QT "Build with Qt support" OFF)
 
 ###
+
+if(ANDROID)
+    set ( COFFEE_BUILD_QT OFF )
+    set ( COFFEE_BUILD_NECT OFF )
+    set ( COFFEE_BUILD_PCL OFF )
+    set ( COFFEE_BUILD_GLEAM_RHI OFF )
+endif()

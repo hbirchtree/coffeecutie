@@ -48,7 +48,7 @@ struct BasicTerm : CmdDef
 
     STATICINLINE void Exit(int code)
     {
-        fprintf(DefaultDebugOutputPipe,
+        fprintf(DefaultPrintOutputPipe,
                 "Exiting with code: %i\n",
                 code);
         exit(code);

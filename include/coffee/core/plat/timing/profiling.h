@@ -156,10 +156,14 @@ struct SimpleProfilerImpl
 #endif
     }
 
+    /* Below variables have storage in extern_storage.cpp */
+
     static Timestamp *start_time;
     static Mutex *data_access_mutex;
     static LinkList<DataPoint> *datapoints;
     static ThreadListing *threadnames;
+
+    static bool Enabled;
 
 protected:
     static std::atomic_int *global_init;

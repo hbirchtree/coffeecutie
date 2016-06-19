@@ -42,7 +42,7 @@ set ( CoffeeCore_SRCS
 # Platform-specific code, put it here
 
 # SDL power-management
-if(ANDROID OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
+if( ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
 	set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
@@ -52,9 +52,10 @@ endif()
 # Android-specific code
 if(ANDROID)
     list ( APPEND CoffeeCore_SRCS
-	private/plat/file/android/file.cpp
-	private/plat/environment/android/environment.cpp
-	)
+            ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
+            private/plat/file/android/file.cpp
+            private/plat/environment/android/environment.cpp
+    )
 endif()
 
 # Linux-specific code
@@ -119,14 +120,17 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this library
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
-    find_package(Unwind QUIET)
-    list ( APPEND CORE_INCLUDE_DIR
-        ${LIBUNWIND_INCLUDE_DIR}
-        )
-    list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
+    find_package(Unwind QUIET )
+    if (LIBUNWIND_FOUND)
+        add_definitions ( -DCOFFEE_USE_UNWIND )
+        list ( APPEND CORE_INCLUDE_DIR
+            ${LIBUNWIND_INCLUDE_DIR}
+            )
+        list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
+    endif()
 endif()
 
-if( SDL_POWER_PLUGIN_ENABLED )
+if( SDL_POWER_PLUGIN_ENABLED OR ANDROID )
     # We use SDL2 for some platform functionality, like power info
     # On Android, it is also used to read assets and
     #  acquiring device info.
@@ -145,6 +149,7 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
+        # TODO: Make GLES3 optional
         GLESv1_CM GLESv2 GLESv3
         )
 endif()

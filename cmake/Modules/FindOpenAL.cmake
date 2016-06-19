@@ -2,6 +2,7 @@ set ( OPENAL_SEARCH_PATHS
     /usr
     /usr/local
     ${OPENAL_ROOT}
+    ${CMAKE_BINARY_DIR}/libs
     )
 
 if(ANDROID)
@@ -10,8 +11,8 @@ if(ANDROID)
         )
 endif()
 
-set ( OPENAL_INCLUDE_DIR "" CACHE PATH "OpenAL include directory" )
-set ( OPENAL_LIBRARY "" CACHE FILEPATH "OpenAL library file" )
+set ( OPENAL_INCLUDE_DIR CACHE PATH "OpenAL include directory" )
+set ( OPENAL_LIBRARY CACHE FILEPATH "OpenAL library file" )
 
 find_path ( OPENAL_INCLUDE_DIR_TMP
     al.h
@@ -25,7 +26,7 @@ find_path ( OPENAL_INCLUDE_DIR_TMP
     include/AL
     )
 
-find_library( OPENAL_LIBRARY_TMP
+find_library ( OPENAL_LIBRARY_TMP
     openal
     OpenAL
 
@@ -38,10 +39,10 @@ find_library( OPENAL_LIBRARY_TMP
     )
 
 if(OPENAL_INCLUDE_DIR_TMP)
-    set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR_TMP}")
+    set ( OPENAL_INCLUDE_DIR ${OPENAL_INCLUDE_DIR_TMP} )
 endif()
 if(OPENAL_LIBRARY_TMP)
-    set ( OPENAL_LIBRARY "${OPENAL_LIBRARY_TMP}")
+    set ( OPENAL_LIBRARY ${OPENAL_LIBRARY_TMP} )
 endif()
 
 mark_as_advanced ( OPENAL_LIBRARY OPENAL_INCLUDE_DIR )

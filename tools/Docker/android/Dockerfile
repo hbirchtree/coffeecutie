@@ -13,8 +13,7 @@ ENV sdktarget="19"
 
 # Install dependencies for Android SDK/NDK as well as build tools
 RUN dpkg --add-architecture i386
-RUN apt-get -qy update
-RUN apt-get -qy install openjdk-8-jdk-headless mercurial git cmake swig usbutils openssl ninja-build make nano libc6:i386 libstdc++6:i386 wget ant
+RUN apt-get -qy update && apt-get -qy install openjdk-8-jdk-headless mercurial git cmake swig usbutils openssl ninja-build make nano libc6:i386 libstdc++6:i386 wget ant
 
 # Create users for dev
 RUN groupadd coffeeusers -g 1000

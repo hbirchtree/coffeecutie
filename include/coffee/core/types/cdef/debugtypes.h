@@ -5,6 +5,7 @@
 
 namespace Coffee{
 
+#ifdef COFFEE_ENABLE_SCALAR_DISSECTION
 struct bigscalar_dissect
 {
     union
@@ -41,6 +42,7 @@ struct half_dissect
         uint16 v;
     };
 };
+#endif
 
 /* The below floating-point formats are used in OpenGL */
 //struct C_FORCE_PACKING scalar11

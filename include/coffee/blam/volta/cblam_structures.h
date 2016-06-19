@@ -8,10 +8,34 @@ namespace CBlam{
 
 using namespace CGraphicsWrappers;
 
-typedef sbyte_t bl_tag[4];
-typedef sbyte_t bl_string[32];
-typedef sbyte_t bl_header[4];
-typedef sbyte_t bl_footer[4];
+using bl_tag = sbyte_t[4];
+using bl_string = sbyte_t[32];
+using bl_header = sbyte_t [4];
+using bl_footer = sbyte_t[4];
+
+struct tagref_t
+{
+    bl_tag  tag;
+    int32   string_offset;
+    int32   unknown;
+    int32   tagId;
+};
+
+/*!
+ * \brief Blam, at least for Halo 1, uses int16 to store bitmap sizes
+ */
+using bl_size_t = _cbasic_size_2d<int16>;
+/*!
+ * \brief As with blam_size, int16 is standard size for Halo 1.
+ */
+using bl_point_t = _cbasic_point<int16>;
+
+/*!
+ * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
+ */
+using BlamBitmProcess = uint32(*)(uint32,uint16,byte_t);
+
+using bl_rgba_t = CRGBA;
 
 /*!
  * \brief Blam maptypes. Names being obvious, the UI type does not give a playable map.
@@ -148,30 +172,6 @@ struct reflexive_t
         return (const T*)(b_basePtr+offset-magic);
     }
 };
-
-struct tagref_t
-{
-    bl_tag  tag;
-    int32   string_offset;
-    int32   unknown;
-    int32   tagId;
-};
-
-/*!
- * \brief Blam, at least for Halo 1, uses int16 to store bitmap sizes
- */
-typedef _cbasic_size_2d<int16> bl_size_t;
-/*!
- * \brief As with blam_size, int16 is standard size for Halo 1.
- */
-typedef _cbasic_point<int16> bl_point_t;
-
-/*!
- * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
- */
-typedef uint32 (*BlamBitmProcess)(uint32,uint16,byte_t);
-
-typedef CRGBA bl_rgba_t;
 
 /*!
  * \brief These are the various texture formats found in the Blam engine

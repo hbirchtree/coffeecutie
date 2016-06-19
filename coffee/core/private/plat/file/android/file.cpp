@@ -3,8 +3,11 @@
 #include <coffee/core/CDebug>
 #include "../file_abstraction.h"
 
+#if !defined(ANDROID_DONT_USE_SDL2)
 #include <SDL2/SDL_system.h>
-#include <SDL2/SDL_rwops.h>
+#else
+#include <coffee/android/android_main.h>
+#endif
 
 namespace Coffee{
 namespace CResources{
@@ -12,6 +15,9 @@ namespace Android{
 
 struct AndroidFileApi::SDLData
 {
+#if defined(ANDROID_DONT_USE_SDL2)
+    AAsset* fp;
+#endif
     cstring fn;
 };
 
@@ -21,12 +27,17 @@ CString AndroidFileFun::NativePath(cstring fn)
         return fn;
 
     CString prefix;
+
+#if !defined(ANDROID_DONT_USE_SDL2)
     if(!(SDL_AndroidGetExternalStorageState()&SDL_ANDROID_EXTERNAL_STORAGE_READ))
     {
         /* Failure! */
     }
 
     prefix = SDL_AndroidGetExternalStoragePath();
+#else
+    prefix = Coffee_GetExternalDataPath();
+#endif
 
     if(prefix.size()==0)
         return CString(fn);
@@ -48,12 +59,19 @@ AndroidFileFun::FileHandle *AndroidFileFun::Open(cstring fn, ResourceAccess ac)
 
     fh->extra_data = new AndroidFileApi::SDLData;
     fh->extra_data->fn = fn;
+#if defined(ANDROID_DONT_USE_SDL2)
+    fh->extra_data->fp = Coffee_AssetGet(fn);
+#endif
 
     return fh;
 }
 
 bool AndroidFileFun::Close(FileHandle *fh)
 {
+#if defined(ANDROID_DONT_USE_SDL2)
+    Coffee_AssetClose(fh->extra_data->fp);
+#endif
+
     if(fh->extra_data)
         delete fh->extra_data;
     delete fh;
@@ -66,10 +84,14 @@ CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
     cstring check = AssetApi::GetAsset(fh->extra_data->fn);
     if(check)
     {
+        /* In this case, the file exists as an asset */
+
+        CByteData data;
+
+#if !defined(ANDROID_DONT_USE_SDL2)
         SDL_RWops* rdev = SDL_RWFromFile(check,"rb");
         if(!rdev || SDL_RWsize(rdev)==0)
             return {};
-        CByteData data;
         data.size = SDL_RWsize(rdev);
 
         if(data.size != size)
@@ -88,6 +110,11 @@ CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
         }
 
         SDL_RWclose(rdev);
+#else
+        data.size = Coffee_AssetGetSize(fh->extra_data->fp);
+        /* NOTE: Be aware! You might fuck sh*t up real bad. */
+        data.data = (byte_t*)Coffee_AssetGetPtr(fh->extra_data->fp);
+#endif
         return data;
     }else
         return Ancestor::Read(fh,size,nterminate);
@@ -98,6 +125,7 @@ bool AndroidFileFun::Write(FileHandle *fh, const CByteData &d, bool)
     cstring check = AssetApi::GetAsset(fh->extra_data->fn);
     if(check)
     {
+#if !defined(ANDROID_DONT_USE_SDL2)
         SDL_RWops* wdev = SDL_RWFromFile(check,"wb");
         if(!wdev)
             return false;
@@ -110,6 +138,10 @@ bool AndroidFileFun::Write(FileHandle *fh, const CByteData &d, bool)
         }else{
             return true;
         }
+#else
+        /* AAsset does not support writing to assets. Bad. */
+        return false;
+#endif
     }else
         return Ancestor::Write(fh,d,false);
 }
@@ -119,7 +151,11 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle *fh)
     cstring check = AssetApi::GetAsset(fh->extra_data->fn);
     if(check)
     {
+#if !defined(ANDROID_DONT_USE_SDL2)
         return Size(fh->extra_data->fn);
+#else
+        return Coffee_AssetGetSize(fh->extra_data->fp);
+#endif
     }else
         return Ancestor::Size(fh);
 }
@@ -129,6 +165,7 @@ szptr AndroidFileFun::Size(cstring fn)
     cstring check = AssetApi::GetAsset(fn);
     if(check)
     {
+#if !defined(ANDROID_DONT_USE_SDL2)
         SDL_RWops* sdev = SDL_RWFromFile(check,"rb");
         if(!sdev)
             return 0;
@@ -136,8 +173,11 @@ szptr AndroidFileFun::Size(cstring fn)
         szptr size = SDL_RWsize(sdev);
 
         SDL_RWclose(sdev);
-
         return size;
+#else
+        return Coffee_AssetGetSizeFn(fn);
+#endif
+
     }else
         return Ancestor::Size(fn);
 }

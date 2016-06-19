@@ -7,7 +7,7 @@
 namespace Coffee{
 namespace CBlam{
 
-typedef byte_t blam_scn_chunk[100];
+using blam_scn_chunk = byte_t[100];
 
 /*!
  * \brief The blam_bounding_box struct

@@ -54,7 +54,11 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
+    # For SDL2-enabled programs
     set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
+
+    # For NativeActivity programs
+    set ( ANDROID_STARTUP_LIBRARY "${Target_Name}" )
 
     set ( ANDROID_ACTIVITY_NAME "${Pkg_Name}.${ANDROID_STARTUP_ACTIVITY}" )
 
@@ -136,12 +140,31 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
              )
     endforeach()
 
-    # Insert details into files
-    configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/AndroidManifest.xml.in"
-        "${BUILD_OUTDIR}/AndroidManifest.xml"
-        @ONLY
-        )
+    if(ANDROID_USE_SDL2_LAUNCH)
+        # Insert details into files
+        configure_file (
+            "${ANDROID_PROJECT_INPUT}/Config/sdl2/AndroidManifest.xml.in"
+            "${BUILD_OUTDIR}/AndroidManifest.xml"
+            @ONLY
+            )
+        configure_file (
+            "${ANDROID_PROJECT_INPUT}/Config/sdl2/SDLActivity.java.in"
+            "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+            @ONLY
+            )
+        configure_file (
+            "${ANDROID_PROJECT_INPUT}/Config/sdl2/${ANDROID_STARTUP_ACTIVITY}.java.in"
+            "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/${ANDROID_STARTUP_ACTIVITY}.java"
+            @ONLY
+            )
+    else()
+        configure_file (
+            "${ANDROID_PROJECT_INPUT}/Config/native/AndroidManifest.xml.in"
+            "${BUILD_OUTDIR}/AndroidManifest.xml"
+            @ONLY
+            )
+    endif()
+
     configure_file (
         "${ANDROID_PROJECT_INPUT}/Config/build.xml.in"
         "${BUILD_OUTDIR}/build.xml"
@@ -157,16 +180,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         "${BUILD_OUTDIR}/res/values/strings.xml"
         @ONLY
         )
-    configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/SDLActivity.java.in"
-        "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-        @ONLY
-        )
-    configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/${ANDROID_STARTUP_ACTIVITY}.java.in"
-        "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/${ANDROID_STARTUP_ACTIVITY}.java"
-        @ONLY
-        )
+
     add_custom_command ( TARGET ${Target_Name}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_ASSET_OUTPUT_DIRECTORY}" )

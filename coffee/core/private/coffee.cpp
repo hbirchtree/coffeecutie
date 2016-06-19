@@ -47,7 +47,9 @@ void CoffeeInit(bool profiler_init)
 
     cDebug("Build string: {0}",CoffeeBuildString);
 
-    cDebug("Compiled for {0} on {1} ({2})",CoffeePlatformString,CoffeeCompilerString,CoffeeArchString);
+    cDebug("Compiled for {0} on {1} ({2})",
+           CoffeePlatformString,CoffeeCompilerString,CoffeeArchString);
+    cDebug("Running on {0}",PlatformData::SystemDisplayString());
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
