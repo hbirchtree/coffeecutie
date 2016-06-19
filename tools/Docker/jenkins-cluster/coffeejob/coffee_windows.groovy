@@ -52,7 +52,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
   steps {
     cmake {
-      generator('Ninja')
+      generator('Visual Studio 14 2015 Win64')
       args('-DCMAKE_INSTALL_PREFIX=out')
       sourceDir('src')
       buildDir('build-debug')
@@ -104,7 +104,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
   
   steps {
     cmake {
-      generator('Ninja')
+      generator('Visual Studio 14 2015 Win64')
       args('-DCMAKE_INSTALL_PREFIX=out')
       sourceDir('src')
       buildDir('build-release')
