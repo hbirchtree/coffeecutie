@@ -29,11 +29,15 @@ job("0.1.${PLATFORM_NAME}-dep-SDL2") {
       subdirectory('SDL2')
     }
   }
+
+  triggers {  
+    scm('H/10 * * * *')
+  }
   
   steps {
     cmake {
       generator("${CMAKE_GENERATOR}")
-      args("-DCMAKE_INSTALL_PREFIX=$WORKSPACE/libs")
+      args("-DCMAKE_INSTALL_PREFIX=${WORKSPACE_LOC}/libs")
       sourceDir('SDL2')
       buildDir('SDL2_build')
       buildType('Release')
@@ -65,10 +69,15 @@ job("0.2.${PLATFORM_NAME}-dep-openal-soft") {
     }
   }
 
+  triggers {  
+    scm('H/10 * * * *')
+    githubPush()
+  }
+
   steps {
     cmake {
       generator("${CMAKE_GENERATOR}")
-      args("-DCMAKE_INSTALL_PREFIX=$WORKSPACE/libs")
+      args("-DCMAKE_INSTALL_PREFIX=${WORKSPACE_LOC}/libs")
       sourceDir('openal-soft')
       buildDir('openal-soft_build')
       buildType('Release')
