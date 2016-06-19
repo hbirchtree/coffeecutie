@@ -1,4 +1,4 @@
-WORKSPACE_LOC="/tmp/coffeebuild_lin"
+WORKSPACE_LOC="/tmp/coffeebuild_win"
 PROJ_NAME="coffee_lin"
 REPO_URL="https://github.com/hbirchtree/coffeecutie.git"
 REPO_BRANCH="master"
