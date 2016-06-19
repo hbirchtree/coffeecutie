@@ -15,7 +15,7 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   allowPipelineStart(true)
   showTotalBuildTime(true)
   pipelines {
-    component("${PLATFORM_NAME}","1.0.${PLATFORM_NAME}-debug-compile")
+    component("${PLATFORM_NAME}",".0.${PLATFORM_NAME}-dep-setup")
   }
 }
 
@@ -45,14 +45,14 @@ job("0.1.${PLATFORM_NAME}-dep-SDL2") {
   }
 
   triggers {
-    upstream("0.0.${PLATFORM_NAME}-dep-setup",'SUCCESS')
+    upstream("0.0.${PLATFORM_NAME}-dep-setup",'FAILURE')
     scm('H/10 * * * *')
   }
   
   steps {
     cmake {
       generator("${CMAKE_GENERATOR}")
-      args("-DCMAKE_INSTALL_PREFIX=${WORKSPACE_LOC}/libs")
+      args("-DCMAKE_INSTALL_PREFIX=${WORKSPACE_LOC}/libs -DSDL_SHARED=OFF -DSDL_ATOMIC=OFF -DSDL_TIMERS=OFF -DSDL_AUDIO=OFF -DSDL_FILESYSTEM=OFF -DSDL_FILE=OFF -DSDL_THREADS=OFF -DSDL_CPUINFO=OFF")
       sourceDir('SDL2')
       buildDir('SDL2_build')
       buildType('Release')
@@ -85,7 +85,7 @@ job("0.2.${PLATFORM_NAME}-dep-openal-soft") {
   }
 
   triggers {
-    upstream("0.0.${PLATFORM_NAME}-dep-setup",'SUCCESS') 
+    upstream("0.0.${PLATFORM_NAME}-dep-setup",'FAILURE') 
     scm('H/10 * * * *')
     githubPush()
   }
@@ -127,6 +127,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
   
   triggers {
+    upstream("0.2.${PLATFORM_NAME}-dep-openal-soft",'SUCCESS')
     scm('H/10 * * * *')
     githubPush()
   }
