@@ -38,6 +38,29 @@ FORCEDINLINE CString CStrReplace(
 }
 
 namespace Convert{
+
+#if defined(COFFEE_ARCH_LLP64)
+	const constexpr cstring u8_fmt  = "%hhu";
+	const constexpr cstring u16_fmt = "%hu";
+	const constexpr cstring u32_fmt = "%u";
+	const constexpr cstring u64_fmt = "%llu";
+
+	const constexpr cstring i8_fmt = "%hhd";
+	const constexpr cstring i16_fmt = "%hd";
+	const constexpr cstring i32_fmt = "%d";
+	const constexpr cstring i64_fmt = "%lld";
+#else
+	const constexpr cstring u8_fmt = "%hhu";
+	const constexpr cstring u16_fmt = "%hu";
+	const constexpr cstring u32_fmt = "%u";
+	const constexpr cstring u64_fmt = "%lu";
+
+	const constexpr cstring i8_fmt = "%hhd";
+	const constexpr cstring i16_fmt = "%hd";
+	const constexpr cstring i32_fmt = "%d";
+	const constexpr cstring i64_fmt = "%ld";
+#endif
+
 /*
  * In the below functions we remove the null-terminator from the strings.
  * It causes a literal NULL to appear in the strings, which is bad, m'kay?
