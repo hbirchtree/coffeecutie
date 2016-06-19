@@ -71,6 +71,17 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             VERSION ${COFFEE_BUILD_STRING}
             SOVERSION 1
             )
+		target_link_libraries ( ${TARGET}
+			user32
+			gdi32
+			winmm
+			imm32
+			ole32
+			oleaut32
+			version
+			uuid
+			dinput8
+			)
         install(
             FILES ${BUNDLE_LIBS}
             DESTINATION bin
