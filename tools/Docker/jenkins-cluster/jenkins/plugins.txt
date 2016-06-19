@@ -8,6 +8,7 @@ github:1.19.1
 git-client:1.19.6
 job-dsl:1.47
 pam-auth:1.1
+mercurial:1.55
 nodelabelparameter:1.7.2
 scm-api:1.2
 ssh-slaves:1.9
