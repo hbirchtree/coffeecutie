@@ -19,6 +19,20 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   }
 }
 
+job("0.0.${PLATFORM_NAME}-dep-setup") {
+  label("${PLAT_LABEL}")
+  customWorkspace("${WORKSPACE_LOC}")
+
+  steps {
+    batchFile("""
+      mkdir ${WORKSPACE_LOC}/build-debug
+      mkdir ${WORKSPACE_LOC}/build-release
+      mklink /J ${WORKSPACE_LOC}/build-debug/libs ${WORKSPACE_LOC}/libs
+      mklink /J ${WORKSPACE_LOC}/build-release/libs ${WORKSPACE_LOC}/libs
+    """)
+  }
+}
+
 job("0.1.${PLATFORM_NAME}-dep-SDL2") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
@@ -30,7 +44,8 @@ job("0.1.${PLATFORM_NAME}-dep-SDL2") {
     }
   }
 
-  triggers {  
+  triggers {
+    upstream("0.0.${PLATFORM_NAME}-dep-setup",'SUCCESS')
     scm('H/10 * * * *')
   }
   
@@ -69,7 +84,8 @@ job("0.2.${PLATFORM_NAME}-dep-openal-soft") {
     }
   }
 
-  triggers {  
+  triggers {
+    upstream("0.0.${PLATFORM_NAME}-dep-setup",'SUCCESS') 
     scm('H/10 * * * *')
     githubPush()
   }
