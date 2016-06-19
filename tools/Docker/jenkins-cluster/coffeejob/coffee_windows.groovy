@@ -29,9 +29,6 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
       branch("${REPO_BRANCH}")
       extensions {
         relativeTargetDirectory('src')
-        submoduleOptions {
-          recursive(true)
-        }
         cloneOptions {
           shallow(true)
         }
@@ -63,6 +60,13 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
       }
     }
   }
+  
+  publishers {
+    archiveArtifacts {
+      pattern('build-debug/out/**')
+      onlyIfSuccessful()
+    }
+  }
 }
 
 job("1.1.${PLATFORM_NAME}-debug-test") {
@@ -71,14 +75,6 @@ job("1.1.${PLATFORM_NAME}-debug-test") {
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug testing')
   
   triggers {
-    upstream("1.0.${PLATFORM_NAME}-debug-compile",'SUCCESS')
-  }
-  
-  publishers {
-    archiveArtifacts {
-      pattern('build-debug/out/**')
-      onlyIfSuccessful()
-    }
   }
   
   steps {
@@ -92,7 +88,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release building')
   
   triggers {
-    upstream("1.1.${PLATFORM_NAME}-debug-test",'SUCCESS')
+    upstream("1.0.${PLATFORM_NAME}-debug-compile",'SUCCESS')
   }
   
   properties {
@@ -115,6 +111,13 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
       }
     }
   }
+  
+  publishers {
+    archiveArtifacts {
+      pattern('build-release/out/**')
+      onlyIfSuccessful()
+    }
+  }
 }
 
 job("2.1.${PLATFORM_NAME}-release-test") {
@@ -123,14 +126,6 @@ job("2.1.${PLATFORM_NAME}-release-test") {
   deliveryPipelineConfiguration("${PIPELINE_NAME}",'Release testing')
   
   triggers {
-    upstream("2.0.${PLATFORM_NAME}-release-compile",'SUCCESS')
-  }
-  
-  publishers {
-    archiveArtifacts {
-      pattern('build-release/out/**')
-      onlyIfSuccessful()
-    }
   }
   
   steps {
