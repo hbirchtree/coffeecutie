@@ -25,10 +25,10 @@ job("0.0.${PLATFORM_NAME}-dep-setup") {
 
   steps {
     batchFile("""
-      mkdir ${WORKSPACE_LOC}/build-debug
-      mkdir ${WORKSPACE_LOC}/build-release
-      mklink /J ${WORKSPACE_LOC}/build-debug/libs ${WORKSPACE_LOC}/libs
-      mklink /J ${WORKSPACE_LOC}/build-release/libs ${WORKSPACE_LOC}/libs
+      mkdir build-debug
+      mkdir build-release
+      mklink /J build-debug\\libs libs
+      mklink /J build-release\\libs libs
     """)
   }
 }
