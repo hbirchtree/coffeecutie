@@ -135,6 +135,6 @@ job("2.1.${PLATFORM_NAME}-release-test") {
   }
   
   steps {
-    shell('for test in build-release/out/bin/Unit_*; do exec $test; done')
+    shell('for test in build-release/out/bin/Unit_*; do exec $test 2>/dev/null; done')
   }
 }
