@@ -6,6 +6,10 @@
 #define COFFEE_ARCH_LLP64
 #endif
 
+#if defined(COFFEE_WINDOWS)
+#define COFFEE_ARCH_LLP64
+#endif
+
 /* Unwind and terminal control signals are desktop-only */
 #if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
 #define COFFEE_USE_TERMINAL_CTL
