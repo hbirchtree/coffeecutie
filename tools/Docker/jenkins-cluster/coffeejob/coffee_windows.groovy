@@ -1,7 +1,11 @@
 WORKSPACE_LOC="/tmp/coffeebuild_win"
 PROJ_NAME="coffee_lin"
+
 REPO_URL="https://github.com/hbirchtree/coffeecutie.git"
 REPO_BRANCH="master"
+
+CMAKE_GENERATOR="Visual Studio 14 2015 Win64"
+
 PLATFORM_NAME="Windows"
 PLAT_LABEL="windows && x64"
 
@@ -12,6 +16,67 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   showTotalBuildTime(true)
   pipelines {
     component("${PLATFORM_NAME}","1.0.${PLATFORM_NAME}-debug-compile")
+  }
+}
+
+job("0.1.${PLATFORM_NAME}-dep-SDL2") {
+  label("${PLAT_LABEL}")
+  customWorkspace("${WORKSPACE_LOC}")
+
+  scm {
+    hg('https://hg.libsdl.org/SDL') {
+      tag('release-2.0.4')
+      subdirectory('SDL2')
+    }
+  }
+  
+  steps {
+    cmake {
+      generator("${CMAKE_GENERATOR}")
+      args("-DCMAKE_INSTALL_PREFIX=$WORKSPACE/libs")
+      sourceDir('SDL2')
+      buildDir('SDL2_build')
+      buildType('Release')
+      buildToolStep {
+        useCmake(true)
+        args('--target install')
+      }
+    }
+  }
+}
+
+job("0.2.${PLATFORM_NAME}-dep-openal-soft") {
+  label("${PLAT_LABEL}")
+  customWorkspace("${WORKSPACE_LOC}")
+
+  scm {
+    git {
+      remote {
+        name('origin')
+        url("https://github.com/kcat/openal-soft.git")
+      }
+      branch("master")
+      extensions {
+        relativeTargetDirectory('openal-soft')
+        cloneOptions {
+          shallow(true)
+        }
+      }
+    }
+  }
+
+  steps {
+    cmake {
+      generator("${CMAKE_GENERATOR}")
+      args("-DCMAKE_INSTALL_PREFIX=$WORKSPACE/libs")
+      sourceDir('openal-soft')
+      buildDir('openal-soft_build')
+      buildType('Release')
+      buildToolStep {
+        useCmake(true)
+        args('--target install')
+      }
+    }
   }
 }
 
@@ -49,7 +114,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
   steps {
     cmake {
-      generator('Visual Studio 14 2015 Win64')
+      generator("${CMAKE_GENERATOR}")
       args('-DCMAKE_INSTALL_PREFIX=out')
       sourceDir('src')
       buildDir('build-debug')
@@ -87,7 +152,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
   
   steps {
     cmake {
-      generator('Visual Studio 14 2015 Win64')
+      generator("${CMAKE_GENERATOR}")
       args('-DCMAKE_INSTALL_PREFIX=out')
       sourceDir('src')
       buildDir('build-release')
