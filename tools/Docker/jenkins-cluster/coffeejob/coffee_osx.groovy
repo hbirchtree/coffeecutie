@@ -44,7 +44,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
     githubPush()
   }
   
-  properties {
+  steps {
     environmentVariables {
       keepSystemVariables(true)
       keepBuildVariables(true)
@@ -52,9 +52,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
       env('CXX','/usr/local/bin/clang++-3.8')
       env('PATH','/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin')
     }
-  }
-  
-  steps {
+    
     cmake {
       generator('Ninja')
       args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
@@ -99,7 +97,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
     upstream("1.1.${PLATFORM_NAME}-debug-test",'SUCCESS')
   }
   
-  properties {
+  steps {
     environmentVariables {
       keepSystemVariables(true)
       keepBuildVariables(true)
@@ -107,9 +105,6 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
       env('CXX','/usr/local/bin/clang++-3.8')
       env('PATH','/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin')
     }
-  }
-  
-  steps {
     cmake {
       generator('Ninja')
       args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
