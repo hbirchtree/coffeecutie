@@ -29,6 +29,9 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
       branch("${REPO_BRANCH}")
       extensions {
         relativeTargetDirectory('src')
+        submoduleOptions {
+            recursive(true)
+        }
         cloneOptions {
           shallow(true)
         }
@@ -45,6 +48,8 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
     environmentVariables {
       keepSystemVariables(true)
       keepBuildVariables(true)
+      env('CC','/usr/local/bin/clang-3.8')
+      env('CXX','/usr/local/bin/clang++-3.8')
     }
   }
   steps {
@@ -96,6 +101,8 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
     environmentVariables {
       keepSystemVariables(true)
       keepBuildVariables(true)
+      env('CC','/usr/local/bin/clang-3.8')
+      env('CXX','/usr/local/bin/clang++-3.8')
     }
   }
   

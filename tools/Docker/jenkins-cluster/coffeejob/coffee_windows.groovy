@@ -129,6 +129,9 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
       branch("${REPO_BRANCH}")
       extensions {
         relativeTargetDirectory('src')
+        submoduleOptions {
+            recursive(true)
+        }
         cloneOptions {
           shallow(true)
         }
