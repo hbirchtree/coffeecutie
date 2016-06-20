@@ -45,14 +45,6 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
   
   steps {
-    environmentVariables {
-      keepSystemVariables(true)
-      keepBuildVariables(true)
-      env('CC','/usr/local/bin/clang-3.8')
-      env('CXX','/usr/local/bin/clang++-3.8')
-      env('PATH','/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin')
-    }
-    
     cmake {
       generator('Ninja')
       args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
@@ -98,13 +90,6 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
   }
   
   steps {
-    environmentVariables {
-      keepSystemVariables(true)
-      keepBuildVariables(true)
-      env('CC','/usr/local/bin/clang-3.8')
-      env('CXX','/usr/local/bin/clang++-3.8')
-      env('PATH','/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin')
-    }
     cmake {
       generator('Ninja')
       args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
