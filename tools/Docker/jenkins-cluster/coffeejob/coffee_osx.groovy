@@ -15,10 +15,10 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   }
 }
 
-job("1.0.${PLATFORM_NAME}-debug-compile") {
+job("0.0.${PLATFORM_NAME}-dep-setup") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
-  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug building')
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Initial setup')
   
   scm {
     git {
@@ -42,6 +42,24 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   triggers {
     scm('H/10 * * * *')
     githubPush()
+  }
+  
+  steps {
+    shell(
+    """
+      cd "${WORKSPACE_LOC}/src/desktop/osx/"
+      bash "gen_icons.sh"
+    """)
+  }
+}
+
+job("1.0.${PLATFORM_NAME}-debug-compile") {
+  label("${PLAT_LABEL}")
+  customWorkspace("${WORKSPACE_LOC}")
+  deliveryPipelineConfiguration("${PIPELINE_NAME}",'Debug building')
+  
+  triggers {
+    upstream("0.0.${PLATFORM_NAME}-dep-setup",'SUCCESS')
   }
   
   steps {
