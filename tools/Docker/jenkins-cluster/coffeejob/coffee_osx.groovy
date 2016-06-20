@@ -89,7 +89,7 @@ job("1.1.${PLATFORM_NAME}-debug-test") {
   }
   
   steps {
-    shell("for test in ${WORKSPACE_LOC}/build-debug/out/bin/Unit_*; do exec $test; done")
+    shell('for test in /tmp/coffeebuild_osx/build-debug/out/bin/Unit_*; do exec $test; done')
   }
 }
 
