@@ -67,7 +67,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
     """
       mkdir -p "${WORKSPACE_LOC}/build-debug"
       cd "${WORKSPACE_LOC}/build-debug"
-      bash -c 'source ~/.bashrc; export PATH=$PATH;/usr/local/bin ; env; cmake -G Ninja -D CMAKE_INSTALL_PREFIX=out/ -D COFFEE_BUILD_OPENAL=OFF; cmake --build . --target install'
+      bash -c 'source ~/.bashrc; export PATH=$PATH;/usr/local/bin ; env; cmake ../src -G Ninja -DCMAKE_INSTALL_PREFIX=out/ -DCOFFEE_BUILD_OPENAL=OFF; cmake --build . --target install'
     """)
   }
 }
