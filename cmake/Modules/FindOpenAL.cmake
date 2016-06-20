@@ -2,6 +2,7 @@ set ( OPENAL_SEARCH_PATHS
     /usr
     /usr/local
     ${OPENAL_ROOT}
+    ${CMAKE_BINARY_DIR}/libs
     )
 
 if(ANDROID)

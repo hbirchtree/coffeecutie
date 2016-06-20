@@ -24,12 +24,13 @@ job("0.0.${PLATFORM_NAME}-dep-setup") {
   customWorkspace("${WORKSPACE_LOC}")
 
   steps {
-    batchFile("""
+    batchFile(
+      """
       mkdir build-debug
       mkdir build-release
       mklink /J build-debug\\libs libs
       mklink /J build-release\\libs libs
-    """)
+      """)
   }
 }
 
@@ -52,7 +53,7 @@ job("0.1.${PLATFORM_NAME}-dep-SDL2") {
   steps {
     cmake {
       generator("${CMAKE_GENERATOR}")
-      args("-DCMAKE_INSTALL_PREFIX=${WORKSPACE_LOC}/libs -DSDL_SHARED=OFF -DSDL_ATOMIC=OFF -DSDL_TIMERS=OFF -DSDL_AUDIO=OFF -DSDL_FILESYSTEM=OFF -DSDL_FILE=OFF -DSDL_THREADS=OFF -DSDL_CPUINFO=OFF")
+      args("-DCMAKE_INSTALL_PREFIX=${WORKSPACE_LOC}/libs -DSDL_SHARED=ON -DSDL_STATIC=ON -DSDL_STATIC_PIC=ON -DSDL_ATOMIC=OFF -DSDL_TIMERS=OFF -DSDL_AUDIO=OFF -DSDL_THREADS=OFF -DSDL_CPUINFO=OFF")
       sourceDir('SDL2')
       buildDir('SDL2_build')
       buildType('Release')
@@ -105,6 +106,15 @@ job("0.2.${PLATFORM_NAME}-dep-openal-soft") {
   }
 }
 
+job("0.9.${PLATFORM_NAME}-dep-complete") {
+  label("${PLAT_LABEL}")
+  
+  triggers {
+    upstream("0.1.${PLATFORM_NAME}-dep-SDL2",'SUCCESS')
+    upstream("0.2.${PLATFORM_NAME}-dep-openal-soft",'SUCCESS')
+  }
+}
+
 job("1.0.${PLATFORM_NAME}-debug-compile") {
   label("${PLAT_LABEL}")
   customWorkspace("${WORKSPACE_LOC}")
@@ -127,7 +137,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
   
   triggers {
-    upstream("0.2.${PLATFORM_NAME}-dep-openal-soft",'SUCCESS')
+    upstream("0.9.${PLATFORM_NAME}-dep-complete",'SUCCESS')
     scm('H/10 * * * *')
     githubPush()
   }

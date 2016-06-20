@@ -38,6 +38,29 @@ FORCEDINLINE CString CStrReplace(
 }
 
 namespace Convert{
+
+#if defined(COFFEE_ARCH_LLP64)
+	const constexpr cstring u8_fmt  = "%hhu";
+	const constexpr cstring u16_fmt = "%hu";
+	const constexpr cstring u32_fmt = "%u";
+	const constexpr cstring u64_fmt = "%llu";
+
+	const constexpr cstring i8_fmt = "%hhd";
+	const constexpr cstring i16_fmt = "%hd";
+	const constexpr cstring i32_fmt = "%d";
+	const constexpr cstring i64_fmt = "%lld";
+#else
+	const constexpr cstring u8_fmt = "%hhu";
+	const constexpr cstring u16_fmt = "%hu";
+	const constexpr cstring u32_fmt = "%u";
+	const constexpr cstring u64_fmt = "%lu";
+
+	const constexpr cstring i8_fmt = "%hhd";
+	const constexpr cstring i16_fmt = "%hd";
+	const constexpr cstring i32_fmt = "%d";
+	const constexpr cstring i64_fmt = "%ld";
+#endif
+
 /*
  * In the below functions we remove the null-terminator from the strings.
  * It causes a literal NULL to appear in the strings, which is bad, m'kay?
@@ -77,8 +100,8 @@ FORCEDINLINE CString uintltostring(uint64 const& s)
     // TODO: Find out what the fuck is going on here
     uint64 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%lu",ss));
-    snprintf(&str[0],str.size(),"%lu",ss);
+    str.resize(snprintf(nullptr,0,u64_fmt,ss));
+    snprintf(&str[0],str.size(),u64_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -88,8 +111,8 @@ FORCEDINLINE CString uinttostring(uint32 const& s)
         return "0";
     uint32 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%u",ss));
-    snprintf(&str[0],str.size(),"%u",ss);
+    str.resize(snprintf(nullptr,0,u32_fmt,ss));
+    snprintf(&str[0],str.size(),u32_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -99,8 +122,8 @@ FORCEDINLINE CString uintstostring(uint16 const& s)
         return "0";
     uint16 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%hu",ss));
-    snprintf(&str[0],str.size(),"%hu",ss);
+    str.resize(snprintf(nullptr,0,u16_fmt,ss));
+    snprintf(&str[0],str.size(),u16_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -110,8 +133,8 @@ FORCEDINLINE CString uintctostring(uint8 const& s)
         return "0";
     uint8 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%hhu",ss));
-    snprintf(&str[0],str.size(),"%hhu",ss);
+    str.resize(snprintf(nullptr,0,u8_fmt,ss));
+    snprintf(&str[0],str.size(),u8_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -122,8 +145,8 @@ FORCEDINLINE CString intltostring(int64 const& s)
         return "0";
     int64 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%ld",ss));
-    snprintf(&str[0],str.size(),"%ld",ss);
+    str.resize(snprintf(nullptr,0,i64_fmt,ss));
+    snprintf(&str[0],str.size(),i64_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -133,8 +156,8 @@ FORCEDINLINE CString inttostring(int32 const& s)
         return "0";
     int32 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%d",ss));
-    snprintf(&str[0],str.size(),"%d",ss);
+    str.resize(snprintf(nullptr,0,i32_fmt,ss));
+    snprintf(&str[0],str.size(),i32_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -144,8 +167,8 @@ FORCEDINLINE CString intstostring(int16 const& s)
         return "0";
     int16 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%hd",ss));
-    snprintf(&str[0],str.size(),"%hd",ss);
+    str.resize(snprintf(nullptr,0,i16_fmt,ss));
+    snprintf(&str[0],str.size(),i16_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
@@ -155,8 +178,8 @@ FORCEDINLINE CString intctostring(int8 const& s)
         return "0";
     int8 ss = s*10;
     CString str;
-    str.resize(snprintf(nullptr,0,"%hhd",ss));
-    snprintf(&str[0],str.size(),"%hhd",ss);
+    str.resize(snprintf(nullptr,0,i8_fmt,ss));
+    snprintf(&str[0],str.size(),i8_fmt,ss);
     str.resize(str.size()-1);
     return str;
 }
