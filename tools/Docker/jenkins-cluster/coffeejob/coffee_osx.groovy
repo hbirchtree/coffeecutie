@@ -50,8 +50,10 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
       keepBuildVariables(true)
       env('CC','/usr/local/bin/clang-3.8')
       env('CXX','/usr/local/bin/clang++-3.8')
+      env('PATH','/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin')
     }
   }
+  
   steps {
     cmake {
       cmakeInstallation('/usr/local')
@@ -104,6 +106,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
       keepBuildVariables(true)
       env('CC','/usr/local/bin/clang-3.8')
       env('CXX','/usr/local/bin/clang++-3.8')
+      env('PATH','/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin')
     }
   }
   
