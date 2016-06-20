@@ -63,17 +63,12 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   }
   
   steps {
-    cmake {
-      generator('Ninja')
-      args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
-      sourceDir('src')
-      buildDir('build-debug')
-      buildType('Debug')
-      buildToolStep {
-        useCmake(true)
-        args('--target install')
-      }
-    }
+    shell(
+    """
+      mkdir -p "${WORKSPACE_LOC}/build-debug"
+      cd "${WORKSPACE_LOC}/build-debug"
+      bash -c 'source ~/.bashrc; env; cmake -G Ninja -D CMAKE_INSTALL_PREFIX=out/ -D COFFEE_BUILD_OPENAL=OFF; cmake --build . --target install'
+    """)
   }
 }
 
