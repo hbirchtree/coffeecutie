@@ -50,7 +50,7 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
   steps {
     cmake {
       generator('Ninja')
-      args('-DCMAKE_INSTALL_PREFIX=out')
+      args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
       sourceDir('src')
       buildDir('build-debug')
       buildType('Debug')
@@ -102,7 +102,7 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
   steps {
     cmake {
       generator('Ninja')
-      args('-DCMAKE_INSTALL_PREFIX=out')
+      args('-DCMAKE_INSTALL_PREFIX=out -DCOFFEE_BUILD_OPENAL=OFF')
       sourceDir('src')
       buildDir('build-release')
       buildType('Release')
