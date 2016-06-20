@@ -56,7 +56,7 @@ add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 find_package ( RapidJson REQUIRED )
 include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
 
-#This causes ASIO to not use Boost.
+# This causes ASIO to not use Boost.
 add_definitions("-DASIO_STANDALONE")
 
 # Toggle some preprocessor flags
@@ -72,6 +72,11 @@ endif()
 
 if(ANDROID AND CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions("-DANDROID_RELEASE_MODE")
+endif()
+
+# Enable testing with COFFEE_TESTS
+if(COFFEE_TESTS)
+    enable_testing()
 endif()
 
 # Android requires SDL for asset functionality

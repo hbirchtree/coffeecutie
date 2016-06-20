@@ -1,1 +1,1 @@
-coffee_add_example ( Unit_Thread_Workload "Cu_MTWorkLoad" test.cpp CoffeeCore )
+coffee_add_test ( Unit_Thread_Workload "Cu_MTWorkLoad" test.cpp CoffeeCore )
