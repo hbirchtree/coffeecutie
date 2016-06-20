@@ -15,7 +15,7 @@ deliveryPipelineView("${PIPELINE_NAME}") {
   allowPipelineStart(true)
   showTotalBuildTime(true)
   pipelines {
-    component("${PLATFORM_NAME}",".0.${PLATFORM_NAME}-dep-setup")
+    component("${PLATFORM_NAME}","0.0.${PLATFORM_NAME}-dep-setup")
   }
 }
 
