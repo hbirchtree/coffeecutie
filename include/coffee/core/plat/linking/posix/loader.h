@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#ifdef COFFEE_LINUX
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
 
 #include "../libraries.h"
 #include "../../memory/stlstring_ops.h"
@@ -16,6 +16,12 @@ namespace Linux{
 
 struct PosixFunctionLoader : FunctionLoad_def
 {
+#if defined(COFFEE_LINUX)
+    static const constexpr cstring shared_object_extension = ".so";
+#elif defined(COFFEE_APPLE)
+    static const constexpr cstring shared_object_extension = ".dylib";
+#endif
+
     STATICINLINE
     cstring LinkError()
     {
@@ -41,12 +47,24 @@ struct PosixFunctionLoader : FunctionLoad_def
             CString* err = nullptr)
     {
         CString perm[4];
-        perm[0] = "lib"+CString(libName)+".so";
+#if defined(COFFEE_LINUX)
+        perm[0] = "lib"+CString(libName)+shared_object_extension;
+#elif defined(COFFEE_APPLE)
+        perm[0] = "lib"+CString(libName);
+#else
+        perm[0] = "lib"+CString(libName)+shared_object_extension;
+#endif
         if(ver)
         {
+#if defined(COFFEE_LINUX)
             perm[1] = perm[0]+Mem::Convert::uinttostring(ver->major);
             perm[2] = perm[1]+Mem::Convert::uinttostring(ver->minor);
             perm[3] = perm[2]+Mem::Convert::uinttostring(ver->revision);
+#elif defined(COFFEE_APPLE)
+            perm[1] = perm[0]+Mem::Convert::uinttostring(ver->major)+shared_object_extension;
+            perm[2] = perm[1]+Mem::Convert::uinttostring(ver->minor)+shared_object_extension;
+            perm[3] = perm[2]+Mem::Convert::uinttostring(ver->revision)+shared_object_extension;
+#endif
         }
 
         szptr i=0;
