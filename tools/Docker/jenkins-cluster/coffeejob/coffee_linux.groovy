@@ -22,7 +22,7 @@ def builds = ['Debug','Release']
 for(i in [1,num_builds])
 {
   def JOB_RELEASE = builds[i]
-  evaluate(new File("coffee_buildstep.groove"))
+  evaluate(new File("./coffee_buildstep.groove"))
   JOB_NUM = i
 }
 
