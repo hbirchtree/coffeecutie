@@ -25,8 +25,13 @@ endmacro()
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
     # Because it's hard to write these three commands over and over again
     add_library(${TARGET} ${LINKOPT} "${SOURCES}")
+
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_enable_cxx11(${TARGET})
+
+    if(APPLE)
+        set_target_properties( ${TARGET} MACOSX_RPATH "." )
+    endif()
 
     install(
         TARGETS
