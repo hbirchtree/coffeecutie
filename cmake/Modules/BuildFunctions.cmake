@@ -30,7 +30,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
     target_enable_cxx11(${TARGET})
 
     if(APPLE)
-        set_target_properties( ${TARGET} MACOSX_RPATH "." )
+        set_target_properties( ${TARGET} PROPERTIES MACOSX_RPATH "." )
     endif()
 
     install(
