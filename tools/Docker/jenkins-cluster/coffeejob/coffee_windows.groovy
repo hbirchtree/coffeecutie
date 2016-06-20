@@ -165,6 +165,28 @@ job("1.0.${PLATFORM_NAME}-debug-compile") {
     }
   }
   
+}
+
+job("1.1.${PLATFORM_NAME}-debug-test") {
+  label("${PLAT_LABEL}")
+
+
+  triggers {
+    upstream("1.0.${PLATFORM_NAME}-debug-compile",'SUCCESS')
+  }
+
+  cmake {
+    generator("${CMAKE_GENERATOR}")
+    args('-DCMAKE_INSTALL_PREFIX=out')
+    sourceDir('src')
+    buildDir('build-debug')
+    buildType('Debug')
+    buildToolStep {
+    useCmake(true)
+    args('--target test')
+    }
+  }
+
   publishers {
     archiveArtifacts {
       pattern('build-debug/out/**')
@@ -203,6 +225,35 @@ job("2.0.${PLATFORM_NAME}-release-compile") {
     }
   }
   
+  publishers {
+    archiveArtifacts {
+      pattern('build-release/out/**')
+      onlyIfSuccessful()
+    }
+  }
+}
+
+
+job("2.1.${PLATFORM_NAME}-release-test") {
+  label("${PLAT_LABEL}")
+
+
+  triggers {
+    upstream("2.0.${PLATFORM_NAME}-release-compile",'SUCCESS')
+  }
+
+  cmake {
+    generator("${CMAKE_GENERATOR}")
+    args('-DCMAKE_INSTALL_PREFIX=out')
+    sourceDir('src')
+    buildDir('build-release')
+    buildType('Release')
+    buildToolStep {
+    useCmake(true)
+    args('--target test')
+    }
+  }
+
   publishers {
     archiveArtifacts {
       pattern('build-release/out/**')

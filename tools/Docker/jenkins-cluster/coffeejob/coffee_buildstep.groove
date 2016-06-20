@@ -1,0 +1,78 @@
+job("${JOB_NUM}.0.${PLATFORM_NAME}-${JOB_RELEASE}-compile") {
+  label("${PLAT_LABEL}")
+  customWorkspace("${WORKSPACE_LOC}")
+  deliveryPipelineConfiguration("${PIPELINE_NAME}","${JOB_RELEASE} building")
+
+  scm {
+    git {
+      remote {
+        name('origin')
+        url("${REPO_URL}")
+      }
+      branch("${REPO_BRANCH}")
+      extensions {
+        relativeTargetDirectory('src')
+        submoduleOptions {
+          recursive(true)
+        }
+        cloneOptions {
+          shallow(true)
+        }
+      }
+    }
+  }
+
+  triggers {
+    upstream("${UPSTREAM_NAME}",'SUCCESS')
+    scm('H/10 * * * *')
+    githubPush()
+  }
+
+  properties {
+    environmentVariables {
+      keepSystemVariables(true)
+      keepBuildVariables(true)
+    }
+  }
+  steps {
+    cmake {
+      generator("${CMAKE_GENERATOR}")
+      args('-DCMAKE_INSTALL_PREFIX=out')
+      sourceDir('src')
+      buildDir('build-${JOB_RELEASE}')
+      buildType('${JOB_RELEASE}')
+      buildToolStep {
+        useCmake(true)
+	args('--target install')
+      }
+    }
+  }
+
+}
+
+job("${JOB_NUM}.1.${PLATFORM_NAME}-${JOB_RELEASE}-test") {
+  label("${PLAT_LABEL}")
+
+  triggers {
+    upstream("${JOB_NUM}.0.${PLATFORM_NAME}-${JOB_RELEASE}-compile",'SUCCESS')
+  }
+
+  cmake {
+    generator("${CMAKE_GENERATOR}")
+    args('-DCMAKE_INSTALL_PREFIX=out')
+    sourceDir('src')
+    buildDir('build-${JOB_RELEASE}')
+    buildType('${JOB_RELEASE}')
+    buildToolStep {
+    useCmake(true)
+    args('--target test')
+    }
+  }
+
+  publishers {
+    archiveArtifacts {
+      pattern('build-${JOB_RELEASE}/out/**')
+      onlyIfSuccessful()
+    }
+  }
+}
