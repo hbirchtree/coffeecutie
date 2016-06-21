@@ -41,32 +41,6 @@ gitTrigger = {
             scm('H/10 * * * *')
             githubPush()
           }
-cmakeTypicalBuild = {
-            cmake {
-              generator("${CMAKE_GENERATOR}")
-              args('-DCMAKE_INSTALL_PREFIX=out')
-              sourceDir('src')
-              buildDir("build-${JOB_RELEASE}")
-              buildType("${JOB_RELEASE}")
-              buildToolStep {
-                useCmake(true)
-                    args('--target install')
-              }
-            }
-          }
-cmakeTypicalTest = {
-            cmake {
-              generator("${CMAKE_GENERATOR}")
-              args('-DCMAKE_INSTALL_PREFIX=out')
-              sourceDir('src')
-              buildDir("build-${JOB_RELEASE}")
-              buildType("${JOB_RELEASE}")
-              buildToolStep {
-                useCmake(true)
-                args('--target test')
-              }
-            }
-          }
 
 for(i in 0..(NUM_PLATFORMS-1)) {
     def PLATFORM_NAME = PLATFORM_STRING[i]
@@ -205,6 +179,33 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     }
 
     for(j in 0..(NUM_FLAVORS-1)) {
+        cmakeTypicalBuild = {
+                    cmake {
+                      generator("${CMAKE_GENERATOR}")
+                      args('-DCMAKE_INSTALL_PREFIX=out')
+                      sourceDir('src')
+                      buildDir("build-${JOB_RELEASE}")
+                      buildType("${JOB_RELEASE}")
+                      buildToolStep {
+                        useCmake(true)
+                            args('--target install')
+                      }
+                    }
+                  }
+        cmakeTypicalTest = {
+                    cmake {
+                      generator("${CMAKE_GENERATOR}")
+                      args('-DCMAKE_INSTALL_PREFIX=out')
+                      sourceDir('src')
+                      buildDir("build-${JOB_RELEASE}")
+                      buildType("${JOB_RELEASE}")
+                      buildToolStep {
+                        useCmake(true)
+                        args('--target test')
+                      }
+                    }
+                  }
+
         def JOB_NUM = j + 1
         def JOB_RELEASE = RELEASE_TYPES[j]
 
