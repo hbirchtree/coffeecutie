@@ -263,5 +263,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
             }
           }
         }
+
+        PREV_STEP = TEST_STEP
     }
 }
