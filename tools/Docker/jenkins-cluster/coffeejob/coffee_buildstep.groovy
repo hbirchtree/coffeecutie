@@ -82,6 +82,15 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       DEP_STATUS = 'FAILURE'
     }
 
+    deliveryPipelineView("${PIPELINE_NAME}") {
+      allowPipelineStart(true)
+      showTotalBuildTime(true)
+      pipelines {
+        component("${PLATFORM_NAME}",DEPENDENCY_STEP)
+      }
+    }
+
+
     job(DEPENDENCY_STEP) {
       label("${PLAT_LABEL}")
       customWorkspace("${WORKSPACE_LOC}")
