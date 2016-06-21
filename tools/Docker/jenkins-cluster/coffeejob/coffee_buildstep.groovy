@@ -84,7 +84,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     job(DEPENDENCY_STEP) {
       label("${PLAT_LABEL}")
       customWorkspace("${WORKSPACE_LOC}")
-      deliveryPipelineConfiguration("${PIPELINE_NAME}","${JOB_RELEASE} build")
+      deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
       
       scm = GIT_CLONE
 
