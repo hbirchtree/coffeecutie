@@ -14,6 +14,7 @@ def CMAKE_OPTIONS    = [
 def PLATFORM_STRING  = ['Linux', 'Windows', 'Android', 'OS X']
 def HAS_DEPENDENCIES = [false,   true,      true,      false]
 def PLATFORM_FLAG    = [0,       3,         1,         2]
+def PLATFORM_LABELS  = ['ubuntu && x64', 'windows && x64', 'android', 'macintosh && x64']
 
 
 def RELEASE_TYPES = ['Debug', 'Release']
@@ -71,6 +72,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     def PLATFORM_NAME = PLATFORM_STRING[i]
     def DEPENDS = HAS_DEPENDENCIES[i]
     def FLAG = PLATFORM_FLAG[i]
+    def PLAT_LABEL = PLATFORM_LABELS[i]
 
     def PIPELINE_NAME = "${PLATFORM_NAME}"
     def WORKSPACE_LOC = "/tmp/${PLATFORM_NAME}/"
