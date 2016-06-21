@@ -79,7 +79,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     def GIT_TRIGGER = gitTrigger
     
     def PREV_STEP = ""
-    def DEPENDENCY_STEP = "${JOB_NUM}.0.${PLATFORM_NAME}-dep-setup"
+    def DEPENDENCY_STEP = "0.0.${PLATFORM_NAME}-dep-setup"
     
     def DEP_STEPS = {}
     def DEP_STATUS = 'SUCCESS'
