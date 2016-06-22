@@ -234,7 +234,19 @@ for(i in 0..(NUM_PLATFORMS-1)) {
             upstream(PREV_STEP,DEP_STATUS)
           }
 
-          steps = BUILDSTEPS
+          steps = {
+                    cmake {
+                      generator("${CMAKE_GENERATOR}")
+                      args('-DCMAKE_INSTALL_PREFIX=out')
+                      sourceDir('src')
+                      buildDir("build-${JOB_RELEASE}")
+                      buildType("${JOB_RELEASE}")
+                      buildToolStep {
+                        useCmake(true)
+                            args('--target install')
+                      }
+                    }
+                  }
 
           properties {
             environmentVariables {
@@ -253,7 +265,19 @@ for(i in 0..(NUM_PLATFORMS-1)) {
             upstream(COMPILE_STEP,'SUCCESS')
           }
 
-          steps = TESTSTEPS
+          steps = {
+                    cmake {
+                      generator("${CMAKE_GENERATOR}")
+                      args('-DCMAKE_INSTALL_PREFIX=out')
+                      sourceDir('src')
+                      buildDir("build-${JOB_RELEASE}")
+                      buildType("${JOB_RELEASE}")
+                      buildToolStep {
+                        useCmake(true)
+                        args('--target test')
+                      }
+                    }
+                  }
 
           publishers {
             archiveArtifacts {
