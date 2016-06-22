@@ -96,9 +96,29 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       customWorkspace("${WORKSPACE_LOC}")
       deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
       
-      scm = GIT_CLONE
+      scm = {
+      git {
+        remote {
+          name('origin')
+          url("${REPO_URL}")
+        }
+        branch("${REPO_BRANCH}")
+        extensions {
+          relativeTargetDirectory('src')
+          submoduleOptions {
+            recursive(true)
+          }
+          cloneOptions {
+            shallow(true)
+          }
+        }
+      }
+    }
 
-      triggers = GIT_TRIGGER
+      triggers = {
+      scm('H/10 * * * *')
+      githubPush()
+    }
       
       steps = DEP_STEPS
     }
