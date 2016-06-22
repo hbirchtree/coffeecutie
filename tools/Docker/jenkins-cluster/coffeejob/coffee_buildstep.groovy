@@ -189,6 +189,9 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     }
 
     for(j in 0..(NUM_FLAVORS-1)) {
+        def JOB_NUM = j + 1
+        def JOB_RELEASE = RELEASE_TYPES[j]
+
         cmakeTypicalBuild = {
                     cmake {
                       generator("${CMAKE_GENERATOR}")
@@ -215,10 +218,6 @@ for(i in 0..(NUM_PLATFORMS-1)) {
                       }
                     }
                   }
-
-        def JOB_NUM = j + 1
-        def JOB_RELEASE = RELEASE_TYPES[j]
-
         
         def BUILDSTEPS = cmakeTypicalBuild
         def TESTSTEPS = cmakeTypicalTest
