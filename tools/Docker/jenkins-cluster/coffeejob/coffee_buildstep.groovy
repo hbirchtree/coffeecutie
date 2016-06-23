@@ -62,7 +62,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     def DEP_STATUS = 'SUCCESS'
     
     if(FLAG == 2) {
-      DEP_STEPS = {
+      DEP_STEPS {
         shell(
           """
             cd "${WORKSPACE_LOC}/src/desktop/osx/"
@@ -70,7 +70,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
           """)
       }
     }else if(FLAG == 3) {
-      DEP_STEPS = {
+      DEP_STEPS {
         batchFile(
           """
             mkdir build-debug
@@ -95,6 +95,8 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       label("${PLAT_LABEL}")
       customWorkspace("${WORKSPACE_LOC}")
       deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
+      
+      steps(DEP_STEPS)
       
       scm {
       git {
@@ -177,7 +179,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
           }
 
           triggers {
-            upstream(DEPENDENCY_STEP,DEP_STATUS)
+            upstream("0.1.${PLATFORM_NAME}-dep-SDL2",'SUCCESS')
           }
 
           steps {
@@ -199,7 +201,6 @@ for(i in 0..(NUM_PLATFORMS-1)) {
           label("${PLAT_LABEL}")
 
           triggers {
-            upstream("0.1.${PLATFORM_NAME}-dep-SDL2",'SUCCESS')
             upstream("0.2.${PLATFORM_NAME}-dep-openal-soft",'SUCCESS')
           }
         }
