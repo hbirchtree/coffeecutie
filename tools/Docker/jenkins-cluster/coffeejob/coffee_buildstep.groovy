@@ -60,27 +60,6 @@ for(i in 0..(NUM_PLATFORMS-1)) {
     
     def DEP_STEPS = {}
     def DEP_STATUS = 'SUCCESS'
-    
-    if(FLAG == 2) {
-      DEP_STEPS {
-        shell(
-          """
-            cd "${WORKSPACE_LOC}/src/desktop/osx/"
-            bash "gen_icons.sh"
-          """)
-      }
-    }else if(FLAG == 3) {
-      DEP_STEPS {
-        batchFile(
-          """
-            mkdir build-debug
-            mkdir build-release
-            mklink /J build-debug\\libs libs
-            mklink /J build-release\\libs libs
-          """)
-      }
-      DEP_STATUS = 'FAILURE'
-    }
 
     deliveryPipelineView("${PIPELINE_NAME}") {
       allowPipelineStart(true)
@@ -89,14 +68,28 @@ for(i in 0..(NUM_PLATFORMS-1)) {
         component("${PLATFORM_NAME}",DEPENDENCY_STEP)
       }
     }
-
-
+    
+    if(FLAG == 2) {
+      DEP_STEPS = {
+        shell(
+          """
+            cd "${WORKSPACE_LOC}/src/desktop/osx/"
+            bash "gen_icons.sh"
+          """)
+      }
+      
     job(DEPENDENCY_STEP) {
       label("${PLAT_LABEL}")
       customWorkspace("${WORKSPACE_LOC}")
       deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
       
-      steps(DEP_STEPS)
+      steps {
+        shell(
+          """
+            cd "${WORKSPACE_LOC}/src/desktop/osx/"
+            bash "gen_icons.sh"
+          """)
+      }
       
       scm {
       git {
@@ -121,8 +114,82 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       scm('H/10 * * * *')
       githubPush()
     }
+    }
+    }else if(FLAG == 3) {
+      DEP_STATUS = 'FAILURE'
       
-      steps = DEP_STEPS
+      job(DEPENDENCY_STEP) {
+      label("${PLAT_LABEL}")
+      customWorkspace("${WORKSPACE_LOC}")
+      deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
+      
+      steps {
+        batchFile(
+          """
+            mkdir build-debug
+            mkdir build-release
+            mklink /J build-debug\\libs libs
+            mklink /J build-release\\libs libs
+          """)
+      }
+      
+      scm {
+      git {
+        remote {
+          name('origin')
+          url("${REPO_URL}")
+        }
+        branch("${REPO_BRANCH}")
+        extensions {
+          relativeTargetDirectory('src')
+          submoduleOptions {
+            recursive(true)
+          }
+          cloneOptions {
+            shallow(true)
+          }
+        }
+      }
+    }
+
+      triggers {
+      scm('H/10 * * * *')
+      githubPush()
+    }
+    }
+    }else {
+
+
+    job(DEPENDENCY_STEP) {
+      label("${PLAT_LABEL}")
+      customWorkspace("${WORKSPACE_LOC}")
+      deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
+      
+      scm {
+      git {
+        remote {
+          name('origin')
+          url("${REPO_URL}")
+        }
+        branch("${REPO_BRANCH}")
+        extensions {
+          relativeTargetDirectory('src')
+          submoduleOptions {
+            recursive(true)
+          }
+          cloneOptions {
+            shallow(true)
+          }
+        }
+      }
+    }
+
+      triggers {
+      scm('H/10 * * * *')
+      githubPush()
+    }
+    }
+    
     }
 
     PREV_STEP = DEPENDENCY_STEP
