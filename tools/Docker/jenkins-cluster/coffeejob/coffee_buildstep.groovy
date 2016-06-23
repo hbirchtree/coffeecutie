@@ -254,7 +254,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
             upstream(PREV_STEP,DEP_STATUS)
           }
 
-          steps = {
+          steps {
                     cmake {
                       generator("${CMAKE_GENERATOR}")
                       args('-DCMAKE_INSTALL_PREFIX=out')
@@ -285,7 +285,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
             upstream(COMPILE_STEP,'SUCCESS')
           }
 
-          steps = {
+          steps {
                     cmake {
                       generator("${CMAKE_GENERATOR}")
                       args('-DCMAKE_INSTALL_PREFIX=out')
