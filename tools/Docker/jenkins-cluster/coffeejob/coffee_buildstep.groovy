@@ -126,10 +126,10 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       steps {
         batchFile(
           """
-            mkdir build-debug
-            mkdir build-release
-            mklink /J build-debug\\libs libs
-            mklink /J build-release\\libs libs
+            mkdir build-Debug
+            mkdir build-Release
+            mklink /J build-Debug\\libs libs
+            mklink /J build-Release\\libs libs
           """)
       }
       
