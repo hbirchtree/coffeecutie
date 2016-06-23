@@ -96,7 +96,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       customWorkspace("${WORKSPACE_LOC}")
       deliveryPipelineConfiguration("${PIPELINE_NAME}","Dependency stage")
       
-      scm = {
+      scm {
       git {
         remote {
           name('origin')
@@ -115,7 +115,7 @@ for(i in 0..(NUM_PLATFORMS-1)) {
       }
     }
 
-      triggers = {
+      triggers {
       scm('H/10 * * * *')
       githubPush()
     }
