@@ -232,9 +232,9 @@ struct PosixFileFun_def : PosixFileMod_def
 
         return buf;
     }
-    STATICINLINE void ScratchUnmap(void* ptr, szptr size)
+    STATICINLINE void ScratchUnmap(ScratchBuf* buf)
     {
-        munmap(ptr,size);
+        munmap(buf->ptr,buf->size);
     }
 
     STATICINLINE szptr Size(cstring fn)

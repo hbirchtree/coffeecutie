@@ -37,7 +37,7 @@ bool filescratch_test()
             break;
         }
 
-    CResources::FileFun::ScratchUnmap(f.ptr,f.size);
+    CResources::FileFun::ScratchUnmap(&f);
 
     return flag;
 }
