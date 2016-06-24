@@ -12,7 +12,7 @@ bool filescratch_test()
     Scratch f = CResources::FileFun::ScratchBuffer(512*1024*1024,ResourceAccess::ReadWrite);
 
     /* If true, no buffer was mapped */
-    if(f.size == 0)
+    if(f.size == 0 || !f.ptr)
         return false;
 
     /* Seeing if SEGFAULT occurs when touching the memory */

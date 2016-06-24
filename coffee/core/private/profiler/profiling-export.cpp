@@ -109,7 +109,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         CString tmp = Convert::inttostring((int32)SysInfo::NetStatus());
         sysdata->SetAttribute("sys.net",tmp.c_str());
 
-        tmp = Convert::uinttostring(SysInfo::MemTotal());
+        tmp = Convert::uintltostring(SysInfo::MemTotal());
         sysdata->SetAttribute("sys.memory",tmp.c_str());
 
         {
