@@ -1,1 +1,1 @@
-coffee_add_example ( Unit_Math_Enum_Ops "Cu_Enums" test.cpp CoffeeCore )
+coffee_add_test ( Unit_Math_Enum_Ops "Cu_Enums" test.cpp CoffeeCore )

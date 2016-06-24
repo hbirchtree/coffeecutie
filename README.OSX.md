@@ -10,12 +10,11 @@ On OS X, you will likely have to download Clang 3.8+ along with its C++ library 
 I (the developer) do this:
 
 0. Install Xcode CLI tools (eg. run clang in terminal once)
-1. Install Clang 3.8 through homebrew
-          brew install homebrew/versions/llvm38 --with-clang --with-asan
-2.
-    1. Install CMake + Ninja through Homebrew as well
-    2. Install SDL2 frameworks (SDL's website provides this, the development version)
-    3. Install OpenAL if you want to
+1. Install Clang, Ninja and CMake through homebrew
+
+          brew install homebrew/versions/llvm38 --with-clang
+          brew install ninja cmake
+2. Install SDL2 frameworks (SDL's website provides this, the development version)
 3. Compile it! You will quickly see the appearance of .app packages in the build/bin directory.
 
 An iOS port is planned, and will likely use the OSX port as its backbone.

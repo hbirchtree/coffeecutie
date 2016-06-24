@@ -25,8 +25,13 @@ endmacro()
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
     # Because it's hard to write these three commands over and over again
     add_library(${TARGET} ${LINKOPT} "${SOURCES}")
+
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_enable_cxx11(${TARGET})
+
+    if(APPLE)
+        set_target_properties( ${TARGET} PROPERTIES MACOSX_RPATH "." )
+    endif()
 
     install(
         TARGETS
@@ -71,17 +76,17 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             VERSION ${COFFEE_BUILD_STRING}
             SOVERSION 1
             )
-		target_link_libraries ( ${TARGET}
-			user32
-			gdi32
-			winmm
-			imm32
-			ole32
-			oleaut32
-			version
-			uuid
-			dinput8
-			)
+	target_link_libraries ( ${TARGET}
+	    user32
+	    gdi32
+	    winmm
+	    imm32
+	    ole32
+	    oleaut32
+	    version
+	    uuid
+	    dinput8
+	    )
         install(
             FILES ${BUNDLE_LIBS}
             DESTINATION bin
@@ -171,6 +176,30 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
     endif()
 endmacro()
 
+macro(COFFEE_ADD_APPLICATION_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
+    coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "${BUNDLE}" "${RSRCS}")
+endmacro()
+
 macro(COFFEE_ADD_EXAMPLE TARGET TITLE SOURCES LIBRARIES)
     coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
+endmacro()
+
+macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
+    coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
+endmacro()
+
+macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
+    add_executable ( ${TARGET} ${SOURCES} )
+
+    target_link_libraries ( ${TARGET}
+	${LIBRARIES}
+	)
+
+    target_enable_cxx11(${TARGET})
+
+    add_test (
+	NAME ${TITLE}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND $<TARGET_FILE:${TARGET}>
+	)
 endmacro()

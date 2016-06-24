@@ -6,7 +6,7 @@
 #define COFFEE_ARCH_LLP64
 #endif
 
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) || defined(COFFEE_APPLE)
 #define COFFEE_ARCH_LLP64
 #endif
 

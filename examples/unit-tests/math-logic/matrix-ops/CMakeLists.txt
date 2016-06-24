@@ -1,1 +1,1 @@
-coffee_add_example ( Unit_Math_Matrix_Ops "Cu_Matrices" test01.cpp CoffeeCore )
+coffee_add_test ( Unit_Math_Matrix_Ops "Cu_Matrices" test01.cpp CoffeeCore )

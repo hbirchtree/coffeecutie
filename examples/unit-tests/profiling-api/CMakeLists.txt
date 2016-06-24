@@ -1,1 +1,1 @@
-coffee_add_example ( Unit_Profiling_Test01 "Cu_Profiler" test01.cpp CoffeeCore )
+coffee_add_test ( Unit_Profiling_Test01 "Cu_Profiler" test01.cpp CoffeeCore )
