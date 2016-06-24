@@ -20,12 +20,11 @@ endif()
 #set ( OPENAL_EFX_LIBRARY CACHE FILEPATH "OpenAL EFX library file" )
 
 find_path ( OPENAL_INCLUDE_DIR
-    al.h
-    alc.h
+    AL/al.h
+    AL/alc.h
 
     PATH_SUFFIXES
     include
-    include/AL
 
     PATHS
     ${OPENAL_SEARCH_PATHS}
