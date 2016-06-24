@@ -6,8 +6,10 @@
 
 #ifdef COFFEE_WINDOWS
 
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <WinSock2.h>
+
 #include <Windows.h>
 #include <VersionHelpers.h>
 
@@ -15,9 +17,6 @@
 #undef near
 #undef minor
 #undef major
-
-#undef min
-#undef max
 
 #undef CreateWindow
 #endif
@@ -36,5 +35,14 @@ namespace Coffee {
 		CString error(msgBuf, size);
 		LocalFree(msgBuf);
 		return error;
+	}
+
+	inline DWORD HIDWORD(DWORD64 e)
+	{
+		return ((e >> 32) & 0xFFFFFFFF);
+	}
+	inline DWORD LODWORD(DWORD64 e)
+	{
+		return (e & 0xFFFFFFFF);
 	}
 }

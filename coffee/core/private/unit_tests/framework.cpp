@@ -12,15 +12,12 @@
 
 namespace CoffeeTest{
 
-void run_tests(uint32 num, Test const* tests, int argc, char** argv)
+int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 {
-    ProcessProperty::CoreDumpEnable();
-
     bool json_formatting = false;
 
     json_formatting = ArgParse::Check(argc,argv,"json");
 
-    Profiler::InitProfiler();
     CString tmp;
 
     Vector<cstring> titles;
@@ -183,7 +180,8 @@ void run_tests(uint32 num, Test const* tests, int argc, char** argv)
         cOutputPrint("{0}",buf.GetString());
     }
 
-    Profiling::ExitRoutine(0,nullptr,true);
+	/* For verbosity, we write it as this */
+	return (fail) ? 1 : 0;
 }
 
 }

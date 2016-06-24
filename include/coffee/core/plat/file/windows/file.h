@@ -234,8 +234,8 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
         DWORD profl = WinFileApi::GetMappingFlags(acc);
 
 		szptr offsize = off + size;
-        DWORD size_high = HIWORD(offsize);
-        DWORD size_low = LOWORD(offsize);
+        DWORD size_high = HIDWORD(offsize);
+        DWORD size_low = LODWORD(offsize);
 
         HANDLE mh = CreateFileMapping(fh, nullptr, profl, size_high, size_low, nullptr);
 
@@ -248,8 +248,8 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
 
         DWORD view_fl = WinFileApi::GetMappingViewFlags(acc);
 
-        DWORD off_high = HIWORD(off);
-        DWORD off_low = LOWORD(off);
+        DWORD off_high = HIDWORD(off);
+        DWORD off_low = LODWORD(off);
 
         void* ptr = MapViewOfFile(mh, view_fl, off_high, off_low, size);
 
@@ -287,10 +287,12 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
 	STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc)
 	{
 		ScratchBuf b = {};
+		
 		b.acc = acc;
+		
 		DWORD fl1 = WinFileApi::GetMappingFlags(acc);
-		DWORD s_hi = HIWORD(size);
-		DWORD s_lo = LOWORD(size);
+		DWORD s_hi = HIDWORD(size);
+		DWORD s_lo = LODWORD(size);
 		b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s_hi, s_lo, nullptr);
 
 		if (!b.mapping)
