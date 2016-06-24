@@ -155,8 +155,11 @@ bool FilePull(Resource &resc, bool textmode, bool)
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
     CString native_fn = FileFun::NativePath(resc.resource());
-    ResourceAccess dflags = ResourceAccess::WriteOnly|
-            ResourceAccess::NewFile;
+    ResourceAccess dflags = ResourceAccess::WriteOnly;
+
+//    if(!FileFun::Exists(native_fn.c_str()))
+        dflags |= ResourceAccess::NewFile;
+
     FileFun::FileHandle *fp = FileFun::Open(
                 native_fn.c_str(),
                 (append) ?

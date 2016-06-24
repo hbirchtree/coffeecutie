@@ -252,7 +252,7 @@ FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, bool spacing = true, szptr n
 {
     byte_t const* data = (byte_t const*)ptr;
     CString out;
-    out.reserve(len*2 /* Hexadec */ + (len-1)*spacing /* Space */);
+    out.reserve(len*2 /* Hexadec */ + len*spacing /* Space */);
 
     for(szptr i=0;i<len;i++)
     {

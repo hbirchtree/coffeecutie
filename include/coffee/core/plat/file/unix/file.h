@@ -66,7 +66,7 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
     {
-	int fd = open(fn,PosixRscFlags(ac));
+        int fd = open(fn,PosixRscFlags(ac),S_IRWXU|S_IRGRP);
 
 	if(fd == -1)
 	    return nullptr;
@@ -366,7 +366,7 @@ protected:
         }
 
 	if(feval(acc&ResourceAccess::NewFile))
-	    oflags |= O_CREAT | S_IRUSR | S_IWUSR | S_IRGRP;
+            oflags |= O_CREAT;
 
         return oflags;
     }
