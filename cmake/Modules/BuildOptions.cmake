@@ -115,8 +115,15 @@ option ( COFFEE_BUILD_QT "Build with Qt support" OFF)
 ###
 
 if(ANDROID)
-    set ( COFFEE_BUILD_QT OFF )
+    set ( COFFEE_BUILD_QT OFF ) # Does not work with Coffee as of yet
     set ( COFFEE_BUILD_NECT OFF )
     set ( COFFEE_BUILD_PCL OFF )
-    set ( COFFEE_BUILD_GLEAM_RHI OFF )
+    set ( COFFEE_BUILD_GLEAM_RHI OFF ) # Not implemented for GLES, only GL3.3
+endif()
+
+if(COFFEE_BUILD_OPENAL)
+	find_package(OpenAL QUIET)
+	if(NOT OPENAL_FOUND)
+		set ( COFFEE_BUILD_OPENAL OFF )
+	endif()
 endif()

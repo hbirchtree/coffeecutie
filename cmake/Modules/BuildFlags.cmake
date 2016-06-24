@@ -21,6 +21,7 @@ else()
     # Microsoft makes the worst headers of them all.
     add_definitions (
 	-W1	
+	-D_WIN32_WINNT=0x0601
 )
 endif()
 
