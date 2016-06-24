@@ -40,6 +40,11 @@ struct WinFileApi
         HANDLE file;
         HANDLE mapping;
     };
+	struct ScratchBuf : CResources::CommonFileFun::ScratchBuf
+	{
+		HANDLE mapping;
+		HANDLE view;
+	};
     struct FileAccess
     {
         DWORD open;
@@ -81,12 +86,63 @@ struct WinFileApi
         FileAccess f = GetAccess(acc);
         return CreateFile(fn,f.open,f.share,nullptr,f.create,f.attr,nullptr);
     }
+	STATICINLINE DWORD GetMappingFlags(ResourceAccess acc)
+	{
+		DWORD profl = 0;
+
+		if (feval(acc&ResourceAccess::ReadOnly)
+			&& feval(acc&ResourceAccess::WriteOnly)
+			&& feval(acc&ResourceAccess::Executable)
+			&& feval(acc&ResourceAccess::Persistent))
+			profl = PAGE_EXECUTE_READWRITE;
+		else if (feval(acc&ResourceAccess::ReadOnly)
+			&& feval(acc&ResourceAccess::WriteOnly)
+			&& feval(acc&ResourceAccess::Persistent))
+			profl = PAGE_READWRITE;
+		if (feval(acc&ResourceAccess::ReadOnly)
+			&& feval(acc&ResourceAccess::WriteOnly)
+			&& feval(acc&ResourceAccess::Executable))
+			profl = PAGE_EXECUTE_WRITECOPY;
+		else if (feval(acc&ResourceAccess::ReadOnly)
+			&& feval(acc&ResourceAccess::WriteOnly))
+			profl = PAGE_WRITECOPY;
+		else if (feval(acc&ResourceAccess::ReadOnly))
+			profl = PAGE_READONLY;
+
+		if (feval(acc&ResourceAccess::NoCache))
+			profl |= SEC_NOCACHE;
+		if (feval(acc&ResourceAccess::HugeFile))
+			profl |= SEC_LARGE_PAGES;
+		if (feval(acc&ResourceAccess::GreedyCache))
+			profl |= SEC_COMMIT;
+		if (feval(acc&ResourceAccess::Virtual))
+			profl |= SEC_RESERVE;
+
+		return profl;
+	}
+	STATICINLINE DWORD GetMappingViewFlags(ResourceAccess acc)
+	{
+		DWORD view_fl = 0;
+
+		if (feval(acc&ResourceAccess::ReadOnly)
+			&& feval(acc&ResourceAccess::WriteOnly)
+			&& feval(acc&ResourceAccess::Persistent))
+			view_fl = FILE_MAP_WRITE;
+		if (feval(acc&ResourceAccess::ReadOnly)
+			&& feval(acc&ResourceAccess::WriteOnly))
+			view_fl |= FILE_MAP_COPY;
+		else if (feval(acc&ResourceAccess::ReadOnly))
+			view_fl = FILE_MAP_READ;
+
+		return view_fl;
+	}
 };
 
 struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
 {
     using FileHandle = WinFileApi::FileHandle;
     using FileMapping = WinFileApi::FileMapping;
+	using ScratchBuf = WinFileApi::ScratchBuf;
 
     STATICINLINE FileHandle* Open(cstring fn, ResourceAccess acc)
     {
@@ -159,7 +215,7 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     }
     STATICINLINE NodeType Stat(cstring)
     {
-        return NodeType::File;
+        return NodeType::None;
     }
 
     STATICINLINE FileMapping Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err)
@@ -175,38 +231,11 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
             return {};
         }
 
-        DWORD profl = 0;
+        DWORD profl = WinFileApi::GetMappingFlags(acc);
 
-        if (feval(acc&ResourceAccess::ReadOnly)
-                && feval(acc&ResourceAccess::WriteOnly)
-                && feval(acc&ResourceAccess::Executable)
-                && feval(acc&ResourceAccess::Persistent))
-            profl = PAGE_EXECUTE_READWRITE;
-        else if (feval(acc&ResourceAccess::ReadOnly)
-                 && feval(acc&ResourceAccess::WriteOnly)
-                 && feval(acc&ResourceAccess::Persistent))
-            profl = PAGE_READWRITE;
-        if (feval(acc&ResourceAccess::ReadOnly)
-                && feval(acc&ResourceAccess::WriteOnly)
-                && feval(acc&ResourceAccess::Executable))
-            profl = PAGE_EXECUTE_WRITECOPY;
-        else if (feval(acc&ResourceAccess::ReadOnly)
-                 && feval(acc&ResourceAccess::WriteOnly))
-            profl = PAGE_WRITECOPY;
-        else if (feval(acc&ResourceAccess::ReadOnly))
-            profl = PAGE_READONLY;
-
-        if (feval(acc&ResourceAccess::NoCache))
-            profl |= SEC_NOCACHE;
-        if (feval(acc&ResourceAccess::HugeFile))
-            profl |= SEC_LARGE_PAGES;
-        if (feval(acc&ResourceAccess::GreedyCache))
-            profl |= SEC_COMMIT;
-        if (feval(acc&ResourceAccess::Virtual))
-            profl |= SEC_RESERVE;
-
-        DWORD size_high = 0;
-        DWORD size_low = off+size;
+		szptr offsize = off + size;
+        DWORD size_high = HIWORD(offsize);
+        DWORD size_low = LOWORD(offsize);
 
         HANDLE mh = CreateFileMapping(fh, nullptr, profl, size_high, size_low, nullptr);
 
@@ -217,20 +246,10 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
             return {};
         }
 
-        DWORD view_fl = 0;
+        DWORD view_fl = WinFileApi::GetMappingViewFlags(acc);
 
-        if (feval(acc&ResourceAccess::ReadOnly)
-                && feval(acc&ResourceAccess::WriteOnly)
-                && feval(acc&ResourceAccess::Persistent))
-            view_fl = FILE_MAP_WRITE;
-        if (feval(acc&ResourceAccess::ReadOnly)
-                && feval(acc&ResourceAccess::WriteOnly))
-            view_fl |= FILE_MAP_COPY;
-        else if (feval(acc&ResourceAccess::ReadOnly))
-            view_fl = FILE_MAP_READ;
-
-        DWORD off_high = 0;
-        DWORD off_low = off;
+        DWORD off_high = HIWORD(off);
+        DWORD off_low = LOWORD(off);
 
         void* ptr = MapViewOfFile(mh, view_fl, off_high, off_low, size);
 
@@ -265,6 +284,41 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
 
         return true;
     }
+	STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc)
+	{
+		ScratchBuf b = {};
+		b.acc = acc;
+		DWORD fl1 = WinFileApi::GetMappingFlags(acc);
+		DWORD s_hi = HIWORD(size);
+		DWORD s_lo = LOWORD(size);
+		b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s_hi, s_lo, nullptr);
+
+		if (!b.mapping)
+		{
+			CString err = win_strerror(GetLastError());
+			return {};
+		}
+
+		DWORD fl2 = WinFileApi::GetMappingViewFlags(acc);
+
+		b.ptr = MapViewOfFile(b.mapping, fl2, 0, 0, size);
+
+		if (!b.ptr)
+		{
+			CString err = win_strerror(GetLastError());
+			CloseHandle(b.mapping);
+			return {};
+		}
+
+		b.size = size;
+
+		return b;
+	}
+	STATICINLINE void ScratchUnmap(ScratchBuf* buf)
+	{
+		UnmapViewOfFile(buf->ptr);
+		CloseHandle(buf->mapping);
+	}
 };
 }
 
