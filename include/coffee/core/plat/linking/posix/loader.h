@@ -61,9 +61,13 @@ struct PosixFunctionLoader : FunctionLoad_def
             perm[2] = perm[1]+Mem::Convert::uinttostring(ver->minor);
             perm[3] = perm[2]+Mem::Convert::uinttostring(ver->revision);
 #elif defined(COFFEE_APPLE)
-            perm[1] = perm[0]+Mem::Convert::uinttostring(ver->major)+shared_object_extension;
-            perm[2] = perm[1]+Mem::Convert::uinttostring(ver->minor)+shared_object_extension;
+            perm[1] = perm[0]+Mem::Convert::uinttostring(ver->major);
+            perm[2] = perm[1]+Mem::Convert::uinttostring(ver->minor);
             perm[3] = perm[2]+Mem::Convert::uinttostring(ver->revision)+shared_object_extension;
+
+            perm[0] = perm[0]+shared_object_extension;
+            perm[1] = perm[1]+shared_object_extension;
+            perm[2] = perm[2]+shared_object_extension;
 #endif
         }
 
