@@ -337,6 +337,21 @@ struct WindowsSysInfo : SysInfoDef
     {
 	return NetStatLocalOnly;
     }
+	STATICINLINE CString GetSystemVersion()
+	{
+		/*Seriously, Microsoft? Fuck off. Just give me a string.*/
+		OSVERSIONINFO a;
+
+		ZeroMemory(&a,sizeof(a));
+
+		GetVersionEx(&a);
+
+		CString out;
+		out += Convert::uinttostring(a.dwMajorVersion);
+		out += ".";
+		out += Convert::uinttostring(a.dwMinorVersion);
+		return out;
+	}
 };
 }
 }

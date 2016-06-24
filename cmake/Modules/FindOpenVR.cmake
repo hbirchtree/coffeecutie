@@ -12,10 +12,7 @@ if(ANDROID)
         )
 endif()
 
-set ( OPENVR_INCLUDE_DIR "" CACHE PATH "OpenVR include directory" )
-set ( OPENVR_LIBRARY "" CACHE FILEPATH "OpenVR library file" )
-
-find_path ( OPENVR_INCLUDE_DIR_TMP
+find_path ( OPENVR_INCLUDE_DIR
     openvr.h
     openvr_capi.h
 
@@ -32,7 +29,7 @@ set ( TARGET_PATH "lib" )
 set ( TARGET_ARCH )
 
 if(WIN32)
-	set ( TARGET_PATH "bin" )
+	set ( TARGET_PATH "lib" )
 	if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
 	set ( TARGET_ARCH "win64" )
 	else()
@@ -52,23 +49,22 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 	endif()
 endif()
 
-find_library( OPENVR_LIBRARY_TMP
-	NAMES
+find_library( OPENVR_LIBRARY
     openvr_api
-
-    PATHS
-    ${OPENVR_SEARCH_PATHS}
 
     PATH_SUFFIXES
     lib
     ${TARGET_PATH}/${TARGET_ARCH}
+
+    PATHS
+    ${OPENVR_SEARCH_PATHS}
     )
 
-if(OPENVR_INCLUDE_DIR_TMP)
-    set ( OPENVR_INCLUDE_DIR "${OPENVR_INCLUDE_DIR_TMP}")
-endif()
-if(OPENVR_LIBRARY_TMP)
-    set ( OPENVR_LIBRARY "${OPENVR_LIBRARY_TMP}")
-endif()
+set ( OPENVR_INCLUDE_DIR "${OPENVR_INCLUDE_DIR}" CACHE PATH "OpenVR include directory" )
+set ( OPENVR_LIBRARY "${OPENVR_LIBRARY}" CACHE FILEPATH "OpenVR library file" )
 
 mark_as_advanced ( OPENVR_LIBRARY OPENVR_INCLUDE_DIR )
+
+INCLUDE(FindPackageHandleStandardArgs)
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenVR REQUIRED_VARS OPENVR_LIBRARY OPENVR_INCLUDE_DIR)
