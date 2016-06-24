@@ -12,7 +12,7 @@ def CMAKE_OPTIONS    = [
     '-DCOFFEE_BUILD_OPENAL=OFF'
     ]
 def PLATFORM_STRING  = ['Linux', 'Windows', 'Android', 'OS X']
-def HAS_DEPENDENCIES = [false,   true,      true,      false]
+def HAS_DEPENDENCIES = [false,   false,     true,      false]
 def PLATFORM_FLAG    = [0,       3,         1,         2]
 def PLATFORM_LABELS  = ['ubuntu && x64', 'windows && x64', 'android', 'macintosh && x64']
 
