@@ -10,6 +10,7 @@
 
 #include <sys/sysinfo.h>
 #include <unistd.h>
+#include <sys/utsname.h>
 
 namespace Coffee{
 namespace Environment{
@@ -67,6 +68,16 @@ struct LinuxSysInfo : SysInfoDef
     {
         return NetStatLocalOnly;
     }
+
+    STATICINLINE CString GetSystemVersion()
+    {
+	utsname d;
+	if(uname(&d)!=0)
+	    return "?";
+	else
+	    return CString(d.release);
+    }
+
 private:
     thread_local static CString cached_cpuinfo_string;
 };

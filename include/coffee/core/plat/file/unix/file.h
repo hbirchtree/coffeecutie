@@ -22,45 +22,106 @@ struct PosixApi
 {
     struct FileHandle
     {
-        FileHandle():
-            handle(nullptr),
+	FileHandle():
             fd(0)
         {
         }
 
-        FILE* handle;
         int fd;
     };
     using FileMapping = FileFunDef::FileMapping;
 };
 
-template<typename FileHandle,typename FileMapping,typename ScratchBuf>
-struct PosixFileFun_def : CFILEFun_def<FileHandle>
+struct PosixFileMod_def : CommonFileFun
 {
     STATICINLINE void ErrnoCheck()
     {
-        if(errno!=0)
-            fprintf(stderr,"ERROR: %s\n",strerror(errno));
+	if(errno!=0)
+	    fprintf(stderr,"ERROR: %s\n",strerror(errno));
     }
 
-    STATICINLINE FileHandle* Open(cstring fn, ResourceAccess ac)
+    STATICINLINE bool Touch(NodeType t, cstring fn)
     {
-        FileHandle* fh = CFILEFun_def<FileHandle>::Open(fn,ac);
-        if(!fh)
-            return nullptr;
+	switch(t)
+	{
+	case NodeType::File:
 
-        fh->fd = open(fn,PosixRscFlags(ac));
+	    break;
+	default:
+	    return false;
+	}
+	return true;
+    }
+    STATICINLINE bool Rm(cstring fn)
+    {
+	bool stat = unlink(fn) == 0;
+	ErrnoCheck();
+	return stat;
+    }
+};
+
+template<typename FH, typename FM,typename ScratchBuf>
+struct PosixFileFun_def : PosixFileMod_def
+{
+
+    STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
+    {
+	int fd = open(fn,PosixRscFlags(ac));
+
+	if(fd == -1)
+	    return nullptr;
+
+	FH* fh = new FH();
+	fh->fd = fd;
 
         return fh;
     }
-    STATICINLINE bool Close(FileHandle* fh)
+    STATICINLINE bool Close(FH* fh)
     {
-        close(fh->fd);
-        CFILEFun_def<FileHandle>::Close(fh);
+	close(fh->fd);
+	delete fh;
         return true;
     }
 
-    STATICINLINE FileMapping Map(cstring filename, ResourceAccess acc,
+    STATICINLINE CByteData Read(FH* f_h, uint64 f_size, bool)
+    {
+	CByteData data;
+
+	szptr sz = Size(f_h);
+
+	if(f_size <= sz && f_size != -1)
+	    sz = f_size;
+
+	data.data = (byte_t*)Alloc(sz);
+	data.size = sz;
+
+	ssize_t r = read(f_h->fd,data.data,data.size);
+
+	if(r < sz && r > 0)
+	    data.data = (byte_t*)Realloc(data.data,r);
+	else if(r < 0)
+	{
+	    CFree(data.data);
+	    return {};
+	}
+
+	return data;
+    }
+
+    STATICINLINE bool Seek(FH*, uint64)
+    {
+	/* We won't use this, it's tedious */
+	return false;
+    }
+
+    STATICINLINE bool Write(FH* f_h, CByteData const& d, bool)
+    {
+	ssize_t w = write(f_h->fd,d.data,d.size);
+	ErrnoCheck();
+	return w == d.size;
+    }
+
+    STATICINLINE FM Map(cstring filename, ResourceAccess acc,
                     szptr offset, szptr size, int* error)
     {
         if(error)
@@ -114,7 +175,7 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
         return map;
     }
 
-    STATICINLINE bool Unmap(FileMapping* mapp)
+    STATICINLINE bool Unmap(FM* mapp)
     {
         void* ptr = mapp->ptr;
         szptr size = mapp->size;
@@ -196,7 +257,7 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
             return errno!=ENOENT||errno==ENOTDIR;
     }
 
-    STATICINLINE szptr Size(FileHandle* fh)
+    STATICINLINE szptr Size(FH* fh)
     {
         struct stat st;
         if(fh->fd>0)
@@ -210,7 +271,7 @@ struct PosixFileFun_def : CFILEFun_def<FileHandle>
             return 0;
         }
     }
-    STATICINLINE bool Exists(FileHandle* fn)
+    STATICINLINE bool Exists(FH* fn)
     {
         struct stat st;
         bool status = fstat(fn->fd,&st)==0;
@@ -288,7 +349,7 @@ protected:
 
             if(feval(acc&ResourceAccess::Discard))
                 oflags |= O_TRUNC;
-        }
+	}
         else if(feval(acc&ResourceAccess::Executable))
             oflags = O_RDONLY;
         else if(feval(acc&(ResourceAccess::ReadOnly)))
@@ -303,6 +364,9 @@ protected:
             if(feval(acc&ResourceAccess::Discard))
                 oflags |= O_TRUNC;
         }
+
+	if(feval(acc&ResourceAccess::NewFile))
+	    oflags |= O_CREAT | S_IRUSR | S_IWUSR | S_IRGRP;
 
         return oflags;
     }

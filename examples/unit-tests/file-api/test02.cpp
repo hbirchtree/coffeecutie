@@ -21,8 +21,13 @@ bool filemap_test()
 {
     CResources::Resource rsc(small_map_test);
     CResources::FileMap(rsc);
+    if(!rsc.data)
+        return false;
     bool status = MemCmp(sample_storage,rsc.data,sizeof(sample_storage));
     CResources::FileUnmap(rsc);
+
+    CResources::FileFun::Rm(small_map_test);
+
     return status;
 }
 
@@ -45,11 +50,19 @@ bool filewrite_large_test()
 
 bool filemap_large_test()
 {
+    bool stat = true;
     CResources::Resource rsc(big_map_test);
     CResources::FileMap(rsc);
-    bool stat = MemCmp(large_data,rsc.data,rsc.size);
+    if(rsc.size != Unit_GB*5)
+        stat = false;
+    else{
+        stat = MemCmp(large_data,rsc.data,rsc.size);
+    }
     CFree(large_data);
     CResources::FileUnmap(rsc);
+
+    CResources::FileFun::Rm(big_map_test);
+
     return stat;
 }
 

@@ -13,11 +13,11 @@ struct CommonFileFun : FileFunDef
 {
     STATICINLINE CString NativePath(cstring fn)
     {
-        CString temp = fn;
 #if defined(COFFEE_WINDOWS)
-        temp = CStrReplace(fn,"/","\\");
+	return CStrReplace(fn,"/","\\");
+#else
+	return fn;
 #endif
-        return temp;
     }
 };
 
@@ -36,8 +36,6 @@ struct FILEApi
 template<typename FH>
 struct CFILEFun_def : CommonFileFun
 {
-    using FileHandle = FILEApi::FileHandle;
-
     STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
     {
         FH* fh = new FH;

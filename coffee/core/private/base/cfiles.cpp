@@ -154,12 +154,14 @@ bool FilePull(Resource &resc, bool textmode, bool)
 
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
-	CString native_fn = FileFun::NativePath(resc.resource());
+    CString native_fn = FileFun::NativePath(resc.resource());
+    ResourceAccess dflags = ResourceAccess::WriteOnly|
+            ResourceAccess::NewFile;
     FileFun::FileHandle *fp = FileFun::Open(
                 native_fn.c_str(),
                 (append) ?
-                    ResourceAccess::Append|ResourceAccess::WriteOnly|acc
-                  : ResourceAccess::WriteOnly|acc);
+                    ResourceAccess::Append|dflags|acc
+                  : dflags|acc);
 	if (!fp)
 		return false;
     CByteData d;

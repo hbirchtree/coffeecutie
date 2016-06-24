@@ -246,7 +246,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         }
     }
 
-    auto file = CResources::FileFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
+    auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
 
     if (!file)
     {
@@ -265,7 +265,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
     }
 #endif
 
-    CResources::FileFun::Close(file);
+    CResources::CFILEFun::Close(file);
 }
 
 void ExitRoutine(int32 argc, cstring_w *argv, bool silent)

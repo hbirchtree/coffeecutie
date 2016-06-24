@@ -29,6 +29,9 @@ bool basic_tests()
     if(sizeof(szptr)!=sizeof(intptr_t))
         return false;
 
+    if(sizeof(size_t)!=8)
+        return false;
+
     return true;
 }
 
@@ -139,9 +142,9 @@ bool uint24_test()
 bool data_unit_tests()
 {
     cDebug("User-verifiable: ");
-    cDebug("kB: {0}",Unit_kB*500);
-    cDebug("GB: {0}",Unit_GB*500);
-    cDebug("TB: {0}",Unit_TB*500);
+    cDebug("500 kB: {0}",Unit_kB*500);
+    cDebug("500 GB: {0}",Unit_GB*500);
+    cDebug("500 TB: {0}",Unit_TB*500);
     return true;
 }
 
