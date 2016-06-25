@@ -372,7 +372,6 @@ for(i in 0..(NUM_PLATFORMS-1)) {
                 textFinder('The following tests FAILED','',true,false,true)
                 archiveArtifacts {
                   pattern("build-${JOB_RELEASE}/out/**")
-                  onlyIfSuccessful()
                 }
               }
             }
@@ -404,7 +403,6 @@ for(i in 0..(NUM_PLATFORMS-1)) {
                 textFinder('The following tests FAILED','',true,false,true)
                 archiveArtifacts {
                   pattern("build-${JOB_RELEASE}/out/**")
-                  onlyIfSuccessful()
                 }
               }
             }

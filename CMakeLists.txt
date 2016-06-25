@@ -24,8 +24,9 @@ include ( BuildFlags )
 
 # Primary includes
 include_directories (
+    ${CMAKE_SOURCE_DIR}/internal/include
+    ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}
-    include
     )
 
 include_directories( SYSTEM ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include )
