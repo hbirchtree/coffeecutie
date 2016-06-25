@@ -344,35 +344,68 @@ for(i in 0..(NUM_PLATFORMS-1)) {
           }
         }
 
-        job(TEST_STEP) {
-          label("${PLAT_LABEL}")
-          customWorkspace("${WORKSPACE_LOC}")
-          deliveryPipelineConfiguration("${PIPELINE_NAME}","${JOB_RELEASE} test")
+        if(FLAG != 3){
+            job(TEST_STEP) {
+              label("${PLAT_LABEL}")
+              customWorkspace("${WORKSPACE_LOC}")
+              deliveryPipelineConfiguration("${PIPELINE_NAME}","${JOB_RELEASE} test")
 
-          triggers {
-            upstream(COMPILE_STEP,'SUCCESS')
-          }
+              triggers {
+                upstream(COMPILE_STEP,'SUCCESS')
+              }
 
-          steps {
-                    cmake {
-                      generator("${CMAKE_GENERATOR}")
-                      args('-DCMAKE_INSTALL_PREFIX=out')
-                      sourceDir('src')
-                      buildDir("build-${JOB_RELEASE}")
-                      buildType("${JOB_RELEASE}")
-                      buildToolStep {
-                        useCmake(true)
-                        args('--target test')
+              steps {
+                        cmake {
+                          generator("${CMAKE_GENERATOR}")
+                          args('-DCMAKE_INSTALL_PREFIX=out')
+                          sourceDir('src')
+                          buildDir("build-${JOB_RELEASE}")
+                          buildType("${JOB_RELEASE}")
+                          buildToolStep {
+                            useCmake(true)
+                            args('--target test')
+                          }
+                        }
                       }
-                    }
-                  }
 
-          publishers {
-            archiveArtifacts {
-              pattern("build-${JOB_RELEASE}/out/**")
-              onlyIfSuccessful()
+              publishers {
+                archiveArtifacts {
+                  pattern("build-${JOB_RELEASE}/out/**")
+                  onlyIfSuccessful()
+                }
+              }
             }
-          }
+        }else{
+            job(TEST_STEP) {
+              label("${PLAT_LABEL}")
+              customWorkspace("${WORKSPACE_LOC}")
+              deliveryPipelineConfiguration("${PIPELINE_NAME}","${JOB_RELEASE} test")
+
+              triggers {
+                upstream(COMPILE_STEP,'SUCCESS')
+              }
+
+              steps {
+                        cmake {
+                          generator("${CMAKE_GENERATOR}")
+                          args('-DCMAKE_INSTALL_PREFIX=out')
+                          sourceDir('src')
+                          buildDir("build-${JOB_RELEASE}")
+                          buildType("${JOB_RELEASE}")
+                          buildToolStep {
+                            useCmake(true)
+                            args('--target RUN_TESTS')
+                          }
+                        }
+                      }
+
+              publishers {
+                archiveArtifacts {
+                  pattern("build-${JOB_RELEASE}/out/**")
+                  onlyIfSuccessful()
+                }
+              }
+            }
         }
 
         PREV_STEP = TEST_STEP
