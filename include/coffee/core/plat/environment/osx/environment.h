@@ -37,7 +37,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
         dir = ConcatPath(dir.c_str(),"Library/Application Support");
         dir = ConcatPath(dir.c_str(),orgname);
         dir = ConcatPath(dir.c_str(),appname);
-        return "";
+        return dir;
     }
 };
 

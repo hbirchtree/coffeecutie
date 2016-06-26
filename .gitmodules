@@ -31,3 +31,6 @@
 [submodule "tools/build-daemon"]
 	path = tools/build-daemon
 	url = https://github.com/hbirchtree/coffeecutie-build-daemon.git
+[submodule "sample_data"]
+	path = sample_data
+	url = https://github.com/hbirchtree/coffeecutie-data.git

@@ -8,7 +8,7 @@ set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android si
 
 # Misc properties
 
-set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/cmake/Platform/Android" )
+set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/desktop/android" )
 
 set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/apk" )
 
