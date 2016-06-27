@@ -28,4 +28,10 @@ inline bool feval(T flagcombo)
     return (int)flagcombo;
 }
 
+template<typename T>
+inline bool feval(T flags, T target)
+{
+    return (flags&target)==target;
+}
+
 }

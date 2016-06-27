@@ -10,7 +10,7 @@ set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android si
 
 set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/desktop/android" )
 
-set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/apk" )
+set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/android-apk" )
 
 # For valid options, see:
 # http://developer.android.com/guide/topics/manifest/activity-element.html
@@ -239,7 +239,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         ${ANDROID_APK_FILE_OUTPUT}
 
         DESTINATION
-        "packaged/apk/"
+        ${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk
         )
 
 endmacro()

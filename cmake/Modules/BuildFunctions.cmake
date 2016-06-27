@@ -8,6 +8,8 @@ if(ANDROID)
     endif()
 endif()
 
+include ( LinuxAppImageBuild )
+
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
@@ -124,6 +126,10 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
         message("Adding files to OS X bundle: ${BUNDLE_FILES}")
 
         add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${OSX_ICON} ${SOURCES})
+    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+        add_executable( ${TARGET} ${SOURCES} )
+
+        APPIMAGE_PACKAGE(${TARGET} "${TITLE}" "${BUNDLE_RSRCS}" "${BUNDLE_LIBS}" "")
     else()
         add_executable(${TARGET} ${SOURCES})
     endif()
@@ -140,7 +146,7 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             ${TARGET}
 
             DESTINATION
-            packaged/osx
+            ${CMAKE_PACKAGED_OUTPUT_PREFIX}/osx
             )
     else()
         install(

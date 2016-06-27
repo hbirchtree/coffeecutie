@@ -29,7 +29,7 @@ public:
         AudioSample smp;
         //Read audio sample from file
         CResources::Resource rsc("caudio_test/healing.ogg",false,
-                                 ResourceAccess::StorageSpecifier
+                                 ResourceAccess::SpecifyStorage
                                  |ResourceAccess::AssetFile);
         cDebug("Resource");
         CResources::FileMap(rsc);

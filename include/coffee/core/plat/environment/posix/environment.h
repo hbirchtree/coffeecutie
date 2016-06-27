@@ -23,6 +23,10 @@ struct PosixEnvironmentFun : EnvInterface
 {
     static CString BaseName(CString const& n);
 
+    STATICINLINE bool ExistsVar(cstring var)
+    {
+        return std::getenv(var);
+    }
     STATICINLINE CString GetVar(cstring var)
     {
         return std::getenv(var);

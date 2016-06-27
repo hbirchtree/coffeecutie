@@ -42,7 +42,7 @@ enum class ResourceAccess
     Discard = 0x2000, /*<! Truncate data that exists in file */
 
     /* Tell function to be particular about where to store this file */
-    StorageSpecifier = 0x4000,
+    SpecifyStorage = 0x4000,
 
     /* Storage types */
     AssetFile  = 0x8000, /* Packaged in virtual file system, system-specific */
@@ -53,7 +53,7 @@ enum class ResourceAccess
     AccessMask  = ReadWrite|Append|Executable,
     CreateMask  = NewFile|Discard,
     CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
-    StorageMask = StorageSpecifier|AssetFile|ConfigFile,
+    StorageMask = SpecifyStorage|AssetFile|ConfigFile,
 };
 C_FLAGS(ResourceAccess,uint32);
 

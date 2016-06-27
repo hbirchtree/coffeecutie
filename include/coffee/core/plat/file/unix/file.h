@@ -34,19 +34,16 @@ struct PosixApi
 
 struct PosixFileMod_def : CommonFileFun
 {
-    STATICINLINE void ErrnoCheck()
+    STATICINLINE void ErrnoCheck(cstring ref = nullptr)
     {
 	if(errno!=0)
-	    fprintf(stderr,"ERROR: %s\n",strerror(errno));
+            fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
     }
 
     STATICINLINE bool Touch(NodeType t, cstring fn)
     {
 	switch(t)
-	{
-	case NodeType::File:
-
-	    break;
+        {
 	default:
 	    return false;
 	}
@@ -241,7 +238,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         struct stat st = {};
         if(stat(fn,&st)!=0)
-            ErrnoCheck();
+            ErrnoCheck(fn);
         errno = 0;
         return st.st_size;
     }
@@ -343,18 +340,18 @@ protected:
     {
         int oflags = 0;
 
-        if(feval(acc&(ResourceAccess::ReadWrite)))
+        if(feval(acc,ResourceAccess::ReadWrite))
         {
             oflags = O_RDWR;
 
             if(feval(acc&ResourceAccess::Discard))
                 oflags |= O_TRUNC;
 	}
-        else if(feval(acc&ResourceAccess::Executable))
+        else if(feval(acc,ResourceAccess::Executable))
             oflags = O_RDONLY;
-        else if(feval(acc&(ResourceAccess::ReadOnly)))
+        else if(feval(acc,ResourceAccess::ReadOnly))
             oflags = O_RDONLY;
-        else if(feval(acc&(ResourceAccess::WriteOnly))||feval(acc&ResourceAccess::Append))
+        else if(feval(acc, ResourceAccess::WriteOnly|ResourceAccess::Append))
         {
             if(feval(acc&ResourceAccess::Append))
                 oflags = O_APPEND;

@@ -11,6 +11,8 @@ namespace CResources{
 namespace Linux{
 struct LinuxFileFun : Posix::PosixFileFun
 {
+    static CString NativePath(cstring fn);
+
     STATICINLINE bool SuperCache()
     {
         return mlockall(MCL_CURRENT)==0;

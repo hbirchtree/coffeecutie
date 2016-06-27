@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Since we don't really know where this directory is, we read our own link to find out
+APPIMAGE_DIR=$(dirname $(readlink -f "${0}"))
+
+export APPIMAGE_DATA_DIR="${APPIMAGE_DIR}/assets"
+
+# Set up environment
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:lib
+export XDG_DATA_HOME=share
+export XDG_DATA_DIRS=$XDG_DATA_DIRS:${APPIMAGE_DIR}/share
+
+# Executing application
+exec "${APPIMAGE_DIR}/@APPIMAGE_EXEC@" $@

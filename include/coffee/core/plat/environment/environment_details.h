@@ -27,6 +27,10 @@ struct EnvInterface
         return CString();
     }
 
+    STATICINLINE bool ExistsVar(cstring)
+    {
+        return true;
+    }
     STATICINLINE CString GetVar(cstring)
     {
         return CString();
