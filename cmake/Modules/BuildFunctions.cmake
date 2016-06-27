@@ -123,8 +123,6 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             endforeach()
         endforeach()
 
-        message("Adding files to OS X bundle: ${BUNDLE_FILES}")
-
         add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${OSX_ICON} ${SOURCES})
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         add_executable( ${TARGET} ${SOURCES} )

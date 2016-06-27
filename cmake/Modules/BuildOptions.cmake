@@ -115,6 +115,8 @@ option ( COFFEE_BUILD_QT "Build with Qt support" OFF)
 ###
 
 if(ANDROID)
+    set ( COFFEE_BUILD_GLES ON )
+    set ( COFFEE_BUILD_OPENSSL OFF )
     set ( COFFEE_BUILD_QT OFF ) # Does not work with Coffee as of yet
     set ( COFFEE_BUILD_NECT OFF )
     set ( COFFEE_BUILD_PCL OFF )
