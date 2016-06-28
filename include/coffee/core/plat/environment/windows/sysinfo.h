@@ -344,6 +344,8 @@ struct WindowsSysInfo : SysInfoDef
 
 		ZeroMemory(&a,sizeof(a));
 
+		a.dwOSVersionInfoSize = sizeof(a);
+
 		GetVersionEx(&a);
 
 		CString out;
