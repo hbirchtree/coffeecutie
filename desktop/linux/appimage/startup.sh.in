@@ -9,5 +9,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:lib
 export XDG_DATA_HOME=share
 export XDG_DATA_DIRS=$XDG_DATA_DIRS:${APPIMAGE_DIR}/share
 
+# Coffee-specific
+export COFFEE_NO_PROFILER_EXPORT="1"
+
 # Executing application
 exec "${APPIMAGE_DIR}/@APPIMAGE_EXEC@" $@

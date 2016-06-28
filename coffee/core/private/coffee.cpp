@@ -105,20 +105,24 @@ void sighandle(int sig)
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_ShitMySelf);
+        break;
     case SIGABRT:
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_PoopedABit);
+        break;
     case SIGILL:
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
+        break;
     case SIGINT:
     {
         Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Interrupt);
+        break;
     }
     case SIGTERM:
     {
@@ -126,9 +130,11 @@ void sighandle(int sig)
         if(exit_handle)
             exit_handle();
         Cmd::Exit(CoffeeExit_Termination);
+        break;
     }
     default:
         Cmd::Exit(CoffeeExit_UnknownBad);
+        break;
     }
 
     /* Implementation detail: SIGKILL might

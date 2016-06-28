@@ -16,14 +16,17 @@ CString DereferencePath(cstring suffix, ResourceAccess storageMask)
     //We will NOT try to add any '/' in there.
     if(feval(storageMask&ResourceAccess::SpecifyStorage))
     {
+        CString asset_fn = CString(AssetApi::AssetPrefix)+suffix;
+
         if(feval(storageMask&ResourceAccess::ConfigFile))
         {
             CString cfgDir = Env::GetUserData(nullptr,nullptr);
             return Env::ConcatPath(cfgDir.c_str(),suffix);
         }
 #if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || defined(COFFEE_LINUX)
-        else if(feval(storageMask&ResourceAccess::AssetFile))
-            return CString(AssetApi::AssetPrefix)+suffix;
+        else if(feval(storageMask,ResourceAccess::AssetFile)
+                && FileFun::VerifyAsset(asset_fn.c_str()))
+            return asset_fn.c_str();
 #endif
     }
     return _coffee_resource_prefix+suffix;

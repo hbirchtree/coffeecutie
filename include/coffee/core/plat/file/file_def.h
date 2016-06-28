@@ -38,6 +38,10 @@ struct FileFunDef
     };
 
     static CString NativePath(cstring);
+    STATICINLINE bool VerifyAsset(cstring)
+    {
+        return true;
+    }
 
     static FileHandle* Open(cstring, ResourceAccess);
     static bool Close(FileHandle*);

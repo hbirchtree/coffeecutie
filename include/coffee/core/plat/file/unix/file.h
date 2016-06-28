@@ -247,11 +247,13 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         struct stat st;
         bool status = stat(fn,&st)==0;
-        errno = 0;
         if(status)
+        {
+            errno = 0;
             return true;
-        else
-            return errno!=ENOENT||errno==ENOTDIR;
+        }else{
+            return (errno!=ENOENT||errno==ENOTDIR) && (errno=0);
+        }
     }
 
     STATICINLINE szptr Size(FH* fh)

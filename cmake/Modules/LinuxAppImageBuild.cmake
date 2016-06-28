@@ -8,11 +8,13 @@ macro( APPIMAGE_PACKAGE TARGET APPIMAGE_TITLE DATA LIBRARIES LIBRARY_FILES )
     set ( APPIMAGE_LIBRARIES )
     set ( APPIMAGE_DATA )
 
+    # Sets the launch variable
     set ( APPIMAGE_EXEC ${TARGET} )
 
     set ( APPIMAGE_CACHE_DIR "${CMAKE_BINARY_DIR}/deploy/linux-appimage/${APPIMAGE_INTERNALNAME}_cache" )
     set ( APPIMAGE_INTERMEDIATE_DIR "${CMAKE_BINARY_DIR}/deploy/linux-appimage/${APPIMAGE_INTERNALNAME}" )
     set ( APPIMAGE_ASSET_DIR "${APPIMAGE_INTERMEDIATE_DIR}/assets" )
+    set ( APPIMAGE_RPATH_DIR "${APPIMAGE_INTERMEDIATE_DIR}/lib" )
     set ( APPIMAGE_FINAL_NAME "${CMAKE_BINARY_DIR}/package/linux-appimage/${APPIMAGE_TITLE}.AppImage" )
 
     list ( APPEND APPIMAGE_LIBRARIES
@@ -20,26 +22,22 @@ macro( APPIMAGE_PACKAGE TARGET APPIMAGE_TITLE DATA LIBRARIES LIBRARY_FILES )
     list ( APPEND APPIMAGE_DATA
         ${DATA} )
 
-    add_custom_command (
-        TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E remove "${APPIMAGE_FINAL_NAME}"
         )
 
     # Create some necessary directory structure in AppDir
-    add_custom_command (
-        TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_INTERMEDIATE_DIR}/lib"
         )
-    add_custom_command (
-        TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${APPIMAGE_INTERMEDIATE_DIR}/assets"
         )
 
-    add_custom_command (
-        TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/package/linux-appimage/"
         )
@@ -75,7 +73,22 @@ macro( APPIMAGE_PACKAGE TARGET APPIMAGE_TITLE DATA LIBRARIES LIBRARY_FILES )
     foreach ( RESC ${DATA} )
         add_custom_command ( TARGET ${TARGET}
             PRE_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_directory ${RESC} ${APPIMAGE_ASSET_DIR}
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${RESC}" "${APPIMAGE_ASSET_DIR}"
+            )
+    endforeach()
+
+    # Copy bundled libraries into AppDir
+    foreach ( LIB ${LIBRARY_FILES} )
+        add_custom_command ( TARGET ${TARGET}
+            PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy "${LIB}" "${APPIMAGE_RPATH_DIR}"
+            )
+    endforeach()
+
+    foreach ( LIB ${LIBRARIES} )
+        add_custom_command ( TARGET ${TARGET}
+            PRE_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${LIB}>" "${APPIMAGE_RPATH_DIR}"
             )
     endforeach()
 
@@ -86,17 +99,19 @@ macro( APPIMAGE_PACKAGE TARGET APPIMAGE_TITLE DATA LIBRARIES LIBRARY_FILES )
         )
 
     # Do the actual packaging step with AppImageKit
-    add_custom_command (
-        TARGET ${TARGET}
+    add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND ${APPIMAGE_ASSISTANT_PROGRAM} ${APPIMAGE_INTERMEDIATE_DIR} ${APPIMAGE_FINAL_NAME}
+        COMMAND "${APPIMAGE_ASSISTANT_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}" "${APPIMAGE_FINAL_NAME}"
         )
 
     install (
         FILES
-        ${APPIMAGE_FINAL_NAME}
+        "${APPIMAGE_FINAL_NAME}"
 
         DESTINATION
-        ${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appimage
+        "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appimage"
+
+        PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
         )
 endmacro()

@@ -72,7 +72,11 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
         endif()
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
     elseif(WIN32)
+
+        # TODO: Generate Win32 resources here for extraction in-memory
+
         add_executable(${TARGET} ${SOURCES} ${CMAKE_SOURCE_DIR}/desktop/windows/winresources.rc )
+
         set_target_properties ( ${TARGET}
             PROPERTIES
             VERSION ${COFFEE_BUILD_STRING}
@@ -89,6 +93,13 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
 	    uuid
 	    dinput8
 	    )
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            bin
+            )
         install(
             FILES ${BUNDLE_LIBS}
             DESTINATION bin
@@ -124,12 +135,28 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
         endforeach()
 
         add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${OSX_ICON} ${SOURCES})
+
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            ${CMAKE_PACKAGED_OUTPUT_PREFIX}/osx
+            )
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         add_executable( ${TARGET} ${SOURCES} )
 
-        APPIMAGE_PACKAGE(${TARGET} "${TITLE}" "${BUNDLE_RSRCS}" "${BUNDLE_LIBS}" "")
+        APPIMAGE_PACKAGE(${TARGET} "${TITLE}" "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}")
     else()
         add_executable(${TARGET} ${SOURCES})
+
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            bin
+            )
     endif()
 
     target_enable_cxx11(${TARGET})
@@ -139,21 +166,7 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
         )
 
     if(APPLE)
-        install(
-            TARGETS
-            ${TARGET}
-
-            DESTINATION
-            ${CMAKE_PACKAGED_OUTPUT_PREFIX}/osx
-            )
     else()
-        install(
-            TARGETS
-            ${TARGET}
-
-            DESTINATION
-            bin
-            )
     endif()
 
     if(ANDROID)
@@ -195,6 +208,14 @@ endmacro()
 macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     add_executable ( ${TARGET} ${SOURCES} )
 
+    install(
+        TARGETS
+        ${TARGET}
+
+        DESTINATION
+        tests
+        )
+
     target_link_libraries ( ${TARGET}
 	${LIBRARIES}
 	)
@@ -205,5 +226,5 @@ macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
 	NAME ${TITLE}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND $<TARGET_FILE:${TARGET}>
-	)
+        )
 endmacro()

@@ -27,4 +27,10 @@ ENDMACRO(GENERATE_DOCUMENTATION)
 
 if(COFFEE_DOCS)
     GENERATE_DOCUMENTATION("docs/coffee.dox.in")
+    install (
+        DIRECTORY
+        "${CMAKE_BINARY_DIR}/docs/html"
+        DESTINATION
+        "docs"
+        )
 endif()

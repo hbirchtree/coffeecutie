@@ -23,6 +23,12 @@ CString LinuxFileFun::NativePath(cstring fn)
         return fn;
 }
 
+bool LinuxFileFun::VerifyAsset(cstring fn)
+{
+    CString native = NativePath(fn);
+    return LinuxFileFun::Exists(native.c_str());
+}
+
 }
 }
 }

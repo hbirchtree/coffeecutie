@@ -7,6 +7,8 @@ set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 set ( CMAKE_PACKAGED_OUTPUT_PREFIX packaged ) # Custom, used by scripts
 
+set ( COFFEE_ASSET_DIRECTORY "${CMAKE_SOURCE_DIR}/sample_data" )
+
 set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
 
 message ("-- Building as: ${CMAKE_BUILD_TYPE}")

@@ -51,6 +51,13 @@ void PrintProfilerData()
 
 void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 {
+    /* Verify if we should export profiler data */
+    {
+        const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
+        if(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1")
+            return;
+    }
+
     XML::Document doc;
 
     XML::Element* root = doc.NewElement("profile");

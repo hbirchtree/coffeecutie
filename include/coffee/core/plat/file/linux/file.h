@@ -12,6 +12,7 @@ namespace Linux{
 struct LinuxFileFun : Posix::PosixFileFun
 {
     static CString NativePath(cstring fn);
+    static bool VerifyAsset(cstring fn);
 
     STATICINLINE bool SuperCache()
     {

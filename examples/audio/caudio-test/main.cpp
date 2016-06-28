@@ -28,7 +28,7 @@ public:
     {
         AudioSample smp;
         //Read audio sample from file
-        CResources::Resource rsc("caudio_test/healing.ogg",false,
+        CResources::Resource rsc("healing.ogg",false,
                                  ResourceAccess::SpecifyStorage
                                  |ResourceAccess::AssetFile);
         cDebug("Resource");
@@ -144,7 +144,7 @@ public:
 
 int32 coffee_main(int32, cstring_w*)
 {
-    CResources::FileResourcePrefix("sample_data/");
+    CResources::FileResourcePrefix("sample_data/caudio_test/");
 
     CDRendererBase *renderer = new CDRenderer();
     CString err;
