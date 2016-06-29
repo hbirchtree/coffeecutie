@@ -31,7 +31,8 @@ namespace Environment{
 
 				sbyte_t* var = std::getenv(v);
 
-				out = var;
+				if(var)
+					out = var;
 
 				return out;
 			}

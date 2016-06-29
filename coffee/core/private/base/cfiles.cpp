@@ -23,7 +23,7 @@ CString DereferencePath(cstring suffix, ResourceAccess storageMask)
             CString cfgDir = Env::GetUserData(nullptr,nullptr);
             return Env::ConcatPath(cfgDir.c_str(),suffix);
         }
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || defined(COFFEE_LINUX) || defined(COFFEE_WINDOWS)
         else if(feval(storageMask,ResourceAccess::AssetFile)
                 && FileFun::VerifyAsset(asset_fn.c_str()))
             return asset_fn.c_str();

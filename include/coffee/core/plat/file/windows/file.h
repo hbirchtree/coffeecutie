@@ -33,7 +33,14 @@ struct WinFileApi
             file(nullptr)
         {
         }
+		enum FH_Type
+		{
+			FS,
+			RC
+		};
         HANDLE file;
+		HRSRC rsrc;
+		FH_Type type = FS;
     };
     struct FileMapping : CResources::FileFunDef::FileMapping
     {
@@ -53,89 +60,11 @@ struct WinFileApi
         DWORD attr;
     };
 
-    STATICINLINE FileAccess GetAccess(ResourceAccess acc)
-    {
-        FileAccess f;
-        f.open = 0;
-        f.share = 0;
-        f.create = 0;
-        f.attr = 0;
+	static FileAccess GetAccess(ResourceAccess acc);
 
-        if (feval(acc&ResourceAccess::ReadOnly))
-            f.open |= GENERIC_READ;
-        if (feval(acc&ResourceAccess::WriteOnly))
-            f.open |= GENERIC_WRITE;
-        if (feval(acc&ResourceAccess::Executable))
-            f.open |= GENERIC_EXECUTE;
-
-        if (!feval(acc&ResourceAccess::ExclusiveLocking))
-            f.share |= FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-
-        if (feval(acc&ResourceAccess::Discard))
-            f.create |= CREATE_ALWAYS;
-        else if (feval(acc&ResourceAccess::NewFile))
-            f.create |= CREATE_NEW;
-        else
-            f.create |= OPEN_EXISTING;
-
-        return f;
-    }
-
-    STATICINLINE HANDLE GetFileHandle(cstring fn, ResourceAccess acc)
-    {
-        FileAccess f = GetAccess(acc);
-        return CreateFile(fn,f.open,f.share,nullptr,f.create,f.attr,nullptr);
-    }
-	STATICINLINE DWORD GetMappingFlags(ResourceAccess acc)
-	{
-		DWORD profl = 0;
-
-		if (feval(acc&ResourceAccess::ReadOnly)
-			&& feval(acc&ResourceAccess::WriteOnly)
-			&& feval(acc&ResourceAccess::Executable)
-			&& feval(acc&ResourceAccess::Persistent))
-			profl = PAGE_EXECUTE_READWRITE;
-		else if (feval(acc&ResourceAccess::ReadOnly)
-			&& feval(acc&ResourceAccess::WriteOnly)
-			&& feval(acc&ResourceAccess::Persistent))
-			profl = PAGE_READWRITE;
-		if (feval(acc&ResourceAccess::ReadOnly)
-			&& feval(acc&ResourceAccess::WriteOnly)
-			&& feval(acc&ResourceAccess::Executable))
-			profl = PAGE_EXECUTE_WRITECOPY;
-		else if (feval(acc&ResourceAccess::ReadOnly)
-			&& feval(acc&ResourceAccess::WriteOnly))
-			profl = PAGE_WRITECOPY;
-		else if (feval(acc&ResourceAccess::ReadOnly))
-			profl = PAGE_READONLY;
-
-		if (feval(acc&ResourceAccess::NoCache))
-			profl |= SEC_NOCACHE;
-		if (feval(acc&ResourceAccess::HugeFile))
-			profl |= SEC_LARGE_PAGES;
-		if (feval(acc&ResourceAccess::GreedyCache))
-			profl |= SEC_COMMIT;
-		if (feval(acc&ResourceAccess::Virtual))
-			profl |= SEC_RESERVE;
-
-		return profl;
-	}
-	STATICINLINE DWORD GetMappingViewFlags(ResourceAccess acc)
-	{
-		DWORD view_fl = 0;
-
-		if (feval(acc&ResourceAccess::ReadOnly)
-			&& feval(acc&ResourceAccess::WriteOnly)
-			&& feval(acc&ResourceAccess::Persistent))
-			view_fl = FILE_MAP_WRITE;
-		if (feval(acc&ResourceAccess::ReadOnly)
-			&& feval(acc&ResourceAccess::WriteOnly))
-			view_fl |= FILE_MAP_COPY;
-		else if (feval(acc&ResourceAccess::ReadOnly))
-			view_fl = FILE_MAP_READ;
-
-		return view_fl;
-	}
+	static HANDLE GetFileHandle(cstring fn, ResourceAccess acc);
+	static DWORD GetMappingFlags(ResourceAccess acc);
+	static DWORD GetMappingViewFlags(ResourceAccess acc);
 };
 
 struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
@@ -144,183 +73,27 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     using FileMapping = WinFileApi::FileMapping;
 	using ScratchBuf = WinFileApi::ScratchBuf;
 
-    STATICINLINE FileHandle* Open(cstring fn, ResourceAccess acc)
-    {
-        HANDLE ff = WinFileApi::GetFileHandle(fn,acc);
+	static CString NativePath(cstring fn);
+	static bool VerifyAsset(cstring fn);
 
-        if (ff == INVALID_HANDLE_VALUE )
-            return nullptr;
+	static FileHandle* Open(cstring fn, ResourceAccess acc);
+	static bool Close(FileHandle* fh);
 
-        FileHandle* fh = CFILEFun_def<FileHandle>::Open(fn, acc);
-        if (!fh)
-        {
-            CloseHandle(ff);
-            return nullptr;
-        }
-        fh->file = ff;
+	static bool Exists(cstring fn);
 
-        return fh;
-    }
-    STATICINLINE bool Close(FileHandle* fh)
-    {
-        if (fh)
-        {
-            HANDLE file = fh->file;
-            return CFILEFun_def<FileHandle>::Close(fh)&&CloseHandle(file);
-        }
-        else
-            return false;
-        return false;
-    }
+	static bool Write(FileHandle* fh, CByteData const& d, bool);
 
-    STATICINLINE bool Exists(cstring fn)
-    {
-        HANDLE fh = CreateFile(fn,0,FILE_SHARE_READ|FILE_SHARE_WRITE,nullptr,OPEN_EXISTING,0,nullptr);
-        if (fh)
-        {
-            CloseHandle(fh);
-            return true;
-        }else
-            return false;
-    }
+	static szptr Size(FileHandle* fh);
+	static szptr Size(cstring fn);
 
-	STATICINLINE bool Write(FileHandle* fh, CByteData const& d, bool)
-	{
-		DWORD size = 0;
-		BOOL stat = WriteFile(fh->file,d.data,d.size,&size,nullptr);
-		BOOL stat2 = FlushFileBuffers(fh->file);
-		return stat && stat2 && size == d.size;
-	}
+	static bool Touch(NodeType, cstring);
+	static bool Rm(cstring fn);
+	static NodeType Stat(cstring);
 
-    STATICINLINE szptr Size(FileHandle* fh)
-    {
-        DWORD highpart = 0;
-        DWORD low = GetFileSize(fh->file,&highpart);
-        return (highpart << 32)+low;
-    }
-    STATICINLINE szptr Size(cstring fn)
-    {
-        struct stat st;
-        stat(fn, &st);
-        return static_cast<szptr>(st.st_size);
-    }
-
-    STATICINLINE bool Touch(NodeType, cstring)
-    {
-        return false;
-    }
-    STATICINLINE bool Rm(cstring fn)
-    {
-        return DeleteFile(fn);
-    }
-    STATICINLINE NodeType Stat(cstring)
-    {
-        return NodeType::None;
-    }
-
-    STATICINLINE FileMapping Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err)
-    {
-        if (off + size > Size(fn))
-            return {};
-
-        HANDLE fh = WinFileApi::GetFileHandle(fn, acc);
-
-        if (fh==INVALID_HANDLE_VALUE)
-        {
-            *err = GetLastError();
-            return {};
-        }
-
-        DWORD profl = WinFileApi::GetMappingFlags(acc);
-
-		szptr offsize = off + size;
-        DWORD size_high = HIDWORD(offsize);
-        DWORD size_low = LODWORD(offsize);
-
-        HANDLE mh = CreateFileMapping(fh, nullptr, profl, size_high, size_low, nullptr);
-
-        if (!mh)
-        {
-            *err = GetLastError();
-            CloseHandle(fh);
-            return {};
-        }
-
-        DWORD view_fl = WinFileApi::GetMappingViewFlags(acc);
-
-        DWORD off_high = HIDWORD(off);
-        DWORD off_low = LODWORD(off);
-
-        void* ptr = MapViewOfFile(mh, view_fl, off_high, off_low, size);
-
-        if (!ptr)
-        {
-            *err = GetLastError();
-            CloseHandle(fh);
-            CloseHandle(mh);
-            return {};
-        }
-
-        FileMapping fm;
-        fm.acc = acc;
-        fm.file = fh;
-        fm.mapping = mh;
-        fm.size = size;
-        fm.ptr = ptr;
-
-        return fm;
-    }
-    STATICINLINE bool Unmap(FileMapping* fp)
-    {
-        if (!UnmapViewOfFile(fp->ptr))
-            return false;
-        fp->ptr = nullptr;
-        if (!CloseHandle(fp->mapping))
-            return false;
-        fp->mapping = nullptr;
-        if (!CloseHandle(fp->file))
-            return false;
-        fp->file = nullptr;
-
-        return true;
-    }
-	STATICINLINE ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc)
-	{
-		ScratchBuf b = {};
-		
-		b.acc = acc;
-		
-		DWORD fl1 = WinFileApi::GetMappingFlags(acc);
-		DWORD s_hi = HIDWORD(size);
-		DWORD s_lo = LODWORD(size);
-		b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s_hi, s_lo, nullptr);
-
-		if (!b.mapping)
-		{
-			CString err = win_strerror(GetLastError());
-			return {};
-		}
-
-		DWORD fl2 = WinFileApi::GetMappingViewFlags(acc);
-
-		b.ptr = MapViewOfFile(b.mapping, fl2, 0, 0, size);
-
-		if (!b.ptr)
-		{
-			CString err = win_strerror(GetLastError());
-			CloseHandle(b.mapping);
-			return {};
-		}
-
-		b.size = size;
-
-		return b;
-	}
-	STATICINLINE void ScratchUnmap(ScratchBuf* buf)
-	{
-		UnmapViewOfFile(buf->ptr);
-		CloseHandle(buf->mapping);
-	}
+	static FileMapping Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err);
+	static bool Unmap(FileMapping* fp);
+	static ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc);
+	static void ScratchUnmap(ScratchBuf* buf);
 };
 }
 
