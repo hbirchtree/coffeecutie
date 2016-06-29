@@ -34,6 +34,12 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
 
     if(APPLE)
         set_target_properties( ${TARGET} PROPERTIES MACOSX_RPATH "." )
+	elseif(WIN32)
+		set_target_properties ( ${TARGET}
+			PROPERTIES
+			VERSION ${COFFEE_BUILD_STRING}
+			SOVERSION 1
+			)
     endif()
 
     install(

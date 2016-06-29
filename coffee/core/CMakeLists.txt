@@ -76,7 +76,7 @@ endif()
 # Windows-specific code
 if(WIN32)
     list ( APPEND CoffeeCore_SRCS
-
+		private/plat/file/windows/file.cpp
         )
 endif()
 
