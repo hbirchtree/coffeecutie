@@ -108,20 +108,6 @@ void ExitHandler_1(void* ptr, const CIEvent& e, c_cptr d)
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-	{
-		HRSRC rsc = FindResourceEx(nullptr, "CF_RES", "\"LICENSE\"", 1033);
-
-		if (rsc)
-		{
-			cDebug("Size of data: {0}", (uint32)SizeofResource(nullptr, rsc));
-			HGLOBAL rsc_h = LoadResource(nullptr, rsc);
-			if (rsc_h)
-			{
-				c_ptr ptr = LockResource(rsc_h);
-			}
-		}
-	}
-
     SubsystemWrapper<SDL2::SDL2> sys1;
     C_UNUSED(sys1);
 
