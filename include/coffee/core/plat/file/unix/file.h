@@ -353,7 +353,7 @@ protected:
             oflags = O_RDONLY;
         else if(feval(acc,ResourceAccess::ReadOnly))
             oflags = O_RDONLY;
-        else if(feval(acc, ResourceAccess::WriteOnly|ResourceAccess::Append))
+	else if(feval(acc, ResourceAccess::WriteOnly))
         {
             if(feval(acc&ResourceAccess::Append))
                 oflags = O_APPEND;
