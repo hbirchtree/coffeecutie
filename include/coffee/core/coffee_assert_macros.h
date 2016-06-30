@@ -1,7 +1,7 @@
 #pragma once
 
+#include <csignal>
 #include <stdlib.h>
-#include <stdexcept>
 #include "plat/memory/memory_ops.h"
 
 #include "types/tdef/integertypes.h"
@@ -12,7 +12,7 @@ namespace Coffee{
 FORCEDINLINE
 void RUNOUTTHEWINDOW()
 {
-    exit(-1);
+    std::raise(SIGINT);
 }
 
 FORCEDINLINE
@@ -28,7 +28,7 @@ FORCEDINLINE
 void ABORTEVERYTHINGGOGOGO()
 {
     /* ABORT! */
-    abort();
+    std::raise(SIGABRT);
 }
 
 FORCEDINLINE

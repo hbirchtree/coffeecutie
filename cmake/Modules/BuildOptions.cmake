@@ -17,6 +17,10 @@ if(ANDROID)
     option ( ANDROID_USE_SDL2_LAUNCH "Use traditional SDL2 Android bindings" ON )
 endif()
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    option ( COFFEE_GENERATE_APPIMAGE OFF )
+endif()
+
 #
 #
 
