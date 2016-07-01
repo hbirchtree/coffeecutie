@@ -34,8 +34,6 @@ byte_t write_data[100] = {
 
 bool filewrite_test()
 {
-    File::Rm(writetest);
-
     Resource rsc(writetest);
     rsc.size = sizeof(write_data);
     rsc.data = write_data;
@@ -66,6 +64,9 @@ bool filesize_test()
     szptr size = CResources::FileFun::Size(writetest);
     szptr target = sizeof(write_data);
 	cDebug("{0}?={1}",size,target);
+
+    File::Rm(writetest);
+
     return size==target;
 }
 

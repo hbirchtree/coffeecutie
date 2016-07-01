@@ -20,7 +20,10 @@ bool filewrite_test()
 {
     Resource rsc(writetest);
     rsc.size = dynamic_size;
+    Profiler::Profile("Pre-allocation setup");
+
     rsc.data = Calloc(1,rsc.size);
+    Profiler::Profile("5GB allocation");
 
     {
         byte_t* dest = (byte_t*)rsc.data;
@@ -29,10 +32,14 @@ bool filewrite_test()
         /* Write data above 4GB mark, requires 64-bit. Fuck 32-bit. */
         MemCpy(&dest[Unit_GB*4],write_data,sizeof(write_data));
     }
+    Profiler::Profile("Copying data into segment");
 
     dynamic_store = rsc.data;
 
-    return CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+    bool stat = CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+    Profiler::Profile("Writing 5GB of data to disk");
+
+    return stat;
 }
 
 bool fileread_test()
@@ -40,18 +47,26 @@ bool fileread_test()
     bool status = true;
 
     CResources::Resource rsc(writetest);
+    Profiler::Profile("Pre-reading setup");
+
     status = CResources::FilePull(rsc);
+    Profiler::Profile("Reading massive data");
 
     if(status)
     {
         status = (dynamic_size == rsc.size);
 
         if(status)
+        {
             status = MemCmp(dynamic_store,rsc.data,dynamic_size);
+            Profiler::Profile("Comparing 5GB of data");
+        }
 
         CResources::FileFree(rsc);
+        Profiler::Profile("Freeing 5GB of data");
 
         File::Rm(writetest);
+        Profiler::Profile("Deleting file");
     }
 
     return status;
