@@ -15,9 +15,12 @@ FORCEDINLINE void CFree(c_ptr data)
     free(data);
 }
 
-FORCEDINLINE bool MemCmp(c_cptr target, c_cptr cmp, szptr len)
+FORCEDINLINE bool MemCmp(c_cptr target, c_cptr cmp, szptr len, int64* val = nullptr)
 {
-    return memcmp(target,cmp,len)==0;
+    if(val)
+        return (*val = memcmp(target,cmp,len))==0;
+    else
+        return memcmp(target,cmp,len)==0;
 }
 
 FORCEDINLINE void MemCpy(c_ptr dest, c_cptr source, szptr len)

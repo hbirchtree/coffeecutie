@@ -34,10 +34,15 @@ struct PosixApi
 
 struct PosixFileMod_def : CommonFileFun
 {
-    STATICINLINE void ErrnoCheck(cstring ref = nullptr)
+    STATICINLINE bool ErrnoCheck(cstring ref = nullptr)
     {
 	if(errno!=0)
+        {
             fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
+            errno = 0;
+            return true;
+        }
+        return false;
     }
 
     STATICINLINE bool Touch(NodeType t, cstring fn)
@@ -60,7 +65,6 @@ struct PosixFileMod_def : CommonFileFun
 template<typename FH, typename FM,typename ScratchBuf>
 struct PosixFileFun_def : PosixFileMod_def
 {
-
     STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
     {
         int fd = open(fn,PosixRscFlags(ac),S_IRWXU|S_IRGRP);
@@ -92,15 +96,23 @@ struct PosixFileFun_def : PosixFileMod_def
 	data.data = (byte_t*)Alloc(sz);
 	data.size = sz;
 
-	ssize_t r = read(f_h->fd,data.data,data.size);
+        szptr i = 0;
+        szptr chnk = 0;
+        while(i<sz)
+        {
+            chnk = ((sz-i) < Int32_Max) ? (sz-i) : Int32_Max;
+            i += read(f_h->fd,
+                      &(((byte_t*)(data.data))[i]),
+                      chnk);
+            if(ErrnoCheck())
+                break;
+        }
 
-	if(r < sz && r > 0)
-	    data.data = (byte_t*)Realloc(data.data,r);
-	else if(r < 0)
-	{
-	    CFree(data.data);
-	    return {};
-	}
+        if(i < sz)
+        {
+            CFree(data.data);
+            return {};
+        }
 
 	return data;
     }
@@ -113,9 +125,20 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE bool Write(FH* f_h, CByteData const& d, bool)
     {
-	ssize_t w = write(f_h->fd,d.data,d.size);
-	ErrnoCheck();
-	return w == d.size;
+        szptr i = 0;
+        szptr it = 0;
+        szptr chnk = 0;
+        while(i<d.size)
+        {
+            chnk = ((d.size-i) < Int32_Max) ? (d.size-i) : Int32_Max;
+            i += write(f_h->fd,
+                       &(((byte_t*)(d.data))[i]),
+                       chnk);
+            if(ErrnoCheck() && it != 0)
+                break;
+            it++;
+        }
+        return i == d.size;
     }
 
     STATICINLINE FM Map(cstring filename, ResourceAccess acc,

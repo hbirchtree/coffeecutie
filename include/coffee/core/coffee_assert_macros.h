@@ -10,6 +10,12 @@
 namespace Coffee{
 
 FORCEDINLINE
+void IMPLODETHEUNIVERSE()
+{
+    std::raise(SIGSEGV);
+}
+
+FORCEDINLINE
 void RUNOUTTHEWINDOW()
 {
     std::raise(SIGINT);

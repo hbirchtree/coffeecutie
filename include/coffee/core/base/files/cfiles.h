@@ -37,6 +37,7 @@ public:
     Resource(cstring rsrc = nullptr,
              bool absolute = false,
              ResourceAccess acc = ResourceAccess::None);
+    ~Resource();
 
     void* data; /*!< Data pointer*/
     uint64 size; /*!< Data size*/

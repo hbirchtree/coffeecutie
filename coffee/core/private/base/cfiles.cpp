@@ -56,6 +56,11 @@ Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
     }
 }
 
+Resource::~Resource()
+{
+    delete m_platform_data;
+}
+
 cstring Resource::resource() const
 {
     return m_resource.c_str();
