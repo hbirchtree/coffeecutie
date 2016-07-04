@@ -216,6 +216,7 @@ CIControllerState SDL2EventHandler::getControllerState(uint16 index)
 
 void SDL2EventHandler::pollEvents()
 {
+    EventApplication::pollEvents();
     while(SDL_PollEvent(&getSDL2Context()->eventhandle))
         CSDL2Types::EventHandleAll(this,&getSDL2Context()->eventhandle);
 }
@@ -227,7 +228,7 @@ bigscalar SDL2EventHandler::contextTime() const
 
 bool SDL2EventHandler::closeFlag() const
 {
-    return getSDL2Context()->contextFlags&0x1;
+    return (getSDL2Context()->contextFlags&0x1) || (EventApplication::closeFlag());
 }
 
 void SDL2EventHandler::internalProcessEvent(const CDEvent &e, c_cptr d)

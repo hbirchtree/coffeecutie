@@ -41,6 +41,13 @@ set ( CoffeeCore_SRCS
 
 # Platform-specific code, put it here
 
+# EGL loading
+if( ANDROID )
+    list ( APPEND CoffeeCore_SRCS
+            private/plat/graphics/eglinit.cpp
+            )
+endif()
+
 # SDL power-management
 if( ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32)
 	set ( SDL_POWER_PLUGIN_ENABLED ON )
@@ -150,9 +157,14 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
-        # TODO: Make GLES3 optional
-        GLESv1_CM GLESv2 GLESv3
+        EGL GLESv1_CM GLESv2
         )
+    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
+        message ( "Building with GLES 3.0+ support" )
+        list ( APPEND CORE_EXTRA_LIBRARIES
+                GLESv3
+                )
+    endif()
 endif()
 
 if(WIN32)

@@ -129,10 +129,15 @@ inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         HWDeviceInfo const& arg)
 {
-    return extArgReplace(fmt,index,cStringFormat("mf={0}, md={1}, fw={2}",
-                                               arg.manufacturer,
-                                               arg.model,
-                                               arg.firmware));
+    if(arg.firmware.size()>0)
+        return extArgReplace(fmt,index,cStringFormat("{0} {1} running {2}",
+                                                     arg.manufacturer,
+                                                     arg.model,
+                                                     arg.firmware));
+    else
+        return extArgReplace(fmt,index,cStringFormat("{0} {1}",
+                                                     arg.manufacturer,
+                                                     arg.model));
 }
 
 inline CString cStringReplace(
@@ -150,7 +155,7 @@ inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         Display::CGLVersion const& arg)
 {
-    return extArgReplace(fmt,index,cStringFormat("major={0}, minor={1}, extra={2}",
+    return extArgReplace(fmt,index,cStringFormat("{0}.{1} {2}",
                                                  arg.major,arg.minor,arg.driver));
 }
 

@@ -1,12 +1,14 @@
 #pragma once
 
 #include "inputapplication.h"
+#include <coffee/core/eventprocess.h>
 
 namespace Coffee{
 namespace Display{
 
 class EventApplication : public InputApplication
 {
+    bool m_closeFlag = false;
 public:
 
     template<typename EvType>
@@ -29,7 +31,13 @@ public:
     /*!
      * \brief Function used for polling events
      */
-    virtual void pollEvents() = 0;
+    virtual void pollEvents()
+    {
+        if(!EventProcess(5))
+        {
+            m_closeFlag = true;
+        }
+    }
 
     /*!
      * \brief Allow installation of event handlers without implementing the class
@@ -56,7 +64,10 @@ public:
      * \brief A flag used to determine when a render loop should terminate
      * \return Whether or not a render loop should terminate
      */
-    virtual bool closeFlag() const = 0;
+    virtual bool closeFlag() const
+    {
+        return m_closeFlag;
+    }
 };
 
 }

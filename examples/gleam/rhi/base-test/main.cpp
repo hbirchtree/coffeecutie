@@ -39,8 +39,8 @@ public:
         Profiler::PushContext("Renderer");
 
         const constexpr cstring textures[num_textures] = {
-            "eye-demo/eye-normal.tga", "eye-demo/eye-weird.tga",
-            "eye-demo/eye-alpha.tga", "eye-demo/eye-veins.tga"
+            "eye-normal.tga", "eye-weird.tga",
+            "eye-alpha.tga",  "eye-veins.tga"
         };
 
         const scalar vertexdata[] = {
@@ -196,10 +196,10 @@ public:
         instdata.m_insts = 2;
         instdata.m_verts = (sizeof(vertexdata)/sizeof(scalar))/5;
 
-        Vecf4 clear_col = {.1,.1,.1,1.};
+        Vecf4 clear_col = {.1f,.1f,.1f,1.f};
 
         CGCamera camera;
-        camera.aspect = 1.6;
+        camera.aspect = 1.6f;
         camera.fieldOfView = 70.f;
 
         camera.position.x() = 1.;
@@ -275,7 +275,7 @@ public:
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
     /* Set a prefix from which resources are fetched */
-    CString prefix = Env::ApplicationDir()+"/sample_data/";
+    CString prefix = "sample_data/eye-demo/";
     CResources::FileResourcePrefix(prefix.c_str());
 
     /*Required for SDL2 applications*/
@@ -309,12 +309,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         return 1;
     }
     Profiler::Profile("Initialize renderer");
-
-    cDebug("OpenGL core profile version: {0}",
-           (_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
-
-    cDebug("Device info: {0}", GL::Debug::Renderer());
-    Profiler::Profile("Get renderer info");
 
     /* Check if required extensions are present */
     if(!(  GL::SeparableShaderSupported()

@@ -97,10 +97,10 @@ struct CGL_Shared_Debug
 
         cstring str_c = GetString(GL_SHADING_LANGUAGE_VERSION);
 
-		if (!str_c)
-			return ver;
+        if (!str_c)
+            return ver;
 
-		CString str = str_c;
+        CString str = str_c;
 
         ver.driver = str;
 
@@ -157,9 +157,8 @@ struct CGL_Shared_Debug
     {
         cstring vendor = GetString(GL_VENDOR);
         cstring device = GetString(GL_RENDERER);
-        cstring ver = GetString(GL_VERSION);
 
-        return HWDeviceInfo(vendor,device,ver);
+        return HWDeviceInfo(vendor,device,ContextVersion().driver);
     }
 
     /* Texture format support */

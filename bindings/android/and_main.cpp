@@ -1,20 +1,28 @@
 #include <coffee/android/android_main.h>
-
 #include <coffee/core/coffee.h>
-#include <coffee/core/coffee_version.h>
-
 #include <coffee/core/CDebug>
-#include <coffee/core/platform_data.h>
 
-#include <android/sensor.h>
+#include <coffee/core/plat/graphics/eglinit.h>
 
-#include <jni.h>
 #include <android_native_app_glue.h>
+#include <android/sensor.h>
 
 using namespace Coffee;
 
 struct android_app* coffee_app = nullptr;
-JavaVM* coffee_jvm = nullptr;
+
+struct AndroidSensorData
+{
+    ASensorManager* manager;
+    const ASensor* accelerometer;
+    const ASensor* gyroscope;
+    ASensorEventQueue* eventQueue;
+};
+
+struct CoffeeAndroidUserData
+{
+    AndroidSensorData sensors;
+};
 
 /*
  *
@@ -160,6 +168,55 @@ COFFAPI c_cptr Coffee_AssetGetPtr(AAsset* fp)
  *
  */
 
+bool Coffee::EventProcess(int timeout)
+{
+    CoffeeAndroidUserData* udata = (CoffeeAndroidUserData*)coffee_app->userData;
+
+    android_poll_source* ISrc;
+
+    ALooper_acquire(coffee_app->looper);
+
+    int IResult = 0;
+    int IEvents = 0;
+
+    while((IResult = ALooper_pollAll(timeout,nullptr,&IEvents,(void**)&ISrc)))
+    {
+        if(ISrc != nullptr)
+        {
+            ISrc->process(coffee_app,ISrc);
+        }
+        if(IResult == LOOPER_ID_USER)
+        {
+            ASensorEvent ev;
+            if(udata->sensors.accelerometer)
+            {
+                while(ASensorEventQueue_getEvents(udata->sensors.eventQueue,
+                                                  &ev, 1) > 0)
+                {
+                    cDebug("Sensor data: {0},{1},{2}",
+                           ev.acceleration.x,ev.acceleration.y,
+                           ev.acceleration.z);
+                }
+            }
+            if(udata->sensors.gyroscope)
+            {
+                while(ASensorEventQueue_getEvents(udata->sensors.eventQueue,
+                                                  &ev, 1) > 0)
+                {
+                    cDebug("Sensor data: {0},{1},{2}",
+                           ev.acceleration.x,ev.acceleration.y,
+                           ev.acceleration.z);
+                }
+            }
+        }
+        if(coffee_app->destroyRequested)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 COFFAPI void CoffeeActivity_onCreate(
         ANativeActivity* activity,
         void* savedState,
@@ -175,18 +232,65 @@ COFFAPI void CoffeeActivity_onCreate(
     ANativeActivity_onCreate(activity,savedState,savedStateSize);
 }
 
-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*)
+void CoffeeActivity_handleCmd(struct android_app* app, int32_t cmd)
 {
-    cDebug("Java VM called me!");
-    coffee_jvm = vm;
+    switch(cmd)
+    {
+        case APP_CMD_SAVE_STATE:
+            break;
+
+        case APP_CMD_INIT_WINDOW:
+            break;
+        case APP_CMD_TERM_WINDOW:
+            break;
+
+        case APP_CMD_GAINED_FOCUS:
+            break;
+        case APP_CMD_LOST_FOCUS:
+            break;
+
+        default:
+            break;
+    }
+}
+
+int32_t CoffeeActivity_handleInput(struct android_app* app, AInputEvent* event)
+{
+    int32_t type = AInputEvent_getType(event);
+    switch(type)
+    {
+        case AINPUT_EVENT_TYPE_MOTION:
+            break;
+        case AINPUT_EVENT_TYPE_KEY:
+            break;
+    }
 }
 
 extern CoffeeMainWithArgs android_entry_point;
 
 void android_main(struct android_app* state)
 {
+    static CoffeeAndroidUserData userdata = {};
+
     /* According to docs, something something glue check */
     app_dummy();
+
+    state->userData = &userdata;
+
+    state->onAppCmd = CoffeeActivity_handleCmd;
+    state->onInputEvent = CoffeeActivity_handleInput;
+
+    userdata.sensors.manager = ASensorManager_getInstance();
+    userdata.sensors.accelerometer = ASensorManager_getDefaultSensor(
+            userdata.sensors.manager,
+            ASENSOR_TYPE_ACCELEROMETER);
+    userdata.sensors.gyroscope = ASensorManager_getDefaultSensor(
+            userdata.sensors.manager,
+            ASENSOR_TYPE_ACCELEROMETER);
+    userdata.sensors.eventQueue = ASensorManager_createEventQueue(
+            userdata.sensors.manager,
+            state->looper,LOOPER_ID_USER,
+            nullptr,nullptr);
 
     coffee_app = state;
 

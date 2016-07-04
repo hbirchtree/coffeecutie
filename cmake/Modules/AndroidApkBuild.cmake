@@ -8,9 +8,7 @@ set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android si
 
 # Misc properties
 
-set ( ANDROID_TEMPLATE_PROJECT "${CMAKE_SOURCE_DIR}/desktop/android" )
-
-set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/packaged/android-apk" )
+set ( APK_OUTPUT_DIR "${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" )
 
 # For valid options, see:
 # http://developer.android.com/guide/topics/manifest/activity-element.html
@@ -30,9 +28,10 @@ set ( ANDROID_APPLICATION_NAME "Coffee App" )
 set ( ANDROID_VERSION_CODE "1" )
 set ( ANDROID_VERSION_NAME "1.0" )
 
-set ( ANDROID_PROJECT_INPUT ${PROJECT_SOURCE_DIR}/cmake/Platform/Android/ )
+set ( ANDROID_PROJECT_INPUT ${CMAKE_SOURCE_DIR}/desktop/android )
 
-set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_PROJECT_INPUT}/Template )
+set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_TEMPLATE_PROJECT}/Template )
+set ( ANDROID_PROJECT_CONFIG_DIR ${ANDROID_TEMPLATE_PROJECT}/Config )
 
 set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
 
@@ -100,7 +99,7 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     # Install base template files
     add_custom_command ( TARGET ${Target_Name}
         PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_PROJECT_INPUT}/Template ${BUILD_OUTDIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_PROJECT_TEMPLATE_DIR} ${BUILD_OUTDIR}
         )
 
     # Create library directory
@@ -143,40 +142,40 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
     if(ANDROID_USE_SDL2_LAUNCH)
         # Insert details into files
         configure_file (
-            "${ANDROID_PROJECT_INPUT}/Config/sdl2/AndroidManifest.xml.in"
+            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/AndroidManifest.xml.in"
             "${BUILD_OUTDIR}/AndroidManifest.xml"
             @ONLY
             )
         configure_file (
-            "${ANDROID_PROJECT_INPUT}/Config/sdl2/SDLActivity.java.in"
+            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
             "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
             @ONLY
             )
         configure_file (
-            "${ANDROID_PROJECT_INPUT}/Config/sdl2/${ANDROID_STARTUP_ACTIVITY}.java.in"
+            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/${ANDROID_STARTUP_ACTIVITY}.java.in"
             "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/${ANDROID_STARTUP_ACTIVITY}.java"
             @ONLY
             )
     else()
         configure_file (
-            "${ANDROID_PROJECT_INPUT}/Config/native/AndroidManifest.xml.in"
+            "${ANDROID_PROJECT_CONFIG_DIR}/native/AndroidManifest.xml.in"
             "${BUILD_OUTDIR}/AndroidManifest.xml"
             @ONLY
             )
     endif()
 
     configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/build.xml.in"
+        "${ANDROID_PROJECT_CONFIG_DIR}/build.xml.in"
         "${BUILD_OUTDIR}/build.xml"
         @ONLY
         )
     configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/project.properties.in"
+        "${ANDROID_PROJECT_CONFIG_DIR}/project.properties.in"
         "${BUILD_OUTDIR}/project.properties"
         @ONLY
         )
     configure_file (
-        "${ANDROID_PROJECT_INPUT}/Config/strings.xml.in"
+        "${ANDROID_PROJECT_CONFIG_DIR}/strings.xml.in"
         "${BUILD_OUTDIR}/res/values/strings.xml"
         @ONLY
         )

@@ -7,6 +7,7 @@
 #include "coffee_version.h"
 
 #include "platform_data.h"
+#include "eventprocess.h"
 
 namespace Coffee{
 

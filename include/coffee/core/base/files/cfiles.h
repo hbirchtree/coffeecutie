@@ -40,7 +40,7 @@ public:
     ~Resource();
 
     void* data; /*!< Data pointer*/
-    uint64 size; /*!< Data size*/
+    szptr size; /*!< Data size*/
 
     cstring resource() const;
 

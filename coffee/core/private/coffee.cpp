@@ -160,4 +160,13 @@ void InstallSignalHandler()
     signal(SIGTERM,sighandle);
 }
 
+#if !defined(COFFEE_ANDROID)
+
+bool EventProcess(int)
+{
+    return true;
+}
+
+#endif
+
 }

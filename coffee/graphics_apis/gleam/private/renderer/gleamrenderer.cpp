@@ -97,7 +97,15 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         }
     }else{
         const static CGLVersion v30es(3,0);
+        const static CGLVersion v31es(3,1);
 
+//        if(p.version>=v31es)
+//        {
+//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v31es);
+//#ifndef COFFEE_GLEAM_DESKTOP
+//            status = CGL::CGLES31::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+//#endif
+//        }else
         if(p.version==v30es)
         {
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
@@ -119,9 +127,12 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         return false;
     }
 
-    cDebug("GL rendering device: {0}",GL::Debug::Renderer());
-    cDebug("GL context version: {0}",GL::Debug::ContextVersion());
-    cDebug("GLSL version: {0}",GL::Debug::ShaderLanguageVersion());
+    cDebug("Rendering device info: {0}",GL::Debug::Renderer());
+    if(feval(p.flags&GLProperties::GLCoreProfile))
+        cDebug("OpenGL core profile version: {0}",GL::Debug::ContextVersion());
+    else
+        cDebug("OpenGL (non-core) version: {0}",GL::Debug::ContextVersion());
+    cDebug("OpenGL GLSL version: {0}",GL::Debug::ShaderLanguageVersion());
 
 #ifdef COFFEE_GLEAM_DESKTOP
     if(GL::DebuggingSupported())
