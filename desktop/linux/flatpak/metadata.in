@@ -1,0 +1,20 @@
+[Application]
+name=@FLATPAK_PKG_NAME@
+runtime=org.freedesktop.Platform/x86_64/1.4
+sdk=org.freedesktop.Sdk/x86_64/1.4
+command=@FLATPAK_EXEC@
+
+[Environment]
+COFFEE_NO_PROFILER_EXPORT=1
+APPIMAGE_DATA_DIR=/app/assets
+LD_LIBRARY_PATH=/app/lib
+
+[Context]
+shared=network;ipc;
+sockets=x11;wayland;pulseaudio;
+devices=dri;
+filesystems=~/.local/share/@FLATPAK_CONFIG@;~/.cache/@FLATPAK_CONFIG@;
+
+[Extension org.freedesktop.Platform.GL]
+directory=lib/GL
+

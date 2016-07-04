@@ -1,0 +1,7 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=@FLATPAK_TITLE@
+Exec=@FLATPAK_EXEC@
+StartupWMClass=@FLATPAK_EXEC_WM@
+Icon=@FLATPAK_ICON_REF@

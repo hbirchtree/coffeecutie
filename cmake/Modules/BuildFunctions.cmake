@@ -9,12 +9,13 @@ if(ANDROID)
 endif()
 
 include ( LinuxAppImageBuild )
+include ( LinuxFlatpakBuild )
 include ( WindowsImagePacker )
 
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
-    if(ANDROID OR "${CMAKE_MAJOR_VERSION}" VERSION_LESS 3 AND "${CMAKE_MINOR_VERSION}" VERSION_LESS 1)
+    if(ANDROID)
         # Android's compiler doesn't support target_compile_features :(
         set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
     elseif(APPLE)
@@ -119,10 +120,15 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             DESTINATION
             ${CMAKE_PACKAGED_OUTPUT_PREFIX}/osx
             )
-    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND COFFEE_GENERATE_APPIMAGE)
+    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         add_executable( ${TARGET} ${SOURCES} )
 
-        APPIMAGE_PACKAGE(${TARGET} "${TITLE}" "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}")
+        if(COFFEE_GENERATE_APPIMAGE)
+            APPIMAGE_PACKAGE(${TARGET} "${TITLE}" "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}")
+        endif()
+        if(COFFEE_GENERATE_FLATPAK)
+            FLATPAK_PACKAGE(${TARGET} "org.coffee" "${TITLE}" "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}" )
+        endif()
     else()
         add_executable(${TARGET} ${SOURCES})
 

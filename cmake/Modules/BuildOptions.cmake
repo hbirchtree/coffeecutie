@@ -15,10 +15,12 @@ option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
 if(ANDROID)
     option ( ANDROID_USE_SDL2_LAUNCH "Use traditional SDL2 Android bindings" ON )
+    option ( ANDROID_DEPLOY_APK "Whether to install directly to a connected device" OFF )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     option ( COFFEE_GENERATE_APPIMAGE OFF )
+    option ( COFFEE_GENERATE_FLATPAK OFF )
 endif()
 
 #
