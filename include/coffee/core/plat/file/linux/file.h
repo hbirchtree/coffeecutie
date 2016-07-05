@@ -24,35 +24,9 @@ struct LinuxFileFun : Posix::PosixFileFun
     }
 };
 
-struct LinuxDirFun : DirFunDef
+struct LinuxDirFun : Posix::PosixDirFun
 {
-    STATICINLINE bool MkDir(cstring dname, bool createParent)
-    {
-        if(!createParent)
-            return mkdir(dname,S_IRWXU|S_IRWXG)==0;
 
-        char tmp[256];
-        char *p = NULL;
-        size_t len;
-
-        snprintf(tmp,sizeof(tmp),"%s",dname);
-        len = strlen(tmp);
-        if(tmp[len-1] == '/')
-            tmp[len-1] = 0;
-        for(p = tmp+1; *p;p++)
-            if(*p == '/')
-            {
-                *p = 0;
-                mkdir(tmp,S_IRWXU);
-                *p = '/';
-            }
-        return mkdir(tmp,S_IRWXU)==0;
-    }
-    STATICINLINE bool RmDir(cstring)
-    {
-        /*TODO: Implement RmDir function*/
-        return false;
-    }
 };
 }
 

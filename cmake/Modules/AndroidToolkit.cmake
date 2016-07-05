@@ -2,6 +2,10 @@ find_package ( AndroidSDK )
 
 message ("Android paths: NDK=${ANDROID_NDK}, SDK=${ANDROID_SDK}")
 
+set ( ANDROID_ADB_PROGRAM
+        "/usr/bin/adb"
+        CACHE FILEPATH "ANT build program" )
+
 set ( ANDROID_ANT_PROGRAM
 
         CACHE FILEPATH "ANT build program" )
@@ -46,6 +50,7 @@ endif()
 mark_as_advanced (
     ANDROID_NDK_BUILD_PROGRAM
     ANDROID_ANT_PROGRAM
+    ANDROID_ADB_PROGRAM
     ANDROID_SDK_PROGRAM
     ANDROID_STRIP
     ANDROID_ZIPALIGN

@@ -8,25 +8,6 @@ const cstring testfile = "fileapi_testfile.txt";
 using Resource = CResources::Resource;
 using File = CResources::FileFun;
 
-bool filedel_test()
-{
-    if(File::Exists(testfile))
-    {
-        cDebug("Unclean environment! Remove file: {0}",testfile);
-        return false;
-    }
-    if(!File::Touch(File::File,testfile))
-        return false;
-
-    if(!File::Exists(testfile))
-        return false;
-
-    if(!File::Rm(testfile))
-        return false;
-
-    return !File::Exists(testfile);
-}
-
 const cstring writetest = "writetest.txt";
 byte_t write_data[100] = {
     "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n"
@@ -70,8 +51,7 @@ bool filesize_test()
     return size==target;
 }
 
-const constexpr CoffeeTest::Test _tests[4] = {
-    {filedel_test,"File handling","Creating and deleting a file",true},
+const constexpr CoffeeTest::Test _tests[3] = {
     {filewrite_test,"File writing","Writing text data to disk"},
     {fileread_test,"File reading","Reading text data from disk"},
     {filesize_test,"File size","Verifying file size on disk"},

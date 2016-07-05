@@ -44,7 +44,7 @@ set ( CoffeeCore_SRCS
 # EGL loading
 if( ANDROID )
     list ( APPEND CoffeeCore_SRCS
-            private/plat/graphics/eglinit.cpp
+#            private/plat/graphics/eglinit.cpp
             )
 endif()
 
@@ -62,6 +62,7 @@ if(ANDROID)
             ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
             private/plat/file/android/file.cpp
             private/plat/environment/android/environment.cpp
+
     )
 endif()
 
@@ -157,7 +158,7 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
-        EGL GLESv1_CM GLESv2
+        GLESv1_CM GLESv2
         )
     if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
         message ( "Building with GLES 3.0+ support" )

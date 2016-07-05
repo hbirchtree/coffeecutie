@@ -5,16 +5,48 @@
 
 using namespace Coffee;
 
-struct Coffee_EGLContext;
-struct Coffee_EGLVisual;
+struct Coffee_EGLConfigurations
+{
+    EGLConfig* configs;
+    EGLint numConfigurations;
+};
 
-int32 Coffee_EGLInit(Coffee_EGLContext* ctxt, Coffee_EGLVisual const* request);
+struct Coffee_EGLDisplay
+{
+    EGLDisplay display;
+    EGLint major,minor;
+};
 
-int32 Coffee_EGLConfig(Coffee_EGLContext* ctxt, EGLNativeWindowType win,
-                       Coffee_EGLVisual* current, EGLContext share);
+struct Coffee_EGLContext
+{
+    EGLSurface surface;
+    EGLContext context;
+    Coffee_EGLConfigurations cfg;
+};
 
-EGLContext Coffee_EGLCreateContext(Coffee_EGLContext* ctxt, EGLContext share);
+struct Coffee_EGLVisual
+{
+    EGLint renderable,surface;
+    EGLint r,g,b,d;
+};
 
-bool Coffee_EGLConfigureSurface(Coffee_EGLContext* ctxt, Coffee_EGLVisual* current);
+namespace Coffee{
+namespace CEGL{
+    extern int32 Init(Coffee_EGLDisplay* ctxt);
 
-int32 Coffee_EGLTerminate(Coffee_EGLContext* ctxt);
+    extern int32 GetConfigs(Coffee_EGLDisplay* dpy, Coffee_EGLContext* ctx,
+                            Coffee_EGLVisual const* request);
+
+    extern int32 CreateSurface(Coffee_EGLDisplay* disp, Coffee_EGLContext* ctxt,
+                               EGLNativeWindowType win, Coffee_EGLVisual* current);
+
+    extern EGLContext CreateContext(Coffee_EGLDisplay* dpy,
+                                    EGLConfig cfg, EGLContext share);
+
+    extern bool ConfigureSurface(Coffee_EGLDisplay* dpy, Coffee_EGLContext* ctxt);
+
+    extern void DestroyContext(Coffee_EGLDisplay* dpy, Coffee_EGLContext* ctxt);
+
+    extern int32 Terminate(Coffee_EGLDisplay* ctxt);
+}
+}

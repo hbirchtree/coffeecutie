@@ -8,7 +8,7 @@ set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android si
 
 # Misc properties
 
-set ( APK_OUTPUT_DIR "${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" )
+set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" )
 
 # For valid options, see:
 # http://developer.android.com/guide/topics/manifest/activity-element.html
@@ -30,8 +30,8 @@ set ( ANDROID_VERSION_NAME "1.0" )
 
 set ( ANDROID_PROJECT_INPUT ${CMAKE_SOURCE_DIR}/desktop/android )
 
-set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_TEMPLATE_PROJECT}/Template )
-set ( ANDROID_PROJECT_CONFIG_DIR ${ANDROID_TEMPLATE_PROJECT}/Config )
+set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_PROJECT_INPUT}/Template )
+set ( ANDROID_PROJECT_CONFIG_DIR ${ANDROID_PROJECT_INPUT}/Config )
 
 set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
 
@@ -48,13 +48,17 @@ set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
 # Api_Arch : armeabi-v7a, arm64-v8a or x86
 # Dependency_Libs : libraries which will be added to the APK
 #
-macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs )
+macro(APK_PACKAGE Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs )
     message ( "APK: Generating ${Pkg_Name} (${Api_Arch})" )
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
     # For SDL2-enabled programs
-    set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
+    if(ANDROID_USE_SDL2_LAUNCH)
+        set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
+    else()
+        set ( ANDROID_STARTUP_ACTIVITY "NativeActivity" )
+    endif()
 
     # For NativeActivity programs
     set ( ANDROID_STARTUP_LIBRARY "${Target_Name}" )
@@ -230,7 +234,32 @@ macro(PACKAGE_APK Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
             POST_BUILD
             COMMAND ${ANDROID_ANT_PROGRAM} ${ANDROID_ANT_COMMON_PROPERTIES} debug
             WORKING_DIRECTORY ${BUILD_OUTDIR}
-	    )
+	        )
+    endif()
+
+    if(ANDROID_DEPLOY_APK)
+        add_custom_command ( TARGET ${Target_Name}
+            POST_BUILD
+            COMMAND
+            ${ANDROID_ADB_PROGRAM} install -r "${ANDROID_APK_FILE_OUTPUT}"
+            )
+        if(ANDROID_USE_SDL2_LAUNCH)
+            add_custom_command ( TARGET ${Target_Name}
+                POST_BUILD
+                COMMAND
+                ${ANDROID_ADB_PROGRAM} shell am start
+                    -a "${ANDROID_PACKAGE_NAME}"
+                    -n "${ANDROID_PACKAGE_NAME}/.${ANDROID_STARTUP_ACTIVITY}"
+                )
+        else()
+            add_custom_command ( TARGET ${Target_Name}
+                POST_BUILD
+                COMMAND
+                ${ANDROID_ADB_PROGRAM} shell am start
+                    -a "android.intent.action.LAUNCHER"
+                    -n "${ANDROID_PACKAGE_NAME}/android.app.NativeActivity"
+                )
+        endif()
     endif()
 
     install (

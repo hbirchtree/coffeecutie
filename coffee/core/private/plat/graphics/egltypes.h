@@ -1,5 +1,6 @@
 #pragma once
 
+/*
 #include <EGL/egl.h>
 
 struct Coffee_EGLConfigurations
@@ -8,20 +9,22 @@ struct Coffee_EGLConfigurations
     EGLint numConfigurations;
 };
 
-struct Coffee_EGLContext
+struct Coffee_EGLDisplay
 {
     EGLDisplay display;
+    EGLint major,minor;
+};
+
+struct Coffee_EGLContext
+{
     EGLSurface surface;
     EGLContext context;
-
     Coffee_EGLConfigurations cfg;
-
-    EGLint major,minor;
 };
 
 struct Coffee_EGLVisual
 {
     EGLint renderable,surface;
     EGLint r,g,b,d;
-    EGLint w,h,fmt;
 };
+ */

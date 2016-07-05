@@ -29,12 +29,13 @@ struct FileFunDef
     {
         None,
         Block,
+        Character,
         Device,
         File,
         Directory,
         Link,
         FIFO,
-        Pipe,
+        Socket,
     };
 
     static CString NativePath(cstring);

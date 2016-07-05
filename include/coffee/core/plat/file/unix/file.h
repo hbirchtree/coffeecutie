@@ -45,10 +45,39 @@ struct PosixFileMod_def : CommonFileFun
         return false;
     }
 
+    STATICINLINE NodeType Stat(cstring fn)
+    {
+        struct stat fs = {};
+        int s = stat(fn,&fs);
+        if(s != 0)
+            return NodeType::None;
+        mode_t m = fs.st_mode;
+        if(m&S_IFDIR)
+            return NodeType::Directory;
+        else if(m&S_IFCHR)
+            return NodeType::Character;
+        else if(m&S_IFBLK)
+            return NodeType::Block;
+        else if(m&S_IFREG)
+            return NodeType::File;
+        else if(m&S_IFLNK)
+            return NodeType::Link;
+        else if(m&S_IFSOCK)
+            return NodeType::Socket;
+        else if(m&S_IFIFO)
+            return NodeType::FIFO;
+        return NodeType::None;
+    }
     STATICINLINE bool Touch(NodeType t, cstring fn)
     {
 	switch(t)
         {
+        case NodeType::File:
+        {
+            int fd = creat(fn,S_IRWXU);
+            close(fd);
+            break;
+        }
 	default:
 	    return false;
 	}
@@ -399,6 +428,36 @@ struct PosixFileFun : PosixFileFun_def<PosixApi::FileHandle,PosixApi::FileMappin
     using FileHandle = PosixApi::FileHandle;
     using FileMapping = PosixApi::FileMapping;
     using ScratchBuf = CommonFileFun::ScratchBuf;
+};
+
+struct PosixDirFun : DirFunDef
+{
+    STATICINLINE bool MkDir(cstring dname, bool createParent)
+    {
+        if(!createParent)
+            return mkdir(dname,S_IRWXU|S_IRWXG)==0;
+
+        char tmp[256];
+        char *p = NULL;
+        size_t len;
+
+        snprintf(tmp,sizeof(tmp),"%s",dname);
+        len = strlen(tmp);
+        if(tmp[len-1] == '/')
+            tmp[len-1] = 0;
+        for(p = tmp+1; *p;p++)
+            if(*p == '/')
+            {
+                *p = 0;
+                mkdir(tmp,S_IRWXU);
+                *p = '/';
+            }
+        return mkdir(tmp,S_IRWXU)==0;
+    }
+    STATICINLINE bool RmDir(cstring dname)
+    {
+        return rmdir(dname) == 0;
+    }
 };
 
 }

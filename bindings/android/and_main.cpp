@@ -6,6 +6,7 @@
 
 #include <android_native_app_glue.h>
 #include <android/sensor.h>
+#include <coffee/core/private/plat/graphics/egltypes.h>
 
 using namespace Coffee;
 
@@ -174,8 +175,6 @@ bool Coffee::EventProcess(int timeout)
 
     android_poll_source* ISrc;
 
-    ALooper_acquire(coffee_app->looper);
-
     int IResult = 0;
     int IEvents = 0;
 
@@ -240,6 +239,10 @@ void CoffeeActivity_handleCmd(struct android_app* app, int32_t cmd)
             break;
 
         case APP_CMD_INIT_WINDOW:
+            if(app->window != nullptr)
+            {
+                // Start GL
+            }
             break;
         case APP_CMD_TERM_WINDOW:
             break;
@@ -264,6 +267,7 @@ int32_t CoffeeActivity_handleInput(struct android_app* app, AInputEvent* event)
         case AINPUT_EVENT_TYPE_KEY:
             break;
     }
+    return 0;
 }
 
 extern CoffeeMainWithArgs android_entry_point;
@@ -307,6 +311,7 @@ void android_main(struct android_app* state)
         /* Get application name, just stock */
         cstring_w appname = &(CoffeeApplicationData.application_name[0]);
 
+
         /* And then load the usual main() entry point */
         if(android_entry_point)
         {
@@ -315,5 +320,7 @@ void android_main(struct android_app* state)
         }else{
             cWarning("Failed to load application entry point!");
         }
+
+        Coffee::EventProcess(-1);
     }
 }

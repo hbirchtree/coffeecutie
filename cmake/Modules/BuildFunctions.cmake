@@ -72,10 +72,12 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
             add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
         else()
             message ("Android sources: ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}")
-            add_library(${TARGET} SHARED ${SOURCES} )
+            add_library(${TARGET} SHARED ${SOURCES}
+                ${CMAKE_SOURCE_DIR}/coffee/core/private/plat/graphics/eglinit.cpp )
 
             target_link_libraries ( ${TARGET}
                 AndroidCore
+                EGL
                 )
         endif()
         set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -162,7 +164,7 @@ macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_
 
         list ( APPEND DEPENDENCIES "${BUNDLE_LIBS}" )
 
-        package_apk(
+        APK_PACKAGE(
             "${TARGET}"
             "${TITLE}"
             "org.coffee.${PACKAGE_SUFFIX}"
