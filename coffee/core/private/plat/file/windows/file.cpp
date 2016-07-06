@@ -167,14 +167,73 @@ namespace Coffee {
 			}
 			return false;
 		}
+		
+		CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
+		{
+			if(h->type == FileHandle::FS)
+			{
+				CByteData d;
+
+				d.size = Size(h);
+				d.size = (size < d.size) ? size : d.size;
+				d.data = (byte_t*)Alloc(d.size);
+
+				DWORD size = 0;
+				szptr i = 0;
+				DWORD chnk = 0;
+
+				while (i < d.size)
+				{
+					chnk = ((d.size - i) < UInt32_Max) ? (d.size - i) : UInt32_Max;
+					SetFilePointer(h->file, chnk, nullptr, FILE_CURRENT);
+					BOOL stat = ReadFile(h->file, &d.data[i], chnk, &size, nullptr);
+					if (stat && size == chnk)
+						i += chnk;
+					else {
+						d.size = 0;
+						CFree(d.data);
+						break;
+					}
+				}
+
+				SetFilePointer(h->file, 0, nullptr, FILE_BEGIN);
+
+				return d;
+			}else
+			{
+				CByteData d;
+
+				HGLOBAL lsrc = LoadResource(nullptr, h->rsrc);
+				d.size = SizeofResource(nullptr, h->rsrc);
+				d.size = (size < d.size) ? size : d.size;
+				d.data = (byte_t*)LockResource(lsrc);
+
+				return d;
+			}
+		}
 
 		bool WinFileFun::Write(FileHandle* fh, CByteData const& d, bool)
 		{
 			if (fh->type == FileHandle::FS) {
 				DWORD size = 0;
-				BOOL stat = WriteFile(fh->file, d.data, d.size, &size, nullptr);
+				szptr i = 0;
+				DWORD chnk = 0;
+				while (i < d.size)
+				{
+					chnk = ((d.size - i) < UInt32_Max) ? (d.size - i) : UInt32_Max;
+					SetFilePointer(fh->file, chnk, nullptr, FILE_CURRENT);
+					BOOL stat = WriteFile(fh->file, &d.data[i], chnk, &size, nullptr);
+					if (stat && chnk == size)
+						i += chnk;
+					else
+						break;
+				}
+				
 				BOOL stat2 = FlushFileBuffers(fh->file);
-				return stat && stat2 && size == d.size;
+
+				SetFilePointer(fh->file, 0, nullptr, FILE_BEGIN);
+
+				return stat && stat2 && i == d.size;
 			}
 			else
 				return false;
@@ -200,9 +259,10 @@ namespace Coffee {
 		{
 			if (fh->type == FileHandle::FS)
 			{
-				DWORD highpart = 0;
-				DWORD low = GetFileSize(fh->file, &highpart);
-				return (highpart << 32) + low;
+				LARGE_INTEGER e;
+				e.QuadPart = 0;
+				e.LowPart = GetFileSize(fh->file, (LPDWORD)&e.HighPart);
+				return e.QuadPart;
 			}
 			return SizeofResource(nullptr, fh->rsrc);
 		}
@@ -213,10 +273,18 @@ namespace Coffee {
 				HRSRC rsc_h = open_rsc(fn);
 				DWORD sz = SizeofResource(nullptr, rsc_h);
 				return sz;
+			}else{
+				LARGE_INTEGER e;
+				HANDLE f = CreateFile(fn, GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
+				if (f != INVALID_HANDLE_VALUE)
+				{
+					BOOL s = GetFileSizeEx(f, &e);
+					CloseHandle(f);
+					return e.QuadPart;
+				}
+				else
+					return 0;
 			}
-			struct stat st;
-			stat(fn, &st);
-			return static_cast<szptr>(st.st_size);
 		}
 
 		bool WinFileFun::Touch(NodeType, cstring)
@@ -265,10 +333,10 @@ namespace Coffee {
 			DWORD profl = WinFileApi::GetMappingFlags(acc);
 
 			szptr offsize = off + size;
-			DWORD size_high = HIDWORD(offsize);
-			DWORD size_low = LODWORD(offsize);
+			LARGE_INTEGER offsize_;
+			offsize_.QuadPart = offsize;
 
-			HANDLE mh = CreateFileMapping(fh, nullptr, profl, size_high, size_low, nullptr);
+			HANDLE mh = CreateFileMapping(fh, nullptr, profl, offsize_.HighPart, offsize_.LowPart, nullptr);
 
 			if (!mh)
 			{
@@ -279,10 +347,10 @@ namespace Coffee {
 
 			DWORD view_fl = WinFileApi::GetMappingViewFlags(acc);
 
-			DWORD off_high = HIDWORD(off);
-			DWORD off_low = LODWORD(off);
+			LARGE_INTEGER off_;
+			off_.QuadPart = off;
 
-			void* ptr = MapViewOfFile(mh, view_fl, off_high, off_low, size);
+			void* ptr = MapViewOfFile(mh, view_fl, off_.HighPart, off_.LowPart, size);
 
 			if (!ptr)
 			{
@@ -324,9 +392,9 @@ namespace Coffee {
 			b.acc = acc;
 
 			DWORD fl1 = WinFileApi::GetMappingFlags(acc);
-			DWORD s_hi = HIDWORD(size);
-			DWORD s_lo = LODWORD(size);
-			b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s_hi, s_lo, nullptr);
+			LARGE_INTEGER s;
+			s.QuadPart = size;
+			b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s.HighPart, s.LowPart, nullptr);
 
 			if (!b.mapping)
 			{

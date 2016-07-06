@@ -296,9 +296,9 @@ struct WindowsSysInfo : SysInfoDef
     }
     STATICINLINE bigscalar ProcessorFrequency()
     {
-	LARGE_INTEGER e;
-	QueryPerformanceFrequency(&e);
-	return ((e.HighPart << 32)+(e.LowPart))/1000000.0;
+		LARGE_INTEGER e;
+		QueryPerformanceFrequency(&e);
+		return e.QuadPart/1000000.0;
     }
     STATICINLINE bool HasFPU()
     {

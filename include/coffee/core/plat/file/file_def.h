@@ -47,9 +47,12 @@ struct FileFunDef
     static FileHandle* Open(cstring, ResourceAccess);
     static bool Close(FileHandle*);
 
-    static CByteData Read(FileHandle* h,uint64 size,bool nterminate);
     static void Seek(FileHandle* h,uint64 off);
+
+    static CByteData Read(FileHandle* h,uint64 size,bool);
     static bool Write(FileHandle* h,CByteData const& d,bool);
+
+    static szptr Size(FileHandle*);
 
     /*!
      * \brief Here's how the resource flags should work:
@@ -85,7 +88,6 @@ struct FileFunDef
     static bool MapSync(void*,szptr)
     {return false;}
 
-    static szptr Size(FileHandle*);
 
     /*!
      * \brief Magically cache your whole application

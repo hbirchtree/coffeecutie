@@ -81,6 +81,7 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
 
 	static bool Exists(cstring fn);
 
+	static CByteData Read(FileHandle* h, uint64 size, bool nterminate);
 	static bool Write(FileHandle* fh, CByteData const& d, bool);
 
 	static szptr Size(FileHandle* fh);

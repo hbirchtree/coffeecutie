@@ -36,13 +36,4 @@ namespace Coffee {
 		LocalFree(msgBuf);
 		return error;
 	}
-
-	inline DWORD HIDWORD(DWORD64 e)
-	{
-		return ((e >> 32) & 0xFFFFFFFF);
-	}
-	inline DWORD LODWORD(DWORD64 e)
-	{
-		return (e & 0xFFFFFFFF);
-	}
 }
