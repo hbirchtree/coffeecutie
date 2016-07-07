@@ -35,9 +35,16 @@ struct SimpleProfilerImpl
         Type tp;
     };
 
+    struct ExtraPair
+    {
+        CString key;
+        CString value;
+    };
+
     using ThreadListing = Map<ShPtr<ThreadId>,CString>;
     using ThreadItem = std::pair<ShPtr<ThreadId>,CString>;
     using ThreadPtr = ShPtr<ThreadId>;
+    using ExtraData = LinkList<ExtraPair>;
 
     STATICINLINE void InitProfiler()
     {
@@ -55,6 +62,7 @@ struct SimpleProfilerImpl
             data_access_mutex = new Mutex;
             datapoints = new LinkList<DataPoint>;
             threadnames = new ThreadListing;
+            extra_data = new ExtraData;
         }
 
         global_init->fetch_add(1);
@@ -76,6 +84,7 @@ struct SimpleProfilerImpl
             delete start_time;
             delete threadnames;
             delete global_init;
+            delete extra_data;
         }
 #endif
     }
@@ -156,12 +165,22 @@ struct SimpleProfilerImpl
 #endif
     }
 
+    STATICINLINE void AddExtraData(CString const& key, CString const& val)
+    {
+        Lock l(*data_access_mutex);
+        C_UNUSED(l);
+
+        extra_data->push_back({key,val});
+    }
+
     /* Below variables have storage in extern_storage.cpp */
 
     static Timestamp *start_time;
     static Mutex *data_access_mutex;
     static LinkList<DataPoint> *datapoints;
     static ThreadListing *threadnames;
+
+    static ExtraData *extra_data;
 
     static bool Enabled;
 

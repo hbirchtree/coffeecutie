@@ -39,7 +39,7 @@ string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 
 set ( COFFEE_VERSION_CODE "001" )
 
-add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
+#add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
 add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffee Guy" )
 add_definitions( -DCOFFEE_VERSION_CODE=${COFFEE_VERSION_CODE} )
 

@@ -66,6 +66,8 @@ include ( GetPrerequisites )
 # For iOS, everything will be statically linked, which might be used for Android as well.
 # For now, we leave the linking options here for desktop platforms
 macro(COFFEE_ADD_EXAMPLE_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
+    add_definitions( -DCOFFEE_APPLICATION_NAME="${TITLE}" )
+
     if(ANDROID)
         message( "Android Main: ${SDL2_ANDROID_MAIN_FILE}" )
         if(ANDROID_USE_SDL2_LAUNCH)
@@ -190,6 +192,8 @@ macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
 endmacro()
 
 macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
+    add_definitions( -DCOFFEE_APPLICATION_NAME="${TITLE}" )
+
     add_executable ( ${TARGET} ${SOURCES} )
 
     install(

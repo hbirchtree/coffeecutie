@@ -1,4 +1,4 @@
-#include <coffee/core/CApplication>
+//#include <coffee/core/CApplication>
 #include <coffee/core/coffee.h>
 
 #if defined(COFFEE_WINDOWS)

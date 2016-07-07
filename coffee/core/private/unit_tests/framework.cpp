@@ -1,3 +1,4 @@
+#define COFFEE_APPLICATION_LIBRARY
 #include <coffee/core/unit_tests/framework.h>
 
 #include <coffee/core/CDebug>
@@ -12,18 +13,191 @@
 
 namespace CoffeeTest{
 
+CElapsedTimerMicro timer;
+
+Vector<cstring> titles;
+Vector<cstring> descriptions;
+Vector<uint64> test_times;
+Vector<bool> result;
+Vector<bool> required;
+
+void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
+                   uint64 const& total_time,
+                   Test const* tests)
+{
+    JSON::Writer root(buf);
+
+    root.StartObject();
+
+    /* List total score */
+    root.Key("complete");
+    root.Uint64(suc);
+    root.Key("total");
+    root.Uint64(result.size());
+    root.Key("time");
+    root.Uint64(total_time);
+
+    /* If all tests passed, don't add this */
+    if(suc<result.size())
+    {
+        root.Key("passed");
+        root.StartArray();
+        for(uint32 i=0;i<result.size();i++)
+        {
+            root.StartObject();
+
+            root.Key("title");
+            if(tests[i].title)
+                root.String(tests[i].title);
+            else
+            {
+                CString fmt = cStringFormat("Test {0}",i);
+                root.String(fmt.c_str());
+            }
+
+            root.Key("time");
+            root.Uint64(test_times[i]);
+
+            root.EndObject();
+        }
+        root.EndArray();
+
+        /* List required tests */
+        root.Key("failed");
+        root.StartArray();
+        szptr i=0;
+        for(bool v : result)
+        {
+            if(!v)
+            {
+                Test const& o = tests[i];
+
+                if(o.optional)
+                    continue;
+
+                root.StartObject();
+
+                root.Key("title");
+                if(o.title)
+                    root.String(o.title);
+                else
+                {
+                    CString fmt = cStringFormat("Test {0}",i);
+                    root.String(fmt.c_str());
+                }
+
+                if(o.description)
+                {
+                    root.Key("desc");
+                    root.String(o.description);
+                }
+
+
+                root.EndObject();
+            }
+            i++;
+        }
+        root.EndArray();
+
+        /* List optional tests */
+        root.Key("optional");
+        root.StartArray();
+        i=0;
+        for(bool v : result)
+        {
+            if(!v)
+            {
+                Test const& o = tests[i];
+
+                if(!o.optional)
+                    continue;
+
+                root.StartObject();
+
+                root.Key("title");
+                root.String(o.title);
+
+                root.Key("desc");
+                root.String(o.description);
+
+                root.EndObject();
+            }
+            i++;
+        }
+        root.EndArray();
+    }
+
+    root.EndObject();
+}
+
+void PrintAsciiTable(uint64 const& time_accum, szptr suc)
+{
+    Table::Header header;
+    header.push_back("Test name");
+    header.push_back("Description");
+    header.push_back("Passed");
+    header.push_back("Required");
+    header.push_back("Time");
+
+    Table::Table table;
+    table.push_back(Table::GenColumn(titles));
+    table.push_back(Table::GenColumn(descriptions));
+    table.push_back(Table::GenColumn(result));
+    table.push_back(Table::GenColumn(required));
+    table.push_back(Table::GenColumn(test_times));
+
+    cBasicPrint("-- Results: \n"
+                "{0}",Table::GenTable(table,header));
+
+    cBasicPrint("Total time: {0} s", ((bigscalar)time_accum)/1000000);
+
+    cBasicPrint("-- Passed: {0}/{1}",suc,result.size());
+}
+
+void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
+{
+    Test const& test = tests[i];
+
+    if(test.title)
+        tmp = test.title;
+    else
+        tmp = cStringFormat("Test {0}",i+1);
+
+    if(!test.test)
+    {
+        cBasicPrint("{0} skipped, nullptr",tmp);
+        return;
+    }
+
+    titles[i] = test.title;
+    descriptions[i] = test.description;
+
+    if(fail)
+    {
+        result.push_back(false);
+        required.push_back(!test.optional);
+        return;
+    }
+
+    Profiler::PushContext(tmp.c_str());
+
+    timer.start();
+    bool res = test.test();
+    test_times.push_back(timer.elapsed());
+    result.push_back(res);
+    required.push_back(!test.optional);
+
+    Profiler::PopContext();
+
+    if(!res && test.required_sequence)
+        fail = true;
+}
+
 int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 {
-    bool json_formatting = false;
-
-    json_formatting = ArgParse::Check(argc,argv,"json");
+    bool json_formatting = ArgParse::Check(argc,argv,"json");
 
     CString tmp;
-
-    Vector<cstring> titles;
-    Vector<cstring> descriptions;
-    Vector<bool> result;
-    Vector<bool> required;
 
     titles.resize(num);
     descriptions.resize(num);
@@ -32,152 +206,40 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     bool fail = false;
 
+
     for(uint32 i=0;i<num;i++)
     {
-        Test const& test = tests[i];
-
-        if(test.title)
-            tmp = test.title;
-        else
-            tmp = cStringFormat("Test {0}",i+1);
-
-        if(!test.test)
-        {
-            cBasicPrint("{0} skipped, nullptr",tmp);
-            continue;
-        }
-
-        titles[i] = test.title;
-        descriptions[i] = test.description;
-
-        if(fail)
-        {
-            result.push_back(false);
-            required.push_back(!test.optional);
-            continue;
-        }
-
-        Profiler::PushContext(tmp.c_str());
-
-        bool res = test.test();
-        result.push_back(res);
-        required.push_back(!test.optional);
-
-        Profiler::PopContext();
-
-        if(!res && test.required_sequence)
-            fail = true;
+        RunTest(i,tmp,tests,fail);
     }
 
     result.resize(num,false);
-        required.resize(num,true);
+    required.resize(num,true);
 
     szptr suc = 0;
     for(bool v : result)
         if(v)
             suc++;
 
+    uint64 time_accum = 0;
+
+    for(uint64 v : test_times)
+        time_accum += v;
+
+    Profiler::AddExtraData("testing:title",CoffeeApplicationData.application_name);
+    Profiler::AddExtraData("testing:version",CoffeeBuildString);
+
+    Profiler::AddExtraData("testing:accum:int", Convert::uintltostring(time_accum));
+
     if(!json_formatting)
     {
-        Table::Header header;
-        header.push_back("Test name");
-        header.push_back("Description");
-        header.push_back("Passed");
-        header.push_back("Required");
-
-        Table::Table table;
-        table.push_back(Table::GenColumn(titles));
-        table.push_back(Table::GenColumn(descriptions));
-        table.push_back(Table::GenColumn(result));
-        table.push_back(Table::GenColumn(required));
-
-        cBasicPrint("-- Results: \n"
-                    "{0}",Table::GenTable(table,header));
-
-        cBasicPrint("-- Passed: {0}/{1}",suc,result.size());
+        PrintAsciiTable(time_accum,suc);
     }else{
         JSON::WriteBuf buf;
-        JSON::Writer root(buf);
-
-        root.StartObject();
-
-        /* List total score */
-        root.Key("complete");
-        root.Int64(suc);
-        root.Key("total");
-        root.Int64(result.size());
-
-        /* If all tests passed, don't add this */
-        if(suc<result.size())
-        {
-            /* List required tests */
-            root.Key("failed");
-            root.StartArray();
-            szptr i=0;
-            for(bool v : result)
-            {
-                if(!v)
-                {
-                    Test const& o = tests[i];
-
-                    if(o.optional)
-                        continue;
-
-                    root.StartObject();
-
-                    root.Key("title");
-                    if(o.title)
-                        root.String(o.title);
-                    else
-                    {
-                        CString fmt = cStringFormat("Test {0}",i);
-                        root.String(fmt.c_str());
-                    }
-
-                    if(o.description)
-                    {
-                        root.Key("desc");
-                        root.String(o.description);
-                    }
-
-
-                    root.EndObject();
-                }
-                i++;
-            }
-            root.EndArray();
-
-            /* List optional tests */
-            root.Key("optional");
-            root.StartArray();
-            i=0;
-            for(bool v : result)
-            {
-                if(!v)
-                {
-                    Test const& o = tests[i];
-
-                    if(!o.optional)
-                        continue;
-
-                    root.StartObject();
-
-                    root.Key("title");
-                    root.String(o.title);
-
-                    root.Key("desc");
-                    root.String(o.description);
-
-                    root.EndObject();
-                }
-                i++;
-            }
-            root.EndArray();
-        }
-
-        root.EndObject();
+        WriteJsonData(buf, suc, time_accum, tests);
 
         cOutputPrint("{0}",buf.GetString());
+
+        Profiler::AddExtraData("testing:result:json",buf.GetString());
     }
 
 	/* For verbosity, we write it as this */

@@ -20,6 +20,7 @@ unw_context_t* Environment::Linux::LinuxStacktracer::unwind_context = nullptr;
 
 /* Storage for profiler data */
 LinkList<Profiler::DataPoint>* Profiler::datapoints = nullptr;
+Profiler::ExtraData* Profiler::extra_data = nullptr;
 #ifndef ANDROID_RELEASE_MODE
 thread_local LinkList<CString>* Profiling::SimpleProfilerImpl::context_stack = nullptr;
 #endif

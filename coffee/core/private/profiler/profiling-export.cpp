@@ -153,7 +153,22 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
     }
 
-    /* Only runs in release mode! */
+    /* Store extra data gathered by program, is parsed as JSON if possible */
+    {
+        XML::Element* extradata = doc.NewElement("extra");
+        root->InsertEndChild(extradata);
+
+        XML::Element* e;
+        for(Profiler::ExtraPair const& p : *Profiler::extra_data)
+        {
+            e = doc.NewElement(p.key.c_str());
+            extradata->InsertEndChild(e);
+
+            e->SetText(p.value.c_str());
+        }
+    }
+
+    /* Only runs in debug mode! */
     if(Profiler::Enabled){
         /* Store list of threads we've bumped into or labeled */
         {
