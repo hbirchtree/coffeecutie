@@ -26,6 +26,9 @@ using byte_t    = uint8;  /*!< System byte*/
 using ubyte_t   = byte_t; /*!< System byte*/
 using sbyte_t   = int8;   /*!< System unsigned byte*/
 
+/* For wstring */
+using wbyte_t   = wchar_t;
+
 using ushort = uint16;
 
 using cstring    = const sbyte_t*; /*!< Typical C-string*/

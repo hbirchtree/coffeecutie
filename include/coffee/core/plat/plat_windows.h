@@ -6,7 +6,10 @@
 
 #ifdef COFFEE_WINDOWS
 
+#undef NOMINMAX
 #define NOMINMAX
+
+#undef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #include <WinSock2.h>
 

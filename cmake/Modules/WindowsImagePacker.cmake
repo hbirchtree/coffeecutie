@@ -1,6 +1,22 @@
-macro(WINPE_PACKAGE TARGET SOURCES RESOURCES)
-    # TODO: Generate Win32 resources here for extraction in-memory
+macro(WINPE_PACKAGE TARGET TITLE SOURCES RESOURCES)
 
+	set ( WINDOWS_DIST_COMPANY "Coffe" )
+
+	set ( WINDOWS_PACKAGE_NAME "Org.${WINDOWS_DIST_COMPANY}.${TARGET}" )
+	set ( WINDOWS_PACKAGE_VERSION "0.0.0.0" )
+
+	set ( WINDOWS_APP_TITLE "${TITLE}" )
+	set ( WINDOWS_APP_DESCRIPTION "???" )
+	set ( WINDOWS_APP_INTERNALNAME "${TARGET}" )
+	set ( WINDOWS_APP_EXECNAME "${TARGET}.exe" )
+
+	set ( WINDOWS_APP_FILEVER "0, 0, 0, 0" )
+	set ( WINDOWS_APP_VERSION "0, 0, 0, 0" )
+	
+	set ( WINDOWS_APP_COMPANY "${WINDOWS_DIST_COMPANY}" )
+	set ( WINDOWS_APP_COPYRIGHT "???")
+    
+	# We describe resources in a .rc file for in-memory access
 	set ( RESOURCE_DESCRIPTOR ${CMAKE_CURRENT_BINARY_DIR}/custom_data.rc )
 
 	file ( WRITE "${RESOURCE_DESCRIPTOR}" "// Automatically generated resource file by Coffee \r\n" )
@@ -21,7 +37,39 @@ macro(WINPE_PACKAGE TARGET SOURCES RESOURCES)
         endforeach()
     endforeach()
 
-    add_executable(${TARGET} ${SOURCES} ${CMAKE_SOURCE_DIR}/desktop/windows/winresources.rc ${RESOURCE_DESCRIPTOR} )
+	# We add an application manifest to get on the good side with Windows 8.1+
+	set ( WINDOWS_DESKTOP_DIR "${CMAKE_SOURCE_DIR}/desktop/windows" )
+
+	set ( WINDOWS_BASE_SOURCE_RESOURCE "${WINDOWS_DESKTOP_DIR}/winresources.rc" )
+	set ( WINDOWS_BASE_RESOURCE "winresource.rc" )
+	set ( MANIFEST_SOURCE_FILE "${WINDOWS_DESKTOP_DIR}/template.manifest.in" )
+	set ( MANIFEST_FILE "${TARGET}.exe.manifest" )
+
+	configure_file ( 
+		"${MANIFEST_SOURCE_FILE}"
+		"${MANIFEST_FILE}"
+		@ONLY
+		)
+
+	configure_file (
+		"${WINDOWS_BASE_SOURCE_RESOURCE}"
+		"${WINDOWS_BASE_RESOURCE}"
+		@ONLY
+		)
+
+	configure_file (
+		"${WINDOWS_DESKTOP_DIR}/icon.ico"
+		"icon.ico"
+		COPYONLY
+		)
+
+	# Finally we stir the smelly gak into PE
+
+    add_executable(${TARGET} ${SOURCES}
+		${WINDOWS_BASE_RESOURCE}
+		${RESOURCE_DESCRIPTOR}
+		${MANIFEST_FILE}
+		)
 
     set_target_properties ( ${TARGET}
         PROPERTIES

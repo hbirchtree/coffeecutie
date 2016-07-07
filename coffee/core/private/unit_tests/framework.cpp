@@ -228,7 +228,7 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
     Profiler::AddExtraData("testing:title",CoffeeApplicationData.application_name);
     Profiler::AddExtraData("testing:version",CoffeeBuildString);
 
-    Profiler::AddExtraData("testing:accum:int", Convert::uintltostring(time_accum));
+    Profiler::AddExtraData("testing:bmark", Convert::uintltostring(time_accum));
 
     if(!json_formatting)
     {

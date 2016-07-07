@@ -8,6 +8,7 @@
 #include <cstdlib>
 //#endif
 #include <cstring>
+#include <cwchar>
 
 #include "memory_ops.h"
 
@@ -47,6 +48,8 @@ FORCEDINLINE void StrCpy(cstring_w t, cstring s)
 
 namespace Search{
 /* Low-level, yes! */
+
+	/* The byte overloads */
 FORCEDINLINE cstring StrFind(cstring s1,cstring s2)
 {
     return strstr(s1,s2);
@@ -69,6 +72,25 @@ FORCEDINLINE cstring_w Tokenize(cstring_w s, cstring q)
 {
     return strtok(s,q);
 }
+
+/* Wide strings */
+FORCEDINLINE cwstring StrFind(cwstring s1, cwstring s2)
+{
+	return wcsstr(s1, s2);
+}
+FORCEDINLINE cwstring ChrFind(cwstring s1, wbyte_t s2)
+{
+	return wcschr(s1, s2);
+}
+FORCEDINLINE cwstring ChrFindR(cwstring s1, wbyte_t s2)
+{
+	return wcsrchr(s1, s2);
+}
+FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
+{
+	return wcspbrk(s1, s2);
+}
+
 }
 
 namespace Convert
@@ -144,6 +166,12 @@ FORCEDINLINE cstring_w WideNarrow(cwstring str)
     wcstombs(out,str,sz);
     out[sz-1] = 0;
     return out;
+}
+
+/* This is a workaround till C++17 constexpr if is made available. */
+FORCEDINLINE cstring_w WideNarrow(cstring str)
+{
+	return nullptr;
 }
 }
 

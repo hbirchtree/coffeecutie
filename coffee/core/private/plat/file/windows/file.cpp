@@ -185,8 +185,8 @@ namespace Coffee {
 				while (i < d.size)
 				{
 					chnk = ((d.size - i) < UInt32_Max) ? (d.size - i) : UInt32_Max;
-					SetFilePointer(h->file, chnk, nullptr, FILE_CURRENT);
 					BOOL stat = ReadFile(h->file, &d.data[i], chnk, &size, nullptr);
+					SetFilePointer(h->file, chnk, nullptr, FILE_CURRENT);
 					if (stat && size == chnk)
 						i += chnk;
 					else {
@@ -221,8 +221,8 @@ namespace Coffee {
 				while (i < d.size)
 				{
 					chnk = ((d.size - i) < UInt32_Max) ? (d.size - i) : UInt32_Max;
-					SetFilePointer(fh->file, chnk, nullptr, FILE_CURRENT);
 					BOOL stat = WriteFile(fh->file, &d.data[i], chnk, &size, nullptr);
+					SetFilePointer(fh->file, chnk, nullptr, FILE_CURRENT);
 					if (stat && chnk == size)
 						i += chnk;
 					else
