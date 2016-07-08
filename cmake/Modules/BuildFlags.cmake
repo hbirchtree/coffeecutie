@@ -19,6 +19,7 @@ else()
     # These include system headers (which are constantly giving off warnings)
     #  as well as small warnings for padding and etc.
     # Microsoft makes the worst headers of them all.
+    # We also set a target Windows NT version for some reason
     add_definitions (
 	-W1	
 	-D_WIN32_WINNT=0x0601
@@ -36,14 +37,22 @@ endif()
 # Because file timestamps are unreliable.
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 
-
 set ( COFFEE_VERSION_CODE "001" )
 
 #add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
 add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffee Guy" )
 add_definitions( -DCOFFEE_VERSION_CODE=${COFFEE_VERSION_CODE} )
 
-set ( GIT_HASH "00000000" )
+# git hash is retrieved
+execute_process (
+    COMMAND git rev-parse HEAD
+    OUTPUT_VARIABLE GIT_HASH
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+
+string ( SUBSTRING "${GIT_HASH}" "" 10 GIT_HASH )
+
+#set ( GIT_HASH "00000000" )
 
 set ( COFFEE_BUILD_STRING "${COFFEE_VERSION_CODE}.00.00.${CBUILDTIME}-${GIT_HASH}" )
 
