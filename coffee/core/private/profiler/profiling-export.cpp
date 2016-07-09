@@ -76,7 +76,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         {
             p = doc.NewElement("v");
             p->SetAttribute("name",v.first.c_str());
-            p->SetAttribute("value",v.second.c_str());
+            p->SetText(v.second.c_str());
             envdata->InsertEndChild(p);
         }
     }
@@ -99,12 +99,14 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         /* Current working directory,
          * most likely application directory
          *  or home directory */
+		CString sys_string = PlatformData::SystemDisplayString();
+
         CString cwd = Env::CurrentDir();
         rundata->SetAttribute("cwd",cwd.c_str());
 
         rundata->SetAttribute("version",CoffeeBuildString);
         rundata->SetAttribute("compiler",CoffeeCompilerString);
-        rundata->SetAttribute("system",CoffeePlatformString);
+        rundata->SetAttribute("system", sys_string.c_str());
         rundata->SetAttribute("architecture",CoffeeArchString);
     }
 
