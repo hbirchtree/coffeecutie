@@ -446,10 +446,23 @@ struct PosixDirFun : DirFunDef
 {
     STATICINLINE CString Basename(cstring dname)
     {
+#ifndef COFFEE_USE_POSIX_BASENAME
+        // This one is fast, but does not handle rootfs
+        int64 idx = StrFind(dname,"/")-dname;
+        if(idx <= 0)
+            return {};
+        CString out;
+        out.insert(0,dname,idx);
+        if(out.empty())
+            out = ".";
+        return out;
+#else
+        // This one is slower
         sbyte_t* out = AllocT<sbyte_t>(StrLen(dname));
         CString out_s = basename(out);
         CFree(out);
         return out_s;
+#endif
     }
     STATICINLINE bool MkDir(cstring dname, bool createParent)
     {
