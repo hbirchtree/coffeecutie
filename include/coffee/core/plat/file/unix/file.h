@@ -4,18 +4,26 @@
 #include "../../plat_primary_identify.h"
 
 #if defined(COFFEE_APPLE)
+// ???
 #include <mach/vm_statistics.h>
 #endif
 
+// errno
 #include <errno.h>
+// ???
 #include <unistd.h>
+// open(), close(), read(), write(), creat()
 #include <fcntl.h>
+// opendir(), readdir()
 #include <dirent.h>
 #include <sys/types.h>
+// lstat()
 #include <sys/stat.h>
+// mmap(), mmap64(), msync(), mlock(), munlock()
 #include <sys/mman.h>
 
-
+// basename()
+#include <libgen.h>
 
 namespace Coffee{
 namespace CResources{
@@ -438,12 +446,10 @@ struct PosixDirFun : DirFunDef
 {
     STATICINLINE CString Basename(cstring dname)
     {
-        int64 idx = StrFind(dname,"/")-dname;
-        if(idx <= 0)
-            return {};
-        CString out;
-        out.insert(0,dname,idx);
-        return out;
+        sbyte_t* out = AllocT<sbyte_t>(StrLen(dname));
+        CString out_s = basename(out);
+        CFree(out);
+        return out_s;
     }
     STATICINLINE bool MkDir(cstring dname, bool createParent)
     {
