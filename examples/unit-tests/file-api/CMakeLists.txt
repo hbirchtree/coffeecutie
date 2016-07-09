@@ -17,3 +17,5 @@ if(NOT ANDROID OR CMAKE_SIZEOF_VOID_P EQUAL 8)
 
     coffee_add_test ( Unit_File_Mapping02 "Cu_FileMassiveMap" test05.cpp CoffeeCore )
 endif()
+
+coffee_add_test ( Unit_Directory_List01 "Cu_DirListing" test07.cpp CoffeeCore )

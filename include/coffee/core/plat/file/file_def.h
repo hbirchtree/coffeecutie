@@ -131,6 +131,8 @@ struct DirFunDef
     static bool RmDir(cstring){return false;}
 
     static bool Ls(cstring,DirList&){return false;}
+
+    static CString Basename(cstring){return {};}
 };
 
 }

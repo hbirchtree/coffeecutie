@@ -48,25 +48,27 @@ struct SimpleProfilerImpl
 
     STATICINLINE void InitProfiler()
     {
-#ifndef NDEBUG
-        context_stack = new LinkList<CString>;
-
         if(!global_init)
         {
             global_init = new std::atomic_int(0);
         }
+#ifndef NDEBUG
+        context_stack = new LinkList<CString>;
+#endif
+
 
         if(global_init->load()<1)
         {
-            start_time = new Timestamp(Time::CurrentMicroTimestamp());
-            data_access_mutex = new Mutex;
+#ifndef NDEBUG
             datapoints = new LinkList<DataPoint>;
             threadnames = new ThreadListing;
+#endif
+            start_time = new Timestamp(Time::CurrentMicroTimestamp());
+            data_access_mutex = new Mutex;
             extra_data = new ExtraData;
         }
 
         global_init->fetch_add(1);
-#endif
     }
 
     STATICINLINE void DestroyProfiler()
@@ -77,16 +79,18 @@ struct SimpleProfilerImpl
             delete context_stack;
             context_stack = nullptr;
         }
+#endif
         if(global_init&&std::atomic_fetch_sub(global_init,1)<2)
         {
-            delete data_access_mutex;
+#ifndef NDEBUG
             delete datapoints;
-            delete start_time;
             delete threadnames;
+#endif
+            delete data_access_mutex;
+            delete start_time;
             delete global_init;
             delete extra_data;
         }
-#endif
     }
 
     STATICINLINE void LabelThread(cstring name)
@@ -177,8 +181,11 @@ struct SimpleProfilerImpl
 
     static Timestamp *start_time;
     static Mutex *data_access_mutex;
+
+#ifndef NDEBUG
     static LinkList<DataPoint> *datapoints;
     static ThreadListing *threadnames;
+#endif
 
     static ExtraData *extra_data;
 
@@ -186,7 +193,9 @@ struct SimpleProfilerImpl
 
 protected:
     static std::atomic_int *global_init;
+#ifndef NDEBUG
     thread_local static LinkList<CString> *context_stack;
+#endif
 };
 
 FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1, SimpleProfilerImpl::DataPoint const& t2)

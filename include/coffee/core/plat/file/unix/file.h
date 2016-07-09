@@ -8,11 +8,14 @@
 #endif
 
 #include <errno.h>
+#include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <unistd.h>
+
+
 
 namespace Coffee{
 namespace CResources{
@@ -48,7 +51,7 @@ struct PosixFileMod_def : CommonFileFun
     STATICINLINE NodeType Stat(cstring fn)
     {
         struct stat fs = {};
-        int s = stat(fn,&fs);
+        int s = lstat(fn,&fs);
         if(s != 0)
             return NodeType::None;
         mode_t m = fs.st_mode;
@@ -269,6 +272,7 @@ struct PosixFileFun_def : PosixFileMod_def
         
         ScratchBuf buf;
 #if defined(COFFEE_LINUX)
+        // mmap64() is a Linux-specific feature it seems
         buf.ptr = mmap64(nullptr,size,proto,mapflags,-1,0);
 #elif defined(COFFEE_APPLE)
         buf.ptr = mmap(nullptr,size,proto,mapflags,-1,0);
@@ -432,6 +436,15 @@ struct PosixFileFun : PosixFileFun_def<PosixApi::FileHandle,PosixApi::FileMappin
 
 struct PosixDirFun : DirFunDef
 {
+    STATICINLINE CString Basename(cstring dname)
+    {
+        int64 idx = StrFind(dname,"/")-dname;
+        if(idx <= 0)
+            return {};
+        CString out;
+        out.insert(0,dname,idx);
+        return out;
+    }
     STATICINLINE bool MkDir(cstring dname, bool createParent)
     {
         if(!createParent)
@@ -457,6 +470,60 @@ struct PosixDirFun : DirFunDef
     STATICINLINE bool RmDir(cstring dname)
     {
         return rmdir(dname) == 0;
+    }
+
+    using Type = FileFunDef::NodeType;
+
+    STATICINLINE bool Ls(cstring dname, DirList& entries)
+    {
+        DIR* dr = opendir(dname);
+
+        if(!dr)
+        {
+            PosixFileFun::ErrnoCheck(dname);
+            return false;
+        }
+
+        struct dirent* dir_ent = nullptr;
+
+        while((dir_ent = readdir(dr)))
+        {
+            Type t = Type::None;
+
+            switch(dir_ent->d_type)
+            {
+            case DT_BLK:
+                t = Type::Block;
+                break;
+            case DT_CHR:
+                t = Type::Character;
+                break;
+            case DT_DIR:
+                t = Type::Directory;
+                break;
+            case DT_LNK:
+                t = Type::Link;
+                break;
+            case DT_FIFO:
+                t = Type::FIFO;
+                break;
+            case DT_REG:
+                t = Type::File;
+                break;
+            case DT_SOCK:
+                t = Type::Socket;
+                break;
+            default:
+                t = PosixFileFun::Stat(dir_ent->d_name);
+                break;
+            }
+
+            entries.push_back({dir_ent->d_name,t});
+        }
+
+        closedir(dr);
+
+        return true;
     }
 };
 

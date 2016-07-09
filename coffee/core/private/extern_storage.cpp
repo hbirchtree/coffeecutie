@@ -19,15 +19,18 @@ unw_context_t* Environment::Linux::LinuxStacktracer::unwind_context = nullptr;
 #endif
 
 /* Storage for profiler data */
+#ifndef NDEBUG
 LinkList<Profiler::DataPoint>* Profiler::datapoints = nullptr;
-Profiler::ExtraData* Profiler::extra_data = nullptr;
 #ifndef ANDROID_RELEASE_MODE
 thread_local LinkList<CString>* Profiling::SimpleProfilerImpl::context_stack = nullptr;
 #endif
+Profiler::ThreadListing* Profiler::threadnames = nullptr;
+#endif
+
 Mutex* Profiler::data_access_mutex = nullptr;
 Timestamp* Profiler::start_time = nullptr;
-Profiler::ThreadListing* Profiler::threadnames = nullptr;
 std::atomic_int *Profiler::global_init = nullptr;
+Profiler::ExtraData* Profiler::extra_data = nullptr;
 
 #ifdef NDEBUG
 bool Profiler::Enabled = false;

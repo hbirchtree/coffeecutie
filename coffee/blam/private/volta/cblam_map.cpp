@@ -11,7 +11,7 @@ cstring blam_file_header_full_mapname(
         if(StrCmp(map->name,blam_map_names[i].key))
             return blam_map_names[i].value;
     }
-    return "";
+    return nullptr;
 }
 
 file_header_t *blam_file_header_get(

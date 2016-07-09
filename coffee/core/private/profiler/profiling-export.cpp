@@ -170,6 +170,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
     /* Only runs in debug mode! */
     if(Profiler::Enabled){
+#ifndef NDEBUG
         /* Store list of threads we've bumped into or labeled */
         {
             XML::Element* threaddata = doc.NewElement("threads");
@@ -266,6 +267,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
                     curr = curr_r;
             }
         }
+#endif
     }
 
     auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
