@@ -4,7 +4,7 @@
 
 #ifdef COFFEE_LINUX
 
-#include "../posix/environment.h"
+#include "../unix/environment.h"
 
 namespace Coffee{
 namespace Environment{

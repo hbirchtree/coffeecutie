@@ -7,13 +7,10 @@
 #include "../environment_details.h"
 #include "../../memory/cmemory.h"
 
-#include <libgen.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <cstdlib>
-#include <limits.h>
+// getenv, setenv, unsetenv, clearenv
+#include <stdlib.h>
 
-extern char** environ;
+extern "C" char** environ;
 
 namespace Coffee{
 namespace Environment{
@@ -21,20 +18,27 @@ namespace Posix{
 
 struct PosixEnvironmentFun : EnvInterface
 {
-    static CString BaseName(CString const& n);
+    static CString BaseName(cstring n);
+
+    static CString DirName(cstring fname);
 
     STATICINLINE bool ExistsVar(cstring var)
     {
-        return std::getenv(var);
+        return getenv(var);
     }
     STATICINLINE CString GetVar(cstring var)
     {
-        return std::getenv(var);
+        cstring val = getenv(var);
+        return val ? CString(val) : CString();
     }
     STATICINLINE bool SetVar(cstring var, cstring val)
     {
         return setenv(var,val,1)==0;
     }
+
+    static bool PrependVar(cstring var, cstring val);
+    static bool AppendVar(cstring var, cstring val);
+
     STATICINLINE bool UnsetVar(cstring var)
     {
         return unsetenv(var)==0;
@@ -51,10 +55,7 @@ struct PosixEnvironmentFun : EnvInterface
     {
 	return CString("/");
     }
-    STATICINLINE CString ConcatPath(cstring v1, cstring v2)
-    {
-	return v1+GetPathSep()+v2;
-    }
+    static CString ConcatPath(cstring v1, cstring v2);
 
     STATICINLINE CString GetUserHome()
     {

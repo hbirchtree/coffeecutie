@@ -59,10 +59,9 @@ endif()
 # Android-specific code
 if(ANDROID)
     list ( APPEND CoffeeCore_SRCS
-            ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
-            private/plat/file/android/file.cpp
-            private/plat/environment/android/environment.cpp
-
+        ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
+        private/plat/file/android/file.cpp
+        private/plat/environment/android/environment.cpp
     )
 endif()
 
@@ -84,14 +83,16 @@ endif()
 # Windows-specific code
 if(WIN32)
     list ( APPEND CoffeeCore_SRCS
-		private/plat/file/windows/file.cpp
+        private/plat/file/windows/file.cpp
         )
 endif()
 
 # POSIX code
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
     list ( APPEND CoffeeCore_SRCS
-        private/plat/environment/posix/environment.cpp
+        private/plat/environment/unix/environment.cpp
+        private/plat/file/unix/file.cpp
+        private/plat/linking/unix/loader.cpp
         )
 endif()
 
