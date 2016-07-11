@@ -56,6 +56,11 @@ Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
     }
 }
 
+Resource::Resource(cstring rsrc, ResourceAccess acc):
+    Resource(rsrc,false,acc)
+{
+}
+
 Resource::~Resource()
 {
     delete m_platform_data;
