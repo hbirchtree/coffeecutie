@@ -8,4 +8,4 @@ if(COFFEE_BUILD_OCULUSVR)
     list ( APPEND LIBS CoffeeOVR )
 endif()
 
-#coffee_add_example ( GLeamBaseTest "GLeam Basic" main.cpp "${LIBS}" )
+coffee_add_example ( GLeamBaseTest "GLeam Basic" main.cpp "${LIBS}" )

@@ -24,8 +24,6 @@ VR::Device* dev;
 
 void framecount_fun(uint32 t, c_cptr)
 {
-    if(dev)
-        cDebug("User position: {0}",get_translation(dev->head()));
     cDebug("Frames: {0}",t);
 }
 
@@ -49,31 +47,31 @@ public:
         FrameCounter fcounter(framecount_fun);
         fcounter.interval = 1000;
 
-        Mesh distortMesh[2];
+//        Mesh distortMesh[2];
 
-        {
-            CResources::Resource mesh_src_0("eye_left.msh");
-            CResources::Resource mesh_src_1("eye_right.msh");
+//        {
+//            CResources::Resource mesh_src_0("eye_left.msh");
+//            CResources::Resource mesh_src_1("eye_right.msh");
 
-            if (CResources::FileFun::Exists(mesh_src_0.resource()))
-            {
-                CString fn = CResources::FileFun::NativePath(mesh_src_0.resource());
-                uint64 v = CResources::FileFun::Size(fn.c_str());
-            }
+//            if (CResources::FileFun::Exists(mesh_src_0.resource()))
+//            {
+//                CString fn = CResources::FileFun::NativePath(mesh_src_0.resource());
+//                uint64 v = CResources::FileFun::Size(fn.c_str());
+//            }
 
-            if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
-                return;
+//            if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
+//                return;
 
-            SMSH::DeserializeMesh(mesh_src_0,&distortMesh[0]);
-            SMSH::DeserializeMesh(mesh_src_1,&distortMesh[1]);
+//            SMSH::DeserializeMesh(mesh_src_0,&distortMesh[0]);
+//            SMSH::DeserializeMesh(mesh_src_1,&distortMesh[1]);
 
-            CResources::FileUnmap(mesh_src_0);
-            CResources::FileUnmap(mesh_src_1);
-        }
+//            CResources::FileUnmap(mesh_src_0);
+//            CResources::FileUnmap(mesh_src_1);
+//        }
 
         const constexpr cstring textures[num_textures] = {
-            "eye-demo/eye-normal.tga", "eye-demo/eye-weird.tga",
-            "eye-demo/eye-alpha.tga", "eye-demo/eye-veins.tga"
+            "eye-normal.tga", "eye-weird.tga",
+            "eye-alpha.tga", "eye-veins.tga"
         };
 
         GL::CGhnd pbobuf[num_textures] = {};
@@ -123,6 +121,7 @@ public:
                            ResourceAccess::ReadOnly);
         }
 
+        /*
         GL::CGhnd distortVao;
         GL::CGhnd distortBuf[2];
         szptr distort_elements;
@@ -212,6 +211,7 @@ public:
             GL::BufBind(GL::BufType::ElementData,distortBuf[1]);
             GL::VAOAttribBinding(0,0);
         }
+        */
 
         Profiler::Profile("Create vertex buffers");
 
@@ -357,21 +357,10 @@ public:
 
         CGraphicsData::CTransform test_transform;
 
-        if(dev)
-            cDebug("User's play area: {0}",dev->viewerSpace());
-
         CGraphicsData::CTransform eyeTransform;
         eyeTransform.scale = CVec3(0.5);
 
         GL::Enable(GL::Feature::ClipDist,0);
-
-        if(dev)
-        {
-            //            WM::SetDecorated(this->window(),false);
-            //            this->setWindowState(CDProperties::WindowedFullScreen);
-            //            this->setWindowPosition(dev->windowPos().topleft());
-            //            this->setWindowSize(dev->windowPos().size());
-        }
 
         CGL::DrwMd mode = {CGL::Prim::Triangle,CGL::PrimCre::Explicit};
 
@@ -397,8 +386,8 @@ public:
 
             cam.position.x() = -2;
             cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
-            if(dev)
-                testmat = dev->view(VR::Eye::Left)*3;
+//            if(dev)
+//                testmat = dev->view(VR::Eye::Left)*3;
             testmat *= testmat_rot;
 
             objects[0] =
@@ -408,8 +397,8 @@ public:
 
             cam.position.x() = 2;
             cam_mat = CGraphicsData::GenPerspective(cam)*CGraphicsData::GenTransform(cam);
-            if(dev)
-                testmat = dev->view(VR::Eye::Right)*3;
+//            if(dev)
+//                testmat = dev->view(VR::Eye::Right)*3;
             testmat *= testmat_rot;
 
             objects[1] =
@@ -431,8 +420,10 @@ public:
             GL::VAOBind(vao);
             GL::DrawArraysInstanced(mode,0,6,2);
 
+            /*
             GL::VAOBind(distortVao);
             GL::DrawElements(mode,100,TypeEnum::UInt,0);
+            */
 
             /* Update framecounter, print frames */
             fcounter.update(ftimer.elapsed());
@@ -489,8 +480,7 @@ public:
 
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
-    CString prefix = Env::ApplicationDir()+"/sample_data/";
-    CResources::FileResourcePrefix(prefix.c_str());
+    CResources::FileResourcePrefix("sample_data/eye-demo/");
 
     /*Required for SDL2 applications*/
     SubsystemWrapper<SDL2::SDL2> sdl2;
@@ -505,7 +495,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     CDProperties props = GetDefaultVisual();
     props.gl.flags |= GLProperties::GLDebug;
-    props.gl.flags |= GLProperties::GLVSync;
+//    props.gl.flags |= GLProperties::GLVSync;
 
     /* The Oculus SDK configures some OpenGL state,
      *  so it needs to be done before any GL context is active */
@@ -533,12 +523,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         return 1;
     }
     Profiler::Profile("Initialize renderer");
-
-    cDebug("OpenGL core profile version: {0}",
-           (_cbasic_version<uint8> const&)GL::Debug::ContextVersion());
-
-    cDebug("Device info: {0}", GL::Debug::Renderer());
-    Profiler::Profile("Get renderer info");
 
     if(!(  GL::SeparableShaderSupported()
            ||GL::VertexAttribBinding()

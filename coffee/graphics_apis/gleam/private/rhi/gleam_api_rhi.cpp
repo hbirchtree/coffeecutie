@@ -221,7 +221,7 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 {
     CGhnd prog = 0;
 
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 && stage != ShaderStage::Fragment)
         prog = pipeline.m_handle;
     else if(GL_CURR_API==GL_4_3)
     {
@@ -239,6 +239,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         CByteData const* db = u.second->data;
         if(!db)
             continue;
+
+        /* TODO: Cache uniform state changes, only set them when necessary */
 
         uint32 idx = u.first;
         uint32 fgs = u.second->flags;

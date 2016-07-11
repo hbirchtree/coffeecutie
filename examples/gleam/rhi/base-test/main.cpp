@@ -111,8 +111,10 @@ public:
         eye_pip.bind();
 
         /* Uploading textures */
-        GLM::S_2DA eyetex(PixelFormat::RGBA8UI,1,GLM::TextureDMABuffered);
+        GLM::S_2DA eyetex(PixelFormat::RGBA8,1,GLM::TextureDMABuffered);
+
         eyetex.allocate({1024,1024,4},PixCmp::RGBA);
+
         for(szptr i=0;i<4;i++)
         {
             CResources::Resource rsc(textures[i]);
@@ -123,6 +125,7 @@ public:
 
             eyetex.upload(BitFormat::UByte,PixCmp::RGBA,{img.size.w,img.size.h,1},
                           img.data,{0,0,(int32)i});
+
             CResources::FileUnmap(rsc);
         }
         GLM::SM_2DA eyesamp;
@@ -167,7 +170,6 @@ public:
 
         for(GLM::UNIFDESC const& u : unifs)
         {
-            cDebug("Uniform value: {0}",u.m_name);
             if(u.m_name == "transform[0]")
                 unifstate.setUniform(u,&transforms);
             else if(u.m_name == "tex_mul[0]")
@@ -216,6 +218,10 @@ public:
 
         while(!closeFlag())
         {
+            clear_col.r() = CMath::sin(this->contextTime()+0.5);
+            clear_col.g() = CMath::sin(this->contextTime()+5.0);
+            clear_col.b() = CMath::sin(this->contextTime()+50.0);
+
             GL::ClearBufferfv(true,0,clear_col);
 
             this->pollEvents();
@@ -227,11 +233,16 @@ public:
             texture_multipliers[1] = Vecf2(-1,1);
 
             camera.position.x() = -1.;
-            object_matrices[0] = GenPerspective(camera) * GenTransform(camera) * GenTransform(base_transform);
+            object_matrices[0] = GenPerspective(camera)
+                    * GenTransform(camera)
+                    * GenTransform(base_transform);
             camera.position.x() = 1.;
-            object_matrices[1] = GenPerspective(camera) * GenTransform(camera) * GenTransform(base_transform);
+            object_matrices[1] = GenPerspective(camera)
+                    * GenTransform(camera)
+                    * GenTransform(base_transform);
 
             GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
+            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
 
             GLM::Draw(call,instdata);
 
@@ -275,8 +286,7 @@ public:
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
     /* Set a prefix from which resources are fetched */
-    CString prefix = "sample_data/eye-demo/";
-    CResources::FileResourcePrefix(prefix.c_str());
+    CResources::FileResourcePrefix("sample_data/eye-demo/");
 
     /*Required for SDL2 applications*/
     SubsystemWrapper<SDL2::SDL2> sdl2;
