@@ -35,18 +35,22 @@ bool resource_exist_test()
     return true;
 }
 
+const constexpr cstring filename_odd = "Oddball: æøå, カケ";
+
 bool resource_exists_odd_characters_test()
 {
-    Resource rsc("Oddball: æøå, カケ",
+    Resource rsc(filename_odd,
                  ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
     /* Tests what happens to unexpected characters. We want these to work. */
     /* If existence passes, we assume the rest works too for these cases. */
     return FileExists(rsc);
 }
 
+const constexpr cstring filename_testable = "filled-dir/subdir/we-need-to-go-deeper/odd-file-with-long-extension.txt.zip.exe";
+
 bool resource_read_test()
 {
-    Resource rsc("Oddball: æøå, カケ",
+    Resource rsc(filename_testable,
                  ResourceAccess::SpecifyStorage
                  |ResourceAccess::AssetFile
                  |ResourceAccess::ReadOnly);
