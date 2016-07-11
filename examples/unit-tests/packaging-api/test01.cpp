@@ -48,8 +48,7 @@ bool resource_read_test()
 {
     Resource rsc("Oddball: æøå, カケ",
                  ResourceAccess::SpecifyStorage
-                 |ResourceAccess::AssetFile
-                 |ResourceAccess::ReadOnly);
+                 |ResourceAccess::AssetFile);
 
     if(!FilePull(rsc))
         return false;
@@ -72,11 +71,30 @@ bool resource_read_test()
 
 bool resource_map_test()
 {
+    Resource rsc("Oddball: æøå, カケ",
+                 ResourceAccess::SpecifyStorage
+                 |ResourceAccess::AssetFile);
+
+    if(!FileMap(rsc,ResourceAccess::ReadOnly))
+        return false;
+
+    if(!FileUnmap(rsc))
+        return false;
+
     return true;
 }
 
 bool resource_write_test()
 {
+    Resource rsc("Oddball: æøå, カケ",
+                 ResourceAccess::SpecifyStorage
+                 |ResourceAccess::AssetFile);
+
+    if(!FileMap(rsc,ResourceAccess::ReadWrite))
+        return false;
+
+    if(!FileUnmap(rsc))
+        return false;
 
     return true;
 }
