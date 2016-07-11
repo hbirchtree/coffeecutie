@@ -58,6 +58,8 @@ enum class PixelFormat
 
     /* Irregular formats */
 
+    RGBA8,      /*  32-bit,          8-bit per channel*/
+
     RGB4UI,     /*  12-bit,          4-bit per channel*/
     RGB5UI,     /*  15-bit,          5-bit per channel*/
     RGB10,      /*  30-bit,         10-bit per channel*/

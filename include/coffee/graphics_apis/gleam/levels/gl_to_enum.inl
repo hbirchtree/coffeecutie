@@ -410,6 +410,7 @@ inline CGenum to_enum(
     case PixelFormat::Stencil:
         return GL_NONE; //TODO: Fix stencil stuff
 
+    /* Requires to be used with GL_UNSIGNED_INT */
     case PixelFormat::R8I:
         return GL_R8I;
     case PixelFormat::R8UI:
@@ -477,6 +478,10 @@ inline CGenum to_enum(
         return GL_RGBA16F;
     case PixelFormat::RGBA32F:
         return GL_RGBA32F;
+
+    /* Because GL_RGBA8I cannot be used with GL_UNSIGNED_BYTE */
+    case PixelFormat::RGBA8:
+        return GL_RGBA8;
 
     case PixelFormat::R11G11B10F:
         return GL_R11F_G11F_B10F;
