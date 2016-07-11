@@ -296,7 +296,8 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
 void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
 {
-    CString exec = Env::BaseName(Env::ExecutableName());
+    CString execname = Env::ExecutableName();
+    CString exec = Env::BaseName(execname.c_str());
     CString profile_log_name = cStringFormat("{0}-profile.xml",exec);
     if(!silent)
         cDebug("Saving profiler data to: {0}",profile_log_name);

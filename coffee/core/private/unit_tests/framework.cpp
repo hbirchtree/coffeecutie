@@ -183,7 +183,7 @@ void RunTest(uint32 i, CString& tmp, Test const* tests, bool& fail)
 
     timer.start();
     bool res = test.test();
-    test_times.push_back(timer.elapsed());
+    test_times[i] = timer.elapsed();
     result.push_back(res);
     required.push_back(!test.optional);
 
@@ -203,6 +203,7 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
     descriptions.resize(num);
     result.reserve(num);
     required.reserve(num);
+    test_times.resize(num);
 
     bool fail = false;
 
@@ -238,7 +239,7 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
         cOutputPrint("{0}",buf.GetString());
 
-        Profiler::AddExtraData("testing:result:json",buf.GetString());
+        Profiler::AddExtraData("testing:result",buf.GetString());
     }
 
 	/* For verbosity, we write it as this */

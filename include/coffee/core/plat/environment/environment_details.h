@@ -22,7 +22,7 @@ struct EnvInterface
         return CString();
     }
 
-    STATICINLINE CString BaseName(CString const& file)
+    STATICINLINE CString BaseName(cstring)
     {
         return CString();
     }
@@ -39,6 +39,16 @@ struct EnvInterface
     {
         return false;
     }
+
+    STATICINLINE bool PrependVar(cstring,cstring)
+    {
+        return false;
+    }
+    STATICINLINE bool AppendVar(cstring,cstring)
+    {
+        return false;
+    }
+
     STATICINLINE bool UnsetVar(cstring)
     {
         return false;
