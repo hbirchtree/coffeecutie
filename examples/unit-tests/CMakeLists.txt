@@ -12,6 +12,10 @@ add_subdirectory(string-api)
 add_subdirectory(sysinfo-api)
 add_subdirectory(thread-api)
 
+
 if(COFFEE_BUILD_OPENVR)
     add_subdirectory(vr-api)
 endif()
+
+# This needs different testing and setup
+add_subdirectory(packaging-api)

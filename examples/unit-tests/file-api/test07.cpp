@@ -6,6 +6,7 @@ using namespace Coffee;
 using File = CResources::FileFun;
 using Dir = CResources::DirFun;
 
+const cstring testpath = "test_level1/test_level2";
 const cstring testdir = "test_dir";
 
 bool dirstat_test()
@@ -29,19 +30,37 @@ bool dirstat_test()
     return true;
 }
 
-const cstring testpath = "test_level1/test_level2";
 
 bool dirbasename_test()
 {
     static const constexpr cstring result = "test_level1";
 
-    CString bname = Dir::Basename(testpath);
+    CString bname = Env::DirName(testpath);
 
     if(bname != result)
     {
         cDebug("{0} != {1}",bname,result);
         return false;
-    }
+    }else
+        return true;
+}
+
+bool basename_test()
+{
+    if(Env::BaseName("/absolute/path/really/path") != "path")
+        return false;
+
+    if(Env::BaseName("relative/path") != "path")
+        return false;
+
+    if(Env::BaseName("") != "")
+        return false;
+
+    if(Env::BaseName("nothing") != "nothing")
+        return false;
+
+    if(Env::BaseName("/") != ".")
+        return false;
 
     return true;
 }
@@ -66,7 +85,7 @@ bool dirlist_test()
 
     cDebug("File entries:");
     for(Dir::DirItem_t const& e : list)
-        cBasicPrint("{0} : {1}",e.name,e.type);
+        cBasicPrint("{0} : {1}",e.name,(uint32)e.type);
     Profiler::Profile("Printing names");
 
     File::Rm(file1.c_str());
@@ -74,7 +93,7 @@ bool dirlist_test()
     Dir::RmDir(testpath);
     Profiler::Profile("Deleting files");
 
-    CString pdir = Dir::Basename(testpath);
+    CString pdir = Env::DirName(testpath);
     Profiler::Profile("Basename");
     Dir::RmDir(pdir.c_str());
     Profiler::Profile("Delete directory");
@@ -82,9 +101,11 @@ bool dirlist_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[3] = {
+const constexpr CoffeeTest::Test _tests[4] = {
+    {dirbasename_test,"Directory basename","Getting the directory of a file"},
+    {basename_test,"Basename operation","Getting the basename of paths"},
+
     {dirstat_test,"Directory testing","Using lstat() to check directory status"},
-    {dirbasename_test,"Directory basename","Getting the basename of a directory"},
     {dirlist_test,"Directory listing","Listing entries in a directory"},
 };
 

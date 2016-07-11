@@ -14,6 +14,13 @@ FunctionLoader::Library* _library_object;
 
 bool dlopen_test()
 {
+#if defined(COFFEE_LINUX)
+    Env::PrependVar("LD_LIBRARY_PATH",CMAKE_LINKING_DIRECTORY);
+    cDebug("Prepending {0}",CMAKE_LINKING_DIRECTORY);
+#elif defined(COFFEE_APPLE)
+    Env::PrependVar("DYLD_LIBRARY_PATH",CMAKE_LINKING_DIRECTORY);
+#endif
+
     /* Try loading a shared library, remember to clean up! */
     Version libver;
     libver.major = 1;
@@ -32,8 +39,6 @@ bool dlopen_test()
         return false;
     }
     return true;
-
-
 }
 
 ObjectLoader::ObjConstructor<TestClass> _constructor;
