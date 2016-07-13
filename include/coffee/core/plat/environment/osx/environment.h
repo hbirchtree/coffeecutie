@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#if defined(COFFEE_APPLE) || 1
+#if defined(COFFEE_APPLE)
 
 #include "../unix/environment.h"
 
