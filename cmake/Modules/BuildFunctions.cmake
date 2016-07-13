@@ -81,7 +81,7 @@ macro(COFFEE_ADD_EXAMPLE_LONGER
 
     file ( WRITE "${LICENSE_FILE}"
         "namespace Coffee{\n"
-        "  const char* CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
+        "  const char* const CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
         "}" )
 
     set ( SOURCES_MOD "${LICENSE_FILE};${SOURCES}" )
@@ -194,7 +194,7 @@ macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
 
     file ( WRITE "${LICENSE_FILE}"
         "namespace Coffee{\n"
-        "  const char* CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
+        "  const char* const CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
         "}" )
 
     set ( SOURCES_MOD "${LICENSE_FILE};${SOURCES}" )
