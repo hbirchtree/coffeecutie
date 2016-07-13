@@ -4,7 +4,7 @@
 
 #if defined(COFFEE_APPLE)
 
-#include "../posix/environment.h"
+#include "../unix/environment.h"
 
 #include <libproc.h>
 #include <errno.h>
