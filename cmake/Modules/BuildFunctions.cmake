@@ -94,20 +94,23 @@ macro(COFFEE_ADD_EXAMPLE_LONGER
     set ( PACKAGE_PREFIX "org.coffee" )
 
     if(ANDROID)
-        ANDROIDAPK_PACKAGE( "${TARGET}"
+        ANDROIDAPK_PACKAGE(
+            "${TARGET}"
             "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
             "${SOURCES_MOD}"
             "${BUNDLE_RSRCS}"
             "${BUNDLE_LIBS}"
             "${ICON_ASSET}" )
     elseif(WIN32)
-        WINPE_PACKAGE( ${TARGET}
-            "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
+        WINPE_PACKAGE(
+            ${TARGET}
+            "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
             "${INFO_STRING}"
             "${SOURCES_MOD}"
             "${BUNDLE_RSRCS}" )
     elseif(APPLE)
-        MACAPP_PACKAGE( "${TARGET}"
+        MACAPP_PACKAGE(
+            "${TARGET}"
             "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
             "${INFO_STRING}"
             "${SOURCES_MOD}"
@@ -118,12 +121,14 @@ macro(COFFEE_ADD_EXAMPLE_LONGER
         add_executable( ${TARGET} ${SOURCES_MOD} )
 
         if(COFFEE_GENERATE_APPIMAGE)
-            APPIMAGE_PACKAGE(${TARGET}
+            APPIMAGE_PACKAGE(
+                ${TARGET}
                 "${TITLE}"
                 "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}")
         endif()
         if(COFFEE_GENERATE_FLATPAK)
-            FLATPAK_PACKAGE(${TARGET}
+            FLATPAK_PACKAGE(
+                ${TARGET}
                 "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
                 "${BUNDLE_RSRCS}"
                 "" "${BUNDLE_LIBS}" )

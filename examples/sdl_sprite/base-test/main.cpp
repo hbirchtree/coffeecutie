@@ -215,6 +215,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         test.pollEvents();
     }
 
+    rend.destroyTexture(1,&t);
+    rend.destroyRenderer(r);
+
     test.hideWindow();
 
     rend.spritesTerminate();

@@ -43,6 +43,8 @@ endif()
 # Because file timestamps are unreliable.
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
 
+set ( COFFEE_VERSION_CODE "2.1.1" )
+
 # git hash is retrieved
 execute_process (
     COMMAND git rev-parse HEAD
@@ -54,7 +56,7 @@ string ( SUBSTRING "${GIT_HASH}" "" 10 GIT_HASH )
 
 #set ( GIT_HASH "00000000" )
 
-set ( COFFEE_BUILD_STRING "${COFFEE_VERSION_CODE}.00.00.${CBUILDTIME}-${GIT_HASH}" )
+set ( COFFEE_BUILD_STRING "${COFFEE_VERSION_CODE}.${CBUILDTIME}-${GIT_HASH}" )
 
 add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 
