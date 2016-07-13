@@ -1,5 +1,9 @@
 #include <coffee/core/plat/environment/unix/environment.h>
 
+#if defined(COFFEE_APPLE)
+#include <coffee/core/plat/environment/osx/environment.h>
+#endif
+
 #include <unistd.h>
 #include <libgen.h>
 #include <limits.h>
