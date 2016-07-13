@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#ifndef COFFEE_ANDROID
+#ifdef COFFEE_ANDROID
 
 #include "../unix/loader.h"
 
