@@ -103,5 +103,23 @@ EnvInterface::Variables PosixEnvironmentFun::Environment()
 }
 
 }
+
+#if defined(COFFEE_APPLE)
+CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
+{
+    int ret;
+    pid_t pid;
+    char pathbuf[PROC_PIDPATHINFO_MAXSIZE] = {};
+
+    pid = getpid();
+    ret = proc_pidpath(pid,pathbuf,sizeof(pathbuf));
+    CString out;
+    out.insert(0,pathbuf,sizeof(pathbuf));
+    szptr e = out.find('\0');
+    out.resize(e);
+    return out;
+}
+#endif
+
 }
 }
