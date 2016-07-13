@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE) || defined(COFFEE_ANDROID)
 
 #include "../libraries.h"
 #include "../../memory/stlstring_ops.h"
@@ -16,7 +16,7 @@ namespace Posix{
 
 struct PosixFunctionLoader : FunctionLoad_def
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_LINUX) || defined(COFFEE_ANDROID)
     static const constexpr cstring shared_object_extension = ".so";
 #elif defined(COFFEE_APPLE)
     static const constexpr cstring shared_object_extension = ".dylib";

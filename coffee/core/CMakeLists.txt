@@ -85,12 +85,12 @@ endif()
 if(WIN32)
     list ( APPEND CoffeeCore_SRCS
         private/plat/file/windows/file.cpp
-		private/plat/environment/windows/environment.cpp
+        private/plat/environment/windows/environment.cpp
         )
 endif()
 
 # POSIX code
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/unix/environment.cpp
         private/plat/file/unix/file.cpp

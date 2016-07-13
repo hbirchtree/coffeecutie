@@ -14,7 +14,7 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" CACHE PATH )
+    set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" CACHE PATH "" )
 
     set ( ANDROID_PROJECT_INPUT ${CMAKE_SOURCE_DIR}/desktop/android )
 

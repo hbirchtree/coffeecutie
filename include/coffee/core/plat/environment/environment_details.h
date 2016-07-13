@@ -26,6 +26,10 @@ struct EnvInterface
     {
         return CString();
     }
+    STATICINLINE CString DirName(cstring)
+    {
+        return CString();
+    }
 
     STATICINLINE bool ExistsVar(cstring)
     {

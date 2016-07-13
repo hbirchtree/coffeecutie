@@ -2,15 +2,21 @@
 
 #include "../../plat_primary_identify.h"
 
-#ifdef COFFEE_ANDROID
+#ifndef COFFEE_ANDROID
 
-#include "../libraries.h"
+#include "../unix/loader.h"
 
 namespace Coffee{
 namespace Library{
+namespace Android{
 
-using FunctionLoader = FunctionLoad_def;
-using ObjectLoader = ObjectLoader_def<FunctionLoader>;
+using AndroidFunctionLoader = Posix::PosixFunctionLoader;
+using AndroidObjectLoader = Posix::PosixObjectLoader;
+
+}
+
+using FunctionLoader = Android::AndroidFunctionLoader;
+using ObjectLoader = Android::AndroidObjectLoader;
 
 }
 }

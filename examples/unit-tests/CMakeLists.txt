@@ -18,4 +18,9 @@ if(COFFEE_BUILD_OPENVR)
 endif()
 
 # This needs different testing and setup
-add_subdirectory(packaging-api)
+if(NOT ANDROID AND NOT WIN32)
+    # Known to not work with:
+    #  - Android (limitations in ant buildtool? thinks it's invalid)
+    #  - Windows (just plain terrible filename encoding)
+    add_subdirectory(packaging-api)
+endif()

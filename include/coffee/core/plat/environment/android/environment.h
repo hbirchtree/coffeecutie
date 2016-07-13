@@ -3,12 +3,13 @@
 #include "../../plat_primary_identify.h"
 
 #ifdef COFFEE_ANDROID
-#include "../environment_details.h"
+#include "../unix/environment.h"
 
 namespace Coffee{
 namespace Environment{
 namespace Android{
-struct AndroidEnv : EnvInterface
+
+struct AndroidEnv : Posix::PosixEnvironmentFun
 {
     static CString GetUserData(cstring,cstring);
 

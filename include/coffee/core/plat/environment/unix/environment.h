@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS)
 
 #include "../environment_details.h"
 #include "../../memory/cmemory.h"
@@ -69,6 +69,8 @@ struct PosixEnvironmentFun : EnvInterface
 
 struct PosixTerminalColorCodes : EnvColorCodes
 {
+    // Because Android doesn't have a proper terminal
+#if !defined(COFFEE_ANDROID)
     static constexpr cstring Reset = "\033[0m";
 
     /* Font color */
@@ -114,6 +116,7 @@ struct PosixTerminalColorCodes : EnvColorCodes
     static constexpr cstring BgLightGray = "\033[0m\033[47m";
     static constexpr cstring BgLightCyan = "\033[1m\033[46m";
     static constexpr cstring BgPink = "\033[1m\033[41m";
+#endif
 };
 
 }

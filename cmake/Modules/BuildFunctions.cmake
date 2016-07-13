@@ -1,7 +1,4 @@
-if(ANDROID)
-
-endif()
-
+include ( AndroidApkBuild )
 include ( LinuxAppImageBuild )
 include ( LinuxFlatpakBuild )
 include ( MacAppBuild )
@@ -181,6 +178,11 @@ macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
 endmacro()
 
 macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
+    # Bleh, Android kind of sucks for this.
+    if(ANDROID)
+        return()
+    endif()
+
     add_definitions( -DCOFFEE_APPLICATION_NAME="${TITLE}" )
     add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffecutie" )
     add_definitions( -DCOFFEE_VERSION_CODE=1 )
@@ -197,7 +199,11 @@ macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         "  extern \"C\" const char* CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
         "}" )
 
-    set ( SOURCES_MOD "${SOURCES};${LICENSE_FILE}" )
+    if(ANDROID) # Android platform layer
+        set ( SOURCES_MOD "${SOURCES};${LICENSE_FILE};${SDL2_ANDROID_MAIN_FILE}" )
+    else()
+        set ( SOURCES_MOD "${SOURCES};${LICENSE_FILE}" )
+    endif()
 
     add_executable ( ${TARGET} ${SOURCES_MOD} )
 
@@ -210,14 +216,19 @@ macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         )
 
     target_link_libraries ( ${TARGET}
-	${LIBRARIES}
-	)
+        ${LIBRARIES}
+        )
 
     target_enable_cxx11(${TARGET})
 
-    add_test (
-	NAME ${TITLE}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND $<TARGET_FILE:${TARGET}>
-        )
+    if(ANDROID) # Crosscompiling setup, until we find an elegant solution
+        message ( "Skipping unit test: ${TITLE}" )
+        message ( "Please run the tests somehow!" )
+    else()
+        add_test (
+            NAME ${TITLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMAND $<TARGET_FILE:${TARGET}>
+            )
+    endif()
 endmacro()
