@@ -8,6 +8,12 @@ if (NOT WIN32)
         #-Werror
         #-Wpadded
         )
+    if( ${CMAKE_BUILD_TYPE} STREQUAL "Release" AND NOT COFFEE_BUILD_SWIG_BINDING )
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions" )
+        if(NOT COFFEE_BUILD_OPENSSL)
+            set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti" )
+        endif()
+    endif()
     if(APPLE)
         include_directories ( "/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1" )
 	link_directories("/usr/local/opt/llvm38/lib/llvm-3.8/lib")
@@ -36,12 +42,6 @@ endif()
 # Build time strings, embedded within constexpr strings to keep track of when a build was made.
 # Because file timestamps are unreliable.
 string (TIMESTAMP CBUILDTIME "%y.%m.%d.%H%M")
-
-set ( COFFEE_VERSION_CODE "001" )
-
-#add_definitions( -DCOFFEE_APPLICATION_NAME="Generic Coffee" )
-add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffee Guy" )
-add_definitions( -DCOFFEE_VERSION_CODE=${COFFEE_VERSION_CODE} )
 
 # git hash is retrieved
 execute_process (

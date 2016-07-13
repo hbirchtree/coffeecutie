@@ -85,11 +85,15 @@ RestClientImpl::RestResponse RestClientImpl::RestRequestHTTPS(Host h, Request co
 
     asio::streambuf recp;
     std::istream is(&recp);
+#ifndef NDEBUG
     try{
+#endif
         asio::read(socket,recp);
+#ifndef NDEBUG
     }
     catch(std::system_error)
     {}
+#endif
 
     RestResponse resp;
 

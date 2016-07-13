@@ -27,8 +27,8 @@
 #define COFFEE_LIL_ENDIAN
 #endif
 
-/* Disabling exceptions and RTTI on Android for size reasons */
-#if !defined(COFFEE_ANDROID)
+/* Disabling exceptions and RTTI in release for size reasons */
+#if !defined(COFFEE_ANDROID) && !defined(NDEBUG)
 #define COFFEE_USE_EXCEPTIONS
 #define COFFEE_USE_RTTI
 #endif

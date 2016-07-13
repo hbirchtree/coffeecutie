@@ -1,15 +1,17 @@
-set ( FLATPAK_CONFIG_DIR "${CMAKE_SOURCE_DIR}/desktop/linux/flatpak" )
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    set ( FLATPAK_CONFIG_DIR "${CMAKE_SOURCE_DIR}/desktop/linux/flatpak" )
 
-set ( FLATPAK_REPOSITORY_DIR CACHE PATH "Target repository to submit flatpaks to" )
+    set ( FLATPAK_REPOSITORY_DIR CACHE PATH "Target repository to submit flatpaks to" )
 
-set ( FLATPAK_PROGRAM "/usr/bin/flatpak" CACHE FILEPATH "Path to flatpak executable" )
-set ( FLATPAK_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/package/linux-flatpak"
-    CACHE PATH "Where to put flatpak directory structures" )
+    set ( FLATPAK_PROGRAM "/usr/bin/flatpak" CACHE FILEPATH "Path to flatpak executable" )
+    set ( FLATPAK_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/package/linux-flatpak"
+        CACHE PATH "Where to put flatpak directory structures" )
 
-set ( FLATPAK_DEFAULT_ICON_FILE "${CMAKE_SOURCE_DIR}/desktop/icon.svg"
-    CACHE FILEPATH "Default icon for AppImages" )
+    set ( FLATPAK_DEFAULT_ICON_FILE "${CMAKE_SOURCE_DIR}/desktop/icon.svg"
+        CACHE FILEPATH "Default icon for AppImages" )
+endif()
 
-macro( FLATPAK_PACKAGE TARGET DOM_NAME TITLE DATA LIBRARIES BUNDLE_LIBRARIES )
+macro( FLATPAK_PACKAGE TARGET DOM_NAME TITLE VERSION_CODE COPYRIGHT COMPANY DATA LIBRARIES BUNDLE_LIBRARIES )
 
     set ( FLATPAK_TARGET_BRANCH "master" )
 

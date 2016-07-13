@@ -65,7 +65,7 @@ constexpr cstring blam_header_head = "deah"; /*!< Header of file header*/
 constexpr cstring blam_header_foot = "toof"; /*!< Footer of file header*/
 
 constexpr int32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
-constexpr _cbasic_static_map<bl_string,bl_string,28> blam_map_names = {
+constexpr _cbasic_static_map<sbyte_t[15],sbyte_t[28],28> blam_map_names = {
     //Single player maps
 {"a10", "Pillar of Autumn"},
 {"a30", "Halo"},

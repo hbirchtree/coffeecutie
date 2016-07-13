@@ -66,4 +66,7 @@ using Complex = std::complex<T>;
 template<typename T>
 using Set = std::set<T>;
 
+template<typename T1, typename T2>
+using Pair = std::pair<T1,T2>;
+
 }

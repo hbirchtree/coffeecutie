@@ -27,6 +27,7 @@ set ( CoffeeCore_SRCS
 
     # Internal platform layer
     private/plat/environment/application_start.cpp
+    private/plat/environment/argument_parse.cpp
 
     # Compression / data storage
     private/datastorage/compression/libz.cpp

@@ -5,6 +5,6 @@ endif()
 
 add_subdirectory(data-management/endian-fixer)
 
-if(COFFEE_BUILD_BOT)
+if(COFFEE_BUILD_BOT AND COFFEE_BUILD_OPENSSL)
     add_subdirectory(build-daemon/build-bot)
 endif()

@@ -52,9 +52,59 @@ void CoffeeInit(bool profiler_init)
     cDebug("Running on {0}",PlatformData::SystemDisplayString());
 }
 
+FORCEDINLINE void PrintVersionInfo()
+{
+    cOutputPrint("{0}, released by {1}, version {2}",
+                CoffeeApplicationData.application_name,
+                CoffeeApplicationData.organization_name,
+                CoffeeApplicationData.version_code);
+}
+
+FORCEDINLINE void PrintBuildInfo()
+{
+    cOutputPrint("Running {0} build {1}",
+                "Coffee",
+                CoffeeBuildString);
+}
+
+FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
+{
+    cOutputPrint("{0}",arg);
+}
+
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
     initargs = AppArg(argc,argv);
+
+    {
+        ArgumentCollection parser;
+        parser.registerArgument(ArgumentCollection::Switch,"help","h");
+        parser.registerArgument(ArgumentCollection::Switch,"version");
+        parser.registerArgument(ArgumentCollection::Switch,"licenses");
+
+        parser.parseArguments(argc,argv);
+
+        for(Pair<CString,bool> const& a : parser.getSwitchOptions())
+        {
+            if((a.first == "help" || a.first == "h") && a.second)
+            {
+                PrintVersionInfo();
+                PrintHelpInfo(parser);
+                return 0;
+            }
+            if(a.first == "version" && a.second)
+            {
+                PrintVersionInfo();
+                PrintBuildInfo();
+                return 0;
+            }
+            if(a.first == "licenses" && a.second)
+            {
+                cOutputPrint("{0}",CoffeeLicenseString);
+                return 0;
+            }
+        }
+    }
 
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");

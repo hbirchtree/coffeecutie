@@ -136,6 +136,13 @@ int32 coffee_main(int32, cstring_w*)
 {
     FileResourcePrefix("sample_data/runescape-data/");
 
+    /* Looking at member offsets, if they are packed */
+    cDebug("Offsets: &name={0}, &mapColor={1}, &actColor={2}, &texture={3}",
+           offsetof(RSFloorConfig,name),
+           offsetof(RSFloorConfig,mapColor),
+           offsetof(RSFloorConfig,actColor),
+           offsetof(RSFloorConfig,texture));
+
     Resource idxfile("main_file_cache.idx0");
     FilePull(idxfile);
 

@@ -1,39 +1,29 @@
-include ( AndroidToolkit )
+if(ANDROID)
+    find_package ( CfAndroidMain )
+    include ( AndroidToolkit )
 
-# APK signing
+    if(ANDROID_USE_SDL2_LAUNCH)
+        find_package(SDL2main REQUIRED)
+    endif()
 
-set ( ANDROID_APK_SIGN_KEY "~/keystore/key.release" CACHE FILEPATH "Android signing key" )
+    # APK signing
 
-set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android signing key alias" )
+    set ( ANDROID_APK_SIGN_KEY "~/keystore/key.release" CACHE FILEPATH "Android signing key" )
 
-# Misc properties
+    set ( ANDROID_APK_SIGN_ALIAS "$ENV{ANDROID_SIGN_ALIAS}" CACHE STRING "Android signing key alias" )
 
-set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" )
+    # Misc properties
 
-# For valid options, see:
-# http://developer.android.com/guide/topics/manifest/activity-element.html
-set ( ANDROID_ORIENTATION_MODE "sensorLandscape" )
+    set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" CACHE PATH )
 
-set ( ANDROID_ACTIVITY_NAME )
+    set ( ANDROID_PROJECT_INPUT ${CMAKE_SOURCE_DIR}/desktop/android )
 
-set ( ANDROID_API_MIN_TARGET )
-set ( ANDROID_API_TARGET )
+    set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_PROJECT_INPUT}/Template )
+    set ( ANDROID_PROJECT_CONFIG_DIR ${ANDROID_PROJECT_INPUT}/Config )
 
-# Name of package in package manager
-set ( ANDROID_PACKAGE_NAME )
-# Name of application in menus
-set ( ANDROID_APPLICATION_NAME "Coffee App" )
+    set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
 
-# Version of APK file, should be consistent
-set ( ANDROID_VERSION_CODE "1" )
-set ( ANDROID_VERSION_NAME "1.0" )
-
-set ( ANDROID_PROJECT_INPUT ${CMAKE_SOURCE_DIR}/desktop/android )
-
-set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_PROJECT_INPUT}/Template )
-set ( ANDROID_PROJECT_CONFIG_DIR ${ANDROID_PROJECT_INPUT}/Config )
-
-set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
+endif()
 
 #
 # Brief: Auto-generate an APK build of a given build target
@@ -48,8 +38,9 @@ set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
 # Api_Arch : armeabi-v7a, arm64-v8a or x86
 # Dependency_Libs : libraries which will be added to the APK
 #
-macro(APK_PACKAGE Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs )
+macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs Icon_File )
     message ( "APK: Generating ${Pkg_Name} (${Api_Arch})" )
+    message ( "TODO: Process the file ${Icon_File}")
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
@@ -74,6 +65,10 @@ macro(APK_PACKAGE Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
 
     set ( ANDROID_API_TARGET ${Api_Target} )
     set ( ANDROID_API_MIN_TARGET "16" )
+
+    # For valid options, see:
+    # http://developer.android.com/guide/topics/manifest/activity-element.html
+    set ( ANDROID_ORIENTATION_MODE "sensorLandscape" )
 
     set ( RELEASE_PREFIX )
 
@@ -270,4 +265,47 @@ macro(APK_PACKAGE Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Targ
         ${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk
         )
 
+endmacro()
+
+macro(ANDROIDAPK_PACKAGE
+        TARGET
+        DOM_NAME TITLE COFFEE_VERSION_CODE COPYRIGHT COMPANY
+        SOURCES
+        BUNDLE_RSRCS
+        BUNDLE_LIBS
+        ICON_ASSET)
+    message( "Android Main: ${SDL2_ANDROID_MAIN_FILE}" )
+    if(ANDROID_USE_SDL2_LAUNCH)
+        add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
+    else()
+        message ("Android sources: ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}")
+        add_library(${TARGET} SHARED ${SOURCES}
+            ${CMAKE_SOURCE_DIR}/coffee/core/private/plat/graphics/eglinit.cpp )
+
+        target_link_libraries ( ${TARGET}
+            AndroidCore
+            EGL
+            )
+    endif()
+    set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+    # Lowercase the target name ofr package name
+    string ( TOLOWER "${TARGET}" PACKAGE_SUFFIX )
+
+    set ( DEPENDENCIES )
+
+    list ( APPEND DEPENDENCIES $<TARGET_FILE:${TARGET}> )
+
+    list ( APPEND DEPENDENCIES "${BUNDLE_LIBS}" )
+
+    APK_PACKAGE_EXT(
+        "${TARGET}"
+        "${TITLE}"
+        "${DOM_NAME}.${PACKAGE_SUFFIX}"
+        "${COFFEE_VERSION_CODE}" "${COFFEE_BUILD_STRING}"
+        "${ANDROID_NATIVE_API_LEVEL}" "${ANDROID_ABI}"
+        "${DEPENDENCIES}"
+        "${ICON_ASSET}"
+        ${BUNDLE_RSRCS}
+        )
 endmacro()

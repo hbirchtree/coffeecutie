@@ -1,4 +1,3 @@
-#define COFFEE_APPLICATION_LIBRARY
 #include <coffee/core/unit_tests/framework.h>
 
 #include <coffee/core/CDebug>

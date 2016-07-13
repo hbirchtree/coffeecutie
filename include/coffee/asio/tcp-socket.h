@@ -80,9 +80,13 @@ struct TCPSocketImpl : ASIO_Client
 
         void pull()
         {
+#ifndef NDEBUG
             try{
+#endif
                 asio::read(socket,recvp);
+#ifndef NDEBUG
             }catch(std::system_error){}
+#endif
             /* Fuck me, std::istream doesn't update itself */
             std::istream::rdbuf(&recvp);
         }
