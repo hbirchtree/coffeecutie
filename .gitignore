@@ -16,7 +16,6 @@ build_*
 Makefile
 
 # CMake files
-CMakeCache.txt
 CMakeFiles
 
 # Ninja files
