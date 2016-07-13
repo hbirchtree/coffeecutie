@@ -12,6 +12,7 @@ extern cstring CoffeeArchString;
 extern cstring CoffeeBuildString;
 extern cstring CoffeePlatformString;
 
-extern cstring CoffeeLicenseString;
 
 }
+
+extern "C" const char* CoffeeLicenseString;

@@ -25,7 +25,7 @@ CString PosixEnvironmentFun::BaseName(cstring n)
         out = ".";
     return out;
 #else
-    // This one is slower
+    // This one is slower, but more compliant
     sbyte_t* out = AllocT<sbyte_t>(StrLen(dname));
     CString out_s = basename(out);
     CFree(out);
