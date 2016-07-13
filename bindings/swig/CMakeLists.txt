@@ -20,7 +20,7 @@ include_directories (
     )
 
 # Define C++11 flag
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 # We have interfaces in this directory
 set(INTERFACE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/interfaces")
@@ -38,6 +38,7 @@ set ( CoffeeSwigShim_SRCS
     )
 
 coffee_add_library(CoffeeSwigShim ${CoffeeSwigShim_SRCS} )
+
 target_link_libraries ( CoffeeSwigShim
     CoffeeCore
     CoffeeGLeam
