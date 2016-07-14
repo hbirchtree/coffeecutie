@@ -259,7 +259,7 @@ struct SysInfoDef
      */
     bool HasPAE()
     {
-        return false;
+        return true;
     }
 
     STATICINLINE
