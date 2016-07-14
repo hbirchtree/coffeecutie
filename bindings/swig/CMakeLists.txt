@@ -88,6 +88,12 @@ target_link_libraries ( CoffeeSwigShim
 # Link with some libraries
 set(COFFEE_LINKING CoffeeCore CoffeeOpenAL CoffeeBlam CoffeeSwigShim )
 
-add_subdirectory(csharp)
-add_subdirectory(dlang)
-add_subdirectory(python)
+if(COFFEE_CSHARP)
+    add_subdirectory(csharp)
+endif()
+if(COFFEE_DLANG)
+    add_subdirectory(dlang)
+endif()
+if(COFFEE_PYTHON)
+    add_subdirectory(python)
+endif()
