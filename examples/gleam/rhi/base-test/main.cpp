@@ -53,6 +53,9 @@ public:
              1.f, -1.f,  1.f,   -1.f,  0.f,
         };
 
+        /*
+         * Loading the GLeam API, chosen according to what is available at runtime
+         */
         GLM::LoadAPI();
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly,sizeof(vertexdata));
@@ -65,6 +68,10 @@ public:
 
             vertbuf.commit(sizeof(vertexdata),vertexdata);
 
+            /*
+             * Specifying a vertex format which is applied.
+             * This is driver- and API-agnostic
+             */
             GLM::V_ATTR pos = {};
             pos.m_idx = 0;
             pos.m_bassoc = 0;
@@ -81,6 +88,7 @@ public:
             tc.m_stride = sizeof(Vecf2);
             tc.m_off = sizeof(Vecf3);
 
+            /* Finally we add these attributes to the descriptor */
             vertdesc.addAttribute(pos);
             vertdesc.addAttribute(tc);
         }
@@ -89,7 +97,7 @@ public:
         GLM::SHD f_shader;
         GLM::PIP eye_pip;
 
-        /* Compiling shaders */
+        /* Compiling shaders and assemble a graphics pipeline */
         {
             CResources::Resource v_rsc("vr/vshader.glsl");
             CResources::Resource f_rsc("vr/fshader.glsl");
@@ -108,6 +116,10 @@ public:
             CResources::FileUnmap(f_rsc);
         }
 
+        /*
+         * Binding the pipeline for usage
+         * This has different meaning across GL3.3 and GL4.3+
+         */
         eye_pip.bind();
 
         /* Uploading textures */
@@ -128,10 +140,13 @@ public:
 
             CResources::FileUnmap(rsc);
         }
+
+        /* Attaching the texture data to a sampler object */
         GLM::SM_2DA eyesamp;
         eyesamp.alloc();
         eyesamp.attach(&eyetex);
 
+        /* Creating the uniform data store */
         Bytes transform_data = {};
         Bytes mult_data = {};
         Bytes time_data = {};
@@ -140,6 +155,13 @@ public:
         Vecf2 texture_multipliers[2] = {};
         scalar time_value = 0.f;
 
+        /*
+         * These specify byte buffers which refer to other data
+         * This makes it simple to redirect or reallocate the uniform data
+         *
+         * These can be rotated to achieve per-frame disposable buffers,
+         *  allowing multiple frames to be processed concurrently without halt
+         */
         transform_data.size = sizeof(object_matrices);
         transform_data.data = (byte_t*)object_matrices;
         mult_data.size = sizeof(texture_multipliers);
@@ -154,6 +176,7 @@ public:
 
         Vector<GLM::UNIFDESC> unifs;
 
+        /* We create some pipeline state, such as blending and viewport state */
         GLM::VIEWSTATE viewportstate(1);
         GLM::BLNDSTATE blendstate;
         GLM::USTATE unifstate;
@@ -166,8 +189,10 @@ public:
                                            this->windowSize().h
                                        });
 
+        /* We query the current pipeline for possible uniform/texture/buffer values */
         GLM::GetShaderUniformState(eye_pip,&unifs);
 
+        /* We assign CPU-side values to GPU-side values */
         for(GLM::UNIFDESC const& u : unifs)
         {
             if(u.m_name == "transform[0]")
@@ -188,42 +213,80 @@ public:
         multipliers.data = &mult_data;
         timeval.data = &time_data;
 
+        /* Applying blending state information */
         GLM::SetBlendState(blendstate);
 
+        /* Now generating a drawcall, which only specifies small state that can be shared */
         GLM::DrawCall call;
         call.m_idxd = false;
         call.m_inst = true;
 
+        /* Instance data is more akin to individual drawcalls, specifying vertex buffer information */
         GLM::DrawInstanceData instdata = {};
         instdata.m_insts = 2;
         instdata.m_verts = (sizeof(vertexdata)/sizeof(scalar))/5;
 
+        /* Specifying the uniform data, such as camera matrices and transforms */
         Vecf4 clear_col = {.1f,.1f,.1f,1.f};
 
         CGCamera camera;
         camera.aspect = 1.6f;
         camera.fieldOfView = 70.f;
 
-        camera.position.x() = 1.;
+        camera.position.x() = -3.;
         camera.position.z() = 3.;
 
         CTransform base_transform;
+        base_transform.position = Vecf3(2,0,0);
         base_transform.scale = Vecf3(1);
 
+        /* Vertex descriptors are based upon the ideas from GL4.3 */
         vertdesc.bind();
         vertdesc.bindBuffer(0,vertbuf);
         vertdesc.bindBuffer(1,vertbuf);
 
         eyesamp.bind(0);
 
+        bigscalar tprevious = this->contextTime();
+        bigscalar tdelta = 0.1;
+
+        scalar v0 = 0;
+
         while(!closeFlag())
         {
+            camera.position.x() += 0.1 * tdelta;
+            camera.position.x() = CMath::fmod(camera.position.x(),10);
+            camera.position.x() -= 5.f;
+
             clear_col.r() = CMath::sin(this->contextTime()+0.5);
             clear_col.g() = CMath::sin(this->contextTime()+5.0);
             clear_col.b() = CMath::sin(this->contextTime()+50.0);
 
+            /*
+             * This will probably be incorporated into the GLM:: namespace somehow
+             * We want to only clear the parts of the buffer that are necessary
+             * eg. don't clear stencil and depth if they are unused
+             *
+             */
             GL::ClearBufferfv(true,0,clear_col);
 
+            /*
+             * Events are always late for the drawcall.
+             * The best we can do is update the state as often as possible.
+             * Or we could maximize the time of each iteration for VSYNC,
+             *  polling once to begin with and also later.
+             *
+             * Example:
+             * poll();
+             * ...
+             * upload();
+             * process();
+             * ...
+             * millisleep(15);
+             * poll();
+             * draw();
+             *
+             */
             this->pollEvents();
 
             /* Define frame data */
@@ -232,7 +295,6 @@ public:
             texture_multipliers[0] = Vecf2(1,1);
             texture_multipliers[1] = Vecf2(-1,1);
 
-            camera.position.x() = -1.;
             object_matrices[0] = GenPerspective(camera)
                     * GenTransform(camera)
                     * GenTransform(base_transform);
@@ -241,12 +303,26 @@ public:
                     * GenTransform(camera)
                     * GenTransform(base_transform);
 
+            /*
+             * In APIs such as GL4.3+, this will apply vertex and fragment states separately.
+             * With GL3.3 it sets all state with the vertex stage and drops the rest.
+             */
             GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
             GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
 
+            /*
+             * For VR, we could add drawcall parameters to specify this
+             * The user would still specify their own projection matrices per-eye,
+             *  or we could fabricate these.
+             * We would primarily support stereo instancing,
+             *  because this has a lot of benefits to efficiency.
+             */
             GLM::Draw(call,instdata);
 
             this->swapBuffers();
+
+            tdelta = this->contextTime() - tprevious;
+            tprevious = this->contextTime();
         }
 
         if(dev)
@@ -261,6 +337,7 @@ public:
         EventHandlers::WindowManagerCloseWindow(this,e,data);
         EventHandlers::ResizeWindow<GL>(e,data);
     }
+
     void eventHandleI(const CIEvent &e, c_cptr data)
     {
         CSDL2Renderer::eventHandleI(e,data);
@@ -270,13 +347,17 @@ public:
         if(e.type==CIEvent::Keyboard)
         {
             auto kev = (CIKeyEvent const*)data;
+
+            if(kev->mod & CIKeyEvent::RepeatedModifier || kev->mod & CIKeyEvent::PressedModifier)
+                return;
+
             switch(kev->key)
             {
             case CK_F11:
-                this->setWindowState(CDProperties::WindowedFullScreen);
-                break;
-            case CK_F10:
-                this->setWindowState(CDProperties::Windowed);
+                if(this->windowState() & CDProperties::Windowed)
+                    this->setWindowState(CDProperties::WindowedFullScreen);
+                else
+                    this->setWindowState(CDProperties::Windowed);
                 break;
             }
         }
@@ -288,7 +369,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
 
-    /*Required for SDL2 applications*/
+    /* Required for SDL2 applications, initializes SDL state */
     SubsystemWrapper<SDL2::SDL2> sdl2;
     C_UNUSED(sdl2);
 
@@ -301,12 +382,15 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual();
+    props.flags ^= CDProperties::Resizable;
     props.gl.flags |= GLProperties::GLDebug;
     props.gl.flags |= GLProperties::GLVSync;
 
-    /* The Oculus SDK configures some OpenGL state,
-     *  so it needs to be done before any GL context is active */
-    Profiler::PushContext("Oculus setup");
+    /* The VR SDK configures some OpenGL state,
+     *  so it needs to be done before any GL context is active
+     * This is a general trait to VR APIs that hook into GL
+     */
+    Profiler::PushContext("VR setup");
     dev = QuickLoadHMD<VR,VR::Device>();
     Profiler::PopContext();
 
