@@ -43,6 +43,7 @@ bool resource_exists_odd_characters_test()
                  ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
     /* Tests what happens to unexpected characters. We want these to work. */
     /* If existence passes, we assume the rest works too for these cases. */
+	/* It is known that it does not work with Win32's resource system. */
     return FileExists(rsc);
 }
 
@@ -59,11 +60,11 @@ bool resource_read_test()
 
     if(sizeof(probe_text)-1 != rsc.size || !MemCmp(rsc.data,probe_text,rsc.size))
     {
-        cDebug("Sizes: {0} ?= {1}",sizeof(probe_text),rsc.size);
+        cDebug("Sizes: {0} ?= {1}", sizeof(probe_text) - 1,rsc.size);
         cDebug("Data:\n"
                "Internal: {0}\n"
                "Resource: {1}\n",
-               StrUtil::hexdump(probe_text,sizeof(probe_text)),
+               StrUtil::hexdump(probe_text, sizeof(probe_text) - 1),
                StrUtil::hexdump(rsc.data,rsc.size));
         return false;
     }
@@ -75,7 +76,7 @@ bool resource_read_test()
 
 bool resource_map_test()
 {
-    Resource rsc("Oddball: æøå, カケ",
+    Resource rsc(filename_testable,
                  ResourceAccess::SpecifyStorage
                  |ResourceAccess::AssetFile);
 
@@ -90,7 +91,7 @@ bool resource_map_test()
 
 bool resource_write_test()
 {
-    Resource rsc("Oddball: æøå, カケ",
+    Resource rsc(filename_testable,
                  ResourceAccess::SpecifyStorage
                  |ResourceAccess::AssetFile);
 
