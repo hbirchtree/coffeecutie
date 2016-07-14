@@ -212,7 +212,7 @@ bool PosixDirFun::MkDir(cstring dname, bool createParent)
     if(!createParent)
         return mkdir(dname,S_IRWXU|S_IRWXG)==0;
 
-    char tmp[256];
+    char tmp[255];
     char *p = NULL;
     size_t len;
 

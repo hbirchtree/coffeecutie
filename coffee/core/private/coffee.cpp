@@ -74,6 +74,20 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
+#ifdef COFFEE_SLAP_LOWMEM
+    /*
+     * Dealing with non-PAE systems is a pain in the ass, fuck it
+     * They are unlikely to have enough memory and processing power anyway.
+     *
+     */
+
+    if(!SysInfo::HasPAE() && !PlatformData::IsMobile())
+    {
+        cOutputPrint("Unsupported system, insufficient addressing space");
+        return 1;
+    }
+#endif
+
     initargs = AppArg(argc,argv);
 
     {

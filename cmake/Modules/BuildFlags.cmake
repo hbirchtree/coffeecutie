@@ -16,7 +16,7 @@ if (NOT WIN32)
     endif()
     if(APPLE)
         include_directories ( "/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1" )
-	link_directories("/usr/local/opt/llvm38/lib/llvm-3.8/lib")
+        link_directories("/usr/local/opt/llvm38/lib/llvm-3.8/lib")
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" )
         set ( CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS}" )
     endif()
@@ -26,10 +26,11 @@ else()
     #  as well as small warnings for padding and etc.
     # Microsoft makes the worst headers of them all.
     # We also set a target Windows NT version for some reason
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1" )
     add_definitions (
-	-W1	
-	-D_WIN32_WINNT=0x0601
-)
+        #        /W1
+        -D_WIN32_WINNT=0x0601
+        )
 endif()
 
 # Static builds

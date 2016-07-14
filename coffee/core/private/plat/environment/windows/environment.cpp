@@ -16,6 +16,7 @@ namespace Coffee {
 				excname.resize(MAX_PATH);
 				GetModuleFileName(nullptr, &excname[0], excname.size());
 				excname.resize(Search::ChrFind(excname.c_str(), 0) - excname.c_str());
+                excname = CStrReplace(excname, "\\", "/");
 
 				return excname;
 			}
@@ -23,11 +24,12 @@ namespace Coffee {
 			CString WindowsEnvFun::GetUserData(cstring org, cstring app)
 			{
 				CString out;
-				out = GetUserHome();
-				out += GetPathSep();
-				out += org;
-				out += GetPathSep();
-				out += app;
+                out = GetUserHome();
+                out = ConcatPath(out.c_str(),"AppData");
+                out = ConcatPath(out.c_str(),"Local");
+                out = ConcatPath(out.c_str(),org);
+                out = ConcatPath(out.c_str(),app);
+                out = CStrReplace(out, "\\", "/");
 				return out;
 			}
 
@@ -98,6 +100,7 @@ namespace Coffee {
 				out.resize(GetCurrentDirectory(0, nullptr));
 				GetCurrentDirectory(out.size(), &out[0]);
 				out.resize(out.size() - 1);
+                out = CStrReplace(out, "\\", "/");
 
 				return out;
 			}
@@ -108,7 +111,7 @@ namespace Coffee {
 				CWString fn_w(fn.begin(), fn.end());
 				PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
 				CString out(fn_w.begin(), fn_w.end());
-				out.resize(StrLen(out.c_str()) - 1);
+                out.resize(StrLen(out.c_str()));
 				out = CStrReplace(out, "\\", "/");
 				return out;
 			}

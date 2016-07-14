@@ -421,6 +421,30 @@ namespace Coffee {
 		{
 			UnmapViewOfFile(buf->ptr);
 			CloseHandle(buf->mapping);
-		}
-	}
+        }
+
+        bool WinDirFun::MkDir(cstring dname, bool parent)
+        {
+            if(!parent)
+                return CreateDirectoryA(dname,nullptr);
+
+            char tmp[255];
+            char *p = NULL;
+            size_t len;
+
+            snprintf(tmp,sizeof(tmp),"%s",dname);
+            len = strlen(tmp);
+            if(tmp[len-1] == '/')
+                tmp[len-1] = 0;
+            for(p = tmp+1; *p;p++)
+                if(*p == '/')
+                {
+                    *p = 0;
+                    CreateDirectoryA(tmp,nullptr);
+                    *p = '/';
+                }
+            return CreateDirectoryA(tmp,nullptr)==0;
+        }
+
+    }
 }

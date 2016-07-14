@@ -1,5 +1,7 @@
 #include "plat_primary_identify.h"
 
+#define COFFEE_SLAP_LOWMEM
+
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
 #if defined(COFFEE_ANDROID) && !defined(__aarch64__)

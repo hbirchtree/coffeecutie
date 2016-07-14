@@ -254,6 +254,16 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
+     * \brief Whether the 32-bit system supports PAE, doesn't really apply to 64-bit
+     * \return
+     */
+    bool HasPAE()
+    {
+        return false;
+    }
+
+    STATICINLINE
+    /*!
      * \brief Reports networking status
      * \return
      */

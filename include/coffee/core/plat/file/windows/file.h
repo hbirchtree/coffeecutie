@@ -15,10 +15,8 @@ namespace Windows {
 struct WinDirFun : CResources::DirFunDef
 {
     /*TODO: Implement Windows directory functions*/
-    STATICINLINE bool MkDir(cstring, bool)
-    {
-        return false;
-    }
+    static bool MkDir(cstring dname, bool parent);
+
     STATICINLINE bool RmDir(cstring)
     {
         return false;
@@ -33,25 +31,25 @@ struct WinFileApi
             file(nullptr)
         {
         }
-		enum FH_Type
-		{
-			FS,
-			RC
-		};
+        enum FH_Type
+        {
+            FS,
+            RC
+        };
         HANDLE file;
-		HRSRC rsrc;
-		FH_Type type = FS;
+        HRSRC rsrc;
+        FH_Type type = FS;
     };
     struct FileMapping : CResources::FileFunDef::FileMapping
     {
         HANDLE file;
         HANDLE mapping;
     };
-	struct ScratchBuf : CResources::CommonFileFun::ScratchBuf
-	{
-		HANDLE mapping;
-		HANDLE view;
-	};
+    struct ScratchBuf : CResources::CommonFileFun::ScratchBuf
+    {
+        HANDLE mapping;
+        HANDLE view;
+    };
     struct FileAccess
     {
         DWORD open;
@@ -60,41 +58,41 @@ struct WinFileApi
         DWORD attr;
     };
 
-	static FileAccess GetAccess(ResourceAccess acc);
+    static FileAccess GetAccess(ResourceAccess acc);
 
-	static HANDLE GetFileHandle(cstring fn, ResourceAccess acc);
-	static DWORD GetMappingFlags(ResourceAccess acc);
-	static DWORD GetMappingViewFlags(ResourceAccess acc);
+    static HANDLE GetFileHandle(cstring fn, ResourceAccess acc);
+    static DWORD GetMappingFlags(ResourceAccess acc);
+    static DWORD GetMappingViewFlags(ResourceAccess acc);
 };
 
 struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
 {
     using FileHandle = WinFileApi::FileHandle;
     using FileMapping = WinFileApi::FileMapping;
-	using ScratchBuf = WinFileApi::ScratchBuf;
+    using ScratchBuf = WinFileApi::ScratchBuf;
 
-	static CString NativePath(cstring fn);
-	static bool VerifyAsset(cstring fn);
+    static CString NativePath(cstring fn);
+    static bool VerifyAsset(cstring fn);
 
-	static FileHandle* Open(cstring fn, ResourceAccess acc);
-	static bool Close(FileHandle* fh);
+    static FileHandle* Open(cstring fn, ResourceAccess acc);
+    static bool Close(FileHandle* fh);
 
-	static bool Exists(cstring fn);
+    static bool Exists(cstring fn);
 
-	static CByteData Read(FileHandle* h, uint64 size, bool nterminate);
-	static bool Write(FileHandle* fh, CByteData const& d, bool);
+    static CByteData Read(FileHandle* h, uint64 size, bool nterminate);
+    static bool Write(FileHandle* fh, CByteData const& d, bool);
 
-	static szptr Size(FileHandle* fh);
-	static szptr Size(cstring fn);
+    static szptr Size(FileHandle* fh);
+    static szptr Size(cstring fn);
 
-	static bool Touch(NodeType, cstring);
-	static bool Rm(cstring fn);
-	static NodeType Stat(cstring);
+    static bool Touch(NodeType, cstring);
+    static bool Rm(cstring fn);
+    static NodeType Stat(cstring);
 
-	static FileMapping Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err);
-	static bool Unmap(FileMapping* fp);
-	static ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc);
-	static void ScratchUnmap(ScratchBuf* buf);
+    static FileMapping Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err);
+    static bool Unmap(FileMapping* fp);
+    static ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc);
+    static void ScratchUnmap(ScratchBuf* buf);
 };
 }
 

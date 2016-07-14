@@ -86,6 +86,7 @@ if(WIN32)
     list ( APPEND CoffeeCore_SRCS
         private/plat/file/windows/file.cpp
         private/plat/environment/windows/environment.cpp
+        private/plat/environment/windows/sysinfo.cpp
         )
 endif()
 
