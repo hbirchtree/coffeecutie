@@ -233,10 +233,11 @@ public:
         camera.aspect = 1.6f;
         camera.fieldOfView = 70.f;
 
-        camera.position.x() = 1.;
+        camera.position.x() = -3.;
         camera.position.z() = 3.;
 
         CTransform base_transform;
+        base_transform.position = Vecf3(2,0,0);
         base_transform.scale = Vecf3(1);
 
         /* Vertex descriptors are based upon the ideas from GL4.3 */
@@ -246,8 +247,17 @@ public:
 
         eyesamp.bind(0);
 
+        bigscalar tprevious = this->contextTime();
+        bigscalar tdelta = 0.1;
+
+        scalar v0 = 0;
+
         while(!closeFlag())
         {
+            camera.position.x() += 0.1 * tdelta;
+            camera.position.x() = CMath::fmod(camera.position.x(),10);
+            camera.position.x() -= 5.f;
+
             clear_col.r() = CMath::sin(this->contextTime()+0.5);
             clear_col.g() = CMath::sin(this->contextTime()+5.0);
             clear_col.b() = CMath::sin(this->contextTime()+50.0);
@@ -285,7 +295,6 @@ public:
             texture_multipliers[0] = Vecf2(1,1);
             texture_multipliers[1] = Vecf2(-1,1);
 
-            camera.position.x() = -1.;
             object_matrices[0] = GenPerspective(camera)
                     * GenTransform(camera)
                     * GenTransform(base_transform);
@@ -311,6 +320,9 @@ public:
             GLM::Draw(call,instdata);
 
             this->swapBuffers();
+
+            tdelta = this->contextTime() - tprevious;
+            tprevious = this->contextTime();
         }
 
         if(dev)
