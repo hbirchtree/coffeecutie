@@ -78,7 +78,7 @@ set ( CoffeeSwigShim_SRCS
     ${LICENSE_FILE}
     )
 
-coffee_add_library(CoffeeSwigShim ${CoffeeSwigShim_SRCS} )
+coffee_add_library(CoffeeSwigShim "${CoffeeSwigShim_SRCS}" )
 
 target_link_libraries ( CoffeeSwigShim
     CoffeeCore
