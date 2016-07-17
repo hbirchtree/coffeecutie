@@ -1,4 +1,7 @@
 /* AMD64 string, also used for Intel's 64-bit architectures */
+
+#undef COFFEE_ARCH
+
 #if defined(__amd64__) || defined(_M_X64) || defined(_M_AMD64)
 #define COFFEE_ARCH "AMD64"
 
@@ -32,5 +35,5 @@
 
 /* And if we don't know..? */
 #else
-#define COFFEE_ARCH "Unknown"
+#define COFFEE_ARCH "Magic"
 #endif

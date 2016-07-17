@@ -58,7 +58,7 @@ endmacro()
 # We do a test to check if a library is a shared library for Android
 # For iOS, everything will be statically linked, which might be used for Android as well.
 # For now, we leave the linking options here for desktop platforms
-macro(COFFEE_ADD_EXAMPLE_LONGER
+function(COFFEE_ADD_EXAMPLE_LONGER
         TARGET
         TITLE APP_COMPANY_NAME APP_VERSION_CODE
         SOURCES LIBRARIES
@@ -147,7 +147,11 @@ macro(COFFEE_ADD_EXAMPLE_LONGER
     target_link_libraries ( ${TARGET}
         ${LIBRARIES}
         )
-endmacro()
+
+    remove_definitions( -DCOFFEE_APPLICATION_NAME )
+    remove_definitions( -DCOFFEE_ORGANIZATION_NAME )
+    remove_definitions( -DCOFFEE_VERSION_CODE )
+endfunction()
 
 macro(COFFEE_ADD_EXAMPLE_LONG
         TARGET
@@ -177,7 +181,7 @@ macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
     coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
 endmacro()
 
-macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
+function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     # Bleh, Android kind of sucks for this.
     if(ANDROID)
         return()
@@ -231,4 +235,9 @@ macro(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             COMMAND $<TARGET_FILE:${TARGET}>
             )
     endif()
-endmacro()
+
+    remove_definitions( -DCOFFEE_APPLICATION_NAME )
+    remove_definitions( -DCOFFEE_ORGANIZATION_NAME )
+    remove_definitions( -DCOFFEE_VERSION_CODE )
+
+endfunction()

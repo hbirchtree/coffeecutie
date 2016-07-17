@@ -10,11 +10,6 @@ using File = CResources::FileFun;
 
 bool filedel_test()
 {
-    if(File::Exists(testfile))
-    {
-        cDebug("Unclean environment! Remove file: {0}",testfile);
-        return false;
-    }
     if(!File::Touch(File::File,testfile))
         return false;
 

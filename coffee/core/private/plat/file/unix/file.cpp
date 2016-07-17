@@ -45,6 +45,10 @@ bool PosixFileMod_def::Touch(FileFunDef::NodeType t, cstring fn)
         close(fd);
         break;
     }
+    case NodeType::Directory:
+    {
+        return DirFun::MkDir(fn,false);
+    }
     default:
         return false;
     }

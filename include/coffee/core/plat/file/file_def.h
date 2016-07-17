@@ -103,6 +103,13 @@ struct FileFunDef
     static bool Exists(cstring);
     static szptr Size(cstring);
 
+    /*!
+     * \brief Creates an entry in the filesystem
+     * States:
+     *  - Files and similar nodes are created without their directory paths
+     *  - Directories are created non-recursively
+     * \return
+     */
     static bool Touch(NodeType, cstring){return false;}
 
     static bool Ln(cstring,cstring)

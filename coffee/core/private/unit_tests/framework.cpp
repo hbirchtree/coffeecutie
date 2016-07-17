@@ -229,6 +229,8 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
     Profiler::AddExtraData("testing:bmark", Convert::uintltostring(time_accum));
 
+    Profiler::AddExtraData("testing:result", cStringFormat("{0},{1}",suc,num));
+
     if(!json_formatting)
     {
         PrintAsciiTable(time_accum,suc);
@@ -238,7 +240,7 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
         cOutputPrint("{0}",buf.GetString());
 
-        Profiler::AddExtraData("testing:result",buf.GetString());
+        Profiler::AddExtraData("testing:jsonresult",buf.GetString());
     }
 
 	/* For verbosity, we write it as this */

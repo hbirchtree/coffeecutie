@@ -27,10 +27,10 @@ bool basic_tests()
         return false;
 
     if(sizeof(szptr)!=sizeof(intptr_t))
+    {
+        cDebug("Inconsistent szptr: {0} != {1}", sizeof(szptr),sizeof(intptr_t));
         return false;
-
-    if(sizeof(size_t)!=8)
-        return false;
+    }
 
     return true;
 }
@@ -39,13 +39,14 @@ const constexpr szptr lscalar_expected = 16;
 
 bool floating_storage_tests()
 {
-    if(sizeof(scalar)!=4)
-        return false;
-    if(sizeof(bigscalar)!=8)
-        return false;
+    return sizeof(bigscalar)==8 && sizeof(scalar)==4;
+}
+
+bool longdoub_test()
+{
     if(sizeof(lscalar)!=lscalar_expected)
     {
-		cWarning("Size of Lscalar: {0}, expected {1}",sizeof(lscalar),lscalar_expected);
+        cWarning("Inconsistent Lscalar: {0} != {1}",sizeof(lscalar),lscalar_expected);
         return false;
     }
     return true;
@@ -136,7 +137,10 @@ bool wrapping_tests()
 
 bool uint24_test()
 {
-    return sizeof(uint24)==3;
+    if(sizeof(uint24)==3)
+        return true;
+    cDebug("Inconsistent uint24: {0} != {1}", sizeof(uint24),3);
+    return false;
 }
 
 bool data_unit_tests()
@@ -222,13 +226,14 @@ bool input_size_tests()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[6] = {
+const constexpr CoffeeTest::Test _tests[7] = {
     {basic_tests,"Integer sizes","Checking the storage of integer types"},
     {floating_storage_tests,"Floating-point sizes","Checking the storage of floating-point types"},
+    {longdoub_test,"Long double size","long double size test",true},
     {wrapping_tests,"Wrapping tests","Checking that numbers wrap correctly"},
-    {uint24_test,"Unsigned 24-bit integer","Special sauce",false},
-    {data_unit_tests,"Verify data units","Special sauce",false},
-    {input_size_tests,"Check sizes of input structures","Useful for aligning data optimally",false},
+    {uint24_test,"Unsigned 24-bit integer","Special sauce",true},
+    {data_unit_tests,"Verify data units","Special sauce",true},
+    {input_size_tests,"Check sizes of input structures","Useful for aligning data optimally",true},
 };
 
 COFFEE_RUN_TESTS(_tests);

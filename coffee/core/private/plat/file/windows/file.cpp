@@ -245,14 +245,17 @@ namespace Coffee {
 			if (VerifyAsset(fn))
 				return true;
 
-			HANDLE fh = CreateFile(fn, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
-			if (fh)
-			{
+            HANDLE fh = CreateFile(fn, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+            if (fh != INVALID_HANDLE_VALUE)
+            {
 				CloseHandle(fh);
 				return true;
 			}
 			else
+            {
+                GetLastError();
 				return false;
+            }
 		}
 
 		szptr WinFileFun::Size(WinFileFun::FileHandle* fh)
@@ -287,18 +290,47 @@ namespace Coffee {
 			}
 		}
 
-		bool WinFileFun::Touch(NodeType, cstring)
+        bool WinFileFun::Touch(NodeType t, cstring n)
 		{
-			return false;
+            switch(t)
+            {
+            case NodeType::File:
+            {
+                HANDLE f = CreateFile(n,0,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+                if(f != INVALID_HANDLE_VALUE)
+                {
+                    GetLastError(); // to clear ERROR_ALREADY_EXISTS if it occurs
+                    return CloseHandle(f) == TRUE;
+                }else{
+                    return false;
+                }
+            }
+            case NodeType::Directory:
+                return DirFun::MkDir(n,false);
+            default:
+                return false;
+            }
 		}
 		bool WinFileFun::Rm(cstring fn)
 		{
 			return DeleteFile(fn);
 		}
-		WinFileFun::NodeType WinFileFun::Stat(cstring)
+        WinFileFun::NodeType WinFileFun::Stat(cstring f)
 		{
-			return NodeType::None;
-		}
+            DWORD d = GetFileAttributesA(f);
+
+            if(d != INVALID_FILE_ATTRIBUTES)
+            {
+                if(d & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    return NodeType::Directory;
+                }else if(d != 0)
+                {
+                    return NodeType::File;
+                }
+            }
+            return NodeType::None;
+        }
 
 		WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err)
 		{

@@ -152,7 +152,7 @@ HWDeviceInfo WindowsSysInfo::Processor()
     if(brand_find)
         brand.resize(brand_find - brand.c_str());
 
-    return HWDeviceInfo(CPUString,brand,"0x0");
+    return HWDeviceInfo(CPUString,brand,std::getenv("PROCESSOR_REVISION"));
 }
 
 bool WindowsSysInfo::HasHyperThreading()

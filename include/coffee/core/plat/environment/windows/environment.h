@@ -8,57 +8,58 @@
 
 namespace Coffee{
 namespace Environment{
-	namespace Windows {
+namespace Windows {
 
-		struct WindowsEnvFun : EnvInterface
-		{
-			static CString ExecutableName(cstring_w = nullptr);
+struct WindowsEnvFun : EnvInterface
+{
+    static CString ExecutableName(cstring_w = nullptr);
 
-			static Variables Environment();
-			
-			static CString GetVar(cstring v);
+    static Variables Environment();
 
-			STATICINLINE bool SetVar(cstring, cstring)
-			{
-				return false;
-			}
-			STATICINLINE bool UnsetVar(cstring)
-			{
-				return false;
-			}
-			STATICINLINE bool ClearEnv()
-			{
-				return false;
-			}
+    static CString GetVar(cstring v);
 
-			STATICINLINE CString GetPathSep()
-			{
-				return "\\";
-			}
-			STATICINLINE CString ConcatPath(cstring f, cstring fv)
-			{
-				CString out;
-				out += f;
-				out += GetPathSep();
-				out += fv;
-				return out;
-			}
-			STATICINLINE CString GetUserHome()
-			{
-				return GetVar("USERPROFILE");
-			}
+    STATICINLINE bool SetVar(cstring, cstring)
+    {
+        return false;
+    }
+    STATICINLINE bool UnsetVar(cstring)
+    {
+        return false;
+    }
+    STATICINLINE bool ClearEnv()
+    {
+        return false;
+    }
 
-			static CString GetUserData(cstring org, cstring app);
+    STATICINLINE CString GetPathSep()
+    {
+        return "\\";
+    }
+    STATICINLINE CString ConcatPath(cstring f, cstring fv)
+    {
+        CString out;
+        out += f;
+        out += GetPathSep();
+        out += fv;
+        return out;
+    }
+    STATICINLINE CString GetUserHome()
+    {
+        return GetVar("USERPROFILE");
+    }
 
-			STATICINLINE CString ApplicationDir()
-			{
-				return DirName(ExecutableName());
-			}
-			static CString CurrentDir();
-			static CString DirName(CString fn);
-			static CString BaseName(CString fn);
-		};
-	}
+    static CString GetUserData(cstring org, cstring app);
+
+    STATICINLINE CString ApplicationDir()
+    {
+        CString fn = ExecutableName();
+        return DirName(fn.c_str());
+    }
+    static CString CurrentDir();
+    static CString DirName(cstring fn);
+    static CString BaseName(cstring fn);
+};
+}
 
 }
 

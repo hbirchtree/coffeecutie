@@ -105,25 +105,30 @@ namespace Coffee {
 				return out;
 			}
 
-			CString WindowsEnvFun::DirName(CString fn)
+            CString WindowsEnvFun::DirName(cstring fn)
 			{
-				fn = CStrReplace(fn, "/", "\\");
-				CWString fn_w(fn.begin(), fn.end());
+                CString fn_ = fn;
+                fn_ = CStrReplace(fn, "/", "\\");
+                CWString fn_w(fn_.begin(), fn_.end());
 				PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
 				CString out(fn_w.begin(), fn_w.end());
                 out.resize(StrLen(out.c_str()));
 				out = CStrReplace(out, "\\", "/");
 				return out;
 			}
-			CString WindowsEnvFun::BaseName(CString fn)
+            CString WindowsEnvFun::BaseName(cstring fn)
 			{
-				CString sep = GetPathSep();
-				cstring out_f = Search::ChrFindR(fn.c_str(), sep[0]);
+                const constexpr cstring sep = "/";
+                cstring out_f = Search::ChrFindR(fn, sep[0]);
+                if((out_f - fn) < 0)
+                    return fn;
 				CString out;
 				if (!out_f)
 					out = fn;
 				else
 					out = out_f + 1;
+                if(out.empty())
+                    out = ".";
 				return out;
 			}
 		}
