@@ -9,6 +9,11 @@
 namespace Coffee{
 namespace Mem{
 
+FORCEDINLINE szptr AlignOffset(szptr off)
+{
+    return off & ~(8);
+}
+
 /* Memory management */
 FORCEDINLINE void CFree(c_ptr data)
 {

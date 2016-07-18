@@ -161,19 +161,19 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
                 switch(unif_types[i])
                 {
                 case GL_SAMPLER_2D:
-                    desc.m_flags = GLEAM_API::SamplerT + GLEAM_API::Sam2D;
+                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::Sam2D;
                     break;
                 case GL_SAMPLER_3D:
-                    desc.m_flags = GLEAM_API::SamplerT + GLEAM_API::Sam3D;
+                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::Sam3D;
                     break;
                 case GL_SAMPLER_2D_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT + GLEAM_API::Sam2DA;
+                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::Sam2DA;
                     break;
                 case GL_SAMPLER_CUBE:
-                    desc.m_flags = GLEAM_API::SamplerT + GLEAM_API::SamCube;
+                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::SamCube;
                     break;
                 case GL_SAMPLER_CUBE_MAP_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT + GLEAM_API::SamCubeA;
+                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::SamCubeA;
                     break;
 
                 case GL_UNSIGNED_INT_SAMPLER_2D:

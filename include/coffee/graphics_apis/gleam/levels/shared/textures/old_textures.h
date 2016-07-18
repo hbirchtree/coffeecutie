@@ -87,16 +87,27 @@ struct CGL_Old_Textures
     STATICINLINE void TexGenMipmap(Texture t)
     {glGenerateMipmap(to_enum(t));}
 
+    /* TexParameter */
+
+    STATICINLINE void TexParameterfv(Texture t, CGenum e, const scalar* v)
+    {glTexParameterfv(to_enum(t),e,v);}
+    STATICINLINE void TexParameteriv(Texture t, CGenum e, const int32* v)
+    {glTexParameteriv(to_enum(t),e,v);}
+    STATICINLINE void TexParameteruiv(Texture t, CGenum e, const uint32* v)
+    {glTexParameterIuiv(to_enum(t),e,v);}
+
     /* Samplers */
     STATICINLINE void SamplerBind(uint32 i,CGhnd h)
     {glBindSampler(i,h);}
 
     /* SamplerParameter */
 
-    STATICINLINE void SamplerParameteriv(CGhnd h,CGenum f,const int32* d)
-    {glSamplerParameteriv(h,f,d);}
     STATICINLINE void SamplerParameterfv(CGhnd h,CGenum f,const scalar* d)
     {glSamplerParameterfv(h,f,d);}
+    STATICINLINE void SamplerParameteriv(CGhnd h,CGenum f,const int32* d)
+    {glSamplerParameteriv(h,f,d);}
+    STATICINLINE void SamplerParameteruiv(CGhnd h,CGenum f,const uint32* d)
+    {glSamplerParameterIuiv(h,f,d);}
 
     /* GetSamplerParameter */
 

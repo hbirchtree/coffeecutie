@@ -296,12 +296,13 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
 void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
 {
-    CString execname = Env::ExecutableName();
-    CString exec = Env::BaseName(execname.c_str());
-    CString profile_log_name = cStringFormat("{0}-profile.xml",exec);
+    CString log_name = Env::ExecutableName();
+    log_name = Env::BaseName(log_name.c_str());
+    log_name = CStrReplace(log_name,".exe","");
+    log_name = cStringFormat("{0}-profile.xml",log_name);
     if(!silent)
-        cDebug("Saving profiler data to: {0}",profile_log_name);
-    Profiling::ExportProfilerData(profile_log_name.c_str(),argc,argv);
+        cDebug("Saving profiler data to: {0}",log_name);
+    Profiling::ExportProfilerData(log_name.c_str(),argc,argv);
     Profiler::DestroyProfiler();
 }
 

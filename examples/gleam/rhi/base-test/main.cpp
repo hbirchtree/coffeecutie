@@ -44,13 +44,13 @@ public:
         };
 
         const scalar vertexdata[] = {
-            -1.f, -1.f,  1.f,    0.f,  0.f,
-             1.f, -1.f,  1.f,   -1.f,  0.f,
-            -1.f,  1.f,  1.f,    0.f, -1.f,
+            -1.f, -1.f,  0.f,    0.f,  0.f,
+             1.f, -1.f,  0.f,   -1.f,  0.f,
+            -1.f,  1.f,  0.f,    0.f, -1.f,
 
-            -1.f,  1.f,  1.f,    0.f, -1.f,
-             1.f,  1.f,  1.f,   -1.f, -1.f,
-             1.f, -1.f,  1.f,   -1.f,  0.f,
+            -1.f,  1.f,  0.f,    0.f, -1.f,
+             1.f,  1.f,  0.f,   -1.f, -1.f,
+             1.f, -1.f,  0.f,   -1.f,  0.f,
         };
 
         /*
@@ -77,15 +77,15 @@ public:
             pos.m_bassoc = 0;
             pos.m_size = 3;
             pos.m_type = TypeEnum::Scalar;
-            pos.m_stride = sizeof(Vecf3);
+            pos.m_stride = sizeof(Vecf3)+sizeof(Vecf2);
             pos.m_off = 0;
 
-            GLM::V_ATTR tc;
+            GLM::V_ATTR tc = {};
             tc.m_idx = 1;
             tc.m_bassoc = 1;
             tc.m_size = 2;
             tc.m_type = TypeEnum::Scalar;
-            tc.m_stride = sizeof(Vecf2);
+            tc.m_stride = sizeof(Vecf3)+sizeof(Vecf2);
             tc.m_off = sizeof(Vecf3);
 
             /* Finally we add these attributes to the descriptor */
@@ -182,12 +182,13 @@ public:
         GLM::USTATE unifstate;
 
         blendstate.m_doBlend = true;
-        viewportstate.m_view.push_back({
-                                           0,0,
-
-                                           this->windowSize().w,
-                                           this->windowSize().h
-                                       });
+        viewportstate.m_view.push_back(
+        {
+                        0,
+                        0,
+                        this->windowSize().w,
+                        this->windowSize().h
+                    });
 
         /* We query the current pipeline for possible uniform/texture/buffer values */
         GLM::GetShaderUniformState(eye_pip,&unifs);
@@ -227,17 +228,16 @@ public:
         instdata.m_verts = (sizeof(vertexdata)/sizeof(scalar))/5;
 
         /* Specifying the uniform data, such as camera matrices and transforms */
-        Vecf4 clear_col = {.1f,.1f,.1f,1.f};
+        Vecf4 clear_col = {.267f,.267f,.267f,1.f};
 
         CGCamera camera;
         camera.aspect = 1.6f;
         camera.fieldOfView = 70.f;
 
-        camera.position.x() = -3.;
-        camera.position.z() = 3.;
+        camera.position = Vecf3(0,0,-3);
 
         CTransform base_transform;
-        base_transform.position = Vecf3(2,0,0);
+        base_transform.position = Vecf3(0,0,0);
         base_transform.scale = Vecf3(1);
 
         /* Vertex descriptors are based upon the ideas from GL4.3 */
@@ -252,15 +252,18 @@ public:
 
         scalar v0 = 0;
 
+//        GL::PolyMode(CGL::Face::Both, CGL::DrawMode::Line);
+        /* Clipping between the two virtual viewports */
+        GL::Enable(GL::Feature::ClipDist,0);
+
         while(!closeFlag())
         {
-            camera.position.x() += 0.1 * tdelta;
-            camera.position.x() = CMath::fmod(camera.position.x(),10);
-            camera.position.x() -= 5.f;
+            base_transform.position.x() = CMath::sin(tprevious) * 2;
+            base_transform.position.y() = CMath::cos(tprevious) * 2;
 
-            clear_col.r() = CMath::sin(this->contextTime()+0.5);
-            clear_col.g() = CMath::sin(this->contextTime()+5.0);
-            clear_col.b() = CMath::sin(this->contextTime()+50.0);
+//            clear_col.r() = CMath::sin(this->contextTime()+0.5);
+//            clear_col.g() = CMath::sin(this->contextTime()+5.0);
+//            clear_col.b() = CMath::sin(this->contextTime()+50.0);
 
             /*
              * This will probably be incorporated into the GLM:: namespace somehow
@@ -290,15 +293,21 @@ public:
             this->pollEvents();
 
             /* Define frame data */
-            time_value = this->contextTime();
+            time_value = CMath::sin(tprevious)+(CMath::pi/4.);
 
             texture_multipliers[0] = Vecf2(1,1);
             texture_multipliers[1] = Vecf2(-1,1);
 
+//            base_transform.rotation.x() += 0.001 * tdelta;
+
+            camera.position.x() = -2;
+
             object_matrices[0] = GenPerspective(camera)
                     * GenTransform(camera)
                     * GenTransform(base_transform);
-            camera.position.x() = 1.;
+
+            camera.position.x() = 2;
+
             object_matrices[1] = GenPerspective(camera)
                     * GenTransform(camera)
                     * GenTransform(base_transform);

@@ -8,12 +8,7 @@ namespace GLEAM{
 
 struct GLEAM_Surface : GraphicsAPI::Surface
 {
-    GLEAM_Surface(Texture type, PixelFormat fmt,uint32 mips,uint32 texflags = 0):
-        Surface(fmt,false,0,mips,texflags),
-        m_type(type),
-        m_handle(0)
-    {
-    }
+    GLEAM_Surface(Texture type, PixelFormat fmt,uint32 mips,uint32 texflags = 0);
 
     void allocate();
     void dealloc();
@@ -84,6 +79,11 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
 
     void alloc();
     void dealloc();
+
+    void setLODRange();
+    void setLODBias();
+    void setEdgePolicy(uint32 mode);
+    void setFiltering(uint32 mode);
 
 protected:
     CGhnd m_handle;

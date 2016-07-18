@@ -219,9 +219,15 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
                                       ShaderStage const& stage,
                                       const GLEAM_ShaderUniformState &ustate)
 {
+    /* TODO: Tie uniforms to their applicable stages */
+
+    /* Skip uniform application on 3.3 fragment stage */
+    if(GL_CURR_API == GL_3_3 && stage == ShaderStage::Fragment)
+        return;
+
     CGhnd prog = 0;
 
-    if(GL_CURR_API==GL_3_3 && stage != ShaderStage::Fragment)
+    if(GL_CURR_API==GL_3_3)
         prog = pipeline.m_handle;
     else if(GL_CURR_API==GL_4_3)
     {
@@ -242,8 +248,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
         /* TODO: Cache uniform state changes, only set them when necessary */
 
-        uint32 idx = u.first;
-        uint32 fgs = u.second->flags;
+        uint32 const& idx = u.first;
+        uint32 const& fgs = u.second->flags;
 
         if(fgs&(Mat2T|ScalarT))
             SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size/sizeof(Matf2));
@@ -273,23 +279,23 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         else if(fgs&(Vec4T|UIntegerT))
             SetUniform_wrapui(prog,idx,(Vecui4*)db->data,db->size/sizeof(Vecui4));
 
-        else if(fgs&(ScalarT))
+        else if(fgs==ScalarT)
             SetUniform_wrapf(prog,idx,(scalar*)db->data,db->size/sizeof(scalar));
-        else if(fgs&(IntegerT))
+        else if(fgs==IntegerT)
             SetUniform_wrapi(prog,idx,(int32*)db->data,db->size/sizeof(int32));
-        else if(fgs&(UIntegerT))
+        else if(fgs==UIntegerT)
             SetUniform_wrapui(prog,idx,(uint32*)db->data,db->size/sizeof(uint32));
     }
 
     for(auto s : ustate.m_samplers)
     {
-        auto handle = s.second;
+        auto& handle = s.second;
         if(GL_CURR_API==GL_3_3)
         {
             /* Set up texture state */
             CGL33::TexActive(handle->m_unit);
-            CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
             CGL33::TexBind(handle->m_type,handle->texture);
+            CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
             /* Set texture handle in shader */
             CGL33::Uniformi(s.first,handle->m_unit);
         }
@@ -299,8 +305,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
     for(auto b : ustate.m_ubuffers)
     {
-        auto det = b.second;
-        auto buf = det.buff;
+        auto& det = b.second;
+        auto& buf = det.buff;
         uint32 bindex = b.first;
         /* Bind uniform block to binding point */
         buf->bindrange(bindex,det.sec.offset,det.sec.size);
@@ -310,8 +316,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
     if(CGL43::ShaderStorageSupported())
         for(auto b : ustate.m_sbuffers)
         {
-            auto det = b.second;
-            auto buf = det.buff;
+            auto& det = b.second;
+            auto& buf = det.buff;
             uint32 bindex = b.first;
             /* Bind uniform block to binding point */
             buf->bindrange(bindex,det.sec.offset,det.sec.size);

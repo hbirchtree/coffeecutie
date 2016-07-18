@@ -311,7 +311,10 @@ struct PosixFileFun_def : PosixFileMod_def
     }
 };
 
-struct PosixFileFun : PosixFileFun_def<PosixApi::FileHandle,PosixApi::FileMapping,CommonFileFun::ScratchBuf>
+struct PosixFileFun : PosixFileFun_def<
+        PosixApi::FileHandle,
+        PosixApi::FileMapping,
+        CommonFileFun::ScratchBuf>
 {
     using FileHandle = PosixApi::FileHandle;
     using FileMapping = PosixApi::FileMapping;
