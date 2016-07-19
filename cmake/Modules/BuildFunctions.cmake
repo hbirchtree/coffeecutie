@@ -57,8 +57,6 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-    target_enable_cxx11(${TARGET})
-
     if(APPLE)
         set_target_properties( ${TARGET} PROPERTIES MACOSX_RPATH "." )
     elseif(WIN32)
@@ -69,6 +67,8 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
             )
     endif()
 
+    target_enable_cxx11(${TARGET})
+
     install(
         TARGETS
         ${TARGET}
@@ -76,13 +76,34 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
         DESTINATION
         lib
         )
+endmacro()
 
+macro(COFFEE_ADD_FRAMEWORK
+	TARGET LINKOPT
+	VERSION_CODE COPYRIGHT COMPANY
+	SOURCES BUNDLE_RSRCS BUNDLE_HDRS )
+    if(APPLE)
+	MACFRAMEWORK_PACKAGE(
+	    "${TARGET}" "${LINKOPT}"
+	    "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
+	    "${SOURCES}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
+    else()
+	coffee_add_elibrary(
+	    "${TARGET}" "${LINKOPT}"
+	    "${SOURCES}")
+    endif()
+
+    target_enable_cxx11(${TARGET})
 endmacro()
 
 macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
     # Just a little simplification
-    coffee_add_elibrary(${TARGET} ${COFFEE_LINK_OPT} "${SOURCES}")
+    coffee_add_framework(
+	${TARGET} ${COFFEE_LINK_OPT}
+	"2.0" "hbirchtree" "hbirchtree"
+	"${SOURCES}" "" "")
 endmacro()
+
 
 # TODO: Make package name more configurable
 # Android only uses shared libraries which are loaded, all else uses typical executables
