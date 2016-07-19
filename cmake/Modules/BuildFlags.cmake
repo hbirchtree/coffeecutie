@@ -5,7 +5,7 @@ if (NOT WIN32)
         # When statically linking, hide symbols
         # This helps us create dynamic frameworks on OSX
         add_definitions (
-            -fvisiblity=hidden
+	    -fvisibility=hidden
             )
     endif()
     add_definitions (
