@@ -15,7 +15,12 @@ set ( COFFEE_PACKAGE_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PR
 set ( COFFEE_DEPLOY_DIRECTORY "${PROJECT_BINARY_DIR}/deploy/android" )
 set ( COFFEE_SOURCE_TEMPLATE_DIRECTORY "${CMAKE_SOURCE_DIR}/internal/templates" )
 
-set ( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/Modules )
+set ( CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    ${CMAKE_SOURCE_DIR}/cmake/Find
+    ${CMAKE_SOURCE_DIR}/cmake/Modules
+    ${CMAKE_SOURCE_DIR}/cmake/Packaging
+    )
 
 message ("-- Building as: ${CMAKE_BUILD_TYPE}")
 

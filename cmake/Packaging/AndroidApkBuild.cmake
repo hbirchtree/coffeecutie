@@ -1,6 +1,6 @@
 if(ANDROID)
     find_package ( CfAndroidMain )
-    include ( AndroidToolkit )
+    find_package ( AndroidToolkit )
 
     if(ANDROID_USE_SDL2_LAUNCH)
         find_package(SDL2main REQUIRED)
@@ -14,7 +14,7 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk" CACHE PATH "" )
+    set ( ANDROID_APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk" CACHE PATH "" )
 
     set ( ANDROID_PROJECT_INPUT "${COFFEE_DESKTOP_DIRECTORY}/android" )
 
@@ -78,7 +78,7 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         set ( RELEASE_PREFIX "dbg" )
     endif()
 
-    set ( ANDROID_APK_FILE_OUTPUT "${APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${RELEASE_PREFIX}.apk" )
+    set ( ANDROID_APK_FILE_OUTPUT "${ANDROID_APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${RELEASE_PREFIX}.apk" )
 
     set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${Target_Name} )
 
@@ -201,7 +201,7 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
     add_custom_command ( TARGET ${Target_Name}
 	PRE_BUILD
-	COMMAND ${CMAKE_COMMAND} -E make_directory "${APK_OUTPUT_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_APK_OUTPUT_DIR}"
         )
 
     set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )

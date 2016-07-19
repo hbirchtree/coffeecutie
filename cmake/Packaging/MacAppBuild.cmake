@@ -62,6 +62,8 @@ macro( MACAPP_PACKAGE
         set ( RESOURCE_DIR "Resources" )
     endif()
 
+    set ( FRAMEWORK_DIR "Frameworks" )
+
     # For installing the icon in the bundle
     set_source_files_properties ( ${OSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "${RESOURCE_DIR}" )
     # Extracted in order to be inserted into Info.plist
@@ -85,30 +87,75 @@ macro( MACAPP_PACKAGE
         endforeach()
     endforeach()
 
-    add_executable(${TARGET} MACOSX_BUNDLE
-        ${BUNDLE_FILES} ${OSX_ICON}
-        ${SOURCES}
-        )
+    # Installing frameworks
+    foreach(fw ${BUNDLE_LIBS})
+        message ( "Framework: ${fw}" )
+    endforeach()
 
-    # Lots of properties!
-    set_target_properties(${TARGET} PROPERTIES
-        MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}"
-        MACOSX_BUNDLE_GUI_IDENTIFIER "${TITLE}"
-        MACOSX_BUNDLE_ICON_FILE "${OSX_ICON_NAME}"
+    if(NOT IOS)
+        add_executable(${TARGET} MACOSX_BUNDLE
+            ${BUNDLE_FILES} ${OSX_ICON}
+            ${SOURCES}
+            )
 
-        MACOSX_BUNDLE_COPYRIGHT "${COPYRIGHT}"
-        MACOSX_BUNDLE_INFO_STRING "${INFO_STRING}"
+        # Lots of properties!
+        set_target_properties(${TARGET} PROPERTIES
+            MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}"
+            MACOSX_BUNDLE_GUI_IDENTIFIER "${TITLE}"
+            MACOSX_BUNDLE_ICON_FILE "${OSX_ICON_NAME}"
 
-        MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
-        MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "${COFFEE_VERSION_CODE}"
-        )
+            MACOSX_BUNDLE_COPYRIGHT "${COPYRIGHT}"
+            MACOSX_BUNDLE_INFO_STRING "${INFO_STRING}"
 
-    install(
-        TARGETS
-        ${TARGET}
+            MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${COFFEE_VERSION_CODE}"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
+            )
 
-        DESTINATION
-        ${CMAKE_PACKAGED_OUTPUT_PREFIX}/osx
-        )
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            ${CMAKE_PACKAGED_OUTPUT_PREFIX}/apple-osx
+            )
+    else()
+        set ( APP_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TITLE}.app" )
+
+        set ( IOS_NAME "${TITLE}" )
+        set ( IOS_IDENTIFIER "${TITLE}" )
+        set ( IOS_INFO "${INFO_STRING}" )
+
+        set ( IOS_BUNDLEVER "${COFFEE_BUILD_STRING}" )
+        set ( IOS_SHORTVER "${COFFEE_VERSION_CODE}" )
+        set ( IOS_LONGVER "${COFFEE_BUILD_STRING}" )
+
+        set ( IOS_EXEC "${TITLE}" )
+        set ( IOS_LANG "English" )
+        set ( IOS_LAUNCH_IMG "Default")
+        set ( IOS_HIDE_STATUSBAR "true" )
+        set ( IOS_PRERENDER_ICON "true" )
+
+        set ( IOS_ORIENTATION "UIInterfaceOrientationLandscapeLeft" )
+
+        set ( IOS_SIGNATURE "..." )
+
+        add_executable ( ${TARGET} ${SOURCES} )
+
+        add_custom_command (
+            TARGET "${TARGET}"
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${APP_DIR}"
+            )
+        add_custom_command (
+            TARGET "${TARGET}"
+            POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${TARGET}>" "${APP_DIR}/${TITLE}"
+            )
+        configure_file (
+            "${COFFEE_DESKTOP_DIRECTORY}/osx/ios/Info.plist.xml"
+            "${APP_DIR}/Info.plist"
+            @ONLY
+            )
+    endif()
 endmacro()
