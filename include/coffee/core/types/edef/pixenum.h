@@ -52,6 +52,21 @@ enum class PixelOperation
     Alignment,
 };
 
+enum class Filtering
+{
+    None,
+    Nearest,
+    Linear,
+};
+
+enum class WrapPolicy
+{
+    Repeat,
+    MirrorRepeat,
+    Clamp,
+    MirrorClamp,
+};
+
 enum class PixelFormat
 {
     /* Formatting: [CHANNELS][NUMBITS][DATATYPE] */

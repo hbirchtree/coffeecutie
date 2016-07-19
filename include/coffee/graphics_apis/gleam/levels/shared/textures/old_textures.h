@@ -102,6 +102,13 @@ struct CGL_Old_Textures
 
     /* SamplerParameter */
 
+    STATICINLINE void SamplerParameteri(CGhnd h,CGenum f,
+                                         Filtering d1,
+                                         Filtering d2 = Filtering::None)
+    {glSamplerParameteri(h,f,to_enum(d1,d2));}
+    STATICINLINE void SamplerParameteri(CGhnd h,CGenum f,WrapPolicy d)
+    {glSamplerParameteri(h,f,to_enum(d));}
+
     STATICINLINE void SamplerParameterfv(CGhnd h,CGenum f,const scalar* d)
     {glSamplerParameterfv(h,f,d);}
     STATICINLINE void SamplerParameteriv(CGhnd h,CGenum f,const int32* d)

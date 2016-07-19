@@ -42,7 +42,7 @@ macro(WINPE_PACKAGE
     endforeach()
 
     # We add an application manifest to get on the good side with Windows 8.1+
-    set ( WINDOWS_DESKTOP_DIR "${CMAKE_SOURCE_DIR}/desktop/windows" )
+    set ( WINDOWS_DESKTOP_DIR "${COFFEE_DESKTOP_DIRECTORY}/windows" )
 
     set ( WINDOWS_BASE_SOURCE_RESOURCE "${WINDOWS_DESKTOP_DIR}/winresources.rc" )
     set ( WINDOWS_BASE_RESOURCE "winresource.rc" )

@@ -127,7 +127,7 @@ protected:
     static thread_local GLEAM_Instance_Data* instance_data;
 
 public:
-    static void LoadAPI();
+    static void LoadAPI(bool debug = false);
 
     /* i specifies view index for indexed views, 0 for  */
     static void SetRasterizerState(RasterizerState const& rstate, uint32 i = 0);

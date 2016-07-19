@@ -15,9 +15,10 @@ thread_local GLEAM_API::GLEAM_Instance_Data* GLEAM_API::instance_data = nullptr;
 
 using GLC = CGL_Implementation;
 
-void GLEAM_API::LoadAPI()
+void GLEAM_API::LoadAPI(bool debug)
 {
     instance_data = new GLEAM_Instance_Data;
+    GL_DEBUG_MODE = debug;
 
     {
         const szptr num_pbos = 5;
@@ -37,26 +38,29 @@ void GLEAM_API::LoadAPI()
 
     auto ver = CGL_Implementation::Debug::ContextVersion();
 
-    if(PlatformData::IsGLES())
+    if(!PlatformData::IsGLES())
     {
         const Display::CGLVersion ver33(3,3);
         const Display::CGLVersion ver43(4,3);
         const Display::CGLVersion ver45(4,5);
 
         /* If higher level of API is not achieved, stay at the lower one */
-        if(ver>=ver33)
-            GL_CURR_API = GL_3_3;
-        if(ver>=ver43)
-            GL_CURR_API = GL_4_3;
-        if(ver>=ver45&&/* DISABLES CODE */ (false))
+        if(ver>=ver45&& /* DISABLES CODE */ (false))
+            /* Unimplemented both on CGL level and here */
             GL_CURR_API = GL_4_5;
+        else if(ver>=ver43)
+            GL_CURR_API = GL_4_3;
+        else if(ver>=ver33)
+            GL_CURR_API = GL_3_3;
     }else
     {
         const Display::CGLVersion ver30es(3,0);
+        const Display::CGLVersion ver32es(3,2);
 
-        if(ver>=ver30es)
-            GL_CURR_API = GL_3_3;
-        /* GL ES versions 3.1+ are not being used yet, they are more like 4.0 than 4.3 */
+        if(ver>=ver32es)
+            GL_CURR_API = GLES_3_2;
+        else if(ver>=ver30es)
+            GL_CURR_API = GLES_3_0;
     }
 
     cDebug("Initialized API level {0}",(const void* const&)GL_CURR_API);
@@ -84,7 +88,8 @@ void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
     GLC::ColorLogicOp(rstate.colorOp());
     GLC::ColorMaski(i,rstate.colorMask());
 
-    GLC::CullMode(((Face)rstate.culling())&Face::FaceMask);
+    if(rstate.culling())
+        GLC::CullMode(((Face)rstate.culling())&Face::FaceMask);
 }
 
 void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
@@ -98,6 +103,7 @@ void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
 
 void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
 {
+#ifdef COFFEE_GLEAM_DESKTOP
     if(vstate.multiview()&&CGL43::ViewportArraySupported())
     {
         CRectF* varr = new CRectF[vstate.viewCount()];
@@ -116,7 +122,9 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
         CGL43::DepthArrayv(i,vstate.viewCount(),&vstate.depth(i));
         CGL43::ScissorArrayv(i,vstate.viewCount(),&vstate.scissor(i));
         CGL43::ViewportArrayv(i,vstate.viewCount(),varr);
-    }else{
+    }else
+#endif
+    {
         {
             auto sview = vstate.view(0);
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
@@ -186,7 +194,8 @@ void GLEAM_API::SetPixelProcessState(const PixelProcessState& pstate)
     if(pstate.alignment())
         GLC::PixelStore(PixelOperation::Alignment,pstate.alignment());
     if(pstate.swapEndianness())
-        GLC::PixelStore(PixelOperation::SwapEndiannes,(pstate.swapEndianness()) ? GL_TRUE : GL_FALSE);
+        GLC::PixelStore(PixelOperation::SwapEndiannes,
+                        (pstate.swapEndianness()) ? GL_TRUE : GL_FALSE);
 
     /*TODO: Implement more processing switches */
 }
@@ -339,6 +348,8 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)
 
         if(d.instanced())
         {
+            /* TODO: Implement the disabled drawcalls using other means */
+#ifdef COFFEE_GLEAM_DESKTOP
             if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0&&i.vertexOffset()!=0)
                 CGL43::DrawElementsInstancedBaseVertexBaseInstance(
                             mode,i.elements(),i.elementType(),
@@ -352,6 +363,7 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)
                             i.indexOffset()*elsize,i.instanceOffset(),
                             i.instances());
             }else
+#endif
                 CGL33::DrawElementsInstanced(mode,i.elements(),i.elementType(),
                                              i.indexOffset()*elsize,i.instances());
         }else{

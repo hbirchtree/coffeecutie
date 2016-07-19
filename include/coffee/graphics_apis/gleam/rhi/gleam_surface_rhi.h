@@ -51,7 +51,6 @@ struct GLEAM_Surface2DArray : GLEAM_Surface
 
     /*TODO: Add download function */
 
-protected:
     CSize3 m_size;
 };
 
@@ -80,10 +79,10 @@ struct GLEAM_Sampler : GraphicsAPI::Sampler
     void alloc();
     void dealloc();
 
-    void setLODRange();
-    void setLODBias();
-    void setEdgePolicy(uint32 mode);
-    void setFiltering(uint32 mode);
+    void setLODRange(Vecf2 const& range);
+    void setLODBias(scalar bias);
+    void setEdgePolicy(uint8 dim, WrapPolicy p);
+    void setFiltering(Filtering mag, Filtering min, Filtering mip = Filtering::None);
 
 protected:
     CGhnd m_handle;

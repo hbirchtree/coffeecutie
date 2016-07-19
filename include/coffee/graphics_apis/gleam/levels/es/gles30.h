@@ -3,6 +3,7 @@
 
 #include "glbase.h"
 
+/* Basic */
 #include "../shared/constructors/oldstyle.h"
 #include "../shared/shaders/compiling.h"
 #include "../shared/shaders/uniforms.h"
@@ -11,6 +12,10 @@
 #include "../shared/framebuffers/old_framebuffers.h"
 #include "../shared/vertex/old_vaos.h"
 #include "../shared/draw/basic.h"
+
+/* Extended functionality */
+#include "../shared/textures/arb_texture_storage.h"
+#include "../shared/shaders/arb_get_program_binary.h"
 
 namespace Coffee{
 namespace CGL{
@@ -26,7 +31,9 @@ struct CGLES30 :
         CGL_Old_Buffers<CGhnd,BufType>,
         CGL_Old_VAOs<CGhnd,CGenum>,
         CGL_Old_Uniforms,
-        CGL_Basic_Draw
+        CGL_Basic_Draw,
+
+        CGL_TextureStorage
 {
     enum FBAttach
     {

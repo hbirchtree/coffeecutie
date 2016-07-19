@@ -129,7 +129,7 @@ struct GraphicsAPI
             m_polysmooth(false),
             m_dither(false),
             m_colOp(LogicOp::NOOP),
-            m_colMask()
+            m_colMask({1,1,1,1})
         {
         }
 
@@ -195,7 +195,7 @@ struct GraphicsAPI
     struct BlendState
     {
         BlendState():
-            m_doBlend(true),
+            m_doBlend(false),
             m_additive(false),
             m_alphaCoverage(false)
         {
@@ -214,7 +214,7 @@ struct GraphicsAPI
     struct DepthState
     {
         DepthState():
-            m_test(true),
+            m_test(false),
             m_clamp(false),
             m_mask(false),
             m_func()

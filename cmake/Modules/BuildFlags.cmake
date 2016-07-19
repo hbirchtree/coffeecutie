@@ -33,6 +33,12 @@ else()
         )
 endif()
 
+if(ANDROID)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11")
+endif()
+
 # Static builds
 if (COFFEE_BUILD_STATIC)
     set(COFFEE_LINK_OPT STATIC)

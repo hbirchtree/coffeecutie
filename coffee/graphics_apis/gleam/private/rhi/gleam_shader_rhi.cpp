@@ -9,14 +9,35 @@ namespace GLEAM{
 
 bool GLEAM_Shader::compile(ShaderStage stage, cstring str)
 {
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         CGL33::ShaderAlloc(1,stage,&m_handle);
         CGL33::ShaderSource(m_handle,1,&str);
-        return CGL33::ShaderCompile(m_handle);
-    }else if(GL_CURR_API==GL_4_3)
+        bool stat = CGL33::ShaderCompile(m_handle);
+
+        if(GL_DEBUG_MODE && !stat)
+        {
+            CString log = CGL33::ShaderGetLog(m_handle);
+            cDebug("Shader compilation error: {0}",log);
+            return false;
+        }
+
+        m_stages |= stage;
+
+        return stat;
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         m_handle = CGL43::ProgramCreate(stage,1,&str);
+
+        if(GL_DEBUG_MODE && m_handle == 0)
+        {
+            CString log = CGL43::ProgramGetLog(m_handle);
+            cDebug("Shader program compilation error: {0}",log);
+            return false;
+        }
+
+        m_stages |= stage;
+
         return m_handle!=0;
     }else
         return false;
@@ -24,12 +45,12 @@ bool GLEAM_Shader::compile(ShaderStage stage, cstring str)
 
 void GLEAM_Shader::dealloc()
 {
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         if(m_handle!=0)
             CGL33::ShaderFree(1,&m_handle);
     }
-    else if(GL_CURR_API==GL_4_3)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         if(m_handle!=0)
             CGL43::ProgramFree(1,&m_handle);
@@ -40,13 +61,13 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader, const ShaderStage &stage
 {
     if(shader.m_handle==0)
         return false;
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         if(m_handle==0)
             CGL33::ProgramAlloc(1,&m_handle);
         CGL33::ShaderAttach(m_handle,shader.m_handle);
         return true;
-    }else if(GL_CURR_API==GL_4_3)
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         if(m_handle==0)
             CGL43::PipelineAlloc(1,&m_handle);
@@ -62,30 +83,42 @@ bool GLEAM_Pipeline::assemble()
 {
     if(m_handle==0)
         return false;
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
-        return CGL33::ProgramLink(m_handle);
+        bool stat = CGL33::ProgramLink(m_handle);
+        if(GL_DEBUG_MODE && !stat)
+        {
+            CString log = CGL33::ProgramGetLog(m_handle);
+            cDebug("Program link error: {0}",log);
+        }
+        return stat;
     }
-    else if(GL_CURR_API==GL_4_3)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
-        return CGL43::PipelineValidate(m_handle);
+        bool stat = CGL43::PipelineValidate(m_handle);
+        if(GL_DEBUG_MODE && !stat)
+        {
+            CString log = CGL43::PipelineGetLog(m_handle);
+            cDebug("Pipeline validation error: {0}",log);
+        }
+        return stat;
     }
     return false;
 }
 
 void GLEAM_Pipeline::bind()
 {
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
         CGL33::ProgramUse(m_handle);
-    else if(GL_CURR_API==GL_4_3)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
         CGL43::PipelineBind(m_handle);
 }
 
 void GLEAM_Pipeline::unbind()
 {
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
         CGL33::ProgramUse(0);
-    else if(GL_CURR_API==GL_4_3)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
         CGL43::PipelineBind(0);
 }
 
@@ -221,6 +254,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
                     desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Vec4T;
                     break;
 
+#ifdef COFFEE_GLEAM_DESKTOP
                 case GL_DOUBLE:
                     desc.m_flags = GLEAM_API::BigScalarT;
                     break;
@@ -233,6 +267,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
                 case GL_DOUBLE_VEC4:
                     desc.m_flags = GLEAM_API::BigScalarT|GLEAM_API::Vec4T;
                     break;
+#endif
 
                 case GL_UNSIGNED_INT:
                     desc.m_flags = GLEAM_API::UIntegerT;

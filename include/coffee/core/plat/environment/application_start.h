@@ -10,14 +10,7 @@
 
 extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);
 
-FORCEDINLINE void _setVerInfo()
-{
-#ifndef COFFEE_APPLICATION_LIBRARY
-    Coffee::CoffeeApplicationData.application_name = COFFEE_APPLICATION_NAME;
-    Coffee::CoffeeApplicationData.organization_name = COFFEE_ORGANIZATION_NAME;
-    Coffee::CoffeeApplicationData.version_code = COFFEE_VERSION_CODE;
-#endif
-}
+extern void _setVerInfo();
 
 //This is a cheeky little macro that allows us to wrap the main function.
 #if defined(COFFEE_ANDROID)

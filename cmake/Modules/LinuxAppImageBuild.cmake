@@ -1,18 +1,18 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    set ( APPIMAGE_CONFIG_DIR "${CMAKE_SOURCE_DIR}/desktop/linux/appimage" )
+    set ( APPIMAGE_CONFIG_DIR "${COFFEE_DESKTOP_DIRECTORY}/linux/appimage" )
 
     set ( APPIMAGE_ASSISTANT_PROGRAM CACHE FILEPATH "AppImageAssistant executable" )
     set ( APPIMAGE_APPRUN_PROGRAM CACHE FILEPATH "AppImage AppRun executable" )
 
-    set ( APPIMAGE_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/deploy/linux-appimage"
+    set ( APPIMAGE_WORKING_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-appimage"
         CACHE PATH "Where to put the AppDir items" )
-    set ( APPIMAGE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-appimage"
+    set ( APPIMAGE_OUTPUT_DIRECTORY "${COFFEE_PACKAGE_DIRECTORY}/linux-appimage"
         CACHE PATH "AppImage output directory" )
     set ( APPIMAGE_FOLLOW_STANDARD OFF
         CACHE BOOL "Whether generator should follow the spec" )
 
     set ( APPIMAGE_DEFAULT_ICON_FILE
-        "${CMAKE_SOURCE_DIR}/desktop/icon.svg"
+        "${COFFEE_DESKTOP_DIRECTORY}/icon.svg"
         CACHE FILEPATH "Default icon for AppImages" )
 endif()
 

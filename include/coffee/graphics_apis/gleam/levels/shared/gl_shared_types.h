@@ -66,6 +66,7 @@ enum class Face
     FaceMask = Front|Back|Both,
 };
 
+
 enum class AttribMode
 {
     Interleaved = GL_INTERLEAVED_ATTRIBS,
@@ -207,6 +208,7 @@ enum class Feature
 
 enum class BufType
 {
+
     ArrayData = GL_ARRAY_BUFFER,
     ElementData = GL_ELEMENT_ARRAY_BUFFER,
     UniformData = GL_UNIFORM_BUFFER,
@@ -214,11 +216,18 @@ enum class BufType
     ShaderData = GL_SHADER_STORAGE_BUFFER,
     AtomicData = GL_ATOMIC_COUNTER_BUFFER,
     QueryData = GL_QUERY_BUFFER,
+#else
+    ShaderData = 0,
+    AtomicData = 0,
+    QueryData = 0,
 #endif
     XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
 #ifdef COFFEE_GLEAM_DESKTOP
     DrawcallData = GL_DRAW_INDIRECT_BUFFER,
     ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
+#else
+    DrawcallData = 0,
+    ComputecallData = 0,
 #endif
     PixelUData = GL_PIXEL_UNPACK_BUFFER,
     PixelPData = GL_PIXEL_PACK_BUFFER,
@@ -262,14 +271,18 @@ enum class Texture
 #endif
 };
 
-#ifdef COFFEE_GLEAM_DESKTOP
 enum class DrawMode
 {
+#ifdef COFFEE_GLEAM_DESKTOP
     Point = GL_POINT,
     Line = GL_LINE,
     Fill = GL_FILL,
-};
+#else
+    Point = 0,
+    Line = 0,
+    Fill = 0,
 #endif
+};
 
 enum class QueryT
 {
@@ -285,14 +298,14 @@ enum class QueryT
 #endif
 };
 
-#ifdef COFFEE_GLEAM_DESKTOP
 enum class PatchProperty
 {
     Vertices = GL_PATCH_VERTICES,
+#ifdef COFFEE_GLEAM_DESKTOP
     DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,
     DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,
-};
 #endif
+};
 
 C_FLAGS(BufBit,uint32);
 C_FLAGS(PrimCre,uint32);

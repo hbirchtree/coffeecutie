@@ -13,8 +13,11 @@ struct CGL_TessellationShader
     /* Tessellation */
     STATICINLINE void PatchParameteri(PatchProperty p,int32 v)
     {glPatchParameteri(to_enum(p),v);}
+
+#ifdef COFFEE_GLEAM_DESKTOP
     STATICINLINE void PatchParameterfv(PatchProperty p,const scalar* v)
     {glPatchParameterfv(to_enum(p),v);}
+#endif
 };
 }
 }

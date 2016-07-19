@@ -14,12 +14,10 @@ struct DrwMd
     PrimCre c;
 };
 
-#ifdef COFFEE_GLEAM_DESKTOP
 FORCEDINLINE CGenum to_enum(PatchProperty f)
 {
     return (CGenum)f;
 }
-#endif
 
 CGenum to_enum(Feature e);
 CGenum to_enum(QueryT f);
@@ -67,6 +65,9 @@ CGenum to_enum(FramebufferT f);
 CGenum to_enum(AttribMode f);
 
 CGpixfmt get_fmt(PixelFormat e, bool rev);
+
+CGenum to_enum(Filtering mag, Filtering min, Filtering mip);
+CGenum to_enum(WrapPolicy p);
 
 }
 }

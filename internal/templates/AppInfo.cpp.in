@@ -1,0 +1,8 @@
+#include <coffee/core/plat/environment/application_start.h>
+
+void _setVerInfo()
+{
+    Coffee::CoffeeApplicationData.application_name = "@APP_TITLE@";
+    Coffee::CoffeeApplicationData.organization_name = "@APP_COMPANY@";
+    Coffee::CoffeeApplicationData.version_code = @APP_VERSION@;
+}

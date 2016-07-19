@@ -1,5 +1,5 @@
 if(APPLE)
-    set ( OSX_DEFAULT_ICON "${CMAKE_SOURCE_DIR}/desktop/osx/Coffee.icns" CACHE FILEPATH "" )
+    set ( OSX_DEFAULT_ICON "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.icns" CACHE FILEPATH "" )
 endif()
 
 macro( MACAPP_PACKAGE

@@ -9,13 +9,44 @@ include ( WindowsImagePacker )
 macro(TARGET_ENABLE_CXX11 TARGET)
     if(ANDROID)
         # Android's compiler doesn't support target_compile_features :(
-        set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+        # See BuildFlags.cmake
     elseif(APPLE)
-        # To get around old Clang versions
-        set(CMAKE_CXX_FLAGS "-stdlib=libc++ -std=c++11 ${CMAKE_CXX_FLAGS}")
+        # Old Clang versions are bad, m'kay?
+        # See BuildFlags.cmake
     else()
+        # This works on Linux and Win32
         target_compile_features(${TARGET} PRIVATE cxx_constexpr)
     endif()
+endmacro()
+
+macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
+    set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_${TARGET}.c" )
+
+    # TODO: Load license data from files, references stored in BUNDLE_LICENSES
+    set ( LICENSE_DATA
+        "Hello!"
+        "Jello!"
+        "What?"
+        )
+
+    configure_file (
+        "${COFFEE_SOURCE_TEMPLATE_DIRECTORY}/LicenseInfo.c.in"
+        "${LICENSE_FILE}"
+        )
+endmacro()
+
+macro(COFFEE_GEN_APPLICATIONINFO TARGET TITLE COMPANY VERSION)
+    set ( APP_TITLE "${TITLE}" )
+    set ( APP_COMPANY "${COMPANY}" )
+    set ( APP_VERSION "${VERSION}" )
+
+    set ( APPLICATION_INFO_FILE "${CMAKE_CURRENT_BINARY_DIR}/AppInfo_${TARGET}.cpp" )
+
+    configure_file (
+        "${COFFEE_SOURCE_TEMPLATE_DIRECTORY}/AppInfo.cpp.in"
+        "${APPLICATION_INFO_FILE}"
+        )
+
 endmacro()
 
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
@@ -64,24 +95,14 @@ function(COFFEE_ADD_EXAMPLE_LONGER
         SOURCES LIBRARIES
         BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES)
 
-    add_definitions( -DCOFFEE_APPLICATION_NAME="${TITLE}" )
-    add_definitions( -DCOFFEE_ORGANIZATION_NAME="${APP_COMPANY_NAME}" )
-    add_definitions( -DCOFFEE_VERSION_CODE=${APP_VERSION_CODE} )
-
-    set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_${TARGET}.cpp" )
-    # TODO: Load license data from files, references stored in BUNDLE_LICENSES
-    set ( LICENSE_DATA
-        "Hello!"
-        "Jello!"
-        "What?"
+    coffee_gen_licenseinfo("${TARGET}" "${BUNDLE_LICENSES}")
+    coffee_gen_applicationinfo("${TARGET}"
+        "${TITLE}"
+        "${APP_COMPANY_NAME}"
+        "${APP_VERSION_CODE}"
         )
 
-    file ( WRITE "${LICENSE_FILE}"
-        "namespace Coffee{\n"
-        "  extern \"C\" const char* CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
-        "}" )
-
-    set ( SOURCES_MOD "${LICENSE_FILE};${SOURCES}" )
+    set ( SOURCES_MOD "${APPLICATION_INFO_FILE};${LICENSE_FILE};${SOURCES}" )
 
     set ( COMPANY "${APP_COMPANY_NAME}" )
     set ( INFO_STRING "It's a Coffee application" )
@@ -148,9 +169,10 @@ function(COFFEE_ADD_EXAMPLE_LONGER
         ${LIBRARIES}
         )
 
-    remove_definitions( -DCOFFEE_APPLICATION_NAME )
-    remove_definitions( -DCOFFEE_ORGANIZATION_NAME )
-    remove_definitions( -DCOFFEE_VERSION_CODE )
+    remove_definitions(
+        -DCOFFEE_APPLICATION_NAME -DCOFFEE_ORGANIZATION_NAME
+        -DCOFFEE_VERSION_CODE )
+
 endfunction()
 
 macro(COFFEE_ADD_EXAMPLE_LONG
@@ -187,26 +209,17 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         return()
     endif()
 
-    add_definitions( -DCOFFEE_APPLICATION_NAME="${TITLE}" )
-    add_definitions( -DCOFFEE_ORGANIZATION_NAME="Coffecutie" )
-    add_definitions( -DCOFFEE_VERSION_CODE=1 )
-
-    set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_${TARGET}.cpp" )
-    set ( LICENSE_DATA
-        "Hello!"
-        "Jello!"
-        "What?"
+    coffee_gen_licenseinfo("${TARGET}" "")
+    coffee_gen_applicationinfo("${TARGET}"
+        "${TITLE}"
+        "Coffee"
+        "5"
         )
 
-    file ( WRITE "${LICENSE_FILE}"
-        "namespace Coffee{\n"
-        "  extern \"C\" const char* CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
-        "}" )
-
     if(ANDROID) # Android platform layer
-        set ( SOURCES_MOD "${SOURCES};${LICENSE_FILE};${SDL2_ANDROID_MAIN_FILE}" )
+        set ( SOURCES_MOD "${SOURCES};${APPLICATION_INFO_FILE};${LICENSE_FILE};${SDL2_ANDROID_MAIN_FILE}" )
     else()
-        set ( SOURCES_MOD "${SOURCES};${LICENSE_FILE}" )
+        set ( SOURCES_MOD "${SOURCES};${APPLICATION_INFO_FILE};${LICENSE_FILE}" )
     endif()
 
     add_executable ( ${TARGET} ${SOURCES_MOD} )
@@ -235,9 +248,5 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             COMMAND $<TARGET_FILE:${TARGET}>
             )
     endif()
-
-    remove_definitions( -DCOFFEE_APPLICATION_NAME )
-    remove_definitions( -DCOFFEE_ORGANIZATION_NAME )
-    remove_definitions( -DCOFFEE_VERSION_CODE )
 
 endfunction()

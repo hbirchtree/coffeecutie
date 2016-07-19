@@ -97,15 +97,15 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         }
     }else{
         const static CGLVersion v30es(3,0);
-        const static CGLVersion v31es(3,1);
+        const static CGLVersion v32es(3,2);
 
-//        if(p.version>=v31es)
-//        {
-//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v31es);
-//#ifndef COFFEE_GLEAM_DESKTOP
-//            status = CGL::CGLES31::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
-//#endif
-//        }else
+        if(p.version>=v32es)
+        {
+            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v32es);
+#ifndef COFFEE_GLEAM_DESKTOP
+            status = CGL::CGLES32::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+#endif
+        }else
         if(p.version==v30es)
         {
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);

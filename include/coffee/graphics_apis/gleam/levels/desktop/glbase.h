@@ -20,6 +20,7 @@ struct CGL_Implementation : CGL_Shared_Functions
     STATICINLINE void Disablei(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
 
     STATICINLINE void ColorMaski(uint32 i, CColorMask op){glColorMaski(i,op.r,op.g,op.b,op.a);}
+
     STATICINLINE void ColorLogicOp(LogicOp op){glLogicOp(to_enum(op));}
     STATICINLINE void DepthSet(ZField64 const* d){glDepthRange(d->near,d->far);}
 

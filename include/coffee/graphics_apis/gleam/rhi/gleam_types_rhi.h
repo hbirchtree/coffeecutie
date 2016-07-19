@@ -11,18 +11,26 @@ using namespace CGL;
 
 #ifndef COFFEE_GLEAM_DESKTOP
 using CGL33 = CGLES30;
+using CGL43 = CGLES32;
 #endif
 
 enum APILevel
 {
     GL_Nothing = 0x100,
-    GL_3_3 = 0x330,
-    GLES_3_0 = 0x330,
-    GL_4_3 = 0x430,
-    GL_4_5 = 0x450,
+
+    /* Desktop GL versions */
+    GL_3_3   = 0x330,
+    GL_4_3   = 0x430,
+    GL_4_5   = 0x450,
+
+    /* Mobile GL versions / ES */
+    /* These do not map directly to desktop versions */
+    GLES_3_0 = 0x300,
+    GLES_3_2 = 0x320,
 };
 
 extern APILevel GL_CURR_API;
+extern bool GL_DEBUG_MODE;
 
 struct GLEAM_API;
 

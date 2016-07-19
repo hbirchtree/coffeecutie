@@ -1,5 +1,5 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-    set ( FLATPAK_CONFIG_DIR "${CMAKE_SOURCE_DIR}/desktop/linux/flatpak" )
+    set ( FLATPAK_CONFIG_DIR "${COFFEE_DESKTOP_DIRECTORY}/linux/flatpak" )
 
     set ( FLATPAK_REPOSITORY_DIR CACHE PATH "Target repository to submit flatpaks to" )
 
@@ -7,7 +7,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( FLATPAK_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/package/linux-flatpak"
         CACHE PATH "Where to put flatpak directory structures" )
 
-    set ( FLATPAK_DEFAULT_ICON_FILE "${CMAKE_SOURCE_DIR}/desktop/icon.svg"
+    set ( FLATPAK_DEFAULT_ICON_FILE "${COFFEE_DESKTOP_DIRECTORY}/icon.svg"
         CACHE FILEPATH "Default icon for AppImages" )
 endif()
 

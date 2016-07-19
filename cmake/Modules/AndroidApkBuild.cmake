@@ -14,14 +14,14 @@ if(ANDROID)
 
     # Misc properties
 
-    set ( APK_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}/android-apk" CACHE PATH "" )
+    set ( APK_OUTPUT_DIR "${COFFEE_PACKAGE_DIRECTORY}/android-apk" CACHE PATH "" )
 
-    set ( ANDROID_PROJECT_INPUT ${CMAKE_SOURCE_DIR}/desktop/android )
+    set ( ANDROID_PROJECT_INPUT "${COFFEE_DESKTOP_DIRECTORY}/android" )
 
-    set ( ANDROID_PROJECT_TEMPLATE_DIR ${ANDROID_PROJECT_INPUT}/Template )
-    set ( ANDROID_PROJECT_CONFIG_DIR ${ANDROID_PROJECT_INPUT}/Config )
+    set ( ANDROID_PROJECT_TEMPLATE_DIR "${ANDROID_PROJECT_INPUT}/Template" )
+    set ( ANDROID_PROJECT_CONFIG_DIR "${ANDROID_PROJECT_INPUT}/Config" )
 
-    set ( ANDROID_BUILD_OUTPUT ${PROJECT_BINARY_DIR}/deploy/android/ )
+    set ( ANDROID_BUILD_OUTPUT "${COFFEE_DEPLOY_DIRECTORY}/android" )
 
 endif()
 
@@ -274,11 +274,9 @@ macro(ANDROIDAPK_PACKAGE
         BUNDLE_RSRCS
         BUNDLE_LIBS
         ICON_ASSET)
-    message( "Android Main: ${SDL2_ANDROID_MAIN_FILE}" )
     if(ANDROID_USE_SDL2_LAUNCH)
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
     else()
-        message ("Android sources: ${SOURCES} ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}")
         add_library(${TARGET} SHARED ${SOURCES}
             ${CMAKE_SOURCE_DIR}/coffee/core/private/plat/graphics/eglinit.cpp )
 

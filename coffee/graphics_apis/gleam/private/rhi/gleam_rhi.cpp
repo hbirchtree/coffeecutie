@@ -7,6 +7,7 @@ namespace RHI{
 namespace GLEAM{
 
 APILevel GL_CURR_API = GL_Nothing;
+bool GL_DEBUG_MODE = false;
 
 }
 }

@@ -30,6 +30,6 @@ target_link_libraries ( CoffeeGLeam
     )
 
 # For Android, there is some special function loading
-    find_package(SDL2 REQUIRED)
-    include_directories (${SDL2_INCLUDE_DIR})
-    target_link_libraries(CoffeeGLeam ${SDL2_LIBRARY})
+find_package(SDL2 REQUIRED)
+include_directories (${SDL2_INCLUDE_DIR})
+target_link_libraries(CoffeeGLeam ${SDL2_LIBRARY})

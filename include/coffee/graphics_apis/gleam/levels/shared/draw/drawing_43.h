@@ -18,18 +18,6 @@ struct CGL_Drawing_43
      */
     STATICINLINE void DrawArraysIndirect(DrwMd c,uint64 off)
     {glDrawArraysIndirect(to_enum(c),(c_cptr)off);}
-    /*!
-     * \brief DrawArraysInstancedBaseInstance
-     * \param p Primitive type
-     * \param c Primitive creation method
-     * \param vf First vertex
-     * \param vc Number of vertices
-     * \param ic Number of instances
-     * \param bi Index of first instance to draw
-     */
-    STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd c,int32 vf,
-                                                uint32 vc,uint32 ic,uint32 bi)
-    {glDrawArraysInstancedBaseInstance(to_enum(c),vf,vc,ic,bi);}
 
     /*!
      * \brief DrawElementsIndirect
@@ -42,34 +30,6 @@ struct CGL_Drawing_43
                                      TypeEnum d,
                                      uint64 off)
     {glDrawElementsIndirect(to_enum(c),to_enum(d),(c_cptr)off);}
-    /*!
-     * \brief DrawElementsInstancedBaseInstance
-     * \param p Primitive type
-     * \param c Primitive creation method
-     * \param ec Number of elements to draw per instance
-     * \param d Element data type
-     * \param off Offset into element buffer
-     * \param bc Number of instances to draw
-     * \param bi Base instance applied to all instances for attribute fetching
-     */
-    STATICINLINE void DrawElementsInstancedBaseInstance(
-            DrwMd c,uint32 ec,TypeEnum d,uint64 off,uint32 bc,uint32 bi)
-    {glDrawElementsInstancedBaseInstance(to_enum(c),ec,to_enum(d),(c_cptr)off,bc,bi);}
-    /*!
-     * \brief DrawElementsInstancedBaseVertexBaseInstance
-     * \param p Primitive type
-     * \param c Primitive creation method
-     * \param ec Number of elements to draw
-     * \param d Element data type
-     * \param off Offset into element buffer
-     * \param ic Number of instances to draw from base instance
-     * \param bv Value added to each element in the element buffer for this call
-     * \param bi Index of first instance to draw
-     */
-    STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(
-            DrwMd c,uint32 ec,TypeEnum d,uint64 off,uint32 ic,int32 bv,uint32 bi)
-    {glDrawElementsInstancedBaseVertexBaseInstance(to_enum(c),ec,to_enum(d),
-                                                   (c_cptr)off,ic,bv,bi);}
 
     /*!
      * \brief DrawRangeElements
@@ -98,6 +58,48 @@ struct CGL_Drawing_43
     STATICINLINE void DrawRangeElementsBaseVertex(
             DrwMd c,uint32 f,uint32 e,uint32 vc,TypeEnum d,uint64 off,int32 bv)
     {glDrawRangeElementsBaseVertex(to_enum(c),f,e,vc,to_enum(d),(c_cptr)off,bv);}
+
+#ifdef COFFEE_GLEAM_DESKTOP
+    /*!
+     * \brief DrawElementsInstancedBaseInstance
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param ec Number of elements to draw per instance
+     * \param d Element data type
+     * \param off Offset into element buffer
+     * \param bc Number of instances to draw
+     * \param bi Base instance applied to all instances for attribute fetching
+     */
+    STATICINLINE void DrawElementsInstancedBaseInstance(
+            DrwMd c,uint32 ec,TypeEnum d,uint64 off,uint32 bc,uint32 bi)
+    {glDrawElementsInstancedBaseInstance(to_enum(c),ec,to_enum(d),(c_cptr)off,bc,bi);}
+    /*!
+     * \brief DrawElementsInstancedBaseVertexBaseInstance
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param ec Number of elements to draw
+     * \param d Element data type
+     * \param off Offset into element buffer
+     * \param ic Number of instances to draw from base instance
+     * \param bv Value added to each element in the element buffer for this call
+     * \param bi Index of first instance to draw
+     */
+    STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(
+            DrwMd c,uint32 ec,TypeEnum d,uint64 off,uint32 ic,int32 bv,uint32 bi)
+    {glDrawElementsInstancedBaseVertexBaseInstance(to_enum(c),ec,to_enum(d),
+                                                   (c_cptr)off,ic,bv,bi);}
+    /*!
+     * \brief DrawArraysInstancedBaseInstance
+     * \param p Primitive type
+     * \param c Primitive creation method
+     * \param vf First vertex
+     * \param vc Number of vertices
+     * \param ic Number of instances
+     * \param bi Index of first instance to draw
+     */
+    STATICINLINE void DrawArraysInstancedBaseInstance(DrwMd c,int32 vf,
+                                                uint32 vc,uint32 ic,uint32 bi)
+    {glDrawArraysInstancedBaseInstance(to_enum(c),vf,vc,ic,bi);}
 
     /*!
      * \brief DrawXF
@@ -136,6 +138,7 @@ struct CGL_Drawing_43
      */
     STATICINLINE void DrawXFStreamInstanced(DrwMd c,CGhnd h,uint32 s,uint32 ic)
     {glDrawTransformFeedbackStreamInstanced(to_enum(c),h,s,ic);}
+#endif
 };
 }
 }

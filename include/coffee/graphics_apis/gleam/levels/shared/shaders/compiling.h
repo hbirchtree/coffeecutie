@@ -20,6 +20,33 @@ struct CGL_Old_ShaderCompiler
 
     /* Shaders */
 
+    STATICINLINE void ShaderGetiv(CGhnd h,CGenum f,int32* d){glGetShaderiv(h,f,d);}
+    STATICINLINE cstring_w ShaderGetLog(CGhnd h)
+    {
+        int32 len = 0;
+        ShaderGetiv(h,GL_INFO_LOG_LENGTH,&len);
+        if(len<=0)
+            return nullptr;
+        cstring_w s = new int8[len+1];
+        glGetShaderInfoLog(h,len,nullptr,s);
+        return s;
+    }
+    STATICINLINE void ShaderSource(CGhnd h,uint32 n,cstring* src)
+    {
+        int32* lens = new int32[n];
+        for(uint32 i=0;i<n;i++)
+            lens[i] = StrLen(src[i]+1);
+        glShaderSource(h,n,src,lens);
+        delete[] lens;
+    }
+    STATICINLINE bool ShaderCompile(CGhnd s)
+    {
+        glCompileShader(s);
+        int32 status;
+        glGetShaderiv(s,GL_COMPILE_STATUS,&status);
+        return status==GL_TRUE;
+    }
+
     STATICINLINE cstring_w ShaderGetSrc(CGhnd h)
     {
         int32 len = 0;
@@ -31,14 +58,10 @@ struct CGL_Old_ShaderCompiler
         s[len] = 0;
         return s;
     }
-    STATICINLINE void ShaderSource(CGhnd h,uint32 n,cstring* src)
-    {
-        int32* lens = new int32[n];
-        for(uint32 i=0;i<n;i++)
-            lens[i] = StrLen(src[i]+1);
-        glShaderSource(h,n,src,lens);
-        delete[] lens;
-    }
+
+    STATICINLINE void ShaderAttach(CGhnd p,CGhnd s){glAttachShader(p,s);}
+    STATICINLINE void ShaderDetach(CGhnd p,CGhnd s){glDetachShader(p,s);}
+
     STATICINLINE bool ProgramLink(CGhnd p)
     {
         glLinkProgram(p);
@@ -47,17 +70,7 @@ struct CGL_Old_ShaderCompiler
         return status==GL_TRUE;
     }
 
-    STATICINLINE void ShaderAttach(CGhnd p,CGhnd s){glAttachShader(p,s);}
-    STATICINLINE void ShaderDetach(CGhnd p,CGhnd s){glDetachShader(p,s);}
-    STATICINLINE bool ShaderCompile(CGhnd s)
-    {
-        glCompileShader(s);
-        int32 status;
-        glGetShaderiv(s,GL_COMPILE_STATUS,&status);
-        return status==GL_TRUE;
-    }
 
-    STATICINLINE void ShaderGetiv(CGhnd h,CGenum f,int32* d){glGetShaderiv(h,f,d);}
     STATICINLINE void ProgramGetAttached(CGhnd p,uint32* n,CGhnd** h)
     {
         int32 num = 0;

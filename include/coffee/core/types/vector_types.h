@@ -42,6 +42,9 @@ using Vecui4 = _cbasic_vec4<uint32>;
 
 using CQuat = _cbasic_quat<scalar>;
 
+using Quatf = CQuat;
+using Quatd = _cbasic_quat<bigscalar>;
+
 using CMat2 = _cbasic_tmatrix<scalar,2>;
 using CMat3 = _cbasic_tmatrix<scalar,3>;
 using CMat4 = _cbasic_tmatrix<scalar,4>;

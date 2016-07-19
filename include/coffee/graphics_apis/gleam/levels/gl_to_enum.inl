@@ -14,7 +14,6 @@
 namespace Coffee{
 namespace CGL{
 
-#ifdef COFFEE_GLEAM_DESKTOP
 inline CGenum to_enum(
         Severity s)
 {
@@ -32,9 +31,7 @@ inline CGenum to_enum(
         return GL_NONE;
     }
 }
-#endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
 inline CGenum to_enum(
         DebugType t)
 {
@@ -62,9 +59,7 @@ inline CGenum to_enum(
         return GL_NONE;
     }
 }
-#endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
 inline CGenum to_enum(
         Object t)
 {
@@ -104,7 +99,6 @@ inline CGenum to_enum(
     }
     return type;
 }
-#endif
 
 inline CGenum to_enum(
         Feature f, uint32 offset)
@@ -177,7 +171,7 @@ inline CGenum to_enum(
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
     case Feature::ClipDist:
-        return GL_CLIP_DISTANCE0+offset;
+        return GL_CLIP_DISTANCE0+((offset>7) ? 7 : offset);
 #endif
     default:
         return GL_NONE;
@@ -554,7 +548,6 @@ inline CGenum to_enum1(
     }
 }
 
-#ifdef COFFEE_GLEAM_DESKTOP
 inline CGenum to_enum2(
         ShaderStage f)
 {
@@ -578,7 +571,6 @@ inline CGenum to_enum2(
 
     return o;
 }
-#endif
 
 inline CGenum to_enum(
         ValueHandling f)
@@ -1011,6 +1003,58 @@ inline CGpixfmt get_fmt(PixelFormat e, bool rev)
         break;
     }
     return {GL_NONE,GL_NONE};
+}
+
+inline CGenum to_enum(Filtering p, Filtering s)
+{
+    switch(p)
+    {
+    case Filtering::Nearest:
+    {
+        switch(s)
+        {
+        case Filtering::Nearest:
+            return GL_NEAREST_MIPMAP_NEAREST;
+        case Filtering::Linear:
+            return GL_NEAREST_MIPMAP_LINEAR;
+        default:
+            return GL_NEAREST;
+        }
+    }
+    case Filtering::Linear:
+    {
+        switch(s)
+        {
+        case Filtering::Nearest:
+            return GL_LINEAR_MIPMAP_NEAREST;
+        case Filtering::Linear:
+            return GL_LINEAR_MIPMAP_LINEAR;
+        default:
+            return GL_LINEAR;
+        }
+    }
+    default:
+        return GL_NONE;
+    }
+}
+
+inline CGenum to_enum(WrapPolicy p)
+{
+    switch(p)
+    {
+    case WrapPolicy::Clamp:
+        return GL_CLAMP_TO_EDGE;
+    case WrapPolicy::MirrorRepeat:
+        return GL_MIRRORED_REPEAT;
+    case WrapPolicy::Repeat:
+        return GL_REPEAT;
+#ifdef COFFEE_GLEAM_DESKTOP
+    case WrapPolicy::MirrorClamp:
+        return GL_MIRROR_CLAMP_TO_EDGE;
+#endif
+    default:
+        return GL_NONE;
+    }
 }
 
 }

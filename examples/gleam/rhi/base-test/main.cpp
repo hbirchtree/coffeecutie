@@ -21,7 +21,12 @@ using VR = HMD::DummyPlugHMD;
 
 VR::Device* dev;
 
+#ifdef COFFEE_GLEAM_DESKTOP
 using GL = CGL::CGL43;
+#else
+using GL = CGL::CGLES30;
+#endif
+
 using GLM = GLEAMAPI;
 
 class CDRenderer : public CSDL2Renderer
@@ -32,7 +37,7 @@ public:
     {
     }
 
-    static const constexpr szptr num_textures = 4;
+    static const constexpr szptr num_textures = 5;
 
     void run()
     {
@@ -40,7 +45,8 @@ public:
 
         const constexpr cstring textures[num_textures] = {
             "eye-normal.tga", "eye-weird.tga",
-            "eye-alpha.tga",  "eye-veins.tga"
+            "eye-alpha.tga",  "eye-veins.tga",
+            "floor-tile.png"
         };
 
         const scalar vertexdata[] = {
@@ -56,7 +62,7 @@ public:
         /*
          * Loading the GLeam API, chosen according to what is available at runtime
          */
-        GLM::LoadAPI();
+        GLM::LoadAPI(true);
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly,sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
@@ -93,9 +99,9 @@ public:
             vertdesc.addAttribute(tc);
         }
 
-        GLM::SHD v_shader;
-        GLM::SHD f_shader;
-        GLM::PIP eye_pip;
+        GLM::SHD v_shader = {};
+        GLM::SHD f_shader = {};
+        GLM::PIP eye_pip = {};
 
         /* Compiling shaders and assemble a graphics pipeline */
         {
@@ -125,9 +131,9 @@ public:
         /* Uploading textures */
         GLM::S_2DA eyetex(PixelFormat::RGBA8,1,GLM::TextureDMABuffered);
 
-        eyetex.allocate({1024,1024,4},PixCmp::RGBA);
+        eyetex.allocate({1024,1024,5},PixCmp::RGBA);
 
-        for(szptr i=0;i<4;i++)
+        for(szptr i=0;i<eyetex.m_size.depth;i++)
         {
             CResources::Resource rsc(textures[i]);
             CResources::FileMap(rsc);
@@ -145,14 +151,15 @@ public:
         GLM::SM_2DA eyesamp;
         eyesamp.alloc();
         eyesamp.attach(&eyetex);
+        eyesamp.setFiltering(Filtering::Linear,Filtering::Linear);
 
         /* Creating the uniform data store */
         Bytes transform_data = {};
         Bytes mult_data = {};
         Bytes time_data = {};
 
-        Matf4 object_matrices[2] = {};
-        Vecf2 texture_multipliers[2] = {};
+        uint8 object_id[3] = {};
+        Matf4 object_matrices[6] = {};
         scalar time_value = 0.f;
 
         /*
@@ -164,8 +171,6 @@ public:
          */
         transform_data.size = sizeof(object_matrices);
         transform_data.data = (byte_t*)object_matrices;
-        mult_data.size = sizeof(texture_multipliers);
-        mult_data.data = (byte_t*)texture_multipliers;
         time_data.size = sizeof(time_value);
         time_data.data = (byte_t*)&time_value;
 
@@ -178,8 +183,13 @@ public:
 
         /* We create some pipeline state, such as blending and viewport state */
         GLM::VIEWSTATE viewportstate(1);
-        GLM::BLNDSTATE blendstate;
-        GLM::USTATE unifstate;
+        GLM::RASTSTATE rasterstate_poly = {};
+        GLM::RASTSTATE rasterstate_line = {};
+        GLM::BLNDSTATE blendstate = {};
+        GLM::USTATE unifstate = {};
+        GLM::PIXLSTATE pixlstate = {};
+        GLM::DEPTSTATE deptstate = {};
+        GLM::TSLRSTATE teslstate = {};
 
         blendstate.m_doBlend = true;
         viewportstate.m_view.push_back(
@@ -189,6 +199,7 @@ public:
                         this->windowSize().w,
                         this->windowSize().h
                     });
+        rasterstate_line.m_wireframe = true;
 
         /* We query the current pipeline for possible uniform/texture/buffer values */
         GLM::GetShaderUniformState(eye_pip,&unifs);
@@ -198,24 +209,23 @@ public:
         {
             if(u.m_name == "transform[0]")
                 unifstate.setUniform(u,&transforms);
-            else if(u.m_name == "tex_mul[0]")
-                unifstate.setUniform(u,&multipliers);
             else if(u.m_name == "texdata")
                 unifstate.setSampler(u,textures_array);
             else if(u.m_name == "mx")
                 unifstate.setUniform(u,&timeval);
             else
-            {
                 cDebug("Unhandled uniform value: {0}",u.m_name);
-            }
         }
 
         transforms.data = &transform_data;
         multipliers.data = &mult_data;
         timeval.data = &time_data;
 
-        /* Applying blending state information */
+        /* Applying state information */
         GLM::SetBlendState(blendstate);
+        GLM::SetPixelProcessState(pixlstate);
+        GLM::SetDepthState(deptstate);
+        GLM::SetTessellatorState(teslstate);
 
         /* Now generating a drawcall, which only specifies small state that can be shared */
         GLM::DrawCall call;
@@ -224,8 +234,8 @@ public:
 
         /* Instance data is more akin to individual drawcalls, specifying vertex buffer information */
         GLM::DrawInstanceData instdata = {};
-        instdata.m_insts = 2;
-        instdata.m_verts = (sizeof(vertexdata)/sizeof(scalar))/5;
+        instdata.m_insts = 4;
+        instdata.m_verts = (sizeof(vertexdata)/sizeof(scalar));
 
         /* Specifying the uniform data, such as camera matrices and transforms */
         Vecf4 clear_col = {.267f,.267f,.267f,1.f};
@@ -234,11 +244,17 @@ public:
         camera.aspect = 1.6f;
         camera.fieldOfView = 70.f;
 
-        camera.position = Vecf3(0,0,-3);
+        camera.position = Vecf3(0,0,-9);
 
         CTransform base_transform;
-        base_transform.position = Vecf3(0,0,0);
+        base_transform.position = Vecf3(0,0,5);
         base_transform.scale = Vecf3(1);
+
+        CTransform floor_transform;
+        floor_transform.position = Vecf3(0,-2,5);
+        floor_transform.scale = Vecf3(2);
+//        floor_transform.rotation.x() = -0.9;
+        floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
         /* Vertex descriptors are based upon the ideas from GL4.3 */
         vertdesc.bind();
@@ -252,18 +268,17 @@ public:
 
         scalar v0 = 0;
 
-//        GL::PolyMode(CGL::Face::Both, CGL::DrawMode::Line);
         /* Clipping between the two virtual viewports */
+#ifdef COFFEE_GLEAM_DESKTOP
         GL::Enable(GL::Feature::ClipDist,0);
+#endif
+
+        /* These improve rendering quality */
+//        GL::Enable(GL::Feature::PolygonSmooth);
+//        GL::Enable(GL::Feature::LineSmooth);
 
         while(!closeFlag())
         {
-            base_transform.position.x() = CMath::sin(tprevious) * 2;
-            base_transform.position.y() = CMath::cos(tprevious) * 2;
-
-//            clear_col.r() = CMath::sin(this->contextTime()+0.5);
-//            clear_col.g() = CMath::sin(this->contextTime()+5.0);
-//            clear_col.b() = CMath::sin(this->contextTime()+50.0);
 
             /*
              * This will probably be incorporated into the GLM:: namespace somehow
@@ -292,25 +307,40 @@ public:
              */
             this->pollEvents();
 
+            base_transform.position.x() = CMath::sin(tprevious) * 2;
+            base_transform.position.y() = CMath::cos(tprevious) * 2;
+
+//            floor_transform.position.z() = CMath::sin(tprevious);
+
             /* Define frame data */
             time_value = CMath::sin(tprevious)+(CMath::pi/4.);
 
-            texture_multipliers[0] = Vecf2(1,1);
-            texture_multipliers[1] = Vecf2(-1,1);
-
-//            base_transform.rotation.x() += 0.001 * tdelta;
+            floor_transform.rotation.x() = CMath::sin(tprevious);
+            floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
             camera.position.x() = -2;
 
             object_matrices[0] = GenPerspective(camera)
                     * GenTransform(camera)
                     * GenTransform(base_transform);
+            object_matrices[2] = GenPerspective(camera)
+                    * GenTransform(camera)
+                    * GenTransform(floor_transform);
+            object_matrices[4] = GenPerspective(camera)
+                    * GenTransform(camera)
+                    * GenTransform(floor_transform);
 
             camera.position.x() = 2;
 
             object_matrices[1] = GenPerspective(camera)
                     * GenTransform(camera)
                     * GenTransform(base_transform);
+            object_matrices[3] = GenPerspective(camera)
+                    * GenTransform(camera)
+                    * GenTransform(floor_transform);
+            object_matrices[5] = GenPerspective(camera)
+                    * GenTransform(camera)
+                    * GenTransform(floor_transform);
 
             /*
              * In APIs such as GL4.3+, this will apply vertex and fragment states separately.
@@ -318,6 +348,8 @@ public:
              */
             GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
             GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
+
+            GLM::SetRasterizerState(rasterstate_poly);
 
             /*
              * For VR, we could add drawcall parameters to specify this
@@ -368,6 +400,8 @@ public:
                 else
                     this->setWindowState(CDProperties::Windowed);
                 break;
+            default:
+                break;
             }
         }
     }
@@ -394,6 +428,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     props.flags ^= CDProperties::Resizable;
     props.gl.flags |= GLProperties::GLDebug;
     props.gl.flags |= GLProperties::GLVSync;
+#ifndef COFFEE_GLEAM_DESKTOP
+    props.gl.version.minor = 2;
+#endif
 
     /* The VR SDK configures some OpenGL state,
      *  so it needs to be done before any GL context is active
@@ -412,24 +449,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         return 1;
     }
     Profiler::Profile("Initialize renderer");
-
-    /* Check if required extensions are present */
-    if(!(  GL::SeparableShaderSupported()
-           ||GL::VertexAttribBinding()
-           ||GL::ViewportArraySupported()
-           ||GL::BufferStorageSupported()))
-    {
-        cDebug("Unable to start: Required OpenGL extensions not found");
-        return 1;
-    }
-
-    /* Check if optional extensions is present */
-    if(!CGL::CGL45::CullDistanceSupported())
-    {
-        cDebug("Some optional extensions were not found. Your experience might suffer.");
-    }
-
-    Profiler::Profile("Get GL requirements");
 
     /* Run the program */
     renderer->run();

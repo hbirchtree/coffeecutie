@@ -70,7 +70,7 @@ struct PlatformData
      */
     bool UseVirtualFS()
     {
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
         return true;
 #else
         return false;
