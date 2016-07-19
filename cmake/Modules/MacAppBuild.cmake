@@ -55,25 +55,19 @@ macro( MACAPP_PACKAGE
         SOURCES BUNDLE_RSRCS BUNDLE_LIBS
         OSX_ICON )
 
+    # iOS stores resources at the bottom level
     if(IOS)
         set ( RESOURCE_DIR "" )
     else()
         set ( RESOURCE_DIR "Resources" )
     endif()
 
+    # For installing the icon in the bundle
     set_source_files_properties ( ${OSX_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "${RESOURCE_DIR}" )
-
-    set ( MACOSX_BUNDLE_LONG_VERSION_STRING ${COFFEE_BUILD_STRING} )
-    set ( MACOSX_BUNDLE_BUNDLE_VERSION ${COFFEE_BUILD_STRING} )
-    set ( MACOSX_BUNDLE_SHORT_VERSION_STRING ${COFFEE_VERSION_CODE} )
+    # Extracted in order to be inserted into Info.plist
     get_filename_component ( OSX_ICON_NAME "${OSX_ICON}" NAME )
-    set ( MACOSX_BUNDLE_ICON_FILE "${OSX_ICON_NAME}" )
 
-    set ( MACOSX_BUNDLE_BUNDLE_NAME ${TITLE} )
-    set ( MACOSX_BUNDLE_COPYRIGHT "${COPYRIGHT}" )
-    set ( MACOSX_BUNDLE_INFO_STRING "${INFO_STRING}" )
-    set ( MACOSX_BUNDLE_GUI_IDENTIFIER ${TITLE} )
-
+    # An exhaustive list of all the resources that will be bundled
     set ( BUNDLE_FILES )
 
     foreach(durr ${BUNDLE_RSRCS})
@@ -91,7 +85,24 @@ macro( MACAPP_PACKAGE
         endforeach()
     endforeach()
 
-    add_executable(${TARGET} MACOSX_BUNDLE ${BUNDLE_FILES} ${OSX_ICON} ${SOURCES})
+    add_executable(${TARGET} MACOSX_BUNDLE
+        ${BUNDLE_FILES} ${OSX_ICON}
+        ${SOURCES}
+        )
+
+    # Lots of properties!
+    set_target_properties(${TARGET} PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_NAME "${TITLE}"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "${TITLE}"
+        MACOSX_BUNDLE_ICON_FILE "${OSX_ICON_NAME}"
+
+        MACOSX_BUNDLE_COPYRIGHT "${COPYRIGHT}"
+        MACOSX_BUNDLE_INFO_STRING "${INFO_STRING}"
+
+        MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
+        MACOSX_BUNDLE_BUNDLE_VERSION "${COFFEE_BUILD_STRING}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${COFFEE_VERSION_CODE}"
+        )
 
     install(
         TARGETS

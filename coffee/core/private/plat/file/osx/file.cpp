@@ -21,7 +21,10 @@ CString MacFileFun::NativePath(cstring fn)
         CFStringEncoding enc = CFStringGetSystemEncoding();
         const char* pathcstr = CFStringGetCStringPtr(pathstr,enc);
         CString out = pathcstr;
+#if defined(COFFEE_APPLE_MOBILE)
+        /* On OSX, the resource structure is different */
         out = Env::ConcatPath(out.c_str(),"Contents/Resources");
+#endif
         out = Env::ConcatPath(out.c_str(),AssetApi::GetAsset(fn));
         fprintf(stderr,"Filename: %s\n",out.c_str());
         return out;
