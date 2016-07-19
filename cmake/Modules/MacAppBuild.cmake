@@ -16,8 +16,11 @@ macro( MACFRAMEWORK_PACKAGE
     set_target_properties( ${TARGET} PROPERTIES
 	MACOSX_RPATH "."
 	FRAMEWORK ON
-	FRAMEWORK_VERSION ${VERSION_CODE}
+	FRAMEWORK_VERSION "A"
 	)
+
+    # TODO: Process resource files
+    # TODO: Process header files
 
     install(
 	TARGETS
