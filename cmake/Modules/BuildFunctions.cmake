@@ -101,7 +101,7 @@ macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
     coffee_add_framework(
 	${TARGET} ${COFFEE_LINK_OPT}
 	"2.0" "hbirchtree" "hbirchtree"
-	"${SOURCES}" "" "")
+	"${SOURCES}" "" "" "")
 endmacro()
 
 

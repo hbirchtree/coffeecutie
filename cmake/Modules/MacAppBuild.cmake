@@ -9,25 +9,37 @@ macro( MACFRAMEWORK_PACKAGE
 
     add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
 
-    add_library(${TARGET} ${LINKOPT} "${SOURCES}")
+    if(NOT IOS)
+        add_library("${TARGET}" SHARED "${SOURCES}")
+    else()
+        add_library("${TARGET}" STATIC "${SOURCES}")
+    endif()
 
-    set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-    set_target_properties( ${TARGET} PROPERTIES
-	MACOSX_RPATH "."
-	FRAMEWORK ON
-	FRAMEWORK_VERSION "A"
-	)
+    set_target_properties("${TARGET}" PROPERTIES 
+        POSITION_INDEPENDENT_CODE TRUE
+        FRAMEWORK TRUE
+        MACOSX_FRAMEWORK_IDENTIFIER org.coffeecutie-dev.${TARGET}
+        MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${VERSION_CODE}
+        MACOSX_FRAMEWORK_BUNDLE_VERSION ${VERSION_CODE}
+        )
 
     # TODO: Process resource files
     # TODO: Process header files
 
     install(
 	TARGETS
-	${TARGET}
+	"${TARGET}"
 
-	DESTINATION
+        LIBRARY DESTINATION
+        lib
+
+        ARCHIVE DESTINATION
+        lib
+
+        FRAMEWORK DESTINATION
 	frameworks
+        COMPONENT
+        bin
 	)
 endmacro()
 

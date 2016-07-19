@@ -1,42 +1,56 @@
 # Fiddle with warning flags
 if (NOT WIN32)
     # These are effectively used by Clang and GCC, descriptive names
+    if((APPLE AND IOS) OR NOT APPLE)
+        # When statically linking, hide symbols
+        # This helps us create dynamic frameworks on OSX
+        add_definitions (
+            -fvisiblity=hidden
+            )
+    endif()
     add_definitions (
-        -fvisibility=hidden
+        #-fvisibility=hidden
         #-Winline
         #-Wall
         #-Werror
         #-Wpadded
         )
     if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT COFFEE_BUILD_SWIG_BINDING )
+        # Because exceptions are garbage
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions" )
         if(NOT COFFEE_BUILD_OPENSSL)
+            # If we can, get rid of RTTI, too
+            # It might be useful for dynamic_cast, but it bloats executables
             set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti" )
         endif()
     endif()
     if(APPLE)
+        # Temporary workaround
         include_directories ( "/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1" )
         link_directories("/usr/local/opt/llvm38/lib/llvm-3.8/lib")
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" )
-        set ( CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS}" )
+        # Forcing use of C++11 (or later) libc++
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11" )
+        # To prevent undefined symbol errors when creating OSX frameworks
+        # License information and application information is undefined in the library for a reason
+        set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_LD_FLAGS} -Wl,-undefined,dynamic_lookup" )
+    elseif(ANDROID)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     endif()
 else()
-    # For Windows, we disable most annoying warnings to save compilation time.
+    # For Windows, we disable most annoying warnings to save compilation time. (damn it, Microsoft...)
     # These include system headers (which are constantly giving off warnings)
     #  as well as small warnings for padding and etc.
     # Microsoft makes the worst headers of them all.
     # We also set a target Windows NT version for some reason
+    # Vista is long gone, so 7 (0x0601) is a good target
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1" )
     add_definitions (
-        #        /W1
         -D_WIN32_WINNT=0x0601
         )
 endif()
 
 if(ANDROID)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(APPLE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11")
+    # On Android, force -std=c++11
 endif()
 
 # Static builds
