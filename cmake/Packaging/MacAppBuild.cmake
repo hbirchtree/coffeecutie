@@ -99,7 +99,34 @@ macro( MACAPP_PACKAGE
         )
 
     if(IOS)
+        set ( IOS_NAME "${TITLE}" )
+        set ( IOS_IDENTIFIER "${TITLE}" )
+        set ( IOS_INFO "${INFO_STRING}" )
 
+        set ( IOS_BUNDLEVER "${COFFEE_BUILD_STRING}" )
+        set ( IOS_SHORTVER "${COFFEE_VERSION_CODE}" )
+        set ( IOS_LONGVER "${COFFEE_BUILD_STRING}" )
+
+        set ( IOS_EXEC "${TITLE}" )
+        set ( IOS_LANG "English" )
+        set ( IOS_LAUNCH_IMG "Default")
+        set ( IOS_HIDE_STATUSBAR "true" )
+        set ( IOS_PRERENDER_ICON "true" )
+
+        set ( IOS_ORIENTATION "UIInterfaceOrientationLandscapeLeft" )
+
+        set ( IOS_SIGNATURE "?" )
+
+        set ( IOS_PLIST_FILE "${TARGET}_Info.plist.in" )
+
+        configure_file (
+            "${COFFEE_DESKTOP_DIRECTORY}/osx/ios/Info.plist.xml"
+            "${IOS_PLIST_FILE}"
+            )
+
+        set_target_properties ( ${TARGET} PROPERTIES
+            MACOSX_BUNDLE_INFO_PLIST "${IOS_PLIST_FILE}"
+            )
     endif()
 
     # Lots of properties!
@@ -126,23 +153,7 @@ macro( MACAPP_PACKAGE
     #    else()
     #        set ( APP_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TITLE}.app" )
 
-    #        set ( IOS_NAME "${TITLE}" )
-    #        set ( IOS_IDENTIFIER "${TITLE}" )
-    #        set ( IOS_INFO "${INFO_STRING}" )
 
-    #        set ( IOS_BUNDLEVER "${COFFEE_BUILD_STRING}" )
-    #        set ( IOS_SHORTVER "${COFFEE_VERSION_CODE}" )
-    #        set ( IOS_LONGVER "${COFFEE_BUILD_STRING}" )
-
-    #        set ( IOS_EXEC "${TITLE}" )
-    #        set ( IOS_LANG "English" )
-    #        set ( IOS_LAUNCH_IMG "Default")
-    #        set ( IOS_HIDE_STATUSBAR "true" )
-    #        set ( IOS_PRERENDER_ICON "true" )
-
-    #        set ( IOS_ORIENTATION "UIInterfaceOrientationLandscapeLeft" )
-
-    #        set ( IOS_SIGNATURE "..." )
 
     #        add_executable ( ${TARGET} ${SOURCES} )
 
