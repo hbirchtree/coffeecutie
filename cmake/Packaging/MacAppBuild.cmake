@@ -117,7 +117,7 @@ macro( MACAPP_PACKAGE
 
         set ( IOS_SIGNATURE "?" )
 
-        set ( IOS_PLIST_FILE "${TARGET}_Info.plist.in" )
+        set ( IOS_PLIST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_Info.plist.in" )
 
         configure_file (
             "${COFFEE_DESKTOP_DIRECTORY}/osx/ios/Info.plist.xml"
