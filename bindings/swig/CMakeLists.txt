@@ -50,7 +50,7 @@ include_directories (
     )
 
 # Define C++11 flag
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # We have interfaces in this directory
 set(INTERFACE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/interfaces")

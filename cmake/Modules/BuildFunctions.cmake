@@ -172,6 +172,16 @@ function(COFFEE_ADD_EXAMPLE_LONGER
                 "${BUNDLE_RSRCS}"
                 "" "${BUNDLE_LIBS}" )
         endif()
+
+        if(NOT COFFEE_GENERATE_APPIMAGE AND NOT COFFEE_GENERATE_FLATPAK)
+            install(
+                TARGETS
+                ${TARGET}
+
+                DESTINATION
+                bin
+                )
+        endif()
     else()
         add_executable(${TARGET} ${SOURCES_MOD})
 

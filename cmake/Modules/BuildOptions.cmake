@@ -2,6 +2,8 @@
 # Documentation!
 #
 
+option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
+
 # Generates Doxygen documentation, requires Doxygen installed in PATH
 option ( COFFEE_DOCS "Generate documentation" OFF )
 
@@ -40,8 +42,7 @@ option ( COFFEE_PYTHON "Build Python binding" OFF)
 option ( COFFEE_CSHARP "Build C# binding" OFF)
 ###
 
-#
-#
+# #
 
 #
 # Build options
@@ -69,6 +70,7 @@ option ( COFFEE_BUILD_OPENAL "Build with OpenAL support" ON)
 option ( COFFEE_BUILD_SDL2 "Build with SDL2 windowing and input" ON)
 # Requires SDL2 in most cases, unless you love writing window management code
 option ( COFFEE_BUILD_GLEAM "Build GLeam rendering API" ON )
+# RHI is written on top of GLeam to provide a device interface, giving access to buffers and surfaces.
 option ( COFFEE_BUILD_GLEAM_RHI "Build GLeam rendering hardware interface" ON )
 # Requires... Nothing. Only core library
 option ( COFFEE_BUILD_CBLAM "Build with Blam engine parsing" ON )
@@ -131,8 +133,8 @@ if(ANDROID)
 endif()
 
 if(COFFEE_BUILD_OPENAL)
-	find_package(OpenAL QUIET)
-	if(NOT OPENAL_FOUND)
-		set ( COFFEE_BUILD_OPENAL OFF )
-	endif()
+    find_package(OpenAL QUIET)
+    if(NOT OPENAL_FOUND)
+        set ( COFFEE_BUILD_OPENAL OFF )
+    endif()
 endif()

@@ -1,9 +1,0 @@
-# Toolchain file, of course
-CMAKE_TOOLCHAIN_FILE:FILEPATH=${CMAKE_SOURCE_DIR}/cmake/Toolchains/android.toolchain.cmake
-
-CMAKE_INSTALL_PREFIX:PATH=${CMAKE_BINARY_DIR}/out
-
-# Android toolchain-specific
-ANDROID_STL:STRING=gnustl_static
-ANDROID_NATIVE_API_LEVEL:STRING=19
-ANDROID_ABI:STRING="armeabi-v7a with VFPv3"

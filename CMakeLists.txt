@@ -22,7 +22,9 @@ set ( CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake/Packaging
     )
 
-message ("-- Building as: ${CMAKE_BUILD_TYPE}")
+if(COFFEE_GENERATE_LIBRARIES)
+    message ("-- Building as: ${CMAKE_BUILD_TYPE}")
+endif()
 
 # Make it verbose
 set ( CMAKE_VERBOSE_MAKEFILE on )
@@ -32,9 +34,11 @@ set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_SOURCE_DIR}/libs )
 
 include ( BuildOptions )
 
-include ( BuildFunctions )
+if(COFFEE_GENERATE_LIBRARIES)
+    include ( BuildFunctions )
 
-include ( BuildFlags )
+    include ( BuildFlags )
+endif()
 
 # Primary includes
 include_directories (
@@ -45,11 +49,13 @@ include_directories (
 
 include_directories( SYSTEM ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include )
 
-install ( DIRECTORY
-    ${CMAKE_SOURCE_DIR}/include
-    DESTINATION
-    .
-    )
+if(COFFEE_GENERATE_LIBRARIES)
+    install ( DIRECTORY
+        ${CMAKE_SOURCE_DIR}/include
+        DESTINATION
+        .
+        )
+endif()
 
 # General include directories, not ours
 include_directories ( SYSTEM
@@ -73,18 +79,23 @@ set (
     ${COFFEE_CORE_INCLUDE_DIR}
     )
 
-# Add subdir for core modules
-add_subdirectory(coffee)
+if(COFFEE_GENERATE_LIBRARIES)
+    # Add subdir for core modules
+    add_subdirectory(coffee)
 
-# Add subdir for example applications
-add_subdirectory(examples)
+    # Add subdir for generation of language bindings
+    add_subdirectory(bindings)
+
+    # Tools, includes the GUI profiler
+    add_subdirectory(tools)
+
+    # Add subdir for example applications
+    add_subdirectory(examples)
+
+    # Add subdir for extensions, weak bindings of libraries
+    add_subdirectory(ext)
+endif()
+
 # Add documentation directory, not built by default (increases build time)
 add_subdirectory(docs)
 
-add_subdirectory(bindings)
-
-# Tools, includes the GUI profiler
-add_subdirectory(tools)
-
-# Add subdir for extensions, weak bindings of libraries
-add_subdirectory(ext)

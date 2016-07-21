@@ -1,3 +1,8 @@
+#
+# Untested, has issues with Alpine's STL (does not compile)
+#
+#
+
 FROM alpine:latest
 MAINTAINER H. Birch Tree
 

@@ -14,6 +14,7 @@ template<typename Ctxt,typename IterType>
  * \param kernel Run on each iteration
  * \param iterations Number of iterations in total
  * \param context
+ * \param weight A specific weight given to each job, used to determine how many tasks can be run in parallel on each core
  * \return
  */
 FORCEDINLINE Future<void> ParallelFor(
