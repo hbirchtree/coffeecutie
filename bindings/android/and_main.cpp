@@ -303,11 +303,6 @@ void android_main(struct android_app* state)
 //    cDebug("Board: {0}",Coffee_AndroidGetBoard());
 
     {
-        /* Set version information */
-        CoffeeApplicationData.application_name = COFFEE_APPLICATION_NAME;
-        CoffeeApplicationData.organization_name = COFFEE_ORGANIZATION_NAME;
-        CoffeeApplicationData.version_code = COFFEE_VERSION_CODE;
-
         /* Get application name, just stock */
         cstring_w appname = &(CoffeeApplicationData.application_name[0]);
 
