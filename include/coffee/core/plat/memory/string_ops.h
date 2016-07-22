@@ -33,11 +33,15 @@ FORCEDINLINE cstring_w StrCat(cstring_w s1, cstring s2)
 
 FORCEDINLINE szptr StrLen(cstring s)
 {
+    if(!s)
+	return 0;
     return strlen(s);
 }
 
 FORCEDINLINE szptr StrLen(cwstring s)
 {
+    if(!s)
+	return 0;
     return wcslen(s);
 }
 
