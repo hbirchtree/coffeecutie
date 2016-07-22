@@ -323,11 +323,13 @@ struct PosixFileFun : PosixFileFun_def<
 
 struct PosixDirFun : DirFunDef
 {
+    static bool ChDir(cstring dir);
+
     static bool MkDir(cstring dname, bool createParent);
 
     STATICINLINE bool RmDir(cstring dname)
     {
-        return rmdir(dname) == 0;
+        return rmdir(dname) == 0 || (errno = 0);
     }
 
     using Type = FileFunDef::NodeType;

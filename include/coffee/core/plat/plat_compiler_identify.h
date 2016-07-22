@@ -24,7 +24,7 @@
 
 #undef C_SYSTEM_BITNESS
 
-#if __x86_64__ || __ppc64__
+#if __x86_64__ || __ppc64__ || __aarch64__
 #define C_SYSTEM_BITNESS 64
 #else
 #define C_SYSTEM_BITNESS 32

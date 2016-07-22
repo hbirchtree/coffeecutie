@@ -30,5 +30,17 @@ bool LinuxFileFun::VerifyAsset(cstring fn)
 }
 
 }
+
+bool Posix::PosixDirFun::ChDir(cstring dir)
+{
+    bool stat = chdir(dir) == 0;
+    if(!stat)
+    {
+        PosixFileFun::ErrnoCheck(dir);
+        return false;
+    }
+    return true;
+}
+
 }
 }

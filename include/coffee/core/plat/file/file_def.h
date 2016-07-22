@@ -134,6 +134,8 @@ struct DirFunDef
 
     using DirList = Vector<DirItem_t>;
 
+    static bool ChDir(cstring){return false;}
+
     static bool MkDir(cstring, bool){return false;}
     static bool RmDir(cstring){return false;}
 
