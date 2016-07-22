@@ -31,12 +31,12 @@ FORCEDINLINE cstring_w StrCat(cstring_w s1, cstring s2)
     return strcat(s1,s2);
 }
 
-FORCEDINLINE int StrLen(cstring s)
+FORCEDINLINE szptr StrLen(cstring s)
 {
     return strlen(s);
 }
 
-FORCEDINLINE int StrLen(cwstring s)
+FORCEDINLINE szptr StrLen(cwstring s)
 {
     return wcslen(s);
 }
