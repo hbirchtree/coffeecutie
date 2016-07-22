@@ -34,3 +34,6 @@
 [submodule "sample_data"]
 	path = sample_data
 	url = https://github.com/hbirchtree/coffeecutie-data.git
+[submodule "tools/automation"]
+	path = tools/automation
+	url = https://github.com/hbirchtree/coffeecutie-automation-tools.git
