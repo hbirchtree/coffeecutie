@@ -57,9 +57,10 @@ void GLEAM_API::LoadAPI(bool debug)
         const Display::CGLVersion ver30es(3,0);
         const Display::CGLVersion ver32es(3,2);
 
-        if(ver>=ver32es)
-            GL_CURR_API = GLES_3_2;
-        else if(ver>=ver30es)
+//        if(ver>=ver32es)
+//            GL_CURR_API = GLES_3_2;
+//        else
+            if(ver>=ver30es)
             GL_CURR_API = GLES_3_0;
     }
 
@@ -231,14 +232,14 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
     /* TODO: Tie uniforms to their applicable stages */
 
     /* Skip uniform application on 3.3 fragment stage */
-    if(GL_CURR_API == GL_3_3 && stage == ShaderStage::Fragment)
+    if((GL_CURR_API == GL_3_3 || GL_CURR_API==GLES_3_0) && stage == ShaderStage::Fragment)
         return;
 
     CGhnd prog = 0;
 
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
         prog = pipeline.m_handle;
-    else if(GL_CURR_API==GL_4_3)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         /*TODO: Find better way of doing this */
         for(auto s : pipeline.m_programs)
@@ -299,7 +300,7 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
     for(auto s : ustate.m_samplers)
     {
         auto& handle = s.second;
-        if(GL_CURR_API==GL_3_3)
+        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
         {
             /* Set up texture state */
             CGL33::TexActive(handle->m_unit);

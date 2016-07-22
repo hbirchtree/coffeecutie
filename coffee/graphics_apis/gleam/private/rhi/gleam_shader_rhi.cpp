@@ -98,8 +98,10 @@ bool GLEAM_Pipeline::assemble()
         bool stat = CGL43::PipelineValidate(m_handle);
         if(GL_DEBUG_MODE && !stat)
         {
+            ShaderStage s = CGL43::PipelineGetStages(m_handle);
             CString log = CGL43::PipelineGetLog(m_handle);
             cDebug("Pipeline validation error: {0}",log);
+            cDebug("Pipeline stages: {0}",(uint32)s);
         }
         return stat;
     }
@@ -167,7 +169,7 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
 
 void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms)
 {
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
         CGhnd prog = pipeline.m_handle;
 

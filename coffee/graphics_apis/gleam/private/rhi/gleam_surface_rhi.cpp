@@ -46,12 +46,12 @@ GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt,uint32 mips,uint32 texflags):
 void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
 {
     CGL33::TexBind(m_type,m_handle);
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         CGL33::TexImage2D(Texture::T2D,0,m_pixfmt,
                           size.w,size.h,0,c,
                           BitFormat::UByte,nullptr);
-    }else if(GL_CURR_API==GL_4_3)
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         CGL43::TexStorage2D(Texture::T2D,m_mips,m_pixfmt,
                             size.w,size.h);
@@ -63,7 +63,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
                              CSize size, c_cptr data,
                              CPoint offset, uint32 mip)
 {
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         CGL33::TexBind(m_type,m_handle);
         c_cptr data_ptr = data;
@@ -121,7 +121,7 @@ void GLEAM_Surface2DArray::allocate(CSize3 size, PixelComponents c)
         CGL33::TexImage3D(Texture::T2DArray,0,m_pixfmt,
                           size.width,size.height,size.depth,0,c,
                           BitFormat::UByte,nullptr);
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0)
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         CGL43::TexStorage3D(Texture::T2DArray,m_mips,m_pixfmt,
                             size.width,size.height,size.depth);

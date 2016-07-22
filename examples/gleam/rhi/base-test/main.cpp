@@ -2,6 +2,7 @@
 #include <coffee/graphics_apis/CGLeamRHI>
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
+#include <coffee/core/CFiles>
 
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics_apis/SMesh>
@@ -99,28 +100,38 @@ public:
             vertdesc.addAttribute(tc);
         }
 
+        cDebug("Generated vertex buffers");
+
         GLM::SHD v_shader = {};
         GLM::SHD f_shader = {};
         GLM::PIP eye_pip = {};
 
         /* Compiling shaders and assemble a graphics pipeline */
         {
-            CResources::Resource v_rsc("vr/vshader.glsl");
-            CResources::Resource f_rsc("vr/fshader.glsl");
+            CResources::Resource v_rsc("vr/vshader_es.glsl");
+            CResources::Resource f_rsc("vr/fshader_es.glsl");
             CResources::FileMap(v_rsc);
             CResources::FileMap(f_rsc);
+            cDebug("Shaders loaded");
             if(v_shader.compile(CGL::ShaderStage::Vertex,(cstring)v_rsc.data)&&
                     f_shader.compile(CGL::ShaderStage::Fragment,(cstring)f_rsc.data))
             {
+                cDebug("Shaders compiled");
                 eye_pip.attach(v_shader,CGL::ShaderStage::Vertex);
                 eye_pip.attach(f_shader,CGL::ShaderStage::Fragment);
+                cDebug("Shaders attached");
                 if(!eye_pip.assemble())
+                {
+                    cDebug("Invalid pipeline");
                     return;
+                }
+                cDebug("GPU pipeline assembled");
             }else
                 return;
             CResources::FileUnmap(v_rsc);
             CResources::FileUnmap(f_rsc);
         }
+        cDebug("Compiled shaders");
 
         /*
          * Binding the pipeline for usage
@@ -147,16 +158,20 @@ public:
             CResources::FileUnmap(rsc);
         }
 
+        cDebug("Uploading textures");
+
         /* Attaching the texture data to a sampler object */
         GLM::SM_2DA eyesamp;
         eyesamp.alloc();
         eyesamp.attach(&eyetex);
         eyesamp.setFiltering(Filtering::Linear,Filtering::Linear);
 
+        cDebug("Setting sampler properties");
+
         /* Creating the uniform data store */
         Bytes transform_data = {};
-        Bytes mult_data = {};
         Bytes time_data = {};
+        Bytes object_id_data = {};
 
         uint8 object_id[3] = {};
         Matf4 object_matrices[6] = {};
@@ -173,9 +188,10 @@ public:
         transform_data.data = (byte_t*)object_matrices;
         time_data.size = sizeof(time_value);
         time_data.data = (byte_t*)&time_value;
+        object_id_data.size = sizeof(object_id);
+        object_id_data.data = (byte_t*)object_id;
 
         GLM::UNIFVAL transforms = {};
-        GLM::UNIFVAL multipliers = {};
         GLM::UNIFVAL timeval = {};
         GLM::UNIFSMP textures_array = eyesamp.handle();
 
@@ -217,8 +233,9 @@ public:
                 cDebug("Unhandled uniform value: {0}",u.m_name);
         }
 
+        cDebug("Acquire and set shader uniforms");
+
         transforms.data = &transform_data;
-        multipliers.data = &mult_data;
         timeval.data = &time_data;
 
         /* Applying state information */
@@ -226,6 +243,8 @@ public:
         GLM::SetPixelProcessState(pixlstate);
         GLM::SetDepthState(deptstate);
         GLM::SetTessellatorState(teslstate);
+
+        cDebug("Set renderer state");
 
         /* Now generating a drawcall, which only specifies small state that can be shared */
         GLM::DrawCall call;
@@ -266,16 +285,10 @@ public:
         bigscalar tprevious = this->contextTime();
         bigscalar tdelta = 0.1;
 
-        scalar v0 = 0;
-
         /* Clipping between the two virtual viewports */
 #ifdef COFFEE_GLEAM_DESKTOP
         GL::Enable(GL::Feature::ClipDist,0);
 #endif
-
-        /* These improve rendering quality */
-//        GL::Enable(GL::Feature::PolygonSmooth);
-//        GL::Enable(GL::Feature::LineSmooth);
 
         while(!closeFlag())
         {
@@ -407,10 +420,16 @@ public:
     }
 };
 
-int32 coffee_main(int32 argc, cstring_w* argv)
+int32 coffee_main(int32, cstring_w*)
 {
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
+
+    {
+        CString dir = Env::ExecutableName();
+        dir = Env::DirName(dir.c_str());
+        DirFun::ChDir(dir.c_str());
+    }
 
     /* Required for SDL2 applications, initializes SDL state */
     SubsystemWrapper<SDL2::SDL2> sdl2;
@@ -429,7 +448,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     props.gl.flags |= GLProperties::GLDebug;
     props.gl.flags |= GLProperties::GLVSync;
 #ifndef COFFEE_GLEAM_DESKTOP
-    props.gl.version.minor = 2;
+    props.gl.version.minor = 0;
 #endif
 
     /* The VR SDK configures some OpenGL state,

@@ -21,7 +21,7 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute &attr)
     m_attributes.push_back(attr);
     CGL33::VAOBind(m_handle);
     CGL33::VAOEnableAttrib(attr.index());
-    if(GL_CURR_API==GL_4_3)
+    if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         CGL43::VAOAttribFormat(attr.index(),attr.size(),attr.type(),false,attr.offset());
     }
@@ -30,7 +30,7 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute &attr)
 void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
 {
     CGL43::VAOBind(m_handle);
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         buf.bind();
         for(GLEAM_VertAttribute const& attr : m_attributes)
@@ -44,7 +44,7 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
                     CGL33::VAODivisor(attr.index(),1);
             }
     }
-    else if(GL_CURR_API==GL_4_3)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         for(GLEAM_VertAttribute const& attr : m_attributes)
             if(binding == attr.bufferAssociation())
@@ -67,7 +67,7 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer *buffer)
 void GLEAM_VertDescriptor::bind()
 {
     CGL33::VAOBind(m_handle);
-    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3)
+    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         if(m_ibuffer)
             m_ibuffer->bind();
@@ -77,7 +77,7 @@ void GLEAM_VertDescriptor::bind()
 void GLEAM_VertDescriptor::unbind()
 {
     CGL33::VAOBind(0);
-    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3)
+    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         if(m_ibuffer)
             m_ibuffer->unbind();

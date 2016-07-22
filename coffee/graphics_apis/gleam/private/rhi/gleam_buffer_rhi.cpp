@@ -18,7 +18,7 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
 {
     m_size = size;
     CGL33::BufBind(m_type,m_handle);
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
         CGL33::BufData(m_type,m_size,data,m_access);
     else if(GL_CURR_API==GL_4_3)
         CGL43::BufStorage(m_type,m_size,data,m_access);
