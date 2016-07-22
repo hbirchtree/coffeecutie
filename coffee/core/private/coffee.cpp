@@ -69,11 +69,15 @@ FORCEDINLINE void PrintBuildInfo()
 
 FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 {
-    cOutputPrint("{0}",arg);
+    cOutputPrint("{0}",arg.helpMessage());
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
+#ifndef NDEBUG
+    Coffee::PrintingVerbosityLevel = 1;
+#endif
+
 #ifdef COFFEE_SLAP_LOWMEM
     /*
      * Dealing with non-PAE systems is a pain in the ass, fuck it
@@ -92,9 +96,14 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
     {
         ArgumentCollection parser;
-        parser.registerArgument(ArgumentCollection::Switch,"help","h");
-        parser.registerArgument(ArgumentCollection::Switch,"version");
-        parser.registerArgument(ArgumentCollection::Switch,"licenses");
+        parser.registerArgument(ArgumentCollection::Switch,"help","h",
+                                "Print help information and exit");
+        parser.registerArgument(ArgumentCollection::Switch,"version",nullptr,
+                                "Print version information and exit");
+        parser.registerArgument(ArgumentCollection::Switch,nullptr,"v",
+                                "Print verbose messages to terminal while running");
+        parser.registerArgument(ArgumentCollection::Switch,"licenses",nullptr,
+                                "Print license information and exit");
 
         parser.parseArguments(argc,argv);
 
@@ -105,6 +114,10 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                 PrintVersionInfo();
                 PrintHelpInfo(parser);
                 return 0;
+            }
+            if(a.first == "v" && a.second)
+            {
+                Coffee::PrintingVerbosityLevel++;
             }
             if(a.first == "version" && a.second)
             {
