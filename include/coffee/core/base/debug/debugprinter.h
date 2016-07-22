@@ -9,6 +9,9 @@
 #include "outputprinter.h"
 
 namespace Coffee{
+
+extern uint8 PrintingVerbosityLevel;
+
 namespace DebugFun{
 
 struct DebugPrinterImpl : DebugPrinterDef
@@ -110,6 +113,9 @@ struct DebugPrinterImpl : DebugPrinterDef
     template<typename... Args>
     STATICINLINE void cDebug(cstring f, Args... a)
     {
+        if(PrintingVerbosityLevel < 1)
+            return;
+
         CString fmt = FormatPrintString(Severity::Debug,
                                         0,f,a...);
         OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
@@ -117,6 +123,9 @@ struct DebugPrinterImpl : DebugPrinterDef
     template<typename... Args>
     STATICINLINE void cWarning(cstring f, Args... a)
     {
+        if(PrintingVerbosityLevel < 1)
+            return;
+
         CString fmt = FormatPrintString(Severity::Medium,
                                         0,f,a...);
         OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
@@ -132,12 +141,18 @@ struct DebugPrinterImpl : DebugPrinterDef
     template<typename... Args>
     STATICINLINE void cBasicPrint(cstring f, Args... a)
     {
+        if(PrintingVerbosityLevel < 1)
+            return;
+
         CString fmt = cStringFormat(f,a...);
         OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
     }
     template<typename... Args>
     STATICINLINE void cBasicPrintNoNL(cstring f, Args... a)
     {
+        if(PrintingVerbosityLevel < 1)
+            return;
+
         OutputPrinter::fprintf(DefaultDebugOutputPipe,f,a...);
     }
 };

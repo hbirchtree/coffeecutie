@@ -2,6 +2,8 @@
 
 namespace Coffee{
 
+uint8 PrintingVerbosityLevel = 0;
+
 /* Move exported functions to common place, not spreading it like this */
 
 using namespace DebugFun;
