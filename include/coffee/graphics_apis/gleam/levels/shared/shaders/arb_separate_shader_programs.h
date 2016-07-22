@@ -39,6 +39,39 @@ struct CGL_SeparableShaderPrograms
         return s;
     }
 
+    STATICINLINE ShaderStage PipelineGetStages(CGhnd p)
+    {
+        static const CGenum shader_types[] = {
+            GL_VERTEX_SHADER,
+            GL_FRAGMENT_SHADER,
+            GL_TESS_CONTROL_SHADER,
+            GL_TESS_EVALUATION_SHADER,
+            GL_GEOMETRY_SHADER,
+            GL_COMPUTE_SHADER
+        };
+        static const ShaderStage shader_values[] = {
+            ShaderStage::Vertex,
+            ShaderStage::Fragment,
+            ShaderStage::TessControl,
+            ShaderStage::TessEval,
+            ShaderStage::Geometry,
+            ShaderStage::Compute
+        };
+
+        ShaderStage out = {};
+
+        int32 v;
+        for(uint8 i=0;i<6;i++)
+        {
+            v = 0;
+            PipelineGetiv(p,shader_types[i],&v);
+            if(v != 0)
+                out |= shader_values[i];
+        }
+
+        return out;
+    }
+
     STATICINLINE bool PipelineValidate(CGhnd h)
     {
         glValidateProgramPipeline(h);

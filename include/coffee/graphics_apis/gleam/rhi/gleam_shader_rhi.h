@@ -18,9 +18,9 @@ struct GLEAM_Shader : GraphicsAPI::Shader
     }
 
     bool compile(ShaderStage stage,cstring str);
+    void dealloc();
 
 protected:
-    void dealloc();
 
     CGhnd m_handle;
     ShaderStage m_stages;
