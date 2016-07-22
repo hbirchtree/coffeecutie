@@ -108,8 +108,15 @@ public:
 
         /* Compiling shaders and assemble a graphics pipeline */
         {
-            CResources::Resource v_rsc("vr/vshader_es.glsl");
-            CResources::Resource f_rsc("vr/fshader_es.glsl");
+            const constexpr cstring shader_files[] = {
+                "vr/vshader.glsl",
+                "vr/fshader.glsl",
+                "vr/vshader_es.glsl",
+                "vr/fshader_es.glsl"
+            };
+
+            CResources::Resource v_rsc(shader_files[PlatformData::IsGLES() * 2]);
+            CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1]);
             CResources::FileMap(v_rsc);
             CResources::FileMap(f_rsc);
             cDebug("Shaders loaded");
@@ -445,8 +452,8 @@ int32 coffee_main(int32, cstring_w*)
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual();
     props.flags ^= CDProperties::Resizable;
-    props.gl.flags |= GLProperties::GLDebug;
-    props.gl.flags |= GLProperties::GLVSync;
+//    props.gl.flags |= GLProperties::GLDebug;
+//    props.gl.flags |= GLProperties::GLVSync;
 #ifndef COFFEE_GLEAM_DESKTOP
     props.gl.version.minor = 0;
 #endif

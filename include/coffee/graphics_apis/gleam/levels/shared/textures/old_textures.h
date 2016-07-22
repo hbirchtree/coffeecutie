@@ -27,6 +27,42 @@ struct CGL_Old_Textures
                                  PixelComponents fmt,BitFormat dt,c_cptr p)
     {glTexImage3D(to_enum(t),level,to_enum(ifmt),w,h,d,border,to_enum(fmt),to_enum(dt),p);}
 
+    /* TexGet */
+    STATICINLINE void TexGetImageSize(Texture t, PixCmp cmp, PixelFormat fmt,
+                                      uint32& w, uint32& h, uint32& d,
+                                      szptr& size)
+    {
+	TexGetParameteruiv(t,GL_TEXTURE_WIDTH,&w);
+	TexGetParameteruiv(t,GL_TEXTURE_HEIGHT,&h);
+	TexGetParameteruiv(t,GL_TEXTURE_DEPTH,&d);
+
+	/* TODO: Calculate pixel format size */
+	size = w * h * d * (1);
+    }
+#ifdef COFFEE_GLEAM_DESKTOP
+    STATICINLINE void TexGetCompressedSize(Texture t, uint32& w, uint32& h, uint32& d, szptr& size)
+    {
+	TexGetParameteruiv(t,GL_TEXTURE_WIDTH,&w);
+	TexGetParameteruiv(t,GL_TEXTURE_HEIGHT,&h);
+	TexGetParameteruiv(t,GL_TEXTURE_DEPTH,&d);
+
+	/*TODO: Calculate compressed size*/
+	size = w * h * d * (1);
+    }
+#endif
+
+    STATICINLINE void TexGetImage(Texture t, uint32 level, PixelComponents fmt,
+                                  PixelFormat outfmt, Bytes& data)
+    {
+	glGetTexImage(to_enum(t),level,to_enum(fmt),to_enum(outfmt),data.data);
+    }
+#ifdef COFFEE_GLEAM_DESKTOP
+    STATICINLINE void TexGetCompressedImage(Texture t, uint32 level, Bytes& data)
+    {
+	glGetCompressedTexImage(to_enum(t),level,data.data);
+    }
+#endif
+
     /* TexSubImage */
 
     STATICINLINE void TexSubImage2D(Texture t,uint32 level,int32 x,int32 y,
@@ -88,6 +124,18 @@ struct CGL_Old_Textures
     {glGenerateMipmap(to_enum(t));}
 
     /* TexParameter */
+
+    STATICINLINE void TexGetParameteriv(Texture t, CGenum f, int32* v)
+    {glGetTexParameteriv(to_enum(t),f,v);}
+    STATICINLINE void TexGetParameterfv(Texture t, CGenum f, scalar* v)
+    {glGetTexParameteriv(to_enum(t),f,v);}
+    STATICINLINE void TexGetParameteruiv(Texture t, CGenum f, uint32* v)
+    {glGetTexParameterIuiv(to_enum(t),f,v);}
+
+    STATICINLINE void TexGetLevelParameteriv(Texture t, CGenum f, int32* v)
+    {glGetTexLevelParameteriv(to_enum(t),f,v);}
+    STATICINLINE void TexGetLevelParameterfv(Texture t, CGenum f, scalar* v)
+    {glGetTexLevelParameteriv(to_enum(t),f,v);}
 
     STATICINLINE void TexParameterfv(Texture t, CGenum e, const scalar* v)
     {glTexParameterfv(to_enum(t),e,v);}
