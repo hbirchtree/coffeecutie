@@ -16,9 +16,9 @@ struct CGL_Implementation : CGL_Shared_Functions
 {
     /* Base OpenGL, all implemented in GL3.3 */
     static void Enable(Feature e)
-    {glEnable(to_enum(e));}
+    {glEnable(to_enum(e,0));}
     static void Disable(Feature e)
-    {glDisable(to_enum(e));}
+    {glDisable(to_enum(e,0));}
 
     STATICINLINE void Enable(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
     STATICINLINE void Disable(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
