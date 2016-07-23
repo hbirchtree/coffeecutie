@@ -2,6 +2,8 @@ if(ANDROID)
     find_package ( CfAndroidMain )
     find_package ( AndroidToolkit )
 
+    include ( AndroidNdkGdb )
+
     if(ANDROID_USE_SDL2_LAUNCH)
         find_package(SDL2main REQUIRED)
     endif()
@@ -39,6 +41,7 @@ endif()
 # Dependency_Libs : libraries which will be added to the APK
 #
 macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs Icon_File )
+
     message ( "APK: Generating ${Pkg_Name} (${Api_Arch})" )
     message ( "TODO: Process the file ${Icon_File}")
 
@@ -66,6 +69,7 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
     set ( ANDROID_API_TARGET ${Api_Target} )
     set ( ANDROID_API_MIN_TARGET "16" )
 
+
     # For valid options, see:
     # http://developer.android.com/guide/topics/manifest/activity-element.html
     set ( ANDROID_ORIENTATION_MODE "sensorLandscape" )
@@ -81,14 +85,15 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
     set ( ANDROID_APK_FILE_OUTPUT
         "${ANDROID_APK_OUTPUT_DIR}/${ANDROID_PACKAGE_NAME}_${RELEASE_PREFIX}.apk" )
 
+
     set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${Target_Name} )
 
     set ( ANDROID_LIB_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/libs/${Api_Arch} )
     set ( ANDROID_ASSET_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/assets )
 
-    # Where the primary class is found, also decides names of package
-    set ( ANDROID_MAIN_PATH )
+    set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
 
+    # Where the primary class is found, also decides names of package
     string ( REGEX REPLACE "\\." "/" ANDROID_MAIN_PATH "${ANDROID_PACKAGE_NAME}" )
 
     # Create build directory
@@ -101,8 +106,14 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_PROJECT_TEMPLATE_DIR} ${BUILD_OUTDIR}
         )
+    add_custom_command ( TARGET ${Target_Name}
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${ANDROID_LIB_OUTPUT_DIRECTORY}
+        )
 
+    #
     # Create library directory
+    #
     add_custom_command ( TARGET ${Target_Name}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_LIB_OUTPUT_DIRECTORY}"
@@ -117,6 +128,12 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${Target_Name}>" ${ANDROID_LIB_OUTPUT_DIRECTORY}
         )
+
+    #
+    # Enable GDB remote debugging
+    #
+    android_ndk_gdb_enable(${TARGET} "${BUILD_OUTDIR}" "${ANDROID_LIB_OUTPUT_DIRECTORY}")
+    android_ndk_gdb_debuggable("${TARGET}")
 
     # Install dependency libraries
     set ( ANDROID_DEPENDENCIES_STRING )
@@ -205,7 +222,13 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_APK_OUTPUT_DIR}"
         )
 
-    set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
+    add_custom_command ( TARGET ${Target_Name}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:${Target_Name}>
+            ${NDK_GDB_SOLIB_PATH}
+        )
+
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         # In release-mode, we sign and align the APK manually
@@ -216,7 +239,13 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
             )
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
-            COMMAND jarsigner -verbose -keystore ${ANDROID_APK_SIGN_KEY} -storepass $ENV{ANDROID_APK_SIGN_PASS} bin/${ANDROID_APK_NAME} ${ANDROID_APK_SIGN_ALIAS}
+            COMMAND jarsigner
+                -verbose
+                -keystore ${ANDROID_APK_SIGN_KEY}
+                -storepass $ENV{ANDROID_APK_SIGN_PASS}
+                bin/${ANDROID_APK_NAME}
+                ${ANDROID_APK_SIGN_ALIAS}
+
             WORKING_DIRECTORY ${BUILD_OUTDIR}
             )
         add_custom_command ( TARGET ${Target_Name}
@@ -275,6 +304,8 @@ macro(ANDROIDAPK_PACKAGE
         BUNDLE_RSRCS
         BUNDLE_LIBS
         ICON_ASSET)
+
+
     if(ANDROID_USE_SDL2_LAUNCH)
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
     else()
@@ -286,6 +317,7 @@ macro(ANDROIDAPK_PACKAGE
             EGL
             )
     endif()
+
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     # Lowercase the target name ofr package name

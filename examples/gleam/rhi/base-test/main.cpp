@@ -151,6 +151,7 @@ public:
 
         eyetex.allocate({1024,1024,5},PixCmp::RGBA);
 
+        Profiler::Profile("Pre-texture loading");
         for(szptr i=0;i<eyetex.m_size.depth;i++)
         {
             CResources::Resource rsc(textures[i]);
@@ -164,6 +165,7 @@ public:
 
             CResources::FileUnmap(rsc);
         }
+        Profiler::Profile("Texture loading");
 
         cDebug("Uploading textures");
 
