@@ -56,7 +56,7 @@ struct CGLES32 : CGLES30,
     STATICINLINE bool TessellationSupported()
     {
         /* TODO: Find proper extension for this */
-        return true;
+	return false;
     }
     STATICINLINE bool ShaderStorageSupported()
     {return false;}

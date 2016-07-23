@@ -23,6 +23,7 @@ struct CGL_Implementation : CGL_Shared_Functions
     STATICINLINE void Enable(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
     STATICINLINE void Disable(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
 
+    STATICINLINE void ColorMask(CColorMask op){glColorMask(op.r,op.g,op.b,op.a);}
     STATICINLINE void ColorMaski(uint32 i, CColorMask op){glColorMaski(i,op.r,op.g,op.b,op.a);}
 
     STATICINLINE void ColorLogicOp(LogicOp){}

@@ -109,7 +109,10 @@ void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
     }
 
     GLC::ColorLogicOp(rstate.colorOp());
-    GLC::ColorMaski(i,rstate.colorMask());
+    if(GL_CURR_API==GLES_3_0)
+        GLC::ColorMask(rstate.colorMask());
+    else
+        GLC::ColorMaski(i,rstate.colorMask());
 
     if(rstate.culling())
         GLC::CullMode(((Face)rstate.culling())&Face::FaceMask);
