@@ -63,6 +63,7 @@ if(ANDROID)
         ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
         private/plat/file/android/file.cpp
         private/plat/environment/android/environment.cpp
+        private/plat/environment/android/sysinfo.cpp
     )
 endif()
 
@@ -165,7 +166,7 @@ if(ANDROID)
         GLESv1_CM GLESv2
         )
     if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
-        message ( "Building with GLES 3.0+ support" )
+        message ( "-- Building with GLES 3.0+ support" )
         list ( APPEND CORE_EXTRA_LIBRARIES
                 GLESv3
                 )
