@@ -89,7 +89,7 @@ public:
 
             GLM::V_ATTR tc = {};
             tc.m_idx = 1;
-            tc.m_bassoc = 1;
+            tc.m_bassoc = 0;
             tc.m_size = 2;
             tc.m_type = TypeEnum::Scalar;
             tc.m_stride = sizeof(Vecf3)+sizeof(Vecf2);
@@ -115,11 +115,15 @@ public:
                 "vr/fshader_es.glsl"
             };
 
-            CResources::Resource v_rsc(shader_files[PlatformData::IsGLES() * 2]);
-            CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1]);
+            CResources::Resource v_rsc(shader_files[PlatformData::IsGLES() * 2],
+                    ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
+            CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1],
+                    ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
             CResources::FileMap(v_rsc);
             CResources::FileMap(f_rsc);
-            cDebug("Shaders loaded");
+            cDebug("Shaders loaded into memory, pointers: {0}+{2}, {1}+{3}",
+                   (uint64)v_rsc.data,(uint64)f_rsc.data,
+                   v_rsc.size,f_rsc.size);
             if(v_shader.compile(CGL::ShaderStage::Vertex,(cstring)v_rsc.data)&&
                     f_shader.compile(CGL::ShaderStage::Fragment,(cstring)f_rsc.data))
             {
@@ -133,8 +137,10 @@ public:
                     return;
                 }
                 cDebug("GPU pipeline assembled");
-            }else
+            }else{
+                cDebug("Shader compilation failed");
                 return;
+            }
             CResources::FileUnmap(v_rsc);
             CResources::FileUnmap(f_rsc);
         }
@@ -145,23 +151,28 @@ public:
          * This has different meaning across GL3.3 and GL4.3+
          */
         eye_pip.bind();
+        cDebug("Pipeline bind");
 
         /* Uploading textures */
         GLM::S_2DA eyetex(PixelFormat::RGBA8,1,GLM::TextureDMABuffered);
 
         eyetex.allocate({1024,1024,5},PixCmp::RGBA);
+        cDebug("Texture allocation");
 
         Profiler::Profile("Pre-texture loading");
-        for(szptr i=0;i<eyetex.m_size.depth;i++)
+        for(int32 i=0;i<eyetex.m_size.depth;i++)
         {
-            CResources::Resource rsc(textures[i]);
+            CResources::Resource rsc(textures[i],
+                                     ResourceAccess::SpecifyStorage
+                                     |ResourceAccess::AssetFile);
             CResources::FileMap(rsc);
 
             CStbImageLib::CStbImage img;
             CStbImageLib::LoadData(&img,&rsc);
 
             eyetex.upload(BitFormat::UByte,PixCmp::RGBA,{img.size.w,img.size.h,1},
-                          img.data,{0,0,(int32)i});
+                          img.data,{0,0,i});
+            cDebug("Texture upload #{0}",i);
 
             CResources::FileUnmap(rsc);
         }
@@ -287,7 +298,6 @@ public:
         /* Vertex descriptors are based upon the ideas from GL4.3 */
         vertdesc.bind();
         vertdesc.bindBuffer(0,vertbuf);
-        vertdesc.bindBuffer(1,vertbuf);
 
         eyesamp.bind(0);
 
@@ -454,7 +464,7 @@ int32 coffee_main(int32, cstring_w*)
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual();
     props.flags ^= CDProperties::Resizable;
-//    props.gl.flags |= GLProperties::GLDebug;
+    props.gl.flags |= GLProperties::GLDebug;
 //    props.gl.flags |= GLProperties::GLVSync;
 #ifndef COFFEE_GLEAM_DESKTOP
     props.gl.version.minor = 0;
