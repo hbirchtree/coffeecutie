@@ -147,6 +147,9 @@ struct CGL43 : CGL33,
     STATICINLINE void ImageBindTextures(int32 f,uint32 c, const CGhnd* h)
     {glBindImageTextures(f,c,h);}
 
+    STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
+    {glBlendFunci(i,v1,v2);}
+
     /* Overriding GL3.3 functions */
     using CGL_SeparableShaderPrograms::Uniformfv;
     using CGL_SeparableShaderPrograms::Uniformiv;

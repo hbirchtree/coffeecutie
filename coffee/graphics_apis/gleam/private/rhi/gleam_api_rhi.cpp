@@ -186,12 +186,23 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
             GLC::Disable(Feature::Blend,i);
     }
 
-    if(bstate.additive())
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
-        GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE);
-        /*TODO: Add indexed alternative, BlendFunci */
-    }else
-        GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        if(bstate.additive())
+        {
+            GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE);
+            /*TODO: Add indexed alternative, BlendFunci */
+        }else
+            GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    {
+        if(bstate.additive())
+        {
+            CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE);
+            /*TODO: Add indexed alternative, BlendFunci */
+        }else
+            CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    }
 
     /*TODO: Add more advanced blending options*/
 
@@ -220,15 +231,7 @@ void GLEAM_API::SetDepthState(const DepthState& dstate, uint32 i)
 
     GLC::DepthFunc((ValueComparison)dstate.fun());
 
-    if(GL_CURR_API==GLES_3_0)
-    {
-        if(dstate.clampDepth())
-            GLC::Enable(Feature::DepthClamp);
-        else
-            GLC::Disable(Feature::DepthClamp);
-    }else if(GL_CURR_API==GL_3_3
-             || GL_CURR_API==GL_4_3
-             || GL_CURR_API==GLES_3_2)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
     {
         if(dstate.clampDepth())
             GLC::Enable(Feature::DepthClamp,i);

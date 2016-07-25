@@ -48,7 +48,7 @@ struct CGLES30 :
         if(!gladLoadGLES2Loader(fun))
             return false;
 
-	if(!Debug::VerifyInit())
+        if(!Debug::VerifyInit() || !glTexStorage2D)
 	    return false;
 
         Debug::GetExtensions();

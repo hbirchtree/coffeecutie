@@ -12,11 +12,6 @@ namespace CGL{
 
 struct CGL_Implementation : CGL_Shared_Functions
 {
-    /* Base OpenGL, all implemented in GL3.3 */
-
-
-    /* SAMPLE_ALPHA_TO_COVERAGE,SAMPLE_ALPHA_TO_ONE */
-
     struct Debug : CGL_Shared_Functions::Debug
     {
 
