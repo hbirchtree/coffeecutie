@@ -3,6 +3,7 @@ if(ANDROID)
     find_package ( AndroidToolkit )
 
     include ( AndroidNdkGdb )
+    include ( InkscapeResize )
 
     if(ANDROID_USE_SDL2_LAUNCH)
         find_package(SDL2main REQUIRED)
@@ -42,8 +43,7 @@ endif()
 #
 macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs Icon_File )
 
-    message ( "APK: Generating ${Pkg_Name} (${Api_Arch})" )
-    message ( "TODO: Process the file ${Icon_File}")
+    message ( "-- Generating ${Pkg_Name} (${Api_Arch})" )
 
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
@@ -67,7 +67,7 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
     set ( ANDROID_VERSION_NAME ${Version_Str} )
 
     set ( ANDROID_API_TARGET ${Api_Target} )
-    set ( ANDROID_API_MIN_TARGET "16" )
+    set ( ANDROID_API_MIN_TARGET "9" )
 
 
     # For valid options, see:
@@ -78,8 +78,10 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
     if( CMAKE_BUILD_TYPE STREQUAL "Release" )
         set ( RELEASE_PREFIX "rel" )
+        set ( ANDROID_APK_DEBUGGABLE "false" )
     else()
         set ( RELEASE_PREFIX "dbg" )
+        set ( ANDROID_APK_DEBUGGABLE "true" )
     endif()
 
     set ( ANDROID_APK_FILE_OUTPUT
@@ -93,15 +95,59 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
     set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
 
+    #
+    # Debugging/deployment options
+    #
+    if(ANDROID_USE_SDL2_LAUNCH)
+        set ( ANDROID_AM_START_INTENT "${ANDROID_PACKAGE_NAME}" )
+        set ( ANDROID_AM_START_ACTIVITY "${ANDROID_PACKAGE_NAME}/.${ANDROID_STARTUP_ACTIVITY}" )
+    else()
+        set ( ANDROID_AM_START_INTENT "android.intent.action.LAUNCHER" )
+        set ( ANDROID_AM_START_ACTIVITY "${ANDROID_PACKAGE_NAME}/android.app.NativeActivity" )
+    endif()
+
     # Where the primary class is found, also decides names of package
     string ( REGEX REPLACE "\\." "/" ANDROID_MAIN_PATH "${ANDROID_PACKAGE_NAME}" )
 
+    #
     # Create build directory
+    #
     add_custom_command ( TARGET ${Target_Name}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${BUILD_OUTDIR}
         )
+    #
+    # Mipmap the icons
+    #
+    set ( ANDROID_MIPMAP_SET
+        "mdpi/48"
+        "hdpi/72"
+        "xhdpi/96"
+        "xxhdpi/144"
+        )
+
+    message ( "-- Mipmapping file ${ICON_ASSET} to ${ANDROID_MIPMAP_SET}" )
+
+    foreach(mip ${ANDROID_MIPMAP_SET})
+        string ( REGEX REPLACE "([a-z]+)/([0-9]+)" "\\1" MIPMAP_DEST_DIR "${mip}" )
+        string ( REGEX REPLACE "([a-z]+)/([0-9]+)" "\\2" MIPMAP_SIZE "${mip}" )
+        set ( MIPMAP_DEST_FILE "${BUILD_OUTDIR}/res/drawable-${MIPMAP_DEST_DIR}/ic_launcher.png" )
+        add_custom_command ( TARGET ${Target_Name}
+            PRE_BUILD
+            COMMAND
+            ${CMAKE_COMMAND} -E
+            make_directory "${BUILD_OUTDIR}/res/drawable-${MIPMAP_DEST_DIR}"
+            )
+        if(INKSCAPE_PROGRAM AND NOWAYFUCKOFF)
+            inkscape_resize_svg( "${Target_Name}" "${ICON_ASSET}" ${MIPMAP_SIZE} "${MIPMAP_DEST_FILE}" )
+        else()
+            magick_resize_svg ( "${Target_Name}" "${ICON_ASSET}" "${MIPMAP_SIZE}" "${MIPMAP_DEST_FILE}" )
+        endif()
+    endforeach()
+
+    #
     # Install base template files
+    #
     add_custom_command ( TARGET ${Target_Name}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${ANDROID_PROJECT_TEMPLATE_DIR} ${BUILD_OUTDIR}
@@ -121,19 +167,19 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
     add_custom_command ( TARGET ${Target_Name}
         POST_BUILD
-        COMMAND ${ANDROID_STRIP} "$<TARGET_FILE:${Target_Name}>"
-        )
-
-    add_custom_command ( TARGET ${Target_Name}
-        POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${Target_Name}>" ${ANDROID_LIB_OUTPUT_DIRECTORY}
         )
 
     #
     # Enable GDB remote debugging
     #
-    android_ndk_gdb_enable(${TARGET} "${BUILD_OUTDIR}" "${ANDROID_LIB_OUTPUT_DIRECTORY}")
+    android_ndk_gdb_enable(
+        ${TARGET} "${BUILD_OUTDIR}"
+        "${BUILD_OUTDIR}/libs"
+        "${SOURCES}" "${LIBRARIES}"
+        )
     android_ndk_gdb_debuggable("${TARGET}")
+
 
     # Install dependency libraries
     set ( ANDROID_DEPENDENCIES_STRING )
@@ -197,6 +243,9 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         @ONLY
         )
 
+    file ( WRITE "${BUILD_OUTDIR}/local.properties"
+        "sdk.dir=${ANDROID_SDK}")
+
     add_custom_command ( TARGET ${Target_Name}
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_ASSET_OUTPUT_DIRECTORY}" )
@@ -231,6 +280,11 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        add_custom_command ( TARGET ${Target_Name}
+            POST_BUILD
+            COMMAND ${ANDROID_STRIP} "$<TARGET_FILE:${Target_Name}>"
+            )
+
         # In release-mode, we sign and align the APK manually
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
@@ -266,25 +320,16 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
             COMMAND
-            ${ANDROID_ADB_PROGRAM} install -r "${ANDROID_APK_FILE_OUTPUT}"
+            ${ANDROID_ADB_PROGRAM} -s "${DEVICE_TARGET}" install -r "${ANDROID_APK_FILE_OUTPUT}"
             )
-        if(ANDROID_USE_SDL2_LAUNCH)
-            add_custom_command ( TARGET ${Target_Name}
-                POST_BUILD
-                COMMAND
-                ${ANDROID_ADB_PROGRAM} shell am start
-                    -a "${ANDROID_PACKAGE_NAME}"
-                    -n "${ANDROID_PACKAGE_NAME}/.${ANDROID_STARTUP_ACTIVITY}"
-                )
-        else()
-            add_custom_command ( TARGET ${Target_Name}
-                POST_BUILD
-                COMMAND
-                ${ANDROID_ADB_PROGRAM} shell am start
-                    -a "android.intent.action.LAUNCHER"
-                    -n "${ANDROID_PACKAGE_NAME}/android.app.NativeActivity"
-                )
-        endif()
+        add_custom_command ( TARGET ${Target_Name}
+            POST_BUILD
+            COMMAND
+            ${ANDROID_ADB_PROGRAM} shell am start
+            -a "${ANDROID_AM_START_INTENT}"
+            -n "${ANDROID_AM_START_ACTIVITY}"
+            )
+        android_ndk_gdb_debug(${Target_Name} "${BUILD_OUTDIR}" "${DEVICE_TARGET}")
     endif()
 
     install (
@@ -303,10 +348,11 @@ macro(ANDROIDAPK_PACKAGE
         SOURCES
         BUNDLE_RSRCS
         BUNDLE_LIBS
-        ICON_ASSET)
+        ICON_ASSET )
 
 
     if(ANDROID_USE_SDL2_LAUNCH)
+        message ( "-- Main File: ${SDL2_ANDROID_MAIN_FILE}" )
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
     else()
         add_library(${TARGET} SHARED ${SOURCES}

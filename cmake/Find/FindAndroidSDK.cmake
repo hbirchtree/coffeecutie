@@ -1,4 +1,3 @@
-set ( ANDROID_SDK CACHE PATH "Path to Android SDK" )
 
 find_path ( ANDROID_SDK
     NAMES
@@ -19,4 +18,8 @@ find_path ( ANDROID_SDK
     android-sdk-macosx
     )
 
-mark_as_advanced ( ANDROID_SDK )
+set ( ANDROID_SDK "${ANDROID_SDK}" CACHE PATH "Path to Android SDK" )
+
+INCLUDE(FindPackageHandleStandardArgs)
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(AndroidSDK REQUIRED_VARS ANDROID_SDK)

@@ -44,8 +44,10 @@
 #
 # the optional parameter defines the path to the android project.
 # uses PROJECT_SOURCE_DIR by default.
-macro(android_ndk_gdb_enable TARGET_NAME PROJECT_DIR DEPLOY_DIR)
-    message ( "Arguments: ${TARGET_NAME} ${PROJECT_DIR} ${DEPLOY_DIR}" )
+
+set ( ANDROID_GDBSERVER_BINARY CACHE FILEPATH "" )
+
+macro(android_ndk_gdb_enable TARGET_NAME PROJECT_DIR DEPLOY_DIR SOURCE_FILES LIBRARIES)
     if(ANDROID)
         # create custom target that depends on the real target so it gets executed afterwards
         add_custom_target("${TARGET_NAME}_NDK_GDB" ALL)
@@ -70,6 +72,15 @@ macro(android_ndk_gdb_enable TARGET_NAME PROJECT_DIR DEPLOY_DIR)
         file(WRITE ${DEPLOY_DIR}/gdb.setup "set solib-search-path ${NDK_GDB_SOLIB_PATH}\n")
         file(APPEND ${DEPLOY_DIR}/gdb.setup "directory ${PROJECT_INCLUDES}\n")
 
+        # 2.1 generate gdb.host.setup, to run on the host computer
+        file(WRITE ${PROJECT_DIR}/gdb.host.setup "set solib-search-path ${NDK_GDB_SOLIB_PATH}\n")
+        file(APPEND ${PROJECT_DIR}/gdb.host.setup "directory ${PROJECT_INCLUDES}\n")
+        file(APPEND ${PROJECT_DIR}/gdb.host.setup "file obj/local/${ANDROID_NDK_ABI_NAME}/lib${TARGET_NAME}.so\n" )
+        file(APPEND ${PROJECT_DIR}/gdb.host.setup "target extended-remote :5052\n")
+        file(APPEND ${PROJECT_DIR}/gdb.host.setup "set remote exec-file /system/bin/am\n" )
+        file(APPEND ${PROJECT_DIR}/gdb.host.setup
+            "run am -a ${ANDROID_AM_START_INTENT} -n ${ANDROID_AM_START_ACTIVITY}\n" )
+
         # 3. copy gdbserver executable
         configure_file (
             "${ANDROID_NDK}/prebuilt/android-${ANDROID_ARCH_NAME}/gdbserver/gdbserver"
@@ -92,4 +103,24 @@ macro(android_ndk_gdb_debuggable TARGET_NAME)
         # create custom target that depends on the real target so it gets executed afterwards
         add_dependencies("${TARGET_NAME}_NDK_GDB" ${TARGET_NAME})
     endif()
+endmacro()
+
+macro(android_ndk_gdb_debug TARGET_NAME PROJECT_DIR DEVICE_TARGET )
+    message ( "-- Creating GDB target for ${TARGET_NAME}" )
+    set ( INT_TARGET "${TARGET_NAME}_RD" )
+    add_custom_target ( "${INT_TARGET}" )
+    set_target_properties("${INT_TARGET}" PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+    execute_process (
+        COMMAND adb -s "${DEVICE_TARGET}" push "${ANDROID_GDBSERVER_BINARY}" "/data/local/gdbserver"
+        )
+
+    add_custom_command (
+        TARGET "${INT_TARGET}"
+        COMMAND adb -s "${DEVICE_TARGET}" forward tcp:5052 tcp:5052
+        )
+    add_custom_command (
+        TARGET "${INT_TARGET}"
+        COMMAND adb -s "${DEVICE_TARGET}" shell /data/local/gdbserver --multi :5052
+        )
 endmacro()

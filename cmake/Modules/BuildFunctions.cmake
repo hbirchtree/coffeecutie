@@ -132,6 +132,8 @@ function(COFFEE_ADD_EXAMPLE_LONGER
 
     set ( PACKAGE_PREFIX "org.coffee" )
 
+    set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/icon.svg" )
+
     if(ANDROID)
         ANDROIDAPK_PACKAGE(
             "${TARGET}"
@@ -146,7 +148,8 @@ function(COFFEE_ADD_EXAMPLE_LONGER
             "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
             "${INFO_STRING}"
             "${SOURCES_MOD}"
-            "${BUNDLE_RSRCS}" )
+            "${BUNDLE_RSRCS}"
+            "${ICON_ASSET}")
     elseif(APPLE)
         MACAPP_PACKAGE(
             "${TARGET}"
@@ -163,14 +166,16 @@ function(COFFEE_ADD_EXAMPLE_LONGER
             APPIMAGE_PACKAGE(
                 ${TARGET}
                 "${TITLE}"
-                "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}")
+                "${BUNDLE_RSRCS}" "" "${BUNDLE_LIBS}"
+                "${ICON_ASSET}" )
         endif()
         if(COFFEE_GENERATE_FLATPAK)
             FLATPAK_PACKAGE(
                 ${TARGET}
                 "${PACKAGE_PREFIX}" "${TITLE}" "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
                 "${BUNDLE_RSRCS}"
-                "" "${BUNDLE_LIBS}" )
+                "" "${BUNDLE_LIBS}"
+                "${ICON_ASSET}" )
         endif()
 
         if(NOT COFFEE_GENERATE_APPIMAGE AND NOT COFFEE_GENERATE_FLATPAK)
