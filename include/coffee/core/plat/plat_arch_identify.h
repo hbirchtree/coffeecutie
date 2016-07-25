@@ -17,6 +17,66 @@
 #define COFFEE_ARCH "i386"
 #endif
 
+/* I have no idea who uses this */
+#elif defined(__mips__) || defined(__mips) || defined(__MIPS__)
+#define COFFEE_MIPS_BASENAME "MIPS"
+
+/* Too lazy to set up string conversion... */
+#if __mips == 1
+#define COFFEE_MIPS_PREFIX COFFEE_MIPS_BASENAME "1"
+#elif __mips == 2
+#define COFFEE_MIPS_PREFIX COFFEE_MIPS_BASENAME "2"
+#elif __mips == 3
+#define COFFEE_MIPS_PREFIX COFFEE_MIPS_BASENAME "3"
+#elif __mips == 4
+#define COFFEE_MIPS_PREFIX COFFEE_MIPS_BASENAME "4"
+#else
+#define COFFEE_MIPS_PREFIX COFFEE_MIPS_BASENAME
+#endif
+
+#if defined(_R3000)
+#define COFFEE_ARCH COFFEE_MIPS_PREFIX " R3000"
+elif defined(_R4000)
+#define COFFEE_ARCH COFFEE_MIPS_PREFIX " R4000"
+elif defined(_R5900)
+#define COFFEE_ARCH COFFEE_MIPS_PREFIX " R5900"
+#else
+#define COFFEE_ARCH COFFEE_MIPS_PREFIX " ???"
+#endif
+
+/* Nobody will use this */
+#elif defined(__powerpc__) || defined(__POWERPC__) || defined(__PPC64__) || defined(__PPC__)
+
+#if defined(_ARCH_440)
+#define COFFEE_POWERPC_CPU "440"
+#elif defined(_ARCH_450)
+#define COFFEE_POWERPC_CPU "450"
+#elif defined(_ARCH_601) || defined(__ppc601__) || _M_PPC == 601
+#define COFFEE_POWERPC_CPU "601"
+#elif defined(_ARCH_603) || defined(__ppc603__) || _M_PPC == 603
+#define COFFEE_POWERPC_CPU "603"
+#elif defined(_ARCH_604) || defined(__ppc604__) || _M_PPC == 604
+#define COFFEE_POWERPC_CPU "604"
+#elif defined(_ARCH_620) || defined(__ppc620__) || _M_PPC == 620
+#define COFFEE_POWERPC_CPU "620"
+#else
+#define COFFEE_POWERPC_CPU "???"
+#endif
+
+#define COFFEE_POWERPC_PREFIX "PowerPC " COFFEE_POWERPC_CPU
+
+#if defined(__PPCGECKO__)
+#define COFFEE_ARCH COFFEE_POWERPC_PREFIX " Gecko"
+#elif defined(__PPCBROADWAY__)
+#define COFFEE_ARCH COFFEE_POWERPC_PREFIX " Broadway"
+#elif defined(_XENON)
+#define COFFEE_ARCH COFFEE_POWERPC_PREFIX " Xenon"
+#elif defined(__powerpc64__)
+#define COFFEE_ARCH COFFEE_POWERPC_PREFIX " 64-bit"
+#else
+#define COFFEE_ARCH COFFEE_POWERPC_PREFIX
+#endif
+
 /* ARM 64-bit is different from ARM 32-bit, but has the same traits */
 #elif defined(__aarch64__)
 #define COFFEE_ARCH "ARMv8-64"

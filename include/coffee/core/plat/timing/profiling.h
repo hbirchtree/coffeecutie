@@ -41,8 +41,8 @@ struct SimpleProfilerImpl
         CString value;
     };
 
-    using ThreadListing = Map<ShPtr<ThreadId>,CString>;
-    using ThreadItem = std::pair<ShPtr<ThreadId>,CString>;
+    using ThreadListing = Map<ThreadId::Hash,CString>;
+    using ThreadItem = Pair<ThreadId::Hash,CString>;
     using ThreadPtr = ShPtr<ThreadId>;
     using ExtraData = LinkList<ExtraPair>;
 
@@ -96,7 +96,8 @@ struct SimpleProfilerImpl
     STATICINLINE void LabelThread(cstring name)
     {
 #ifndef NDEBUG
-        threadnames->insert(ThreadItem(ThreadPtr(new ThreadId()),CString(name)));
+        ThreadId tid;
+        threadnames->insert(ThreadItem(tid.hash(),name));
 #endif
     }
 
