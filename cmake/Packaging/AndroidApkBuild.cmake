@@ -90,7 +90,9 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
     set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${Target_Name} )
 
-    set ( ANDROID_LIB_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/libs/${Api_Arch} )
+    string ( REGEX REPLACE "([a-zA-Z0-9\_\-]+)\ .*" "\\1" LIB_SUFFIX "${Api_Arch}"  )
+
+    set ( ANDROID_LIB_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/libs/${LIB_SUFFIX} )
     set ( ANDROID_ASSET_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/assets )
 
     set ( ANDROID_ANT_COMMON_PROPERTIES -Dout.final.file="${ANDROID_APK_FILE_OUTPUT}" )
@@ -168,6 +170,15 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
     add_custom_command ( TARGET ${Target_Name}
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${Target_Name}>" ${ANDROID_LIB_OUTPUT_DIRECTORY}
+        )
+
+    #
+    # We strip the final .so file that will be put on the device, not the real one
+    #
+
+    add_custom_command ( TARGET ${Target_Name}
+        POST_BUILD
+        COMMAND ${ANDROID_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
         )
 
     #
@@ -280,11 +291,6 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
 
 
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        add_custom_command ( TARGET ${Target_Name}
-            POST_BUILD
-            COMMAND ${ANDROID_STRIP} "$<TARGET_FILE:${Target_Name}>"
-            )
-
         # In release-mode, we sign and align the APK manually
         add_custom_command ( TARGET ${Target_Name}
             POST_BUILD
