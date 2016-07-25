@@ -4,7 +4,10 @@ A desired outcome is to have simple code that works on top of OpenGL 3.3, OpenGL
 
 As a result it will be quite simple to bring one codebase over to a different platform.
 
-Here is a screenshot running on a Google Nexus 5X device running Android Marshmallow:
 
-![GLeamBaseTest_RHI running on a Google Nexus 5X](https://github.com/hbirchtree/coffeecutie/blob/master/examples/gleam/rhi/base-test/android_23-nexus_5x.png?raw=true)
+![GLeamBaseTest_RHI running on a Google Nexus 5X](https://github.com/hbirchtree/coffeecutie/blob/master/examples/gleam/rhi/base-test/android_23-nexus_5x.png?raw=true "Demo running on a Google Nexus 5X")
+
+![GLeamBaseTest_RHI running on Ubuntu](https://github.com/hbirchtree/coffeecutie/blob/master/examples/gleam/rhi/base-test/ubuntu-test.png?raw=true "Demo running on Ubuntu with NVIDIA graphics")
+
+
 
