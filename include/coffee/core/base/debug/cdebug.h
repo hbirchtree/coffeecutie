@@ -120,6 +120,17 @@ FORCEDINLINE void cDebug(cstring str, Arg... args)
 
 template<typename... Arg>
 /*!
+ * \brief Verbose message
+ * \param str
+ * \param args
+ */
+FORCEDINLINE void cVerbose(cstring str, Arg... args)
+{
+    DebugPrinter::cVerbose(str,args...);
+}
+
+template<typename... Arg>
+/*!
  * \brief Warning message
  * \param str
  * \param args
