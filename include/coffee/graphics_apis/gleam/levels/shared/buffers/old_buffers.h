@@ -30,6 +30,11 @@ struct CGL_Old_Buffers
     {return glMapBufferRange(to_enum(t),off,sz,to_enum2(a));}
     STATICINLINE void BufUnmap(BufType t)
     {glUnmapBuffer(to_enum(t));}
+
+    STATICINLINE void BufGetParameteriv(BufType t, CGenum p, int32* v)
+    {glGetBufferParameteriv(to_enum(t),p,v);}
+    STATICINLINE void BufGetParameterLLv(BufType t, CGenum p, int64* v)
+    {glGetBufferParameteri64v(to_enum(t),p,v);}
 };
 
 }

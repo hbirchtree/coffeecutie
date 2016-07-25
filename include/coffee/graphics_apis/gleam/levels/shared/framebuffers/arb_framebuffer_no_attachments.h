@@ -12,6 +12,8 @@ struct CGL_FramebufferNoAttachments
 {
     STATICINLINE void FBParameteri(CGenum t,CGenum p,int32 d)
     {glFramebufferParameteri(t,p,d);}
+    STATICINLINE void FBGetParameteriv(FramebufferT t, CGenum p, int32* v)
+    {glGetFramebufferParameteriv(to_enum(t),p,v);}
 };
 }
 }

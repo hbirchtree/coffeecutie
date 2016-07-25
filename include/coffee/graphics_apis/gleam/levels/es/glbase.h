@@ -15,28 +15,6 @@ namespace CGL{
 struct CGL_Implementation : CGL_Shared_Functions
 {
     /* Base OpenGL, all implemented in GL3.3 */
-    static void Enable(Feature e)
-    {glEnable(to_enum(e,0));}
-    static void Disable(Feature e)
-    {glDisable(to_enum(e,0));}
-
-    STATICINLINE void Enable(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
-    STATICINLINE void Disable(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
-
-    STATICINLINE void ColorMask(CColorMask op){glColorMask(op.r,op.g,op.b,op.a);}
-    STATICINLINE void ColorMaski(uint32 i, CColorMask op){glColorMaski(i,op.r,op.g,op.b,op.a);}
-
-    STATICINLINE void ColorLogicOp(LogicOp){}
-    STATICINLINE void DepthSet(ZField64 const*){}
-
-    STATICINLINE void PointParameteriv(CGenum,const int32*){}
-    STATICINLINE void PointParameterfv(CGenum,const scalar*){}
-    STATICINLINE void PointSize(scalar){}
-
-    STATICINLINE void PolyMode(Face,DrawMode){}
-
-    static bool DebuggingSupported()
-    {return Debug::CheckExtensionSupported("GL_KHR_debug");}
 
     struct Debug : CGL_Shared_Functions::Debug
     {

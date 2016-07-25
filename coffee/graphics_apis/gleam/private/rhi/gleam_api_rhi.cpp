@@ -18,7 +18,10 @@ using GLC = CGL_Implementation;
 void GLEAM_API::LoadAPI(bool debug)
 {
     instance_data = new GLEAM_Instance_Data;
+
+#ifndef NDEBUG
     GL_DEBUG_MODE = debug;
+#endif
 
     {
         const szptr num_pbos = 5;
@@ -57,9 +60,9 @@ void GLEAM_API::LoadAPI(bool debug)
         const Display::CGLVersion ver30es(3,0);
         const Display::CGLVersion ver32es(3,2);
 
-//        if(ver>=ver32es)
-//            GL_CURR_API = GLES_3_2;
-//        else
+        if(ver>=ver32es)
+            GL_CURR_API = GLES_3_2;
+        else
             if(ver>=ver30es)
             GL_CURR_API = GLES_3_0;
     }

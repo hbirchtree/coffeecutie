@@ -12,7 +12,11 @@ struct CGL_SeparableShaderPrograms
 {
     //TODO: Create off-thread program compiler when binary storage is available
     STATICINLINE CGhnd ProgramCreate(ShaderStage t,uint32 c,cstring* d)
-    {return glCreateShaderProgramv(to_enum1(t),c,d);}
+    {
+        CGhnd h = glCreateShaderProgramv(to_enum1(t),c,d);
+        ProgramParameter(h,GL_PROGRAM_SEPARABLE,GL_TRUE);
+        return h;
+    }
 
     //TODO: Create ProgramParameter enum
     STATICINLINE void ProgramParameter(CGhnd h,CGenum e,int32 v)

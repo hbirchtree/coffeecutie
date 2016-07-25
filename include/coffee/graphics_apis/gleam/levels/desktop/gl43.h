@@ -18,6 +18,7 @@
 #include "../shared/framebuffers/arb_viewport_array.h"
 #include "../shared/framebuffers/arb_invalidate_subdata.h"
 #include "../shared/framebuffers/arb_framebuffer_no_attachments.h"
+#include "../shared/framebuffers/framebuffer_43.h"
 
 #include "../shared/shaders/arb_es2_compatibility.h"
 #include "../shared/shaders/arb_program_interface_query.h"
@@ -59,6 +60,7 @@ struct CGL43 : CGL33,
         CGL_ViewportArray,
         CGL_FramebufferInvalidateSubData,
         CGL_FramebufferNoAttachments,
+        CGL_Framebuffers_43,
 
         CGL_ES2Compatibility,
         CGL_ProgramInterfaceQuery,

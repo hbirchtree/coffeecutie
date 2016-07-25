@@ -22,7 +22,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, cstring str)
             return false;
         }
 
-        m_stages |= stage;
+        m_stages = stage;
 
         return stat;
     }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
@@ -36,7 +36,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, cstring str)
             return false;
         }
 
-        m_stages |= stage;
+        m_stages = stage;
 
         return m_handle!=0;
     }else
