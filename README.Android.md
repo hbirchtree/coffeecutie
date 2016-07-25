@@ -19,3 +19,15 @@ In release mode, some environment variables are needed:
  - ANDROID_APK_SIGN_PASS : password for given keychain (not cached, no worries)
 
 You might have to help the scripts to find the SDK, NDK and other utilities (zipalign etc.)
+
+# Typical errors (or mistakes, whatever)
+## Not giving SDL_android_main.c to SDL2_ANDROID_MAIN_FILE
+
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: FATAL EXCEPTION: SDLThread
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: Process: org.coffee.gleambasetest_rhi, PID: 28327
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: Theme: themes:{default=, fontPkg:system}
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: java.lang.UnsatisfiedLinkError: No implementation found for int org.libsdl.app.SDLActivity.nativeInit(java.lang.Object) (tried Java_org_libsdl_app_SDLActivity_nativeInit and Java_org_libsdl_app_SDLActivity_nativeInit__Ljava_lang_Object_2)
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: 	at org.libsdl.app.SDLActivity.nativeInit(Native Method)
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: 	at org.libsdl.app.SDLMain.run(SDLActivity.java:953)
+    07-25 03:06:38.894 28327 28344 E AndroidRuntime: 	at java.lang.Thread.run(Thread.java:818)
+    07-25 03:06:38.899  5387  7747 W ActivityManager:   Force finishing activity org.coffee.gleambasetest_rhi/.CoffeeActivity
