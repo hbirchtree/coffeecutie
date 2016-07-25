@@ -132,10 +132,10 @@ struct CGL_Old_Textures
     STATICINLINE void TexGetParameteruiv(Texture t, CGenum f, uint32* v)
     {glGetTexParameterIuiv(to_enum(t),f,v);}
 
-    STATICINLINE void TexGetLevelParameteriv(Texture t, CGenum f, int32* v)
-    {glGetTexLevelParameteriv(to_enum(t),f,v);}
-    STATICINLINE void TexGetLevelParameterfv(Texture t, CGenum f, scalar* v)
-    {glGetTexLevelParameteriv(to_enum(t),f,v);}
+    STATICINLINE void TexGetLevelParameteriv(Texture t, uint32 l, CGenum f, int32* v)
+    {glGetTexLevelParameteriv(to_enum(t),l,f,v);}
+    STATICINLINE void TexGetLevelParameterfv(Texture t, uint32 l, CGenum f, scalar* v)
+    {glGetTexLevelParameteriv(to_enum(t),l,f,v);}
 
     STATICINLINE void TexParameterfv(Texture t, CGenum e, const scalar* v)
     {glTexParameterfv(to_enum(t),e,v);}
@@ -170,6 +170,8 @@ struct CGL_Old_Textures
     {glGetSamplerParameteriv(h,f,d);}
     STATICINLINE void SamplerGetParameterfv(CGhnd h,CGenum f,scalar* d)
     {glGetSamplerParameterfv(h,f,d);}
+    STATICINLINE void SamplerGetParameteruiv(CGhnd h,CGenum f,uint32* d)
+    {glGetSamplerParameterIuiv(h,f,d);}
 };
 
 }

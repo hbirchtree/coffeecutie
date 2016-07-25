@@ -39,3 +39,7 @@
 #if defined(COFFEE_ANDROID)
 #define COFFEE_LIMIT_INLINE
 #endif
+
+/* This enables safer, but a bit slower functions for some core functions */
+/* dirname(), basename() */
+#define COFFEE_USE_POSIX_BASENAME

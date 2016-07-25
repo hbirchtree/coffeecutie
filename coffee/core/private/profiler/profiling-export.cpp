@@ -51,13 +51,6 @@ void PrintProfilerData()
 
 void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 {
-    /* Verify if we should export profiler data */
-    {
-        const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
-        if(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1")
-            return;
-    }
-
     XML::Document doc;
 
     XML::Element* root = doc.NewElement("profile");
@@ -184,7 +177,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
                 e = doc.NewElement("thread");
                 threaddata->InsertEndChild(e);
 
-                CString id = StrUtil::pointerify(p.first->hash());
+                CString id = StrUtil::pointerify(p.first);
                 e->SetAttribute("id",id.c_str());
                 e->SetAttribute("name",p.second.c_str());
             }
@@ -272,37 +265,65 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 #endif
     }
 
-    auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
-
-    if (!file)
+    if(!PlatformData::IsMobile())
     {
-        cWarning("Failed to save timing profile");
-        return;
-    }
+        auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
 
-    /* Because fuck dangling file handles */
+        if (!file)
+        {
+            cWarning("Failed to save timing profile");
+            return;
+        }
+
+        /* Because fuck dangling file handles */
 #if defined(COFFEE_USE_EXCEPTIONS)
-    try{
+        try{
 #endif
-        doc.SaveFile(file->handle,false);
+            doc.SaveFile(file->handle,false);
 #if defined(COFFEE_USE_EXCEPTIONS)
-    }catch(std::exception)
-    {
-    }
+        }catch(std::exception)
+        {
+        }
 #endif
 
-    CResources::CFILEFun::Close(file);
+        CResources::CFILEFun::Close(file);
+    }else{
+#if defined(COFFEE_ANDROID)
+        const constexpr cstring mobile_logtemplate = "/data/local/{0}-profile.xml";
+#else
+        const constexpr cstring mobile_logtemplate = "/tmp/{0}-profile.xml";
+#endif
+
+        tinyxml2::XMLPrinter printer;
+        doc.Print(&printer);
+        CString log_name = cStringFormat(
+                    mobile_logtemplate,
+                    CoffeeApplicationData.application_name);
+        CResources::Resource out(log_name.c_str());
+        out.data = (c_ptr)printer.CStr();
+        out.size = (szptr)printer.CStrSize();
+        CResources::FileCommit(out);
+    }
 }
 
 void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
 {
-    CString log_name = Env::ExecutableName();
-    log_name = Env::BaseName(log_name.c_str());
-    log_name = CStrReplace(log_name,".exe","");
-    log_name = cStringFormat("{0}-profile.xml",log_name);
-    if(!silent)
-        cDebug("Saving profiler data to: {0}",log_name);
-    Profiling::ExportProfilerData(log_name.c_str(),argc,argv);
+    /* Verify if we should export profiler data */
+    {
+        const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
+        if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
+        {
+            CString log_name = Env::ExecutableName();
+            log_name = Env::BaseName(log_name.c_str());
+            log_name = CStrReplace(log_name,".exe","");
+            log_name = cStringFormat("{0}-profile.xml",log_name);
+            if(!silent)
+                cDebug("Saving profiler data to: {0}",log_name);
+
+            Profiling::ExportProfilerData(log_name.c_str(),argc,argv);
+        }
+    }
+    /* ... and always destroy the profiler */
     Profiler::DestroyProfiler();
 }
 

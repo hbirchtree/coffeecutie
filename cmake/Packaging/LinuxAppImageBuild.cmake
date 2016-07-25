@@ -16,7 +16,12 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
         CACHE FILEPATH "Default icon for AppImages" )
 endif()
 
-macro( APPIMAGE_PACKAGE TARGET APPIMAGE_TITLE DATA LIBRARIES LIBRARY_FILES )
+macro( APPIMAGE_PACKAGE
+        TARGET
+        APPIMAGE_TITLE
+        DATA
+        LIBRARIES LIBRARY_FILES
+        ICON_ASSET )
     string ( TOLOWER "${APPIMAGE_TITLE}" APPIMAGE_INTERNALNAME )
     string ( MAKE_C_IDENTIFIER "${APPIMAGE_INTERNALNAME}" APPIMAGE_INTERNALNAME )
 
@@ -28,7 +33,7 @@ macro( APPIMAGE_PACKAGE TARGET APPIMAGE_TITLE DATA LIBRARIES LIBRARY_FILES )
     set ( APPIMAGE_DATA )
 
     # Icon file to be used for the AppImage, only one in this case, preferrably SVG
-    set ( APPIMAGE_ICON "${APPIMAGE_DEFAULT_ICON_FILE}" )
+    set ( APPIMAGE_ICON "${ICON_ASSET}" )
     # We define a way to reference this icon based on where it is located
     set ( APPIMAGE_ICON_REF "${APPIMAGE_INTERNALNAME}.svg" )
 

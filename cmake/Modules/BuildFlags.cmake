@@ -122,7 +122,7 @@ if(ANDROID)
             ${SDL2_INCLUDE_DIR}
             ${SDL2_INCLUDE_DIR}/SDL2)
     else()
-        message("-- Building Android project with NDK bindings")
+        message("-- Building Android project with native_app_glue bindings")
         add_definitions("-DANDROID_DONT_USE_SDL2")
         find_package(AndroidGlue)
         include_directories (${ANDROID_GLUE_INCLUDE_DIR})

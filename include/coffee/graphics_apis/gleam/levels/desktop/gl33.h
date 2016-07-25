@@ -11,6 +11,7 @@
 #include "../shared/framebuffers/old_framebuffers.h"
 #include "../shared/vertex/old_vaos.h"
 #include "../shared/draw/basic.h"
+#include "../shared/draw/drawing_base_multidraw.h"
 
 namespace Coffee{
 namespace CGL{
@@ -27,7 +28,9 @@ struct CGL33 :
         CGL_Old_Buffers<CGhnd,BufType>,
         CGL_Old_VAOs<CGhnd,CGenum>,
         CGL_Old_Uniforms,
-        CGL_Basic_Draw
+        CGL_Basic_Draw,
+        CGL_Drawing_Base_MultiDraw
+
 {
     enum FBAttach
     {
@@ -42,7 +45,7 @@ struct CGL33 :
         if(!gladLoadGL())
             return false;
 
-        if(!Debug::VerifyInit())
+        if(!Debug::VerifyInit() || !glGenSamplers)
             return false;
 
         Debug::GetExtensions();
@@ -115,30 +118,12 @@ struct CGL33 :
     STATICINLINE void ProgramSubRtBind(ShaderStage s,int32 n,const uint32* d)
     {glUniformSubroutinesuiv(to_enum1(s),n,d);}
 
-
-    STATICINLINE void TexGetLevelParami(Texture t, uint32 l, CGenum p, int32* v)
-    {glGetTexLevelParameteriv(to_enum(t),l,p,v);}
-    STATICINLINE void TexGetLevelParamf(Texture t, uint32 l, CGenum p, scalar* v)
-    {glGetTexLevelParameterfv(to_enum(t),l,p,v);}
-
-
     STATICINLINE void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
                                    uint32 w,uint32 h)
     {glTexImage2DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,GL_FALSE);}
     STATICINLINE void TexImage2DMS(Texture t,uint32 samples,PixelFormat ifmt,
                                    uint32 w,uint32 h,uint32 d)
     {glTexImage3DMultisample(to_enum(t),samples,to_enum(ifmt),w,h,d,GL_FALSE);}
-
-    STATICINLINE void TexGetImage(Texture t,uint32 level,PixelComponents fmt,BitFormat dt,c_ptr p)
-    {glGetTexImage(to_enum(t),level,to_enum(fmt),to_enum(dt),p);}
-    STATICINLINE void TexGetImageCompressed(Texture t,uint32 level,c_ptr p)
-    {glGetCompressedTexImage(to_enum(t),level,p);}
-
-    /* Samplers */
-    STATICINLINE void SamplerParameteruiv(CGhnd h,CGenum f,const uint32* d)
-    {glSamplerParameterIuiv(h,f,d);}
-    STATICINLINE void SamplerGetParameteruiv(CGhnd h,CGenum f,uint32* d)
-    {glGetSamplerParameterIuiv(h,f,d);}
 
     /* Buffers */
     STATICINLINE void BufGetSubData(BufType t,int64 off,uint32 sz,c_ptr p)
@@ -150,20 +135,10 @@ struct CGL33 :
     STATICINLINE void ConditionalRenderEnd()
     {glEndConditionalRender();}
 
-    /*Create QueryProperty enum*/
-    STATICINLINE void QueryGetObjectiv(CGhnd h,CGenum f,int32* d)
-    {glGetQueryObjectiv(h,f,d);}
-    STATICINLINE void QueryGetObjecti64v(CGhnd h,CGenum f,int64* d)
-    {glGetQueryObjecti64v(h,f,d);}
-    STATICINLINE void QueryGetObjectui64v(CGhnd h,CGenum f,uint64* d)
-    {glGetQueryObjectui64v(h,f,d);}
-
     STATICINLINE void QueryCounter(CGhnd h,CGenum t)
     {glQueryCounter(h,t);}
 
     /* FB */
-    STATICINLINE void FBAttachTexture(FramebufferT t,CGenum att,CGhnd h,int32 level)
-    {glFramebufferTexture(to_enum(t),att,h,level);}
     STATICINLINE void FBAttachTexture3D(FramebufferT t,CGenum att,Texture textrg,CGhnd h,
                                         int32 level,int32 z)
     {glFramebufferTexture3D(to_enum(t),att,to_enum(textrg),h,level,z);}
@@ -174,27 +149,6 @@ struct CGL33 :
         glPrimitiveRestartIndex(idx);
         Enable(Feature::PrimitiveRestart);
     }
-
-    //TODO: Create FenceProperty enum
-
-
-    /* Drawing */
-
-    STATICINLINE void DrawElementsBaseVertex(CGenum p,int32 c,TypeEnum t,int64 off,int32 bv)
-    {glDrawElementsBaseVertex(p,c,to_enum(t),(void*)off,bv);}
-    STATICINLINE void DrawElementsInstancedBaseVertex(CGenum p,int32 c,TypeEnum t,int64 off,int32 pc,int32 bv)
-    {glDrawElementsInstancedBaseVertex(p,c,to_enum(t),(void*)off,pc,bv);}
-
-    STATICINLINE void DrawRangeElementsBaseVertex(CGenum p,uint32 f,uint32 e,int32 c,TypeEnum t,int64 off,int32 bv)
-    {glDrawRangeElementsBaseVertex(p,f,e,c,to_enum(t),(void*)off,bv);}
-
-    STATICINLINE void DrawMultiArrays(CGenum p,const int32* f,const int32* c, int32 dc)
-    {glMultiDrawArrays(p,f,c,dc);}
-
-    STATICINLINE void DrawMultiElements(CGenum p,const int32* f,TypeEnum t,const int64* off,int32 dc)
-    {glMultiDrawElements(p,f,to_enum(t),(const void**)&off,dc);}
-    STATICINLINE void DrawMultiElementsBaseVertex(CGenum p,const int32* c,TypeEnum t,const int64* off,int32 dc,const int32* bv)
-    {glMultiDrawElementsBaseVertex(p,c,to_enum(t),(const void**)&off,dc,bv);}
 };
 
 }

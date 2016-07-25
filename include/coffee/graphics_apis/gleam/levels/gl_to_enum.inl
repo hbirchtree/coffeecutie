@@ -1057,5 +1057,16 @@ inline CGenum to_enum(WrapPolicy p)
     }
 }
 
+inline CGenum to_enum(VertexWinding e)
+{
+    switch(e)
+    {
+    case VertexWinding::CCW:
+        return GL_CCW;
+    case VertexWinding::CW:
+        return GL_CW;
+    }
+}
+
 }
 }

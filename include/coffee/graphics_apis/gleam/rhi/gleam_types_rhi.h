@@ -30,7 +30,12 @@ enum APILevel
 };
 
 extern APILevel GL_CURR_API;
+
+#ifndef NDEBUG
 extern bool GL_DEBUG_MODE;
+#else
+const constexpr bool GL_DEBUG_MODE = false;
+#endif
 
 struct GLEAM_API;
 

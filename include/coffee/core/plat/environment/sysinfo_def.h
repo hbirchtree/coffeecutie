@@ -271,6 +271,12 @@ struct SysInfoDef
     {
         return NetStatLocalOnly;
     }
+
+    STATICINLINE
+    HWDeviceInfo DeviceName()
+    {
+        return HWDeviceInfo("Generic","Device","0x0");
+    }
 };
 
 struct PowerInfoDef

@@ -63,9 +63,13 @@ enum class Face
     Front = 0x1,
     Back = 0x2,
     Both = 0x3,
-    FaceMask = Front|Back|Both,
+    FaceMask = Both,
 };
 
+enum class VertexWinding
+{
+    CCW, CW
+};
 
 enum class AttribMode
 {

@@ -155,6 +155,19 @@ struct DebugPrinterImpl : DebugPrinterDef
 
         OutputPrinter::fprintf(DefaultDebugOutputPipe,f,a...);
     }
+
+    template<typename... Args>
+    STATICINLINE void cVerbose(cstring f, Args... a)
+    {
+#ifndef NDEBUG
+        if(PrintingVerbosityLevel < 3)
+            return;
+
+        CString fmt = FormatPrintString(Severity::Information,
+                                        0,f,a...);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
+#endif
+    }
 };
 
 using DebugPrinter = DebugPrinterImpl;

@@ -14,7 +14,9 @@ namespace Posix{
 
 CString PosixEnvironmentFun::BaseName(cstring n)
 {
-#ifndef COFFEE_USE_POSIX_BASENAME
+#if !defined(COFFEE_USE_POSIX_BASENAME)
+    if(StrLen(n)<1)
+        return ".";
     // This one is fast, but does not handle rootfs
     int64 idx = Search::ChrFindR(n,'/')-n;
     if(idx < 0)
@@ -26,7 +28,9 @@ CString PosixEnvironmentFun::BaseName(cstring n)
     return out;
 #else
     // This one is slower, but more compliant
-    sbyte_t* out = AllocT<sbyte_t>(StrLen(dname));
+    cstring dname = n;
+    cstring_w out = AllocT<sbyte_t>(StrLen(dname)+1);
+    StrCpy(out,dname);
     CString out_s = basename(out);
     CFree(out);
     return out_s;
@@ -35,6 +39,7 @@ CString PosixEnvironmentFun::BaseName(cstring n)
 
 CString PosixEnvironmentFun::DirName(cstring fname)
 {
+#if !defined(COFFEE_USE_POSIX_BASENAME)
     int64 idx = Search::ChrFindR(fname,'/')-fname;
     if(idx < 0)
         return fname;
@@ -43,6 +48,14 @@ CString PosixEnvironmentFun::DirName(cstring fname)
     if(out.empty())
         out = ".";
     return out;
+#else
+    // This one is slower, but more compliant
+    cstring_w out = AllocT<sbyte_t>(StrLen(fname)+1);
+    StrCpy(out,fname);
+    CString out_s = dirname(out);
+    CFree(out);
+    return out_s;
+#endif
 }
 
 bool PosixEnvironmentFun::PrependVar(cstring var, cstring val)

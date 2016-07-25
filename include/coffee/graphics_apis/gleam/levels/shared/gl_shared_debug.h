@@ -2,6 +2,7 @@
 
 #include "gl_shared_include.h"
 #include "gl_shared_types.h"
+#include "gl_shared_enum_convert.h"
 
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/plat/memory/string_ops.h>
@@ -14,6 +15,69 @@ struct CGL_Shared_Debug
 {
     static bool b_isDebugging;
     static CString s_ExtensionList;
+
+    /* Verifying loader results */
+    STATICINLINE bool VerifyInit()
+    {
+        return (bool)glEnable;
+    }
+
+    /* GL_KHR_debug */
+    STATICINLINE void InitDebugFlag()
+    {
+        b_isDebugging = false;
+    }
+
+    STATICINLINE void SetDebugMode(bool enabled)
+    {
+        if(enabled == b_isDebugging)
+            return;
+        if(enabled)
+        {
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            b_isDebugging = true;
+        }
+        else
+        {
+            glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            b_isDebugging = true;
+        }
+    }
+
+    STATICINLINE void SetDebugLevel(Severity s,bool enabled)
+    {
+        glDebugMessageControl(
+                    GL_DONT_CARE,GL_DONT_CARE,
+                    to_enum(s),0,nullptr,
+                    (enabled)?GL_TRUE:GL_FALSE);
+    }
+
+    STATICINLINE void SetObjectLabel(Object t,CGhnd h,cstring s)
+    {
+        glObjectLabel(to_enum(t),h,-1,s);
+    }
+
+    STATICINLINE void SetDebugGroup(cstring n, uint32 id)
+    {
+        glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
+    }
+    STATICINLINE void UnsetDebugGroup()
+    {
+        glPopDebugGroup();
+    }
+
+    STATICINLINE void DebugMessage(Severity s,DebugType t,cstring n)
+    {
+        glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
+                             to_enum(t),0,
+                             to_enum(s),
+                             -1,n);
+    }
+
+    STATICINLINE void DebugSetCallback(CGcallback c, void* param)
+    {
+        glDebugMessageCallback(c,param);
+    }
 
     /* Extensions */
 
@@ -254,6 +318,13 @@ struct CGL_Shared_Debug
 
     STATICINLINE
     bool IsXF(CGhnd h){return glIsTransformFeedback(h)==GL_TRUE;}
+
+    STATICINLINE
+    bool IsPipeline(CGhnd h){return glIsProgramPipeline(h)==GL_TRUE;}
+
+    /* IsEnabled */
+    STATICINLINE
+    bool IsEnabledi(Feature f,int32 i){return glIsEnabledi(to_enum(f),i)==GL_TRUE;}
 };
 
 }

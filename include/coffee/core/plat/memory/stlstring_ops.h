@@ -368,6 +368,21 @@ FORCEDINLINE CString upper(CString const& st)
     return o;
 }
 
+FORCEDINLINE CString propercase(CString const& input)
+{
+    CString out;
+    out.reserve(input.size());
+    szptr i = 0;
+    for(CString::value_type c : input)
+    {
+        if((i++) < 1)
+            out.push_back(std::toupper(c));
+        else
+            out.push_back(c);
+    }
+    return out;
+}
+
 }
 
 

@@ -69,6 +69,8 @@ CGpixfmt get_fmt(PixelFormat e, bool rev);
 CGenum to_enum(Filtering mag, Filtering min, Filtering mip);
 CGenum to_enum(WrapPolicy p);
 
+CGenum to_enum(VertexWinding e);
+
 }
 }
 

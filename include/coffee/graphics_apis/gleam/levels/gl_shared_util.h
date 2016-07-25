@@ -20,33 +20,34 @@ struct CGLUtil
     STATICINLINE void DumpTexture(typename GL::Texture t, typename GL::CGhnd h,
                             uint32 l, cstring fn)
     {
-        CSize tsize;
 #ifdef COFFEE_GLEAM_DESKTOP
-        GL::TexGetLevelParami(t,l,GL_TEXTURE_WIDTH,&tsize.w);
-        GL::TexGetLevelParami(t,l,GL_TEXTURE_HEIGHT,&tsize.h);
-#else
-        tsize = {128,128};
-#endif
 
-        szptr data_size = tsize.area()*4;
-        ubyte_t* data = (ubyte_t*)Alloc(data_size);
+        CSize tsize;
+        GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_WIDTH,&tsize.w);
+        GL::TexGetLevelParameteriv(t,l,GL_TEXTURE_HEIGHT,&tsize.h);
+
+        Bytes data = {};
+
+        data.size = tsize.area()*4;
+        data.data = (ubyte_t*)Alloc(data.size);
 
         GL::TexBind(t,h);
-        GL::TexGetImage(t,0,PixelComponents::RGBA,BitFormat::Byte,data);
+        GL::TexGetImage(t,0,PixelComponents::RGBA,PixelFormat::RGBA8,data);
         GL::TexBind(t,0);
 
         CResources::Resource rsc(fn);
 
         CStbImageLib::CStbImageConst img;
         img.bpp = 4;
-        img.data = data;
+        img.data = data.data;
         img.size = tsize;
 
         CStbImageLib::SavePNG(&rsc,&img);
 
         CResources::FileCommit(rsc);
         CResources::FileFree(rsc);
-        CFree(data);
+        CFree(data.data);
+#endif
     }
 };
 

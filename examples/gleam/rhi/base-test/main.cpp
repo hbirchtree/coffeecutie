@@ -42,6 +42,8 @@ public:
 
     void run()
     {
+        cVerbose("Entering run() function");
+
         Profiler::PushContext("Renderer");
 
         const constexpr cstring textures[num_textures] = {
@@ -60,6 +62,7 @@ public:
              1.f, -1.f,  0.f,   -1.f,  0.f,
         };
 
+        cVerbose("Loading GLeam API");
         /*
          * Loading the GLeam API, chosen according to what is available at runtime
          */
@@ -68,6 +71,7 @@ public:
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly,sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
 
+        cVerbose("Entering GL initialization stage");
         /* Uploading vertex data and creating descriptors */
         {
             vertdesc.alloc();
@@ -89,7 +93,7 @@ public:
 
             GLM::V_ATTR tc = {};
             tc.m_idx = 1;
-            tc.m_bassoc = 1;
+            tc.m_bassoc = 0;
             tc.m_size = 2;
             tc.m_type = TypeEnum::Scalar;
             tc.m_stride = sizeof(Vecf3)+sizeof(Vecf2);
@@ -100,7 +104,7 @@ public:
             vertdesc.addAttribute(tc);
         }
 
-        cDebug("Generated vertex buffers");
+        cVerbose("Generated vertex buffers");
 
         GLM::SHD v_shader = {};
         GLM::SHD f_shader = {};
@@ -115,57 +119,70 @@ public:
                 "vr/fshader_es.glsl"
             };
 
-            CResources::Resource v_rsc(shader_files[PlatformData::IsGLES() * 2]);
-            CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1]);
+            CResources::Resource v_rsc(shader_files[PlatformData::IsGLES() * 2],
+                    ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
+            CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1],
+                    ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
             CResources::FileMap(v_rsc);
             CResources::FileMap(f_rsc);
-            cDebug("Shaders loaded");
+            cVerbose("Shaders loaded into memory, pointers: {0}+{2}, {1}+{3}",
+                   (uint64)v_rsc.data,(uint64)f_rsc.data,
+                   v_rsc.size,f_rsc.size);
             if(v_shader.compile(CGL::ShaderStage::Vertex,(cstring)v_rsc.data)&&
                     f_shader.compile(CGL::ShaderStage::Fragment,(cstring)f_rsc.data))
             {
-                cDebug("Shaders compiled");
+                cVerbose("Shaders compiled");
                 eye_pip.attach(v_shader,CGL::ShaderStage::Vertex);
                 eye_pip.attach(f_shader,CGL::ShaderStage::Fragment);
-                cDebug("Shaders attached");
+                cVerbose("Shaders attached");
                 if(!eye_pip.assemble())
                 {
-                    cDebug("Invalid pipeline");
+                    cVerbose("Invalid pipeline");
                     return;
                 }
-                cDebug("GPU pipeline assembled");
-            }else
+                cVerbose("GPU pipeline assembled");
+            }else{
+                cVerbose("Shader compilation failed");
                 return;
+            }
             CResources::FileUnmap(v_rsc);
             CResources::FileUnmap(f_rsc);
         }
-        cDebug("Compiled shaders");
+        cVerbose("Compiled shaders");
 
         /*
          * Binding the pipeline for usage
          * This has different meaning across GL3.3 and GL4.3+
          */
         eye_pip.bind();
+        cVerbose("Pipeline bind");
 
         /* Uploading textures */
         GLM::S_2DA eyetex(PixelFormat::RGBA8,1,GLM::TextureDMABuffered);
 
         eyetex.allocate({1024,1024,5},PixCmp::RGBA);
+        cVerbose("Texture allocation");
 
-        for(szptr i=0;i<eyetex.m_size.depth;i++)
+        Profiler::Profile("Pre-texture loading");
+        for(int32 i=0;i<eyetex.m_size.depth;i++)
         {
-            CResources::Resource rsc(textures[i]);
+            CResources::Resource rsc(textures[i],
+                                     ResourceAccess::SpecifyStorage
+                                     |ResourceAccess::AssetFile);
             CResources::FileMap(rsc);
 
             CStbImageLib::CStbImage img;
             CStbImageLib::LoadData(&img,&rsc);
 
             eyetex.upload(BitFormat::UByte,PixCmp::RGBA,{img.size.w,img.size.h,1},
-                          img.data,{0,0,(int32)i});
+                          img.data,{0,0,i});
+            cVerbose("Texture upload #{0}",i);
 
             CResources::FileUnmap(rsc);
         }
+        Profiler::Profile("Texture loading");
 
-        cDebug("Uploading textures");
+        cVerbose("Uploading textures");
 
         /* Attaching the texture data to a sampler object */
         GLM::SM_2DA eyesamp;
@@ -173,7 +190,7 @@ public:
         eyesamp.attach(&eyetex);
         eyesamp.setFiltering(Filtering::Linear,Filtering::Linear);
 
-        cDebug("Setting sampler properties");
+        cVerbose("Setting sampler properties");
 
         /* Creating the uniform data store */
         Bytes transform_data = {};
@@ -240,7 +257,7 @@ public:
                 cDebug("Unhandled uniform value: {0}",u.m_name);
         }
 
-        cDebug("Acquire and set shader uniforms");
+        cVerbose("Acquire and set shader uniforms");
 
         transforms.data = &transform_data;
         timeval.data = &time_data;
@@ -251,7 +268,7 @@ public:
         GLM::SetDepthState(deptstate);
         GLM::SetTessellatorState(teslstate);
 
-        cDebug("Set renderer state");
+        cVerbose("Set renderer state");
 
         /* Now generating a drawcall, which only specifies small state that can be shared */
         GLM::DrawCall call;
@@ -285,7 +302,6 @@ public:
         /* Vertex descriptors are based upon the ideas from GL4.3 */
         vertdesc.bind();
         vertdesc.bindBuffer(0,vertbuf);
-        vertdesc.bindBuffer(1,vertbuf);
 
         eyesamp.bind(0);
 
@@ -429,13 +445,19 @@ public:
 
 int32 coffee_main(int32, cstring_w*)
 {
+    cVerbose("Device: {0}",SysInfo::DeviceName());
+
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
 
     {
+        cVerbose("Attempting to retrieve executable name");
         CString dir = Env::ExecutableName();
+        cVerbose("Got execname");
         dir = Env::DirName(dir.c_str());
+        cVerbose("Got dirname");
         DirFun::ChDir(dir.c_str());
+        cVerbose("Changed directory: {0}",dir);
     }
 
     /* Required for SDL2 applications, initializes SDL state */
@@ -452,7 +474,7 @@ int32 coffee_main(int32, cstring_w*)
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual();
     props.flags ^= CDProperties::Resizable;
-//    props.gl.flags |= GLProperties::GLDebug;
+    props.gl.flags |= GLProperties::GLDebug;
 //    props.gl.flags |= GLProperties::GLVSync;
 #ifndef COFFEE_GLEAM_DESKTOP
     props.gl.version.minor = 0;
@@ -475,6 +497,7 @@ int32 coffee_main(int32, cstring_w*)
         return 1;
     }
     Profiler::Profile("Initialize renderer");
+    cVerbose("Initialized renderer");
 
     /* Run the program */
     renderer->run();

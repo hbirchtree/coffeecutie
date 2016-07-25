@@ -46,9 +46,15 @@ struct CGLES32 : CGLES30,
     {
         if(!CGLES30::LoadBinding(ctxt,fun))
             return false;
+        if(!glVertexAttribFormat)
+            return false;
 
         return true;
     }
+
+    STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
+    {glBlendFunci(i,v1,v2);}
+
     /* Stubbing this to avoid compilation errors */
     STATICINLINE void BufStorage(BufType,uint64,c_cptr,ResourceAccess){}
     STATICINLINE void SBufBind(CGhnd,uint32,uint32){}
@@ -56,7 +62,7 @@ struct CGLES32 : CGLES30,
     STATICINLINE bool TessellationSupported()
     {
         /* TODO: Find proper extension for this */
-        return true;
+	return false;
     }
     STATICINLINE bool ShaderStorageSupported()
     {return false;}

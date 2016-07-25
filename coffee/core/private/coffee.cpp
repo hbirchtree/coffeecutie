@@ -75,8 +75,12 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef NDEBUG
+    Coffee::PrintingVerbosityLevel = 3;
+#else
     Coffee::PrintingVerbosityLevel = 1;
 #endif
+
+    cDebug("Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
 
 #ifdef COFFEE_SLAP_LOWMEM
     /*
@@ -133,23 +137,29 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         }
     }
 
+    cVerbose("Initializing profiler");
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 
     Profiler::PushContext("CoffeeMain");
 
+    cVerbose("Initializing Coffee library");
     CoffeeInit(false);
+    cVerbose("Calling Profile()");
     Profiler::Profile("Init");
 
+    cVerbose("Entering main function");
     Profiler::PushContext("main()");
     int32 r = mainfun(argc,argv);
     Profiler::PopContext();
     Profiler::Profile("Runtime");
 
+    cVerbose("Terminating library");
     CoffeeTerminate(false);
     Profiler::Profile("Termination");
     Profiler::PopContext();
 
+    cVerbose("Unloading profiler");
     Profiling::ExitRoutine(initargs.argc,initargs.argv);
 
     return r;

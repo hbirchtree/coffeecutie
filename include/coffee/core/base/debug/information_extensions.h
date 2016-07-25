@@ -129,7 +129,13 @@ inline CString cStringReplace(
         CString const& fmt, size_t const& index,
         HWDeviceInfo const& arg)
 {
-    if(arg.firmware.size()>0)
+    if(arg.serial.size())
+        return extArgReplace(fmt,index,cStringFormat("{0} {1} running {2}, identified by {3}",
+                                                     arg.manufacturer,
+                                                     arg.model,
+                                                     arg.firmware,
+                                                     arg.serial));
+    else if(arg.firmware.size())
         return extArgReplace(fmt,index,cStringFormat("{0} {1} running {2}",
                                                      arg.manufacturer,
                                                      arg.model,

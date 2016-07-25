@@ -18,7 +18,10 @@ using GLC = CGL_Implementation;
 void GLEAM_API::LoadAPI(bool debug)
 {
     instance_data = new GLEAM_Instance_Data;
+
+#ifndef NDEBUG
     GL_DEBUG_MODE = debug;
+#endif
 
     {
         const szptr num_pbos = 5;
@@ -57,9 +60,9 @@ void GLEAM_API::LoadAPI(bool debug)
         const Display::CGLVersion ver30es(3,0);
         const Display::CGLVersion ver32es(3,2);
 
-//        if(ver>=ver32es)
-//            GL_CURR_API = GLES_3_2;
-//        else
+        if(ver>=ver32es)
+            GL_CURR_API = GLES_3_2;
+        else
             if(ver>=ver30es)
             GL_CURR_API = GLES_3_0;
     }
@@ -71,23 +74,48 @@ void GLEAM_API::LoadAPI(bool debug)
 
 void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
 {
-    if(rstate.dither())
-        GLC::Enable(Feature::Dither,i);
-    else
-        GLC::Disable(Feature::Dither,i);
+    if(GL_CURR_API==GLES_3_0)
+    {
+        if(rstate.dither())
+            GLC::Enable(Feature::Dither);
+        else
+            GLC::Disable(Feature::Dither);
+    }else if(GL_CURR_API==GL_3_3
+             || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_3_2)
+    {
+        if(rstate.dither())
+            GLC::Enable(Feature::Dither,i);
+        else
+            GLC::Disable(Feature::Dither,i);
+    }
 
     GLC::PolyMode(Face::Both,
                   (rstate.wireframeRender())
                   ? DrawMode::Line
                   : DrawMode::Fill);
 
-    if(rstate.discard())
-        GLC::Enable(Feature::RasterizerDiscard,i);
-    else
-        GLC::Disable(Feature::RasterizerDiscard,i);
+    if(GL_CURR_API==GLES_3_0)
+    {
+        if(rstate.discard())
+            GLC::Enable(Feature::RasterizerDiscard);
+        else
+            GLC::Disable(Feature::RasterizerDiscard);
+    }else if(GL_CURR_API==GL_3_3
+             || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_3_2)
+    {
+        if(rstate.discard())
+            GLC::Enable(Feature::RasterizerDiscard,i);
+        else
+            GLC::Disable(Feature::RasterizerDiscard,i);
+    }
 
     GLC::ColorLogicOp(rstate.colorOp());
-    GLC::ColorMaski(i,rstate.colorMask());
+    if(GL_CURR_API==GLES_3_0)
+        GLC::ColorMask(rstate.colorMask());
+    else
+        GLC::ColorMaski(i,rstate.colorMask());
 
     if(rstate.culling())
         GLC::CullMode(((Face)rstate.culling())&Face::FaceMask);
@@ -142,17 +170,39 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
 
 void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
 {
-    if(bstate.blend())
-        GLC::Enable(Feature::Blend,i);
-    else
-        GLC::Disable(Feature::Blend,i);
-
-    if(bstate.additive())
+    if(GL_CURR_API==GLES_3_0)
     {
-        GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE);
-        /*TODO: Add indexed alternative, BlendFunci */
-    }else
-        GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        if(bstate.blend())
+            GLC::Enable(Feature::Blend);
+        else
+            GLC::Disable(Feature::Blend);
+    }else if(GL_CURR_API==GL_3_3
+             || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_3_2)
+    {
+        if(bstate.blend())
+            GLC::Enable(Feature::Blend,i);
+        else
+            GLC::Disable(Feature::Blend,i);
+    }
+
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    {
+        if(bstate.additive())
+        {
+            GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE);
+            /*TODO: Add indexed alternative, BlendFunci */
+        }else
+            GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    {
+        if(bstate.additive())
+        {
+            CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE);
+            /*TODO: Add indexed alternative, BlendFunci */
+        }else
+            CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+    }
 
     /*TODO: Add more advanced blending options*/
 
@@ -161,29 +211,54 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
 
 void GLEAM_API::SetDepthState(const DepthState& dstate, uint32 i)
 {
-    if(dstate.testDepth())
-        GLC::Enable(Feature::DepthTest,i);
-    else
-        GLC::Disable(Feature::DepthTest,i);
+    if(GL_CURR_API==GLES_3_0)
+    {
+        if(dstate.testDepth())
+            GLC::Enable(Feature::DepthTest);
+        else
+            GLC::Disable(Feature::DepthTest);
+    }else if(GL_CURR_API==GL_3_3
+             || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_3_2)
+    {
+        if(dstate.testDepth())
+            GLC::Enable(Feature::DepthTest,i);
+        else
+            GLC::Disable(Feature::DepthTest,i);
+    }
 
     GLC::DepthMask(dstate.mask());
 
     GLC::DepthFunc((ValueComparison)dstate.fun());
 
-    if(dstate.clampDepth())
-        GLC::Enable(Feature::DepthClamp,i);
-    else
-        GLC::Disable(Feature::DepthClamp,i);
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
+    {
+        if(dstate.clampDepth())
+            GLC::Enable(Feature::DepthClamp,i);
+        else
+            GLC::Disable(Feature::DepthClamp,i);
+    }
 
     /*TODO: Implement clamping*/
 }
 
 void GLEAM_API::SetStencilState(const StencilState& sstate, uint32 i)
 {
-    if(sstate.testStencil())
-        GLC::Enable(Feature::StencilTest,i);
-    else
-        GLC::Disable(Feature::StencilTest,i);
+    if(GL_CURR_API==GLES_3_0)
+    {
+        if(sstate.testStencil())
+            GLC::Enable(Feature::StencilTest);
+        else
+            GLC::Disable(Feature::StencilTest);
+    }else if(GL_CURR_API==GL_3_3
+             || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_3_2)
+    {
+        if(sstate.testStencil())
+            GLC::Enable(Feature::StencilTest,i);
+        else
+            GLC::Disable(Feature::StencilTest,i);
+    }
 
     GLC::StencilMaskSep(Face::Both,i);
 

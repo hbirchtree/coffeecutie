@@ -18,6 +18,7 @@
 #include "../shared/framebuffers/arb_viewport_array.h"
 #include "../shared/framebuffers/arb_invalidate_subdata.h"
 #include "../shared/framebuffers/arb_framebuffer_no_attachments.h"
+#include "../shared/framebuffers/framebuffer_43.h"
 
 #include "../shared/shaders/arb_es2_compatibility.h"
 #include "../shared/shaders/arb_program_interface_query.h"
@@ -59,6 +60,7 @@ struct CGL43 : CGL33,
         CGL_ViewportArray,
         CGL_FramebufferInvalidateSubData,
         CGL_FramebufferNoAttachments,
+        CGL_Framebuffers_43,
 
         CGL_ES2Compatibility,
         CGL_ProgramInterfaceQuery,
@@ -144,6 +146,9 @@ struct CGL43 : CGL33,
     /*TODO: Move to 4.5*/
     STATICINLINE void ImageBindTextures(int32 f,uint32 c, const CGhnd* h)
     {glBindImageTextures(f,c,h);}
+
+    STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
+    {glBlendFunci(i,v1,v2);}
 
     /* Overriding GL3.3 functions */
     using CGL_SeparableShaderPrograms::Uniformfv;
