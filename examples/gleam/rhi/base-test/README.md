@@ -10,3 +10,6 @@ Running on Android Marshmallow, using the GLES 3.0 backend
 
 ![GLeamBaseTest_RHI running on Ubuntu](https://github.com/hbirchtree/coffeecutie/blob/master/examples/gleam/rhi/base-test/ubuntu-test.png?raw=true "Demo running on Ubuntu with NVIDIA graphics")
 Running on Ubuntu 16.04, using the GL 3.3 backend
+
+![GLeamBaseTest_RHI running on Ubuntu](https://github.com/hbirchtree/coffeecutie/blob/master/examples/gleam/rhi/base-test/windows_8.1-nvidia.png?raw=true "Demo running on Windows with NVIDIA graphics")
+Running on Windows 8.1, using the GL 3.3 backend
