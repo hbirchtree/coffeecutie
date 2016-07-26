@@ -53,6 +53,12 @@ macro(WINPE_PACKAGE
                 string ( REPLACE "_" "___" "${file_dir}" file_dir )
                 string ( REPLACE "/" "_" "${file_dir}" file_dir )
                 string ( REPLACE "\\" "_" "${file_dir}" file_dir )
+                # If there is a directory path, append a "_" for it to be correct
+                # This is disgusting.
+                if(file_dir)
+                    set( file_dir "${file_dir}_" )
+                endif()
+                # Insert the file with directory path and filename into the .rc file
                 file (
                     APPEND "${RESOURCE_DESCRIPTOR}"
                     "\"${file_dir}${file_name}\" CF_RES \"${file_full}\" \r\n"
@@ -95,7 +101,6 @@ macro(WINPE_PACKAGE
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
         ${MANIFEST_FILE}
-        ${RESOURCE_HEADER}
         )
 
     set_target_properties ( ${TARGET}

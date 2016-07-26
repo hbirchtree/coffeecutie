@@ -104,6 +104,10 @@ namespace Coffee {
 				return "";
 			CString tag = "\"";
 			CString wrap = tag + AssetApi::GetAsset(fn) + tag;
+			/* Transform the filename to correspond with  */
+            wrap = CStrReplace(wrap,"_","___");
+            wrap = CStrReplace(wrap,"/","_");
+            wrap = CStrReplace(wrap,"\\","_");
 			return wrap;
 		}
 
