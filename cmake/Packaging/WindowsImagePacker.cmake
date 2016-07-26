@@ -23,22 +23,43 @@ macro(WINPE_PACKAGE
     
     # We describe resources in a .rc file for in-memory access
     set ( RESOURCE_DESCRIPTOR ${CMAKE_CURRENT_BINARY_DIR}/custom_data.rc )
+    set ( RESOURCE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/custom_data.c )
 
     file ( WRITE "${RESOURCE_DESCRIPTOR}" "// Automatically generated resource file by Coffee \r\n" )
+
+    set ( RESC_NUM "0" )
+
+    # Clear resource descriptor to avoid dupes
+    file ( WRITE "${RESOURCE_DESCRIPTOR}"   "" )
+    # Clear resource header
+    file ( WRITE "${RESOURCE_HEADER}"       "" )
 
     foreach(durr ${RESOURCES})
         file(GLOB_RECURSE TMP ${durr}/* )
         foreach(file_full ${TMP})
+            # First, get a relative filename
+            # This is used to describe structure
             file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
             get_filename_component ( file_dir "${file_dir}" DIRECTORY )
             get_filename_component ( file_name "${file_full}" NAME )
+            # We get a lower-case version to compare with other filenames
             string(TOLOWER "${file_name}" file_name_lower)
+
             if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
+                file (
+                    APPEND "${RESOURCE_HEADER}"
+                    "{${RESC_NUM},\"${file_dir}${file_name}\"},"
+                    )
+                string ( REPLACE "_" "___" "${file_dir}" file_dir )
+                string ( REPLACE "/" "_" "${file_dir}" file_dir )
+                string ( REPLACE "\\" "_" "${file_dir}" file_dir )
                 file (
                     APPEND "${RESOURCE_DESCRIPTOR}"
                     "\"${file_dir}${file_name}\" CF_RES \"${file_full}\" \r\n"
                     )
             endif()
+            # Increment resource number, inserted into .rc file
+            math ( EXPR RESC_NUM "${RESC_NUM} + 1" )
         endforeach()
     endforeach()
 
@@ -74,6 +95,7 @@ macro(WINPE_PACKAGE
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
         ${MANIFEST_FILE}
+        ${RESOURCE_HEADER}
         )
 
     set_target_properties ( ${TARGET}

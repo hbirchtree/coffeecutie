@@ -123,8 +123,14 @@ public:
                     ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
             CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1],
                     ResourceAccess::SpecifyStorage|ResourceAccess::AssetFile);
-            CResources::FileMap(v_rsc);
-            CResources::FileMap(f_rsc);
+            if(!CResources::FileMap(v_rsc) ||
+                    !CResources::FileMap(f_rsc))
+            {
+                cWarning("Failed to map resources: {0}, {1}",
+                         v_rsc.resource(),f_rsc.resource());
+                return;
+            }
+
             cVerbose("Shaders loaded into memory, pointers: {0}+{2}, {1}+{3}",
                    (uint64)v_rsc.data,(uint64)f_rsc.data,
                    v_rsc.size,f_rsc.size);
