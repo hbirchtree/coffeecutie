@@ -131,11 +131,11 @@ public:
                 return;
             }
 
-            cVerbose("Shaders loaded into memory, pointers: {0}+{2}, {1}+{3}",
-                   (uint64)v_rsc.data,(uint64)f_rsc.data,
-                   v_rsc.size,f_rsc.size);
-            if(v_shader.compile(CGL::ShaderStage::Vertex,(cstring)v_rsc.data)&&
-                    f_shader.compile(CGL::ShaderStage::Fragment,(cstring)f_rsc.data))
+			CString v_shader_code((cstring)v_rsc.data, v_rsc.size);
+			CString f_shader_code((cstring)f_rsc.data, f_rsc.size);
+
+            if(v_shader.compile(CGL::ShaderStage::Vertex,v_shader_code.c_str())&&
+                    f_shader.compile(CGL::ShaderStage::Fragment, f_shader_code.c_str()))
             {
                 cVerbose("Shaders compiled");
                 eye_pip.attach(v_shader,CGL::ShaderStage::Vertex);
