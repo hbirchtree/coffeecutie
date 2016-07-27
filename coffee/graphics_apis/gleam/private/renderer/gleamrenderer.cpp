@@ -3,6 +3,7 @@
 #include <coffee/core/platform_data.h>
 
 #include <coffee/graphics_apis/gleam/gleam.h>
+#include <coffee/core/CProfiling>
 
 #ifndef COFFEE_GLEAM_DESKTOP
 #include <SDL2/SDL_video.h>
@@ -96,6 +97,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 #endif
         }
     }else{
+        const static CGLVersion v20es(2,0);
         const static CGLVersion v30es(3,0);
         const static CGLVersion v32es(3,2);
 
@@ -111,6 +113,13 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
 #ifndef COFFEE_GLEAM_DESKTOP
             status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+#endif
+        }
+        if(p.version==v20es)
+        {
+            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v20es);
+#ifndef COFFEE_GLEAM_DESKTOP
+            status = CGL::CGLES20::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
 #endif
         }
     }

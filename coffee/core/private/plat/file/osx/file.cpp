@@ -11,6 +11,9 @@ namespace Mac{
 
 CString MacFileFun::NativePath(cstring fn)
 {
+    if(fn[0] == '/')
+        return fn;
+
     if(AssetApi::GetAsset(fn))
     {
         CFBundleRef bun = CFBundleGetMainBundle();

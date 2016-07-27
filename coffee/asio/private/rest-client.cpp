@@ -1,5 +1,6 @@
 #include <coffee/asio/rest-client.h>
 
+#include <coffee/core/CProfiling>
 #include <coffee/asio/http_parsing.h>
 
 namespace Coffee{

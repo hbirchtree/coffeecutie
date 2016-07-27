@@ -23,18 +23,38 @@ struct AndroidFileApi::SDLData
 
 CString AndroidFileFun::NativePath(cstring fn)
 {
-    if(AssetApi::GetAsset(fn))
+    cVerbose(6,"Input filename: {0}",fn);
+
+    if(!fn)
+        return "";
+
+    if(fn[0] == '/')
         return fn;
+
+    if(AssetApi::GetAsset(fn))
+    {
+        cVerbose(6,"File {0} identified as asset",fn);
+        return fn;
+    }
 
     CString prefix;
 
+    cVerbose(6,"ExternalStorageState() function pointer: {0}",(uint64)SDL_AndroidGetExternalStorageState);
+
 #if !defined(ANDROID_DONT_USE_SDL2)
-    if(!(SDL_AndroidGetExternalStorageState()&SDL_ANDROID_EXTERNAL_STORAGE_READ))
+    if(SDL_AndroidGetExternalStorageState() == 0 ||
+            !(SDL_AndroidGetExternalStorageState()&SDL_ANDROID_EXTERNAL_STORAGE_READ))
     {
         /* Failure! */
+        cVerbose(6,"Android SDL external storage status failed");
+        if(SDL_AndroidGetInternalStoragePath())
+            prefix = SDL_AndroidGetInternalStoragePath();
+    }else{
+        if(SDL_AndroidGetExternalStoragePath())
+            prefix = SDL_AndroidGetExternalStoragePath();
     }
 
-    prefix = SDL_AndroidGetExternalStoragePath();
+    cVerbose(6,"Storage prefix: {0}",prefix);
 #else
     prefix = Coffee_GetExternalDataPath();
 #endif
@@ -43,7 +63,18 @@ CString AndroidFileFun::NativePath(cstring fn)
         return CString(fn);
 
     prefix.append("/");
+
+    cVerbose(5,"Android native path: {0}",prefix+fn);
+
     return prefix + fn;
+}
+
+CString AndroidFileFun::NativePath(cstring fn, ResourceAccess storage)
+{
+    if(feval(storage,ResourceAccess::TemporaryFile))
+        return Env::ConcatPath("/data/local/tmp",fn);
+    else
+        return NativePath(fn);
 }
 
 AndroidFileFun::FileHandle *AndroidFileFun::Open(cstring fn, ResourceAccess ac)

@@ -1,4 +1,6 @@
 #include <coffee/core/CApplication>
+#include <coffee/core/CProfiling>
+
 #include <coffee/graphics_apis/CGLeamRHI>
 #include <coffee/CGraphics>
 #include <coffee/sdl2/CSDL2GLRenderer>

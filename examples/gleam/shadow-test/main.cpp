@@ -36,6 +36,7 @@ public:
     {
         CSDL2Renderer::eventHandleD(e,data);
 
+        EventHandlers::WindowManagerCloseWindow(this,e,data);
         EventHandlers::ResizeWindow<GL>(e,data);
     }
     void eventHandleI(const CIEvent &e, c_cptr data)
@@ -58,7 +59,10 @@ int32 coffee_main(int32, cstring_w*)
 
     CDProperties visual = GetDefaultVisual(3,3);
     if(PlatformData::IsGLES())
+    {
+        visual.gl.version.major = 2;
         visual.gl.version.minor = 0;
+    }
 
     if(!renderer.init(visual,&err))
     {

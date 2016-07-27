@@ -1,6 +1,7 @@
 #include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 #include "../windowing/sdl2helpers.h"
 #include "csdl2_gl_context.h"
 

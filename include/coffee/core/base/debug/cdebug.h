@@ -118,6 +118,18 @@ FORCEDINLINE void cDebug(cstring str, Arg... args)
     DebugPrinter::cDebug(str,args...);
 }
 
+#ifndef NDEBUG
+template<typename... Arg>
+/*!
+ * \brief Verbose message
+ * \param str
+ * \param args
+ */
+FORCEDINLINE void cVerbose(uint32 v, cstring str, Arg... args)
+{
+    DebugPrinter::cVerbose(v,str,args...);
+}
+
 template<typename... Arg>
 /*!
  * \brief Verbose message
@@ -126,8 +138,13 @@ template<typename... Arg>
  */
 FORCEDINLINE void cVerbose(cstring str, Arg... args)
 {
-    DebugPrinter::cVerbose(str,args...);
+    DebugPrinter::cVerbose(3,str,args...);
 }
+#else
+/* Disable the function, not even compiling it */
+/* We take no chances */
+#define cVerbose(...)
+#endif
 
 template<typename... Arg>
 /*!

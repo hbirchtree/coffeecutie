@@ -3,6 +3,7 @@
 #include <coffee/core/CTiming>
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CApplication>
+#include <coffee/core/CProfiling>
 
 using namespace Coffee;
 

@@ -11,6 +11,9 @@ CString LinuxFileFun::NativePath(cstring fn)
 {
     const constexpr cstring var_appimg = "APPIMAGE_DATA_DIR";
 
+    if(fn[0] == '/')
+        return fn;
+
     if(AssetApi::GetAsset(fn))
     {
         if(!Env::ExistsVar(var_appimg))
@@ -21,6 +24,14 @@ CString LinuxFileFun::NativePath(cstring fn)
         return out;
     }else
         return fn;
+}
+
+CString LinuxFileFun::NativePath(cstring fn, ResourceAccess storage)
+{
+    if(feval(storage,ResourceAccess::TemporaryFile))
+        return Env::ConcatPath("/tmp",fn);
+    else
+        return NativePath(fn);
 }
 
 bool LinuxFileFun::VerifyAsset(cstring fn)

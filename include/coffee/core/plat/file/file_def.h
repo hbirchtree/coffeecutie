@@ -39,6 +39,8 @@ struct FileFunDef
     };
 
     static CString NativePath(cstring);
+    static CString NativePath(cstring,ResourceAccess);
+
     STATICINLINE bool VerifyAsset(cstring)
     {
         return true;

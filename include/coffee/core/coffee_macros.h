@@ -1,8 +1,6 @@
 #ifndef COFFEE_MACROS
 #define COFFEE_MACROS
 
-#include "plat/plat_memory.h"
-
 #include "plat/platform_detect.h"
 #include <stdio.h>
 #include <stdexcept>
