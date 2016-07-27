@@ -21,7 +21,8 @@ struct LinuxEnv : Posix::PosixEnvironmentFun
     }
     STATICINLINE CString ApplicationDir()
     {
-        return DirName(ExecutableName());
+        CString execname = ExecutableName();
+        return DirName(execname.c_str());
     }
     STATICINLINE CString GetUserData(cstring orgname, cstring appname)
     {
