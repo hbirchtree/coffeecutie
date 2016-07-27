@@ -102,7 +102,8 @@ CString WinFileFun::NativePath(cstring fn, ResourceAccess storage)
 {
     if(feval(storage,ResourceAccess::TemporaryFile))
     {
-        return Env::ConcatPath("/tmp",fn);
+        CString temp_dir = Env::GetVar("TEMP");
+        return Env::ConcatPath(temp_dir.c_str(),fn);
     }
     else
         return NativePath(fn);

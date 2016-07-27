@@ -7,6 +7,7 @@
 #include <coffee/core/types/tdef/stlfunctypes.h>
 
 #include <coffee/core/CDebug>
+#include <coffee/core/CThreading>
 #include <coffee/core/coffee_strings.h>
 
 namespace Coffee{

@@ -72,6 +72,7 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     using ScratchBuf = WinFileApi::ScratchBuf;
 
     static CString NativePath(cstring fn);
+    static CString NativePath(cstring fn,ResourceAccess storage);
     static bool VerifyAsset(cstring fn);
 
     static FileHandle* Open(cstring fn, ResourceAccess acc);
