@@ -4,6 +4,7 @@
 #include <coffee/CSDL2>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
+#include <coffee/sdl2/CSDL2Dialog>
 
 #include <coffee/core/input/eventhandlers.h>
 
@@ -491,6 +492,7 @@ int32 coffee_main(int32, cstring_w*)
     /* Initialize the window and check for errors */
     if(!renderer->init(props,&err))
     {
+        SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
         cDebug("Initialization error: {0}",err);
         return 1;
     }

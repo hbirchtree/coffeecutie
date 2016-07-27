@@ -27,6 +27,34 @@ cstring CoffeeBuildString = COFFEE_BUILD_STRING;
 
 cstring CoffeePlatformString = C_SYSTEM_STRING;
 
+FORCEDINLINE void PrintVersionInfo()
+{
+    cOutputPrint("{0}, released by {1}, version {2}",
+                CoffeeApplicationData.application_name,
+                CoffeeApplicationData.organization_name,
+                CoffeeApplicationData.version_code);
+}
+
+FORCEDINLINE void PrintBuildInfo()
+{
+    cOutputPrint("Running {0} build {1}",
+                "Coffee",
+                CoffeeBuildString);
+}
+
+FORCEDINLINE void PrintArchitectureInfo()
+{
+    cOutputPrint("Compiled for {0} on {1} ({2}})",
+                 CoffeePlatformString,CoffeeCompilerString,
+                 CoffeeArchString);
+    cOutputPrint("Executing on {0}",PlatformData::SystemDisplayString());
+}
+
+FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
+{
+    cOutputPrint("{0}",arg.helpMessage());
+}
+
 void CoffeeInit(bool profiler_init)
 {
     if(profiler_init)
@@ -47,37 +75,16 @@ void CoffeeInit(bool profiler_init)
     CoffeePlatformString = plat_tmp_string.c_str();
 #endif
 
-    cDebug("Build string: {0}",CoffeeBuildString);
+    PrintBuildInfo();
+    PrintArchitectureInfo();
 
-    cDebug("Compiled for {0} on {1} ({2})",
-           CoffeePlatformString,CoffeeCompilerString,CoffeeArchString);
-    cDebug("Running on {0}",PlatformData::SystemDisplayString());
-}
-
-FORCEDINLINE void PrintVersionInfo()
-{
-    cOutputPrint("{0}, released by {1}, version {2}",
-                CoffeeApplicationData.application_name,
-                CoffeeApplicationData.organization_name,
-                CoffeeApplicationData.version_code);
-}
-
-FORCEDINLINE void PrintBuildInfo()
-{
-    cOutputPrint("Running {0} build {1}",
-                "Coffee",
-                CoffeeBuildString);
-}
-
-FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
-{
-    cOutputPrint("{0}",arg.helpMessage());
+    cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 6;
+    Coffee::PrintingVerbosityLevel = 3;
 #else
     Coffee::PrintingVerbosityLevel = 1;
 #endif
@@ -137,34 +144,32 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         }
     }
 
-    cDebug("Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
-
-    cVerbose("Initializing profiler");
+    cVerbose(5,"Initializing profiler");
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 
     Profiler::PushContext("CoffeeMain");
 
-    cVerbose("Initializing Coffee library");
+    cVerbose(5,"Initializing Coffee library");
     CoffeeInit(false);
-    cVerbose("Calling Profile()");
+    cVerbose(5,"Calling Profile()");
     Profiler::Profile("Init");
 
-    cVerbose("Entering main function");
+    cVerbose(5,"Entering main function");
     Profiler::PushContext("main()");
     int32 r = mainfun(argc,argv);
     Profiler::PopContext();
     Profiler::Profile("Runtime");
 
-    cVerbose("Terminating library");
+    cVerbose(5,"Terminating library");
     CoffeeTerminate(false);
     Profiler::Profile("Termination");
     Profiler::PopContext();
 
-    cVerbose("Unloading profiler");
+    cVerbose(5,"Unloading profiler");
     Profiling::ExitRoutine(initargs.argc,initargs.argv);
 
-    cVerbose("Successfully reached end of main()");
+    cVerbose(5,"Successfully reached end of main()");
     return r;
 }
 
@@ -189,7 +194,7 @@ void sighandle(int sig)
     switch(sig)
     {
     case SIGFPE:
-        cBasicPrint("FPE occurred");
+        cVerbose(4,"FPE occurred");
         break;
     case SIGSEGV:
         if(exit_handle)
