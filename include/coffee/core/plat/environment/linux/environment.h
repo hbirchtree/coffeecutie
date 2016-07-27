@@ -19,6 +19,10 @@ struct LinuxEnv : Posix::PosixEnvironmentFun
         CFree(p);
         return v;
     }
+    STATICINLINE CString ApplicationDir()
+    {
+        return DirName(ExecutableName());
+    }
     STATICINLINE CString GetUserData(cstring orgname, cstring appname)
     {
         CString homedir = GetUserHome();

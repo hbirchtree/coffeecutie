@@ -62,7 +62,6 @@ struct PosixEnvironmentFun : EnvInterface
 	return GetVar("HOME");
     }
 
-    static CString ApplicationDir();
     static CString CurrentDir();
     static Variables Environment();
 };

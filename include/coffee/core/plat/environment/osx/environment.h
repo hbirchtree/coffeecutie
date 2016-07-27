@@ -19,6 +19,10 @@ struct MacEnv : Posix::PosixEnvironmentFun
 {
     static CString ExecutableName(cstring_w = nullptr);
 
+    STATICINLINE CString ApplicationDir()
+    {
+        return DirName(ExecutableName());
+    }
     STATICINLINE CString GetUserData(cstring orgname, cstring appname)
     {
         CString dir = GetVar("HOME");

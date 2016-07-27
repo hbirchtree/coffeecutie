@@ -77,13 +77,6 @@ CString PosixEnvironmentFun::ConcatPath(cstring v1, cstring v2)
     return v1+GetPathSep()+v2;
 }
 
-CString PosixEnvironmentFun::ApplicationDir()
-{
-    CString tmp = ExecutableName();
-    CString stmp = dirname(&tmp[0]);
-    return stmp;
-}
-
 CString PosixEnvironmentFun::CurrentDir()
 {
     CString dir;
