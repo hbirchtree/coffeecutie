@@ -3,6 +3,7 @@
 #include <coffee/core/plat/memory/string_ops.h>
 #include <coffee/core/plat/memory/stlstring_ops.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 #include "http_types.h"
 
 namespace Coffee{
