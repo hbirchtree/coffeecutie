@@ -10,6 +10,7 @@
 #include <coffee/core/argument_handling.h>
 #include <coffee/core/plat/environment/process_def.h>
 #include <coffee/core/types/cdef/infotypes.h>
+#include <coffee/core/plat/plat_file.h>
 
 namespace Coffee{
 
@@ -254,6 +255,12 @@ void InstallSignalHandler()
 bool EventProcess(int)
 {
     return true;
+}
+
+void GotoApplicationDir()
+{
+    CString dir = Env::ApplicationDir();
+    DirFun::ChDir(dir.c_str());
 }
 
 #endif

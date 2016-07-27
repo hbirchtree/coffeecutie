@@ -23,6 +23,8 @@ extern void CoffeeInit(bool profiler_init = true);
 
 extern void CoffeeTerminate(bool profiler_destroy = true);
 
+extern void GotoApplicationDir();
+
 //A simpler implementation of QObject
 class CObject;
 

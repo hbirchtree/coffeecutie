@@ -456,15 +456,7 @@ int32 coffee_main(int32, cstring_w*)
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
 
-    {
-        cVerbose("Attempting to retrieve executable name");
-        CString dir = Env::ExecutableName();
-        cVerbose("Got execname");
-        dir = Env::DirName(dir.c_str());
-        cVerbose("Got dirname");
-        DirFun::ChDir(dir.c_str());
-        cVerbose("Changed directory: {0}",dir);
-    }
+    GotoApplicationDir();
 
     /* Required for SDL2 applications, initializes SDL state */
     SubsystemWrapper<SDL2::SDL2> sdl2;
