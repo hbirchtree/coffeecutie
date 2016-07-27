@@ -1,8 +1,8 @@
 #ifndef COFFEE_CORE_BASE_DEBUG_DEBUGPRINTER_H
 #define COFFEE_CORE_BASE_DEBUG_DEBUGPRINTER_H
 
-#include "../../plat/plat_timing.h"
-#include "../../plat/environment/environment_details.h"
+#include "../../plat/timing/timing_def.h"
+#include "../../plat/plat_environment.h"
 
 #include "debug_interface.h"
 
@@ -157,10 +157,10 @@ struct DebugPrinterImpl : DebugPrinterDef
     }
 
     template<typename... Args>
-    STATICINLINE void cVerbose(cstring f, Args... a)
+    STATICINLINE void cVerbose(uint32 level, cstring f, Args... a)
     {
 #ifndef NDEBUG
-        if(PrintingVerbosityLevel < 3)
+        if(PrintingVerbosityLevel < level)
             return;
 
         CString fmt = FormatPrintString(Severity::Information,

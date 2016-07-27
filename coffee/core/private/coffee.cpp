@@ -2,6 +2,7 @@
 
 #include <coffee/core/CMD>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 
 #include <coffee/core/coffee_version.h>
 
@@ -75,12 +76,10 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 3;
+    Coffee::PrintingVerbosityLevel = 6;
 #else
     Coffee::PrintingVerbosityLevel = 1;
 #endif
-
-    cDebug("Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
 
 #ifdef COFFEE_SLAP_LOWMEM
     /*
@@ -137,6 +136,8 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         }
     }
 
+    cDebug("Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
+
     cVerbose("Initializing profiler");
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
@@ -162,6 +163,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     cVerbose("Unloading profiler");
     Profiling::ExitRoutine(initargs.argc,initargs.argv);
 
+    cVerbose("Successfully reached end of main()");
     return r;
 }
 

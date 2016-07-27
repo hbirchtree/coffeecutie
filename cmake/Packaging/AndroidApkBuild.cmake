@@ -26,6 +26,8 @@ if(ANDROID)
 
     set ( ANDROID_BUILD_OUTPUT "${COFFEE_DEPLOY_DIRECTORY}/android-apk" )
 
+    message ( "-- Main File: ${SDL2_ANDROID_MAIN_FILE}" )
+
 endif()
 
 #
@@ -128,7 +130,7 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         "xxhdpi/144"
         )
 
-    message ( "-- Mipmapping file ${ICON_ASSET} to ${ANDROID_MIPMAP_SET}" )
+    #message ( "-- Mipmapping file ${ICON_ASSET} to ${ANDROID_MIPMAP_SET}" )
 
     foreach(mip ${ANDROID_MIPMAP_SET})
         string ( REGEX REPLACE "([a-z]+)/([0-9]+)" "\\1" MIPMAP_DEST_DIR "${mip}" )
@@ -358,7 +360,6 @@ macro(ANDROIDAPK_PACKAGE
 
 
     if(ANDROID_USE_SDL2_LAUNCH)
-        message ( "-- Main File: ${SDL2_ANDROID_MAIN_FILE}" )
         add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
     else()
         add_library(${TARGET} SHARED ${SOURCES}

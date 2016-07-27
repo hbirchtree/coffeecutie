@@ -64,8 +64,10 @@ endif()
 #
 
 if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_GLEAM)
-    # Supports GL 3.3+ and GL ES 3.0+ APIs
-    add_subdirectory(gleam/rhi/base-test)
+    if(COFFEE_BUILD_GLEAM_RHI)
+        # Supports GL 3.3+ and GL ES 3.0+ APIs
+        add_subdirectory(gleam/rhi/base-test)
+    endif()
 
     if(NOT COFFEE_BUILD_GLES)
         add_subdirectory(gleam/base-test)

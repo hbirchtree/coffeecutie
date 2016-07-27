@@ -1,4 +1,5 @@
 #include <coffee/core/CApplication>
+#include <coffee/core/CProfiling>
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
 

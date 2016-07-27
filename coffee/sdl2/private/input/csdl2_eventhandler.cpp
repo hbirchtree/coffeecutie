@@ -1,6 +1,7 @@
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 #include "evhandlers/sdl2eventhandlers.h"
 #include "sdl2inputfun.h"
 

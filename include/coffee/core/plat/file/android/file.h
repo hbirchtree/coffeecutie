@@ -35,6 +35,7 @@ struct AndroidFileFun : Posix::PosixFileFun_def<AndroidFileApi::FileHandle,Posix
     using Ancestor = Posix::PosixFileFun_def<AndroidFileApi::FileHandle,Posix::PosixApi::FileMapping,CommonFileFun::ScratchBuf>;
 
     static CString NativePath(cstring fn);
+    static CString NativePath(cstring fn,ResourceAccess storage);
 
     static FileHandle* Open(cstring fn, ResourceAccess ac);
 

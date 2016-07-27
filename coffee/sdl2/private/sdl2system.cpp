@@ -2,6 +2,7 @@
 
 #include <coffee/core/coffee_strings.h>
 #include <coffee/core/CDebug>
+#include <coffee/core/CProfiling>
 #include "types/sdl2datatypes.h"
 
 namespace Coffee{

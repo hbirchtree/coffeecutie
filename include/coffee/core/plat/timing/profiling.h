@@ -4,6 +4,7 @@
 #include "timing_def.h"
 #include "../../coffee_macros.h"
 #include "../../base/threading/cthreading.h"
+#include "../../CDebug"
 
 namespace Coffee{
 namespace Profiling{
@@ -46,19 +47,28 @@ struct SimpleProfilerImpl
     using ThreadPtr = ShPtr<ThreadId>;
     using ExtraData = LinkList<ExtraPair>;
 
+    STATICINLINE void ResetPointers()
+    {
+        global_init = nullptr;
+    }
+
     STATICINLINE void InitProfiler()
     {
         if(!global_init)
         {
+            cVerbose(6,"Creating global thread counter");
             global_init = new std::atomic_int(0);
+            global_init->store(0);
         }
 #ifndef NDEBUG
+        cVerbose(6,"Creating thread context stack");
         context_stack = new LinkList<CString>;
 #endif
 
-
+        cVerbose(6,"Checking initializer value: {0}",global_init->load());
         if(global_init->load()<1)
         {
+            cVerbose(6,"Creating profiler");
 #ifndef NDEBUG
             datapoints = new LinkList<DataPoint>;
             threadnames = new ThreadListing;

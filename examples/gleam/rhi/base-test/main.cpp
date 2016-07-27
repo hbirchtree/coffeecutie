@@ -3,9 +3,9 @@
 #include <coffee/CGraphics>
 #include <coffee/CSDL2>
 #include <coffee/core/CFiles>
+#include <coffee/core/CProfiling>
 
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/graphics_apis/SMesh>
 
 #include <coffee/dummyplug/hmd-dummy.h>
 #include <coffee/COculusRift>

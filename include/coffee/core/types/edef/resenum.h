@@ -45,15 +45,16 @@ enum class ResourceAccess
     SpecifyStorage = 0x4000,
 
     /* Storage types */
-    AssetFile  = 0x8000, /* Packaged in virtual file system, system-specific */
-    ConfigFile = 0x10000, /* Stored in configuration directory, system-specific */
+    AssetFile     = 0x8000,  /* Packaged in virtual file system, system-specific */
+    ConfigFile    = 0x10000, /* Stored in configuration directory, system-specific */
+    TemporaryFile = 0x20000, /* Stored in a temporary directory that is expected to be wiped, system-specific result */
 
     /* Masks */
     LockingMask = ExclusiveLocking|SharedLocking,
     AccessMask  = ReadWrite|Append|Executable,
     CreateMask  = NewFile|Discard,
     CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
-    StorageMask = SpecifyStorage|AssetFile|ConfigFile,
+    StorageMask = SpecifyStorage|AssetFile|ConfigFile|TemporaryFile,
 };
 C_FLAGS(ResourceAccess,uint32);
 

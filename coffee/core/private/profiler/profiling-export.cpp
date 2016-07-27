@@ -73,6 +73,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             envdata->InsertEndChild(p);
         }
     }
+    cVerbose(4,"Writing environment data");
 
     /* Store data about runtime */
     {
@@ -102,6 +103,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         rundata->SetAttribute("system", sys_string.c_str());
         rundata->SetAttribute("architecture",CoffeeArchString);
     }
+    cVerbose(4,"Writing runtime data");
 
     /* Store system information */
     {
@@ -147,6 +149,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         tmp = Convert::booltostring(SysInfo::HasHyperThreading());
         sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
     }
+    cVerbose(4,"Writing system data");
 
     /* Store extra data gathered by program, is parsed as JSON if possible */
     {
@@ -162,6 +165,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             e->SetText(p.value.c_str());
         }
     }
+    cVerbose(4,"Writing extra data");
 
     /* Only runs in debug mode! */
     if(Profiler::Enabled){
@@ -264,6 +268,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         }
 #endif
     }
+    cVerbose(4,"Writing profiler data");
 
     if(!PlatformData::IsMobile())
     {
@@ -289,20 +294,25 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         CResources::CFILEFun::Close(file);
     }else{
 #if defined(COFFEE_ANDROID)
-        const constexpr cstring mobile_logtemplate = "/data/local/{0}-profile.xml";
+        const constexpr cstring mobile_logtemplate = "/data/local/tmp/{0}-profile.xml";
 #else
         const constexpr cstring mobile_logtemplate = "/tmp/{0}-profile.xml";
 #endif
 
+        cVerbose(5,"Creating tinyxml2 printer");
         tinyxml2::XMLPrinter printer;
         doc.Print(&printer);
+        cVerbose(5,"Printed tinyxml2 document");
         CString log_name = cStringFormat(
                     mobile_logtemplate,
                     CoffeeApplicationData.application_name);
-        CResources::Resource out(log_name.c_str());
+        cVerbose(5,"Creating filename");
+        CResources::Resource out(log_name.c_str(),true);
         out.data = (c_ptr)printer.CStr();
         out.size = (szptr)printer.CStrSize();
+        cVerbose(5,"Retrieving data pointers");
         CResources::FileCommit(out);
+        cVerbose(5,"Wrote file");
     }
 }
 
