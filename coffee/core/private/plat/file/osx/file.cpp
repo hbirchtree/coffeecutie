@@ -35,6 +35,14 @@ CString MacFileFun::NativePath(cstring fn)
         return fn;
 }
 
+CString MacFileFun::NativePath(cstring fn, ResourceAccess storage)
+{
+    if(feval(storage,ResourceAccess::TemporaryFile))
+        return Env::ConcatPath("/tmp",fn);
+    else
+        return NativePath(fn);
+}
+
 }
 }
 }
