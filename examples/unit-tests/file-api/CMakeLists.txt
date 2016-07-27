@@ -19,3 +19,5 @@ if(NOT ANDROID AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 coffee_add_test ( Unit_Directory_List01 "Cu_DirListing" test07.cpp CoffeeCore )
+
+coffee_add_test ( Unit_Symlink_Test01 "Cu_Symlink" test08.cpp CoffeeCore )

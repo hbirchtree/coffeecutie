@@ -12,6 +12,8 @@
 
 namespace CoffeeTest{
 
+using namespace Coffee;
+
 CElapsedTimerMicro timer;
 
 Vector<cstring> titles;

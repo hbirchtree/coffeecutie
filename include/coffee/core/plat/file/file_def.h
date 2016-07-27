@@ -122,6 +122,9 @@ struct FileFunDef
 
     static NodeType Stat(cstring)
     {return NodeType::None;}
+
+    static CString DereferenceLink(cstring){return {};}
+    static CString CanonicalName(cstring){return {};}
 };
 
 struct DirFunDef

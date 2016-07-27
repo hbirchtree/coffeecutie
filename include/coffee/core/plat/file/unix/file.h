@@ -67,6 +67,12 @@ struct PosixFileMod_def : CommonFileFun
 	return stat;
     }
 
+    static CString DereferenceLink(cstring fn);
+
+    static CString CanonicalName(cstring fn);
+
+    static bool Ln(cstring src, cstring target);
+
     static szptr Size(cstring fn);
 
     static bool Exists(cstring fn);

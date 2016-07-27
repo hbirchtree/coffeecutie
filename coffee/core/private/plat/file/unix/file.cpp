@@ -16,19 +16,19 @@ FileFunDef::NodeType PosixFileMod_def::Stat(cstring fn)
 
     mode_t m = fs.st_mode;
 
-    if(m&S_IFDIR)
+    if(S_ISDIR(m))
         return NodeType::Directory;
-    else if(m&S_IFCHR)
-        return NodeType::Character;
-    else if(m&S_IFBLK)
-        return NodeType::Block;
-    else if(m&S_IFREG)
+    else if(S_ISREG(m))
         return NodeType::File;
-    else if(m&S_IFLNK)
+    else if(S_ISLNK(m))
         return NodeType::Link;
-    else if(m&S_IFSOCK)
+    else if(S_ISCHR(m))
+        return NodeType::Character;
+    else if(S_ISBLK(m))
+        return NodeType::Block;
+    else if(S_ISSOCK(m))
         return NodeType::Socket;
-    else if(m&S_IFIFO)
+    else if(S_ISFIFO(m))
         return NodeType::FIFO;
 
     return NodeType::None;
@@ -53,6 +53,43 @@ bool PosixFileMod_def::Touch(FileFunDef::NodeType t, cstring fn)
         return false;
     }
     return true;
+}
+
+CString PosixFileMod_def::DereferenceLink(cstring fn)
+{
+    CString out;
+    szptr name_size = PATH_MAX;
+    out.resize(name_size+1);
+    out.resize(readlink(fn,&out[0],name_size));
+
+    ErrnoCheck(fn);
+
+    return out;
+}
+
+CString PosixFileMod_def::CanonicalName(cstring fn)
+{
+    cstring_w name = canonicalize_file_name(fn);
+    if(!name)
+    {
+        ErrnoCheck(fn);
+        return {};
+    }
+    CString out = name;
+    free(name);
+    return out;
+}
+
+bool PosixFileMod_def::Ln(cstring src, cstring target)
+{
+    int sig = symlink(src,target);
+    if(sig == 0)
+        return true;
+    else
+    {
+        ErrnoCheck(target);
+        return false;
+    }
 }
 
 szptr PosixFileMod_def::Size(cstring fn)
