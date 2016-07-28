@@ -1,19 +1,23 @@
 #ifndef COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
 #define COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
 
-#include <coffee/core/types/tdef/integertypes.h>
 
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/cdef/funtypes.h>
+#include <coffee/core/types/cdef/memtypes.h>
 #include <coffee/core/types/cdef/pixtypes.h>
-
 #include <coffee/core/types/cdef/timetypes.h>
+
+#include <coffee/core/types/vector_types.h>
 
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/edef/colorenum.h>
+#include <coffee/core/types/edef/graphicsenum.h>
 #include <coffee/core/types/edef/logicenum.h>
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
+
+#include <coffee/core/types/tdef/integertypes.h>
 
 namespace Coffee{
 namespace RHI{
@@ -103,6 +107,18 @@ struct GraphicsProfiler
 
 struct GraphicsAPI
 {
+    struct GraphicsDevice
+    {
+    };
+
+    struct GraphicsContext
+    {
+    };
+
+    static void LoadAPI(bool UNUSED_PARAM debug_mode)
+    {
+    }
+
     /*!
      * \brief A singular command for the GPU command queue
      */
@@ -304,7 +320,12 @@ struct GraphicsAPI
          * \brief Pointer to data, access restricted to original settings
          * \return
          */
-        void* data();
+        void* data(){return nullptr;}
+
+        void alloc(){}
+        void dealloc(){}
+
+        void commit(szptr,c_cptr){}
 
     protected:
         ResourceAccess m_access;
@@ -314,9 +335,10 @@ struct GraphicsAPI
     /*!
      * \brief Contains mesh indices for ordering of vertices
      */
-    struct IndexBuffer : VertexBuffer
+    struct ElementBuffer : VertexBuffer
     {
-        IndexBuffer(ResourceAccess access, TypeEnum itype, szptr size):VertexBuffer(access,size),m_itype(itype){}
+        ElementBuffer(ResourceAccess access, TypeEnum itype, szptr size)
+            :VertexBuffer(access,size),m_itype(itype){}
     protected:
         TypeEnum m_itype;
     };
@@ -325,7 +347,8 @@ struct GraphicsAPI
      */
     struct UniformBuffer : VertexBuffer
     {
-        UniformBuffer(ResourceAccess access, uint32 stride, szptr size):VertexBuffer(access,size),m_stride(stride){}
+        UniformBuffer(ResourceAccess access, uint32 stride, szptr size)
+            :VertexBuffer(access,size),m_stride(stride){}
     protected:
         uint32 m_stride;
     };
@@ -334,7 +357,8 @@ struct GraphicsAPI
      */
     struct ShaderBuffer : VertexBuffer
     {
-        ShaderBuffer(ResourceAccess access, uint32 stride, szptr size):VertexBuffer(access,size),m_stride(stride){}
+        ShaderBuffer(ResourceAccess access, uint32 stride, szptr size)
+            :VertexBuffer(access,size),m_stride(stride){}
     protected:
         uint32 m_stride;
     };
@@ -344,12 +368,26 @@ struct GraphicsAPI
      */
     struct IndirectBuffer : VertexBuffer
     {
-        IndirectBuffer(ResourceAccess access, uint32 flags, uint32 stride, szptr size):VertexBuffer(access,size),m_flags(flags),m_stride(stride){}
+        IndirectBuffer(ResourceAccess access, uint32 flags, uint32 stride, szptr size)
+            :VertexBuffer(access,size),m_flags(flags),m_stride(stride){}
     protected:
         uint32 m_flags;
         uint32 m_stride;
     };
 
+    /*!
+     * \brief Describes a buffer used to upload pixel data
+     */
+    struct PixelBuffer : VertexBuffer
+    {
+        PixelBuffer(ResourceAccess access, szptr size)
+            :VertexBuffer(access,size)
+        {}
+    };
+
+    /*!
+     * \brief Describes a singular vertex attribute
+     */
     struct VertexAttribute
     {
         VertexAttribute():
@@ -381,6 +419,9 @@ struct GraphicsAPI
         bool m_instanced;
     };
 
+    /*!
+     * \brief Describes the association of a vertex buffer to a vertex attribute location
+     */
     struct VertexBufferBinding
     {
         VertexBufferBinding(VertexBuffer& buf, VertexAttribute& desc):m_buffer(buf),m_descr(desc){}
@@ -389,14 +430,23 @@ struct GraphicsAPI
         VertexAttribute& m_descr;
     };
 
+    /*!
+     * \brief Describes a vertex buffer structure, intra-buffer and/or across buffers
+     */
     struct VertexDescriptor
     {
         VertexDescriptor()
         {
         }
 
+        void alloc(){}
+        void dealloc(){}
+
+        void bind(){}
+        void bindBuffer(uint32,VertexBuffer&){}
+
         void addAttribute(VertexAttribute const&){}
-        void setIndexBuffer(IndexBuffer const&){}
+        void setIndexBuffer(ElementBuffer const&){}
     };
 
     /*!
@@ -421,10 +471,14 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Keeps track of textures, uniforms and miscellaneous buffers
+     * \brief Describes data to go into uniform value
      */
-    struct ShaderUniformState
+    struct UniformValue
     {
+        UniformValue()
+        {}
+        Bytes const* data;
+        uint32 flags;
     };
 
     /*!
@@ -436,26 +490,34 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader (for GL3.3, just slap a program in there and put tighter restrictions on attaching)
-     * On GL3.3, this will be a program object
-     * On GL4.3+ this will be a pipeline object with separable shaderprogram objects
-     */
-    struct Pipeline
-    {
-        Pipeline(uint32 flags):m_flags(flags){}
-        void begin(){}
-        void end(){}
-    protected:
-        uint32 m_flags;
-    };
-    /*!
      * \brief Contains a single shader, fragment and etc.
      * On GL3.3 this will be a shader object
      * On GL4.3+ this will be a separable shaderprogram object
      */
     struct Shader
     {
+        Shader():Shader(0){}
         Shader(uint32 flags):m_flags(flags){}
+
+        bool compile(ShaderStage,Bytes&){return true;}
+        void dealloc(){}
+    protected:
+        uint32 m_flags;
+    };
+    /*!
+     * \brief Contains programs for a rendering pipeline, eg. vertex, fragment, compute shader (for GL3.3, just slap a program in there and put tighter restrictions on attaching)
+     * On GL3.3, this will be a program object
+     * On GL4.3+ this will be a pipeline object with separable shaderprogram objects
+     */
+    struct Pipeline
+    {
+        Pipeline():Pipeline(0){}
+        Pipeline(uint32 flags):m_flags(flags){}
+        void bind(){}
+        void unbind(){}
+
+        bool assemble(){return true;}
+        void attach(Shader&,ShaderStage){}
     protected:
         uint32 m_flags;
     };
@@ -477,6 +539,7 @@ struct GraphicsAPI
      */
     struct Surface
     {
+
         Surface(PixelFormat fmt, bool isArray = false, uint32 arraySize = 0,
                 uint32 mips = 1, uint32 flags = 0,
                 ResourceAccess cl = ResourceAccess::ReadOnly)
@@ -487,6 +550,11 @@ struct GraphicsAPI
               m_flags(flags),
               m_access(cl)
         {}
+
+        void allocate(CSizeT const&,PixCmp){}
+        void dealloc(){}
+
+        void upload(BitFormat,PixCmp,CSizeT const&,c_cptr,PointT const&){}
 
         uint32 size() const {return 0;}
         bool isArray() const {return b_array;}
@@ -502,20 +570,59 @@ struct GraphicsAPI
         ResourceAccess m_access;
     };
 
-    struct Surface2D; /* Simple 2D texture */
-    struct Surface3D; /* 3D texture */
-    struct SurfaceCube; /* Cube texture */
+    using Surface2D = Surface /* Simple 2D texture */;
+    using Surface3D = Surface /* Simple 3D texture */;
+    using SurfaceCube = Surface /* Cubemap texture */;
 
-    struct Surface2DArray; /* Layered 2D texture*/
-    struct SurfaceCubeArray; /* Layered cubemap */
+    using Surface2DArray = Surface /* 2D texture array */;
+    using SurfaceCubeArray = Surface /* Cubemap array */;
 
+    /*!
+     * \brief Used to address a sampler from the shaders
+     */
+    struct SamplerHandle
+    {
+    };
+
+    /*!
+     * \brief Samples from a Surface
+     */
     struct Sampler
     {
         Sampler()
         {
         }
 
-        void attach(Surface const&);
+        void alloc(){}
+
+        SamplerHandle handle(){return {};}
+
+        void attach(Surface const*){}
+
+        void bind(uint32){}
+
+        void setFiltering(Filtering,Filtering,Filtering = Filtering::None){}
+    };
+
+    struct Sampler2D : Sampler
+    {
+    };
+    struct Sampler3D : Sampler
+    {
+    };
+    struct SamplerCube : Sampler
+    {
+    };
+
+    struct Sampler2DArray : Sampler
+    {
+    };
+    struct SamplerCubeArray : Sampler
+    {
+    };
+
+    struct RenderDummy
+    {
     };
 
     /*!
@@ -524,8 +631,18 @@ struct GraphicsAPI
      */
     struct RenderTarget
     {
-        void attachSurface(){}
-        void attachDepthStencilSurface(){}
+        constexpr RenderTarget(){}
+
+        void attachSurface(Surface const&, uint32, uint32 = 0){}
+        void attachSurface(RenderDummy const&){}
+
+        void attachDepthStencilSurface(Surface const&, uint32){}
+        void attachDepthSurface(Surface const&, uint32){}
+
+        void resize(uint32,CRect64 const&){}
+
+        void clear(Vecf4 const&,bigscalar = 0.){}
+        void clear(bigscalar,int32 = 0){}
     };
 
     static void SetRenderTarget(RenderTarget const&);
@@ -562,32 +679,122 @@ struct GraphicsAPI
     };
 
     /*!
+     * \brief Keeps track of textures, uniforms and miscellaneous buffers
+     */
+    struct ShaderUniformState
+    {
+        void setUniform(UniformDescriptor const&,UniformValue*){}
+        void setSampler(UniformDescriptor const&,SamplerHandle&){}
+    };
+
+    static void GetShaderUniformState(Pipeline&,Vector<UniformDescriptor>*){}
+
+    /*!
      * \brief Draw primitives regardlessly
      * \param d General drawcall settings
      * \param i Data associated with instance of drawcall
      */
-    static void Draw(DrawCall const& d,DrawInstanceData const& i);
+    static void Draw(DrawCall const& d,DrawInstanceData const& i){}
     /*!
      * \brief Draw primitives with occlusion query
      * \param d
      * \param i
      * \param c An occlusion query to be considered in the drawcall
      */
-    static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c);
+    static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c){}
 
-    static void SetRasterizerState(){}
-    static void SetTessellatorState(){}
-    static void SetViewportState(){}
-    static void SetBlendState(){}
-    static void SetDepthState(){}
-    static void SetStencilState(){}
-    static void SetPixelProcessState(){}
-    static void SetShaderUniformState(){}
+    static void SetRasterizerState(RasterizerState const&){}
+    static void SetTessellatorState(TessellatorState const&){}
+    static void SetViewportState(ViewportState const&){}
+    static void SetBlendState(BlendState const&){}
+    static void SetDepthState(DepthState<uint32> const&){}
+    static void SetStencilState(StencilState<uint32,uint32> const&){}
+    static void SetPixelProcessState(PixelProcessState const&){}
+    static void SetShaderUniformState(Pipeline&,ShaderStage,ShaderUniformState const&){}
 
     struct Util
     {
         static void DumpTexture(Surface const& s);
     };
+
+};
+
+struct NullAPI : GraphicsAPI
+{
+    enum DummyValues
+    {
+        TextureDMABuffered = 0,
+    };
+
+    /* Null renderer types, do not inherit from these */
+    struct S_2D : Surface2D
+    {
+        S_2D(PixelFormat fmt,uint32 mips, uint32 flags):
+            Surface2D(fmt,false,0,mips,flags)
+        {}
+        CSize m_size;
+    };
+    struct S_3D : Surface3D
+    {
+        S_3D(PixelFormat fmt,uint32 mips, uint32 flags):
+            Surface3D(fmt,false,0,mips,flags)
+        {}
+        CSize3 m_size;
+    };
+    using S_Cube = SurfaceCube;
+
+    struct S_2DA : Surface2DArray
+    {
+        S_2DA(PixelFormat fmt,uint32 mips, uint32 flags):
+            Surface2DArray(fmt,false,0,mips,flags)
+        {}
+        CSize3 m_size;
+    };
+
+    using FB_T = RenderTarget;
+    using RBUF = RenderDummy;
+
+    using S_CubeA = SurfaceCubeArray;
+
+    using SM_2D = Sampler2D;
+    using SM_3D = Sampler3D;
+    using SM_Cube = SamplerCube;
+
+    using SM_2DA = Sampler2DArray;
+    using SM_CubeA = SamplerCubeArray;
+
+    using SHD = Shader;
+    using PIP = Pipeline;
+
+    using V_ATTR = VertexAttribute;
+    using V_DESC = VertexDescriptor;
+
+    using BUF_A = VertexBuffer;
+    using BUF_E = ElementBuffer;
+    using BUF_U = UniformBuffer;
+    using BUF_S = ShaderBuffer;
+    using BUF_P = PixelBuffer;
+
+    using D_CALL = DrawCall;
+    using D_DATA = DrawInstanceData;
+
+    using UNIFDESC = UniformDescriptor;
+    using UNIFVAL = UniformValue;
+    using UNIFSMP = SamplerHandle;
+
+    using USTATE = ShaderUniformState;
+    using RASTSTATE = RasterizerState;
+    using VIEWSTATE = ViewportState;
+    using BLNDSTATE = BlendState;
+    using DEPTSTATE = DepthState<uint32>;
+    using STENSTATE = StencilState<uint32,uint32>;
+    using TSLRSTATE = TessellatorState;
+    using PIXLSTATE = PixelProcessState;
+
+    using G_CTXT = GraphicsContext;
+    using G_DEV = GraphicsDevice;
+
+    static FB_T DefaultFramebuffer;
 };
 
 }

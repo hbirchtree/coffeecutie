@@ -17,7 +17,7 @@ struct GLEAM_Shader : GraphicsAPI::Shader
     {
     }
 
-    bool compile(ShaderStage stage,cstring str);
+    bool compile(ShaderStage stage, Bytes& data);
     void dealloc();
 
 protected:
@@ -60,10 +60,8 @@ struct GLEAM_UniformDescriptor : GraphicsAPI::UniformDescriptor
     ShaderStage stages;
 };
 
-struct GLEAM_UniformValue
+struct GLEAM_UniformValue : GraphicsAPI::UniformValue
 {
-    CByteData const* data;
-    uint32 flags;
 };
 
 struct GLEAM_BufferSection

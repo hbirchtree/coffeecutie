@@ -30,7 +30,7 @@ struct TinyXML2Impl
     STATICINLINE Document* XMLRead(
             const CResources::Resource& source)
     {
-		return XMLRead(CResources::FileGetDescriptor(source));
+                return XMLRead(FileGetDescriptor(source));
     }
 
 };

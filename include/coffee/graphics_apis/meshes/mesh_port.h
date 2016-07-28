@@ -42,7 +42,7 @@ void SerializeMesh(_cbasic_mesh const& mesh,
     Vector<attr_grouping_t> groups;
 
     /* Retrieve all attributes, get their sizes */
-    for(std::pair<Mesh::AttributeType_t,Vector<byte_t>> const& v : mesh.attributes)
+    for(Pair<Mesh::AttributeType_t,Vector<byte_t>> const& v : mesh.attributes)
     {
         attr_grouping_t g;
         g.id = v.first;

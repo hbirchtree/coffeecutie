@@ -8,6 +8,7 @@ if(COFFEE_BUILD_GLEAM_RHI)
         private/rhi/gleam_rhi.cpp
         private/rhi/gleam_api_rhi.cpp
         private/rhi/gleam_buffer_rhi.cpp
+        private/rhi/gleam_framebuffer_rhi.cpp
         private/rhi/gleam_shader_rhi.cpp
         private/rhi/gleam_surface_rhi.cpp
         private/rhi/gleam_vertex_rhi.cpp
@@ -27,6 +28,7 @@ target_link_libraries ( CoffeeGLeam
     CoffeeCore
     CoffeeImage
     CoffeeSDL2
+    CoffeeGraphicsAPI
     )
 
 # For Android, there is some special function loading

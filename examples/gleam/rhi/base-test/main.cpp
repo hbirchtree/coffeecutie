@@ -23,13 +23,19 @@ using VR = HMD::DummyPlugHMD;
 
 VR::Device* dev;
 
-#ifdef COFFEE_GLEAM_DESKTOP
-using GL = CGL::CGL43;
-#else
-using GL = CGL::CGLES30;
-#endif
+//#ifdef COFFEE_GLEAM_DESKTOP
+//using GL = CGL::CGL43;
+//#else
+//using GL = CGL::CGLES30;
+//#endif
 
+//#define DERP
+
+#ifndef DERP
 using GLM = GLEAMAPI;
+#else
+using GLM = RHI::NullAPI;
+#endif
 
 class CDRenderer : public CSDL2Renderer
 {
@@ -132,11 +138,11 @@ public:
                 return;
             }
 
-			CString v_shader_code((cstring)v_rsc.data, v_rsc.size);
-			CString f_shader_code((cstring)f_rsc.data, f_rsc.size);
+            Bytes v_shader_code = FileGetDescriptor(v_rsc);
+            Bytes f_shader_code = FileGetDescriptor(f_rsc);
 
-            if(v_shader.compile(CGL::ShaderStage::Vertex,v_shader_code.c_str())&&
-                    f_shader.compile(CGL::ShaderStage::Fragment, f_shader_code.c_str()))
+            if(v_shader.compile(ShaderStage::Vertex,v_shader_code)&&
+                    f_shader.compile(ShaderStage::Fragment,f_shader_code))
             {
                 cVerbose("Shaders compiled");
                 eye_pip.attach(v_shader,CGL::ShaderStage::Vertex);
@@ -152,6 +158,8 @@ public:
                 cVerbose("Shader compilation failed");
                 return;
             }
+            v_shader.dealloc();
+            f_shader.dealloc();
             CResources::FileUnmap(v_rsc);
             CResources::FileUnmap(f_rsc);
         }
@@ -246,6 +254,7 @@ public:
                         this->windowSize().w,
                         this->windowSize().h
                     });
+        viewportstate.m_mview = true;
         rasterstate_line.m_wireframe = true;
 
         /* We query the current pipeline for possible uniform/texture/buffer values */
@@ -270,6 +279,7 @@ public:
         timeval.data = &time_data;
 
         /* Applying state information */
+        GLM::SetViewportState(viewportstate,0);
         GLM::SetBlendState(blendstate);
         GLM::SetPixelProcessState(pixlstate);
         GLM::SetDepthState(deptstate);
@@ -315,10 +325,7 @@ public:
         bigscalar tprevious = this->contextTime();
         bigscalar tdelta = 0.1;
 
-        /* Clipping between the two virtual viewports */
-#ifdef COFFEE_GLEAM_DESKTOP
-        GL::Enable(GL::Feature::ClipDist,0);
-#endif
+        GLM::DefaultFramebuffer.resize(0,{0,0,1280,720});
 
         while(!closeFlag())
         {
@@ -329,7 +336,7 @@ public:
              * eg. don't clear stencil and depth if they are unused
              *
              */
-            GL::ClearBufferfv(true,0,clear_col);
+            GLM::DefaultFramebuffer.clear(clear_col);
 
             /*
              * Events are always late for the drawcall.
@@ -419,7 +426,7 @@ public:
         CSDL2Renderer::eventHandleD(e,data);
 
         EventHandlers::WindowManagerCloseWindow(this,e,data);
-        EventHandlers::ResizeWindow<GL>(e,data);
+        EventHandlers::ResizeWindowUniversal<GLM>(e,data);
     }
 
     void eventHandleI(const CIEvent &e, c_cptr data)

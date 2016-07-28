@@ -7,6 +7,9 @@ namespace Coffee{
 
 template<typename T, size_t Size> struct _cbasic_tvector
 {
+private:
+    T data[Size];
+public:
     static constexpr size_t size = Size;
 
     FORCEDINLINE _cbasic_tvector()
@@ -276,8 +279,6 @@ template<typename T, size_t Size> struct _cbasic_tvector
         for(size_t i=0;i<Size;i++)
             (*this)[i] /= v;
     }
-private:
-    T data[Size];
 };
 
 template<typename T,size_t Size>

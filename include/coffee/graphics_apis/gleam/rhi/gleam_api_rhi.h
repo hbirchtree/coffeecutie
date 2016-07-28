@@ -9,6 +9,7 @@ namespace GLEAM{
 
 struct GLEAM_API : GraphicsAPI
 {
+    /* Enumerations */
     enum TextureFlags
     {
         TextureDMABuffered = 1,
@@ -67,6 +68,8 @@ struct GLEAM_API : GraphicsAPI
         SamCubeA = 0x400,
     };
 
+    /* Types and relationships */
+
     using StencilState = GraphicsAPI::StencilState<CGenum,CGenum>;
     using DepthState = GraphicsAPI::DepthState<CGenum>;
 
@@ -122,10 +125,10 @@ struct GLEAM_API : GraphicsAPI
     using TSLRSTATE = TessellatorState;
     using PIXLSTATE = PixelProcessState;
 
-protected:
-    struct GLEAM_Instance_Data;
-    static thread_local GLEAM_Instance_Data* instance_data;
+    using FB_T = GLEAM_RenderTarget;
+    using RBUF = GLEAM_RenderDummy;
 
+    /* "Loose" functions */
 public:
     static void LoadAPI(bool debug = false);
 
@@ -149,6 +152,14 @@ public:
 
     static void Draw(DrawCall const& d,DrawInstanceData const& i);
     static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c);
+
+    /* Variables */
+protected:
+    struct GLEAM_Instance_Data;
+    static thread_local GLEAM_Instance_Data* instance_data;
+
+public:
+    static thread_local FB_T DefaultFramebuffer;
 };
 
 }

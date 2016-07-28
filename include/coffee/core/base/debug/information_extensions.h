@@ -168,7 +168,7 @@ inline CString cStringReplace(
 template<typename T>
 inline CString cStringReplace(
         CString const& fmt, size_t const& index,
-        _cbasic_point<T> v)
+        _cbasic_point_2d<T> v)
 {
     return extArgReplace(fmt,index,cStringFormat("p({0},{1})",
                                                v.x,v.y));

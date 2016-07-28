@@ -133,8 +133,10 @@ void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
 void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
 {
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(vstate.multiview()&&CGL43::ViewportArraySupported())
+    if(vstate.multiview())
     {
+        if(CGL43::ViewportArraySupported())
+        {
         CRectF* varr = new CRectF[vstate.viewCount()];
 
         for(uint32 k=i;k<vstate.viewCount();k++)
@@ -151,6 +153,14 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
         CGL43::DepthArrayv(i,vstate.viewCount(),&vstate.depth(i));
         CGL43::ScissorArrayv(i,vstate.viewCount(),&vstate.scissor(i));
         CGL43::ViewportArrayv(i,vstate.viewCount(),varr);
+
+        CGL33::Enable(Feature::ClipDist,0);
+
+        }else if(CGL33::ClipDistanceSupported())
+        {
+            /* TODO: Expand on this feature */
+            CGL33::Enable(Feature::ClipDist,0);
+        }
     }else
 #endif
     {

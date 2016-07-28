@@ -28,7 +28,7 @@ using bl_size_t = _cbasic_size_2d<int16>;
 /*!
  * \brief As with blam_size, int16 is standard size for Halo 1.
  */
-using bl_point_t = _cbasic_point<int16>;
+using bl_point_t = _cbasic_point_2d<int16>;
 
 /*!
  * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function

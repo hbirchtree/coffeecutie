@@ -10,13 +10,13 @@ template<typename T>
 struct _cbasic_data_chunk
 {
     /*!
-     * \brief Size in bytes
-     */
-    szptr size;
-    /*!
      * \brief Pointer to data
      */
     T* data;
+    /*!
+     * \brief Size in bytes
+     */
+    szptr size;
     /*!
      * \brief Number of elements, if applicable
      */

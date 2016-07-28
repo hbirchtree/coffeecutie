@@ -103,16 +103,17 @@ extern void FileCommitTextmode(const Resource& resc, bool append = false);
  */
 extern bool FileMkdir(cstring dirname, bool recursive);
 
-FORCEDINLINE Bytes FileGetDescriptor(Resource& resc)
-{
-    return {resc.size,(byte_t*)resc.data};
-}
-FORCEDINLINE BytesConst FileGetDescriptor(const Resource& resc)
-{
-    return {resc.size,(byte_t const*)resc.data};
 }
 
+FORCEDINLINE Bytes FileGetDescriptor(CResources::Resource& resc)
+{
+    return {(byte_t*)resc.data,resc.size};
 }
+FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
+{
+    return {(byte_t const*)resc.data,resc.size};
+}
+
 }
 
 #endif // CFILES_H

@@ -12,6 +12,17 @@ namespace EventHandlers{
 
 using namespace CInput;
 
+template<class GLM>
+FORCEDINLINE void ResizeWindowUniversal(const CDEvent& e, c_cptr data)
+{
+    if(e.type==CDEvent::Resize)
+    {
+        auto rev = (const CDResizeEvent*)data;
+        CRect64 view(0,0,rev->w,rev->h);
+        GLM::DefaultFramebuffer.resize(0,view);
+    }
+}
+
 template<class GL>
 FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
 {

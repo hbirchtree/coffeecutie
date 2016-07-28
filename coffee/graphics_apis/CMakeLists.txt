@@ -6,3 +6,5 @@ endif()
 if(COFFEE_BUILD_GLEAM)
     add_subdirectory(gleam)
 endif()
+
+coffee_add_library ( CoffeeGraphicsAPI "private/nullrenderer.cpp" )

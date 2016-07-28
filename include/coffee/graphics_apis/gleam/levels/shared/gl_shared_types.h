@@ -4,6 +4,7 @@
 
 #include <coffee/core/types/edef/dbgenum.h>
 #include <coffee/core/types/edef/enumfun.h>
+#include <coffee/core/types/edef/graphicsenum.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee{
@@ -71,26 +72,12 @@ enum class VertexWinding
     CCW, CW
 };
 
+using ShaderStage = Coffee::ShaderStage;
+
 enum class AttribMode
 {
     Interleaved = GL_INTERLEAVED_ATTRIBS,
     Separate = GL_SEPARATE_ATTRIBS,
-};
-
-enum class ShaderStage
-{
-    Vertex = 0x1,
-    Fragment = 0x2,
-
-    Compute = 0x4,
-    Geometry = 0x8,
-
-    TessEval = 0x10,
-    TessControl = 0x20,
-
-    All = Vertex|Fragment
-    |Compute|Geometry
-    |TessEval|TessControl,
 };
 
 enum CompFlags

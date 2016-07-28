@@ -159,8 +159,8 @@ void GLEAM_Surface2DArray::upload(BitFormat fmt, PixelComponents comp,
         CGL33::TexSubImage3D(m_type,mip,offset.x,offset.y,offset.z,
                              size.width,size.height,size.depth,comp,fmt,data_ptr);
 
-        CGL33::BufBind(BufType::PixelUData,0);
-
+        if(m_flags&GLEAM_API::TextureDMABuffered)
+            CGL33::BufBind(BufType::PixelUData,0);
     }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
         CGL43::TexBind(m_type,m_handle);

@@ -53,6 +53,9 @@ struct CGL33 :
         return true;
     }
 
+    STATICINLINE bool ClipDistanceSupported()
+    {return true;}
+
     STATICINLINE bool InstancedGeometryShaderSupported()
     {return Debug::CheckExtensionSupported("GL_ARB_geometry_shader4");}
 

@@ -7,8 +7,11 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-bool GLEAM_Shader::compile(ShaderStage stage, cstring str)
+bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
 {
+    CString str_s((cstring)data.data,data.size);
+    cstring str = str_s.c_str();
+
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         CGL33::ShaderAlloc(1,stage,&m_handle);

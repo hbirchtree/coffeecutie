@@ -20,6 +20,10 @@ struct CGL_Shared_Functions
     using Feature = CGL::Feature;
     using FramebufferT = CGL::FramebufferT;
 
+    /* Features */
+    STATICINLINE bool ClipDistanceSupported()
+    {return false;}
+
     /* Loading */
     STATICINLINE
     void LoadBinding(){}

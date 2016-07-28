@@ -82,3 +82,9 @@
 /* Apparently, a lot of compilers define these shits */
 #undef major
 #undef minor
+
+#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#define UNUSED_PARAM __attribute__((unused))
+#else
+#define UNUSED_PARAM
+#endif

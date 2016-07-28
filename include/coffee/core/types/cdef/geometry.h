@@ -6,11 +6,25 @@
 
 namespace Coffee{
 
+struct _cbasic_size
+{
+    _cbasic_size(){}
+    _cbasic_size(int32,int32){}
+    _cbasic_size(int32,int32,int32){}
+};
+
+struct _cbasic_point
+{
+    _cbasic_point(){}
+    _cbasic_point(int32,int32){}
+    _cbasic_point(int32,int32,int32){}
+};
+
 /*!
  * \brief A template for sizes
  */
 template<typename T>
-struct _cbasic_size_2d
+struct _cbasic_size_2d : _cbasic_size
 {
     FORCEDINLINE _cbasic_size_2d(T wd,T hg) : w(wd),h(hg){}
     FORCEDINLINE _cbasic_size_2d(): w(0),h(0)
@@ -46,7 +60,7 @@ struct _cbasic_size_2d
 };
 
 template<typename T>
-struct _cbasic_size_3d
+struct _cbasic_size_3d : _cbasic_size
 {
     FORCEDINLINE _cbasic_size_3d(T w, T h, T d):
         width(w),height(h),depth(d)
@@ -68,23 +82,25 @@ struct _cbasic_size_3d
 /*!
  * \brief A template for point types, x and y values
  */
-template<typename T> struct _cbasic_point
+template<typename T>
+struct _cbasic_point_2d : _cbasic_point
 {
-    _cbasic_point(T x,T y){
+    _cbasic_point_2d(T x,T y){
         this->x = x;
         this->y = y;
     }
-    _cbasic_point(){}
+    _cbasic_point_2d(){}
 
     T x,y;
 
-    T distance(const _cbasic_point& p)
+    T distance(const _cbasic_point_2d& p)
     {
         return CMath::sqrt(CMath::pow(this->x-p.x,2)+CMath::pow(this->y-p.y,2));
     }
 };
 
-template<typename T> struct _cbasic_point_3d
+template<typename T>
+struct _cbasic_point_3d : _cbasic_point
 {
     _cbasic_point_3d(T x, T y, T z):
         x(x),y(y),z(z)
@@ -101,7 +117,8 @@ template<typename T> struct _cbasic_point_3d
 /*!
  * \brief Template for rectangle types, used for window rectangle positioning and orthographic view
  */
-template<typename T> struct _cbasic_rect
+template<typename T>
+struct _cbasic_rect
 {
     FORCEDINLINE _cbasic_rect(T x,T y,T w,T h){
         this->x = x;
@@ -133,21 +150,21 @@ template<typename T> struct _cbasic_rect
         return y;
     }
 
-    FORCEDINLINE _cbasic_point<T> topleft() const
+    FORCEDINLINE _cbasic_point_2d<T> topleft() const
     {
-	return _cbasic_point<T>(left(),top());
+        return _cbasic_point_2d<T>(left(),top());
     }
-    FORCEDINLINE _cbasic_point<T> topright() const
+    FORCEDINLINE _cbasic_point_2d<T> topright() const
     {
-	return _cbasic_point<T>(right(),top());
+        return _cbasic_point_2d<T>(right(),top());
     }
-    FORCEDINLINE _cbasic_point<T> bottomleft() const
+    FORCEDINLINE _cbasic_point_2d<T> bottomleft() const
     {
-	return _cbasic_point<T>(left(),bottom());
+        return _cbasic_point_2d<T>(left(),bottom());
     }
-    FORCEDINLINE _cbasic_point<T> bottomright() const
+    FORCEDINLINE _cbasic_point_2d<T> bottomright() const
     {
-	return _cbasic_point<T>(right(),bottom());
+        return _cbasic_point_2d<T>(right(),bottom());
     }
 
     FORCEDINLINE T area() const
@@ -168,7 +185,7 @@ template<typename T> struct _cbasic_rect
                     CMath::min(rekt.w,this->w),
                     CMath::min(rekt.h,this->h));
     }
-    FORCEDINLINE bool test(const _cbasic_point<T>& point)
+    FORCEDINLINE bool test(const _cbasic_point_2d<T>& point)
     {
         if(point.x>this->left()  && point.x<this->right() &&
                 point.y>this->bottom() && point.y<this->top())
@@ -183,7 +200,7 @@ template<typename T> struct _cbasic_rect
                     CMath::max(rekt.w,this->w),
                     CMath::max(rekt.h,this->h));
     }
-    FORCEDINLINE _cbasic_rect<T> offset(const _cbasic_point<T>& point)
+    FORCEDINLINE _cbasic_rect<T> offset(const _cbasic_point_2d<T>& point)
     {
         return _cbasic_rect<T>(this->x+point.x,
                                this->y+point.y,
@@ -279,6 +296,9 @@ struct _cbasic_fov
     T v;
 };
 
+using CSizeT = _cbasic_size;
+using PointT = _cbasic_point;
+
 /*!
  * \brief Typical size, uses integer, should be used for window size
  */
@@ -316,17 +336,17 @@ using CRectD = _cbasic_rect<bigscalar>;
 /*!
  * \brief 32-bit integer point
  */
-using CPoint = _cbasic_point<int32>;
+using CPoint = _cbasic_point_2d<int32>;
 
 using CPoint3 =  _cbasic_point_3d<int32>;
 /*!
  * \brief Single-precision floating-point point
  */
-using CPointF = _cbasic_point<scalar>;
+using CPointF = _cbasic_point_2d<scalar>;
 /*!
  * \brief Double-precision floating-point point
  */
-using CPointD = _cbasic_point<bigscalar>;
+using CPointD = _cbasic_point_2d<bigscalar>;
 
 /*!
  * \brief Standard clipping type
