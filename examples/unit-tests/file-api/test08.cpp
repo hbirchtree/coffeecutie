@@ -11,7 +11,7 @@ bool link_create_test()
 {
     bool status = true;
     /* Creating a target file */
-    if(status && !FileFun::Touch(FileFun::File,target_test))
+    if(!FileFun::Touch(FileFun::File,target_test))
         status = false;
     if(status && FileFun::Stat(target_test) != FileFun::File)
         status = false;
@@ -22,8 +22,8 @@ bool link_create_test()
     if(status && FileFun::Stat(link_test) != FileFun::Link)
         status = false;
 
-    /* Being able to rm() the link */
-    FileFun::Rm(link_test);
+    /* Verify that links are deletable */
+    status = status && FileFun::Rm(link_test);
     FileFun::Rm(target_test);
 
     return status;
@@ -31,27 +31,60 @@ bool link_create_test()
 
 bool link_create_hanging_test()
 {
+    bool status = true;
     /* Creating link to non-existent file */
     if(!FileFun::Ln(target_test,link_test))
-        return false;
+        status = false;
     /* Getting correct result upon lstat() */
     if(FileFun::Stat(link_test) != FileFun::Link)
-        return false;
-    /* Being able to rm() the link */
-    if(!FileFun::Rm(link_test))
-        return false;
+        status = false;
 
-    return true;
+    /* Symlinks are verified deletable from last test */
+    FileFun::Rm(link_test);
+
+    return status;
 }
 
 bool link_dereference_test()
 {
-    return true;
+    bool status = true;
+
+    if(!FileFun::Ln(target_test,link_test))
+        status =  false;
+
+    if(status && FileFun::DereferenceLink(link_test) != target_test)
+        status = false;
+
+    /* Symlinks are verified deletable from last test */
+    FileFun::Rm(link_test);
+
+    return status;
 }
 
 bool link_canonical_test()
 {
-    return true;
+    CString target_path = Env::CurrentDir();
+    target_path = Env::ConcatPath(target_path.c_str(),target_test);
+
+    bool status = true;
+
+    FileFun::Touch(FileFun::File,target_test);
+    if(!FileFun::Ln(target_test,link_test))
+        status =  false;
+
+    if(status && FileFun::CanonicalName(link_test) != target_path)
+    {
+        cWarning("Canonical name test:\n {0} != {1}",
+                 FileFun::CanonicalName(link_test),
+                 target_path);
+        status = false;
+    }
+
+    /* Symlinks are verified deletable from last test */
+    FileFun::Rm(link_test);
+    FileFun::Rm(target_test);
+
+    return status;
 }
 
 const constexpr CoffeeTest::Test _run_tests[4] = {
