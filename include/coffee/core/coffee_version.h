@@ -12,6 +12,8 @@ extern cstring CoffeeArchString;
 extern cstring CoffeeBuildString;
 extern cstring CoffeePlatformString;
 
+extern CString CoffeeDefaultWindowName;
+
 
 }
 

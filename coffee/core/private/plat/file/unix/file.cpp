@@ -1,5 +1,7 @@
 #include <coffee/core/plat/file/unix/file.h>
 
+#include <stdlib.h>
+
 namespace Coffee{
 namespace CResources{
 namespace Posix{
@@ -69,6 +71,7 @@ CString PosixFileMod_def::DereferenceLink(cstring fn)
 
 CString PosixFileMod_def::CanonicalName(cstring fn)
 {
+#if defined(COFFEE_LINUX)
     cstring_w name = canonicalize_file_name(fn);
     if(!name)
     {
@@ -78,6 +81,14 @@ CString PosixFileMod_def::CanonicalName(cstring fn)
     CString out = name;
     free(name);
     return out;
+#else
+    CString out;
+    out.resize(FILENAME_MAX);
+    if(!realpath(fn,&out[0]))
+        out.resize(0);
+    out.resize(StrLen(out.c_str()));
+    return out;
+#endif
 }
 
 bool PosixFileMod_def::Ln(cstring src, cstring target)

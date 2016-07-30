@@ -101,6 +101,9 @@ bool SDL2SpriteRenderer::createTexture(
     Uint32 sdlfmt = 0;
     switch(fmt)
     {
+    case PixelFormat::RGBA8:
+        sdlfmt = SDL_PIXELFORMAT_ABGR8888;
+        break;
     default:
         sdlfmt = SDL_PIXELFORMAT_RGBA8888;
         break;
@@ -114,6 +117,7 @@ bool SDL2SpriteRenderer::createTexture(
         break;
     case ResourceAccess::WriteOnly:
         sdlacc = SDL_TEXTUREACCESS_TARGET;
+        break;
     default:
         sdlacc = SDL_TEXTUREACCESS_STATIC;
         break;

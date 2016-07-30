@@ -27,8 +27,7 @@ bool SDL2EventHandler::inputInit(CString*)
     /* If found, load game controller mappings from file */
     CResources::Resource mapping("gamecontrollerdb.txt", false,
                                  ResourceAccess::SpecifyStorage|
-                                 ResourceAccess::AssetFile|
-                                 ResourceAccess::ReadOnly);
+                                 ResourceAccess::AssetFile);
     if(FileExists(mapping))
     {
         cMsg("SDL2","Found game controller mappings");
@@ -181,6 +180,9 @@ void SDL2EventHandler::setRelativeMouse(bool enable)
 CIControllerState SDL2EventHandler::getControllerState(uint16 index)
 {
     SDL_GameController* gc = getSDL2Context()->controllers[index];
+    if(!gc)
+        return {};
+
     CIControllerState state;
 
     state.axes.e.l_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTX);
@@ -235,13 +237,13 @@ bool SDL2EventHandler::closeFlag() const
 void SDL2EventHandler::internalProcessEvent(const CDEvent &e, c_cptr d)
 {
     for(EventHandlerD& eh : m_eventhandlers_windw)
-        eh.func(this,e,d);
+        eh.func(eh.user_ptr,e,d);
 }
 
 void SDL2EventHandler::internalProcessEvent(const CIEvent &e, c_cptr d)
 {
     for(EventHandlerI& eh : m_eventhandlers_input)
-        eh.func(this,e,d);
+        eh.func(eh.user_ptr,e,d);
 }
 
 void SDL2EventHandler::installEventHandler(const EventApplication::EventHandlerI &e)

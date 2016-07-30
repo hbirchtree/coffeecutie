@@ -11,6 +11,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef COFFEE_ANDROID
+#include <android/log.h>
+#endif
+
 namespace Coffee{
 namespace CmdInterface{
 
@@ -48,9 +52,12 @@ struct BasicTerm : CmdDef
 
     STATICINLINE void Exit(int code)
     {
-        fprintf(DefaultPrintOutputPipe,
-                "Exiting with code: %i\n",
-                code);
+        const constexpr cstring printf_fmt = "Exiting with code: %i\n";
+#if defined(COFFEE_ANDROID)
+        __android_log_print(ANDROID_LOG_WARN, "Coffee", printf_fmt, code);
+#else
+        fprintf(DefaultPrintOutputPipe, printf_fmt, code);
+#endif
         exit(code);
     }
 };

@@ -18,6 +18,7 @@ public:
 
         FPtr func;
         cstring name;
+        void* user_ptr;
     };
 
     using EventHandlerI = EventHandler<CIEvent>;

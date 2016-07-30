@@ -10,6 +10,7 @@ set ( CoffeeCore_SRCS
 
     # Internal object / debug functions
     private/base/cdebug.cpp
+    private/base/cdisplay.cpp
     private/base/cfiles.cpp
     private/base/cobject.cpp
 

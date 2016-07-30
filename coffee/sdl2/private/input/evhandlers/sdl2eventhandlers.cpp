@@ -109,6 +109,12 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
     case SDL_APP_DIDENTERFOREGROUND:
         break;
 
+        /* Stub these useless things */
+    case SDL_JOYAXISMOTION:
+    case SDL_JOYBUTTONDOWN:
+    case SDL_JOYBUTTONUP:
+    case SDL_JOYHATMOTION:
+        break;
     default:
     {
         cDebug("Unhandled SDL event: type={0}",ev->type);

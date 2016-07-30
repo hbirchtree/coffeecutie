@@ -34,7 +34,8 @@ FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
     }
 }
 
-FORCEDINLINE void EscapeCloseWindow(WindowApplication *r,
+template<typename T>
+FORCEDINLINE void EscapeCloseWindow(T *r,
                                     const CIEvent& e, c_cptr data)
 {
     if(e.type==CIEvent::Keyboard)
@@ -45,7 +46,8 @@ FORCEDINLINE void EscapeCloseWindow(WindowApplication *r,
     }
 }
 
-FORCEDINLINE void WindowManagerCloseWindow(WindowApplication* r,
+template<typename T>
+FORCEDINLINE void WindowManagerCloseWindow(T* r,
                                            const CDEvent& event, c_cptr data)
 {
     if(event.type==CDEvent::State)
@@ -70,6 +72,18 @@ FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
         MouseRotate(q,ev);
     }
 }
+
+#if defined(COFFEE_ENABLE_PLUGGABLE_EVENTHANDLERS)
+FORCEDINLINE void EscapeCloseWindow(void* r, CIEvent const& e, c_cptr data)
+{
+    EscapeCloseWindow((WindowHandler*)r,e,data);
+}
+
+FORCEDINLINE void WindowManagerCloseWindow(void* r, CDEvent const& e, c_cptr data)
+{
+    WindowManagerCloseWindow((WindowHandler*)r,e,data);
+}
+#endif
 
 }
 }

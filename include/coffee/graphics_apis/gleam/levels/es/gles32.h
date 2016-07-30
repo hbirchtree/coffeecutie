@@ -41,6 +41,7 @@ struct CGLES32 : CGLES30,
 
         CGL_XF2
 {
+    using CGLES30::ViewportSet;
 
     STATICINLINE bool LoadBinding(CGL_Context* ctxt, GLADloadproc fun)
     {
@@ -50,6 +51,16 @@ struct CGLES32 : CGLES30,
             return false;
 
         return true;
+    }
+
+    STATICINLINE void ViewportSet(uint32, CRectF* view)
+    {
+        CRect64 rec;
+        rec.x = view->x;
+        rec.y = view->y;
+        rec.w = view->w;
+        rec.h = view->h;
+        ViewportSet(&rec);
     }
 
     STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
@@ -65,6 +76,8 @@ struct CGLES32 : CGLES30,
 	return false;
     }
     STATICINLINE bool ShaderStorageSupported()
+    {return false;}
+    STATICINLINE bool ViewportArraySupported()
     {return false;}
 };
 

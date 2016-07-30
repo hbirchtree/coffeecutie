@@ -27,6 +27,8 @@ cstring CoffeeBuildString = COFFEE_BUILD_STRING;
 
 cstring CoffeePlatformString = C_SYSTEM_STRING;
 
+CString CoffeeDefaultWindowName;
+
 FORCEDINLINE void PrintVersionInfo()
 {
     cOutputPrint("{0}, released by {1}, version {2}",
@@ -103,6 +105,8 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         return 1;
     }
 #endif
+
+    CoffeeDefaultWindowName = CoffeeApplicationData.application_name + " [OpenGL]";
 
     initargs = AppArg(argc,argv);
 
@@ -247,7 +251,7 @@ void InstallSignalHandler()
 {
     /* Set up signal handlers, make the process more well-behaved */
     signal(SIGABRT,sighandle);
-    signal(SIGSEGV,sighandle);
+//    signal(SIGSEGV,sighandle);
 
     signal(SIGFPE,sighandle);
 

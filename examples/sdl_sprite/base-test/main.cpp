@@ -19,12 +19,22 @@ const constexpr szptr num_points = 10;
 
 CPointF sprite_pos[num_points] = {};
 CSizeF sprite_scale = {1,1};
+CSize window_size = {};
 
 #ifndef COFFEE_USE_RTTI
 SDL2WindowHost* window_host;
 #endif
 
 bool exit_flag = false;
+
+void WindowResize_1(void*, const CDEvent& e, c_cptr d)
+{
+    if(e.type == CDEvent::Resize)
+    {
+        auto ev = (CDResizeEvent const*)d;
+        window_size = *ev;
+    }
+}
 
 void TouchInput_1(void*, const CIEvent& e, c_cptr d)
 {
@@ -49,8 +59,8 @@ void TouchInput_1(void*, const CIEvent& e, c_cptr d)
         if(!tch.hover)
         {
             sprite_pos[tch.finger] = tch.origin;
-            sprite_pos[tch.finger].x *= 1280;
-            sprite_pos[tch.finger].y *= 720;
+            sprite_pos[tch.finger].x *= window_size.w;
+            sprite_pos[tch.finger].y *= window_size.h;
             sprite_pos[tch.finger].x -= 64;
             sprite_pos[tch.finger].y -= 64;
         }
@@ -71,8 +81,8 @@ void TouchInput_1(void*, const CIEvent& e, c_cptr d)
         if(tch.pressed)
         {
             sprite_pos[tch.finger] = tch.pos;
-            sprite_pos[tch.finger].x *= 1280;
-            sprite_pos[tch.finger].y *= 720;
+            sprite_pos[tch.finger].x *= window_size.w;
+            sprite_pos[tch.finger].y *= window_size.h;
             sprite_pos[tch.finger].x -= 64;
             sprite_pos[tch.finger].y -= 64;
         }
@@ -118,9 +128,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     /* Create a window host for the renderer */
     BasicWindow test;
     auto visual = GetDefaultVisual();
-#ifdef COFFEE_ANDROID
-    visual.flags = CDProperties::FullScreen;
-#endif
 
 #ifndef COFFEE_USE_RTTI
     window_host = &test;
@@ -201,6 +208,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     test.installEventHandler({TouchInput_1});
     test.installEventHandler({ExitHandler_1});
+    test.installEventHandler({WindowResize_1});
 
     while(!test.closeFlag())
     {

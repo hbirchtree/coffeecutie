@@ -309,11 +309,10 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         struct stat st;
         bool status = fstat(fn->fd,&st)==0;
-        errno = 0;
         if(status)
             return true;
         else
-            return errno==ENOENT|| errno==ENOTDIR;
+            return errno==ENOENT|| errno==ENOTDIR || (errno = 0);
     }
 };
 

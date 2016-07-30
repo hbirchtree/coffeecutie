@@ -25,15 +25,15 @@ struct OutputPrinterImpl : OutputPrinterDef
         CString formatted = cStringFormat(format,args...);
         if(locking)
             PrinterLock.lock();
-#ifndef COFFEE_ANDROID
-        Puts(stream,formatted.c_str());
-#else
+#if defined(COFFEE_ANDROID)
         int flag = ANDROID_LOG_DEBUG;
         if(formatted.substr(0,4) == "WARN")
             flag = ANDROID_LOG_WARN;
         else if(formatted.substr(0,4) == "FTAL")
             flag = ANDROID_LOG_ERROR;
         __android_log_print(flag, "Coffee", formatted.c_str());
+#else
+        Puts(stream,formatted.c_str());
 #endif
         if(locking)
             PrinterLock.unlock();
