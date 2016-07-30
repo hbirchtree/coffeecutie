@@ -42,6 +42,8 @@ add_subdirectory (experiments/cgb-test)
 if(COFFEE_BUILD_SDL2)
     # Sprite rendering with SDL2
     add_subdirectory(sdl_sprite/base-test)
+    # Joystick visualizer
+    add_subdirectory(input/joystick-test)
 endif()
 
 #
