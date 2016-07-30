@@ -75,6 +75,7 @@ SET(SDL2_SEARCH_PATHS
   /opt/csw # Blastwave
   /opt
   ${CMAKE_BINARY_DIR}/libs
+  "C:\\SDL2_64"
 )
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
