@@ -72,8 +72,6 @@ enum class VertexWinding
     CCW, CW
 };
 
-using ShaderStage = Coffee::ShaderStage;
-
 enum class AttribMode
 {
     Interleaved = GL_INTERLEAVED_ATTRIBS,

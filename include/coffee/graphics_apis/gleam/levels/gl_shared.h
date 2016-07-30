@@ -15,7 +15,6 @@ struct CGL_Shared_Functions
 {
     using CGhnd = CGL::CGhnd;
     using BufType = CGL::BufType;
-    using ShaderStage = CGL::ShaderStage;
     using Texture = CGL::Texture;
     using Feature = CGL::Feature;
     using FramebufferT = CGL::FramebufferT;

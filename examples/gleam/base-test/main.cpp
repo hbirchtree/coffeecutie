@@ -256,10 +256,10 @@ public:
                 cstr = &tmp[0];
                 if(i==0)
                 {
-                    vprogram = GL::ProgramCreate(GL::ShaderStage::Vertex,1,&cstr);
+                    vprogram = GL::ProgramCreate(ShaderStage::Vertex,1,&cstr);
                 }else if(i==1)
                 {
-                    fprogram = GL::ProgramCreate(GL::ShaderStage::Fragment,1,&cstr);
+                    fprogram = GL::ProgramCreate(ShaderStage::Fragment,1,&cstr);
                 }
 
                 CResources::FileUnmap(shader_handle);
@@ -272,8 +272,8 @@ public:
         GL::CGhnd pipeline;
         {
             GL::PipelineAlloc(1,&pipeline);
-            GL::PipelineUseStages(pipeline,GL::ShaderStage::Vertex,vprogram);
-            GL::PipelineUseStages(pipeline,GL::ShaderStage::Fragment,fprogram);
+            GL::PipelineUseStages(pipeline,ShaderStage::Vertex,vprogram);
+            GL::PipelineUseStages(pipeline,ShaderStage::Fragment,fprogram);
 
             GL::PipelineBind(pipeline);
 

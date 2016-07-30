@@ -145,8 +145,8 @@ public:
                     f_shader.compile(ShaderStage::Fragment,f_shader_code))
             {
                 cVerbose("Shaders compiled");
-                eye_pip.attach(v_shader,CGL::ShaderStage::Vertex);
-                eye_pip.attach(f_shader,CGL::ShaderStage::Fragment);
+                eye_pip.attach(v_shader,ShaderStage::Vertex);
+                eye_pip.attach(f_shader,ShaderStage::Fragment);
                 cVerbose("Shaders attached");
                 if(!eye_pip.assemble())
                 {
@@ -396,8 +396,8 @@ public:
              * In APIs such as GL4.3+, this will apply vertex and fragment states separately.
              * With GL3.3 it sets all state with the vertex stage and drops the rest.
              */
-            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Vertex,unifstate);
-            GLM::SetShaderUniformState(eye_pip,CGL::ShaderStage::Fragment,unifstate);
+            GLM::SetShaderUniformState(eye_pip,ShaderStage::Vertex,unifstate);
+            GLM::SetShaderUniformState(eye_pip,ShaderStage::Fragment,unifstate);
 
             GLM::SetRasterizerState(rasterstate_poly);
 

@@ -73,7 +73,7 @@ public:
             1.f,
         };
 
-        GL::CGhnd cprogram = GL::ProgramCreate(GL::ShaderStage::Compute,
+        GL::CGhnd cprogram = GL::ProgramCreate(ShaderStage::Compute,
                                                1,(cstring*)&shader_file.data);
 
         cDebug("Program log: {0}",GL::ProgramGetLog(cprogram));
@@ -101,7 +101,7 @@ public:
 
         GL::CGhnd pipeline;
         GL::PipelineAlloc(1,&pipeline);
-        GL::PipelineUseStages(pipeline,GL::ShaderStage::All,cprogram);
+        GL::PipelineUseStages(pipeline,ShaderStage::All,cprogram);
 
         if(!GL::PipelineValidate(pipeline))
         {
