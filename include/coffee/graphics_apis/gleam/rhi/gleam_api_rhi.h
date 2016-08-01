@@ -7,8 +7,11 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+struct GLEAM_Instance_Data;
+
 struct GLEAM_API : GraphicsAPI
 {
+
     /* Enumerations */
     enum TextureFlags
     {
@@ -69,6 +72,7 @@ struct GLEAM_API : GraphicsAPI
     };
 
     /* Types and relationships */
+    using PRF = GLEAM_PRF;
 
     using StencilState = GraphicsAPI::StencilState<CGenum,CGenum>;
     using DepthState = GraphicsAPI::DepthState<CGenum>;
@@ -149,16 +153,23 @@ public:
     static void SetShaderUniformState(const GLEAM_Pipeline &pipeline, ShaderStage const& stage,
                                       GLEAM_ShaderUniformState const& ustate);
 
+    static void PreDrawCleanup();
+
     static void Draw(DrawCall const& d,DrawInstanceData const& i);
     static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c);
 
     /* Variables */
 protected:
-    struct GLEAM_Instance_Data;
     static thread_local GLEAM_Instance_Data* instance_data;
 
 public:
     static thread_local FB_T DefaultFramebuffer;
+};
+
+struct GLEAM_PRF : GraphicsProfiler
+{
+    using QRY_PERF = GLEAM_PrfQuery;
+    using QRY_DBUF = GLEAM_DBufQuery;
 };
 
 }

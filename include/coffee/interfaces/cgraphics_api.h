@@ -89,22 +89,6 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
     return pxsz*pixels;
 }
 
-struct GraphicsProfiler
-{
-    /*!
-     * \brief Queries the API for performance information, begins and ends
-     */
-    struct PerfQuery
-    {
-        PerfQuery(ProfilingTerm term);
-
-        void begin();
-        void end();
-
-        int64 getResult();
-    };
-};
-
 struct GraphicsAPI
 {
     struct GraphicsDevice
@@ -632,8 +616,16 @@ struct GraphicsAPI
      */
     struct RenderTarget
     {
-        constexpr RenderTarget(){}
+	constexpr RenderTarget(){}
 
+	/*!
+	 * \brief Do a framebuffer blit  to another framebuffer
+	 */
+	void blit(CRect64 const&,Surface&,CRect64 const&,DBuffers) const{}
+
+	/*!
+	 * \brief Attacha a surface to this framebuffer
+	 */
         void attachSurface(Surface const&, uint32, uint32 = 0){}
         void attachSurface(RenderDummy const&){}
 
@@ -642,8 +634,13 @@ struct GraphicsAPI
 
         void resize(uint32,CRect64 const&){}
 
-        void clear(Vecf4 const&,bigscalar = 0.){}
-        void clear(bigscalar,int32 = 0){}
+	void clear(uint32, Vecf4 const&){}
+	void clear(bigscalar){}
+	void clear(bigscalar, int32){}
+	void clear(uint32, Vecf4 const&, bigscalar){}
+	void clear(uint32, Vecf4 const&, bigscalar, int32){}
+
+	void use(FramebufferT){}
     };
 
     static void SetRenderTarget(RenderTarget const&);
@@ -706,22 +703,64 @@ struct GraphicsAPI
 
     static void SetRasterizerState(RasterizerState const&){}
     static void SetTessellatorState(TessellatorState const&){}
-    static void SetViewportState(ViewportState const&){}
+    static void SetViewportState(ViewportState const&,uint32){}
     static void SetBlendState(BlendState const&){}
     static void SetDepthState(DepthState<uint32> const&){}
     static void SetStencilState(StencilState<uint32,uint32> const&){}
     static void SetPixelProcessState(PixelProcessState const&){}
     static void SetShaderUniformState(Pipeline&,ShaderStage,ShaderUniformState const&){}
 
+    /*!
+     * \brief Performs operations that might boost performance or otherwise clean up any mess
+     *   left by the initialization parts.
+     *   In GLM, this releases the shader compiler.
+     */
+    static void PreDrawCleanup(){}
+
     struct Util
     {
         static void DumpTexture(Surface const& s);
     };
+};
 
+struct GraphicsProfiler
+{
+    /*!
+     * \brief Queries the API for performance information, begins and ends
+     */
+    struct PerfQuery
+    {
+	PerfQuery(ProfilingTerm term):m_term(term){}
+
+	void begin(){}
+	void end(){}
+
+	int64 result(){return 0;}
+
+	const ProfilingTerm m_term;
+    };
+
+    template<typename RT>
+    /*!
+     * \brief Will blit color, stencil and depth buffers to a given framebuffer, begins and ends, in which time it captures the data
+     * Data that already exists in a framebuffer is included, because it's simpler
+     */
+    struct BufferQuery
+    {
+	BufferQuery(RT& t,DBuffers b) : m_rtarget(t),m_buffers(b) {}
+
+	void begin(){}
+	void end(){}
+	RT const& output(){return m_rtarget;}
+
+	RT& m_rtarget;
+	const DBuffers m_buffers;
+    };
 };
 
 struct NullAPI : GraphicsAPI
 {
+
     enum DummyValues
     {
         TextureDMABuffered = 0,
@@ -796,6 +835,13 @@ struct NullAPI : GraphicsAPI
     using G_DEV = GraphicsDevice;
 
     static FB_T DefaultFramebuffer;
+
+    /* We define a profiler namespace */
+    struct PRF
+    {
+	using QRY_DBUF = GraphicsProfiler::BufferQuery<FB_T>;
+	using QRY_PERF = GraphicsProfiler::PerfQuery;
+    };
 };
 
 }

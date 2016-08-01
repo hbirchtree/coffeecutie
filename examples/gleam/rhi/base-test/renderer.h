@@ -3,6 +3,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics_apis/CGLeamRHI>
+#include <coffee/image/cimage.h>
 
 #include <coffee/core/platform_data.h>
 
@@ -268,8 +269,10 @@ public:
     bigscalar tprevious = this->contextTime();
     bigscalar tdelta = 0.1;
 
-    CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
+    GLM::PreDrawCleanup();
 
+    GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
+                                    DBuffers::Color|DBuffers::Depth);
 
     while (!closeFlag()) {
 
@@ -339,7 +342,9 @@ public:
        * We would primarily support stereo instancing,
        *  because this has a lot of benefits to efficiency.
        */
+      buffer_debug.begin();
       GLM::Draw(call, instdata);
+      buffer_debug.end();
 
       this->swapBuffers();
 

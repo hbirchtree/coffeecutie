@@ -17,7 +17,6 @@ struct CGL_Shared_Functions
     using BufType = CGL::BufType;
     using Texture = CGL::Texture;
     using Feature = CGL::Feature;
-    using FramebufferT = CGL::FramebufferT;
 
     /* Features */
     STATICINLINE bool ClipDistanceSupported()

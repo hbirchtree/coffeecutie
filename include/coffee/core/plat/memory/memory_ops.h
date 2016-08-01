@@ -9,9 +9,9 @@
 namespace Coffee{
 namespace Mem{
 
-FORCEDINLINE szptr AlignOffset(szptr off)
+FORCEDINLINE szptr AlignOffset(szptr alignment, szptr off)
 {
-    return off & ~(8);
+    return off & ~(alignment);
 }
 
 /* Memory management */

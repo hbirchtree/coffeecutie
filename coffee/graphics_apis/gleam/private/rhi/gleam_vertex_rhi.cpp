@@ -1,6 +1,7 @@
 #include <coffee/graphics_apis/gleam/rhi/gleam_vertex_rhi.h>
 
 #include <coffee/graphics_apis/gleam/rhi/gleam_buffer_rhi.h>
+#include "gleam_internal_types.h"
 
 namespace Coffee{
 namespace RHI{

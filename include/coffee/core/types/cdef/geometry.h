@@ -133,6 +133,17 @@ struct _cbasic_rect
     T w = 0;
     T h = 0;
 
+    template<typename T2>
+    FORCEDINLINE _cbasic_rect<T2> convert() const
+    {
+	_cbasic_rect<T2> out;
+	out.x = x;
+	out.y = y;
+	out.w = w;
+	out.h = h;
+	return out;
+    }
+
     FORCEDINLINE T left() const
     {
         return x;

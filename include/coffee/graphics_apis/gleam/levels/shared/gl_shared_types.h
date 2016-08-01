@@ -145,13 +145,6 @@ enum class OpType
     FramebufferCompletion,
 };
 
-enum class FramebufferT
-{
-    Draw = 0x1,
-    Read = 0x2,
-    All = 0x3,
-};
-
 enum class Feature
 {
     Blend,

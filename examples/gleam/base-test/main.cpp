@@ -1,11 +1,12 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CProfiling>
 
-#include <coffee/graphics_apis/CGLeamRHI>
 #include <coffee/CGraphics>
 #include <coffee/sdl2/CSDL2GLRenderer>
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2System>
+
+#include <coffee/graphics_apis/CGLeam>
 
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics_apis/SMesh>

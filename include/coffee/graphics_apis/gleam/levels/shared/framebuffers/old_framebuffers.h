@@ -36,8 +36,8 @@ struct CGL_Old_Framebuffers
 
     /* Blit */
     STATICINLINE void FBBlit(
-            const CRect& s, const CRect& d,CGflag m,CGenum f)
-    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, m,f);}
+            const CRect& s, const CRect& d,DBuffers m,Filtering f)
+    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, to_enum(m),to_enum(f));}
 
     /* Buffer management */
     STATICINLINE void FBDrawBuffers(uint32 n,const CGenum* d)

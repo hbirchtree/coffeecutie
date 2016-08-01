@@ -1068,5 +1068,20 @@ inline CGenum to_enum(VertexWinding e)
     }
 }
 
+inline CGenum to_enum(DBuffers buf)
+{
+    switch(buf)
+    {
+    case DBuffers::Color:
+	return GL_COLOR_BUFFER_BIT;
+    case DBuffers::Depth:
+	return GL_DEPTH_BUFFER_BIT;
+    case DBuffers::Stencil:
+	return GL_STENCIL_BUFFER_BIT;
+    default:
+	return GL_NONE;
+    }
+}
+
 }
 }

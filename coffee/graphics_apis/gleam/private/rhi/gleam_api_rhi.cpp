@@ -11,8 +11,6 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-thread_local GLEAM_API::GLEAM_Instance_Data* GLEAM_API::instance_data = nullptr;
-
 using GLC = CGL_Implementation;
 
 void GLEAM_API::LoadAPI(bool debug)
@@ -423,6 +421,11 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
             buf->bindrange(bindex,det.sec.offset,det.sec.size);
             CGL43::SBufBind(prog,b.first,bindex);
         }
+}
+
+void GLEAM_API::PreDrawCleanup()
+{
+    CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
 void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)

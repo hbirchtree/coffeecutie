@@ -42,12 +42,4 @@ enum class DebugComponent : uint8
     Extension,
 };
 
-enum class ProfilingTerm
-{
-    ElapsedTime,
-    ScreenSamples,
-    ScreenPrimitives,
-    TransformedPrimitives,
-};
-
 }

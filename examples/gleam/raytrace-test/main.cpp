@@ -161,19 +161,19 @@ public:
 
         /* Create dummy framebuffer to blit from */
         GL::FBAlloc(1,&fb);
-        GL::FBBind(GL::FramebufferT::All,fb);
-        GL::FBAttachTexture(GL::FramebufferT::All,GL_COLOR_ATTACHMENT0,tex,0);
+        GL::FBBind(FramebufferT::All,fb);
+        GL::FBAttachTexture(FramebufferT::All,GL_COLOR_ATTACHMENT0,tex,0);
 
-        if(!GL::FBValidate(GL::FramebufferT::All))
+        if(!GL::FBValidate(FramebufferT::All))
         {
             cDebug("Invalid FB config!");
             return;
         }
 
-        GL::FBBind(GL::FramebufferT::All,0);
+        GL::FBBind(FramebufferT::All,0);
 
-        GL::FBBind(GL::FramebufferT::Draw,0);
-        GL::FBBind(GL::FramebufferT::Read,fb);
+        GL::FBBind(FramebufferT::Draw,0);
+        GL::FBBind(FramebufferT::Read,fb);
 
         /* Set up uniforms */
         GL::ImageBindTexture(imageUnit,tex,0,false,0,ResourceAccess::WriteOnly,
@@ -202,7 +202,7 @@ public:
             GL::ProgramUse(cprogram);
             GL::ComputeDispatch(1024/16,1024/16,1);
 
-            GL::FBBlit(blit_source,blit_target,GL_COLOR_BUFFER_BIT,GL_LINEAR);
+            GL::FBBlit(blit_source,blit_target,DBuffers::Color,Filtering::Linear);
 
             this->pollEvents();
             this->swapBuffers();

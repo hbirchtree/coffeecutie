@@ -1,18 +1,13 @@
 #pragma once
 
 #include <coffee/interfaces/cgraphics_api.h>
-#include "../gleam.h"
+#include <coffee/graphics_apis/gleam/levels/shared/gl_shared_types.h>
 
 namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
 using namespace CGL;
-
-#ifndef COFFEE_GLEAM_DESKTOP
-using CGL33 = CGLES30;
-using CGL43 = CGLES32;
-#endif
 
 enum APILevel
 {
@@ -38,6 +33,11 @@ const constexpr bool GL_DEBUG_MODE = false;
 #endif
 
 struct GLEAM_API;
+
+/* Profiler structures */
+struct GLEAM_PRF;
+struct GLEAM_DBufQuery;
+struct GLEAM_PrfQuery;
 
 /* Buffers */
 struct GLEAM_VBuffer;

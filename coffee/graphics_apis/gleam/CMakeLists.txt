@@ -9,6 +9,7 @@ if(COFFEE_BUILD_GLEAM_RHI)
         private/rhi/gleam_api_rhi.cpp
         private/rhi/gleam_buffer_rhi.cpp
         private/rhi/gleam_framebuffer_rhi.cpp
+	private/rhi/gleam_profiler_rhi.cpp
         private/rhi/gleam_shader_rhi.cpp
         private/rhi/gleam_surface_rhi.cpp
         private/rhi/gleam_vertex_rhi.cpp
