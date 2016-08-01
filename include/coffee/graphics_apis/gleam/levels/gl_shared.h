@@ -56,15 +56,17 @@ struct CGL_Shared_Functions
     void ClearStencil(int32 f){glClearStencil(f);}
 
     STATICINLINE
-    void ClearBufferiv(const int32* d){glClearBufferiv(GL_STENCIL,0,d);}
+    void ClearBufferiv(const int32* d)
+    {glClearBufferiv(GL_STENCIL,0,d);}
     STATICINLINE
-    void ClearBufferfv(bool color,int32 i,const scalar* d)
-    {glClearBufferfv((color) ? GL_COLOR : GL_DEPTH,i,d);}
+    void ClearBufferfv(const scalar* d)
+    {glClearBufferfv(GL_DEPTH,0,d);}
     STATICINLINE
-    void ClearBufferfv(bool color,int32 i,const CVec4& d)
-    {glClearBufferfv((color) ? GL_COLOR : GL_DEPTH,i,(scalar*)&d);}
+    void ClearBufferfv(bool,int32 i,const CVec4& d)
+    {glClearBufferfv(GL_COLOR,i,(scalar*)&d);}
     STATICINLINE
-    void ClearBufferfi(scalar d,int32 s){glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);}
+    void ClearBufferfi(scalar d,int32 s)
+    {glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);}
 
     /* Blending */
     STATICINLINE

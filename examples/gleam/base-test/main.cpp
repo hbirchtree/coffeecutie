@@ -302,7 +302,7 @@ public:
             clearcol = normalize(clearcol);
 
             GL::ClearBufferfv(true,0,clearcol);
-            GL::ClearBufferfv(false,0,&depth_zero);
+            GL::ClearBufferfv(&depth_zero);
 
             /* Draw objects */
             GL::VAOBind(vao);

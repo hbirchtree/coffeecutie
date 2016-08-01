@@ -1,6 +1,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/core/input/eventhandlers.h>
+#include <coffee/core/coffee.h>
 #include "renderer.h"
 
 int32 coffee_main(int32, cstring_w*)
@@ -45,6 +46,7 @@ int32 coffee_main(int32, cstring_w*)
         cDebug("Initialization error: {0}",err);
         return 1;
     }
+
     Profiler::Profile("Initialize renderer");
     cVerbose("Initialized renderer");
 

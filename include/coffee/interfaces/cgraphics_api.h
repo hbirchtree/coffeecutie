@@ -230,9 +230,9 @@ struct GraphicsAPI
     struct DepthState
     {
         DepthState():
-            m_test(false),
+	    m_test(true),
             m_clamp(false),
-            m_mask(false),
+	    m_mask(true),
             m_func()
         {
         }

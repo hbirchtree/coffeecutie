@@ -169,11 +169,11 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
             GLC::ViewportSet(&tview);
         }
-        GLC::DepthSet(&vstate.depth(0));
+//        GLC::DepthSet(&vstate.depth(0));
         {
             auto sview = vstate.scissor(0);
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
-            GLC::ScissorSet(&tview);
+//            GLC::ScissorSet(&tview);
         }
     }
 }
@@ -226,15 +226,20 @@ void GLEAM_API::SetDepthState(const DepthState& dstate, uint32 i)
         if(dstate.testDepth())
             GLC::Enable(Feature::DepthTest);
         else
+        {
             GLC::Disable(Feature::DepthTest);
+            return;
+        }
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
              || GL_CURR_API==GLES_3_2)
     {
         if(dstate.testDepth())
             GLC::Enable(Feature::DepthTest,i);
-        else
+        else{
             GLC::Disable(Feature::DepthTest,i);
+            return;
+        }
     }
 
     GLC::DepthMask(dstate.mask());

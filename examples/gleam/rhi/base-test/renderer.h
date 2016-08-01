@@ -4,8 +4,7 @@
 #include <coffee/core/CProfiling>
 #include <coffee/graphics_apis/CGLeamRHI>
 
-#include <coffee/COculusRift>
-#include <coffee/dummyplug/hmd-dummy.h>
+#include <coffee/core/platform_data.h>
 
 using namespace Coffee;
 using namespace Display;
@@ -200,9 +199,12 @@ public:
     GLM::TSLRSTATE teslstate = {};
 
     blendstate.m_doBlend = true;
-    viewportstate.m_view.push_back({0, 0, this->windowSize().w, this->windowSize().h});
+    viewportstate.m_view.clear();
+    viewportstate.m_view.push_back({0, 0, 1280, 720});
     viewportstate.m_mview = true;
     rasterstate_line.m_wireframe = true;
+    deptstate.m_test = true;
+    deptstate.m_func = GL_LESS;
 
     /* Applying state information */
     GLM::SetViewportState(viewportstate, 0);
@@ -266,6 +268,9 @@ public:
     bigscalar tprevious = this->contextTime();
     bigscalar tdelta = 0.1;
 
+    CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
+
+
     while (!closeFlag()) {
 
       /*
@@ -274,7 +279,7 @@ public:
        * eg. don't clear stencil and depth if they are unused
        *
        */
-      GLM::DefaultFramebuffer.clear(clear_col);
+      GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
 
       /*
        * Events are always late for the drawcall.
@@ -299,7 +304,7 @@ public:
       base_transform.position.x() = CMath::sin(tprevious) * 2;
       base_transform.position.y() = CMath::cos(tprevious) * 2;
 
-      camera.position.z() = -tprevious;
+//      camera.position.z() = -tprevious;
 
       time_value = CMath::sin(tprevious) + (CMath::pi / 4.);
 
