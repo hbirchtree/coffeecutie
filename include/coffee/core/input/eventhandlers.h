@@ -35,8 +35,7 @@ FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
 }
 
 template<typename T>
-FORCEDINLINE void EscapeCloseWindow(T *r,
-                                    const CIEvent& e, c_cptr data)
+FORCEDINLINE void EscapeCloseWindow(T *r, const CIEvent& e, c_cptr data)
 {
     if(e.type==CIEvent::Keyboard)
     {
@@ -58,6 +57,30 @@ FORCEDINLINE void WindowManagerCloseWindow(T* r,
     }
 }
 
+template<typename T>
+FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
+{
+    if(e.type==CIEvent::Keyboard)
+    {
+        auto kev = (CIKeyEvent const*)data;
+
+        if(kev->mod & CIKeyEvent::RepeatedModifier || kev->mod & CIKeyEvent::PressedModifier)
+            return;
+
+        switch(kev->key)
+        {
+        case CK_F11:
+            if(r->windowState() & CDProperties::Windowed)
+                r->setWindowState(CDProperties::WindowedFullScreen);
+            else
+                r->setWindowState(CDProperties::Windowed);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
 {
     if(e.type==CIEvent::Controller)
@@ -73,17 +96,28 @@ FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
     }
 }
 
-#if defined(COFFEE_ENABLE_PLUGGABLE_EVENTHANDLERS)
-FORCEDINLINE void EscapeCloseWindow(void* r, CIEvent const& e, c_cptr data)
-{
-    EscapeCloseWindow((WindowHandler*)r,e,data);
-}
+/* These are pluggable event handlers */
 
-FORCEDINLINE void WindowManagerCloseWindow(void* r, CDEvent const& e, c_cptr data)
+template<typename WindowHandler>
+void EscapeCloseWindow(void* r, CIEvent const& e, c_cptr data)
 {
-    WindowManagerCloseWindow((WindowHandler*)r,e,data);
+    EscapeCloseWindow<WindowHandler>((WindowHandler*)r,e,data);
 }
-#endif
+template<typename WindowHandler>
+void WindowManagerCloseWindow(void* r, CDEvent const& e, c_cptr data)
+{
+    WindowManagerCloseWindow<WindowHandler>((WindowHandler*)r,e,data);
+}
+template<typename WindowHandler>
+void WindowManagerFullscreen(void* r, CDEvent const& e, c_cptr data)
+{
+    WindowManagerFullscreen<WindowHandler>((WindowHandler*)r,e,data);
+}
+template<typename GraphicsHandler>
+void ResizeWindowUniversal(void*, CDEvent const& e, c_cptr data)
+{
+    ResizeWindowUniversal<GraphicsHandler>(e,data);
+}
 
 }
 }

@@ -37,11 +37,11 @@ protected:
     CSize m_size;
 };
 
-struct GLEAM_Surface2DArray : GLEAM_Surface
+struct GLEAM_Surface3D_Base : GLEAM_Surface
 {
-    friend struct GLEAM_Sampler2DArray;
+    friend struct GLEAM_Sampler3D;
 
-    GLEAM_Surface2DArray(PixelFormat fmt,uint32 mips = 1,uint32 texflags = 0);
+    GLEAM_Surface3D_Base(Texture t, PixelFormat fmt,uint32 mips,uint32 texflags);
 
     void allocate(CSize3 size, PixelComponents c);
 
@@ -52,6 +52,20 @@ struct GLEAM_Surface2DArray : GLEAM_Surface
     /*TODO: Add download function */
 
     CSize3 m_size;
+};
+
+struct GLEAM_Surface3D : GLEAM_Surface3D_Base
+{
+    friend struct GLEAM_Sampler3D;
+    GLEAM_Surface3D(PixelFormat fmt, uint32 mips = 1,uint32 texflags = 0):
+        GLEAM_Surface3D_Base(Texture::T3D,fmt,mips,texflags) {}
+};
+
+struct GLEAM_Surface2DArray : GLEAM_Surface3D_Base
+{
+    friend struct GLEAM_Sampler2DArray;
+    GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips = 1,uint32 texflags = 0):
+        GLEAM_Surface3D_Base(Texture::T2DArray,fmt,mips,texflags) {}
 };
 
 struct GLEAM_SamplerHandle
@@ -105,7 +119,25 @@ struct GLEAM_Sampler2D : GLEAM_Sampler_Base<GLEAM_Surface2D>
     GLEAM_SamplerHandle handle();
 };
 
+struct GLEAM_Sampler3D : GLEAM_Sampler_Base<GLEAM_Surface3D>
+{
+    void bind(uint32 i);
+    GLEAM_SamplerHandle handle();
+};
+
 struct GLEAM_Sampler2DArray : GLEAM_Sampler_Base<GLEAM_Surface2DArray>
+{
+    void bind(uint32 i);
+    GLEAM_SamplerHandle handle();
+};
+
+struct GLEAM_SamplerCube : GLEAM_Sampler_Base<GLEAM_SurfaceCube>
+{
+    void bind(uint32 i);
+    GLEAM_SamplerHandle handle();
+};
+
+struct GLEAM_SamplerCubeArray : GLEAM_Sampler_Base<GLEAM_SurfaceCubeArray>
 {
     void bind(uint32 i);
     GLEAM_SamplerHandle handle();

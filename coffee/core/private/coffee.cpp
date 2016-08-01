@@ -57,6 +57,15 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
     cOutputPrint("{0}",arg.helpMessage());
 }
 
+FORCEDINLINE void PrintLicenseInfo()
+{
+    cVerbose(5,"Number of licenses to print: {0}",CoffeeLicenseCount);
+    for(unsigned int i=0;i<CoffeeLicenseCount;i++)
+    {
+        cOutputPrint("{0}",CoffeeLicenseString[i]);
+    }
+}
+
 void CoffeeInit(bool profiler_init)
 {
     if(profiler_init)
@@ -86,7 +95,7 @@ void CoffeeInit(bool profiler_init)
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 3;
+    Coffee::PrintingVerbosityLevel = 5;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel = 1;
@@ -143,7 +152,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
             }
             if(a.first == "licenses" && a.second)
             {
-                cOutputPrint("{0}",CoffeeLicenseString);
+                PrintLicenseInfo();
                 return 0;
             }
         }
@@ -175,6 +184,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiling::ExitRoutine(initargs.argc,initargs.argv);
 
     cVerbose(5,"Successfully reached end of main()");
+
     return r;
 }
 

@@ -393,6 +393,7 @@ struct GraphicsAPI
         VertexAttribute():
             m_boffset(0),
             m_bassoc(0),
+            m_idx(0),
             m_size(0),
             m_off(0),
             m_stride(sizeof(scalar)),

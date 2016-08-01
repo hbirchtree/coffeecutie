@@ -77,9 +77,8 @@ struct GLEAM_API : GraphicsAPI
 
     /* These access the PBO queue */
     friend struct GLEAM_Surface2D;
-    friend struct GLEAM_Surface3D;
+    friend struct GLEAM_Surface3D_Base;
     friend struct GLEAM_SurfaceCube;
-    friend struct GLEAM_Surface2DArray;
     friend struct GLEAM_SurfaceCubeArray;
 
     /* Just defining nicer names */

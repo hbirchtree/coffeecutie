@@ -49,28 +49,6 @@ public:
         FrameCounter fcounter(framecount_fun);
         fcounter.interval = 1000;
 
-//        Mesh distortMesh[2];
-
-//        {
-//            CResources::Resource mesh_src_0("eye_left.msh");
-//            CResources::Resource mesh_src_1("eye_right.msh");
-
-//            if (CResources::FileFun::Exists(mesh_src_0.resource()))
-//            {
-//                CString fn = CResources::FileFun::NativePath(mesh_src_0.resource());
-//                uint64 v = CResources::FileFun::Size(fn.c_str());
-//            }
-
-//            if (!CResources::FileMap(mesh_src_0) || !CResources::FileMap(mesh_src_1))
-//                return;
-
-//            SMSH::DeserializeMesh(mesh_src_0,&distortMesh[0]);
-//            SMSH::DeserializeMesh(mesh_src_1,&distortMesh[1]);
-
-//            CResources::FileUnmap(mesh_src_0);
-//            CResources::FileUnmap(mesh_src_1);
-//        }
-
         const constexpr cstring textures[num_textures] = {
             "eye-normal.tga", "eye-weird.tga",
             "eye-alpha.tga", "eye-veins.tga"
@@ -122,98 +100,6 @@ public:
                            sizeof(vertexdata),vertexdata,
                            ResourceAccess::ReadOnly);
         }
-
-        /*
-        GL::CGhnd distortVao;
-        GL::CGhnd distortBuf[2];
-        szptr distort_elements;
-        {
-            GL::VAOAlloc(1,&distortVao);
-            GL::BufAlloc(2,distortBuf);
-            GL::BufBind(GL::BufType::ArrayData,distortBuf[0]);
-            GL::BufBind(GL::BufType::ElementData,distortBuf[1]);
-
-            uint64 array_size = 0;
-            uint64 element_size = 0;
-
-            const constexpr uint8 MESH_VIGNETTE = 10;
-            const constexpr uint8 MESH_WARP = 11;
-            const constexpr uint8 MESH_R = 12;
-            const constexpr uint8 MESH_G = 13;
-            const constexpr uint8 MESH_B = 14;
-            const constexpr uint8 MESH_NDC = 15;
-
-            for(szptr i=0;i<2;i++)
-            {
-                Mesh& msh = distortMesh[i];
-                for(Mesh::Pair const& a : msh.attributes)
-                {
-                    cDebug("Vertex attribute: {0}, size={1}",a.first,a.second.size());
-                    if(a.first==Mesh::Indices)
-                    {
-                        element_size += a.second.size();
-                        distort_elements = element_size/4;
-                    }
-                    else
-                        array_size += a.second.size();
-                }
-            }
-
-            GL::BufStorage(
-                        GL::BufType::ElementData,
-                        element_size,
-                        nullptr,
-                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
-
-            GL::BufStorage(GL::BufType::ArrayData,
-                           array_size,
-                           nullptr,
-                           ResourceAccess::Persistent|ResourceAccess::WriteOnly);
-
-            byte_t* array_data = (byte_t*)GL::BufMapRange(
-                        GL::BufType::ArrayData,0,
-                        array_size,
-                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
-            byte_t* element_data = (byte_t*)GL::BufMapRange(
-                        GL::BufType::ElementData,0,
-                        element_size,
-                        ResourceAccess::Persistent|ResourceAccess::WriteOnly);
-
-            array_size = 0;
-            element_size = 0;
-
-            szptr vignette_offset = 0;
-            szptr warp_offset = 0;
-            szptr r_offset = 0;
-            szptr g_offset = 0;
-            szptr b_offset = 0;
-            szptr ndc_offset = 0;
-
-            for(szptr i=0;i<2;i++)
-            {
-                Mesh& msh = distortMesh[i];
-                for(Mesh::Pair const& a : msh.attributes)
-                    if(a.first==Mesh::Indices)
-                    {
-                        MemCpy(&element_data[element_size],a.second.data(),a.second.size());
-                        element_size += a.second.size();
-                    }
-                    else{
-                        MemCpy(&array_data[array_size],a.second.data(),a.second.size());
-                        if(a.first==MESH_NDC)
-                            ndc_offset = array_size;
-                        array_size += a.second.size();
-                    }
-            }
-
-            GL::VAOBind(distortVao);
-            GL::VAOEnableAttrib(0);
-            GL::VAOAttribFormat(0,2,TypeEnum::Scalar,false,0);
-            GL::VAOBindVertexBuffer(0,distortBuf[0],ndc_offset,sizeof(CVec2));
-            GL::BufBind(GL::BufType::ElementData,distortBuf[1]);
-            GL::VAOAttribBinding(0,0);
-        }
-        */
 
         Profiler::Profile("Create vertex buffers");
 

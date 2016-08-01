@@ -1,5 +1,6 @@
 #include <coffee/core/base/types/cdisplay.h>
 #include <coffee/core/coffee_version.h>
+#include <coffee/core/platform_data.h>
 
 namespace Coffee{
 namespace Display{
@@ -14,7 +15,7 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
             CDProperties::Visible;
 
 #ifdef COFFEE_ANDROID
-    props.flags |= CDProperties::FullScreen;
+    props.flags = CDProperties::FullScreen;
 #endif
 
     props.gl.flags =

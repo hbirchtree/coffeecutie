@@ -14,7 +14,7 @@ extern cstring CoffeePlatformString;
 
 extern CString CoffeeDefaultWindowName;
 
-
 }
 
-extern "C" const char* CoffeeLicenseString;
+extern "C" const char* CoffeeLicenseString[];
+extern "C" unsigned int CoffeeLicenseCount;

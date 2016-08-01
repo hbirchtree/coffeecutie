@@ -24,10 +24,9 @@ macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
 
     # TODO: Load license data from files, references stored in BUNDLE_LICENSES
     set ( LICENSE_DATA
-        "Hello!"
-        "Jello!"
-        "What?"
+        "\"Hello!\",\"Jello!\",\"What?\""
         )
+    set ( LICENSE_COUNT 3 )
 
     configure_file (
         "${COFFEE_SOURCE_TEMPLATE_DIRECTORY}/LicenseInfo.c.in"

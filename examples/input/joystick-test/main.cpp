@@ -4,6 +4,7 @@
 #include <coffee/sdl2/CSDL2System>
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2WindowHost>
+#include <coffee/core/input/eventhandlers.h>
 
 #include <coffee/image/cimage.h>
 
@@ -15,9 +16,6 @@ using RSC = CResources::Resource;
 using BasicWindow = SDL2WindowHost;
 using Sprites = SDL2SpriteRenderer;
 
-#define COFFEE_ENABLE_PLUGGABLE_EVENTHANDLERS
-using WindowHandler = BasicWindow;
-#include <coffee/core/input/eventhandlers.h>
 
 Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
                              cstring source, Sprites::SpriteSource* size)
@@ -125,8 +123,8 @@ int32 coffee_main(int32, cstring_w*)
     rend.createSprite(controller_atlas,{768,128,128,128},&button_yp_sprite);
 
     /* Install standard event handlers */
-    winhost.installEventHandler({EventHandlers::EscapeCloseWindow,nullptr,&winhost});
-    winhost.installEventHandler({EventHandlers::WindowManagerCloseWindow,nullptr,&winhost});
+    winhost.installEventHandler({EventHandlers::EscapeCloseWindow<BasicWindow>,nullptr,&winhost});
+    winhost.installEventHandler({EventHandlers::WindowManagerCloseWindow<BasicWindow>,nullptr,&winhost});
 
     while(!winhost.closeFlag())
     {

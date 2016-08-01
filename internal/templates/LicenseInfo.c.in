@@ -1,1 +1,5 @@
-const char* CoffeeLicenseString = "@LICENSE_DATA@";
+const char* CoffeeLicenseString[] =
+    {
+        @LICENSE_DATA@
+    };
+unsigned int CoffeeLicenseCount = @LICENSE_COUNT@;

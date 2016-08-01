@@ -257,8 +257,14 @@ C_FLAGS(CDProperties::State,uint16);
 C_FLAGS(GLProperties::Flags,uint8);
 
 extern CDProperties GetDefaultVisual(
+#ifdef COFFEE_GLEAM_DESKTOP
         const int32& ctxtMajorVer = 3,
-        const int32& ctxtMinorVer = 3);
+        const int32& ctxtMinorVer = 3
+#else
+        const int32& ctxtMajorVer = 3,
+        const int32& ctxtMinorVer = 0
+#endif
+        );
 
 }
 }

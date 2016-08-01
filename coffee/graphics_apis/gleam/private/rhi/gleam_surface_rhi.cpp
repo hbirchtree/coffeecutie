@@ -107,13 +107,13 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
     }
 }
 
-GLEAM_Surface2DArray::GLEAM_Surface2DArray(PixelFormat fmt, uint32 mips, uint32 texflags):
-    GLEAM_Surface(Texture::T2DArray,fmt,mips,texflags),
+GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
+    GLEAM_Surface(t,fmt,mips,texflags),
     m_size(0,0,0)
 {
 }
 
-void GLEAM_Surface2DArray::allocate(CSize3 size, PixelComponents c)
+void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 {
     CGL33::TexBind(m_type,m_handle);
     if(GL_CURR_API==GL_3_3)
@@ -129,7 +129,7 @@ void GLEAM_Surface2DArray::allocate(CSize3 size, PixelComponents c)
     m_size = size;
 }
 
-void GLEAM_Surface2DArray::upload(BitFormat fmt, PixelComponents comp,
+void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
                                   CSize3 size, c_cptr data, CPoint3 offset, uint32 mip)
 {
     /* If we want to use DMA transfer */
@@ -172,7 +172,6 @@ void GLEAM_Surface2DArray::upload(BitFormat fmt, PixelComponents comp,
             CGL43::BufBind(BufType::PixelUData,0);
     }
 }
-
 
 void GLEAM_Sampler::alloc()
 {
@@ -249,6 +248,25 @@ void GLEAM_Sampler2D::bind(uint32 i)
 }
 
 GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
+{
+    GLEAM_SamplerHandle h = {};
+
+    /* TODO: Add bindless */
+    h.m_type = m_surface->m_type;
+    h.texture = m_surface->m_handle;
+    h.m_sampler = m_handle;
+
+    return h;
+}
+
+void GLEAM_Sampler3D::bind(uint32 i)
+{
+    CGL33::TexActive(i);
+    CGL33::SamplerBind(i,m_handle);
+    CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
+}
+
+GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 {
     GLEAM_SamplerHandle h = {};
 
