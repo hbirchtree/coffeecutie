@@ -8,7 +8,7 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-static const CSize v_size = {1280,720};
+static CSize v_size = {1280,720};
 
 static cstring m_shader_vertex_passthrough = {
     "#version 300 es\n"
@@ -47,6 +47,7 @@ static const scalar m_vertex_quad_data[] = {
 
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b),
+      m_size(t.size()),
       m_depth_stencil(PixelFormat::Depth24Stencil8,1),
       m_color(PixelFormat::RGBA8,1)
 {
@@ -59,13 +60,13 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     {
         m_debug_target.alloc();
 
-        m_color.allocate(v_size,PixCmp::RGBA);
         m_color_sampler.alloc();
-        m_color_sampler.attach(&m_color);
-
-        m_depth_stencil.allocate(v_size,PixCmp::Depth);
         m_depth_stencil_sampler.alloc();
+
+        m_color_sampler.attach(&m_color);
         m_depth_stencil_sampler.attach(&m_depth_stencil);
+
+        resize(m_size);
 
         m_debug_target.attachSurface(m_color,0,0);
         m_debug_target.attachDepthStencilSurface(m_depth_stencil,0);
@@ -135,6 +136,13 @@ GLEAM_DBufQuery::~GLEAM_DBufQuery()
         m_debug_target.dealloc();
         CGL33::ProgramFree(1,&m_prg);
     }
+}
+
+void GLEAM_DBufQuery::resize(const CSize &s)
+{
+    cVerbose(5,"New framebuffer dimensions: {0}",s);
+    m_color.allocate(s,PixCmp::RGBA);
+    m_depth_stencil.allocate(s,PixCmp::Depth);
 }
 
 void GLEAM_DBufQuery::begin()

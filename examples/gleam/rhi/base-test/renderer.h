@@ -11,16 +11,20 @@ using namespace Coffee;
 using namespace Display;
 
 class CDRenderer : public CSDL2Renderer {
-    bool m_debugging = true;
-
 public:
-//#define DERP
+    //#define DERP
 
 #ifndef DERP
   using GLM = GLEAMAPI;
 #else
   using GLM = RHI::NullAPI;
 #endif
+
+private:
+    bool m_debugging = true;
+    GLM::PRF::QRY_DBUF* buffer_debug_p;
+
+public:
 
   CDRenderer() : CSDL2Renderer(0) {}
   static const constexpr szptr num_textures = 5;
@@ -275,10 +279,13 @@ public:
 
     GLM::PreDrawCleanup();
 
+    GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
+
     GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
                                     DBuffers::Color | DBuffers::Depth);
 
-    GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
+    buffer_debug_p = &buffer_debug;
+
     while (!closeFlag()) {
 
       /*
@@ -371,6 +378,12 @@ public:
   }
   void eventHandleD(const Display::CDEvent &e, c_cptr data) {
     CSDL2Renderer::eventHandleD(e, data);
+
+    if(e.type == CDEvent::Resize)
+    {
+        auto rev = (Display::CDResizeEvent const*)data;
+        buffer_debug_p->resize(*rev);
+    }
   }
 
   void eventHandleI(const CIEvent &e, c_cptr data) {

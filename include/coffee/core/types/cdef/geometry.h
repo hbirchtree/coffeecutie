@@ -126,12 +126,17 @@ struct _cbasic_rect
         this->w = w;
         this->h = h;
     }
-    FORCEDINLINE _cbasic_rect(){}
+    FORCEDINLINE _cbasic_rect():x(0),y(0),w(0),h(0){}
 
-    T x = 0;
-    T y = 0;
-    T w = 0;
-    T h = 0;
+    union{
+        struct{
+            T x;
+            T y;
+            T w;
+            T h;
+        };
+        T data[4];
+    };
 
     template<typename T2>
     FORCEDINLINE _cbasic_rect<T2> convert() const

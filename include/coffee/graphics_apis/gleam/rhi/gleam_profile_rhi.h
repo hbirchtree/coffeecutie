@@ -17,9 +17,13 @@ struct GLEAM_DBufQuery : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>
     GLEAM_DBufQuery(GLEAM_RenderTarget& t, DBuffers b);
     ~GLEAM_DBufQuery();
 
+    void resize(CSize const& s);
+
     void begin();
     void end();
 protected:
+    CSize m_size;
+
     GLEAM_RenderTarget m_debug_target;
 
     GLEAM_Surface2D m_depth_stencil;

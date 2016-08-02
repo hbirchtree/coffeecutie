@@ -292,6 +292,13 @@ struct CGL_Shared_Debug
 
     /* Get*v */
 
+    STATICINLINE CSize GetViewport()
+    {
+        CRect r;
+        GetIntegerv(GL_VIEWPORT,r.data);
+        return r.size();
+    }
+
     STATICINLINE void GetIntegerv(CGenum e, int32* v)
     {
         glGetIntegerv(e,v);

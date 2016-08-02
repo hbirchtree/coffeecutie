@@ -7,6 +7,8 @@
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/edef/pixenum.h>
 
+#include "../textures/old_textures.h"
+
 namespace Coffee{
 namespace CGL{
 
@@ -79,6 +81,49 @@ struct CGL_Old_Framebuffers
 
     STATICINLINE void RBufGetParameteri(CGenum p,int32* d)
     {glGetRenderbufferParameteriv(GL_RENDERBUFFER,p,d);}
+
+    STATICINLINE CSize FBGetAttachmentSize(FramebufferT t, uint32 idx)
+    {
+        using Tex = CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>;
+
+        CSize out = {};
+
+        int32 tmp = 0;
+        int32 hnd = 0;
+        /* Get object type and handle */
+        FBGetAttachParameter(t,GL_COLOR_ATTACHMENT0+idx,
+                             GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE,&tmp);
+        FBGetAttachParameter(t,GL_COLOR_ATTACHMENT0+idx,
+                             GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME,&hnd);
+        if(tmp == GL_TEXTURE)
+        {
+            /* If texture, determine type of texture */
+            Texture textype = Texture::T2D;
+            FBGetAttachParameter(t,GL_COLOR_ATTACHMENT0+idx,
+                                 GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER,
+                                 &tmp);
+            if(tmp == GL_TRUE)
+                textype = Texture::T2DArray;
+
+            uint32 w,h,d;
+            szptr sz;
+            /* Use this helper function to get the size */
+            Tex::TexBind(textype,hnd);
+            Tex::TexGetImageSize(textype,PixCmp::None,PixelFormat::RGBA8,w,h,d,sz);
+            Tex::TexBind(textype,0);
+            /* Assign these values later, uint32 != int32 */
+            out.w = w;
+            out.h = h;
+        }else if(tmp == GL_RENDERBUFFER){
+            /* I wish textures were this easy */
+            RBufBind(hnd);
+            RBufGetParameteri(GL_RENDERBUFFER_WIDTH,&out.w);
+            RBufGetParameteri(GL_RENDERBUFFER_HEIGHT,&out.h);
+            RBufBind(0);
+        }
+
+        return out;
+    }
 };
 
 }

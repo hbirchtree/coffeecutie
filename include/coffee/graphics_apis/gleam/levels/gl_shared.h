@@ -184,7 +184,7 @@ struct CGL_Shared_Functions
      * \return
      */
     bool DebuggingSupported()
-    {return Debug::CheckExtensionSupported("GL_KHR_debug");}
+    {return Debug::CheckExtensionSupported("GL_KHR_debug") && glDebugMessageCallback;}
 
     using Debug = CGL_Shared_Debug;
 };

@@ -114,6 +114,25 @@ void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
         CGL33::FBBind(m_type,0);
 }
 
+CSize GLEAM_RenderTarget::size()
+{
+    CSize out;
+
+    if(m_handle != 0)
+    {
+        CGL33::FBBind(m_type,m_handle);
+
+        out = CGL33::FBGetAttachmentSize(m_type,0);
+
+        if(m_handle != 0)
+            CGL33::FBBind(m_type,0);
+    }else{
+        out = CGL33::Debug::GetViewport();
+    }
+
+    return out;
+}
+
 void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 {
     CGL33::FBBind(m_type,m_handle);

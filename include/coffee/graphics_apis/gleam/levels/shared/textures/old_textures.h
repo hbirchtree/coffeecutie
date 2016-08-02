@@ -28,7 +28,7 @@ struct CGL_Old_Textures
     {glTexImage3D(to_enum(t),level,to_enum(ifmt),w,h,d,border,to_enum(fmt),to_enum(dt),p);}
 
     /* TexGet */
-    STATICINLINE void TexGetImageSize(Texture t, PixCmp cmp, PixelFormat fmt,
+    STATICINLINE void TexGetImageSize(Texture t, PixCmp, PixelFormat,
                                       uint32& w, uint32& h, uint32& d,
                                       szptr& size)
     {

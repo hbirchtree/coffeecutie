@@ -40,6 +40,8 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
 
     void resize(uint32 i,CRect64 const& view);
 
+    CSize size();
+
     void clear(uint32 i, Vecf4 const& color);
     void clear(bigscalar depth);
     void clear(bigscalar depth, int32 stencil);
