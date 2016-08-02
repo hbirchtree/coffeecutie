@@ -8,6 +8,15 @@ namespace GLEAM{
 
 struct GLEAM_RenderDummy : GraphicsAPI::RenderDummy
 {
+    friend struct GLEAM_RenderTarget;
+
+    void allocate(PixelFormat fmt, DBuffers buf, uint32 index, CSize size);
+    void deallocate();
+
+protected:
+    CGhnd m_handle;
+    DBuffers m_type;
+    uint32 m_attachment;
 };
 
 struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
@@ -20,11 +29,11 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     void alloc();
     void dealloc();
 
-    void attachSurface(GLEAM_Surface const&, uint32 idx, uint32 mip = 0);
+    void attachSurface(GLEAM_Surface const&s, uint32 idx, uint32 mip = 0);
     void attachSurface(GLEAM_RenderDummy const& rb);
 
-    void attachDepthStencilSurface(GLEAM_Surface const& s, uint32 idx);
-    void attachDepthSurface(GLEAM_Surface const& s, uint32 idx);
+    void attachDepthStencilSurface(GLEAM_Surface const& s, uint32 mip);
+    void attachDepthSurface(GLEAM_Surface const& s, uint32 mip);
 
     void blit(CRect64 const& src,GLEAM_RenderTarget& target,
               CRect64 const& tgt,DBuffers buf,Filtering flt) const;
@@ -40,6 +49,7 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
 protected:
     void bind(FramebufferT t) const;
     void unbind(FramebufferT t) const;
+    bool validate() const;
 
     CGhnd m_handle;
     FramebufferT m_type;

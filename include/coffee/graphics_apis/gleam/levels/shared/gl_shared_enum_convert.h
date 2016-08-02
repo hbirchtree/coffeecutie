@@ -66,7 +66,8 @@ CGenum to_enum(AttribMode f);
 
 CGpixfmt get_fmt(PixelFormat e, bool rev);
 
-CGenum to_enum(DBuffers buf);
+CGenum to_enum1(DBuffers buf);
+CGenum to_enum2(DBuffers buf);
 CGenum to_enum(Filtering p, Filtering s = Filtering::None);
 CGenum to_enum(WrapPolicy p);
 

@@ -110,8 +110,9 @@ using GL = CGLES30;
 
 void ClearBuffer(float dep, float color[4])
 {
-    GL::ClearBufferfv(false,0,&dep);
-    GL::ClearBufferfv(true,0,color);
+    GL::ClearBufferfv(&dep);
+    GL::ClearBufferfv(true,0,Vecf4(color[0],color[1],
+                                   color[2],color[3]));
 }
 
 }

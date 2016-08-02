@@ -71,10 +71,10 @@ enum class PixelFormat
 {
     /* Formatting: [CHANNELS][NUMBITS][DATATYPE] */
 
-    /* Irregular formats */
-
+    /* Standard formats */
     RGBA8,      /*  32-bit,          8-bit per channel*/
 
+    /* Irregular formats */
     RGB4UI,     /*  12-bit,          4-bit per channel*/
     RGB5UI,     /*  15-bit,          5-bit per channel*/
     RGB10,      /*  30-bit,         10-bit per channel*/
@@ -139,9 +139,12 @@ enum class PixelFormat
     S3TC,
 
     /* Special data */
-    Stencil,      /*  8-bit integer */
-    Depth,        /* 32-bit floating-point */
-    DepthStencil, /* 32-bit data,           24-bit floating-point, 8-bit integer */
+//    Stencil,         /*  8-bit integer, not a real format */
+    Depth16,         /* 16-bit unsigned short */
+    Depth32,         /* 32-bit unsigned integer */
+    Depth24Stencil8, /* 32-bit data,           24-bit floating-point, 8-bit integer */
+
+    Depth, DepthStencil, /* Fakes */
 };
 
 }

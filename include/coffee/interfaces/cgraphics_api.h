@@ -608,6 +608,8 @@ struct GraphicsAPI
 
     struct RenderDummy
     {
+        void allocate(PixelFormat,DBuffers,uint32,CSize){}
+        void deallocate(){}
     };
 
     /*!

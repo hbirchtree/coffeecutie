@@ -397,12 +397,11 @@ inline CGenum to_enum(
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 #endif
 
-    case PixelFormat::Depth:
-        return GL_DEPTH_COMPONENT;
-    case PixelFormat::DepthStencil:
-        return GL_DEPTH_STENCIL;
-    case PixelFormat::Stencil:
-        return GL_NONE; //TODO: Fix stencil stuff
+    /* Depth/stencil buffers */
+    case PixelFormat::Depth16:
+        return GL_DEPTH_COMPONENT16;
+    case PixelFormat::Depth24Stencil8:
+        return GL_DEPTH24_STENCIL8;
 
     /* Requires to be used with GL_UNSIGNED_INT */
     case PixelFormat::R8I:
@@ -617,6 +616,8 @@ inline CGenum to_enum(
         return GL_NOTEQUAL;
     case ValueComparison::Never:
         return GL_NEVER;
+    default:
+        return GL_NONE;
     }
 }
 
@@ -1068,19 +1069,32 @@ inline CGenum to_enum(VertexWinding e)
     }
 }
 
-inline CGenum to_enum(DBuffers buf)
+inline CGenum to_enum1(DBuffers buf)
 {
-    switch(buf)
-    {
-    case DBuffers::Color:
-	return GL_COLOR_BUFFER_BIT;
-    case DBuffers::Depth:
-	return GL_DEPTH_BUFFER_BIT;
-    case DBuffers::Stencil:
-	return GL_STENCIL_BUFFER_BIT;
-    default:
-	return GL_NONE;
-    }
+    if(feval(buf,DBuffers::Color))
+        return GL_COLOR_ATTACHMENT0;
+    if(feval(buf,DBuffers::DepthStencil))
+        return GL_DEPTH_STENCIL_ATTACHMENT;
+    if(feval(buf,DBuffers::Depth))
+        return GL_DEPTH_ATTACHMENT;
+    if(feval(buf,DBuffers::Stencil))
+        return GL_STENCIL_ATTACHMENT;
+
+    return GL_NONE;
+}
+
+inline CGenum to_enum2(DBuffers buf)
+{
+    if(feval(buf,DBuffers::Color))
+        return GL_COLOR_BUFFER_BIT;
+    if(feval(buf,DBuffers::DepthStencil))
+        return GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT;
+    if(feval(buf,DBuffers::Depth))
+        return GL_DEPTH_BUFFER_BIT;
+    if(feval(buf,DBuffers::Stencil))
+        return GL_STENCIL_BUFFER_BIT;
+
+    return GL_NONE;
 }
 
 }

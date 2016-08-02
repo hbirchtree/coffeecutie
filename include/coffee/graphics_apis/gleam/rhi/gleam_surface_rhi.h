@@ -8,6 +8,8 @@ namespace GLEAM{
 
 struct GLEAM_Surface : GraphicsAPI::Surface
 {
+    friend struct GLEAM_RenderTarget;
+
     GLEAM_Surface(Texture type, PixelFormat fmt,uint32 mips,uint32 texflags = 0);
 
     void allocate();

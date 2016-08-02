@@ -11,6 +11,8 @@ using namespace Coffee;
 using namespace Display;
 
 class CDRenderer : public CSDL2Renderer {
+    bool m_debugging = false;
+
 public:
 //#define DERP
 
@@ -33,19 +35,19 @@ public:
         "floor-tile.png"};
 
     const scalar vertexdata[] = {
-        -1.f, -1.f, 0.f,  0.f,  0.f,
-         1.f, -1.f, 0.f, -1.f,  0.f,
-        -1.f,  1.f, 0.f,  0.f, -1.f,
+        -1.f, -1.f,  0.f,  0.f,  0.f,
+         1.f, -1.f,  0.f, -1.f,  0.f,
+        -1.f,  1.f,  0.f,  0.f, -1.f,
 
-        -1.f,  1.f, 0.f,  0.f, -1.f,
-         1.f,  1.f, 0.f, -1.f, -1.f,
-         1.f, -1.f, 0.f, -1.f,  0.f,
+        -1.f,  1.f,  0.f,  0.f, -1.f,
+         1.f,  1.f,  0.f, -1.f, -1.f,
+         1.f, -1.f,  0.f, -1.f,  0.f,
     };
 
     cVerbose("Loading GLeam API");
     /*
-     * Loading the GLeam API, chosen according to what is available at runtime
-     */
+ * Loading the GLeam API, chosen according to what is available at runtime
+ */
     GLM::LoadAPI(true);
 
     GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
@@ -60,9 +62,9 @@ public:
       vertbuf.commit(sizeof(vertexdata), vertexdata);
 
       /*
-       * Specifying a vertex format which is applied.
-       * This is driver- and API-agnostic
-       */
+ * Specifying a vertex format which is applied.
+ * This is driver- and API-agnostic
+ */
       GLM::V_ATTR pos = {};
       pos.m_size = 3;
       pos.m_type = TypeEnum::Scalar;
@@ -130,9 +132,9 @@ public:
     cVerbose("Compiled shaders");
 
     /*
-     * Binding the pipeline for usage
-     * This has different meaning across GL3.3 and GL4.3+
-     */
+ * Binding the pipeline for usage
+ * This has different meaning across GL3.3 and GL4.3+
+ */
     eye_pip.bind();
     cVerbose("Pipeline bind");
 
@@ -173,14 +175,14 @@ public:
     scalar time_value = 0.f;
 
     /*
-     * These specify byte buffers which refer to other data
-     * This makes it simple to redirect or reallocate the uniform data
-     *
-     * These can be rotated to achieve per-frame disposable buffers,
-     *  allowing multiple frames to be processed concurrently without halt
-     */
-    Bytes transform_data = {(byte_t *)object_matrices,sizeof(object_matrices)};
-    Bytes time_data = {(byte_t *)&time_value,sizeof(time_value)};
+ * These specify byte buffers which refer to other data
+ * This makes it simple to redirect or reallocate the uniform data
+ *
+ * These can be rotated to achieve per-frame disposable buffers,
+ *  allowing multiple frames to be processed concurrently without halt
+ */
+    Bytes transform_data = {(byte_t *)object_matrices, sizeof(object_matrices)};
+    Bytes time_data = {(byte_t *)&time_value, sizeof(time_value)};
 
     GLM::UNIFVAL transforms = {};
     GLM::UNIFVAL timeval = {};
@@ -205,7 +207,7 @@ public:
     viewportstate.m_mview = true;
     rasterstate_line.m_wireframe = true;
     deptstate.m_test = true;
-    deptstate.m_func = GL_LESS;
+    deptstate.m_func = (uint32)ValueComparison::Less;
 
     /* Applying state information */
     GLM::SetViewportState(viewportstate, 0);
@@ -215,7 +217,8 @@ public:
     GLM::SetTessellatorState(teslstate);
     cVerbose("Set renderer state");
 
-    /* We query the current pipeline for possible uniform/texture/buffer values */
+    /* We query the current pipeline for possible uniform/texture/buffer values
+     */
     Vector<GLM::UNIFDESC> unifs;
     GLM::GetShaderUniformState(eye_pip, &unifs);
 
@@ -228,21 +231,22 @@ public:
       else if (u.m_name == "mx")
         unifstate.setUniform(u, &timeval);
       else
-        cDebug("Unhandled uniform value: {0}", u.m_name);
+        cVerbose(4,"Unhandled uniform value: {0}", u.m_name);
     }
 
     cVerbose("Acquire and set shader uniforms");
 
-
-    /* Now generating a drawcall, which only specifies small state that can be shared */
+    /* Now generating a drawcall, which only specifies small state that can be
+     * shared */
     GLM::DrawCall call;
     call.m_idxd = false;
     call.m_inst = true;
 
-    /* Instance data is more akin to individual drawcalls, specifying vertex buffer information */
+    /* Instance data is more akin to individual drawcalls, specifying vertex
+     * buffer information */
     GLM::DrawInstanceData instdata = {};
     instdata.m_insts = 4;
-    instdata.m_verts = (sizeof(vertexdata) / sizeof(scalar));
+    instdata.m_verts = 6;
 
     /* Specifying the uniform data, such as camera matrices and transforms */
     Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
@@ -272,42 +276,47 @@ public:
     GLM::PreDrawCleanup();
 
     GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
-                                    DBuffers::Color|DBuffers::Depth);
+                                    DBuffers::Color | DBuffers::Depth);
 
+    GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
     while (!closeFlag()) {
 
       /*
-       * This will probably be incorporated into the GLM:: namespace somehow
-       * We want to only clear the parts of the buffer that are necessary
-       * eg. don't clear stencil and depth if they are unused
-       *
-       */
-      GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
+      * This will probably be incorporated into the GLM:: namespace somehow
+      * We want to only clear the parts of the buffer that are necessary
+      * eg. don't clear stencil and depth if they are unused
+      *
+      */
+
+      if(!m_debugging)
+          GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
+      else
+          buffer_debug.begin();
 
       /*
-       * Events are always late for the drawcall.
-       * The best we can do is update the state as often as possible.
-       * Or we could maximize the time of each iteration for VSYNC,
-       *  polling once to begin with and also later.
-       *
-       * Example:
-       * poll();
-       * ...
-       * upload();
-       * process();
-       * ...
-       * millisleep(15);
-       * poll();
-       * draw();
-       *
-       */
+      * Events are always late for the drawcall.
+      * The best we can do is update the state as often as possible.
+      * Or we could maximize the time of each iteration for VSYNC,
+      *  polling once to begin with and also later.
+      *
+      * Example:
+      * poll();
+      * ...
+      * upload();
+      * process();
+      * ...
+      * millisleep(15);
+      * poll();
+      * draw();
+      *
+      */
       this->pollEvents();
 
       /* Define frame data */
       base_transform.position.x() = CMath::sin(tprevious) * 2;
       base_transform.position.y() = CMath::cos(tprevious) * 2;
 
-//      camera.position.z() = -tprevious;
+      //      camera.position.z() = -tprevious;
 
       time_value = CMath::sin(tprevious) + (CMath::pi / 4.);
 
@@ -327,13 +336,18 @@ public:
                            GenTransform(floor_transform);
 
       /*
-       * In APIs such as GL4.3+, this will apply vertex and fragment states separately.
+       * In APIs such as GL4.3+, this will apply vertex and fragment states
+       * separately.
        * With GL3.3 it sets all state with the vertex stage and drops the rest.
        */
+      vertdesc.bind();
+      vertdesc.bindBuffer(0, vertbuf);
+      eye_pip.bind();
       GLM::SetShaderUniformState(eye_pip, ShaderStage::Vertex, unifstate);
       GLM::SetShaderUniformState(eye_pip, ShaderStage::Fragment, unifstate);
 
       GLM::SetRasterizerState(rasterstate_poly);
+      GLM::SetDepthState(deptstate);
 
       /*
        * For VR, we could add drawcall parameters to specify this
@@ -342,9 +356,10 @@ public:
        * We would primarily support stereo instancing,
        *  because this has a lot of benefits to efficiency.
        */
-      buffer_debug.begin();
       GLM::Draw(call, instdata);
-      buffer_debug.end();
+
+      if(m_debugging)
+          buffer_debug.end();
 
       this->swapBuffers();
 
@@ -360,5 +375,16 @@ public:
 
   void eventHandleI(const CIEvent &e, c_cptr data) {
     CSDL2Renderer::eventHandleI(e, data);
+
+    if(e.type == CIEvent::Keyboard)
+    {
+        auto kev = (CIKeyEvent const*)data;
+
+        if(kev->key == CK_F10
+                && kev->mod & CIKeyEvent::PressedModifier
+                && !(kev->mod&CIKeyEvent::RepeatedModifier) )
+            m_debugging = !m_debugging;
+
+    }
   }
 };

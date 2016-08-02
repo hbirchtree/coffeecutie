@@ -37,7 +37,7 @@ struct CGL_Old_Framebuffers
     /* Blit */
     STATICINLINE void FBBlit(
             const CRect& s, const CRect& d,DBuffers m,Filtering f)
-    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, to_enum(m),to_enum(f));}
+    {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, to_enum2(m),to_enum(f));}
 
     /* Buffer management */
     STATICINLINE void FBDrawBuffers(uint32 n,const CGenum* d)
@@ -60,11 +60,20 @@ struct CGL_Old_Framebuffers
     }
 
     /* Renderbuffers */
-    STATICINLINE void RBufBind(FramebufferT t,CGhnd h)
-    {glBindRenderbuffer(to_enum(t),h);}
+    STATICINLINE void RBufBind(CGhnd h)
+    {glBindRenderbuffer(GL_RENDERBUFFER,h);}
 
     STATICINLINE void RBufStorage(PixelFormat ifmt,uint32 w,uint32 h)
-    {glRenderbufferStorage(GL_RENDERBUFFER,to_enum(ifmt),w,h);}
+    {
+        CGenum fmt = GL_NONE;
+        if(ifmt == PixelFormat::Depth
+                || ifmt == PixelFormat::DepthStencil)
+            fmt = to_enum(ifmt);
+        else
+            fmt = GL_RGBA;
+
+        glRenderbufferStorage(GL_RENDERBUFFER,fmt,w,h);
+    }
     STATICINLINE void RBufStorageMS(PixelFormat ifmt,uint32 samples,uint32 w,uint32 h)
     {glRenderbufferStorageMultisample(GL_RENDERBUFFER,samples,to_enum(ifmt),w,h);}
 
