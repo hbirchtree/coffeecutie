@@ -47,10 +47,15 @@ static const scalar m_vertex_quad_data[] = {
 
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b),
-      m_depth_stencil(PixelFormat::Depth16,1),
+      m_depth_stencil(PixelFormat::Depth24Stencil8,1),
       m_color(PixelFormat::RGBA8,1)
 {
-    if(GL_DEBUG_MODE)
+    m_enabled = CGL33::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
+
+    if(GL_DEBUG_MODE && !m_enabled)
+        cWarning("Cannot enable debugging, unsupported depth-stencil format (DEPTH24_STENCIL8)");
+
+    if(GL_DEBUG_MODE && m_enabled)
     {
         m_debug_target.alloc();
 
@@ -125,7 +130,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
 
 GLEAM_DBufQuery::~GLEAM_DBufQuery()
 {
-    if(GL_DEBUG_MODE)
+    if(GL_DEBUG_MODE && m_enabled)
     {
         m_debug_target.dealloc();
         CGL33::ProgramFree(1,&m_prg);
@@ -134,7 +139,7 @@ GLEAM_DBufQuery::~GLEAM_DBufQuery()
 
 void GLEAM_DBufQuery::begin()
 {
-    if(GL_DEBUG_MODE)
+    if(GL_DEBUG_MODE && m_enabled)
     {
         Vecf4 clear_col(1);
         m_debug_target.clear(0,clear_col,1.f);
@@ -144,7 +149,7 @@ void GLEAM_DBufQuery::begin()
 
 void GLEAM_DBufQuery::end()
 {
-    if(GL_DEBUG_MODE)
+    if(GL_DEBUG_MODE && m_enabled)
     {
 //        CGL33::FBBind(FramebufferT::Read,m_debug_target.m_handle);
 //        CGL33::FBBind(FramebufferT::Draw,m_rtarget.m_handle);

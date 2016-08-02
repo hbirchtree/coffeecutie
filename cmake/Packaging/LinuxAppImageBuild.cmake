@@ -156,6 +156,13 @@ macro( APPIMAGE_PACKAGE
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>" "${APPIMAGE_BINARY_DIR}"
         )
 
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        add_custom_command ( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND strip "${APPIMAGE_BINARY_DIR}/${TARGET}"
+            )
+    endif()
+
     # Do the actual packaging step with AppImageKit
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD

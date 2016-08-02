@@ -37,7 +37,6 @@ struct CDColorSpace
 struct CDContextBits
 {
     CDContextBits():
-        accum(),
         red(0),
         green(0),
         blue(0),
@@ -46,8 +45,6 @@ struct CDContextBits
         stencil(0)
     {
     }
-
-    CRGBA accum;
 
     uint8 red;
     uint8 green;
@@ -266,7 +263,9 @@ extern CDProperties GetDefaultVisual(
 #endif
         );
 
+
 }
+using ColBits = Display::CDContextBits;
 }
 
 #endif // CDISPLAY_H

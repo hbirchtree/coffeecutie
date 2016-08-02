@@ -29,17 +29,10 @@ struct CGLES30 :
 
     STATICINLINE bool LoadBinding(CGL_Context* ctxt, GLADloadproc fun)
     {
-        if(!ctxt->acquireContext())
-            return false;
-        if(!gladLoadGLES2Loader(fun))
+        if(!CGLES20::LoadBinding(ctxt,fun))
             return false;
 
-        if(!Debug::VerifyInit() || !glTexStorage2D)
-	    return false;
-
-        Debug::GetExtensions();
-        Debug::InitDebugFlag();
-        return true;
+        return (bool)glTexStorage2D;
     }
 };
 

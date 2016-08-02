@@ -11,7 +11,7 @@ using namespace Coffee;
 using namespace Display;
 
 class CDRenderer : public CSDL2Renderer {
-    bool m_debugging = false;
+    bool m_debugging = true;
 
 public:
 //#define DERP

@@ -4,6 +4,8 @@
 
 #if defined(COFFEE_WINDOWS)
 #include <coffee/core/plat/plat_windows.h>
+#elif defined(COFFEE_ANDROID)
+
 #endif
 
 using namespace Coffee;

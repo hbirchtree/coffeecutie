@@ -50,6 +50,7 @@ struct CGL33 :
 
         Debug::GetExtensions();
         Debug::InitDebugFlag();
+        Debug::InitInternalFormats();
         return true;
     }
 

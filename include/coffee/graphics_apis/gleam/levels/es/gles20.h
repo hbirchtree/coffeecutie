@@ -42,6 +42,8 @@ struct CGLES20 :
         if(!Debug::VerifyInit() || !glTexImage2D)
             return false;
 
+        Debug::InitInternalFormats();
+
         Debug::GetExtensions();
         Debug::InitDebugFlag();
         return true;

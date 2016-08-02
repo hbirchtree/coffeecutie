@@ -47,10 +47,8 @@ struct CGLES32 : CGLES30,
     {
         if(!CGLES30::LoadBinding(ctxt,fun))
             return false;
-        if(!glVertexAttribFormat)
-            return false;
 
-        return true;
+        return (bool)glVertexAttribFormat;
     }
 
     STATICINLINE void ViewportSet(uint32, CRectF* view)

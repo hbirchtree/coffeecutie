@@ -102,6 +102,13 @@ macro( FLATPAK_PACKAGE
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>" "${FLATPAK_BINARY_DIR}"
         )
 
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+        add_custom_command ( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND strip "${FLATPAK_BINARY_DIR}/${TARGET}"
+            )
+    endif()
+
     # Add arrangement to install flatpak structure somewhere else
     install (
         DIRECTORY

@@ -35,6 +35,8 @@ protected:
     int32 m_tex_size_unif;
     int32 m_trans_unif;
     int32 m_tex_unif;
+
+    bool m_enabled;
 };
 
 }

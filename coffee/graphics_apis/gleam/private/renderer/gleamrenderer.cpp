@@ -157,6 +157,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
 void GLeamRenderer::bindingTerminate()
 {
+    GL::Debug::FreeInternalFormats();
 }
 
 }
