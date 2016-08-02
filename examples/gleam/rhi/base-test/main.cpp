@@ -28,6 +28,8 @@ int32 coffee_main(int32, cstring_w*)
                                    nullptr,renderer});
     renderer->installEventHandler({EventHandlers::ResizeWindowUniversal<CDRenderer::GLM>,
                                    nullptr,renderer});
+    renderer->installEventHandler({EventHandlers::WindowManagerFullscreen<CDRenderer>,
+                                  nullptr,renderer});
 
     Profiler::Profile("Object creation");
 

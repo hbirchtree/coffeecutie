@@ -143,7 +143,6 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         cDebug("OpenGL (non-core) version: {0}",GL::Debug::ContextVersion());
     cDebug("OpenGL GLSL version: {0}",GL::Debug::ShaderLanguageVersion());
 
-#ifdef COFFEE_GLEAM_DESKTOP
     if(GL::DebuggingSupported())
     {
 #ifndef COFFEE_WINDOWS
@@ -151,7 +150,6 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         GL::Debug::DebugSetCallback(gleamcallback,this);
 #endif
     }
-#endif
 
     Profiler::Profile("Debug setup");
     return true;

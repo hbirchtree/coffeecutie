@@ -109,9 +109,9 @@ void WindowManagerCloseWindow(void* r, CDEvent const& e, c_cptr data)
     WindowManagerCloseWindow<WindowHandler>((WindowHandler*)r,e,data);
 }
 template<typename WindowHandler>
-void WindowManagerFullscreen(void* r, CDEvent const& e, c_cptr data)
+void WindowManagerFullscreen(void* r, CIEvent const& e, c_cptr data)
 {
-    WindowManagerFullscreen<WindowHandler>((WindowHandler*)r,e,data);
+    WindowManagerFullscreen((WindowHandler*)r,e,data);
 }
 template<typename GraphicsHandler>
 void ResizeWindowUniversal(void*, CDEvent const& e, c_cptr data)

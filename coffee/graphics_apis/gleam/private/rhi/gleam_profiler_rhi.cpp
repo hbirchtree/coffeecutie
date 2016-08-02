@@ -47,7 +47,7 @@ static const scalar m_vertex_quad_data[] = {
 
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b),
-      m_depth_stencil(PixelFormat::Depth24Stencil8,1),
+      m_depth_stencil(PixelFormat::Depth16,1),
       m_color(PixelFormat::RGBA8,1)
 {
     if(GL_DEBUG_MODE)
@@ -136,7 +136,8 @@ void GLEAM_DBufQuery::begin()
 {
     if(GL_DEBUG_MODE)
     {
-        m_debug_target.clear(0,Vecf4(1),1.f);
+        Vecf4 clear_col(1);
+        m_debug_target.clear(0,clear_col,1.f);
         m_debug_target.bind(FramebufferT::All);
     }
 }

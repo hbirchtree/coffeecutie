@@ -117,6 +117,7 @@ void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
 void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 {
     CGL33::FBBind(m_type,m_handle);
+    scalar* d = (scalar*)&color;
     CGL33::ClearBufferfv(true,i,color);
     if(m_handle != 0)
         CGL33::FBBind(m_type,0);
