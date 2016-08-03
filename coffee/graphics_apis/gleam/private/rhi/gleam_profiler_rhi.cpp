@@ -199,6 +199,11 @@ void GLEAM_DBufQuery::end()
     }
 }
 
+bool GLEAM_DBufQuery::enabled()
+{
+    return m_enabled;
+}
+
 }
 }
 }

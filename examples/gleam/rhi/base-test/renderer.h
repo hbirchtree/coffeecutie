@@ -291,7 +291,7 @@ public:
       *
       */
 
-      if(!m_debugging)
+      if(!buffer_debug.enabled())
           GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
       else
           buffer_debug.begin();
@@ -361,7 +361,7 @@ public:
        */
       GLM::Draw(call, instdata);
 
-      if(m_debugging)
+      if(buffer_debug.enabled())
           buffer_debug.end();
 
       this->swapBuffers();
