@@ -22,11 +22,27 @@ endmacro()
 macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
     set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_${TARGET}.c" )
 
+    set ( LICENSE_BUNDLE "${CMAKE_SOURCE_DIR}/LICENSE;${LICENSES}" )
+
+    set ( LICENSE_COUNT 0 )
+
+    foreach(licsn ${LICENSE_BUNDLE})
+        file ( READ "${licsn}" THIS_LICENSE )
+        string ( REPLACE "\"" "\\\"" THIS_LICENSE "${THIS_LICENSE}" )
+        string ( REPLACE "\n" "\\n\"\n\"" THIS_LICENSE "${THIS_LICENSE}" )
+        if(NOT LICENSE_DATA)
+            set ( LICENSE_DATA "\"${THIS_LICENSE}\"" )
+        else()
+            set ( LICENSE_DATA "${LICENSE_DATA},\"${THIS_LICENSE}\"" )
+        endif()
+        math( EXPR LICENSE_COUNT "${LICENSE_COUNT}+1" )
+    endforeach()
+
     # TODO: Load license data from files, references stored in BUNDLE_LICENSES
-    set ( LICENSE_DATA
-        "\"Hello!\",\"Jello!\",\"What?\""
-        )
-    set ( LICENSE_COUNT 3 )
+#    set ( LICENSE_DATA
+#        "\"Hello!\",\"Jello!\",\"What?\""
+#        )
+#    set ( LICENSE_COUNT 3 )
 
     configure_file (
         "${COFFEE_SOURCE_TEMPLATE_DIRECTORY}/LicenseInfo.c.in"

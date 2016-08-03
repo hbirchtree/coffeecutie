@@ -59,10 +59,12 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 
 FORCEDINLINE void PrintLicenseInfo()
 {
-    cVerbose(5,"Number of licenses to print: {0}",CoffeeLicenseCount);
+    cVerbose(6,"Number of licenses to print: {0}",CoffeeLicenseCount);
     for(unsigned int i=0;i<CoffeeLicenseCount;i++)
     {
         cOutputPrint("{0}",CoffeeLicenseString[i]);
+        if(i<(CoffeeLicenseCount-1))
+            cOutputPrint("\n\n--|END OF LICENSE|--\n\n");
     }
 }
 

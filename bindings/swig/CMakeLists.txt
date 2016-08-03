@@ -8,19 +8,16 @@ macro(CONFIG_SWIG_BUILD SFILE)
 endmacro()
 
 macro(SWIG_LANGUAGE_BINDING TARGET BIND CFILE OUTPUT_EXTENSION OUTPUT_DEST )
+    CONFIG_SWIG_BUILD(${CFILE})
+
+    swig_add_module(${TARGET} ${BIND} ${CFILE} )
+
     if("${BIND}" STREQUAL "python")
         # Python build
         find_package(PythonLibs)
         include_directories ( SYSTEM
             ${PYTHON_INCLUDE_PATH}
             )
-    endif()
-
-    CONFIG_SWIG_BUILD(${CFILE})
-
-    swig_add_module(${TARGET} ${BIND} ${CFILE} )
-
-    if("${BIND}" STREQUAL "python")
         swig_link_libraries(${TARGET} ${COFFEE_LINKING} ${PYTHON_LIBRARIES} )
     else()
         swig_link_libraries(${TARGET} ${COFFEE_LINKING} )
@@ -63,15 +60,7 @@ set(CMAKE_SWIG_FLAGS "")
 
 link_directories( ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${COFFEE_LIB_DIR})
 
-set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_SWIG_Shim.cpp" )
-set ( LICENSE_DATA
-    "Hello!"
-    )
-
-file ( WRITE "${LICENSE_FILE}"
-    "namespace Coffee{\n"
-    "  extern \"C\" const char* CoffeeLicenseString = \"${LICENSE_DATA}\";\n"
-    "}" )
+coffee_gen_licenseinfo( CoffeeSwigShim "" )
 
 set ( CoffeeSwigShim_SRCS
     coffeeswig.cpp
