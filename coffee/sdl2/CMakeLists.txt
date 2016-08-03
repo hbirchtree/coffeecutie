@@ -14,16 +14,14 @@ set ( CoffeeSDL2_SRCS
     )
 
 set ( CoffeeSDL2Audio_SRCS
-
     private/audio/csdl2_audio.cpp
-
     )
 
-find_package ( SDL2 REQUIRED)
+#find_package ( SDL2 REQUIRED)
 
-if(NOT SDL2_FOUND)
-    message(FATAL_ERROR "Failed to locate SDL2")
-endif()
+#if(NOT SDL2_FOUND)
+#    message(FATAL_ERROR "Failed to locate SDL2")
+#endif()
 
 include_directories ( SYSTEM
     ${SDL2_INCLUDE_DIR}
@@ -33,7 +31,7 @@ coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
 
 target_link_libraries( CoffeeSDL2
     CoffeeCore
-    ${SDL2_LIBRARY}
+#    ${SDL2_LIBRARY}
     )
 
 coffee_add_library ( CoffeeSDL2Audio "${CoffeeSDL2Audio_SRCS}" )

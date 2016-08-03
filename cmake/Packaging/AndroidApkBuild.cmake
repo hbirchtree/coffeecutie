@@ -169,20 +169,6 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ANDROID_LIB_OUTPUT_DIRECTORY}"
         )
 
-    add_custom_command ( TARGET ${Target_Name}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${Target_Name}>" ${ANDROID_LIB_OUTPUT_DIRECTORY}
-        )
-
-    #
-    # We strip the final .so file that will be put on the device, not the real one
-    #
-
-    add_custom_command ( TARGET ${Target_Name}
-        POST_BUILD
-        COMMAND ${ANDROID_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
-        )
-
     #
     # Enable GDB remote debugging
     #
@@ -214,6 +200,19 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
             "\"${_LIBNAME_STRIPPED}\", "
              )
     endforeach()
+
+    #
+    # We strip the final .so file that will be put on the device, not the real one
+    #
+
+    add_custom_command ( TARGET ${Target_Name}
+        POST_BUILD
+        COMMAND ${ANDROID_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
+        )
+
+    #
+    # Some necessary files for APK generation
+    #
 
     if(ANDROID_USE_SDL2_LAUNCH)
         # Insert details into files
@@ -377,6 +376,8 @@ macro(ANDROIDAPK_PACKAGE
     string ( TOLOWER "${TARGET}" PACKAGE_SUFFIX )
 
     set ( DEPENDENCIES )
+
+    list ( APPEND DEPENDENCIES "$<TARGET_FILE:${TARGET}>" )
 
     list ( APPEND DEPENDENCIES "${BUNDLE_LIBS}" )
 

@@ -1,9 +1,10 @@
 # Fiddle with warning flags
 if (NOT WIN32)
     # These are effectively used by Clang and GCC, descriptive names
-    if((APPLE AND IOS) OR NOT APPLE)
+    if((APPLE AND IOS) OR (NOT APPLE))
         # When statically linking, hide symbols
         # This helps us create dynamic frameworks on OSX
+        message("-- Hiding symbols")
         add_definitions (
 	    -fvisibility=hidden
             )
@@ -34,6 +35,7 @@ if (NOT WIN32)
         # License information and application information is undefined in the library for a reason
         set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_LD_FLAGS} -Wl,-undefined,dynamic_lookup" )
     elseif(ANDROID)
+        # On Android, force -std=c++11
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     endif()
 else()
@@ -47,10 +49,6 @@ else()
     add_definitions (
         -D_WIN32_WINNT=0x0601
         )
-endif()
-
-if(ANDROID)
-    # On Android, force -std=c++11
 endif()
 
 # Static builds
@@ -131,6 +129,4 @@ endif()
 
 if(NOT COFFEE_BUILD_GLES)
     add_definitions("-DCOFFEE_GLEAM_DESKTOP")
-else()
-
 endif()
