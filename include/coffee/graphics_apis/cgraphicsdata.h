@@ -14,7 +14,7 @@ typedef _cbasic_graphics_transform<scalar> CTransform;
 
 typedef _cbasic_rect<scalar> CViewport;
 typedef _cbasic_rect<int32> CScissorViewport;
-typedef _cbasic_zfield<bigscalar> CDepthViewport;
+typedef _cbasic_range<bigscalar> CDepthViewport;
 
 } //CGraphicsData
 

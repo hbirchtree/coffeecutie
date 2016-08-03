@@ -13,7 +13,7 @@ template<typename T> struct _cbasic_graphics_camera
         flags(CameraFlags::Perspective),
         aspect(T(1)),
         zVals(T(1),T(100)),
-        fieldOfView(T(60)),
+        fieldOfView(T(85)),
         position(T(0)),
         rotation(),
         orthoview(T(0),T(0),T(1),T(1))
@@ -25,16 +25,16 @@ template<typename T> struct _cbasic_graphics_camera
         Orthographic = 0x1,
     };
 
-    CameraFlags flags;
-
-    T aspect;
-    _cbasic_zfield<T> zVals;
-    T fieldOfView;
-
-    _cbasic_vec3<T> position;
     _cbasic_tquaternion<T> rotation;
-
     _cbasic_rect<T> orthoview;
+    _cbasic_vec3<T> position;
+
+    _cbasic_range<T> zVals;
+
+    T fieldOfView;
+    T aspect;
+
+    CameraFlags flags;
 };
 
 template<typename T> struct _cbasic_graphics_transform

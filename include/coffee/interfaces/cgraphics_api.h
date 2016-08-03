@@ -658,6 +658,9 @@ struct GraphicsAPI
 
     struct DrawInstanceData
     {
+        DrawInstanceData(){}
+        DrawInstanceData(uint32 v, uint32 e, uint32 i):m_verts(v),m_elems(e),m_insts(i){}
+
         uint32 vertices()const{return m_verts;}
         uint32 elements()const{return m_elems;}
         TypeEnum elementType()const{return m_eltype;}

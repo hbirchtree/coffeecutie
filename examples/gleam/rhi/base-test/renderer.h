@@ -23,6 +23,7 @@ public:
 private:
     bool m_debugging = true;
     GLM::PRF::QRY_DBUF* buffer_debug_p;
+    CGCamera camera;
 
 public:
 
@@ -242,20 +243,15 @@ public:
 
     /* Now generating a drawcall, which only specifies small state that can be
      * shared */
-    GLM::DrawCall call;
-    call.m_idxd = false;
-    call.m_inst = true;
+    GLM::DrawCall call{false,true};
 
     /* Instance data is more akin to individual drawcalls, specifying vertex
      * buffer information */
-    GLM::DrawInstanceData instdata = {};
-    instdata.m_insts = 4;
-    instdata.m_verts = 6;
+    GLM::DrawInstanceData instdata = {6,0,4};
 
     /* Specifying the uniform data, such as camera matrices and transforms */
     Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
-    CGCamera camera;
     camera.aspect = 1.6f;
     camera.fieldOfView = 70.f;
     camera.zVals.far = 100.;
@@ -383,6 +379,8 @@ public:
     {
         auto rev = (Display::CDResizeEvent const*)data;
         buffer_debug_p->resize(*rev);
+
+        camera.aspect = scalar(rev->w)/scalar(rev->h);
     }
   }
 

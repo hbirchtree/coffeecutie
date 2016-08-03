@@ -274,14 +274,14 @@ struct _cbasic_boundingbox
  * \brief Describes the clipping distance of a GL scene
  */
 template<typename T>
-struct _cbasic_zfield
+struct _cbasic_range
 {
-    _cbasic_zfield()
+    _cbasic_range()
         : near(0.1),
           far(10)
     {
     }
-    _cbasic_zfield(T vnear, T vfar)
+    _cbasic_range(T vnear, T vfar)
         : near(vnear),
           far(vfar)
     {
@@ -367,9 +367,9 @@ using CPointD = _cbasic_point_2d<bigscalar>;
 /*!
  * \brief Standard clipping type
  */
-using ZField = _cbasic_zfield<scalar>;
+using ZField = _cbasic_range<scalar>;
 
-using ZField64 = _cbasic_zfield<bigscalar>;
+using ZField64 = _cbasic_range<bigscalar>;
 
 using FovDetail = _cbasic_fov<scalar>;
 

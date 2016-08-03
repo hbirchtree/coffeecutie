@@ -78,6 +78,7 @@ struct GLEAM_API : GraphicsAPI
     using DepthState = GraphicsAPI::DepthState<CGenum>;
 
     using DrawCall = GraphicsAPI::DrawCall;
+    using DrawInstanceData = GraphicsAPI::DrawInstanceData;
 
     /* These access the PBO queue */
     friend struct GLEAM_Surface2D;

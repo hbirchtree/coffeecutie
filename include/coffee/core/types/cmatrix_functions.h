@@ -8,7 +8,7 @@ namespace CGraphicsData{
 
 template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> GenOrthographic(
-        _cbasic_rect<T> const& view, const _cbasic_zfield<T>& zfield)
+        _cbasic_rect<T> const& view, const _cbasic_range<T>& zfield)
 {
     _cbasic_tmatrix<T,4> mat;
 
@@ -30,7 +30,7 @@ template<typename T>
 FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
         const T& fov,
         const T& aspect,
-        const _cbasic_zfield<T>& zfield)
+        const _cbasic_range<T>& zfield)
 {
     CASSERT(CMath::abs(aspect - CMath::numeric_limits<T>::epsilon()) > T(0));
 

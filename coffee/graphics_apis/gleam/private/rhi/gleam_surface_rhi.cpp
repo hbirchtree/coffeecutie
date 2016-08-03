@@ -14,6 +14,7 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
     m_handle(0)
 {
     allocate();
+    if(CGL43::TexStorageSupported())
     {
         /* We must set this to register a proper mipmap level */
 
@@ -21,7 +22,7 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
         int32 max_lev = mips - 1;
 
         CGL33::TexBind(type,m_handle);
-        CGL33::TexParameteriv(type,GL_TEXTURE_BASE_LEVEL,&min_lev);
+//        CGL33::TexParameteriv(type,GL_TEXTURE_BASE_LEVEL,&min_lev);
         CGL33::TexParameteriv(type,GL_TEXTURE_MAX_LEVEL,&max_lev);
         CGL33::TexBind(type,0);
     }
@@ -35,6 +36,20 @@ void GLEAM_Surface::allocate()
 void GLEAM_Surface::dealloc()
 {
     CGL33::TexFree(1,&m_handle);
+}
+
+void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
+{
+    if(GL_DEBUG_MODE){
+        uint32 w,h,d;
+        szptr size;
+        CGL33::TexGetImageSize(m_type,comp,w,h,d,&size,mip);
+        if(m_type == Texture::T2DArray)
+            size /= d;
+        cVerbose(5,"Texture allocation size ({0}): {1}",m_handle,size);
+
+        /* TODO: Add information about mipmaps */
+    }
 }
 
 GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt,uint32 mips,uint32 texflags):
@@ -105,6 +120,9 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL43::BufBind(BufType::PixelUData,0);
     }
+
+    if(GL_DEBUG_MODE)
+        upload_info(comp,mip,1);
 }
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
@@ -171,6 +189,9 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL43::BufBind(BufType::PixelUData,0);
     }
+
+    if(GL_DEBUG_MODE)
+        upload_info(comp,mip,size.depth);
 }
 
 void GLEAM_Sampler::alloc()

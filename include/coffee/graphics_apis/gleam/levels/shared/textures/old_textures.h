@@ -28,16 +28,51 @@ struct CGL_Old_Textures
     {glTexImage3D(to_enum(t),level,to_enum(ifmt),w,h,d,border,to_enum(fmt),to_enum(dt),p);}
 
     /* TexGet */
-    STATICINLINE void TexGetImageSize(Texture t, PixCmp, PixelFormat,
+    STATICINLINE void TexGetImageSize(Texture t, PixCmp c,
                                       uint32& w, uint32& h, uint32& d,
-                                      szptr& size)
+                                      szptr* size, uint32 mip = 0)
     {
-	TexGetParameteruiv(t,GL_TEXTURE_WIDTH,&w);
-	TexGetParameteruiv(t,GL_TEXTURE_HEIGHT,&h);
-	TexGetParameteruiv(t,GL_TEXTURE_DEPTH,&d);
+        int32 w_t,h_t,d_t;
+        TexGetLevelParameteriv(t,mip,GL_TEXTURE_WIDTH,&w_t);
+        TexGetLevelParameteriv(t,mip,GL_TEXTURE_HEIGHT,&h_t);
+        TexGetLevelParameteriv(t,mip,GL_TEXTURE_DEPTH,&d_t);
+        w = w_t, h = h_t, d = d_t;
 
-	/* TODO: Calculate pixel format size */
-	size = w * h * d * (1);
+        if(!size)
+            return;
+
+        szptr cmp_size = 0;
+
+        switch(c)
+        {
+        case PixCmp::RGBA:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_ALPHA_SIZE)/8;
+        case PixCmp::RGB:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_BLUE_SIZE)/8;
+        case PixCmp::RG:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_GREEN_SIZE)/8;
+        case PixCmp::R:
+        case PixCmp::G:
+        case PixCmp::B:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_RED_SIZE)/8;
+            break;
+        case PixCmp::BGRA:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_ALPHA_SIZE)/8;
+            break;
+        case PixCmp::DepthStencil:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_STENCIL_SIZE)/8;
+        case PixCmp::Depth:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_DEPTH_SIZE)/8;
+            break;
+        case PixCmp::Stencil:
+            cmp_size += TexGetLevelParameteri(t,mip,GL_TEXTURE_STENCIL_SIZE)/8;
+            break;
+        default:
+            cmp_size = 4;
+            break;
+        }
+
+        *size = w * h * d * cmp_size;
     }
 #ifdef COFFEE_GLEAM_DESKTOP
     STATICINLINE void TexGetCompressedSize(Texture t, uint32& w, uint32& h, uint32& d, szptr& size)
@@ -131,9 +166,21 @@ struct CGL_Old_Textures
     {glGetTexParameteriv(to_enum(t),f,v);}
     STATICINLINE void TexGetParameteruiv(Texture t, CGenum f, uint32* v)
     {glGetTexParameterIuiv(to_enum(t),f,v);}
+    STATICINLINE uint32 TexGetParameterui(Texture t, CGenum f)
+    {
+        uint32 v;
+        glGetTexParameterIuiv(to_enum(t),f,&v);
+        return v;
+    }
 
     STATICINLINE void TexGetLevelParameteriv(Texture t, uint32 l, CGenum f, int32* v)
     {glGetTexLevelParameteriv(to_enum(t),l,f,v);}
+    STATICINLINE int32 TexGetLevelParameteri(Texture t, uint32 l, CGenum f)
+    {
+        int32 v = 0;
+        glGetTexLevelParameteriv(to_enum(t),l,f,&v);
+        return v;
+    }
     STATICINLINE void TexGetLevelParameterfv(Texture t, uint32 l, CGenum f, scalar* v)
     {glGetTexLevelParameteriv(to_enum(t),l,f,v);}
 

@@ -106,10 +106,9 @@ struct CGL_Old_Framebuffers
                 textype = Texture::T2DArray;
 
             uint32 w,h,d;
-            szptr sz;
             /* Use this helper function to get the size */
             Tex::TexBind(textype,hnd);
-            Tex::TexGetImageSize(textype,PixCmp::None,PixelFormat::RGBA8,w,h,d,sz);
+            Tex::TexGetImageSize(textype,PixCmp::None,w,h,d,nullptr);
             Tex::TexBind(textype,0);
             /* Assign these values later, uint32 != int32 */
             out.w = w;
