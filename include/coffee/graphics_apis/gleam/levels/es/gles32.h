@@ -77,6 +77,8 @@ struct CGLES32 : CGLES30,
     {return false;}
     STATICINLINE bool ViewportArraySupported()
     {return false;}
+    STATICINLINE bool TexStorageSupported()
+    {return false;}
 };
 
 }
