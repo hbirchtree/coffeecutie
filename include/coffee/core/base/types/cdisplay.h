@@ -84,22 +84,28 @@ struct CDMonitor{
  */
 struct CDEvent{
     CDEvent():
-        type(),
-        ts(0)
+        ts(0),
+        type()
     {
     }
 
     enum EventType : uint8
     {
-        Refresh = 0x1,
-        Move    = 0x2,
-        Resize  = 0x4,
-        State   = 0x5,
+        Refresh = 1,
+        Move,
+        Resize,
+        State,
 
-        Focus   = 0x6,
+        Focus,
+
+        IsBackground,
+        IsForeground,
+
+        TransitionBackground,
+        TransitionForeground,
     };
-    EventType type; /*!< Event type*/
     uint32  ts; /*!< Event timestamp*/
+    EventType type; /*!< Event type*/
 };
 
 /*!

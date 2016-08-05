@@ -46,7 +46,7 @@ FORCEDINLINE void PrintBuildInfo()
 
 FORCEDINLINE void PrintArchitectureInfo()
 {
-    cOutputPrint("Compiled for {0} on {1} ({2}})",
+    cOutputPrint("Compiled for {0} on {1} ({2})",
                  CoffeePlatformString,CoffeeCompilerString,
                  CoffeeArchString);
     cOutputPrint("Executing on {0}",PlatformData::SystemDisplayString());

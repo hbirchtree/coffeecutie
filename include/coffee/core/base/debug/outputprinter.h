@@ -26,12 +26,29 @@ struct OutputPrinterImpl : OutputPrinterDef
         if(locking)
             PrinterLock.lock();
 #if defined(COFFEE_ANDROID)
-        int flag = ANDROID_LOG_DEBUG;
-        if(formatted.substr(0,4) == "WARN")
+        int c_str_offset = 0;
+        int flag = ANDROID_LOG_INFO;
+        if(formatted.substr(0,4) == "INFO")
+        {
+            flag = ANDROID_LOG_VERBOSE;
+            c_str_offset = 6;
+        }
+        else if(formatted.substr(0,4) == "DEBG")
+        {
+            flag = ANDROID_LOG_DEBUG;
+            c_str_offset = 6;
+        }
+        else if(formatted.substr(0,4) == "WARN")
+        {
             flag = ANDROID_LOG_WARN;
+            c_str_offset = 6;
+        }
         else if(formatted.substr(0,4) == "FTAL")
+        {
             flag = ANDROID_LOG_ERROR;
-        __android_log_print(flag, "Coffee", formatted.c_str());
+            c_str_offset = 6;
+        }
+        __android_log_print(flag, "Coffee", &formatted[c_str_offset]);
 #else
         Puts(stream,formatted.c_str());
 #endif

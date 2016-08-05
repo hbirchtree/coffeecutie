@@ -8,6 +8,8 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+#ifndef NDEBUG
+
 static CSize v_size = {1280,720};
 
 static cstring m_shader_vertex_passthrough = {
@@ -45,6 +47,13 @@ static const scalar m_vertex_quad_data[] = {
      1.f, -1.f, 0.f, 1.f, 0.f,
 };
 
+#endif
+
+#ifdef NDEBUG
+GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
+    : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b)
+{
+#else
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b),
       m_size(t.size()),
@@ -58,7 +67,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
 
     if(GL_DEBUG_MODE && m_enabled)
     {
-        m_debug_target.alloc();
+        m_dtarget.alloc();
 
         m_color_sampler.alloc();
         m_depth_stencil_sampler.alloc();
@@ -68,10 +77,10 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
 
         resize(m_size);
 
-        m_debug_target.attachSurface(m_color,0,0);
-        m_debug_target.attachDepthStencilSurface(m_depth_stencil,0);
+        m_dtarget.attachSurface(m_color,0,0);
+        m_dtarget.attachDepthStencilSurface(m_depth_stencil,0);
 
-        if(!m_debug_target.validate())
+        if(!m_dtarget.validate())
         {
             cWarning("Failed to create framebuffer");
         }
@@ -127,46 +136,42 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         m_trans_unif = CGL33::ProgramUnifGetLoc(m_prg,"transform");
 
     }
+#endif
 }
 
 GLEAM_DBufQuery::~GLEAM_DBufQuery()
 {
+#ifndef NDEBUG
     if(GL_DEBUG_MODE && m_enabled)
     {
-        m_debug_target.dealloc();
+        m_dtarget.dealloc();
         CGL33::ProgramFree(1,&m_prg);
     }
+#endif
 }
 
 void GLEAM_DBufQuery::resize(const CSize &s)
 {
+#ifndef NDEBUG
     cVerbose(5,"New framebuffer dimensions: {0}",s);
     m_color.allocate(s,PixCmp::RGBA);
     m_depth_stencil.allocate(s,PixCmp::Depth);
+#endif
 }
 
 void GLEAM_DBufQuery::begin()
 {
+#ifndef NDEBUG
     if(GL_DEBUG_MODE && m_enabled)
-    {
-        Vecf4 clear_col(1);
-        m_debug_target.clear(0,clear_col,1.f);
-        m_debug_target.bind(FramebufferT::All);
-    }
+        m_dtarget.bind(FramebufferT::All);
+#endif
 }
 
 void GLEAM_DBufQuery::end()
 {
+#ifndef NDEBUG
     if(GL_DEBUG_MODE && m_enabled)
     {
-//        CGL33::FBBind(FramebufferT::Read,m_debug_target.m_handle);
-//        CGL33::FBBind(FramebufferT::Draw,m_rtarget.m_handle);
-//        CGL33::FBBlit({0,0,v_size.w,v_size.h}
-//                      ,{0,0,v_size.w/2,v_size.h/2}
-//                      ,DBuffers::Color,Filtering::Linear);
-//        CGL33::FBBlit({0,0,v_size.w,v_size.h}
-//                      ,{v_size.w/2,0,v_size.w/2,v_size.h/2}
-//                      ,DBuffers::Depth,Filtering::Nearest);
         m_rtarget.bind(FramebufferT::All);
 
         /* Frame data */
@@ -197,6 +202,7 @@ void GLEAM_DBufQuery::end()
         CGL33::VAOBind(0);
         CGL33::BufBind(BufType::ArrayData,0);
     }
+#endif
 }
 
 }

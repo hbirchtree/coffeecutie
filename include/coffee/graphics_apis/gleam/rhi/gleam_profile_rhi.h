@@ -22,9 +22,8 @@ struct GLEAM_DBufQuery : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>
     void begin();
     void end();
 protected:
+#ifndef NDEBUG
     CSize m_size;
-
-    GLEAM_RenderTarget m_debug_target;
 
     GLEAM_Surface2D m_depth_stencil;
     GLEAM_Surface2D m_color;
@@ -41,6 +40,7 @@ protected:
     int32 m_tex_unif;
 
     bool m_enabled;
+#endif
 };
 
 }

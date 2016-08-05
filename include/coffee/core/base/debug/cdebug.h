@@ -21,29 +21,12 @@ struct DebuggingState
     static Mutex PrinterLock;
 };
 
-template<typename... Args>
-FORCEDINLINE void cfprintf(FILE* stream, cstring format, Args... args)
-{
-    bool locking = false;
-
-    /* If printing to file, don't lock IO */
-    if(stream==stdout||stream==stderr)
-        locking = true;
-
-    CString formatted = cStringFormat(format,args...);
-    if(locking)
-        DebuggingState::PrinterLock.lock();
-    Puts(stream,formatted.c_str());
-    if(locking)
-        DebuggingState::PrinterLock.unlock();
-}
-
 namespace CDebugHelpers{
 FORCEDINLINE void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {
-    cfprintf(DefaultDebugOutputPipe,header);
+    OutputPrinter::fprintf(DefaultDebugOutputPipe,header);
     for(szptr i=0;i<stacksize;i++){
-        cfprintf(DefaultDebugOutputPipe,callfmt,callstack[i]);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,callfmt,callstack[i]);
         CFree(callstack[i]);
     }
     CFree(callstack);
@@ -78,7 +61,7 @@ template<typename... Arg>
 FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
     CString out = cStringFormat(str,args...);
-    cfprintf(DefaultDebugOutputPipe,"{0}\n",out.c_str());
+    OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",out.c_str());
 }
 
 template<typename... Arg>
@@ -90,21 +73,21 @@ template<typename... Arg>
 FORCEDINLINE void cBasicPrintNoNL(cstring str, Arg... args)
 {
     CString out = cStringFormat(str,args...);
-    cfprintf(DefaultDebugOutputPipe,"{0}",out.c_str());
+    OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}",out.c_str());
 }
 
 template<typename... Arg> FORCEDINLINE
 void cOutputPrint(cstring str, Arg... args)
 {
     CString out = cStringFormat(str,args...);
-    cfprintf(DefaultPrintOutputPipe,"{0}\n",out.c_str());
+    OutputPrinter::fprintf(DefaultPrintOutputPipe,"{0}\n",out.c_str());
 }
 
 template<typename... Arg> FORCEDINLINE
 void cOutputPrintNoNL(cstring str, Arg... args)
 {
     CString out = cStringFormat(str,args...);
-    cfprintf(DefaultPrintOutputPipe,"{0}",out.c_str());
+    OutputPrinter::fprintf(DefaultPrintOutputPipe,"{0}",out.c_str());
 }
 
 template<typename... Arg>

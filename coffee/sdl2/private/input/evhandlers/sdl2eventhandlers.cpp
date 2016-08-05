@@ -100,13 +100,17 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
         break;
 
     case SDL_APP_WILLENTERBACKGROUND:
+        EventAtomic<CDEvent>(ctxt,CDEvent::TransitionBackground);
         break;
     case SDL_APP_DIDENTERBACKGROUND:
+        EventAtomic<CDEvent>(ctxt,CDEvent::IsBackground);
         break;
 
     case SDL_APP_WILLENTERFOREGROUND:
+        EventAtomic<CDEvent>(ctxt,CDEvent::TransitionForeground);
         break;
     case SDL_APP_DIDENTERFOREGROUND:
+        EventAtomic<CDEvent>(ctxt,CDEvent::IsForeground);
         break;
 
         /* Stub these useless things */

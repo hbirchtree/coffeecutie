@@ -77,7 +77,7 @@ public class SDLActivity extends Activity {
     // Load the .so
     public void loadLibraries() {
        for (String lib : getLibraries()) {
-          Log.v(TAG, "Loading library: "+lib);
+          //Log.v(TAG, "Loading library: "+lib);
           System.loadLibrary(lib);
        }
     }
@@ -112,9 +112,9 @@ public class SDLActivity extends Activity {
     // Setup
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v(TAG, "Device: " + android.os.Build.DEVICE);
-        Log.v(TAG, "Model: " + android.os.Build.MODEL);
-        Log.v(TAG, "onCreate(): " + mSingleton);
+        //Log.v(TAG, "Device: " + android.os.Build.DEVICE);
+        //Log.v(TAG, "Model: " + android.os.Build.MODEL);
+        //Log.v(TAG, "onCreate(): " + mSingleton);
         super.onCreate(savedInstanceState);
 
         SDLActivity.initialize();
@@ -178,7 +178,7 @@ public class SDLActivity extends Activity {
         if (intent != null && intent.getData() != null) {
             String filename = intent.getData().getPath();
             if (filename != null) {
-                Log.v(TAG, "Got filename: " + filename);
+                //Log.v(TAG, "Got filename: " + filename);
                 SDLActivity.onNativeDropFile(filename);
             }
         }
@@ -1084,7 +1084,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         mWidth = width;
         mHeight = height;
         SDLActivity.onNativeResize(width, height, sdlFormat, mDisplay.getRefreshRate());
-        Log.v("SDL", "Window size: " + width + "x" + height);
+        //Log.v("SDL", "Window size: " + width + "x" + height);
 
  
         boolean skip = false;

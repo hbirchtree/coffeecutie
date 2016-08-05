@@ -282,19 +282,19 @@ public:
 
     buffer_debug_p = &buffer_debug;
 
+    GLM::FB_T* render_target = &GLM::DefaultFramebuffer;
+
     while (!closeFlag()) {
 
-      /*
-      * This will probably be incorporated into the GLM:: namespace somehow
-      * We want to only clear the parts of the buffer that are necessary
-      * eg. don't clear stencil and depth if they are unused
-      *
-      */
+        if(m_debugging)
+        {
 
-      if(!m_debugging)
-          GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
-      else
-          buffer_debug.begin();
+            render_target = &buffer_debug.debugTarget();
+        }
+        else
+            render_target = &GLM::DefaultFramebuffer;
+
+      render_target->clear(0,clear_col,1.);
 
       /*
       * Events are always late for the drawcall.

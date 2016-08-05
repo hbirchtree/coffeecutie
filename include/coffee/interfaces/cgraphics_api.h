@@ -752,13 +752,18 @@ struct GraphicsProfiler
      */
     struct BufferQuery
     {
-	BufferQuery(RT& t,DBuffers b) : m_rtarget(t),m_buffers(b) {}
+        BufferQuery(RT& t,DBuffers b) : m_rtarget(t),m_dtarget(),m_buffers(b) {}
+
+        void resize(CSize const&){}
 
 	void begin(){}
 	void end(){}
-	RT const& output(){return m_rtarget;}
+
+        RT& output(){return m_rtarget;}
+        RT& debugTarget(){return m_dtarget;}
 
 	RT& m_rtarget;
+        RT m_dtarget;
 	const DBuffers m_buffers;
     };
 };
