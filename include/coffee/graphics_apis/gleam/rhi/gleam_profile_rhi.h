@@ -21,6 +21,8 @@ struct GLEAM_DBufQuery : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>
 
     void begin();
     void end();
+
+    bool enabled();
 protected:
 #ifndef NDEBUG
     CSize m_size;

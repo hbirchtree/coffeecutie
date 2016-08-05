@@ -41,9 +41,9 @@ void GLEAM_Surface::dealloc()
 void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 {
     if(GL_DEBUG_MODE){
-        uint32 w,h,d;
+        uint32 w,h,d_;
         szptr size;
-        CGL33::TexGetImageSize(m_type,comp,w,h,d,&size,mip);
+        CGL33::TexGetImageSize(m_type,comp,w,h,d_,&size,mip);
         if(m_type == Texture::T2DArray)
             size /= d;
         cVerbose(5,"Texture allocation size ({0}): {1}",m_handle,size);

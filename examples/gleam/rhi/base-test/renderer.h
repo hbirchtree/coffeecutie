@@ -286,7 +286,7 @@ public:
 
     while (!closeFlag()) {
 
-        if(m_debugging)
+        if(buffer_debug.enabled())
         {
 
             render_target = &buffer_debug.debugTarget();
@@ -361,7 +361,7 @@ public:
        */
       GLM::Draw(call, instdata);
 
-      if(m_debugging)
+      if(buffer_debug.enabled())
           buffer_debug.end();
 
       this->swapBuffers();
