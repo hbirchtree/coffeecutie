@@ -9,7 +9,7 @@ list (APPEND LIBS
     CoffeeImage
     )
 
-coffee_add_example_long (
+coffee_add_application_long (
     SDLSpriteTest "SDL Sprite Test"
     main.cpp
     "${LIBS}" ""

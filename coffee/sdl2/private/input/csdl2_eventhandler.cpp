@@ -246,14 +246,16 @@ void SDL2EventHandler::internalProcessEvent(const CIEvent &e, c_cptr d)
         eh.func(eh.user_ptr,e,d);
 }
 
-void SDL2EventHandler::installEventHandler(const EventApplication::EventHandlerI &e)
+bool SDL2EventHandler::installEventHandler(EventHandlerI e)
 {
     m_eventhandlers_input.push_back(e);
+    return true;
 }
 
-void SDL2EventHandler::installEventHandler(const EventApplication::EventHandlerD &e)
+bool SDL2EventHandler::installEventHandler(EventHandlerD e)
 {
     m_eventhandlers_windw.push_back(e);
+    return true;
 }
 
 }

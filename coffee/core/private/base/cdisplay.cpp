@@ -15,6 +15,7 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
             CDProperties::Visible;
 
 #ifdef COFFEE_ANDROID
+    props.flags ^= CDProperties::Windowed;
     props.flags = CDProperties::FullScreen;
 #endif
 

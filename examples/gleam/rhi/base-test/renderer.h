@@ -20,6 +20,11 @@ public:
   using GLM = RHI::NullAPI;
 #endif
 
+    static void frame_count(uint32 f, c_cptr)
+    {
+        cDebug("Swaps/s: {0}",f);
+    }
+
 private:
     bool m_debugging = true;
     GLM::PRF::QRY_DBUF* buffer_debug_p;
@@ -180,12 +185,12 @@ public:
     scalar time_value = 0.f;
 
     /*
- * These specify byte buffers which refer to other data
- * This makes it simple to redirect or reallocate the uniform data
- *
- * These can be rotated to achieve per-frame disposable buffers,
- *  allowing multiple frames to be processed concurrently without halt
- */
+     * These specify byte buffers which refer to other data
+     * This makes it simple to redirect or reallocate the uniform data
+     *
+     * These can be rotated to achieve per-frame disposable buffers,
+     *  allowing multiple frames to be processed concurrently without halt
+     */
     Bytes transform_data = {(byte_t *)object_matrices, sizeof(object_matrices)};
     Bytes time_data = {(byte_t *)&time_value, sizeof(time_value)};
 
@@ -284,13 +289,12 @@ public:
 
     GLM::FB_T* render_target = &GLM::DefaultFramebuffer;
 
+    Counter frame_counter(frame_count);
+
     while (!closeFlag()) {
 
-        if(buffer_debug.enabled())
-        {
-
+        if(m_debugging && buffer_debug.enabled())
             render_target = &buffer_debug.debugTarget();
-        }
         else
             render_target = &GLM::DefaultFramebuffer;
 
@@ -313,6 +317,9 @@ public:
       * draw();
       *
       */
+
+//      Threads::sleepMicros(16666);
+
       this->pollEvents();
 
       /* Define frame data */
@@ -361,8 +368,13 @@ public:
        */
       GLM::Draw(call, instdata);
 
-      if(buffer_debug.enabled())
+      if(buffer_debug.enabled() && m_debugging)
+      {
+          GLM::DefaultFramebuffer.clear(0,clear_col,1.f);
           buffer_debug.end();
+      }
+
+      frame_counter.update(Time::CurrentMicroTimestamp()/1000);
 
       this->swapBuffers();
 

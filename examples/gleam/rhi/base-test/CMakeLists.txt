@@ -12,4 +12,4 @@ if(COFFEE_BUILD_OCULUSVR)
     list ( APPEND LIBS CoffeeOVR )
 endif()
 
-coffee_add_example_long ( GLeamBaseTest_RHI "GLeam Basic RHI" main.cpp "${LIBS}" "" "${USERDATA}" )
+coffee_add_application_long ( GLeamBaseTest_RHI "GLeam Basic RHI" main.cpp "${LIBS}" "" "${USERDATA}" )

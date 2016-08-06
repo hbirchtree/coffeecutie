@@ -60,8 +60,8 @@ public:
     void pollEvents();
     bigscalar contextTime() const;
     bool closeFlag() const;
-    void installEventHandler(EventHandlerI const& e);
-    void installEventHandler(EventHandlerD const& e);
+    virtual bool installEventHandler(EventHandlerI e);
+    virtual bool installEventHandler(EventHandlerD e);
 };
 
 }

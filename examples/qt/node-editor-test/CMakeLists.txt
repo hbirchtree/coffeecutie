@@ -15,7 +15,7 @@ list ( APPEND LIBRARIES
     CoffeeQtNodeEditor
  )
 
-coffee_add_example ( NodeEditorTest "Node Editor Test" "${NodeEditorTest_SRCS}" "${LIBRARIES}" )
+coffee_add_application ( NodeEditorTest "Node Editor Test" "${NodeEditorTest_SRCS}" "${LIBRARIES}" )
 
 target_link_libraries ( NodeEditorTest
     )

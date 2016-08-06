@@ -14,7 +14,9 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
     m_handle(0)
 {
     allocate();
-    if(!CGL43::TexStorageSupported())
+    if(GL_CURR_API != GL_4_3
+            && GL_CURR_API != GLES_3_0
+            && GL_CURR_API != GLES_3_2)
     {
         /* We must set this to register a proper mipmap level */
 

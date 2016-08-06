@@ -138,8 +138,6 @@ void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
     CGL33::FBBind(m_type,m_handle);
     scalar* d = (scalar*)&color;
     CGL33::ClearBufferfv(true,i,color);
-    if(m_handle != 0)
-        CGL33::FBBind(m_type,0);
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth)
@@ -147,8 +145,12 @@ void GLEAM_RenderTarget::clear(bigscalar depth)
     CGL33::FBBind(m_type,m_handle);
     scalar tmp_dep = depth;
     CGL33::ClearBufferfv(&tmp_dep);
-    if(m_handle != 0)
-        CGL33::FBBind(m_type,0);
+}
+
+void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
+{
+    CGL33::FBBind(m_type,m_handle);
+    CGL33::ClearBufferfi(depth,(int32)stencil);
 }
 
 void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth)
@@ -184,13 +186,6 @@ bool GLEAM_RenderTarget::validate() const
         return stat;
     }else
         return true;
-}
-
-void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
-{
-    CGL33::FBBind(m_type,m_handle);
-    CGL33::ClearBufferfi(depth,(int32)stencil);
-    CGL33::FBBind(m_type,0);
 }
 
 }

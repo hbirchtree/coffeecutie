@@ -10,4 +10,4 @@ list ( APPEND LIBRARIES
     CoffeeQtShimCore
 )
 
-coffee_add_example ( Profiler "Application Profiler" "${CoffeeProfiler_SRCS}" "${LIBRARIES}" )
+coffee_add_application ( Profiler "Application Profiler" "${CoffeeProfiler_SRCS}" "${LIBRARIES}" )
