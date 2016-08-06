@@ -207,7 +207,11 @@ void GLEAM_DBufQuery::end()
 
 bool GLEAM_DBufQuery::enabled()
 {
+#ifndef NDEBUG
     return m_enabled;
+#else
+    return false;
+#endif
 }
 
 }

@@ -82,17 +82,9 @@ struct CGL43 : CGL33,
     {
         bool status = CGL33::LoadBinding(ctxt);
 	if(!status)
-	    return false;
-        const Display::CGLVersion targetVer(4,3);
-        Display::CGLVersion ver = Debug::ContextVersion();
-        if(ver<targetVer)
-        {
-	    const _cbasic_version<uint8>& rv = ver;
-	    const _cbasic_version<uint8>& tv = targetVer;
-            cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Library_Name,
-                 CFStrings::Graphics_GLeam_Library_CoreVersionError,
-                 rv,tv);
-        }
+            return false;
+
+        Debug::InitInternalFormats();
         return status;
     }
 
@@ -162,6 +154,38 @@ struct CGL43 : CGL33,
         CRectF r(v->x,v->y,v->w,v->h);
         ViewportSet(0,&r);
     }
+
+    struct Debug : CGL33::Debug
+    {
+        STATICINLINE void InitInternalFormats()
+        {
+        }
+
+        STATICINLINE void FreeInternalFormats()
+        {
+        }
+
+        STATICINLINE bool InternalFormatSupport(Texture tt, PixelFormat t)
+        {
+            /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
+            int32 supp = GL_FALSE;
+            glGetInternalformativ(to_enum(tt),to_enum(t),GL_INTERNALFORMAT_SUPPORTED,sizeof(supp),&supp);
+            return supp == GL_TRUE;
+        }
+        STATICINLINE ColBits InternalFormatDepths(Texture, PixelFormat)
+        {
+    //        int32 supp;
+    //        glGetInternalformativ(to_enum(tt),to_enum(t),GL_INTERNALFORMAT_SUPPORTED,sizeof(supp),&supp);
+            return {};
+        }
+        STATICINLINE CSize InternalFormatMaxResolution2D(Texture tt, PixelFormat t)
+        {
+            CSize sz;
+            glGetInternalformativ(to_enum(tt),to_enum(t),GL_MAX_WIDTH,sizeof(sz.w),&sz.w);
+            glGetInternalformativ(to_enum(tt),to_enum(t),GL_MAX_HEIGHT,sizeof(sz.h),&sz.h);
+            return sz;
+        }
+    };
 };
 
 }

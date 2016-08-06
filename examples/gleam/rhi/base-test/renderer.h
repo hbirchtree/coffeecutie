@@ -214,6 +214,8 @@ public:
     blendstate.m_doBlend = true;
     viewportstate.m_view.clear();
     viewportstate.m_view.push_back({0, 0, 1280, 720});
+    viewportstate.m_scissor.clear();
+    viewportstate.m_scissor.push_back({0,0,1280,720});
     viewportstate.m_mview = true;
     rasterstate_line.m_wireframe = true;
     deptstate.m_test = true;
