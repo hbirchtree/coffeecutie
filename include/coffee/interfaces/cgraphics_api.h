@@ -658,8 +658,10 @@ struct GraphicsAPI
 
     struct DrawInstanceData
     {
-        DrawInstanceData(){}
-        DrawInstanceData(uint32 v, uint32 e, uint32 i):m_verts(v),m_elems(e),m_insts(i){}
+	DrawInstanceData(uint32 v = 0, uint32 e = 0, uint32 i = 0):
+	    m_verts(v),m_elems(e),m_insts(i),
+	    m_voff(0),m_eoff(0),m_ioff(0),
+	    m_eltype(TypeEnum::UByte){}
 
         uint32 vertices()const{return m_verts;}
         uint32 elements()const{return m_elems;}
