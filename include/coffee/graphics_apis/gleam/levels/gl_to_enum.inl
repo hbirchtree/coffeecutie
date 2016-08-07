@@ -896,6 +896,8 @@ inline CGenum to_enum(FramebufferT f)
         return GL_READ_FRAMEBUFFER;
     case FramebufferT::All:
         return GL_FRAMEBUFFER;
+    default:
+        return GL_NONE;
     }
 }
 

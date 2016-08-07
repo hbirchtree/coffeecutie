@@ -35,6 +35,7 @@ enum class ShaderStage
 
 enum class FramebufferT
 {
+    None,
     Draw = 0x1,
     Read = 0x2,
     All = 0x3,

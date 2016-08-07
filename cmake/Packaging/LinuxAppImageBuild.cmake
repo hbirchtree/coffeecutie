@@ -166,7 +166,8 @@ macro( APPIMAGE_PACKAGE
     # Do the actual packaging step with AppImageKit
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND "${APPIMAGE_ASSISTANT_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}" "${APPIMAGE_FINAL_NAME}"
+        COMMAND
+        "${APPIMAGE_ASSISTANT_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}" "${APPIMAGE_FINAL_NAME}"
         )
 
     install (

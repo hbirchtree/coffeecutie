@@ -16,6 +16,7 @@ FORCEDINLINE cstring Gets(cstring_w target, int32 size, FILE* strm)
 FORCEDINLINE void Puts(FILE* strm, cstring output)
 {
     fputs(output,strm);
+    fflush(strm);
 }
 
 }

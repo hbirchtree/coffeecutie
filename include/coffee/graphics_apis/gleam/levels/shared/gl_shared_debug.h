@@ -230,21 +230,27 @@ struct CGL_Shared_Debug
     }
 
     /* Texture format support */
-
     STATICINLINE void InitInternalFormats()
+    {
+    }
+    STATICINLINE void FreeInternalFormats()
+    {
+    }
+
+    STATICINLINE void InitCompressedFormats()
     {
         Num_Internal_Formats = GetInteger(GL_NUM_COMPRESSED_TEXTURE_FORMATS);
         Internal_Formats = new int32[Num_Internal_Formats];
         GetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS,Internal_Formats);
     }
 
-    STATICINLINE void FreeInternalFormats()
+    STATICINLINE void FreeCompressedFormats()
     {
         Num_Internal_Formats = 0;
         delete[] Internal_Formats;
     }
 
-    STATICINLINE bool InternalFormatSupport(Texture tt, PixelFormat t)
+    STATICINLINE bool CompressedFormatSupport(Texture, PixelFormat t)
     {
         /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
         int32 supp = GL_FALSE;
@@ -257,11 +263,16 @@ struct CGL_Shared_Debug
             }
         return supp == GL_TRUE;
     }
-    STATICINLINE ColBits InternalFormatDepths(Texture, PixelFormat)
+    STATICINLINE ColBits CompressedFormatDepths(Texture, PixelFormat)
     {
 //        int32 supp;
 //        glGetInternalformativ(to_enum(tt),to_enum(t),GL_INTERNALFORMAT_SUPPORTED,sizeof(supp),&supp);
         return {};
+    }
+
+    STATICINLINE bool InternalFormatSupport(Texture, PixelFormat)
+    {
+        return true;
     }
     STATICINLINE CSize InternalFormatMaxResolution2D(Texture tt, PixelFormat t)
     {

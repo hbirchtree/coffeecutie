@@ -126,12 +126,12 @@ public:
         eye_pip.attach(f_shader, ShaderStage::Fragment);
         cVerbose("Shaders attached");
         if (!eye_pip.assemble()) {
-          cVerbose("Invalid pipeline");
+          cWarning("Invalid pipeline");
           return;
         }
         cVerbose("GPU pipeline assembled");
       } else {
-        cVerbose("Shader compilation failed");
+        cWarning("Shader compilation failed");
         return;
       }
       v_shader.dealloc();
@@ -295,10 +295,10 @@ public:
 
     while (!closeFlag()) {
 
-        if(m_debugging && buffer_debug.enabled())
-            render_target = &buffer_debug.debugTarget();
-        else
-            render_target = &GLM::DefaultFramebuffer;
+      if(m_debugging && buffer_debug.enabled())
+        render_target = &buffer_debug.debugTarget();
+      else
+       render_target = &GLM::DefaultFramebuffer;
 
       render_target->clear(0,clear_col,1.);
 
@@ -319,8 +319,6 @@ public:
       * draw();
       *
       */
-
-//      Threads::sleepMicros(16666);
 
       this->pollEvents();
 
@@ -355,11 +353,12 @@ public:
       vertdesc.bind();
       vertdesc.bindBuffer(0, vertbuf);
       eye_pip.bind();
-      GLM::SetShaderUniformState(eye_pip, ShaderStage::Vertex, unifstate);
-      GLM::SetShaderUniformState(eye_pip, ShaderStage::Fragment, unifstate);
 
       GLM::SetRasterizerState(rasterstate_poly);
       GLM::SetDepthState(deptstate);
+
+      GLM::SetShaderUniformState(eye_pip, ShaderStage::Vertex, unifstate);
+      GLM::SetShaderUniformState(eye_pip, ShaderStage::Fragment, unifstate);
 
       /*
        * For VR, we could add drawcall parameters to specify this
