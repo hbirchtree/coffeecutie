@@ -88,6 +88,7 @@ void CoffeeInit(bool profiler_init)
     CoffeePlatformString = plat_tmp_string.c_str();
 #endif
 
+    PrintVersionInfo();
     PrintBuildInfo();
     PrintArchitectureInfo();
 

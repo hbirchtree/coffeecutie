@@ -89,6 +89,14 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         if(!m_dtarget.validate())
         {
             cWarning("Failed to create framebuffer");
+            m_enabled = false;
+
+            m_dtarget.dealloc();
+
+            m_color_sampler.dealloc();
+            m_depth_stencil_sampler.dealloc();
+
+            return;
         }
 
         CGhnd shaders[2];
@@ -104,6 +112,11 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
             cWarning("Failed to compile passthrough shaders! Fuck this");
             cDebug("Vertex: {0}",CGL33::ShaderGetLog(shaders[0]));
             cDebug("Fragment: {0}",CGL33::ShaderGetLog(shaders[1]));
+            m_enabled = false;
+
+            CGL33::ShaderFree(2,shaders);
+
+            return;
         }
 
         CGL33::ProgramAlloc(1,&m_prg);
@@ -115,6 +128,16 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         {
             cWarning("Failed to link passthrough program! Fuck this");
             cDebug("Log: {0}",CGL33::ProgramGetLog(m_prg));
+            m_enabled = false;
+
+            CGL33::ShaderDetach(m_prg,shaders[0]);
+            CGL33::ShaderDetach(m_prg,shaders[1]);
+
+            CGL33::ShaderFree(2,shaders);
+
+            CGL33::ProgramFree(1,&m_prg);
+
+            return;
         }
 
         CGL33::ShaderDetach(m_prg,shaders[0]);
@@ -159,9 +182,12 @@ GLEAM_DBufQuery::~GLEAM_DBufQuery()
 void GLEAM_DBufQuery::resize(const CSize &s)
 {
 #ifndef NDEBUG
-    cVerbose(5,"New framebuffer dimensions: {0}",s);
-    m_color.allocate(s,PixCmp::RGBA);
-    m_depth_stencil.allocate(s,PixCmp::Depth);
+    if(GL_DEBUG_MODE && m_enabled)
+    {
+        cVerbose(5,"New framebuffer dimensions: {0}",s);
+        m_color.allocate(s,PixCmp::RGBA);
+        m_depth_stencil.allocate(s,PixCmp::Depth);
+    }
 #endif
 }
 
