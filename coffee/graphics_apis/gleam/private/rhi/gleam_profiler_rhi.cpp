@@ -60,6 +60,12 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
       m_depth_stencil(PixelFormat::Depth24Stencil8,1),
       m_color(PixelFormat::RGBA8,1)
 {
+    if(!GL_DEBUG_MODE)
+    {
+        m_enabled = false;
+        return;
+    }
+
     if(GL_CURR_API == GL_4_3)
         m_enabled = CGL43::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
     else

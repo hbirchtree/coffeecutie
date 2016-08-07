@@ -22,7 +22,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         if(GL_DEBUG_MODE && !stat)
         {
             CString log = CGL33::ShaderGetLog(m_handle);
-            cDebug("Shader compilation error: {0}",log);
+            cWarning("Shader compilation error: {0}",log);
             return false;
         }
 
@@ -36,7 +36,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         if(GL_DEBUG_MODE && m_handle == 0)
         {
             CString log = CGL43::ProgramGetLog(m_handle);
-            cDebug("Shader program compilation error: {0}",log);
+            cWarning("Shader program compilation error: {0}",log);
             return false;
         }
 

@@ -133,6 +133,11 @@ COFFAPI CString Coffee_GetExternalDataPath()
     return coffee_app->activity->externalDataPath;
 }
 
+COFFAPI AAssetManager* Coffee_GetAssetManager()
+{
+    return coffee_app->activity->assetmanager;
+}
+
 COFFAPI AAsset* Coffee_AssetGet(cstring fname)
 {
     return AAssetManager_open(coffee_app->activity->assetManager,fname,AASSET_MODE_BUFFER);

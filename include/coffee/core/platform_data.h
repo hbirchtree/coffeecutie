@@ -76,5 +76,19 @@ struct PlatformData
         return false;
 #endif
     }
+
+    STATICINLINE
+    /*!
+     * \brief IsDebug
+     * \return
+     */
+    bool IsDebug()
+    {
+#ifndef NDEBUG
+        return true;
+#else
+        return false;
+#endif
+    }
 };
 }

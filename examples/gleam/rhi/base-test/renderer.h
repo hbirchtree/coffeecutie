@@ -58,7 +58,7 @@ public:
         /*
  * Loading the GLeam API, chosen according to what is available at runtime
  */
-        GLM::LoadAPI(true);
+        GLM::LoadAPI(false);
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};

@@ -14,7 +14,6 @@ namespace Android{
 JNIEnv* jni_getEnv()
 {
 #if !defined(ANDROID_DONT_USE_SDL2)
-
     return (JNIEnv*)SDL_AndroidGetJNIEnv();
 #else
     /* TODO: Add native_app_glue implementation */
