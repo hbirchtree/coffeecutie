@@ -40,7 +40,7 @@ public:
         Profiler::PushContext("Renderer");
 
         const constexpr cstring textures[num_textures] = {
-            "eye-normal.tga", "eye-weird.tga", "eye-alpha.tga", "eye-veins.tga",
+	    "circle_red.png", "circle_blue.png", "circle_alpha.png",
             "floor-tile.png"};
 
         const scalar vertexdata[] = {
@@ -153,7 +153,7 @@ public:
         /* Uploading textures */
         GLM::S_2DA eyetex(PixelFormat::SRGB8A8, 1, GLM::TextureDMABuffered);
 
-        eyetex.allocate({1024, 1024, 5}, PixCmp::RGBA);
+	eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
         cVerbose("Texture allocation");
 
         Profiler::Profile("Pre-texture loading");
