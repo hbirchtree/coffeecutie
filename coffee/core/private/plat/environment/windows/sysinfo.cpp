@@ -192,7 +192,7 @@ CString WindowsSysInfo::GetSystemVersion()
         pwine_get_version = (void*)GetProcAddress(hntdll,"wine_get_version");
         if(!pwine_get_version)
             break;
-        CString out = pwine_get_version();
+        CString out = CString("Wine") + pwine_get_version();
         return out;
     }while(false);
     /* Dear Microsoft, I only want a string. */
