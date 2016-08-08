@@ -167,10 +167,11 @@ public:
     static thread_local FB_T DefaultFramebuffer;
 };
 
-struct GLEAM_PRF : GraphicsProfiler
+struct GLEAM_PRF
 {
     using QRY_PERF = GLEAM_PrfQuery;
     using QRY_DBUF = GLEAM_DBufQuery;
+    using QRY_PIPDMP = GLEAM_PipelineDumper;
 };
 
 }

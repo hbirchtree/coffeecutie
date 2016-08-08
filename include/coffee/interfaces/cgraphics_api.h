@@ -99,6 +99,10 @@ struct GraphicsAPI
     {
     };
 
+    struct GraphicsThreadContext
+    {
+    };
+
     static void LoadAPI(bool UNUSED_PARAM debug_mode)
     {
     }
@@ -756,6 +760,8 @@ struct GraphicsProfiler
     {
         BufferQuery(RT& t,DBuffers b) : m_rtarget(t),m_dtarget(),m_buffers(b) {}
 
+        bool enabled(){return true;}
+
         void resize(CSize const&){}
 
 	void begin(){}
@@ -767,6 +773,16 @@ struct GraphicsProfiler
 	RT& m_rtarget;
         RT m_dtarget;
 	const DBuffers m_buffers;
+    };
+
+    template<typename PIP>
+    struct PipelineDumper
+    {
+        PipelineDumper(PIP& p):m_pipeline(p){}
+
+        void dump(cstring){}
+
+        PIP& m_pipeline;
     };
 };
 
@@ -844,6 +860,7 @@ struct NullAPI : GraphicsAPI
     using PIXLSTATE = PixelProcessState;
 
     using G_CTXT = GraphicsContext;
+    using G_TCTXT = GraphicsThreadContext;
     using G_DEV = GraphicsDevice;
 
     static FB_T DefaultFramebuffer;
@@ -853,6 +870,7 @@ struct NullAPI : GraphicsAPI
     {
 	using QRY_DBUF = GraphicsProfiler::BufferQuery<FB_T>;
 	using QRY_PERF = GraphicsProfiler::PerfQuery;
+        using QRY_PIPDMP = GraphicsProfiler::PipelineDumper<PIP>;
     };
 };
 

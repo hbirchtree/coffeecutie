@@ -29,11 +29,16 @@ static cstring m_shader_fragment_passthrough = {
     "#version 300 es\n"
     "precision lowp float;\n"
     "uniform sampler2D tex;\n"
-    "uniform vec2 tex_size;\n"
     "in vec2 tex_out;\n"
     "layout(location=0) out vec4 out_col;\n"
     "void main(){\n"
+    #if !defined(COFFEE_ANDROID) && 0
+    "    vec4 comp = texture(tex,tex_out);\n"
+    "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
+    "    out_col.a = comp.a;\n"
+    #else
     "    out_col = texture(tex,tex_out);\n"
+    #endif
     "}\n"
 };
 
@@ -66,13 +71,24 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         return;
     }
 
+    if(CGL33::Tex_SRGB_Supported())
+    {
+        m_color.dealloc();
+        new (&m_color) GLEAM_Surface2D(PixelFormat::SRGB8A8);
+    }
+
     if(GL_CURR_API == GL_4_3)
         m_enabled = CGL43::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
     else
         m_enabled = CGL33::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
 
-    if(GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
+    if(!m_enabled && (GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2))
+    {
+        m_enabled = true;
+        cVerbose(6,"Opting for DEPTH16 depth buffer format");
+        m_depth_stencil.dealloc();
         new (&m_depth_stencil) GLEAM_Surface2D(PixelFormat::Depth16,1);
+    }
 
     if(GL_DEBUG_MODE && !m_enabled)
         cWarning("Cannot enable debugging, unsupported depth-stencil format (DEPTH24_STENCIL8)");

@@ -6,7 +6,6 @@
 
 int32 coffee_main(int32, cstring_w*)
 {
-    cVerbose("Device: {0}",SysInfo::DeviceName());
 
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");

@@ -19,9 +19,15 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
     props.flags = CDProperties::FullScreen;
 #endif
 
+
+
     props.gl.flags =
-            GLProperties::GLAutoResize|
-            GLProperties::GLCoreProfile;
+            GLProperties::GLAutoResize
+            |GLProperties::GLCoreProfile
+#if !defined(COFFEE_ANDROID)
+            |GLProperties::GLSRGB
+#endif
+            ;
 
     props.title = CoffeeDefaultWindowName.c_str();
 

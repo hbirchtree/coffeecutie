@@ -28,6 +28,7 @@ protected:
 
 struct GLEAM_Pipeline : GraphicsAPI::Pipeline
 {
+    friend struct GLEAM_PipelineDumper;
     friend struct GLEAM_API;
     friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms);
 
@@ -97,6 +98,12 @@ protected:
     Map<uint32,GLEAM_SamplerHandle const*> m_samplers;
     Map<uint32,buffer_container<GLEAM_UniformBuffer>> m_ubuffers;
     Map<uint32,buffer_container<GLEAM_ShaderBuffer>> m_sbuffers;
+};
+
+struct GLEAM_PipelineDumper : GraphicsProfiler::PipelineDumper<GLEAM_Pipeline>
+{
+    GLEAM_PipelineDumper(GLEAM_Pipeline& pipeline);
+    void dump(cstring out);
 };
 
 extern void GetShaderUniforms(GLEAM_Pipeline const& pipeline,

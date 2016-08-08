@@ -200,10 +200,10 @@ struct GLProperties
         GLRobust            = 0x10, /*!< Set GL robustness*/
         GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
         GLES                = 0x40, /*!< Request that only GLES features are used*/
+        GLSRGB              = 0x100, /*!< Request SRGB framebuffers*/
 
         GLFeatureLevelProfile = 0x80,
 
-        NoGL                = 0x100,
     };
     CDContextBits       bits; /*!< Context bits*/
     Flags               flags; /*!< Context flags*/

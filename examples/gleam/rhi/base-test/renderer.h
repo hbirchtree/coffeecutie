@@ -7,14 +7,14 @@
 
 #include <coffee/core/platform_data.h>
 
+//#define USE_NULL_RENDERER
+
 using namespace Coffee;
 using namespace Display;
 
 class CDRenderer : public CSDL2Renderer {
 public:
-    //#define DERP
-
-#ifndef DERP
+#ifndef USE_NULL_RENDERER
     using GLM = GLEAMAPI;
 #else
     using GLM = RHI::NullAPI;
@@ -31,7 +31,6 @@ private:
     CGCamera camera;
 
 public:
-
     CDRenderer() : CSDL2Renderer(0) {}
     static const constexpr szptr num_textures = 5;
 
@@ -46,19 +45,19 @@ public:
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  0.f,  0.f,  0.f,
-            1.f, -1.f,  0.f, -1.f,  0.f,
+             1.f, -1.f,  0.f, -1.f,  0.f,
             -1.f,  1.f,  0.f,  0.f, -1.f,
 
             -1.f,  1.f,  0.f,  0.f, -1.f,
-            1.f,  1.f,  0.f, -1.f, -1.f,
-            1.f, -1.f,  0.f, -1.f,  0.f,
+             1.f,  1.f,  0.f, -1.f, -1.f,
+             1.f, -1.f,  0.f, -1.f,  0.f,
         };
 
         cVerbose("Loading GLeam API");
         /*
- * Loading the GLeam API, chosen according to what is available at runtime
- */
-        GLM::LoadAPI(false);
+         * Loading the GLeam API, chosen according to what is available at runtime
+         */
+        GLM::LoadAPI(true);
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
@@ -72,9 +71,9 @@ public:
             vertbuf.commit(sizeof(vertexdata), vertexdata);
 
             /*
- * Specifying a vertex format which is applied.
- * This is driver- and API-agnostic
- */
+             * Specifying a vertex format which is applied.
+             * This is driver- and API-agnostic
+             */
             GLM::V_ATTR pos = {};
             pos.m_size = 3;
             pos.m_type = TypeEnum::Scalar;
@@ -138,18 +137,21 @@ public:
             f_shader.dealloc();
             CResources::FileUnmap(v_rsc);
             CResources::FileUnmap(f_rsc);
+
+            GLM::PRF::QRY_PIPDMP dumper(eye_pip);
+            dumper.dump("hello.prg");
         }
         cVerbose("Compiled shaders");
 
         /*
- * Binding the pipeline for usage
- * This has different meaning across GL3.3 and GL4.3+
- */
+         * Binding the pipeline for usage
+         * This has different meaning across GL3.3 and GL4.3+
+         */
         eye_pip.bind();
         cVerbose("Pipeline bind");
 
         /* Uploading textures */
-        GLM::S_2DA eyetex(PixelFormat::RGBA8, 1, GLM::TextureDMABuffered);
+        GLM::S_2DA eyetex(PixelFormat::SRGB8A8, 1, GLM::TextureDMABuffered);
 
         eyetex.allocate({1024, 1024, 5}, PixCmp::RGBA);
         cVerbose("Texture allocation");

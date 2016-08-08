@@ -20,8 +20,8 @@ enum APILevel
 
     /* Mobile GL versions / ES */
     /* These do not map directly to desktop versions */
-    GLES_3_0 = 0x300,
-    GLES_3_2 = 0x320,
+    GLES_3_0 = 0x10300,
+    GLES_3_2 = 0x10320,
 };
 
 extern APILevel GL_CURR_API;
@@ -38,6 +38,7 @@ struct GLEAM_API;
 struct GLEAM_PRF;
 struct GLEAM_DBufQuery;
 struct GLEAM_PrfQuery;
+struct GLEAM_PipelineDumper;
 
 /* Buffers */
 struct GLEAM_VBuffer;

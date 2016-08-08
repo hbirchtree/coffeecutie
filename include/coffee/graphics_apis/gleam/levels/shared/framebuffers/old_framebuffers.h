@@ -55,9 +55,6 @@ struct CGL_Old_Framebuffers
     STATICINLINE bool FBValidate(FramebufferT t)
     {
         CGenum f = glCheckFramebufferStatus(to_enum(t));
-        if(f!=GL_FRAMEBUFFER_COMPLETE)
-            cLog(__FILE__,__LINE__,"GL33","Incomplete framebuffer",f);
-
         return f==GL_FRAMEBUFFER_COMPLETE;
     }
 

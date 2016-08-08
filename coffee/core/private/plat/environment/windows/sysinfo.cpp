@@ -181,7 +181,21 @@ bool WindowsSysInfo::HasHyperThreading()
 
 CString WindowsSysInfo::GetSystemVersion()
 {
-    /*Seriously, Microsoft? Fuck off. Just give me a string.*/
+    /* Checking for Wine, being a cheeky cunt */
+    /* Source: https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
+    do{
+        static const char * (CDECL *pwine_get_version)(void);
+
+        HMODULE hntdll = GetModuleHandle("ntdll.dll");
+        if(!hntdll)
+            break;
+        pwine_get_version = (void*)GetProcAddress(hntdll,"wine_get_version");
+        if(!pwine_get_version)
+            break;
+        CString out = pwine_get_version();
+        return out;
+    }while(false);
+    /* Dear Microsoft, I only want a string. */
     OSVERSIONINFO a;
 
     ZeroMemory(&a,sizeof(a));

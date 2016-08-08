@@ -22,6 +22,17 @@ struct CGL_Shared_Functions
     STATICINLINE bool ClipDistanceSupported()
     {return false;}
 
+    STATICINLINE bool Tex_SRGB_Supported()
+    {
+        return Debug::CheckExtensionSupported("GL_EXT_sRGB")
+                || Debug::CheckExtensionSupported("GL_EXT_texture_sRGB");
+    }
+    STATICINLINE bool GetProgramBinarySupported()
+    {
+        return Debug::CheckExtensionSupported("GL_ARB_get_program_binary")
+                || Debug::CheckExtensionSupported("GL_OES_get_program_binary");
+    }
+
     /* Loading */
     STATICINLINE
     void LoadBinding(){}

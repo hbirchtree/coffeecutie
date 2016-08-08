@@ -179,8 +179,10 @@ AndroidFileFun::FileHandle *AndroidFileFun::Open(cstring fn, ResourceAccess ac)
 
 bool AndroidFileFun::Close(FileHandle *fh)
 {
-    AAsset_close(fh->fp);
-    delete fh;
+    if(fh->fp)
+        AAsset_close(fh->fp);
+    else
+        return Ancestor::Close(fh);
     return true;
 }
 
