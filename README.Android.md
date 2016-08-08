@@ -22,6 +22,7 @@ You might have to help the scripts to find the SDK, NDK and other utilities (zip
 
 # Typical errors (or mistakes, whatever)
 ## Not giving SDL_android_main.c to SDL2_ANDROID_MAIN_FILE
+nativeInit() is part of SDL_android_main.c, and is necessary to start the application.
 
     07-25 03:06:38.894 28327 28344 E AndroidRuntime: FATAL EXCEPTION: SDLThread
     07-25 03:06:38.894 28327 28344 E AndroidRuntime: Process: org.coffee.gleambasetest_rhi, PID: 28327
@@ -31,3 +32,11 @@ You might have to help the scripts to find the SDK, NDK and other utilities (zip
     07-25 03:06:38.894 28327 28344 E AndroidRuntime: 	at org.libsdl.app.SDLMain.run(SDLActivity.java:953)
     07-25 03:06:38.894 28327 28344 E AndroidRuntime: 	at java.lang.Thread.run(Thread.java:818)
     07-25 03:06:38.899  5387  7747 W ActivityManager:   Force finishing activity org.coffee.gleambasetest_rhi/.CoffeeActivity
+
+## Forgetting to include a library (SDLActivity.java), not exporting symbols (-fvisibility=hidden)
+Some functions are part of libSDL2.a and must not be stripped.
+
+    08-02 12:21:51.189 16301 16301 E AndroidRuntime: FATAL EXCEPTION: main
+    08-02 12:21:51.189 16301 16301 E AndroidRuntime: Process: org.coffee.gleambasetest_rhi, PID: 16301
+    08-02 12:21:51.189 16301 16301 E AndroidRuntime: Theme: themes:{default=, fontPkg:system}
+    08-02 12:21:51.189 16301 16301 E AndroidRuntime: java.lang.UnsatisfiedLinkError: No implementation found for void org.libsdl.app.SDLActivity.onNativeResize(int, int, int, float) (tried Java_org_libsdl_app_SDLActivity_onNativeResize and Java_org_libsdl_app_SDLActivity_onNativeResize__IIIF)
