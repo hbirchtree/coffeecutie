@@ -26,7 +26,7 @@ public:
     }
 
 private:
-    bool m_debugging = true;
+    bool m_debugging = false;
     GLM::PRF::QRY_DBUF* buffer_debug_p;
     CGCamera camera;
 

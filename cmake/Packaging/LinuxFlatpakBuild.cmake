@@ -4,8 +4,10 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( FLATPAK_REPOSITORY_DIR CACHE PATH "Target repository to submit flatpaks to" )
 
     set ( FLATPAK_PROGRAM "/usr/bin/flatpak" CACHE FILEPATH "Path to flatpak executable" )
-    set ( FLATPAK_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/package/linux-flatpak"
+    set ( FLATPAK_WORKING_DIRECTORY "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
         CACHE PATH "Where to put flatpak directory structures" )
+    set ( FLATPAK_DEPLOY_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-flatpak"
+	CACHE PATH "Where to put flatpak directory structures" )
 
     set ( FLATPAK_DEFAULT_ICON_FILE "${COFFEE_DESKTOP_DIRECTORY}/icon.svg"
         CACHE FILEPATH "Default icon for AppImages" )
@@ -35,6 +37,9 @@ macro( FLATPAK_PACKAGE
 
     set ( FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}.svg" )
 
+    set ( FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}" )
+    set ( FLATPAK_BUNDLE_FILE "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.tar" )
+
     # Create directory structures
     add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
@@ -55,6 +60,11 @@ macro( FLATPAK_PACKAGE
         PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_EXPORT_DIR}"
         )
+
+    add_custom_command ( TARGET ${TARGET}
+	PRE_BUILD
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${FLATPAK_DEPLOY_DIRECTORY}"
+	)
 
     # Configure metadata file
     configure_file (
@@ -109,13 +119,29 @@ macro( FLATPAK_PACKAGE
             )
     endif()
 
+    add_custom_command ( TARGET ${TARGET}
+	POST_BUILD
+	COMMAND ${FLATPAK_PROGRAM} build-export "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BASE_DIR}"
+	)
+
+    add_custom_command ( TARGET ${TARGET}
+	POST_BUILD
+	COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_FILE}" "${FLATPAK_PKG_NAME}" )
+
     # Add arrangement to install flatpak structure somewhere else
     install (
         DIRECTORY
         "${FLATPAK_BASE_DIR}"
 
         DESTINATION
-        "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
+	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
         )
+    install (
+	FILES
+	"${FLATPAK_BUNDLE_FILE}"
+
+	DESTINATION
+	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
+	)
 
 endmacro(FLATPAK_PACKAGE)
