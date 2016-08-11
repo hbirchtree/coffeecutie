@@ -11,10 +11,10 @@
 
 #undef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include <WinSock2.h>
 
-#include <Windows.h>
-#include <VersionHelpers.h>
+#include <winsock2.h>
+
+#include <windows.h>
 
 #undef far
 #undef near
