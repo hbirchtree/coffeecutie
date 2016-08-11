@@ -119,7 +119,7 @@ void Error()
 
 void ImageFree(CStbImage *img)
 {
-    CFree(img->data);
+    stbi_image_free(img->data);
 }
 
 }

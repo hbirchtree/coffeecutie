@@ -7,15 +7,15 @@
 namespace Coffee{
 namespace CFunctional{
 
-struct FrameCounter
+struct Counter
 {
 public:
-    using FrameCounterFun = void(*)(uint32,const void*);
+    using CounterFun = void(*)(uint32,const void*);
 
     const void* ptr;
     uint32 interval;
 
-    FORCEDINLINE FrameCounter(FrameCounterFun fun, uint32 interval = 1000):
+    FORCEDINLINE Counter(CounterFun fun, uint32 interval = 1000):
         ptr(nullptr),
         interval(interval),
         m_timestamp(0),
@@ -41,10 +41,13 @@ public:
 private:
     uint32 m_frames;
     uint64 m_timestamp;
-    FrameCounterFun m_fun;
+    CounterFun m_fun;
 };
 
 }
+
+using Counter = CFunctional::Counter;
+
 }
 
 #endif

@@ -8,6 +8,8 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+#ifndef NDEBUG
+
 static CSize v_size = {1280,720};
 
 static cstring m_shader_vertex_passthrough = {
@@ -27,11 +29,16 @@ static cstring m_shader_fragment_passthrough = {
     "#version 300 es\n"
     "precision lowp float;\n"
     "uniform sampler2D tex;\n"
-    "uniform vec2 tex_size;\n"
     "in vec2 tex_out;\n"
     "layout(location=0) out vec4 out_col;\n"
     "void main(){\n"
+    #if !defined(COFFEE_ANDROID) && 0
+    "    vec4 comp = texture(tex,tex_out);\n"
+    "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
+    "    out_col.a = comp.a;\n"
+    #else
     "    out_col = texture(tex,tex_out);\n"
+    #endif
     "}\n"
 };
 
@@ -45,20 +52,50 @@ static const scalar m_vertex_quad_data[] = {
      1.f, -1.f, 0.f, 1.f, 0.f,
 };
 
+#endif
+
+#ifdef NDEBUG
+GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
+    : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b)
+{
+#else
 GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>(t,b),
       m_size(t.size()),
       m_depth_stencil(PixelFormat::Depth24Stencil8,1),
       m_color(PixelFormat::RGBA8,1)
 {
-    m_enabled = CGL33::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
+    if(!GL_DEBUG_MODE)
+    {
+        m_enabled = false;
+        return;
+    }
+
+    if(CGL33::Tex_SRGB_Supported())
+    {
+        m_color.dealloc();
+        new (&m_color) GLEAM_Surface2D(PixelFormat::SRGB8A8);
+    }
+
+    if(GL_CURR_API == GL_4_3)
+        m_enabled = CGL43::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
+    else
+        m_enabled = CGL33::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
+
+    if(!m_enabled && (GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2))
+    {
+        m_enabled = true;
+        cVerbose(6,"Opting for DEPTH16 depth buffer format");
+        m_depth_stencil.dealloc();
+        new (&m_depth_stencil) GLEAM_Surface2D(PixelFormat::Depth16,1);
+    }
 
     if(GL_DEBUG_MODE && !m_enabled)
         cWarning("Cannot enable debugging, unsupported depth-stencil format (DEPTH24_STENCIL8)");
 
     if(GL_DEBUG_MODE && m_enabled)
     {
-        m_debug_target.alloc();
+        m_dtarget.alloc();
 
         m_color_sampler.alloc();
         m_depth_stencil_sampler.alloc();
@@ -68,12 +105,20 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
 
         resize(m_size);
 
-        m_debug_target.attachSurface(m_color,0,0);
-        m_debug_target.attachDepthStencilSurface(m_depth_stencil,0);
+        m_dtarget.attachSurface(m_color,0,0);
+        m_dtarget.attachDepthStencilSurface(m_depth_stencil,0);
 
-        if(!m_debug_target.validate())
+        if(!m_dtarget.validate())
         {
             cWarning("Failed to create framebuffer");
+            m_enabled = false;
+
+            m_dtarget.dealloc();
+
+            m_color_sampler.dealloc();
+            m_depth_stencil_sampler.dealloc();
+
+            return;
         }
 
         CGhnd shaders[2];
@@ -89,6 +134,11 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
             cWarning("Failed to compile passthrough shaders! Fuck this");
             cDebug("Vertex: {0}",CGL33::ShaderGetLog(shaders[0]));
             cDebug("Fragment: {0}",CGL33::ShaderGetLog(shaders[1]));
+            m_enabled = false;
+
+            CGL33::ShaderFree(2,shaders);
+
+            return;
         }
 
         CGL33::ProgramAlloc(1,&m_prg);
@@ -100,6 +150,16 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         {
             cWarning("Failed to link passthrough program! Fuck this");
             cDebug("Log: {0}",CGL33::ProgramGetLog(m_prg));
+            m_enabled = false;
+
+            CGL33::ShaderDetach(m_prg,shaders[0]);
+            CGL33::ShaderDetach(m_prg,shaders[1]);
+
+            CGL33::ShaderFree(2,shaders);
+
+            CGL33::ProgramFree(1,&m_prg);
+
+            return;
         }
 
         CGL33::ShaderDetach(m_prg,shaders[0]);
@@ -127,46 +187,45 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
         m_trans_unif = CGL33::ProgramUnifGetLoc(m_prg,"transform");
 
     }
+#endif
 }
 
 GLEAM_DBufQuery::~GLEAM_DBufQuery()
 {
+#ifndef NDEBUG
     if(GL_DEBUG_MODE && m_enabled)
     {
-        m_debug_target.dealloc();
+        m_dtarget.dealloc();
         CGL33::ProgramFree(1,&m_prg);
     }
+#endif
 }
 
 void GLEAM_DBufQuery::resize(const CSize &s)
 {
-    cVerbose(5,"New framebuffer dimensions: {0}",s);
-    m_color.allocate(s,PixCmp::RGBA);
-    m_depth_stencil.allocate(s,PixCmp::Depth);
+#ifndef NDEBUG
+    if(GL_DEBUG_MODE && m_enabled)
+    {
+        cVerbose(5,"New framebuffer dimensions: {0}",s);
+        m_color.allocate(s,PixCmp::RGBA);
+        m_depth_stencil.allocate(s,PixCmp::Depth);
+    }
+#endif
 }
 
 void GLEAM_DBufQuery::begin()
 {
+#ifndef NDEBUG
     if(GL_DEBUG_MODE && m_enabled)
-    {
-        Vecf4 clear_col(1);
-        m_debug_target.clear(0,clear_col,1.f);
-        m_debug_target.bind(FramebufferT::All);
-    }
+        m_dtarget.bind(FramebufferT::All);
+#endif
 }
 
 void GLEAM_DBufQuery::end()
 {
+#ifndef NDEBUG
     if(GL_DEBUG_MODE && m_enabled)
     {
-//        CGL33::FBBind(FramebufferT::Read,m_debug_target.m_handle);
-//        CGL33::FBBind(FramebufferT::Draw,m_rtarget.m_handle);
-//        CGL33::FBBlit({0,0,v_size.w,v_size.h}
-//                      ,{0,0,v_size.w/2,v_size.h/2}
-//                      ,DBuffers::Color,Filtering::Linear);
-//        CGL33::FBBlit({0,0,v_size.w,v_size.h}
-//                      ,{v_size.w/2,0,v_size.w/2,v_size.h/2}
-//                      ,DBuffers::Depth,Filtering::Nearest);
         m_rtarget.bind(FramebufferT::All);
 
         /* Frame data */
@@ -197,6 +256,16 @@ void GLEAM_DBufQuery::end()
         CGL33::VAOBind(0);
         CGL33::BufBind(BufType::ArrayData,0);
     }
+#endif
+}
+
+bool GLEAM_DBufQuery::enabled()
+{
+#ifndef NDEBUG
+    return m_enabled;
+#else
+    return false;
+#endif
 }
 
 }

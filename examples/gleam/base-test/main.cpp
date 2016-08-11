@@ -47,7 +47,7 @@ public:
         Profiler::PushContext("Renderer");
         CElapsedTimer ftimer;
 
-        FrameCounter fcounter(framecount_fun);
+        Counter fcounter(framecount_fun);
         fcounter.interval = 1000;
 
         const constexpr cstring textures[num_textures] = {
@@ -62,7 +62,9 @@ public:
 
         for(uint32 i=0;i<num_textures;i++)
         {
-            CResources::Resource rsc(textures[i]);
+            CResources::Resource rsc(textures[i],
+                                     ResourceAccess::SpecifyStorage
+                                     |ResourceAccess::AssetFile);
             if(!CResources::FileMap(rsc))
             {
                 /* ABORT! */
@@ -134,7 +136,9 @@ public:
             cstring cstr;
             for(int32 i=0;i<2;i++)
             {
-                CResources::Resource shader_handle(shader_files[i]);
+                CResources::Resource shader_handle(shader_files[i],
+                                                   ResourceAccess::SpecifyStorage
+                                                   |ResourceAccess::AssetFile);
                 if(!CResources::FileMap(shader_handle))
                     continue;
 

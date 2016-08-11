@@ -200,3 +200,12 @@ endif()
 
 #
 #
+
+#
+# Font rendering, stb_truetype.h
+#
+
+add_subdirectory(font-rendering)
+
+#
+#

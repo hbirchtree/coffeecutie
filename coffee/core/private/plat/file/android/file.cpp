@@ -3,23 +3,105 @@
 #include <coffee/core/CDebug>
 #include "../file_abstraction.h"
 
+
 #if !defined(ANDROID_DONT_USE_SDL2)
+#include <android/asset_manager_jni.h>
 #include <SDL2/SDL_system.h>
 #else
-#include <coffee/android/android_main.h>
+#include <android/asset_manager.h>
 #endif
 
 namespace Coffee{
 namespace CResources{
 namespace Android{
 
-struct AndroidFileApi::SDLData
+static AAssetManager* m_android_asset_manager = nullptr;
+
+#if !defined(ANDROID_DONT_USE_SDL2)
+jobject and_get_app_context(JNIEnv* env, jobject activity)
 {
-#if defined(ANDROID_DONT_USE_SDL2)
-    AAsset* fp;
+    jmethodID methodApp = env->GetMethodID(env->GetObjectClass(activity),
+                                           "getApplication",
+                                           "()Landroid/app/Application;");
+    if(!methodApp)
+        return nullptr;
+    jclass contextClass = env->FindClass("android/content/Context");
+    if(!contextClass)
+        return nullptr;
+    jmethodID contextMethod = env->GetMethodID(contextClass,
+                                               "getApplicationContext",
+                                               "()Landroid/content/Context;");
+    if(!contextMethod)
+        return nullptr;
+    jobject contextObject = env->CallObjectMethod(activity,contextMethod);
+
+    return contextObject;
+}
+
+jobject and_get_asset_manager(JNIEnv* env, jobject activity)
+{
+    jobject appContext = and_get_app_context(env,activity);
+    if(!appContext)
+    {
+        cVerbose(6,"Failed to acquire applicationContext object");
+        return nullptr;
+    }
+    jmethodID getAssets = env->GetMethodID(env->GetObjectClass(appContext),
+                                           "getAssets",
+                                           "()Landroid/content/res/AssetManager;");
+    if(!getAssets)
+    {
+        cVerbose(6,"Failed to acquire getAssets() method");
+        return nullptr;
+    }
+    jobject assetManager = env->CallObjectMethod(appContext,
+                                                 getAssets);
+    if(!assetManager)
+    {
+        cVerbose(6,"Failed to get assetManager object");
+        return nullptr;
+    }
+    jobject globalRef = env->NewGlobalRef(assetManager);
+    if(!globalRef)
+    {
+        cVerbose(6,"Failed to acquire global reference to AssetManager");
+        return nullptr;
+    }
+    return globalRef;
+}
 #endif
-    cstring fn;
-};
+
+AAssetManager* and_asset_manager()
+{
+    if(!m_android_asset_manager)
+    {
+#if !defined(ANDROID_DONT_USE_SDL2)
+        cVerbose(6,"Acquiring JNI environment from SDL");
+        JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+        cVerbose(6,"Acquiring Android activity from SDL");
+        jobject manager = and_get_asset_manager(env,(jobject)SDL_AndroidGetActivity());
+        if(!manager)
+        {
+            cVerbose(6,"Failed to acquire assetManager object");
+            return nullptr;
+        }
+        cVerbose(6,"Calling into AAssetManager_fromJava({0},{1})",
+                 (c_cptr const&)env,(c_cptr const&)manager);
+        m_android_asset_manager = AAssetManager_fromJava(env, manager);
+        cVerbose(6,"Acquired AAssetManager* ptr: {0}",
+                 (c_cptr const&)m_android_asset_manager);
+#else
+        m_android_asset_manager = Coffee_GetAssetManager();
+#endif
+    }
+
+    if(!m_android_asset_manager)
+    {
+        cVerbose(6,"Failed to acquire AssetManager* from Java");
+    }
+
+    return m_android_asset_manager;
+}
 
 CString AndroidFileFun::NativePath(cstring fn)
 {
@@ -64,7 +146,7 @@ CString AndroidFileFun::NativePath(cstring fn)
 
     prefix.append("/");
 
-    cVerbose(5,"Android native path: {0}",prefix+fn);
+    cVerbose(6,"Android native path: {0}",prefix+fn);
 
     return prefix + fn;
 }
@@ -80,72 +162,42 @@ CString AndroidFileFun::NativePath(cstring fn, ResourceAccess storage)
 AndroidFileFun::FileHandle *AndroidFileFun::Open(cstring fn, ResourceAccess ac)
 {
     FileHandle* fh = nullptr;
-    if(AssetApi::GetAsset(fn))
+    cstring asset = AssetApi::GetAsset(fn);
+    if(asset && FileFun::VerifyAsset(asset))
+    {
+        AAsset* fp = AAssetManager_open(and_asset_manager(),asset,AASSET_MODE_BUFFER);
+        if(!fp)
+            return nullptr;
         fh = new FileHandle;
+        fh->fp = fp;
+    }
     else
         fh = Ancestor::Open(fn,ac);
-
-    if(!fh)
-        return nullptr;
-
-    fh->extra_data = new AndroidFileApi::SDLData;
-    fh->extra_data->fn = fn;
-#if defined(ANDROID_DONT_USE_SDL2)
-    fh->extra_data->fp = Coffee_AssetGet(fn);
-#endif
 
     return fh;
 }
 
 bool AndroidFileFun::Close(FileHandle *fh)
 {
-#if defined(ANDROID_DONT_USE_SDL2)
-    Coffee_AssetClose(fh->extra_data->fp);
-#endif
-
-    if(fh->extra_data)
-        delete fh->extra_data;
-    delete fh;
+    if(fh->fp)
+        AAsset_close(fh->fp);
+    else
+        return Ancestor::Close(fh);
+    return true;
 }
 
 CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
 {
     if(!fh)
         return {};
-    cstring check = AssetApi::GetAsset(fh->extra_data->fn);
-    if(check)
+    if(fh->fp)
     {
         /* In this case, the file exists as an asset */
-
         CByteData data;
-
-#if !defined(ANDROID_DONT_USE_SDL2)
-        SDL_RWops* rdev = SDL_RWFromFile(check,"rb");
-        if(!rdev || SDL_RWsize(rdev)==0)
-            return {};
-        data.size = SDL_RWsize(rdev);
-
-        if(data.size != size)
-        {
-            SDL_RWclose(rdev);
-            return {};
-        }
-
-        data.data = (byte_t*)Alloc(data.size);
-
-        if(SDL_RWread(rdev,data.data,1,data.size)!=data.size)
-        {
-            SDL_RWclose(rdev);
-            CFree(data.data);
-            return {};
-        }
-
-        SDL_RWclose(rdev);
-#else
-        data.size = Coffee_AssetGetSize(fh->extra_data->fp);
+        data.size = AAsset_getLength64(fh->fp);
         /* NOTE: Be aware! You might fuck sh*t up real bad. */
-        data.data = (byte_t*)Coffee_AssetGetPtr(fh->extra_data->fp);
-#endif
+        data.data = (byte_t*)AAsset_getBuffer(fh->fp);
+
         return data;
     }else
         return Ancestor::Read(fh,size,nterminate);
@@ -153,40 +205,19 @@ CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
 
 bool AndroidFileFun::Write(FileHandle *fh, const CByteData &d, bool)
 {
-    cstring check = AssetApi::GetAsset(fh->extra_data->fn);
-    if(check)
+    if(fh->fp)
     {
-#if !defined(ANDROID_DONT_USE_SDL2)
-        SDL_RWops* wdev = SDL_RWFromFile(check,"wb");
-        if(!wdev)
-            return false;
-
-        szptr outsize = SDL_RWwrite(wdev,d.data,1,d.size);
-        SDL_RWclose(wdev);
-        if(outsize != d.size)
-        {
-            return false;
-        }else{
-            return true;
-        }
-#else
-        /* AAsset does not support writing to assets. Bad. */
+        /* AAsset does not support writing to assets. */
         return false;
-#endif
     }else
         return Ancestor::Write(fh,d,false);
 }
 
 szptr AndroidFileFun::Size(AndroidFileFun::FileHandle *fh)
 {
-    cstring check = AssetApi::GetAsset(fh->extra_data->fn);
-    if(check)
+    if(fh->fp)
     {
-#if !defined(ANDROID_DONT_USE_SDL2)
-        return Size(fh->extra_data->fn);
-#else
-        return Coffee_AssetGetSize(fh->extra_data->fp);
-#endif
+        return AAsset_getLength64(fh->fp);
     }else
         return Ancestor::Size(fh);
 }
@@ -194,23 +225,74 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle *fh)
 szptr AndroidFileFun::Size(cstring fn)
 {
     cstring check = AssetApi::GetAsset(fn);
-    if(check)
+    if(check && FileFun::VerifyAsset(check))
     {
-#if !defined(ANDROID_DONT_USE_SDL2)
-        SDL_RWops* sdev = SDL_RWFromFile(check,"rb");
-        if(!sdev)
+        AAsset* ass = AAssetManager_open(and_asset_manager(),check,AASSET_MODE_UNKNOWN);
+        if(!ass)
             return 0;
+        szptr sz = AAsset_getLength64(ass);
+        AAsset_close(ass);
 
-        szptr size = SDL_RWsize(sdev);
-
-        SDL_RWclose(sdev);
-        return size;
-#else
-        return Coffee_AssetGetSizeFn(fn);
-#endif
-
+        return sz;
     }else
         return Ancestor::Size(fn);
+}
+
+AndroidFileFun::FileMapping AndroidFileFun::Map(cstring fn, ResourceAccess acc,
+                                                szptr offset, szptr size,
+                                                int *)
+{
+    cstring asset = AssetApi::GetAsset(fn);
+    if(asset)
+    {
+        if(feval(acc,ResourceAccess::WriteOnly))
+            return {};
+        FileHandle* fh = Open(fn,acc);
+        if(!fh)
+            return {};
+        FileMapping map = {};
+        map.handle = fh;
+        if(AAsset_getLength64(fh->fp)<(offset+size))
+        {
+            Close(fh);
+            return {};
+        }
+        map.acc = acc;
+        map.ptr = &((byte_t*)AAsset_getBuffer(fh->fp))[offset];
+        map.size = size;
+        return map;
+    }else
+    {
+        auto fm = Ancestor::Map(fn,acc,offset,size,nullptr);
+
+        FileMapping map;
+        map.handle = nullptr;
+        map.acc = fm.acc;
+        map.ptr = fm.ptr;
+        map.size = fm.size;
+        return map;
+    }
+}
+
+bool AndroidFileFun::Unmap(AndroidFileFun::FileMapping *mp)
+{
+    if(mp->handle)
+    {
+        mp->acc = ResourceAccess::None;
+        mp->ptr = nullptr;
+        mp->size = 0;
+        return Close(mp->handle);
+    }else{
+        Ancestor::FileMapping map = {};
+        map.acc = mp->acc;
+        map.ptr = mp->ptr;
+        map.size = mp->size;
+        bool stat = Ancestor::Unmap(&map);
+        mp->acc = map.acc;
+        mp->ptr = map.ptr;
+        mp->size = map.size;
+        return stat;
+    }
 }
 
 }

@@ -125,7 +125,7 @@ endmacro()
 # We do a test to check if a library is a shared library for Android
 # For iOS, everything will be statically linked, which might be used for Android as well.
 # For now, we leave the linking options here for desktop platforms
-function(COFFEE_ADD_EXAMPLE_LONGER
+function(COFFEE_ADD_APPLICATION_LONGER
         TARGET
         TITLE APP_COMPANY_NAME APP_VERSION_CODE
         SOURCES LIBRARIES
@@ -226,6 +226,8 @@ function(COFFEE_ADD_EXAMPLE_LONGER
 
 endfunction()
 
+# Wrapper functions
+
 macro(COFFEE_ADD_EXAMPLE_LONG
         TARGET
         TITLE
@@ -242,6 +244,18 @@ macro(COFFEE_ADD_EXAMPLE_LONG
         "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
 endmacro()
 
+function(COFFEE_ADD_EXAMPLE_LONGER
+        TARGET
+        TITLE APP_COMPANY_NAME APP_VERSION_CODE
+        SOURCES LIBRARIES
+        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES)
+    COFFEE_ADD_APPLICATION_LONGER(
+        "${TARGET}"
+        "${TITLE}" "${COMPANY}" "${VERSION}"
+        "${SOURCES}" "${LIBRARIES}"
+        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
+endfunction()
+
 macro(COFFEE_ADD_APPLICATION_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
     coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}")
 endmacro()
@@ -253,6 +267,8 @@ endmacro()
 macro(COFFEE_ADD_APPLICATION TARGET TITLE SOURCES LIBRARIES)
     coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "" "")
 endmacro()
+
+# CTest functions
 
 function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     # Bleh, Android kind of sucks for this.

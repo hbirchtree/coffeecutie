@@ -31,7 +31,11 @@ CString DereferencePath(cstring suffix, ResourceAccess storageMask)
         else if(feval(storageMask,ResourceAccess::TemporaryFile))
             return FileFun::NativePath(suffix,ResourceAccess::TemporaryFile);
     }
+#if defined(COFFEE_ANDROID)
+    return suffix;
+#else
     return _coffee_resource_prefix+suffix;
+#endif
 }
 
 struct Resource::ResourceData

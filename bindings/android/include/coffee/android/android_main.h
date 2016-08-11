@@ -4,6 +4,7 @@
 #include <coffee/core/types/tdef/stltypes.h>
 
 struct AAsset;
+struct AAssetManager;
 
 namespace Coffee{
     /* Android API version */
@@ -15,6 +16,8 @@ namespace Coffee{
     COFFAPI CString Coffee_GetObbDataPath();
 
     /* Asset API */
+    COFFAPI AAssetManager* Coffee_GetAssetManager();
+
     COFFAPI AAsset* Coffee_AssetGet(cstring fname);
     COFFAPI void Coffee_AssetClose(AAsset* fp);
     COFFAPI int64 Coffee_AssetGetSizeFn(cstring fname);

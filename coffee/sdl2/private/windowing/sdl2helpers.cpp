@@ -65,6 +65,9 @@ void SetContextProperties(const GLProperties &props)
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL,SDL_TRUE);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,SDL_TRUE);
 
+    if(props.flags&GLProperties::GLSRGB)
+        SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE,SDL_TRUE);
+
     SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE,props.bits.alpha);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE,props.bits.stencil);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,props.bits.depth);

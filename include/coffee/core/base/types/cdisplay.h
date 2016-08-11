@@ -84,22 +84,28 @@ struct CDMonitor{
  */
 struct CDEvent{
     CDEvent():
-        type(),
-        ts(0)
+        ts(0),
+        type()
     {
     }
 
     enum EventType : uint8
     {
-        Refresh = 0x1,
-        Move    = 0x2,
-        Resize  = 0x4,
-        State   = 0x5,
+        Refresh = 1,
+        Move,
+        Resize,
+        State,
 
-        Focus   = 0x6,
+        Focus,
+
+        IsBackground,
+        IsForeground,
+
+        TransitionBackground,
+        TransitionForeground,
     };
-    EventType type; /*!< Event type*/
     uint32  ts; /*!< Event timestamp*/
+    EventType type; /*!< Event type*/
 };
 
 /*!
@@ -194,10 +200,10 @@ struct GLProperties
         GLRobust            = 0x10, /*!< Set GL robustness*/
         GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
         GLES                = 0x40, /*!< Request that only GLES features are used*/
+        GLSRGB              = 0x100, /*!< Request SRGB framebuffers*/
 
         GLFeatureLevelProfile = 0x80,
 
-        NoGL                = 0x100,
     };
     CDContextBits       bits; /*!< Context bits*/
     Flags               flags; /*!< Context flags*/

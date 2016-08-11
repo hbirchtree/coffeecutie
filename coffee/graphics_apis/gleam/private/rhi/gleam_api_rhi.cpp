@@ -65,6 +65,12 @@ void GLEAM_API::LoadAPI(bool debug)
             GL_CURR_API = GLES_3_0;
     }
 
+    if(CGL33::Tex_SRGB_Supported())
+    {
+        cVerbose(5,"Enabling SRGB color for framebuffers");
+        CGL33::Enable(Feature::FramebufferSRGB);
+    }
+
     cDebug("Initialized API level {0}",(const void* const&)GL_CURR_API);
 }
 

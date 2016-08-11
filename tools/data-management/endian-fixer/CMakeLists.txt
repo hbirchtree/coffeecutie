@@ -1,1 +1,1 @@
-coffee_add_example ( EndianFixer "Endian Fixer" main.cpp CoffeeCore )
+coffee_add_application ( EndianFixer "Endian Fixer" main.cpp CoffeeCore )

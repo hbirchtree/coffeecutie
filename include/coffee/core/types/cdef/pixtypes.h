@@ -60,7 +60,7 @@ struct _cbasic_bitmap_base
     FORCEDINLINE _cbasic_bitmap_base(DimT w, DimT h):
         size(w,h)
     {
-        m_pixels = (PixelType*)CCalloc(sizeof(PixelType),w*h);
+        m_pixels = new PixelType[sizeof(PixelType),w*h];
         m_internal_data = true;
     }
     FORCEDINLINE _cbasic_bitmap_base(DimT w, DimT h, PixelType* data):
@@ -73,7 +73,7 @@ struct _cbasic_bitmap_base
     FORCEDINLINE ~_cbasic_bitmap_base()
     {
         if(m_internal_data)
-	    CFree(m_pixels);
+            delete[] m_pixels;
     }
 
     const _cbasic_size_2d<DimT> size;
@@ -101,5 +101,6 @@ struct CColorMask
 };
 
 using CBitmap = _cbasic_bitmap_base<CRGBA,int32>;
+using Bitmap = CBitmap;
 
 }

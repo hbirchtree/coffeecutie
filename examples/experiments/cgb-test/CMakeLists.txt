@@ -2,7 +2,7 @@
 #        main.cpp
 #        )
 
-#coffee_add_example ( CGameBoyTest ${TemplateTest_SRCS} )
+#coffee_add_application ( CGameBoyTest ${TemplateTest_SRCS} )
 
 #target_link_libraries ( CGameBoyTest
 #CoffeeCore

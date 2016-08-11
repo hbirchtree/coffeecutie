@@ -99,6 +99,10 @@ struct GraphicsAPI
     {
     };
 
+    struct GraphicsThreadContext
+    {
+    };
+
     static void LoadAPI(bool UNUSED_PARAM debug_mode)
     {
     }
@@ -658,8 +662,10 @@ struct GraphicsAPI
 
     struct DrawInstanceData
     {
-        DrawInstanceData(){}
-        DrawInstanceData(uint32 v, uint32 e, uint32 i):m_verts(v),m_elems(e),m_insts(i){}
+	DrawInstanceData(uint32 v = 0, uint32 e = 0, uint32 i = 0):
+	    m_verts(v),m_elems(e),m_insts(i),
+	    m_voff(0),m_eoff(0),m_ioff(0),
+	    m_eltype(TypeEnum::UByte){}
 
         uint32 vertices()const{return m_verts;}
         uint32 elements()const{return m_elems;}
@@ -752,14 +758,31 @@ struct GraphicsProfiler
      */
     struct BufferQuery
     {
-	BufferQuery(RT& t,DBuffers b) : m_rtarget(t),m_buffers(b) {}
+        BufferQuery(RT& t,DBuffers b) : m_rtarget(t),m_dtarget(),m_buffers(b) {}
+
+        bool enabled(){return true;}
+
+        void resize(CSize const&){}
 
 	void begin(){}
 	void end(){}
-	RT const& output(){return m_rtarget;}
+
+        RT& output(){return m_rtarget;}
+        RT& debugTarget(){return m_dtarget;}
 
 	RT& m_rtarget;
+        RT m_dtarget;
 	const DBuffers m_buffers;
+    };
+
+    template<typename PIP>
+    struct PipelineDumper
+    {
+        PipelineDumper(PIP& p):m_pipeline(p){}
+
+        void dump(cstring){}
+
+        PIP& m_pipeline;
     };
 };
 
@@ -837,6 +860,7 @@ struct NullAPI : GraphicsAPI
     using PIXLSTATE = PixelProcessState;
 
     using G_CTXT = GraphicsContext;
+    using G_TCTXT = GraphicsThreadContext;
     using G_DEV = GraphicsDevice;
 
     static FB_T DefaultFramebuffer;
@@ -846,6 +870,7 @@ struct NullAPI : GraphicsAPI
     {
 	using QRY_DBUF = GraphicsProfiler::BufferQuery<FB_T>;
 	using QRY_PERF = GraphicsProfiler::PerfQuery;
+        using QRY_PIPDMP = GraphicsProfiler::PipelineDumper<PIP>;
     };
 };
 

@@ -133,6 +133,11 @@ COFFAPI CString Coffee_GetExternalDataPath()
     return coffee_app->activity->externalDataPath;
 }
 
+COFFAPI AAssetManager* Coffee_GetAssetManager()
+{
+    return coffee_app->activity->assetmanager;
+}
+
 COFFAPI AAsset* Coffee_AssetGet(cstring fname)
 {
     return AAssetManager_open(coffee_app->activity->assetManager,fname,AASSET_MODE_BUFFER);
@@ -275,6 +280,10 @@ extern CoffeeMainWithArgs android_entry_point;
 void android_main(struct android_app* state)
 {
     static CoffeeAndroidUserData userdata = {};
+
+    /* TODO: Use deref_main instead of CoffeeMain() for bootstrapping */
+    /* TODO: Execute Android_InitSensors() from here */
+    /* TODO: Execute Profiler::ResetPointers() from here */
 
     /* According to docs, something something glue check */
     app_dummy();

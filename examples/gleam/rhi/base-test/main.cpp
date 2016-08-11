@@ -6,7 +6,6 @@
 
 int32 coffee_main(int32, cstring_w*)
 {
-    cVerbose("Device: {0}",SysInfo::DeviceName());
 
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
@@ -19,7 +18,10 @@ int32 coffee_main(int32, cstring_w*)
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
 
-    CSDL2Renderer *renderer = new CDRenderer();
+    CDRenderer actual_renderer;
+
+    /* We use a reference for the virtual functions to work correctly */
+    CSDL2Renderer* renderer = &actual_renderer;
 
     /* Install some standard event handlers */
     renderer->installEventHandler({EventHandlers::EscapeCloseWindow<CDRenderer>,
@@ -33,9 +35,13 @@ int32 coffee_main(int32, cstring_w*)
 
     Profiler::Profile("Object creation");
 
+
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual();
-    props.flags ^= CDProperties::Resizable;
+    props.flags ^= CDProperties::Resizable
+//            |CDProperties::Windowed
+            ;
+//    props.flags |= CDProperties::WindowedFullScreen;
     props.gl.flags |= GLProperties::GLDebug;
 //    props.gl.flags |= GLProperties::GLVSync;
 
@@ -49,6 +55,25 @@ int32 coffee_main(int32, cstring_w*)
         return 1;
     }
 
+    do {
+        CResources::Resource icon("icon.png",
+                                  ResourceAccess::SpecifyStorage
+                                  |ResourceAccess::AssetFile);
+        if(!CResources::FileMap(icon))
+            break;
+        do {
+            CStbImageLib::CStbImage img;
+            if(!CStbImageLib::LoadData(&img,&icon))
+                break;
+
+            Bitmap bmp(img.size.w,img.size.h,(CRGBA*)img.data);
+            renderer->setWindowIcon(bmp);
+
+            CStbImageLib::ImageFree(&img);
+        }while(false);
+        CResources::FileUnmap(icon);
+    }while(false);
+
     Profiler::Profile("Initialize renderer");
     cVerbose("Initialized renderer");
 
@@ -59,7 +84,6 @@ int32 coffee_main(int32, cstring_w*)
 
     /* Clean all resources */
     renderer->cleanup();
-    delete renderer;
 
     Profiler::Profile("Cleanup");
 

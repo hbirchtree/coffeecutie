@@ -34,6 +34,8 @@ struct CGLES30 :
 
         return (bool)glTexStorage2D;
     }
+    STATICINLINE bool TexStorageSupported()
+    {return true;}
 };
 
 }

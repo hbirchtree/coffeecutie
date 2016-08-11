@@ -21,10 +21,6 @@ CPointF sprite_pos[num_points] = {};
 CSizeF sprite_scale = {1,1};
 CSize window_size = {};
 
-#ifndef COFFEE_USE_RTTI
-SDL2WindowHost* window_host;
-#endif
-
 bool exit_flag = false;
 
 void WindowResize_1(void*, const CDEvent& e, c_cptr d)
@@ -100,11 +96,7 @@ void TouchInput_1(void*, const CIEvent& e, c_cptr d)
 
 void ExitHandler_1(void* ptr, const CIEvent& e, c_cptr d)
 {
-#ifdef COFFEE_USE_RTTI
-    SDL2WindowHost* host = dynamic_cast<SDL2WindowHost*>((SDL2EventHandler*)ptr);
-#else
-    SDL2WindowHost* host = window_host;
-#endif
+    SDL2WindowHost* host = (SDL2WindowHost*)ptr;
 
     if(e.type == CIEvent::QuitSign)
     {
@@ -128,10 +120,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     /* Create a window host for the renderer */
     BasicWindow test;
     auto visual = GetDefaultVisual();
-
-#ifndef COFFEE_USE_RTTI
-    window_host = &test;
-#endif
 
     CString err;
 
@@ -206,9 +194,9 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     SDL2Dialog::InformationMessage("Leaving?","Hello there! Did you press the wrong button?");
 
-    test.installEventHandler({TouchInput_1});
-    test.installEventHandler({ExitHandler_1});
-    test.installEventHandler({WindowResize_1});
+    test.installEventHandler({TouchInput_1,nullptr,&test});
+    test.installEventHandler({ExitHandler_1,nullptr,&test});
+    test.installEventHandler({WindowResize_1,nullptr,&test});
 
     while(!test.closeFlag())
     {

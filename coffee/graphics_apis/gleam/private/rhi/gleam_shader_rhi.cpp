@@ -22,7 +22,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         if(GL_DEBUG_MODE && !stat)
         {
             CString log = CGL33::ShaderGetLog(m_handle);
-            cDebug("Shader compilation error: {0}",log);
+            cWarning("Shader compilation error: {0}",log);
             return false;
         }
 
@@ -36,7 +36,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         if(GL_DEBUG_MODE && m_handle == 0)
         {
             CString log = CGL43::ProgramGetLog(m_handle);
-            cDebug("Shader program compilation error: {0}",log);
+            cWarning("Shader program compilation error: {0}",log);
             return false;
         }
 
@@ -325,6 +325,41 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
         {
         }
     }else if(GL_CURR_API==GL_4_3){
+
+    }
+}
+
+GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
+    PipelineDumper(pipeline)
+{
+}
+
+void GLEAM_PipelineDumper::dump(cstring out)
+{
+    if(CGL43::GetProgramBinarySupported() &&
+            (GL_CURR_API == GL_3_3 || GL_CURR_API == GLES_3_0))
+    {
+        /* Just dump the program binary, nothing else is needed */
+        CResources::Resource output(out,ResourceAccess::NewFile);
+        Vector<byte_t> program_data;
+        /* We'll fit the binary type in here */
+        program_data.resize(sizeof(CGenum));
+        CGenum t = GL_NONE;
+        cVerbose(6,"About to get program binary");
+        /* Append program data */
+        if(!CGL43::ProgramGetBinary(m_pipeline.m_handle,&t,&program_data))
+            return;
+        cVerbose(6,"Acquired program binary");
+        /* Put binary type in there */
+        MemCpy(&program_data[0],&t,sizeof(t));
+
+        output.size = program_data.size();
+        output.data = program_data.data();
+        CResources::FileCommit(output);
+        cVerbose(5,"Dumped shader ({0}) into file {1}",
+                 m_pipeline.m_handle,output.resource());
+    }else if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+    {
 
     }
 }

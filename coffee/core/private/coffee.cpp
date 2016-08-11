@@ -46,10 +46,11 @@ FORCEDINLINE void PrintBuildInfo()
 
 FORCEDINLINE void PrintArchitectureInfo()
 {
-    cOutputPrint("Compiled for {0} on {1} ({2}})",
+    cOutputPrint("Compiled for {0} on {1} ({2})",
                  CoffeePlatformString,CoffeeCompilerString,
                  CoffeeArchString);
     cOutputPrint("Executing on {0}",PlatformData::SystemDisplayString());
+    cOutputPrint("Device: {0}",SysInfo::DeviceName());
 }
 
 FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
@@ -88,6 +89,7 @@ void CoffeeInit(bool profiler_init)
     CoffeePlatformString = plat_tmp_string.c_str();
 #endif
 
+    PrintVersionInfo();
     PrintBuildInfo();
     PrintArchitectureInfo();
 
@@ -97,7 +99,7 @@ void CoffeeInit(bool profiler_init)
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 5;
+    Coffee::PrintingVerbosityLevel = 6;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel = 1;
@@ -262,14 +264,14 @@ void sighandle(int sig)
 void InstallSignalHandler()
 {
     /* Set up signal handlers, make the process more well-behaved */
-    signal(SIGABRT,sighandle);
+//    signal(SIGABRT,sighandle);
 //    signal(SIGSEGV,sighandle);
 
-    signal(SIGFPE,sighandle);
+//    signal(SIGFPE,sighandle);
 
-    signal(SIGILL,sighandle);
-    signal(SIGINT,sighandle);
-    signal(SIGTERM,sighandle);
+//    signal(SIGILL,sighandle);
+//    signal(SIGINT,sighandle);
+//    signal(SIGTERM,sighandle);
 }
 
 #if !defined(COFFEE_ANDROID) || !defined(ANDROID_DONT_USE_SDL2)

@@ -16,10 +16,9 @@ struct CGL_Shared_Debug
     static bool b_isDebugging;
     static CString s_ExtensionList;
 
-#ifndef COFFEE_GLEAM_DESKTOP
+    /* Stores information on pixel formats */
     static int32 Num_Internal_Formats;
     static int32* Internal_Formats;
-#endif
 
     /* Verifying loader results */
     STATICINLINE bool VerifyInit()
@@ -47,23 +46,6 @@ struct CGL_Shared_Debug
             glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             b_isDebugging = true;
         }
-    }
-
-    STATICINLINE void InitInternalFormats()
-    {
-#ifndef COFFEE_GLEAM_DESKTOP
-        Num_Internal_Formats = GetInteger(GL_NUM_COMPRESSED_TEXTURE_FORMATS);
-        Internal_Formats = new int32[Num_Internal_Formats];
-        GetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS,Internal_Formats);
-#endif
-    }
-
-    STATICINLINE void FreeInternalFormats()
-    {
-#ifndef COFFEE_GLEAM_DESKTOP
-        Num_Internal_Formats = 0;
-        delete[] Internal_Formats;
-#endif
     }
 
     STATICINLINE void SetDebugLevel(Severity s,bool enabled)
@@ -248,14 +230,30 @@ struct CGL_Shared_Debug
     }
 
     /* Texture format support */
+    STATICINLINE void InitInternalFormats()
+    {
+    }
+    STATICINLINE void FreeInternalFormats()
+    {
+    }
 
-    STATICINLINE bool InternalFormatSupport(Texture tt, PixelFormat t)
+    STATICINLINE void InitCompressedFormats()
+    {
+        Num_Internal_Formats = GetInteger(GL_NUM_COMPRESSED_TEXTURE_FORMATS);
+        Internal_Formats = new int32[Num_Internal_Formats];
+        GetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS,Internal_Formats);
+    }
+
+    STATICINLINE void FreeCompressedFormats()
+    {
+        Num_Internal_Formats = 0;
+        delete[] Internal_Formats;
+    }
+
+    STATICINLINE bool CompressedFormatSupport(Texture, PixelFormat t)
     {
         /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
         int32 supp = GL_FALSE;
-#ifdef COFFEE_GLEAM_DESKTOP
-        glGetInternalformativ(to_enum(tt),to_enum(t),GL_INTERNALFORMAT_SUPPORTED,sizeof(supp),&supp);
-#else
         CGenum target = to_enum(t);
         for(int32 i=0;i<Num_Internal_Formats;i++)
             if(target == Internal_Formats[i])
@@ -263,24 +261,23 @@ struct CGL_Shared_Debug
                 supp = GL_TRUE;
                 break;
             }
-#endif
         return supp == GL_TRUE;
     }
-    STATICINLINE ColBits InternalFormatDepths(Texture, PixelFormat)
+    STATICINLINE ColBits CompressedFormatDepths(Texture, PixelFormat)
     {
 //        int32 supp;
 //        glGetInternalformativ(to_enum(tt),to_enum(t),GL_INTERNALFORMAT_SUPPORTED,sizeof(supp),&supp);
         return {};
     }
+
+    STATICINLINE bool InternalFormatSupport(Texture, PixelFormat)
+    {
+        return true;
+    }
     STATICINLINE CSize InternalFormatMaxResolution2D(Texture tt, PixelFormat t)
     {
         CSize sz;
-#ifdef COFFEE_GLEAM_DESKTOP
-        glGetInternalformativ(to_enum(tt),to_enum(t),GL_MAX_WIDTH,sizeof(sz.w),&sz.w);
-        glGetInternalformativ(to_enum(tt),to_enum(t),GL_MAX_HEIGHT,sizeof(sz.h),&sz.h);
-#else
         sz.w = sz.h = GetInteger(GL_MAX_TEXTURE_SIZE);
-#endif
         return sz;
     }
 

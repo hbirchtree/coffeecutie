@@ -43,3 +43,7 @@
 /* This enables safer, but a bit slower functions for some core functions */
 /* dirname(), basename() */
 #define COFFEE_USE_POSIX_BASENAME
+
+#if defined(COFFEE_ANDROID)
+//#define COFFEE_DISABLE_SRGB_SUPPORT
+#endif

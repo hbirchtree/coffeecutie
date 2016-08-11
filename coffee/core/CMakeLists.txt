@@ -65,6 +65,7 @@ if(ANDROID)
         private/plat/file/android/file.cpp
         private/plat/environment/android/environment.cpp
         private/plat/environment/android/sysinfo.cpp
+        private/plat/sensor/android/sensor.cpp
     )
 endif()
 

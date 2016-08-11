@@ -76,6 +76,17 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
 
     cMsg("SDL2","Running {0}",m_contextString);
 
+    /* Finally, push a resize event */
+    {
+        SDL_Event wev;
+        wev.window.event = SDL_WINDOWEVENT_RESIZED;
+        CSize win_size = windowSize();
+        wev.window.data1 = win_size.w;
+        wev.window.data2 = win_size.h;
+        if(SDL_PushEvent(&wev)!=1)
+            cVerbose(5,"Failed to push resize event!");
+    }
+
     Profiler::Profile("Set window properties");
     return true;
 }

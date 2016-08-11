@@ -1,1 +1,1 @@
-coffee_add_example ( RSReadTest "RS Reading" main.cpp CoffeeCore )
+coffee_add_application ( RSReadTest "RS Reading" main.cpp CoffeeCore )

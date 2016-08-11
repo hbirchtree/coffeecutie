@@ -513,9 +513,17 @@ inline CGenum to_enum(
         return GL_RGB5_A1;
 
     case PixelFormat::SRGB8A8:
+#if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
         return GL_SRGB8_ALPHA8;
+#else
+        return GL_RGBA8;
+#endif
     case PixelFormat::SRGB8:
+#if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
         return GL_SRGB8;
+#else
+        return GL_RGB8;
+#endif
     default:
 	return GL_NONE;
     }
@@ -896,6 +904,8 @@ inline CGenum to_enum(FramebufferT f)
         return GL_READ_FRAMEBUFFER;
     case FramebufferT::All:
         return GL_FRAMEBUFFER;
+    default:
+        return GL_NONE;
     }
 }
 

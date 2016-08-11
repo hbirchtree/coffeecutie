@@ -32,6 +32,7 @@ struct CGL_Old_Textures
                                       uint32& w, uint32& h, uint32& d,
                                       szptr* size, uint32 mip = 0)
     {
+#ifdef COFFEE_GLEAM_DESKTOP
         int32 w_t,h_t,d_t;
         TexGetLevelParameteriv(t,mip,GL_TEXTURE_WIDTH,&w_t);
         TexGetLevelParameteriv(t,mip,GL_TEXTURE_HEIGHT,&h_t);
@@ -73,6 +74,13 @@ struct CGL_Old_Textures
         }
 
         *size = w * h * d * cmp_size;
+#else
+        C_UNUSED(t);
+        C_UNUSED(c);
+        C_UNUSED(mip);
+        w = 0, h = 0, d = 0;
+        *size = 0;
+#endif
     }
 #ifdef COFFEE_GLEAM_DESKTOP
     STATICINLINE void TexGetCompressedSize(Texture t, uint32& w, uint32& h, uint32& d, szptr& size)

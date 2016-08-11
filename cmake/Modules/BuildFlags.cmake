@@ -16,7 +16,9 @@ if (NOT WIN32)
         #-Werror
         #-Wpadded
         )
-    if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND NOT COFFEE_BUILD_SWIG_BINDING )
+    if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release"
+            AND NOT COFFEE_BUILD_SWIG_BINDING
+            AND NOT COFFEE_BUILD_OPENSSL )
         # Because exceptions are garbage
         set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions" )
         if(NOT COFFEE_BUILD_OPENSSL)

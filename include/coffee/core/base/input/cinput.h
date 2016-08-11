@@ -13,7 +13,8 @@ constexpr szptr ci_max_text_edit_size = 32;
 /*!
  * \brief Base for input events
  */
-struct CIEvent
+struct
+        CIEvent
 {
     enum EventType : uint8 {
         NoneType,

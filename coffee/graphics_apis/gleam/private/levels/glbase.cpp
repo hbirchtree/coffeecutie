@@ -15,9 +15,9 @@ bool CGL_Shared_Debug::b_isDebugging = false;
 Coffee::XML::Document* CGLXML::doc = nullptr;
 Coffee::Mutex CGLXML::doc_mutex;
 #else
+#endif
 Coffee::int32 CGL_Shared_Debug::Num_Internal_Formats = 0;
 Coffee::int32* CGL_Shared_Debug::Internal_Formats = nullptr;
-#endif
 
 }
 }
