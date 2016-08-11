@@ -176,7 +176,21 @@ endif()
 
 if(WIN32)
     # Don't know what this is, but it's necessary
-    list ( APPEND CORE_EXTRA_LIBRARIES pathcch )
+    list ( APPEND CORE_EXTRA_LIBRARIES
+	 # For some of the file API
+	 pathcch
+
+	 # Core includes
+	 m
+	 user32
+	 gdi32
+	 winmm
+	 imm32
+	 ole32
+	 oleaut32
+	 shell32
+	 version
+	  )
 endif()
 
 coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
