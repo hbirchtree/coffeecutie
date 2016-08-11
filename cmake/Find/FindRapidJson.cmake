@@ -1,5 +1,3 @@
-set ( RAPIDJSON_ROOT_DIR CACHE PATH "RapidJSON root directory" )
-
 find_path ( RAPIDJSON_INCLUDE_DIR_TMP
     NAMES
     rapidjson.h

@@ -7,6 +7,7 @@ set ( OPENAL_SEARCH_PATHS
     "C:/Program Files (x86)/OpenAL 1.1 SDK"
     ~/Library/Frameworks
     /Library/Frameworks
+    "${COFFEE_NATIVE_LIBRARY_DIR}"
     )
 
 if(ANDROID)
