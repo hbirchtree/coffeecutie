@@ -3,6 +3,8 @@
 
 #include "../file_abstraction.h"
 
+#include <fileapi.h>
+
 namespace Coffee {
 namespace Windows {
 const constexpr cstring coffee_rsc_tag = "CF_RES";
@@ -39,7 +41,13 @@ WinFileApi::FileAccess WinFileApi::GetAccess(ResourceAccess acc)
 HANDLE WinFileApi::GetFileHandle(cstring fn, ResourceAccess acc)
 {
     FileAccess f = GetAccess(acc);
+#ifdef COFFEE_WINDOWS_UWP
+	CWString fn_w(CString(fn));
+	//return CreateFile2(&fn_w[0], f.open, f.share, f.create,nullptr);
+	return INVALID_HANDLE_VALUE;
+#else
     return CreateFile(fn, f.open, f.share, nullptr, f.create, f.attr, nullptr);
+#endif
 }
 DWORD WinFileApi::GetMappingFlags(ResourceAccess acc)
 {
@@ -125,7 +133,11 @@ CString create_rsc_name(cstring fn)
 HRSRC open_rsc(cstring fn)
 {
     CString wrap = create_rsc_name(fn);
+#ifndef COFFEE_WINDOWS_UWP
     return FindResourceEx(nullptr, coffee_rsc_tag, wrap.c_str(), 1033);
+#else
+	return 0;
+#endif
 }
 
 bool WinFileFun::VerifyAsset(cstring fn)
@@ -216,12 +228,14 @@ CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
         return d;
     }else
     {
-        CByteData d;
+		CByteData d = {};
 
+#ifndef COFFEE_WINDOWS_UWP
         HGLOBAL lsrc = LoadResource(nullptr, h->rsrc);
         d.size = SizeofResource(nullptr, h->rsrc);
         d.size = (size < d.size) ? size : d.size;
         d.data = (byte_t*)LockResource(lsrc);
+#endif
 
         return d;
     }
@@ -260,7 +274,10 @@ bool WinFileFun::Exists(cstring fn)
     if (VerifyAsset(fn))
         return true;
 
-    HANDLE fh = CreateFile(fn, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+	HANDLE fh = INVALID_HANDLE_VALUE;
+#ifndef COFFEE_WINDOWS_UWP
+    fh = CreateFile(fn, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+#endif
     if (fh != INVALID_HANDLE_VALUE)
     {
         CloseHandle(fh);
@@ -279,21 +296,33 @@ szptr WinFileFun::Size(WinFileFun::FileHandle* fh)
     {
         LARGE_INTEGER e;
         e.QuadPart = 0;
+#ifndef COFFEE_WINDOWS_UWP
         e.LowPart = GetFileSize(fh->file, (LPDWORD)&e.HighPart);
+#endif
         return e.QuadPart;
     }
+#ifndef COFFEE_WINDOWS_UWP
     return SizeofResource(nullptr, fh->rsrc);
+#else
+	return 0;
+#endif
 }
 szptr WinFileFun::Size(cstring fn)
 {
     if (VerifyAsset(fn))
     {
         HRSRC rsc_h = open_rsc(fn);
-        DWORD sz = SizeofResource(nullptr, rsc_h);
+		DWORD sz = 0;
+#ifndef COFFEE_WINDOWS_UWP
+		sz = SizeofResource(nullptr, rsc_h);
+#endif
         return sz;
     }else{
         LARGE_INTEGER e;
-        HANDLE f = CreateFile(fn, GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
+		HANDLE f = INVALID_HANDLE_VALUE;
+#ifndef COFFEE_WINDOWS_UWP
+		f = CreateFile(fn, GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
+#endif
         if (f != INVALID_HANDLE_VALUE)
         {
             BOOL s = GetFileSizeEx(f, &e);
@@ -311,7 +340,10 @@ bool WinFileFun::Touch(NodeType t, cstring n)
     {
     case NodeType::File:
     {
-        HANDLE f = CreateFile(n,0,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+		HANDLE f = INVALID_HANDLE_VALUE;
+#ifndef COFFEE_WINDOWS_UWP
+        f = CreateFile(n,0,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+#endif
         if(f != INVALID_HANDLE_VALUE)
         {
             GetLastError(); // to clear ERROR_ALREADY_EXISTS if it occurs
@@ -328,7 +360,13 @@ bool WinFileFun::Touch(NodeType t, cstring n)
 }
 bool WinFileFun::Rm(cstring fn)
 {
+#ifdef COFFEE_WINDOWS_UWP
+	CWString fn_w(CString(fn));
+	//return DeleteFile(&fn_w[0]);
+	return false;
+#else
     return DeleteFile(fn);
+#endif
 }
 WinFileFun::NodeType WinFileFun::Stat(cstring f)
 {
@@ -355,6 +393,7 @@ WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr of
 
         HRSRC rsc = open_rsc(fn);
 
+#ifndef COFFEE_WINDOWS_UWP
         if (rsc && off+size <= SizeofResource(nullptr, rsc))
         {
             HGLOBAL lsrc = LoadResource(nullptr, rsc);
@@ -362,6 +401,7 @@ WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr of
             fm.ptr = &(((byte_t*)LockResource(lsrc))[off]);
             fm.acc = acc;
         }
+#endif
 
         return fm;
     }
@@ -383,7 +423,12 @@ WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr of
     LARGE_INTEGER offsize_;
     offsize_.QuadPart = offsize;
 
-    HANDLE mh = CreateFileMapping(fh, nullptr, profl, offsize_.HighPart, offsize_.LowPart, nullptr);
+	HANDLE mh = nullptr;
+#ifndef COFFEE_WINDOWS_UWP
+	mh = CreateFileMapping(fh, nullptr, profl, offsize_.HighPart, offsize_.LowPart, nullptr);
+#else
+	//mh = CreateFIleMappingFromApp(fh,nullptr,profl,offsize,nullptr);
+#endif
 
     if (!mh)
     {
@@ -397,7 +442,12 @@ WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr of
     LARGE_INTEGER off_;
     off_.QuadPart = off;
 
-    void* ptr = MapViewOfFile(mh, view_fl, off_.HighPart, off_.LowPart, size);
+	void* ptr = nullptr;
+#ifndef COFFEE_WINDOWS_UWP
+	ptr = MapViewOfFile(mh, view_fl, off_.HighPart, off_.LowPart, size);
+#else
+	//ptr = MapViewOfFileFromApp(mh,view_fl,off_.QuadPart,size);
+#endif
 
     if (!ptr)
     {
@@ -441,7 +491,11 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(szptr size, ResourceAccess acc)
     DWORD fl1 = WinFileApi::GetMappingFlags(acc);
     LARGE_INTEGER s;
     s.QuadPart = size;
+#ifndef COFFEE_WINDOWS_UWP
     b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s.HighPart, s.LowPart, nullptr);
+#else
+	b.mapping = nullptr;
+#endif
 
     if (!b.mapping)
     {
@@ -451,7 +505,11 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(szptr size, ResourceAccess acc)
 
     DWORD fl2 = WinFileApi::GetMappingViewFlags(acc);
 
+#ifndef COFFEE_WINDOWS_UWP
     b.ptr = MapViewOfFile(b.mapping, fl2, 0, 0, size);
+#else
+	b.ptr = nullptr;
+#endif
 
     if (!b.ptr)
     {

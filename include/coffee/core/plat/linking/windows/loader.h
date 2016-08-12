@@ -30,7 +30,10 @@ struct WindowsFunctionLoader : FunctionLoad_def
         CString libname = name;
         libname += LIBRARY_SUFFIX;
 
-        HMODULE hnd = LoadLibrary(libname.c_str());
+		HMODULE hnd = nullptr;
+#ifndef COFFEE_WINDOWS_UWP
+		hnd = LoadLibrary(libname.c_str());
+#endif
 
         if(!hnd)
         {

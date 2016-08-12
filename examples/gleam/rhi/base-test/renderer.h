@@ -293,7 +293,7 @@ public:
 
         GLM::FB_T* render_target = &GLM::DefaultFramebuffer;
 
-        Counter frame_counter(frame_count);
+        Coffee::Counter frame_counter(frame_count);
 
         bool do_debugging = false;
         bool did_apply_state = false;

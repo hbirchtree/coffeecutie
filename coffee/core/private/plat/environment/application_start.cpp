@@ -13,7 +13,7 @@ using namespace Coffee;
 int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 {
     cDebug("Entering deref_main() at {0}",StrUtil::pointerify((uint64)deref_main));
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
 #elif defined(COFFEE_ANDROID)
     Profiler::ResetPointers();

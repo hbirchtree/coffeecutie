@@ -4,21 +4,35 @@
 
 #include <coffee/core/plat/plat_windows.h>
 #include <Pathcch.h>
-#include <cstdlib>
+#include <stdlib.h>
+#include <wchar.h>
 
 namespace Coffee {
 	namespace Environment {
 		namespace Windows {
 			CString WindowsEnvFun::ExecutableName(cstring_w)
 			{
+#ifdef COFFEE_WINDOWS_UWP
+				CWString excname;
+#else
 				CString excname;
-
+#endif
 				excname.resize(MAX_PATH);
+
 				GetModuleFileName(nullptr, &excname[0], excname.size());
 				excname.resize(Search::ChrFind(excname.c_str(), 0) - excname.c_str());
-                excname = CStrReplace(excname, "\\", "/");
+#ifdef COFFEE_WINDOWS_UWP
+                excname = CStrReplace(excname, L"\\", L"/");
+#else
+				excname = CStrReplace(excname, "\\", "/");
+#endif
 
+#ifdef COFFEE_WINDOWS_UWP
+				CString out(excname.begin(),excname.end());
+				return out;
+#else
 				return excname;
+#endif
 			}
 
 			CString WindowsEnvFun::GetUserData(cstring org, cstring app)
@@ -37,16 +51,21 @@ namespace Coffee {
 			{
 				CString out;
 
-				sbyte_t* var = std::getenv(v);
+#ifndef COFFEE_WINDOWS_UWP
+				cstring_w* var = getenv(v);
 
 				if (var)
 					out = var;
+#endif
 
 				return out;
 			}
 
 			WindowsEnvFun::Variables WindowsEnvFun::Environment()
 			{
+#ifdef COFFEE_WINDOWS_UWP
+				return {};
+#else
 				TCHAR* env = GetEnvironmentStrings();
 				if (!env)
 					return{};
@@ -91,22 +110,34 @@ namespace Coffee {
 				}
 
 				return var;
+#endif
 			}
 
 			CString WindowsEnvFun::CurrentDir()
 			{
+#ifdef COFFEE_WINDOWS_UWP
+				CWString out;
+#else
 				CString out;
+#endif
 
 				out.resize(GetCurrentDirectory(0, nullptr));
 				GetCurrentDirectory(out.size(), &out[0]);
 				out.resize(out.size() - 1);
-                out = CStrReplace(out, "\\", "/");
-
+#ifdef COFFEE_WINDOWS_UWP
+				out = CStrReplace(out, L"\\", L"/");
+				return CString(out.begin(),out.end());
+#else
+				out = CStrReplace(out, "\\", "/");
 				return out;
+#endif
 			}
 
             CString WindowsEnvFun::DirName(cstring fn)
 			{
+#ifdef COFFEE_WINDOWS_UWP
+				return {};
+#else
                 CString fn_ = fn;
                 fn_ = CStrReplace(fn, "/", "\\");
                 CWString fn_w(fn_.begin(), fn_.end());
@@ -115,6 +146,7 @@ namespace Coffee {
                 out.resize(StrLen(out.c_str()));
 				out = CStrReplace(out, "\\", "/");
 				return out;
+#endif
 			}
             CString WindowsEnvFun::BaseName(cstring fn)
 			{

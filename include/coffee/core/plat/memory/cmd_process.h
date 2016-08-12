@@ -33,7 +33,7 @@ struct CProcess
 	{
 #if defined(COFFEE_ANDROID)
         return -1;
-#else
+#elif !defined(COFFEE_WINDOWS_UWP)
 		CString cmd = cmd_.program;
 		for (CString const& arg : cmd_.argv)
 		{
@@ -41,6 +41,8 @@ struct CProcess
 			cmd.append(arg);
 		}
 		return system(cmd.c_str());
+#else
+		return -1;
 #endif
 	}
 
