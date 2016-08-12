@@ -43,7 +43,12 @@ endif()
 # Api_Arch : armeabi-v7a, arm64-v8a or x86
 # Dependency_Libs : libraries which will be added to the APK
 #
-macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_Target Api_Arch Dependency_Libs Icon_File )
+macro(APK_PACKAGE_EXT
+        Target_Name App_Name Pkg_Name
+        Version_Int Version_Str
+        Api_Target Api_Arch
+        Dependency_Libs
+        Icon_File )
 
     message ( "-- Generating ${Pkg_Name} (${Api_Arch})" )
 
@@ -69,8 +74,63 @@ macro(APK_PACKAGE_EXT Target_Name App_Name Pkg_Name Version_Int Version_Str Api_
     set ( ANDROID_VERSION_NAME ${Version_Str} )
 
     set ( ANDROID_API_TARGET ${Api_Target} )
-    set ( ANDROID_API_MIN_TARGET "9" )
 
+    set ( ANDROID_FEATURES "" )
+
+    set ( ANDROID_ES30_REQ "false" )
+
+    if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        set ( ANDROID_DEBUGGABLE "true" )
+    else()
+        set ( ANDROID_DEBUGGABLE "false" )
+    endif()
+
+    if(COFFEE_BUILD_GLEAM_RHI)
+        set ( ANDROID_ES30_REQ "true" )
+        set ( ANDROID_API_MIN_TARGET "17" )
+    else()
+        set ( ANDROID_API_MIN_TARGET "9" )
+    endif()
+
+    set ( ANDROID_REQUIRED_FEATURES
+        "android.hardware.faketouch"
+        "android.hardware.gamepad"
+        "android.hardware.screen.landscape"
+        "android.hardware.audio.output"
+        )
+
+    set ( ANDROID_OPTIONAL_FEATURES
+        "android.hardware.sensor.accelerometer"
+        "android.hardware.opengles.aep"
+        "${ANDROID_CUSTOM_PERMISSIONS}"
+        )
+
+    foreach(feat ${ANDROID_REQUIRED_FEATURES})
+        set ( ANDROID_FEATURES
+            "${ANDROID_FEATURES}
+            <uses-feature android:name=\"${feat}\" android:required=\"true\" />")
+    endforeach()
+    foreach(feat ${ANDROID_OPTIONAL_FEATURES})
+        set ( ANDROID_FEATURES
+            "${ANDROID_FEATURES}
+            <uses-feature android:name=\"${feat}\" android:required=\"false\" />")
+    endforeach()
+
+    if(COFFEE_BUILD_GLES)
+        set ( ANDROID_FEATURES
+            "${ANDROID_FEATURES}
+
+            <uses-feature android:glEsVersion=\"0x00020000\" android:required=\"true\" />")
+
+        set ( ANDROID_FEATURES
+            "${ANDROID_FEATURES}
+            <uses-feature android:glEsVersion=\"0x00030000\" android:required=\"${ANDROID_ES30_REQ}\" />
+            <uses-feature android:glEsVersion=\"0x00030001\" android:required=\"false\" />
+            <uses-feature android:glEsVersion=\"0x00030002\" android:required=\"false\" />"
+            )
+    endif()
+
+    set ( ANDROID_PERMISSIONS )
 
     # For valid options, see:
     # http://developer.android.com/guide/topics/manifest/activity-element.html

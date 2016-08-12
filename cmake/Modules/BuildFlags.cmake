@@ -47,7 +47,14 @@ else()
     # Microsoft makes the worst headers of them all.
     # We also set a target Windows NT version for some reason
     # Vista is long gone, so 7 (0x0601) is a good target
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1" )
+    if(NOT MINGW64)
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W1" )
+    else()
+        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
+        add_definitions (
+            -DMINGW64
+            )
+    endif()
     add_definitions (
         -D_WIN32_WINNT=0x0601
         )
