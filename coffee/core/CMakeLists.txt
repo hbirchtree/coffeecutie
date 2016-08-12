@@ -182,7 +182,6 @@ if(WIN32)
 	 pathcch
 
 	 # Core includes
-	 m
 	 user32
 	 gdi32
 	 winmm

@@ -32,6 +32,7 @@ coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
 target_link_libraries( CoffeeSDL2
     CoffeeCore
 #    ${SDL2_LIBRARY}
+	
     )
 
 coffee_add_library ( CoffeeSDL2Audio "${CoffeeSDL2Audio_SRCS}" )

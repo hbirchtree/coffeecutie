@@ -20,8 +20,11 @@
 #endif
 
 /* Windows macro, only one for now */
-#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(WIN32)
+#if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(WIN32) || defined(WINUWP)
 #define C_SYSTEM_STRING "Windows"
+#if defined(WINUWP)
+#define COFFEE_WINDOWS_UWP
+#endif
 #define COFFEE_WINDOWS
 #undef COFFEE_LINUX
 #endif

@@ -20,21 +20,33 @@ namespace Mem{
 namespace Search
 {
 /* Higher-level string utilities */
-FORCEDINLINE CString CStrReplace(
-        const CString &target, const CString &query,
-        const CString &replacement)
+template<typename StrType> FORCEDINLINE
+StrType CStrReplace(const StrType &target, const StrType &query,
+					const StrType &replacement)
 {
-    CString out = target;
+    StrType out = target;
     for(size_t pos=0;;pos+=replacement.length())
     {
         pos = out.find(query,pos);
-        if(pos==std::string::npos)
+        if(pos==StrType::npos)
             break;
         out.erase(pos,query.length());
         out.insert(pos,replacement);
     }
     return out;
 }
+
+FORCEDINLINE
+CString CStrReplace(CString const& target, CString const& query, CString const& replacement)
+{
+	return CStrReplace<CString>(target,query,replacement);
+}
+FORCEDINLINE
+CWString CStrReplace(CWString const& target, CWString const& query, CWString const& replacement)
+{
+	return CStrReplace<CWString>(target, query, replacement);
+}
+
 }
 
 namespace Convert{

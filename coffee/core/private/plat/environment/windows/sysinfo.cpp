@@ -1,4 +1,5 @@
 #include <coffee/core/plat/environment/windows/sysinfo.h>
+#include <coffee/core/plat/plat_environment.h>
 
 namespace Coffee{
 namespace Environment{
@@ -152,7 +153,7 @@ HWDeviceInfo WindowsSysInfo::Processor()
     if(brand_find)
         brand.resize(brand_find - brand.c_str());
 
-    return HWDeviceInfo(CPUString,brand,std::getenv("PROCESSOR_REVISION"));
+    return HWDeviceInfo(CPUString,brand,Env::GetVar("PROCESSOR_REVISION"));
 }
 
 bool WindowsSysInfo::HasHyperThreading()
@@ -183,6 +184,7 @@ CString WindowsSysInfo::GetSystemVersion()
 {
     /* Checking for Wine, being a cheeky cunt */
     /* Source: https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
+#if !defined(COFFEE_WINDOWS_UWP)
     do{
         static const char * (CDECL *pwine_get_version)(void);
 
@@ -195,6 +197,7 @@ CString WindowsSysInfo::GetSystemVersion()
         CString out = CString("Wine") + pwine_get_version();
         return out;
     }while(false);
+#endif
     /* Dear Microsoft, I only want a string. */
     OSVERSIONINFO a;
 
@@ -202,7 +205,12 @@ CString WindowsSysInfo::GetSystemVersion()
 
     a.dwOSVersionInfoSize = sizeof(a);
 
-    GetVersionEx(&a);
+#ifdef COFFEE_WINDOWS_UWP
+	a.dwMajorVersion = 10;
+	a.dwMinorVersion = 0;
+#else
+	GetVersionEx(&a);
+#endif
 
     CString out;
     out += Convert::uinttostring(a.dwMajorVersion);
