@@ -7,7 +7,9 @@ set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
 set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
 set ( CMAKE_RC_COMPILER "${TOOLCHAIN_PREFIX}-windres" )
 
-add_definitions ( )
+add_definitions (
+    -DMINGW64
+)
 
 set ( CMAKE_FIND_ROOT_PATH "/usr/${TOOLCHAIN_PREFIX};/usr/lib/gcc/${TOOLCHAIN_PREFIX}/5.3-posix" )
 
