@@ -3,9 +3,9 @@
 
 #include <coffee/core/CDRendererBase>
 
-#include "graphics/csdl2_gl_renderer.h"
-#include "windowing/csdl2_window.h"
-#include "input/csdl2_eventhandler.h"
+#include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
+#include <coffee/sdl2/windowing/csdl2_window.h>
+#include <coffee/sdl2/input/csdl2_eventhandler.h>
 #include <coffee/graphics_apis/gleam/renderer/gleamrenderer.h>
 
 namespace Coffee{

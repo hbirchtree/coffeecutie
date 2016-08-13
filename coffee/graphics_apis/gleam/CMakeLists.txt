@@ -1,6 +1,8 @@
 set ( CoffeeGLeam_SRCS
     private/renderer/gleamrenderer.cpp
     private/levels/glbase.cpp
+
+    private/csdl2renderer.cpp
     )
 
 if(COFFEE_BUILD_GLEAM_RHI)

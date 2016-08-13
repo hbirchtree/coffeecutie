@@ -205,3 +205,11 @@ macro (find_host_package)
         set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
         set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 endmacro (find_host_package)
+
+
+# Added by H. Birch Tree
+message("-- Hiding symbols")
+add_definitions (-fvisibility=hidden)
+
+message("-- Disabling RTTI and exceptions")
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions" )

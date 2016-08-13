@@ -1,6 +1,4 @@
 set ( CoffeeSDL2_SRCS
-    private/csdl2renderer.cpp
-
     private/sdl2system.cpp
 
     private/windowing/csdl2_dialogs.cpp

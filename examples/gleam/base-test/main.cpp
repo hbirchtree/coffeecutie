@@ -51,8 +51,8 @@ public:
         fcounter.interval = 1000;
 
         const constexpr cstring textures[num_textures] = {
-            "eye-normal.tga", "eye-weird.tga",
-            "eye-alpha.tga", "eye-veins.tga"
+            "circle_red.png", "circle_blue.png", "circle_alpha.png",
+            "floor-tile.png"
         };
 
         GL::CGhnd pbobuf[num_textures] = {};

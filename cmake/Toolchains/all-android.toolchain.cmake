@@ -1691,3 +1691,13 @@ endif()
 #   ANDROID_NDK_SEARCH_PATHS
 #   ANDROID_SUPPORTED_ABIS_${ARCH}
 #   ANDROID_SUPPORTED_NDK_VERSIONS
+
+# Added by H. Birch Tree
+
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+
+message("-- Hiding symbols")
+add_definitions (-fvisibility=hidden)
+
+message("-- Disabling RTTI and exceptions")
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions" )

@@ -1,53 +1,5 @@
-# Fiddle with warning flags
-if (NOT WIN32)
-    # These are effectively used by Clang and GCC, descriptive names
-    if((APPLE AND IOS) OR (NOT APPLE))
-        # When statically linking, hide symbols
-        # This helps us create dynamic frameworks on OSX
-        message("-- Hiding symbols")
-        add_definitions (
-	    -fvisibility=hidden
-            )
-    endif()
-    add_definitions (
-        #-fvisibility=hidden
-        #-Winline
-        #-Wall
-        #-Werror
-        #-Wpadded
-        )
-    if( "${CMAKE_BUILD_TYPE}" STREQUAL "Release"
-            AND NOT COFFEE_BUILD_SWIG_BINDING
-            AND NOT COFFEE_BUILD_OPENSSL )
-        # Because exceptions are garbage
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions" )
-        if(NOT COFFEE_BUILD_OPENSSL)
-            # If we can, get rid of RTTI, too
-            # It might be useful for dynamic_cast, but it bloats executables
-            set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti" )
-        endif()
-    endif()
-    if(APPLE)
-        # Temporary workaround
-        include_directories ( "/usr/local/opt/llvm38/lib/llvm-3.8/include/c++/v1" )
-        link_directories("/usr/local/opt/llvm38/lib/llvm-3.8/lib")
-        # Forcing use of C++11 (or later) libc++
-        set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11" )
-        # To prevent undefined symbol errors when creating OSX frameworks
-        # License information and application information is undefined in the library for a reason
-        set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_LD_FLAGS} -Wl,-undefined,dynamic_lookup" )
-    elseif(ANDROID)
-        # On Android, force -std=c++11
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    endif()
-endif()
-
 # Static builds
-if (COFFEE_BUILD_STATIC)
-    set(COFFEE_LINK_OPT STATIC)
-else()
-    set(COFFEE_LINK_OPT SHARED)
-endif()
+set(COFFEE_LINK_OPT STATIC)
 
 # Build time strings, embedded within constexpr strings to keep track of when a build was made.
 # Because file timestamps are unreliable.
@@ -106,15 +58,9 @@ endif()
 if(ANDROID)
     if(ANDROID_USE_SDL2_LAUNCH)
         message("-- Building Android project with SDL2 bindings")
-        find_package(SDL2 REQUIRED)
-        include_directories(
-            ${SDL2_INCLUDE_DIR}
-            ${SDL2_INCLUDE_DIR}/SDL2)
     else()
         message("-- Building Android project with native_app_glue bindings")
         add_definitions("-DANDROID_DONT_USE_SDL2")
-        find_package(AndroidGlue)
-        include_directories (${ANDROID_GLUE_INCLUDE_DIR})
     endif()
 endif()
 

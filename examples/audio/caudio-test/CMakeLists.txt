@@ -1,4 +1,4 @@
-set ( LIBS CoffeeCore CoffeeOpenAL CoffeeSDL2 )
+set ( LIBS CoffeeCore CoffeeOpenAL CoffeeSDL2 CoffeeGLeam )
 
 find_package( OpenAL REQUIRED )
 
