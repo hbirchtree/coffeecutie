@@ -152,7 +152,7 @@ macro(APK_PACKAGE_EXT
 
     set( BUILD_OUTDIR ${ANDROID_BUILD_OUTPUT}/${Target_Name} )
 
-    string ( REGEX REPLACE "([a-zA-Z0-9\_\-]+)\ .*" "\\1" LIB_SUFFIX "${Api_Arch}"  )
+    string ( REGEX REPLACE "([a-zA-Z0-9_-]+)\ .*" "\\1" LIB_SUFFIX "${Api_Arch}"  )
 
     set ( ANDROID_LIB_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/libs/${LIB_SUFFIX} )
     set ( ANDROID_ASSET_OUTPUT_DIRECTORY ${BUILD_OUTDIR}/assets )

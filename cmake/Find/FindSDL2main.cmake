@@ -3,7 +3,6 @@
 #
 
 set ( SDL2_ROOT_DIR CACHE PATH "Path to SDL2 source directory" )
-set ( SDL2_ANDROID_MAIN_FILE CACHE FILEPATH "Path to SDL_android_main.c for JNI functions" )
 
 find_file ( SDL2_ANDROID_MAIN_FILE_TMP
     SDL_android_main.c
@@ -17,7 +16,11 @@ find_file ( SDL2_ANDROID_MAIN_FILE_TMP
     )
 
 if(SDL2_ANDROID_MAIN_FILE_TMP)
-    set ( SDL2_ANDROID_MAIN_FILE ${SDL2_ANDROID_MAIN_FILE_TMP} CACHE FILEPATH "Path to SDL_android_main.c for JNI functions" )
+    set ( SDL2_ANDROID_MAIN_FILE
+        ${SDL2_ANDROID_MAIN_FILE_TMP}
+        CACHE FILEPATH
+        "Path to SDL_android_main.c for JNI functions"
+        )
 endif()
 
 mark_as_advanced(SDL2_ANDROID_MAIN_FILE)
