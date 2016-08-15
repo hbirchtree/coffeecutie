@@ -106,15 +106,6 @@ endif()
 set ( CORE_INCLUDE_DIR )
 set ( CORE_EXTRA_LIBRARIES )
 
-if(COFFEE_BUILD_OPENSSL)
-    # OpenSSL used for ASIO networking
-    find_package(OpenSSL REQUIRED)
-    list ( APPEND CORE_INCLUDE_DIR
-        ${OPENSSL_INCLUDE_DIR}
-        )
-    list ( APPEND CORE_EXTRA_LIBRARIES ${OPENSSL_LIBRARIES} )
-endif()
-
 # Platform-specific target options
 
 if(NOT WIN32 AND NOT MINGW AND NOT MSYS)
@@ -125,11 +116,6 @@ endif()
 if(NOT WIN32 AND NOT ANDROID)
     # Used for thread details
     list ( APPEND CORE_EXTRA_LIBRARIES pthread )
-endif()
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    find_package ( X11 REQUIRED )
-    list ( APPEND CORE_EXTRA_LIBRARIES ${X11_LIBRARIES} )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
@@ -154,7 +140,7 @@ if( SDL_POWER_PLUGIN_ENABLED OR ANDROID )
     list ( APPEND CORE_INCLUDE_DIR
         ${SDL2_INCLUDE_DIR}
         )
-    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
+#    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
 
 if(ANDROID)

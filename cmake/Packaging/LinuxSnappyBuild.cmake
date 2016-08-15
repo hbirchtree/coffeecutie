@@ -77,6 +77,11 @@ macro ( SNAPPY_PACKAGE
 
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
+        COMMAND ${SNAPPY_PROGRAM} clean
+        WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
+        )
+    add_custom_command ( TARGET ${TARGET}
+        POST_BUILD
         COMMAND ${SNAPPY_PROGRAM} build
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
         )

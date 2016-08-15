@@ -27,10 +27,15 @@ include_directories ( SYSTEM
 
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
 
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+    find_package ( X11 REQUIRED )
+    target_link_libraries( CoffeeSDL2 ${X11_LIBRARIES} )
+endif()
+
 target_link_libraries( CoffeeSDL2
     CoffeeCore
 #    ${SDL2_LIBRARY}
-	
     )
 
 coffee_add_library ( CoffeeSDL2Audio "${CoffeeSDL2Audio_SRCS}" )
