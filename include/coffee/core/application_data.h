@@ -7,12 +7,10 @@ namespace Coffee{
 
 typedef struct application_data_t
 {
+    static CString organization_name;
+    static CString application_name;
 
-    CString organization_name;
-    CString application_name;
-
-    uint32 version_code;
-
+    static uint32 version_code;
 } ApplicationData_t;
 
 }

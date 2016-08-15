@@ -5,7 +5,7 @@
 
 namespace Coffee{
 
-extern ApplicationData_t CoffeeApplicationData;
+using CoffeeApplicationData = ApplicationData_t;
 
 extern cstring CoffeeCompilerString;
 extern cstring CoffeeArchString;

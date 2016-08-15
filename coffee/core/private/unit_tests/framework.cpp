@@ -227,7 +227,7 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
     for(uint64 v : test_times)
         time_accum += v;
 
-    Profiler::AddExtraData("testing:title",CoffeeApplicationData.application_name);
+    Profiler::AddExtraData("testing:title",CoffeeApplicationData::application_name);
 
     Profiler::AddExtraData("testing:bmark", Convert::uintltostring(time_accum));
 

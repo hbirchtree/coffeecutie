@@ -305,7 +305,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         cVerbose(5,"Printed tinyxml2 document");
         CString log_name = cStringFormat(
                     mobile_logtemplate,
-                    CoffeeApplicationData.application_name);
+                    CoffeeApplicationData::application_name);
         cVerbose(5,"Creating filename");
         CResources::Resource out(log_name.c_str(),true);
         out.data = (c_ptr)printer.CStr();

@@ -310,7 +310,7 @@ public:
             else
                 render_target = &GLM::DefaultFramebuffer;
 
-            render_target->clear(0,clear_col,1.);
+	    render_target->clear(0,clear_col,1.);
 
             /*
            * Events are always late for the drawcall.

@@ -17,7 +17,6 @@ namespace Coffee{
 CString plat_tmp_string;
 
 /* Information that is not otherwise available */
-ApplicationData_t CoffeeApplicationData;
 cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
                                                         C_COMPILER_VER_MAJ,
                                                         C_COMPILER_VER_MIN,
@@ -32,9 +31,9 @@ CString CoffeeDefaultWindowName;
 FORCEDINLINE void PrintVersionInfo()
 {
     cOutputPrint("{0}, released by {1}, version {2}",
-                CoffeeApplicationData.application_name,
-                CoffeeApplicationData.organization_name,
-                CoffeeApplicationData.version_code);
+                CoffeeApplicationData::application_name,
+                CoffeeApplicationData::organization_name,
+                CoffeeApplicationData::version_code);
 }
 
 FORCEDINLINE void PrintBuildInfo()
@@ -119,7 +118,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     }
 #endif
 
-    CoffeeDefaultWindowName = CoffeeApplicationData.application_name + " [OpenGL]";
+    CoffeeDefaultWindowName = CoffeeApplicationData::application_name + " [OpenGL]";
 
     initargs = AppArg(argc,argv);
 

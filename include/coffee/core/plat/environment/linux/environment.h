@@ -24,13 +24,7 @@ struct LinuxEnv : Posix::PosixEnvironmentFun
         CString execname = ExecutableName();
         return DirName(execname.c_str());
     }
-    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
-    {
-        CString homedir = GetUserHome();
-        homedir = ConcatPath(homedir.c_str(),".local/share");
-        homedir = ConcatPath(homedir.c_str(),orgname);
-        return ConcatPath(homedir.c_str(),appname);
-    }
+    static CString GetUserData(cstring orgname, cstring appname);
 };
 
 }

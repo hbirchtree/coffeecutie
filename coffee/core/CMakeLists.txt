@@ -74,6 +74,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/linux/sysinfo.cpp
         private/plat/file/linux/file.cpp
+	private/plat/environment/linux/environment.cpp
         )
 endif()
 
