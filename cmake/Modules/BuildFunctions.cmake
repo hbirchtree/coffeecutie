@@ -1,6 +1,7 @@
 include ( AndroidApkBuild )
 include ( LinuxAppImageBuild )
 include ( LinuxFlatpakBuild )
+include ( LinuxSnappyBuild )
 include ( MacAppBuild )
 include ( WindowsImagePacker )
 
@@ -191,6 +192,17 @@ function(COFFEE_ADD_APPLICATION_LONGER
                 "${BUNDLE_RSRCS}"
                 "" "${BUNDLE_LIBS}"
                 "${ICON_ASSET}" )
+        endif()
+        if(COFFEE_GENERATE_SNAPPY)
+            SNAPPY_PACKAGE(
+                ${TARGET}
+                "${TITLE}" "${INFO_STRING}"
+                "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
+                "${BUNDLE_RSRCS}"
+                "" "${BUNDLE_LIBS}"
+                "${ICON_ASSET}"
+                ""
+                )
         endif()
 
         if(NOT COFFEE_GENERATE_APPIMAGE AND NOT COFFEE_GENERATE_FLATPAK)
