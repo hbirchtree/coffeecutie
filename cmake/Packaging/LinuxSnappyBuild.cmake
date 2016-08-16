@@ -3,8 +3,14 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 
     set ( SNAPPY_PROGRAM "/usr/bin/snapcraft" CACHE FILEPATH "" )
 
-    set ( SNAPPY_DEPLOY_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-snappy" CACHE PATH "" )
-    set ( SNAPPY_OUTPUT_DIRECTORY "${COFFEE_PACKAGE_DIRECTORY}/linux-snappy" CACHE PATH "" )
+    set ( SNAPPY_PACKAGING_CAT "linux-snappy" CACHE STRING "" )
+
+    set ( SNAPPY_DEPLOY_DIRECTORY
+	"${COFFEE_DEPLOY_DIRECTORY}/${SNAPPY_PACKAGING_CAT}"
+	CACHE PATH "" )
+    set ( SNAPPY_OUTPUT_DIRECTORY
+	"${COFFEE_PACKAGE_DIRECTORY}/${SNAPPY_PACKAGING_CAT}"
+	CACHE PATH "" )
 endif()
 
 macro ( SNAPPY_PACKAGE
@@ -57,11 +63,16 @@ macro ( SNAPPY_PACKAGE
         "      - pulseaudio\n"
         "parts:\n"
         "  binary-import:\n"
-        "    plugin: copy\n"
-        "    source: \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\"\n"
+	"    plugin: copy\n"
         "    files:\n"
-        "      ${TARGET}: \"bin/${TARGET}\"\n"
+	"      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
         )
+
+    foreach(LIB ${LIBRARY_FILES})
+	get_filename_component ( SH_LIB "${LIB}" NAME )
+	file ( APPEND "${SNAPCRAFT_FILE}"
+	    "      \"${LIB}\": \"lib/${CMAKE_LIBRARY_ARCHITECTURE}/${SH_LIB}\"\n")
+    endforeach()
 
     set ( NUM_IMPORTS "0" )
     foreach ( SRC ${DATA} )
@@ -79,7 +90,7 @@ macro ( SNAPPY_PACKAGE
         POST_BUILD
         COMMAND ${SNAPPY_PROGRAM} clean
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
-        )
+	)
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
         COMMAND ${SNAPPY_PROGRAM} build
@@ -90,5 +101,13 @@ macro ( SNAPPY_PACKAGE
         COMMAND ${SNAPPY_PROGRAM} snap -o "${SNAPPY_FINAL_SNAP}"
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
         )
+
+    install (
+	FILES
+	"${SNAPPY_FINAL_SNAP}"
+
+	DESTINATION
+	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/${SNAPPY_PACKAGING_CAT}"
+	)
 
 endmacro()

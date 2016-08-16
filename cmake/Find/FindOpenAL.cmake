@@ -20,18 +20,19 @@ endif()
 #set ( OPENAL_LIBRARY CACHE FILEPATH "OpenAL library file" )
 #set ( OPENAL_EFX_LIBRARY CACHE FILEPATH "OpenAL EFX library file" )
 
-find_path ( OPENAL_INCLUDE_DIR
-    AL/al.h
-    AL/alc.h
+find_path ( OPENAL_INCLUDE_DIR_TMP
+    al.h
+    alc.h
 
     PATH_SUFFIXES
     include
+    include/AL
 
     PATHS
     ${OPENAL_SEARCH_PATHS}
     )
 
-find_library ( OPENAL_LIBRARY
+find_library ( OPENAL_LIBRARY_TMP
     NAMES
     openal
     OpenAL
@@ -46,7 +47,7 @@ find_library ( OPENAL_LIBRARY
     ${OPENAL_SEARCH_PATHS}
     )
 
-find_library ( OPENAL_EFX_LIBRARY
+find_library ( OPENAL_EFX_LIBRARY_TMP
     NAMES
     EFX-Util
 
@@ -59,14 +60,18 @@ find_library ( OPENAL_EFX_LIBRARY
     ${OPENAL_SEARCH_PATHS}
     )
 
-set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR}" CACHE PATH "OpenAL include directory" FORCE )
-set ( OPENAL_LIBRARY "${OPENAL_LIBRARY}" CACHE FILEPATH "OpenAL library file" FORCE )
-set ( OPENAL_EFX_LIBRARY "${OPENAL_EFX_LIBRARY}" CACHE FILEPATH "OpenAL EFX library file" FORCE )
+# TODO: Add check for whether libraries are symbolic links, and dereference them
+
+set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR_TMP}" CACHE PATH "OpenAL include directory" FORCE )
+set ( OPENAL_LIBRARY "${OPENAL_LIBRARY_TMP}" CACHE FILEPATH "OpenAL library file" FORCE )
+set ( OPENAL_EFX_LIBRARY "${OPENAL_EFX_LIBRARY_TMP}" CACHE FILEPATH "OpenAL EFX library file" FORCE )
 
 if(OPENAL_INCLUDE_DIR AND OPENAL_LIBRARY)
     set ( OPENAL_FOUND ON )
 endif()
 
 INCLUDE(FindPackageHandleStandardArgs)
+
+message ( "${OPENAL_LIBRARY} ${OPENAL_INCLUDE_DIR}" )
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(OpenAL REQUIRED_VARS OPENAL_LIBRARY OPENAL_INCLUDE_DIR)
