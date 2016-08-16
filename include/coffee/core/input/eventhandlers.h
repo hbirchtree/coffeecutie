@@ -60,6 +60,7 @@ FORCEDINLINE void WindowManagerCloseWindow(T* r,
 template<typename T>
 FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
 {
+#if !defined(COFFEE_ANDROID) || !defined(COFFEE_APPLE_MOBILE)
     if(e.type==CIEvent::Keyboard)
     {
         auto kev = (CIKeyEvent const*)data;
@@ -68,7 +69,11 @@ FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
             return;
 
         switch(kev->key)
-        {
+	{
+	case CK_EnterCR:
+	case CK_EnterNL:
+	    if(!(kev->mod & CIKeyEvent::LAltModifier))
+		break;
         case CK_F11:
             if(r->windowState() & CDProperties::Windowed)
                 r->setWindowState(CDProperties::WindowedFullScreen);
@@ -79,6 +84,7 @@ FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
             break;
         }
     }
+#endif
 }
 
 FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)

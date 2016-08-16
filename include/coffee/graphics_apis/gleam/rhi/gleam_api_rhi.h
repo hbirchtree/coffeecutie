@@ -71,6 +71,13 @@ struct GLEAM_API : GraphicsAPI
         SamCubeA = 0x400,
     };
 
+    /* These access the PBO queue */
+    friend struct GLEAM_Surface2D;
+    friend struct GLEAM_Surface3D_Base;
+    friend struct GLEAM_SurfaceCube;
+    friend struct GLEAM_SurfaceCubeArray;
+    friend struct GLEAM_PipelineDumper;
+
     /* Types and relationships */
     using PRF = GLEAM_PRF;
 
@@ -79,12 +86,6 @@ struct GLEAM_API : GraphicsAPI
 
     using DrawCall = GraphicsAPI::DrawCall;
     using DrawInstanceData = GraphicsAPI::DrawInstanceData;
-
-    /* These access the PBO queue */
-    friend struct GLEAM_Surface2D;
-    friend struct GLEAM_Surface3D_Base;
-    friend struct GLEAM_SurfaceCube;
-    friend struct GLEAM_SurfaceCubeArray;
 
     /* Just defining nicer names */
     using S_2D = GLEAM_Surface2D;

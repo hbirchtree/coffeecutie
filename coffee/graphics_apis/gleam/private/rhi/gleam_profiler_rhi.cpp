@@ -20,6 +20,7 @@ static cstring m_shader_vertex_passthrough = {
     ""
     "out vec2 tex_out;\n"
     "uniform mat4 transform;\n"
+    ""
     "void main(){\n"
     "    tex_out = tex;\n"
     "    gl_Position = transform*vec4(pos,1.);\n"

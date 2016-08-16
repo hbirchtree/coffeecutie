@@ -30,6 +30,9 @@ struct GLEAM_PboQueue
 struct GLEAM_Instance_Data
 {
     GLEAM_PboQueue pboQueue;
+    struct {
+	int32 NUM_PROGRAM_BINARY_FORMATS = -1;
+    } GL_CACHED;
 };
 
 }
