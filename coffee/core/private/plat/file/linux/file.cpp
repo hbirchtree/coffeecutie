@@ -11,7 +11,9 @@ namespace Linux{
 CString LinuxFileFun::NativePath(cstring fn)
 {
     const constexpr cstring var_appimg = "APPIMAGE_DATA_DIR";
-    const constexpr cstring var_snappy = "SNAP_DATA";
+    const constexpr cstring var_snappy = "SNAP";
+
+    fprintf(stderr,"Asset path: %s\n",fn);
 
     if(fn[0] == '/')
         return fn;
@@ -19,22 +21,25 @@ CString LinuxFileFun::NativePath(cstring fn)
     if(AssetApi::GetAsset(fn))
     {
         /* Check if it's an AppImage */
+        if(Env::ExistsVar(var_appimg))
         {
-            if(!Env::ExistsVar(var_appimg))
-                return AssetApi::GetAsset(fn);
             cstring asset = AssetApi::GetAsset(fn);
             CString res = Env::GetVar(var_appimg);
             CString out = Env::ConcatPath(res.c_str(),asset);
             return out;
         }
         /* Check if it's a Snap */
+        else if(Env::ExistsVar(var_snappy))
         {
             cstring asset = AssetApi::GetAsset(fn);
             if(!Env::ExistsVar(var_snappy))
                 return asset;
             CString res = Env::GetVar(var_snappy);
             CString out = Env::ConcatPath(res.c_str(),asset);
+            fprintf(stderr,"Snappy path: %s\n",out.c_str());
             return out;
+        }else{
+            return AssetApi::GetAsset(fn);
         }
     }else
         return fn;

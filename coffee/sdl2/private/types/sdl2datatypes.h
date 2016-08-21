@@ -2,9 +2,9 @@
 #define SDL2DATATYPES
 
 #include <coffee/core/base/types/cdisplay.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_video.h>
-#include <SDL2/SDL_syswm.h>
+#include <SDL.h>
+#include <SDL_video.h>
+#include <SDL_syswm.h>
 #include <coffee/graphics_apis/gltypes.h>
 
 namespace Coffee{

@@ -6,11 +6,11 @@ namespace Linux{
 
 CString LinuxEnv::GetUserData(cstring orgname, cstring appname)
 {
-    const constexpr cstring var_snappy = "SNAP_USER_DATA";
+    const constexpr cstring var_snappy = "SNAP_USER_COMMON";
 
     if(LinuxEnv::ExistsVar(var_snappy))
     {
-    return LinuxEnv::GetVar(var_snappy);
+        return LinuxEnv::GetVar(var_snappy);
     }else{
         CString homedir = GetUserHome();
         homedir = ConcatPath(homedir.c_str(),".local/share");

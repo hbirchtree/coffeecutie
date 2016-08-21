@@ -28,7 +28,8 @@ int32 coffee_main(int32, cstring_w*)
 
         Profiler::Profile("Print some data");
 
-        CResources::FileMkdir(cfg_dir.c_str(),true);
+        if(!CResources::FileMkdir(cfg_dir.c_str(),true))
+            cWarning("Failed to create settings directory");
         Profiler::Profile("Create directory recursively");
     }
     Profiler::PopContext();

@@ -3,19 +3,12 @@ include ( LinuxAppImageBuild )
 include ( LinuxFlatpakBuild )
 include ( LinuxSnappyBuild )
 include ( MacAppBuild )
-include ( WindowsImagePacker )
+include ( WindowsImageBuild )
 
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
-    if(ANDROID)
-        # Android's compiler doesn't support target_compile_features :(
-        # See BuildFlags.cmake
-    elseif(APPLE)
-        # Old Clang versions are bad, m'kay?
-        # See BuildFlags.cmake
-    else()
-        # This works on Linux and Win32
+    if(NOT ANDROID AND NOT APPLE)
         target_compile_features(${TARGET} PRIVATE cxx_constexpr)
     endif()
 endmacro()

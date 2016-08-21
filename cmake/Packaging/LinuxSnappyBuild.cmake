@@ -47,9 +47,17 @@ macro ( SNAPPY_PACKAGE
 
     set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )
 
+    set ( SNAPPY_ARCH_DATA "amd64) ARCH_STRING=\"${CMAKE_LIBRARY_ARCHITECTURE}\" ;;" )
+
     configure_file (
         "${SNAPPY_CONFIG_DIR}/snap.yaml.in"
         "${SNAPCRAFT_FILE}"
+        @ONLY
+        )
+
+    configure_file (
+        "${SNAPPY_CONFIG_DIR}/snap-select.sh"
+        "${SNAPPY_PKG_DIR}/snap-select.sh"
         @ONLY
         )
 
@@ -66,6 +74,8 @@ macro ( SNAPPY_PACKAGE
 	"    plugin: copy\n"
         "    files:\n"
 	"      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
+        "      \"${SNAPPY_PKG_DIR}/snap-select.sh\": \"bin/${TARGET}\"\n"
+
         )
 
     foreach(LIB ${LIBRARY_FILES})

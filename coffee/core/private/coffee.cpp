@@ -14,8 +14,6 @@
 
 namespace Coffee{
 
-CString plat_tmp_string;
-
 /* Information that is not otherwise available */
 cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
                                                         C_COMPILER_VER_MAJ,
