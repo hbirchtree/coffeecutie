@@ -139,6 +139,8 @@ function(COFFEE_ADD_APPLICATION_LONGER
     set ( COPYRIGHT "Coffeecutie, MIT license" )
     set ( VERSION_CODE "${APP_VERSION_CODE}" )
 
+    set ( PERMISSIONS "OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT" )
+
     set ( PACKAGE_PREFIX "org.coffee" )
 
     set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/icon.svg" )
@@ -192,8 +194,10 @@ function(COFFEE_ADD_APPLICATION_LONGER
                 "${TITLE}" "${INFO_STRING}"
                 "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
                 "${BUNDLE_RSRCS}"
-                "" "${BUNDLE_LIBS}"
+                ""
+                "${BUNDLE_LIBS}"
                 "${ICON_ASSET}"
+                "${PERMISSIONS}"
                 ""
                 )
         endif()

@@ -1,4 +1,6 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    include ( PermissionList )
+
     set ( SNAPPY_CONFIG_DIR "${COFFEE_DESKTOP_DIRECTORY}/linux/snappy" CACHE PATH "" )
 
     set ( SNAPPY_PROGRAM "/usr/bin/snapcraft" CACHE FILEPATH "" )
@@ -13,33 +15,71 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 	CACHE PATH "" )
 endif()
 
+macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
+    set ( ${PERMISSION_OUTPUT}
+#        "system-observe"
+#        "hardware-observe"
+
+#        "network"
+#        "network-observe"
+#        "network-bind"
+
+#        "opengl"
+#        "x11"
+
+#        "pulseaudio"
+        )
+    foreach( PARAM ${PERMISSIONS_LIST} )
+        get_permission_flag( ${PARAM} PARAM_ENABLED )
+        if( "${PARAM_ENABLED}" STREQUAL "1" )
+            set ( PARAM_TRANS )
+            if("${PARAM}" MATCHES "GRAPHICS" OR "${PARAM}" MATCHES "OPENGL")
+                # SDL2 needs to create a Unix socket, therefore we need this
+                set ( PARAM_TRANS "x11;opengl;network-bind;network" )
+            elseif("${PARAM}" MATCHES "AUDIO")
+                set ( PARAM_TRANS "pulseaudio" )
+            elseif("${PARAM}" MATCHES "NETWORK_ACCESS")
+                set ( PARAM_TRANS "network" )
+            elseif("${PARAM}" MATCHES "NETWORK_CONNECT" OR "${PARAM}" MATCHES "NETWORK_SERVE")
+                set ( PARAM_TRANS "network-observe;network-bind" )
+            endif()
+            list ( APPEND ${PERMISSION_OUTPUT} "${PARAM_TRANS}" )
+        endif()
+    endforeach()
+endmacro()
+
 macro ( SNAPPY_PACKAGE
         TARGET
         TITLE SUMMARY
         VERSION COPYRIGHT COMPANY
         DATA
         LIBRARIES LIBRARY_FILES
-        ICON_ASSET)
+        ICON_ASSET
+        PERMISSIONS
+        )
 
     set ( SNAPPY_PACKAGE_NAME "${TARGET}" )
+
     string ( TOLOWER "${SNAPPY_PACKAGE_NAME}" SNAPPY_PACKAGE_NAME )
     string ( REPLACE "_" "-" SNAPPY_PACKAGE_NAME "${SNAPPY_PACKAGE_NAME}" )
 
     set ( SNAPPY_PKG_DIR "${SNAPPY_DEPLOY_DIRECTORY}/${TARGET}" )
     set ( SNAPPY_FINAL_SNAP "${SNAPPY_OUTPUT_DIRECTORY}/${SNAPPY_PACKAGE_NAME}_${VERSION}_all.snap" )
+    set ( SNAPPY_ARCH_DATA "amd64) ARCH_STRING=\"${CMAKE_LIBRARY_ARCHITECTURE}\" ;;" )
 
+    set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )
     set ( ICON_TARGET "${SNAPPY_PKG_DIR}/setup/gui/icon.svg" )
 
     set ( SNAPPY_TITLE "${TITLE}" )
     set ( SNAPPY_VERSION "${VERSION}" )
-    set ( SNAPPY_ARCHITECTURES "all" )
+    set ( SNAPPY_ARCHITECTURES "amd64" )
     set ( SNAPPY_SUMMARY "${SUMMARY}" )
 
     set ( SNAPPY_CONFINEMENT "strict" )
 
-    if( "${CMAKE_BUILD_TYPE}" MATCHES "Debug" )
-        set ( SNAPPY_CONFINEMENT "devmode" )
-    endif()
+    # Retrieve Snappy permissions list
+    snappy_translate_permissions( "${PERMISSIONS}" SNAPPY_PERMISSIONS )
+    message ( "${SNAPPY_PERMISSIONS}" )
 
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/setup/gui"
@@ -50,10 +90,6 @@ macro ( SNAPPY_PACKAGE
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_OUTPUT_DIRECTORY}"
         )
-
-    set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )
-
-    set ( SNAPPY_ARCH_DATA "amd64) ARCH_STRING=\"${CMAKE_LIBRARY_ARCHITECTURE}\" ;;" )
 
     configure_file (
         "${SNAPPY_CONFIG_DIR}/snap.yaml.in"
@@ -72,17 +108,19 @@ macro ( SNAPPY_PACKAGE
         "  game:\n"
         "    command: bin/${TARGET}\n"
         "    plugs:\n"
-        "      - network\n"
-        "      - opengl\n"
-        "      - pulseaudio\n"
-        "      - x11\n"
+        )
+    foreach( PERM ${SNAPPY_PERMISSIONS})
+        file ( APPEND "${SNAPCRAFT_FILE}"
+            "      - ${PERM}\n"
+            )
+    endforeach()
+    file ( APPEND "${SNAPCRAFT_FILE}"
         "parts:\n"
         "  binary-import:\n"
 	"    plugin: copy\n"
         "    files:\n"
 	"      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
         "      \"${SNAPPY_PKG_DIR}/snap-select.sh\": \"bin/${TARGET}\"\n"
-
         )
 
     foreach(LIB ${LIBRARY_FILES})
