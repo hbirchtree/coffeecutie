@@ -30,7 +30,15 @@ coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     find_package ( X11 REQUIRED )
-    target_link_libraries( CoffeeSDL2 ${X11_LIBRARIES} )
+    target_link_libraries( CoffeeSDL2
+        ${X11_LIBRARIES}
+
+        wayland-client
+        wayland-cursor
+        wayland-egl
+
+        mirclient
+        )
 endif()
 
 target_link_libraries( CoffeeSDL2

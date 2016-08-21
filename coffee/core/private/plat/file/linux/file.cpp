@@ -13,8 +13,6 @@ CString LinuxFileFun::NativePath(cstring fn)
     const constexpr cstring var_appimg = "APPIMAGE_DATA_DIR";
     const constexpr cstring var_snappy = "SNAP";
 
-    fprintf(stderr,"Asset path: %s\n",fn);
-
     if(fn[0] == '/')
         return fn;
 
@@ -35,8 +33,8 @@ CString LinuxFileFun::NativePath(cstring fn)
             if(!Env::ExistsVar(var_snappy))
                 return asset;
             CString res = Env::GetVar(var_snappy);
+            res = Env::ConcatPath(res.c_str(),"assets");
             CString out = Env::ConcatPath(res.c_str(),asset);
-            fprintf(stderr,"Snappy path: %s\n",out.c_str());
             return out;
         }else{
             return AssetApi::GetAsset(fn);
