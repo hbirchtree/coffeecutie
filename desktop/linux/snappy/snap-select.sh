@@ -10,6 +10,7 @@ EXEC_NAME="$SNAP/bin/$ARCH_STRING/@TARGET@"
 
 echo "-- System information --"
 uname -a
+lsb_release -a
 echo "------------------------"
 echo "--- Snappy variables ---"
 env | grep SNAP
@@ -25,6 +26,12 @@ echo "------------------------"
     exit 1
 
 "$EXEC_NAME"
+
+EXIT_CODE="$?"
+
+[ "$EXIT_CODE" != "0" ] && \
+    echo "------------------------" && \
+    echo "Exited with status: $EXIT_CODE"
 
 echo "------------------------"
 echo "Current directory: $(pwd)"

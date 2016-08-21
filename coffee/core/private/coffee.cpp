@@ -14,6 +14,10 @@
 
 namespace Coffee{
 
+#if defined(COFFEE_ANDROID)
+CString plat_tmp_string;
+#endif
+
 /* Information that is not otherwise available */
 cstring CoffeeCompilerString = C_COMPILER_DEFINE_STRING(C_COMPILER_NAME,
                                                         C_COMPILER_VER_MAJ,

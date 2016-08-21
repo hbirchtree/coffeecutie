@@ -35,6 +35,12 @@ macro ( SNAPPY_PACKAGE
     set ( SNAPPY_ARCHITECTURES "all" )
     set ( SNAPPY_SUMMARY "${SUMMARY}" )
 
+    set ( SNAPPY_CONFINEMENT "strict" )
+
+    if( "${CMAKE_BUILD_TYPE}" MATCHES "Debug" )
+        set ( SNAPPY_CONFINEMENT "devmode" )
+    endif()
+
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/setup/gui"
         )
@@ -69,6 +75,7 @@ macro ( SNAPPY_PACKAGE
         "      - network\n"
         "      - opengl\n"
         "      - pulseaudio\n"
+        "      - x11\n"
         "parts:\n"
         "  binary-import:\n"
 	"    plugin: copy\n"

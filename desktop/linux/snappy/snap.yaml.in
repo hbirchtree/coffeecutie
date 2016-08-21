@@ -1,6 +1,6 @@
 name: @SNAPPY_PACKAGE_NAME@
 version: @SNAPPY_VERSION@
-confinement: strict
+confinement: @SNAPPY_CONFINEMENT@
 architectures: [ @SNAPPY_ARCHITECTURES@ ]
 summary: @SNAPPY_TITLE@
 description: @SNAPPY_SUMMARY@
