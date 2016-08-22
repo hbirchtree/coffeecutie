@@ -9,5 +9,4 @@ set ( SDL_CPUINFO       OFF CACHE BOOL "" )
 set ( SDL_FILE          OFF CACHE BOOL "" )
 set ( SDL_THREADS       OFF CACHE BOOL "" )
 
-set ( VIDEO_OPENGLES    OFF CACHE BOOL "" )
 set ( DIRECTX           OFF CACHE BOOL "" )
