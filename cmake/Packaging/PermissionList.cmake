@@ -3,12 +3,26 @@ function ( GET_PERMISSION_FLAG TEST FLAG )
         "NETWORK_ACCESS"
         "NETWORK_CONNECT"
         "NETWORK_SERVE"
+        "WIFI_CONNECT"
+        "WIFI_MANAGE"
+
+        "SERIAL_PORTS"
+        "BLUETOOTH"
+        "NFC"
+        "JOYSTICK"
+
         "AUDIO"
+
         "SIMPLE_GRAPHICS"
         "OPENGL"
+
         "CAMERA"
         "MICROPHONE"
+
         "ENVIRONMENT_SENSORS"
+        "PROCESSES"
+
+        "BROWSER"
         )
     foreach( PERM ${PERMISSIONS_LIST} )
         if( "${PERM}" MATCHES "${TEST}" )

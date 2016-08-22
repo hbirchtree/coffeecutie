@@ -33,15 +33,29 @@ macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
         get_permission_flag( ${PARAM} PARAM_ENABLED )
         if( "${PARAM_ENABLED}" STREQUAL "1" )
             set ( PARAM_TRANS )
-            if("${PARAM}" MATCHES "GRAPHICS" OR "${PARAM}" MATCHES "OPENGL")
+            # Snapcraft does not like it if we have non-unique elements in the list, we therefore verify this
+            if("${PARAM}" MATCHES "SIMPLE_GRAPHICS" OR "${PARAM}" MATCHES "OPENGL")
                 # SDL2 needs to create a Unix socket, therefore we need this
                 set ( PARAM_TRANS "x11;opengl;network-bind;network" )
             elseif("${PARAM}" MATCHES "AUDIO")
                 set ( PARAM_TRANS "pulseaudio" )
-            elseif("${PARAM}" MATCHES "NETWORK_ACCESS")
+            elseif("${PARAM}" MATCHES "JOYSTICK")
+                set ( PARAM_TRANS "system-observe;hardware-observe" )
+            elseif("${PARAM}" MATCHES "BROWSER")
+                set ( PARAM_TRANS "browser-support" )
+            elseif("${PARAM}" MATCHES "NETWORK_ACCESS"
+                    AND NOT "${PERMISSIONS_LIST}" MATCHES ".*GRAPHICS.*"
+                    AND NOT "${PERMISSIONS_LIST}" MATCHES ".*OPENGL.*"
+                    AND NOT "${PERMISSIONS_LIST}" MATCHES ".*NETWORK_CONNECT.*"
+                    AND NOT "${PERMISSIONS_LIST}" MATCHES ".*NETWORK_SERVE.*")
                 set ( PARAM_TRANS "network" )
-            elseif("${PARAM}" MATCHES "NETWORK_CONNECT" OR "${PARAM}" MATCHES "NETWORK_SERVE")
-                set ( PARAM_TRANS "network-observe;network-bind" )
+            elseif("${PARAM}" MATCHES "NETWORK_CONNECT"
+                    OR "${PARAM}" MATCHES "NETWORK_SERVE")
+                set ( PARAM_TRANS "network-observe" )
+                if(NOT "${PERMISSIONS_LIST}" MATCHES ".*GRAPHICS.*"
+                        AND NOT "${PERMISSIONS_LIST}" MATCHES ".*OPENGL.*")
+                    set ( PARAM_TRANS "${PARAM_TRANS};network;network-bind" )
+                endif()
             endif()
             list ( APPEND ${PERMISSION_OUTPUT} "${PARAM_TRANS}" )
         endif()
@@ -54,6 +68,7 @@ macro ( SNAPPY_PACKAGE
         VERSION COPYRIGHT COMPANY
         DATA
         LIBRARIES LIBRARY_FILES
+        EXEC_FILES
         ICON_ASSET
         PERMISSIONS
         )
@@ -79,7 +94,6 @@ macro ( SNAPPY_PACKAGE
 
     # Retrieve Snappy permissions list
     snappy_translate_permissions( "${PERMISSIONS}" SNAPPY_PERMISSIONS )
-    message ( "${SNAPPY_PERMISSIONS}" )
 
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/setup/gui"
@@ -127,6 +141,11 @@ macro ( SNAPPY_PACKAGE
 	get_filename_component ( SH_LIB "${LIB}" NAME )
 	file ( APPEND "${SNAPCRAFT_FILE}"
 	    "      \"${LIB}\": \"lib/${CMAKE_LIBRARY_ARCHITECTURE}/${SH_LIB}\"\n")
+    endforeach()
+
+    foreach(BIN ${EXEC_FILES})
+        file ( APPEND "${SNAPCRAFT_FILE}"
+            "      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${BIN}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${BIN}\"\n")
     endforeach()
 
     set ( NUM_IMPORTS "0" )

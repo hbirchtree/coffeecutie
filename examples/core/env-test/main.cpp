@@ -30,6 +30,11 @@ int32 coffee_main(int32, cstring_w*)
 
         if(!CResources::FileMkdir(cfg_dir.c_str(),true))
             cWarning("Failed to create settings directory");
+        else
+        {
+            CString test_file = Env::ConcatPath(cfg_dir.c_str(),"test_file.sav");
+            FileFun::Touch(FileFun::File,test_file.c_str());
+        }
         Profiler::Profile("Create directory recursively");
     }
     Profiler::PopContext();

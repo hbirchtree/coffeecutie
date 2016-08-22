@@ -119,11 +119,14 @@ endmacro()
 # We do a test to check if a library is a shared library for Android
 # For iOS, everything will be statically linked, which might be used for Android as well.
 # For now, we leave the linking options here for desktop platforms
-function(COFFEE_ADD_APPLICATION_LONGER
+function(COFFEE_ADD_APPLICATION_LONGERER
         TARGET
         TITLE APP_COMPANY_NAME APP_VERSION_CODE
+        INFO_STRING COPYRIGHT
         SOURCES LIBRARIES
-        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES)
+        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES
+        PERMISSIONS
+        BUNDLE_BINARIES)
 
     coffee_gen_licenseinfo("${TARGET}" "${BUNDLE_LICENSES}")
     coffee_gen_applicationinfo("${TARGET}"
@@ -135,11 +138,7 @@ function(COFFEE_ADD_APPLICATION_LONGER
     set ( SOURCES_MOD "${APPLICATION_INFO_FILE};${LICENSE_FILE};${SOURCES}" )
 
     set ( COMPANY "${APP_COMPANY_NAME}" )
-    set ( INFO_STRING "It's a Coffee application" )
-    set ( COPYRIGHT "Coffeecutie, MIT license" )
     set ( VERSION_CODE "${APP_VERSION_CODE}" )
-
-    set ( PERMISSIONS "OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT" )
 
     set ( PACKAGE_PREFIX "org.coffee" )
 
@@ -194,11 +193,10 @@ function(COFFEE_ADD_APPLICATION_LONGER
                 "${TITLE}" "${INFO_STRING}"
                 "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
                 "${BUNDLE_RSRCS}"
-                ""
-                "${BUNDLE_LIBS}"
+                "" "${BUNDLE_LIBS}"
+                "${BUNDLE_BINARIES}"
                 "${ICON_ASSET}"
                 "${PERMISSIONS}"
-                ""
                 )
         endif()
 
@@ -237,6 +235,38 @@ endfunction()
 
 # Wrapper functions
 
+macro(COFFEE_ADD_APPLICATION_LONGER
+        TARGET
+        TITLE COMPANY VERSION
+        SOURCES LIBRARIES
+        BUNDLE_LIBS BUNDLE_RSRCS)
+
+    set ( PERMISSIONS "OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT;JOYSTICK" )
+    set ( INFO_STRING "It's a Coffee application" )
+    set ( COPYRIGHT "Coffeecutie, MIT license" )
+
+    COFFEE_ADD_APPLICATION_LONGERER(
+        "${TARGET}"
+        "${TITLE}" "${COMPANY}" "${VERSION}"
+        "${INFO_STRING}" "${COPYRIGHT}"
+        "${SOURCES}" "${LIBRARIES}"
+        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}"
+        "${PERMISSIONS}"
+        "")
+endmacro()
+
+function(COFFEE_ADD_EXAMPLE_LONGER
+        TARGET
+        TITLE APP_COMPANY_NAME APP_VERSION_CODE
+        SOURCES LIBRARIES
+        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES)
+    COFFEE_ADD_APPLICATION_LONGER(
+        "${TARGET}"
+        "${TITLE}" "${COMPANY}" "${VERSION}"
+        "${SOURCES}" "${LIBRARIES}"
+        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
+endfunction()
+
 macro(COFFEE_ADD_EXAMPLE_LONG
         TARGET
         TITLE
@@ -252,18 +282,6 @@ macro(COFFEE_ADD_EXAMPLE_LONG
         "${SOURCES}" "${LIBRARIES}"
         "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
 endmacro()
-
-function(COFFEE_ADD_EXAMPLE_LONGER
-        TARGET
-        TITLE APP_COMPANY_NAME APP_VERSION_CODE
-        SOURCES LIBRARIES
-        BUNDLE_LIBS BUNDLE_RSRCS BUNDLE_LICENSES)
-    COFFEE_ADD_APPLICATION_LONGER(
-        "${TARGET}"
-        "${TITLE}" "${COMPANY}" "${VERSION}"
-        "${SOURCES}" "${LIBRARIES}"
-        "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}" "${BUNDLE_LICENSES}")
-endfunction()
 
 macro(COFFEE_ADD_APPLICATION_LONG TARGET TITLE SOURCES LIBRARIES BUNDLE_LIBS BUNDLE_RSRCS)
     coffee_add_example_long(${TARGET} ${TITLE} "${SOURCES}" "${LIBRARIES}" "${BUNDLE_LIBS}" "${BUNDLE_RSRCS}")

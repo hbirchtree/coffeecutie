@@ -34,12 +34,17 @@ bool CEFSubsystem::Init()
     cef_args = CefMainArgs(m_args.argc,m_args.argv);
 
     cDebug("CEF init");
+    cDebug("Current ICU directory: {0}",Env::CurrentDir());
 
     CefSettings& settings = cef_settings;
     cef_string_utf16_t path_string = {};
-    cstring subpath = "./CoffeeCefSlave";
+//    cef_string_utf16_t resc_string = {};
+    cstring subpath = "./CCefSlave";
+//    CString rescpath = Env::CurrentDir();
     cef_string_ascii_to_utf16(subpath,StrLen(subpath),&path_string);
+//    cef_string_ascii_to_utf16(rescpath.c_str(),rescpath.size(),&resc_string);
     settings.browser_subprocess_path = path_string;
+//    settings.resources_dir_path = resc_string;
 
     return CefInitialize(cef_args,settings,nullptr,nullptr);
 }
@@ -93,7 +98,7 @@ public:
 private:
     CStbImageLib::CStbImage texture_out;
 
-    IMPLEMENT_REFCOUNTING(CEFOffscreenBrowser);
+    IMPLEMENT_REFCOUNTING(CEFOffscreenBrowser)
 };
 
 class CEFCoffeeClient : public CefClient

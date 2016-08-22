@@ -279,7 +279,7 @@ bool PosixDirFun::MkDir(cstring dname, bool createParent)
             mkdir(tmp,S_IRWXU);
             *p = '/';
         }
-    return mkdir(tmp,S_IRWXU)==0;
+    return mkdir(tmp,S_IRWXU)==0 || (errno == EEXIST);
 }
 
 bool Posix::PosixDirFun::ChDir(cstring dir)

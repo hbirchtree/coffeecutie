@@ -7,4 +7,4 @@ target_link_libraries ( CoffeeCEF
     ${CEF_LIBRARIES}
     CoffeeImage )
 
-coffee_add_example ( CCefSlave "CEFSlave" private/ccef_slave.cpp "${CEF_LIBRARIES};CoffeeCore" )
+coffee_add_application ( CCefSlave "CEFSlave" private/ccef_slave.cpp "${CEF_LIBRARIES};CoffeeCore" )
