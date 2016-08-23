@@ -33,6 +33,11 @@ struct _cal_devdata
     bool b_input;
 };
 
+bool CALSoundDevice::is_loaded()
+{
+    return (bool)m_data->m_ctxt;
+}
+
 CALSoundDevice::CALSoundDevice(const CSoundDeviceIdentifier& dev):
     CSoundDevice(0)
 {

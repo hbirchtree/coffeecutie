@@ -17,8 +17,8 @@ class CALSoundManager : public CSoundArbiter<CALSource,CALBuffer>
     uint32 idevices = 0;
     cstring* a_idevices = nullptr;
     cstring* a_odevices = nullptr;
-    std::vector<CALSoundDeviceIdentifier> v_idevices;
-    std::vector<CALSoundDeviceIdentifier> v_odevices;
+    Vector<CALSoundDeviceIdentifier> v_idevices;
+    Vector<CALSoundDeviceIdentifier> v_odevices;
 
 public:
     CALSoundManager();
