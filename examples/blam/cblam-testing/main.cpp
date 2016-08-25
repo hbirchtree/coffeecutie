@@ -16,7 +16,7 @@ int coffee_main(int32 argv,cstring_w* argc)
     CResources::FileResourcePrefix("sample_data/cblam_data/");
 
 //    cstring mapstring = GetArgument(argv,argc,"halomap");
-    cstring mapstring = "bloodgulch.map";
+    cstring mapstring = "b40.map";
     if(!mapstring)
         return 1;
     Resource mapfile(mapstring);
@@ -43,8 +43,8 @@ int coffee_main(int32 argv,cstring_w* argc)
             //        const blam_scn_chunk* bsp =
             //                (const blam_scn_chunk*)
             //                blam_mptr(map,0,s_bsp->offset);
-            cDebug("Name of BSP: {0}",(cstring)blam_mptr(map,tags.index_magic,
-                                                         s_bsp->name_ptr));
+            cDebug("BSP: {0}",(cstring)blam_mptr(map,tags.index_magic,
+                                                 s_bsp->name_ptr));
         }
     }
 
