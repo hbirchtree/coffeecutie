@@ -147,4 +147,6 @@ enum class PixelFormat
     Depth, DepthStencil, /* Fakes */
 };
 
+using PixFmt = PixelFormat;
+
 }

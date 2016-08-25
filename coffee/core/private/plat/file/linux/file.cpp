@@ -40,7 +40,9 @@ CString LinuxFileFun::NativePath(cstring fn)
             return AssetApi::GetAsset(fn);
         }
     }else
-        return fn;
+    {
+        return FileFun::DereferenceLink(fn);
+    }
 }
 
 CString LinuxFileFun::NativePath(cstring fn, ResourceAccess storage)

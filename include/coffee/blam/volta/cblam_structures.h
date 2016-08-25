@@ -1,12 +1,18 @@
 #ifndef CBLAM_STRUCTURES
 #define CBLAM_STRUCTURES
 
-#include <coffee/graphics_apis/opengl/glbinding/wrappers/ctexture_types.h>
+/* In the future, we might use this for packing-sensitive structs */
+#define BL_STRUCT struct
+
+#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/core/types/cdef/pixtypes.h>
+#include <coffee/core/types/edef/graphicsenum.h>
+#include <coffee/core/types/edef/pixenum.h>
+#include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/map.h>
 
 namespace Coffee{
 namespace CBlam{
-
-using namespace CGraphicsWrappers;
 
 using bl_tag = sbyte_t[4];
 using bl_string = sbyte_t[32];
@@ -253,14 +259,14 @@ struct bitm_image_t
  */
 struct bitm_texture_t
 {
-    CTextureSize  resolution;  /*!< Size of texture*/
-    const void*   data;        /*!< Pointer to described data*/
-    int16         mipmaps;     /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
-    CTexFormat    format;      /*!< Texture format, DXT or RGBA*/
-    CTexIntFormat cformat;     /*!< Compression format, if applicable*/
-    CDataType     dformat;     /*!< Data format of texture data*/
-    CTexType      type;        /*!< Texture type, 2D, 3D and cubes*/
-    uint16        blocksize;   /*!< Block size of DXT* formats*/
+    CSize3    resolution;  /*!< Size of texture*/
+    c_cptr    data;        /*!< Pointer to described data*/
+    int16     mipmaps;     /*!< Number of mipmaps, assumed to be r/2 per mipmap*/
+    PixCmp    format;      /*!< Texture format, DXT or RGBA*/
+    PixFmt    cformat;     /*!< Compression format, if applicable*/
+    BitFormat dformat;     /*!< Data format of texture data*/
+    TexType   type;        /*!< Texture type, 2D, 3D and cubes*/
+    uint16    blocksize;   /*!< Block size of DXT* formats*/
 };
 
 }

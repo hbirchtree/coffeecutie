@@ -94,6 +94,11 @@ extern cstring blam_tagref_get_name(
         const file_header_t* file,
         const tag_index_t* tags);
 
+extern bool blam_tagref_match_class(
+        const index_item_t* item,
+        uint32 i,
+        const bl_tag tag);
+
 }
 }
 

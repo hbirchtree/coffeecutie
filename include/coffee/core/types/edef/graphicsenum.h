@@ -50,6 +50,11 @@ enum class ProfilingTerm
     Frametime,
 };
 
+enum class TexType
+{
+    None, T2D, T3D, Cube
+};
+
 C_FLAGS(DBuffers,uint32);
 C_FLAGS(FramebufferT,uint32);
 

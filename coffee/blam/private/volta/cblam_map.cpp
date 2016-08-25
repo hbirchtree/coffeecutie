@@ -83,6 +83,11 @@ cstring blam_tagref_get_name(const tagref_t *tag, const file_header_t *file, con
     return (cstring)blam_mptr(file,tags->index_magic,tag->string_offset);
 }
 
+bool blam_tagref_match_class(const index_item_t *item, uint32 i, const bl_tag tag)
+{
+    return MemCmp(item->tagclass[i],tag,4);
+}
+
 }
 
 }
