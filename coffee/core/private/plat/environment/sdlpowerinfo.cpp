@@ -1,6 +1,6 @@
 #include <coffee/core/plat/environment/sdlpowerinfo.h>
 
-#include <SDL2/SDL_power.h>
+#include <SDL_power.h>
 
 namespace Coffee{
 namespace Environment{
