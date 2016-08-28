@@ -7,7 +7,7 @@
 namespace Coffee{
 namespace CFunctional{
 
-struct Counter
+struct counter_t
 {
 public:
     using CounterFun = void(*)(uint32,const void*);
@@ -15,7 +15,7 @@ public:
     const void* ptr;
     uint32 interval;
 
-    FORCEDINLINE Counter(CounterFun fun, uint32 interval = 1000):
+    FORCEDINLINE counter_t(CounterFun fun, uint32 interval = 1000):
         ptr(nullptr),
         interval(interval),
         m_timestamp(0),
@@ -46,7 +46,7 @@ private:
 
 }
 
-using Counter = CFunctional::Counter;
+using Counter = CFunctional::counter_t;
 
 }
 

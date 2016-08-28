@@ -52,7 +52,7 @@ namespace Coffee {
 				CString out;
 
 #ifndef COFFEE_WINDOWS_UWP
-				cstring_w* var = getenv(v);
+				cstring_w var = getenv(v);
 
 				if (var)
 					out = var;
