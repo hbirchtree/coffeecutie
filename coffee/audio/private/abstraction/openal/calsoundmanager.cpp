@@ -67,7 +67,10 @@ CSoundDeviceIdentifier &CALSoundManager::soundInputDevice(const szptr &devEnum)
 
 CSoundDevice<CALSource,CALBuffer>* CALSoundManager::createDevice(const CSoundDeviceIdentifier &id)
 {
-    return new CALSoundDevice(id);
+    CALSoundDevice* dev = new CALSoundDevice(id);
+    if(!dev->is_loaded())
+        return nullptr;
+    return dev;
 }
 
 CSoundDevice<CALSource, CALBuffer> *CALSoundManager::createInputDevice(

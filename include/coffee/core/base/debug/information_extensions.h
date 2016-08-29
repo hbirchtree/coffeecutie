@@ -183,5 +183,14 @@ inline CString cStringReplace(
                                                v.w,v.h));
 }
 
+template<typename T>
+inline CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        _cbasic_size_3d<T> v)
+{
+    return extArgReplace(fmt,index,cStringFormat("sz({0},{1},{2}})",
+                                               v.width,v.height,v.depth));
+}
+
 }
 }

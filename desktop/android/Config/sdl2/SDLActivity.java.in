@@ -29,6 +29,9 @@ import android.graphics.drawable.Drawable;
 import android.media.*;
 import android.hardware.*;
 import android.content.pm.ActivityInfo;
+import android.app.ActivityManager.TaskDescription;
+
+import @ANDROID_PACKAGE_NAME@.R;
 
 /**
     SDL Activity
@@ -177,6 +180,14 @@ public class SDLActivity extends Activity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+
+        /* Sauce: https://www.bignerdranch.com/blog/polishing-your-Android-overview-screen-entry/ */
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            TaskDescription taskDesc = new TaskDescription(getString(R.string.app_name), null,
+                                            getResources().getColor(R.color.activity_color) );
+            setTaskDescription(taskDesc);
+        }
         
         // Get filename from "Open with" of another application
         Intent intent = getIntent();

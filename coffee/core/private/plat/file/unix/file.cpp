@@ -62,7 +62,11 @@ CString PosixFileMod_def::DereferenceLink(cstring fn)
     CString out;
     szptr name_size = PATH_MAX;
     out.resize(name_size+1);
-    out.resize(readlink(fn,&out[0],name_size));
+    ssize_t sz = readlink(fn,&out[0],name_size);
+    if(sz > 0)
+        out.resize(sz);
+    else
+        out.resize(0);
 
     ErrnoCheck(fn);
 

@@ -34,40 +34,42 @@ macro(WINPE_PACKAGE
     # Clear resource header
     file ( WRITE "${RESOURCE_HEADER}"       "" )
 
-    foreach(durr ${RESOURCES})
-        file(GLOB_RECURSE TMP ${durr}/* )
-        foreach(file_full ${TMP})
-            # First, get a relative filename
-            # This is used to describe structure
-            file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
-            get_filename_component ( file_dir "${file_dir}" DIRECTORY )
-            get_filename_component ( file_name "${file_full}" NAME )
-            # We get a lower-case version to compare with other filenames
-            string(TOLOWER "${file_name}" file_name_lower)
+    if(NOT WIN_UWP)
+        foreach(durr ${RESOURCES})
+            file(GLOB_RECURSE TMP ${durr}/* )
+            foreach(file_full ${TMP})
+                # First, get a relative filename
+                # This is used to describe structure
+                file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
+                get_filename_component ( file_dir "${file_dir}" DIRECTORY )
+                get_filename_component ( file_name "${file_full}" NAME )
+                # We get a lower-case version to compare with other filenames
+                string(TOLOWER "${file_name}" file_name_lower)
 
-            if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
-                file (
-                    APPEND "${RESOURCE_HEADER}"
-                    "{${RESC_NUM},\"${file_dir}${file_name}\"},"
-                    )
-                string ( REPLACE "_" "___" "${file_dir}" file_dir )
-                string ( REPLACE "/" "_" "${file_dir}" file_dir )
-                string ( REPLACE "\\" "_" "${file_dir}" file_dir )
-                # If there is a directory path, append a "_" for it to be correct
-                # This is disgusting.
-                if(file_dir)
-                    set( file_dir "${file_dir}_" )
+                if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
+                    file (
+                        APPEND "${RESOURCE_HEADER}"
+                        "{${RESC_NUM},\"${file_dir}${file_name}\"},"
+                        )
+                    string ( REPLACE "_" "___" "${file_dir}" file_dir )
+                    string ( REPLACE "/" "_" "${file_dir}" file_dir )
+                    string ( REPLACE "\\" "_" "${file_dir}" file_dir )
+                    # If there is a directory path, append a "_" for it to be correct
+                    # This is disgusting.
+                    if(file_dir)
+                        set( file_dir "${file_dir}_" )
+                    endif()
+                    # Insert the file with directory path and filename into the .rc file
+                    file (
+                        APPEND "${RESOURCE_DESCRIPTOR}"
+                        "\"${file_dir}${file_name}\" CF_RES \"${file_full}\" \r\n"
+                        )
                 endif()
-                # Insert the file with directory path and filename into the .rc file
-                file (
-                    APPEND "${RESOURCE_DESCRIPTOR}"
-                    "\"${file_dir}${file_name}\" CF_RES \"${file_full}\" \r\n"
-                    )
-            endif()
-            # Increment resource number, inserted into .rc file
-            math ( EXPR RESC_NUM "${RESC_NUM} + 1" )
+                # Increment resource number, inserted into .rc file
+                math ( EXPR RESC_NUM "${RESC_NUM} + 1" )
+            endforeach()
         endforeach()
-    endforeach()
+    endif()
 
     # We add an application manifest to get on the good side with Windows 8.1+
     set ( WINDOWS_DESKTOP_DIR "${COFFEE_DESKTOP_DIRECTORY}/windows" )

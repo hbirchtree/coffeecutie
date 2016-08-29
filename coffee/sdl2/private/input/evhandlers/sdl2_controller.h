@@ -42,7 +42,10 @@ FORCEDINLINE void EventHandleControllerUpdate(
     e.type = CIEvent::ControllerUpdate;
     e.ts = dev.timestamp;
 
-    cstring name = SDL_GameControllerNameForIndex(dev.which);
+	cstring name = nullptr;
+
+	if (dev.type != SDL_CONTROLLERDEVICEREMOVED)
+		name = SDL_GameControllerNameForIndex(dev.which);
 
     CIControllerAtomicUpdateEvent c;
 

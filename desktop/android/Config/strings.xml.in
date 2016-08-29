@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">@ANDROID_APPLICATION_NAME@</string>
+    <color name="activity_color">@ANDROID_APPLICATION_COLOR@</color>
 </resources>

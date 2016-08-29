@@ -32,13 +32,16 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     find_package ( X11 REQUIRED )
     target_link_libraries( CoffeeSDL2
         ${X11_LIBRARIES}
-
-        wayland-client
-        wayland-cursor
-        wayland-egl
-
-        mirclient
         )
+    if(NOT RASPBERRY)
+        target_link_libraries( CoffeeSDL2
+            wayland-client
+            wayland-cursor
+            wayland-egl
+
+            mirclient
+            )
+    endif()
 endif()
 
 target_link_libraries( CoffeeSDL2

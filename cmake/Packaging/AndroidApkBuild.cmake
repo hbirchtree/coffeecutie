@@ -4,9 +4,13 @@ if(ANDROID)
 
     include ( AndroidNdkGdb )
     include ( InkscapeResize )
+    include ( PermissionList )
 
     if(ANDROID_USE_SDL2_LAUNCH)
         find_package(SDL2main REQUIRED)
+        find_package(SDL2 REQUIRED)
+
+        include_directories(${SDL2_INCLUDE_DIR})
     endif()
 
     # APK signing
@@ -74,6 +78,8 @@ macro(APK_PACKAGE_EXT
     set ( ANDROID_VERSION_NAME ${Version_Str} )
 
     set ( ANDROID_API_TARGET ${Api_Target} )
+
+    set ( ANDROID_APPLICATION_COLOR "#E91E63" )
 
     set ( ANDROID_FEATURES "" )
 

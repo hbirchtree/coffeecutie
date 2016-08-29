@@ -62,9 +62,16 @@ link_directories( ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${COFFEE_LIB_D
 
 coffee_gen_licenseinfo( CoffeeSwigShim "" )
 
+coffee_gen_applicationinfo( CoffeeSwigShim
+    "Coffee"
+    "Coffee"
+    1
+    )
+
 set ( CoffeeSwigShim_SRCS
     coffeeswig.cpp
     ${LICENSE_FILE}
+	${APPLICATION_INFO_FILE}
     )
 
 coffee_add_library(CoffeeSwigShim "${CoffeeSwigShim_SRCS}" )

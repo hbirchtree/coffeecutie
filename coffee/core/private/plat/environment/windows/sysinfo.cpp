@@ -185,13 +185,14 @@ CString WindowsSysInfo::GetSystemVersion()
     /* Checking for Wine, being a cheeky cunt */
     /* Source: https://www.winehq.org/pipermail/wine-devel/2008-September/069387.html */
 #if !defined(COFFEE_WINDOWS_UWP)
+	typedef const char * (CDECL *WINE_GET_VERSION_FPTR)(void);
     do{
-        static const char * (CDECL *pwine_get_version)(void);
+        static WINE_GET_VERSION_FPTR pwine_get_version;
 
         HMODULE hntdll = GetModuleHandle("ntdll.dll");
         if(!hntdll)
             break;
-        pwine_get_version = (void*)GetProcAddress(hntdll,"wine_get_version");
+        pwine_get_version = (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll,"wine_get_version");
         if(!pwine_get_version)
             break;
         CString out = CString("Wine") + pwine_get_version();

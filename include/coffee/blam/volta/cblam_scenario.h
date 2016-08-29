@@ -1,6 +1,8 @@
 #ifndef CBLAM_SCENARIO
 #define CBLAM_SCENARIO
 
+#include <coffee/core/types/vector_types.h>
+
 #include "cblam_structures.h"
 #include "cblam_mod2.h"
 
@@ -20,8 +22,8 @@ struct blam_bounding_box
     {
     }
 
-    CVec3 min;
-    CVec3 max;
+    Vecf3 min;
+    Vecf3 max;
 };
 
 template<typename T>
@@ -39,7 +41,7 @@ struct blam_scn_biped
     int16 BipedType;
     int16 unk2;
     uint32 unk3;
-    CVec3 pos;
+    Vecf3 pos;
     scalar rot;
     uint32 unk[24];
 };
@@ -49,7 +51,7 @@ struct blam_scn_equip
     int16 numid;
     int16 unk2;
     uint32  unk3;
-    CVec3 pos;
+    Vecf3 pos;
     uint32 unk[5];
 };
 
@@ -58,7 +60,7 @@ struct blam_scn_vehicle_spawn
     int16 numid;
     uint16 flag;
     uint32 unknown1;
-    CVec3 pos;
+    Vecf3 pos;
     scalar rot;
     uint32 unknown2[24];
 };
@@ -77,7 +79,7 @@ struct blam_scn_weapon_spawn
     int16 numid;
     uint16 flag;
     uint32   unknown1;
-    CVec3 pos;
+    Vecf3 pos;
     scalar  rot;
     uint32   unknown2[17];
 };
@@ -87,7 +89,7 @@ struct blam_scn_weapon_ref
     int16 numid;
     uint16 flag;
     uint32   unknown1;
-    CVec3 pos;
+    Vecf3 pos;
     scalar  rot;
     uint32   unknown2[17];
 };
@@ -98,7 +100,7 @@ struct blam_scn_scenery_spawn
     int16 numid;
     uint16 flag;
     uint32 unknown1;
-    CVec3 pos;
+    Vecf3 pos;
     scalar  rot;
     scalar  unk1[2];
     uint32   unknown2[10];
@@ -109,7 +111,7 @@ struct blam_scn_machine
     int16 MachineType;
     int16 unk2;
     uint32  unk3;
-    CVec3 pos;
+    Vecf3 pos;
     scalar rot;
     uint32 unk[10];
 };
@@ -119,13 +121,13 @@ struct blam_scn_sound_scenery
     int16 SoundType;
     int16 unk2;
     uint32  unk3;
-    CVec3 pos;
+    Vecf3 pos;
     uint32 unk4[5];
 };
 
 struct blam_scn_player_spawn
 {
-    CVec3 pos;
+    Vecf3 pos;
     scalar  rot;
     scalar  unknown2[9];
 };
@@ -155,7 +157,7 @@ struct blam_scn_profile_placement
 
 struct blam_scn_multiplayer_flag
 {
-    CVec3 pos;
+    Vecf3 pos;
     scalar yaw;
     uint16 index1;
     uint16 index2;
@@ -166,7 +168,7 @@ struct blam_scn_multiplayer_flag
 struct blam_scn_multiplayer_equipment
 {
     uint32 unk[16];
-    CVec3 pos;
+    Vecf3 pos;
     scalar yaw;
     scalar unk1;
     uint32 NamePtr;
@@ -255,7 +257,7 @@ struct blam_scn_script_triggers
 {
     uint32 unk1;
     bl_string name;
-    CVec3 pos;
+    Vecf3 pos;
     uint32 unk[11];
 };
 
@@ -264,7 +266,7 @@ struct blam_scn_globals
     uint32 unk1;
     bl_string name;
     uint32 unk2;
-    CVec3 pos;
+    Vecf3 pos;
     scalar unk3[4];
     uint32 unk[9];
 };
@@ -311,7 +313,7 @@ struct blam_scn_encounter_squad
 
 struct blam_scn_encounter_squad_spawn
 {
-    CVec3 pos;
+    Vecf3 pos;
     scalar yaw;
     int16 unk2[5];
     int16 CommandList;
@@ -331,7 +333,7 @@ struct blam_scn_decal
 {
     int16 unk1;
     int16 unk2;
-    CVec3 pos;
+    Vecf3 pos;
 };
 
 struct blam_scn_decal_ref
@@ -370,7 +372,7 @@ struct blam_scn_control
     int16 unk1;
     int16 unk2;
     byte_t unk3[4];
-    CVec3 pos;
+    Vecf3 pos;
     uint32 tag_id;
     byte_t unk[40];
 };
@@ -379,7 +381,7 @@ struct blam_scn_light_fixture
 {
     bl_rgba_t ambient;
     byte_t unk1[4];
-    CVec3 pos;
+    Vecf3 pos;
     byte_t unk2[12];
     bl_rgba_t specular;
     int32 zero1;

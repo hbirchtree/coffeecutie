@@ -1,8 +1,6 @@
 #ifndef CMATH_FUN
 #define CMATH_FUN
 
-#include "../../coffee_mem_macros.h"
-
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <random>

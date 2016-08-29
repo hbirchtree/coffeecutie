@@ -109,14 +109,19 @@ set ( CORE_EXTRA_LIBRARIES )
 
 # Platform-specific target options
 
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS)
-    # Necessary for Linux and possibly OS X (latter is untested)
-    list ( APPEND CORE_EXTRA_LIBRARIES dl m )
-endif()
-
 if(NOT WIN32 AND NOT ANDROID)
     # Used for thread details
     list ( APPEND CORE_EXTRA_LIBRARIES pthread )
+endif()
+
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID)
+    # Used for thread details
+    list ( APPEND CORE_EXTRA_LIBRARIES rt )
+endif()
+
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS)
+    # Necessary for Linux and possibly OS X (latter is untested)
+    list ( APPEND CORE_EXTRA_LIBRARIES dl m )
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)

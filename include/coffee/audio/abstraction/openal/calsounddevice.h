@@ -11,7 +11,11 @@ struct _cal_devdata;
 
 class CALSoundDevice : public CSoundDevice<CALSource,CALBuffer>
 {
+    friend class CALSoundManager;
+
     _cal_devdata* m_data;
+
+    bool is_loaded();
 
 public:
     CALSoundDevice(const CSoundDeviceIdentifier &dev);
