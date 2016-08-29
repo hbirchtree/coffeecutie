@@ -3,7 +3,11 @@ cmake_minimum_required( VERSION 3.1 )
 
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
-set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
+if(NOT WIN32)
+    set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
+else()
+    set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
+endif()
 set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 
 set ( CMAKE_PACKAGED_OUTPUT_PREFIX packaged ) # Custom, used by scripts
