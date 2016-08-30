@@ -14,11 +14,11 @@ class CALSoundTrack : public CSoundTrack<CALSource,CALBuffer>
         CALBuffer* buf;
         uint64 b_pts;
 
-        bool operator<(const _csample_data& d1)
+        bool operator<(const _csample_data& d1) const
         {
             return b_pts<d1.b_pts;
         }
-        bool operator==(const _csample_data& d1)
+        bool operator==(const _csample_data& d1) const
         {
             return this==&d1;
         }

@@ -35,9 +35,9 @@ void CALSoundTrack::queueSample(CSoundSample<CALSource, CALBuffer> &sample)
 
 void CALSoundTrack::updateTrack(uint64 ts)
 {
-    std::vector<const _csample_data*> removal;
+    Vector<_csample_data*> removal;
     m_samples.sort();
-    for(const _csample_data& smp : m_samples)
+    for(_csample_data& smp : m_samples)
     {
         if(ts >= smp.b_pts)
         {
@@ -46,7 +46,7 @@ void CALSoundTrack::updateTrack(uint64 ts)
             removal.push_back(&smp);
         }
     }
-    for(const _csample_data* r : removal)
+    for(_csample_data* r : removal)
         m_samples.remove(*r);
 }
 
