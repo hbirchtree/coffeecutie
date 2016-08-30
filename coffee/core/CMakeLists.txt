@@ -149,6 +149,10 @@ if( SDL_POWER_PLUGIN_ENABLED OR ANDROID )
 #    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
 
+if(APPLE)
+    list ( APPEND CORE_EXTRA_LIBRARIES "-framework CoreFoundation" )
+endif()
+
 if(ANDROID)
     # Add the Android logging library, as well as android and GLESv*
     list ( APPEND CORE_EXTRA_LIBRARIES
