@@ -72,6 +72,9 @@ macro(APK_PACKAGE_EXT
 
     set ( ANDROID_APK_NAME "${Pkg_Name}.${ANDROID_STARTUP_ACTIVITY}-release-unsigned.apk" )
 
+    #set ( ANDROID_APK_BANNER_DATA "android:banner=\"@drawable/banner\"" )
+    #set ( ANDROID_APK_LOGO_DATA "android:logo=\"@drawable/logo\"")
+
     set ( ANDROID_APPLICATION_NAME ${App_Name} )
 
     set ( ANDROID_VERSION_CODE ${Version_Int} )
