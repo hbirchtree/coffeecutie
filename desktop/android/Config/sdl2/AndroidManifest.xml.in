@@ -25,17 +25,20 @@
     <supports-gl-texture android:name="GL_OES_compressed_paletted_texture" />
     -->
 
-    <application android:label="@string/app_name"
-                 android:icon="@drawable/ic_launcher"
+    <application
                  android:allowBackup="true"
-                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+                 @ANDROID_APK_BANNER_DATA@
+                 android:debuggable="@ANDROID_APK_DEBUGGABLE@"
                  android:hardwareAccelerated="true"
-                 android:debuggable="@ANDROID_APK_DEBUGGABLE@">
+                 android:icon="@drawable/ic_launcher"
+                 android:isGame="true"
+                 android:label="@string/app_name"
+                 @ANDROID_APK_LOGO_DATA@
+                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
         <activity android:name="CoffeeActivity"
                   android:label="@string/app_name"
                   android:configChanges="keyboardHidden|orientation|keyboardHidden|keyboard"
-                  android:screenOrientation="@ANDROID_ORIENTATION_MODE@"
-                  >
+                  android:screenOrientation="@ANDROID_ORIENTATION_MODE@" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
