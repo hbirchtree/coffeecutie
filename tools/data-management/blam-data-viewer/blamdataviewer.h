@@ -4,6 +4,8 @@
 #include <QMainWindow>
 
 class QFileDialog;
+class QTreeWidgetItem;
+
 class BlamMapHandler;
 
 namespace Ui {
@@ -41,6 +43,8 @@ private slots:
 
     void openMap(BlamFileContext* map);
 
+    void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int);
+
 private:
     BlamFileContext *createFileMapping(QString const& file);
 
@@ -55,6 +59,8 @@ private:
     BlamFileContext* m_sound_file = nullptr;
 
     QList<BlamFileContext*> m_opened_files;
+
+    QVector<QImage> m_textures_ref;
 };
 
 #endif // BLAMDATAVIEWER_H

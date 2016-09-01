@@ -55,6 +55,7 @@ void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images)
                     fmt = QImage::Format_RGBA8888;
                     break;
                 default:
+                    continue;
                     fmt = QImage::Format_Mono;
                     break;
                 }

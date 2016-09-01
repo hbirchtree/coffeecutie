@@ -78,13 +78,23 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
 
     target_enable_cxx11(${TARGET})
 
-    install(
-        TARGETS
-        ${TARGET}
+    if(NOT WIN32)
+	install(
+	    TARGETS
+	    ${TARGET}
 
-        DESTINATION
-        lib
-        )
+	    DESTINATION
+	    lib
+	    )
+    else()
+	install(
+	    TARGETS
+	    ${TARGET}
+
+	    DESTINATION
+	    bin
+	    )
+    endif()
 endmacro()
 
 macro(COFFEE_ADD_FRAMEWORK

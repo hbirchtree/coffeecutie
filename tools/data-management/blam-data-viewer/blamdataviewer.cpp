@@ -1,6 +1,7 @@
 #include "blamdataviewer.h"
 #include "ui_blamdataviewer.h"
 
+#include <QTreeWidgetItem>
 #include <QFileDialog>
 #include <QString>
 #include <QtDebug>
@@ -104,13 +105,12 @@ void BlamDataViewer::openMap(BlamFileContext *map)
 
     if(m_map_handle->valid() && m_bitmap_file)
     {
-        QVector<QImage> images;
-        m_map_handle->allTextures(m_bitmap_file->data,&images);
-        qDebug("Number of textures: %i",images.size());
+        m_map_handle->allTextures(m_bitmap_file->data,&m_textures_ref);
+//        qDebug("Number of textures: %i",images.size());
 
-        if(images.size())
+        if(m_textures_ref.size())
         {
-            ui->textureViewer->setPixmap(QPixmap::fromImage(images.first()));
+            ui->textureViewer->setPixmap(QPixmap::fromImage(m_textures_ref.first()));
         }
     }
 }
@@ -135,4 +135,8 @@ BlamDataViewer::BlamFileContext *BlamDataViewer::createFileMapping(const QString
     }
 
     return m;
+}
+
+void BlamDataViewer::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int)
+{
 }
