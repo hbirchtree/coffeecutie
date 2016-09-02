@@ -24,5 +24,8 @@ public:
 
     bitm_texture_t texture(uchar* bitm, const index_item_t* ref);
 
-    void allTextures(uchar* bitm, QVector<QImage>* images);
+    void allTextures(uchar* bitm, QVector<QImage>* images, QVector<const index_item_t*> *tags);
+
+    const char* tagName(const index_item_t* item);
+    QString tagType(const index_item_t* item);
 };

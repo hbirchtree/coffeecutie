@@ -33,7 +33,7 @@ bitm_texture_t BlamMapHandler::texture(uchar *bitm, const index_item_t* ref)
     return bitm_get_texture(item,bitm);
 }
 
-void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images)
+void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images, QVector<const index_item_t *> *tags)
 {
     const index_item_t* base = blam_tag_index_get_items(m_file);
     const index_item_t* it;
@@ -65,7 +65,24 @@ void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images)
                                    tex.resolution.width,
                                    tex.resolution.height,
                                    fmt));
+                tags->append(it);
             }
         }
     }
+}
+
+const char *BlamMapHandler::tagName(const index_item_t *item)
+{
+    return blam_index_item_get_string(item,m_file,m_index_magical);
+}
+
+QString BlamMapHandler::tagType(const index_item_t *item)
+{
+    std::string out;
+    const char* str = item->tagclass[0];
+    out.push_back(str[3]);
+    out.push_back(str[2]);
+    out.push_back(str[1]);
+    out.push_back(str[0]);
+    return QString::fromStdString(out);
 }

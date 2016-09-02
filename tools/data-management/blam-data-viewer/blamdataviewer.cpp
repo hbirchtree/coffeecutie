@@ -91,12 +91,14 @@ void BlamDataViewer::openBitmap(const QString &filename)
 {
     if(!m_bitmap_file)
         m_bitmap_file = createFileMapping(filename);
+    qDebug("bitmaps.map mapped into: %p+%lu",m_bitmap_file->data,m_bitmap_file->file.size());
 }
 
 void BlamDataViewer::openSound(const QString &filename)
 {
     if(!m_sound_file)
         m_sound_file = createFileMapping(filename);
+    qDebug("sounds.map mapped into: %p+%lu",m_bitmap_file->data,m_bitmap_file->file.size());
 }
 
 void BlamDataViewer::openMap(BlamFileContext *map)
@@ -105,12 +107,16 @@ void BlamDataViewer::openMap(BlamFileContext *map)
 
     if(m_map_handle->valid() && m_bitmap_file)
     {
-        m_map_handle->allTextures(m_bitmap_file->data,&m_textures_ref);
-//        qDebug("Number of textures: %i",images.size());
+        m_map_handle->allTextures(m_bitmap_file->data,&m_textures_ref,&m_textures_name_ref);
 
-        if(m_textures_ref.size())
+        int j = 0;
+        for(QImage const& i : m_textures_ref)
         {
-            ui->textureViewer->setPixmap(QPixmap::fromImage(m_textures_ref.first()));
+            QTreeWidgetItem* it = new QTreeWidgetItem;
+            it->setData(0,0,m_map_handle->tagName(m_textures_name_ref[j]));
+            it->setData(1,0,m_map_handle->tagType(m_textures_name_ref[j]));
+            ui->treeWidget->addTopLevelItem(it);
+            j++;
         }
     }
 }
@@ -120,7 +126,7 @@ BlamDataViewer::BlamFileContext *BlamDataViewer::createFileMapping(const QString
     BlamFileContext* m = new BlamFileContext;
     m->file.setFileName(file);
 
-    if(!m->file.open(QFile::ReadOnly))
+    if(!m->file.open(QFile::ReadWrite))
     {
         delete m;
         return nullptr;
@@ -139,4 +145,9 @@ BlamDataViewer::BlamFileContext *BlamDataViewer::createFileMapping(const QString
 
 void BlamDataViewer::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int)
 {
+    int i = ui->treeWidget->indexOfTopLevelItem(item);
+    qDebug("Opening idx: %i",i);
+    QImage const& img = m_textures_ref[i];
+    qDebug("Data range: %p+%lu",img.bits(),img.byteCount());
+    ui->textureViewer->setPixmap(QPixmap::fromImage(img));
 }
