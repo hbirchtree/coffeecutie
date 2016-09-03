@@ -17,6 +17,8 @@ bool SDL2EventHandler::inputPreInit(CString*)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        setSDL2Context(nullptr);
+        return false;
     }
     Profiler::Profile("SDL2 input initializtion");
     return true;

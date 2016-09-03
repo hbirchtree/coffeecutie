@@ -17,6 +17,7 @@ bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
+        setSDL2Context(nullptr);
         return false;
     }
 
