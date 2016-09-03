@@ -171,6 +171,13 @@ if(ANDROID)
     endif()
 endif()
 
+if(RASPBERRY)
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        GLESv1_CM GLESv2
+        bcm_host
+        )
+endif()
+
 if(WIN32)
     # Don't know what this is, but it's necessary
     list ( APPEND CORE_EXTRA_LIBRARIES

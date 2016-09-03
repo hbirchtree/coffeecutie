@@ -2,7 +2,7 @@
 
 #include "coffee/core/plat/platform_detect.h"
 
-#ifdef COFFEE_LINUX
+#ifdef COFFEE_X11
 
 #include "../../../coffee_mem_macros.h"
 #include "../plat_windowtype.h"
@@ -21,5 +21,5 @@ namespace Wayland{
 
 }
 
-#endif // COFFEE_LINUX
+#endif // COFFEE_X11
 

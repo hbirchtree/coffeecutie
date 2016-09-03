@@ -24,7 +24,7 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
     props.gl.flags =
             GLProperties::GLAutoResize
             |GLProperties::GLCoreProfile
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_RASPBERRYPI)
             |GLProperties::GLSRGB
 #endif
             ;

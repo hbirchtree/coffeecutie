@@ -264,8 +264,13 @@ extern CDProperties GetDefaultVisual(
         const int32& ctxtMajorVer = 3,
         const int32& ctxtMinorVer = 3
 #else
+        #if defined(COFFEE_RASPBERRYPI)
+        const int32& ctxtMajorVer = 2,
+        const int32& ctxtMinorVer = 0
+        #else
         const int32& ctxtMajorVer = 3,
         const int32& ctxtMinorVer = 0
+        #endif
 #endif
         );
 

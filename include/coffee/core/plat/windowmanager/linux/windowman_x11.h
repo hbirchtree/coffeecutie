@@ -2,7 +2,7 @@
 
 #include "../../platform_detect.h"
 
-#ifdef COFFEE_LINUX
+#ifdef COFFEE_X11
 
 #include "../windowman.h"
 #include "linux_wm_x11.h"

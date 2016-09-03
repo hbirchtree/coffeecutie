@@ -4,11 +4,16 @@
 #define C_SYSTEM_STRING "Linux"
 #define COFFEE_LINUX
 
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__RASPBERRYPI__)
 #define COFFEE_X11
 /*#define COFFEE_WAYLAND*/
 /*#define COFFEE_MIR*/
 #endif
+
+#if defined(__RASPBERRYPI__)
+#define COFFEE_RASPBERRYPI
+#endif
+
 #endif
 
 /* Android: the land of oddities */

@@ -87,6 +87,7 @@ bool FileExists(const Resource &resc)
 bool FileMap(Resource &resc, ResourceAccess acc)
 {
     CString native_fn = FileFun::NativePath(resc.resource());
+    cVerbose(6,"Native file path: {0}->{1}",resc.resource(),native_fn);
     resc.size = FileFun::Size(native_fn.c_str());
 
     if(resc.size == 0)

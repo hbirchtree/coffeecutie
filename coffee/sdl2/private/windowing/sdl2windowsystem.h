@@ -16,7 +16,7 @@ void GetWindowPtr(SDL_Window *window, CDWindow *win)
 
             if(SDL_GetWindowWMInfo(window,&info)){
         switch(info.subsystem){
-#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID)
+#if defined(COFFEE_X11)
         case SDL_SYSWM_X11:
             win->wininfo.x11.window = info.info.x11.window;
             win->wininfo.x11.display = info.info.x11.display;

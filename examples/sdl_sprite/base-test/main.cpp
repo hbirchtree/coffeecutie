@@ -116,6 +116,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     /* Set file prefix, basically a cwd but only for resources */
     CResources::FileResourcePrefix("sample_data/ctest_hud/");
+    cDebug("Current directory: {0}",Env::CurrentDir());
 
     /* Create a window host for the renderer */
     BasicWindow test;
@@ -192,7 +193,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     Profiler::Profile("Renderer state");
     /* Start rendering! */
 
-    SDL2Dialog::InformationMessage("Leaving?","Hello there! Did you press the wrong button?");
+//    SDL2Dialog::InformationMessage("Leaving?","Hello there! Did you press the wrong button?");
 
     test.installEventHandler({TouchInput_1,nullptr,&test});
     test.installEventHandler({ExitHandler_1,nullptr,&test});

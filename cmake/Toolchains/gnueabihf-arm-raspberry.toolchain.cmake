@@ -13,4 +13,7 @@ set ( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
 set ( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 set ( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 
-include_directories ( ${RASPBERRY_SDK}/usr/include )
+include_directories ( ${RASPBERRY_SDK}/vc/include ${RASPBERRY_SDK}/usr/include )
+link_directories ( ${RASPBERRY_SDK}/vc/lib )
+
+add_definitions(-D__RASPBERRYPI__)

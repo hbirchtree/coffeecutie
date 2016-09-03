@@ -42,6 +42,8 @@ ThreadId SDL2GLRenderer::contextThread()
 
 CGL::CGL_Context *SDL2GLRenderer::glContext()
 {
+    if(!getSDL2Context())
+        return nullptr;
     return getSDL2Context()->context;
 }
 

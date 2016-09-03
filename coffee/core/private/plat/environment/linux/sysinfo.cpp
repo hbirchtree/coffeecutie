@@ -31,11 +31,18 @@ CString LinuxSysInfo::CPUInfoString(bool force)
 
 Vector<CString> LinuxSysInfo::CPUFlags()
 {
+    const cstring query_linaro = "Features";
     const cstring query = "flags";
 
     CPUInfoString();
 
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
+
+    if(!res)
+        res = StrFind(cached_cpuinfo_string.c_str(),query_linaro);
+
+    if(!res)
+        return {};
 
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");
@@ -44,7 +51,7 @@ Vector<CString> LinuxSysInfo::CPUFlags()
     result.insert(0,res,end-res);
     StrUtil::trim(result);
 
-    std::vector<CString> flags;
+    Vector<CString> flags;
     cstring ptr = &result[0];
 
     while(ptr)
@@ -89,7 +96,7 @@ uint32 LinuxSysInfo::CpuCount()
         res = StrFind(src,query);
     }
 
-    return count;
+    return count ? count : 1;
 }
 
 uint32 LinuxSysInfo::CoreCount()
@@ -99,6 +106,9 @@ uint32 LinuxSysInfo::CoreCount()
     CPUInfoString();
 
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
+
+    if(!res)
+        return 1;
 
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");
@@ -118,27 +128,42 @@ HWDeviceInfo LinuxSysInfo::Processor()
     const cstring md_query = "model name";
     const cstring fw_query = "microcode";
 
+    const cstring mk_query_linaro = "Hardware";
+    const cstring fw_query_linaro = "Revision";
+
     CPUInfoString();
 
     cstring mk_str = StrFind(cached_cpuinfo_string.c_str(),mk_query);
+    if(!mk_str)
+        mk_str = StrFind(cached_cpuinfo_string.c_str(),mk_query_linaro);
     cstring md_str = StrFind(cached_cpuinfo_string.c_str(),md_query);
     cstring fw_str = StrFind(cached_cpuinfo_string.c_str(),fw_query);
+    if(!fw_str)
+        fw_str = StrFind(cached_cpuinfo_string.c_str(),fw_query_linaro);
 
-    mk_str = StrFind(mk_str,":")+1;
-    md_str = StrFind(md_str,":")+1;
-    fw_str = StrFind(fw_str,":")+1;
+    if(mk_str)
+    {
+        mk_str = StrFind(mk_str,":")+1;
+        cstring mk_end = StrFind(mk_str,"\n");
+        mk.insert(0,mk_str,mk_end-mk_str);
+        StrUtil::trim(mk);
+    }
 
-    cstring mk_end = StrFind(mk_str,"\n");
-    cstring md_end = StrFind(md_str,"\n");
-    cstring fw_end = StrFind(fw_str,"\n");
+    if(md_str)
+    {
+        md_str = StrFind(md_str,":")+1;
+        cstring md_end = StrFind(md_str,"\n");
+        md.insert(0,md_str,md_end-md_str);
+        StrUtil::trim(md);
+    }
 
-    mk.insert(0,mk_str,mk_end-mk_str);
-    md.insert(0,md_str,md_end-md_str);
-    fw.insert(0,fw_str,fw_end-fw_str);
-
-    StrUtil::trim(mk);
-    StrUtil::trim(md);
-    StrUtil::trim(fw);
+    if(fw_str)
+    {
+        fw_str = StrFind(fw_str,":")+1;
+        cstring fw_end = StrFind(fw_str,"\n");
+        fw.insert(0,fw_str,fw_end-fw_str);
+        StrUtil::trim(fw);
+    }
 
     return HWDeviceInfo(mk,md,fw);
 }
@@ -150,6 +175,9 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
     CPUInfoString();
 
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query.c_str());
+
+    if(!res)
+        return 0.0;
 
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");
@@ -169,6 +197,9 @@ bool LinuxSysInfo::HasFPU()
 
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
+    if(!res)
+        return false;
+
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");
 
@@ -186,6 +217,9 @@ bool LinuxSysInfo::HasFPUExceptions()
     CPUInfoString();
 
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
+
+    if(!res)
+        return false;
 
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");
@@ -205,6 +239,9 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
 
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
+    if(!res)
+        return 0;
+
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");
 
@@ -220,7 +257,7 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
 
 bool LinuxSysInfo::HasHyperThreading()
 {
-    std::vector<CString> flags = CPUFlags();
+    Vector<CString> flags = CPUFlags();
 
     for(const CString& flag : flags)
     {
