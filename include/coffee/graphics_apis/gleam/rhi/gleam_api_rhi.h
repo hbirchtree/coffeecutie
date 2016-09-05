@@ -102,6 +102,8 @@ struct GLEAM_API : GraphicsAPI
     using SM_2DA = GLEAM_Sampler2DArray;
     using SM_CubeA = GLEAM_SamplerCubeArray;
 
+    using S_IMG = GLEAM_ShaderImage;
+
     using SHD = GLEAM_Shader;
     using PIP = GLEAM_Pipeline;
 

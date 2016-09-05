@@ -76,7 +76,8 @@ struct GLEAM_ShaderUniformState : GraphicsAPI::ShaderUniformState
     friend struct GLEAM_API;
 
     bool setUniform(GLEAM_UniformDescriptor const& value, GLEAM_UniformValue* data);
-    bool setSampler(GLEAM_UniformDescriptor const& value,GLEAM_SamplerHandle const& sampler);
+    bool setSampler(GLEAM_UniformDescriptor const& value,GLEAM_SamplerHandle const* sampler);
+    bool setImage(GLEAM_UniformValue const& value, GLEAM_ShaderImage* img);
 
     bool setUBuffer(GLEAM_UniformDescriptor const& value,
                     GLEAM_UniformBuffer const* buf,

@@ -212,6 +212,7 @@ public:
         GLM::PIXLSTATE pixlstate = {};
         GLM::DEPTSTATE deptstate = {};
         GLM::TSLRSTATE teslstate = {};
+        GLM::STENSTATE stenstate = {};
 
         blendstate.m_doBlend = true;
         viewportstate.m_view.clear();
@@ -225,6 +226,7 @@ public:
 
         /* Applying state information */
         GLM::SetViewportState(viewportstate, 0);
+        GLM::SetStencilState(stenstate,0);
         GLM::SetBlendState(blendstate);
         GLM::SetPixelProcessState(pixlstate);
         GLM::SetDepthState(deptstate);
@@ -241,7 +243,7 @@ public:
             if (u.m_name == "transform[0]")
                 unifstate.setUniform(u, &transforms);
             else if (u.m_name == "texdata")
-                unifstate.setSampler(u, textures_array);
+                unifstate.setSampler(u, &textures_array);
             else if (u.m_name == "mx")
                 unifstate.setUniform(u, &timeval);
             else

@@ -60,6 +60,7 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
     case BitFormat::Scalar_64:
     case BitFormat::Scalar_32_Int_24_8:
         pxsz = 8;
+        break;
     }
     switch(comp)
     {
@@ -84,6 +85,7 @@ FORCEDINLINE szptr GetPixSize(BitFormat fmt, PixelComponents comp, szptr pixels)
         break;
     default:
         pxsz *= 0;
+        break;
     }
 
     return pxsz*pixels;
@@ -249,8 +251,8 @@ struct GraphicsAPI
 
         bool testStencil()const{return 0;}
         uint32 mask()const{return 0;}
-        StencilFunc func()const{return StencilFunc();}
-        StencilOp op()const{return StencilOp();}
+        StencilFunc func()const{return m_func;}
+        StencilOp op()const{return m_op;}
 
         bool m_test;
         uint32 m_mask;
@@ -471,7 +473,9 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Use compute shaders when applicable, transform feedback + geometry shader otherwise (GL3.3). Data-specification is depending on implementation.
+     * \brief Use compute shaders when applicable,
+     *  transform feedback + geometry shader otherwise (GL3.3).
+     * Data-specification is depending on implementation.
      */
     struct ComputePipeline
     {
@@ -512,7 +516,8 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Can be included in a drawcall to determine whether or not to render. Calls begin() before rendering occlusion shapes
+     * \brief Can be included in a drawcall to determine whether or
+     *  not to render. Calls begin() before rendering occlusion shapes
      */
     struct OccludeQuery
     {
@@ -574,7 +579,7 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Samples from a Surface
+     * \brief Samples from a Surface/texture
      */
     struct Sampler
     {
@@ -610,6 +615,24 @@ struct GraphicsAPI
     {
     };
 
+    /*!
+     * \brief Images that may be read and written to by shaders
+     * On GL 4.2+ this will be using the actual shader image functionality
+     *
+     * On GL 4.1 and lower, this might be implemented with a fragment shader
+     *  and a separate read/write texture, using fragment location outputs for
+     *  redirection to textures.
+     * Copies back to original texture will be done by CopyTexSubImage*
+     */
+    struct ShaderImage
+    {
+        void bind(uint32){}
+        void attach(Surface*,PixFmt,ResourceAccess,uint32,uint32 = 0){}
+    };
+
+    /*!
+     * \brief RenderTargets may use these for GPU-side storage that is not retrievable by the CPU
+     */
     struct RenderDummy
     {
         void allocate(PixelFormat,DBuffers,uint32,CSize){}
@@ -627,10 +650,10 @@ struct GraphicsAPI
 	/*!
 	 * \brief Do a framebuffer blit  to another framebuffer
 	 */
-	void blit(CRect64 const&,Surface&,CRect64 const&,DBuffers) const{}
+        void blit(CRect64 const&,RenderTarget&,CRect64 const&,DBuffers) const{}
 
 	/*!
-	 * \brief Attacha a surface to this framebuffer
+         * \brief Attach a surface to this framebuffer
 	 */
         void attachSurface(Surface const&, uint32, uint32 = 0){}
         void attachSurface(RenderDummy const&){}

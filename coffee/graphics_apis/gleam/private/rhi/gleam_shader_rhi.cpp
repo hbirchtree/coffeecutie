@@ -140,12 +140,12 @@ bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
 }
 
 bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
-                                          const GLEAM_SamplerHandle &sampler)
+                                          const GLEAM_SamplerHandle *sampler)
 {
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_samplers[idx] = &sampler;
+    m_samplers[idx] = sampler;
     return true;
 }
 

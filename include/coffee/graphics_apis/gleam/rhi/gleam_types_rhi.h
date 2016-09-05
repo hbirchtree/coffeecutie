@@ -85,6 +85,8 @@ struct GLEAM_ShaderUniformState;
 struct GLEAM_RenderTarget;
 struct GLEAM_RenderDummy;
 
+struct GLEAM_ShaderImage;
+
 }
 }
 }
