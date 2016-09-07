@@ -31,7 +31,7 @@
                  android:debuggable="@ANDROID_APK_DEBUGGABLE@"
                  android:hardwareAccelerated="true"
                  android:icon="@drawable/ic_launcher"
-                 android:isGame="true"
+                 @ANDROID_APK_IS_GAME@
                  android:label="@string/app_name"
                  @ANDROID_APK_LOGO_DATA@
                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >

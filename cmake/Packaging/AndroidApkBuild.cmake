@@ -72,8 +72,14 @@ macro(APK_PACKAGE_EXT
 
     set ( ANDROID_APK_NAME "${Pkg_Name}.${ANDROID_STARTUP_ACTIVITY}-release-unsigned.apk" )
 
-    #set ( ANDROID_APK_BANNER_DATA "android:banner=\"@drawable/banner\"" )
-    #set ( ANDROID_APK_LOGO_DATA "android:logo=\"@drawable/logo\"")
+
+    if( "${Api_Target}" GREATER "20" )
+        # isGame is only available on API 21+
+        set ( ANDROID_APK_IS_GAME "android:isGame=\"true\"" )
+
+        #set ( ANDROID_APK_BANNER_DATA "android:banner=\"@drawable/banner\"" )
+        #set ( ANDROID_APK_LOGO_DATA "android:logo=\"@drawable/logo\"")
+    endif()
 
     set ( ANDROID_APPLICATION_NAME ${App_Name} )
 

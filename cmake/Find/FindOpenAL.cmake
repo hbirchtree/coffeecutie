@@ -20,7 +20,7 @@ endif()
 #set ( OPENAL_LIBRARY CACHE FILEPATH "OpenAL library file" )
 #set ( OPENAL_EFX_LIBRARY CACHE FILEPATH "OpenAL EFX library file" )
 
-find_path ( OPENAL_INCLUDE_DIR_TMP
+find_path ( OPENAL_INCLUDE_DIR
     al.h
     alc.h
 
@@ -41,6 +41,7 @@ find_library ( OPENAL_LIBRARY_TMP
     PATH_SUFFIXES
     lib
     lib/${ANDROID_ABI}
+    ${ANDROID_ABI}
     libs/Win64
 
     PATHS
@@ -62,7 +63,7 @@ find_library ( OPENAL_EFX_LIBRARY_TMP
 
 # TODO: Add check for whether libraries are symbolic links, and dereference them
 
-set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR_TMP}" CACHE PATH "OpenAL include directory" FORCE )
+set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR_TMP}" CACHE PATH "OpenAL include directory" )
 set ( OPENAL_LIBRARY "${OPENAL_LIBRARY_TMP}" CACHE FILEPATH "OpenAL library file" FORCE )
 set ( OPENAL_EFX_LIBRARY "${OPENAL_EFX_LIBRARY_TMP}" CACHE FILEPATH "OpenAL EFX library file" FORCE )
 

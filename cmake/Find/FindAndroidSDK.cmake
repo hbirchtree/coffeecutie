@@ -1,7 +1,10 @@
-
 find_path ( ANDROID_SDK
     NAMES
     tools/android${TOOL_OS_SUFFIX}
+
+    HINTS
+    $ENV{ANDROID_SDK}
+    $ENV{ANDROID_HOME}
 
     PATHS
     ~

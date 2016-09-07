@@ -6,7 +6,7 @@
 
 #if !defined(ANDROID_DONT_USE_SDL2)
 #include <android/asset_manager_jni.h>
-#include <SDL2/SDL_system.h>
+#include <SDL_system.h>
 #else
 #include <android/asset_manager.h>
 #endif

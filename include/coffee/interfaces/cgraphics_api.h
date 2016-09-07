@@ -473,16 +473,6 @@ struct GraphicsAPI
     };
 
     /*!
-     * \brief Use compute shaders when applicable,
-     *  transform feedback + geometry shader otherwise (GL3.3).
-     * Data-specification is depending on implementation.
-     */
-    struct ComputePipeline
-    {
-        void dispatch(){}
-    };
-
-    /*!
      * \brief Contains a single shader, fragment and etc.
      * On GL3.3 this will be a shader object
      * On GL4.3+ this will be a separable shaderprogram object
@@ -513,6 +503,18 @@ struct GraphicsAPI
         void attach(Shader&,ShaderStage){}
     protected:
         uint32 m_flags;
+    };
+
+    /*!
+     * \brief Use compute shaders when applicable,
+     *  transform feedback + geometry shader otherwise (GL3.3).
+     * Data-specification is depending on implementation.
+     */
+    struct ComputePipeline
+    {
+        void attach(Pipeline&){}
+
+        void dispatch(){}
     };
 
     /*!

@@ -3,7 +3,7 @@
 #ifdef COFFEE_ANDROID
 
 #ifndef ANDROID_DONT_USE_SDL2
-#include <SDL2/SDL_system.h>
+#include <SDL_system.h>
 #else
 #include <coffee/android/android_main.h>
 #endif

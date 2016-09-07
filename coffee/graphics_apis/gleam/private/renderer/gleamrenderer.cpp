@@ -6,7 +6,7 @@
 #include <coffee/core/CProfiling>
 
 #ifndef COFFEE_GLEAM_DESKTOP
-#include <SDL2/SDL_video.h>
+#include <SDL_video.h>
 #endif
 
 #include "conversion.h"

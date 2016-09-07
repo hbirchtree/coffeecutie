@@ -162,6 +162,8 @@ if(ANDROID)
         log android
         # OpenGL ES
         GLESv1_CM GLESv2
+
+        ${SDL2_LIBRARY}
         )
     if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
         message ( "-- Building with GLES 3.0+ support" )

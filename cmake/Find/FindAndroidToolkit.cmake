@@ -7,7 +7,7 @@ set ( ANDROID_ADB_PROGRAM
         CACHE FILEPATH "ANT build program" )
 
 set ( ANDROID_ANT_PROGRAM
-
+        "/usr/bin/ant"
         CACHE FILEPATH "ANT build program" )
 set ( ANDROID_SDK_PROGRAM
         "${ANDROID_SDK}/tools/android${TOOL_OS_SUFFIX}"

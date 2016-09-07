@@ -4,7 +4,7 @@
 #include <coffee/android/android_main.h>
 #else
 #include <jni.h>
-#include <SDL2/SDL_system.h>
+#include <SDL_system.h>
 #endif
 
 namespace Coffee{
