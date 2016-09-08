@@ -187,12 +187,12 @@ public:
         scalar time_value = 0.f;
 
         /*
-     * These specify byte buffers which refer to other data
-     * This makes it simple to redirect or reallocate the uniform data
-     *
-     * These can be rotated to achieve per-frame disposable buffers,
-     *  allowing multiple frames to be processed concurrently without halt
-     */
+         * These specify byte buffers which refer to other data
+         * This makes it simple to redirect or reallocate the uniform data
+         *
+         * These can be rotated to achieve per-frame disposable buffers,
+         *  allowing multiple frames to be processed concurrently without halt
+         */
         Bytes transform_data = {(byte_t *)object_matrices, sizeof(object_matrices)};
         Bytes time_data = {(byte_t *)&time_value, sizeof(time_value)};
 
@@ -234,7 +234,7 @@ public:
         cVerbose("Set renderer state");
 
         /* We query the current pipeline for possible uniform/texture/buffer values
-     */
+         */
         Vector<GLM::UNIFDESC> unifs;
         GLM::GetShaderUniformState(eye_pip, &unifs);
 
@@ -253,11 +253,11 @@ public:
         cVerbose("Acquire and set shader uniforms");
 
         /* Now generating a drawcall, which only specifies small state that can be
-     * shared */
+         * shared */
         GLM::DrawCall call{false,true};
 
         /* Instance data is more akin to individual drawcalls, specifying vertex
-     * buffer information */
+         * buffer information */
         GLM::DrawInstanceData instdata = {6,0,4};
 
         /* Specifying the uniform data, such as camera matrices and transforms */

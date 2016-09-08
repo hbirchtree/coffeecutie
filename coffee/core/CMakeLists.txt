@@ -174,6 +174,9 @@ if(ANDROID)
 endif()
 
 if(RASPBERRY)
+    # Linkage on Raspberry kind of looks like Android
+    # We also have bcm_host for accessing OpenGL for some reason
+    # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
         GLESv1_CM GLESv2
         bcm_host
