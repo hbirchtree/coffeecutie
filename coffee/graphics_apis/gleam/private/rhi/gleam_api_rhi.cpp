@@ -65,6 +65,12 @@ void GLEAM_API::LoadAPI(bool debug)
             GL_CURR_API = GLES_3_0;
     }
 
+    if(GL_CURR_API == GL_Nothing)
+    {
+        cWarning("Totally failed to create a GLEAM context, got version: {0}",ver);
+//        RUNOUTTHEWINDOW();
+    }
+
     if(CGL33::Tex_SRGB_Supported())
     {
         cVerbose(5,"Enabling SRGB color for framebuffers");

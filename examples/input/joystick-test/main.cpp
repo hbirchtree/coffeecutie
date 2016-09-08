@@ -169,6 +169,9 @@ int32 coffee_main(int32, cstring_w*)
                 rend.drawSprite(inst,{320,0+96+16},{1,1},button_y_sprite);
             else
                 rend.drawSprite(inst,{320,0+96+16},{1,1},button_yp_sprite);
+
+            if(ctl.buttons.e.guide)
+                cDebug("GUIDE ME");
         }
 
         rend.swapBuffers(inst);
