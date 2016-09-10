@@ -117,7 +117,9 @@ uint32 LinuxSysInfo::CoreCount()
     result.insert(0,res,end-res);
     StrUtil::trim(result);
 
-    return Convert::strtoll(result.c_str());
+    uint32 cores = Convert::strtoll(result.c_str());
+
+    return cores ? cores : 1;
 }
 
 HWDeviceInfo LinuxSysInfo::Processor()

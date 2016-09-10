@@ -112,9 +112,12 @@ FORCEDINLINE CString uintltostring(uint64 const& s)
     // TODO: Find out what the fuck is going on here
     uint64 ss = s*10;
     CString str;
+#if defined(COFFEE_RASPBERRYPI)
+    str.resize(30);
+#else
     str.resize(snprintf(nullptr,0,u64_fmt,ss));
-    snprintf(&str[0],str.size(),u64_fmt,ss);
-    str.resize(str.size()-1);
+#endif
+    str.resize(snprintf(&str[0],str.size(),u64_fmt,ss)-1);
     return str;
 }
 FORCEDINLINE CString uinttostring(uint32 const& s)
