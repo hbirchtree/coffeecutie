@@ -14,7 +14,7 @@ bool filewrite_test()
     CResources::Resource rsc(small_map_test);
     rsc.data = sample_storage;
     rsc.size = sizeof(sample_storage);
-    return CResources::FileCommit(rsc,false,ResourceAccess::WriteOnly|ResourceAccess::Discard);
+    return CResources::FileCommit(rsc,false,ResourceAccess::WriteOnly|ResourceAccess::Discard|ResourceAccess::NewFile);
 }
 
 bool filemap_test()

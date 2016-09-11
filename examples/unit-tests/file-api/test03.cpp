@@ -7,9 +7,15 @@ using Scratch = CResources::FileFun::ScratchBuf;
 
 bool filescratch_test()
 {
+#if defined(COFFEE_RASPBERRYPI)
+    /* Raspberry Pi has limited memory, and often does not have swap */
+    /* 256MB devices are out of the question */
+    szptr size = 256*1024*1024;
+#else
     szptr size = 512*1024*1024;
+#endif
 
-    Scratch f = CResources::FileFun::ScratchBuffer(512*1024*1024,ResourceAccess::ReadWrite);
+    Scratch f = CResources::FileFun::ScratchBuffer(size,ResourceAccess::ReadWrite);
 
     /* If true, no buffer was mapped */
     if(f.size == 0 || !f.ptr)
