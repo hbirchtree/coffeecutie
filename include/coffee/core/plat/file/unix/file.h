@@ -117,7 +117,7 @@ struct PosixFileFun_def : PosixFileMod_def
         return true;
     }
 
-    STATICINLINE CByteData Read(FH* f_h, uint64 f_size, bool)
+    STATICINLINE CByteData Read(FH* f_h, uint64 f_size, bool nullterm)
     {
         CByteData data;
 
@@ -126,7 +126,10 @@ struct PosixFileFun_def : PosixFileMod_def
         if(f_size <= sz && f_size != -1)
             sz = f_size;
 
-        data.data = (byte_t*)Alloc(sz);
+        if(nullterm)
+            sz += 1;
+
+        data.data = (byte_t*)Calloc(4,sz);
         data.size = sz;
 
         szptr i = 0;
@@ -281,7 +284,7 @@ struct PosixFileFun_def : PosixFileMod_def
         buf.acc = access;
         buf.size = size;
 
-        if(!buf.ptr)
+        if(!buf.ptr || buf.ptr == (void*)0xFFFFFFFF)
             return {};
 
         return buf;

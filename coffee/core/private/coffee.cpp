@@ -100,7 +100,7 @@ void CoffeeInit(bool profiler_init)
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 6;
+    Coffee::PrintingVerbosityLevel = 7;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel = 1;

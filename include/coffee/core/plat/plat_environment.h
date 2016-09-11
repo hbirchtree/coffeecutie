@@ -21,6 +21,7 @@
 #include "environment/android/sysinfo.h"
 #include "environment/linux/sysinfo.h"
 #include "environment/osx/sysinfo.h"
+#include "environment/raspberry/sysinfo.h"
 #include "environment/windows/sysinfo.h"
 
 namespace Coffee{

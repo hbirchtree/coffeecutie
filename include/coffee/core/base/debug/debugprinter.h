@@ -70,6 +70,7 @@ struct DebugPrinterImpl : DebugPrinterDef
         cstring const severity_debg = "DEBG";
         cstring const severity_warn = "WARN";
         cstring const severity_ftal = "FTAL";
+        cstring const severity_verb = "VERB";
 
         cstring severity_str = nullptr;
 
@@ -77,6 +78,9 @@ struct DebugPrinterImpl : DebugPrinterDef
         {
         case Severity::Information:
             severity_str = severity_info;
+            break;
+        case Severity::Verbose:
+            severity_str = severity_verb;
             break;
         case Severity::Debug:
         case Severity::Low:
@@ -163,7 +167,7 @@ struct DebugPrinterImpl : DebugPrinterDef
         if(PrintingVerbosityLevel < level)
             return;
 
-        CString fmt = FormatPrintString(Severity::Information,
+        CString fmt = FormatPrintString(Severity::Verbose,
                                         0,f,a...);
         OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
 #endif

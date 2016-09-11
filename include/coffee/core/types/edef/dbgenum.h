@@ -6,6 +6,7 @@ namespace Coffee{
 
 enum class Severity : uint8
 {
+    Verbose,
     Information,
     Debug,
 

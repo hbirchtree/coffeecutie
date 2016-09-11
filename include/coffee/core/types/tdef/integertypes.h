@@ -84,9 +84,13 @@ constexpr uint64 UInt64_Max = (18446744073709551615ULL);
 using c_cptr = const void*;
 using c_ptr  = void*;
 
+#if !defined(COFFEE_RASPBERRYPI)
 using ThrdCnt = uint64;
-using CoreCnt = uint32;
+#else
+using ThrdCnt = uint32;
+#endif
 using MemUnit = uint64;
+using CoreCnt = uint32;
 
 constexpr MemUnit Unit_kB = 1024;
 constexpr MemUnit Unit_MB = 1024*1024;

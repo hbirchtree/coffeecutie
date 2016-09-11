@@ -279,8 +279,15 @@ struct SysInfoDef
     }
 };
 
+
 struct PowerInfoDef
 {
+    struct Temp
+    {
+        scalar current;
+        scalar trip_point;
+    };
+
     STATICINLINE
     /*!
      * \brief If device is connected to wall power, often same as charging status,
@@ -326,6 +333,15 @@ struct PowerInfoDef
     uint32 BatteryLifetime()
     {
         return 0;
+    }
+    STATICINLINE
+    /*!
+     * \brief Basic system temperature in Celsius
+     * \return
+     */
+    Temp CpuTemperature()
+    {
+        return {0.f,0.f};
     }
 };
 

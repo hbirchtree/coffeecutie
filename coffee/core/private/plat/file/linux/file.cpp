@@ -64,6 +64,24 @@ bool LinuxFileFun::VerifyAsset(cstring fn)
     return LinuxFileFun::Exists(native.c_str());
 }
 
+CString LinuxFileFun::sys_read(cstring fn)
+{
+    CString out;
+    FILE* fh = fopen(fn,"r");
+    char* arg = 0;
+    size_t size = 0;
+
+    while(getdelim(&arg,&size,0,fh) != -1)
+    {
+        out.append(arg);
+    }
+    free(arg);
+    fclose(fh);
+    if(out.size() > 0)
+        out.resize(out.size()-1);
+    return out;
+}
+
 }
 
 }

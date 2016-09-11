@@ -71,6 +71,8 @@ inline cstring cStringify(Severity const& sev)
         return "Low";
     case Severity::Information:
         return "Information";
+    case Severity::Verbose:
+        return "Verbose";
     }
     return "";
 }

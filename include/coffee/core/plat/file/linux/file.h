@@ -16,6 +16,8 @@ struct LinuxFileFun : Posix::PosixFileFun
 
     static bool VerifyAsset(cstring fn);
 
+    static CString sys_read(cstring fn);
+
     STATICINLINE bool SuperCache()
     {
         return mlockall(MCL_CURRENT)==0;

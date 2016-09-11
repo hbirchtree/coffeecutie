@@ -68,7 +68,7 @@ CString PosixFileMod_def::DereferenceLink(cstring fn)
     if(sz > 0)
         out.resize(sz);
     else
-        out.resize(0);
+        return out = fn;
 
     ErrnoCheck(fn);
 

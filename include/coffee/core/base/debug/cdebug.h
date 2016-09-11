@@ -163,7 +163,7 @@ FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 {
     CString msg_out = cStringFormat(msg,args...);
     CString out = DebugPrinter::FormatPrintString(
-                Severity::Information,1,"{0}: {1}",src,msg_out.c_str());
+                Severity::Verbose,1,"{0}: {1}",src,msg_out.c_str());
     DebugPrinter::cBasicPrint("{0}",out);
 }
 

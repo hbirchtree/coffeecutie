@@ -1,4 +1,6 @@
 #include <coffee/core/plat/environment/linux/sysinfo.h>
+#include <coffee/core/plat/file/linux/file.h>
+#include <coffee/core/plat/environment/linux/environment.h>
 
 namespace Coffee{
 namespace Environment{
@@ -12,17 +14,7 @@ CString LinuxSysInfo::CPUInfoString(bool force)
 
     //        C_PERFWARN(__FILE__,__LINE__,"Reading from /proc/cpuinfo!");
 
-    FILE* cpuinfo = fopen("/proc/cpuinfo","r");
-    char* arg = 0;
-    size_t size = 0;
-    CString data;
-
-    while(getdelim(&arg,&size,0,cpuinfo)!=-1)
-        data.append(arg);
-
-    CFree(arg);
-
-    fclose(cpuinfo);
+    CString data = CResources::Linux::LinuxFileFun::sys_read("/proc/cpuinfo");
 
     cached_cpuinfo_string = data;
 
@@ -267,6 +259,35 @@ bool LinuxSysInfo::HasHyperThreading()
             return true;
     }
     return false;
+}
+
+using namespace CResources;
+
+PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
+{
+    static const constexpr cstring thermal_class = "/sys/class/thermal";
+    Temp out = {};
+
+    DirFun::DirList lst;
+    CString tmp,tmp2;
+    if(DirFun::Ls(thermal_class,lst))
+    {
+        for(auto e : lst)
+            if(e.name != "." && e.name != "..")
+            {
+                tmp = Env_::ConcatPath(thermal_class,e.name.c_str());
+                tmp2 = Env_::ConcatPath(tmp.c_str(),"temp");
+
+                if(FileFun::Exists(tmp2.c_str()))
+                {
+                    CString temp = FileFun::sys_read(tmp2.c_str());
+                    out.current = Convert::strtofscalar(temp.c_str()) / 1000;
+                    break;
+                }
+            }
+    }
+
+    return out;
 }
 
 }

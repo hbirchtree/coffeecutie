@@ -82,13 +82,18 @@ private:
     thread_local static CString cached_cpuinfo_string;
 };
 
-using LinuxPowerInfo = _SDLPowerInfo;
+struct LinuxPowerInfo : _SDLPowerInfo
+{
+    static Temp CpuTemperature();
+};
 
 }
 }
 
 using PowerInfo = Environment::Linux::LinuxPowerInfo;
+#if !defined(COFFEE_RASPBERRYPI)
 using SysInfo = Environment::Linux::LinuxSysInfo;
+#endif
 
 }
 
