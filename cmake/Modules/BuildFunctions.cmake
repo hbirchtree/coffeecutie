@@ -333,7 +333,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         ${TARGET}
 
         DESTINATION
-        tests
+        bin/tests
         )
 
     target_link_libraries ( ${TARGET}

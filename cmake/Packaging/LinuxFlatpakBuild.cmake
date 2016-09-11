@@ -4,7 +4,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( FLATPAK_REPOSITORY_DIR CACHE PATH "Target repository to submit flatpaks to" )
 
     set ( FLATPAK_PROGRAM "/usr/bin/flatpak" CACHE FILEPATH "Path to flatpak executable" )
-    set ( FLATPAK_WORKING_DIRECTORY "${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
+    set ( FLATPAK_WORKING_DIRECTORY "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak"
         CACHE PATH "Where to put flatpak directory structures" )
     set ( FLATPAK_DEPLOY_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-flatpak"
 	CACHE PATH "Where to put flatpak directory structures" )
@@ -112,7 +112,7 @@ macro( FLATPAK_PACKAGE
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${TARGET}>" "${FLATPAK_BINARY_DIR}"
         )
 
-    if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         add_custom_command ( TARGET ${TARGET}
             POST_BUILD
             COMMAND strip "${FLATPAK_BINARY_DIR}/${TARGET}"
@@ -126,7 +126,7 @@ macro( FLATPAK_PACKAGE
 
     add_custom_command ( TARGET ${TARGET}
 	POST_BUILD
-	COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_FILE}" "${FLATPAK_PKG_NAME}" )
+        COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_FILE}" "${FLATPAK_PKG_NAME}" )
 
     # Add arrangement to install flatpak structure somewhere else
     install (
