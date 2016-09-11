@@ -48,11 +48,10 @@ int32 coffee_main(int32, cstring_w*)
     CString err;
 
     /* Initialize the window and check for errors */
-    if(!renderer->init(props,&err))
+    if(!LoadHighestVersion(renderer,props,&err))
     {
         SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
         cDebug("Initialization error: {0}",err);
-        return 1;
     }
 
     do {

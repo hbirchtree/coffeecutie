@@ -32,6 +32,7 @@ void GLEAM_API::LoadAPI(bool debug)
         {
             GLEAM_PboQueue::Pbo pbo;
             pbo.buf = bufs[i];
+            pbo.flags = 0;
             instance_data->pboQueue.buffers.push_back(pbo);
         }
         delete[] bufs;
@@ -77,7 +78,7 @@ void GLEAM_API::LoadAPI(bool debug)
         CGL33::Enable(Feature::FramebufferSRGB);
     }
 
-    cDebug("Initialized API level {0}",(const void* const&)GL_CURR_API);
+    cVerbose(4,"Initialized API level {0}",(const void* const&)GL_CURR_API);
 }
 
 /* Future improvement: cache changes, or maybe rely on driver for that */
@@ -304,25 +305,37 @@ void GLEAM_API::SetPixelProcessState(const PixelProcessState& pstate)
 template<typename T>
 void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
-    CGL33::Uniformfv(idx,arr_size,data);
+    if(GL_CURR_API == GL_4_3)
+        CGL43::Uniformfv(prog,idx,arr_size,data);
+    else
+        CGL33::Uniformfv(idx,arr_size,data);
 }
 
 template<typename T>
 void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
-    CGL33::Uniformfv(idx,arr_size,false,data);
+    if(GL_CURR_API == GL_4_3)
+        CGL43::Uniformfv(prog,idx,arr_size,false,data);
+    else
+        CGL33::Uniformfv(idx,arr_size,false,data);
 }
 
 template<typename T>
 void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
-    CGL33::Uniformiv(idx,arr_size,data);
+    if(GL_CURR_API == GL_4_3)
+        CGL43::Uniformiv(prog,idx,arr_size,data);
+    else
+        CGL33::Uniformiv(idx,arr_size,data);
 }
 
 template<typename T>
 void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
-    CGL33::Uniformuiv(idx,arr_size,data);
+    if(GL_CURR_API == GL_4_3)
+        CGL43::Uniformuiv(prog,idx,arr_size,data);
+    else
+        CGL33::Uniformuiv(idx,arr_size,data);
 }
 
 void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,

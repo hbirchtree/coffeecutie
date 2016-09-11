@@ -84,18 +84,22 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
 
     if(m_flags&GLEAM_API::TextureDMABuffered)
     {
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
-        {
-        data_ptr = 0x0;
-        CGL33::BufBind(BufType::PixelUData,GLEAM_API::instance_data->pboQueue.current().buf);
-        CGL33::BufData(BufType::PixelUData,GetPixSize(fmt,comp,size.area()),data,
-                       ResourceAccess::WriteOnly|ResourceAccess::Persistent);
-        }else if(GL_CURR_API==GL_4_3)
+        GLEAM_PboQueue::Pbo& pbo = GLEAM_API::instance_data->pboQueue.current();
+
+        if((GL_CURR_API==GL_4_3 || GL_CURR_API==GL_4_5) && CGL43::BufferStorageSupported())
         {
             data_ptr = 0x0;
-            CGL43::BufBind(BufType::PixelUData,GLEAM_API::instance_data->pboQueue.current().buf);
+            CGL43::BufBind(BufType::PixelUData,pbo.buf);
+            if(pbo.flags != 0)
+                CGL43::BufInvalidateData(pbo.buf);
             CGL43::BufStorage(BufType::PixelUData,GetPixSize(fmt,comp,size.area()),data,
                               ResourceAccess::WriteOnly|ResourceAccess::Persistent);
+        }else
+        {
+        data_ptr = 0x0;
+        CGL33::BufBind(BufType::PixelUData,pbo.buf);
+        CGL33::BufData(BufType::PixelUData,GetPixSize(fmt,comp,size.area()),data,
+                       ResourceAccess::WriteOnly|ResourceAccess::Streaming);
         }
     }
 

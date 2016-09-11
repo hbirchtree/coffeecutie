@@ -175,6 +175,8 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
 {
     if(GL_CURR_API==GL_3_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
+        /* Does not differentiate between shader stages and their uniforms */
+        /* GL 4.3+ do not work with this */
         CGhnd prog = pipeline.m_handle;
 
         /* Get typical uniforms */

@@ -89,7 +89,7 @@ struct CGL_SeparableShaderPrograms
     {glProgramUniform1fv(h,l,c,d);}
     STATICINLINE void Uniformiv(CGhnd h,int32 l,int32 c,const int32* d)
     {glProgramUniform1iv(h,l,c,d);}
-    STATICINLINE void Uniformiv(CGhnd h,int32 l,int32 c,const uint32* d)
+    STATICINLINE void Uniformuiv(CGhnd h,int32 l,int32 c,const uint32* d)
     {glProgramUniform1uiv(h,l,c,d);}
 
     STATICINLINE void Uniformfv(CGhnd h,int32 l,int32 c,const _cbasic_vec2<scalar>* d)

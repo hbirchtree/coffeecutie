@@ -130,6 +130,9 @@ struct CGL_Shared_Debug
         do
         {
             CString str = GetString(GL_VERSION);
+
+            cVerbose(7,"Input GL_VERSION string: {0}",str);
+
             if (str.size()<=0)
                 break;
             Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
@@ -167,6 +170,8 @@ struct CGL_Shared_Debug
 
         if (!str_c)
             return ver;
+
+        cVerbose(7,"Input GL_SHADING_LANGUAGE_VERSION string: {0}",str_c);
 
         CString str = str_c;
 

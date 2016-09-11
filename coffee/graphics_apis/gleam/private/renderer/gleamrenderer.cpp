@@ -73,6 +73,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(!PlatformData::IsGLES())
     {
+#ifdef COFFEE_GLEAM_DESKTOP
         const static CGLVersion v33(3,3);
         const static CGLVersion v43(4,3);
         const static CGLVersion v45(4,5);
@@ -80,23 +81,19 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         if(p.version>=v45)
         {
             cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v45);
-#ifdef COFFEE_GLEAM_DESKTOP
             status = CGL::CGL45::LoadBinding(m_app->glContext());
-#endif
         }else if(p.version>=v43)
         {
             cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v43);
-#ifdef COFFEE_GLEAM_DESKTOP
             status = CGL::CGL43::LoadBinding(m_app->glContext());
-#endif
         } else if(p.version>=v33)
         {
             cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v33);
-#ifdef COFFEE_GLEAM_DESKTOP
             status = CGL::CGL33::LoadBinding(m_app->glContext());
-#endif
         }
+#endif
     }else{
+#ifndef COFFEE_GLEAM_DESKTOP
         const static CGLVersion v20es(2,0);
         const static CGLVersion v30es(3,0);
         const static CGLVersion v32es(3,2);
@@ -104,24 +101,19 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         if(p.version>=v32es)
         {
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v32es);
-#ifndef COFFEE_GLEAM_DESKTOP
             status = CGL::CGLES32::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
-#endif
         }else
         if(p.version==v30es)
         {
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
-#ifndef COFFEE_GLEAM_DESKTOP
             status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
-#endif
         }
         if(p.version==v20es)
         {
             cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v20es);
-#ifndef COFFEE_GLEAM_DESKTOP
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
-#endif
         }
+#endif
     }
 
     Profiler::Profile("Loading GL function pointers");

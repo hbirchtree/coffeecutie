@@ -678,8 +678,8 @@ struct GraphicsAPI
 
     struct DrawCall
     {
-        bool indexed()const{return m_idxd;}
-        bool instanced()const{return m_inst;}
+        FORCEDINLINE bool indexed()const{return m_idxd;}
+        FORCEDINLINE bool instanced()const{return m_inst;}
 
         bool m_idxd;
         bool m_inst;
@@ -692,14 +692,14 @@ struct GraphicsAPI
 	    m_voff(0),m_eoff(0),m_ioff(0),
 	    m_eltype(TypeEnum::UByte){}
 
-        uint32 vertices()const{return m_verts;}
-        uint32 elements()const{return m_elems;}
-        TypeEnum elementType()const{return m_eltype;}
-        uint32 instances()const{return m_insts;}
+        FORCEDINLINE uint32 vertices()const{return m_verts;}
+        FORCEDINLINE uint32 elements()const{return m_elems;}
+        FORCEDINLINE TypeEnum elementType()const{return m_eltype;}
+        FORCEDINLINE uint32 instances()const{return m_insts;}
 
-        int32 vertexOffset()const{return m_voff;}
-        uint32 indexOffset()const{return m_eoff;}
-        uint32 instanceOffset()const{return m_ioff;}
+        FORCEDINLINE int32 vertexOffset()const{return m_voff;}
+        FORCEDINLINE uint32 indexOffset()const{return m_eoff;}
+        FORCEDINLINE uint32 instanceOffset()const{return m_ioff;}
 
         uint32 m_verts;
         uint32 m_elems;
@@ -718,7 +718,7 @@ struct GraphicsAPI
     struct ShaderUniformState
     {
         void setUniform(UniformDescriptor const&,UniformValue*){}
-        void setSampler(UniformDescriptor const&,SamplerHandle&){}
+        void setSampler(UniformDescriptor const&,SamplerHandle*){}
     };
 
     static void GetShaderUniformState(Pipeline&,Vector<UniformDescriptor>*){}
@@ -742,7 +742,7 @@ struct GraphicsAPI
     static void SetViewportState(ViewportState const&,uint32){}
     static void SetBlendState(BlendState const&){}
     static void SetDepthState(DepthState<uint32> const&){}
-    static void SetStencilState(StencilState<uint32,uint32> const&){}
+    static void SetStencilState(StencilState<uint32,uint32> const&,uint32){}
     static void SetPixelProcessState(PixelProcessState const&){}
     static void SetShaderUniformState(Pipeline&,ShaderStage,ShaderUniformState const&){}
 

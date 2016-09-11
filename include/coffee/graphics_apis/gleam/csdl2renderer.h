@@ -31,6 +31,49 @@ protected:
     CSDL2Renderer(CObject* parent);
 };
 
+template<typename Renderer> STATICINLINE
+bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* err)
+{
+    do{
+#if defined(COFFEE_GLEAM_DESKTOP)
+        properties.gl.version.major = 4;
+        properties.gl.version.minor = 5;
+#else
+        properties.gl.version.major = 3;
+        properties.gl.version.minor = 2;
+#endif
+        if(renderer->init(properties,err))
+            break;
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+        properties.gl.version.minor = 3;
+#else
+        properties.gl.version.major = 3;
+        properties.gl.version.minor = 1;
+#endif
+        if(renderer->init(properties,err))
+            break;
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+        properties.gl.version.major = 3;
+#else
+        properties.gl.version.major = 3;
+        properties.gl.version.minor = 0;
+#endif
+        if(renderer->init(properties,err))
+            break;
+
+#if !defined(COFFEE_GLEAM_DESKTOP)
+        properties.gl.version.major = 2;
+        if(renderer->init(properties,err))
+            break;
+#endif
+
+        return false;
+    } while(false);
+    return true;
+}
+
 }
 }
 

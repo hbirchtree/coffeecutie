@@ -19,11 +19,13 @@ struct GLEAM_PboQueue
     struct Pbo
     {
         CGhnd buf;
+        uint32 flags;
     };
     Vector<Pbo> buffers;
+    uint32 idx = 0;
     Pbo& current()
     {
-        return buffers.at(0);
+        return buffers.at(idx++);
     }
 };
 

@@ -747,7 +747,7 @@ inline CGenum to_enum2(ResourceAccess acc)
         f |= GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
 #ifdef COFFEE_GLEAM_DESKTOP
     if(feval(acc&ResourceAccess::Streaming))
-        f |= GL_DYNAMIC_STORAGE_BIT;
+        f |= GL_CLIENT_STORAGE_BIT;
 #endif
     return f;
 }

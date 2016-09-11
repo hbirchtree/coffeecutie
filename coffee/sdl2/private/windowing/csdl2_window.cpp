@@ -200,8 +200,7 @@ void SDL2Window::popErrorMessage(Severity s, cstring title, cstring msg)
         flags |= SDL_MESSAGEBOX_WARNING;
         break;
     case Severity::Information:
-        flags |= SDL_MESSAGEBOX_INFORMATION;
-        break;
+    case Severity::Verbose:
     case Severity::Debug:
         flags |= SDL_MESSAGEBOX_INFORMATION;
         break;
