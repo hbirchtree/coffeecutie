@@ -470,32 +470,37 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)
             /* TODO: Implement the disabled drawcalls using other means */
 #ifdef COFFEE_GLEAM_DESKTOP
             if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0&&i.vertexOffset()!=0)
+
                 CGL43::DrawElementsInstancedBaseVertexBaseInstance(
                             mode,i.elements(),i.elementType(),
                             i.indexOffset()*elsize,i.instances(),
                             i.vertexOffset(),i.instanceOffset());
+
             else if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0)
-            {
+
                 CGL43::DrawElementsInstancedBaseInstance(
                             mode,
                             i.elements(),i.elementType(),
                             i.indexOffset()*elsize,i.instanceOffset(),
                             i.instances());
-            }else
+
+            else
 #endif
                 CGL33::DrawElementsInstanced(mode,i.elements(),i.elementType(),
                                              i.indexOffset()*elsize,i.instances());
-        }else{
+        }else
+
             CGL33::DrawElements(mode,i.elements(),i.elementType(),
                                 i.indexOffset()*elsize);
-        }
+
     }else{
         if(d.instanced())
-        {
+
             CGL33::DrawArraysInstanced(mode,i.vertexOffset(),i.vertices(),i.instances());
-        }else{
+
+        else
+
             CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
-        }
     }
 }
 
