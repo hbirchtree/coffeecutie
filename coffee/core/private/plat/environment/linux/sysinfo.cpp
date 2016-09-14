@@ -100,7 +100,7 @@ uint32 LinuxSysInfo::CoreCount()
     cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
 
     if(!res)
-        return 1;
+        return ThreadCount();
 
     res = StrFind(res,":")+1;
     cstring end = StrFind(res,"\n");

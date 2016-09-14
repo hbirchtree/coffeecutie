@@ -256,6 +256,7 @@ FORCEDINLINE CString encode(c_cptr ptr, szptr len)
 FORCEDINLINE bool decode(byte_t const* i_ptr, szptr i_len,
                          Vector<byte_t>* out)
 {
+    /*TODO: Implement Base64 decoding*/
     return false;
 }
 

@@ -23,7 +23,18 @@
 namespace Coffee{
 namespace CGL{
 
-struct CGLES32 : CGLES30,
+struct CGLES32 :
+        CGL_Implementation,
+        CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture>,
+        CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>,
+        CGL_Old_Constructors<CGhnd,ShaderStage,CGsync>,
+        CGL_Old_ShaderCompiler<CGhnd,CGenum>,
+        CGL_Old_Buffers<CGhnd,BufType>,
+        CGL_Old_VAOs<CGhnd,CGenum>,
+        CGL_Basic_Draw,
+
+        CGL_TextureStorage,
+
         CGL_SeparableShaderPrograms,
 
         CGL_SeparableShaderPrograms_Allocators,
@@ -41,7 +52,19 @@ struct CGLES32 : CGLES30,
 
         CGL_XF2
 {
-    using CGLES30::ViewportSet;
+    using CGL_Implementation::ViewportSet;
+
+    STATICINLINE bool ShaderStorageSupported()
+    {return false;}
+    STATICINLINE bool ViewportArraySupported()
+    {return false;}
+    STATICINLINE bool BufferStorageSupported()
+    {return true;}
+    STATICINLINE bool TessellationSupported()
+    {
+        /* TODO: Find proper extension for this */
+        return false;
+    }
 
     STATICINLINE bool LoadBinding(CGL_Context* ctxt, GLADloadproc fun)
     {
@@ -68,15 +91,7 @@ struct CGLES32 : CGLES30,
     STATICINLINE void BufStorage(BufType,uint64,c_cptr,ResourceAccess){}
     STATICINLINE void SBufBind(CGhnd,uint32,uint32){}
 
-    STATICINLINE bool TessellationSupported()
-    {
-        /* TODO: Find proper extension for this */
-	return false;
-    }
-    STATICINLINE bool ShaderStorageSupported()
-    {return false;}
-    STATICINLINE bool ViewportArraySupported()
-    {return false;}
+    STATICINLINE void BufInvalidateData(CGhnd){}
 };
 
 }
