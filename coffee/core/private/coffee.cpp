@@ -12,6 +12,8 @@
 #include <coffee/core/types/cdef/infotypes.h>
 #include <coffee/core/plat/plat_file.h>
 
+#include <coffee/core/coffee_signals.h>
+
 namespace Coffee{
 
 #if defined(COFFEE_ANDROID)
@@ -82,8 +84,6 @@ void CoffeeInit(bool profiler_init)
 #ifndef NDEBUG
     ProcessProperty::CoreDumpEnable();
 #endif
-
-    InstallSignalHandler();
 
 #if defined(COFFEE_ANDROID)
     plat_tmp_string = cStringFormat("Android ({0})",__ANDROID_API__);
@@ -200,81 +200,6 @@ void CoffeeTerminate(bool profiler_destroy)
     Cmd::ResetScreen();
 }
 
-ExitCallback exit_handle = nullptr;
-
-void SetExitFunction(ExitCallback f)
-{
-    exit_handle = f;
-}
-
-void sighandle(int sig)
-{
-    /* If we use an alternate buffer, switch back to primary */
-    Cmd::ResetScreen();
-    switch(sig)
-    {
-    case SIGFPE:
-        cVerbose(4,"FPE occurred");
-        break;
-    case SIGSEGV:
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(CoffeeExit_ShitMySelf);
-        break;
-    case SIGABRT:
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(CoffeeExit_PoopedABit);
-        break;
-    case SIGILL:
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(CoffeeExit_Termination);
-        break;
-    case SIGINT:
-    {
-        Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(CoffeeExit_Interrupt);
-        break;
-    }
-    case SIGTERM:
-    {
-        Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
-        if(exit_handle)
-            exit_handle();
-        Cmd::Exit(CoffeeExit_Termination);
-        break;
-    }
-    default:
-        Cmd::Exit(CoffeeExit_UnknownBad);
-        break;
-    }
-
-    /* Implementation detail: SIGKILL might
-     *  leave system with dirty state for certain hardware devices:
-     *  - Input devices such as controllers
-     *  - Haptic devices
-     *  - Kinect devices (if using CNect)
-     *
-     * If any abnormal behavior occurs after
-     *  a SIGKILL shutdown has happened, this is likely the cause.*/
-}
-
-void InstallSignalHandler()
-{
-    /* Set up signal handlers, make the process more well-behaved */
-//    signal(SIGABRT,sighandle);
-//    signal(SIGSEGV,sighandle);
-
-//    signal(SIGFPE,sighandle);
-
-//    signal(SIGILL,sighandle);
-//    signal(SIGINT,sighandle);
-//    signal(SIGTERM,sighandle);
-}
-
 #if !defined(COFFEE_ANDROID) || !defined(ANDROID_DONT_USE_SDL2)
 
 bool EventProcess(int)
@@ -286,6 +211,14 @@ void GotoApplicationDir()
 {
     CString dir = Env::ApplicationDir();
     DirFun::ChDir(dir.c_str());
+}
+
+void InstallDefaultSigHandlers()
+{
+    InstallSignalHandler(Sig_Termination,nullptr);
+    InstallSignalHandler(Sig_PoopedABit,nullptr);
+    InstallSignalHandler(Sig_ShitMySelf,nullptr);
+    InstallSignalHandler(Sig_FPE,nullptr);
 }
 
 #endif

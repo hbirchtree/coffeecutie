@@ -2,6 +2,7 @@ set ( CoffeeCore_SRCS
 
     private/extern_storage.cpp
 #    private/exit_handling.cpp
+    private/coffee_signals.cpp
     private/argument_handling.cpp
 
     # General functions

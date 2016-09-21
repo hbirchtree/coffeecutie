@@ -2,10 +2,13 @@
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/coffee.h>
+#include <coffee/core/coffee_signals.h>
+
 #include "renderer.h"
 
 int32 coffee_main(int32, cstring_w*)
 {
+//    InstallSignalHandler(Sig_ShitMySelf,sig_dummy_handler);
 
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");

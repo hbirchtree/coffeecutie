@@ -25,6 +25,8 @@ extern void CoffeeTerminate(bool profiler_destroy = true);
 
 extern void GotoApplicationDir();
 
+extern void InstallDefaultSigHandlers();
+
 //A simpler implementation of QObject
 class CObject;
 

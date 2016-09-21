@@ -325,11 +325,15 @@ public:
             vr_ctxt.VRChaperone()->SetSceneColor(sceneCol);
 
             /* Resize window to dimensions of VR stuffs */
-            vr_ctxt.VRSystem()->
+//            vr_ctxt.VRSystem()->
         }
 
         vr::Texture_t eye_texture;
         vr::VRTextureBounds_t eye_bounds[2] = {};
+
+	eye_bounds[0].uMax = eye_bounds[1].uMin = 640;
+	eye_bounds[0].uMax = eye_bounds[1].uMax = 1280;
+	eye_bounds[0].vMax = eye_bounds[1].vMax = 720;
 
         while (!closeFlag()) {
 
@@ -428,8 +432,8 @@ public:
 
             if(vr_ctxt.VRSystem())
             {
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,nullptr,vr::Submit_Default);
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,,vr::Submit_Default);
+		vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,&eye_bounds[0],vr::Submit_Default);
+		vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,&eye_bounds[1],vr::Submit_Default);
             }
 
             this->swapBuffers();
