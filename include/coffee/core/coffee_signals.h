@@ -1,29 +1,34 @@
 #pragma once
 
 #include <signal.h>
+#include <coffee/core/plat/plat_primary_identify.h>
 
 namespace Coffee{
 
 using exithandler_t = void(*)();
+using sighandler_t = void(*)(int);
 
 enum Signals
 {
-#ifndef COFFEE_WINDOWS
-    Sig_Normal       = SIGQUIT,
+#ifdef COFFEE_WINDOWS
+	Sig_Normal		= 0,
 #else
-    Sig_Normal       = 0,
+	Sig_Normal		= SIGQUIT,
 #endif
-    Sig_GeneralError = 1,
 
-    Sig_UnknownBad  = 100,
+	Sig_GeneralError = 1,
 
-    Sig_IllegalOp   = SIGILL,
-    Sig_Termination = SIGTERM,
-    Sig_Interrupt   = SIGINT,
+	Sig_UnknownBad	= 100,
 
-    Sig_FPE	    = SIGFPE,
+	Sig_IllegalOp	= SIGILL,
+	Sig_Termination = SIGTERM,
+	Sig_Interrupt	= SIGINT,
 
-#ifndef COFFEE_WINDOWS
+	Sig_FPE			= SIGFPE,
+
+#ifdef COFFEE_WINDOWS
+	Sig_Kill		= 0,
+#else
     Sig_Kill        = SIGKILL,
 #endif
 
