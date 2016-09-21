@@ -20,6 +20,7 @@ enum APILevel
 
     /* Mobile GL versions / ES */
     /* These do not map directly to desktop versions */
+    GLES_2_0 = 0x10200,
     GLES_3_0 = 0x10300,
     GLES_3_2 = 0x10320,
 };

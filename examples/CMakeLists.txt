@@ -69,6 +69,7 @@ if(COFFEE_BUILD_SDL2 AND COFFEE_BUILD_GLEAM)
     if(COFFEE_BUILD_GLEAM_RHI)
         # Supports GL 3.3+ and GL ES 3.0+ APIs
         add_subdirectory(gleam/rhi/base-test)
+        add_subdirectory(gleam/rhi/vr-test)
     endif()
 
     if(NOT COFFEE_BUILD_GLES)

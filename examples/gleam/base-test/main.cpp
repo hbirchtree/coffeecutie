@@ -11,19 +11,19 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics_apis/SMesh>
 
-#include <coffee/dummyplug/hmd-dummy.h>
-#include <coffee/COculusRift>
+//#include <coffee/dummyplug/hmd-dummy.h>
+//#include <coffee/COculusRift>
 
 using namespace Coffee;
 using namespace Display;
 
-#ifdef COFFEE_OCULUSVR_ENABLED
-using VR = OculusRift::OculusVR;
-#else
-using VR = HMD::DummyPlugHMD;
-#endif
+//#ifdef COFFEE_OCULUSVR_ENABLED
+//using VR = OculusRift::OculusVR;
+//#else
+//using VR = HMD::DummyPlugHMD;
+//#endif
 
-VR::Device* dev;
+//VR::Device* dev;
 
 void framecount_fun(uint32 t, c_cptr)
 {
@@ -337,8 +337,8 @@ public:
 
         Profiler::Profile();
 
-        if(dev)
-            VR::Shutdown();
+//        if(dev)
+//            VR::Shutdown();
 
         Profiler::PopContext();
     }
@@ -392,20 +392,20 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     /* The Oculus SDK configures some OpenGL state,
      *  so it needs to be done before any GL context is active */
-    Profiler::PushContext("Oculus setup");
-    dev = nullptr;
-    {
-        int32 devcount;
-        if(VR::InitializeBinding())
-        {
-            if(VR::PollDevices(&devcount)&&devcount>0)
-                dev = VR::GetDefaultDevice();
-            if(dev)
-                cDebug("Here's Johnny!");
-            VR::PollDevices();
-        }
-    }
-    Profiler::PopContext();
+//    Profiler::PushContext("Oculus setup");
+//    dev = nullptr;
+//    {
+//        int32 devcount;
+//        if(VR::InitializeBinding())
+//        {
+//            if(VR::PollDevices(&devcount)&&devcount>0)
+//                dev = VR::GetDefaultDevice();
+//            if(dev)
+//                cDebug("Here's Johnny!");
+//            VR::PollDevices();
+//        }
+//    }
+//    Profiler::PopContext();
 
     CString err;
 
