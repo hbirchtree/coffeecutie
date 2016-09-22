@@ -316,6 +316,9 @@ public:
         bool do_debugging = false;
         bool did_apply_state = false;
 
+		vr::Texture_t eye_texture;
+		vr::VRTextureBounds_t eye_bounds[2] = {};
+
         if(vr_ctxt.VRSystem())
         {
             /* Set primary color for VR stuffs */
@@ -325,19 +328,19 @@ public:
             vr_ctxt.VRChaperone()->SetSceneColor(sceneCol);
 
             /* Resize window to dimensions of VR stuffs */
-//            vr_ctxt.VRSystem()->
+			_cbasic_size_2d<uint32> tsize = {};
+			vr_ctxt.VRSystem()->GetRecommendedRenderTargetSize(&tsize.w, &tsize.h);
+			CSize s = { (int32)tsize.w,(int32)tsize.h};
+			this->setWindowSize(s);
+
+			eye_bounds[0].uMax = eye_bounds[1].uMin = 512;
+			eye_bounds[0].uMax = eye_bounds[1].uMax = 1024;
+			eye_bounds[0].vMax = eye_bounds[1].vMax = 1024;
+
+			eye_texture.eType = vr::API_OpenGL;
+			eye_texture.eColorSpace = vr::ColorSpace_Auto;
+			eye_texture.handle = (void*)eyesamp.handle().texture;
         }
-
-        vr::Texture_t eye_texture;
-        vr::VRTextureBounds_t eye_bounds[2] = {};
-
-		eye_bounds[0].uMax = eye_bounds[1].uMin = 512;
-		eye_bounds[0].uMax = eye_bounds[1].uMax = 1024;
-		eye_bounds[0].vMax = eye_bounds[1].vMax = 1024;
-
-		eye_texture.eType = vr::API_OpenGL;
-		eye_texture.eColorSpace = vr::ColorSpace_Auto;
-		eye_texture.handle = (void*)eyesamp.handle().texture;
 
         while (!closeFlag()) {
 
@@ -445,6 +448,11 @@ public:
             tdelta = this->contextTime() - tprevious;
             tprevious = this->contextTime();
         }
+
+		if (vr_ctxt.VRSystem())
+		{
+			vr::VR_Shutdown();
+		}
 
         Profiler::PopContext();
     }
