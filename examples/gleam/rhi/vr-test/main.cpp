@@ -2,7 +2,6 @@
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/coffee.h>
-#include <coffee/core/coffee_signals.h>
 
 #include "renderer.h"
 

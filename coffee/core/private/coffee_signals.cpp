@@ -66,7 +66,7 @@ void sighandle(int sig)
      *  a SIGKILL shutdown has happened, this is likely the cause.*/
 }
 
-void SetExitFunction(exithandler_t handler)
+void SetExitHandler(exithandler_t handler)
 {
     exit_handle = handler;
 }

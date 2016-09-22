@@ -18,7 +18,7 @@ void ExitFun()
 
 int32 coffee_main(int32, cstring_w*)
 {
-    SetExitFunction(ExitFun);
+    SetExitHandler(ExitFun);
 
     CString user = "testuser";
     CString channel = "#test";

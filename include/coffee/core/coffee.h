@@ -1,7 +1,7 @@
 #ifndef COFFEE_H
 #define COFFEE_H
 
-#include "exit_handling.h"
+#include "coffee_signals.h"
 #include "argument_handling.h"
 #include "types/tdef/fntypes.h"
 #include "coffee_version.h"
