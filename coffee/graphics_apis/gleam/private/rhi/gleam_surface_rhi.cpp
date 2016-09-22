@@ -40,6 +40,11 @@ void GLEAM_Surface::dealloc()
     CGL33::TexFree(1,&m_handle);
 }
 
+CGhnd GLEAM_Surface::handle()
+{
+    return m_handle;
+}
+
 void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 {
     if(GL_DEBUG_MODE){

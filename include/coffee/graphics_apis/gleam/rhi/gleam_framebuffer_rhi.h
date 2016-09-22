@@ -26,6 +26,12 @@ struct GLEAM_RenderTarget : GraphicsAPI::RenderTarget
     GLEAM_RenderTarget() : GLEAM_RenderTarget(FramebufferT::All){}
     GLEAM_RenderTarget(FramebufferT t) : GraphicsAPI::RenderTarget(), m_type(t) {}
 
+    void use(FramebufferT t)
+    {
+	validate();
+	bind(t);
+    }
+
     void alloc();
     void dealloc();
 

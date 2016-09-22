@@ -15,6 +15,7 @@ struct GLEAM_Surface : GraphicsAPI::Surface
     void allocate();
     void dealloc();
 
+    CGhnd handle();
 
 protected:
     void upload_info(PixCmp comp, uint32 mip, uint32 d);

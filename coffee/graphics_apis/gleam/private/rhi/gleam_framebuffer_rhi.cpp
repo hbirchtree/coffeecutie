@@ -214,7 +214,7 @@ void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth, in
 
 void GLEAM_RenderTarget::bind(FramebufferT t) const
 {
-    fb_bind(m_type,m_handle);
+    fb_bind(t,m_handle);
 }
 
 void GLEAM_RenderTarget::unbind(FramebufferT t) const
