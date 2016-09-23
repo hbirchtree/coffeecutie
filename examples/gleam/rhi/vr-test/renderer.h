@@ -331,31 +331,29 @@ public:
 	    vr::HmdColor_t sceneCol;
 	    sceneCol.r = sceneCol.g = 0.5;
 	    sceneCol.b = sceneCol.a = 1.0;
-	    vr_ctxt.VRChaperone()->SetSceneColor(sceneCol);
-
-	    /* Resize window to dimensions of VR stuffs */
-	    _cbasic_size_2d<uint32> tsize = {};
-	    vr_ctxt.VRSystem()->GetRecommendedRenderTargetSize(&tsize.w, &tsize.h);
-	    CSize s = { (int32)tsize.w,(int32)tsize.h};
-//	    this->setWindowSize(s);
-
-	    eye_bounds[0].uMax = eye_bounds[1].uMin = 512;
-	    eye_bounds[0].uMax = eye_bounds[1].uMax = 1024;
-	    eye_bounds[0].vMax = eye_bounds[1].vMax = 1024;
-
-	    eye_texture.eType = vr::API_OpenGL;
-	    eye_texture.eColorSpace = vr::ColorSpace_Auto;
-	    eye_texture.handle = (void*)eyetex.handle();
+            vr_ctxt.VRChaperone()->SetSceneColor(sceneCol);
 	}
 
 	{
 	    CSize s = {1280,1536};
 
+            if(vr_ctxt.VRSystem())
+            {
+                /* Resize window to dimensions of VR stuffs */
+                _cbasic_size_2d<uint32> tsize = {};
+                vr_ctxt.VRSystem()->GetRecommendedRenderTargetSize(&tsize.w, &tsize.h);
+                s = { (int32)tsize.w,(int32)tsize.h};
+            }
+
 	    vr_target.alloc();
-	    vr_ctarget = new GLM::S_2D(PixelFormat::RGBA8,1);
+            vr_ctarget = new GLM::S_2D(PixelFormat::SRGB8A8,1);
 	    vr_dtarget = new GLM::S_2D(PixelFormat::Depth24Stencil8,1);
 
-	    s.w *= 2;
+            eye_bounds[0].uMax = eye_bounds[1].uMin = s.w;
+            eye_bounds[1].uMax = s.w*2;
+            eye_bounds[0].vMax = eye_bounds[1].vMax = s.h;
+
+            s.w *= 2;
 	    vr_ctarget->allocate(s,PixCmp::RGBA);
 	    vr_dtarget->allocate(s,PixCmp::Depth);
 
@@ -363,6 +361,10 @@ public:
 	    vr_target.attachSurface(*vr_ctarget,0);
 
 	    vr_target.resize(0,{0,0,s.w,s.h});
+
+            eye_texture.eType = vr::API_OpenGL;
+            eye_texture.eColorSpace = vr::ColorSpace_Gamma;
+            eye_texture.handle = (void*)vr_ctarget->handle();
 	}
 
 	GLM::FB_T* default_fb = &GLM::DefaultFramebuffer;
@@ -466,8 +468,12 @@ public:
 
 	    if(vr_ctxt.VRSystem())
 	    {
-		vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,&eye_bounds[0],vr::Submit_Default);
-		vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,&eye_bounds[1],vr::Submit_Default);
+                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,
+                                               &eye_bounds[0],vr::Submit_Default);
+                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,
+                                               &eye_bounds[1],vr::Submit_Default);
+
+                vr_ctxt.VRCompositor()->WaitGetPoses(nullptr,0,nullptr,0);
 	    }
 
 	    vr_target.blit({0,0,1280,720},GLM::DefaultFramebuffer,{0,0,1280,720},DBuffers::Color,Filtering::Linear);
@@ -479,7 +485,7 @@ public:
 	}
 
 	if(vr_ctxt.VRSystem())
-	{
+        {
 	    vr::VR_Shutdown();
 	}
 
