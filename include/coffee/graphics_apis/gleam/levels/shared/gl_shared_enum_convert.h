@@ -73,6 +73,8 @@ CGenum to_enum(WrapPolicy p);
 
 CGenum to_enum(VertexWinding e);
 
+uint32 to_enum_shtype(CGenum f);
+
 }
 }
 

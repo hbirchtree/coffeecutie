@@ -173,6 +173,8 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
 
 void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms)
 {
+    using namespace ShaderTypes;
+
     if(GL_CURR_API==GL_3_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
         /* Does not differentiate between shader stages and their uniforms */
@@ -199,124 +201,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
                 desc.m_name = unif_names[i];
                 desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
                 desc.stages = ShaderStage::All;
-                switch(unif_types[i])
-                {
-                case GL_SAMPLER_2D:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::Sam2D;
-                    break;
-                case GL_SAMPLER_3D:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::Sam3D;
-                    break;
-                case GL_SAMPLER_2D_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::Sam2DA;
-                    break;
-                case GL_SAMPLER_CUBE:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::SamCube;
-                    break;
-                case GL_SAMPLER_CUBE_MAP_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::SamCubeA;
-                    break;
-
-                case GL_UNSIGNED_INT_SAMPLER_2D:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::UIntegerT|GLEAM_API::Sam2D;
-                    break;
-                case GL_UNSIGNED_INT_SAMPLER_3D:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::UIntegerT|GLEAM_API::Sam3D;
-                    break;
-                case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::UIntegerT|GLEAM_API::Sam2DA;
-                    break;
-                case GL_UNSIGNED_INT_SAMPLER_CUBE:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::UIntegerT|GLEAM_API::SamCube;
-                    break;
-                case GL_UNSIGNED_INT_SAMPLER_CUBE_MAP_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::UIntegerT|GLEAM_API::SamCubeA;
-                    break;
-
-                case GL_INT_SAMPLER_2D:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::IntegerT|GLEAM_API::Sam2D;
-                    break;
-                case GL_INT_SAMPLER_3D:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::IntegerT|GLEAM_API::Sam3D;
-                    break;
-                case GL_INT_SAMPLER_2D_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::IntegerT|GLEAM_API::Sam2DA;
-                    break;
-                case GL_INT_SAMPLER_CUBE:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::IntegerT|GLEAM_API::SamCube;
-                    break;
-                case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
-                    desc.m_flags = GLEAM_API::SamplerT|GLEAM_API::IntegerT|GLEAM_API::SamCubeA;
-                    break;
-
-                case GL_FLOAT:
-                    desc.m_flags = GLEAM_API::ScalarT;
-                    break;
-                case GL_FLOAT_VEC2:
-                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Vec2T;
-                    break;
-                case GL_FLOAT_VEC3:
-                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Vec3T;
-                    break;
-                case GL_FLOAT_VEC4:
-                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Vec4T;
-                    break;
-
-#ifdef COFFEE_GLEAM_DESKTOP
-                case GL_DOUBLE:
-                    desc.m_flags = GLEAM_API::BigScalarT;
-                    break;
-                case GL_DOUBLE_VEC2:
-                    desc.m_flags = GLEAM_API::BigScalarT|GLEAM_API::Vec2T;
-                    break;
-                case GL_DOUBLE_VEC3:
-                    desc.m_flags = GLEAM_API::BigScalarT|GLEAM_API::Vec3T;
-                    break;
-                case GL_DOUBLE_VEC4:
-                    desc.m_flags = GLEAM_API::BigScalarT|GLEAM_API::Vec4T;
-                    break;
-#endif
-
-                case GL_UNSIGNED_INT:
-                    desc.m_flags = GLEAM_API::UIntegerT;
-                    break;
-                case GL_UNSIGNED_INT_VEC2:
-                    desc.m_flags = GLEAM_API::UIntegerT|GLEAM_API::Vec2T;
-                    break;
-                case GL_UNSIGNED_INT_VEC3:
-                    desc.m_flags = GLEAM_API::UIntegerT|GLEAM_API::Vec3T;
-                    break;
-                case GL_UNSIGNED_INT_VEC4:
-                    desc.m_flags = GLEAM_API::UIntegerT|GLEAM_API::Vec4T;
-                    break;
-
-                case GL_INT:
-                    desc.m_flags = GLEAM_API::IntegerT;
-                    break;
-                case GL_INT_VEC2:
-                    desc.m_flags = GLEAM_API::IntegerT|GLEAM_API::Vec2T;
-                    break;
-                case GL_INT_VEC3:
-                    desc.m_flags = GLEAM_API::IntegerT|GLEAM_API::Vec3T;
-                    break;
-                case GL_INT_VEC4:
-                    desc.m_flags = GLEAM_API::IntegerT|GLEAM_API::Vec4T;
-                    break;
-
-                case GL_FLOAT_MAT2:
-                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Mat2T;
-                    break;
-                case GL_FLOAT_MAT3:
-                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Mat3T;
-                    break;
-                case GL_FLOAT_MAT4:
-                    desc.m_flags = GLEAM_API::ScalarT|GLEAM_API::Mat4T;
-                    break;
-
-                default:
-                    cDebug("Unhandled shader type: {0}, uniform={1}",
-                           unif_types[i],unif_names[i]);
-                }
+                desc.m_flags = to_enum_shtype(unif_types[i]);
                 delete[] unif_names[i];
             }
             delete[] unif_names;
@@ -327,7 +212,34 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
         {
         }
     }else if(GL_CURR_API==GL_4_3){
+        for(auto& p : pipeline.m_programs)
+        {
+            int32 num_unifs;
+            CGhnd& hnd = p.shader->m_handle;
+            glGetProgramInterfaceiv(hnd, GL_UNIFORM, GL_ACTIVE_RESOURCES, &num_unifs);
 
+            for(int32 i=0;i<num_unifs;i++)
+            {
+                const CGenum props_to_get[] = {
+                    /* General data */
+                    GL_NAME_LENGTH,
+                    GL_TYPE,
+                    GL_LOCATION,
+
+                    /* Array data */
+                    GL_ARRAY_STRIDE,
+
+                    /* Block data */
+                    GL_BLOCK_INDEX,
+                    GL_OFFSET,
+                };
+                int32 props_out[sizeof(props_to_get)/sizeof(CGenum)];
+                glGetProgramResourceiv(hnd, GL_UNIFORM, i,
+                                       sizeof(props_to_get)/sizeof(CGenum),
+                                       props_to_get, sizeof(props_out), nullptr,
+                                       props_out);
+            }
+        }
     }
 }
 
@@ -407,6 +319,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
         };
         struct GL_MASS_DUMP
         {
+            APILevel lev;
             GL_DUMPED_FMT dumps[6];
         };
 

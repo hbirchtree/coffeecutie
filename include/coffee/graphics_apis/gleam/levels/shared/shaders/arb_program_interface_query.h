@@ -13,7 +13,9 @@ struct CGL_ProgramInterfaceQuery
     //TODO: Create PInterfaceProperty enum
     STATICINLINE void ProgramGetInterfaceiv(CGhnd h,CGenum i,CGenum e,int32* v)
     {glGetProgramInterfaceiv(h,i,e,v);}
-    //TODO: Add glGetProgramResourceiv()
+
+    STATICINLINE void ProgramGetResourceiv(CGhnd h)
+    {}
 
     STATICINLINE uint32 ProgramGetResourceIdx(CGhnd h,CGenum i,cstring n)
     {return glGetProgramResourceIndex(h,i,n);}

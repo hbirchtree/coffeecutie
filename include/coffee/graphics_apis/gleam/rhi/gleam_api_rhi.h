@@ -19,58 +19,6 @@ struct GLEAM_API : GraphicsAPI
         TextureAutoMipmapped,
     };
 
-    enum BufferFlags
-    {
-
-    };
-
-    enum UniformFlags
-    {
-        UniformT = 0x0,
-        UBufferT = 0x1,
-        SBufferT = 0x2,
-        SamplerT = 0x3,
-        ImageT = 0x4,
-
-        UniformStorageMask = UBufferT|SBufferT|SamplerT,
-
-        ScalarT = 0x0,
-        IntegerT = 0x8,
-        UIntegerT = 0x10,
-        BigScalarT = 0x20,
-
-        UniformDataMask = IntegerT|UIntegerT|ScalarT|BigScalarT,
-    };
-
-    enum VectorFlags
-    {
-        Mat2T = 0x40,
-        Mat3T = 0x80,
-        Mat4T = 0x100,
-
-        Mat2x4T = 0x200,
-        Mat2x3T = 0x400,
-
-        Mat3x2T = 0x800,
-        Mat3x4T = 0x1000,
-
-        Mat4x2T = 0x2000,
-        Mat4x3T = 0x4000,
-
-        Vec2T = 0x8000,
-        Vec3T = 0x10000,
-        Vec4T = 0x20000,
-    };
-
-    enum SamplerFlags
-    {
-        Sam2D = 0x40,
-        Sam3D = 0x80,
-        Sam2DA = 0x100,
-        SamCube = 0x200,
-        SamCubeA = 0x400,
-    };
-
     /* These access the PBO queue */
     friend struct GLEAM_Surface2D;
     friend struct GLEAM_Surface3D_Base;

@@ -50,8 +50,8 @@ void GLEAM_API::LoadAPI(bool debug)
         if(ver>=ver45&& /* DISABLES CODE */ (false))
             /* Unimplemented both on CGL level and here */
             GL_CURR_API = GL_4_5;
-        else if(ver>=ver43)
-            GL_CURR_API = GL_4_3;
+//        else if(ver>=ver43)
+//            GL_CURR_API = GL_4_3;
         else if(ver>=ver33)
             GL_CURR_API = GL_3_3;
     }else
@@ -342,6 +342,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
                                       ShaderStage const& stage,
                                       const GLEAM_ShaderUniformState &ustate)
 {
+    using namespace ShaderTypes;
+
     /* TODO: Tie uniforms to their applicable stages */
 
     /* Skip uniform application on 3.3 fragment stage */
@@ -374,39 +376,39 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         uint32 const& idx = u.first;
         uint32 const& fgs = u.second->flags;
 
-        if(fgs&(Mat2T|ScalarT))
+        if(fgs == (Mat_d|S2|Scalar_t))
             SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size/sizeof(Matf2));
-        else if(fgs&(Mat3T|ScalarT))
+        else if(fgs == (Mat_d|S3|Scalar_t))
             SetUniform_wrapf_m(prog,idx,(Matf3*)db->data,db->size/sizeof(Matf3));
-        else if(fgs&(Mat4T|ScalarT))
+        else if(fgs == (Mat_d|S4|Scalar_t))
             SetUniform_wrapf_m(prog,idx,(Matf4*)db->data,db->size/sizeof(Matf4));
 
-        else if(fgs&(Vec2T|ScalarT))
+        else if(fgs == (Vec_d|S2|Scalar_t))
             SetUniform_wrapf(prog,idx,(Vecf2*)db->data,db->size/sizeof(Vecf2));
-        else if(fgs&(Vec3T|ScalarT))
+        else if(fgs == (Vec_d|S3|Scalar_t))
             SetUniform_wrapf(prog,idx,(Vecf3*)db->data,db->size/sizeof(Vecf3));
-        else if(fgs&(Vec4T|ScalarT))
+        else if(fgs == (Vec_d|S4|Scalar_t))
             SetUniform_wrapf(prog,idx,(Vecf4*)db->data,db->size/sizeof(Vecf4));
 
-        else if(fgs&(Vec2T|IntegerT))
+        else if(fgs == (Vec_d|S2|Int_t))
             SetUniform_wrapi(prog,idx,(Veci2*)db->data,db->size/sizeof(Veci2));
-        else if(fgs&(Vec3T|IntegerT))
+        else if(fgs == (Vec_d|S3|Int_t))
             SetUniform_wrapi(prog,idx,(Veci3*)db->data,db->size/sizeof(Veci3));
-        else if(fgs&(Vec4T|IntegerT))
+        else if(fgs == (Vec_d|S4|Int_t))
             SetUniform_wrapi(prog,idx,(Veci4*)db->data,db->size/sizeof(Veci4));
 
-        else if(fgs&(Vec2T|UIntegerT))
+        else if(fgs == (Vec_d|S2|UInt_t))
             SetUniform_wrapui(prog,idx,(Vecui2*)db->data,db->size/sizeof(Vecui2));
-        else if(fgs&(Vec3T|UIntegerT))
+        else if(fgs == (Vec_d|S3|UInt_t))
             SetUniform_wrapui(prog,idx,(Vecui3*)db->data,db->size/sizeof(Vecui3));
-        else if(fgs&(Vec4T|UIntegerT))
+        else if(fgs == (Vec_d|S4|UInt_t))
             SetUniform_wrapui(prog,idx,(Vecui4*)db->data,db->size/sizeof(Vecui4));
 
-        else if(fgs==ScalarT)
+        else if(fgs==Scalar_t)
             SetUniform_wrapf(prog,idx,(scalar*)db->data,db->size/sizeof(scalar));
-        else if(fgs==IntegerT)
+        else if(fgs==Int_t)
             SetUniform_wrapi(prog,idx,(int32*)db->data,db->size/sizeof(int32));
-        else if(fgs==UIntegerT)
+        else if(fgs==UInt_t)
             SetUniform_wrapui(prog,idx,(uint32*)db->data,db->size/sizeof(uint32));
     }
 
