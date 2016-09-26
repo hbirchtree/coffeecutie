@@ -3,6 +3,7 @@
 #include <coffee/graphics_apis/gleam/rhi/gleam_buffer_rhi.h>
 #include <coffee/graphics_apis/gleam/rhi/gleam_shader_rhi.h>
 #include <coffee/graphics_apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/graphics_apis/gleam/rhi/gleam_query_rhi.h>
 
 #include <coffee/core/platform_data.h>
 #include "gleam_internal_types.h"
@@ -367,14 +368,16 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
     for(auto u : ustate.m_uniforms)
     {
-        CByteData const* db = u.second->data;
+        if(!feval(u.second.stages&stage))
+            continue;
+        CByteData const* db = u.second.value->data;
         if(!db)
             continue;
 
         /* TODO: Cache uniform state changes, only set them when necessary */
 
         uint32 const& idx = u.first;
-        uint32 const& fgs = u.second->flags;
+        uint32 const& fgs = u.second.value->flags;
 
         if(fgs == (Mat_d|S2|Scalar_t))
             SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size/sizeof(Matf2));
@@ -414,15 +417,26 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
     for(auto s : ustate.m_samplers)
     {
-        auto& handle = s.second;
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
+        if(!feval(s.second.stages&stage))
+            continue;
+
+        auto& handle = s.second.value;
+        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3 ||
+                GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
         {
             /* Set up texture state */
             CGL33::TexActive(handle->m_unit);
             CGL33::TexBind(handle->m_type,handle->texture);
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
-            /* Set texture handle in shader */
-            CGL33::Uniformi(s.first,handle->m_unit);
+            if(GL_CURR_API != GL_4_3)
+            {
+                /* Set texture handle in shader */
+                CGL33::Uniformi(s.first,handle->m_unit);
+            }else
+            {
+                /* Set texture handle in shader */
+                CGL43::Uniformi(prog,s.first,handle->m_unit);
+            }
         }
         /*TODO: Add bindless textures */
         /*TODO: Add optimized path where BindSamplers is used */
@@ -510,7 +524,21 @@ void GLEAM_API::DrawConditional(const DrawCall &d,
                                 const DrawInstanceData &i,
                                 const OccludeQuery &c)
 {
-
+    /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
+#ifdef COFFEE_GLEAM_DESKTOP
+    CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
+#else
+    uint32 v = 0;
+    CGL33::QueryGetObjectuiv(c.m_handle,GL_QUERY_RESULT,&v);
+    if(v > 0)
+    {
+#endif
+    Draw(d,i);
+#ifdef COFFEE_GLEAM_DESKTOP
+    CGL33::ConditionalRenderEnd();
+#else
+    }
+#endif
 }
 
 }

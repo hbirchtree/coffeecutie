@@ -135,7 +135,7 @@ bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
         return false;
     uint32 idx = value.m_idx;
     data->flags = value.m_flags;
-    m_uniforms[idx] = data;
+    m_uniforms[idx] = {data,value.stages};
     return true;
 }
 
@@ -145,7 +145,7 @@ bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_samplers[idx] = sampler;
+    m_samplers[idx] = {sampler,value.stages};
     return true;
 }
 
@@ -156,7 +156,7 @@ bool GLEAM_ShaderUniformState::setUBuffer(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_ubuffers[idx] = {sec,buf};
+    m_ubuffers[idx] = {sec,buf,value.stages};
     return true;
 }
 
@@ -167,11 +167,13 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
     uint32 idx = value.m_idx;
-    m_sbuffers[idx] = {sec,buf};
+    m_sbuffers[idx] = {sec,buf,value.stages};
     return true;
 }
 
-void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms)
+void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
+                       Vector<GLEAM_UniformDescriptor> *uniforms,
+                       Vector<GLEAM_ProgramParameter> *params)
 {
     using namespace ShaderTypes;
 
@@ -212,14 +214,29 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
         {
         }
     }else if(GL_CURR_API==GL_4_3){
+
+        enum GL_PROP_IDX
+        {
+            G_NameLen,
+            G_Type,
+            G_Loc,
+            G_ArrStride,
+            G_ArrSize,
+            G_BlkIdx,
+            G_Offset,
+        };
+
         for(auto& p : pipeline.m_programs)
         {
             int32 num_unifs;
-            CGhnd& hnd = p.shader->m_handle;
+            const CGhnd& hnd = p.shader->m_handle;
+
+            /* Get number of uniform variables */
             glGetProgramInterfaceiv(hnd, GL_UNIFORM, GL_ACTIVE_RESOURCES, &num_unifs);
 
             for(int32 i=0;i<num_unifs;i++)
             {
+                /* Per uniform, acquire the following variables */
                 const CGenum props_to_get[] = {
                     /* General data */
                     GL_NAME_LENGTH,
@@ -228,6 +245,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
 
                     /* Array data */
                     GL_ARRAY_STRIDE,
+                    GL_ARRAY_SIZE,
 
                     /* Block data */
                     GL_BLOCK_INDEX,
@@ -238,6 +256,34 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescr
                                        sizeof(props_to_get)/sizeof(CGenum),
                                        props_to_get, sizeof(props_out), nullptr,
                                        props_out);
+
+                /* Create the uniform value */
+                uniforms->push_back({});
+                GLEAM_UniformDescriptor& desc = uniforms->back();
+                desc.stages = p.stages;
+
+                desc.m_flags = to_enum_shtype(props_out[G_Type]);
+                desc.m_idx = props_out[G_Loc];
+
+                if((desc.m_blkIdx = props_out[G_BlkIdx]) != -1)
+                {
+                    desc.m_blkIdx = props_out[G_BlkIdx];
+                    desc.m_offset = props_out[G_Offset];
+                }
+                if(props_out[G_ArrSize] != -1)
+                {
+                    desc.m_arrSize = props_out[G_ArrSize];
+                    desc.m_arrStride = props_out[G_ArrStride];
+                }
+
+                /* Get the uniform name */
+                desc.m_name.resize(props_out[G_NameLen]);
+                glGetProgramResourceName(hnd, GL_UNIFORM, i,
+                                         props_out[G_NameLen],
+                                         nullptr,&desc.m_name[0]);
+                /* Remove the null character */
+                if(desc.m_name.size() > 1)
+                    desc.m_name.resize(desc.m_name.size()-1);
             }
         }
     }

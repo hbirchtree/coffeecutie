@@ -5,6 +5,12 @@
 
 namespace Coffee{
 
+enum class Delay : uint8
+{
+    Wait,
+    NoWait
+};
+
 enum class TypeEnum : uint8
 {
     UByte, Byte,

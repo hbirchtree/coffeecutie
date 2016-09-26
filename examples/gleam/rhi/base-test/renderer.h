@@ -3,6 +3,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics_apis/CGLeamRHI>
+#include <coffee/graphics_apis/gleam/gleam.h>
 #include <coffee/image/cimage.h>
 
 #include <coffee/core/platform_data.h>
@@ -254,11 +255,12 @@ public:
 
         /* Now generating a drawcall, which only specifies small state that can be
          * shared */
-        GLM::DrawCall call{false,true};
+        GLM::D_CALL call{false,true};
+        GLM::OccludeQuery o_query(CGL::QueryT::AnySamplesCon);
 
         /* Instance data is more akin to individual drawcalls, specifying vertex
          * buffer information */
-        GLM::DrawInstanceData instdata = {6,0,4};
+        GLM::D_DATA instdata = {6,0,4};
 
         /* Specifying the uniform data, such as camera matrices and transforms */
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
@@ -335,8 +337,8 @@ public:
             this->pollEvents();
 
             /* Define frame data */
-            base_transform.position.x() = CMath::sin(tprevious) * 2;
-            base_transform.position.y() = CMath::cos(tprevious) * 2;
+            base_transform.position.x() = CMath::sin(tprevious) * 5;
+            base_transform.position.y() = CMath::cos(tprevious) * 5;
 
             //      camera.position.z() = -tprevious;
 
@@ -384,7 +386,14 @@ public:
            * We would primarily support stereo instancing,
            *  because this has a lot of benefits to efficiency.
            */
+
+            o_query.begin();
             GLM::Draw(call, instdata);
+            o_query.end();
+
+            GLM::DrawConditional(call, instdata, o_query);
+
+//            cDebug("Samples: {0}",o_query.getResultu());
 
             if(do_debugging)
             {

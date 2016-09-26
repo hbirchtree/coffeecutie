@@ -35,6 +35,8 @@ struct GLEAM_API : GraphicsAPI
     using DrawCall = GraphicsAPI::DrawCall;
     using DrawInstanceData = GraphicsAPI::DrawInstanceData;
 
+    using OccludeQuery = GLEAM_OccludeQuery;
+
     /* Just defining nicer names */
     using S_2D = GLEAM_Surface2D;
     using S_3D = GLEAM_Surface3D;
@@ -83,6 +85,8 @@ struct GLEAM_API : GraphicsAPI
     using FB_T = GLEAM_RenderTarget;
     using RBUF = GLEAM_RenderDummy;
 
+    using Q_OCC = OccludeQuery;
+
     /* "Loose" functions */
 public:
     static void LoadAPI(bool debug = false);
@@ -95,9 +99,10 @@ public:
     static void SetStencilState(StencilState const& sstate, uint32 i = 0);
 
     static void GetShaderUniformState(GLEAM_Pipeline const& pipeline,
-                                      Vector<GLEAM_UniformDescriptor>* uniforms)
+                                      Vector<GLEAM_UniformDescriptor>* uniforms,
+                                      Vector<GLEAM_ProgramParameter>* params = nullptr)
     {
-        GLEAM::GetShaderUniforms(pipeline,uniforms);
+        GLEAM::GetShaderUniforms(pipeline,uniforms,params);
     }
 
     static void SetTessellatorState(TessellatorState const& tstate);

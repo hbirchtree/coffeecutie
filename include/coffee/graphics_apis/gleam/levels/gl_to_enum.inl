@@ -887,12 +887,10 @@ inline CGenum to_enum(BitFormat f)
     }
 }
 
-#ifdef COFFEE_GLEAM_DESKTOP
 inline CGenum to_enum(QueryT f)
 {
     return (CGenum)f;
 }
-#endif
 
 inline CGenum to_enum(FramebufferT f)
 {
@@ -1201,6 +1199,22 @@ inline uint32 to_enum_shtype(CGenum f)
 
     default:
         return ShaderTypes::None;
+    }
+}
+
+inline CGenum to_enum1(Delay d)
+{
+    switch(d)
+    {
+#ifdef COFFEE_GLEAM_DESKTOP
+    case Delay::NoWait:
+        return GL_QUERY_NO_WAIT;
+    default:
+        return GL_QUERY_WAIT;
+#else
+    default:
+        return GL_NONE;
+#endif
     }
 }
 

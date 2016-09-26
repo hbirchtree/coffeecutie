@@ -75,6 +75,8 @@ CGenum to_enum(VertexWinding e);
 
 uint32 to_enum_shtype(CGenum f);
 
+CGenum to_enum1(Delay d);
+
 }
 }
 

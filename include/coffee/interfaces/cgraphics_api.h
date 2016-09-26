@@ -459,6 +459,18 @@ struct GraphicsAPI
         CString m_name;
         uint32 m_flags;
         int32 m_idx;
+
+        int32 m_blkIdx;
+
+        union{
+            struct{
+                int32 m_offset;
+            };
+            struct{
+                int32 m_arrStride;
+                int32 m_arrSize;
+            };
+        };
     };
 
     /*!
@@ -470,6 +482,16 @@ struct GraphicsAPI
         {}
         Bytes const* data;
         uint32 flags;
+    };
+
+    /*!
+     * \brief Describes vertex inputs and outputs as well as fragment shader outputs
+     */
+    struct ProgramParameter
+    {
+        CString m_name;
+        uint32 m_flags;
+        uint16 m_idx;
     };
 
     /*!
@@ -521,12 +543,18 @@ struct GraphicsAPI
      * \brief Can be included in a drawcall to determine whether or
      *  not to render. Calls begin() before rendering occlusion shapes
      */
+    template<typename T>
     struct OccludeQuery
     {
+        OccludeQuery(){}
+        OccludeQuery(T){}
+
         void begin(){}
         void end(){}
 
-        int64 getResult(){return 0;}
+        /* How to kill perf: */
+        int64 getResulti(){return 0;}
+        uint64 getResultu(){return 0;}
     };
 
     /*!
@@ -721,21 +749,22 @@ struct GraphicsAPI
         void setSampler(UniformDescriptor const&,SamplerHandle*){}
     };
 
-    static void GetShaderUniformState(Pipeline&,Vector<UniformDescriptor>*){}
+    static void GetShaderUniformState(Pipeline&,Vector<UniformDescriptor>*,
+                                      Vector<ProgramParameter>*){}
 
     /*!
      * \brief Draw primitives regardlessly
      * \param d General drawcall settings
      * \param i Data associated with instance of drawcall
      */
-    static void Draw(DrawCall const& d,DrawInstanceData const& i){}
+    static void Draw(DrawCall const&,DrawInstanceData const&){}
     /*!
      * \brief Draw primitives with occlusion query
      * \param d
      * \param i
      * \param c An occlusion query to be considered in the drawcall
      */
-    static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c){}
+    static void DrawConditional(DrawCall const&,DrawInstanceData const&,OccludeQuery<int> const&){}
 
     static void SetRasterizerState(RasterizerState const&){}
     static void SetTessellatorState(TessellatorState const&){}
@@ -813,6 +842,7 @@ struct GraphicsProfiler
 
 struct NullAPI : GraphicsAPI
 {
+    using OccludeQuery = GraphicsAPI::OccludeQuery<int>;
 
     enum DummyValues
     {
@@ -887,6 +917,8 @@ struct NullAPI : GraphicsAPI
     using G_CTXT = GraphicsContext;
     using G_TCTXT = GraphicsThreadContext;
     using G_DEV = GraphicsDevice;
+
+    using Q_OCC = OccludeQuery;
 
     static FB_T DefaultFramebuffer;
 

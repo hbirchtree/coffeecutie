@@ -115,6 +115,11 @@ namespace ShaderTypes
 
         SizeMask_f = 0xFFFF0000,
     };
+
+    enum ProgramData_t
+    {
+        PerPatch = 1 << 26,
+    };
 }
 
 C_FLAGS(DBuffers,uint32);

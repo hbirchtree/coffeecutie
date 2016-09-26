@@ -3,12 +3,13 @@
 #include "gleam_types_rhi.h"
 #include "gleam_framebuffer_rhi.h"
 #include "gleam_surface_rhi.h"
+#include "gleam_query_rhi.h"
 
 namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-struct GLEAM_PrfQuery : GraphicsProfiler::PerfQuery
+struct GLEAM_PrfQuery : GraphicsProfiler::PerfQuery, GLEAM_Query
 {
 };
 

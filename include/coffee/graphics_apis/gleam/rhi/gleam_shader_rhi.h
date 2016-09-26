@@ -10,6 +10,9 @@ struct GLEAM_Shader : GraphicsAPI::Shader
 {
     friend struct GLEAM_API;
     friend struct GLEAM_Pipeline;
+    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
+                                  Vector<GLEAM_UniformDescriptor> *uniforms,
+                                  Vector<GLEAM_ProgramParameter> *params);
 
     GLEAM_Shader():
         Shader(0),
@@ -30,7 +33,9 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
 {
     friend struct GLEAM_PipelineDumper;
     friend struct GLEAM_API;
-    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline, Vector<GLEAM_UniformDescriptor> *uniforms);
+    friend void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
+                                  Vector<GLEAM_UniformDescriptor> *uniforms,
+                                  Vector<GLEAM_ProgramParameter> *params);
 
     GLEAM_Pipeline():
         Pipeline(0),
@@ -54,6 +59,10 @@ protected:
     };
 
     Vector<shader_cntainer> m_programs;
+};
+
+struct GLEAM_ProgramParameter : GraphicsAPI::ProgramParameter
+{
 };
 
 struct GLEAM_UniformDescriptor : GraphicsAPI::UniformDescriptor
@@ -93,10 +102,18 @@ protected:
     {
         GLEAM_BufferSection sec;
         T const* buff;
+        ShaderStage stages;
     };
 
-    Map<uint32,GLEAM_UniformValue const*> m_uniforms;
-    Map<uint32,GLEAM_SamplerHandle const*> m_samplers;
+    template<typename T>
+    struct uniform_container
+    {
+        T const* value;
+        ShaderStage stages;
+    };
+
+    Map<uint32,uniform_container<GLEAM_UniformValue>> m_uniforms;
+    Map<uint32,uniform_container<GLEAM_SamplerHandle>> m_samplers;
     Map<uint32,buffer_container<GLEAM_UniformBuffer>> m_ubuffers;
     Map<uint32,buffer_container<GLEAM_ShaderBuffer>> m_sbuffers;
 };
@@ -108,7 +125,8 @@ struct GLEAM_PipelineDumper : GraphicsProfiler::PipelineDumper<GLEAM_Pipeline>
 };
 
 extern void GetShaderUniforms(GLEAM_Pipeline const& pipeline,
-			      Vector<GLEAM_UniformDescriptor>* uniforms);
+                              Vector<GLEAM_UniformDescriptor>* uniforms,
+                              Vector<GLEAM_ProgramParameter> *params);
 
 }
 }

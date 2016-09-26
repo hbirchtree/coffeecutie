@@ -42,7 +42,7 @@ namespace CGL{
 /*!
  * \brief OpenGL 4.3 compliance model
  */
-struct CGL43 : CGL33,
+struct CGL43 : CGL33_Base,
         CGL_BufferInvalidateSubData,
         CGL_ClearBuffer,
         CGL_BufferStorage,

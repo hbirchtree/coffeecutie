@@ -83,10 +83,15 @@ struct GLEAM_VertDescriptor;
 struct GLEAM_UniformDescriptor;
 struct GLEAM_ShaderUniformState;
 
+struct GLEAM_ProgramParameter;
+
 struct GLEAM_RenderTarget;
 struct GLEAM_RenderDummy;
 
 struct GLEAM_ShaderImage;
+
+/* Queries */
+struct GLEAM_OccludeQuery;
 
 }
 }

@@ -3,15 +3,16 @@
 
 #include "glbase.h"
 
+#include "../shared/buffers/old_buffers.h"
 #include "../shared/constructors/oldstyle.h"
+#include "../shared/draw/basic.h"
+#include "../shared/draw/drawing_base_multidraw.h"
+#include "../shared/framebuffers/old_framebuffers.h"
+#include "../shared/queries/old_queries.h"
 #include "../shared/shaders/compiling.h"
 #include "../shared/shaders/uniforms.h"
 #include "../shared/textures/old_textures.h"
-#include "../shared/buffers/old_buffers.h"
-#include "../shared/framebuffers/old_framebuffers.h"
 #include "../shared/vertex/old_vaos.h"
-#include "../shared/draw/basic.h"
-#include "../shared/draw/drawing_base_multidraw.h"
 
 namespace Coffee{
 namespace CGL{
@@ -19,7 +20,7 @@ namespace CGL{
 /*!
  * \brief OpenGL 3.3 compliance model
  */
-struct CGL33 :
+struct CGL33_Base :
         CGL_Implementation,
         CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture>,
         CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>,
@@ -27,7 +28,7 @@ struct CGL33 :
         CGL_Old_ShaderCompiler<CGhnd,CGenum>,
         CGL_Old_Buffers<CGhnd,BufType>,
         CGL_Old_VAOs<CGhnd,CGenum>,
-        CGL_Old_Uniforms,
+        CGL_Old_Queries<QueryT,CGhnd,CGenum>,
         CGL_Basic_Draw,
         CGL_Drawing_Base_MultiDraw
 
@@ -134,8 +135,8 @@ struct CGL33 :
     {glGetBufferSubData(to_enum(t),off,sz,p);}
 
     /* Queries */
-    STATICINLINE void ConditionalRenderBegin(CGhnd h,QueryT m)
-    {glBeginConditionalRender(h,to_enum(m));}
+    STATICINLINE void ConditionalRenderBegin(CGhnd h,Delay m)
+    {glBeginConditionalRender(h,to_enum1(m));}
     STATICINLINE void ConditionalRenderEnd()
     {glEndConditionalRender();}
 
@@ -153,6 +154,11 @@ struct CGL33 :
         glPrimitiveRestartIndex(idx);
         Enable(Feature::PrimitiveRestart);
     }
+};
+
+struct CGL33 : CGL33_Base,
+        CGL_Old_Uniforms
+{
 };
 
 }

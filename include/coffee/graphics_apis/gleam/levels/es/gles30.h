@@ -5,6 +5,7 @@
 
 /* Basic */
 #include "../shared/draw/basic.h"
+#include "../shared/queries/old_queries.h"
 
 /* Extended functionality */
 #include "../shared/textures/arb_texture_storage.h"
@@ -17,6 +18,7 @@ namespace CGL{
  */
 struct CGLES30 :
         CGLES20,
+        CGL_Old_Queries<QueryT,CGhnd,CGenum>,
         CGL_Basic_Draw,
 
         CGL_TextureStorage
