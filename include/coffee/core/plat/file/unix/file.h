@@ -182,7 +182,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         if(error)
             *error = 0;
-        szptr pa_offset = offset & ~(PageSize());
+        uint64 pa_offset = offset & ~(PageSize());
 
         if(pa_offset!=offset)
             return {};
@@ -204,17 +204,17 @@ struct PosixFileFun_def : PosixFileMod_def
         byte_t* addr = nullptr;
 
 #if defined(COFFEE_LINUX)
-        addr = (byte_t*)mmap64(
+        addr = static_cast<byte_t*>(mmap64(
                     NULL,
                     offset+size-pa_offset,
                     prot,mapping,
-                    fd,pa_offset);
+                    fd,pa_offset));
 #else
-        addr = (byte_t*)mmap(
+        addr = static_cast<byte_t*>(mmap(
                     NULL,
                     offset+size-pa_offset,
                     prot,mapping,
-                    fd,pa_offset);
+                    fd,pa_offset));
 #endif
 
         if(addr == MAP_FAILED)
@@ -223,12 +223,10 @@ struct PosixFileFun_def : PosixFileMod_def
             return {};
         }
 
-        FileMapping map;
-        map.ptr = addr;
-        map.size = size;
-        map.acc = acc;
+        if(::close(fd) != 0)
+            ErrnoCheck();
 
-        return map;
+        return {addr,size,acc};
     }
 
     STATICINLINE bool Unmap(FM* mapp)
@@ -245,7 +243,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         if(r_off+r_size>t_size)
             return false;
-        byte_t* base = (byte_t*)t_ptr;
+        byte_t* base = static_cast<byte_t*>(t_ptr);
         base += r_off;
         return mlock(base,r_size)==0;
     }

@@ -9,6 +9,13 @@
 namespace Coffee{
 namespace Mem{
 
+template<typename T>
+FORCEDINLINE void* FitIntegerInPtr(T in)
+{
+    void* ptr = nullptr;
+    return memcpy(ptr,&in,sizeof(T));
+}
+
 FORCEDINLINE szptr AlignOffset(szptr alignment, szptr off)
 {
     return off & ~(alignment);
@@ -57,25 +64,25 @@ FORCEDINLINE void* Calloc(szptr unit, szptr num)
 template<typename T>
 FORCEDINLINE T* AllocT(szptr datasize)
 {
-    return (T*)malloc(datasize);
+    return static_cast<T*>(malloc(datasize));
 }
 
 template<typename T>
 FORCEDINLINE T* ReallocT(T* ptr, szptr datasize)
 {
-    return (T*)realloc(ptr,datasize);
+    return static_cast<T*>(realloc(ptr,datasize));
 }
 
 template<typename T>
 FORCEDINLINE T* CallocT(szptr unit, szptr num)
 {
-    return (T*)calloc(unit,num);
+    return static_cast<T*>(calloc(unit,num));
 }
 
 template<typename T>
 FORCEDINLINE T* CallocPtrs(szptr num)
 {
-    return (T*)calloc(sizeof(T),num);
+    return static_cast<T*>(calloc(sizeof(T),num));
 }
 
 }
