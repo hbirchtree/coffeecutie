@@ -217,7 +217,7 @@ macro(APK_PACKAGE_EXT
             ${CMAKE_COMMAND} -E
             make_directory "${BUILD_OUTDIR}/res/drawable-${MIPMAP_DEST_DIR}"
             )
-        if(INKSCAPE_PROGRAM AND NOWAYFUCKOFF)
+        if(INKSCAPE_PROGRAM)
             inkscape_resize_svg( "${Target_Name}" "${ICON_ASSET}" ${MIPMAP_SIZE} "${MIPMAP_DEST_FILE}" )
         else()
             magick_resize_svg ( "${Target_Name}" "${ICON_ASSET}" "${MIPMAP_SIZE}" "${MIPMAP_DEST_FILE}" )
@@ -296,11 +296,21 @@ macro(APK_PACKAGE_EXT
             "${BUILD_OUTDIR}/AndroidManifest.xml"
             @ONLY
             )
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
-            "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-            @ONLY
-            )
+
+        if(ANDROID_NATIVE_API_LEVEL GREATER 19)
+            configure_file (
+                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
+                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+                @ONLY
+                )
+        else()
+            configure_file (
+                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
+                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+                @ONLY
+                )
+        endif()
+
         configure_file (
             "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/${ANDROID_STARTUP_ACTIVITY}.java.in"
             "${BUILD_OUTDIR}/src/${ANDROID_MAIN_PATH}/${ANDROID_STARTUP_ACTIVITY}.java"

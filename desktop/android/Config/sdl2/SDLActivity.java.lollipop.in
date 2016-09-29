@@ -29,6 +29,7 @@ import android.graphics.drawable.Drawable;
 import android.media.*;
 import android.hardware.*;
 import android.content.pm.ActivityInfo;
+import android.app.ActivityManager.TaskDescription;
 
 import @ANDROID_PACKAGE_NAME@.R;
 
@@ -177,7 +178,15 @@ public class SDLActivity extends Activity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        
+
+        /* Sauce: https://www.bignerdranch.com/blog/polishing-your-Android-overview-screen-entry/ */
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            TaskDescription taskDesc = new TaskDescription(getString(R.string.app_name), null,
+                                            getResources().getColor(R.color.activity_color) );
+            setTaskDescription(taskDesc);
+        }
+
         // Get filename from "Open with" of another application
         Intent intent = getIntent();
 
@@ -1099,7 +1108,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         SDLActivity.onNativeResize(width, height, sdlFormat, mDisplay.getRefreshRate());
         //Log.v("SDL", "Window size: " + width + "x" + height);
 
- 
+
         boolean skip = false;
         int requestedOrientation = SDLActivity.mSingleton.getRequestedOrientation();
 
@@ -1122,7 +1131,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
         if (skip) {
            double min = Math.min(mWidth, mHeight);
            double max = Math.max(mWidth, mHeight);
-           
+
            if (max / min < 1.20) {
               Log.v("SDL", "Don't skip on such aspect-ratio. Could be a square resolution.");
               skip = false;
@@ -1529,10 +1538,10 @@ class SDLJoystickHandler_API12 extends SDLJoystickHandler {
                 joystick = new SDLJoystick();
                 InputDevice joystickDevice = InputDevice.getDevice(deviceIds[i]);
 
-                if ( 
-                      (joystickDevice.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0 
+                if (
+                      (joystickDevice.getSources() & InputDevice.SOURCE_CLASS_JOYSTICK) != 0
                    ||
-                      (joystickDevice.getSources() & InputDevice.SOURCE_CLASS_BUTTON) != 0 
+                      (joystickDevice.getSources() & InputDevice.SOURCE_CLASS_BUTTON) != 0
                   )
                 {
                     joystick.device_id = deviceIds[i];
