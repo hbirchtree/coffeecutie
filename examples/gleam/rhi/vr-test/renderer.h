@@ -228,8 +228,10 @@ public:
 	GLM::PIXLSTATE pixlstate = {};
 	GLM::DEPTSTATE deptstate = {};
 	GLM::TSLRSTATE teslstate = {};
-	GLM::STENSTATE stenstate = {};
 
+        GLM::STENSTATE stenstate = {}, stenstate_write = {};
+
+        stenstate.m_test = true;
 	blendstate.m_doBlend = true;
 	viewportstate.m_view.clear();
 	viewportstate.m_view.push_back({0, 0, 1280, 720});
@@ -364,7 +366,7 @@ public:
 
             eye_texture.eType = vr::API_OpenGL;
             eye_texture.eColorSpace = vr::ColorSpace_Gamma;
-            eye_texture.handle = (void*)vr_ctarget->handle();
+            eye_texture.handle = FitIntegerInPtr(vr_ctarget->handle());
 	}
 
 	GLM::FB_T* default_fb = &GLM::DefaultFramebuffer;
@@ -457,13 +459,6 @@ public:
 	   */
 	    GLM::Draw(call, instdata);
 
-	    if(do_debugging)
-	    {
-		did_apply_state = false;
-		default_fb->clear(0,clear_col,1.f);
-		buffer_debug.end();
-	    }
-
 	    frame_counter.update(Time::CurrentMicroTimestamp()/1000);
 
 	    if(vr_ctxt.VRSystem())
@@ -477,6 +472,13 @@ public:
 	    }
 
 	    vr_target.blit({0,0,1280,720},GLM::DefaultFramebuffer,{0,0,1280,720},DBuffers::Color,Filtering::Linear);
+
+            if(do_debugging)
+            {
+                did_apply_state = false;
+                default_fb->clear(0,clear_col,1.f);
+                buffer_debug.end();
+            }
 
 	    this->swapBuffers();
 

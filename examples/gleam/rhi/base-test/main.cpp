@@ -45,16 +45,8 @@ int32 coffee_main(int32, cstring_w*)
     props.gl.flags |= GLProperties::GLDebug;
 //    props.gl.flags |= GLProperties::GLVSync;
 
-    CString err;
-
-    /* Initialize the window and check for errors */
-    if(!LoadHighestVersion(renderer,props,&err))
-    {
-        SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
-        cDebug("Initialization error: {0}",err);
-    }
-
     do {
+        break;
         CResources::Resource icon("icon.png",
                                   ResourceAccess::SpecifyStorage
                                   |ResourceAccess::AssetFile);
@@ -72,6 +64,15 @@ int32 coffee_main(int32, cstring_w*)
         }while(false);
         CResources::FileUnmap(icon);
     }while(false);
+
+    CString err;
+
+    /* Initialize the window and check for errors */
+    if(!LoadHighestVersion(renderer,props,&err))
+    {
+        SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
+        cDebug("Initialization error: {0}",err);
+    }
 
     Profiler::Profile("Initialize renderer");
     cVerbose("Initialized renderer");

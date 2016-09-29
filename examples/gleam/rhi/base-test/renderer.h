@@ -213,6 +213,7 @@ public:
         GLM::PIXLSTATE pixlstate = {};
         GLM::DEPTSTATE deptstate = {};
         GLM::TSLRSTATE teslstate = {};
+
         GLM::STENSTATE stenstate = {};
 
         blendstate.m_doBlend = true;
@@ -256,7 +257,7 @@ public:
         /* Now generating a drawcall, which only specifies small state that can be
          * shared */
         GLM::D_CALL call{false,true};
-        GLM::OccludeQuery o_query(CGL::QueryT::AnySamplesCon);
+        GLM::Q_OCC o_query(CGL::QueryT::AnySamplesCon);
 
         /* Instance data is more akin to individual drawcalls, specifying vertex
          * buffer information */
@@ -271,11 +272,11 @@ public:
 
         camera.position = Vecf3(0, 0, -9);
 
-        CTransform base_transform;
+        Transform base_transform;
         base_transform.position = Vecf3(0, 0, 5);
         base_transform.scale = Vecf3(1);
 
-        CTransform floor_transform;
+        Transform floor_transform;
         floor_transform.position = Vecf3(0, -2, 5);
         floor_transform.scale = Vecf3(2);
 

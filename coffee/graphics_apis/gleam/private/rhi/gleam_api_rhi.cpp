@@ -287,7 +287,7 @@ void GLEAM_API::SetStencilState(const StencilState& sstate, uint32 i)
             GLC::Disable(Feature::StencilTest,i);
     }
 
-    GLC::StencilMaskSep(Face::Both,i);
+    GLC::StencilMaskSep(Face::Both,0x00000000);
 
     /*TODO: Implement functionality for more operations */
 }

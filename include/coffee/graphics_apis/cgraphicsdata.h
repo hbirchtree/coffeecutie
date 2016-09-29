@@ -19,6 +19,7 @@ typedef _cbasic_range<bigscalar> CDepthViewport;
 } //CGraphicsData
 
 using namespace CGraphicsData;
+using Transform = CTransform;
 
 } //Coffee
 
