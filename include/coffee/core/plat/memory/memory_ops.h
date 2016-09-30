@@ -12,8 +12,7 @@ namespace Mem{
 template<typename T>
 FORCEDINLINE void* FitIntegerInPtr(T in)
 {
-    void* ptr = nullptr;
-    return memcpy(ptr,&in,sizeof(T));
+    return (void*)in;
 }
 
 FORCEDINLINE szptr AlignOffset(szptr alignment, szptr off)

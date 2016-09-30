@@ -3,6 +3,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics_apis/CGLeamRHI>
+#include <coffee/graphics_apis/CGLeam>
 #include <coffee/image/cimage.h>
 
 #include <coffee/core/platform_data.h>
@@ -293,7 +294,7 @@ public:
 
 	CTransform floor_transform;
 	floor_transform.position = Vecf3(0, -2, 5);
-	floor_transform.scale = Vecf3(2);
+        floor_transform.scale = Vecf3(2);
 
 	/* Vertex descriptors are based upon the ideas from GL4.3 */
 	vertdesc.bind();
@@ -334,7 +335,7 @@ public:
 	    sceneCol.r = sceneCol.g = 0.5;
 	    sceneCol.b = sceneCol.a = 1.0;
             vr_ctxt.VRChaperone()->SetSceneColor(sceneCol);
-	}
+        }
 
 	{
 	    CSize s = {1280,1536};
@@ -372,6 +373,8 @@ public:
 	GLM::FB_T* default_fb = &GLM::DefaultFramebuffer;
 //	if(vr_ctxt.VRSystem())
 	default_fb = &vr_target;
+
+        Matf4 camera_mat;
 
 	while (!closeFlag()) {
 
@@ -418,17 +421,27 @@ public:
 	    floor_transform.rotation.y() = CMath::sin(tprevious);
 	    floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
-	    camera.position.x() = -2;
-	    object_matrices[0] = GenPerspective(camera) * GenTransform(camera) *
-	            GenTransform(base_transform);
-	    object_matrices[2] = GenPerspective(camera) * GenTransform(camera) *
-	            GenTransform(floor_transform);
+            camera.position.x() = -2;
+            if(vr_ctxt.VRCompositor())
+            {
+                auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left,1,10,vr::API_OpenGL);
+                MemCpy(&camera_mat,&mat,sizeof(Matf4));
+            }else{
+                camera_mat = GenPerspective(camera) * GenTransform(camera);
+            }
+            object_matrices[0] = camera_mat * GenTransform(base_transform);
+            object_matrices[2] = camera_mat * GenTransform(floor_transform);
 
 	    camera.position.x() = 2;
-	    object_matrices[1] = GenPerspective(camera) * GenTransform(camera) *
-	            GenTransform(base_transform);
-	    object_matrices[3] = GenPerspective(camera) * GenTransform(camera) *
-	            GenTransform(floor_transform);
+            if(vr_ctxt.VRCompositor())
+            {
+                auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Right,1,10,vr::API_OpenGL);
+                MemCpy(&camera_mat,&mat,sizeof(Matf4));
+            }else{
+                camera_mat = GenPerspective(camera) * GenTransform(camera);
+            }
+            object_matrices[1] = camera_mat * GenTransform(base_transform);
+            object_matrices[3] = camera_mat * GenTransform(floor_transform);
 
 	    /*
 	   * In APIs such as GL4.3+, this will apply vertex and fragment states
@@ -463,10 +476,10 @@ public:
 
 	    if(vr_ctxt.VRSystem())
 	    {
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,
-                                               &eye_bounds[0],vr::Submit_Default);
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,
-                                               &eye_bounds[1],vr::Submit_Default);
+                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture);
+                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture);
+
+                CGL::CGL33::Flush();
 
                 vr_ctxt.VRCompositor()->WaitGetPoses(nullptr,0,nullptr,0);
 	    }
