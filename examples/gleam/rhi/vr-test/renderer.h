@@ -352,9 +352,9 @@ public:
             vr_ctarget = new GLM::S_2D(PixelFormat::SRGB8A8,1);
 	    vr_dtarget = new GLM::S_2D(PixelFormat::Depth24Stencil8,1);
 
-            eye_bounds[0].uMax = eye_bounds[1].uMin = s.w;
-            eye_bounds[1].uMax = s.w*2;
-            eye_bounds[0].vMax = eye_bounds[1].vMax = s.h;
+            eye_bounds[0].uMax = eye_bounds[1].uMin = 0.5;
+            eye_bounds[1].uMax = 1.0;
+            eye_bounds[0].vMax = eye_bounds[1].vMax = 1.0;
 
             s.w *= 2;
 	    vr_ctarget->allocate(s,PixCmp::RGBA);
@@ -476,8 +476,10 @@ public:
 
 	    if(vr_ctxt.VRSystem())
 	    {
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture);
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture);
+                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,
+                                               &eye_bounds[0]);
+                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,
+                                               &eye_bounds[1]);
 
                 CGL::CGL33::Flush();
 

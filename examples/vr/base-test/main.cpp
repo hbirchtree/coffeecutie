@@ -2,6 +2,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/COculusRift>
 #include <coffee/core/CMD>
+#include <coffee/core/CProfiling>
 
 using namespace Coffee;
 
