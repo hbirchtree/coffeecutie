@@ -35,12 +35,25 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
                 else
                     (*this)[x][y] = T(0);
     }
+	_cbasic_tmatrix(const _cbasic_tmatrix<T, Size+1>& matrix)
+	{
+		for (size_t y = 0; y<Size; y++)
+			for (size_t x = 0; x<Size; x++)
+				(*this)[x][y] = matrix[x][y];
+	}
     _cbasic_tmatrix(const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] = matrix[x][y];
     }
+	_cbasic_tmatrix(const _cbasic_tmatrix<T, Size-1>& matrix)
+		: _cbasic_tmatrix()
+	{
+		for (size_t y = 0; y<Size-1; y++)
+			for (size_t x = 0; x<Size-1; x++)
+				(*this)[x][y] = matrix[x][y];
+	}
 
     /*
      * Standard operators
@@ -392,8 +405,6 @@ FORCEDINLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)
 
     return nv;
 }
-
-
 
 }
 

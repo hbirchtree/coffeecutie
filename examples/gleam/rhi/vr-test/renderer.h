@@ -35,6 +35,8 @@ private:
     GLM::PRF::QRY_DBUF* buffer_debug_p;
     CGCamera camera;
 
+	bool m_paused = false;
+
 public:
     CDRenderer() : CSDL2Renderer(0) {}
     static const constexpr szptr num_textures = 5;
@@ -239,6 +241,10 @@ public:
 	viewportstate.m_scissor.clear();
 	viewportstate.m_scissor.push_back({0,0,1280,720});
 	viewportstate.m_mview = true;
+
+	GLM::VIEWSTATE viewstate_vr = viewportstate;
+	viewstate_vr.m_view.clear();
+
 	rasterstate_line.m_wireframe = true;
 	deptstate.m_test = true;
 	deptstate.m_func = (uint32)ValueComparison::Less;
@@ -327,9 +333,6 @@ public:
 
 	if(vr_ctxt.VRSystem())
 	{
-	    auto ml = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left,10.f,100.f,vr::API_OpenGL);
-	    auto mr = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left,10.f,100.f,vr::API_OpenGL);
-
 	    /* Set primary color for VR stuffs */
 	    vr::HmdColor_t sceneCol;
 	    sceneCol.r = sceneCol.g = 0.5;
@@ -338,25 +341,24 @@ public:
         }
 
 	{
-	    CSize s = {1280,1536};
+		_cbasic_size_2d<uint32> _s = {1332, 1536};
 
-            if(vr_ctxt.VRSystem())
-            {
-                /* Resize window to dimensions of VR stuffs */
-                _cbasic_size_2d<uint32> tsize = {};
-                vr_ctxt.VRSystem()->GetRecommendedRenderTargetSize(&tsize.w, &tsize.h);
-                s = { (int32)tsize.w,(int32)tsize.h};
-            }
+		if (vr_ctxt.VRSystem())
+		{
+			vr_ctxt.VRSystem()->GetRecommendedRenderTargetSize(&_s.w, &_s.h);
+		}
+
+		CSize s = {(int32)_s.w, (int32)_s.h};
 
 	    vr_target.alloc();
-            vr_ctarget = new GLM::S_2D(PixelFormat::SRGB8A8,1);
+        vr_ctarget = new GLM::S_2D(PixelFormat::SRGB8A8,1);
 	    vr_dtarget = new GLM::S_2D(PixelFormat::Depth24Stencil8,1);
 
-            eye_bounds[0].uMax = eye_bounds[1].uMin = 0.5;
-            eye_bounds[1].uMax = 1.0;
-            eye_bounds[0].vMax = eye_bounds[1].vMax = 1.0;
+        eye_bounds[0].uMax = eye_bounds[1].uMin = 0.5;
+        eye_bounds[1].uMax = 1.0;
+        eye_bounds[0].vMax = eye_bounds[1].vMax = 1.0;
 
-            s.w *= 2;
+        s.w *= 2;
 	    vr_ctarget->allocate(s,PixCmp::RGBA);
 	    vr_dtarget->allocate(s,PixCmp::Depth);
 
@@ -368,13 +370,46 @@ public:
             eye_texture.eType = vr::API_OpenGL;
             eye_texture.eColorSpace = vr::ColorSpace_Gamma;
             eye_texture.handle = FitIntegerInPtr(vr_ctarget->handle());
+		
+
+		CRect vr_renderSize = { 0,0, (int32)_s.w*2,(int32)_s.h };
+
+		viewstate_vr.m_view.push_back(vr_renderSize);
 	}
+
 
 	GLM::FB_T* default_fb = &GLM::DefaultFramebuffer;
 //	if(vr_ctxt.VRSystem())
 	default_fb = &vr_target;
 
         Matf4 camera_mat;
+		Matf4 camera_tmp;
+		Matf4 camera_pre[2] = {};
+		Matf4 camera_pose;
+
+		if (vr_ctxt.VRSystem())
+		{
+			auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left, 1, 10, vr::API_OpenGL);
+			MemCpy(&camera_mat, &mat, sizeof(Matf4));
+			auto mat_tf = vr_ctxt.VRSystem()->GetEyeToHeadTransform(vr::Eye_Left);
+			camera_tmp = Matf4();
+			MemCpy(&camera_tmp, &mat_tf, sizeof(mat_tf));
+			camera_pre[0] = camera_mat * inverse(camera_tmp);
+
+			mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Right, 1, 10, vr::API_OpenGL);
+			MemCpy(&camera_mat, &mat, sizeof(Matf4));
+			mat_tf = vr_ctxt.VRSystem()->GetEyeToHeadTransform(vr::Eye_Right);
+			camera_tmp = Matf4();
+			MemCpy(&camera_tmp, &mat_tf, sizeof(mat_tf));
+			camera_pre[1] = camera_mat * inverse(camera_tmp);
+
+			camera_pre[0] = camera_pre[0] * scale(Matf4(), Vecf3(0.5));
+			camera_pre[1] = camera_pre[1] * scale(Matf4(), Vecf3(0.5));
+		}
+
+	vr::TrackedDevicePose_t trackedDevicePoses[vr::k_unMaxTrackedDeviceCount];
+
+	setWindowSize({ 1280,720 });
 
 	while (!closeFlag()) {
 
@@ -410,22 +445,32 @@ public:
 
 	    this->pollEvents();
 
-	    /* Define frame data */
-	    base_transform.position.x() = CMath::sin(tprevious) * 2;
-	    base_transform.position.y() = CMath::cos(tprevious) * 2;
+		if(!m_paused)
+		{
+			/* Define frame data */
+			base_transform.position.x() = CMath::sin(tprevious) * 2;
+			base_transform.position.y() = CMath::cos(tprevious) * 2;
 
-	    //      camera.position.z() = -tprevious;
+			floor_transform.rotation.y() = CMath::sin(tprevious);
+			floor_transform.rotation = normalize_quat(floor_transform.rotation);
+		}
 
-	    time_value = CMath::sin(tprevious) + (CMath::pi / 4.);
-
-	    floor_transform.rotation.y() = CMath::sin(tprevious);
-	    floor_transform.rotation = normalize_quat(floor_transform.rotation);
+		if (vr_ctxt.VRCompositor())
+		{
+			vr_ctxt.VRCompositor()->WaitGetPoses(trackedDevicePoses, vr::k_unMaxTrackedDeviceCount,
+				nullptr, 0);
+			if (trackedDevicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+			{
+				auto& mat = trackedDevicePoses[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
+				MemCpy(&camera_pose,&mat,sizeof(mat));
+				camera_pose = camera_pose;
+			}
+		}
 
             camera.position.x() = -2;
             if(vr_ctxt.VRCompositor())
             {
-                auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left,1,10,vr::API_OpenGL);
-                MemCpy(&camera_mat,&mat,sizeof(Matf4));
+				camera_mat = camera_pre[0] * camera_pose;
             }else{
                 camera_mat = GenPerspective(camera) * GenTransform(camera);
             }
@@ -435,8 +480,7 @@ public:
 	    camera.position.x() = 2;
             if(vr_ctxt.VRCompositor())
             {
-                auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Right,1,10,vr::API_OpenGL);
-                MemCpy(&camera_mat,&mat,sizeof(Matf4));
+				camera_mat = camera_pre[1] * camera_pose;
             }else{
                 camera_mat = GenPerspective(camera) * GenTransform(camera);
             }
@@ -470,11 +514,13 @@ public:
 	   * We would primarily support stereo instancing,
 	   *  because this has a lot of benefits to efficiency.
 	   */
-	    GLM::Draw(call, instdata);
+		GLM::SetViewportState(viewstate_vr);
+		GLM::Draw(call, instdata);
+		GLM::SetViewportState(viewportstate);
 
 	    frame_counter.update(Time::CurrentMicroTimestamp()/1000);
 
-	    if(vr_ctxt.VRSystem())
+	    if(vr_ctxt.VRCompositor())
 	    {
                 vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,
                                                &eye_bounds[0]);
@@ -531,6 +577,9 @@ public:
 	            && kev->mod & CIKeyEvent::PressedModifier
 	            && !(kev->mod&CIKeyEvent::RepeatedModifier) )
 		m_debugging = !m_debugging;
+
+		if (kev->key == CK_p && kev->mod & CIKeyEvent::PressedModifier && !(kev->mod & CIKeyEvent::RepeatedModifier))
+			m_paused = !m_paused;
 
 	}
     }

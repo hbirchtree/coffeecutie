@@ -51,18 +51,20 @@ macro(WINPE_PACKAGE
                         APPEND "${RESOURCE_HEADER}"
                         "{${RESC_NUM},\"${file_dir}${file_name}\"},"
                         )
-                    string ( REPLACE "_" "___" "${file_dir}" file_dir )
-                    string ( REPLACE "/" "_" "${file_dir}" file_dir )
-                    string ( REPLACE "\\" "_" "${file_dir}" file_dir )
-                    # If there is a directory path, append a "_" for it to be correct
+					# If there is a directory path, append a "_" for it to be correct
                     # This is disgusting.
-                    if(file_dir)
-                        set( file_dir "${file_dir}_" )
+					if(file_dir)
+                        set( file_dir "${file_dir}/" )
                     endif()
+					# Set virtual filename
+					set ( virt_fname "${file_dir}${file_name}" )
+                    string ( REPLACE "_" "___" virt_fname "${virt_fname}" )
+                    string ( REPLACE "/" "_" virt_fname "${virt_fname}" )
+                    string ( REPLACE "\\" "_" virt_fname "${virt_fname}" )
                     # Insert the file with directory path and filename into the .rc file
                     file (
                         APPEND "${RESOURCE_DESCRIPTOR}"
-                        "\"${file_dir}${file_name}\" CF_RES \"${file_full}\" \r\n"
+                        "\"${virt_fname}\" CF_RES \"${file_full}\" \r\n"
                         )
                 endif()
                 # Increment resource number, inserted into .rc file
