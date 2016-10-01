@@ -195,7 +195,7 @@ CString WindowsSysInfo::GetSystemVersion()
         pwine_get_version = (WINE_GET_VERSION_FPTR)GetProcAddress(hntdll,"wine_get_version");
         if(!pwine_get_version)
             break;
-        CString out = CString("Wine") + pwine_get_version();
+        CString out = CString("Wine ") + pwine_get_version();
         return out;
     }while(false);
 #endif
