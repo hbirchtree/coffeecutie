@@ -51,8 +51,8 @@ void GLEAM_API::LoadAPI(bool debug)
         if(ver>=ver45&& /* DISABLES CODE */ (false))
             /* Unimplemented both on CGL level and here */
             GL_CURR_API = GL_4_5;
-//        else if(ver>=ver43)
-//            GL_CURR_API = GL_4_3;
+        else if(ver>=ver43)
+            GL_CURR_API = GL_4_3;
         else if(ver>=ver33)
             GL_CURR_API = GL_3_3;
     }else
@@ -179,7 +179,7 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
         {
             auto sview = vstate.view(0);
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
-            GLC::ViewportSet(&tview);
+            GLC::ViewportSet(tview);
         }
 //        GLC::DepthSet(&vstate.depth(0));
         {
@@ -292,12 +292,12 @@ void GLEAM_API::SetStencilState(const StencilState& sstate, uint32 i)
     /*TODO: Implement functionality for more operations */
 }
 
-void GLEAM_API::SetPixelProcessState(const PixelProcessState& pstate)
+void GLEAM_API::SetPixelProcessState(const PixelProcessState& pstate, bool unpack)
 {
     if(pstate.alignment())
-        GLC::PixelStore(PixelOperation::Alignment,pstate.alignment());
+        GLC::PixelStore(unpack,PixelOperation::Alignment,pstate.alignment());
     if(pstate.swapEndianness())
-        GLC::PixelStore(PixelOperation::SwapEndiannes,
+        GLC::PixelStore(unpack,PixelOperation::SwapEndiannes,
                         (pstate.swapEndianness()) ? GL_TRUE : GL_FALSE);
 
     /*TODO: Implement more processing switches */

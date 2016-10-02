@@ -106,7 +106,7 @@ public:
     }
 
     static void SetTessellatorState(TessellatorState const& tstate);
-    static void SetPixelProcessState(PixelProcessState const& pstate);
+    static void SetPixelProcessState(PixelProcessState const& pstate, bool unpack = true);
     static void SetShaderUniformState(const GLEAM_Pipeline &pipeline, ShaderStage const& stage,
                                       GLEAM_ShaderUniformState const& ustate);
 
