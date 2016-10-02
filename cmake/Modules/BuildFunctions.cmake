@@ -5,6 +5,8 @@ include ( LinuxSnappyBuild )
 include ( MacAppBuild )
 include ( WindowsImageBuild )
 
+include ( ValgrindTest )
+
 # Wrappers to get rid of boilerplate and cross-platform-ness (ahem, Android)
 
 macro(TARGET_ENABLE_CXX11 TARGET)
@@ -31,12 +33,6 @@ macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
         endif()
         math( EXPR LICENSE_COUNT "${LICENSE_COUNT}+1" )
     endforeach()
-
-    # TODO: Load license data from files, references stored in BUNDLE_LICENSES
-#    set ( LICENSE_DATA
-#        "\"Hello!\",\"Jello!\",\"What?\""
-#        )
-#    set ( LICENSE_COUNT 3 )
 
     configure_file (
         "${COFFEE_SOURCE_TEMPLATE_DIRECTORY}/LicenseInfo.c.in"
@@ -351,6 +347,19 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
             COMMAND $<TARGET_FILE:${TARGET}>
             )
+    endif()
+
+    if(COFFEE_VALGRIND_MASSIF)
+        VALGRIND_TEST("massif" "--stacks=yes" "${TARGET}")
+    endif()
+    if(COFFEE_VALGRIND_MEMCHECK)
+        VALGRIND_TEST("memcheck" "--stacks=yes" "${TARGET}")
+    endif()
+    if(COFFEE_VALGRIND_CALLGRIND)
+        VALGRIND_TEST("callgrind" "--stacks=yes" "${TARGET}")
+    endif()
+    if(COFFEE_VALGRIND_CACHEGRIND)
+        VALGRIND_TEST("cachegrind" "--stacks=yes" "${TARGET}")
     endif()
 
 endfunction()
