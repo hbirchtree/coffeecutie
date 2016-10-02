@@ -12,7 +12,16 @@ namespace Mem{
 template<typename T>
 FORCEDINLINE void* FitIntegerInPtr(T in)
 {
-    return (void*)in;
+    static_assert(sizeof(T) < sizeof(void*), "Type too large");
+
+    if(sizeof(T) == sizeof(void*))
+        return (void*)in;
+    else{
+        void* out = nullptr;
+        T* imm = (T*)(&out);
+        memcpy(imm,&in,sizeof(in));
+        return out;
+    }
 }
 
 FORCEDINLINE szptr AlignOffset(szptr alignment, szptr off)

@@ -134,7 +134,7 @@ void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
             if(i != 0)
                 cWarning("Cannot perform task: applying viewport index, unsupported");
         if(i==0)
-            CGL33::ViewportSet(&view);
+            CGL33::ViewportSet(view);
     }
     if(m_handle != 0)
         fb_bind(m_type,0);

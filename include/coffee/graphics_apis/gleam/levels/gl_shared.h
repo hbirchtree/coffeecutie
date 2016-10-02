@@ -61,6 +61,8 @@ struct CGL_Shared_Functions
 
     /* Buffer clearing */
     STATICINLINE
+    void ClearColor(Vecf4 const& c){glClearColor(c.r(),c.g(),c.b(),c.a());}
+    STATICINLINE
     void ClearDepth(scalar f){glClearDepthf(f);}
     STATICINLINE
     void ClearStencil(int32 f){glClearStencil(f);}
@@ -95,10 +97,12 @@ struct CGL_Shared_Functions
     STATICINLINE
     void DepthMask(bool v){glDepthMask((v) ? GL_TRUE : GL_FALSE);}
     STATICINLINE
-    void DepthSet(ZField64 const* d)
+    void DepthSet(ZField64 const& d)
     {
 #ifdef COFFEE_GLEAM_DESKTOP
-        glDepthRange(d->near,d->far);
+        glDepthRange(d.near,d.far);
+#else
+        glDepthRangef(d.near,d.far);
 #endif
     }
 
@@ -113,9 +117,9 @@ struct CGL_Shared_Functions
 
     /* Viewport */
     STATICINLINE
-    void ViewportSet(CRect64 const* r){glViewport(r->x,r->y,r->w,r->h);}
+    void ViewportSet(CRect64 const& r){glViewport(r.x,r.y,r.w,r.h);}
     STATICINLINE
-    void ScissorSet(CRect64 const* r){glScissor(r->x,r->y,r->w,r->h);}
+    void ScissorSet(CRect64 const& r){glScissor(r.x,r.y,r.w,r.h);}
 
     /* Polygonal / line rendering */
     STATICINLINE
@@ -160,10 +164,9 @@ struct CGL_Shared_Functions
 
     /* Pixel operations */
     STATICINLINE
-    void PixelStore(PixelOperation op, int32 v)
+    void PixelStore(bool pack, PixelOperation op, int32 v)
     {
-        glPixelStorei(to_enum(false,op),v);
-        glPixelStorei(to_enum(true,op),v);
+        glPixelStorei(to_enum(pack,op),v);
     }
 
     STATICINLINE

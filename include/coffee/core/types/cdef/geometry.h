@@ -38,6 +38,12 @@ struct _cbasic_size_2d : _cbasic_size
         return w*h;
     }
 
+    template<typename U>
+    FORCEDINLINE _cbasic_size_2d<U> convert()
+    {
+        return _cbasic_size_2d<U>(w,h);
+    }
+
     FORCEDINLINE _cbasic_size_2d<T> operator/(const T& d)
     {
         return _cbasic_size_2d<T>(this->w/d,this->h/d);
@@ -127,6 +133,9 @@ struct _cbasic_rect
         this->h = h;
     }
     FORCEDINLINE _cbasic_rect():x(0),y(0),w(0),h(0){}
+
+    FORCEDINLINE _cbasic_rect(_cbasic_size_2d<T> const& s)
+        :x(0),y(0), w(s.w),h(s.h){}
 
     union{
         struct{

@@ -10,13 +10,11 @@ namespace GLEAM{
 
 bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
 {
-    CString str_s((cstring)data.data,data.size);
-    cstring str = str_s.c_str();
-
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
+        int32 slen = data.size;
         CGL33::ShaderAlloc(1,stage,&m_handle);
-        CGL33::ShaderSource(m_handle,1,&str);
+        CGL33::ShaderSource(m_handle,1,&slen,(cstring*)&data.data);
         bool stat = CGL33::ShaderCompile(m_handle);
 
         if(GL_DEBUG_MODE && !stat)
@@ -31,6 +29,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         return stat;
     }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
+        cstring str = (cstring)data.data;
         m_handle = CGL43::ProgramCreate(stage,1,&str);
 
         if(GL_DEBUG_MODE && m_handle == 0)
@@ -186,29 +185,26 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         /* Get typical uniforms */
         {
             uint32 num_uniforms;
-            cstring_w* unif_names;
-            uint32* unif_types;
-            int32* unif_sizes;
-            CGL33::ProgramUnifGet(prog,&num_uniforms,&unif_names,
-                                  &unif_types,&unif_sizes);
+            CGL33::UnifValInfo* unifs;
+            CGL33::ProgramUnifGet(prog,&num_uniforms,&unifs);
             if(num_uniforms==0)
                 return;
             uniforms->reserve(num_uniforms);
             for(uint32 i=0;i<num_uniforms;i++)
             {
+                auto const& v = unifs[i];
+
                 uniforms->push_back({});
                 GLEAM_UniformDescriptor &desc = uniforms->back();
                 desc.m_flags = 0;
 
-                desc.m_name = unif_names[i];
+                desc.m_name = v.name;
                 desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
                 desc.stages = ShaderStage::All;
-                desc.m_flags = to_enum_shtype(unif_types[i]);
-                delete[] unif_names[i];
+                desc.m_flags = to_enum_shtype(v.type);
+                delete[] v.name;
             }
-            delete[] unif_names;
-            delete[] unif_types;
-            delete[] unif_sizes;
+            delete[] unifs;
         }
         /* Get uniforms buffers */
         {

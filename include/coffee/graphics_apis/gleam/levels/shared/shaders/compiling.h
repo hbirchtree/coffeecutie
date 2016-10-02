@@ -34,10 +34,15 @@ struct CGL_Old_ShaderCompiler
     STATICINLINE void ShaderSource(CGhnd h,uint32 n,cstring* src)
     {
         int32* lens = new int32[n];
+        /* ShaderSource wants to know all the string lengths */
         for(uint32 i=0;i<n;i++)
             lens[i] = StrLen(src[i]+1);
         glShaderSource(h,n,src,lens);
         delete[] lens;
+    }
+    STATICINLINE void ShaderSource(CGhnd h,uint32 n, int32* len,cstring* src)
+    {
+        glShaderSource(h,n,src,len);
     }
     STATICINLINE bool ShaderCompile(CGhnd s)
     {
@@ -134,8 +139,15 @@ struct CGL_Old_ShaderCompiler
     STATICINLINE void ProgramAttribBind(CGhnd h,uint32 i,cstring n){glBindAttribLocation(h,i,n);}
 
     /* Uniforms */
+    struct UnifValInfo
+    {
+        cstring_w name;
+        CGenum type;
+        int32 size;
+    };
+
     STATICINLINE
-    void ProgramUnifGet(CGhnd h,uint32* n,cstring_w** names,CGenum** type,int32** size)
+    void ProgramUnifGet(CGhnd h,uint32* n,UnifValInfo** values)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORMS,&num);
@@ -149,20 +161,29 @@ struct CGL_Old_ShaderCompiler
         int32 namelen = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
 
-        names[0] = new cstring_w[num];
-        type[0] = new CGenum[num];
-        size[0] = new int32[num];
+        *values = new UnifValInfo[num];
+
         for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
+            (*values)[i].name = new int8[namelen];
         for(int32 i=0;i<num;i++)
-            glGetActiveUniform(h,i,namelen,nullptr,&size[0][i],&type[0][i],names[0][i]);
+            glGetActiveUniform(h,i,namelen,nullptr,
+                               &(*values)[i].size,
+                               &(*values)[i].type,
+                               (*values)[i].name);
     }
     STATICINLINE int32 ProgramUnifGetLoc(CGhnd h,cstring n){return glGetUniformLocation(h,n);}
 
     /* Uniform blocks */
+    struct UnifBlkInfo
+    {
+        cstring_w name;
+        int32 *index;
+        int32 indexSize;
+        int32 size;
+    };
+
     STATICINLINE
-    void ProgramUnifBlockGet(CGhnd h,uint32* n,cstring_w** names,
-                                          int32** indexSize,int32*** index,int32** size)
+    void ProgramUnifBlockGet(CGhnd h,uint32* n, UnifBlkInfo** blocks)
     {
         int32 num = 0;
         ProgramGetiv(h,GL_ACTIVE_UNIFORM_BLOCKS,&num);
@@ -173,22 +194,25 @@ struct CGL_Old_ShaderCompiler
         }
         *n = num;
 
-        int32 namelen = 0;
-        ProgramGetiv(h,GL_ACTIVE_UNIFORM_MAX_LENGTH,&namelen);
+        *blocks = new UnifBlkInfo[num];
 
-        names[0] = new cstring_w[num];
-        indexSize[0] = new int32[num];
-        index[0] = new int32*[num];
-        size[0] = new int32[num];
+        int32 namelen = 0;
         for(int32 i=0;i<num;i++)
-            names[0][i] = new int8[namelen];
+        {
+            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_NAME_LENGTH,&namelen);
+            (*blocks)[i].name = new int8[namelen];
+        }
         for(uint32 i=0;i<(uint32)num;i++)
         {
-            glGetActiveUniformBlockName(h,i,namelen,nullptr,names[0][i]);
-            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_DATA_SIZE,&size[0][i]);
-            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,&indexSize[0][i]);
-            index[0][i] = new int32[indexSize[0][i]];
-            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,index[0][i]);
+            glGetActiveUniformBlockName(h,i,namelen,nullptr,
+                                        (*blocks)[i].name);
+            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_DATA_SIZE,
+                                      &((*blocks)[i].size));
+            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS,
+                                      &((*blocks)[i].indexSize));
+            (*blocks)[i].index = new int32[(*blocks)[i].indexSize];
+            glGetActiveUniformBlockiv(h,i,GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES,
+                                      (*blocks)[i].index);
         }
     }
     STATICINLINE uint32 ProgramUnifBlockGetLoc(CGhnd h,cstring n)

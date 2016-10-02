@@ -14,7 +14,13 @@
 namespace Coffee{
 namespace CGL{
 /*!
- * \brief OpenGL ES 3.0 compliance model
+ * \brief OpenGL ES 2.0 compliance model
+ * Support notes:
+ *  - VertexArrayObject is present, but not supported
+ *  - GetBufferParameteri64v is present, but not supported
+ *  - Queries are present, but not supported
+ *  - 3D textures are present but not supported
+ *  - Framebuffer layers are present, but not supported
  */
 struct CGLES20 :
         CGL_Implementation,
