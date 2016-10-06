@@ -199,6 +199,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     test.installEventHandler({ExitHandler_1,nullptr,&test});
     test.installEventHandler({WindowResize_1,nullptr,&test});
 
+    cDebug("Resolution: {0}", test.windowSize());
+
     while(!test.closeFlag())
     {
         rend.setClearColor(r,clearCol);

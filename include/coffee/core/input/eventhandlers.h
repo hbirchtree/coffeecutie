@@ -30,7 +30,7 @@ FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
     {
         auto rev = (const CDResizeEvent*)data;
         CRect64 view(0,0,rev->w,rev->h);
-        GL::ViewportSet(&view);
+	GL::ViewportSet(view);
     }
 }
 
