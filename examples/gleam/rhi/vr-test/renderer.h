@@ -341,7 +341,7 @@ public:
         }
 
         {
-            _cbasic_size_2d<uint32> _s = {540, 720};
+            _cbasic_size_2d<uint32> _s = {540, 960};
 
             if (vr_ctxt.VRSystem())
             {
@@ -393,14 +393,14 @@ public:
 
         if (vr_ctxt.VRSystem())
         {
-            auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left, 1, 10, vr::API_OpenGL);
+            auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left, 1, 100, vr::API_OpenGL);
             MemCpy(&camera_mat, &mat, sizeof(Matf4));
             auto mat_tf = vr_ctxt.VRSystem()->GetEyeToHeadTransform(vr::Eye_Left);
             camera_tmp = Matf4();
             MemCpy(&camera_tmp, &mat_tf, sizeof(mat_tf));
             camera_pre[0] = camera_mat * inverse(camera_tmp);
 
-            mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Right, 1, 10, vr::API_OpenGL);
+            mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Right, 1, 100, vr::API_OpenGL);
             MemCpy(&camera_mat, &mat, sizeof(Matf4));
             mat_tf = vr_ctxt.VRSystem()->GetEyeToHeadTransform(vr::Eye_Right);
             camera_tmp = Matf4();
@@ -458,7 +458,7 @@ public:
                 floor_transform.rotation.y() = CMath::sin(tprevious);
                 floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
-//                camera.position.z() = 1. + CMath::fmod(tprevious,5.0);
+//                camera.position.z() = -9. - CMath::fmod(tprevious,5.0);
             }
 
             if (vr_ctxt.VRCompositor())
@@ -473,20 +473,20 @@ public:
                 }
             }
 
-            camera.position.x() = -1;
+//            camera.position.x() = -1;
             if(vr_ctxt.VRCompositor())
             {
-                camera_mat = camera_pre[0] * camera_pose * GenTransform(camera) * aspect_scaling;
+                camera_mat = camera_pre[0] * camera_pose * GenTransform(camera);
             }else{
                 camera_mat = GenPerspective(camera) * GenTransform(camera) * aspect_scaling;
             }
             object_matrices[0] = camera_mat * GenTransform(base_transform);
             object_matrices[2] = camera_mat * GenTransform(floor_transform);
 
-            camera.position.x() = 1;
+//            camera.position.x() = 1;
             if(vr_ctxt.VRCompositor())
             {
-                camera_mat = camera_pre[1] * camera_pose * GenTransform(camera) * aspect_scaling;
+                camera_mat = camera_pre[1] * camera_pose * GenTransform(camera);
             }else{
                 camera_mat = GenPerspective(camera) * GenTransform(camera) * aspect_scaling;
             }
@@ -535,7 +535,7 @@ public:
 
                 CGL::CGL33::Flush();
 
-                vr_ctxt.VRCompositor()->WaitGetPoses(nullptr,0,nullptr,0);
+//                vr_ctxt.VRCompositor()->WaitGetPoses(nullptr,0,nullptr,0);
             }
 
             vr_target.blit(

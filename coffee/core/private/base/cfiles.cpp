@@ -97,7 +97,7 @@ bool FileMap(Resource &resc, ResourceAccess acc)
     resc.m_platform_data->m_mapping = FileFun::Map(
 				native_fn.c_str(),
                 acc,
-                0,resc.size+8,
+                0,resc.size,
                 &err);
 
     if(!resc.m_platform_data->m_mapping.ptr)
