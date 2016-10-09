@@ -1,18 +1,14 @@
-#include <coffee/CGraphics>
 #include <coffee/CSDL2>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics_apis/CGLeamRHI>
-#include <coffee/graphics_apis/CGLeam>
 #include <coffee/image/cimage.h>
+#include <coffee/vr/OpenVR>
 
 #include <coffee/core/platform_data.h>
 
-#include <openvr.h>
 
 //#define USE_NULL_RENDERER
-
-vr::COpenVRContext vr_ctxt;
 
 using namespace Coffee;
 using namespace Display;
@@ -25,6 +21,8 @@ public:
     using GLM = RHI::NullAPI;
 #endif
 
+    using OVR = VR::OpenVR<GLM>;
+
     static void frame_count(uint32 f, c_cptr)
     {
         cDebug("Swaps/s: {0}",f);
@@ -32,6 +30,7 @@ public:
 
 private:
     bool m_debugging = false;
+    OVR::DATA vr_data;
     GLM::PRF::QRY_DBUF* buffer_debug_p;
     CGCamera camera;
 
@@ -67,16 +66,7 @@ public:
 
         GLM::LoadAPI(true);
 
-        {
-            vr::EVRInitError err;
-            if(vr::VR_Init(&err,vr::VRApplication_Scene)&&vr::VRCompositor()&&vr_ctxt.VRSystem())
-            {
-                cVerbose(5,"Initialized VR system");
-            }else{
-                cVerbose(5,"Failed to initialize VR system: {0}",
-                         vr::VR_GetVRInitErrorAsEnglishDescription(err));
-            }
-        }
+        OVR::Init();
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
@@ -212,8 +202,8 @@ public:
          * These can be rotated to achieve per-frame disposable buffers,
          *  allowing multiple frames to be processed concurrently without halt
          */
-        Bytes transform_data = {(byte_t *)object_matrices, sizeof(object_matrices)};
-        Bytes time_data = {(byte_t *)&time_value, sizeof(time_value)};
+        Bytes transform_data = {(byte_t *)object_matrices, sizeof(object_matrices), 0};
+        Bytes time_data = {(byte_t *)&time_value, sizeof(time_value), 0};
 
         GLM::UNIFVAL transforms = {};
         GLM::UNIFVAL timeval = {};
@@ -236,6 +226,8 @@ public:
 
         stenstate.m_test = true;
         blendstate.m_doBlend = true;
+        viewportstate.m_depth.clear();
+        viewportstate.m_depth.push_back({0.0, 100.0});
         viewportstate.m_view.clear();
         viewportstate.m_view.push_back({0, 0, 1280, 720});
         viewportstate.m_scissor.clear();
@@ -244,6 +236,7 @@ public:
 
         GLM::VIEWSTATE viewstate_vr = viewportstate;
         viewstate_vr.m_view.clear();
+        viewstate_vr.m_scissor.clear();
 
         rasterstate_line.m_wireframe = true;
         deptstate.m_test = true;
@@ -311,7 +304,7 @@ public:
 
         GLM::PreDrawCleanup();
 
-        GLM::DefaultFramebuffer.clear(0, clear_col, 1.f);
+        GLM::DefaultFramebuffer.clear(0, clear_col, 1.);
 
         GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
                                         DBuffers::Color | DBuffers::Depth);
@@ -325,95 +318,28 @@ public:
         bool do_debugging = false;
         bool did_apply_state = false;
 
-        vr::Texture_t eye_texture;
-        vr::VRTextureBounds_t eye_bounds[2] = {};
-
-        GLM::FB_T vr_target;
-        GLM::S_2D *vr_ctarget = nullptr, *vr_dtarget = nullptr;
-
-        if(vr_ctxt.VRSystem())
-        {
-            /* Set primary color for VR stuffs */
-            vr::HmdColor_t sceneCol;
-            sceneCol.r = sceneCol.g = 0.5;
-            sceneCol.b = sceneCol.a = 1.0;
-            vr_ctxt.VRChaperone()->SetSceneColor(sceneCol);
-        }
-
-        {
-            _cbasic_size_2d<uint32> _s = {540, 960};
-
-            if (vr_ctxt.VRSystem())
-            {
-                vr_ctxt.VRSystem()->GetRecommendedRenderTargetSize(&_s.w, &_s.h);
-            }
-
-            CSize s = {(int32)_s.w, (int32)_s.h};
-
-            vr_target.alloc();
-            vr_ctarget = new GLM::S_2D(PixelFormat::SRGB8A8,1);
-            vr_dtarget = new GLM::S_2D(PixelFormat::Depth24Stencil8,1);
-
-            eye_bounds[0].uMax = eye_bounds[1].uMin = 0.5;
-            eye_bounds[1].uMax = 1.0;
-            eye_bounds[0].vMax = eye_bounds[1].vMax = 1.0;
-
-            s.w *= 2;
-            vr_ctarget->allocate(s,PixCmp::RGBA);
-            vr_dtarget->allocate(s,PixCmp::Depth);
-
-            vr_target.attachDepthStencilSurface(*vr_dtarget,0);
-            vr_target.attachSurface(*vr_ctarget,0);
-
-            vr_target.resize(0,{0,0,s.w,s.h});
-
-            eye_texture.eType = vr::API_OpenGL;
-            eye_texture.eColorSpace = vr::ColorSpace_Gamma;
-            eye_texture.handle = FitIntegerInPtr(vr_ctarget->handle());
-
-
-            CRect vr_renderSize = { 0,0, (int32)_s.w*2,(int32)_s.h };
-
-            viewstate_vr.m_view.push_back(vr_renderSize);
-
-            camera.aspect = scalar(vr_renderSize.w/2.f) / scalar(vr_renderSize.h);
-            setWindowSize(vr_renderSize.size()/2);
-        }
-
+        GLM::FB_T& vr_target = OVR::GenRenderTarget(vr_data, viewstate_vr);
 
         GLM::FB_T* default_fb = &GLM::DefaultFramebuffer;
-        //	if(vr_ctxt.VRSystem())
         default_fb = &vr_target;
 
-        Matf4 camera_mat;
-        Matf4 camera_tmp;
-        Matf4 camera_pre[2] = {};
-        Matf4 camera_pose;
-        Matf4 aspect_scaling = scale(Matf4(), Vecf3(0.5,1,1));
+        Vector<Matf4> camera_pre;
+        camera_pre.resize(2);
 
-        if (vr_ctxt.VRSystem())
         {
-            auto mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Left, 1, 100, vr::API_OpenGL);
-            MemCpy(&camera_mat, &mat, sizeof(Matf4));
-            auto mat_tf = vr_ctxt.VRSystem()->GetEyeToHeadTransform(vr::Eye_Left);
-            camera_tmp = Matf4();
-            MemCpy(&camera_tmp, &mat_tf, sizeof(mat_tf));
-            camera_pre[0] = camera_mat * inverse(camera_tmp);
+            /* In this short context, we will multiply matrices */
+            Vector<Matf4> camera_per;
+            Vector<Matf4> camera_xf;
+            camera_per.resize(2);
+            camera_xf.resize(2);
+            OVR::GetPerspectiveMatrices(camera_per, {1.0, 100.0});
+            OVR::GetTransformMatrices(camera_xf);
 
-            mat = vr_ctxt.VRSystem()->GetProjectionMatrix(vr::Eye_Right, 1, 100, vr::API_OpenGL);
-            MemCpy(&camera_mat, &mat, sizeof(Matf4));
-            mat_tf = vr_ctxt.VRSystem()->GetEyeToHeadTransform(vr::Eye_Right);
-            camera_tmp = Matf4();
-            MemCpy(&camera_tmp, &mat_tf, sizeof(mat_tf));
-            camera_pre[1] = camera_mat * inverse(camera_tmp);
-
-            camera_pre[0] = camera_pre[0] * aspect_scaling;
-            camera_pre[1] = camera_pre[1] * aspect_scaling;
+            for(uint8 i=0;i<2;i++)
+                camera_pre[i] = camera_per[i] * camera_xf[i];
         }
 
-        vr::TrackedDevicePose_t trackedDevicePoses[vr::k_unMaxTrackedDeviceCount];
-
-        cDebug("Monitor resolution: {0}",this->monitor().screenArea.size());
+        this->setWindowSize(OVR::GetRenderTargetSize().convert<int32>());
 
         while (!closeFlag()) {
 
@@ -452,8 +378,8 @@ public:
             if(!m_paused)
             {
                 /* Define frame data */
-                base_transform.position.x() = CMath::sin(tprevious) * 2;
-                base_transform.position.y() = CMath::cos(tprevious) * 2;
+                base_transform.position.x() = CMath::sin(tprevious) * 2.;
+                base_transform.position.y() = CMath::cos(tprevious) * 2.;
 
                 floor_transform.rotation.y() = CMath::sin(tprevious);
                 floor_transform.rotation = normalize_quat(floor_transform.rotation);
@@ -461,37 +387,19 @@ public:
 //                camera.position.z() = -9. - CMath::fmod(tprevious,5.0);
             }
 
-            if (vr_ctxt.VRCompositor())
             {
-                vr_ctxt.VRCompositor()->WaitGetPoses(trackedDevicePoses, vr::k_unMaxTrackedDeviceCount,
-                                                     nullptr, 0);
-                if (trackedDevicePoses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+                Matf4 camera_pose;
+                Matf4 camera_mat;
+
+                OVR::GetPoses(vr_data, camera_pose);
+
+                for(uint8 i=0;i<2;i++)
                 {
-                    auto& mat = trackedDevicePoses[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
-                    MemCpy(&camera_pose,&mat,sizeof(mat));
-                    camera_pose = camera_pose;
+                    camera_mat = camera_pre[i] * camera_pose * GenTransform(camera);
+                    object_matrices[0+i] = camera_mat * GenTransform(base_transform);
+                    object_matrices[2+i] = camera_mat * GenTransform(floor_transform);
                 }
             }
-
-//            camera.position.x() = -1;
-            if(vr_ctxt.VRCompositor())
-            {
-                camera_mat = camera_pre[0] * camera_pose * GenTransform(camera);
-            }else{
-                camera_mat = GenPerspective(camera) * GenTransform(camera) * aspect_scaling;
-            }
-            object_matrices[0] = camera_mat * GenTransform(base_transform);
-            object_matrices[2] = camera_mat * GenTransform(floor_transform);
-
-//            camera.position.x() = 1;
-            if(vr_ctxt.VRCompositor())
-            {
-                camera_mat = camera_pre[1] * camera_pose * GenTransform(camera);
-            }else{
-                camera_mat = GenPerspective(camera) * GenTransform(camera) * aspect_scaling;
-            }
-            object_matrices[1] = camera_mat * GenTransform(base_transform);
-            object_matrices[3] = camera_mat * GenTransform(floor_transform);
 
             /*
            * In APIs such as GL4.3+, this will apply vertex and fragment states
@@ -526,27 +434,12 @@ public:
 
             frame_counter.update(Time::CurrentMicroTimestamp()/1000);
 
-            if(vr_ctxt.VRCompositor())
-            {
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Left,&eye_texture,
-                                               &eye_bounds[0]);
-                vr_ctxt.VRCompositor()->Submit(vr::Eye_Right,&eye_texture,
-                                               &eye_bounds[1]);
-
-                CGL::CGL33::Flush();
-
-//                vr_ctxt.VRCompositor()->WaitGetPoses(nullptr,0,nullptr,0);
-            }
-
-            vr_target.blit(
-                        viewstate_vr.m_view[0].convert<int64>(),GLM::DefaultFramebuffer,
-                    CRect64(this->windowSize().convert<int64>()),
-                    DBuffers::Color,Filtering::Linear);
+            OVR::SubmitFrames(vr_data, this->windowSize());
 
             if(do_debugging)
             {
                 did_apply_state = false;
-                default_fb->clear(0,clear_col,1.f);
+                default_fb->clear(0, clear_col, 1.);
                 buffer_debug.end();
             }
 
@@ -556,11 +449,6 @@ public:
             tprevious = this->contextTime();
         }
 
-        if(vr_ctxt.VRSystem())
-        {
-            vr::VR_Shutdown();
-        }
-
         Profiler::PopContext();
     }
     void eventHandleD(const Display::CDEvent &e, c_cptr data) {
@@ -568,7 +456,7 @@ public:
 
         if(e.type == CDEvent::Resize)
         {
-            auto rev = (Display::CDResizeEvent const*)data;
+            auto rev = static_cast<Display::CDResizeEvent const*>(data);
             buffer_debug_p->resize(*rev);
 
 //            camera.aspect = scalar(rev->w)/scalar(rev->h);
@@ -580,7 +468,7 @@ public:
 
         if(e.type == CIEvent::Keyboard)
         {
-            auto kev = (CIKeyEvent const*)data;
+            auto kev = static_cast<CIKeyEvent const*>(data);
 
             if(kev->key == CK_F10
                     && kev->mod & CIKeyEvent::PressedModifier
