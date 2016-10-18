@@ -17,9 +17,10 @@ enum Sensors
     SENS_Gyro,
     SENS_Mag,
     SENS_Lux,
+    SENS_Count,
 };
 
-static const ASensor* m_sensors[6] = {};
+static const ASensor* m_sensors[SENS_Count] = {};
 
 void Android_InitSensors()
 {

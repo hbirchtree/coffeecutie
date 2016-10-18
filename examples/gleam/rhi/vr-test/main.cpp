@@ -7,11 +7,9 @@
 
 int32 coffee_main(int32, cstring_w*)
 {
-//    InstallSignalHandler(Sig_ShitMySelf,sig_dummy_handler);
-
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
-//    GotoApplicationDir();
+    GotoApplicationDir();
 
     /* Required for SDL2 applications, initializes SDL state */
     SubsystemWrapper<SDL2::SDL2> sdl2;

@@ -1,12 +1,6 @@
 #ifndef COFFEE_DEBUG
 #define COFFEE_DEBUG
 
-//#define CPPFORMAT_PRINTING
-
-#ifdef CPPFORMAT_PRINTING
-#include <cppformat/format.h>
-#endif
-
 #include "cdebug_print.h"
 #include "debugprinter.h"
 #include "../../coffee_mem_macros.h"

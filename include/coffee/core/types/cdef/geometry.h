@@ -39,7 +39,7 @@ struct _cbasic_size_2d : _cbasic_size
     }
 
     template<typename U>
-    FORCEDINLINE _cbasic_size_2d<U> convert()
+    FORCEDINLINE _cbasic_size_2d<U> convert() const
     {
         return _cbasic_size_2d<U>(w,h);
     }
