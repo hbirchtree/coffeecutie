@@ -206,15 +206,14 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 )
         endif()
 
-        if(NOT COFFEE_GENERATE_APPIMAGE AND NOT COFFEE_GENERATE_FLATPAK)
-            install(
-                TARGETS
-                ${TARGET}
+        # We still install a basic binary executable
+        install(
+            TARGETS
+            ${TARGET}
 
-                DESTINATION
-                bin
-                )
-        endif()
+            DESTINATION
+            bin
+            )
     else()
         add_executable(${TARGET} ${SOURCES_MOD})
 
