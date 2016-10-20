@@ -1,6 +1,8 @@
 project( Coffee C CXX )
 cmake_minimum_required( VERSION 3.1 )
 
+include ( CTest )
+
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 if(NOT WIN32)

@@ -81,7 +81,7 @@ struct CGLES32 :
         rec.y = view->y;
         rec.w = view->w;
         rec.h = view->h;
-        ViewportSet(&rec);
+	ViewportSet(rec);
     }
 
     STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
