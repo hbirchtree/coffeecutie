@@ -55,9 +55,9 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenTransform(
 {
     _cbasic_tmatrix<T,4> mat;
 
-    mat = matrixify(rot);
-    mat = scale(mat,scl);
     mat = translation(mat,pos);
+    mat = scale(mat,scl);
+    mat *= matrixify(rot);
 
     return mat;
 }
