@@ -149,9 +149,9 @@ struct CGL43 : CGL33_Base,
 
     /* Overriding GL3.3 functions */
     using CGL_ViewportArray::ViewportSet;
-    STATICINLINE void ViewportSet(CRect64 const* v)
+    STATICINLINE void ViewportSet(CRect64 const& v)
     {
-        CRectF r(v->x,v->y,v->w,v->h);
+        CRectF r = v.convert<scalar>();
         ViewportSet(0,&r);
     }
 

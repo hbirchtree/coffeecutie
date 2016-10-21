@@ -74,14 +74,9 @@ struct CGLES32 :
         return (bool)glVertexAttribFormat;
     }
 
-    STATICINLINE void ViewportSet(uint32, CRectF* view)
+    STATICINLINE void ViewportSet(uint32, CRectF& view)
     {
-        CRect64 rec;
-        rec.x = view->x;
-        rec.y = view->y;
-        rec.w = view->w;
-        rec.h = view->h;
-	ViewportSet(rec);
+        ViewportSet(view.convert<int64>());
     }
 
     STATICINLINE void BlendFunci(uint32 i, CGenum v1,CGenum v2)
