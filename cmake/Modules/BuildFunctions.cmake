@@ -208,8 +208,8 @@ function(COFFEE_ADD_APPLICATION_LONGERER
 
         # We still install a basic binary executable
         install(
-            TARGETS
-            ${TARGET}
+            FILES
+            "$<TARGET_FILE:${TARGET}>"
 
             DESTINATION
             bin
