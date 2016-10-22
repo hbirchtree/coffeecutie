@@ -324,8 +324,8 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     add_executable ( ${TARGET} ${SOURCES_MOD} )
 
     install(
-        TARGETS
-        ${TARGET}
+        FILES
+        "$<TARGET_FILE:${TARGET}>"
 
         DESTINATION
         bin/tests
