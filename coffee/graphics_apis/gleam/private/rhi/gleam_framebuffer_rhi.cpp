@@ -126,9 +126,7 @@ void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
     fb_bind(m_type,m_handle);
     if(CGL43::ViewportArraySupported())
     {
-        CRectF view_f = {(scalar)view.x,(scalar)view.y,
-                         (scalar)view.w,(scalar)view.h};
-        CGL43::ViewportSet(i,&view_f);
+        CGL43::ViewportSet(i,view.convert<scalar>());
     }else{
         if(GL_DEBUG_MODE)
             if(i != 0)

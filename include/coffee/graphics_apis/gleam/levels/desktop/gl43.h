@@ -151,8 +151,7 @@ struct CGL43 : CGL33_Base,
     using CGL_ViewportArray::ViewportSet;
     STATICINLINE void ViewportSet(CRect64 const& v)
     {
-        CRectF r = v.convert<scalar>();
-        ViewportSet(0,&r);
+        ViewportSet(0,v.convert<scalar>());
     }
 
     struct Debug : CGL33::Debug

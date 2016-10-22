@@ -13,7 +13,7 @@ struct CGL_ViewportArray
     /* Use gl*Indexed gl*Arrayv */
     STATICINLINE void ViewportArrayv(uint32 i,size_t c,CRectF const* v)
     {glViewportArrayv(i,c,(scalar*)v);}
-    STATICINLINE void ViewportSet(uint32 i,CRectF const* v){ViewportArrayv(i,1,v);}
+    STATICINLINE void ViewportSet(uint32 i,CRectF const& v){ViewportArrayv(i,1,&v);}
 
     STATICINLINE void ScissorArrayv(uint32 i,size_t c,CRect const* v)
     {glScissorArrayv(i,c,(int32*)v);}
