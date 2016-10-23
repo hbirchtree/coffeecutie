@@ -4,7 +4,7 @@
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
-#if defined(COFFEE_ANDROID) && !defined(__aarch64__)
+#if defined(COFFEE_ANDROID) && !defined(__aarch64__) && !defined(__amd64__)
 #define COFFEE_ARCH_LLP64
 #endif
 
