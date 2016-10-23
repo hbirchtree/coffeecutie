@@ -194,7 +194,11 @@ CByteData AndroidFileFun::Read(FileHandle *fh, uint64 size, bool nterminate)
     {
         /* In this case, the file exists as an asset */
         CByteData data;
+#if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
         data.size = AAsset_getLength64(fh->fp);
+#else
+        data.size = AAsset_getLength(fh->fp);
+#endif
         /* NOTE: Be aware! You might fuck sh*t up real bad. */
         data.data = (byte_t*)AAsset_getBuffer(fh->fp);
 
@@ -217,7 +221,11 @@ szptr AndroidFileFun::Size(AndroidFileFun::FileHandle *fh)
 {
     if(fh->fp)
     {
+#if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
         return AAsset_getLength64(fh->fp);
+#else
+        return AAsset_getLength(fh->fp);
+#endif
     }else
         return Ancestor::Size(fh);
 }
@@ -230,7 +238,11 @@ szptr AndroidFileFun::Size(cstring fn)
         AAsset* ass = AAssetManager_open(and_asset_manager(),check,AASSET_MODE_UNKNOWN);
         if(!ass)
             return 0;
+#if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
         szptr sz = AAsset_getLength64(ass);
+#else
+        szptr sz = AAsset_getLength(ass);
+#endif
         AAsset_close(ass);
 
         return sz;
@@ -252,7 +264,11 @@ AndroidFileFun::FileMapping AndroidFileFun::Map(cstring fn, ResourceAccess acc,
             return {};
         FileMapping map = {};
         map.handle = fh;
+#if (ANDROID_API_LEVEL >= 16) || !defined(ANDROID_API_LEVEL)
         if(AAsset_getLength64(fh->fp)<(offset+size))
+#else
+        if(AAsset_getLength(fh->fp)<(offset+size))
+#endif
         {
             Close(fh);
             return {};
