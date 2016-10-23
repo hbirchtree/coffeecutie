@@ -62,6 +62,8 @@ if(ANDROID)
         message("-- Building Android project with native_app_glue bindings")
         add_definitions("-DANDROID_DONT_USE_SDL2")
     endif()
+
+    add_definitions ( "-DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}" )
 endif()
 
 if(NOT COFFEE_BUILD_GLES)
