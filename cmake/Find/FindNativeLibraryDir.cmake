@@ -5,4 +5,6 @@ find_path ( NATIVE_LIBRARY_DIR_TMP
     ${CMAKE_SOURCE_DIR}/../native-library-bundle/
     )
 
-set ( NATIVE_LIBRARY_DIR ${NATIVE_LIBRARY_DIR_TMP} CACHE PATH "" )
+if(NATIVE_LIBRARY_DIR_TMP)
+    set ( NATIVE_LIBRARY_DIR ${NATIVE_LIBRARY_DIR_TMP} CACHE PATH "" )
+endif()
