@@ -74,13 +74,21 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
 
     target_enable_cxx11(${TARGET})
 
-    if(NOT WIN32)
+    if(ANDROID)
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            lib/${ANDROID_ABI}
+            )
+    elseif(NOT WIN32)
 	install(
 	    TARGETS
 	    ${TARGET}
 
 	    DESTINATION
-	    lib
+            lib
 	    )
     else()
 	install(
