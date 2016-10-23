@@ -54,8 +54,6 @@ macro(APK_PACKAGE_EXT
         Dependency_Libs
         Icon_File )
 
-    message ( "-- Generating ${Pkg_Name} (${Api_Arch})" )
-
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
     # For SDL2-enabled programs
@@ -298,21 +296,18 @@ macro(APK_PACKAGE_EXT
             )
 
         if(ANDROID_NATIVE_API_LEVEL GREATER 19)
-            message ( "-- Using Android Lollipop Java code" )
             configure_file (
                 "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
                 "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
                 @ONLY
                 )
         elseif(ANDROID_NATIVE_API_LEVEL EQUAL 19)
-            message ( "-- Using Android Kitkat Java code" )
             configure_file (
                 "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.kitkat.in"
                 "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
                 @ONLY
                 )
         else()
-            message ( "-- Using Android legacy Java code" )
             configure_file (
                 "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
                 "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
