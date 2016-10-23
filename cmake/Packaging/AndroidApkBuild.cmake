@@ -303,6 +303,12 @@ macro(APK_PACKAGE_EXT
                 "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
                 @ONLY
                 )
+        elseif(ANDROID_NATIVE_API_LEVEL EQUAL 19)
+            configure_file (
+                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.kitkat.in"
+                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+                @ONLY
+                )
         else()
             configure_file (
                 "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
