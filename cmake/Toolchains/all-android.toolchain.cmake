@@ -1701,3 +1701,5 @@ add_definitions (-fvisibility=hidden)
 
 message("-- Disabling RTTI and exceptions")
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti -fno-exceptions" )
+
+include_directories( SYSTEM ${ANDROID_SYSROOT}/usr/include )
