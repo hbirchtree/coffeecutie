@@ -69,12 +69,12 @@ inline CString to_string(const bigscalar& v)
     CString out = Convert::scalartostring(v);
     return StrUtil::zerortrim(out);
 }
-#ifdef COFFEE_ARCH_LLP64
-inline CString to_string(const long int& v)
-{
-    return Convert::inttostring(v);
-}
-#endif
+//#ifdef COFFEE_ARCH_LLP64
+//inline CString to_string(const long int& v)
+//{
+//    return Convert::inttostring(v);
+//}
+//#endif
 
 template<typename T>
 inline CString to_string(const T& v)
