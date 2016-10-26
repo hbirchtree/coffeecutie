@@ -295,25 +295,25 @@ macro(APK_PACKAGE_EXT
             @ONLY
             )
 
-        if(ANDROID_NATIVE_API_LEVEL GREATER 19)
-            configure_file (
-                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
-                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-                @ONLY
-                )
-        elseif(ANDROID_NATIVE_API_LEVEL EQUAL 19)
-            configure_file (
-                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.kitkat.in"
-                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-                @ONLY
-                )
-        else()
-            configure_file (
-                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
-                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-                @ONLY
-                )
-        endif()
+#        if(ANDROID_NATIVE_API_LEVEL GREATER 19)
+#            configure_file (
+#                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
+#                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+#                @ONLY
+#                )
+#        elseif(ANDROID_NATIVE_API_LEVEL EQUAL 19)
+#            configure_file (
+#                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.kitkat.in"
+#                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+#                @ONLY
+#                )
+#        else()
+        configure_file (
+            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
+            "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+            @ONLY
+            )
+#        endif()
 
         configure_file (
             "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/${ANDROID_STARTUP_ACTIVITY}.java.in"
