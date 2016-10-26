@@ -36,7 +36,7 @@
 
 #if defined(_R3000)
 #define COFFEE_ARCH COFFEE_MIPS_PREFIX " R3000"
-elif defined(_R4000)
+#elif defined(_R4000)
 #define COFFEE_ARCH COFFEE_MIPS_PREFIX " R4000"
 elif defined(_R5900)
 #define COFFEE_ARCH COFFEE_MIPS_PREFIX " R5900"
