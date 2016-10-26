@@ -61,12 +61,12 @@ if(ANDROID)
 
         ${SDL2_LIBRARY}
         )
-    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
-        message ( "-- Building with GLES 3.0+ support" )
-        list ( APPEND CORE_EXTRA_LIBRARIES
-                GLESv3
-                )
-    endif()
+#    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
+#        message ( "-- Building with GLES 3.0+ support" )
+#        list ( APPEND CORE_EXTRA_LIBRARIES
+#                GLESv3
+#                )
+#    endif()
 endif()
 
 if(RASPBERRY)

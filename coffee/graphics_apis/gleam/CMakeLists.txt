@@ -35,6 +35,12 @@ target_link_libraries ( CoffeeGLeam
     CoffeeGraphicsAPI
     )
 
+if(ANDROID)
+    target_link_libraries( CoffeeGLeam
+        GLESv3
+        )
+endif()
+
 # For Android, there is some special function loading
 find_package(SDL2 REQUIRED)
 include_directories (${SDL2_INCLUDE_DIR})
