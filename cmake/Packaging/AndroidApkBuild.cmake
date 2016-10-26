@@ -98,12 +98,12 @@ macro(APK_PACKAGE_EXT
         set ( ANDROID_DEBUGGABLE "false" )
     endif()
 
-    if(COFFEE_BUILD_GLEAM_RHI)
-        set ( ANDROID_ES30_REQ "true" )
-        set ( ANDROID_API_MIN_TARGET "17" )
-    else()
-        set ( ANDROID_API_MIN_TARGET "9" )
-    endif()
+#    if(COFFEE_BUILD_GLEAM_RHI)
+#        set ( ANDROID_ES30_REQ "true" )
+#        set ( ANDROID_API_MIN_TARGET "17" )
+#    else()
+#    endif()
+    set ( ANDROID_API_MIN_TARGET "9" )
 
     set ( ANDROID_REQUIRED_FEATURES
         "android.hardware.faketouch"
