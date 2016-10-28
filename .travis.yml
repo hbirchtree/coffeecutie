@@ -14,7 +14,7 @@ before_script:
 - sudo apt-get install -qqy libsdl2-dev libopenal-dev cmake ninja-build
 
 script:
-- cmake -G"Ninja" -DCOFFEE_BUILD_SNAPPY=ON
+- cmake -G"Ninja" -DCOFFEE_BUILD_SNAPPY=ON -DCMAKE_INSTALL_PREFIX=out
 - cmake --build . --target install
 - cmake --build . --target test
 
