@@ -15,6 +15,7 @@ before_script:
 
 script:
 - cmake -G"Ninja" -DCOFFEE_BUILD_SNAPPY=ON
+- cmake --build . --target install
 - cmake --build . --target test
 
 notifications:
