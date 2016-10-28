@@ -1,0 +1,26 @@
+language: cpp
+sudo: required
+dist: xenial
+
+os:
+- linux
+- osx
+compiler:
+  - clang
+  - gcc
+
+before_script:
+- sudo apt-get update -qq
+- sudo apt-get install -qqy snapcraft libsdl2-dev libopenal-dev cmake ninja-build
+
+script:
+- cmake -G"Ninja" -DCOFFEE_BUILD_SNAPPY=ON
+- cmake --build . --target test
+
+notifications:
+  email: true
+
+branches:
+  only:
+  - master
+  - testing
