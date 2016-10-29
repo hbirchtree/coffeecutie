@@ -6,8 +6,8 @@ os:
 - linux
 - osx
 compiler:
-  - clang
-  - gcc
+- clang
+- gcc
 
 before_script:
 - tools/travis/install-dependencies.sh
