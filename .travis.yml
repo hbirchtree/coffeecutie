@@ -13,9 +13,7 @@ before_script:
 - tools/travis/install-dependencies.sh
 
 script:
-- cmake -G"Ninja" -DCOFFEE_BUILD_SNAPPY=ON -DCMAKE_INSTALL_PREFIX=out
-- cmake --build . --target install
-- cmake --build . --target test
+- tools/travis/build.sh
 
 notifications:
   email: true
