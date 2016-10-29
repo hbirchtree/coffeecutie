@@ -22,3 +22,11 @@ branches:
   only:
   - master
   - testing
+
+deploy:
+  provider: releases
+  api_key: "${GITHUB_TOKEN}"
+  file: "binaries.tar.gz"
+  skip_cleanup: true
+  on:
+    tags: true

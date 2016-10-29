@@ -12,3 +12,5 @@ cmake -G"Ninja" -DCMAKE_TOOLCHAIN_FILE=cmake/Toolchains/native-macintosh-generic
 esac
 
 cmake --build . --target install
+
+tar -zcf binaries.tar.gz out/*
