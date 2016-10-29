@@ -13,4 +13,4 @@ esac
 
 cmake --build . --target install
 
-tar -zcf binaries.tar.gz out/*
+tar -zcf binaries_$TRAVIS_OS_NAME_$CC.tar.gz out/*
