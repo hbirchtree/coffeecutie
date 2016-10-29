@@ -21,7 +21,6 @@ notifications:
 branches:
   only:
   - master
-  - testing
 
 deploy:
   provider: releases
