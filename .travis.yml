@@ -25,7 +25,7 @@ branches:
 deploy:
   provider: releases
   api_key: "${GITHUB_TOKEN}"
-  file: "binaries.tar.gz"
+  file: "binaries_${TRAVIS_OS_NAME}_${CC}.tar.gz"
   skip_cleanup: true
   on:
     branch: master
