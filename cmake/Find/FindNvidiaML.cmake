@@ -1,0 +1,25 @@
+set ( NVIDIAML_SEARCH_PATHS
+    /usr
+    /usr/local
+    )
+
+find_path ( NVIDIAML_INCLUDE_DIR
+    nvml.h
+    PATH_SUFFIXES include/nvidia/gdk/
+    PATHS ${NVIDIAML_SEARCH_PATHS}
+    )
+
+find_library ( NVIDIAML_LIB_TMP
+    NAMES nvidia-ml
+    PATH_SUFFIXES src/gdk/nvml/lib/
+    PATHS ${NVIDIAML_SEARCH_PATHS}
+    )
+
+if(NVIDIAML_LIB_TMP)
+    set ( NVIDIAML_LIBRARIES "${NVIDIAML_LIB_TMP}" CACHE FILEPATH "" )
+    set ( NVIDIAML_FOUND TRUE )
+endif()
+
+INCLUDE(FindPackageHandleStandardArgs)
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(NvidiaML REQUIRED_VARS NVIDIAML_LIBRARIES NVIDIAML_INCLUDE_DIR)
