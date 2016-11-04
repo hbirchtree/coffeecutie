@@ -1,3 +1,5 @@
+#include "coffeeswig.h"
+
 #include <coffee/CCore>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/CSDL2>
@@ -100,12 +102,10 @@ CGL::CGL_Context *GetContext(CGLWindow *p)
 
 }
 
-namespace CGL{
-
 #ifdef COFFEE_GLEAM_DESKTOP
-using GL = CGL33;
+using GL = CGL::CGL33;
 #else
-using GL = CGLES30;
+using GL = CGL::CGLES30;
 #endif
 
 void ClearBuffer(float dep, float color[4])
@@ -115,40 +115,29 @@ void ClearBuffer(float dep, float color[4])
                                    color[2],color[3]));
 }
 
-}
-
-namespace Profiling{
-
-void exPrintProfilerData()
-{
-    PrintProfilerData();
-}
-
-void exExportProfilerData(const char* outfile)
-{
-    ExportProfilerData(outfile,GetInitArgs().argc,GetInitArgs().argv);
-}
-
-void Perf_PushContext(const char *name)
+void Profile::Push(const char* name)
 {
     Profiler::PushContext(name);
 }
-
-void Perf_PopContext()
+void Profile::Pop()
 {
     Profiler::PopContext();
 }
-
-void Perf_Profile(const char *name)
+void Profile::Tag(const char* name)
 {
     Profiler::Profile(name);
 }
-
-void Perf_LabelThread(const char *name)
+void Profile::LabelThread(const char* name)
 {
     Profiler::LabelThread(name);
 }
-
+void Profile::Save(const char* outfile)
+{
+    Profiling::ExportProfilerData(outfile,GetInitArgs().argc,GetInitArgs().argv);
+}
+void Profile::PrintData()
+{
+    Profiling::PrintProfilerData();
 }
 
 }

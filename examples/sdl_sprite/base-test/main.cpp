@@ -2,6 +2,7 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/CFiles>
 #include <coffee/core/CInput>
+#include <coffee/core/CDebug>
 
 #include <coffee/CImage>
 

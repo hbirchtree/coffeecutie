@@ -51,7 +51,7 @@ void GLEAM_API::LoadAPI(bool debug)
         if(ver>=ver45&& /* DISABLES CODE */ (false))
             /* Unimplemented both on CGL level and here */
             GL_CURR_API = GL_4_5;
-        else if(ver>=ver43)
+        else if(ver>=ver43 && /* DISABLES CODE */ (false))
             GL_CURR_API = GL_4_3;
         else if(ver>=ver33)
             GL_CURR_API = GL_3_3;

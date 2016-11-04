@@ -39,7 +39,10 @@ PosixFunctionLoader::Library *PosixFunctionLoader::GetLibrary(
     while(!handle && i<4)
     {
         handle = dlopen(perm[i].c_str(),RTLD_NOW|flags);
-        i++;
+        if(ver)
+            i++;
+        else
+            break;
     }
 
     if(!handle)
@@ -57,6 +60,7 @@ bool PosixFunctionLoader::UnloadLibrary(PosixFunctionLoader::Library *lib, CStri
     bool stat = dlclose(lib->handle)==0;
     if(!stat && err)
         *err = LinkError();
+    delete lib;
     return stat;
 }
 

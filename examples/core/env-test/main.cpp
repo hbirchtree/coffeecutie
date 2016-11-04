@@ -3,6 +3,8 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CDebug>
 
+#include <coffee/core/plat/graphics/gpu/gpu_query.h>
+
 using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
@@ -38,6 +40,13 @@ int32 coffee_main(int32, cstring_w*)
         Profiler::Profile("Create directory recursively");
     }
     Profiler::PopContext();
+
+    GpuInfo::GpuQueryInterface fun = {};
+    if(GpuInfo::LoadDefaultGpuQuery(&fun))
+    {
+        cDebug("Driver: {0}", fun.GetDriver());
+        cDebug("Devices: {0}", fun.GetNumGpus());
+    }
 
     return 0;
 }

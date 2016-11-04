@@ -25,6 +25,9 @@ macro(SWIG_LANGUAGE_BINDING TARGET BIND CFILE OUTPUT_EXTENSION OUTPUT_DEST )
 
     file(GLOB OUTPUT_FILES "${CMAKE_CURRENT_BINARY_DIR}/*.${OUTPUT_EXTENSION}")
 
+    install( FILES "${SWIG_MODULE_${TARGET}_REAL_NAME}"
+        DESTINATION lib )
+
     install(
         FILES
         ${OUTPUT_FILES}
@@ -70,20 +73,19 @@ coffee_gen_applicationinfo( CoffeeSwigShim
     )
 
 set ( CoffeeSwigShim_SRCS
-    coffeeswig.cpp
-    ${LICENSE_FILE}
-	${APPLICATION_INFO_FILE}
+    "coffeeswig.cpp;${LICENSE_FILE};${APPLICATION_INFO_FILE}"
     )
 
 coffee_add_library(CoffeeSwigShim "${CoffeeSwigShim_SRCS}" )
 
 target_link_libraries ( CoffeeSwigShim
-    CoffeeCore
     CoffeeGLeam
+    CoffeeOpenAL
+    CoffeeBlam
     )
 
 # Link with some libraries
-set(COFFEE_LINKING CoffeeCore CoffeeOpenAL CoffeeBlam CoffeeSwigShim )
+set(COFFEE_LINKING CoffeeSwigShim )
 
 if(COFFEE_CSHARP)
     add_subdirectory(csharp)

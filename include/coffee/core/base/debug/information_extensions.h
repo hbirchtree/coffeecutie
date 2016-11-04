@@ -3,6 +3,7 @@
 #include "extensionresolvers.h"
 
 #include "../types/cdisplay.h"
+#include "../../types/edef/dbgenum.h"
 
 namespace Coffee{
 namespace DebugFun{

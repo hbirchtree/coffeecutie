@@ -13,8 +13,6 @@
 namespace Coffee{
 namespace CASIO{
 
-using namespace Threads;
-
 struct ASIO_Client
 {
     struct AsioContext_class

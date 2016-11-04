@@ -5,6 +5,7 @@
 #include <coffee/sdl2/CSDL2SpriteWindow>
 #include <coffee/sdl2/CSDL2WindowHost>
 #include <coffee/core/input/eventhandlers.h>
+#include <coffee/core/CDebug>
 
 #include <coffee/image/cimage.h>
 

@@ -1,6 +1,7 @@
 //#include <coffee/core/CApplication>
 #include <coffee/core/coffee.h>
 #include <coffee/core/CProfiling>
+#include <coffee/core/CDebug>
 
 #if defined(COFFEE_WINDOWS)
 #include <coffee/core/plat/plat_windows.h>

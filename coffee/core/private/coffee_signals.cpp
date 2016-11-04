@@ -2,6 +2,7 @@
 
 #include <coffee/core/CMD>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 

@@ -1,11 +1,9 @@
 #include <coffee/audio/openal/copenal.h>
+#include <coffee/core/types/map.h>
+#include <coffee/core/CDebug>
 
 #include <al.h>
 #include <alc.h>
-
-#include <coffee/core/CBase>
-
-#include <thread>
 
 namespace Coffee{
 namespace CAudio{

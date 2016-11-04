@@ -1,9 +1,9 @@
 #ifndef COFFEE_COMPOSITE_TYPES_H
 #define COFFEE_COMPOSITE_TYPES_H
 
-#include "basetypes.h"
-#include "map.h"
-#include "translatable_string.h"
+//#include "basetypes.h"
+//#include "map.h"
+//#include "translatable_string.h"
 
 #include "subsystem.h"
 

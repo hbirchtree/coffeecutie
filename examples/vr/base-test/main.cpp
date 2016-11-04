@@ -3,6 +3,7 @@
 #include <coffee/COculusRift>
 #include <coffee/core/CMD>
 #include <coffee/core/CProfiling>
+#include <coffee/core/CDebug>
 
 using namespace Coffee;
 

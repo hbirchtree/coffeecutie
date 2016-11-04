@@ -3,9 +3,11 @@
 #include "../types/tdef/integertypes.h"
 #include "../types/tdef/stltypes.h"
 #include "../plat/memory/stlstring_ops.h"
-#include <coffee/core/CDebug>
 
 namespace Coffee{
+
+template<typename T> struct _cbasic_size_2d;
+using CSize = _cbasic_size_2d<int32>;
 
 struct TablePrinter_Basic
 {

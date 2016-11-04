@@ -1,4 +1,6 @@
 #include <coffee/core/terminal/table-print.h>
+#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/core/CMath>
 
 namespace Coffee{
 

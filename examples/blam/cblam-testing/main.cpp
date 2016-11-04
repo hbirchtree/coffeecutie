@@ -48,22 +48,61 @@ int coffee_main(int32 argv,cstring_w* argc)
         }
     }
 
+    auto fun = [](tag_index_t& tags, const file_header_t* map){
+        static int32 i=0;
+        static const index_item_t* base_idx = blam_tag_index_get_items(map);
+        static const index_item_t* idx;
+
+        if(i >= tags.tagCount)
+            return static_cast<const index_item_t*>(nullptr);
+
+        idx = &base_idx[i];
+        i++;
+        return idx;
+    };
+
+    struct texture_data_t
+    {
+        bitm_texture_t tex;
+        const index_item_t* tag;
+        const bitm_image_t* img;
+        cstring tag_name;
+    };
+
+    auto fun_filter = [](
+            std::function<const index_item_t*(tag_index_t& tags, const file_header_t* map)> input,
+            tag_index_t& tags,
+            const file_header_t* map,
+            Resource& bitmfile,
+            texture_data_t& output){
+
+        static int32 num = 0;
+        static const index_item_t* idx;
+
+        do {
+            idx = input(tags, map);
+
+            if(!idx)
+                return false;
+
+        } while(!blam_tagref_match_class(idx,0,blam_index_item_type_bitm));
+
+        output.tag = idx;
+        output.img = bitm_get(idx,map,tags.index_magic,&num);
+        output.tag_name = blam_index_item_get_string(idx,map,&tags);
+        output.tex = bitm_get_texture(output.img,bitmfile.data);
+
+        return true;
+    };
+
+    cDebug("Lambda: {0}, {1}", sizeof(fun_filter), sizeof(fun));
+
     {
         /* Extracting texture data */
-        const index_item_t* base_idx = blam_tag_index_get_items(map);
-        const index_item_t* idx;
-        bitm_texture_t tex;
-        for(int32 i=0;i<tags.tagCount;i++)
+        texture_data_t img;
+        while(fun_filter(fun, tags, map, bitmfile, img))
         {
-            idx = &base_idx[i];
-            if(blam_tagref_match_class(idx,0,blam_index_item_type_bitm))
-            {
-                int num = 0;
-                const bitm_image_t* img = bitm_get(idx,map,tags.index_magic,&num);
-                cstring t = blam_index_item_get_string(idx,map,&tags);
-                tex = bitm_get_texture(img,bitmfile.data);
-                cDebug("Texture: {0},res={1},mip={2}",t,tex.resolution,tex.mipmaps);
-            }
+//            cDebug("Texture: {0},res={1},mip={2}",img.tag_name,img.tex.resolution,img.tex.mipmaps);
         }
     }
 

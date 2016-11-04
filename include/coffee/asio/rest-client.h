@@ -30,7 +30,7 @@ struct RestClientImpl : ASIO_Client
      * \param r
      * \return
      */
-    Future<RestResponse> RestRequestAsync(
+    Threads::Future<RestResponse> RestRequestAsync(
             AsioContext context, Host const& h, Request const& r)
     {
         Threads::Function<RestResponse()> fun = [=]()

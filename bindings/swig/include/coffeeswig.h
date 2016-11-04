@@ -43,58 +43,16 @@ extern CGL::CGL_Context* GetContext(CGLWindow* p);
 
 }
 
-namespace CGL{
-
 extern void ClearBuffer(float dep, float color[4]);
 
-}
-
-namespace Profiling{
-
-extern void exPrintProfilerData();
-
-extern void exExportProfilerData(const char* out);
-
-extern void Perf_PushContext(const char* name);
-extern void Perf_PopContext();
-extern void Perf_Profile(const char* name);
-extern void Perf_LabelThread(const char* name);
-
-}
-
-namespace Freenect{
-
-struct FreenectContext;
-
-struct FNContext
+struct Profile
 {
-    FNContext()
-    {
-    }
-    ~FNContext()
-    {
-    }
-
-    void LaunchAsync()
-    {
-    }
-    void MergeAsync()
-    {
-    }
-
-    bool IsRunningAsync()
-    {
-        return false;
-    }
-
-    bool GetFrame()
-    {
-        return false;
-    }
-private:
-    FreenectContext* m_context;
+    static void Push(const char* name);
+    static void Pop();
+    static void Tag(const char* name);
+    static void LabelThread(const char* name);
+    static void Save(const char* outfile);
+    static void PrintData();
 };
-
-}
 
 }

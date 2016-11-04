@@ -17,7 +17,7 @@ struct CGLUtil
      * \param fn
      */
     template<typename GL>
-    STATICINLINE void DumpTexture(typename GL::Texture t, typename GL::CGhnd h,
+    static void DumpTexture(typename GL::Texture t, typename GL::CGhnd h,
                             uint32 l, cstring fn)
     {
 #ifdef COFFEE_GLEAM_DESKTOP
