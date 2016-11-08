@@ -1,17 +1,18 @@
 set ( NVIDIAML_SEARCH_PATHS
     /usr
     /usr/local
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v8.0"
     )
 
 find_path ( NVIDIAML_INCLUDE_DIR
     nvml.h
-    PATH_SUFFIXES include/nvidia/gdk/
+    PATH_SUFFIXES include/nvidia/gdk/ include/
     PATHS ${NVIDIAML_SEARCH_PATHS}
     )
 
 find_library ( NVIDIAML_LIB_TMP
-    NAMES nvidia-ml
-    PATH_SUFFIXES src/gdk/nvml/lib/
+    NAMES nvidia-ml nvml
+    PATH_SUFFIXES src/gdk/nvml/lib/ lib/x64/
     PATHS ${NVIDIAML_SEARCH_PATHS}
     )
 

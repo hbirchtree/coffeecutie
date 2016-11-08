@@ -83,7 +83,7 @@ if(WIN32)
     # Don't know what this is, but it's necessary
     list ( APPEND CORE_EXTRA_LIBRARIES
          # For some of the file API
-         pathcch
+         #pathcch
 
          # Core includes
          user32

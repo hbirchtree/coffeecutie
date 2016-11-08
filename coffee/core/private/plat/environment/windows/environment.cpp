@@ -3,7 +3,7 @@
 #include <coffee/core/plat/plat_memory.h>
 
 #include <coffee/core/plat/plat_windows.h>
-#include <Pathcch.h>
+//#include <Pathcch.h>
 #include <stdlib.h>
 #include <wchar.h>
 
@@ -141,7 +141,7 @@ namespace Coffee {
                 CString fn_ = fn;
                 fn_ = CStrReplace(fn, "/", "\\");
                 CWString fn_w(fn_.begin(), fn_.end());
-				PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
+                //PathCchRemoveFileSpec(&fn_w[0], fn_w.size());
 				CString out(fn_w.begin(), fn_w.end());
                 out.resize(StrLen(out.c_str()));
 				out = CStrReplace(out, "\\", "/");
