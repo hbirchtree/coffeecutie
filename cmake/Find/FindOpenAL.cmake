@@ -7,7 +7,7 @@ set ( OPENAL_SEARCH_PATHS
     "C:/Program Files (x86)/OpenAL 1.1 SDK"
     ~/Library/Frameworks
     /Library/Frameworks
-    "${COFFEE_NATIVE_LIBRARY_DIR}"
+    ${NATIVE_LIBRARY_DIR}
     )
 
 if(ANDROID)
@@ -43,6 +43,7 @@ find_library ( OPENAL_LIBRARY_TMP
     lib/${ANDROID_ABI}
     ${ANDROID_ABI}
     libs/Win64
+    64/link
 
     PATHS
     ${OPENAL_SEARCH_PATHS}
@@ -56,6 +57,7 @@ find_library ( OPENAL_EFX_LIBRARY_TMP
     lib
     lib/${ANDROID_ABI}
     libs/Win64/EFX-Util_MT
+    64/link
 
     PATHS
     ${OPENAL_SEARCH_PATHS}
