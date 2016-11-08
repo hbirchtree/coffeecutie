@@ -13,13 +13,18 @@ target_link_libraries( CoffeeGraphicsAPI
     CoffeeCore
     )
 
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+
 find_package( NvidiaML QUIET )
 if(NVIDIAML_FOUND)
     coffee_add_elibrary ( "coffee-nvidia" SHARED "../core/private/plat/graphics/gpu/nvidia_query.cpp" )
 
+    add_library( nvidia-ml SHARED IMPORTED )
+    set_property(TARGET nvidia-ml PROPERTY IMPORTED_LOCATION "${NVIDIAML_LIBRARIES}" )
+
     include_directories( "${NVIDIAML_INCLUDE_DIR}" )
     target_link_libraries( "coffee-nvidia"
-        "${NVIDIAML_LIBRARIES}"
+        nvidia-ml
         )
 endif()
 

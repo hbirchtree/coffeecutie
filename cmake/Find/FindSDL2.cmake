@@ -74,6 +74,7 @@ SET(SDL2_SEARCH_PATHS
   /opt/local # DarwinPorts
   /opt/csw # Blastwave
   /opt
+  "C:\\SDL2"
   "C:\\SDL2_64"
   ${CMAKE_BINARY_DIR}/libs
   ${NATIVE_LIBRARY_DIR}
@@ -91,7 +92,7 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   NAMES SDL2
   HINTS
   $ENV{SDL2DIR}
-  PATH_SUFFIXES lib64 lib lib/${ANDROID_ABI} ${ANDROID_ABI}
+  PATH_SUFFIXES lib64 lib lib/${ANDROID_ABI} ${ANDROID_ABI} lib/x64
   PATHS ${SDL2_SEARCH_PATHS}
 )
 
@@ -105,7 +106,7 @@ IF(NOT SDL2_BUILDING_LIBRARY)
       NAMES SDL2main
       HINTS
       $ENV{SDL2DIR}
-      PATH_SUFFIXES lib64 lib
+      PATH_SUFFIXES lib64 lib lib/x64
       PATHS ${SDL2_SEARCH_PATHS}
     )
   ENDIF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
