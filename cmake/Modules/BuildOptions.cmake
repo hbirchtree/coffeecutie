@@ -9,6 +9,7 @@ option ( COFFEE_DOCS "Generate documentation" OFF )
 
 option ( COFFEE_TESTS "Build unit tests" ON )
 option ( SKIP_TESTS "Skip high-memory tests" OFF )
+option ( SKIP_LINKAGE_TEST "Skip test of dynamic linking" ON )
 
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
