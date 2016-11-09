@@ -10,7 +10,7 @@ A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will b
 
 # What is the progress report?
  - Ports:
-   - Runs on any Linux distro that supports OpenGL (of which there are many), Dockerfile is provided with all required dependencies in "tools/ubuntu"
+   - Runs on any Linux distro that supports OpenGL (of which there are many)
    - Windows port is in
    - Android port is in
    - OS X port is in
