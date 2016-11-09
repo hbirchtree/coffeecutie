@@ -8,6 +8,7 @@ option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
 option ( COFFEE_DOCS "Generate documentation" OFF )
 
 option ( COFFEE_TESTS "Build unit tests" ON )
+option ( SKIP_TESTS "Skip high-memory tests" OFF )
 
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
