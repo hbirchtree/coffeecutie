@@ -82,3 +82,5 @@ deploy:
   description: Automatic build by Appveyor
   artifact: Coffee_Win64
   prerelease: true
+  auth_token:
+      secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
