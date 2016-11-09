@@ -3,7 +3,11 @@ A C++ game engine/rendering engine written in a very C-influenced way.
 
 # Build status
 
-Mac and Linux builds: [![Build Status](https://travis-ci.org/hbirchtree/coffeecutie.svg?branch=master)](https://travis-ci.org/hbirchtree/coffeecutie)
+|Platform   |Status      |
+|:----------|:-----------|
+|Mac        |[![Build Status](https://travis-ci.org/hbirchtree/coffeecutie.svg?branch=master)](https://travis-ci.org/hbirchtree/coffeecutie)|
+|Linux      |[![Build Status](https://travis-ci.org/hbirchtree/coffeecutie.svg?branch=master)](https://travis-ci.org/hbirchtree/coffeecutie)|
+|Windows    |[![Build status](https://ci.appveyor.com/api/projects/status/t6b9f7q3i6erk3r7/branch/master?svg=true)](https://ci.appveyor.com/project/hbirchtree/coffeecutie/branch/master)|
 
 # What is this?
 A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will be there soon), media playback (thanks to FFMPEG), a platform layer, audio through OpenAL and free choice (as in: no integration) for physics engines. It consists of a custom platform layer, with codepaths for Windows, Linux and Android so far.
