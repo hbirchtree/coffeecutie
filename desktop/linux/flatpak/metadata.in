@@ -16,5 +16,12 @@ devices=dri;
 filesystems=~/.local/share/@FLATPAK_CONFIG@;~/.cache/@FLATPAK_CONFIG@;
 
 [Extension org.freedesktop.Platform.GL]
+version=1.4
 directory=lib/GL
 
+[Extension org.freedesktop.Platform.Timezones]
+directory=share/zoneinfo
+
+[Extension org.freedesktop.Platform.Locale]
+directory=share/runtime/locale
+subdirectories=true

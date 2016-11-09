@@ -20,7 +20,3 @@ The workflow is as such:
 
 # Platform implementation
 Uses Win32 where Microsoft won't let us use POSIX. Reuses POSIX functions where possible, although this is not always the case.
-
-UWP
----
-No.

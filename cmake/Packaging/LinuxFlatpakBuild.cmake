@@ -40,6 +40,9 @@ macro( FLATPAK_PACKAGE
     set ( FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}" )
     set ( FLATPAK_BUNDLE_FILE "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.tar" )
 
+    # TODO: Unify this with the in-app information somehow
+    set ( FLATPAK_CONFIG "${TARGET}" )
+
     # Create directory structures
     add_custom_command ( TARGET ${TARGET}
         PRE_BUILD
