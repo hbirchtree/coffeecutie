@@ -7,7 +7,7 @@ coffee_add_test ( Unit_File_Mapping01 "Cu_FileMap" test02.cpp CoffeeCore )
 # Testing anonymous buffers for memory allocation, can be more efficient that malloc() on some systems
 coffee_add_test ( Unit_File_Scratch01 "Cu_FileScratchBuf" test03.cpp CoffeeCore )
 
-if(NOT SKIP_MEMTESTS)
+if(NOT SKIP_HIGHMEM_TESTS)
     if(NOT ANDROID AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         # The tests below require a 64-bit or 32-bit PAE system
         # These tests will not run on mobile devices, most likely (unless they have swap space, and tons of it)

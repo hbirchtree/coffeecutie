@@ -8,8 +8,10 @@ option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
 option ( COFFEE_DOCS "Generate documentation" OFF )
 
 option ( COFFEE_TESTS "Build unit tests" ON )
-option ( SKIP_TESTS "Skip high-memory tests" OFF )
+
+option ( SKIP_HIGHMEM_TESTS "Skip high-memory tests" OFF )
 option ( SKIP_LINKAGE_TEST "Skip test of dynamic linking" ON )
+option ( SKIP_OPENVR_TEST "Skip tests of OpenVR, it requires a display and hardware" ON )
 
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
