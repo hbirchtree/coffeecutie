@@ -1,0 +1,84 @@
+version: '{build}'
+branches:
+  only:
+  - master
+  - testing
+configuration:
+- Debug
+- Release
+platform: x64
+clone_depth: 1
+clone_folder: C:\src
+clone_script:
+- cmd: >-
+    git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
+
+    git checkout -qf %APPVEYOR_REPO_COMMIT%
+environment:
+  INSTALL_DIR: C:\Build_install
+  BUILD_DIR: C:\Build
+  PRELOAD_FILE: x86_64-windows-generic.cmake
+  TOOLCHAIN_FILE: x86_64-windows-win32.toolchain.cmake
+  CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
+  CMAKE_GENERATOR: Visual Studio 14 2015 Win64
+install:
+- ps: >-
+    Invoke-WebRequest https://www.libsdl.org/release/SDL2-devel-2.0.4-VC.zip -OutFile "$env:TEMP/SDL2.zip"
+
+    Expand-Archive -Force -Path "$env:TEMP\SDL2.zip" -DestinationPath "$env:TEMP/SDL2"
+
+    mv -ErrorAction Ignore -Force "$env:TEMP/SDL2/*" "C:\"
+
+    mv -ErrorAction Ignore -Force "C:\SDL2-2.0.4" "C:\SDL2"
+
+    rm -r -ErrorAction Ignore -Force "C:\SDL2\SDL2-2.0.4"
+
+
+    iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+
+    choco install -y cmake
+
+
+    ls C:\
+
+    ls "C:\Program Files"
+
+    ls "C:\Program Files (x86)"
+build_script:
+- cmd: >-
+    mkdir %BUILD_DIR%
+
+    cd %BUILD_DIR%
+
+
+    "%CMAKE_BIN%" -G"%CMAKE_GENERATOR%" -DCMAKE_TOOLCHAIN_FILE="%APPVEYOR_BUILD_FOLDER%\cmake\Toolchains\%TOOLCHAIN_FILE%" -C"%APPVEYOR_BUILD_FOLDER%\cmake\Preload\%PRELOAD_FILE%" "%APPVEYOR_BUILD_FOLDER%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_BUILD_OPENAL=OFF -DSKIP_HIGHMEM_TESTS=ON
+
+
+    "%CMAKE_BIN%" --build %BUILD_DIR% --target install
+
+
+
+
+    cd %APPVEYOR_BUILD_FOLDER%
+
+
+    7z a Coffee_Win64_%APPVEYOR_BUILD_NUMBER%_%APPVEYOR_REPO_COMMIT%.zip "%INSTALL_DIR%\*"
+
+
+    ls %APPVEYOR_BUILD_FOLDER%
+
+    ls %BUILD_DIR%
+
+    ls %INSTALL_DIR%
+test_script:
+- cmd: '"%CMAKE_BIN%" --build %BUILD_DIR% --target RUN_TESTS'
+artifacts:
+- path: '*.zip'
+  name: Coffee_Win64
+deploy:
+- provider: GitHub
+  tag: appveyor-build-$(APPVEYOR_BUILD_NUMBER)
+  release: Appveyor Build $(APPVEYOR_BUILD_NUMBER)
+  description: Automatic build by Appveyor
+  artifact: Coffee_Win64
+  prerelease: true
