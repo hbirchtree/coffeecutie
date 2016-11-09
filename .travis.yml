@@ -9,6 +9,11 @@ compiler:
 - clang
 - gcc
 
+matrix:
+  exclude:
+  - os: osx
+    compiler: gcc
+
 before_script:
 - tools/travis/install-dependencies.sh
 
