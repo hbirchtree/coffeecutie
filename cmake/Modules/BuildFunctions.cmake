@@ -186,6 +186,15 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         add_executable( ${TARGET} ${SOURCES_MOD} )
 
+        # We still install a basic binary executable
+        install(
+            FILES
+            "$<TARGET_FILE:${TARGET}>"
+
+            DESTINATION
+            bin
+            )
+
         if(COFFEE_GENERATE_APPIMAGE)
             APPIMAGE_PACKAGE(
                 ${TARGET}
@@ -214,14 +223,6 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 )
         endif()
 
-        # We still install a basic binary executable
-        install(
-            FILES
-            "$<TARGET_FILE:${TARGET}>"
-
-            DESTINATION
-            bin
-            )
     else()
         add_executable(${TARGET} ${SOURCES_MOD})
 
