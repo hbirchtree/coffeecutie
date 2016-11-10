@@ -1,3 +1,5 @@
+#include <coffee/core/coffee_version.h>
+
 const char* CoffeeLicenseString[] =
     {
         @LICENSE_DATA@

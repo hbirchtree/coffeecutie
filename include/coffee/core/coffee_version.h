@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef __cplusplus
+
 #include "application_data.h"
 #include "coffee_macros.h"
 
@@ -16,5 +18,11 @@ extern CString CoffeeDefaultWindowName;
 
 }
 
-extern "C" const char* CoffeeLicenseString[];
-extern "C" unsigned int CoffeeLicenseCount;
+
+extern "C" {
+#endif
+extern const char* CoffeeLicenseString[];
+extern unsigned int CoffeeLicenseCount;
+#ifdef __cplusplus
+}
+#endif

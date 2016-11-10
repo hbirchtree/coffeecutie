@@ -113,7 +113,7 @@ public:
     static void PreDrawCleanup();
 
     static void Draw(DrawCall const& d,DrawInstanceData const& i);
-    static void DrawConditional(DrawCall const& d,DrawInstanceData const& i,OccludeQuery const& c);
+    static void DrawConditional(DrawCall const& d, DrawInstanceData const& i, OccludeQuery &c);
 
     /* Variables */
 protected:

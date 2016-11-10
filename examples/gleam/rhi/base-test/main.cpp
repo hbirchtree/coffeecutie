@@ -19,6 +19,8 @@ int32 coffee_main(int32, cstring_w*)
 
     CDRenderer actual_renderer;
 
+    cDebug("Renderer object size: {0}", sizeof(actual_renderer));
+
     /* We use a reference for the virtual functions to work correctly */
     CSDL2Renderer* renderer = &actual_renderer;
 
@@ -31,38 +33,19 @@ int32 coffee_main(int32, cstring_w*)
                                    nullptr,renderer});
     renderer->installEventHandler({EventHandlers::WindowManagerFullscreen<CDRenderer>,
                                   nullptr,renderer});
+    renderer->installEventHandler({EventHandlers::StandardCamera<CDRenderer, CGCamera>,
+                                  nullptr, renderer});
 
     Profiler::Profile("Object creation");
 
 
     /* Set up the window visual */
     CDProperties props = GetDefaultVisual();
-    props.flags ^= CDProperties::Resizable
-//            |CDProperties::Windowed
-            ;
-//    props.flags |= CDProperties::WindowedFullScreen;
+
+    cDebug("Property object size: {0}", sizeof(props));
+
+    props.flags ^= CDProperties::Resizable;
     props.gl.flags |= GLProperties::GLDebug;
-//    props.gl.flags |= GLProperties::GLVSync;
-
-    do {
-        break;
-        CResources::Resource icon("icon.png",
-                                  ResourceAccess::SpecifyStorage
-                                  |ResourceAccess::AssetFile);
-        if(!CResources::FileMap(icon))
-            break;
-        do {
-            CStbImageLib::CStbImage img;
-            if(!CStbImageLib::LoadData(&img,&icon))
-                break;
-
-            Bitmap bmp(img.size.w,img.size.h,(CRGBA*)img.data);
-            renderer->setWindowIcon(bmp);
-
-            CStbImageLib::ImageFree(&img);
-        }while(false);
-        CResources::FileUnmap(icon);
-    }while(false);
 
     CString err;
 

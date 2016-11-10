@@ -8,6 +8,9 @@
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
 #define C_MOVE_CONSTRUCTOR(ctype) ctype(ctype&& x) = default; ctype& operator=(ctype&& a) = default
 
+#define C_CAST(type, var) static_cast<type>(var)
+#define C_DCAST(type, var) dynamic_cast<type>(var)
+
 /* Library export */
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 

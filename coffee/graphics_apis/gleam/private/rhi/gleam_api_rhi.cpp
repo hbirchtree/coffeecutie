@@ -522,23 +522,12 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)
 
 void GLEAM_API::DrawConditional(const DrawCall &d,
                                 const DrawInstanceData &i,
-                                const OccludeQuery &c)
+                                OccludeQuery &c)
 {
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
-#ifdef COFFEE_GLEAM_DESKTOP
-    CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
-#else
-    uint32 v = 0;
-    CGL33::QueryGetObjectuiv(c.m_handle,GL_QUERY_RESULT,&v);
-    if(v > 0)
-    {
-#endif
+    c.begin();
     Draw(d,i);
-#ifdef COFFEE_GLEAM_DESKTOP
-    CGL33::ConditionalRenderEnd();
-#else
-    }
-#endif
+    c.end();
 }
 
 }

@@ -33,9 +33,15 @@ private:
 
 public:
     CDRenderer() : CSDL2Renderer(0) {}
+    virtual ~CDRenderer() {}
     static const constexpr szptr num_textures = 5;
 
-    void run() {
+    CGCamera& cameraReference()
+    {
+        return camera;
+    }
+
+    virtual void run() {
         cVerbose("Entering run() function");
 
         Profiler::PushContext("Renderer");
@@ -348,17 +354,19 @@ public:
             floor_transform.rotation.y() = CMath::sin(tprevious);
             floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
-            camera.position.x() = -2;
+            camera.position.x() -= 0.1;
             object_matrices[0] = GenPerspective(camera) * GenTransform(camera) *
                     GenTransform(base_transform);
             object_matrices[2] = GenPerspective(camera) * GenTransform(camera) *
                     GenTransform(floor_transform);
 
-            camera.position.x() = 2;
+            camera.position.x() += 0.2;
             object_matrices[1] = GenPerspective(camera) * GenTransform(camera) *
                     GenTransform(base_transform);
             object_matrices[3] = GenPerspective(camera) * GenTransform(camera) *
                     GenTransform(floor_transform);
+
+            camera.position.x() -= 0.1;
 
             /*
            * In APIs such as GL4.3+, this will apply vertex and fragment states
@@ -389,12 +397,12 @@ public:
            */
 
             o_query.begin();
-            GLM::Draw(call, instdata);
+            GLM::DrawConditional(call, instdata, o_query);
             o_query.end();
 
             GLM::DrawConditional(call, instdata, o_query);
 
-//            cDebug("Samples: {0}",o_query.getResultu());
+            cDebug("Samples: {0}",o_query.getResultu());
 
             if(do_debugging)
             {
@@ -413,7 +421,7 @@ public:
 
         Profiler::PopContext();
     }
-    void eventHandleD(const Display::CDEvent &e, c_cptr data) {
+    virtual void eventHandleD(const Display::CDEvent &e, c_cptr data) {
         CSDL2Renderer::eventHandleD(e, data);
 
         if(e.type == CDEvent::Resize)
@@ -425,18 +433,20 @@ public:
         }
     }
 
-    void eventHandleI(const CIEvent &e, c_cptr data) {
+    virtual void eventHandleI(const CIEvent &e, c_cptr data) {
         CSDL2Renderer::eventHandleI(e, data);
 
         if(e.type == CIEvent::Keyboard)
         {
             auto kev = (CIKeyEvent const*)data;
 
-            if(kev->key == CK_F10
-                    && kev->mod & CIKeyEvent::PressedModifier
-                    && !(kev->mod&CIKeyEvent::RepeatedModifier) )
-                m_debugging = !m_debugging;
-
+            /* Single presses */
+            if(kev->mod & CIKeyEvent::PressedModifier
+                    && !(kev->mod&CIKeyEvent::RepeatedModifier))
+            {
+                if(kev->key == CK_F10)
+                    m_debugging = !m_debugging;
+            }
         }
     }
 };
