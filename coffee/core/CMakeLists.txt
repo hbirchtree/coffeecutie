@@ -1,24 +1,24 @@
-set ( CORE_INCLUDE_DIR ${COFFEE_INCLUDE_DIR}/core/ )
+set ( CORE_INC_DIR ${COFFEE_INCLUDE_DIR}/core/ )
 
 set ( CoffeeCore_PCH
-    ${CORE_INCLUDE_DIR}/plat/plat_environment.h
-    ${CORE_INCLUDE_DIR}/plat/plat_file.h
-    ${CORE_INCLUDE_DIR}/plat/plat_memory.h
+    ${CORE_INC_DIR}/plat/plat_environment.h
+    ${CORE_INC_DIR}/plat/plat_file.h
+    ${CORE_INC_DIR}/plat/plat_memory.h
 
-    ${CORE_INCLUDE_DIR}/platform_data.h
+    ${CORE_INC_DIR}/platform_data.h
 
-    ${CORE_INCLUDE_DIR}/CApplication
-    ${CORE_INCLUDE_DIR}/CArgParser
-    ${CORE_INCLUDE_DIR}/CFiles
-    ${CORE_INCLUDE_DIR}/CIniParser
-    ${CORE_INCLUDE_DIR}/CInput
-    ${CORE_INCLUDE_DIR}/CJSONParser
-    ${CORE_INCLUDE_DIR}/CMD
-    ${CORE_INCLUDE_DIR}/CPlatform
-    ${CORE_INCLUDE_DIR}/CProfiling
-    ${CORE_INCLUDE_DIR}/CRegex
-    ${CORE_INCLUDE_DIR}/CTiming
-    ${CORE_INCLUDE_DIR}/CXmlParser
+    ${CORE_INC_DIR}/CApplication
+    ${CORE_INC_DIR}/CArgParser
+    ${CORE_INC_DIR}/CFiles
+    ${CORE_INC_DIR}/CIniParser
+    ${CORE_INC_DIR}/CInput
+    ${CORE_INC_DIR}/CJSONParser
+    ${CORE_INC_DIR}/CMD
+    ${CORE_INC_DIR}/CPlatform
+    ${CORE_INC_DIR}/CProfiling
+    ${CORE_INC_DIR}/CRegex
+    ${CORE_INC_DIR}/CTiming
+    ${CORE_INC_DIR}/CXmlParser
     )
 
 set ( CoffeeCore_SRCS
