@@ -94,6 +94,7 @@ if(WIN32)
          oleaut32
          shell32
          version
+         Ws2_32
           )
 endif()
 
