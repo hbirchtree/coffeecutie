@@ -146,6 +146,17 @@ FORCEDINLINE void cFatal(cstring str, Arg... args)
     CASSERT(false);
 }
 
+template<typename...Arg>
+FORCEDINLINE void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
+{
+    /* TODO: Pipe this to a proper logger */
+#ifndef NDEBUG
+    CString logr = cStringFormat("{0}:{1}@{2}", id, file, line);
+    CString fmt = logr + msg;
+    DebugPrinter::cDebug(fmt.c_str(), args...);
+#endif
+}
+
 template<typename... Arg>
 /*!
  * \brief Print message with source and message
@@ -155,27 +166,8 @@ template<typename... Arg>
  */
 FORCEDINLINE void cMsg(cstring src, cstring msg, Arg... args)
 {
-    CString msg_out = cStringFormat(msg,args...);
-    CString out = DebugPrinter::FormatPrintString(
-                Severity::Verbose,1,"{0}: {1}",src,msg_out.c_str());
-    DebugPrinter::cBasicPrint("{0}",out);
+    cLog(nullptr, 0, src, msg, args...);
 }
-
-template<typename...Arg>
-FORCEDINLINE void cLog(cstring file,int64 line,cstring id, cstring msg, Arg... args)
-{
-    /* TODO: Pipe this to a proper logger */
-#ifndef NDEBUG
-    CString msg_out = cStringFormat(msg,args...);
-    msg_out = cStringFormat("LOGR:{0}:{1}@{2}: {3}",id,file,line,msg_out.c_str());
-    msg_out = DebugPrinter::Colorize(
-                msg_out,
-                Color::Blue,
-                Color::Red);
-    cBasicPrint("{0}",msg_out);
-#endif
-}
-
 }
 
 using namespace Coffee::DebugFun;

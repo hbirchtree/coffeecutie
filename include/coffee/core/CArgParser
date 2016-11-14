@@ -1,1 +1,3 @@
+#pragma once
+
 #include "plat/environment/argument_parse.h"

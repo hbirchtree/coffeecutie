@@ -1,2 +1,4 @@
+#pragma once
+
 #include "datastorage/text/xml/cxmlparser.h"
 #include "datastorage/text/json/cjsonparser.h"

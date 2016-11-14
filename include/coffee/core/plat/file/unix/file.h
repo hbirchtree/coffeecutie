@@ -45,16 +45,7 @@ struct PosixApi
 
 struct PosixFileMod_def : CommonFileFun
 {
-    STATICINLINE bool ErrnoCheck(cstring ref = nullptr)
-    {
-	if(errno!=0)
-        {
-            fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
-            errno = 0;
-            return true;
-        }
-        return false;
-    }
+    static bool ErrnoCheck(cstring ref = nullptr);
 
     static NodeType Stat(cstring fn);
 
@@ -78,14 +69,7 @@ struct PosixFileMod_def : CommonFileFun
     static bool Exists(cstring fn);
 
 protected:
-    STATICINLINE uint32 PageSize()
-    {
-#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
-        return sysconf(_SC_PAGESIZE)-1;
-#else
-        return 8;
-#endif
-    }
+    static uint32 PageSize();
 
     static int MappingFlags(ResourceAccess acc);
     static int ProtFlags(ResourceAccess acc);
@@ -150,7 +134,7 @@ struct PosixFileFun_def : PosixFileMod_def
             return {};
         }
 
-	return data;
+        return data;
     }
 
     STATICINLINE bool Seek(FH*, uint64)
@@ -270,8 +254,8 @@ struct PosixFileFun_def : PosixFileMod_def
 #elif defined(COFFEE_APPLE)
         mapflags |= MAP_ANON;
 #endif
-        
-        
+
+
         ScratchBuf buf;
 #if defined(COFFEE_LINUX)
         // mmap64() is a Linux-specific feature it seems

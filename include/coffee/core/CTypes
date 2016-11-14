@@ -1,3 +1,4 @@
+#pragma once
 #pragma message ( "Greedy header in use!" )
 
 #include <coffee/interfaces/cdialog_api.h>

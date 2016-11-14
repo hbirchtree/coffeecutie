@@ -28,7 +28,7 @@ struct LinuxStacktracer : StacktracerDef
         else
             return sym;
 #endif
-        return "";
+        return {};
     }
 #if defined(COFFEE_USE_UNWIND)
     STATICINLINE Stacktrace GetRawStackframes(uint32 start = 0, int32 length = 1)

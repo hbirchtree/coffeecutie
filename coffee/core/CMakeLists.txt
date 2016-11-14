@@ -1,3 +1,28 @@
+find_package( StandardLibs REQUIRED )
+
+set ( CORE_INCLUDE_DIR ${COFFEE_INCLUDE_DIR}/core/ )
+
+set ( CoffeeCore_PCH
+    ${CORE_INCLUDE_DIR}/plat/plat_environment.h
+    ${CORE_INCLUDE_DIR}/plat/plat_file.h
+    ${CORE_INCLUDE_DIR}/plat/plat_memory.h
+
+    ${CORE_INCLUDE_DIR}/platform_data.h
+
+    ${CORE_INCLUDE_DIR}/CApplication
+    ${CORE_INCLUDE_DIR}/CArgParser
+    ${CORE_INCLUDE_DIR}/CFiles
+    ${CORE_INCLUDE_DIR}/CIniParser
+    ${CORE_INCLUDE_DIR}/CInput
+    ${CORE_INCLUDE_DIR}/CJSONParser
+    ${CORE_INCLUDE_DIR}/CMD
+    ${CORE_INCLUDE_DIR}/CPlatform
+    ${CORE_INCLUDE_DIR}/CProfiling
+    ${CORE_INCLUDE_DIR}/CRegex
+    ${CORE_INCLUDE_DIR}/CTiming
+    ${CORE_INCLUDE_DIR}/CXmlParser
+    )
+
 set ( CoffeeCore_SRCS
 
     private/extern_storage.cpp
@@ -14,6 +39,7 @@ set ( CoffeeCore_SRCS
     private/base/cdisplay.cpp
     private/base/cfiles.cpp
     private/base/cobject.cpp
+    private/base/cregex.cpp
 
     # Terminal functions
     private/terminal/table-print.cpp
@@ -30,6 +56,7 @@ set ( CoffeeCore_SRCS
     # Internal platform layer
     private/plat/environment/application_start.cpp
     private/plat/environment/argument_parse.cpp
+    private/plat/environment/shared_func.cpp
 
     # Compression / data storage
     private/datastorage/compression/libz.cpp
@@ -110,8 +137,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
         )
 endif()
 
-find_package( StandardLibs REQUIRED )
-
 coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
 include_directories ( SYSTEM ${STANDARDLIBS_INCLUDE_DIR} )
 target_link_libraries ( CoffeeCore ${STANDARDLIBS_LIBRARIES} )
+
+# If PCH is supported, this will be used
+#CREATE_PCH_FILES(CoffeeCore "${CoffeeCore_PCH}")

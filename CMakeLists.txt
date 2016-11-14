@@ -1,7 +1,17 @@
 project( Coffee C CXX )
 cmake_minimum_required( VERSION 3.1 )
 
+# Make it verbose
+set ( CMAKE_VERBOSE_MAKEFILE on )
+
 include ( CTest )
+
+set ( CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    ${CMAKE_SOURCE_DIR}/cmake/Find
+    ${CMAKE_SOURCE_DIR}/cmake/Modules
+    ${CMAKE_SOURCE_DIR}/cmake/Packaging
+    )
 
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
@@ -12,6 +22,7 @@ else()
 endif()
 set ( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
 
+# Custom, Coffee-specific variables
 set ( CMAKE_PACKAGED_OUTPUT_PREFIX packaged ) # Custom, used by scripts
 
 set ( COFFEE_DESKTOP_DIRECTORY "${CMAKE_SOURCE_DIR}/desktop" )
@@ -23,24 +34,18 @@ set ( COFFEE_SOURCE_TEMPLATE_DIRECTORY "${CMAKE_SOURCE_DIR}/internal/templates" 
 
 set ( COFFEE_NATIVE_LIB_DIR CACHE PATH "" )
 
-set ( CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    ${CMAKE_SOURCE_DIR}/cmake/Find
-    ${CMAKE_SOURCE_DIR}/cmake/Modules
-    ${CMAKE_SOURCE_DIR}/cmake/Packaging
-    )
+set ( COFFEE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/coffee" )
+set ( COFFEE_PCH_DIR "${CMAKE_BINARY_DIR}/pch/" )
 
 if(COFFEE_GENERATE_LIBRARIES)
     message ("-- Building as: ${CMAKE_BUILD_TYPE}")
 endif()
 
-# Make it verbose
-set ( CMAKE_VERBOSE_MAKEFILE on )
-
 # This is used inside modules to refer to libraries
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_SOURCE_DIR}/libs )
 
 include ( BuildOptions )
+include ( PrecompiledHeader )
 
 if(COFFEE_GENERATE_LIBRARIES)
     include ( BuildFunctions )
@@ -57,23 +62,10 @@ include_directories (
 
 include_directories( SYSTEM ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include )
 
-if(COFFEE_GENERATE_LIBRARIES)
-    install ( DIRECTORY
-        ${CMAKE_SOURCE_DIR}/include
-        DESTINATION
-        .
-        )
-endif()
-
 # General include directories, not ours
 include_directories ( SYSTEM
     ${CMAKE_BINARY_DIR}/libs/include
     libs
-    )
-
-# Add automatic linking directory, useful to get builds up quickly
-link_directories(
-    ${CMAKE_BINARY_DIR}/libs/lib/
     )
 
 # Extension include directories
@@ -107,3 +99,15 @@ endif()
 # Add documentation directory, not built by default (increases build time)
 add_subdirectory(docs)
 
+if(COFFEE_GENERATE_LIBRARIES)
+    install ( DIRECTORY
+        ${CMAKE_SOURCE_DIR}/include
+        DESTINATION
+        .
+        )
+endif()
+
+# Add automatic linking directory, useful to get builds up quickly
+link_directories(
+    ${CMAKE_BINARY_DIR}/libs/lib/
+    )

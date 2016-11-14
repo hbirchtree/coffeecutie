@@ -1,3 +1,5 @@
+#pragma once
+
 #include "plat/memory/cmd_interface.h"
 #include "plat/memory/cmd_process.h"
 #include "terminal/table-print.h"

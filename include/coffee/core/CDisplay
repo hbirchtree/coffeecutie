@@ -1,1 +1,3 @@
+#pragma once
+
 #include <coffee/core/base/types/cdisplay.h>

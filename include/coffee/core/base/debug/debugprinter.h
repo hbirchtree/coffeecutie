@@ -16,51 +16,9 @@ namespace DebugFun{
 
 struct DebugPrinterImpl : DebugPrinterDef
 {
-    STATICINLINE CString& Colorize(CString& s, Color back, Color front)
-    {
-        cstring bg = "";
-        cstring fg = "";
-        switch(back)
-        {
-        case Color::Yellow:
-            bg = ColorMap::BgYellow;
-            break;
-        case Color::Blue:
-            bg = ColorMap::BgBlue;
-            break;
-        case Color::Red:
-            bg = ColorMap::BgRed;
-            break;
-        case Color::Green:
-            bg = ColorMap::BgDarkGreen;
-            break;
-        default:
-            break;
-        }
-        switch(front)
-        {
-        case Color::Yellow:
-            fg = ColorMap::FontYellow;
-            break;
-        case Color::Red:
-            fg = ColorMap::FontRed;
-            break;
-        case Color::Blue:
-            fg = ColorMap::FontBlue;
-            break;
-        case Color::Green:
-            fg = ColorMap::FontDarkGreen;
-            break;
-        default:
-            break;
-        }
+    using CmdColor = ColorMap::CmdColor;
 
-        s = fg + s;
-        s = bg + s;
-        s.append(ColorMap::Reset);
-
-        return s;
-    }
+    static const constexpr cstring print_fmt = "{0}\n";
 
     template<typename... Args>
     STATICINLINE CString FormatPrintString(Severity sev, uint32 stackoffset,
@@ -107,7 +65,7 @@ struct DebugPrinterImpl : DebugPrinterDef
         CString prefix = severity_str;
 #endif
 
-        Colorize(prefix,Color::Blue,Color::Green);
+        ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Blue, CmdColor::Green));
 
         CString formatted = cStringFormat(fmt,args...);
 
@@ -122,7 +80,7 @@ struct DebugPrinterImpl : DebugPrinterDef
 
         CString fmt = FormatPrintString(Severity::Debug,
                                         0,f,a...);
-        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,print_fmt,fmt);
     }
     template<typename... Args>
     STATICINLINE void cWarning(cstring f, Args... a)
@@ -132,14 +90,14 @@ struct DebugPrinterImpl : DebugPrinterDef
 
         CString fmt = FormatPrintString(Severity::Medium,
                                         0,f,a...);
-        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,print_fmt,fmt);
     }
     template<typename... Args>
     STATICINLINE void cFatal(cstring f, Args... a)
     {
         CString fmt = FormatPrintString(Severity::Fatal,
                                         0,f,a...);
-        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,print_fmt,fmt);
     }
 
     template<typename... Args>
@@ -149,7 +107,7 @@ struct DebugPrinterImpl : DebugPrinterDef
             return;
 
         CString fmt = cStringFormat(f,a...);
-        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,print_fmt,fmt);
     }
     template<typename... Args>
     STATICINLINE void cBasicPrintNoNL(cstring f, Args... a)
@@ -169,7 +127,7 @@ struct DebugPrinterImpl : DebugPrinterDef
 
         CString fmt = FormatPrintString(Severity::Verbose,
                                         0,f,a...);
-        OutputPrinter::fprintf(DefaultDebugOutputPipe,"{0}\n",fmt);
+        OutputPrinter::fprintf(DefaultDebugOutputPipe,print_fmt,fmt);
 #endif
     }
 };

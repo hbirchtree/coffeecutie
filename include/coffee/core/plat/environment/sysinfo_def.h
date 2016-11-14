@@ -50,42 +50,19 @@ struct SysInfoDef
         return "?";
     }
 
-    STATICINLINE
+    static
     /*!
      * \brief Get string representing system architecture (eg. win64, lin64, mac64, ios64, and32)
      * \return
      */
-    CString GetSystemString()
-    {
-        /* Please don't ask about the leading space :) */
-        const constexpr cstring _fmt = "%.3s%u_%s ";
-        int len = snprintf(nullptr,0,_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
-        CString base;
-        base.resize(len);
-        snprintf(&base[0],base.size(),_fmt,C_SYSTEM_STRING,BitNess(),COFFEE_ARCH);
-        base.resize(base.find('\0'));
-        base = Mem::StrUtil::lower(base);
-        return base;
-    }
+    CString GetSystemString();
 
-    STATICINLINE
+    static
     /*!
      * \brief Only for use in safe environments, such as internal servers.
      * \return
      */
-    CString HostName()
-    {
-#if defined(COFFEE_UNIXPLAT) || defined(COFFEE_WINDOWS)
-        /* For now, we assume this works. We might implement a better one where it retries upon failure. */
-        CString _m;
-        _m.resize(60);
-        gethostname(&_m[0],_m.size());
-        _m.resize(_m.find('\0'));
-        return _m;
-#else
-        return "localhost";
-#endif
-    }
+    CString HostName();
 
     STATICINLINE
     /*!
@@ -127,24 +104,14 @@ struct SysInfoDef
         return ThreadCount()*64;
     }
 
-    STATICINLINE
+    static
     /*!
      * \brief Calculate a 'smart' amount of tasks to launch based upon amount of tasks
      * \param worksize Amount of tasks
      * \param weight Weight given to each tasks. Should only be modified if each task is significant in size.
      * \return An estimated value for what would be a suitable amount of tasks
      */
-    ThrdCnt SmartParallelism(uint64 worksize, uint64 weight = 1)
-    {
-        if(worksize*weight <= ThreadCount())
-        {
-            return 1;
-        }else if(worksize*weight <= CMath::pow<uint64>(Parallelism(),3))
-        {
-            return ThreadCount();
-        }else
-            return Parallelism();
-    }
+    ThrdCnt SmartParallelism(uint64 worksize, uint64 weight = 1);
 
     STATICINLINE
     /*!
@@ -196,15 +163,12 @@ struct SysInfoDef
         return 0;
     }
 
-    STATICINLINE
+    static
     /*!
      * \brief Info about the system's processor
      * \return
      */
-    HWDeviceInfo Processor()
-    {
-        return HWDeviceInfo("Generic Processor","0x0");
-    }
+    HWDeviceInfo Processor();
 
     STATICINLINE
     /*!
@@ -272,11 +236,8 @@ struct SysInfoDef
         return NetStatLocalOnly;
     }
 
-    STATICINLINE
-    HWDeviceInfo DeviceName()
-    {
-        return HWDeviceInfo("Generic","Device","0x0");
-    }
+    static
+    HWDeviceInfo DeviceName();
 };
 
 

@@ -1,19 +1,18 @@
 #pragma once
 
-#define C_FLAGS(type,utype) \
-    \
-    inline type operator~(type val){return (type)(~((utype)val));} \
-    \
-    inline type operator^(type lhs, type rhs){return (type)(((utype)lhs)^((utype)rhs));} \
-    inline type operator&(type lhs, type rhs){return (type)(((utype)lhs)&((utype)rhs));} \
-    inline type operator|(type lhs, type rhs){return (type)(((utype)lhs)|((utype)rhs));} \
-    \
-    inline type operator^=(type& lhs, type rhs){return lhs = (type)(((utype)lhs)^((utype)rhs));} \
-    inline type operator&=(type& lhs, type rhs){return lhs = (type)(((utype)lhs)&((utype)rhs));} \
-    inline type operator|=(type& lhs, type rhs){return lhs = (type)(((utype)lhs)|((utype)rhs));}
+#define C_FC(t,v) static_cast<t>(v)
 
-/*
- */
+#define C_FLAGS(e,t) \
+    \
+    inline e operator~(e val){return C_FC(e,~((t)val));} \
+    \
+    inline e operator^(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
+    inline e operator&(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)&C_FC(t,rhs));} \
+    inline e operator|(e lhs, e rhs){return C_FC(e,C_FC(t,lhs)|C_FC(t,rhs));} \
+    \
+    inline e operator^=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
+    inline e operator&=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));} \
+    inline e operator|=(e& lhs, e rhs){return lhs = C_FC(e,C_FC(t,lhs)^C_FC(t,rhs));}
 
 namespace Coffee{
 
@@ -25,7 +24,7 @@ template<typename T>
  */
 inline bool feval(T flagcombo)
 {
-    return (int)flagcombo;
+    return static_cast<int>(flagcombo);
 }
 
 template<typename T>

@@ -40,7 +40,7 @@ struct CFILEFun_def : CommonFileFun
     {
         FH* fh = new FH;
 
-        cstring mode = "";
+        cstring mode = nullptr;
 
         /* Because of the way masks work, feval must be run on each individual flag */
         if(feval(ac&ResourceAccess::ReadWrite) &&

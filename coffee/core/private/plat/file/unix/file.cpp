@@ -299,6 +299,28 @@ bool Posix::PosixDirFun::ChDir(cstring dir)
     return true;
 }
 
+bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref)
+{
+    if(errno!=0)
+    {
+        fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
+        errno = 0;
+        return true;
+    }
+    return false;
+}
+
+uint32 Posix::PosixFileMod_def::PageSize()
+{
+#if defined(COFFEE_LINUX) || defined(COFFEE_APPLE)
+    return static_cast<uint32>(sysconf(_SC_PAGESIZE)-1);
+#else
+    return 8;
+#endif
+}
+
+
+
 }
 }
 }
