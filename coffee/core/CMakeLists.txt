@@ -1,5 +1,3 @@
-find_package( StandardLibs REQUIRED )
-
 set ( CORE_INCLUDE_DIR ${COFFEE_INCLUDE_DIR}/core/ )
 
 set ( CoffeeCore_PCH
@@ -136,6 +134,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
         private/plat/linking/unix/loader.cpp
         )
 endif()
+
+find_package( StandardLibs REQUIRED )
 
 coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
 include_directories ( SYSTEM ${STANDARDLIBS_INCLUDE_DIR} )
