@@ -1,0 +1,42 @@
+project ( @PJNAME@ )
+cmake_minimum_required(VERSION 3.1)
+
+set ( COFFEE_DESKTOP_DIRECTORY "${CMAKE_SOURCE_DIR}/desktop" )
+set ( COFFEE_PACKAGE_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PREFIX}" )
+set ( COFFEE_DEPLOY_DIRECTORY "${PROJECT_BINARY_DIR}/deploy" )
+set ( COFFEE_SOURCE_TEMPLATE_DIRECTORY "${CMAKE_SOURCE_DIR}/internal/templates" )
+set ( CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    ${CMAKE_SOURCE_DIR}/cmake/Find
+    ${CMAKE_SOURCE_DIR}/cmake/Modules
+    ${CMAKE_SOURCE_DIR}/cmake/Packaging
+    )
+
+include ( BuildFlags )
+include ( BuildFunctions )
+
+find_package ( Coffee REQUIRED )
+
+set ( SRCS
+    @SRCS@
+    )
+
+set ( USERDATA
+    "${CMAKE_SOURCE_DIR}/rsrc/@PJNAME@"
+    )
+
+set ( LIBS
+    @LIBS@
+    )
+
+include_directories ( "${COFFEE_INCLUDE_DIR}" )
+
+coffee_add_application_longerer ( @PJNAME@ "@TITLE@"
+        "@COMPANY@" "1"
+        "@DESC@" "@COPYRIGHT@"
+        "${SRCS}" "${LIBS}"
+        "${BUNDLE_LIBS}" "${USERDATA}"
+        "${LICENSES}" "${PERMS}"
+        "${BUNDLE_BINS}"
+        )
+
