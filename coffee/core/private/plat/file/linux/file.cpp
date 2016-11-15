@@ -71,6 +71,9 @@ CString LinuxFileFun::sys_read(cstring fn)
     char* arg = 0;
     size_t size = 0;
 
+    if(!fh)
+        return out;
+
     while(getdelim(&arg,&size,0,fh) != -1)
     {
         out.append(arg);

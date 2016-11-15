@@ -132,6 +132,8 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
                                 "Print version information and exit");
         parser.registerArgument(ArgumentCollection::Switch,nullptr,"v",
                                 "Print verbose messages to terminal while running");
+        parser.registerArgument(ArgumentCollection::Switch,nullptr,"q",
+                                "Be quiet");
         parser.registerArgument(ArgumentCollection::Switch,"licenses",nullptr,
                                 "Print license information and exit");
 
@@ -148,6 +150,10 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
             if(a.first == "v" && a.second)
             {
                 Coffee::PrintingVerbosityLevel++;
+            }
+            if(a.first == "q" && a.second)
+            {
+                Coffee::PrintingVerbosityLevel = 0;
             }
             if(a.first == "version" && a.second)
             {

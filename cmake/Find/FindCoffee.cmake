@@ -19,6 +19,9 @@ set ( COFFEE_SEARCH_PATHS
 
     ~/Library/Frameworks
     /Library/Frameworks
+
+    "${COFFEE_ROOT_DIR}"
+    "$ENV{COFFEE_ROOT_DIR}"
     )
 
 find_path ( COFFEE_INCLUDE_DIR_TMP
@@ -47,20 +50,6 @@ find_library ( COFFEE_CORE_LIBRARY_TMP
 
 find_library ( COFFEE_ASIO_LIBRARY_TMP
     CoffeeASIO
-
-    PATHS
-    ${COFFEE_ROOT_DIR}
-    ${COFFEE_SEARCH_PATHS}
-
-    PATH_SUFFIXES
-    lib
-    lib64
-    )
-
-find_library ( COFFEE_OCULUS_LIBRARY_TMP
-    CoffeeOVR
-    CoffeeOculusRift
-    CoffeeOculusVR
 
     PATHS
     ${COFFEE_ROOT_DIR}
@@ -132,15 +121,17 @@ if(COFFEE_GLEAM_LIBRARY_TMP)
 endif()
 
 if(COFFEE_OPENAL_LIBRARY_TMP)
-    set (COFFEE_GLEAM_LIBRARY "${COFFEE_GLEAM_LIBRARY_TMP}")
+    set (COFFEE_OPENAL_LIBRARY "${COFFEE_OPENAL_LIBRARY_TMP}")
 endif()
 
-mark_as_advanced(
-    COFFEE_INCLUDE_DIR
+INCLUDE(FindPackageHandleStandardArgs)
+
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(
+    Coffee
+
+    REQUIRED_VARS
     COFFEE_CORE_LIBRARY
-    COFFEE_ASIO_LIBRARY
-    COFFEE_OCULUS_LIBRARY
-    COFFEE_OPENVR_LIBRARY
+    COFFEE_INCLUDE_DIR
     COFFEE_GLEAM_LIBRARY
     COFFEE_OPENAL_LIBRARY
     )

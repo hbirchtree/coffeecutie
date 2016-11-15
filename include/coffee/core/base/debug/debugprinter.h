@@ -65,7 +65,7 @@ struct DebugPrinterImpl : DebugPrinterDef
         CString prefix = severity_str;
 #endif
 
-        ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Blue, CmdColor::Green));
+        ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));
 
         CString formatted = cStringFormat(fmt,args...);
 

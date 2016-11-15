@@ -261,6 +261,35 @@ bool LinuxSysInfo::HasHyperThreading()
     return false;
 }
 
+HWDeviceInfo LinuxSysInfo::DeviceName()
+{
+    static const cstring str_gen = "Generic";
+    static const cstring str_lin = "Linux";
+
+    /* Assumes the following format:
+     *
+     * DISTRIB_ID=Ubuntu
+     * DISTRIB_RELEASE=16.04
+     * DISTRIB_CODENAME=xenial
+     * DISTRIB_DESCRIPTION="Ubuntu 16.04.1 LTS"
+     *
+     */
+
+    CString version = CResources::Linux::LinuxFileFun::sys_read("/etc/lsb-release");
+    cstring desc = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
+    if(desc && (desc = Search::ChrFind(desc, '=') + 1))
+    {
+        cstring end = Search::ChrFind(desc, '\n');
+        if(end || (end = Search::ChrFind(desc, 0)))
+        {
+            CString desc_std(desc, end-desc);
+            return HWDeviceInfo(str_gen, str_lin, desc_std);
+        }
+    }
+
+    return HWDeviceInfo(str_gen, str_lin, GetSystemVersion());
+}
+
 using namespace CResources;
 
 PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()

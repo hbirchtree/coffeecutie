@@ -41,14 +41,18 @@ ThrdCnt SysInfoDef::SmartParallelism(uint64 worksize, uint64 weight)
         return Parallelism();
 }
 
+#if !defined(COFFEE_LINUX) || !defined(COFFEE_WINDOWS)
 HWDeviceInfo SysInfoDef::Processor()
 {
     return HWDeviceInfo("Generic Processor","0x0");
 }
+#endif
 
+#if !defined(COFFEE_LINUX) || !defined(COFFEE_ANDROID)
 HWDeviceInfo SysInfoDef::DeviceName()
 {
     return HWDeviceInfo("Generic","Device","0x0");
 }
+#endif
 
 }

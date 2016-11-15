@@ -78,6 +78,8 @@ struct LinuxSysInfo : SysInfoDef
 	    return CString(d.release);
     }
 
+    static HWDeviceInfo DeviceName();
+
 private:
     thread_local static CString cached_cpuinfo_string;
 };
