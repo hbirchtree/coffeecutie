@@ -27,6 +27,7 @@ function copy_config_files()
     cp -ur "${COFFEE_DIR}/cmake/Find" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Modules" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Packaging" "${PROJECT_DIR}/cmake"
+    cp -ur "${COFFEE_DIR}/cmake/Preloads" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Toolchains" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/desktop" "${PROJECT_DIR}"
     cp -ur "${COFFEE_DIR}/internal/templates" "${PROJECT_DIR}/internal"
