@@ -29,6 +29,7 @@ struct MacSysInfo : SysInfoDef
         }else
             return "0.0";
     }
+    static HWDeviceInfo DeviceName();
 };
 
 using MacPowerInfo = _SDLPowerInfo;
