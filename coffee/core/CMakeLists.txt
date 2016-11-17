@@ -137,9 +137,8 @@ endif()
 
 find_package( StandardLibs REQUIRED )
 
-coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" )
 include_directories ( SYSTEM ${STANDARDLIBS_INCLUDE_DIR} )
-target_link_libraries ( CoffeeCore ${STANDARDLIBS_LIBRARIES} )
+coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" "${STANDARDLIBS_LIBRARIES}" )
 
 # If PCH is supported, this will be used
 #CREATE_PCH_FILES(CoffeeCore "${CoffeeCore_PCH}")

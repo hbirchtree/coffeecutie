@@ -26,9 +26,7 @@ else()
     list(APPEND CoffeeGLeam_SRCS private/glad/glad.c)
 endif()
 
-coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" )
-
-target_link_libraries ( CoffeeGLeam
+set ( LIBS
     CoffeeCore
     CoffeeImage
     CoffeeSDL2
@@ -36,7 +34,7 @@ target_link_libraries ( CoffeeGLeam
     )
 
 if(ANDROID)
-    target_link_libraries( CoffeeGLeam
+    list ( APPEND LIBS
         GLESv3
         )
 endif()
@@ -44,4 +42,8 @@ endif()
 # For Android, there is some special function loading
 find_package(SDL2 REQUIRED)
 include_directories (${SDL2_INCLUDE_DIR})
-target_link_libraries(CoffeeGLeam ${SDL2_LIBRARY})
+
+list ( APPEND LIBS ${SDL2_LIBRARY})
+
+coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" "${LIBS}" )
+

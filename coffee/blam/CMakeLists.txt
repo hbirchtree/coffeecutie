@@ -5,9 +5,4 @@ set ( CBlam_SRCS
         private/volta/cblam_scenario_loader.cpp
         )
 
-coffee_add_library ( CoffeeBlam "${CBlam_SRCS}" )
-
-target_link_libraries( CoffeeBlam
-        CoffeeCore
-        CoffeeImage
-    )
+coffee_add_library ( CoffeeBlam "${CBlam_SRCS}" "CoffeeCore;CoffeeImage" )

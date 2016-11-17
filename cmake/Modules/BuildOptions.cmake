@@ -16,29 +16,6 @@ option ( SKIP_OPENVR_TEST "Skip tests of OpenVR, it requires a display and hardw
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
 
 #
-# Platform-specific
-#
-
-if(ANDROID)
-    # The option to this is using the native_app_glue implementation which is not done
-    option ( ANDROID_USE_SDL2_LAUNCH "Use traditional SDL2 Android bindings" ON )
-    option ( ANDROID_DEPLOY_APK "Whether to install directly to a connected device" OFF )
-endif()
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    option ( COFFEE_GENERATE_APPIMAGE OFF )
-    option ( COFFEE_GENERATE_FLATPAK  OFF )
-    option ( COFFEE_GENERATE_SNAPPY   OFF )
-endif()
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
-    option ( COFFEE_VALGRIND_MASSIF OFF )
-    option ( COFFEE_VALGRIND_MEMCHECK OFF )
-    option ( COFFEE_VALGRIND_CALLGRIND OFF )
-    option ( COFFEE_VALGRIND_CACHEGRIND OFF )
-endif()
-
-#
 #
 
 #

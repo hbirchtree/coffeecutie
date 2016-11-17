@@ -25,43 +25,9 @@ include_directories ( SYSTEM
     ${SDL2_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" )
-
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-    find_package ( X11 REQUIRED )
-    find_package ( Wayland QUIET )
-    find_package ( Mir QUIET )
-
-    if(X11_FOUND)
-        target_link_libraries(CoffeeSDL2
-            ${X11_LIBRARIES}
-            )
-        include_directories(
-            ${X11_INCLUDE_DIR}
-            )
-    endif()
-    if(WAYLAND_FOUND)
-        target_link_libraries(CoffeeSDL2
-            ${WAYLAND_LIBRARIES}
-            )
-        include_directories(
-            ${WAYLAND_INCLUDE_DIR}
-            )
-    endif()
-    if(MIR_FOUND)
-        target_link_libraries(CoffeeSDL2
-            ${MIR_LIBRARIES}
-            )
-        include_directories(
-            ${MIR_INCLUDE_DIR}
-            )
-    endif()
-endif()
-
-target_link_libraries( CoffeeSDL2
+set ( LIBS
     CoffeeCore
     ${SDL2_LIBRARY}
     )
 
-coffee_add_library ( CoffeeSDL2Audio "${CoffeeSDL2Audio_SRCS}" )
+coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}" )

@@ -1,8 +1,4 @@
-coffee_add_elibrary ( EnvLibraryLoadTester SHARED libcode.cpp )
-
-target_link_libraries(EnvLibraryLoadTester
-    CoffeeCore
-    )
+coffee_add_elibrary ( EnvLibraryLoadTester SHARED libcode.cpp "CoffeeCore" )
 
 add_definitions ( -DCMAKE_LINKING_DIRECTORY="${CMAKE_BINARY_DIR}/lib" )
 

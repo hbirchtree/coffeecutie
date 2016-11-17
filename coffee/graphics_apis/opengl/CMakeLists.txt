@@ -34,12 +34,4 @@ include_directories ( SYSTEM
     ${GLBINDING_INCLUDE_DIRS}
     )
 
-coffee_add_library ( CoffeeOpenGL "${CoffeeOpenGL_SRCS}" )
-
-
-target_link_libraries ( CoffeeOpenGL
-    CoffeeCore
-    CoffeeImage
-    CoffeeSDL2
-    ${GLBINDING_LIBRARIES}
-    )
+coffee_add_library ( CoffeeOpenGL "${CoffeeOpenGL_SRCS}" "CoffeeCore;CoffeeImage;CoffeeSDL2;${GLBINDING_LIBRARIES}" )

@@ -78,13 +78,9 @@ set ( CoffeeSwigShim_SRCS
     "coffeeswig.cpp;${LICENSE_FILE};${APPLICATION_INFO_FILE}"
     )
 
-coffee_add_library(CoffeeSwigShim "${CoffeeSwigShim_SRCS}" )
-
-target_link_libraries ( CoffeeSwigShim
-    CoffeeGLeam
-    CoffeeOpenAL
-    CoffeeBlam
-    )
+coffee_add_library(CoffeeSwigShim
+    "${CoffeeSwigShim_SRCS}"
+    "CoffeeGLeam;CoffeeOpenAL;CoffeeBlam" )
 
 # Link with some libraries
 set(COFFEE_LINKING CoffeeSwigShim )

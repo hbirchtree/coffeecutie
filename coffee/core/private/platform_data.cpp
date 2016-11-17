@@ -25,4 +25,13 @@ CString PlatformData::SystemDisplayString()
     return base;
 }
 
+bool PlatformData::IsDebug()
+{
+#ifndef NDEBUG
+    return true;
+#else
+    return false;
+#endif
+}
+
 }

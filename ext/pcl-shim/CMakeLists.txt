@@ -18,7 +18,7 @@ else()
         private/cpcl.cpp
         )
     coffee_add_library ( CoffeePCL
-        ${CPointClouds_SRCS}
+        ${CPointClouds_SRCS} ""
         )
     target_link_libraries( CoffeePCL
         CoffeeCore

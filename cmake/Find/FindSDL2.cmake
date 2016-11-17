@@ -157,6 +157,37 @@ IF(SDL2_LIBRARY_TEMP)
     SET(SDL2_LIBRARY_TEMP ${MINGW32_LIBRARY} ${SDL2_LIBRARY_TEMP})
   ENDIF(MINGW)
 
+  if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+      find_package ( X11 REQUIRED )
+      find_package ( Wayland QUIET )
+      find_package ( Mir QUIET )
+
+      if(X11_FOUND)
+          SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP}
+              ${X11_LIBRARIES}
+              )
+          include_directories(
+              ${X11_INCLUDE_DIR}
+              )
+      endif()
+      if(WAYLAND_FOUND)
+          SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP}
+              ${WAYLAND_LIBRARIES}
+              )
+          include_directories(
+              ${WAYLAND_INCLUDE_DIR}
+              )
+      endif()
+      if(MIR_FOUND)
+          SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP}
+              ${MIR_LIBRARIES}
+              )
+          include_directories(
+              ${MIR_INCLUDE_DIR}
+              )
+      endif()
+  endif()
+
   # Set the final string here so the GUI reflects the final state.
   SET(SDL2_LIBRARY ${SDL2_LIBRARY_TEMP} CACHE STRING "Where the SDL2 Library can be found")
   # Set the temp variable to INTERNAL so it is not seen in the CMake GUI

@@ -9,8 +9,8 @@ using namespace Library;
 
 const constexpr cstring TargetLibrary = "EnvLibraryLoadTester";
 
-CString _error;
-FunctionLoader::Library* _library_object;
+static CString _error;
+static FunctionLoader::Library* _library_object;
 
 bool dlopen_test()
 {
@@ -41,7 +41,7 @@ bool dlopen_test()
     return true;
 }
 
-ObjectLoader::ObjConstructor<TestClass> _constructor;
+static ObjectLoader::ObjConstructor<TestClass> _constructor;
 
 bool dlsym_test()
 {

@@ -11,6 +11,8 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 
     set ( FLATPAK_DEFAULT_ICON_FILE "${COFFEE_DESKTOP_DIRECTORY}/icon.svg"
         CACHE FILEPATH "Default icon for AppImages" )
+
+    set ( FLATPAK_DEPLOY_LOCALLY FALSE CACHE BOOL "Deploy with local, user-only repository" )
 endif()
 
 macro( FLATPAK_PACKAGE
@@ -130,6 +132,21 @@ macro( FLATPAK_PACKAGE
     add_custom_command ( TARGET ${TARGET}
 	POST_BUILD
         COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_FILE}" "${FLATPAK_PKG_NAME}" )
+
+    if(FLATPAK_DEPLOY_LOCALLY)
+        add_custom_command( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND ${FLATPAK_PROGRAM} remote-add --user --no-gpg-verify deployed_${FLATPAK_PKG_NAME} ${FLATPAK_BUNDLE_REPO} || true
+            )
+        add_custom_command( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND ${FLATPAK_PROGRAM} uninstall --user ${FLATPAK_PKG_NAME} || true
+            )
+        add_custom_command( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND ${FLATPAK_PROGRAM} install --user deployed_${FLATPAK_PKG_NAME} ${FLATPAK_PKG_NAME}
+            )
+    endif()
 
     # Add arrangement to install flatpak structure somewhere else
     install (

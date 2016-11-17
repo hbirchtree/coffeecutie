@@ -54,7 +54,7 @@ macro(COFFEE_GEN_APPLICATIONINFO TARGET TITLE COMPANY VERSION)
 
 endmacro()
 
-macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
+macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES)
     add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
 
     # Because it's hard to write these three commands over and over again
@@ -74,6 +74,10 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
 
     target_enable_cxx11(${TARGET})
 
+    target_link_libraries(${TARGET} ${LIBRARIES})
+
+    file ( WRITE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TARGET}.link" "${LIBRARIES}" )
+
     if(ANDROID)
         install(
             TARGETS
@@ -83,48 +87,54 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES)
             lib/${ANDROID_ABI}
             )
     elseif(NOT WIN32)
-	install(
-	    TARGETS
-	    ${TARGET}
+        install(
+            TARGETS
+            ${TARGET}
 
-	    DESTINATION
+            DESTINATION
             lib
-	    )
+            )
     else()
-	install(
-	    TARGETS
-	    ${TARGET}
+        install(
+            TARGETS
+            ${TARGET}
 
-	    DESTINATION
-	    bin
-	    )
+            DESTINATION
+            bin
+            )
     endif()
+
+#    install (
+#        FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TARGET}.libraries"
+#        DESTINATION deps)
 endmacro()
 
 macro(COFFEE_ADD_FRAMEWORK
-	TARGET LINKOPT
-	VERSION_CODE COPYRIGHT COMPANY
-	SOURCES BUNDLE_RSRCS BUNDLE_HDRS )
+        TARGET LINKOPT
+        VERSION_CODE COPYRIGHT COMPANY
+        SOURCES BUNDLE_RSRCS BUNDLE_HDRS
+        LIBRARIES BUNDLE_LIBRARIES)
     if(APPLE)
-	MACFRAMEWORK_PACKAGE(
-	    "${TARGET}" "${LINKOPT}"
-	    "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
-	    "${SOURCES}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
+        MACFRAMEWORK_PACKAGE(
+            "${TARGET}" "${LINKOPT}"
+            "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
+            "${SOURCES}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
     else()
-	coffee_add_elibrary(
-	    "${TARGET}" "${LINKOPT}"
-	    "${SOURCES}")
+        coffee_add_elibrary(
+            "${TARGET}" "${LINKOPT}"
+            "${SOURCES}" "${LIBRARIES}")
     endif()
 
     target_enable_cxx11(${TARGET})
 endmacro()
 
-macro(COFFEE_ADD_LIBRARY TARGET SOURCES)
+macro(COFFEE_ADD_LIBRARY TARGET SOURCES LIBRARIES)
     # Just a little simplification
     coffee_add_framework(
-	${TARGET} ${COFFEE_LINK_OPT}
-	"2.0" "hbirchtree" "hbirchtree"
-	"${SOURCES}" "" "" "")
+        ${TARGET} ${COFFEE_LINK_OPT}
+        "2.0" "hbirchtree" "hbirchtree"
+        "${SOURCES}" "" ""
+        "${LIBRARIES}" "")
 endmacro()
 
 

@@ -9,9 +9,4 @@ include_directories ( SYSTEM
     ${ASSIMP_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeAssimp "${CoffeeAssimp_SRCS}" )
-
-target_link_libraries ( CoffeeAssimp
-    CoffeeCore
-    ${ASSIMP_LIBRARIES}
-    )
+coffee_add_library ( CoffeeAssimp "${CoffeeAssimp_SRCS}" "CoffeeCore;${ASSIMP_LIBRARIES}" )

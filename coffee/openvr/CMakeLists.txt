@@ -14,10 +14,4 @@ set ( CoffeeVR_SRCS
     private/ovr_private.cpp
     )
 
-coffee_add_library ( CoffeeVR "${CoffeeVR_SRCS}" )
-
-target_link_libraries( CoffeeVR
-    ${OPENVR_LIBRARY}
-    CoffeeGLeam
-    CoffeeCore
-    )
+coffee_add_library ( CoffeeVR "${CoffeeVR_SRCS}" "${OPENVR_LIBRARY};CoffeeGLeam;CoffeeCore" )

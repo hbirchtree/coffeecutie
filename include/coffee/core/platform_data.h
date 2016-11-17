@@ -8,7 +8,7 @@ namespace Coffee{
 struct PlatformData
 {
     static
-/*!
+    /*!
      * \brief Displayable string of system and its version
      */
     CString SystemDisplayString();
@@ -55,18 +55,11 @@ struct PlatformData
 #endif
     }
 
-    STATICINLINE
+    static
     /*!
      * \brief IsDebug
      * \return
      */
-    bool IsDebug()
-    {
-#ifndef NDEBUG
-        return true;
-#else
-        return false;
-#endif
-    }
+    bool IsDebug();
 };
 }

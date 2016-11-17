@@ -9,5 +9,5 @@ include_directories(${OPENVR_INCLUDE_DIR} ${BULLET_INCLUDE_DIRS})
 
 list (APPEND LIBS CoffeeGLeam ${OPENVR_LIBRARY} ${BULLET_LIBRARIES} )
 
-coffee_add_application_long ( VRBaseTest_RHI "VR Basic RHI" main.cpp "${LIBS}" "" "${USERDATA}" )
-target_link_libraries( VRBaseTest_RHI ${LIBS} )
+coffee_add_application_long ( VRBaseTest_RHI "VR Basic RHI" main.cpp
+    "${LIBS}" "" "${USERDATA}" )

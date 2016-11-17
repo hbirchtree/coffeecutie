@@ -4,6 +4,4 @@ set ( CoffeeImage_SRCS
         private/ctextrender.cpp
         )
 
-coffee_add_library ( CoffeeImage "${CoffeeImage_SRCS}" )
-
-target_link_libraries( CoffeeImage CoffeeCore )
+coffee_add_library ( CoffeeImage "${CoffeeImage_SRCS}" "CoffeeCore" )
