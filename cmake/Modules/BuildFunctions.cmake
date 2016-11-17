@@ -119,6 +119,7 @@ macro(COFFEE_ADD_FRAMEWORK
             "${TARGET}" "${LINKOPT}"
             "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
             "${SOURCES}" "${BUNDLE_RSRCS}" "${BUNDLE_HDRS}")
+        target_link_libraries(${LIBRARIES})
     else()
         coffee_add_elibrary(
             "${TARGET}" "${LINKOPT}"
