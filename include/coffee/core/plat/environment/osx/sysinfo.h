@@ -17,6 +17,8 @@ struct MacSysInfo : SysInfoDef
 {
     static CString GetSystemVersion();
     static HWDeviceInfo DeviceName();
+
+    static HWDeviceInfo Processor();
 };
 
 using MacPowerInfo = _SDLPowerInfo;

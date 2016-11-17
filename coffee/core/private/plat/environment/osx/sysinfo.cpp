@@ -7,6 +7,23 @@ namespace Coffee{
 namespace Environment{
 namespace Mac{
 
+static CString _GetSysctlString(const cstring mod_string)
+{
+    CString target;
+
+    size_t len = 0;
+    sysctlbyname(mod_string, nullptr, &len, nullptr, 0);
+
+    if(len > 0)
+    {
+        target.resize(len+1);
+        sysctlbyname(mod_string, &target[0], &len, nullptr, 0);
+        target.resize(Mem::Search::ChrFind(&target[0], '\0') - &target[0]);
+    }
+
+    return target;
+}
+
 CString MacSysInfo::GetSystemVersion()
 {
     FILE* out = popen("sw_vers -productVersion","r");
@@ -25,42 +42,12 @@ CString MacSysInfo::GetSystemVersion()
 HWDeviceInfo MacSysInfo::DeviceName()
 {
     static const cstring mod_string = "hw.model";
-    static const cstring rel_string = "kern.osrelease";
     static const cstring typ_string = "kern.ostype";
+    static const cstring rel_string = "kern.osrelease";
 
-    CString target;
-    CString kern;
-    CString osrel;
-
-    size_t len = 0;
-    sysctlbyname(mod_string, nullptr, &len, nullptr, 0);
-
-    if(len > 0)
-    {
-        target.resize(len+1);
-        sysctlbyname(mod_string, &target[0], &len, nullptr, 0);
-        target.resize(Mem::Search::ChrFind(&target[0], '\0') - &target[0]);
-    }
-
-    len = 0;
-    sysctlbyname(rel_string, nullptr, &len, nullptr, 0);
-
-    if(len)
-    {
-        osrel.resize(len+1);
-        sysctlbyname(rel_string, &osrel[0], &len, nullptr, 0);
-        osrel.resize(Mem::Search::ChrFind(&osrel[0], '\0') - &osrel[0]);
-    }
-
-    len = 0;
-    sysctlbyname(typ_string, nullptr, &len, nullptr, 0);
-
-    if(len)
-    {
-        kern.resize(len+1);
-        sysctlbyname(typ_string, &kern[0], &len, nullptr, 0);
-        kern.resize(Mem::Search::ChrFind(&kern[0], '\0') - &kern[0]);
-    }
+    CString target = _GetSysctlString(mod_string);
+    CString kern = _GetSysctlString(typ_string);;
+    CString osrel = _GetSysctlString(rel_string);;
 
     return HWDeviceInfo("Apple", target, kern + " " + osrel);
 }
