@@ -7,6 +7,21 @@ namespace Coffee{
 namespace Environment{
 namespace Mac{
 
+CString MacSysInfo::GetSystemVersion()
+{
+    FILE* out = popen("sw_vers -productVersion","r");
+    if(out)
+    {
+        char buf[16];
+        char* ptr = fgets(buf, sizeof(buf),out);
+        pclose(out);
+        CString output = ptr;
+        output.resize(Mem::Search::ChrFind((cstring)ptr,'\n')-ptr);
+        return output;
+    }else
+        return "0.0";
+}
+
 HWDeviceInfo MacSysInfo::DeviceName()
 {
     static const cstring mod_string = "hw.model";
