@@ -18,3 +18,7 @@ I (the developer) do this:
 3. Compile it! You will quickly see the appearance of .app packages in the build/bin directory.
 
 An iOS port is planned, and will likely use the OSX port as its backbone.
+
+# Any quirks?
+
+When running as a Jenkins slave, CMake and Ninja should be symlinked to /usr/bin. This ensures proper detection.
