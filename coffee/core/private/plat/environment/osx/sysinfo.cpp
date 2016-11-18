@@ -66,6 +66,8 @@ HWDeviceInfo MacSysInfo::Processor()
     CString brand = _GetSysctlString(brd_string);
     CString microcode = _GetSysctlString(mcc_string);
 
+    printf("Value: %s\n",microcode.c_str());
+
     return HWDeviceInfo(vendor, brand, microcode);
 }
 
@@ -75,8 +77,9 @@ bigscalar MacSysInfo::ProcessorFrequency()
     static const cstring frq_string = "hw.cpufrequency";
 
     CString freq_s = _GetSysctlString(frq_string);
+    printf("Value: %s\n",freq_s.c_str());
 
-    return Mem::Convert::strtoscalar(freq_s.data()) / (1024. * 1024. * 1024.);
+    return Mem::Convert::strtoscalar(freq_s.c_str()) / (1024. * 1024. * 1024.);
 }
 
 CoreCnt MacSysInfo::CpuCount()
@@ -84,8 +87,9 @@ CoreCnt MacSysInfo::CpuCount()
     static const cstring cpu_string = "hw.packages";
 
     CString c = _GetSysctlString(cpu_string);
+    printf("Value: %s\n",c.c_str());
 
-    return Mem::Convert::strtouint(c.data());
+    return Mem::Convert::strtouint(c.c_str());
 }
 
 CoreCnt MacSysInfo::CoreCount()
@@ -93,8 +97,9 @@ CoreCnt MacSysInfo::CoreCount()
     static const cstring cre_string = "machdep.cpu.core_count";
 
     CString c = _GetSysctlString(cre_string);
+    printf("Value: %s\n",c.c_str());
 
-    return Mem::Convert::strtouint(c.data());
+    return Mem::Convert::strtouint(c.c_str());
 }
 
 MemUnit MacSysInfo::MemTotal()
@@ -102,8 +107,9 @@ MemUnit MacSysInfo::MemTotal()
     static const cstring mtl_string = "hw.memsize";
 
     CString c = _GetSysctlString(mtl_string);
+    printf("Value: %s\n",c.c_str());
 
-    return Mem::Convert::strtouint(c.data());
+    return Mem::Convert::strtouint(c.c_str());
 }
 
 MemUnit MacSysInfo::MemAvailable()
@@ -116,6 +122,7 @@ bool MacSysInfo::HasFPU()
     static const cstring fpu_string = "hw.optional.floatingpoint";
 
     CString fpu_s = _GetSysctlString(fpu_string);
+    printf("Value: %s\n",fpu_s.c_str());
 
     return fpu_s == "1";
 }
@@ -124,7 +131,7 @@ bool MacSysInfo::HasHyperThreading()
 {
     static const cstring thd_string = "machdep.cpu.thread_count";
     CString c = _GetSysctlString(thd_string);
-    CoreCnt thr_count = Mem::Convert::strtouint(c.data());
+    CoreCnt thr_count = Mem::Convert::strtouint(c.c_str());
 
     return thr_count == CoreCount();
 }
