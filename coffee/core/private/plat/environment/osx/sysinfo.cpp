@@ -109,7 +109,6 @@ MemUnit MacSysInfo::MemTotal()
     static const cstring mtl_string = "hw.memsize";
 
     uint64 c = _GetSysctlInt(mtl_string);
-    printf("Value: %llu\n",c);
 
     return c;
 }
