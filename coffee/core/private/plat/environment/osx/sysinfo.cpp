@@ -79,7 +79,8 @@ HWDeviceInfo MacSysInfo::Processor()
 
 bigscalar MacSysInfo::ProcessorFrequency()
 {
-    static const cstring frq_string = "hw.cpufrequency";
+    static const cstring frq_string = "machdep.tsc.frequency";
+//            "hw.cpufrequency"
 
     uint32 freq_i = _GetSysctlInt(frq_string);
 
