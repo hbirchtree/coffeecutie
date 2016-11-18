@@ -115,7 +115,11 @@ MemUnit MacSysInfo::MemTotal()
 
 MemUnit MacSysInfo::MemAvailable()
 {
-    return MemTotal();
+    static const cstring mav_string = "hw.usermem";
+
+    uint64 c = _GetSysctlInt(mav_string);
+
+    return MemTotal() - c;
 }
 
 bool MacSysInfo::HasFPU()
