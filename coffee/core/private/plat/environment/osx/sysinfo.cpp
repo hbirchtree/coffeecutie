@@ -137,7 +137,7 @@ bool MacSysInfo::HasHyperThreading()
 {
     static const cstring thd_string = "machdep.cpu.thread_count";
     uint32 thr_count = _GetSysctlInt(thd_string);
-    printf("Value: %i\n",c);
+    printf("Value: %i\n",thr_count);
 
     return thr_count == CoreCount();
 }
