@@ -84,7 +84,7 @@ bigscalar MacSysInfo::ProcessorFrequency()
 
     uint32 freq_i = _GetSysctlInt(frq_string);
 
-    return freq_i / (1024. * 1024. * 1024.);
+    return freq_i / (1000. * 1000. * 1000.);
 }
 
 CoreCnt MacSysInfo::CpuCount()
