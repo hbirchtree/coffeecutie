@@ -62,9 +62,9 @@ HWDeviceInfo MacSysInfo::Processor()
     static const cstring brd_string = "machdep.cpu.brand_string";
     static const cstring mcc_string = "machdep.cpu.microcode_version";
 
-    CString vendor = _GetSysCtlString(ven_string);
-    CString brand = _GetSysCtlString(brd_string);
-    CString microcode = _GetSysCtlString(mcc_string);
+    CString vendor = _GetSysctlString(ven_string);
+    CString brand = _GetSysctlString(brd_string);
+    CString microcode = _GetSysctlString(mcc_string);
 
     return HWDeviceInfo(vendor, brand, microcode);
 }
@@ -74,7 +74,7 @@ bigscalar MacSysInfo::ProcessorFrequency()
 //    static const cstring frq_string = "machdep.tsc.frequency";
     static const cstring frq_string = "hw.cpufrequency";
 
-    CString freq_s = _GetSysCtlString(frq_string);
+    CString freq_s = _GetSysctlString(frq_string);
 
     return Mem::Convert::strtoscalar(freq_s.data()) / (1024. * 1024. * 1024.);
 }
@@ -83,7 +83,7 @@ CoreCnt MacSysInfo::CpuCount()
 {
     static const cstring cpu_string = "hw.packages";
 
-    CString c = _GetSysCtlString(cpu_string);
+    CString c = _GetSysctlString(cpu_string);
 
     return Mem::Convert::strtouint(c.data());
 }
@@ -92,7 +92,7 @@ CoreCnt MacSysInfo::CoreCount()
 {
     static const cstring cre_string = "machdep.cpu.core_count";
 
-    CString c = _GetSysCtlString(cre_string);
+    CString c = _GetSysctlString(cre_string);
 
     return Mem::Convert::strtouint(c.data());
 }
@@ -101,7 +101,7 @@ MemUnit MacSysInfo::MemTotal()
 {
     static const cstring mtl_string = "hw.memsize";
 
-    CString c = _GetSysCtlString(mtl_string);
+    CString c = _GetSysctlString(mtl_string);
 
     return Mem::Convert::strtouint(c.data());
 }
@@ -115,7 +115,7 @@ bool MacSysInfo::HasFPU()
 {
     static const cstring fpu_string = "hw.optional.floatingpoint";
 
-    CString fpu_s = _GetSysCtlString(fpu_string);
+    CString fpu_s = _GetSysctlString(fpu_string);
 
     return fpu_s == "1";
 }
@@ -123,7 +123,7 @@ bool MacSysInfo::HasFPU()
 bool MacSysInfo::HasHyperThreading()
 {
     static const cstring thd_string = "machdep.cpu.thread_count";
-    CString c = _GetSysCtlString(cre_string);
+    CString c = _GetSysctlString(cre_string);
     CoreCnt thr_count = Mem::Convert::strtouint(c.data());
 
     return thr_count == CoreCount();
