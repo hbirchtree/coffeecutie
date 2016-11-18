@@ -123,7 +123,7 @@ bool MacSysInfo::HasFPU()
 bool MacSysInfo::HasHyperThreading()
 {
     static const cstring thd_string = "machdep.cpu.thread_count";
-    CString c = _GetSysctlString(cre_string);
+    CString c = _GetSysctlString(thd_string);
     CoreCnt thr_count = Mem::Convert::strtouint(c.data());
 
     return thr_count == CoreCount();
