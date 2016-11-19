@@ -105,7 +105,7 @@ struct PosixFileFun_def : PosixFileMod_def
     {
         CByteData data;
 
-        szptr sz = Size(f_h);
+        int64 sz = Size(f_h);
 
         if(f_size <= sz && f_size != -1)
             sz = f_size;
