@@ -15,4 +15,5 @@ endif()
 
 coffee_add_library ( AndroidCore
         "${AndroidCore_SRCS}"
+        ""
          )
