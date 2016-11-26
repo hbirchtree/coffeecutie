@@ -26,8 +26,8 @@ struct GLEAM_OccludeQuery : GraphicsAPI::OccludeQuery<QueryT>, GLEAM_Query
     void begin();
     void end();
 
-    int64 getResulti();
-    uint64 getResultu();
+    int64 resulti();
+    uint64 resultu();
 };
 
 }

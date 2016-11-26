@@ -32,7 +32,7 @@ void GLEAM_OccludeQuery::end()
     CGL33::QueryEnd(m_type);
 }
 
-int64 GLEAM_OccludeQuery::getResulti()
+int64 GLEAM_OccludeQuery::resulti()
 {
 #ifdef COFFEE_GLEAM_DESKTOP
     int64 v;
@@ -44,7 +44,7 @@ int64 GLEAM_OccludeQuery::getResulti()
     return v;
 }
 
-uint64 GLEAM_OccludeQuery::getResultu()
+uint64 GLEAM_OccludeQuery::resultu()
 {
 #ifdef COFFEE_GLEAM_DESKTOP
     uint64 v;

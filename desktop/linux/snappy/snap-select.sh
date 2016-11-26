@@ -25,7 +25,7 @@ echo "------------------------"
     echo "$SNAP_NAME: Unsupported architecture (SNAP_ARCH=$SNAP_ARCH)" && \
     exit 1
 
-"$EXEC_NAME"
+"$EXEC_NAME" "$@"
 
 EXIT_CODE="$?"
 

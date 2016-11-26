@@ -64,7 +64,7 @@ public:
         /*
          * Loading the GLeam API, chosen according to what is available at runtime
          */
-        GLM::LoadAPI(true);
+        GLM::LoadAPI(PlatformData::IsDebug());
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
@@ -311,7 +311,7 @@ public:
 
         while (!closeFlag()) {
 
-            do_debugging = m_debugging && buffer_debug.enabled();
+            do_debugging = m_debugging && PlatformData::IsDebug();
 
             if(do_debugging)
             {
@@ -396,13 +396,9 @@ public:
            *  because this has a lot of benefits to efficiency.
            */
 
-            o_query.begin();
-            GLM::DrawConditional(call, instdata, o_query);
-            o_query.end();
+            GLM::Draw(call, instdata, &o_query);
 
             GLM::DrawConditional(call, instdata, o_query);
-
-            cDebug("Samples: {0}",o_query.getResultu());
 
             if(do_debugging)
             {

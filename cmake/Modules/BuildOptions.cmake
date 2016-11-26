@@ -3,6 +3,7 @@
 #
 
 option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
+option ( GENERATE_PROGRAMS "Whether examples should be built" ON )
 
 # Generates Doxygen documentation, requires Doxygen installed in PATH
 option ( COFFEE_DOCS "Generate documentation" OFF )

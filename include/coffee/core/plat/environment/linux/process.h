@@ -15,6 +15,9 @@ namespace Environment{
 namespace Linux{
 struct LinuxProcessProperty : ProcessPropertyDef
 {
+    using PID = pid_t;
+    using MemUnit = long;
+
     STATICINLINE void CoreDumpEnable()
     {
         struct rlimit lim;
