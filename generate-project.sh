@@ -31,6 +31,7 @@ function copy_config_files()
     cp -ur "${COFFEE_DIR}/cmake/Toolchains" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/desktop" "${PROJECT_DIR}"
     cp -ur "${COFFEE_DIR}/internal/templates" "${PROJECT_DIR}/internal"
+    cp -ur "${COFFEE_DIR}/internal/include" "${PROJECT_DIR}"
     touch "${PROJECT_DIR}/rsrc/${PJNAME}/RESOURCES"
 }
 

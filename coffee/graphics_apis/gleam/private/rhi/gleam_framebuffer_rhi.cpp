@@ -162,12 +162,12 @@ void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 {
     fb_bind(m_type,m_handle);
     scalar* d = (scalar*)&color;
-    if(GL_CURR_API == GLES_3_0)
-    {
+//    if(GL_CURR_API == GLES_3_0)
+//    {
         glClearColor(color.r(),color.g(),color.b(),color.a());
         glClear(GL_COLOR_BUFFER_BIT);
-    }else
-        CGL33::ClearBufferfv(true,i,color);
+//    }else
+//        CGL33::ClearBufferfv(true,i,color);
 }
 
 void GLEAM_RenderTarget::clear(bigscalar depth)

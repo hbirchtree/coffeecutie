@@ -228,7 +228,7 @@ void SDL2EventHandler::pollEvents()
 
 bigscalar SDL2EventHandler::contextTime() const
 {
-    return (bigscalar)SDL_GetTicks()/1000.0;
+    return static_cast<bigscalar>(SDL_GetTicks())/1000.0;
 }
 
 bool SDL2EventHandler::closeFlag() const
