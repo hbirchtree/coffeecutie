@@ -26,6 +26,12 @@ struct _cbasic_point
 template<typename T>
 struct _cbasic_size_2d : _cbasic_size
 {
+    template<typename U>
+    operator _cbasic_size_2d<U>() const
+    {
+        return this->convert<U>();
+    }
+
     FORCEDINLINE _cbasic_size_2d(T wd,T hg) : w(wd),h(hg){}
     FORCEDINLINE _cbasic_size_2d(): w(0),h(0)
     {}
