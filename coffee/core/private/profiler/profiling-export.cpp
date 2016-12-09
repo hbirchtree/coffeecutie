@@ -73,7 +73,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             envdata->InsertEndChild(p);
         }
     }
-    cVerbose(4,"Writing environment data");
+    cVerbose(8,"Writing environment data");
 
     /* Store data about runtime */
     {
@@ -103,7 +103,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         rundata->SetAttribute("system", sys_string.c_str());
         rundata->SetAttribute("architecture",CoffeeArchString);
     }
-    cVerbose(4,"Writing runtime data");
+    cVerbose(8,"Writing runtime data");
 
     /* Store system information */
     {
@@ -149,7 +149,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         tmp = Convert::booltostring(SysInfo::HasHyperThreading());
         sysdata->SetAttribute("proc.hyperthread",tmp.c_str());
     }
-    cVerbose(4,"Writing system data");
+    cVerbose(8,"Writing system data");
 
     /* Store extra data gathered by program, is parsed as JSON if possible */
     {
@@ -165,7 +165,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             e->SetText(p.value.c_str());
         }
     }
-    cVerbose(4,"Writing extra data");
+    cVerbose(8,"Writing extra data");
 
     /* Only runs in debug mode! */
     if(Profiler::Enabled){
@@ -268,7 +268,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         }
 #endif
     }
-    cVerbose(4,"Writing profiler data");
+    cVerbose(8,"Writing profiler data");
 
     if(!PlatformData::IsMobile())
     {

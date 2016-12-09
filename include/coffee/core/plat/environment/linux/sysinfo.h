@@ -69,14 +69,7 @@ struct LinuxSysInfo : SysInfoDef
         return NetStatLocalOnly;
     }
 
-    STATICINLINE CString GetSystemVersion()
-    {
-	utsname d;
-	if(uname(&d)!=0)
-	    return "?";
-	else
-	    return CString(d.release);
-    }
+    static CString GetSystemVersion();
 
     static HWDeviceInfo DeviceName();
 
