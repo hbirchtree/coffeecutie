@@ -131,7 +131,7 @@ struct CGL_Shared_Debug
         {
             CString str = GetString(GL_VERSION);
 
-            cVerbose(7,"Input GL_VERSION string: {0}",str);
+//            cVerbose(7,"Input GL_VERSION string: {0}",str);
 
             if (str.size()<=0)
                 break;
@@ -171,7 +171,7 @@ struct CGL_Shared_Debug
         if (!str_c)
             return ver;
 
-        cVerbose(7,"Input GL_SHADING_LANGUAGE_VERSION string: {0}",str_c);
+//        cVerbose(7,"Input GL_SHADING_LANGUAGE_VERSION string: {0}",str_c);
 
         CString str = str_c;
 

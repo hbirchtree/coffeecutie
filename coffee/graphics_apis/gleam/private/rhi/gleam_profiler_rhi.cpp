@@ -8,6 +8,66 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+QueryT from_term(ProfilingTerm t)
+{
+    switch(t)
+    {
+    case ProfilingTerm::ElapsedTime:
+        return QueryT::TimeElapsed;
+    case ProfilingTerm::ScreenPrimitives:
+        return QueryT::PrimGen;
+    case ProfilingTerm::ScreenSamples:
+        return QueryT::Samples;
+    case ProfilingTerm::TransformedPrimitives:
+        return QueryT::XFGen;
+    default:
+        return QueryT::AnySamples;
+    }
+}
+
+GLEAM_PrfQuery::GLEAM_PrfQuery(ProfilingTerm term):
+    PerfQuery(term),
+    GLEAM_Query(from_term(term))
+{
+}
+
+void GLEAM_PrfQuery::begin()
+{
+    if(m_handle == 0)
+        alloc();
+
+    CGL33::QueryBegin(m_type, m_handle);
+}
+
+void GLEAM_PrfQuery::end()
+{
+    CGL33::QueryEnd(m_type);
+}
+
+int64 GLEAM_PrfQuery::resulti()
+{
+#ifdef COFFEE_GLEAM_DESKTOP
+    int64 v;
+    CGL33::QueryGetObjecti64v(m_handle,GL_QUERY_RESULT,&v);
+#else
+    uint32 v;
+    CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
+#endif
+    return v;
+}
+
+uint64 GLEAM_PrfQuery::resultu()
+{
+#ifdef COFFEE_GLEAM_DESKTOP
+    uint64 v;
+    CGL33::QueryGetObjectui64v(m_handle,GL_QUERY_RESULT,&v);
+#else
+    uint32 v;
+    CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
+#endif
+    return v;
+}
+
 #ifndef NDEBUG
 
 static CSize v_size = {1280,720};
@@ -257,15 +317,6 @@ void GLEAM_DBufQuery::end()
         CGL33::VAOBind(0);
         CGL33::BufBind(BufType::ArrayData,0);
     }
-#endif
-}
-
-bool GLEAM_DBufQuery::enabled()
-{
-#ifndef NDEBUG
-    return m_enabled;
-#else
-    return false;
 #endif
 }
 

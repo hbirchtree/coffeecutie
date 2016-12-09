@@ -86,11 +86,13 @@ if(COFFEE_GENERATE_LIBRARIES)
     # Add subdir for generation of language bindings
     add_subdirectory(bindings)
 
-    # Tools, includes the GUI profiler
-    add_subdirectory(tools)
+    if(GENERATE_PROGRAMS)
+        # Tools, includes the GUI profiler
+        add_subdirectory(tools)
 
-    # Add subdir for example applications
-    add_subdirectory(examples)
+        # Add subdir for example applications
+        add_subdirectory(examples)
+    endif()
 
     # Add subdir for extensions, weak bindings of libraries
     add_subdirectory(ext)
