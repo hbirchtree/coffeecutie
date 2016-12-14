@@ -13,6 +13,7 @@ if(NOT ANDROID_USE_SDL2_LAUNCH)
             )
 endif()
 
+include_directories ( SYSTEM ${ANDROID_GLUE_INCLUDE_DIR} )
 include_directories ( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 coffee_add_library ( AndroidCore
