@@ -4,6 +4,18 @@
 #include <coffee/core/coffee.h>
 #include "renderer.h"
 
+void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
+{
+    auto r = C_CAST<CDRenderer*>(user_ptr);
+
+    cDebug("Caught window event: {0}", ev.type);
+
+    if(ev.type == CDEvent::TransitionBackground)
+    {
+        exit(0);
+    }
+}
+
 int32 coffee_main(int32, cstring_w*)
 {
     /* Set a prefix from which resources are fetched */
@@ -35,6 +47,8 @@ int32 coffee_main(int32, cstring_w*)
                                   nullptr,renderer});
     renderer->installEventHandler({EventHandlers::StandardCamera<CDRenderer, CGCamera>,
                                   nullptr, renderer});
+
+    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
 
     Profiler::Profile("Object creation");
 
