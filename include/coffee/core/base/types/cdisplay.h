@@ -174,6 +174,7 @@ struct CDFocusEvent
         Mouse   = 0x1,
         Enter   = 0x2,
         Exposed = 0x4,
+        Leave   = 0x8,
     };
     FocusMask mod; /*!< Type of focus event*/
 };

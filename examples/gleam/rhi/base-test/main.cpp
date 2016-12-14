@@ -8,11 +8,13 @@ void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
 {
     auto r = C_CAST<CDRenderer*>(user_ptr);
 
-    cDebug("Caught window event: {0}", ev.type);
+    cDebug("Caught window event: {0}", C_CAST<uint32>(ev.type));
 
-    if(ev.type == CDEvent::TransitionBackground)
+    if(ev.type == CDEvent::Focus)
     {
-        exit(0);
+        auto state = C_CAST<CDFocusEvent const*>(data);
+        if(state->mod == CDFocusEvent::Leave)
+            exit(0);
     }
 }
 
