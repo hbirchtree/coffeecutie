@@ -277,6 +277,11 @@ enum class QueryT
 
     Samples = GL_SAMPLES_PASSED,
     PrimGen = GL_PRIMITIVES_GENERATED,
+
+#else
+    TimeElapsed = GL_NONE,
+    Samples = GL_NONE,
+    PrimGen = GL_NONE,
 #endif
 };
 
