@@ -469,9 +469,13 @@ void GLEAM_API::PreDrawCleanup()
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
-void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)
+void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i,
+                     OccludeQuery* query)
 {
     DrwMd mode = {Prim::Triangle,PrimCre::Explicit};
+
+    if(query)
+        query->begin();
 
     if(d.indexed())
     {
@@ -518,6 +522,8 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i)
 
             CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
     }
+    if(query)
+        query->end();
 }
 
 void GLEAM_API::DrawConditional(const DrawCall &d,
@@ -525,9 +531,9 @@ void GLEAM_API::DrawConditional(const DrawCall &d,
                                 OccludeQuery &c)
 {
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
-    c.begin();
+    CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
     Draw(d,i);
-    c.end();
+    CGL33::ConditionalRenderEnd();
 }
 
 }

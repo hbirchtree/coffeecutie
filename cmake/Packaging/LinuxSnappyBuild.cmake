@@ -80,17 +80,19 @@ macro ( SNAPPY_PACKAGE
 
     set ( SNAPPY_PKG_DIR "${SNAPPY_DEPLOY_DIRECTORY}/${TARGET}" )
     set ( SNAPPY_FINAL_SNAP "${SNAPPY_OUTPUT_DIRECTORY}/${SNAPPY_PACKAGE_NAME}_${VERSION}_all.snap" )
-    set ( SNAPPY_ARCH_DATA "amd64) ARCH_STRING=\"${CMAKE_LIBRARY_ARCHITECTURE}\" ;;" )
+    set ( SNAPPY_ARCH_DATA
+        "amd64) ARCH_STRING=\"${CMAKE_LIBRARY_ARCHITECTURE}\" ;;"
+    )
 
     set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )
     set ( ICON_TARGET "${SNAPPY_PKG_DIR}/setup/gui/icon.svg" )
 
     set ( SNAPPY_TITLE "${TITLE}" )
     set ( SNAPPY_VERSION "${VERSION}" )
-    set ( SNAPPY_ARCHITECTURES "amd64" )
+    set ( SNAPPY_ARCHITECTURES "all" )
     set ( SNAPPY_SUMMARY "${SUMMARY}" )
 
-    set ( SNAPPY_CONFINEMENT "strict" )
+    set ( SNAPPY_CONFINEMENT "devmode" )
 
     # Retrieve Snappy permissions list
     snappy_translate_permissions( "${PERMISSIONS}" SNAPPY_PERMISSIONS )

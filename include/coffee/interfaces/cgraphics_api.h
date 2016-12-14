@@ -553,8 +553,8 @@ struct GraphicsAPI
         void end(){}
 
         /* How to kill perf: */
-        int64 getResulti(){return 0;}
-        uint64 getResultu(){return 0;}
+        int64 resulti(){return 0;}
+        uint64 resultu(){return 0;}
     };
 
     /*!
@@ -757,7 +757,8 @@ struct GraphicsAPI
      * \param d General drawcall settings
      * \param i Data associated with instance of drawcall
      */
-    static void Draw(DrawCall const&,DrawInstanceData const&){}
+    static void Draw(DrawCall const&,DrawInstanceData const&,
+                     OccludeQuery<int>* = nullptr){}
     /*!
      * \brief Draw primitives with occlusion query
      * \param d
@@ -800,9 +801,10 @@ struct GraphicsProfiler
 	void begin(){}
 	void end(){}
 
-	int64 result(){return 0;}
+        int64 resulti(){return 0;}
+        uint64 resultu(){return 0;}
 
-	const ProfilingTerm m_term;
+        const ProfilingTerm m_term;
     };
 
     template<typename RT>

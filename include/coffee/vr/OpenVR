@@ -94,6 +94,8 @@ struct OpenVR
         d.vr_ctarget = new typename GAPI::S_2D(c_fmt,1);
         d.vr_dtarget = new typename GAPI::S_2D(d_fmt,1);
 
+        d.render_bounds[0].uMin = d.render_bounds[0].vMin = 0.0;
+        d.render_bounds[1].vMin = 0.0;
         d.render_bounds[0].uMax = d.render_bounds[1].uMin = 0.5;
         d.render_bounds[1].uMax = 1.0;
         d.render_bounds[0].vMax = d.render_bounds[1].vMax = 1.0;
@@ -181,9 +183,11 @@ struct OpenVR
         vr::VRCompositor()->WaitGetPoses(d.device_poses, vr::k_unMaxTrackedDeviceCount,
                                          nullptr, 0);
 
-        if(d.device_poses[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+        auto& headPoseObj = d.device_poses[vr::k_unTrackedDeviceIndex_Hmd];
+
+        if(headPoseObj.bPoseIsValid)
         {
-            auto& mat = d.device_poses[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
+            auto& mat = headPoseObj.mDeviceToAbsoluteTracking;
             TransferVRMatrix(mat,headPose);
         }
     }

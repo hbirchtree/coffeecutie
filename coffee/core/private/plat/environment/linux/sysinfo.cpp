@@ -277,9 +277,10 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
 
     CString version = CResources::Linux::LinuxFileFun::sys_read("/etc/lsb-release");
     cstring desc = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = Search::ChrFind(desc, '=') + 1))
+    if(desc && (desc = Search::ChrFind(desc, '=') + 1)
+            && (desc = Search::ChrFind(desc, '"') + 1))
     {
-        cstring end = Search::ChrFind(desc, '\n');
+        cstring end = Search::ChrFind(desc, '"');
         if(end || (end = Search::ChrFind(desc, 0)))
         {
             CString desc_std(desc, end-desc);

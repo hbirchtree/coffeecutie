@@ -9,6 +9,8 @@ find_package ( OpenAL REQUIRED )
 find_package ( SDL2 REQUIRED )
 find_package ( StandardLibs QUIET )
 
+set ( COFFEE_ROOT_DIR "" CACHE PATH "" )
+
 set ( COFFEE_SEARCH_PATHS
     /usr/local
     /usr

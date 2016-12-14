@@ -11,6 +11,13 @@ namespace GLEAM{
 
 struct GLEAM_PrfQuery : GraphicsProfiler::PerfQuery, GLEAM_Query
 {
+    GLEAM_PrfQuery(ProfilingTerm term);
+
+    void begin();
+    void end();
+
+    int64 resulti();
+    uint64 resultu();
 };
 
 struct GLEAM_DBufQuery : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>
@@ -22,8 +29,6 @@ struct GLEAM_DBufQuery : GraphicsProfiler::BufferQuery<GLEAM_RenderTarget>
 
     void begin();
     void end();
-
-    bool enabled();
 protected:
 #ifndef NDEBUG
     CSize m_size;

@@ -15,6 +15,9 @@ namespace Environment{
 namespace Linux{
 struct LinuxProcessProperty : ProcessPropertyDef
 {
+    using PID = pid_t;
+    using MemUnit = long;
+
     STATICINLINE void CoreDumpEnable()
     {
         struct rlimit lim;
@@ -36,23 +39,67 @@ struct LinuxProcessProperty : ProcessPropertyDef
     {
         return getpid();
     }
-    STATICINLINE MemUnit MemResident(PID pid)
+    STATICINLINE MemUnit Mem(PID)
     {
         rusage rs;
-        if(getrusage(pid,&rs)!=0)
+        if(getrusage(RUSAGE_SELF,&rs)!=0)
             return 0;
-        return rs.ru_idrss+rs.ru_isrss;
+        return rs.ru_maxrss - rs.ru_isrss;
     }
-    STATICINLINE MemUnit MemVirtual(PID pid)
+    STATICINLINE int32 CpuTime(PID)
+    {
+        return 0;
+    }
+
+    STATICINLINE int64 UserTime()
     {
         rusage rs;
-        if(getrusage(pid,&rs)!=0)
+        if(getrusage(RUSAGE_SELF,&rs)!=0)
+            return 0;
+        return rs.ru_utime.tv_sec * 1000000 + rs.ru_utime.tv_usec;
+    }
+    STATICINLINE int64 KernTime()
+    {
+        rusage rs;
+        if(getrusage(RUSAGE_SELF,&rs)!=0)
+            return 0;
+        return rs.ru_stime.tv_sec * 1000000 + rs.ru_stime.tv_usec;
+    }
+
+    STATICINLINE int64 ThreadPageFaults()
+    {
+        rusage rs;
+        if(getrusage(RUSAGE_THREAD,&rs)!=0)
+            return 0;
+        return rs.ru_majflt;
+    }
+    STATICINLINE int64 ThreadSoftPageFaults()
+    {
+        rusage rs;
+        if(getrusage(RUSAGE_THREAD,&rs)!=0)
+            return 0;
+        return rs.ru_minflt;
+    }
+    STATICINLINE int64 Swaps()
+    {
+        rusage rs;
+        if(getrusage(RUSAGE_SELF,&rs)!=0)
+            return 0;
+        return rs.ru_nswap;
+    }
+    STATICINLINE MemUnit ContextSwitches()
+    {
+        rusage rs;
+        if(getrusage(RUSAGE_SELF,&rs)!=0)
             return 0;
         return rs.ru_nvcsw;
     }
-    STATICINLINE int32 CpuUsage(PID)
+    STATICINLINE MemUnit BadContextSwitches()
     {
-        return 0;
+        rusage rs;
+        if(getrusage(RUSAGE_SELF,&rs)!=0)
+            return 0;
+        return rs.ru_nivcsw;
     }
 };
 }
