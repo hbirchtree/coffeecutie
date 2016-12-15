@@ -5,7 +5,8 @@
 #include "../../coffee_version.h"
 
 #if defined(COFFEE_ANDROID) && !defined(ANDROID_DONT_USE_SDL2)
-#include <SDL.h>
+#include <jni.h>
+#define main SDL_main
 #endif
 
 extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);

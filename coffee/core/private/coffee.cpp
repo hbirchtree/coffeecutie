@@ -32,12 +32,14 @@ cstring CoffeePlatformString = C_SYSTEM_STRING;
 
 CString CoffeeDefaultWindowName;
 
+extern CoffeeApplicationData app_data;
+
 FORCEDINLINE void PrintVersionInfo()
 {
     cOutputPrint("{0}, released by {1}, version {2}",
-                CoffeeApplicationData::application_name,
-                CoffeeApplicationData::organization_name,
-                CoffeeApplicationData::version_code);
+                app_data.application_name,
+                app_data.organization_name,
+                app_data.version_code);
 }
 
 FORCEDINLINE void PrintBuildInfo()
@@ -120,7 +122,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     }
 #endif
 
-    CoffeeDefaultWindowName = CoffeeApplicationData::application_name + " [OpenGL]";
+    CoffeeDefaultWindowName = app_data.application_name + " [OpenGL]";
 
     initargs = AppArg(argc,argv);
 
@@ -225,6 +227,11 @@ void InstallDefaultSigHandlers()
     InstallSignalHandler(Sig_PoopedABit,nullptr);
     InstallSignalHandler(Sig_ShitMySelf,nullptr);
     InstallSignalHandler(Sig_FPE,nullptr);
+}
+
+const CoffeeApplicationData &ApplicationData()
+{
+    return app_data;
 }
 
 #endif
