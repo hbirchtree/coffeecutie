@@ -314,7 +314,7 @@ void android_main(struct android_app* state)
 
     {
         /* Get application name, just stock */
-        CString appname = ApplicationData().application_name[0];
+        CString appname = ApplicationData().application_name;
 
         /* And then load the usual main() entry point */
         if(android_entry_point)
