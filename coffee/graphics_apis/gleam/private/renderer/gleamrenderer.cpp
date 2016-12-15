@@ -80,15 +80,15 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
         if(p.version>=v45)
         {
-            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v45);
+//            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v45);
             status = CGL::CGL45::LoadBinding(m_app->glContext());
         }else if(p.version>=v43)
         {
-            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v43);
+//            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v43);
             status = CGL::CGL43::LoadBinding(m_app->glContext());
         } else if(p.version>=v33)
         {
-            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v33);
+//            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v33);
             status = CGL::CGL33::LoadBinding(m_app->glContext());
         }
 #endif
@@ -100,17 +100,17 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
         if(p.version>=v32es)
         {
-            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v32es);
+//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v32es);
             status = CGL::CGLES32::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
         }else
         if(p.version==v30es)
         {
-            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
+//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
             status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
         }
         if(p.version==v20es)
         {
-            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v20es);
+//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v20es);
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
         }
 #endif

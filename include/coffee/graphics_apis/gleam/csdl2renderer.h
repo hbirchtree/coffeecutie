@@ -34,6 +34,7 @@ protected:
 template<typename Renderer> STATICINLINE
 bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* err)
 {
+#if !defined(COFFEE_ANDROID)
     do{
 #if defined(COFFEE_GLEAM_DESKTOP)
         properties.gl.version.major = 4;
@@ -71,6 +72,9 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 
         return false;
     } while(false);
+#else
+    renderer->init(properties, err);
+#endif
     return true;
 }
 

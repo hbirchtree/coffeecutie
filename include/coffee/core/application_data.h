@@ -5,12 +5,12 @@
 
 namespace Coffee{
 
-typedef struct application_data_t
+struct ApplicationData_t
 {
-    static CString organization_name;
-    static CString application_name;
+    CString organization_name;
+    CString application_name;
 
-    static uint32 version_code;
-} ApplicationData_t;
+    uint32 version_code;
+};
 
 }

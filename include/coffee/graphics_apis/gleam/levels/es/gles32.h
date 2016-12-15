@@ -83,10 +83,10 @@ struct CGLES32 :
     {glBlendFunci(i,v1,v2);}
 
     /* Stubbing this to avoid compilation errors */
-    STATICINLINE void BufStorage(BufType,uint64,c_cptr,ResourceAccess){}
-    STATICINLINE void SBufBind(CGhnd,uint32,uint32){}
+    STATICINLINE void BufStorage(...){}
+    STATICINLINE void SBufBind(...){}
 
-    STATICINLINE void BufInvalidateData(CGhnd){}
+    STATICINLINE void BufInvalidateData(...){}
 };
 
 }

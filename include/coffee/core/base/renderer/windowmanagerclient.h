@@ -82,6 +82,8 @@ public:
      * \param m
      */
     virtual void setScreensaverMode(bool m) = 0;
+
+    virtual CString windowLibrary() const = 0;
 };
 
 }
