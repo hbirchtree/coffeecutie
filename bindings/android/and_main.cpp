@@ -135,7 +135,8 @@ COFFAPI CString Coffee_GetExternalDataPath()
 
 COFFAPI AAssetManager* Coffee_GetAssetManager()
 {
-    return coffee_app->activity->assetmanager;
+//    return coffee_app->activity->assetmanager;
+    return nullptr;
 }
 
 COFFAPI AAsset* Coffee_AssetGet(cstring fname)
@@ -176,7 +177,7 @@ COFFAPI c_cptr Coffee_AssetGetPtr(AAsset* fp)
 
 bool Coffee::EventProcess(int timeout)
 {
-    CoffeeAndroidUserData* udata = (CoffeeAndroidUserData*)coffee_app->userData;
+    CoffeeAndroidUserData* udata = C_CAST<CoffeeAndroidUserData*>(coffee_app->userData);
 
     android_poll_source* ISrc;
 
@@ -313,7 +314,7 @@ void android_main(struct android_app* state)
 
     {
         /* Get application name, just stock */
-        cstring_w appname = &(CoffeeApplicationData.application_name[0]);
+        cstring_w appname = &(ApplicationData().application_name[0]);
 
 
         /* And then load the usual main() entry point */
