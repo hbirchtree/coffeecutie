@@ -208,12 +208,14 @@ void CoffeeTerminate(bool profiler_destroy)
     Cmd::ResetScreen();
 }
 
-#if !defined(COFFEE_ANDROID) || !defined(ANDROID_DONT_USE_SDL2)
+#if !defined(COFFEE_ANDROID)
 
 bool EventProcess(int)
 {
     return true;
 }
+
+#endif
 
 void GotoApplicationDir()
 {
@@ -233,7 +235,5 @@ const CoffeeApplicationData &ApplicationData()
 {
     return app_data;
 }
-
-#endif
 
 }

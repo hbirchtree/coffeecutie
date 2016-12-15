@@ -56,12 +56,12 @@ endif()
 # Android requires SDL for asset functionality
 # GLES uses SDL for function loading
 if(ANDROID)
-    if(ANDROID_USE_SDL2_LAUNCH)
+#    if(ANDROID_USE_SDL2_LAUNCH)
         message("-- Building Android project with SDL2 bindings")
-    else()
-        message("-- Building Android project with native_app_glue bindings")
-        add_definitions("-DANDROID_DONT_USE_SDL2")
-    endif()
+#    else()
+#        message("-- Building Android project with native_app_glue bindings")
+#        add_definitions("-DANDROID_DONT_USE_SDL2")
+#    endif()
 
     add_definitions ( "-DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}" )
 endif()
