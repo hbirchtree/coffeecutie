@@ -314,13 +314,12 @@ void android_main(struct android_app* state)
 
     {
         /* Get application name, just stock */
-        cstring_w appname = &(ApplicationData().application_name[0]);
-
+        CString appname = ApplicationData().application_name[0];
 
         /* And then load the usual main() entry point */
         if(android_entry_point)
         {
-            int32 status = CoffeeMain(android_entry_point,1,&appname);
+            int32 status = CoffeeMain(android_entry_point,1,&appname[0]);
             cDebug("Android exit: {0}",status);
         }else{
             cWarning("Failed to load application entry point!");
