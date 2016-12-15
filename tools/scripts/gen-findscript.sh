@@ -79,6 +79,21 @@ endif()"
 done
 
 echo "
+if(ANDROID)
+    find_library ( COFFEE_ANDROID_LIBRARY_TMP
+        AndroidCore
+
+        PATHS
+        \${COFFEE_SEARCH_PATHS}
+
+        PATH_SUFFIXES
+        \${COFFEE_LIBRARY_SUFFIXES}
+        )
+    if(COFFEE_ANDROID_LIBRARY_TMP)
+        set ( COFFEE_ANDROID_LIBRARY \"\${COFFEE_ANDROID_LIBRARY_TMP}\" CACHE STRING \"\" )
+    endif()
+endif()
+
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args (
