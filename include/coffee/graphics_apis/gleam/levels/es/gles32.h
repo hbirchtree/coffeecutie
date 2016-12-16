@@ -83,10 +83,13 @@ struct CGLES32 :
     {glBlendFunci(i,v1,v2);}
 
     /* Stubbing this to avoid compilation errors */
-    STATICINLINE void BufStorage(...){}
-    STATICINLINE void SBufBind(...){}
+    template<typename... T>
+    STATICINLINE void BufStorage(T...){}
+    template<typename... T>
+    STATICINLINE void SBufBind(T...){}
 
-    STATICINLINE void BufInvalidateData(...){}
+    template<typename... T>
+    STATICINLINE void BufInvalidateData(T...){}
 };
 
 }
