@@ -74,7 +74,7 @@ struct OpenVR
     STATICINLINE CRect GetViewportSize()
     {
         auto _s = GetRenderTargetSize();
-        return {0, 0, static_cast<int32>(_s.w*2), static_cast<int32>(_s.h)};
+        return {0, 0, C_CAST<int32>(_s.w*2), C_CAST<int32>(_s.h)};
     }
 
     /*!
@@ -197,12 +197,13 @@ struct OpenVR
         auto p = vr::VRCompositor();
         if(p)
             for(int i=0;i<2;i++)
-                p->Submit(static_cast<vr::EVREye>(i), &d.render_handle,
+                p->Submit(C_CAST<vr::EVREye>(i), &d.render_handle,
                           &d.render_bounds[i]);
 
-        d.vr_target.blit(GetRenderTargetSize().convert<int64>(),GAPI::DefaultFramebuffer,
-                       CRect64(tgtSize.convert<int64>()),
-                       DBuffers::Color,Filtering::Linear);
+        d.vr_target.blit(C_CAST<CRect64>(GetRenderTargetSize()),
+                         GAPI::DefaultFramebuffer,
+                         CRect64(tgtSize.convert<int64>()),
+                         DBuffers::Color,Filtering::Linear);
     }
 
 protected:

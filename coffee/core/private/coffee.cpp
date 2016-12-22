@@ -32,12 +32,14 @@ cstring CoffeePlatformString = C_SYSTEM_STRING;
 
 CString CoffeeDefaultWindowName;
 
+extern CoffeeApplicationData app_data;
+
 FORCEDINLINE void PrintVersionInfo()
 {
     cOutputPrint("{0}, released by {1}, version {2}",
-                CoffeeApplicationData::application_name,
-                CoffeeApplicationData::organization_name,
-                CoffeeApplicationData::version_code);
+                app_data.application_name,
+                app_data.organization_name,
+                app_data.version_code);
 }
 
 FORCEDINLINE void PrintBuildInfo()
@@ -120,7 +122,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     }
 #endif
 
-    CoffeeDefaultWindowName = CoffeeApplicationData::application_name + " [OpenGL]";
+    CoffeeDefaultWindowName = app_data.application_name + " [OpenGL]";
 
     initargs = AppArg(argc,argv);
 
@@ -169,32 +171,32 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         }
     }
 
-    cVerbose(5,"Initializing profiler");
+    cVerbose(8,"Initializing profiler");
     Profiler::InitProfiler();
     Profiler::LabelThread("Main");
 
     Profiler::PushContext("CoffeeMain");
 
-    cVerbose(5,"Initializing Coffee library");
+    cVerbose(8,"Initializing Coffee library");
     CoffeeInit(false);
-    cVerbose(5,"Calling Profile()");
+    cVerbose(8,"Calling Profile()");
     Profiler::Profile("Init");
 
-    cVerbose(5,"Entering main function");
+    cVerbose(8,"Entering main function");
     Profiler::PushContext("main()");
     int32 r = mainfun(argc,argv);
     Profiler::PopContext();
     Profiler::Profile("Runtime");
 
-    cVerbose(5,"Terminating library");
+    cVerbose(8,"Terminating library");
     CoffeeTerminate(false);
     Profiler::Profile("Termination");
     Profiler::PopContext();
 
-    cVerbose(5,"Unloading profiler");
+    cVerbose(8,"Unloading profiler");
     Profiling::ExitRoutine(initargs.argc,initargs.argv);
 
-    cVerbose(5,"Successfully reached end of main()");
+    cVerbose(8,"Successfully reached end of main()");
 
     return r;
 }
@@ -225,6 +227,11 @@ void InstallDefaultSigHandlers()
     InstallSignalHandler(Sig_PoopedABit,nullptr);
     InstallSignalHandler(Sig_ShitMySelf,nullptr);
     InstallSignalHandler(Sig_FPE,nullptr);
+}
+
+const CoffeeApplicationData &ApplicationData()
+{
+    return app_data;
 }
 
 #endif

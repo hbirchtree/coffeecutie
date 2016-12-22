@@ -17,7 +17,7 @@ FORCEDINLINE void ResizeWindowUniversal(const CDEvent& e, c_cptr data)
 {
     if(e.type==CDEvent::Resize)
     {
-        auto rev = C_CAST(const CDResizeEvent*,data);
+        auto rev = C_CAST<const CDResizeEvent*>(data);
         CRect64 view(0,0,rev->w,rev->h);
         GLM::DefaultFramebuffer.resize(0,view);
     }
@@ -28,7 +28,7 @@ FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
 {
     if(e.type==CDEvent::Resize)
     {
-        auto rev = C_CAST(const CDResizeEvent*,data);
+        auto rev = C_CAST<const CDResizeEvent*>(data);
         CRect64 view(0,0,rev->w,rev->h);
 	GL::ViewportSet(view);
     }
@@ -39,7 +39,7 @@ FORCEDINLINE void EscapeCloseWindow(T *r, const CIEvent& e, c_cptr data)
 {
     if(e.type==CIEvent::Keyboard)
     {
-        auto kev = C_CAST(const CIKeyEvent*,data);
+        auto kev = C_CAST<const CIKeyEvent*>(data);
         if(kev->key==CK_Escape)
             r->closeWindow();
     }
@@ -51,7 +51,7 @@ FORCEDINLINE void WindowManagerCloseWindow(T* r,
 {
     if(event.type==CDEvent::State)
     {
-        const CDStateEvent* sev = C_CAST(const CDStateEvent*,data);
+        const CDStateEvent* sev = C_CAST<const CDStateEvent*>(data);
         if(sev->type==CDStateEvent::Closed)
             r->closeWindow();
     }
@@ -63,7 +63,7 @@ FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
 #if !defined(COFFEE_ANDROID) || !defined(COFFEE_APPLE_MOBILE)
     if(e.type==CIEvent::Keyboard)
     {
-        auto kev = C_CAST(CIKeyEvent const*,data);
+        auto kev = C_CAST<CIKeyEvent const*>(data);
 
         if(kev->mod & CIKeyEvent::RepeatedModifier || kev->mod & CIKeyEvent::PressedModifier)
             return;
@@ -91,13 +91,13 @@ FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
 {
     if(e.type==CIEvent::Controller)
     {
-        auto ev = C_CAST(const CIControllerAtomicEvent*,data);
+        auto ev = C_CAST<const CIControllerAtomicEvent*>(data);
         if(ev->axis && (   ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_X
                         || ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_Y))
             ControllerRotate(q,ev);
     }else if(e.type==CIEvent::MouseMove)
     {
-        auto ev = C_CAST(const CIMouseMoveEvent*,data);
+        auto ev = C_CAST<const CIMouseMoveEvent*>(data);
         MouseRotate(q,ev);
     }
 }
@@ -107,17 +107,17 @@ FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
 template<typename WindowHandler>
 void EscapeCloseWindow(void* r, CIEvent const& e, c_cptr data)
 {
-    EscapeCloseWindow<WindowHandler>(C_CAST(WindowHandler*,r),e,data);
+    EscapeCloseWindow<WindowHandler>(C_CAST<WindowHandler*>(r),e,data);
 }
 template<typename WindowHandler>
 void WindowManagerCloseWindow(void* r, CDEvent const& e, c_cptr data)
 {
-    WindowManagerCloseWindow<WindowHandler>(C_CAST(WindowHandler*,r),e,data);
+    WindowManagerCloseWindow<WindowHandler>(C_CAST<WindowHandler*>(r),e,data);
 }
 template<typename WindowHandler>
 void WindowManagerFullscreen(void* r, CIEvent const& e, c_cptr data)
 {
-    WindowManagerFullscreen(C_CAST(WindowHandler*,r),e,data);
+    WindowManagerFullscreen(C_CAST<WindowHandler*>(r),e,data);
 }
 template<typename GraphicsHandler>
 void ResizeWindowUniversal(void*, CDEvent const& e, c_cptr data)
@@ -132,7 +132,7 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
     {
     case CIEvent::Keyboard:
     {
-        auto kev = C_CAST(CIKeyEvent const*,data);
+        auto kev = C_CAST<CIKeyEvent const*>(data);
         scalar acceleration = 1.0;
 
         if(kev->mod & CIKeyEvent::LShiftModifier)
@@ -159,7 +159,7 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
     }
     case CIEvent::MouseMove:
     {
-        auto mev = C_CAST(CIMouseMoveEvent const*,data);
+        auto mev = C_CAST<CIMouseMoveEvent const*>(data);
 
 
 

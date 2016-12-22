@@ -8,8 +8,24 @@
 #define C_DELETE_COPY_CONSTRUCTOR(ctype) ctype(ctype const&) = delete
 #define C_MOVE_CONSTRUCTOR(ctype) ctype(ctype&& x) = default; ctype& operator=(ctype&& a) = default
 
+#if defined(COFFEE_MACRO_CASTS)
 #define C_CAST(type, var) static_cast<type>(var)
 #define C_DCAST(type, var) dynamic_cast<type>(var)
+#else
+template<typename D, typename T>
+static inline D C_CAST(T from)
+{
+    return static_cast<D>(from);
+}
+template<typename D, typename T>
+static inline D* C_DCAST(T* from)
+{
+    return dynamic_cast<D*>(from);
+}
+
+#define C_CAST(type, var) C_CAST<type>(var)
+#define C_DCAST(type, var) C_DCAST<type>(var)
+#endif
 
 /* Library export */
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)

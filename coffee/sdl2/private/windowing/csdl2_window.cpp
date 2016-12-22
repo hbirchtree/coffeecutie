@@ -75,8 +75,6 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
     if(p.flags&CDProperties::Windowed)
         SDL_SetWindowFullscreen(getSDL2Context()->window,0);
 
-    cMsg("SDL2","Running {0}",m_contextString);
-
     /* Finally, push a resize event */
     {
         SDL_Event wev;
@@ -158,6 +156,11 @@ void SDL2Window::setScreensaverMode(bool state)
         SDL_EnableScreenSaver();
     else
         SDL_DisableScreenSaver();
+}
+
+CString SDL2Window::windowLibrary() const
+{
+    return m_contextString;
 }
 
 CPoint SDL2Window::windowPosition() const

@@ -6,6 +6,49 @@ namespace Coffee{
 namespace Environment{
 namespace Linux{
 
+static CString get_lsb_release()
+{
+    CString version = CResources::Linux::LinuxFileFun::sys_read("/etc/lsb-release");
+    cstring desc = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
+    if(desc && (desc = Search::ChrFind(desc, '=') + 1)
+            && (desc = Search::ChrFind(desc, '"') + 1))
+    {
+        cstring end = Search::ChrFind(desc, '"');
+        if(end || (end = Search::ChrFind(desc, 0)))
+        {
+            CString desc_std(desc, end-desc);
+            return desc_std;
+        }
+    }
+    return {};
+}
+
+static CString get_kern_ver()
+{
+    utsname d;
+    if(uname(&d)!=0)
+        return "?";
+    else
+        return d.release;
+}
+
+CString get_kern_name()
+{
+    utsname d;
+    if(uname(&d)!=0)
+        return "?";
+    else
+        return d.sysname;
+}
+
+CString LinuxSysInfo::GetSystemVersion()
+{
+    CString tmp = get_lsb_release();
+    if(tmp.size() <= 0)
+        tmp = get_kern_ver();
+    return tmp;
+}
+
 CString LinuxSysInfo::CPUInfoString(bool force)
 {
     /* We don't want to read it tons of times */
@@ -263,10 +306,13 @@ bool LinuxSysInfo::HasHyperThreading()
 
 HWDeviceInfo LinuxSysInfo::DeviceName()
 {
+    static const cstring prod_ver = "/sys/class/dmi/id/product_version";
+    static const cstring prod_name = "/sys/class/dmi/id/product_name";
+
     static const cstring str_gen = "Generic";
     static const cstring str_lin = "Linux";
 
-    /* Assumes the following format:
+    /* Assumes the following format for lsb-release:
      *
      * DISTRIB_ID=Ubuntu
      * DISTRIB_RELEASE=16.04
@@ -275,20 +321,21 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
      *
      */
 
-    CString version = CResources::Linux::LinuxFileFun::sys_read("/etc/lsb-release");
-    cstring desc = StrFind(version.c_str(), "DISTRIB_DESCRIPTION");
-    if(desc && (desc = Search::ChrFind(desc, '=') + 1)
-            && (desc = Search::ChrFind(desc, '"') + 1))
-    {
-        cstring end = Search::ChrFind(desc, '"');
-        if(end || (end = Search::ChrFind(desc, 0)))
-        {
-            CString desc_std(desc, end-desc);
-            return HWDeviceInfo(str_gen, str_lin, desc_std);
-        }
-    }
+    cstring manf = str_gen;
+    cstring prod = str_lin;
 
-    return HWDeviceInfo(str_gen, str_lin, GetSystemVersion());
+    CString manufac = CResources::Linux::LinuxFileFun::sys_read("/sys/class/dmi/id/sys_vendor");
+    cstring prod_src = prod_name;
+    if(manufac == "LENOVO")
+        prod_src = prod_ver;
+    CString product = CResources::Linux::LinuxFileFun::sys_read(prod_ver);
+
+    if(manufac.size() > 0)
+        manf = manufac.c_str();
+    if(product.size() > 0)
+        prod = product.c_str();
+
+    return HWDeviceInfo(manf, prod, get_kern_name() + (" " + get_kern_ver()));
 }
 
 using namespace CResources;
