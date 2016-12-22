@@ -157,7 +157,7 @@ macro( FLATPAK_PACKAGE
 	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
         )
     install (
-	FILES
+        DIRECTORY
 	"${FLATPAK_BUNDLE_FILE}"
 
 	DESTINATION
