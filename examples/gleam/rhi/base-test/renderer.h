@@ -230,7 +230,7 @@ public:
         viewportstate.m_mview = true;
         rasterstate_line.m_wireframe = true;
         deptstate.m_test = true;
-        deptstate.m_func = C_CAST(uint32,ValueComparison::Less);
+        deptstate.m_func = C_CAST<uint32>(ValueComparison::Less);
 
         /* Applying state information */
         GLM::SetViewportState(viewportstate, 0);
@@ -344,14 +344,14 @@ public:
             this->pollEvents();
 
             /* Define frame data */
-            base_transform.position.x() = C_CAST(scalar,CMath::sin(tprevious) * 5.);
-            base_transform.position.y() = C_CAST(scalar,CMath::cos(tprevious) * 5.);
+            base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 5.);
+            base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 5.);
 
             //      camera.position.z() = -tprevious;
 
-            time_value = C_CAST(scalar,CMath::sin(tprevious) + (CMath::pi / 4.));
+            time_value = C_CAST<scalar>(CMath::sin(tprevious) + (CMath::pi / 4.));
 
-            floor_transform.rotation.y() = C_CAST(scalar,CMath::sin(tprevious));
+            floor_transform.rotation.y() = C_CAST<scalar>(CMath::sin(tprevious));
             floor_transform.rotation = normalize_quat(floor_transform.rotation);
 
             camera.position.x() -= 0.1;
@@ -422,7 +422,7 @@ public:
 
         if(e.type == CDEvent::Resize)
         {
-            auto rev = C_CAST(Display::CDResizeEvent const*,data);
+            auto rev = C_CAST<Display::CDResizeEvent const*>(data);
             buffer_debug_p->resize(*rev);
 
             camera.aspect = scalar(rev->w)/scalar(rev->h);
@@ -434,7 +434,7 @@ public:
 
         if(e.type == CIEvent::Keyboard)
         {
-            auto kev = C_CAST(CIKeyEvent const*,data);
+            auto kev = C_CAST<CIKeyEvent const*>(data);
 
             /* Single presses */
             if(kev->mod & CIKeyEvent::PressedModifier
