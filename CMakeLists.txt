@@ -96,6 +96,12 @@ if(COFFEE_GENERATE_LIBRARIES)
 
     # Add subdir for extensions, weak bindings of libraries
     add_subdirectory(ext)
+
+    install ( FILES
+        ${CMAKE_SOURCE_DIR}/cmake/Find/FindCoffee.cmake
+
+        DESTINATION
+        share/cmake/Modules)
 endif()
 
 # Add documentation directory, not built by default (increases build time)

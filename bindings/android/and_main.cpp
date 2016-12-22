@@ -135,7 +135,8 @@ COFFAPI CString Coffee_GetExternalDataPath()
 
 COFFAPI AAssetManager* Coffee_GetAssetManager()
 {
-    return coffee_app->activity->assetmanager;
+//    return coffee_app->activity->assetmanager;
+    return nullptr;
 }
 
 COFFAPI AAsset* Coffee_AssetGet(cstring fname)
@@ -176,7 +177,7 @@ COFFAPI c_cptr Coffee_AssetGetPtr(AAsset* fp)
 
 bool Coffee::EventProcess(int timeout)
 {
-    CoffeeAndroidUserData* udata = (CoffeeAndroidUserData*)coffee_app->userData;
+    CoffeeAndroidUserData* udata = C_CAST<CoffeeAndroidUserData*>(coffee_app->userData);
 
     android_poll_source* ISrc;
 
@@ -313,13 +314,13 @@ void android_main(struct android_app* state)
 
     {
         /* Get application name, just stock */
-        cstring_w appname = &(CoffeeApplicationData.application_name[0]);
-
+        CString appname = ApplicationData().application_name;
+        cstring_w appname_c = &appname[0];
 
         /* And then load the usual main() entry point */
         if(android_entry_point)
         {
-            int32 status = CoffeeMain(android_entry_point,1,&appname);
+            int32 status = CoffeeMain(android_entry_point,1,&appname_c);
             cDebug("Android exit: {0}",status);
         }else{
             cWarning("Failed to load application entry point!");

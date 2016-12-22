@@ -44,6 +44,8 @@ public:
 
     bool screensaverMode();
     void setScreensaverMode(bool m);
+
+    CString windowLibrary() const;
 };
 
 }

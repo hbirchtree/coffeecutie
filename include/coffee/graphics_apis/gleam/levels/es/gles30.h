@@ -38,6 +38,11 @@ struct CGLES30 :
     }
     STATICINLINE bool TexStorageSupported()
     {return true;}
+
+    template<typename... T>
+    STATICINLINE void ConditionalRenderBegin(T...){}
+    template<typename... T>
+    STATICINLINE void ConditionalRenderEnd(T...){}
 };
 
 }

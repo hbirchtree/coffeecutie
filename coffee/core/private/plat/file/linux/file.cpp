@@ -3,6 +3,7 @@
 
 #include "../file_abstraction.h"
 #include <coffee/core/coffee_version.h>
+#include <coffee/core/coffee.h>
 
 namespace Coffee{
 namespace CResources{
@@ -49,8 +50,8 @@ CString LinuxFileFun::NativePath(cstring fn, ResourceAccess storage)
 {
     if(feval(storage,ResourceAccess::ConfigFile))
     {
-        CString udata = Env::GetUserData(CoffeeApplicationData::organization_name.c_str(),
-                                         CoffeeApplicationData::application_name.c_str());
+        CString udata = Env::GetUserData(ApplicationData().organization_name.c_str(),
+                                         ApplicationData().application_name.c_str());
         return Env::ConcatPath(udata.c_str(),fn);
     }else if(feval(storage,ResourceAccess::TemporaryFile))
         return Env::ConcatPath("/tmp",fn);

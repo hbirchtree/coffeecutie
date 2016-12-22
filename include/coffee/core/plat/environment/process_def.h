@@ -60,6 +60,47 @@ struct ProcessPropertyDef
     {
         return 0;
     }
+
+    /*!
+     * \brief Memory consumed by process
+     * \return
+     */
+    static MemUnit Mem(PID)
+    {
+        return 0;
+    }
+    static int32 CpuTime(PID)
+    {
+        return 0;
+    }
+    static int64 UserTime()
+    {
+        return 0;
+    }
+    static int64 KernTime()
+    {
+        return 0;
+    }
+    static int64 ThreadPageFaults()
+    {
+        return 0;
+    }
+    static int64 ThreadSoftPageFaults()
+    {
+        return 0;
+    }
+    static int64 Swaps()
+    {
+        return 0;
+    }
+    static MemUnit ContextSwitches()
+    {
+        return 0;
+    }
+    static MemUnit BadContextSwitches()
+    {
+        return 0;
+    }
 };
 
 }

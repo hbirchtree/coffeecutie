@@ -1,5 +1,16 @@
 #include <coffee/core/plat/environment/application_start.h>
 
-Coffee::CString Coffee::CoffeeApplicationData::application_name = "@APP_TITLE@";
-Coffee::CString Coffee::CoffeeApplicationData::organization_name = "@APP_COMPANY@";
-Coffee::uint32 Coffee::CoffeeApplicationData::version_code = @APP_VERSION@;
+#if defined(COFFEE_ANDROID)
+extern "C" int Java_org_libsdl_app_SDLActivity_nativeInit(JNIEnv* env, jclass cls, jobject array);
+
+__attribute__ ((visibility ("default")))
+int Java_org_libsdl_app_SDLActivity_nativeInit__Ljava_lang_Object_2(
+        JNIEnv* env, jclass cls, jobject array)
+{
+    return Java_org_libsdl_app_SDLActivity_nativeInit(env, cls, array);
+}
+#endif
+
+namespace Coffee{
+Coffee::CoffeeApplicationData app_data = {"@APP_COMPANY@", "@APP_TITLE@", @APP_VERSION@};
+}
