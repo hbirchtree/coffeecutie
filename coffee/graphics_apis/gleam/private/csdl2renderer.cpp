@@ -23,26 +23,32 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
 {
     m_properties = props;
 
-    if(!(windowPreInit(initialProperties(),err) &&
-         contextPreInit(initialProperties().gl,err) &&
-         bindingPreInit(initialProperties().gl,err) &&
-         inputPreInit(err)))
-        return false;
+    do{
+        if(!(windowPreInit(initialProperties(),err) &&
+             contextPreInit(initialProperties().gl,err) &&
+             bindingPreInit(initialProperties().gl,err) &&
+             inputPreInit(err)))
+            break;
 
-    if(!(windowInit(initialProperties(),err) &&
-         contextInit(initialProperties().gl,err) &&
-         bindingInit(initialProperties().gl,err) &&
-         inputInit(err)))
-        return false;
+        if(!(windowInit(initialProperties(),err) &&
+             contextInit(initialProperties().gl,err) &&
+             bindingInit(initialProperties().gl,err) &&
+             inputInit(err)))
+            break;
 
-    /* Run binding post-init, fetches GL extensions and etc. */
-    if(!(windowPostInit(initialProperties(),err) &&
-         contextPostInit(initialProperties().gl,err) &&
-         bindingPostInit(initialProperties().gl,err) &&
-         inputPostInit(err)))
-        return false;
+        /* Run binding post-init, fetches GL extensions and etc. */
+        if(!(windowPostInit(initialProperties(),err) &&
+             contextPostInit(initialProperties().gl,err) &&
+             bindingPostInit(initialProperties().gl,err) &&
+             inputPostInit(err)))
+            break;
 
-    return true;
+        return true;
+    } while(false);
+
+    cleanup();
+
+    return false;
 }
 
 void CSDL2Renderer::cleanup()

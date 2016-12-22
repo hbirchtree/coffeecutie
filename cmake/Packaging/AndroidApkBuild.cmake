@@ -6,13 +6,6 @@ if(ANDROID)
     include ( InkscapeResize )
     include ( PermissionList )
 
-    if(ANDROID_USE_SDL2_LAUNCH)
-        find_package(SDL2main REQUIRED)
-        find_package(SDL2 REQUIRED)
-
-        include_directories(${SDL2_INCLUDE_DIR})
-    endif()
-
     # APK signing
 
     set ( ANDROID_APK_SIGN_KEY "~/keystore/key.release" CACHE FILEPATH "Android signing key" )
@@ -448,7 +441,7 @@ macro(ANDROIDAPK_PACKAGE
 
 
     if(ANDROID_USE_SDL2_LAUNCH)
-        add_library(${TARGET} SHARED ${SOURCES} "${SDL2_ANDROID_MAIN_FILE}" )
+        add_library(${TARGET} SHARED ${SOURCES} )
     else()
         add_library(${TARGET} SHARED ${SOURCES}
             ${CMAKE_SOURCE_DIR}/coffee/core/private/plat/graphics/eglinit.cpp )

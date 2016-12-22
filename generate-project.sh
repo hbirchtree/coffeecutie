@@ -72,7 +72,7 @@ function configure_project()
     local DESC="Coffee Application"
     local COPYRIGHT="Coffee"
     local SRCS="src/main.cpp"
-    local LIBS="\${COFFEE_CORE_LIBRARY};\${COFFEE_GLEAM_LIBRARY};\${COFFEE_OPENAL_LIBRARY}"
+    local LIBS="\${COFFEE_CORE_LIBRARY};\${COFFEE_GLEAM_LIBRARY};\${COFFEE_OPENAL_LIBRARY};\${COFFEE_ANDROID_LIBRARY}"
 
     if [[ -z "$1" ]]; then
         local TITLE=`basename "$(pwd)"`

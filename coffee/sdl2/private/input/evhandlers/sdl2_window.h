@@ -40,6 +40,7 @@ FORCEDINLINE void coffee_sdl2_eventhandle_window_focus(
     case SDL_WINDOWEVENT_LEAVE: s.mod |= CDFocusEvent::Mouse; break;
     case SDL_WINDOWEVENT_EXPOSED: s.mod |= CDFocusEvent::Exposed; break;
     case SDL_WINDOWEVENT_FOCUS_GAINED: s.mod |= CDFocusEvent::Enter; break;
+    case SDL_WINDOWEVENT_FOCUS_LOST: s.mod |= CDFocusEvent::Leave; break;
     }
 
     EventPack(ctxt,&e,&s);
@@ -88,6 +89,10 @@ FORCEDINLINE void EventHandleWindow(
     case SDL_WINDOWEVENT_LEAVE:
     case SDL_WINDOWEVENT_EXPOSED:
     case SDL_WINDOWEVENT_FOCUS_GAINED:{
+        coffee_sdl2_eventhandle_window_focus(ctxt,win.timestamp,win.event);
+        break;
+    }
+    case SDL_WINDOWEVENT_FOCUS_LOST:{
         coffee_sdl2_eventhandle_window_focus(ctxt,win.timestamp,win.event);
         break;
     }

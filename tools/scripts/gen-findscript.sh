@@ -21,6 +21,11 @@ set ( COFFEE_SEARCH_PATHS
     "${COFFEE_ROOT_DIR}"
     "$ENV{COFFEE_ROOT_DIR}"
     )
+set ( COFFEE_LIBRARY_SUFFIXES
+    lib
+    lib64
+    lib/${ANDROID_ABI}
+    )
 
 find_path ( COFFEE_INCLUDE_DIR_TMP
     coffee/core/coffee.h
@@ -65,8 +70,7 @@ find_library ( COFFEE_${libnames[$e]}_LIBRARY_TMP
     \${COFFEE_SEARCH_PATHS}
 
     PATH_SUFFIXES
-    lib
-    lib64
+    \${COFFEE_LIBRARY_SUFFIXES}
     )
 
 if(COFFEE_${libnames[$e]}_LIBRARY_TMP)
@@ -75,6 +79,21 @@ endif()"
 done
 
 echo "
+if(ANDROID)
+    find_library ( COFFEE_ANDROID_LIBRARY_TMP
+        AndroidCore
+
+        PATHS
+        \${COFFEE_SEARCH_PATHS}
+
+        PATH_SUFFIXES
+        \${COFFEE_LIBRARY_SUFFIXES}
+        )
+    if(COFFEE_ANDROID_LIBRARY_TMP)
+        set ( COFFEE_ANDROID_LIBRARY \"\${COFFEE_ANDROID_LIBRARY_TMP}\" CACHE STRING \"\" )
+    endif()
+endif()
+
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args (
