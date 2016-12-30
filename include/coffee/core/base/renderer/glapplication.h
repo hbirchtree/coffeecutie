@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../types/cdisplay.h"
-#include <coffee/graphics_apis/gltypes.h>
+#include <coffee/graphics/common/gltypes.h>
 
 namespace Coffee{
 namespace Display{

@@ -22,4 +22,5 @@ include_directories ( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 coffee_add_library ( AndroidCore
         "${AndroidCore_SRCS}"
         ""
+        "${CMAKE_CURRENT_SOURCE_DIR}/include"
          )

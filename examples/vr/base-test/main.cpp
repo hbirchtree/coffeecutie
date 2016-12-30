@@ -1,13 +1,11 @@
 #include <coffee/COpenVR>
 #include <coffee/core/CApplication>
-#include <coffee/COculusRift>
 #include <coffee/core/CMD>
 #include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 
 using namespace Coffee;
 
-//using VR = OculusRift::OculusVR;
 using VR = OpenVR;
 
 int32 coffee_main(int32, cstring_w*)

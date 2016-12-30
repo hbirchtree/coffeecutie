@@ -30,4 +30,5 @@ set ( LIBS
     ${SDL2_LIBRARY}
     )
 
-coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}" )
+coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
+    "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")

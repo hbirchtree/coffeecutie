@@ -14,4 +14,7 @@ set ( CoffeeVR_SRCS
     private/ovr_private.cpp
     )
 
-coffee_add_library ( CoffeeVR "${CoffeeVR_SRCS}" "${OPENVR_LIBRARY};CoffeeGLeam;CoffeeCore" )
+coffee_add_library ( CoffeeVR "${CoffeeVR_SRCS}"
+    "${OPENVR_LIBRARY};CoffeeGLeam;CoffeeCore"
+    "${CMAKE_SOURCE_DIR}/coffee/openvr"
+    )

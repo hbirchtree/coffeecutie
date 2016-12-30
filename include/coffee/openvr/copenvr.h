@@ -1,7 +1,7 @@
 #ifndef COFFEE_OPENVR_OPENVR_H
 #define COFFEE_OPENVR_OPENVR_H
 
-#include <coffee/graphics_apis/gleam/rhi/gleam_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_rhi.h>
 
 #include "ovrdevice.h"
 #include "ovractor.h"

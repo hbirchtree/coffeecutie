@@ -14,9 +14,9 @@ add_subdirectory(thread-api)
 if(NOT SKIP_LINKAGE_TEST)
     add_subdirectory(link-api)
 endif()
-if(COFFEE_BUILD_OPENVR AND NOT SKIP_OPENVR_TEST)
-    add_subdirectory(vr-api)
-endif()
+#if(COFFEE_BUILD_OPENVR AND NOT SKIP_OPENVR_TEST)
+#    add_subdirectory(vr-api)
+#endif()
 
 # This needs different testing and setup
 if(NOT ANDROID AND NOT WIN32)

@@ -8,7 +8,7 @@ if(COFFEE_BUILD_OPENSSL)
 endif()
 
 # More here!
-add_subdirectory(graphics_apis)
+add_subdirectory(graphics)
 
 if(COFFEE_BUILD_CBLAM)
     add_subdirectory(blam)
@@ -33,13 +33,14 @@ if(COFFEE_BUILD_FFMEDIA)
 endif()
 
 # Requires OpenVR libraries from Valve
-if(COFFEE_BUILD_OPENVR)
-    add_subdirectory(openvr)
-endif()
-# Requires Oculus SDK
-if(COFFEE_BUILD_OCULUSVR)
-    add_subdirectory(oculusvr)
-endif()
+#if(COFFEE_BUILD_OPENVR)
+#    add_subdirectory(openvr)
+#endif()
+
+## Requires Oculus SDK
+#if(COFFEE_BUILD_OCULUSVR)
+#    add_subdirectory(oculusvr)
+#endif()
 
 if(COFFEE_BUILD_CEF)
     add_subdirectory(cef)

@@ -11,5 +11,6 @@ include_directories( SYSTEM
     ${OPENSSL_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "CoffeeCore;${OPENSSL_LIBRARIES}" )
+coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "CoffeeCore;${OPENSSL_LIBRARIES}"
+    "${CMAKE_SOURCE_DIR}/include/coffee/asio")
 

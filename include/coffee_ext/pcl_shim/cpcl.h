@@ -2,7 +2,7 @@
 #define COFFEE_EXT_PCL_SHIM_PCL_H
 
 #include <coffee/CCore>
-#include <coffee/graphics_apis/cgraphicsdata.h>
+#include <coffee/graphics/apis/cgraphicsdata.h>
 
 /* Base headers */
 #include <pcl/point_types.h>

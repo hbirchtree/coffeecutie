@@ -1,8 +1,7 @@
 #ifndef SDL2EVENTHANDLERS
 #define SDL2EVENTHANDLERS
 
-#include <coffee/graphics_apis/gleam/csdl2renderer.h>
-
+#include <coffee/sdl2/input/csdl2_eventhandler.h>
 #include "../../types/sdl2datatypes.h"
 
 namespace Coffee{

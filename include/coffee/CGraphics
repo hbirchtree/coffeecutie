@@ -1,2 +1,2 @@
-#include "graphics_apis/cgraphicsdata.h"
-#include "graphics_apis/scene/cnode.h"
+#include "graphics/common/cgraphicsdata.h"
+#include "graphics/common/scene/cnode.h"

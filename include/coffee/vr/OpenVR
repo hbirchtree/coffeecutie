@@ -1,6 +1,6 @@
 #include <coffee/CGraphics>
 #include <coffee/core/CDebug>
-#include <coffee/graphics_apis/CGLeamRHI>
+#include <coffee/graphics/apis/CGLeamRHI>
 
 #include <openvr.h>
 

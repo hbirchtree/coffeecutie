@@ -54,11 +54,17 @@ macro(COFFEE_GEN_APPLICATIONINFO TARGET TITLE COMPANY VERSION)
 
 endmacro()
 
-macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES)
+macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
     add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
 
+    file ( GLOB_RECURSE ${TARGET}_HEADERS
+        ${HEADER_DIR}/*.h
+        ${HEADER_DIR}/*.hpp
+        )
+    source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
+
     # Because it's hard to write these three commands over and over again
-    add_library(${TARGET} ${LINKOPT} "${SOURCES}")
+    add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${${TARGET}_HEADERS}")
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -112,7 +118,8 @@ endmacro()
 macro(COFFEE_ADD_FRAMEWORK
         TARGET LINKOPT
         VERSION_CODE COPYRIGHT COMPANY
-        SOURCES BUNDLE_RSRCS BUNDLE_HDRS
+        SOURCES HEADER_DIR
+        BUNDLE_RSRCS BUNDLE_HDRS
         LIBRARIES BUNDLE_LIBRARIES)
     if(APPLE)
         MACFRAMEWORK_PACKAGE(
@@ -123,18 +130,18 @@ macro(COFFEE_ADD_FRAMEWORK
     else()
         coffee_add_elibrary(
             "${TARGET}" "${LINKOPT}"
-            "${SOURCES}" "${LIBRARIES}")
+            "${SOURCES}" "${LIBRARIES}" "${HEADER_DIR}")
     endif()
 
     target_enable_cxx11(${TARGET})
 endmacro()
 
-macro(COFFEE_ADD_LIBRARY TARGET SOURCES LIBRARIES)
+macro(COFFEE_ADD_LIBRARY TARGET SOURCES LIBRARIES HEADER_DIR)
     # Just a little simplification
     coffee_add_framework(
         ${TARGET} ${COFFEE_LINK_OPT}
         "2.0" "hbirchtree" "hbirchtree"
-        "${SOURCES}" "" ""
+        "${SOURCES}" "${HEADER_DIR}" "" ""
         "${LIBRARIES}" "")
 endmacro()
 

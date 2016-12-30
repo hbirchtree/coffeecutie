@@ -1,5 +1,5 @@
 #include <coffee/core/CApplication>
-#include <coffee/graphics_apis/CGLeam>
+#include <coffee/graphics/apis/CGLeam>
 #include <coffee/sdl2/CSDL2GLRenderer>
 #include <coffee/CGraphics>
 #include <coffee/CImage>

@@ -95,7 +95,7 @@ option ( COFFEE_BUILD_CEF "Build with CEF" OFF )
 option ( COFFEE_BUILD_OPENVR "Build with OpenVR" OFF)
 # Whether we should build with OculusVR support
 # Recommended to set OVR_ROOT_DIR and OVR_LIBRARY_RELEASE on CMake configuration
-option ( COFFEE_BUILD_OCULUSVR "Build with OculusVR" OFF)
+#option ( COFFEE_BUILD_OCULUSVR "Build with OculusVR" OFF)
 
 #
 #

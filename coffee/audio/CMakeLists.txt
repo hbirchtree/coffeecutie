@@ -19,4 +19,6 @@ set ( CoffeeAudio_SRCS
 
 include_directories(${OPENAL_INCLUDE_DIR})
 
-coffee_add_library ( CoffeeOpenAL "${CoffeeAudio_SRCS}" "CoffeeCore;${OPENAL_LIBRARY}" )
+coffee_add_library ( CoffeeOpenAL "${CoffeeAudio_SRCS}" "CoffeeCore;${OPENAL_LIBRARY}"
+    "${CMAKE_SOURCE_DIR}/include/coffee/audio"
+    )

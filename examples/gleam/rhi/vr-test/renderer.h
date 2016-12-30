@@ -1,7 +1,7 @@
 #include <coffee/CSDL2>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
-#include <coffee/graphics_apis/CGLeamRHI>
+#include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/vr/OpenVR>
 

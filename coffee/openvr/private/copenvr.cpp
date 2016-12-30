@@ -6,8 +6,8 @@
 #include <coffee/core/coffee_strings.h>
 #include <coffee/openvr/ovrdevice.h>
 
-#include <coffee/graphics_apis/gleam/rhi/gleam_vertex_rhi.h>
-#include <coffee/graphics_apis/gleam/rhi/gleam_buffer_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
 
 namespace Coffee{
 namespace OpenVRFun{

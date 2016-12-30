@@ -3,7 +3,7 @@
 #include <coffee/graphics_apis/COpenGL>
 #include <coffee/CImage>
 
-#include <coffee/graphics_apis/gleam/gleam.h>
+#include <coffee/graphics/apis/gleam/gleam.h>
 
 using namespace Coffee;
 using namespace CDisplay;

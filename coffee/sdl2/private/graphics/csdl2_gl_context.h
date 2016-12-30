@@ -1,6 +1,6 @@
 #pragma once
 
-#include <coffee/graphics_apis/gltypes.h>
+#include <coffee/graphics/common/gltypes.h>
 #include "../types/sdl2datatypes.h"
 
 namespace Coffee{

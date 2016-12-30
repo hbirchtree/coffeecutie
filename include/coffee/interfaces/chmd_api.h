@@ -3,7 +3,7 @@
 
 #include <coffee/core/types/cdef/infotypes.h>
 #include <coffee/core/types/graphics_types.h>
-#include <coffee/graphics_apis/scene/cnode.h>
+#include <coffee/graphics/common/scene/cnode.h>
 
 namespace Coffee{
 namespace HMD{

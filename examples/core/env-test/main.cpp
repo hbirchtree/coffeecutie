@@ -3,7 +3,7 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CDebug>
 
-#include <coffee/core/plat/graphics/gpu/gpu_query.h>
+#include <coffee/graphics/common/query/gpu_query.h>
 
 using namespace Coffee;
 
