@@ -75,10 +75,6 @@ option ( COFFEE_BUILD_OPENSSL "Build with SSL support, used for ASIO SSL sockets
 # External libraries
 #
 
-# Whether we should build FFMPEG-dependent modules, notably media
-option ( COFFEE_BUILD_FFMEDIA "Build with FFMPEG library" OFF)
-# Whether we should build the legacy GLBinding module for OpenGL abstraction.
-option ( COFFEE_BUILD_GLBINDING "Build with GLBinding library" OFF)
 # Whether we should build with Assimp support
 option ( COFFEE_BUILD_ASSIMP "Build with Assimp loader" OFF)
 # Chromium Embedded Framework
@@ -93,9 +89,6 @@ option ( COFFEE_BUILD_CEF "Build with CEF" OFF )
 
 # Whether we should build with OpenVR support
 option ( COFFEE_BUILD_OPENVR "Build with OpenVR" OFF)
-# Whether we should build with OculusVR support
-# Recommended to set OVR_ROOT_DIR and OVR_LIBRARY_RELEASE on CMake configuration
-#option ( COFFEE_BUILD_OCULUSVR "Build with OculusVR" OFF)
 
 #
 #
@@ -125,11 +118,4 @@ option ( COFFEE_BUILD_QT "Build with Qt support" OFF)
 #    set ( COFFEE_BUILD_NECT OFF )
 #    set ( COFFEE_BUILD_PCL OFF )
 ##    set ( COFFEE_BUILD_GLEAM_RHI OFF ) # Not implemented for GLES, only GL3.3
-#endif()
-
-#if(COFFEE_BUILD_OPENAL)
-#    find_package(OpenAL QUIET)
-#    if(NOT OPENAL_FOUND)
-#	set ( COFFEE_BUILD_OPENAL OFF )
-#    endif()
 #endif()
