@@ -13,6 +13,11 @@
 #define C_DCAST(type, var) dynamic_cast<type>(var)
 #else
 template<typename D, typename T>
+static inline D C_FCAST(T from)
+{
+    return (D)(from);
+}
+template<typename D, typename T>
 static inline D C_CAST(T from)
 {
     return static_cast<D>(from);
