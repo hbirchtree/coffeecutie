@@ -8,7 +8,6 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 find_package( NvidiaML QUIET )
 
 if(NVIDIAML_FOUND)
-    set_property(TARGET nvidia-ml PROPERTY IMPORTED_LOCATION "${NVIDIAML_LIBRARIES}" )
     include_directories( "${NVIDIAML_INCLUDE_DIR}" )
 
     coffee_add_elibrary ( "coffee-nvidia" SHARED
