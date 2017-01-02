@@ -21,13 +21,12 @@ find_library ( SSL_LIBRARY_TMP
     )
 
 find_path ( SSL_INCLUDE_DIR_TMP
-    ssl.h
-    ssl2.h
-    ssl3.h
+    openssl/ssl.h
+    openssl/ssl2.h
+    openssl/ssl3.h
 
     PATH_SUFFIXES
-    include/openssl
-    include/
+    include
     PATHS
     ${OPENSSL_SEARCH_PATHS}
     )
