@@ -13,6 +13,13 @@ set ( CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake/Packaging
     )
 
+if(WIN32)
+    set ( CMAKE_MODULE_PATH
+        ${CMAKE_SOURCE_DIR}/cmake/Find_Windows
+        ${CMAKE_MODULE_PATH}
+        )
+endif()
+
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 if(NOT WIN32)
