@@ -14,6 +14,8 @@ set ( CMAKE_MODULE_PATH
     )
 
 if(WIN32)
+    # FindOpenSSL is broken on Windows.
+    # There is this 'replacement' that works in our environment.
     set ( CMAKE_MODULE_PATH
         ${CMAKE_SOURCE_DIR}/cmake/Find_Windows
         ${CMAKE_MODULE_PATH}
