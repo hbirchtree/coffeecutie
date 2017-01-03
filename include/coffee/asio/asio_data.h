@@ -29,8 +29,7 @@ struct ASIO_Client
             service(),
             resolver(service)
 #if defined(ASIO_USE_SSL)
-          ,
-            sslctxt(asio::ssl::context::sslv23_client)
+          ,sslctxt(asio::ssl::context::sslv23_client)
 #endif
         {
         }
