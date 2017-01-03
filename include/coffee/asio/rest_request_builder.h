@@ -5,7 +5,7 @@
 #include "rest-client.h"
 
 namespace Coffee{
-namespace CASIO{
+namespace ASIO{
 
 }
 }

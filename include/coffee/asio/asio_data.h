@@ -11,13 +11,13 @@
 #include <coffee/core/coffee_strings.h>
 
 namespace Coffee{
-namespace CASIO{
+namespace ASIO{
 
 struct ASIO_Client
 {
-    struct AsioContext_class
+    struct AsioContext_data
     {
-        AsioContext_class():
+        AsioContext_data():
             service(),
             resolver(service),
             sslctxt(asio::ssl::context::sslv23_client)
@@ -29,35 +29,16 @@ struct ASIO_Client
         asio::ssl::context sslctxt;
     };
 
-    using AsioContext = ShPtr<AsioContext_class>;
+    using AsioContext_internal = ShPtr<AsioContext_data>;
 
-    STATICINLINE void InitService()
+    STATICINLINE AsioContext_internal InitService()
     {
-        t_context = AsioContext(new AsioContext_class());
+        return AsioContext_internal(new AsioContext_data());
     }
-
-    STATICINLINE AsioContext GetContext()
-    {
-        AsioContext t = t_context;
-        t_context = nullptr;
-        return t;
-    }
-
-    STATICINLINE bool MakeCurrent(AsioContext c)
-    {
-        if(t_context.get())
-        {
-            cLog(__FILE__,__LINE__,CFStrings::ASIO_Library_Name,
-                 CFStrings::ASIO_Library_MakeCurrent_Error);
-            return false;
-        }
-        t_context = c;
-        return true;
-    }
-
-protected:
-    static thread_local AsioContext t_context;
 };
+
+using AsioContext = ASIO_Client::AsioContext_internal;
+using AsioService = ASIO_Client;
 
 }
 }

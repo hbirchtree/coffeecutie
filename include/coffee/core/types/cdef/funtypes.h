@@ -94,11 +94,11 @@ public:
     void insertCmd(_cbasic_threadrunner_command*){}
 };
 
-class CThreadCommand : public _cbasic_threadrunner_command
+class ThreadCommand : public _cbasic_threadrunner_command
 {
 public:
-    CThreadCommand(Threads::Function<void()> f):m_cmd(f){}
-    STATICINLINE void perform(CThreadCommand* c)
+    ThreadCommand(Function<void()> f):m_cmd(f){}
+    STATICINLINE void perform(ThreadCommand* c)
     {
         c->m_cmd();
     }
@@ -107,14 +107,14 @@ public:
         return m_stat.load();
     }
 protected:
-    Threads::Function<void()> m_cmd;
+    Function<void()> m_cmd;
     std::atomic_bool m_stat;
 };
 
 /*!
  * \brief Event loop for inserting commands from multiple threads, reimplement for
  */
-class CEventLoop
+class EventLoop
 {
 public:
     virtual void processEvents()
@@ -122,12 +122,12 @@ public:
         m_cmdlistaccess.lock();
         while(!m_cmds.empty())
         {
-            CThreadCommand::perform(m_cmds.front());
+            ThreadCommand::perform(m_cmds.front());
             m_cmds.pop();
         }
         m_cmdlistaccess.unlock();
     }
-    FORCEDINLINE void insertCmd(CThreadCommand* c)
+    FORCEDINLINE void insertCmd(ThreadCommand* c)
     {
         m_cmdlistaccess.lock();
         m_cmds.push(c);
@@ -135,7 +135,7 @@ public:
     }
 protected:
     Mutex m_cmdlistaccess;
-    Queue<CThreadCommand*> m_cmds;
+    Queue<ThreadCommand*> m_cmds;
 };
 
 }

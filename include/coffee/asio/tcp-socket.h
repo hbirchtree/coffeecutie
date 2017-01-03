@@ -5,7 +5,7 @@
 #include <iostream>
 
 namespace Coffee{
-namespace CASIO{
+namespace ASIO{
 
 struct TCPSocketImpl : ASIO_Client
 {
@@ -26,6 +26,7 @@ struct TCPSocketImpl : ASIO_Client
     {
         using sock_t = asio::ssl::stream<asio::ip::tcp::socket>;
 
+        AsioContext_internal context;
         sock_t socket;
 
         SSLSocket_(asio::io_service &serv, asio::ssl::context& ctxt):
@@ -37,26 +38,20 @@ struct TCPSocketImpl : ASIO_Client
         {
         }
 
-        SSLSocket_():
+        SSLSocket_(AsioContext_internal c):
             recvp(),
             trans(),
             std::istream(&recvp),
             std::ostream(&trans),
-            socket(t_context->service,t_context->sslctxt)
+            context(c),
+            socket(c->service,c->sslctxt)
         {
         }
 
         void connect(Host h, Service p)
         {
-            AsioContext c = TCPSocketImpl::GetContext();
-            connect(c,h,p);
-            TCPSocketImpl::MakeCurrent(c);
-        }
-
-        void connect(AsioContext c, Host h, Service p)
-        {
             asio::ip::tcp::resolver::query q(h,p);
-            auto it = c->resolver.resolve(q);
+            auto it = context->resolver.resolve(q);
 
             asio::connect(socket.next_layer(),it);
 
@@ -113,7 +108,7 @@ struct TCPSocketImpl : ASIO_Client
 
 }
 
-using TCP = CASIO::TCPSocketImpl;
+using TCP = ASIO::TCPSocketImpl;
 
 }
 

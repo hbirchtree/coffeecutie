@@ -5,14 +5,14 @@
 #include "http_types.h"
 
 namespace Coffee{
-namespace CASIO{
+namespace ASIO{
 
 struct RestClientImpl : ASIO_Client
 {
     using Host = CString;
     using Request = HTTP::_http_request<CString>;
 
-    using RestResponse = HTTP::Response;
+    using Response = HTTP::Response;
 
     enum Protocol
     {
@@ -30,15 +30,13 @@ struct RestClientImpl : ASIO_Client
      * \param r
      * \return
      */
-    Threads::Future<RestResponse> RestRequestAsync(
-            AsioContext context, Host const& h, Request const& r)
+    Threads::Future<Response> RestRequestAsync(
+            AsioContext_internal context, Host const& h, Request const& r)
     {
-        Threads::Function<RestResponse()> fun = [=]()
+        Function<Response()> fun = [=]()
         {
-            MakeCurrent(context);
-            RestResponse res = RestRequest(h,r);
-	    GetContext();
-	    return res;
+            Response res = RestRequest(context, h, r);
+            return res;
         };
         return Threads::RunAsync(fun);
     }
@@ -50,23 +48,23 @@ struct RestClientImpl : ASIO_Client
      * \param r
      * \return
      */
-    static RestResponse RestRequest(Host h, Request const& r);
+    static Response RestRequest(AsioContext_internal c, Host h, Request const& r);
 
-    static RestResponse RestRequestHTTP(Host h, Request const&r);
+    static Response RestRequestHTTP(AsioContext_internal c, Host h, Request const&r);
 
-    static RestResponse RestRequestHTTPS(Host h, Request const& r);
+    static Response RestRequestHTTPS(AsioContext_internal c, Host h, Request const& r);
 
     /*!
      * \brief Retrieve the MIME-type of the REST response, used for strict checking
      * \return String representing the format
      */
-    static CString GetContentType(RestResponse const& resp);
+    static CString GetContentType(Response const& resp);
 };
 
 
 }
 
-using REST = CASIO::RestClientImpl;
+using REST = ASIO::RestClientImpl;
 
 }
 

@@ -47,3 +47,8 @@
 #if defined(COFFEE_ANDROID)
 //#define COFFEE_DISABLE_SRGB_SUPPORT
 #endif
+
+/* OpenSSL is difficult on Windows... */
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
+#define ASIO_USE_SSL
+#endif

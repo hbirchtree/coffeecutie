@@ -29,20 +29,18 @@ struct _http_request
 
     StrType version;
     StrType mimeType;
-    ValueMapping<StrType> values;
+    ValueMapping<StrType> header;
     StrType payload;
 };
 
 template<typename StrType>
 struct _http_response
 {
-    StrType header; /*!< OBSOLETE: Will be removed soon! */
-
     StrType reqtype;
     StrType version;
     StrType mimeType;
     StrType message;
-    ValueMapping<StrType> values;
+    ValueMapping<StrType> header;
     StrType payload;
 
     union
@@ -60,7 +58,7 @@ void InitializeRequest(_http_request<T>& r)
     r.reqtype = "GET";
     r.version = "HTTP/1.0";
     r.mimeType = "text/plain";
-    r.values.insert({"Accept","*/*"});
+    r.header.insert({"Accept","*/*"});
 }
 
 using Request = _http_request<CString>;
