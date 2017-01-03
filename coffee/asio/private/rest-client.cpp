@@ -57,6 +57,7 @@ RestClientImpl::Response RestClientImpl::RestRequestHTTP(AsioContext_internal, H
 
 RestClientImpl::Response RestClientImpl::RestRequestHTTPS(AsioContext_internal c, Host h, Request const& r)
 {
+#if defined(ASIO_USE_SSL)
     asio::ssl::stream<asio::ip::tcp::socket> socket(c->service,
                                                     c->sslctxt);
 
@@ -99,9 +100,12 @@ RestClientImpl::Response RestClientImpl::RestRequestHTTPS(AsioContext_internal c
     Response resp;
 
     if(!HTTP::ExtractResponse(is,&resp))
-        return Response();
+        return {};
     else
         return resp;
+#else
+    return {};
+#endif
 }
 
 CString RestClientImpl::GetContentType(const Response &resp)

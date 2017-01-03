@@ -208,7 +208,7 @@ struct SysInfoDef
 
     STATICINLINE
     /*!
-     * \brief Useful in correlation to core count
+     * \brief Useful in relation to core count
      * \return
      */
     bool HasHyperThreading()

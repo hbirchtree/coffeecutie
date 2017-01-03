@@ -4,6 +4,8 @@ find_package(OpenSSL REQUIRED)
 set ( CoffeeASIO_SRCS
     private/rest-client.cpp
     private/asio_data.cpp
+    private/tcp-socket.cpp
+    private/udp-socket.cpp
     )
 
 include_directories( SYSTEM

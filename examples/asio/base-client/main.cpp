@@ -18,6 +18,7 @@ int32 coffee_main(int32, cstring_w*)
         ProfContext __m("example.com");
 
         TCP::SSLSocket cn(net_context);
+        tim.start();
         cn.connect("example.com","https");
 
         Profiler::Profile("Connect to host");
@@ -42,6 +43,7 @@ int32 coffee_main(int32, cstring_w*)
         {
             cDebug("Bad mojo");
         }else{
+            cDebug("Total time: {0}", tim.elapsed());
             for(std::pair<CString,CString> const& v : resp.header)
                 cDebug("{0} : {1}",v.first,v.second);
             cDebug("Payload:\n{0}",resp.payload);
@@ -58,9 +60,9 @@ int32 coffee_main(int32, cstring_w*)
         HTTP::InitializeRequest(rq);
 
         rq.transp = REST::HTTPS;
-        rq.resource = "/kraken/channels";
+        rq.resource = "/kraken";
         rq.header["Accept"] = "application/vnd.twitchtv.v2+json";
-        rq.header["Client-ID"] = "abcdefghijklmnop";
+        rq.header["Client-ID"] = {};
 
         Profiler::Profile("Generate response");
 
@@ -76,26 +78,31 @@ int32 coffee_main(int32, cstring_w*)
             Profiler::Profile("Response acquisition");
 
             cDebug("Content type: {0}",REST::GetContentType(res));
-
             cDebug("Status: {0}",res.status);
-            cDebug("Header: \n{0}",res.header);
             cDebug("Message: {0}",res.message);
-            cDebug("Payload: \n{0}",res.payload);
+            for(auto const& k : res.header)
+                cDebug("Header: {0} = {1}", k.first, k.second);
 
             JSON::Document doc = JSON::Read(res.payload.c_str());
 
             if(doc.IsNull())
-                return 1;
+                return;
 
             cDebug("JSON document:\n{0}",JSON::Serialize(doc));
         };
 
         Threads::Future<REST::Response> t = REST::RestRequestAsync(net_context,host,rq);
-        Profiler::Profile("Dispath request");
+        Profiler::Profile("Dispatch request");
 
         tim.start();
+        printResult(t);
 
-        cDebug("Launched network task!");
+        rq.resource = "/kraken/streams";
+        t = REST::RestRequestAsync(net_context, host, rq);
+        Profiler::Profile("Dispatch request");
+
+        tim.start();
+        printResult(t);
     }
 
     return 0;

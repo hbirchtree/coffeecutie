@@ -132,7 +132,7 @@ public:
 
             if(parallel_sphere_creation)
             {
-                Threads::Function<void(szptr,int32*)> sphere_fun = [](szptr i, int32* data)
+                Function<void(szptr,int32*)> sphere_fun = [](szptr i, int32* data)
                 {
                     for(szptr j=0;j<512;j++)
                         for(szptr k=0;k<512;k++)

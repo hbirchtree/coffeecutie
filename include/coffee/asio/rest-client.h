@@ -9,9 +9,7 @@ namespace ASIO{
 
 struct RestClientImpl : ASIO_Client
 {
-    using Host = CString;
     using Request = HTTP::_http_request<CString>;
-
     using Response = HTTP::Response;
 
     enum Protocol
