@@ -18,9 +18,6 @@ set ( ANDROID_NDK_BUILD_PROGRAM
 set ( ANDROID_ZIPALIGN
 
         CACHE FILEPATH "Android zipalign" )
-set ( ANDROID_STRIP
-        "${ANDROID_TOOLCHAIN_ROOT}/bin/${ANDROID_TOOLCHAIN_MACHINE_NAME}-strip${TOOL_OS_SUFFIX}"
-        CACHE FILEPATH "Android strip utility" )
 
 find_program ( ANDROID_ANT_PROGRAM_TMP
     ant

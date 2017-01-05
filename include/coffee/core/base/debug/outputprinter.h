@@ -52,7 +52,7 @@ struct OutputPrinterImpl : OutputPrinterDef
             flag = ANDROID_LOG_VERBOSE;
             c_str_offset = 6;
         }
-        __android_log_print(flag, "Coffee", &formatted[c_str_offset]);
+        __android_log_print(flag, "Coffee", "%s", &formatted[c_str_offset]);
 #else
         Puts(stream,formatted.c_str());
 #endif

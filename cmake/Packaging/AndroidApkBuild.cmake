@@ -275,7 +275,7 @@ macro(APK_PACKAGE_EXT
 
     add_custom_command ( TARGET ${Target_Name}
         POST_BUILD
-        COMMAND ${ANDROID_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
+        COMMAND ${CMAKE_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
         )
 
     #

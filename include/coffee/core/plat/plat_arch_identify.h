@@ -5,10 +5,13 @@
 #if defined(__amd64__) || defined(_M_X64) || defined(_M_AMD64)
 #define COFFEE_ARCH "AMD64"
 
-#define COFFEE_ARCH_X86
+#define COFFEE_ARCH_AMD64
 
 /* i386 is a weird one */
 #elif defined(__i386__) || defined(_X86_)
+
+#define COFFEE_ARCH_X86
+
 #if defined(__i686__)
 #define COFFEE_ARCH "i686"
 #elif defined(__i586__)
