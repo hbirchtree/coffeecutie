@@ -33,12 +33,6 @@ set ( LIBS
     CoffeeGraphicsAPI
     )
 
-if(ANDROID)
-    list ( APPEND LIBS
-        GLESv3
-        )
-endif()
-
 # For Android, there is some special function loading
 find_package(SDL2 REQUIRED)
 include_directories (${SDL2_INCLUDE_DIR})
@@ -47,4 +41,3 @@ list ( APPEND LIBS ${SDL2_LIBRARY})
 
 coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam")
-

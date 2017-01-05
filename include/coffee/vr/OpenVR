@@ -201,7 +201,7 @@ struct OpenVR
                           &d.render_bounds[i]);
 
         d.vr_target.blit(C_CAST<CRect64>(GetRenderTargetSize()),
-                         GAPI::DefaultFramebuffer,
+                         GAPI::DefaultFramebuffer(),
                          CRect64(tgtSize.convert<int64>()),
                          DBuffers::Color,Filtering::Linear);
     }

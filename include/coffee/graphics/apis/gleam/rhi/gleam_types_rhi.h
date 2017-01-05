@@ -25,15 +25,12 @@ enum APILevel
     GLES_3_2 = 0x10320,
 };
 
-extern APILevel GL_CURR_API;
-
-#ifndef NDEBUG
-extern bool GL_DEBUG_MODE;
-#else
-const constexpr bool GL_DEBUG_MODE = false;
-#endif
-
 struct GLEAM_API;
+
+/* GLEAM-specific data */
+
+struct GLEAM_Instance_Data;
+struct GLEAM_DataStore;
 
 /* Profiler structures */
 struct GLEAM_PRF;

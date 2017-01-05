@@ -4,6 +4,7 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_query_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 
 #include <coffee/core/platform_data.h>
 #include "gleam_internal_types.h"
@@ -14,12 +15,12 @@ namespace GLEAM{
 
 using GLC = CGL_Implementation;
 
-void GLEAM_API::LoadAPI(bool debug)
+bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
-    instance_data = new GLEAM_Instance_Data;
+    store->inst_data = new GLEAM_Instance_Data;
 
 #ifndef NDEBUG
-    GL_DEBUG_MODE = debug;
+    store->DEBUG_MODE = debug;
 #endif
 
     {
@@ -28,13 +29,13 @@ void GLEAM_API::LoadAPI(bool debug)
         CGhnd* bufs = new CGhnd[num_pbos];
         CGL33::BufAlloc(num_pbos,bufs);
 
-        instance_data->pboQueue.buffers.reserve(num_pbos);
+        store->inst_data->pboQueue.buffers.reserve(num_pbos);
         for(uint32 i=0;i<num_pbos;i++)
         {
             GLEAM_PboQueue::Pbo pbo;
             pbo.buf = bufs[i];
             pbo.flags = 0;
-            instance_data->pboQueue.buffers.push_back(pbo);
+            store->inst_data->pboQueue.buffers.push_back(pbo);
         }
         delete[] bufs;
     }
@@ -50,26 +51,29 @@ void GLEAM_API::LoadAPI(bool debug)
         /* If higher level of API is not achieved, stay at the lower one */
         if(ver>=ver45&& /* DISABLES CODE */ (false))
             /* Unimplemented both on CGL level and here */
-            GL_CURR_API = GL_4_5;
+            store->CURR_API = GL_4_5;
         else if(ver>=ver43 && /* DISABLES CODE */ (false))
-            GL_CURR_API = GL_4_3;
+            store->CURR_API = GL_4_3;
         else if(ver>=ver33)
-            GL_CURR_API = GL_3_3;
+            store->CURR_API = GL_3_3;
     }else
     {
+        const Display::CGLVersion ver20es(2,0);
         const Display::CGLVersion ver30es(3,0);
         const Display::CGLVersion ver32es(3,2);
 
         if(ver>=ver32es)
-            GL_CURR_API = GLES_3_2;
-        else
-            if(ver>=ver30es)
-            GL_CURR_API = GLES_3_0;
+            store->CURR_API = GLES_3_2;
+        else if(ver>=ver30es)
+            store->CURR_API = GLES_3_0;
+        else if(ver>=ver20es)
+            store->CURR_API = GLES_2_0;
     }
 
-    if(GL_CURR_API == GL_Nothing)
+    if(store->CURR_API == GL_Nothing)
     {
         cWarning("Totally failed to create a GLEAM context, got version: {0}",ver);
+        return false;
 //        RUNOUTTHEWINDOW();
     }
 
@@ -79,10 +83,23 @@ void GLEAM_API::LoadAPI(bool debug)
         CGL33::Enable(Feature::FramebufferSRGB);
     }
 
-    cVerbose(4,"Initialized API level {0}",(const void* const&)GL_CURR_API);
+    cVerbose(4,"Initialized API level {0}",(const void* const&)store->CURR_API);
+
+    m_store = store;
+
+    return true;
 }
 
 /* Future improvement: cache changes, or maybe rely on driver for that */
+
+Function<bool (bool debug)> GLEAM_API::GetLoadAPI()
+{
+    return [](bool debug = false)
+    {
+        static GLEAM_DataStore m_gleam_data = {};
+        return LoadAPI(&m_gleam_data, debug);
+    };
+}
 
 void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
 {
@@ -534,6 +551,11 @@ void GLEAM_API::DrawConditional(const DrawCall &d,
     CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
     Draw(d,i);
     CGL33::ConditionalRenderEnd();
+}
+
+GLEAM_API::FB_T &GLEAM_API::DefaultFramebuffer()
+{
+    return m_store->DefaultFramebuffer;
 }
 
 }

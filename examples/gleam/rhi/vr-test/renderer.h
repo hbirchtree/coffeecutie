@@ -64,7 +64,12 @@ public:
          * Loading the GLeam API, chosen according to what is available at runtime
          */
 
-        GLM::LoadAPI(true);
+        auto Loader = GLM::GetLoadAPI();
+        if(!Loader(true))
+        {
+            cDebug("Failed to load GLEAM API");
+            return;
+        }
 
         OVR::Init();
 
@@ -304,14 +309,14 @@ public:
 
         GLM::PreDrawCleanup();
 
-        GLM::DefaultFramebuffer.clear(0, clear_col, 1.);
+        GLM::DefaultFramebuffer().clear(0, clear_col, 1.);
 
-        GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
+        GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer(),
                                         DBuffers::Color | DBuffers::Depth);
 
         buffer_debug_p = &buffer_debug;
 
-        GLM::FB_T* render_target = &GLM::DefaultFramebuffer;
+        GLM::FB_T* render_target = &GLM::DefaultFramebuffer();
 
         Coffee::Counter frame_counter(frame_count);
 
@@ -320,7 +325,7 @@ public:
 
         GLM::FB_T& vr_target = OVR::GenRenderTarget(vr_data, viewstate_vr);
 
-        GLM::FB_T* default_fb = &GLM::DefaultFramebuffer;
+        GLM::FB_T* default_fb = &GLM::DefaultFramebuffer();
         default_fb = &vr_target;
 
         Vector<Matf4> camera_pre;

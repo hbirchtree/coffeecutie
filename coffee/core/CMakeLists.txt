@@ -24,7 +24,6 @@ set ( CoffeeCore_PCH
 set ( CoffeeCore_SRCS
 
     private/extern_storage.cpp
-#    private/exit_handling.cpp
     private/coffee_signals.cpp
     private/argument_handling.cpp
 
@@ -45,9 +44,6 @@ set ( CoffeeCore_SRCS
     # Profiling
     private/profiler/profiling-export.cpp
 
-    # TODO: Move Windows library code into new API
-    private/plat/linking/libraries.cpp
-
     # Isolation of platform libraries
     private/plat/environment_wall.cpp
 
@@ -59,6 +55,9 @@ set ( CoffeeCore_SRCS
     # Compression / data storage
     private/datastorage/compression/libz.cpp
     private/datastorage/text/ini/ciniparser.cpp
+
+    # Storage stuff, may be externalized
+    private/coffee_saving.cpp
 
     # Unit testing
     private/unit_tests/framework.cpp

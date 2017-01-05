@@ -19,7 +19,7 @@ FORCEDINLINE void ResizeWindowUniversal(const CDEvent& e, c_cptr data)
     {
         auto rev = C_CAST<const CDResizeEvent*>(data);
         CRect64 view(0,0,rev->w,rev->h);
-        GLM::DefaultFramebuffer.resize(0,view);
+        GLM::DefaultFramebuffer().resize(0,view);
     }
 }
 

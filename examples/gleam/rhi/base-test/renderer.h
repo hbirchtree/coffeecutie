@@ -7,11 +7,20 @@
 #include <coffee/image/cimage.h>
 
 #include <coffee/core/platform_data.h>
+#include <coffee/core/coffee_saving.h>
 
 //#define USE_NULL_RENDERER
 
 using namespace Coffee;
 using namespace Display;
+
+struct RuntimeState
+{
+    bigscalar time_base = 0.;
+    bool debug_enabled = false;
+};
+
+RuntimeState save_state;
 
 class CDRenderer : public CSDL2Renderer {
 public:
@@ -42,6 +51,17 @@ public:
     }
 
     virtual void run() {
+        {
+            cDebug("Available storage memory: {0}", Store::AvailableSaveMemory());
+            szptr data_size = sizeof(save_state);
+            save_state.time_base = 10.;
+            Store::SaveMemory(&save_state, sizeof(save_state));
+            save_state = {};
+            Store::RestoreMemory(&save_state, &data_size);
+
+            return;
+        }
+
         cVerbose("Entering run() function");
 
         Profiler::PushContext("Renderer");
@@ -64,7 +84,12 @@ public:
         /*
          * Loading the GLeam API, chosen according to what is available at runtime
          */
-        GLM::LoadAPI(PlatformData::IsDebug());
+        auto Loader = GLM::GetLoadAPI();
+        if(!Loader(PlatformData::IsDebug()))
+        {
+            cDebug("Failed to load GLEAM API");
+            return;
+        }
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
@@ -295,14 +320,14 @@ public:
 
         GLM::PreDrawCleanup();
 
-        GLM::DefaultFramebuffer.clear(0, clear_col, 1.);
+        GLM::DefaultFramebuffer().clear(0, clear_col, 1.);
 
-        GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
+        GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer(),
                                         DBuffers::Color | DBuffers::Depth);
 
         buffer_debug_p = &buffer_debug;
 
-        GLM::FB_T* render_target = &GLM::DefaultFramebuffer;
+        GLM::FB_T* render_target = &GLM::DefaultFramebuffer();
 
         Coffee::Counter frame_counter(frame_count);
 
@@ -319,7 +344,7 @@ public:
                 render_target = &buffer_debug.debugTarget();
             }
             else
-                render_target = &GLM::DefaultFramebuffer;
+                render_target = &GLM::DefaultFramebuffer();
 
 	    render_target->clear(0,clear_col,1.);
 
@@ -403,7 +428,7 @@ public:
             if(do_debugging)
             {
                 did_apply_state = false;
-                GLM::DefaultFramebuffer.clear(0,clear_col,1.);
+                GLM::DefaultFramebuffer().clear(0,clear_col,1.);
                 buffer_debug.end();
             }
 

@@ -6,3 +6,4 @@
 #include "gleam/rhi/gleam_shader_rhi.h"
 #include "gleam/rhi/gleam_surface_rhi.h"
 #include "gleam/rhi/gleam_vertex_rhi.h"
+#include "gleam/rhi/gleam_data.h"

@@ -292,7 +292,7 @@ GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
 
 void GLEAM_PipelineDumper::dump(cstring out)
 {
-    int32* bin_fmts = &GLEAM_API::instance_data->GL_CACHED
+    int32* bin_fmts = &GLEAM_API_INSTANCE_DATA->GL_CACHED
             .NUM_PROGRAM_BINARY_FORMATS;
     if(*bin_fmts == -1)
     {

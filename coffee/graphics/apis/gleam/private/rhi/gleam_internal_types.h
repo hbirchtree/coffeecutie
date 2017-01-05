@@ -1,6 +1,7 @@
 #pragma once
 
 #include <coffee/graphics/apis/gleam/rhi/gleam_types_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/gleam.h>
 
 namespace Coffee{
@@ -14,6 +15,8 @@ using CGL43 = CGLES32;
 
 using namespace CGL;
 
+extern thread_local GLEAM_DataStore* m_store;
+
 struct GLEAM_PboQueue
 {
     struct Pbo
@@ -25,7 +28,9 @@ struct GLEAM_PboQueue
     uint32 idx = 0;
     Pbo& current()
     {
-        return buffers.at(idx++);
+        Pbo& ref = buffers.at(idx++);
+        idx = idx % buffers.size();
+        return ref;
     }
 };
 
@@ -40,3 +45,7 @@ struct GLEAM_Instance_Data
 }
 }
 }
+
+#define GL_CURR_API m_store->CURR_API
+#define GL_DEBUG_MODE m_store->DEBUG_MODE
+#define GLEAM_API_INSTANCE_DATA m_store->inst_data

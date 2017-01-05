@@ -7,11 +7,8 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-struct GLEAM_Instance_Data;
-
 struct GLEAM_API : GraphicsAPI
 {
-
     /* Enumerations */
     enum TextureFlags
     {
@@ -87,9 +84,13 @@ struct GLEAM_API : GraphicsAPI
 
     using Q_OCC = OccludeQuery;
 
+    using DataStore = GLEAM_DataStore*;
+
     /* "Loose" functions */
 public:
-    static void LoadAPI(bool debug = false);
+    static bool LoadAPI(DataStore store, bool debug = false);
+
+    static Function<bool(bool debug)> GetLoadAPI();
 
     /* i specifies view index for indexed views, 0 for  */
     static void SetRasterizerState(RasterizerState const& rstate, uint32 i = 0);
@@ -116,12 +117,7 @@ public:
                      OccludeQuery* query = nullptr);
     static void DrawConditional(DrawCall const& d, DrawInstanceData const& i, OccludeQuery &c);
 
-    /* Variables */
-protected:
-    static thread_local GLEAM_Instance_Data* instance_data;
-
-public:
-    static thread_local FB_T DefaultFramebuffer;
+    static FB_T& DefaultFramebuffer();
 };
 
 struct GLEAM_PRF

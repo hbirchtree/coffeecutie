@@ -89,7 +89,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
 
     if(m_flags&GLEAM_API::TextureDMABuffered)
     {
-        GLEAM_PboQueue::Pbo& pbo = GLEAM_API::instance_data->pboQueue.current();
+        GLEAM_PboQueue::Pbo& pbo = GLEAM_API_INSTANCE_DATA->pboQueue.current();
 
         if((GL_CURR_API==GL_4_3 || GL_CURR_API==GL_4_5) && CGL43::BufferStorageSupported())
         {
@@ -171,12 +171,12 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
         data_ptr = 0x0;
         if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
         {
-            CGL33::BufBind(BufType::PixelUData,GLEAM_API::instance_data->pboQueue.current().buf);
+            CGL33::BufBind(BufType::PixelUData,GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
             CGL33::BufData(BufType::PixelUData,GetPixSize(fmt,comp,size.volume()),data,
                            ResourceAccess::WriteOnly|ResourceAccess::Persistent);
         }else if (GL_CURR_API == GL_4_3)
         {
-            CGL43::BufBind(BufType::PixelUData,GLEAM_API::instance_data->pboQueue.current().buf);
+            CGL43::BufBind(BufType::PixelUData,GLEAM_API_INSTANCE_DATA->pboQueue.current().buf);
             CGL43::BufStorage(BufType::PixelUData,GetPixSize(fmt,comp,size.volume()),data,
                               ResourceAccess::WriteOnly|ResourceAccess::Persistent);
         }
