@@ -208,7 +208,7 @@ void CoffeeTerminate(bool profiler_destroy)
     Cmd::ResetScreen();
 }
 
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) || !defined(ANDROID_DONT_USE_SDL2)
 
 bool EventProcess(int)
 {
