@@ -225,10 +225,10 @@ void GotoApplicationDir()
 
 void InstallDefaultSigHandlers()
 {
-    InstallSignalHandler(Sig_Termination,nullptr);
-    InstallSignalHandler(Sig_PoopedABit,nullptr);
-    InstallSignalHandler(Sig_ShitMySelf,nullptr);
-    InstallSignalHandler(Sig_FPE,nullptr);
+//    InstallSignalHandler(Sig_Termination,nullptr);
+//    InstallSignalHandler(Sig_PoopedABit,nullptr);
+//    InstallSignalHandler(Sig_ShitMySelf,nullptr);
+//    InstallSignalHandler(Sig_FPE,nullptr);
 }
 
 const CoffeeApplicationData &ApplicationData()

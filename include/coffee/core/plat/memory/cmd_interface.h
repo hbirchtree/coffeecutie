@@ -50,7 +50,7 @@ struct BasicTerm : CmdDef
         getchar();
     }
 
-    STATICINLINE void Exit(int code)
+    [[noreturn]] STATICINLINE void Exit(int code)
     {
         const constexpr cstring printf_fmt = "Exiting with code: %i\n";
 #if defined(COFFEE_ANDROID)

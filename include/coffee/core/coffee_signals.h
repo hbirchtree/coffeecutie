@@ -27,7 +27,7 @@ enum Signals
 	Sig_FPE			= SIGFPE,
 
 #ifdef COFFEE_WINDOWS
-	Sig_Kill		= 0,
+    Sig_Kill		= Sig_GeneralError,
 #else
     Sig_Kill        = SIGKILL,
 #endif
