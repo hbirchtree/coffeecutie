@@ -1,5 +1,7 @@
 #include <coffee/core/plat/environment/android/sysinfo.h>
 
+#include <coffee/core/CDebug>
+
 #if defined(ANDROID_DONT_USE_SDL2)
 #include <coffee/android/android_main.h>
 #else
@@ -14,7 +16,8 @@ namespace Android{
 JNIEnv* jni_getEnv()
 {
 #if !defined(ANDROID_DONT_USE_SDL2)
-    return (JNIEnv*)SDL_AndroidGetJNIEnv();
+    cVerbose(7, "SDL_AndroidGetJNIEnv: {0}", c_cptr(SDL_AndroidGetJNIEnv));
+    return C_CAST<JNIEnv*>(SDL_AndroidGetJNIEnv());
 #else
     /* TODO: Add native_app_glue implementation */
     return nullptr;
@@ -38,7 +41,7 @@ CString jni_getString(cstring cname, cstring field)
         if(!stringField)
             break;
 
-        jstring stringVal = (jstring)env->GetStaticObjectField(baseClass,stringField);
+        jstring stringVal = C_CAST<jstring>(env->GetStaticObjectField(baseClass,stringField));
         if(!stringVal)
             break;
 
@@ -59,9 +62,12 @@ CString AndroidSysInfo::GetSystemVersion()
 {
     JNIEnv* env = jni_getEnv();
 
+    cVerbose(7, "JNIEnv: {0}", c_cptr(env));
+
     do {
         /*
-         * Reference: http://stackoverflow.com/questions/10196361/how-to-check-the-device-running-api-level-using-c-code-via-ndk
+         * Reference:
+         * http://stackoverflow.com/questions/10196361/how-to-check-the-device-running-api-level-using-c-code-via-ndk
          */
         if(!env)
             break;

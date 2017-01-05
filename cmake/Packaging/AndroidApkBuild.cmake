@@ -25,6 +25,8 @@ if(ANDROID)
 
     message ( "-- Main File: ${SDL2_ANDROID_MAIN_FILE}" )
 
+    set ( ANDROID_USE_SDL2_LAUNCH ON )
+
 endif()
 
 #

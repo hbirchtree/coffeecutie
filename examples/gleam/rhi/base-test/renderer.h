@@ -18,9 +18,10 @@ struct RuntimeState
 {
     bigscalar time_base = 0.;
     bool debug_enabled = false;
+    uint8 padding[7];
 };
 
-RuntimeState save_state;
+static RuntimeState save_state;
 
 class CDRenderer : public CSDL2Renderer {
 public:
@@ -51,17 +52,6 @@ public:
     }
 
     virtual void run() {
-        {
-            cDebug("Available storage memory: {0}", Store::AvailableSaveMemory());
-            szptr data_size = sizeof(save_state);
-            save_state.time_base = 10.;
-            Store::SaveMemory(&save_state, sizeof(save_state));
-            save_state = {};
-            Store::RestoreMemory(&save_state, &data_size);
-
-            return;
-        }
-
         cVerbose("Entering run() function");
 
         Profiler::PushContext("Renderer");
@@ -438,6 +428,9 @@ public:
 
             tdelta = this->contextTime() - tprevious;
             tprevious = this->contextTime();
+
+            save_state.time_base = tprevious;
+            save_state.debug_enabled = do_debugging;
         }
 
         Profiler::PopContext();

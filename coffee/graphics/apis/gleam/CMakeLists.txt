@@ -33,6 +33,10 @@ set ( LIBS
     CoffeeGraphicsAPI
     )
 
+if(ANDROID)
+
+endif()
+
 # For Android, there is some special function loading
 find_package(SDL2 REQUIRED)
 include_directories (${SDL2_INCLUDE_DIR})
