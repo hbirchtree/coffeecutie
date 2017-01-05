@@ -74,6 +74,7 @@ void SetExitHandler(exithandler_t handler)
 
 void InstallSignalHandler(Signals sig, sighandler_t handler)
 {
+#if !defined(COFFEE_ANDROID) || (defined(COFFEE_ANDROID) && !defined(COFFEE_ARCH_MIPS))
     /* Set up signal handlers, make the process more well-behaved */
     if(sig < 100 && sig > 1)
     {
@@ -81,6 +82,7 @@ void InstallSignalHandler(Signals sig, sighandler_t handler)
             handler = sighandle;
         signal(sig,handler);
     }
+#endif
 }
 
 void sig_dummy_handler(int)
