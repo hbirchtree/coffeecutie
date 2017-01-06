@@ -18,7 +18,7 @@ struct GLEAM_DataStore
     #ifndef NDEBUG
     bool DEBUG_MODE = false;
     #else
-    const constexpr bool GL_DEBUG_MODE = false;
+    const constexpr bool DEBUG_MODE = false;
     #endif
 };
 
