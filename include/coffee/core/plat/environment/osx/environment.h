@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-//#if defined(COFFEE_APPLE)
+#if defined(COFFEE_APPLE)
 
 #include "../unix/environment.h"
 
@@ -35,4 +35,4 @@ using Env_ = Environment::Mac::MacEnv;
 using ColorMap_ = Environment::Mac::MacColorMap;
 
 }
-//#endif
+#endif
