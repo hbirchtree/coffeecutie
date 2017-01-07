@@ -108,6 +108,7 @@ if(APPLE)
     list ( APPEND CoffeeCore_SRCS
         private/plat/file/osx/file.cpp
         private/plat/environment/osx/sysinfo.cpp
+        private/plat/environment/osx/environment.cpp
         )
 endif()
 

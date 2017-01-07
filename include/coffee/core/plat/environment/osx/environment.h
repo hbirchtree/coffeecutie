@@ -2,12 +2,9 @@
 
 #include "../../plat_primary_identify.h"
 
-#if defined(COFFEE_APPLE)
+//#if defined(COFFEE_APPLE)
 
 #include "../unix/environment.h"
-
-#include <libproc.h>
-#include <errno.h>
 
 #include "../../memory/stlstring_ops.h"
 
@@ -24,14 +21,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
         CString execname = ExecutableName();
         return DirName(execname.c_str());
     }
-    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
-    {
-        CString dir = GetVar("HOME");
-        dir = ConcatPath(dir.c_str(),"Library/Application Support");
-        dir = ConcatPath(dir.c_str(),orgname);
-        dir = ConcatPath(dir.c_str(),appname);
-        return dir;
-    }
+    static CString GetUserData(cstring orgname, cstring appname);
 };
 
 struct MacColorMap : Posix::PosixTerminalColorCodes
@@ -45,4 +35,4 @@ using Env_ = Environment::Mac::MacEnv;
 using ColorMap_ = Environment::Mac::MacColorMap;
 
 }
-#endif
+//#endif
