@@ -52,3 +52,7 @@
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
 #define ASIO_USE_SSL
 #endif
+
+#if defined(COFFEE_APPLE)
+#define thread_local __thread
+#endif

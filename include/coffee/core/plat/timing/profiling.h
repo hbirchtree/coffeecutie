@@ -49,16 +49,18 @@ struct SimpleProfilerImpl
 
     STATICINLINE void ResetPointers()
     {
-        global_init = nullptr;
+        /* Some platforms can't keep their pants on.
+         * And they shit the bed.
+         */
+        profiler_data_store = nullptr;
     }
 
     STATICINLINE void InitProfiler()
     {
-        if(!global_init)
+        if(!profiler_data_store)
         {
-//            cVerbose(6,"Creating global thread counter");
-            global_init = new std::atomic_int(0);
-            global_init->store(0);
+            profiler_data_store = new ProfilerDataStore;
+            profiler_data_store->global_init.store(0);
         }
 #ifndef NDEBUG
 //        cVerbose(6,"Creating thread context stack");
@@ -66,19 +68,14 @@ struct SimpleProfilerImpl
 #endif
 
 //        cVerbose(6,"Checking initializer value: {0}",global_init->load());
-        if(global_init->load()<1)
+        if(profiler_data_store->global_init.load()<1)
         {
 //            cVerbose(6,"Creating profiler");
-#ifndef NDEBUG
-            datapoints = new LinkList<DataPoint>;
-            threadnames = new ThreadListing;
-#endif
-            start_time = new Timestamp(Time::CurrentMicroTimestamp());
-            data_access_mutex = new Mutex;
-            extra_data = new ExtraData;
+
+            profiler_data_store->start_time = Time::CurrentMicroTimestamp();
         }
 
-        global_init->fetch_add(1);
+        profiler_data_store->global_init.fetch_add(1);
     }
 
     STATICINLINE void DestroyProfiler()
@@ -90,16 +87,10 @@ struct SimpleProfilerImpl
             context_stack = nullptr;
         }
 #endif
-        if(global_init&&std::atomic_fetch_sub(global_init,1)<2)
+        if(profiler_data_store &&
+                std::atomic_fetch_sub(&profiler_data_store->global_init,1)<2)
         {
-#ifndef NDEBUG
-            delete datapoints;
-            delete threadnames;
-#endif
-            delete data_access_mutex;
-            delete start_time;
-            delete global_init;
-            delete extra_data;
+            delete profiler_data_store;
         }
     }
 
@@ -107,7 +98,7 @@ struct SimpleProfilerImpl
     {
 #ifndef NDEBUG
         ThreadId tid;
-        threadnames->insert(ThreadItem(tid.hash(),name));
+        profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
 #endif
     }
 
@@ -123,7 +114,7 @@ struct SimpleProfilerImpl
 #ifndef NDEBUG
         uint64 ts = Time::CurrentMicroTimestamp();
 
-        Lock l(*data_access_mutex);
+        Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
         if(!context_stack)
@@ -134,7 +125,7 @@ struct SimpleProfilerImpl
         p.ts = ts;
         p.name = (name) ? name : context_stack->front();
 
-        datapoints->push_back(p);
+        profiler_data_store->datapoints.push_back(p);
 #endif
     }
 
@@ -142,7 +133,7 @@ struct SimpleProfilerImpl
     {
 #ifndef NDEBUG
 
-        Lock l(*data_access_mutex);
+        Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
         if(!context_stack)
@@ -155,8 +146,8 @@ struct SimpleProfilerImpl
         p.ts = 0;
         p.name = name;
 
-        datapoints->push_back(p);
-        datapoints->back().ts = Time::CurrentMicroTimestamp();
+        profiler_data_store->datapoints.push_back(p);
+        profiler_data_store->datapoints.back().ts = Time::CurrentMicroTimestamp();
 #endif
     }
     STATICINLINE void PopContext()
@@ -164,7 +155,7 @@ struct SimpleProfilerImpl
 #ifndef NDEBUG
         uint64 ts = Time::CurrentMicroTimestamp();
 
-        Lock l(*data_access_mutex);
+        Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
         if(!context_stack || context_stack->size()<1)
@@ -175,38 +166,95 @@ struct SimpleProfilerImpl
         p.ts = ts;
         p.name = context_stack->front();
 
-        datapoints->push_back(p);
+        profiler_data_store->datapoints.push_back(p);
         context_stack->pop_front();
 #endif
     }
 
     STATICINLINE void AddExtraData(CString const& key, CString const& val)
     {
-        Lock l(*data_access_mutex);
+        Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
-        extra_data->push_back({key,val});
+        profiler_data_store->extra_data.push_back({key,val});
     }
+
 
     /* Below variables have storage in extern_storage.cpp */
 
-    static Timestamp *start_time;
-    static Mutex *data_access_mutex;
+    struct ProfilerDataStore
+    {
+        Timestamp start_time;
+
+        Mutex data_access_mutex;
+    #ifndef NDEBUG
+        LinkList<DataPoint> datapoints;
+        ThreadListing threadnames;
+    #endif
+
+        ExtraData extra_data;
+        std::atomic_int global_init;
 
 #ifndef NDEBUG
-    static LinkList<DataPoint> *datapoints;
-    static ThreadListing *threadnames;
+        bool Enabled;
+#else
+        static const constexpr bool Enabled = false;
 #endif
+        byte_t padding[3];
 
-    static ExtraData *extra_data;
+    };
 
-    static bool Enabled;
+    static ProfilerDataStore* profiler_data_store;
 
-protected:
-    static std::atomic_int *global_init;
 #ifndef NDEBUG
     thread_local static LinkList<CString> *context_stack;
 #endif
+
+    STATICINLINE ExtraData* ExtraInfo()
+    {
+        if(profiler_data_store)
+            return &profiler_data_store->extra_data;
+        else
+            return nullptr;
+    }
+
+    STATICINLINE LinkList<DataPoint>* DataPoints()
+    {
+#ifndef NDEBUG
+        if(profiler_data_store)
+            return &profiler_data_store->datapoints;
+        else
+#endif
+            return nullptr;
+    }
+
+    STATICINLINE bool Enabled()
+    {
+#ifndef NDEBUG
+        if(profiler_data_store)
+            return profiler_data_store->Enabled;
+        else
+#endif
+            return false;
+    }
+
+    STATICINLINE Timestamp StartTime()
+    {
+        if(profiler_data_store)
+            return profiler_data_store->start_time;
+        else
+            return 0;
+    }
+
+    STATICINLINE ThreadListing* ThreadNames()
+    {
+#ifndef NDEBUG
+        if(profiler_data_store)
+            return &profiler_data_store->threadnames;
+        else
+#endif
+            return nullptr;
+    }
 };
 
 FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1, SimpleProfilerImpl::DataPoint const& t2)
