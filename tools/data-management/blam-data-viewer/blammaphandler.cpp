@@ -49,16 +49,24 @@ void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images, QVector<c
             if(tex.type == TexType::T2D)
             {
                 QImage::Format fmt;
-                switch(tex.cformat)
+                switch(tex.format)
                 {
-                case PixFmt::RGBA8:
-                    fmt = QImage::Format_RGBA8888;
+                case PixCmp::RGBA:
+                    switch(tex.dformat)
+                    {
+                    case BitFormat::UIntR:
+                        fmt = QImage::Format_RGBA8888;
+                        break;
+                    default:
+                        continue;
+                    }
                     break;
                 default:
                     continue;
-                    fmt = QImage::Format_Mono;
-                    break;
                 }
+
+                if(fmt != QImage::Format_RGBA8888)
+                    Q_ASSERT(false);
 
                 images->append(QImage(
                                    (uchar*)tex.data,

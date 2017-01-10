@@ -80,7 +80,9 @@ set ( CoffeeSwigShim_SRCS
 
 coffee_add_library(CoffeeSwigShim
     "${CoffeeSwigShim_SRCS}"
-    "CoffeeGLeam;CoffeeOpenAL;CoffeeBlam" )
+    "CoffeeGLeam;CoffeeOpenAL;CoffeeBlam"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    )
 
 # Link with some libraries
 set(COFFEE_LINKING CoffeeSwigShim )

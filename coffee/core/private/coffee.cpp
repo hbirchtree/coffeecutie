@@ -208,7 +208,7 @@ void CoffeeTerminate(bool profiler_destroy)
     Cmd::ResetScreen();
 }
 
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) || !defined(ANDROID_DONT_USE_SDL2)
 
 bool EventProcess(int)
 {
@@ -225,10 +225,10 @@ void GotoApplicationDir()
 
 void InstallDefaultSigHandlers()
 {
-    InstallSignalHandler(Sig_Termination,nullptr);
-    InstallSignalHandler(Sig_PoopedABit,nullptr);
-    InstallSignalHandler(Sig_ShitMySelf,nullptr);
-    InstallSignalHandler(Sig_FPE,nullptr);
+//    InstallSignalHandler(Sig_Termination,nullptr);
+//    InstallSignalHandler(Sig_PoopedABit,nullptr);
+//    InstallSignalHandler(Sig_ShitMySelf,nullptr);
+//    InstallSignalHandler(Sig_FPE,nullptr);
 }
 
 const CoffeeApplicationData &ApplicationData()

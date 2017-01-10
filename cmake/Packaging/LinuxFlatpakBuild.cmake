@@ -40,7 +40,7 @@ macro( FLATPAK_PACKAGE
     set ( FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}.svg" )
 
     set ( FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}" )
-    set ( FLATPAK_BUNDLE_FILE "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.tar" )
+    set ( FLATPAK_BUNDLE_DIR "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.oci" )
 
     # TODO: Unify this with the in-app information somehow
     set ( FLATPAK_CONFIG "${TARGET}" )
@@ -131,7 +131,7 @@ macro( FLATPAK_PACKAGE
 
     add_custom_command ( TARGET ${TARGET}
 	POST_BUILD
-        COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_FILE}" "${FLATPAK_PKG_NAME}" )
+        COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}" )
 
     if(FLATPAK_DEPLOY_LOCALLY)
         add_custom_command( TARGET ${TARGET}
@@ -158,7 +158,7 @@ macro( FLATPAK_PACKAGE
         )
     install (
         DIRECTORY
-	"${FLATPAK_BUNDLE_FILE}"
+        "${FLATPAK_BUNDLE_DIR}"
 
 	DESTINATION
 	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"

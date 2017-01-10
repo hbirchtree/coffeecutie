@@ -4,6 +4,8 @@ find_package(OpenSSL REQUIRED)
 set ( CoffeeASIO_SRCS
     private/rest-client.cpp
     private/asio_data.cpp
+    private/tcp-socket.cpp
+    private/udp-socket.cpp
     )
 
 include_directories( SYSTEM
@@ -11,5 +13,6 @@ include_directories( SYSTEM
     ${OPENSSL_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "CoffeeCore;${OPENSSL_LIBRARIES}" )
+coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "CoffeeCore;${OPENSSL_LIBRARIES}"
+    "${CMAKE_SOURCE_DIR}/include/coffee/asio")
 

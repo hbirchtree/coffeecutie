@@ -85,7 +85,7 @@ macro ( SNAPPY_PACKAGE
     )
 
     set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )
-    set ( ICON_TARGET "${SNAPPY_PKG_DIR}/setup/gui/icon.svg" )
+    set ( ICON_TARGET "${SNAPPY_PKG_DIR}/meta/gui/icon.svg" )
 
     set ( SNAPPY_TITLE "${TITLE}" )
     set ( SNAPPY_VERSION "${VERSION}" )
@@ -99,6 +99,9 @@ macro ( SNAPPY_PACKAGE
 
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/setup/gui"
+        )
+    execute_process (
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/meta/gui"
         )
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E copy "${ICON_ASSET}" "${ICON_TARGET}"
@@ -161,6 +164,12 @@ macro ( SNAPPY_PACKAGE
             )
         math ( EXPR NUM_IMPORTS "${NUM_IMPORTS}+1" )
     endforeach()
+
+    target_sources ( ${TARGET} PUBLIC
+        "${SNAPCRAFT_FILE}"
+        "${ICON_TARGET}"
+        "${SNAPPY_PKG_DIR}/snap-select.sh"
+        )
 
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD

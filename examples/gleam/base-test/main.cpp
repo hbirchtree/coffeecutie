@@ -6,10 +6,10 @@
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2System>
 
-#include <coffee/graphics_apis/CGLeam>
+#include <coffee/graphics/apis/CGLeam>
 
 #include <coffee/core/input/eventhandlers.h>
-#include <coffee/graphics_apis/SMesh>
+#include <coffee/graphics/common/SMesh>
 
 //#include <coffee/dummyplug/hmd-dummy.h>
 //#include <coffee/COculusRift>

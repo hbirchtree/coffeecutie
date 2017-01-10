@@ -2,16 +2,26 @@
 #include <coffee/CSDL2>
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
-#include <coffee/graphics_apis/CGLeamRHI>
-#include <coffee/graphics_apis/gleam/gleam.h>
+#include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/image/cimage.h>
 
 #include <coffee/core/platform_data.h>
+#include <coffee/core/coffee_saving.h>
 
 //#define USE_NULL_RENDERER
 
 using namespace Coffee;
 using namespace Display;
+
+struct RuntimeState
+{
+    bigscalar time_base = 0.;
+    bool debug_enabled = false;
+    uint8 padding[7];
+};
+
+static RuntimeState save_state;
 
 class CDRenderer : public CSDL2Renderer {
 public:
@@ -64,7 +74,12 @@ public:
         /*
          * Loading the GLeam API, chosen according to what is available at runtime
          */
-        GLM::LoadAPI(PlatformData::IsDebug());
+        auto Loader = GLM::GetLoadAPI();
+        if(!Loader(PlatformData::IsDebug()))
+        {
+            cDebug("Failed to load GLEAM API");
+            return;
+        }
 
         GLM::BUF_A vertbuf(ResourceAccess::ReadOnly, sizeof(vertexdata));
         GLM::V_DESC vertdesc = {};
@@ -295,14 +310,14 @@ public:
 
         GLM::PreDrawCleanup();
 
-        GLM::DefaultFramebuffer.clear(0, clear_col, 1.);
+        GLM::DefaultFramebuffer().clear(0, clear_col, 1.);
 
-        GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer,
+        GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer(),
                                         DBuffers::Color | DBuffers::Depth);
 
         buffer_debug_p = &buffer_debug;
 
-        GLM::FB_T* render_target = &GLM::DefaultFramebuffer;
+        GLM::FB_T* render_target = &GLM::DefaultFramebuffer();
 
         Coffee::Counter frame_counter(frame_count);
 
@@ -319,7 +334,7 @@ public:
                 render_target = &buffer_debug.debugTarget();
             }
             else
-                render_target = &GLM::DefaultFramebuffer;
+                render_target = &GLM::DefaultFramebuffer();
 
 	    render_target->clear(0,clear_col,1.);
 
@@ -403,7 +418,7 @@ public:
             if(do_debugging)
             {
                 did_apply_state = false;
-                GLM::DefaultFramebuffer.clear(0,clear_col,1.);
+                GLM::DefaultFramebuffer().clear(0,clear_col,1.);
                 buffer_debug.end();
             }
 
@@ -413,6 +428,9 @@ public:
 
             tdelta = this->contextTime() - tprevious;
             tprevious = this->contextTime();
+
+            save_state.time_base = tprevious;
+            save_state.debug_enabled = do_debugging;
         }
 
         Profiler::PopContext();

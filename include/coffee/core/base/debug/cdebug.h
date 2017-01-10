@@ -10,11 +10,6 @@
 namespace Coffee{
 namespace DebugFun{
 
-struct DebuggingState
-{
-    static Mutex PrinterLock;
-};
-
 namespace CDebugHelpers{
 FORCEDINLINE void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)
 {

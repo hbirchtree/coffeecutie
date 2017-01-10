@@ -8,7 +8,7 @@
 #include <openvr.h>
 
 #include <coffee/core/CDebug>
-#include <coffee/graphics_apis/CGLeam>
+#include <coffee/graphics/apis/CGLeam>
 
 #include "shared/lodepng.h"
 #include "shared/Matrices.h"

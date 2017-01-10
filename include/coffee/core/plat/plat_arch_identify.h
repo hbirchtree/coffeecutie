@@ -5,8 +5,13 @@
 #if defined(__amd64__) || defined(_M_X64) || defined(_M_AMD64)
 #define COFFEE_ARCH "AMD64"
 
+#define COFFEE_ARCH_AMD64
+
 /* i386 is a weird one */
 #elif defined(__i386__) || defined(_X86_)
+
+#define COFFEE_ARCH_X86
+
 #if defined(__i686__)
 #define COFFEE_ARCH "i686"
 #elif defined(__i586__)
@@ -20,6 +25,8 @@
 /* I have no idea who uses this */
 #elif defined(__mips__) || defined(__mips) || defined(__MIPS__)
 #define COFFEE_MIPS_BASENAME "MIPS"
+
+#define COFFEE_ARCH_MIPS
 
 /* Too lazy to set up string conversion... */
 #if __mips == 1
@@ -46,6 +53,8 @@
 
 /* Nobody will use this */
 #elif defined(__powerpc__) || defined(__POWERPC__) || defined(__PPC64__) || defined(__PPC__)
+
+#define COFFEE_ARCH_POWERPC
 
 #if defined(_ARCH_440)
 #define COFFEE_POWERPC_CPU "440"
@@ -81,8 +90,13 @@
 #elif defined(__aarch64__)
 #define COFFEE_ARCH "ARMv8-64"
 
+#define COFFEE_ARCH_ARM64
+
 /* The chain of identification is a long one for ARM */
 #elif defined(__arm__)
+
+#define COFFEE_ARCH_ARM32
+
 #if defined(__ARM_ARCH_5__)
 #define COFFEE_ARCH "ARMv5"
 #elif defined(__ARM_ARCH_7A__)

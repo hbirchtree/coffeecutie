@@ -15,7 +15,7 @@ set ( COFFEE_SEARCH_PATHS
     /usr
     /opt
 
-    \~/Library/Frameworks
+    ~/Library/Frameworks
     /Library/Frameworks
 
     "${COFFEE_ROOT_DIR}"

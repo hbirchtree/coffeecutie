@@ -2,6 +2,7 @@
 
 #if defined(COFFEE_APPLE)
 #include <coffee/core/plat/environment/osx/environment.h>
+#include <libproc.h>
 #endif
 
 #include <unistd.h>

@@ -28,27 +28,31 @@ struct OutputPrinterImpl : OutputPrinterDef
 #if defined(COFFEE_ANDROID)
         int c_str_offset = 0;
         int flag = ANDROID_LOG_INFO;
-        if(formatted.substr(0,4) == "INFO")
+        if(formatted[0] == 'I')
         {
             flag = ANDROID_LOG_VERBOSE;
             c_str_offset = 6;
         }
-        else if(formatted.substr(0,4) == "DEBG")
+        else if(formatted[0] == 'D')
         {
             flag = ANDROID_LOG_DEBUG;
             c_str_offset = 6;
         }
-        else if(formatted.substr(0,4) == "WARN")
+        else if(formatted[0] == 'W')
         {
             flag = ANDROID_LOG_WARN;
             c_str_offset = 6;
         }
-        else if(formatted.substr(0,4) == "FTAL")
+        else if(formatted[0] == 'F')
         {
             flag = ANDROID_LOG_ERROR;
             c_str_offset = 6;
+        }else if(formatted[0] == 'V')
+        {
+            flag = ANDROID_LOG_VERBOSE;
+            c_str_offset = 6;
         }
-        __android_log_print(flag, "Coffee", &formatted[c_str_offset]);
+        __android_log_print(flag, "Coffee", "%s", &formatted[c_str_offset]);
 #else
         Puts(stream,formatted.c_str());
 #endif

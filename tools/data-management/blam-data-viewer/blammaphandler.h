@@ -2,6 +2,7 @@
 #include <QImage>
 #include <QVector>
 #include <coffee/blam/cblam.h>
+#include <coffee/core/types/edef/resenum.h>
 
 using namespace Coffee;
 using namespace Coffee::CBlam;

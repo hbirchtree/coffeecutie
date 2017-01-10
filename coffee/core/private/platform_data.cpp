@@ -1,6 +1,8 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/core/plat/plat_environment.h>
 
+#include <coffee/core/plat/plat_primary_identify.h>
+#include <coffee/core/coffee_mem_macros.h>
 
 namespace Coffee{
 
@@ -36,6 +38,33 @@ CString PlatformData::SystemDisplayString()
     /* What the fuck. Where does the rest of the string go? */
     base.append(")");
     return base;
+}
+
+bool PlatformData::IsMobile()
+{
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_IOS)
+    return false;
+#else
+    return true;
+#endif
+}
+
+bool PlatformData::IsGLES()
+{
+#ifdef COFFEE_GLEAM_DESKTOP
+    return false;
+#else
+    return true;
+#endif
+}
+
+bool PlatformData::UseVirtualFS()
+{
+#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)
+    return true;
+#else
+    return false;
+#endif
 }
 
 bool PlatformData::IsDebug()

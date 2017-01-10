@@ -31,7 +31,7 @@ bool workload_test()
 
             cDebug("Reducing to {0} B of memory",data.size.area());
 
-            data.value = (uint8*)Alloc(data.size.area());
+            data.value = C_CAST<uint8*>(Alloc(data.size.area()));
 
             if(sz <= 2)
                 break;
@@ -47,7 +47,7 @@ bool workload_test()
 
 	Profiler::Profile("Memory allocation");
 
-    Threads::Function<void(uint64,DataSet*)> kern = [](uint64 i, DataSet* d)
+    Function<void(uint64,DataSet*)> kern = [](uint64 i, DataSet* d)
     {
         for(int32 j=0;j<64;j++)
             d->value[i*64+j] /= 2;

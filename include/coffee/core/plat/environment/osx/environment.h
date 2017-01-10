@@ -6,9 +6,6 @@
 
 #include "../unix/environment.h"
 
-#include <libproc.h>
-#include <errno.h>
-
 #include "../../memory/stlstring_ops.h"
 
 namespace Coffee{
@@ -24,14 +21,7 @@ struct MacEnv : Posix::PosixEnvironmentFun
         CString execname = ExecutableName();
         return DirName(execname.c_str());
     }
-    STATICINLINE CString GetUserData(cstring orgname, cstring appname)
-    {
-        CString dir = GetVar("HOME");
-        dir = ConcatPath(dir.c_str(),"Library/Application Support");
-        dir = ConcatPath(dir.c_str(),orgname);
-        dir = ConcatPath(dir.c_str(),appname);
-        return dir;
-    }
+    static CString GetUserData(cstring orgname, cstring appname);
 };
 
 struct MacColorMap : Posix::PosixTerminalColorCodes

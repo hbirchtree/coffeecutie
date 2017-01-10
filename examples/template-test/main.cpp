@@ -1,5 +1,5 @@
 #include <coffee/CCore>
-#include <coffee/graphics_apis/CGLeam>
+#include <coffee/graphics/apis/CGLeam>
 
 using namespace Coffee;
 using namespace CDisplay;

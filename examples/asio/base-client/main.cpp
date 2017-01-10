@@ -9,13 +9,16 @@ using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
 {
-    REST::InitService();
+    ASIO::AsioContext net_context = ASIO::AsioService::InitService();
+
     CElapsedTimer tim;
 
     {
+        /* Testing HTTP transport, will return the HTML document */
         ProfContext __m("example.com");
 
-        TCP::SSLSocket cn;
+        TCP::SSLSocket cn(net_context);
+        tim.start();
         cn.connect("example.com","https");
 
         Profiler::Profile("Connect to host");
@@ -40,57 +43,67 @@ int32 coffee_main(int32, cstring_w*)
         {
             cDebug("Bad mojo");
         }else{
-            for(std::pair<CString,CString> const& v : resp.values)
+            cDebug("Total time: {0}", tim.elapsed());
+            for(std::pair<CString,CString> const& v : resp.header)
                 cDebug("{0} : {1}",v.first,v.second);
             cDebug("Payload:\n{0}",resp.payload);
         }
         Profiler::Profile("Receive response");
     }
 
-    ProfContext __m2("Asynchronous request");
+    {
+        ProfContext __m2("Asynchronous request");
 
-    TCP::AsioContext c = REST::GetContext();
-    Profiler::Profile("Acquire ASIO context");
+        CString host = "api.twitch.tv";
+        REST::Request rq = {};
 
-    CString host = "api.twitch.tv";
-    REST::Request rq = {};
+        HTTP::InitializeRequest(rq);
 
-    HTTP::InitializeRequest(rq);
+        rq.transp = REST::HTTPS;
+        rq.resource = "/kraken";
+        rq.header["Accept"] = "application/vnd.twitchtv.v2+json";
+        rq.header["Client-ID"] = {};
 
-    rq.transp = REST::HTTPS;
-    rq.resource = "/kraken/streams";
-    rq.values["Accept"] = "application/json";
+        Profiler::Profile("Generate response");
 
-    Profiler::Profile("Generate response");
+        Function<void(Threads::Future<REST::Response>&)> printResult =
+                [&](Threads::Future<REST::Response>& t)
+        {
+            while(!Threads::FutureAvailable(t));
+            Profiler::Profile("Await response");
 
-    Threads::Future<REST::RestResponse> t = REST::RestRequestAsync(c,host,rq);
-    Profiler::Profile("Dispath request");
+            cDebug("Results are here: {0}",tim.elapsed());
 
-    tim.start();
+            REST::Response res = t.get();
+            Profiler::Profile("Response acquisition");
 
-    cDebug("Launched network task!");
+            cDebug("Content type: {0}",REST::GetContentType(res));
+            cDebug("Status: {0}",res.status);
+            cDebug("Message: {0}",res.message);
+            for(auto const& k : res.header)
+                cDebug("Header: {0} = {1}", k.first, k.second);
 
-    while(!Threads::FutureAvailable(t));
-    Profiler::Profile("Await response");
+            JSON::Document doc = JSON::Read(res.payload.c_str());
 
-    cDebug("Results are here: {0}",tim.elapsed());
+            if(doc.IsNull())
+                return;
 
-    REST::RestResponse res = t.get();
-    Profiler::Profile("Resposne acquisition");
+            cDebug("JSON document:\n{0}",JSON::Serialize(doc));
+        };
 
-    cDebug("Content type: {0}",REST::GetContentType(res));
+        Threads::Future<REST::Response> t = REST::RestRequestAsync(net_context,host,rq);
+        Profiler::Profile("Dispatch request");
 
-    cDebug("Status: {0}",res.status);
-    cDebug("Header: \n{0}",res.header);
-    cDebug("Message: {0}",res.message);
-    cDebug("Payload: \n{0}",res.payload);
+        tim.start();
+        printResult(t);
 
-    JSON::Document doc = JSON::Read(res.payload.c_str());
+        rq.resource = "/kraken/streams";
+        t = REST::RestRequestAsync(net_context, host, rq);
+        Profiler::Profile("Dispatch request");
 
-    if(doc.IsNull())
-        return 1;
-
-    cDebug("JSON document:\n{0}",JSON::Serialize(doc));
+        tim.start();
+        printResult(t);
+    }
 
     return 0;
 }

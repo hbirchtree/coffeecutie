@@ -33,11 +33,6 @@ include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
 # This causes ASIO to not use Boost.
 add_definitions("-DASIO_STANDALONE")
 
-# Toggle some preprocessor flags
-if(COFFEE_BUILD_OCULUSVR)
-    add_definitions("-DCOFFEE_OCULUSVR_ENABLED")
-endif()
-
 # Include SSL if built
 if(COFFEE_BUILD_OPENSSL)
     find_package ( OpenSSL REQUIRED )

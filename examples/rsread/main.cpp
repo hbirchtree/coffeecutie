@@ -146,8 +146,8 @@ int32 coffee_main(int32, cstring_w*)
     Resource idxfile("main_file_cache.idx0");
     FilePull(idxfile);
 
-    RSCacheSectorHeader* t1 = (RSCacheSectorHeader*)idxfile.data;
-    RSCacheSector* t3 = (RSCacheSector*)&t1[1];
+    RSCacheSectorHeader* t1 = C_CAST<RSCacheSectorHeader*>(idxfile.data);
+    RSCacheSector* t3 = C_FCAST<RSCacheSector*>(&t1[1]);
 
     cDebug("Test {0}",t1->cacheNumber);
     cDebug("Test {0}",t3->data[0]);

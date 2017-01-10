@@ -5,7 +5,7 @@
 #include <SDL.h>
 #include <SDL_video.h>
 #include <SDL_syswm.h>
-#include <coffee/graphics_apis/gltypes.h>
+#include <coffee/graphics/common/gltypes.h>
 
 namespace Coffee{
 namespace CSDL2Types{

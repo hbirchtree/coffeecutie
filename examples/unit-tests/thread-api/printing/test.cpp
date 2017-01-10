@@ -7,7 +7,7 @@ using namespace Coffee;
 
 bool mutex_locking()
 {
-    Threads::Function<void()> message_test = [](){
+    Function<void()> message_test = [](){
         int64 msgs = 0;
         ThreadId thread;
 

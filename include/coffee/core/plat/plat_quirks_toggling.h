@@ -1,14 +1,14 @@
 #include "plat_primary_identify.h"
+#include "plat_arch_identify.h"
 
 #define COFFEE_SLAP_LOWMEM
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
-#if defined(COFFEE_ANDROID) && (__INTPTR_WIDTH__ != 8)
-#define COFFEE_ARCH_LLP64
-#endif
-
-#if defined(COFFEE_WINDOWS) || defined(COFFEE_APPLE)
+#if defined(COFFEE_WINDOWS) || defined(COFFEE_APPLE) \
+    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) \
+    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) \
+    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86))
 #define COFFEE_ARCH_LLP64
 #endif
 
@@ -46,4 +46,9 @@
 
 #if defined(COFFEE_ANDROID)
 //#define COFFEE_DISABLE_SRGB_SUPPORT
+#endif
+
+/* OpenSSL is difficult on Windows... */
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
+#define ASIO_USE_SSL
 #endif

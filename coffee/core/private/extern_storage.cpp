@@ -43,6 +43,5 @@ bool UnixCmd::UnixTerm::alternate_buffer = false;
 #endif
 
 Mutex OutputPrinterDef::PrinterLock;
-Mutex DebuggingState::PrinterLock;
 
 }

@@ -94,13 +94,15 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
          * most likely application directory
          *  or home directory */
 		CString sys_string = PlatformData::SystemDisplayString();
+        CString device_string = cStringFormat("{0}", SysInfo::DeviceName());
 
         CString cwd = Env::CurrentDir();
         rundata->SetAttribute("cwd",cwd.c_str());
 
         rundata->SetAttribute("version",CoffeeBuildString);
-        rundata->SetAttribute("compiler",CoffeeCompilerString);
         rundata->SetAttribute("system", sys_string.c_str());
+        rundata->SetAttribute("device", device_string.c_str());
+        rundata->SetAttribute("compiler",CoffeeCompilerString);
         rundata->SetAttribute("architecture",CoffeeArchString);
     }
     cVerbose(8,"Writing runtime data");

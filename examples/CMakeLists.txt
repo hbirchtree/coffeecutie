@@ -3,16 +3,6 @@
 #
 #
 
-if(COFFEE_BUILD_OCULUSVR)
-    message ( "-- Examples built with Oculus support" )
-else()
-    message ( "-- Examples built without Oculus support" )
-endif()
-
-if(NOT COFFEE_BUILD_OPENAL)
-    message ( "-- Examples built without OpenAL support" )
-endif()
-
 #
 # Core
 #
@@ -138,7 +128,7 @@ endif()
 #
 
 if(COFFEE_BUILD_OPENVR) # AND COFFEE_BUILD_OCULUSVR
-    add_subdirectory(vr/base-test)
+#    add_subdirectory(vr/base-test)
 #    add_subdirectory(vr/hellovr)
 #    add_subdirectory(vr/hellovr-rhi)
 endif()
@@ -154,29 +144,6 @@ endif()
 # Offscreen rendering test
 if(COFFEE_BUILD_CEF)
     add_subdirectory(cef/base-test)
-endif()
-
-#
-#
-
-#
-# GLBinding APIs (deprecated)
-#
-
-
-if(COFFEE_BUILD_GLBINDING)
-    if(COFFEE_BUILD_SDL2)
-        # Library loading and interface implementation
-        add_subdirectory (core/dynamic-test)
-
-        # Examples of graphics rendering through OpenGL with several different techniques in use
-        if(COFFEE_BUILD_ASSIMP)
-            add_subdirectory (opengl/ctest)
-        endif()
-        add_subdirectory (opengl/ctest-hud)
-        add_subdirectory (opengl/ctest-async-pbo)
-        add_subdirectory (opengl/ctest-shaderswitch)
-    endif()
 endif()
 
 #

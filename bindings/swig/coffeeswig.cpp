@@ -3,7 +3,7 @@
 #include <coffee/CCore>
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/CSDL2>
-#include <coffee/graphics_apis/CGLeam>
+#include <coffee/graphics/apis/CGLeam>
 #include <coffee/sdl2/CSDL2GLRenderer>
 
 namespace Coffee{

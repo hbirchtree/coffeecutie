@@ -25,6 +25,8 @@ if(ANDROID)
 
     message ( "-- Main File: ${SDL2_ANDROID_MAIN_FILE}" )
 
+    set ( ANDROID_USE_SDL2_LAUNCH ON )
+
 endif()
 
 #
@@ -67,6 +69,8 @@ macro(APK_PACKAGE_EXT
     if( "${Api_Target}" GREATER "20" )
         # isGame is only available on API 21+
         set ( ANDROID_APK_IS_GAME "android:isGame=\"true\"" )
+        # Lollipop+ does not work on Kitkat
+        set ( ANDROID_API_MIN_TARGET "21" )
 
         #set ( ANDROID_APK_BANNER_DATA "android:banner=\"@drawable/banner\"" )
         #set ( ANDROID_APK_LOGO_DATA "android:logo=\"@drawable/logo\"")
@@ -273,7 +277,7 @@ macro(APK_PACKAGE_EXT
 
     add_custom_command ( TARGET ${Target_Name}
         POST_BUILD
-        COMMAND ${ANDROID_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
+        COMMAND ${CMAKE_STRIP} "${ANDROID_LIB_OUTPUT_DIRECTORY}/lib${Target_Name}.so"
         )
 
     #
@@ -288,25 +292,25 @@ macro(APK_PACKAGE_EXT
             @ONLY
             )
 
-#        if(ANDROID_NATIVE_API_LEVEL GREATER 19)
-#            configure_file (
-#                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
-#                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-#                @ONLY
-#                )
-#        elseif(ANDROID_NATIVE_API_LEVEL EQUAL 19)
-#            configure_file (
-#                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.kitkat.in"
-#                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-#                @ONLY
-#                )
-#        else()
+        if(ANDROID_NATIVE_API_LEVEL GREATER 20)
+            configure_file (
+                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.lollipop.in"
+                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+                @ONLY
+                )
+        elseif(ANDROID_NATIVE_API_LEVEL GREATER 18)
+            configure_file (
+                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.kitkat.in"
+                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+                @ONLY
+                )
+        else()
         configure_file (
             "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
             "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
             @ONLY
             )
-#        endif()
+        endif()
 
         configure_file (
             "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/${ANDROID_STARTUP_ACTIVITY}.java.in"

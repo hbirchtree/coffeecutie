@@ -21,6 +21,8 @@ CString DereferencePath(cstring suffix, ResourceAccess storageMask)
         if(feval(storageMask&ResourceAccess::ConfigFile))
         {
             CString cfgDir = Env::GetUserData(nullptr,nullptr);
+            if(!DirFun::MkDir(cfgDir.c_str(), true))
+                return {};
             return Env::ConcatPath(cfgDir.c_str(),suffix);
         }
 #if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || defined(COFFEE_LINUX) || defined(COFFEE_WINDOWS)
@@ -71,6 +73,11 @@ Resource::~Resource()
 cstring Resource::resource() const
 {
     return m_resource.c_str();
+}
+
+bool Resource::valid() const
+{
+    return !m_resource.empty();
 }
 
 void FileResourcePrefix(cstring prefix)

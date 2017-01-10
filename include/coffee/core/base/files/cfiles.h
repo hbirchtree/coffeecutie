@@ -45,6 +45,7 @@ public:
     szptr size; /*!< Data size*/
 
     cstring resource() const;
+    bool valid() const;
 
     enum FileFlags
     {

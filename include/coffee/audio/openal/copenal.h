@@ -251,7 +251,7 @@ struct CALReport
     cstring message;
 };
 
-using CALCallback = Threads::Function<void(CALReport*)>;
+using CALCallback = Function<void(CALReport*)>;
 
 /*!
  * \brief Presents an OpenAL context in which sound can be played

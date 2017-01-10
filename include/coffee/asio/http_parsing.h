@@ -29,7 +29,7 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     SendProperty(header,"Host",host);
 
-    for(std::pair<CString,CString> const& p : r.values)
+    for(std::pair<CString,CString> const& p : r.header)
     {
         SendProperty(header,p.first,p.second);
     }
@@ -88,7 +88,7 @@ bool ExtractResponse(StrmT& stream, Response* response)
 
     while(std::getline(stream,tmp) && tmp!="\r")
     {
-        szptr idx = Search::ChrFind(tmp.c_str(),':')-tmp.c_str();
+        int64 idx = Search::ChrFind(tmp.c_str(),':')-tmp.c_str();
         cstring end = Search::ChrFind(tmp.c_str(),'\r');
         if(idx > 0)
         {
@@ -97,7 +97,7 @@ bool ExtractResponse(StrmT& stream, Response* response)
             if(end)
                 t2.resize(t2.size()-1);
             StrUtil::trim(t2);
-            response->values[t1] = t2;
+            response->header[t1] = t2;
         }
     }
 

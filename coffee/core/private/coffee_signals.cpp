@@ -19,42 +19,42 @@ void sighandle(int sig)
     switch(sig)
     {
     case SIGFPE:
-	cVerbose(4,"FPE occurred");
-	break;
+        cVerbose(4,"FPE occurred");
+        break;
     case SIGSEGV:
-	if(exit_handle)
-	    exit_handle();
-    Cmd::Exit(Sig_ShitMySelf);
-	break;
+        if(exit_handle)
+            exit_handle();
+        Cmd::Exit(Sig_ShitMySelf);
+        break;
     case SIGABRT:
-	if(exit_handle)
-	    exit_handle();
-    Cmd::Exit(Sig_PoopedABit);
-	break;
+        if(exit_handle)
+            exit_handle();
+        Cmd::Exit(Sig_PoopedABit);
+        break;
     case SIGILL:
-	if(exit_handle)
-	    exit_handle();
-    Cmd::Exit(Sig_Termination);
-	break;
+        if(exit_handle)
+            exit_handle();
+        Cmd::Exit(Sig_Termination);
+        break;
     case SIGINT:
     {
-	Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
-	if(exit_handle)
-	    exit_handle();
-    Cmd::Exit(Sig_Interrupt);
-	break;
+        Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
+        if(exit_handle)
+            exit_handle();
+        Cmd::Exit(Sig_Interrupt);
+        break;
     }
     case SIGTERM:
     {
-	Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
-	if(exit_handle)
-	    exit_handle();
-    Cmd::Exit(Sig_Termination);
-	break;
+        Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
+        if(exit_handle)
+            exit_handle();
+        Cmd::Exit(Sig_Termination);
+        break;
     }
     default:
-    Cmd::Exit(Sig_UnknownBad);
-	break;
+        Cmd::Exit(Sig_UnknownBad);
+        break;
     }
 
     /* Implementation detail: SIGKILL might
@@ -74,13 +74,15 @@ void SetExitHandler(exithandler_t handler)
 
 void InstallSignalHandler(Signals sig, sighandler_t handler)
 {
+#if !defined(COFFEE_ANDROID) || (defined(COFFEE_ANDROID) && !defined(COFFEE_ARCH_MIPS))
     /* Set up signal handlers, make the process more well-behaved */
     if(sig < 100 && sig > 1)
     {
-	if(!handler)
-	    handler = sighandle;
-	signal(sig,handler);
+        if(!handler)
+            handler = sighandle;
+        signal(sig,handler);
     }
+#endif
 }
 
 void sig_dummy_handler(int)

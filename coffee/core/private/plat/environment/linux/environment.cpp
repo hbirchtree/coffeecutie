@@ -1,4 +1,5 @@
 #include <coffee/core/plat/environment/linux/environment.h>
+#include <coffee/core/coffee.h>
 
 namespace Coffee{
 namespace Environment{
@@ -12,6 +13,12 @@ CString LinuxEnv::GetUserData(cstring orgname, cstring appname)
     {
         return LinuxEnv::GetVar(var_snappy);
     }else{
+        if(!orgname && !appname)
+        {
+            orgname = ApplicationData().organization_name.c_str();
+            appname = ApplicationData().application_name.c_str();
+        }
+
         CString homedir = GetUserHome();
         homedir = ConcatPath(homedir.c_str(),".local/share");
         homedir = ConcatPath(homedir.c_str(),orgname);

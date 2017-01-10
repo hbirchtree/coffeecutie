@@ -35,9 +35,9 @@ public:
 };
 
 template<class T>
-FORCEDINLINE std::future<void> LaunchAsync(T* r, CDProperties const& p)
+FORCEDINLINE Threads::Future<void> LaunchAsync(T* r, CDProperties const& p)
 {
-    Threads::Function<void()> fn = [r,p]()
+    Function<void()> fn = [r,p]()
     {
         CString err;
         r->init(p,&err);
