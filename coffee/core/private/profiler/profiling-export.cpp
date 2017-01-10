@@ -22,7 +22,7 @@ void PrintProfilerData()
 
     LinkList<uint64> base_time; /* Stack of time values */
     LinkList<uint64> curr_timeline; /* Progression of time within a context */
-    for(Profiler::DataPoint const& p : *Profiler::datapoints)
+    for(Profiler::DataPoint const& p : *Profiler::DataPoints())
     {
         if(p.tp==Profiler::DataPoint::Profile)
         {
@@ -112,7 +112,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         XML::Element* sysdata = doc.NewElement("sysinfo");
         root->InsertEndChild(sysdata);
 
-        CString tmp = Convert::inttostring((int32)SysInfo::NetStatus());
+        CString tmp = Convert::uinttostring(SysInfo::NetStatus());
         sysdata->SetAttribute("sys.net",tmp.c_str());
 
         tmp = Convert::uintltostring(SysInfo::MemTotal());
@@ -131,7 +131,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             sysdata->SetAttribute("proc.firmware",tmp.c_str());
         }
 
-        tmp = Convert::uinttostring(SysInfo::ProcessorCacheSize());
+        tmp = Convert::uintltostring(SysInfo::ProcessorCacheSize());
         sysdata->SetAttribute("proc.cache",tmp.c_str());
 
         tmp = Convert::scalartostring(SysInfo::ProcessorFrequency());
@@ -144,7 +144,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             tmp = Convert::uinttostring(SysInfo::CoreCount());
             sysdata->SetAttribute("proc.cores",tmp.c_str());
 
-            tmp = Convert::uinttostring(SysInfo::ThreadCount());
+            tmp = Convert::uintltostring(SysInfo::ThreadCount());
             sysdata->SetAttribute("proc.threads",tmp.c_str());
         }
 
@@ -159,7 +159,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
         root->InsertEndChild(extradata);
 
         XML::Element* e;
-        for(Profiler::ExtraPair const& p : *Profiler::extra_data)
+        for(Profiler::ExtraPair const& p : *Profiler::ExtraInfo())
         {
             e = doc.NewElement(p.key.c_str());
             extradata->InsertEndChild(e);
@@ -170,7 +170,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
     cVerbose(8,"Writing extra data");
 
     /* Only runs in debug mode! */
-    if(Profiler::Enabled){
+    if(Profiler::Enabled()){
 #ifndef NDEBUG
         /* Store list of threads we've bumped into or labeled */
         {
@@ -178,7 +178,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             root->InsertEndChild(threaddata);
 
             XML::Element* e;
-            for(Profiler::ThreadItem const& p : *Profiler::threadnames)
+            for(Profiler::ThreadItem const& p : *Profiler::ThreadNames())
             {
                 e = doc.NewElement("thread");
                 threaddata->InsertEndChild(e);
@@ -197,7 +197,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             XML::Element* curr = curr_r;
 
             /* Store information about runtime */
-            CString st = Convert::uinttostring(*Profiler::start_time);
+            CString st = Convert::uintltostring(Profiler::StartTime());
 
             /* Create a nice date string */
             CString date = Time::FormattedCurrentTime("%Y%m%dT%H%M%S");
@@ -210,13 +210,13 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
             LinkList<Timestamp> base;
             LinkList<Timestamp> lt;
 
-            base.push_front(*Profiler::start_time);
+            base.push_front(Profiler::StartTime());
             lt.push_front(0);
 
-            Profiler::datapoints->sort();
+            Profiler::DataPoints()->sort();
 
             /* Finally, smash data points into XML format */
-            for(Profiler::DataPoint const& p : *Profiler::datapoints)
+            for(Profiler::DataPoint const& p : *Profiler::DataPoints())
             {
                 switch(p.tp)
                 {
@@ -226,7 +226,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
 
                     XML::Element* n = doc.NewElement("dpoint");
 
-                    CString tsf = Convert::uinttostring(ts);
+                    CString tsf = Convert::uintltostring(ts);
                     CString tid = StrUtil::pointerify(p.thread.hash());
 
                     n->SetAttribute("ts",tsf.c_str());
@@ -242,7 +242,7 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
                 {
                     XML::Element* n = doc.NewElement("context");
 
-                    CString tsf = Convert::uinttostring(p.ts-base.front());
+                    CString tsf = Convert::uintltostring(p.ts-base.front());
                     CString tid = StrUtil::pointerify(p.thread.hash());
 
                     n->SetAttribute("ts",tsf.c_str());
@@ -310,8 +310,8 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
                     ApplicationData().application_name);
         cVerbose(5,"Creating filename");
         CResources::Resource out(log_name.c_str(),true);
-        out.data = (c_ptr)printer.CStr();
-        out.size = (szptr)printer.CStrSize();
+        out.data = C_FCAST<c_ptr>(printer.CStr());
+        out.size = C_CAST<szptr>(printer.CStrSize());
         cVerbose(5,"Retrieving data pointers");
         CResources::FileCommit(out);
         cVerbose(5,"Wrote file");

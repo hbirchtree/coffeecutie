@@ -18,25 +18,8 @@ thread_local CString Environment::Linux::LinuxSysInfo::cached_cpuinfo_string;
 unw_context_t* Environment::Linux::LinuxStacktracer::unwind_context = nullptr;
 #endif
 
-/* Storage for profiler data */
-#ifndef NDEBUG
-LinkList<Profiler::DataPoint>* Profiler::datapoints = nullptr;
-#ifndef ANDROID_RELEASE_MODE
-thread_local LinkList<CString>* Profiling::SimpleProfilerImpl::context_stack = nullptr;
-#endif
-Profiler::ThreadListing* Profiler::threadnames = nullptr;
-#endif
-
-Mutex* Profiler::data_access_mutex = nullptr;
-Timestamp* Profiler::start_time = nullptr;
-std::atomic_int *Profiler::global_init = nullptr;
-Profiler::ExtraData* Profiler::extra_data = nullptr;
-
-#ifdef NDEBUG
-bool Profiler::Enabled = false;
-#else
-bool Profiler::Enabled = true;
-#endif
+Profiler::ProfilerDataStore* Profiler::profiler_data_store = nullptr;
+thread_local LinkList<CString>* Profiler::context_stack = nullptr;
 
 #if defined(COFFEE_USE_TERMINAL_CTL)
 bool UnixCmd::UnixTerm::alternate_buffer = false;
