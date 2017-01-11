@@ -5,6 +5,12 @@
 option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
 option ( GENERATE_PROGRAMS "Whether examples should be built" ON )
 
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    option ( COFFEE_GENERATE_APPIMAGE "Generate AppImage packages" OFF )
+    option ( COFFEE_GENERATE_FLATPAK "Generate Flatpaks" OFF )
+    option ( COFFEE_GENERATE_SNAPPY "Generate Snaps" OFF )
+endif()
+
 # Generates Doxygen documentation, requires Doxygen installed in PATH
 option ( COFFEE_DOCS "Generate documentation" OFF )
 
