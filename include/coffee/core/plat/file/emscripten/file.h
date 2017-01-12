@@ -1,6 +1,6 @@
 #pragma once
 
-#ifndef __emscripten__
+#ifdef __emscripten__
 
 #include "../cfile.h"
 
