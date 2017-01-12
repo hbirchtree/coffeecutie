@@ -50,6 +50,11 @@
 
 #endif
 
+#if defined(__emscripten__)
+#define C_SYSTEM_STRING "asm.js/WebAssembly"
+#define COFFEE_EMSCRIPTEN
+#endif
+
 /* Generic UNIX, mostly for POSIX libraries */
 #if (defined(__unix__) || defined(COFFEE_APPLE))
 #define COFFEE_UNIXPLAT
