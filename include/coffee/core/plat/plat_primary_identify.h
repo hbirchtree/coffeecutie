@@ -51,6 +51,6 @@
 #endif
 
 /* Generic UNIX, mostly for POSIX libraries */
-#if defined(__unix__) || defined(COFFEE_APPLE)
+#if (defined(__unix__) || defined(COFFEE_APPLE))
 #define COFFEE_UNIXPLAT
 #endif

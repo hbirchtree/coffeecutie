@@ -31,7 +31,7 @@ struct CProcess
 
 	STATICINLINE int ExecuteSystem(Command const& cmd_)
 	{
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(__emscripten__)
         return -1;
 #elif !defined(COFFEE_WINDOWS_UWP)
 		CString cmd = cmd_.program;
@@ -48,7 +48,7 @@ struct CProcess
 
     STATICINLINE int Execute(Command const& cmd_)
     {
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(__emscripten__)
         return -1;
 #elif defined(COFFEE_UNIXPLAT)
         Command cmd = cmd_;
@@ -91,7 +91,7 @@ struct CProcess
 
     STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* err = nullptr)
     {
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(__emscripten__)
         return -1;
 #elif defined(COFFEE_UNIXPLAT)
         CString cmd = cmd_.program;
