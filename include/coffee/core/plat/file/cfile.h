@@ -19,6 +19,10 @@ struct CommonFileFun : FileFunDef
 	return fn;
 #endif
     }
+    STATICINLINE CString NativePath(cstring fn, ResourceAccess)
+    {
+        return NativePath(fn);
+    }
 };
 
 struct FILEApi
