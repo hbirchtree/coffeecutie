@@ -108,6 +108,17 @@ struct CFILEFun_def : CommonFileFun
         return wsize==d.size;
     }
 
+    STATICINLINE szptr Size(cstring fn)
+    {
+        FH* f = Open(fn, ResourceAccess::ReadOnly);
+        if(f)
+        {
+            szptr tmp = Size(f);
+            Close(f);
+            return tmp;
+        }else
+            return 0;
+    }
     STATICINLINE szptr Size(FH* fh)
     {
         szptr offset = ftell(fh->handle);
