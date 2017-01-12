@@ -1,14 +1,19 @@
 #pragma once
 
-#ifdef __emscripten__
+#ifndef __emscripten__
 
 #include "../cfile.h"
 
 namespace Coffee{
 namespace CResources{
 
+struct EmscriptenFileFun : CFILEFun_def<FILEApi::FileHandle>
+{
+    using FileHandle = FILEApi::FileHandle;
+};
+
 using DirFun = DirFunDef;
-using FileFun = CFILEFun_def<FILEApi::FileHandle>;
+using FileFun = EmscriptenFileFun;
 
 }
 }
