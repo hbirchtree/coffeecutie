@@ -19,7 +19,7 @@ unw_context_t* Environment::Linux::LinuxStacktracer::unwind_context = nullptr;
 #endif
 
 Profiler::ProfilerDataStore* Profiler::profiler_data_store = nullptr;
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
 thread_local LinkList<CString>* Profiler::context_stack = nullptr;
 #endif
 

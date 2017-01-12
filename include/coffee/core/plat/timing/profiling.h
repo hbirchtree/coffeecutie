@@ -62,7 +62,7 @@ struct SimpleProfilerImpl
             profiler_data_store = new ProfilerDataStore;
             profiler_data_store->global_init.store(0);
         }
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
 //        cVerbose(6,"Creating thread context stack");
         context_stack = new LinkList<CString>;
 #endif
@@ -80,7 +80,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void DestroyProfiler()
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         if(context_stack)
         {
             delete context_stack;
@@ -96,7 +96,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void LabelThread(cstring name)
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
 #endif
@@ -111,7 +111,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void Profile(cstring name = nullptr)
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -131,7 +131,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void PushContext(cstring name)
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
 
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
@@ -152,7 +152,7 @@ struct SimpleProfilerImpl
     }
     STATICINLINE void PopContext()
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -187,7 +187,7 @@ struct SimpleProfilerImpl
         Timestamp start_time;
 
         Mutex data_access_mutex;
-    #ifndef NDEBUG
+    #if !defined(NDEBUG) && !defined(__emscripten__)
         LinkList<DataPoint> datapoints;
         ThreadListing threadnames;
     #endif
@@ -195,7 +195,7 @@ struct SimpleProfilerImpl
         ExtraData extra_data;
         std::atomic_int global_init;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         bool Enabled;
 #else
         static const constexpr bool Enabled = false;
@@ -206,7 +206,7 @@ struct SimpleProfilerImpl
 
     static ProfilerDataStore* profiler_data_store;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
     thread_local static LinkList<CString> *context_stack;
 #endif
 
