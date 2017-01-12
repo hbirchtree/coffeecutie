@@ -220,7 +220,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE LinkList<DataPoint>* DataPoints()
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         if(profiler_data_store)
             return &profiler_data_store->datapoints;
         else
@@ -230,7 +230,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE bool Enabled()
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         if(profiler_data_store)
             return profiler_data_store->Enabled;
         else
@@ -248,7 +248,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE ThreadListing* ThreadNames()
     {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__emscripten__)
         if(profiler_data_store)
             return &profiler_data_store->threadnames;
         else
