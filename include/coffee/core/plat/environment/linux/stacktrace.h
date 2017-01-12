@@ -1,8 +1,8 @@
+#pragma once
+
 #include "../../platform_detect.h"
 
 #ifdef COFFEE_LINUX
-#ifndef COFFEE_PLAT_ENVIRONMNET_STACKTRACE_LINUX_H
-#define COFFEE_PLAT_ENVIRONMNET_STACKTRACE_LINUX_H
 
 #include "../../../coffee_macros.h"
 #include "../stacktrace_def.h"
@@ -98,5 +98,4 @@ using Stacktracer = Environment::Linux::LinuxStacktracer;
 
 }
 
-#endif
 #endif

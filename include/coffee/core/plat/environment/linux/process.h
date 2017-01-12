@@ -1,8 +1,8 @@
+#pragma once
+
 #include "../../plat_primary_identify.h"
 
 #ifdef COFFEE_LINUX
-#ifndef COFFEE_CORE_PLAT_ENV_PROCESS_H
-#define COFFEE_CORE_PLAT_ENV_PROCESS_H
 
 #include "../../../coffee_strings.h"
 #include "../process_def.h"
@@ -109,5 +109,4 @@ using ProcessProperty = Environment::Linux::LinuxProcessProperty;
 
 }
 
-#endif
 #endif
