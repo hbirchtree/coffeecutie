@@ -70,6 +70,11 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
         target_compile_options(${TARGET} PRIVATE
             -s USE_SDL=2
             )
+        if(COFFEE_GENERATE_WASM)
+            target_compile_options( ${TARGET} PRIVATE
+                -s WASM=1
+                )
+        endif()
     endif()
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
