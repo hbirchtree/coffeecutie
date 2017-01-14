@@ -98,8 +98,8 @@ struct FileFunDef
     static bool SuperCache(){return false;}
     static bool SuperUncache(){return false;}
 
-    static ScratchBuf ScratchBuffer(szptr size, ResourceAccess access);
-    static void ScratchUnmap(ScratchBuf*);
+    static ScratchBuf ScratchBuffer(szptr, ResourceAccess){return {};}
+    static void ScratchUnmap(ScratchBuf*){}
 
     /* We allow checking size of unopened files, convenience */
     static bool Exists(cstring);

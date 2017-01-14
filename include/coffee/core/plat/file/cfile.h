@@ -176,6 +176,13 @@ struct CFILEFun_def : CommonFileFun
 
         return true;
     }
+    STATICINLINE bool Exists(cstring fn)
+    {
+        FH* f = Open(fn, ResourceAccess::ReadOnly);
+        if(f)
+            Close(f);
+        return f;
+    }
 };
 
 using CFILEFun = CFILEFun_def<FILEApi::FileHandle>;
