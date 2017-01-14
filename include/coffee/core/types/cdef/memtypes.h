@@ -9,6 +9,15 @@ namespace Coffee{
 template<typename T>
 struct _cbasic_data_chunk
 {
+    T& operator[] (szptr i)
+    {
+        return data[i];
+    }
+    T const& operator[] (szptr i) const
+    {
+        return data[i];
+    }
+
     /*!
      * \brief Pointer to data
      */
@@ -62,10 +71,10 @@ struct CMimeData
     FORCEDINLINE CMimeData(cstring id, void* data,
                            const szptr& size,
                            bool doClean = false):
-        b_doClean(doClean),
+        m_id(id),
         m_data(data),
         m_size(size),
-        m_id(id)
+        b_doClean(doClean)
     {
     }
     FORCEDINLINE ~CMimeData()

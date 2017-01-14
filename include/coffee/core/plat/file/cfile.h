@@ -35,11 +35,18 @@ struct FILEApi
         }
         FILE* handle;
     };
+    struct FileMapping : FileFunDef::FileMapping
+    {
+        FileHandle* handle;
+        void* base_ptr;
+    };
 };
 
 template<typename FH>
 struct CFILEFun_def : CommonFileFun
 {
+    using FileMapping = FILEApi::FileMapping;
+
     STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
     {
         FH* fh = new FH;
@@ -130,6 +137,44 @@ struct CFILEFun_def : CommonFileFun
         szptr fsize = ftell(fh->handle);
         fseek(fh->handle,offset,SEEK_SET);
         return fsize;
+    }
+    /*!
+     * \brief Wrapped function for platforms without support for file mapping.
+     * \param fname
+     * \param access
+     * \param size
+     * \param offset
+     * \param err
+     * \return
+     */
+    STATICINLINE FileMapping Map(cstring fname, ResourceAccess access,
+                                 szptr size, szptr offset, int* err)
+    {
+        FileMapping map;
+        map.handle = Open(fname, access);
+        szptr r_size = Size(map.handle);
+        if(size + offset > r_size)
+        {
+            Close(map.handle);
+            map.handle = nullptr;
+            return map;
+        }
+        CByteData data = Read(map.handle, offset + size, false);
+        map.acc = access;
+        map.size = size;
+        map.ptr = &data[offset];
+        map.base_ptr = data.data;
+        return map;
+    }
+    STATICINLINE bool Unmap(FileMapping* map)
+    {
+        if(!map->handle || !map->base_ptr)
+            return false;
+
+        Close(map->handle);
+        CFree(map->base_ptr);
+
+        return true;
     }
 };
 
