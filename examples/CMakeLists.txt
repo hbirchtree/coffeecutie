@@ -161,21 +161,22 @@ endif()
 #
 
 #
-# Unit tests
-#
-
-if(COFFEE_TESTS)
-    add_subdirectory(unit-tests)
-endif()
-
-#
-#
-
-#
 # Font rendering, stb_truetype.h
 #
 
 add_subdirectory(font-rendering)
+
+#
+#
+
+#
+# Unit tests
+#
+
+if(COFFEE_TESTS)
+    set ( CMAKE_EXECUTABLE_SUFFIX ".js" )
+    add_subdirectory(unit-tests)
+endif()
 
 #
 #
