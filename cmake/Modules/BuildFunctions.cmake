@@ -66,6 +66,12 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
     # Because it's hard to write these three commands over and over again
     add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${${TARGET}_HEADERS}")
 
+    if(EMSCRIPTEN)
+        target_compile_options(CoffeeGLeam PRIVATE
+            -s USE_SDL=2
+            )
+    endif()
+
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
     if(APPLE)

@@ -39,7 +39,9 @@ endif()
 
 # For Android, there is some special function loading
 find_package(SDL2 REQUIRED)
-include_directories (${SDL2_INCLUDE_DIR})
+if(NOT EMSCRIPTEN)
+    include_directories (${SDL2_INCLUDE_DIR})
+endif()
 
 list ( APPEND LIBS ${SDL2_LIBRARY})
 
