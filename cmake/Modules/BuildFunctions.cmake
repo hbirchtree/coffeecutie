@@ -202,8 +202,10 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             "${BUNDLE_LIBS}"
             "${ICON_ASSET}" )
     elseif(EMSCRIPTEN)
+        if(COFFEE_GENERATE_HTML)
+            set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
+        endif()
         add_executable(${TARGET} ${SOURCES_MOD})
-        set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
         if(COFFEE_GENERATE_WASM)
             target_compile_options( ${TARGET} PRIVATE
                 -s WASM=1
