@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __emscripten__
+#ifdef __EMSCRIPTEN__
 
 #include "../sysinfo_def.h"
 

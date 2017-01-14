@@ -62,7 +62,7 @@ struct SimpleProfilerImpl
             profiler_data_store = new ProfilerDataStore;
             profiler_data_store->global_init.store(0);
         }
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
 //        cVerbose(6,"Creating thread context stack");
         context_stack = new LinkList<CString>;
 #endif
@@ -80,7 +80,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void DestroyProfiler()
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         if(context_stack)
         {
             delete context_stack;
@@ -96,7 +96,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void LabelThread(cstring name)
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
 #endif
@@ -111,7 +111,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void Profile(cstring name = nullptr)
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -131,7 +131,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void PushContext(cstring name)
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
 
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
@@ -152,7 +152,7 @@ struct SimpleProfilerImpl
     }
     STATICINLINE void PopContext()
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -187,7 +187,7 @@ struct SimpleProfilerImpl
         Timestamp start_time;
 
         Mutex data_access_mutex;
-    #if !defined(NDEBUG) && !defined(__emscripten__)
+    #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         LinkList<DataPoint> datapoints;
         ThreadListing threadnames;
     #endif
@@ -195,7 +195,7 @@ struct SimpleProfilerImpl
         ExtraData extra_data;
         std::atomic_int global_init;
 
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         bool Enabled;
 #else
         static const constexpr bool Enabled = false;
@@ -206,7 +206,7 @@ struct SimpleProfilerImpl
 
     static ProfilerDataStore* profiler_data_store;
 
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
     thread_local static LinkList<CString> *context_stack;
 #endif
 
@@ -220,7 +220,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE LinkList<DataPoint>* DataPoints()
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         if(profiler_data_store)
             return &profiler_data_store->datapoints;
         else
@@ -230,7 +230,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE bool Enabled()
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         if(profiler_data_store)
             return profiler_data_store->Enabled;
         else
@@ -248,7 +248,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE ThreadListing* ThreadNames()
     {
-#if !defined(NDEBUG) && !defined(__emscripten__)
+#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         if(profiler_data_store)
             return &profiler_data_store->threadnames;
         else

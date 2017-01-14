@@ -50,7 +50,7 @@
 
 #endif
 
-#if defined(__emscripten__)
+#if defined(__EMSCRIPTEN__)
 #define C_SYSTEM_STRING "asm.js/WebAssembly"
 #define COFFEE_EMSCRIPTEN
 #endif
