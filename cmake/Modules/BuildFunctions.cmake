@@ -225,7 +225,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             )
             install(
                 DIRECTORY
-                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bin/${TARGET}.bundle
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
 
                 DESTINATION
                 bin
