@@ -394,6 +394,12 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     if(ANDROID) # Crosscompiling setup, until we find an elegant solution
         message ( "Skipping unit test: ${TITLE}" )
         message ( "Please run the tests somehow!" )
+    elseif(EMSCRIPTEN)
+        add_test (
+            NAME ${TITLE}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMAND nodejs $<TARGET_FILE:${TARGET}>
+            )
     else()
         add_test (
             NAME ${TITLE}
