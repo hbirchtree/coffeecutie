@@ -206,6 +206,9 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
         endif()
         add_executable(${TARGET} ${SOURCES_MOD})
+        target_compile_options(${TARGET} PRIVATE
+            -s USE_SDL=2
+            )
         if(COFFEE_GENERATE_WASM)
             target_compile_options( ${TARGET} PRIVATE
                 -s WASM=1

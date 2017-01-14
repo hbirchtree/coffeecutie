@@ -21,14 +21,17 @@ find_package ( SDL2 REQUIRED)
 #    message(FATAL_ERROR "Failed to locate SDL2")
 #endif()
 
-include_directories ( SYSTEM
-    ${SDL2_INCLUDE_DIR}
-    )
+# Emscripten has an SDL2 port
+if(NOT EMSCRIPTEN)
+    include_directories ( SYSTEM
+        ${SDL2_INCLUDE_DIR}
+        )
 
-set ( LIBS
-    CoffeeCore
-    ${SDL2_LIBRARY}
-    )
+    set ( LIBS
+        CoffeeCore
+        ${SDL2_LIBRARY}
+        )
+endif()
 
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")
