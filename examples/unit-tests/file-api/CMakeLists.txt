@@ -22,6 +22,6 @@ endif()
 
 coffee_add_test ( Unit_Directory_List01 "Cu_DirListing" test07.cpp CoffeeCore )
 
-if(NOT WIN32)
+if(NOT WIN32 AND NOT EMSCRIPTEN)
     coffee_add_test ( Unit_Symlink_Test01 "Cu_Symlink" test08.cpp CoffeeCore )
 endif()
