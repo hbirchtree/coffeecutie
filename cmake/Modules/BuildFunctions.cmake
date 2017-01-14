@@ -13,6 +13,18 @@ macro(TARGET_ENABLE_CXX11 TARGET)
     if(NOT ANDROID AND NOT APPLE)
         target_compile_features(${TARGET} PRIVATE cxx_constexpr)
     endif()
+
+    # Sneaky sneaky
+    if(EMSCRIPTEN)
+        target_compile_options(${TARGET} PRIVATE
+            -s USE_SDL=2
+            )
+        if(COFFEE_GENERATE_WASM)
+#            target_compile_options( ${TARGET} PRIVATE
+#                "-s WASM=1"
+#                )
+        endif()
+    endif()
 endmacro()
 
 macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
@@ -65,17 +77,6 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
 
     # Because it's hard to write these three commands over and over again
     add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${${TARGET}_HEADERS}")
-
-    if(EMSCRIPTEN)
-        target_compile_options(${TARGET} PRIVATE
-            "-s USE_SDL=2"
-            )
-        if(COFFEE_GENERATE_WASM)
-            target_compile_options( ${TARGET} PRIVATE
-                "-s WASM=1"
-                )
-        endif()
-    endif()
 
     set_property(TARGET ${TARGET} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
@@ -217,14 +218,6 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
         endif()
         add_executable(${TARGET} ${SOURCES_MOD})
-        target_compile_options(${TARGET} PRIVATE
-            "-s USE_SDL=2"
-            )
-        if(COFFEE_GENERATE_WASM)
-            target_compile_options( ${TARGET} PRIVATE
-                "-s WASM=1"
-                )
-        endif()
         if(NOT COFFEE_GENERATE_HTML)
             install(
                 TARGETS
