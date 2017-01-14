@@ -96,6 +96,9 @@ if(COFFEE_GENERATE_LIBRARIES)
     add_subdirectory(bindings)
 
     if(GENERATE_PROGRAMS)
+        if(COFFEE_GENERATE_HTML)
+            set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
+        endif()
         # Tools, includes the GUI profiler
         add_subdirectory(tools)
 
