@@ -399,7 +399,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     elseif(EMSCRIPTEN)
         add_test (
             NAME ${TITLE}
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             COMMAND nodejs $<TARGET_FILE:${TARGET}>
             )
     else()
