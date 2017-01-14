@@ -67,7 +67,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
     add_library(${TARGET} ${LINKOPT} "${SOURCES}" "${${TARGET}_HEADERS}")
 
     if(EMSCRIPTEN)
-        target_compile_options(CoffeeGLeam PRIVATE
+        target_compile_options(${TARGET} PRIVATE
             -s USE_SDL=2
             )
     endif()
