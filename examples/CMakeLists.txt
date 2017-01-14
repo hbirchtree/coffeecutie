@@ -174,7 +174,6 @@ add_subdirectory(font-rendering)
 #
 
 if(COFFEE_TESTS)
-    set ( CMAKE_EXECUTABLE_SUFFIX ".js" )
     add_subdirectory(unit-tests)
 endif()
 
