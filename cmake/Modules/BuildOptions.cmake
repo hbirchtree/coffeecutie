@@ -9,6 +9,9 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     option ( COFFEE_GENERATE_APPIMAGE "Generate AppImage packages" OFF )
     option ( COFFEE_GENERATE_FLATPAK "Generate Flatpaks" OFF )
     option ( COFFEE_GENERATE_SNAPPY "Generate Snaps" OFF )
+elseif(EMSCRIPTEN)
+    option ( COFFEE_GENERATE_HTML "Generate HTML wrapper document for Emscripten" ON )
+    option ( COFFEE_GENERATE_WASM "Generate WASM version of code, not asm.js" OFF )
 endif()
 
 # Generates Doxygen documentation, requires Doxygen installed in PATH
@@ -21,6 +24,7 @@ option ( SKIP_LINKAGE_TEST "Skip test of dynamic linking" ON )
 option ( SKIP_OPENVR_TEST "Skip tests of OpenVR, it requires a display and hardware" ON )
 
 option ( COFFEE_BUILD_BOT "Build CMake bot" OFF )
+
 
 #
 #

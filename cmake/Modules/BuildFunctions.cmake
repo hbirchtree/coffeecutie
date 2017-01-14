@@ -201,6 +201,34 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             "${BUNDLE_RSRCS}"
             "${BUNDLE_LIBS}"
             "${ICON_ASSET}" )
+    elseif(EMSCRIPTEN)
+        add_executable(${TARGET} ${SOURCES_MOD})
+        set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
+        if(COFFEE_GENERATE_WASM)
+            target_compile_options( ${TARGET} PRIVATE
+                -s WASM=1
+                )
+        endif()
+        if(NOT COFFEE_GENERATE_HTML)
+            install(
+                TARGETS
+                ${TARGET}
+
+                DESTINATION
+                bin
+                )
+        else()
+            set_target_properties( ${TARGET} PROPERTIES
+              RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
+            )
+            install(
+                DIRECTORY
+                ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/bin/${TARGET}.bundle
+
+                DESTINATION
+                bin
+                )
+        endif()
     elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         add_executable( ${TARGET} ${SOURCES_MOD} )
 
@@ -240,7 +268,6 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 "${PERMISSIONS}"
                 )
         endif()
-
     else()
         add_executable(${TARGET} ${SOURCES_MOD})
 
