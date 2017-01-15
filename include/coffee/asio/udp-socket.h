@@ -7,7 +7,19 @@ namespace ASIO{
 
 struct UDPSocketImpl : ASIO_Client
 {
-    using Socket = asio::ip::udp::socket;
+    class Socket : public asio::ip::udp::socket
+    {
+    public:
+
+        using UDP = asio::ip::udp;
+
+        Socket(AsioContext_internal context) :
+            asio::ip::udp::socket(context->service)
+        {
+        }
+
+        C_DELETE_COPY_CONSTRUCTOR(Socket);
+    };
 };
 
 }

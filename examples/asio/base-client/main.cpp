@@ -51,7 +51,7 @@ int32 coffee_main(int32, cstring_w*)
         Profiler::Profile("Receive response");
     }
 
-    {
+    if(/* DISABLES CODE */false){
         ProfContext __m2("Asynchronous request");
 
         CString host = "api.twitch.tv";
@@ -103,6 +103,17 @@ int32 coffee_main(int32, cstring_w*)
 
         tim.start();
         printResult(t);
+    }
+
+    {
+        /* UDP socket stuff */
+        UDP::Socket test_socket(net_context);
+
+        test_socket.open(UDP::Socket::UDP::v4());
+        asio::ip::udp::resolver::query q("192.168.10.153", "10240");
+        auto it = net_context->resolver_udp.resolve(q);
+        Vector<byte_t> data = {32, 32, 65, 65, 0};
+        test_socket.send_to(asio::buffer(data), *it);
     }
 
     return 0;

@@ -27,7 +27,8 @@ struct ASIO_Client
     {
         AsioContext_data():
             service(),
-            resolver(service)
+            resolver(service),
+            resolver_udp(service)
 #if defined(ASIO_USE_SSL)
           ,sslctxt(asio::ssl::context::sslv23_client)
 #endif
@@ -36,6 +37,7 @@ struct ASIO_Client
 
         asio::io_service service;
         asio::ip::tcp::resolver resolver;
+        asio::ip::udp::resolver resolver_udp;
 #if defined(ASIO_USE_SSL)
         asio::ssl::context sslctxt;
 #endif
