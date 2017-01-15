@@ -34,7 +34,7 @@ include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
 add_definitions("-DASIO_STANDALONE")
 
 # Include SSL if built
-if(COFFEE_BUILD_OPENSSL)
+if(COFFEE_BUILD_OPENSSL AND NOT WIN32 AND NOT ANDROID)
     find_package ( OpenSSL REQUIRED )
     include_directories ( ${OPENSSL_INCLUDE_DIR} )
 endif()
