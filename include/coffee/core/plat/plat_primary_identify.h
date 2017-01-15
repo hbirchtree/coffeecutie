@@ -51,7 +51,11 @@
 #endif
 
 #if defined(__EMSCRIPTEN__)
-#define C_SYSTEM_STRING "asm.js/WebAssembly"
+#if defined(__EMSCRIPTEN_WASM__)
+#define C_SYSTEM_STRING "Emscripten/WebAsm"
+#else
+#define C_SYSTEM_STRING "Emscripten/asm.js"
+#endif
 #define COFFEE_EMSCRIPTEN
 #endif
 

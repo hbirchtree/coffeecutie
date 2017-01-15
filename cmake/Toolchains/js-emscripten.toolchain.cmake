@@ -20,6 +20,14 @@ cmake_minimum_required(VERSION 3.4.3)
 set(CMAKE_SYSTEM_NAME Emscripten)
 set(CMAKE_SYSTEM_VERSION 1)
 
+option ( COFFEE_GENERATE_HTML "Generate HTML wrapper document for Emscripten" ON )
+option ( COFFEE_GENERATE_WASM "Generate WASM version of code, not asm.js" OFF )
+
+if(COFFEE_GENERATE_WASM)
+    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_WASM=1" )
+    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_WASM=1" )
+endif()
+
 set(CMAKE_CROSSCOMPILING TRUE)
 
 # Advertise Emscripten as a 32-bit platform (as opposed to CMAKE_SYSTEM_PROCESSOR=x86_64 for 64-bit platform),

@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __EMSCRIPTEN__
+#ifndef __EMSCRIPTEN__
 
 #include "../sysinfo_def.h"
 
@@ -10,6 +10,7 @@ namespace Emscripten {
 
 struct EmSysInfo : SysInfoDef
 {
+    static CString GetSystemVersion();
 };
 struct EmPowerInfo : PowerInfoDef
 {

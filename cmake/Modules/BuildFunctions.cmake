@@ -19,11 +19,6 @@ macro(TARGET_ENABLE_CXX11 TARGET)
         target_compile_options(${TARGET} PRIVATE
             -s USE_SDL=2
             )
-        if(COFFEE_GENERATE_WASM)
-#            target_compile_options( ${TARGET} PRIVATE
-#                "-s WASM=1"
-#                )
-        endif()
     endif()
 endmacro()
 

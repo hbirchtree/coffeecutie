@@ -103,6 +103,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         )
 endif()
 
+if(EMSCRIPTEN)
+    list ( APPEND CoffeeCore_SRCS
+        private/plat/environment/emscripten/sysinfo.cpp
+        )
+endif()
+
 # Mac OS X-specific code
 if(APPLE)
     list ( APPEND CoffeeCore_SRCS
