@@ -55,14 +55,11 @@ struct DebugPrinterImpl : DebugPrinterDef
         }
 
         CString cclock = Time::ClockString();
-#ifndef COFFEE_ANDROID
+#if !defined(COFFEE_ANDROID) && !defined(__EMSCRIPTEN__)
         CString clock = cStringFormat("{0}.{1}",cclock,Time::Microsecond()/1000);
-        CString prefix = cStringFormat("{0}:{1}:{2}",
-                                       clock.c_str(),
-                                       severity_str,
-                                       "???");
+        CString prefix = cStringFormat("{0}:{1}", clock.c_str(), severity_str);
 #else
-        CString prefix = severity_str;
+        CString prefix = severity_str[0];
 #endif
 
         ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));

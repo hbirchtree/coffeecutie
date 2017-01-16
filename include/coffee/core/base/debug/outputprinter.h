@@ -4,8 +4,10 @@
 #include "cdebug_print.h"
 #include "debug_interface.h"
 
-#ifdef COFFEE_ANDROID
+#if defined(COFFEE_ANDROID)
 #include <android/log.h>
+#elif defined(__EMSCRIPTEN__)
+#include <emscripten.h>
 #endif
 
 namespace Coffee{
@@ -26,33 +28,28 @@ struct OutputPrinterImpl : OutputPrinterDef
         if(locking)
             PrinterLock.lock();
 #if defined(COFFEE_ANDROID)
-        int c_str_offset = 0;
-        int flag = ANDROID_LOG_INFO;
+        int c_str_offset = 2;
+        int flag = 0;
+
         if(formatted[0] == 'I')
-        {
-            flag = ANDROID_LOG_VERBOSE;
-            c_str_offset = 6;
-        }
+            flag = ANDROID_LOG_INFO;
         else if(formatted[0] == 'D')
-        {
             flag = ANDROID_LOG_DEBUG;
-            c_str_offset = 6;
-        }
         else if(formatted[0] == 'W')
-        {
             flag = ANDROID_LOG_WARN;
-            c_str_offset = 6;
-        }
         else if(formatted[0] == 'F')
-        {
             flag = ANDROID_LOG_ERROR;
-            c_str_offset = 6;
-        }else if(formatted[0] == 'V')
-        {
+        else if(formatted[0] == 'V')
             flag = ANDROID_LOG_VERBOSE;
-            c_str_offset = 6;
-        }
+
         __android_log_print(flag, "Coffee", "%s", &formatted[c_str_offset]);
+#elif !defined(__EMSCRIPTEN__)
+        int flag = EM_LOG_CONSOLE;
+        if(formatted[0] == 'W')
+            flag = EM_LOG_WARN;
+        else if(formatted[0] == 'F')
+            flag = EM_LOG_ERROR;
+        emscripten_log(flag, "%s", &formatted[2]);
 #else
         Puts(stream,formatted.c_str());
 #endif
