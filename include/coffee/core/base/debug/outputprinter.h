@@ -43,7 +43,7 @@ struct OutputPrinterImpl : OutputPrinterDef
             flag = ANDROID_LOG_VERBOSE;
 
         __android_log_print(flag, "Coffee", "%s", &formatted[c_str_offset]);
-#elif !defined(__EMSCRIPTEN__)
+#elif defined(__EMSCRIPTEN__)
         int flag = EM_LOG_CONSOLE;
         if(formatted[0] == 'W')
             flag = EM_LOG_WARN;
