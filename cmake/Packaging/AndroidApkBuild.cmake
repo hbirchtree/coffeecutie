@@ -110,7 +110,14 @@ macro(APK_PACKAGE_EXT
         )
 
     set ( ANDROID_OPTIONAL_FEATURES
+        "android.hardware.usb.host"
+        "android.hardware.touchscreen"
+        "android.hardware.touchscreen.multitouch"
+        "android.hardware.touchscreen.multitouch.distinct"
+        "android.hardware.touchscreen.multitouch.jazzhand"
         "android.hardware.sensor.accelerometer"
+        "android.hardware.sensor.gyroscope"
+        "android.hardware.sensor.hifi_sensors"
         "android.hardware.opengles.aep"
         "${ANDROID_CUSTOM_PERMISSIONS}"
         )
@@ -140,7 +147,16 @@ macro(APK_PACKAGE_EXT
             )
     endif()
 
-    set ( ANDROID_PERMISSIONS )
+    set ( ANDROID_PERMISSIONS_PRE
+        "android.permission.INTERNET"
+        "android.permission.VIBRATE")
+
+    foreach(perm ${ANDROID_PERMISSIONS_PRE})
+        set ( ANDROID_PERMISSIONS
+            "${ANDROID_PERMISSIONS}
+            <uses-permission android:name=\"${perm}\" />"
+            )
+    endforeach()
 
     # For valid options, see:
     # http://developer.android.com/guide/topics/manifest/activity-element.html
