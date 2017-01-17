@@ -111,12 +111,26 @@ int32 coffee_main(int32, cstring_w*)
 
         try {
             test_socket.open(UDP::Socket::UDP::v4());
-            asio::ip::udp::resolver::query q("192.168.1.197", "10240");
+            asio::ip::udp::resolver::query q("10.22.43.157", "10240");
             auto it = net_context->resolver_udp.resolve(q);
             Vector<byte_t> data = {32, 32, 65, 65, 0};
-            test_socket.send_to(asio::buffer(data), *it);
+            test_socket.send_to(asio::buffer("HELLO world!"), *it);
+            CString recv;
+            recv.resize(20);
+            asio::ip::udp::endpoint endpoint;
+            test_socket.receive_from(asio::buffer(recv), endpoint);
+            cDebug("Received {0} bytes:\n{1}", recv.size(), recv);
         } catch (std::system_error const& e) {
             cDebug("Caught exception: {0}", e.what());
+        }
+        if(test_socket.is_open())
+        {
+            try{
+                test_socket.close();
+            }catch (std::system_error const& e)
+            {
+                cDebug("Caught exception: {0}", e.what());
+            }
         }
     }
 
