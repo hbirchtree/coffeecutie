@@ -56,7 +56,11 @@ struct DebugPrinterImpl : DebugPrinterDef
 
         CString cclock = Time::ClockString();
 #if !defined(COFFEE_ANDROID) && !defined(__EMSCRIPTEN__)
-        CString clock = cStringFormat("{0}.{1}",cclock,Time::Microsecond()/1000);
+        CString ms_time = Convert::uintltostring(Time::Microsecond()/1000);
+        CString clock = cStringFormat("{0}.{1}",
+                                      cclock,
+                                      StrUtil::lpad(ms_time, '0', 3)
+                                      );
         CString prefix = cStringFormat("{0}:", clock.c_str());
         prefix.push_back(severity_str[0]);
 #else

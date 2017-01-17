@@ -331,6 +331,20 @@ FORCEDINLINE CString& zerotrim(CString& s)
     return zeroltrim(zerortrim(s));
 }
 
+template<typename T>
+FORCEDINLINE std::basic_string<T>& lpad(std::basic_string<T>& s, T ch, uint32 len)
+{
+    s.insert(s.begin(), len - s.size(), ch);
+    return s;
+}
+
+template<typename T>
+FORCEDINLINE std::basic_string<T>& rpad(std::basic_string<T>& s, T ch, uint32 len)
+{
+    s.insert(s.end(), len - s.size(), ch);
+    return s;
+}
+
 FORCEDINLINE CString hexify(uint64 inp, bool trim_zero = false)
 {
     CString out;
