@@ -1,5 +1,7 @@
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests )
-set ( CMAKE_EXECUTABLE_SUFFIX ".js" )
+if(EMSCRIPTEN)
+    set ( CMAKE_EXECUTABLE_SUFFIX ".js" )
+endif()
 
 add_subdirectory(cmd-api)
 add_subdirectory(datastorage-api)
