@@ -1,27 +1,32 @@
 #!/bin/bash
 
-COFFEE_DIR=$(dirname $(readlink -f "${0}"))
-PROJECT_DIR="$(pwd)"
+readonly COFFEE_DIR=$(dirname $(readlink -f "${0}"))
+readonly PROJECT_DIR="$(pwd)"
 GIT_COMMIT=""
 export PJNAME="CoffeeGame"
 
+# Get Git commit from source directory
 function fetch_version()
 {
     pushd "${COFFEE_DIR}" 1>/dev/null
-    GIT_COMMIT="$(git rev-parse HEAD)" || GIT_COMMIT="0000"
+    GIT_COMMIT="$(git describe --tags)" || GIT_COMMIT="0000"
     popd 1>/dev/null
 
     echo "${GIT_COMMIT}" > "${PROJECT_DIR}/ENGINE_VERSION"
 }
 
+# Create all basic directory structures
 function create_base_directories()
 {
-    mkdir -p "${PROJECT_DIR}/cmake"
-    mkdir -p "${PROJECT_DIR}/rsrc/${PJNAME}"
-    mkdir -p "${PROJECT_DIR}/src"
-    mkdir -p "${PROJECT_DIR}/internal"
+    mkdir -p "${PROJECT_DIR}/cmake" \
+        "${PROJECT_DIR}/rsrc/${PJNAME}" \
+        "${PROJECT_DIR}/src" \
+        "${PROJECT_DIR}/internal" \
+        "${PROJECT_DIR}/meta/android" \
+        "${PROJECT_DIR}/meta/jenkins"
 }
 
+# Copying of configuration files from source directory
 function copy_config_files()
 {
     cp -ur "${COFFEE_DIR}/cmake/Find" "${PROJECT_DIR}/cmake"
@@ -66,7 +71,6 @@ function set_pjname()
 #
 function configure_project()
 {
-
     local TITLE="$1"
     local COMPANY="Coffee"
     local DESC="Coffee Application"
@@ -78,12 +82,27 @@ function configure_project()
         local TITLE=`basename "$(pwd)"`
     fi
 
+    if [[ ! -d "${PROJECT_DIR}/.git" ]]; then
+        echo "-- Creating Git repository"
+        git init
+    fi
+
     echo "-- Generating project with name '${PJNAME}'"
     echo "-- Properties: "
     local
 
     local MAIN_FILE="${PROJECT_DIR}/src/main.cpp"
     local CMAKE_FILE="${PROJECT_DIR}/CMakeLists.txt"
+    local GITIGNORE_FILE="${PROJECT_DIR}/.gitignore"
+    local META_ANDROID_FILE="${PROJECT_DIR}/meta/android/CMakeLists.txt"
+    local META_JENKINS_FILE="${PROJECT_DIR}/meta/jenkins/${PJNAME}.groovy"
+
+    if [[ ! -f "${GITIGNORE_FILE}" ]]; then
+        echo "*~" \
+            "reconfig.sh" \
+            "*.user" \
+            > "${GITIGNORE_FILE}"
+    fi
 
     if [[ ! -f "${CMAKE_FILE}" ]]; then
         cat "${COFFEE_DIR}/cmake/Templates/TemplateProject.txt" | \
@@ -102,6 +121,9 @@ function configure_project()
             sed -e "s|@PJNAME@|${PJNAME}|g" \
             > "${MAIN_FILE}"
     fi
+
+    cp "${COFFEE_DIR}/cmake/Templates/AndroidProject.txt" "${META_ANDROID_FILE}"
+    cp "${COFFEE_DIR}/cmake/Templates/templatejob.groovy" "${META_JENKINS_FILE}"
 
     touch "${PROJECT_DIR}/LICENSE"
 }
