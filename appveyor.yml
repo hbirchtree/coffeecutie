@@ -76,7 +76,7 @@ deploy:
   artifact: Coffee_Win64
   prerelease: true
   on:
-  appveyor_repo_tag: true
+    appveyor_repo_tag: true
   auth_token:
       secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 
