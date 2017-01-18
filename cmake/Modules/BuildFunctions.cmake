@@ -381,13 +381,26 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
 
     add_executable ( ${TARGET} ${SOURCES_MOD} )
 
-    install(
-        FILES
-        "$<TARGET_FILE:${TARGET}>"
-
-        DESTINATION
-        bin/tests
+    if(EMSCRIPTEN)
+        set_target_properties( ${TARGET} PROPERTIES
+          RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
         )
+        install(
+            DIRECTORY
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
+
+            DESTINATION
+            bin
+            )
+    else()
+        install(
+            FILES
+            "$<TARGET_FILE:${TARGET}>"
+
+            DESTINATION
+            bin/tests
+            )
+    endif()
 
     target_link_libraries ( ${TARGET}
         ${LIBRARIES}
