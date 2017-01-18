@@ -113,7 +113,6 @@ int32 coffee_main(int32, cstring_w*)
             test_socket.open(UDP::Socket::UDP::v4());
             asio::ip::udp::resolver::query q("10.22.43.157", "10240");
             auto it = net_context->resolver_udp.resolve(q);
-            Vector<byte_t> data = {32, 32, 65, 65, 0};
             test_socket.send_to(asio::buffer("HELLO world!"), *it);
             CString recv;
             recv.resize(20);
