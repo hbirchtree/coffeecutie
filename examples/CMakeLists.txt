@@ -12,7 +12,7 @@ add_subdirectory (core/env-test)
 if(COFFEE_BUILD_OPENSSL)
     # ASIO examples, we leave this as core
     add_subdirectory(asio/base-client)
-    #add_subdirectory(asio/base-server)
+    add_subdirectory(asio/base-server)
     add_subdirectory(asio/irc-client)
 endif()
 

@@ -111,7 +111,7 @@ int32 coffee_main(int32, cstring_w*)
 
         try {
             test_socket.open(UDP::Socket::UDP::v4());
-            asio::ip::udp::resolver::query q("10.22.43.157", "10240");
+            asio::ip::udp::resolver::query q("localhost", "10240");
             auto it = net_context->resolver_udp.resolve(q);
             test_socket.send_to(asio::buffer("HELLO world!"), *it);
             CString recv;

@@ -2,11 +2,7 @@
 
 #include "../platform_detect.h"
 
-//#ifdef COFFEE_ANDROID
-//#include <stdlib.h>
-//#else
 #include <cstdlib>
-//#endif
 #include <cstring>
 #include <cwchar>
 
@@ -97,63 +93,38 @@ FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
 
 }
 
+#define STRTON_FUNCTION(type, name, converter) \
+    FORCEDINLINE type name(cstring n,int base = 10, bool* ok = nullptr) \
+    { \
+        if(!ok) \
+            return ::converter(n,nullptr,base); \
+        char* t = nullptr; \
+        int32 v = ::converter(n,&t,base); \
+        *ok = t>n; \
+        return v; \
+    }
+
+#define STRTOFN_FUNCTION(type, name, converter) \
+    FORCEDINLINE type name(cstring n, bool* ok = nullptr) \
+    { \
+        if(!ok) \
+            return ::converter(n,nullptr); \
+        char* t = nullptr; \
+        scalar v = ::converter(n,&t); \
+        *ok = t>n; \
+        return v; \
+    }
+
 namespace Convert
 {
 /* Conversion from string */
-FORCEDINLINE int32 strtoint(cstring n,int base = 10, bool* ok = nullptr)
-{
-    if(!ok)
-        return ::strtol(n,nullptr,base);
-    char* t = nullptr;
-    int32 v = ::strtol(n,&t,base);
-    *ok = t>n;
-    return v;
-}
-FORCEDINLINE uint32 strtouint(cstring n,int base = 10, bool* ok = nullptr)
-{
-    if(!ok)
-        return ::strtoul(n,nullptr,base);
-    char* t = nullptr;
-    uint32 v = ::strtoul(n,&t,base);
-    *ok = t>n;
-    return v;
-}
-FORCEDINLINE int64 strtoll(cstring n,int base = 10, bool* ok = nullptr)
-{
-    if(!ok)
-        return ::strtoll(n,nullptr,base);
-    char* t = nullptr;
-    int64 v = ::strtoll(n,&t,base);
-    *ok = t>n;
-    return v;
-}
-FORCEDINLINE uint64 strtoull(cstring n,int base = 10, bool* ok = nullptr)
-{
-    if(!ok)
-        return ::strtoull(n,nullptr,base);
-    char* t = nullptr;
-    uint64 v = ::strtoull(n,&t,base);
-    *ok = t>n;
-    return v;
-}
-FORCEDINLINE scalar strtofscalar(cstring n, bool* ok = nullptr)
-{
-    if(!ok)
-        return ::strtof(n,nullptr);
-    char* t = nullptr;
-    scalar v = ::strtof(n,&t);
-    *ok = t>n;
-    return v;
-}
-FORCEDINLINE bigscalar strtoscalar(cstring n, bool* ok = nullptr)
-{
-    if(!ok)
-        return ::strtod(n,nullptr);
-    char* t = nullptr;
-    bigscalar v = ::strtod(n,&t);
-    *ok = t>n;
-    return v;
-}
+STRTON_FUNCTION(int32, strtoint, strtol)
+STRTON_FUNCTION(uint32, strtouint, strtoul)
+STRTON_FUNCTION(int64, strtoll, strtoll)
+STRTON_FUNCTION(uint64, strtoull, strtoull)
+
+STRTOFN_FUNCTION(scalar, strtofscalar, strtof)
+STRTOFN_FUNCTION(bigscalar, strtoscalar, strtod)
 
 /* C-String conversion */
 FORCEDINLINE cwstring_w NarrowWide(cstring str)
@@ -181,3 +152,6 @@ FORCEDINLINE cstring_w WideNarrow(cstring str)
 
 }
 }
+
+#undef STRTON_FUNCTION
+#undef STRTOFN_FUNCTION
