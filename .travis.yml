@@ -26,7 +26,7 @@ notifications:
 branches:
   only:
   - master
-  - testing
+  - /^testing.*$/
 
 deploy:
   provider: releases
@@ -34,4 +34,4 @@ deploy:
   file: "binaries_${TRAVIS_OS_NAME}_${CC}.tar.gz"
   skip_cleanup: true
   on:
-    branch: master
+    tags: true

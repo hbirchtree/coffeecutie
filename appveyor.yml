@@ -3,7 +3,8 @@ skip_tags: true
 branches:
   only:
   - master
-  - testing
+  - /testing.*/
+  - /feature.*/
 configuration:
 - Debug
 platform: x64
@@ -70,10 +71,12 @@ artifacts:
   name: Coffee_Win64
 deploy:
 - provider: GitHub
-  tag: appveyor-build-$(APPVEYOR_BUILD_NUMBER)
   release: Appveyor Build $(APPVEYOR_BUILD_NUMBER)
   description: Automatic build by Appveyor
   artifact: Coffee_Win64
   prerelease: true
+  on:
+    branch: master
   auth_token:
       secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
+
