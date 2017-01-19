@@ -27,17 +27,17 @@ bool convert_string()
 {
     CString test;
     do{
-        test = cast_pod<uint32>(123);
+        test = cast_pod(123);
 
         if(test != "123")
             break;
 
-        test = cast_pod<scalar>(123.567f);
+        test = cast_pod(123.567f);
 
         if(StrUtil::zerortrim(test) != "123.567")
             break;
 
-        test = cast_pod<bigscalar>(123456.78910);
+        test = cast_pod(123456.78910);
 
         if(test != "123456.78910")
             break;
