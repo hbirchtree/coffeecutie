@@ -99,7 +99,7 @@ FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
         if(!ok) \
             return ::converter(n,nullptr,base); \
         char* t = nullptr; \
-        int32 v = ::converter(n,&t,base); \
+        type v = ::converter(n,&t,base); \
         *ok = t>n; \
         return v; \
     }
@@ -110,7 +110,7 @@ FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
         if(!ok) \
             return ::converter(n,nullptr); \
         char* t = nullptr; \
-        scalar v = ::converter(n,&t); \
+        type v = ::converter(n,&t); \
         *ok = t>n; \
         return v; \
     }
