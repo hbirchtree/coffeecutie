@@ -4,6 +4,7 @@
 #include <coffee/core/CJSONParser>
 #include <coffee/core/CApplication>
 #include <coffee/core/CProfiling>
+#include <coffee/core/profiler/profiling-export.h>
 
 using namespace Coffee;
 
@@ -107,29 +108,36 @@ int32 coffee_main(int32, cstring_w*)
 
     {
         /* UDP socket stuff */
-        UDP::Socket test_socket(net_context);
 
         try {
-            test_socket.open(UDP::Socket::UDP::v4());
-            asio::ip::udp::resolver::query q("localhost", "10240");
-            auto it = net_context->resolver_udp.resolve(q);
-            test_socket.send_to(asio::buffer("HELLO world!"), *it);
-            CString recv;
-            recv.resize(20);
-            asio::ip::udp::endpoint endpoint;
-            test_socket.receive_from(asio::buffer(recv), endpoint);
-            cDebug("Received {0} bytes:\n{1}", recv.size(), recv);
-        } catch (std::system_error const& e) {
-            cDebug("Caught exception: {0}", e.what());
-        }
-        if(test_socket.is_open())
-        {
-            try{
-                test_socket.close();
-            }catch (std::system_error const& e)
-            {
+            UDP::Socket test_socket(net_context, UDP::proto::v4());
+
+            try {
+                asio::ip::udp::resolver::query q("localhost", "10240");
+                auto it = net_context->resolver_udp.resolve(q);
+                CString test_log;
+                Profiling::ExportProfilerData(test_log);
+                test_socket.send_to(asio::buffer(test_log), *it);
+    //            CString recv;
+    //            recv.resize(20);
+    //            asio::ip::udp::endpoint endpoint;
+    //            test_socket.receive_from(asio::buffer(recv), endpoint);
+    //            cDebug("Received {0} bytes:\n{1}", recv.size(), recv);
+            } catch (std::system_error const& e) {
                 cDebug("Caught exception: {0}", e.what());
             }
+            if(test_socket.is_open())
+            {
+                try{
+                    test_socket.close();
+                }catch (std::system_error const& e)
+                {
+                    cDebug("Caught exception: {0}", e.what());
+                }
+            }
+        }catch (std::system_error const& e)
+        {
+            cDebug("Caught exception: {0}", e.what());
         }
     }
 

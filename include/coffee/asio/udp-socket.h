@@ -7,15 +7,24 @@ namespace ASIO{
 
 struct UDPSocketImpl : ASIO_Client
 {
+    using proto = asio::ip::udp;
+    using endpoint = asio::ip::udp::endpoint;
+
     class Socket : public asio::ip::udp::socket
     {
     public:
 
-        using UDP = asio::ip::udp;
-
-        Socket(AsioContext_internal context) :
+        Socket(AsioContext_internal context, proto prot) :
             asio::ip::udp::socket(context->service)
         {
+            this->open(prot);
+        }
+
+        Socket(AsioContext_internal context, proto prot, uint16 port) :
+            asio::ip::udp::socket(context->service)
+        {
+            this->open(prot);
+            this->bind(endpoint(asio::ip::address_v4::any(), port));
         }
 
         C_DELETE_COPY_CONSTRUCTOR(Socket);

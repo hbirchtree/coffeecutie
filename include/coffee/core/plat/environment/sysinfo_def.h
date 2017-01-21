@@ -55,7 +55,7 @@ struct SysInfoDef
      * \brief Get string representing system architecture (eg. win64, lin64, mac64, ios64, and32)
      * \return
      */
-    CString GetSystemString();
+    SWVersionInfo GetSystemString();
 
     static
     /*!

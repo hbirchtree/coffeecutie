@@ -9,7 +9,6 @@
 #include <coffee/core/coffee.h>
 
 #include <coffee/core/plat/plat_file.h>
-
 #include <coffee/core/plat/plat_quirks_toggling.h>
 
 namespace Coffee{
@@ -49,8 +48,11 @@ void PrintProfilerData()
 #endif
 }
 
-void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
+void ExportProfilerData(CString& target)
 {
+    auto argv = GetInitArgs().argv;
+    auto argc = GetInitArgs().argc;
+
     XML::Document doc;
 
     XML::Element* root = doc.NewElement("profile");
@@ -272,51 +274,58 @@ void ExportProfilerData(cstring out, int32 argc, cstring_w *argv)
     }
     cVerbose(8,"Writing profiler data");
 
-    if(!PlatformData::IsMobile())
-    {
-        auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
+    tinyxml2::XMLPrinter printer;
+    doc.Print(&printer);
 
-        if (!file)
-        {
-            cWarning("Failed to save timing profile");
-            return;
-        }
-
-        /* Because fuck dangling file handles */
-#if defined(COFFEE_USE_EXCEPTIONS)
-        try{
-#endif
-            doc.SaveFile(file->handle,false);
-#if defined(COFFEE_USE_EXCEPTIONS)
-        }catch(std::exception)
-        {
-        }
-#endif
-
-        CResources::CFILEFun::Close(file);
-    }else{
-#if defined(COFFEE_ANDROID)
-        const constexpr cstring mobile_logtemplate = "/data/local/tmp/{0}-profile.xml";
-#else
-        const constexpr cstring mobile_logtemplate = "/tmp/{0}-profile.xml";
-#endif
-
-        cVerbose(5,"Creating tinyxml2 printer");
-        tinyxml2::XMLPrinter printer;
-        doc.Print(&printer);
-        cVerbose(5,"Printed tinyxml2 document");
-        CString log_name = cStringFormat(
-                    mobile_logtemplate,
-                    ApplicationData().application_name);
-        cVerbose(5,"Creating filename");
-        CResources::Resource out(log_name.c_str(),true);
-        out.data = C_FCAST<c_ptr>(printer.CStr());
-        out.size = C_CAST<szptr>(printer.CStrSize());
-        cVerbose(5,"Retrieving data pointers");
-        CResources::FileCommit(out);
-        cVerbose(5,"Wrote file");
-    }
+    target.insert(0, printer.CStr(), printer.CStrSize());
 }
+
+
+//    if(!PlatformData::IsMobile())
+//    {
+//        auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
+
+//        if (!file)
+//        {
+//            cWarning("Failed to save timing profile");
+//            return;
+//        }
+
+//        /* Because fuck dangling file handles */
+//#if defined(COFFEE_USE_EXCEPTIONS)
+//        try{
+//#endif
+//            doc.SaveFile(file->handle,false);
+//#if defined(COFFEE_USE_EXCEPTIONS)
+//        }catch(std::exception)
+//        {
+//        }
+//#endif
+
+//        CResources::CFILEFun::Close(file);
+//    }else{
+//#if defined(COFFEE_ANDROID)
+//        const constexpr cstring mobile_logtemplate = "/data/local/tmp/{0}-profile.xml";
+//#else
+//        const constexpr cstring mobile_logtemplate = "/tmp/{0}-profile.xml";
+//#endif
+
+//        cVerbose(5,"Creating tinyxml2 printer");
+//        tinyxml2::XMLPrinter printer;
+//        doc.Print(&printer);
+//        cVerbose(5,"Printed tinyxml2 document");
+//        CString log_name = cStringFormat(
+//                    mobile_logtemplate,
+//                    ApplicationData().application_name);
+//        cVerbose(5,"Creating filename");
+//        CResources::Resource out(log_name.c_str(),true);
+//        out.data = C_FCAST<c_ptr>(printer.CStr());
+//        out.size = C_CAST<szptr>(printer.CStrSize());
+//        cVerbose(5,"Retrieving data pointers");
+//        CResources::FileCommit(out);
+//        cVerbose(5,"Wrote file");
+//    }
+//}
 
 void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
 {
@@ -332,7 +341,9 @@ void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
             if(!silent)
                 cDebug("Saving profiler data to: {0}",log_name);
 
-            Profiling::ExportProfilerData(log_name.c_str(),argc,argv);
+            CString target_log;
+            Profiling::ExportProfilerData(/*log_name.c_str(),argc,argv*/ target_log);
+            cBasicPrint(target_log.c_str());
         }
     }
     /* ... and always destroy the profiler */
