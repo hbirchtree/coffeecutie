@@ -20,9 +20,10 @@ try{
             [&](asio::error_code const& code, size_t recv_bytes)
     {
         cDebug("Got {0} bytes, code {1}", recv_bytes, code.message());
-        cDebug("Buffer: \n{0}\n{1}",
-               Mem::StrUtil::hexdump(recv.data(), recv_bytes),
+        cDebug("Time: {0}", Time::Microsecond());
+        cDebug("Buffer: \n{0}",
                C_CAST<cstring>(recv.data()));
+
 
         sock.async_receive_from(asio::buffer(recv), remote, receive_fun);
     };

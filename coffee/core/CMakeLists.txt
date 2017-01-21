@@ -52,6 +52,8 @@ set ( CoffeeCore_SRCS
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
+    private/plat/memory/string_ops.cpp
+
     # Compression / data storage
     private/datastorage/compression/libz.cpp
     private/datastorage/text/ini/ciniparser.cpp

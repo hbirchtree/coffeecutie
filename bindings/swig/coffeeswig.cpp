@@ -133,7 +133,9 @@ void Profile::LabelThread(const char* name)
 }
 void Profile::Save(const char* outfile)
 {
-    Profiling::ExportProfilerData(outfile,GetInitArgs().argc,GetInitArgs().argv);
+    CString log_data;
+    Profiling::ExportProfilerData(log_data);
+    Profiling::ExportStringToFile(log_data, outfile);
 }
 void Profile::PrintData()
 {

@@ -24,6 +24,10 @@
 #undef COFFEE_LINUX
 #endif
 
+#if defined(__MAEMO__)
+#define COFFEE_MAEMO
+#endif
+
 /* Windows macro, only one for now */
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(WIN32) || defined(WINUWP)
 #define C_SYSTEM_STRING "Windows"

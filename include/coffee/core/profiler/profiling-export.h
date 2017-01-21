@@ -19,6 +19,8 @@ extern void PrintProfilerData();
  */
 extern void ExportProfilerData(CString &target);
 
+extern void ExportStringToFile(CString const& data, cstring outfile);
+
 /*!
  * \brief Called on exit to conclude profiling session
  * \param argc

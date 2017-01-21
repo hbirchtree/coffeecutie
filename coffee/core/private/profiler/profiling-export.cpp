@@ -281,51 +281,30 @@ void ExportProfilerData(CString& target)
 }
 
 
-//    if(!PlatformData::IsMobile())
-//    {
-//        auto file = CResources::CFILEFun::Open(out,ResourceAccess::WriteOnly|ResourceAccess::Discard);
 
-//        if (!file)
-//        {
-//            cWarning("Failed to save timing profile");
-//            return;
-//        }
-
-//        /* Because fuck dangling file handles */
-//#if defined(COFFEE_USE_EXCEPTIONS)
-//        try{
-//#endif
-//            doc.SaveFile(file->handle,false);
-//#if defined(COFFEE_USE_EXCEPTIONS)
-//        }catch(std::exception)
-//        {
-//        }
-//#endif
-
-//        CResources::CFILEFun::Close(file);
-//    }else{
-//#if defined(COFFEE_ANDROID)
-//        const constexpr cstring mobile_logtemplate = "/data/local/tmp/{0}-profile.xml";
-//#else
-//        const constexpr cstring mobile_logtemplate = "/tmp/{0}-profile.xml";
-//#endif
-
-//        cVerbose(5,"Creating tinyxml2 printer");
-//        tinyxml2::XMLPrinter printer;
-//        doc.Print(&printer);
-//        cVerbose(5,"Printed tinyxml2 document");
-//        CString log_name = cStringFormat(
-//                    mobile_logtemplate,
-//                    ApplicationData().application_name);
-//        cVerbose(5,"Creating filename");
-//        CResources::Resource out(log_name.c_str(),true);
-//        out.data = C_FCAST<c_ptr>(printer.CStr());
-//        out.size = C_CAST<szptr>(printer.CStrSize());
-//        cVerbose(5,"Retrieving data pointers");
-//        CResources::FileCommit(out);
-//        cVerbose(5,"Wrote file");
-//    }
 //}
+
+void ExportStringToFile(const CString &data, cstring outfile)
+{
+#if defined(COFFEE_ANDROID)
+    const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
+#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
+    const constexpr cstring logtemplate = "/tmp/{0}_profile.xml";
+#else
+    cstring logtemplate = outfile;
+#endif
+
+    CString log_name = cStringFormat(
+                logtemplate,
+                ApplicationData().application_name);
+    cVerbose(5,"Creating filename");
+    CResources::Resource out(log_name.c_str(),true);
+    out.data = C_FCAST<c_ptr>(data.c_str());
+    out.size = C_CAST<szptr>(data.size());
+    cVerbose(5,"Retrieving data pointers");
+    CResources::FileCommit(out);
+    cVerbose(5,"Wrote file");
+}
 
 void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
 {

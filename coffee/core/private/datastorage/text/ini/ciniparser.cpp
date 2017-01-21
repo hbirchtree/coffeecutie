@@ -1,5 +1,6 @@
 #include <coffee/core/datastorage/text/ini/ciniparser.h>
 
+#include <coffee/core/string_casting.h>
 #include <coffee/core/CDebug>
 
 namespace Coffee{
@@ -21,7 +22,7 @@ SimpleIniParser::document_t SimpleIniParser::Read(const CResources::Resource &so
         linesep = "\r";
 
     /* Retrieve data */
-    cstring data = (cstring)source.data;
+    cstring data = C_CAST<cstring>(source.data);
     cstring ref = data;
     cstring end = data+source.size;
 
@@ -34,7 +35,7 @@ SimpleIniParser::document_t SimpleIniParser::Read(const CResources::Resource &so
     CString tvalu;
     variant_t* cval = nullptr;
     Vector<cstring> cmtlines;
-    t2 = nullptr,t3 = nullptr,t4 = nullptr;
+    t2 = nullptr; t3 = nullptr; t4 = nullptr;
     while(ref&&ref<end)
     {
         t1 = StrFind(ref,linesep);
@@ -90,17 +91,10 @@ SimpleIniParser::document_t SimpleIniParser::Read(const CResources::Resource &so
                             cval = doc.newFloat(dtype);
                         }else{
                             eval = true;
-                            bool btype;
-                            if(tvalu=="false"||tvalu=="False")
-                                btype = false;
-                            else if(tvalu=="true"||tvalu=="True")
-                                btype = true;
-                            else
-                                eval = false;
+                            bool btype = Convert::strtobool(tvalu.c_str(),&eval);
                             if(eval)
-                            {
                                 cval = doc.newBool(btype);
-                            }else
+                            else
                                 cval = doc.newString(tvalu.c_str());
                         }
                     }

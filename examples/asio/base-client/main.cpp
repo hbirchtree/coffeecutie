@@ -6,6 +6,8 @@
 #include <coffee/core/CProfiling>
 #include <coffee/core/profiler/profiling-export.h>
 
+#include <coffee/core/CMD>
+
 using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
@@ -117,7 +119,15 @@ int32 coffee_main(int32, cstring_w*)
                 auto it = net_context->resolver_udp.resolve(q);
                 CString test_log;
                 Profiling::ExportProfilerData(test_log);
-                test_socket.send_to(asio::buffer(test_log), *it);
+
+//                test_log.resize(4096);
+
+//                while(true)
+//                {
+//                    Cmd::ReadString(&test_log[0], test_log.size(), stdin);
+                    test_socket.send_to(asio::buffer(test_log), *it);
+                    cDebug("{0}", Time::Microsecond());
+//                }
     //            CString recv;
     //            recv.resize(20);
     //            asio::ip::udp::endpoint endpoint;
