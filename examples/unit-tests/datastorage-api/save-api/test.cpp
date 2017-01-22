@@ -32,6 +32,13 @@ struct TestStructure
 bool save_to_disk()
 {
     TestStructure data = {};
+    szptr data_size = sizeof(data);
+
+    cVerbose(5, "Separate operation");
+    Store::RestoreMemory(&data, &data_size);
+
+    cDebug("On-disk: {0}", C_CAST<CString>(data));
+
     data.big_float_test = 1610493.10;
     data.big_integer_test = UInt32_Max * 4;
     data.smaller_integer_test = UInt16_Max * 2;
@@ -39,13 +46,15 @@ bool save_to_disk()
 
     TestStructure data_cpy = data;
 
+    cVerbose(5, "Separate operation");
     Store::SaveMemory(&data, sizeof(data));
 
-    szptr data_size = sizeof(data);
+    data_size = sizeof(data);
 
+    cVerbose(5, "Separate operation");
     Store::RestoreMemory(&data, &data_size);
 
-    cDebug("In-memory: {0}", C_CAST<CString>(data));
+    cDebug("In-memory: {0}", C_CAST<CString>(data_cpy));
     cDebug("On-disk: {0}", C_CAST<CString>(data));
 
     return data_cpy == data;

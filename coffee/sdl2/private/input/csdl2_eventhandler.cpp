@@ -12,13 +12,17 @@ bool SDL2EventHandler::inputPreInit(CString*)
 {
     /* Load input systems */
     if(SDL_InitSubSystem(SDL_INIT_EVENTS|
-                         SDL_INIT_GAMECONTROLLER|
-                         SDL_INIT_HAPTIC)<0)
+                         SDL_INIT_GAMECONTROLLER)<0)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
         setSDL2Context(nullptr);
         return false;
+    }
+    if(SDL_InitSubSystem(SDL_INIT_HAPTIC) < 0)
+    {
+        cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
+             CFStrings::SDL2_Library_FailureInit,SDL_GetError());
     }
     Profiler::Profile("SDL2 input initializtion");
     return true;

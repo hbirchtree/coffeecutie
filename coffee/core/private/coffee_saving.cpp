@@ -18,39 +18,64 @@ uint16 AvailableSaveSlots()
 }
 
 #if defined(__EMSCRIPTEN__)
-void emscripten_callback_load(void* arg)
+struct DataStatus
 {
-    int* status = C_FCAST<int*>(arg);
+    int32 status;
+    int32 __padding;
+    c_ptr ptr;
+    szptr* size;
+};
+
+void emscripten_callback_load(void* arg, void* data, int size)
+{
+    DataStatus* status = C_FCAST<DataStatus*>(arg);
     cDebug("Loaded file");
-    *status = 1;
+    if(size <= C_CAST<int>(*status->size))
+        MemCpy(status->ptr, data, C_CAST<szptr>(size));
+    status->status = 1;
 }
 void emscripten_callback_store(void* arg)
 {
-    int* status = C_FCAST<int*>(arg);
+    int32* status = C_FCAST<int32*>(arg);
     cDebug("Stored file");
     *status = 1;
 }
 void emscripten_callback_error(void* arg)
 {
-    int* status = C_FCAST<int*>(arg);
-    cDebug("Failed to store file :(");
+    int32* status = C_FCAST<int32*>(arg);
+    cDebug("Failed to do something with file :(");
     *status = -1;
+}
+
+void emscripten_eventloop(void* arg)
+{
+    int32* status = C_FCAST<int32*>(arg);
+    cDebug("Event loop! ({0})", *status);
+    if(*status != 0)
+        emscripten_cancel_main_loop();
 }
 #endif
 
 szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
 {
 #if defined(__EMSCRIPTEN__)
-    CString save_file = cStringFormat("Coffee_Data_{0}.dat", slot);
-    int status = 0;
-    emscripten_idb_async_store("Coffee" ,save_file.c_str(), data_ptr, data_size,
-                               &status,
-                               emscripten_callback_store,
-                               emscripten_callback_error);
+    CString save_file = cStringFormat("{0}_Slot-{1}.dat",
+                                      ApplicationData().application_name,
+                                      slot);
 
-    while(status == 0);
+    static DataStatus data_status = {0, 0, data_ptr, data_size};
+    emscripten_idb_async_load(ApplicationData().organization_name.c_str(),
+                              save_file.c_str(),
+                              &data_status,
+                              emscripten_callback_load,
+                              emscripten_callback_error);
 
-    return data_size;
+    emscripten_set_main_loop_arg(emscripten_eventloop, &data_status.status, -1, 0);
+    emscripten_resume_main_loop();
+
+    emscripten_cancel_main_loop();
+
+    return *data_size;
 #else
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
     CResources::Resource rsc(file_str.c_str(),
@@ -79,17 +104,23 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
 szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
 {
 #if defined(__EMSCRIPTEN__)
-    CString save_file = cStringFormat("Coffee_Data_{0}.dat", slot);
+    CString save_file = cStringFormat("{0}_Slot-{1}.dat",
+                                      ApplicationData().application_name,
+                                      slot);
 
-    int status = 0;
+    static int32 status = 0;
 
-    emscripten_idb_async_store("Coffee" ,save_file.c_str(), data_ptr, data_size,
+    emscripten_idb_async_store(ApplicationData().organization_name.c_str(),
+                               save_file.c_str(),
+                               C_FCAST<void*>(data_ptr), data_size,
                                &status,
                                emscripten_callback_store,
                                emscripten_callback_error);
 
-    /* Await data, we're lazy, maybe do some event handling externally? */
-    while(status == 0);
+    emscripten_set_main_loop_arg(emscripten_eventloop, &status, -1, 0);
+    emscripten_resume_main_loop();
+
+    emscripten_cancel_main_loop();
 
     return data_size;
 #else
