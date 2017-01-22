@@ -24,13 +24,6 @@ public:
 
     void run()
     {
-		cDebug("GL extensions: {0}",GL::Debug::s_ExtensionList);
-
-        while(!this->closeFlag())
-        {
-            this->pollEvents();
-            this->swapBuffers();
-        }
     }
     void eventHandleD(const Display::CDEvent &e, c_cptr data)
     {
@@ -50,6 +43,30 @@ public:
     CQuat r_view;
 };
 
+template<typename Renderer, typename ShareData>
+struct EventLoopData
+{
+    Renderer* renderer;
+    ShareData* data;
+
+    std::function<void(Renderer&, ShareData*)> setup;
+    std::function<void(Renderer&, ShareData*)> loop;
+    std::function<void(Renderer&, ShareData*)> cleanup;
+};
+
+template<typename R, typename D>
+void emscripten_middleman(void* arg)
+{
+    auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
+
+    eventloop->loop(*eventloop->renderer, eventloop->data);
+}
+
+struct SharedData
+{
+    void* ptr;
+};
+
 int32 coffee_main(int32, cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/");
@@ -64,13 +81,46 @@ int32 coffee_main(int32, cstring_w*)
         visual.gl.version.minor = 0;
     }
 
+    SharedData share_data = {};
+
+    auto setup_fun = [](CDRenderer& renderer, SharedData*)
+    {
+        cDebug("GL extensions: {0}",GL::Debug::s_ExtensionList);
+    };
+    auto loop_fun = [](CDRenderer& renderer, SharedData*)
+    {
+        renderer.pollEvents();
+        renderer.swapBuffers();
+    };
+    auto cleanup_fun = [](CDRenderer& renderer, SharedData*)
+    {
+
+    };
+
+    EventLoopData<CDRenderer, SharedData> eventloop =
+    {&renderer, &share_data,
+     setup_fun, loop_fun, cleanup_fun};
+
+#if defined(__EMSCRIPTEN__)
+    emscripten_set_main_loop_arg(emscripten_middleman<CDRenderer,SharedData>, &eventloop, 0, 0);
+#endif
+
     if(!renderer.init(visual,&err))
     {
         cDebug("Initialization error: {0}",err);
         return 1;
     }
 
-    renderer.run();
+
+    eventloop.setup(*eventloop.renderer, eventloop.data);
+#if defined(__EMSCRIPTEN__)
+    emscripten_resume_main_loop();
+#else
+    while(!eventloop.renderer->closeFlag())
+        emscripten_middleman<CDRenderer,SharedData>(&eventloop);
+#endif
+    eventloop.cleanup(*eventloop.renderer, eventloop.data);
+
     renderer.cleanup();
 
     return 0;

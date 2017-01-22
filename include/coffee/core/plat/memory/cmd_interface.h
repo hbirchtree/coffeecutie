@@ -15,6 +15,10 @@
 #include <android/log.h>
 #endif
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 namespace Coffee{
 namespace CmdInterface{
 
@@ -58,7 +62,11 @@ struct BasicTerm : CmdDef
 #else
         fprintf(DefaultPrintOutputPipe, printf_fmt, code);
 #endif
+#if defined(__EMSCRIPTEN__)
+        emscripten_force_exit(code);
+#else
         exit(code);
+#endif
     }
 };
 

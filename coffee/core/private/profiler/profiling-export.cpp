@@ -280,10 +280,6 @@ void ExportProfilerData(CString& target)
     target.insert(0, printer.CStr(), printer.CStrSize());
 }
 
-
-
-//}
-
 void ExportStringToFile(const CString &data, cstring outfile)
 {
 #if defined(COFFEE_ANDROID)
@@ -322,7 +318,7 @@ void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
 
             CString target_log;
             Profiling::ExportProfilerData(/*log_name.c_str(),argc,argv*/ target_log);
-            cBasicPrint(target_log.c_str());
+            Profiling::ExportStringToFile(target_log, log_name.c_str());
         }
     }
     /* ... and always destroy the profiler */

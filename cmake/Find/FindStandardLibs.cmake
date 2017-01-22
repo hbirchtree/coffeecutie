@@ -34,7 +34,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     endif()
 endif()
 
-if( SDL_POWER_PLUGIN_ENABLED OR ANDROID)
+if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
     # We use SDL2 for some platform functionality, like power info
     # On Android, it is also used to read assets and
     #  acquiring device info.

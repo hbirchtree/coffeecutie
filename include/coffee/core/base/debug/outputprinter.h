@@ -28,7 +28,6 @@ struct OutputPrinterImpl : OutputPrinterDef
         if(locking)
             PrinterLock.lock();
 #if defined(COFFEE_ANDROID)
-        int c_str_offset = 2;
         int flag = 0;
 
         if(formatted[0] == 'I')
@@ -42,14 +41,14 @@ struct OutputPrinterImpl : OutputPrinterDef
         else if(formatted[0] == 'V')
             flag = ANDROID_LOG_VERBOSE;
 
-        __android_log_print(flag, "Coffee", "%s", &formatted[c_str_offset]);
+        __android_log_print(flag, "Coffee", "%s", &formatted[0]);
 #elif defined(__EMSCRIPTEN__)
         int flag = EM_LOG_CONSOLE;
         if(formatted[0] == 'W')
             flag = EM_LOG_WARN;
         else if(formatted[0] == 'F')
             flag = EM_LOG_ERROR;
-        emscripten_log(flag, "%s", &formatted[2]);
+        emscripten_log(flag, "%s", &formatted[0]);
 #else
         Puts(stream,formatted.c_str());
 #endif
