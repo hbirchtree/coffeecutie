@@ -334,14 +334,16 @@ FORCEDINLINE CString& zerotrim(CString& s)
 template<typename T>
 FORCEDINLINE std::basic_string<T>& lpad(std::basic_string<T>& s, T ch, uint32 len)
 {
-    s.insert(s.begin(), len - s.size(), ch);
+	if(len > s.size())
+		s.insert(s.begin(), len - s.size(), ch);
     return s;
 }
 
 template<typename T>
 FORCEDINLINE std::basic_string<T>& rpad(std::basic_string<T>& s, T ch, uint32 len)
 {
-    s.insert(s.end(), len - s.size(), ch);
+	if(len > s.size())
+		s.insert(s.end(), len - s.size(), ch);
     return s;
 }
 
