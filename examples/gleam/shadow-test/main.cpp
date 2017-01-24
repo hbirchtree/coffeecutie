@@ -43,17 +43,6 @@ public:
     CQuat r_view;
 };
 
-template<typename Renderer, typename ShareData>
-struct EventLoopData
-{
-    Renderer* renderer;
-    ShareData* data;
-
-    std::function<void(Renderer&, ShareData*)> setup;
-    std::function<void(Renderer&, ShareData*)> loop;
-    std::function<void(Renderer&, ShareData*)> cleanup;
-};
-
 template<typename R, typename D>
 void emscripten_middleman(void* arg)
 {
@@ -83,7 +72,7 @@ int32 coffee_main(int32, cstring_w*)
 
     SharedData share_data = {};
 
-    auto setup_fun = [](CDRenderer& renderer, SharedData*)
+    auto setup_fun = [](CDRenderer&, SharedData*)
     {
         cDebug("GL extensions: {0}",GL::Debug::s_ExtensionList);
     };
@@ -92,7 +81,7 @@ int32 coffee_main(int32, cstring_w*)
         renderer.pollEvents();
         renderer.swapBuffers();
     };
-    auto cleanup_fun = [](CDRenderer& renderer, SharedData*)
+    auto cleanup_fun = [](CDRenderer&, SharedData*)
     {
 
     };

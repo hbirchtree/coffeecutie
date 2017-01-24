@@ -26,6 +26,7 @@ public:
 
     bool init(const CDProperties &, CString*err);
     void cleanup();
+    virtual void run();
 
 protected:
     CSDL2Renderer(CObject* parent);

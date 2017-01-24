@@ -64,5 +64,9 @@ void CSDL2Renderer::cleanup()
     }
 }
 
+void CSDL2Renderer::run()
+{
+}
+
 }
 }

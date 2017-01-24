@@ -16,6 +16,8 @@ protected:
     Vector<EventHandlerI> m_eventhandlers_input;
     Vector<EventHandlerD> m_eventhandlers_windw;
 
+    void* m_eventloop = nullptr;
+
     void internalProcessEvent(CDEvent const& e, c_cptr d);
     void internalProcessEvent(CIEvent const& e, c_cptr d);
 
@@ -62,6 +64,11 @@ public:
     bool closeFlag() const;
     virtual bool installEventHandler(EventHandlerI e);
     virtual bool installEventHandler(EventHandlerD e);
+
+    void injectEvent(const CIEvent &e, c_cptr d);
+    void injectEvent(const CDEvent &e, c_cptr d);
+
+    void registerEventLoop(void* eventloop);
 };
 
 }
