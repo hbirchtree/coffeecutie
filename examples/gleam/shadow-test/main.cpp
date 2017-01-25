@@ -87,32 +87,12 @@ int32 coffee_main(int32, cstring_w*)
     };
 
     EventLoopData<CDRenderer, SharedData> eventloop =
-    {&renderer, &share_data,
-     setup_fun, loop_fun, cleanup_fun};
+    {&renderer, &share_data, setup_fun, loop_fun, cleanup_fun, 0};
 
-#if defined(__EMSCRIPTEN__)
-    emscripten_set_main_loop_arg(emscripten_middleman<CDRenderer,SharedData>, &eventloop, 0, 0);
-#endif
-
-    if(!renderer.init(visual,&err))
-    {
-        cDebug("Initialization error: {0}",err);
-        return 1;
-    }
-
-
-    eventloop.setup(*eventloop.renderer, eventloop.data);
-#if defined(__EMSCRIPTEN__)
-    emscripten_resume_main_loop();
-#else
-    while(!eventloop.renderer->closeFlag())
-        emscripten_middleman<CDRenderer,SharedData>(&eventloop);
-#endif
-    eventloop.cleanup(*eventloop.renderer, eventloop.data);
-
-    renderer.cleanup();
-
-    return 0;
+    int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
+    if(stat != 0)
+        cDebug("Init error: {0}", err);
+    return stat;
 }
 
 COFFEE_APPLICATION_MAIN(coffee_main)

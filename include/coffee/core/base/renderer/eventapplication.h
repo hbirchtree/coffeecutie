@@ -19,6 +19,8 @@ struct EventLoopData
     uint32 flags;
 };
 
+
+
 class EventApplication : public InputApplication
 {
     bool m_closeFlag = false;
@@ -101,10 +103,81 @@ public:
     }
 
     template<typename Renderer, typename Data>
-    static void execEventLoop(EventLoopData<Renderer,Data>& ev)
+    STATICINLINE void resumeExtra(EventLoopData<Renderer, Data>&)
     {
+#if defined(__EMSCRIPTEN__)
+        emscripten_resume_main_loop();
+#endif
+    }
+    template<typename Renderer, typename Data>
+    STATICINLINE void suspendExtra(EventLoopData<Renderer, Data>&)
+    {
+#if defined(__EMSCRIPTEN__)
+        emscripten_pause_main_loop();
+#endif
+    }
+
+#define SUSPRESUME_FUN(var, cond, fun, extrafun) \
+    template<typename Renderer, typename Data> \
+    static void var(void* ptr, CDEvent const& e, c_cptr) \
+    { \
+        if(e.type == CDEvent::cond) \
+        { \
+            EventLoopData<Renderer, Data>& evdata = *C_FCAST<EventLoopData<Renderer, Data>* >(ptr); \
+            extrafun(evdata); \
+            evdata.fun(*evdata.renderer, evdata.data); \
+        } \
+    }
+
+    SUSPRESUME_FUN(resumeFunction, IsForeground, setup, resumeExtra)
+    SUSPRESUME_FUN(suspendFunction, IsBackground, cleanup, suspendExtra)
+
+#if defined(__EMSCRIPTEN__)
+    template<typename R, typename D>
+    static void emscripten_looper(void* arg)
+    {
+        auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
+
+        eventloop->loop(*eventloop->renderer, eventloop->data);
+    }
+
+#endif
+
+#undef SUSPRESUME_FUN
+
+    template<typename Renderer, typename Data>
+    static int32 execEventLoop(EventLoopData<Renderer,Data>& ev, CDProperties& visual, CString& err)
+    {
+        static cstring suspend_str = "Suspend handler";
+        static cstring resume_str = "Resume handler";
+
+        Renderer& r = *ev.renderer;
+        r.installEventHandler(EventHandlerD{suspendFunction<Renderer,Data>, suspend_str, &ev});
+        r.installEventHandler(EventHandlerD{resumeFunction<Renderer,Data>, resume_str, &ev});
+
+#if defined(__EMSCRIPTEN__)
+        emscripten_set_main_loop(emscripten_looper<Renderer,Data>, &ev, 0, 0);
+#endif
+
+        if(!(*ev.renderer).init(visual, &err))
+        {
+            return -1;
+        }
+
+#if !defined(COFFEE_ANDROID)
+        r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
+#endif
+
         while(!ev.renderer->closeFlag())
-            ev.loop(*ev.renderer, *ev.data);
+            ev.loop(*ev.renderer, ev.data);
+
+        (*ev.renderer).cleanup();
+        return 0;
+    }
+
+    void exec()
+    {
+
     }
 };
 

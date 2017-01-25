@@ -83,11 +83,6 @@ struct CDMonitor{
  * \brief Window event
  */
 struct CDEvent{
-    CDEvent():
-        ts(0),
-        type()
-    {
-    }
 
     enum EventType : uint8
     {
