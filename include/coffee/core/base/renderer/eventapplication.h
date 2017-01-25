@@ -3,6 +3,10 @@
 #include "inputapplication.h"
 #include <coffee/core/eventprocess.h>
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
+
 namespace Coffee{
 namespace Display{
 
