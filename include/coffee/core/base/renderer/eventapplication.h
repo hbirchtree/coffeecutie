@@ -160,7 +160,7 @@ public:
         r.installEventHandler(EventHandlerD{resumeFunction<Renderer,Data>, resume_str, &ev});
 
 #if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop(emscripten_looper<Renderer,Data>, &ev, 0, 0);
+        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>, &ev, 0, 0);
 #endif
 
         if(!(*ev.renderer).init(visual, &err))
