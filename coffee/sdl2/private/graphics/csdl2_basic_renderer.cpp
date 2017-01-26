@@ -82,10 +82,16 @@ void SDL2SpriteRenderer::swapBuffers(const Renderer &r)
 SpriteApplication::Renderer SDL2SpriteRenderer::createRenderer()
 {
     m_context->renderer_counter++;
+    auto ctxt = getSDL2Context();
+    auto window = ctxt->window;
+    auto renderer = SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED);
+    if(!renderer)
+        cDebug("Failed to create renderer: {0}", SDL_GetError());
     m_context->renderers.insert(
                 std::pair<Renderer,SDL_Renderer*>(
-                    m_context->renderer_counter,SDL_CreateRenderer(
-                        getSDL2Context()->window,-1,SDL_RENDERER_ACCELERATED)));
+                    m_context->renderer_counter,
+                    renderer
+                    ));
     return m_context->renderer_counter;
 }
 
@@ -131,7 +137,10 @@ bool SDL2SpriteRenderer::createTexture(
         ctxt.tex = SDL_CreateTexture(ren,sdlfmt,sdlacc,size.w,size.h);
 
         if(!ctxt.tex)
+        {
             cDebug("Error: {0}",SDL_GetError());
+            return false;
+        }
 
         SDL_SetTextureBlendMode(ctxt.tex,SDL_BLENDMODE_BLEND);
 

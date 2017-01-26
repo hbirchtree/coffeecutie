@@ -110,6 +110,15 @@ void ExitHandler_1(void* ptr, const CIEvent& e, c_cptr d)
     }
 }
 
+struct RenderData
+{
+    Sprites rend;
+    Sprites::Renderer r;
+    Sprites::Texture t;
+    Sprites::Sprite sprite;
+    CRGBA clearCol;
+};
+
 int32 coffee_main(int32 argc, cstring_w* argv)
 {
     SubsystemWrapper<SDL2::SDL2> sys1;
@@ -124,105 +133,106 @@ int32 coffee_main(int32 argc, cstring_w* argv)
     auto visual = GetDefaultVisual();
 
     CString err;
-
-    if(!test.init(visual,&err))
-    {
-        cDebug("Initialization error: {0}",err);
-        return 1;
-    }
-    Profiler::Profile("Window init");
-
-    /* Create a sprite renderer context */
-    Sprites rend(&test);
-    if(!rend.init(&err))
-    {
-        cDebug("Initialization error: {0}",err);
-        return 1;
-    }
-
-    /* Create a renderer handle */
-    Sprites::Renderer r = rend.createRenderer();
-    Profiler::Profile("Context handle");
-
-    /* Create a texture */
-    Sprites::Texture t;
-    rend.createTexture(r,1,&t,PixelFormat::RGBA8UI,ResourceAccess::Streaming,CSize(128,128));
-    Profiler::Profile("Texture creation");
-
-    {
-        /* Map a texture into memory */
-        CResources::Resource texfile("particle_sprite.png",false,
-                                     ResourceAccess::SpecifyStorage|
-                                     ResourceAccess::AssetFile|
-                                     ResourceAccess::ReadOnly);
-
-        cDebug("Opening texture: {0}",texfile.resource());
-
-        CResources::FileMap(texfile);
-
-        cDebug("Pointer to texture: {0}",(const byte_t*)texfile.data);
-
-        /* Decode file to RGBA data */
-        CStbImageLib::CStbImage img;
-        CStbImageLib::LoadData(&img,&texfile);
-
-        /* Copy texture into texture memory */
-        {
-            CRGBA* data = (CRGBA*)rend.mapTexture(t);
-            MemCpy(data,img.data,img.size.area()*img.bpp);
-            rend.unmapTexture(t);
-        }
-
-        /* Clean up */
-        CStbImageLib::ImageFree(&img);
-        CResources::FileUnmap(texfile);
-    }
-    Profiler::Profile("Texture load");
-
-    /* Create a sprite from the texture */
-    CRect src(0,0,128,128);
-    Sprites::Sprite sprite;
-    rend.createSprite(t,src,&sprite);
-
-    /* Show the window */
-    test.showWindow();
-
-    CRGBA clearCol = CRGBA(255,0,0);
-
-    /* Set clear color for buffer */
-    rend.setClearColor(r,clearCol);
-    Profiler::Profile("Renderer state");
-    /* Start rendering! */
-
-//    SDL2Dialog::InformationMessage("Leaving?","Hello there! Did you press the wrong button?");
+    RenderData data = {};
 
     test.installEventHandler({TouchInput_1,nullptr,&test});
     test.installEventHandler({ExitHandler_1,nullptr,&test});
     test.installEventHandler({WindowResize_1,nullptr,&test});
 
-    cDebug("Resolution: {0}", test.windowSize());
-
-    while(!test.closeFlag())
+    auto setup = [](BasicWindow& test, RenderData* data)
     {
-        rend.setClearColor(r,clearCol);
+        /* Create a sprite renderer context */
+        data->rend = Sprites(&test);
 
-        rend.clearBuffer(r);
+        CString err;
+        if(!data->rend.init(&err))
+        {
+            cDebug("Initialization error: {0}",err);
+            return;
+        }
+
+        /* Create a renderer handle */
+        data->r = data->rend.createRenderer();
+        Profiler::Profile("Context handle");
+
+        /* Create a texture */
+        if(data->rend.createTexture(
+                    data->r, 1, &data->t, PixelFormat::RGBA8UI,
+                    ResourceAccess::Streaming,CSize(128,128)))
+        {
+            Profiler::Profile("Texture creation");
+
+            /* Map a texture into memory */
+            CResources::Resource texfile("particle_sprite.png",false,
+                                         ResourceAccess::SpecifyStorage|
+                                         ResourceAccess::AssetFile|
+                                         ResourceAccess::ReadOnly);
+
+            cDebug("Opening texture: {0}",texfile.resource());
+
+            CResources::FileMap(texfile);
+
+            cDebug("Pointer to texture: {0}",C_FCAST<const byte_t*>(texfile.data));
+
+            /* Decode file to RGBA data */
+            CStbImageLib::CStbImage img;
+            CStbImageLib::LoadData(&img,&texfile);
+
+            /* Copy texture into texture memory */
+            {
+                CRGBA* pdata = C_FCAST<CRGBA*>(data->rend.mapTexture(data->t));
+                MemCpy(pdata, img.data, img.size.area()*img.bpp);
+                data->rend.unmapTexture(data->t);
+            }
+
+            /* Clean up */
+            CStbImageLib::ImageFree(&img);
+            CResources::FileUnmap(texfile);
+            Profiler::Profile("Texture load");
+        }
+
+        /* Create a sprite from the texture */
+        CRect src(0,0,128,128);
+        data->rend.createSprite(data->t,src,&data->sprite);
+
+        /* Show the window */
+        test.showWindow();
+
+        data->clearCol = CRGBA(255,0,0);
+
+        /* Set clear color for buffer */
+        data->rend.setClearColor(data->r,data->clearCol);
+
+        cDebug("Resolution: {0}", test.windowSize());
+    };
+
+    auto loop = [] (BasicWindow& test, RenderData* data)
+    {
+        data->rend.setClearColor(data->r,data->clearCol);
+
+        data->rend.clearBuffer(data->r);
         for(szptr i=0;i<num_points;i++)
-            rend.drawSprite(r,sprite_pos[i],sprite_scale,sprite);
+            data->rend.drawSprite(data->r,sprite_pos[i],sprite_scale,data->sprite);
 
-        clearCol.r = (Time::CurrentTimestamp()*1000)%255;
+        data->clearCol.r = (Time::CurrentTimestamp()*1000)%255;
 
-        rend.swapBuffers(r);
+        data->rend.swapBuffers(data->r);
         test.pollEvents();
-    }
+    };
 
-    rend.destroyTexture(1,&t);
-    rend.destroyRenderer(r);
+    auto cleanup = [](BasicWindow& test, RenderData* data)
+    {
+        test.hideWindow();
 
-    test.hideWindow();
+        data->rend.destroyTexture(1,&data->t);
+        data->rend.destroyRenderer(data->r);
 
-    rend.spritesTerminate();
-    test.cleanup();
+        data->rend.spritesTerminate();
+    };
+
+    EventLoopData<BasicWindow, RenderData> eventData = {&test, &data, setup, loop, cleanup, 0};
+
+    BasicWindow::execEventLoop(eventData, visual, err);
 
     return 0;
 }

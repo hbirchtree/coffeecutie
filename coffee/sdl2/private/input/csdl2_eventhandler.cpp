@@ -266,13 +266,11 @@ bool SDL2EventHandler::installEventHandler(EventHandlerD e)
 
 void SDL2EventHandler::injectEvent(const CIEvent &e, c_cptr d)
 {
-    internalProcessEvent(e, d);
     eventHandleI(e, d);
 }
 
 void SDL2EventHandler::injectEvent(const CDEvent &e, c_cptr d)
 {
-    internalProcessEvent(e, d);
     eventHandleD(e, d);
 }
 

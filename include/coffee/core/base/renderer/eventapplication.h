@@ -172,8 +172,10 @@ public:
         r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
 #endif
 
+#if !defined(__EMSCRIPTEN__)
         while(!ev.renderer->closeFlag())
             ev.loop(*ev.renderer, ev.data);
+#endif
 
         (*ev.renderer).cleanup();
         return 0;
