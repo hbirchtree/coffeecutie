@@ -150,12 +150,15 @@ public:
 #undef SUSPRESUME_FUN
 
     template<typename Renderer, typename Data>
-    static int32 execEventLoop(EventLoopData<Renderer,Data>& ev, CDProperties& visual, CString& err)
+    static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
+                               CDProperties& visual, CString& err)
     {
         static cstring suspend_str = "Suspend handler";
         static cstring resume_str = "Resume handler";
 
         Renderer& r = *ev.renderer;
+
+        /* Because MSVC++ sucks, I can't use a struct initializer list for this :( */
 		EventHandlerD suspend_data = {};
 		EventHandlerD resume_data = {};
 		suspend_data.user_ptr = resume_data.user_ptr = &ev;
@@ -163,6 +166,7 @@ public:
 		resume_data.func = resumeFunction<Renderer, Data>;
 		suspend_data.name = suspend_str;
 		resume_data.name = resume_str;
+
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
 
