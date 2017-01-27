@@ -4,7 +4,7 @@
 #include "cblam_structures.h"
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 /*!
  * \brief Get the proper, full name of a map

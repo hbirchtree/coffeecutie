@@ -4,7 +4,7 @@
 #include "cblam_structures.h"
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 /*!
  * \brief Convert RGBA struct to integer format containing the RGBA bytes

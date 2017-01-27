@@ -4,7 +4,7 @@
 #include "cblam_scenario.h"
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 /*!
  * \brief Acquire a map's scenario structure, containing information about objects and etc.

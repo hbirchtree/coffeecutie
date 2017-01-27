@@ -4,7 +4,7 @@
 #include <coffee/blam/volta/cblam_map.h>
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 const blam_scenario* blam_scn_get(
         const file_header_t *map, const tag_index_t* tags)

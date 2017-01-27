@@ -5,7 +5,7 @@
 #include "cblam_structures.h"
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 /*!
  * \brief To acquire a bitmap from a tag item

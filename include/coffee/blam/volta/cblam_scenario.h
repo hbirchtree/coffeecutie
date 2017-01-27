@@ -7,7 +7,7 @@
 #include "cblam_mod2.h"
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 using blam_scn_chunk = byte_t[100];
 

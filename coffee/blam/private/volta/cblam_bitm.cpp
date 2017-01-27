@@ -7,7 +7,7 @@
 #include <coffee/blam/volta/cblam_bitm_decoders.h>
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 bitm_header_t _bitm_get_header(const void* base, int32 offset)
 {

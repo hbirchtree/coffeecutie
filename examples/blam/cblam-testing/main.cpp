@@ -3,9 +3,75 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/CApplication>
 
+#include <iterator>
+#include <algorithm>
+
 using namespace Coffee;
 using namespace CResources;
-using namespace CBlam;
+using namespace Blam;
+
+
+class tag_index_view
+{
+    tag_index_t& m_idx;
+    file_header_t const* m_file;
+    index_item_t const* m_root;
+
+public:
+
+    class index_iterator : public std::iterator<std::forward_iterator_tag, index_item_t const*>
+    {
+        uint32 i;
+        tag_index_view& idx;
+
+        index_item_t const* deref()
+        {
+            if(!idx.m_root)
+                idx.m_root = blam_tag_index_get_items(idx.m_file);
+            return &idx.m_root[i];
+        }
+
+    public:
+        index_iterator(tag_index_view& idx, uint32 i):
+            i(i),
+            idx(idx)
+        {
+        }
+
+        bool operator !=(index_iterator const& other) const
+        {
+            return i != other.i;
+        }
+
+        index_iterator& operator++()
+        {
+            i++;
+        }
+
+        index_item_t const* operator*()
+        {
+            return deref();
+        }
+    };
+
+    using iterator = index_iterator;
+
+    tag_index_view(file_header_t const* file, tag_index_t& idx):
+        m_idx(idx),
+        m_file(file),
+        m_root(nullptr)
+    {
+    }
+
+    iterator begin()
+    {
+        return index_iterator(*this, 0);
+    }
+    iterator end()
+    {
+        return index_iterator(*this, m_idx.tagCount - 1);
+    }
+};
 
 /*!
  * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
@@ -16,7 +82,7 @@ int coffee_main(int32 argv,cstring_w* argc)
     CResources::FileResourcePrefix("sample_data/cblam_data/");
 
 //    cstring mapstring = GetArgument(argv,argc,"halomap");
-    cstring mapstring = "b40.map";
+    cstring mapstring = "bloodgulch.map";
     if(!mapstring)
         return 1;
     Resource mapfile(mapstring);
@@ -48,18 +114,6 @@ int coffee_main(int32 argv,cstring_w* argc)
         }
     }
 
-    auto fun = [](tag_index_t& tags, const file_header_t* map){
-        static int32 i=0;
-        static const index_item_t* base_idx = blam_tag_index_get_items(map);
-        static const index_item_t* idx;
-
-        if(i >= tags.tagCount)
-            return static_cast<const index_item_t*>(nullptr);
-
-        idx = &base_idx[i];
-        i++;
-        return idx;
-    };
 
     struct texture_data_t
     {
@@ -69,42 +123,37 @@ int coffee_main(int32 argv,cstring_w* argc)
         cstring tag_name;
     };
 
-    auto fun_filter = [](
-            std::function<const index_item_t*(tag_index_t& tags, const file_header_t* map)> input,
-            tag_index_t& tags,
-            const file_header_t* map,
-            Resource& bitmfile,
-            texture_data_t& output){
-
-        static int32 num = 0;
-        static const index_item_t* idx;
-
-        do {
-            idx = input(tags, map);
-
-            if(!idx)
-                return false;
-
-        } while(!blam_tagref_match_class(idx,0,blam_index_item_type_bitm));
-
-        output.tag = idx;
-        output.img = bitm_get(idx,map,tags.index_magic,&num);
-        output.tag_name = blam_index_item_get_string(idx,map,&tags);
-        output.tex = bitm_get_texture(output.img,bitmfile.data);
-
-        return true;
+    auto debigend = [](cstring src, uint32 len)
+    {
+        return StrUtil::reverse(StrUtil::encapsulate(src, len));
     };
 
-    cDebug("Lambda: {0}, {1}", sizeof(fun_filter), sizeof(fun));
+    tag_index_view index_view(map, tags);
 
+    auto pred = [&](index_item_t const* e)
     {
-        /* Extracting texture data */
-        texture_data_t img;
-        while(fun_filter(fun, tags, map, bitmfile, img))
-        {
-//            cDebug("Texture: {0},res={1},mip={2}",img.tag_name,img.tex.resolution,img.tex.mipmaps);
-        }
+        return debigend(e->tagclass[0], 4) == "bitm";
+    };
+
+    for(auto e : index_view)
+    {
+        cDebug("Values: {0}", blam_index_item_get_string(e, map, &tags));
     }
+
+//    {
+//        /* Extracting texture data */
+//        texture_data_t img;
+//        const index_item_t* it = nullptr;
+//        while(it = fun(tags, map) /*fun_filter(fun, tags, map, bitmfile, img)*/)
+//        {
+//            cDebug("Index item: {0} -> {1}, {2}, {3}",
+//                   it->tagId,
+//                   debigend(it->tagclass[0], 4),
+//                    (it->tagclass[1][0] != -1) ? debigend(it->tagclass[1], 4) : CString(),
+//                    blam_index_item_get_string(it, map, &tags));
+////            cDebug("Texture: {0},res={1},mip={2}",img.tag_name,img.tex.resolution,img.tex.mipmaps);
+//        }
+//    }
 
     FileUnmap(bitmfile);
     FileUnmap(mapfile);

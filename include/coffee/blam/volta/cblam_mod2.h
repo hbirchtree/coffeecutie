@@ -4,7 +4,7 @@
 #include "cblam_structures.h"
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 /*!
  * \brief Used as index for LOD levels of a mesh

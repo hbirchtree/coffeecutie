@@ -1,7 +1,7 @@
 #include <coffee/blam/volta/cblam_map.h>
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 cstring blam_file_header_full_mapname(
         const file_header_t *map)

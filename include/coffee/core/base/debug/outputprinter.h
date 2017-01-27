@@ -20,11 +20,15 @@ struct OutputPrinterImpl : OutputPrinterDef
     {
         bool locking = false;
 
+        CString formatted = cStringFormat(format,args...);
+
         /* If printing to file, don't lock IO */
         if(stream==stdout||stream==stderr)
+        {
             locking = true;
+            formatted = StrUtil::printclean(formatted);
+        }
 
-        CString formatted = cStringFormat(format,args...);
         if(locking)
             PrinterLock.lock();
 #if defined(COFFEE_ANDROID)

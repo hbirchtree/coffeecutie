@@ -1,7 +1,7 @@
 #include <coffee/blam/volta/cblam_mod2.h>
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 const blam_mod2_header *blam_mod2_get_header(const index_item_t *item, const file_header_t *map, int32 magic)
 {

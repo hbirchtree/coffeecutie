@@ -11,8 +11,10 @@
 #include <coffee/core/types/edef/resenum.h>
 #include <coffee/core/types/map.h>
 
+#include "blam_tag_classes.h"
+
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 
 using bl_tag = sbyte_t[4];
 using bl_string = sbyte_t[32];
@@ -141,6 +143,7 @@ struct tag_index_t
     int32   modelRawDataSize; /*!< Raw model data size*/
     int32   tagStart; /*!< ???*/
 };
+
 
 /*!
  * \brief An item in the tag index, contains tag class (which identifies the type of item), tag ID (a numerical ID), an offset to a proper string, and an offset to its associated data.

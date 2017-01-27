@@ -264,6 +264,32 @@ FORCEDINLINE bool decode(byte_t const* i_ptr, szptr i_len,
 
 namespace StrUtil{
 
+FORCEDINLINE CString encapsulate(cstring src, uint32 len)
+{
+    CString target;
+    target.insert(0, src, len);
+    return target;
+}
+
+FORCEDINLINE CString reverse(CString const& src)
+{
+    CString target;
+    target.insert(target.begin(), src.rbegin(), src.rend());
+    return target;
+}
+
+FORCEDINLINE CString printclean(CString const& src_)
+{
+    CString src = src_;
+    src.erase(src.begin(),
+              std::find_if(
+                  src.begin(), src.end(),
+                  [](CString::value_type c){return std::isprint(c, std::locale()) || std::iscntrl(c, std::locale());}
+                  )
+              );
+    return src;
+}
+
 FORCEDINLINE CString hexdump(c_cptr ptr, szptr len, bool spacing = true, szptr newline_freq = 0)
 {
     byte_t const* data = (byte_t const*)ptr;
