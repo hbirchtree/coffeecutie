@@ -3,6 +3,9 @@
 namespace Coffee{
 namespace Blam{
 
+/*!
+ * \brief Blam tag classes, sourced from SparkEdit source code
+ */
 enum class tag_class
 {
     obje = 0x656a626f,  /* TAG_OBJECT */
