@@ -156,8 +156,15 @@ public:
         static cstring resume_str = "Resume handler";
 
         Renderer& r = *ev.renderer;
-        r.installEventHandler(EventHandlerD{suspendFunction<Renderer,Data>, suspend_str, &ev});
-        r.installEventHandler(EventHandlerD{resumeFunction<Renderer,Data>, resume_str, &ev});
+		EventHandlerD suspend_data = {};
+		EventHandlerD resume_data = {};
+		suspend_data.user_ptr = resume_data.user_ptr = &ev;
+		suspend_data.func = suspendFunction<Renderer, Data>;
+		resume_data.func = resumeFunction<Renderer, Data>;
+		suspend_data.name = suspend_str;
+		resume_data.name = resume_str;
+        r.installEventHandler(suspend_data);
+        r.installEventHandler(resume_data);
 
 #if defined(__EMSCRIPTEN__)
         emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>, &ev, 0, 0);
