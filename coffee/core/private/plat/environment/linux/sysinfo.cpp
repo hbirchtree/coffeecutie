@@ -6,6 +6,18 @@ namespace Coffee{
 namespace Environment{
 namespace Linux{
 
+/* More paths to inspect:
+ *
+ * Desktop details:
+ * - /sys/class/dmi/id/board_name
+ * - /sys/class/dmi/id/board_vendor
+ * - /sys/class/dmi/id/chassis_type
+ *
+ * Networking:
+ * - /sys/class/net/.../operstate
+ *
+ */
+
 static CString get_lsb_release()
 {
     CString version = CResources::Linux::LinuxFileFun::sys_read("/etc/lsb-release");
