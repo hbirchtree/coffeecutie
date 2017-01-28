@@ -9,7 +9,7 @@ class QTreeWidgetItem;
 class BlamMapHandler;
 
 namespace Coffee{
-namespace CBlam{
+namespace Blam{
 struct index_item_t;
 }
 }
@@ -67,7 +67,7 @@ private:
     QList<BlamFileContext*> m_opened_files;
 
     QVector<QImage> m_textures_ref;
-    QVector<const Coffee::CBlam::index_item_t *> m_textures_name_ref;
+    QVector<const Coffee::Blam::index_item_t *> m_textures_name_ref;
 };
 
 #endif // BLAMDATAVIEWER_H

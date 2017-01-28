@@ -5,7 +5,7 @@
 #include <coffee/core/types/edef/resenum.h>
 
 using namespace Coffee;
-using namespace Coffee::CBlam;
+using namespace Coffee::Blam;
 
 class BlamMapHandler
 {

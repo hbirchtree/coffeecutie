@@ -284,7 +284,7 @@ FORCEDINLINE CString printclean(CString const& src_)
     src.erase(src.begin(),
               std::find_if(
                   src.begin(), src.end(),
-                  [](CString::value_type c){return std::isprint(c, std::locale()) || std::iscntrl(c, std::locale());}
+                  [](CString::value_type c){return std::isprint(c) || std::iscntrl(c);}
                   )
               );
     return src;

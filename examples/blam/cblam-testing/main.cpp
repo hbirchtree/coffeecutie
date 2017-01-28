@@ -46,6 +46,7 @@ public:
         index_iterator& operator++()
         {
             i++;
+            return *this;
         }
 
         index_item_t const* operator*()
