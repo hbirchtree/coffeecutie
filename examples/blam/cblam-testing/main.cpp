@@ -21,7 +21,7 @@ public:
 
     class index_iterator : public std::iterator<std::forward_iterator_tag, index_item_t const*>
     {
-        uint32 i;
+        int32 i;
         tag_index_view& idx;
 
         index_item_t const* deref()
@@ -32,7 +32,7 @@ public:
         }
 
     public:
-        index_iterator(tag_index_view& idx, uint32 i):
+        index_iterator(tag_index_view& idx, int32 i):
             i(i),
             idx(idx)
         {
@@ -41,6 +41,11 @@ public:
         bool operator !=(index_iterator const& other) const
         {
             return i != other.i;
+        }
+
+        bool operator ==(index_iterator const& other) const
+        {
+            return !(*this != other);
         }
 
         index_iterator& operator++()
@@ -133,8 +138,14 @@ int coffee_main(int32 argv,cstring_w* argc)
 
     auto pred = [&](index_item_t const* e)
     {
-        return debigend(e->tagclass[0], 4) == "bitm";
+        return debigend(e->tagclass[0], 4) == "scnr";
     };
+
+    auto scenario = (*std::find_if(index_view.begin(), index_view.end(), pred));
+
+    cDebug("Predicate test: {0} -> {1}", scenario->tagId, blam_index_item_get_string(scenario, map, &tags));
+
+    return 0;
 
     for(auto e : index_view)
     {
