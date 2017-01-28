@@ -21,21 +21,36 @@ public:
 
     class index_iterator : public std::iterator<std::forward_iterator_tag, index_item_t const*>
     {
+        friend class tag_index_view;
+
         int32 i;
-        tag_index_view& idx;
+        tag_index_view* idx;
 
         index_item_t const* deref()
         {
-            if(!idx.m_root)
-                idx.m_root = blam_tag_index_get_items(idx.m_file);
-            return &idx.m_root[i];
+            if(!idx->m_root)
+                idx->m_root = blam_tag_index_get_items(idx->m_file);
+            return &idx->m_root[i];
+        }
+
+        index_iterator(tag_index_view& idx, int32 i):
+            i(i),
+            idx(&idx)
+        {
         }
 
     public:
-        index_iterator(tag_index_view& idx, int32 i):
-            i(i),
-            idx(idx)
+
+        index_iterator& operator=(const index_iterator& other)
         {
+            if(other == *this)
+                return *this;
+
+            if(&other.idx != &this->idx)
+                this->idx = other.idx;
+            this->i = other.i;
+
+            return *this;
         }
 
         bool operator !=(index_iterator const& other) const
