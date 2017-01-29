@@ -32,6 +32,10 @@ struct map_container
     {
         return index_item_get_string(idx, map, &tags);
     }
+    cstring get_name(tagref_t const* ref)
+    {
+        return tagref_get_name(ref, map, &tags);
+    }
 };
 
 class tag_index_view
@@ -110,6 +114,15 @@ public:
         m_file(map.map),
         m_root(nullptr)
     {
+    }
+
+    file_header_t const* file() const
+    {
+        return m_file;
+    }
+    tag_index_t const* tags() const
+    {
+        return &m_idx;
     }
 
     iterator begin()

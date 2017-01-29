@@ -2,24 +2,36 @@
 
 #include <coffee/core/CDebug>
 #include <coffee/blam/volta/cblam_map.h>
+#include <coffee/blam/volta/blam_stl.h>
 
 namespace Coffee{
 namespace Blam{
 
-const scenario *blam_scn_get(
-        const file_header_t *map, const tag_index_t* tags)
+const scenario *scn_get(tag_index_view& tags)
 {
-    const index_item_t* base = tag_index_get_items(map);
+    static const auto pred = [](index_item_t const* v)
+    {
+        return cmp_tag_class(v->tagclass_e[0], tag_class_t::scnr);
+    };
 
-    if(!MemCmp(index_item_type_scnr,base->tagclass[0],4))
+    auto base_it = std::find_if(tags.begin(), tags.end(),
+                                pred);
+
+    if(base_it == tags.end())
         return nullptr;
 
-    cDebug("Scenario name: {0},offset={1}",
-           index_item_get_string(base,map,tags),
-           base->offset-tags->index_magic);
+    auto base = *base_it;
 
-    const byte_t* b_ptr = (const byte_t*)map;
-    return (const scenario*)(b_ptr+base->offset-tags->index_magic);
+    cDebug("Scenario name: {0},offset={1}",
+           index_item_get_string(base,tags.file(),tags.tags()),
+           base->offset-tags.tags()->index_magic);
+
+    return C_CAST<const scenario*>(
+                blam_mptr(
+                    tags.file(),
+                    tags.tags()->index_magic,
+                    base->offset)
+                );
 }
 
 }

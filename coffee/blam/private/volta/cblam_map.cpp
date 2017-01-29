@@ -67,7 +67,7 @@ cstring index_item_get_string(
         const file_header_t *map,
         const tag_index_t *tagindex)
 {
-    return (cstring)blam_mptr(map,tagindex->index_magic,idx->string_offset);
+    return C_CAST<cstring>(blam_mptr(map,tagindex->index_magic,idx->string_offset));
 }
 
 const index_item_t *tag_index_get_item(

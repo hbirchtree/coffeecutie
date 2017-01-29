@@ -8,6 +8,14 @@ using namespace Coffee;
 using namespace CResources;
 using namespace Blam;
 
+struct texture_data_t
+{
+    bitm_texture_t tex;
+    const index_item_t* tag;
+    const bitm_image_t* img;
+    cstring tag_name;
+};
+
 /*!
  * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
  *   The purpose of this is platform abstraction such that the rest of the code works consistently across platforms.
@@ -33,9 +41,11 @@ int coffee_main(int32 argv,cstring_w* argc)
 
     cDebug("Opening map: {0}, build {1}", C_CAST<cstring>(map), map.map->buildDate);
 
+    tag_index_view index_view(map);
+
     {
         /* Extracting scenario data */
-        const scenario* scn = blam_scn_get(map.map,&map.tags);
+        const scenario* scn = scn_get(index_view);
 
         const scn_bsp_header* sbsp = scn->struct_bsp.data(map.map,map.tags.index_magic);
         for(int i=0;i<scn->struct_bsp.count;i++)
@@ -49,22 +59,10 @@ int coffee_main(int32 argv,cstring_w* argc)
         }
     }
 
-
-    struct texture_data_t
-    {
-        bitm_texture_t tex;
-        const index_item_t* tag;
-        const bitm_image_t* img;
-        cstring tag_name;
-    };
-
     auto debigend = [](cstring src, uint32 len)
     {
         return StrUtil::reverse(StrUtil::encapsulate(src, len));
     };
-
-    tag_index_view index_view(map);
-
     auto pred = [&](index_item_t const* e)
     {
         return debigend(e->tagclass[0], 4) == "scnr";
@@ -76,7 +74,7 @@ int coffee_main(int32 argv,cstring_w* argc)
 
     Vector<index_item_t const*> texture_vec;
     auto aggregate_func = [](
-            Vector<index_item_t const*> v,
+            Vector<index_item_t const*>& v,
             tag_class_t c, index_item_t const* e)
     {
         if(e->tagclass_e[0] == c)
