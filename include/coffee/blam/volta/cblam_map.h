@@ -11,7 +11,7 @@ namespace Blam{
  * \param map Map from which we identify a string
  * \return A null-terminated string with a map name or empty (empty if map name is not recognized)
  */
-extern cstring blam_file_header_full_mapname(
+extern cstring file_header_full_mapname(
         const file_header_t* map);
 
 /*!
@@ -20,14 +20,14 @@ extern cstring blam_file_header_full_mapname(
  * \param expectedVersion Expected version of Halo to be parsed. If version does not match, fail.
  * \return Returns a casted pointer on success, nullptr on failure
  */
-extern file_header_t* blam_file_header_get(void* baseptr, version_t expectedVersion);
+extern file_header_t* file_header_get(void* baseptr, version_t expectedVersion);
 
 /*!
  * \brief Sets index magic for a tag index and modifies it with the correct magic number.
  * \param tagindex Tag index to update
  * \param tagIndexOffset Tag index offset from map, used to calculate magic
  */
-extern void blam_tag_index_magic(
+extern void tag_index_magic(
         tag_index_t* tagindex,
         int32 tagIndexOffset);
 
@@ -36,7 +36,7 @@ extern void blam_tag_index_magic(
  * \param file File header from which we want a tag index
  * \return A pointer to the tag index
  */
-extern const tag_index_t* blam_tag_index_ptr(
+extern const tag_index_t* tag_index_ptr(
         const file_header_t* file);
 
 /*!
@@ -44,10 +44,10 @@ extern const tag_index_t* blam_tag_index_ptr(
  * \param file File header from which we get the pointer
  * \return A pointer to the first tag index item
  */
-extern const index_item_t* blam_tag_index_get_items(
+extern const index_item_t* tag_index_get_items(
         const file_header_t* file);
 
-extern const index_item_t* blam_tag_index_get_item(
+extern const index_item_t* tag_index_get_item(
         const file_header_t* file,
         const tag_index_t* tags,
         int32 tag_id);
@@ -57,7 +57,7 @@ extern const index_item_t* blam_tag_index_get_item(
  * \param file File header from which we extract a tag index
  * \return A tag index object copied from the file
  */
-extern tag_index_t blam_tag_index_get(
+extern tag_index_t tag_index_get(
         const file_header_t* file);
 
 /*!
@@ -77,7 +77,7 @@ extern const void* blam_mptr(
  * \param tagindex Index item's tag index for the index magic
  * \return A null-terminated string with the index item's name
  */
-extern cstring blam_index_item_get_string(
+extern cstring index_item_get_string(
         const index_item_t* idx,
         const file_header_t* map,
         const tag_index_t* tagindex);
@@ -89,12 +89,12 @@ extern cstring blam_index_item_get_string(
  * \param tags
  * \return
  */
-extern cstring blam_tagref_get_name(
+extern cstring tagref_get_name(
         const tagref_t* tag,
         const file_header_t* file,
         const tag_index_t* tags);
 
-extern bool blam_tagref_match_class(
+extern bool tagref_match_class(
         const index_item_t* item,
         uint32 i,
         const bl_tag tag);

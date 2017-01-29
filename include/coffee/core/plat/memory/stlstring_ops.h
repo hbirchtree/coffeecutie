@@ -271,11 +271,11 @@ FORCEDINLINE CString encapsulate(cstring src, uint32 len)
     return target;
 }
 
-FORCEDINLINE CString reverse(CString const& src)
+FORCEDINLINE CString reverse(CString const& src_)
 {
-    CString target;
-    target.insert(target.begin(), src.rbegin(), src.rend());
-    return target;
+    CString src = src_;
+    std::reverse(src.begin(), src.end());
+    return src;
 }
 
 FORCEDINLINE CString printclean(CString const& src_)

@@ -41,7 +41,7 @@ using bl_point_t = _cbasic_point_2d<int16>;
 /*!
  * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
  */
-using BlamBitmProcess = uint32(*)(uint32,uint16,byte_t);
+using BitmProcess = uint32(*)(uint32,uint16,byte_t);
 
 using bl_rgba_t = CRGBA;
 
@@ -64,13 +64,13 @@ enum class version_t : int32
     pc     = 7, /*!< The 2004 version of Halo: Combat Evolved for PC*/
 };
 
-constexpr cstring blam_index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
-constexpr cstring blam_index_item_type_bitm = "mtib"; /*!< Tag class for bitmaps*/
-constexpr cstring blam_index_item_type_scnr = "rncs"; /*!< Tag class for scenarios*/
-constexpr cstring blam_index_item_type_sbsp = "psbs"; /*!< Tag class for structured BSP*/
+constexpr cstring index_item_type_mod2 = "2dom"; /*!< Tag class for models*/
+constexpr cstring index_item_type_bitm = "mtib"; /*!< Tag class for bitmaps*/
+constexpr cstring index_item_type_scnr = "rncs"; /*!< Tag class for scenarios*/
+constexpr cstring index_item_type_sbsp = "psbs"; /*!< Tag class for structured BSP*/
 
-constexpr cstring blam_header_head = "deah"; /*!< Header of file header*/
-constexpr cstring blam_header_foot = "toof"; /*!< Footer of file header*/
+constexpr cstring header_head = "deah"; /*!< Header of file header*/
+constexpr cstring header_foot = "toof"; /*!< Footer of file header*/
 
 constexpr int32 blam_num_map_names = 28; /*!< Number of recognizable map names*/
 constexpr _cbasic_static_map<sbyte_t[15],sbyte_t[28],28> blam_map_names = {
@@ -150,7 +150,10 @@ struct tag_index_t
  */
 struct index_item_t
 {
-    bl_tag  tagclass[3]; /*!< Strings which identify its class*/
+    union{
+        bl_tag  tagclass[3]; /*!< Strings which identify its class*/
+        tag_class_t tagclass_e[3]; /*!< enum-ified tagclass value */
+    };
     int32   tagId; /*!< A number representing its ID, only used for enumeration*/
     uint32  string_offset; /*! Magic data offset to a full string for the item*/
     int32   offset; /*!< A byte offset to associated data*/

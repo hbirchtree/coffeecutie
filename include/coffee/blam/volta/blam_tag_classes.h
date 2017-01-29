@@ -1,12 +1,14 @@
 #pragma once
 
+#include <coffee/core/plat/memory/endian_ops.h>
+
 namespace Coffee{
 namespace Blam{
 
 /*!
  * \brief Blam tag classes, sourced from SparkEdit source code
  */
-enum class tag_class
+enum class tag_class_t
 {
     obje = 0x656a626f,  /* TAG_OBJECT */
     unit = 0x2,         /* TAG_UNIT */
@@ -87,6 +89,12 @@ enum class tag_class
     vcky = 0x17,        /* TAG_VIRTUAL_KEYBOARD */
     mod2 = 0x32646F6D,  /* TAG_MODEL2 */
 };
+
+FORCEDINLINE bool cmp_tag_class(tag_class_t v1, tag_class_t v2)
+{
+    return Mem::ForeignEndian32(C_CAST<uint32>(v1)) == C_CAST<uint32>(v2) ||
+            v1 == v2;
+}
 
 }
 }

@@ -7,14 +7,14 @@ BlamMapHandler::BlamMapHandler(uchar* data) :
     m_index(nullptr),
     m_index_magical(nullptr)
 {
-    m_file = blam_file_header_get(data,version_t::pc);
+    m_file = file_header_get(data,version_t::pc);
     if(!m_file)
         return;
-    m_index = blam_tag_index_ptr(m_file);
+    m_index = tag_index_ptr(m_file);
     m_index_magical = new tag_index_t(*m_index);
     uchar* d1 = (uchar*)m_file;
     uchar* d2 = (uchar*)m_index;
-    blam_tag_index_magic(m_index_magical,d2-d1);
+    tag_index_magic(m_index_magical,d2-d1);
 }
 
 bool BlamMapHandler::valid()
@@ -24,7 +24,7 @@ bool BlamMapHandler::valid()
 
 const char* BlamMapHandler::mapName()
 {
-    return blam_file_header_full_mapname(m_file);
+    return file_header_full_mapname(m_file);
 }
 
 bitm_texture_t BlamMapHandler::texture(uchar *bitm, const index_item_t* ref)
@@ -35,7 +35,7 @@ bitm_texture_t BlamMapHandler::texture(uchar *bitm, const index_item_t* ref)
 
 void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images, QVector<const index_item_t *> *tags)
 {
-    const index_item_t* base = blam_tag_index_get_items(m_file);
+    const index_item_t* base = tag_index_get_items(m_file);
     const index_item_t* it;
     bitm_texture_t tex;
 
@@ -43,7 +43,7 @@ void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images, QVector<c
     while((i++) < m_index->tagCount)
     {
         it = &base[i];
-        if(blam_tagref_match_class(it,0,blam_index_item_type_bitm))
+        if(tagref_match_class(it,0,index_item_type_bitm))
         {
             tex = texture(bitm,it);
             if(tex.type == TexType::T2D)
@@ -81,7 +81,7 @@ void BlamMapHandler::allTextures(uchar *bitm, QVector<QImage> *images, QVector<c
 
 const char *BlamMapHandler::tagName(const index_item_t *item)
 {
-    return blam_index_item_get_string(item,m_file,m_index_magical);
+    return index_item_get_string(item,m_file,m_index_magical);
 }
 
 QString BlamMapHandler::tagType(const index_item_t *item)
