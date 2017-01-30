@@ -90,7 +90,7 @@ enum class tag_class_t
     mod2 = 0x32646F6D,  /* TAG_MODEL2 */
 };
 
-FORCEDINLINE bool cmp_tag_class(tag_class_t v1, tag_class_t v2)
+FORCEDINLINE bool tag_class_cmp(tag_class_t v1, tag_class_t v2)
 {
     return Mem::ForeignEndian32(C_CAST<uint32>(v1)) == C_CAST<uint32>(v2) ||
             v1 == v2;

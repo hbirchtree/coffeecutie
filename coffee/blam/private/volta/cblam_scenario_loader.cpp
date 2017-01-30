@@ -11,7 +11,7 @@ const scenario *scn_get(tag_index_view& tags)
 {
     static const auto pred = [](index_item_t const* v)
     {
-        return cmp_tag_class(v->tagclass_e[0], tag_class_t::scnr);
+        return tag_class_cmp(v->tagclass_e[0], tag_class_t::scnr);
     };
 
     auto base_it = std::find_if(tags.begin(), tags.end(),

@@ -11,9 +11,7 @@ class BlamMapHandler
 {
     uchar* m_data;
 
-    file_header_t* m_file;
-    const tag_index_t* m_index;
-    tag_index_t* m_index_magical;
+    map_container m_map;
 
 public:
     BlamMapHandler(uchar* data);
@@ -22,10 +20,11 @@ public:
     bool valid();
 
     const char* mapName();
+    map_container &container();
 
     bitm_texture_t texture(uchar* bitm, const index_item_t* ref);
 
-    void allTextures(uchar* bitm, QVector<QImage>* images, QVector<const index_item_t*> *tags);
+    void allTextures(uchar* bitm, QVector<QImage>* images);
 
     const char* tagName(const index_item_t* item);
     QString tagType(const index_item_t* item);

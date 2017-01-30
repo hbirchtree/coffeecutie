@@ -87,7 +87,7 @@ public:
 
         bool operator ==(index_iterator const& other) const
         {
-            return !(*this != other);
+            return i == other.i;
         }
 
         index_iterator& operator++()
@@ -131,7 +131,7 @@ public:
     }
     iterator end()
     {
-        return index_iterator(*this, m_idx.tagCount - 1);
+        return index_iterator(*this, m_idx.tagCount);
     }
 };
 

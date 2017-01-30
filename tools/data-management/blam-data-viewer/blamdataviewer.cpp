@@ -110,16 +110,26 @@ void BlamDataViewer::openMap(BlamFileContext *map)
 
     if(m_map_handle->valid() && m_bitmap_file)
     {
-        m_map_handle->allTextures(m_bitmap_file->data,&m_textures_ref,&m_textures_name_ref);
+        m_map_handle->allTextures(m_bitmap_file->data,&m_textures_ref);
 
-        int j = 0;
+        auto matcher = [](index_item_t const* e){
+            return tag_class_cmp(e->tagclass_e[0], tag_class_t::bitm);
+        };
+
+        auto raw = tag_index_view(m_map_handle->container());
+        auto id = raw.begin();
+        auto end = raw.end();
         for(QImage const& i : m_textures_ref)
         {
+            id = std::find_if(id, end, matcher);
+            if(id == end)
+                break;
+
             QTreeWidgetItem* it = new QTreeWidgetItem;
-            it->setData(0,0,m_map_handle->tagName(m_textures_name_ref[j]));
-            it->setData(1,0,m_map_handle->tagType(m_textures_name_ref[j]));
+            it->setData(0,0,m_map_handle->tagName(*id));
+            it->setData(1,0,m_map_handle->tagType(*id));
             ui->treeWidget->addTopLevelItem(it);
-            j++;
+            ++id;
         }
     }
 }

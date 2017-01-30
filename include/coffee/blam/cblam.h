@@ -1,6 +1,7 @@
 #ifndef CBLAM_HEADER
 #define CBLAM_HEADER
 
+#include "volta/blam_stl.h"
 #include "volta/cblam_map.h"
 #include "volta/cblam_bitm.h"
 #include "volta/cblam_mod2.h"
