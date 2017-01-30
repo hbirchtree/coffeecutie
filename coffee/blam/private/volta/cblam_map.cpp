@@ -80,7 +80,7 @@ const index_item_t *tag_index_get_item(
 
 cstring tagref_get_name(const tagref_t *tag, const file_header_t *file, const tag_index_t *tags)
 {
-    return (cstring)blam_mptr(file,tags->index_magic,tag->string_offset);
+    return C_CAST<cstring>(blam_mptr(file,tags->index_magic,tag->string_offset));
 }
 
 bool tagref_match_class(const index_item_t *item, uint32 i, const bl_tag tag)
