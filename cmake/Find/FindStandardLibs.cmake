@@ -98,6 +98,7 @@ if(WIN32)
          shell32
          version
          Ws2_32
+         wbemuuid
           )
 endif()
 

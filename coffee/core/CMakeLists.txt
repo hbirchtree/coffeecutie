@@ -126,6 +126,7 @@ if(WIN32)
         private/plat/file/windows/file.cpp
         private/plat/environment/windows/environment.cpp
         private/plat/environment/windows/sysinfo.cpp
+        private/plat/environment/windows/windows_startup.cpp
         )
 endif()
 
