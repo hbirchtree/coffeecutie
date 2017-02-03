@@ -18,23 +18,32 @@ namespace Environment{
 namespace Linux{
 struct LinuxStacktracer : StacktracerDef
 {
+    template<typename T>
+    STATICINLINE CString GetTypeName()
+    {
+        return DemangleSymbol(typeid(T).name());
+    }
+
     STATICINLINE CString DemangleSymbol(CString const& sym)
+    {
+        return DemangleSymbol(sym.c_str());
+    }
+
+    STATICINLINE CString DemangleSymbol(const char* sym)
     {
 #if defined(COFFEE_USE_UNWIND)
         int32 stat = 0;
-        cstring_w symbol = abi::__cxa_demangle(sym.c_str(),nullptr,nullptr,&stat);
+        cstring_w symbol = abi::__cxa_demangle(sym, nullptr, nullptr, &stat);
         if(stat==0)
             return CString(symbol);
         else
             return sym;
-#endif
-        return {};
-    }
-#if defined(COFFEE_USE_UNWIND)
-    STATICINLINE Stacktrace GetRawStackframes(uint32 start = 0, int32 length = 1)
 #else
-    STATICINLINE Stacktrace GetRawStackframes(uint32 = 0, int32 = 1)
+        return sym;
 #endif
+    }
+
+    STATICINLINE Stacktrace GetRawStackframes(uint32 start = 0, int32 length = 1)
     {
         Stacktrace t;
 #if defined(COFFEE_USE_UNWIND)
@@ -71,6 +80,9 @@ struct LinuxStacktracer : StacktracerDef
             if(length!=(-1) && depth==length)
                 break;
         }
+#else
+        C_UNUSED(start);
+        C_UNUSED(length);
 #endif
         return t;
     }
@@ -87,9 +99,11 @@ struct LinuxStacktracer : StacktracerDef
         return GetRawStackframes(start,length);
     }
 private:
+
 #if defined(COFFEE_USE_UNWIND)
     static unw_context_t* unwind_context;
 #endif
+
 };
 }
 }

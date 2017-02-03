@@ -14,10 +14,12 @@ cstring file_header_full_mapname(
     return map->name;
 }
 
-file_header_t *file_header_get(
-        void *baseptr, version_t expectedVersion)
+
+
+file_header_t const* file_header_get(
+        c_cptr baseptr, version_t expectedVersion)
 {
-    file_header_t* fh = (file_header_t*)baseptr;
+    file_header_t const* fh = (const file_header_t*)baseptr;
     if(
             fh->version!=expectedVersion &&
             MemCmp(&fh->id,header_head,4) &&
@@ -56,7 +58,7 @@ const index_item_t *tag_index_get_items(
     return (const index_item_t*)&(ptr[1]);
 }
 
-const void *blam_mptr(const void *base, int32 magic, int32 offset)
+c_cptr blam_mptr(c_cptr base, int32 magic, int32 offset)
 {
     const byte_t* ptr = ((const byte_t*)base)+offset-magic;
     return (ptr < base) ? nullptr : ptr;
@@ -81,11 +83,6 @@ const index_item_t *tag_index_get_item(
 cstring tagref_get_name(const tagref_t *tag, const file_header_t *file, const tag_index_t *tags)
 {
     return C_CAST<cstring>(blam_mptr(file,tags->index_magic,tag->string_offset));
-}
-
-bool tagref_match_class(const index_item_t *item, uint32 i, const bl_tag tag)
-{
-    return MemCmp(item->tagclass[i],tag,4);
 }
 
 }

@@ -103,4 +103,9 @@ struct CColorMask
 using CBitmap = _cbasic_bitmap_base<CRGBA,int32>;
 using Bitmap = CBitmap;
 
+using rgba_t = CRGBA;
+using rgb_t = CRGB;
+using bitmap_t = Bitmap;
+using colormask_t = CColorMask;
+
 }

@@ -152,6 +152,13 @@ bool data_unit_tests()
     return true;
 }
 
+template<typename T>
+static void CheckSize(Vector<CString>& names, Vector<szptr>& sizes)
+{
+    names.push_back(Stacktracer::DemangleSymbol(typeid(T).name()));
+    sizes.push_back(sizeof(T));
+}
+
 bool input_size_tests()
 {
     Table::Table table;
@@ -163,67 +170,55 @@ bool input_size_tests()
     Vector<CString> typenames;
     Vector<szptr> typesizes;
 
-    typenames.push_back("CIEvent");
+    CheckSize<CIEvent>(typenames, typesizes);
+
     typesizes.push_back(sizeof(CIEvent));
 
-    typenames.push_back("CIKeyEvent");
     typesizes.push_back(sizeof(CIKeyEvent));
 
-    typenames.push_back("CITextEvent");
     typesizes.push_back(sizeof(CITextEvent));
 
-    typenames.push_back("CIMouseMoveEvent");
     typesizes.push_back(sizeof(CIMouseMoveEvent));
 
-    typenames.push_back("CIMouseButtonEvent");
     typesizes.push_back(sizeof(CIMouseButtonEvent));
 
-    typenames.push_back("CIScrollEvent");
     typesizes.push_back(sizeof(CIScrollEvent));
 
-    typenames.push_back("CIWriteEvent");
     typesizes.push_back(sizeof(CIWriteEvent));
 
-    typenames.push_back("CIWEditEvent");
     typesizes.push_back(sizeof(CIWEditEvent));
 
-    typenames.push_back("CIControllerAtomicEvent");
     typesizes.push_back(sizeof(CIControllerAtomicEvent));
 
-    typenames.push_back("CIControllerAtomicUpdateEvent");
     typesizes.push_back(sizeof(CIControllerAtomicUpdateEvent));
 
-    typenames.push_back("CIControllerState");
     typesizes.push_back(sizeof(CIControllerState));
 
-    typenames.push_back("CIHapticEvent");
     typesizes.push_back(sizeof(CIHapticEvent));
 
-    typenames.push_back("CIDropEvent");
     typesizes.push_back(sizeof(CIDropEvent));
 
-    typenames.push_back("CISensorEvent");
-    typesizes.push_back(sizeof(CISensorEvent));
-
-    typenames.push_back("CITouchTapEvent");
+    typesizes.push_back(sizeof(CISensorEvent));   
     typesizes.push_back(sizeof(CITouchTapEvent));
 
-    typenames.push_back("CITouchMotionEvent");
     typesizes.push_back(sizeof(CITouchMotionEvent));
 
-    typenames.push_back("CIMTouchMotionEvent");
     typesizes.push_back(sizeof(CIMTouchMotionEvent));
 
-    typenames.push_back("CIGestureEvent");
     typesizes.push_back(sizeof(CIGestureEvent));
 
     table.push_back(Table::GenColumn(typenames.data(),typenames.size()));
     table.push_back(Table::GenColumn(typesizes.data(),typesizes.size()));
 
     cBasicPrint("Sizes of input structures:");
-    cBasicPrint("{0}",Table::GenTable(table,head));
+    cBasicPrint("{0}", Table::GenTable(table,head));
 
     return true;
+}
+
+bool pix_size_tests()
+{
+
 }
 
 const constexpr CoffeeTest::Test _tests[7] = {

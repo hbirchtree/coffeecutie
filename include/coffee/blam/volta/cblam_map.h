@@ -20,7 +20,7 @@ extern cstring file_header_full_mapname(
  * \param expectedVersion Expected version of Halo to be parsed. If version does not match, fail.
  * \return Returns a casted pointer on success, nullptr on failure
  */
-extern file_header_t* file_header_get(void* baseptr, version_t expectedVersion);
+extern file_header_t const* file_header_get(c_cptr baseptr, version_t expectedVersion);
 
 /*!
  * \brief Sets index magic for a tag index and modifies it with the correct magic number.
@@ -68,7 +68,7 @@ extern tag_index_t tag_index_get(
  * \return A pointer to the described data
  */
 extern const void* blam_mptr(
-        const void* base, int32 magic, int32 offset);
+        c_cptr base, int32 magic, int32 offset);
 
 /*!
  * \brief Acquire the name string for a tag
@@ -93,11 +93,6 @@ extern cstring tagref_get_name(
         const tagref_t* tag,
         const file_header_t* file,
         const tag_index_t* tags);
-
-extern bool tagref_match_class(
-        const index_item_t* item,
-        uint32 i,
-        const bl_tag tag);
 
 }
 }
