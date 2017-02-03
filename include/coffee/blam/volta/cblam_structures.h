@@ -176,11 +176,11 @@ struct reflexive_t
      * \param magic Magic number from tag index
      * \return A valid pointer if the reflexive is deemed valid (if the variable zero is indeed zero)
      */
-    const T* data(const void* basePtr, szptr magic) const
+    const T* data(c_cptr basePtr, szptr magic) const
     {
         if(zero != 0)
             return nullptr;
-        const byte_t* b_basePtr = (const byte_t*)basePtr;
+        const byte_t* b_basePtr = C_CAST<const byte_t*>(basePtr);
         return (const T*)(b_basePtr+offset-magic);
     }
 };

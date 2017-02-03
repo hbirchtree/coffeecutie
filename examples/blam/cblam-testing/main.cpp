@@ -47,7 +47,7 @@ int coffee_main(int32 argv,cstring_w* argc)
         /* Extracting scenario data */
         const scenario* scn = scn_get(index_view);
 
-        const scn_bsp_header* sbsp = scn->struct_bsp.data(map.map,map.tags.index_magic);
+        const scn_bsp_header* sbsp = scn->struct_bsp.data(map.map, map.tags.index_magic);
         for(int i=0;i<scn->struct_bsp.count;i++)
         {
             const scn_bsp_header* s_bsp = &sbsp[i];
