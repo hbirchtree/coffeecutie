@@ -62,7 +62,7 @@ struct LinuxStacktracer : StacktracerDef
         CString temp_buf;
         temp_buf.resize(256);
 
-        uint32 depth = 0;
+        int32 depth = 0;
 
         while(unw_step(&cursor)>0)
         {
@@ -77,7 +77,7 @@ struct LinuxStacktracer : StacktracerDef
             }
 
             depth++;
-            if(length!=(-1) && depth==length)
+            if(length != (-1) && depth == length)
                 break;
         }
 #else
