@@ -1,7 +1,6 @@
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/core/plat/plat_environment.h>
 #include <coffee/core/plat/timing/profiling.h>
-#include <coffee/core/plat/environment/stacktrace_def.h>
 #include <coffee/core/CDebug>
 
 #ifdef COFFEE_USE_TERMINAL_CTL
@@ -15,7 +14,7 @@ thread_local CString Environment::Linux::LinuxSysInfo::cached_cpuinfo_string;
 #endif
 
 #if defined(COFFEE_USE_UNWIND)
-unw_context_t* Environment::Linux::LinuxStacktracer::unwind_context = nullptr;
+unw_context_t* Environment::Posix::PosixStacktracer::unwind_context = nullptr;
 #endif
 
 Profiler::ProfilerDataStore* Profiler::profiler_data_store = nullptr;
