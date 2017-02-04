@@ -1,0 +1,9 @@
+var searchData=
+[
+  ['x',['x',['../d4/d39/structCoffee_1_1CInput_1_1CIControllerState.html#af110674f6e437f61276682238ee1980d',1,'Coffee::CInput::CIControllerState::x()'],['../d5/d6e/structCoffee_1_1CInput_1_1CISensorEvent.html#a40cd06dd419b1be80e1274ea8841745d',1,'Coffee::CInput::CISensorEvent::x()'],['../d5/d6e/structCoffee_1_1CInput_1_1CISensorEvent.html#a95a6301784dcd548aeb27e744c5f9193',1,'Coffee::CInput::CISensorEvent::x()'],['../da/d1d/structCoffee_1_1__cbasic__point__2d.html#ad3bf2e10bf836c811ecba9a07f2a207a',1,'Coffee::_cbasic_point_2d::x()'],['../db/df2/structCoffee_1_1__cbasic__point__3d.html#a8ec8c64b852bdaf109bfed518ec27672',1,'Coffee::_cbasic_point_3d::x()'],['../d0/d62/structCoffee_1_1__cbasic__rect.html#ac45b93b7d571d41e99fcae009727999d',1,'Coffee::_cbasic_rect::x()'],['../d6/d1c/structCoffee_1_1__cbasic__boundingbox.html#a7be2ba9d2ea8221278bb4ef0ff6c0f9e',1,'Coffee::_cbasic_boundingbox::x()']]],
+  ['xbox_5flightmap_5freflexive_5fcount',['xbox_lightmap_reflexive_count',['../df/d46/structCoffee_1_1Blam_1_1scn__sbsp.html#a4c04b48b36d2183853b9937e6ebac05c',1,'Coffee::Blam::scn_sbsp']]],
+  ['xbox_5flightmap_5freflexive_5foffset',['xbox_lightmap_reflexive_offset',['../df/d46/structCoffee_1_1Blam_1_1scn__sbsp.html#a4a8f456cf305a62b3ff63bbac9426322',1,'Coffee::Blam::scn_sbsp']]],
+  ['xbox_5freflexive_5fcount',['xbox_reflexive_count',['../df/d46/structCoffee_1_1Blam_1_1scn__sbsp.html#a55c3e3ce314b64393b1917651d0ece78',1,'Coffee::Blam::scn_sbsp']]],
+  ['xbox_5freflexive_5foffset',['xbox_reflexive_offset',['../df/d46/structCoffee_1_1Blam_1_1scn__sbsp.html#a8d6009b9959c6fdebb53404e04ab0870',1,'Coffee::Blam::scn_sbsp']]],
+  ['xdk_5fver',['xdk_ver',['../d6/dfe/structCoffee_1_1CBlam_1_1Elegy_1_1blam__file__header__h3.html#a5045dd9f0aabe868ed725aebb6448743',1,'Coffee::CBlam::Elegy::blam_file_header_h3']]]
+];
