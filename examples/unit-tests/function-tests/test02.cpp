@@ -71,15 +71,13 @@ bool printing_tests()
 	timing.push_back(debug_time);
 	titles.push_back("cDebug");
 
-	Table::Header head;
-	head.push_back("Type of printing");
-	head.push_back("Time score");
+    Table::Header head = {"Type of printing", "Time score"};
 
-	Table::Table table;
+    Table::Table table(head);
 	table.push_back(Table::GenColumn(&titles[0],titles.size()));
 	table.push_back(Table::GenColumn(&timing[0],titles.size()));
 
-	cBasicPrint("{0}",Table::GenTable(table,head));
+    cBasicPrint("{0}", table);
 
     return true;
 }

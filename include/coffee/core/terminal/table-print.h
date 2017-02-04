@@ -15,7 +15,22 @@ struct TablePrinter_Basic
     using ColumnSizes = Vector<ColSize>;
     using Column = Vector<CString>;
     using Header = Vector<CString>;
-    using Table = Vector<Column>;
+    class Table : public Vector<Column>
+    {
+        Header const& m_header;
+
+    public:
+        Table(Header const& head):
+            Vector<Column>(),
+            m_header(head)
+        {
+        }
+
+        operator CString()
+        {
+            return GenTable(*this, m_header);
+        }
+    };
 
     template<typename T> STATICINLINE
     /*!

@@ -194,7 +194,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiler::PopContext();
 
     cVerbose(8,"Unloading profiler");
-    Profiling::ExitRoutine(initargs.argc,initargs.argv);
+    Profiling::ExitRoutine();
 
     cVerbose(8,"Successfully reached end of main()");
 
