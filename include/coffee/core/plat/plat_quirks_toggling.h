@@ -13,7 +13,8 @@
 #endif
 
 /* Unwind and terminal control signals are desktop-only */
-#if defined(COFFEE_LINUX) && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__)
+#if (defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) \
+    && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__)
 #define COFFEE_USE_TERMINAL_CTL
 #define COFFEE_USE_UNWIND
 #endif
