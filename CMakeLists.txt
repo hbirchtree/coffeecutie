@@ -117,7 +117,7 @@ if(COFFEE_GENERATE_LIBRARIES)
 endif()
 
 # Add documentation directory, not built by default (increases build time)
-add_subdirectory(docs)
+add_subdirectory(docs-gen)
 
 if(COFFEE_GENERATE_LIBRARIES)
     install ( DIRECTORY
