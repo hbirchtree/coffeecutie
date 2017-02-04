@@ -9,9 +9,15 @@ struct StacktracerDef
 {
     using Stacktrace = std::vector<CString>;
 
-    static CString DemangleSymbol(CString const&)
+    template<typename T>
+    static CString GetTypeName()
     {
-        return {};
+        return typeid(T).name();
+    }
+
+    static CString DemangleSymbol(CString const& in)
+    {
+        return in;
     }
 
     /*!
