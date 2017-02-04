@@ -9,6 +9,11 @@ struct StacktracerDef
 {
     using Stacktrace = std::vector<CString>;
 
+    static CString DemangleSymbol(CString const&)
+    {
+        return {};
+    }
+
     /*!
      * \brief Will return stackframe name for calling function at depth 0
      * \param depth
