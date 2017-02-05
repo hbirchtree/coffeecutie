@@ -19,7 +19,7 @@ cstring file_header_full_mapname(
 file_header_t const* file_header_get(
         c_cptr baseptr, version_t expectedVersion)
 {
-    file_header_t const* fh = (const file_header_t*)baseptr;
+    file_header_t const* fh = C_CAST<const file_header_t*>(baseptr);
     if(
             fh->version!=expectedVersion &&
             MemCmp(&fh->id,header_head,4) &&
@@ -38,7 +38,7 @@ void tag_index_magic(
 const tag_index_t *tag_index_ptr(
         const file_header_t *file)
 {
-    return (const tag_index_t*)&((const byte_t*)file)[file->tagIndexOffset];
+    return C_FCAST<const tag_index_t*>(&(C_FCAST<const byte_t*>(file))[file->tagIndexOffset]);
 }
 
 tag_index_t tag_index_get(
@@ -55,12 +55,12 @@ const index_item_t *tag_index_get_items(
         const file_header_t *file)
 {
     const tag_index_t* ptr = tag_index_ptr(file);
-    return (const index_item_t*)&(ptr[1]);
+    return C_FCAST<const index_item_t*>(&(ptr[1]));
 }
 
 c_cptr blam_mptr(c_cptr base, int32 magic, int32 offset)
 {
-    const byte_t* ptr = ((const byte_t*)base)+offset-magic;
+    const byte_t* ptr = (C_FCAST<const byte_t*>(base))+offset-magic;
     return (ptr < base) ? nullptr : ptr;
 }
 
@@ -69,7 +69,7 @@ cstring index_item_get_string(
         const file_header_t *map,
         const tag_index_t *tagindex)
 {
-    return C_CAST<cstring>(blam_mptr(map,tagindex->index_magic,idx->string_offset));
+    return C_CAST<cstring>(blam_mptr(map,tagindex->index_magic, C_CAST<int32>(idx->string_offset)));
 }
 
 const index_item_t *tag_index_get_item(

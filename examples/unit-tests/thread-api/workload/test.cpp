@@ -14,7 +14,7 @@ bool workload_test()
     data.size.w = 1024*1024;
     data.size.h = 1024;
 
-    data.value = (uint8*)Alloc(data.size.area());
+    data.value = C_CAST<uint8*>(Alloc(data.size.area()));
 
     if(!data.value)
     {
@@ -76,17 +76,17 @@ bool workload_test()
 	head.push_back("Workload type");
 	head.push_back("Time score");
 
-	Table::Table table;
+    Table::Table table(head);
 	table.push_back(Table::GenColumn(titles.data(),titles.size()));
 	table.push_back(Table::GenColumn(timing.data(),timing.size()));
 
-	cBasicPrint("{0}",Table::GenTable(table,head));
+    cBasicPrint("{0}", table);
 
     return true;
 }
 
 const constexpr CoffeeTest::Test _tests[1] = {
-	{workload_test,"Threaded workload test"}
+    {workload_test,"Threaded workload test", nullptr, true, false}
 };
 
 COFFEE_RUN_TESTS(_tests);

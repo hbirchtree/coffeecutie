@@ -9,6 +9,17 @@ struct StacktracerDef
 {
     using Stacktrace = std::vector<CString>;
 
+    template<typename T>
+    static CString GetTypeName()
+    {
+        return typeid(T).name();
+    }
+
+    static CString DemangleSymbol(CString const& in)
+    {
+        return in;
+    }
+
     /*!
      * \brief Will return stackframe name for calling function at depth 0
      * \param depth

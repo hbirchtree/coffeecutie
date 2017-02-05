@@ -4,13 +4,13 @@
 
 #if defined(COFFEE_APPLE)
 
-#include "../stacktrace_def.h"
+#include "../unix/stacktrace.h"
 
 namespace Coffee{
 namespace Environment{
 namespace Mac{
 
-struct MacStacktracer : StacktracerDef
+struct MacStacktracer : Posix::PosixStacktracer
 {
 };
 

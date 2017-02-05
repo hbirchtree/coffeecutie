@@ -15,7 +15,7 @@ void Init()
 
 void Terminate()
 {
-    Profiling::ExitRoutine(0,nullptr);
+    Profiling::ExitRoutine();
     CoffeeTerminate(false);
 }
 
@@ -26,11 +26,13 @@ public:
         CSDL2Renderer(p)
     {
     }
-    void run()
-    {
-        /* Stub! Do what you want. */
-    }
+    void run();
 };
+
+void CGLWindow::run()
+{
+    /* Stub! Do what you want. */
+}
 
 namespace Window{
 CGLWindow* CreateWindow(int w, int h,

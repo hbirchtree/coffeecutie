@@ -277,7 +277,7 @@ void ExportProfilerData(CString& target)
     tinyxml2::XMLPrinter printer;
     doc.Print(&printer);
 
-    target.insert(0, printer.CStr(), printer.CStrSize());
+    target.insert(0, printer.CStr(), C_CAST<szptr>(printer.CStrSize()));
 }
 
 void ExportStringToFile(const CString &data, cstring outfile)
@@ -293,16 +293,16 @@ void ExportStringToFile(const CString &data, cstring outfile)
     CString log_name = cStringFormat(
                 logtemplate,
                 ApplicationData().application_name);
-    cVerbose(5,"Creating filename");
+    cVerbose(6,"Creating filename");
     CResources::Resource out(log_name.c_str(),true);
     out.data = C_FCAST<c_ptr>(data.c_str());
     out.size = C_CAST<szptr>(data.size());
-    cVerbose(5,"Retrieving data pointers");
+    cVerbose(6,"Retrieving data pointers");
     CResources::FileCommit(out);
-    cVerbose(5,"Wrote file");
+    cVerbose(6,"Wrote file");
 }
 
-void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
+void ExitRoutine()
 {
     /* Verify if we should export profiler data */
     {
@@ -313,8 +313,7 @@ void ExitRoutine(int32 argc, cstring_w *argv, bool silent)
             log_name = Env::BaseName(log_name.c_str());
             log_name = CStrReplace(log_name,".exe","");
             log_name = cStringFormat("{0}-profile.xml",log_name);
-            if(!silent)
-                cDebug("Saving profiler data to: {0}",log_name);
+            cVerbose(6, "Saving profiler data to: {0}",log_name);
 
             CString target_log;
             Profiling::ExportProfilerData(/*log_name.c_str(),argc,argv*/ target_log);

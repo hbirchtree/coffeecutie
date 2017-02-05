@@ -17,13 +17,11 @@ const constexpr bigscalar test1_values[20] = {
 
 bool table_test()
 {
-    Table::Table table;
+    Table::Header h = {"Names", "Values"};
+    Table::Table table(h);
     table.push_back(Table::GenColumn(test1_names,20));
     table.push_back(Table::GenColumn(test1_values,20));
 
-    Table::Header h;
-    h.push_back("Names");
-    h.push_back("Values");
 
     cBasicPrint("{0}",Table::GenTable(table,h));
 
@@ -31,7 +29,7 @@ bool table_test()
 }
 
 const constexpr CoffeeTest::Test _tests[1] = {
-    {table_test,"Print a table"}
+    {table_test,"Print a table", nullptr, false, false}
 };
 
 COFFEE_RUN_TESTS(_tests);

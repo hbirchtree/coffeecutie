@@ -6,7 +6,7 @@
 
 namespace Coffee{
 
-exithandler_t exit_handle = nullptr;
+static exithandler_t exit_handle = nullptr;
 
 /*!
  * \brief Default signal handler function
@@ -25,36 +25,30 @@ void sighandle(int sig)
         if(exit_handle)
             exit_handle();
         Cmd::Exit(Sig_ShitMySelf);
-        break;
     case SIGABRT:
         if(exit_handle)
             exit_handle();
         Cmd::Exit(Sig_PoopedABit);
-        break;
     case SIGILL:
         if(exit_handle)
             exit_handle();
         Cmd::Exit(Sig_Termination);
-        break;
     case SIGINT:
     {
-        Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
+        Profiling::ExitRoutine();
         if(exit_handle)
             exit_handle();
         Cmd::Exit(Sig_Interrupt);
-        break;
     }
     case SIGTERM:
     {
-        Profiling::ExitRoutine(GetInitArgs().argc,GetInitArgs().argv);
+        Profiling::ExitRoutine();
         if(exit_handle)
             exit_handle();
         Cmd::Exit(Sig_Termination);
-        break;
     }
     default:
         Cmd::Exit(Sig_UnknownBad);
-        break;
     }
 
     /* Implementation detail: SIGKILL might

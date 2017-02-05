@@ -27,7 +27,7 @@ extern void ExportStringToFile(CString const& data, cstring outfile);
  * \param argv
  * \param silent
  */
-extern void ExitRoutine(int32 argc, cstring_w* argv, bool silent = false);
+extern void ExitRoutine();
 
 }
 }

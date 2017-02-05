@@ -1,6 +1,7 @@
 #include <coffee/core/CUnitTesting>
 
 #include <coffee/core/CInput>
+#include <coffee/core/string_casting.h>
 
 using namespace Coffee;
 using namespace CInput;
@@ -155,80 +156,72 @@ bool data_unit_tests()
 template<typename T>
 static void CheckSize(Vector<CString>& names, Vector<szptr>& sizes)
 {
-    names.push_back(Stacktracer::DemangleSymbol(typeid(T).name()));
+    CString type_name = Stacktracer::DemangleSymbol(typeid(T).name());
+    names.push_back(type_name);
     sizes.push_back(sizeof(T));
+
+    Profiler::AddExtraData(cStringFormat("sizeof:{0}", CStrReplace(type_name, "::", "_")),
+                           cast_pod(sizeof(T)));
 }
 
 bool input_size_tests()
 {
-    Table::Table table;
-
-    Table::Header head;
-    head.push_back("Type Name");
-    head.push_back("Size");
+    Table::Header head = {"Type name", "Size"};
+    Table::Table table(head);
 
     Vector<CString> typenames;
     Vector<szptr> typesizes;
 
     CheckSize<CIEvent>(typenames, typesizes);
 
-    typesizes.push_back(sizeof(CIEvent));
+    CheckSize<CIKeyEvent>(typenames, typesizes);
+    CheckSize<CITextEvent>(typenames, typesizes);
 
-    typesizes.push_back(sizeof(CIKeyEvent));
+    CheckSize<CIMouseMoveEvent>(typenames, typesizes);
+    CheckSize<CIMouseButtonEvent>(typenames, typesizes);
+    CheckSize<CIScrollEvent>(typenames, typesizes);
 
-    typesizes.push_back(sizeof(CITextEvent));
+    CheckSize<CIWriteEvent>(typenames, typesizes);
+    CheckSize<CIWEditEvent>(typenames, typesizes);
 
-    typesizes.push_back(sizeof(CIMouseMoveEvent));
+    CheckSize<CIControllerAtomicEvent>(typenames, typesizes);
+    CheckSize<CIControllerAtomicUpdateEvent>(typenames, typesizes);
+    CheckSize<CIControllerState>(typenames, typesizes);
 
-    typesizes.push_back(sizeof(CIMouseButtonEvent));
+    CheckSize<CIHapticEvent>(typenames, typesizes);
+    CheckSize<CIDropEvent>(typenames, typesizes);
+    CheckSize<CISensorEvent>(typenames, typesizes);
 
-    typesizes.push_back(sizeof(CIScrollEvent));
-
-    typesizes.push_back(sizeof(CIWriteEvent));
-
-    typesizes.push_back(sizeof(CIWEditEvent));
-
-    typesizes.push_back(sizeof(CIControllerAtomicEvent));
-
-    typesizes.push_back(sizeof(CIControllerAtomicUpdateEvent));
-
-    typesizes.push_back(sizeof(CIControllerState));
-
-    typesizes.push_back(sizeof(CIHapticEvent));
-
-    typesizes.push_back(sizeof(CIDropEvent));
-
-    typesizes.push_back(sizeof(CISensorEvent));   
-    typesizes.push_back(sizeof(CITouchTapEvent));
-
-    typesizes.push_back(sizeof(CITouchMotionEvent));
-
-    typesizes.push_back(sizeof(CIMTouchMotionEvent));
-
-    typesizes.push_back(sizeof(CIGestureEvent));
+    CheckSize<CITouchTapEvent>(typenames, typesizes);
+    CheckSize<CITouchMotionEvent>(typenames, typesizes);
+    CheckSize<CIMTouchMotionEvent>(typenames, typesizes);
+    CheckSize<CIGestureEvent>(typenames, typesizes);
 
     table.push_back(Table::GenColumn(typenames.data(),typenames.size()));
     table.push_back(Table::GenColumn(typesizes.data(),typesizes.size()));
 
     cBasicPrint("Sizes of input structures:");
-    cBasicPrint("{0}", Table::GenTable(table,head));
+    cBasicPrint("{0}", table);
 
     return true;
 }
 
 bool pix_size_tests()
 {
-
+    return false;
 }
 
 const constexpr CoffeeTest::Test _tests[7] = {
-    {basic_tests,"Integer sizes","Checking the storage of integer types"},
-    {floating_storage_tests,"Floating-point sizes","Checking the storage of floating-point types"},
-    {longdoub_test,"Long double size","long double size test",true},
-    {wrapping_tests,"Wrapping tests","Checking that numbers wrap correctly"},
-    {uint24_test,"Unsigned 24-bit integer","Special sauce",true},
-    {data_unit_tests,"Verify data units","Special sauce",true},
-    {input_size_tests,"Check sizes of input structures","Useful for aligning data optimally",true},
+    {basic_tests,"Integer sizes","Checking the storage of integer types", false, false},
+    {floating_storage_tests,"Floating-point sizes","Checking the storage of floating-point types",
+     false, false},
+    {longdoub_test,"Long double size","long double size test",true, false},
+    {wrapping_tests,"Wrapping tests","Checking that numbers wrap correctly",
+     true, false},
+    {uint24_test,"Unsigned 24-bit integer","Special sauce",true, false},
+    {data_unit_tests,"Verify data units","Special sauce",true, false},
+    {input_size_tests,"Check sizes of input structures","Useful for aligning data optimally",
+     true, false},
 };
 
 COFFEE_RUN_TESTS(_tests);

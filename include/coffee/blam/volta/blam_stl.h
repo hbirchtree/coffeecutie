@@ -4,6 +4,7 @@
 #include <functional>
 #include <iterator>
 #include "cblam_structures.h"
+#include "cblam_scenario.h"
 #include "cblam_map.h"
 
 namespace Coffee{
@@ -27,6 +28,8 @@ struct map_container
     {
         return file_header_full_mapname(map);
     }
+
+
 
     cstring get_name(index_item_t const* idx)
     {

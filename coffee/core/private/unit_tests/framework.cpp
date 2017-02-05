@@ -140,7 +140,7 @@ void PrintAsciiTable(uint64 const& time_accum, szptr suc)
     header.push_back("Required");
     header.push_back("Time");
 
-    Table::Table table;
+    Table::Table table(header);
     table.push_back(Table::GenColumn(titles));
     table.push_back(Table::GenColumn(descriptions));
     table.push_back(Table::GenColumn(result));
