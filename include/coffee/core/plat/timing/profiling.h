@@ -96,7 +96,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void LabelThread(cstring name)
     {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) && !defined(__EMSCRIPTEN__)
         pthread_setname_np(pthread_self(), name);
 #endif
 #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
