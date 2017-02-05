@@ -96,6 +96,9 @@ struct SimpleProfilerImpl
 
     STATICINLINE void LabelThread(cstring name)
     {
+#if defined(COFFEE_UNIXPLAT)
+        pthread_setname_np(pthread_self(), name);
+#endif
 #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
