@@ -27,7 +27,7 @@ struct CGL_VertexAttribBinding
     STATICINLINE void VAOAttribFormatL(uint32 i,uint32 s,TypeEnum t,uint32 off)
     {glVertexAttribLFormat(i,s,to_enum(t),off);}
     STATICINLINE void VAOBindVertexBuffers(uint32 idx_f, uint32 c,const CGhnd* h,
-                                           const intptr* off, const int32* stride)
+                                           const GLintptr* off, const int32* stride)
     {glBindVertexBuffers(idx_f,c,h,off,stride);}
 #endif
 };

@@ -108,18 +108,21 @@ if (${IOS_PLATFORM} STREQUAL "OS")
 
         # This causes the installers to properly locate the output libraries
         set (CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphoneos")
+        add_definitions( -DTARGET_OS_IPHONE )
 elseif (${IOS_PLATFORM} STREQUAL "SIMULATOR")
     set (SIMULATOR true)
         set (IOS_PLATFORM_LOCATION "iPhoneSimulator.platform")
 
         # This causes the installers to properly locate the output libraries
         set (CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphonesimulator")
+        add_definitions( -DTARGET_IPHONE_SIMULATOR )
 elseif (${IOS_PLATFORM} STREQUAL "SIMULATOR64")
     set (SIMULATOR true)
         set (IOS_PLATFORM_LOCATION "iPhoneSimulator.platform")
 
         # This causes the installers to properly locate the output libraries
         set (CMAKE_XCODE_EFFECTIVE_PLATFORMS "-iphonesimulator")
+        add_definitions( -DTARGET_IPHONE_SIMULATOR )
 else (${IOS_PLATFORM} STREQUAL "OS")
         message (FATAL_ERROR "Unsupported IOS_PLATFORM value selected. Please choose OS or SIMULATOR")
 endif (${IOS_PLATFORM} STREQUAL "OS")

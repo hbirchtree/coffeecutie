@@ -46,7 +46,19 @@ if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
 endif()
 
 if(APPLE)
-    list ( APPEND CORE_EXTRA_LIBRARIES "-framework CoreFoundation" )
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        "-framework AudioToolbox"
+        "-framework CoreAudio"
+        "-framework CoreFoundation"
+        "-framework CoreGraphics"
+        "-framework CoreMotion"
+        "-framework Foundation"
+        "-framework GameController"
+        "-framework OpenAL"
+        "-framework OpenGLES"
+        "-framework QuartzCore"
+        "-framework UIKit"
+        )
 endif()
 
 if(ANDROID)

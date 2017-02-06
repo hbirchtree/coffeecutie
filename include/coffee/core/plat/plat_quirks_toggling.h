@@ -14,7 +14,8 @@
 
 /* Unwind and terminal control signals are desktop-only */
 #if (defined(COFFEE_LINUX) || defined(COFFEE_APPLE)) \
-    && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__)
+    && !defined(COFFEE_ANDROID) && !defined(__STEAMOS__) \
+    && !defined(COFFEE_APPLE_MOBILE)
 #define COFFEE_USE_TERMINAL_CTL
 #define COFFEE_USE_UNWIND
 #endif
@@ -55,6 +56,8 @@
 #define ASIO_USE_SSL
 #endif
 
-#if defined(COFFEE_APPLE)
+#if defined(COFFEE_APPLE_MOBILE)
+#define thread_local
+#elif defined(COFFEE_APPLE)
 #define thread_local __thread
 #endif

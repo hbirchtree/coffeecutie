@@ -2,7 +2,11 @@
 
 #if defined(COFFEE_APPLE)
 #include <coffee/core/plat/environment/osx/environment.h>
+
+#if !defined(COFFEE_APPLE_MOBILE)
 #include <libproc.h>
+#endif
+
 #endif
 
 #include <unistd.h>
@@ -118,6 +122,7 @@ EnvInterface::Variables PosixEnvironmentFun::Environment()
 #if defined(COFFEE_APPLE)
 CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
 {
+#if !defined(COFFEE_APPLE_MOBILE)
     int ret;
     pid_t pid;
     char pathbuf[PROC_PIDPATHINFO_MAXSIZE] = {};
@@ -129,6 +134,9 @@ CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
     szptr e = out.find('\0');
     out.resize(e);
     return out;
+#else
+    return {};
+#endif
 }
 #endif
 

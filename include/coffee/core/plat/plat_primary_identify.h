@@ -41,6 +41,7 @@
 /* Mac OS X macro, not iOS */
 #if defined(__APPLE__)
 
+#undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "Mac OS X"
 #define COFFEE_APPLE
 
