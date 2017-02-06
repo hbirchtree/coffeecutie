@@ -40,7 +40,7 @@ IF(COFFEE_DOCS)
     GENERATE_DOCUMENTATION("${CMAKE_SOURCE_DIR}/docs/coffee.dox.in")
     INSTALL (
         DIRECTORY
-        "${CMAKE_BINARY_DIR}/docs/html"
+        "${CMAKE_BINARY_DIR}/docs-gen/html"
         DESTINATION
         "docs"
         )
