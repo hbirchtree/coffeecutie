@@ -30,15 +30,25 @@ gpucount_t GetNumGpus()
     return c;
 }
 
+HWDeviceInfo GetModel(gpucount_t i)
+{
+    return HWDeviceInfo("", "");
+}
+
+TempRange GetTemp(gpucount_t i)
+{
+    return {};
+}
+
 GpuQueryInterface GetNvidia()
 {
     return {
         GetDriver,
                 GetNumGpus,
+                GetModel,
                 nullptr,
                 nullptr,
-                nullptr,
-                nullptr,
+                GetTemp,
                 nullptr,
                 nullptr,
                 nullptr,

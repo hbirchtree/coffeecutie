@@ -148,11 +148,6 @@ public:
         {
             return GpuView(m_gpu, m_view->m_interface);
         }
-
-        operator CString()
-        {
-            return (*(*this)).model().model;
-        }
     };
 
     using iterator = GpuQueryIterator;
