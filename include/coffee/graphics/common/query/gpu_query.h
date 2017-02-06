@@ -146,11 +146,30 @@ public:
 
         GpuView operator*()
         {
+            return GpuView(m_gpu, m_view->m_interface);
+        }
 
+        operator CString()
+        {
+            return (*(*this)).model().model;
         }
     };
 
     using iterator = GpuQueryIterator;
+
+    GpuQueryView(GpuQueryInterface& interface):
+        m_interface(interface)
+    {
+    }
+
+    iterator begin()
+    {
+        return iterator(*this, 0);
+    }
+    iterator end()
+    {
+        return iterator(*this, m_interface.GetNumGpus());
+    }
 };
 
 }

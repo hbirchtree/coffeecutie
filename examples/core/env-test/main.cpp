@@ -44,9 +44,13 @@ int32 coffee_main(int32, cstring_w*)
     GpuInfo::GpuQueryInterface fun = {};
     if(GpuInfo::LoadDefaultGpuQuery(&fun))
     {
-        cDebug("Driver: {0}", fun.GetDriver());
-        cDebug("Devices: {0}", fun.GetNumGpus());
-        cDebug("Model: {0}", fun.GpuModel(0));
+        cDebug("GPU Driver: {0}", fun.GetDriver());
+        cDebug("GPU Devices: {0}", fun.GetNumGpus());
+        for(GpuInfo::GpuView e : GpuInfo::GpuQueryView(fun))
+        {
+            cDebug("GPU Model: {0}", e.model());
+            cDebug("Temperature: {0}", e.temp().current);
+        }
     }
 
     return 0;
