@@ -51,14 +51,22 @@ if(APPLE)
         "-framework CoreAudio"
         "-framework CoreFoundation"
         "-framework CoreGraphics"
-        "-framework CoreMotion"
         "-framework Foundation"
-        "-framework GameController"
         "-framework OpenAL"
-        "-framework OpenGLES"
         "-framework QuartzCore"
-        "-framework UIKit"
         )
+    if(IOS)
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            "-framework CoreMotion"
+            "-framework GameController"
+            "-framework OpenGLES"
+            "-framework UIKit"
+            )
+    else()
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            "-framework OpenGL"
+            )
+    endif()
 endif()
 
 if(ANDROID)
