@@ -3,6 +3,7 @@
 #include <coffee/sdl2/CSDL2GLRenderer>
 #include <coffee/CGraphics>
 #include <coffee/CImage>
+#include <coffee/graphics/common/query/gpu_query.h>
 
 using namespace Coffee;
 using namespace Display;

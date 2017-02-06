@@ -9,6 +9,8 @@
 #include <coffee/core/platform_data.h>
 #include <coffee/core/coffee_saving.h>
 
+#include <coffee/graphics/common/query/gpu_query.h>
+
 //#define USE_NULL_RENDERER
 
 using namespace Coffee;
@@ -34,10 +36,47 @@ public:
     static void frame_count(uint32 f, c_cptr)
     {
         cDebug("Swaps/s: {0}",f);
+
+        if(m_query)
+        {
+            cDebug("GPU Driver: {0}", fun.GetDriver());
+            cDebug("GPU Devices: {0}", fun.GetNumGpus());
+            for(GpuInfo::GpuView e : GpuInfo::GpuQueryView(fun))
+            {
+                cDebug("GPU Model: {0}", e.model());
+
+                auto temp = e.temp();
+                cDebug("Temperature: {0} // {1}", temp.current, temp.max);
+
+                auto mem = e.mem();
+                cDebug("Memory use: tot={0}, used={1}, free={2}", mem.total, mem.used, mem.free);
+                cDebug("Memory used by this application: {0}", e.memUsage(ProcessProperty::Pid()));
+
+                auto clk = e.clock(GpuInfo::Clock::Graphics);
+                cDebug("Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+                clk = e.clock(GpuInfo::Clock::Memory);
+                cDebug("Memory limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+                clk = e.clock(GpuInfo::Clock::VideoDecode);
+                cDebug("Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+
+                auto bus = e.bus();
+                cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
+
+                auto util = e.usage();
+                cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
+                       util.gpu, util.mem, util.decoder, util.encoder);
+
+                cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
+            }
+        }
+
+        cDebug("Memory: {0}", ProcessProperty::Mem(ProcessProperty::Pid()));
     }
 
 private:
     bool m_debugging = false;
+    static bool m_query;
+    static GpuInfo::GpuQueryInterface fun;
     GLM::PRF::QRY_DBUF* buffer_debug_p;
     CGCamera camera;
 
@@ -52,6 +91,8 @@ public:
     }
 
     virtual void run() {
+        m_query = GpuInfo::LoadDefaultGpuQuery(&fun);
+
         cVerbose("Entering run() function");
 
         Profiler::PushContext("Renderer");
@@ -464,3 +505,7 @@ public:
         }
     }
 };
+
+
+bool CDRenderer::m_query = false;
+GpuInfo::GpuQueryInterface CDRenderer::fun = {};

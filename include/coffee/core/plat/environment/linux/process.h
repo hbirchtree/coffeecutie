@@ -39,13 +39,9 @@ struct LinuxProcessProperty : ProcessPropertyDef
     {
         return getpid();
     }
-    STATICINLINE MemUnit Mem(PID)
-    {
-        rusage rs;
-        if(getrusage(RUSAGE_SELF,&rs)!=0)
-            return 0;
-        return rs.ru_maxrss - rs.ru_isrss;
-    }
+
+    static MemUnit Mem(PID);
+
     STATICINLINE int32 CpuTime(PID)
     {
         return 0;

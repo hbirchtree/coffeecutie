@@ -6,8 +6,8 @@
 
 namespace Coffee{
 
-class SWVersionInfo;
-class HWDeviceInfo;
+struct SWVersionInfo;
+struct HWDeviceInfo;
 
 namespace GpuInfo{
 
@@ -31,7 +31,7 @@ struct ClockRange
 };
 struct UsageMeter
 {
-    uint8 mem, gpu;
+    uint8 mem, gpu, decoder, encoder;
 };
 struct TransferStatus
 {
@@ -39,7 +39,7 @@ struct TransferStatus
 };
 enum class Clock
 {
-    Graphics, Memory,
+    Graphics, Memory, VideoDecode, VideoEncode
 };
 enum class PMode
 {
@@ -96,16 +96,20 @@ public:
     }
 
 #define GPU_GLUE(outtype, fun, interface) outtype fun() const {return m_interface.interface(m_gpu);}
+#define GPU_GLUE_2(outtype, fun, t2, interface) outtype fun(t2 arg2) const \
+    {return m_interface.interface(m_gpu, arg2);}
 
     GPU_GLUE(HWDeviceInfo, model, GpuModel)
     GPU_GLUE(MemStatus, mem, MemoryInfo)
-//    GPU_GLUE(uint64, memUsage, ProcMemoryUse)
     GPU_GLUE(TempRange, temp, GetTemperature)
-//    GPU_GLUE(ClockRange, clock, GetClock)
     GPU_GLUE(PMode, pMode, GetPowerMode)
     GPU_GLUE(UsageMeter, usage, GetUsage)
     GPU_GLUE(TransferStatus, bus, GetPcieTransfer)
 
+    GPU_GLUE_2(uint64, memUsage, proc_t, ProcMemoryUse)
+    GPU_GLUE_2(ClockRange, clock, Clock, GetClock)
+
+#undef GPU_GLUE_2
 #undef GPU_GLUE
 };
 

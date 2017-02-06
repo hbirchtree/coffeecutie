@@ -102,6 +102,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         private/plat/environment/linux/sysinfo.cpp
         private/plat/file/linux/file.cpp
 	private/plat/environment/linux/environment.cpp
+        private/plat/environment/linux/process.cpp
         )
 endif()
 

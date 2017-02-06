@@ -50,7 +50,7 @@ int32 coffee_main(int32, cstring_w*)
     renderer->installEventHandler({EventHandlers::StandardCamera<CDRenderer, CGCamera>,
                                   nullptr, renderer});
 
-    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
+//    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
 
     Profiler::Profile("Object creation");
 

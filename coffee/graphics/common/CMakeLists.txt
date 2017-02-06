@@ -11,7 +11,7 @@ if(NVIDIAML_FOUND)
     include_directories( "${NVIDIAML_INCLUDE_DIR}" )
 
     coffee_add_elibrary ( "coffee-nvidia" SHARED
-        "private/query/nvidia_query.cpp" "${NVIDIAML_LIBRARIES}"
+        "private/query/nvidia_query.cpp" "${NVIDIAML_LIBRARIES};CoffeeCore"
         "${CMAKE_SOURCE_DIR}/include/coffee/graphics/common" )
 endif()
 
