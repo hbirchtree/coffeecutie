@@ -18,8 +18,8 @@ clone_script:
 environment:
   INSTALL_DIR: C:\Build_install
   BUILD_DIR: C:\Build
-  PRELOAD_FILE: x86_64-windows-generic.cmake
-  TOOLCHAIN_FILE: x86_64-windows-win32.toolchain.cmake
+  PRELOAD_FILE: windows-generic.cmake
+  TOOLCHAIN_FILE: windows-win32_windows.toolchain.cmake
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   CMAKE_GENERATOR: Visual Studio 14 2015 Win64
 install:
