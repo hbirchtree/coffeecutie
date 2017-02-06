@@ -1,7 +1,8 @@
 #pragma once
 
 #include <coffee/core/types/tdef/integertypes.h>
-
+#include <coffee/core/types/cdef/infotypes.h>
+#include <iterator>
 
 namespace Coffee{
 
@@ -82,6 +83,75 @@ extern GpuQueryInterface GetDefault();
  * \return True if external library was loaded, false if internal dummy
  */
 extern bool LoadDefaultGpuQuery(GpuQueryInterface* loc);
+
+class GpuView
+{
+    gpucount_t m_gpu;
+    GpuQueryInterface& m_interface;
+public:
+    GpuView(gpucount_t i, GpuQueryInterface& interface):
+        m_gpu(i),
+        m_interface(interface)
+    {
+    }
+
+#define GPU_GLUE(outtype, fun, interface) outtype fun() const {return m_interface.interface(m_gpu);}
+
+    GPU_GLUE(HWDeviceInfo, model, GpuModel)
+    GPU_GLUE(MemStatus, mem, MemoryInfo)
+//    GPU_GLUE(uint64, memUsage, ProcMemoryUse)
+    GPU_GLUE(TempRange, temp, GetTemperature)
+//    GPU_GLUE(ClockRange, clock, GetClock)
+    GPU_GLUE(PMode, pMode, GetPowerMode)
+    GPU_GLUE(UsageMeter, usage, GetUsage)
+    GPU_GLUE(TransferStatus, bus, GetPcieTransfer)
+
+#undef GPU_GLUE
+};
+
+class GpuQueryView
+{
+    GpuQueryInterface& m_interface;
+
+public:
+    class GpuQueryIterator : public std::iterator<std::forward_iterator_tag, GpuView>
+    {
+        friend class GpuQueryView;
+
+        gpucount_t m_gpu;
+        GpuQueryView* m_view;
+
+        GpuQueryIterator(GpuQueryView& view, gpucount_t i):
+            m_gpu(i),
+            m_view(&view)
+        {
+        }
+
+    public:
+
+        bool operator !=(GpuQueryIterator const& other)
+        {
+            return m_gpu != other.m_gpu;
+        }
+        bool operator ==(GpuQueryIterator const& other)
+        {
+            return !(m_gpu != other.m_gpu);
+        }
+
+        GpuQueryIterator& operator++()
+        {
+            m_gpu++;
+            return *this;
+        }
+
+        GpuView operator*()
+        {
+
+        }
+    };
+
+    using iterator = GpuQueryIterator;
+};
 
 }
 }

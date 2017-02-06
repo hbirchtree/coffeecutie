@@ -46,6 +46,7 @@ int32 coffee_main(int32, cstring_w*)
     {
         cDebug("Driver: {0}", fun.GetDriver());
         cDebug("Devices: {0}", fun.GetNumGpus());
+        cDebug("Model: {0}", fun.GpuModel(0));
     }
 
     return 0;
