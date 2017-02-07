@@ -60,7 +60,8 @@ bool LoadDefaultGpuQuery(GpuQueryInterface *loc)
     Vector<cstring> libs = {
         "coffee-nvidia",
         "coffee-amd",
-        "coffee-intel"
+        "coffee-intel",
+        "coffee-libdrm"
     };
     CString error;
     for(cstring mf : libs)

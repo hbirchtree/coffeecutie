@@ -205,11 +205,10 @@ extern "C" GpuQueryFunction* GetGpuQuery();
 
 GpuQueryFunction* GetGpuQuery()
 {
-    if(nvmlInit() == NVML_SUCCESS)
-        return new GpuQueryFunction { Coffee::GpuInfo::GetNvidia };
-    else
+    if(nvmlInit() == NVML_SUCCESS && GetNumGpus())
     {
-//        fprintf(stderr, "NVML could not be initialized\n");
-        return nullptr;
+        return new GpuQueryFunction { Coffee::GpuInfo::GetNvidia };
     }
+    //        fprintf(stderr, "NVML could not be initialized\n");
+    return nullptr;
 }
