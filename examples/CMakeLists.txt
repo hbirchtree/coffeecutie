@@ -8,6 +8,8 @@
 #
 
 add_subdirectory (core/env-test)
+add_subdirectory (core/power-test)
+add_subdirectory (core/gpu-query)
 
 if(COFFEE_BUILD_OPENSSL)
     # ASIO examples, we leave this as core
