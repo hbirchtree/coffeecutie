@@ -26,6 +26,8 @@ thread_local LinkList<CString>* Profiler::context_stack = nullptr;
 bool UnixCmd::UnixTerm::alternate_buffer = false;
 #endif
 
+#ifndef COFFEE_LOWFAT
 Mutex OutputPrinterDef::PrinterLock;
+#endif
 
 }

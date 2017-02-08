@@ -120,8 +120,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(!status)
     {
-        cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
-             CFStrings::Graphics_GLeam_Renderer_FailLoad);
+//        cLog(__FILE__,__LINE__,CFStrings::Graphics_GLeam_Renderer_Name,
+//             CFStrings::Graphics_GLeam_Renderer_FailLoad);
         /*Context or graphics card on fire? Just get out!*/
         if(err)
             *err = CFStrings::Graphics_GLeam_Renderer_FailLoad;

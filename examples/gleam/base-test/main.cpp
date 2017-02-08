@@ -8,6 +8,7 @@
 
 #include <coffee/graphics/apis/CGLeam>
 
+#include <coffee/core/base/types/counter.h>
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics/common/SMesh>
 

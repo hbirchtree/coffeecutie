@@ -5,6 +5,7 @@
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/image/cimage.h>
+#include <coffee/core/base/types/counter.h>
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/coffee_saving.h>

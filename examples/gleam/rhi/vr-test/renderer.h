@@ -4,6 +4,7 @@
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/vr/OpenVR>
+#include <coffee/core/base/types/counter.h>
 
 #include <coffee/core/platform_data.h>
 

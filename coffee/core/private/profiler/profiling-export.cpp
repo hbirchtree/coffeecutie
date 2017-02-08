@@ -16,6 +16,10 @@ namespace Profiling{
 
 void PrintProfilerData()
 {
+#ifdef COFFEE_LOWFAT
+    return;
+#endif
+
 #ifndef NDEBUG
     cBasicPrint("Profiling information:");
 
@@ -50,6 +54,10 @@ void PrintProfilerData()
 
 void ExportProfilerData(CString& target)
 {
+#ifdef COFFEE_LOWFAT
+    return;
+#endif
+
     auto argv = GetInitArgs().argv;
     auto argc = GetInitArgs().argc;
 
@@ -282,6 +290,10 @@ void ExportProfilerData(CString& target)
 
 void ExportStringToFile(const CString &data, cstring outfile)
 {
+#ifndef COFFEE_LOWFAT
+    return;
+#endif
+
 #if defined(COFFEE_ANDROID)
     const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
 #elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
@@ -304,6 +316,9 @@ void ExportStringToFile(const CString &data, cstring outfile)
 
 void ExitRoutine()
 {
+#ifndef COFFEE_LOWFAT
+    return;
+#endif
     /* Verify if we should export profiler data */
     {
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";

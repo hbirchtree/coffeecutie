@@ -53,6 +53,10 @@ endif()
 # This is used inside modules to refer to libraries
 set ( COFFEE_EXT_LIBRARY_DIR ${CMAKE_SOURCE_DIR}/libs )
 
+if(LOWFAT_BUILD)
+    add_definitions ( -DCOFFEE_LOWFAT )
+endif()
+
 include ( BuildOptions )
 include ( PrecompiledHeader )
 

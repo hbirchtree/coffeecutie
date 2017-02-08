@@ -36,26 +36,32 @@ extern CoffeeApplicationData app_data;
 
 FORCEDINLINE void PrintVersionInfo()
 {
+#ifndef COFFEE_LOWFAT
     cOutputPrint("{0}, released by {1}, version {2}",
                 app_data.application_name,
                 app_data.organization_name,
                 app_data.version_code);
+#endif
 }
 
 FORCEDINLINE void PrintBuildInfo()
 {
+#ifndef COFFEE_LOWFAT
     cOutputPrint("Running {0} build {1}",
                 "Coffee",
                 CoffeeBuildString);
+#endif
 }
 
 FORCEDINLINE void PrintArchitectureInfo()
 {
+#ifndef COFFEE_LOWFAT
     cOutputPrint("Compiled for {0} on {1} ({2})",
                  CoffeePlatformString,CoffeeCompilerString,
                  CoffeeArchString);
     cOutputPrint("Executing on {0}",PlatformData::SystemDisplayString());
     cOutputPrint("Device: {0}",SysInfo::DeviceName());
+#endif
 }
 
 FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
@@ -65,6 +71,7 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 
 FORCEDINLINE void PrintLicenseInfo()
 {
+#ifndef COFFEE_LOWFAT
     cVerbose(6,"Number of licenses to print: {0}",CoffeeLicenseCount);
     for(unsigned int i=0;i<CoffeeLicenseCount;i++)
     {
@@ -72,15 +79,18 @@ FORCEDINLINE void PrintLicenseInfo()
         if(i<(CoffeeLicenseCount-1))
             cOutputPrint("\n\n--|END OF LICENSE|--\n\n");
     }
+#endif
 }
 
 void CoffeeInit(bool profiler_init)
 {
+#ifndef COFFEE_LOWFAT
     if(profiler_init)
     {
         Profiler::InitProfiler();
         Profiler::LabelThread("Main");
     }
+#endif
 
     /* Allow core dump by default */
 #ifndef NDEBUG
@@ -101,11 +111,13 @@ void CoffeeInit(bool profiler_init)
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
+#ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
     Coffee::PrintingVerbosityLevel = 7;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
     Coffee::PrintingVerbosityLevel = 1;
+#endif
 #endif
 
 #ifdef COFFEE_SLAP_LOWMEM
@@ -126,6 +138,7 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
     initargs = AppArg(argc,argv);
 
+#ifndef COFFEE_LOWFAT
     {
         ArgumentCollection parser;
         parser.registerArgument(ArgumentCollection::Switch,"help","h",
@@ -184,7 +197,9 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 
     cVerbose(8,"Entering main function");
     Profiler::PushContext("main()");
+#endif
     int32 r = mainfun(argc,argv);
+#ifndef COFFEE_LOWFAT
     Profiler::PopContext();
     Profiler::Profile("Runtime");
 
@@ -197,15 +212,18 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiling::ExitRoutine();
 
     cVerbose(8,"Successfully reached end of main()");
+#endif
 
     return r;
 }
 
 void CoffeeTerminate(bool profiler_destroy)
 {
+#ifndef COFFEE_LOWFAT
     if(profiler_destroy)
         Profiler::DestroyProfiler();
     Cmd::ResetScreen();
+#endif
 }
 
 #if !defined(COFFEE_ANDROID) || !defined(ANDROID_DONT_USE_SDL2)

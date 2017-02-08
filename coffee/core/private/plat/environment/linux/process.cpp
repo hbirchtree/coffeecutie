@@ -32,7 +32,8 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PI
         if(spacer > mem_info.size())
             break;
 
-        uint64 num = cast_string<uint64>(StrUtil::encapsulate(&mem_info[start], C_CAST<uint32>(spacer - start)));
+        uint64 num = cast_string<uint64>(StrUtil::encapsulate(&mem_info[start],
+                                                              C_CAST<uint32>(spacer - start)));
         if(steps == 0)
             usage.vmsize = num;
         else if(steps == 1)
@@ -47,11 +48,7 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PI
         steps++;
     }
 
-    return usage.vmsize + usage.rss;
-//    rusage rs;
-//    if(getrusage(RUSAGE_SELF,&rs)!=0)
-//        return 0;
-//    return rs.ru_maxrss - rs.ru_isrss;
+    return usage.vmsize - usage.vmrss;
 }
 
 

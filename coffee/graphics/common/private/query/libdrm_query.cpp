@@ -1,35 +1,33 @@
 #include <coffee/graphics/common/query/gpu_query.h>
 #include <coffee/core/types/cdef/infotypes.h>
 #include <coffee/core/CFiles>
+#include <coffee/core/CDebug>
 #include <coffee/core/string_casting.h>
 
 #include <libdrm/drm.h>
+#include <xf86drm.h>
 
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 
 extern "C" {
 
-uint64_t get_nouveau_property(int fd);
+//uint64_t get_nouveau_property(int fd);
 
 }
 
 namespace Coffee{
 namespace GpuInfo{
 
-SWVersionInfo GetDriver()
-{
-    drm_version_t ver = {};
-    int fd = open("/dev/dri/card0", 0);
-    ioctl(fd, DRM_IOCTL_VERSION, &ver);
-
-    return SWVersionInfo("DRM", 1, 0);
-}
-
 int device(gpucount_t i)
 {
     CString dev_name = "/dev/dri/card" + cast_pod(i);
     return open(dev_name.c_str(), 0);
+}
+
+SWVersionInfo GetDriver()
+{
+    return SWVersionInfo("DRM", 1, 0);
 }
 
 gpucount_t GetNumGpus()
@@ -48,24 +46,21 @@ HWDeviceInfo GetModel(gpucount_t i)
 {
     int dev = device(i);
 
-    drm_version_t ver = {};
-    ioctl(dev, DRM_IOCTL_VERSION, &ver);
+    drmVersionPtr ver = drmGetVersion(dev);
+    drmDevicePtr dev_ptr;
+    drmGetDevice(dev, &dev_ptr);
 
-    CString name;
-    name.resize(ver.name_len);
-    ver.name = &name[0];
-    CString desc;
-    desc.resize(ver.desc_len);
-    ver.desc = &desc[0];
-    CString date;
-    date.resize(ver.date_len);
-    ver.date = &date[0];
+    CString dev_id =
+            cStringFormat(
+                "{0}:{1}",
+                StrUtil::pointerify(dev_ptr->deviceinfo.pci->vendor_id),
+                StrUtil::pointerify(dev_ptr->deviceinfo.pci->device_id));
 
-    ioctl(dev, DRM_IOCTL_VERSION, &ver);
+    auto h = HWDeviceInfo(ver->desc, dev_id, ver->name);
+    drmFreeVersion(ver);
+    drmFreeDevice(&dev_ptr);
 
-    get_nouveau_property(dev);
-
-    return HWDeviceInfo(desc, "", name + " " + date);
+    return h;
 }
 
 GpuQueryInterface GetDRM()
@@ -91,5 +86,8 @@ extern "C" GpuQueryFunction* GetGpuQuery();
 
 GpuQueryFunction* GetGpuQuery()
 {
-    return new GpuQueryFunction{ Coffee::GpuInfo::GetDRM };
+    if(drmAvailable() && Coffee::GpuInfo::GetNumGpus())
+        return new GpuQueryFunction{ Coffee::GpuInfo::GetDRM };
+
+    return nullptr;
 }

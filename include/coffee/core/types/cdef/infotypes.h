@@ -5,6 +5,7 @@
 #include "../tdef/integertypes.h"
 
 #include "../../plat/memory/string_ops.h"
+#include <coffee/core/coffee_mem_macros.h>
 
 namespace Coffee{
 
@@ -13,6 +14,8 @@ namespace Coffee{
  */
 struct HWDeviceInfo
 {
+    FORCEDINLINE HWDeviceInfo()
+    {}
     FORCEDINLINE HWDeviceInfo(CString model,
                               CString firmware):
         model(model),

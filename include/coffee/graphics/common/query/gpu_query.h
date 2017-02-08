@@ -95,9 +95,10 @@ public:
     {
     }
 
-#define GPU_GLUE(outtype, fun, interface) outtype fun() const {return m_interface.interface(m_gpu);}
+#define GPU_GLUE(outtype, fun, interface) outtype fun() const \
+    { if(m_interface.interface) return m_interface.interface(m_gpu); return {};}
 #define GPU_GLUE_2(outtype, fun, t2, interface) outtype fun(t2 arg2) const \
-    {return m_interface.interface(m_gpu, arg2);}
+    {if(m_interface.interface) return m_interface.interface(m_gpu, arg2); return {};}
 
     GPU_GLUE(HWDeviceInfo, model, GpuModel)
     GPU_GLUE(MemStatus, mem, MemoryInfo)

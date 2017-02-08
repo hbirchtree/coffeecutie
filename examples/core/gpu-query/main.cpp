@@ -15,8 +15,6 @@ int32 coffee_main(int32, cstring_w*)
         {
             cDebug("GPU Model: {0}", e.model());
 
-            continue;
-
             auto temp = e.temp();
             cDebug("Temperature: {0} // {1}", temp.current, temp.max);
 
