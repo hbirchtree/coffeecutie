@@ -14,6 +14,8 @@ extern uint8 PrintingVerbosityLevel;
 
 namespace DebugFun{
 
+extern cstring severity_string(Severity sev);
+
 struct DebugPrinterImpl : DebugPrinterDef
 {
     using CmdColor = ColorMap::CmdColor;
@@ -21,41 +23,12 @@ struct DebugPrinterImpl : DebugPrinterDef
     static const constexpr cstring print_fmt = "{0}\n";
 
     template<typename... Args>
-    STATICINLINE CString FormatPrintString(Severity sev, uint32 stackoffset,
-                                     cstring fmt, Args... args)
+    STATICINLINE CString FormatPrintString(Severity sev, uint32, cstring fmt,Args... args)
     {
-        cstring const severity_info = "INFO";
-        cstring const severity_debg = "DEBG";
-        cstring const severity_warn = "WARN";
-        cstring const severity_ftal = "FTAL";
-        cstring const severity_verb = "VERB";
-
-        cstring severity_str = nullptr;
-
-        switch(sev)
-        {
-        case Severity::Information:
-            severity_str = severity_info;
-            break;
-        case Severity::Verbose:
-            severity_str = severity_verb;
-            break;
-        case Severity::Debug:
-        case Severity::Low:
-            severity_str = severity_debg;
-            break;
-        case Severity::Medium:
-            severity_str = severity_warn;
-            break;
-        case Severity::Critical:
-        case Severity::Fatal:
-        case Severity::High:
-            severity_str = severity_ftal;
-            break;
-        }
+        cstring severity_str = severity_string(sev);
 
         CString cclock = Time::ClockString();
-#if !defined(COFFEE_ANDROID) && !defined(__EMSCRIPTEN__)
+    #if !defined(COFFEE_ANDROID) && !defined(__EMSCRIPTEN__)
         CString ms_time = Convert::uintltostring(Time::Microsecond()/1000);
         CString clock = cStringFormat("{0}.{1}",
                                       cclock,
@@ -63,10 +36,10 @@ struct DebugPrinterImpl : DebugPrinterDef
                                       );
         CString prefix = cStringFormat("{0}:", clock.c_str());
         prefix.push_back(severity_str[0]);
-#else
+    #else
         CString prefix;
         prefix.push_back(severity_str[0]);
-#endif
+    #endif
 
         ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));
 

@@ -3,6 +3,8 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CDebug>
 
+#include <stdarg.h>
+
 #include <coffee/graphics/common/query/gpu_query.h>
 
 using namespace Coffee;
@@ -40,6 +42,8 @@ int32 coffee_main(int32, cstring_w*)
         Profiler::Profile("Create directory recursively");
     }
     Profiler::PopContext();
+
+
 
     return 0;
 }

@@ -2,19 +2,13 @@
 #define COFFEE_CORE_DEBUG_PRINT_H
 
 #include "extensionresolvers.h"
+#include "information_extensions.h"
+#include "vector_print_extensions.h"
 
 namespace Coffee{
 namespace DebugFun{
 
 /* Core string resolution */
-
-template<typename T>
-FORCEDINLINE CString cStringReplace(
-        CString const& fmt, size_t const& index,
-        const T& arg)
-{
-    return extArgReplace(fmt,index,conversion::to_string(arg));
-}
 
 template<typename T>
 FORCEDINLINE CString cStringResolve(CString const& fmt, size_t index,

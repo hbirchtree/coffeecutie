@@ -4,14 +4,13 @@
 #include "../../plat/memory/stlstring_ops.h"
 #include "../../coffee_mem_macros.h"
 #include "../../plat/plat_quirks_toggling.h"
-#include "../textprocessing/cregex.h"
-#include "../../plat/plat_memory.h"
-#include "../../types/composite_types.h"
-#include "../../types/vector_types.h"
+#include "../../plat/memory/stlstring_ops.h"
 
 namespace Coffee{
 namespace DebugFun{
 namespace conversion{
+
+using namespace Mem;
 
 inline CString to_string(const char* const& v)
 {
@@ -24,7 +23,7 @@ inline CString to_string(const CString& v)
 template<typename T>
 inline CString to_string(const T* const& v)
 {
-    return "0x"+StrUtil::hexify((uintptr)v,true);
+    return "0x"+StrUtil::hexify(C_FCAST<uintptr>(v),true);
 }
 
 inline CString to_string(const uint8& v)
@@ -69,12 +68,6 @@ inline CString to_string(const bigscalar& v)
     CString out = Convert::scalartostring(v);
     return StrUtil::zerortrim(out);
 }
-//#ifdef COFFEE_ARCH_LLP64
-//inline CString to_string(const long int& v)
-//{
-//    return Convert::inttostring(v);
-//}
-//#endif
 
 template<typename T>
 inline CString to_string(const T& v)
@@ -91,20 +84,13 @@ inline CString cStringResolve(CString const& fmt, size_t)
     return fmt;
 }
 
-inline CString extArgReplace(CString const& fmt,
+extern CString extArgReplace(CString const& fmt,
                                    size_t const& index,
-                                   CString const& replace)
-{
-    CString subfmt = "{" + Convert::uinttostring(index) + "}";
-    return CStrReplace(fmt,subfmt,replace);
-}
+                                   CString const& replace);
 
-inline CString extArgReplacePhrase(const CString& fmt,
+extern CString extArgReplacePhrase(const CString& fmt,
                                          const CString& phrase,
-                                         const CString& replace)
-{
-    return CStrReplace(fmt,phrase,replace);
-}
+                                         const CString& replace);
 
 template<typename T>
 inline CString cStringReplace(
@@ -114,49 +100,39 @@ inline CString cStringReplace(
     return extArgReplace(fmt,index,conversion::to_string(ptr));
 }
 
-inline CString cStringReplace(
+extern CString cStringReplace(
         CString const& fmt, size_t const& index,
-        cstring arg)
-{
-    return extArgReplace(fmt,index,(arg) ? arg : "0x0");
-}
+        cstring arg);
 
-inline CString cStringReplace(
+extern CString cStringReplace(
         CString const& fmt, size_t const& index,
-        char* const arg)
-{
-    return extArgReplace(fmt,index,(arg) ? arg : "0x0");
-}
+        char* const arg);
 
-inline CString cStringReplace(
+extern CString cStringReplace(
         CString const& fmt, size_t const& index,
-        bool const& arg)
-{
-    return extArgReplace(fmt,index,(arg) ? "true" : "false");
-}
+        bool const& arg);
 
-inline CString cStringReplace(
+extern CString cStringReplace(
         CString const& fmt, size_t const& index,
-        const CString& arg)
-{
-    return extArgReplace(fmt,index,arg);
-}
+        const CString& arg);
 
 extern CString cStringReplace(
         CString const& fmt, size_t const& index,
         bigscalar const& arg);
 
-inline CString cStringReplace(
+extern CString cStringReplace(
         CString const& fmt, size_t const& index,
-        scalar const& arg)
+        scalar const& arg);
+
+template<typename T>
+FORCEDINLINE CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        const T& arg)
 {
-    return cStringReplace(fmt,index,(bigscalar)arg);
+    return extArgReplace(fmt,index,conversion::to_string(arg));
 }
 
 }
 }
 
 #endif
-
-#include "information_extensions.h"
-#include "vector_print_extensions.h"

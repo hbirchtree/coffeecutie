@@ -282,7 +282,6 @@ struct _cbasic_boundingbox
     T y2()const{return y+h;}
     T z1()const{return z;}
     T z2()const{return z+d;}
-
 };
 
 /*!

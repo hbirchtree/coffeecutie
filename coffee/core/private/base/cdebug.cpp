@@ -1,5 +1,7 @@
 #include <coffee/core/base/debug/debugprinter.h>
 
+#include <coffee/core/CRegex>
+
 namespace Coffee{
 
 uint8 PrintingVerbosityLevel = 0;
