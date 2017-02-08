@@ -205,7 +205,7 @@ extern "C" GpuQueryFunction* GetGpuQuery();
 
 GpuQueryFunction* GetGpuQuery()
 {
-    if(nvmlInit() == NVML_SUCCESS && GetNumGpus())
+    if(nvmlInit() == NVML_SUCCESS && Coffee::GpuInfo::GetNumGpus())
     {
         return new GpuQueryFunction { Coffee::GpuInfo::GetNvidia };
     }
