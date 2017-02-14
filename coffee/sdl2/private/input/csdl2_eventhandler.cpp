@@ -195,7 +195,7 @@ CIControllerState SDL2EventHandler::getControllerState(uint16 index)
     state.axes.e.l_y = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_LEFTY);
 
     state.axes.e.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTX);
-    state.axes.e.r_x = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTY);
+    state.axes.e.r_y = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_RIGHTY);
 
     state.axes.e.t_l = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERLEFT);
     state.axes.e.t_r = SDL_GameControllerGetAxis(gc,SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
