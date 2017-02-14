@@ -3,7 +3,7 @@
 #include "../../platform_detect.h"
 
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
 
 #include "../stacktrace_def.h"
 

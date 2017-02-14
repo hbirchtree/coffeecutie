@@ -24,10 +24,12 @@ FORCEDINLINE int StrCmpI(cstring s1, cstring s2)
 
 FORCEDINLINE bool StrICmp(cstring s1, cstring s2)
 {
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NACL)
     return strcasecmp(s1, s2)==0;
 #elif defined(COFFEE_WINDOWS)
     return stricmp(s1, s2);
+#else
+    return false;
 #endif
 }
 
@@ -106,9 +108,9 @@ FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
     FORCEDINLINE type name(cstring n,int base = 10, bool* ok = nullptr) \
 { \
     if(!ok) \
-    return ::converter(n,nullptr,base); \
+        return C_CAST<type>(::converter(n,nullptr,base)); \
     char* t = nullptr; \
-    type v = ::converter(n,&t,base); \
+    type v = C_CAST<type>(::converter(n,&t,base)); \
     *ok = t>n; \
     return v; \
 }
@@ -117,9 +119,9 @@ FORCEDINLINE cwstring ChrFindAny(cwstring s1, cwstring s2)
     FORCEDINLINE type name(cstring n, bool* ok = nullptr) \
 { \
     if(!ok) \
-    return ::converter(n,nullptr); \
+        return C_CAST<type>(::converter(n,nullptr)); \
     char* t = nullptr; \
-    type v = ::converter(n,&t); \
+    type v = C_CAST<type>(::converter(n,&t)); \
     *ok = t>n; \
     return v; \
 }

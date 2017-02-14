@@ -100,7 +100,7 @@ if(ANDROID)
 endif()
 
 # Linux-specific code
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/linux/sysinfo.cpp
         private/plat/file/linux/file.cpp
@@ -141,7 +141,7 @@ if(RASPBERRY)
 endif()
 
 # POSIX code
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID)
+if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
     list ( APPEND CoffeeCore_SRCS
         private/plat/environment/unix/environment.cpp
         private/plat/file/unix/file.cpp

@@ -1,6 +1,7 @@
 #pragma once
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+
 #include "../process_def.h"
 
 namespace Coffee{

@@ -1,6 +1,8 @@
 #ifndef CMATH_FUN
 #define CMATH_FUN
 
+#include <coffee/core/plat/plat_primary_identify.h>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <random>
@@ -13,6 +15,14 @@ namespace Coffee{
  */
 namespace CMath{
 using namespace std;
+
+#if defined(COFFEE_NACL)
+using ::sin;
+using ::cos;
+using ::tan;
+using ::sqrt;
+using ::pow;
+#endif
 
 #ifdef COFFEE_WINDOWS
 template<typename T>

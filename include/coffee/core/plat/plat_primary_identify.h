@@ -1,5 +1,5 @@
 /* Linux macro, also defines window system target */
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__NATIVE_CLIENT__)
 #undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "Linux"
 #define COFFEE_LINUX
@@ -62,6 +62,11 @@
 #define C_SYSTEM_STRING "Emscripten/asm.js"
 #endif
 #define COFFEE_EMSCRIPTEN
+#endif
+
+#if defined(__NATIVE_CLIENT__)
+#define C_SYSTEM_STRING "Native Client"
+#define COFFEE_NACL
 #endif
 
 /* Generic UNIX, mostly for POSIX libraries */

@@ -7,7 +7,11 @@
 
 #include "../timing_def.h"
 #include <sys/time.h>
+#if defined(COFFEE_NACL)
+#include <memory>
+#else
 #include <memory.h>
+#endif
 
 namespace Coffee{
 namespace CFunctional{

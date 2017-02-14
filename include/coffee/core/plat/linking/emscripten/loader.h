@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
 
 #include "../libraries.h"
 

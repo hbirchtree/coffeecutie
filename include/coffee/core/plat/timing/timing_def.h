@@ -9,7 +9,7 @@
 #include <ctime>
 #include <time.h>
 
-#if defined(COFFEE_WINDOWS)
+#if defined(COFFEE_WINDOWS) || defined(COFFEE_NACL)
 #include <iomanip>
 #include <sstream>
 #endif
@@ -42,7 +42,7 @@ struct PosixIshTimeDef
 	{
 		constexpr cstring fmt = "%Y-%m-%dT%H:%M:%S";
 		struct tm time_s = {};
-#if !defined(COFFEE_WINDOWS)
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL)
 		if (strptime(src, fmt, &time_s))
 #else
 		std::istringstream ss(src);

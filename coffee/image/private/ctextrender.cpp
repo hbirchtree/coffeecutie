@@ -1,6 +1,8 @@
 #include <coffee/image/ctextrender.h>
 
+#if !defined(COFFEE_NACL)
 #include <coffee/core/plat/plat_memory.h>
+
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb/stb_truetype.h>
@@ -91,3 +93,4 @@ bool StbFontRenderer::RenderText(FontData *d, const FontProperties &p, cstring t
 
 }
 }
+#endif

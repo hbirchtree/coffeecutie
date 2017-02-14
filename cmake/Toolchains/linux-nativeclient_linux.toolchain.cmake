@@ -6,11 +6,19 @@
 # Note: only works on OSX
 #
 
+set(NACL TRUE)
+
 set(NACL_PATH $ENV{NACL_ROOT} CACHE STRING "Native Client SDK Root Path")
 
 set(NACL_TAG pnacl)
 
 set(NACL_HOST linux_pnacl )
+
+if(CMAKE_TOOLCHAIN_FILE)
+    # Stub the warning
+endif()
+
+add_definitions(-D__NATIVE_CLIENT__)
 
 # 
 #
@@ -31,14 +39,17 @@ set(CMAKE_CXX_COMPILER ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-clang
 
 set(CMAKE_C_FLAGS 
 #	"--prefix=${NACL_PATH}/cross/armv7a --exec_prefix=${NACL_PATH}/cross/armv7a #--with-mpfr=${NACL_PATH}/staging/i686-linux/usr"
-	CACHE STRING "OpenEmbedded - GCC/C flags" HORSE
+        CACHE STRING "OpenEmbedded - GCC/C flags" FORCE
 )
 
 set(CMAKE_CXX_FLAGS 
-	""
-	CACHE STRING "OpenEmbedded - GCC/C++ flags" HORSE
+        "-std=gnu++14"
+        CACHE STRING "OpenEmbedded - GCC/C++ flags" FORCE
 )
 
+include_directories (
+    "${NACL_PATH}/include"
+    )
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)

@@ -6,6 +6,7 @@
 #include <coffee/core/types/cdef/memtypes.h>
 
 namespace Coffee{
+#if !defined(COFFEE_NACL)
 namespace TrueType{
 
 struct FontRendererDef
@@ -48,6 +49,7 @@ struct StbFontRenderer : TrueType::FontRendererDef
 }
 
 using FontRenderer = StbTruetype::StbFontRenderer;
+#endif
 
 }
 

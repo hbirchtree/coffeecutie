@@ -48,7 +48,7 @@ struct CProcess
 
     STATICINLINE int Execute(Command const& cmd_)
     {
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__)
+#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
         return -1;
 #elif defined(COFFEE_UNIXPLAT)
         Command cmd = cmd_;

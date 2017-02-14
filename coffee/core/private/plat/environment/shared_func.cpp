@@ -34,7 +34,7 @@ ThrdCnt SysInfoDef::SmartParallelism(uint64 worksize, uint64 weight)
     if(worksize*weight <= ThreadCount())
     {
         return 1;
-    }else if(worksize*weight <= CMath::pow<uint64>(Parallelism(),3))
+    }else if(worksize*weight <= CMath::pow(Parallelism(),3))
     {
         return ThreadCount();
     }else

@@ -10,12 +10,12 @@ if(NOT WIN32 AND NOT ANDROID)
     list ( APPEND CORE_EXTRA_LIBRARIES pthread )
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID)
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     # Used for thread details
     list ( APPEND CORE_EXTRA_LIBRARIES rt )
 endif()
 
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS)
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL)
     # Necessary for Linux and possibly OS X (latter is untested)
     list ( APPEND CORE_EXTRA_LIBRARIES dl m )
 endif()

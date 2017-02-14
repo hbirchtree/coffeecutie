@@ -1,6 +1,7 @@
 #pragma once
 
-#ifndef COFFEE_WINDOWS
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_NACL)
+#define USE_ARPA
 #include <arpa/inet.h>
 #endif
 
@@ -13,7 +14,7 @@ namespace Mem{
 /* Endian conversion */
 FORCEDINLINE uint32 ForeignEndian32(uint32 i)
 {
-#ifndef COFFEE_WINDOWS
+#ifdef USE_ARPA
     return htonl(i);
 #else
     return  ((i >> 24) & 0x000000FF) |
@@ -25,7 +26,7 @@ FORCEDINLINE uint32 ForeignEndian32(uint32 i)
 
 FORCEDINLINE uint16 ForeignEndian16(uint16 i)
 {
-#ifndef COFFEE_WINDOWS
+#ifdef USE_ARPA
     return htons(i);
 #else
     /* TODO: Fix this */
@@ -35,7 +36,7 @@ FORCEDINLINE uint16 ForeignEndian16(uint16 i)
 
 FORCEDINLINE uint32 NativeEndian32(uint32 i)
 {
-#ifndef COFFEE_WINDOWS
+#ifdef USE_ARPA
     return ntohl(i);
 #else
     /* TODO: Fix this */
@@ -45,7 +46,7 @@ FORCEDINLINE uint32 NativeEndian32(uint32 i)
 
 FORCEDINLINE uint16 NativeEndian16(uint16 i)
 {
-#ifndef COFFEE_WINDOWS
+#ifdef USE_ARPA
     return ntohs(i);
 #else
     /* TODO: Fix this */
@@ -55,3 +56,5 @@ FORCEDINLINE uint16 NativeEndian16(uint16 i)
 
 }
 }
+
+#undef USE_ARPA
