@@ -97,6 +97,15 @@ int32 coffee_main(int32, cstring_w*)
     Sprites::Sprite trigger_sprite;
     Sprites::Sprite trigger_back_sprite;
 
+    Sprites::Sprite menu_sprite;
+    Sprites::Sprite menu_p_sprite;
+
+    Sprites::Sprite shoulderl_sprite;
+    Sprites::Sprite shoulderl_p_sprite;
+
+    Sprites::Sprite shoulderr_sprite;
+    Sprites::Sprite shoulderr_p_sprite;
+
     Sprites::Sprite button_a_sprite;
     Sprites::Sprite button_x_sprite;
     Sprites::Sprite button_b_sprite;
@@ -113,6 +122,12 @@ int32 coffee_main(int32, cstring_w*)
     rend.createSprite(controller_atlas,{128,256,96,32},&trigger_sprite);
     rend.createSprite(controller_atlas,{0,256,96,256},&trigger_back_sprite);
 
+    rend.createSprite(controller_atlas,{640,256,128,64},&shoulderl_sprite);
+    rend.createSprite(controller_atlas,{768,256,128,64},&shoulderl_p_sprite);
+
+    rend.createSprite(controller_atlas,{384,256,128,64},&shoulderr_sprite);
+    rend.createSprite(controller_atlas,{512,256,128,64},&shoulderr_p_sprite);
+
     rend.createSprite(controller_atlas,{384,0,128,128},&button_a_sprite);
     rend.createSprite(controller_atlas,{384,128,128,128},&button_x_sprite);
     rend.createSprite(controller_atlas,{640,0,128,128},&button_b_sprite);
@@ -127,6 +142,18 @@ int32 coffee_main(int32, cstring_w*)
     winhost.installEventHandler({EventHandlers::EscapeCloseWindow<BasicWindow>,nullptr,&winhost});
     winhost.installEventHandler({EventHandlers::WindowManagerCloseWindow<BasicWindow>,nullptr,&winhost});
 
+    auto draw_axis = [&](
+            Sprites::Sprite const& unpressed, Sprites::Sprite const& pressed,
+            Sprites::Sprite const& background,
+            bool button, Veci2 const& base, Veci2 const& size, Veci2 const& pos)
+    {
+        Sprites::Sprite const* sp = &unpressed;
+        if(button)
+            sp = &pressed;
+        rend.drawSprite(inst, {0,0}, {1,1}, background);
+        rend.drawSprite(inst, {0,0}, {1,1}, *sp);
+    };
+
     while(!winhost.closeFlag())
     {
         rend.setClearColor(inst,CRGBA(0,0,0,255));
@@ -137,12 +164,12 @@ int32 coffee_main(int32, cstring_w*)
             rend.drawSprite(inst,{0,256+128},{1,1},analog_back_sprite);
             rend.drawSprite(inst,{scalar(scalar(ctl.axes.e.l_x)/Int16_Max*128.+64.),
                                   scalar(scalar(ctl.axes.e.l_y)/Int16_Max*128.+64.+256.+128.)},
-                                 {1,1},analog_sprite);
+                                 {1,1},button_x_sprite);
 
             rend.drawSprite(inst,{512,256+128.},{1,1},analog_back_sprite);
             rend.drawSprite(inst,{scalar(scalar(ctl.axes.e.r_x)/Int16_Max*128.+64.+512.),
                                   scalar(scalar(ctl.axes.e.r_y)/Int16_Max*128.+64.+256.+128.)},
-                                 {1,1},analog_sprite);
+                                 {1,1},button_x_sprite);
 
             rend.drawSprite(inst,{0,0},{1,1},trigger_back_sprite);
             rend.drawSprite(inst,{0.,
@@ -170,6 +197,16 @@ int32 coffee_main(int32, cstring_w*)
                 rend.drawSprite(inst,{320,0+96+16},{1,1},button_y_sprite);
             else
                 rend.drawSprite(inst,{320,0+96+16},{1,1},button_yp_sprite);
+
+            if(!ctl.buttons.e.b_l)
+                rend.drawSprite(inst,{96,0},{1,1},shoulderl_sprite);
+            else
+                rend.drawSprite(inst,{96,0},{1,1},shoulderl_p_sprite);
+
+            if(!ctl.buttons.e.b_r)
+                rend.drawSprite(inst,{512,0},{1,1},shoulderr_sprite);
+            else
+                rend.drawSprite(inst,{512,0},{1,1},shoulderr_p_sprite);
 
             if(ctl.buttons.e.guide)
                 cDebug("GUIDE ME");
