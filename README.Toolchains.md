@@ -29,5 +29,5 @@ Some features are special cases and quite ugly. Beware.
 
 | #    | Notes                                                        |
 |:-----|:-------------------------------------------------------------|
-| 1    | Replaces thread_local with __thread, only supports POD types |
-| 2    | Removes usage of thread_local, __thread not supported        |
+| 1    | Replaces `thread_local` with `__thread`, only supports POD types |
+| 2    | Removes usage of `thread_local`, `__thread` not supported        |
