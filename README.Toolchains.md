@@ -19,16 +19,10 @@ Some features are special cases and quite ugly. Beware.
 |Windows (Win32)   | MSVC++              | 14.0             |                  |
 |Windows (UWP)     | MSVC++              | 14.0             |                  |
 |                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
 
 ## Platform workarounds
 
-| #    | Notes                                                        |
-|:-----|:-------------------------------------------------------------|
+| #    | Notes                                                            |
+|:-----|:-----------------------------------------------------------------|
 | 1    | Replaces `thread_local` with `__thread`, only supports POD types |
 | 2    | Removes usage of `thread_local`, `__thread` not supported        |
