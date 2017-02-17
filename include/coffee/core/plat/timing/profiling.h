@@ -98,7 +98,7 @@ struct SimpleProfilerImpl
     {
 #if defined(COFFEE_APPLE)
         pthread_setname_np(name);
-#elif defined(COFFEE_UNIXPLAT) && !defined(__EMSCRIPTEN__) && !defined(COFFEE_NACL)
+#elif defined(COFFEE_UNIXPLAT) && !defined(__EMSCRIPTEN__) && !defined(COFFEE_NACL) && !defined(COFFEE_MAEMO)
         pthread_setname_np(pthread_self(), name);
 #endif
 
