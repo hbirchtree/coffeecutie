@@ -5,12 +5,12 @@ Some features are special cases and quite ugly. Beware.
 
 ## Compiler versions and workarounds
 
-| Platform         | Compiler name       | Compiler version |Notes             |
+| Platform         | Compiler name       | Compiler version |Workarounds       |
 |:-----------------|--------------------:|:-----------------|:-----------------|
-|Apple iOS         | Clang               | 3.4.0+           |Workaround #2     |
-|Apple OS X        | Clang               | 3.4.0+           |Workaround #1     |
+|Apple iOS         | Clang               | 3.4.0+           |#2                |
+|Apple OS X        | Clang               | 3.4.0+           |#1                |
 |Emscripten        | emcc                | 1.37.0+          |                  |
-|Maemo 5           | GCC                 | 6.0.1            |                  |
+|Maemo 5           | GCC                 | 6.0.1            |#3                |
 |Native Client     | Clang               | 3.7.0+           |                  |
 |Raspberry Pi      | GCC                 | 4.9.3            |                  |
 |SteamOS           | GCC                 | 4.8.1            |                  |
@@ -28,7 +28,8 @@ Some features are special cases and quite ugly. Beware.
 
 ## Platform workarounds
 
-| #    | Notes                                                        |
-|:-----|:-------------------------------------------------------------|
-| 1    | Replaces `thread_local` with `__thread`, only supports POD types |
-| 2    | Removes usage of `thread_local`, `__thread` not supported        |
+| #    | Notes                                                               |
+|:-----|:--------------------------------------------------------------------|
+| 1    | Replaces `thread_local` with `__thread`, only supports POD types    |
+| 2    | Removes usage of `thread_local`, `__thread` not supported           |
+| 3    | std::future is not implemented, replaced by single-thread solution. |
