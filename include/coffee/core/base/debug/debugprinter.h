@@ -28,7 +28,7 @@ struct DebugPrinterImpl : DebugPrinterDef
         cstring severity_str = severity_string(sev);
 
         CString cclock = Time::ClockString();
-    #if !defined(COFFEE_ANDROID) && !defined(__EMSCRIPTEN__)
+    #if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
         CString ms_time = Convert::uintltostring(Time::Microsecond()/1000);
         CString clock = cStringFormat("{0}.{1}",
                                       cclock,

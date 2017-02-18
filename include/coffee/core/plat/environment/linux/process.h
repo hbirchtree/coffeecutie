@@ -10,6 +10,11 @@
 #include <sys/resource.h>
 #include <unistd.h>
 
+#if defined(COFFEE_NO_RUSAGE_THREAD)
+#undef RUSAGE_THREAD
+#define RUSAGE_THREAD RUSAGE_SELF
+#endif
+
 namespace Coffee{
 namespace Environment{
 namespace Linux{

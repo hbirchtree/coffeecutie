@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_STUBBED_ENVIRONMENT)
 
 #include "../environment_details.h"
 

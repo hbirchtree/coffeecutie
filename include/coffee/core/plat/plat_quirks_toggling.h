@@ -56,8 +56,51 @@
 #define ASIO_USE_SSL
 #endif
 
+/* thread_local workarounds */
 #if defined(COFFEE_APPLE_MOBILE)
 #define thread_local
 #elif defined(COFFEE_APPLE)
 #define thread_local __thread
+#endif
+
+/* std::future workarounds */
+#if defined(COFFEE_MAEMO)
+#define COFFEE_NO_FUTURES
+#endif
+
+#if defined(COFFEE_MAEMO)
+#define COFFEE_NO_HUGETLB
+#endif
+
+#if defined(COFFEE_MAEMO)
+#define COFFEE_NO_RUSAGE_THREAD
+#endif
+
+#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
+    || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
+#define COFFEE_NO_EXECVPE
+#endif
+
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
+#define COFFEE_NO_PTHREAD_SETNAME_NP
+#endif
+
+#if defined(__EMSCRIPTEN__)
+#define COFFEE_NO_TLS
+#endif
+
+#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__)
+#define COFFEE_PLATFORM_OUTPUT_FORMAT
+#endif
+
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#define COFFEE_STUBBED_ENVIRONMENT
+#define COFFEE_STUBBED_PROCESS
+#define COFFEE_STUBBED_STACKTRACE
+#define COFFEE_STUBBED_CFILE
+#define COFFEE_STUBBED_DYNLOADER
+#endif
+
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_ANDROID)
+#define COFFEE_NO_SYSTEM_CMD
 #endif
