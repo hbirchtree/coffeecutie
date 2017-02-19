@@ -5,10 +5,12 @@ set ( MAEMO TRUE )
 
 set ( MAEMO_SDK "${MAEMO_SDK}" CACHE PATH "" )
 
-set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
-set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
-set ( CMAKE_AR "ar" )
-set ( CMAKE_LINKER "${TOOLCHAIN_PREFIX}-gcc" )
+set ( CMAKE_C_COMPILER "/usr/bin/${TOOLCHAIN_PREFIX}-gcc" )
+set ( CMAKE_CXX_COMPILER "/usr/bin/${TOOLCHAIN_PREFIX}-g++" )
+set ( CMAKE_AR "/usr/bin/ar" CACHE FILEPATH "" )
+set ( CMAKE_LINKER "/usr/bin/${TOOLCHAIN_PREFIX}-gcc" CACHE FILEPATH "" )
+
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=cortex-a8" )
 
 set ( CMAKE_FIND_ROOT_PATH "${MAEMO_SDK}" )
 set ( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )

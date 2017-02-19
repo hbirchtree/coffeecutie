@@ -1,6 +1,7 @@
 #include <coffee/core/plat/environment/linux/sysinfo.h>
 #include <coffee/core/plat/file/linux/file.h>
 #include <coffee/core/plat/environment/linux/environment.h>
+#include <coffee/core/string_casting.h>
 
 namespace Coffee{
 namespace Environment{
@@ -136,7 +137,7 @@ uint32 LinuxSysInfo::CpuCount()
         result.insert(0,res,end-res);
         StrUtil::trim(result);
 
-        uint32 c = Convert::strtoint(result.c_str())+1;
+        uint32 c = cast_string<uint32>(result)+1;
         count = CMath::max(count,c);
 
         src = end;
@@ -164,7 +165,7 @@ uint32 LinuxSysInfo::CoreCount()
     result.insert(0,res,end-res);
     StrUtil::trim(result);
 
-    uint32 cores = Convert::strtoll(result.c_str());
+    uint32 cores = cast_string<uint32>(result);
 
     return cores ? cores : 1;
 }
@@ -235,12 +236,16 @@ bigscalar LinuxSysInfo::ProcessorFrequency()
     result.insert(0,res,end-res);
     StrUtil::trim(result);
 
-    return CMath::floor(Convert::strtoscalar(result.c_str()))/1000;
+    return CMath::floor(cast_string<bigscalar>(result))/1000;
 }
 
 bool LinuxSysInfo::HasFPU()
 {
+#if defined(COFFEE_MAEMO)
+    const cstring query = "vfpv3";
+#else
     const cstring query = "fpu";
+#endif
 
     CPUInfoString();
 
@@ -301,7 +306,7 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
     szptr e = result.find(" ");
     result.erase(e,result.size()-e);
 
-    return Convert::strtoll(result.c_str());
+    return cast_string<uint64>(result);
 }
 
 bool LinuxSysInfo::HasHyperThreading()
@@ -370,7 +375,7 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
                 if(FileFun::Exists(tmp2.c_str()))
                 {
                     CString temp = FileFun::sys_read(tmp2.c_str());
-                    out.current = Convert::strtofscalar(temp.c_str()) / 1000;
+                    out.current = cast_string<scalar>(temp) / 1000;
                     break;
                 }
             }
