@@ -4,10 +4,10 @@
 #include <coffee/core/plat/memory/string_ops.h>
 
 #define CAST_TO_FUNCTION(type, converter) \
-    template<> type cast_string(CString const& str) { return Mem::Convert::converter(str.c_str()); }
+    template<> inline type cast_string(CString const& str) { return Mem::Convert::converter(str.c_str()); }
 
 #define CAST_FROM_FUNCTION(type, converter) \
-    template<> CString cast_pod(type src) {return Mem::Convert::converter(src); }
+    template<> inline CString cast_pod(type src) {return Mem::Convert::converter(src); }
 
 #define CAST_BOTH_FUNCTION(type, converter1, converter2) \
     CAST_TO_FUNCTION(type, converter1) \

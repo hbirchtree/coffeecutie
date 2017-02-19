@@ -13,11 +13,13 @@ namespace CStbAudio{
 bool LoadVorbis(CAudio::AudioSample *smp, CResources::Resource *src)
 {
     /* C is not so good with uint64 used by our resource format*/
-    int data_size = src->size;
+    int32 data_size = C_CAST<int32>(src->size);
 
-    smp->samples = stb_vorbis_decode_memory(
-                (ubyte_t*)src->data,data_size,
-                &smp->fmt.channels,&smp->fmt.samplerate,&smp->data);
+    smp->samples = C_CAST<uint32>(stb_vorbis_decode_memory(
+                C_CAST<ubyte_t*>(src->data),data_size,
+                reinterpret_cast<int*>(&smp->fmt.channels),
+                reinterpret_cast<int*>(&smp->fmt.samplerate),
+                &smp->data));
     if(smp->samples<=0)
         return false;
     smp->fmt.bitdepth = smp->samples/smp->fmt.samplerate*smp->fmt.channels;
@@ -40,7 +42,7 @@ bigscalar GetSampleLength(AudioSample const& smp)
 
 szptr GetSampleDataSize(const AudioFormat &fmt, szptr samples)
 {
-    return fmt.samplerate*fmt.channels*samples*CMath::max(1,fmt.bitdepth/8);
+    return fmt.samplerate*fmt.channels*samples*CMath::max(C_CAST<uint32>(1),fmt.bitdepth/8);
 }
 
 }

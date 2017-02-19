@@ -366,14 +366,14 @@ void source_dequeue_buffers(
 void source_seti(
         CALSource *source, CSourceProperty const& prop, const int32 *val)
 {
-    alSourceiv(_al_get_handle(source),coffee_get_value(prop,al_source_prop_map),val);
+    alSourceiv(_al_get_handle(source),get_value(prop,al_source_prop_map),val);
     context_get_error();
 }
 
 void source_setf(
         CALSource *source, CSourceProperty const& prop, const scalar* val)
 {
-    alSourcefv(_al_get_handle(source),coffee_get_value(prop,al_source_prop_map),val);
+    alSourcefv(_al_get_handle(source),get_value(prop,al_source_prop_map),val);
     context_get_error();
 }
 
@@ -474,14 +474,14 @@ void source_setf(
 int32 source_geti(CALSource *source, const CSourceProperty &prop)
 {
     ALint v;
-    alGetSourcei(_al_get_handle(source),coffee_get_value(prop,al_source_prop_map),&v);
+    alGetSourcei(_al_get_handle(source),get_value(prop,al_source_prop_map),&v);
     return v;
 }
 
 scalar source_getf(CALSource *source, const CSourceProperty &prop)
 {
     ALfloat v;
-    alGetSourcef(_al_get_handle(source),coffee_get_value(prop,al_source_prop_map),&v);
+    alGetSourcef(_al_get_handle(source),get_value(prop,al_source_prop_map),&v);
     return v;
 }
 
@@ -492,8 +492,8 @@ void buffer_data(CALBuffer *buffer, const AudioSample *sample)
     alBufferData(
                 _al_get_handle(buffer),fmt,
                 sample->data,
-                sample->samples*sample->fmt.channels*sizeof(sample->data[0]),
-            sample->fmt.samplerate);
+                C_CAST<ALCsizei>(sample->samples*sample->fmt.channels*sizeof(sample->data[0])),
+            C_CAST<ALCsizei>(sample->fmt.samplerate));
 }
 
 void alAlloc(CALBuffer *buffer, const AudioSample *sample)
@@ -515,7 +515,7 @@ CALCaptureDevice *capture_create(
                 device,
                 fmt.samplerate,
                 _al_get_fmt(fmt),
-                samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels);
+                C_CAST<ALCsizei>(samples*fmt.samplerate*(fmt.bitdepth/8)*fmt.channels));
 
     cDebug("Creating AL capture device: {0},fq={1},buffer={2}",
            device,fmt.samplerate,samples*(fmt.bitdepth/8)*fmt.channels);
