@@ -2,6 +2,7 @@
 #define COFFEE_TYPES_MAP_H
 
 #include "basetypes.h"
+#include <iterator>
 
 namespace Coffee{
 
@@ -42,7 +43,7 @@ public:
 };
 
 template<typename KeyType, typename ValueType, size_t Size>
-ValueType coffee_get_flags(
+ValueType get_flags(
         const KeyType& key,
         const _cbasic_static_map<KeyType,ValueType,Size>& map)
 {
@@ -55,7 +56,7 @@ ValueType coffee_get_flags(
     return val;
 }
 template<typename KeyType, typename ValueType, size_t Size>
-ValueType coffee_get_value(
+ValueType get_value(
         const KeyType& key,
         const _cbasic_static_map<KeyType,ValueType,Size>& map)
 {
@@ -65,6 +66,30 @@ ValueType coffee_get_value(
 
     return ValueType();
 }
+
+template<typename KeyType, typename ValueType, size_t Size>
+class StaticMap
+{
+    _cbasic_static_map<KeyType,ValueType,Size> m_map;
+public:
+    C_DELETE_COPY_CONSTRUCTOR(StaticMap);
+
+    StaticMap(_cbasic_pair<KeyType, ValueType> map[Size])
+    {
+    }
+
+    size_t size()
+    {
+        return Size;
+    }
+
+    template<typename KeyType, typename ValueType, size_t Size>
+    class static_map_iterator : public std::iterator<std::forward_iterator_tag, KeyType>
+    {
+    };
+
+    using iterator = static_map_iterator<KeyType,ValueType,Size>;
+};
 
 }
 

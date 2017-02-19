@@ -64,7 +64,10 @@ void _sdl2_controllers_handle(CSDL2Types::CSDL2Context* m_context,
             SDL_GameControllerClose(m_context->controllers.at(ev->controller));
         }
         SDL_GameController* gc = SDL_GameControllerOpen(ev->controller);
-        m_context->controllers[ev->controller] = gc;
+        if(!gc)
+            m_context->joysticks[ev->controller] = SDL_JoystickOpen(ev->controller);
+        else
+            m_context->controllers[ev->controller] = gc;
 
         SDL_Haptic* hdev;
         CIEvent* hev = sdl2_controller_get_haptic(gc,ev->controller,hdev);

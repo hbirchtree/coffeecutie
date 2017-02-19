@@ -27,6 +27,7 @@ struct CSDL2Context{
 
     Mutex controller_access;
     Map<uint8,SDL_GameController*> controllers;
+    Map<uint8,SDL_Joystick*> joysticks;
     Map<uint8,SDL_Haptic*> haptics;
 };
 

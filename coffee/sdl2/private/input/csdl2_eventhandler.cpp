@@ -226,8 +226,13 @@ CIControllerState SDL2EventHandler::getControllerState(uint16 index)
 void SDL2EventHandler::pollEvents()
 {
     EventApplication::pollEvents();
-    while(SDL_PollEvent(&getSDL2Context()->eventhandle))
-        CSDL2Types::EventHandleAll(this,&getSDL2Context()->eventhandle);
+    SDL_Event* ev = &getSDL2Context()->eventhandle;
+    while(SDL_PollEvent(ev))
+    {
+        CSDL2Types::EventHandleAll(this,ev);
+        for(EventHandlerSDL const& eh : m_eventhandlers_sdl)
+            eh.func(eh.user_ptr, ev, nullptr);
+    }
 }
 
 bigscalar SDL2EventHandler::contextTime() const
@@ -264,6 +269,12 @@ bool SDL2EventHandler::installEventHandler(EventHandlerD e)
     return true;
 }
 
+bool SDL2EventHandler::installEventHandler(EventHandlerSDL e)
+{
+    m_eventhandlers_sdl.push_back(e);
+    return true;
+}
+
 void SDL2EventHandler::injectEvent(const CIEvent &e, c_cptr d)
 {
     eventHandleI(e, d);
@@ -272,6 +283,11 @@ void SDL2EventHandler::injectEvent(const CIEvent &e, c_cptr d)
 void SDL2EventHandler::injectEvent(const CDEvent &e, c_cptr d)
 {
     eventHandleD(e, d);
+}
+
+void SDL2EventHandler::injectEvent(SDL_Event *e)
+{
+    SDL_PushEvent(e);
 }
 
 void SDL2EventHandler::registerEventLoop(void *eventloop)

@@ -42,10 +42,15 @@ FORCEDINLINE void EventHandleControllerUpdate(
     e.type = CIEvent::ControllerUpdate;
     e.ts = dev.timestamp;
 
-	cstring name = nullptr;
+    cstring name = nullptr;
 
-	if (dev.type != SDL_CONTROLLERDEVICEREMOVED)
-		name = SDL_GameControllerNameForIndex(dev.which);
+    if (dev.type != SDL_CONTROLLERDEVICEREMOVED)
+        name = SDL_GameControllerNameForIndex(dev.which);
+    if(!name)
+    {
+        /* This is the case for SDL_JOYDEVICEADDED */
+        name = SDL_JoystickNameForIndex(dev.which);
+    }
 
     CIControllerAtomicUpdateEvent c;
 

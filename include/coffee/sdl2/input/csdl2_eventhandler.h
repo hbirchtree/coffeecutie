@@ -4,6 +4,8 @@
 #include <coffee/core/base/renderer/hapticapplication.h>
 #include "../csdl2_context.h"
 
+union SDL_Event;
+
 namespace Coffee{
 namespace Display{
 
@@ -13,8 +15,11 @@ class SDL2EventHandler :
         public virtual SDL2ContextUser
 {
 protected:
+    using EventHandlerSDL = EventHandler<SDL_Event*>;
+
     Vector<EventHandlerI> m_eventhandlers_input;
     Vector<EventHandlerD> m_eventhandlers_windw;
+    Vector<EventHandlerSDL> m_eventhandlers_sdl;
 
     void* m_eventloop = nullptr;
 
@@ -64,9 +69,11 @@ public:
     bool closeFlag() const;
     virtual bool installEventHandler(EventHandlerI e);
     virtual bool installEventHandler(EventHandlerD e);
+    virtual bool installEventHandler(EventHandlerSDL e);
 
     void injectEvent(const CIEvent &e, c_cptr d);
     void injectEvent(const CDEvent &e, c_cptr d);
+    void injectEvent(SDL_Event* e);
 
     void registerEventLoop(void* eventloop);
 };

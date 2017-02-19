@@ -7,8 +7,12 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/CDebug>
 
+#include <coffee/core/types/map.h>
 #include <coffee/image/cimage.h>
 
+#include <SDL.h>
+
+#undef main
 
 using namespace Coffee;
 using namespace Display;
@@ -55,6 +59,11 @@ Sprites::Texture sprite_load(Sprites* instance, Sprites::Renderer* renderer,
     return out;
 }
 
+void SDL_Handler(void*, SDL_Event* const& ev, c_cptr)
+{
+    cDebug("Event received: {0}", ev->type);
+}
+
 int32 coffee_main(int32, cstring_w*)
 {
     SubsystemWrapper<SDL2::SDL2> sys1;
@@ -73,6 +82,8 @@ int32 coffee_main(int32, cstring_w*)
                                  err.c_str());
         return 1;
     }
+
+    winhost.installEventHandler({SDL_Handler, nullptr, nullptr});
 
     /* Attaching the sprite instance to the window */
     Sprites rend(&winhost);
@@ -116,42 +127,66 @@ int32 coffee_main(int32, cstring_w*)
     Sprites::Sprite button_bp_sprite;
     Sprites::Sprite button_yp_sprite;
 
-    rend.createSprite(controller_atlas,{256,0,128,128},&analog_sprite);
-    rend.createSprite(controller_atlas,{0,0,256,256},&analog_back_sprite);
+    auto bind_sprite = [&](Sprites::SpriteSource const& src, Sprites::Sprite& sprite)
+    {
+        rend.createSprite(controller_atlas, src, &sprite);
+    };
 
-    rend.createSprite(controller_atlas,{128,256,96,32},&trigger_sprite);
-    rend.createSprite(controller_atlas,{0,256,96,256},&trigger_back_sprite);
+    _cbasic_static_map<Sprites::SpriteSource,Sprites::Sprite&,18> sprite_map = {
+        {{256,0,128,128},analog_sprite},
 
-    rend.createSprite(controller_atlas,{640,256,128,64},&shoulderl_sprite);
-    rend.createSprite(controller_atlas,{768,256,128,64},&shoulderl_p_sprite);
+        {{256,128,96,64},menu_sprite},
+        {{256,192,96,64},menu_p_sprite},
 
-    rend.createSprite(controller_atlas,{384,256,128,64},&shoulderr_sprite);
-    rend.createSprite(controller_atlas,{512,256,128,64},&shoulderr_p_sprite);
+        {{0,0,256,256},analog_back_sprite},
 
-    rend.createSprite(controller_atlas,{384,0,128,128},&button_a_sprite);
-    rend.createSprite(controller_atlas,{384,128,128,128},&button_x_sprite);
-    rend.createSprite(controller_atlas,{640,0,128,128},&button_b_sprite);
-    rend.createSprite(controller_atlas,{640,128,128,128},&button_y_sprite);
+        {{128,256,96,32},trigger_sprite},
+        {{0,256,96,256},trigger_back_sprite},
 
-    rend.createSprite(controller_atlas,{512,0,128,128},&button_ap_sprite);
-    rend.createSprite(controller_atlas,{512,128,128,128},&button_xp_sprite);
-    rend.createSprite(controller_atlas,{768,0,128,128},&button_bp_sprite);
-    rend.createSprite(controller_atlas,{768,128,128,128},&button_yp_sprite);
+        {{640,256,128,64},shoulderl_sprite},
+        {{768,256,128,64},shoulderl_p_sprite},
+
+        {{384,256,128,64},shoulderr_sprite},
+        {{512,256,128,64},shoulderr_p_sprite},
+
+        {{384,0,128,128},button_a_sprite},
+        {{384,128,128,128},button_x_sprite},
+        {{640,0,128,128},button_b_sprite},
+        {{640,128,128,128},button_y_sprite},
+
+        {{512,0,128,128},button_ap_sprite},
+        {{512,128,128,128},button_xp_sprite},
+        {{768,0,128,128},button_bp_sprite},
+        {{768,128,128,128},button_yp_sprite},
+    };
+
+    for(size_t i=0;i<18;i++)
+        bind_sprite(sprite_map[i].key, sprite_map[i].value);
 
     /* Install standard event handlers */
     winhost.installEventHandler({EventHandlers::EscapeCloseWindow<BasicWindow>,nullptr,&winhost});
     winhost.installEventHandler({EventHandlers::WindowManagerCloseWindow<BasicWindow>,nullptr,&winhost});
 
-    auto draw_axis = [&](
-            Sprites::Sprite const& unpressed, Sprites::Sprite const& pressed,
-            Sprites::Sprite const& background,
-            bool button, Veci2 const& base, Veci2 const& size, Veci2 const& pos)
+    auto draw_element = [&](
+            Sprites::Sprite const& unpressed, Sprites::Sprite const* pressed,
+            Sprites::Sprite const* background,
+            bool button, Vecf2 const& base, Vecf2 const& size, Vecf2 const& pos)
     {
-        Sprites::Sprite const* sp = &unpressed;
+        auto sp = &unpressed;
         if(button)
-            sp = &pressed;
-        rend.drawSprite(inst, {0,0}, {1,1}, background);
-        rend.drawSprite(inst, {0,0}, {1,1}, *sp);
+            sp = pressed;
+        if(background)
+            rend.drawSprite(inst, {base.x(), base.y()}, {size.x(), size.y()}, *background);
+        rend.drawSprite(inst, {base.x() + pos.x(), base.y() + pos.y()}, {size.x(), size.y()}, *sp);
+    };
+
+    auto draw_axis = [&](Vecf2 base, i16 x, i16 y, bool btn)
+    {
+        draw_element(button_x_sprite, &button_xp_sprite, &analog_back_sprite,
+                     btn, base,
+                    {1,1}, {scalar(scalar(x)/Int16_Max*128. + 64),
+                            scalar(scalar(y)/Int16_Max*128. + 64)}
+                     );
     };
 
     while(!winhost.closeFlag())
@@ -161,55 +196,41 @@ int32 coffee_main(int32, cstring_w*)
 
         {
             auto ctl = winhost.getControllerState(0);
-            rend.drawSprite(inst,{0,256+128},{1,1},analog_back_sprite);
-            rend.drawSprite(inst,{scalar(scalar(ctl.axes.e.l_x)/Int16_Max*128.+64.),
-                                  scalar(scalar(ctl.axes.e.l_y)/Int16_Max*128.+64.+256.+128.)},
-                                 {1,1},button_x_sprite);
+            f32 axes_ruler = winhost.windowSize().h - 256.f;
+            draw_axis({0,axes_ruler}, ctl.axes.e.l_x,
+                      ctl.axes.e.l_y, ctl.buttons.e.s_l);
+            draw_axis({winhost.windowSize().w-256.f,axes_ruler},
+                      ctl.axes.e.r_x, ctl.axes.e.r_y, ctl.buttons.e.s_r);
 
-            rend.drawSprite(inst,{512,256+128.},{1,1},analog_back_sprite);
-            rend.drawSprite(inst,{scalar(scalar(ctl.axes.e.r_x)/Int16_Max*128.+64.+512.),
-                                  scalar(scalar(ctl.axes.e.r_y)/Int16_Max*128.+64.+256.+128.)},
-                                 {1,1},button_x_sprite);
+            Vecf2 back_root = {};
+            draw_element(shoulderl_sprite, &shoulderl_p_sprite, nullptr,
+                         ctl.buttons.e.b_l, {back_root.x(),back_root.y()}, {1,1}, {});
+            draw_element(trigger_sprite, nullptr, &trigger_back_sprite, false,
+                         {back_root.x(),back_root.y()+64}, {1,1}, {0,scalar(scalar(ctl.axes.e.t_l)/Int16_Max*220.)});
 
-            rend.drawSprite(inst,{0,0},{1,1},trigger_back_sprite);
-            rend.drawSprite(inst,{0.,
-                                  scalar(scalar(ctl.axes.e.t_l)/Int16_Max*220.)},
-                                 {1,1},trigger_sprite);
+            Vecf2 right_anchor = {scalar(winhost.windowSize().w-128) + back_root.x(), back_root.y()};
+            draw_element(trigger_sprite, nullptr, &trigger_back_sprite, false,
+                         {right_anchor.x(),right_anchor.y()+64}, {1,1}, {0,scalar(scalar(ctl.axes.e.t_r)/Int16_Max*220.)});
+            draw_element(shoulderr_sprite, &shoulderr_p_sprite, nullptr,
+                         ctl.buttons.e.b_r, {right_anchor.x(),right_anchor.y()}, {1,1}, {});
 
-            rend.drawSprite(inst,{640,0},{1,1},trigger_back_sprite);
-            rend.drawSprite(inst,{640,
-                                  scalar(scalar(ctl.axes.e.t_r)/Int16_Max*220.)},
-                                 {1,1},trigger_sprite);
+            Vecf2 button_root = {right_anchor.x()-320.f, 0.f};
+            draw_element(button_a_sprite, &button_ap_sprite, nullptr,
+                         ctl.buttons.e.a, {button_root.x() + 96, button_root.y() + 196}, {1,1}, {});
+            draw_element(button_x_sprite, &button_xp_sprite, nullptr,
+                         ctl.buttons.e.x, {button_root.x(),button_root.y() + 96}, {1,1}, {});
+            draw_element(button_b_sprite, &button_bp_sprite, nullptr,
+                         ctl.buttons.e.b, {button_root.x() + 192,button_root.y() + 96}, {1,1}, {});
+            draw_element(button_y_sprite, &button_yp_sprite, nullptr,
+                         ctl.buttons.e.y, {button_root.x() + 96,button_root.y()}, {1,1}, {});
 
-            if(!ctl.buttons.e.a)
-                rend.drawSprite(inst,{320,256+96-16},{1,1},button_a_sprite);
-            else
-                rend.drawSprite(inst,{320,256+96-16},{1,1},button_ap_sprite);
-            if(!ctl.buttons.e.x)
-                rend.drawSprite(inst,{192+16+16,128+96},{1,1},button_x_sprite);
-            else
-                rend.drawSprite(inst,{192+16+16,128+96},{1,1},button_xp_sprite);
-            if(!ctl.buttons.e.b)
-                rend.drawSprite(inst,{432-16,128+96},{1,1},button_b_sprite);
-            else
-                rend.drawSprite(inst,{432-16,128+96},{1,1},button_bp_sprite);
-            if(!ctl.buttons.e.y)
-                rend.drawSprite(inst,{320,0+96+16},{1,1},button_y_sprite);
-            else
-                rend.drawSprite(inst,{320,0+96+16},{1,1},button_yp_sprite);
-
-            if(!ctl.buttons.e.b_l)
-                rend.drawSprite(inst,{96,0},{1,1},shoulderl_sprite);
-            else
-                rend.drawSprite(inst,{96,0},{1,1},shoulderl_p_sprite);
-
-            if(!ctl.buttons.e.b_r)
-                rend.drawSprite(inst,{512,0},{1,1},shoulderr_sprite);
-            else
-                rend.drawSprite(inst,{512,0},{1,1},shoulderr_p_sprite);
-
-            if(ctl.buttons.e.guide)
-                cDebug("GUIDE ME");
+            Vecf2 menu_root = {winhost.windowSize().w / 2.f, winhost.windowSize().h - 64.f};
+            draw_element(menu_sprite, &menu_p_sprite, nullptr,
+                         ctl.buttons.e.back, {menu_root.x() - 96.f,menu_root.y()}, {1,1}, {});
+            draw_element(menu_sprite, &menu_p_sprite, nullptr,
+                         ctl.buttons.e.start, {menu_root.x(),menu_root.y()}, {1,1}, {});
+            draw_element(menu_sprite, &menu_p_sprite, nullptr,
+                         ctl.buttons.e.guide, {menu_root.x() - 48.f,menu_root.y()-64.f}, {1,1}, {});
         }
 
         rend.swapBuffers(inst);
