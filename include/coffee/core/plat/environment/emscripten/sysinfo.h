@@ -1,5 +1,7 @@
 #pragma once
 
+#include <coffee/core/plat/plat_primary_identify.h>
+
 #if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
 
 #include "../sysinfo_def.h"
