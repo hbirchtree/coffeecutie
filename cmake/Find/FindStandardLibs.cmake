@@ -123,7 +123,9 @@ if(WIN32)
 endif()
 
 if(NACL)
+    find_package(SDL2 REQUIRED)
     list ( APPEND CORE_EXTRA_LIBRARIES
+        ${SDL2_LIBRARY}
         ppapi_gles2
         ppapi_simple
         )
