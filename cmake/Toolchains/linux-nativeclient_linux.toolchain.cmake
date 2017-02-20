@@ -14,6 +14,8 @@ set(NACL_TAG pnacl)
 
 set(NACL_HOST linux_pnacl )
 
+set( CMAKE_EXECUTABLE_SUFFIX "pexe" )
+
 if(CMAKE_TOOLCHAIN_FILE)
     # Stub the warning
 endif()
@@ -40,6 +42,8 @@ set(CMAKE_AR ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-ar CACHE FILEPA
 set(CMAKE_NM ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-nm CACHE FILEPATH "")
 set(CMAKE_RANLIB ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-ranlib CACHE FILEPATH "")
 set(CMAKE_LINKER ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-ld CACHE FILEPATH "")
+
+set(NACL_FINALIZE ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-finalize CACHE FILEPATH "")
 
 set(CMAKE_C_FLAGS 
 #	"--prefix=${NACL_PATH}/cross/armv7a --exec_prefix=${NACL_PATH}/cross/armv7a #--with-mpfr=${NACL_PATH}/staging/i686-linux/usr"

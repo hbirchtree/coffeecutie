@@ -272,6 +272,40 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 "${PERMISSIONS}"
                 )
         endif()
+    elseif(NACL)
+        add_executable(${TARGET} ${SOURCES_MOD})
+
+        set ( OUT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle" )
+
+        execute_process( "${CMAKE_COMMAND}" -E make_directory "${OUT_DIR}" )
+
+        # Create a manifest
+        configure_file(
+            "${COFFEE_DESKTOP_DIRECTORY}/native-client/application.nmf.in"
+            "${OUT_DIR}/${TARGET}.nmf"
+            )
+
+        # Create a simple, testable HTML page
+        configure_file(
+            "${COFFEE_DESKTOP_DIRECTORY}/native-client/index.html.in"
+            "${OUT_DIR}/index.html"
+            )
+
+        set_target_properties( ${TARGET} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle")
+
+        add_custom_command( TARGET ${TARGET}
+            POST_BUILD
+            COMMAND ${NACL_FINALIZE} $<TARGET_FILE:${TARGET}>
+            )
+
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            bin
+            )
     else()
         add_executable(${TARGET} ${SOURCES_MOD})
 
