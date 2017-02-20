@@ -27,8 +27,8 @@ include_directories ( SYSTEM
     )
 
 set ( LIBS
-    CoffeeCore
     ${SDL2_LIBRARY}
+    CoffeeCore
     )
 
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
