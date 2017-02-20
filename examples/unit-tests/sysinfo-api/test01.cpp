@@ -9,9 +9,9 @@ bool sysinfo_printing()
     cDebug("Device name: {0}",SysInfo::DeviceName());
 
     cDebug("System memory: {0:1}MB",
-           SysInfo::MemTotal()/CMath::pow<bigscalar>(1024,2));
+           SysInfo::MemTotal()/CMath::pow(1024,2));
     cDebug("Available system memory: {0:1}MB",
-           SysInfo::MemAvailable()/CMath::pow<bigscalar>(1024,2));
+           SysInfo::MemAvailable()/CMath::pow(1024,2));
 
     cDebug("Processor info: {0}",SysInfo::Processor());
     cDebug("Frequency: {0:2}GHz",SysInfo::ProcessorFrequency());

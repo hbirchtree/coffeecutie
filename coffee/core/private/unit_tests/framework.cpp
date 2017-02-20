@@ -10,6 +10,8 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
+#include <coffee/core/string_casting.h>
+
 namespace CoffeeTest{
 
 using namespace Coffee;
@@ -227,11 +229,13 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
     for(uint64 v : test_times)
         time_accum += v;
 
-    Profiler::AddExtraData("testing:title",ApplicationData().application_name);
+    Profiler::AddExtraData("testing:title", ApplicationData().application_name);
 
-    Profiler::AddExtraData("testing:bmark", Convert::uintltostring(time_accum));
+    Profiler::AddExtraData("testing:bmark", cast_pod(time_accum));
 
     Profiler::AddExtraData("testing:result", cStringFormat("{0},{1}",suc,num));
+
+    Profiler::AddExtraData("testing:mem", cast_pod(ProcessProperty::Mem(0)));
 
     if(!json_formatting)
     {
@@ -244,6 +248,8 @@ int run_tests(uint32 num, Test const* tests, int argc, char** argv)
 
         Profiler::AddExtraData("testing:jsonresult",buf.GetString());
     }
+
+    cDebug("Memory consumption: {0} kB", ProcessProperty::Mem(0));
 
 	/* For verbosity, we write it as this */
 	return (fail) ? 1 : 0;
