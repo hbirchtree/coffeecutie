@@ -31,6 +31,6 @@ Some features are special cases and quite ugly. Beware.
 | 4    | OpenSSL support disabled, plain sockets only                          |
 | 5    | Replace `RUSAGE_THREAD` with `RUSAGE_SELF`                            |
 | 6    | Disables `MAP_HUGETLB`                                                |
-| 7    | No `execvpe` function defined, external programs will fail            |
-| 7.1  | No `system` function defined                                          |
-| 8    | No way to set thread names, `pthread_setname_np` non-existent         |
+| 7    | No `execvpe()` function defined, external programs will fail            |
+| 7.1  | No `system()` function defined                                          |
+| 8    | No way to set thread names, `pthread_setname_np()` non-existent         |
