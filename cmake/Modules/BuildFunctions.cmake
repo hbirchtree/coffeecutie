@@ -290,12 +290,6 @@ function(COFFEE_ADD_APPLICATION_LONGERER
         ${LIBRARIES}
         )
 
-    if(NACL)
-        target_link_libraries ( ${TARGET}
-                ppapi_gles2
-            )
-    endif()
-
     remove_definitions(
         -DCOFFEE_APPLICATION_NAME -DCOFFEE_ORGANIZATION_NAME
         -DCOFFEE_VERSION_CODE )

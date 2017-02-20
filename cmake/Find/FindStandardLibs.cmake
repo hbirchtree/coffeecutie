@@ -125,6 +125,7 @@ endif()
 if(NACL)
     list ( APPEND CORE_EXTRA_LIBRARIES
         ppapi_gles2
+        ppapi_simple
         )
 endif()
 
