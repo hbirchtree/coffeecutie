@@ -6,7 +6,7 @@
 # Note: only works on OSX
 #
 
-set(NACL TRUE)
+set(NACL TRUE CACHE BOOL "")
 
 set(NACL_PATH $ENV{NACL_ROOT} CACHE STRING "Native Client SDK Root Path")
 
@@ -14,7 +14,8 @@ set(NACL_TAG pnacl)
 
 set(NACL_HOST linux_pnacl )
 
-set( CMAKE_EXECUTABLE_SUFFIX "pexe" )
+set( CMAKE_EXECUTABLE_SUFFIX "pexe" CACHE STRING "" )
+set( CMAKE_EXECUTABLE_SUFFIX_CXX "pexe" CACHE STRING "" )
 
 if(CMAKE_TOOLCHAIN_FILE)
     # Stub the warning
