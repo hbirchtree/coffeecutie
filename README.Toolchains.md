@@ -19,12 +19,6 @@ Some features are special cases and quite ugly. Beware.
 |Windows (Win32)   | MSVC++              | 14.0             |                  |
 |Windows (UWP)     | MSVC++              | 14.0             |                  |
 |                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
-|                  |                     |                  |                  |
 
 ## Platform workarounds
 
