@@ -10,9 +10,9 @@
 #include <coffee/core/types/map.h>
 #include <coffee/image/cimage.h>
 
-#include <SDL.h>
+//#include <SDL.h>
 
-#undef main
+//#undef main
 
 using namespace Coffee;
 using namespace Display;
