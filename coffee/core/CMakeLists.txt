@@ -115,6 +115,12 @@ if(EMSCRIPTEN)
         )
 endif()
 
+if(NACL)
+    list ( APPEND CoffeeCore_SRCS
+        private/plat/environment/native-client/sysinfo.cpp
+        )
+endif()
+
 # Mac OS X-specific code
 if(APPLE)
     list ( APPEND CoffeeCore_SRCS
