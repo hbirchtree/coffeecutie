@@ -122,6 +122,12 @@ if(WIN32)
           )
 endif()
 
+if(NACL)
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        ppapi_gles2
+        )
+endif()
+
 set ( STANDARDLIBS_LIBRARIES "${CORE_EXTRA_LIBRARIES}" CACHE STRING "" )
 set ( STANDARDLIBS_INCLUDE_DIR "${CORE_INCLUDE_DIR}" CACHE STRING "" )
 
