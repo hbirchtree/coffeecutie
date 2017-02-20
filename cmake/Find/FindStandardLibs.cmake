@@ -128,6 +128,9 @@ if(NACL)
         ${SDL2_LIBRARY}
         ppapi_gles2
         ppapi_simple
+        ppapi
+        nacl_io
+        nosys
         )
 endif()
 
