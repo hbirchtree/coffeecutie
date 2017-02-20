@@ -31,7 +31,7 @@ struct CProcess
 
 	STATICINLINE int ExecuteSystem(Command const& cmd_)
 	{
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__)
+#if defined(COFFEE_NO_SYSTEM_CMD)
         return -1;
 #elif !defined(COFFEE_WINDOWS_UWP)
 		CString cmd = cmd_.program;
@@ -48,7 +48,8 @@ struct CProcess
 
     STATICINLINE int Execute(Command const& cmd_)
     {
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_NO_EXECVPE)
+        C_UNUSED(cmd_);
         return -1;
 #elif defined(COFFEE_UNIXPLAT)
         Command cmd = cmd_;
@@ -66,7 +67,6 @@ struct CProcess
 
         if(child == 0)
         {
-#ifndef COFFEE_APPLE
             child_sig = execvpe(
                         cmd.program.c_str(),
                         (cstring_w const*)cmd.argv.data(),
@@ -74,7 +74,6 @@ struct CProcess
                         (cmd.envp.size()>0)
                         ? (cstring_w const*)cmd.envp.data()
                         : environ);
-#endif
             exit(0);
         }
 

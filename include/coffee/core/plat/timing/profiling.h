@@ -62,7 +62,7 @@ struct SimpleProfilerImpl
             profiler_data_store = new ProfilerDataStore;
             profiler_data_store->global_init.store(0);
         }
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
 //        cVerbose(6,"Creating thread context stack");
         context_stack = new LinkList<CString>;
 #endif
@@ -80,7 +80,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void DestroyProfiler()
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
         if(context_stack)
         {
             delete context_stack;
@@ -98,7 +98,7 @@ struct SimpleProfilerImpl
     {
 #if defined(COFFEE_APPLE)
         pthread_setname_np(name);
-#elif defined(COFFEE_UNIXPLAT) && !defined(__EMSCRIPTEN__) && !defined(COFFEE_NACL)
+#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
         pthread_setname_np(pthread_self(), name);
 #endif
 
@@ -117,7 +117,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void Profile(cstring name = nullptr)
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -137,7 +137,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void PushContext(cstring name)
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
 
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
@@ -158,7 +158,7 @@ struct SimpleProfilerImpl
     }
     STATICINLINE void PopContext()
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -212,7 +212,7 @@ struct SimpleProfilerImpl
 
     static ProfilerDataStore* profiler_data_store;
 
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
     thread_local static LinkList<CString> *context_stack;
 #endif
 

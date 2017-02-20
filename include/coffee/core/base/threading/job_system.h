@@ -48,7 +48,7 @@ FORCEDINLINE Future<void> ParallelFor(
             IterType itc = split;
             if(i==0)
                 itc+=rest;
-            tasks.push_back(RunAsync<void>(fun,kernel,context,split));
+            tasks.push_back(RunAsync(fun,kernel,context,split));
         }
 
         for(uint32 i=0;i<thrcount;i++)

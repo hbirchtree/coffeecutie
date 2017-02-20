@@ -31,7 +31,14 @@ SharedFuture<ReturnType> RunThread(
 }
 
 template<typename ReturnType,
-         typename... Args>
+         typename... Args
+#if defined(COFFEE_NO_FUTURES)
+         /* We don't want to let void in here, because it doesn't work with our Future-implementation.
+          * The next declaration handles this peacefully.
+          */
+         , class = typename std::enable_if<! std::is_same<ReturnType, void>::value, bool>::type
+#endif
+         >
 /*!
  * \brief Launch a task asynchronously, returning a future value
  * \param function
@@ -41,8 +48,23 @@ template<typename ReturnType,
 FORCEDINLINE Future<ReturnType> RunAsync(
         Function<ReturnType(Args...)> function, Args... a)
 {
+#if defined(COFFEE_NO_FUTURES)
+    ReturnType r = function(a...);
+    return {r};
+#else
     return std::async(std::launch::async,function,a...);
+#endif
 }
+
+#if defined(COFFEE_NO_FUTURES)
+template<typename... Args>
+FORCEDINLINE Future<void> RunAsync(
+        Function<void(Args...)> function, Args... a)
+{
+    function(a...);
+    return {};
+}
+#endif
 
 template<typename T>
 /*!
@@ -52,7 +74,12 @@ template<typename T>
  */
 FORCEDINLINE bool FutureAvailable(Future<T> const& f)
 {
+#if defined(COFFEE_NO_FUTURES)
+    C_UNUSED(f);
+    return true;
+#else
     return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+#endif
 }
 
 /*!

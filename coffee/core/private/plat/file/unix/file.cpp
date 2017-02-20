@@ -148,8 +148,10 @@ int PosixFileMod_def::MappingFlags(ResourceAccess acc)
 #endif
 
 #if defined(COFFEE_LINUX)
+    #if !defined(COFFEE_NO_HUGETLB)
     if(feval(acc&ResourceAccess::HugeFile))
-        mapping |= MAP_HUGETLB;
+        mapping |= MAP_HUGETiLB;
+    #endif
 
     if(feval(acc&ResourceAccess::ExclusiveLocking))
         mapping |= MAP_LOCKED;
