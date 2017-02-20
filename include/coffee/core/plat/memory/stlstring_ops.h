@@ -53,15 +53,15 @@ CWString CStrReplace(CWString const& target, CWString const& query, CWString con
 namespace Convert{
 
 #if defined(PRIu8)
-    const constexpr cstring u8_fmt = "%"PRIu8;
-    const constexpr cstring u16_fmt = "%"PRIu16;
-    const constexpr cstring u32_fmt = "%"PRIu32;
-    const constexpr cstring u64_fmt = "%"PRIu64;
+    const constexpr cstring u8_fmt = "%" PRIu8;
+    const constexpr cstring u16_fmt = "%" PRIu16;
+    const constexpr cstring u32_fmt = "%" PRIu32;
+    const constexpr cstring u64_fmt = "%" PRIu64;
 
-    const constexpr cstring i8_fmt = "%"PRIu8;
-    const constexpr cstring i16_fmt = "%"PRIu16;
-    const constexpr cstring i32_fmt = "%"PRIu32;
-    const constexpr cstring i64_fmt = "%"PRIu64;
+    const constexpr cstring i8_fmt = "%" PRIu8;
+    const constexpr cstring i16_fmt = "%" PRIu16;
+    const constexpr cstring i32_fmt = "%" PRIu32;
+    const constexpr cstring i64_fmt = "%" PRIu64;
 #elif defined(COFFEE_ARCH_LLP64)
 	const constexpr cstring u8_fmt  = "%hhu";
 	const constexpr cstring u16_fmt = "%hu";
