@@ -36,6 +36,10 @@ set(CMAKE_FIND_ROOT_PATH
 set(CMAKE_ASM_COMPILER ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-as )
 set(CMAKE_C_COMPILER   ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-clang )
 set(CMAKE_CXX_COMPILER ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-clang++ )
+set(CMAKE_AR ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-ar CACHE FILEPATH "")
+set(CMAKE_NM ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-nm CACHE FILEPATH "")
+set(CMAKE_RANLIB ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-ranlib CACHE FILEPATH "")
+set(CMAKE_LINKER ${NACL_PATH}/toolchain/${NACL_HOST}/bin/${NACL_TAG}-ld CACHE FILEPATH "")
 
 set(CMAKE_C_FLAGS 
 #	"--prefix=${NACL_PATH}/cross/armv7a --exec_prefix=${NACL_PATH}/cross/armv7a #--with-mpfr=${NACL_PATH}/staging/i686-linux/usr"
