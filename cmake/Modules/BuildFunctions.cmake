@@ -234,7 +234,12 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 )
         endif()
     elseif(NACL)
-        add_executable(${TARGET} ${SOURCES_MOD})
+        include_directories( ${SDL2_INCLUDE_DIR} )
+
+        add_executable(${TARGET}
+            ${SDL2_MAIN_C_FILE}
+            ${SOURCES_MOD}
+            )
 
         set ( OUT_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle" )
 

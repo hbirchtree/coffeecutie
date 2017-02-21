@@ -14,8 +14,8 @@ set(NACL_TAG pnacl)
 
 set(NACL_HOST linux_pnacl )
 
-set( CMAKE_EXECUTABLE_SUFFIX "pexe" CACHE STRING "" )
-set( CMAKE_EXECUTABLE_SUFFIX_CXX "pexe" CACHE STRING "" )
+set( CMAKE_EXECUTABLE_SUFFIX ".pexe" CACHE STRING "" )
+set( CMAKE_EXECUTABLE_SUFFIX_CXX ".pexe" CACHE STRING "" )
 
 if(CMAKE_TOOLCHAIN_FILE)
     # Stub the warning
@@ -58,6 +58,7 @@ set(CMAKE_CXX_FLAGS
 
 include_directories (
     "${NACL_PATH}/include"
+    "${NACL_PATH}/include/pnacl"
     )
 
 link_directories (

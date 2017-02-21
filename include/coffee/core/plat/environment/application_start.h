@@ -4,8 +4,12 @@
 #include "../../types/tdef/fntypes.h"
 #include "../../coffee_version.h"
 
-#if defined(COFFEE_ANDROID) && !defined(ANDROID_DONT_USE_SDL2)
+#if (defined(COFFEE_ANDROID) && !defined(ANDROID_DONT_USE_SDL2))
 #include <jni.h>
+#define main SDL_main
+#endif
+
+#if defined(COFFEE_NACL)
 #define main SDL_main
 #endif
 

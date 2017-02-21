@@ -89,7 +89,7 @@
 #define COFFEE_NO_TLS
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__)
+#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
