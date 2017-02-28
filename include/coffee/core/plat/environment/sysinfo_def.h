@@ -306,6 +306,36 @@ struct PowerInfoDef
     }
 };
 
+struct DeviceInfoDef
+{
+    static CString Manufacturer(){return {};}
+    static CString Model(){return {};}
+    static CString Board(){return {};}
+
+    struct Screen
+    {
+        enum TouchType
+        {
+            None,
+            Resistive,
+            Capacitive,
+        };
+
+        scalar size;
+        u32 density;
+        u32 res_x;
+        u32 res_y;
+
+        u32 color_space;
+
+        TouchType touch_type;
+    };
+
+    static Screen Screen(){return {};}
+
+    static scalar Weight(){return {};}
+};
+
 }
 
 #endif

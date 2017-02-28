@@ -22,6 +22,10 @@ struct SensorAPI_Def
 
     /* Light measured by ambient light sensor */
     STATICINLINE scalar Lux(){return 0;}
+
+    STATICINLINE uint32 StepCounter(){return 0;}
+
+    STATICINLINE scalar Proximity(){return 0;}
 };
 
 }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../sensor_def.h"
 
 namespace Coffee{

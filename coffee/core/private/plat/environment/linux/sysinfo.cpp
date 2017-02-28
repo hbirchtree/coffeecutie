@@ -54,6 +54,15 @@ CString get_kern_name()
         return d.sysname;
 }
 
+CString get_kern_arch()
+{
+    utsname d;
+    if(uname(&d)!=0)
+        return "?";
+    else
+        return d.machine;
+}
+
 CString LinuxSysInfo::GetSystemVersion()
 {
     CString tmp = get_lsb_release();
