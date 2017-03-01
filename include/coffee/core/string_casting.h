@@ -13,6 +13,10 @@
     CAST_TO_FUNCTION(type, converter1) \
     CAST_FROM_FUNCTION(type, converter2)
 
+#define CAST_LOWER_FUNCTION(type, converter) \
+    template<> inline type cast_string(CString const& str) \
+    {return C_CAST<type>(Mem::Convert::converter(str.c_str())); }
+
 namespace Coffee{
 
 template<typename T>
@@ -40,7 +44,14 @@ CAST_FROM_FUNCTION(uint8, uintctostring)
 CAST_FROM_FUNCTION(int16, intstostring)
 CAST_FROM_FUNCTION(uint16, uintstostring)
 
+CAST_LOWER_FUNCTION(int8, strtoint)
+CAST_LOWER_FUNCTION(uint8, strtouint)
+CAST_LOWER_FUNCTION(int16, strtoint)
+CAST_LOWER_FUNCTION(uint16, strtouint)
 
 }
 
+#undef CAST_LOWER_FUNCTION
+#undef CAST_BOTH_FUNCTION
 #undef CAST_TO_FUNCTION
+#undef CAST_FROM_FUNCTION

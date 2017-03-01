@@ -14,6 +14,7 @@
 #include "../../types/tdef/integertypes.h"
 #include "../../types/tdef/stltypes.h"
 #include "../../coffee_mem_macros.h"
+#include "../../coffee_assert_macros.h"
 
 namespace Coffee{
 namespace Mem{
@@ -90,125 +91,48 @@ namespace Convert{
  *
  */
 
+#define SCALAR_CONVERT(name, type, fmt) \
+    FORCEDINLINE CString name(type s) \
+    { \
+    CString str; \
+    str.resize(C_CAST<size_t>(snprintf(nullptr,0,fmt,s)) + 1); \
+    snprintf(&str[0],str.size() + 1,fmt,s); \
+    str.resize(str.size() - 1); \
+    return str; \
+    }
+
 /* Floating-point conversion */
-FORCEDINLINE CString scalarltostring(lscalar const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%Lf",s));
-    snprintf(&str[0],str.size(),"%Lf",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString scalartostring(bigscalar const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%f",s));
-    snprintf(&str[0],str.size(),"%f",s);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString scalarftostring(scalar const& s)
-{
-    CString str;
-    str.resize(snprintf(nullptr,0,"%f",s));
-    snprintf(&str[0],str.size(),"%f",s);
-    str.resize(str.size()-1);
-    return str;
-}
+SCALAR_CONVERT(scalarltostring, lscalar, "%Lf")
+SCALAR_CONVERT(scalartostring, bigscalar, "%f")
+SCALAR_CONVERT(scalarftostring, scalar, "%f")
+
+#undef SCALAR_CONVERT
+
 /* Unsigned integer conversion */
-FORCEDINLINE CString uintltostring(uint64 const& s)
-{
-    if(s==0)
-        return "0";
-    // TODO: Find out what the fuck is going on here
-    uint64 ss = s*10;
-    CString str;
-#if defined(COFFEE_RASPBERRYPI)
-    str.resize(30);
-#else
-    str.resize(snprintf(nullptr,0,u64_fmt,ss));
-#endif
-    str.resize(snprintf(&str[0],str.size(),u64_fmt,ss)-1);
-    return str;
-}
-FORCEDINLINE CString uinttostring(uint32 const& s)
-{
-    if(s==0)
-        return "0";
-    uint32 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,u32_fmt,ss));
-    snprintf(&str[0],str.size(),u32_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString uintstostring(uint16 const& s)
-{
-    if(s==0)
-        return "0";
-    uint16 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,u16_fmt,ss));
-    snprintf(&str[0],str.size(),u16_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString uintctostring(uint8 const& s)
-{
-    if(s==0)
-        return "0";
-    uint8 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,u8_fmt,ss));
-    snprintf(&str[0],str.size(),u8_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
-/* Integer conversion */
-FORCEDINLINE CString intltostring(int64 const& s)
-{
-    if(s==0)
-        return "0";
-    int64 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,i64_fmt,ss));
-    snprintf(&str[0],str.size(),i64_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString inttostring(int32 const& s)
-{
-    if(s==0)
-        return "0";
-    int32 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,i32_fmt,ss));
-    snprintf(&str[0],str.size(),i32_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString intstostring(int16 const& s)
-{
-    if(s==0)
-        return "0";
-    int16 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,i16_fmt,ss));
-    snprintf(&str[0],str.size(),i16_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
-FORCEDINLINE CString intctostring(int8 const& s)
-{
-    if(s==0)
-        return "0";
-    int8 ss = s*10;
-    CString str;
-    str.resize(snprintf(nullptr,0,i8_fmt,ss));
-    snprintf(&str[0],str.size(),i8_fmt,ss);
-    str.resize(str.size()-1);
-    return str;
-}
+#define INTEGER_CONVERT(name, type, fmt) \
+    FORCEDINLINE CString name(type s) \
+    { \
+        if(s==0) \
+            return "0"; \
+        type ss = s; \
+        CString str; \
+        str.resize(C_CAST<size_t>(snprintf(nullptr,0,fmt,ss)) + 1); \
+        snprintf(&str[0],str.size() + 1,fmt,ss); \
+        str.resize(str.size() - 1); \
+        return str; \
+    }
+
+INTEGER_CONVERT(uintltostring, uint64, u64_fmt)
+INTEGER_CONVERT(uinttostring, uint32, u32_fmt)
+INTEGER_CONVERT(uintstostring, uint16, u16_fmt)
+INTEGER_CONVERT(uintctostring, uint8, u8_fmt)
+
+INTEGER_CONVERT(intltostring, int64, i64_fmt)
+INTEGER_CONVERT(inttostring, int32, i32_fmt)
+INTEGER_CONVERT(intstostring, int16, i16_fmt)
+INTEGER_CONVERT(intctostring, int8, i8_fmt)
+
+#undef INTEGER_CONVERT
 
 FORCEDINLINE cstring booltostring(bool i)
 {
@@ -228,14 +152,14 @@ FORCEDINLINE CString encode(c_cptr ptr, szptr len)
     CString out;
     out.reserve(len/3 + len % 3 > 0);
 
-    byte_t const* data = (byte_t const*)ptr;
+    byte_t const* data = C_CAST<byte_t const*>(ptr);
 
     uint32 temp;
     szptr j = 0;
     for(szptr i=0;i<len/3; i++)
     {
-        temp = (data[j++]) << 16;
-        temp += (data[j++]) << 8;
+        temp = C_CAST<uint32>((data[j++]) << 16);
+        temp += C_CAST<uint32>((data[j++]) << 8);
         temp += (data[j++]);
         out.append(1,b64_char[(temp & 0x00FC0000) >> 18]);
         out.append(1,b64_char[(temp & 0x0003F000) >> 12]);
@@ -268,6 +192,9 @@ FORCEDINLINE bool decode(byte_t const* i_ptr, szptr i_len,
                          Vector<byte_t>* out)
 {
     /*TODO: Implement Base64 decoding*/
+    C_UNUSED(i_ptr);
+    C_UNUSED(i_len);
+    C_UNUSED(out);
     return false;
 }
 
@@ -419,30 +346,33 @@ FORCEDINLINE CString pointerify(const void* const& ptr)
     return pointerify((uint64 const&)ptr);
 }
 
-FORCEDINLINE CString lower(CString const& st)
+template<typename CharT >
+FORCEDINLINE std::basic_string<CharT> lower(typename std::basic_string<CharT> const& st)
 {
-    CString o;
+    typename std::basic_string<CharT> o;
     o.reserve(st.size());
-    for(CString::value_type c : st)
+    for(typename std::basic_string<CharT>::value_type c : st)
         o.push_back(std::tolower(c));
     return o;
 }
 
-FORCEDINLINE CString upper(CString const& st)
+template<typename CharT >
+FORCEDINLINE std::basic_string<CharT> upper(std::basic_string<CharT> const& st)
 {
-    CString o;
+    std::basic_string<CharT> o;
     o.reserve(st.size());
-    for(CString::value_type c : st)
+    for(typename std::basic_string<CharT>::value_type c : st)
         o.push_back(std::toupper(c));
     return o;
 }
 
-FORCEDINLINE CString propercase(CString const& input)
+template<typename CharT >
+FORCEDINLINE std::basic_string<CharT> propercase(std::basic_string<CharT> const& input)
 {
-    CString out;
+    std::basic_string<CharT> out;
     out.reserve(input.size());
     szptr i = 0;
-    for(CString::value_type c : input)
+    for(typename std::basic_string<CharT>::value_type c : input)
     {
         if((i++) < 1)
             out.push_back(std::toupper(c));

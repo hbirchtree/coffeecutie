@@ -1,6 +1,7 @@
 set ( CoffeeGLeam_SRCS
     private/renderer/gleamrenderer.cpp
     private/levels/glbase.cpp
+    private/levels/shared/gl_shared_debug.cpp
 
     private/csdl2renderer.cpp
     )

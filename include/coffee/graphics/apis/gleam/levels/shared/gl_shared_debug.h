@@ -1,7 +1,5 @@
 #pragma once
 
-#include "gl_shared_include.h"
-#include "gl_shared_types.h"
 #include "gl_shared_enum_convert.h"
 
 #include <coffee/core/base/types/cdisplay.h>
@@ -23,7 +21,7 @@ struct CGL_Shared_Debug
     /* Verifying loader results */
     STATICINLINE bool VerifyInit()
     {
-        return (bool)glEnable;
+        return C_CAST<bool>(glEnable);
     }
 
     /* GL_KHR_debug */
@@ -32,21 +30,7 @@ struct CGL_Shared_Debug
         b_isDebugging = false;
     }
 
-    STATICINLINE void SetDebugMode(bool enabled)
-    {
-        if(enabled == b_isDebugging)
-            return;
-        if(enabled)
-        {
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            b_isDebugging = true;
-        }
-        else
-        {
-            glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            b_isDebugging = true;
-        }
-    }
+    static void SetDebugMode(bool enabled);
 
     STATICINLINE void SetDebugLevel(Severity s,bool enabled)
     {
@@ -85,23 +69,7 @@ struct CGL_Shared_Debug
 
     /* Extensions */
 
-    STATICINLINE void GetExtensions()
-    {
-        int32 numExtensions = GetInteger(GL_NUM_EXTENSIONS);
-
-        if (numExtensions <= 0)
-            return;
-
-        s_ExtensionList = std::string();
-        s_ExtensionList.reserve(numExtensions*20);
-        for(int32 i=0;i<numExtensions;i++)
-        {
-            cstring str = GetStringi(GL_EXTENSIONS,i);
-            s_ExtensionList.append(str);
-            if(i<numExtensions-1)
-                s_ExtensionList.push_back(' ');
-        }
-    }
+    static void GetExtensions();
 
     STATICINLINE bool CheckExtensionSupported(cstring id)
     {
@@ -110,119 +78,11 @@ struct CGL_Shared_Debug
 
     /* Context information */
 
-    STATICINLINE Display::CGLVersion ContextVersion()
-    {
-        Display::CGLVersion ver = {};
-
-        ver.major = 0;
-        ver.minor = 0;
-        ver.revision = 0;
-
-        /* In most cases, this will work wonders */
-        do
-        {
-            ver.major = GetInteger(GL_MAJOR_VERSION);
-            ver.minor = GetInteger(GL_MINOR_VERSION);
-        }while(false);
-
-        /* In some cases, we run on drivers that are old or crappy.
-         * We still want to know what the hardware supports, though. */
-        do
-        {
-            CString str = GetString(GL_VERSION);
-
-//            cVerbose(7,"Input GL_VERSION string: {0}",str);
-
-            if (str.size()<=0)
-                break;
-            Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
-            auto match = Regex::Match(p,str,true);
-            if (match.size() < 3)
-                break;
-            ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
-            ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
-            if (match.size() == 4)
-            {
-                bool ok = false;
-                ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str(),10,&ok);
-                if (!ok)
-                {
-                    ver.driver = match.at(3).s_match.front();
-                }
-            }
-            else if (match.size() == 5)
-            {
-                ver.revision = Convert::strtoint(match.at(3).s_match.front().c_str());
-                ver.driver = StrUtil::trim(match.at(4).s_match.front());
-            }
-        }while(false);
-
-        return ver;
-    }
+    static Display::CGLVersion ContextVersion();
 
     /* GLSL information */
 
-    STATICINLINE Display::CGLVersion ShaderLanguageVersion()
-    {
-        Display::CGLVersion ver = {};
-
-        cstring str_c = GetString(GL_SHADING_LANGUAGE_VERSION);
-
-        if (!str_c)
-            return ver;
-
-//        cVerbose(7,"Input GL_SHADING_LANGUAGE_VERSION string: {0}",str_c);
-
-        CString str = str_c;
-
-        ver.driver = str;
-
-        if(str.size()<1)
-            return ver;
-
-        if(ver.major == 0 && ver.minor ==0)
-            do
-            {
-                Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+).([\\s\\S]*)");
-                auto match = Regex::Match(p,str,true);
-
-                if(match.size() < 3)
-                    break;
-
-                ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
-                ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
-
-                if(match.size() < 4)
-                    break;
-
-                ver.driver = match.at(3).s_match.front().c_str();
-
-            }while(false);
-
-        if(ver.major == 0 && ver.minor == 0)
-            do
-            {
-                Regex::Pattern pa = Regex::Compile("([\\s\\S]+) ([0-9]+).([0-9]+)");
-                auto match = Regex::Match(pa,str,true);
-
-                if(match.size() == 3)
-                {
-                    ver.major = Convert::strtoint(match.at(1).s_match.front().c_str());
-                    ver.minor = Convert::strtoint(match.at(2).s_match.front().c_str());
-                    break;
-                }else if(match.size() ==4)
-                {
-                    ver.major = Convert::strtoint(match.at(2).s_match.front().c_str());
-                    ver.minor = Convert::strtoint(match.at(3).s_match.front().c_str());
-                }else
-                    break;
-
-                ver.driver = match.at(1).s_match.front().c_str();
-
-            }while(false);
-
-        return ver;
-    }
+    static Display::CGLVersion ShaderLanguageVersion();
 
     /* Rendering device info */
 
@@ -255,19 +115,8 @@ struct CGL_Shared_Debug
         delete[] Internal_Formats;
     }
 
-    STATICINLINE bool CompressedFormatSupport(Texture, PixelFormat t)
-    {
-        /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
-        int32 supp = GL_FALSE;
-        CGenum target = to_enum(t);
-        for(int32 i=0;i<Num_Internal_Formats;i++)
-            if(target == Internal_Formats[i])
-            {
-                supp = GL_TRUE;
-                break;
-            }
-        return supp == GL_TRUE;
-    }
+    static bool CompressedFormatSupport(Texture, PixelFormat t);
+
     STATICINLINE ColBits CompressedFormatDepths(Texture, PixelFormat)
     {
 //        int32 supp;

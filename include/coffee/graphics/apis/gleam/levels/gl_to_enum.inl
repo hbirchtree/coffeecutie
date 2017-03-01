@@ -1,15 +1,9 @@
 #pragma once
 
-#include "../gleam.h"
+#include <glad/glad.h>
 #include <glad_es/glad.h>
-#include <glad_es/KHR/khrplatform.h>
-#include <coffee/core/types/basetypes.h>
 
-#ifdef COFFEE_GLEAM_DESKTOP
-#include "desktop/glbase.h"
-#else
-#include "es/glbase.h"
-#endif
+#include "shared/gl_shared_types.h"
 
 namespace Coffee{
 namespace CGL{
@@ -39,24 +33,20 @@ inline CGenum to_enum(
     {
     case DebugType::Compatibility:
         return GL_DEBUG_TYPE_PORTABILITY;
-        break;
     case DebugType::Compliance:
         return GL_DEBUG_TYPE_PORTABILITY;
-        break;
     case DebugType::Deprecated:
         return GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR;
-        break;
     case DebugType::Performance:
         return GL_DEBUG_TYPE_PERFORMANCE;
-        break;
     case DebugType::Marker:
         return GL_DEBUG_TYPE_MARKER;
-        break;
     case DebugType::UndefinedBehavior:
         return GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR;
-        break;
-    default:
-        return GL_NONE;
+
+    case DebugType::Other:
+    case DebugType::Information:
+        return GL_DEBUG_TYPE_OTHER;
     }
 }
 

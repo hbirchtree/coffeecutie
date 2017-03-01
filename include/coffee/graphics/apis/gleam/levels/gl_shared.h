@@ -18,6 +18,8 @@ struct CGL_Shared_Functions
     using Texture = CGL::Texture;
     using Feature = CGL::Feature;
 
+    using Debug = CGL_Shared_Debug;
+
     /* Features */
     STATICINLINE bool ClipDistanceSupported()
     {return false;}
@@ -199,8 +201,6 @@ struct CGL_Shared_Functions
      */
     bool DebuggingSupported()
     {return Debug::CheckExtensionSupported("GL_KHR_debug") && glDebugMessageCallback;}
-
-    using Debug = CGL_Shared_Debug;
 };
 
 }
