@@ -5,6 +5,7 @@
 #include <coffee/core/types/tdef/integertypes.h>
 #include <coffee/core/types/edef/pixenum.h>
 #include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/cdef/memtypes.h>
 
 namespace Coffee{
 namespace CGL{
