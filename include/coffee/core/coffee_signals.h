@@ -1,6 +1,8 @@
 #pragma once
 
+#if !defined(__GAMECUBE__)
 #include <signal.h>
+#endif
 #include <coffee/core/plat/plat_primary_identify.h>
 
 namespace Coffee{
@@ -10,6 +12,8 @@ using sighandler_t = void(*)(int);
 
 enum Signals
 {
+#if !defined(__GAMECUBE__)
+
 #ifdef COFFEE_WINDOWS
 	Sig_Normal		= 0,
 #else
@@ -34,6 +38,7 @@ enum Signals
 
     Sig_ShitMySelf   = SIGSEGV,
     Sig_PoopedABit   = SIGABRT,
+#endif
 };
 
 extern void sig_dummy_handler(int);

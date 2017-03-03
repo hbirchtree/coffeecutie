@@ -4,7 +4,7 @@ set ( CORE_EXTRA_LIBRARIES )
 
 # Platform-specific target options
 
-if(NOT WIN32 AND NOT ANDROID)
+if(NOT WIN32 AND NOT ANDROID )
     # Used for thread details
     # Might replace this with Thread
     list ( APPEND CORE_EXTRA_LIBRARIES pthread )
@@ -15,9 +15,12 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     list ( APPEND CORE_EXTRA_LIBRARIES rt )
 endif()
 
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL)
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL )
     # Necessary for Linux and possibly OS X (latter is untested)
-    list ( APPEND CORE_EXTRA_LIBRARIES dl m )
+    list ( APPEND CORE_EXTRA_LIBRARIES m )
+    if(NOT GAMECUBE)
+        list ( APPEND CORE_EXTRA_LIBRARIES dl )
+    endif()
 endif()
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)

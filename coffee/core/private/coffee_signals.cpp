@@ -6,7 +6,9 @@
 
 namespace Coffee{
 
+#if !defined(__GAMECUBE__)
 static exithandler_t exit_handle = nullptr;
+#endif
 
 /*!
  * \brief Default signal handler function
