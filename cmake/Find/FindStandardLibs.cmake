@@ -12,7 +12,7 @@ endif()
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     # Used for thread details
-    list ( APPEND CORE_EXTRA_LIBRARIES rt )
+    list ( APPEND CORE_EXTRA_LIBRARIES rt EGL )
 endif()
 
 if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL)
@@ -129,6 +129,13 @@ if(NACL)
         ppapi
         nacl_io
         nosys
+        )
+endif()
+
+if(MAEMO)
+    list ( APPEND CORE_EXTRA_LIBRARIES
+        GLES_CM GLESv2
+        EGL IMGegl
         )
 endif()
 
