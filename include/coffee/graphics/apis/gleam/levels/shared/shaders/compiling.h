@@ -182,6 +182,7 @@ struct CGL_Old_ShaderCompiler
         int32 size;
     };
 
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE
     void ProgramUnifBlockGet(CGhnd h,uint32* n, UnifBlkInfo** blocks)
     {
@@ -215,10 +216,14 @@ struct CGL_Old_ShaderCompiler
                                       (*blocks)[i].index);
         }
     }
+#endif
+
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE uint32 ProgramUnifBlockGetLoc(CGhnd h,cstring n)
     {return glGetUniformBlockIndex(h,n);}
     STATICINLINE void ProgramUnifBlockBind(CGhnd h,uint32 l,uint32 i)
     {glUniformBlockBinding(h,l,i);}
+#endif
 };
 
 

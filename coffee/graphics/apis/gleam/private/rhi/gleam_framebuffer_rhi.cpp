@@ -91,12 +91,16 @@ void GLEAM_RenderTarget::attachSurface(const GLEAM_RenderDummy &rb)
 
 void GLEAM_RenderTarget::attachDepthStencilSurface(const GLEAM_Surface &s, uint32 mip)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     fb_bind(m_type,m_handle);
 
     CGL33::FBAttachTexture2D(m_type,GL_DEPTH_STENCIL_ATTACHMENT,s.m_type,s.m_handle,mip);
 
     if(m_handle != 0)
         fb_bind(m_type,0);
+#else
+    attachDepthSurface(s, mip);
+#endif
 }
 
 void GLEAM_RenderTarget::attachDepthSurface(const GLEAM_Surface &s, uint32 mip)
@@ -113,22 +117,27 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
                               const CRect64 &tgt, DBuffers buf,
                               Filtering flt) const
 {
+#if !defined(COFFEE_ONLY_GLES20)
     this->bind(FramebufferT::Read);
     target.bind(FramebufferT::Draw);
     CGL33::FBBlit(src.convert<int32>(),tgt.convert<int32>(),buf,flt);
 
     this->unbind(FramebufferT::Read);
     target.unbind(FramebufferT::Draw);
+#endif
 }
 
 void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
 {
     fb_bind(m_type,m_handle);
+#if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::ViewportArraySupported())
     {
         auto r = view.convert<scalar>();
         CGL43::ViewportSet(i,r);
-    }else{
+    }else
+#endif
+    {
         if(GL_DEBUG_MODE)
             if(i != 0)
                 cWarning("Cannot perform task: applying viewport index, unsupported");

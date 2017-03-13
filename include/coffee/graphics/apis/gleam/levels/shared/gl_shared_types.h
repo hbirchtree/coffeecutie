@@ -13,7 +13,11 @@ namespace CGL{
 /* Type definitions */
 using CGenum = uint32;
 using CGflag = uint32;
+#if defined(COFFEE_ONLY_GLES20)
+using CGcallback = void(*)();
+#else
 using CGcallback = GLDEBUGPROC;
+#endif
 using CGsync = void*;
 
 /* Shorthand for GL object handles, we will treat them differently */
@@ -74,8 +78,13 @@ enum class VertexWinding
 
 enum class AttribMode
 {
+#if defined(COFFEE_ONLY_GLES20)
+    Interleaved = GL_NONE,
+    Separate = GL_NONE,
+#else
     Interleaved = GL_INTERLEAVED_ATTRIBS,
     Separate = GL_SEPARATE_ATTRIBS,
+#endif
 };
 
 enum CompFlags
@@ -193,7 +202,12 @@ enum class BufType
 
     ArrayData = GL_ARRAY_BUFFER,
     ElementData = GL_ELEMENT_ARRAY_BUFFER,
+#if defined(COFFEE_ONLY_GLES20)
+    UniformData = GL_NONE,
+#else
     UniformData = GL_UNIFORM_BUFFER,
+#endif
+
 #ifdef COFFEE_GLEAM_DESKTOP
     ShaderData = GL_SHADER_STORAGE_BUFFER,
     AtomicData = GL_ATOMIC_COUNTER_BUFFER,
@@ -203,7 +217,11 @@ enum class BufType
     AtomicData = 0,
     QueryData = 0,
 #endif
+#if defined(COFFEE_ONLY_GLES20)
+    XFBData = GL_NONE,
+#else
     XFBData = GL_TRANSFORM_FEEDBACK_BUFFER,
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     DrawcallData = GL_DRAW_INDIRECT_BUFFER,
     ComputecallData = GL_DISPATCH_INDIRECT_BUFFER,
@@ -211,20 +229,33 @@ enum class BufType
     DrawcallData = 0,
     ComputecallData = 0,
 #endif
+
+#if defined(COFFEE_ONLY_GLES20)
+    PixelUData = GL_NONE,
+    PixelPData = GL_NONE,
+#else
     PixelUData = GL_PIXEL_UNPACK_BUFFER,
     PixelPData = GL_PIXEL_PACK_BUFFER,
+#endif
 };
 
 enum class Texture
 {
     T2D = GL_TEXTURE_2D,
+#if defined(COFFEE_ONLY_GLES20)
+    T3D = GL_NONE,
+#else
     T3D = GL_TEXTURE_3D,
+#endif
     Cubemap = GL_TEXTURE_CUBE_MAP,
 #ifdef COFFEE_GLEAM_DESKTOP
     Rect = GL_TEXTURE_RECTANGLE,
 #endif
-
+#if defined(COFFEE_ONLY_GLES20)
+    T2DArray = GL_NONE,
+#else
     T2DArray = GL_TEXTURE_2D_ARRAY,
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
 #endif
@@ -268,9 +299,15 @@ enum class DrawMode
 
 enum class QueryT
 {
+#if defined(COFFEE_ONLY_GLES20)
+    AnySamples = GL_NONE,
+    AnySamplesCon = GL_NONE,
+    XFGen = GL_NONE,
+#else
     AnySamples = GL_ANY_SAMPLES_PASSED,
     AnySamplesCon = GL_ANY_SAMPLES_PASSED_CONSERVATIVE,
     XFGen = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
+#endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
     TimeElapsed = GL_TIME_ELAPSED,
@@ -287,7 +324,11 @@ enum class QueryT
 
 enum class PatchProperty
 {
+#if defined(COFFEE_ONLY_GLES20)
+    Vertices = GL_NONE,
+#else
     Vertices = GL_PATCH_VERTICES,
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     DefOuterLevel = GL_PATCH_DEFAULT_OUTER_LEVEL,
     DefInnerLevel = GL_PATCH_DEFAULT_INNER_LEVEL,

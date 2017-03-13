@@ -38,12 +38,21 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
     props.gl.version.major = ctxtMajorVer;
     props.gl.version.minor = ctxtMinorVer;
 
+#if defined(COFFEE_MAEMO)
+    props.gl.bits.alpha = 0;
+    props.gl.bits.red = 5;
+    props.gl.bits.green = 6;
+    props.gl.bits.blue = 5;
+#else
     props.gl.bits.alpha = 8;
     props.gl.bits.red = 8;
     props.gl.bits.blue = 8;
     props.gl.bits.green = 8;
+#endif
     props.gl.bits.depth = 24;
     props.gl.bits.stencil = 8;
+
+    props.gl.bits.samples = 0;
 
     return props;
 }

@@ -25,6 +25,10 @@ private:
     GLEAM_ElementBuffer const* m_ibuffer;
     Vector<GLEAM_VertAttribute> m_attributes;
     CGhnd m_handle;
+
+#if defined(COFFEE_ONLY_GLES20)
+    Map<uint32, GLEAM_ArrayBuffer&> m_bufferMapping;
+#endif
 };
 
 }

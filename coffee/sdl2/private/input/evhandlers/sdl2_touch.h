@@ -6,7 +6,7 @@
 #include <coffee/core/CDebug>
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 FORCEDINLINE void EventHandleTap(SDL2EventHandler* ctxt, const SDL_TouchFingerEvent& ev)
 {

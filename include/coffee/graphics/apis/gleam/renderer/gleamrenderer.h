@@ -21,10 +21,6 @@ protected:
     bool bindingPostInit(const GLProperties &p,CString*);
 
     void bindingTerminate();
-
-    CString m_rendererString;
-    CString m_vendorString;
-    CString m_versionString;
 };
 
 }

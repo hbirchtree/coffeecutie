@@ -92,6 +92,11 @@ public:
     }
 
     virtual void run() {
+        {
+            szptr restore_size = sizeof(save_state);
+            Store::RestoreMemory(&save_state, &restore_size, 0);
+        }
+
         m_query = GpuInfo::LoadDefaultGpuQuery(&fun);
 
         cVerbose("Entering run() function");
@@ -347,7 +352,7 @@ public:
         vertdesc.bind();
         vertdesc.bindBuffer(0, vertbuf);
 
-        bigscalar tprevious = this->contextTime();
+        bigscalar tprevious = save_state.time_base;
         bigscalar tdelta = 0.1;
 
         GLM::PreDrawCleanup();
@@ -363,7 +368,7 @@ public:
 
         Coffee::Counter frame_counter(frame_count);
 
-        bool do_debugging = false;
+        bool do_debugging = save_state.debug_enabled;
         bool did_apply_state = false;
 
         while (!closeFlag()) {
@@ -474,6 +479,9 @@ public:
             save_state.time_base = tprevious;
             save_state.debug_enabled = do_debugging;
         }
+
+        cDebug("Saving time: {0}", save_state.time_base);
+        Store::SaveMemory(&save_state, sizeof(save_state), 0);
 
         Profiler::PopContext();
     }

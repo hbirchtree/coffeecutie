@@ -1,9 +1,8 @@
 #pragma once
 
 #include "extensionresolvers.h"
-
-#include "../types/cdisplay.h"
-#include "../../types/edef/dbgenum.h"
+#include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/types/edef/dbgenum.h>
 
 namespace Coffee{
 namespace DebugFun{
@@ -45,6 +44,10 @@ extern CString cStringReplace(
 extern CString cStringReplace(
         CString const& fmt, size_t const& index,
         Display::CGLVersion const& arg);
+
+extern CString cStringReplace(
+        CString const& fmt, size_t const& index,
+        Display::CDContextBits const& arg);
 
 template<typename T>
 inline CString cStringReplace(

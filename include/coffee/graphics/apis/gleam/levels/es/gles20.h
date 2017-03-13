@@ -10,6 +10,8 @@
 #include "../shared/buffers/old_buffers.h"
 #include "../shared/framebuffers/old_framebuffers.h"
 #include "../shared/vertex/old_vaos.h"
+#include "../shared/draw/basic.h"
+#include "../shared/shaders/arb_es2_compatibility.h"
 
 namespace Coffee{
 namespace CGL{
@@ -22,6 +24,11 @@ namespace CGL{
  *  - 3D textures are present but not supported
  *  - Framebuffer layers are present, but not supported
  */
+
+#if defined(COFFEE_LINKED_GLES)
+using GLADloadproc = void(*)();
+#endif
+
 struct CGLES20 :
         CGL_Implementation,
         CGL_Old_Framebuffers<CGhnd,CGenum,FramebufferT,Texture>,
@@ -30,7 +37,8 @@ struct CGLES20 :
         CGL_Old_ShaderCompiler<CGhnd,CGenum>,
         CGL_Old_Buffers<CGhnd,BufType>,
         CGL_Old_VAOs<CGhnd,CGenum>,
-        CGL_Old_Uniforms
+        CGL_Old_Uniforms,
+        CGL_Basic_Draw
 {
     enum FBAttach
     {
@@ -42,8 +50,11 @@ struct CGLES20 :
     {
         if(!ctxt->acquireContext())
             return false;
+
+#if !defined(COFFEE_LINKED_GLES)
         if(!gladLoadGLES2Loader(fun))
             return false;
+#endif
 
         if(!Debug::VerifyInit() || !glTexImage2D)
             return false;

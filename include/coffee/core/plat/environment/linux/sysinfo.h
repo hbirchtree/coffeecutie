@@ -21,6 +21,8 @@ struct LinuxSysInfo : SysInfoDef
 
     static Vector<CString> CPUFlags();
 
+    static NetStatusFlags NetStatus();
+
     static uint32 CpuCount();
     static uint32 CoreCount();
     STATICINLINE bool MemVirtualAvailable()
@@ -63,11 +65,6 @@ struct LinuxSysInfo : SysInfoDef
     static uint64 ProcessorCacheSize();
 
     static bool HasHyperThreading();
-
-    STATICINLINE NetStatusFlags NetStatus()
-    {
-        return NetStatLocalOnly;
-    }
 
     static CString GetSystemVersion();
 

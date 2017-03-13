@@ -46,6 +46,20 @@ struct CDContextBits
     {
     }
 
+    bool operator ==(CDContextBits const& other)
+    {
+        return (
+                    red     == other.red    &&
+                    green   == other.green  &&
+                    blue    == other.blue   &&
+                    alpha   == other.alpha  &&
+                    depth   == other.depth  &&
+                    stencil == other.stencil &&
+                    samples == other.samples
+                    );
+    }
+
+
     uint8 red;
     uint8 green;
     uint8 blue;
@@ -54,7 +68,9 @@ struct CDContextBits
     uint8 depth;
     uint8 stencil;
 
-    uint16 _pad;
+    uint8 samples;
+
+    uint8 _pad;
 };
 
 /*!

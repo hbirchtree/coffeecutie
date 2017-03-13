@@ -11,6 +11,7 @@ class SDL2Window :
         public virtual SDL2ContextUser
 {
 public:
+    virtual ~SDL2Window() {}
     CDMonitor monitor();
 
     bool showWindow();

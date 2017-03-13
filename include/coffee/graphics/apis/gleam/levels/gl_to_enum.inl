@@ -1,7 +1,11 @@
 #pragma once
 
+#if !defined(COFFEE_ONLY_GLES20)
 #include <glad/glad.h>
 #include <glad_es/glad.h>
+#else
+#include <GLES2/gl2.h>
+#endif
 
 #include "shared/gl_shared_types.h"
 
@@ -13,6 +17,7 @@ inline CGenum to_enum(
 {
     switch(s)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case Severity::High:
         return GL_DEBUG_SEVERITY_HIGH;
     case Severity::Medium:
@@ -21,6 +26,7 @@ inline CGenum to_enum(
         return GL_DEBUG_SEVERITY_LOW;
     case Severity::Information:
         return GL_DEBUG_SEVERITY_NOTIFICATION;
+#endif
     default:
         return GL_NONE;
     }
@@ -31,6 +37,7 @@ inline CGenum to_enum(
 {
     switch(t)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case DebugType::Compatibility:
         return GL_DEBUG_TYPE_PORTABILITY;
     case DebugType::Compliance:
@@ -47,6 +54,10 @@ inline CGenum to_enum(
     case DebugType::Other:
     case DebugType::Information:
         return GL_DEBUG_TYPE_OTHER;
+#else
+    default:
+        return GL_NONE;
+#endif
     }
 }
 
@@ -56,6 +67,7 @@ inline CGenum to_enum(
     CGenum type;
     switch(t)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case Object::Shader:
         type = GL_SHADER;
         break;
@@ -86,6 +98,10 @@ inline CGenum to_enum(
     case Object::RenderBuffer:
         type = GL_RENDERBUFFER;
         break;
+#else
+    default:
+        return GL_NONE;
+#endif
     }
     return type;
 }
@@ -133,10 +149,12 @@ inline CGenum to_enum(
     case Feature::PrimitiveRestart:
         return GL_PRIMITIVE_RESTART;
 #endif
+#if !defined(COFFEE_ONLY_GLES20)
     case Feature::PrimitiveRestartFixedIdx:
         return GL_PRIMITIVE_RESTART_FIXED_INDEX;
     case Feature::RasterizerDiscard:
         return GL_RASTERIZER_DISCARD;
+#endif
     case Feature::SampleAlphaToCoverage:
         return GL_SAMPLE_ALPHA_TO_COVERAGE;
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -390,10 +408,13 @@ inline CGenum to_enum(
     /* Depth/stencil buffers */
     case PixelFormat::Depth16:
         return GL_DEPTH_COMPONENT16;
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::Depth24Stencil8:
         return GL_DEPTH24_STENCIL8;
+#endif
 
     /* Requires to be used with GL_UNSIGNED_INT */
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::R8I:
         return GL_R8I;
     case PixelFormat::R8UI:
@@ -468,6 +489,7 @@ inline CGenum to_enum(
 
     case PixelFormat::R11G11B10F:
         return GL_R11F_G11F_B10F;
+#endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case PixelFormat::R3G3B2UI:
@@ -479,8 +501,10 @@ inline CGenum to_enum(
 #endif
     case PixelFormat::RGB565UI:
         return GL_RGB565;
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::RGB9E5UI:
         return GL_RGB9_E5;
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     case PixelFormat::RGB10:
         return GL_RGB10;
@@ -491,16 +515,20 @@ inline CGenum to_enum(
     case PixelFormat::RGBA2:
         return GL_RGBA2;
 #endif
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::RGB10A2I:
         return GL_RGB10_A2;
     case PixelFormat::RGB10A2UI:
         return GL_RGB10_A2UI;
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     case PixelFormat::RGBA12:
         return GL_RGBA12;
 #endif
     case PixelFormat::RGB5A1UI:
         return GL_RGB5_A1;
+
+#if !defined(COFFEE_ONLY_GLES20)
 
     case PixelFormat::SRGB8A8:
 #if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
@@ -514,6 +542,8 @@ inline CGenum to_enum(
 #else
         return GL_RGB8;
 #endif
+#endif
+
     default:
 	return GL_NONE;
     }
@@ -550,6 +580,7 @@ inline CGenum to_enum2(
 {
     CGenum o = 0;
 
+#if !defined(COFFEE_ONLY_GLES20)
     if(feval(f&ShaderStage::Vertex))
         o |= GL_VERTEX_SHADER_BIT;
     if(feval(f&ShaderStage::TessControl))
@@ -565,6 +596,7 @@ inline CGenum to_enum2(
 
     if(f==ShaderStage::All)
         o = GL_ALL_SHADER_BITS;
+#endif
 
     return o;
 }
@@ -630,10 +662,15 @@ inline CGenum to_enum(
         return GL_FUNC_SUBTRACT;
     case Operator::RevSub:
         return GL_FUNC_REVERSE_SUBTRACT;
+#if !defined(COFFEE_ONLY_GLES20)
     case Operator::Min:
         return GL_MIN;
     case Operator::Max:
         return GL_MAX;
+#else
+    default:
+        return GL_NONE;
+#endif
     }
 }
 
@@ -692,6 +729,8 @@ inline CGenum to_enum(BufType f)
 inline CGenum to_enum1(ResourceAccess acc)
 {
     CGenum f = GL_NONE;
+
+#if !defined(COFFEE_ONLY_GLES20)
     if(feval(acc&(ResourceAccess::ReadOnly|ResourceAccess::Persistent)))
         f = GL_DYNAMIC_READ;
     if(feval(acc&(ResourceAccess::WriteOnly|ResourceAccess::Persistent)))
@@ -718,6 +757,14 @@ inline CGenum to_enum1(ResourceAccess acc)
         f = GL_STATIC_DRAW;
     if(feval(acc&(ResourceAccess::ReadWrite)))
         f = GL_STATIC_COPY;
+#else
+    if(feval(acc&(ResourceAccess::Persistent)))
+        f = GL_DYNAMIC_DRAW;
+    else if(feval(acc&(ResourceAccess::Streaming)))
+        f = GL_STREAM_DRAW;
+    else
+        f = GL_STATIC_DRAW;
+#endif
 
     return f;
 }
@@ -729,12 +776,14 @@ inline CGenum to_enum2(ResourceAccess acc)
     if(feval(acc&ResourceAccess::Persistent))
         f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
 #endif
+#if !defined(COFFEE_ONLY_GLES20)
     if(feval(acc&ResourceAccess::ReadOnly))
         f |= GL_MAP_READ_BIT;
     if(feval(acc&ResourceAccess::WriteOnly))
         f |= GL_MAP_WRITE_BIT;
     if(feval(acc&ResourceAccess::ReadWrite))
         f |= GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     if(feval(acc&ResourceAccess::Streaming))
         f |= GL_CLIENT_STORAGE_BIT;
@@ -763,6 +812,7 @@ inline CGenum to_enum(PixelComponents f)
 {
     switch(f)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelComponents::R:
         return GL_RED;
     case PixelComponents::G:
@@ -771,6 +821,7 @@ inline CGenum to_enum(PixelComponents f)
         return GL_BLUE;
     case PixelComponents::RG:
         return GL_RG;
+#endif
     case PixelComponents::RGB:
         return GL_RGB;
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -785,10 +836,12 @@ inline CGenum to_enum(PixelComponents f)
 #endif
     case PixelComponents::Depth:
         return GL_DEPTH_COMPONENT;
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelComponents::DepthStencil:
         return GL_DEPTH_STENCIL;
     case PixelComponents::Stencil:
         return GL_STENCIL;
+#endif
     default:
         return GL_NONE;
     }
@@ -859,17 +912,22 @@ inline CGenum to_enum(BitFormat f)
 
     case BitFormat::UInt:
         return GL_UNSIGNED_INT;
+#if !defined(COFFEE_ONLY_GLES20)
     case BitFormat::UInt_5999R:
         return GL_UNSIGNED_INT_5_9_9_9_REV;
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     case BitFormat::UInt_1010102:
         return GL_UNSIGNED_INT_10_10_10_2;
 #endif
+#if !defined(COFFEE_ONLY_GLES20)
     case BitFormat::UInt_2101010R:
         return GL_UNSIGNED_INT_2_10_10_10_REV;
-
+#endif
+#if !defined(COFFEE_ONLY_GLES20)
     case BitFormat::Scalar_16:
         return GL_HALF_FLOAT;
+#endif
     case BitFormat::Scalar_32:
         return GL_FLOAT;
     default:
@@ -886,10 +944,12 @@ inline CGenum to_enum(FramebufferT f)
 {
     switch(f)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case FramebufferT::Draw:
         return GL_DRAW_FRAMEBUFFER;
     case FramebufferT::Read:
         return GL_READ_FRAMEBUFFER;
+#endif
     case FramebufferT::All:
         return GL_FRAMEBUFFER;
     default:
@@ -966,33 +1026,44 @@ inline CGpixfmt get_fmt(PixelFormat e, bool rev)
         else
 #endif
             return {GL_UNSIGNED_SHORT_5_5_5_1,GL_RGBA};
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::RGB9E5UI:
         if(rev)
             return {GL_UNSIGNED_INT_5_9_9_9_REV,GL_RGBA};
         else
             break;
-
+#endif
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::RGB10A2I:
         if(rev)
             return {GL_INT_2_10_10_10_REV,GL_RGBA};
         else
             break;
+#endif
+
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::RGB10A2UI:
 #ifdef COFFEE_GLEAM_DESKTOP
         if(rev)
 #endif
             return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
+#endif
+
 #ifdef COFFEE_GLEAM_DESKTOP
         else
             return {GL_UNSIGNED_INT_10_10_10_2,GL_RGBA};
 #endif
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::R11G11B10F:
         return {GL_UNSIGNED_INT_10F_11F_11F_REV,GL_RGB};
+#endif
 
+#if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::R32F:
         return {GL_FLOAT,GL_RED};
     case PixelFormat::RG32F:
         return {GL_FLOAT,GL_RG};
+#endif
     case PixelFormat::RGB32F:
         return {GL_FLOAT,GL_RGB};
     case PixelFormat::RGBA32F:
@@ -1071,8 +1142,10 @@ inline CGenum to_enum1(DBuffers buf)
 {
     if(feval(buf,DBuffers::Color))
         return GL_COLOR_ATTACHMENT0;
+#if !defined(COFFEE_ONLY_GLES20)
     if(feval(buf,DBuffers::DepthStencil))
         return GL_DEPTH_STENCIL_ATTACHMENT;
+#endif
     if(feval(buf,DBuffers::Depth))
         return GL_DEPTH_ATTACHMENT;
     if(feval(buf,DBuffers::Stencil))
@@ -1101,6 +1174,7 @@ inline uint32 to_enum_shtype(CGenum f)
 
     switch(f)
     {
+#if !defined(COFFEE_ONLY_GLES20)
     case GL_SAMPLER_2D:
         return Sampler_v|S2|Scalar_t;
     case GL_SAMPLER_3D:
@@ -1150,6 +1224,7 @@ inline uint32 to_enum_shtype(CGenum f)
         return Scalar_t|Mat_d|S3;
     case GL_FLOAT_MAT4:
         return Scalar_t|Mat_d|S4;
+#endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case GL_DOUBLE:
@@ -1169,6 +1244,7 @@ inline uint32 to_enum_shtype(CGenum f)
         return BScalar_t|Mat_d|S4;
 #endif
 
+#if !defined(COFFEE_ONLY_GLES20)
     case GL_UNSIGNED_INT:
         return UInt_t;
     case GL_UNSIGNED_INT_VEC2:
@@ -1186,6 +1262,7 @@ inline uint32 to_enum_shtype(CGenum f)
         return Int_t|Vec_d|S3;
     case GL_INT_VEC4:
         return Int_t|Vec_d|S4;
+#endif
 
     default:
         return ShaderTypes::None;

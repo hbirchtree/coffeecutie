@@ -7,7 +7,7 @@
 #include "sdl2_inputmap.h"
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 FORCEDINLINE void coffee_sdl2_eventhandle_window_state(
         SDL2EventHandler* ctxt,

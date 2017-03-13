@@ -6,7 +6,7 @@
 #include "../types/sdl2datatypes.h"
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 void GetWindowPtr(SDL_Window *window, CDWindow *win)
 {

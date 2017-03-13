@@ -6,7 +6,7 @@
 #include <coffee/core/platform_data.h>
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 //"Private" functions
 Uint32 _coffee_sdl2_toggle_flag(bool flag, Uint32 value)

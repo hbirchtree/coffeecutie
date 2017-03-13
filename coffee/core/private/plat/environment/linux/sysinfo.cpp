@@ -3,9 +3,13 @@
 #include <coffee/core/plat/environment/linux/environment.h>
 #include <coffee/core/string_casting.h>
 
+#include <coffee/core/platform_data.h>
+
 namespace Coffee{
 namespace Environment{
 namespace Linux{
+
+using DirFun = CResources::DirFun;
 
 /* More paths to inspect:
  *
@@ -61,6 +65,24 @@ CString get_kern_arch()
         return "?";
     else
         return d.machine;
+}
+
+PlatformData::DeviceType get_device_variant()
+{
+    CString input = CResources::Linux::LinuxFileFun::sys_read(
+                "/sys/class/dmi/id/chassis_type");
+
+    int32 chassis_type = cast_string<int32>(input);
+
+    switch(chassis_type)
+    {
+    case 1:
+        return PlatformData::DeviceDesktop;
+    case 10:
+        return PlatformData::DeviceLaptop;
+    default:
+        return PlatformData::DeviceUnknown;
+    }
 }
 
 CString LinuxSysInfo::GetSystemVersion()
@@ -125,6 +147,30 @@ Vector<CString> LinuxSysInfo::CPUFlags()
     }
 
     return flags;
+}
+
+SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
+{
+    static const constexpr cstring net_path = "/sys/class/net/";
+
+    DirFun::DirList list;
+    DirFun::Ls(net_path, list);
+    bool has_loopback = false;
+    for(DirFun::DirItem_t const& dir : list)
+    {
+        if(dir.name == "lo")
+            has_loopback = true;
+        else {
+            CString operstate_file = Env_::ConcatPath(net_path, dir.name.c_str());
+            operstate_file = Env_::ConcatPath(operstate_file.c_str(), "operstate");
+            CString state = CResources::Linux::LinuxFileFun::sys_read(operstate_file.c_str());
+            if(state == "up")
+                return NetStatConnected;
+        }
+    }
+    if(has_loopback)
+        return NetStatLocalOnly;
+    return NetStatDisconnected;
 }
 
 uint32 LinuxSysInfo::CpuCount()
@@ -332,6 +378,9 @@ bool LinuxSysInfo::HasHyperThreading()
 
 HWDeviceInfo LinuxSysInfo::DeviceName()
 {
+#if defined(COFFEE_MAEMO)
+    return HWDeviceInfo("Nokia", "N900", get_kern_name() + (" " + get_kern_ver()));
+#else
     static const cstring prod_ver = "/sys/class/dmi/id/product_version";
     static const cstring prod_name = "/sys/class/dmi/id/product_name";
 
@@ -362,6 +411,7 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
         prod = product.c_str();
 
     return HWDeviceInfo(manf, prod, get_kern_name() + (" " + get_kern_ver()));
+#endif
 }
 
 using namespace CResources;

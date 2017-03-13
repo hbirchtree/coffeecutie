@@ -1,7 +1,12 @@
 #pragma once
 
 #include <coffee/core/types/edef/dbgenum.h>
+#if defined(COFFEE_ONLY_GLES20)
+//#include <GLES/gl.h>
+#include <GLES2/gl2.h>
+#else
 #include <glad/glad.h>
+#endif
 
 namespace Coffee{
 

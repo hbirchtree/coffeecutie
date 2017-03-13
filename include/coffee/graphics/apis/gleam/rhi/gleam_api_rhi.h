@@ -88,6 +88,8 @@ struct GLEAM_API : GraphicsAPI
 
     /* "Loose" functions */
 public:
+    static void GetDefaultVersion(int32& major, int32& minor);
+
     static bool LoadAPI(DataStore store, bool debug = false);
 
     static Function<bool(bool debug)> GetLoadAPI();

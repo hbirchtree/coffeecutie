@@ -6,7 +6,7 @@
 #include <coffee/core/CInput>
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 FORCEDINLINE void EventHandleControllerInput(
         SDL2EventHandler* ctxt,

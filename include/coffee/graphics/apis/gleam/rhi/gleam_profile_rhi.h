@@ -39,14 +39,6 @@ protected:
     GLEAM_Sampler2D m_depth_stencil_sampler;
     GLEAM_Sampler2D m_color_sampler;
 
-    CGhnd m_vbo;
-    CGhnd m_vao;
-    CGhnd m_prg;
-
-    int32 m_tex_size_unif;
-    int32 m_trans_unif;
-    int32 m_tex_unif;
-
     bool m_enabled;
 #endif
 };

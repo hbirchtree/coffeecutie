@@ -4,6 +4,7 @@ set ( CoffeeSDL2_SRCS
     private/windowing/csdl2_dialogs.cpp
     private/graphics/csdl2_basic_renderer.cpp
     private/graphics/csdl2_gl_renderer.cpp
+    private/graphics/egl_renderer.cpp
     private/input/csdl2_eventhandler.cpp
     private/windowing/csdl2_window.cpp
 

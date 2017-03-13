@@ -7,43 +7,71 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
+                             uint32 binding, GLEAM_ArrayBuffer& buf)
+{
+    for(GLEAM_VertAttribute const& attr : m_attributes)
+        if(binding == attr.bufferAssociation())
+        {
+#if !defined(COFFEE_ONLY_GLES20)
+            if(attr.type() != TypeEnum::Int && attr.type() != TypeEnum::LL &&
+                    attr.type() != TypeEnum::UInt && attr.type() != TypeEnum::ULL)
+#endif
+                CGL33::VAOAttribPointer(
+                            attr.index(),attr.size(),attr.type(),
+                            false,attr.stride(),
+                            attr.bufferOffset()+attr.offset());
+#if !defined(COFFEE_ONLY_GLES20)
+            else
+                CGL33::VAOAttribIPointer(
+                            attr.index(),attr.size(),attr.type(),
+                            attr.stride(),
+                            attr.bufferOffset()+attr.offset());
+#endif
+#if !defined(COFFEE_ONLY_GLES20)
+            if(attr.instanced())
+                CGL33::VAODivisor(attr.index(),1);
+#endif
+        }
+}
+
 void GLEAM_VertDescriptor::alloc()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOAlloc(1,&m_handle);
+#endif
 }
 
 void GLEAM_VertDescriptor::dealloc()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOFree(1,&m_handle);
+#endif
 }
 
 void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute &attr)
 {
     m_attributes.push_back(attr);
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOBind(m_handle);
+#endif
     CGL33::VAOEnableAttrib(attr.index());
+#if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         CGL43::VAOAttribFormat(attr.index(),attr.size(),attr.type(),false,attr.offset());
     }
+#endif
 }
 
 void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL43::VAOBind(m_handle);
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
     {
         buf.bind();
-        for(GLEAM_VertAttribute const& attr : m_attributes)
-            if(binding == attr.bufferAssociation())
-            {
-                CGL33::VAOAttribPointer(
-                            attr.index(),attr.size(),attr.type(),
-                            false,attr.stride(),
-                            attr.bufferOffset()+attr.offset());
-                if(attr.instanced())
-                    CGL33::VAODivisor(attr.index(),1);
-            }
+        vao_apply_buffer(m_attributes, binding, buf);
     }
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
@@ -58,6 +86,9 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
                     CGL43::VAOBindingDivisor(attr.index(),1);
             }
     }
+#else
+    m_bufferMapping.insert({binding, buf});
+#endif
 }
 
 void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer *buffer)
@@ -67,8 +98,17 @@ void GLEAM_VertDescriptor::setIndexBuffer(const GLEAM_ElementBuffer *buffer)
 
 void GLEAM_VertDescriptor::bind()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOBind(m_handle);
-    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
+#else
+    for(Pair<uint32, GLEAM_ArrayBuffer&> binding : m_bufferMapping)
+    {
+        binding.second.bind();
+        vao_apply_buffer(m_attributes, binding.first, binding.second);
+    }
+#endif
+    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_2_0
+            || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         if(m_ibuffer)
             m_ibuffer->bind();
@@ -77,8 +117,11 @@ void GLEAM_VertDescriptor::bind()
 
 void GLEAM_VertDescriptor::unbind()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOBind(0);
-    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
+#endif
+    if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_2_0
+            || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         if(m_ibuffer)
             m_ibuffer->unbind();

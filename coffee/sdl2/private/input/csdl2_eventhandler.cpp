@@ -226,12 +226,12 @@ CIControllerState SDL2EventHandler::getControllerState(uint16 index)
 void SDL2EventHandler::pollEvents()
 {
     EventApplication::pollEvents();
-    SDL_Event* ev = &getSDL2Context()->eventhandle;
-    while(SDL_PollEvent(ev))
+    SDL_Event ev;
+    while(SDL_PollEvent(&ev))
     {
-        CSDL2Types::EventHandleAll(this,ev);
+        SDL2::EventHandleAll(this,&ev);
         for(EventHandlerSDL const& eh : m_eventhandlers_sdl)
-            eh.func(eh.user_ptr, ev, nullptr);
+            eh.func(eh.user_ptr, &ev, nullptr);
     }
 }
 

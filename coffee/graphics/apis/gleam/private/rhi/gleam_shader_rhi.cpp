@@ -10,7 +10,7 @@ namespace GLEAM{
 
 bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         int32 slen = data.size;
         CGL33::ShaderAlloc(1,stage,&m_handle);
@@ -27,7 +27,9 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         m_stages = stage;
 
         return stat;
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         cstring str = (cstring)data.data;
         m_handle = CGL43::ProgramCreate(stage,1,&str);
@@ -42,35 +44,41 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
         m_stages = stage;
 
         return m_handle!=0;
-    }else
+    }
+#endif
+    else
         return false;
 }
 
 void GLEAM_Shader::dealloc()
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         if(m_handle!=0)
             CGL33::ShaderFree(1,&m_handle);
     }
+#if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         if(m_handle!=0)
             CGL43::ProgramFree(1,&m_handle);
     }
+#endif
 }
 
 bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader, const ShaderStage &stages)
 {
     if(shader.m_handle==0)
         return false;
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         if(m_handle==0)
             CGL33::ProgramAlloc(1,&m_handle);
         CGL33::ShaderAttach(m_handle,shader.m_handle);
         return true;
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         if(m_handle==0)
             CGL43::PipelineAlloc(1,&m_handle);
@@ -79,6 +87,7 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader, const ShaderStage &stage
             m_programs.push_back({&shader,shader.m_stages&stages});
         return stat;
     }
+#endif
     return false;
 }
 
@@ -86,7 +95,7 @@ bool GLEAM_Pipeline::assemble()
 {
     if(m_handle==0)
         return false;
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         bool stat = CGL33::ProgramLink(m_handle);
         if(GL_DEBUG_MODE && !stat)
@@ -96,6 +105,7 @@ bool GLEAM_Pipeline::assemble()
         }
         return stat;
     }
+#if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         bool stat = CGL43::PipelineValidate(m_handle);
@@ -108,23 +118,28 @@ bool GLEAM_Pipeline::assemble()
         }
         return stat;
     }
+#endif
     return false;
 }
 
 void GLEAM_Pipeline::bind()
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
         CGL33::ProgramUse(m_handle);
+#if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
         CGL43::PipelineBind(m_handle);
+#endif
 }
 
 void GLEAM_Pipeline::unbind()
 {
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
         CGL33::ProgramUse(0);
+#if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
         CGL43::PipelineBind(0);
+#endif
 }
 
 bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
@@ -176,7 +191,8 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
 {
     using namespace ShaderTypes;
 
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
+            || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
         /* Does not differentiate between shader stages and their uniforms */
         /* GL 4.3+ do not work with this */
@@ -209,7 +225,9 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         /* Get uniforms buffers */
         {
         }
-    }else if(GL_CURR_API==GL_4_3){
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3){
 
         enum GL_PROP_IDX
         {
@@ -283,6 +301,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
             }
         }
     }
+#endif
 }
 
 GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
@@ -292,11 +311,11 @@ GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
 
 void GLEAM_PipelineDumper::dump(cstring out)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     int32* bin_fmts = &GLEAM_API_INSTANCE_DATA->GL_CACHED
             .NUM_PROGRAM_BINARY_FORMATS;
     if(*bin_fmts == -1)
     {
-        /**/
         CGL43::Debug::GetIntegerv(
                     GL_NUM_PROGRAM_BINARY_FORMATS,
                     bin_fmts);
@@ -369,6 +388,7 @@ void GLEAM_PipelineDumper::dump(cstring out)
          *  and extracting them, maybe share
          *  the code between paths? */
     }
+#endif
 }
 
 }

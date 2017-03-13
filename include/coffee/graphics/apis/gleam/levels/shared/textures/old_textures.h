@@ -23,10 +23,12 @@ struct CGL_Old_Textures
                                  uint32 w,uint32 h,int32 border,PixelComponents fmt,
                                  BitFormat dt,c_cptr p)
     {glTexImage2D(to_enum(t),level,to_enum(ifmt),w,h,border,to_enum(fmt),to_enum(dt),p);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexImage3D(Texture t,uint32 level,PixelFormat ifmt,
                                  uint32 w,uint32 h,uint32 d,int32 border,
                                  PixelComponents fmt,BitFormat dt,c_cptr p)
     {glTexImage3D(to_enum(t),level,to_enum(ifmt),w,h,d,border,to_enum(fmt),to_enum(dt),p);}
+#endif
 
     /* TexGet */
     STATICINLINE void TexGetImageSize(Texture t, PixCmp c,
@@ -95,12 +97,12 @@ struct CGL_Old_Textures
     }
 #endif
 
+#ifdef COFFEE_GLEAM_DESKTOP
     STATICINLINE void TexGetImage(Texture t, uint32 level, PixelComponents fmt,
                                   PixelFormat outfmt, Bytes& data)
     {
 	glGetTexImage(to_enum(t),level,to_enum(fmt),to_enum(outfmt),data.data);
     }
-#ifdef COFFEE_GLEAM_DESKTOP
     STATICINLINE void TexGetCompressedImage(Texture t, uint32 level, Bytes& data)
     {
 	glGetCompressedTexImage(to_enum(t),level,data.data);
@@ -112,10 +114,12 @@ struct CGL_Old_Textures
     STATICINLINE void TexSubImage2D(Texture t,uint32 level,int32 x,int32 y,
                                     uint32 w,uint32 h,PixelComponents fmt,BitFormat dt,c_cptr p)
     {glTexSubImage2D(to_enum(t),level,x,y,w,h,to_enum(fmt),to_enum(dt),p);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexSubImage3D(Texture t,uint32 level,int32 x,int32 y,int32 z,
                                     uint32 w,uint32 h,uint32 d,PixelComponents fmt,
                                     BitFormat dt,c_cptr p)
     {glTexSubImage3D(to_enum(t),level,x,y,z,w,h,d,to_enum(fmt),to_enum(dt),p);}
+#endif
 
     /* TexImageCompressed */
 
@@ -124,11 +128,13 @@ struct CGL_Old_Textures
                                            CompFlags cflgs,
                                            uint32 w,uint32 h,int32 border,uint32 sz,c_cptr p)
     {glCompressedTexImage2D(to_enum(t),level,to_enum(ifmt,flgs,cflgs),w,h,border,sz,p);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexImageCompressed3D(Texture t,int32 level,
                                            PixelFormat ifmt, PixelFlags flgs,
                                            CompFlags cflgs,
                                            uint32 w,uint32 h,uint32 d,int32 border,uint32 sz,c_cptr p)
     {glCompressedTexImage3D(to_enum(t),level,to_enum(ifmt,flgs,cflgs),w,h,d,border,sz,p);}
+#endif
 
     /* TexSubImageCompressed */
 
@@ -138,12 +144,14 @@ struct CGL_Old_Textures
                                               CompFlags cflgs,
                                               int32 sz,c_cptr p)
     {glCompressedTexSubImage2D(to_enum(t),level,x,y,w,h,to_enum(fmt,flgs,cflgs),sz,p);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexSubImageCompressed3D(Texture t,uint32 level,int32 x,int32 y,int32 z,
                                               uint32 w,uint32 h,uint32 d,
                                               PixelFormat fmt, PixelFlags flgs,
                                               CompFlags cflgs,
                                               uint32 sz,c_cptr p)
     {glCompressedTexSubImage3D(to_enum(t),level,x,y,z,w,h,d,to_enum(fmt,flgs,cflgs),sz,p);}
+#endif
 
     /* TexCopyImage* */
 
@@ -157,10 +165,12 @@ struct CGL_Old_Textures
                                         int32 x,int32 y,
                                         uint32 w,uint32 h)
     {glCopyTexSubImage2D(to_enum(t),level,xo,yo,x,y,w,h);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void TexCopySubImage3D(Texture t,uint32 level,int32 xo,int32 yo,int32 zo,
                                         int32 x,int32 y,
                                         uint32 w,uint32 h)
     {glCopyTexSubImage3D(to_enum(t),level,xo,yo,zo,x,y,w,h);}
+#endif
 
     /* TexGenMipmap */
 
@@ -200,6 +210,8 @@ struct CGL_Old_Textures
     STATICINLINE void TexParameteruiv(Texture t, CGenum e, const uint32* v)
     {glTexParameterIuiv(to_enum(t),e,v);}
 
+
+#if !defined(COFFEE_ONLY_GLES20)
     /* Samplers */
     STATICINLINE void SamplerBind(uint32 i,CGhnd h)
     {glBindSampler(i,h);}
@@ -228,6 +240,7 @@ struct CGL_Old_Textures
     {glGetSamplerParameterfv(h,f,d);}
     STATICINLINE void SamplerGetParameteruiv(CGhnd h,CGenum f,uint32* d)
     {glGetSamplerParameterIuiv(h,f,d);}
+#endif
 };
 
 }

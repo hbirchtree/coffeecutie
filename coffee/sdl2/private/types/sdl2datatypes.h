@@ -1,5 +1,4 @@
-#ifndef SDL2DATATYPES
-#define SDL2DATATYPES
+#pragma once
 
 #include <coffee/core/base/types/cdisplay.h>
 #include <SDL.h>
@@ -8,24 +7,24 @@
 #include <coffee/graphics/common/gltypes.h>
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 using namespace Display;
 
-struct CSDL2Context{
+struct SDL2Context{
     SDL_Window* window = nullptr;
     SDL_Surface* surface = nullptr;
 
+#if !defined(COFFEE_USE_MAEMO_EGL)
     CGL::CGL_Context* context;
+#endif
 
-    Vector<CGL::CGL_Context*> m_subcontexts;
+//    Vector<CGL::CGL_Context*> m_subcontexts;
 
-    SDL_Event eventhandle;
     uint8 contextFlags = 0;
 
     ThreadId thread;
 
-    Mutex controller_access;
     Map<uint8,SDL_GameController*> controllers;
     Map<uint8,SDL_Joystick*> joysticks;
     Map<uint8,SDL_Haptic*> haptics;
@@ -33,6 +32,3 @@ struct CSDL2Context{
 
 }
 }
-
-#endif // SDL2DATATYPES
-

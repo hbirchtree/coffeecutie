@@ -5,7 +5,7 @@
 #include "../../types/sdl2datatypes.h"
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 template<typename T>
 FORCEDINLINE void EventAtomic(SDL2EventHandler* ctxt, typename T::EventType type)

@@ -10,7 +10,7 @@
 #include "sdl2_window.h"
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
 {

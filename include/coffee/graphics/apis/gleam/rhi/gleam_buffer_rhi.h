@@ -33,6 +33,10 @@ protected:
 
     BufType m_type;
     CGhnd m_handle;
+
+#if defined(COFFEE_ONLY_GLES20)
+    Vector<byte_t> m_mappedBufferFake;
+#endif
 };
 
 struct GLEAM_BindableBuffer : GLEAM_VBuffer

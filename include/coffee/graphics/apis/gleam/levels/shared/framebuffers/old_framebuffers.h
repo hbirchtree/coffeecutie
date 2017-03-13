@@ -36,10 +36,12 @@ struct CGL_Old_Framebuffers
             FramebufferT t,CGenum att,CGhnd h)
     {glFramebufferRenderbuffer(to_enum(t),att,GL_RENDERBUFFER,h);}
 
+#if !defined(COFFEE_ONLY_GLES20)
     /* Blit */
     STATICINLINE void FBBlit(
             const CRect& s, const CRect& d,DBuffers m,Filtering f)
     {glBlitFramebuffer(s.x,s.y,s.w,s.h, d.x,d.y,d.w,d.h, to_enum2(m),to_enum(f));}
+#endif
 
     /* Buffer management */
     STATICINLINE void FBDrawBuffers(uint32 n,const CGenum* d)
@@ -73,8 +75,10 @@ struct CGL_Old_Framebuffers
 
         glRenderbufferStorage(GL_RENDERBUFFER,fmt,w,h);
     }
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE void RBufStorageMS(PixelFormat ifmt,uint32 samples,uint32 w,uint32 h)
     {glRenderbufferStorageMultisample(GL_RENDERBUFFER,samples,to_enum(ifmt),w,h);}
+#endif
 
     STATICINLINE void RBufGetParameteri(CGenum p,int32* d)
     {glGetRenderbufferParameteriv(GL_RENDERBUFFER,p,d);}
@@ -84,6 +88,8 @@ struct CGL_Old_Framebuffers
         using Tex = CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>;
 
         CSize out = {};
+
+#if !defined(COFFEE_ONLY_GLES20)
 
         int32 tmp = 0;
         int32 hnd = 0;
@@ -117,6 +123,7 @@ struct CGL_Old_Framebuffers
             RBufGetParameteri(GL_RENDERBUFFER_HEIGHT,&out.h);
             RBufBind(0);
         }
+#endif
 
         return out;
     }

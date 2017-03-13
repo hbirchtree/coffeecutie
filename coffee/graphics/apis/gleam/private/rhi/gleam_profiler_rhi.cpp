@@ -2,6 +2,7 @@
 
 #include <coffee/graphics/apis/gleam/rhi/gleam_framebuffer_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_quad_draw.h>
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -33,19 +34,24 @@ GLEAM_PrfQuery::GLEAM_PrfQuery(ProfilingTerm term):
 
 void GLEAM_PrfQuery::begin()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(m_handle == 0)
         alloc();
 
     CGL33::QueryBegin(m_type, m_handle);
+#endif
 }
 
 void GLEAM_PrfQuery::end()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::QueryEnd(m_type);
+#endif
 }
 
 int64 GLEAM_PrfQuery::resulti()
 {
+#if !defined(COFFEE_ONLY_GLES20)
 #ifdef COFFEE_GLEAM_DESKTOP
     int64 v;
     CGL33::QueryGetObjecti64v(m_handle,GL_QUERY_RESULT,&v);
@@ -54,10 +60,14 @@ int64 GLEAM_PrfQuery::resulti()
     CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
 #endif
     return v;
+#else
+    return 0;
+#endif
 }
 
 uint64 GLEAM_PrfQuery::resultu()
 {
+#if !defined(COFFEE_ONLY_GLES20)
 #ifdef COFFEE_GLEAM_DESKTOP
     uint64 v;
     CGL33::QueryGetObjectui64v(m_handle,GL_QUERY_RESULT,&v);
@@ -66,52 +76,15 @@ uint64 GLEAM_PrfQuery::resultu()
     CGL33::QueryGetObjectuiv(m_handle,GL_QUERY_RESULT,&v);
 #endif
     return v;
+#else
+    return 0;
+#endif
 }
 
 #ifndef NDEBUG
 
 static CSize v_size = {1280,720};
-
-static cstring m_shader_vertex_passthrough = {
-    "#version 300 es\n"
-    "precision lowp float;\n"
-    "layout(location=0) in vec3 pos;\n"
-    "layout(location=1) in vec2 tex;\n"
-    ""
-    "out vec2 tex_out;\n"
-    "uniform mat4 transform;\n"
-    ""
-    "void main(){\n"
-    "    tex_out = tex;\n"
-    "    gl_Position = transform*vec4(pos,1.);\n"
-    "}\n"
-};
-static cstring m_shader_fragment_passthrough = {
-    "#version 300 es\n"
-    "precision lowp float;\n"
-    "uniform sampler2D tex;\n"
-    "in vec2 tex_out;\n"
-    "layout(location=0) out vec4 out_col;\n"
-    "void main(){\n"
-    #if !defined(COFFEE_ANDROID) && 0
-    "    vec4 comp = texture(tex,tex_out);\n"
-    "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
-    "    out_col.a = comp.a;\n"
-    #else
-    "    out_col = texture(tex,tex_out);\n"
-    #endif
-    "}\n"
-};
-
-static const scalar m_vertex_quad_data[] = {
-    -1.f, -1.f, 0.f, 0.f, 0.f,
-     1.f, -1.f, 0.f, 1.f, 0.f,
-    -1.f,  1.f, 0.f, 0.f, 1.f,
-
-    -1.f,  1.f, 0.f, 0.f, 1.f,
-     1.f,  1.f, 0.f, 1.f, 1.f,
-     1.f, -1.f, 0.f, 1.f, 0.f,
-};
+static GLEAM_Quad_Drawer m_quad_drawer;
 
 #endif
 
@@ -182,71 +155,7 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
             return;
         }
 
-        CGhnd shaders[2];
-
-        CGL33::ShaderAlloc(1,ShaderStage::Vertex,&shaders[0]);
-        CGL33::ShaderAlloc(1,ShaderStage::Fragment,&shaders[1]);
-
-        CGL33::ShaderSource(shaders[0],1,&m_shader_vertex_passthrough);
-        CGL33::ShaderSource(shaders[1],1,&m_shader_fragment_passthrough);
-
-        if(!CGL33::ShaderCompile(shaders[0]) || !CGL33::ShaderCompile(shaders[1]))
-        {
-            cWarning("Failed to compile passthrough shaders! Fuck this");
-            cDebug("Vertex: {0}",CGL33::ShaderGetLog(shaders[0]));
-            cDebug("Fragment: {0}",CGL33::ShaderGetLog(shaders[1]));
-            m_enabled = false;
-
-            CGL33::ShaderFree(2,shaders);
-
-            return;
-        }
-
-        CGL33::ProgramAlloc(1,&m_prg);
-
-        CGL33::ShaderAttach(m_prg,shaders[0]);
-        CGL33::ShaderAttach(m_prg,shaders[1]);
-
-        if(!CGL33::ProgramLink(m_prg))
-        {
-            cWarning("Failed to link passthrough program! Fuck this");
-            cDebug("Log: {0}",CGL33::ProgramGetLog(m_prg));
-            m_enabled = false;
-
-            CGL33::ShaderDetach(m_prg,shaders[0]);
-            CGL33::ShaderDetach(m_prg,shaders[1]);
-
-            CGL33::ShaderFree(2,shaders);
-
-            CGL33::ProgramFree(1,&m_prg);
-
-            return;
-        }
-
-        CGL33::ShaderDetach(m_prg,shaders[0]);
-        CGL33::ShaderDetach(m_prg,shaders[1]);
-
-        CGL33::ShaderFree(2,shaders);
-
-        CGL33::BufAlloc(1,&m_vbo);
-        CGL33::VAOAlloc(1,&m_vao);
-
-        CGL33::BufBind(BufType::ArrayData,m_vbo);
-        CGL33::BufData(BufType::ArrayData,sizeof(m_vertex_quad_data),
-                       m_vertex_quad_data,ResourceAccess::ReadOnly);
-
-        CGL33::VAOBind(m_vao);
-        CGL33::VAOEnableAttrib(0);
-        CGL33::VAOEnableAttrib(1);
-        CGL33::VAOAttribPointer(0,3,TypeEnum::Scalar,false,sizeof(scalar)*5,0);
-        CGL33::VAOAttribPointer(1,2,TypeEnum::Scalar,false,sizeof(scalar)*5,sizeof(scalar)*3);
-
-        CGL33::BufBind(BufType::ArrayData,0);
-
-        m_tex_size_unif = CGL33::ProgramUnifGetLoc(m_prg,"tex_size");
-        m_tex_unif = CGL33::ProgramUnifGetLoc(m_prg,"tex");
-        m_trans_unif = CGL33::ProgramUnifGetLoc(m_prg,"transform");
-
+        m_quad_drawer.create();
     }
 #endif
 }
@@ -257,7 +166,7 @@ GLEAM_DBufQuery::~GLEAM_DBufQuery()
     if(GL_DEBUG_MODE && m_enabled)
     {
         m_dtarget.dealloc();
-        CGL33::ProgramFree(1,&m_prg);
+        m_quad_drawer.cleanup();
     }
 #endif
 }
@@ -290,32 +199,15 @@ void GLEAM_DBufQuery::end()
         m_rtarget.bind(FramebufferT::All);
 
         /* Frame data */
-        constexpr DrwMd md = {Prim::Triangle,PrimCre::Explicit};
-        Vecf2 tex_size(v_size.w,v_size.h);
         Matf4 transform = scale(Matf4(),Vecf3(0.5));
 
-        /* Set up rendering state */
-        CGL33::VAOBind(m_vao);
-        CGL33::BufBind(BufType::ArrayData,m_vbo);
-        CGL33::ProgramUse(m_prg);
-        CGL33::Disable(Feature::DepthTest);
-        CGL33::Uniformfv(m_tex_size_unif,1,&tex_size);
-        CGL33::Uniformi(m_tex_unif,0);
-
         /* Draw depth buffer view */
-        m_depth_stencil_sampler.bind(0);
         transform = translation(transform,Vecf3(-1,-1,0));
-        CGL33::Uniformfv(m_trans_unif,1,false,&transform);
-        CGL33::DrawArrays(md,0,6);
+        m_quad_drawer.draw(transform, m_depth_stencil_sampler);
 
         /* Draw color buffer view */
-        m_color_sampler.bind(0);
         transform = translation(transform,Vecf3(2,0,0));
-        CGL33::Uniformfv(m_trans_unif,1,false,&transform);
-        CGL33::DrawArrays(md,0,6);
-
-        CGL33::VAOBind(0);
-        CGL33::BufBind(BufType::ArrayData,0);
+        m_quad_drawer.draw(transform, m_color_sampler);
     }
 #endif
 }

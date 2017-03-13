@@ -1,9 +1,9 @@
 #pragma once
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
-struct CSDL2Context;
+struct SDL2Context;
 
 }
 }

@@ -238,6 +238,12 @@ struct SysInfoDef
 
     static
     HWDeviceInfo DeviceName();
+
+    static
+    HWDeviceInfo Motherboard();
+
+    static
+    HWDeviceInfo Chassis();
 };
 
 

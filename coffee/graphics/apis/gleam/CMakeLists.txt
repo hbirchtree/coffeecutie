@@ -14,6 +14,7 @@ if(COFFEE_BUILD_GLEAM_RHI)
         private/rhi/gleam_framebuffer_rhi.cpp
 	private/rhi/gleam_profiler_rhi.cpp
         private/rhi/gleam_query_rhi.cpp
+        private/rhi/gleam_quad_draw.cpp
         private/rhi/gleam_shader_rhi.cpp
         private/rhi/gleam_surface_rhi.cpp
         private/rhi/gleam_vertex_rhi.cpp
@@ -48,3 +49,22 @@ list ( APPEND LIBS ${SDL2_LIBRARY})
 
 coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam")
+
+#set ( RendererGL_SRCS
+#    private/renderers/gl_lib.cpp
+#    )
+#set ( RendererGLES_SRCS
+#    private/renderers/gles_lib.cpp
+#    )
+#set ( RendererEGL_SRCS
+#    private/renderers/egl_lib.cpp
+#    )
+
+#coffee_add_library ( GLeam_Renderer_GL "${RendererGL_SRCS}" "CoffeeGLeam;CoffeeSDL2"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/renderers/gl_lib" )
+
+#coffee_add_library ( GLeam_Renderer_GLES "${RendererGL_SRCS}" "CoffeeGLeam;CoffeeSDL2"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/renderers/gles_lib" )
+
+#coffee_add_library ( GLeam_Renderer_EGL "${RendererGL_SRCS}" "CoffeeGLeam;CoffeeSDL2"
+#    "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/renderers/egl_lib" )

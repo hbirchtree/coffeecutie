@@ -34,37 +34,49 @@ struct CGL_Shared_Debug
 
     STATICINLINE void SetDebugLevel(Severity s,bool enabled)
     {
+#if !defined(COFFEE_ONLY_GLES20)
         glDebugMessageControl(
                     GL_DONT_CARE,GL_DONT_CARE,
                     to_enum(s),0,nullptr,
                     (enabled)?GL_TRUE:GL_FALSE);
+#endif
     }
 
     STATICINLINE void SetObjectLabel(Object t,CGhnd h,cstring s)
     {
+#if !defined(COFFEE_ONLY_GLES20)
         glObjectLabel(to_enum(t),h,-1,s);
+#endif
     }
 
     STATICINLINE void SetDebugGroup(cstring n, uint32 id)
     {
+#if !defined(COFFEE_ONLY_GLES20)
         glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
+#endif
     }
     STATICINLINE void UnsetDebugGroup()
     {
+#if !defined(COFFEE_ONLY_GLES20)
         glPopDebugGroup();
+#endif
     }
 
     STATICINLINE void DebugMessage(Severity s,DebugType t,cstring n)
     {
+#if !defined(COFFEE_ONLY_GLES20)
         glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
                              to_enum(t),0,
                              to_enum(s),
                              -1,n);
+#endif
     }
 
     STATICINLINE void DebugSetCallback(CGcallback c, void* param)
     {
+#if !defined(COFFEE_ONLY_GLES20)
         glDebugMessageCallback(c,param);
+#endif
     }
 
     /* Extensions */
@@ -139,7 +151,9 @@ struct CGL_Shared_Debug
     /* GetString */
 
     STATICINLINE cstring GetString(CGenum e){return (cstring)glGetString(e);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE cstring GetStringi(CGenum e,uint32 i){return (cstring)glGetStringi(e,i);}
+#endif
 
     /* Get*v */
 
@@ -160,13 +174,14 @@ struct CGL_Shared_Debug
         glGetIntegerv(e,&i);
         return i;
     }
-
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE int64 GetIntegerLL(CGenum e)
     {
         int64 i = 0;
         glGetInteger64v(e,&i);
         return i;
     }
+#endif
 
     STATICINLINE scalar GetScalar(CGenum e)
     {
@@ -183,7 +198,7 @@ struct CGL_Shared_Debug
     }
 
     /* Get*i_v */
-
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE int32 GetIntegerI(CGenum e,uint32 i)
     {
         int32 v = 0;
@@ -197,6 +212,7 @@ struct CGL_Shared_Debug
         glGetInteger64i_v(e,i,&v);
         return v;
     }
+#endif
 
     /* Object validity */
 
@@ -205,8 +221,10 @@ struct CGL_Shared_Debug
     {
         return glIsBuffer(h)==GL_TRUE;
     }
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE
     bool IsVAO(CGhnd h){return glIsVertexArray(h)==GL_TRUE;}
+#endif
 
     STATICINLINE
     bool IsFramebuffer(CGhnd h){return glIsFramebuffer(h)==GL_TRUE;}
@@ -220,6 +238,8 @@ struct CGL_Shared_Debug
 
     STATICINLINE
     bool IsTexture(CGhnd h){return glIsTexture(h)==GL_TRUE;}
+
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE
     bool IsSampler(CGhnd h){return glIsSampler(h)==GL_TRUE;}
 
@@ -227,6 +247,7 @@ struct CGL_Shared_Debug
     bool IsSync(CGsync h){return glIsSync((GLsync)h)==GL_TRUE;}
     STATICINLINE
     bool IsQuery(CGhnd h){return glIsQuery(h)==GL_TRUE;}
+
 
     STATICINLINE
     bool IsXF(CGhnd h){return glIsTransformFeedback(h)==GL_TRUE;}
@@ -237,6 +258,7 @@ struct CGL_Shared_Debug
     /* IsEnabled */
     STATICINLINE
     bool IsEnabledi(Feature f,int32 i){return glIsEnabledi(to_enum(f),i)==GL_TRUE;}
+#endif
 };
 
 }

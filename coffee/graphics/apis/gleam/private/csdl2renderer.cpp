@@ -6,11 +6,11 @@
 namespace Coffee{
 namespace Display{
 
-using namespace Coffee::CSDL2Types;
+using namespace Coffee::SDL2;
 
 CSDL2Renderer::CSDL2Renderer(CObject *parent) :
     CDRendererBase(parent),
-    GLeamRenderer(this)
+    GLeamRenderer(*this)
 {
 }
 

@@ -11,7 +11,7 @@ using namespace Display;
 #ifdef COFFEE_GLEAM_DESKTOP
 using GL = CGL::CGL43;
 #else
-using GL = CGL::CGLES30;
+using GL = CGL::CGLES20;
 #endif
 
 class CDRenderer : public CSDL2Renderer

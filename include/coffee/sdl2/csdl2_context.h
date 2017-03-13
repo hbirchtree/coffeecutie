@@ -14,7 +14,7 @@ class SDL2ContextUser :
         public BaseApplication
 {
 public:
-    using Context = CSDL2Types::CSDL2Context;
+    using Context = SDL2::SDL2Context;
 
     Context* getSDL2Context()
     {

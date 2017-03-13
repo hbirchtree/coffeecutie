@@ -210,7 +210,18 @@ CString cStringReplace(
             "b({0}->{1},{2}->{3},{4}->{5})",
             box.x1(),box.x2(),
             box.y1(),box.y2(),
-            box.z1(),box.z2()));
+                    box.z1(),box.z2()));
+}
+
+CString cStringReplace(const CString &fmt, const size_t &index, const Display::CDContextBits &arg)
+{
+    return extArgReplace(
+                fmt,index,
+                cStringFormat(
+                    "bits(rgba:{0},{1},{2},{3};ds:{4},{5},smp:{6})",
+                    arg.red, arg.green, arg.blue, arg.alpha,
+                    arg.depth, arg.stencil, arg.samples
+                    ));
 }
 
 }

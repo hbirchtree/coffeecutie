@@ -20,17 +20,19 @@ struct CGL_Old_Constructors
     STATICINLINE bool RenderBufferAlloc(uint32 l,CGhnd* d){glGenRenderbuffers(l,d); return true;}
     STATICINLINE bool RenderBufferFree(uint32 l,CGhnd* d){glDeleteRenderbuffers(l,d); return true;}
 
-    STATICINLINE bool SamplerAlloc(uint32 l,CGhnd* d){glGenSamplers(l,d); return true;}
-    STATICINLINE bool SamplerFree(uint32 l,CGhnd* d){glDeleteSamplers(l,d); return true;}
-
     STATICINLINE bool BufAlloc(uint32 l,CGhnd* d){glGenBuffers(l,d); return true;}
     STATICINLINE bool BufFree(uint32 l,CGhnd* d){glDeleteBuffers(l,d); return true;}
+
+#if !defined(COFFEE_ONLY_GLES20)
+    STATICINLINE bool SamplerAlloc(uint32 l,CGhnd* d){glGenSamplers(l,d); return true;}
+    STATICINLINE bool SamplerFree(uint32 l,CGhnd* d){glDeleteSamplers(l,d); return true;}
 
     STATICINLINE bool VAOAlloc(uint32 l,CGhnd* d){glGenVertexArrays(l,d); return true;}
     STATICINLINE bool VAOFree(uint32 l,CGhnd* d){glDeleteVertexArrays(l,d); return true;}
 
     STATICINLINE bool QueryAlloc(uint32 l,CGhnd* d){glGenQueries(l,d); return true;}
     STATICINLINE bool QueryFree(uint32 l,CGhnd* d){glDeleteQueries(l,d); return true;}
+#endif
 
     STATICINLINE bool ProgramAlloc(uint32 l,CGhnd* d)
     {
@@ -58,12 +60,14 @@ struct CGL_Old_Constructors
         return true;
     }
 
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE bool FenceFree(uint32 l,CGsync* d)
     {
         for(uint32 i=0;i<l;i++)
             glDeleteSync((GLsync)d[i]);
         return true;
     }
+#endif
 };
 
 }

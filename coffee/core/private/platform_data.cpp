@@ -11,9 +11,24 @@ namespace Environment{
 namespace Linux{
 extern CString get_kern_name();
 extern CString get_kern_arch();
+extern PlatformData::DeviceType get_device_variant();
 }
 }
 #endif
+
+PlatformData::DeviceType PlatformData::DeviceVariant()
+{
+#if defined(COFFEE_LINUX)
+
+#else
+    return DeviceUnknown;
+#endif
+}
+
+scalar PlatformData::DeviceDPI()
+{
+    return 1.f;
+}
 
 CString PlatformData::SystemDisplayString()
 {

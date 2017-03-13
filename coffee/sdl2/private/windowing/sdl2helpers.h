@@ -9,7 +9,7 @@
 #include <coffee/core/base/types/cdisplay.h>
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 extern Uint32 InterpretWindowFlags(const CDProperties::State &flags);
 

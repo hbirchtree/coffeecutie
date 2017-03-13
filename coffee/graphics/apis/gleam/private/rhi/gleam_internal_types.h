@@ -9,8 +9,13 @@ namespace RHI{
 namespace GLEAM{
 
 #ifndef COFFEE_GLEAM_DESKTOP
+#if !defined(COFFEE_ONLY_GLES20)
 using CGL33 = CGLES30;
 using CGL43 = CGLES32;
+#else
+using CGL33 = CGLES20;
+using CGL43 = CGLES20;
+#endif
 #endif
 
 using namespace CGL;

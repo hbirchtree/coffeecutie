@@ -19,8 +19,6 @@ namespace CGL{
 struct CGLES30 :
         CGLES20,
         CGL_Old_Queries<QueryT,CGhnd,CGenum>,
-        CGL_Basic_Draw,
-
         CGL_TextureStorage
 {
     enum FBAttach

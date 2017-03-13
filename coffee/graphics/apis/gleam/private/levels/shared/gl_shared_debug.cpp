@@ -6,6 +6,7 @@ namespace CGL{
 
 void CGL_Shared_Debug::SetDebugMode(bool enabled)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(enabled == b_isDebugging)
         return;
     if(enabled)
@@ -18,11 +19,14 @@ void CGL_Shared_Debug::SetDebugMode(bool enabled)
         glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         b_isDebugging = true;
     }
+#endif
 }
 
 void CGL_Shared_Debug::GetExtensions()
 {
-    int32 numExtensions = GetInteger(GL_NUM_EXTENSIONS);
+#if !defined(COFFEE_ONLY_GLES20)
+    int32 numExtensions = 0;
+    numExtensions = GetInteger(GL_NUM_EXTENSIONS);
 
     if (numExtensions <= 0)
         return;
@@ -36,6 +40,7 @@ void CGL_Shared_Debug::GetExtensions()
         if(i<numExtensions-1)
             s_ExtensionList.push_back(' ');
     }
+#endif
 }
 
 Display::CGLVersion CGL_Shared_Debug::ContextVersion()
@@ -47,8 +52,10 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
     ver.revision = 0;
 
     /* In most cases, this will work wonders */
+#if !defined(COFFEE_ONLY_GLES20)
     ver.major = C_CAST<uint8>(GetInteger(GL_MAJOR_VERSION));
     ver.minor = C_CAST<uint8>(GetInteger(GL_MINOR_VERSION));
+#endif
 
     /* In some cases, we run on drivers that are old or crappy.
          * We still want to know what the hardware supports, though. */
@@ -60,7 +67,11 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
 
         if (str.size()<=0)
             break;
+#if defined(COFFEE_GLEAM_DESKTOP)
         Regex::Pattern p = Regex::Compile("([0-9]+)\\.([0-9]+)\\.([0-9])?([\\s\\S]*)");
+#else
+        Regex::Pattern p = Regex::Compile("OpenGL ES ([0-9]+)\\.([0-9]+)?([\\s\\S]*)");
+#endif
         auto match = Regex::Match(p,str,true);
         if (match.size() < 3)
             break;
@@ -74,7 +85,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
             ver.revision = cast_string<uint8>(match.at(3).s_match.front());
             if (!ok)
             {
-                ver.driver = match.at(3).s_match.front();
+                ver.driver = StrUtil::trim(match.at(3).s_match.front());
             }
         }
         else if (match.size() == 5)

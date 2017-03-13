@@ -6,6 +6,7 @@
 namespace Coffee{
 namespace Display{
 
+#if !defined(COFFEE_USE_MAEMO_EGL)
 class SDL2GLRenderer : public GLApplication,
         public virtual SDL2ContextUser
 {
@@ -28,6 +29,7 @@ public:
     bool contextPostInit(const GLProperties& props,CString*);
     void contextTerminate();
 };
+#endif
 
 }
 }

@@ -8,6 +8,7 @@
 namespace Coffee{
 namespace Display{
 
+#if !defined(COFFEE_USE_MAEMO_EGL)
 void SDL2GLRenderer::swapBuffers()
 {
     SDL_GL_SwapWindow(getSDL2Context()->window);
@@ -32,7 +33,7 @@ void SDL2GLRenderer::setSwapInterval(const int &i)
 
 CDContextBits SDL2GLRenderer::context()
 {
-    return CSDL2Types::GetContextProperties().bits;
+    return SDL2::GetContextProperties().bits;
 }
 
 ThreadId SDL2GLRenderer::contextThread()
@@ -55,7 +56,7 @@ CGL::CGL_ScopedContext SDL2GLRenderer::scopedContext()
 bool SDL2GLRenderer::contextPreInit(const GLProperties& props,CString*)
 {
     m_window_flags |= SDL_WINDOW_OPENGL;
-    CSDL2Types::SetContextProperties(props);
+    SDL2::SetContextProperties(props);
     Profiler::Profile("Set context properties");
     return true;
 }
@@ -90,6 +91,7 @@ bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
 
 void SDL2GLRenderer::contextTerminate()
 {
+    cDebug("Context pointer: {0}", C_CAST<void*>(glContext()));
     if(!glContext())
         return;
     /* Acquire GL context first, ensures that destructor won't fail on different thread */
@@ -98,6 +100,7 @@ void SDL2GLRenderer::contextTerminate()
     /* Delete GL context object */
     delete glContext();
 }
+#endif
 
 }
 }

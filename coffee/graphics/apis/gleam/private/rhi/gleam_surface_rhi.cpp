@@ -20,13 +20,14 @@ GLEAM_Surface::GLEAM_Surface(Texture type, PixelFormat fmt, uint32 mips, uint32 
     {
         /* We must set this to register a proper mipmap level */
 
-        int32 min_lev = 0;
+//        int32 min_lev = 0;
         int32 max_lev = mips - 1;
 
+#if !defined(COFFEE_ONLY_GLES20)
         CGL33::TexBind(type,m_handle);
-//        CGL33::TexParameteriv(type,GL_TEXTURE_BASE_LEVEL,&min_lev);
         CGL33::TexParameteriv(type,GL_TEXTURE_MAX_LEVEL,&max_lev);
         CGL33::TexBind(type,0);
+#endif
     }
 }
 
@@ -47,6 +48,7 @@ CGhnd GLEAM_Surface::handle()
 
 void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(GL_DEBUG_MODE){
         uint32 w,h,d_;
         szptr size;
@@ -57,6 +59,7 @@ void GLEAM_Surface::upload_info(PixCmp comp, uint32 mip, uint32 d)
 
         /* TODO: Add information about mipmaps */
     }
+#endif
 }
 
 GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt,uint32 mips,uint32 texflags):
@@ -68,16 +71,19 @@ GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt,uint32 mips,uint32 texflags):
 void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
 {
     CGL33::TexBind(m_type,m_handle);
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         CGL33::TexImage2D(Texture::T2D,0,m_pixfmt,
                           size.w,size.h,0,c,
                           BitFormat::UByte,nullptr);
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         CGL43::TexStorage2D(Texture::T2D,m_mips,m_pixfmt,
                             size.w,size.h);
     }
+#endif
     m_size = size;
 }
 
@@ -87,6 +93,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
 {
     c_cptr data_ptr = data;
 
+#if !defined(COFFEE_ONLY_GLES20)
     if(m_flags&GLEAM_API::TextureDMABuffered)
     {
         GLEAM_PboQueue::Pbo& pbo = GLEAM_API_INSTANCE_DATA->pboQueue.current();
@@ -107,8 +114,9 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
                        ResourceAccess::WriteOnly|ResourceAccess::Streaming);
         }
     }
+#endif
 
-    if(GL_CURR_API==GL_3_3)
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0)
     {
         CGL33::TexBind(m_type,m_handle);
 
@@ -122,7 +130,9 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         }
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL33::BufBind(BufType::PixelUData,0);
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
         CGL43::TexBind(m_type,m_handle);
 
@@ -133,6 +143,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL43::BufBind(BufType::PixelUData,0);
     }
+#endif
 
     if(GL_DEBUG_MODE)
         upload_info(comp,mip,1);
@@ -146,6 +157,7 @@ GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mi
 
 void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::TexBind(m_type,m_handle);
     if(GL_CURR_API==GL_3_3)
     {
@@ -158,11 +170,13 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
                             size.width,size.height,size.depth);
     }
     m_size = size;
+#endif
 }
 
 void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
                                   CSize3 size, c_cptr data, CPoint3 offset, uint32 mip)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     /* If we want to use DMA transfer */
     c_cptr data_ptr = data;
 
@@ -205,15 +219,18 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
 
     if(GL_DEBUG_MODE)
         upload_info(comp,mip,size.depth);
+#endif
 }
 
 void GLEAM_Sampler::alloc()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_3_3 || GL_CURR_API == GL_4_3
             || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
         CGL33::SamplerAlloc(1,&m_handle);
     }
+#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     else if(GL_CURR_API==GL_4_5)
         CGL45::SamplerAlloc(1,&m_handle);
@@ -222,13 +239,17 @@ void GLEAM_Sampler::alloc()
 
 void GLEAM_Sampler::dealloc()
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::SamplerFree(1,&m_handle);
+#endif
 }
 
 void GLEAM_Sampler::setLODRange(const Vecf2 &range)
 {
-        CGL33::SamplerParameterfv(m_handle,GL_TEXTURE_MIN_LOD,&range.x());
-        CGL33::SamplerParameterfv(m_handle,GL_TEXTURE_MAX_LOD,&range.y());
+#if !defined(COFFEE_ONLY_GLES20)
+    CGL33::SamplerParameterfv(m_handle,GL_TEXTURE_MIN_LOD,&range.x());
+    CGL33::SamplerParameterfv(m_handle,GL_TEXTURE_MAX_LOD,&range.y());
+#endif
 }
 
 void GLEAM_Sampler::setLODBias(scalar bias)
@@ -249,6 +270,7 @@ void GLEAM_Sampler::setLODBias(scalar bias)
 
 void GLEAM_Sampler::setEdgePolicy(uint8 dim, WrapPolicy p)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGenum d;
     switch(dim)
     {
@@ -266,18 +288,23 @@ void GLEAM_Sampler::setEdgePolicy(uint8 dim, WrapPolicy p)
     }
 
     CGL33::SamplerParameteri(m_handle,d,p);
+#endif
 }
 
 void GLEAM_Sampler::setFiltering(Filtering mag, Filtering min, Filtering mip)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::SamplerParameteri(m_handle,GL_TEXTURE_MAG_FILTER,mag);
     CGL33::SamplerParameteri(m_handle,GL_TEXTURE_MIN_FILTER,min,mip);
+#endif
 }
 
 void GLEAM_Sampler2D::bind(uint32 i)
 {
     CGL33::TexActive(i);
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::SamplerBind(i,m_handle);
+#endif
     CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
 }
 
@@ -296,7 +323,9 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
 void GLEAM_Sampler3D::bind(uint32 i)
 {
     CGL33::TexActive(i);
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::SamplerBind(i,m_handle);
+#endif
     CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
 }
 
@@ -307,7 +336,7 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
     /* TODO: Add bindless */
     h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
-    h.m_sampler = m_handle;
+    h.m_sampler = m_surface->m_handle;
 
     return h;
 }
@@ -315,7 +344,9 @@ GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 void GLEAM_Sampler2DArray::bind(uint32 i)
 {
     CGL33::TexActive(i);
+#if !defined(COFFEE_ONLY_GLES20)
     CGL33::SamplerBind(i,m_handle);
+#endif
     CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
 }
 
@@ -325,7 +356,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 
     h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
-    h.m_sampler = m_handle;
+    h.m_sampler = m_surface->m_handle;
 
     return h;
 }

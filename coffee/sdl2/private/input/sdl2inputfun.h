@@ -51,7 +51,7 @@ CIEvent* sdl2_controller_get_haptic(
     return nullptr;
 }
 
-void _sdl2_controllers_handle(CSDL2Types::CSDL2Context* m_context,
+void _sdl2_controllers_handle(SDL2::SDL2Context* m_context,
                               HapticApplication* haptictarget,
                               const CIControllerAtomicUpdateEvent *ev)
 {

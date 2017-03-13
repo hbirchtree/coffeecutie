@@ -4,7 +4,7 @@
 #include <coffee/core/CInput>
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 using namespace CInput;
 

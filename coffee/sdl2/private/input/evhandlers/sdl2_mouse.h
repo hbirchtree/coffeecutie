@@ -7,7 +7,7 @@
 #include "sdl2eventhandlers.h"
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 using namespace CInput;
 

@@ -177,9 +177,9 @@ bool FilePull(Resource &resc, bool textmode, bool)
 
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
-    cVerbose(5,"Entered FileCommit");
+    cVerbose(7,"Entered FileCommit");
     CString native_fn = FileFun::NativePath(resc.resource());
-    cVerbose(5,"Got native path: {0}",native_fn);
+    cVerbose(7,"Got native path: {0}",native_fn);
     ResourceAccess dflags = ResourceAccess::WriteOnly;
 
 //    if(!FileFun::Exists(native_fn.c_str()))
@@ -190,14 +190,14 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
                 (append) ?
                     ResourceAccess::Append|dflags|acc
                   : dflags|acc);
-    cVerbose(5,"Got FH pointer: {0}",(c_cptr const&)fp);
+    cVerbose(7,"Got FH pointer: {0}",(c_cptr const&)fp);
 	if (!fp)
         return false;
     CByteData d;
     d.data = (byte_t*)resc.data;
     d.size = resc.size;
     bool stat = FileFun::Write(fp,d,false);
-    cVerbose(5,"Write operation result: {0}",stat);
+    cVerbose(7,"Write operation result: {0}",stat);
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
     return stat;

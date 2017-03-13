@@ -1,10 +1,27 @@
 #pragma once
 
 #include "types/tdef/stltypes.h"
+#include "types/tdef/integertypes.h"
 
 namespace Coffee{
 struct PlatformData
 {
+    enum DeviceType
+    {
+        DeviceUnknown,
+        DeviceDesktop,
+        DeviceIOT,
+        DeviceLaptop,
+        DevicePhone,
+        DeviceTablet,
+    };
+
+    static
+    DeviceType DeviceVariant();
+
+    static
+    scalar DeviceDPI();
+
     static
     /*!
      * \brief Displayable string of system and its version

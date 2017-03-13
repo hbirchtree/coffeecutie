@@ -130,7 +130,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     /* Create a window host for the renderer */
     BasicWindow test;
-    auto visual = GetDefaultVisual();
+    auto visual = GetDefaultVisual(2,0);
 
     CString err;
     RenderData data = {};

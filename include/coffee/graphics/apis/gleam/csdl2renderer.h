@@ -4,20 +4,26 @@
 #include <coffee/core/CDRendererBase>
 
 #include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
+#include <coffee/sdl2/graphics/egl_renderer.h>
+
 #include <coffee/sdl2/windowing/csdl2_window.h>
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 #include <coffee/graphics/apis/gleam/renderer/gleamrenderer.h>
 
 namespace Coffee{
-namespace CSDL2Types{
-    struct CSDL2Context;
+namespace SDL2{
+    struct SDL2Context;
 }
 namespace Display{
 
 class CSDL2Renderer :
         public CDRendererBase,
         public SDL2Window,
+        #if defined(COFFEE_USE_MAEMO_EGL)
+        public EGLRenderer,
+        #else
         public SDL2GLRenderer,
+        #endif
         public SDL2EventHandler,
         public GLeamRenderer
 {
@@ -37,6 +43,7 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 {
 #if !defined(COFFEE_ANDROID)
     do{
+#if !defined(COFFEE_ONLY_GLES20)
 #if defined(COFFEE_GLEAM_DESKTOP)
         properties.gl.version.major = 4;
         properties.gl.version.minor = 5;
@@ -64,6 +71,7 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 #endif
         if(renderer->init(properties,err))
             break;
+#endif
 
 #if !defined(COFFEE_GLEAM_DESKTOP)
         properties.gl.version.major = 2;

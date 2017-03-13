@@ -6,7 +6,7 @@
 #include "sdl2eventhandlers.h"
 
 namespace Coffee{
-namespace CSDL2Types{
+namespace SDL2{
 
 FORCEDINLINE void EventHandleDrop(
         SDL2EventHandler* ctxt,

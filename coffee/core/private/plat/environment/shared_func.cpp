@@ -53,6 +53,16 @@ HWDeviceInfo SysInfoDef::DeviceName()
 {
     return HWDeviceInfo("Generic","Device","0x0");
 }
+
+HWDeviceInfo SysInfoDef::Motherboard()
+{
+    return HWDeviceInfo("Generic", "Motherboard", "0x0");
+}
+
+HWDeviceInfo SysInfoDef::Chassis()
+{
+    return HWDeviceInfo("Generic", "Chassis", "0x0");
+}
 #endif
 
 }

@@ -50,10 +50,12 @@ struct CGL_Shared_Functions
     STATICINLINE
     void Disable(Feature e,uint32 o = 0){glDisable(to_enum(e,o));}
 
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE
     void Enablei(Feature e,uint32 i,uint32 o = 0){glEnablei(to_enum(e,o),i);}
     STATICINLINE
     void Disablei(Feature e,uint32 i,uint32 o = 0){glDisablei(to_enum(e,o),i);}
+#endif
 
     /* Pipeline actions */
     STATICINLINE
@@ -71,16 +73,41 @@ struct CGL_Shared_Functions
 
     STATICINLINE
     void ClearBufferiv(const int32* d)
-    {glClearBufferiv(GL_STENCIL,0,d);}
+    {
+#if !defined(COFFEE_ONLY_GLES20)
+        glClearBufferiv(GL_STENCIL,0,d);
+#else
+        ClearStencil(*d);
+#endif
+    }
     STATICINLINE
     void ClearBufferfv(const scalar* d)
-    {glClearBufferfv(GL_DEPTH,0,d);}
+    {
+#if !defined(COFFEE_ONLY_GLES20)
+        glClearBufferfv(GL_DEPTH,0,d);
+#else
+        ClearDepth(*d);
+#endif
+    }
     STATICINLINE
     void ClearBufferfv(bool,int32 i,const CVec4& d)
-    {glClearBufferfv(GL_COLOR,i,(scalar*)&d);}
+    {
+#if !defined(COFFEE_ONLY_GLES20)
+        glClearBufferfv(GL_COLOR,i,(scalar*)&d);
+#else
+        ClearColor(d);
+#endif
+    }
     STATICINLINE
     void ClearBufferfi(scalar d,int32 s)
-    {glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);}
+    {
+#if !defined(COFFEE_ONLY_GLES20)
+        glClearBufferfi(GL_DEPTH_STENCIL,0,d,s);
+#else
+        ClearBufferiv(&s);
+        ClearBufferfv(&d);
+#endif
+    }
 
     /* Blending */
     STATICINLINE
@@ -161,8 +188,10 @@ struct CGL_Shared_Functions
     /* Sampling */
     STATICINLINE
     void SampleCoverage(scalar f,bool d){glSampleCoverage(f,(d) ? GL_TRUE : GL_FALSE);}
+#if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE
     void SampleMaski(uint32 d,CGflag f){glSampleMaski(d,f);}
+#endif
 
     /* Pixel operations */
     STATICINLINE
@@ -199,8 +228,13 @@ struct CGL_Shared_Functions
      * \brief Check if platform supports any kind of GL debugging. If this returns true, there should be a valid implementation.
      * \return
      */
+#if !defined(COFFEE_ONLY_GLES20)
     bool DebuggingSupported()
     {return Debug::CheckExtensionSupported("GL_KHR_debug") && glDebugMessageCallback;}
+#else
+    bool DebuggingSupported()
+    {return false;}
+#endif
 };
 
 }

@@ -15,6 +15,17 @@ namespace GLEAM{
 
 using GLC = CGL_Implementation;
 
+void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
+{
+#if defined(COFFEE_GLEAM_DESKTOP)
+    major = 3; minor = 3;
+#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_ONLY_GLES20)
+    major = 2; minor = 0;
+#else
+    major = 3; minor = 0;
+#endif
+}
+
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
     store->inst_data = new GLEAM_Instance_Data;
@@ -59,6 +70,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     }else
     {
         const Display::CGLVersion ver20es(2,0);
+#if !defined(COFFEE_ONLY_GLES20)
         const Display::CGLVersion ver30es(3,0);
         const Display::CGLVersion ver32es(3,2);
 
@@ -66,7 +78,9 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
             store->CURR_API = GLES_3_2;
         else if(ver>=ver30es)
             store->CURR_API = GLES_3_0;
-        else if(ver>=ver20es)
+        else
+#endif
+        if(ver>=ver20es)
             store->CURR_API = GLES_2_0;
     }
 
@@ -152,11 +166,13 @@ void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
 
 void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::TessellationSupported())
     {
         CGL43::PatchParameteri(PatchProperty::Vertices,tstate.patchCount());
         /*TODO: Add configurability for inner and outer levels in place of TCS */
     }
+#endif
 }
 
 void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
@@ -233,7 +249,9 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
             /*TODO: Add indexed alternative, BlendFunci */
         }else
             GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    }else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+    }
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         if(bstate.additive())
         {
@@ -242,6 +260,7 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
         }else
             CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
     }
+#endif
 
     /*TODO: Add more advanced blending options*/
 
@@ -323,30 +342,37 @@ void GLEAM_API::SetPixelProcessState(const PixelProcessState& pstate, bool unpac
 template<typename T>
 void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
         CGL43::Uniformfv(prog,idx,arr_size,data);
     else
+#endif
         CGL33::Uniformfv(idx,arr_size,data);
 }
 
 template<typename T>
 void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
         CGL43::Uniformfv(prog,idx,arr_size,false,data);
     else
+#endif
         CGL33::Uniformfv(idx,arr_size,false,data);
 }
 
 template<typename T>
 void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
         CGL43::Uniformiv(prog,idx,arr_size,data);
     else
+#endif
         CGL33::Uniformiv(idx,arr_size,data);
 }
 
+#if !defined(COFFEE_ONLY_GLES20)
 template<typename T>
 void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
@@ -355,6 +381,7 @@ void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
     else
         CGL33::Uniformuiv(idx,arr_size,data);
 }
+#endif
 
 void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
                                       ShaderStage const& stage,
@@ -365,12 +392,13 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
     /* TODO: Tie uniforms to their applicable stages */
 
     /* Skip uniform application on 3.3 fragment stage */
-    if((GL_CURR_API == GL_3_3 || GL_CURR_API==GLES_3_0) && stage == ShaderStage::Fragment)
+    if((GL_CURR_API == GL_3_3 || GL_CURR_API==GLES_2_0
+        || GL_CURR_API==GLES_3_0) && stage == ShaderStage::Fragment)
         return;
 
     CGhnd prog = 0;
 
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3  || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
         prog = pipeline.m_handle;
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
@@ -417,19 +445,23 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         else if(fgs == (Vec_d|S4|Int_t))
             SetUniform_wrapi(prog,idx,(Veci4*)db->data,db->size/sizeof(Veci4));
 
+#if !defined(COFFEE_ONLY_GLES20)
         else if(fgs == (Vec_d|S2|UInt_t))
             SetUniform_wrapui(prog,idx,(Vecui2*)db->data,db->size/sizeof(Vecui2));
         else if(fgs == (Vec_d|S3|UInt_t))
             SetUniform_wrapui(prog,idx,(Vecui3*)db->data,db->size/sizeof(Vecui3));
         else if(fgs == (Vec_d|S4|UInt_t))
             SetUniform_wrapui(prog,idx,(Vecui4*)db->data,db->size/sizeof(Vecui4));
+#endif
 
         else if(fgs==Scalar_t)
             SetUniform_wrapf(prog,idx,(scalar*)db->data,db->size/sizeof(scalar));
         else if(fgs==Int_t)
             SetUniform_wrapi(prog,idx,(int32*)db->data,db->size/sizeof(int32));
+#if !defined(COFFEE_ONLY_GLES20)
         else if(fgs==UInt_t)
             SetUniform_wrapui(prog,idx,(uint32*)db->data,db->size/sizeof(uint32));
+#endif
     }
 
     for(auto s : ustate.m_samplers)
@@ -444,21 +476,26 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
             /* Set up texture state */
             CGL33::TexActive(handle->m_unit);
             CGL33::TexBind(handle->m_type,handle->texture);
+#if !defined(COFFEE_ONLY_GLES20)
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
+#endif
             if(GL_CURR_API != GL_4_3)
             {
                 /* Set texture handle in shader */
                 CGL33::Uniformi(s.first,handle->m_unit);
-            }else
-            {
+            }
+#if !defined(COFFEE_ONLY_GLES20)
+            else{
                 /* Set texture handle in shader */
                 CGL43::Uniformi(prog,s.first,handle->m_unit);
             }
+#endif
         }
         /*TODO: Add bindless textures */
         /*TODO: Add optimized path where BindSamplers is used */
     }
 
+#if !defined(COFFEE_ONLY_GLES20)
     for(auto b : ustate.m_ubuffers)
     {
         auto& det = b.second;
@@ -468,7 +505,9 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         buf->bindrange(bindex,det.sec.offset,det.sec.size);
         CGL33::ProgramUnifBlockBind(prog,b.first,bindex);
     }
+#endif
 
+#if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::ShaderStorageSupported())
         for(auto b : ustate.m_sbuffers)
         {
@@ -479,6 +518,7 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
             buf->bindrange(bindex,det.sec.offset,det.sec.size);
             CGL43::SBufBind(prog,b.first,bindex);
         }
+#endif
 }
 
 void GLEAM_API::PreDrawCleanup()
@@ -523,20 +563,24 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i,
 
             else
 #endif
+#if !defined(COFFEE_ONLY_GLES20)
                 CGL33::DrawElementsInstanced(mode,i.elements(),i.elementType(),
                                              i.indexOffset()*elsize,i.instances());
+#else
+                CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                    i.indexOffset()*elsize);
+#endif
         }else
 
             CGL33::DrawElements(mode,i.elements(),i.elementType(),
                                 i.indexOffset()*elsize);
 
     }else{
+#if !defined(COFFEE_ONLY_GLES20)
         if(d.instanced())
-
             CGL33::DrawArraysInstanced(mode,i.vertexOffset(),i.vertices(),i.instances());
-
         else
-
+#endif
             CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
     }
     if(query)
@@ -547,10 +591,12 @@ void GLEAM_API::DrawConditional(const DrawCall &d,
                                 const DrawInstanceData &i,
                                 OccludeQuery &c)
 {
+#if !defined(COFFEE_ONLY_GLES20)
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
     CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
     Draw(d,i);
     CGL33::ConditionalRenderEnd();
+#endif
 }
 
 GLEAM_API::FB_T &GLEAM_API::DefaultFramebuffer()

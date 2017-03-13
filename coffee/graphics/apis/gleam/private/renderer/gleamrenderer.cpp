@@ -25,6 +25,7 @@ GLeamRenderer::~GLeamRenderer()
 {
 }
 
+#if !defined(COFFEE_ONLY_GLES20)
 void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GLchar* msg,
                    const void* param)
 {
@@ -39,6 +40,7 @@ void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GL
     cmsg.msg = msg;
     renderer->bindingCallback(&cmsg);
 }
+#endif
 
 void GLeamRenderer::bindingCallback(const void *report) const
 {
@@ -95,23 +97,28 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     }else{
 #ifndef COFFEE_GLEAM_DESKTOP
         const static CGLVersion v20es(2,0);
+#if !defined(COFFEE_ONLY_GLES20)
         const static CGLVersion v30es(3,0);
         const static CGLVersion v32es(3,2);
+#endif
 
+#if !defined(COFFEE_ONLY_GLES20)
         if(p.version>=v32es)
         {
-//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v32es);
             status = CGL::CGLES32::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
         }else
         if(p.version==v30es)
         {
-//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v30es);
             status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
-        }
+        }else
+#endif
         if(p.version==v20es)
         {
-//            cDebug("Loading context version: GLES {0}",(_cbasic_version<uint8> const&)v20es);
+#if !defined(COFFEE_LINKED_GLES)
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+#else
+            status = CGL::CGLES20::LoadBinding(m_app->glContext(),nullptr);
+#endif
         }
 #endif
     }
@@ -137,7 +144,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     if(GL::DebuggingSupported())
     {
-#ifndef COFFEE_WINDOWS
+#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ONLY_GLES20)
         GL::Debug::SetDebugMode(true);
         GL::Debug::DebugSetCallback(gleamcallback,this);
 #endif
