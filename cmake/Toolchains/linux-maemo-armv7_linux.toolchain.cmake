@@ -1,7 +1,7 @@
 set ( CMAKE_SYSTEM_NAME Linux )
 set ( TOOLCHAIN_PREFIX "arm-unknown-linux-gnueabi" )
 
-set ( MAEMO TRUE )
+set ( MAEMO TRUE CACHE BOOL "" )
 
 set ( MAEMO_SDK "${MAEMO_SDK}" CACHE PATH "" )
 
