@@ -80,8 +80,6 @@
 #define COFFEE_USE_MAEMO_EGL
 #endif
 
-#define COFFEE_USE_MAEMO_EGL
-
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE
