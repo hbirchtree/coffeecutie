@@ -258,7 +258,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             )
 
         set_target_properties( ${TARGET} PROPERTIES
-            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle")
+            RUNTIME_OUTPUT_DIRECTORY "${OUT_DIR}")
 
         add_custom_command( TARGET ${TARGET}
             POST_BUILD
@@ -266,8 +266,8 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             )
 
         install(
-            TARGETS
-            ${TARGET}
+            DIRECTORIES
+            ${OUT_DIR}
 
             DESTINATION
             bin
