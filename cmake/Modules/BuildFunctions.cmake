@@ -266,7 +266,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             )
 
         install(
-            DIRECTORIES
+            DIRECTORY
             ${OUT_DIR}
 
             DESTINATION
