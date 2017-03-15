@@ -103,6 +103,9 @@ struct CGL_Shared_Debug
         cstring vendor = GetString(GL_VENDOR);
         cstring device = GetString(GL_RENDERER);
 
+        if(!vendor || !device)
+            return HWDeviceInfo("Unknown", "Unknown", "");
+
         return HWDeviceInfo(vendor,device,ContextVersion().driver);
     }
 

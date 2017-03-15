@@ -130,6 +130,7 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
 void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
 {
     fb_bind(m_type,m_handle);
+    cVerbose(5, "Resizing render target {0} to {1}x{2}", m_handle, view.w, view.h);
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::ViewportArraySupported())
     {
@@ -200,7 +201,8 @@ void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
 
 void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth)
 {
-    if(GL_CURR_API == GLES_3_0)
+    if(GL_CURR_API == GLES_3_0 ||
+       GL_CURR_API == GLES_2_0)
     {
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     }else{
@@ -211,7 +213,8 @@ void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth)
 
 void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth, int32 stencil)
 {
-    if(GL_CURR_API == GLES_3_0)
+    if(GL_CURR_API == GLES_3_0 ||
+       GL_CURR_API == GLES_2_0)
     {
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     }else{

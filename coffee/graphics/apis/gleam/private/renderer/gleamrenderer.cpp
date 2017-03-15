@@ -65,6 +65,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 {
     Profiler::PushContext("GLeam");
 
+    cVerbose(5, "Acquiring GL context from {0}, {1}", (u64)m_app, (u64)m_app->glContext());
+
     m_app->glContext()->acquireContext();
 
     Profiler::Profile("Context acquisition");
@@ -117,6 +119,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 #if !defined(COFFEE_LINKED_GLES)
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
 #else
+            cVerbose(5, "Checking OpenGL ES 2.0 functions...");
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),nullptr);
 #endif
         }
@@ -124,6 +127,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     }
 
     Profiler::Profile("Loading GL function pointers");
+    cVerbose(5, "Function pointer checks succeeded: {0}", status);
 
     if(!status)
     {

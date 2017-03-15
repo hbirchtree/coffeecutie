@@ -55,13 +55,20 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
 #if !defined(COFFEE_ONLY_GLES20)
     ver.major = C_CAST<uint8>(GetInteger(GL_MAJOR_VERSION));
     ver.minor = C_CAST<uint8>(GetInteger(GL_MINOR_VERSION));
+#else
+    ver.major = 2;
+    ver.minor = 0;
+    return ver;
 #endif
 
     /* In some cases, we run on drivers that are old or crappy.
          * We still want to know what the hardware supports, though. */
     do
     {
-        CString str = GetString(GL_VERSION);
+        cstring str_ = GetString(GL_VERSION);
+        if(!str_)
+            break;
+        CString str = str_;
 
         //            cVerbose(7,"Input GL_VERSION string: {0}",str);
 

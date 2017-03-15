@@ -2,7 +2,8 @@
 
 namespace Coffee {
 
-CObject::CObject()
+CObject::CObject():
+    m_parent(nullptr)
 {
 }
 

@@ -5,14 +5,18 @@
 #if defined(COFFEE_USE_MAEMO_EGL)
 
 #include <coffee/core/base/renderer/glapplication.h>
+#include <coffee/core/base/types/cobject.h>
 
 namespace Coffee{
 namespace Display{
 
 struct EGL_Data;
+struct EGL_GL_Context;
 
-class EGLRenderer : public GLApplication
+class EGLRenderer : public GLApplication, public CObject
 {
+    friend struct EGL_GL_Context;
+
     std::unique_ptr<EGL_Data> m_eglData;
 public:
     EGLRenderer();

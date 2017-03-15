@@ -80,6 +80,7 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
         SDL_Event wev;
         wev.window.event = SDL_WINDOWEVENT_RESIZED;
         CSize win_size = windowSize();
+        cVerbose(5, "Pushing resize event with: {0}x{1}", win_size.w, win_size.h);
         wev.window.data1 = win_size.w;
         wev.window.data2 = win_size.h;
         if(SDL_PushEvent(&wev)!=1)
