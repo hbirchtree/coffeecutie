@@ -10,7 +10,7 @@ using namespace Coffee::SDL2;
 
 CSDL2Renderer::CSDL2Renderer(CObject *parent) :
     CDRendererBase(parent),
-    GLeamRenderer(*this)
+    GLeamRenderer(this)
 {
 }
 

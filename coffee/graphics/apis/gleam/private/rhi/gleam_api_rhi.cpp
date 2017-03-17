@@ -42,6 +42,8 @@ void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
 #endif
 
 #if defined(COFFEE_MAEMO)
+    props.size.w = 800;
+    props.size.h = 480;
     props.gl.bits.alpha = 0;
     props.gl.bits.red = 5;
     props.gl.bits.green = 6;

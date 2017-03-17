@@ -64,6 +64,34 @@ struct EGL_Data
     EGLContext context;
 };
 
+struct EGL_GL_Context : public CGL::CGL_Context, public CObject
+{
+private:
+    EGL_Data& data;
+    ThreadId m_threadId;
+public:
+    EGL_GL_Context(EGLRenderer& renderer):
+        CObject(nullptr),
+        data(*renderer.m_eglData)
+    {
+    }
+
+    virtual bool acquireContext()
+    {
+        EGL_ERRORCHECK_N(eglMakeCurrent(data.display, data.surface, data.surface, data.context));
+        new (&m_threadId) ThreadId;
+        return true;
+    }
+    virtual bool releaseContext()
+    {
+        EGL_ERRORCHECK_N(eglMakeCurrent(data.display, nullptr, nullptr, nullptr));
+    }
+    virtual ThreadId const& currentThread()
+    {
+        return m_threadId;
+    }
+};
+
 EGLRenderer::EGLRenderer()
 {
 }
@@ -83,6 +111,10 @@ bool EGLRenderer::contextInit(const GLProperties &props, CString *err)
     C_UNUSED(props);
 
     m_eglData = std::unique_ptr<EGL_Data>(new EGL_Data);
+    m_eglData->surface = nullptr;
+    m_eglData->context = nullptr;
+    m_eglData->config = nullptr;
+
     m_eglData->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
     EGL_NULLCHECK(m_eglData->display, "Failed to retrieve EGL display");
@@ -105,6 +137,9 @@ bool EGLRenderer::contextInit(const GLProperties &props, CString *err)
             EGL_DEPTH_SIZE, props.bits.depth,
 
             EGL_SAMPLES, props.bits.samples,
+
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+
             EGL_NONE
         };
 
@@ -117,16 +152,16 @@ bool EGLRenderer::contextInit(const GLProperties &props, CString *err)
         Vector<EGLConfig> configurations;
         configurations.resize(config_num);
 
-        eglChooseConfig(m_eglData->display, &config_preferred[0],
-                &configurations[0], config_num, &config_num);
+        EGL_ERRORCHECK(eglChooseConfig(m_eglData->display, &config_preferred[0],
+                       &configurations[0], config_num, &config_num));
 
-        m_eglData->config = configurations[0];
-        cVerbose(8, "Picked EGLConfig: {0}", (u64)m_eglData->config);
+        m_eglData->config = configurations[3];
+        cVerbose(7, "Picked EGLConfig: {0}", (u64)m_eglData->config);
         CDContextBits bits;
         for(EGLConfig const& cfg : configurations)
         {
-            egl_config_to_bits(m_eglData->display, m_eglData->config, bits);
-            cVerbose(8, "EGLConfig information: {0}", bits);
+            egl_config_to_bits(m_eglData->display, cfg, bits);
+            cVerbose(8, "EGLConfig information:{1}: {0}", bits, (u64)cfg);
         }
     }
 
@@ -139,41 +174,40 @@ bool EGLRenderer::contextInit(const GLProperties &props, CString *err)
         m_eglData->context = eglCreateContext(m_eglData->display, m_eglData->config,
                                               EGL_NO_CONTEXT, &config_preferred[0]);
 
-        if(m_eglData->context == EGL_NO_CONTEXT)
-        {
-            cWarning("Failed to create EGL context: {0}", eglGetError());
-            return false;
-        }
+        EGL_NULLCHECK(m_eglData->context, "Failed to create EGL context");
     }
 
-    return true;
-}
-
-bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
-{
     /* And now we perform voodoo-magic.
      * We need a valid X window manager handle for our window.
      * Where do we get it? The moon.
      */
     SDL2Window* its_a_me_mario = C_DCAST<SDL2Window>(this);
     SDL_SysWMinfo wminfo;
+    cVerbose(8, "Window pointer {0}", (u64)its_a_me_mario->getSDL2Context()->window);
+    SDL_VERSION(&wminfo.version);
     if(SDL_GetWindowWMInfo(its_a_me_mario->getSDL2Context()->window, &wminfo) == SDL_FALSE)
     {
         cDebug("Failed to retrieve window information");
         return false;
     }
 
-    cDebug("WM variant: {0}", (u32)wminfo.subsystem);
-    cVerbose(8, "X11 window handle: {0}", (uint64_t const&)wminfo.info.x11.window);
+    cVerbose(8, "WM variant: {0}", (u32)wminfo.subsystem);
+    cVerbose(8, "X11 window handle: {0}", (u64)wminfo.info.x11.window);
+    cVerbose(8, "Config for surface: {0}", (u64)m_eglData->config);
 
+    cVerbose(8, "Calling eglCreateWindowSurface...");
     m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
                                                 wminfo.info.x11.window, nullptr);
+    cVerbose(8, "eglCreateWindowSurface returned!");
+    EGL_NULLCHECK(m_eglData->surface, "Failed to create surface");
 
-    if(m_eglData->surface == EGL_NO_SURFACE)
-    {
-        cWarning("Failed to create surface: {0}", eglGetError());
-        return false;
-    }
+    cVerbose(8, "Null check succeeded");
+
+    return glContext()->acquireContext();
+}
+
+bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
+{
     return true;
 }
 
@@ -221,7 +255,9 @@ void EGLRenderer::setSwapInterval(const int &i)
 
 CDContextBits EGLRenderer::context()
 {
-    return {};
+    CDContextBits bits;
+    egl_config_to_bits(m_eglData->display, m_eglData->config, bits);
+    return bits;
 }
 
 ThreadId EGLRenderer::contextThread()
@@ -231,12 +267,13 @@ ThreadId EGLRenderer::contextThread()
 
 CGL::CGL_Context *EGLRenderer::glContext()
 {
-
+    static EGL_GL_Context ctxt(*this);
+    return &ctxt;
 }
 
 CGL::CGL_ScopedContext EGLRenderer::scopedContext()
 {
-
+    return CGL::CGL_ScopedContext(glContext());
 }
 
 }

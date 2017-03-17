@@ -78,6 +78,7 @@ struct CGL_Shared_Functions
         glClearBufferiv(GL_STENCIL,0,d);
 #else
         ClearStencil(*d);
+        glClear(GL_STENCIL_BUFFER_BIT);
 #endif
     }
     STATICINLINE
@@ -87,6 +88,7 @@ struct CGL_Shared_Functions
         glClearBufferfv(GL_DEPTH,0,d);
 #else
         ClearDepth(*d);
+        glClear(GL_DEPTH_BUFFER_BIT);
 #endif
     }
     STATICINLINE
@@ -96,6 +98,7 @@ struct CGL_Shared_Functions
         glClearBufferfv(GL_COLOR,i,(scalar*)&d);
 #else
         ClearColor(d);
+        glClear(GL_COLOR_BUFFER_BIT);
 #endif
     }
     STATICINLINE
