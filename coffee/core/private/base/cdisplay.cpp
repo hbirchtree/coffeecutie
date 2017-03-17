@@ -31,8 +31,13 @@ CDProperties GetDefaultVisual(const int32& ctxtMajorVer,const int32& ctxtMinorVe
 
     props.title = CoffeeDefaultWindowName.c_str();
 
+#if defined(COFFEE_MAEMO)
+    props.size.w = 800;
+    props.size.h = 480;
+#else
     props.size.w = 1280;
     props.size.h = 720;
+#endif
     props.monitor = 0;
 
     props.gl.version.major = ctxtMajorVer;

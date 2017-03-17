@@ -72,12 +72,17 @@ int32 coffee_main(int32, cstring_w*)
 
     SharedData share_data = {};
 
-    auto setup_fun = [](CDRenderer&, SharedData*)
+    auto setup_fun = [&](CDRenderer&, SharedData*)
     {
         cDebug("GL extensions: {0}",GL::Debug::s_ExtensionList);
+//        renderer.setWindowState(CDProperties::WindowedFullScreen);
+        renderer.setWindowSize({800,480});
+        GL::ViewportSet({0,0,800,480});
     };
     auto loop_fun = [](CDRenderer& renderer, SharedData*)
     {
+        glClearColor(1.f, 1.f, 0.f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderer.pollEvents();
         renderer.swapBuffers();
     };
