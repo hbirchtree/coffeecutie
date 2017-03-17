@@ -211,7 +211,7 @@ struct GLProperties
         GLAutoResize	    = 0x08, /*!< Set GL auto resize of context*/
         GLRobust            = 0x10, /*!< Set GL robustness*/
         GLPrintExtensions   = 0x20, /*!< Print GL extensions on startup*/
-        GLES                = 0x40, /*!< Request that only GLES features are used*/
+        GLES                = 0x40, /*!< Request GLES is used*/
         GLSRGB              = 0x100, /*!< Request SRGB framebuffers*/
 
         GLFeatureLevelProfile = 0x80,
@@ -272,20 +272,19 @@ C_FLAGS(CDProperties::State,uint16);
 C_FLAGS(GLProperties::Flags,uint8);
 
 extern CDProperties GetDefaultVisual(
-#ifdef COFFEE_GLEAM_DESKTOP
-        const int32& ctxtMajorVer = 3,
-        const int32& ctxtMinorVer = 3
-#else
-        #if defined(COFFEE_RASPBERRYPI)
-        const int32& ctxtMajorVer = 2,
-        const int32& ctxtMinorVer = 0
-        #else
-        const int32& ctxtMajorVer = 3,
-        const int32& ctxtMinorVer = 0
-        #endif
-#endif
+        const int32& ctxtMajorVer,
+        const int32& ctxtMinorVer
         );
 
+template<typename GL_LIB>
+STATICINLINE CDProperties GetDefaultVisual()
+{
+    int32 majver = 0, minver = 0;
+    GL_LIB::GetDefaultVersion(majver, minver);
+    auto visual = GetDefaultVisual(majver, minver);
+    GL_LIB::GetDefaultProperties(visual);
+    return visual;
+}
 
 }
 using ColBits = Display::CDContextBits;

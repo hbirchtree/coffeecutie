@@ -37,13 +37,7 @@ int32 coffee_main(int32, cstring_w*)
 
 
     /* Set up the window visual */
-    CDProperties props = GetDefaultVisual();
-    props.flags ^= CDProperties::Resizable
-//            |CDProperties::Windowed
-            ;
-//    props.flags |= CDProperties::WindowedFullScreen;
-    props.gl.flags |= GLProperties::GLDebug;
-//    props.gl.flags |= GLProperties::GLVSync;
+    CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
     CString err;
 

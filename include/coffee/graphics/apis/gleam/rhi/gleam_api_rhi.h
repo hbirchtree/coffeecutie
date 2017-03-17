@@ -3,6 +3,8 @@
 #include "gleam_types_rhi.h"
 #include "gleam_shader_rhi.h"
 
+#include <coffee/core/base/types/cdisplay.h>
+
 namespace Coffee{
 namespace RHI{
 namespace GLEAM{
@@ -90,6 +92,8 @@ struct GLEAM_API : GraphicsAPI
 public:
     static void GetDefaultVersion(int32& major, int32& minor);
 
+    static void GetDefaultProperties(Display::CDProperties& properties);
+
     static bool LoadAPI(DataStore store, bool debug = false);
 
     static Function<bool(bool debug)> GetLoadAPI();
@@ -120,6 +124,9 @@ public:
     static void DrawConditional(DrawCall const& d, DrawInstanceData const& i, OccludeQuery &c);
 
     static FB_T& DefaultFramebuffer();
+
+    using APIClass = RHI::GLEAM::APIClass;
+    static APILevel Level();
 };
 
 struct GLEAM_PRF

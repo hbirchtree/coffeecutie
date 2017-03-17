@@ -12,19 +12,8 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/graphics/common/SMesh>
 
-//#include <coffee/dummyplug/hmd-dummy.h>
-//#include <coffee/COculusRift>
-
 using namespace Coffee;
 using namespace Display;
-
-//#ifdef COFFEE_OCULUSVR_ENABLED
-//using VR = OculusRift::OculusVR;
-//#else
-//using VR = HMD::DummyPlugHMD;
-//#endif
-
-//VR::Device* dev;
 
 void framecount_fun(uint32 t, c_cptr)
 {
@@ -387,26 +376,8 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     Profiler::Profile("Object creation");
 
-    CDProperties props = GetDefaultVisual();
+    CDProperties props = GetDefaultVisual(3,3);
     props.gl.flags |= GLProperties::GLDebug;
-//    props.gl.flags |= GLProperties::GLVSync;
-
-    /* The Oculus SDK configures some OpenGL state,
-     *  so it needs to be done before any GL context is active */
-//    Profiler::PushContext("Oculus setup");
-//    dev = nullptr;
-//    {
-//        int32 devcount;
-//        if(VR::InitializeBinding())
-//        {
-//            if(VR::PollDevices(&devcount)&&devcount>0)
-//                dev = VR::GetDefaultDevice();
-//            if(dev)
-//                cDebug("Here's Johnny!");
-//            VR::PollDevices();
-//        }
-//    }
-//    Profiler::PopContext();
 
     CString err;
 

@@ -7,6 +7,7 @@ list (APPEND RSRCS
 list (APPEND LIBS
     CoffeeSDL2
     CoffeeImage
+    CoffeeGLeam
     )
 
 coffee_add_application_long (

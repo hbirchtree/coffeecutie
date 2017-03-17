@@ -56,7 +56,7 @@ int32 coffee_main(int32, cstring_w*)
 
 
     /* Set up the window visual */
-    CDProperties props = GetDefaultVisual();
+    CDProperties props = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
     cDebug("Property object size: {0}", sizeof(props));
 

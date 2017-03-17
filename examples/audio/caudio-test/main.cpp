@@ -5,6 +5,7 @@
 #include <coffee/CAudio>
 
 #include <coffee/sdl2/CSDL2WindowHost>
+#include <coffee/graphics/apis/CGLeamRHI>
 
 using namespace Coffee;
 using namespace Display;
@@ -148,7 +149,7 @@ int32 coffee_main(int32, cstring_w*)
 
     CDRendererBase *renderer = new CDRenderer();
     CString err;
-    if(!renderer->init(GetDefaultVisual(),&err))
+    if(!renderer->init(GetDefaultVisual<RHI::GLEAM::GLEAM_API>(), &err))
     {
         cDebug("Initialization error: {0}",err);
         return 1;

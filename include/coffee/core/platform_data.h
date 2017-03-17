@@ -35,12 +35,12 @@ struct PlatformData
      */
     bool IsMobile();
 
-    static
-    /*!
-     * \brief Defined when OpenGL ES is the graphics API
-     * \return
-     */
-    bool IsGLES();
+//    static
+//    /*!
+//     * \brief Defined when OpenGL ES is the graphics API
+//     * \return
+//     */
+//    bool IsGLES();
 
     static
     /*!

@@ -26,6 +26,35 @@ void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 #endif
 }
 
+void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
+{
+    props.gl.flags |=
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_RASPBERRYPI) && !defined(COFFEE_MAEMO)
+            Display::GLProperties::GLSRGB
+#else
+            |Display::GLProperties::GLES
+#endif
+            ;
+
+#ifdef COFFEE_ANDROID
+    props.flags ^= CDProperties::Windowed;
+    props.flags |= CDProperties::FullScreen;
+#endif
+
+#if defined(COFFEE_MAEMO)
+    props.gl.bits.alpha = 0;
+    props.gl.bits.red = 5;
+    props.gl.bits.green = 6;
+    props.gl.bits.blue = 5;
+#else
+    props.gl.bits.alpha = 8;
+    props.gl.bits.red = 8;
+    props.gl.bits.blue = 8;
+    props.gl.bits.green = 8;
+#endif
+
+}
+
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
     store->inst_data = new GLEAM_Instance_Data;
@@ -53,7 +82,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
     auto ver = CGL_Implementation::Debug::ContextVersion();
 
-    if(!PlatformData::IsGLES())
+    if(GL_CURR_API != APIClass::GLES)
     {
         const Display::CGLVersion ver33(3,3);
         const Display::CGLVersion ver43(4,3);
@@ -602,6 +631,11 @@ void GLEAM_API::DrawConditional(const DrawCall &d,
 GLEAM_API::FB_T &GLEAM_API::DefaultFramebuffer()
 {
     return m_store->DefaultFramebuffer;
+}
+
+APILevel GLEAM_API::Level()
+{
+    return GL_CURR_API;
 }
 
 }

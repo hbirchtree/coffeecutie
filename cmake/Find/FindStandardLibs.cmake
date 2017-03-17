@@ -26,7 +26,6 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Android's Bionic does not grant access to unwind, even though it is there. Bad Google, bad!
     find_package(Unwind QUIET )
     if (LIBUNWIND_FOUND)
-        add_definitions ( -DCOFFEE_USE_UNWIND )
         list ( APPEND CORE_INCLUDE_DIR
             ${LIBUNWIND_INCLUDE_DIR}
             )

@@ -249,10 +249,8 @@ int32 coffee_main(int32, cstring_w*)
     timer.start();
     CSDL2Renderer *renderer = new CDRenderer();
     cDebug("Allocated renderer: {0}",timer.elapsed());
-    CDProperties props = GetDefaultVisual();
+    CDProperties props = GetDefaultVisual(4,3);
     props.gl.flags = props.gl.flags|GLProperties::GLDebug;
-    props.gl.version.major = 4;
-    props.gl.version.minor = 3;
 
     CString err;
     if(!renderer->init(props,&err))

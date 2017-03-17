@@ -6,6 +6,7 @@
 #include "core/CFunctional"
 #include "core/CPlatform"
 #include "core/CTypes"
+#include "core/CApplication"
 
 #include "core/input/eventhandlers.h"
 #include "core/coffee.h"

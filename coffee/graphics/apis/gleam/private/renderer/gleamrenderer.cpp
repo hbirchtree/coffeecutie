@@ -73,7 +73,7 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     cDebug("Attempting to load version: {0}",p.version);
 
-    if(!PlatformData::IsGLES())
+    if(!(p.flags & GLProperties::Flags::GLES))
     {
 #ifdef COFFEE_GLEAM_DESKTOP
         const static CGLVersion v33(3,3);

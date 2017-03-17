@@ -172,10 +172,12 @@ public:
                 "vr/vshader.glsl", "vr/fshader.glsl", "vr/vshader_es.glsl",
                 "vr/fshader_es.glsl"};
 
-            CResources::Resource v_rsc(shader_files[PlatformData::IsGLES() * 2],
+            bool isGles = (GLM::Level() == GLM::APIClass::GLES);
+
+            CResources::Resource v_rsc(shader_files[isGles * 2],
                     ResourceAccess::SpecifyStorage |
                     ResourceAccess::AssetFile);
-            CResources::Resource f_rsc(shader_files[PlatformData::IsGLES() * 2 + 1],
+            CResources::Resource f_rsc(shader_files[isGles * 2 + 1],
                     ResourceAccess::SpecifyStorage |
                     ResourceAccess::AssetFile);
             if (!CResources::FileMap(v_rsc) || !CResources::FileMap(f_rsc)) {

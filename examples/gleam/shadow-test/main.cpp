@@ -1,18 +1,15 @@
 #include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/core/CApplication>
 #include <coffee/core/CInput>
 #include <coffee/CGraphics>
 #include <coffee/core/coffee.h>
+#include <coffee/core/CFiles>
 
 using namespace Coffee;
 using namespace Display;
-
-#ifdef COFFEE_GLEAM_DESKTOP
-using GL = CGL::CGL43;
-#else
-using GL = CGL::CGLES20;
-#endif
+using namespace CResources;
 
 class CDRenderer : public CSDL2Renderer
 {
@@ -30,7 +27,7 @@ public:
         CSDL2Renderer::eventHandleD(e,data);
 
         EventHandlers::WindowManagerCloseWindow(this,e,data);
-        EventHandlers::ResizeWindow<GL>(e,data);
+        EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>(e,data);
     }
     void eventHandleI(const CIEvent &e, c_cptr data)
     {
@@ -58,23 +55,18 @@ struct SharedData
 
 int32 coffee_main(int32, cstring_w*)
 {
-    CResources::FileResourcePrefix("sample_data/");
+    FileResourcePrefix("sample_data/");
 
     CString err;
     CDRenderer renderer;
 
-    CDProperties visual = GetDefaultVisual(3,3);
-    if(PlatformData::IsGLES())
-    {
-        visual.gl.version.major = 2;
-        visual.gl.version.minor = 0;
-    }
+    CDProperties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
 
     SharedData share_data = {};
 
     auto setup_fun = [](CDRenderer&, SharedData*)
     {
-        cDebug("GL extensions: {0}",GL::Debug::s_ExtensionList);
+        cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
     };
     auto loop_fun = [](CDRenderer& renderer, SharedData*)
     {

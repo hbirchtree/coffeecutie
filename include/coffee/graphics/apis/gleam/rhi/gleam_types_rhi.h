@@ -25,6 +25,35 @@ enum APILevel
     GLES_3_2 = 0x10320,
 };
 
+enum class APIClass
+{
+    Undefined,
+    GLCore,
+    GLES,
+};
+
+inline bool operator ==(APILevel l, APIClass c)
+{
+    switch(l)
+    {
+    case GL_3_3:
+    case GL_4_3:
+    case GL_4_5:
+        return c == APIClass::GLCore;
+    case GLES_2_0:
+    case GLES_3_0:
+    case GLES_3_2:
+        return c == APIClass::GLES;
+    case GL_Nothing:
+        return c == APIClass::Undefined;
+    }
+}
+
+inline bool operator !=(APILevel l, APIClass c)
+{
+    return !(l == c);
+}
+
 struct GLEAM_API;
 
 /* GLEAM-specific data */

@@ -10,9 +10,7 @@
 #include <coffee/core/types/map.h>
 #include <coffee/image/cimage.h>
 
-//#include <SDL.h>
-
-//#undef main
+#include <coffee/graphics/apis/CGLeamRHI>
 
 using namespace Coffee;
 using namespace Display;
@@ -71,7 +69,10 @@ int32 coffee_main(int32, cstring_w*)
 
     CResources::FileResourcePrefix("sample_data/input-sprites/");
 
-    auto visual = GetDefaultVisual();
+    int32 majGL = 2, minGL = 0;
+    RHI::GLEAM::GLEAM_API::GetDefaultVersion(majGL, minGL);
+    auto visual = GetDefaultVisual(majGL, minGL);
+    RHI::GLEAM::GLEAM_API::GetDefaultProperties(visual);
 
     CString err;
 

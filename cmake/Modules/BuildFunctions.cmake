@@ -65,8 +65,9 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
     add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
 
     file ( GLOB_RECURSE ${TARGET}_HEADERS
-        ${HEADER_DIR}/*.h
-        ${HEADER_DIR}/*.hpp
+#        ${HEADER_DIR}/*.h
+#        ${HEADER_DIR}/*.hpp
+        ${HEADER_DIR}/*
         )
     source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
 

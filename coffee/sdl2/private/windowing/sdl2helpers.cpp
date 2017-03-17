@@ -81,10 +81,10 @@ void SetContextProperties(const GLProperties &props)
 
     if(props.flags&GLProperties::Flags::GLCoreProfile)
     {
-        if(!PlatformData::IsGLES())
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
-        else
+        if(props.flags&GLProperties::Flags::GLES)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_ES);
+        else
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,SDL_GL_CONTEXT_PROFILE_CORE);
     }
 
     int32 cflags = 0;
