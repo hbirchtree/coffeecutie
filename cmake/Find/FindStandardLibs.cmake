@@ -97,7 +97,7 @@ if(RASPBERRY)
     # We also have bcm_host for accessing OpenGL for some reason
     # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
-        EGL GLESv1_CM GLESv2
+        EGL GLESv2
         bcm_host
         )
 endif()
