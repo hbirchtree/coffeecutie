@@ -153,7 +153,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     }
 #endif
 
-    cVerbose(4,"Initialized API level {0}",(const void* const&)store->CURR_API);
+    cVerbose(4,"Initialized API level {0}", StrUtil::pointerify(store->CURR_API));
 
     m_store = store;
 

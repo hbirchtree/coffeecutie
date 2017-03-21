@@ -68,7 +68,6 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
 #else
     ver.major = 2;
     ver.minor = 0;
-    return ver;
 #endif
 
     /* In some cases, we run on drivers that are old or crappy.
@@ -194,14 +193,17 @@ HWDeviceInfo CGL_Shared_Debug::Renderer()
 
 #if defined(COFFEE_USE_MAEMO_EGL)
     EGLDisplay m_disp = eglGetCurrentDisplay();
-    vendor = eglQueryString(m_disp, EGL_VENDOR);
-    cstring driver_c = eglQueryString(m_disp, EGL_VERSION);
+    if(!vendor)
+        vendor = eglQueryString(m_disp, EGL_VENDOR);
 #if defined(COFFEE_MAEMO)
-    device = "PowerVR SGX 530";
-    if(driver_c)
+    cstring driver_c = eglQueryString(m_disp, EGL_VERSION);
+    if(!device)
+        device = "PowerVR SGX 530";
+    if(!driver && driver_c)
         driver = driver_c;
 #else
-    device = "GPU";
+    if(!device)
+        device = "GPU";
 #endif
 #endif
 

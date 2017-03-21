@@ -53,37 +53,44 @@ CWString CStrReplace(CWString const& target, CWString const& query, CWString con
 
 namespace Convert{
 
-#if defined(PRIu8)
-    const constexpr cstring u8_fmt = "%" PRIu8;
-    const constexpr cstring u16_fmt = "%" PRIu16;
-    const constexpr cstring u32_fmt = "%" PRIu32;
-    const constexpr cstring u64_fmt = "%" PRIu64;
+#define FMT_TYPE const constexpr cstring
+#if defined(PRIu8a)
+#define FMT_STR(bits, fmt) \
+    FMT_TYPE fmt ## bits ## _fmt = "%" PRI ## fmt ## bits
+#define FMT_PAIR(bits) \
+    FMT_STR(bits, u); \
+    FMT_STR(bits, i); \
+    FMT_STR(bits, x);
 
-    const constexpr cstring i8_fmt = "%" PRIu8;
-    const constexpr cstring i16_fmt = "%" PRIu16;
-    const constexpr cstring i32_fmt = "%" PRIu32;
-    const constexpr cstring i64_fmt = "%" PRIu64;
-#elif defined(COFFEE_ARCH_LLP64)
-	const constexpr cstring u8_fmt  = "%hhu";
-	const constexpr cstring u16_fmt = "%hu";
-	const constexpr cstring u32_fmt = "%u";
-	const constexpr cstring u64_fmt = "%llu";
-
-	const constexpr cstring i8_fmt = "%hhd";
-	const constexpr cstring i16_fmt = "%hd";
-	const constexpr cstring i32_fmt = "%d";
-	const constexpr cstring i64_fmt = "%lld";
+    FMT_PAIR(8)
+    FMT_PAIR(16)
+    FMT_PAIR(32)
+    FMT_PAIR(64)
 #else
-	const constexpr cstring u8_fmt = "%hhu";
-	const constexpr cstring u16_fmt = "%hu";
-	const constexpr cstring u32_fmt = "%u";
-	const constexpr cstring u64_fmt = "%lu";
+#define FMT_STR(bits, fmt, prefix) \
+    FMT_TYPE fmt ## bits ## _fmt = "%" prefix #fmt
 
-	const constexpr cstring i8_fmt = "%hhd";
-	const constexpr cstring i16_fmt = "%hd";
-	const constexpr cstring i32_fmt = "%d";
-	const constexpr cstring i64_fmt = "%ld";
+#define FMT_PAIR(bits, prefix) \
+    FMT_STR(bits, u, prefix); \
+    FMT_STR(bits, i, prefix); \
+    FMT_STR(bits, x, prefix);
+
+#if defined(COFFEE_ARCH_LLP64)
+    FMT_PAIR(8,  "hh")
+    FMT_PAIR(16, "h")
+    FMT_PAIR(32, "")
+    FMT_PAIR(64, "ll")
+#else
+    FMT_PAIR(8,  "hh")
+    FMT_PAIR(16, "h")
+    FMT_PAIR(32, "")
+    FMT_PAIR(64, "l")
 #endif
+#endif
+
+#undef FMT_TYPE
+#undef FMT_STR
+#undef FMT_PAIR
 
 /*
  * In the below functions we remove the null-terminator from the strings.
@@ -311,6 +318,7 @@ FORCEDINLINE std::basic_string<T>& rpad(std::basic_string<T>& s, T ch, uint32 le
     return s;
 }
 
+#if defined(COFFEE_USE_WONKY_HEXIFY)
 FORCEDINLINE CString hexify(uint64 inp, bool trim_zero = false)
 {
     CString out;
@@ -333,7 +341,31 @@ FORCEDINLINE CString hexify(uint64 inp, bool trim_zero = false)
     if(trim_zero)
         zerortrim(out);
     return out;
+
 }
+#else
+#define HEX_CONVERT(name, type, fmt) \
+    FORCEDINLINE CString name(type s, bool trim_zero = false) \
+    { \
+        if(s==0) \
+            return "0"; \
+        type ss = s; \
+        CString str; \
+        str.resize(C_CAST<size_t>(snprintf(nullptr,0,fmt,ss)) + 1); \
+        snprintf(&str[0],str.size() + 1,fmt,ss); \
+        str.resize(str.size() - 1); \
+        zeroltrim(str); \
+        if(trim_zero) \
+            zerortrim(str); \
+        return str; \
+    }
+
+HEX_CONVERT(hexify, uint8,  Convert::x8_fmt)
+HEX_CONVERT(hexify, uint16, Convert::x16_fmt)
+HEX_CONVERT(hexify, uint32, Convert::x32_fmt)
+HEX_CONVERT(hexify, uint64, Convert::x64_fmt)
+
+#endif
 
 FORCEDINLINE CString pointerify(uint64 const& ptr)
 {
