@@ -14,6 +14,11 @@ bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
 {
     m_window_flags = 0;
 
+#if defined(COFFEE_LINUX)
+    struct sigaction action;
+    sigaction(SIGINT, nullptr, &action);
+#endif
+
     if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0)
     {
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
@@ -21,6 +26,10 @@ bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
         setSDL2Context(nullptr);
         return false;
     }
+
+#if defined(COFFEE_LINUX)
+    sigaction(SIGINT, &action, nullptr);
+#endif
 
     /* Create SDL2 context object */
     setSDL2Context(new Context);

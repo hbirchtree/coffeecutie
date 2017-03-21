@@ -27,6 +27,12 @@ SDL2EventHandler::SDL2EventHandler()
 bool SDL2EventHandler::inputPreInit(CString*)
 {
     /* Load input systems */
+
+#if defined(COFFEE_LINUX)
+    struct sigaction action;
+    sigaction(SIGINT, nullptr, &action);
+#endif
+
     if(SDL_InitSubSystem(SDL_INIT_EVENTS|
                          SDL_INIT_GAMECONTROLLER)<0)
     {
@@ -40,6 +46,11 @@ bool SDL2EventHandler::inputPreInit(CString*)
         cLog(__FILE__,__LINE__,CFStrings::SDL2_Library_Name,
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
     }
+
+#if defined(COFFEE_LINUX)
+    sigaction(SIGINT, &action, nullptr);
+#endif
+
     Profiler::Profile("SDL2 input initializtion");
 
     return true;
