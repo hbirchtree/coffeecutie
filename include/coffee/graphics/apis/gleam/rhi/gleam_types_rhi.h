@@ -44,9 +44,8 @@ inline bool APILevelIsOfClass(APILevel l, APIClass c)
     case GLES_3_0:
     case GLES_3_2:
         return c == APIClass::GLES;
-    case GL_Nothing:
-        return c == APIClass::Undefined;
     }
+    return false;
 }
 
 struct GLEAM_API;
