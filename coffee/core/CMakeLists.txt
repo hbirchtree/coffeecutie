@@ -155,6 +155,12 @@ if(NOT NACL AND (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR ANDROID))
         )
 endif()
 
+if(MAEMO)
+    list ( APPEND CoffeeCore_SRCS
+        private/plat/sensor/maemo/sensors.cpp
+        )
+endif()
+
 find_package( StandardLibs REQUIRED )
 
 include_directories ( SYSTEM ${STANDARDLIBS_INCLUDE_DIR} )
