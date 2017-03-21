@@ -199,7 +199,7 @@ HWDeviceInfo CGL_Shared_Debug::Renderer()
     cstring driver_c = eglQueryString(m_disp, EGL_VERSION);
     if(!device)
         device = "PowerVR SGX 530";
-    if(!driver && driver_c)
+    if(driver.size()<1 && driver_c)
         driver = driver_c;
 #else
     if(!device)
