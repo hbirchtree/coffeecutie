@@ -2,6 +2,8 @@
 
 #include "../sensor_def.h"
 
+#if defined(COFFEE_ANDROID)
+
 namespace Coffee{
 namespace Sensor{
 namespace Android{
@@ -28,3 +30,4 @@ using Sensors = Android::Android_SensorAPI;
 
 }
 }
+#endif

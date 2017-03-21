@@ -7,6 +7,8 @@
 
 #include <coffee/graphics/common/query/gpu_query.h>
 
+#include <coffee/core/plat/plat_sensor.h>
+
 using namespace Coffee;
 
 int32 coffee_main(int32, cstring_w*)
@@ -43,7 +45,12 @@ int32 coffee_main(int32, cstring_w*)
     }
     Profiler::PopContext();
 
-
+    cDebug("Sensor gravity: {0}", Sensor::Sensors::Gravity());
+    cDebug("Sensor gyro: {0}", Sensor::Sensors::Gyroscope());
+    cDebug("Sensor lux: {0}", Sensor::Sensors::Lux());
+    cDebug("Sensor steps: {0}", Sensor::Sensors::StepCounter());
+    cDebug("Sensor acceleration: {0}", Sensor::Sensors::Acceleration());
+    cDebug("Sensor orientation: {0}", Sensor::Sensors::Orientation());
 
     return 0;
 }
