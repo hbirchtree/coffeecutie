@@ -24,6 +24,9 @@
  * COFFEE_NO_HUGETLB - disable non-standard HUGE_TLB flag for file mapping
  * COFFEE_NO_RUSAGE_THREAD - disable rusage statistics per-thread
  * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them. Android, Maemo, RPi and Apple do this
+ * COFFEE_LINKED_GLES30 - GLES 3.0 linked headers
+ * COFFEE_LINKED_GLES31 - GLES 3.1 linked headers
+ * COFFEE_LINKED_GLES32 - GLES 3.2 linked headers
  * COFFEE_ONLY_GLES20 - allow only GLES 2.0, for RPi, old Android and Maemo
  * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite fast, only ~100 EGL calls as opposed to SDL's thousands
  * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window with minimal functionality
@@ -105,8 +108,11 @@
 #define thread_local __thread
 #endif
 
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
 #define COFFEE_LINKED_GLES
+#endif
+
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
 #define COFFEE_DISABLE_SRGB_SUPPORT
 #define COFFEE_USE_IMMERSIVE_VIEW
 #endif
