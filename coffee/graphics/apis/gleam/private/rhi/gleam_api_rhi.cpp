@@ -528,21 +528,22 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
             continue;
 
         auto& handle = s.second.value;
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3 ||
-                GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
+        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3
+                || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2
+                || GL_CURR_API==GLES_2_0)
         {
             /* Set up texture state */
             CGL33::TexActive(handle->m_unit);
             CGL33::TexBind(handle->m_type,handle->texture);
 #if !defined(COFFEE_ONLY_GLES20)
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
-#endif
             if(GL_CURR_API != GL_4_3)
             {
+#endif
                 /* Set texture handle in shader */
                 CGL33::Uniformi(s.first,handle->m_unit);
-            }
 #if !defined(COFFEE_ONLY_GLES20)
+            }
             else{
                 /* Set texture handle in shader */
                 CGL43::Uniformi(prog,s.first,handle->m_unit);

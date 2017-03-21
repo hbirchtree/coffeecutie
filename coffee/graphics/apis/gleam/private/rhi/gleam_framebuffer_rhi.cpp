@@ -185,8 +185,10 @@ void GLEAM_RenderTarget::clear(bigscalar depth)
     fb_bind(m_type,m_handle);
     scalar tmp_dep = depth;
     if(GL_CURR_API == GLES_3_0)
+    {
+        glClearDepthf(C_CAST<scalar>(depth));
         glClear(GL_DEPTH_BUFFER_BIT);
-    else
+    }else
         CGL33::ClearBufferfv(&tmp_dep);
 }
 
@@ -194,8 +196,11 @@ void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
 {
     fb_bind(m_type,m_handle);
     if(GL_CURR_API == GLES_3_0)
+    {
+        glClearDepthf(C_CAST<scalar>(depth));
+        glClearStencil(stencil);
         glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-    else
+    }else
         CGL33::ClearBufferfi(depth,(int32)stencil);
 }
 
@@ -204,6 +209,8 @@ void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth)
     if(GL_CURR_API == GLES_3_0 ||
        GL_CURR_API == GLES_2_0)
     {
+        glClearDepthf(C_CAST<scalar>(depth));
+        glClearColor(color.r(), color.g(), color.b(), color.a());
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
     }else{
         clear(i,color);

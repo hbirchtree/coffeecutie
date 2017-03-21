@@ -1174,17 +1174,17 @@ inline uint32 to_enum_shtype(CGenum f)
 
     switch(f)
     {
-#if !defined(COFFEE_ONLY_GLES20)
     case GL_SAMPLER_2D:
         return Sampler_v|S2|Scalar_t;
+    case GL_SAMPLER_CUBE:
+        return Sampler_v|SCube|Scalar_t;
+#if !defined(COFFEE_ONLY_GLES20)
+    case GL_SAMPLER_CUBE_MAP_ARRAY:
+        return Sampler_v|SCubeA;
     case GL_SAMPLER_3D:
         return Sampler_v|S3|Scalar_t;
     case GL_SAMPLER_2D_ARRAY:
         return Sampler_v|S2A|Scalar_t;
-    case GL_SAMPLER_CUBE:
-        return Sampler_v|SCube|Scalar_t;
-    case GL_SAMPLER_CUBE_MAP_ARRAY:
-        return Sampler_v|SCubeA;
 
     case GL_UNSIGNED_INT_SAMPLER_2D:
         return Sampler_v|S2|UInt_t;
@@ -1208,6 +1208,7 @@ inline uint32 to_enum_shtype(CGenum f)
     case GL_INT_SAMPLER_CUBE_MAP_ARRAY:
         return Sampler_v|Int_t|SCubeA;
         break;
+#endif
 
     case GL_FLOAT:
         return Scalar_t;
@@ -1224,7 +1225,6 @@ inline uint32 to_enum_shtype(CGenum f)
         return Scalar_t|Mat_d|S3;
     case GL_FLOAT_MAT4:
         return Scalar_t|Mat_d|S4;
-#endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
     case GL_DOUBLE:
@@ -1244,15 +1244,16 @@ inline uint32 to_enum_shtype(CGenum f)
         return BScalar_t|Mat_d|S4;
 #endif
 
-#if !defined(COFFEE_ONLY_GLES20)
     case GL_UNSIGNED_INT:
         return UInt_t;
+#if !defined(COFFEE_ONLY_GLES20)
     case GL_UNSIGNED_INT_VEC2:
         return UInt_t|Vec_d|S2;
     case GL_UNSIGNED_INT_VEC3:
         return UInt_t|Vec_d|S3;
     case GL_UNSIGNED_INT_VEC4:
         return UInt_t|Vec_d|S4;
+#endif
 
     case GL_INT:
         return Int_t;
@@ -1262,7 +1263,6 @@ inline uint32 to_enum_shtype(CGenum f)
         return Int_t|Vec_d|S3;
     case GL_INT_VEC4:
         return Int_t|Vec_d|S4;
-#endif
 
     default:
         return ShaderTypes::None;
