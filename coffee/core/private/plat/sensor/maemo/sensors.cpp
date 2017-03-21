@@ -3,6 +3,7 @@
 
 #include <coffee/core/plat/plat_memory.h>
 #include <coffee/core/string_casting.h>
+#include <coffee/core/CDebug>
 
 #define const_string static const constexpr cstring
 
@@ -27,17 +28,26 @@ Vecf3 Maemo_SensorAPI::Gravity()
     if(data.size() < 1)
         return v;
 
+    cVerbose(15, "Gravity input: {0}", data);
+
     size_t p_i = 0;
     size_t i = data.find(' ');
 
     size_t v_i = 0;
-    while(i <= data.size())
+    while(v_i < 3)
     {
-        CString en = StrUtil::encapsulate(&data[0], i - p_i);
-        v[v_i] = cast_string<scalar>(en) / 100.f;
+        if(i > data.size())
+            i = data.size();
+        CString en = StrUtil::encapsulate(&data[p_i], i - p_i);
+        cVerbose(15, "Gravity string: {0}", en);
+        if(en[0] == '-')
+            v[v_i] = -cast_string<scalar>(&en[1]) / 100.f;
+        else
+            v[v_i] = cast_string<scalar>(en) / 100.f;
         v_i++;
         p_i = i;
-        i = data.find(' ', p_i);
+        i = data.find(' ', p_i + 1);
+        cVerbose(15, "Gravity is looking at: {0}, {1}", p_i, i);
     }
 
     return v;
