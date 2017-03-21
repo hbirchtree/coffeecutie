@@ -7,6 +7,8 @@
 #include <coffee/sdl2/graphics/egl_renderer.h>
 
 #include <coffee/sdl2/windowing/csdl2_window.h>
+#include <coffee/sdl2/windowing/x11_window.h>
+
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 #include <coffee/graphics/apis/gleam/renderer/gleamrenderer.h>
 
@@ -18,10 +20,11 @@ namespace Display{
 
 class CSDL2Renderer :
         public CDRendererBase,
-        public SDL2Window,
         #if defined(COFFEE_USE_MAEMO_EGL)
+        public X11Window,
         public EGLRenderer,
         #else
+        public SDL2Window,
         public SDL2GLRenderer,
         #endif
         public SDL2EventHandler,
@@ -44,40 +47,49 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 #if !defined(COFFEE_ANDROID)
     do{
 #if !defined(COFFEE_ONLY_GLES20)
-#if defined(COFFEE_GLEAM_DESKTOP)
-        properties.gl.version.major = 4;
-        properties.gl.version.minor = 5;
-#else
-        properties.gl.version.major = 3;
-        properties.gl.version.minor = 2;
-#endif
+        if(properties.gl.flags & (GLProperties::Flags::GLES))
+        {
+            properties.gl.version.major = 3;
+            properties.gl.version.minor = 2;
+        }else
+        {
+            properties.gl.version.major = 4;
+            properties.gl.version.minor = 5;
+        }
+
         if(renderer->init(properties,err))
             break;
 
-#if defined(COFFEE_GLEAM_DESKTOP)
-        properties.gl.version.minor = 3;
-#else
-        properties.gl.version.major = 3;
-        properties.gl.version.minor = 1;
-#endif
+        if(properties.gl.flags & (GLProperties::Flags::GLES))
+        {
+            properties.gl.version.major = 3;
+            properties.gl.version.minor = 1;
+        }else
+        {
+            properties.gl.version.minor = 3;
+        }
+
         if(renderer->init(properties,err))
             break;
 
-#if defined(COFFEE_GLEAM_DESKTOP)
-        properties.gl.version.major = 3;
-#else
-        properties.gl.version.major = 3;
-        properties.gl.version.minor = 0;
-#endif
+        if(properties.gl.flags & (GLProperties::Flags::GLES))
+        {
+            properties.gl.version.major = 3;
+            properties.gl.version.minor = 0;
+        }else
+        {
+            properties.gl.version.major = 3;
+        }
         if(renderer->init(properties,err))
             break;
 #endif
+        if(properties.gl.flags & (GLProperties::Flags::GLES))
+        {
+            properties.gl.version.major = 2;
 
-#if !defined(COFFEE_GLEAM_DESKTOP)
-        properties.gl.version.major = 2;
-        if(renderer->init(properties,err))
-            break;
-#endif
+            if(renderer->init(properties,err))
+                break;
+        }
 
         return false;
     } while(false);

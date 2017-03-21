@@ -67,15 +67,6 @@ bool PlatformData::IsMobile()
 #endif
 }
 
-//bool PlatformData::IsGLES()
-//{
-//#ifdef COFFEE_GLEAM_DESKTOP
-//    return false;
-//#else
-//    return true;
-//#endif
-//}
-
 bool PlatformData::UseVirtualFS()
 {
 #if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS)

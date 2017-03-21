@@ -61,6 +61,9 @@ template<typename T>
 using ShPtr = std::shared_ptr<T>;
 
 template<typename T>
+using UqPtr = std::unique_ptr<T>;
+
+template<typename T>
 using Complex = std::complex<T>;
 
 template<typename T>

@@ -7,6 +7,7 @@ set ( CoffeeSDL2_SRCS
     private/graphics/egl_renderer.cpp
     private/input/csdl2_eventhandler.cpp
     private/windowing/csdl2_window.cpp
+    private/windowing/x11_window.cpp
 
     private/input/evhandlers/sdl2eventhandlers.cpp
     private/windowing/sdl2helpers.cpp

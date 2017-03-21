@@ -27,7 +27,7 @@ public:
         CSDL2Renderer::eventHandleD(e,data);
 
         EventHandlers::WindowManagerCloseWindow(this,e,data);
-        EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>(e,data);
+//        EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>(e,data);
     }
     void eventHandleI(const CIEvent &e, c_cptr data)
     {
@@ -50,11 +50,15 @@ void emscripten_middleman(void* arg)
 
 struct SharedData
 {
+    uint16 frame_count;
+    Timestamp frame_ts;
+
     void* ptr;
 };
 
 int32 coffee_main(int32, cstring_w*)
 {
+    SetPrintingVerbosity(8);
     FileResourcePrefix("sample_data/");
 
     CString err;
@@ -66,15 +70,24 @@ int32 coffee_main(int32, cstring_w*)
 
     auto setup_fun = [&](CDRenderer&, SharedData*)
     {
+        renderer.setWindowTitle("GL extensions");
         cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
-//        renderer.setWindowState(CDProperties::WindowedFullScreen);
-        renderer.setWindowSize({800,480});
-        glViewport(0,0,800,480);
+        cDebug("Framebuffer size: {0}, window size: {1}",
+               renderer.framebufferSize(), renderer.windowSize());
     };
-    auto loop_fun = [](CDRenderer& renderer, SharedData*)
+    auto loop_fun = [](CDRenderer& renderer, SharedData* data)
     {
         glClearColor(1.f, 1.f, 0.f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        if(data->frame_ts <= Time::CurrentTimestamp())
+        {
+            cDebug("FPS: {0}", data->frame_count);
+            data->frame_ts = Time::CurrentTimestamp() + 1;
+            data->frame_count = 0;
+        }
+        data->frame_count++;
+
         renderer.pollEvents();
         renderer.swapBuffers();
     };

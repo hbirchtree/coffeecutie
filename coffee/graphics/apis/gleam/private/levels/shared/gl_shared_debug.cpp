@@ -1,6 +1,10 @@
 #include <coffee/graphics/apis/gleam/levels/shared/gl_shared_debug.h>
 #include <coffee/core/string_casting.h>
 
+#if defined(COFFEE_USE_MAEMO_EGL)
+#include <EGL/egl.h>
+#endif
+
 namespace Coffee{
 namespace CGL{
 
@@ -40,6 +44,12 @@ void CGL_Shared_Debug::GetExtensions()
         if(i<numExtensions-1)
             s_ExtensionList.push_back(' ');
     }
+#elif defined(COFFEE_USE_MAEMO_EGL)
+    EGLDisplay m_disp = eglGetCurrentDisplay();
+    s_ExtensionList = std::string();
+    cstring extensions = eglQueryString(m_disp, EGL_EXTENSIONS);
+    if(extensions)
+        s_ExtensionList = extensions;
 #endif
 }
 
@@ -109,6 +119,15 @@ Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
 {
     Display::CGLVersion ver = {};
 
+#if !defined(COFFEE_GLEAM_DESKTOP)
+    ver.revision = 1;
+#endif
+
+#if defined(COFFEE_ONLY_GLES20)
+    ver.major = 1;
+    ver.minor = 0;
+#endif
+
     cstring str_c = GetString(GL_SHADING_LANGUAGE_VERSION);
 
     if (!str_c)
@@ -165,6 +184,31 @@ Display::CGLVersion CGL_Shared_Debug::ShaderLanguageVersion()
     }while(false);
 
     return ver;
+}
+
+HWDeviceInfo CGL_Shared_Debug::Renderer()
+{
+    cstring vendor = GetString(GL_VENDOR);
+    cstring device = GetString(GL_RENDERER);
+    CString driver = ContextVersion().driver;
+
+#if defined(COFFEE_USE_MAEMO_EGL)
+    EGLDisplay m_disp = eglGetCurrentDisplay();
+    vendor = eglQueryString(m_disp, EGL_VENDOR);
+    cstring driver_c = eglQueryString(m_disp, EGL_VERSION);
+#if defined(COFFEE_MAEMO)
+    device = "PowerVR SGX 530";
+    if(driver_c)
+        driver = driver_c;
+#else
+    device = "GPU";
+#endif
+#endif
+
+    if(!vendor || !device)
+        return HWDeviceInfo("Unknown", "Unknown", "");
+
+    return HWDeviceInfo(vendor,device,driver);
 }
 
 bool CGL_Shared_Debug::CompressedFormatSupport(Texture, PixelFormat t)

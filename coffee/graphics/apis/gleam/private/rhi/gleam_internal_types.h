@@ -41,7 +41,9 @@ struct GLEAM_PboQueue
 
 struct GLEAM_Instance_Data
 {
+#if !defined(COFFEE_ONLY_GLES20)
     GLEAM_PboQueue pboQueue;
+#endif
     struct {
 	int32 NUM_PROGRAM_BINARY_FORMATS = -1;
     } GL_CACHED;

@@ -1,12 +1,28 @@
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 
+
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include "evhandlers/sdl2eventhandlers.h"
 #include "sdl2inputfun.h"
 
+#if defined(COFFEE_USE_MAEMO_X11)
+
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <coffee/core/plat/windowmanager/plat_windowtype.h>
+#include <coffee/core/base/renderer/windowmanagerclient.h>
+
+#endif
+
 namespace Coffee{
 namespace Display{
+
+SDL2EventHandler::SDL2EventHandler()
+{
+    setSDL2Context(nullptr);
+}
 
 bool SDL2EventHandler::inputPreInit(CString*)
 {
@@ -25,6 +41,7 @@ bool SDL2EventHandler::inputPreInit(CString*)
              CFStrings::SDL2_Library_FailureInit,SDL_GetError());
     }
     Profiler::Profile("SDL2 input initializtion");
+
     return true;
 }
 
@@ -69,11 +86,12 @@ bool SDL2EventHandler::inputPostInit(CString*)
 void SDL2EventHandler::inputTerminate()
 {
     /* Close haptic devices and game controllers */
-    for(std::pair<uint8,SDL_GameController*> con : getSDL2Context()->controllers)
-    {
-        SDL_HapticClose(getSDL2Context()->haptics[con.first]);
-        SDL_GameControllerClose(getSDL2Context()->controllers[con.first]);
-    }
+    if(getSDL2Context())
+        for(std::pair<uint8,SDL_GameController*> con : getSDL2Context()->controllers)
+        {
+            SDL_HapticClose(getSDL2Context()->haptics[con.first]);
+            SDL_GameControllerClose(getSDL2Context()->controllers[con.first]);
+        }
     SDL_QuitSubSystem(SDL_INIT_EVENTS|
                       SDL_INIT_GAMECONTROLLER|
                       SDL_INIT_HAPTIC);
@@ -90,6 +108,8 @@ void SDL2EventHandler::eventHandleD(const CDEvent &e, c_cptr d)
  */
 void SDL2EventHandler::eventHandleI(const CIEvent &event, c_cptr data)
 {
+    if(!getSDL2Context())
+        return;
     if(event.type==CIEvent::ControllerUpdate)
     {
         const CIControllerAtomicUpdateEvent* jev =
@@ -101,10 +121,11 @@ void SDL2EventHandler::eventHandleI(const CIEvent &event, c_cptr data)
 
 void SDL2EventHandler::hapticInsert(const CIHapticEvent &e, c_cptr data)
 {
-    SDL_HapticRumblePlay(
-                getSDL2Context()->haptics[e.rumble_input.index],
-            e.rumble_input.strength,
-            e.rumble_input.duration);
+    if(getSDL2Context())
+        SDL_HapticRumblePlay(
+                    getSDL2Context()->haptics[e.rumble_input.index],
+                e.rumble_input.strength,
+                e.rumble_input.duration);
 }
 
 void SDL2EventHandler::setTextArea(const CRect &area)
@@ -153,12 +174,14 @@ void SDL2EventHandler::setKeyboardRepeat(bool m)
 
 bool SDL2EventHandler::isMouseGrabbed() const
 {
-    return (SDL_GetWindowGrab(getSDL2Context()->window)==SDL_TRUE);
+    if(getSDL2Context())
+        return (SDL_GetWindowGrab(getSDL2Context()->window)==SDL_TRUE);
 }
 
 void SDL2EventHandler::setMouseGrabbing(bool grab)
 {
-    SDL_SetWindowGrab(getSDL2Context()->window,(grab) ? SDL_TRUE : SDL_FALSE);
+    if(getSDL2Context())
+        SDL_SetWindowGrab(getSDL2Context()->window,(grab) ? SDL_TRUE : SDL_FALSE);
 }
 
 CPoint SDL2EventHandler::mousePosition() const
@@ -170,7 +193,8 @@ CPoint SDL2EventHandler::mousePosition() const
 
 void SDL2EventHandler::setMousePosition(const CPoint &pos)
 {
-    SDL_WarpMouseInWindow(getSDL2Context()->window,pos.x,pos.y);
+    if(getSDL2Context())
+        SDL_WarpMouseInWindow(getSDL2Context()->window,pos.x,pos.y);
 }
 
 bool SDL2EventHandler::relativeMouse() const
@@ -185,6 +209,9 @@ void SDL2EventHandler::setRelativeMouse(bool enable)
 
 CIControllerState SDL2EventHandler::getControllerState(uint16 index)
 {
+    if(!getSDL2Context())
+        return {};
+
     SDL_GameController* gc = getSDL2Context()->controllers[index];
     if(!gc)
         return {};
@@ -233,6 +260,27 @@ void SDL2EventHandler::pollEvents()
         for(EventHandlerSDL const& eh : m_eventhandlers_sdl)
             eh.func(eh.user_ptr, &ev, nullptr);
     }
+
+#if defined(COFFEE_USE_MAEMO_X11)
+    static WindowManagerClient* wm;
+    static CDWindow* win;
+
+    if(!wm)
+    {
+        wm = C_DCAST<WindowManagerClient>((SDL2EventHandler*)this);
+        win = wm->window();
+#if C_SYSTEM_BITNESS == 32
+        cDebug("Window pointer: {0}, X11: {1},{2}", (u32)win,
+               (u32)win->wininfo.x11.display, (u32)win->wininfo.x11.window);
+#endif
+    }
+
+    XEvent xev;
+    while(XPending(win->wininfo.x11.display))
+    {
+        XNextEvent(win->wininfo.x11.display, &xev);
+    }
+#endif
 }
 
 bigscalar SDL2EventHandler::contextTime() const
@@ -242,7 +290,10 @@ bigscalar SDL2EventHandler::contextTime() const
 
 bool SDL2EventHandler::closeFlag() const
 {
-    return (getSDL2Context()->contextFlags&0x1) || (EventApplication::closeFlag());
+    if(getSDL2Context())
+        return (getSDL2Context()->contextFlags&0x1) || (EventApplication::closeFlag());
+    else
+        return EventApplication::closeFlag();
 }
 
 void SDL2EventHandler::internalProcessEvent(const CDEvent &e, c_cptr d)

@@ -172,7 +172,7 @@ public:
                 "vr/vshader.glsl", "vr/fshader.glsl", "vr/vshader_es.glsl",
                 "vr/fshader_es.glsl"};
 
-            bool isGles = (GLM::Level() == GLM::APIClass::GLES);
+            bool isGles = (GLM::LevelIsOfClass(GLM::Level(),GLM::APIClass::GLES));
 
             CResources::Resource v_rsc(shader_files[isGles * 2],
                     ResourceAccess::SpecifyStorage |
@@ -286,11 +286,13 @@ public:
 
         GLM::STENSTATE stenstate = {};
 
+        CSize win_size = windowSize();
+
         blendstate.m_doBlend = true;
         viewportstate.m_view.clear();
-        viewportstate.m_view.push_back({0, 0, 1280, 720});
+        viewportstate.m_view.push_back({0, 0, win_size.w, win_size.h});
         viewportstate.m_scissor.clear();
-        viewportstate.m_scissor.push_back({0,0,1280,720});
+        viewportstate.m_scissor.push_back({0,0,win_size.w,win_size.h});
         viewportstate.m_mview = true;
         rasterstate_line.m_wireframe = true;
         deptstate.m_test = true;

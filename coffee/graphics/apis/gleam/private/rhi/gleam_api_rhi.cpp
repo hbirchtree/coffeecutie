@@ -28,20 +28,28 @@ void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 
 void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
 {
-    props.gl.flags |=
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_RASPBERRYPI) && !defined(COFFEE_MAEMO)
-            Display::GLProperties::GLSRGB
-#else
+    props.gl.flags |= Display::GLProperties::GLNoFlag
+#if !defined(COFFEE_ANDROID) && !defined(COFFEE_RASPBERRYPI) \
+            && !defined(COFFEE_MAEMO)
+            |Display::GLProperties::GLSRGB
+#endif
+#if defined(COFFEE_ANDROID) || defined(COFFEE_RASPBERRYPI) \
+            || defined(COFFEE_MAEMO) || !defined(COFFEE_GLEAM_DESKTOP)
             |Display::GLProperties::GLES
+#endif
+#if defined(COFFEE_MAEMO)
+            |Display::GLProperties::GLVSync;
 #endif
             ;
 
 #ifdef COFFEE_ANDROID
-    props.flags ^= CDProperties::Windowed;
-    props.flags |= CDProperties::FullScreen;
+    props.flags ^= Display::CDProperties::Windowed;
+    props.flags |= Display::CDProperties::FullScreen;
 #endif
 
 #if defined(COFFEE_MAEMO)
+    props.flags ^= Display::CDProperties::Windowed;
+    props.flags |= Display::CDProperties::FullScreen;
     props.size.w = 800;
     props.size.h = 480;
     props.gl.bits.alpha = 0;
@@ -59,14 +67,24 @@ void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
 
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
+    cVerbose(8, "Entering LoadAPI()");
+    if(!store)
+    {
+        cWarning("No data store provided");
+        return false;
+    }
+
+    cVerbose(8, "Creating instance data");
     store->inst_data = new GLEAM_Instance_Data;
 
 #ifndef NDEBUG
     store->DEBUG_MODE = debug;
 #endif
 
+#if !defined(COFFEE_ONLY_GLES20)
     {
         const szptr num_pbos = 5;
+        cVerbose(7, "Creating PBO storage, {0} units", num_pbos);
 
         CGhnd* bufs = new CGhnd[num_pbos];
         CGL33::BufAlloc(num_pbos,bufs);
@@ -81,52 +99,63 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         }
         delete[] bufs;
     }
+#endif
 
+    cVerbose(10, "Getting GL context version");
     auto ver = CGL_Implementation::Debug::ContextVersion();
 
-    if(GL_CURR_API != APIClass::GLES)
-    {
-        const Display::CGLVersion ver33(3,3);
-        const Display::CGLVersion ver43(4,3);
-        const Display::CGLVersion ver45(4,5);
+    cVerbose(10, "Matching GL API...");
+#if defined(COFFEE_GLEAM_DESKTOP)
+    cVerbose(8, "Checking GL core versions");
 
-        /* If higher level of API is not achieved, stay at the lower one */
-        if(ver>=ver45&& /* DISABLES CODE */ (false))
-            /* Unimplemented both on CGL level and here */
-            store->CURR_API = GL_4_5;
-        else if(ver>=ver43 && /* DISABLES CODE */ (false))
-            store->CURR_API = GL_4_3;
-        else if(ver>=ver33)
-            store->CURR_API = GL_3_3;
-    }else
-    {
-        const Display::CGLVersion ver20es(2,0);
+    cVerbose(12, "Constructing GL version structures");
+    const Display::CGLVersion ver33(3,3);
+    const Display::CGLVersion ver43(4,3);
+    const Display::CGLVersion ver45(4,5);
+
+    /* If higher level of API is not achieved, stay at the lower one */
+    if(ver>=ver45&& /* DISABLES CODE */ (false))
+        /* Unimplemented both on CGL level and here */
+        store->CURR_API = GL_4_5;
+    else if(ver>=ver43 && /* DISABLES CODE */ (false))
+        store->CURR_API = GL_4_3;
+    else if(ver>=ver33)
+        store->CURR_API = GL_3_3;
+#else
+    cVerbose(8, "Checking GLES versions");
+
+    cVerbose(12, "Constructing GL version structures");
+    const Display::CGLVersion ver20es(2,0);
 #if !defined(COFFEE_ONLY_GLES20)
-        const Display::CGLVersion ver30es(3,0);
-        const Display::CGLVersion ver32es(3,2);
+    const Display::CGLVersion ver30es(3,0);
+    const Display::CGLVersion ver32es(3,2);
 
-        if(ver>=ver32es)
-            store->CURR_API = GLES_3_2;
-        else if(ver>=ver30es)
-            store->CURR_API = GLES_3_0;
-        else
+    if(ver>=ver32es)
+        store->CURR_API = GLES_3_2;
+    else if(ver>=ver30es)
+        store->CURR_API = GLES_3_0;
+    else
 #endif
-        if(ver>=ver20es)
-            store->CURR_API = GLES_2_0;
-    }
+    if(ver>=ver20es)
+        store->CURR_API = GLES_2_0;
+#endif
+
+    cVerbose(8, "Got API: {0}", store->CURR_API);
 
     if(store->CURR_API == GL_Nothing)
     {
         cWarning("Totally failed to create a GLEAM context, got version: {0}",ver);
         return false;
-//        RUNOUTTHEWINDOW();
     }
+    cVerbose(10, "Selected API: {0}", store->CURR_API);
 
+#if !defined(COFFEE_ONLY_GLES20)
     if(CGL33::Tex_SRGB_Supported())
     {
-        cVerbose(5,"Enabling SRGB color for framebuffers");
+        cVerbose(6,"Enabling SRGB color for framebuffers");
         CGL33::Enable(Feature::FramebufferSRGB);
     }
+#endif
 
     cVerbose(4,"Initialized API level {0}",(const void* const&)store->CURR_API);
 
@@ -139,9 +168,11 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
 Function<bool (bool debug)> GLEAM_API::GetLoadAPI()
 {
+    cVerbose(8, "Returning GLEAM loader...");
     return [](bool debug = false)
     {
         static GLEAM_DataStore m_gleam_data = {};
+        cVerbose(8, "Running GLEAM loader");
         return LoadAPI(&m_gleam_data, debug);
     };
 }
@@ -639,6 +670,8 @@ APILevel GLEAM_API::Level()
 {
     return GL_CURR_API;
 }
+
+
 
 }
 }

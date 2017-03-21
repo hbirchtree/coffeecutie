@@ -127,6 +127,11 @@ public:
 
     using APIClass = RHI::GLEAM::APIClass;
     static APILevel Level();
+
+    STATICINLINE bool LevelIsOfClass(APILevel l, APIClass c)
+    {
+        return APILevelIsOfClass(l, c);
+    }
 };
 
 struct GLEAM_PRF

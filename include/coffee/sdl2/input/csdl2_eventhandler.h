@@ -14,7 +14,14 @@ class SDL2EventHandler :
         public HapticApplication,
         public virtual SDL2ContextUser
 {
+public:
+    SDL2EventHandler();
+
 protected:
+#if defined(COFFEE_USE_MAEMO_X11)
+    CDWindow* m_window = nullptr;
+#endif
+
     using EventHandlerSDL = EventHandler<SDL_Event*>;
 
     Vector<EventHandlerI> m_eventhandlers_input;

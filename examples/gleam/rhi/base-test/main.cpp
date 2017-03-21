@@ -22,6 +22,7 @@ int32 coffee_main(int32, cstring_w*)
 {
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
+    SetPrintingVerbosity(8);
     GotoApplicationDir();
 
     /* Required for SDL2 applications, initializes SDL state */

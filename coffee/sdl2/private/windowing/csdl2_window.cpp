@@ -1,5 +1,6 @@
 ﻿#include <coffee/sdl2/windowing/csdl2_window.h>
 
+
 #include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
@@ -75,17 +76,19 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
     if(p.flags&CDProperties::Windowed)
         SDL_SetWindowFullscreen(getSDL2Context()->window,0);
 
+#if !defined(COFFEE_MAEMO)
     /* Finally, push a resize event */
     {
         SDL_Event wev;
         wev.window.event = SDL_WINDOWEVENT_RESIZED;
         CSize win_size = windowSize();
-        cVerbose(5, "Pushing resize event with: {0}x{1}", win_size.w, win_size.h);
+        cVerbose(7, "Pushing resize event with: {0}x{1}", win_size.w, win_size.h);
         wev.window.data1 = win_size.w;
         wev.window.data2 = win_size.h;
         if(SDL_PushEvent(&wev)!=1)
             cVerbose(5,"Failed to push resize event!");
     }
+#endif
 
     Profiler::Profile("Set window properties");
     return true;
@@ -254,4 +257,3 @@ CDMonitor SDL2Window::monitor()
 
 }
 }
-

@@ -78,7 +78,10 @@
 #define COFFEE_ONLY_GLES20
 #define COFFEE_DISABLE_SRGB_SUPPORT
 #define COFFEE_USE_MAEMO_EGL
+#define COFFEE_USE_MAEMO_X11
 #endif
+
+#define COFFEE_ONLY_GLES20
 
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
@@ -107,4 +110,10 @@
 
 #if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_ANDROID)
 #define COFFEE_NO_SYSTEM_CMD
+#endif
+
+#if defined(COFFEE_RASPBERRYPI)
+#define COFFEE_LINKED_GLES
+#define COFFEE_ONLY_GLES20
+//#define COFFEE_USE_MAEMO_EGL
 #endif

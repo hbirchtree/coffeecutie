@@ -85,7 +85,10 @@ struct CGL_Shared_Debug
 
     STATICINLINE bool CheckExtensionSupported(cstring id)
     {
-        return Mem::Search::StrFind(s_ExtensionList.c_str(),id);
+        if(s_ExtensionList.size() > 0)
+            return Mem::Search::StrFind(s_ExtensionList.c_str(),id);
+        else
+            return false;
     }
 
     /* Context information */
@@ -98,16 +101,7 @@ struct CGL_Shared_Debug
 
     /* Rendering device info */
 
-    STATICINLINE HWDeviceInfo Renderer()
-    {
-        cstring vendor = GetString(GL_VENDOR);
-        cstring device = GetString(GL_RENDERER);
-
-        if(!vendor || !device)
-            return HWDeviceInfo("Unknown", "Unknown", "");
-
-        return HWDeviceInfo(vendor,device,ContextVersion().driver);
-    }
+    static HWDeviceInfo Renderer();
 
     /* Texture format support */
     STATICINLINE void InitInternalFormats()

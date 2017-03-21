@@ -27,6 +27,8 @@ extern void GotoApplicationDir();
 
 extern void InstallDefaultSigHandlers();
 
+extern void SetPrintingVerbosity(u8 level);
+
 extern CoffeeApplicationData const& ApplicationData();
 
 //A simpler implementation of QObject

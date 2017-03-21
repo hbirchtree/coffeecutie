@@ -12,29 +12,22 @@ void GetWindowPtr(SDL_Window *window, CDWindow *win)
 {
     SDL_SysWMinfo info;
 
-    SDL_VERSION(&info.version)
+    SDL_VERSION(&info.version);
 
-            if(SDL_GetWindowWMInfo(window,&info)){
-        switch(info.subsystem){
-#if defined(COFFEE_X11)
-        case SDL_SYSWM_X11:
-            win->wininfo.x11.window = info.info.x11.window;
-            win->wininfo.x11.display = info.info.x11.display;
-            break;
-#elif defined(COFFEE_WINDOWS)
-        case SDL_SYSWM_WINDOWS:
-            break;
-#elif defined(COFFEE_APPLE)
-        case SDL_SYSWM_COCOA:
-            break;
-        case SDL_SYSWM_UIKIT:
-            break;
-#endif
-        default:
-            break;
-        }
-    }else{
+    if(!SDL_GetWindowWMInfo(window,&info))
+    {
         cDebug("Failed to acquire information on window: %s",SDL_GetError());
+        return;
+    }
+    switch(info.subsystem){
+#if defined(SDL_VIDEO_DRIVER_X11)
+    case SDL_SYSWM_X11:
+        win->wininfo.x11.window = info.info.x11.window;
+        win->wininfo.x11.display = info.info.x11.display;
+        break;
+#endif
+    default:
+        break;
     }
 }
 

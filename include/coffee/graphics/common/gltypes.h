@@ -16,6 +16,12 @@ struct CGL_Context
     virtual bool releaseContext() = 0;
     virtual const ThreadId &currentThread() = 0;
 };
+
+struct CGL_WorkerContext : public CGL_Context
+{
+    virtual ~CGL_WorkerContext(){}
+};
+
 /*!
  * \brief A static object
  */

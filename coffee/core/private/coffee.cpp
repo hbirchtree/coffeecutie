@@ -254,4 +254,9 @@ const CoffeeApplicationData &ApplicationData()
     return app_data;
 }
 
+void SetPrintingVerbosity(u8 level)
+{
+    Coffee::PrintingVerbosityLevel = level;
+}
+
 }

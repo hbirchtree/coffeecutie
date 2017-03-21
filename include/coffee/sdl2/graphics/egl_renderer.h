@@ -11,13 +11,16 @@ namespace Coffee{
 namespace Display{
 
 struct EGL_Data;
+
 struct EGL_GL_Context;
+struct EGL_GL_WorkerContext;
 
 class EGLRenderer : public GLApplication, public CObject
 {
     friend struct EGL_GL_Context;
+    friend struct EGL_GL_WorkerContext;
 
-    std::unique_ptr<EGL_Data> m_eglData;
+    UqPtr<EGL_Data> m_eglData;
 public:
     EGLRenderer();
     virtual ~EGLRenderer();
@@ -32,8 +35,11 @@ public:
     void setSwapInterval(const int &i);
     CDContextBits context();
     ThreadId contextThread();
-    CGL::CGL_Context *glContext();
-    CGL::CGL_ScopedContext scopedContext();
+
+    virtual CGL::CGL_Context *glContext();
+    virtual CGL::CGL_ScopedContext scopedContext();
+
+    virtual CGL::CGL_WorkerContext* workerContext();
 };
 
 }

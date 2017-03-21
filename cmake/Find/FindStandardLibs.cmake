@@ -31,6 +31,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
             )
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
+    list ( APPEND CORE_EXTRA_LIBRARIES X11 )
 endif()
 
 if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
@@ -96,7 +97,7 @@ if(RASPBERRY)
     # We also have bcm_host for accessing OpenGL for some reason
     # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
-        GLESv1_CM GLESv2
+        EGL GLESv1_CM GLESv2
         bcm_host
         )
 endif()
@@ -133,8 +134,7 @@ endif()
 
 if(MAEMO)
     list ( APPEND CORE_EXTRA_LIBRARIES
-        GLES_CM GLESv2
-        EGL IMGegl
+        GLESv2 EGL IMGegl
         )
 endif()
 

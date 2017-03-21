@@ -95,9 +95,8 @@ void SetContextProperties(const GLProperties &props)
     if(props.flags&GLProperties::Flags::GLRobust)
         cflags|=SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG;
 
-#ifdef COFFEE_GLEAM_DESKTOP
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
-#endif
+    if(!(props.flags&GLProperties::Flags::GLES))
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS,cflags);
 }
 
 GLProperties GetContextProperties()

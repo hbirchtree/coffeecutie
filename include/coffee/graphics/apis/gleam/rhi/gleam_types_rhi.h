@@ -11,7 +11,7 @@ using namespace CGL;
 
 enum APILevel
 {
-    GL_Nothing = 0x100,
+    GL_Nothing = 0x0,
 
     /* Desktop GL versions */
     GL_3_3   = 0x330,
@@ -32,7 +32,7 @@ enum class APIClass
     GLES,
 };
 
-inline bool operator ==(APILevel l, APIClass c)
+inline bool APILevelIsOfClass(APILevel l, APIClass c)
 {
     switch(l)
     {
@@ -47,11 +47,6 @@ inline bool operator ==(APILevel l, APIClass c)
     case GL_Nothing:
         return c == APIClass::Undefined;
     }
-}
-
-inline bool operator !=(APILevel l, APIClass c)
-{
-    return !(l == c);
 }
 
 struct GLEAM_API;

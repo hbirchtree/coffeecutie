@@ -50,6 +50,11 @@ public:
 
     virtual CGL::CGL_Context* glContext() = 0;
     virtual CGL::CGL_ScopedContext scopedContext() = 0;
+
+    virtual CGL::CGL_WorkerContext* workerContext()
+    {
+        return nullptr;
+    }
 };
 
 }

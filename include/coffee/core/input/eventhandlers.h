@@ -30,7 +30,7 @@ FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
     {
         auto rev = C_CAST<const CDResizeEvent*>(data);
         CRect64 view(0,0,rev->w,rev->h);
-	GL::ViewportSet(view);
+        GL::ViewportSet(view);
     }
 }
 
@@ -69,11 +69,11 @@ FORCEDINLINE void WindowManagerFullscreen(T* r, CIEvent const& e, c_cptr data)
             return;
 
         switch(kev->key)
-	{
-	case CK_EnterCR:
-	case CK_EnterNL:
-	    if(!(kev->mod & CIKeyEvent::LAltModifier))
-		break;
+        {
+        case CK_EnterCR:
+        case CK_EnterNL:
+            if(!(kev->mod & CIKeyEvent::LAltModifier))
+                break;
         case CK_F11:
             if(r->windowState() & CDProperties::Windowed)
                 r->setWindowState(CDProperties::WindowedFullScreen);
@@ -93,7 +93,7 @@ FORCEDINLINE void RotateView(CQuat& q, const CIEvent& e, c_cptr data)
     {
         auto ev = C_CAST<const CIControllerAtomicEvent*>(data);
         if(ev->axis && (   ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_X
-                        || ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_Y))
+                           || ev->index+CK_AXIS_LEFT_X == CK_AXIS_RIGHT_Y))
             ControllerRotate(q,ev);
     }else if(e.type==CIEvent::MouseMove)
     {

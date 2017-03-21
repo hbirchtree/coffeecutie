@@ -70,7 +70,7 @@ struct CDContextBits
 
     uint8 samples;
 
-    uint8 _pad;
+    uint8 buffer_size;
 };
 
 /*!
@@ -205,6 +205,7 @@ struct GLProperties
     }
 
     enum Flags : uint32{
+        GLNoFlag            = 0x00,
         GLCoreProfile	    = 0x01, /*!< Set GL core profile*/
         GLVSync             = 0x02, /*!< Set GL vertical sync*/
         GLDebug             = 0x04, /*!< Set GL debug context*/
