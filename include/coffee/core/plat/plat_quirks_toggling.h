@@ -1,6 +1,52 @@
 #include "plat_primary_identify.h"
 #include "plat_arch_identify.h"
 
+/* Platform specifications:
+ * COFFEE_ARCH_LLP64 - Uses ull as opposed to ul
+ * COFFEE_USE_TERMINAL_CTL - insert ASCII commands for color and etc.
+ * COFFEE_USE_UNWIND - use Unwind stack backtracing
+ * COFFEE_USE_IOCTL_TERM_SIZE - allow requesting terminal size from ioctl()
+ *
+ * COFFEE_LIL_ENDIAN - Little endian system
+ * COFFEE_BIG_ENDIAN - Big endian system, quite rare
+ *
+ * COFFEE_USE_EXCEPTIONS - do use exceptions
+ * COFFEE_USE_RTTI - do use RTTI
+ *
+ * COFFEE_LIMIT_INLINE - disable inlining for code size reduction
+ *
+ * Quirks:
+ * COFFEE_NO_FUTURES - std::future does not exist
+ * COFFEE_USE_POSIX_BASENAME - using POSIX basename() or a custom implementation
+ * COFFEE_DISABLE_SRGB_SUPPORT - deny sRGB framebuffers, some platforms shouldn't check for it
+ * COFFEE_USE_IMMERSIVE_VIEW - use fullscreen at all times
+ * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL does not exist on a platform
+ * COFFEE_NO_HUGETLB - disable non-standard HUGE_TLB flag for file mapping
+ * COFFEE_NO_RUSAGE_THREAD - disable rusage statistics per-thread
+ * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them. Android, Maemo, RPi and Apple do this
+ * COFFEE_ONLY_GLES20 - allow only GLES 2.0, for RPi, old Android and Maemo
+ * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite fast, only ~100 EGL calls as opposed to SDL's thousands
+ * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window with minimal functionality
+ * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with resizes that may crash some devices (Maemo)
+ * COFFEE_ALWAYS_VSYNC - for devices which force VSYNC
+ * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support pthread thread names
+ * COFFEE_SLAP_LOWMEM - if system is x86 and does not PAE, give up
+ *
+ * COFFEE_STUBBED_ENVIRONMENT - stubs environment functions, because they are impossible to fulfull
+ * COFFEE_STUBBED_PROCESS - stubs process functions, same reason as above
+ * COFFEE_STUBBED_STACKTRACE - stubs stacktracing
+ * COFFEE_STUBBED_CFILE - stubs FILE functionality
+ * COFFEE_STUBBED_DYNLOADER - stubs dynamic library loading
+ *
+ * COFFEE_NO_EXECVPE - platforms that do not support execvpe
+ * COFFEE_NO_SYSTEM_CMD - disables system() code, either if it does not exist or for security
+ *
+ * COFFEE_PLATFORM_OUTPUT_FORMAT - platforms that do logging in a special way, less processing
+ *
+ * COFFEE_NO_TLS - disallowing thread-local storage
+ *
+ */
+
 #define COFFEE_SLAP_LOWMEM
 
 /* For Android 32-bit, we need this neat little trick. */
@@ -48,7 +94,8 @@
 #define COFFEE_USE_POSIX_BASENAME
 
 #if defined(COFFEE_ANDROID)
-//#define COFFEE_DISABLE_SRGB_SUPPORT
+#define COFFEE_DISABLE_SRGB_SUPPORT
+#define COFFEE_USE_IMMERSIVE_VIEW
 #endif
 
 /* OpenSSL is difficult on Windows... */
@@ -63,25 +110,20 @@
 #define thread_local __thread
 #endif
 
-/* std::future workarounds */
 #if defined(COFFEE_MAEMO)
-#define COFFEE_NO_FUTURES
-#endif
-
-#if defined(COFFEE_MAEMO)
+#define COFFEE_NO_FUTURES /* std::future workarounds */
 #define COFFEE_NO_HUGETLB
-#endif
 
-#if defined(COFFEE_MAEMO)
 #define COFFEE_NO_RUSAGE_THREAD
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
 #define COFFEE_DISABLE_SRGB_SUPPORT
 #define COFFEE_USE_MAEMO_EGL
 #define COFFEE_USE_MAEMO_X11
+#define COFFEE_FRAGILE_FRAMEBUFFER
+#define COFFEE_ALWAYS_VSYNC
+#define COFFEE_USE_IMMERSIVE_VIEW
 #endif
-
-#define COFFEE_ONLY_GLES20
 
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
@@ -115,5 +157,4 @@
 #if defined(COFFEE_RASPBERRYPI)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
-//#define COFFEE_USE_MAEMO_EGL
 #endif
