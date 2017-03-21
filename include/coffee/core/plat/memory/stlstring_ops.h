@@ -360,9 +360,9 @@ FORCEDINLINE CString hexify(uint64 inp, bool trim_zero = false)
         return str; \
     }
 
-HEX_CONVERT(hexify, uint8,  Convert::x8_fmt)
-HEX_CONVERT(hexify, uint16, Convert::x16_fmt)
-HEX_CONVERT(hexify, uint32, Convert::x32_fmt)
+//HEX_CONVERT(hexify, uint8,  Convert::x8_fmt)
+//HEX_CONVERT(hexify, uint16, Convert::x16_fmt)
+//HEX_CONVERT(hexify, uint32, Convert::x32_fmt)
 HEX_CONVERT(hexify, uint64, Convert::x64_fmt)
 
 #endif

@@ -176,6 +176,7 @@ bool SDL2EventHandler::isMouseGrabbed() const
 {
     if(getSDL2Context())
         return (SDL_GetWindowGrab(getSDL2Context()->window)==SDL_TRUE);
+    return false;
 }
 
 void SDL2EventHandler::setMouseGrabbing(bool grab)
