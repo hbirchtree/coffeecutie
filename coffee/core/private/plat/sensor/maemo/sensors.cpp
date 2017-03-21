@@ -37,7 +37,7 @@ Vecf3 Maemo_SensorAPI::Gravity()
         v[v_i] = cast_string<scalar>(en) / 100.f;
         v_i++;
         p_i = i;
-        i = data.find(' ');
+        i = data.find(' ', p_i);
     }
 
     return v;
