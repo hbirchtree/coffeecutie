@@ -336,6 +336,8 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
                     bits.blue == props.bits.blue)
                 m_eglData->config = cfg;
         }
+        if(!m_eglData->config)
+            m_eglData->config = configurations[0];
         cVerbose(7, "Picked EGLConfig: {0}", EGL_PRINT(m_eglData->config));
     }
 
