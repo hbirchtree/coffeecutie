@@ -115,10 +115,11 @@ public:
         /* Compiling shaders and assemble a graphics pipeline */
         {
             const constexpr cstring shader_files[] = {
-                "vr/vshader.glsl", "vr/fshader.glsl", "vr/vshader_es.glsl",
-                "vr/fshader_es.glsl"};
+                "vr/vshader.glsl",     "vr/fshader.glsl",
+                "vr/vshader_es.glsl",  "vr/fshader_es.glsl"
+            };
 
-            bool isGles = (GLM::Level() == GLM::APIClass::GLES);
+            bool isGles = (GLM::LevelIsOfClass(GLM::Level(),GLM::APIClass::GLES));
 
             CResources::Resource v_rsc(shader_files[isGles * 2],
                     ResourceAccess::SpecifyStorage |

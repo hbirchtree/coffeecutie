@@ -169,15 +169,16 @@ public:
         /* Compiling shaders and assemble a graphics pipeline */
         {
             const constexpr cstring shader_files[] = {
-                "vr/vshader.glsl", "vr/fshader.glsl", "vr/vshader_es.glsl",
-                "vr/fshader_es.glsl"};
+                "vr/vshader.glsl", "vr/fshader.glsl",
+                "vr/vshader_es.glsl", "vr/fshader_es.glsl",
+                "vr/vshader_es2.glsl", "vr/fshader_es2.glsl"};
 
             bool isGles = (GLM::LevelIsOfClass(GLM::Level(),GLM::APIClass::GLES));
 
-            CResources::Resource v_rsc(shader_files[isGles * 2],
+            CResources::Resource v_rsc(shader_files[isGles * 2 + 2],
                     ResourceAccess::SpecifyStorage |
                     ResourceAccess::AssetFile);
-            CResources::Resource f_rsc(shader_files[isGles * 2 + 1],
+            CResources::Resource f_rsc(shader_files[isGles * 2 + 3],
                     ResourceAccess::SpecifyStorage |
                     ResourceAccess::AssetFile);
             if (!CResources::FileMap(v_rsc) || !CResources::FileMap(f_rsc)) {

@@ -84,19 +84,14 @@
 #define COFFEE_USE_RTTI
 #endif
 
-/* For Android, we limit inlining for size reasons */
 #if defined(COFFEE_ANDROID)
+/* For Android, we limit inlining for size reasons */
 #define COFFEE_LIMIT_INLINE
 #endif
 
 /* This enables safer, but a bit slower functions for some core functions */
 /* dirname(), basename() */
 #define COFFEE_USE_POSIX_BASENAME
-
-#if defined(COFFEE_ANDROID)
-#define COFFEE_DISABLE_SRGB_SUPPORT
-#define COFFEE_USE_IMMERSIVE_VIEW
-#endif
 
 /* OpenSSL is difficult on Windows... */
 #if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
@@ -110,19 +105,25 @@
 #define thread_local __thread
 #endif
 
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)
+#define COFFEE_LINKED_GLES
+#define COFFEE_DISABLE_SRGB_SUPPORT
+#define COFFEE_USE_IMMERSIVE_VIEW
+#endif
+
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
+#define COFFEE_ONLY_GLES20
+#endif
+
 #if defined(COFFEE_MAEMO)
-#define COFFEE_NO_FUTURES /* std::future workarounds */
+#define COFFEE_NO_FUTURES
 #define COFFEE_NO_HUGETLB
 
 #define COFFEE_NO_RUSAGE_THREAD
-#define COFFEE_LINKED_GLES
-#define COFFEE_ONLY_GLES20
-#define COFFEE_DISABLE_SRGB_SUPPORT
 #define COFFEE_USE_MAEMO_EGL
 #define COFFEE_USE_MAEMO_X11
 #define COFFEE_FRAGILE_FRAMEBUFFER
 #define COFFEE_ALWAYS_VSYNC
-#define COFFEE_USE_IMMERSIVE_VIEW
 #endif
 
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
@@ -154,7 +155,3 @@
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 
-#if defined(COFFEE_RASPBERRYPI)
-#define COFFEE_LINKED_GLES
-#define COFFEE_ONLY_GLES20
-#endif

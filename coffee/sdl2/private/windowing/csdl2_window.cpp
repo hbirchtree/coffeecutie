@@ -76,7 +76,7 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
     if(p.flags&CDProperties::Windowed)
         SDL_SetWindowFullscreen(getSDL2Context()->window,0);
 
-#if !defined(COFFEE_MAEMO)
+#if !defined(COFFEE_FRAGILE_FRAMEBUFFER)
     /* Finally, push a resize event */
     {
         SDL_Event wev;

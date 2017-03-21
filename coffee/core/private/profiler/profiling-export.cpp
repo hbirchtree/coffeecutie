@@ -294,6 +294,7 @@ void ExportStringToFile(const CString &data, cstring outfile)
     return;
 #endif
 
+    /* TODO: Create structure to describe log directory */
 #if defined(COFFEE_ANDROID)
     const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
 #elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)

@@ -19,7 +19,7 @@ void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
 #if defined(COFFEE_GLEAM_DESKTOP)
     major = 3; minor = 3;
-#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_ONLY_GLES20)
+#elif defined(COFFEE_ONLY_GLES20)
     major = 2; minor = 0;
 #else
     major = 3; minor = 0;
@@ -29,27 +29,23 @@ void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
 {
     props.gl.flags |= Display::GLProperties::GLNoFlag
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_RASPBERRYPI) \
-            && !defined(COFFEE_MAEMO)
+#if !defined(COFFEE_DISABLE_SRGB_SUPPORT)
             |Display::GLProperties::GLSRGB
 #endif
-#if defined(COFFEE_ANDROID) || defined(COFFEE_RASPBERRYPI) \
-            || defined(COFFEE_MAEMO) || !defined(COFFEE_GLEAM_DESKTOP)
+#if !defined(COFFEE_GLEAM_DESKTOP)
             |Display::GLProperties::GLES
 #endif
-#if defined(COFFEE_MAEMO)
+#if defined(COFFEE_ALWAYS_VSYNC)
             |Display::GLProperties::GLVSync;
 #endif
             ;
 
-#ifdef COFFEE_ANDROID
+#if defined(COFFEE_USE_IMMERSIVE_VIEW)
     props.flags ^= Display::CDProperties::Windowed;
     props.flags |= Display::CDProperties::FullScreen;
 #endif
 
 #if defined(COFFEE_MAEMO)
-    props.flags ^= Display::CDProperties::Windowed;
-    props.flags |= Display::CDProperties::FullScreen;
     props.size.w = 800;
     props.size.h = 480;
     props.gl.bits.alpha = 0;

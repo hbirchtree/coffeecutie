@@ -4,7 +4,7 @@
 #include "levels/desktop/gl45.h"
 #else
 
-#if defined(COFFEE_MAEMO)
+#if defined(COFFEE_ONLY_GLES20)
 #include "levels/es/gles20.h"
 #else
 #include "levels/es/gles32.h"

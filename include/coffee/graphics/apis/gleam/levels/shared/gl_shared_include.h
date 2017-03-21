@@ -9,7 +9,7 @@
 
 #else
 
-#if defined(COFFEE_MAEMO)
+#if defined(COFFEE_LINKED_GLES)
 #include <GLES2/gl2.h>
 #else
 #include <glad_es/glad.h>

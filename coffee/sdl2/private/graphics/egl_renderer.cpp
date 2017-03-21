@@ -299,10 +299,6 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
             EGL_CONFIG_CAVEAT, EGL_NONE,
             EGL_NATIVE_RENDERABLE, EGL_TRUE,
 
-    #if defined(COFFEE_MAEMO)
-            EGL_BUFFER_SIZE, 16,
-    #endif
-
             EGL_RED_SIZE, props.bits.red,
             EGL_GREEN_SIZE, props.bits.green,
             EGL_BLUE_SIZE, props.bits.blue,
