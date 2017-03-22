@@ -1,6 +1,6 @@
 #ifndef COFFEE_PLAT_WINDOWMANAGER_DEF_H
 #define COFFEE_PLAT_WINDOWMANAGER_DEF_H
-
+/*
 #include "../../types/cdef/pixtypes.h"
 #include "../../types/tdef/integertypes.h"
 
@@ -41,8 +41,9 @@ struct WindowControlDef
 }
 }
 
-#endif
 
 #include "android/windowman.h"
 #include "linux/windowman.h"
 #include "windows/windowman.h"
+*/
+#endif

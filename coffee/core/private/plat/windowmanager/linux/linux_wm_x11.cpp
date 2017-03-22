@@ -1,3 +1,4 @@
+/*
 #include "coffee/core/plat/platform_detect.h"
 
 #ifdef COFFEE_LINUX
@@ -21,14 +22,6 @@ struct X11Window
     Window handle;
     Display* display;
 };
-
-typedef struct {
-    unsigned long   flags;
-    unsigned long   functions;
-    unsigned long   decorations;
-    long            inputMode;
-    unsigned long   status;
-} Hints;
 
 void set_decorations(Display* disp, Window target,bool enable = false)
 {
@@ -77,3 +70,4 @@ namespace Wayland{
 
 #endif // COFFEE_LINUX
 
+*/
