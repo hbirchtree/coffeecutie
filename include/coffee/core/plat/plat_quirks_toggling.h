@@ -130,6 +130,7 @@
 #define COFFEE_USE_MAEMO_X11
 #define COFFEE_FRAGILE_FRAMEBUFFER
 #define COFFEE_ALWAYS_VSYNC
+#define COFFEE_X11_HILDON
 #endif
 
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
