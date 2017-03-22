@@ -19,7 +19,7 @@ extern PlatformData::DeviceType get_device_variant();
 PlatformData::DeviceType PlatformData::DeviceVariant()
 {
 #if defined(COFFEE_LINUX)
-
+    return DeviceUnknown;
 #else
     return DeviceUnknown;
 #endif
