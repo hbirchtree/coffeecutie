@@ -90,6 +90,7 @@ struct CDMonitor{
     CRect           screenArea; /*!< Area occupied in window manager*/
     cstring         name; /*!< Name of monitor*/
     CSize           phySize; /*!< Physical size of monitor*/
+    CSize           resolution;
     CDColorSpace    colorBits; /*!< Color depth bits*/
     int32           refresh:24;/*!< Refresh rate*/
     uint8           index; /*!< Real monitor index*/

@@ -521,6 +521,10 @@ public:
             {
                 if(kev->key == CK_F10)
                     m_debugging = !m_debugging;
+                else if(kev->key == CK_F9)
+                    setWindowPosition({0,0});
+                else
+                    cDebug("Unhandled key event: {0}:{1}", kev->key, (uint32)kev->mod);
             }
         }
     }

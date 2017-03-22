@@ -288,9 +288,36 @@ void SDL2EventHandler::pollEvents()
     }
 
     XEvent xev;
+    CIEvent base;
     while(XPending(win->wininfo.x11.display))
     {
         XNextEvent(win->wininfo.x11.display, &xev);
+
+        switch(xev.type)
+        {
+        case KeyPress:
+        case KeyRelease:
+        {
+            base.type = CIEvent::Keyboard;
+            CIKeyEvent k;
+            XKeyEvent& xk = xev.xkey;
+            if(xk.keycode < 256)
+                /* ASCII letters */
+                k.key = xk.keycode;
+            else if(xk.keycode > 0xFF00 && xk.keycode < 0xFF1C)
+                /* ASCII control codes */
+                k.key = xk.keycode - 0xFF00;
+            else if(xk.keycode > 0xFFBD && xk.keycode < 0xFFCA)
+                k.key = xk.keycode - 0xFFBE + CK_F1;
+
+            if(xk.type == KeyPress)
+                k.mod |= CIKeyEvent::PressedModifier;
+            eventHandle(base, &k);
+            continue;
+        }
+        default:
+            continue;
+        }
     }
 #endif
 }

@@ -39,6 +39,23 @@ X11Window::~X11Window()
 
 CDMonitor X11Window::monitor()
 {
+    CDMonitor mon = {};
+
+    {
+        ::Window win;
+        i32 x, y;
+        u32 w, h;
+        u32 bw, d;
+        XGetGeometry(m_xData->display, DefaultRootWindow(m_xData->display),
+                     &win, &x, &y, &w, &h, &bw, &d);
+        mon.resolution = {C_CAST<i32>(w), C_CAST<i32>(h)};
+    }
+
+    CSize w_size = windowSize();
+    CPoint w_pos = windowPosition();
+
+    mon.screenArea = {w_pos.x, w_pos.y, w_size.w, w_size.h};
+
     return {};
 }
 
@@ -99,18 +116,13 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     xattr.override_redirect = False;
     XChangeWindowAttributes(m_xData->display, m_xData->window, CWOverrideRedirect, &xattr);
 
-    Atom atom;
-    atom = XInternAtom(m_xData->display, "_NET_WM_STATE_FULLSCREEN", True);
-    XChangeProperty(m_xData->display, m_xData->window,
-                    XInternAtom(m_xData->display, "_NET_WM_STATE", True),
-                    XA_ATOM, 32, PropModeReplace,
-                    (u8*)&atom, 1);
-
+#if defined(COFFEE_X11_HILDON)
     int one = 1;
     XChangeProperty(m_xData->display, m_xData->window,
                     XInternAtom(m_xData->display, "_HILDON_NON_COMPOSITED_WINDOW", True),
                     XA_INTEGER, 32, PropModeReplace,
                     (u8*)&one, 1);
+#endif
 
     XWMHints hints;
     hints.input = True;
@@ -120,24 +132,7 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     showWindow();
     setWindowTitle(props.title);
 
-    Atom wm_state = XInternAtom(m_xData->display, "_NET_WM_STATE", False);
-    Atom fullscreen = XInternAtom(m_xData->display, "_NET_WM_STATE_FULLSCREEN", False);
-
-    XEvent xev;
-    memset(&xev, 0, sizeof(xev));
-
-    xev.type = ClientMessage;
-    xev.xclient.window = m_xData->window;
-    xev.xclient.message_type = wm_state;
-    xev.xclient.format = 32;
-    xev.xclient.data.l[0] = 1;
-    xev.xclient.data.l[1] = fullscreen;
-
-    XSendEvent(m_xData->display,
-               rootWindow,
-               False,
-               SubstructureNotifyMask,
-               &xev);
+    setWindowState(props.flags);
 
     return true;
 }
@@ -173,9 +168,121 @@ uint32 X11Window::windowState() const
     return 0;
 }
 
+static constexpr const int _NET_WM_STATE_REMOVE = 0;
+static constexpr const int _NET_WM_STATE_ADD = 1;
+static constexpr const int _NET_WM_STATE_TOGGLE = 2;
+
+static void X_Apply_State(::Display* xd, ::Window w, cstring msg, int mode, Vector<cstring>const& atoms)
+{
+    if(atoms.size() > 4)
+    {
+        cWarning("Cannot set this many atoms on one window, please split it ({0})", atoms.size());
+        return;
+    }
+
+    ::Window rootWindow = DefaultRootWindow(xd);
+
+    /* Send event to window */
+    {
+        Vector<Atom> atoms_;
+        for(size_t i=0;i<atoms.size();i++)
+        {
+            atoms_.push_back(XInternAtom(xd, atoms[i], True));
+        }
+        XChangeProperty(xd, w,
+                        XInternAtom(xd, msg, True),
+                        XA_ATOM, 32, PropModeReplace,
+                        (u8*)atoms_.data(), atoms_.size());
+    }
+
+    /* Send event to root window */
+    {
+        Atom wm_state = XInternAtom(xd, msg, False);
+
+        Vector<Atom> atoms_;
+        for(size_t i=0;i<atoms.size();i++)
+        {
+            atoms_.push_back(XInternAtom(xd, atoms[i], False));
+        }
+
+        XEvent xev;
+        memset(&xev, 0, sizeof(xev));
+
+        xev.type = ClientMessage;
+        xev.xclient.window = w;
+        xev.xclient.message_type = wm_state;
+        xev.xclient.format = 32;
+        xev.xclient.data.l[0] = mode;
+        int num = 0;
+        for(Atom state : atoms_)
+        {
+            xev.xclient.data.l[++num] = state;
+        }
+
+        XSendEvent(xd,
+                   rootWindow,
+                   False,
+                   SubstructureNotifyMask,
+                   &xev);
+    }
+}
+
+static void X_Set_Decorated(::Display* disp, ::Window target, bool enable)
+{
+    typedef struct {
+        unsigned long   flags;
+        unsigned long   functions;
+        unsigned long   decorations;
+        long            inputMode;
+        unsigned long   status;
+    } Hints;
+
+    Hints w_hints = {};
+    w_hints.flags = 2;
+    w_hints.decorations = enable;
+
+    XChangeProperty(disp,target,
+                    XInternAtom(disp,"_MOTIF_WM_HINTS",True),
+                    XInternAtom(disp,"_MOTIF_WM_HINTS",True),
+                    32,PropModeReplace,
+                    (unsigned char*)&w_hints,5);
+}
+
 void X11Window::setWindowState(const CDProperties::State &s)
 {
+    if(s & CDProperties::FullScreen)
+    {
+        X_Apply_State(m_xData->display, m_xData->window,
+                      "_NET_WM_STATE", _NET_WM_STATE_ADD,
+        {"_NET_WM_STATE_FULLSCREEN"});
+    }else if(s & CDProperties::Windowed)
+    {
+        X_Apply_State(m_xData->display, m_xData->window,
+                      "_NET_WM_STATE", _NET_WM_STATE_REMOVE,
+        {"_NET_WM_STATE_FULLSCREEN"});
+        X_Set_Decorated(m_xData->display, m_xData->window, true);
+    }else if(s & CDProperties::WindowedFullScreen)
+    {
+        X_Apply_State(m_xData->display, m_xData->window,
+                      "_NET_WM_STATE", _NET_WM_STATE_REMOVE,
+        {"_NET_WM_STATE_FULLSCREEN"});
+        X_Set_Decorated(m_xData->display, m_xData->window, false);
+    }
 
+    if(s & CDProperties::Maximized)
+    {
+        X_Apply_State(m_xData->display, m_xData->window,
+                      "_NET_WM_STATE", _NET_WM_STATE_ADD,
+        {"_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ"});
+    }else if(s & CDProperties::Normal)
+    {
+        X_Apply_State(m_xData->display, m_xData->window,
+                      "_NET_WM_STATE", _NET_WM_STATE_REMOVE,
+        {"_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ"});
+    }else if(s & CDProperties::Minimized)
+    {
+        hideWindow();
+    }
 }
 
 CSize X11Window::windowSize() const
@@ -196,12 +303,18 @@ void X11Window::setWindowSize(const CSize &s)
 
 CPoint X11Window::windowPosition() const
 {
-    return {};
+    ::Window win;
+    i32 x, y;
+    u32 w, h;
+    u32 bw, d;
+    XGetGeometry(m_xData->display, m_xData->window, &win,
+                 &x, &y, &w, &h, &bw, &d);
+    return {C_CAST<i32>(x), C_CAST<i32>(y)};
 }
 
 void X11Window::setWindowPosition(const CPoint &p)
 {
-
+    XMoveWindow(m_xData->display, m_xData->window, p.x, p.y);
 }
 
 CString X11Window::windowTitle() const
