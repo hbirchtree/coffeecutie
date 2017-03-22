@@ -88,6 +88,8 @@ struct GLEAM_API : GraphicsAPI
 
     using DataStore = GLEAM_DataStore*;
 
+    using PipelineState = Map<ShaderStage,const GLEAM_ShaderUniformState &>;
+
     /* "Loose" functions */
 public:
     static void GetDefaultVersion(int32& major, int32& minor);
@@ -119,9 +121,18 @@ public:
 
     static void PreDrawCleanup();
 
-    static void Draw(DrawCall const& d,DrawInstanceData const& i,
-                     OccludeQuery* query = nullptr);
-    static void DrawConditional(DrawCall const& d, DrawInstanceData const& i, OccludeQuery &c);
+    static void Draw(
+            GLEAM_Pipeline const& pipeline,
+            PipelineState const& ustate,
+            V_DESC& vertices,
+            DrawCall const& d,DrawInstanceData const& i,
+            OccludeQuery* query = nullptr);
+    static void DrawConditional(
+            GLEAM_Pipeline const& pipeline,
+            PipelineState const& ustate,
+            V_DESC& vertices,
+            DrawCall const& d,
+            DrawInstanceData const& i, OccludeQuery &c);
 
     static FB_T& DefaultFramebuffer();
 

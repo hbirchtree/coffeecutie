@@ -585,13 +585,23 @@ void GLEAM_API::PreDrawCleanup()
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
-void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i,
+void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
+                     PipelineState const& ustate,
+                     V_DESC& vertices,
+                     const DrawCall &d, const DrawInstanceData &i,
                      OccludeQuery* query)
 {
+    C_UNUSED(vertices);
+
     DrwMd mode = {Prim::Triangle,PrimCre::Explicit};
 
     if(query)
         query->begin();
+
+    for(auto const& s : ustate)
+    {
+        SetShaderUniformState(pipeline, s.first, s.second);
+    }
 
     if(d.indexed())
     {
@@ -639,6 +649,19 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i,
         if(d.instanced())
             CGL33::DrawArraysInstanced(mode,i.vertexOffset(),i.vertices(),i.instances());
         else
+#else
+        if(d.instanced())
+        {
+            auto hnd = pipeline.m_handle;
+            auto loc = glGetUniformLocation(hnd, "InstanceID");
+
+            for(uint32 j=0;j<i.instances();j++)
+            {
+                if(loc != -1)
+                    glUniform1i(loc, C_CAST<i32>(j));
+                CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
+            }
+        }else
 #endif
             CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
     }
@@ -646,15 +669,24 @@ void GLEAM_API::Draw(const DrawCall &d, const DrawInstanceData &i,
         query->end();
 }
 
-void GLEAM_API::DrawConditional(const DrawCall &d,
+void GLEAM_API::DrawConditional(const GLEAM_Pipeline &pipeline,
+                                const PipelineState &ustate, V_DESC &vertices,
+                                const DrawCall &d,
                                 const DrawInstanceData &i,
                                 OccludeQuery &c)
 {
 #if !defined(COFFEE_ONLY_GLES20)
     /*TODO: Implement use of GL_QUERY_RESULT_AVAILABLE for GLES path */
     CGL33::ConditionalRenderBegin(c.m_handle, Delay::Wait);
-    Draw(d,i);
+    Draw(pipeline, ustate, vertices, d, i);
     CGL33::ConditionalRenderEnd();
+#else
+    C_UNUSED(pipeline);
+    C_UNUSED(ustate);
+    C_UNUSED(vertices);
+    C_UNUSED(d);
+    C_UNUSED(i);
+    C_UNUSED(c);
 #endif
 }
 

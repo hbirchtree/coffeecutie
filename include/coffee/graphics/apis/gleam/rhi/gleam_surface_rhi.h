@@ -42,7 +42,11 @@ protected:
     CSize m_size;
 };
 
+#if !defined(COFFEE_ONLY_GLES20)
 struct GLEAM_Surface3D_Base : GLEAM_Surface
+        #else
+struct GLEAM_Surface3D_Base : GraphicsAPI::Surface
+        #endif
 {
     friend struct GLEAM_Sampler3D;
 
@@ -57,6 +61,12 @@ struct GLEAM_Surface3D_Base : GLEAM_Surface
     /*TODO: Add download function */
 
     CSize3 m_size;
+
+protected:
+#if defined(COFFEE_ONLY_GLES20)
+    Vector<CGhnd> m_handles;
+    Texture m_type;
+#endif
 };
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base
@@ -132,6 +142,8 @@ struct GLEAM_Sampler3D : GLEAM_Sampler_Base<GLEAM_Surface3D>
 
 struct GLEAM_Sampler2DArray : GLEAM_Sampler_Base<GLEAM_Surface2DArray>
 {
+    friend struct GLEAM_API;
+
     void bind(uint32 i);
     GLEAM_SamplerHandle handle();
 };

@@ -116,12 +116,13 @@ GLEAM_DBufQuery::GLEAM_DBufQuery(GLEAM_RenderTarget& t,DBuffers b)
     else
         m_enabled = CGL33::Debug::InternalFormatSupport(Texture::T2D,PixelFormat::Depth24Stencil8);
 
-    if(!m_enabled && (GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2))
+    if(!m_enabled && (GL_CURR_API == GLES_2_0||GL_CURR_API == GLES_3_0||GL_CURR_API == GLES_3_2))
     {
         m_enabled = true;
         cVerbose(6,"Opting for DEPTH16 depth buffer format");
         m_depth_stencil.dealloc();
         new (&m_depth_stencil) GLEAM_Surface2D(PixelFormat::Depth16,1);
+        new (&m_color) GLEAM_Surface2D(PixelFormat::RGB5A1UI);
     }
 
     if(GL_DEBUG_MODE && !m_enabled)

@@ -749,6 +749,8 @@ struct GraphicsAPI
         void setSampler(UniformDescriptor const&,SamplerHandle*){}
     };
 
+    using PipelineState = Map<ShaderStage,const ShaderUniformState &>;
+
     static void GetShaderUniformState(Pipeline&,Vector<UniformDescriptor>*,
                                       Vector<ProgramParameter>*){}
 
@@ -757,7 +759,10 @@ struct GraphicsAPI
      * \param d General drawcall settings
      * \param i Data associated with instance of drawcall
      */
-    static void Draw(DrawCall const&,DrawInstanceData const&,
+    static void Draw(const Pipeline &pipeline,
+                     PipelineState const& ustate,
+                     DrawCall const&,
+                     DrawInstanceData const&,
                      OccludeQuery<int>* = nullptr){}
     /*!
      * \brief Draw primitives with occlusion query
@@ -765,7 +770,11 @@ struct GraphicsAPI
      * \param i
      * \param c An occlusion query to be considered in the drawcall
      */
-    static void DrawConditional(DrawCall const&,DrawInstanceData const&,OccludeQuery<int> const&){}
+    static void DrawConditional(const Pipeline &pipeline,
+                                PipelineState const& ustate,
+                                DrawCall const&,
+                                DrawInstanceData const&,
+                                OccludeQuery<int> const&){}
 
     static void SetRasterizerState(RasterizerState const&){}
     static void SetTessellatorState(TessellatorState const&){}

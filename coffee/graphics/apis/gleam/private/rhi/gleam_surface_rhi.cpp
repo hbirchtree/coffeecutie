@@ -150,26 +150,43 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
 }
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
+    #if !defined(COFFEE_ONLY_GLES20)
     GLEAM_Surface(t,fmt,mips,texflags),
+    #else
+    GraphicsAPI::Surface(fmt,mips,texflags),
+    m_type(Texture::T2D),
+    #endif
     m_size(0,0,0)
 {
+    C_UNUSED(t);
 }
 
 void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 {
+    m_size = size;
 #if !defined(COFFEE_ONLY_GLES20)
     CGL33::TexBind(m_type,m_handle);
     if(GL_CURR_API==GL_3_3)
     {
-        CGL33::TexImage3D(Texture::T2DArray,0,m_pixfmt,
+        CGL33::TexImage3D(m_type, 0,m_pixfmt,
                           size.width,size.height,size.depth,0,c,
                           BitFormat::UByte,nullptr);
     }else if(GL_CURR_API==GL_4_3 || GL_CURR_API == GLES_3_0 || GL_CURR_API==GLES_3_2)
     {
-        CGL43::TexStorage3D(Texture::T2DArray,m_mips,m_pixfmt,
+        CGL43::TexStorage3D(m_type, m_mips,m_pixfmt,
                             size.width,size.height,size.depth);
     }
-    m_size = size;
+#else
+    size_t len = C_CAST<size_t>(size.depth);
+    m_handles.resize(len);
+    CGL33::TexAlloc(len, m_handles.data());
+
+    for(CGhnd& h : m_handles)
+    {
+        CGL33::TexBind(m_type, h);
+        CGL33::TexImage2D(m_type, 0, m_pixfmt, size.width, size.height,
+                          0, c, BitFormat::UByte, nullptr);
+    }
 #endif
 }
 
@@ -219,6 +236,19 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
 
     if(GL_DEBUG_MODE)
         upload_info(comp,mip,size.depth);
+#else
+    if(size.depth + offset.z > m_handles.size())
+    {
+        cWarning("Invalid texture upload: Got max {0}, actual max is {1}",
+                 size.depth + offset.z, m_handles.size());
+    }
+
+    for(int32 i=0;i<size.depth;i++)
+    {
+        CGL33::TexBind(m_type, m_handles[offset.z + i]);
+        CGL33::TexSubImage2D(m_type, mip, offset.x, offset.y,
+                             size.width, size.height, comp, fmt, data);
+    }
 #endif
 }
 
@@ -322,41 +352,51 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
 
 void GLEAM_Sampler3D::bind(uint32 i)
 {
-    CGL33::TexActive(i);
 #if !defined(COFFEE_ONLY_GLES20)
+    CGL33::TexActive(i);
     CGL33::SamplerBind(i,m_handle);
-#endif
     CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
+#endif
 }
 
 GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 {
     GLEAM_SamplerHandle h = {};
-
+#if !defined(COFFEE_ONLY_GLES20)
     /* TODO: Add bindless */
     h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
     h.m_sampler = m_surface->m_handle;
-
+#endif
     return h;
 }
 
 void GLEAM_Sampler2DArray::bind(uint32 i)
 {
-    CGL33::TexActive(i);
 #if !defined(COFFEE_ONLY_GLES20)
+    CGL33::TexActive(i);
     CGL33::SamplerBind(i,m_handle);
-#endif
     CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
+#else
+    uint32 bind = 0;
+    for(CGhnd& h : m_surface->m_handles)
+    {
+        CGL33::TexActive(i + bind++);
+        CGL33::TexBind(m_surface->m_type, h);
+    }
+#endif
 }
 
 GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 {
     GLEAM_SamplerHandle h = {};
-
     h.m_type = m_surface->m_type;
+#if !defined(COFFEE_ONLY_GLES20)
     h.texture = m_surface->m_handle;
-    h.m_sampler = m_surface->m_handle;
+    h.m_sampler = m_handle;
+#else
+    h.texture = m_surface->m_handles[0];
+#endif
 
     return h;
 }

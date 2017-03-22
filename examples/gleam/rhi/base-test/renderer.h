@@ -109,12 +109,12 @@ public:
 
         const scalar vertexdata[] = {
             -1.f, -1.f,  0.f,  0.f,  0.f,
-             1.f, -1.f,  0.f, -1.f,  0.f,
-            -1.f,  1.f,  0.f,  0.f, -1.f,
+             1.f, -1.f,  0.f,  1.f,  0.f,
+            -1.f,  1.f,  0.f,  0.f,  1.f,
 
-            -1.f,  1.f,  0.f,  0.f, -1.f,
-             1.f,  1.f,  0.f, -1.f, -1.f,
-             1.f, -1.f,  0.f, -1.f,  0.f,
+            -1.f,  1.f,  0.f,  0.f,  1.f,
+             1.f,  1.f,  0.f,  1.f,  1.f,
+             1.f, -1.f,  0.f,  1.f,  0.f,
         };
 
         cVerbose("Loading GLeam API");
@@ -174,11 +174,12 @@ public:
                 "vr/vshader_es2.glsl", "vr/fshader_es2.glsl"};
 
             bool isGles = (GLM::LevelIsOfClass(GLM::Level(),GLM::APIClass::GLES));
+            bool isGles20 = GLM::Level() == RHI::GLEAM::GLES_2_0;
 
-            CResources::Resource v_rsc(shader_files[isGles * 2 + 2],
+            CResources::Resource v_rsc(shader_files[isGles * 2 + isGles20 * 2],
                     ResourceAccess::SpecifyStorage |
                     ResourceAccess::AssetFile);
-            CResources::Resource f_rsc(shader_files[isGles * 2 + 3],
+            CResources::Resource f_rsc(shader_files[isGles * 2 + isGles20 * 2 + 1],
                     ResourceAccess::SpecifyStorage |
                     ResourceAccess::AssetFile);
             if (!CResources::FileMap(v_rsc) || !CResources::FileMap(f_rsc)) {
@@ -223,9 +224,9 @@ public:
         cVerbose("Pipeline bind");
 
         /* Uploading textures */
-        GLM::S_2DA eyetex(PixelFormat::SRGB8A8, 1, GLM::TextureDMABuffered);
+        GLM::S_2DA eyetex(PixelFormat::RGB5A1UI, 1, GLM::TextureDMABuffered);
 
-	eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
+        eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
         cVerbose("Texture allocation");
 
         Profiler::Profile("Pre-texture loading");
@@ -340,10 +341,10 @@ public:
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
 
         camera.aspect = 1.6f;
-        camera.fieldOfView = 70.f;
+        camera.fieldOfView = 85.f;
         camera.zVals.far = 100.;
 
-        camera.position = Vecf3(0, 0, -9);
+        camera.position = Vecf3(0, 0, -15);
 
         Transform base_transform;
         base_transform.position = Vecf3(0, 0, 5);
@@ -375,6 +376,11 @@ public:
 
         bool do_debugging = save_state.debug_enabled;
         bool did_apply_state = false;
+
+        GLM::PipelineState pstate = {
+            {ShaderStage::Vertex, unifstate},
+            {ShaderStage::Fragment, unifstate}
+        };
 
         while (!closeFlag()) {
 
@@ -411,8 +417,8 @@ public:
             this->pollEvents();
 
             /* Define frame data */
-            base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 5.);
-            base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 5.);
+            base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 2.);
+            base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 2.);
 
             //      camera.position.z() = -tprevious;
 
@@ -452,9 +458,6 @@ public:
                 GLM::SetDepthState(deptstate);
             }
 
-            GLM::SetShaderUniformState(eye_pip, ShaderStage::Vertex, unifstate);
-            GLM::SetShaderUniformState(eye_pip, ShaderStage::Fragment, unifstate);
-
             /*
            * For VR, we could add drawcall parameters to specify this
            * The user would still specify their own projection matrices per-eye,
@@ -463,9 +466,9 @@ public:
            *  because this has a lot of benefits to efficiency.
            */
 
-            GLM::Draw(call, instdata, &o_query);
+            GLM::Draw(eye_pip, pstate, vertdesc, call, instdata, &o_query);
 
-            GLM::DrawConditional(call, instdata, o_query);
+            GLM::DrawConditional(eye_pip, pstate, vertdesc, call, instdata, o_query);
 
             if(do_debugging)
             {

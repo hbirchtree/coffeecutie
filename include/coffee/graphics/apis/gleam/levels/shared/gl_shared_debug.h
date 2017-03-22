@@ -135,7 +135,11 @@ struct CGL_Shared_Debug
 
     STATICINLINE bool InternalFormatSupport(Texture, PixelFormat)
     {
+#if !defined(COFFEE_ONLY_GLES20)
         return true;
+#else
+        return false;
+#endif
     }
     STATICINLINE CSize InternalFormatMaxResolution2D(Texture tt, PixelFormat t)
     {
