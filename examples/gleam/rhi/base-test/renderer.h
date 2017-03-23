@@ -316,8 +316,11 @@ public:
 
         /* We assign CPU-side values to GPU-side values */
         for (GLM::UNIFDESC const &u : unifs) {
-            if (u.m_name == "transform[0]")
+            if (u.m_name == "transform[0]" || u.m_name == "transform")
+            {
                 unifstate.setUniform(u, &transforms);
+                cVerbose(4, "Array size: {0}", u.m_arrSize);
+            }
             else if (u.m_name == "texdata")
                 unifstate.setSampler(u, &textures_array);
             else if (u.m_name == "mx")
@@ -384,7 +387,7 @@ public:
 
         while (!closeFlag()) {
 
-            do_debugging = m_debugging && PlatformData::IsDebug();
+            //do_debugging = m_debugging && PlatformData::IsDebug();
 
             if(do_debugging)
             {

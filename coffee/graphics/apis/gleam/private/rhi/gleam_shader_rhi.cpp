@@ -218,6 +218,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                 desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
                 desc.stages = ShaderStage::All;
                 desc.m_flags = to_enum_shtype(v.type);
+                desc.m_arrSize = v.size;
                 delete[] v.name;
             }
             delete[] unifs;
