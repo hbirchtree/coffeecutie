@@ -427,9 +427,6 @@ public:
                 GLM::SetDepthState(deptstate);
             }
 
-            GLM::SetShaderUniformState(eye_pip, ShaderStage::Vertex, unifstate);
-            GLM::SetShaderUniformState(eye_pip, ShaderStage::Fragment, unifstate);
-
             /*
            * For VR, we could add drawcall parameters to specify this
            * The user would still specify their own projection matrices per-eye,
@@ -438,7 +435,11 @@ public:
            *  because this has a lot of benefits to efficiency.
            */
             GLM::SetViewportState(viewstate_vr);
-            GLM::Draw(call, instdata);
+            GLM::Draw(eye_pip,
+            {
+                          {ShaderStage::Vertex, unifstate},
+                          {ShaderStage::Fragment, unifstate}
+                      }, vertdesc, call, instdata);
             GLM::SetViewportState(viewportstate);
 
             frame_counter.update(Time::CurrentMicroTimestamp()/1000);
