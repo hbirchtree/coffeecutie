@@ -53,12 +53,11 @@ void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
     props.gl.bits.green = 6;
     props.gl.bits.blue = 5;
 #else
-    props.gl.bits.alpha = 8;
+//    props.gl.bits.alpha = 8;
     props.gl.bits.red = 8;
     props.gl.bits.blue = 8;
     props.gl.bits.green = 8;
 #endif
-
 }
 
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)

@@ -71,6 +71,7 @@ int32 coffee_main(int32, cstring_w*)
     {
         SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
         cDebug("Initialization error: {0}",err);
+        return 1;
     }
 
     Profiler::Profile("Initialize renderer");

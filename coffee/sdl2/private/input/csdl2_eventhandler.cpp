@@ -7,13 +7,7 @@
 #include "sdl2inputfun.h"
 
 #if defined(COFFEE_USE_MAEMO_X11)
-
-#include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <X11/Xutil.h>
-#include <coffee/core/plat/windowmanager/plat_windowtype.h>
-#include <coffee/core/base/renderer/windowmanagerclient.h>
-
+#include <coffee/sdl2/windowing/x11_window.h>
 #endif
 
 namespace Coffee{
@@ -274,51 +268,15 @@ void SDL2EventHandler::pollEvents()
     }
 
 #if defined(COFFEE_USE_MAEMO_X11)
-    static WindowManagerClient* wm;
-    static CDWindow* win;
+    static X11Window* xapp;
 
-    if(!wm)
+    if(!xapp)
     {
-        wm = C_DCAST<WindowManagerClient>((SDL2EventHandler*)this);
-        win = wm->window();
-#if C_SYSTEM_BITNESS == 32
-        cDebug("Window pointer: {0}, X11: {1},{2}", (u32)win,
-               (u32)win->wininfo.x11.display, (u32)win->wininfo.x11.window);
-#endif
+        xapp = C_DCAST<X11Window>((SDL2EventHandler*)this);
     }
 
-    XEvent xev;
-    CIEvent base;
-    while(XPending(win->wininfo.x11.display))
-    {
-        XNextEvent(win->wininfo.x11.display, &xev);
-
-        switch(xev.type)
-        {
-        case KeyPress:
-        case KeyRelease:
-        {
-            base.type = CIEvent::Keyboard;
-            CIKeyEvent k;
-            XKeyEvent& xk = xev.xkey;
-            if(xk.keycode < 256)
-                /* ASCII letters */
-                k.key = xk.keycode;
-            else if(xk.keycode > 0xFF00 && xk.keycode < 0xFF1C)
-                /* ASCII control codes */
-                k.key = xk.keycode - 0xFF00;
-            else if(xk.keycode > 0xFFBD && xk.keycode < 0xFFCA)
-                k.key = xk.keycode - 0xFFBE + CK_F1;
-
-            if(xk.type == KeyPress)
-                k.mod |= CIKeyEvent::PressedModifier;
-            eventHandle(base, &k);
-            continue;
-        }
-        default:
-            continue;
-        }
-    }
+    if(xapp)
+        xapp->processX11Events(this);
 #endif
 }
 

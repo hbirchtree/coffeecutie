@@ -29,6 +29,10 @@ public:
      */
     virtual void eventHandleI(const CIEvent& e, c_cptr data) = 0;
 
+    virtual void eventHandle(const CIHapticEvent& haptic, c_cptr data) = 0;
+    virtual void eventHandle(const CIEvent &event, c_cptr data) = 0;
+    virtual void eventHandle(const CDEvent &event, c_cptr data) = 0;
+
     /*!
      * \brief Alternative way of querying controls, will grab all state.
      *  Requires more calls than event-based polling.

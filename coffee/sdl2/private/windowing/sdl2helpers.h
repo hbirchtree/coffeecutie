@@ -4,7 +4,7 @@
 #define SDL2_WINDOWING
 
 #include "../types/sdl2datatypes.h"
-#include <coffee/core/plat/windowmanager/plat_wm.h>
+#include <coffee/core/plat/plat_windowmanager.h>
 #include <coffee/core/plat/platform_detect.h>
 #include <coffee/core/base/types/cdisplay.h>
 

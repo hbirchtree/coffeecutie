@@ -133,6 +133,11 @@
 #define COFFEE_X11_HILDON
 #endif
 
+#define COFFEE_USE_MAEMO_EGL
+#define COFFEE_USE_MAEMO_X11
+#define COFFEE_ONLY_GLES20
+#define COFFEE_LINKED_GLES
+
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE

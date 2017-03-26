@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
 #if defined(COFFEE_USE_MAEMO_X11)
@@ -45,6 +46,9 @@ public:
     bool screensaverMode();
     void setScreensaverMode(bool m);
     CString windowLibrary() const;
+
+public:
+    void processX11Events(InputApplication *eh);
 };
 
 }

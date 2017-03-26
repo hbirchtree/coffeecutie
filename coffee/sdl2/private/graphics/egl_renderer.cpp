@@ -18,7 +18,7 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(5, "@" #result ": " "EGL error: {0}", error); \
+        cVerbose(5, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
         if(err) \
             *err = cast_pod<>(error); \
         return false; \
@@ -28,7 +28,7 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(5, "@" #result ": " "EGL error: {0}", error); \
+        cVerbose(5, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
         return false; \
     }
 
@@ -36,7 +36,7 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(5, "@" #result ": " "EGL error: {0}", error); \
+        cVerbose(5, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
     }
 
 #define EGL_NULLCHECK(result, error_text) \
@@ -83,7 +83,6 @@ bool egl_config_to_bits(EGLDisplay disp, EGLConfig cfg, CDContextBits& bits)
 
     BITS_ASSIGN(buffer_size, EGL_BUFFER_SIZE);
 
-    /*
     EGL_PRINT_VALUE(EGL_RED_SIZE);
     EGL_PRINT_VALUE(EGL_GREEN_SIZE);
     EGL_PRINT_VALUE(EGL_BLUE_SIZE);
@@ -113,7 +112,6 @@ bool egl_config_to_bits(EGLDisplay disp, EGLConfig cfg, CDContextBits& bits)
     EGL_PRINT_VALUE(EGL_TRANSPARENT_RED_VALUE);
     EGL_PRINT_VALUE(EGL_TRANSPARENT_GREEN_VALUE);
     EGL_PRINT_VALUE(EGL_TRANSPARENT_BLUE_VALUE);
-    */
 
     return true;
 }
@@ -297,7 +295,7 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
             EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
             EGL_CONFIG_CAVEAT, EGL_NONE,
-            EGL_NATIVE_RENDERABLE, EGL_TRUE,
+//            EGL_NATIVE_RENDERABLE, EGL_TRUE,
 
             EGL_RED_SIZE, props.bits.red,
             EGL_GREEN_SIZE, props.bits.green,
@@ -316,7 +314,10 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
         cVerbose(5, "Number of FB configs: {0}", config_num);
         if(config_num < 1)
+        {
+            *err = "No framebuffer configurations found";
             return false;
+        }
 
         Vector<EGLConfig> configurations;
         configurations.resize(config_num);
@@ -334,7 +335,10 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
                     bits.red == props.bits.red &&
                     bits.green == props.bits.green &&
                     bits.blue == props.bits.blue)
+            {
                 m_eglData->config = cfg;
+                break;
+            }
         }
         if(!m_eglData->config)
             m_eglData->config = configurations[0];

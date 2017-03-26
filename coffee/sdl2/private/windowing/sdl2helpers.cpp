@@ -196,11 +196,6 @@ void SetWindowFlags(SDL_Window* window,CDProperties::State const& state)
 CDWindow *GetWindow(SDL_Window *window)
 {
     CDWindow* cwin = new CDWindow;
-
-    SDL_GetWindowSize(window,&cwin->screenArea.w,&cwin->screenArea.h);
-    SDL_GetWindowPosition(window,&cwin->screenArea.x,&cwin->screenArea.y);
-
-    cwin->title = SDL_GetWindowTitle(window);
     GetWindowPtr(window,cwin);
 
     return cwin;

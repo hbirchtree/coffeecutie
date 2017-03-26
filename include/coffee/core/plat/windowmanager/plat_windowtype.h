@@ -29,9 +29,6 @@ struct CDWindow{
 #endif
 
     } wininfo;
-
-    cstring             title       = nullptr;
-    CRect               screenArea;
 };
 
 }
