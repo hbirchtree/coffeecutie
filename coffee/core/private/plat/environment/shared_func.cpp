@@ -1,5 +1,11 @@
 #include <coffee/core/plat/environment/sysinfo_def.h>
 
+#if defined(COFFEE_UNIXPLAT)
+#include <unistd.h>
+#elif defined(COFFEE_WINDOWS)
+#include "../plat_windows.h"
+#endif
+
 namespace Coffee{
 
 CString SysInfoDef::GetSystemString()
@@ -18,6 +24,7 @@ CString SysInfoDef::GetSystemString()
 CString SysInfoDef::HostName()
 {
 #if !defined(NDEBUG)
+
 #if defined(COFFEE_UNIXPLAT) || defined(COFFEE_WINDOWS)
     /* For now, we assume this works. We might implement a better one where it retries upon failure. */
     CString _m;
@@ -28,6 +35,7 @@ CString SysInfoDef::HostName()
 #else
     return "localhost";
 #endif
+
 #else
     return "";
 #endif

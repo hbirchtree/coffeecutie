@@ -30,10 +30,8 @@ struct CProcess
     using Environment = Env::Variables;
 
 	STATICINLINE int ExecuteSystem(Command const& cmd_)
-	{
-#if defined(COFFEE_NO_SYSTEM_CMD)
-        return -1;
-#elif !defined(COFFEE_WINDOWS_UWP)
+    {
+#if !defined(COFFEE_NO_SYSTEM_CMD)
 		CString cmd = cmd_.program;
 		for (CString const& arg : cmd_.argv)
 		{
@@ -48,10 +46,7 @@ struct CProcess
 
     STATICINLINE int Execute(Command const& cmd_)
     {
-#if defined(COFFEE_NO_EXECVPE)
-        C_UNUSED(cmd_);
-        return -1;
-#elif defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_USE_EXECVPE)
         Command cmd = cmd_;
 
         pid_t child;
@@ -90,9 +85,7 @@ struct CProcess
 
     STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* err = nullptr)
     {
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__)
-        return -1;
-#elif defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_USE_EXECVPE)
         CString cmd = cmd_.program;
 	for(CString const& arg : cmd_.argv)
         {

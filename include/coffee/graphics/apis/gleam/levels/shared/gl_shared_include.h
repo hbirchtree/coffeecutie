@@ -1,5 +1,23 @@
 #pragma once
 
+/*!
+ * \file gl_shared_include.h
+ * \brief
+ * GLES comes in two forms:
+ *  - Header-defined functions + linked functions (Maemo, Android, NaCL, Emscripten)
+ *  - Dynamically loaded functions from the OS (Android, Linux, Mac OSX, Windows)
+ *
+ * Dynamically loaded will occupy more symbols and code.
+ * It will probably be slower compared to the linked option.
+ * Dynamically loaded will be more flexible on platforms with multiple versions
+ *  available with a single, statically linked binary.
+ * Linked alternative works well on restricted or otherwise limited platforms.
+ *
+ * Android can do both, but we use dynamic loading to avoid separate GLESv2 and GLESv3 loading.
+ *
+ * OpenGL on desktop only dynamically loads functions, as this works everywhere.
+ */
+
 #include <coffee/core/coffee_mem_macros.h>
 
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -8,6 +26,7 @@
 #include <glad/KHR/khrplatform.h>
 
 #else
+
 
 #if defined(COFFEE_LINKED_GLES)
 #include <GLES2/gl2.h>

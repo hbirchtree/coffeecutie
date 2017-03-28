@@ -1,5 +1,4 @@
-#ifndef CINPUT_KEYMAP
-#define CINPUT_KEYMAP
+#pragma once
 
 #include "cinput_latin1_keymap.h"
 
@@ -121,5 +120,3 @@ using InputCode = uint16;
 
 }
 }
-
-#endif // CINPUT_KEYMAP

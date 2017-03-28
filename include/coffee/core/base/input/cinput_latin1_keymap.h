@@ -1,5 +1,16 @@
 #pragma once
 
+/*!
+ * \file cinput_latin1_keymap.h
+ * \brief
+ * Input mappings are stolen from Qt and SDL2.
+ * This is done such that conversion of keycodes can be done flexibly between
+ *  multiple systems if need be. For example, X11 on smaller
+ *  embedded devices suffer with SDL2, but work well with a lighter implementation.
+ * This mapping is just a common ground.
+ * Further keys are found in "cinput_keymap.h"
+ */
+
 #include "../../types/tdef/integertypes.h"
 #include "../../types/edef/enumfun.h"
 

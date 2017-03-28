@@ -32,7 +32,6 @@ using Future = std::future<RType>;
 template<typename RType>
 using SharedFuture = std::shared_future<RType>;
 
-
 using Thread = std::thread;
 
 }

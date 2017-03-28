@@ -117,7 +117,7 @@
 #define COFFEE_USE_IMMERSIVE_VIEW
 #endif
 
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || 0
 #define COFFEE_ONLY_GLES20
 #endif
 
@@ -126,21 +126,23 @@
 #define COFFEE_NO_HUGETLB
 
 #define COFFEE_NO_RUSAGE_THREAD
-#define COFFEE_USE_MAEMO_EGL
-#define COFFEE_USE_MAEMO_X11
 #define COFFEE_FRAGILE_FRAMEBUFFER
 #define COFFEE_ALWAYS_VSYNC
 #define COFFEE_X11_HILDON
 #endif
 
+#if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
 #define COFFEE_USE_MAEMO_EGL
 #define COFFEE_USE_MAEMO_X11
-#define COFFEE_ONLY_GLES20
-#define COFFEE_LINKED_GLES
+#endif
 
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE
+#endif
+
+#if defined(COFFEE_UNIXPLAT)
+#define COFFEE_USE_EXECVPE
 #endif
 
 #if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
@@ -156,6 +158,7 @@
 #endif
 
 #if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#define COFFEE_STUBBED_SYSINFO
 #define COFFEE_STUBBED_ENVIRONMENT
 #define COFFEE_STUBBED_PROCESS
 #define COFFEE_STUBBED_STACKTRACE
@@ -163,7 +166,8 @@
 #define COFFEE_STUBBED_DYNLOADER
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_ANDROID)
+#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
+    || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 

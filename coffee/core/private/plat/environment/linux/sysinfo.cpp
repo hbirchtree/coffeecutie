@@ -9,6 +9,8 @@ namespace Coffee{
 namespace Environment{
 namespace Linux{
 
+thread_local CString LinuxSysInfo::cached_cpuinfo_string;
+
 using DirFun = CResources::DirFun;
 
 /* More paths to inspect:

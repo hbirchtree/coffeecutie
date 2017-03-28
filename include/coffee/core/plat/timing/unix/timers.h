@@ -1,9 +1,8 @@
+#pragma once
+
 #include "../../platform_detect.h"
 
 #if defined(COFFEE_UNIXPLAT) || defined(COFFEE_ANDROID)
-
-#ifndef COFFEE_CORE_PLAT_TIMING_TIMERS_H
-#define COFFEE_CORE_PLAT_TIMING_TIMERS_H
 
 #include "../timing_def.h"
 #include <sys/time.h>
@@ -132,5 +131,4 @@ using CElapsedTimerD = CFunctional::_plat_timer_scalar_micro;
 
 }
 
-#endif
 #endif

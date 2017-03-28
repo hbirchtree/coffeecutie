@@ -103,7 +103,13 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     ::Window rootWindow = DefaultRootWindow(m_xData->display);
 
     XSetWindowAttributes swa;
-    swa.event_mask = ExposureMask | PointerMotionMask | KeyPressMask | KeyReleaseMask;
+    swa.event_mask =
+            ExposureMask
+            | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
+            | KeyPressMask | KeyReleaseMask
+            | FocusChangeMask | VisibilityChangeMask | ResizeRedirectMask
+            | ButtonMotionMask
+            | EnterWindowMask | LeaveWindowMask;
 
     m_xData->window = XCreateWindow(m_xData->display, rootWindow,
                                     0, 0, props.size.w, props.size.h, 0,
@@ -291,14 +297,16 @@ CSize X11Window::windowSize() const
     i32 x, y;
     u32 w, h;
     u32 bw, d;
-    XGetGeometry(m_xData->display, m_xData->window, &win,
-                 &x, &y, &w, &h, &bw, &d);
+    XGetGeometry(m_xData->display, m_xData->window,
+                 &win, &x, &y, &w, &h, &bw, &d);
     return {C_CAST<i32>(w), C_CAST<i32>(h)};
 }
 
 void X11Window::setWindowSize(const CSize &s)
 {
-
+    auto pos = windowPosition();
+    XMoveResizeWindow(m_xData->display, m_xData->window, pos.x, pos.y,
+                      C_CAST<u32>(s.w), C_CAST<u32>(s.h));
 }
 
 CPoint X11Window::windowPosition() const
@@ -359,7 +367,8 @@ CString X11Window::windowLibrary() const
 void X11Window::processX11Events(InputApplication *eh)
 {
     XEvent xev;
-    CIEvent base;
+    CIEvent base_i;
+    CDEvent base_d;
     while(XPending(m_xData->display))
     {
         XNextEvent(m_xData->display, &xev);
@@ -369,24 +378,40 @@ void X11Window::processX11Events(InputApplication *eh)
         case KeyPress:
         case KeyRelease:
         {
-            base.type = CIEvent::Keyboard;
+            base_i.type = CIEvent::Keyboard;
             CIKeyEvent k;
             XKeyEvent& xk = xev.xkey;
-            if(xk.keycode < 256)
+            if(xk.keycode == XK_VoidSymbol)
+                continue;
+            if((xk.keycode > XK_space && xk.keycode < XK_asciitilde)
+                    || (xk.keycode > XK_nobreakspace && xk.keycode < XK_ydiaeresis))
                 /* ASCII letters */
                 k.key = xk.keycode;
-            else if(xk.keycode > 0xFF00 && xk.keycode < 0xFF1C)
-                /* ASCII control codes */
-                k.key = xk.keycode - 0xFF00;
-            else if(xk.keycode > 0xFFBD && xk.keycode < 0xFFCA)
-                k.key = xk.keycode - 0xFFBE + CK_F1;
+            else if(xk.keycode > XK_F1 && xk.keycode < XK_F12)
+                k.key = xk.keycode - XK_F1 + CK_F1;
 
             if(xk.type == KeyPress)
                 k.mod |= CIKeyEvent::PressedModifier;
-            eh->eventHandle(base, &k);
+            eh->eventHandle(base_i, &k);
             continue;
         }
+        case MotionNotify:
+        {
+            break;
+        }
+        case ResizeRequest:
+        {
+            XResizeRequestEvent& xr = xev.xresizerequest;
+            CDResizeEvent r;
+            setWindowSize({xr.width, xr.height});
+            base_d.type = CDEvent::Resize;
+            r.w = xr.width;
+            r.h = xr.height;
+            eh->eventHandle(base_d, &r);
+            break;
+        }
         default:
+            cVerbose(5, "X11:Unhandled event: {0}", xev.type);
             continue;
         }
     }

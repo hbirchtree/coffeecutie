@@ -2,7 +2,7 @@
 
 #include "../../plat_primary_identify.h"
 
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_WINDOWS)
+#if defined(COFFEE_UNIXPLAT)
 
 #include "../environment_details.h"
 #include "../../memory/cmemory.h"

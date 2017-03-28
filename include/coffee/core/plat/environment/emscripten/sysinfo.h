@@ -2,7 +2,7 @@
 
 #include <coffee/core/plat/plat_primary_identify.h>
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_STUBBED_SYSINFO)
 
 #include "../sysinfo_def.h"
 

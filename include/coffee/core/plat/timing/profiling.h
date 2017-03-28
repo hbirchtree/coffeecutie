@@ -96,13 +96,14 @@ struct SimpleProfilerImpl
 
     STATICINLINE void LabelThread(cstring name)
     {
+        /* TODO: Move thread naming code to different place */
 #if defined(COFFEE_APPLE)
         pthread_setname_np(name);
 #elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
         pthread_setname_np(pthread_self(), name);
 #endif
 
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
 #endif
@@ -193,7 +194,7 @@ struct SimpleProfilerImpl
         Timestamp start_time;
 
         Mutex data_access_mutex;
-    #if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+    #if !defined(NDEBUG)
         LinkList<DataPoint> datapoints;
         ThreadListing threadnames;
     #endif
@@ -201,7 +202,7 @@ struct SimpleProfilerImpl
         ExtraData extra_data;
         std::atomic_int global_init;
 
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG)
         bool Enabled;
 #else
         static const constexpr bool Enabled = false;
@@ -226,7 +227,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE LinkList<DataPoint>* DataPoints()
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG)
         if(profiler_data_store)
             return &profiler_data_store->datapoints;
         else
@@ -236,7 +237,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE bool Enabled()
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG)
         if(profiler_data_store)
             return profiler_data_store->Enabled;
         else
@@ -254,7 +255,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE ThreadListing* ThreadNames()
     {
-#if !defined(NDEBUG) && !defined(__EMSCRIPTEN__)
+#if !defined(NDEBUG)
         if(profiler_data_store)
             return &profiler_data_store->threadnames;
         else
@@ -263,7 +264,8 @@ struct SimpleProfilerImpl
     }
 };
 
-FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1, SimpleProfilerImpl::DataPoint const& t2)
+FORCEDINLINE bool operator<(SimpleProfilerImpl::DataPoint const& t1,
+                            SimpleProfilerImpl::DataPoint const& t2)
 {
     ThreadId::Hash th1 = t1.thread.hash();
     ThreadId::Hash th2 = t1.thread.hash();
