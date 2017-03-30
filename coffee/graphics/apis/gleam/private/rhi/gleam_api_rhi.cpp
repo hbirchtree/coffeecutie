@@ -53,7 +53,7 @@ void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
     props.gl.bits.green = 6;
     props.gl.bits.blue = 5;
 #else
-//    props.gl.bits.alpha = 8;
+    props.gl.bits.alpha = 8;
     props.gl.bits.red = 8;
     props.gl.bits.blue = 8;
     props.gl.bits.green = 8;
@@ -161,7 +161,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
 /* Future improvement: cache changes, or maybe rely on driver for that */
 
-Function<bool (bool debug)> GLEAM_API::GetLoadAPI()
+GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI()
 {
     cVerbose(8, "Returning GLEAM loader...");
     return [](bool debug = false)

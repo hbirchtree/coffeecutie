@@ -27,7 +27,9 @@ public:
         CSDL2Renderer::eventHandleD(e,data);
 
         EventHandlers::WindowManagerCloseWindow(this,e,data);
-//        EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>(e,data);
+        EventHandlers::ResizeWindowUniversal<RHI::GLEAM::GLEAM_API>(e,data);
+
+        cDebug("Event: {0}", C_CAST<uint32>(e.type));
     }
     void eventHandleI(const CIEvent &e, c_cptr data)
     {
@@ -35,18 +37,13 @@ public:
 
         EventHandlers::EscapeCloseWindow(this,e,data);
         EventHandlers::RotateView(r_view,e,data);
+        EventHandlers::ExitOnQuitSignal(this, e, data);
+
+        cDebug("Event: {0}", C_CAST<uint32>(e.type));
     }
 
     CQuat r_view;
 };
-
-template<typename R, typename D>
-void emscripten_middleman(void* arg)
-{
-    auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
-
-    eventloop->loop(*eventloop->renderer, eventloop->data);
-}
 
 struct SharedData
 {
@@ -54,7 +51,11 @@ struct SharedData
     Timestamp frame_ts;
 
     void* ptr;
+
+    RHI::GLEAM::GLEAM_API::API_CONTEXT api;
 };
+
+using ELoop = EventLoopData<CDRenderer, SharedData>;
 
 int32 coffee_main(int32, cstring_w*)
 {
@@ -65,20 +66,27 @@ int32 coffee_main(int32, cstring_w*)
     CDRenderer renderer;
 
     CDProperties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
+    visual.flags ^= CDProperties::Windowed;
+    visual.flags |= CDProperties::WindowedFullScreen;
 
     SharedData share_data = {};
 
-    auto setup_fun = [&](CDRenderer&, SharedData*)
+    auto setup_fun = [&](CDRenderer&, SharedData* data)
     {
         renderer.setWindowTitle("GL extensions");
         cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
         cDebug("Framebuffer size: {0}, window size: {1}",
                renderer.framebufferSize(), renderer.windowSize());
+
+        data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
+        if(!data->api(PlatformData::IsDebug()))
+        {
+            cDebug("Failed to initialize graphics API");
+        }
     };
     auto loop_fun = [](CDRenderer& renderer, SharedData* data)
     {
-        glClearColor(1.f, 1.f, 0.f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
 
         if(data->frame_ts <= Time::CurrentTimestamp())
         {
@@ -96,8 +104,11 @@ int32 coffee_main(int32, cstring_w*)
 
     };
 
-    EventLoopData<CDRenderer, SharedData> eventloop =
+    ELoop eventloop =
     {&renderer, &share_data, setup_fun, loop_fun, cleanup_fun, 0};
+
+//    eventloop.flags |= ELoop::TimeLimited;
+    eventloop.time.max = 3;
 
     int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
     if(stat != 0)

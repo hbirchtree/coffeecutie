@@ -5,8 +5,10 @@
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/core/CProfiling>
 
-#ifndef COFFEE_GLEAM_DESKTOP
+#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_USE_MAEMO_EGL)
 #include <SDL_video.h>
+#else
+#include <EGL/egl.h>
 #endif
 
 #include "conversion.h"
@@ -75,6 +77,16 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     cDebug("Attempting to load version: {0}",p.version);
 
+#if !defined(COFFEE_GLEAM_DESKTOP)
+
+#if !defined(COFFEE_USE_MAEMO_EGL)
+    GLADloadproc procload = SDL_GL_GetProcAddress;
+#else
+    GLADloadproc procload = (GLADloadproc)eglGetProcAddress;
+#endif
+
+#endif
+
     if(!(p.flags & GLProperties::Flags::GLES))
     {
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -107,17 +119,17 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 #if !defined(COFFEE_ONLY_GLES20)
         if(p.version>=v32es)
         {
-            status = CGL::CGLES32::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+            status = CGL::CGLES32::LoadBinding(m_app->glContext(),procload);
         }else
         if(p.version==v30es)
         {
-            status = CGL::CGLES30::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+            status = CGL::CGLES30::LoadBinding(m_app->glContext(),procload);
         }else
 #endif
         if(p.version==v20es)
         {
 #if !defined(COFFEE_LINKED_GLES)
-            status = CGL::CGLES20::LoadBinding(m_app->glContext(),SDL_GL_GetProcAddress);
+            status = CGL::CGLES20::LoadBinding(m_app->glContext(),procload);
 #else
             cVerbose(7, "Checking OpenGL ES 2.0 functions...");
             status = CGL::CGLES20::LoadBinding(m_app->glContext(),nullptr);

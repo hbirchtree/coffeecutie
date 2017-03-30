@@ -11,6 +11,8 @@ namespace GLEAM{
 
 struct GLEAM_API : GraphicsAPI
 {
+    using API_CONTEXT = Function<bool(bool)>;
+
     /* Enumerations */
     enum TextureFlags
     {
@@ -98,7 +100,7 @@ public:
 
     static bool LoadAPI(DataStore store, bool debug = false);
 
-    static Function<bool(bool debug)> GetLoadAPI();
+    static API_CONTEXT GetLoadAPI();
 
     /* i specifies view index for indexed views, 0 for  */
     static void SetRasterizerState(RasterizerState const& rstate, uint32 i = 0);

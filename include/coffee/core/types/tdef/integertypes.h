@@ -116,4 +116,6 @@ PACKEDSTRUCT uint24
     uint32 d:24;
 };
 
+using EvTs = uint32;
+
 }

@@ -3,6 +3,8 @@
 #include "inputapplication.h"
 #include <coffee/core/eventprocess.h>
 
+#include <coffee/core/plat/plat_timing.h>
+
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #endif
@@ -13,6 +15,11 @@ namespace Display{
 template<typename Renderer, typename ShareData>
 struct EventLoopData
 {
+    enum Flags
+    {
+        TimeLimited = 0x1,
+    };
+
     Renderer* renderer;
     ShareData* data;
 
@@ -21,6 +28,14 @@ struct EventLoopData
     std::function<void(Renderer&, ShareData*)> cleanup;
 
     uint32 flags;
+
+    union
+    {
+        struct{
+            Timestamp start;
+            Timestamp max;
+        } time;
+    };
 };
 
 
@@ -97,6 +112,11 @@ public:
         return m_closeFlag;
     }
 
+    virtual bool applyCloseFlag()
+    {
+        m_closeFlag = true;
+    }
+
     /*!
      * \brief Stores a reference to an event loop to be used with the application.
      * \param eventloop Generic pointer to EventLoopData<> structure
@@ -153,6 +173,8 @@ public:
     static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
                                CDProperties& visual, CString& err)
     {
+        using ELD = EventLoopData<Renderer, Data>;
+
         static cstring suspend_str = "Suspend handler";
         static cstring resume_str = "Resume handler";
 
@@ -170,6 +192,7 @@ public:
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
 
+
 #if defined(__EMSCRIPTEN__)
         emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>, &ev, 0, 0);
 #endif
@@ -179,13 +202,23 @@ public:
             return -1;
         }
 
+        ev.time.start = Time::CurrentTimestamp();
+
 #if !defined(COFFEE_ANDROID)
         r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
 #endif
 
 #if !defined(__EMSCRIPTEN__)
         while(!ev.renderer->closeFlag())
+        {
             ev.loop(*ev.renderer, ev.data);
+
+            if(ev.flags & ELD::TimeLimited &&
+                    Time::CurrentTimestamp() > (ev.time.start + ev.time.max))
+            {
+                r.injectEvent(CIEvent::Create(0, CIEvent::QuitSign), nullptr);
+            }
+        }
 #endif
 
         (*ev.renderer).cleanup();

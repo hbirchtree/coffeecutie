@@ -23,6 +23,13 @@ FORCEDINLINE void ResizeWindowUniversal(const CDEvent& e, c_cptr data)
     }
 }
 
+template<typename T>
+FORCEDINLINE void ExitOnQuitSignal(T* r, const CIEvent& e, c_cptr)
+{
+    if(e.type == CIEvent::QuitSign)
+        r->closeWindow();
+}
+
 template<class GL>
 FORCEDINLINE void ResizeWindow(const CDEvent& e, c_cptr data)
 {

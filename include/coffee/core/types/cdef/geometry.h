@@ -109,6 +109,15 @@ struct _cbasic_point_2d : _cbasic_point
     {
         return CMath::sqrt(CMath::pow(this->x-p.x,2)+CMath::pow(this->y-p.y,2));
     }
+
+    template<typename T2>
+    _cbasic_point_2d<T2> convert() const
+    {
+        _cbasic_point_2d<T2> out;
+        out.x = x;
+        out.y = y;
+        return out;
+    }
 };
 
 template<typename T>

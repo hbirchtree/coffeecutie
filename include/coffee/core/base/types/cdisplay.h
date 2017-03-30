@@ -116,7 +116,7 @@ struct CDEvent{
         TransitionBackground,
         TransitionForeground,
     };
-    uint32  ts; /*!< Event timestamp*/
+    EvTs ts; /*!< Event timestamp*/
     EventType type; /*!< Event type*/
 };
 

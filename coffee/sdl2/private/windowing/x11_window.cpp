@@ -76,7 +76,11 @@ bool X11Window::hideWindow()
 bool X11Window::closeWindow()
 {
     if(m_xData)
-        return XUnmapWindow(m_xData->display, m_xData->window) == 0;
+    {
+        bool stat = XUnmapWindow(m_xData->display, m_xData->window) == 0;
+        EventApplication* eventapp = C_DCAST<EventApplication>(this);
+        if(eventapp) eventapp->applyCloseFlag();
+    }
     return false;
 }
 
@@ -100,6 +104,12 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
 
     m_xData->display = XOpenDisplay(nullptr);
 
+    if(!m_xData->display)
+    {
+        *err = "Failed to open X11 display connection";
+        return false;
+    }
+
     ::Window rootWindow = DefaultRootWindow(m_xData->display);
 
     XSetWindowAttributes swa;
@@ -109,13 +119,24 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
             | KeyPressMask | KeyReleaseMask
             | FocusChangeMask | VisibilityChangeMask | ResizeRedirectMask
             | ButtonMotionMask
-            | EnterWindowMask | LeaveWindowMask;
+            | EnterWindowMask | LeaveWindowMask
+            | ExposureMask
+            ;
 
     m_xData->window = XCreateWindow(m_xData->display, rootWindow,
                                     0, 0, props.size.w, props.size.h, 0,
                                     CopyFromParent, InputOutput,
                                     CopyFromParent, CWEventMask,
                                     &swa);
+
+    if(!m_xData->window)
+    {
+        *err = "Failed to create X11 window";
+        return false;
+    }
+
+    Atom delete_window = XInternAtom(m_xData->display, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(m_xData->display, m_xData->window, &delete_window, 1);
 
     XSetWindowAttributes xattr;
 
@@ -395,8 +416,46 @@ void X11Window::processX11Events(InputApplication *eh)
             eh->eventHandle(base_i, &k);
             continue;
         }
+//        case EnterNotify:
+//        case LeaveNotify:
+        case FocusIn:
+        case FocusOut:
+        {
+            base_d.type = CDEvent::Focus;
+            CDFocusEvent f;
+            /* Right now, we smash these two together and hope for the best */
+            f.mod = (xev.type == FocusIn || xev.type == EnterNotify)
+                    ? CDFocusEvent::Enter : CDFocusEvent::Leave;
+            eh->eventHandle(base_d, &f);
+            break;
+        }
+        case ButtonRelease:
+        case ButtonPress:
+        {
+            XButtonEvent& xb = xev.xbutton;
+            base_i.type = CIEvent::MouseButton;
+            CIMouseButtonEvent b;
+
+            /* We remap this from:
+             * Button1 = 1, Button2 = 2, Button3 = 3
+             * To:
+             * Button1 = 1, Button2 = 2, Button3 = 4
+             */
+            b.btn = C_CAST<CIMouseButtonEvent::MouseButton>(1 << xb.button);
+            b.mod = (xev.type == ButtonPress)
+                    ? CIMouseButtonEvent::Pressed
+                    : CIMouseButtonEvent::NoneModifier;
+            eh->eventHandle(base_i, &b);
+            break;
+        }
         case MotionNotify:
         {
+            XMotionEvent& xm = xev.xmotion;
+            base_i.type = CIEvent::MouseMove;
+            CIMouseMoveEvent m;
+            m.btn = CIMouseButtonEvent::NoneBtn;
+            m.origin = CPoint(xm.x, xm.y).convert<scalar>();
+            eh->eventHandle(base_i, &m);
             break;
         }
         case ResizeRequest:
@@ -408,6 +467,13 @@ void X11Window::processX11Events(InputApplication *eh)
             r.w = xr.width;
             r.h = xr.height;
             eh->eventHandle(base_d, &r);
+            break;
+        }
+        case ClientMessage:
+        {
+            XClientMessageEvent& xcm = xev.xclient;
+            base_i.type = CIEvent::QuitSign;
+            eh->eventHandle(base_i, nullptr);
             break;
         }
         default:

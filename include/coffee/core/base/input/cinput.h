@@ -42,11 +42,19 @@ struct
         MultiTouch, /*!< Multi-touch events using several fingers*/
         Gesture,/*!< Multi-touch events using several fingers*/
     };
-    uint32 ts = 0; /*!< Event timestamp*/
+    EvTs ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
 
     uint8 pad1;
     uint16 pad2;
+
+    STATICINLINE CIEvent Create(uint32 ts, EventType t)
+    {
+        CIEvent e;
+        e.ts = ts;
+        e.type = t;
+        return e;
+    }
 };
 
 /*!
