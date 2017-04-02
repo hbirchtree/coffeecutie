@@ -23,6 +23,17 @@ static int x11_handler(Display*, XErrorEvent* ev)
 namespace Coffee{
 namespace Display{
 
+STATICINLINE u32 x11_key_to_coffee(u32 xkey)
+{
+    switch(xkey)
+    {
+    case XK_Escape:
+        return CK_Escape;
+    default:
+        return CK_Null;
+    }
+}
+
 struct X11_Data
 {
     ::Display* display;
@@ -410,6 +421,8 @@ void X11Window::processX11Events(InputApplication *eh)
                 k.key = xk.keycode;
             else if(xk.keycode > XK_F1 && xk.keycode < XK_F12)
                 k.key = xk.keycode - XK_F1 + CK_F1;
+            else
+                k.key = x11_key_to_coffee(xk.keycode);
 
             if(xk.type == KeyPress)
                 k.mod |= CIKeyEvent::PressedModifier;

@@ -527,6 +527,7 @@ public:
                     cDebug("Unhandled key event: {0}:{1}", kev->key, (uint32)kev->mod);
             }
         }
+        EventHandlers::ExitOnQuitSignal(this, e, data);
     }
 };
 
