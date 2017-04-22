@@ -4,8 +4,10 @@
 #include "gleam_shader_rhi.h"
 
 #include <coffee/core/base/types/cdisplay.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee{
+
 namespace RHI{
 namespace GLEAM{
 
@@ -94,6 +96,10 @@ struct GLEAM_API : GraphicsAPI
 
     /* "Loose" functions */
 public:
+    /* Dump the framebuffer pixels to a buffer, might be asynchronous */
+    static void DumpFramebuffer(FB_T& fb, PixelComponents c, TypeEnum dt,
+                                Vector<byte_t>& storage);
+
     static void GetDefaultVersion(int32& major, int32& minor);
 
     static void GetDefaultProperties(Display::CDProperties& properties);

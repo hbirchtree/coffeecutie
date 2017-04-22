@@ -23,16 +23,78 @@ static int x11_handler(Display*, XErrorEvent* ev)
 namespace Coffee{
 namespace Display{
 
+#define MAP_DIRECT(name) case XK_ ## name: return CK_ ## name;
+#define MAP_INDIRECT(name1, name2) case XK_ ## name1: return CK_ ## name2;
+
 STATICINLINE u32 x11_key_to_coffee(u32 xkey)
 {
     switch(xkey)
     {
-    case XK_Escape:
-        return CK_Escape;
+    MAP_DIRECT(Escape);
+
+    MAP_INDIRECT(Control_L, LCtrl);
+    MAP_INDIRECT(Control_R, RCtrl);
+
+    MAP_INDIRECT(Shift_L, LShift);
+    MAP_INDIRECT(Shift_R, RShift);
+
+    MAP_INDIRECT(Alt_L, LAlt);
+    MAP_INDIRECT(Alt_R, AltGr);
+    MAP_INDIRECT(ISO_Level3_Shift, AltGr);
+
+    MAP_INDIRECT(Super_L, LSuper);
+    MAP_INDIRECT(Super_R, RSuper);
+
+    MAP_INDIRECT(Caps_Lock, CapsLock);
+    MAP_INDIRECT(Num_Lock, NumLock);
+
+    MAP_INDIRECT(Return, EnterNL);
+
+    MAP_DIRECT(BackSpace);
+    MAP_DIRECT(Delete);
+    MAP_DIRECT(Home);
+    MAP_DIRECT(Insert);
+    MAP_DIRECT(Pause);
+    MAP_INDIRECT(Page_Up, PgUp);
+    MAP_INDIRECT(Page_Down, PgDn);
+    MAP_INDIRECT(Tab, HTab);
+    MAP_INDIRECT(Print, PrntScrn);
+
+    MAP_DIRECT(Left);
+    MAP_DIRECT(Right);
+    MAP_DIRECT(Up);
+    MAP_DIRECT(Down);
+
+    MAP_DIRECT(KP_Enter);
+    MAP_DIRECT(KP_Add);
+    MAP_INDIRECT(KP_Subtract, KP_Sub);
+    MAP_INDIRECT(KP_Multiply, KP_Mul);
+    MAP_INDIRECT(KP_Divide, KP_Div);
+
+    MAP_DIRECT(KP_Home);
+    MAP_DIRECT(KP_End);
+    MAP_DIRECT(KP_Insert);
+    MAP_DIRECT(KP_Delete);
+    MAP_DIRECT(KP_Left);
+    MAP_DIRECT(KP_Right);
+    MAP_DIRECT(KP_Up);
+    MAP_DIRECT(KP_Down);
+    MAP_DIRECT(KP_Begin);
+    MAP_INDIRECT(KP_Page_Up, KP_PgUp);
+    MAP_INDIRECT(KP_Page_Down, KP_PgDn);
+
+    case XK_KP_Decimal:
+    MAP_INDIRECT(KP_Separator, KP_Comma);
+
+    MAP_DIRECT(Menu);
+
     default:
         return CK_Null;
     }
 }
+
+#undef MAP_DIRECT
+#undef MAP_INDIRECT
 
 struct X11_Data
 {
@@ -89,8 +151,7 @@ bool X11Window::closeWindow()
     if(m_xData)
     {
         bool stat = XUnmapWindow(m_xData->display, m_xData->window) == 0;
-        EventApplication* eventapp = C_DCAST<EventApplication>(this);
-        if(eventapp) eventapp->applyCloseFlag();
+        m_closeFlag = true;
     }
     return false;
 }
@@ -157,7 +218,8 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
 #if defined(COFFEE_X11_HILDON)
     int one = 1;
     XChangeProperty(m_xData->display, m_xData->window,
-                    XInternAtom(m_xData->display, "_HILDON_NON_COMPOSITED_WINDOW", True),
+                    XInternAtom(m_xData->display, "_HILDON_NON_COMPOSITED_WINDOW",
+                                True),
                     XA_INTEGER, 32, PropModeReplace,
                     (u8*)&one, 1);
 #endif
@@ -413,21 +475,24 @@ void X11Window::processX11Events(InputApplication *eh)
             base_i.type = CIEvent::Keyboard;
             CIKeyEvent k;
             XKeyEvent& xk = xev.xkey;
+            auto keycode = XKeycodeToKeysym(m_xData->display, xk.keycode, 0);
             if(xk.keycode == XK_VoidSymbol)
-                continue;
-            if((xk.keycode > XK_space && xk.keycode < XK_asciitilde)
-                    || (xk.keycode > XK_nobreakspace && xk.keycode < XK_ydiaeresis))
+                goto out_of_switch;
+            if((keycode >= XK_space && keycode <= XK_asciitilde)
+                    || (keycode >= XK_nobreakspace && keycode <= XK_ydiaeresis))
                 /* ASCII letters */
-                k.key = xk.keycode;
-            else if(xk.keycode > XK_F1 && xk.keycode < XK_F12)
-                k.key = xk.keycode - XK_F1 + CK_F1;
+                k.key = keycode;
+            else if(keycode >= XK_F1 && keycode <= XK_F12)
+                k.key = keycode - XK_F1 + CK_F1;
+            else if(keycode >= XK_KP_0 && keycode <= XK_KP_9)
+                k.key = keycode - XK_KP_0 + CK_KP_0;
             else
-                k.key = x11_key_to_coffee(xk.keycode);
+                k.key = x11_key_to_coffee(keycode);
 
             if(xk.type == KeyPress)
                 k.mod |= CIKeyEvent::PressedModifier;
             eh->eventHandle(base_i, &k);
-            continue;
+            goto out_of_switch;
         }
 //        case EnterNotify:
 //        case LeaveNotify:
@@ -440,7 +505,7 @@ void X11Window::processX11Events(InputApplication *eh)
             f.mod = (xev.type == FocusIn || xev.type == EnterNotify)
                     ? CDFocusEvent::Enter : CDFocusEvent::Leave;
             eh->eventHandle(base_d, &f);
-            break;
+            goto out_of_switch;
         }
         case ButtonRelease:
         case ButtonPress:
@@ -459,7 +524,7 @@ void X11Window::processX11Events(InputApplication *eh)
                     ? CIMouseButtonEvent::Pressed
                     : CIMouseButtonEvent::NoneModifier;
             eh->eventHandle(base_i, &b);
-            break;
+            goto out_of_switch;
         }
         case MotionNotify:
         {
@@ -469,7 +534,7 @@ void X11Window::processX11Events(InputApplication *eh)
             m.btn = CIMouseButtonEvent::NoneBtn;
             m.origin = CPoint(xm.x, xm.y).convert<scalar>();
             eh->eventHandle(base_i, &m);
-            break;
+            goto out_of_switch;
         }
         case ResizeRequest:
         {
@@ -480,19 +545,23 @@ void X11Window::processX11Events(InputApplication *eh)
             r.w = xr.width;
             r.h = xr.height;
             eh->eventHandle(base_d, &r);
-            break;
+            goto out_of_switch;
         }
         case ClientMessage:
         {
             XClientMessageEvent& xcm = xev.xclient;
             base_i.type = CIEvent::QuitSign;
             eh->eventHandle(base_i, nullptr);
-            break;
+            goto out_of_switch;
         }
         default:
             cVerbose(5, "X11:Unhandled event: {0}", xev.type);
-            continue;
+            goto out_of_switch;
         }
+
+        /* while() and switch() don't cooperate well, so we'll jump */
+out_of_switch:
+        (void)0;
     }
 }
 

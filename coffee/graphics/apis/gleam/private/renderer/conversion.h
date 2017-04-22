@@ -1,7 +1,7 @@
 #pragma once
 
 #include <coffee/core/types/edef/dbgenum.h>
-#if defined(COFFEE_ONLY_GLES20)
+#if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_LINKED_GLES)
 //#include <GLES/gl.h>
 #include <GLES2/gl2.h>
 #else

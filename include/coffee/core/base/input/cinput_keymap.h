@@ -83,6 +83,18 @@ enum CISpecialKeyMapping : uint16
     CK_KP_Div           = 0x11E,
     CK_KP_Comma         = 0x11F,
 
+    CK_KP_End           = 0x1201,
+    CK_KP_Down          = 0x1202,
+    CK_KP_PgDn          = 0x1203,
+    CK_KP_Left          = 0x1204,
+    CK_KP_Begin         = 0x1205,
+    CK_KP_Right         = 0x1206,
+    CK_KP_Home          = 0x1207,
+    CK_KP_Up            = 0x1208,
+    CK_KP_PgUp          = 0x1209,
+    CK_KP_Insert        = 0x120A,
+    CK_KP_Delete        = 0x120B,
+
     CK_Insert           = 0x120,
     CK_Home             = 0x121,
     CK_End              = 0x122,
@@ -107,6 +119,8 @@ enum CISpecialKeyMapping : uint16
     CK_Down             = 0x133, /*!< Arrow key down*/
 
     CK_AltGr            = 0x134,
+
+    CK_Menu             = 0x135,
 
     CK_Android_Back     = CK_Escape,
     CK_Android_Menu     = CK_Home,

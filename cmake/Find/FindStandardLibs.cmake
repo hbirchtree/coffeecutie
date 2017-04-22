@@ -31,7 +31,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
             )
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
-    list ( APPEND CORE_EXTRA_LIBRARIES X11 )
+    list ( APPEND CORE_EXTRA_LIBRARIES X11 EGL )
 endif()
 
 if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
@@ -77,7 +77,7 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
-        GLESv1_CM GLESv2
+        GLESv2
 
         ${SDL2_LIBRARY}
         )
@@ -134,7 +134,7 @@ endif()
 
 if(MAEMO)
     list ( APPEND CORE_EXTRA_LIBRARIES
-        GLESv2 EGL IMGegl
+        GLESv2 IMGegl
         )
 endif()
 

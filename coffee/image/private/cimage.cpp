@@ -144,8 +144,7 @@ void CImage::SaveTGA(const CSize& resolution,
                       const CByteData& imgData,
                       CByteData& outdata)
 {
-    tga_header head;
-    MemClear(&head,sizeof(tga_header));
+    tga_header head = {};
 
     head.width = resolution.w;
     head.height = resolution.h;
@@ -158,6 +157,24 @@ void CImage::SaveTGA(const CSize& resolution,
 
     MemCpy(&outdata.data[0],&head,sizeof(head));
     MemCpy(&outdata.data[sizeof(tga_header)],imgData.data,imgData.size);
+}
+
+void PNG::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
+{
+    CResources::Resource rsc(dest, ResourceAccess::None);
+
+    CStbImageLib::CStbImageConst img;
+    img.bpp = 4;
+    img.data = data.data();
+    img.size = res;
+
+    CStbImageLib::SavePNG(&rsc, &img);
+    CResources::FileCommit(rsc);
+}
+
+void TGA::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
+{
+
 }
 
 }

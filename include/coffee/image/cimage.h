@@ -126,6 +126,16 @@ extern void SaveTGA(const CSize &resolution,
 
 }
 
+namespace PNG
+{
+extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);
+}
+
+namespace TGA
+{
+extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);
+}
+
 } //Coffee
 
 #endif

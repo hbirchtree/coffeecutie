@@ -13,6 +13,10 @@
 #include "../shared/draw/basic.h"
 #include "../shared/shaders/arb_es2_compatibility.h"
 
+#if defined(COFFEE_LINKED_GLES)
+using GLADloadproc = void(*)();
+#endif
+
 namespace Coffee{
 namespace CGL{
 /*!
@@ -25,9 +29,6 @@ namespace CGL{
  *  - Framebuffer layers are present, but not supported
  */
 
-#if defined(COFFEE_LINKED_GLES)
-using GLADloadproc = void(*)();
-#endif
 
 struct CGLES20 :
         CGL_Implementation,

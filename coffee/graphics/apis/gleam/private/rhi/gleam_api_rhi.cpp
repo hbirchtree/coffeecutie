@@ -7,6 +7,9 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 
 #include <coffee/core/platform_data.h>
+#include <coffee/core/types/cdef/geometry.h>
+#include <coffee/interfaces/cgraphics_pixops.h>
+
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -14,6 +17,18 @@ namespace RHI{
 namespace GLEAM{
 
 using GLC = CGL_Implementation;
+
+void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, TypeEnum dt, Vector<byte_t> &storage)
+{
+    auto size = fb.size();
+    if(size.area() <= 0)
+        return;
+
+    storage.resize(GetPixSize(BitFormat::UByte, c, size.area()));
+
+    fb.use(FramebufferT::Read);
+    CGL33::FBReadPixels(0, 0, size.w, size.h, c, dt, &storage[0]);
+}
 
 void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
@@ -282,10 +297,12 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
 
 void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
 {
-    if(GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GLES_3_0 || GL_CURR_API == GLES_2_0)
     {
         if(bstate.blend())
+        {
             GLC::Enable(Feature::Blend);
+        }
         else
             GLC::Disable(Feature::Blend);
     }else if(GL_CURR_API==GL_3_3
@@ -298,25 +315,26 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
             GLC::Disable(Feature::Blend,i);
     }
 
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0)
-    {
-        if(bstate.additive())
+    if(bstate.blend())
+        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
         {
-            GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE);
-            /*TODO: Add indexed alternative, BlendFunci */
-        }else
-            GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    }
+            if(bstate.additive())
+            {
+                GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE);
+                /*TODO: Add indexed alternative, BlendFunci */
+            }else
+                GLC::BlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        }
 #if !defined(COFFEE_ONLY_GLES20)
-    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
-    {
-        if(bstate.additive())
+        else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
         {
-            CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE);
-            /*TODO: Add indexed alternative, BlendFunci */
-        }else
-            CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    }
+            if(bstate.additive())
+            {
+                CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE);
+                /*TODO: Add indexed alternative, BlendFunci */
+            }else
+                CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        }
 #endif
 
     /*TODO: Add more advanced blending options*/
@@ -347,24 +365,27 @@ void GLEAM_API::SetDepthState(const DepthState& dstate, uint32 i)
         }
     }
 
-    GLC::DepthMask(dstate.mask());
-
-    GLC::DepthFunc((ValueComparison)dstate.fun());
-
-    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
+    if(dstate.testDepth())
     {
-        if(dstate.clampDepth())
-            GLC::Enable(Feature::DepthClamp,i);
-        else
-            GLC::Disable(Feature::DepthClamp,i);
+        GLC::DepthMask(dstate.mask());
+
+        GLC::DepthFunc((ValueComparison)dstate.fun());
+
+        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
+        {
+            if(dstate.clampDepth())
+                GLC::Enable(Feature::DepthClamp,i);
+            else
+                GLC::Disable(Feature::DepthClamp,i);
+        }
+        /*TODO: Implement clamping*/
     }
 
-    /*TODO: Implement clamping*/
 }
 
 void GLEAM_API::SetStencilState(const StencilState& sstate, uint32 i)
 {
-    if(GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
     {
         if(sstate.testStencil())
             GLC::Enable(Feature::StencilTest);

@@ -117,7 +117,13 @@
 #define COFFEE_USE_IMMERSIVE_VIEW
 #endif
 
-#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || 0
+
+#if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
+#define COFFEE_ONLY_GLES20
+#endif
+
+#if defined(COFFEE_ANDROID)
+#define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
 #endif
 
@@ -131,7 +137,9 @@
 #define COFFEE_X11_HILDON
 #endif
 
-#define COFFEE_LINUX_LIGHTWEIGHT_WM
+//#define COFFEE_LINKED_GLES
+//#define COFFEE_ONLY_GLES20
+//#define COFFEE_LINUX_LIGHTWEIGHT_WM
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
 #define COFFEE_USE_MAEMO_EGL
@@ -173,3 +181,8 @@
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 
+/* And here comes some simplification for configuration issues */
+
+#if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_GLEAM_DESKTOP)
+#error Invalid configuration detected, cannot use GLES2.0 mode with desktop GL!
+#endif

@@ -42,6 +42,7 @@ struct EventLoopData
 
 class EventApplication : public InputApplication
 {
+protected:
     bool m_closeFlag = false;
 public:
 

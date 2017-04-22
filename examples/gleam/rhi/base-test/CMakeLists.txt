@@ -9,4 +9,4 @@ list (APPEND USERDATA
 
 list (APPEND LIBS CoffeeGLeam )
 
-coffee_add_application_long ( GLeamBaseTest_RHI "GLeam Basic RHI" main.cpp "${LIBS}" "" "${USERDATA}" )
+coffee_add_application_long ( GLeamBaseTest_RHI "GLeam Basic RHI" "main.cpp;renderer.h" "${LIBS}" "" "${USERDATA}" )

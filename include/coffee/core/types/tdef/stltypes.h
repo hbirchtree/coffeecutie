@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stldef.h"
+
 /*Container types*/
 #include <string>
 #include <queue>
@@ -71,5 +73,7 @@ using Set = std::set<T>;
 
 template<typename T1, typename T2>
 using Pair = std::pair<T1,T2>;
+
+using ByteVector = Vector<uint8_t>;
 
 }

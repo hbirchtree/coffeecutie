@@ -1,10 +1,10 @@
 #pragma once
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_LINKED_GLES)
+#include <GLES2/gl2.h>
+#else
 #include <glad/glad.h>
 #include <glad_es/glad.h>
-#else
-#include <GLES2/gl2.h>
 #endif
 
 #include "shared/gl_shared_types.h"
@@ -1041,18 +1041,14 @@ inline CGpixfmt get_fmt(PixelFormat e, bool rev)
             break;
 #endif
 
-#if !defined(COFFEE_ONLY_GLES20)
-    case PixelFormat::RGB10A2UI:
-#ifdef COFFEE_GLEAM_DESKTOP
-        if(rev)
-#endif
-            return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
-#endif
+//#if !defined(COFFEE_ONLY_GLES20)
+//    case PixelFormat::RGB10A2UI:
+//        if(rev)
+//            return {GL_UNSIGNED_INT_2_10_10_10_REV,GL_RGBA};
+//        else
+//            return {GL_UNSIGNED_INT_10_10_10_2,GL_RGBA};
+//#endif
 
-#ifdef COFFEE_GLEAM_DESKTOP
-        else
-            return {GL_UNSIGNED_INT_10_10_10_2,GL_RGBA};
-#endif
 #if !defined(COFFEE_ONLY_GLES20)
     case PixelFormat::R11G11B10F:
         return {GL_UNSIGNED_INT_10F_11F_11F_REV,GL_RGB};

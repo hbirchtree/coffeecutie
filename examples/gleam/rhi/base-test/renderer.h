@@ -290,7 +290,7 @@ public:
 
         CSize win_size = windowSize();
 
-        blendstate.m_doBlend = true;
+//        blendstate.m_doBlend = true;
         viewportstate.m_view.clear();
         viewportstate.m_view.push_back({0, 0, win_size.w, win_size.h});
         viewportstate.m_scissor.clear();
@@ -362,6 +362,7 @@ public:
         vertdesc.bindBuffer(0, vertbuf);
 
         bigscalar tprevious = save_state.time_base;
+        bigscalar tbase = save_state.time_base;
         bigscalar tdelta = 0.1;
 
         GLM::PreDrawCleanup();
@@ -484,12 +485,18 @@ public:
 
             this->swapBuffers();
 
-            tdelta = this->contextTime() - tprevious;
-            tprevious = this->contextTime();
+            tdelta = tbase + this->contextTime() - tprevious;
+            tprevious = tbase + this->contextTime();
 
             save_state.time_base = tprevious;
             save_state.debug_enabled = do_debugging;
         }
+
+        Vector<byte_t> m_framebuffer;
+        GLM::DumpFramebuffer(GLM::DefaultFramebuffer(), PixelComponents::RGBA, TypeEnum::UByte,
+                             m_framebuffer);
+
+        PNG::Save(m_framebuffer, GLM::DefaultFramebuffer().size(), "test.png");
 
         cDebug("Saving time: {0}", save_state.time_base);
         Store::SaveMemory(&save_state, sizeof(save_state), 0);
@@ -519,6 +526,8 @@ public:
             if(kev->mod & CIKeyEvent::PressedModifier
                     && !(kev->mod&CIKeyEvent::RepeatedModifier))
             {
+                if(kev->key == CK_Escape)
+                    closeWindow();
                 if(kev->key == CK_F10)
                     m_debugging = !m_debugging;
                 else if(kev->key == CK_F9)

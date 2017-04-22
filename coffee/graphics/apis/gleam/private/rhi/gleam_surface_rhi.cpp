@@ -130,6 +130,8 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         }
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL33::BufBind(BufType::PixelUData,0);
+
+        CGL33::TexGenMipmap(m_type);
     }
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)
@@ -248,6 +250,8 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
         CGL33::TexBind(m_type, m_handles[offset.z + i]);
         CGL33::TexSubImage2D(m_type, mip, offset.x, offset.y,
                              size.width, size.height, comp, fmt, data);
+
+        CGL33::TexGenMipmap(m_type);
     }
 #endif
 }
@@ -260,10 +264,10 @@ void GLEAM_Sampler::alloc()
     {
         CGL33::SamplerAlloc(1,&m_handle);
     }
-#endif
 #ifdef COFFEE_GLEAM_DESKTOP
     else if(GL_CURR_API==GL_4_5)
         CGL45::SamplerAlloc(1,&m_handle);
+#endif
 #endif
 }
 

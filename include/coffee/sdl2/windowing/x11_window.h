@@ -11,7 +11,8 @@ namespace Display{
 struct X11_Data;
 
 class X11Window :
-        public WindowManagerClient
+        public WindowManagerClient,
+        private virtual EventApplication
 {
     UqPtr<X11_Data> m_xData;
     // WindowApplication interface
