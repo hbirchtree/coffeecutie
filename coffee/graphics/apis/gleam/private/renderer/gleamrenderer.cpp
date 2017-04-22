@@ -79,10 +79,12 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
 #if !defined(COFFEE_GLEAM_DESKTOP)
 
+#if !defined(COFFEE_LINKED_GLES)
 #if !defined(COFFEE_USE_MAEMO_EGL)
     GLADloadproc procload = SDL_GL_GetProcAddress;
 #else
     GLADloadproc procload = (GLADloadproc)eglGetProcAddress;
+#endif
 #endif
 
 #endif
