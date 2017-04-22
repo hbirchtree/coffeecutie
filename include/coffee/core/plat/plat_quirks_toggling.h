@@ -151,7 +151,7 @@
 #define COFFEE_NO_EXECVPE
 #endif
 
-#if defined(COFFEE_UNIXPLAT)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_ANDROID)
 #define COFFEE_USE_EXECVPE
 #endif
 
