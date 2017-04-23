@@ -251,6 +251,7 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
         CGL33::TexSubImage2D(m_type, mip, offset.x, offset.y,
                              size.width, size.height, comp, fmt, data);
 
+        cWarning("Generating mipmaps");
         CGL33::TexGenMipmap(m_type);
     }
 #endif

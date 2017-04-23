@@ -91,14 +91,14 @@ bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
 
 void SDL2GLRenderer::contextTerminate()
 {
-    cDebug("Context pointer: {0}", C_CAST<void*>(glContext()));
-    if(!glContext())
-        return;
-    /* Acquire GL context first, ensures that destructor won't fail on different thread */
-    glContext()->acquireContext();
+//    cDebug("Context pointer: {0}", C_CAST<void*>(glContext()));
+//    if(!glContext())
+//        return;
+//    /* Acquire GL context first, ensures that destructor won't fail on different thread */
+//    glContext()->acquireContext();
 
-    /* Delete GL context object */
-    delete glContext();
+//    /* Delete GL context object */
+//    delete glContext();
 }
 #endif
 

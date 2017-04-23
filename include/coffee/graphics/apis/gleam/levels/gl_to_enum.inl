@@ -405,6 +405,9 @@ inline CGenum to_enum(
             return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 #endif
 
+//    case PixelFormat::ETC1:
+//        return GL_ETC1_RGB8_OES;
+
     /* Depth/stencil buffers */
     case PixelFormat::Depth16:
         return GL_DEPTH_COMPONENT16;
@@ -489,6 +492,10 @@ inline CGenum to_enum(
 
     case PixelFormat::R11G11B10F:
         return GL_R11F_G11F_B10F;
+#else
+    case PixelFormat::RGBA8:
+        return GL_RGBA;
+
 #endif
 
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -1064,6 +1071,10 @@ inline CGpixfmt get_fmt(PixelFormat e, bool rev)
         return {GL_FLOAT,GL_RGB};
     case PixelFormat::RGBA32F:
         return {GL_FLOAT,GL_RGBA};
+
+    case PixelFormat::RGBA8:
+        return {GL_UNSIGNED_BYTE, GL_RGBA};
+
 
     default:
         break;

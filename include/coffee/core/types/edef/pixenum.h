@@ -138,6 +138,8 @@ enum class PixelFormat
     RGTC,
     S3TC,
 
+    ETC1,
+
     /* Special data */
 //    Stencil,         /*  8-bit integer, not a real format */
     Depth16,         /* 16-bit unsigned short */

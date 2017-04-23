@@ -77,7 +77,7 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
-        GLESv2
+        GLESv1_CM GLESv2
 
         ${SDL2_LIBRARY}
         )
@@ -99,6 +99,11 @@ if(RASPBERRY)
     list ( APPEND CORE_EXTRA_LIBRARIES
         EGL GLESv2
         bcm_host
+
+#        asound
+#        pulse-simple pulse
+#        X11 Xext Xcursor Xinerama Xi Xrandr Xss Xxf86vm xkbcommon
+#        wayland-egl wayland-client wayland-cursor
         )
 endif()
 

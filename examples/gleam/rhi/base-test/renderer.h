@@ -224,7 +224,7 @@ public:
         cVerbose("Pipeline bind");
 
         /* Uploading textures */
-        GLM::S_2DA eyetex(PixelFormat::RGB5A1UI, 1, GLM::TextureDMABuffered);
+        GLM::S_2DA eyetex(PixelFormat::RGBA8, 1, GLM::TextureDMABuffered);
 
         eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
         cVerbose("Texture allocation");
