@@ -141,11 +141,17 @@
 //#define COFFEE_LINKED_GLES
 //#define COFFEE_ONLY_GLES20
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
+#define COFFEE_LINUX_DESKTOP_LIGHT_WM
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
 // This is the super-fast X11 combination, SDL2 can't even be compared to this
 // The window is guaranteed to show within 500ms
 #define COFFEE_USE_MAEMO_EGL
+#define COFFEE_USE_MAEMO_X11
+#endif
+
+#if defined(COFFEE_LINUX_DESKTOP_LIGHT_WM)
+#define COFFEE_USE_LINUX_GLX
 #define COFFEE_USE_MAEMO_X11
 #endif
 

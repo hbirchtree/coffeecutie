@@ -44,6 +44,35 @@ public:
     bool screensaverMode();
     void setScreensaverMode(bool m);
     CString windowLibrary() const;
+
+    // InputApplication interface
+public:
+    bool inputPreInit(CString *) {return true;}
+    bool inputInit(CString *) {return true;}
+    bool inputPostInit(CString *) {return true;}
+    void inputTerminate() {}
+    void eventHandleD(const CDEvent &e, c_cptr) {}
+    void eventHandleI(const CIEvent &e, c_cptr) {}
+    void eventHandle(const CIHapticEvent &, c_cptr) {}
+    void eventHandle(const CIEvent &, c_cptr) {}
+    void eventHandle(const CDEvent &, c_cptr) {}
+    CIControllerState getControllerState(uint16) { return {};}
+    bool isMouseGrabbed() const { return false; }
+    void setMouseGrabbing(bool) {}
+    bool relativeMouse() const { return false; }
+    void setRelativeMouse(bool) {}
+    CPoint mousePosition() const {return {};}
+    void setMousePosition(const CPoint &) {}
+    void setKeyboardRepeat(bool) {}
+    bool textInputMode() const { return false;}
+    void setTextInputMode(bool) {}
+
+    // EventApplication interface
+public:
+    void run() {}
+    void injectEvent(const CIEvent &, c_cptr) {}
+    void injectEvent(const CDEvent &, c_cptr) {}
+    bigscalar contextTime() const { return 0.0; }
 };
 
 }

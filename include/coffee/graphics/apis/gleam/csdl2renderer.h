@@ -5,6 +5,7 @@
 
 #include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
 #include <coffee/sdl2/graphics/egl_renderer.h>
+#include <coffee/sdl2/graphics/glx_renderer.h>
 
 #include <coffee/sdl2/windowing/csdl2_window.h>
 #include <coffee/sdl2/windowing/x11_window.h>
@@ -24,6 +25,9 @@ class CSDL2Renderer :
         #if defined(COFFEE_RASPBERRY_DMX)
         public DispmanXWindow,
         public EGLRenderer,
+        #elif defined(COFFEE_USE_LINUX_GLX)
+        public X11Window,
+        public GLXRenderer,
         #elif defined(COFFEE_USE_MAEMO_EGL)
         public X11Window,
         public EGLRenderer,
@@ -31,7 +35,9 @@ class CSDL2Renderer :
         public SDL2Window,
         public SDL2GLRenderer,
         #endif
+        #if !defined(COFFEE_RASPBERRY_DMX)
         public SDL2EventHandler,
+        #endif
         public GLeamRenderer
 {
 public:

@@ -21,27 +21,29 @@ CSDL2Renderer::~CSDL2Renderer()
 
 bool CSDL2Renderer::init(const CDProperties &props,CString* err)
 {
+#if !defined(COFFEE_RASPBERRY_DMX)
     m_properties = props;
+#endif
 
     do{
-        if(!(windowPreInit(initialProperties(),err)
-             && contextPreInit(initialProperties().gl,err)
-             && bindingPreInit(initialProperties().gl,err)
+        if(!(windowPreInit(props,err)
+             && contextPreInit(props.gl,err)
+             && bindingPreInit(props.gl,err)
              && inputPreInit(err)
              ))
             break;
 
-        if(!(windowInit(initialProperties(),err)
-             && contextInit(initialProperties().gl,err)
-             && bindingInit(initialProperties().gl,err)
+        if(!(windowInit(props,err)
+             && contextInit(props.gl,err)
+             && bindingInit(props.gl,err)
              && inputInit(err)
              ))
             break;
 
         /* Run binding post-init, fetches GL extensions and etc. */
-        if(!(windowPostInit(initialProperties(),err)
-             && contextPostInit(initialProperties().gl,err)
-             && bindingPostInit(initialProperties().gl,err)
+        if(!(windowPostInit(props,err)
+             && contextPostInit(props.gl,err)
+             && bindingPostInit(props.gl,err)
              && inputPostInit(err)
              ))
             break;
@@ -54,27 +56,49 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
     return false;
 }
 
+#if defined(COFFEE_RASPBERRY_DMX)
+#define DISABLE_SDL2
+#endif
+
+#if defined(COFFEE_USE_MAEMO_EGL) || defined(DISABLE_SDL2)
+#define USE_SEPARATE_CONTEXT_MGR
+#endif
+
+#if defined(COFFEE_USE_MAEMO_X11) || defined(DISABLE_SDL2)
+#define USE_SEPARATE_WINDOW_MGR
+#endif
+
+#if defined(DISABLE_SDL2)
+#define USE_SEPARATE_EVENT_MGR
+#endif
+
 void CSDL2Renderer::cleanup()
 {
-#if defined(COFFEE_USE_MAEMO_EGL)
+    bindingTerminate();
+#if defined(USE_SEPARATE_CONTEXT_MGR)
     contextTerminate();
 #endif
-#if defined(COFFEE_RASPBERRY_DMX)
+#if defined(USE_SEPARATE_EVENT_MGR)
+    inputTerminate();
+#endif
+#if defined(USE_SEPARATE_WINDOW_MGR)
     windowTerminate();
 #endif
-    bindingTerminate();
+
+#if !defined(DISABLE_SDL2)
     if(getSDL2Context()){
-        inputTerminate();
-#if !defined(COFFEE_USE_MAEMO_EGL)
+#if !defined(USE_SEPARATE_CONTEXT_MGR)
         contextTerminate();
 #endif
-#if !defined(COFFEE_RASPBERRY_DMX)
+        inputTerminate();
+#if !defined(USE_SEPARATE_WINDOW_MGR)
         windowTerminate();
 #endif
     }else{
         /* This happens if cleanup has happened before destruction, or if cleanup is called multiple times. Either way is fine. */
         cMsg("SDL2","Already cleaned up");
     }
+#endif
 }
 
 void CSDL2Renderer::run()

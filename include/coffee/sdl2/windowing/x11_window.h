@@ -3,6 +3,8 @@
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
+#include "../graphics/glx_renderer.h"
+
 #if defined(COFFEE_USE_MAEMO_X11)
 
 namespace Coffee{
@@ -14,6 +16,8 @@ class X11Window :
         public WindowManagerClient,
         private virtual EventApplication
 {
+    friend class GLXRenderer;
+
     UqPtr<X11_Data> m_xData;
     // WindowApplication interface
 public:

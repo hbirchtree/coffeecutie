@@ -5,10 +5,13 @@
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/core/CProfiling>
 
-#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_USE_MAEMO_EGL)
-#include <SDL_video.h>
-#else
+#if defined(COFFEE_USE_MAEMO_EGL)
 #include <EGL/egl.h>
+#elif defined(COFFEE_USE_LINUX_GLX)
+#define __gl_h_
+#include <GL/glx.h>
+#else
+#include <SDL_video.h>
 #endif
 
 #include "conversion.h"
@@ -78,12 +81,13 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     cDebug("Attempting to load version: {0}",p.version);
 
 #if !defined(COFFEE_GLEAM_DESKTOP)
-
 #if !defined(COFFEE_LINKED_GLES)
-#if !defined(COFFEE_USE_MAEMO_EGL)
-    GLADloadproc procload = SDL_GL_GetProcAddress;
-#else
+#if defined(COFFEE_USE_LINUX_GLX)
+    GLADloadproc procload = (GLADloadproc)glXGetProcAddress;
+#elif defined(COFFEE_USE_MAEMO_EGL)
     GLADloadproc procload = (GLADloadproc)eglGetProcAddress;
+#else
+    GLADloadproc procload = SDL_GL_GetProcAddress;
 #endif
 #endif
 

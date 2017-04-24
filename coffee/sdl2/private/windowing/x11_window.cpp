@@ -2,13 +2,14 @@
 
 #if defined(COFFEE_USE_MAEMO_X11)
 
+#include "x11_window_data.h"
+
 #include <coffee/core/plat/windowmanager/plat_windowtype.h>
 
 #include <coffee/core/CDebug>
 
 #include <iostream>
 
-#include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
@@ -96,12 +97,6 @@ STATICINLINE u32 x11_key_to_coffee(u32 xkey)
 #undef MAP_DIRECT
 #undef MAP_INDIRECT
 
-struct X11_Data
-{
-    ::Display* display;
-    ::Window window;
-};
-
 X11Window::X11Window()
 {
 }
@@ -163,11 +158,6 @@ void X11Window::popErrorMessage(Severity s, cstring title, cstring msg)
 
 bool X11Window::windowPreInit(const CDProperties &, CString *)
 {
-    return true;
-}
-
-bool X11Window::windowInit(const CDProperties &props, CString *err)
-{
     XSetErrorHandler(x11_handler);
 
     /* Reference: https://wiki.maemo.org/SimpleGL_example */
@@ -175,6 +165,12 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     m_xData = UqPtr<X11_Data>(new X11_Data());
 
     m_xData->display = XOpenDisplay(nullptr);
+
+    return m_xData->display;
+}
+
+bool X11Window::windowInit(const CDProperties &props, CString *err)
+{
 
     if(!m_xData->display)
     {
@@ -197,8 +193,9 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
 
     m_xData->window = XCreateWindow(m_xData->display, rootWindow,
                                     0, 0, props.size.w, props.size.h, 0,
-                                    CopyFromParent, InputOutput,
-                                    CopyFromParent, CWEventMask,
+                                    m_xData->visual->depth, InputOutput,
+                                    m_xData->visual->visual,
+                                    CWEventMask|CWBackPixmap,
                                     &swa);
 
     if(!m_xData->window)
@@ -250,6 +247,8 @@ void X11Window::windowTerminate()
     XUnmapWindow(m_xData->display, m_xData->window);
     XDestroyWindow(m_xData->display, m_xData->window);
     XCloseDisplay(m_xData->display);
+
+    m_xData.reset();
 }
 
 CDWindow *X11Window::window()

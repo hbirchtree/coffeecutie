@@ -47,16 +47,21 @@ bool DispmanXWindow::windowInit(const CDProperties &props, CString *err)
     src_rect.height = screen_size.h << 16;
 
     m_dmData->display = vc_dispmanx_display_open(display_num);
+
+    if(m_dmData->display == DISPMANX_NO_HANDLE)
+        return false;
+
     auto upd = vc_dispmanx_update_start(0);
+
     m_dmData->window.element = vc_dispmanx_element_add(upd, m_dmData->display,
                                                        0, &dst_rect, 0, &src_rect,
                                                        DISPMANX_PROTECTION_NONE, 0, 0,
                                                        DISPMANX_NO_ROTATE);
 
+    vc_dispmanx_update_submit_sync(upd);
+
     m_dmData->window.width = screen_size.w;
     m_dmData->window.height = screen_size.h;
-
-    vc_dispmanx_update_submit_sync(upd);
 
     C_UNUSED(props);
     C_UNUSED(err);
