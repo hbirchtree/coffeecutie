@@ -20,7 +20,7 @@ void GetWindowPtr(SDL_Window *window, CDWindow *win)
         return;
     }
     switch(info.subsystem){
-#if defined(SDL_VIDEO_DRIVER_X11)
+#if !defined(COFFEE_RASPBERRYPI) && (defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11))
     case SDL_SYSWM_X11:
         win->wininfo.x11.window = info.info.x11.window;
         win->wininfo.x11.display = info.info.x11.display;

@@ -13,6 +13,7 @@
 const constexpr static int EGL_MIN_VERB = 5;
 
 #include <EGL/egl.h>
+#include <GLES2/gl2.h>
 
 #define EGL_ERRORCHECK(result) \
     if(result != EGL_TRUE) \
@@ -133,7 +134,9 @@ static bool egl_create_context(EGLRenderer* renderer,
 {
     {
         Vector<EGLint> config_preferred = {
+    #if !defined(COFFEE_RASPBERRYPI)
             EGL_CONTEXT_CLIENT_VERSION, 2,
+    #endif
             EGL_NONE,
         };
 
@@ -143,30 +146,46 @@ static bool egl_create_context(EGLRenderer* renderer,
         EGL_NULLCHECK(m_eglData->context, "Failed to create EGL context");
     }
 
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     /* And now we perform voodoo-magic.
      * We need a valid X window manager handle for our window.
-     * Where do we get it? The moon.
+     * Where do we get it?
+     * We ask the other side of the class that we are part of. This requires traversing the class hierarchy up and down. It's really weird.
      */
     ::Display* x_disp = nullptr;
     ::Window x_win = 0;
+#elif defined(COFFEE_RASPBERRY_DMX)
+    ::EGL_DISPMANX_WINDOW_T dmx_win = {};
+#endif
 
     WindowManagerClient* wm_client = C_DCAST<WindowManagerClient>(renderer);
     CDWindow* win = wm_client->window();
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     x_disp = win->wininfo.x11.display;
     x_win = win->wininfo.x11.window;
+#elif defined(COFFEE_RASPBERRY_DMX)
+    dmx_win = win->wininfo.dmx.window;
+#endif
     delete win;
 
 #if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     cVerbose(8, "X11 display connection from SDL: {0}", EGL_PRINT(x_disp));
     cVerbose(8, "X11 display connection from EGL: {0}", EGL_PRINT(eglGetDisplay(x_disp)));
     cVerbose(8, "X11 window handle: {0}", EGL_PRINT(x_win));
+#elif defined(COFFEE_RASPBERRY_DMX)
+    cVerbose(8, "DISPMANX window handle: {0}", EGL_PRINT(dmx_win.element));
 #endif
     cVerbose(8, "Config for surface: {0}", EGL_PRINT(m_eglData->config));
 
     cVerbose(8, "Calling eglCreateWindowSurface...");
 
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
-                                                x_win, nullptr);
+                                                (EGLNativeWindowType)x_win, nullptr);
+#elif defined(COFFEE_RASPBERRY_DMX)
+    m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
+                                                &dmx_win, nullptr);
+#endif
 
     cVerbose(8, "eglCreateWindowSurface returned: {0}", eglGetError());
     EGL_NULLCHECK(m_eglData->surface, "Failed to create surface");
@@ -275,10 +294,16 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
     WindowManagerClient* wm_client = C_DCAST<WindowManagerClient>(this);
     CDWindow* win = wm_client->window();
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     ::Display* x_disp = win->wininfo.x11.display;
+#endif
     delete win;
 
+#if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
     m_eglData->display = eglGetDisplay((EGLNativeDisplayType)x_disp);
+#else
+    m_eglData->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
 
     EGL_NULLCHECK(m_eglData->display, "Failed to retrieve EGL display");
 
@@ -291,10 +316,14 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
         Vector<EGLint> config_preferred = {
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+    #if !defined(COFFEE_RASPBERRYPI)
             EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
+    #endif
 
+    #if !defined(COFFEE_RASPBERRYPI)
             EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
             EGL_CONFIG_CAVEAT, EGL_NONE,
+    #endif
 //            EGL_NATIVE_RENDERABLE, EGL_TRUE,
 
             EGL_RED_SIZE, props.bits.red,
@@ -350,6 +379,10 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
     if(!glContext()->acquireContext())
         return false;
+
+    glViewport(0,0,1920,1080);
+    glClearColor(1.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     if(props.flags & GLProperties::GLVSync)
         setSwapInterval(1);

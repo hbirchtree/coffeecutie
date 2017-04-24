@@ -16,6 +16,7 @@ set ( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 include_directories (
     ${RASPBERRY_SDK}/vc/include
     ${RASPBERRY_SDK}/vc/include/interface/vcos/pthreads
+    ${RASPBERRY_SDK}/vc/include/interface/vmcs_host/linux
     ${RASPBERRY_SDK}/usr/include
     )
 link_directories ( ${RASPBERRY_SDK}/vc/lib ${RASPBERRY_SDK}/usr/lib )

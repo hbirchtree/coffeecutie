@@ -30,6 +30,7 @@
  * COFFEE_ONLY_GLES20 - allow only GLES 2.0, for RPi, old Android and Maemo
  * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite fast, only ~100 EGL calls as opposed to SDL's thousands
  * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window with minimal functionality
+ * COFFEE_RASPBERRY_DMX - uses a tiny loader for DISPMANX, takes the entire screen on Raspberry Pi devices for application
  * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with resizes that may crash some devices (Maemo)
  * COFFEE_ALWAYS_VSYNC - for devices which force VSYNC
  * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support pthread thread names
@@ -117,10 +118,10 @@
 #define COFFEE_USE_IMMERSIVE_VIEW
 #endif
 
-
 #if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
 #define COFFEE_ONLY_GLES20
 #endif
+
 
 #if defined(COFFEE_ANDROID)
 #define COFFEE_LINKED_GLES
@@ -142,8 +143,15 @@
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
+// This is the super-fast X11 combination, SDL2 can't even be compared to this
+// The window is guaranteed to show within 500ms
 #define COFFEE_USE_MAEMO_EGL
 #define COFFEE_USE_MAEMO_X11
+#endif
+
+#if defined(COFFEE_RASPBERRYPI)
+#define COFFEE_RASPBERRY_DMX
+#define COFFEE_USE_MAEMO_EGL
 #endif
 
 #if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \

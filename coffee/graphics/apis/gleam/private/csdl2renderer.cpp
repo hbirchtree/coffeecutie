@@ -56,11 +56,21 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
 
 void CSDL2Renderer::cleanup()
 {
+#if defined(COFFEE_USE_MAEMO_EGL)
+    contextTerminate();
+#endif
+#if defined(COFFEE_RASPBERRY_DMX)
+    windowTerminate();
+#endif
+    bindingTerminate();
     if(getSDL2Context()){
         inputTerminate();
-        bindingTerminate();
+#if !defined(COFFEE_USE_MAEMO_EGL)
         contextTerminate();
+#endif
+#if !defined(COFFEE_RASPBERRY_DMX)
         windowTerminate();
+#endif
     }else{
         /* This happens if cleanup has happened before destruction, or if cleanup is called multiple times. Either way is fine. */
         cMsg("SDL2","Already cleaned up");

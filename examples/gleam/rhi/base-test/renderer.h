@@ -388,6 +388,9 @@ public:
 
         while (!closeFlag()) {
 
+            if(contextTime() >= 5.0)
+                break;
+
             //do_debugging = m_debugging && PlatformData::IsDebug();
 
             if(do_debugging)
@@ -492,11 +495,11 @@ public:
             save_state.debug_enabled = do_debugging;
         }
 
-        Vector<byte_t> m_framebuffer;
-        GLM::DumpFramebuffer(GLM::DefaultFramebuffer(), PixelComponents::RGBA, TypeEnum::UByte,
-                             m_framebuffer);
+//        Vector<byte_t> m_framebuffer;
+//        GLM::DumpFramebuffer(GLM::DefaultFramebuffer(), PixelComponents::RGBA, TypeEnum::UByte,
+//                             m_framebuffer);
 
-        PNG::Save(m_framebuffer, GLM::DefaultFramebuffer().size(), "test.png");
+//        PNG::Save(m_framebuffer, GLM::DefaultFramebuffer().size(), "test.png");
 
         cDebug("Saving time: {0}", save_state.time_base);
         Store::SaveMemory(&save_state, sizeof(save_state), 0);

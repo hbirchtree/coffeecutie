@@ -130,7 +130,9 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
 void GLEAM_RenderTarget::resize(uint32 i,CRect64 const& view)
 {
     fb_bind(m_type,m_handle);
-    cVerbose(5, "Resizing render target {0} to {1}x{2}", m_handle, view.w, view.h);
+    auto sz_arm_printable = view.convert<i32>();
+    cVerbose(5, "Resizing render target {0} to {1}x{2}", m_handle,
+             sz_arm_printable.w, sz_arm_printable.h);
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::ViewportArraySupported())
     {

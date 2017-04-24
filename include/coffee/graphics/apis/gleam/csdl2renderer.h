@@ -8,6 +8,7 @@
 
 #include <coffee/sdl2/windowing/csdl2_window.h>
 #include <coffee/sdl2/windowing/x11_window.h>
+#include <coffee/sdl2/windowing/dispmanx_window.h>
 
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 #include <coffee/graphics/apis/gleam/renderer/gleamrenderer.h>
@@ -20,7 +21,10 @@ namespace Display{
 
 class CSDL2Renderer :
         public CDRendererBase,
-        #if defined(COFFEE_USE_MAEMO_EGL)
+        #if defined(COFFEE_RASPBERRY_DMX)
+        public DispmanXWindow,
+        public EGLRenderer,
+        #elif defined(COFFEE_USE_MAEMO_EGL)
         public X11Window,
         public EGLRenderer,
         #else

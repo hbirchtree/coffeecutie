@@ -86,6 +86,9 @@ int32 coffee_main(int32, cstring_w*)
     };
     auto loop_fun = [](CDRenderer& renderer, SharedData* data)
     {
+        if(renderer.contextTime() > 5.0)
+            renderer.closeWindow();
+
         RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
 
         if(data->frame_ts <= Time::CurrentTimestamp())

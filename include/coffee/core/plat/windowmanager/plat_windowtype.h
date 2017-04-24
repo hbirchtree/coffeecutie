@@ -5,8 +5,11 @@
 #include "../../types/cdef/geometry.h"
 #include "../platform_detect.h"
 
-#if defined(COFFEE_X11)
+#if defined(COFFEE_X11) || defined(COFFEE_USE_MAEMO_X11)
 #include <X11/Xlib.h>
+#elif defined(COFFEE_RASPBERRY_DMX)
+#include <bcm_host.h>
+#include <EGL/egl.h>
 #endif
 
 namespace Coffee{
@@ -15,12 +18,17 @@ namespace Display{
 struct CDWindow{
 
     union {
-#if defined(COFFEE_X11)
+#if defined(COFFEE_X11) || defined(COFFEE_USE_MAEMO_X11)
         struct {
             ::Window window;
             ::Display* display;
         } x11;
+#elif defined(COFFEE_RASPBERRY_DMX)
+        struct {
+            ::EGL_DISPMANX_WINDOW_T window;
+        } dmx;
 #elif defined(COFFEE_WINDOWS)
+
         struct {
 
         } win32;
