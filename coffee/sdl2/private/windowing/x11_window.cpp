@@ -17,7 +17,7 @@
 
 static int x11_handler(Display*, XErrorEvent* ev)
 {
-    Coffee::cVerbose(8, "X11 error: {0}", ev->error_code);
+    Coffee::cVerbose(8, "X11 error major code {0}, minor code {1}", ev->error_code, ev->minor_code);
     return 0;
 }
 
@@ -156,7 +156,7 @@ void X11Window::popErrorMessage(Severity s, cstring title, cstring msg)
 
 }
 
-bool X11Window::windowPreInit(const CDProperties &, CString *)
+bool X11Window::windowPreInit(const CDProperties &, CString *err)
 {
     XSetErrorHandler(x11_handler);
 
@@ -166,18 +166,17 @@ bool X11Window::windowPreInit(const CDProperties &, CString *)
 
     m_xData->display = XOpenDisplay(nullptr);
 
-    return m_xData->display;
-}
-
-bool X11Window::windowInit(const CDProperties &props, CString *err)
-{
-
     if(!m_xData->display)
     {
         *err = "Failed to open X11 display connection";
         return false;
     }
 
+    return m_xData->display;
+}
+
+bool X11Window::windowInit(const CDProperties &props, CString *err)
+{
     ::Window rootWindow = DefaultRootWindow(m_xData->display);
 
     XSetWindowAttributes swa;
@@ -190,12 +189,13 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
             | EnterWindowMask | LeaveWindowMask
             | ExposureMask
             ;
-
+    //
+    //
     m_xData->window = XCreateWindow(m_xData->display, rootWindow,
                                     0, 0, props.size.w, props.size.h, 0,
                                     m_xData->visual->depth, InputOutput,
                                     m_xData->visual->visual,
-                                    CWEventMask|CWBackPixmap,
+                                    CWEventMask,
                                     &swa);
 
     if(!m_xData->window)

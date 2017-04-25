@@ -31,7 +31,7 @@ public:
     void popErrorMessage(Severity s, cstring title, cstring msg);
 
 protected:
-    bool windowPreInit(const CDProperties &, CString *);
+    bool windowPreInit(const CDProperties &, CString *err);
     bool windowInit(const CDProperties &props, CString * err);
     bool windowPostInit(const CDProperties &, CString *);
     void windowTerminate();

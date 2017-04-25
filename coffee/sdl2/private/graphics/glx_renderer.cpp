@@ -261,7 +261,8 @@ bool GLXRenderer::contextPostInit(const GLProperties &props, CString *)
 //        cWarning("GLX_ARB_create_context not supported");
 
     if(!ctxt)
-        ctxt = glXCreateNewContext(m_gxData->display, m_gxData->config, GLX_RGBA_TYPE, 0, True);
+        ctxt = glXCreateNewContext(m_gxData->display, m_gxData->config,
+                                   GLX_RGBA_TYPE, nullptr, True);
 
     if(!ctxt)
     {
