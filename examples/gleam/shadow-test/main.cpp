@@ -110,7 +110,8 @@ int32 coffee_main(int32, cstring_w*)
     ELoop eventloop =
     {&renderer, &share_data, setup_fun, loop_fun, cleanup_fun, 0};
 
-//    eventloop.flags |= ELoop::TimeLimited;
+
+    eventloop.flags |= ELoop::TimeLimited;
     eventloop.time.max = 3;
 
     int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);

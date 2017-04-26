@@ -209,6 +209,8 @@ public:
         r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
 #endif
 
+        ev.setup(*ev.renderer, ev.data);
+
 #if !defined(__EMSCRIPTEN__)
         while(!ev.renderer->closeFlag())
         {
@@ -223,6 +225,7 @@ public:
 #endif
 
         (*ev.renderer).cleanup();
+        ev.cleanup(*ev.renderer, ev.data);
         return 0;
     }
 

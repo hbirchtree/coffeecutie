@@ -141,7 +141,7 @@
 //#define COFFEE_LINKED_GLES
 //#define COFFEE_ONLY_GLES20
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
-#define COFFEE_LINUX_DESKTOP_LIGHT_WM
+//#define COFFEE_LINUX_DESKTOP_LIGHT_WM
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
 // This is the super-fast X11 combination, SDL2 can't even be compared to this
