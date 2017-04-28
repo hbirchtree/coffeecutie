@@ -9,4 +9,7 @@ include_directories ( SYSTEM
     ${ASSIMP_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeAssimp "${CoffeeAssimp_SRCS}" "CoffeeCore;${ASSIMP_LIBRARIES}" )
+coffee_add_library (
+    CoffeeAssimp "${CoffeeAssimp_SRCS}"
+    "CoffeeCore;${ASSIMP_LIBRARIES}"
+    "${CMAKE_SOURCE_DIR}/include/coffee/assimp" )

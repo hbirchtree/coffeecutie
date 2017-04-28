@@ -33,6 +33,17 @@ extern byte_t* coffee_assimp_get_reflexive_ptr(void* baseptr, const assimp_refle
 
 } // namespace CAssimp
 } // namespace CResourceTypes
+
+namespace Assimp {
+
+using Resource = CResources::Resource;
+
+class AssimpData;
+
+extern UqPtr<AssimpData> LoadScene(Resource* source, cstring hint = nullptr);
+
+}
+
 } // namespace Coffee
 
 #endif // COFFEE_CRESOURCETYPES_CASSIMP_CASSIMPIMPORTERS_H
