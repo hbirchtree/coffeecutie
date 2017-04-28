@@ -332,8 +332,9 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
             {
                 CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE);
                 /*TODO: Add indexed alternative, BlendFunci */
-            }else
+            }else{
                 CGL43::BlendFunci(i,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+            }
         }
 #endif
 

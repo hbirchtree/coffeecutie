@@ -115,7 +115,7 @@ public:
 
     virtual bool applyCloseFlag()
     {
-        m_closeFlag = true;
+        return m_closeFlag = true;
     }
 
     /*!

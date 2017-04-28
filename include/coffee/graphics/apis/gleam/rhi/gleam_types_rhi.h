@@ -44,6 +44,9 @@ inline bool APILevelIsOfClass(APILevel l, APIClass c)
     case GLES_3_0:
     case GLES_3_2:
         return c == APIClass::GLES;
+
+    default:
+        return false;
     }
     return false;
 }

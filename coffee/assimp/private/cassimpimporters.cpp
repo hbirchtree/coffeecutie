@@ -129,5 +129,23 @@ bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, Resource *resource)
 
 } // namespace CAssimp
 } // namespace CResourceTypes
+
+namespace Assimp{
+
+class AssimpData
+{
+    ::Assimp::Importer importer;
+    ::aiScene scene;
+};
+
+UqPtr<AssimpData> LoadScene(Resource* source, cstring hint)
+{
+    UqPtr<AssimpData> data = UqPtr<AssimpData>(new AssimpData);
+
+    return data;
+}
+
+}
+
 } // namespace Coffee
 
