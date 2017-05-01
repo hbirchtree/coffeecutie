@@ -131,7 +131,8 @@ IF(SDL2_LIBRARY_TEMP)
   # For SDL2main
   IF(NOT SDL2_BUILDING_LIBRARY)
     IF(SDL2MAIN_LIBRARY)
-      SET(SDL2_LIBRARY_TEMP ${SDL2MAIN_LIBRARY} ${SDL2_LIBRARY_TEMP})
+      SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP})
+      SET(SDL2_LIBRARIES_TEMP ${SDL2MAIN_LIBRARY})
     ENDIF(SDL2MAIN_LIBRARY)
   ENDIF(NOT SDL2_BUILDING_LIBRARY)
 
@@ -142,58 +143,68 @@ IF(SDL2_LIBRARY_TEMP)
   # So I use a temporary variable until the end so I can set the
   # "real" variable in one-shot.
   IF(APPLE)
-    SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} "-framework Cocoa")
+    SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP} "-framework Cocoa")
   ENDIF(APPLE)
 
   # For threads, as mentioned Apple doesn't need this.
   # In fact, there seems to be a problem if I used the Threads package
   # and try using this line, so I'm just skipping it entirely for OS X.
   IF(NOT APPLE)
-    SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} ${CMAKE_THREAD_LIBS_INIT})
+    SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP} ${CMAKE_THREAD_LIBS_INIT})
   ENDIF(NOT APPLE)
 
   # For MinGW library
   IF(MINGW)
-    SET(SDL2_LIBRARY_TEMP ${MINGW32_LIBRARY} ${SDL2_LIBRARY_TEMP})
+    SET(SDL2_LIBRARIES_TEMP ${MINGW32_LIBRARY} ${SDL2_LIBRARIES_TEMP})
   ENDIF(MINGW)
 
   if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
-      find_package ( X11 REQUIRED )
+      find_package ( X11 QUIET )
       find_package ( Wayland QUIET )
-      find_package ( Mir QUIET )
 
       if(X11_FOUND)
-          SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP}
+          SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP}
               ${X11_LIBRARIES}
               )
           include_directories(
               ${X11_INCLUDE_DIR}
               )
       endif()
-      if(WAYLAND_FOUND)
-          SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP}
+      if(WAYLAND_LIBRARIES)
+          SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP}
               ${WAYLAND_LIBRARIES}
               )
           include_directories(
               ${WAYLAND_INCLUDE_DIR}
               )
       endif()
-      if(MIR_FOUND)
-          SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP}
-              ${MIR_LIBRARIES}
-              )
-          include_directories(
-              ${MIR_INCLUDE_DIR}
-              )
-      endif()
+      set ( SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP}
+          asound
+          pulse
+          pulse-simple
+          sndio
+          Xcursor
+          Xinerama
+          Xi
+          Xrandr
+          Xss
+          Xxf86vm
+          xkbcommon
+          )
   endif()
 
   # Set the final string here so the GUI reflects the final state.
   SET(SDL2_LIBRARY ${SDL2_LIBRARY_TEMP} CACHE STRING "Where the SDL2 Library can be found")
+  SET(SDL2_LIBRARIES ${SDL2_LIBRARIES_TEMP} CACHE STRING "SDL2 library dependencies")
   # Set the temp variable to INTERNAL so it is not seen in the CMake GUI
-  SET(SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" CACHE INTERNAL "")
+#  SET(SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" CACHE INTERNAL "")
+  SET(SDL2_LIBRARIES_TEMP "${SDL2_LIBRARIES_TEMP}" CACHE INTERNAL "")
 ENDIF(SDL2_LIBRARY_TEMP)
 
 INCLUDE(FindPackageHandleStandardArgs)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2
+    REQUIRED_VARS
+    SDL2_LIBRARY
+    SDL2_LIBRARIES
+    SDL2_INCLUDE_DIR)

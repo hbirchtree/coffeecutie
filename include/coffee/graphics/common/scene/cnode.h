@@ -21,6 +21,13 @@ struct Node
     byte_t name[32];
 };
 
+struct InplaceNode
+{
+    Matf4 transform;
+    InplaceNode* parent;
+    cstring name;
+};
+
 /*TODO: Transitional! */
 using CNode = Node;
 

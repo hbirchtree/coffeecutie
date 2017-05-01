@@ -17,8 +17,9 @@ set ( LIBRARIES
     CoffeeCore
     CoffeeVR
 
-    "${SDL2_LIBRARY}"
-    "${OPENVR_LIBRARY}"
+    ${SDL2_LIBRARY}
+    ${SDL2_LIBRARIES}
+    ${OPENVR_LIBRARY}
     )
 
 coffee_add_example ( OpenVR_HelloVR_RHI "Hello VR (RHI)" "${SOURCES}" "${LIBRARIES}" )

@@ -335,6 +335,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     if(NACL)
         target_link_libraries( ${TARGET}
             ${SDL2_LIBRARY}
+            ${SDL2_LIBRARIES}
             ppapi_gles2
             )
     endif()

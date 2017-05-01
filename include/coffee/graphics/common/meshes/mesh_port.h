@@ -18,7 +18,7 @@ void InsertBytes(Vector<byte_t>& buf, T* s, szptr num)
 }
 
 FORCEDINLINE
-void SerializeMesh(_cbasic_mesh const& mesh,
+void SerializeMesh(_cbasic_mesh& mesh,
                                 cstring fn)
 {
 
@@ -42,11 +42,11 @@ void SerializeMesh(_cbasic_mesh const& mesh,
     Vector<attr_grouping_t> groups;
 
     /* Retrieve all attributes, get their sizes */
-    for(Pair<Mesh::AttributeType_t,Vector<byte_t>> const& v : mesh.attributes)
+    for(auto const& v : mesh.attributes)
     {
         attr_grouping_t g;
         g.id = v.first;
-        g.content_size = v.second.size()*sizeof(v.second[0]);
+        g.content_size = v.second.data.size()*sizeof(v.second.data[0]);
         g.content_offset = 0;
         groups.push_back(g);
     }
@@ -81,7 +81,7 @@ void SerializeMesh(_cbasic_mesh const& mesh,
     for(attr_grouping_t const& g : groups)
     {
         Vector<byte_t> const& data =
-                mesh.attributes.find(g.id)->second;
+                mesh.attributes.find(g.id)->second.data;
         InsertBytes(storage,data.data(),data.size()*sizeof(data[0]));
     }
 

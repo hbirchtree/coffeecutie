@@ -63,6 +63,7 @@ struct GLEAM_PRF;
 struct GLEAM_DBufQuery;
 struct GLEAM_PrfQuery;
 struct GLEAM_PipelineDumper;
+struct GLEAM_Quad_Drawer;
 
 /* Buffers */
 struct GLEAM_VBuffer;

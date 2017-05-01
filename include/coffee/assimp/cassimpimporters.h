@@ -5,7 +5,14 @@
 #include <coffee/core/CFiles>
 #include "cassimptypes.h"
 
+#include <coffee/core/types/vector_types.h>
+#include <coffee/core/CObject>
+
 namespace Coffee {
+
+struct _cbasic_mesh;
+using Mesh = _cbasic_mesh;
+
 namespace CResourceTypes {
 namespace CAssimp {
 
@@ -34,13 +41,66 @@ extern byte_t* coffee_assimp_get_reflexive_ptr(void* baseptr, const assimp_refle
 } // namespace CAssimp
 } // namespace CResourceTypes
 
-namespace Assimp {
+namespace CGraphicsData{
+struct InplaceNode;
+}
+
+namespace ASSIMP {
 
 using Resource = CResources::Resource;
 
-class AssimpData;
+struct Node : public CObject
+{
+    Node(Node* parent):
+        CObject(parent)
+    {
+    }
+
+    Matf4 transform;
+    i32 mesh;
+};
+
+struct NodeList : public LinkList<Node>
+{
+    ~NodeList()
+    {
+        for(Node& n : *this)
+            n.setParent(nullptr);
+    }
+};
+
+struct AssimpData;
 
 extern UqPtr<AssimpData> LoadScene(Resource* source, cstring hint = nullptr);
+
+struct ObjectDesc
+{
+    enum ObjectType
+    {
+        Undefined,
+        Mesh,
+        Light,
+        Animation,
+        Camera,
+    };
+
+    const cstring objectName;
+    const ObjectType type;
+};
+
+struct Object
+{
+    ObjectDesc::ObjectType type;
+    union{
+
+    };
+};
+
+extern bool GetSceneObjects(UqPtr<AssimpData> const& scene, Vector<ObjectDesc>& objects);
+
+extern bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
+
+extern bool GetMeshData(UqPtr<AssimpData> const& scene, const Node &node, Mesh& output_mesh);
 
 }
 

@@ -316,6 +316,7 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
     }
 
     if(bstate.blend())
+    {
         if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
         {
             if(bstate.additive())
@@ -337,6 +338,7 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
             }
         }
 #endif
+    }
 
     /*TODO: Add more advanced blending options*/
 

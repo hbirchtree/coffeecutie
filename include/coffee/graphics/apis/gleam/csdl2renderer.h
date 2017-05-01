@@ -31,6 +31,11 @@ class CSDL2Renderer :
         public GLeamRenderer
 {
 public:
+    CSDL2Renderer():
+        CSDL2Renderer(nullptr)
+    {
+    }
+
     virtual ~CSDL2Renderer();
 
     bool init(const CDProperties &, CString*err);
