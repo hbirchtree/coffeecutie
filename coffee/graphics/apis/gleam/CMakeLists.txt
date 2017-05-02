@@ -45,7 +45,7 @@ if(NOT EMSCRIPTEN)
     include_directories (${SDL2_INCLUDE_DIR})
 endif()
 
-list ( APPEND LIBS ${SDL2_LIBRARY})
+list ( APPEND LIBS ${SDL2_LIBRARY} ${SDL2_LIBRARIES})
 
 coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam")

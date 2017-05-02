@@ -158,6 +158,7 @@ struct GLEAM_PRF
     using QRY_PERF = GLEAM_PrfQuery;
     using QRY_DBUF = GLEAM_DBufQuery;
     using QRY_PIPDMP = GLEAM_PipelineDumper;
+    using DRAW_QUAD = GLEAM_Quad_Drawer;
 };
 
 }

@@ -5,8 +5,6 @@
 
 #include <stdarg.h>
 
-#include <coffee/graphics/common/query/gpu_query.h>
-
 #include <coffee/core/plat/plat_sensor.h>
 
 using namespace Coffee;

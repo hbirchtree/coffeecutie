@@ -86,6 +86,7 @@ if(ANDROID)
         GLESv1_CM GLESv2
 
         ${SDL2_LIBRARY}
+        ${SDL2_LIBRARIES}
         )
     list ( APPEND CORE_INCLUDE_DIR
         ${CMAKE_SOURCE_DIR}/bindings/android/include

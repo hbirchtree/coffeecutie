@@ -1,4 +1,5 @@
 #include <coffee/core/CObject>
+#include <coffee/core/CDebug>
 
 namespace Coffee {
 
@@ -36,17 +37,13 @@ CObject *CObject::parent()
 
 void CObject::setParent(CObject *parent)
 {
-    if(parent!=this){
-        for(auto it=m_parent->m_children.begin();
-            it!=m_parent->m_children.end();
-            it++)
-            if(*it==this){
-                m_parent->m_children.erase(it);
-                break;
-            }
-        this->m_parent = parent;
-        m_parent->m_children.push_back(this);
-    }
+    if(parent == this)
+        return;
+    if(m_parent)
+        m_parent->removeChild(this);
+    if(parent)
+        parent->m_children.push_back(this);
+    this->m_parent = parent;
 }
 
 cstring CObject::objectName() const
@@ -57,6 +54,11 @@ cstring CObject::objectName() const
 void CObject::setObjectName(cstring name)
 {
     this->m_objectName = name;
+}
+
+const Vector<CObject *> &CObject::children() const
+{
+    return m_children;
 }
 
 void CObject::removeChild(CObject *child)

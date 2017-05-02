@@ -67,6 +67,7 @@ void ExportProfilerData(CString& target)
     doc.InsertFirstChild(root);
 
     /* Save environment variables */
+#if defined(COFFEE_INTERNAL_BUILD)
     {
         XML::Element* envdata = doc.NewElement("environment");
         root->InsertEndChild(envdata);
@@ -84,6 +85,7 @@ void ExportProfilerData(CString& target)
         }
     }
     cVerbose(8,"Writing environment data");
+#endif
 
     /* Store data about runtime */
     {
@@ -290,7 +292,7 @@ void ExportProfilerData(CString& target)
 
 void ExportStringToFile(const CString &data, cstring outfile)
 {
-#ifndef COFFEE_LOWFAT
+#ifdef COFFEE_LOWFAT
     return;
 #endif
 
@@ -309,15 +311,16 @@ void ExportStringToFile(const CString &data, cstring outfile)
     cVerbose(6,"Creating filename");
     CResources::Resource out(log_name.c_str(),true);
     out.data = C_FCAST<c_ptr>(data.c_str());
-    out.size = C_CAST<szptr>(data.size());
+    /* -1 because we don't want the null-terminator */
+    out.size = C_CAST<szptr>(data.size() - 1);
     cVerbose(6,"Retrieving data pointers");
-    CResources::FileCommit(out);
+    CResources::FileCommit(out, false, ResourceAccess::Discard);
     cVerbose(6,"Wrote file");
 }
 
 void ExitRoutine()
 {
-#ifndef COFFEE_LOWFAT
+#ifdef COFFEE_LOWFAT
     return;
 #endif
     /* Verify if we should export profiler data */
@@ -328,8 +331,9 @@ void ExitRoutine()
             CString log_name = Env::ExecutableName();
             log_name = Env::BaseName(log_name.c_str());
             log_name = CStrReplace(log_name,".exe","");
-            log_name = cStringFormat("{0}-profile.xml",log_name);
-            cVerbose(6, "Saving profiler data to: {0}",log_name);
+            log_name = cStringFormat("{0}-profile.xml", log_name);
+            CString c_file = FileFun::CanonicalName(log_name.c_str());
+            cVerbose(6, "Saving profiler data to: {0}", c_file);
 
             CString target_log;
             Profiling::ExportProfilerData(/*log_name.c_str(),argc,argv*/ target_log);

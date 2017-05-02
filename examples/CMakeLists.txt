@@ -138,6 +138,16 @@ endif()
 #
 #
 
+#
+# Assimp
+#
+
+if(COFFEE_BUILD_ASSIMP)
+    add_subdirectory(assimp/model-load)
+endif()
+
+#
+#
 
 #
 # Chromium Embedded Framework

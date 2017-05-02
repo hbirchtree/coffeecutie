@@ -70,8 +70,23 @@ set ( LIBS
     CoffeeWindow_DMX
     CoffeeContext_GLX
     CoffeeContext_EGL
+    ${SDL2_LIBRARIES}
     )
 
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
-    "${CMAKE_SOURCE_DIR}/include/coffee/sdl2"
+    "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")
+
+install (
+    DIRECTORY
+    ${SDL2_INCLUDE_DIR}
+
+    DESTINATION
+    include
+    )
+install (
+    FILES
+    ${SDL2_LIBRARY}
+
+    DESTINATION
+    lib
     )

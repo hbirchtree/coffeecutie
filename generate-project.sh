@@ -98,9 +98,10 @@ function configure_project()
     local META_JENKINS_FILE="${PROJECT_DIR}/meta/jenkins/${PJNAME}.groovy"
 
     if [[ ! -f "${GITIGNORE_FILE}" ]]; then
-        echo "*~" \
-            "reconfig.sh" \
-            "*.user" \
+        echo \
+"*~
+reconfig.sh
+*.user" \
             > "${GITIGNORE_FILE}"
     fi
 
@@ -114,6 +115,10 @@ function configure_project()
         sed -e "s|@DESC@|${DESC}|g" | \
         sed -e "s|@TITLE@|${TITLE}|g" \
         > "${CMAKE_FILE}"
+    fi
+
+    if [[ ! -d ".git" ]]; then
+        git init
     fi
 
     if [[ ! -f "${MAIN_FILE}" ]]; then

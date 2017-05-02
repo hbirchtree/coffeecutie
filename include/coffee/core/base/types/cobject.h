@@ -21,6 +21,8 @@ public:
     cstring objectName() const;
     void setObjectName(cstring name);
 
+    Vector<CObject*> const& children() const;
+
 protected:
     ThreadId m_thread;
 

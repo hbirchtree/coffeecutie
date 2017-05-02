@@ -1,8 +1,10 @@
 #pragma once
 
-#include <coffee/core/types/vector_types.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee{
+
+//#define COFFEE_USE_OLD_MESH_MAP
 
 /*!
  * \brief A simple mesh format, made for static vertex data.
@@ -14,26 +16,50 @@ struct _cbasic_mesh
 {
     enum AttributeTypes
     {
-	Undefined,
+        Undefined,
 
-	Indices,
+        Indices,
 
-	Position, TexCoord,
-	Normal,
-	Tangent, Bitangent,
+        Position, TexCoord,
+        Normal,
+        Tangent, Bitangent,
+
+        Color,
     };
 
     using attr_component = byte_t;
-    using attr = Vector<attr_component>;
+    struct attr
+    {
+        u32 attr_index;
+        Vector<attr_component> data;
+        struct {
+            c_cptr ptr;
+            szptr size;
+        } mem;
+    };
 
     using AttributeType_t = uint16;
-    using Pair = std::pair<AttributeType_t,attr>;
 
-    _cbasic_mesh()
+    _cbasic_mesh(bool referenced):
+        referenced_attributes(referenced)
     {
     }
 
-    Map<AttributeType_t,attr> attributes;
+    _cbasic_mesh():
+        _cbasic_mesh(false)
+    {
+    }
+
+    template<typename K, typename V>
+    using maptype = MultiMap<K,V>;
+
+    using map_container = maptype<AttributeType_t, attr>;
+    using map_pair = Pair<AttributeType_t, attr>;
+
+    map_container attributes;
+    const bool referenced_attributes;
+
+    using iterator = map_container::iterator;
 
     /* Convenience functions for the attributes */
 
@@ -45,56 +71,123 @@ struct _cbasic_mesh
     FORCEDINLINE
     bool indexed()
     {
-	return attributes.find(Indices)!=attributes.end();
+        auto range = attributes.equal_range(Indices);
+        if(range.first == attributes.end())
+            return false;
+        return true;
     }
     FORCEDINLINE
-    szptr indices(szptr stride)
+    attr* attrGet(AttributeType_t t, szptr stride, u32 idx = 0)
     {
-        auto it = attributes.find(Indices);
-        if(it!=attributes.end())
-            return it->second.size()/stride;
-        else
-            return 0;
+        auto range = attributes.equal_range(t);
+        if(range.first == range.second)
+            return nullptr;
+        auto it = range.first;
+        while(it != range.second)
+        {
+            if(it->second.attr_index == idx)
+                return &it->second;
+            it ++;
+        }
+        return nullptr;
     }
     FORCEDINLINE
-    szptr vertices(AttributeType_t t,szptr stride)
+    attr const* attrGetConst(AttributeType_t t, u32 idx = 0) const
     {
-        auto it = attributes.find(t);
-        if(it!=attributes.end())
-            return it->second.size()/stride;
-        else
-            return 0;
+        auto range = attributes.equal_range(t);
+        if(range.first == range.second)
+            return nullptr;
+        auto it = range.first;
+        while(it != range.second)
+        {
+            if(it->second.attr_index == idx)
+                return &it->second;
+            it ++;
+        }
+        return nullptr;
+    }
 
+    FORCEDINLINE
+    szptr attrCount(AttributeType_t t,szptr stride, u32 idx = 0) const
+    {
+        auto ptr = attrGetConst(t, idx);
+        if(ptr)
+        {
+            if(referenced_attributes)
+                return ptr->mem.size / stride;
+            else
+                return ptr->data.size() / stride;
+        }
+        return 0;
+    }
+    FORCEDINLINE
+    szptr indices(szptr stride, u32 idx = 0) const
+    {
+        return attrCount(Indices, stride, idx);
+    }
+    FORCEDINLINE
+    szptr vertices(AttributeType_t t, szptr stride, u32 idx = 0) const
+    {
+        return attrCount(t, stride, idx);
     }
 
     template<typename VT>
     FORCEDINLINE
-    void addAttributeData(AttributeType_t a, VT const* ptr, szptr num)
+    void addAttributeData(AttributeType_t a, VT const* ptr, szptr num, u32 idx = 0)
     {
-	attr& data = attributes[a];
-	data.insert(data.end(),(attr_component*)&ptr[0],(attr_component*)&ptr[num]);
+        auto data_ptr = attrGet(a, idx);
+        if(!data_ptr)
+        {
+            attributes.insert({a, {}});
+            data_ptr = attrGet(a, idx);
+        }
+        if(data_ptr)
+        {
+            data_ptr->attr_index = idx;
+            if(referenced_attributes)
+            {
+                auto& data = data_ptr->mem;
+                data.ptr = ptr;
+                data.size = num * sizeof(VT);
+            }else{
+                auto& data = data_ptr->data;
+                data.insert(data.end(), (byte_t*)&ptr[0], (byte_t*)&ptr[num]);
+            }
+        }
     }
     template<typename VT>
     FORCEDINLINE
-    VT* getAttributeData(AttributeType_t attr)
+    VT* getAttributeData(AttributeType_t attr, u32 idx = 0)
     {
-	if(attributes.find(attr)==attributes.end())
-	    return nullptr;
-	return (VT*)&attributes[attr][0];
+        auto ptr = attrGet(attr, idx);
+        if(ptr)
+        {
+            if(referenced_attributes)
+                return C_CAST<VT*>(ptr->mem.ptr);
+            else
+                return C_CAST<VT*>(ptr->data.data());
+        }
+        return nullptr;
     }
     template<typename VT>
     FORCEDINLINE
-    VT const* getAttributeData(AttributeType_t attr) const
+    VT const* getAttributeData(AttributeType_t attr, u32 idx = 0) const
     {
-	if(attributes.find(attr)==attributes.end())
-	    return nullptr;
-	return (VT const*)attributes.find(attr)->second.data();
+        auto ptr = attrGetConst(attr, idx);
+        if(ptr)
+        {
+            if(referenced_attributes)
+                return C_CAST<VT const*>(ptr->mem.ptr);
+            else
+                return C_CAST<VT const*>(ptr->data.data());
+        }
+        return nullptr;
     }
 
     FORCEDINLINE
     void clearAttributes()
     {
-	attributes.clear();
+        attributes.clear();
     }
 };
 

@@ -51,6 +51,7 @@ libnames[4]="SDL2"
 libnames[5]="BLAM"
 libnames[6]="GRAPHICS"
 libnames[7]="IMAGE"
+libnames[8]="ASSIMP"
 
 soname[0]="Core"
 soname[1]="GLeam"
@@ -60,8 +61,9 @@ soname[4]="SDL2"
 soname[5]="Blam"
 soname[6]="GraphicsAPI"
 soname[7]="Image"
+soname[8]="Assimp"
 
-for e in $(seq 0 7); do
+for e in $(seq 0 8); do
     echo "
 find_library ( COFFEE_${libnames[$e]}_LIBRARY_TMP
     Coffee${soname[$e]}
