@@ -78,9 +78,9 @@ struct CGL43 : CGL33_Base,
         CGL_XF2,
         CGL_XF3
 {
-    STATICINLINE bool LoadBinding(CGL_Context *ctxt = nullptr)
+    STATICINLINE bool LoadBinding(CGL_Context *ctxt = nullptr, GLADloadproc procLoad = nullptr)
     {
-        bool status = CGL33::LoadBinding(ctxt);
+        bool status = CGL33::LoadBinding(ctxt, procLoad);
 	if(!status)
             return false;
 

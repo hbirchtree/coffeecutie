@@ -5,7 +5,9 @@
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/core/CProfiling>
 
-#if defined(COFFEE_USE_MAEMO_EGL)
+#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_USE_MAEMO_EGL)
+#include <SDL_video.h>
+#else
 #include <EGL/egl.h>
 #elif defined(COFFEE_USE_LINUX_GLX)
 #define __gl_h_
@@ -80,7 +82,9 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     cDebug("Attempting to load version: {0}",p.version);
 
-#if !defined(COFFEE_GLEAM_DESKTOP)
+#if !defined(COFFEE_GLEAM_DESKTOP) || defined(COFFEE_USE_MAEMO_EGL)
+
+==== BASE ====
 #if !defined(COFFEE_LINKED_GLES)
 #if defined(COFFEE_USE_LINUX_GLX)
     GLADloadproc procload = (GLADloadproc)glXGetProcAddress;
@@ -91,6 +95,8 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 #endif
 #endif
 
+#else
+    GLADloadproc procload = nullptr;
 #endif
 
     if(!(p.flags & GLProperties::Flags::GLES))
@@ -103,15 +109,15 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
         if(p.version>=v45)
         {
 //            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v45);
-            status = CGL::CGL45::LoadBinding(m_app->glContext());
+            status = CGL::CGL45::LoadBinding(m_app->glContext(), procload);
         }else if(p.version>=v43)
         {
 //            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v43);
-            status = CGL::CGL43::LoadBinding(m_app->glContext());
+            status = CGL::CGL43::LoadBinding(m_app->glContext(), procload);
         } else if(p.version>=v33)
         {
 //            cDebug("Loading context version: GL {0}",(_cbasic_version<uint8> const&)v33);
-            status = CGL::CGL33::LoadBinding(m_app->glContext());
+            status = CGL::CGL33::LoadBinding(m_app->glContext(), procload);
         }
 #endif
     }else{

@@ -136,6 +136,13 @@ namespace TGA
 extern void Save(Vector<byte_t> const& data, CSize const& res, cstring dest);
 }
 
+namespace Stb
+{
+using namespace CStbImageLib;
+using Img = CStbImage;
+using ImgConst = CStbImageConst;
+}
+
 } //Coffee
 
 #endif

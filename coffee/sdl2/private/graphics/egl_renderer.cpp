@@ -311,14 +311,22 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
     EGLint config_num = 0;
 
+#if defined(COFFEE_GLEAM_DESKTOP)
+    eglBindAPI(EGL_OPENGL_API);
+#endif
+
     {
         /* Set up preferred configuration */
         Vector<EGLint> config_preferred = {
+    #if defined(COFFEE_GLEAM_DESKTOP)
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+            EGL_CONFORMANT, EGL_OPENGL_BIT,
+    #else
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
     #if !defined(COFFEE_RASPBERRYPI)
             EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
     #endif
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 
     #if !defined(COFFEE_RASPBERRYPI)
             EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
@@ -379,10 +387,6 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
     if(!glContext()->acquireContext())
         return false;
-
-    glViewport(0,0,1920,1080);
-    glClearColor(1.f, 0.f, 0.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     if(props.flags & GLProperties::GLVSync)
         setSwapInterval(1);

@@ -38,7 +38,7 @@ bool LoadData(CStbImage *target, const Resource *src, PixelComponents comp)
                 (const byte_t*)src->data,src->size,
                 &target->size.w,&target->size.h,
                 &target->bpp,scomp);
-    return true;
+    return target->data != nullptr;
 }
 
 void _stbi_write_data(void *ctxt, void *data, int size)
