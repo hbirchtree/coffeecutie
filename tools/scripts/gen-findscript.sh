@@ -117,7 +117,7 @@ echo "\
 set ( COFFEE_GRAPHICS_COMMON_LIBRARY"
 
 for e in $(seq 0 ${#graphics_libs[@]}); do
-    if [[ ! -z ${gleam_libs[$e]} ]]; then
+    if [[ ! -z ${graphics_libs[$e]} ]]; then
         echo "    \${COFFEE_${graphics_libs[$e]}_LIBRARY}"
     fi
 done
