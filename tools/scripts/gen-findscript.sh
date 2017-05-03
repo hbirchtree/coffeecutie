@@ -43,27 +43,59 @@ if(COFFEE_INCLUDE_DIR_TMP)
     set ( COFFEE_INCLUDE_DIR "${COFFEE_INCLUDE_DIR_TMP}" CACHE PATH "" )
 endif()'
 
-libnames[0]="CORE"
-libnames[1]="GLEAM"
-libnames[2]="ASIO"
-libnames[3]="OPENAL"
-libnames[4]="SDL2"
-libnames[5]="BLAM"
-libnames[6]="GRAPHICS"
-libnames[7]="IMAGE"
-libnames[8]="ASSIMP"
+libnames=(
+CORE 
+GLEAM 
+ASIO 
+OPENAL
+SDL2
+BLAM
+GRAPHICS
+IMAGE
+ASSIMP
+WINDOW_X11
+WINDOW_DMX
+CONTEXT_EGL
+CONTEXT_GLX
+)
 
-soname[0]="Core"
-soname[1]="GLeam"
-soname[2]="ASIO"
-soname[3]="OpenAL"
-soname[4]="SDL2"
-soname[5]="Blam"
-soname[6]="GraphicsAPI"
-soname[7]="Image"
-soname[8]="Assimp"
+soname=(
+Core
+GLeam
+ASIO
+OpenAL
+SDL2
+Blam
+GraphicsAPI
+Image
+Assimp
+Window_X11
+Window_DMX
+Context_EGL
+Context_GLX
+)
 
-for e in $(seq 0 8); do
+graphics_libs=(
+SDL2
+GRAPHICS
+WINDOW_X11
+WINDOW_DMX
+CONTEXT_EGL
+CONTEXT_GLX
+)
+
+gleam_libs=(
+GRAPHICS_COMMON
+GLEAM
+IMAGE
+ASSIMP
+)
+
+num_libs=${#libnames[@]}
+num_libs=$(($num_libs - 1))
+num_required_libs=$(($num_libs - 5))
+
+for e in $(seq 0 $num_libs); do
     echo "
 find_library ( COFFEE_${libnames[$e]}_LIBRARY_TMP
     Coffee${soname[$e]}
@@ -77,8 +109,33 @@ find_library ( COFFEE_${libnames[$e]}_LIBRARY_TMP
 
 if(COFFEE_${libnames[$e]}_LIBRARY_TMP)
     set ( COFFEE_${libnames[$e]}_LIBRARY \"\${COFFEE_${libnames[$e]}_LIBRARY_TMP}\" CACHE STRING \"\" )
-endif()"
+endif()
+"
 done
+
+echo "\
+set ( COFFEE_GRAPHICS_COMMON_LIBRARY"
+
+for e in $(seq 0 ${#graphics_libs[@]}); do
+    if [[ ! -z ${gleam_libs[$e]} ]]; then
+        echo "    \${COFFEE_${graphics_libs[$e]}_LIBRARY}"
+    fi
+done
+
+echo "\
+    CACHE STRING \"\")"
+
+echo "\
+set ( COFFEE_GLEAM_COMMON_LIBRARY"
+
+for e in $(seq 0 ${#gleam_libs[@]}); do
+    if [[ ! -z ${gleam_libs[$e]} ]]; then
+        echo "    \${COFFEE_${gleam_libs[$e]}_LIBRARY}"
+    fi
+done
+
+echo "\
+    CACHE STRING \"\")"
 
 echo "
 if(ANDROID)
@@ -104,7 +161,7 @@ find_package_handle_standard_args (
     REQUIRED_VARS
     COFFEE_INCLUDE_DIR"
 
-for e in $(seq 0 7); do
+for e in $(seq 0 $num_required_libs); do
     echo "    COFFEE_${libnames[$e]}_LIBRARY"
 done
 
