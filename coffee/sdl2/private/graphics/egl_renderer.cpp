@@ -286,12 +286,21 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
     EGLint config_num = 0;
 
+#if defined(COFFEE_GLEAM_DESKTOP)
+    eglBindAPI(EGL_OPENGL_API);
+#endif
+
     {
         /* Set up preferred configuration */
         Vector<EGLint> config_preferred = {
+    #if defined(COFFEE_GLEAM_DESKTOP)
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+            EGL_CONFORMANT, EGL_OPENGL_BIT,
+    #else
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
+    #endif
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 
             EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
             EGL_CONFIG_CAVEAT, EGL_NONE,

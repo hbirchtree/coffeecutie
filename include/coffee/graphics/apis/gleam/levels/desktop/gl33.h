@@ -39,11 +39,15 @@ struct CGL33_Base :
         ColorBuffer,
     };
 
-    STATICINLINE bool LoadBinding(CGL_Context* ctxt)
+    STATICINLINE bool LoadBinding(CGL_Context* ctxt, GLADloadproc procLoad = nullptr)
     {
         if(ctxt && !ctxt->acquireContext())
             return false;
+#if defined(COFFEE_USE_MAEMO_EGL)
+        if(!gladLoadGLLoader(procLoad))
+#else
         if(!gladLoadGL())
+#endif
             return false;
 
         if(!Debug::VerifyInit() || !glGenSamplers)

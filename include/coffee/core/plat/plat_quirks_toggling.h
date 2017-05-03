@@ -50,6 +50,11 @@
  *
  */
 
+/* General configuration changers */
+#define COFFEE_LINUX_LIGHTWEIGHT_WM
+//#define COFFEE_GLES20_MODE
+
+/* Minor prohibiting flags */
 #define COFFEE_SLAP_LOWMEM
 
 /* For Android 32-bit, we need this neat little trick. */
@@ -122,7 +127,7 @@
 #define COFFEE_ONLY_GLES20
 #endif
 
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_GLES20_MODE)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
 #endif
@@ -137,12 +142,10 @@
 #define COFFEE_X11_HILDON
 #endif
 
-//#define COFFEE_LINKED_GLES
-//#define COFFEE_ONLY_GLES20
-#define COFFEE_LINUX_LIGHTWEIGHT_WM
-
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
+#if !defined(COFFEE_GLEAM_DESKTOP)
 #define COFFEE_USE_MAEMO_EGL
+#endif
 #define COFFEE_USE_MAEMO_X11
 #endif
 
@@ -185,4 +188,7 @@
 
 #if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_GLEAM_DESKTOP)
 #error Invalid configuration detected, cannot use GLES2.0 mode with desktop GL!
+#endif
+#if defined(COFFEE_GLEAM_DESKTOP) && defined(COFFEE_USE_MAEMO_EGL)
+#error Invalid configuration detected, cannot use EGL with OpenGL (non-ES)!
 #endif
