@@ -398,4 +398,8 @@ using FovDetail = _cbasic_fov<scalar>;
 
 using BoundBox = _cbasic_boundingbox<scalar>;
 
+using PtF = CPointF;
+using PtD = CPointD;
+using PtI = CPoint;
+
 }
