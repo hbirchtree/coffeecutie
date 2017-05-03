@@ -85,10 +85,10 @@ CONTEXT_GLX
 )
 
 gleam_libs=(
-GRAPHICS_COMMON
 GLEAM
 IMAGE
 ASSIMP
+GRAPHICS_COMMON
 )
 
 num_libs=${#libnames[@]}
