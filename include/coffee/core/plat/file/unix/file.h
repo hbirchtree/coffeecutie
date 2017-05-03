@@ -218,7 +218,10 @@ struct PosixFileFun_def : PosixFileMod_def
         {
             return true;
         }else
+        {
+            ErrnoCheck("munmap()");
             return false;
+        }
     }
     STATICINLINE bool MapCache(void* t_ptr, szptr t_size, szptr r_off, szptr r_size)
     {

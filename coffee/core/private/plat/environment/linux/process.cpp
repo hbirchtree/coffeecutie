@@ -122,7 +122,7 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
                     break;
                 }
                 default:
-                    fprintf(stderr, "%s - ", sec.c_str());
+//                    fprintf(stderr, "%s - ", sec.c_str());
                     break;
                 }
 

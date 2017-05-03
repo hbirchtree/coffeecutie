@@ -28,24 +28,20 @@ else()
     list(APPEND CoffeeGLeam_SRCS private/glad/glad.c)
 endif()
 
-set ( LIBS
-    CoffeeCore
-    CoffeeImage
-    CoffeeSDL2
-    CoffeeGraphicsAPI
-    )
-
-if(ANDROID)
-
-endif()
-
 # For Android, there is some special function loading
 find_package(SDL2 REQUIRED)
 if(NOT EMSCRIPTEN)
     include_directories (${SDL2_INCLUDE_DIR})
 endif()
 
-list ( APPEND LIBS ${SDL2_LIBRARY} ${SDL2_LIBRARIES})
+set ( LIBS
+    ${SDL2_LIBRARY}
+    CoffeeCore
+    CoffeeImage
+    CoffeeSDL2
+    CoffeeGraphicsAPI
+    ${SDL2_LIBRARIES}
+    )
 
 coffee_add_library ( CoffeeGLeam "${CoffeeGLeam_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/graphics_apis/gleam")

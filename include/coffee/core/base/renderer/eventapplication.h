@@ -207,9 +207,10 @@ public:
 
 #if !defined(COFFEE_ANDROID)
         r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
+#else
+        ev.setup(*ev.renderer, ev.data);
 #endif
 
-        ev.setup(*ev.renderer, ev.data);
 
 #if !defined(__EMSCRIPTEN__)
         while(!ev.renderer->closeFlag())

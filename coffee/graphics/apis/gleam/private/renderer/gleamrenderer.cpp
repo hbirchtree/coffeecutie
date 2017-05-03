@@ -82,7 +82,6 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
 #if !defined(COFFEE_GLEAM_DESKTOP) || defined(COFFEE_USE_MAEMO_EGL)
 
-==== BASE ====
 #if !defined(COFFEE_LINKED_GLES)
 #if defined(COFFEE_USE_LINUX_GLX)
     GLADloadproc procload = (GLADloadproc)glXGetProcAddress;

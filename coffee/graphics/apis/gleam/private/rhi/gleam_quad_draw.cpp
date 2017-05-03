@@ -1,5 +1,8 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_quad_draw.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 #include "gleam_internal_types.h"
 
 namespace Coffee{
@@ -59,7 +62,7 @@ void GLEAM_Quad_Drawer::create()
 void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 {
     constexpr DrwMd mode = {Prim::Triangle, PrimCre::Explicit};
-
+/*
     CGL33::BufBind(BufType::ArrayData,m_vbo);
     CGL33::ProgramUse(m_prg);
     CGL33::Disable(Feature::DepthTest);
@@ -74,16 +77,42 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 
     sampler.bind(0);
     CGL33::Uniformfv(m_trans_unif,1,false,&xf);
+
+//    glEnableVertexAttribArray(0);
+//    glEnableVertexAttribArray(1);
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(scalar) * 5, 0);
+//    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(scalar) * 5, (c_ptr)(sizeof(scalar) * 3));
+    CGL33::VAOEnableAttrib(0);
+    CGL33::VAOEnableAttrib(1);
+    CGL33::VAOAttribPointer(0,3,TypeEnum::Scalar,false,sizeof(scalar)*5,0);
+    CGL33::VAOAttribPointer(1,2,TypeEnum::Scalar,false,sizeof(scalar)*5,sizeof(scalar)*3);
+
+//    glDrawArrays(GL_TRIANGLES, 0, 6);
     CGL33::DrawArrays(mode,0,6);
+    */
 }
 
 void GLEAM_Quad_Drawer::cleanup()
 {
+    /*
     CGL33::ProgramFree(1,&m_prg);
+    */
 }
 
 bool GLEAM_Quad_Drawer::compile_shaders()
 {
+    GLEAM_Shader vertex;
+    GLEAM_Shader fragment;
+
+    Bytes vertex_src = {};
+    Bytes fragment_src = {};
+
+    vertex.compile(ShaderStage::Vertex, vertex_src);
+    fragment.compile(ShaderStage::Fragment, fragment_src);
+
+    GLEAM_Pipeline m_pip;
+//    m_pip.
+    /*
     CGhnd shaders[2];
 
     CGL33::ShaderAlloc(1,ShaderStage::Vertex,&shaders[0]);
@@ -132,10 +161,12 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     m_trans_unif = CGL33::ProgramUnifGetLoc(m_prg,"transform");
 
     return true;
+    */
 }
 
 void GLEAM_Quad_Drawer::create_vbo_data()
 {
+    /*
     CGL33::BufAlloc(1,&m_vbo);
 #if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOAlloc(1,&m_vao);
@@ -145,19 +176,21 @@ void GLEAM_Quad_Drawer::create_vbo_data()
     CGL33::BufData(BufType::ArrayData,sizeof(m_vertex_quad_data),
                    m_vertex_quad_data,ResourceAccess::ReadOnly);
     CGL33::BufBind(BufType::ArrayData,0);
+    */
 }
 
 void GLEAM_Quad_Drawer::set_vao_attributes()
 {
-#if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOBind(m_vao);
-#else
-    CGL33::BufBind(BufType::ArrayData,m_vbo);
-#endif
-    CGL33::VAOEnableAttrib(0);
-    CGL33::VAOEnableAttrib(1);
-    CGL33::VAOAttribPointer(0,3,TypeEnum::Scalar,false,sizeof(scalar)*5,0);
-    CGL33::VAOAttribPointer(1,2,TypeEnum::Scalar,false,sizeof(scalar)*5,sizeof(scalar)*3);
+//    glBindVertexArray(m_vao);
+//#if !defined(COFFEE_ONLY_GLES20)
+//    CGL33::VAOBind(m_vao);
+//#else
+//    CGL33::BufBind(BufType::ArrayData,m_vbo);
+//#endif
+//    CGL33::VAOEnableAttrib(0);
+//    CGL33::VAOEnableAttrib(1);
+//    CGL33::VAOAttribPointer(0,3,TypeEnum::Scalar,false,sizeof(scalar)*5,0);
+//    CGL33::VAOAttribPointer(1,2,TypeEnum::Scalar,false,sizeof(scalar)*5,sizeof(scalar)*3);
 }
 
 }

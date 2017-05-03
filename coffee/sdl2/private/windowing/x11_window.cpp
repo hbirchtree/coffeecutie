@@ -193,8 +193,8 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
     //
     m_xData->window = XCreateWindow(m_xData->display, rootWindow,
                                     0, 0, props.size.w, props.size.h, 0,
-                                    m_xData->visual->depth, InputOutput,
-                                    m_xData->visual->visual,
+                                    (m_xData->visual) ? m_xData->visual->depth : 0, InputOutput,
+                                    (m_xData->visual) ? m_xData->visual->visual : nullptr,
                                     CWEventMask,
                                     &swa);
 

@@ -52,7 +52,7 @@
  */
 
 /* General configuration changers */
-#define COFFEE_LINUX_LIGHTWEIGHT_WM
+//#define COFFEE_LINUX_LIGHTWEIGHT_WM
 //#define COFFEE_GLES20_MODE
 
 /* Minor prohibiting flags */
