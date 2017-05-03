@@ -326,6 +326,7 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
     #if !defined(COFFEE_RASPBERRYPI)
             EGL_CONFORMANT, EGL_OPENGL_ES2_BIT,
     #endif
+    #endif
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 
     #if !defined(COFFEE_RASPBERRYPI)

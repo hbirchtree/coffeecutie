@@ -4,7 +4,8 @@
 
 #ifdef COFFEE_LINUX
 
-#include "../../../coffee_strings.h"
+#include <coffee/core/types/edef/resenum.h>
+#include <coffee/core/types/tdef/stltypes.h>
 #include "../process_def.h"
 
 #include <sys/resource.h>
@@ -103,6 +104,31 @@ struct LinuxProcessProperty : ProcessPropertyDef
         return rs.ru_nivcsw;
     }
 };
+
+struct MemMap
+{
+    struct Entry
+    {
+        CString name; /*!< Path name if applicable*/
+        u64 inode;
+        u64 start; /*!< Start memory address*/
+        u64 end; /*!< End memory address*/
+        szptr offset; /*!< Offset into file*/
+        ResourceAccess access;
+
+        inline u64 size()
+        {
+            return end - start;
+        }
+    };
+
+    struct ProcMap : Vector<Entry>
+    {
+    };
+
+    static bool GetProcMap(LinuxProcessProperty::PID pid, ProcMap& target);
+};
+
 }
 }
 

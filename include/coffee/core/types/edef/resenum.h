@@ -1,5 +1,7 @@
 #pragma once
 
+#undef None
+
 #include "enumfun.h"
 #include "../tdef/integertypes.h"
 
@@ -43,13 +45,17 @@ enum class ResourceAccess
     Append     = 0x400, /*<! If file exists, append to it */
     Executable = 0x800, /*<! You should know what this does before you try to use it. */
 
+    /* Access specifiers, will not be used with caching options, so we're borrowing some flags */
+    Private    = Virtual,
+    CopyOnWrite= Private,
+    Shared     = SharedLocking,
+
     /* File operations or policies */
     NewFile = 0x1000, /*<! Don't overwrite files that exist */
     Discard = 0x2000, /*<! Truncate data that exists in file */
 
     /* Tell function to be particular about where to store this file */
     SpecifyStorage = 0x4000,
-
     /* Storage types */
     AssetFile     = 0x8000,  /* Packaged in virtual file system, system-specific */
     ConfigFile    = 0x10000, /* Stored in configuration directory, system-specific */

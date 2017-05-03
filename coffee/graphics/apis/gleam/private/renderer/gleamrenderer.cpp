@@ -5,9 +5,7 @@
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/core/CProfiling>
 
-#if !defined(COFFEE_GLEAM_DESKTOP) && !defined(COFFEE_USE_MAEMO_EGL)
-#include <SDL_video.h>
-#else
+#if defined(COFFEE_USE_MAEMO_EGL)
 #include <EGL/egl.h>
 #elif defined(COFFEE_USE_LINUX_GLX)
 #define __gl_h_

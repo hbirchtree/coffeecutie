@@ -1,7 +1,6 @@
 #include <coffee/core/plat/environment/linux/process.h>
 #include <coffee/core/CFiles>
 #include <coffee/core/string_casting.h>
-#include <coffee/core/plat/memory/stlstring_ops.h>
 
 namespace Coffee{
 namespace Environment{
@@ -49,6 +48,96 @@ LinuxProcessProperty::MemUnit LinuxProcessProperty::Mem(LinuxProcessProperty::PI
     }
 
     return usage.vmsize - usage.vmrss;
+}
+
+bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
+{
+    CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
+    CString maps_info = CResources::Linux::LinuxFileFun::sys_read(maps_file.c_str());
+
+    i32 end = maps_info.find('\n');
+    u32 pos = 0;
+    bool was_empty = false;
+    while(end != -1)
+    {
+        target.push_back({});
+        Entry& file = target.back();
+
+        i32 space = 0;
+        u32 filename_counter = 0;
+        while(space < end)
+        {
+            space = maps_info.find(' ', pos);
+            i32 len = space - pos;
+            if(space > end)
+                len = end - pos;
+            auto sec = StrUtil::encapsulate(&maps_info[pos], len);
+            was_empty = sec.size() == 0;
+            if(!was_empty)
+            {
+                filename_counter++;
+                switch(filename_counter)
+                {
+                case 1:
+                {
+                    i32 mid = sec.find('-');
+                    CString tmp = StrUtil::encapsulate(sec.data(), mid);
+                    file.start = Convert::strtoull(tmp.data(), 16);
+                    tmp = &sec[mid+1];
+                    file.end = Convert::strtoull(tmp.data(), 16);
+                    break;
+                }
+                case 2:
+                {
+                    if(sec.find('r') != -1)
+                        file.access |= ResourceAccess::ReadOnly;
+                    if(sec.find('w') != -1)
+                        file.access |= ResourceAccess::WriteOnly;
+                    if(sec.find('x') != -1)
+                        file.access |= ResourceAccess::Executable;
+                    if(sec.find('s') != -1)
+                        file.access |= ResourceAccess::Shared;
+                    if(sec.find('p') != -1)
+                        file.access |= ResourceAccess::Private;
+                    break;
+                }
+                case 3:
+                {
+                    file.offset = cast_string<u64>(sec);
+                    break;
+                }
+                case 4:
+                {
+                    /* dev ?? */
+                    break;
+                }
+                case 5:
+                {
+                    file.inode = cast_string<u64>(sec);
+                    break;
+                }
+                case 6:
+                {
+                    file.name = sec;
+                    break;
+                }
+                default:
+                    fprintf(stderr, "%s - ", sec.c_str());
+                    break;
+                }
+
+            }
+            pos = space + 1;
+            if(space > end)
+            {
+                pos = end + 1;
+                break;
+            }
+        }
+        end = maps_info.find('\n', pos);
+    }
+
+    return true;
 }
 
 
