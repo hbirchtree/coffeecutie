@@ -31,7 +31,12 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
             )
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
-    list ( APPEND CORE_EXTRA_LIBRARIES X11 EGL )
+
+    list ( APPEND CORE_EXTRA_LIBRARIES X11 )
+
+    if(COFFEE_BUILD_GLES)
+        list ( APPEND CORE_EXTRA_LIBRARIES EGL )
+    endif()
 
     if(NOT COFFEE_BUILD_GLES)
         list ( APPEND CORE_EXTRA_LIBRARIES
@@ -84,6 +89,7 @@ if(ANDROID)
         log android
         # OpenGL ES
         GLESv1_CM GLESv2
+        EGL
 
         ${SDL2_LIBRARY}
         ${SDL2_LIBRARIES}
@@ -104,7 +110,7 @@ if(RASPBERRY)
     # We also have bcm_host for accessing OpenGL for some reason
     # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
-        EGL GLESv2
+        GLESv2
         bcm_host
 
 #        asound
