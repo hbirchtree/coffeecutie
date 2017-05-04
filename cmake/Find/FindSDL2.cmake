@@ -179,17 +179,17 @@ IF(SDL2_LIBRARY_TEMP)
               )
       endif()
       set ( SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP}
-          asound
-          pulse
-          pulse-simple
-          sndio
-          Xcursor
-          Xinerama
-          Xi
-          Xrandr
-          Xss
-          Xxf86vm
-          xkbcommon
+#          asound
+#          pulse
+#          pulse-simple
+#          sndio
+#          Xcursor
+#          Xinerama
+#          Xi
+#          Xrandr
+#          Xss
+#          Xxf86vm
+#          xkbcommon
           )
   endif()
 
