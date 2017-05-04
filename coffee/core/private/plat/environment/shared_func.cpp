@@ -3,7 +3,7 @@
 #if defined(COFFEE_UNIXPLAT)
 #include <unistd.h>
 #elif defined(COFFEE_WINDOWS)
-#include "../plat_windows.h"
+#include <coffee/core/plat/plat_windows.h>
 #endif
 
 namespace Coffee{
