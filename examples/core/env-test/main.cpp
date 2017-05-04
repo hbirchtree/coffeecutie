@@ -50,14 +50,6 @@ int32 coffee_main(int32, cstring_w*)
     cDebug("Sensor acceleration: {0}", Sensor::Sensors::Acceleration());
     cDebug("Sensor orientation: {0}", Sensor::Sensors::Orientation());
 
-    cDebug("This process' mapped files:");
-
-    Environment::Linux::MemMap::ProcMap m_map;
-    Environment::Linux::MemMap::GetProcMap(ProcessProperty::Pid(), m_map);
-
-    for(auto& e : m_map)
-        cDebug("Entry: {0} -> sz:{1},acc:{2}", e.name, e.size(), (u32)e.access);
-
     return 0;
 }
 

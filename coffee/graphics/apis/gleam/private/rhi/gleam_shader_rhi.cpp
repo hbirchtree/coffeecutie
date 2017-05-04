@@ -19,7 +19,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
 
         if(GL_DEBUG_MODE && !stat)
         {
-            CString log = CGL33::ShaderGetLog(m_handle);
+            cstring_w log = CGL33::ShaderGetLog(m_handle);
             cWarning("Shader compilation error: {0}",log);
             return false;
         }

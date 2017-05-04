@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../../platform_detect.h"
-
+#include <coffee/core/plat/plat_quirks_toggling.h>
 
 #if defined(COFFEE_STUBBED_STACKTRACE)
 
