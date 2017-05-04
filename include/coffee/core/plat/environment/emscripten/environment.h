@@ -1,5 +1,7 @@
 #pragma once
 
+#include <coffee/core/plat/plat_quirks_toggling.h>
+
 #if defined(COFFEE_STUBBED_ENVIRONMENT)
 
 #include "../environment_details.h"
