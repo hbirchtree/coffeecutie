@@ -59,6 +59,9 @@ void GLEAM_Quad_Drawer::create()
 #endif
 }
 
+static GLEAM_Pipeline m_pip;
+static GLEAM_VertDescriptor m_desc;
+
 void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 {
     constexpr DrwMd mode = {Prim::Triangle, PrimCre::Explicit};
@@ -90,6 +93,11 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 //    glDrawArrays(GL_TRIANGLES, 0, 6);
     CGL33::DrawArrays(mode,0,6);
     */
+
+    GLEAM_API::DrawInstanceData di;
+    di.m_verts = 6;
+
+    GLEAM_API::Draw(m_pip, {}, m_desc, {}, di, nullptr);
 }
 
 void GLEAM_Quad_Drawer::cleanup()
@@ -101,16 +109,31 @@ void GLEAM_Quad_Drawer::cleanup()
 
 bool GLEAM_Quad_Drawer::compile_shaders()
 {
+    bool status = true;
     GLEAM_Shader vertex;
     GLEAM_Shader fragment;
 
-    Bytes vertex_src = {};
-    Bytes fragment_src = {};
+    Bytes vertex_src;
+    Bytes fragment_src;
+    vertex_src.data = (u8*)m_shader_vertex_passthrough;
+    vertex_src.size = Search::ChrFind(m_shader_vertex_passthrough, 0) - m_shader_vertex_passthrough;
+    fragment_src.data = (u8*)m_shader_fragment_passthrough;
+    fragment_src.size = Search::ChrFind(m_shader_fragment_passthrough, 0) - m_shader_fragment_passthrough;
 
     vertex.compile(ShaderStage::Vertex, vertex_src);
     fragment.compile(ShaderStage::Fragment, fragment_src);
 
-    GLEAM_Pipeline m_pip;
+    m_pip.attach(vertex, ShaderStage::Vertex);
+    m_pip.attach(fragment, ShaderStage::Fragment);
+
+    status = m_pip.assemble();
+
+    vertex.dealloc();
+    fragment.dealloc();
+
+    m_pip.bind();
+
+    return status;
 //    m_pip.
     /*
     CGhnd shaders[2];
@@ -166,6 +189,27 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
 void GLEAM_Quad_Drawer::create_vbo_data()
 {
+    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::ReadOnly, sizeof(m_vertex_quad_data));
+
+    m_buffer.alloc();
+    m_buffer.commit(sizeof(m_vertex_quad_data), m_vertex_quad_data);
+
+    m_desc.alloc();
+
+    GLEAM_VertAttribute pos;
+    GLEAM_VertAttribute tex;
+
+    pos.m_idx = 0;
+    tex.m_idx = 1;
+
+    pos.m_stride = tex.m_stride = sizeof(scalar) * 5;
+    tex.m_off = sizeof(scalar) * 3;
+
+    m_desc.addAttribute(pos);
+    m_desc.addAttribute(tex);
+
+    m_desc.bindBuffer(0, m_buffer);
+
     /*
     CGL33::BufAlloc(1,&m_vbo);
 #if !defined(COFFEE_ONLY_GLES20)
