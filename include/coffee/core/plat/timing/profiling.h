@@ -57,6 +57,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void InitProfiler()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
         if(!profiler_data_store)
         {
             profiler_data_store = new ProfilerDataStore;
@@ -76,10 +77,12 @@ struct SimpleProfilerImpl
         }
 
         profiler_data_store->global_init.fetch_add(1);
+#endif
     }
 
     STATICINLINE void DestroyProfiler()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
         if(context_stack)
         {
@@ -92,10 +95,12 @@ struct SimpleProfilerImpl
         {
             delete profiler_data_store;
         }
+#endif
     }
 
     STATICINLINE void LabelThread(cstring name)
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
         /* TODO: Move thread naming code to different place */
 #if defined(COFFEE_APPLE)
         pthread_setname_np(name);
@@ -106,6 +111,7 @@ struct SimpleProfilerImpl
 #if !defined(NDEBUG)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
+#endif
 #endif
     }
 
@@ -118,6 +124,7 @@ struct SimpleProfilerImpl
 
     STATICINLINE void Profile(cstring name = nullptr)
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
         uint64 ts = Time::CurrentMicroTimestamp();
 
@@ -134,10 +141,12 @@ struct SimpleProfilerImpl
 
         profiler_data_store->datapoints.push_back(p);
 #endif
+#endif
     }
 
     STATICINLINE void PushContext(cstring name)
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -156,9 +165,11 @@ struct SimpleProfilerImpl
         profiler_data_store->datapoints.push_back(p);
         profiler_data_store->datapoints.back().ts = Time::CurrentMicroTimestamp();
 #endif
+#endif
     }
     STATICINLINE void PopContext()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
         uint64 ts = Time::CurrentMicroTimestamp();
 
@@ -176,16 +187,20 @@ struct SimpleProfilerImpl
         profiler_data_store->datapoints.push_back(p);
         context_stack->pop_front();
 #endif
+#endif
     }
 
     STATICINLINE void AddExtraData(CString const& key, CString const& val)
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 
         profiler_data_store->extra_data.push_back({key,val});
+#endif
     }
 
+#if !defined(COFFEE_DISABLE_PROFILER)
 
     /* Below variables have storage in extern_storage.cpp */
 
@@ -217,48 +232,60 @@ struct SimpleProfilerImpl
     thread_local static LinkList<CString> *context_stack;
 #endif
 
+#endif
+
     STATICINLINE ExtraData* ExtraInfo()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
         if(profiler_data_store)
             return &profiler_data_store->extra_data;
         else
             return nullptr;
+#endif
     }
 
     STATICINLINE LinkList<DataPoint>* DataPoints()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG)
         if(profiler_data_store)
             return &profiler_data_store->datapoints;
         else
+#endif
 #endif
             return nullptr;
     }
 
     STATICINLINE bool Enabled()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG)
         if(profiler_data_store)
             return profiler_data_store->Enabled;
         else
+#endif
 #endif
             return false;
     }
 
     STATICINLINE Timestamp StartTime()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
         if(profiler_data_store)
             return profiler_data_store->start_time;
         else
+#endif
             return 0;
     }
 
     STATICINLINE ThreadListing* ThreadNames()
     {
+#if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG)
         if(profiler_data_store)
             return &profiler_data_store->threadnames;
         else
+#endif
 #endif
             return nullptr;
     }
