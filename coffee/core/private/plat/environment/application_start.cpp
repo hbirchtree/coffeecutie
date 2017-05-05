@@ -1,10 +1,10 @@
 #include <coffee/core/plat/plat_primary_identify.h>
 
 #if defined(COFFEE_WINDOWS)
-
+#if !defined(COFFEE_WINDOWS_UWP)
 extern bool WMI_Query(const char* query, const wchar_t* property);
+#endif
 extern int InitCOMInterface();
-
 #elif defined(COFFEE_ANDROID)
 #include "../sensor/android/android_sensors.h"
 #endif
@@ -22,6 +22,8 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
     InitCOMInterface();
     WMI_Query("SELECT * FROM Win32_BIOS", L"SerialNumber");
+#elif defined(COFFEE_WINDOWS_UWP)
+	InitCOMInterface();
 #elif defined(COFFEE_ANDROID)
     Profiler::ResetPointers();
     Sensor::Android::Android_InitSensors();

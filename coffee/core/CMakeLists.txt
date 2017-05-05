@@ -136,8 +136,16 @@ if(WIN32)
         private/plat/file/windows/file.cpp
         private/plat/environment/windows/environment.cpp
         private/plat/environment/windows/sysinfo.cpp
-        private/plat/environment/windows/windows_startup.cpp
         )
+	if(NOT WIN_UWP)
+		list ( APPEND CoffeeCore_SRCS
+			private/plat/environment/windows/windows_startup.cpp
+			)
+	else()
+		list ( APPEND CoffeeCore_SRCS
+			private/plat/environment/windows/windows_startup_uwp.cpp
+			)
+	endif()
 endif()
 
 if(RASPBERRY)

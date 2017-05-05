@@ -26,6 +26,8 @@ FORCEDINLINE bool StrICmp(cstring s1, cstring s2)
 {
 #if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NACL)
     return strcasecmp(s1, s2)==0;
+#elif defined(COFFEE_WINDOWS_UWP)
+	return _stricmp(s1, s2);
 #elif defined(COFFEE_WINDOWS)
     return stricmp(s1, s2);
 #else
