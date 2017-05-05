@@ -49,6 +49,8 @@
  *
  * COFFEE_NO_TLS - disallowing thread-local storage
  *
+ * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms with isolation
+ *
  */
 
 /* General configuration changers */
@@ -96,6 +98,7 @@
 #if defined(COFFEE_ANDROID)
 /* For Android, we limit inlining for size reasons */
 #define COFFEE_LIMIT_INLINE
+#define COFFEE_DISABLE_PROFILER
 #endif
 
 /* This enables safer, but a bit slower functions for some core functions */
