@@ -76,7 +76,7 @@ set ( LIBS
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")
 
-if(NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} EQUAL "Emscripten")
+if(NOT (NACL OR ${CMAKE_SYSTEM_NAME} EQUAL "Emscripten"))
     install (
         DIRECTORY
         ${SDL2_INCLUDE_DIR}
@@ -84,17 +84,9 @@ if(NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} EQUAL "Emscripten")
         DESTINATION
         include
         )
-    if(APPLE)
+    if(NOT APPLE) # Apple platforms will supply their own SDL2
         install (
             DIRECTORY
-            ${SDL2_LIBRARY}
-
-            DESTINATION
-            lib
-            )
-    else()
-        install (
-            FILES
             ${SDL2_LIBRARY}
 
             DESTINATION
