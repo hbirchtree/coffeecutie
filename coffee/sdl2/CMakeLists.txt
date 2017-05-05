@@ -91,7 +91,7 @@ if(APPLE)
         DESTINATION
         lib
         )
-else()
+elseif(NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} EQUAL "Emscripten")
     install (
         FILES
         ${SDL2_LIBRARY}
