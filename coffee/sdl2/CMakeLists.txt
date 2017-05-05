@@ -76,7 +76,7 @@ set ( LIBS
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")
 
-if(NOT (NACL OR ${CMAKE_SYSTEM_NAME} EQUAL "Emscripten"))
+if(NOT (NACL OR ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
     install (
         DIRECTORY
         ${SDL2_INCLUDE_DIR}
