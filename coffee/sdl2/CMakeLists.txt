@@ -86,7 +86,7 @@ if(NOT (NACL OR ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
         )
     if(NOT APPLE) # Apple platforms will supply their own SDL2
         install (
-            FILE
+            FILES
             ${SDL2_LIBRARY}
 
             DESTINATION
