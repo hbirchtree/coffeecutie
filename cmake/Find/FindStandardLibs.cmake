@@ -32,18 +32,18 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
 
-    if(NOT NACL AND NOT EMSCRIPTEN)
+    if(NOT NACL)
         list ( APPEND CORE_EXTRA_LIBRARIES X11 )
-    endif()
 
-    if(COFFEE_BUILD_GLES)
-        list ( APPEND CORE_EXTRA_LIBRARIES EGL )
-    endif()
+        if(COFFEE_BUILD_GLES)
+            list ( APPEND CORE_EXTRA_LIBRARIES EGL )
+        endif()
 
-    if(NOT COFFEE_BUILD_GLES)
-        list ( APPEND CORE_EXTRA_LIBRARIES
-            GL Xrender
-            )
+        if(NOT COFFEE_BUILD_GLES)
+            list ( APPEND CORE_EXTRA_LIBRARIES
+                GL Xrender
+                )
+        endif()
     endif()
 endif()
 
