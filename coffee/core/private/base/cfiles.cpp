@@ -14,13 +14,16 @@ static CString _coffee_resource_prefix = "./";
 CString DereferencePath(cstring suffix, ResourceAccess storageMask)
 {
     //We will NOT try to add any '/' in there.
+    cVerbose(9, "Dereferencing resource path");
     if(feval(storageMask&ResourceAccess::SpecifyStorage))
     {
         CString asset_fn = CString(AssetApi::AssetPrefix)+suffix;
 
         if(feval(storageMask&ResourceAccess::ConfigFile))
         {
+            cVerbose(9, "Detected configuration file flag");
             CString cfgDir = Env::GetUserData(nullptr,nullptr);
+            cVerbose(9, "Using configuration directory: {0}", cfgDir);
             if(!DirFun::MkDir(cfgDir.c_str(), true))
                 return {};
             return Env::ConcatPath(cfgDir.c_str(),suffix);

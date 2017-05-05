@@ -58,6 +58,10 @@ void emscripten_eventloop(void* arg)
 
 szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
 {
+    cVerbose(8, "Loading memory: {0}+{1} <- slot {2} ::",
+             StrUtil::pointerify(data_ptr),
+             *data_size, slot);
+
 #if defined(__EMSCRIPTEN__)
     CString save_file = cStringFormat("{0}_Slot-{1}.dat",
                                       ApplicationData().application_name,
@@ -78,9 +82,12 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
     return *data_size;
 #else
     CString file_str = cStringFormat("CoffeeData.{0}.bin", slot);
+    cVerbose(8, "Pre-creating resource");
     CResources::Resource rsc(file_str.c_str(),
                              ResourceAccess::SpecifyStorage
                              | ResourceAccess::ConfigFile);
+
+    cVerbose(8, "Created resource");
 
     if(!CResources::FilePull(rsc, false, false) && rsc.size <= *data_size)
     {
@@ -89,14 +96,23 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
         return *data_size;
     }
 
-    if(!data_ptr)
+    cVerbose(8, "Pulled resource");
+
+    if(!data_ptr || !rsc.data || rsc.size < 1 || rsc.size >= *data_size)
     {
         CResources::FileFree(rsc);
         return rsc.size;
     }
 
+    cVerbose(8, "Validated resource, got {0}+{1}",
+             StrUtil::pointerify(rsc.data), rsc.size);
+
     MemCpy(data_ptr, rsc.data, rsc.size);
+    cVerbose(8, "Copied data from mapping to memory");
     CResources::FileFree(rsc);
+
+    cVerbose(8, "Memory load succeeded, got {0} bytes", *data_size);
+
     return rsc.size;
 #endif
 }

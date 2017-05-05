@@ -91,6 +91,7 @@ Display::CGLVersion CGL_Shared_Debug::ContextVersion()
         auto match = Regex::Match(p,str,true);
         if (match.size() < 3)
             break;
+        ver = {};
         if(ver.major == 0)
             ver.major = cast_string<uint8>(match.at(1).s_match.front());
         if(ver.minor == 0)
