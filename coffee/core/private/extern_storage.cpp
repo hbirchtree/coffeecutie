@@ -14,9 +14,11 @@ namespace Coffee{
 unw_context_t* Environment::Posix::PosixStacktracer::unwind_context = nullptr;
 #endif
 
+#if !defined(COFFEE_DISABLE_PROFILER)
 Profiler::ProfilerDataStore* Profiler::profiler_data_store = nullptr;
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
 thread_local LinkList<CString>* Profiler::context_stack = nullptr;
+#endif
 #endif
 
 #if defined(COFFEE_USE_TERMINAL_CTL)

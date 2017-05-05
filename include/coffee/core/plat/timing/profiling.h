@@ -52,7 +52,9 @@ struct SimpleProfilerImpl
         /* Some platforms can't keep their pants on.
          * And they shit the bed.
          */
+#if !defined(COFFEE_DISABLE_PROFILER)
         profiler_data_store = nullptr;
+#endif
     }
 
     STATICINLINE void InitProfiler()
@@ -240,8 +242,8 @@ struct SimpleProfilerImpl
         if(profiler_data_store)
             return &profiler_data_store->extra_data;
         else
-            return nullptr;
 #endif
+            return nullptr;
     }
 
     STATICINLINE LinkList<DataPoint>* DataPoints()

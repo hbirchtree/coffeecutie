@@ -15,7 +15,11 @@ namespace Android{
 CString AndroidEnv::GetUserData(cstring,cstring)
 {
 #ifndef ANDROID_DONT_USE_SDL2
-    return SDL_AndroidGetInternalStoragePath();
+    auto path = SDL_AndroidGetInternalStoragePath();
+    if(path)
+        return path;
+    else
+        return {};
 #else
     return Coffee_GetDataPath();
 #endif

@@ -166,6 +166,7 @@ void ExportProfilerData(CString& target)
     cVerbose(8,"Writing system data");
 
     /* Store extra data gathered by program, is parsed as JSON if possible */
+    if(Profiler::ExtraInfo())
     {
         XML::Element* extradata = doc.NewElement("extra");
         root->InsertEndChild(extradata);
