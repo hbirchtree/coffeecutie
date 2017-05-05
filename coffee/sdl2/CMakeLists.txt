@@ -83,10 +83,20 @@ install (
     DESTINATION
     include
     )
-install (
-    FILES
-    ${SDL2_LIBRARY}
+if(APPLE)
+    install (
+        DIRECTORY
+        ${SDL2_LIBRARY}
 
-    DESTINATION
-    lib
-    )
+        DESTINATION
+        lib
+        )
+else()
+    install (
+        FILES
+        ${SDL2_LIBRARY}
+
+        DESTINATION
+        lib
+        )
+endif()
