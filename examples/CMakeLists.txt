@@ -35,7 +35,9 @@ if(COFFEE_BUILD_SDL2)
     # Sprite rendering with SDL2
     add_subdirectory(sdl_sprite/base-test)
     # Joystick visualizer
-    add_subdirectory(input/joystick-test)
+    if(NOT APPLE)
+        add_subdirectory(input/joystick-test)
+    endif()
 endif()
 
 #
@@ -47,7 +49,9 @@ endif()
 
 # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
 if(COFFEE_BUILD_OPENAL AND COFFEE_BUILD_GLEAM)
-    add_subdirectory (audio/caudio-test)
+    if(NOT APPLE)    
+        add_subdirectory (audio/caudio-test)
+    endif()
 endif()
 
 #
