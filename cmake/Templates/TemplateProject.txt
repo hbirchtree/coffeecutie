@@ -24,6 +24,8 @@ include ( TestingOptions )
 option ( BUILD_TESTS "Build unit tests" ON )
 
 find_package ( Coffee REQUIRED )
+find_package ( StandardLibs REQUIRED )
+find_package ( SDL2 REQUIRED )
 
 set ( SRCS
     @SRCS@
@@ -51,4 +53,3 @@ coffee_add_application_longerer ( @PJNAME@ "@TITLE@"
         "${LICENSES}" "${PERMS}"
         "${BUNDLE_BINS}"
         )
-

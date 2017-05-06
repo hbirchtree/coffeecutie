@@ -1,0 +1,7 @@
+set ( CMAKE_SYSTEM_NAME Linux )
+set ( TOOLCHAIN_PREFIX "powerpc-linux-gnuspe" )
+
+set ( CMAKE_C_COMPILER "${TOOLCHAIN_PREFIX}-gcc" )
+set ( CMAKE_CXX_COMPILER "${TOOLCHAIN_PREFIX}-g++" )
+
+set ( POWERPC TRUE CACHE BOOL "" )
