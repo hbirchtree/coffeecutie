@@ -1,6 +1,8 @@
 #include <coffee/core/plat/environment/windows/sysinfo.h>
 #include <coffee/core/plat/plat_environment.h>
 
+extern bool WMI_Query(const char* query, const wchar_t* property, std::string& target);
+
 namespace Coffee{
 namespace Environment{
 namespace Windows{
@@ -219,6 +221,29 @@ CString WindowsSysInfo::GetSystemVersion()
     out += Convert::uinttostring(a.dwMinorVersion);
     return out;
 }
+
+HWDeviceInfo WindowsSysInfo::DeviceName()
+{
+	CString dev_manuf;
+	CString dev_desc;
+	CString dev_fw;
+	WMI_Query("SELECT * FROM CIM_Product", L"Vendor", dev_manuf);
+	WMI_Query("SELECT * FROM CIM_Product", L"Version", dev_desc);
+	WMI_Query("SELECT * FROM CIM_Product", L"SKUNumber", dev_fw);
+	return HWDeviceInfo(dev_manuf, dev_desc, dev_fw);
+}
+
+HWDeviceInfo WindowsSysInfo::Motherboard()
+{
+	return HWDeviceInfo();
+}
+
+HWDeviceInfo WindowsSysInfo::Chassis()
+{
+	return HWDeviceInfo();
+}
+
+
 
 }
 }

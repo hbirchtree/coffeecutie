@@ -7,6 +7,7 @@
 #include <WbemIdl.h>
 #include <comdef.h>
 #include <objbase.h>
+#include <string>
 
 using std::wcout;
 using std::cout;
@@ -207,7 +208,7 @@ int InitCOMInterface()
     return 0;   // Program successfully completed.
 }
 
-bool WMI_Query(const char* query, const wchar_t* property)
+bool WMI_Query(const char* query, const wchar_t* property, std::string& target)
 {
     if(InitCOMInterface() != 0)
         return false;
@@ -237,23 +238,34 @@ bool WMI_Query(const char* query, const wchar_t* property)
     IWbemClassObject *pclsObj = NULL;
     ULONG uReturn = 0;
 
-    while (pEnumerator)
-    {
-        HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1,
-                                       &pclsObj, &uReturn);
+	while (pEnumerator)
+	{
+		HRESULT hr = pEnumerator->Next(2, 1,
+			&pclsObj, &uReturn);
 
-        if(0 == uReturn)
-        {
-            break;
-        }
+		if (0 == uReturn)
+		{
+			break;
+		}
 
-        VARIANT vtProp;
+		VARIANT vtProp;
 
-        // Get the value of the Name property
-        hr = pclsObj->Get(property, 0, &vtProp, 0, 0);
-//        cout << "Boolean: " << vtProp.boolVal << endl;
-        wcout << " OS Name : " << vtProp.bstrVal << endl;
-        VariantClear(&vtProp);
+		// Get the value of the Name property
+		hr = pclsObj->Get(property, 0, &vtProp, 0, 0);
+		//        cout << "Boolean: " << vtProp.boolVal << endl;
+		//        wcout << " OS Name : " << vtProp.bstrVal << endl;
+		switch (vtProp.vt)
+		{
+		case VT_BSTR:
+		{
+			std::wstring output_w = vtProp.bstrVal;
+			target = std::string(output_w.begin(), output_w.end());
+			break;
+		}	
+		default:
+			break;
+		}
+		VariantClear(&vtProp);
 
         pclsObj->Release();
     }
