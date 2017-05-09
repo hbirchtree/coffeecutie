@@ -113,10 +113,10 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
 {
 #ifndef COFFEE_LOWFAT
 #ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 10;
+    Coffee::PrintingVerbosityLevel = 6;
     DefaultPrintOutputPipe = DefaultDebugOutputPipe;
 #else
-    Coffee::PrintingVerbosityLevel = 10;
+    Coffee::PrintingVerbosityLevel = 1;
 #endif
 #endif
 

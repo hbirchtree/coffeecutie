@@ -50,11 +50,11 @@ FORCEDINLINE void C_BADERROR(cstring name)
 #endif
 }
 
-FORCEDINLINE void C_DEPRECATED()
-{
-#ifndef NDEBUG
-    fprintf(DefaultDebugOutputPipe,"DEPRECATED");
-#endif
-}
+//FORCEDINLINE void C_DEPRECATED()
+//{
+//#ifndef NDEBUG
+//    fprintf(DefaultDebugOutputPipe,"DEPRECATED");
+//#endif
+//}
 
 }

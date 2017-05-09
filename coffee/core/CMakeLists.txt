@@ -175,5 +175,13 @@ include_directories ( SYSTEM ${STANDARDLIBS_INCLUDE_DIR} )
 coffee_add_library ( CoffeeCore "${CoffeeCore_SRCS}" "${STANDARDLIBS_LIBRARIES}"
     "${CMAKE_SOURCE_DIR}/include/coffee/core" )
 
+install(
+    DIRECTORY
+    ${CMAKE_SOURCE_DIR}/libs/tinyxml2
+
+    DESTINATION
+    include
+    )
+
 # If PCH is supported, this will be used
 #CREATE_PCH_FILES(CoffeeCore "${CoffeeCore_PCH}")

@@ -42,11 +42,11 @@ template<typename T>
 /*!
  * \brief For storing arrays
  */
-struct chunk_mem
+struct C_DEPRECATED chunk_mem
 {
     FORCEDINLINE chunk_mem()
     {
-        C_DEPRECATED();
+//        C_DEPRECATED();
     }
     szptr size = 0;
     T* d = nullptr;
