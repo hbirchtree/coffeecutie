@@ -78,6 +78,9 @@ public:
     virtual bool installEventHandler(EventHandlerD e);
     virtual bool installEventHandler(EventHandlerSDL e);
 
+    virtual Vector<EventHandlerI>* getEventHandlersI();
+    virtual Vector<EventHandlerD>* getEventHandlersD();
+
     void injectEvent(const CIEvent &e, c_cptr d);
     void injectEvent(const CDEvent &e, c_cptr d);
     void injectEvent(SDL_Event* e);

@@ -95,6 +95,8 @@ struct GLEAM_ShaderUniformState : GraphicsAPI::ShaderUniformState
                     GLEAM_ShaderBuffer const* buf,
                     GLEAM_BufferSection const& sec);
 
+    void clear();
+
 protected:
 
     template<typename T>

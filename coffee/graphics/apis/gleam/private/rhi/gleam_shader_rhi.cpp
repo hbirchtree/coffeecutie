@@ -185,6 +185,14 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
     return true;
 }
 
+void GLEAM_ShaderUniformState::clear()
+{
+    m_samplers.clear();
+    m_sbuffers.clear();
+    m_ubuffers.clear();
+    m_uniforms.clear();
+}
+
 void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                        Vector<GLEAM_UniformDescriptor> *uniforms,
                        Vector<GLEAM_ProgramParameter> *params)

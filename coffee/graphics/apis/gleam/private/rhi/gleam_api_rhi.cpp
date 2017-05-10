@@ -1,10 +1,11 @@
 #include <coffee/graphics/apis/gleam/rhi/gleam_api_rhi.h>
 
+#include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_buffer_rhi.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_query_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_shader_rhi.h>
 #include <coffee/graphics/apis/gleam/rhi/gleam_surface_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_query_rhi.h>
-#include <coffee/graphics/apis/gleam/rhi/gleam_data.h>
+#include <coffee/graphics/apis/gleam/rhi/gleam_vertex_rhi.h>
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/types/cdef/geometry.h>
@@ -476,11 +477,6 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
     /* TODO: Tie uniforms to their applicable stages */
 
-    /* Skip uniform application on 3.3 fragment stage */
-    if((GL_CURR_API == GL_3_3 || GL_CURR_API==GLES_2_0
-        || GL_CURR_API==GLES_3_0) && stage == ShaderStage::Fragment)
-        return;
-
     CGhnd prog = 0;
 
     if(GL_CURR_API==GL_3_3  || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
@@ -629,6 +625,8 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
     {
         SetShaderUniformState(pipeline, s.first, s.second);
     }
+
+    vertices.bind();
 
     if(d.indexed())
     {

@@ -323,6 +323,16 @@ bool SDL2EventHandler::installEventHandler(EventHandlerSDL e)
     return true;
 }
 
+Vector<EventApplication::EventHandlerI>* SDL2EventHandler::getEventHandlersI()
+{
+    return &m_eventhandlers_input;
+}
+
+Vector<EventApplication::EventHandlerD>* SDL2EventHandler::getEventHandlersD()
+{
+    return &m_eventhandlers_windw;
+}
+
 void SDL2EventHandler::injectEvent(const CIEvent &e, c_cptr d)
 {
     eventHandleI(e, d);

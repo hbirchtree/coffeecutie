@@ -319,7 +319,8 @@ struct GraphicsAPI
             m_size(0),
             m_off(0),
             m_stride(sizeof(scalar)),
-            m_type(TypeEnum::Scalar)
+            m_type(TypeEnum::Scalar),
+            m_instanced(false)
         {
         }
 

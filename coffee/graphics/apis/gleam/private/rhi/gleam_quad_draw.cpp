@@ -54,17 +54,10 @@ void GLEAM_Quad_Drawer::create()
 {
     compile_shaders();
     create_vbo_data();
-#if !defined(COFFEE_ONLY_GLES20)
-    set_vao_attributes();
-#endif
 }
-
-static GLEAM_Pipeline m_pip;
-static GLEAM_VertDescriptor m_desc;
 
 void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 {
-    constexpr DrwMd mode = {Prim::Triangle, PrimCre::Explicit};
 /*
     CGL33::BufBind(BufType::ArrayData,m_vbo);
     CGL33::ProgramUse(m_prg);
@@ -97,14 +90,24 @@ void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
     GLEAM_API::DrawInstanceData di;
     di.m_verts = 6;
 
-    GLEAM_API::Draw(m_pip, {}, m_desc, {}, di, nullptr);
+    GLEAM_ShaderUniformState m_state_v;
+    GLEAM_ShaderUniformState m_state_f;
+
+    Bytes xf_data = Bytes::Create(xf);
+    GLEAM_UniformValue m_transform = {};
+    m_transform.data = &xf_data;
+    m_state_v.setUniform(m_transformLoc, &m_transform);
+
+    auto handle = sampler.handle();
+    m_state_f.setSampler(m_texLoc, &handle);
+
+    GLEAM_API::Draw(m_pip,
+    {{ShaderStage::Vertex, m_state_v},{ShaderStage::Fragment, m_state_f}},
+                    m_desc, {}, di, nullptr);
 }
 
 void GLEAM_Quad_Drawer::cleanup()
 {
-    /*
-    CGL33::ProgramFree(1,&m_prg);
-    */
 }
 
 bool GLEAM_Quad_Drawer::compile_shaders()
@@ -113,12 +116,8 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     GLEAM_Shader vertex;
     GLEAM_Shader fragment;
 
-    Bytes vertex_src;
-    Bytes fragment_src;
-    vertex_src.data = (u8*)m_shader_vertex_passthrough;
-    vertex_src.size = Search::ChrFind(m_shader_vertex_passthrough, 0) - m_shader_vertex_passthrough;
-    fragment_src.data = (u8*)m_shader_fragment_passthrough;
-    fragment_src.size = Search::ChrFind(m_shader_fragment_passthrough, 0) - m_shader_fragment_passthrough;
+    Bytes vertex_src = Bytes::CreateString(m_shader_vertex_passthrough);
+    Bytes fragment_src = Bytes::CreateString(m_shader_fragment_passthrough);
 
     vertex.compile(ShaderStage::Vertex, vertex_src);
     fragment.compile(ShaderStage::Fragment, fragment_src);
@@ -133,63 +132,25 @@ bool GLEAM_Quad_Drawer::compile_shaders()
 
     m_pip.bind();
 
+    Vector<GLEAM_UniformDescriptor> desc;
+    Vector<GLEAM_ProgramParameter> params;
+    GLEAM_API::GetShaderUniformState(m_pip, &desc, &params);
+
+    for(auto const& d : desc)
+    {
+        if(d.m_name == "tex")
+            m_texLoc = d;
+        if(d.m_name == "transform")
+            m_transformLoc = d;
+    }
+
     return status;
-//    m_pip.
-    /*
-    CGhnd shaders[2];
-
-    CGL33::ShaderAlloc(1,ShaderStage::Vertex,&shaders[0]);
-    CGL33::ShaderAlloc(1,ShaderStage::Fragment,&shaders[1]);
-
-    CGL33::ShaderSource(shaders[0],1,&m_shader_vertex_passthrough);
-    CGL33::ShaderSource(shaders[1],1,&m_shader_fragment_passthrough);
-
-    if(!CGL33::ShaderCompile(shaders[0]) || !CGL33::ShaderCompile(shaders[1]))
-    {
-        cWarning("Failed to compile passthrough shaders! Fuck this");
-        cDebug("Vertex: {0}",CGL33::ShaderGetLog(shaders[0]));
-        cDebug("Fragment: {0}",CGL33::ShaderGetLog(shaders[1]));
-
-        CGL33::ShaderFree(2,shaders);
-
-        return false;
-    }
-
-    CGL33::ProgramAlloc(1,&m_prg);
-
-    CGL33::ShaderAttach(m_prg,shaders[0]);
-    CGL33::ShaderAttach(m_prg,shaders[1]);
-
-    if(!CGL33::ProgramLink(m_prg))
-    {
-        cWarning("Failed to link passthrough program! Fuck this");
-        cDebug("Log: {0}",CGL33::ProgramGetLog(m_prg));
-
-        CGL33::ShaderDetach(m_prg,shaders[0]);
-        CGL33::ShaderDetach(m_prg,shaders[1]);
-
-        CGL33::ShaderFree(2,shaders);
-
-        CGL33::ProgramFree(1,&m_prg);
-
-        return false;
-    }
-
-    CGL33::ShaderDetach(m_prg,shaders[0]);
-    CGL33::ShaderDetach(m_prg,shaders[1]);
-
-    CGL33::ShaderFree(2,shaders);
-
-    m_tex_unif = CGL33::ProgramUnifGetLoc(m_prg,"tex");
-    m_trans_unif = CGL33::ProgramUnifGetLoc(m_prg,"transform");
-
-    return true;
-    */
 }
 
 void GLEAM_Quad_Drawer::create_vbo_data()
 {
-    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::ReadOnly, sizeof(m_vertex_quad_data));
+    static GLEAM_ArrayBuffer m_buffer(ResourceAccess::ReadOnly,
+                                      sizeof(m_vertex_quad_data));
 
     m_buffer.alloc();
     m_buffer.commit(sizeof(m_vertex_quad_data), m_vertex_quad_data);
@@ -202,6 +163,9 @@ void GLEAM_Quad_Drawer::create_vbo_data()
     pos.m_idx = 0;
     tex.m_idx = 1;
 
+    pos.m_size = 3;
+    tex.m_size = 2;
+
     pos.m_stride = tex.m_stride = sizeof(scalar) * 5;
     tex.m_off = sizeof(scalar) * 3;
 
@@ -209,32 +173,6 @@ void GLEAM_Quad_Drawer::create_vbo_data()
     m_desc.addAttribute(tex);
 
     m_desc.bindBuffer(0, m_buffer);
-
-    /*
-    CGL33::BufAlloc(1,&m_vbo);
-#if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOAlloc(1,&m_vao);
-#endif
-
-    CGL33::BufBind(BufType::ArrayData,m_vbo);
-    CGL33::BufData(BufType::ArrayData,sizeof(m_vertex_quad_data),
-                   m_vertex_quad_data,ResourceAccess::ReadOnly);
-    CGL33::BufBind(BufType::ArrayData,0);
-    */
-}
-
-void GLEAM_Quad_Drawer::set_vao_attributes()
-{
-//    glBindVertexArray(m_vao);
-//#if !defined(COFFEE_ONLY_GLES20)
-//    CGL33::VAOBind(m_vao);
-//#else
-//    CGL33::BufBind(BufType::ArrayData,m_vbo);
-//#endif
-//    CGL33::VAOEnableAttrib(0);
-//    CGL33::VAOEnableAttrib(1);
-//    CGL33::VAOAttribPointer(0,3,TypeEnum::Scalar,false,sizeof(scalar)*5,0);
-//    CGL33::VAOAttribPointer(1,2,TypeEnum::Scalar,false,sizeof(scalar)*5,sizeof(scalar)*3);
 }
 
 }

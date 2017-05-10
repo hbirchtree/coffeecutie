@@ -9,6 +9,17 @@ namespace Coffee{
 template<typename T>
 struct _cbasic_data_chunk
 {
+    template<typename DT>
+    STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
+    {
+        return {C_FCAST<T*>(&obj), sizeof(DT)};
+    }
+
+    STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
+    {
+        return {C_FCAST<u8*>(src), C_FCAST<szptr>(strchr(src, 0) - src)};
+    }
+
     T& operator[] (szptr i)
     {
         return data[i];

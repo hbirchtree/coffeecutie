@@ -98,6 +98,15 @@ public:
 
     virtual void injectEvent(CDEvent const&, c_cptr) = 0;
 
+    virtual Vector<EventHandlerI>* getEventHandlersI()
+    {
+        return nullptr;
+    }
+    virtual Vector<EventHandlerD>* getEventHandlersD()
+    {
+        return nullptr;
+    }
+
     /*!
      * \brief Get current context time, can be returned by the context or the system
      * \return Current context time

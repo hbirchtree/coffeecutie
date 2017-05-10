@@ -22,7 +22,7 @@ struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
     void bind();
     void unbind();
 private:
-    GLEAM_ElementBuffer const* m_ibuffer;
+    GLEAM_ElementBuffer const* m_ibuffer = nullptr;
     Vector<GLEAM_VertAttribute> m_attributes;
     CGhnd m_handle;
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "gleam_types_rhi.h"
+#include "gleam_shader_rhi.h"
+#include "gleam_vertex_rhi.h"
 
 namespace Coffee{
 namespace RHI{
@@ -15,15 +17,11 @@ struct GLEAM_Quad_Drawer
 protected:
     bool compile_shaders();
     void create_vbo_data();
-    void set_vao_attributes();
 
-    CGhnd m_vbo;
-    CGhnd m_vao;
-    CGhnd m_prg;
-
-    int32 m_tex_size_unif;
-    int32 m_trans_unif;
-    int32 m_tex_unif;
+    GLEAM_Pipeline m_pip;
+    GLEAM_UniformDescriptor m_texLoc;
+    GLEAM_UniformDescriptor m_transformLoc;
+    GLEAM_VertDescriptor m_desc;
 };
 
 }
