@@ -18,13 +18,13 @@ struct GLEAM_API : GraphicsAPI
     /* Enumerations */
     enum TextureFlags
     {
-        TextureDMABuffered = 1,
-        TextureAutoMipmapped,
+        TextureDMABuffered = 1, /*!< Use DMA transfer for texture if available on hardware */
+        TextureAutoMipmapped, /*!< Generate automatic mipmaps on texture */
     };
     enum AttributeFlags
     {
-        AttributePacked         = 0x1,
-        AttributeNormalization  = 0x2,
+        AttributePacked         = 0x1, /*!< For integer types, loads them through the VertexAttribPointer() function */
+        AttributeNormalization  = 0x2, /*!< For integers loaded with VertexAttribPointer(), apply normalization */
     };
 
     /* These access the PBO queue */
