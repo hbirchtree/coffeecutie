@@ -290,18 +290,22 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
     }else
 #endif
     {
+        if(vstate.m_view.size() > 0)
         {
             auto sview = vstate.view(0);
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
             GLC::ViewportSet(tview);
         }
-//        GLC::DepthSet(&vstate.depth(0));
+        if(vstate.m_depth.size() > 0)
+            GLC::DepthSet(vstate.depth(0));
+        if(vstate.m_scissor.size() > 0)
         {
             auto sview = vstate.scissor(0);
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
             GLC::ScissorSet(tview);
             GLC::Enable(Feature::ScissorTest);
-        }
+        }else
+            GLC::Disable(Feature::ScissorTest);
     }
 }
 

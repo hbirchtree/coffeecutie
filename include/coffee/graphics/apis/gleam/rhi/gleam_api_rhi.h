@@ -23,7 +23,8 @@ struct GLEAM_API : GraphicsAPI
     };
     enum AttributeFlags
     {
-        AttributePacked = 1,
+        AttributePacked         = 0x1,
+        AttributeNormalization  = 0x2,
     };
 
     /* These access the PBO queue */

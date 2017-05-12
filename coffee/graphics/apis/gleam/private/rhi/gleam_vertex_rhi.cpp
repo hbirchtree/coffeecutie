@@ -17,6 +17,8 @@ static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
             bool use_integer = false;
             switch(attr.type())
             {
+            case TypeEnum::Byte:
+            case TypeEnum::UByte:
             case TypeEnum::Short:
             case TypeEnum::UShort:
             case TypeEnum::Int:
@@ -25,27 +27,21 @@ static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
             case TypeEnum::ULL:
                 use_integer = true;
                 break;
-            case TypeEnum::Byte:
-            case TypeEnum::UByte:
-            case TypeEnum::Scalar:
-            case TypeEnum::BigScalar:
-#endif
-
-#if !defined(COFFEE_ONLY_GLES20)
+            default:
                 break;
             }
-
             if(use_integer && !(attr.m_flags & GLEAM_API::AttributePacked))
                 CGL33::VAOAttribIPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.stride(),
                             attr.bufferOffset()+attr.offset());
             else
+#endif
                 CGL33::VAOAttribPointer(
                             attr.index(),attr.size(),attr.type(),
-                            false,attr.stride(),
+                            attr.m_flags & GLEAM_API::AttributeNormalization,
+                            attr.stride(),
                             attr.bufferOffset()+attr.offset());
-#endif
 
 #if !defined(COFFEE_ONLY_GLES20)
             if(attr.instanced())
