@@ -20,7 +20,7 @@ struct GLEAM_Shader : GraphicsAPI::Shader
     {
     }
 
-    bool compile(ShaderStage stage, Bytes& data);
+    bool compile(ShaderStage stage, Bytes const& data);
     void dealloc();
 
 protected:
@@ -47,8 +47,10 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
 
     bool assemble();
 
-    void bind();
-    void unbind();
+    void bind() const;
+    void unbind() const;
+
+    void dealloc();
 protected:
     CGhnd m_handle;
 

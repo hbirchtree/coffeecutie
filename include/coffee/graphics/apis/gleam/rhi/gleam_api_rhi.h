@@ -21,6 +21,10 @@ struct GLEAM_API : GraphicsAPI
         TextureDMABuffered = 1,
         TextureAutoMipmapped,
     };
+    enum AttributeFlags
+    {
+        AttributePacked = 1,
+    };
 
     /* These access the PBO queue */
     friend struct GLEAM_Surface2D;
@@ -75,6 +79,7 @@ struct GLEAM_API : GraphicsAPI
     using UNIFDESC = GLEAM_UniformDescriptor;
     using UNIFVAL = GLEAM_UniformValue;
     using UNIFSMP = GLEAM_SamplerHandle;
+    using PPARAM = GLEAM_ProgramParameter;
 
     using USTATE = GLEAM_ShaderUniformState;
     using RASTSTATE = RasterizerState;
@@ -94,6 +99,8 @@ struct GLEAM_API : GraphicsAPI
 
     using PipelineState = Map<ShaderStage,const GLEAM_ShaderUniformState &>;
 
+    using PSTATE = PipelineState;
+
     /* "Loose" functions */
 public:
     /* Dump the framebuffer pixels to a buffer, might be asynchronous */
@@ -109,38 +116,38 @@ public:
     static API_CONTEXT GetLoadAPI();
 
     /* i specifies view index for indexed views, 0 for  */
-    static void SetRasterizerState(RasterizerState const& rstate, uint32 i = 0);
-    static void SetViewportState(ViewportState const& vstate, uint32 i = 0);
-    static void SetBlendState(BlendState const& bstate, uint32 i = 0);
-    static void SetDepthState(DepthState const& dstate, uint32 i = 0);
-    static void SetStencilState(StencilState const& sstate, uint32 i = 0);
+    static void SetRasterizerState(RASTSTATE const& rstate, uint32 i = 0);
+    static void SetViewportState(VIEWSTATE const& vstate, uint32 i = 0);
+    static void SetBlendState(BLNDSTATE const& bstate, uint32 i = 0);
+    static void SetDepthState(DEPTSTATE const& dstate, uint32 i = 0);
+    static void SetStencilState(STENSTATE const& sstate, uint32 i = 0);
 
-    static void GetShaderUniformState(GLEAM_Pipeline const& pipeline,
-                                      Vector<GLEAM_UniformDescriptor>* uniforms,
-                                      Vector<GLEAM_ProgramParameter>* params = nullptr)
+    static void GetShaderUniformState(PIP const& pipeline,
+                                      Vector<UNIFDESC>* uniforms,
+                                      Vector<PPARAM>* params = nullptr)
     {
         GLEAM::GetShaderUniforms(pipeline,uniforms,params);
     }
 
-    static void SetTessellatorState(TessellatorState const& tstate);
-    static void SetPixelProcessState(PixelProcessState const& pstate, bool unpack = true);
-    static void SetShaderUniformState(const GLEAM_Pipeline &pipeline, ShaderStage const& stage,
-                                      GLEAM_ShaderUniformState const& ustate);
+    static void SetTessellatorState(TSLRSTATE const& tstate);
+    static void SetPixelProcessState(PIXLSTATE const& pstate, bool unpack = true);
+    static void SetShaderUniformState(const PIP &pipeline, ShaderStage const& stage,
+                                      USTATE const& ustate);
 
     static void PreDrawCleanup();
 
     static void Draw(
-            GLEAM_Pipeline const& pipeline,
-            PipelineState const& ustate,
+            PIP const& pipeline,
+            PSTATE const& ustate,
             V_DESC& vertices,
-            DrawCall const& d,DrawInstanceData const& i,
-            OccludeQuery* query = nullptr);
+            D_CALL const& d,D_DATA const& i,
+            Q_OCC* query = nullptr);
     static void DrawConditional(
-            GLEAM_Pipeline const& pipeline,
-            PipelineState const& ustate,
+            PIP const& pipeline,
+            PSTATE const& ustate,
             V_DESC& vertices,
-            DrawCall const& d,
-            DrawInstanceData const& i, OccludeQuery &c);
+            D_CALL const& d,
+            D_DATA const& i, Q_OCC &c);
 
     static FB_T& DefaultFramebuffer();
 

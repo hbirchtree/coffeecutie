@@ -181,8 +181,8 @@ inline CGenum to_enum(
     case Feature::ClipDist:
         return GL_CLIP_DISTANCE0+((offset>7) ? 7 : offset);
 #endif
-    default:
-        return GL_NONE;
+    case Feature::Culling:
+        return GL_CULL_FACE;
     }
 }
 

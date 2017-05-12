@@ -12,8 +12,8 @@ struct GLEAM_VBuffer : GraphicsAPI::VertexBuffer
     friend struct GLEAM_Surface2D;
     friend struct GLEAM_Surface2DArray;
 
-    GLEAM_VBuffer(BufType type, ResourceAccess acc, szptr size):
-        VertexBuffer(acc,size),
+    GLEAM_VBuffer(BufType type, ResourceAccess acc, szptr):
+        VertexBuffer(acc),
         m_type(type),
         m_handle(0)
     {

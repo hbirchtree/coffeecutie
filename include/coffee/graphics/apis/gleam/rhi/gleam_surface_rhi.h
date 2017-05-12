@@ -21,6 +21,7 @@ protected:
     void upload_info(PixCmp comp, uint32 mip, uint32 d);
 
     Texture m_type;
+public:
     CGhnd m_handle;
 };
 
@@ -34,7 +35,7 @@ struct GLEAM_Surface2D : GLEAM_Surface
 
     void upload(BitFormat fmt, PixelComponents comp,
                 CSize size, c_cptr data,
-                CPoint offset = {}, uint32 mip = 0);
+                CPoint offset = {0,0}, uint32 mip = 0);
 
     /*TODO: Add download function */
 
@@ -56,7 +57,7 @@ struct GLEAM_Surface3D_Base : GraphicsAPI::Surface
 
     void upload(BitFormat fmt, PixelComponents comp,
                 CSize3 size, c_cptr data,
-                CPoint3 offset = {}, uint32 mip = 0);
+                CPoint3 offset = {0,0,0}, uint32 mip = 0);
 
     /*TODO: Add download function */
 

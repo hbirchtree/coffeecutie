@@ -238,7 +238,11 @@ void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
         GLC::ColorMaski(i,rstate.colorMask());
 
     if(rstate.culling())
-        GLC::CullMode(((Face)rstate.culling())&Face::FaceMask);
+    {
+        GLC::Enable(Feature::Culling);
+        GLC::CullMode(C_CAST<Face>(rstate.culling())&Face::FaceMask);
+    }else
+        GLC::Disable(Feature::Culling);
 }
 
 void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
@@ -246,7 +250,7 @@ void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::TessellationSupported())
     {
-        CGL43::PatchParameteri(PatchProperty::Vertices,tstate.patchCount());
+        CGL43::PatchParameteri(PatchProperty::Vertices, tstate.patchCount());
         /*TODO: Add configurability for inner and outer levels in place of TCS */
     }
 #endif
@@ -295,7 +299,8 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
         {
             auto sview = vstate.scissor(0);
             CRect64 tview(sview.x,sview.y,sview.w,sview.h);
-//            GLC::ScissorSet(&tview);
+            GLC::ScissorSet(tview);
+            GLC::Enable(Feature::ScissorTest);
         }
     }
 }
@@ -620,6 +625,8 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     if(query)
         query->begin();
+
+    pipeline.bind();
 
     for(auto const& s : ustate)
     {

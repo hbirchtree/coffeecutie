@@ -8,26 +8,45 @@ namespace RHI{
 namespace GLEAM{
 
 static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
-                             uint32 binding, GLEAM_ArrayBuffer& buf)
+                             uint32 binding, GLEAM_ArrayBuffer&)
 {
     for(GLEAM_VertAttribute const& attr : m_attributes)
         if(binding == attr.bufferAssociation())
         {
 #if !defined(COFFEE_ONLY_GLES20)
-            if(attr.type() != TypeEnum::Int && attr.type() != TypeEnum::LL &&
-                    attr.type() != TypeEnum::UInt && attr.type() != TypeEnum::ULL)
+            bool use_integer = false;
+            switch(attr.type())
+            {
+            case TypeEnum::Short:
+            case TypeEnum::UShort:
+            case TypeEnum::Int:
+            case TypeEnum::UInt:
+            case TypeEnum::LL:
+            case TypeEnum::ULL:
+                use_integer = true;
+                break;
+            case TypeEnum::Byte:
+            case TypeEnum::UByte:
+            case TypeEnum::Scalar:
+            case TypeEnum::BigScalar:
 #endif
-                CGL33::VAOAttribPointer(
-                            attr.index(),attr.size(),attr.type(),
-                            false,attr.stride(),
-                            attr.bufferOffset()+attr.offset());
+
 #if !defined(COFFEE_ONLY_GLES20)
-            else
+                break;
+            }
+
+            if(use_integer && !(attr.m_flags & GLEAM_API::AttributePacked))
                 CGL33::VAOAttribIPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.stride(),
                             attr.bufferOffset()+attr.offset());
+            else
+                CGL33::VAOAttribPointer(
+                            attr.index(),attr.size(),attr.type(),
+                            false,attr.stride(),
+                            attr.bufferOffset()+attr.offset());
 #endif
+
 #if !defined(COFFEE_ONLY_GLES20)
             if(attr.instanced())
                 CGL33::VAODivisor(attr.index(),1);

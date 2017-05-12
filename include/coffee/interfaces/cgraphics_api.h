@@ -61,13 +61,14 @@ struct GraphicsAPI
     struct RasterizerState
     {
         RasterizerState():
+            m_culling(0),
+            m_colOp(LogicOp::NOOP),
+            m_colMask({1,1,1,1}),
             m_discard(false),
-            m_culling(false),
             m_wireframe(false),
             m_polysmooth(false),
             m_dither(false),
-            m_colOp(LogicOp::NOOP),
-            m_colMask({1,1,1,1})
+            m_doCull(false)
         {
         }
 
@@ -76,17 +77,19 @@ struct GraphicsAPI
         bool wireframeRender()const{return m_wireframe;}
         bool polygonSmooth()const{return m_polysmooth;}
         bool dither()const{return m_dither;}
+        bool doCull()const{return m_doCull;}
 
         LogicOp colorOp()const{return m_colOp;}
         CColorMask colorMask()const{return m_colMask;}
 
-        bool m_discard;
         uint32 m_culling;
+        LogicOp m_colOp;
+        CColorMask m_colMask;
+        bool m_discard;
         bool m_wireframe;
         bool m_polysmooth;
         bool m_dither;
-        LogicOp m_colOp;
-        CColorMask m_colMask;
+        bool m_doCull;
     };
 
     struct TessellatorState
@@ -236,7 +239,7 @@ struct GraphicsAPI
      */
     struct VertexBuffer
     {
-        VertexBuffer(ResourceAccess access, szptr size):m_access(access),m_size(size){}
+        VertexBuffer(ResourceAccess access,szptr size=0):m_access(access),m_size(size){}
 
         /*!
          * \brief Pointer to data, access restricted to original settings
@@ -339,6 +342,7 @@ struct GraphicsAPI
         uint32 m_size;
         uint32 m_off;
         uint32 m_stride;
+        uint32 m_flags;
         TypeEnum m_type;
         bool m_instanced;
     };

@@ -8,7 +8,7 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
-bool GLEAM_Shader::compile(ShaderStage stage, Bytes &data)
+bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
@@ -122,7 +122,7 @@ bool GLEAM_Pipeline::assemble()
     return false;
 }
 
-void GLEAM_Pipeline::bind()
+void GLEAM_Pipeline::bind() const
 {
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
         CGL33::ProgramUse(m_handle);
@@ -132,13 +132,23 @@ void GLEAM_Pipeline::bind()
 #endif
 }
 
-void GLEAM_Pipeline::unbind()
+void GLEAM_Pipeline::unbind() const
 {
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
         CGL33::ProgramUse(0);
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
         CGL43::PipelineBind(0);
+#endif
+}
+
+void GLEAM_Pipeline::dealloc()
+{
+    if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
+        CGL33::ProgramFree(1, &m_handle);
+#if !defined(COFFEE_ONLY_GLES20)
+    else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
+        CGL43::PipelineFree(0, &m_handle);
 #endif
 }
 
@@ -233,6 +243,30 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         }
         /* Get uniforms buffers */
         {
+        }
+
+        /* Get attribute locations, names and types */
+        {
+            u32 num = 0;
+            cstring_w* names = nullptr;
+            u32* types = nullptr;
+            i32* sizes = nullptr;
+            CGL33::ProgramAttribGet(prog, &num, &names, &types, &sizes);
+            params->reserve(num);
+
+            for(u32 i=0;i<num;i++)
+            {
+                params->push_back({});
+                auto& att = params->back();
+
+                att.m_name = names[i];
+                att.m_idx = C_CAST<u16>(CGL33::ProgramAttribLoc(prog, names[i]));
+                att.m_flags = to_enum_shtype(types[i]);
+                delete[] names[i];
+            }
+            delete[] names;
+            delete[] types;
+            delete[] sizes;
         }
     }
 #if !defined(COFFEE_ONLY_GLES20)

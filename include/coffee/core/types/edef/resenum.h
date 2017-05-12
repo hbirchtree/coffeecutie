@@ -94,4 +94,6 @@ enum class BitFormat : uint8
     Scalar_32_Int_24_8,
 };
 
+using BitFmt = BitFormat;
+
 }

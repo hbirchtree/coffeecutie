@@ -159,6 +159,7 @@ enum class Feature
     Blend,
 
     ClipDist,
+    Culling,
 
     DebugOutput,
     DebugOutputSync,
