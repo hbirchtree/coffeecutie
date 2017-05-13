@@ -60,7 +60,3 @@ if(ANDROID)
 
     add_definitions ( "-DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}" )
 endif()
-
-if(NOT COFFEE_BUILD_GLES)
-    add_definitions("-DCOFFEE_GLEAM_DESKTOP")
-endif()

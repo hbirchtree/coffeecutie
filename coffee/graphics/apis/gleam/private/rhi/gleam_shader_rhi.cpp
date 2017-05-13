@@ -246,6 +246,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         }
 
         /* Get attribute locations, names and types */
+        if(params)
         {
             u32 num = 0;
             cstring_w* names = nullptr;
