@@ -87,6 +87,11 @@ option ( COFFEE_BUILD_ASSIMP "Build with Assimp loader" OFF)
 # Chromium Embedded Framework
 option ( COFFEE_BUILD_CEF "Build with CEF" OFF )
 
+if(COFFEE_BUILD_ASSIMP)
+    find_package(assimp REQUIRED)
+    include_directories(${ASSIMP_INCLUDE_DIR})
+endif()
+
 #
 #
 
