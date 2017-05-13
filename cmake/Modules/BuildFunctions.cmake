@@ -22,6 +22,29 @@ macro(TARGET_ENABLE_CXX11 TARGET)
     endif()
 endmacro()
 
+macro(COFFEE_BUNDLE_INCLUDES INCLUDE_DIR)
+    if(NOT (NACL OR ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
+        install(
+            DIRECTORY ${INCLUDE_DIR}
+            DESTINATION include
+            )
+    endif()
+endmacro()
+
+macro(COFFEE_BUNDLE_LIBRARY LIBRARY )
+    if(ANDROID)
+        install(
+            FILES ${LIBRARY}
+            DESTINATION lib/${ANDROID_ABI}
+            )
+    elseif(NOT APPLE AND NOT (NACL OR ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
+        install (
+            FILES ${LIBRARY}
+            DESTINATION lib
+            )
+    endif()
+endmacro()
+
 macro(COFFEE_GEN_LICENSEINFO TARGET LICENSES)
     set ( LICENSE_FILE "${CMAKE_CURRENT_BINARY_DIR}/LicenseInfo_${TARGET}.c" )
 

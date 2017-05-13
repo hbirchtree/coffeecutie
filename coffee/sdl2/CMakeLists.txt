@@ -37,15 +37,9 @@ set ( CoffeeSDL2Audio_SRCS
 
 find_package ( SDL2 REQUIRED)
 
-#if(NOT SDL2_FOUND)
-#    message(FATAL_ERROR "Failed to locate SDL2")
-#endif()
-
-# Emscripten has an SDL2 port
 include_directories ( SYSTEM
     ${SDL2_INCLUDE_DIR}
     )
-
 
 coffee_add_library ( CoffeeWindow_X11 "${CoffeeX11_SRCS}" "CoffeeCore"
     "${CMAKE_SOURCE_DIR}/include/coffee/sdl2"
@@ -76,21 +70,5 @@ set ( LIBS
 coffee_add_library ( CoffeeSDL2 "${CoffeeSDL2_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/sdl2")
 
-if(NOT (NACL OR ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
-    install (
-        DIRECTORY
-        ${SDL2_INCLUDE_DIR}
-
-        DESTINATION
-        include
-        )
-    if(NOT APPLE) # Apple platforms will supply their own SDL2
-        install (
-            FILES
-            ${SDL2_LIBRARY}
-
-            DESTINATION
-            lib
-            )
-    endif()
-endif()
+coffee_bundle_includes( ${SDL2_INCLUDE_DIR} )
+coffee_bundle_library( ${SDL2_LIBRARY} )

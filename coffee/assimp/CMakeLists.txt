@@ -14,17 +14,5 @@ coffee_add_library (
     "CoffeeCore;${ASSIMP_LIBRARIES}"
     "${CMAKE_SOURCE_DIR}/include/coffee/assimp" )
 
-install (
-    DIRECTORY
-    ${ASSIMP_INCLUDE_DIR}/assimp
-
-    DESTINATION
-    include
-    )
-install (
-    FILES
-    ${ASSIMP_LIBRARIES}
-
-    DESTINATION
-    lib
-    )
+coffee_bundle_includes ( ${ASSIMP_INCLUDE_DIR}/assimp )
+coffee_bundle_library ( ${ASSIMP_LIBRARIES} )
