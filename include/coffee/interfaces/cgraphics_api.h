@@ -21,10 +21,25 @@
 #include "cgraphics_pixops.h"
 
 namespace Coffee{
+namespace Display{
+struct CDProperties;
+}
 namespace RHI{
 
 struct GraphicsAPI
 {
+    /* Enumerations */
+    enum TextureFlags
+    {
+        TextureDMABuffered = 1, /*!< Use DMA transfer for texture if available on hardware */
+        TextureAutoMipmapped, /*!< Generate automatic mipmaps on texture */
+    };
+    enum AttributeFlags
+    {
+        AttributePacked         = 0x1, /*!< For integer types, loads them through the VertexAttribPointer() function */
+        AttributeNormalization  = 0x2, /*!< For integers loaded with VertexAttribPointer(), apply normalization */
+    };
+
     struct GraphicsDevice
     {
     };
@@ -262,10 +277,8 @@ struct GraphicsAPI
      */
     struct ElementBuffer : VertexBuffer
     {
-        ElementBuffer(ResourceAccess access, TypeEnum itype, szptr size)
-            :VertexBuffer(access,size),m_itype(itype){}
-    protected:
-        TypeEnum m_itype;
+        ElementBuffer(ResourceAccess access, szptr size)
+            :VertexBuffer(access,size){}
     };
     /*!
      * \brief Contains data which will be read by a shader
@@ -374,7 +387,7 @@ struct GraphicsAPI
         void bindBuffer(uint32,VertexBuffer&){}
 
         void addAttribute(VertexAttribute const&){}
-        void setIndexBuffer(ElementBuffer const&){}
+        void setIndexBuffer(ElementBuffer const*){}
     };
 
     /*!
@@ -515,13 +528,15 @@ struct GraphicsAPI
         void allocate(CSizeT const&,PixCmp){}
         void dealloc(){}
 
-        void upload(BitFormat,PixCmp,CSizeT const&,c_cptr,PointT const&){}
+        void upload(BitFormat,PixCmp,CSizeT const&,c_cptr,PointT const& = {}){}
 
         uint32 size() const {return 0;}
         bool isArray() const {return b_array;}
         uint32 arraySize() const {return m_arrsize;}
         uint32 mipmaps() const {return m_mips;}
         PixelFormat format() const {return m_pixfmt;}
+
+        u8& glTexHandle() {static u8 m_; return m_;}
 
         PixelFormat m_pixfmt;
         bool b_array;
@@ -543,6 +558,8 @@ struct GraphicsAPI
      */
     struct SamplerHandle
     {
+        u8& glTexHandle() {static u8 m_; return m_;}
+        u8& glSamplerHandle() {static u8 m_; return m_;}
     };
 
     /*!
@@ -696,8 +713,9 @@ struct GraphicsAPI
      * \param d General drawcall settings
      * \param i Data associated with instance of drawcall
      */
-    static void Draw(const Pipeline &pipeline,
-                     PipelineState const& ustate,
+    static void Draw(const Pipeline &,
+                     PipelineState const&,
+                     VertexDescriptor&,
                      DrawCall const&,
                      DrawInstanceData const&,
                      OccludeQuery<int>* = nullptr){}
@@ -707,15 +725,16 @@ struct GraphicsAPI
      * \param i
      * \param c An occlusion query to be considered in the drawcall
      */
-    static void DrawConditional(const Pipeline &pipeline,
-                                PipelineState const& ustate,
+    static void DrawConditional(const Pipeline &,
+                                PipelineState const&,
+                                VertexDescriptor&,
                                 DrawCall const&,
                                 DrawInstanceData const&,
                                 OccludeQuery<int> const&){}
 
     static void SetRasterizerState(RasterizerState const&){}
     static void SetTessellatorState(TessellatorState const&){}
-    static void SetViewportState(ViewportState const&,uint32){}
+    static void SetViewportState(ViewportState const&,uint32 = 0){}
     static void SetBlendState(BlendState const&){}
     static void SetDepthState(DepthState<uint32> const&){}
     static void SetStencilState(StencilState<uint32,uint32> const&,uint32){}
@@ -800,14 +819,14 @@ struct NullAPI : GraphicsAPI
     /* Null renderer types, do not inherit from these */
     struct S_2D : Surface2D
     {
-        S_2D(PixelFormat fmt,uint32 mips, uint32 flags):
+        S_2D(PixelFormat fmt,uint32 mips = 1, uint32 flags = 0):
             Surface2D(fmt,false,0,mips,flags)
         {}
         CSize m_size;
     };
     struct S_3D : Surface3D
     {
-        S_3D(PixelFormat fmt,uint32 mips, uint32 flags):
+        S_3D(PixelFormat fmt,uint32 mips = 1, uint32 flags = 0):
             Surface3D(fmt,false,0,mips,flags)
         {}
         CSize3 m_size;
@@ -816,11 +835,13 @@ struct NullAPI : GraphicsAPI
 
     struct S_2DA : Surface2DArray
     {
-        S_2DA(PixelFormat fmt,uint32 mips, uint32 flags):
+        S_2DA(PixelFormat fmt,uint32 mips = 1, uint32 flags = 0):
             Surface2DArray(fmt,false,0,mips,flags)
         {}
         CSize3 m_size;
     };
+
+    using API_CONTEXT = Function<bool(bool)>;
 
     using FB_T = RenderTarget;
     using RBUF = RenderDummy;
@@ -852,6 +873,7 @@ struct NullAPI : GraphicsAPI
     using UNIFDESC = UniformDescriptor;
     using UNIFVAL = UniformValue;
     using UNIFSMP = SamplerHandle;
+    using PPARAM = ProgramParameter;
 
     using USTATE = ShaderUniformState;
     using RASTSTATE = RasterizerState;
@@ -862,13 +884,35 @@ struct NullAPI : GraphicsAPI
     using TSLRSTATE = TessellatorState;
     using PIXLSTATE = PixelProcessState;
 
+    using PSTATE = PipelineState;
+
     using G_CTXT = GraphicsContext;
     using G_TCTXT = GraphicsThreadContext;
     using G_DEV = GraphicsDevice;
 
     using Q_OCC = OccludeQuery;
 
-    static FB_T DefaultFramebuffer;
+    static FB_T& DefaultFramebuffer()
+    {
+        static FB_T m_;
+        return m_;
+    }
+
+    static API_CONTEXT GetLoadAPI()
+    {
+        return [](bool)
+        {
+            return true;
+        };
+    }
+
+    static void GetDefaultVersion(i32&, i32&)
+    {
+    }
+
+    static void GetDefaultProperties(Display::CDProperties&)
+    {
+    }
 
     /* We define a profiler namespace */
     struct PRF

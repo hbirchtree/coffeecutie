@@ -10,6 +10,8 @@ echo "
 #"
 
 echo '
+set ( COFFEE_ROOT_DIR "${COFFEE_ROOT_DIR}" CACHE PATH "" )
+
 set ( COFFEE_SEARCH_PATHS
     /usr/local
     /usr
@@ -18,8 +20,8 @@ set ( COFFEE_SEARCH_PATHS
     ~/Library/Frameworks
     /Library/Frameworks
 
-    "${COFFEE_ROOT_DIR}"
-    "$ENV{COFFEE_ROOT_DIR}"
+    ${COFFEE_ROOT_DIR}
+    $ENV{COFFEE_ROOT_DIR}
     )
 set ( COFFEE_LIBRARY_SUFFIXES
     lib
@@ -32,7 +34,6 @@ find_path ( COFFEE_INCLUDE_DIR_TMP
     coffee/CCore
 
     PATHS
-    ${COFFEE_ROOT_DIR}
     ${COFFEE_SEARCH_PATHS}
 
     PATH_SUFFIXES
@@ -82,6 +83,7 @@ WINDOW_X11
 WINDOW_DMX
 CONTEXT_EGL
 CONTEXT_GLX
+CORE
 )
 
 gleam_libs=(

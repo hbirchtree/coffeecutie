@@ -192,7 +192,7 @@ GLEAM_API::API_CONTEXT GLEAM_API::GetLoadAPI()
     };
 }
 
-void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
+void GLEAM_API::SetRasterizerState(const RASTSTATE &rstate, uint32 i)
 {
     if(GL_CURR_API==GLES_3_0)
     {
@@ -245,7 +245,7 @@ void GLEAM_API::SetRasterizerState(const RasterizerState &rstate, uint32 i)
         GLC::Disable(Feature::Culling);
 }
 
-void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
+void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 {
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::TessellationSupported())
@@ -256,7 +256,7 @@ void GLEAM_API::SetTessellatorState(const TessellatorState& tstate)
 #endif
 }
 
-void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
+void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 {
 #ifdef COFFEE_GLEAM_DESKTOP
     if(vstate.multiview())
@@ -309,7 +309,7 @@ void GLEAM_API::SetViewportState(const ViewportState& vstate, uint32 i)
     }
 }
 
-void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
+void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 {
     if(GL_CURR_API==GLES_3_0 || GL_CURR_API == GLES_2_0)
     {
@@ -359,7 +359,7 @@ void GLEAM_API::SetBlendState(const BlendState& bstate, uint32 i)
     /*TODO: Find semantics for SampleCoverage*/
 }
 
-void GLEAM_API::SetDepthState(const DepthState& dstate, uint32 i)
+void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
 {
     if(GL_CURR_API==GLES_3_0)
     {
@@ -400,7 +400,7 @@ void GLEAM_API::SetDepthState(const DepthState& dstate, uint32 i)
 
 }
 
-void GLEAM_API::SetStencilState(const StencilState& sstate, uint32 i)
+void GLEAM_API::SetStencilState(const STENSTATE& sstate, uint32 i)
 {
     if(GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
     {
@@ -423,7 +423,7 @@ void GLEAM_API::SetStencilState(const StencilState& sstate, uint32 i)
     /*TODO: Implement functionality for more operations */
 }
 
-void GLEAM_API::SetPixelProcessState(const PixelProcessState& pstate, bool unpack)
+void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
 {
     if(pstate.alignment())
         GLC::PixelStore(unpack,PixelOperation::Alignment,pstate.alignment());

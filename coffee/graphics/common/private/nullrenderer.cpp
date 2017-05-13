@@ -3,7 +3,5 @@
 namespace Coffee{
 namespace RHI{
 
-NullAPI::FB_T NullAPI::DefaultFramebuffer = {};
-
 }
 }

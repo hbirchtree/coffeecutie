@@ -17,6 +17,8 @@ struct GLEAM_Surface : GraphicsAPI::Surface
 
     CGhnd handle();
 
+    CGhnd& glTexHandle() {return m_handle;}
+
 protected:
     void upload_info(PixCmp comp, uint32 mip, uint32 d);
 
@@ -97,6 +99,9 @@ struct GLEAM_SamplerHandle
     };
     CGhnd m_sampler;
     Texture m_type;
+
+    CGhnd& glTexHandle() {return texture;}
+    CGhnd& glSamplerHandle() {return m_sampler;}
 };
 
 struct GLEAM_Sampler : GraphicsAPI::Sampler
