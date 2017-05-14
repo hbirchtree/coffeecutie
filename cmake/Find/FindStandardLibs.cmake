@@ -90,7 +90,8 @@ if(ANDROID)
         # Logging and Android functions
         log android
         # OpenGL ES
-        GLESv1_CM GLESv2
+#        GLESv1_CM
+        GLESv2
         EGL
 
         ${SDL2_LIBRARY}
