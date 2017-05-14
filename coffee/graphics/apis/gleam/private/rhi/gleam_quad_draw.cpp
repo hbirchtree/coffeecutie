@@ -58,35 +58,6 @@ void GLEAM_Quad_Drawer::create()
 
 void GLEAM_Quad_Drawer::draw(const Matf4 &xf, GLEAM_Sampler2D &sampler)
 {
-/*
-    CGL33::BufBind(BufType::ArrayData,m_vbo);
-    CGL33::ProgramUse(m_prg);
-    CGL33::Disable(Feature::DepthTest);
-
-    CGL33::Uniformi(m_tex_unif,0);
-
-#if !defined(COFFEE_ONLY_GLES20)
-    CGL33::VAOBind(m_vao);
-#else
-    set_vao_attributes();
-#endif
-
-    sampler.bind(0);
-    CGL33::Uniformfv(m_trans_unif,1,false,&xf);
-
-//    glEnableVertexAttribArray(0);
-//    glEnableVertexAttribArray(1);
-//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(scalar) * 5, 0);
-//    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(scalar) * 5, (c_ptr)(sizeof(scalar) * 3));
-    CGL33::VAOEnableAttrib(0);
-    CGL33::VAOEnableAttrib(1);
-    CGL33::VAOAttribPointer(0,3,TypeEnum::Scalar,false,sizeof(scalar)*5,0);
-    CGL33::VAOAttribPointer(1,2,TypeEnum::Scalar,false,sizeof(scalar)*5,sizeof(scalar)*3);
-
-//    glDrawArrays(GL_TRIANGLES, 0, 6);
-    CGL33::DrawArrays(mode,0,6);
-    */
-
     GLEAM_API::DrawInstanceData di;
     di.m_verts = 6;
 
