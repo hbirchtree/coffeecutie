@@ -30,6 +30,8 @@ function create_base_directories()
 function copy_config_files()
 {
     cp -ur "${COFFEE_DIR}/cmake/Find" "${PROJECT_DIR}/cmake"
+    cp -ur "${COFFEE_DIR}/cmake/Find_Android" "${PROJECT_DIR}/cmake"
+    cp -ur "${COFFEE_DIR}/cmake/Find_Windows" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Modules" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Packaging" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Preload" "${PROJECT_DIR}/cmake"

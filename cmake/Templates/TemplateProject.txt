@@ -9,6 +9,19 @@ set ( COFFEE_PACKAGE_DIRECTORY "${PROJECT_BINARY_DIR}/${CMAKE_PACKAGED_OUTPUT_PR
 set ( COFFEE_DEPLOY_DIRECTORY "${PROJECT_BINARY_DIR}/deploy" )
 set ( COFFEE_SOURCE_TEMPLATE_DIRECTORY "${CMAKE_SOURCE_DIR}/internal/templates" )
 
+if(ANDROID)
+    set ( CMAKE_MODULE_PATH
+        ${CMAKE_SOURCE_DIR}/cmake/Find_Android
+        ${CMAKE_MODULE_PATH}
+        )
+endif()
+if(WIN32)
+    set ( CMAKE_MODULE_PATH
+        ${CMAKE_SOURCE_DIR}/cmake/Find_Windows
+        ${CMAKE_MODULE_PATH}
+        )
+endif()
+
 set ( CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     ${CMAKE_SOURCE_DIR}/cmake/Find
@@ -35,8 +48,13 @@ set ( USERDATA
     "${CMAKE_SOURCE_DIR}/rsrc/@PJNAME@"
     )
 
+set ( BUNDLE_LIBS
+    @BUNDLE_LIBS@
+    )
+
 set ( LIBS
     @LIBS@
+    ;${BUNDLE_LIBS}
     )
 
 set ( PERMS
