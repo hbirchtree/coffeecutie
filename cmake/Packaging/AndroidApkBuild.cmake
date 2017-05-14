@@ -321,11 +321,11 @@ macro(APK_PACKAGE_EXT
                 @ONLY
                 )
         else()
-        configure_file (
-            "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
-            "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
-            @ONLY
-            )
+            configure_file (
+                "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/SDLActivity.java.in"
+                "${BUILD_OUTDIR}/src/org/libsdl/app/SDLActivity.java"
+                @ONLY
+                )
         endif()
 
         configure_file (
