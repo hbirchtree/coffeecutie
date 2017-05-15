@@ -174,6 +174,9 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
     {
         auto mev = C_CAST<CIMouseMoveEvent const*>(data);
 
+        if(mev->btn != CIMouseButtonEvent::LeftButton)
+            break;
+
         camera.rotation.x() += mev->delta.y * 0.05f;
         camera.rotation.y() += mev->delta.x * 0.05f;
 

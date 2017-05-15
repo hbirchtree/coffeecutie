@@ -16,7 +16,7 @@ namespace DebugFun{
 struct OutputPrinterImpl : OutputPrinterDef
 {
     template<typename... Args>
-    static void fprintf(FILE* stream, cstring format, Args... args)
+    static void fprintf(FILE* stream, Severity sev, cstring format, Args... args)
     {
         bool locking = false;
 
@@ -34,16 +34,24 @@ struct OutputPrinterImpl : OutputPrinterDef
 #if defined(COFFEE_ANDROID)
         int flag = 0;
 
-        if(formatted[0] == 'I')
+        switch(sev)
+        {
+        case Severity::Information:
             flag = ANDROID_LOG_INFO;
-        else if(formatted[0] == 'D')
+            break;
+        case Severity::Debug:
             flag = ANDROID_LOG_DEBUG;
-        else if(formatted[0] == 'W')
+            break;
+        case Severity::Medium:
             flag = ANDROID_LOG_WARN;
-        else if(formatted[0] == 'F')
+            break;
+        case Severity::Fatal:
             flag = ANDROID_LOG_ERROR;
-        else if(formatted[0] == 'V')
+            break;
+        case Severity::Verbose:
             flag = ANDROID_LOG_VERBOSE;
+            break;
+        }
 
         __android_log_print(flag, "Coffee", "%s", &formatted[0]);
 #elif defined(__EMSCRIPTEN__)

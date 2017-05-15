@@ -183,6 +183,8 @@ inline CGenum to_enum(
 #endif
     case Feature::Culling:
         return GL_CULL_FACE;
+    default:
+        return GL_NONE;
     }
 }
 
