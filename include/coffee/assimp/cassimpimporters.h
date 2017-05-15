@@ -47,6 +47,8 @@ struct InplaceNode;
 
 namespace ASSIMP {
 
+struct AssimpData;
+using AssimpPtr = UqPtr<AssimpData>;
 using Resource = CResources::Resource;
 
 struct Node : public CObject
@@ -69,9 +71,8 @@ struct NodeList : public LinkList<Node>
     }
 };
 
-struct AssimpData;
 
-extern UqPtr<AssimpData> LoadScene(Resource* source, cstring hint = nullptr);
+extern bool LoadScene(UqPtr<AssimpData> &target, Resource* source, cstring hint = nullptr);
 
 struct ObjectDesc
 {

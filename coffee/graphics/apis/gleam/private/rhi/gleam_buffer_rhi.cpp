@@ -46,7 +46,12 @@ void *GLEAM_VBuffer::map(szptr offset,szptr size)
     if(offset+size > m_size)
         return nullptr;
     bind();
-    return CGL33::BufMapRange(m_type,offset,(size) ? size : m_size,m_access);
+
+    auto acc = m_access;
+    if(GL_CURR_API == GL_3_3)
+        acc ^= ResourceAccess::Persistent;
+
+    return CGL33::BufMapRange(m_type,offset,(size) ? size : m_size,acc);
 #else
     m_mappedBufferFake.resize(size);
     return &m_mappedBufferFake[0];

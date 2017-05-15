@@ -48,8 +48,8 @@ int32 coffee_main(int32, cstring_w*)
                                    nullptr,renderer});
     renderer->installEventHandler({EventHandlers::WindowManagerFullscreen<CDRenderer>,
                                   nullptr,renderer});
-    renderer->installEventHandler({EventHandlers::StandardCamera<CDRenderer, CGCamera>,
-                                  nullptr, renderer});
+    renderer->installEventHandler({EventHandlers::StandardCamera<CGCamera>,
+                                  nullptr, &actual_renderer.cameraReference()});
 
 //    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
 

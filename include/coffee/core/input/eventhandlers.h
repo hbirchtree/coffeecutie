@@ -131,10 +131,10 @@ void ResizeWindowUniversal(void*, CDEvent const& e, c_cptr data)
 {
     ResizeWindowUniversal<GraphicsHandler>(e,data);
 }
-template<typename WindowHandler, typename Camera>
+template<typename Camera>
 void StandardCamera(void* r, const CIEvent& e, c_cptr data)
 {
-    Camera& camera = static_cast<WindowHandler*>(r)->cameraReference();
+    Camera& camera = *C_CAST<Camera*>(r);
     switch(e.type)
     {
     case CIEvent::Keyboard:
@@ -159,6 +159,12 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
         case CK_d:
             camera.position.x() -= 0.05f * acceleration;
             break;
+        case CK_q:
+            camera.position.y() += 0.05f * acceleration;
+            break;
+        case CK_e:
+            camera.position.y() -= 0.05f * acceleration;
+            break;
         default:
             break;
         }
@@ -168,7 +174,10 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
     {
         auto mev = C_CAST<CIMouseMoveEvent const*>(data);
 
+        camera.rotation.x() += mev->delta.y * 0.05f;
+        camera.rotation.y() += mev->delta.x * 0.05f;
 
+        camera.rotation = normalize_quat(camera.rotation);
 
         break;
     }

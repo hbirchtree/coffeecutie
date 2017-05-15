@@ -641,7 +641,7 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     if(d.indexed())
     {
-        szptr elsize = 1;
+        szptr elsize = 4;
         if(i.elementType()==TypeEnum::UShort)
             elsize = 2;
         if(i.elementType()==TypeEnum::UInt)
@@ -675,10 +675,16 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
                 CGL33::DrawElements(mode,i.elements(),i.elementType(),
                                     i.indexOffset()*elsize);
 #endif
-        }else
-
-            CGL33::DrawElements(mode,i.elements(),i.elementType(),
-                                i.indexOffset()*elsize);
+        }else{
+#if !defined(COFFEE_ONLY_GLES20)
+            if(i.vertexOffset()>0)
+                CGL33::DrawElementsBaseVertex(mode, i.elements(), i.elementType(),
+                                              i.indexOffset()*elsize, i.vertexOffset());
+            else
+#endif
+                CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                    i.indexOffset()*elsize);
+        }
 
     }else{
 #if !defined(COFFEE_ONLY_GLES20)

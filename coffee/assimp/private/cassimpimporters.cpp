@@ -137,9 +137,11 @@ bool coffee_assimp_dump_mesh(CAssimpMesh *mesh, Resource *resource)
 
 namespace ASSIMP{
 
-UqPtr<AssimpData> LoadScene(Resource* source, cstring hint)
+bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
 {
-    UqPtr<AssimpData> data = UqPtr<AssimpData>(new AssimpData);
+    auto& data = target;
+
+    data = UqPtr<AssimpData>(new AssimpData);
 
     u32 aiFlags = aiProcess_CalcTangentSpace|
             aiProcess_Triangulate|
@@ -149,7 +151,13 @@ UqPtr<AssimpData> LoadScene(Resource* source, cstring hint)
     data->scene = data->importer.ReadFileFromMemory(source->data, source->size,
                                                     aiFlags, hint);
 
-    return data;
+    if(!data->scene)
+    {
+        target.reset();
+        return false;
+    }
+
+    return true;
 }
 
 bool GetSceneObjects(const UqPtr<AssimpData> &scene, Vector<ObjectDesc> &objects)
@@ -186,7 +194,7 @@ FORCEDINLINE Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>&
     auto& n_node = node_storage.back();
     n_node.setParent(parent);
     n_node.setObjectName(node->mName.C_Str());
-    n_node.transform = convert_aiMatrix(node->mTransformation);
+    n_node.transform = transpose(convert_aiMatrix(node->mTransformation));
 
     if(node->mNumMeshes > 0)
         n_node.mesh = C_CAST<i32>(node->mMeshes[0]);
@@ -203,6 +211,9 @@ DENYINLINE void get_scene_nodes(aiNode* node, Node* parent, LinkList<Node>& node
         auto c = node->mChildren[i];
 
         auto np = create_scene_node(c, parent, node_storage);
+
+        /* Pre-multiplying the scene transform, much easier to deal with when doing MultiDraw* */
+        np->transform = parent->transform * np->transform;
 
         get_scene_nodes(c, np, node_storage);
     }
@@ -266,13 +277,13 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
                                          mesh->mNumVertices, i);
         else
         {
-            Vector<Vecf2> texcoords;
-            texcoords.resize(mesh->mNumVertices);
-            for(u32 j=0;j<mesh->mNumVertices;j++)
-                MemCpy(&texcoords[j], &mesh->mTextureCoords[i][j], sizeof(Vecf2));
-            output_mesh.addAttributeData(Mesh::TexCoord,
-                                         texcoords.data(),
-                                         texcoords.size(), i);
+//            Vector<Vecf2> texcoords;
+//            texcoords.resize(mesh->mNumVertices);
+//            for(u32 j=0;j<mesh->mNumVertices;j++)
+//                MemCpy(&texcoords[j], &mesh->mTextureCoords[i][j], sizeof(Vecf2));
+//            output_mesh.addAttributeData(Mesh::TexCoord,
+//                                         texcoords.data(),
+//                                         texcoords.size(), i);
         }
     }
 

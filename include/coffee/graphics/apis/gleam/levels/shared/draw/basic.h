@@ -22,6 +22,9 @@ struct CGL_Basic_Draw
     {glDrawElements(to_enum(p),c,to_enum(t),(void*)off);}
 
 #if !defined(COFFEE_ONLY_GLES20)
+    STATICINLINE void DrawElementsBaseVertex(DrwMd const& p, uint32 c, TypeEnum t,
+                                             uint64 off, i32 voff)
+    {glDrawElementsBaseVertex(to_enum(p), c, to_enum(t), (void*)off, voff);}
     STATICINLINE void DrawElementsInstanced(DrwMd const& p,uint32 c,TypeEnum t,uint64 off,uint64 pc)
     {glDrawElementsInstanced(to_enum(p),c,to_enum(t),(void*)off,pc);}
 

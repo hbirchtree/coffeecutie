@@ -199,7 +199,7 @@ void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
     fb_bind(m_type,m_handle);
     if(GL_CURR_API == GLES_3_0)
     {
-        glClearDepthf(C_CAST<scalar>(depth));
+//        glClearDepthf(C_CAST<scalar>(depth));
         glClearStencil(stencil);
         glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     }else

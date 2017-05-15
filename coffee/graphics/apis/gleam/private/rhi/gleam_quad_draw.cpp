@@ -101,8 +101,6 @@ bool GLEAM_Quad_Drawer::compile_shaders()
     vertex.dealloc();
     fragment.dealloc();
 
-    m_pip.bind();
-
     Vector<GLEAM_UniformDescriptor> desc;
     Vector<GLEAM_ProgramParameter> params;
     GLEAM_API::GetShaderUniformState(m_pip, &desc, &params);

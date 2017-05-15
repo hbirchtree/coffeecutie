@@ -780,19 +780,17 @@ inline CGenum to_enum2(ResourceAccess acc)
 {
     CGenum f = 0;
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(feval(acc&ResourceAccess::Persistent))
+    if(feval(acc,ResourceAccess::Persistent))
         f |= GL_MAP_COHERENT_BIT|GL_MAP_PERSISTENT_BIT;
 #endif
 #if !defined(COFFEE_ONLY_GLES20)
-    if(feval(acc&ResourceAccess::ReadOnly))
+    if(feval(acc,ResourceAccess::ReadOnly))
         f |= GL_MAP_READ_BIT;
-    if(feval(acc&ResourceAccess::WriteOnly))
+    if(feval(acc,ResourceAccess::WriteOnly))
         f |= GL_MAP_WRITE_BIT;
-    if(feval(acc&ResourceAccess::ReadWrite))
-        f |= GL_MAP_READ_BIT | GL_MAP_WRITE_BIT;
 #endif
 #ifdef COFFEE_GLEAM_DESKTOP
-    if(feval(acc&ResourceAccess::Streaming))
+    if(feval(acc,ResourceAccess::Streaming))
         f |= GL_CLIENT_STORAGE_BIT;
 #endif
     return f;

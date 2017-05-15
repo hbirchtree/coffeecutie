@@ -49,33 +49,33 @@ using CByteData = _cbasic_data_chunk<byte_t>;
 using Bytes = CByteData;
 using BytesConst = _cbasic_data_chunk<const byte_t>;
 
-template<typename T>
-/*!
- * \brief For storing arrays
- */
-struct C_DEPRECATED chunk_mem
-{
-    FORCEDINLINE chunk_mem()
-    {
-//        C_DEPRECATED();
-    }
-    szptr size = 0;
-    T* d = nullptr;
-};
+//template<typename T>
+///*!
+// * \brief For storing arrays
+// */
+//struct C_DEPRECATED chunk_mem
+//{
+//    FORCEDINLINE chunk_mem()
+//    {
+////        C_DEPRECATED();
+//    }
+//    szptr size = 0;
+//    T* d = nullptr;
+//};
 
-/*!
- * \brief Expands an array contained in chunk_mem<T> types
- * \param mem
- * \param size
- */
-template<typename T>
-STATICINLINE void coffee_mem_expand_array(chunk_mem<T> *mem, szptr size)
-{
-    szptr osize = mem->size;
-    mem->size += size;
-    mem->d = (T*)Realloc(mem->d,sizeof(T)*mem->size);
-    MemClear(&mem->d[osize],sizeof(T)*(mem->size-osize));
-}
+///*!
+// * \brief Expands an array contained in chunk_mem<T> types
+// * \param mem
+// * \param size
+// */
+//template<typename T>
+//STATICINLINE void coffee_mem_expand_array(chunk_mem<T> *mem, szptr size)
+//{
+//    szptr osize = mem->size;
+//    mem->size += size;
+//    mem->d = (T*)Realloc(mem->d,sizeof(T)*mem->size);
+//    MemClear(&mem->d[osize],sizeof(T)*(mem->size-osize));
+//}
 
 struct CMimeData
 {
