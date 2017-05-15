@@ -1,5 +1,4 @@
-#ifndef COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
-#define COFFEE_GRAPHICS_APIS_RHI_GRAPHICS_API_H
+#pragma once
 
 #include <coffee/core/types/cdef/geometry.h>
 #include <coffee/core/types/cdef/funtypes.h>
@@ -925,5 +924,3 @@ struct NullAPI : GraphicsAPI
 
 }
 }
-
-#endif

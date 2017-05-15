@@ -36,7 +36,7 @@ i32 coffee_main(i32, cstring_w*)
             cDebug("Node: {3} <- {0}:{1},{2}", node.objectName(), node.transform, node.mesh,
                    (node.parent()) ? node.parent()->objectName() : nullptr);
             Mesh output_mesh(true);
-            ASSIMP::GetMeshData(scene, node, output_mesh);
+            ASSIMP::GetMeshData(scene, node.mesh, output_mesh);
             cDebug("Mesh: {0}, {1}, {2}",
                    output_mesh.numAttributes(),
                    output_mesh.indices(sizeof(u32)),

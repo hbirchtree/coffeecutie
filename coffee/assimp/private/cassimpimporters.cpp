@@ -224,14 +224,14 @@ bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node **root, NodeList &nodes)
     return nodes.size() > 0;
 }
 
-aiMesh* get_mesh(UqPtr<AssimpData> const& scene, Node const& node)
+aiMesh* get_mesh(UqPtr<AssimpData> const& scene, i32 node)
 {
-    if(node.mesh < 0 || node.mesh >= C_CAST<i32>(scene->scene->mNumMeshes))
+    if(node < 0 || node >= C_CAST<i32>(scene->scene->mNumMeshes))
         return nullptr;
-    return scene->scene->mMeshes[node.mesh];
+    return scene->scene->mMeshes[node];
 }
 
-bool GetMeshData(const UqPtr<AssimpData> &scene, Node const&node, Mesh &output_mesh)
+bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
 {
     auto mesh = get_mesh(scene, node);
 
@@ -296,6 +296,15 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, Node const&node, Mesh &output_m
                                      mesh->mNumVertices, 0);
     }
 
+    return true;
+}
+
+bool GetMeshCount(const UqPtr<AssimpData> &scene, i32 &count)
+{
+    if(!scene || !scene->scene)
+        return false;
+
+    count = C_CAST<i32>(scene->scene->mNumMeshes);
     return true;
 }
 

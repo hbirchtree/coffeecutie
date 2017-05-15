@@ -37,6 +37,7 @@ static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
                             attr.bufferOffset()+attr.offset());
             else
 #endif
+                CGL33::VAOEnableAttrib(attr.index());
                 CGL33::VAOAttribPointer(
                             attr.index(),attr.size(),attr.type(),
                             attr.m_flags & GLEAM_API::AttributeNormalization,
@@ -70,8 +71,8 @@ void GLEAM_VertDescriptor::addAttribute(const GLEAM_VertAttribute &attr)
 #if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOBind(m_handle);
 #endif
-    CGL33::VAOEnableAttrib(attr.index());
 #if !defined(COFFEE_ONLY_GLES20)
+    CGL33::VAOEnableAttrib(attr.index());
     if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
         CGL43::VAOAttribFormat(attr.index(),attr.size(),attr.type(),false,attr.offset());
@@ -134,6 +135,9 @@ void GLEAM_VertDescriptor::unbind()
 {
 #if !defined(COFFEE_ONLY_GLES20)
     CGL33::VAOBind(0);
+#else
+    for(auto const& attr : m_attributes)
+        CGL33::VAODisableAttrib(attr.index());
 #endif
     if(GL_CURR_API==GL_3_3||GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_2_0
             || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_3_2)

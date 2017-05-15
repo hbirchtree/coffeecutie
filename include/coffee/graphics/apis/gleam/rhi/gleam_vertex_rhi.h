@@ -12,6 +12,17 @@ struct GLEAM_VertAttribute : GraphicsAPI::VertexAttribute
 
 struct GLEAM_VertDescriptor : GraphicsAPI::VertexDescriptor
 {
+    GLEAM_VertDescriptor():
+        m_ibuffer(nullptr),
+        m_attributes(),
+        m_handle(0)
+  #if defined(COFFEE_ONLY_GLES20)
+      ,m_bufferMapping()
+  #endif
+    {
+
+    }
+
     void alloc();
     void dealloc();
 

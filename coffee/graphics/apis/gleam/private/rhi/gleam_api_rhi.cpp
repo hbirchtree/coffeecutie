@@ -701,8 +701,12 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 #endif
             CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
     }
+
     if(query)
         query->end();
+
+    vertices.unbind();
+    pipeline.unbind();
 }
 
 void GLEAM_API::DrawConditional(const GLEAM_Pipeline &pipeline,

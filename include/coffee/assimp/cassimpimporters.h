@@ -100,7 +100,9 @@ extern bool GetSceneObjects(UqPtr<AssimpData> const& scene, Vector<ObjectDesc>& 
 
 extern bool GetSceneRoot(UqPtr<AssimpData> const& scene, Node** root, NodeList& nodes);
 
-extern bool GetMeshData(UqPtr<AssimpData> const& scene, const Node &node, Mesh& output_mesh);
+extern bool GetMeshData(UqPtr<AssimpData> const& scene, i32 node, Mesh& output_mesh);
+
+extern bool GetMeshCount(UqPtr<AssimpData> const& scene, i32& count);
 
 }
 

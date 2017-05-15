@@ -108,17 +108,23 @@ struct _cbasic_mesh
     }
 
     FORCEDINLINE
-    szptr attrCount(AttributeType_t t,szptr stride, u32 idx = 0) const
+    szptr attrSize(AttributeType_t t, u32 idx = 0) const
     {
         auto ptr = attrGetConst(t, idx);
         if(ptr)
         {
             if(referenced_attributes)
-                return ptr->mem.size / stride;
+                return ptr->mem.size;
             else
-                return ptr->data.size() / stride;
+                return ptr->data.size();
         }
         return 0;
+    }
+
+    FORCEDINLINE
+    szptr attrCount(AttributeType_t t,szptr stride, u32 idx = 0) const
+    {
+        return attrSize(t, idx) / stride;
     }
     FORCEDINLINE
     szptr indices(szptr stride, u32 idx = 0) const
@@ -163,9 +169,9 @@ struct _cbasic_mesh
         if(ptr)
         {
             if(referenced_attributes)
-                return C_CAST<VT*>(ptr->mem.ptr);
+                return C_FCAST<VT*>(ptr->mem.ptr);
             else
-                return C_CAST<VT*>(ptr->data.data());
+                return C_FCAST<VT*>(ptr->data.data());
         }
         return nullptr;
     }
@@ -177,9 +183,9 @@ struct _cbasic_mesh
         if(ptr)
         {
             if(referenced_attributes)
-                return C_CAST<VT const*>(ptr->mem.ptr);
+                return C_FCAST<VT const*>(ptr->mem.ptr);
             else
-                return C_CAST<VT const*>(ptr->data.data());
+                return C_FCAST<VT const*>(ptr->data.data());
         }
         return nullptr;
     }
