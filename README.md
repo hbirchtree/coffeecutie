@@ -10,30 +10,33 @@ A C++ game engine/rendering engine written in a very C-influenced way.
 |Windows    |[![Build status](https://ci.appveyor.com/api/projects/status/nt47us32mp6cc0fa/branch/master?svg=true)](https://ci.appveyor.com/project/hbirchtree/coffeecutie/branch/master)|
 
 # What is this?
-A game engine comprising a GL renderer (with full OpenGL 4.3 support, 4.5 will be there soon), media playback (thanks to FFMPEG), a platform layer, audio through OpenAL and free choice (as in: no integration) for physics engines. It consists of a custom platform layer, with codepaths for Windows, Linux and Android so far.
+Game engine with platform support for Linux, OS X, Windows, Android
 
 # What is the progress report?
  - Ports:
-   - Runs on any Linux distro that supports OpenGL (of which there are many)
-   - Windows port is in
-   - Android port is in
-   - OS X port is in
- - Current functionality:
-   - Lets you create OpenAL contexts for audio playback and streaming with a relatively simple API (see examples)
-   - Abstraction layer for OpenGL 3.3 and 4.3 is in place, heavily inlined code, uses enums for a lot of functions, still opens up for using pure OpenGL functions.
-   - Uses SDL2 for window creation, theoretically works on a toaster
-   - Some type abstractions for the sake of porting ease (eg. int64 on Android)
-   - Tons of platform-abstraction, from files to networking (the latter is still WIP)
+   - Linux
+     - Desktops
+     - SteamOS builds are working
+     - Nokia N900 (using GCC 6)
+     - Raspberry Pi (to some degree, if only DispManX wasn't so terrible)
+     - ODROID-XU4 (provided you have a working GLES driver)
+     - Supports packaging into self-contained AppImage files
+     - Packaging solutions such as Flatpak and Snap kind of work, but not really
+   - Windows
+     - Win32 is the only one that works properly, it also bakes resources into the executable
+     - UWP is underway, but it will probably run on ANGLE (no plans for D3D support)
+   - Android (only ARM64 and ARMv7a are truly tested, but it compiles for MIPS\* and x86\_\*!)
+   - Mac OS X (compiles for iOS as well, but no guarantee of actually working)
+   - Emscripten (barely works)
+   - NaCL (barely works)
+ - Has OpenGL backends for 3.3 and 4.3, OpenGL ES backends for 2.0 and 3.0
 
 # Platform support tl;dr
  - Linux support is dandy, always maintained
- - Windows port is about as good as Linux, some lack in platform layer for non-essential code
- - Android port is all good, although lacking in some aspects (no scratch buffers), it will work well in time
- - OS X kind of works, with some hiccups in setting it up (eg. needing a newer version of Clang)
- - ReactOS support might happen
+ - Windows is kind of wonky, not all Linux features are present (such as retrieving memory allocations by library in memory)
+ - OS X port is pretty good-looking
+ - ReactOS support might happen if it supports OpenGL
  - Wrapper code for Python, D-language and C# are in their early phases, currently support creation of windows and GL contexts, as well as clearing said GL context
- - Symbian support might happen in a parallel universe where Symbian supports C++11
- - Maemo crossed my mind months ago, and might happen if it supports C++11
  - Refrigerator port has yet to be realized, contributors appreciated
  - Toaster edition might follow refrigerator port
  - coffeecutie on a cob is off the table
