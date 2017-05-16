@@ -1,6 +1,9 @@
 #ifndef COFFEE_CORE_MEM_MACROS_H
 #define COFFEE_CORE_MEM_MACROS_H
 
+#include <type_traits>
+#include <limits>
+
 #include "plat/plat_compiler_identify.h"
 #include "plat/plat_quirks_toggling.h"
 
@@ -12,11 +15,49 @@
 #define C_CAST(type, var) static_cast<type>(var)
 #define C_DCAST(type, var) dynamic_cast<type>(var)
 #else
+
+template <typename D, typename T>
+static inline typename std::enable_if<std::is_signed<D>::value, bool>::type C_ICAST(T from)
+{
+    using valid_T1 = typename std::enable_if<std::is_unsigned<T>::value, bool>::type;
+
+    valid_T1 v1 = 0;
+
+    return ((from > std::numeric_limits<D>::max())
+            ? 0
+            : from) + v1;
+}
+template <typename D, typename T>
+static inline typename std::enable_if<std::is_unsigned<D>::value, bool>::type C_ICAST(T from)
+{
+    using valid_T1 = typename std::enable_if<std::is_signed<T>::value, bool>::type;
+
+    valid_T1 v1 = 0;
+
+    return ((from < 0)
+            ? 0
+            : from) + v1;
+}
+
 template<typename D, typename T>
 static inline D C_FCAST(T from)
 {
-    return (D)(from);
+    using T_not_const = typename std::remove_cv<T>::type;
+    return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
+
+template<typename D, typename T>
+static inline D C_FCAST(T* from)
+{
+
+    using T_not_const =
+    typename std::add_pointer<
+    typename std::remove_cv<
+    typename std::remove_pointer<T>::type>::type>::type;
+
+    return reinterpret_cast<D>(const_cast<T_not_const>(from));
+}
+
 template<typename D, typename T>
 static inline D C_CAST(T from)
 {
@@ -26,6 +67,11 @@ template<typename D, typename T>
 static inline D* C_DCAST(T* from)
 {
     return dynamic_cast<D*>(from);
+}
+template<typename D, typename T>
+static inline D C_CCAST(T from)
+{
+    return const_cast<D>(from);
 }
 
 #define C_CAST(type, var) C_CAST<type>(var)
