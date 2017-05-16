@@ -47,7 +47,7 @@ static inline D C_FCAST(T from)
 }
 
 template<typename D, typename T>
-static inline D C_FCAST(T* from)
+static inline D C_FCAST(T const* from)
 {
 
     using T_not_const =
