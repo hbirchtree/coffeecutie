@@ -36,7 +36,7 @@ template<typename ReturnType,
          /* We don't want to let void in here, because it doesn't work with our Future-implementation.
           * The next declaration handles this peacefully.
           */
-         , class = typename std::enable_if<! std::is_same<ReturnType, void>::value, bool>::type
+         , class = typename std::enable_if<std::is_void<ReturnType>::value, bool>::type
 #endif
          >
 /*!

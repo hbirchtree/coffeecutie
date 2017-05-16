@@ -16,47 +16,146 @@
 #define C_DCAST(type, var) dynamic_cast<type>(var)
 #else
 
-template <typename D, typename T>
-static inline typename std::enable_if<std::is_signed<D>::value, bool>::type C_ICAST(T from)
+template <typename D,
+          typename T,
+
+          typename std::enable_if<std::is_signed<D>::value, T>::type* = nullptr,
+          typename std::enable_if<std::is_unsigned<T>::value, T>::type* = nullptr
+
+          >
+/*!
+ * \brief "Safe" casting between unsigned and signed types
+ * \param from
+ * \return The correct integer is all is good, 0 if it cannot be represented
+ */
+static inline D C_FCAST(T from)
 {
-    using valid_T1 = typename std::enable_if<std::is_unsigned<T>::value, bool>::type;
-
-    valid_T1 v1 = 0;
-
     return ((from > std::numeric_limits<D>::max())
             ? 0
-            : from) + v1;
+            : from);
 }
-template <typename D, typename T>
-static inline typename std::enable_if<std::is_unsigned<D>::value, bool>::type C_ICAST(T from)
+template <typename D,
+          typename T,
+
+          typename std::enable_if<std::is_unsigned<D>::value, D>::type* = nullptr,
+          typename std::enable_if<std::is_signed<T>::value, T>::type* = nullptr
+
+          >
+/*!
+ * \brief "Safe" casting between unsigned and signed types
+ * \param from
+ * \return The correct integer if all is good, 0 if it cannot be represented
+ */
+static inline D C_FCAST(T from)
 {
-    using valid_T1 = typename std::enable_if<std::is_signed<T>::value, bool>::type;
-
-    valid_T1 v1 = 0;
-
     return ((from < 0)
             ? 0
-            : from) + v1;
+            : from);
 }
 
-template<typename D, typename T>
+template<typename D,
+         typename T,
+
+         typename std::enable_if<std::is_convertible<T,D>::value,T>::type* = nullptr,
+         typename std::enable_if<std::is_integral<D>::value,T>::type* = nullptr,
+         typename std::enable_if<std::is_integral<T>::value,T>::type* = nullptr
+
+         >
+/*!
+ * \brief Integral casting, ex. u32 to u16
+ * \param from
+ * \return
+ */
+static inline D C_FCAST(T from)
+{
+    return static_cast<D>(from);
+}
+
+template<typename D,
+         typename T,
+
+         typename std::enable_if<std::is_convertible<T,D>::value,T>::type* = nullptr,
+         typename std::enable_if<std::is_pointer<D>::value,T>::type* = nullptr,
+         typename std::enable_if<std::is_pointer<T>::value,T>::type* = nullptr,
+         typename std::enable_if<(std::is_const<D>::value && std::is_const<T>::value)
+                                 ||
+                                 !(std::is_const<D>::value && std::is_const<T>::value)
+                                 ,T>::type* = nullptr
+
+         >
+/*!
+ * \brief Simple reinterpretation of a pointer
+ * \param from
+ * \return
+ */
+static inline D C_FCAST(T from)
+{
+    return reinterpret_cast<D>(from);
+}
+
+template<typename D,
+         typename T,
+
+         typename std::enable_if<std::is_integral<D>::value, D>::type* = nullptr,
+         typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
+
+         >
+static inline D C_FCAST(T from)
+{
+    return static_cast<D>(from);
+}
+
+template<typename D,
+         typename T,
+
+         typename std::enable_if<std::is_integral<D>::value, D>::type* = nullptr,
+         typename std::enable_if<std::is_pointer<T>::value, T>::type* = nullptr
+
+         >
+static inline D C_FCAST(T from)
+{
+    return reinterpret_cast<D>(from);
+}
+
+template<typename D,
+         typename T,
+
+         typename std::enable_if<std::is_pointer<D>::value, D>::type* = nullptr,
+         typename std::enable_if<!std::is_const<D>::value, D>::type* = nullptr,
+
+         typename std::enable_if<std::is_const<T>::value, D>::type* = nullptr,
+         typename std::enable_if<std::is_pointer<T>::value, T>::type* = nullptr
+         >
 static inline D C_FCAST(T from)
 {
     using T_not_const = typename std::remove_cv<T>::type;
     return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
 
-template<typename D, typename T>
-static inline D C_FCAST(T const* from)
-{
+template<typename D,
+         typename T,
 
+         typename std::enable_if<!std::is_integral<D>::value, D>::type* = nullptr,
+
+         typename std::enable_if<!std::is_const<typename std::remove_pointer<D>::type>::value, T>::type* = nullptr,
+
+         typename std::enable_if<std::is_const<typename std::remove_pointer<T>::type>::value, T>::type* = nullptr,
+         typename std::enable_if<!std::is_const<T>::value, T>::type* = nullptr
+
+         >
+static inline D C_FCAST(T from)
+{
     using T_not_const =
-    typename std::add_pointer<
-    typename std::remove_cv<
-    typename std::remove_pointer<T>::type>::type>::type;
+    typename std::add_pointer<typename std::remove_const<typename std::remove_pointer<T>::type>::type>::type;
 
     return reinterpret_cast<D>(const_cast<T_not_const>(from));
 }
+
+//template<typename D, typename T>
+//static inline D C_FCAST(T from)
+//{
+//    return (D)from;
+//}
 
 template<typename D, typename T>
 static inline D C_CAST(T from)
@@ -72,6 +171,11 @@ template<typename D, typename T>
 static inline D C_CCAST(T from)
 {
     return const_cast<D>(from);
+}
+template<typename D, typename T>
+static inline D C_RCAST(T from)
+{
+    return reinterpret_cast<D>(from);
 }
 
 #define C_CAST(type, var) C_CAST<type>(var)
