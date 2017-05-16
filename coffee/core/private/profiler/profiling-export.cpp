@@ -311,7 +311,7 @@ void ExportStringToFile(const CString &data, cstring outfile)
                 ApplicationData().application_name);
     cVerbose(6,"Creating filename");
     CResources::Resource out(log_name.c_str(),true);
-    out.data = C_FCAST<c_ptr>(data.c_str());
+    out.data = C_CCAST<c_ptr>(C_FCAST<c_cptr>(data.c_str()));
     /* -1 because we don't want the null-terminator */
     out.size = C_CAST<szptr>(data.size() - 1);
     cVerbose(6,"Retrieving data pointers");
