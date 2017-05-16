@@ -7,11 +7,12 @@ Some features are special cases and quite ugly. Beware.
 
 | Platform         | Compiler name       | Compiler version |Workarounds       |
 |:-----------------|--------------------:|:-----------------|:-----------------|
+|Android           | Clang (GCC libs)    | 3.8.0+ (4.9.x)   |7                 |
 |Apple iOS         | Clang               | 3.4.0+           |2                 |
 |Apple OS X        | Clang               | 3.4.0+           |1, 7              |
-|Emscripten        | emcc                | 1.37.0+          |2.1, 7, 7.1, 8    |
-|Maemo 5           | GCC                 | 6.0.1            |3, 5, 6, 7, 7.1, 8|
-|Native Client     | Clang               | 3.7.0+           |2.1, 7, 7.1, 8    |
+|Emscripten        | emcc                | 1.37.0+          |2.1, 7, 8         |
+|Maemo 5           | GCC                 | 6.0.1            |3, 5, 6, 7, 8     |
+|Native Client     | Clang               | 3.7.0+           |2.1, 7, 8         |
 |Raspberry Pi      | GCC                 | 4.9.3            |                  |
 |SteamOS           | GCC                 | 4.8.1            |                  |
 |Ubuntu            | GCC                 | 5.4.0+           |                  |
@@ -31,6 +32,6 @@ Some features are special cases and quite ugly. Beware.
 | 4    | OpenSSL support disabled, plain sockets only                          |
 | 5    | Replace `RUSAGE_THREAD` with `RUSAGE_SELF`                            |
 | 6    | Disables `MAP_HUGETLB`                                                |
-| 7    | No `execvpe()` function defined, external programs will fail            |
-| 7.1  | No `system()` function defined                                          |
-| 8    | No way to set thread names, `pthread_setname_np()` non-existent         |
+| 7    | No `system()` function defined                                        |
+| 7.1  | No `execvpe()` function defined, external programs will fail          |
+| 8    | No way to set thread names, `pthread_setname_np()` non-existent       |
