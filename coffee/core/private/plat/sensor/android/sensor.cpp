@@ -89,32 +89,32 @@ void Android_DestroySensors()
 
 Vecf3 Android_SensorAPI::Gravity()
 {
-
+    return {};
 }
 
 Vecf3 Android_SensorAPI::Acceleration()
 {
-
+    return {};
 }
 
 Vecf3 Android_SensorAPI::Orientation()
 {
-
+    return {};
 }
 
 Vecf3 Android_SensorAPI::Gyroscope()
 {
-
+    return {};
 }
 
 Vecf3 Android_SensorAPI::Magnetometer()
 {
-
+    return {};
 }
 
 scalar Android_SensorAPI::Lux()
 {
-
+    return 0.f;
 }
 
 }
