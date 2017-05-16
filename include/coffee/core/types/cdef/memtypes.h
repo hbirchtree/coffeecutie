@@ -17,7 +17,7 @@ struct _cbasic_data_chunk
 
     STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {C_FCAST<u8*>(src), C_ICAST<szptr>(strchr(src, 0) - src)};
+        return {C_FCAST<u8*>(src), strlen(src)};
     }
 
     T& operator[] (szptr i)
