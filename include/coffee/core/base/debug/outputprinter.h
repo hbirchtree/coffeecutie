@@ -51,6 +51,8 @@ struct OutputPrinterImpl : OutputPrinterDef
         case Severity::Verbose:
             flag = ANDROID_LOG_VERBOSE;
             break;
+	default:
+	    break;
         }
 
         __android_log_print(flag, "Coffee", "%s", &formatted[0]);
