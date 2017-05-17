@@ -1,1 +1,0 @@
-coffee_add_application ( EndianFixer "Endian Fixer" main.cpp CoffeeCore )
