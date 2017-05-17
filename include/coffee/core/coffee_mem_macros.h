@@ -53,12 +53,20 @@ static inline D C_FCAST(T from)
             : from);
 }
 
+#define NINT(Type) std::is_integral<Type>::value
+#define NPTR(Type) std::is_pointer<Type>::value
+#define RP(Type) typename std::remove_pointer<Type>::type
+#define IT_CONST(Type) std::is_const<RP(Type)>::value
+//#define IBASE(Type) (std::is_void<Type>::value || std::is_integral<Type>::value || std::is_class<Type>::value || std::is_floating_point<Type>::value)
+#define IBASE(Type) (!std::is_pointer<Type>::value)
+#define CONST(Type) std::is_const<Type>::value
+
 template<typename D,
          typename T,
 
          typename std::enable_if<std::is_convertible<T,D>::value,T>::type* = nullptr,
-         typename std::enable_if<std::is_integral<D>::value,T>::type* = nullptr,
-         typename std::enable_if<std::is_integral<T>::value,T>::type* = nullptr
+         typename std::enable_if<NINT(D),T>::type* = nullptr,
+         typename std::enable_if<NINT(T),T>::type* = nullptr
 
          >
 /*!
@@ -74,13 +82,22 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<std::is_convertible<T,D>::value,T>::type* = nullptr,
-         typename std::enable_if<std::is_pointer<D>::value,T>::type* = nullptr,
-         typename std::enable_if<std::is_pointer<T>::value,T>::type* = nullptr,
-         typename std::enable_if<(std::is_const<D>::value && std::is_const<T>::value)
-                                 ||
-                                 !(std::is_const<D>::value && std::is_const<T>::value)
-                                 ,T>::type* = nullptr
+         typename std::enable_if<NINT(D), D>::type* = nullptr,
+         typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
+
+         >
+static inline D C_FCAST(T from)
+{
+    return static_cast<D>(from);
+}
+
+template<typename D,
+         typename T,
+
+         typename std::enable_if<NPTR(D),T>::type* = nullptr,
+         typename std::enable_if<NPTR(T),T>::type* = nullptr,
+         typename std::enable_if<IBASE(RP(D)) && IBASE(RP(T)),T>::type* = nullptr,
+         typename std::enable_if<(CONST(RP(D)) && CONST(RP(T))) || (!CONST(RP(D)) && !CONST(RP(T))) || (CONST(RP(D)) && !CONST(RP(T))),T>::type* = nullptr
 
          >
 /*!
@@ -93,23 +110,30 @@ static inline D C_FCAST(T from)
     return reinterpret_cast<D>(from);
 }
 
+//template<typename D,
+//         typename T,
+
+//         typename std::enable_if<std::is_same<T, void*>::value, bool>::type* = nullptr,
+//         typename std::enable_if<IBASE(RP(D)), bool>::type* = nullptr,
+//         typename std::enable_if<NPTR(D), bool>::type* = nullptr,
+//         typename std::enable_if<(CONST(RP(D)) && CONST(RP(T))) || (!CONST(RP(D)) && !CONST(RP(T))) || (CONST(RP(D)) && !CONST(RP(T))),T>::type* = nullptr
+
+//         >
+///*!
+// * \brief Simple reinterpretation of a pointer
+// * \param from
+// * \return
+// */
+//static inline D C_FCAST(T from)
+//{
+//    return reinterpret_cast<D>(from);
+//}
+
 template<typename D,
          typename T,
 
-         typename std::enable_if<std::is_integral<D>::value, D>::type* = nullptr,
-         typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
-
-         >
-static inline D C_FCAST(T from)
-{
-    return static_cast<D>(from);
-}
-
-template<typename D,
-         typename T,
-
-         typename std::enable_if<std::is_integral<D>::value, D>::type* = nullptr,
-         typename std::enable_if<std::is_pointer<T>::value, T>::type* = nullptr
+         typename std::enable_if<NINT(D), D>::type* = nullptr,
+         typename std::enable_if<NPTR(T), T>::type* = nullptr
 
          >
 static inline D C_FCAST(T from)
@@ -120,11 +144,11 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<std::is_pointer<D>::value, D>::type* = nullptr,
-         typename std::enable_if<!std::is_const<D>::value, D>::type* = nullptr,
+         typename std::enable_if<NPTR(D), D>::type* = nullptr,
+         typename std::enable_if<!CONST(D), D>::type* = nullptr,
 
-         typename std::enable_if<std::is_const<T>::value, D>::type* = nullptr,
-         typename std::enable_if<std::is_pointer<T>::value, T>::type* = nullptr
+         typename std::enable_if<CONST(T), D>::type* = nullptr,
+         typename std::enable_if<NPTR(T), T>::type* = nullptr
          >
 static inline D C_FCAST(T from)
 {
@@ -135,12 +159,10 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<!std::is_integral<D>::value, D>::type* = nullptr,
+         typename std::enable_if<NPTR(D) && NPTR(T), D>::type* = nullptr,
 
-         typename std::enable_if<!std::is_const<typename std::remove_pointer<D>::type>::value, T>::type* = nullptr,
-
-         typename std::enable_if<std::is_const<typename std::remove_pointer<T>::type>::value, T>::type* = nullptr,
-         typename std::enable_if<!std::is_const<T>::value, T>::type* = nullptr
+         typename std::enable_if<IBASE(RP(D)) && !CONST(RP(D)), bool>::type* = nullptr,
+         typename std::enable_if<IBASE(RP(T)) && CONST(RP(T)), bool>::type* = nullptr
 
          >
 static inline D C_FCAST(T from)
@@ -152,7 +174,7 @@ static inline D C_FCAST(T from)
 }
 
 //template<typename D, typename T>
-//static inline D C_FCAST(T from)
+//static inline D C_FFCAST(T from)
 //{
 //    return (D)from;
 //}
@@ -177,6 +199,13 @@ static inline D C_RCAST(T from)
 {
     return reinterpret_cast<D>(from);
 }
+
+#undef NINT
+#undef NPTR
+#undef RP
+#undef IT_CONST
+#undef IBASE
+#undef CONST
 
 #define C_CAST(type, var) C_CAST<type>(var)
 #define C_DCAST(type, var) C_DCAST<type>(var)

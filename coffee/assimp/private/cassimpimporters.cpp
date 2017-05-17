@@ -273,7 +273,7 @@ bool GetMeshData(const UqPtr<AssimpData> &scene, i32 node, Mesh &output_mesh)
     {
         if(mesh->mNumUVComponents[i] == 3)
             output_mesh.addAttributeData(Mesh::TexCoord,
-                                         C_FCAST<Vecf3*>(mesh->mTextureCoords),
+                                         C_FCAST<Vecf3*>(mesh->mTextureCoords[i]),
                                          mesh->mNumVertices, i);
         else
         {

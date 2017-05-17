@@ -17,13 +17,15 @@ struct _cbasic_data_chunk
 
     STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {C_FCAST<u8*>(src), strlen(src)};
+        return {C_FCAST<T*>(src), strlen(src)};
     }
 
+    template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>
     T& operator[] (szptr i)
     {
         return data[i];
     }
+    template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>
     T const& operator[] (szptr i) const
     {
         return data[i];
