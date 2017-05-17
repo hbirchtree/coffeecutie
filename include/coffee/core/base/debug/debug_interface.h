@@ -8,7 +8,7 @@ namespace DebugFun{
 
 struct StacktraceFunDef
 {
-    using Stacktrace = std::vector<CString>;
+    using Stacktrace = Vector<CString>;
     static Stacktrace GetStacktrace();
 };
 

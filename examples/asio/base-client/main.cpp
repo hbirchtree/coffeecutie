@@ -69,8 +69,8 @@ int32 coffee_main(int32, cstring_w*)
 
         Profiler::Profile("Generate response");
 
-        Function<void(Threads::Future<REST::Response>&)> printResult =
-                [&](Threads::Future<REST::Response>& t)
+        Function<void(Future<REST::Response>&)> printResult =
+                [&](Future<REST::Response>& t)
         {
             while(!Threads::FutureAvailable(t));
             Profiler::Profile("Await response");
@@ -94,7 +94,7 @@ int32 coffee_main(int32, cstring_w*)
             cDebug("JSON document:\n{0}",JSON::Serialize(doc));
         };
 
-        Threads::Future<REST::Response> t = REST::RestRequestAsync(net_context,host,rq);
+        Future<REST::Response> t = REST::RestRequestAsync(net_context,host,rq);
         Profiler::Profile("Dispatch request");
 
         tim.start();

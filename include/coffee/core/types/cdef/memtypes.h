@@ -183,7 +183,7 @@ class _cbasic_cookie_container
     Mutex& _access;
     T& _cookie;
 public:
-    FORCEDINLINE _cbasic_cookie_container(std::mutex& acc, T& cookie):
+    FORCEDINLINE _cbasic_cookie_container(Mutex& acc, T& cookie):
         _access(acc),
         _cookie(cookie)
     {

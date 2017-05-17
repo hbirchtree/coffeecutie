@@ -15,10 +15,12 @@ struct map_container
     map_container(c_ptr map, version_t ver)
     {
         this->map = file_header_get(map, ver);
-        if(!this->map)
-            throw std::runtime_error("Failed to load map; invalid data");
-
         tags = tag_index_get(this->map);
+    }
+
+    bool is_valid()
+    {
+        return this->map;
     }
 
     file_header_t const* map;
@@ -49,7 +51,7 @@ class tag_index_view
 
 public:
 
-    class index_iterator : public std::iterator<std::forward_iterator_tag, index_item_t const*>
+    class index_iterator : public Iterator<ForwardIteratorTag, index_item_t const*>
     {
         friend class tag_index_view;
 

@@ -7,7 +7,7 @@ namespace Coffee{
 
 struct StacktracerDef
 {
-    using Stacktrace = std::vector<CString>;
+    using Stacktrace = Vector<CString>;
 
     template<typename T>
     static CString GetTypeName()

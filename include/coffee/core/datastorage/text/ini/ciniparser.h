@@ -106,7 +106,7 @@ struct SimpleIniParser : IniParserDef
 
         void insertValue(cstring name, variant_t* v)
         {
-            m_values.insert(std::pair<CString,variant_t*>(name,v));
+            m_values.insert(Pair<CString,variant_t*>(name,v));
         }
         variant_t* value(cstring name)
         {
@@ -164,7 +164,7 @@ struct SimpleIniParser : IniParserDef
         /* Section insertion/extraction */
         void insertSection(cstring name, section_t* s)
         {
-            m_section_map.insert(std::pair<CString,section_t*>(name,s));
+            m_section_map.insert(Pair<CString,section_t*>(name,s));
         }
         section_t* section(cstring name)
         {
@@ -176,7 +176,7 @@ struct SimpleIniParser : IniParserDef
         /* Global values */
         void insertValue(cstring name, variant_t* v)
         {
-            m_variant_map.insert(std::pair<CString,variant_t*>(name,v));
+            m_variant_map.insert(Pair<CString,variant_t*>(name,v));
         }
         variant_t* value(cstring name)
         {
@@ -213,7 +213,7 @@ struct SimpleIniParser : IniParserDef
     using Section = section_t*;
 
 protected:
-    static void PairToString(std::pair<CString,variant_t*> const& v,
+    static void PairToString(Pair<CString,variant_t*> const& v,
                              CString& t1, CString& outdata, cstring linesep);
 
 };

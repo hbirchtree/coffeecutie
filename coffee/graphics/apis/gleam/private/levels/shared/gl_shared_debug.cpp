@@ -35,7 +35,7 @@ void CGL_Shared_Debug::GetExtensions()
     if (numExtensions <= 0)
         return;
 
-    s_ExtensionList = std::string();
+    s_ExtensionList = CString();
     s_ExtensionList.reserve(C_CAST<size_t>(numExtensions*20));
     for(int32 i=0;i<numExtensions;i++)
     {
@@ -46,7 +46,7 @@ void CGL_Shared_Debug::GetExtensions()
     }
 #elif defined(COFFEE_USE_MAEMO_EGL)
     EGLDisplay m_disp = eglGetCurrentDisplay();
-    s_ExtensionList = std::string();
+    s_ExtensionList = CString();
     cstring extensions = eglQueryString(m_disp, EGL_EXTENSIONS);
     if(extensions)
         s_ExtensionList = extensions;

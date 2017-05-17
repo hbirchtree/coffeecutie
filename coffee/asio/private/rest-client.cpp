@@ -115,7 +115,7 @@ CString RestClientImpl::GetContentType(const Response &resp)
     CString data;
 
     CString lowered;
-    for(std::pair<CString,CString> const& v : resp.header)
+    for(Pair<CString,CString> const& v : resp.header)
     {
         lowered = StrUtil::lower(v.first);
         if(lowered == query)

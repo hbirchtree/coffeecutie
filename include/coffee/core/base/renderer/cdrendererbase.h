@@ -35,7 +35,7 @@ public:
 };
 
 template<class T>
-FORCEDINLINE Threads::Future<void> LaunchAsync(T* r, CDProperties const& p)
+FORCEDINLINE Future<void> LaunchAsync(T* r, CDProperties const& p)
 {
     Function<void()> fn = [r,p]()
     {

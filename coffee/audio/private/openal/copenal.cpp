@@ -21,7 +21,7 @@ struct CALContext
     ALCcontext *context;
     ALCdevice *device;
     CALCallback callback; /*!< Callback to be called on error*/
-    std::thread::id context_thread; /*!< Which thread the context is currently located on*/
+    Thread::id context_thread; /*!< Which thread the context is currently located on*/
 };
 
 struct CALCaptureDevice
@@ -159,7 +159,7 @@ void context_set_distance_model(CDistanceModel const& m)
 
 void context_destroy(CALContext *context)
 {
-    if(context->context_thread==std::this_thread::get_id())
+    if(context->context_thread==CurrentThread::get_id())
         alcMakeContextCurrent(context->context);
 
     alcDestroyContext(context->context);
@@ -174,13 +174,13 @@ void context_destroy(CALContext *context)
 
 bool context_make_current(CALContext *context)
 {
-    if(std::this_thread::get_id()==context->context_thread)
+    if(CurrentThread::get_id()==context->context_thread)
         return true;
 
     ALCboolean b = alcMakeContextCurrent(context->context);
     if(b==ALC_FALSE)
         return false;
-    context->context_thread = std::this_thread::get_id();
+    context->context_thread = CurrentThread::get_id();
     return true;
 }
 

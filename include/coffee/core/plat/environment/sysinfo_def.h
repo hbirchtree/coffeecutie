@@ -8,9 +8,7 @@
 
 #include "../memory/stlstring_ops.h"
 #include "../memory/string_ops.h"
-
-#include <thread>
-
+#include "../../types/tdef/stlfunctypes.h"
 
 namespace Coffee{
 
@@ -85,7 +83,7 @@ struct SysInfoDef
      */
     ThrdCnt ThreadCount()
     {
-        return std::thread::hardware_concurrency();
+        return Thread::hardware_concurrency();
     }
 
     STATICINLINE

@@ -23,9 +23,9 @@ struct _cal_devdata
     {
     }
 
-    std::vector<CALSoundStream*> m_streams;
-    std::vector<CALSoundSample*> m_samples;
-    std::vector<CALSoundBuffer*> m_buffers;
+    Vector<CALSoundStream*> m_streams;
+    Vector<CALSoundSample*> m_samples;
+    Vector<CALSoundBuffer*> m_buffers;
     CALContext* m_ctxt;
     CALSoundMixer* m_mixer;
     CALSoundFormat* m_format;

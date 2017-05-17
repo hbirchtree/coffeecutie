@@ -124,17 +124,17 @@ bool SimpleIniParser::Write(const SimpleIniParser::document_t &doc, CResources::
     CString outdata;
 
     CString t1;
-    for(std::pair<CString,variant_t*> const& v : doc.values())
+    for(Pair<CString,variant_t*> const& v : doc.values())
     {
         PairToString(v,t1,outdata,linesep);
     }
 
-    for(std::pair<CString,section_t*> const& s : doc.sections())
+    for(Pair<CString,section_t*> const& s : doc.sections())
     {
         if(outdata.size() > 0)
             outdata.append(linesep);
         outdata.append(cStringFormat("[{0}]{1}",s.first,linesep));
-        for(std::pair<CString,variant_t*> const& v : s.second->values())
+        for(Pair<CString,variant_t*> const& v : s.second->values())
         {
             PairToString(v,t1,outdata,linesep);
         }
@@ -147,9 +147,8 @@ bool SimpleIniParser::Write(const SimpleIniParser::document_t &doc, CResources::
     return true;
 }
 
-void SimpleIniParser::PairToString(
-        std::pair<CString,variant_t*> const& v,
-        CString& t1, CString& outdata, cstring linesep)
+void SimpleIniParser::PairToString(const Pair<CString, variant_t *> &v,
+                                   CString& t1, CString& outdata, cstring linesep)
 {
     t1.clear();
     switch(v.second->type)

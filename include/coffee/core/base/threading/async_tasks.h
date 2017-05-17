@@ -78,7 +78,7 @@ FORCEDINLINE bool FutureAvailable(Future<T> const& f)
     C_UNUSED(f);
     return true;
 #else
-    return f.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    return f.wait_for(Chrono::seconds(0)) == FutureStatus::ready;
 #endif
 }
 
@@ -88,7 +88,7 @@ FORCEDINLINE bool FutureAvailable(Future<T> const& f)
  */
 FORCEDINLINE void sleepMicros(uint64 mic)
 {
-    std::this_thread::sleep_for(std::chrono::microseconds(mic));
+    CurrentThread::sleep_for(Chrono::microseconds(mic));
 }
 /*!
  * \brief Sleep for mll milliseconds
@@ -96,7 +96,7 @@ FORCEDINLINE void sleepMicros(uint64 mic)
  */
 FORCEDINLINE void sleepMillis(uint64 mll)
 {
-    std::this_thread::sleep_for(std::chrono::milliseconds(mll));
+    CurrentThread::sleep_for(Chrono::milliseconds(mll));
 }
 
 }

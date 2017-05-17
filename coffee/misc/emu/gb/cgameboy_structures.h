@@ -87,7 +87,7 @@ using gb_operator = Threads::Function<void(_cgb_core*,_cgb_mmu*)>;
 /*!
  * \brief A map from opcode to function pointers
  */
-using gb_operator_map = std::map<uint8,gb_operator>;
+using gb_operator_map = Map<uint8,gb_operator>;
 
 }
 }

@@ -34,12 +34,12 @@ using Atomic = std::atomic<T>;
 
 using AtomicInt8 = std::atomic_int_fast8_t;
 using AtomicInt16 = std::atomic_int_fast16_t;
-using AtomicInt32 = std::atomic_int_fast32_t;
+using AtomicInt32 = std::atomic_int;
 using AtomicInt64 = std::atomic_int_fast64_t;
 
 using AtomicUInt8 = std::atomic_uint_fast8_t;
 using AtomicUInt16 = std::atomic_uint_fast16_t;
-using AtomicUInt32 = std::atomic_uint_fast32_t;
+using AtomicUInt32 = std::atomic_uint;
 using AtomicUInt64 = std::atomic_uint_fast64_t;
 
 using AtomicBool = std::atomic_bool;
@@ -49,6 +49,8 @@ using Queue = std::queue<T>;
 
 template<typename T>
 using LinkList = std::list<T>;
+template<typename T>
+using List = std::list<T>;
 
 template<typename T>
 using Vector = std::vector<T>;
@@ -75,5 +77,10 @@ template<typename T1, typename T2>
 using Pair = std::pair<T1,T2>;
 
 using ByteVector = Vector<uint8_t>;
+
+template<typename Tag, typename T>
+using Iterator = std::iterator<Tag,T>;
+
+using ForwardIteratorTag = std::forward_iterator_tag;
 
 }

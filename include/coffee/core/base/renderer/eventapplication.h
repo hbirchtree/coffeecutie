@@ -23,9 +23,9 @@ struct EventLoopData
     Renderer* renderer;
     ShareData* data;
 
-    std::function<void(Renderer&, ShareData*)> setup;
-    std::function<void(Renderer&, ShareData*)> loop;
-    std::function<void(Renderer&, ShareData*)> cleanup;
+    Function<void(Renderer&, ShareData*)> setup;
+    Function<void(Renderer&, ShareData*)> loop;
+    Function<void(Renderer&, ShareData*)> cleanup;
 
     uint32 flags;
 

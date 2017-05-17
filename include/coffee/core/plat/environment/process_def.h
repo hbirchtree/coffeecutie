@@ -20,7 +20,7 @@ struct ProcessPropertyDef
     * \param thread
     * \param core
     */
-    static bool CoreAffinity(Threads::Thread&, CoreCnt)
+    static bool CoreAffinity(Thread&, CoreCnt)
     {
         return false;
     }

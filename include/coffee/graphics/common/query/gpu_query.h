@@ -119,7 +119,7 @@ class GpuQueryView
     GpuQueryInterface& m_interface;
 
 public:
-    class GpuQueryIterator : public std::iterator<std::forward_iterator_tag, GpuView>
+    class GpuQueryIterator : public Iterator<ForwardIteratorTag, GpuView>
     {
         friend class GpuQueryView;
 

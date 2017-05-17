@@ -92,7 +92,7 @@ void SDL2EventHandler::inputTerminate()
 {
     /* Close haptic devices and game controllers */
     if(getSDL2Context())
-        for(std::pair<uint8,SDL_GameController*> con : getSDL2Context()->controllers)
+        for(Pair<uint8,SDL_GameController*> con : getSDL2Context()->controllers)
         {
             SDL_HapticClose(getSDL2Context()->haptics[con.first]);
             SDL_GameControllerClose(getSDL2Context()->controllers[con.first]);

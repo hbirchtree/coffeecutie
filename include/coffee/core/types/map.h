@@ -84,7 +84,7 @@ public:
     }
 
     template<typename IKeyType, typename IValueType, size_t ISize>
-    class static_map_iterator : public std::iterator<std::forward_iterator_tag, KeyType>
+    class static_map_iterator : public Iterator<ForwardIteratorTag, KeyType>
     {
     };
 

@@ -29,7 +29,7 @@ void GenerateRequest(StrmT& req_s, Host const& host, Request const& r)
 
     SendProperty(header,"Host",host);
 
-    for(std::pair<CString,CString> const& p : r.header)
+    for(Pair<CString,CString> const& p : r.header)
     {
         SendProperty(header,p.first,p.second);
     }

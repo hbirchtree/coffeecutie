@@ -8,7 +8,7 @@ namespace Coffee{
 
 template<typename PT>
 /*!
- * \brief Wrapper around std::queue to make it easier to recycle packets in a fast loop
+ * \brief Wrapper around Queue to make it easier to recycle packets in a fast loop
  */
 class PacketPool
 {

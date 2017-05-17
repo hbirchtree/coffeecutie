@@ -11,7 +11,7 @@ namespace COpenAL{
 class CALSoundMixer : public CSoundMixer<CALSource,CALBuffer>
 {
     CSoundDevice<CALSource,CALBuffer> *m_dev;
-    std::vector<CSoundTrack<CALSource,CALBuffer>*> m_tracks;
+    Vector<CSoundTrack<CALSource,CALBuffer>*> m_tracks;
 public:
     CALSoundMixer(CSoundDevice<CALSource,CALBuffer>& dev);
     ~CALSoundMixer();

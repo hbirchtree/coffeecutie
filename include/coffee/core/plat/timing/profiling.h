@@ -217,14 +217,14 @@ struct SimpleProfilerImpl
     #endif
 
         ExtraData extra_data;
-        std::atomic_int global_init;
+        AtomicInt32 global_init;
 
 #if !defined(NDEBUG)
         bool Enabled;
 #else
         static const constexpr bool Enabled = false;
 #endif
-        byte_t padding[3];
+        byte_t padding[7];
 
     };
 

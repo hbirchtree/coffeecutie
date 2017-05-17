@@ -39,7 +39,7 @@ using bl_size_t = _cbasic_size_2d<int16>;
 using bl_point_t = _cbasic_point_2d<int16>;
 
 /*!
- * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than std::function
+ * \brief Function pointers for blam bitmap processing, raw function pointer is much faster than Function
  */
 using BitmProcess = uint32(*)(uint32,uint16,byte_t);
 

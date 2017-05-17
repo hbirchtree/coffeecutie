@@ -19,12 +19,6 @@ static FILE* DefaultInputPipe = stdin;
 
 namespace Mem{
 
-namespace Classify
-{
-using std::isgraph;
-using std::isspace;
-}
-
 using Search::StrFind;
 using Search::CStrReplace;
 

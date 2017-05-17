@@ -88,7 +88,7 @@ SpriteApplication::Renderer SDL2SpriteRenderer::createRenderer()
     if(!renderer)
         cDebug("Failed to create renderer: {0}", SDL_GetError());
     m_context->renderers.insert(
-                std::pair<Renderer,SDL_Renderer*>(
+                Pair<Renderer,SDL_Renderer*>(
                     m_context->renderer_counter,
                     renderer
                     ));
@@ -146,10 +146,7 @@ bool SDL2SpriteRenderer::createTexture(
 
         m_context->texture_counter++;
 
-        m_context->textures.insert(
-                    std::pair<Texture,SDLSpriteContext::TexContext>(
-                        m_context->texture_counter,
-                        ctxt));
+        m_context->textures.insert({m_context->texture_counter, ctxt});
         t[i] = m_context->texture_counter;
     }
     return true;

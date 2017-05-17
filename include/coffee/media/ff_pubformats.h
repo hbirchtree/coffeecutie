@@ -46,8 +46,8 @@ struct CFFAudioPacket
 template<typename PacketT>
 struct CFFPacketTarget
 {
-    std::queue<PacketT> packet_queue;
-    std::mutex queue_mutex;
+    Queue<PacketT> packet_queue;
+    Mutex queue_mutex;
 };
 
 struct CFFStreamTarget
@@ -69,7 +69,7 @@ struct CFFSubtitleRect
 
 struct CFFSubtitleTarget
 {
-    std::vector<CFFSubtitleRect> subtitles;
+    Vector<CFFSubtitleRect> subtitles;
 };
 
 struct CFFVideoTarget
@@ -92,7 +92,7 @@ struct CFFStreamDescriptor
         CString label;
     };
 
-    std::vector<Stream> streams;
+    Vector<Stream> streams;
 };
 
 }

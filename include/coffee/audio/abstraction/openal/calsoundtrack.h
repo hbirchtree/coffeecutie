@@ -25,7 +25,7 @@ class CALSoundTrack : public CSoundTrack<CALSource,CALBuffer>
     };
 
     CSoundDevice<CALSource,CALBuffer> *m_dev;
-    std::list<_csample_data> m_samples;
+    List<_csample_data> m_samples;
     CALSource* m_source;
 
 public:

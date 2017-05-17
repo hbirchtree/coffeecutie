@@ -14,9 +14,9 @@ namespace CFunctional {
             QueryPerformanceFrequency(&freq);
         }
 
-        std::mutex perf_lock;
+        Mutex perf_lock;
         LARGE_INTEGER freq;
-        std::atomic_bool loaded;
+        AtomicBool loaded;
     };
 
     static WindowsPerformanceCounterData _win_perfcounter_data;

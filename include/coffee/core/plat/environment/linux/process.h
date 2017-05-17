@@ -30,7 +30,7 @@ struct LinuxProcessProperty : ProcessPropertyDef
         lim.rlim_cur = lim.rlim_max = RLIM_INFINITY;
         setrlimit(RLIMIT_CORE,&lim);
     }
-    STATICINLINE bool CoreAffinity(std::thread& thr, uint32 i)
+    STATICINLINE bool CoreAffinity(Thread& thr, uint32 i)
     {
         cpu_set_t t;
         CPU_ZERO(&t);

@@ -108,7 +108,7 @@ public:
     }
 protected:
     Function<void()> m_cmd;
-    std::atomic_bool m_stat;
+    AtomicBool m_stat;
 };
 
 /*!
