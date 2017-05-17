@@ -60,7 +60,9 @@ endif()
 
 include ( BuildOptions )
 include ( PrecompiledHeader )
-include ( CodeCoverage )
+if(BUILD_COVERAGE)
+    include ( CodeCoverage )
+endif()
 
 if(COFFEE_GENERATE_LIBRARIES)
     include ( BuildFunctions )
