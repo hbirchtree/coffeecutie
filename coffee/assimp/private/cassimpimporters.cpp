@@ -2,6 +2,8 @@
 
 #include <coffee/assimp/assimp_data.h>
 
+#include <coffee/core/CThreading>
+
 #include <coffee/core/CRegex>
 #include <coffee/core/CThreading>
 #include <coffee/core/CDebug>
@@ -55,7 +57,7 @@ CAssimpData *CAssimpImporters::importResource(Resource *source,
     std::vector<CAssimpMesh*> meshes;
 #ifdef CASSIMP_MULTITHREAD
     Function<CAssimpMesh*(aiMesh*)> fun = importMesh;
-    Vector<std::future<CAssimpMesh*> > meshes_future;
+    Vector<Threads::Future<CAssimpMesh*> > meshes_future;
 #endif
     szptr i;
     for(i=0;i<scene->mNumMeshes;i++){

@@ -22,6 +22,7 @@ if(WIN32)
         )
 endif()
 
+
 # We set some general options for building, just to keep the binaries and libs in one place
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
 if(NOT WIN32)
@@ -59,6 +60,7 @@ endif()
 
 include ( BuildOptions )
 include ( PrecompiledHeader )
+include ( CodeCoverage )
 
 if(COFFEE_GENERATE_LIBRARIES)
     include ( BuildFunctions )

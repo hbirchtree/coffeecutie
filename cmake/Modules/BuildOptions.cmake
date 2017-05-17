@@ -4,6 +4,9 @@
 
 option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
 option ( GENERATE_PROGRAMS "Whether examples should be built" ON )
+if(NOT WIN32 AND NOT WIN_UWP)
+    option ( BUILD_COVERAGE "Run coverage tests" OFF )
+endif()
 
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     option ( COFFEE_GENERATE_APPIMAGE "Generate AppImage packages" OFF )

@@ -479,6 +479,12 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         ${LIBRARIES}
         )
 
+    if(BUILD_COVERAGE)
+        target_link_libraries ( ${TARGET}
+            gcov
+            )
+    endif()
+
     target_enable_cxx11(${TARGET})
 
     if(ANDROID) # Crosscompiling setup, until we find an elegant solution
@@ -509,6 +515,14 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     endif()
     if(COFFEE_VALGRIND_CACHEGRIND)
         VALGRIND_TEST("cachegrind" "--stacks=yes" "${TARGET}")
+    endif()
+
+    if(BUILD_COVERAGE)
+        setup_target_for_coverage(
+            "${TARGET}.Coverage"
+            "${TARGET}"
+            coverage
+            )
     endif()
 
 endfunction()

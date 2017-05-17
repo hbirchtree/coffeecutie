@@ -60,3 +60,4 @@ if(ANDROID)
 
     add_definitions ( "-DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}" )
 endif()
+
