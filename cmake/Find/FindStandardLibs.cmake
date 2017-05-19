@@ -139,6 +139,16 @@ if(WIN32)
          Ws2_32
          wbemuuid
           )
+
+	if(COFFEE_BUILD_ANGLE)
+		find_package( ANGLE REQUIRED )
+		list ( APPEND CORE_EXTRA_LIBRARIES
+			${ANGLE_LIBRARIES}
+			)
+		list ( APPEND CORE_INCLUDE_DIR
+			${ANGLE_INCLUDE_DIR}
+			)
+	endif()
 endif()
 
 if(NACL)

@@ -47,7 +47,7 @@ struct CGL_Old_ShaderCompiler
     STATICINLINE bool ShaderCompile(CGhnd s)
     {
         glCompileShader(s);
-        int32 status;
+        int32 status = GL_TRUE;
         glGetShaderiv(s,GL_COMPILE_STATUS,&status);
         return status==GL_TRUE;
     }

@@ -11,7 +11,9 @@ set ( WIN_UWP TRUE )
 # Vista is long gone, so 7 (0x0601) is a good target
 
 add_definitions (
- -D_WIN32_WINNT=0x0601
+ # Windows UWP actually requires >= 0x0602, aka. Windows 8. We'll go for Windows 10, because UWP only runs on Windows 10
+ -D_WIN32_WINNT=0x0A00 
+ # We add this flag to help us a bit, a lot easier
  -DWINUWP
  # We allow pure C string functions. Fuck, Microsoft.
  -D_CRT_SECURE_NO_WARNINGS

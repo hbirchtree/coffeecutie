@@ -25,6 +25,11 @@ void GetWindowPtr(SDL_Window *window, CDWindow *win)
         win->wininfo.x11.window = info.info.x11.window;
         win->wininfo.x11.display = info.info.x11.display;
         break;
+#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+	case SDL_SYSWM_WINDOWS:
+		win->wininfo.win32.window = info.info.win.window;
+		win->wininfo.win32.hdc = info.info.win.hdc;
+		break;
 #endif
     default:
         break;

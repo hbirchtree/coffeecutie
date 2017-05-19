@@ -61,3 +61,6 @@ if(ANDROID)
     add_definitions ( "-DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}" )
 endif()
 
+if(COFFEE_BUILD_ANGLE)
+	add_definitions( "-DCOFFEE_GLES20_MODE" )
+endif()

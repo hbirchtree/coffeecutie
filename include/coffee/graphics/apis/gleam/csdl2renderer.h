@@ -28,6 +28,9 @@ class CSDL2Renderer :
         #elif defined(COFFEE_USE_LINUX_GLX)
         public X11Window,
         public GLXRenderer,
+		#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+		public EGLRenderer,
+		public SDL2Window,
         #elif defined(COFFEE_USE_MAEMO_EGL)
         public X11Window,
         public EGLRenderer,

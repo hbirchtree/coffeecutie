@@ -146,6 +146,11 @@
 #define COFFEE_X11_HILDON
 #endif
 
+#if defined(COFFEE_WINDOWS) && defined(COFFEE_GLES20_MODE)
+#define COFFEE_USE_MAEMO_EGL
+#define COFFEE_USE_WINDOWS_ANGLE
+#endif
+
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
 // This is the super-fast X11 combination, SDL2 can't even be compared to this
 // The window is guaranteed to show within 500ms
