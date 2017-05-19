@@ -42,8 +42,8 @@ HANDLE WinFileApi::GetFileHandle(cstring fn, ResourceAccess acc)
 {
     FileAccess f = GetAccess(acc);
 #ifdef COFFEE_WINDOWS_UWP
-	CWString fn_w(CString(fn));
-	//return CreateFile2(&fn_w[0], f.open, f.share, f.create,nullptr);
+	CWString fn_w = StrUtil::convertformat<wbyte_t>(CString(fn));
+	return CreateFile2(&fn_w[0], f.open, f.share, f.create,nullptr);
 	return INVALID_HANDLE_VALUE;
 #else
     return CreateFile(fn, f.open, f.share, nullptr, f.create, f.attr, nullptr);

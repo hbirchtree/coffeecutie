@@ -39,6 +39,7 @@ find_package ( SDL2 REQUIRED)
 
 include_directories ( SYSTEM
     ${SDL2_INCLUDE_DIR}
+	${STANDARDLIBS_INCLUDE_DIR}
     )
 
 coffee_add_library ( CoffeeWindow_X11 "${CoffeeX11_SRCS}" "CoffeeCore"

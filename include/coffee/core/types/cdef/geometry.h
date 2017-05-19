@@ -293,6 +293,10 @@ struct _cbasic_boundingbox
     T z2()const{return z+d;}
 };
 
+#pragma push_macro("near")
+#undef near
+#pragma push_macro("far")
+#undef far
 /*!
  * \brief Describes the clipping distance of a GL scene
  */
@@ -316,6 +320,8 @@ struct _cbasic_range
     T near;
     T far;
 };
+#pragma pop_macro("near")
+#pragma pop_macro("far")
 
 template<typename T>
 struct _cbasic_fov

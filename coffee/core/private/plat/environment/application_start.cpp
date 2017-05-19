@@ -19,7 +19,7 @@ using namespace Coffee;
 
 int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 {
-    cDebug("Entering deref_main() at {0}",StrUtil::pointerify(deref_main));
+    cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
 #ifdef NDEBUG
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
