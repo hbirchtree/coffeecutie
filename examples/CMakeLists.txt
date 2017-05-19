@@ -184,14 +184,3 @@ add_subdirectory(font-rendering)
 
 #
 #
-
-#
-# Unit tests
-#
-
-if(COFFEE_TESTS)
-    add_subdirectory(unit-tests)
-endif()
-
-#
-#

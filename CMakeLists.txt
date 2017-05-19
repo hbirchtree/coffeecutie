@@ -111,7 +111,12 @@ if(COFFEE_GENERATE_LIBRARIES)
         add_subdirectory(tools)
 
         # Add subdir for example applications
-        add_subdirectory(examples)
+        if(GENERATE_EXAMPLES)
+            add_subdirectory(examples)
+        endif()
+        if(GENERATE_TESTS)
+            add_subdirectory(examples/unit-tests)
+        endif()
     endif()
 
     # Add subdir for extensions, weak bindings of libraries

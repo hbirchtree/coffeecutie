@@ -111,6 +111,14 @@ IF ( NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "Covera
   MESSAGE( WARNING "Code coverage results with an optimized (non-Debug) build may be misleading" )
 ENDIF() # NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
 
+ADD_CUSTOM_TARGET ( CoverageTest
+
+    # Cleanup lcov
+    ${LCOV_PATH} --directory . --zerocounters
+
+    COMMENT "Resetting code coverage counters to zero."
+
+    )
 
 # Param _targetname     The name of new the custom make target
 # Param _testrunner     The name of the target which runs the tests.
@@ -122,43 +130,42 @@ ENDIF() # NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
 #   Pass them in list form, e.g.: "-j;2" for -j 2
 FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname)
 
-	IF(NOT LCOV_PATH)
-		MESSAGE(FATAL_ERROR "lcov not found! Aborting...")
-	ENDIF() # NOT LCOV_PATH
+    IF(NOT LCOV_PATH)
+    MESSAGE(FATAL_ERROR "lcov not found! Aborting...")
+    ENDIF() # NOT LCOV_PATH
 
-	IF(NOT GENHTML_PATH)
-		MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
-	ENDIF() # NOT GENHTML_PATH
+    IF(NOT GENHTML_PATH)
+    MESSAGE(FATAL_ERROR "genhtml not found! Aborting...")
+    ENDIF() # NOT GENHTML_PATH
 
-	SET(coverage_info "${CMAKE_BINARY_DIR}/${_outputname}.info")
-	SET(coverage_cleaned "${coverage_info}.cleaned")
+    SET(coverage_info "${CMAKE_BINARY_DIR}/${_outputname}.info")
+    SET(coverage_cleaned "${coverage_info}.cleaned")
 
-	SEPARATE_ARGUMENTS(test_command UNIX_COMMAND "${_testrunner}")
+    SEPARATE_ARGUMENTS(test_command UNIX_COMMAND "${_testrunner}")
 
-	# Setup target
-	ADD_CUSTOM_TARGET(${_targetname}
+    # Setup target
+    ADD_CUSTOM_TARGET(${_targetname}
 
-		# Cleanup lcov
-		${LCOV_PATH} --directory . --zerocounters
+        # Run tests
+        ${test_command} ${ARGV3}
 
-		# Run tests
-		COMMAND ${test_command} ${ARGV3}
+        # Capturing lcov counters and generating report
+        COMMAND ${LCOV_PATH} --directory . --capture --output-file ${coverage_info}
+        COMMAND ${LCOV_PATH} --remove ${coverage_info} 'tests/*' '/usr/*' --output-file ${coverage_cleaned}
+        COMMAND ${GENHTML_PATH} -o ${_outputname} ${coverage_cleaned}
+#        COMMAND ${CMAKE_COMMAND} -E remove ${coverage_info} ${coverage_cleaned}
 
-		# Capturing lcov counters and generating report
-		COMMAND ${LCOV_PATH} --directory . --capture --output-file ${coverage_info}
-		COMMAND ${LCOV_PATH} --remove ${coverage_info} 'tests/*' '/usr/*' --output-file ${coverage_cleaned}
-		COMMAND ${GENHTML_PATH} -o ${_outputname} ${coverage_cleaned}
-		COMMAND ${CMAKE_COMMAND} -E remove ${coverage_info} ${coverage_cleaned}
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Processing code coverage counters and generating report."
+        )
 
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		COMMENT "Resetting code coverage counters to zero.\nProcessing code coverage counters and generating report."
-	)
+    # Show info where to find the report
+    ADD_CUSTOM_COMMAND(TARGET ${_targetname} POST_BUILD
+        COMMAND ;
+        COMMENT "Open ./${_outputname}/index.html in your browser to view the coverage report."
+        )
 
-	# Show info where to find the report
-	ADD_CUSTOM_COMMAND(TARGET ${_targetname} POST_BUILD
-		COMMAND ;
-		COMMENT "Open ./${_outputname}/index.html in your browser to view the coverage report."
-	)
+    ADD_DEPENDENCIES ( CoverageTest ${_targetname} )
 
 ENDFUNCTION() # SETUP_TARGET_FOR_COVERAGE
 
@@ -169,29 +176,29 @@ ENDFUNCTION() # SETUP_TARGET_FOR_COVERAGE
 #   Pass them in list form, e.g.: "-j;2" for -j 2
 FUNCTION(SETUP_TARGET_FOR_COVERAGE_COBERTURA _targetname _testrunner _outputname)
 
-	IF(NOT PYTHON_EXECUTABLE)
-		MESSAGE(FATAL_ERROR "Python not found! Aborting...")
-	ENDIF() # NOT PYTHON_EXECUTABLE
+    IF(NOT PYTHON_EXECUTABLE)
+            MESSAGE(FATAL_ERROR "Python not found! Aborting...")
+    ENDIF() # NOT PYTHON_EXECUTABLE
 
-	IF(NOT GCOVR_PATH)
-		MESSAGE(FATAL_ERROR "gcovr not found! Aborting...")
-	ENDIF() # NOT GCOVR_PATH
+    IF(NOT GCOVR_PATH)
+            MESSAGE(FATAL_ERROR "gcovr not found! Aborting...")
+    ENDIF() # NOT GCOVR_PATH
 
-	ADD_CUSTOM_TARGET(${_targetname}
+    ADD_CUSTOM_TARGET(${_targetname}
 
-		# Run tests
-		${_testrunner} ${ARGV3}
+            # Run tests
+            ${_testrunner} ${ARGV3}
 
-		# Running gcovr
-		COMMAND ${GCOVR_PATH} -x -r ${CMAKE_SOURCE_DIR} -e '${CMAKE_SOURCE_DIR}/tests/'  -o ${_outputname}.xml
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		COMMENT "Running gcovr to produce Cobertura code coverage report."
-	)
+            # Running gcovr
+            COMMAND ${GCOVR_PATH} -x -r ${CMAKE_SOURCE_DIR} -e '${CMAKE_SOURCE_DIR}/tests/'  -o ${_outputname}.xml
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Running gcovr to produce Cobertura code coverage report."
+    )
 
-	# Show info where to find the report
-	ADD_CUSTOM_COMMAND(TARGET ${_targetname} POST_BUILD
-		COMMAND ;
-		COMMENT "Cobertura code coverage report saved in ${_outputname}.xml."
-	)
+    # Show info where to find the report
+    ADD_CUSTOM_COMMAND(TARGET ${_targetname} POST_BUILD
+            COMMAND ;
+            COMMENT "Cobertura code coverage report saved in ${_outputname}.xml."
+    )
 
 ENDFUNCTION() # SETUP_TARGET_FOR_COVERAGE_COBERTURA
