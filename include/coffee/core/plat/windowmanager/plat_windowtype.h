@@ -28,9 +28,9 @@ struct CDWindow{
             ::EGL_DISPMANX_WINDOW_T window;
         } dmx;
 #elif defined(COFFEE_WINDOWS)
-
         struct {
-
+			::HWND window;
+			::HDC hdc;
         } win32;
 #elif defined(COFFEE_APPLE)
 

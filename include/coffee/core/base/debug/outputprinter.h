@@ -63,6 +63,8 @@ struct OutputPrinterImpl : OutputPrinterDef
         else if(formatted[0] == 'F')
             flag = EM_LOG_ERROR;
         emscripten_log(flag, "%s", &formatted[0]);
+#elif defined(COFFEE_WINDOWS)
+		OutputDebugString(formatted.c_str());
 #else
         Puts(stream,formatted.c_str());
 #endif
