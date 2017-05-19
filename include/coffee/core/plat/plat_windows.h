@@ -10,18 +10,18 @@
 #define NOMINMAX
 
 #undef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 1
 
 #include <winsock2.h>
 
 #include <windows.h>
 
-#undef far
-#undef near
-#undef minor
-#undef major
+//#undef far
+//#undef near
+//#undef minor
+//#undef major
 
-#undef CreateWindow
+//#undef CreateWindow
 #endif
 
 namespace Coffee {

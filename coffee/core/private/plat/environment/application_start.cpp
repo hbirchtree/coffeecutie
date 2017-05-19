@@ -1,8 +1,10 @@
 #include <coffee/core/plat/plat_primary_identify.h>
 
+#include <string>
+
 #if defined(COFFEE_WINDOWS)
 #if !defined(COFFEE_WINDOWS_UWP)
-extern bool WMI_Query(const char* query, const wchar_t* property);
+extern bool WMI_Query(const char* query, const wchar_t* property, std::string& target);
 #endif
 extern int InitCOMInterface();
 #elif defined(COFFEE_ANDROID)
@@ -17,11 +19,12 @@ using namespace Coffee;
 
 int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 {
-    cDebug("Entering deref_main() at {0}",StrUtil::pointerify((uint64)deref_main));
+    cDebug("Entering deref_main() at {0}", StrUtil::pointerify(deref_main));
 #if defined(COFFEE_WINDOWS) && !defined(COFFEE_WINDOWS_UWP)
+#ifdef NDEBUG
 	ShowWindow(GetConsoleWindow(), SW_HIDE);
+#endif
     InitCOMInterface();
-    WMI_Query("SELECT * FROM Win32_BIOS", L"SerialNumber");
 #elif defined(COFFEE_WINDOWS_UWP)
 	InitCOMInterface();
 #elif defined(COFFEE_ANDROID)

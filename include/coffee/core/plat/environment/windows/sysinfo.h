@@ -179,6 +179,12 @@ struct WindowsSysInfo : SysInfoDef
         return NetStatLocalOnly;
     }
     static CString GetSystemVersion();
+
+	static HWDeviceInfo DeviceName();
+
+	static HWDeviceInfo Motherboard();
+
+	static HWDeviceInfo Chassis();
 };
 
 }

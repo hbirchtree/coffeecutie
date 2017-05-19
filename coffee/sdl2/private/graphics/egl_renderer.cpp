@@ -156,6 +156,8 @@ static bool egl_create_context(EGLRenderer* renderer,
     ::Window x_win = 0;
 #elif defined(COFFEE_RASPBERRY_DMX)
     ::EGL_DISPMANX_WINDOW_T dmx_win = {};
+#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+	::EGLNativeWindowType egl_win = nullptr;
 #endif
 
     WindowManagerClient* wm_client = C_DCAST<WindowManagerClient>(renderer);
@@ -165,6 +167,8 @@ static bool egl_create_context(EGLRenderer* renderer,
     x_win = win->wininfo.x11.window;
 #elif defined(COFFEE_RASPBERRY_DMX)
     dmx_win = win->wininfo.dmx.window;
+#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+	egl_win = win->wininfo.win32.window;
 #endif
     delete win;
 
@@ -174,6 +178,8 @@ static bool egl_create_context(EGLRenderer* renderer,
     cVerbose(8, "X11 window handle: {0}", EGL_PRINT(x_win));
 #elif defined(COFFEE_RASPBERRY_DMX)
     cVerbose(8, "DISPMANX window handle: {0}", EGL_PRINT(dmx_win.element));
+#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+	cVerbose(8, "Windows HWND: {0}", EGL_PRINT(egl_win));
 #endif
     cVerbose(8, "Config for surface: {0}", EGL_PRINT(m_eglData->config));
 
@@ -185,6 +191,9 @@ static bool egl_create_context(EGLRenderer* renderer,
 #elif defined(COFFEE_RASPBERRY_DMX)
     m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
                                                 &dmx_win, nullptr);
+#elif defined(COFFEE_USE_WINDOWS_ANGLE)
+	m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
+												egl_win, nullptr);
 #endif
 
     cVerbose(8, "eglCreateWindowSurface returned: {0}", eglGetError());

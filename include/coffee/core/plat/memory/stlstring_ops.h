@@ -373,7 +373,9 @@ FORCEDINLINE CString pointerify(uint64 const& ptr)
     str += hexify(ptr);
     return str;
 }
-FORCEDINLINE CString pointerify(const void* const& ptr)
+template<typename T,
+		 typename std::enable_if<std::is_pointer<T>::value, bool>::type* = nullptr>
+FORCEDINLINE CString pointerify(T ptr)
 {
     return pointerify((uint64 const&)ptr);
 }
@@ -412,6 +414,12 @@ FORCEDINLINE std::basic_string<CharT> propercase(std::basic_string<CharT> const&
             out.push_back(c);
     }
     return out;
+}
+
+template<typename OutCharType, typename InCharType>
+FORCEDINLINE std::basic_string<OutCharType> convertformat(typename std::basic_string<InCharType> const& input)
+{
+	return std::basic_string<OutCharType>(input.begin(), input.end());
 }
 
 }

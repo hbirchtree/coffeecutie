@@ -14,6 +14,11 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
     {
         int32 slen = data.size;
         CGL33::ShaderAlloc(1,stage,&m_handle);
+		if (m_handle == 0)
+		{
+			cWarning("Failed to allocate shader handle..?");
+			return false;
+		}
         CGL33::ShaderSource(m_handle,1,&slen,(cstring*)&data.data);
         bool stat = CGL33::ShaderCompile(m_handle);
 
