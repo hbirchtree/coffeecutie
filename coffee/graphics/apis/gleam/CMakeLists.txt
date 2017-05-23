@@ -9,6 +9,7 @@ set ( CoffeeGLeam_SRCS
 if(COFFEE_BUILD_GLEAM_RHI)
     list(APPEND CoffeeGLeam_SRCS
         private/rhi/gleam_rhi.cpp
+        private/rhi/gleam_api_query.cpp
         private/rhi/gleam_api_rhi.cpp
         private/rhi/gleam_buffer_rhi.cpp
         private/rhi/gleam_framebuffer_rhi.cpp
