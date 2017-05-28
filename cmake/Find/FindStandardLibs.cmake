@@ -15,7 +15,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     list ( APPEND CORE_EXTRA_LIBRARIES rt )
 endif()
 
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL)
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
     # Necessary for Linux and possibly OS X (latter is untested)
     list ( APPEND CORE_EXTRA_LIBRARIES dl m )
 endif()
