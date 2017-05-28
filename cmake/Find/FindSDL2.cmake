@@ -89,7 +89,7 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
 )
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
-  NAMES SDL2
+  NAMES SDL2 SDL2-2 SDL2-2.0
   HINTS
   $ENV{SDL2DIR}
   PATH_SUFFIXES
@@ -198,6 +198,8 @@ IF(SDL2_LIBRARY_TEMP)
 #          xkbcommon
           )
   endif()
+
+  get_filename_component ( SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" REALPATH )
 
   # Set the final string here so the GUI reflects the final state.
   SET(SDL2_LIBRARY ${SDL2_LIBRARY_TEMP} CACHE STRING "Where the SDL2 Library can be found")
