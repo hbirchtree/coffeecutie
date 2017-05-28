@@ -64,3 +64,16 @@ endif()
 if(COFFEE_BUILD_ANGLE)
 	add_definitions( "-DCOFFEE_GLES20_MODE" )
 endif()
+
+# Windows is missing an identifier for libraries
+if(WIN32)
+    if(${CMAKE_CXX_COMPILER} MATCHES "/x86_amd64/")
+        set ( CMAKE_LIBRARY_ARCHITECTURE_ "amd64" )
+    elseif(${CMAKE_CXX_COMPILER} MATCHES "/x86_arm/")
+        set ( CMAKE_LIBRARY_ARCHITECTURE_ "arm" )
+    else()
+        set ( CMAKE_LIBRARY_ARCHITECTURE_ "x86" )
+    endif()
+
+    set ( CMAKE_LIBRARY_ARCHITECTURE "${CMAKE_LIBRARY_ARCHITECTURE_}" CACHE STRING "" )
+endif()
