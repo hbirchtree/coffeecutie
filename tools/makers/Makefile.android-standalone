@@ -1,0 +1,51 @@
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+TARGET := armv7a_neon_latest
+
+COFFEE_DIR := 
+DOCK_COFFEE_DIR := /home/coffee/library
+
+BUILD_DIR:=$(PWD)
+SOURCE_DIR:=$(PWD)/..
+AUTOMATION_DIR:=$(BUILD_DIR)/automation
+AUTO_DIR:=$(AUTOMATION_DIR)/builders
+
+COMPILE_DIR := $(BUILD_DIR)/build-android_standalone
+TARGET_COMPILE_DIR := $(BUILD_DIR)/build-android-$(TARGET)
+
+TOOLCHAIN_FILE := all-android.toolchain.cmake
+PRELOAD_DIR := $(COMPILE_DIR)/build-android/preloads
+EXTRA_OPTIONS := -DCOFFEE_ROOT_DIR=$(DOCK_COFFEE_DIR)
+
+DOCK_PRLD_DIR := /home/coffee/preload
+DOCK_BLD_DIR := /home/coffee/build
+
+all: android
+
+# Make it possible to avoid root permissions
+android-mkdirs:
+	@mkdir -p $(TARGET_COMPILE_DIR)/Coffee_NativeLibs
+
+android-get-nativelibs: android-mkdirs
+	@make -f $(ROOT_DIR)/Makefile.choices native-lib-root
+
+android-gen-preloads:
+	@make -f $(ROOT_DIR)/Makefile.android android-config \
+		-e AUTO_DIR=$(AUTO_DIR) \
+		-e BUILD_DIR=$(COMPILE_DIR)
+
+android: android-gen-preloads android-get-nativelibs
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=android-$(TARGET) \
+		-e BUILDER_NAME=android-builder \
+		-e DOCKER_CONFIG=android \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS) \
+		-e CMAKE_GEN="Unix\ Makefiles" \
+		-e PRELOAD_FILE=$(DOCK_PRLD_DIR)/$(TARGET).cmake \
+		-e TOOLCHAIN=$(TOOLCHAIN_FILE) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e AUTOMATION_DIR=$(AUTOMATION_DIR) \
+		-e AUTO_DIR=$(AUTO_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e DOCKER_EXTRA_OPTIONS="-v $(PRELOAD_DIR):$(DOCK_PRLD_DIR):ro -v $(BUILD_DIR)/native-libs:$(DOCK_BLD_DIR)/Coffee_NativeLibs:ro -v $(COFFEE_DIR)/android-$(TARGET):$(DOCK_COFFEE_DIR):ro"
+

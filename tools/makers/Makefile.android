@@ -1,0 +1,91 @@
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+BUILD_DIR:=$(PWD)
+SOURCE_DIR:=$(PWD)/..
+AUTO_DIR:=$(SOURCE_DIR)/tools/automation/builders
+
+DOCK_SRC:=/home/coffee/project
+DOCK_BUILD:=/home/coffee/build
+DOCK_META:=/home/coffee/meta
+DOCK_OUT:=/home/coffee/build/out
+
+DOCKER := docker
+
+EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF
+DOCKER_EXTRA_OPTIONS := 
+
+META_DIR := $(BUILD_DIR)/build-android/meta
+
+TARGET := all
+
+all: android
+
+android-mkdir:
+	mkdir -p \
+		$(BUILD_DIR)/build-android/meta \
+		$(BUILD_DIR)/build-android/out \
+		$(BUILD_DIR)/build/android
+
+android-get-automation:
+	@make -f $(ROOT_DIR)/Makefile.multi automation-data
+
+android-build-docker: android-get-automation
+	$(DOCKER) build \
+		-t android-builder:dev \
+		$(AUTO_DIR)/android
+
+android-permission-config: android-build-docker android-mkdir
+	$(DOCKER) run --rm \
+		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
+		-v $(BUILD_DIR)/build-android/meta:$(DOCK_META):rw \
+		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		-u root \
+		android-builder:dev \
+			chown -R coffee:coffee $(DOCK_BUILD) $(DOCK_META)
+
+android-get-config: android-permission-config
+	[ -d $(BUILD_DIR)/build-android/meta/.git ] || \
+	$(DOCKER) run --rm \
+		-v $(META_DIR):$(DOCK_META):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		android-builder:dev \
+			git clone \
+			"https://github.com/hbirchtree/coffeecutie-meta.git" \
+			$(DOCK_META)
+
+android-config: android-get-config
+	$(DOCKER) run --rm \
+		-v $(BUILD_DIR)/build-android/meta:$(DOCK_META):rw \
+		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
+		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		android-builder:dev \
+			cmake $(DOCK_META)/android \
+				-DSOURCE_DIR=$(DOCK_SRC)
+
+android: android-config
+	$(DOCKER) run --rm \
+		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
+		-v $(BUILD_DIR)/build-android/meta:$(DOCK_META):rw \
+		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
+		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		android-builder:dev \
+			cmake --build $(DOCK_BUILD)
+
+android.target: android-config android-permission-config
+	$(DOCKER) run --rm \
+		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
+		-v $(BUILD_DIR)/build-android/meta:$(DOCK_META):rw \
+		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
+		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		android-builder:dev \
+			cmake --build $(DOCK_BUILD) --target $(TARGET)
+

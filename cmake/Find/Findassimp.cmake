@@ -6,9 +6,9 @@ FIND_PATH( ASSIMP_INCLUDE_DIR_TMP
     Importer.hpp
 
     PATHS
+    ${NATIVE_LIBRARY_DIR}
     ${CMAKE_BINARY_DIR}/libs/
     ${COFFEE_EXT_LIBRARY_DIR}/assimp/
-    ${NATIVE_LIBRARY_DIR}
     ${COFFEE_ROOT_DIR}
 
     PATH_SUFFIXES include include/assimp

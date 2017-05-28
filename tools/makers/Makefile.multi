@@ -1,0 +1,103 @@
+DOCKER:=docker
+CMAKE:=cmake
+
+OUTPUT_DIR:=$(PWD)
+SOURCE_DIR:=$(PWD)/..
+AUTOMATION_DIR:=$(OUTPUT_DIR)/automation
+AUTO_DIR:=$(AUTOMATION_DIR)/builders
+
+DOCKER_EXTRA_OPTIONS:=
+
+DOCK_SRC:=/home/coffee/project
+DOCK_BUILD:=/home/coffee/build
+DOCK_OUT:=/home/coffee/build/out
+
+DOCK_TOOLS:=$(DOCK_SRC)/cmake/Toolchains
+DOCK_PRLDS:=$(DOCK_SRC)/cmake/Preload
+
+CMAKE_SRC_DIR:=$(DOCK_SRC)
+CMAKE_BLD_DIR:=$(DOCK_BUILD)
+CMAKE_OUT_DIR:=$(DOCK_OUT)
+
+CMAKE_GEN:=Ninja
+
+BUILD_NAME:=ubuntu
+DOCKER_CONFIG:=ubuntu
+PRELOAD:=linux-generic.cmake
+TOOLCHAIN:=linux-generic_linux.toolchain.cmake
+BUILDER_NAME:=ubuntu-native
+
+PRELOAD_FILE=$(DOCK_PRLDS)/$(PRELOAD)
+
+DOCKER_CONTAINER=$(BUILDER_NAME):dev
+
+EXTRA_OPTIONS:=-DGENERATE_PROGRAMS=OFF
+
+all: multi
+
+multi-mk-build:
+	mkdir -p $(OUTPUT_DIR)/build-$(BUILD_NAME)/out
+	
+multi-mk-output:
+	mkdir -p $(OUTPUT_DIR)/build/$(BUILD_NAME)
+
+multi-prepare: multi-mk-build multi-mk-output
+
+automation-data:
+	wget "https://github.com/hbirchtree/coffeecutie-automation-tools/archive/master.tar.gz" && \
+	tar -zxf master.tar.gz && \
+	bash -c "[ -d $(AUTOMATION_DIR) ] && rm -r $(AUTOMATION_DIR) || true" && \
+	cp -ru "coffeecutie-automation-tools-master" $(AUTOMATION_DIR) && \
+	rm -r master.tar.gz coffeecutie-automation-tools-master
+
+multi-docker-build: automation-data multi-prepare
+	$(DOCKER) build \
+		-t $(BUILDER_NAME):dev \
+		$(AUTO_DIR)/$(DOCKER_CONFIG) || true
+
+multi-config: multi-docker-build
+	$(DOCKER) run --rm \
+		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
+		-v $(OUTPUT_DIR)/build-$(BUILD_NAME):$(DOCK_BUILD):rw \
+		-v $(OUTPUT_DIR)/build/$(BUILD_NAME):$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		$(DOCKER_CONTAINER) \
+			sh -c "cd $(CMAKE_BLD_DIR) && \
+			$(CMAKE) $(CMAKE_SRC_DIR) \
+    			-G$(CMAKE_GEN) \
+	    		-C$(PRELOAD_FILE) \
+	    		-DCMAKE_TOOLCHAIN_FILE=$(DOCK_TOOLS)/$(TOOLCHAIN) \
+	    		-DCMAKE_INSTALL_PREFIX=$(CMAKE_OUT_DIR) \
+	    		$(EXTRA_OPTIONS)"
+
+multi: multi-config
+	$(DOCKER) run --rm \
+		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
+		-v $(OUTPUT_DIR)/build-$(BUILD_NAME):$(DOCK_BUILD):rw \
+		-v $(OUTPUT_DIR)/build/$(BUILD_NAME):$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		$(DOCKER_CONTAINER) \
+			$(CMAKE) --build $(CMAKE_BLD_DIR) --target install
+
+multi.coverage: multi
+	$(DOCKER) run --rm \
+		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
+		-v $(OUTPUT_DIR)/build-$(BUILD_NAME):$(DOCK_BUILD):rw \
+		-v $(OUTPUT_DIR)/build/$(BUILD_NAME):$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		$(DOCKER_CONTAINER) \
+			$(CMAKE) --build $(CMAKE_BLD_DIR) --target CoverageTest
+
+multi.make8: multi-config
+	$(DOCKER) run --rm \
+		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
+		-v $(OUTPUT_DIR)/build-$(BUILD_NAME):$(DOCK_BUILD):rw \
+		-v $(OUTPUT_DIR)/build/$(BUILD_NAME):$(DOCK_OUT):rw \
+		$(DOCKER_EXTRA_OPTIONS) \
+		--workdir $(DOCK_BUILD) \
+		$(DOCKER_CONTAINER) \
+			sh -c "cd $(CMAKE_BLD_DIR) && make -j8 install"
+
