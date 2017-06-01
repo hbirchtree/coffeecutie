@@ -14,14 +14,14 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenOrthographic(
 
     mat[0][0] = T(2)/(view.right()-view.left());
     mat[1][1] = T(2)/(view.top()-view.bottom());
-    mat[2][2] = -T(2)/(zfield.far-zfield.near);
+    mat[2][2] = -T(2)/(zfield.far_-zfield.near_);
 
     mat[3][0] = -(view.right()+view.left())
                 /(view.right()-view.left());
     mat[3][1] = -(view.top()+view.bottom())
                 /(view.top()-view.bottom());
-    mat[3][2] = -(zfield.far+zfield.near)
-                /(zfield.far-zfield.near);
+    mat[3][2] = -(zfield.far_+zfield.near_)
+                /(zfield.far_-zfield.near_);
 
     return mat;
 }
@@ -40,9 +40,9 @@ FORCEDINLINE _cbasic_tmatrix<T,4> GenPerspective(
 
     matrix[0][0] = T(1)/(aspect*thalffov);
     matrix[1][1] = T(1)/(thalffov);
-    matrix[2][2] = -(zfield.far+zfield.near)/(zfield.far-zfield.near);
+    matrix[2][2] = -(zfield.far_+zfield.near_)/(zfield.far_-zfield.near_);
     matrix[2][3] = T(-1);
-    matrix[3][2] = (T(-2)*zfield.far*zfield.near)/(zfield.far-zfield.near);
+    matrix[3][2] = (T(-2)*zfield.far_*zfield.near_)/(zfield.far_-zfield.near_);
 
     return matrix;
 }

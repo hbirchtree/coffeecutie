@@ -27,6 +27,7 @@ set ( COFFEE_LIBRARY_SUFFIXES
     lib
     lib64
     lib/${ANDROID_ABI}
+    lib/${CMAKE_LIBRARY_ARCHITECTURE}
     )
 
 find_path ( COFFEE_INCLUDE_DIR_TMP

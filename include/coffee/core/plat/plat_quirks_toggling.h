@@ -65,7 +65,8 @@
 #if (defined(COFFEE_WINDOWS) || defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) \
-    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) ) \
+    || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) \
+    || defined(COFFEE_NACL) ) \
     && __LP64__ != 1
 #define COFFEE_ARCH_LLP64
 #endif

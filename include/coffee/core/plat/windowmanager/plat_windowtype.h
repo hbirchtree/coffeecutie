@@ -10,6 +10,8 @@
 #elif defined(COFFEE_RASPBERRY_DMX)
 #include <bcm_host.h>
 #include <EGL/egl.h>
+#elif defined(COFFEE_WINDOWS_UWP)
+#include <Inspectable.h>
 #endif
 
 namespace Coffee{
@@ -27,6 +29,10 @@ struct CDWindow{
         struct {
             ::EGL_DISPMANX_WINDOW_T window;
         } dmx;
+#elif defined(COFFEE_WINDOWS_UWP)
+		struct {
+			IInspectable * window;
+		} winrt;
 #elif defined(COFFEE_WINDOWS)
         struct {
 			::HWND window;

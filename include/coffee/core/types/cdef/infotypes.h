@@ -37,6 +37,17 @@ struct HWDeviceInfo
 	firmware(firmware),
 	serial(serial)
     {}
+//    FORCEDINLINE HWDeviceInfo(HWDeviceInfo&& dev):
+//        HWDeviceInfo(dev.manufacturer, dev.model,
+//                     dev.firmware, dev.serial)
+//    {
+//    }
+//    FORCEDINLINE HWDeviceInfo(const HWDeviceInfo& dev):
+//        HWDeviceInfo(dev.manufacturer, dev.model,
+//                     dev.firmware, dev.serial)
+//    {
+//    }
+
     const CString manufacturer;
     const CString model;
     const CString firmware;
@@ -71,6 +82,9 @@ struct SWVersionInfo
         build(build)
     {
     }
+    FORCEDINLINE SWVersionInfo():
+        SWVersionInfo({}, 0, 0)
+    {}
 
     const CString name;
 

@@ -20,6 +20,10 @@
 #include "cgraphics_pixops.h"
 
 namespace Coffee{
+
+struct HWDeviceInfo;
+struct SWVersionInfo;
+
 namespace Display{
 struct CDProperties;
 }
@@ -53,6 +57,32 @@ struct GraphicsAPI
 
     static void LoadAPI(bool UNUSED_PARAM debug_mode)
     {
+    }
+
+    static CString GetAPIName(GraphicsDevice const&)
+    {
+        return {};
+    }
+    static bool GetAPIVersion(GraphicsDevice const&, SWVersionInfo*)
+    {
+
+    }
+
+    static bool GetRendererInfo(GraphicsDevice const&, HWDeviceInfo*)
+    {
+        return false;
+    }
+    static bool GetRendererDriverInfo(GraphicsDevice const&, SWVersionInfo*)
+    {
+        return false;
+    }
+    static CString GetShaderLanguageName(GraphicsContext const&)
+    {
+        return {};
+    }
+    static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*)
+    {
+        return false;
     }
 
     /*!

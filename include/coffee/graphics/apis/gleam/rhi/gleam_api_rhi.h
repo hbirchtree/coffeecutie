@@ -15,6 +15,9 @@ struct GLEAM_API : GraphicsAPI
 {
     using API_CONTEXT = Function<bool(bool)>;
 
+    using G_DEV = GraphicsDevice;
+    using G_CTXT = GraphicsContext;
+
     /* These access the PBO queue */
     friend struct GLEAM_Surface2D;
     friend struct GLEAM_Surface3D_Base;
@@ -147,6 +150,13 @@ public:
     {
         return APILevelIsOfClass(l, c);
     }
+
+    static CString GetAPIName(GraphicsDevice const&);
+    static bool GetAPIVersion(GraphicsDevice const&, SWVersionInfo*);
+    static bool GetRendererInfo(GraphicsDevice const&, HWDeviceInfo*);
+    static bool GetRendererDriverInfo(GraphicsDevice const&, SWVersionInfo*);
+    static CString GetShaderLanguageName(GraphicsContext const&);
+    static bool GetShaderLanguageVersion(GraphicsContext const&, SWVersionInfo*);
 };
 
 struct GLEAM_PRF

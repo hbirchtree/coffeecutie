@@ -1,0 +1,31 @@
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+BUILD_DIR:=$(PWD)
+SOURCE_DIR:=$(PWD)/..
+
+COFFEE_DIR := 
+DOCK_COFFEE_DIR := /home/coffee/library
+
+CHOICES := $(ROOT_DIR)/Makefile.choices
+AND_STAND := $(ROOT_DIR)/Makefile.android-standalone
+
+AUTOMATION_DIR := $(BUILD_DIR)/automation
+
+EXTRA_OPTIONS := "-DCOFFEE_ROOT_DIR=$(DOCK_COFFEE_DIR)"
+DOCKER_EXTRA_OPTIONS := "-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
+
+android.armv8a:
+	@make -f $(AND_STAND) \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)" \
+		-e TARGET=arm64_nougat
+
+ubuntu.amd64:
+	@make -f $(CHOICES) ubuntu-amd64 \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu:$(DOCK_COFFEE_DIR):ro"
+
+

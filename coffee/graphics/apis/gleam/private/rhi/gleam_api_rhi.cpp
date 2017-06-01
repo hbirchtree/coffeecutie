@@ -746,8 +746,6 @@ APILevel GLEAM_API::Level()
     return GL_CURR_API;
 }
 
-
-
 }
 }
 }

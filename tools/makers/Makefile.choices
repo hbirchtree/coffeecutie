@@ -1,0 +1,195 @@
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+BUILD_DIR:=$(PWD)
+SOURCE_DIR:=$(PWD)/..
+
+RASPBERRY_SYSROOT:=$(BUILD_DIR)/raspberry-sysroot
+NATIVE_LIB_ROOT:=$(BUILD_DIR)/native-libs
+
+EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF -DCOFFEE_BUILD_ASSIMP=ON
+
+all:
+	@true
+
+# Compiles for Ubuntu 16.04+ amd64
+ubuntu-amd64: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
+
+# Compiles for latest Fedora amd64
+fedora-amd64: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=fedora \
+		-e BUILDER_NAME=fedora-builder \
+		-e DOCKER_CONFIG=fedora \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Fedora" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR)
+
+# Compiles for SteamOS amd64
+steam-amd64: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=steam \
+		-e BUILDER_NAME=steam-builder \
+		-e DOCKER_CONFIG=steam \
+		-e TOOLCHAIN=linux-steam_linux.toolchain.cmake \
+		-e PRELOAD=linux-steam.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/SteamOS" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR)
+
+# Provide coverage results for Ubuntu 16.04+ amd64 using lcov
+coverage: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi multi.coverage \
+		-e BUILD_NAME=coverage \
+		-e PRELOAD=linux-coverage.cmake \
+		-e EXTRA_OPTIONS="-DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR)
+
+# Generate documentation
+docs: 
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=docs \
+		-e PRELOAD=docs-all.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)" \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR)
+
+# Compiles for Emscripten using asm.js
+emscripten-asmjs: native-lib-root 
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=emscripten \
+		-e BUILDER_NAME=emscripten-builder \
+		-e DOCKER_CONFIG=emscripten \
+		-e TOOLCHAIN=js-emscripten.toolchain.cmake \
+		-e PRELOAD=js-emscripten.cmake \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e CMAKE_GEN="Unix\ Makefiles" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT)/Emscripten:/Emscripten:ro -e EMSCRIPTEN=/emsdk_portable/emscripten/master" \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/native-libs/Emscripten -DEMSCRIPTEN_ROOT_PATH=/emsdk_portable/emscripten/master"
+
+# Compiles for Emscripten using WebAssembly
+emscripten-wasm: 
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=emscripten-wasm \
+		-e BUILDER_NAME=emscripten-builder \
+		-e DOCKER_CONFIG=emscripten \
+		-e TOOLCHAIN=js-emscripten.toolchain.cmake \
+		-e PRELOAD=js-emscripten-wasm.cmake \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e CMAKE_GEN="Unix\ Makefiles" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT)/Emscripten:/Emscripten:ro -e EMSCRIPTEN=/emsdk_portable/emscripten/master" \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DEMSCRIPTEN_ROOT_PATH=/emsdk_portable/emscripten/master"
+
+# Compiles for Raspberry Pi armhf/ARMv6
+raspberry-armhf: $(RASPBERRY_SYSROOT) native-lib-root 
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=raspberry \
+		-e BUILDER_NAME=raspberry-builder \
+		-e DOCKER_CONFIG=raspberry \
+		-e TOOLCHAIN=linux-raspberry-armhf_linux.toolchain.cmake \
+		-e PRELOAD=linux-raspberry.cmake \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(RASPBERRY_SYSROOT)/architectures/rpi-SDL2-X11-armv6:/rpi-sysroot:ro -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/RaspberryPi -DRASPBERRY_SDK=/rpi-sysroot"
+
+# Compiles for Maemo 5 armel/ARMv7A
+maemo-armv7a: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=maemo \
+		-e BUILDER_NAME=maemo-builder \
+		-e DOCKER_CONFIG= \
+		-e TOOLCHAIN=linux-maemo-armv7_linux.toolchain.cmake \
+		-e PRELOAD=linux-maemo.cmake \
+		\
+		-e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
+		-e DOCK_SRC="/maemo/home/coffee/project" \
+		-e DOCK_BUILD="/maemo/home/coffee/build" \
+		-e DOCK_OUT="/maemo/home/coffee/build/out" \
+		\
+		-e DOCK_PRLDS="/home/coffee/project/cmake/Preload" \
+		-e DOCK_TOOLS="/home/coffee/project/cmake/Toolchains" \
+		-e CMAKE_SRC_DIR="/home/coffee/project" \
+		-e CMAKE_BLD_DIR="/home/coffee/build" \
+		-e CMAKE_OUT_DIR="/home/coffee/build/out" \
+		-e CMAKE_GEN="Unix\ Makefiles" \
+		\
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIB_ROOT=/nativelibs/Maemo5" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/maemo/nativelibs:ro" \
+		\
+		multi.make8
+
+# Compiles for Native Client/PNaCL
+nacl-pnacl: native-lib-root 
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e BUILD_NAME=nacl \
+		-e BUILDER_NAME=nacl-builder \
+		-e DOCKER_CONFIG=native-client \
+		-e TOOLCHAIN=linux-nativeclient_linux.toolchain.cmake \
+		-e PRELOAD=linux-nativeclient.cmake \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelib/NaCL" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelib:ro"
+		
+# Android builds, multi-arch and stuff
+android: 
+	@make -f $(ROOT_DIR)/Makefile.android \
+		-e DOCKER_EXTRA_OPTIONS=$(DOCKER_EXTRA_OPTIONS) \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS)
+# Specific platforms for Android
+android.armv8a: 
+	@make -f $(ROOT_DIR)/Makefile.android android.target \
+		-e TARGET=arm64_nougat \
+		-e DOCKER_EXTRA_OPTIONS=$(DOCKER_EXTRA_OPTIONS) \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS)
+android.armv7a: 
+	@make -f $(ROOT_DIR)/Makefile.android android.target \
+		-e TARGET=armv7a_neon_latest \
+		-e DOCKER_EXTRA_OPTIONS=$(DOCKER_EXTRA_OPTIONS) \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS)
+android.armv7a.kk: 
+	@make -f $(ROOT_DIR)/Makefile.android android.target \
+		-e TARGET=armv7a_neon_kk \
+		-e DOCKER_EXTRA_OPTIONS=$(DOCKER_EXTRA_OPTIONS) \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS)
+android.x86_64: 
+	@make -f $(ROOT_DIR)/Makefile.android android.target \
+		-e TARGET=x86-64_kk \
+		-e DOCKER_EXTRA_OPTIONS=$(DOCKER_EXTRA_OPTIONS) \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS)
+android.x86: 
+	@make -f $(ROOT_DIR)/Makefile.android android.target \
+		-e TARGET=x86_kk \
+		-e DOCKER_EXTRA_OPTIONS=$(DOCKER_EXTRA_OPTIONS) \
+		-e EXTRA_OPTIONS=$(EXTRA_OPTIONS)
+
+
+native-lib-root:
+	@test ! -d $(NATIVE_LIB_ROOT) && \
+	mkdir $(NATIVE_LIB_ROOT) && \
+	git clone \
+		"https://github.com/hbirchtree/native-library-bundle.git" \
+		$(NATIVE_LIB_ROOT) || \
+	true
+
+$(RASPBERRY_SYSROOT):
+	@test ! -d $(RASPBERRY_SYSROOT) && \
+	mkdir $(RASPBERRY_SYSROOT) && \
+	git clone \
+		"https://github.com/hbirchtree/raspberry-sysroot.git" \
+		$(RASPBERRY_SYSROOT) || \
+	true
+

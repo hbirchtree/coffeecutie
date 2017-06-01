@@ -5,6 +5,8 @@
 # This find-script will make it easier to add several libraries for external use 
 #
 
+set ( COFFEE_ROOT_DIR "${COFFEE_ROOT_DIR}" CACHE PATH "" )
+
 set ( COFFEE_SEARCH_PATHS
     /usr/local
     /usr
@@ -13,13 +15,14 @@ set ( COFFEE_SEARCH_PATHS
     ~/Library/Frameworks
     /Library/Frameworks
 
-    "${COFFEE_ROOT_DIR}"
-    "$ENV{COFFEE_ROOT_DIR}"
+    ${COFFEE_ROOT_DIR}
+    $ENV{COFFEE_ROOT_DIR}
     )
 set ( COFFEE_LIBRARY_SUFFIXES
     lib
     lib64
     lib/${ANDROID_ABI}
+    lib/${CMAKE_LIBRARY_ARCHITECTURE}
     )
 
 find_path ( COFFEE_INCLUDE_DIR_TMP
@@ -27,7 +30,6 @@ find_path ( COFFEE_INCLUDE_DIR_TMP
     coffee/CCore
 
     PATHS
-    ${COFFEE_ROOT_DIR}
     ${COFFEE_SEARCH_PATHS}
 
     PATH_SUFFIXES
@@ -239,6 +241,7 @@ set ( COFFEE_GRAPHICS_COMMON_LIBRARY
     ${COFFEE_WINDOW_DMX_LIBRARY}
     ${COFFEE_CONTEXT_EGL_LIBRARY}
     ${COFFEE_CONTEXT_GLX_LIBRARY}
+    ${COFFEE_CORE_LIBRARY}
     CACHE STRING "")
 set ( COFFEE_GLEAM_COMMON_LIBRARY
     ${COFFEE_GLEAM_LIBRARY}

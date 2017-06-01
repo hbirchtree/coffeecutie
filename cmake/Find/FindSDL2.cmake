@@ -66,20 +66,20 @@
 #  License text for the above reference.)
 
 SET(SDL2_SEARCH_PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /usr/local
-  /usr
-  /sw # Fink
-  /opt/local # DarwinPorts
-  /opt/csw # Blastwave
-  /opt
-  "C:\\SDL2"
-  "C:\\SDL2_64"
-  ${CMAKE_BINARY_DIR}/libs
-  ${NATIVE_LIBRARY_DIR}
-  ${RASPBERRY_SDK}/usr
-)
+    ~/Library/Frameworks
+    /Library/Frameworks
+    /usr/local
+    /usr
+    /sw # Fink
+    /opt/local # DarwinPorts
+    /opt/csw # Blastwave
+    /opt
+    "C:\\SDL2"
+    "C:\\SDL2_64"
+    ${CMAKE_BINARY_DIR}/libs
+    ${NATIVE_LIBRARY_DIR}
+    ${RASPBERRY_SDK}/usr
+    )
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
   HINTS
@@ -89,10 +89,16 @@ FIND_PATH(SDL2_INCLUDE_DIR SDL.h
 )
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
-  NAMES SDL2
+  NAMES SDL2 SDL2-2 SDL2-2.0
   HINTS
   $ENV{SDL2DIR}
-  PATH_SUFFIXES lib64 lib lib/${ANDROID_ABI} ${ANDROID_ABI} lib/x64 64/link
+  PATH_SUFFIXES
+
+  lib64 lib # Default stuff
+  lib/${CMAKE_LIBRARY_ARCHITECTURE} # CMake architecture path
+  lib/${ANDROID_ABI} ${ANDROID_ABI} # Android paths
+  lib/x64 64/link
+
   PATHS ${SDL2_SEARCH_PATHS}
 )
 
@@ -116,9 +122,9 @@ ENDIF(NOT SDL2_BUILDING_LIBRARY)
 # The Apple build may not need an explicit flag because one of the
 # frameworks may already provide it.
 # But for non-OSX systems, I will use the CMake Threads package.
-IF(NOT APPLE)
+IF(NOT APPLE AND NOT NACL)
   FIND_PACKAGE(Threads)
-ENDIF(NOT APPLE)
+ENDIF(NOT APPLE AND NOT NACL)
 
 # MinGW needs an additional library, mwindows
 # It's total link flags should look like -lmingw32 -lSDL2main -lSDL2 -lmwindows
@@ -193,6 +199,8 @@ IF(SDL2_LIBRARY_TEMP)
           )
   endif()
 
+  get_filename_component ( SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" REALPATH )
+
   # Set the final string here so the GUI reflects the final state.
   SET(SDL2_LIBRARY ${SDL2_LIBRARY_TEMP} CACHE STRING "Where the SDL2 Library can be found")
   SET(SDL2_LIBRARIES ${SDL2_LIBRARIES_TEMP} CACHE STRING "SDL2 library dependencies")
@@ -206,4 +214,5 @@ INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2
     REQUIRED_VARS
     SDL2_LIBRARY
-    SDL2_INCLUDE_DIR)
+    SDL2_INCLUDE_DIR
+    )

@@ -15,7 +15,7 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
     list ( APPEND CORE_EXTRA_LIBRARIES rt )
 endif()
 
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL)
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
     # Necessary for Linux and possibly OS X (latter is untested)
     list ( APPEND CORE_EXTRA_LIBRARIES dl m )
 endif()
@@ -123,22 +123,28 @@ endif()
 
 if(WIN32)
     # Don't know what this is, but it's necessary
-    list ( APPEND CORE_EXTRA_LIBRARIES
-         # For some of the file API
-         #pathcch
+	if(NOT WIN_UWP)
+		list ( APPEND CORE_EXTRA_LIBRARIES
+			 # For some of the file API
+			 #pathcch
 
-         # Core includes
-         user32
-         gdi32
-         winmm
-         imm32
-         ole32
-         oleaut32
-         shell32
-         version
-         Ws2_32
-         wbemuuid
-          )
+			 # Core includes
+			 user32
+			 gdi32
+			 winmm
+			 imm32
+			 ole32
+			 oleaut32
+			 shell32
+			 version
+			 Ws2_32
+			 wbemuuid
+			 )
+	else()
+		list ( APPEND CORE_EXTRA_LIBRARIES
+			OneCore
+			)
+	endif()
 
 	if(COFFEE_BUILD_ANGLE)
 		find_package( ANGLE REQUIRED )
