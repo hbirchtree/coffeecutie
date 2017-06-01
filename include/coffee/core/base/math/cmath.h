@@ -92,6 +92,11 @@ template<typename T> T mix(T a, T b, T f)
     return a*(T(1)-f)+b*f;
 }
 
+template<typename T> T c_rand()
+{
+    return T(rand()) / RAND_MAX;
+}
+
 }
 }
 
