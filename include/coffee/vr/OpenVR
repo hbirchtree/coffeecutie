@@ -132,7 +132,7 @@ struct OpenVR
             for(uint8 i = 0; i<2; i++)
             {
                 auto mat = vr::VRSystem()->GetProjectionMatrix(static_cast<vr::EVREye>(i),
-                                                               clip.near, clip.far, vr::API_OpenGL);
+                                                               clip.near_, clip.far_, vr::API_OpenGL);
                 TransferVRMatrix(mat,matrices[i]);
             }
         }else{
