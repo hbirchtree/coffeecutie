@@ -9,14 +9,14 @@
 #define main SDL_main
 #endif
 
-#if defined(COFFEE_NACL)
+#if defined(COFFEE_NACL) || defined(COFFEE_WINDOWS_UWP)
 #define main SDL_main
 #endif
 
 extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv);
 
 //This is a cheeky little macro that allows us to wrap the main function.
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     Coffee::CoffeeMainWithArgs android_entry_point = mainfun; \

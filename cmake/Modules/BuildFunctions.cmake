@@ -441,6 +441,8 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     # Bleh, Android kind of sucks for this.
     if(ANDROID)
         return()
+	elseif(WIN_UWP)
+		return()
     endif()
 
     coffee_gen_licenseinfo("${TARGET}" "")

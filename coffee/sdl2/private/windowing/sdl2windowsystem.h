@@ -19,12 +19,17 @@ void GetWindowPtr(SDL_Window *window, CDWindow *win)
         cDebug("Failed to acquire information on window: %s",SDL_GetError());
         return;
     }
+
     switch(info.subsystem){
 #if !defined(COFFEE_RASPBERRYPI) && (defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11))
     case SDL_SYSWM_X11:
         win->wininfo.x11.window = info.info.x11.window;
         win->wininfo.x11.display = info.info.x11.display;
         break;
+#elif defined(COFFEE_WINDOWS_UWP)
+	case SDL_SYSWM_WINRT:
+		win->wininfo.winrt.window = info.info.winrt.window;
+		break;
 #elif defined(COFFEE_USE_WINDOWS_ANGLE)
 	case SDL_SYSWM_WINDOWS:
 		win->wininfo.win32.window = info.info.win.window;

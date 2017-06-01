@@ -361,7 +361,7 @@ bool WinFileFun::Touch(NodeType t, cstring n)
 bool WinFileFun::Rm(cstring fn)
 {
 #ifdef COFFEE_WINDOWS_UWP
-	CWString fn_w(CString(fn));
+	CWString fn_w = StrUtil::convertformat<wbyte_t>(CString(fn));
 	//return DeleteFile(&fn_w[0]);
 	return false;
 #else
