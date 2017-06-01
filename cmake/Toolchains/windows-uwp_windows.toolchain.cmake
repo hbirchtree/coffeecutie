@@ -1,7 +1,7 @@
 set ( CMAKE_SYSTEM_NAME "WindowsStore" )
 set ( CMAKE_SYSTEM_VERSION "10.0" )
 
-set ( WIN_UWP TRUE CACHE BOOL "" )
+set ( WIN_UWP TRUE )
 
 # For Windows, we disable most annoying warnings to save compilation time. (damn it, Microsoft...)
 # These include system headers (which are constantly giving off warnings)

@@ -74,12 +74,17 @@ SET(SDL2_SEARCH_PATHS
     /opt/local # DarwinPorts
     /opt/csw # Blastwave
     /opt
-    "C:\\SDL2"
-    "C:\\SDL2_64"
     ${CMAKE_BINARY_DIR}/libs
     ${NATIVE_LIBRARY_DIR}
     ${RASPBERRY_SDK}/usr
     )
+
+if(NOT WIN_UWP)
+	list ( APPEND SDL2_SEARCH_PATHS
+		"C:/SDL2_64/"
+		"C:/SDL2/"
+		)
+endif()
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
   HINTS
@@ -94,13 +99,13 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   $ENV{SDL2DIR}
   PATH_SUFFIXES
 
-  lib64 lib # Default stuff
+  lib # Default stuff
   lib/${CMAKE_LIBRARY_ARCHITECTURE} # CMake architecture path
+  lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
   lib/${ANDROID_ABI} ${ANDROID_ABI} # Android paths
-  lib/x64 64/link
 
   PATHS ${SDL2_SEARCH_PATHS}
-)
+  )
 
 IF(NOT SDL2_BUILDING_LIBRARY)
   IF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")

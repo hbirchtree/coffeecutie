@@ -5,6 +5,15 @@ macro(WINPE_PACKAGE
         SOURCES RESOURCES
         ICON_ASSET )
 
+	set ( INCLUDED_LIBS "" )
+	# Locate necessary binary files
+	foreach(lib ${ANGLE_LIBRARIES};${SDL2_LIBRARY})
+		get_filename_component ( LIB_BASE "${lib}" NAME_WE )
+		get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
+
+		set ( INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll" )
+	endforeach()
+
     set ( WINDOWS_DIST_COMPANY "${COMPANY}" )
 
     set ( WINDOWS_PACKAGE_NAME "${DOM_NAME}.${TARGET}" )
@@ -102,6 +111,7 @@ macro(WINPE_PACKAGE
     # Finally we stir the smelly gak into PE
 
 	if(WIN_UWP)
+		set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
         include_directories( ${SDL2_INCLUDE_DIR} )
 		include_directories( ${ANGLE_INCLUDE_DIR} )
 	endif()
@@ -118,8 +128,7 @@ macro(WINPE_PACKAGE
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
         ${MANIFEST_FILE}
-		${SDL2_LIBRARY_BIN}
-		${ANGLE_LIBRARIES}
+		${INCLUDED_LIBS}
         )
 
 	if(WIN_UWP)
@@ -128,10 +137,18 @@ macro(WINPE_PACKAGE
 		set_source_files_properties ( ${SDL2_MAIN_C_FILE}
 			PROPERTIES COMPILE_FLAGS /ZW
 			)
-		set_target_properties ( ${TARGET}
-			PROPERTIES
-			RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES}"
-			)
+		#set_target_properties ( ${TARGET}
+		#	PROPERTIES
+		#	RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES_BIN}"
+		#	)
+		execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
+		foreach(var ${INCLUDED_LIBS})
+			configure_file(
+				"${var}"
+				${APPX_DIR}/
+				COPYONLY
+				)
+		endforeach()
 	endif()
 
     set_target_properties ( ${TARGET}
