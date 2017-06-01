@@ -292,7 +292,7 @@ public:
 
         camera.aspect = 1.6f;
         camera.fieldOfView = 70.f;
-        camera.zVals.far = 100.;
+        camera.zVals.far_ = 100.;
 
         camera.position = Vecf3(0, 0, -9);
 
