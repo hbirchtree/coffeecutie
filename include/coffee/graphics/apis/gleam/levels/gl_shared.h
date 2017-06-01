@@ -132,9 +132,9 @@ struct CGL_Shared_Functions
     void DepthSet(ZField64 const& d)
     {
 #ifdef COFFEE_GLEAM_DESKTOP
-        glDepthRange(d.near,d.far);
+        glDepthRange(d.near_,d.far_);
 #else
-        glDepthRangef(d.near,d.far);
+        glDepthRangef(d.near_,d.far_);
 #endif
     }
 

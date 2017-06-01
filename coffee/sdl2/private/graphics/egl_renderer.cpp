@@ -168,7 +168,12 @@ static bool egl_create_context(EGLRenderer* renderer,
 #elif defined(COFFEE_RASPBERRY_DMX)
     dmx_win = win->wininfo.dmx.window;
 #elif defined(COFFEE_USE_WINDOWS_ANGLE)
-	egl_win = win->wininfo.win32.window;
+	if (!win->wininfo.winrt.window)
+	{
+		cWarning("Got invalid window WinRT window handle!");
+		return false;
+	}
+	egl_win = (EGLNativeWindowType)win->wininfo.winrt.window;
 #endif
     delete win;
 

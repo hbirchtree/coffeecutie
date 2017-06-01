@@ -293,10 +293,6 @@ struct _cbasic_boundingbox
     T z2()const{return z+d;}
 };
 
-#pragma push_macro("near")
-#undef near
-#pragma push_macro("far")
-#undef far
 /*!
  * \brief Describes the clipping distance of a GL scene
  */
@@ -304,24 +300,22 @@ template<typename T>
 struct _cbasic_range
 {
     _cbasic_range()
-        : near(0.1),
-          far(10)
+        : near_(0.1),
+          far_(10)
     {
     }
     _cbasic_range(T vnear, T vfar)
-        : near(vnear),
-          far(vfar)
+        : near_(vnear),
+          far_(vfar)
     {
     }
 
-    //Why fnear and ffar?
+    //Why near_ and far_?
     //Because Windows is a piece of shit. :)
 
-    T near;
-    T far;
+    T near_;
+    T far_;
 };
-#pragma pop_macro("near")
-#pragma pop_macro("far")
 
 template<typename T>
 struct _cbasic_fov

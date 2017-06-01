@@ -101,28 +101,57 @@ macro(WINPE_PACKAGE
 
     # Finally we stir the smelly gak into PE
 
-    add_executable(${TARGET} ${SOURCES}
+	if(WIN_UWP)
+        include_directories( ${SDL2_INCLUDE_DIR} )
+		include_directories( ${ANGLE_INCLUDE_DIR} )
+	endif()
+
+	
+	if(MSVC AND WIN_UWP)
+		set ( OPTIONS WIN32 )
+	endif()
+
+    add_executable(${TARGET}
+		${OPTIONS}
+		${SDL2_MAIN_C_FILE}
+		${SOURCES}
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
         ${MANIFEST_FILE}
+		${SDL2_LIBRARY_BIN}
+		${ANGLE_LIBRARIES}
         )
+
+	if(WIN_UWP)
+		# I need these seeds for mye research, Morty, gotta stuff it waaay up there, Morty.
+		target_link_libraries ( ${TARGET} ${SDL2_LIBRARY} )
+		set_source_files_properties ( ${SDL2_MAIN_C_FILE}
+			PROPERTIES COMPILE_FLAGS /ZW
+			)
+		set_target_properties ( ${TARGET}
+			PROPERTIES
+			RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES}"
+			)
+	endif()
 
     set_target_properties ( ${TARGET}
         PROPERTIES
         VERSION ${COFFEE_BUILD_STRING}
         SOVERSION 1
         )
-    target_link_libraries ( ${TARGET}
-        user32
-        gdi32
-        winmm
-        imm32
-        ole32
-        oleaut32
-        version
-        uuid
-        dinput8
-        )
+	if(NOT WIN_UWP)
+		target_link_libraries ( ${TARGET}
+			user32
+			gdi32
+			winmm
+			imm32
+			ole32
+			oleaut32
+			version
+			uuid
+			dinput8
+			)
+	endif()
     install(
         TARGETS
         ${TARGET}

@@ -3,9 +3,9 @@
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/CGLeamRHI>
-#include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/image/cimage.h>
 #include <coffee/core/base/types/counter.h>
+#include <coffee/core/CDebug>
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/coffee_saving.h>
@@ -307,7 +307,7 @@ public:
 
         camera.aspect = 1.6f;
         camera.fieldOfView = 85.f;
-        camera.zVals.far = 100.;
+        camera.zVals.far_ = 100.;
 
         camera.position = Vecf3(0, 0, -15);
 
