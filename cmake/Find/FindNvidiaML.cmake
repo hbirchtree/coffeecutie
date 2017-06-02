@@ -12,7 +12,7 @@ find_path ( NVIDIAML_INCLUDE_DIR
 
 find_library ( NVIDIAML_LIB_TMP
     NAMES nvidia-ml nvml
-    PATH_SUFFIXES src/gdk/nvml/lib/ lib/x64/
+    PATH_SUFFIXES src/gdk/nvml/lib/ lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL}/
     PATHS ${NVIDIAML_SEARCH_PATHS}
     )
 

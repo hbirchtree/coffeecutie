@@ -111,6 +111,7 @@ WindowsSysInfo::proc_info WindowsSysInfo::GetProcInfo()
 
 HWDeviceInfo WindowsSysInfo::Processor()
 {
+#if defined(COFFEE_ARCH_AMD64) || defined(COFFEE_ARCH_X86)
     char CPUString[0x20];
     char CPUBrandString[0x40];
 
@@ -156,10 +157,14 @@ HWDeviceInfo WindowsSysInfo::Processor()
         brand.resize(brand_find - brand.c_str());
 
     return HWDeviceInfo(CPUString,brand,Env::GetVar("PROCESSOR_REVISION"));
+#else
+	return HWDeviceInfo("Generic", COFFEE_ARCH, "0x0");
+#endif
 }
 
 bool WindowsSysInfo::HasHyperThreading()
 {
+#if defined(COFFEE_ARCH_AMD64) || defined(COFFEE_ARCH_X86)
     bool dht = false;
 
     int CPUInfo[4];
@@ -180,6 +185,9 @@ bool WindowsSysInfo::HasHyperThreading()
     }
 
     return dht;
+#else
+	return false;
+#endif
 }
 
 CString WindowsSysInfo::GetSystemVersion()

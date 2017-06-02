@@ -68,7 +68,7 @@ if(WIN32)
 endif()
 
 if( COFFEE_BUILD_ANGLE )
-	message ( "-- Building ANGLE as OpenGL ES provider" )
+	message (STATUS "Building ANGLE as OpenGL ES provider" )
 endif()
 
 if(NOT COFFEE_BUILD_GLES)

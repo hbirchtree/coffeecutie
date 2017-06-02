@@ -48,7 +48,7 @@ set ( COFFEE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include/coffee" )
 set ( COFFEE_PCH_DIR "${CMAKE_BINARY_DIR}/pch/" )
 
 if(COFFEE_GENERATE_LIBRARIES)
-    message ("-- Building as: ${CMAKE_BUILD_TYPE}")
+    message (STATUS "Building as: ${CMAKE_BUILD_TYPE}")
 endif()
 
 # This is used inside modules to refer to libraries
