@@ -143,6 +143,13 @@ macro(WINPE_PACKAGE
 		#	)
 		execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
 		foreach(var ${INCLUDED_LIBS})
+			set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
+			configure_file(
+				"${var}"
+				${APPX_DIR}/
+				COPYONLY
+				)
+			set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
 			configure_file(
 				"${var}"
 				${APPX_DIR}/
