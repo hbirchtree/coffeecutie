@@ -30,7 +30,10 @@ function CheckArch($arch) {
     }
 }
 
-function ConfigProject($SrcDir, $arch, $toolchain, $preload, $LibVariant, $ANGLEDir, $ExtraArgs) {
+function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
+					[String] $preload,[String] $LibVariant,[String] $ANGLEDir, `
+					[String[]] $ExtraArgs) {
+
     $archfix = (CheckArch $arch)
 
     mkdir -Force build_"$preload"_$archfix
@@ -41,6 +44,7 @@ function ConfigProject($SrcDir, $arch, $toolchain, $preload, $LibVariant, $ANGLE
 
     $Generator = "Visual Studio 14 2015 $arch".Trim()
 
+	echo $ExtraArgs
     cmake $SrcDir `
         -G"$Generator" `
         -DCMAKE_TOOLCHAIN_FILE="$SrcDir/cmake/Toolchains/$toolchain.toolchain.cmake" `

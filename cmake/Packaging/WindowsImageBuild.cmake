@@ -111,7 +111,6 @@ macro(WINPE_PACKAGE
     # Finally we stir the smelly gak into PE
 
 	if(WIN_UWP)
-		set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
         include_directories( ${SDL2_INCLUDE_DIR} )
 		include_directories( ${ANGLE_INCLUDE_DIR} )
 	endif()
@@ -141,7 +140,11 @@ macro(WINPE_PACKAGE
 		#	PROPERTIES
 		#	RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES_BIN}"
 		#	)
+		set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
 		execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
+		set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
+		execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
+
 		foreach(var ${INCLUDED_LIBS})
 			set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
 			configure_file(
@@ -176,15 +179,24 @@ macro(WINPE_PACKAGE
 			dinput8
 			)
 	endif()
-    install(
-        TARGETS
-        ${TARGET}
+	if(NOT WIN_UWP)
+		install(
+			TARGETS
+			${TARGET}
 
-        DESTINATION
-        bin
-        )
-    install(
-        FILES ${BUNDLE_LIBS}
-        DESTINATION bin
-        )
+			DESTINATION
+			bin
+			)
+		install(
+			FILES ${BUNDLE_LIBS}
+			DESTINATION bin
+			)
+	else()
+		install (
+			DIRECTORY
+			${CMAKE_CURRENT_BINARY_DIR}/AppPackages/${TARGET}
+
+			DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/windows-universal"
+			)
+	endif()
 endmacro()

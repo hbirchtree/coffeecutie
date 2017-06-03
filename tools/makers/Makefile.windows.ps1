@@ -1,14 +1,23 @@
+param(
+	[string] $Target = "win32.amd64",
+	[string] $SourceDir = "$Pwd\..",
+	[switch] $Standalone = $false,
+	[string] $CoffeeRoot = $Pwd,
+	[string[]] $ExtraArgs = @()
+	)
 $ErrorActionPreference = "Stop"
 
-. $Pwd\Makefile.windows-base.ps1
+$ScriptPath = (split-path -parent $MyInvocation.MyCommand.Definition)
 
-$SrcDir = $args[0]
+. $ScriptPath\Makefile.windows-base.ps1
+
+$SrcDir = $sourcedir
 $Toolchain = "win32"
 $Preload = "generic"
 $LibType = "Win32"
 $Arch = "Win64"
 
-switch ($args[1])
+switch ($target)
 {
     "win32.amd64" {
         echo "W32/AMD64"
@@ -44,9 +53,18 @@ switch ($args[1])
     }
 }
 
+if ($Standalone) {
+	echo "-- Building as standalone project"
+	$ExtraArgs += ,"-DCOFFEE_ROOT_DIR=$CoffeeRoot"
+}
+
+$CurrentDir = $Pwd
+
 ConfigProject "$SrcDir" `
     "$Arch" windows-"$Toolchain"_windows "windows-$Preload" `
-    "$LibType" (DownloadAngle)
+    "$LibType" (DownloadAngle) $ExtraArgs
+
+cd $CurrentDir
 
 BuildProject "windows-$Preload" "$Arch" "Release"
 
