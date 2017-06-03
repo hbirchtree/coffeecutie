@@ -55,6 +55,8 @@ build_script:
 
     & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug
 
+    #& $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CoffeeRoot $$$
+
     cd "$env:APPVEYOR_BUILD_FOLDER"
 
     7z a Coffee_Win64_"$env:APPVEYOR_BUILD_NUMBER"_$env:APPVEYOR_REPO_COMMIT.zip "$env:INSTALL_DIR\*"

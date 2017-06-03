@@ -4,13 +4,14 @@ param(
 	[switch] $Standalone = $false,
 	[string] $CoffeeRoot = $Pwd,
 	[string[]] $ExtraArgs = @(),
-	[string] $Config = "Release"
+        [string] $Config = "Release",
+        [string] $CMakeBin = "cmake"
 	)
 $ErrorActionPreference = "Stop"
 
 $ScriptPath = (split-path -parent $MyInvocation.MyCommand.Definition)
 
-. $ScriptPath\Makefile.windows-base.ps1
+. $ScriptPath\Makefile.windows-base.ps1 -CMakeBin "$CMakeBin"
 
 $SrcDir = $sourcedir
 $Toolchain = "win32"
