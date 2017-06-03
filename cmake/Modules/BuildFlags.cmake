@@ -65,3 +65,5 @@ endif()
 if(COFFEE_BUILD_ANGLE)
 	add_definitions( "-DCOFFEE_GLES20_MODE" )
 endif()
+
+include ( WindowsPlatformDetect )

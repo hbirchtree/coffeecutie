@@ -1,0 +1,20 @@
+# Windows is missing an identifier for libraries
+# This applies to all derivative builds
+if(WIN32)
+    if(${CMAKE_CXX_COMPILER} MATCHES "/x86_amd64/")
+        set ( CMAKE_LIBRARY_ARCHITECTURE_ "amd64" )
+                set ( CMAKE_LIBRARY_ARCHITECTURE_UWP_ "x64" )
+                set ( CMAKE_LIBRARY_ARCHITECTURE_SDL_ "x64" )
+    elseif(${CMAKE_CXX_COMPILER} MATCHES "/x86_arm/")
+        set ( CMAKE_LIBRARY_ARCHITECTURE_ "arm" )
+                set ( CMAKE_LIBRARY_ARCHITECTURE_UWP_ "arm" )
+    else()
+        set ( CMAKE_LIBRARY_ARCHITECTURE_ "x86" )
+                set ( CMAKE_LIBRARY_ARCHITECTURE_UWP_ "Win32" )
+                set ( CMAKE_LIBRARY_ARCHITECTURE_SDL_ "x86" )
+    endif()
+
+    set ( CMAKE_LIBRARY_ARCHITECTURE "${CMAKE_LIBRARY_ARCHITECTURE_}" CACHE STRING "" )
+        set ( CMAKE_LIBRARY_ARCHITECTURE_UWP "${CMAKE_LIBRARY_ARCHITECTURE_UWP_}" CACHE STRING "" )
+        set ( CMAKE_LIBRARY_ARCHITECTURE_SDL "${CMAKE_LIBRARY_ARCHITECTURE_SDL_}" CACHE STRING "" )
+endif()
