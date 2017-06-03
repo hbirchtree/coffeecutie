@@ -127,21 +127,13 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             DESTINATION
             lib/${ANDROID_ABI}
             )
-    elseif(NOT WIN32)
-        install(
-            TARGETS
-            ${TARGET}
-
-            DESTINATION
-            lib/${CMAKE_LIBRARY_ARCHITECTURE}
-            )
     else()
         install(
             TARGETS
             ${TARGET}
 
             DESTINATION
-            bin/${CMAKE_LIBRARY_ARCHITECTURE}
+            lib/${CMAKE_LIBRARY_ARCHITECTURE}
             )
     endif()
 
