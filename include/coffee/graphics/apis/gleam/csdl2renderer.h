@@ -44,10 +44,7 @@ class CSDL2Renderer :
         public GLeamRenderer
 {
 public:
-    CSDL2Renderer():
-        CSDL2Renderer(nullptr)
-    {
-    }
+    CSDL2Renderer();
 
     virtual ~CSDL2Renderer();
 

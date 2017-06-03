@@ -14,6 +14,11 @@ CSDL2Renderer::CSDL2Renderer(CObject *parent) :
 {
 }
 
+CSDL2Renderer::CSDL2Renderer():
+    CSDL2Renderer(nullptr)
+{
+}
+
 CSDL2Renderer::~CSDL2Renderer()
 {
     cleanup();

@@ -48,12 +48,12 @@ endif()'
 libnames=(
 CORE 
 GLEAM 
-ASIO 
-OPENAL
 SDL2
 BLAM
 GRAPHICS
 IMAGE
+ASIO 
+OPENAL
 ASSIMP
 WINDOW_X11
 WINDOW_DMX
@@ -64,12 +64,12 @@ CONTEXT_GLX
 soname=(
 Core
 GLeam
-ASIO
-OpenAL
 SDL2
 Blam
 GraphicsAPI
 Image
+ASIO
+OpenAL
 Assimp
 Window_X11
 Window_DMX
@@ -96,7 +96,7 @@ GRAPHICS_COMMON
 
 num_libs=${#libnames[@]}
 num_libs=$(($num_libs - 1))
-num_required_libs=$(($num_libs - 5))
+num_required_libs=$(($num_libs - 7))
 
 for e in $(seq 0 $num_libs); do
     echo "
