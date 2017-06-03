@@ -49,7 +49,7 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     $Generator = "Visual Studio 14 2015 $arch".Trim()
 
 	echo $ExtraArgs
-    $CMakeBin $SrcDir `
+    & $CMakeBin $SrcDir `
         -G"$Generator" `
         -DCMAKE_TOOLCHAIN_FILE="$SrcDir/cmake/Toolchains/$toolchain.toolchain.cmake" `
         -DANGLE_ROOT_DIR="$ANGLEDir" `
@@ -64,14 +64,14 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 function BuildProject($preload, $arch, $config) {
     $arch = (CheckArch $arch)
 
-    $CMakeBin --build $Pwd/build_"$preload"_$arch `
+    & $CMakeBin --build $Pwd/build_"$preload"_$arch `
         --target install --config $config
 }
 
 function TestProject($preload, $arch, $config) {
     $arch = (CheckArch $arch)
 
-    $CMakeBin --build $Pwd/build_"$preload"_$arch `
+    & $CMakeBin --build $Pwd/build_"$preload"_$arch `
         --target RUN_TESTS --config $config
 }
 
