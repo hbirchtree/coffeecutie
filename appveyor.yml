@@ -51,9 +51,9 @@ build_script:
 
     #"%CMAKE_BIN%" -G"%CMAKE_GENERATOR%" -DCMAKE_TOOLCHAIN_FILE="%APPVEYOR_BUILD_FOLDER%\cmake\Toolchains\%TOOLCHAIN_FILE%" -C"%APPVEYOR_BUILD_FOLDER%\cmake\Preload\%PRELOAD_FILE%" "%APPVEYOR_BUILD_FOLDER%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_BUILD_OPENAL=OFF -DSKIP_HIGHMEM_TESTS=ON
 
-    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target uwp.amd64 -Config Debug
+    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target uwp.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN
 
-    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug
+    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN
 
     #& $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CoffeeRoot $$$
 
