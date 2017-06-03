@@ -5,18 +5,18 @@ macro(WINPE_PACKAGE
         SOURCES RESOURCES
         ICON_ASSET )
 
-	if(COFFEE_BUILD_ANGLE)
-		find_package ( ANGLE REQUIRED )
-	endif()
+    if(COFFEE_BUILD_ANGLE)
+        find_package ( ANGLE REQUIRED )
+    endif()
 
-	set ( INCLUDED_LIBS "" )
-	# Locate necessary binary files
-	foreach(lib ${ANGLE_LIBRARIES};${SDL2_LIBRARY})
-		get_filename_component ( LIB_BASE "${lib}" NAME_WE )
-		get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
+    set ( INCLUDED_LIBS "" )
+    # Locate necessary binary files
+    foreach(lib ${ANGLE_LIBRARIES};${SDL2_LIBRARY})
+        get_filename_component ( LIB_BASE "${lib}" NAME_WE )
+        get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
 
-		set ( INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll" )
-	endforeach()
+        set ( INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll" )
+    endforeach()
 
     set ( WINDOWS_DIST_COMPANY "${COMPANY}" )
 
@@ -64,13 +64,13 @@ macro(WINPE_PACKAGE
                         APPEND "${RESOURCE_HEADER}"
                         "{${RESC_NUM},\"${file_dir}${file_name}\"},"
                         )
-					# If there is a directory path, append a "_" for it to be correct
+                    # If there is a directory path, append a "_" for it to be correct
                     # This is disgusting.
-					if(file_dir)
+                    if(file_dir)
                         set( file_dir "${file_dir}/" )
                     endif()
-					# Set virtual filename
-					set ( virt_fname "${file_dir}${file_name}" )
+                    # Set virtual filename
+                    set ( virt_fname "${file_dir}${file_name}" )
                     string ( REPLACE "_" "___" virt_fname "${virt_fname}" )
                     string ( REPLACE "/" "_" virt_fname "${virt_fname}" )
                     string ( REPLACE "\\" "_" virt_fname "${virt_fname}" )
@@ -114,122 +114,129 @@ macro(WINPE_PACKAGE
 
     # Finally we stir the smelly gak into PE
 
-	if(WIN_UWP)
+    if(WIN_UWP)
         include_directories( ${SDL2_INCLUDE_DIR} )
-		include_directories( ${ANGLE_INCLUDE_DIR} )
-	endif()
+        include_directories( ${ANGLE_INCLUDE_DIR} )
+    endif()
 
-	
-	if(MSVC AND WIN_UWP)
-		set ( OPTIONS WIN32 )
-	endif()
+
+    if(MSVC AND WIN_UWP)
+        set ( OPTIONS WIN32 )
+    endif()
 
     add_executable(${TARGET}
-		${OPTIONS}
-		${SDL2_MAIN_C_FILE}
-		${SOURCES}
+        ${OPTIONS}
+        ${SDL2_MAIN_C_FILE}
+        ${SOURCES}
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
         ${MANIFEST_FILE}
-		${INCLUDED_LIBS}
+        ${INCLUDED_LIBS}
         )
 
-	if(WIN_UWP)
-		# I need these seeds for mye research, Morty, gotta stuff it waaay up there, Morty.
-		target_link_libraries ( ${TARGET} ${SDL2_LIBRARY} )
-		set_source_files_properties ( ${SDL2_MAIN_C_FILE}
-			PROPERTIES COMPILE_FLAGS /ZW
-			)
-		#set_target_properties ( ${TARGET}
-		#	PROPERTIES
-		#	RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES_BIN}"
-		#	)
-		set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
-		execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
-		set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
-		execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
+    if(WIN_UWP)
+        # I need these seeds for mye research, Morty, gotta stuff it waaay up there, Morty.
+        target_link_libraries ( ${TARGET} ${SDL2_LIBRARY} )
+        set_source_files_properties ( ${SDL2_MAIN_C_FILE}
+            PROPERTIES COMPILE_FLAGS /ZW
+            )
+        #set_target_properties ( ${TARGET}
+        #	PROPERTIES
+        #	RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES_BIN}"
+        #	)
+        set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
+        execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
+        set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
+        execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
 
-		foreach(var ${INCLUDED_LIBS})
-			set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
-			configure_file(
-				"${var}"
-				${APPX_DIR}/
-				COPYONLY
-				)
-			set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
-			configure_file(
-				"${var}"
-				${APPX_DIR}/
-				COPYONLY
-				)
-		endforeach()
+        foreach(var ${INCLUDED_LIBS})
+            set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
+            configure_file(
+                "${var}"
+                ${APPX_DIR}/
+                COPYONLY
+                )
+            set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
+            configure_file(
+                "${var}"
+                ${APPX_DIR}/
+                COPYONLY
+                )
+        endforeach()
 
-		execute_process ( COMMAND cmake -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir )
+        execute_process (
+            COMMAND cmake -E make_directory
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir )
 
-		configure_file (
-			${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
-			${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/Logo.png
-			COPYONLY
-			)
-		configure_file (
-			${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
-			${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SmallLogo.png
-			COPYONLY
-			)
-		configure_file (
-			${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
-			${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SmallLogo44x44.png
-			COPYONLY
-			)
-		configure_file (
-			${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
-			${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/StoreLogo.png
-			COPYONLY
-			)
-			
-		configure_file (
-			${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
-			${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SplashScreen.png
-			COPYONLY
-			)
-	endif()
+        add_custom_command ( TARGET ${TARGET}
+            PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/Logo.png
+            )
+        add_custom_command ( TARGET ${TARGET}
+            PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SmallLogo.png
+            )
+        add_custom_command ( TARGET ${TARGET}
+            PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SmallLogo44x44.png
+            )
+        add_custom_command ( TARGET ${TARGET}
+            PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/StoreLogo.png
+            )
+
+        add_custom_command ( TARGET ${TARGET}
+            PRE_LINK
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SplashScreen.png
+            )
+    endif()
 
     set_target_properties ( ${TARGET}
         PROPERTIES
         VERSION ${COFFEE_BUILD_STRING}
         SOVERSION 1
         )
-	if(NOT WIN_UWP)
-		target_link_libraries ( ${TARGET}
-			user32
-			gdi32
-			winmm
-			imm32
-			ole32
-			oleaut32
-			version
-			uuid
-			dinput8
-			)
-	endif()
-	if(NOT WIN_UWP)
-		install(
-			TARGETS
-			${TARGET}
+    if(NOT WIN_UWP)
+        target_link_libraries ( ${TARGET}
+            user32
+            gdi32
+            winmm
+            imm32
+            ole32
+            oleaut32
+            version
+            uuid
+            dinput8
+            )
+    endif()
+    if(NOT WIN_UWP)
+        install(
+            TARGETS
+            ${TARGET}
 
-			DESTINATION
-			bin
-			)
-		install(
-			FILES ${BUNDLE_LIBS}
-			DESTINATION bin
-			)
-	else()
-		install (
-			DIRECTORY
-			${CMAKE_CURRENT_BINARY_DIR}/AppPackages/${TARGET}
+            DESTINATION
+            bin
+            )
+        install(
+            FILES ${BUNDLE_LIBS}
+            DESTINATION bin
+            )
+    else()
+        install (
+            DIRECTORY
+            ${CMAKE_CURRENT_BINARY_DIR}/AppPackages/${TARGET}
 
-			DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/windows-universal"
-			)
-	endif()
+            DESTINATION "${CMAKE_PACKAGED_OUTPUT_PREFIX}/windows-universal"
+            )
+    endif()
 endmacro()
