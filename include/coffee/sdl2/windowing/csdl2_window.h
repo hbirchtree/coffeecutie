@@ -13,41 +13,41 @@ class SDL2Window :
 {
 public:
     virtual ~SDL2Window() {}
-    CDMonitor monitor();
+    virtual CDMonitor monitor();
 
-    bool showWindow();
-    bool hideWindow();
-    bool closeWindow();
+    virtual bool showWindow();
+    virtual bool hideWindow();
+    virtual bool closeWindow();
 
-    void popErrorMessage(Severity s, cstring title, cstring msg);
+    virtual void popErrorMessage(Severity s, cstring title, cstring msg);
 
 protected:
-    bool windowPreInit(const CDProperties &p, CString *err);
-    bool windowInit(const CDProperties& p, CString *err);
-    bool windowPostInit(const CDProperties& p, CString *err);
-    void windowTerminate();
+    virtual bool windowPreInit(const CDProperties &p, CString *err);
+    virtual bool windowInit(const CDProperties& p, CString *err);
+    virtual bool windowPostInit(const CDProperties& p, CString *err);
+    virtual void windowTerminate();
 
 public:
-    CDWindow *window();
+	virtual CDWindow *window();
 
-    uint32 windowState() const;
-    void setWindowState(const CDProperties::State &s);
+	virtual uint32 windowState() const;
+	virtual void setWindowState(const CDProperties::State &s);
 
-    CSize windowSize() const;
-    void setWindowSize(const CSize &s);
+	virtual CSize windowSize() const;
+	virtual void setWindowSize(const CSize &s);
 
-    CPoint windowPosition() const;
-    void setWindowPosition(const CPoint &p);
+	virtual CPoint windowPosition() const;
+	virtual void setWindowPosition(const CPoint &p);
 
-    CString windowTitle() const;
-    void setWindowTitle(const CString &tl);
+	virtual CString windowTitle() const;
+    virtual void setWindowTitle(const CString &tl);
 
-    bool setWindowIcon(CBitmap &icon);
+	virtual bool setWindowIcon(CBitmap &icon);
 
-    bool screensaverMode();
-    void setScreensaverMode(bool m);
+	virtual bool screensaverMode();
+	virtual void setScreensaverMode(bool m);
 
-    CString windowLibrary() const;
+    virtual CString windowLibrary() const;
 };
 
 }

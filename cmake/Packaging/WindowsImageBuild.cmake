@@ -5,6 +5,10 @@ macro(WINPE_PACKAGE
         SOURCES RESOURCES
         ICON_ASSET )
 
+	if(COFFEE_BUILD_ANGLE)
+		find_package ( ANGLE REQUIRED )
+	endif()
+
 	set ( INCLUDED_LIBS "" )
 	# Locate necessary binary files
 	foreach(lib ${ANGLE_LIBRARIES};${SDL2_LIBRARY})

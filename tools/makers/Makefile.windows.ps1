@@ -3,7 +3,8 @@ param(
 	[string] $SourceDir = "$Pwd\..",
 	[switch] $Standalone = $false,
 	[string] $CoffeeRoot = $Pwd,
-	[string[]] $ExtraArgs = @()
+	[string[]] $ExtraArgs = @(),
+	[string] $Config = "Release"
 	)
 $ErrorActionPreference = "Stop"
 
@@ -66,9 +67,9 @@ ConfigProject "$SrcDir" `
 
 cd $CurrentDir
 
-BuildProject "windows-$Preload" "$Arch" "Release"
+BuildProject "windows-$Preload" $Arch $Config
 
-TestProject "windows-$Preload" "$Arch" "Release"
+TestProject "windows-$Preload" $Arch $Config
 
 #ConfigProject "C:\tmp\jenkins\Windows-UWP_x86-64_Dbg\src" `
 #    "" "windows-win32_windows" "windows-generic" `

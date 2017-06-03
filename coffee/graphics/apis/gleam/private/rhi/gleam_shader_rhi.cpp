@@ -105,8 +105,8 @@ bool GLEAM_Pipeline::assemble()
         bool stat = CGL33::ProgramLink(m_handle);
         if(GL_DEBUG_MODE && !stat)
         {
-            CString log = CGL33::ProgramGetLog(m_handle);
-            cDebug("Program link error: {0}",log);
+            cstring_w log_ = CGL33::ProgramGetLog(m_handle);
+            cDebug("Program link error: {0}", log_);
         }
         return stat;
     }

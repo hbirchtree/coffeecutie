@@ -15,7 +15,7 @@ struct EGL_Data;
 struct EGL_GL_Context;
 struct EGL_GL_WorkerContext;
 
-class EGLRenderer : public GLApplication, public CObject
+class EGLRenderer : public GLApplication
 {
     friend struct EGL_GL_Context;
     friend struct EGL_GL_WorkerContext;
