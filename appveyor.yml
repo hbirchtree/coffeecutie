@@ -34,11 +34,9 @@ install:
 
     rm -r -ErrorAction Ignore -Force "C:\SDL2\SDL2-2.0.4"
 
-
     iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
 
     choco install -y cmake
-
 
     ls C:\
 
@@ -46,26 +44,25 @@ install:
 
     ls "C:\Program Files (x86)"
 build_script:
-- cmd: >-
+- ps: >-
     mkdir %BUILD_DIR%
 
     cd %BUILD_DIR%
 
-    "%CMAKE_BIN%" -G"%CMAKE_GENERATOR%" -DCMAKE_TOOLCHAIN_FILE="%APPVEYOR_BUILD_FOLDER%\cmake\Toolchains\%TOOLCHAIN_FILE%" -C"%APPVEYOR_BUILD_FOLDER%\cmake\Preload\%PRELOAD_FILE%" "%APPVEYOR_BUILD_FOLDER%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_BUILD_OPENAL=OFF -DSKIP_HIGHMEM_TESTS=ON
+    #"%CMAKE_BIN%" -G"%CMAKE_GENERATOR%" -DCMAKE_TOOLCHAIN_FILE="%APPVEYOR_BUILD_FOLDER%\cmake\Toolchains\%TOOLCHAIN_FILE%" -C"%APPVEYOR_BUILD_FOLDER%\cmake\Preload\%PRELOAD_FILE%" "%APPVEYOR_BUILD_FOLDER%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_BUILD_OPENAL=OFF -DSKIP_HIGHMEM_TESTS=ON
 
-    "%CMAKE_BIN%" --build %BUILD_DIR% --target install
+    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target uwp.amd64 -Config Debug
+    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug
 
-    cd %APPVEYOR_BUILD_FOLDER%
+    cd "$env:APPVEYOR_BUILD_FOLDER"
 
-    7z a Coffee_Win64_%APPVEYOR_BUILD_NUMBER%_%APPVEYOR_REPO_COMMIT%.zip "%INSTALL_DIR%\*"
+    7z a Coffee_Win64_"$env:APPVEYOR_BUILD_NUMBER"_$env:APPVEYOR_REPO_COMMIT.zip "$env:INSTALL_DIR\*"
 
     ls %APPVEYOR_BUILD_FOLDER%
 
     ls %BUILD_DIR%
 
     ls %INSTALL_DIR%
-test_script:
-- cmd: '"%CMAKE_BIN%" --build %BUILD_DIR% --target RUN_TESTS'
 artifacts:
 - path: '*.zip'
   name: Coffee_Win64
