@@ -53,7 +53,7 @@ build_script:
 
     #& $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target uwp.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN
 
-    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN
+    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN -ExtraOptions ("-DCOFFEE_BUILD_OPENAL=OFF","")
 
     #& $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CoffeeRoot $$$
 
