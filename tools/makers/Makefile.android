@@ -10,6 +10,7 @@ DOCK_META:=/home/coffee/meta
 DOCK_OUT:=/home/coffee/build/out
 
 DOCKER := docker
+DOCKER_CONTAINER := hbirch/coffeecutie:android
 
 EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF
 DOCKER_EXTRA_OPTIONS := 
@@ -29,10 +30,11 @@ android-mkdir:
 android-get-automation:
 	@make -f $(ROOT_DIR)/Makefile.multi automation-data
 
-android-build-docker: android-get-automation
-	$(DOCKER) build \
-		-t android-builder:dev \
-		$(AUTO_DIR)/android
+android-build-docker: #android-get-automation
+	true
+#	$(DOCKER) build \
+#		-t android-builder:dev \
+#		$(AUTO_DIR)/android
 
 android-permission-config: android-build-docker android-mkdir
 	$(DOCKER) run --rm \
@@ -42,7 +44,7 @@ android-permission-config: android-build-docker android-mkdir
 		$(DOCKER_EXTRA_OPTIONS) \
 		--workdir $(DOCK_BUILD) \
 		-u root \
-		android-builder:dev \
+		$(DOCKER_CONTAINER) \
 			chown -R coffee:coffee $(DOCK_BUILD) $(DOCK_META)
 
 android-get-config: android-permission-config
@@ -51,7 +53,7 @@ android-get-config: android-permission-config
 		-v $(META_DIR):$(DOCK_META):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
 		--workdir $(DOCK_BUILD) \
-		android-builder:dev \
+		$(DOCKER_CONTAINER) \
 			git clone \
 			"https://github.com/hbirchtree/coffeecutie-meta.git" \
 			$(DOCK_META)
@@ -63,7 +65,7 @@ android-config: android-get-config
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
 		--workdir $(DOCK_BUILD) \
-		android-builder:dev \
+		$(DOCKER_CONTAINER) \
 			cmake $(DOCK_META)/android \
 				-DSOURCE_DIR=$(DOCK_SRC)
 
@@ -75,7 +77,7 @@ android: android-config
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
 		--workdir $(DOCK_BUILD) \
-		android-builder:dev \
+		$(DOCKER_CONTAINER) \
 			cmake --build $(DOCK_BUILD)
 
 android.target: android-config android-permission-config
@@ -86,6 +88,6 @@ android.target: android-config android-permission-config
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
 		--workdir $(DOCK_BUILD) \
-		android-builder:dev \
+		$(DOCKER_CONTAINER) \
 			cmake --build $(DOCK_BUILD) --target $(TARGET)
 
