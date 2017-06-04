@@ -29,7 +29,7 @@ BUILDER_NAME:=ubuntu-native
 
 PRELOAD_FILE=$(DOCK_PRLDS)/$(PRELOAD)
 
-DOCKER_CONTAINER=$(BUILDER_NAME):dev
+DOCKER_CONTAINER=hbirch/coffeecutie:$(DOCKER_CONFIG)
 
 EXTRA_OPTIONS:=-DGENERATE_PROGRAMS=OFF
 
@@ -51,9 +51,10 @@ automation-data:
 	rm -r master.tar.gz coffeecutie-automation-tools-master
 
 multi-docker-build: automation-data multi-prepare
-	$(DOCKER) build \
-		-t $(BUILDER_NAME):dev \
-		$(AUTO_DIR)/$(DOCKER_CONFIG) || true
+	true
+#	$(DOCKER) build \
+#		-t $(BUILDER_NAME):dev \
+#		$(AUTO_DIR)/$(DOCKER_CONFIG) || true
 
 multi-config: multi-docker-build
 	$(DOCKER) run --rm \
