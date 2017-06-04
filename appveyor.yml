@@ -16,7 +16,7 @@ clone_script:
 
     git checkout -qf %APPVEYOR_REPO_COMMIT%
 environment:
-  INSTALL_DIR: C:\Build_install
+  INSTALL_DIR: C:\Build\build_*\out\
   BUILD_DIR: C:\Build
   PRELOAD_FILE: windows-generic.cmake
   TOOLCHAIN_FILE: windows-win32_windows.toolchain.cmake
@@ -45,9 +45,9 @@ install:
     ls "C:\Program Files (x86)"
 build_script:
 - ps: >-
-    mkdir %BUILD_DIR%
+    mkdir $env:BUILD_DIR
 
-    cd %BUILD_DIR%
+    cd $env:BUILD_DIR
 
     #"%CMAKE_BIN%" -G"%CMAKE_GENERATOR%" -DCMAKE_TOOLCHAIN_FILE="%APPVEYOR_BUILD_FOLDER%\cmake\Toolchains\%TOOLCHAIN_FILE%" -C"%APPVEYOR_BUILD_FOLDER%\cmake\Preload\%PRELOAD_FILE%" "%APPVEYOR_BUILD_FOLDER%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_BUILD_OPENAL=OFF -DSKIP_HIGHMEM_TESTS=ON
 
@@ -59,7 +59,7 @@ build_script:
 
     cd "$env:APPVEYOR_BUILD_FOLDER"
 
-    7z a Coffee_Win64_"$env:APPVEYOR_BUILD_NUMBER"_$env:APPVEYOR_REPO_COMMIT.zip "$env:INSTALL_DIR\*"
+    7z a Coffee_Win64_"$env:APPVEYOR_BUILD_NUMBER"_$env:APPVEYOR_REPO_COMMIT.zip $env:INSTALL_DIR
 
     ls %APPVEYOR_BUILD_FOLDER%
 
