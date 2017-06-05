@@ -59,12 +59,6 @@ build_script:
     cd "$env:APPVEYOR_BUILD_FOLDER"
 
     7z a Coffee_Win64_"$env:APPVEYOR_BUILD_NUMBER"_$env:APPVEYOR_REPO_COMMIT.zip $env:INSTALL_DIR
-
-    ls %APPVEYOR_BUILD_FOLDER%
-
-    ls %BUILD_DIR%
-
-    ls %INSTALL_DIR%
 artifacts:
 - path: '*.zip'
   name: Coffee_Win64

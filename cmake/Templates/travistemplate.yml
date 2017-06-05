@@ -57,7 +57,7 @@ branches:
 deploy:
   provider: releases
   api_key: "${GITHUB_TOKEN}"
-  file: "binaries_*.tar.gz"
+  file: "libraries_*.tar.gz"
   skip_cleanup: true
   on:
     tags: true
