@@ -41,7 +41,7 @@ matrix:
     env: BUILDVARIANT=emscripten.wasm
 
 before_script:
- - tools/travis/travis-deps.sh
+ - tools/travis/install-dependencies.sh
 
 script:
  - tools/travis/build.sh
