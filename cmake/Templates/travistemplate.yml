@@ -14,6 +14,12 @@ env:
    - BUILDVARIANT=ubuntu.amd64
    - BUILDVARIANT=android.armv7a
    - BUILDVARIANT=android.armv8a
+   - BUILDVARIANT=fedora.amd64
+   - BUILDVARIANT=maemo.armv7a
+   - BUILDVARIANT=raspberry.armhf
+   - BUILDVARIANT=steam.amd64
+   - BUILDVARIANT=emscripten.asmjs
+   - BUILDVARIANT=emscripten.wasm
 
 matrix:
   exclude:
@@ -21,6 +27,18 @@ matrix:
     env: BUILDVARIANT=android.armv7a
   - os: osx
     env: BUILDVARIANT=android.armv8a
+  - os: osx
+    env: BUILDVARIANT=fedora.amd64
+  - os: osx
+    env: BUILDVARIANT=maemo.armv7a
+  - os: osx
+    env: BUILDVARIANT=raspberry.armhf
+  - os: osx
+    env: BUILDVARIANT=steam.amd64
+  - os: osx
+    env: BUILDVARIANT=emscripten.asmjs
+  - os: osx
+    env: BUILDVARIANT=emscripten.wasm
 
 before_script:
  - ci/travis-deps.sh
