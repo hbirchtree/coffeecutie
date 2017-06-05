@@ -7,7 +7,7 @@ param(
         [string] $Config = "Release",
         [string] $CMakeBin = "cmake"
 	)
-$ErrorActionPreference = "Stop"
+#$ErrorActionPreference = "Stop"
 
 $ScriptPath = (split-path -parent $MyInvocation.MyCommand.Definition)
 

@@ -21,7 +21,6 @@ environment:
   PRELOAD_FILE: windows-generic.cmake
   TOOLCHAIN_FILE: windows-win32_windows.toolchain.cmake
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
-  CMAKE_GENERATOR: Visual Studio 14 2015 Win64
 install:
 - ps: >-
     Invoke-WebRequest https://www.libsdl.org/release/SDL2-devel-2.0.4-VC.zip -OutFile "$env:TEMP/SDL2.zip"
