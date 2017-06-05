@@ -1,37 +1,63 @@
 language: cpp
-sudo: required
 dist: trusty
+services:
+ - docker
 
 os:
-- linux
-- osx
-compiler:
-- clang
-- gcc
+ - linux
+ - osx
+compiles:
+ - clang
+
+env:
+  matrix:
+   - BUILDVARIANT=ubuntu.amd64
+   - BUILDVARIANT=android.armv7a
+   - BUILDVARIANT=android.armv8a
+   - BUILDVARIANT=fedora.amd64
+   - BUILDVARIANT=maemo.armv7a
+   - BUILDVARIANT=raspberry.armhf
+   - BUILDVARIANT=steam.amd64
+   - BUILDVARIANT=emscripten.asmjs
+   - BUILDVARIANT=emscripten.wasm
 
 matrix:
   exclude:
   - os: osx
-    compiler: gcc
+    env: BUILDVARIANT=android.armv7a
+  - os: osx
+    env: BUILDVARIANT=android.armv8a
+  - os: osx
+    env: BUILDVARIANT=fedora.amd64
+  - os: osx
+    env: BUILDVARIANT=maemo.armv7a
+  - os: osx
+    env: BUILDVARIANT=raspberry.armhf
+  - os: osx
+    env: BUILDVARIANT=steam.amd64
+  - os: osx
+    env: BUILDVARIANT=emscripten.asmjs
+  - os: osx
+    env: BUILDVARIANT=emscripten.wasm
 
 before_script:
-- tools/travis/install-dependencies.sh
+ - tools/travis/travis-deps.sh
 
 script:
-- tools/travis/build.sh
+ - tools/travis/build.sh
 
 notifications:
   email: true
 
 branches:
   only:
-  - master
-  - /^testing.*$/
+   - master
+   - /^testing.*$/
 
 deploy:
   provider: releases
   api_key: "${GITHUB_TOKEN}"
-  file: "binaries_${TRAVIS_OS_NAME}_${CC}.tar.gz"
+  file: "libraries_*.tar.gz"
   skip_cleanup: true
   on:
     tags: true
