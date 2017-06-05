@@ -2,6 +2,9 @@
 
 case "${TRAVIS_OS_NAME}" in
 "linux")
+    echo " * Travis/CI people, if you are seeing this, some systems require extended binary format support to work :/"
+    docker run --rm --privileged multiarch/qemu-user-static:register
+
     sudo apt-get update -qq
     sudo apt-get install -qy libsdl2-dev libopenal-dev cmake ninja-build swig3.0 libunwind8-dev
 ;;
