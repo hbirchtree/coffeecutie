@@ -23,7 +23,8 @@ function create_base_directories()
         "${PROJECT_DIR}/src" \
         "${PROJECT_DIR}/internal" \
         "${PROJECT_DIR}/meta/android" \
-        "${PROJECT_DIR}/meta/jenkins"
+        "${PROJECT_DIR}/meta/jenkins" \
+        "${PROJECT_DIR}/ci"
 }
 
 # Copying of configuration files from source directory
@@ -39,7 +40,19 @@ function copy_config_files()
     cp -ur "${COFFEE_DIR}/desktop" "${PROJECT_DIR}"
     cp -ur "${COFFEE_DIR}/internal/templates" "${PROJECT_DIR}/internal"
     cp -ur "${COFFEE_DIR}/internal/include" "${PROJECT_DIR}"
+    cp ${COFFEE_DIR}/tools/makers/Makefile.* "${PROJECT_DIR}/ci/"
     touch "${PROJECT_DIR}/rsrc/${PJNAME}/RESOURCES"
+}
+
+# Generating CI files for Travis and Appveyor
+# Travis will be a universal build, to note, and will take some time to complete
+function gen_ci_files()
+{
+    cp -u "${COFFEE_DIR}/cmake/Templates/travis-build.sh" "${PROJECT_DIR}/ci/"
+    cp -u "${COFFEE_DIR}/cmake/Templates/travis-deps.sh" "${PROJECT_DIR}/ci/"
+    cp -u "${COFFEE_DIR}/cmake/Templates/travistemplate.yml" "${PROJECT_DIR}/.travis.yml"
+
+    chmod +x ${PROJECT_DIR}/ci/*.sh
 }
 
 #
@@ -165,6 +178,7 @@ function main()
     configure_project "$1"
 
     copy_config_files
+    gen_ci_files
 
     reconfig_project "$1" "$2"
 }

@@ -1,0 +1,45 @@
+language: cpp
+dist: trusty
+services:
+ - docker
+
+os:
+ - linux
+ - osx
+compiles:
+ - clang
+
+env:
+  matrix:
+   - BUILDVARIANT=ubuntu.amd64
+   - BUILDVARIANT=android.armv7a
+   - BUILDVARIANT=android.armv8a
+
+matrix:
+  exclude:
+  - os: osx
+    env: BUILDVARIANT=android.armv7a
+  - os: osx
+    env: BUILDVARIANT=android.armv8a
+
+before_script:
+ - ci/travis-deps.sh
+
+script:
+ - ci/travis-build.sh
+
+notifications:
+  email: true
+
+branches:
+  only:
+   - master
+   - /^testing.*$/
+
+deploy:
+  provider: releases
+  api_key: "${GITHUB_TOKEN}"
+  file: "binaries_*.tar.gz"
+  skip_cleanup: true
+  on:
+    tags: true
