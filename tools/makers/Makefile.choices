@@ -25,6 +25,7 @@ fedora-amd64: native-lib-root
 		-e BUILD_NAME=fedora \
 		-e BUILDER_NAME=fedora-builder \
 		-e DOCKER_CONFIG=fedora \
+                -e PRELOAD=linux-fedora.cmake \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Fedora" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
