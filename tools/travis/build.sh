@@ -22,8 +22,7 @@ function notify()
 function build_standalone()
 {
     make -f "$CI_DIR/Makefile.standalone" \
-        -e SOURCE_DIR="$SOURCE_DIR" $@ \
-        -e EXTRA_OPTIONS=""
+        -e SOURCE_DIR="$SOURCE_DIR" $@
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong

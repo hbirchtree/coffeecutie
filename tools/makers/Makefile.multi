@@ -66,11 +66,11 @@ multi-config: multi-docker-build
 		$(DOCKER_CONTAINER) \
 			sh -c "cd $(CMAKE_BLD_DIR) && \
 			$(CMAKE) $(CMAKE_SRC_DIR) \
-    			-G$(CMAKE_GEN) \
-	    		-C$(PRELOAD_FILE) \
-	    		-DCMAKE_TOOLCHAIN_FILE=$(DOCK_TOOLS)/$(TOOLCHAIN) \
-	    		-DCMAKE_INSTALL_PREFIX=$(CMAKE_OUT_DIR) \
-	    		$(EXTRA_OPTIONS)"
+				-G$(CMAKE_GEN) \
+				-C$(PRELOAD_FILE) \
+				-DCMAKE_TOOLCHAIN_FILE=$(DOCK_TOOLS)/$(TOOLCHAIN) \
+				-DCMAKE_INSTALL_PREFIX=$(CMAKE_OUT_DIR) \
+				$(EXTRA_OPTIONS)"
 
 multi: multi-config
 	$(DOCKER) run --rm \
