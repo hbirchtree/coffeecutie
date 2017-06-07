@@ -78,7 +78,7 @@ emscripten-asmjs: native-lib-root
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/native-libs/Emscripten -DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master"
 
 # Compiles for Emscripten using WebAssembly
-emscripten-wasm: 
+emscripten-wasm: native-lib-root 
 	@make -f $(ROOT_DIR)/Makefile.multi \
 		-e BUILD_NAME=emscripten-wasm \
 		-e BUILDER_NAME=emscripten-builder \
@@ -89,7 +89,7 @@ emscripten-wasm:
 		-e BUILD_DIR=$(BUILD_DIR) \
 		-e CMAKE_GEN="Unix\ Makefiles" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT)/Emscripten:/Emscripten:ro -e EMSCRIPTEN=/home/coffee/emsdk_portable/emscripten/master" \
-		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master"
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/native-libs/Emscripten -DEMSCRIPTEN_ROOT_PATH=/home/coffee/emsdk_portable/emscripten/master"
 
 # Compiles for Raspberry Pi armhf/ARMv6
 raspberry-armhf: $(RASPBERRY_SYSROOT) native-lib-root 
