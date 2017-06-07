@@ -155,6 +155,7 @@ bool LoadScene(UqPtr<AssimpData>& target,Resource* source, cstring hint)
 
     if(!data->scene)
     {
+        cWarning("Could not load scene: {0}", source->resource());
         target.reset();
         return false;
     }
@@ -180,6 +181,9 @@ bool GetSceneObjects(const UqPtr<AssimpData> &scene, Vector<ObjectDesc> &objects
     ExtractDetail(Meshes, Mesh);
 
 #undef ExtractDetail
+
+    if(objects.size() > 0)
+        cWarning("Scene exists, but there are no objects in it");
 
     return objects.size() > 0;
 }

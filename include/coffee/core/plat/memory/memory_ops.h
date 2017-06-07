@@ -12,7 +12,7 @@ namespace Mem{
 template<typename T>
 FORCEDINLINE void* FitIntegerInPtr(T in)
 {
-    static_assert(sizeof(T) < sizeof(void*), "Type too large");
+    static_assert(sizeof(T) <= sizeof(void*), "Type too large");
 
 //    return C_FCAST<void*>(in);
 
