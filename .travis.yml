@@ -63,5 +63,4 @@ deploy:
   file: "libraries_*.tar.gz"
   skip_cleanup: true
   on:
-    tags: true
     branch: master
