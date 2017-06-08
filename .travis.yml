@@ -20,6 +20,7 @@ env:
    - BUILDVARIANT=steam.amd64
    - BUILDVARIANT=emscripten.asmjs
    - BUILDVARIANT=emscripten.wasm
+   - BUILDVARIANT=ubuntu.i686
 
 matrix:
   exclude:
@@ -39,6 +40,8 @@ matrix:
     env: BUILDVARIANT=emscripten.asmjs
   - os: osx
     env: BUILDVARIANT=emscripten.wasm
+  - os: osx
+    env: BUILDVARIANT=ubuntu.i686
 
 before_script:
  - tools/travis/install-dependencies.sh
