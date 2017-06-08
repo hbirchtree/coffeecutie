@@ -34,7 +34,7 @@ case "${TRAVIS_OS_NAME}" in
 "linux")
     build_standalone "$BUILDVARIANT"
 
-    tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" ${BUILD_DIR}/build
+    tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
 ;;
 "osx")
 
