@@ -1,7 +1,7 @@
 [Application]
 name=@FLATPAK_PKG_NAME@
-runtime=org.freedesktop.Platform/x86_64/1.4
-sdk=org.freedesktop.Sdk/x86_64/1.4
+runtime=org.freedesktop.Platform/@FLATPAK_ARCH@/1.4
+sdk=org.freedesktop.Sdk/@FLATPAK_ARCH@/1.4
 command=@FLATPAK_EXEC@
 
 [Environment]

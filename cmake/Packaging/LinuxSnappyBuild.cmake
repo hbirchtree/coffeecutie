@@ -15,6 +15,15 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 	CACHE PATH "" )
 endif()
 
+macro ( SNAPPY_TRANSLATE_ARCH_NAME OUTPUT_VAR )
+    if("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "x86_64-linux-gnu")
+        set(OUTPUT_VAR "amd64")
+    elseif("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "i386-linux-gnu" OR
+            "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "i686-linux-gnu")
+        set(OUTPUT_VAR "i386")
+    endif()
+endmacro()
+
 macro ( SNAPPY_TRANSLATE_PERMISSIONS PERMISSIONS_LIST PERMISSION_OUTPUT )
     set ( ${PERMISSION_OUTPUT}
 #        "system-observe"
@@ -81,7 +90,9 @@ macro ( SNAPPY_PACKAGE
     set ( SNAPPY_PKG_DIR "${SNAPPY_DEPLOY_DIRECTORY}/${TARGET}" )
     set ( SNAPPY_FINAL_SNAP "${SNAPPY_OUTPUT_DIRECTORY}/${SNAPPY_PACKAGE_NAME}_${VERSION}_all.snap" )
     set ( SNAPPY_ARCH_DATA
-        "amd64) ARCH_STRING=\"${CMAKE_LIBRARY_ARCHITECTURE}\" ;;"
+        "amd64) ARCH_STRING=\"x86_64-linux-gnu\" ;;"
+        "i386) ARCH_STRING=\"i386-linux-gnu\" ;;"
+        "armhf) ARCH_STRING=\"arm-linux-gnueabihf\" ;;"
     )
 
     set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )

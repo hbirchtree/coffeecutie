@@ -29,6 +29,16 @@ macro( FLATPAK_PACKAGE
     set ( FLATPAK_TITLE "${TITLE}" )
     set ( FLATPAK_EXEC "${TARGET}" )
     set ( FLATPAK_EXEC_WM "${TARGET}" )
+    set ( FLATPAK_ARCH "x86_64" )
+
+    if("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "i386-linux-gnu" OR
+            "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "i686-linux-gnu")
+        set ( FLATPAK_ARCH "i386" )
+    elseif("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES "aarch64")
+        set ( FLATPAK_ARCH "aarch64" )
+    elseif("${CMAKE_LIBRARY_ARCHITECTURE}" MATCHES "arm")
+        set ( FLATPAK_ARCH "arm" )
+    endif()
 
     set ( FLATPAK_BASE_DIR "${FLATPAK_WORKING_DIRECTORY}/${FLATPAK_PKG_NAME}" )
 
