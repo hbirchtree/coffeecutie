@@ -161,6 +161,7 @@ function reconfig_project()
 {
     local RECONFIG_FILE="${PROJECT_DIR}/reconfig.sh"
     echo "#!/bin/bash
+cd \"\$(dirname \"\$(readlink -f \"\$0\")\")\"
 ${COFFEE_DIR}/generate-project.sh '${1}' '${PJNAME}'
 " > "${RECONFIG_FILE}"
     chmod +x "${RECONFIG_FILE}"
