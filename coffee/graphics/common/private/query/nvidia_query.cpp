@@ -76,6 +76,7 @@ MemStatus GetMemInfo(gpucount_t i)
 
 uint64 GetProcMemInfo(gpucount_t i, proc_t pid)
 {
+#if NVML_API_VERSION >= 7
     auto dev = device(i);
 
     uint32 count = 0;
@@ -89,7 +90,7 @@ uint64 GetProcMemInfo(gpucount_t i, proc_t pid)
     for(nvmlProcessInfo_t const& p : procs)
         if(p.pid == pid)
             return p.usedGpuMemory;
-
+#endif
     return 0;
 }
 
@@ -173,6 +174,7 @@ UsageMeter GetUsage(gpucount_t i)
 
 TransferStatus GetPcieTransfer(gpucount_t i)
 {
+#if NVML_API_VERSION >= 7
     auto dev = device(i);
 
     TransferStatus stat = {};
@@ -180,6 +182,9 @@ TransferStatus GetPcieTransfer(gpucount_t i)
     r = nvmlDeviceGetPcieThroughput(dev, NVML_PCIE_UTIL_TX_BYTES, &stat.tx);
 
     return stat;
+#else
+    return {};
+#endif
 }
 
 GpuQueryInterface GetNvidia()
