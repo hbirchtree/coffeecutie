@@ -5,6 +5,7 @@
 #include <coffee/CSDL2>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/core/types/vector_types.h>
 
 namespace Coffee{
 
@@ -106,15 +107,23 @@ CGL::CGL_Context *GetContext(CGLWindow *p)
 
 #ifdef COFFEE_GLEAM_DESKTOP
 using GL = CGL::CGL33;
-#else
+#elif !defined(COFFEE_GLES20_MODE)
 using GL = CGL::CGLES30;
+#else
+using GL = CGL::CGLES20;
 #endif
 
 void ClearBuffer(float dep, float color[4])
 {
+#if defined(COFFEE_GLES20_MODE)
+    Vecf4 clearcol = {color[0], color[1], color[2], color[3]};
+    GL::ClearBufferfv(false, 0, clearcol);
+    GL::ClearBufferfv(&dep);
+#else
     GL::ClearBufferfv(&dep);
     GL::ClearBufferfv(true,0,Vecf4(color[0],color[1],
                                    color[2],color[3]));
+#endif
 }
 
 void Profile::Push(const char* name)

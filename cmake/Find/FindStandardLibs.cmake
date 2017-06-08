@@ -43,6 +43,10 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
             list ( APPEND CORE_EXTRA_LIBRARIES
                 GL Xrender
                 )
+        else()
+            list ( APPEND CORE_EXTRA_LIBRARIES
+                GLESv2
+                )
         endif()
     endif()
 endif()

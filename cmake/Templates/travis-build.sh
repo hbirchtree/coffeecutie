@@ -44,6 +44,7 @@ function download_libraries()
     github_api pull asset $COFFEE_SLUG $ASSET_ID
 
     tar -xvf "$ASSET_FN"
+    mv build $COFFEE_DIR
 }
 
 function get_opts()
@@ -70,7 +71,7 @@ case "${TRAVIS_OS_NAME}" in
 "linux")
     build_standalone "$BUILDVARIANT"
 
-    tar -zcvf "libraries_$BUILDVARIANT.tar.gz" ${BUILD_DIR}/build
+    tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
 ;;
 "osx")
 

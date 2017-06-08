@@ -29,13 +29,35 @@ ubuntu-i686: native-lib-root
 		-e TOOLCHAIN=linux-generic-i686_linux.toolchain.cmake \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
 
+ubuntu-i686-gles: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e DOCKER_CONFIG=ubuntu-i686 \
+		-e BUILD_NAME=ubuntu-i686-gles \
+		-e TOOLCHAIN=linux-generic-i686_linux.toolchain.cmake \
+		-e PRELOAD=linux-gles.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
+
+ubuntu-i686-gles20: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e DOCKER_CONFIG=ubuntu-i686 \
+		-e BUILD_NAME=ubuntu-i686-gles20 \
+		-e TOOLCHAIN=linux-generic-i686_linux.toolchain.cmake \
+		-e PRELOAD=linux-gles20.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
+
 # Compiles for latest Fedora amd64
 fedora-amd64: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi \
 		-e BUILD_NAME=fedora \
 		-e BUILDER_NAME=fedora-builder \
 		-e DOCKER_CONFIG=fedora \
-                -e PRELOAD=linux-fedora.cmake \
+		-e PRELOAD=linux-fedora.cmake \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Fedora" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
 		-e SOURCE_DIR=$(SOURCE_DIR) \

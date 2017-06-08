@@ -57,6 +57,7 @@ option ( COFFEE_BUILD_STATIC "Build statically linked binaries" ON )
 
 # Whether to enable the GLES renderer, will replace desktop GL renderer
 option ( COFFEE_BUILD_GLES "Build with GLES 3.0 renderer instead of desktop GL" OFF)
+option ( COFFEE_BUILD_GLES_20 "BUild with only GLES 2.0 renderer" OFF )
 
 if(WIN32)
 	set ( ANGLE_OPT OFF )
@@ -71,6 +72,9 @@ if( COFFEE_BUILD_ANGLE )
 	message (STATUS "Building ANGLE as OpenGL ES provider" )
 endif()
 
+if(COFFEE_BUILD_GLES_20)
+    add_definitions(-DOFFEE_GLES20_MODE -DCOFFEE_LINUX_LIGHTWEIGHT_WM)
+endif()
 if(NOT COFFEE_BUILD_GLES)
     add_definitions("-DCOFFEE_GLEAM_DESKTOP")
 endif()
