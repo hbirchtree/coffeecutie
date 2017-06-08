@@ -60,7 +60,7 @@ branches:
 deploy:
   provider: releases
   api_key: "${GITHUB_TOKEN}"
-  file: "libraries_*.tar.gz"
+  file: "libraries_$BUILDVARIANT.tar.gz"
   skip_cleanup: true
   on:
     branch: master
