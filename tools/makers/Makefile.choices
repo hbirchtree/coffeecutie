@@ -19,6 +19,15 @@ ubuntu-amd64: native-lib-root
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
 
+ubuntu-i686: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e DOCKER_CONFIG=ubuntu-i386 \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e TOOLCHAIN=linux-generic-i686_linux.toolchain.cmake \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
+
 # Compiles for latest Fedora amd64
 fedora-amd64: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi \
