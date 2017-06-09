@@ -20,6 +20,11 @@ struct CGLUtil
     static void DumpTexture(typename GL::Texture t, typename GL::CGhnd h,
                             uint32 l, cstring fn)
     {
+        C_USED(t);
+        C_USED(h);
+        C_USED(l);
+        C_USED(fn);
+
 #ifdef COFFEE_GLEAM_DESKTOP
 
         CSize tsize;

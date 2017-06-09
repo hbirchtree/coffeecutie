@@ -83,6 +83,12 @@ struct _cbasic_size_3d : _cbasic_size
     {
     }
 
+    template<typename U>
+    FORCEDINLINE _cbasic_size_3d<U> convert() const
+    {
+        return _cbasic_size_3d<U>(width, height, depth);
+    }
+
     T width,height,depth;
 
     FORCEDINLINE T volume()
@@ -130,6 +136,12 @@ struct _cbasic_point_3d : _cbasic_point
     _cbasic_point_3d():
         x(0),y(0),z(0)
     {
+    }
+
+    template<typename U>
+    FORCEDINLINE _cbasic_point_3d<U> convert() const
+    {
+        return _cbasic_point_3d<U>(x,y,z);
     }
 
     T x,y,z;

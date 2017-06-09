@@ -10,6 +10,7 @@ namespace CGL{
 
 void CGL_Shared_Debug::SetDebugMode(bool enabled)
 {
+    C_USED(enabled);
 #if !defined(COFFEE_ONLY_GLES20)
     if(enabled == b_isDebugging)
         return;
@@ -218,7 +219,7 @@ bool CGL_Shared_Debug::CompressedFormatSupport(Texture, PixelFormat t)
 {
     /* TODO: GL_COMPRESSED_TEXTURE_FORMATS */
     int32 supp = GL_FALSE;
-    CGenum target = to_enum(t);
+    i32 target = C_CAST<i32>(to_enum(t));
     for(int32 i=0;i<Num_Internal_Formats;i++)
         if(target == Internal_Formats[i])
         {

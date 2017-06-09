@@ -86,8 +86,7 @@ CString PosixEnvironmentFun::CurrentDir()
 {
     CString dir;
     dir.resize(PATH_MAX);
-    char* p = getcwd(&dir[0],PATH_MAX);
-    dir.resize(strchr(dir.c_str(),'\0')-dir.c_str());
+    dir.resize(C_CAST<size_t>(strchr(dir.c_str(),'\0')-dir.c_str()));
     return dir;
 }
 
@@ -103,8 +102,8 @@ EnvInterface::Variables PosixEnvironmentFun::Environment()
         q = StrFind(envar,"=");
         if(!q)
             continue;
-        v1.insert(0,(cstring)envar,q-envar);
-        v2.insert(0,(cstring)q+1,StrLen(q+1));
+        v1.insert(0,C_CAST<cstring>(envar),C_CAST<size_t>(q-envar));
+        v2.insert(0,C_CAST<cstring>(q+1),StrLen(q+1));
 
         e.insert(VarPair(v1,v2));
 

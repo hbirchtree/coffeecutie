@@ -11,7 +11,8 @@ namespace Blam{
 
 bitm_header_t _bitm_get_header(const void* base, int32 offset)
 {
-    const bitm_header_t* ptr = (const bitm_header_t*)(((const byte_t*)base)+offset);
+    const bitm_header_t* ptr = C_RCAST<const bitm_header_t*>(
+                (C_RCAST<const byte_t*>(base))+offset);
 	bitm_header_t hdr = {};
     if(ptr->imageCount < 1)
         return hdr;
@@ -25,12 +26,14 @@ const bitm_image_t *bitm_get(
         int32 magic,
         int32* numImages)
 {
+    C_UNUSED(numImages);
     bitm_header_t hdr = _bitm_get_header(map,item->offset-magic);
 
     hdr.offset_first -= magic;
     hdr.imageOffset -= magic;
 
-    const bitm_image_t* img = (const bitm_image_t*)(((const byte_t*)map)+hdr.imageOffset);
+    const bitm_image_t* img = C_RCAST<const bitm_image_t*>(
+                (C_RCAST<const byte_t*>(map))+hdr.imageOffset);
 
     return img;
 }

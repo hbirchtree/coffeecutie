@@ -79,6 +79,8 @@ struct _cbasic_mesh
     FORCEDINLINE
     attr* attrGet(AttributeType_t t, szptr stride, u32 idx = 0)
     {
+        (void)stride;
+
         auto range = attributes.equal_range(t);
         if(range.first == range.second)
             return nullptr;

@@ -109,6 +109,8 @@ inline CGenum to_enum(
 inline CGenum to_enum(
         Feature f, uint32 offset)
 {
+    (void)offset;
+
     switch(f)
     {
     case Feature::Blend:
@@ -328,6 +330,10 @@ inline CGenum to_enum(
         PixelFormat f, PixelFlags e,
         CompFlags d)
 {
+    (void)f;
+    (void)e;
+    (void)d;
+
     switch(f)
     {
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -587,6 +593,8 @@ inline CGenum to_enum1(
 inline CGenum to_enum2(
         ShaderStage f)
 {
+    (void)f;
+
     CGenum o = 0;
 
 #if !defined(COFFEE_ONLY_GLES20)
@@ -780,6 +788,8 @@ inline CGenum to_enum1(ResourceAccess acc)
 
 inline CGenum to_enum2(ResourceAccess acc)
 {
+    (void)acc;
+
     CGenum f = 0;
 #ifdef COFFEE_GLEAM_DESKTOP
     if(feval(acc,ResourceAccess::Persistent))
@@ -966,11 +976,14 @@ inline CGenum to_enum(FramebufferT f)
 
 inline CGenum to_enum(AttribMode f)
 {
-    return (CGenum)f;
+    return C_CAST<CGenum>(f);
 }
 
 inline CGpixfmt get_fmt(PixelFormat e, bool rev)
 {
+    (void)e;
+    (void)rev;
+
     switch(e)
     {
     case PixelFormat::RGB8UI:

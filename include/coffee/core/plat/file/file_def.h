@@ -83,12 +83,28 @@ struct FileFunDef
 
     static bool MapCache(void* mapping_ptr,szptr mapping_size,
                          szptr cache_offset, szptr cache_size)
-    {return false;}
+    {
+        C_UNUSED(mapping_ptr);
+        C_UNUSED(mapping_size);
+        C_UNUSED(cache_offset);
+        C_UNUSED(cache_size);
+        return false;
+    }
     static bool MapUncache(void* mapping_ptr,szptr mapping_size,
                            szptr cache_offset, szptr cache_size)
-    {return false;}
-    static bool MapSync(void*,szptr)
-    {return false;}
+    {
+        C_UNUSED(mapping_ptr);
+        C_UNUSED(mapping_size);
+        C_UNUSED(cache_offset);
+        C_UNUSED(cache_size);
+        return false;
+    }
+    static bool MapSync(void* ptr,szptr size)
+    {
+        C_UNUSED(ptr);
+        C_UNUSED(size);
+        return false;
+    }
 
 
     /*!

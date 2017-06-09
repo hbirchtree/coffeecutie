@@ -41,15 +41,15 @@ struct SplashInterface
                            Alignment a = AlignUndefined,
                            int s = 12):
             m_title(t),
-            m_col(c),
             m_align(a),
+            m_col(c),
             m_size(s)
         {
         }
         FORCEDINLINE Title(Title const& t):
             m_title(t.m_title),
-            m_col(t.m_col),
             m_align(t.m_align),
+            m_col(t.m_col),
             m_size(t.m_size)
         {
         }

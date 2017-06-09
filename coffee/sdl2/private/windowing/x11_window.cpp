@@ -27,7 +27,7 @@ namespace Display{
 #define MAP_DIRECT(name) case XK_ ## name: return CK_ ## name;
 #define MAP_INDIRECT(name1, name2) case XK_ ## name1: return CK_ ## name2;
 
-STATICINLINE u32 x11_key_to_coffee(u32 xkey)
+STATICINLINE u32 x11_key_to_coffee(u64 xkey)
 {
     switch(xkey)
     {
@@ -146,14 +146,18 @@ bool X11Window::closeWindow()
     if(m_xData)
     {
         bool stat = XUnmapWindow(m_xData->display, m_xData->window) == 0;
-        m_closeFlag = true;
+        if(stat)
+            m_closeFlag = true;
+        return stat;
     }
     return false;
 }
 
 void X11Window::popErrorMessage(Severity s, cstring title, cstring msg)
 {
-
+    C_UNUSED(s);
+    C_UNUSED(title);
+    C_UNUSED(msg);
 }
 
 bool X11Window::windowPreInit(const CDProperties &, CString *err)
@@ -269,7 +273,7 @@ uint32 X11Window::windowState() const
 
 static constexpr const int _NET_WM_STATE_REMOVE = 0;
 static constexpr const int _NET_WM_STATE_ADD = 1;
-static constexpr const int _NET_WM_STATE_TOGGLE = 2;
+//static constexpr const int _NET_WM_STATE_TOGGLE = 2;
 
 static void X_Apply_State(::Display* xd, ::Window w, cstring msg, int mode, Vector<cstring>const& atoms)
 {
@@ -439,6 +443,7 @@ void X11Window::setWindowTitle(const CString &tl)
 
 bool X11Window::setWindowIcon(CBitmap &icon)
 {
+    C_UNUSED(icon);
     return false;
 }
 
@@ -480,11 +485,11 @@ void X11Window::processX11Events(InputApplication *eh)
             if((keycode >= XK_space && keycode <= XK_asciitilde)
                     || (keycode >= XK_nobreakspace && keycode <= XK_ydiaeresis))
                 /* ASCII letters */
-                k.key = keycode;
+                k.key = C_CAST<u32>(keycode);
             else if(keycode >= XK_F1 && keycode <= XK_F12)
-                k.key = keycode - XK_F1 + CK_F1;
+                k.key = C_CAST<u32>(keycode - XK_F1 + CK_F1);
             else if(keycode >= XK_KP_0 && keycode <= XK_KP_9)
-                k.key = keycode - XK_KP_0 + CK_KP_0;
+                k.key = C_CAST<u32>(keycode - XK_KP_0 + CK_KP_0);
             else
                 k.key = x11_key_to_coffee(keycode);
 
@@ -548,7 +553,7 @@ void X11Window::processX11Events(InputApplication *eh)
         }
         case ClientMessage:
         {
-            XClientMessageEvent& xcm = xev.xclient;
+//            XClientMessageEvent& xcm = xev.xclient;
             base_i.type = CIEvent::QuitSign;
             eh->eventHandle(base_i, nullptr);
             goto out_of_switch;

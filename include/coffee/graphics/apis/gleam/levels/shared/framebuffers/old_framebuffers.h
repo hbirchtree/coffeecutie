@@ -85,11 +85,13 @@ struct CGL_Old_Framebuffers
 
     STATICINLINE CSize FBGetAttachmentSize(FramebufferT t, uint32 idx)
     {
-        using Tex = CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>;
+        C_UNUSED(t);
+        C_UNUSED(idx);
 
         CSize out = {};
 
 #if !defined(COFFEE_ONLY_GLES20)
+        using Tex = CGL_Old_Textures<CGhnd,CGenum,Texture,CompFlags>;
 
         int32 tmp = 0;
         int32 hnd = 0;

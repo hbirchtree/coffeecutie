@@ -62,7 +62,6 @@ CString cStringReplace(
         cstring dot1 = Search::ChrFind(rep.c_str(),'.');
         cstring dot2 = Search::ChrFind(rep.c_str(),',');
         cstring ptr_start = rep.c_str();
-        cstring ptr_end = rep.c_str()+rep.size();
         if(dot1)
             rep.resize(dot1-ptr_start+1+prec,'0');
         else if(dot2)

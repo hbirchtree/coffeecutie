@@ -238,20 +238,34 @@ FORCEDINLINE _cbasic_tmatrix<T,4> scale(
 }
 
 template<typename T>
+/*!
+ * \brief Rotate a matrix by specified euler angle
+ * \param matrix
+ * \param angle
+ * \param vector
+ * \return
+ */
 FORCEDINLINE _cbasic_tmatrix<T,4> rotate(
         const _cbasic_tmatrix<T,4>& matrix,
         const T& angle,
         const _cbasic_tvector<T,3>& vector)
 {
+    (void)matrix;
+
     T const a = angle;
     T const b = CMath::cos(a);
     T const c = CMath::sin(a);
 
     _cbasic_tvector<T,3> axis(normalize(vector));
-    _cbasic_tvector<T,3> temp((T(1) - c)*axis);
+//    _cbasic_tvector<T,3> temp((T(1) - c)*axis);
 }
 
 template<typename T, size_t Size>
+/*!
+ * \brief Transpose a matrix
+ * \param m
+ * \return
+ */
 FORCEDINLINE _cbasic_tmatrix<T,Size> transpose(const _cbasic_tmatrix<T,Size>& m)
 {
     _cbasic_tmatrix<T,Size> n;

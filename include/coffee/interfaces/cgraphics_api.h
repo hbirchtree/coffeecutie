@@ -96,6 +96,7 @@ struct GraphicsAPI
      */
     struct GPUCommandQueue : _cbasic_threadrunner_queue
     {
+        virtual ~GPUCommandQueue() {}
         void insertCmd(GPUCommand*){}
     };
 
@@ -107,7 +108,7 @@ struct GraphicsAPI
         RasterizerState():
             m_culling(0),
             m_colOp(LogicOp::NOOP),
-            m_colMask({1,1,1,1}),
+            m_colMask({1,1,1,1, 0}),
             m_discard(false),
             m_wireframe(false),
             m_polysmooth(false),
@@ -697,12 +698,22 @@ struct GraphicsAPI
         bool m_inst;
     };
 
+    /*!
+     * \brief DrawInstanceData struct describes a single mesh entity
+     *  in an array buffer (+ element buffer)
+     * It does this by specifying counts and offsets of
+     *  vertices and elements.
+     * It also helps describe instances.
+     * The use of this information is up to the RHI.
+     * Potentially, instance offsets may be implemented as buffer offsets or similar.
+     */
     struct DrawInstanceData
     {
 	DrawInstanceData(uint32 v = 0, uint32 e = 0, uint32 i = 0):
 	    m_verts(v),m_elems(e),m_insts(i),
-	    m_voff(0),m_eoff(0),m_ioff(0),
-	    m_eltype(TypeEnum::UByte){}
+        m_eltype(TypeEnum::UByte),
+        m_voff(0),m_eoff(0),m_ioff(0)
+    {}
 
         FORCEDINLINE uint32 vertices()const{return m_verts;}
         FORCEDINLINE uint32 elements()const{return m_elems;}

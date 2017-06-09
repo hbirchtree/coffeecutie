@@ -18,6 +18,8 @@ struct OutputPrinterImpl : OutputPrinterDef
     template<typename... Args>
     static void fprintf(FILE* stream, Severity sev, cstring format, Args... args)
     {
+        C_UNUSED(sev);
+
         bool locking = false;
 
         CString formatted = cStringFormat(format,args...);

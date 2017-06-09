@@ -176,6 +176,10 @@ public:
     virtual void feedDataTimed(c_cptr data, const CSoundFormat& fmt,
                                const szptr& samples, const uint64& pts)
     {
+        C_UNUSED(data);
+        C_UNUSED(fmt);
+        C_UNUSED(samples);
+        C_UNUSED(pts);
         C_STUBBED("Timed data streaming");
     }
 

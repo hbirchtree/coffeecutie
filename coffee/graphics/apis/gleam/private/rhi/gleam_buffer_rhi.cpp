@@ -38,6 +38,8 @@ void GLEAM_VBuffer::commit(szptr size, c_cptr data)
 
 void *GLEAM_VBuffer::map(szptr offset,szptr size)
 {
+    C_USED(offset);
+
 #if !defined(COFFEE_ONLY_GLES20)
     VerifyBuffer(m_handle);
 
@@ -53,6 +55,7 @@ void *GLEAM_VBuffer::map(szptr offset,szptr size)
 
     return CGL33::BufMapRange(m_type,offset,(size) ? size : m_size,acc);
 #else
+    //TODO: Fix cases where offset is used for something!!!
     m_mappedBufferFake.resize(size);
     return &m_mappedBufferFake[0];
 #endif
@@ -82,10 +85,15 @@ void GLEAM_VBuffer::unbind() const
 
 void GLEAM_BindableBuffer::bindrange(uint32 idx, szptr off, szptr size) const
 {
+    C_USED(idx);
+    C_USED(off);
+    C_USED(size);
 #if !defined(COFFEE_ONLY_GLES20)
     VerifyBuffer(m_handle);
 
     CGL33::BufBindRange(m_type,idx,m_handle,off,size);
+#else
+    //TODO: Find some solution to this, or print tons of errors
 #endif
 }
 

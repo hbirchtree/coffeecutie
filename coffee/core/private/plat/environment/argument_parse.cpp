@@ -151,7 +151,7 @@ bool ArgParse::Check(int argc, String *argv, String sw_l, Character sw_s, int *p
 cstring ArgParse::Get(int argc, String *argv, String sw, Character sw_s, int *pos)
 {
     for(int i=1;i<argc-1;i++)
-        if(_cmp_short_switch(argv[i],sw[0])||_cmp_long_switch(argv[i],sw))
+        if(_cmp_short_switch(argv[i],sw_s)||_cmp_long_switch(argv[i],sw))
         {
             if(pos)
                 *pos = i;

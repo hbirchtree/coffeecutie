@@ -16,11 +16,14 @@
 #define C_DCAST(type, var) dynamic_cast<type>(var)
 #else
 
+#define IS_SIGNED(Type) std::is_signed<D>::value
+#define IS_USIGNED(Type) std::is_unsigned<D>::value
+
 template <typename D,
           typename T,
 
-          typename std::enable_if<std::is_signed<D>::value, T>::type* = nullptr,
-          typename std::enable_if<std::is_unsigned<T>::value, T>::type* = nullptr
+          typename std::enable_if<IS_SIGNED(D), T>::type* = nullptr,
+          typename std::enable_if<IS_USIGNED(T), T>::type* = nullptr
 
           >
 /*!
@@ -37,8 +40,8 @@ static inline D C_FCAST(T from)
 template <typename D,
           typename T,
 
-          typename std::enable_if<std::is_unsigned<D>::value, D>::type* = nullptr,
-          typename std::enable_if<std::is_signed<T>::value, T>::type* = nullptr
+          typename std::enable_if<IS_USIGNED(D), D>::type* = nullptr,
+          typename std::enable_if<IS_SIGNED(T), T>::type* = nullptr
 
           >
 /*!
@@ -53,20 +56,21 @@ static inline D C_FCAST(T from)
             : from);
 }
 
-#define NINT(Type) std::is_integral<Type>::value
-#define NPTR(Type) std::is_pointer<Type>::value
+#define IS_INT(Type) std::is_integral<Type>::value
+#define IS_PTR(Type) std::is_pointer<Type>::value
 #define RP(Type) typename std::remove_pointer<Type>::type
-#define IT_CONST(Type) std::is_const<RP(Type)>::value
 //#define IBASE(Type) (std::is_void<Type>::value || std::is_integral<Type>::value || std::is_class<Type>::value || std::is_floating_point<Type>::value)
-#define IBASE(Type) (!std::is_pointer<Type>::value)
-#define CONST(Type) std::is_const<Type>::value
+#define IS_POD(Type) (!std::is_pointer<Type>::value)
+#define IS_CONST(Type) std::is_const<Type>::value
 
 template<typename D,
          typename T,
 
          typename std::enable_if<std::is_convertible<T,D>::value,T>::type* = nullptr,
-         typename std::enable_if<NINT(D),T>::type* = nullptr,
-         typename std::enable_if<NINT(T),T>::type* = nullptr
+         typename std::enable_if<IS_INT(D),T>::type* = nullptr,
+         typename std::enable_if<IS_INT(T),T>::type* = nullptr,
+
+         typename std::enable_if<!((IS_SIGNED(T) && IS_USIGNED(D)) || (IS_USIGNED(T) && IS_SIGNED(D))), T>::type* = nullptr
 
          >
 /*!
@@ -82,7 +86,7 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<NINT(D), D>::type* = nullptr,
+         typename std::enable_if<IS_INT(D), D>::type* = nullptr,
          typename std::enable_if<std::is_enum<T>::value, T>::type* = nullptr
 
          >
@@ -94,10 +98,10 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<NPTR(D),T>::type* = nullptr,
-         typename std::enable_if<NPTR(T),T>::type* = nullptr,
-         typename std::enable_if<IBASE(RP(D)) && IBASE(RP(T)),T>::type* = nullptr,
-         typename std::enable_if<(CONST(RP(D)) && CONST(RP(T))) || (!CONST(RP(D)) && !CONST(RP(T))) || (CONST(RP(D)) && !CONST(RP(T))),T>::type* = nullptr
+         typename std::enable_if<IS_PTR(D),T>::type* = nullptr,
+         typename std::enable_if<IS_PTR(T),T>::type* = nullptr,
+         typename std::enable_if<IS_POD(RP(D)) && IS_POD(RP(T)),T>::type* = nullptr,
+         typename std::enable_if<(IS_CONST(RP(D)) && IS_CONST(RP(T))) || (!IS_CONST(RP(D)) && !IS_CONST(RP(T))) || (IS_CONST(RP(D)) && !IS_CONST(RP(T))),T>::type* = nullptr
 
          >
 /*!
@@ -132,8 +136,8 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<NINT(D), D>::type* = nullptr,
-         typename std::enable_if<NPTR(T), T>::type* = nullptr
+         typename std::enable_if<IS_INT(D), D>::type* = nullptr,
+         typename std::enable_if<IS_PTR(T), T>::type* = nullptr
 
          >
 static inline D C_FCAST(T from)
@@ -144,11 +148,11 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<NPTR(D), D>::type* = nullptr,
-         typename std::enable_if<!CONST(D), D>::type* = nullptr,
+         typename std::enable_if<IS_PTR(D), D>::type* = nullptr,
+         typename std::enable_if<!IS_CONST(D), D>::type* = nullptr,
 
-         typename std::enable_if<CONST(T), D>::type* = nullptr,
-         typename std::enable_if<NPTR(T), T>::type* = nullptr
+         typename std::enable_if<IS_CONST(T), D>::type* = nullptr,
+         typename std::enable_if<IS_PTR(T), T>::type* = nullptr
          >
 static inline D C_FCAST(T from)
 {
@@ -159,10 +163,10 @@ static inline D C_FCAST(T from)
 template<typename D,
          typename T,
 
-         typename std::enable_if<NPTR(D) && NPTR(T), D>::type* = nullptr,
+         typename std::enable_if<IS_PTR(D) && IS_PTR(T), D>::type* = nullptr,
 
-         typename std::enable_if<IBASE(RP(D)) && !CONST(RP(D)), bool>::type* = nullptr,
-         typename std::enable_if<IBASE(RP(T)) && CONST(RP(T)), bool>::type* = nullptr
+         typename std::enable_if<IS_POD(RP(D)) && !IS_CONST(RP(D)), bool>::type* = nullptr,
+         typename std::enable_if<IS_POD(RP(T)) && IS_CONST(RP(T)), bool>::type* = nullptr
 
          >
 static inline D C_FCAST(T from)
@@ -200,12 +204,13 @@ static inline D C_RCAST(T from)
     return reinterpret_cast<D>(from);
 }
 
-#undef NINT
-#undef NPTR
+#undef IS_INT
+#undef IS_PTR
 #undef RP
-#undef IT_CONST
-#undef IBASE
-#undef CONST
+#undef IS_POD
+#undef IS_CONST
+#undef IS_SIGNED
+#undef IS_USIGNED
 
 #define C_CAST(type, var) C_CAST<type>(var)
 #define C_DCAST(type, var) C_DCAST<type>(var)

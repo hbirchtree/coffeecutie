@@ -12,12 +12,12 @@ struct _cbasic_data_chunk
     template<typename DT>
     STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
-        return {C_FCAST<T*>(&obj), sizeof(DT)};
+        return {C_FCAST<T*>(&obj), sizeof(DT), 0};
     }
 
     STATICINLINE _cbasic_data_chunk<T> CreateString(cstring src)
     {
-        return {C_FCAST<T*>(src), strlen(src)};
+        return {C_FCAST<T*>(src), strlen(src), 0};
     }
 
     template<typename std::enable_if<!std::is_void<T>::value,bool>::type* = nullptr>

@@ -97,6 +97,7 @@ struct CGL_Shared_Functions
 #if !defined(COFFEE_ONLY_GLES20)
         glClearBufferfv(GL_COLOR,i,(scalar*)&d);
 #else
+        C_UNUSED(i);
         ClearColor(d);
         glClear(GL_COLOR_BUFFER_BIT);
 #endif
@@ -161,6 +162,9 @@ struct CGL_Shared_Functions
     STATICINLINE
     void PolyMode(Face f1,DrawMode f2)
     {
+        C_UNUSED(f1);
+        C_UNUSED(f2);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glPolygonMode(to_enum(f1),to_enum(f2));
 #endif
@@ -169,6 +173,9 @@ struct CGL_Shared_Functions
     STATICINLINE
     void PointParameteriv(CGenum f,const int32* d)
     {
+        C_UNUSED(f);
+        C_UNUSED(d);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glPointParameteriv(f,d);
 #endif
@@ -176,6 +183,9 @@ struct CGL_Shared_Functions
     STATICINLINE
     void PointParameterfv(CGenum f,const scalar* d)
     {
+        C_UNUSED(f);
+        C_UNUSED(d);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glPointParameterfv(f,d);
 #endif
@@ -183,6 +193,8 @@ struct CGL_Shared_Functions
     STATICINLINE
     void PointSize(scalar f)
     {
+        C_UNUSED(f);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glPointSize(f);
 #endif
@@ -206,6 +218,8 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ColorMask(CColorMask op)
     {
+        C_UNUSED(op);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glColorMask(op.r,op.g,op.b,op.a);
 #endif
@@ -213,6 +227,9 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ColorMaski(uint32 i, CColorMask op)
     {
+        C_UNUSED(i);
+        C_UNUSED(op);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glColorMaski(i,op.r,op.g,op.b,op.a);
 #endif
@@ -220,6 +237,8 @@ struct CGL_Shared_Functions
     STATICINLINE
     void ColorLogicOp(LogicOp op)
     {
+        C_UNUSED(op);
+
 #ifdef COFFEE_GLEAM_DESKTOP
         glLogicOp(to_enum(op));
 #endif

@@ -34,6 +34,10 @@ GLeamRenderer::~GLeamRenderer()
 void gleamcallback(GLenum src, GLenum type,GLuint id,GLenum sev,GLsizei,const GLchar* msg,
                    const void* param)
 {
+    C_USED(src);
+    C_USED(type);
+    C_USED(sev);
+
     const GLeamRenderer* renderer = (const GLeamRenderer*)param;
     CGL::CGDbgMsg cmsg;
 #ifdef COFFEE_GLEAM_DESKTOP

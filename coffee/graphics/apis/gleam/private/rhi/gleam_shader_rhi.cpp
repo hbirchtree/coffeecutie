@@ -73,6 +73,8 @@ void GLEAM_Shader::dealloc()
 
 bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader, const ShaderStage &stages)
 {
+    C_USED(stages);
+
     if(shader.m_handle==0)
         return false;
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
@@ -360,6 +362,7 @@ GLEAM_PipelineDumper::GLEAM_PipelineDumper(GLEAM_Pipeline &pipeline):
 
 void GLEAM_PipelineDumper::dump(cstring out)
 {
+    C_USED(out);
 #if !defined(COFFEE_ONLY_GLES20)
     int32* bin_fmts = &GLEAM_API_INSTANCE_DATA->GL_CACHED
             .NUM_PROGRAM_BINARY_FORMATS;

@@ -15,7 +15,10 @@ struct CGL_ProgramInterfaceQuery
     {glGetProgramInterfaceiv(h,i,e,v);}
 
     STATICINLINE void ProgramGetResourceiv(CGhnd h)
-    {}
+    {
+        (void)h;
+        //TODO: Implement this shit
+    }
 
     STATICINLINE uint32 ProgramGetResourceIdx(CGhnd h,CGenum i,cstring n)
     {return glGetProgramResourceIndex(h,i,n);}

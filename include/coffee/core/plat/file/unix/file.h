@@ -110,22 +110,24 @@ struct PosixFileFun_def : PosixFileMod_def
         if(f_size <= sz && f_size != -1)
             sz = f_size;
 
-        data.data = (byte_t*)Calloc(4,sz);
-        data.size = sz + nullterm;
+        szptr szp = C_CAST<szptr>(sz);
+
+        data.data = C_CAST<byte_t*>(Calloc(4,szp));
+        data.size = szp + nullterm;
 
         szptr i = 0;
         szptr chnk = 0;
-        while(i<sz)
+        while(i < szp)
         {
-            chnk = ((sz-i) < Int32_Max) ? (sz-i) : Int32_Max;
+            chnk = ((szp-i) < Int32_Max) ? (szp-i) : Int32_Max;
             i += read(f_h->fd,
-                      &(((byte_t*)(data.data))[i]),
+                      &((C_CAST<byte_t*>(data.data))[i]),
                       chnk);
             if(ErrnoCheck())
                 break;
         }
 
-        if(i < sz)
+        if(i < szp)
         {
             CFree(data.data);
             return {};
@@ -136,8 +138,8 @@ struct PosixFileFun_def : PosixFileMod_def
 
     STATICINLINE bool Seek(FH*, uint64)
     {
-	/* We won't use this, it's tedious */
-	return false;
+        /* We won't use this, it's tedious */
+        return false;
     }
 
     STATICINLINE bool Write(FH* f_h, CByteData const& d, bool)
@@ -149,7 +151,7 @@ struct PosixFileFun_def : PosixFileMod_def
         {
             chnk = ((d.size-i) < Int32_Max) ? (d.size-i) : Int32_Max;
             i += write(f_h->fd,
-                       &(((byte_t*)(d.data))[i]),
+                       &(C_CAST<byte_t*>(d.data)[i]),
                        chnk);
             if(ErrnoCheck() && it != 0)
                 break;

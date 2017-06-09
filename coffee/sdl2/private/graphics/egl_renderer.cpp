@@ -19,7 +19,7 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(5, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
         if(err) \
             *err = cast_pod<>(error); \
         return false; \
@@ -29,7 +29,7 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(5, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
         return false; \
     }
 
@@ -37,13 +37,13 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(5, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
     }
 
 #define EGL_NULLCHECK(result, error_text) \
     if(!result) \
     { \
-        cVerbose(5, "@" #result ": " error_text); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " error_text); \
         if(err) \
             *err = error_text; \
         return false; \
@@ -57,7 +57,7 @@ const constexpr static int EGL_MIN_VERB = 5;
 #if C_SYSTEM_BITNESS == 32
 #define EGL_PRINT(id) cast_pod<u32>((u32)(id))
 #else
-#define EGL_PRINT(id) cast_pod<u64>((u64)(id))
+#define EGL_PRINT(id) StrUtil::pointerify(id)
 #endif
 
 namespace Coffee{

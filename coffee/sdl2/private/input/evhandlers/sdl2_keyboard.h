@@ -17,6 +17,8 @@ FORCEDINLINE void EventHandleKeys(
         Uint32 type,
         const SDL_KeyboardEvent& key)
 {
+    C_UNUSED(type);
+
     CIEvent e;
     CIKeyEvent k;
 

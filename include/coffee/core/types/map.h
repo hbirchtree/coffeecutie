@@ -32,6 +32,7 @@ public:
      */
     _cbasic_map(const _cbasic_pair<KeyType,ValueType>* otherMap)
     {
+        (void)otherMap;
     }
     /*!
      * \brief Reserve st amount of elements
@@ -39,6 +40,7 @@ public:
      */
     _cbasic_map(size_t st)
     {
+        (void)st;
     }
 };
 
@@ -76,6 +78,7 @@ public:
 
     StaticMap(_cbasic_pair<KeyType, ValueType> map[Size])
     {
+        (void)map;
     }
 
     size_t size()

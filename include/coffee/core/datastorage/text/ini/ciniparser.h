@@ -102,7 +102,7 @@ struct SimpleIniParser : IniParserDef
 
     struct section_t
     {
-        friend class document_t;
+        friend struct document_t;
 
         void insertValue(cstring name, variant_t* v)
         {

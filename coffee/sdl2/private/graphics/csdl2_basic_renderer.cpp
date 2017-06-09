@@ -168,7 +168,7 @@ void SDL2SpriteRenderer::createSpriteAtlas(
         uint32 &,
         Vector<SDL2SpriteRenderer::Sprite> &)
 {
-
+    C_UNUSED(t);
 }
 
 bool SDL2SpriteRenderer::createSprite(const Texture &t,

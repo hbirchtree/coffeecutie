@@ -174,7 +174,9 @@ void PNG::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
 
 void TGA::Save(const Vector<byte_t> &data, const CSize &res, cstring dest)
 {
-
+    C_UNUSED(data);
+    C_UNUSED(res);
+    C_UNUSED(dest);
 }
 
 }

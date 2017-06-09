@@ -247,6 +247,7 @@ void GLEAM_API::SetRasterizerState(const RASTSTATE &rstate, uint32 i)
 
 void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 {
+    C_USED(tstate);
 #if !defined(COFFEE_ONLY_GLES20)
     if(CGL43::TessellationSupported())
     {
@@ -258,6 +259,7 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 
 void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 {
+    C_USED(i);
 #ifdef COFFEE_GLEAM_DESKTOP
     if(vstate.multiview())
     {
@@ -437,34 +439,37 @@ void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
 template<typename T>
 void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
+    C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
         CGL43::Uniformfv(prog,idx,arr_size,data);
     else
 #endif
-        CGL33::Uniformfv(idx,arr_size,data);
+        CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
 template<typename T>
 void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
+    C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
         CGL43::Uniformfv(prog,idx,arr_size,false,data);
     else
 #endif
-        CGL33::Uniformfv(idx,arr_size,false,data);
+        CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),false,data);
 }
 
 template<typename T>
 void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
+    C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
         CGL43::Uniformiv(prog,idx,arr_size,data);
     else
 #endif
-        CGL33::Uniformiv(idx,arr_size,data);
+        CGL33::Uniformiv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
 #if !defined(COFFEE_ONLY_GLES20)
@@ -515,25 +520,25 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         uint32 const& fgs = u.second.value->flags;
 
         if(fgs == (Mat_d|S2|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size/sizeof(Matf2));
+            SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size);
         else if(fgs == (Mat_d|S3|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf3*)db->data,db->size/sizeof(Matf3));
+            SetUniform_wrapf_m(prog,idx,(Matf3*)db->data,db->size);
         else if(fgs == (Mat_d|S4|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf4*)db->data,db->size/sizeof(Matf4));
+            SetUniform_wrapf_m(prog,idx,(Matf4*)db->data,db->size);
 
         else if(fgs == (Vec_d|S2|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf2*)db->data,db->size/sizeof(Vecf2));
+            SetUniform_wrapf(prog,idx,(Vecf2*)db->data,db->size);
         else if(fgs == (Vec_d|S3|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf3*)db->data,db->size/sizeof(Vecf3));
+            SetUniform_wrapf(prog,idx,(Vecf3*)db->data,db->size);
         else if(fgs == (Vec_d|S4|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf4*)db->data,db->size/sizeof(Vecf4));
+            SetUniform_wrapf(prog,idx,(Vecf4*)db->data,db->size);
 
         else if(fgs == (Vec_d|S2|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci2*)db->data,db->size/sizeof(Veci2));
+            SetUniform_wrapi(prog,idx,(Veci2*)db->data,db->size);
         else if(fgs == (Vec_d|S3|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci3*)db->data,db->size/sizeof(Veci3));
+            SetUniform_wrapi(prog,idx,(Veci3*)db->data,db->size);
         else if(fgs == (Vec_d|S4|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci4*)db->data,db->size/sizeof(Veci4));
+            SetUniform_wrapi(prog,idx,(Veci4*)db->data,db->size);
 
 #if !defined(COFFEE_ONLY_GLES20)
         else if(fgs == (Vec_d|S2|UInt_t))

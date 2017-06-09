@@ -55,20 +55,20 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
     CString maps_file = "/proc/" + cast_pod(pid) + "/maps";
     CString maps_info = CResources::Linux::LinuxFileFun::sys_read(maps_file.c_str());
 
-    i32 end = maps_info.find('\n');
-    u32 pos = 0;
+    szptr end = maps_info.find('\n');
+    szptr pos = 0;
     bool was_empty = false;
-    while(end != -1)
+    while(end < maps_info.size())
     {
         target.push_back({});
         Entry& file = target.back();
 
-        i32 space = 0;
+        szptr space = 0;
         u32 filename_counter = 0;
         while(space < end)
         {
             space = maps_info.find(' ', pos);
-            i32 len = space - pos;
+            szptr len = space - pos;
             if(space > end)
                 len = end - pos;
             auto sec = StrUtil::encapsulate(&maps_info[pos], len);
@@ -80,7 +80,7 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
                 {
                 case 1:
                 {
-                    i32 mid = sec.find('-');
+                    szptr mid = sec.find('-');
                     CString tmp = StrUtil::encapsulate(sec.data(), mid);
                     file.start = Convert::strtoull(tmp.data(), 16);
                     tmp = &sec[mid+1];
@@ -89,15 +89,15 @@ bool MemMap::GetProcMap(LinuxProcessProperty::PID pid, MemMap::ProcMap &target)
                 }
                 case 2:
                 {
-                    if(sec.find('r') != -1)
+                    if(sec.find('r') < end)
                         file.access |= ResourceAccess::ReadOnly;
-                    if(sec.find('w') != -1)
+                    if(sec.find('w') < end)
                         file.access |= ResourceAccess::WriteOnly;
-                    if(sec.find('x') != -1)
+                    if(sec.find('x') < end)
                         file.access |= ResourceAccess::Executable;
-                    if(sec.find('s') != -1)
+                    if(sec.find('s') < end)
                         file.access |= ResourceAccess::Shared;
-                    if(sec.find('p') != -1)
+                    if(sec.find('p') < end)
                         file.access |= ResourceAccess::Private;
                     break;
                 }

@@ -141,7 +141,7 @@ public:
  * \param node
  * \return This node's complete matrix unless the pointer is NULL
  */
-static CMat4 AccumulateTransform(const CNode *node)
+STATICINLINE CMat4 AccumulateTransform(const CNode *node)
 {
     if(!node || !node->transform)
         return CMat4();

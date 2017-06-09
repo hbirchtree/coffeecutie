@@ -49,6 +49,8 @@ struct CGLES20 :
 
     STATICINLINE bool LoadBinding(CGL_Context* ctxt, GLADloadproc fun)
     {
+        C_UNUSED(fun);
+
         if(!ctxt->acquireContext())
             return false;
 
@@ -57,7 +59,11 @@ struct CGLES20 :
             return false;
 #endif
 
-        if(!Debug::VerifyInit() || !glTexImage2D)
+        if(!Debug::VerifyInit()
+        #if !defined(COFFEE_LINKED_GLES)
+                || !glTexImage2D
+        #endif
+                )
             return false;
 
         Debug::InitInternalFormats();

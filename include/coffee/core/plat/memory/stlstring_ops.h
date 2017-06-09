@@ -209,7 +209,7 @@ FORCEDINLINE bool decode(byte_t const* i_ptr, szptr i_len,
 
 namespace StrUtil{
 
-FORCEDINLINE CString encapsulate(cstring src, uint32 len)
+FORCEDINLINE CString encapsulate(cstring src, szptr len)
 {
     CString target;
     target.insert(0, src, len);

@@ -26,7 +26,7 @@ void GLEAM_OccludeQuery::begin()
     if(m_handle == 0)
         alloc();
     CGL33::QueryBegin(m_type,m_handle);
-    CGL33::ColorMask({0,0,0,0});
+    CGL33::ColorMask({0,0,0,0,0});
     CGL33::DepthMask(false);
 #endif
 }
@@ -34,7 +34,7 @@ void GLEAM_OccludeQuery::begin()
 void GLEAM_OccludeQuery::end()
 {
 #if !defined(COFFEE_ONLY_GLES20)
-    CGL33::ColorMask({1,1,1,1});
+    CGL33::ColorMask({1,1,1,1,0});
     CGL33::DepthMask(true);
     CGL33::QueryEnd(m_type);
 #endif

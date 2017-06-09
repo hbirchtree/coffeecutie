@@ -54,7 +54,25 @@ protected:
         return StrCmp(_switch_long(in),sw);
     }
 
+    /*!
+     * \brief Check if an argument exists
+     * \param argc
+     * \param argv
+     * \param sw_l
+     * \param sw_s
+     * \param pos
+     * \return
+     */
     static bool Check(int argc, String* argv, String sw_l, Character sw_s, int* pos);
+    /*!
+     * \brief Get the value of an argument
+     * \param argc
+     * \param argv
+     * \param sw
+     * \param sw_s
+     * \param pos
+     * \return
+     */
     static cstring Get(int argc, String* argv, String sw, Character sw_s, int* pos);
 
 public:

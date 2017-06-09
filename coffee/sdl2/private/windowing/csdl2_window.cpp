@@ -12,6 +12,8 @@ namespace Display{
 
 bool SDL2Window::windowPreInit(const CDProperties& p, CString *)
 {
+    C_UNUSED(p);
+
     m_window_flags = 0;
 
 #if defined(COFFEE_LINUX)

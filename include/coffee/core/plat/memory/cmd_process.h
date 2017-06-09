@@ -83,7 +83,13 @@ struct CProcess
 #endif
     }
 
-    STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* err = nullptr)
+    /*!
+     * \brief Execute command with logged output, logs stdout to out, stderr can go to last argument
+     * \param cmd_
+     * \param out
+     * \return
+     */
+    STATICINLINE int ExecuteLogged(Command const& cmd_, CString* out, CString* = nullptr)
     {
 #if defined(COFFEE_USE_EXECVPE)
         CString cmd = cmd_.program;

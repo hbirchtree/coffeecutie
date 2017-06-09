@@ -34,6 +34,9 @@ struct CGL_Shared_Debug
 
     STATICINLINE void SetDebugLevel(Severity s,bool enabled)
     {
+        C_UNUSED(s);
+        C_UNUSED(enabled);
+
 #if !defined(COFFEE_ONLY_GLES20)
         glDebugMessageControl(
                     GL_DONT_CARE,GL_DONT_CARE,
@@ -44,6 +47,10 @@ struct CGL_Shared_Debug
 
     STATICINLINE void SetObjectLabel(Object t,CGhnd h,cstring s)
     {
+        C_UNUSED(t);
+        C_UNUSED(h);
+        C_UNUSED(s);
+
 #if !defined(COFFEE_ONLY_GLES20)
         glObjectLabel(to_enum(t),h,-1,s);
 #endif
@@ -51,6 +58,9 @@ struct CGL_Shared_Debug
 
     STATICINLINE void SetDebugGroup(cstring n, uint32 id)
     {
+        C_UNUSED(n);
+        C_UNUSED(id);
+
 #if !defined(COFFEE_ONLY_GLES20)
         glPushDebugGroup(GL_DEBUG_TYPE_PUSH_GROUP,id,-1,n);
 #endif
@@ -64,6 +74,10 @@ struct CGL_Shared_Debug
 
     STATICINLINE void DebugMessage(Severity s,DebugType t,cstring n)
     {
+        C_UNUSED(s);
+        C_UNUSED(t);
+        C_UNUSED(n);
+
 #if !defined(COFFEE_ONLY_GLES20)
         glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION,
                              to_enum(t),0,
@@ -74,6 +88,9 @@ struct CGL_Shared_Debug
 
     STATICINLINE void DebugSetCallback(CGcallback c, void* param)
     {
+        C_UNUSED(c);
+        C_UNUSED(param);
+
 #if !defined(COFFEE_ONLY_GLES20)
         glDebugMessageCallback(c,param);
 #endif
@@ -143,6 +160,9 @@ struct CGL_Shared_Debug
     }
     STATICINLINE CSize InternalFormatMaxResolution2D(Texture tt, PixelFormat t)
     {
+        C_UNUSED(tt);
+        C_UNUSED(t);
+
         CSize sz;
         sz.w = sz.h = GetInteger(GL_MAX_TEXTURE_SIZE);
         return sz;
@@ -151,7 +171,7 @@ struct CGL_Shared_Debug
 
     /* GetString */
 
-    STATICINLINE cstring GetString(CGenum e){return (cstring)glGetString(e);}
+    STATICINLINE cstring GetString(CGenum e){return C_RCAST<cstring>(glGetString(e));}
 #if !defined(COFFEE_ONLY_GLES20)
     STATICINLINE cstring GetStringi(CGenum e,uint32 i){return (cstring)glGetStringi(e,i);}
 #endif

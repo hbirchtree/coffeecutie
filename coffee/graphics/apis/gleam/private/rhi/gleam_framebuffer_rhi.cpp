@@ -117,6 +117,11 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
                               const CRect64 &tgt, DBuffers buf,
                               Filtering flt) const
 {
+    C_USED(src);
+    C_USED(target);
+    C_USED(tgt);
+    C_USED(buf);
+    C_USED(flt);
 #if !defined(COFFEE_ONLY_GLES20)
     this->bind(FramebufferT::Read);
     target.bind(FramebufferT::Draw);
@@ -124,6 +129,8 @@ void GLEAM_RenderTarget::blit(const CRect64 &src, GLEAM_RenderTarget &target,
 
     this->unbind(FramebufferT::Read);
     target.unbind(FramebufferT::Draw);
+#else
+    //TODO: We could implement this with a slow method and give lots of errors
 #endif
 }
 
@@ -172,8 +179,9 @@ CSize GLEAM_RenderTarget::size()
 
 void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 {
+    C_USED(i);
     fb_bind(m_type,m_handle);
-    scalar* d = (scalar*)&color;
+//    scalar* d = (scalar*)&color;
 //    if(GL_CURR_API == GLES_3_0)
 //    {
         glClearColor(color.r(),color.g(),color.b(),color.a());
@@ -185,7 +193,7 @@ void GLEAM_RenderTarget::clear(uint32 i, Vecf4 const& color)
 void GLEAM_RenderTarget::clear(bigscalar depth)
 {
     fb_bind(m_type,m_handle);
-    scalar tmp_dep = depth;
+    scalar tmp_dep = C_CAST<scalar>(depth);
     if(GL_CURR_API == GLES_3_0)
     {
         glClearDepthf(C_CAST<scalar>(depth));
@@ -203,7 +211,8 @@ void GLEAM_RenderTarget::clear(bigscalar depth, int32 stencil)
         glClearStencil(stencil);
         glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
     }else
-        CGL33::ClearBufferfi(depth,(int32)stencil);
+        CGL33::ClearBufferfi(C_CAST<scalar>(depth),
+                             C_CAST<int32>(stencil));
 }
 
 void GLEAM_RenderTarget::clear(uint32 i, const Vecf4 &color, bigscalar depth)
@@ -226,7 +235,7 @@ void GLEAM_RenderTarget::bind(FramebufferT t) const
 void GLEAM_RenderTarget::unbind(FramebufferT t) const
 {
     if(m_handle != 0)
-        fb_bind(m_type,0);
+        fb_bind(t,0);
 }
 
 bool GLEAM_RenderTarget::validate() const
