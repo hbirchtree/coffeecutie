@@ -50,7 +50,7 @@ automation-data:
 	cp -ru "coffeecutie-automation-tools-master" $(AUTOMATION_DIR) && \
 	rm -r master.tar.gz coffeecutie-automation-tools-master
 
-multi-docker-build: automation-data multi-prepare
+multi-docker-build: multi-prepare
 	true
 #	$(DOCKER) build \
 #		-t $(BUILDER_NAME):dev \
