@@ -31,9 +31,9 @@ function github_api()
 
 function download_libraries()
 {
-    notify "Downloading libraries for architecture: ${BUILDVARIANT}"
-    local LATEST_RELEASE="$(github_api list release $COFFEE_SLUG | head -1 | cut -d'|' -f 3)"
-    local CURRENT_ASSET="$(github_api list asset ${COFFEE_SLUG}:${LATEST_RELEASE} | grep $BUILDVARIANT)"
+    notify "Downloading library ${1}:${BUILDVARIANT}"
+    local LATEST_RELEASE="$(github_api list release ${1} | head -1 | cut -d'|' -f 3)"
+    local CURRENT_ASSET="$(github_api list asset ${1}:${LATEST_RELEASE} | grep $BUILDVARIANT)"
 
     [[ -z $CURRENT_ASSET ]] && die "Failed to find library release for $BUILDVARIANT"
 
@@ -41,27 +41,19 @@ function download_libraries()
     local ASSET_ID="$(echo $CURRENT_ASSET | cut -d'|' -f 3)"
     local ASSET_FN="$(echo $CURRENT_ASSET | cut -d'|' -f 5)"
 
-    github_api pull asset $COFFEE_SLUG $ASSET_ID
+    github_api pull asset $1 $ASSET_ID
 
     tar -xvf "$ASSET_FN"
     mv build $COFFEE_DIR
-
-    ls -lR
-}
-
-function get_opts()
-{
-    [[ ! -z $COFFEE_LIBRARY_BUILD ]] && echo "-DGENERATE_PROGRAMS=OFF"
 }
 
 function build_standalone()
 {
-    download_libraries
+    download_libraries $COFFEE_SLUG
 
     make -f "$CI_DIR/Makefile.standalone" \
         -e SOURCE_DIR="$SOURCE_DIR" \
-        -e COFFEE_DIR="$COFFEE_DIR" $@ \
-        -e EXTRA_OPTIONS="$(get_opts)"
+        -e COFFEE_DIR="$COFFEE_DIR" $@
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
