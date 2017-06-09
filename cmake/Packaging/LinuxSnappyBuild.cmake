@@ -90,9 +90,7 @@ macro ( SNAPPY_PACKAGE
     set ( SNAPPY_PKG_DIR "${SNAPPY_DEPLOY_DIRECTORY}/${TARGET}" )
     set ( SNAPPY_FINAL_SNAP "${SNAPPY_OUTPUT_DIRECTORY}/${SNAPPY_PACKAGE_NAME}_${VERSION}_all.snap" )
     set ( SNAPPY_ARCH_DATA
-        "amd64) ARCH_STRING=\"x86_64-linux-gnu\" ;;"
-        "i386) ARCH_STRING=\"i386-linux-gnu\" ;;"
-        "armhf) ARCH_STRING=\"arm-linux-gnueabihf\" ;;"
+        "amd64) ARCH_STRING=\"x86_64-linux-gnu\" ;;\ni386) ARCH_STRING=\"i386-linux-gnu\" ;;\narmhf) ARCH_STRING=\"arm-linux-gnueabihf\" ;;"
     )
 
     set ( SNAPCRAFT_FILE "${SNAPPY_PKG_DIR}/snapcraft.yaml" )
