@@ -30,6 +30,7 @@ set ( CMAKE_MODULE_PATH
     )
 
 include ( BuildFlags )
+include ( BuildOptions )
 include ( BuildFunctions )
 include ( PackagingOptions )
 include ( TestingOptions )

@@ -46,6 +46,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
         else()
             list ( APPEND CORE_EXTRA_LIBRARIES
                 GLESv2
+                EGL
                 )
         endif()
     endif()

@@ -22,10 +22,10 @@ if(COFFEE_BUILD_GLEAM_RHI)
         )
 endif()
 
-if(COFFEE_BUILD_GLES)
+if(COFFEE_BUILD_GLES AND NOT COFFEE_BUILD_GLES_20)
     add_definitions(-DCOFFEE_ESMODE)
     list(APPEND CoffeeGLeam_SRCS private/glad_es/glad.c)
-else()
+elseif(NOT COFFEE_BUILD_GLES)
     list(APPEND CoffeeGLeam_SRCS private/glad/glad.c)
 endif()
 

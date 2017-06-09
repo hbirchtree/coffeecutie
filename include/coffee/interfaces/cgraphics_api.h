@@ -65,7 +65,7 @@ struct GraphicsAPI
     }
     static bool GetAPIVersion(GraphicsDevice const&, SWVersionInfo*)
     {
-
+        return false;
     }
 
     static bool GetRendererInfo(GraphicsDevice const&, HWDeviceInfo*)

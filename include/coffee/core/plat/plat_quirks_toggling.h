@@ -163,7 +163,7 @@
 #endif
 
 #if defined(COFFEE_LINUX_DESKTOP_LIGHT_WM)
-#define COFFEE_USE_LINUX_GLX
+//#define COFFEE_USE_LINUX_GLX
 #define COFFEE_USE_MAEMO_X11
 #endif
 

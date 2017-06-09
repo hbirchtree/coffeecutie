@@ -19,6 +19,24 @@ ubuntu-amd64: native-lib-root
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
 
+ubuntu-amd64-gles: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e BUILD_NAME=ubuntu-amd64-gles \
+		-e PRELOAD=linux-gles.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
+
+ubuntu-amd64-gles20: native-lib-root
+	@make -f $(ROOT_DIR)/Makefile.multi \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e BUILD_DIR=$(BUILD_DIR) \
+		-e BUILD_NAME=ubuntu-amd64-gles20 \
+		-e PRELOAD=linux-gles20.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
+
 ubuntu-i686: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
