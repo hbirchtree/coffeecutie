@@ -41,6 +41,8 @@ struct CGL33_Base :
 
     STATICINLINE bool LoadBinding(CGL_Context* ctxt, GLADloadproc procLoad = nullptr)
     {
+        C_USED(procLoad);
+
         if(ctxt && !ctxt->acquireContext())
             return false;
 #if defined(COFFEE_USE_MAEMO_EGL)
