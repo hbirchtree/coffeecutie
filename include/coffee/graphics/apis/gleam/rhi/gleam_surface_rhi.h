@@ -66,10 +66,9 @@ struct GLEAM_Surface3D_Base : GraphicsAPI::Surface
     CSize3 m_size;
 
 protected:
+    Texture m_type;
 #if defined(COFFEE_ONLY_GLES20)
     Vector<CGhnd> m_handles;
-#else
-    Texture m_type;
 #endif
 };
 

@@ -26,7 +26,7 @@ function notify()
 
 function github_api()
 {
-    docker run --rm $QTHUB_DOCKER --api-token "$GITHUB_TOKEN" $@
+    docker run --rm -v $PWD:/data $QTHUB_DOCKER --api-token "$GITHUB_TOKEN" $@
 }
 
 function download_libraries()
@@ -45,6 +45,8 @@ function download_libraries()
 
     tar -xvf "$ASSET_FN"
     mv build $COFFEE_DIR
+
+    ls -lR
 }
 
 function get_opts()

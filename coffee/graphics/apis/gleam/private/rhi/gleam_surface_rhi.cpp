@@ -94,6 +94,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
                              CPoint offset, uint32 mip)
 {
     c_cptr data_ptr = data;
+    auto msz = size.convert<u32>();
 
 #if !defined(COFFEE_ONLY_GLES20)
     if(m_flags&GLEAM_API::TextureDMABuffered)
@@ -125,10 +126,10 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         if(m_size.area()==0)
         {
             m_size = size;
-            CGL33::TexImage2D(m_type,m_mips,m_pixfmt,size.w,size.h,0,comp,fmt,data_ptr);
+            CGL33::TexImage2D(m_type,m_mips,m_pixfmt,msz.w,msz.h,0,comp,fmt,data_ptr);
         }else{
             CGL33::TexSubImage2D(m_type,mip,offset.x,offset.y,
-                                 size.w,size.h,comp,fmt,data_ptr);
+                                 msz.w,msz.h,comp,fmt,data_ptr);
         }
         if(m_flags&GLEAM_API::TextureDMABuffered)
             CGL33::BufBind(BufType::PixelUData,0);
@@ -159,10 +160,8 @@ GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mi
     #else
     GraphicsAPI::Surface(fmt,mips,texflags),
     #endif
-    m_size(0,0,0)
-    #if !defined(COFFEE_ONLY_GLES20)
-    ,m_type(Texture::T2D)
-    #endif
+    m_size(0,0,0),
+    m_type(Texture::T2D)
 {
     C_USED(t);
 }
@@ -187,14 +186,14 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
                             msz.width,msz.height,msz.depth);
     }
 #else
-    size_t len = C_CAST<size_t>(size.depth);
+    u32 len = msz.depth;
     m_handles.resize(len);
     CGL33::TexAlloc(len, m_handles.data());
 
     for(CGhnd& h : m_handles)
     {
         CGL33::TexBind(m_type, h);
-        CGL33::TexImage2D(m_type, 0, m_pixfmt, size.width, size.height,
+        CGL33::TexImage2D(m_type, 0, m_pixfmt, msz.width, msz.height,
                           0, c, BitFormat::UByte, nullptr);
     }
 #endif
@@ -203,6 +202,8 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
                                   CSize3 size, c_cptr data, CPoint3 offset, uint32 mip)
 {
+    auto msz = size.convert<u32>();
+    auto mof = offset.convert<u32>();
 #if !defined(COFFEE_ONLY_GLES20)
     /* If we want to use DMA transfer */
     c_cptr data_ptr = data;
@@ -247,7 +248,7 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
     if(GL_DEBUG_MODE)
         upload_info(comp,mip,size.depth);
 #else
-    if(size.depth + offset.z > C_CAST<i32>(m_handles.size()))
+    if(msz.depth + mof.z > m_handles.size())
     {
         cWarning("Invalid texture upload: Got max {0}, actual max is {1}",
                  size.depth + offset.z, m_handles.size());
@@ -257,8 +258,7 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
     {
         CGL33::TexBind(m_type, m_handles[C_FCAST<u32>(offset.z) + i]);
         CGL33::TexSubImage2D(m_type, mip, offset.x, offset.y,
-                             C_FCAST<u32>(size.width), C_FCAST<u32>(size.height),
-                             comp, fmt, data);
+                             msz.width, msz.height, comp, fmt, data);
 
         cWarning("Generating mipmaps");
         CGL33::TexGenMipmap(m_type);
