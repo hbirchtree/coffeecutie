@@ -90,7 +90,7 @@ maemo.armv7a:
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/maemo:$(DOCK_COFFEE_DIR):ro"
+                -e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/maemo:/maemo/$(DOCK_COFFEE_DIR):ro"
 
 raspberry.armhf:
 	@make -f $(CHOICES) raspberry-armhf \
