@@ -163,6 +163,7 @@ maemo-armv7a: native-lib-root
 		-e TOOLCHAIN=linux-maemo-armv7_linux.toolchain.cmake \
 		-e PRELOAD=linux-maemo.cmake \
                 \
+                -e DOCKER_CONTAINER="hbirch/maemo-builder:v3" \
 		-e DOCK_SRC="/maemo/home/coffee/project" \
 		-e DOCK_BUILD="/maemo/home/coffee/build" \
 		-e DOCK_OUT="/maemo/home/coffee/build/out" \
