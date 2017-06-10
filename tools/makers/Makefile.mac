@@ -12,7 +12,7 @@ osx:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
-		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)"
+                -e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DSWIG_DIR=/usr/local/opt/swig304"
 
 ios.x86:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
