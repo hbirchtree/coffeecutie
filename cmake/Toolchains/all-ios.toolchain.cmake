@@ -214,3 +214,5 @@ endmacro (find_host_package)
 add_definitions (-fvisibility=hidden)
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 set ( CMAKE_LIBRARY_ARCHITECTURE "ios-universal" CACHE STRING "" )
+
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" CACHE STRING "" )
