@@ -158,8 +158,7 @@ raspberry-armhf: $(RASPBERRY_SYSROOT) native-lib-root
 maemo-armv7a: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi \
 		-e BUILD_NAME=maemo \
-		-e BUILDER_NAME=maemo-builder \
-                -e DOCKER_CONFIG=maemo \
+                -e BUILDER_NAME=maemo-builder \
 		-e TOOLCHAIN=linux-maemo-armv7_linux.toolchain.cmake \
 		-e PRELOAD=linux-maemo.cmake \
                 \
