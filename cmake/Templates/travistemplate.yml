@@ -21,15 +21,17 @@ env:
    - BUILDVARIANT=emscripten.asmjs
    - BUILDVARIANT=emscripten.wasm
    - BUILDVARIANT=ubuntu.i686
-   - BUILDVARIANT=mac.osx
-   - BUILDVARIANT=mac.ios
+   - BUILDVARIANT=osx
+   - BUILDVARIANT=ios
 
 matrix:
   exclude:
   - os: linux
-    env: BUILDVARIANT=mac.osx
+    env: BUILDVARIANT=osx
   - os: linux
-    env: BUILDVARIANT=mac.ios
+    env: BUILDVARIANT=ios
+  - os: osx
+    env: BUILDVARIANT=ubuntu.amd64
   - os: osx
     env: BUILDVARIANT=android.armv7a
   - os: osx
@@ -48,8 +50,6 @@ matrix:
     env: BUILDVARIANT=emscripten.wasm
   - os: osx
     env: BUILDVARIANT=ubuntu.i686
-  - os: osx
-    env: BUILDVARIANT=ubuntu.amd64
 
 before_script:
  - ci/travis-deps.sh

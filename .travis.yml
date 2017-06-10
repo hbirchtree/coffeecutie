@@ -21,9 +21,17 @@ env:
    - BUILDVARIANT=emscripten.asmjs
    - BUILDVARIANT=emscripten.wasm
    - BUILDVARIANT=ubuntu.i686
+   - BUILDVARIANT=osx
+   - BUILDVARIANT=ios
 
 matrix:
   exclude:
+  - os: linux
+    env: BUILDVARIANT=osx
+  - os: linux
+    env: BUILDVARIANT=ios
+  - os: osx
+    env: BUILDVARIANT=ubuntu.amd64
   - os: osx
     env: BUILDVARIANT=android.armv7a
   - os: osx
