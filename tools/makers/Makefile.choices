@@ -116,7 +116,7 @@ docs:
 # Compiles for Emscripten using asm.js
 emscripten-asmjs: native-lib-root 
 	@make -f $(ROOT_DIR)/Makefile.multi \
-		-e BUILD_NAME=emscripten \
+		-e BUILD_NAME=emscripten-asmjs \
 		-e BUILDER_NAME=emscripten-builder \
 		-e DOCKER_CONFIG=emscripten \
 		-e TOOLCHAIN=js-emscripten.toolchain.cmake \
