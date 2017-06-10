@@ -61,6 +61,18 @@ function build_standalone()
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 }
 
+function build_mac()
+{
+    download_libraries_mac $COFFEE_SLUG
+
+    make -f "$CI_DIR/Makefile.mac" \
+        -e SOURCE_DIR="$SOURCE_DIR" \
+        -e COFFEE_DIR="$COFFEE_DIR" $@
+
+    EXIT_STAT=$?
+    [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
+}
+
 case "${TRAVIS_OS_NAME}" in
 "linux")
     build_standalone "$BUILDVARIANT"
@@ -68,6 +80,8 @@ case "${TRAVIS_OS_NAME}" in
     tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
 ;;
 "osx")
+    build_mac "$BUILDVARIANT"
 
+    tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
 ;;
 esac
