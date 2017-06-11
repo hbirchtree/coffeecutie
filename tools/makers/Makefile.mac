@@ -11,7 +11,7 @@ EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF
 osx:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
-		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e COFFEE_DIR=$(COFFEE_DIR)/mac-osx \
                 -e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DSWIG_DIR=/usr/local/opt/swig304"
 
 ios.x86:
@@ -20,7 +20,7 @@ ios.x86:
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e TOOLCHAIN=all-ios.toolchain.cmake \
 		-e PRELOAD=osx-ios.cmake \
-		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e COFFEE_DIR=$(COFFEE_DIR)/ios-x86 \
 		-e EXTRA_OPTIONS="-DIOS_PLATFORM=SIMULATOR $(EXTRA_OPTIONS)"
 
 ios.x86_64:
@@ -29,7 +29,7 @@ ios.x86_64:
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e TOOLCHAIN=all-ios.toolchain.cmake \
 		-e PRELOAD=osx-ios.cmake \
-		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e COFFEE_DIR=$(COFFEE_DIR)/ios-x86_64 \
 		-e EXTRA_OPTIONS="-DIOS_PLATFORM=SIMULATOR64 $(EXTRA_OPTIONS)"
 
 ios:
@@ -38,5 +38,5 @@ ios:
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e TOOLCHAIN=all-ios.toolchain.cmake \
 		-e PRELOAD=osx-ios.cmake \
-		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e COFFEE_DIR=$(COFFEE_DIR)/ios \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)"
