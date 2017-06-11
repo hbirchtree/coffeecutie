@@ -59,11 +59,6 @@ function download_libraries()
     mv build $COFFEE_DIR
 }
 
-function download_libraries_mac()
-{
-
-}
-
 function build_standalone()
 {
     download_libraries $COFFEE_SLUG
@@ -80,7 +75,7 @@ function build_standalone()
 
 function build_mac()
 {
-    download_libraries_mac $COFFEE_SLUG
+    download_libraries $COFFEE_SLUG
 
     make -f "$CI_DIR/Makefile.mac" \
         -e SOURCE_DIR="$SOURCE_DIR" \
