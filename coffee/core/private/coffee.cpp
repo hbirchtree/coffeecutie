@@ -32,11 +32,13 @@ cstring CoffeePlatformString = C_SYSTEM_STRING;
 
 CString CoffeeDefaultWindowName;
 
+#ifndef COFFEE_LOADABLE_LIBRARY
 extern CoffeeApplicationData app_data;
+#endif
 
 FORCEDINLINE void PrintVersionInfo()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
     cOutputPrint("{0}, released by {1}, version {2}",
                 app_data.application_name,
                 app_data.organization_name,
@@ -71,7 +73,7 @@ FORCEDINLINE void PrintHelpInfo(ArgumentCollection const& arg)
 
 FORCEDINLINE void PrintLicenseInfo()
 {
-#ifndef COFFEE_LOWFAT
+#if !defined(COFFEE_LOWFAT) && !defined(COFFEE_LOADABLE_LIBRARY)
     cVerbose(6,"Number of licenses to print: {0}",CoffeeLicenseCount);
     for(unsigned int i=0;i<CoffeeLicenseCount;i++)
     {
@@ -134,7 +136,11 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     }
 #endif
 
+#ifndef COFFEE_LOADABLE_LIBRARY
     CoffeeDefaultWindowName = app_data.application_name + " [OpenGL]";
+#else
+    CoffeeDefaultWindowName = "Coffee [OpenGL]";
+#endif
 
     initargs = AppArg(argc,argv);
 
@@ -251,6 +257,9 @@ void InstallDefaultSigHandlers()
 
 const CoffeeApplicationData &ApplicationData()
 {
+#ifdef COFFEE_LOADABLE_LIBRARY
+    static CoffeeApplicationData app_data;
+#endif
     return app_data;
 }
 

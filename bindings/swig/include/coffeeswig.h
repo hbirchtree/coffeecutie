@@ -1,3 +1,7 @@
+#if !defined(SWIG)
+#define SWIG
+#endif
+
 namespace Coffee
 {
 /* Class declarations */
@@ -18,6 +22,9 @@ extern void cDebug(const char* text);
 extern void cWarning(const char* text);
 extern void cFatal(const char* text);
 extern void cLog(const char* id, const char* msg);
+
+extern char GetLogVerbosity();
+extern void SetLogVerbosity(char level);
 
 /* Generating GL window */
 namespace Window{

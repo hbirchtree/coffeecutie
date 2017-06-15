@@ -153,4 +153,14 @@ void Profile::PrintData()
     Profiling::PrintProfilerData();
 }
 
+void SetLogVerbosity(char level)
+{
+    Coffee::SetPrintingVerbosity(level);
+}
+
+char GetLogVerbosity()
+{
+    return Coffee::PrintingVerbosityLevel;
+}
+
 }

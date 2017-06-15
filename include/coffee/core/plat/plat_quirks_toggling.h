@@ -51,6 +51,8 @@
  *
  * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms with isolation
  *
+ * COFFEE_LOWFAT - disable or remove a lot of code, reduces library size a lot
+ * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
  */
 
 /* General configuration changers */

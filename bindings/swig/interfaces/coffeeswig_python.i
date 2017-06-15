@@ -1,5 +1,3 @@
-%module CoffeePython
-
 %include "../coffee_common.i"
 
 %{
