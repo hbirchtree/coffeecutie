@@ -32,8 +32,6 @@ function build_standalone()
 
 function build_mac()
 {
-    download_libraries_mac $COFFEE_SLUG
-
     make -f "$CI_DIR/Makefile.mac" \
         -e SOURCE_DIR="$SOURCE_DIR" $@
 

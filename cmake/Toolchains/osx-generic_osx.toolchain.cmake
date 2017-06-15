@@ -13,3 +13,5 @@ set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -std=c++11" CACHE STRIN
 # To prevent undefined symbol errors when creating OSX frameworks
 # License information and application information is undefined in the library for a reason
 set ( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_LD_FLAGS} -Wl,-undefined,dynamic_lookup" )
+
+set ( CMAKE_LIBRARY_ARCHITECTURE "osx-universal" CACHE STRING "" )

@@ -47,8 +47,8 @@ endif (CMAKE_UNAME)
 
 # Force the compilers to gcc for iOS
 include (CMakeForceCompiler)
-set ( CMAKE_C_COMPILER /usr/bin/gcc Apple )
-set ( CMAKE_CXX_COMPILER /usr/bin/g++ Apple )
+set ( CMAKE_C_COMPILER /usr/bin/gcc )
+set ( CMAKE_CXX_COMPILER /usr/bin/g++ )
 set ( CMAKE_AR ar CACHE FILEPATH "" FORCE )
 
 # Skip the platform compiler checks for cross compiling
@@ -170,7 +170,7 @@ endif (${IOS_PLATFORM} STREQUAL "OS")
 set (CMAKE_OSX_ARCHITECTURES ${IOS_ARCH} CACHE string  "Build architecture for iOS")
 
 # Set the find root to the iOS developer roots and to user defined paths
-set (CMAKE_FIND_ROOT_PATH ${CMAKE_IOS_DEVELOPER_ROOT} ${CMAKE_IOS_SDK_ROOT} ${CMAKE_PREFIX_PATH} CACHE string  "iOS find search path root")
+set (CMAKE_FIND_ROOT_PATH ${CMAKE_IOS_DEVELOPER_ROOT} ${CMAKE_IOS_SDK_ROOT} ${CMAKE_PREFIX_PATH} ${NATIVE_LIBRARY_DIR} ${COFFEE_ROOT_DIR} CACHE string  "iOS find search path root")
 
 # default to searching for frameworks first
 set (CMAKE_FIND_FRAMEWORK FIRST)
@@ -213,3 +213,6 @@ endmacro (find_host_package)
 # Added by H. Birch Tree
 add_definitions (-fvisibility=hidden)
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+set ( CMAKE_LIBRARY_ARCHITECTURE "ios-universal" CACHE STRING "" )
+
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" CACHE STRING "" )
