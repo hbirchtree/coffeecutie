@@ -14,6 +14,8 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     option ( COFFEE_GENERATE_APPIMAGE "Generate AppImage packages" OFF )
     option ( COFFEE_GENERATE_FLATPAK "Generate Flatpaks" OFF )
     option ( COFFEE_GENERATE_SNAPPY "Generate Snaps" OFF )
+
+    option ( COFFEE_BUILD_DBUS "Build with support for the DBus service" OFF )
 endif()
 
 # Generates Doxygen documentation, requires Doxygen installed in PATH

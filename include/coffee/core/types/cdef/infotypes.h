@@ -61,8 +61,8 @@ struct SWVersionInfo
                                uint32 minor):
         name(name),
         product(0),
-        major(major),
-        minor(minor),
+        major_(major),
+        minor_(minor),
         patch(0),
         build("")
     {
@@ -76,8 +76,8 @@ struct SWVersionInfo
                                CString const& build):
         name(name),
         product(prod),
-        major(major),
-        minor(minor),
+        major_(major),
+        minor_(minor),
         patch(patch),
         build(build)
     {
@@ -89,8 +89,14 @@ struct SWVersionInfo
     const CString name;
 
     const uint32 product;
-    const uint32 major;
-    const uint32 minor;
+    union{
+        const uint32 major;
+        const uint32 major_;
+    };
+    union{
+        const uint32 minor;
+        const uint32 minor_;
+    };
     const uint32 patch;
     const CString build;
 };

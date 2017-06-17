@@ -31,3 +31,7 @@ endif()
 if(COFFEE_BUILD_CEF)
     add_subdirectory(cef)
 endif()
+
+if(COFFEE_BUILD_DBUS)
+    add_subdirectory(misc/dbus)
+endif()

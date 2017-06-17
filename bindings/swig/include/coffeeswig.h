@@ -1,65 +1,20 @@
-#if !defined(SWIG)
+#pragma once
+
 #define SWIG
-#endif
 
-namespace Coffee
-{
-/* Class declarations */
-class CObject;
+#include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/tdef/stltypes.h>
 
-namespace CGL{
-struct CGL_Context;
-}
+#include <coffee/graphics/apis/CGLeamRHI>
+#include <coffee/interfaces/cgraphics_api.h>
+#include <coffee/sdl2/CSDL2GLRenderer>
 
-/* Wrapper types */
-class CGLWindow;
+#include <coffee/graphics/common/gltypes.h>
 
-extern void Init();
-extern void Terminate();
+#include <coffee/core/CObject>
 
-/* Logging */
-extern void cDebug(const char* text);
-extern void cWarning(const char* text);
-extern void cFatal(const char* text);
-extern void cLog(const char* id, const char* msg);
+using SDL2Renderer = Coffee::Display::CSDL2Renderer;
+using GLContext = Coffee::CGL::CGL_Context;
+using Props = Coffee::Display::CDProperties;
 
-extern char GetLogVerbosity();
-extern void SetLogVerbosity(char level);
-
-/* Generating GL window */
-namespace Window{
-extern CGLWindow* CreateWindow(int w, int h,
-                               int major = 3, int minor = 3,
-                               bool debug = false,
-                               CObject* p = 0);
-extern void DestroyWindow(CGLWindow* p);
-
-/* Controlling GL window */
-extern void ShowWindow(CGLWindow* p);
-extern void HideWindow(CGLWindow* p);
-extern bool ShouldClose(CGLWindow* p);
-extern void CloseWindow(CGLWindow* p);
-
-extern void Process(CGLWindow* p);
-
-extern void SetWindowTitle(CGLWindow* p, const char* title);
-extern void SetWindowSize(CGLWindow* p, int w, int h);
-extern void SetWindowPosition(CGLWindow* p, int x, int y);
-
-extern CGL::CGL_Context* GetContext(CGLWindow* p);
-
-}
-
-extern void ClearBuffer(float dep, float color[4]);
-
-struct Profile
-{
-    static void Push(const char* name);
-    static void Pop();
-    static void Tag(const char* name);
-    static void LabelThread(const char* name);
-    static void Save(const char* outfile);
-    static void PrintData();
-};
-
-}
+#include "coffeeswig.inl"

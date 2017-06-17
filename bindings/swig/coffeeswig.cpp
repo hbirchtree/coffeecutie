@@ -1,3 +1,4 @@
+#undef SWIG
 #include "coffeeswig.h"
 
 #include <coffee/CCore>
@@ -7,7 +8,14 @@
 #include <coffee/sdl2/CSDL2GLRenderer>
 #include <coffee/core/types/vector_types.h>
 
-namespace Coffee{
+
+using namespace Coffee;
+
+CObject& GetRootObject()
+{
+    static CObject root_object;
+    return root_object;
+}
 
 void Init()
 {
@@ -20,89 +28,64 @@ void Terminate()
     CoffeeTerminate(false);
 }
 
-class CGLWindow : public Display::CSDL2Renderer
+SDL2Renderer* CreateWindow(Props const& props, CObject *p)
 {
-public:
-    CGLWindow(CObject* p):
-        CSDL2Renderer(p)
-    {
-    }
-    void run();
-};
-
-void CGLWindow::run()
-{
-    /* Stub! Do what you want. */
-}
-
-namespace Window{
-CGLWindow* CreateWindow(int w, int h,
-                        int major, int minor,
-                        bool debug,
-                        CObject* p)
-{
-    Display::CDProperties o = Display::GetDefaultVisual(major,minor);
-    o.size.w = w;
-    o.size.h = h;
-    if(debug)
-        o.gl.flags = o.gl.flags|Display::GLProperties::GLDebug;
-
     CString err;
 
-    CGLWindow* win = new CGLWindow(p);
-    if(!win->init(o,&err))
+    SDL2Renderer* win = new SDL2Renderer();
+    if(!win->init(props,&err))
         cDebug("Window creation error: {0}",err);
+
+    win->setParent(p);
 
     return win;
 }
-void DestroyWindow(CGLWindow* p)
+void DestroyWindow(SDL2Renderer* p)
 {
     p->closeWindow();
     p->cleanup();
     delete p;
 }
-void ShowWindow(CGLWindow* p)
+void ShowWindow(SDL2Renderer* p)
 {
     p->showWindow();
 }
-void HideWindow(CGLWindow* p)
+void HideWindow(SDL2Renderer* p)
 {
     p->hideWindow();
 }
-bool ShouldClose(CGLWindow* p)
+bool ShouldClose(SDL2Renderer* p)
 {
     return p->closeFlag();
 }
-void CloseWindow(CGLWindow* p)
+void CloseWindow(SDL2Renderer* p)
 {
     p->closeWindow();
 }
-void Process(CGLWindow* p)
+void Process(SDL2Renderer* p)
 {
     p->swapBuffers();
     p->pollEvents();
 }
 
-void SetWindowTitle(CGLWindow *p, const char *title)
+void SetWindowTitle(SDL2Renderer *p, const char *title)
 {
     p->setWindowTitle(title);
 }
 
-void SetWindowSize(CGLWindow *p, int w, int h)
+void SetWindowSize(SDL2Renderer *p, int w, int h)
 {
     p->setWindowSize(CSize(w,h));
 }
 
-void SetWindowPosition(CGLWindow *p, int x, int y)
+void SetWindowPosition(SDL2Renderer *p, int x, int y)
 {
     p->setWindowPosition(CPoint(x,y));
 }
 
-CGL::CGL_Context *GetContext(CGLWindow *p)
+GLContext *GetContext(SDL2Renderer *p)
 {
-    return p->glContext();
-}
-
+    return C_DCAST<GLContext>(p->glContext());
 }
 
 #ifdef COFFEE_GLEAM_DESKTOP
@@ -126,41 +109,39 @@ void ClearBuffer(float dep, float color[4])
 #endif
 }
 
-void Profile::Push(const char* name)
+void Push(const char* name)
 {
-    Profiler::PushContext(name);
+    Coffee::Profiler::PushContext(name);
 }
-void Profile::Pop()
+void Pop()
 {
-    Profiler::PopContext();
+    Coffee::Profiler::PopContext();
 }
-void Profile::Tag(const char* name)
+void Tag(const char* name)
 {
-    Profiler::Profile(name);
+    Coffee::Profiler::Profile(name);
 }
-void Profile::LabelThread(const char* name)
+void LabelThread(const char* name)
 {
-    Profiler::LabelThread(name);
+    Coffee::Profiler::LabelThread(name);
 }
-void Profile::Save(const char* outfile)
+void Save(const char* outfile)
 {
     CString log_data;
     Profiling::ExportProfilerData(log_data);
     Profiling::ExportStringToFile(log_data, outfile);
 }
-void Profile::PrintData()
+void PrintData()
 {
     Profiling::PrintProfilerData();
 }
 
-void SetLogVerbosity(char level)
+void SetLogVerbosity(int level)
 {
-    Coffee::SetPrintingVerbosity(level);
+    Coffee::SetPrintingVerbosity(C_FCAST<u8>(level));
 }
 
-char GetLogVerbosity()
+int GetLogVerbosity()
 {
     return Coffee::PrintingVerbosityLevel;
-}
-
 }

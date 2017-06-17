@@ -1,3 +1,5 @@
+#pragma once
+
 /* Linux macro, also defines window system target */
 #if defined(__linux__) && !defined(__NATIVE_CLIENT__)
 #undef C_SYSTEM_STRING

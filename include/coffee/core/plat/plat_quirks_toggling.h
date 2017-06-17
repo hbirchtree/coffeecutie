@@ -1,3 +1,5 @@
+#pragma once
+
 #include "plat_primary_identify.h"
 #include "plat_arch_identify.h"
 

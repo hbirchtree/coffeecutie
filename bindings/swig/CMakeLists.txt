@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
+set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+
 macro(CONFIG_SWIG_BUILD SFILE ID)
     # Explicit C++ build
     set_source_files_properties(${SFILE} PROPERTIES CPLUSPLUS ON)
@@ -9,10 +11,6 @@ macro(CONFIG_SWIG_BUILD SFILE ID)
     else()
         set_property(SOURCE ${SFILE} PROPERTY SWIG_FLAGS "-importall" )
     endif()
-
-    set_property ( SOURCE ${CFILE}
-        PROPERTY CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11"
-        )
 endmacro()
 
 macro(SWIG_LANGUAGE_BINDING TARGET BIND CFILE OUTPUT_EXTENSION OUTPUT_DEST )

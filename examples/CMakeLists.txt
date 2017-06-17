@@ -184,3 +184,7 @@ add_subdirectory(font-rendering)
 
 #
 #
+
+if(COFFEE_BUILD_DBUS)
+    add_subdirectory ( misc/dbus/simple-method )
+endif()

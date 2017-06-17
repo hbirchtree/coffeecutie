@@ -1,3 +1,5 @@
+#pragma once
+
 /* ...And this is string processing in a pre-processor. Look away now. */
 #define STR_UNREDIR(s) #s
 #define STR_REDIR(s) STR_UNREDIR(s)

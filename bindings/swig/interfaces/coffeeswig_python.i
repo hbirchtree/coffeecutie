@@ -22,4 +22,8 @@
     }
 }
 
-%include "coffeeswig.h"
+//%include "coffeeswig.h"
+
+#define SWIG_PARSER
+
+%include "coffeeswig.inl"

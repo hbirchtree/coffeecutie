@@ -2,19 +2,19 @@
 
 int main()
 {
-    Coffee::Init();
+    Init();
 
     Coffee::cDebug("Nice!");
 
-    Coffee::CGLWindow* win = Coffee::Window::CreateWindow(1280,720);
-    Coffee::Window::ShowWindow(win);
+    SDL2Renderer* win = CreateWindow({});
+    ShowWindow(win);
 
-    while(!Coffee::Window::ShouldClose(win))
+    while(!ShouldClose(win))
     {
-        Coffee::Window::Process(win);
+        Process(win);
     }
 
-    Coffee::Terminate();
+    Terminate();
 
     return 0;
 }

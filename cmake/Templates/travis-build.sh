@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SOURCE_DIR="$PWD"
 BUILD_DIR="$SOURCE_DIR/multi_build"
 
@@ -12,6 +14,7 @@ cd "$BUILD_DIR"
 
 QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
 COFFEE_SLUG="hbirchtree/coffeecutie"
+MAKEFILE="Makefile.standalone"
 
 function die()
 {
@@ -24,19 +27,113 @@ function notify()
     echo " * " $@
 }
 
+function debug()
+{
+    echo $@ > /dev/stderr
+}
+
+function requires()
+{
+    for prog in $@; do
+        local mute=$(which $prog)
+        if [[ ! "$?" = "0" ]]; then
+            die "Could not find program: $prog"
+        fi
+    done
+}
+
+#
+# 1: Github repo slug
+# 2: Sub-path
+#
+function github_curl()
+{
+    local output="$(curl \
+        -s \
+        -i \
+        -o - \
+        -X GET \
+        -H "Accept: application/vnd.github.v3+json" \
+        -H "Authorization: token $GITHUB_TOKEN" \
+        https://api.github.com/repos/$1/$2)"
+
+    debug $output
+
+    local code=$(cat download-info.txt | grep HTTP | awk '{print $2}')
+
+    #debug $output
+    echo $(echo "$output" | grep body)
+}
+
+function github_filter_latest()
+{
+    local input=$(cat)
+    #debug $input
+    local tags=$(echo $input | jq -r '.[]?.tag_name')
+    local string=""
+    for tag in $tags; do
+        echo "||$tag"
+    done
+}
+
+function github_filter_asset()
+{
+    local input=$(cat)
+    local IFS=$'\n'
+    for rel in $(jq -c '.[]?'); do
+        local rel_name=$(echo "$rel" | jq -r '.tag_name')
+        if [[ "$?" = 0 ]] && [[ ! -z $(echo $rel_name | grep "$1") ]]; then
+            local vars=$(echo "$rel" \
+                | jq -c '.assets[] | {name: .name, url: .browser_download_url, id: .id}')
+
+            for asset in $vars; do
+                local ID=$(echo "$asset" | jq -r '.id')
+                local NAME=$(echo "$asset" | jq -r '.name')
+                local URL=$(echo "$asset" | jq -r '.url')
+                echo "|$1|$ID||$NAME||$URL"
+            done
+        fi
+    done
+}
+
+function github_curl_frontend()
+{
+    # It's a read-only application, so we only need these
+    case "$1" in
+    "list")
+        case "$2" in
+        "release")
+            github_curl "$3" "releases" | github_filter_latest
+        ;;
+        "asset")
+            local slug=$(echo $3 | cut -d':' -f 1)
+            local release=$(echo $3 | cut -d':' -f 2)
+            github_curl "$slug" "releases" | github_filter_asset "$release"
+        ;;
+        esac
+    ;;
+    "pull")
+        case "$2" in
+        "asset")
+            local data=$(github_curl "$3" "release" | github_filter_asset)
+            local filename=$(echo $data | cut -d'|' -f 5)
+            local url=$(echo $data | cut -d'|' -f 7)
+
+            wget "$url" -O "$filename"
+        ;;
+        esac
+    ;;
+    esac
+}
+
 function github_api()
 {
     case "${TRAVIS_OS_NAME}" in
     "linux")
         docker run --rm -v $PWD:/data $QTHUB_DOCKER --api-token "$GITHUB_TOKEN" $@
     ;;
-    "osx")
-        if [[ ! -f "github-cli" ]]; then
-            wget "https://github.com/hbirchtree/qthub/releases/download/v1.0.1.1/github-cli-osx" \
-                    -O github-cli
-            chmod +x github-cli
-        fi
-        ./github-cli --api-token "$GITHUB_TOKEN" $@
+    *)
+        github_curl_frontend $@
     ;;
     esac
 }
@@ -77,6 +174,8 @@ function build_mac()
 {
     download_libraries $COFFEE_SLUG
 
+    die
+
     make -f "$CI_DIR/Makefile.mac" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e COFFEE_DIR="$COFFEE_DIR" $@
@@ -85,15 +184,22 @@ function build_mac()
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 }
 
-case "${TRAVIS_OS_NAME}" in
-"linux")
-    build_standalone "$BUILDVARIANT"
+function main()
+{
+    case "${TRAVIS_OS_NAME}" in
+    "linux")
+        requires make docker tar
+        build_standalone "$BUILDVARIANT"
 
-    tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
-;;
-"osx")
-    build_mac "$BUILDVARIANT"
+        tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
+    ;;
+    "osx")
+        requires make wget curl jq tar
+        build_mac "$BUILDVARIANT"
 
-    tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
-;;
-esac
+        tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
+    ;;
+    esac
+}
+
+main

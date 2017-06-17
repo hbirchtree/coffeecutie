@@ -1,3 +1,5 @@
+#pragma once
+
 /* AMD64 string, also used for Intel's 64-bit architectures */
 
 #undef COFFEE_ARCH

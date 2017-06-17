@@ -7,3 +7,5 @@ if(COFFEE_BUILD_SWIG_BINDING)
     # Builds a C-like wrapper library for SWIG to embed
     add_subdirectory(swig)
 endif()
+
+add_subdirectory ( c-binding )
