@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 SOURCE_DIR="$PWD"
 BUILD_DIR="$SOURCE_DIR/multi_build"
 

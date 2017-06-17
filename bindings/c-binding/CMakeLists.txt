@@ -12,6 +12,13 @@ include_directories (
     ${Cappuccino_HDRS}
     )
 
+set ( LINK_MODE SHARED )
+
+if(APPLE AND IOS)
+    # Shared libraries don't work on iOS
+    set ( LINK_MODE STATIC )
+endif()
+
 coffee_add_elibrary (
     Cappuccino SHARED
     "${Cappuccino_SRCS}"
