@@ -7,7 +7,7 @@
 #endif
 
 #if defined(SWIG)
-#include <coffee/core/types/cdef/geometry.h>
+//#include <coffee/core/types/cdef/geometry.h>
 #endif
 
 COFFAPI Coffee::CObject& GetRootObject();
