@@ -20,7 +20,7 @@ if(APPLE AND IOS)
 endif()
 
 coffee_add_elibrary (
-    Cappuccino SHARED
+    Cappuccino ${LINK_MODE}
     "${Cappuccino_SRCS}"
     "${Cappuccino_LIBS}"
     "${Cappuccino_HDRS}"
