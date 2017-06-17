@@ -168,20 +168,6 @@ function build_standalone()
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 }
 
-function build_mac()
-{
-    download_libraries $COFFEE_SLUG
-
-    die
-
-    make -f "$CI_DIR/Makefile.mac" \
-        -e SOURCE_DIR="$SOURCE_DIR" \
-        -e COFFEE_DIR="$COFFEE_DIR" $@
-
-    EXIT_STAT=$?
-    [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
-}
-
 function main()
 {
     case "${TRAVIS_OS_NAME}" in
@@ -193,7 +179,8 @@ function main()
     ;;
     "osx")
         requires make wget curl jq tar
-        build_mac "$BUILDVARIANT"
+        MAKEFILE="Makefile.mac"
+        build_standalone "$BUILDVARIANT"
 
         tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
     ;;
