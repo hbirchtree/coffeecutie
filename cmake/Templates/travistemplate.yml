@@ -5,7 +5,7 @@ services:
 
 os:
  - linux
- - osx
+ #- osx
 compiles:
  - clang
 
