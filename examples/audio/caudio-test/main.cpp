@@ -35,7 +35,7 @@ public:
         cDebug("Resource");
         CResources::FileMap(rsc);
         cDebug("Mapping file succeeded, size={0},ptr={1}",rsc.size,(uintptr_t)rsc.data);
-        if(!CStbAudio::LoadVorbis(&smp,&rsc))
+        if(!Stb::LoadVorbis(&smp,&rsc))
         {
             cDebug("Failed to load audio file: {0}",rsc.resource());
             return;

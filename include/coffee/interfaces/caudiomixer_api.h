@@ -82,9 +82,9 @@ public:
     /*!
      * \brief Insert data into the buffer
      * \param data
-     * \param size
+     * \param samples Number of samples of provided
      */
-    virtual void fillBuffer(c_cptr data, const szptr& size) = 0;
+    virtual void fillBuffer(c_cptr data, const szptr& samples) = 0;
 
     virtual BT* object() = 0;
 };

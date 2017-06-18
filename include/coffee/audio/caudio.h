@@ -20,6 +20,8 @@ enum class SampleFormat
     F32M,
     F32S,
     F32Q,
+
+    /* M=mono, S=stereo, Q=quadrophonic */
 };
 
 /*!
@@ -51,7 +53,7 @@ extern bigscalar GetSampleLength(const AudioSample &smp);
 
 extern szptr GetSampleDataSize(AudioFormat const& fmt, szptr samples);
 
-namespace CStbAudio{
+namespace Stb{
 
 /*!
  * \brief Import a Vorbis audio sample

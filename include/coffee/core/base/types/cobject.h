@@ -12,6 +12,7 @@ public:
     CObject();
     CObject(CObject* parent);
     ~CObject();
+//    C_DELETE_COPY_CONSTRUCTOR(CObject);
 
     CObject* parent() const;
     CObject* parent();

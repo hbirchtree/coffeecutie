@@ -8,7 +8,7 @@
 
 namespace Coffee{
 namespace CAudio{
-namespace CStbAudio{
+namespace Stb{
 
 bool LoadVorbis(CAudio::AudioSample *smp, CResources::Resource *src)
 {
@@ -22,7 +22,7 @@ bool LoadVorbis(CAudio::AudioSample *smp, CResources::Resource *src)
                 &smp->data));
     if(smp->samples<=0)
         return false;
-    smp->fmt.bitdepth = smp->samples/smp->fmt.samplerate*smp->fmt.channels;
+    smp->fmt.bitdepth = smp->samples / smp->fmt.samplerate*smp->fmt.channels;
     return true;
 }
 
