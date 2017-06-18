@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_QUATERNION_H
-#define COFFEE_CORE_QUATERNION_H
+#pragma once
 
 #include "vectors.h"
 #include "matrices.h"
@@ -162,5 +161,3 @@ template<typename T> _cbasic_tquaternion<T> normalize_quat(
 }
 
 }
-
-#endif

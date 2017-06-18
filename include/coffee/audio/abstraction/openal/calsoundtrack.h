@@ -12,6 +12,7 @@ class CALSoundTrack : public CSoundTrack<CALSource,CALBuffer>
     struct _csample_data
     {
         CALBuffer* buf;
+        CSoundProperty const* prop;
         uint64 b_pts;
 
         bool operator<(const _csample_data& d1) const
@@ -28,6 +29,9 @@ class CALSoundTrack : public CSoundTrack<CALSource,CALBuffer>
     List<_csample_data> m_samples;
     CALSource* m_source;
 
+    CSoundProperty const* m_defaultProp;
+    CListenerProperty const* m_listenProp;
+
 public:
     CALSoundTrack(CSoundDevice<CALSource, CALBuffer> &dev);
     ~CALSoundTrack();
@@ -39,6 +43,9 @@ public:
     virtual void updateTrack(uint64 ts);
 
     virtual CALSource* object();
+
+    void assignProperties(const CSoundProperty *props);
+    void assignProperties(const CListenerProperty *props);
 };
 
 }

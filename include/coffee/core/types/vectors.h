@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_VECTORS_H
-#define COFFEE_CORE_VECTORS_H
+#pragma once
 
 #include <coffee/core/CMath>
 
@@ -364,5 +363,3 @@ FORCEDINLINE _cbasic_tvector<T,Size> mix(
 }
 
 }
-
-#endif

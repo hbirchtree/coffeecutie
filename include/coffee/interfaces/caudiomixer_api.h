@@ -3,6 +3,7 @@
 
 #include <coffee/core/CObject>
 #include <coffee/core/types/tdef/integertypes.h>
+#include <coffee/core/types/vector_types.h>
 #include <coffee/core/coffee_message_macros.h>
 
 namespace Coffee{
@@ -12,6 +13,104 @@ namespace CSoundAbstraction{
 //ST = stream/track/source type, BT = buffer type
 template<class ST,class BT>
 class CSoundDevice;
+
+struct CSoundTransform
+{
+    struct Transform
+    {
+        Vecf3 position;
+        Vecf3 velocity;
+    } transform;
+};
+
+struct CSoundProperty
+{
+
+    struct
+    {
+        scalar inner;
+        scalar outer;
+
+        scalar outer_gain;
+    } cone;
+
+    struct Transform : public CSoundTransform::Transform
+    {
+        Vecf3 direction;
+    } transform;
+
+    struct
+    {
+        scalar min;
+        scalar base;
+        scalar max;
+    } gain;
+
+    struct
+    {
+        scalar rolloff;
+        scalar ref_dist;
+        scalar max_dist;
+    } acoustic;
+
+    struct
+    {
+        scalar pitch;
+    } warp;
+
+    union
+    {
+        struct{
+            /* Simple tickers, still properties */
+            struct{
+                bool relative:1;
+                bool spatial:1;
+                bool looping:1;
+            };
+            /* Because we might make a lot of calls to the audio API,
+             *  we will minimize it by allowing partial application.
+             */
+            u16 active;
+        };
+        u32 flags;
+    };
+
+    enum ActiveProperty
+    {
+        Cone_Inner          = 0x1,
+        Cone_Outer          = 0x2,
+        Cone_Outer_Gain     = 0x4,
+        XF_Position         = 0x8,
+        XF_Velocity         = 0x10,
+        XF_Direction        = 0x20,
+        Gain_Min            = 0x40,
+        Gain_Base           = 0x80,
+        Gain_Max            = 0x100,
+        Rolloff             = 0x200,
+        Ref_Dist            = 0x400,
+        Max_Dist            = 0x800,
+        Pitch               = 0x1000,
+        Relative            = 0x2000,
+        Spatialized         = 0x4000,
+        Looping             = 0x8000,
+
+        ActiveProperty_All  = 0xFFFF,
+        ActiveProperty_Num  = 16,
+    };
+};
+
+struct CListenerProperty
+{
+    struct Transform : public CSoundTransform::Transform
+    {
+        struct {
+            Vecf3 forward;
+            Vecf3 up;
+        } orientation;
+    } transform;
+
+    scalar gain;
+};
 
 class CSoundFormat
 {
@@ -111,6 +210,9 @@ public:
 
     virtual uint64 pts() const = 0;
     virtual void setPts(const uint64& pts) = 0;
+
+    virtual CSoundProperty const* properties() = 0;
+    virtual void assignProperties(CSoundProperty const* props) = 0;
 };
 template<class ST,class BT>
 /*!
@@ -140,6 +242,9 @@ public:
     virtual void updateTrack(uint64 ts) = 0;
 
     virtual ST* object() = 0;
+
+    virtual void assignProperties(CSoundProperty const* props) = 0;
+    virtual void assignProperties(CListenerProperty const*) = 0;
 };
 template<class ST,class BT>
 class CSoundStream : public CObject
@@ -160,14 +265,17 @@ public:
     virtual void pauseStream() = 0;
 
     /*!
-     * \brief Insert data into sound stream. Implementation decides how the data is queued.
+     * \brief Insert data into sound stream.
+     *  Implementation decides how the data is queued.
      * \param data
      * \param fmt
      * \param samples
      */
-    virtual void feedData(c_cptr data,const CSoundFormat& fmt,const szptr& samples) = 0;
+    virtual void feedData(c_cptr data,const CSoundFormat& fmt,
+                          const szptr& samples) = 0;
     /*!
-     * \brief Insert sound buffer into stream. Will always queue after previous invocations.
+     * \brief Insert sound buffer into stream.
+     *  Will always queue after previous invocations.
      * \param buffer
      */
     virtual void feedBuffer(CSoundBuffer<ST,BT>& buffer) = 0;
@@ -184,7 +292,9 @@ public:
     }
 
     /*!
-     * \brief If this is a capture stream, this is true and there will be no use of the soundbuffer. Any data will be collected with collectSamples() function.
+     * \brief If this is a capture stream, this is true and there
+     *  will be no use of the soundbuffer.
+     *  Any data will be collected with collectSamples() function.
      * \return
      */
     virtual bool isInputStream() const = 0;
@@ -303,6 +413,9 @@ struct AudioAPI
     /* Basic buffers */
     using Buffer = CSoundBuffer<StreamT,BufferT>;
     using Format = FormatT;
+
+    using Properties = CSoundProperty;
+    using ListenProperties = CListenerProperty;
 };
 
 }

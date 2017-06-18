@@ -34,7 +34,8 @@ public:
                                  |ResourceAccess::AssetFile);
         cDebug("Resource");
         CResources::FileMap(rsc);
-        cDebug("Mapping file succeeded, size={0},ptr={1}",rsc.size,(uintptr_t)rsc.data);
+        cDebug("Mapping file succeeded, size={0},ptr={1}",rsc.size,
+               (uintptr_t)rsc.data);
         if(!Stb::LoadVorbis(&smp,&rsc))
         {
             cDebug("Failed to load audio file: {0}",rsc.resource());
@@ -79,6 +80,12 @@ public:
         //Create an audio sample
         AL::Sample& samp1 = dev->genSample(buf,fmt);
         samp1.setPts(0);
+
+        AL::Properties samp1_props = {};
+        samp1_props.looping = true;
+        samp1_props.active |= AL::Properties::Looping;
+
+        samp1.assignProperties(&samp1_props);
 
         //Free sample data from source
         CFree(smp.data);

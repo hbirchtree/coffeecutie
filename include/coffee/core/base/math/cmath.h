@@ -1,5 +1,4 @@
-#ifndef CMATH_FUN
-#define CMATH_FUN
+#pragma once
 
 #include <coffee/core/plat/plat_primary_identify.h>
 
@@ -99,5 +98,3 @@ template<typename T> T c_rand()
 
 }
 }
-
-#endif

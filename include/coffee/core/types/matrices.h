@@ -1,5 +1,4 @@
-#ifndef COFFEE_CORE_MATRICES_H
-#define COFFEE_CORE_MATRICES_H
+#pragma once
 
 #include "vectors.h"
 #include "mnmatrix.h"
@@ -421,6 +420,3 @@ FORCEDINLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)
 }
 
 }
-
-#endif
-

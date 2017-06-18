@@ -1,5 +1,4 @@
-#ifndef COFFEE_VECTOR_TYPES_H
-#define COFFEE_VECTOR_TYPES_H
+#pragma once
 
 #include "vectors.h"
 #include "matrices.h"
@@ -61,5 +60,3 @@ using Matf4_2 = _cbasic_tmnmatrix<scalar,4,2>;
 using Matf4_3 = _cbasic_tmnmatrix<scalar,4,3>;
 
 }
-
-#endif

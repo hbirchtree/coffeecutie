@@ -10,7 +10,8 @@ CALSoundSample::CALSoundSample(CSoundDevice<CALSource, CALBuffer> &dev,
     CSoundSample(&dev),
     m_dev(&dev),
     m_fmt(&fmt),
-    m_buffer(&buf)
+    m_buffer(&buf),
+    m_properties(nullptr)
 {
 }
 
@@ -46,6 +47,16 @@ uint64 CALSoundSample::pts() const
 void CALSoundSample::setPts(const uint64& pts)
 {
     m_pts = pts;
+}
+
+const CSoundProperty *CALSoundSample::properties()
+{
+    return m_properties;
+}
+
+void CALSoundSample::assignProperties(const CSoundProperty *props)
+{
+    m_properties = props;
 }
 
 }
