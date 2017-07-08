@@ -18,7 +18,11 @@ void IMPLODETHEUNIVERSE()
 FORCEDINLINE
 void RUNOUTTHEWINDOW()
 {
+#if defined(COFFEE_USE_EXCEPTIONS)
+    throw "I RAN OUT THE WINDOW";
+#else
     std::raise(SIGINT);
+#endif
 }
 
 FORCEDINLINE

@@ -3,7 +3,7 @@
 
 #include "../../coffee_mem_macros.h"
 
-#include "cdebug_print.h"
+#include "../strings/cdebug_print.h"
 
 #ifndef COFFEE_LOWFAT
 #include "debugprinter.h"
@@ -12,6 +12,7 @@
 namespace Coffee{
 
 namespace DebugFun{
+using namespace Strings;
 
 namespace CDebugHelpers{
 //FORCEDINLINE void coffee_print_callstack(cstring header, cstring callfmt, cstring_w* callstack, szptr stacksize)

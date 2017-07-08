@@ -38,5 +38,74 @@ cstring severity_string(Severity sev)
     return severity_str;
 }
 
+void DebugPrinterImpl::AddContextString(CString& prefix, Severity sev)
+{
+    cstring severity_str = severity_string(sev);
+
+    CString cclock = Time::ClockString();
+#if !defined(COFFEE_PLATFORM_OUTPUT_FORMAT)
+    CString ms_time = Convert::uintltostring(Time::Microsecond()/1000);
+    CString clock = cStringFormat("{0}.{1}",
+                                  cclock,
+                                  StrUtil::lpad(ms_time, '0', 3)
+                                  );
+    prefix = cStringFormat("{0}:", clock.c_str());
+    prefix.push_back(severity_str[0]);
+
+    ColorMap::ColorText(prefix, ColorMap::CombineFormat(CmdColor::Green, CmdColor::Blue));
+#endif
+}
+
+void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
+                                         Severity sev, bool locking)
+{
+    C_USED(sev);
+
+    if(locking)
+        PrinterLock.lock();
+#if defined(COFFEE_ANDROID)
+    int flag = 0;
+
+    switch(sev)
+    {
+    case Severity::Information:
+        flag = ANDROID_LOG_INFO;
+        break;
+    case Severity::Debug:
+        flag = ANDROID_LOG_DEBUG;
+        break;
+    case Severity::Medium:
+        flag = ANDROID_LOG_WARN;
+        break;
+    case Severity::Fatal:
+        flag = ANDROID_LOG_ERROR;
+        break;
+    case Severity::Verbose:
+        flag = ANDROID_LOG_VERBOSE;
+        break;
+    default:
+        break;
+    }
+
+    __android_log_print(flag, "Coffee", "%s", &formatted[0]);
+#elif defined(__EMSCRIPTEN__)
+    int flag = EM_LOG_CONSOLE;
+    if(formatted[0] == 'W')
+        flag = EM_LOG_WARN;
+    else if(formatted[0] == 'F')
+        flag = EM_LOG_ERROR;
+    emscripten_log(flag, "%s", &formatted[0]);
+#elif defined(COFFEE_WINDOWS_UWP)
+    CWString formatted_w = StrUtil::convertformat<wbyte_t>(formatted);
+    OutputDebugString(formatted_w.c_str());
+#elif defined(COFFEE_WINDOWS)
+    OutputDebugString(formatted.c_str());
+#else
+    Puts(stream,formatted.c_str());
+#endif
+    if(locking)
+        PrinterLock.unlock();
+}
+
 }
 }

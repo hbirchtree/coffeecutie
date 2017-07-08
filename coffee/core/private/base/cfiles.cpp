@@ -212,4 +212,15 @@ bool FileMkdir(cstring dirname, bool recursive)
 }
 
 }
+
+namespace Strings{
+CString to_string(const CResources::Resource &r)
+{
+    return CString("rsc(") +
+            StrUtil::pointerify(r.data) +
+            "+" +
+            cast_pod(r.size) +
+            ")";
+}
+}
 }

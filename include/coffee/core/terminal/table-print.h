@@ -26,7 +26,7 @@ struct TablePrinter_Basic
         {
         }
 
-        operator CString()
+        operator CString() const
         {
             return GenTable(*this, m_header);
         }

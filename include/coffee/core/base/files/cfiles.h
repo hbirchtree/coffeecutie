@@ -115,6 +115,9 @@ FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
     return {C_CAST<byte_t const*>(resc.data),resc.size, 0};
 }
 
+namespace Strings{
+extern CString to_string(CResources::Resource const& r);
+}
 }
 
 #endif // CFILES_H

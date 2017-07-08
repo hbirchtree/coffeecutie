@@ -6,20 +6,26 @@
 #include "vector_print_extensions.h"
 
 namespace Coffee{
-namespace DebugFun{
+namespace Strings{
 
 /* Core string resolution */
 
 template<typename T>
-FORCEDINLINE CString cStringResolve(CString const& fmt, size_t index,
+FORCEDINLINE CString cStringReplace(CString& fmt, size_t index,
+                                    T const& arg)
+{
+    return extArgReplace(fmt, index, to_string(arg));
+}
+
+template<typename T>
+FORCEDINLINE CString cStringResolve(CString& fmt, size_t index,
                                     const T& arg)
 {
-    CString str = cStringReplace(fmt,index,arg);
-    return cStringResolve(str,++index);
+    return cStringReplace(fmt,index,arg);
 }
 
 template<typename... Args, typename T>
-FORCEDINLINE CString cStringResolve(CString const& fmt, size_t index,
+FORCEDINLINE CString cStringResolve(CString& fmt, size_t index,
                                     const T& arg, Args... args)
 {
     CString str = cStringReplace(fmt,index,arg);
@@ -29,7 +35,16 @@ FORCEDINLINE CString cStringResolve(CString const& fmt, size_t index,
 template<typename... Arg>
 FORCEDINLINE CString cStringFormat(cstring fmt, Arg... args)
 {
-    return cStringResolve(fmt,0,args...);
+    CString fmt_ = fmt;
+
+    fmt_ = cStringResolve(fmt_, 0, args...);
+
+    return fmt_;
+}
+
+FORCEDINLINE CString cStringFormat(cstring fmt)
+{
+    return fmt;
 }
 
 }

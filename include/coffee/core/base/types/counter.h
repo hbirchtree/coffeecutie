@@ -39,9 +39,9 @@ public:
     }
 
 private:
-    uint32 m_frames;
     uint64 m_timestamp;
     CounterFun m_fun;
+    uint32 m_frames;
 };
 
 }
