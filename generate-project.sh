@@ -8,6 +8,8 @@ export PJNAME="CoffeeGame"
 # Get Git commit from source directory
 function fetch_version()
 {
+    echo "-- Fetching Git tag of source repository"
+
     pushd "${COFFEE_DIR}" 1>/dev/null
     GIT_COMMIT="$(git describe --tags)" || GIT_COMMIT="0000"
     popd 1>/dev/null
@@ -18,6 +20,8 @@ function fetch_version()
 # Create all basic directory structures
 function create_base_directories()
 {
+    echo "-- Creating base directories"
+
     mkdir -p "${PROJECT_DIR}/cmake" \
         "${PROJECT_DIR}/rsrc/${PJNAME}" \
         "${PROJECT_DIR}/src" \
@@ -30,6 +34,8 @@ function create_base_directories()
 # Copying of configuration files from source directory
 function copy_config_files()
 {
+    echo "-- Installing CMake modules and automators"
+
     cp -ur "${COFFEE_DIR}/cmake/Find" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Find_Android" "${PROJECT_DIR}/cmake"
     cp -ur "${COFFEE_DIR}/cmake/Find_Windows" "${PROJECT_DIR}/cmake"
@@ -48,6 +54,8 @@ function copy_config_files()
 # Travis will be a universal build, to note, and will take some time to complete
 function gen_ci_files()
 {
+    echo "-- Instaling CI files for Travis"
+
     cp -u "${COFFEE_DIR}/cmake/Templates/travis-build.sh" "${PROJECT_DIR}/ci/"
     cp -u "${COFFEE_DIR}/cmake/Templates/travis-deps.sh" "${PROJECT_DIR}/ci/"
     cp -u "${COFFEE_DIR}/cmake/Templates/travistemplate.yml" "${PROJECT_DIR}/.travis.yml"
@@ -60,11 +68,11 @@ function gen_ci_files()
 #
 function filter_pjname()
 {
-    echo "-- Before filter: ${PJNAME}"
+    local BEFORE=${PJNAME}
     PJNAME=`echo ${PJNAME} | sed -e 's/[&^|\/\  -+%#"!~*?=(){}\\<>.,;:]//g'`
     PJNAME=`echo ${PJNAME} | sed -e "s/[']//g"`
     PJNAME=`echo ${PJNAME} | sed -e "s/[0-9]//g"`
-    echo "-- After filter: ${PJNAME}"
+    echo "-- Filtering project name: ${BEFORE} -> ${PJNAME}"
 }
 
 #
@@ -91,24 +99,20 @@ function configure_project()
     local DESC="Coffee Application"
     local COPYRIGHT="Coffee"
     local SRCS="src/main.cpp"
-    local LIBS="\${COFFEE_CORE_LIBRARY};\
-    \${COFFEE_GLEAM_COMMON_LIBRARY};\
-    \${COFFEE_OPENAL_LIBRARY};\${COFFEE_ANDROID_LIBRARY};\
-    \${STANDARDLIBS_LIBRARIES};\
-    \${SDL2_LIBRARY};\${SDL2_LIBRARIES}"
+    local LIBS="\${COFFEE_CORE_LIBRARY};
+\${COFFEE_GLEAM_COMMON_LIBRARY};
+\${COFFEE_OPENAL_LIBRARY};\${COFFEE_ANDROID_LIBRARY};
+\${STANDARDLIBS_LIBRARIES};
+\${SDL2_LIBRARY};\${SDL2_LIBRARIES}"
+    local BUNDLE_LIBS=""
 
     if [[ -z "$1" ]]; then
         local TITLE=`basename "$(pwd)"`
     fi
 
-    if [[ ! -d "${PROJECT_DIR}/.git" ]]; then
-        echo "-- Creating Git repository"
-        git init
-    fi
-
     echo "-- Generating project with name '${PJNAME}'"
-    echo "-- Properties: "
-    local
+#    echo "-- Properties: "
+#    local
 
     local MAIN_FILE="${PROJECT_DIR}/src/main.cpp"
     local CMAKE_FILE="${PROJECT_DIR}/CMakeLists.txt"
@@ -117,6 +121,7 @@ function configure_project()
     local META_JENKINS_FILE="${PROJECT_DIR}/meta/jenkins/${PJNAME}.groovy"
 
     if [[ ! -f "${GITIGNORE_FILE}" ]]; then
+        echo "-- Creating .gitignore file"
         echo \
 "*~
 reconfig.sh
@@ -128,6 +133,7 @@ reconfig.sh
         cat "${COFFEE_DIR}/cmake/Templates/TemplateProject.txt" | \
         sed -e "s|@PJNAME@|${PJNAME}|g" | \
         sed -e "s|@SRCS@|${SRCS}|g" | \
+        sed -e "s|@BUNDLE_LIBS@|${BUNDLE_LIBS}|g" | \
         sed -e "s|@LIBS@|${LIBS}|g" | \
         sed -e "s|@COPYRIGHT@|${COPYRIGHT}|g" | \
         sed -e "s|@COMPANY@|${COMPANY}|g" | \
@@ -136,18 +142,16 @@ reconfig.sh
         > "${CMAKE_FILE}"
     fi
 
-    if [[ ! -d ".git" ]]; then
-        git init
-    fi
-
     if [[ ! -f "${MAIN_FILE}" ]]; then
         cat "${COFFEE_DIR}/cmake/Templates/main.cpp" | \
             sed -e "s|@PJNAME@|${PJNAME}|g" \
             > "${MAIN_FILE}"
     fi
 
-    cp "${COFFEE_DIR}/cmake/Templates/AndroidProject.txt" "${META_ANDROID_FILE}"
-    cp "${COFFEE_DIR}/cmake/Templates/templatejob.groovy" "${META_JENKINS_FILE}"
+    if [[ ! -d "${PROJECT_DIR}/.git" ]]; then
+        echo "-- Creating Git repository"
+        git init
+    fi
 
     touch "${PROJECT_DIR}/LICENSE"
 }
@@ -159,6 +163,7 @@ reconfig.sh
 #
 function reconfig_project()
 {
+    echo "-- Creating file for reconfiguration"
     local RECONFIG_FILE="${PROJECT_DIR}/reconfig.sh"
     echo "#!/bin/bash
 cd \"\$(dirname \"\$(readlink -f \"\$0\")\")\"
@@ -184,4 +189,25 @@ function main()
     reconfig_project "$1" "$2"
 }
 
+function print_help()
+{
+    echo \
+"$0 [full title] [working title]
+
+Will generate a barebones project with all the bells and whistles.
+Will also generate a local reconfig.sh file to refresh CMake and CI files.
+"
+}
+
+case "$1" in
+"--help")
+print_help
+;;
+"-h")
+print_help
+;;
+*)
 main "$1" "$2"
+;;
+esac
+
