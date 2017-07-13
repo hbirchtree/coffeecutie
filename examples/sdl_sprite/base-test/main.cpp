@@ -119,7 +119,7 @@ struct RenderData
     CRGBA clearCol;
 };
 
-int32 coffee_main(int32 argc, cstring_w* argv)
+int32 coffee_main(int32, cstring_w*)
 {
     SubsystemWrapper<SDL2::SDL2> sys1;
     C_UNUSED(sys1);
@@ -230,7 +230,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
         data->rend.spritesTerminate();
     };
 
-    EventLoopData<BasicWindow, RenderData> eventData = {&test, &data, setup, loop, cleanup, 0};
+    EventLoopData<BasicWindow, RenderData> eventData = {&test, &data, setup, loop, cleanup, 0, {}};
 
     BasicWindow::execEventLoop(eventData, visual, err);
 
