@@ -2,13 +2,27 @@
 
 #include "caudiomixer_api.h"
 #include <coffee/audio/caudio.h>
+#include <coffee/core/CFiles>
 
 namespace Coffee{
 namespace CAudio{
 
-template<typename T>
-FORCEDINLINE void LoadVorbisFromFile(T* dev)
+FORCEDINLINE bool LoadVorbisFromFile(AudioSample& sample, cstring fn,
+                                     ResourceAccess access)
 {
+    bool status = true;
+
+    CResources::Resource file(fn, access);
+
+    if(CResources::FileMap(file))
+        return false;
+
+    if(!CAudio::Stb::LoadVorbis(&sample, &file))
+        status = false;
+
+    CResources::FileUnmap(file);
+
+    return status;
 }
 
 template<typename T,

@@ -525,6 +525,12 @@ extern cstring context_device_default();
 
 }
 }
+namespace Strings{
+
+extern CString to_string(CAudio::COpenAL::CALBuffer const& buf);
+extern CString to_string(CAudio::COpenAL::CALSource const& src);
+
+}
 }
 
 #endif
