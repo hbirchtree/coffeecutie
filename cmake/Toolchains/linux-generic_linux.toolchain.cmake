@@ -1,4 +1,3 @@
-message("-- Hiding symbols")
 add_definitions (-fvisibility=hidden)
 
 if(LINUX_PARANOID_BUILD)
