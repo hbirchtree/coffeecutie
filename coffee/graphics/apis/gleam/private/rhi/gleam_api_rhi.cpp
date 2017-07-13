@@ -753,4 +753,11 @@ APILevel GLEAM_API::Level()
 
 }
 }
+
+namespace Strings{
+cstring to_string(RHI::GLEAM::APILevel lev)
+{
+    return "?";
+}
+}
 }

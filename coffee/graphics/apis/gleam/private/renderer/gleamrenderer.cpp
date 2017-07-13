@@ -58,6 +58,7 @@ void GLeamRenderer::bindingCallback(const void *report) const
     cBasicPrint("GL:{0}:{1}:{2}:{3}: {4}",
                 msg->comp,msg->sev,msg->type,
                 msg->id,msg->msg.c_str());
+    (void)msg;
 }
 
 bool GLeamRenderer::bindingPreInit(const GLProperties&,CString*)

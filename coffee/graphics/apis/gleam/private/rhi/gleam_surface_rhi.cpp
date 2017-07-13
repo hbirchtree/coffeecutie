@@ -161,7 +161,11 @@ GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mi
     GraphicsAPI::Surface(fmt,mips,texflags),
     #endif
     m_size(0,0,0),
+    #if defined(COFFEE_ONLY_GLES20)
     m_type(Texture::T2D)
+  #else
+    m_type(t)
+  #endif
 {
     C_USED(t);
 }

@@ -169,4 +169,8 @@ struct GLEAM_PRF
 
 }
 }
+
+namespace Strings{
+extern cstring to_string(RHI::GLEAM::APILevel lev);
+}
 }
