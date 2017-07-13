@@ -10,13 +10,13 @@ namespace CGraphicsData{
 template<typename T> struct _cbasic_graphics_camera
 {
     FORCEDINLINE _cbasic_graphics_camera():
-        flags(CameraFlags::Perspective),
-        aspect(T(1)),
+        rotation(),
+        orthoview(T(0),T(0),T(1),T(1)),
+        position(T(0)),
         zVals(T(1),T(100)),
         fieldOfView(T(85)),
-        position(T(0)),
-        rotation(),
-        orthoview(T(0),T(0),T(1),T(1))
+        aspect(T(1)),
+        flags(CameraFlags::Perspective)
     {
     }
 

@@ -51,6 +51,19 @@ static CString get_kern_ver()
         return d.release;
 }
 
+static CString get_linux_property(CString const& source, cstring query)
+{
+    auto res = source.find(query);
+
+    if(res == source.npos)
+        return {};
+
+    res = source.find(":", res)+1;
+    auto end = source.find_first_of("\n", res);
+
+    return source.substr(res, end-res);
+}
+
 CString get_kern_name()
 {
     utsname d;
@@ -110,42 +123,33 @@ CString LinuxSysInfo::CPUInfoString(bool force)
     return data;
 }
 
-Vector<CString> LinuxSysInfo::CPUFlags()
+Set<CString> LinuxSysInfo::CPUFlags()
 {
     const cstring query_linaro = "Features";
     const cstring query = "flags";
 
     CPUInfoString();
 
-    cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
+    CString result = get_linux_property(cached_cpuinfo_string, query);
 
-    if(!res)
-        res = StrFind(cached_cpuinfo_string.c_str(),query_linaro);
+    if(!result.size())
+        result = get_linux_property(cached_cpuinfo_string, query_linaro);
 
-    if(!res)
+    if(!result.size())
         return {};
 
-    res = StrFind(res,":")+1;
-    cstring end = StrFind(res,"\n");
-
-    CString result;
-    result.insert(0,res,end-res);
     StrUtil::trim(result);
 
-    Vector<CString> flags;
-    cstring ptr = &result[0];
+    Set<CString> flags;
+    CString::size_type ptr = 0;
 
-    while(ptr)
+    while(true)
     {
-        if(ptr!=&result[0])
-            ptr++;
-        cstring sp = StrFind(ptr," ");
-        if(!sp)
-            sp=&result[result.size()-1];
-        CString out;
-        out.insert(0,ptr,sp-ptr);
-        flags.push_back(out);
-        ptr = StrFind(ptr," ");
+        auto sp = result.find(' ', ptr);
+        flags.insert(result.substr(ptr, sp-ptr));
+        if(sp == result.npos)
+            break;
+        ptr = sp + 1;
     }
 
     return flags;
@@ -181,24 +185,20 @@ uint32 LinuxSysInfo::CpuCount()
 
     CPUInfoString();
 
-    cstring src = cached_cpuinfo_string.c_str();
-
     uint32 count = 0;
-    cstring res = StrFind(src,query);
-    while(res)
+    auto res = cached_cpuinfo_string.find(query);
+    while(res != cached_cpuinfo_string.npos)
     {
-        res = StrFind(res,":")+1;
-        cstring end = StrFind(res,"\n");
+        res = cached_cpuinfo_string.find(':', res)+1;
+        auto end = cached_cpuinfo_string.find('\n', res);
 
-        CString result;
-        result.insert(0,res,end-res);
+        CString result = cached_cpuinfo_string.substr(res, end);
         StrUtil::trim(result);
 
         uint32 c = cast_string<uint32>(result)+1;
         count = CMath::max(count,c);
 
-        src = end;
-        res = StrFind(src,query);
+        res = cached_cpuinfo_string.find(query, end);
     }
 
     return count ? count : 1;
@@ -210,16 +210,11 @@ uint32 LinuxSysInfo::CoreCount()
 
     CPUInfoString();
 
-    cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
+    CString result = get_linux_property(cached_cpuinfo_string, query);
 
-    if(!res)
+    if(!result.size())
         return ThreadCount();
 
-    res = StrFind(res,":")+1;
-    cstring end = StrFind(res,"\n");
-
-    CString result;
-    result.insert(0,res,end-res);
     StrUtil::trim(result);
 
     uint32 cores = cast_string<uint32>(result);
@@ -229,8 +224,6 @@ uint32 LinuxSysInfo::CoreCount()
 
 HWDeviceInfo LinuxSysInfo::Processor()
 {
-    CString mk,md,fw;
-
     const cstring mk_query = "vendor_id";
     const cstring md_query = "model name";
     const cstring fw_query = "microcode";
@@ -240,60 +233,35 @@ HWDeviceInfo LinuxSysInfo::Processor()
 
     CPUInfoString();
 
-    cstring mk_str = StrFind(cached_cpuinfo_string.c_str(),mk_query);
-    if(!mk_str)
-        mk_str = StrFind(cached_cpuinfo_string.c_str(),mk_query_linaro);
-    cstring md_str = StrFind(cached_cpuinfo_string.c_str(),md_query);
-    cstring fw_str = StrFind(cached_cpuinfo_string.c_str(),fw_query);
-    if(!fw_str)
-        fw_str = StrFind(cached_cpuinfo_string.c_str(),fw_query_linaro);
+    CString mk_str = get_linux_property(cached_cpuinfo_string, mk_query);
+    if(!mk_str.size())
+        mk_str = get_linux_property(cached_cpuinfo_string, mk_query_linaro);
+    CString md_str = get_linux_property(cached_cpuinfo_string, md_query);
+    CString fw_str = get_linux_property(cached_cpuinfo_string, fw_query);
+    if(!fw_str.size())
+        fw_str = get_linux_property(cached_cpuinfo_string, fw_query_linaro);
 
-    if(mk_str)
-    {
-        mk_str = StrFind(mk_str,":")+1;
-        cstring mk_end = StrFind(mk_str,"\n");
-        mk.insert(0,mk_str,mk_end-mk_str);
-        StrUtil::trim(mk);
-    }
+    StrUtil::trim(mk_str);
+    StrUtil::trim(md_str);
+    StrUtil::trim(fw_str);
 
-    if(md_str)
-    {
-        md_str = StrFind(md_str,":")+1;
-        cstring md_end = StrFind(md_str,"\n");
-        md.insert(0,md_str,md_end-md_str);
-        StrUtil::trim(md);
-    }
-
-    if(fw_str)
-    {
-        fw_str = StrFind(fw_str,":")+1;
-        cstring fw_end = StrFind(fw_str,"\n");
-        fw.insert(0,fw_str,fw_end-fw_str);
-        StrUtil::trim(fw);
-    }
-
-    return HWDeviceInfo(mk,md,fw);
+    return HWDeviceInfo(mk_str,md_str,fw_str);
 }
 
 bigscalar LinuxSysInfo::ProcessorFrequency()
 {
-    const CString query = "cpu MHz";
+    constexpr cstring query = "cpu MHz";
 
     CPUInfoString();
 
-    cstring res = StrFind(cached_cpuinfo_string.c_str(),query.c_str());
+    CString res = get_linux_property(cached_cpuinfo_string, query);
 
-    if(!res)
+    if(!res.size())
         return 0.0;
 
-    res = StrFind(res,":")+1;
-    cstring end = StrFind(res,"\n");
+    StrUtil::trim(res);
 
-    CString result;
-    result.insert(0,res,end-res);
-    StrUtil::trim(result);
-
-    return CMath::floor(cast_string<bigscalar>(result))/1000;
+    return CMath::floor(cast_string<bigscalar>(res))/1000;
 }
 
 bool LinuxSysInfo::HasFPU()
@@ -306,19 +274,10 @@ bool LinuxSysInfo::HasFPU()
 
     CPUInfoString();
 
-    cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
-
-    if(!res)
-        return false;
-
-    res = StrFind(res,":")+1;
-    cstring end = StrFind(res,"\n");
-
-    CString result;
-    result.insert(0,res,end-res);
+    CString result = get_linux_property(cached_cpuinfo_string, query);
     StrUtil::trim(result);
 
-    return StrCmp(result.c_str(),"yes");
+    return result == "yes";
 }
 
 bool LinuxSysInfo::HasFPUExceptions()
@@ -327,16 +286,7 @@ bool LinuxSysInfo::HasFPUExceptions()
 
     CPUInfoString();
 
-    cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
-
-    if(!res)
-        return false;
-
-    res = StrFind(res,":")+1;
-    cstring end = StrFind(res,"\n");
-
-    CString result;
-    result.insert(0,res,end-res);
+    CString result = get_linux_property(cached_cpuinfo_string, query);
     StrUtil::trim(result);
 
     return StrCmp(result.c_str(),"yes");
@@ -348,16 +298,7 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
 
     CPUInfoString();
 
-    cstring res = StrFind(cached_cpuinfo_string.c_str(),query);
-
-    if(!res)
-        return 0;
-
-    res = StrFind(res,":")+1;
-    cstring end = StrFind(res,"\n");
-
-    CString result;
-    result.insert(0,res,end-res);
+    CString result = get_linux_property(cached_cpuinfo_string, query);
     StrUtil::trim(result);
 
     szptr e = result.find(" ");
@@ -368,14 +309,14 @@ uint64 LinuxSysInfo::ProcessorCacheSize()
 
 bool LinuxSysInfo::HasHyperThreading()
 {
-    Vector<CString> flags = CPUFlags();
+    Set<CString> flags = CPUFlags();
 
-    for(const CString& flag : flags)
-    {
-        if(StrCmp(flag.c_str(),"ht")||StrCmp(flag.c_str(),"htt"))
-            return true;
-    }
-    return false;
+    auto it = flags.find("ht");
+
+    if(it == flags.end())
+        it = flags.find("htt");
+
+    return it != flags.end();
 }
 
 HWDeviceInfo LinuxSysInfo::DeviceName()

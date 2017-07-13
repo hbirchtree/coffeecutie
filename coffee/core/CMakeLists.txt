@@ -38,8 +38,10 @@ set ( CoffeeCore_SRCS
     private/base/cobject.cpp
     private/base/cregex.cpp
     private/base/debugprinter.cpp
-    private/base/debug/extensionresolvers.cpp
-    private/base/debug/information_extensions.cpp
+
+    private/base/strings/extensionresolvers.cpp
+    private/base/strings/information_extensions.cpp
+    private/base/strings/vector_print_extensions.cpp
 
     # Terminal functions
     private/terminal/table-print.cpp

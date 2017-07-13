@@ -25,6 +25,17 @@ PlatformData::DeviceType PlatformData::DeviceVariant()
 #endif
 }
 
+PlatformData::Platform PlatformData::PlatformVariant()
+{
+#if defined(COFFEE_ANDROID)
+    return PlatformAndroid;
+#elif defined(COFFEE_LINUX)
+    return PlatformLinux;
+#elif defined(COFFEE_WINDOWS)
+    return PlatformWindows;
+#endif
+}
+
 scalar PlatformData::DeviceDPI()
 {
     return 1.f;

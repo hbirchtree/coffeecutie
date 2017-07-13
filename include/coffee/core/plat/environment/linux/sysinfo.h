@@ -19,7 +19,7 @@ struct LinuxSysInfo : SysInfoDef
 {
     static CString CPUInfoString(bool force = false);
 
-    static Vector<CString> CPUFlags();
+    static Set<CString> CPUFlags();
 
     static NetStatusFlags NetStatus();
 
