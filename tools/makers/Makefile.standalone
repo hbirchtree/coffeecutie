@@ -29,6 +29,13 @@ android.armv7a:
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
 		-e TARGET=armv7a_neon_latest
 
+android.armv7a.kitkat:
+	@make -f $(AND_STAND) \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
+		-e TARGET=armv7a_neon_kk
+
 ubuntu.amd64:
 	@make -f $(CHOICES) ubuntu-amd64 \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
