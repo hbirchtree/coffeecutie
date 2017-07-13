@@ -20,7 +20,7 @@ struct texture_data_t
  * \brief This example employs the COFFEE_APPLICATION_MAIN macro to redirect the main function.
  *   The purpose of this is platform abstraction such that the rest of the code works consistently across platforms.
  */
-int coffee_main(int32 argv,cstring_w* argc)
+int coffee_main(int32,cstring_w*)
 {
     CResources::FileResourcePrefix("sample_data/cblam_data/");
 
