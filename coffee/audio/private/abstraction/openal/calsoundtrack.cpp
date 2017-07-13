@@ -1,5 +1,5 @@
 #include <coffee/audio/abstraction/openal/calsoundtrack.h>
-
+#include <coffee/core/CDebug>
 
 namespace Coffee{
 namespace CAudio{
@@ -78,6 +78,7 @@ void CALSoundTrack::updateTrack(uint64 ts)
         {
             if(smp.prop)
                 applySourceProperties(m_source, smp.prop);
+            cVerbose(3, "Inputs: {0}, {1}", *m_source, *smp.buf);
             source_queue_buffers(m_source,1,&smp.buf);
             source_set_state(m_source,CALPlaybackState::Playing);
             removal.push_back(&smp);

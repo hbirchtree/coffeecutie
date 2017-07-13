@@ -100,6 +100,23 @@ ALuint _al_get_handle(const CALSource* b)
 {
     return b->handle->handle;
 }
+void _al_check_rsc(const CALBuffer* b)
+{
+    if(!b || !b->handle)
+        cWarning("Unsafe handle passed");
+    auto hnd = _al_get_handle(b);
+    if(alIsBuffer(hnd) != AL_TRUE)
+        cWarning("Buffer handle not valid: {0}");
+}
+void _al_check_rsc(const CALSource* b)
+{
+    if(!b || !b->handle)
+        cWarning("Unsafe handle passed");
+    auto hnd = _al_get_handle(b);
+    if(alIsSource(hnd) != AL_TRUE)
+        cWarning("Source handle not valid: {0}");
+}
+
 ALenum _al_get_fmt(AudioFormat const& fmt)
 {
     ALenum ofmt;
@@ -319,6 +336,8 @@ void listener_set(const CALListener *listener)
 
 int32 source_get_offset_seconds(const CALSource *source)
 {
+    _al_check_rsc(source);
+
     int32 i;
     alGetSourcei(_al_get_handle(source),AL_SEC_OFFSET,&i);
     context_get_error();
@@ -327,6 +346,8 @@ int32 source_get_offset_seconds(const CALSource *source)
 
 int32 source_get_offset_samples(const CALSource *source)
 {
+    _al_check_rsc(source);
+
     int32 i;
     alGetSourcei(_al_get_handle(source),AL_SAMPLE_OFFSET,&i);
     context_get_error();
@@ -335,6 +356,8 @@ int32 source_get_offset_samples(const CALSource *source)
 
 int32 source_get_offset_bytes(const CALSource *source)
 {
+    _al_check_rsc(source);
+
     int32 i;
     alGetSourcei(_al_get_handle(source),AL_BYTE_OFFSET,&i);
     context_get_error();
@@ -344,9 +367,15 @@ int32 source_get_offset_bytes(const CALSource *source)
 void source_queue_buffers(
         CALSource *source, szptr numBuffers, const CALBuffer * const *buffers)
 {
+    _al_check_rsc(source);
+
     ALuint* handles = new ALuint[numBuffers];
     for(szptr i=0;i<numBuffers;i++)
-        handles[i] = buffers[i]->handle->handle;
+    {
+        _al_check_rsc(buffers[i]);
+        auto hnd = _al_get_handle(buffers[i]);
+        handles[i] = hnd;
+    }
     alSourceQueueBuffers(_al_get_handle(source),numBuffers,handles);
     delete[] handles;
     context_get_error();
@@ -355,9 +384,13 @@ void source_queue_buffers(
 void source_dequeue_buffers(
         CALSource *source, szptr numBuffers, const CALBuffer * const *buffers)
 {
+    _al_check_rsc(source);
     ALuint* handles = new ALuint[numBuffers];
     for(szptr i=0;i<numBuffers;i++)
+    {
+        _al_check_rsc(buffers[i]);
         handles[i] = buffers[i]->handle->handle;
+    }
     alSourceUnqueueBuffers(_al_get_handle(source),numBuffers,handles);
     delete[] handles;
     context_get_error();
@@ -366,6 +399,7 @@ void source_dequeue_buffers(
 void source_seti(
         CALSource *source, CSourceProperty const& prop, const int32 *val)
 {
+    _al_check_rsc(source);
     alSourceiv(_al_get_handle(source),get_value(prop,al_source_prop_map),val);
     context_get_error();
 }
@@ -373,6 +407,7 @@ void source_seti(
 void source_setf(
         CALSource *source, CSourceProperty const& prop, const scalar* val)
 {
+    _al_check_rsc(source);
     alSourcefv(_al_get_handle(source),get_value(prop,al_source_prop_map),val);
     context_get_error();
 }
@@ -447,6 +482,8 @@ void source_transform(
         CALSource *source, const CVec3& position,
         const CVec3& velocity, const CVec3& direction)
 {
+    _al_check_rsc(source);
+
     source->position = position;
     source->velocity = velocity;
     source->direction = direction;
@@ -473,6 +510,8 @@ void source_setf(
 
 int32 source_geti(CALSource *source, const CSourceProperty &prop)
 {
+    _al_check_rsc(source);
+
     ALint v;
     alGetSourcei(_al_get_handle(source),get_value(prop,al_source_prop_map),&v);
     return v;
@@ -480,6 +519,8 @@ int32 source_geti(CALSource *source, const CSourceProperty &prop)
 
 scalar source_getf(CALSource *source, const CSourceProperty &prop)
 {
+    _al_check_rsc(source);
+
     ALfloat v;
     alGetSourcef(_al_get_handle(source),get_value(prop,al_source_prop_map),&v);
     return v;
@@ -487,6 +528,8 @@ scalar source_getf(CALSource *source, const CSourceProperty &prop)
 
 void buffer_data(CALBuffer *buffer, const AudioSample *sample)
 {
+    _al_check_rsc(buffer);
+
     ALenum fmt = _al_get_fmt(sample->fmt);
 
     alBufferData(
@@ -499,6 +542,7 @@ void buffer_data(CALBuffer *buffer, const AudioSample *sample)
 void alAlloc(CALBuffer *buffer, const AudioSample *sample)
 {
     alAlloc(buffer);
+    _al_check_rsc(buffer);
     buffer_data(buffer,sample);
     context_get_error();
 }
@@ -545,6 +589,22 @@ void capture_grab_samples(CALCaptureDevice *dev,
     alcCaptureSamples(dev->capdevice,sample.data,sample.samples);
 }
 
+}
+}
+
+namespace Strings{
+CString to_string(CAudio::COpenAL::CALBuffer const& buf)
+{
+    return "CALBuffer(" + StrUtil::pointerify(buf.handle) + ","
+            + ((buf.handle) ? cast_pod(buf.handle->handle) : CString("0x0"))
+            + ")";
+}
+
+CString to_string(CAudio::COpenAL::CALSource const& src)
+{
+    return "CALSource(" + StrUtil::pointerify(src.handle) + ","
+            + ((src.handle) ? cast_pod(src.handle->handle) : CString("0x0"))
+            + ")";
 }
 }
 }
