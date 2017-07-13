@@ -9,14 +9,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.lang.reflect.Method;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.app.*;
 import android.content.*;
+import android.content.res.ColorStateList;
+import android.graphics.drawable.GradientDrawable;
 import android.text.InputType;
 import android.view.*;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -60,10 +66,6 @@ public class SDLActivity extends Activity {
     // This is what SDL runs in. It invokes SDL_main(), eventually
     protected static Thread mSDLThread;
 
-    // Audio
-    protected static AudioTrack mAudioTrack;
-    protected static AudioRecord mAudioRecord;
-
     /**
      * This method is called by SDL before loading the native shared libraries.
      * It can be overridden to provide names of shared libraries to be loaded.
@@ -104,8 +106,6 @@ public class SDLActivity extends Activity {
         mLayout = null;
         mJoystickHandler = null;
         mSDLThread = null;
-        mAudioTrack = null;
-        mAudioRecord = null;
         mExitCalledFromJava = false;
         mBrokenLibraries = false;
         mIsPaused = false;
@@ -172,22 +172,15 @@ public class SDLActivity extends Activity {
         }
 
         mLayout = new RelativeLayout(this);
-        mLayout.addView(mSurface);
+
+        mLayout.addView(mSurface,
+                RelativeLayout.LayoutParams.MATCH_PARENT,
+                RelativeLayout.LayoutParams.MATCH_PARENT);
+        showLoadingScreen();
 
         setContentView(mLayout);
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-        {
-            mLayout.setSystemUiVisibility(
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }else{
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                            WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        }
+        hidePanelsAndNaviBar();
 
         /* Sauce: https://www.bignerdranch.com/blog/polishing-your-Android-overview-screen-entry/ */
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
@@ -231,12 +224,7 @@ public class SDLActivity extends Activity {
            return;
         }
 
-        mLayout.setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        hidePanelsAndNaviBar();
 
         SDLActivity.handleResume();
     }
@@ -253,6 +241,7 @@ public class SDLActivity extends Activity {
 
         SDLActivity.mHasFocus = hasFocus;
         if (hasFocus) {
+            expandSurfaceView();
             SDLActivity.handleResume();
         }
     }
@@ -576,36 +565,6 @@ public class SDLActivity extends Activity {
      * This method is called by SDL using JNI.
      */
     public static int audioOpen(int sampleRate, boolean is16Bit, boolean isStereo, int desiredFrames) {
-        int channelConfig = isStereo ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO;
-        int audioFormat = is16Bit ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT;
-        int frameSize = (isStereo ? 2 : 1) * (is16Bit ? 2 : 1);
-
-        Log.v(TAG, "SDL audio: wanted " + (isStereo ? "stereo" : "mono") + " " + (is16Bit ? "16-bit" : "8-bit") + " " + (sampleRate / 1000f) + "kHz, " + desiredFrames + " frames buffer");
-
-        // Let the user pick a larger buffer if they really want -- but ye
-        // gods they probably shouldn't, the minimums are horrifyingly high
-        // latency already
-        desiredFrames = Math.max(desiredFrames, (AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat) + frameSize - 1) / frameSize);
-
-        if (mAudioTrack == null) {
-            mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate,
-                    channelConfig, audioFormat, desiredFrames * frameSize, AudioTrack.MODE_STREAM);
-
-            // Instantiating AudioTrack can "succeed" without an exception and the track may still be invalid
-            // Ref: https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/media/java/android/media/AudioTrack.java
-            // Ref: http://developer.android.com/reference/android/media/AudioTrack.html#getState()
-
-            if (mAudioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
-                Log.e(TAG, "Failed during initialization of Audio Track");
-                mAudioTrack = null;
-                return -1;
-            }
-
-            mAudioTrack.play();
-        }
-
-        Log.v(TAG, "SDL audio: got " + ((mAudioTrack.getChannelCount() >= 2) ? "stereo" : "mono") + " " + ((mAudioTrack.getAudioFormat() == AudioFormat.ENCODING_PCM_16BIT) ? "16-bit" : "8-bit") + " " + (mAudioTrack.getSampleRate() / 1000f) + "kHz, " + desiredFrames + " frames buffer");
-
         return 0;
     }
 
@@ -613,110 +572,42 @@ public class SDLActivity extends Activity {
      * This method is called by SDL using JNI.
      */
     public static void audioWriteShortBuffer(short[] buffer) {
-        for (int i = 0; i < buffer.length; ) {
-            int result = mAudioTrack.write(buffer, i, buffer.length - i);
-            if (result > 0) {
-                i += result;
-            } else if (result == 0) {
-                try {
-                    Thread.sleep(1);
-                } catch(InterruptedException e) {
-                    // Nom nom
-                }
-            } else {
-                Log.w(TAG, "SDL audio: error return from write(short)");
-                return;
-            }
-        }
+
     }
 
     /**
      * This method is called by SDL using JNI.
      */
     public static void audioWriteByteBuffer(byte[] buffer) {
-        for (int i = 0; i < buffer.length; ) {
-            int result = mAudioTrack.write(buffer, i, buffer.length - i);
-            if (result > 0) {
-                i += result;
-            } else if (result == 0) {
-                try {
-                    Thread.sleep(1);
-                } catch(InterruptedException e) {
-                    // Nom nom
-                }
-            } else {
-                Log.w(TAG, "SDL audio: error return from write(byte)");
-                return;
-            }
-        }
+
     }
 
     /**
      * This method is called by SDL using JNI.
      */
     public static int captureOpen(int sampleRate, boolean is16Bit, boolean isStereo, int desiredFrames) {
-        int channelConfig = isStereo ? AudioFormat.CHANNEL_CONFIGURATION_STEREO : AudioFormat.CHANNEL_CONFIGURATION_MONO;
-        int audioFormat = is16Bit ? AudioFormat.ENCODING_PCM_16BIT : AudioFormat.ENCODING_PCM_8BIT;
-        int frameSize = (isStereo ? 2 : 1) * (is16Bit ? 2 : 1);
-
-        Log.v(TAG, "SDL capture: wanted " + (isStereo ? "stereo" : "mono") + " " + (is16Bit ? "16-bit" : "8-bit") + " " + (sampleRate / 1000f) + "kHz, " + desiredFrames + " frames buffer");
-
-        // Let the user pick a larger buffer if they really want -- but ye
-        // gods they probably shouldn't, the minimums are horrifyingly high
-        // latency already
-        desiredFrames = Math.max(desiredFrames, (AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat) + frameSize - 1) / frameSize);
-
-        if (mAudioRecord == null) {
-            mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, sampleRate,
-                    channelConfig, audioFormat, desiredFrames * frameSize);
-
-            // see notes about AudioTrack state in audioOpen(), above. Probably also applies here.
-            if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-                Log.e(TAG, "Failed during initialization of AudioRecord");
-                mAudioRecord.release();
-                mAudioRecord = null;
-                return -1;
-            }
-
-            mAudioRecord.startRecording();
-        }
-
-        Log.v(TAG, "SDL capture: got " + ((mAudioRecord.getChannelCount() >= 2) ? "stereo" : "mono") + " " + ((mAudioRecord.getAudioFormat() == AudioFormat.ENCODING_PCM_16BIT) ? "16-bit" : "8-bit") + " " + (mAudioRecord.getSampleRate() / 1000f) + "kHz, " + desiredFrames + " frames buffer");
-
         return 0;
     }
 
     /** This method is called by SDL using JNI. */
     public static int captureReadShortBuffer(short[] buffer, boolean blocking) {
-        // !!! FIXME: this is available in API Level 23. Until then, we always block.  :(
-        //return mAudioRecord.read(buffer, 0, buffer.length, blocking ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
-        return mAudioRecord.read(buffer, 0, buffer.length);
+        return 0;
     }
 
     /** This method is called by SDL using JNI. */
     public static int captureReadByteBuffer(byte[] buffer, boolean blocking) {
-        // !!! FIXME: this is available in API Level 23. Until then, we always block.  :(
-        //return mAudioRecord.read(buffer, 0, buffer.length, blocking ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
-        return mAudioRecord.read(buffer, 0, buffer.length);
+        return 0;
     }
 
 
     /** This method is called by SDL using JNI. */
     public static void audioClose() {
-        if (mAudioTrack != null) {
-            mAudioTrack.stop();
-            mAudioTrack.release();
-            mAudioTrack = null;
-        }
+
     }
 
     /** This method is called by SDL using JNI. */
     public static void captureClose() {
-        if (mAudioRecord != null) {
-            mAudioRecord.stop();
-            mAudioRecord.release();
-            mAudioRecord = null;
-        }
+
     }
 
 
@@ -1042,16 +933,143 @@ public class SDLActivity extends Activity {
 
         return dialog;
     }
+
+    private LinearLayout mLoadingLayout;
+
+    public void hidePanelsAndNaviBar()
+    {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+        {
+            mLayout.setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }else{
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        }
+    }
+
+    public void showLoadingScreen()
+    {
+        Point disp_size = new Point();
+        {
+            Display disp = getWindowManager().getDefaultDisplay();
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
+                disp.getSize(disp_size);
+            }else {
+                disp_size.x = disp.getWidth();
+                disp_size.y = disp.getHeight();
+            }
+        }
+
+        {
+            LinearLayout loadingLayout = new LinearLayout(this);
+
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+            {
+                /* Create a lighter color */
+                float[] hsv = new float[3];
+                int innerColor = getResources().getColor(R.color.loading_background_color);
+
+                Color.colorToHSV(innerColor, hsv);
+
+                hsv[1] *= 0.6f;
+                hsv[2] *= 0.2f;
+
+                int outerColor = Color.HSVToColor(hsv);
+
+                /* Create a gradient */
+                GradientDrawable gradient = new GradientDrawable();
+
+                //gradient.setGradientCenter(0.5f, 0.5f);
+                //gradient.setGradientRadius(0.2f);
+                gradient.setColors(new int[]{
+                        innerColor,
+                        outerColor
+                });
+                gradient.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+
+                gradient.setGradientRadius(disp_size.x * 0.85f);
+                gradient.setGradientCenter(0.5f, 0.5f);
+
+                loadingLayout.setBackground(gradient);
+            }
+
+            loadingLayout.setOrientation(LinearLayout.VERTICAL);
+            loadingLayout.setGravity(Gravity.CENTER_VERTICAL);
+
+            mLayout.addView(loadingLayout);
+
+            loadingLayout.setLayoutParams(
+                    new RelativeLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.MATCH_PARENT));
+
+            String loading_title = String.format("Starting %s...", getResources().getText(R.string.app_name));
+
+            TextView textView = new TextView(getApplication());
+            ImageView imgView = new ImageView(getApplication());
+            ProgressBar progView = new ProgressBar(getApplication());
+
+            progView.setIndeterminate(true);
+            textView.setText(loading_title);
+            textView.setTextColor(getResources().getColor(R.color.loading_title_color));
+            imgView.setImageDrawable(getResources().getDrawable(R.drawable.ic_launcher));
+
+            loadingLayout.addView(imgView, 0);
+            loadingLayout.addView(textView, 1);
+            loadingLayout.addView(progView, 2);
+
+            textView.setGravity(Gravity.CENTER);
+            imgView.setMinimumHeight(256);
+
+            mLoadingLayout = loadingLayout;
+        }
+    }
+
+
+    public void expandSurfaceView() {
+        Log.v(TAG, "Expanding surface view");
+
+        final Handler expandHandler = new Handler();
+
+        expandHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(mLoadingLayout != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1)
+                {
+                    mLoadingLayout.animate()
+                            .alpha(0f)
+                            .setDuration(getResources().getInteger(android.R.integer.config_mediumAnimTime))
+                            .setListener(new AnimatorListenerAdapter() {
+                                @Override
+                                public void onAnimationEnd(Animator animation) {
+                                    super.onAnimationEnd(animation);
+                                    mLoadingLayout.setVisibility(View.GONE);
+                                }
+                            });
+                }
+            }
+        }, 1500);
+    }
 }
 
 /**
     Simple nativeInit() runnable
 */
 class SDLMain implements Runnable {
+    private SDLActivity mActivity;
+
+    public SDLMain(SDLActivity sdlSurface) {
+        mActivity = sdlSurface;
+    }
+
     @Override
     public void run() {
         // Runs SDL_main()
-        SDLActivity.nativeInit(SDLActivity.mSingleton.getArguments());
+        SDLActivity.nativeInit(mActivity.getArguments());
 
         //Log.v("SDL", "SDL thread terminated");
     }
@@ -1066,6 +1084,8 @@ class SDLMain implements Runnable {
 */
 class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
     View.OnKeyListener, View.OnTouchListener, SensorEventListener  {
+
+    private int mResizeCounter = 0;
 
     // Sensors
     protected static SensorManager mSensorManager;
@@ -1184,6 +1204,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
         mWidth = width;
         mHeight = height;
+
         SDLActivity.onNativeResize(width, height, sdlFormat, mDisplay.getRefreshRate());
         Log.v("SDL", "Window size: " + width + "x" + height);
 
@@ -1232,7 +1253,7 @@ class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
             // This is the entry point to the C app.
             // Start up the C app thread and enable sensor input for the first time
 
-            final Thread sdlThread = new Thread(new SDLMain(), "SDLThread");
+            final Thread sdlThread = new Thread(new SDLMain(SDLActivity.mSingleton), "Main");
             enableSensor(Sensor.TYPE_ACCELEROMETER, true);
             sdlThread.start();
 

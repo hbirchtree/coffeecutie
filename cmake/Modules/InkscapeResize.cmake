@@ -14,11 +14,12 @@ macro ( MAGICK_RESIZE_SVG TARGET SOURCE MIPSIZE OUTPUT )
         PRE_BUILD
         COMMAND
             convert
-                "${SOURCE}"
+                -background none
                 -scale ${MIPSIZE}x${MIPSIZE}
                 -gravity center
                 -channel rgba -alpha on
                 -extent ${MIPSIZE}x${MIPSIZE}
+                "${SOURCE}"
                 "${OUTPUT}"
         )
 endmacro()

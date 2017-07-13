@@ -201,7 +201,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
 
     set ( PACKAGE_PREFIX "org.coffee" )
 
-    set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/icon.svg" )
+    set ( ICON_ASSET "${COFFEE_DESKTOP_DIRECTORY}/common/icon.svg" )
 
     if(ANDROID)
         ANDROIDAPK_PACKAGE(

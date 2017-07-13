@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">@ANDROID_APPLICATION_NAME@</string>
-    <color name="activity_color">@ANDROID_APPLICATION_COLOR@</color>
+    <string name="app_name">Metro Station</string>
+    <color name="activity_color">#E91E63</color>
 
     <color name="loading_background_color">#812041</color>
     <color name="loading_title_color">#ffffff</color>
