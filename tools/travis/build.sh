@@ -40,6 +40,7 @@ function build_mac()
 }
 
 whoami
+ls -l
 
 case "${TRAVIS_OS_NAME}" in
 "linux")
