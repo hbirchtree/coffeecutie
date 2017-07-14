@@ -39,6 +39,8 @@ function build_mac()
     [[ ! "$EXIT_STAT" = 0 ]] && die "Make process failed"
 }
 
+whoami
+
 case "${TRAVIS_OS_NAME}" in
 "linux")
     build_standalone "$BUILDVARIANT"

@@ -117,8 +117,6 @@ function configure_project()
     local MAIN_FILE="${PROJECT_DIR}/src/main.cpp"
     local CMAKE_FILE="${PROJECT_DIR}/CMakeLists.txt"
     local GITIGNORE_FILE="${PROJECT_DIR}/.gitignore"
-    local META_ANDROID_FILE="${PROJECT_DIR}/meta/android/CMakeLists.txt"
-    local META_JENKINS_FILE="${PROJECT_DIR}/meta/jenkins/${PJNAME}.groovy"
 
     if [[ ! -f "${GITIGNORE_FILE}" ]]; then
         echo "-- Creating .gitignore file"

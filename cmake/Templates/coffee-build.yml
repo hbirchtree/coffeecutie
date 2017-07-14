@@ -1,0 +1,35 @@
+name: @PJNAME@
+platforms:
+    - emscripten
+      - asmjs
+      - wasm
+    - linux
+      - ubuntu
+        - amd64
+        - i686
+        - armhf
+      - fedora
+      - raspberry
+      - steam
+    - android
+      - android
+        - armv7a
+        - armv8a
+        - armv7a.kitkat
+    - macos
+      - osx
+      - ios
+    - windows
+      - win32
+      - uwp
+
+dependencies:
+    - hbirchtree/coffeecutie
+
+travis_config:
+    branches:
+        only:
+            - master
+    deploy:
+        on:
+            tags: true
