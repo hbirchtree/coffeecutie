@@ -198,7 +198,8 @@ FORCEDINLINE Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>&
     node_storage.push_back(Node(nullptr));
 
     auto& n_node = node_storage.back();
-    n_node.setParent(parent);
+    if(parent)
+        parent->addChild(&n_node);
     n_node.setObjectName(node->mName.C_Str());
     n_node.transform = transpose(convert_aiMatrix(node->mTransformation));
 

@@ -36,7 +36,7 @@ i32 coffee_main(i32, cstring_w*)
         {
             auto& node = *m_node_hierarchy.front();
             cDebug("Node: {3} <- {0}:{1},{2}", node.objectName(), node.transform, node.mesh,
-                   (node.parent()) ? node.parent()->objectName() : nullptr);
+                   nullptr);
             Mesh output_mesh(true);
             ASSIMP::GetMeshData(scene, node.mesh, output_mesh);
             cDebug("Mesh: {0}, {1}, {2}",
@@ -44,7 +44,7 @@ i32 coffee_main(i32, cstring_w*)
                    output_mesh.indices(sizeof(u32)),
                    output_mesh.vertices(Mesh::Position, sizeof(Vecf3)));
             cDebug("Children: {0}", node.children().size());
-            for(CObject* child : node.children())
+            for(auto child : node.children())
                 m_node_hierarchy.push(C_CAST<Node*>(child));
             m_node_hierarchy.pop();
         }

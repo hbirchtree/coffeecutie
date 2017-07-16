@@ -21,7 +21,7 @@ CObject::~CObject()
 {
     if(m_parent)
         m_parent->removeChild(this);
-    for(CObject* child : m_children)
+    for(auto child : m_children)
         delete child;
 }
 
@@ -46,29 +46,39 @@ void CObject::setParent(CObject *parent)
     this->m_parent = parent;
 }
 
-cstring CObject::objectName() const
+cstring NamedObject::objectName() const
 {
     return m_objectName.c_str();
 }
 
-void CObject::setObjectName(cstring name)
+void NamedObject::setObjectName(cstring name)
 {
     this->m_objectName = name;
 }
 
-const Vector<CObject *> &CObject::children() const
+const Vector<MultiParentObject *> &MultiParentObject::children() const
 {
     return m_children;
 }
 
 void CObject::removeChild(CObject *child)
 {
-    for(auto it=m_children.begin();it!=m_children.end();it++)
-        if(*it == child)
-        {
-            m_children.erase(it);
-            break;
-        }
+    MultiParentObject::removeChild(child);
+}
+
+void MultiParentObject::addChild(MultiParentObject *child)
+{
+    m_children.push_back(child);
+}
+
+void MultiParentObject::removeChild(MultiParentObject *child)
+{
+    std::remove_if(m_children.begin(), m_children.end(),
+                   [&](MultiParentObject* it){
+        if( it == child )
+            return true;
+        return false;
+    });
 }
 
 } // namespace Coffee

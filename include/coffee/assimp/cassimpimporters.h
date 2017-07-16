@@ -51,24 +51,21 @@ struct AssimpData;
 using AssimpPtr = UqPtr<AssimpData>;
 using Resource = CResources::Resource;
 
-struct Node : public CObject
+struct Node : public MultiParentObject
 {
-    Node(Node* parent):
-        CObject(parent)
+    Node(Node* parent)
     {
+        if(parent)
+            parent->addChild(this);
     }
 
     Matf4 transform;
     i32 mesh;
+    u32 flags;
 };
 
 struct NodeList : public LinkList<Node>
 {
-    ~NodeList()
-    {
-        for(Node& n : *this)
-            n.setParent(nullptr);
-    }
 };
 
 

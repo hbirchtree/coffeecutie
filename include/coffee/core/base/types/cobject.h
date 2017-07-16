@@ -1,39 +1,49 @@
-#ifndef COFFEE_COBJECT_H
-#define COFFEE_COBJECT_H
+#pragma once
 
 #include <coffee/core/types/tdef/stlfunctypes.h>
 #include <coffee/core/types/tdef/stltypes.h>
 
 namespace Coffee {
 
-class CObject
+class NamedObject
+{
+public:
+    cstring objectName() const;
+    void setObjectName(cstring name);
+private:
+    CString m_objectName;
+};
+
+class MultiParentObject : public NamedObject
+{
+public:
+    void addChild(MultiParentObject* child);
+    void removeChild(MultiParentObject* child);
+
+    Vector<MultiParentObject*> const& children() const;
+
+protected:
+    Vector<MultiParentObject*> m_children;
+};
+
+class CObject : public MultiParentObject
 {
 public:
     CObject();
     CObject(CObject* parent);
     ~CObject();
-//    C_DELETE_COPY_CONSTRUCTOR(CObject);
+
+    void addChild(CObject* child) = delete;
 
     CObject* parent() const;
     CObject* parent();
     void setParent(CObject* parent);
 
-    //Object name, must be freed
-    cstring objectName() const;
-    void setObjectName(cstring name);
-
-    Vector<CObject*> const& children() const;
-
 protected:
+    void removeChild(CObject* child);
     ThreadId m_thread;
 
 private:
-    void removeChild(CObject* child);
-
-    Vector<CObject*> m_children;
     CObject* m_parent;
-    CString m_objectName;
 };
-} // namespace Coffee
-
-#endif // COFFEE_COBJECT_H
+}
