@@ -52,6 +52,11 @@ struct _cbasic_tquaternion : _cbasic_tvector<T,4>
         return vnew;
     }
 
+    static _cbasic_tquaternion<T> from_euler(const _cbasic_tvector<T, 3>& euler)
+    {
+        return _cbasic_tquaternion<T>(euler);
+    }
+
     T& w()
     {
         return (*this)[3];
