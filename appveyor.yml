@@ -11,7 +11,7 @@ platform: x64
 clone_depth: 1
 environment:
   INSTALL_DIR: C:\Build\build_*\out\
-  BUILD_DIR: C:\Build
+  BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   MAKEFILE_DIR: tools\makers
 install:
