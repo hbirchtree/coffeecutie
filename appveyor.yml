@@ -17,9 +17,9 @@ environment:
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   MAKEFILE_DIR: tools\makers
 install:
-- ps: %APPVEYOR_BUILD_FOLDER%\tools\ci\appveyor-deps.ps
+- ps: "%APPVEYOR_BUILD_FOLDER%\tools\ci\appveyor-deps.ps"
 build_script:
-- ps: %APPVEYOR_BUILD_FOLDER%\tools\ci\appveyor-build.ps1
+- ps: "%APPVEYOR_BUILD_FOLDER%\tools\ci\appveyor-build.ps1"
 artifacts:
 - path: '*.zip'
   name: Coffee_Win64
