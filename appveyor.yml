@@ -16,8 +16,10 @@ environment:
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   MAKEFILE_DIR: tools\makers
-install: powershell -noexit "& tools\ci\appveyor-deps.ps"
-build_script: powershell -noexit "& tools\ci\appveyor-build.ps1"
+install:
+- ps: "& tools\ci\appveyor-deps.ps"
+build_script:
+- ps: "& tools\ci\appveyor-build.ps1"
 artifacts:
 - path: '*.zip'
   name: Coffee_Win64
