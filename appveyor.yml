@@ -10,16 +10,17 @@ configuration:
 platform: x64
 clone_depth: 1
 clone_script:
-- ps: true
+- cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
+- cmd: git checkout -qf %APPVEYOR_REPO_COMMIT%
 environment:
   INSTALL_DIR: C:\Build\build_*\out\
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   MAKEFILE_DIR: tools\makers
 install:
-- ps: "%APPVEYOR_BUILD_FOLDER%\tools\ci\appveyor-deps.ps"
+- ps: tools\ci\appveyor-deps.ps
 build_script:
-- ps: "%APPVEYOR_BUILD_FOLDER%\tools\ci\appveyor-build.ps1"
+- ps: tools\ci\appveyor-build.ps1
 artifacts:
 - path: '*.zip'
   name: Coffee_Win64
