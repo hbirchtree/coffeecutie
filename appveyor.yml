@@ -9,6 +9,8 @@ configuration:
 - Debug
 platform: x64
 clone_depth: 1
+clone_script:
+- ps: true
 environment:
   INSTALL_DIR: C:\Build\build_*\out\
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
