@@ -18,6 +18,7 @@ environment:
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   MAKEFILE_DIR: tools\makers
 install:
+- ps: env
 - ps: pwd
 - ps: tools\ci\appveyor-deps.ps
 build_script:
