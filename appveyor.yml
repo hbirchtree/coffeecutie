@@ -9,56 +9,13 @@ configuration:
 - Debug
 platform: x64
 clone_depth: 1
-clone_folder: C:\src
-clone_script:
-- cmd: >-
-    git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
-
-    git checkout -qf %APPVEYOR_REPO_COMMIT%
 environment:
   INSTALL_DIR: C:\Build\build_*\out\
   BUILD_DIR: C:\Build
-  PRELOAD_FILE: windows-generic.cmake
-  TOOLCHAIN_FILE: windows-win32_windows.toolchain.cmake
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
-install:
-- ps: >-
-    Invoke-WebRequest https://www.libsdl.org/release/SDL2-devel-2.0.4-VC.zip -OutFile "$env:TEMP/SDL2.zip"
-
-    Expand-Archive -Force -Path "$env:TEMP\SDL2.zip" -DestinationPath "$env:TEMP/SDL2"
-
-    mv -ErrorAction Ignore -Force "$env:TEMP/SDL2/*" "C:\"
-
-    mv -ErrorAction Ignore -Force "C:\SDL2-2.0.4" "C:\SDL2"
-
-    rm -r -ErrorAction Ignore -Force "C:\SDL2\SDL2-2.0.4"
-
-    iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
-
-    choco install -y cmake
-
-    ls C:\
-
-    ls "C:\Program Files"
-
-    ls "C:\Program Files (x86)"
-build_script:
-- ps: >-
-    mkdir $env:BUILD_DIR
-
-    cd $env:BUILD_DIR
-
-    #"%CMAKE_BIN%" -G"%CMAKE_GENERATOR%" -DCMAKE_TOOLCHAIN_FILE="%APPVEYOR_BUILD_FOLDER%\cmake\Toolchains\%TOOLCHAIN_FILE%" -C"%APPVEYOR_BUILD_FOLDER%\cmake\Preload\%PRELOAD_FILE%" "%APPVEYOR_BUILD_FOLDER%" -DCMAKE_INSTALL_PREFIX=%INSTALL_DIR% -DCOFFEE_BUILD_OPENSSL=OFF -DCOFFEE_BUILD_OPENAL=OFF -DSKIP_HIGHMEM_TESTS=ON
-
-    #& $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target uwp.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN
-
-    & $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CMakeBin $env:CMAKE_BIN -ExtraArgs ("-DCOFFEE_BUILD_OPENAL=OFF","")
-
-    #& $env:APPVEYOR_BUILD_FOLDER\tools\makers\Makefile.windows.ps1 -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target win32.amd64 -Config Debug -CoffeeRoot $$$
-
-    cd "$env:APPVEYOR_BUILD_FOLDER"
-
-    7z a Coffee_Win64_"$env:APPVEYOR_BUILD_NUMBER"_$env:APPVEYOR_REPO_COMMIT.zip $env:INSTALL_DIR
+  MAKEFILE_DIR: tools\makers
+install: tools/ci/appveyor-deps.ps1
+build_script: tools/ci/appveyor-build.ps1
 artifacts:
 - path: '*.zip'
   name: Coffee_Win64
