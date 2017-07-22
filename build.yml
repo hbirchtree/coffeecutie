@@ -27,9 +27,6 @@ platforms:
       - win32
       - uwp
 
-dependencies:
-    - github:hbirchtree/coffeecutie:unstable
-
 branches:
   - name: master
     build: true
@@ -37,6 +34,6 @@ branches:
   - name: testing
     build: true
 
-makefile_location: ci
+makefile_location: tools/makers
 template_location: cmake/Templates
-script_location: ci
+script_location: tools/travis

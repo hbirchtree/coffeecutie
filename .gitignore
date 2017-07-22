@@ -57,3 +57,7 @@ gamecontrollerdb.txt*
 *.so
 *.a
 *.out
+
+# From tools
+*.pyc
+__pycache__
