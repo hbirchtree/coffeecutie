@@ -54,8 +54,80 @@ def parse_buildinfo(file):
     return parse_yaml(file)
 
 
+def create_deploy_info(build_info):
+    deploy_data = DeployInfo([], [])
+
+    if 'branches' in build_info:
+        for e in build_info['branches']:
+            name = 'master'
+            if 'name' in e:
+                name = e['name']
+            if 'build' in e:
+                if e['build']:
+                    deploy_data.build_branches.append(name)
+            else:
+                deploy_data.build_branches.append(name)
+            if 'deploy' in e:
+                if e['deploy']:
+                    deploy_data.deploy_branches.append(name)
+            else:
+                pass
+
+    if len(deploy_data.deploy_branches) == 0:
+        deploy_data.deploy_branches.append('master')
+
+    return (deploy_data.build_branches,
+            deploy_data.deploy_branches)
+
+
 def appveyor_gen_config(build_info):
-    return {}
+    deploy_info = create_deploy_info(build_info)
+
+    return {
+        'version': '{build}',
+        'skip_tags': True,
+        'branches': {
+            'only': deploy_info[0]
+        },
+        'configuration': ['Debug'],
+        'platform': 'x64',
+        'clone_depth': 1,
+        'clone_script': [
+            {
+                'cmd': 'git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%',
+            },
+            {
+                'cmd': 'git checkout -qf %APPVEYOR_REPO_COMMIT%'
+            }
+        ],
+        'environment': {
+            'BUILD_DIR': 'C:\\project\\%APPVEYOR_PROJECT_SLUG%',
+            'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
+            'MAKEFILE_DIR': 'tools\\makers',
+            'BUILDVARIANT': 'win32.amd64',
+        },
+        'install': [
+            {'ps': 'tools\\ci\\appveyor-deps.ps1'}
+        ],
+        'build_script': [
+            {'ps': 'tools\\ci\\appveyor-build.ps1'}
+        ],
+        'artifacts': [
+            {'path': '*.zip', 'name': 'Libraries'}
+        ],
+        'deploy': [
+            {
+                'provider': 'releases',
+                'release': 'Appveyor Build $(APPVEYOR_BUILD_NUMBER)',
+                'description': 'Automatic build by Appveyor',
+                'artifact': 'Libraries',
+                'prelease': True,
+                'on': {
+                    'appveyor_repo_tag': True
+                },
+            }
+        ]
+    }
 
 
 def travis_gen_config(build_info):
@@ -86,31 +158,6 @@ def travis_gen_config(build_info):
                     for dist in matrix:
                         excludes.append({'os': target2, 'env': dist})
         return matrices, excludes
-
-    def create_deploy_info(build_info):
-        deploy_data = DeployInfo([], [])
-
-        if 'branches' in build_info:
-            for e in build_info['branches']:
-                name = 'master'
-                if 'name' in e:
-                    name = e['name']
-                if 'build' in e:
-                    if e['build']:
-                        deploy_data.build_branches.append(name)
-                else:
-                    deploy_data.build_branches.append(name)
-                if 'deploy' in e:
-                    if e['deploy']:
-                        deploy_data.deploy_branches.append(name)
-                else:
-                    pass
-
-        if len(deploy_data.deploy_branches) == 0:
-            deploy_data.deploy_branches.append('master')
-
-        return (deploy_data.build_branches,
-                deploy_data.deploy_branches)
 
     targets = ['linux', 'osx']
 
