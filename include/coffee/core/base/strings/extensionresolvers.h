@@ -61,8 +61,6 @@ template<typename T,
                                  bool>::type* = nullptr>
 inline CString to_string(T const& value)
 {
-    if(value == nullptr)
-        return "0x0";
     return static_cast<CString>(value);
 }
 
