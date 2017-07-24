@@ -83,6 +83,10 @@ def create_deploy_info(build_info):
 def appveyor_gen_config(build_info):
     deploy_info = create_deploy_info(build_info)
 
+    dependencies_list = ""
+
+    for e in build_info['dependencies']: dependencies_list += e.split(":")[1] + ";"
+
     return {
         'version': '{build}',
         'skip_tags': True,
@@ -105,6 +109,7 @@ def appveyor_gen_config(build_info):
             'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
             'MAKEFILE_DIR': 'tools\\makers',
             'BUILDVARIANT': 'win32.amd64',
+            'DEPENDENCIES': dependencies_list
         },
         'install': [
             {'ps': 'tools\\ci\\appveyor-deps.ps1'}
