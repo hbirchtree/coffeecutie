@@ -64,7 +64,7 @@ $CurrentDir = $Pwd
 
 ConfigProject "$SrcDir" `
     "$Arch" windows-"$Toolchain"_windows "windows-$Preload" `
-    "$LibType" (DownloadAngle) $ExtraArgs
+    "$LibType" (DownloadAngle) $ExtraArgs "build_$target"
 
 cd $CurrentDir
 

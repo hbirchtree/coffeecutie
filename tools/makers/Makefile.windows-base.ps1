@@ -1,5 +1,6 @@
 param(
-    [string] $CMakeBin = "cmake"
+    [string] $CMakeBin = "cmake",
+    [string] $BuildDir = "build_Windows-unknown"
     )
 
 $NativeLibDir = "$Pwd\NativeLibs"
@@ -36,12 +37,12 @@ function CheckArch($arch) {
 
 function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 					[String] $preload,[String] $LibVariant,[String] $ANGLEDir, `
-					[String[]] $ExtraArgs) {
+					[String[]] $ExtraArgs, [String] $BuildDir) {
 
     $archfix = (CheckArch $arch)
 
-    mkdir -Force build_"$preload"_$archfix
-    cd build_"$preload"_$archfix
+    mkdir -Force $BuildDir
+    cd $BuildDir
 
     
     DownloadNativeLibs
