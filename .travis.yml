@@ -54,10 +54,10 @@ matrix:
     env: BUILDVARIANT=ubuntu.i686
 
 before_script:
- - tools/travis/install-dependencies.sh
+ - tools/ci/travis-deps.sh
 
 script:
- - tools/travis/build.sh
+ - tools/ci/travis-build.sh
 
 notifications:
   email: true
