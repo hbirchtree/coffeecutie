@@ -12,6 +12,7 @@ compiles:
  - clang
 
 env:
+  MAKEFILE_DIR: tools/ci
   matrix:
    - BUILDVARIANT=ubuntu.amd64
    - BUILDVARIANT=android.armv7a
