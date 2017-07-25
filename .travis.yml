@@ -13,7 +13,7 @@ compiles:
 
 env:
   global:
-   - MAKEFILE_DIR=tools/ci
+   - MAKEFILE_DIR=tools/makers
   matrix:
    - BUILDVARIANT=ubuntu.amd64
    - BUILDVARIANT=android.armv7a
