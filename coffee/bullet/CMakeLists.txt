@@ -1,6 +1,6 @@
 find_package(Bullet)
 
-include_directories ( SYSTEM
+include_directories (
     ${BULLET_INCLUDE_DIRS}
     )
 

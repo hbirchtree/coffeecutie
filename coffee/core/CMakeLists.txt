@@ -173,7 +173,7 @@ endif()
 
 find_package( StandardLibs REQUIRED )
 
-include_directories ( SYSTEM ${STANDARDLIBS_INCLUDE_DIR} )
+include_directories ( ${STANDARDLIBS_INCLUDE_DIR} )
 coffee_add_library ( CoffeeCore
     "${CoffeeCore_SRCS}"
     "${STANDARDLIBS_LIBRARIES}"

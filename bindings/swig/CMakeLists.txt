@@ -21,7 +21,7 @@ macro(SWIG_LANGUAGE_BINDING TARGET BIND CFILE OUTPUT_EXTENSION OUTPUT_DEST )
     if("${BIND}" STREQUAL "python")
         # Python build
         find_package(PythonLibs)
-        include_directories ( SYSTEM
+        include_directories (
             ${PYTHON_INCLUDE_PATH}
             )
         swig_link_libraries(${TARGET} ${COFFEE_LINKING} ${PYTHON_LIBRARIES} )

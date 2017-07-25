@@ -3,7 +3,7 @@ include_directories( SYSTEM
     )
 
 if(NOT WIN32 AND NOT ANDROID)
-    include_directories( SYSTEM ${OPENSSL_INCLUDE_DIR})
+    include_directories( ${OPENSSL_INCLUDE_DIR})
 endif()
 
 coffee_add_application ( AsioClientTest "ASIO Test" main.cpp CoffeeASIO )

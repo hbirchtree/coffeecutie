@@ -3,9 +3,7 @@ add_subdirectory(core)
 add_subdirectory(image)
 
 # ASIO networking
-if(COFFEE_BUILD_OPENSSL)
-    add_subdirectory(asio)
-endif()
+add_subdirectory(asio)
 
 # More here!
 add_subdirectory(graphics)

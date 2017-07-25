@@ -34,9 +34,10 @@ include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
 add_definitions("-DASIO_STANDALONE")
 
 # Include SSL if built
-if(COFFEE_BUILD_OPENSSL AND NOT WIN32 AND NOT ANDROID)
+if(COFFEE_BUILD_OPENSSL)
     find_package ( OpenSSL REQUIRED )
     include_directories ( ${OPENSSL_INCLUDE_DIR} )
+    add_definitions("-DCOFFEE_ENABLE_SSL")
 endif()
 
 if(ANDROID AND CMAKE_BUILD_TYPE STREQUAL "Release")

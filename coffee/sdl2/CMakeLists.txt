@@ -37,7 +37,7 @@ set ( CoffeeSDL2Audio_SRCS
 
 find_package ( SDL2 REQUIRED)
 
-include_directories ( SYSTEM
+include_directories (
     ${SDL2_INCLUDE_DIR}
 	${STANDARDLIBS_INCLUDE_DIR}
     )

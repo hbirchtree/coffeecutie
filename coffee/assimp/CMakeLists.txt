@@ -5,7 +5,7 @@ set ( CoffeeAssimp_SRCS
         private/assimpfun.cpp
         )
 
-include_directories ( SYSTEM
+include_directories (
     ${ASSIMP_INCLUDE_DIR}
     )
 

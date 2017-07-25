@@ -11,12 +11,10 @@ add_subdirectory (core/env-test)
 add_subdirectory (core/power-test)
 add_subdirectory (core/gpu-query)
 
-if(COFFEE_BUILD_OPENSSL)
-    # ASIO examples, we leave this as core
-    add_subdirectory(asio/base-client)
-    add_subdirectory(asio/base-server)
-    add_subdirectory(asio/irc-client)
-endif()
+# ASIO examples, we leave this as core
+add_subdirectory(asio/base-client)
+add_subdirectory(asio/base-server)
+add_subdirectory(asio/irc-client)
 
 # Not going to say.
 add_subdirectory(rsread)

@@ -4,10 +4,10 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( FLATPAK_REPOSITORY_DIR CACHE PATH "Target repository to submit flatpaks to" )
 
     set ( FLATPAK_PROGRAM "/usr/bin/flatpak" CACHE FILEPATH "Path to flatpak executable" )
-    set ( FLATPAK_WORKING_DIRECTORY "${COFFEE_PACKAGE_DIRECTORY}/linux-flatpak"
+    set ( FLATPAK_WORKING_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-flatpak"
         CACHE PATH "Where to put flatpak directory structures" )
     set ( FLATPAK_DEPLOY_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-flatpak"
-	CACHE PATH "Where to put flatpak directory structures" )
+        CACHE PATH "Where to put flatpak directory structures" )
 
     set ( FLATPAK_DEFAULT_ICON_FILE "${COFFEE_DESKTOP_DIRECTORY}/icon.svg"
         CACHE FILEPATH "Default icon for AppImages" )
@@ -40,7 +40,7 @@ macro( FLATPAK_PACKAGE
         set ( FLATPAK_ARCH "arm" )
     endif()
 
-    set ( FLATPAK_BASE_DIR "${FLATPAK_WORKING_DIRECTORY}/${FLATPAK_PKG_NAME}" )
+    set ( FLATPAK_BASE_DIR "${FLATPAK_DEPLOY_DIRECTORY}/${FLATPAK_PKG_NAME}" )
 
     set ( FLATPAK_ASSET_DIR "${FLATPAK_BASE_DIR}/files/assets" )
     set ( FLATPAK_LIBRARY_DIR "${FLATPAK_BASE_DIR}/files/lib" )
@@ -50,7 +50,7 @@ macro( FLATPAK_PACKAGE
     set ( FLATPAK_ICON_REF "${FLATPAK_PKG_NAME}.svg" )
 
     set ( FLATPAK_BUNDLE_REPO "${FLATPAK_DEPLOY_DIRECTORY}/${TARGET}" )
-    set ( FLATPAK_BUNDLE_DIR "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.oci" )
+    set ( FLATPAK_BUNDLE_DIR "${FLATPAK_WORKING_DIRECTORY}/${TARGET}.flatpak" )
 
     # TODO: Unify this with the in-app information somehow
     set ( FLATPAK_CONFIG "${TARGET}" )
@@ -141,7 +141,7 @@ macro( FLATPAK_PACKAGE
 
     add_custom_command ( TARGET ${TARGET}
 	POST_BUILD
-        COMMAND ${FLATPAK_PROGRAM} build-bundle --oci "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}" )
+        COMMAND ${FLATPAK_PROGRAM} build-bundle "${FLATPAK_BUNDLE_REPO}" "${FLATPAK_BUNDLE_DIR}" "${FLATPAK_PKG_NAME}" )
 
     if(FLATPAK_DEPLOY_LOCALLY)
         add_custom_command( TARGET ${TARGET}
@@ -159,15 +159,15 @@ macro( FLATPAK_PACKAGE
     endif()
 
     # Add arrangement to install flatpak structure somewhere else
-    install (
-        DIRECTORY
-        "${FLATPAK_BASE_DIR}"
+#    install (
+#        DIRECTORY
+#        "${FLATPAK_BASE_DIR}"
 
-        DESTINATION
-	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
-        )
+#        DESTINATION
+#	"${CMAKE_PACKAGED_OUTPUT_PREFIX}/linux-flatpak"
+#        )
     install (
-        DIRECTORY
+        FILES
         "${FLATPAK_BUNDLE_DIR}"
 
 	DESTINATION

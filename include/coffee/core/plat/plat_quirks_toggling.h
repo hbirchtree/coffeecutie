@@ -113,7 +113,7 @@
 #define COFFEE_USE_POSIX_BASENAME
 
 /* OpenSSL is difficult on Windows... */
-#if !defined(COFFEE_WINDOWS) && !defined(COFFEE_ANDROID)
+#if defined(COFFEE_ENABLE_SSL)
 #define ASIO_USE_SSL
 #endif
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#define COFFEE_LIMIT_INLINE
+//#define COFFEE_LIMIT_INLINE
 
 #include "plat/plat_compiler_identify.h"
 
