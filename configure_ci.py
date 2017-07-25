@@ -178,7 +178,7 @@ def travis_gen_config(build_info):
     dependencies = ''
 
     for dep in build_info['dependencies']:
-        dependencies = '%s;%s' % (dep, dependencies)
+        dependencies = '%s;%s' % (dep.split(":")[1], dependencies)
 
     return {
         'language': 'cpp',
