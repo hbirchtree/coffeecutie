@@ -26,7 +26,7 @@ function notify()
 
 function debug()
 {
-    #echo $@ > /dev/stderr
+    echo $@ > /dev/stderr
 }
 
 function requires()
@@ -139,18 +139,28 @@ function download_libraries()
 {
     notify "Downloading library ${1}:${BUILDVARIANT}"
     local LATEST_RELEASE="$(github_api list release ${1} | head -1 | cut -d'|' -f 3)"
+    echo Release $LATEST_RELEASE
     local CURRENT_ASSET="$(github_api list asset ${1}:${LATEST_RELEASE} | grep $BUILDVARIANT)"
+    echo Asset $CURRENT_ASSET
 
     [[ -z $CURRENT_ASSET ]] && die "Failed to find ${1} for $BUILDVARIANT"
 
     notify "Found assets: $CURRENT_ASSET (from $LATEST_RELEASE)"
     local ASSET_ID="$(echo $CURRENT_ASSET | cut -d'|' -f 3)"
-    local ASSET_FN="$(echo $CURRENT_ASSET | cut -d'|' -f 5)"
+    local ASSET_FN="$PWD/$(echo $CURRENT_ASSET | cut -d'|' -f 5)"
 
     github_api pull asset $1 $ASSET_ID
 
+    local PREV_WD="$PWD"
+
+    mkdir -p $COFFEE_DIR
+    cd $COFFEE_DIR
+
     tar -xvf "$ASSET_FN"
-    mv build $COFFEE_DIR
+    mv -f build/* .
+    rm -f "$ASSET_FN"
+
+    cd "$PREV_WD"
 }
 
 function build_standalone()

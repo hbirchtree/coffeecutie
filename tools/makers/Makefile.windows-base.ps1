@@ -62,10 +62,10 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     cd ..
 }
 
-function BuildProject($preload, $arch, $config) {
+function BuildProject($preload, $arch, $config, $BuildDir) {
     $arch = (CheckArch $arch)
 
-    & $CMakeBin --build $Pwd/build_"$preload"_$arch `
+    & $CMakeBin --build $BuildDir `
         --target install --config $config
 }
 

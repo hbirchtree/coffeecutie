@@ -68,7 +68,7 @@ ConfigProject "$SrcDir" `
 
 cd $CurrentDir
 
-BuildProject "windows-$Preload" $Arch $Config
+BuildProject "windows-$Preload" $Arch $Config "build_$target"
 
 TestProject "windows-$Preload" $Arch $Config
 
