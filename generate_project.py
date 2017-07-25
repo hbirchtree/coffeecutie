@@ -325,8 +325,8 @@ def main():
             'desktop': None,
             'internal/templates': None,
             'tools/makers/Makefile.*': 'ci',
-            'cmake/Templates/travis-build.sh': 'ci',
-            'cmake/Templates/travis-deps.sh': 'ci',
+            'tools/ci/*.sh': 'ci',
+            'tools/ci/*.ps1': 'ci',
             'configure_ci.py': None,
             'cmake/Templates/reconfig.py': 'rebuild.py'
         }
