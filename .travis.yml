@@ -12,7 +12,8 @@ compiles:
  - clang
 
 env:
-  MAKEFILE_DIR: tools/ci
+  global:
+   - MAKEFILE_DIR=tools/ci
   matrix:
    - BUILDVARIANT=ubuntu.amd64
    - BUILDVARIANT=android.armv7a
@@ -26,6 +27,7 @@ env:
    - BUILDVARIANT=ubuntu.i686
    - BUILDVARIANT=osx
    - BUILDVARIANT=ios
+
 
 matrix:
   exclude:
