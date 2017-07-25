@@ -36,4 +36,4 @@ branches:
 
 makefile_location: tools/makers
 template_location: cmake/Templates
-script_location: tools/travis
+script_location: tools/ci

@@ -85,7 +85,11 @@ def appveyor_gen_config(build_info):
 
     dependencies_list = ""
 
-    for e in build_info['dependencies']: dependencies_list += e.split(":")[1] + ";"
+    for e in build_info['dependencies']:
+        dependencies_list += e.split(":")[1] + ";"
+
+    script_loc = build_info['script_location'].replace('/', '\\')
+    make_loc = build_info['makefile_location'].replace('/', '\\')
 
     return {
         'version': '{build}',
@@ -107,15 +111,15 @@ def appveyor_gen_config(build_info):
         'environment': {
             'BUILD_DIR': 'C:\\project\\%APPVEYOR_PROJECT_SLUG%',
             'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
-            'MAKEFILE_DIR': 'tools\\makers',
+            'MAKEFILE_DIR': '%s' % (make_loc,),
             'BUILDVARIANT': 'win32.amd64',
             'DEPENDENCIES': dependencies_list
         },
         'install': [
-            {'ps': 'tools\\ci\\appveyor-deps.ps1'}
+            {'ps': '%s\\appveyor-deps.ps1' % script_loc}
         ],
         'build_script': [
-            {'ps': 'tools\\ci\\appveyor-build.ps1'}
+            {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
         'artifacts': [
             {'path': '*.zip', 'name': 'Libraries'}
@@ -128,7 +132,7 @@ def appveyor_gen_config(build_info):
                 'artifact': 'Libraries',
                 'prelease': True,
                 'on': {
-                    'appveyor_repo_tag': True
+                    'branch': deploy_info[1].pop()
                 },
             }
         ]
@@ -181,8 +185,8 @@ def travis_gen_config(build_info):
         'dist': 'trusty',
         'sudo': 'required',
         'services': ['docker'],
-        'before_script': ['%s/install-dependencies.sh' % script_loc],
-        'script': ['%s/build.sh' % script_loc],
+        'before_script': ['%s/travis-deps.sh' % script_loc],
+        'script': ['%s/travis-build.sh' % script_loc],
         'os': targets,
         'compiles': ['clang'],
         'env':
