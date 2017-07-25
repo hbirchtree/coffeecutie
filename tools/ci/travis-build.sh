@@ -26,7 +26,7 @@ function notify()
 
 function debug()
 {
-    echo $@ > /dev/stderr
+    #echo $@ > /dev/stderr
 }
 
 function requires()
