@@ -183,6 +183,7 @@ def travis_gen_config(build_info):
     return {
         'language': 'cpp',
         'dist': 'trusty',
+        'group': 'deprecated-2017Q2',
         'sudo': 'required',
         'services': ['docker'],
         'before_script': ['%s/travis-deps.sh' % script_loc],
