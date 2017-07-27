@@ -231,6 +231,7 @@ native-lib-root:
 	@test ! -d $(NATIVE_LIB_ROOT) && \
 	mkdir $(NATIVE_LIB_ROOT) && \
 	git clone \
+		--depth=1 \
 		"https://github.com/hbirchtree/native-library-bundle.git" \
 		$(NATIVE_LIB_ROOT) || \
 	true
@@ -239,6 +240,7 @@ $(RASPBERRY_SYSROOT):
 	@test ! -d $(RASPBERRY_SYSROOT) && \
 	mkdir $(RASPBERRY_SYSROOT) && \
 	git clone \
+		--depth=1 \
 		"https://github.com/hbirchtree/raspberry-sysroot.git" \
 		$(RASPBERRY_SYSROOT) || \
 	true
