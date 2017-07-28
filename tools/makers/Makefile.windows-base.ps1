@@ -69,10 +69,10 @@ function BuildProject($preload, $arch, $config, $BuildDir) {
         --target install --config $config
 }
 
-function TestProject($preload, $arch, $config) {
+function TestProject($preload, $arch, $config, $BuildDir) {
     $arch = (CheckArch $arch)
 
-    & $CMakeBin --build $Pwd/build_"$preload"_$arch `
+    & $CMakeBin --build $Pwd/$BuildDir `
         --target RUN_TESTS --config $config
 }
 

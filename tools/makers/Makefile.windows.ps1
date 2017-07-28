@@ -57,7 +57,7 @@ switch ($target)
 
 if ($Standalone) {
 	echo "-- Building as standalone project"
-	$ExtraArgs += ,"-DCOFFEE_ROOT_DIR=$CoffeeRoot"
+	$ExtraArgs += "-DCMAKE_INSTALL_PREFIX=out","-DCOFFEE_ROOT_DIR=$CoffeeRoot"
 }
 
 $CurrentDir = $Pwd
@@ -70,7 +70,7 @@ cd $CurrentDir
 
 BuildProject "windows-$Preload" $Arch $Config "build_$target"
 
-TestProject "windows-$Preload" $Arch $Config
+TestProject "windows-$Preload" $Arch $Config "build_$target"
 
 #ConfigProject "C:\tmp\jenkins\Windows-UWP_x86-64_Dbg\src" `
 #    "" "windows-win32_windows" "windows-generic" `
