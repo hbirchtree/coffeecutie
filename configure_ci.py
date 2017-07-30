@@ -6,13 +6,19 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-from os.path import isfile, dirname, realpath
+from os.path import isfile, dirname, realpath, curdir
 
 from argparse import ArgumentParser
 
 from collections import namedtuple
 
+from common import *
+
 _yaml_template = 'cmake/Templates/coffee-build.yml'
+
+
+DATAFORMAT_YAML = 0
+DATAFORMAT_TEXT = 1
 
 
 _TARGET_NAMES = {
@@ -26,7 +32,10 @@ _TARGET_NAMES = {
         'raspberry': ['armhf']
     },
     'osx': ['osx', 'ios'],
-    'windows': ['win32', 'uwp']
+    'windows': {
+        'win32': ['amd64'],
+        'uwp': ['amd64']
+    }
 }
 
 appveyor_targets = ['windows']
@@ -34,8 +43,14 @@ travis_targets = ['osx', 'ubuntu', 'fedora',
                   'emscripten', 'steam',
                   'android', 'maemo',
                   'raspberry']
+jenkins_targets = list(_TARGET_NAMES.keys()) + list(_TARGET_NAMES['linux'].keys())
 
 DeployInfo = namedtuple('DeployInfo', 'deploy_branches, build_branches')
+
+
+def assertm(condition, message='BAD ASSERT'):
+    if not condition:
+        raise AssertionError(message)
 
 
 def parse_yaml(source_file):
@@ -45,9 +60,121 @@ def parse_yaml(source_file):
 
 
 def render_yaml(source):
-    if len(source) < 1:
-        return ''
-    return dump(source, default_flow_style=False)
+    yaml_struct = dump(source, default_flow_style=False)
+    assert ( type(yaml_struct) == str)
+    return yaml_struct
+
+
+def git_get_origin(srcDir):
+    import re
+    with open('%s/.git/config' % srcDir, mode='r') as f:
+        data = f.read()
+
+        remote_patt = re.compile('\[remote .*')
+        prop_patt = re.compile('^\s+([a-z]+)\s*=\s*([\W\w]+)$')
+
+        block_started = True
+        for line in data.split('\n'):
+            if len(line) < 1:
+                continue
+            if remote_patt.match(line):
+                block_started = True
+                continue
+            if block_started:
+                match = prop_patt.findall(line)
+                if not match:
+                    block_started = False
+                    continue
+                if match[0][0] == 'url':
+                    return match[0][1]
+                print(match)
+
+
+        raise RuntimeError('Failed to parse')
+
+
+def try_get_key(d, k, v): # d=dictionary, k=key, v=default val
+    try:
+        return d[k]
+    except KeyError:
+        return v
+
+
+def create_env_matrix(current, build_info):
+    def get_targets(d1, d2, out, prefix):
+        def zip_lists(v1, v2, out, prefix):
+            for e1 in v1:
+                assertm (type(e1) == str, '%s != %s' % (type(d1), str))
+                for e2 in v2:
+                    assertm (type(e1) == type(e2), '%s != %s' % (type(e1), type(e2)))
+                    out.add(prefix + e1)
+
+        # Special cases:
+        present_types = [type(d1), type(d2)]
+
+        if list in present_types and dict in present_types:
+            dtype = None
+            ltype = None
+            if type(d1) == dict:
+                dtype = d1
+                ltype = d2
+            else:
+                dtype = d2
+                ltype = d1
+            for vnt in dtype:
+                if vnt in ltype:
+                    for arch in dtype[vnt]:
+                        out.add(prefix + vnt + '.' + arch)
+            return
+        elif dict in present_types and str in present_types:
+            dtype = None
+            stype = None
+            if type(d1) == dict:
+                dtype = d1
+                stype = d2
+            else:
+                dtype = d2
+                stype = d1
+            assertm (stype == 'all', 'Invalid string in dictionary')
+            get_targets(dtype, dtype, out, prefix)
+
+        assertm (type(d1) == type(d2), '%s != %s' % (type(d1), type(d2)))
+        if type(d1) == dict:
+            for k in d1:
+                if k in d2:
+                    v1 = d1[k]
+                    v2 = d2[k]
+                    sub_prefix = None
+                    if len(prefix) > 0:
+                        sub_prefix = prefix + '.' + k
+                    else:
+                        sub_prefix = k + '.'
+                    assertm (type(v1) == type(v2), '%s != %s' % (type(v1), type(v2)))
+                    if type(v1) == dict:
+                        get_targets(v1, v2, out, sub_prefix)
+                    elif type(v1) == list:
+                        zip_lists(v1, v2, out, sub_prefix)
+                    else:
+                        assertm (False, 'Bad type in array') # WRONG TYPE IN LIST
+        elif type(d1) == list:
+            zip_lists(d1, d2, out, prefix)
+
+
+    plat_data = try_get_key(build_info, 'platforms', [])
+    resident_data = _TARGET_NAMES[current]
+    prefix = ''
+
+    if current != 'linux':
+        plat_data = try_get_key(plat_data, current, [])
+        #prefix = current + '.'
+
+    out = set()
+
+    get_targets(resident_data, plat_data, out, prefix)
+
+    out = list(out)
+    out.sort()
+    return out
 
 
 def parse_buildinfo(file):
@@ -57,21 +184,18 @@ def parse_buildinfo(file):
 def create_deploy_info(build_info):
     deploy_data = DeployInfo([], [])
 
-    if 'branches' in build_info:
-        for e in build_info['branches']:
-            name = 'master'
-            if 'name' in e:
-                name = e['name']
-            if 'build' in e:
-                if e['build']:
-                    deploy_data.build_branches.append(name)
-            else:
+    for e in try_get_key(build_info, 'branches', []):
+        name = 'master'
+        if 'name' in e:
+            name = e['name']
+        if 'build' in e:
+            if e['build']:
                 deploy_data.build_branches.append(name)
-            if 'deploy' in e:
-                if e['deploy']:
-                    deploy_data.deploy_branches.append(name)
-            else:
-                pass
+        if 'deploy' in e:
+            if e['deploy']:
+                deploy_data.deploy_branches.append(name)
+        else:
+            pass
 
     if len(deploy_data.deploy_branches) == 0:
         deploy_data.deploy_branches.append('master')
@@ -85,7 +209,7 @@ def appveyor_gen_config(build_info):
 
     dependencies_list = ""
 
-    for e in build_info['dependencies']:
+    for e in try_get_key(build_info, 'dependencies', []):
         dependencies_list += e.split(":")[1] + ";"
 
     script_loc = build_info['script_location'].replace('/', '\\')
@@ -140,21 +264,13 @@ def appveyor_gen_config(build_info):
 
 
 def travis_gen_config(build_info):
-    def create_env_matrix(current, build_info):
-        out = []
-        for dist in _TARGET_NAMES[current]:
-            if dist not in build_info['platforms']:
-                continue
-            sub = _TARGET_NAMES[current]
-            if type(sub) == dict:
-                # These have sub-architectures, eg. amd64
-                for arch in sub[dist]:
-                    out.append('BUILDVARIANT=%s.%s' % (dist, arch))
-            elif type(sub) == list:
-                # These do not have architectures
-                out.append('BUILDVARIANT=%s' % (dist,))
-        out.sort()
-        return out
+    def create_travis_matrix(current, build_info):
+        env = create_env_matrix(current, build_info)
+
+        for i, var in enumerate(env):
+            env[i] = 'BUILDVARIANT=%s' % var
+
+        return env
 
     def create_build_matrix(targets, build_info):
         excludes = []
@@ -173,11 +289,11 @@ def travis_gen_config(build_info):
     build_matrix = create_build_matrix(targets, build_info)
     deploy_data = create_deploy_info(build_info)
 
-    script_loc = build_info['script_location']
-    make_loc = build_info['makefile_location']
-    dependencies = ''
+    script_loc = try_get_key(build_info, 'script_location', 'ci')
+    make_loc = try_get_key(build_info, 'makefile_location', 'ci')
 
-    for dep in build_info['dependencies']:
+    dependencies = ''
+    for dep in try_get_key(build_info, 'dependencies', []):
         dependencies = '%s;%s' % (dep.split(":")[1], dependencies)
 
     return {
@@ -215,18 +331,88 @@ def travis_gen_config(build_info):
     }
 
 
+def jenkins_gen_config(build_info):
+    def mk_groovy_list(l):
+        glist = ''
+        for e in l:
+            glist = "'%s', %s" % (e, glist)
+        return glist
+
+    def mk_shell_list(l):
+        glist = ''
+        for e in l:
+            glist = "%s;%s" % (e, glist)
+        return glist
+
+    def mk_dep_list(l):
+        for i, e in enumerate(l):
+            l[i] = e.split(':')[1]
+
+        return mk_shell_list(l)
+
+    def sshgit_to_https(url):
+        import re
+        patt = re.compile('git@(.+):(.+)')
+
+        match = patt.findall(url)
+
+        if match:
+            return 'https://%s/%s' % (match[0][0], match[0][1])
+        else:
+            return url
+
+    srcDir = realpath(dirname(__file__))
+    template_dir = '%s/cmake/Templates' % srcDir
+
+    deps = mk_dep_list(try_get_key(build_info, 'dependencies', []))
+
+    linux_targets = create_env_matrix('linux', build_info)
+    osx_targets = create_env_matrix('osx', build_info)
+    windows_targets = create_env_matrix('windows', build_info)
+
+    repo_url = git_get_origin(realpath(dirname(__file__)))
+
+    repo_url = sshgit_to_https(repo_url)
+
+    variables = {
+        'PROJECT_NAME': try_get_key(build_info, 'name', 'coffee'),
+
+        'LINUX_TARGETS': mk_groovy_list(linux_targets),
+        'OSX_TARGETS': mk_groovy_list(osx_targets),
+        'WINDOWS_TARGETS': mk_groovy_list(windows_targets),
+
+        'DEPENDENCIES': deps,
+        'REPO_URL': repo_url,
+
+        'SCRIPT_DIR': try_get_key(build_info, 'script_location', 'ci'),
+        'MAKEFILE_DIR': try_get_key(build_info, 'makefile_location', 'ci')
+    }
+
+    data = ''
+    with open('%s/JenkinsTemplate.groovy' % template_dir, mode='r') as f:
+        data = f.read()
+
+    return configure_string(data, variables)
+
+
 class ConfigCreator(object):
-    def __init__(self, func, name, targets, filename):
+    def __init__(self, func, name,
+                 targets, filename,
+                 data_format=DATAFORMAT_YAML):
         self.func = func
         self.name = name
         self.targets = targets
         self.filename = filename
+        self.data_format = data_format
 
     def compatible_with(self, target):
         return target in self.targets
 
     def get_filename(self):
         return self.filename
+
+    def get_data_format(self):
+        return self.data_format
 
     def __str__(self):
         return self.name
@@ -239,9 +425,14 @@ def generate_config_files(services, build_info):
     service_configs = {}
 
     for service in services:
-        for plat in build_info['platforms']:
+        for plat in try_get_key(build_info, 'platforms', []):
             if service.compatible_with(plat):
-                service_configs[service.get_filename()] = service(build_info)
+                try:
+                    service_configs[service.get_filename()] = (service(build_info), service)
+                except FileNotFoundError as e:
+                    print('%s: %s: %s: %s' % (service, e.__class__.__name__, e.filename, e.strerror))
+                except RuntimeError as e:
+                    print('%s: %s: %s' % (service, e.__class__.__name__, e.args))
                 break
 
     return service_configs
@@ -254,29 +445,62 @@ def main():
 
     default_file = '%s/%s' % (cur_dir, 'build.yml')
 
-    args.add_argument('input_file', metavar='input_file', type=str,
+    args.add_argument('input_file', metavar='input_file', type=str, nargs='*',
                       help='file used for configuring CI systems, defaults to %s' % default_file,
-                      default=default_file)
+                      default=default_file,)
     args.add_argument('--overwrite-ci-files', dest='overwrite', action='store_true',
                       help='overwrite existing CI config files',
                       default=False)
 
+    args.add_argument('--list-platforms', dest='list_plats', action='store_true',
+                      help='list valid platforms and architectures',
+                      default=False)
+
+    args.add_argument('--print-configuration', dest='print_config', action='store_true',
+                      help='print generated configuration to stdout',
+                      default=False)
+
     args = args.parse_args()
+
+    if args.list_plats:
+        print(render_yaml(_TARGET_NAMES))
+        exit(0)
 
     build_info = parse_yaml(args.input_file)
 
     ci_services = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.travis.yml'),
-                   ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml')]
+                   ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
+                   ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, 'build.groovy',
+                                 data_format=DATAFORMAT_TEXT)]
 
     configs = generate_config_files(ci_services, build_info)
 
     for config in configs:
         trg_file = '%s/%s' % (cur_dir, config)
-        if not args.overwrite and isfile(trg_file):
-            print('Skipping %s, it exists' % trg_file)
+
+        data, srv = configs[config]
+
+        if srv.data_format == DATAFORMAT_TEXT:
+            pass
+        elif srv.data_format == DATAFORMAT_YAML:
+            data = render_yaml(data)
+        else:
+            print('Unknown output data format: %s' % srv.data_format)
             continue
-        with open(trg_file, mode='w') as f:
-            f.write(render_yaml(configs[config]))
+
+        assert ( type(data) == str )
+
+        if args.print_config:
+            print('Configuration for %s:' % config)
+            print('-' * 80)
+            print(data)
+            print('-' * 80)
+        else:
+            if not args.overwrite and isfile(trg_file):
+                print('Skipping %s, it exists' % trg_file)
+                continue
+            with open(trg_file, mode='w') as f:
+                f.write(data)
 
 
 if __name__ == '__main__':

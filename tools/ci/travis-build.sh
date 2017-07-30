@@ -10,6 +10,7 @@ COFFEE_DIR="$BUILD_DIR/coffee_lib"
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
+GITHUBPY="$(dirname $0)/github_api.py"
 QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
 MAKEFILE="Makefile.standalone"
 
@@ -126,10 +127,16 @@ function github_curl_frontend()
 function github_api()
 {
     case "${TRAVIS_OS_NAME}" in
+    *)
+        # Python client
+        "$GITHUBPY" --api-token "$GITHUB_TOKEN" $@
+    ;;
     "linux")
-        docker run --rm -v $PWD:/data $QTHUB_DOCKER --api-token "$GITHUB_TOKEN" $@
+        # Qt/C++ client
+        docker run --rm -v "$PWD:/data" $QTHUB_DOCKER --api-token "$GITHUB_TOKEN" $@
     ;;
     *)
+        # curl/wget client
         github_curl_frontend $@
     ;;
     esac
@@ -153,8 +160,8 @@ function download_libraries()
 
     local PREV_WD="$PWD"
 
-    mkdir -p $COFFEE_DIR
-    cd $COFFEE_DIR
+    mkdir -p "$COFFEE_DIR"
+    cd "$COFFEE_DIR"
 
     tar -xvf "$ASSET_FN"
     mv -f build/* .
@@ -183,21 +190,33 @@ function build_standalone()
 
 function main()
 {
+    local LIB_ARCHIVE="$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz"
+
     case "${TRAVIS_OS_NAME}" in
     "linux")
-        requires make docker tar
-        build_standalone "$BUILDVARIANT"
-
-        tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
+        requires make docker tar python3
     ;;
     "osx")
-        requires make wget curl jq tar
+        requires make tar python3
         MAKEFILE="Makefile.mac"
-        build_standalone "$BUILDVARIANT"
-
-        tar -zcvf "$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz" -C ${BUILD_DIR} build/
+    ;;
+    *)
+        exit 1
     ;;
     esac
+
+    build_standalone "$BUILDVARIANT"
+    tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} build/
+
+    if [[ ! -z $MANUAL_DEPLOY ]]; then
+        local RELEASE="$(github_api list release $SLUG | head -1 | cut -d'|' -f 3)"
+
+        [[ -z $RELEASE ]] && die "No releases to upload to"
+
+        github_api push asset "$SLUG:$RELEASE" "$LIB_ARCHIVE"
+        github_api push status "$SLUG:$COMMIT_SHA" success "$BUILDVARIANT" \
+                --gh-context "$MANUAL_CONTEXT"
+    fi
 }
 
 main

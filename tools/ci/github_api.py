@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+
+from collections import namedtuple
+from argparse import ArgumentParser
+import requests
+import json
+
+
+REQUEST_POST = 0
+REQUEST_GET  = 1
+
+GH_TOKEN = None
+GH_API = 'https://api.github.com'
+
+_verbose = False
+args = None
+
+GithubRequestData = namedtuple('GithubRequestData',
+                               ['type', 'jsonData',
+                                'file'])
+
+
+def printerr(s):
+    print(s, file=open('/dev/stderr', mode='w'))
+
+
+def rest_request(url, headers, data, form=None, rtype=REQUEST_GET):
+    if _verbose:
+        printerr('Request: %s %s %s %s' % (rtype, url, headers, type(data)))
+        printerr(data)
+    #print(url, headers, data)
+    if rtype == REQUEST_GET:
+        return requests.get(url, headers=headers)
+    elif rtype == REQUEST_POST:
+        return requests.post(url, data=data, params=form, headers=headers)
+
+
+def gh_request(endpoint, data=None, rtype=REQUEST_GET, headers=None, form=None):
+    if headers is None:
+        headers = {}
+
+    if 'Accept' not in headers:
+        headers['Accept'] = 'application/vnd.github.v3+json'
+
+    if GH_TOKEN is not None:
+        headers['Authorization'] = 'token %s' % GH_TOKEN
+
+    resp = rest_request('%s%s' % (GH_API, endpoint),
+                        headers=headers,
+                        data=data,
+                        rtype=rtype,
+                        form=form)
+
+    if resp is None:
+        return
+
+    #print(resp.headers)
+
+    if 'Link' in resp.headers:
+        printerr('Found link in header')
+
+    return resp
+
+
+def gh_errorhandle(resp):
+    if resp.status_code >= 400:
+        printerr('Got response: %s' % resp.status_code)
+        printerr('Content: \n%s' % resp.content)
+        exit(1)
+
+
+def gh_get_release(repo, release):
+    release_resp = gh_request('/repos/%s/releases' % repo)
+    gh_errorhandle(release_resp)
+    release_data = json.loads(release_resp.content.decode())
+    for r in release_data:
+        if r['tag_name'] == release:
+            release_data = r
+            break
+    if type(release_data) == list:
+        return {}
+    return release_data
+
+
+def handle_cmd(action, cat, item, select):
+    if action == 'list':
+        if cat == 'release':
+            # Just get and format the list of releases
+            resp = gh_request('/repos/%s/releases' % item)
+            gh_errorhandle(resp)
+            j = json.loads(resp.content.decode())
+            for r in j:
+                print('%s|%s|%s' % (r['id'], item, r['tag_name']))
+        elif cat == 'asset':
+            item, release = item.split(':')
+            # First, get list of releases to get the release ID
+            release_data = gh_get_release(item, release)
+            release_id = release_data['id']
+            if release_id is None:
+                printerr('Release not found')
+                exit(1)
+            resp = gh_request('/repos/%s/releases/%s/assets' % (item, release_id))
+            gh_errorhandle(resp)
+            j = json.loads(resp.content.decode())
+            for a in j:
+                print('%s|%s|%s|%s|%s|%s' % (item, release,
+                                             a['id'],
+                                             release_data['name'],
+                                             a['name'],
+                                             ''))
+    elif action == 'pull':
+        if cat == 'asset':
+            resp = gh_request('/repos/%s/releases/assets/%s' % (item, select[0]))
+            gh_errorhandle(resp)
+            jdata = json.loads(resp.content.decode())
+            assert ('browser_download_url' in jdata and 'name' in jdata)
+            printerr('Downloading %s bytes to %s' % (jdata['size'], jdata['name']))
+            data = gh_request('/repos/%s/releases/assets/%s' % (item, select[0]),
+                              headers={'Accept': 'application/octet-stream'})
+            gh_errorhandle(data)
+            assert ('Content-Type' in data.headers and
+                    data.headers['Content-Type'] == 'application/octet-stream')
+            with open(jdata['name'], mode='wb') as f:
+                f.write(data.content)
+    elif action == 'push':
+        if GH_TOKEN is None:
+            raise RuntimeError('No API token, cannot push')
+
+        if cat == 'asset':
+
+            item, release = item.split(':')
+            release_data = gh_get_release(item, release)
+            assert ('id' in release_data)
+            print()
+            with open(select[0], mode='rb') as f:
+                data = f.read()
+                endpoint = release_data['upload_url']
+                endpoint = endpoint.replace('{?name,label}', '')
+                upload = rest_request('%s' % endpoint,
+                                      data=data,
+                                      rtype=REQUEST_POST,
+                                      headers={
+                                          'Content-Type': 'application/octet-stream',
+                                          'Content-Length': '%s' % len(data),
+                                          'Authorization': 'token %s' % GH_TOKEN
+                                      },
+                                      form={
+                                          'name': select[0]
+                                      })
+                gh_errorhandle(upload)
+        elif cat == 'status':
+            item, sha = item.split(':')
+            assert (len(select) == 2)
+
+            assert(select[0] in ['success', 'pending', 'error', 'failure'])
+            assert(len(select[1]) < 1024)
+
+            status_data = {
+                'state': select[0],
+                'description': select[1],
+                'context': args.context
+            }
+
+            if args.url is not None:
+                status_data['target_url'] = args.url
+
+            status = gh_request('/repos/%s/statuses/%s' % (item, sha),
+                                data=json.dumps(status_data),
+                                rtype=REQUEST_POST,
+                                headers={
+                                    'Content-Type': 'application/json'
+                                })
+            gh_errorhandle(status)
+
+
+def main():
+    global args
+
+    args = ArgumentParser('Github API tool')
+
+    args.add_argument('action', type=str,
+                      choices=['list', 'pull', 'push'],
+                      help='action to be performed on category')
+
+    args.add_argument('category', type=str,
+                      choices=['asset', 'release', 'status'],
+                      help='category of item to pull')
+
+    args.add_argument('item', type=str,
+                      help='item to be inspected/modified')
+
+    args.add_argument('selection', type=str, nargs='*',
+                      help='selection or target name')
+
+    args.add_argument('--api-token', dest='token', type=str,
+                      help='Github API token',
+                      default='')
+    args.add_argument('--gh-context', dest='context', type=str,
+                      help='Github API context, when identifying this system',
+                      default='Coffee GitHub Client')
+    args.add_argument('--gh-url', dest='url', type=str,
+                      help='Github API context url, if applicable',
+                      default=None)
+
+    args.add_argument('--verbose', dest='verbose', action='store_true',
+                      help='verbose mode')
+
+    args = args.parse_args()
+
+    global _verbose
+    _verbose = args.verbose
+
+    global GH_TOKEN
+    GH_TOKEN = args.token
+
+    handle_cmd(args.action, args.category, args.item, args.selection)
+
+if __name__ == '__main__':
+    main()

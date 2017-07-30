@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+
+from common import *
+
 from os.path import dirname, basename, realpath, curdir
 
 from os.path import isfile, isdir
@@ -11,11 +15,10 @@ from argparse import ArgumentParser
 import configure_ci
 
 
-ProcessResult = namedtuple('ProcessResult', 'code, stdout, stderr')
-
-
 _dry_run = True
 _verbose = False
+
+ProcessResult = namedtuple('ProcessResult', 'code, stdout, stderr')
 
 
 def run_command(program, args, workdir=curdir):
@@ -147,40 +150,14 @@ def copy_config_files(source_dir, target_dir, files):
                 git_add(trg_name)
 
 
-def configure_file(src_file, trg_file, variables):
-    if isfile(trg_file):
-        if _verbose:
-            print('Skipping configuration of %s, it already exists' % trg_file)
-        return
-
-    for var in variables:
-        assert ( type(variables[var]) == str )
-    src_text = None
-    if src_file is not None:
-        with open(src_file, 'r') as src_fd:
-            src_text = src_fd.read()
-            for var in variables:
-                src_text = src_text.replace('@%s@' % (var,),
-                                            variables[var])
-
-    if _dry_run or _verbose:
-        print('Writing file %s:' % trg_file)
-        print(src_text)
-        if _dry_run:
-            return
-
-    with open(trg_file, 'w') as trg_fd:
-        if src_text is not None:
-            trg_fd.write(src_text)
-    git_add(trg_file)
-
-
 def configure_all_files(src_dir, trg_dir, files, variables):
     for file in files:
         src_file = '%s/%s' % (src_dir, file)
         trg_file = '%s/%s' % (trg_dir, files[file])
 
-        configure_file(src_file, trg_file, variables)
+        configure_file(src_file, trg_file, variables, _verbose, _dry_run)
+        if not _dry_run:
+            git_add(trg_file)
 
 
 def create_ci_config_file(src_dir, trg_dir, template, args,
@@ -328,6 +305,8 @@ def main():
             'tools/ci/*.sh': 'ci',
             'tools/ci/*.ps1': 'ci',
             'configure_ci.py': None,
+            'common.py': None,
+            'cmake/Templates/JenkinsTemplate.groovy': None,
             'cmake/Templates/reconfig.py': 'rebuild.py'
         }
 

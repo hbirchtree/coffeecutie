@@ -6,6 +6,7 @@ case "${TRAVIS_OS_NAME}" in
     docker run --rm --privileged multiarch/qemu-user-static:register
 ;;
 "osx")
+    which python3 >/dev/null && brew install python3
     brew install sdl2 cmake ninja openssl swig@3.04 jq
     exit 0
 ;;
