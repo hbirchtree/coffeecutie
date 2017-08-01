@@ -10,6 +10,10 @@ COFFEE_DIR="$BUILD_DIR/coffee_lib"
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
+export BUILDVARIANT
+export MANUAL_DEPLOY
+export MANUAL_CONTEXT
+
 GITHUBPY="$CI_DIR/github_api.py"
 QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
 MAKEFILE="Makefile.standalone"
@@ -144,13 +148,13 @@ function github_api()
 
 function download_libraries()
 {
-    notify "Downloading library ${1}:${BUILDVARIANT}"
+    notify "Downloading library ${1}:${2}"
     local LATEST_RELEASE="$(github_api list release ${1} | head -1 | cut -d'|' -f 3)"
     echo Release $LATEST_RELEASE
-    local CURRENT_ASSET="$(github_api list asset ${1}:${LATEST_RELEASE} | grep $BUILDVARIANT)"
+    local CURRENT_ASSET="$(github_api list asset ${1}:${LATEST_RELEASE} | grep "${2}" | head -1)"
     echo Asset $CURRENT_ASSET
 
-    [[ -z $CURRENT_ASSET ]] && die "Failed to find ${1} for $BUILDVARIANT"
+    [[ -z $CURRENT_ASSET ]] && die "Failed to find ${1} for $2"
 
     notify "Found assets: $CURRENT_ASSET (from $LATEST_RELEASE)"
     local ASSET_ID="$(echo $CURRENT_ASSET | cut -d'|' -f 3)"
@@ -175,7 +179,7 @@ function build_standalone()
     OLD_IFS=$IFS
     IFS='\;'
     for dep in $DEPENDENCIES; do
-        IFS=$OLD_IFS download_libraries "$dep"
+        IFS=$OLD_IFS download_libraries "$dep" "$1"
     done
 
     make -f "$CI_DIR/$MAKEFILE" \
@@ -190,7 +194,8 @@ function build_standalone()
 
 function main()
 {
-    local LIB_ARCHIVE="$TRAVIS_BUILD_DIR/libraries_$BUILDVARIANT.tar.gz"
+    local BUILDVARIANT="$1"
+    local LIB_ARCHIVE="$TRAVIS_BUILD_DIR/libraries_$1.tar.gz"
 
     case "${TRAVIS_OS_NAME}" in
     "linux")
@@ -205,7 +210,7 @@ function main()
     ;;
     esac
 
-    build_standalone "$BUILDVARIANT"
+    build_standalone "$1"
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} build/
 
     if [[ ! -z $MANUAL_DEPLOY ]]; then
@@ -220,9 +225,10 @@ function main()
 
         cd $(dirname $LIB_ARCHIVE)
         github_api push asset "$SLUG:$RELEASE" "$(basename $LIB_ARCHIVE)"
-        github_api push status "$SLUG:$COMMIT_SHA" success "$BUILDVARIANT" \
+        github_api push status "$SLUG:$COMMIT_SHA" success "$1" \
                 --gh-context "$MANUAL_CONTEXT"
     fi
 }
 
-main
+notify "Building $BUILDVARIANT"
+main "$BUILDVARIANT"

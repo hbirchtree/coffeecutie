@@ -277,6 +277,8 @@ def travis_gen_config(build_info, srcDir):
         matrices = []
         for target in targets:
             matrix = create_env_matrix(target, build_info)
+            for i, e in enumerate(matrix):
+                matrix[i] = "BUILDVARIANT=%s" % e
             matrices += matrix
             for target2 in targets:
                 if target2 != target:
@@ -287,6 +289,7 @@ def travis_gen_config(build_info, srcDir):
     targets = ['linux', 'osx']
 
     build_matrix = create_build_matrix(targets, build_info)
+
     deploy_data = create_deploy_info(build_info)
 
     script_loc = try_get_key(build_info, 'script_location', 'ci')
@@ -309,7 +312,8 @@ def travis_gen_config(build_info, srcDir):
         'env':
             {
                 'global': ['MAKEFILE_DIR=%s' % make_loc,
-                           'DEPENDENCIES=%s' % dependencies],
+                           'DEPENDENCIES=%s' % dependencies,
+                           'PYTHONPATH=/usr/lib/python3/dist-packages'],
                 'matrix': build_matrix[0]
             },
         'matrix':
