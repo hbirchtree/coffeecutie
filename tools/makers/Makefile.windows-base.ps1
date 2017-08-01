@@ -60,7 +60,7 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
     cd ..
 }
 
-function BuildProject($preload, $arch, $config, $BuildDir) {
+function CompileProject($preload, $arch, $config, $BuildDir) {
     $arch = (CheckArch $arch)
 
     & $CMakeBin --build $BuildDir `

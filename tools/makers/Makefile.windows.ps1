@@ -72,7 +72,7 @@ function BuildProject($Target, $SourceDir,
 
     cd $CurrentDir
 
-    BuildProject "windows-$Preload" $Arch $Config "build_$target"
+    CompileProject "windows-$Preload" $Arch $Config "build_$target"
 
     TestProject "windows-$Preload" $Arch $Config "build_$target"
 }
