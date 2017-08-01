@@ -5,7 +5,7 @@ cd $env:BUILD_DIR
 
 # "Authorization" = "token $env:GITHUB_TOKEN";
 
-$INTERNAL_BUILD_DIR = "build_$BUILDVARIANT"
+$INTERNAL_BUILD_DIR = "build_$env:BUILDVARIANT"
 
 $LIBRARY_DIR = "$env:BUILD_DIR\libraries"
 
@@ -43,7 +43,7 @@ $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
 . $env:APPVEYOR_BUILD_FOLDER\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
     -CMakeBin $env:CMAKE_BIN
 
-BuildProject $BUILDVARIANT $env:APPVEYOR_BUILD_FOLDER $LIBRARY_DIR "Debug" $Args
+BuildProject $env:BUILDVARIANT $env:APPVEYOR_BUILD_FOLDER $LIBRARY_DIR "Debug" $Args
 
 cd "$env:APPVEYOR_BUILD_FOLDER"
 7z a libraries_$env:BUILDVARIANT.zip $env:BUILD_DIR\out
