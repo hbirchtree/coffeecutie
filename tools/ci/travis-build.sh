@@ -10,7 +10,7 @@ COFFEE_DIR="$BUILD_DIR/coffee_lib"
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-GITHUBPY="$(dirname $0)/github_api.py"
+GITHUBPY="$CI_DIR/github_api.py"
 QTHUB_DOCKER="hbirch/coffeecutie:qthub-client"
 MAKEFILE="Makefile.standalone"
 
@@ -209,11 +209,17 @@ function main()
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} build/
 
     if [[ ! -z $MANUAL_DEPLOY ]]; then
-        local RELEASE="$(github_api list release $SLUG | head -1 | cut -d'|' -f 3)"
+        local SLUG=$(git -C "$SOURCE_DIR" remote show -n origin | grep 'Fetch URL' | sed -e 's/^.*github.com[:\/]//g' -e 's/\.git//g')
+        [[ -z $SLUG ]] && die "Failed to get repo slug"
 
+        local COMMIT_SHA=$(git -C "$SOURCE_DIR" rev-parse HEAD)
+        [[ -z $COMMIT_SHA ]] && die "Failed to get commit SHA"
+
+        local RELEASE="$(github_api list release $SLUG | head -1 | cut -d'|' -f 3)"
         [[ -z $RELEASE ]] && die "No releases to upload to"
 
-        github_api push asset "$SLUG:$RELEASE" "$LIB_ARCHIVE"
+        cd $(dirname $LIB_ARCHIVE)
+        github_api push asset "$SLUG:$RELEASE" "$(basename $LIB_ARCHIVE)"
         github_api push status "$SLUG:$COMMIT_SHA" success "$BUILDVARIANT" \
                 --gh-context "$MANUAL_CONTEXT"
     fi

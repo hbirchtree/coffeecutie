@@ -204,7 +204,7 @@ def create_deploy_info(build_info):
             deploy_data.deploy_branches)
 
 
-def appveyor_gen_config(build_info):
+def appveyor_gen_config(build_info, srcDir):
     deploy_info = create_deploy_info(build_info)
 
     dependencies_list = ""
@@ -263,7 +263,7 @@ def appveyor_gen_config(build_info):
     }
 
 
-def travis_gen_config(build_info):
+def travis_gen_config(build_info, srcDir):
     def create_travis_matrix(current, build_info):
         env = create_env_matrix(current, build_info)
 
@@ -331,7 +331,7 @@ def travis_gen_config(build_info):
     }
 
 
-def jenkins_gen_config(build_info):
+def jenkins_gen_config(build_info, srcDir):
     def mk_groovy_list(l):
         glist = ''
         for e in l:
@@ -361,7 +361,6 @@ def jenkins_gen_config(build_info):
         else:
             return url
 
-    srcDir = realpath(dirname(__file__))
     template_dir = '%s/cmake/Templates' % srcDir
 
     deps = mk_dep_list(try_get_key(build_info, 'dependencies', []))
@@ -370,7 +369,7 @@ def jenkins_gen_config(build_info):
     osx_targets = create_env_matrix('osx', build_info)
     windows_targets = create_env_matrix('windows', build_info)
 
-    repo_url = git_get_origin(realpath(dirname(__file__)))
+    repo_url = git_get_origin(srcDir)
 
     repo_url = sshgit_to_https(repo_url)
 
@@ -421,14 +420,14 @@ class ConfigCreator(object):
         return self.func(*args)
 
 
-def generate_config_files(services, build_info):
+def generate_config_files(services, build_info, source_dir):
     service_configs = {}
 
     for service in services:
         for plat in try_get_key(build_info, 'platforms', []):
             if service.compatible_with(plat):
                 try:
-                    service_configs[service.get_filename()] = (service(build_info), service)
+                    service_configs[service.get_filename()] = (service(build_info, source_dir), service)
                 except FileNotFoundError as e:
                     print('%s: %s: %s: %s' % (service, e.__class__.__name__, e.filename, e.strerror))
                 except RuntimeError as e:
@@ -436,6 +435,41 @@ def generate_config_files(services, build_info):
                 break
 
     return service_configs
+
+
+def process_configs(configs, print_config=False, overwrite=False, cur_dir='.'):
+    for config in configs:
+        trg_file = '%s/%s' % (cur_dir, config)
+
+        data, srv = configs[config]
+
+        if srv.data_format == DATAFORMAT_TEXT:
+            pass
+        elif srv.data_format == DATAFORMAT_YAML:
+            data = render_yaml(data)
+        else:
+            print('Unknown output data format: %s' % srv.data_format)
+            continue
+
+        assert ( type(data) == str )
+
+        if print_config:
+            print('Configuration for %s:' % config)
+            print('-' * 80)
+            print(data)
+            print('-' * 80)
+        else:
+            if not overwrite and isfile(trg_file):
+                print('Skipping %s, it exists' % trg_file)
+                continue
+            with open(trg_file, mode='w') as f:
+                f.write(data)
+
+
+CI_SERVICES = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.travis.yml'),
+               ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
+               ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, 'build.groovy',
+                             data_format=DATAFORMAT_TEXT)]
 
 
 def main():
@@ -468,39 +502,12 @@ def main():
 
     build_info = parse_yaml(args.input_file)
 
-    ci_services = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.travis.yml'),
-                   ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
-                   ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, 'build.groovy',
-                                 data_format=DATAFORMAT_TEXT)]
+    configs = generate_config_files(CI_SERVICES, build_info, realpath(dirname(__file__)))
 
-    configs = generate_config_files(ci_services, build_info)
-
-    for config in configs:
-        trg_file = '%s/%s' % (cur_dir, config)
-
-        data, srv = configs[config]
-
-        if srv.data_format == DATAFORMAT_TEXT:
-            pass
-        elif srv.data_format == DATAFORMAT_YAML:
-            data = render_yaml(data)
-        else:
-            print('Unknown output data format: %s' % srv.data_format)
-            continue
-
-        assert ( type(data) == str )
-
-        if args.print_config:
-            print('Configuration for %s:' % config)
-            print('-' * 80)
-            print(data)
-            print('-' * 80)
-        else:
-            if not args.overwrite and isfile(trg_file):
-                print('Skipping %s, it exists' % trg_file)
-                continue
-            with open(trg_file, mode='w') as f:
-                f.write(data)
+    process_configs(configs,
+                    print_config=args.print_config,
+                    overwrite=args.overwrite,
+                    cur_dir=realpath(dirname(__file__)))
 
 
 if __name__ == '__main__':

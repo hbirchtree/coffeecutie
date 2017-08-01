@@ -162,17 +162,25 @@ def configure_all_files(src_dir, trg_dir, files, variables):
 
 def create_ci_config_file(src_dir, trg_dir, template, args,
                           ci_services=[]):
+    from copy import deepcopy
+
     src_file = '%s/%s' % (src_dir, template)
     trg_file = '%s/build.yml' % (trg_dir,)
 
-    structure = configure_ci.parse_yaml(src_file)
+    structure = None
+    if isfile(trg_file):
+        structure = configure_ci.parse_yaml(trg_file)
+        structure['engine_version'] = git_get_commit(args.repo_dir)
+    else:
+        structure = configure_ci.parse_yaml(src_file)
 
-    structure['name'] = args.project_name
-    structure['display_name'] = args.display_name
-    structure['engine_version'] = git_get_commit(args.repo_dir)
+        structure['name'] = args.project_name
+        structure['display_name'] = args.display_name
+        structure['engine_version'] = git_get_commit(args.repo_dir)
 
     config_files = configure_ci.generate_config_files(ci_services,
-                                                      structure)
+                                                      deepcopy(structure),
+                                                      trg_dir)
 
     yaml_data = configure_ci.render_yaml(structure)
 
@@ -186,19 +194,17 @@ def create_ci_config_file(src_dir, trg_dir, template, args,
         if _dry_run:
             return
 
-    if not isfile(trg_file):
-        with open(trg_file, mode='w') as trg_fd:
-            trg_fd.write(yaml_data)
-        git_add(trg_file)
+    configure_ci.process_configs(config_files,
+                                 print_config=_verbose,
+                                 overwrite=not _dry_run,
+                                 cur_dir=trg_dir)
 
-    for config in config_files:
-        ci_file = '%s/%s' % (trg_dir, config)
-        if isfile(ci_file):
-            continue
-        yaml_config = configure_ci.render_yaml(config_files[config])
-        with open(ci_file, mode='w') as ci_fd:
-            ci_fd.write(yaml_config)
-        git_add(ci_file)
+    if not _dry_run:
+        for config in config_files:
+            git_add('%s/%s' % (trg_dir, config))
+        with open(trg_file, mode='w') as f:
+            f.write(yaml_data)
+        git_add(trg_file)
 
 
 project_name_compliance = r'[A-Za-z_][A-Za-z0-9_]+'
@@ -303,6 +309,7 @@ def main():
             'internal/templates': None,
             'tools/makers/Makefile.*': 'ci',
             'tools/ci/*.sh': 'ci',
+            'tools/ci/github_api.py': 'ci',
             'tools/ci/*.ps1': 'ci',
             'configure_ci.py': None,
             'common.py': None,
@@ -331,15 +338,6 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
         'local.yml'
     ]
 
-    services = {
-        configure_ci.ConfigCreator(configure_ci.travis_gen_config,
-                                   'Travis CI', configure_ci.travis_targets,
-                                   '.travis.yml'),
-        configure_ci.ConfigCreator(configure_ci.appveyor_gen_config,
-                                   'Appveyor CI', configure_ci.appveyor_targets,
-                                   'appveyor.yml'),
-    }
-
     configurable_files = {
         'cmake/Templates/TemplateProject.txt': 'CMakeLists.txt',
         'cmake/Templates/main.cpp': 'src/main.cpp'
@@ -356,7 +354,7 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
     configure_file(None, '%s/%s/RESOURCES' % (target_dir, resource_dir), {})
 
     create_ci_config_file(repo_dir, target_dir, 'cmake/Templates/coffee-build.yml',
-                          args=args, ci_services=services)
+                          args=args, ci_services=configure_ci.CI_SERVICES)
 
     # Leave local configuration for quick reconfiguration
 
@@ -375,6 +373,8 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
     for f in ('%s/rebuild.py' % target_dir, '%s/configure_ci.py' % target_dir):
         run_command('add_execute', [f])
         git_add(f)
+
+    print(run_command('git', ['status'], target_dir).stdout)
 
     return 0
 

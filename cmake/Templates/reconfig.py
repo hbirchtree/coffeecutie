@@ -66,4 +66,6 @@ if __name__ == '__main__':
 
     #print('Executing %s %s' % (executable, args))
 
-    exit(call(args=args))
+    STDOUT = open('/dev/stdout', mode='w')
+
+    exit(call(args=args, stdout=STDOUT, stderr=STDOUT))
