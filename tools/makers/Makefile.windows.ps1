@@ -9,9 +9,14 @@ param(
 	)
 #$ErrorActionPreference = "Stop"
 
-$ScriptPath = (split-path -parent $MyInvocation.MyCommand.Definition)
+try {
+    $ScriptPath = (split-path -parent $MyInvocation.MyCommand.Definition)
 
-. $ScriptPath\Makefile.windows-base.ps1 -CMakeBin "$CMakeBin"
+    . $ScriptPath\Makefile.windows-base.ps1 -CMakeBin "$CMakeBin"
+}
+catch {
+    . $env:APPVEYOR_BUILD_FOLDER\$env:MAKEFILE_DIR\Makefile.windows-base.ps1 -CMakeBin "$CMakeBin"
+}
 
 $SrcDir = $sourcedir
 $Toolchain = "win32"
@@ -57,8 +62,10 @@ switch ($target)
 
 if ($Standalone) {
 	echo "-- Building as standalone project"
-	$ExtraArgs += "-DCMAKE_INSTALL_PREFIX=out","-DCOFFEE_ROOT_DIR=$CoffeeRoot"
+	$ExtraArgs += ,"-DCOFFEE_ROOT_DIR=$CoffeeRoot"
 }
+
+$ExtraArgs += ,"-DCMAKE_INSTALL_PREFIX=out"
 
 $CurrentDir = $Pwd
 
