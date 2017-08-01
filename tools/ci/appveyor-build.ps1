@@ -1,3 +1,5 @@
+$PrevPwd = $Pwd
+
 mkdir $env:BUILD_DIR
 cd $env:BUILD_DIR
 
@@ -6,9 +8,6 @@ cd $env:BUILD_DIR
 $INTERNAL_BUILD_DIR = "build_$BUILDVARIANT"
 
 $LIBRARY_DIR = "$env:BUILD_DIR\libraries"
-
-$BUILDVARIANT = "win32.amd64"
-$DEPENDENCIES = "hbirchtree/coffeecutie;hbirchtree/coffeecutie-imgui"
 
 ForEach($dep in $DEPENDENCIES -split ";") {
     try{
@@ -38,10 +37,15 @@ ForEach($dep in $DEPENDENCIES -split ";") {
     }
 }
 
-& $env:APPVEYOR_BUILD_FOLDER\$env:MAKEFILE_DIR\Makefile.windows.ps1`
-     -SourceDir $env:APPVEYOR_BUILD_FOLDER -Target $env:BUILDVARIANT`
-     -Config Debug -CoffeeRoot $LIBRARY_DIR -CMakeBin $env:CMAKE_BIN`
-     -ExtraArgs ("-DCOFFEE_BUILD_OPENAL=OFF","-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON")
+$Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
+         "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON")
+
+. $env:APPVEYOR_BUILD_FOLDER\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
+    -CMakeBin $env:CMAKE_BIN
+
+BuildProject $BUILDVARIANT $env:APPVEYOR_BUILD_FOLDER $LIBRARY_DIR "Debug" $Args
 
 cd "$env:APPVEYOR_BUILD_FOLDER"
 7z a libraries_$env:BUILDVARIANT.zip $env:BUILD_DIR\out
+
+cd $PrevPwd

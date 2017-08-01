@@ -43,13 +43,11 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 
     mkdir -Force $BuildDir
     cd $BuildDir
-
     
     DownloadNativeLibs
 
     $Generator = "Visual Studio 14 2015 $arch".Trim()
 
-	echo $ExtraArgs
     & $CMakeBin $SrcDir `
         -G"$Generator" `
         -DCMAKE_TOOLCHAIN_FILE="$SrcDir/cmake/Toolchains/$toolchain.toolchain.cmake" `
