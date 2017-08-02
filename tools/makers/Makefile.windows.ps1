@@ -13,6 +13,7 @@ catch {
 }
 
 function BuildProject($Target, $SourceDir,
+                      $BuildDir,
                       $CoffeeRoot, $Config,
                       $ExtraArgs)
 {
@@ -68,11 +69,11 @@ function BuildProject($Target, $SourceDir,
 
     ConfigProject "$SrcDir" `
         "$Arch" windows-"$Toolchain"_windows "windows-$Preload" `
-        "$LibType" (DownloadAngle) $ExtraArgs "build_$target"
+        "$LibType" (DownloadAngle) $ExtraArgs $BuildDir
 
     cd $CurrentDir
 
-    CompileProject "windows-$Preload" $Arch $Config "build_$target"
+    CompileProject "windows-$Preload" $Arch $Config $BuildDir
 
-    TestProject "windows-$Preload" $Arch $Config "build_$target"
+    TestProject "windows-$Preload" $Arch $Config $BuildDir
 }

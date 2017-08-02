@@ -56,8 +56,6 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
         -C"$SrcDir/cmake/Preload/$preload.cmake" `
         -DCMAKE_INSTALL_PREFIX="$Pwd/Out" `
         $ExtraArgs
-
-    cd ..
 }
 
 function CompileProject($preload, $arch, $config, $BuildDir) {
