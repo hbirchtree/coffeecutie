@@ -20,7 +20,6 @@ env:
    - BUILDVARIANT=android.armv8a
    - BUILDVARIANT=fedora.amd64
    - BUILDVARIANT=maemo.armv7a
-   - BUILDVARIANT=raspberry.armhf
    - BUILDVARIANT=steam.amd64
    - BUILDVARIANT=emscripten.asmjs
    - BUILDVARIANT=emscripten.wasm

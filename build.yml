@@ -10,8 +10,6 @@ platforms:
       - armhf
     fedora:
       - amd64
-    raspberry:
-      - armhf
     steam:
       - amd64
     android:
@@ -31,7 +29,9 @@ branches:
   - name: master
     build: true
     deploy: true
-  - name: testing
+  - name: /^testing.*$/
+    build: true
+  - name: /^feature.*$/
     build: true
 
 makefile_location: tools/makers

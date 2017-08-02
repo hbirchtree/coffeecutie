@@ -250,7 +250,7 @@ def appveyor_gen_config(build_info, srcDir):
         ],
         'deploy': [
             {
-                'provider': 'releases',
+                'provider': 'GitHub',
                 'release': 'Appveyor Build $(APPVEYOR_BUILD_NUMBER)',
                 'description': 'Automatic build by Appveyor',
                 'artifact': 'Libraries',
