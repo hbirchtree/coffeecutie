@@ -106,8 +106,9 @@ def create_env_matrix(current, build_info):
             for e1 in v1:
                 assertm (type(e1) == str, '%s != %s' % (type(d1), str))
                 for e2 in v2:
-                    assertm (type(e1) == type(e2), '%s != %s' % (type(e1), type(e2)))
-                    out.add(prefix + e1)
+                    if e1 == e2:
+                        assertm (type(e1) == type(e2), '%s != %s' % (type(e1), type(e2)))
+                        out.add(prefix + e1)
 
         # Special cases:
         present_types = [type(d1), type(d2)]
@@ -335,7 +336,7 @@ def travis_gen_config(build_info, srcDir):
     }
 
 
-def jenkins_gen_config(build_info, srcDir):
+def jenkins_gen_config(build_info, src_dir):
     def mk_groovy_list(l):
         glist = ''
         for e in l:
@@ -365,7 +366,7 @@ def jenkins_gen_config(build_info, srcDir):
         else:
             return url
 
-    template_dir = '%s/cmake/Templates' % srcDir
+    template_dir = '%s/cmake/Templates' % src_dir
 
     deps = mk_dep_list(try_get_key(build_info, 'dependencies', []))
 
@@ -373,7 +374,7 @@ def jenkins_gen_config(build_info, srcDir):
     osx_targets = create_env_matrix('osx', build_info)
     windows_targets = create_env_matrix('windows', build_info)
 
-    repo_url = git_get_origin(srcDir)
+    repo_url = git_get_origin(src_dir)
 
     repo_url = sshgit_to_https(repo_url)
 
