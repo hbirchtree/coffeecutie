@@ -31,7 +31,7 @@ deploy:
   artifact: Libraries
   prerelease: true
   on:
-    appveyor_repo_tag: true
+    branch: master
   auth_token:
       secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 
