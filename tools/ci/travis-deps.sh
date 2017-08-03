@@ -8,8 +8,9 @@ case "${TRAVIS_OS_NAME}" in
     sudo apt-get -qy install python3-requests python3-yaml
 ;;
 "osx")
-    which python3 >/dev/null && brew install python3
+    brew install python3
     brew install sdl2 cmake ninja openssl swig@3.04 jq
+    pip3 install pyyaml requests
     exit 0
 ;;
 esac
