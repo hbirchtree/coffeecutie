@@ -40,7 +40,7 @@ android: android-gen-preloads android-get-nativelibs
 		-e BUILDER_NAME=android-builder \
 		-e DOCKER_CONFIG=android \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)" \
-		-e CMAKE_GEN="Unix\ Makefiles" \
+		-e CMAKE_GEN="Ninja" \
 		-e PRELOAD_FILE=$(DOCK_PRLD_DIR)/$(TARGET).cmake \
 		-e TOOLCHAIN=$(TOOLCHAIN_FILE) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
