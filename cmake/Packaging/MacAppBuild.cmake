@@ -105,6 +105,8 @@ macro( MACAPP_PACKAGE
                             XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++"
                             )
         
+        target_link_libraries ( ${TARGET} ${SDL2_LIBRARY} ${SDL2_LIBRARIES} )
+        
         
         set ( IOS_NAME "${TITLE}" )
         set ( IOS_IDENTIFIER "${TITLE}" )
@@ -148,13 +150,23 @@ macro( MACAPP_PACKAGE
         MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
         )
 
-    install(
-        TARGETS
-        ${TARGET}
+    if(IOS)
+        install(
+            TARGETS
+            ${TARGET}
 
-        DESTINATION
-        ${CMAKE_PACKAGED_OUTPUT_PREFIX}/apple-osx
-        )
+            DESTINATION
+            ${CMAKE_PACKAGED_OUTPUT_PREFIX}/apple-ios
+            )
+    else()
+        install(
+            TARGETS
+            ${TARGET}
+
+            DESTINATION
+            ${CMAKE_PACKAGED_OUTPUT_PREFIX}/apple-osx
+            )
+    endif()
     #    else()
     #        set ( APP_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TITLE}.app" )
 
