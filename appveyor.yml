@@ -22,6 +22,8 @@ deploy:
   prelease: true
   provider: GitHub
   release: Appveyor Build $(APPVEYOR_BUILD_NUMBER)
+  auth_token:
+    secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 environment:
   BUILDVARIANT: win32.amd64
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
