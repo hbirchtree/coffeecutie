@@ -101,8 +101,6 @@ macro( MACAPP_PACKAGE
     if(IOS)
         set_target_properties ( ${TARGET} PROPERTIES
                             XCODE_PRODUCT_TYPE "com.apple.product-type.application"
-                            XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11"
-                            XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++"
                             )
         
         target_link_libraries ( ${TARGET} ${SDL2_LIBRARY} ${SDL2_LIBRARIES} )
