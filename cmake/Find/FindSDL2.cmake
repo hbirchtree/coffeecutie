@@ -158,9 +158,9 @@ IF(SDL2_LIBRARY_TEMP)
   # "real" variable in one-shot.
   IF(APPLE AND NOT IOS)
     SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP} "-framework Cocoa")
-  ELSE()
+  ELSEIF(IOS)
     SET(SDL2_LIBRARIES_TEMP ${SDL2_LIBRARIES_TEMP} "-framework AVFoundation")
-  ENDIF(APPLE)
+  ENDIF()
 
   # For threads, as mentioned Apple doesn't need this.
   # In fact, there seems to be a problem if I used the Threads package
