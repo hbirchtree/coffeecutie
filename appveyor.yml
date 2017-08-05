@@ -1,37 +1,35 @@
-version: '{build}'
-skip_tags: true
+artifacts:
+- name: Libraries
+  path: '*.zip'
 branches:
   only:
   - master
-  - /testing.*/
-  - /feature.*/
-configuration:
-- Debug
-platform: x64
-clone_depth: 1
-clone_script:
-- cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%
-- cmd: git checkout -qf %APPVEYOR_REPO_COMMIT%
-environment:
-  BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
-  CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
-  MAKEFILE_DIR: tools\makers
-  BUILDVARIANT: win32.amd64
-install:
-- ps: tools\ci\appveyor-deps.ps1
+  - /^testing.*$/
+  - /^feature.*$/
 build_script:
 - ps: tools\ci\appveyor-build.ps1
-artifacts:
-- path: '*.zip'
-  name: Libraries
+clone_script:
+- cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
+    %APPVEYOR_BUILD_FOLDER%
+- cmd: git checkout -qf %APPVEYOR_REPO_COMMIT%
+configuration:
+- Debug
 deploy:
-- provider: GitHub
-  release: Appveyor Build $(APPVEYOR_BUILD_NUMBER)
+- artifact: Libraries
   description: Automatic build by Appveyor
-  artifact: Libraries
-  prerelease: true
-  on:
+  'on':
     branch: master
-  auth_token:
-      secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
-
+  prelease: true
+  provider: GitHub
+  release: Appveyor Build $(APPVEYOR_BUILD_NUMBER)
+environment:
+  BUILDVARIANT: win32.amd64
+  BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
+  CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
+  DEPENDENCIES: ''
+  MAKEFILE_DIR: tools\makers
+install:
+- ps: tools\ci\appveyor-deps.ps1
+platform: x64
+skip_tags: true
+version: '{build}'

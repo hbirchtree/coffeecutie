@@ -31,7 +31,10 @@ _TARGET_NAMES = {
         'maemo': ['armv7a'],
         'raspberry': ['armhf']
     },
-    'osx': ['osx', 'ios'],
+    'osx': [
+        'osx',
+        'ios',
+        'ios.x86_64'],
     'windows': {
         'win32': ['amd64'],
         'uwp': ['amd64']
@@ -224,7 +227,6 @@ def appveyor_gen_config(build_info, srcDir):
         },
         'configuration': ['Debug'],
         'platform': 'x64',
-        'clone_depth': 1,
         'clone_script': [
             {
                 'cmd': 'git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%',
@@ -236,7 +238,7 @@ def appveyor_gen_config(build_info, srcDir):
         'environment': {
             'BUILD_DIR': 'C:\\project\\%APPVEYOR_PROJECT_SLUG%',
             'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
-            'MAKEFILE_DIR': '%s' % (make_loc,),
+            'MAKEFILE_DIR': make_loc,
             'BUILDVARIANT': 'win32.amd64',
             'DEPENDENCIES': dependencies_list
         },
@@ -306,6 +308,9 @@ def travis_gen_config(build_info, srcDir):
         'group': 'deprecated-2017Q2',
         'sudo': 'required',
         'services': ['docker'],
+        'notifications': {
+            'email': True
+        },
         'before_script': ['%s/travis-deps.sh' % script_loc],
         'script': ['%s/travis-build.sh' % script_loc],
         'os': targets,

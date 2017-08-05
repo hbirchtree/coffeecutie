@@ -1,78 +1,73 @@
-language: cpp
-dist: trusty
-sudo: required
-group: deprecated-2017Q2
-services:
- - docker
-
-os:
- - linux
- - osx
-compiles:
- - clang
-
-env:
-  global:
-   - MAKEFILE_DIR=tools/makers
-  matrix:
-   - BUILDVARIANT=ubuntu.amd64
-   - BUILDVARIANT=android.armv7a
-   - BUILDVARIANT=android.armv8a
-   - BUILDVARIANT=fedora.amd64
-   - BUILDVARIANT=maemo.armv7a
-   - BUILDVARIANT=steam.amd64
-   - BUILDVARIANT=emscripten.asmjs
-   - BUILDVARIANT=emscripten.wasm
-   - BUILDVARIANT=ubuntu.i686
-   - BUILDVARIANT=osx
-   - BUILDVARIANT=ios
-
-
-matrix:
-  exclude:
-  - os: linux
-    env: BUILDVARIANT=osx
-  - os: linux
-    env: BUILDVARIANT=ios
-  - os: osx
-    env: BUILDVARIANT=ubuntu.amd64
-  - os: osx
-    env: BUILDVARIANT=android.armv7a
-  - os: osx
-    env: BUILDVARIANT=android.armv8a
-  - os: osx
-    env: BUILDVARIANT=fedora.amd64
-  - os: osx
-    env: BUILDVARIANT=maemo.armv7a
-  - os: osx
-    env: BUILDVARIANT=raspberry.armhf
-  - os: osx
-    env: BUILDVARIANT=steam.amd64
-  - os: osx
-    env: BUILDVARIANT=emscripten.asmjs
-  - os: osx
-    env: BUILDVARIANT=emscripten.wasm
-  - os: osx
-    env: BUILDVARIANT=ubuntu.i686
-
 before_script:
- - tools/ci/travis-deps.sh
-
-script:
- - tools/ci/travis-build.sh
-
-notifications:
-  email: true
-
+- tools/ci/travis-deps.sh
 branches:
   only:
-   - master
-   - /^testing.*$/
-
+  - master
+  - /^testing.*$/
+  - /^feature.*$/
+compiles:
+- clang
 deploy:
-  provider: releases
-  api_key: "${GITHUB_TOKEN}"
-  file: "libraries_$BUILDVARIANT.tar.gz"
-  skip_cleanup: true
-  on:
+  api_key: ${GITHUB_TOKEN}
+  file: libraries_$BUILDVARIANT.tar.gz
+  'on':
     branch: master
+  provider: releases
+  skip_cleanup: true
+dist: trusty
+env:
+  global:
+  - MAKEFILE_DIR=tools/makers
+  - DEPENDENCIES=
+  - PYTHONPATH=/usr/lib/python3/dist-packages
+  matrix:
+  - BUILDVARIANT=android.armv7a
+  - BUILDVARIANT=android.armv7a.kitkat
+  - BUILDVARIANT=android.armv8a
+  - BUILDVARIANT=emscripten.asmjs
+  - BUILDVARIANT=emscripten.wasm
+  - BUILDVARIANT=fedora.amd64
+  - BUILDVARIANT=maemo.armv7a
+  - BUILDVARIANT=steam.amd64
+  - BUILDVARIANT=ubuntu.amd64
+  - BUILDVARIANT=ubuntu.i686
+  - BUILDVARIANT=ios.x86_64
+  - BUILDVARIANT=osx
+group: deprecated-2017Q2
+language: cpp
+matrix:
+  exclude:
+  - env: BUILDVARIANT=android.armv7a
+    os: osx
+  - env: BUILDVARIANT=android.armv7a.kitkat
+    os: osx
+  - env: BUILDVARIANT=android.armv8a
+    os: osx
+  - env: BUILDVARIANT=emscripten.asmjs
+    os: osx
+  - env: BUILDVARIANT=emscripten.wasm
+    os: osx
+  - env: BUILDVARIANT=fedora.amd64
+    os: osx
+  - env: BUILDVARIANT=maemo.armv7a
+    os: osx
+  - env: BUILDVARIANT=steam.amd64
+    os: osx
+  - env: BUILDVARIANT=ubuntu.amd64
+    os: osx
+  - env: BUILDVARIANT=ubuntu.i686
+    os: osx
+  - env: BUILDVARIANT=ios.x86_64
+    os: linux
+  - env: BUILDVARIANT=osx
+    os: linux
+notifications:
+  email: true
+os:
+- linux
+- osx
+script:
+- tools/ci/travis-build.sh
+services:
+- docker
+sudo: required
