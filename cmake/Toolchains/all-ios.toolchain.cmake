@@ -217,6 +217,13 @@ set ( CMAKE_FIND_ROOT_PATH
 	${NATIVE_LIBRARY_DIR}
     )
 
+set ( CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++0x" 
+		CACHE STRING "" )
+set ( CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++" 
+		CACHE STRING "" )
+set ( CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvm.clang.1_0.compiler"
+		CACHE STRING "" )
+
 set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++" )
 
 set ( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -std=c++11 -stdlib=libc++" )
