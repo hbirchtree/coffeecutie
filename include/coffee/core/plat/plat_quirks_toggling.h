@@ -62,7 +62,7 @@
 
 /* General configuration changers */
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
-#define COFFEE_GLES20_MODE
+//#define COFFEE_GLES20_MODE
 
 /* Minor prohibiting flags */
 #define COFFEE_SLAP_LOWMEM
@@ -151,7 +151,8 @@
 #define COFFEE_ONLY_GLES20
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_GLES20_MODE)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)\
+    || defined(COFFEE_GLES20_MODE)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20
 #endif
