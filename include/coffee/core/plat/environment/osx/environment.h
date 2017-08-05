@@ -24,15 +24,21 @@ struct MacEnv : Posix::PosixEnvironmentFun
     static CString GetUserData(cstring orgname, cstring appname);
 };
 
+#if defined(COFFEE_APPLE_DESKTOP)
 struct MacColorMap : Posix::PosixTerminalColorCodes
 {
 };
+#endif
 
 }
 }
 
 using Env_ = Environment::Mac::MacEnv;
+#if defined(COFFEE_APPLE_DESKTOP)
 using ColorMap_ = Environment::Mac::MacColorMap;
+#else
+using ColorMap_ = Environment::EnvColorCodes;
+#endif
 
 }
 #endif

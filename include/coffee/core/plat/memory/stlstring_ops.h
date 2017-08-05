@@ -74,19 +74,19 @@ namespace Convert{
     FMT_STR(bits, u, prefix); \
     FMT_STR(bits, i, prefix); \
     FMT_STR(bits, x, prefix);
-
-#if defined(COFFEE_ARCH_LLP64)
+    
     FMT_PAIR(8,  "hh")
     FMT_PAIR(16, "h")
     FMT_PAIR(32, "")
+    
+#if defined(COFFEE_ARCH_LLP64)
     FMT_PAIR(64, "ll")
 #else
-    FMT_PAIR(8,  "hh")
-    FMT_PAIR(16, "h")
-    FMT_PAIR(32, "")
     FMT_PAIR(64, "l")
 #endif
 #endif
+    
+FMT_TYPE fmt_size_t_fmt = "%zu";
 
 #undef FMT_TYPE
 #undef FMT_STR
@@ -128,6 +128,8 @@ SCALAR_CONVERT(scalarftostring, scalar, "%f")
         str.resize(str.size() - 1); \
         return str; \
     }
+    
+INTEGER_CONVERT(sizetostring, size_t, fmt_size_t_fmt)
 
 INTEGER_CONVERT(uintltostring, uint64, u64_fmt)
 INTEGER_CONVERT(uinttostring, uint32, u32_fmt)

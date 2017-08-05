@@ -134,7 +134,7 @@ CString Coffee::Environment::Mac::MacEnv::ExecutableName(cstring_w)
     out.resize(e);
     return out;
 #else
-    return {};
+    return "App";
 #endif
 }
 #endif

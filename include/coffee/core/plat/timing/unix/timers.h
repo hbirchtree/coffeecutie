@@ -97,7 +97,7 @@ struct UnixTime : PosixIshTimeDef
         CString out;
         out.resize(100);
 
-        int len = std::strftime(&out[0],out.size(),fmt,&t);
+        size_t len = std::strftime(&out[0],out.size(),fmt,&t);
         out.resize(len);
 
         return out;

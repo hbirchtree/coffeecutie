@@ -39,9 +39,14 @@ macro(COFFEE_BUNDLE_LIBRARY LIBRARY )
             FILES ${LIBRARY}
             DESTINATION lib/${ANDROID_ABI}
             )
+    elseif(APPLE AND IOS)
+        install (
+            FILES ${LIBRARY}
+            DESTINATION lib/${CMAKE_LIBRARY_ARCHITECTURE}
+            )
     elseif(EMSCRIPTEN)
 
-    elseif(NOT APPLE AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
+    elseif((NOT APPLE OR IOS) AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
         install (
             FILES ${LIBRARY}
             DESTINATION lib/${CMAKE_LIBRARY_ARCHITECTURE}
@@ -90,7 +95,6 @@ endmacro()
 
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
     add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
-
     file ( GLOB_RECURSE ${TARGET}_HEADERS
 #        ${HEADER_DIR}/*.h
 #        ${HEADER_DIR}/*.hpp
@@ -148,7 +152,8 @@ macro(COFFEE_ADD_FRAMEWORK
         SOURCES HEADER_DIR
         BUNDLE_RSRCS BUNDLE_HDRS
         LIBRARIES BUNDLE_LIBRARIES)
-    if(APPLE)
+    if(APPLE AND NOT IOS)
+        add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
         MACFRAMEWORK_PACKAGE(
             "${TARGET}" "${LINKOPT}"
             "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
@@ -485,7 +490,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
 
     target_enable_cxx11(${TARGET})
 
-    if(ANDROID) # Crosscompiling setup, until we find an elegant solution
+    if(ANDROID OR IOS) # Crosscompiling setup, until we find an elegant solution
         message ( "Skipping unit test: ${TITLE}" )
         message ( "Please run the tests somehow!" )
     elseif(EMSCRIPTEN)
@@ -524,3 +529,4 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     endif()
 
 endfunction()
+

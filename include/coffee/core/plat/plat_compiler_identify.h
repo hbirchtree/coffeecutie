@@ -55,7 +55,13 @@
 #undef C_COMPILER_VER_MIN
 #undef C_COMPILER_VER_REV
 
+#if defined(__APPLE_CC__)
+// Apple Clang is a variation of Clang
+#define C_COMPILER_NAME "Apple Clang"
+#else
 #define C_COMPILER_NAME "Clang"
+#endif
+
 #define C_COMPILER_VER_MAJ __clang_major__
 #define C_COMPILER_VER_MIN __clang_minor__
 #define C_COMPILER_VER_REV __clang_patchlevel__

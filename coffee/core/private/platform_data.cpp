@@ -33,6 +33,8 @@ PlatformData::Platform PlatformData::PlatformVariant()
     return PlatformLinux;
 #elif defined(COFFEE_WINDOWS)
     return PlatformWindows;
+#elif defined(COFFEE_APPLE)
+    return PlatformMac;
 #endif
 }
 

@@ -55,6 +55,7 @@
 #elif defined(TARGET_OS_IPHONE) || defined(TARGET_IPHONE_SIMULATOR)
 #undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "iOS"
+#define COFFEE_ARCH_LLP64
 #define COFFEE_APPLE_MOBILE
 #endif
 

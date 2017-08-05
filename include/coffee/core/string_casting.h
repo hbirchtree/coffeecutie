@@ -26,9 +26,15 @@ T cast_string(CString const&)
 }
 
 template<typename T>
-CString cast_pod(T)
+CString cast_pod(T v)
 {
-    return {};
+    return Mem::Convert::intltostring(v);
+}
+    
+template<size_t>
+CString cast_pod(size_t v)
+{
+    return Mem::Convert::sizetostring(v);
 }
 
 CAST_BOTH_FUNCTION(uint64, strtoull, uintltostring)

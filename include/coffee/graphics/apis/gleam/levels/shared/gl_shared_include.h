@@ -29,10 +29,18 @@
 
 
 #if defined(COFFEE_LINKED_GLES)
+
 #if defined(COFFEE_WINDOWS)
 #define GL_GLEXT_PROTOTYPES // I believe ANGLE could choke on a glass of water.
 #endif
+
+#if defined(COFFEE_APPLE)
+#include <OpenGLES/ES2/gl.h>
+#include <OpenGLES/ES2/glext.h>
+#else
 #include <GLES2/gl2.h>
+#endif
+
 #if defined(COFFEE_LINKED_GLES30)
 #include <GLES3/gl3.h>
 #endif

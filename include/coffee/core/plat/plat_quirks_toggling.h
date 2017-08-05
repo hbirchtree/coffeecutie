@@ -55,24 +55,29 @@
  *
  * COFFEE_LOWFAT - disable or remove a lot of code, reduces library size a lot
  * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
+ *
+ * COFFEE_SDL_MAIN - use SDL_main on start, allowing SDL to create its state
+ *
  */
 
 /* General configuration changers */
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
-//#define COFFEE_GLES20_MODE
+#define COFFEE_GLES20_MODE
 
 /* Minor prohibiting flags */
 #define COFFEE_SLAP_LOWMEM
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
-#if (defined(COFFEE_WINDOWS) || defined(COFFEE_APPLE) || defined(COFFEE_EMSCRIPTEN) \
+#if ((defined(COFFEE_WINDOWS) \
+    || defined(COFFEE_EMSCRIPTEN) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_ARM32)) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_MIPS)) \
     || (defined(COFFEE_ANDROID) && defined(COFFEE_ARCH_X86)) \
     || defined(COFFEE_NACL) \
     || (defined(COFFEE_LINUX) && __SIZEOF_PTRDIFF_T__ == 4) ) \
-    && __LP64__ != 1
+    && __LP64__ != 1) \
+    || defined(COFFEE_APPLE)
 #define COFFEE_ARCH_LLP64
 #endif
 
@@ -82,6 +87,15 @@
     && !defined(COFFEE_APPLE_MOBILE)
 #define COFFEE_USE_TERMINAL_CTL
 #define COFFEE_USE_UNWIND
+#endif
+
+#if defined(COFFEE_ANDROID) \
+    || defined(COFFEE_WINDOWS_UWP) \
+    || defined(COFFEE_NACL) \
+    || defined(COFFEE_APPLE_MOBILE)
+
+#define COFFEE_SDL_MAIN
+
 #endif
 
 /* Terminal size: useless on Android */

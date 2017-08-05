@@ -154,13 +154,13 @@ void SimpleIniParser::PairToString(const Pair<CString, variant_t *> &v,
     switch(v.second->type)
     {
     case variant_t::Bool:
-        t1 = Convert::booltostring(v.second->getBool());
+        t1 = cast_pod(v.second->getBool());
         break;
     case variant_t::Float:
-        t1 = Convert::scalartostring(v.second->getFloat());
+        t1 = cast_pod(v.second->getFloat());
         break;
     case variant_t::Integer:
-        t1 = Convert::inttostring(v.second->getInteger());
+        t1 = cast_pod(v.second->getInteger());
         break;
     case variant_t::String:
     {

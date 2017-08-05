@@ -329,11 +329,15 @@ void ExitRoutine()
         const constexpr cstring disable_flag = "COFFEE_NO_PROFILER_EXPORT";
         if(!(Env::ExistsVar(disable_flag) && Env::GetVar(disable_flag) == "1"))
         {
+            constexpr cstring log_fmt = "{0}-profile.xml";
+        
             CString log_name = Env::ExecutableName();
             log_name = Env::BaseName(log_name.c_str());
             log_name = CStrReplace(log_name,".exe","");
-            log_name = cStringFormat("{0}-profile.xml", log_name);
+            log_name = cStringFormat(log_fmt, log_name);
             CString c_file = FileFun::CanonicalName(log_name.c_str());
+            if(c_file.size() == 0)
+                c_file = cStringFormat(log_fmt, Env::ExecutableName());
             cVerbose(6, "Saving profiler data to: {0}", c_file);
 
             CString target_log;

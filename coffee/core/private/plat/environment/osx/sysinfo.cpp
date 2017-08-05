@@ -44,11 +44,14 @@ CString MacSysInfo::GetSystemVersion()
         char buf[16];
         char* ptr = fgets(buf, sizeof(buf),out);
         pclose(out);
-        CString output = ptr;
-        output.resize(Mem::Search::ChrFind((cstring)ptr,'\n')-ptr);
-        return output;
-    }else
-        return "0.0";
+        if(ptr)
+        {
+            CString output = ptr;
+            output.resize(Mem::Search::ChrFind((cstring)ptr,'\n')-ptr);
+            return output;
+        }
+    }
+    return "0.0";
 }
 
 HWDeviceInfo MacSysInfo::DeviceName()
@@ -72,7 +75,7 @@ HWDeviceInfo MacSysInfo::Processor()
 
     CString vendor = _GetSysctlString(ven_string);
     CString brand = _GetSysctlString(brd_string);
-    uint32 microcode = _GetSysctlInt(mcc_string);
+    uint64 microcode = _GetSysctlInt(mcc_string);
 
     return HWDeviceInfo(vendor, brand, Mem::StrUtil::hexify(microcode, true));
 }
@@ -82,7 +85,7 @@ bigscalar MacSysInfo::ProcessorFrequency()
     static const cstring frq_string = "machdep.tsc.frequency";
 //            "hw.cpufrequency"
 
-    uint32 freq_i = _GetSysctlInt(frq_string);
+    uint64 freq_i = _GetSysctlInt(frq_string);
 
     return freq_i / (1000. * 1000. * 1000.);
 }
@@ -91,18 +94,18 @@ CoreCnt MacSysInfo::CpuCount()
 {
     static const cstring cpu_string = "hw.packages";
 
-    uint32 c = _GetSysctlInt(cpu_string);
+    uint64 c = _GetSysctlInt(cpu_string);
 
-    return c;
+    return C_FCAST<CoreCnt>(c);
 }
 
 CoreCnt MacSysInfo::CoreCount()
 {
     static const cstring cre_string = "machdep.cpu.core_count";
 
-    uint32 c = _GetSysctlInt(cre_string);
+    uint64 c = _GetSysctlInt(cre_string);
 
-    return c;
+    return C_FCAST<CoreCnt>(c);
 }
 
 MemUnit MacSysInfo::MemTotal()
@@ -111,7 +114,7 @@ MemUnit MacSysInfo::MemTotal()
 
     uint64 c = _GetSysctlInt(mtl_string);
 
-    return c;
+    return C_FCAST<MemUnit>(c);
 }
 
 MemUnit MacSysInfo::MemAvailable()
@@ -127,7 +130,7 @@ bool MacSysInfo::HasFPU()
 {
     static const cstring fpu_string = "hw.optional.floatingpoint";
 
-    uint32 c = _GetSysctlInt(fpu_string);
+    uint64 c = _GetSysctlInt(fpu_string);
 
     return c;
 }
@@ -135,7 +138,7 @@ bool MacSysInfo::HasFPU()
 bool MacSysInfo::HasHyperThreading()
 {
     static const cstring thd_string = "machdep.cpu.thread_count";
-    uint32 thr_count = _GetSysctlInt(thd_string);
+    uint64 thr_count = _GetSysctlInt(thd_string);
 
     return thr_count != CoreCount();
 }

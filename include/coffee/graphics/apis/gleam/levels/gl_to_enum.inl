@@ -1,12 +1,6 @@
 #pragma once
 
-#if defined(COFFEE_ONLY_GLES20) && defined(COFFEE_LINKED_GLES)
-#include <GLES2/gl2.h>
-#else
-#include <glad/glad.h>
-#include <glad_es/glad.h>
-#endif
-
+#include "shared/gl_shared_include.h"
 #include "shared/gl_shared_types.h"
 
 namespace Coffee{

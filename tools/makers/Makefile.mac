@@ -5,19 +5,22 @@ SOURCE_DIR := $(PWD)/..
 COFFEE_DIR := $(PWD)/coffee_lib
 
 NATIVE_LIB_DIR := $(PWD)/native-libs
+BUILD_CONFIG := Debug
 
-EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF
+EXTRA_OPTIONS := -DGENERATE_TESTS=OFF
 
 osx:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e COFFEE_DIR=$(COFFEE_DIR)/mac-osx \
-                -e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DSWIG_DIR=/usr/local/opt/swig304"
+		-e CMAKE_GEN="Xcode" \
+        -e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DSWIG_DIR=/usr/local/opt/swig304"
 
 ios.x86:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
 		-e BUILD_NAME=ios-x86 \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e CMAKE_GEN="Xcode" \
 		-e TOOLCHAIN=all-ios.toolchain.cmake \
 		-e PRELOAD=osx-ios.cmake \
 		-e COFFEE_DIR=$(COFFEE_DIR)/ios-x86 \
@@ -27,6 +30,7 @@ ios.x86_64:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
 		-e BUILD_NAME=ios-x86_64 \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e CMAKE_GEN="Xcode" \
 		-e TOOLCHAIN=all-ios.toolchain.cmake \
 		-e PRELOAD=osx-ios.cmake \
 		-e COFFEE_DIR=$(COFFEE_DIR)/ios-x86_64 \
@@ -36,7 +40,9 @@ ios:
 	@make -f $(ROOT_DIR)/Makefile.mac-base \
 		-e BUILD_NAME=ios \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e CMAKE_GEN="Xcode" \
 		-e TOOLCHAIN=all-ios.toolchain.cmake \
 		-e PRELOAD=osx-ios.cmake \
+		-e CMAKE_CONFIG=$(BUILD_CONFIG) \
 		-e COFFEE_DIR=$(COFFEE_DIR)/ios \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)"
