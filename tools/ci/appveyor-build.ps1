@@ -12,7 +12,7 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
         continue
     }
     try{
-        $release = (Invoke-RestMethod -Uri https://api.github.com/repos/$dep/releases/latest -Headers @{"Accept" = "application/vnd.github.v3+json"})
+        $release = (Invoke-RestMethod -Uri https://api.github.com/repos/$dep/releases/latest -Headers @{"Accept" = "application/vnd.github.v3+json"; "Authorization" = "token $env:GITHUB_TOKEN"})
 
         echo "Found release for $dep"
 
@@ -36,6 +36,7 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
         }
     } catch {
         echo "Failed to download $dep"
+        echo $_.Exception.Message
     }
 }
 
