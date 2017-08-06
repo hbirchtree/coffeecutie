@@ -4,6 +4,8 @@ from argparse import ArgumentParser
 import requests
 import json
 
+from sys import stderr
+
 
 REQUEST_POST = 0
 REQUEST_GET  = 1
@@ -24,7 +26,7 @@ class GithubRequestData:
 
 
 def printerr(s):
-    print(s, file=open('/dev/stderr', mode='w'))
+    print(s, file=stderr)
 
 
 def rest_request(url, headers, data, form=None, rtype=REQUEST_GET):

@@ -48,9 +48,6 @@ $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
 $BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
 
 echo "Starting CMake process"
-BuildProject $env:BUILDVARIANT $env:APPVEYOR_BUILD_FOLDER $BuildDir $LIBRARY_DIR "Debug" $Args
-
-cd "$BuildDir\out"
-7z a "$env:APPVEYOR_BUILD_FOLDER\libraries_$env:BUILDVARIANT.zip" "*"
+BuildProject $env:BUILDVARIANT $env:APPVEYOR_BUILD_FOLDER $BuildDir $LIBRARY_DIR "$env:CONFIGURATION" $Args
 
 cd $PrevPwd

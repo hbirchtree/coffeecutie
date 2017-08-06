@@ -1,6 +1,7 @@
 param(
     [switch] $Standalone,
-    [string] $CMakeBin = "cmake"
+    [string] $CMakeBin = "cmake",
+    [switch] $ConfigureOnly
 	)
 
 try {
@@ -73,7 +74,11 @@ function BuildProject($Target, $SourceDir,
 
     cd $CurrentDir
 
-    CompileProject "windows-$Preload" $Arch $Config $BuildDir
+    if ($ConfigureOnly) {
+        echo " * Only configuring project"
+    }else{
+        CompileProject "windows-$Preload" $Arch $Config $BuildDir
 
-    TestProject "windows-$Preload" $Arch $Config $BuildDir
+        TestProject "windows-$Preload" $Arch $Config $BuildDir
+    }
 }

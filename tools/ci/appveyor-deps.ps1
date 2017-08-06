@@ -2,5 +2,6 @@
 #git checkout -qf %APPVEYOR_REPO_COMMIT%
 
 iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
-choco install -y cmake
+choco install -y cmake python3
 
+. C:\Python36\Scripts\pip install pyyaml requests
