@@ -248,7 +248,10 @@ def appveyor_gen_config(build_info, srcDir):
             'MAKEFILE_DIR': make_loc,
             'BUILDVARIANT': 'win32.amd64',
             'DEPENDENCIES': dependencies_list,
-            'DEPLOY_PATTERNS': deploy_patterns
+            'DEPLOY_PATTERNS': deploy_patterns,
+            'GITHUB_TOKEN': {
+                'secure': ''
+            }
         },
         'install': [
             {'ps': '%s\\appveyor-deps.ps1' % script_loc}
@@ -321,25 +324,6 @@ def travis_gen_config(build_info, srcDir):
 
     dependencies = get_dep_list(build_info)
 
-    deploy_provider = {
-            'provider': 'releases',
-            'api_key': '${GITHUB_TOKEN}',
-            'file': 'libraries_$BUILDVARIANT.tar.gz',
-            'skip_cleanup': True,
-            'on': {}
-    }
-
-    deploy_provider_tag = deploy_provider.copy()
-    deploy_provider_branch = deploy_provider.copy()
-
-    deploy_provider_branch['on'] = {
-        'branch': deploy_data[1].pop()
-    }
-
-    deploy_provider_tag['on'] = {
-        'tags': True
-    }
-
     return {
         'language': 'cpp',
         'dist': 'trusty',
@@ -368,10 +352,6 @@ def travis_gen_config(build_info, srcDir):
             'only': deploy_data[0]
         },
         'after_success': ['%s/travis-deploy.sh' % script_loc]
-        # 'deploy': [
-        #     deploy_provider_tag,
-        #     deploy_provider_branch
-        # ]
     }
 
 

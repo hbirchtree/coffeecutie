@@ -1,3 +1,5 @@
+after_success:
+- tools/ci/travis-deploy.sh
 before_script:
 - tools/ci/travis-deps.sh
 branches:
@@ -7,13 +9,6 @@ branches:
   - /^feature.*$/
 compiles:
 - clang
-deploy:
-  api_key: ${GITHUB_TOKEN}
-  file: libraries_$BUILDVARIANT.tar.gz
-  'on':
-    branch: master
-  provider: releases
-  skip_cleanup: true
 dist: trusty
 env:
   global:
