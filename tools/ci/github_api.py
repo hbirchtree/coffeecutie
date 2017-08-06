@@ -134,6 +134,7 @@ def handle_cmd(action, cat, item, select):
             item, release = item.split(':')
             # First, get list of releases to get the release ID
             release_data = gh_get_release(item, release)
+            assert ('id' in release_data)
             release_id = release_data['id']
             if release_id is None:
                 printerr('Release not found')
@@ -197,8 +198,9 @@ def handle_cmd(action, cat, item, select):
         if cat == 'asset':
             item, release = item.split(':')
             release_data = gh_get_release(item, release)
+            if len(release_data) == 0:
+                raise RuntimeError('No releases found')
             assert ('id' in release_data)
-            print()
             with open(select[0], mode='rb') as f:
                 data = f.read()
                 endpoint = release_data['upload_url']
@@ -217,7 +219,8 @@ def handle_cmd(action, cat, item, select):
                 gh_errorhandle(upload)
         elif cat == 'status':
             item, sha = item.split(':')
-            assert (len(select) == 2)
+            if len(select) != 2:
+                raise RuntimeError("Wrong amount of arguments, received: %s" % select)
 
             assert(select[0] in ['success', 'pending', 'error', 'failure'])
             assert(len(select[1]) < 1024)
@@ -239,7 +242,8 @@ def handle_cmd(action, cat, item, select):
                                 })
             gh_errorhandle(status)
         elif cat == 'release':
-            assert(len(select) == 3)
+            if len(select) != 3:
+                raise RuntimeError("Wrong amount of arguments, received: %s" % select)
 
             release_data = {
                 'tag_name': select[0],

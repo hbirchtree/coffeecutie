@@ -344,7 +344,7 @@ def main():
             'common.py': None,
             'cmake/Templates/JenkinsTemplate.groovy': None,
             'cmake/Templates/reconfig.py': 'rebuild.py',
-            'cmake/Templates/buildinfo.py': 'buildinfo.py',
+            'buildinfo.py': None,
             'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
         }
 

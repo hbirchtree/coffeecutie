@@ -24,7 +24,7 @@ fi
 TARGET_RELEASE=$(github_api list release "$TRAVIS_REPO_SLUG" "^$TARGET_TAG$" | cut -d'|' -f 1)
 
 if [[ -z $TARGET_RELEASE ]]; then
-    github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Automatic Release" "Generated automatically"
+    github_api push release "$TRAVIS_REPO_SLUG" "$TARGET_TAG" "Autorelease" "Autorelease"
 fi
 
 echo " * Deploying $DEPLOY_ASSET to $TARGET_TAG"

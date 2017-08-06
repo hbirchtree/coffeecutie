@@ -68,7 +68,7 @@ function CompileProject($preload, $arch, $config, $BuildDir) {
 function TestProject($preload, $arch, $config, $BuildDir) {
     $arch = (CheckArch $arch)
 
-    & $CMakeBin --build $Pwd/$BuildDir `
+    & $CMakeBin --build $BuildDir `
         --target RUN_TESTS --config $config
 }
 
