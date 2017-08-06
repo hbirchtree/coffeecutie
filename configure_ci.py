@@ -181,6 +181,14 @@ def create_env_matrix(current, build_info):
     return out
 
 
+def get_dep_list(build_info):
+    dependencies = ''
+    deps = try_get_key(build_info, 'dependencies', [])
+    for dep in deps:
+        dependencies = '%s;%s' % (dep, dependencies)
+    return dependencies
+
+
 def parse_buildinfo(file):
     return parse_yaml(file)
 
@@ -211,13 +219,12 @@ def create_deploy_info(build_info):
 def appveyor_gen_config(build_info, srcDir):
     deploy_info = create_deploy_info(build_info)
 
-    dependencies_list = ""
-
-    for e in try_get_key(build_info, 'dependencies', []):
-        dependencies_list += e.split(":")[1] + ";"
+    dependencies_list = get_dep_list(build_info)
 
     script_loc = build_info['script_location'].replace('/', '\\')
     make_loc = build_info['makefile_location'].replace('/', '\\')
+
+    deploy_patterns = ''
 
     return {
         'version': '{build}',
@@ -240,7 +247,8 @@ def appveyor_gen_config(build_info, srcDir):
             'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
             'MAKEFILE_DIR': make_loc,
             'BUILDVARIANT': 'win32.amd64',
-            'DEPENDENCIES': dependencies_list
+            'DEPENDENCIES': dependencies_list,
+            'DEPLOY_PATTERNS': deploy_patterns
         },
         'install': [
             {'ps': '%s\\appveyor-deps.ps1' % script_loc}
@@ -251,18 +259,31 @@ def appveyor_gen_config(build_info, srcDir):
         'artifacts': [
             {'path': '*.zip', 'name': 'Libraries'}
         ],
-        'deploy': [
-            {
-                'provider': 'GitHub',
-                'release': 'Appveyor Build $(APPVEYOR_BUILD_NUMBER)',
-                'description': 'Automatic build by Appveyor',
-                'artifact': 'Libraries',
-                'prelease': True,
-                'on': {
-                    'branch': deploy_info[1].pop()
-                },
-            }
+        'deploy_script': [
+            {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]
+        # 'deploy': [
+        #     {
+        #         'provider': 'GitHub',
+        #         'release': 'automatic-build-$(APPVEYOR_BUILD_NUMBER)',
+        #         'description': 'Automatic build',
+        #         'artifact': 'Libraries',
+        #         'prelease': True,
+        #         'on': {
+        #             'appveyor_repo_tag': True
+        #         },
+        #     },
+        #     {
+        #         'provider': 'GitHub',
+        #         'release': 'automatic-build-$(APPVEYOR_BUILD_NUMBER)',
+        #         'description': 'Automatic build',
+        #         'artifact': 'Libraries',
+        #         'prelease': True,
+        #         'on': {
+        #             'branch': deploy_info[1].pop()
+        #         },
+        #     }
+        # ]
     }
 
 
@@ -298,9 +319,26 @@ def travis_gen_config(build_info, srcDir):
     script_loc = try_get_key(build_info, 'script_location', 'ci')
     make_loc = try_get_key(build_info, 'makefile_location', 'ci')
 
-    dependencies = ''
-    for dep in try_get_key(build_info, 'dependencies', []):
-        dependencies = '%s;%s' % (dep.split(":")[1], dependencies)
+    dependencies = get_dep_list(build_info)
+
+    deploy_provider = {
+            'provider': 'releases',
+            'api_key': '${GITHUB_TOKEN}',
+            'file': 'libraries_$BUILDVARIANT.tar.gz',
+            'skip_cleanup': True,
+            'on': {}
+    }
+
+    deploy_provider_tag = deploy_provider.copy()
+    deploy_provider_branch = deploy_provider.copy()
+
+    deploy_provider_branch['on'] = {
+        'branch': deploy_data[1].pop()
+    }
+
+    deploy_provider_tag['on'] = {
+        'tags': True
+    }
 
     return {
         'language': 'cpp',
@@ -329,15 +367,11 @@ def travis_gen_config(build_info, srcDir):
         'branches': {
             'only': deploy_data[0]
         },
-        'deploy': {
-            'provider': 'releases',
-            'api_key': '${GITHUB_TOKEN}',
-            'file': 'libraries_$BUILDVARIANT.tar.gz',
-            'skip_cleanup': True,
-            'on': {
-                'branch': deploy_data[1].pop()
-            }
-        }
+        'deploy': ['%s/travis-deploy.sh' % script_loc]
+        # 'deploy': [
+        #     deploy_provider_tag,
+        #     deploy_provider_branch
+        # ]
     }
 
 
@@ -354,12 +388,6 @@ def jenkins_gen_config(build_info, src_dir):
             glist = "%s;%s" % (e, glist)
         return glist
 
-    def mk_dep_list(l):
-        for i, e in enumerate(l):
-            l[i] = e.split(':')[1]
-
-        return mk_shell_list(l)
-
     def sshgit_to_https(url):
         import re
         patt = re.compile('git@(.+):(.+)')
@@ -373,7 +401,7 @@ def jenkins_gen_config(build_info, src_dir):
 
     template_dir = '%s/cmake/Templates' % src_dir
 
-    deps = mk_dep_list(try_get_key(build_info, 'dependencies', []))
+    deps = get_dep_list(build_info)
 
     linux_targets = create_env_matrix('linux', build_info)
     osx_targets = create_env_matrix('osx', build_info)
@@ -456,6 +484,11 @@ def process_configs(configs, print_config=False, overwrite=False, cur_dir='.'):
         if srv.data_format == DATAFORMAT_TEXT:
             pass
         elif srv.data_format == DATAFORMAT_YAML:
+            if isfile(trg_file) and not overwrite:
+                data2 = parse_yaml(trg_file)
+                #data = {**data, **data2} # If there is only Python 3.5+
+                data.update(data2)
+
             data = render_yaml(data)
         else:
             print('Unknown output data format: %s' % srv.data_format)
@@ -469,9 +502,6 @@ def process_configs(configs, print_config=False, overwrite=False, cur_dir='.'):
             print(data)
             print('-' * 80)
         else:
-            if not overwrite and isfile(trg_file):
-                print('Skipping %s, it exists' % trg_file)
-                continue
             with open(trg_file, mode='w') as f:
                 f.write(data)
 

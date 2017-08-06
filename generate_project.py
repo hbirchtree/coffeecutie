@@ -77,6 +77,15 @@ def git_get_commit(repo_dir):
     return commit
 
 
+def git_get_slug(repo_dir):
+    import re
+    origin = configure_ci.git_get_origin(repo_dir)
+    patt = re.compile('^.*[/:](\S+\/\S+)\.git$')
+    match = patt.findall(origin)
+
+    return match.pop()
+
+
 def git_add(file):
     run_command('git', ['-C', _git_dir, 'add', file])
 
@@ -168,15 +177,36 @@ def create_ci_config_file(src_dir, trg_dir, template, args,
     trg_file = '%s/build.yml' % (trg_dir,)
 
     structure = None
+    engine_version = git_get_commit(args.repo_dir)
+    engine_slug = git_get_slug(args.repo_dir)
+
     if isfile(trg_file):
         structure = configure_ci.parse_yaml(trg_file)
-        structure['engine_version'] = git_get_commit(args.repo_dir)
+
+        if 'dependencies' in structure:
+            v = structure['dependencies']
+
+            if type(v) == list:
+                dv = {}
+                print('Updating build.yml structure')
+                structure.remove('engine_version')
+                for e in v:
+                    try:
+                        dv[e.split(':')[1]] = '*'
+                    except IndexError:
+                        pass
+                structure['dependencies'] = dv
+                v = dv
+
+            if engine_slug in v:
+                structure['dependencies'][engine_slug] = engine_version
     else:
         structure = configure_ci.parse_yaml(src_file)
 
+        structure['dependencies'][engine_slug] = engine_version
+
         structure['name'] = args.project_name
         structure['display_name'] = args.display_name
-        structure['engine_version'] = git_get_commit(args.repo_dir)
 
     config_files = configure_ci.generate_config_files(ci_services,
                                                       deepcopy(structure),
@@ -196,7 +226,6 @@ def create_ci_config_file(src_dir, trg_dir, template, args,
 
     configure_ci.process_configs(config_files,
                                  print_config=_verbose,
-                                 overwrite=not _dry_run,
                                  cur_dir=trg_dir)
 
     if not _dry_run:
@@ -314,7 +343,9 @@ def main():
             'configure_ci.py': None,
             'common.py': None,
             'cmake/Templates/JenkinsTemplate.groovy': None,
-            'cmake/Templates/reconfig.py': 'rebuild.py'
+            'cmake/Templates/reconfig.py': 'rebuild.py',
+            'cmake/Templates/buildinfo.py': 'buildinfo.py',
+            'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
         }
 
     variables = {

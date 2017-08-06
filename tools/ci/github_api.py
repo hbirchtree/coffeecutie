@@ -14,9 +14,13 @@ GH_API = 'https://api.github.com'
 _verbose = False
 args = None
 
-GithubRequestData = namedtuple('GithubRequestData',
-                               ['type', 'jsonData',
-                                'file'])
+
+class GithubRequestData:
+    def __init__(self):
+        self.type = ''
+        self.headers = {}
+        self.content = {}
+        self.status_code = 0
 
 
 def printerr(s):
@@ -32,6 +36,8 @@ def rest_request(url, headers, data, form=None, rtype=REQUEST_GET):
         return requests.get(url, headers=headers)
     elif rtype == REQUEST_POST:
         return requests.post(url, data=data, params=form, headers=headers)
+    else:
+        raise RuntimeError('Invalid request type')
 
 
 def gh_request(endpoint, data=None, rtype=REQUEST_GET, headers=None, form=None):
@@ -44,21 +50,38 @@ def gh_request(endpoint, data=None, rtype=REQUEST_GET, headers=None, form=None):
     if GH_TOKEN is not None:
         headers['Authorization'] = 'token %s' % GH_TOKEN
 
-    resp = rest_request('%s%s' % (GH_API, endpoint),
+    url = None
+    if endpoint.startswith('https'):
+        url = endpoint
+    else:
+        url = '%s%s' % (GH_API, endpoint)
+
+    resp = rest_request(url,
                         headers=headers,
                         data=data,
                         rtype=rtype,
                         form=form)
 
-    if resp is None:
-        return
+    resp_ = GithubRequestData()
+    resp_.type = resp.headers['Content-Type']
+    resp_.headers = resp.headers
+    resp_.content = resp.content
+    resp_.status_code = resp.status_code
 
-    #print(resp.headers)
+    jsondata = False
+    if resp_.type.startswith('application/json'):
+        resp_.content = json.loads(resp_.content.decode())
+        jsondata = True
 
-    if 'Link' in resp.headers:
-        printerr('Found link in header')
+    if 'Link' in resp.headers and 'next' in resp.links and jsondata:
+        #printerr('Using link header')
+        r = gh_request(resp.links['next']['url'], headers=headers, data=None, rtype=rtype)
+        if type(r.content) == list and type(resp_.content) == list:
+            resp_.content += r.content
+        else:
+            raise RuntimeError('Got Link header, but not way to merge it')
 
-    return resp
+    return resp_
 
 
 def gh_errorhandle(resp):
@@ -71,7 +94,7 @@ def gh_errorhandle(resp):
 def gh_get_release(repo, release):
     release_resp = gh_request('/repos/%s/releases' % repo)
     gh_errorhandle(release_resp)
-    release_data = json.loads(release_resp.content.decode())
+    release_data = release_resp.content
     for r in release_data:
         if r['tag_name'] == release:
             release_data = r
@@ -83,13 +106,28 @@ def gh_get_release(repo, release):
 
 def handle_cmd(action, cat, item, select):
     if action == 'list':
+        import re
         if cat == 'release':
             # Just get and format the list of releases
             resp = gh_request('/repos/%s/releases' % item)
             gh_errorhandle(resp)
-            j = json.loads(resp.content.decode())
+            j = resp.content
+            patterns = []
+            for e in select:
+                patterns += [re.compile(e)]
             for r in j:
-                print('%s|%s|%s' % (r['id'], item, r['tag_name']))
+                match = False
+                if len(patterns) < 1:
+                    match = True
+                for e in patterns:
+                    match = match or e.match(r['tag_name'])
+                if not match:
+                    continue
+                print('%s|%s|%s' % (
+                    r['id'],
+                    item,
+                    r['tag_name']
+                ))
         elif cat == 'asset':
             item, release = item.split(':')
             # First, get list of releases to get the release ID
@@ -100,25 +138,54 @@ def handle_cmd(action, cat, item, select):
                 exit(1)
             resp = gh_request('/repos/%s/releases/%s/assets' % (item, release_id))
             gh_errorhandle(resp)
-            j = json.loads(resp.content.decode())
+            j = resp.content
+            patterns = []
+            for e in select:
+                patterns += [re.compile(e)]
             for a in j:
-                print('%s|%s|%s|%s|%s|%s' % (item, release,
-                                             a['id'],
-                                             release_data['name'],
-                                             a['name'],
-                                             ''))
+                match = False
+                if len(patterns) < 1:
+                    match = True
+                for e in patterns:
+                    match = match or e.match(a['name'])
+                print('%s|%s|%s|%s|%s|%s|%s' % (
+                    item, release,
+                    a['id'],
+                    release_data['name'],
+                    a['name'],
+                    '',
+                    release_data['tag_name']
+                ))
+        elif cat == 'tag':
+            resp = gh_request('/repos/%s/tags' % (item,))
+            gh_errorhandle(resp)
+            patterns = []
+            for e in select:
+                patterns += [re.compile(e)]
+            for r in resp.content:
+                match = False
+                if len(patterns) < 1:
+                    match = True
+                for e in patterns:
+                    match = match or e.match(r['commit']['sha'])
+                if not match:
+                    continue
+                print('%s|%s|%s' % (
+                    item,
+                    r['name'],
+                    r['commit']['sha']
+                ))
     elif action == 'pull':
         if cat == 'asset':
             resp = gh_request('/repos/%s/releases/assets/%s' % (item, select[0]))
             gh_errorhandle(resp)
-            jdata = json.loads(resp.content.decode())
+            jdata = resp.content
             assert ('browser_download_url' in jdata and 'name' in jdata)
             printerr('Downloading %s bytes to %s' % (jdata['size'], jdata['name']))
             data = gh_request('/repos/%s/releases/assets/%s' % (item, select[0]),
                               headers={'Accept': 'application/octet-stream'})
             gh_errorhandle(data)
-            assert ('Content-Type' in data.headers and
-                    data.headers['Content-Type'] == 'application/octet-stream')
+            assert (data.type == 'application/octet-stream')
             with open(jdata['name'], mode='wb') as f:
                 f.write(data.content)
     elif action == 'push':
@@ -126,7 +193,6 @@ def handle_cmd(action, cat, item, select):
             raise RuntimeError('No API token, cannot push')
 
         if cat == 'asset':
-
             item, release = item.split(':')
             release_data = gh_get_release(item, release)
             assert ('id' in release_data)
@@ -170,6 +236,23 @@ def handle_cmd(action, cat, item, select):
                                     'Content-Type': 'application/json'
                                 })
             gh_errorhandle(status)
+        elif cat == 'release':
+            assert(len(select) == 3)
+
+            release_data = {
+                'tag_name': select[0],
+                'name': select[1],
+                'body': select[2],
+                'prerelease': True
+            }
+
+            status = gh_request('/repos/%s/releases' % (item,),
+                                data=json.dumps(release_data),
+                                rtype=REQUEST_POST,
+                                headers={
+                                    'Content-Type': 'application/json'
+                                })
+            gh_errorhandle(status)
 
 
 def main():
@@ -182,7 +265,7 @@ def main():
                       help='action to be performed on category')
 
     args.add_argument('category', type=str,
-                      choices=['asset', 'release', 'status'],
+                      choices=['asset', 'release', 'status', 'tag'],
                       help='category of item to pull')
 
     args.add_argument('item', type=str,

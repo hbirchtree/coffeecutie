@@ -28,7 +28,7 @@ platforms:
       - uwp
 
 dependencies:
-    - github:hbirchtree/coffeecutie:unstable
+    hbirchtree/coffeecutie: *
 
 branches:
   - name: master
