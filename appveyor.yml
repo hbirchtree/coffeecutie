@@ -18,6 +18,8 @@ environment:
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
   DEPENDENCIES: ''
+  GITHUB_TOKEN:
+    secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
   MAKEFILE_DIR: tools\makers
 install:
 - ps: tools\ci\appveyor-deps.ps1
