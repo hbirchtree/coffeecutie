@@ -6,7 +6,7 @@ branches:
 build_script:
 - ps: tools\ci\appveyor-build.ps1
 clone_script:
-- cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
+- cmd: git clone -q --recursive https://github.com/%APPVEYOR_REPO_NAME%.git
     %APPVEYOR_BUILD_FOLDER%
 - cmd: git checkout -qf %APPVEYOR_REPO_COMMIT%
 configuration:
