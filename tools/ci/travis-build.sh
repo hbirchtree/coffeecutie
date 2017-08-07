@@ -103,7 +103,7 @@ function download_libraries()
 function build_standalone()
 {
     OLD_IFS=$IFS
-    IFS='\;'
+    IFS='%'
     for dep in $DEPENDENCIES; do
         IFS=$OLD_IFS download_libraries "$dep" "$1"
     done

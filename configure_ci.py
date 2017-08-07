@@ -322,7 +322,7 @@ def travis_gen_config(build_info, srcDir):
     script_loc = try_get_key(build_info, 'script_location', 'ci')
     make_loc = try_get_key(build_info, 'makefile_location', 'ci')
 
-    dependencies = get_dep_list(build_info)
+    dependencies = get_dep_list(build_info).replace(";", "%")
 
     return {
         'language': 'cpp',

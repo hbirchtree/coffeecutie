@@ -189,7 +189,7 @@ def create_ci_config_file(src_dir, trg_dir, template, args,
             if type(v) == list:
                 dv = {}
                 print('Updating build.yml structure')
-                structure.remove('engine_version')
+                structure.pop('engine_version', None)
                 for e in v:
                     try:
                         dv[e.split(':')[1]] = '*'
