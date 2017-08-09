@@ -1,3 +1,7 @@
 # How to build against the Steam Runtime?
 
-In tools/automation/builders/steam, you will find a container which when set up is ready to compile against the Steam Runtime. This same effect can be achieved by using the bundled Jenkins configuration.
+The SteamOS build is mostly functional, with libraries built against
+GNU GCC 4.8.
+
+Libraries for SteamRT should not be assumed to be link-compatible
+with Ubuntu and Fedora, because of the older GCC version it uses.

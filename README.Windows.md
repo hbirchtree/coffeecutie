@@ -4,17 +4,8 @@ You *will* need Visual Studio 2015 in order for compilation to work. (We need fu
 
 No successful attempts have been made with Cygwin, MinGW-W64 and MSYS2 so far. (Please report back if it does work!)
 
-The workflow is as such:
- 1. Configure with CMake. Just use the dam* GUI and get over with it. You will have to specify a lot of filepaths since Windows has no automatic library directories or include directories.
- 2. Browse to build directory
- 3. Either:
-
-    a. Open cmd.exe and execute (assuming MSBuild.exe is in PATH):
-
-        MSBuild.exe Coffee.sln
-
-    b. Open Visual Studio and open Coffee.sln, build from there
-
+For setting up an environment, refer to `BUILDING.md` on Windows Makefiles,
+as it is usable in Visual Studio.
 
 **NB**: Note that Windows is not fully supported or tested at all times.
 

@@ -1,6 +1,7 @@
 # Platform compiler details
 
-You should use this list when you consider using C++ features introduced in C++14 and later.
+You should use this list when you consider using C++ features introduced
+in C++14 and later.
 Some features are special cases and quite ugly. Beware.
 
 ## Compiler versions and workarounds
