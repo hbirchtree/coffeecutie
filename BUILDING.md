@@ -28,20 +28,20 @@ Navigate to a directory outside the source tree, and do as follows:
 
  1. Install dependencies (supports OS X with Brew and Ubuntu):
 
-    cd $SOURCE_DIR/tools/ci/
-    TRAVIS_OS_NAME=*linux|osx* ./travis-deps.sh
+        cd $SOURCE_DIR/tools/ci/
+        TRAVIS_OS_NAME=*linux|osx* ./travis-deps.sh
 
  2. Build it
 
-    cd $SOURCE_DIR
-    TRAVIS_BUILD_DIR=$PWD
-    MAKEFILE_DIR=*directory path to Makefile.standalone, tools/makers*
-    BUILDVARIANT=$TARGET
-    TRAVIS_OS_NAME=*linux|osx*
-    DEPENDENCIES=*list of repository blobs, %-separated*
-    GITHUB_TOKEN=*used if you are downloading dependencies*
+        cd $SOURCE_DIR
+        TRAVIS_BUILD_DIR=$PWD
+        MAKEFILE_DIR=*directory path to Makefile.standalone, tools/makers*
+        BUILDVARIANT=$TARGET
+        TRAVIS_OS_NAME=*linux|osx*
+        DEPENDENCIES=*list of repository blobs, %-separated*
+        GITHUB_TOKEN=*used if you are downloading dependencies*
 
-    $SOURCE_DIR/tools/ci/travis-build.sh
+        $SOURCE_DIR/tools/ci/travis-build.sh
 
 Where TARGET is one of the targets found in the Makefile.
 This process will download SDKs for most platforms, contained inside Docker containers.
