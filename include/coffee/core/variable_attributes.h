@@ -20,11 +20,14 @@
 
 #if (__cplusplus >= 201403L)
 #define C_DEPRECATED [[deprecated]]
+#define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 #else
 #if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
 #define C_DEPRECATED __attribute__((deprecated))
+#define C_DEPRECATED_S(reason) C_DEPRECATED
 #elif defined(COFFEE_MSVC)
 #define C_DEPRECATED __declspec(deprecated)
+#define C_DEPRECATED_S(reason) C_DEPRECATED
 #else
 #pragma message("No warnings for deprecated functions!")
 #define C_DEPRECATED
