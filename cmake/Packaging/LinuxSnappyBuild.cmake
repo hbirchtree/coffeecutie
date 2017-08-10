@@ -180,20 +180,25 @@ macro ( SNAPPY_PACKAGE
         "${SNAPPY_PKG_DIR}/snap-select.sh"
         )
 
+    set ( PYTHON_ENCODING_STUFF LC_ALL=C.UTF-8 LANG=C.UTF-8 )
+
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND python2 ${SNAPPY_PROGRAM} clean
+        COMMAND ${PYTHON_ENCODING_STUFF} ${SNAPPY_PROGRAM} clean
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
+        USES_TERMINAL
 	)
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND python2 ${SNAPPY_PROGRAM} build
+        COMMAND ${PYTHON_ENCODING_STUFF} ${SNAPPY_PROGRAM} build
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
+        USES_TERMINAL
         )
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND python2 ${SNAPPY_PROGRAM} snap -o "${SNAPPY_FINAL_SNAP}"
+        COMMAND ${PYTHON_ENCODING_STUFF} ${SNAPPY_PROGRAM} snap -o "${SNAPPY_FINAL_SNAP}"
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
+        USES_TERMINAL
         )
 
     install (
