@@ -182,17 +182,17 @@ macro ( SNAPPY_PACKAGE
 
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND ${SNAPPY_PROGRAM} clean
+        COMMAND python2 ${SNAPPY_PROGRAM} clean
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
 	)
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND ${SNAPPY_PROGRAM} build
+        COMMAND python2 ${SNAPPY_PROGRAM} build
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
         )
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND ${SNAPPY_PROGRAM} snap -o "${SNAPPY_FINAL_SNAP}"
+        COMMAND python2 ${SNAPPY_PROGRAM} snap -o "${SNAPPY_FINAL_SNAP}"
         WORKING_DIRECTORY ${SNAPPY_PKG_DIR}
         )
 
