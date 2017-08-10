@@ -100,12 +100,13 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
   PATH_SUFFIXES
 
   lib # Default stuff
-  lib/${CMAKE_LIBRARY_ARCHITECTURE} # CMake architecture path
-  lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-  lib/${ANDROID_ABI} ${ANDROID_ABI} # Android paths
+  "lib/${CMAKE_LIBRARY_ARCHITECTURE}" # CMake architecture path
+  "lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release"
+  "lib/${ANDROID_ABI}" "${ANDROID_ABI}" # Android paths
+  "lib/${WINDOWS_ABI}"
 
-  lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL} # CMake architecture path
-  lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL}/Release
+  "lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL}" # CMake architecture path
+  "lib/${CMAKE_LIBRARY_ARCHITECTURE_SDL}/Release"
 
   PATHS ${SDL2_SEARCH_PATHS}
   )

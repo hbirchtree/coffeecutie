@@ -40,8 +40,9 @@ find_library ( OPENAL_LIBRARY_TMP
 
     PATH_SUFFIXES
     lib
-    lib/${ANDROID_ABI}
-    ${ANDROID_ABI}
+    "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
+    "lib/${ANDROID_ABI}"
+    "${ANDROID_ABI}"
     libs/Win64
     64/link
 

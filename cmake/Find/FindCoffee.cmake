@@ -15,14 +15,14 @@ set ( COFFEE_SEARCH_PATHS
     ~/Library/Frameworks
     /Library/Frameworks
 
-    ${COFFEE_ROOT_DIR}
-    $ENV{COFFEE_ROOT_DIR}
+    "${COFFEE_ROOT_DIR}"
+    "$ENV{COFFEE_ROOT_DIR}"
     )
 set ( COFFEE_LIBRARY_SUFFIXES
     lib
     lib64
-    lib/${ANDROID_ABI}
-    lib/${CMAKE_LIBRARY_ARCHITECTURE}
+    "lib/${ANDROID_ABI}"
+    "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
     )
 
 find_path ( COFFEE_INCLUDE_DIR_TMP

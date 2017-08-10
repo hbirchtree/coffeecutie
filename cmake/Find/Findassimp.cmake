@@ -20,7 +20,8 @@ FIND_LIBRARY(
     PATHS ${CMAKE_BINARY_DIR}/libs/lib/ ${COFFEE_ROOT_DIR} ${NATIVE_LIBRARY_DIR}
     PATH_SUFFIXES
     64/link lib lib64
-    lib/${CMAKE_LIBRARY_ARCHITECTURE} # CMake architecture path
+    "lib/${CMAKE_LIBRARY_ARCHITECTURE}" # CMake architecture path
+    "lib/${ANDROID_ABI}"
     )
 
 IF (ASSIMP_INCLUDE_DIR_TMP AND ASSIMP_LIBRARIES_TMP)

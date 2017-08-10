@@ -7,10 +7,10 @@ set ( ANGLE_SEARCH_PATHS
 	${COFFEE_ROOT_DIR}
 	)
 set ( ANGLE_LIB_SUFFIXES
-	lib/${WINDOWS_ABI} #Future-proofing for x86/x86_64/armv7/arm64
+        "lib/${WINDOWS_ABI}" #Future-proofing for x86/x86_64/armv7/arm64
 
-	lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release
-	bin/UAP/${CMAKE_LIBRARY_ARCHITECTURE_UWP} #Future-proofing for x86/x86_64/armv7/arm64
+        "lib/${CMAKE_LIBRARY_ARCHITECTURE}/Release"
+        "bin/UAP/${CMAKE_LIBRARY_ARCHITECTURE_UWP}" #Future-proofing for x86/x86_64/armv7/arm64
 	)
 
 FIND_PATH( ANGLE_INCLUDE_DIR_TMP

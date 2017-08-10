@@ -37,19 +37,19 @@ macro(COFFEE_BUNDLE_LIBRARY LIBRARY )
     if(ANDROID)
         install(
             FILES ${LIBRARY}
-            DESTINATION lib/${ANDROID_ABI}
+            DESTINATION "lib/${ANDROID_ABI}"
             )
     elseif(APPLE AND IOS)
         install (
             FILES ${LIBRARY}
-            DESTINATION lib/${CMAKE_LIBRARY_ARCHITECTURE}
+            DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
     elseif(EMSCRIPTEN)
 
     elseif((NOT APPLE OR IOS) AND NOT (${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten"))
         install (
             FILES ${LIBRARY}
-            DESTINATION lib/${CMAKE_LIBRARY_ARCHITECTURE}
+            DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
     endif()
 endmacro()
@@ -129,7 +129,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             ${TARGET}
 
             DESTINATION
-            lib/${ANDROID_ABI}
+            "lib/${ANDROID_ABI}"
             )
     else()
         install(
@@ -137,7 +137,7 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
             ${TARGET}
 
             DESTINATION
-            lib/${CMAKE_LIBRARY_ARCHITECTURE}
+            "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
     endif()
 
@@ -306,7 +306,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             "$<TARGET_FILE:${TARGET}>"
 
             DESTINATION
-            bin/${CMAKE_LIBRARY_ARCHITECTURE}
+            "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
 
         if(COFFEE_GENERATE_APPIMAGE)
@@ -345,7 +345,7 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             ${TARGET}
 
             DESTINATION
-            bin/${CMAKE_LIBRARY_ARCHITECTURE}
+            "bin/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
     endif()
 
