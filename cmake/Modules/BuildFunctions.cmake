@@ -436,10 +436,8 @@ endmacro()
 
 function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
     # Bleh, Android kind of sucks for this.
-    if(ANDROID)
+    if(ANDROID OR WIN_UWP)
         return()
-	elseif(WIN_UWP)
-		return()
     endif()
 
     coffee_gen_licenseinfo("${TARGET}" "")
@@ -474,7 +472,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
             "$<TARGET_FILE:${TARGET}>"
 
             DESTINATION
-            bin/tests
+            "bin/tests/${CMAKE_LIBRARY_ARCHITECTURE}"
             )
     endif()
 
