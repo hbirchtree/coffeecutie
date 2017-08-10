@@ -174,21 +174,26 @@ def create_ci_config_file(src_dir, trg_dir, template, args,
     from copy import deepcopy
 
     src_file = '%s/%s' % (src_dir, template)
-    trg_file = '%s/build.yml' % (trg_dir,)
+    trg_file = '%s/%s' % (trg_dir, build_yml_filespec)
+    old_trg_file = '%s/%s' % (trg_dir, 'build.yml')
 
     structure = None
     engine_version = git_get_commit(args.repo_dir)
     engine_slug = git_get_slug(args.repo_dir)
 
-    if isfile(trg_file):
-        structure = configure_ci.parse_yaml(trg_file)
+    if isfile(trg_file) or isfile(old_trg_file):
+        if isfile(trg_file):
+            structure = configure_ci.parse_yaml(trg_file)
+        if isfile(old_trg_file):
+            structure = configure_ci.parse_yaml(old_trg_file)
+            run_command('remove_file', [old_trg_file])
 
         if 'dependencies' in structure:
             v = structure['dependencies']
 
             if type(v) == list:
                 dv = {}
-                print('Updating build.yml structure')
+                print('Updating %s structure' % (build_yml_filespec,))
                 structure.pop('engine_version', None)
                 for e in v:
                     try:
@@ -364,9 +369,10 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
     }
 
     gitignore_patterns = [
+        '__pycache__',
         '*~',
         '*.user',
-        'local.yml'
+        local_yml_filespec
     ]
 
     configurable_files = {
@@ -388,11 +394,16 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
                           args=args, ci_services=configure_ci.CI_SERVICES)
 
     # Leave local configuration for quick reconfiguration
+    old_local_file = '%s/local.yml' % (target_dir,)
+    local_file = '%s/%s' % (target_dir, local_yml_filespec)
 
-    with open('%s/local.yml' % target_dir, mode='w') as local_config:
-        cfg = {
-            'source_dir': repo_dir
-        }
+    with open(local_file, mode='w') as local_config:
+        cfg = {}
+        if isfile(old_local_file):
+            cfg.update(configure_ci.parse_yaml(old_local_file))
+            #run_command('remove_file', [old_local_file])
+
+        cfg.update({'source_dir': repo_dir})
         yaml_data = configure_ci.render_yaml(cfg)
         if _dry_run or _verbose:
             print('Writing local config file:')

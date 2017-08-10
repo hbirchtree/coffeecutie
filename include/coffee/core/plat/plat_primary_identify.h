@@ -19,7 +19,7 @@
 #endif
 
 /* Android: the land of oddities */
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(ANDROID)
 #undef C_SYSTEM_STRING
 #define C_SYSTEM_STRING "Android"
 #define COFFEE_ANDROID

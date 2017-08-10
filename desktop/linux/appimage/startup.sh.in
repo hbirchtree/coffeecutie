@@ -4,9 +4,9 @@
 export APPIMAGE_DATA_DIR="${APPDIR}/assets"
 
 # Set up environment
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${APPDIR}/lib
-export XDG_DATA_HOME=${APPDIR}/share
-export XDG_DATA_DIRS=$XDG_DATA_DIRS:${APPDIR}/share
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${APPDIR}/lib"
+export XDG_DATA_HOME="${APPDIR}/share"
+export XDG_DATA_DIRS="$XDG_DATA_DIRS:${APPDIR}/share"
 
 # Coffee-specific
 export COFFEE_NO_PROFILER_EXPORT="1"

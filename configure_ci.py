@@ -265,28 +265,6 @@ def appveyor_gen_config(build_info, srcDir):
         'deploy_script': [
             {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]
-        # 'deploy': [
-        #     {
-        #         'provider': 'GitHub',
-        #         'release': 'automatic-build-$(APPVEYOR_BUILD_NUMBER)',
-        #         'description': 'Automatic build',
-        #         'artifact': 'Libraries',
-        #         'prelease': True,
-        #         'on': {
-        #             'appveyor_repo_tag': True
-        #         },
-        #     },
-        #     {
-        #         'provider': 'GitHub',
-        #         'release': 'automatic-build-$(APPVEYOR_BUILD_NUMBER)',
-        #         'description': 'Automatic build',
-        #         'artifact': 'Libraries',
-        #         'prelease': True,
-        #         'on': {
-        #             'branch': deploy_info[1].pop()
-        #         },
-        #     }
-        # ]
     }
 
 
@@ -488,7 +466,7 @@ def process_configs(configs, print_config=False, overwrite=False, cur_dir='.'):
 
 CI_SERVICES = [ConfigCreator(travis_gen_config, 'Travis CI', travis_targets, '.travis.yml'),
                ConfigCreator(appveyor_gen_config, 'Appveyor CI', appveyor_targets, 'appveyor.yml'),
-               ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, 'build.groovy',
+               ConfigCreator(jenkins_gen_config, 'Jenkins CI', jenkins_targets, '.jenkins.groovy',
                              data_format=DATAFORMAT_TEXT)]
 
 
@@ -497,7 +475,7 @@ def main():
 
     cur_dir = realpath(dirname(__file__))
 
-    default_file = '%s/%s' % (cur_dir, 'build.yml')
+    default_file = '%s/%s' % (cur_dir, build_yml_filespec)
 
     args.add_argument('input_file', metavar='input_file', type=str, nargs='*',
                       help='file used for configuring CI systems, defaults to %s' % default_file,

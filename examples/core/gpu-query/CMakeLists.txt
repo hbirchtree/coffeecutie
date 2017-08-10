@@ -1,1 +1,5 @@
-coffee_add_application ( GpuQueryTest "GPU Query Test" main.cpp "CoffeeCore;CoffeeGraphicsAPI" )
+coffee_add_application_longer ( GpuQueryTest
+    "GPU Query Test" "hbirchtree" "5"
+    main.cpp "CoffeeCore;CoffeeGraphicsAPI"
+    "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libcoffee-nvidia.so"
+    "")

@@ -1,8 +1,9 @@
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     set ( APPIMAGE_CONFIG_DIR "${COFFEE_DESKTOP_DIRECTORY}/linux/appimage" )
 
-    set ( APPIMAGE_ASSISTANT_PROGRAM CACHE FILEPATH "AppImageAssistant executable" )
+    set ( MKSQUASH_PROGRAM CACHE FILEPATH "AppImageAssistant executable" )
     set ( APPIMAGE_APPRUN_PROGRAM CACHE FILEPATH "AppImage AppRun executable" )
+    set ( APPIMAGE_RUNTIME_BINARY CACHE FILEPATH "AppImage runtime to be embedded into the AppImage" )
 
     set ( APPIMAGE_WORKING_DIRECTORY "${COFFEE_DEPLOY_DIRECTORY}/linux-appimage"
         CACHE PATH "Where to put the AppDir items" )
@@ -46,8 +47,14 @@ macro( APPIMAGE_PACKAGE
     # This directory is used for temporary files, might get messy
     set ( APPIMAGE_CACHE_DIR "${APPIMAGE_WORKING_DIRECTORY}/${APPIMAGE_INTERNALNAME}_cache" )
     # Where the AppDir is generated
-    set ( APPIMAGE_INTERMEDIATE_DIR "${APPIMAGE_WORKING_DIRECTORY}/${APPIMAGE_INTERNALNAME}" )
-    set ( APPIMAGE_ICON_TARGET "${APPIMAGE_INTERMEDIATE_DIR}/${APPIMAGE_ICON_REF}" )
+    set ( APPIMAGE_INTERMEDIATE_DIR
+        "${APPIMAGE_WORKING_DIRECTORY}/${APPIMAGE_INTERNALNAME}.AppDir" )
+    set ( APPIMAGE_INTERMEDIATE_SQUASH
+        "${APPIMAGE_WORKING_DIRECTORY}/${APPIMAGE_INTERNALNAME}.squashfs" )
+
+    set ( APPIMAGE_ICON_TARGET
+        "${APPIMAGE_INTERMEDIATE_DIR}/${APPIMAGE_ICON_REF}" )
+
     if(NOT APPIMAGE_FOLLOW_STANDARD)
         set ( APPIMAGE_BINARY_DIR "${APPIMAGE_INTERMEDIATE_DIR}" )
         set ( APPIMAGE_ASSET_DIR "${APPIMAGE_INTERMEDIATE_DIR}/assets" )
@@ -166,8 +173,18 @@ macro( APPIMAGE_PACKAGE
     # Do the actual packaging step with AppImageKit
     add_custom_command ( TARGET ${TARGET}
         POST_BUILD
-        COMMAND
-        "${APPIMAGE_ASSISTANT_PROGRAM}" "${APPIMAGE_INTERMEDIATE_DIR}" "${APPIMAGE_FINAL_NAME}"
+        COMMAND "${MKSQUASH_PROGRAM}"
+                "${APPIMAGE_INTERMEDIATE_DIR}"
+                "${APPIMAGE_INTERMEDIATE_SQUASH}"
+                -root-owned -noappend
+        )
+    add_custom_command ( TARGET ${TARGET}
+        POST_BUILD
+        USES_TERMINAL
+
+        COMMAND cat "${APPIMAGE_RUNTIME_BINARY}" >> "${APPIMAGE_FINAL_NAME}"
+        COMMAND cat "${APPIMAGE_INTERMEDIATE_SQUASH}" >> "${APPIMAGE_FINAL_NAME}"
+        COMMAND chmod +x "${APPIMAGE_FINAL_NAME}"
         )
 
     install (

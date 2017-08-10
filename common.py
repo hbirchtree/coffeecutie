@@ -3,6 +3,10 @@ from os.path import dirname, basename, realpath, curdir
 from os.path import isfile, isdir
 
 
+local_yml_filespec = '.local.yml'
+build_yml_filespec = '.build.yml'
+
+
 def configure_string(src_text, variables):
     for var in variables:
         src_text = src_text.replace('@%s@' % (var,),

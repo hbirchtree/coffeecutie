@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from sys import stderr
+from common import build_yml_filespec
 
 from yaml import load, dump
 try:
@@ -33,7 +34,7 @@ if __name__ == '__main__':
 
     this_dir = args.src_dir
 
-    build_config = '%s/build.yml' % this_dir
+    build_config = '%s/%s' % (this_dir, build_yml_filespec)
 
     if isfile(build_config):
         config = read_yaml_file(build_config)

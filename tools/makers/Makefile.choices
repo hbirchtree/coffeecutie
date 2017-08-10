@@ -16,7 +16,7 @@ ubuntu-amd64: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e BUILD_DIR=$(BUILD_DIR) \
-		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu -DMKSQUASH_PROGRAM=/usr/bin/mksquashfs -DAPPIMAGE_RUNTIME_BINARY=/nativelibs/Ubuntu/util/x86_64-linux-gnu/runtime -DCOFFEE_GENERATE_APPIMAGE=ON" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro"
 
 ubuntu-amd64-gles: native-lib-root

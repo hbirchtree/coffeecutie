@@ -6,6 +6,8 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
+import common
+
 from os.path import dirname, realpath, isfile, isdir
 from subprocess import call
 from sys import executable
@@ -21,8 +23,8 @@ if __name__ == '__main__':
 
     this_dir = dirname(realpath(__file__))
 
-    local_config = '%s/local.yml' % this_dir
-    build_config = '%s/build.yml' % this_dir
+    local_config = '%s/%s' % (this_dir, common.local_yml_filespec)
+    build_config = '%s/%s' % (this_dir, common.build_yml_filespec)
 
     repo_dir = None
     project_name = None

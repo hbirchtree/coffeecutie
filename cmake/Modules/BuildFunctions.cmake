@@ -380,7 +380,7 @@ macro(COFFEE_ADD_APPLICATION_LONGER
 
     set ( PERMISSIONS "OPENGL;AUDIO;ENVIRONMENT_SENSORS;NETWORK_CONNECT;JOYSTICK" )
     set ( INFO_STRING "It's a Coffee application" )
-    set ( COPYRIGHT "Coffeecutie, MIT license" )
+    set ( COPYRIGHT "Copyright hbirchtree under MIT license" )
 
     COFFEE_ADD_APPLICATION_LONGERER(
         "${TARGET}"
