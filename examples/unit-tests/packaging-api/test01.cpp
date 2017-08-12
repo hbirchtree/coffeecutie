@@ -2,7 +2,6 @@
 #include <coffee/core/CFiles>
 
 using namespace Coffee;
-using namespace CResources;
 
 const constexpr sbyte_t probe_text[25] = "I'M THE TRASHMAN! Hello.";
 

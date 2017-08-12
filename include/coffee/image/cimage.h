@@ -8,8 +8,6 @@
 namespace Coffee{
 namespace CStbImageLib{
 
-using namespace CResources;
-
 /*!
  * \brief STB image format for standard imported images
  */

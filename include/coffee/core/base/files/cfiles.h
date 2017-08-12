@@ -144,8 +144,6 @@ FORCEDINLINE CResources::Resource operator "" _config(const char* fn, size_t)
                                 ResourceAccess::ConfigFile);
 }
 
-using namespace CResources;
-
 namespace Strings{
 extern CString to_string(CResources::Resource const& r);
 }

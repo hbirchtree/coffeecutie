@@ -8,7 +8,6 @@ namespace Coffee{
 namespace FFMedia{
 
 using namespace CAudio;
-using namespace CResources;
 
 using CFFMessageCallback = void(*)(void*,int,cstring,va_list);
 

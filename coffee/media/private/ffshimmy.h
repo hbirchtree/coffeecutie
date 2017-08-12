@@ -17,7 +17,6 @@ namespace Coffee{
 namespace FFMedia{
 
 using namespace CAudio;
-using namespace CResources;
 
 struct FFStream
 {

@@ -9,8 +9,6 @@ namespace Coffee {
 namespace Windows {
 const constexpr cstring coffee_rsc_tag = "CF_RES";
 
-using namespace CResources;
-
 WinFileApi::FileAccess WinFileApi::GetAccess(ResourceAccess acc)
 {
     FileAccess f;

@@ -166,6 +166,9 @@ struct DirFunDef
 };
 
 }
+
+using namespace CResources;
+
 }
 
 #endif

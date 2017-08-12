@@ -9,7 +9,6 @@
 
 using namespace Coffee;
 using namespace Display;
-using namespace CResources;
 
 class CDRenderer : public CSDL2Renderer
 {

@@ -4,7 +4,6 @@
 #include <coffee/core/CFiles>
 
 using namespace Coffee;
-using namespace CResources;
 
 struct C_FORCE_PACKING RSCacheSectorHeader
 {

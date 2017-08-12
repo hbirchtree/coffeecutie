@@ -357,8 +357,6 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
 #endif
 }
 
-using namespace CResources;
-
 PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
 {
     static const constexpr cstring thermal_class = "/sys/class/thermal";

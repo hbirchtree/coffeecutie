@@ -5,7 +5,6 @@
 #include <coffee/core/CApplication>
 
 using namespace Coffee;
-using namespace CResources;
 using namespace Blam;
 
 struct texture_data_t
