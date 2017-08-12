@@ -116,28 +116,28 @@ FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
     return {C_CAST<byte_t const*>(resc.data),resc.size, 0};
 }
 
-FORCEDINLINE CResources::Resource operator "" _rsc(const char* fn, unsigned long)
+FORCEDINLINE CResources::Resource operator "" _rsc(const char* fn, size_t)
 {
     return CResources::Resource(fn,
                                 ResourceAccess::SpecifyStorage|
                                 ResourceAccess::AssetFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _tmp(const char* fn, unsigned long)
+FORCEDINLINE CResources::Resource operator "" _tmp(const char* fn, size_t)
 {
     return CResources::Resource(fn,
                                 ResourceAccess::SpecifyStorage|
                                 ResourceAccess::TemporaryFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _cache(const char* fn, unsigned long)
+FORCEDINLINE CResources::Resource operator "" _cache(const char* fn, size_t)
 {
     return CResources::Resource(fn,
                                 ResourceAccess::SpecifyStorage|
                                 ResourceAccess::CachedFile);
 }
 
-FORCEDINLINE CResources::Resource operator "" _cfg(const char* fn, unsigned long)
+FORCEDINLINE CResources::Resource operator "" _config(const char* fn, size_t)
 {
     return CResources::Resource(fn,
                                 ResourceAccess::SpecifyStorage|

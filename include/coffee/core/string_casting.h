@@ -6,7 +6,7 @@
 #define CAST_TO_FUNCTION(type, converter) \
     template<> inline type cast_string(CString const& str) \
     { return Mem::Convert::converter(str.c_str()); } \
-    inline type operator "" _ ## type(const char* v, unsigned long) \
+    inline type operator "" _ ## type(const char* v, size_t) \
     {return cast_string<type>(v);}
 
 #define CAST_FROM_FUNCTION(type, converter) \
@@ -19,7 +19,7 @@
 #define CAST_LOWER_FUNCTION(type, converter) \
     template<> inline type cast_string(CString const& str) \
     {return C_CAST<type>(Mem::Convert::converter(str.c_str())); } \
-    inline type operator "" _ ## type(const char* v, unsigned long) \
+    inline type operator "" _ ## type(const char* v, size_t) \
     {return cast_string<type>(v);}
 
 namespace Coffee{
