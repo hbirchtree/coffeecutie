@@ -27,6 +27,14 @@ inline CString to_string(const CharT* const& v)
     return out;
 }
 
+template<typename T,
+          typename std::enable_if<std::is_same<T, std::nullptr_t>::value,
+                                  bool>::type* = nullptr>
+ inline CString to_string(T const&)
+ {
+     return "0x0";
+ }
+
 inline cstring to_string(bool const& v)
 {
     return (v) ? "true" : "false";
