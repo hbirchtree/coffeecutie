@@ -89,7 +89,8 @@ Resource::Resource(Resource &&rsc)
 
 Resource::~Resource()
 {
-    delete m_platform_data;
+    if(m_platform_data)
+        delete m_platform_data;
 }
 
 cstring Resource::resource() const
