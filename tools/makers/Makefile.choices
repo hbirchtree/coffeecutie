@@ -155,7 +155,7 @@ raspberry-armhf: $(RASPBERRY_SYSROOT) native-lib-root
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=/nativelibs/RaspberryPi -DRASPBERRY_SDK=/rpi-sysroot"
 
 # Compiles for Maemo 5 armel/ARMv7A
-maemo-armv7a: native-lib-root
+maemo-armel: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi \
 		-e BUILD_NAME=maemo \
                 -e BUILDER_NAME=maemo-builder \

@@ -28,7 +28,7 @@ _TARGET_NAMES = {
         'emscripten': ['wasm', 'asmjs'],
         'steam': ['amd64'],
         'android': ['armv7a', 'armv8a', 'armv7a.kitkat'],
-        'maemo': ['armv7a'],
+        'maemo': ['armel', 'i386'],
         'raspberry': ['armhf']
     },
     'osx': [

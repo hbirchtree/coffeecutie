@@ -92,8 +92,8 @@ emscripten.wasm:
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/emscripten-wasm:$(DOCK_COFFEE_DIR):ro"
 
-maemo.armv7a:
-	@make -f $(CHOICES) maemo-armv7a \
+maemo.armel:
+	@make -f $(CHOICES) maemo-armel \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \

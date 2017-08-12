@@ -17,7 +17,7 @@ platforms:
       - armv8a
       - armv7a.kitkat
     maemo:
-      - armv7a
+      - armel
     osx:
       - osx
       - ios.x86_64
