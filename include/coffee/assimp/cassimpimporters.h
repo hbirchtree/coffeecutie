@@ -49,7 +49,6 @@ namespace ASSIMP {
 
 struct AssimpData;
 using AssimpPtr = UqPtr<AssimpData>;
-using Resource = CResources::Resource;
 
 struct Node : public MultiParentObject
 {

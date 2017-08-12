@@ -5,8 +5,7 @@ using namespace Coffee;
 
 const cstring testfile = "fileapi_testfile.txt";
 
-using Resource = CResources::Resource;
-using File = CResources::FileFun;
+using File = FileFun;
 
 const cstring writetest = "file_write_large.bin";
 byte_t write_data[100] = {
@@ -36,7 +35,7 @@ bool filewrite_test()
 
     dynamic_store = rsc.data;
 
-    bool stat = CResources::FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+    bool stat = FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;
@@ -46,7 +45,7 @@ bool fileread_test()
 {
     bool status = true;
 
-    CResources::Resource rsc(writetest);
+    Resource rsc(writetest);
     Profiler::Profile("Pre-reading setup");
 
     status = CResources::FilePull(rsc);
