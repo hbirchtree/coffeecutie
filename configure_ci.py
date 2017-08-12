@@ -259,9 +259,9 @@ def appveyor_gen_config(build_info, srcDir):
         'build_script': [
             {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
-        'artifacts': [
-            {'path': '*.zip', 'name': 'Libraries'}
-        ],
+#        'artifacts': [
+#            {'path': '*.zip', 'name': 'Libraries'}
+#        ],
         'deploy_script': [
             {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]
