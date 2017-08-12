@@ -42,23 +42,23 @@ CString cast_pod(size_t v)
     return Mem::Convert::sizetostring(v);
 }
 
-CAST_BOTH_FUNCTION(uint64, strtoull, uintltostring)
-CAST_BOTH_FUNCTION(int64, strtoll, intltostring)
-CAST_BOTH_FUNCTION(uint32, strtouint, uinttostring)
-CAST_BOTH_FUNCTION(int32, strtoint, inttostring)
+CAST_BOTH_FUNCTION(u64, strtoull, uintltostring)
+CAST_BOTH_FUNCTION(i64, strtoll, intltostring)
+CAST_BOTH_FUNCTION(u32, strtouint, uinttostring)
+CAST_BOTH_FUNCTION(i32, strtoint, inttostring)
 CAST_BOTH_FUNCTION(scalar, strtofscalar, scalarftostring)
 CAST_BOTH_FUNCTION(bigscalar, strtoscalar, scalartostring)
 CAST_BOTH_FUNCTION(bool, strtobool, booltostring)
 
-CAST_FROM_FUNCTION(int8, intctostring)
-CAST_FROM_FUNCTION(uint8, uintctostring)
-CAST_FROM_FUNCTION(int16, intstostring)
-CAST_FROM_FUNCTION(uint16, uintstostring)
+CAST_FROM_FUNCTION(i8, intctostring)
+CAST_FROM_FUNCTION(u8, uintctostring)
+CAST_FROM_FUNCTION(i16, intstostring)
+CAST_FROM_FUNCTION(u16, uintstostring)
 
-CAST_LOWER_FUNCTION(int8, strtoint)
-CAST_LOWER_FUNCTION(uint8, strtouint)
-CAST_LOWER_FUNCTION(int16, strtoint)
-CAST_LOWER_FUNCTION(uint16, strtouint)
+CAST_LOWER_FUNCTION(i8, strtoint)
+CAST_LOWER_FUNCTION(u8, strtouint)
+CAST_LOWER_FUNCTION(i16, strtoint)
+CAST_LOWER_FUNCTION(u16, strtouint)
 
 }
 

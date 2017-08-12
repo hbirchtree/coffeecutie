@@ -52,8 +52,8 @@ bool convert_string()
 bool string_literal_test()
 {
     bigscalar cast_test_f = "127"_bigscalar;
-    uint64 cast_test_u = "127"_uint64;
-    int64 cast_test_i = "-127"_int64;
+    uint64 cast_test_u = "127"_u64;
+    int64 cast_test_i = "-127"_i64;
 
     if(cast_test_f != 127 ||
             cast_test_u != 127 ||

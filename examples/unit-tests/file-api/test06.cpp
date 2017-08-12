@@ -5,8 +5,7 @@ using namespace Coffee;
 
 const cstring testfile = "fileapi_testfile.txt";
 
-using Resource = CResources::Resource;
-using File = CResources::FileFun;
+using File = FileFun;
 
 bool filedel_test()
 {
