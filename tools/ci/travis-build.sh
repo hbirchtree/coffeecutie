@@ -78,7 +78,7 @@ function download_libraries()
     local LATEST_RELEASE=$($HELPER get-closest-release $CONFIG_RELEASE $ALL_RELEASES)
 
     notify "Using release $LATEST_RELEASE for $slug"
-    local CURRENT_ASSET="$(github_api list asset ${slug}:${LATEST_RELEASE} | grep "${2}" | head -1)"
+    local CURRENT_ASSET="$(github_api list asset ${slug}:${LATEST_RELEASE} | grep "_${2}.tar.gz" | head -1)"
     echo Asset $CURRENT_ASSET
 
     [[ -z $CURRENT_ASSET ]] && die "Failed to find ${slug} for $2"

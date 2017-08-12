@@ -58,6 +58,8 @@ template<typename T,
          typename std::enable_if<std::is_convertible<T, CString>::value,
                                  bool>::type* = nullptr,
          typename std::enable_if<!std::is_pointer<T>::value,
+                                 bool>::type* = nullptr,
+         typename std::enable_if<!std::is_same<T, std::nullptr_t>::value,
                                  bool>::type* = nullptr>
 inline CString to_string(T const& value)
 {
