@@ -377,6 +377,7 @@ def jenkins_gen_config(build_info, src_dir):
         'WINDOWS_TARGETS': mk_groovy_list(windows_targets),
 
         'DEPENDENCIES': deps,
+        'DEPENDENCIES_NIX': deps.replace(";", "%"),
         'REPO_URL': repo_url,
 
         'SCRIPT_DIR': try_get_key(build_info, 'script_location', 'ci'),

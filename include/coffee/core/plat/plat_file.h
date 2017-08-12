@@ -7,7 +7,7 @@
 
 namespace Coffee{
 
-using DirFun = CResources::DirFun;
-using FileFun = CResources::FileFun;
+//using DirFun = CResources::DirFun;
+//using FileFun = CResources::FileFun;
 
 }
