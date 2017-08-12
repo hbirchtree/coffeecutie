@@ -73,6 +73,20 @@ Resource::Resource(cstring rsrc, ResourceAccess acc):
 {
 }
 
+Resource::Resource(Resource &&rsc)
+{
+    this->data = rsc.data;
+    this->size = rsc.size;
+    this->flags = rsc.flags;
+    this->m_platform_data = rsc.m_platform_data;
+    this->m_resource = std::move(rsc.m_resource);
+
+    rsc.data = nullptr;
+    rsc.flags = FileFlags::Undefined;
+    rsc.m_platform_data = nullptr;
+    rsc.size = 0;
+}
+
 Resource::~Resource()
 {
     delete m_platform_data;
@@ -99,11 +113,13 @@ bool FileExists(const Resource &resc)
     return FileFun::Exists(native_fn.c_str());
 }
 
-bool FileMap(Resource &resc, ResourceAccess acc)
+bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 {
     CString native_fn = FileFun::NativePath(resc.resource());
     cVerbose(6,"Native file path: {0}->{1}",resc.resource(),native_fn);
     resc.size = FileFun::Size(native_fn.c_str());
+
+    resc.size = CMath::max(resc.size, size);
 
     if(resc.size == 0)
         return false;

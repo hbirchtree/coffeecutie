@@ -39,7 +39,7 @@ bool convert_string()
 
         test = cast_pod(123456.78910);
 
-        if(test != "123456.78910")
+        if(test != "123456.7891")
             break;
 
         return true;
@@ -49,9 +49,24 @@ bool convert_string()
     return false;
 }
 
-static const CoffeeTest::Test string_tests[2] = {
+bool string_literal_test()
+{
+    bigscalar cast_test_f = "127"_bigscalar;
+    uint64 cast_test_u = "127"_uint64;
+    int64 cast_test_i = "-127"_int64;
+
+    if(cast_test_f != 127 ||
+            cast_test_u != 127 ||
+            cast_test_i != -127)
+        return false;
+
+    return true;
+}
+
+static const CoffeeTest::Test string_tests[3] = {
     {interpret_integers},
-    {convert_string}
+    {convert_string, "String conversion of POD types", "", false},
+    {string_literal_test}
 };
 
 COFFEE_RUN_TESTS(string_tests)

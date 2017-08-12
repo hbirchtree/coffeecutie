@@ -26,7 +26,7 @@ public:
     friend bool FilePull(Resource &resc, bool textmode, bool bigendian);
     friend bool FileCommit(Resource &resc, bool append, ResourceAccess acc);
 
-    friend bool FileMap(Resource &resc, ResourceAccess acc);
+    friend bool FileMap(Resource &resc, ResourceAccess acc, szptr size);
     friend bool FileUnmap(Resource &resc);
 
     /*!
@@ -39,6 +39,7 @@ public:
              ResourceAccess acc = ResourceAccess::None);
     Resource(cstring rsrc,
              ResourceAccess acc);
+    Resource(Resource &&rsc);
     ~Resource();
 
     void* data; /*!< Data pointer*/
@@ -72,7 +73,7 @@ extern bool FileExists(const Resource& resc);
  * \brief Memory map file as buffer
  * \return True if success
  */
-extern bool FileMap(Resource& resc, ResourceAccess acc = ResourceAccess::ReadOnly);
+extern bool FileMap(Resource& resc, ResourceAccess acc = ResourceAccess::ReadOnly, szptr size = 0);
 /*!
  * \brief Unmap file
  * \return True if success
@@ -114,6 +115,36 @@ FORCEDINLINE BytesConst FileGetDescriptor(const CResources::Resource& resc)
 {
     return {C_CAST<byte_t const*>(resc.data),resc.size, 0};
 }
+
+FORCEDINLINE CResources::Resource operator "" _rsc(const char* fn, unsigned long)
+{
+    return CResources::Resource(fn,
+                                ResourceAccess::SpecifyStorage|
+                                ResourceAccess::AssetFile);
+}
+
+FORCEDINLINE CResources::Resource operator "" _tmp(const char* fn, unsigned long)
+{
+    return CResources::Resource(fn,
+                                ResourceAccess::SpecifyStorage|
+                                ResourceAccess::TemporaryFile);
+}
+
+FORCEDINLINE CResources::Resource operator "" _cache(const char* fn, unsigned long)
+{
+    return CResources::Resource(fn,
+                                ResourceAccess::SpecifyStorage|
+                                ResourceAccess::CachedFile);
+}
+
+FORCEDINLINE CResources::Resource operator "" _cfg(const char* fn, unsigned long)
+{
+    return CResources::Resource(fn,
+                                ResourceAccess::SpecifyStorage|
+                                ResourceAccess::ConfigFile);
+}
+
+using namespace CResources;
 
 namespace Strings{
 extern CString to_string(CResources::Resource const& r);

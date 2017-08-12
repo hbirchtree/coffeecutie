@@ -16,13 +16,13 @@ namespace CoffeeTest{
 
 using namespace Coffee;
 
-CElapsedTimerMicro timer;
+static CElapsedTimerMicro timer;
 
-Vector<cstring> titles;
-Vector<cstring> descriptions;
-Vector<uint64> test_times;
-Vector<bool> result;
-Vector<bool> required;
+static Vector<cstring> titles;
+static Vector<cstring> descriptions;
+static Vector<uint64> test_times;
+static Vector<bool> result;
+static Vector<bool> required;
 
 void WriteJsonData(JSON::WriteBuf& buf, szptr const& suc,
                    uint64 const& total_time,
@@ -152,7 +152,7 @@ void PrintAsciiTable(uint64 const& time_accum, szptr suc)
     cBasicPrint("-- Results: \n"
                 "{0}",Table::GenTable(table,header));
 
-    cBasicPrint("Total time: {0} s", ((bigscalar)time_accum)/1000000);
+    cBasicPrint("Total time: {0} s", C_CAST<bigscalar>(time_accum)/1000000);
 
     cBasicPrint("-- Passed: {0}/{1}",suc,result.size());
 }

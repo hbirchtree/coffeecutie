@@ -22,6 +22,35 @@ bool filedel_test()
     return !File::Exists(testfile);
 }
 
+bool check_literal_constructor()
+{
+    auto r = "testfile.txt"_rsc;
+
+    // This could be a compile-time test, but we'll do it at runtime
+    return std::is_same<Resource, decltype (r)>::value;
+}
+
+bool check_move_constructor()
+{
+    Resource r1 = Resource(testfile,
+                           ResourceAccess::SpecifyStorage|
+                           ResourceAccess::AssetFile);
+
+    bool status = true;
+
+    FileMap(r1, ResourceAccess::ReadWrite|ResourceAccess::NewFile, 100);
+
+    Resource r2 = std::move(r1);
+
+    if(r1.data)
+        status = false;
+
+    FileUnmap(r1);
+    FileUnmap(r2);
+
+    return status;
+}
+
 bool filestat_test()
 {
     if(!File::Touch(File::File,testfile))
@@ -36,9 +65,11 @@ bool filestat_test()
     return true;
 }
 
-const constexpr CoffeeTest::Test _tests[2] = {
+const constexpr CoffeeTest::Test _tests[4] = {
     {filedel_test,"File handling","Creating and deleting a file"},
-    {filestat_test,"File testing","Using stat() to check file status"}
+    {check_move_constructor,"Constructor test 1","Verifying literal constructor"},
+    {check_move_constructor,"Constructor test 2","Verifying std::move for Resource"},
+    {filestat_test,"File testing","Using stat() to check file status"},
 };
 
 COFFEE_RUN_TESTS(_tests);
