@@ -129,4 +129,9 @@ PACKEDSTRUCT uint24
 
 using EvTs = uint32;
 
+FORCEDINLINE scalar convert_i16_f(int16 v)
+{
+    return C_CAST<scalar>(v) / Int16_Max;
+}
+
 }

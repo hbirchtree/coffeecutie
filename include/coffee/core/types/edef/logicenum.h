@@ -7,6 +7,13 @@
 
 namespace Coffee{
 
+enum class CameraDirection
+{
+    Forward,
+    Right,
+    Up,
+};
+
 enum class Operator
 {
     Add,

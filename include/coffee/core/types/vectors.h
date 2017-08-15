@@ -58,6 +58,14 @@ public:
         this[Size-1] = c;
     }
 
+    FORCEDINLINE _cbasic_tvector(
+            const _cbasic_tvector<T,Size+1>& v)
+    {
+        static_assert((Size+1) <= 4,"Invalid vector combination!");
+        for(size_t i=0;i<Size;i++)
+            this[i] = v[i];
+    }
+
     FORCEDINLINE T& x()
     {
         return (*this)[0];
@@ -207,7 +215,7 @@ public:
             const _cbasic_tvector<T,Size>& v)
     {
         for(size_t i=0;i<Size;i++)
-            (*this)[i] += v[i];
+            (*this)[i] -= v[i];
     }
     FORCEDINLINE void operator*=(
             const _cbasic_tvector<T,Size>& v)

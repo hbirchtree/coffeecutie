@@ -34,25 +34,25 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
                 else
                     (*this)[x][y] = T(0);
     }
-	_cbasic_tmatrix(const _cbasic_tmatrix<T, Size+1>& matrix)
-	{
-		for (size_t y = 0; y<Size; y++)
-			for (size_t x = 0; x<Size; x++)
-				(*this)[x][y] = matrix[x][y];
-	}
+    _cbasic_tmatrix(const _cbasic_tmatrix<T, Size+1>& matrix)
+    {
+        for (size_t y = 0; y<Size; y++)
+            for (size_t x = 0; x<Size; x++)
+                (*this)[x][y] = matrix[x][y];
+    }
     _cbasic_tmatrix(const _cbasic_tmatrix<T,Size>& matrix)
     {
         for(size_t y=0;y<Size;y++)
             for(size_t x=0;x<Size;x++)
                 (*this)[x][y] = matrix[x][y];
     }
-	_cbasic_tmatrix(const _cbasic_tmatrix<T, Size-1>& matrix)
-		: _cbasic_tmatrix()
-	{
-		for (size_t y = 0; y<Size-1; y++)
-			for (size_t x = 0; x<Size-1; x++)
-				(*this)[x][y] = matrix[x][y];
-	}
+    _cbasic_tmatrix(const _cbasic_tmatrix<T, Size-1>& matrix)
+        : _cbasic_tmatrix()
+    {
+        for (size_t y = 0; y<Size-1; y++)
+            for (size_t x = 0; x<Size-1; x++)
+                (*this)[x][y] = matrix[x][y];
+    }
 
     /*
      * Standard operators
@@ -113,26 +113,26 @@ template<typename T,size_t Size> struct _cbasic_tmatrix
     }
 
     FORCEDINLINE _cbasic_tvector<T,Size> operator*(
-            _cbasic_tvector<T,Size> const& vec)
+            _cbasic_tvector<T,Size> const& vec) const
     {
         _cbasic_tvector<T,Size> out(vec);
 
-	for(size_t i=0;i<Size;i++)
+        for(size_t i=0;i<Size;i++)
             out[i] = dot((*this)[i],vec);
 
         return out;
     }
 
     FORCEDINLINE _cbasic_tmatrix<T,Size> operator*(
-	    T const& scl)
+            T const& scl) const
     {
-	_cbasic_tmatrix<T,Size> out(*this);
+        _cbasic_tmatrix<T,Size> out(*this);
 
-	for(size_t i=0;i<Size;i++)
-	    for(size_t j=0;j<Size;j++)
-		out[i][j] *= scl;
+        for(size_t i=0;i<Size;i++)
+            for(size_t j=0;j<Size;j++)
+                out[i][j] *= scl;
 
-	return out;
+        return out;
     }
 };
 
@@ -256,7 +256,7 @@ FORCEDINLINE _cbasic_tmatrix<T,4> rotate(
     T const c = CMath::sin(a);
 
     _cbasic_tvector<T,3> axis(normalize(vector));
-//    _cbasic_tvector<T,3> temp((T(1) - c)*axis);
+    //    _cbasic_tvector<T,3> temp((T(1) - c)*axis);
 }
 
 template<typename T, size_t Size>

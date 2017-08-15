@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coffee/core/types/edef/logicenum.h>
 #include "vectors.h"
 #include "matrices.h"
 
@@ -163,6 +164,28 @@ template<typename T> _cbasic_tquaternion<T> normalize_quat(
         return _cbasic_tquaternion<T>();
     len = T(1)/len;
     return _cbasic_tquaternion<T>(v.w()*len,v.x()*len,v.y()*len,v.z()*len);
+}
+
+template<CameraDirection Direction, typename T>
+_cbasic_tvector<T, 3> quaternion_to_direction(_cbasic_tquaternion<T> const& q)
+{
+    const auto imm_mat = matrixify_mat3(q);
+    auto comp = _cbasic_tvector<T, 3>();
+    switch(Direction)
+    {
+    case CameraDirection::Forward:
+        comp.z() = -1.f;
+        break;
+    case CameraDirection::Up:
+        comp.y() = 1.f;
+        break;
+    case CameraDirection::Right:
+        comp.x() = -1.f;
+        break;
+    }
+    auto dir = imm_mat * comp;
+
+    return dir;
 }
 
 }
