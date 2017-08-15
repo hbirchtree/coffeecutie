@@ -12,7 +12,7 @@ byte_t write_data[100] = {
     "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n"
 };
 
-const constexpr szptr dynamic_size = Unit_GB*5;
+const szptr dynamic_size = 5_GB;
 void* dynamic_store = nullptr;
 
 bool filewrite_test()
@@ -29,7 +29,7 @@ bool filewrite_test()
         /* Write some data below 4GB mark */
         MemCpy(dest,write_data,sizeof(write_data));
         /* Write data above 4GB mark, requires 64-bit. Fuck 32-bit. */
-        MemCpy(&dest[Unit_GB*4],write_data,sizeof(write_data));
+        MemCpy(&dest[4_GB],write_data,sizeof(write_data));
     }
     Profiler::Profile("Copying data into segment");
 
