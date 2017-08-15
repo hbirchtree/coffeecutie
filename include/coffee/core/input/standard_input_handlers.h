@@ -11,6 +11,16 @@ namespace StandardInput{
 using namespace CInput;
 
 template<typename Camera>
+/*!
+ * \brief Perform standard camera operations
+ * Allows control with WASD and mouse
+ * Is used as an event handler
+ * User pointer should be a camera structure with
+ *  .position and .rotation
+ * \param r Pointer to a CGCamera structure or similar
+ * \param e An event
+ * \param data
+ */
 void StandardCamera(void* r, const CIEvent& e, c_cptr data)
 {
     Camera& camera = *C_CAST<Camera*>(r);
@@ -73,6 +83,16 @@ FORCEDINLINE scalar FilterJoystickInput(i16 raw, i16 deadzone, scalar sens)
 }
 
 template<typename Camera>
+/*!
+ * \brief Allow control with generic game controller
+ * Requires state-dump from joystick on every frame
+ * \param cam Camera for a given player
+ * \param state Controller state dump for a given controller
+ * \param deadzone
+ * \param moveSensitivity
+ * \param lookSensitivityX
+ * \param lookSensitivityY
+ */
 void ControllerCamera(Camera& cam, CIControllerState const& state,
                       i16 deadzone, scalar moveSensitivity,
                       scalar lookSensitivityX,

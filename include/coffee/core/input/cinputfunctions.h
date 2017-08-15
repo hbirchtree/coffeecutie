@@ -7,38 +7,6 @@ namespace Coffee{
 namespace CInput{
 
 /*!
- * \brief Class made to filter out movement towards the center of the control stick
- */
-class CIAxisFilter
-{
-public:
-    FORCEDINLINE CIAxisFilter():
-        last(0,0)
-    {
-    }
-    FORCEDINLINE const CVec2 &filterDelta(const CVec2 &v)
-    {
-        CVec2 out = v;
-
-        if(sqrt(pow(out.x(),2.f)+pow(out.y(),2.f))
-                < sqrt(pow(m_deadzone,2.f)+pow(m_deadzone,2.f)))
-        {
-            out = CVec2(0,0);
-        }
-
-        //TODO: Filter out movement toward center
-
-        //TODO: Remap stick from 0.1-0.85 to 0.0,1.0
-
-        this->last = out;
-        return this->last;
-    }
-private:
-    CVec2 last;
-    scalar m_deadzone;
-};
-
-/*!
  * \brief Stock function for rotating a quaternion by mouse movement.
  * \param cqt
  * \param evsrc
@@ -55,8 +23,6 @@ FORCEDINLINE void MouseRotate(CQuat& cqt,
     cqt.x() = CMath::max(-0.5f, CMath::min(0.5f, cqt.x()));
 
     cqt = normalize_quat(Quatf(1, yaw, 0, 0) * cqt);
-
-    cDebug("{0}", cqt);
 }
 
 FORCEDINLINE void ControllerRotate(CQuat& cqt,
@@ -71,17 +37,6 @@ FORCEDINLINE void ControllerRotate(CQuat& cqt,
                       0)
                 * cqt);
 }
-
-/*!
- * \brief Stock function for rotating a quaternion by controller stick movement.
- * \param cqt
- * \param jev Controller event
- * \param filter
- */
-extern void coffee_input_controller_rotate(
-        CQuat *cqt,
-        const CIControllerAtomicEvent *jev,
-        CIAxisFilter &filter);
 
 }
 }

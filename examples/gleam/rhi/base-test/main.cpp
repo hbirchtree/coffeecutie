@@ -3,6 +3,7 @@
 #include <coffee/core/input/eventhandlers.h>
 #include <coffee/core/coffee.h>
 #include "renderer.h"
+#include <coffee/core/input/standard_input_handlers.h>
 
 void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
 {
@@ -48,7 +49,7 @@ int32 coffee_main(int32, cstring_w*)
                                    nullptr,renderer});
     renderer->installEventHandler({EventHandlers::WindowManagerFullscreen<CDRenderer>,
                                   nullptr,renderer});
-    renderer->installEventHandler({EventHandlers::StandardCamera<CGCamera>,
+    renderer->installEventHandler({StandardInput::StandardCamera<CGCamera>,
                                   nullptr, &actual_renderer.cameraReference()});
 
 //    renderer->installEventHandler({ExitOnBackground, nullptr, renderer});
