@@ -480,12 +480,6 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
         ${LIBRARIES}
         )
 
-    if(BUILD_COVERAGE)
-        target_link_libraries ( ${TARGET}
-            gcov
-            )
-    endif()
-
     target_enable_cxx11(${TARGET})
 
     if(ANDROID OR IOS) # Crosscompiling setup, until we find an elegant solution

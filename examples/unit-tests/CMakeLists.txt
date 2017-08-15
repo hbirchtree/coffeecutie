@@ -1,13 +1,7 @@
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests )
 
 if(BUILD_COVERAGE)
-    set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fprofile-arcs -ftest-coverage" )
-    set ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 -fprofile-arcs -ftest-coverage" )
-    if(CMAKE_COMPILER_IS_GNUCXX)
-        set ( CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} --coverage" )
-    elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-        set ( CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} --coverage" )
-    endif()
+#    APPEND_COVERAGE_COMPILER_FLAGS()
 endif()
 
 add_subdirectory(cmd-api)

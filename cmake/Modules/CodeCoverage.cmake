@@ -85,27 +85,40 @@ ELSEIF(NOT CMAKE_COMPILER_IS_GNUCXX)
 	MESSAGE(FATAL_ERROR "Compiler is not GNU gcc! Aborting...")
 ENDIF() # CHECK VALID COMPILER
 
-SET(CMAKE_CXX_FLAGS_COVERAGE
-    "-g -O0 --coverage -fprofile-arcs -ftest-coverage"
+set(COVERAGE_COMPILER_FLAGS "-g -O0 --coverage -fprofile-arcs -ftest-coverage"
+    CACHE INTERNAL "")
+
+set(CMAKE_CXX_FLAGS_COVERAGE
+    ${COVERAGE_COMPILER_FLAGS}
     CACHE STRING "Flags used by the C++ compiler during coverage builds."
     HORSE )
-SET(CMAKE_C_FLAGS_COVERAGE
-    "-g -O0 --coverage -fprofile-arcs -ftest-coverage"
+set(CMAKE_C_FLAGS_COVERAGE
+    ${COVERAGE_COMPILER_FLAGS}
     CACHE STRING "Flags used by the C compiler during coverage builds."
     HORSE )
-SET(CMAKE_EXE_LINKER_FLAGS_COVERAGE
+set(CMAKE_EXE_LINKER_FLAGS_COVERAGE
     ""
     CACHE STRING "Flags used for linking binaries during coverage builds."
     HORSE )
-SET(CMAKE_SHARED_LINKER_FLAGS_COVERAGE
+set(CMAKE_SHARED_LINKER_FLAGS_COVERAGE
     ""
     CACHE STRING "Flags used by the shared libraries linker during coverage builds."
     HORSE )
-MARK_AS_ADVANCED(
+mark_as_advanced(
     CMAKE_CXX_FLAGS_COVERAGE
     CMAKE_C_FLAGS_COVERAGE
     CMAKE_EXE_LINKER_FLAGS_COVERAGE
     CMAKE_SHARED_LINKER_FLAGS_COVERAGE )
+
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(WARNING "Code coverage results with an optimised (non-Debug) build may be misleading")
+endif() # NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
+
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+    link_libraries(gcov)
+else()
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
 
 IF ( NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "Coverage"))
   MESSAGE( WARNING "Code coverage results with an optimized (non-Debug) build may be misleading" )
@@ -202,3 +215,9 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE_COBERTURA _targetname _testrunner _outputname
     )
 
 ENDFUNCTION() # SETUP_TARGET_FOR_COVERAGE_COBERTURA
+
+function(APPEND_COVERAGE_COMPILER_FLAGS)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_COMPILER_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COVERAGE_COMPILER_FLAGS}" PARENT_SCOPE)
+    message(STATUS "Appending code coverage compiler flags: ${COVERAGE_COMPILER_FLAGS}")
+endfunction() # APPEND_COVERAGE_COMPILER_FLAGS
