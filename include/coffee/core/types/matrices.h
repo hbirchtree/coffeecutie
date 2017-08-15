@@ -419,4 +419,17 @@ FORCEDINLINE _cbasic_tmatrix<T,4> inverse(const _cbasic_tmatrix<T,4>& mv)
     return nv;
 }
 
+template<typename T>
+FORCEDINLINE _cbasic_tvector<T, 3> decompose_matrix(
+        _cbasic_tmatrix<T, 3> const& m)
+{
+    _cbasic_tvector<T, 3> out;
+
+    out[0] = CMath::atan2( m[3][2], m[3][3]);
+    out[1] = CMath::atan2(-m[3][1], CMath::sqrt(CMath::pow(m[3][2], 2) + m[3][3]));
+    out[2] = CMath::atan2( m[2][1], m[1][1]);
+
+    return out;
+}
+
 }

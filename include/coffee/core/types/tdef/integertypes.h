@@ -111,6 +111,17 @@ constexpr MemUnit Unit_MB = 1024*1024;
 constexpr MemUnit Unit_GB = 1024*1024*1024;
 constexpr MemUnit Unit_TB = 1024ULL*1024ULL*1024ULL*1024ULL;
 
+#define GEN_SIZE_LITERAL(unit) \
+    inline MemUnit operator "" _ ## unit ## B (unsigned long long int v) \
+    { \
+        return v * Unit_ ## unit ## B;\
+    }
+
+GEN_SIZE_LITERAL(k)
+GEN_SIZE_LITERAL(M)
+GEN_SIZE_LITERAL(G)
+GEN_SIZE_LITERAL(T)
+
 PACKEDSTRUCT uint24
 {
     uint32 d:24;
