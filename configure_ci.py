@@ -295,6 +295,10 @@ def travis_gen_config(build_info, srcDir):
 
     build_matrix = create_build_matrix(targets, build_info)
 
+    if try_get_key(build_info, 'coverage', False):
+        build_matrix[0].append('BUILDVARIANT=coverage')
+        build_matrix[1].append({'os': 'osx', 'env': 'BUILDVARIANT=coverage'})
+
     deploy_data = create_deploy_info(build_info)
 
     script_loc = try_get_key(build_info, 'script_location', 'ci')

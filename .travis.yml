@@ -16,7 +16,6 @@ env:
   - DEPENDENCIES=
   - PYTHONPATH=/usr/lib/python3/dist-packages
   matrix:
-  - BUILDVARIANT=coverage
   - BUILDVARIANT=android.armv7a
   - BUILDVARIANT=android.armv7a.kitkat
   - BUILDVARIANT=android.armv8a
@@ -29,6 +28,7 @@ env:
   - BUILDVARIANT=ubuntu.i686
   - BUILDVARIANT=ios.x86_64
   - BUILDVARIANT=osx
+  - BUILDVARIANT=coverage
 group: deprecated-2017Q2
 language: cpp
 matrix:
@@ -57,6 +57,8 @@ matrix:
     os: linux
   - env: BUILDVARIANT=osx
     os: linux
+  - env: BUILDVARIANT=coverage
+    os: osx
 notifications:
   email: true
 os:

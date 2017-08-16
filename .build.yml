@@ -25,6 +25,8 @@ platforms:
       - win32
       - uwp
 
+coverage: true
+
 branches:
   - name: master
     build: true

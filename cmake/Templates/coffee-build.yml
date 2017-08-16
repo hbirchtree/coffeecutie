@@ -30,6 +30,8 @@ platforms:
 dependencies:
     hbirchtree/coffeecutie: *
 
+coverage: false
+
 branches:
   - name: master
     build: true
