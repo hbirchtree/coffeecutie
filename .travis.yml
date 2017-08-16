@@ -16,6 +16,7 @@ env:
   - DEPENDENCIES=
   - PYTHONPATH=/usr/lib/python3/dist-packages
   matrix:
+  - BUILDVARIANT=coverage
   - BUILDVARIANT=android.armv7a
   - BUILDVARIANT=android.armv7a.kitkat
   - BUILDVARIANT=android.armv8a
