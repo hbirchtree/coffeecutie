@@ -156,6 +156,10 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname)
 
     SEPARATE_ARGUMENTS(test_command UNIX_COMMAND "${_testrunner}")
 
+    if(COFFEE_ROOT_DIR)
+        set ( COFFEE_ROOT_DIR_PATTERN "${COFFEE_ROOT_DIR}/*" )
+    endif()
+
     # Setup target
     ADD_CUSTOM_TARGET(${_targetname}
 
@@ -164,7 +168,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname)
 
         # Capturing lcov counters and generating report
         COMMAND ${LCOV_PATH} --directory . --capture --output-file ${coverage_info}
-        COMMAND ${LCOV_PATH} --remove ${coverage_info} '${COFFEE_ROOT_DIR}/*' 'tests/*' '/usr/*' --output-file ${coverage_cleaned}
+        COMMAND ${LCOV_PATH} --remove ${coverage_info} ${COFFEE_ROOT_DIR_PATTERN} 'tests/*' '/usr/*' --output-file ${coverage_cleaned}
         COMMAND ${GENHTML_PATH} -o ${_outputname} ${coverage_cleaned}
 #        COMMAND ${CMAKE_COMMAND} -E remove ${coverage_info} ${coverage_cleaned}
 
