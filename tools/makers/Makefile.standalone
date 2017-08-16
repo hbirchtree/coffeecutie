@@ -43,6 +43,13 @@ ubuntu.amd64:
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
 		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu:$(DOCK_COFFEE_DIR):ro"
 
+coverage:
+	@make -f $(CHOICES) coverage \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu:$(DOCK_COFFEE_DIR):ro"
+
 ubuntu.i686:
 	@make -f $(CHOICES) ubuntu-i686 \
 		-e COFFEE_DIR=$(COFFEE_DIR) \

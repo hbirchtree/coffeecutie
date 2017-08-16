@@ -62,6 +62,7 @@ include ( BuildOptions )
 include ( PrecompiledHeader )
 if(BUILD_COVERAGE)
     include ( CodeCoverage )
+    APPEND_COVERAGE_COMPILER_FLAGS()
 endif()
 
 if(COFFEE_GENERATE_LIBRARIES)

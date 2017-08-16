@@ -160,7 +160,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname)
     ADD_CUSTOM_TARGET(${_targetname}
 
         # Run tests
-        ${test_command} ${ARGV3}
+        ${test_command} -q ${ARGV3}
 
         # Capturing lcov counters and generating report
         COMMAND ${LCOV_PATH} --directory . --capture --output-file ${coverage_info}

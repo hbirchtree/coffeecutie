@@ -99,8 +99,8 @@ coverage: native-lib-root
 	@make -f $(ROOT_DIR)/Makefile.multi multi.coverage \
 		-e BUILD_NAME=coverage \
 		-e PRELOAD=linux-coverage.cmake \
-		-e EXTRA_OPTIONS="-DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
-		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro" \
+		-e EXTRA_OPTIONS="-DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu -DCOVERAGE_COMMAND=/usr/bin/lcov" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro -e CC= -e CXX=" \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e BUILD_DIR=$(BUILD_DIR)
 

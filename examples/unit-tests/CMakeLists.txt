@@ -1,9 +1,5 @@
 set ( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests )
 
-if(BUILD_COVERAGE)
-#    APPEND_COVERAGE_COMPILER_FLAGS()
-endif()
-
 add_subdirectory(cmd-api)
 add_subdirectory(datastorage-api)
 add_subdirectory(file-api)
