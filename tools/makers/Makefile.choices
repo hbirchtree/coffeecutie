@@ -96,10 +96,11 @@ steam-amd64: native-lib-root
 
 # Provide coverage results for Ubuntu 16.04+ amd64 using lcov
 coverage: native-lib-root
-	@make -f $(ROOT_DIR)/Makefile.multi multi.coverage \
+	@make -f $(ROOT_DIR)/Makefile.multi multi.twostage \
+		-e CMAKE_SECOND_TARGET=CoverageTest \
 		-e BUILD_NAME=coverage \
 		-e PRELOAD=linux-coverage.cmake \
-		-e EXTRA_OPTIONS="-DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu -DCOVERAGE_COMMAND=/usr/bin/lcov" \
+		-e EXTRA_OPTIONS="-DNATIVE_LIBRARY_DIR=/nativelibs/Ubuntu" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/nativelibs:ro -e CC= -e CXX=" \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e BUILD_DIR=$(BUILD_DIR)

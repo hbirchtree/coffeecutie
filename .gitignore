@@ -3,6 +3,7 @@
 *.userprefs
 *.user
 .DS_Store
+*.swp
 
 # Directories
 bin

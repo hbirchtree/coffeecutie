@@ -8,7 +8,6 @@ if [[ $BUILDVARIANT = "coverage" ]]; then
     SEARCH_DIR=$SOURCE_DIR/multi_build/build-coverage
     mv $SEARCH_DIR/coverage.info.cleaned $SEARCH_DIR/coverage.info
     bash <(curl -s https://codecov.io/bash) -X gcov -s $SEARCH_DIR || echo "Codecov did not collect coverage reports"
-    exit 0
 fi
 
 HELPER="$SCRIPT_DIR/travis-helper.py"

@@ -35,7 +35,8 @@ android-gen-preloads:
 		-e BUILD_DIR=$(COMPILE_DIR)
 
 android: android-gen-preloads android-get-nativelibs
-	@make -f $(ROOT_DIR)/Makefile.multi \
+	@make -f $(ROOT_DIR)/Makefile.multi multi.twostage \
+		-e CMAKE_SECOND_TARGET=AndroidPackage \
 		-e BUILD_NAME=android-$(TARGET) \
 		-e BUILDER_NAME=android-builder \
 		-e DOCKER_CONFIG=android \
