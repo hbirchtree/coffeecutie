@@ -22,6 +22,7 @@ CMAKE_OUT_DIR:=$(DOCK_OUT)
 CMAKE_GEN:=Ninja
 CMAKE_TARGET:=install
 CMAKE_SECOND_TARGET:=CoverageTest
+BUILD_TYPE:=Debug
 
 BUILD_NAME:=ubuntu
 DOCKER_CONFIG:=ubuntu
@@ -72,6 +73,7 @@ multi-config: multi-docker-build
 				-C$(PRELOAD_FILE) \
 				-DCMAKE_TOOLCHAIN_FILE=$(DOCK_TOOLS)/$(TOOLCHAIN) \
 				-DCMAKE_INSTALL_PREFIX=$(CMAKE_OUT_DIR) \
+				-DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
 				$(EXTRA_OPTIONS)"
 
 multi: multi-config

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 from sys import stderr
-from common import build_yml_filespec
 
 from yaml import load, dump
+
+from tools.python.common import build_yml_filespec
+
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
@@ -53,7 +55,14 @@ if __name__ == '__main__':
             else:
                 break
 
-        print(values)
+        if type(values) == dict:
+            for k in values.keys():
+                print(k)
+        elif type(values) == list:
+            for v in values:
+                print(v)
+        else:
+            print(values)
     except [IndexError, KeyError]:
         pass
 

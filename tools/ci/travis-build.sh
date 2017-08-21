@@ -75,10 +75,10 @@ function download_libraries()
 
     local ALL_RELEASES=$(github_api list release ${slug} | cut -d'|' -f 3)
 
-    local LATEST_RELEASE=$($HELPER get-closest-release $CONFIG_RELEASE $ALL_RELEASES)
+    local LATEST_RELEASE=$($HELPER get-closest-release "$CONFIG_RELEASE" $ALL_RELEASES)
 
     notify "Using release $LATEST_RELEASE for $slug"
-    local CURRENT_ASSET="$(github_api list asset ${slug}:${LATEST_RELEASE} | grep "_${2}.tar.gz" | head -1)"
+    local CURRENT_ASSET="$(github_api list asset ${slug}:${LATEST_RELEASE} | grep "libraries_${2}.tar.gz" | head -1)"
     echo Asset $CURRENT_ASSET
 
     [[ -z $CURRENT_ASSET ]] && die "Failed to find ${slug} for $2"
@@ -124,6 +124,9 @@ function main()
 
     local BUILDVARIANT="$1"
     local LIB_ARCHIVE="$TRAVIS_BUILD_DIR/libraries_$1.tar.gz"
+    local BIN_ARCHIVE="$TRAVIS_BUILD_DIR/binaries_$1.tar.gz"
+
+    [ -z $BUILDVARIANT ] && die "No BUILDVARIANT specified"
 
     case "${TRAVIS_OS_NAME}" in
     "linux")
@@ -139,23 +142,15 @@ function main()
     esac
 
     build_standalone "$1"
-    tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} build/
-
-    if [[ ! -z $MANUAL_DEPLOY ]]; then
-        local SLUG=$(git -C "$SOURCE_DIR" remote show -n origin | grep 'Fetch URL' | sed -e 's/^.*github.com[:\/]//g' -e 's/\.git//g')
-        [[ -z $SLUG ]] && die "Failed to get repo slug"
-
-        local COMMIT_SHA=$(git -C "$SOURCE_DIR" rev-parse HEAD)
-        [[ -z $COMMIT_SHA ]] && die "Failed to get commit SHA"
-
-        local RELEASE="$(github_api list release $SLUG | head -1 | cut -d'|' -f 3)"
-        [[ -z $RELEASE ]] && die "No releases to upload to"
-
-        cd $(dirname $LIB_ARCHIVE)
-        github_api push asset "$SLUG:$RELEASE" "$(basename $LIB_ARCHIVE)"
-        github_api push status "$SLUG:$COMMIT_SHA" success "$1" \
-                --gh-context "$MANUAL_CONTEXT"
-    fi
+    tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} \
+            --exclude=build/*/packaged \
+            --exclude=build/*/bin \
+            build/
+    tar -zcvf "$BIN_ARCHIVE" -C ${BUILD_DIR} \
+            --exclude=build/*/lib \
+            --exclude=build/*/include \
+            --exclude=build/*/share \
+            build/
 }
 
 notify "Building $BUILDVARIANT"

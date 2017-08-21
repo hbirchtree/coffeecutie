@@ -14,6 +14,7 @@ HELPER="$SCRIPT_DIR/travis-helper.py"
 GITHUBPY="$SCRIPT_DIR/github_api.py"
 
 DEPLOY_ASSET="libraries_$BUILDVARIANT.tar.gz"
+DEPLOY_BINS="binaries_$BUILDVARIANT.tar.gz"
 
 function github_api()
 {
@@ -35,3 +36,4 @@ fi
 
 echo " * Deploying $DEPLOY_ASSET to $TARGET_TAG"
 github_api push asset "$TRAVIS_REPO_SLUG:$TARGET_TAG" "$DEPLOY_ASSET"
+github_api push asset "$TRAVIS_REPO_SLUG:$TARGET_TAG" "$DEPLOY_BINS"
