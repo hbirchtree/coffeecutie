@@ -11,14 +11,14 @@ using namespace CSoundAbstraction;
 
 class CALSoundManager : public CSoundArbiter<CALSource,CALBuffer>
 {
-    uint32 d_idx = 0;
-
-    uint32 odevices = 0;
-    uint32 idevices = 0;
-    cstring* a_idevices = nullptr;
-    cstring* a_odevices = nullptr;
+    Vector<cstring> idevices;
+    Vector<cstring> odevices;
     Vector<CALSoundDeviceIdentifier> v_idevices;
     Vector<CALSoundDeviceIdentifier> v_odevices;
+
+    uint32 d_idx = 0;
+
+    C_MAYBE_UNUSED uint32 padding = -1;
 
 public:
     CALSoundManager();

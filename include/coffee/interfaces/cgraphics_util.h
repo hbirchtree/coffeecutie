@@ -8,13 +8,10 @@ namespace Coffee{
 namespace RHI{
 
 template<typename GFX>
-FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface, cstring file, ResourceAccess access)
+FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface, Resource&& tex_rsc)
 {
-    using RSC = CResources::Resource;
-
     bool status = true;
 
-    RSC tex_rsc(file, access);
     if(CResources::FileMap(tex_rsc, ResourceAccess::ReadOnly))
     {
         Stb::Img tex_src;
@@ -33,13 +30,9 @@ FORCEDINLINE bool LoadTexture(typename GFX::S_2D& surface, cstring file, Resourc
 }
 
 template<typename GFX>
-FORCEDINLINE bool LoadShader(typename GFX::SHD& shader, cstring file,
-                             ResourceAccess access, ShaderStage stage)
+FORCEDINLINE bool LoadShader(typename GFX::SHD& shader, Resource&& data,
+                             ShaderStage stage)
 {
-    using RSC = CResources::Resource;
-
-    RSC data(file, access);
-
     if(!CResources::FileMap(data, ResourceAccess::ReadOnly))
         return false;
 
@@ -51,15 +44,16 @@ FORCEDINLINE bool LoadShader(typename GFX::SHD& shader, cstring file,
 }
 
 template<typename GFX>
-FORCEDINLINE bool LoadPipeline(typename GFX::PIP& pip, cstring vert_file,
-                               cstring frag_file, ResourceAccess access)
+FORCEDINLINE bool LoadPipeline(typename GFX::PIP& pip,
+                               Resource&& vert_file,
+                               Resource&& frag_file)
 {
     typename GFX::SHD vert;
     typename GFX::SHD frag;
 
-    if(!LoadShader<GFX>(vert, vert_file, access, ShaderStage::Vertex))
+    if(!LoadShader<GFX>(vert, std::move(vert_file), ShaderStage::Vertex))
         return false;
-    if(!LoadShader<GFX>(frag, frag_file, access, ShaderStage::Fragment))
+    if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment))
         return false;
 
     if(!pip.attach(vert, ShaderStage::Vertex))

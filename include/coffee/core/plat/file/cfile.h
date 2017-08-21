@@ -102,7 +102,7 @@ struct CFILEFun_def : CommonFileFun
             data.size = esize;
         data.data = (byte_t*)Alloc(data.size);
         szptr rsize = fread(data.data,sizeof(byte_t),esize,fh->handle);
-		data.size = rsize;
+        data.size = rsize;
         if(nterminate)
             data.data[esize-1] = 0;
 //        if(rsize<esize)

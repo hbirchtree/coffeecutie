@@ -14,6 +14,8 @@
 
 #if (__cplusplus >= 201703L)
 #define C_MAYBE_UNUSED [[maybe_unused]]
+#elif defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#define C_MAYBE_UNUSED __attribute__((unused))
 #else
 #define C_MAYBE_UNUSED
 #endif

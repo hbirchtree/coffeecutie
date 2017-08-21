@@ -18,6 +18,7 @@ struct CGL_SDL_GL_Context : CGL::CGL_Context
     {
         releaseContext();
         SDL_GL_DeleteContext(m_context);
+        m_context = nullptr;
     }
 
     C_DELETE_COPY_CONSTRUCTOR(CGL_SDL_GL_Context);

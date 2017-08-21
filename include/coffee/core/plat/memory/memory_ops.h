@@ -108,7 +108,7 @@ FORCEDINLINE bool MemCmp(c_cptr target, c_cptr cmp, szptr len, int64* val = null
         return memcmp(target,cmp,len)==0;
 }
 
-FORCEDINLINE void MemCpy(c_ptr dest, c_cptr source, szptr len)
+C_DEPRECATED FORCEDINLINE void MemCpy(c_ptr dest, c_cptr source, szptr len)
 {
     memcpy(dest,source,len);
 }
@@ -119,17 +119,17 @@ FORCEDINLINE void MemClear(c_ptr start, szptr len)
 }
 
 /* Memory allocation */
-FORCEDINLINE void* Alloc(szptr datasize)
+C_DEPRECATED FORCEDINLINE void* Alloc(szptr datasize)
 {
     return malloc(datasize);
 }
 
-FORCEDINLINE void* Realloc(c_ptr ptr, szptr datasize)
+C_DEPRECATED FORCEDINLINE void* Realloc(c_ptr ptr, szptr datasize)
 {
     return realloc(ptr,datasize);
 }
 
-FORCEDINLINE void* Calloc(szptr unit, szptr num)
+C_DEPRECATED FORCEDINLINE void* Calloc(szptr unit, szptr num)
 {
     return calloc(unit,num);
 }

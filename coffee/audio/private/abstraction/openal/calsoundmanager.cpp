@@ -13,30 +13,34 @@ namespace COpenAL{
 
 CALSoundManager::CALSoundManager()
 {
-    this->a_idevices = context_devices_input(&idevices);
-    this->a_odevices = context_devices_output(&odevices);
+    context_devices_input(idevices);
+    context_devices_output(odevices);
 
     cstring def_str = context_device_default();
 
-    for(uint32 i=0;i<odevices;i++)
+    szptr i = 0;
+    for(cstring dev : odevices)
     {
-        if(StrCmp(a_odevices[i],def_str))
+        if(StrCmp(odevices[i],def_str))
             d_idx = i;
-        v_odevices.push_back(CALSoundDeviceIdentifier(i,a_odevices[i]));
+        v_odevices.push_back(CALSoundDeviceIdentifier(i,dev));
+        i++;
     }
-    for(uint32 i=0;i<idevices;i++)
-        v_idevices.push_back(CALSoundDeviceIdentifier(i,a_odevices[i]));
+    i = 0;
+    for(cstring dev : idevices)
+    {
+        v_idevices.push_back(CALSoundDeviceIdentifier(i,dev));
+        i++;
+    }
 }
 
 CALSoundManager::~CALSoundManager()
 {
-    CFree(a_idevices);
-    CFree(a_odevices);
 }
 
 CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
 {
-    if(odevices<1)
+    if(odevices.size() < 1)
     {
         cWarning("Failed to find any audio output devices!");
         cWarning("I shall now perform my next trick: RUNOUTTHEWINDOW()");
@@ -47,12 +51,12 @@ CSoundDeviceIdentifier &CALSoundManager::defaultSoundDevice()
 
 uint32 CALSoundManager::numberSoundDevices()
 {
-    return odevices;
+    return odevices.size();
 }
 
 uint32 CALSoundManager::numberSoundInputDevices()
 {
-    return idevices;
+    return idevices.size();
 }
 
 CSoundDeviceIdentifier &CALSoundManager::soundDevice(const szptr &devEnum)

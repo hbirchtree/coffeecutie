@@ -519,8 +519,8 @@ extern void buffer_data(
 
 extern void context_set_distance_model(const CDistanceModel &m);
 
-extern cstring* context_devices_output(uint32 *numDevices);
-extern cstring* context_devices_input(uint32 *numDevices);
+extern void context_devices_output(Vector<cstring>& devices);
+extern void context_devices_input(Vector<cstring>& devices);
 extern cstring context_device_default();
 
 }

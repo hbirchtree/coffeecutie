@@ -233,53 +233,41 @@ void context_set_debug_callback(CALContext *context, CALCallback callback)
     context->callback = callback;
 }
 
-cstring *context_devices_output(uint32* numDevices)
+void context_devices_output(Vector<cstring>& devices)
 {
-    *numDevices = 0;
-
     if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
-        return nullptr;
+        return;
 
-    const ALCchar* devices = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
+    const ALCchar* devices_c = alcGetString(NULL,ALC_DEVICE_SPECIFIER);
 
-    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
-
-    while(*devices)
+    szptr i = 0;
+    while(*devices_c)
     {
-        if(!(*numDevices))
-            arrdev = (cstring*)Realloc(arrdev,sizeof(cstring)*(*numDevices+1));
-        arrdev[*numDevices] = devices;
-        devices += StrLen(devices)+1;
-        (*numDevices)++;
+        devices.resize(i + 1);
+        devices[i] = devices_c;
+        devices_c += StrLen(devices_c)+1;
+        i++;
     }
-
-    return arrdev;
 }
 
-cstring *context_devices_input(uint32* numDevices)
+void context_devices_input(Vector<cstring>& devices)
 {
-    *numDevices = 0;
-
     if(!alcIsExtensionPresent(NULL,"ALC_ENUMERATION_EXT"))
-        return nullptr;
+        return;
 
     const ALCchar* cdevices = alcGetString(NULL,ALC_CAPTURE_DEVICE_SPECIFIER);
 
     if(!cdevices)
-        return nullptr;
+        return;
 
-    cstring* arrdev = (cstring*)Alloc(sizeof(cstring));
-
+    szptr i = 0;
     while(*cdevices)
     {
-        if(!(*numDevices))
-            arrdev = (cstring*)Realloc(arrdev,sizeof(cstring)*(*numDevices+1));
-        arrdev[*numDevices] = cdevices;
+        devices.resize(i + 1);
+        devices[i] = cdevices;
         cdevices += StrLen(cdevices)+1;
-        (*numDevices)++;
+        i++;
     }
-
-    return arrdev;
 }
 
 cstring context_device_default()

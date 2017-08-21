@@ -7,14 +7,11 @@
 namespace Coffee{
 namespace CAudio{
 
-FORCEDINLINE bool LoadVorbisFromFile(AudioSample& sample, cstring fn,
-                                     ResourceAccess access)
+FORCEDINLINE bool LoadVorbisFromFile(AudioSample& sample, Resource&& file)
 {
     bool status = true;
 
-    CResources::Resource file(fn, access);
-
-    if(CResources::FileMap(file))
+    if(!CResources::FileMap(file))
         return false;
 
     if(!CAudio::Stb::LoadVorbis(&sample, &file))

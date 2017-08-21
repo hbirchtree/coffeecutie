@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include "../../coffee_macros.h"
 #include "../tdef/integertypes.h"
 #include "../../plat/memory/cmemory.h"
@@ -9,6 +10,23 @@ namespace Coffee{
 template<typename T>
 struct _cbasic_data_chunk
 {
+    _cbasic_data_chunk()
+    {}
+    _cbasic_data_chunk(T* data, szptr size, szptr elements):
+        data(data),
+        size(size),
+        elements(elements)
+    {
+    }
+    _cbasic_data_chunk(T* data, szptr size):
+        data(data),
+        size(size)
+    {
+    }
+
+    _cbasic_data_chunk(_cbasic_data_chunk&&) = default;
+    _cbasic_data_chunk& operator=(_cbasic_data_chunk&&) = default;
+
     template<typename DT>
     STATICINLINE _cbasic_data_chunk<T> Create(DT& obj)
     {
