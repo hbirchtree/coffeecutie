@@ -326,7 +326,8 @@ def travis_gen_config(build_info, srcDir):
             },
         'matrix':
             {
-                'exclude': build_matrix[1]
+                'exclude': build_matrix[1],
+                'allow_failures': try_get_key(build_info, 'allow_fail', [])
             },
         'branches': {
             'only': deploy_data[0]

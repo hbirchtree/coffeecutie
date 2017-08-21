@@ -32,6 +32,8 @@ env:
 group: deprecated-2017Q2
 language: cpp
 matrix:
+  allow_failures:
+  - env: BUILDVARIANT=maemo.armel
   exclude:
   - env: BUILDVARIANT=android.armv7a
     os: osx
