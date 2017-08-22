@@ -2,6 +2,8 @@
 # Documentation!
 #
 
+option ( COFFEE_LOWFAT "Whether to build a light-weight library, disables some functionality that consumes space/processing power" OFF )
+
 option ( COFFEE_GENERATE_LIBRARIES "Whether any source should be compiled" ON )
 option ( GENERATE_PROGRAMS "Whether examples should be built" ON )
 option ( GENERATE_EXAMPLES "Whether examples aside from unit tests should be built" ON )

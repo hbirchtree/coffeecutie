@@ -67,4 +67,8 @@ if(COFFEE_BUILD_ANGLE)
 	add_definitions( "-DCOFFEE_GLES20_MODE" )
 endif()
 
+if(COFFEE_LOWFAT)
+    add_definitions("-DCOFFEE_LOWFAT")
+endif()
+
 include ( WindowsPlatformDetect )

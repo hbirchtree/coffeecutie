@@ -58,11 +58,14 @@
  *
  * COFFEE_SDL_MAIN - use SDL_main on start, allowing SDL to create its state
  *
+ * COFFEE_LOWFAT - disable tons of features for size, most of these changes are not noticeable for end-user applications with GUIs
+ *
  */
 
 /* General configuration changers */
 //#define COFFEE_LINUX_LIGHTWEIGHT_WM
 //#define COFFEE_GLES20_MODE
+//#define COFFEE_LOWFAT
 
 /* Minor prohibiting flags */
 #define COFFEE_SLAP_LOWMEM
@@ -116,7 +119,7 @@
 #define COFFEE_USE_RTTI
 #endif
 
-#if defined(COFFEE_ANDROID)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_LOWFAT)
 /* For Android, we limit inlining for size reasons */
 #define COFFEE_LIMIT_INLINE
 #define COFFEE_DISABLE_PROFILER

@@ -108,7 +108,9 @@ void CoffeeInit(bool profiler_init)
     PrintBuildInfo();
     PrintArchitectureInfo();
 
+#ifndef COFFEE_LOWFAT
     cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
+#endif
 }
 
 int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
@@ -263,9 +265,11 @@ const CoffeeApplicationData &ApplicationData()
     return app_data;
 }
 
-void SetPrintingVerbosity(u8 level)
+void SetPrintingVerbosity(C_MAYBE_UNUSED u8 level)
 {
+#ifndef COFFEE_LOWFAT
     Coffee::PrintingVerbosityLevel = level;
+#endif
 }
 
 }
