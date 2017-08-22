@@ -1,4 +1,5 @@
 name: @SNAPPY_PACKAGE_NAME@
+grade: @SNAPPY_GRADE@
 version: @SNAPPY_VERSION@
 confinement: @SNAPPY_CONFINEMENT@
 icon: meta/gui/icon.svg

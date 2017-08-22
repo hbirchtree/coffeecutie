@@ -101,13 +101,14 @@ macro ( SNAPPY_PACKAGE
     set ( SNAPPY_ARCHITECTURES "all" )
     set ( SNAPPY_SUMMARY "${SUMMARY}" )
 
+    set ( SNAPPY_GRADE "devel" )
     set ( SNAPPY_CONFINEMENT "devmode" )
 
     # Retrieve Snappy permissions list
     snappy_translate_permissions( "${PERMISSIONS}" SNAPPY_PERMISSIONS )
 
     execute_process (
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/setup/gui"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/snap/gui"
         )
     execute_process (
         COMMAND ${CMAKE_COMMAND} -E make_directory "${SNAPPY_PKG_DIR}/meta/gui"
@@ -145,7 +146,7 @@ macro ( SNAPPY_PACKAGE
     file ( APPEND "${SNAPCRAFT_FILE}"
         "parts:\n"
         "  binary-import:\n"
-	"    plugin: copy\n"
+        "    plugin: copy\n"
         "    files:\n"
 	"      \"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}\": \"bin/${CMAKE_LIBRARY_ARCHITECTURE}/${TARGET}\"\n"
         "      \"${SNAPPY_PKG_DIR}/snap-select.sh\": \"bin/${TARGET}\"\n"
@@ -153,8 +154,9 @@ macro ( SNAPPY_PACKAGE
 
     foreach(LIB ${LIBRARY_FILES})
 	get_filename_component ( SH_LIB "${LIB}" NAME )
-	file ( APPEND "${SNAPCRAFT_FILE}"
-	    "      \"${LIB}\": \"lib/${CMAKE_LIBRARY_ARCHITECTURE}/${SH_LIB}\"\n")
+
+        file ( APPEND "${SNAPCRAFT_FILE}"
+            "      \"${LIB}\": \"lib/${CMAKE_LIBRARY_ARCHITECTURE}/${SH_LIB}\"\n")
     endforeach()
 
     foreach(BIN ${EXEC_FILES})
@@ -166,10 +168,10 @@ macro ( SNAPPY_PACKAGE
     foreach ( SRC ${DATA} )
         file ( APPEND "${SNAPCRAFT_FILE}"
             "  resc-import-${NUM_IMPORTS}:\n"
-            "    plugin: copy\n"
+            "    plugin: dump\n"
             "    source: \"${SRC}\"\n"
-            "    files:\n"
-            "      \"*\": assets/.\n"
+            "    organize:\n"
+            "      \'*\': assets/.\n"
             )
         math ( EXPR NUM_IMPORTS "${NUM_IMPORTS}+1" )
     endforeach()

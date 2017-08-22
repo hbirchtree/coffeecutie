@@ -49,7 +49,7 @@ def gh_request(endpoint, data=None, rtype=REQUEST_GET, headers=None, form=None):
     if 'Accept' not in headers:
         headers['Accept'] = 'application/vnd.github.v3+json'
 
-    if GH_TOKEN is not None:
+    if GH_TOKEN is not None and GH_TOKEN != "":
         headers['Authorization'] = 'token %s' % GH_TOKEN
 
     url = None
