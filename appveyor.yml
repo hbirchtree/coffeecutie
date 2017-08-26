@@ -9,7 +9,6 @@ clone_script:
 - cmd: cmake --version
 - ps: where.exe cmake
 - ps: cmake.exe --version
-- ps: & cmake.exe --version
 - ps: cmake --version
 - cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
     %APPVEYOR_BUILD_FOLDER%
