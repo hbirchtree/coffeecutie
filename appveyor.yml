@@ -6,6 +6,7 @@ branches:
 build_script:
 - ps: tools\ci\appveyor-build.ps1
 clone_script:
+- cmd: cmake --version
 - cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
     %APPVEYOR_BUILD_FOLDER%
 - cmd: git checkout -qf %APPVEYOR_REPO_COMMIT%
@@ -16,7 +17,7 @@ deploy_script:
 environment:
   BUILDVARIANT: win32.amd64
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
-  CMAKE_BIN: C:\Program Files\CMake\bin\cmake.exe
+  CMAKE_BIN: cmake
   DEPENDENCIES: ''
   GITHUB_TOKEN:
     secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
