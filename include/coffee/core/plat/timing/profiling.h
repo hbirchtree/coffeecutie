@@ -103,13 +103,7 @@ struct SimpleProfilerImpl
     STATICINLINE void LabelThread(cstring name)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        /* TODO: Move thread naming code to different place */
-#if defined(COFFEE_APPLE)
-        pthread_setname_np(name);
-#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
-        pthread_setname_np(pthread_self(), name);
-#endif
-
+        ThreadSetName(name);
 #if !defined(NDEBUG)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
