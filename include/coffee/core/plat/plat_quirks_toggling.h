@@ -26,7 +26,9 @@
  * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL does not exist on a platform
  * COFFEE_NO_HUGETLB - disable non-standard HUGE_TLB flag for file mapping
  * COFFEE_NO_RUSAGE_THREAD - disable rusage statistics per-thread
- * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support pthread thread names
+ *
+ * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support setting thread names
+ * COFFEE_NO_PTHREAD_GETNAME_NP - platforms that do not support getting thread names
  *
  * Graphics quirks:
  * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them. Android, Maemo, RPi and Apple do this
@@ -215,6 +217,11 @@
 
 #if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
 #define COFFEE_NO_PTHREAD_SETNAME_NP
+#define COFFEE_NO_PTHREAD_GETNAME_NP
+#endif
+
+#if defined(COFFEE_ANDROID)
+#define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
 
 #if defined(__EMSCRIPTEN__)

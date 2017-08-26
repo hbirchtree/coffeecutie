@@ -6,6 +6,10 @@
 #include "stltypes.h"
 #include "../../base/threading/thread_id.h"
 
+#if defined(COFFEE_ANDROID) && (defined(COFFEE_NO_PTHREAD_GETNAME_NP) || defined(COFFEE_NO_PTHREAD_SETNAME_NP))
+#include <sys/prctl.h>
+#endif
+
 namespace Coffee{
 
 #if defined(COFFEE_NO_FUTURES)
@@ -56,11 +60,14 @@ FORCEDINLINE bool ThreadSetName(Thread& t, CString const& name)
 }
 FORCEDINLINE bool ThreadSetName(CString const& name)
 {
+    CString cpy = name;
+    if(name.size() >= 16)
+        cpy.resize(15);
 #if defined(COFFEE_APPLE)
-    pthread_setname_np(name.c_str());
+    pthread_setname_np(cpy.c_str());
     return true;
 #elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
-    pthread_setname_np(pthread_self(), name.c_str());
+    pthread_setname_np(pthread_self(), cpy.c_str());
     return true;
 #else
     return false;
@@ -68,30 +75,32 @@ FORCEDINLINE bool ThreadSetName(CString const& name)
 }
 FORCEDINLINE CString ThreadGetName(Thread& t)
 {
-#if defined(COFFEE_APPLE)
-    return {};
-#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
     CString out;
-    out.resize(32);
+    out.resize(17);
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP)
     int stat = pthread_getname_np(t.native_handle(), &out[0], out.size());
     if(stat != 0)
         return out;
     out.resize(out.find('\0', 0));
     return out;
 #else
-    return {};
+    return out;
 #endif
 }
 FORCEDINLINE CString ThreadGetName()
 {
-#if defined(COFFEE_APPLE)
-    return {};
-#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
+#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_GETNAME_NP)
     CString out;
-    out.resize(32);
+    out.resize(17);
     int stat = pthread_getname_np(pthread_self(), &out[0], out.size());
     if(stat != 0)
         return out;
+    out.resize(out.find('\0', 0));
+    return out;
+#elif defined(COFFEE_ANDROID)
+    CString out;
+    out.resize(17);
+    int stat = prctl(PR_GET_NAME, &out[0], 0, 0, 0);
     out.resize(out.find('\0', 0));
     return out;
 #else
