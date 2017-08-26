@@ -48,7 +48,7 @@ function ConfigProject([String] $SrcDir,[String] $arch,[String] $toolchain, `
 
     $Generator = "Visual Studio 14 2015 $arch".Trim()
 
-    $CMakeBin $SrcDir `
+    & $CMakeBin $SrcDir `
         -G"$Generator" `
         -DCMAKE_TOOLCHAIN_FILE="$SrcDir/cmake/Toolchains/$toolchain.toolchain.cmake" `
         -DANGLE_ROOT_DIR="$ANGLEDir" `
