@@ -20,6 +20,8 @@ cmake_minimum_required(VERSION 3.4.3)
 set(CMAKE_SYSTEM_NAME Emscripten)
 set(CMAKE_SYSTEM_VERSION 1)
 
+set( EMSCRIPTEN ON CACHE BOOL "" )
+
 option ( COFFEE_GENERATE_HTML "Generate HTML wrapper document for Emscripten" ON )
 option ( COFFEE_GENERATE_WASM "Generate WASM version of code, not asm.js" OFF )
 
