@@ -103,7 +103,10 @@ macro( MACAPP_PACKAGE
                             XCODE_PRODUCT_TYPE "com.apple.product-type.application"
                             )
         
-        target_link_libraries ( ${TARGET} ${SDL2_LIBRARY} ${SDL2_LIBRARIES} )
+        target_link_libraries ( ${TARGET}
+            PUBLIC
+            ${SDL2_LIBRARY} ${SDL2_LIBRARIES}
+            )
         
         
         set ( IOS_NAME "${TITLE}" )
