@@ -4,22 +4,6 @@ set ( CORE_EXTRA_LIBRARIES )
 
 # Platform-specific target options
 
-if(NOT WIN32 AND NOT ANDROID)
-    # Used for thread details
-    # Might replace this with Thread
-    list ( APPEND CORE_EXTRA_LIBRARIES pthread )
-endif()
-
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
-    # Used for thread details
-    list ( APPEND CORE_EXTRA_LIBRARIES rt )
-endif()
-
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
-    # Necessary for Linux and possibly OS X (latter is untested)
-    list ( APPEND CORE_EXTRA_LIBRARIES dl m z )
-endif()
-
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this library
@@ -33,21 +17,8 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     endif()
 
     if(NOT NACL)
-        list ( APPEND CORE_EXTRA_LIBRARIES X11 )
-
         if(COFFEE_BUILD_GLES)
-            list ( APPEND CORE_EXTRA_LIBRARIES EGL )
-        endif()
-
-        if(NOT COFFEE_BUILD_GLES)
-            list ( APPEND CORE_EXTRA_LIBRARIES
-                GL Xrender
-                )
-        else()
-            list ( APPEND CORE_EXTRA_LIBRARIES
-                GLESv2
-                EGL
-                )
+            list ( APPEND CORE_EXTRA_LIBRARIES EGL GLESv2 )
         endif()
     endif()
 endif()
@@ -116,7 +87,7 @@ if(RASPBERRY)
     # We also have bcm_host for accessing OpenGL for some reason
     # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
-        GLESv2
+#        GLESv2
         bcm_host
 
 #        asound
@@ -176,6 +147,21 @@ if(MAEMO)
     list ( APPEND CORE_EXTRA_LIBRARIES
         GLESv2 IMGegl
         )
+endif()
+
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
+    # Used for thread details
+    list ( APPEND CORE_EXTRA_LIBRARIES rt )
+endif()
+
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT EMSCRIPTEN)
+    # Necessary for Linux and possibly OS X (latter is untested)
+    list ( APPEND CORE_EXTRA_LIBRARIES dl m z )
+endif()
+
+if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN)
+    find_package(Threads REQUIRED)
+    list( APPEND CORE_EXTRA_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} )
 endif()
 
 set ( STANDARDLIBS_LIBRARIES "${CORE_EXTRA_LIBRARIES}" CACHE STRING "" )

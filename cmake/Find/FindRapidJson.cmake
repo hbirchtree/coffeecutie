@@ -1,6 +1,6 @@
 find_path ( RAPIDJSON_INCLUDE_DIR_TMP
     NAMES
-    rapidjson.h
+    rapidjson/rapidjson.h
 
     PATHS
     /usr
@@ -9,14 +9,15 @@ find_path ( RAPIDJSON_INCLUDE_DIR_TMP
     ~/Library/Frameworks
     ${COFFEE_EXT_LIBRARY_DIR}/rapidjson
     ${RAPIDJSON_ROOT_DIR}
+    ${CMAKE_SOURCE_DIR}/libs
 
     PATH_SUFFIXES
-    include
-    include/rapidjson
+    include/
+    rapidjson/include/
     )
 
 set ( RAPIDJSON_INCLUDE_DIR "${RAPIDJSON_INCLUDE_DIR_TMP}" CACHE PATH "RapidJSON include directory" )
 
-set ( RAPIDJSON_INCLUDE_DIR ${COFFEE_EXT_LIBRARY_DIR}/rapidjson/include )
+INCLUDE(FindPackageHandleStandardArgs)
 
-mark_as_advanced ( RAPIDJSON_INCLUDE_DIR )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(RapidJson REQUIRED_VARS RAPIDJSON_INCLUDE_DIR)

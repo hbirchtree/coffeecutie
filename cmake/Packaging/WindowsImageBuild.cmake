@@ -115,8 +115,8 @@ macro(WINPE_PACKAGE
     # Finally we stir the smelly gak into PE
 
     if(WIN_UWP)
-        include_directories( ${SDL2_INCLUDE_DIR} )
-        include_directories( ${ANGLE_INCLUDE_DIR} )
+        target_include_directories( ${TARGET} PRIVATE ${SDL2_INCLUDE_DIR} )
+        target_include_directories( ${TARGET} PRIVATE ${ANGLE_INCLUDE_DIR} )
     endif()
 
 

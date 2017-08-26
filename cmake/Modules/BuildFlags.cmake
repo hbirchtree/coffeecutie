@@ -26,17 +26,11 @@ add_definitions( -DCOFFEE_BUILD_STRING="${COFFEE_BUILD_STRING}" )
 # Be wary of this. In most cases you would do this for relatively long-term builds
 #add_custom_target(invalidate_files ALL COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_SOURCE_DIR}/coffee/core/coffee_macros.h)
 
-# RapidJSON is part of the core, and is therefore added as a submodule
-find_package ( RapidJson REQUIRED )
-include_directories ( ${RAPIDJSON_INCLUDE_DIR} )
-
 # This causes ASIO to not use Boost.
 add_definitions("-DASIO_STANDALONE")
 
 # Include SSL if built
 if(COFFEE_BUILD_OPENSSL)
-    find_package ( OpenSSL REQUIRED )
-    include_directories ( ${OPENSSL_INCLUDE_DIR} )
     add_definitions("-DCOFFEE_ENABLE_SSL")
 endif()
 
@@ -69,6 +63,12 @@ endif()
 
 if(COFFEE_LOWFAT)
     add_definitions("-DCOFFEE_LOWFAT")
+endif()
+
+if(COFFEE_BUILD_SDL2)
+    add_definitions("-DCOFFEE_USE_SDL2=1")
+else()
+    add_definitions( -DCOFFEE_LINUX_LIGHTWEIGHT_WM )
 endif()
 
 include ( WindowsPlatformDetect )
