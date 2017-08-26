@@ -3,7 +3,7 @@
 
 #include "../../../types/tdef/integertypes.h"
 #include "../../../base/files/cfiles.h"
-#include <tinyxml2/tinyxml2.h>
+#include <tinyxml2.h>
 
 namespace Coffee{
 namespace DataStorage{

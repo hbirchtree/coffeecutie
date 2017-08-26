@@ -329,7 +329,7 @@ public:
 
         GLM::PreDrawCleanup();
 
-        GLM::DefaultFramebuffer().clear(0, clear_col, 1.);
+        GLM::DefaultFramebuffer().clear(0, clear_col, 0.5);
 
         GLM::PRF::QRY_DBUF buffer_debug(GLM::DefaultFramebuffer(),
                                         DBuffers::Color | DBuffers::Depth);
@@ -349,7 +349,6 @@ public:
         };
 
         while (!closeFlag()) {
-
             if(contextTime() >= 5.0)
                 break;
 

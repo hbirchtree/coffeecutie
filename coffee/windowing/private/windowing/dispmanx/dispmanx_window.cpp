@@ -1,4 +1,4 @@
-#include <coffee/sdl2/windowing/dispmanx_window.h>
+#include <coffee/windowing/windowing/dispmanx/dispmanx_window.h>
 
 #if defined(COFFEE_RASPBERRY_DMX)
 

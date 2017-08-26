@@ -8,6 +8,8 @@ add_subdirectory(asio)
 # More here!
 add_subdirectory(graphics)
 
+add_subdirectory(windowing)
+
 if(COFFEE_BUILD_CBLAM)
     add_subdirectory(blam)
 endif()
@@ -16,7 +18,8 @@ endif()
 if(COFFEE_BUILD_OPENAL)
     add_subdirectory(audio)
 endif()
-# Requires SDL2
+
+# Requires SDL2... obviously
 if(COFFEE_BUILD_SDL2)
     add_subdirectory(sdl2)
 endif()

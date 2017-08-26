@@ -5,14 +5,15 @@ set ( CoffeeAssimp_SRCS
         private/assimpfun.cpp
         )
 
-include_directories (
-    ${ASSIMP_INCLUDE_DIR}
-    )
-
 coffee_add_library (
     CoffeeAssimp "${CoffeeAssimp_SRCS}"
-    "CoffeeCore;${ASSIMP_LIBRARIES}"
+    "${ASSIMP_LIBRARIES}"
     "${CMAKE_SOURCE_DIR}/include/coffee/assimp" )
 
 coffee_bundle_includes ( ${ASSIMP_INCLUDE_DIR}/assimp )
 coffee_bundle_library ( ${ASSIMP_LIBRARIES} )
+
+target_include_directories ( CoffeeAssimp
+    PUBLIC
+    ${ASSIMP_INCLUDE_DIR}
+    )

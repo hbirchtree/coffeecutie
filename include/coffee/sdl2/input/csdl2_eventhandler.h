@@ -2,6 +2,8 @@
 
 #include <coffee/core/base/renderer/eventapplication.h>
 #include <coffee/core/base/renderer/hapticapplication.h>
+
+#if defined(COFFEE_USE_SDL_EVENT)
 #include "../csdl2_context.h"
 
 union SDL_Event;
@@ -90,3 +92,4 @@ public:
 
 }
 }
+#endif

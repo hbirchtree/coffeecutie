@@ -5,14 +5,15 @@ if(DBUS_FOUND)
         private/dbus-proc.cpp
         )
 
-    include_directories(
-        ${DBUS_INCLUDE_DIR}
-        )
 
     coffee_add_library (
         CfDBusModule
         "${DBUS_SRCS}"
-        "CoffeeCore;${DBUS_LIBRARY}"
+        "${DBUS_LIBRARY}"
         "${CMAKE_SOURCE_DIR}/include/coffee/misc/dbus"
+        )
+    target_include_directories( CfDBusModule
+        PRIVATE
+        ${DBUS_INCLUDE_DIR}
         )
 endif()

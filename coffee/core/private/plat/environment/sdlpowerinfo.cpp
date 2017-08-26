@@ -1,5 +1,6 @@
 #include <coffee/core/plat/environment/sdlpowerinfo.h>
 
+#if defined(COFFEE_USE_SDL2)
 #include <SDL_power.h>
 
 namespace Coffee{
@@ -38,3 +39,4 @@ uint32 _SDLPowerInfo::BatteryLifetime()
 
 }
 }
+#endif

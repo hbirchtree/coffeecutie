@@ -1,13 +1,13 @@
 find_package (SDL2GameControllerDB REQUIRED)
 
-list (APPEND RSRCS
+set ( RSRCS
     ${COFFEE_ASSET_DIRECTORY}/ctest_hud
     ${SDL2_GAMECONTROLLERDB}
     )
-list (APPEND LIBS
+set ( LIBS
     CoffeeSDL2
+    CoffeeRenderer_Default
     CoffeeImage
-    CoffeeGLeam
     )
 
 coffee_add_application_long (

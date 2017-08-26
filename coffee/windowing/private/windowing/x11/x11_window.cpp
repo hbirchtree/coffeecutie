@@ -1,4 +1,4 @@
-#include <coffee/sdl2/windowing/x11_window.h>
+#include <coffee/windowing/windowing/x11/x11_window.h>
 
 #if defined(COFFEE_USE_MAEMO_X11)
 
@@ -13,11 +13,18 @@
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>
 
+#if defined(COFFEE_USE_LINUX_GLX)
+#include <GL/glx.h>
+#include <GL/glxext.h>
+#endif
+
 #include <EGL/egl.h>
 
-static int x11_handler(Display*, XErrorEvent* ev)
+using namespace Coffee;
+
+static int x11_handler(::Display*, XErrorEvent* ev)
 {
-    Coffee::cVerbose(8, "X11 error major code {0}, minor code {1}", ev->error_code, ev->minor_code);
+    cVerbose(8, "X11 error major code {0}, minor code {1}", ev->error_code, ev->minor_code);
     return 0;
 }
 
@@ -183,23 +190,47 @@ bool X11Window::windowInit(const CDProperties &props, CString *err)
 {
     ::Window rootWindow = DefaultRootWindow(m_xData->display);
 
-    XSetWindowAttributes swa;
+    XSetWindowAttributes swa = {};
+    swa.colormap = XCreateColormap(m_xData->display, rootWindow,
+                                   m_xData->visual->visual,
+                                   AllocNone);
+    swa.background_pixmap = None;
+    swa.border_pixmap = None;
+    swa.border_pixel = 0;
     swa.event_mask =
-            ExposureMask
+            0
             | PointerMotionMask | ButtonPressMask | ButtonReleaseMask
             | KeyPressMask | KeyReleaseMask
             | FocusChangeMask | VisibilityChangeMask | ResizeRedirectMask
             | ButtonMotionMask
             | EnterWindowMask | LeaveWindowMask
             | ExposureMask
+            | StructureNotifyMask
             ;
+
+
+//    auto vis = m_xData->visual;
+
+//    auto cmap = XCreateColormap(m_xData->display, rootWindow,
+//                                vis->visual, AllocNone);
+
+//    XSetWindowAttributes swa;
+//    swa.colormap = cmap;
+//    swa.event_mask = ExposureMask | KeyPressMask;
+
+//    m_xData->window = XCreateWindow(m_xData->display, rootWindow,
+//                                    0, 0, 800, 600, 0,
+//                                    vis->depth, InputOutput, vis->visual,
+//                                    CWColormap | CWEventMask,
+//                                    &swa);
+
     //
     //
     m_xData->window = XCreateWindow(m_xData->display, rootWindow,
                                     0, 0, props.size.w, props.size.h, 0,
-                                    (m_xData->visual) ? m_xData->visual->depth : 0, InputOutput,
-                                    (m_xData->visual) ? m_xData->visual->visual : nullptr,
-                                    CWEventMask,
+                                    m_xData->visual->depth, InputOutput,
+                                    m_xData->visual->visual,
+                                    CWColormap | CWEventMask,
                                     &swa);
 
     if(!m_xData->window)
@@ -532,11 +563,14 @@ void X11Window::processX11Events(InputApplication *eh)
         }
         case MotionNotify:
         {
+            static Veci2 prevOrigin;
             XMotionEvent& xm = xev.xmotion;
             base_i.type = CIEvent::MouseMove;
             CIMouseMoveEvent m;
             m.btn = CIMouseButtonEvent::NoneBtn;
-            m.origin = CPoint(xm.x, xm.y).convert<scalar>();
+            m.origin = PtI(xm.x, xm.y).convert<scalar>();
+            m.delta = PtI(Veci2(xm.x, xm.y) - prevOrigin).convert<scalar>();
+            prevOrigin = m.origin.toVector<i32>();
             eh->eventHandle(base_i, &m);
             goto out_of_switch;
         }
@@ -567,6 +601,119 @@ void X11Window::processX11Events(InputApplication *eh)
 out_of_switch:
         (void)0;
     }
+}
+
+void X11Window::pollEvents()
+{
+    if(!EventProcess(5))
+    {
+        m_closeFlag = true;
+    }
+
+    processX11Events(this);
+}
+
+void X11Window::eventHandleD(const CDEvent &e, c_cptr data)
+{
+    for(auto& eh : m_dhandlers)
+        eh.func(eh.user_ptr, e, data);
+}
+
+void X11Window::eventHandleI(const CIEvent &e, c_cptr data)
+{
+    for(auto& eh : m_ihandlers)
+        eh.func(eh.user_ptr, e, data);
+}
+
+void X11Window::eventHandle(const CIHapticEvent &haptic, c_cptr data)
+{
+}
+
+void X11Window::eventHandle(const CIEvent &event, c_cptr data)
+{
+    eventHandleI(event, data);
+}
+
+void X11Window::eventHandle(const CDEvent &event, c_cptr data)
+{
+    eventHandleD(event, data);
+}
+
+bool X11Window::isMouseGrabbed() const
+{
+    return false;
+}
+
+void X11Window::setMouseGrabbing(bool m)
+{
+
+}
+
+bool X11Window::relativeMouse() const
+{
+    return false;
+}
+
+void X11Window::setRelativeMouse(bool enable)
+{
+
+}
+
+CPoint X11Window::mousePosition() const
+{
+    return {};
+}
+
+void X11Window::setMousePosition(const CPoint &p)
+{
+
+}
+
+void X11Window::setKeyboardRepeat(bool m)
+{
+
+}
+
+bool X11Window::textInputMode() const
+{
+    return false;
+}
+
+void X11Window::setTextInputMode(bool m)
+{
+
+}
+
+void X11Window::injectEvent(const CIEvent &, c_cptr)
+{
+
+}
+
+void X11Window::injectEvent(const CDEvent &, c_cptr)
+{
+
+}
+
+bool X11Window::installEventHandler(EventApplication::EventHandlerI eh)
+{
+    m_ihandlers.push_back(eh);
+    return true;
+}
+
+bool X11Window::installEventHandler(EventApplication::EventHandlerD eh)
+{
+    m_dhandlers.push_back(eh);
+    return true;
+}
+
+Vector<EventApplication::EventHandlerI> *X11Window::getEventHandlersI()
+{
+    return &m_ihandlers;
+}
+
+Vector<EventApplication::EventHandlerD> *X11Window::getEventHandlersD()
+{
+    return &m_dhandlers;
 }
 
 }

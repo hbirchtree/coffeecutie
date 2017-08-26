@@ -1,4 +1,5 @@
-#include <coffee/graphics/apis/gleam/renderer/gleamrenderer.h>
+#include <coffee/windowing/binding/glad/gleamrenderer.h>
+
 #include <coffee/core/coffee_strings.h>
 #include <coffee/core/platform_data.h>
 
@@ -77,7 +78,11 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
 
     cVerbose(8, "Acquiring GL context from {0}, {1}", (u64)m_app, (u64)m_app->glContext());
 
-    m_app->glContext()->acquireContext();
+    if(!m_app->glContext()->acquireContext())
+    {
+        cWarning("Failed to acquire GL context");
+        return false;
+    }
 
     Profiler::Profile("Context acquisition");
 

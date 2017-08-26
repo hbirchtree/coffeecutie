@@ -2,6 +2,8 @@
 
 #include <coffee/core/CDebug>
 
+#if defined(COFFEE_USE_SDL_EVENT)
+
 #include "sdl2_controller.h"
 #include "sdl2_keyboard.h"
 #include "sdl2_misc.h"
@@ -131,3 +133,4 @@ void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event *ev)
 
 }
 }
+#endif

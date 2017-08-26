@@ -1,6 +1,8 @@
 #pragma once
 
 #include "windowing/csdl2_window.h"
+
+#if defined(COFFEE_USE_SDL_WINDOW)
 #include "input/csdl2_eventhandler.h"
 #include <coffee/core/CDRendererBase>
 
@@ -57,3 +59,4 @@ public:
 
 }
 }
+#endif

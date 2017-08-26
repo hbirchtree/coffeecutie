@@ -1,4 +1,4 @@
-#include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/graphics/apis/CGLeam>
 #include <coffee/core/CApplication>

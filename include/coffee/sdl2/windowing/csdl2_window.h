@@ -2,6 +2,7 @@
 
 #include <coffee/core/base/renderer/windowmanagerclient.h>
 
+#if defined(COFFEE_USE_SDL_WINDOW)
 #include "../csdl2_context.h"
 
 namespace Coffee{
@@ -52,3 +53,4 @@ public:
 
 }
 }
+#endif

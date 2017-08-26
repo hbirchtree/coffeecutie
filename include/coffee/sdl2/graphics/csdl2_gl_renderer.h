@@ -1,12 +1,13 @@
 #pragma once
 
 #include <coffee/core/base/renderer/glapplication.h>
+
+#if defined(COFFEE_USE_SDL_GL)
 #include "../csdl2_context.h"
 
 namespace Coffee{
 namespace Display{
 
-#if !defined(COFFEE_USE_MAEMO_EGL)
 class SDL2GLRenderer : public GLApplication,
         public virtual SDL2ContextUser
 {
@@ -29,7 +30,8 @@ public:
     bool contextPostInit(const GLProperties& props,CString*);
     void contextTerminate();
 };
-#endif
 
 }
 }
+
+#endif

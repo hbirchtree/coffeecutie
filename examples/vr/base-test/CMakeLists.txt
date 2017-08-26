@@ -1,4 +1,4 @@
-list ( APPEND LIBRARIES
+set ( LIBRARIES
     CoffeeVR
 #    CoffeeOVR
     )

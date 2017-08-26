@@ -27,8 +27,8 @@ int32 coffee_main(int32, cstring_w*)
     GotoApplicationDir();
 
     /* Required for SDL2 applications, initializes SDL state */
-    SubsystemWrapper<SDL2::SDL2> sdl2;
-    C_UNUSED(sdl2);
+//    SubsystemWrapper<SDL2::SDL2> sdl2;
+//    C_UNUSED(sdl2);
 
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
@@ -70,7 +70,7 @@ int32 coffee_main(int32, cstring_w*)
     /* Initialize the window and check for errors */
     if(!LoadHighestVersion(renderer,props,&err))
     {
-        SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
+//        SDL2Dialog::ErrorMessage("Initialization error",err.c_str());
         cDebug("Initialization error: {0}",err);
         return 1;
     }

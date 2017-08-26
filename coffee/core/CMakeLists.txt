@@ -171,13 +171,23 @@ if(MAEMO)
         )
 endif()
 
-find_package( StandardLibs REQUIRED )
+find_package ( StandardLibs REQUIRED )
 
-include_directories ( ${STANDARDLIBS_INCLUDE_DIR} )
 coffee_add_library ( CoffeeCore
     "${CoffeeCore_SRCS}"
     "${STANDARDLIBS_LIBRARIES}"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+
+find_package ( RapidJson REQUIRED )
+find_package ( TinyXML2 REQUIRED )
+
+target_include_directories ( CoffeeCore
+    SYSTEM
+    PUBLIC
+    ${RAPIDJSON_INCLUDE_DIR}
+    ${TINYXML2_INCLUDE_DIR}
+    ${STANDARDLIBS_INCLUDE_DIR}
     )
 
 if(COFFEE_BUILD_SWIG_BINDING)
@@ -187,6 +197,13 @@ if(COFFEE_BUILD_SWIG_BINDING)
         "${CoffeeCore_SRCS}"
         "${STANDARDLIBS_LIBRARIES}"
         "${CMAKE_SOURCE_DIR}/include/coffee/core"
+        )
+    target_include_directories ( CoffeeCoreLoadable
+        SYSTEM
+        PUBLIC
+        ${RAPIDJSON_INCLUDE_DIR}
+        ${TINYXML2_INCLUDE_DIR}
+        ${STANDARDLIBS_INCLUDE_DIR}
         )
 endif()
 

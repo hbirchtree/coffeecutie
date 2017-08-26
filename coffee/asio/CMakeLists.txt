@@ -9,12 +9,14 @@ set ( CoffeeASIO_SRCS
     private/tcp-socket.cpp
     private/udp-socket.cpp
     )
-set ( LIBS "CoffeeCore;${OPENSSL_LIBRARIES}" )
 
-include_directories( SYSTEM
-    ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include
-    ${OPENSSL_INCLUDE_DIR}
-    )
+set ( LIBS ${OPENSSL_LIBRARIES} )
 
 coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/asio")
+
+target_include_directories ( CoffeeASIO
+    PUBLIC
+    ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include
+    ${OPENSSL_INCLUDE_DIR}
+    )

@@ -1,10 +1,10 @@
-#include <coffee/sdl2/graphics/glx_renderer.h>
+#include <coffee/windowing/graphics/glx/glx_renderer.h>
 
 #if defined(COFFEE_USE_LINUX_GLX)
 
-#include "../windowing/x11_window_data.h"
+#include "../../windowing/x11/x11_window_data.h"
 
-#include <coffee/sdl2/windowing/x11_window.h>
+#include <coffee/windowing/windowing/x11/x11_window.h>
 
 #include <coffee/core/CDebug>
 
@@ -16,6 +16,10 @@
 
 #include <GL/glx.h>
 #include <GL/glxext.h>
+
+/* Advanced use of GLX should allow transparent windows */
+/* Right now it does not work */
+//#define USE_ADVANCED_GLX
 
 typedef GLXContext (*glXCreateContextAttribsARBProc)(::Display*, GLXFBConfig,GLXContext,Bool, const int*);
 
@@ -34,8 +38,8 @@ struct GLX_Data
     GLXFBConfig config;
 
     XVisualInfo* visual;
-    Atom del_atom;
-    XRenderPictFormat* pict_format;
+//    Atom del_atom;
+//    XRenderPictFormat* pict_format;
 
 
     GLX_Context* c_context;
@@ -79,18 +83,23 @@ bool GLXRenderer::contextPreInit(const GLProperties &props, CString *)
         GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
         GLX_DOUBLEBUFFER, True,
 
-        GLX_RED_SIZE, props.bits.red,
-        GLX_GREEN_SIZE, props.bits.green,
-        GLX_BLUE_SIZE, props.bits.blue,
-        GLX_ALPHA_SIZE, props.bits.alpha,
+//        GLX_RED_SIZE, props.bits.red,
+//        GLX_GREEN_SIZE, props.bits.green,
+//        GLX_BLUE_SIZE, props.bits.blue,
+//        GLX_ALPHA_SIZE, props.bits.alpha,
 
         GLX_DEPTH_SIZE, props.bits.depth,
-        GLX_STENCIL_SIZE, props.bits.stencil,
+//        GLX_STENCIL_SIZE, props.bits.stencil,
 
-        GLX_SAMPLES, props.bits.samples,
+//        GLX_SAMPLES, props.bits.samples,
 
         None,
     };
+
+    X11Window* xwin = C_DCAST<X11Window>(this);
+
+    if(!xwin->m_xData)
+        return false;
 
     WindowManagerClient* wm = C_DCAST<WindowManagerClient>(this);
     CDWindow* window_handle = wm->window();
@@ -99,14 +108,17 @@ bool GLXRenderer::contextPreInit(const GLProperties &props, CString *)
 
     delete window_handle;
 
+    m_gxData = new GLX_Data;
+    MemClear(m_gxData, sizeof(*m_gxData));
+
+#ifdef USE_ADVANCED_GLX
+
     int numFbConfigs = 0;
     auto configs = glXChooseFBConfig(x_disp, DefaultScreen(x_disp),
                                      visual_data, &numFbConfigs);
 
     cDebug("Found {0} GLX FB configs", numFbConfigs);
 
-    m_gxData = new GLX_Data;
-    MemClear(m_gxData, sizeof(*m_gxData));
 
     if(numFbConfigs <= 0)
     {
@@ -129,9 +141,11 @@ bool GLXRenderer::contextPreInit(const GLProperties &props, CString *)
         if(!pict_format)
             continue;
 
-        m_gxData->config = configs[i];
         if(pict_format->direct.alphaMask > 0)
+        {
+            m_gxData->config = configs[i];
             break;
+        }
     }
 
     if(!m_gxData->config)
@@ -139,10 +153,12 @@ bool GLXRenderer::contextPreInit(const GLProperties &props, CString *)
         cWarning("Failed to find matching GLX FB config!");
         return false;
     }
+#else
 
-    X11Window* xwin = C_DCAST<X11Window>(this);
-    if(!xwin->m_xData.get())
-        return false;
+    GLint attrs[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
+    auto visual = glXChooseVisual(x_disp, 0, attrs);
+
+#endif
 
     xwin->m_xData->visual = visual;
 
@@ -190,9 +206,12 @@ static int isExtensionSupported(const char *extList, const char *extension)
 
 bool GLXRenderer::contextPostInit(const GLProperties &props, CString *)
 {
-    static int glx_attr[] = {
-        None
-    };
+    X11Window* xwin = C_DCAST<X11Window>(this);
+    auto xdat = xwin->m_xData.get();
+
+//    m_gxData->window = xdat->window;
+//    m_gxData->x_window = xdat->window;
+//    m_gxData->display = xdat->display;
 
     WindowManagerClient* wm = C_DCAST<WindowManagerClient>(this);
     CDWindow* window_handle = wm->window();
@@ -226,10 +245,10 @@ bool GLXRenderer::contextPostInit(const GLProperties &props, CString *)
             ? GLX_CONTEXT_DEBUG_BIT_ARB : 0;
 //    context_flags |= (props.flags & GLProperties::GLES)
 //            ? GLX_CONTEXT_ES2_PROFILE_BIT_EXT : 0;
-//#if defined(GLX_EXT_framebuffer_sRGB)
-//    context_flags |= (props.flags & GLProperties::GLSRGB)
-//            ? GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB : 0;
-//#endif
+#if defined(GLX_EXT_framebuffer_sRGB)
+    context_flags |= (props.flags & GLProperties::GLSRGB)
+            ? GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB : 0;
+#endif
 
     int context_attribs[] = {
         GLX_CONTEXT_MAJOR_VERSION_ARB, props.version.major,
@@ -243,26 +262,30 @@ bool GLXRenderer::contextPostInit(const GLProperties &props, CString *)
 
     GLXContext ctxt = nullptr;
 
-//    if(isExtensionSupported(glXQueryExtensionsString(m_gxData->display,
-//                                                     DefaultScreen(m_gxData->display)),
-//                            "GLX_ARB_create_context"))
-//    {
-//        glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
-//                (glXCreateContextAttribsARBProc)glXGetProcAddressARB((const GLubyte*)"glXCreateContextAttribsARB");
-//        if(glXCreateContextAttribsARB)
-//        {
-//            ctxt = glXCreateContextAttribsARB(m_gxData->display, m_gxData->config,
-//                                              0, True, context_attribs);
+#ifdef USE_ADVANCED_GLX
+    if(isExtensionSupported(glXQueryExtensionsString(m_gxData->display,
+                                                     DefaultScreen(m_gxData->display)),
+                            "GLX_ARB_create_context"))
+    {
+        glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
+                (glXCreateContextAttribsARBProc)glXGetProcAddressARB(
+                    (const GLubyte*)"glXCreateContextAttribsARB"
+                    );
+        if(glXCreateContextAttribsARB)
+        {
+            ctxt = glXCreateContextAttribsARB(m_gxData->display, m_gxData->config,
+                                              0, True, context_attribs);
 
-//            XSync(m_gxData->display, False);
-//        }else
-//            cWarning("Failed to retrieve glXCreateContextAttribsARB");
-//    }else
-//        cWarning("GLX_ARB_create_context not supported");
+            XSync(m_gxData->display, False);
+        }else
+            cWarning("Failed to retrieve glXCreateContextAttribsARB");
+    }else
+        cWarning("GLX_ARB_create_context not supported");
+#endif
 
     if(!ctxt)
-        ctxt = glXCreateNewContext(m_gxData->display, m_gxData->config,
-                                   GLX_RGBA_TYPE, nullptr, True);
+        ctxt = glXCreateContext(xdat->display, xdat->visual,
+                                nullptr, GL_TRUE);
 
     if(!ctxt)
     {
@@ -283,6 +306,12 @@ void GLXRenderer::contextTerminate()
 
 void GLXRenderer::swapBuffers()
 {
+#ifndef NDEBUG
+    CASSERT(m_gxData);
+    CASSERT(m_gxData->display);
+    CASSERT(m_gxData->window);
+#endif
+
     glXSwapBuffers(m_gxData->display, m_gxData->window);
 }
 

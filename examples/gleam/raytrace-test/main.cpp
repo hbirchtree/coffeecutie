@@ -1,6 +1,6 @@
 #include <coffee/core/CApplication>
 #include <coffee/graphics/apis/CGLeam>
-#include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/CGraphics>
 #include <coffee/CImage>
 #include <coffee/graphics/common/query/gpu_query.h>

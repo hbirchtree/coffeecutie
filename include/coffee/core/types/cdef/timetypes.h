@@ -9,7 +9,8 @@ using Timestamp = uint64;
 
 using DateTime = tm;
 
-template<typename T> class _cbasic_timer
+template<typename T>
+class C_DEPRECATED _cbasic_timer
 {
 public:
     virtual ~_cbasic_timer(){}

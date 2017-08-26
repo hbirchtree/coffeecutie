@@ -1,0 +1,109 @@
+set ( X11_SRCS
+    private/windowing/x11/x11_window.cpp
+    )
+
+set ( DMX_SRCS
+    private/windowing/dispmanx/dispmanx_window.cpp
+    )
+
+set ( EGL_SRCS
+    private/graphics/egl/egl_renderer.cpp
+    )
+
+set ( GLX_SRCS
+    private/graphics/glx/glx_renderer.cpp
+    )
+
+set ( GLAD_SRCS
+    private/binding/glad/gleamrenderer.cpp
+    )
+
+set ( Renderer_SRCS
+    private/renderer.cpp
+    )
+    
+if(COFFEE_BUILD_GLES AND NOT COFFEE_BUILD_GLES_20)
+    list(APPEND GLAD_SRCS private/binding/glad/glad_es/glad.c)
+elseif(NOT COFFEE_BUILD_GLES)
+    list(APPEND GLAD_SRCS private/binding/glad/glad/glad.c)
+endif()
+
+set ( RENDERER_LIBS
+    CoffeeWindow_X11
+    CoffeeWindow_DMX
+
+    CoffeeContext_GLX
+    CoffeeContext_EGL
+
+    CoffeeBinding_GLAD
+
+    CoffeeGLeamRHI
+    )
+
+if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2)
+    list ( APPEND RENDERER_LIBS CoffeeSDL2 )
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
+        AND NOT ANDROID AND NOT NACL AND NOT EMSCRIPTEN
+        AND NOT COFFEE_BUILD_SDL2)
+endif()
+
+coffee_add_library ( CoffeeContext_EGL "${EGL_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/egl"
+    )
+
+coffee_add_library ( CoffeeContext_GLX "${GLX_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/graphics/glx"
+    )
+
+coffee_add_library ( CoffeeBinding_GLAD "${GLAD_SRCS}" CoffeeGLeamCommon
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/binding/glad"
+    )
+
+target_link_libraries ( CoffeeBinding_GLAD
+    PRIVATE
+    CoffeeCore
+    )
+
+coffee_add_library ( CoffeeWindow_X11 "${X11_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/x11"
+    )
+
+coffee_add_library ( CoffeeWindow_DMX "${DMX_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/dispmanx"
+    )
+
+coffee_add_library ( CoffeeRenderer_Default "${Renderer_SRCS}"
+    "${RENDERER_LIBS}"
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer"
+    )
+
+if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2)
+    find_package(SDL2 REQUIRED)
+    target_include_directories ( CoffeeBinding_GLAD
+        PRIVATE ${SDL2_INCLUDE_DIR}
+        PRIVATE ${STANDARDLIBS_INCLUDE_DIR}
+        )
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
+        AND NOT ANDROID AND NOT NACL AND NOT EMSCRIPTEN
+        AND NOT COFFEE_BUILD_SDL2)
+    find_package ( X11 QUIET )
+
+    target_link_libraries ( CoffeeContext_GLX
+        PUBLIC
+        Xrender GL
+        ${X11_LIBRARIES}
+        )
+    target_include_directories( CoffeeContext_GLX
+        PRIVATE
+        ${X11_INCLUDE_DIR}
+        )
+
+    target_link_libraries ( CoffeeWindow_X11
+        PUBLIC
+        ${X11_LIBRARIES}
+        )
+    target_include_directories( CoffeeWindow_X11
+        PRIVATE
+        ${X11_INCLUDE_DIR}
+        )
+endif()

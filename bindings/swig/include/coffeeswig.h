@@ -7,7 +7,7 @@
 
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/interfaces/cgraphics_api.h>
-#include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/windowing/renderer/renderer.h>
 
 #include <coffee/graphics/common/gltypes.h>
 

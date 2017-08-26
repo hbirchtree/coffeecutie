@@ -111,7 +111,14 @@ public:
      * \brief Get current context time, can be returned by the context or the system
      * \return Current context time
      */
-    virtual bigscalar contextTime() const = 0;
+    virtual bigscalar contextTime() const
+    {
+        static u64 start_time = 0;
+        if(start_time == 0)
+            start_time = Time::CurrentTimestamp<std::chrono::microseconds>();
+
+        return bigscalar(Time::CurrentTimestamp<std::chrono::microseconds>() - start_time) * 1_us;
+    }
 
     /*!
      * \brief A flag used to determine when a render loop should terminate
@@ -211,6 +218,8 @@ public:
         {
             return -1;
         }
+
+        return 0;
 
         ev.time.start = Time::CurrentTimestamp();
 

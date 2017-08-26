@@ -1,4 +1,4 @@
-#include <coffee/sdl2/graphics/egl_renderer.h>
+#include <coffee/windowing/graphics/egl/egl_renderer.h>
 
 #if defined(COFFEE_USE_MAEMO_EGL)
 

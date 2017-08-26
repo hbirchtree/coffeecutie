@@ -17,7 +17,8 @@
  *
  * COFFEE_LIMIT_INLINE - disable inlining for code size reduction
  *
- * Quirks:
+ * System-level quirks:
+ * COFFEE_SLAP_LOWMEM - if system is x86 and does not PAE, give up
  * COFFEE_NO_FUTURES - std::future does not exist
  * COFFEE_USE_POSIX_BASENAME - using POSIX basename() or a custom implementation
  * COFFEE_DISABLE_SRGB_SUPPORT - deny sRGB framebuffers, some platforms shouldn't check for it
@@ -25,18 +26,25 @@
  * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL does not exist on a platform
  * COFFEE_NO_HUGETLB - disable non-standard HUGE_TLB flag for file mapping
  * COFFEE_NO_RUSAGE_THREAD - disable rusage statistics per-thread
+ * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support pthread thread names
+ *
+ * Graphics quirks:
  * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them. Android, Maemo, RPi and Apple do this
  * COFFEE_LINKED_GLES30 - GLES 3.0 linked headers
  * COFFEE_LINKED_GLES31 - GLES 3.1 linked headers
  * COFFEE_LINKED_GLES32 - GLES 3.2 linked headers
  * COFFEE_ONLY_GLES20 - allow only GLES 2.0, for RPi, old Android and Maemo
+ *
+ * Windowing/graphical quirks:
+ * COFFEE_USE_SDL_GL - use SDL for GL initialization
+ * COFFEE_USE_SDL_EVENT - use SDL for event handling (joysticks, input, etc.)
+ * COFFEE_USE_SDL_WINDOW - use SDL for creating a window
+ *
  * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite fast, only ~100 EGL calls as opposed to SDL's thousands
  * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window with minimal functionality
  * COFFEE_RASPBERRY_DMX - uses a tiny loader for DISPMANX, takes the entire screen on Raspberry Pi devices for application
- * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with resizes that may crash some devices (Maemo)
+ * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with resizes that may crash some devices (N900)
  * COFFEE_ALWAYS_VSYNC - for devices which force VSYNC
- * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support pthread thread names
- * COFFEE_SLAP_LOWMEM - if system is x86 and does not PAE, give up
  *
  * COFFEE_STUBBED_ENVIRONMENT - stubs environment functions, because they are impossible to fulfull
  * COFFEE_STUBBED_PROCESS - stubs process functions, same reason as above
@@ -60,6 +68,8 @@
  *
  * COFFEE_LOWFAT - disable tons of features for size, most of these changes are not noticeable for end-user applications with GUIs
  *
+ * COFFEE_USE_CHRONOTIME - use std::chrono in place of system-provided time facilities
+ *
  */
 
 /* General configuration changers */
@@ -69,6 +79,9 @@
 
 /* Minor prohibiting flags */
 #define COFFEE_SLAP_LOWMEM
+
+/* Standard flags */
+#define COFFEE_USE_CHRONOTIME
 
 /* For Android 32-bit, we need this neat little trick. */
 /* This might apply to win32 and lin32 as well, but they don't exist */
@@ -180,12 +193,9 @@
 // The window is guaranteed to show within 500ms
 #if !defined(COFFEE_GLEAM_DESKTOP) //You cannot load OpenGL (non-ES) with EGL :(
 #define COFFEE_USE_MAEMO_EGL
+#else
+#define COFFEE_USE_LINUX_GLX
 #endif
-#define COFFEE_USE_MAEMO_X11
-#endif
-
-#if defined(COFFEE_LINUX_DESKTOP_LIGHT_WM)
-//#define COFFEE_USE_LINUX_GLX
 #define COFFEE_USE_MAEMO_X11
 #endif
 
@@ -227,6 +237,27 @@
 #if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
     || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
+#endif
+
+#if !defined(COFFEE_RASPBERRY_DMX) && \
+    !defined(COFFEE_USE_LINUX_GLX) && \
+    !defined(COFFEE_USE_WINDOWS_ANGLE) && \
+    !defined(COFFEE_USE_MAEMO_EGL) && \
+    !defined(COFFEE_USE_MAEMO_X11) && \
+    defined(COFFEE_USE_SDL2)
+#define COFFEE_USE_SDL_GL
+#endif
+
+#if !defined(COFFEE_RASPBERRY_DMX) && \
+    !defined(COFFEE_USE_LINUX_GLX) && \
+    !defined(COFFEE_USE_MAEMO_EGL) && \
+    !defined(COFFEE_USE_MAEMO_X11) && \
+    defined(COFFEE_USE_SDL2)
+#define COFFEE_USE_SDL_WINDOW
+#endif
+
+#if !defined(COFFEE_RASPBERRY_DMX) && defined(COFFEE_USE_SDL2)
+#define COFFEE_USE_SDL_EVENT
 #endif
 
 /* And here comes some simplification for configuration issues */

@@ -15,8 +15,8 @@ struct SDL2Context{
     SDL_Window* window = nullptr;
     SDL_Surface* surface = nullptr;
 
-#if !defined(COFFEE_USE_MAEMO_EGL)
-    CGL::CGL_Context* context;
+#if defined(COFFEE_USE_SDL_GL)
+    CGL::CGL_Context* context = nullptr;
 #endif
 
 //    Vector<CGL::CGL_Context*> m_subcontexts;

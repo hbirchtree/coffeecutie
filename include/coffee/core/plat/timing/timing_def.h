@@ -6,6 +6,10 @@
 
 #include "../plat_primary_identify.h"
 
+#if defined(COFFEE_USE_CHRONOTIME)
+#include <chrono>
+#endif
+
 #include <ctime>
 #include <time.h>
 
@@ -15,6 +19,15 @@
 #endif
 
 namespace Coffee{
+namespace Chronology{
+
+using namespace std::chrono;
+
+template<typename cast_to, typename T>
+FORCEDINLINE uint64 time_to_uint64(T d)
+{
+    return C_FCAST<uint64>(duration_cast<cast_to>(d).count());
+}
 
 struct TimeDef
 {
@@ -22,12 +35,33 @@ struct TimeDef
      * \brief Current microsecond
      * \return
      */
-    static uint64 Microsecond(){return 0;}
+#if defined(COFFEE_USE_CHRONOTIME)
+    static uint64 Microsecond()
+    {
+        return time_to_uint64<microseconds>(
+                    high_resolution_clock::now().time_since_epoch()
+                    );
+    }
 
-    static Timestamp CurrentTimestamp(){return 0;}
-    static uint64 CurrentMicroTimestamp(){return 0;}
+    template<typename cast_to = seconds>
+    static Timestamp CurrentTimestamp()
+    {
+        return time_to_uint64<cast_to>(
+                    high_resolution_clock::now().time_since_epoch()
+                    );
+    }
+    static uint64 CurrentMicroTimestamp()
+    {
+        return time_to_uint64<microseconds>(
+                    high_resolution_clock::now().time_since_epoch()
+                    );
+    }
+#endif
 
-    static DateTime GetDateTime(Timestamp){return DateTime();}
+    static DateTime GetDateTime(Timestamp)
+    {
+        return {};
+    }
 
     static CString StringDate(cstring,DateTime){return "";}
     static CString ClockString(){return "";}
@@ -35,7 +69,7 @@ struct TimeDef
 	static Timestamp ParseTimeStdTime(cstring) { return 0; }
 };
 
-struct PosixIshTimeDef
+struct PosixIshTimeDef : public TimeDef
 {
 
 	STATICINLINE Timestamp ParseTimeStdTime(cstring src)
@@ -56,6 +90,11 @@ struct PosixIshTimeDef
 	}
 
 };
+
+}
+
+using TimeDef = Chronology::TimeDef;
+using PosixIshTimeDef = Chronology::PosixIshTimeDef;
 
 }
 
