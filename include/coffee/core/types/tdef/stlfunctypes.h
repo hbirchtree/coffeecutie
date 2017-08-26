@@ -68,7 +68,9 @@ FORCEDINLINE bool ThreadSetName(CString const& name)
 }
 FORCEDINLINE CString ThreadGetName(Thread& t)
 {
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
+#if defined(COFFEE_APPLE)
+    return {};
+#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
     CString out;
     out.resize(32);
     int stat = pthread_getname_np(t.native_handle(), &out[0], out.size());
@@ -82,7 +84,9 @@ FORCEDINLINE CString ThreadGetName(Thread& t)
 }
 FORCEDINLINE CString ThreadGetName()
 {
-#if defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
+#if defined(COFFEE_APPLE)
+    return {};
+#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
     CString out;
     out.resize(32);
     int stat = pthread_getname_np(pthread_self(), &out[0], out.size());
