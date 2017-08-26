@@ -180,11 +180,13 @@ function(COFFEE_ADD_APPLICATION_LONGERER
     target_enable_cxx11(${TARGET})
 
     target_link_libraries ( ${TARGET}
+        PUBLIC
         ${LIBRARIES}
         )
 
     if(NACL)
         target_link_libraries( ${TARGET}
+            PUBLIC
             ${SDL2_LIBRARY}
             ${SDL2_LIBRARIES}
             ppapi_gles2
