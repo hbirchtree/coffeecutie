@@ -4,6 +4,7 @@
 #include "../../coffee_mem_macros.h"
 #include "../tdef/integertypes.h"
 #include <coffee/core/CMath>
+#include <coffee/core/types/vectors.h>
 #endif
 
 namespace Coffee{
@@ -34,6 +35,11 @@ struct _cbasic_size_2d : _cbasic_size
         return this->convert<U>();
     }
 
+    _cbasic_size_2d(_cbasic_tvector<T, 2> const& src):
+        w(src.x()),
+        h(src.y())
+    {
+    }
     _cbasic_size_2d(T wd,T hg);
     _cbasic_size_2d();
 
@@ -58,6 +64,12 @@ struct _cbasic_size_2d : _cbasic_size
 template<typename T>
 struct _cbasic_size_3d : _cbasic_size
 {
+    _cbasic_size_3d(_cbasic_tvector<T, 3> const& src):
+        width(src.x()),
+        height(src.y()),
+        depth(src.z())
+    {
+    }
     _cbasic_size_3d(T w, T h, T d);
     _cbasic_size_3d();
 
@@ -78,6 +90,11 @@ struct _cbasic_size_3d : _cbasic_size
 template<typename T>
 struct _cbasic_point_2d : _cbasic_point
 {
+    _cbasic_point_2d(_cbasic_tvector<T, 2> const& src):
+        x(src.x()),
+        y(src.y())
+    {
+    }
     _cbasic_point_2d(T x,T y);
     _cbasic_point_2d();
 
@@ -93,16 +110,34 @@ struct _cbasic_point_2d : _cbasic_point
         out.y = y;
         return out;
     }
+
+    template<typename T2>
+    _cbasic_tvector<T2, 2> toVector() const
+    {
+        return {x, y};
+    }
 };
 
 template<typename T>
 struct _cbasic_point_3d : _cbasic_point
 {
+    _cbasic_point_3d(_cbasic_tvector<T, 3> const& src):
+        x(src.x()),
+        y(src.y()),
+        z(src.z())
+    {
+    }
     _cbasic_point_3d(T x, T y, T z);
     _cbasic_point_3d();
 
     template<typename U>
     _cbasic_point_3d<U> convert() const;
+
+    template<typename T2>
+    _cbasic_tvector<T2, 3> toVector() const
+    {
+        return {x, y, z};
+    }
 
     T x,y,z;
 };
