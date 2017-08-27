@@ -19,7 +19,10 @@ deploy_script:
 - ps:
 - ps: tools\ci\appveyor-deploy.ps1
 environment:
-  BUILDVARIANT: win32.amd64
+  matrix:
+  - BUILDVARIANT: win32.amd64
+  - BUILDVARIANT: uwp.amd64
+  - BUILDVARIANT: uwp.arm
   BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: cmake.exe
   DEPENDENCIES: ''
