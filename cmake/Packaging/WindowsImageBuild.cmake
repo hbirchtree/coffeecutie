@@ -114,11 +114,6 @@ macro(WINPE_PACKAGE
 
     # Finally we stir the smelly gak into PE
 
-    if(WIN_UWP)
-        target_include_directories( ${TARGET} PRIVATE ${SDL2_INCLUDE_DIR} )
-        target_include_directories( ${TARGET} PRIVATE ${ANGLE_INCLUDE_DIR} )
-    endif()
-
 
     if(MSVC AND WIN_UWP)
         set ( OPTIONS WIN32 )
@@ -135,6 +130,9 @@ macro(WINPE_PACKAGE
         )
 
     if(WIN_UWP)
+        target_include_directories( ${TARGET} PRIVATE ${SDL2_INCLUDE_DIR} )
+        target_include_directories( ${TARGET} PRIVATE ${ANGLE_INCLUDE_DIR} )
+
         # I need these seeds for mye research, Morty, gotta stuff it waaay up there, Morty.
         target_link_libraries ( ${TARGET}
             PUBLIC
