@@ -31,6 +31,7 @@ matrix:
   - BUILDVARIANT: maemo.armel
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: uwp.arm
+  - BUILDVARIANT: coverage
 platform: x64
 skip_tags: true
 version: '{build}'
