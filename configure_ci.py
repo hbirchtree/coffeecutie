@@ -280,6 +280,9 @@ def appveyor_gen_config(build_info, srcDir):
         'before_build': [
             {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
+        'before_deploy': [
+            {'cmd': 'cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%'}
+        ],
         'deploy_script': [
             {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]

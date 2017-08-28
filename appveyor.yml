@@ -1,7 +1,7 @@
-before_deploy:
-- cmd: cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%
 before_build:
 - ps: tools\ci\appveyor-build.ps1
+before_deploy:
+- cmd: cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%
 branches:
   only:
   - master
