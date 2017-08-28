@@ -100,7 +100,7 @@ linux_targets.each {
 
     def srcDir = '${WORKSPACE}'
 
-    GetSourceStep(j, 'ssh://git@github.com/hbirchtree/coffeecutie.git', srcDir)
+    GetSourceStep(j, 'https://github.com/hbirchtree/coffeecutie.git', srcDir)
     GetBuildStep(j, srcDir, 'linux', linux_label, it)
 }
 
@@ -109,7 +109,7 @@ osx_targets.each {
 
     def srcDir = '${WORKSPACE}'
 
-    GetSourceStep(j, 'ssh://git@github.com/hbirchtree/coffeecutie.git', srcDir)
+    GetSourceStep(j, 'https://github.com/hbirchtree/coffeecutie.git', srcDir)
     GetBuildStep(j, srcDir, 'osx', osx_label, it)
 }
 
@@ -118,6 +118,6 @@ windows_targets.each {
 
     def srcDir = '${WORKSPACE}'
 
-    GetSourceStep(j, 'ssh://git@github.com/hbirchtree/coffeecutie.git', srcDir)
+    GetSourceStep(j, 'https://github.com/hbirchtree/coffeecutie.git', srcDir)
     GetBuildStep(j, srcDir, 'windows', windows_label, it)
 }
