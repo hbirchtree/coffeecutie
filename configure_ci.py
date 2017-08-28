@@ -377,12 +377,12 @@ def jenkins_gen_config(build_info, src_dir):
         import re
         # git@github.com:hbirchtree/coffeecutie.git
         # ssh://git@github.com/hbirchtree/coffeecutie.git
-        patterns = [re.compile('git@(.+):(.+)'),
-                    re.compile('ssh://git@([^/]+)/(.+)')]
+        patterns = [re.compile('^.*git@([^/]+)[:/](.+)'),
+                    #re.compile('ssh://git@([^/]+)/(.+)')
+                   ]
 
         for patt in patterns:
             match = patt.findall(url)
-            print(patt, match)
             if match:
                 return 'https://%s/%s' % (match[0][0], match[0][1])
         return url
