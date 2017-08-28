@@ -15,6 +15,7 @@ env:
   - MAKEFILE_DIR=tools/makers
   - DEPENDENCIES=
   - PYTHONPATH=/usr/lib/python3/dist-packages
+  - CONFIGURATION=Debug
   matrix:
   - BUILDVARIANT=android.armv7a
   - BUILDVARIANT=android.armv7a.kitkat
@@ -34,6 +35,8 @@ language: cpp
 matrix:
   allow_failures:
   - env: BUILDVARIANT=maemo.armel
+  - env: BUILDVARIANT=uwp.amd64
+  - env: BUILDVARIANT=uwp.arm
   exclude:
   - env: BUILDVARIANT=android.armv7a
     os: osx

@@ -222,7 +222,19 @@ def appveyor_gen_config(build_info, srcDir):
     script_loc = build_info['script_location'].replace('/', '\\')
     make_loc = build_info['makefile_location'].replace('/', '\\')
 
+    allow_fails = []
+
+    for f in try_get_key(build_info, 'allow_fail', []):
+        e = f['env'].split('=')
+        allow_fails += [{e[0]: e[1]}]
+
     deploy_patterns = ''
+
+    secret = try_get_key(try_get_key(build_info, 'secrets', {}), 'appveyor', '')
+
+    matrix = []
+    for p in create_env_matrix('windows', build_info):
+        matrix += [{'BUILDVARIANT': p}]
 
     return {
         'version': '{build}',
@@ -240,15 +252,18 @@ def appveyor_gen_config(build_info, srcDir):
                 'cmd': 'git checkout -qf %APPVEYOR_REPO_COMMIT%'
             }
         ],
+        'matrix': {
+            'allow_failures': allow_fails
+        },
         'environment': {
+            'matrix': matrix,
             'BUILD_DIR': 'C:\\project\\%APPVEYOR_PROJECT_SLUG%',
-            'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
+            'CMAKE_BIN': 'cmake.exe',
             'MAKEFILE_DIR': make_loc,
-            'BUILDVARIANT': 'win32.amd64',
             'DEPENDENCIES': dependencies_list,
             'DEPLOY_PATTERNS': deploy_patterns,
             'GITHUB_TOKEN': {
-                'secure': ''
+                'secure': secret
             }
         },
         'install': [
@@ -257,9 +272,6 @@ def appveyor_gen_config(build_info, srcDir):
         'build_script': [
             {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
-#        'artifacts': [
-#            {'path': '*.zip', 'name': 'Libraries'}
-#        ],
         'deploy_script': [
             {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]
@@ -321,8 +333,8 @@ def travis_gen_config(build_info, srcDir):
             {
                 'global': ['MAKEFILE_DIR=%s' % make_loc,
                            'DEPENDENCIES=%s' % dependencies,
-                           'PYTHONPATH=/usr/lib/python3/dist-packages'],
-                           'CONFIGURATION=Debug'
+                           'PYTHONPATH=/usr/lib/python3/dist-packages',
+                           'CONFIGURATION=Debug'],
                 'matrix': build_matrix[0]
             },
         'matrix':

@@ -1,5 +1,7 @@
 allow_fail:
   - env: BUILDVARIANT=maemo.armel
+  - env: BUILDVARIANT=uwp.amd64
+  - env: BUILDVARIANT=uwp.arm
 name: coffeecutie
 display_name: Coffeecutie
 platforms:
@@ -38,6 +40,8 @@ branches:
   - name: /^feature.*$/
     build: true
 
+secrets:
+  appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 makefile_location: tools/makers
 template_location: cmake/Templates
 script_location: tools/ci
