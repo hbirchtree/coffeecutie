@@ -9,6 +9,7 @@ find_path ( TINYXML2_INCLUDE_DIR
     ~/Library/Frameworks
     ${COFFEE_EXT_LIBRARY_DIR}/tinyxml2
     ${CMAKE_SOURCE_DIR}/libs
+    ${COFFEE_ROOT_DIR}
 
     PATH_SUFFIXES
     tinyxml2

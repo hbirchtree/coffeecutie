@@ -212,8 +212,8 @@ if(COFFEE_BUILD_SWIG_BINDING)
 endif()
 
 install(
-    DIRECTORY
-    ${CMAKE_SOURCE_DIR}/libs/tinyxml2
+    DIRECTORY ${CMAKE_SOURCE_DIR}/libs/tinyxml2
+    DIRECTORY ${CMAKE_SOURCE_DIR}/libs/rapidjson/include/rapidjson
 
     DESTINATION
     include

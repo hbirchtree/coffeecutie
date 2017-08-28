@@ -10,6 +10,7 @@ find_path ( RAPIDJSON_INCLUDE_DIR_TMP
     ${COFFEE_EXT_LIBRARY_DIR}/rapidjson
     ${RAPIDJSON_ROOT_DIR}
     ${CMAKE_SOURCE_DIR}/libs
+    ${COFFEE_ROOT_DIR}
 
     PATH_SUFFIXES
     include/

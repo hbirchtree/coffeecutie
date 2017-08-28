@@ -9,6 +9,7 @@ find_path ( STB_INCLUDE_DIR
     ~/Library/Frameworks
     ${COFFEE_EXT_LIBRARY_DIR}/stb
     ${CMAKE_SOURCE_DIR}/libs
+    ${COFFEE_ROOT_DIR}
 
     PATH_SUFFIXES
     stb
