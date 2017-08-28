@@ -1,5 +1,7 @@
 before_build:
 - ps: tools\ci\appveyor-build.ps1
+before_deploy:
+- cmd: cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%
 branches:
   only:
   - master
@@ -39,6 +41,7 @@ matrix:
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: uwp.arm
   - BUILDVARIANT: coverage
+  - BUILDVARIANT: raspberry.armhf
 platform: x64
 skip_tags: true
 version: '{build}'

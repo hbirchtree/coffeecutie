@@ -280,6 +280,9 @@ def appveyor_gen_config(build_info, srcDir):
         'before_build': [
             {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
+        'before_deploy': [
+            {'cmd': 'cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%'}
+        ],
         'deploy_script': [
             {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]
@@ -372,14 +375,17 @@ def jenkins_gen_config(build_info, src_dir):
 
     def sshgit_to_https(url):
         import re
-        patt = re.compile('git@(.+):(.+)')
+        # git@github.com:hbirchtree/coffeecutie.git
+        # ssh://git@github.com/hbirchtree/coffeecutie.git
+        patterns = [re.compile('^.*git@([^/:]+)[:/](.+)'),
+                    #re.compile('ssh://git@([^/]+)/(.+)')
+                   ]
 
-        match = patt.findall(url)
-
-        if match:
-            return 'https://%s/%s' % (match[0][0], match[0][1])
-        else:
-            return url
+        for patt in patterns:
+            match = patt.findall(url)
+            if match:
+                return 'https://%s/%s' % (match[0][0], match[0][1])
+        return url
 
     template_dir = '%s/cmake/Templates' % src_dir
 
