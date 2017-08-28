@@ -41,6 +41,7 @@ matrix:
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: uwp.arm
   - BUILDVARIANT: coverage
+  - BUILDVARIANT: raspberry.armhf
 platform: x64
 skip_tags: true
 version: '{build}'

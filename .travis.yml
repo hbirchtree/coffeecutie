@@ -24,6 +24,7 @@ env:
   - BUILDVARIANT=emscripten.wasm
   - BUILDVARIANT=fedora.amd64
   - BUILDVARIANT=maemo.armel
+  - BUILDVARIANT=raspberry.armhf
   - BUILDVARIANT=steam.amd64
   - BUILDVARIANT=ubuntu.amd64
   - BUILDVARIANT=ubuntu.i686
@@ -38,6 +39,7 @@ matrix:
   - env: BUILDVARIANT=uwp.amd64
   - env: BUILDVARIANT=uwp.arm
   - env: BUILDVARIANT=coverage
+  - env: BUILDVARIANT=raspberry.armhf
   exclude:
   - env: BUILDVARIANT=android.armv7a
     os: osx
@@ -52,6 +54,8 @@ matrix:
   - env: BUILDVARIANT=fedora.amd64
     os: osx
   - env: BUILDVARIANT=maemo.armel
+    os: osx
+  - env: BUILDVARIANT=raspberry.armhf
     os: osx
   - env: BUILDVARIANT=steam.amd64
     os: osx

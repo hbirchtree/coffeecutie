@@ -1,4 +1,4 @@
-def linux_targets = ['ubuntu.i686', 'ubuntu.amd64', 'steam.amd64', 'maemo.armel', 'fedora.amd64', 'emscripten.wasm', 'emscripten.asmjs', 'android.armv8a', 'android.armv7a.kitkat', 'android.armv7a', ]
+def linux_targets = ['ubuntu.i686', 'ubuntu.amd64', 'steam.amd64', 'raspberry.armhf', 'maemo.armel', 'fedora.amd64', 'emscripten.wasm', 'emscripten.asmjs', 'android.armv8a', 'android.armv7a.kitkat', 'android.armv7a', ]
 def osx_targets = ['osx', 'ios.x86_64', ]
 def windows_targets = ['win32.amd64', 'uwp.amd64', ]
 
@@ -100,7 +100,7 @@ linux_targets.each {
 
     def srcDir = '${WORKSPACE}'
 
-    GetSourceStep(j, 'ssh://git@github.com/hbirchtree/coffeecutie.git', srcDir)
+    GetSourceStep(j, 'https://github.com/hbirchtree/coffeecutie.git', srcDir)
     GetBuildStep(j, srcDir, 'linux', linux_label, it)
 }
 
@@ -109,7 +109,7 @@ osx_targets.each {
 
     def srcDir = '${WORKSPACE}'
 
-    GetSourceStep(j, 'ssh://git@github.com/hbirchtree/coffeecutie.git', srcDir)
+    GetSourceStep(j, 'https://github.com/hbirchtree/coffeecutie.git', srcDir)
     GetBuildStep(j, srcDir, 'osx', osx_label, it)
 }
 
@@ -118,6 +118,6 @@ windows_targets.each {
 
     def srcDir = '${WORKSPACE}'
 
-    GetSourceStep(j, 'ssh://git@github.com/hbirchtree/coffeecutie.git', srcDir)
+    GetSourceStep(j, 'https://github.com/hbirchtree/coffeecutie.git', srcDir)
     GetBuildStep(j, srcDir, 'windows', windows_label, it)
 }

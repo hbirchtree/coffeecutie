@@ -375,14 +375,17 @@ def jenkins_gen_config(build_info, src_dir):
 
     def sshgit_to_https(url):
         import re
-        patt = re.compile('git@(.+):(.+)')
+        # git@github.com:hbirchtree/coffeecutie.git
+        # ssh://git@github.com/hbirchtree/coffeecutie.git
+        patterns = [re.compile('git@(.+):(.+)'),
+                    re.compile('ssh://git@([^/]+)/(.+)')]
 
-        match = patt.findall(url)
-
-        if match:
-            return 'https://%s/%s' % (match[0][0], match[0][1])
-        else:
-            return url
+        for patt in patterns:
+            match = patt.findall(url)
+            print(patt, match)
+            if match:
+                return 'https://%s/%s' % (match[0][0], match[0][1])
+        return url
 
     template_dir = '%s/cmake/Templates' % src_dir
 
