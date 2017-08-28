@@ -1,34 +1,36 @@
+before_build:
+- ps: tools\ci\appveyor-build.ps1
 branches:
   only:
   - master
   - /^testing.*$/
   - /^feature.*$/
-before_build:
-- ps: tools\ci\appveyor-build.ps1
 build:
-  project: %BUILD_DIR%\\build_%BUILDVARIANT%\\Coffee.sln
   parallel: true
+  project: Coffee.sln
   verbosity: minimal
 clone_script:
 - cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
-    %APPVEYOR_BUILD_FOLDER%
-- cmd: git checkout -qf %APPVEYOR_REPO_COMMIT%
+    %SOURCE_DIR%
+- cmd: cd %SOURCE_DIR% && git checkout -qf %APPVEYOR_REPO_COMMIT%
 configuration:
 - Debug
 deploy_script:
 - ps: tools\ci\appveyor-deploy.ps1
 environment:
-  BUILD_DIR: C:\project\%APPVEYOR_PROJECT_SLUG%
+  BUILD_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%
   CMAKE_BIN: cmake.exe
   DEPENDENCIES: ''
   DEPLOY_PATTERNS: ''
   GITHUB_TOKEN:
     secure: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
   MAKEFILE_DIR: tools\makers
+  NOBUILD: 1
+  SAME_BUILD_DIR: 1
+  SOURCE_DIR: C:\projects\%APPVEYOR_PROJECT_SLUG%\src
   matrix:
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: win32.amd64
-  NOBUILD: 1
 install:
 - ps: tools\ci\appveyor-deps.ps1
 matrix:

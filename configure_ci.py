@@ -246,10 +246,10 @@ def appveyor_gen_config(build_info, srcDir):
         'platform': 'x64',
         'clone_script': [
             {
-                'cmd': 'git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%',
+                'cmd': 'git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %SOURCE_DIR%',
             },
             {
-                'cmd': 'git checkout -qf %APPVEYOR_REPO_COMMIT%'
+                'cmd': 'cd %SOURCE_DIR% && git checkout -qf %APPVEYOR_REPO_COMMIT%'
             }
         ],
         'matrix': {
@@ -257,7 +257,10 @@ def appveyor_gen_config(build_info, srcDir):
         },
         'environment': {
             'matrix': matrix,
-            'BUILD_DIR': 'C:\\project\\%APPVEYOR_PROJECT_SLUG%',
+            'BUILD_DIR': 'C:\\projects\\%APPVEYOR_PROJECT_SLUG%',
+            'SOURCE_DIR': 'C:\\projects\\%APPVEYOR_PROJECT_SLUG%\\src',
+            'NOBUILD': 1,
+            'SAME_BUILD_DIR': 1,
             'CMAKE_BIN': 'cmake.exe',
             'MAKEFILE_DIR': make_loc,
             'DEPENDENCIES': dependencies_list,
@@ -269,7 +272,12 @@ def appveyor_gen_config(build_info, srcDir):
         'install': [
             {'ps': '%s\\appveyor-deps.ps1' % script_loc}
         ],
-        'build_script': [
+        'build': {
+            'parallel': True,
+            'verbosity': 'minimal',
+            'project': '%s.sln' % (try_get_key(build_info, 'name', 'coffee'),)
+        },
+        'before_build': [
             {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
         'deploy_script': [
