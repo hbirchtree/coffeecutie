@@ -377,7 +377,7 @@ def jenkins_gen_config(build_info, src_dir):
         import re
         # git@github.com:hbirchtree/coffeecutie.git
         # ssh://git@github.com/hbirchtree/coffeecutie.git
-        patterns = [re.compile('^.*git@([^/]+)[:/](.+)'),
+        patterns = [re.compile('^.*git@([^/:]+)[:/](.+)'),
                     #re.compile('ssh://git@([^/]+)/(.+)')
                    ]
 
