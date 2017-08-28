@@ -139,6 +139,10 @@ if(WIN32)
         private/plat/environment/windows/environment.cpp
         private/plat/environment/windows/sysinfo.cpp
         )
+	set_source_files_properties ( private/plat/file/windows/file.cpp
+		PROPERTIES
+		COMPILE_FLAGS "/ZW"
+		)
 	if(NOT WIN_UWP)
 		list ( APPEND CoffeeCore_SRCS
 			private/plat/environment/windows/windows_startup.cpp

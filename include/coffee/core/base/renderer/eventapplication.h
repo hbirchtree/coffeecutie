@@ -219,8 +219,6 @@ public:
             return -1;
         }
 
-        return 0;
-
         ev.time.start = Time::CurrentTimestamp();
 
 #if !defined(COFFEE_ANDROID)
