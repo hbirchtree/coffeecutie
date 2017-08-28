@@ -3,8 +3,12 @@ branches:
   - master
   - /^testing.*$/
   - /^feature.*$/
-build_script:
+before_build:
 - ps: tools\ci\appveyor-build.ps1
+build:
+  project: %BUILD_DIR%\\build_%BUILDVARIANT%\\Coffee.sln
+  parallel: true
+  verbosity: minimal
 clone_script:
 - cmd: git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git
     %APPVEYOR_BUILD_FOLDER%
@@ -24,6 +28,7 @@ environment:
   matrix:
   - BUILDVARIANT: uwp.amd64
   - BUILDVARIANT: win32.amd64
+  NOBUILD: 1
 install:
 - ps: tools\ci\appveyor-deps.ps1
 matrix:
