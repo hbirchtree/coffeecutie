@@ -3,7 +3,7 @@ allow_fail:
   - env: BUILDVARIANT=uwp.amd64
   - env: BUILDVARIANT=uwp.arm
   - env: BUILDVARIANT=coverage
-name: coffeecutie
+name: Coffee
 display_name: Coffeecutie
 platforms:
     emscripten:
