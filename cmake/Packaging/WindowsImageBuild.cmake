@@ -47,44 +47,46 @@ macro(WINPE_PACKAGE
     # Clear resource header
     file ( WRITE "${RESOURCE_HEADER}"       "" )
 
-    if(NOT WIN_UWP)
-        foreach(durr ${RESOURCES})
-            file(GLOB_RECURSE TMP ${durr}/* )
-            foreach(file_full ${TMP})
-                # First, get a relative filename
-                # This is used to describe structure
-                file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
-                get_filename_component ( file_dir "${file_dir}" DIRECTORY )
-                get_filename_component ( file_name "${file_full}" NAME )
-                # We get a lower-case version to compare with other filenames
-                string(TOLOWER "${file_name}" file_name_lower)
+	set ( RESOURCE_FILES "" )
 
-                if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
-                    file (
-                        APPEND "${RESOURCE_HEADER}"
-                        "{${RESC_NUM},\"${file_dir}${file_name}\"},"
-                        )
-                    # If there is a directory path, append a "_" for it to be correct
-                    # This is disgusting.
-                    if(file_dir)
-                        set( file_dir "${file_dir}/" )
-                    endif()
-                    # Set virtual filename
-                    set ( virt_fname "${file_dir}${file_name}" )
-                    string ( REPLACE "_" "___" virt_fname "${virt_fname}" )
-                    string ( REPLACE "/" "_" virt_fname "${virt_fname}" )
-                    string ( REPLACE "\\" "_" virt_fname "${virt_fname}" )
-                    # Insert the file with directory path and filename into the .rc file
-                    file (
-                        APPEND "${RESOURCE_DESCRIPTOR}"
-                        "\"${virt_fname}\" CF_RES \"${file_full}\" \r\n"
-                        )
-                endif()
-                # Increment resource number, inserted into .rc file
-                math ( EXPR RESC_NUM "${RESC_NUM} + 1" )
-            endforeach()
+    foreach(durr ${RESOURCES})
+        file(GLOB_RECURSE TMP ${durr}/* )
+        foreach(file_full ${TMP})
+            # First, get a relative filename
+            # This is used to describe structure
+            file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
+            get_filename_component ( file_dir "${file_dir}" DIRECTORY )
+            get_filename_component ( file_name "${file_full}" NAME )
+            # We get a lower-case version to compare with other filenames
+            string(TOLOWER "${file_name}" file_name_lower)
+
+            if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
+				if(NOT WIN_UWP)
+					# On Win32, package it into the .exe file
+
+					# If there is a directory path, append a "_" for it to be correct
+					# This is disgusting.
+					if(file_dir)
+						set( file_dir "${file_dir}/" )
+					endif()
+					# Set virtual filename
+					set ( virt_fname "${file_dir}${file_name}" )
+					string ( REPLACE "_" "___" virt_fname "${virt_fname}" )
+					string ( REPLACE "/" "_" virt_fname "${virt_fname}" )
+					string ( REPLACE "\\" "_" virt_fname "${virt_fname}" )
+					# Insert the file with directory path and filename into the .rc file
+					file (
+						APPEND "${RESOURCE_DESCRIPTOR}"
+						"\"${virt_fname}\" CF_RES \"${file_full}\" \r\n"
+						)
+				else()
+					list ( APPEND RESOURCE_FILES "${file_full}" )
+				endif()
+			endif()
+            # Increment resource number, inserted into .rc file
+            math ( EXPR RESC_NUM "${RESC_NUM} + 1" )
         endforeach()
-    endif()
+    endforeach()
 
     # We add an application manifest to get on the good side with Windows 8.1+
     set ( WINDOWS_DESKTOP_DIR "${COFFEE_DESKTOP_DIRECTORY}/windows" )
@@ -125,8 +127,10 @@ macro(WINPE_PACKAGE
         ${SOURCES}
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
+		#${RESOURCE_HEADER}
         ${MANIFEST_FILE}
         ${INCLUDED_LIBS}
+		${RESOURCE_FILES}
         )
 
     if(WIN_UWP)
@@ -146,25 +150,6 @@ macro(WINPE_PACKAGE
         #	PROPERTIES
         #	RESOURCE "${SDL2_LIBRARY_BIN};${ANGLE_LIBRARIES_BIN}"
         #	)
-        set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
-        execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
-        set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
-        execute_process ( COMMAND cmake -E make_directory ${APPX_DIR} )
-
-        foreach(var ${INCLUDED_LIBS})
-            set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug/AppX" )
-            configure_file(
-                "${var}"
-                ${APPX_DIR}/
-                COPYONLY
-                )
-            set ( APPX_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/AppX" )
-            configure_file(
-                "${var}"
-                ${APPX_DIR}/
-                COPYONLY
-                )
-        endforeach()
 
         execute_process (
             COMMAND cmake -E make_directory
@@ -173,34 +158,70 @@ macro(WINPE_PACKAGE
         add_custom_command ( TARGET ${TARGET}
             PRE_LINK
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${COFFEE_DESKTOP_DIRECTORY}/windows/icon_150.png
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/Logo.png
             )
         add_custom_command ( TARGET ${TARGET}
             PRE_LINK
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${COFFEE_DESKTOP_DIRECTORY}/windows/icon_44.png
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SmallLogo.png
             )
         add_custom_command ( TARGET ${TARGET}
             PRE_LINK
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${COFFEE_DESKTOP_DIRECTORY}/windows/icon_44.png
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SmallLogo44x44.png
             )
         add_custom_command ( TARGET ${TARGET}
             PRE_LINK
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${COFFEE_DESKTOP_DIRECTORY}/windows/icon_50.png
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/StoreLogo.png
             )
 
         add_custom_command ( TARGET ${TARGET}
             PRE_LINK
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png
+            ${COFFEE_DESKTOP_DIRECTORY}/windows/banner_620.png
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SplashScreen.png
             )
+
+		foreach(durr ${RESOURCES})
+			file(GLOB_RECURSE TMP ${durr}/* )
+			foreach(file_full ${TMP})
+				# First, get a relative filename
+				# This is used to describe structure
+				file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
+				get_filename_component ( file_dir "${file_dir}" DIRECTORY )
+				get_filename_component ( file_name "${file_full}" NAME )
+				# We get a lower-case version to compare with other filenames
+				string(TOLOWER "${file_name}" file_name_lower)
+
+				if(NOT file_dir)
+					set ( file_dir "." )
+				endif()
+
+				if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
+					# On UWP, mark it as a .appx content file
+					set_source_files_properties( "${file_full}"
+						PROPERTIES
+						VS_DEPLOYMENT_CONTENT 1
+						VS_DEPLOYMENT_LOCATION "${file_dir}"
+						)
+				endif()
+			endforeach()
+		endforeach()
+
+		foreach(var ${INCLUDED_LIBS})
+			set_source_files_properties( "${var}"
+				PROPERTIES
+				VS_DEPLOYMENT_CONTENT 1
+				VS_DEPLOYMENT_LOCATION "."
+				)
+        endforeach()
+
+		
     endif()
 
     set_target_properties ( ${TARGET}

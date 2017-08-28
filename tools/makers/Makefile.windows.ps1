@@ -74,7 +74,7 @@ function BuildProject($Target, $SourceDir,
 
     cd $CurrentDir
 
-    if ($ConfigureOnly) {
+    if ($ConfigureOnly -Or $env:NOBUILD) {
         echo " * Only configuring project"
     }else{
         CompileProject "windows-$Preload" $Arch $Config $BuildDir

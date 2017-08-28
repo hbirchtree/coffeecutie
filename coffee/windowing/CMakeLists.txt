@@ -77,6 +77,11 @@ coffee_add_library ( CoffeeRenderer_Default "${Renderer_SRCS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer"
     )
 
+target_link_libraries( CoffeeContext_EGL
+	PRIVATE
+	CoffeeCore
+	)
+
 if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2)
     find_package(SDL2 REQUIRED)
     target_include_directories ( CoffeeBinding_GLAD

@@ -257,7 +257,6 @@
 
 #if !defined(COFFEE_RASPBERRY_DMX) && \
     !defined(COFFEE_USE_LINUX_GLX) && \
-    !defined(COFFEE_USE_MAEMO_EGL) && \
     !defined(COFFEE_USE_MAEMO_X11) && \
     defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_WINDOW
