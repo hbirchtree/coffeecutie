@@ -29,7 +29,7 @@ coffee_add_library ( CoffeeAudio "${CoffeeAudio_SRCS}" ""
 target_include_directories ( CoffeeAudio
     SYSTEM
     PRIVATE
-    ${STB_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${STB_INCLUDE_DIR}>
     )
 
 coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}" "CoffeeAudio;${OPENAL_LIBRARY}"
@@ -39,5 +39,5 @@ coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}" "CoffeeAudio;${OPENAL_L
 target_include_directories ( CoffeeOpenAL
     SYSTEM
     PRIVATE
-    ${OPENAL_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${OPENAL_INCLUDE_DIR}>
     )

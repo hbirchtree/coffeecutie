@@ -36,8 +36,8 @@ target_link_libraries ( CoffeeSDL2
 
 target_include_directories ( CoffeeSDL2
     PRIVATE
-    ${SDL2_INCLUDE_DIR}
-    ${STANDARDLIBS_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
     )
 
 coffee_bundle_includes( ${SDL2_INCLUDE_DIR} )

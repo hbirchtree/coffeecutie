@@ -11,5 +11,5 @@ coffee_add_library ( CoffeeImage "${CoffeeImage_SRCS}" ""
 
 target_include_directories ( CoffeeImage
     PUBLIC
-    ${STB_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${STB_INCLUDE_DIR}>
     )

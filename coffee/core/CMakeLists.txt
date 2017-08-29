@@ -187,12 +187,17 @@ find_package ( RapidJson REQUIRED )
 find_package ( TinyXML2 REQUIRED )
 
 target_include_directories ( CoffeeCore
-    SYSTEM
     PUBLIC
-    ${RAPIDJSON_INCLUDE_DIR}
-    ${TINYXML2_INCLUDE_DIR}
-    ${STANDARDLIBS_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
     )
+
+foreach(INC ${STANDARDLIBS_INCLUDE_DIR})
+    target_include_directories ( CoffeeCore
+        PUBLIC
+        $<BUILD_INTERFACE:${INC}>
+        )
+endforeach()
 
 if(COFFEE_BUILD_SWIG_BINDING)
     add_definitions ( -DCOFFEE_LOADABLE_LIBRARY )
@@ -203,21 +208,29 @@ if(COFFEE_BUILD_SWIG_BINDING)
         "${CMAKE_SOURCE_DIR}/include/coffee/core"
         )
     target_include_directories ( CoffeeCoreLoadable
-        SYSTEM
         PUBLIC
-        ${RAPIDJSON_INCLUDE_DIR}
-        ${TINYXML2_INCLUDE_DIR}
-        ${STANDARDLIBS_INCLUDE_DIR}
+        $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
         )
+
+    foreach(INC ${STANDARDLIBS_INCLUDE_DIR})
+        target_include_directories ( CoffeeCore
+            PUBLIC
+            $<BUILD_INTERFACE:${INC}>
+            )
+    endforeach()
 endif()
 
-install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/libs/tinyxml2
-    DIRECTORY ${CMAKE_SOURCE_DIR}/libs/rapidjson/include/rapidjson
+#install(
+#    EXPORT ${PROJECT_NAME}
 
-    DESTINATION
-    include
-    )
+#    DIRECTORY
+#    ${CMAKE_SOURCE_DIR}/libs/tinyxml2
+#    ${CMAKE_SOURCE_DIR}/libs/rapidjson/include/rapidjson
+
+
+#    DESTINATION include
+#    )
 
 # If PCH is supported, this will be used
 #CREATE_PCH_FILES(CoffeeCore "${CoffeeCore_PCH}")

@@ -21,7 +21,10 @@ if(NVIDIAML_FOUND)
         "${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query"
         )
 
-    target_include_directories( "coffee-nvidia" PRIVATE "${NVIDIAML_INCLUDE_DIR}" )
+    target_include_directories( "coffee-nvidia"
+        PRIVATE
+        $<BUILD_INTERFACE:${NVIDIAML_INCLUDE_DIR}>
+        )
 endif()
 
 if(LIBDRM_FOUND)
@@ -31,7 +34,10 @@ if(LIBDRM_FOUND)
         "${CMAKE_SOURCE_DIR}/include/coffee/graphics/common/query"
         )
 
-    target_include_directories( "coffee-libdrm" PRIVATE "${LIBDRM_INCLUDE_DIR}" )
+    target_include_directories( "coffee-libdrm"
+        PRIVATE
+        $<BUILD_INTERFACE:${LIBDRM_INCLUDE_DIR}>
+        )
 endif()
 
 #coffee_add_elibrary ( "coffee-amd" SHARED "" )

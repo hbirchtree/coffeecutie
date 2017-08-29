@@ -24,5 +24,5 @@ coffee_add_elibrary (
 
 target_include_directories ( Cappuccino
     PUBLIC
-    ${Cappuccino_HDRS}
+    $<BUILD_INTERFACE:${Cappuccino_HDRS}>
     )

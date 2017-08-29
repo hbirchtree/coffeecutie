@@ -123,6 +123,7 @@ def main():
                          'tools/python/common.py': 'common.py',
                          'cmake/Templates/JenkinsTemplate.groovy': None,
                          'cmake/Templates/reconfig.py': 'rebuild.py',
+                         'cmake/Templates/Config*.cmake.in': 'cmake/Templates',
                          'buildinfo.py': None,
                          'quick-build.sh': None,
                          'tools/ci/get_matching_release.py': 'ci/travis-helper.py',

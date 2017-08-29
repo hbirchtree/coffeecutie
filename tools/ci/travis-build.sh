@@ -145,6 +145,8 @@ function main()
     esac
 
     build_standalone "$1"
+
+    [ ! -z $NODEPLOY ] && exit 0
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} \
             --exclude=build/*/bin \
             --exclude=build/*/packaged \

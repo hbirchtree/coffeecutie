@@ -32,19 +32,16 @@ macro( MACFRAMEWORK_PACKAGE
     # TODO: Process header files
 
     install(
-        TARGETS
-        "${TARGET}"
+        TARGETS "${TARGET}"
 
-        LIBRARY DESTINATION
-        lib
+        EXPORT ${PROJECT_NAME}
 
-        ARCHIVE DESTINATION
-        lib
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        FRAMEWORK DESTINATION frameworks
+        PUBLIC_HEADER DESTINATION include
 
-        FRAMEWORK DESTINATION
-        frameworks
-        COMPONENT
-        bin
+        COMPONENT bin
         )
 endmacro()
 

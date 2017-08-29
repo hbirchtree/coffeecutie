@@ -14,6 +14,6 @@ if(DBUS_FOUND)
         )
     target_include_directories( CfDBusModule
         PRIVATE
-        ${DBUS_INCLUDE_DIR}
+        $<BUILD_INTERFACE:${DBUS_INCLUDE_DIR}>
         )
 endif()
