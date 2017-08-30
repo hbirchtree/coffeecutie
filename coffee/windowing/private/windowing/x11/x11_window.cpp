@@ -16,9 +16,9 @@
 #if defined(COFFEE_USE_LINUX_GLX)
 #include <GL/glx.h>
 #include <GL/glxext.h>
-#endif
-
+#else
 #include <EGL/egl.h>
+#endif
 
 using namespace Coffee;
 

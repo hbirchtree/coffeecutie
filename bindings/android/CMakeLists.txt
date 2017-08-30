@@ -27,6 +27,7 @@ coffee_add_library ( AndroidCore
 target_include_directories ( AndroidCore
     PRIVATE
     $<BUILD_INTERFACE:${ANDROID_GLUE_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${ANDROID_GLUE_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )

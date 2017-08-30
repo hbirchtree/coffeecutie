@@ -36,3 +36,5 @@ endif()
 if(COFFEE_BUILD_DBUS)
     add_subdirectory(misc/dbus)
 endif()
+
+coffee_bundle_includes ( "${CMAKE_SOURCE_DIR}/include" )

@@ -222,7 +222,10 @@ public:
         ev.time.start = Time::CurrentTimestamp();
 
 #if !defined(COFFEE_ANDROID)
-        r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
+        {
+            auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
+            r.injectEvent(fevent, nullptr);
+        }
 #else
         ev.setup(*ev.renderer, ev.data);
 #endif
@@ -236,7 +239,8 @@ public:
             if(ev.flags & ELD::TimeLimited &&
                     Time::CurrentTimestamp() > (ev.time.start + ev.time.max))
             {
-                r.injectEvent(CIEvent::Create(0, CIEvent::QuitSign), nullptr);
+                auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
+                r.injectEvent(qevent, nullptr);
             }
         }
 #endif

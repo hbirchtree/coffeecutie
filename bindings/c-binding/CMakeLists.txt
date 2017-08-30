@@ -25,4 +25,7 @@ coffee_add_elibrary (
 target_include_directories ( Cappuccino
     PUBLIC
     $<BUILD_INTERFACE:${Cappuccino_HDRS}>
+    $<INSTALL_INTERFACE:include/>
     )
+
+coffee_bundle_includes ( ${Cappuccino_HDRS} )

@@ -19,4 +19,8 @@ target_include_directories ( CoffeeASIO
     PUBLIC
     $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include>
     $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
+
+    $<INSTALL_INTERFACE:include/>
     )
+
+coffee_bundle_includes ( "${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include" )

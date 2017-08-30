@@ -24,21 +24,21 @@ namespace Display{
 class CSDL2Renderer :
         public CDRendererBase,
 
-        #if defined(COFFEE_RASPBERRY_DMX)
-        public DispmanXWindow,
-        public EGLRenderer,
-        #elif defined(COFFEE_USE_LINUX_GLX)
-        public X11Window,
-        public GLXRenderer,
-        #elif defined(COFFEE_USE_WINDOWS_ANGLE)
-        public EGLRenderer,
-        public SDL2Window,
-        #elif defined(COFFEE_USE_MAEMO_EGL)
-        public X11Window,
-        public EGLRenderer,
-        #elif defined(COFFEE_USE_SDL_GL) && defined(COFFEE_USE_SDL_WINDOW)
+        #if defined(COFFEE_USE_SDL_GL) && defined(COFFEE_USE_SDL_WINDOW)
         public SDL2Window,
         public SDL2GLRenderer,
+        #elif defined(COFFEE_RASPBERRY_DMX)
+        public DispmanXWindow,
+        public EGLRenderer,
+        #elif defined(COFFEE_USE_LINUX_GLX) && defined(COFFEE_USE_MAEMO_X11)
+        public X11Window,
+        public GLXRenderer,
+        #elif defined(COFFEE_USE_WINDOWS_ANGLE) && defined(COFFEE_USE_SDL_WINDOW)
+        public EGLRenderer,
+        public SDL2Window,
+        #elif defined(COFFEE_USE_MAEMO_EGL) && defined(COFFEE_USE_MAEMO_X11)
+        public X11Window,
+        public EGLRenderer,
         #else
         #error No rendering infrastructure defined
         #endif

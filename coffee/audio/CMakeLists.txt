@@ -29,15 +29,16 @@ coffee_add_library ( CoffeeAudio "${CoffeeAudio_SRCS}" ""
 target_include_directories ( CoffeeAudio
     SYSTEM
     PRIVATE
-    $<BUILD_INTERFACE:${STB_INCLUDE_DIR}>
+    ${STB_INCLUDE_DIR}
     )
 
-coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}" "CoffeeAudio;${OPENAL_LIBRARY}"
+coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}"
+    "CoffeeAudio;${OPENAL_LIBRARY}"
     "${CMAKE_SOURCE_DIR}/include/coffee/audio/openal"
     )
 
 target_include_directories ( CoffeeOpenAL
     SYSTEM
     PRIVATE
-    $<BUILD_INTERFACE:${OPENAL_INCLUDE_DIR}>
+    ${OPENAL_INCLUDE_DIR}
     )

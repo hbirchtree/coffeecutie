@@ -30,16 +30,14 @@ macro( INIT_SUBPROJECT )
         ${CMAKE_SOURCE_DIR}/cmake/Packaging
         )
 
-    message ( "${CMAKE_MODULE_PATH}" )
-
     if(NOT WIN32)
         set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
     else()
         set ( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin )
     endif()
 
-    include ( BuildFlags )
     include ( BuildOptions )
+    include ( BuildFlags )
     include ( BuildFunctions )
     include ( PackagingOptions )
     include ( TestingOptions )

@@ -246,23 +246,27 @@
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 
+#pragma warning(FUCK)
+
 #if !defined(COFFEE_RASPBERRY_DMX) && \
     !defined(COFFEE_USE_LINUX_GLX) && \
     !defined(COFFEE_USE_WINDOWS_ANGLE) && \
     !defined(COFFEE_USE_MAEMO_EGL) && \
-    !defined(COFFEE_USE_MAEMO_X11) && \
     defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_GL
 #endif
 
 #if !defined(COFFEE_RASPBERRY_DMX) && \
     !defined(COFFEE_USE_LINUX_GLX) && \
+    !defined(COFFEE_USE_MAEMO_EGL) && \
     !defined(COFFEE_USE_MAEMO_X11) && \
     defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_WINDOW
 #endif
 
-#if !defined(COFFEE_RASPBERRY_DMX) && defined(COFFEE_USE_SDL2)
+#if !defined(COFFEE_RASPBERRY_DMX) && \
+    !defined(COFFEE_USE_MAEMO_X11) && \
+    defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_EVENT
 #endif
 

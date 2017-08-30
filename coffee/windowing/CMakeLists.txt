@@ -86,8 +86,8 @@ if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2)
     find_package(SDL2 REQUIRED)
     target_include_directories ( CoffeeBinding_GLAD
         PRIVATE
-        $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
-        $<BUILD_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
+        ${SDL2_INCLUDE_DIR}
+        ${STANDARDLIBS_INCLUDE_DIR}
         )
 elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
         AND NOT ANDROID AND NOT NACL AND NOT EMSCRIPTEN
@@ -101,7 +101,7 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
         )
     target_include_directories( CoffeeContext_GLX
         PRIVATE
-        $<BUILD_INTERFACE:${X11_INCLUDE_DIR}>
+        ${X11_INCLUDE_DIR}
         )
 
     target_link_libraries ( CoffeeWindow_X11
@@ -110,6 +110,6 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux"
         )
     target_include_directories( CoffeeWindow_X11
         PRIVATE
-        $<BUILD_INTERFACE:${X11_INCLUDE_DIR}>
+        ${X11_INCLUDE_DIR}
         )
 endif()

@@ -11,7 +11,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     find_package(Unwind QUIET )
     if (LIBUNWIND_FOUND)
         list ( APPEND CORE_INCLUDE_DIR
-            ${LIBUNWIND_INCLUDE_DIR}
+            $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
             )
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
@@ -29,7 +29,8 @@ if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
     #  acquiring device info.
     find_package(SDL2 REQUIRED)
     list ( APPEND CORE_INCLUDE_DIR
-        ${SDL2_INCLUDE_DIR}
+        $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:include/SDL2>
         )
 #    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
