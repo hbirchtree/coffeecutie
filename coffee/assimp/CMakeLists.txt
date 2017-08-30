@@ -15,6 +15,6 @@ coffee_bundle_library ( ${ASSIMP_LIBRARIES} )
 
 target_include_directories ( CoffeeAssimp
     PUBLIC
-    $<BUILD_INTERFACE:${ASSIMP_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${ASSIMP_INCLUDE_DIR}/..>
     $<INSTALL_INTERFACE:include/>
     )
