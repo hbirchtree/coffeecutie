@@ -73,7 +73,7 @@ if(ANDROID)
         ${SDL2_LIBRARIES}
         )
     list ( APPEND CORE_INCLUDE_DIR
-        ${CMAKE_SOURCE_DIR}/bindings/android/include
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )
 #    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
 #        message ( "-- Building with GLES 3.0+ support" )

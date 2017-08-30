@@ -22,6 +22,7 @@ FIND_LIBRARY(
     64/link lib lib64
     "lib/${CMAKE_LIBRARY_ARCHITECTURE}" # CMake architecture path
     "lib/${ANDROID_ABI}"
+    "${ANDROID_ABI}"
     )
 
 FIND_LIBRARY(

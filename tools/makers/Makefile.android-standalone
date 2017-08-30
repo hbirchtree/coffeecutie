@@ -40,7 +40,7 @@ android: android-gen-preloads android-get-nativelibs
 		-e BUILD_NAME=android-$(TARGET) \
 		-e BUILDER_NAME=android-builder \
 		-e DOCKER_CONFIG=android \
-		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS)" \
+                -e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=$(DOCK_BLD_DIR)/Coffee_NativeLibs/Android" \
 		-e CMAKE_GEN="Ninja" \
 		-e PRELOAD_FILE=$(DOCK_PRLD_DIR)/$(TARGET).cmake \
 		-e TOOLCHAIN=$(TOOLCHAIN_FILE) \
@@ -49,4 +49,3 @@ android: android-gen-preloads android-get-nativelibs
 		-e AUTO_DIR=$(AUTO_DIR) \
 		-e BUILD_DIR=$(BUILD_DIR) \
 		-e DOCKER_EXTRA_OPTIONS="-v $(PRELOAD_DIR):$(DOCK_PRLD_DIR):ro -v $(BUILD_DIR)/native-libs:$(DOCK_BLD_DIR)/Coffee_NativeLibs:ro -v $(COFFEE_DIR)/android-$(TARGET):$(DOCK_COFFEE_DIR):ro"
-
