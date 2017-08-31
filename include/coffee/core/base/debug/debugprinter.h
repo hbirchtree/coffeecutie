@@ -22,7 +22,11 @@ struct DebugPrinterImpl : DebugPrinterDef
 {
     using CmdColor = ColorMap::CmdColor;
 
+#if !defined(COFFEE_EMSCRIPTEN)
     static const constexpr cstring print_fmt = "{0}\n";
+#else
+    static const constexpr cstring print_fmt = "{0}";
+#endif
 
     static void AddContextString(CString& prefix, Severity sev);
 
