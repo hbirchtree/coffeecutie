@@ -21,15 +21,15 @@ endmacro()
 
 macro(COFFEE_BUNDLE_LIBRARY )
     foreach( LIBRARY ${ARGN} )
-        if(ANDROID)
+        if(IS_DIRECTORY "${LIBRARY}")
+            install(
+                DIRECTORY ${LIBRARY}
+                DESTINATION lib/${CMAKE_LIBRARY_ARCHITECTURE}
+                )
+        elseif(ANDROID)
             install(
                 FILES ${LIBRARY}
                 DESTINATION "lib/${ANDROID_ABI}"
-                )
-        elseif(APPLE AND IOS)
-            install (
-                FILES ${LIBRARY}
-                DESTINATION "lib/${CMAKE_LIBRARY_ARCHITECTURE}"
                 )
         else()
             install (
