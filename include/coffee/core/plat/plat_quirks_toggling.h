@@ -150,7 +150,7 @@
 #endif
 
 /* thread_local workarounds */
-#if defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_EMSCRIPTEN)
 #define thread_local
 #elif defined(COFFEE_APPLE)
 #define thread_local __thread
@@ -245,8 +245,6 @@
     || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
 #endif
-
-#pragma warning(FUCK)
 
 #if !defined(COFFEE_RASPBERRY_DMX) && \
     !defined(COFFEE_USE_LINUX_GLX) && \

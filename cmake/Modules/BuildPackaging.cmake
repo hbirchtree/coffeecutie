@@ -61,10 +61,9 @@ function(COFFEE_ADD_APPLICATION_LONGERER
             "${BUNDLE_LIBS}"
             "${ICON_ASSET}" )
     elseif(EMSCRIPTEN)
-        if(COFFEE_GENERATE_HTML)
-            set ( CMAKE_EXECUTABLE_SUFFIX ".html" )
-        endif()
         add_executable(${TARGET} ${SOURCES_MOD})
+        set_property ( TARGET ${TARGET}
+            PROPERTY SUFFIX ".html" )
         if(NOT COFFEE_GENERATE_HTML)
             install(
                 TARGETS

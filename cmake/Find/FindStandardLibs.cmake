@@ -23,15 +23,17 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     endif()
 endif()
 
-if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
+if(SDL_POWER_PLUGIN_ENABLED OR ANDROID OR WIN_UWP)
     # We use SDL2 for some platform functionality, like power info
     # On Android, it is also used to read assets and
     #  acquiring device info.
     find_package(SDL2 REQUIRED)
-    list ( APPEND CORE_INCLUDE_DIR
-        $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
-        $<INSTALL_INTERFACE:include/SDL2>
-        )
+    if(SDL2_INCLUDE_DIR)
+        list ( APPEND CORE_INCLUDE_DIR
+            $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:include/SDL2>
+            )
+    endif()
 #    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
 

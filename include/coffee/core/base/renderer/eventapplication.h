@@ -146,14 +146,14 @@ public:
     template<typename Renderer, typename Data>
     STATICINLINE void resumeExtra(EventLoopData<Renderer, Data>&)
     {
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
         emscripten_resume_main_loop();
 #endif
     }
     template<typename Renderer, typename Data>
     STATICINLINE void suspendExtra(EventLoopData<Renderer, Data>&)
     {
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
         emscripten_pause_main_loop();
 #endif
     }
@@ -173,7 +173,7 @@ public:
     SUSPRESUME_FUN(resumeFunction, IsForeground, setup, resumeExtra)
     SUSPRESUME_FUN(suspendFunction, IsBackground, cleanup, suspendExtra)
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
     template<typename R, typename D>
     static void emscripten_looper(void* arg)
     {
@@ -210,8 +210,9 @@ public:
         r.installEventHandler(resume_data);
 
 
-#if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>, &ev, 0, 0);
+#if defined(COFFEE_EMSCRIPTEN)
+        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
+                                     &ev, 0, 0);
 #endif
 
         if(!(*ev.renderer).init(visual, &err))
@@ -231,7 +232,7 @@ public:
 #endif
 
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(COFFEE_EMSCRIPTEN)
         while(!ev.renderer->closeFlag())
         {
             ev.loop(*ev.renderer, ev.data);
@@ -245,8 +246,11 @@ public:
         }
 #endif
 
+#if !defined(COFFEE_EMSCRIPTEN)
         (*ev.renderer).cleanup();
         ev.cleanup(*ev.renderer, ev.data);
+#endif
+
         return 0;
     }
 

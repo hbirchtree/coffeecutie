@@ -157,7 +157,7 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
                          StepSaveLocalInfo(),
                          StepUpdateBuildInfo('cmake/Templates/coffee-build.yml',
                                              configure_ci.CI_SERVICES),
-                         StepGenerateCMakeScript(),
+                         #StepGenerateCMakeScript(),
                          StepCorrectPythonScriptPaths(),
                          StepListGitStatus(),
                      ]
