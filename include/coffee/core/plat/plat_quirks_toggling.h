@@ -206,7 +206,7 @@
 #define COFFEE_USE_MAEMO_EGL
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE
 #endif
@@ -215,7 +215,7 @@
 #define COFFEE_USE_EXECVPE
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
 #define COFFEE_NO_PTHREAD_SETNAME_NP
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
@@ -224,15 +224,15 @@
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_NO_TLS
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)
 #define COFFEE_STUBBED_SYSINFO
 #define COFFEE_STUBBED_ENVIRONMENT
 #define COFFEE_STUBBED_PROCESS
@@ -241,7 +241,7 @@
 #define COFFEE_STUBBED_DYNLOADER
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
 #endif

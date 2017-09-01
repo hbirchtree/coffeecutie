@@ -17,7 +17,7 @@ uint16 AvailableSaveSlots()
     return 1;
 }
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
 struct DataStatus
 {
     int32 status;
@@ -62,7 +62,7 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
              StrUtil::pointerify(data_ptr),
              *data_size, slot);
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
     CString save_file = cStringFormat("{0}_Slot-{1}.dat",
                                       ApplicationData().application_name,
                                       slot);
@@ -119,7 +119,7 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
 
 szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
 {
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
     CString save_file = cStringFormat("{0}_Slot-{1}.dat",
                                       ApplicationData().application_name,
                                       slot);

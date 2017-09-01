@@ -59,7 +59,7 @@ FORCEDINLINE void cBasicPrint(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
     CString out = cStringFormat(str,args...);
-    OutputPrinter::fprintf(DefaultDebugOutputPipe,Severity::Information,"{0}\n",out.c_str());
+    OutputPrinter::fprintf(DefaultDebugOutputPipe,Severity::Information,DebugPrinterImpl::print_fmt,out.c_str());
 #endif
 }
 
@@ -82,7 +82,7 @@ void cOutputPrint(cstring str, Arg... args)
 {
 #ifndef COFFEE_LOWFAT
     CString out = cStringFormat(str,args...);
-    OutputPrinter::fprintf(DefaultPrintOutputPipe,Severity::Information,"{0}\n",out.c_str());
+    OutputPrinter::fprintf(DefaultPrintOutputPipe,Severity::Information,DebugPrinterImpl::print_fmt,out.c_str());
 #endif
 }
 

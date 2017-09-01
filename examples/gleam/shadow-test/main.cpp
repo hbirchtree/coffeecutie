@@ -55,66 +55,68 @@ struct SharedData
 
 using ELoop = EventLoopData<CDRenderer, SharedData>;
 
+void setup_fun(CDRenderer& renderer, SharedData* data)
+{
+    renderer.setWindowTitle("GL extensions");
+    cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
+    cDebug("Framebuffer size: {0}, window size: {1}",
+           renderer.framebufferSize(), renderer.windowSize());
+
+    data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
+    if(!data->api(PlatformData::IsDebug()))
+    {
+        cDebug("Failed to initialize graphics API");
+    }
+}
+
+void loop_fun(CDRenderer& renderer, SharedData* data)
+{
+    if(renderer.contextTime() > 5.0)
+        renderer.closeWindow();
+
+    RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
+
+    if(data->frame_ts <= Time::CurrentTimestamp())
+    {
+        cDebug("FPS: {0}", data->frame_count);
+        data->frame_ts = Time::CurrentTimestamp() + 1;
+        data->frame_count = 0;
+    }
+    data->frame_count++;
+
+    renderer.pollEvents();
+    renderer.swapBuffers();
+}
+
+void cleanup_fun(CDRenderer&, SharedData*)
+{
+}
+
 int32 coffee_main(int32, cstring_w*)
 {
     SetPrintingVerbosity(8);
     FileResourcePrefix("sample_data/");
 
     CString err;
-    CDRenderer renderer;
+
+    ELoop* globLoop = new ELoop{
+            new CDRenderer,
+            new SharedData,
+            setup_fun, loop_fun, cleanup_fun,
+            ELoop::TimeLimited, {}};
+
+    ELoop& eventloop = *globLoop;
+    eventloop.time.max = 3;
 
     CDProperties visual = GetDefaultVisual<RHI::GLEAM::GLEAM_API>();
     visual.flags ^= CDProperties::Windowed;
     visual.flags |= CDProperties::WindowedFullScreen;
 
-    SharedData share_data = {};
-
-    auto setup_fun = [&](CDRenderer&, SharedData* data)
-    {
-        renderer.setWindowTitle("GL extensions");
-        cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
-        cDebug("Framebuffer size: {0}, window size: {1}",
-               renderer.framebufferSize(), renderer.windowSize());
-
-        data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
-        if(!data->api(PlatformData::IsDebug()))
-        {
-            cDebug("Failed to initialize graphics API");
-        }
-    };
-    auto loop_fun = [](CDRenderer& renderer, SharedData* data)
-    {
-        if(renderer.contextTime() > 5.0)
-            renderer.closeWindow();
-
-        RHI::GLEAM::GLEAM_API::DefaultFramebuffer().clear(0, {1.f, 1.f, 0.f, 0.1f});
-
-        if(data->frame_ts <= Time::CurrentTimestamp())
-        {
-            cDebug("FPS: {0}", data->frame_count);
-            data->frame_ts = Time::CurrentTimestamp() + 1;
-            data->frame_count = 0;
-        }
-        data->frame_count++;
-
-        renderer.pollEvents();
-        renderer.swapBuffers();
-    };
-    auto cleanup_fun = [](CDRenderer&, SharedData*)
-    {
-
-    };
-
-    ELoop eventloop =
-    {&renderer, &share_data, setup_fun, loop_fun, cleanup_fun, 0};
-
-
-    eventloop.flags |= ELoop::TimeLimited;
-    eventloop.time.max = 3;
-
     int32 stat = CDRenderer::execEventLoop(eventloop, visual, err);
+
     if(stat != 0)
         cDebug("Init error: {0}", err);
+
     return stat;
 }
 

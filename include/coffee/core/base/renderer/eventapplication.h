@@ -5,7 +5,7 @@
 
 #include <coffee/core/plat/plat_timing.h>
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
 #endif
 
@@ -177,14 +177,39 @@ public:
     template<typename R, typename D>
     static void emscripten_looper(void* arg)
     {
+        using ELD = EventLoopData<R, D>;
+
         auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
 
         eventloop->loop(*eventloop->renderer, eventloop->data);
-    }
 
+        if(eventloop->flags & ELD::TimeLimited &&
+                Time::CurrentTimestamp() > (eventloop->time.start + eventloop->time.max))
+        {
+            auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
+            eventloop->renderer->injectEvent(qevent, nullptr);
+        }
+    }
 #endif
 
 #undef SUSPRESUME_FUN
+
+    template<typename Renderer, typename Data>
+    struct EventExitHandler
+    {
+        static EventLoopData<Renderer,Data>* ev;
+
+        static void event_exitFunc()
+        {
+            if(!ev)
+            {
+                fprintf(stderr, "Event exit handler could not be triggered");
+                return;
+            }
+            (*ev->renderer).cleanup();
+            ev->cleanup(*ev->renderer, ev->data);
+        }
+    };
 
     template<typename Renderer, typename Data>
     static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
@@ -210,17 +235,18 @@ public:
         r.installEventHandler(resume_data);
 
 
-#if defined(COFFEE_EMSCRIPTEN)
-        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
-                                     &ev, 0, 0);
-#endif
-
         if(!(*ev.renderer).init(visual, &err))
         {
             return -1;
         }
 
         ev.time.start = Time::CurrentTimestamp();
+
+#if defined(COFFEE_EMSCRIPTEN)
+        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
+                                     &ev, 0, 1);
+#endif
+
 
 #if !defined(COFFEE_ANDROID)
         {
@@ -247,8 +273,8 @@ public:
 #endif
 
 #if !defined(COFFEE_EMSCRIPTEN)
-        (*ev.renderer).cleanup();
-        ev.cleanup(*ev.renderer, ev.data);
+        EventExitHandler<Renderer, Data>::ev = &ev;
+        atexit(EventExitHandler<Renderer, Data>::event_exitFunc);
 #endif
 
         return 0;
