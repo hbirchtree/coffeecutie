@@ -5,7 +5,20 @@ function build_info()
     $(dirname $0)/buildinfo.py $@ 2>/dev/null
 }
 
-TRAVIS_OS_NAME=linux
+function get_travis_platform()
+{
+    osname=$(uname)
+    case "$osname" in
+    Linux)
+        echo linux
+    ;;
+    Darwin)
+        echo osx
+    ;;
+    esac
+}
+
+TRAVIS_OS_NAME=$(get_travis_platform)
 BUILDVARIANT=$1
 DEPENDENCIES="$(build_info dependencies)"
 DEPENDENCIES="$(echo $DEPENDENCIES | sed -e 's/ /%/g')"
