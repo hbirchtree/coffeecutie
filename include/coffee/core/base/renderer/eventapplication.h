@@ -201,6 +201,10 @@ public:
 
         static void event_exitFunc()
         {
+            event_exitFunc(ev);
+        }
+        static void event_exitFunc(EventLoopData<Renderer,Data>* ev)
+        {
             if(!ev)
             {
                 fprintf(stderr, "Event exit handler could not be triggered");
@@ -272,9 +276,11 @@ public:
         }
 #endif
 
-#if !defined(COFFEE_EMSCRIPTEN)
+#if defined(COFFEE_EMSCRIPTEN)
         EventExitHandler<Renderer, Data>::ev = &ev;
         atexit(EventExitHandler<Renderer, Data>::event_exitFunc);
+#else
+        EventExitHandler<Renderer, Data>::event_exitFunc(&ev);
 #endif
 
         return 0;
