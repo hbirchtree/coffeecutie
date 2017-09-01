@@ -53,6 +53,7 @@ if(APPLE)
             "-framework GameController"
             "-framework OpenGLES"
             "-framework UIKit"
+            "-framework GLKit"
             )
     else()
         list ( APPEND CORE_EXTRA_LIBRARIES
