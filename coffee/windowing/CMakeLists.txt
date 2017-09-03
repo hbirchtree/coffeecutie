@@ -14,6 +14,14 @@ set ( GLX_SRCS
     private/graphics/glx/glx_renderer.cpp
     )
 
+set ( GLKit_SRCS
+    private/graphics/eagl/eagl_bind.mm
+    private/graphics/eagl/EGLView.m
+    private/windowing/glkit/glk_window.cpp
+    private/windowing/glkit/glk_window.mm
+    private/windowing/glkit/AppDelegate.m
+    )
+
 set ( GLAD_SRCS
     private/binding/glad/gleamrenderer.cpp
     )
@@ -31,11 +39,13 @@ endif()
 set ( RENDERER_LIBS
     CoffeeWindow_X11
     CoffeeWindow_DMX
+    CoffeeWindow_GLKit
 
     CoffeeContext_GLX
     CoffeeContext_EGL
 
     CoffeeBinding_GLAD
+
 
     CoffeeGLeamRHI
     )
@@ -70,6 +80,10 @@ coffee_add_library ( CoffeeWindow_X11 "${X11_SRCS}" ""
 
 coffee_add_library ( CoffeeWindow_DMX "${DMX_SRCS}" ""
     "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/dispmanx"
+    )
+
+coffee_add_library ( CoffeeWindow_GLKit "${GLKit_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/glkit"
     )
 
 coffee_add_library ( CoffeeRenderer_Default "${Renderer_SRCS}"

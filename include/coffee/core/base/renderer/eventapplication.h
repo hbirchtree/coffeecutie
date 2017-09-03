@@ -5,6 +5,8 @@
 
 #include <coffee/core/plat/plat_timing.h>
 
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
 #endif
@@ -38,6 +40,31 @@ struct EventLoopData
     };
 };
 
+template<typename RendType, typename DataType>
+void WrapEventFunction(void* data, int event)
+{
+    using ELD = EventLoopData<RendType,DataType>;
+    
+    ELD* edata = C_FCAST<ELD*>(data);
+
+    switch(event)
+    {
+        case CoffeeHandle_Setup:
+        edata->setup(*edata->renderer, edata->data);
+        break;
+        
+        case CoffeeHandle_Loop:
+        edata->loop(*edata->renderer, edata->data);
+        break;
+        
+        case CoffeeHandle_Cleanup:
+        edata->cleanup(*edata->renderer, edata->data);
+        break;
+        
+        default:
+        break;
+    }
+}
 
 
 class EventApplication : public InputApplication
@@ -239,30 +266,53 @@ public:
         r.installEventHandler(resume_data);
 
 
-        if(!(*ev.renderer).init(visual, &err))
+        if(!LoadHighestVersion(ev.renderer, visual, &err))
         {
             return -1;
         }
 
+//        if(!(*ev.renderer).init(visual, &err))
+//        {
+//            return -1;
+//        }
+
         ev.time.start = Time::CurrentTimestamp();
+        
+#if defined(COFFEE_USE_APPLE_GLKIT)
+        /* Under GLKit, the entry point for setup, update and cleanup
+         *  reside in AppDelegate.m
+         * Lifecycle is manageed by UIKit in this case
+         */
+        coffee_event_handling_data = &ev;
+        CoffeeEventHandle = WrapEventFunction<Renderer, Data>;
+        
+        return 0;
+#else
 
 #if defined(COFFEE_EMSCRIPTEN)
+        // Under emscripten, only the loop function is used later
         emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
                                      &ev, 0, 1);
 #endif
 
 
 #if !defined(COFFEE_ANDROID)
+        // Android awaits a foreground event, as it may not be there when started.
         {
             auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
             r.injectEvent(fevent, nullptr);
         }
 #else
+        // On desktop and etc, we are always ready for setup
         ev.setup(*ev.renderer, ev.data);
 #endif
 
 
 #if !defined(COFFEE_EMSCRIPTEN)
+        /* In this case, event processing happens in a tight loop that happens
+            regardless of outside events
+           Android might want something better
+         */
         while(!ev.renderer->closeFlag())
         {
             ev.loop(*ev.renderer, ev.data);
@@ -277,13 +327,16 @@ public:
 #endif
 
 #if defined(COFFEE_EMSCRIPTEN)
+        // Emscripten will exit after main()
         EventExitHandler<Renderer, Data>::ev = &ev;
         atexit(EventExitHandler<Renderer, Data>::event_exitFunc);
 #else
+        // All others exit here
         EventExitHandler<Renderer, Data>::event_exitFunc(&ev);
 #endif
 
         return 0;
+#endif
     }
 
     void exec()

@@ -67,6 +67,8 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     {
         cDebug("Failed to initialize graphics API");
     }
+    
+    renderer.popErrorMessage(Severity::Information, "Hello!", "Goodbye");
 }
 
 void loop_fun(CDRenderer& renderer, SharedData* data)

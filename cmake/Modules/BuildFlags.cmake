@@ -67,7 +67,9 @@ endif()
 
 if(COFFEE_BUILD_SDL2)
     add_definitions("-DCOFFEE_USE_SDL2=1")
-else()
+elseif(APPLE)
+    # It will just use GLKit
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT EMSCRIPTEN AND NOT NACL AND NOT ANDROID)
     add_definitions( -DCOFFEE_LINUX_LIGHTWEIGHT_WM )
 endif()
 

@@ -67,6 +67,7 @@
  * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
  *
  * COFFEE_SDL_MAIN - use SDL_main on start, allowing SDL to create its state
+ * COFFEE_CUSTOM_MAIN - use a magical main entry point somewhere else
  *
  * COFFEE_LOWFAT - disable tons of features for size, most of these changes are not noticeable for end-user applications with GUIs
  *
@@ -109,11 +110,10 @@
 
 #if defined(COFFEE_ANDROID) \
     || defined(COFFEE_WINDOWS_UWP) \
-    || defined(COFFEE_NACL) \
-    || defined(COFFEE_APPLE_MOBILE)
-
+    || defined(COFFEE_NACL)
 #define COFFEE_SDL_MAIN
-
+#elif defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_CUSTOM_MAIN
 #endif
 
 /* Terminal size: useless on Android */
@@ -188,6 +188,11 @@
 #if defined(COFFEE_WINDOWS) && defined(COFFEE_GLES20_MODE)
 #define COFFEE_USE_MAEMO_EGL
 #define COFFEE_USE_WINDOWS_ANGLE
+#endif
+
+#if defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_USE_APPLE_GLKIT
+#define COFFEE_USE_MAEMO_EGL
 #endif
 
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
