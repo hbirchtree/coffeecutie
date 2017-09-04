@@ -24,6 +24,7 @@ enum CoffeeEventHandleType
     CoffeeHandle_TransForeground,
     
     CoffeeHandle_GeneralEvent,
+    CoffeeHandle_SensorEvent,
 };
 
 // The int will be CoffeeEventHandleType
@@ -34,6 +35,37 @@ extern void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
 // This is done such that the Coffee code does not need extra spice to work
 // ... And we only need to link to a valid library for it.
 extern void* coffee_event_handling_data;
+
+enum CfSensorType
+{
+    CfSensor_Accel = 0x1,
+    CfSensor_Gyro = 0x2,
+    
+    CfSensor_Orientation = 0x4,
+    CfSensor_Gravity = 0x8,
+    
+    CfSensor_Magnetometer = 0x10,
+    
+    CfSensor_Lux = 0x20,
+};
+
+struct CfSensorEvent
+{
+    union {
+        struct {
+            int32_t x;
+            int32_t y;
+            int32_t z;
+            int32_t w;
+        } ivec4;
+        struct {
+            float x;
+            float y;
+            float z;
+            float w;
+        } fvec4;
+    };
+};
 
 // Wrapper for simpler usage, assuming that the foreign part supports C code
 inline bool CoffeeEventHandleCall(int event)
@@ -63,6 +95,8 @@ inline bool CoffeeEventHandleNACall(int event, void* ptr1,
     }
 }
 
+
+
 /* Now, for interaction from Coffee to foreign code */
 /* May not run on the same thread at all times */
 enum CoffeeForeignSignal
@@ -77,6 +111,8 @@ enum CoffeeForeignSignal
     CoffeeForeign_DisplayMessage, // Will be coupled with a C-string or two
     /* ptr1 = pointer to 2-sized int array */
     CoffeeForeign_GetWinSize,
+    
+    CoffeeForeign_ActivateMotion,
 };
 
 // Same rules, except from Coffee to foreign code

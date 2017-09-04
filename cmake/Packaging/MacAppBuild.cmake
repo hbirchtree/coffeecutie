@@ -81,9 +81,15 @@ macro( MACAPP_PACKAGE
             get_filename_component ( file_name "${file_dir}" NAME )
             if(NOT ("${file_name}" STREQUAL ".DS_Store"))
                 list ( APPEND BUNDLE_FILES ${file} )
-                set_source_files_properties(
-                    ${file} PROPERTIES MACOSX_PACKAGE_LOCATION
-                    "${RESOURCE_DIR}/${file_dir}" )
+                if(NOT IOS)
+                    set_source_files_properties(
+                        ${file} PROPERTIES MACOSX_PACKAGE_LOCATION
+                        "${RESOURCE_DIR}/${file_dir}" )
+                else()
+                    set_source_files_properties(
+                        ${file} PROPERTIES MACOSX_PACKAGE_LOCATION
+                        "${file_dir}" )
+                endif()
             endif()
         endforeach()
     endforeach()
@@ -108,6 +114,10 @@ macro( MACAPP_PACKAGE
     endif()
 
     if(IOS)
+        target_link_libraries ( ${TARGET}
+            PUBLIC
+            CoffeeWindow_GLKit
+            )
         set ( IOS_NAME "${TITLE}" )
         set ( IOS_IDENTIFIER "${TITLE}" )
         set ( IOS_INFO "${INFO_STRING}" )

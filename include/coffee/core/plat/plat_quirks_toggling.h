@@ -68,6 +68,7 @@
  *
  * COFFEE_SDL_MAIN - use SDL_main on start, allowing SDL to create its state
  * COFFEE_CUSTOM_MAIN - use a magical main entry point somewhere else
+ * COFFEE_CUSTOM_EVENT_HANDLING - use magical event handling, exiting main()
  *
  * COFFEE_LOWFAT - disable tons of features for size, most of these changes are not noticeable for end-user applications with GUIs
  *
@@ -114,6 +115,7 @@
 #define COFFEE_SDL_MAIN
 #elif defined(COFFEE_APPLE_MOBILE)
 #define COFFEE_CUSTOM_MAIN
+#define COFFEE_CUSTOM_EVENT_HANDLING
 #endif
 
 /* Terminal size: useless on Android */

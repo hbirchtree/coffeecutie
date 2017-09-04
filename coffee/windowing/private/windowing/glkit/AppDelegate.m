@@ -7,6 +7,7 @@
 //
 
 #import "AppDelegate.h"
+#import <CoreMotion/CoreMotion.h>
 
 // This is where all the foreign stuff comes from
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
@@ -15,6 +16,8 @@
 // We will be using this to attach a GLKViewController
 void* appdelegate_ptr = NULL;
 AppDelegate* appdelegate_typed = NULL;
+
+CMMotionManager* app_motionManager = NULL;
 
 // Event handling, sending stuff to Coffee
 void(*CoffeeEventHandle)(void*, int);
@@ -50,10 +53,13 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
     self.window.backgroundColor = [UIColor redColor];
     
     // Call the Coffee entrypoint, it will set up a bunch of things
-//    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-
     deref_main_c(apple_entry_point, 0, NULL);
-//    });
+
+    if(self.window.rootViewController == nil)
+    {
+        NSLog(@"No root view controller set up, dying");
+        exit(0);
+    }
     
     [self.window makeKeyAndVisible];
     
@@ -103,8 +109,11 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
     // NOOP
 }
 
+// TODO: Add handlers for touch events and key events
+
 @end
 
+// The simple foreign signal handler
 void HandleForeignSignals(int event)
 {
     switch(event)
@@ -117,6 +126,8 @@ void HandleForeignSignals(int event)
         break;
     }
 }
+
+// Foreign signal handler
 void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
 {
     switch(event)
@@ -205,6 +216,23 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
             winSize[1] = size.height;
             break;
         }
+        case CoffeeForeign_ActivateMotion:
+        {
+            printf("Request to activate motion device");
+            if(!app_motionManager)
+                app_motionManager = [CMMotionManager alloc];
+            
+            uint32_t flags = *((uint32_t*)ptr1);
+            
+            if(flags & CfSensor_Accel)
+                [app_motionManager startAccelerometerUpdates];
+            if(flags & CfSensor_Gyro)
+                [app_motionManager startGyroUpdates];
+            if(flags & CfSensor_Magnetometer)
+                [app_motionManager startMagnetometerUpdates];
+            
+            break;
+        }
         default:
         printf("Unhandled signal: %i\n", event);
         break;
@@ -217,4 +245,3 @@ int main(int argc, char** argv)
         UIApplicationMain(argc, argv, NULL, NSStringFromClass([AppDelegate class]));
     }
 }
-
