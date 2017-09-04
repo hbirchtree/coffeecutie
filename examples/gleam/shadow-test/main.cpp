@@ -61,6 +61,7 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
     cDebug("Framebuffer size: {0}, window size: {1}",
            renderer.framebufferSize(), renderer.windowSize());
+    cDebug("Monitor: {0}", renderer.monitor());
 
     data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
     if(!data->api(PlatformData::IsDebug()))

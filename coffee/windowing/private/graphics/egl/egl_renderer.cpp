@@ -123,7 +123,7 @@ bool egl_config_to_bits(EGLDisplay disp, EGLConfig cfg, CDContextBits& bits)
 
 #undef BITS_ASSIGN
 
-
+/* TODO: Externalize this for access from GLKWindow */
 struct EGL_Data
 {
     EGLDisplay display;

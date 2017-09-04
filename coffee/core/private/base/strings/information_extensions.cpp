@@ -173,5 +173,15 @@ CString to_string(const Display::CDContextBits &arg)
                 );
 }
 
+CString to_string(Display::CDMonitor const& arg)
+{
+    return cStringFormat(
+                "monitor(rgbx:{0},{1},{2},{3})",
+                arg.colorBits.red,
+                arg.colorBits.green,
+                arg.colorBits.blue,
+                arg.colorBits.extra);
+}
+
 }
 }

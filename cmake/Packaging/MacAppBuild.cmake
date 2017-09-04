@@ -1,5 +1,6 @@
 if(APPLE)
     set ( OSX_DEFAULT_ICON "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.icns" CACHE FILEPATH "" )
+    set ( IOS_LOADING_ICON "${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png" CACHE FILEPATH "" )
     set ( IOS_DEFAULT_STORYBOARD "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.storyboard" CACHE FILEPATH "" )
     file ( GLOB IMAGES_TMP "${COFFEE_DESKTOP_DIRECTORY}/osx/launch_images/*.png" )
     set ( IMAGES "${IMAGES_TMP}" CACHE FILEPATH "" )
@@ -102,6 +103,7 @@ macro( MACAPP_PACKAGE
             ${BUNDLE_FILES} ${OSX_ICON}
             ${SOURCES} ${IMAGES}
             ${IOS_DEFAULT_STORYBOARD}
+            ${IOS_LOADING_ICON}
             )
     endif()
 

@@ -14,6 +14,14 @@
 namespace Coffee{
 namespace Display{
 
+struct EGL_Data
+{
+    EGLDisplay display;
+    EGLSurface surface;
+    EGLConfig config;
+    EGLContext context;
+};
+
 static void Msg_Complete_Handle(void* ptr)
 {
     cDebug("We're back! {0}", StrUtil::pointerify(ptr));
@@ -29,9 +37,12 @@ GLKWindow::~GLKWindow()
 
 CDMonitor GLKWindow::monitor()
 {
-    EGLDisplay* display = nullptr;
-    CoffeeForeignSignalHandleNA(CoffeeForeing_GetEGLDisplay,
-                                &display, nullptr, nullptr);
+    EGLDisplay display = nullptr;
+    
+    EGLRenderer* egl_side = C_DCAST<EGLRenderer>(this);
+    
+    if(egl_side)
+        display = egl_side->m_eglData->display;
     
 #define EGL_GET_PROP(var, prop) \
         eglGetConfigAttrib(display, nullptr, prop, &val); \

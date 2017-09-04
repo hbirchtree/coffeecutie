@@ -15,12 +15,17 @@ set ( GLX_SRCS
     )
 
 set ( GLKit_SRCS
-    private/graphics/eagl/eagl_bind.mm
-    private/graphics/eagl/EGLView.m
     private/windowing/glkit/glk_window.cpp
-    private/windowing/glkit/glk_window.mm
-    private/windowing/glkit/AppDelegate.m
     )
+
+if(APPLE AND IOS)
+    list ( APPEND GLKit_SRCS
+        private/graphics/eagl/eagl_bind.mm
+        private/graphics/eagl/EGLView.m
+        private/windowing/glkit/glk_window.mm
+        private/windowing/glkit/AppDelegate.m
+        )
+endif()
 
 set ( GLAD_SRCS
     private/binding/glad/gleamrenderer.cpp

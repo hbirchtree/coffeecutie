@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
-    <device id="retina4_7" orientation="landscape">
-        <adaptation id="fullscreen"/>
-    </device>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" colorMatched="NO" initialViewController="01J-lp-oVM">
     <dependencies>
         <deployment identifier="iOS"/>
+        <development version="7000" identifier="xcode"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
-        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -18,23 +15,25 @@
                         <viewControllerLayoutGuide type="bottom" id="xb3-aO-Qok"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
-                        <rect key="frame" x="0.0" y="0.0" width="667" height="375"/>
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" placeholderIntrinsicWidth="128" placeholderIntrinsicHeight="128" image="icon_large.png" translatesAutoresizingMaskIntoConstraints="NO" id="PSS-Zr-ddK">
-                                <rect key="frame" x="269" y="123" width="128" height="128"/>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" placeholderIntrinsicWidth="128" placeholderIntrinsicHeight="128" image="icon_large.png" translatesAutoresizingMaskIntoConstraints="NO" id="PSS-Zr-ddK">
+                                <rect key="frame" x="304" y="143" width="128" height="128"/>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="128" id="IpU-sf-XjG"/>
-                                    <constraint firstAttribute="height" constant="128" id="fwu-0I-LIg"/>
+                                    <constraint firstAttribute="height" constant="128" id="KLs-6j-NAt"/>
+                                    <constraint firstAttribute="width" constant="128" id="uN6-az-flV"/>
                                 </constraints>
                             </imageView>
                             <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="whiteLarge" translatesAutoresizingMaskIntoConstraints="NO" id="xMA-TB-5a4">
                                 <rect key="frame" x="315" y="257" width="37" height="37"/>
                             </activityIndicatorView>
                         </subviews>
-                        <color key="backgroundColor" red="0.14864031166912961" green="0.67576641841152685" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="0.14864031166912961" green="0.67576641841152685" blue="1" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
                             <constraint firstItem="PSS-Zr-ddK" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="0at-gx-lzo"/>
+                            <constraint firstItem="PSS-Zr-ddK" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="4EK-Oo-dPZ"/>
+                            <constraint firstItem="PSS-Zr-ddK" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="4Zx-ML-mWh"/>
                             <constraint firstItem="xMA-TB-5a4" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Ixg-9b-JVy"/>
                             <constraint firstItem="PSS-Zr-ddK" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Las-Pn-Rcc"/>
                             <constraint firstItem="xMA-TB-5a4" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Lfv-mO-IHx"/>
