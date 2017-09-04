@@ -9,6 +9,8 @@
 
 #include <coffee/core/plat/windowmanager/plat_windowtype.h>
 
+#include <CEAGL/eagl.h>
+
 namespace Coffee{
 namespace Display{
 
@@ -27,7 +29,26 @@ GLKWindow::~GLKWindow()
 
 CDMonitor GLKWindow::monitor()
 {
-    return {};
+    EGLDisplay* display = nullptr;
+    CoffeeForeignSignalHandleNA(CoffeeForeing_GetEGLDisplay,
+                                &display, nullptr, nullptr);
+    
+#define EGL_GET_PROP(var, prop) \
+        eglGetConfigAttrib(display, nullptr, prop, &val); \
+        var = val;
+    
+    CDMonitor mon;
+    
+    EGLint val = 0;
+    EGL_GET_PROP(mon.colorBits.red, EGL_RED_SIZE);
+    EGL_GET_PROP(mon.colorBits.green, EGL_GREEN_SIZE);
+    EGL_GET_PROP(mon.colorBits.blue, EGL_BLUE_SIZE);
+    
+    EGL_GET_PROP(mon.colorBits.extra, EGL_ALPHA_SIZE);
+    
+    mon.resolution = this->windowSize();
+
+    return mon;
 }
 
 bool GLKWindow::showWindow()

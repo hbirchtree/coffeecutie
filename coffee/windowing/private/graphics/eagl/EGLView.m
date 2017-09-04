@@ -36,6 +36,10 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
         [self->mAppDelegate.window.rootViewController release];
     
     GLKView* view = [[GLKView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    
+    view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+    view.drawableStencilFormat = GLKViewDrawableStencilFormat8;
+    
     view.context = self->mContext;
     view.delegate = self->mAppDelegate;
     

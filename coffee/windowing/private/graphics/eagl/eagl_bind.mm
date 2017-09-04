@@ -22,18 +22,148 @@ EGLboolean eglInitialize(EGLDisplay display, void*, void*)
 EGLboolean eglQuerySurface(EGLDisplay display, EGLSurface surface,
                            EGLint attr, EGLint* value)
 {
+    EGLView* view = (EGLView*)display;
+    switch(attr)
+    {
+    case EGL_WIDTH:
+        *value = (int)[[view getView] drawableWidth];
+        break;
+    case EGL_HEIGHT:
+        *value = (int)[[view getView] drawableHeight];
+        break;
+    case EGL_MAX_SWAP_INTERVAL:
+        *value = 1;
+        break;
+    case EGL_MIN_SWAP_INTERVAL:
+        *value = 1;
+        break;
+    }
     return EGL_TRUE;
 }
 
 const char* eglQueryString(EGLDisplay display, EGLint attr)
 {
+    EGLView* view = (EGLView*)display;
+    switch(attr)
+    {
+    case EGL_VENDOR:
+        return "Apple EAGL";
+    case EGL_VERSION:
+        return "1.2 Coffee EAGL-to-EGL layer";
+    case EGL_EXTENSIONS:
+        return "";
+    case EGL_CLIENT_APIS:
+        return "OpenGL_ES";
+    }
     return nullptr;
+}
+
+static inline int ColorFormatToChannels(GLKViewDrawableColorFormat fmt,
+                                        int color)
+{
+    switch(fmt)
+    {
+    case GLKViewDrawableColorFormatSRGBA8888:
+    case GLKViewDrawableColorFormatRGBA8888:
+        return 8;
+    case GLKViewDrawableColorFormatRGB565:
+        {
+            switch(color)
+            {
+            case 0:
+                return 5;
+            case 1:
+                return 6;
+            case 2:
+                return 5;
+            case 3:
+                return 0;
+            }
+        }
+    default:
+        return 0;
+    }
+}
+
+static inline int DepthFormatToInt(GLKViewDrawableDepthFormat fmt)
+{
+    switch(fmt)
+    {
+    case GLKViewDrawableDepthFormat16:
+        return 16;
+    case GLKViewDrawableDepthFormat24:
+        return 24;
+    default:
+        return 0;
+    }
+}
+
+static inline int StencilFormatToInt(GLKViewDrawableStencilFormat fmt)
+{
+    switch(fmt)
+    {
+    case GLKViewDrawableStencilFormat8:
+        return 8;
+    default:
+        return 0;
+    }
+}
+
+static inline int MultisampleToInt(GLKViewDrawableMultisample fmt)
+{
+    switch(fmt)
+    {
+    case GLKViewDrawableMultisample4X:
+        return 4;
+    default:
+        return 1;
+    }
 }
 
 EGLboolean eglGetConfigAttrib(EGLDisplay display, EGLConfig cfg,
                               EGLint attr,
                               EGLint* value)
 {
+    EGLView* view = (EGLView*)display;
+    
+    GLKViewDrawableColorFormat c_fmt = [[view getView] drawableColorFormat];
+    
+    switch(attr)
+    {
+    case EGL_RED_SIZE:
+        *value = ColorFormatToChannels(c_fmt, 0);
+        break;
+    case EGL_GREEN_SIZE:
+        *value = ColorFormatToChannels(c_fmt, 1);
+        break;
+    case EGL_BLUE_SIZE:
+        *value = ColorFormatToChannels(c_fmt, 2);
+        break;
+    case EGL_ALPHA_SIZE:
+        *value = ColorFormatToChannels(c_fmt, 3);
+        break;
+    
+    
+    case EGL_DEPTH_SIZE:
+        *value = DepthFormatToInt([[view getView] drawableDepthFormat]);
+        break;
+    case EGL_STENCIL_SIZE:
+        *value = StencilFormatToInt([[view getView] drawableStencilFormat]);
+        break;
+        
+    case EGL_BUFFER_SIZE:
+        *value = ColorFormatToChannels(c_fmt, 0)
+            + ColorFormatToChannels(c_fmt, 1)
+            + ColorFormatToChannels(c_fmt, 2);
+        break;
+        
+    case EGL_SAMPLES:
+        *value = MultisampleToInt([[view getView] drawableMultisample]);
+        break;
+    
+    default:
+        return EGL_FALSE;
+    }
     return EGL_TRUE;
 }
 
