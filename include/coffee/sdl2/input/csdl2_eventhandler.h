@@ -74,7 +74,7 @@ public:
     // EventApplication interface
 public:
     void pollEvents();
-    bigscalar contextTime() const;
+//    bigscalar contextTime() const;
     bool closeFlag() const;
     virtual bool installEventHandler(EventHandlerI e);
     virtual bool installEventHandler(EventHandlerD e);

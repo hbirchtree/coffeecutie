@@ -6,6 +6,7 @@
 #include <coffee/core/plat/plat_timing.h>
 
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#include <coffee/core/base/renderer_loader.h>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>

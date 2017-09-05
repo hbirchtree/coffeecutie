@@ -55,6 +55,13 @@ struct RendererState
         
         GLM::S_2DA* eyetex;
         GLM::SM_2DA eyesamp = {};
+
+        GLM::UNIFVAL transforms = {};
+        GLM::UNIFVAL timeval = {};
+        GLM::UNIFSMP textures_array = {};
+
+        Bytes transform_data = {};
+        Bytes time_data = {};
         
         // Graphics data
         CGCamera camera;
@@ -67,7 +74,7 @@ struct RendererState
         // Timing information
         bigscalar tprevious = 0.0;
         bigscalar tbase = 0.0;
-        bigscalar tdelta = 0.1;
+        bigscalar tdelta = 0.0;
         
         Vecf4 clear_col = {.267f, .267f, .267f, 1.f};
         
@@ -313,6 +320,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     /* Attaching the texture data to a sampler object */
     auto& eyesamp = g.eyesamp;
+    eyesamp = {};
     eyesamp.alloc();
     eyesamp.attach(&eyetex);
     eyesamp.setFiltering(Filtering::Linear, Filtering::Linear);
@@ -327,15 +335,16 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
      * These can be rotated to achieve per-frame disposable buffers,
      *  allowing multiple frames to be processed concurrently without halt
      */
-    Bytes transform_data = Bytes::Create(g.object_matrices);
-    Bytes time_data = Bytes::Create(g.time_value);
+    auto& transform_data = g.transform_data;
+    auto& time_data = g.time_data;
+
+    transform_data = Bytes::Create(g.object_matrices);
+    time_data = Bytes::Create(g.time_value);
+
+    g.textures_array = eyesamp.handle();
     
-    GLM::UNIFVAL transforms = {};
-    GLM::UNIFVAL timeval = {};
-    GLM::UNIFSMP textures_array = eyesamp.handle();
-    
-    transforms.data = &transform_data;
-    timeval.data = &time_data;
+    g.transforms.data = &transform_data;
+    g.timeval.data = &time_data;
     
     /* We create some pipeline state, such as blending and viewport state */
     auto& viewportstate = g.viewportstate;
@@ -372,13 +381,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     for (GLM::UNIFDESC const &u : unifs) {
         if (u.m_name == "transform[0]" || u.m_name == "transform")
         {
-            unifstate.setUniform(u, &transforms);
+            unifstate.setUniform(u, &g.transforms);
             cVerbose(4, "Array size: {0}", u.m_arrSize);
         }
         else if (u.m_name == "texdata")
-            unifstate.setSampler(u, &textures_array);
+            unifstate.setSampler(u, &g.textures_array);
         else if (u.m_name == "mx")
-            unifstate.setUniform(u, &timeval);
+            unifstate.setUniform(u, &g.timeval);
         else
             cVerbose(4,"Unhandled uniform value: {0}", u.m_name);
     }
