@@ -22,7 +22,7 @@ set ( CoffeeSDL2Audio_SRCS
 find_package ( SDL2 REQUIRED )
 
 set ( LIBS
-    ${SDL2_LIBRARY}
+    SDL2
     ${SDL2_LIBRARIES}
     )
 
