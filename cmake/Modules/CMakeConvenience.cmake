@@ -4,10 +4,12 @@ macro(TARGET_ENABLE_CXX11 TARGET)
     endif()
 
     # Sneaky sneaky
-    target_compile_options ( ${TARGET}
-        PRIVATE
-        -O2
-        )
+    if(EMSCRIPTEN)
+        target_compile_options ( ${TARGET}
+            PRIVATE
+            -O2
+            )
+    endif()
 #    if(EMSCRIPTEN)
 #        target_compile_options(${TARGET} PRIVATE
 #            -s USE_SDL=2
