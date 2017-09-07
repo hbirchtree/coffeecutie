@@ -68,34 +68,8 @@ struct CfSensorEvent
 };
 
 // Wrapper for simpler usage, assuming that the foreign part supports C code
-inline bool CoffeeEventHandleCall(int event)
-{
-    if(CoffeeEventHandle && coffee_event_handling_data)
-    {
-        CoffeeEventHandle(coffee_event_handling_data, event);
-        return true;
-    }else{
-        fprintf(stderr,
-                "Event handler function called without valid configuration!\n");
-        return false;
-    }
-}
-inline bool CoffeeEventHandleNACall(int event, void* ptr1,
-                                    void* ptr2, void* ptr3)
-{
-    if(CoffeeEventHandle && coffee_event_handling_data)
-    {
-        CoffeeEventHandleNA(coffee_event_handling_data,
-                            event, ptr1, ptr2, ptr3);
-        return true;
-    }else{
-        fprintf(stderr,
-                "Event handler function called without valid configuration!\n");
-        return false;
-    }
-}
-
-
+extern bool CoffeeEventHandleCall(int event);
+extern bool CoffeeEventHandleNACall(int event, void* ptr1, void* ptr2, void* ptr3);
 
 /* Now, for interaction from Coffee to foreign code */
 /* May not run on the same thread at all times */
