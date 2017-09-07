@@ -57,6 +57,8 @@ set ( CoffeeCore_SRCS
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
+    private/base/eventapplication_wrapper.cpp
+
     private/plat/memory/string_ops.cpp
 
     # Compression / data storage
