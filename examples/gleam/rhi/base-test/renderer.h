@@ -12,6 +12,8 @@
 
 #include <coffee/graphics/common/query/gpu_query.h>
 
+#include <coffee/core/task_queue/task.h>
+
 //#define USE_NULL_RENDERER
 
 using namespace Coffee;
@@ -36,6 +38,8 @@ struct RendererState
 {
     // State that can be loaded from disk
     RuntimeState r_state;
+
+    RuntimeQueue* rt_queue;
     
     struct RGraphicsData{
         // GLEAM data
@@ -81,7 +85,7 @@ struct RendererState
         /* Now generating a drawcall, which only specifies small state that can be
          * shared */
         GLM::D_CALL call{false,true};
-//        GLM::Q_OCC o_query(CGL::QueryT::AnySamplesCon);
+        GLM::Q_OCC* o_query = nullptr;
         
         /* Instance data is more akin to individual drawcalls, specifying vertex
          * buffer information */
@@ -348,12 +352,13 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     /* We create some pipeline state, such as blending and viewport state */
     auto& viewportstate = g.viewportstate;
+    auto& blendstate = g.blendstate;
     auto& deptstate = g.deptstate;
     auto& rasterstate_line = g.rasterstate_line;
     
     CSize win_size = renderer.windowSize();
     
-    //        blendstate.m_doBlend = true;
+    blendstate.m_doBlend = true;
     viewportstate.m_view.clear();
     viewportstate.m_view.push_back({0, 0, win_size.w, win_size.h});
     viewportstate.m_scissor.clear();
@@ -433,6 +438,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     g.tprevious = d->r_state.time_base;
     g.tbase = d->r_state.time_base;
+
+    g.o_query = new GLM::Q_OCC(CGL::QueryT::AnySamplesCon);
     
     Profiler::PopContext();
 }
@@ -542,9 +549,10 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
      *  because this has a lot of benefits to efficiency.
      */
     
-    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata, nullptr);
+    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata, g.o_query);
     
-//    GLM::DrawConditional(eye_pip, pstate, vertdesc, call, instdata, o_query);
+    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
+                         g.call, g.instdata, *g.o_query);
     
     if(d->r_state.debug_enabled)
     {
@@ -556,6 +564,8 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
 //    frame_counter.update(Time::CurrentMicroTimestamp()/1000);
     
     renderer.swapBuffers();
+
+    d->rt_queue->executeTasks();
     
     tdelta = tbase + renderer.contextTime() - tprevious;
     tprevious = tbase + renderer.contextTime();
@@ -579,7 +589,7 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
 //void CDRenderer::frame_count(uint32 f, c_cptr)
 //{
 //    cDebug("Swaps/s: {0}",f);
-//
+
 //    if(m_query)
 //    {
 //        cDebug("GPU Driver: {0}", fun.GetDriver());
@@ -587,31 +597,31 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
 //        for(GpuInfo::GpuView e : GpuInfo::GpuQueryView(fun))
 //        {
 //            cDebug("GPU Model: {0}", e.model());
-//
+
 //            auto temp = e.temp();
 //            cDebug("Temperature: {0} // {1}", temp.current, temp.max);
-//
+
 //            auto mem = e.mem();
 //            cDebug("Memory use: tot={0}, used={1}, free={2}", mem.total, mem.used, mem.free);
 //            cDebug("Memory used by this application: {0}", e.memUsage(ProcessProperty::Pid()));
-//
+
 //            auto clk = e.clock(GpuInfo::Clock::Graphics);
 //            cDebug("Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
 //            clk = e.clock(GpuInfo::Clock::Memory);
 //            cDebug("Memory limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
 //            clk = e.clock(GpuInfo::Clock::VideoDecode);
 //            cDebug("Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
-//
+
 //            auto bus = e.bus();
 //            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
-//
+
 //            auto util = e.usage();
 //            cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
 //                   util.gpu, util.mem, util.decoder, util.encoder);
-//
+
 //            cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
 //        }
 //    }
-//
+
 //    cDebug("Memory: {0}", ProcessProperty::Mem(ProcessProperty::Pid()));
 //}
