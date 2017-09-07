@@ -3,7 +3,7 @@ set ( CoffeeFFMedia_SRCS private/cffmedia.cpp )
 coffee_add_library ( CoffeeFFMedia "${CoffeeFFMedia_SRCS}" )
 
 target_link_libraries( CoffeeFFMedia
-        CoffeeCore
+#        CoffeeCore
 #        CoffeeOpenGL
 	CoffeeOpenAL
 

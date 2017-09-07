@@ -1,6 +1,10 @@
 $ErrorActionPreference = "Stop"
 
-$BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
+if($env:SAME_BUILD_DIR) {
+    $BuildDir = $env:BUILD_DIR
+}else{
+    $BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
+}
 
 $DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$env:BUILDVARIANT.zip"
 
@@ -13,9 +17,9 @@ cd $PrevWd
 # Next, we need to find the target tag and release
 # We use Python to do most of the work...
 $PYTHON="C:\Python36\python.exe"
-$BUILDINFOPY = "$env:APPVEYOR_BUILD_FOLDER\buildinfo.py"
-$SCRIPT_DIR = (. $PYTHON $BUILDINFOPY --source-dir $env:APPVEYOR_BUILD_FOLDER script_location )
-$SCRIPT_DIR = "$env:APPVEYOR_BUILD_FOLDER\$SCRIPT_DIR"
+$BUILDINFOPY = "$env:SOURCE_DIR\buildinfo.py"
+$SCRIPT_DIR = (. $PYTHON $BUILDINFOPY --source-dir $env:SOURCE_DIR script_location )
+$SCRIPT_DIR = "$env:SOURCE_DIR\$SCRIPT_DIR"
 
 $GITHUBAPIPY = "$SCRIPT_DIR\github_api.py"
 

@@ -57,6 +57,8 @@ set ( CoffeeCore_SRCS
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
+    private/base/eventapplication_wrapper.cpp
+
     private/plat/memory/string_ops.cpp
 
     # Compression / data storage
@@ -68,6 +70,9 @@ set ( CoffeeCore_SRCS
 
     # Unit testing
     private/unit_tests/framework.cpp
+
+    # Task queues, for easier time scheduling
+    private/task_queue/task.cpp
 
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
@@ -83,7 +88,7 @@ if( ANDROID )
 endif()
 
 # SDL power-management
-if(NOT POWERPC AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+if(NOT POWERPC AND NOT IOS AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
     set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
@@ -139,6 +144,10 @@ if(WIN32)
         private/plat/environment/windows/environment.cpp
         private/plat/environment/windows/sysinfo.cpp
         )
+#	set_source_files_properties ( private/plat/file/windows/file.cpp
+#		PROPERTIES
+#		COMPILE_FLAGS "/ZW"
+#		)
 	if(NOT WIN_UWP)
 		list ( APPEND CoffeeCore_SRCS
 			private/plat/environment/windows/windows_startup.cpp
@@ -171,13 +180,24 @@ if(MAEMO)
         )
 endif()
 
-find_package( StandardLibs REQUIRED )
+find_package ( StandardLibs REQUIRED )
 
-include_directories ( ${STANDARDLIBS_INCLUDE_DIR} )
 coffee_add_library ( CoffeeCore
     "${CoffeeCore_SRCS}"
     "${STANDARDLIBS_LIBRARIES}"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+
+find_package ( RapidJson REQUIRED )
+find_package ( TinyXML2 REQUIRED )
+
+target_include_directories ( CoffeeCore
+    PUBLIC
+    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include/>
+    $<INSTALL_INTERFACE:include/tinyxml2/>
+    ${STANDARDLIBS_INCLUDE_DIR}
     )
 
 if(COFFEE_BUILD_SWIG_BINDING)
@@ -188,15 +208,19 @@ if(COFFEE_BUILD_SWIG_BINDING)
         "${STANDARDLIBS_LIBRARIES}"
         "${CMAKE_SOURCE_DIR}/include/coffee/core"
         )
+    target_include_directories ( CoffeeCoreLoadable
+        PUBLIC
+        $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
+        $<INSTALL_INTERFACE:include/>
+        $<INSTALL_INTERFACE:include/tinyxml2/>
+
+        ${STANDARDLIBS_INCLUDE_DIR}
+        )
 endif()
 
-install(
-    DIRECTORY
-    ${CMAKE_SOURCE_DIR}/libs/tinyxml2
-
-    DESTINATION
-    include
+coffee_bundle_includes (
+    ${STANDARDLIBS_INCLUDE_DIR}
+    ${RAPIDJSON_INCLUDE_DIR}
+    ${TINYXML2_INCLUDE_DIR}
     )
-
-# If PCH is supported, this will be used
-#CREATE_PCH_FILES(CoffeeCore "${CoffeeCore_PCH}")

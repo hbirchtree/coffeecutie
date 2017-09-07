@@ -1,5 +1,7 @@
 #include <coffee/sdl2/graphics/csdl2_gl_renderer.h>
 
+#if defined(COFFEE_USE_SDL_GL)
+
 #include <coffee/core/CDebug>
 #include <coffee/core/CProfiling>
 #include "../windowing/sdl2helpers.h"
@@ -8,7 +10,6 @@
 namespace Coffee{
 namespace Display{
 
-#if !defined(COFFEE_USE_MAEMO_EGL)
 void SDL2GLRenderer::swapBuffers()
 {
     SDL_GL_SwapWindow(getSDL2Context()->window);
@@ -44,7 +45,14 @@ ThreadId SDL2GLRenderer::contextThread()
 CGL::CGL_Context *SDL2GLRenderer::glContext()
 {
     if(!getSDL2Context())
+        setSDL2Context(new Context);
+
+    if(getSDL2Context() && !getSDL2Context()->context)
+        getSDL2Context()->context = new CGL_SDL_GL_Context(getSDL2Context()->window);
+
+    if(!getSDL2Context() || !getSDL2Context()->context)
         return nullptr;
+
     return getSDL2Context()->context;
 }
 
@@ -64,19 +72,21 @@ bool SDL2GLRenderer::contextPreInit(const GLProperties& props,CString*)
 bool SDL2GLRenderer::contextInit(const GLProperties&,CString* err)
 {
     /* Acquire the OpenGL context from SDL2 */
-    getSDL2Context()->context = new CGL_SDL_GL_Context(getSDL2Context()->window);
     Profiler::Profile("Acquire GL context");
 
     /* Make the GL context current to this thread */
-    if(!glContext()->acquireContext())
+    if(glContext() && glContext()->acquireContext())
+    {
+        Profiler::Profile("Acquire context currency");
+        return true;
+    }
+    else
     {
         CString m_err = cStringFormat("Failed to create SDL2 OpenGL context: {0}",SDL_GetError());
         if(err)
             *err = m_err;
         return false;
     }
-    Profiler::Profile("Acquire context currency");
-    return true;
 }
 
 bool SDL2GLRenderer::contextPostInit(const GLProperties& props, CString *)
@@ -99,8 +109,11 @@ void SDL2GLRenderer::contextTerminate()
 
     /* Delete GL context object */
     delete glContext();
+
+    getSDL2Context()->context = nullptr;
 }
-#endif
 
 }
 }
+
+#endif

@@ -10,10 +10,10 @@ set ( NodeEditorTest_SRCS
     mainwindowtester.cpp
     )
 
-list ( APPEND LIBRARIES
+set ( LIBRARIES
     CoffeeCore
     CoffeeQtNodeEditor
- )
+    )
 
 coffee_add_application ( NodeEditorTest "Node Editor Test" "${NodeEditorTest_SRCS}" "${LIBRARIES}" )
 

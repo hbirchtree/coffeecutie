@@ -1,6 +1,8 @@
 #pragma once
 
 #include "graphics/csdl2_basic_renderer.h"
+
+#if defined(COFFEE_USE_SDL_WINDOW)
 #include "csdl2_windowhost.h"
 
 namespace Coffee{
@@ -37,3 +39,4 @@ public:
 
 }
 }
+#endif

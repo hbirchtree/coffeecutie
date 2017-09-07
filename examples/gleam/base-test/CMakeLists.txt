@@ -1,4 +1,4 @@
-list (APPEND LIBS CoffeeGLeam )
+set ( LIBS CoffeeGLeamRHI CoffeeImage CoffeeRenderer_Default CoffeeCore )
 
 if(COFFEE_BUILD_OCULUSVR)
     list ( APPEND LIBS CoffeeOVR )

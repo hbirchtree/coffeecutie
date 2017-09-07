@@ -101,6 +101,17 @@ DWORD WinFileApi::GetMappingViewFlags(ResourceAccess acc)
 
 CString WinFileFun::NativePath(cstring fn)
 {
+	if (fn[0] == ':')
+	{
+		//auto path = ::Windows::ApplicationModel::Package::Current->InstalledLocation->Path->Data();
+		//CString appdir = StrUtil::convertformat<char, wchar_t>(path);
+		//CString appdir = Env::ApplicationDir();
+		cstring asset_path = AssetApi::GetAsset(fn);
+		//CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
+		CString conc_path = asset_path;
+		conc_path = Mem::CStrReplace(conc_path, "/", "\\");
+		return conc_path;
+	}
     return fn;
 }
 
@@ -131,7 +142,7 @@ CString create_rsc_name(cstring fn)
 HRSRC open_rsc(cstring fn)
 {
     CString wrap = create_rsc_name(fn);
-#ifndef COFFEE_WINDOWS_UWP
+#if !defined(COFFEE_WINDOWS_UWP)
     return FindResourceEx(nullptr, coffee_rsc_tag, wrap.c_str(), 1033);
 #else
 	return 0;
@@ -140,7 +151,11 @@ HRSRC open_rsc(cstring fn)
 
 bool WinFileFun::VerifyAsset(cstring fn)
 {
+#if defined(COFFEE_WINDOWS_UWP)
+	return true;
+#else
     return open_rsc(fn);
+#endif
 }
 
 WinFileFun::FileHandle* WinFileFun::Open(cstring fn, ResourceAccess acc)
@@ -294,9 +309,7 @@ szptr WinFileFun::Size(WinFileFun::FileHandle* fh)
     {
         LARGE_INTEGER e;
         e.QuadPart = 0;
-#ifndef COFFEE_WINDOWS_UWP
-        e.LowPart = GetFileSize(fh->file, (LPDWORD)&e.HighPart);
-#endif
+        e.LowPart = GetFileSizeEx(fh->file, &e);
         return e.QuadPart;
     }
 #ifndef COFFEE_WINDOWS_UWP
@@ -307,19 +320,24 @@ szptr WinFileFun::Size(WinFileFun::FileHandle* fh)
 }
 szptr WinFileFun::Size(cstring fn)
 {
+#ifndef COFFEE_WINDOWS_UWP
     if (VerifyAsset(fn))
     {
         HRSRC rsc_h = open_rsc(fn);
 		DWORD sz = 0;
-#ifndef COFFEE_WINDOWS_UWP
 		sz = SizeofResource(nullptr, rsc_h);
-#endif
         return sz;
-    }else{
+    }else
+#endif
+	{
         LARGE_INTEGER e;
 		HANDLE f = INVALID_HANDLE_VALUE;
 #ifndef COFFEE_WINDOWS_UWP
 		f = CreateFile(fn, GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
+#else
+		CWString wname = Mem::StrUtil::convertformat<wchar_t, char>(fn);
+		f = CreateFile2(wname.c_str(), GENERIC_READ, 0, OPEN_ALWAYS, nullptr);
+		CString err = win_strerror(GetLastError());
 #endif
         if (f != INVALID_HANDLE_VALUE)
         {

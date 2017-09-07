@@ -5,7 +5,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 #include <coffee/CSDL2>
 #include <coffee/graphics/apis/CGLeam>
-#include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/core/types/vector_types.h>
 
 

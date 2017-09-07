@@ -20,6 +20,8 @@ cmake_minimum_required(VERSION 3.4.3)
 set(CMAKE_SYSTEM_NAME Emscripten)
 set(CMAKE_SYSTEM_VERSION 1)
 
+set( EMSCRIPTEN ON CACHE BOOL "" )
+
 option ( COFFEE_GENERATE_HTML "Generate HTML wrapper document for Emscripten" ON )
 option ( COFFEE_GENERATE_WASM "Generate WASM version of code, not asm.js" OFF )
 
@@ -79,7 +81,11 @@ get_filename_component(EMSCRIPTEN_ROOT_PATH "${EMSCRIPTEN_ROOT_PATH}" ABSOLUTE)
 
 list(APPEND CMAKE_MODULE_PATH "${EMSCRIPTEN_ROOT_PATH}/cmake/Modules")
 
-list(APPEND CMAKE_FIND_ROOT_PATH "${EMSCRIPTEN_ROOT_PATH}/system;${COFFEE_ROOT_DIR}")
+list(APPEND CMAKE_FIND_ROOT_PATH
+    ${EMSCRIPTEN_ROOT_PATH}/system
+    ${COFFEE_ROOT_DIR}
+    ${CMAKE_SOURCE_DIR}/libs
+    )
 
 if (CMAKE_HOST_WIN32)
 	set(EMCC_SUFFIX ".bat")
@@ -338,3 +344,8 @@ endif()
 # complain about unused CMake variable.
 if(CMAKE_CROSSCOMPILING_EMULATOR)
 endif()
+
+list ( APPEND CMAKE_FIND_ROOT_PATH
+    ${NATIVE_LIBRARY_DIR}
+    ${COFFEE_ROOT_DIR}
+    )

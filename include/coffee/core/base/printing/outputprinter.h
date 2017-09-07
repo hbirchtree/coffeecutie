@@ -6,7 +6,7 @@
 
 #if defined(COFFEE_ANDROID)
 #include <android/log.h>
-#elif defined(__EMSCRIPTEN__)
+#elif defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
 #endif
 

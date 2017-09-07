@@ -2,7 +2,7 @@
 #include <coffee/core/CProfiling>
 
 #include <coffee/CGraphics>
-#include <coffee/sdl2/CSDL2GLRenderer>
+#include <coffee/windowing/renderer/renderer.h>
 #include <coffee/sdl2/CSDL2Dialog>
 #include <coffee/sdl2/CSDL2System>
 

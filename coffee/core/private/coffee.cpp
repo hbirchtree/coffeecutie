@@ -211,13 +211,16 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     Profiler::PopContext();
     Profiler::Profile("Runtime");
 
+    Profiler::PopContext();
+
+#ifndef COFFEE_CUSTOM_EVENT_HANDLING
     cVerbose(8,"Terminating library");
     CoffeeTerminate(false);
     Profiler::Profile("Termination");
-    Profiler::PopContext();
 
     cVerbose(8,"Unloading profiler");
     Profiling::ExitRoutine();
+#endif
 
     cVerbose(8,"Successfully reached end of main()");
 #endif

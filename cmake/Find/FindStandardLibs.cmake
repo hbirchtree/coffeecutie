@@ -4,22 +4,6 @@ set ( CORE_EXTRA_LIBRARIES )
 
 # Platform-specific target options
 
-if(NOT WIN32 AND NOT ANDROID)
-    # Used for thread details
-    # Might replace this with Thread
-    list ( APPEND CORE_EXTRA_LIBRARIES pthread )
-endif()
-
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
-    # Used for thread details
-    list ( APPEND CORE_EXTRA_LIBRARIES rt )
-endif()
-
-if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
-    # Necessary for Linux and possibly OS X (latter is untested)
-    list ( APPEND CORE_EXTRA_LIBRARIES dl m )
-endif()
-
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     # Libunwind is used to print function names at runtime
     # Windows does not support this library
@@ -27,39 +11,29 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     find_package(Unwind QUIET )
     if (LIBUNWIND_FOUND)
         list ( APPEND CORE_INCLUDE_DIR
-            ${LIBUNWIND_INCLUDE_DIR}
+            $<BUILD_INTERFACE:${LIBUNWIND_INCLUDE_DIR}>
             )
         list ( APPEND CORE_EXTRA_LIBRARIES ${LIBUNWIND_LIBRARIES} )
     endif()
 
     if(NOT NACL)
-        list ( APPEND CORE_EXTRA_LIBRARIES X11 )
-
         if(COFFEE_BUILD_GLES)
-            list ( APPEND CORE_EXTRA_LIBRARIES EGL )
-        endif()
-
-        if(NOT COFFEE_BUILD_GLES)
-            list ( APPEND CORE_EXTRA_LIBRARIES
-                GL Xrender
-                )
-        else()
-            list ( APPEND CORE_EXTRA_LIBRARIES
-                GLESv2
-                EGL
-                )
+            list ( APPEND CORE_EXTRA_LIBRARIES EGL GLESv2 )
         endif()
     endif()
 endif()
 
-if( SDL_POWER_PLUGIN_ENABLED OR ANDROID OR EMSCRIPTEN)
+if(SDL_POWER_PLUGIN_ENABLED OR ANDROID OR WIN_UWP)
     # We use SDL2 for some platform functionality, like power info
     # On Android, it is also used to read assets and
     #  acquiring device info.
     find_package(SDL2 REQUIRED)
-    list ( APPEND CORE_INCLUDE_DIR
-        ${SDL2_INCLUDE_DIR}
-        )
+    if(SDL2_INCLUDE_DIR)
+        list ( APPEND CORE_INCLUDE_DIR
+            $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+            $<INSTALL_INTERFACE:include/SDL2>
+            )
+    endif()
 #    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
 
@@ -79,6 +53,7 @@ if(APPLE)
             "-framework GameController"
             "-framework OpenGLES"
             "-framework UIKit"
+            "-framework GLKit"
             )
     else()
         list ( APPEND CORE_EXTRA_LIBRARIES
@@ -101,7 +76,7 @@ if(ANDROID)
         ${SDL2_LIBRARIES}
         )
     list ( APPEND CORE_INCLUDE_DIR
-        ${CMAKE_SOURCE_DIR}/bindings/android/include
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )
 #    if("${ANDROID_NATIVE_API_LEVEL}" GREATER 17)
 #        message ( "-- Building with GLES 3.0+ support" )
@@ -116,7 +91,7 @@ if(RASPBERRY)
     # We also have bcm_host for accessing OpenGL for some reason
     # Next we might look for OpenMAX?
     list ( APPEND CORE_EXTRA_LIBRARIES
-        GLESv2
+#        GLESv2
         bcm_host
 
 #        asound
@@ -178,12 +153,23 @@ if(MAEMO)
         )
 endif()
 
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID AND NOT NACL)
+    # Used for thread details
+    list ( APPEND CORE_EXTRA_LIBRARIES rt )
+endif()
+
+if(NOT WIN32 AND NOT MINGW AND NOT MSYS AND NOT NACL AND NOT EMSCRIPTEN)
+    # Necessary for Linux and possibly OS X (latter is untested)
+    list ( APPEND CORE_EXTRA_LIBRARIES dl m z )
+endif()
+
+if(NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN)
+    find_package(Threads REQUIRED)
+    list( APPEND CORE_EXTRA_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} )
+endif()
+
 set ( STANDARDLIBS_LIBRARIES "${CORE_EXTRA_LIBRARIES}" CACHE STRING "" )
 set ( STANDARDLIBS_INCLUDE_DIR "${CORE_INCLUDE_DIR}" CACHE STRING "" )
 
-INCLUDE(FindPackageHandleStandardArgs)
-
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(StandardLibs
-    REQUIRED_VARS
-    STANDARDLIBS_LIBRARIES
-)
+message ( STATUS "Standardlibs in use: ${STANDARDLIBS_LIBRARIES}" )
+message ( STATUS "Standard includes in use: ${STANDARDLIBS_INCLUDE_DIR}" )

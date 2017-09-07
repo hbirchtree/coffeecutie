@@ -1,6 +1,6 @@
 ﻿#include <coffee/sdl2/windowing/csdl2_window.h>
 
-
+#if defined(COFFEE_USE_SDL_WINDOW)
 #include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
@@ -268,3 +268,4 @@ CDMonitor SDL2Window::monitor()
 
 }
 }
+#endif

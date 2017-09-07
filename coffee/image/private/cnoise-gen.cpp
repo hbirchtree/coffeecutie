@@ -1,7 +1,7 @@
 #include <coffee/image/cnoise-gen.h>
 
 #define STB_PERLIN_IMPLEMENTATION
-#include <stb/stb_perlin.h>
+#include <stb_perlin.h>
 
 namespace Coffee{
 namespace NoiseGen{

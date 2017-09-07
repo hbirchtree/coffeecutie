@@ -8,10 +8,6 @@ set ( Cappuccino_HDRS
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     )
 
-include_directories (
-    ${Cappuccino_HDRS}
-    )
-
 set ( LINK_MODE SHARED )
 
 if(APPLE AND IOS)
@@ -25,3 +21,11 @@ coffee_add_elibrary (
     "${Cappuccino_LIBS}"
     "${Cappuccino_HDRS}"
     )
+
+target_include_directories ( Cappuccino
+    PUBLIC
+    $<BUILD_INTERFACE:${Cappuccino_HDRS}>
+    $<INSTALL_INTERFACE:include/>
+    )
+
+coffee_bundle_includes ( ${Cappuccino_HDRS} )

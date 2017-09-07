@@ -1,13 +1,13 @@
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 
-
+#if defined(COFFEE_USE_SDL_EVENT)
 #include <coffee/core/CFiles>
 #include <coffee/core/CProfiling>
 #include "evhandlers/sdl2eventhandlers.h"
 #include "sdl2inputfun.h"
 
 #if defined(COFFEE_USE_MAEMO_X11)
-#include <coffee/sdl2/windowing/x11_window.h>
+#include <coffee/windowing/windowing/x11/x11_window.h>
 #endif
 
 namespace Coffee{
@@ -53,14 +53,13 @@ bool SDL2EventHandler::inputPreInit(CString*)
 bool SDL2EventHandler::inputInit(CString*)
 {
     /* If found, load game controller mappings from file */
-    CResources::Resource mapping("gamecontrollerdb.txt", false,
-                                 ResourceAccess::SpecifyStorage|
-                                 ResourceAccess::AssetFile);
+    auto mapping = "gamecontrollerdb.txt"_rsc;
+
     if(FileExists(mapping))
     {
         cMsg("SDL2","Found game controller mappings");
         FileMap(mapping);
-        SDL_RWops* fsrc = SDL_RWFromConstMem(mapping.data,mapping.size);
+        SDL_RWops* fsrc = SDL_RWFromConstMem(mapping.data, mapping.size);
         SDL_GameControllerAddMappingsFromRW(fsrc,0);
         SDL_FreeRW(fsrc);
         FileUnmap(mapping);
@@ -271,22 +270,19 @@ void SDL2EventHandler::pollEvents()
     }
 
 #if defined(COFFEE_USE_MAEMO_X11)
-    static X11Window* xapp;
+    X11Window* xapp;
 
-    if(!xapp)
-    {
-        xapp = C_DCAST<X11Window>((SDL2EventHandler*)this);
-    }
+    xapp = C_DCAST<X11Window>((SDL2EventHandler*)this);
 
     if(xapp)
         xapp->processX11Events(this);
 #endif
 }
 
-bigscalar SDL2EventHandler::contextTime() const
-{
-    return static_cast<bigscalar>(SDL_GetTicks())/1000.0;
-}
+//bigscalar SDL2EventHandler::contextTime() const
+//{
+//    return static_cast<bigscalar>(SDL_GetTicks())/1000.0;
+//}
 
 bool SDL2EventHandler::closeFlag() const
 {
@@ -358,3 +354,4 @@ void SDL2EventHandler::registerEventLoop(void *eventloop)
 
 }
 }
+#endif

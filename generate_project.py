@@ -109,7 +109,7 @@ def main():
                      ],
                      constant_files={
                          'cmake': [
-                             'Find', 'Find_Android', 'Find_Windows',
+                             'Find', 'Find_Windows',
                              'Modules', 'Packaging', 'Preload',
                              'Toolchains'
                          ],
@@ -123,6 +123,7 @@ def main():
                          'tools/python/common.py': 'common.py',
                          'cmake/Templates/JenkinsTemplate.groovy': None,
                          'cmake/Templates/reconfig.py': 'rebuild.py',
+                         'cmake/Templates/Config*.cmake.in': 'cmake/Templates',
                          'buildinfo.py': None,
                          'quick-build.sh': None,
                          'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
@@ -156,7 +157,7 @@ ${SDL2_LIBRARY};${SDL2_LIBRARIES}''',
                          StepSaveLocalInfo(),
                          StepUpdateBuildInfo('cmake/Templates/coffee-build.yml',
                                              configure_ci.CI_SERVICES),
-                         StepGenerateCMakeScript(),
+                         #StepGenerateCMakeScript(),
                          StepCorrectPythonScriptPaths(),
                          StepListGitStatus(),
                      ]

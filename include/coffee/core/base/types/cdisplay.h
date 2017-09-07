@@ -118,6 +118,11 @@ struct CDEvent{
     };
     EvTs ts; /*!< Event timestamp*/
     EventType type; /*!< Event type*/
+
+    STATICINLINE CDEvent Create(EvTs ts, EventType et)
+    {
+        return {ts, et};
+    }
 };
 
 /*!

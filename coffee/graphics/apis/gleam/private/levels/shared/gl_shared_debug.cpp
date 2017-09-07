@@ -1,7 +1,9 @@
 #include <coffee/graphics/apis/gleam/levels/shared/gl_shared_debug.h>
 #include <coffee/core/string_casting.h>
 
-#if defined(COFFEE_USE_MAEMO_EGL)
+#if defined(COFFEE_USE_APPLE_GLKIT)
+#include <CEAGL/eagl.h>
+#elif defined(COFFEE_USE_MAEMO_EGL)
 #include <EGL/egl.h>
 #endif
 
@@ -45,7 +47,7 @@ void CGL_Shared_Debug::GetExtensions()
         if(i<numExtensions-1)
             s_ExtensionList.push_back(' ');
     }
-#elif defined(COFFEE_USE_MAEMO_EGL)
+#elif defined(COFFEE_USE_MAEMO_EGL) && !defined(COFFEE_USE_APPLE_GLKIT)
     EGLDisplay m_disp = eglGetCurrentDisplay();
     s_ExtensionList = CString();
     cstring extensions = eglQueryString(m_disp, EGL_EXTENSIONS);
@@ -193,7 +195,7 @@ HWDeviceInfo CGL_Shared_Debug::Renderer()
     cstring device = GetString(GL_RENDERER);
     CString driver = ContextVersion().driver;
 
-#if defined(COFFEE_USE_MAEMO_EGL)
+#if defined(COFFEE_USE_MAEMO_EGL) && !defined(COFFEE_USE_APPLE_GLKIT)
     EGLDisplay m_disp = eglGetCurrentDisplay();
     if(!vendor)
         vendor = eglQueryString(m_disp, EGL_VENDOR);

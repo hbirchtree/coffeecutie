@@ -96,6 +96,7 @@ struct SimpleProfilerImpl
                 std::atomic_fetch_sub(&profiler_data_store->global_init,1)<2)
         {
             delete profiler_data_store;
+            profiler_data_store = nullptr;
         }
 #endif
     }
@@ -103,13 +104,7 @@ struct SimpleProfilerImpl
     STATICINLINE void LabelThread(cstring name)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
-        /* TODO: Move thread naming code to different place */
-#if defined(COFFEE_APPLE)
-        pthread_setname_np(name);
-#elif defined(COFFEE_UNIXPLAT) && !defined(COFFEE_NO_PTHREAD_SETNAME_NP)
-        pthread_setname_np(pthread_self(), name);
-#endif
-
+        ThreadSetName(name);
 #if !defined(NDEBUG)
         ThreadId tid;
         profiler_data_store->threadnames.insert(ThreadItem(tid.hash(),name));
@@ -128,6 +123,9 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
+        if(!profiler_data_store)
+            return;
+
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -150,6 +148,8 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
+        if(!profiler_data_store)
+            return;
 
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
@@ -173,6 +173,9 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
+        if(!profiler_data_store)
+            return;
+
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -195,6 +198,9 @@ struct SimpleProfilerImpl
     STATICINLINE void AddExtraData(CString const& key, CString const& val)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
+        if(!profiler_data_store)
+            return;
+
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 

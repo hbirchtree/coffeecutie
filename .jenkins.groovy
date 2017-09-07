@@ -1,4 +1,4 @@
-def linux_targets = ['ubuntu.i686', 'ubuntu.amd64', 'steam.amd64', 'maemo.armel', 'fedora.amd64', 'emscripten.wasm', 'emscripten.asmjs', 'android.armv8a', 'android.armv7a.kitkat', 'android.armv7a', ]
+def linux_targets = ['ubuntu.i686', 'ubuntu.amd64', 'steam.amd64', 'raspberry.armhf', 'maemo.armel', 'fedora.amd64', 'emscripten.wasm', 'emscripten.asmjs', 'android.armv8a', 'android.armv7a.kitkat', 'android.armv7a', ]
 def osx_targets = ['osx', 'ios.x86_64', ]
 def windows_targets = ['win32.amd64', 'uwp.amd64', ]
 
@@ -96,7 +96,7 @@ void GetBuildStep(job, srcDir, platform, targetLabel, target)
 }
 
 linux_targets.each {
-    def j = job("coffeecutie_${it}")
+    def j = job("Coffee_${it}")
 
     def srcDir = '${WORKSPACE}'
 
@@ -105,7 +105,7 @@ linux_targets.each {
 }
 
 osx_targets.each {
-    def j = job("coffeecutie_${it}")
+    def j = job("Coffee_${it}")
 
     def srcDir = '${WORKSPACE}'
 
@@ -114,7 +114,7 @@ osx_targets.each {
 }
 
 windows_targets.each {
-    def j = job("coffeecutie_${it}")
+    def j = job("Coffee_${it}")
 
     def srcDir = '${WORKSPACE}'
 

@@ -78,10 +78,12 @@ namespace CFunctional {
 
 struct WindowsTime : PosixIshTimeDef
 {
+#if !defined(COFFEE_USE_CHRONOTIME)
     static uint64 Microsecond() { return CFunctional::_win_api_get_time(); }
 
     static Timestamp CurrentTimestamp() { return Microsecond()/1000000; }
-	static uint64 CurrentMicroTimestamp() { return Microsecond(); }
+    static uint64 CurrentMicroTimestamp() { return Microsecond(); }
+#endif
 
 	static DateTime GetDateTime(Timestamp ts)
 	{

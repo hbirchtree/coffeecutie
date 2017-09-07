@@ -37,3 +37,8 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 #endif
     return stat;
 }
+
+extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv)
+{
+    return deref_main(mainfun, argc, argv);
+}

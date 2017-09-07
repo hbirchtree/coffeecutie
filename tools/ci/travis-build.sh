@@ -105,7 +105,7 @@ function build_standalone()
     OLD_IFS=$IFS
     IFS='%'
     for dep in $DEPENDENCIES; do
-        IFS=$OLD_IFS download_libraries "$dep" "$1"
+        [ -z $NODEPS ] && IFS=$OLD_IFS download_libraries "$dep" "$1"
     done
 
     [ -z $CONFIGURATION ] && export CONFIGURATION=Debug
@@ -145,13 +145,15 @@ function main()
     esac
 
     build_standalone "$1"
+
+    [ ! -z $NODEPLOY ] && exit 0
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} \
-            --exclude=build/*/packaged \
             --exclude=build/*/bin \
+            --exclude=build/*/packaged \
             build/
     tar -zcvf "$BIN_ARCHIVE" -C ${BUILD_DIR} \
-            --exclude=build/*/lib \
             --exclude=build/*/include \
+            --exclude=build/*/lib \
             --exclude=build/*/share \
             build/
 }

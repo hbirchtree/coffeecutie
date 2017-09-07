@@ -1,6 +1,8 @@
-#ifndef SDL2EVENTHANDLERS
-#define SDL2EVENTHANDLERS
+#pragma once
 
+#include <coffee/core/plat/plat_quirks_toggling.h>
+
+#if defined(COFFEE_USE_SDL_EVENT)
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 #include "../../types/sdl2datatypes.h"
 
@@ -25,6 +27,4 @@ extern void EventHandleAll(SDL2EventHandler *ctxt, const SDL_Event* ev);
 
 }
 }
-#endif // SDL2EVENTHANDLERS
-
-
+#endif

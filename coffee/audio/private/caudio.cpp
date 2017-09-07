@@ -1,8 +1,8 @@
 #include <coffee/audio/caudio.h>
 
 #define STB_VORBIS_HEADER_ONLY
-#include <stb/stb_vorbis.c>
-#include <stb/stb.h>
+#include <stb_vorbis.c>
+#include <stb.h>
 
 #include <coffee/core/CMath>
 

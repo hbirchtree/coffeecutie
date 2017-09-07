@@ -1,8 +1,8 @@
 if(ANDROID)
     find_package ( CfAndroidMain )
     find_package ( AndroidToolkit )
+    find_package ( SDL2main REQUIRED )
 
-    include ( AndroidNdkGdb )
     include ( InkscapeResize )
     include ( PermissionList )
 

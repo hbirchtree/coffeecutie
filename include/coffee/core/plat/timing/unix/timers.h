@@ -66,6 +66,7 @@ private:
 
 struct UnixTime : PosixIshTimeDef
 {
+#if !defined(COFFEE_USE_CHRONOTIME)
     STATICINLINE uint64 Microsecond()
     {
         struct timeval t;
@@ -80,6 +81,8 @@ struct UnixTime : PosixIshTimeDef
     {
         return CurrentTimestamp()*1000000+Microsecond();
     }
+#endif
+
     STATICINLINE DateTime GetDateTime(Timestamp ts)
     {
         DateTime t;

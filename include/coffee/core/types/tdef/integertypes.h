@@ -122,6 +122,15 @@ GEN_SIZE_LITERAL(M)
 GEN_SIZE_LITERAL(G)
 GEN_SIZE_LITERAL(T)
 
+#define GEN_TIME_LITERAL(unit, div) \
+    inline bigscalar operator "" _ ## unit ## s (unsigned long long int v) \
+    { \
+        return bigscalar(v) / div; \
+    }
+
+GEN_TIME_LITERAL(m, 1000)
+GEN_TIME_LITERAL(u, 1000000)
+
 PACKEDSTRUCT uint24
 {
     uint32 d:24;

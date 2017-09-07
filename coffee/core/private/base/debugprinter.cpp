@@ -88,8 +88,8 @@ void OutputPrinterImpl::fprintf_platform(FILE *stream, CString formatted,
     }
 
     __android_log_print(flag, "Coffee", "%s", &formatted[0]);
-#elif defined(__EMSCRIPTEN__)
-    int flag = EM_LOG_CONSOLE;
+#elif defined(COFFEE_EMSCRIPTEN)
+    int flag = 0;
     if(formatted[0] == 'W')
         flag = EM_LOG_WARN;
     else if(formatted[0] == 'F')

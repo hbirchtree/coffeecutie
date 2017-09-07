@@ -1,6 +1,10 @@
 allow_fail:
   - env: BUILDVARIANT=maemo.armel
-name: coffeecutie
+  - env: BUILDVARIANT=uwp.amd64
+  - env: BUILDVARIANT=uwp.arm
+  - env: BUILDVARIANT=coverage
+  - env: BUILDVARIANT=raspberry.armhf
+name: Coffee
 display_name: Coffeecutie
 platforms:
     emscripten:
@@ -20,6 +24,8 @@ platforms:
       - armv7a.kitkat
     maemo:
       - armel
+    raspberry:
+      - armhf
     osx:
       - osx
       - ios.x86_64
@@ -38,6 +44,8 @@ branches:
   - name: /^feature.*$/
     build: true
 
+secrets:
+  appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
 makefile_location: tools/makers
 template_location: cmake/Templates
 script_location: tools/ci

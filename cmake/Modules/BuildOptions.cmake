@@ -96,7 +96,7 @@ endif()
 # Requires OpenAL libraries and headers
 option ( COFFEE_BUILD_OPENAL "Build with OpenAL support" ON)
 # Requires SDL2 libraries and headers
-option ( COFFEE_BUILD_SDL2 "Build with SDL2 windowing and input" ON)
+option ( COFFEE_BUILD_SDL2 "Build with SDL2" ON)
 # Requires SDL2 in most cases, unless you love writing window management code
 option ( COFFEE_BUILD_GLEAM "Build GLeam rendering API" ON )
 # RHI is written on top of GLeam to provide a device interface, giving access to buffers and surfaces.

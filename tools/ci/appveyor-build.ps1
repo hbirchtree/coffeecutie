@@ -43,12 +43,16 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
 $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
          "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON")
 
-. $env:APPVEYOR_BUILD_FOLDER\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
+. $env:SOURCE_DIR\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
     -CMakeBin $env:CMAKE_BIN -Standalone
 
-$BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
+if($env:SAME_BUILD_DIR) {
+    $BuildDir = $env:BUILD_DIR
+} else {
+    $BuildDir = "$env:BUILD_DIR\build_$env:BUILDVARIANT"
+}
 
 echo "Starting CMake process"
-BuildProject $env:BUILDVARIANT $env:APPVEYOR_BUILD_FOLDER $BuildDir $LIBRARY_DIR "$env:CONFIGURATION" $Args
+BuildProject $env:BUILDVARIANT $env:SOURCE_DIR $BuildDir $LIBRARY_DIR "$env:CONFIGURATION" $Args
 
 cd $PrevPwd

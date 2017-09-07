@@ -222,7 +222,19 @@ def appveyor_gen_config(build_info, srcDir):
     script_loc = build_info['script_location'].replace('/', '\\')
     make_loc = build_info['makefile_location'].replace('/', '\\')
 
+    allow_fails = []
+
+    for f in try_get_key(build_info, 'allow_fail', []):
+        e = f['env'].split('=')
+        allow_fails += [{e[0]: e[1]}]
+
     deploy_patterns = ''
+
+    secret = try_get_key(try_get_key(build_info, 'secrets', {}), 'appveyor', '')
+
+    matrix = []
+    for p in create_env_matrix('windows', build_info):
+        matrix += [{'BUILDVARIANT': p}]
 
     return {
         'version': '{build}',
@@ -234,32 +246,43 @@ def appveyor_gen_config(build_info, srcDir):
         'platform': 'x64',
         'clone_script': [
             {
-                'cmd': 'git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %APPVEYOR_BUILD_FOLDER%',
+                'cmd': 'git clone -q --recursive --branch=%APPVEYOR_REPO_BRANCH% https://github.com/%APPVEYOR_REPO_NAME%.git %SOURCE_DIR%',
             },
             {
-                'cmd': 'git checkout -qf %APPVEYOR_REPO_COMMIT%'
+                'cmd': 'cd %SOURCE_DIR% && git checkout -qf %APPVEYOR_REPO_COMMIT%'
             }
         ],
+        'matrix': {
+            'allow_failures': allow_fails
+        },
         'environment': {
-            'BUILD_DIR': 'C:\\project\\%APPVEYOR_PROJECT_SLUG%',
-            'CMAKE_BIN': 'C:\\Program Files\\CMake\\bin\\cmake.exe',
+            'matrix': matrix,
+            'BUILD_DIR': 'C:\\projects\\%APPVEYOR_PROJECT_SLUG%',
+            'SOURCE_DIR': 'C:\\projects\\%APPVEYOR_PROJECT_SLUG%\\src',
+            'NOBUILD': 1,
+            'SAME_BUILD_DIR': 1,
+            'CMAKE_BIN': 'cmake.exe',
             'MAKEFILE_DIR': make_loc,
-            'BUILDVARIANT': 'win32.amd64',
             'DEPENDENCIES': dependencies_list,
             'DEPLOY_PATTERNS': deploy_patterns,
             'GITHUB_TOKEN': {
-                'secure': ''
+                'secure': secret
             }
         },
         'install': [
             {'ps': '%s\\appveyor-deps.ps1' % script_loc}
         ],
-        'build_script': [
+        'build': {
+            'parallel': True,
+            'verbosity': 'minimal',
+            'project': '%s.sln' % (try_get_key(build_info, 'name', 'coffee'),)
+        },
+        'before_build': [
             {'ps': '%s\\appveyor-build.ps1' % script_loc}
         ],
-#        'artifacts': [
-#            {'path': '*.zip', 'name': 'Libraries'}
-#        ],
+        'before_deploy': [
+            {'cmd': 'cmake.exe --build %BUILD_DIR% --target install --config %CONFIGURATION%'}
+        ],
         'deploy_script': [
             {'ps': '%s\\appveyor-deploy.ps1' % script_loc}
         ]
@@ -321,8 +344,8 @@ def travis_gen_config(build_info, srcDir):
             {
                 'global': ['MAKEFILE_DIR=%s' % make_loc,
                            'DEPENDENCIES=%s' % dependencies,
-                           'PYTHONPATH=/usr/lib/python3/dist-packages'],
-                           'CONFIGURATION=Debug'
+                           'PYTHONPATH=/usr/lib/python3/dist-packages',
+                           'CONFIGURATION=Debug'],
                 'matrix': build_matrix[0]
             },
         'matrix':
@@ -352,14 +375,17 @@ def jenkins_gen_config(build_info, src_dir):
 
     def sshgit_to_https(url):
         import re
-        patt = re.compile('git@(.+):(.+)')
+        # git@github.com:hbirchtree/coffeecutie.git
+        # ssh://git@github.com/hbirchtree/coffeecutie.git
+        patterns = [re.compile('^.*git@([^/:]+)[:/](.+)'),
+                    #re.compile('ssh://git@([^/]+)/(.+)')
+                   ]
 
-        match = patt.findall(url)
-
-        if match:
-            return 'https://%s/%s' % (match[0][0], match[0][1])
-        else:
-            return url
+        for patt in patterns:
+            match = patt.findall(url)
+            if match:
+                return 'https://%s/%s' % (match[0][0], match[0][1])
+        return url
 
     template_dir = '%s/cmake/Templates' % src_dir
 

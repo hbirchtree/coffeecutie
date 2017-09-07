@@ -78,12 +78,9 @@ include_directories (
     ${CMAKE_SOURCE_DIR}
     )
 
-include_directories( SYSTEM ${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include )
-
 # General include directories, not ours
 include_directories ( SYSTEM
     ${CMAKE_BINARY_DIR}/libs/include
-    libs
     )
 
 # Extension include directories
@@ -122,26 +119,14 @@ if(COFFEE_GENERATE_LIBRARIES)
 
     # Add subdir for extensions, weak bindings of libraries
     add_subdirectory(ext)
-
-    install ( FILES
-        ${CMAKE_SOURCE_DIR}/cmake/Find/FindCoffee.cmake
-
-        DESTINATION
-        share/cmake/Modules)
 endif()
 
 # Add documentation directory, not built by default (increases build time)
 add_subdirectory(docs-gen)
 
-if(COFFEE_GENERATE_LIBRARIES)
-    install ( DIRECTORY
-        ${CMAKE_SOURCE_DIR}/include
-        DESTINATION
-        .
-        )
-endif()
-
 # Add automatic linking directory, useful to get builds up quickly
 link_directories(
     ${CMAKE_BINARY_DIR}/libs/lib/
     )
+
+generate_findscript()
