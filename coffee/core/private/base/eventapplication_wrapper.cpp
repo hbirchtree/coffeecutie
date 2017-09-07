@@ -1,6 +1,7 @@
-#include <coffee/core/base/renderer/eventapplication_wrapper.h>
-
+#include <stdint.h>
 #include <stdio.h>
+
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
 
 bool CoffeeEventHandleCall(int event)
 {

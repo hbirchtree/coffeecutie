@@ -4,6 +4,7 @@
 #include <coffee/core/coffee.h>
 #include "renderer.h"
 #include <coffee/core/input/standard_input_handlers.h>
+#include <coffee/core/task_queue/task.h>
 
 void ExitOnBackground(void* user_ptr, CDEvent const& ev, c_cptr data)
 {
@@ -66,6 +67,18 @@ int32 coffee_main(int32, cstring_w*)
 //                                   nullptr, renderer});
     renderer->installEventHandler({StandardInput::StandardCamera<CGCamera>,
                                    nullptr, &loop->data->g_data.camera});
+
+    loop->data->rt_queue = RuntimeQueue::CreateNewQueue("MainQueue");
+
+    RuntimeQueue::Queue({
+                            [](){
+                                cDebug("Hello from RQ!");
+                            },
+                            {},
+                            std::chrono::seconds(1),
+                            RuntimeTask::Periodic,
+                            0,
+                        });
 
     CString err;
     if(CDRenderer::execEventLoop(*loop, props, err) != 0)

@@ -71,6 +71,9 @@ set ( CoffeeCore_SRCS
     # Unit testing
     private/unit_tests/framework.cpp
 
+    # Task queues, for easier time scheduling
+    private/task_queue/task.cpp
+
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
     )
