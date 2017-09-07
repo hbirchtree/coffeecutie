@@ -37,7 +37,7 @@ struct RuntimeTask
     TaskFlags flags;
     u32 _pad;
 
-    bool operator<(RuntimeTask const& other)
+    bool operator<(RuntimeTask const& other) const
     {
         return time < other.time;
     }
