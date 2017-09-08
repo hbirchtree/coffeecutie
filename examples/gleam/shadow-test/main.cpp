@@ -61,12 +61,15 @@ void setup_fun(CDRenderer& renderer, SharedData* data)
     cDebug("GL extensions: {0}",CGL::CGL_Shared_Debug::s_ExtensionList);
     cDebug("Framebuffer size: {0}, window size: {1}",
            renderer.framebufferSize(), renderer.windowSize());
+    cDebug("Monitor: {0}", renderer.monitor());
 
     data->api = RHI::GLEAM::GLEAM_API::GetLoadAPI();
     if(!data->api(PlatformData::IsDebug()))
     {
         cDebug("Failed to initialize graphics API");
     }
+    
+    renderer.popErrorMessage(Severity::Information, "Hello!", "Goodbye");
 }
 
 void loop_fun(CDRenderer& renderer, SharedData* data)
@@ -100,8 +103,8 @@ int32 coffee_main(int32, cstring_w*)
     CString err;
 
     ELoop* globLoop = new ELoop{
-            new CDRenderer,
-            new SharedData,
+            MkUq<CDRenderer>(),
+            MkUq<SharedData>(),
             setup_fun, loop_fun, cleanup_fun,
             ELoop::TimeLimited, {}};
 

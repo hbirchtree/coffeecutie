@@ -80,6 +80,11 @@ void GLEAM_API::GetDefaultProperties(Display::CDProperties &props)
     props.gl.bits.samples = 0;
 }
 
+void InstanceDataDeleter::operator()(GLEAM_Instance_Data *p)
+{
+    delete p;
+}
+
 bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 {
     cVerbose(8, "Entering LoadAPI()");
@@ -90,7 +95,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     }
 
     cVerbose(8, "Creating instance data");
-    store->inst_data = new GLEAM_Instance_Data;
+    store->inst_data = MkUqDST<GLEAM_Instance_Data, InstanceDataDeleter>();
 
 #ifndef NDEBUG
     store->DEBUG_MODE = debug;
@@ -176,6 +181,12 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
 
     m_store = store;
 
+    return true;
+}
+
+bool GLEAM_API::UnloadAPI()
+{
+    m_store = nullptr;
     return true;
 }
 
@@ -281,6 +292,9 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
         CGL43::DepthArrayv(i,vstate.viewCount(),&vstate.depth(i));
         CGL43::ScissorArrayv(i,vstate.viewCount(),&vstate.scissor(i));
         CGL43::ViewportArrayv(i,vstate.viewCount(),varr);
+
+        if(vstate.viewCount())
+            delete[] varr;
 
         CGL33::Enable(Feature::ClipDist,0);
 

@@ -68,6 +68,13 @@ struct BasicTerm : CmdDef
         exit(code);
 #endif
     }
+
+    STATICINLINE void RegisterAtExit(void(*efun)())
+    {
+        if(atexit(efun) != 0)
+            fprintf(DefaultDebugOutputPipe,
+                    "Failed to register atexit() function\n");
+    }
 };
 
 }

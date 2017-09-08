@@ -4,6 +4,12 @@
 #include <coffee/core/eventprocess.h>
 
 #include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/task_queue/task.h>
+
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#include <coffee/core/base/renderer_loader.h>
+
+#include <coffee/core/CMD>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
@@ -20,8 +26,8 @@ struct EventLoopData
         TimeLimited = 0x1,
     };
 
-    Renderer* renderer;
-    ShareData* data;
+    UqPtr<Renderer> renderer;
+    UqPtr<ShareData> data;
 
     Function<void(Renderer&, ShareData*)> setup;
     Function<void(Renderer&, ShareData*)> loop;
@@ -36,8 +42,36 @@ struct EventLoopData
             Timestamp max;
         } time;
     };
+
+    FORCEDINLINE Renderer& r() {return *renderer.get();}
+    FORCEDINLINE ShareData* d() {return data.get();}
 };
 
+template<typename RendType, typename DataType>
+void WrapEventFunction(void* data, int event)
+{
+    using ELD = EventLoopData<RendType,DataType>;
+    
+    ELD* edata = C_FCAST<ELD*>(data);
+
+    switch(event)
+    {
+        case CoffeeHandle_Setup:
+        edata->setup(*edata->renderer, edata->data);
+        break;
+        
+        case CoffeeHandle_Loop:
+        edata->loop(*edata->renderer, edata->data);
+        break;
+        
+        case CoffeeHandle_Cleanup:
+        edata->cleanup(*edata->renderer, edata->data);
+        break;
+        
+        default:
+        break;
+    }
+}
 
 
 class EventApplication : public InputApplication
@@ -166,7 +200,7 @@ public:
         { \
             EventLoopData<Renderer, Data>& evdata = *C_FCAST<EventLoopData<Renderer, Data>* >(ptr); \
             extrafun(evdata); \
-            evdata.fun(*evdata.renderer, evdata.data); \
+            evdata.fun(evdata.r(), evdata.d()); \
         } \
     }
 
@@ -181,7 +215,7 @@ public:
 
         auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
 
-        eventloop->loop(*eventloop->renderer, eventloop->data);
+        eventloop->loop(eventloop->r(), eventloop->d());
 
         if(eventloop->flags & ELD::TimeLimited &&
                 Time::CurrentTimestamp() > (eventloop->time.start + eventloop->time.max))
@@ -197,21 +231,24 @@ public:
     template<typename Renderer, typename Data>
     struct EventExitHandler
     {
-        static EventLoopData<Renderer,Data>* ev;
+        using ELD = EventLoopData<Renderer,Data>;
+
+        static ELD* ev;
 
         static void event_exitFunc()
         {
             event_exitFunc(ev);
         }
-        static void event_exitFunc(EventLoopData<Renderer,Data>* ev)
+        static void event_exitFunc(ELD* ev)
         {
             if(!ev)
             {
                 fprintf(stderr, "Event exit handler could not be triggered");
                 return;
             }
-            (*ev->renderer).cleanup();
-            ev->cleanup(*ev->renderer, ev->data);
+            ev->cleanup(ev->r(), ev->d());
+            ev->r().cleanup();
+            delete ev;
         }
     };
 
@@ -224,7 +261,7 @@ public:
         static cstring suspend_str = "Suspend handler";
         static cstring resume_str = "Resume handler";
 
-        Renderer& r = *ev.renderer;
+        Renderer& r = ev.r();
 
         /* Because MSVC++ sucks, I can't use a struct initializer list for this :( */
 		EventHandlerD suspend_data = {};
@@ -239,33 +276,53 @@ public:
         r.installEventHandler(resume_data);
 
 
-        if(!(*ev.renderer).init(visual, &err))
+        if(!LoadHighestVersion(&ev.r(), visual, &err))
         {
             return -1;
         }
 
         ev.time.start = Time::CurrentTimestamp();
+        
+#if defined(COFFEE_USE_APPLE_GLKIT)
+        /* Under GLKit, the entry point for setup, update and cleanup
+         *  reside in AppDelegate.m
+         * Lifecycle is manageed by UIKit in this case
+         */
+        coffee_event_handling_data = &ev;
+        CoffeeEventHandle = WrapEventFunction<Renderer, Data>;
+        
+        return 0;
+#else
 
 #if defined(COFFEE_EMSCRIPTEN)
+        // Under emscripten, only the loop function is used later
         emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
                                      &ev, 0, 1);
 #endif
 
 
 #if !defined(COFFEE_ANDROID)
+        // Android awaits a foreground event, as it may not be there when started.
         {
             auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
             r.injectEvent(fevent, nullptr);
         }
 #else
-        ev.setup(*ev.renderer, ev.data);
+        // On desktop and etc, we are always ready for setup
+        ev.setup(ev.r(), ev.d());
 #endif
 
 
 #if !defined(COFFEE_EMSCRIPTEN)
+        /* In this case, event processing happens in a tight loop that happens
+            regardless of outside events
+           Android might want something better
+         */
+
+        RuntimeQueue* rt_queue = RuntimeQueue::GetCurrentQueue();
         while(!ev.renderer->closeFlag())
         {
-            ev.loop(*ev.renderer, ev.data);
+            ev.loop(ev.r(), ev.d());
 
             if(ev.flags & ELD::TimeLimited &&
                     Time::CurrentTimestamp() > (ev.time.start + ev.time.max))
@@ -273,17 +330,24 @@ public:
                 auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);
             }
+
+            rt_queue->executeTasks();
         }
 #endif
 
+        using EH = EventExitHandler<Renderer, Data>;
+
 #if defined(COFFEE_EMSCRIPTEN)
-        EventExitHandler<Renderer, Data>::ev = &ev;
-        atexit(EventExitHandler<Renderer, Data>::event_exitFunc);
+        // Emscripten will exit after main()
+        EH::ev = &ev;
+        Cmd::RegisterAtExit(EH::event_exitFunc);
 #else
-        EventExitHandler<Renderer, Data>::event_exitFunc(&ev);
+        // All others exit here
+        EH::event_exitFunc(&ev);
 #endif
 
         return 0;
+#endif
     }
 
     void exec()

@@ -1,5 +1,9 @@
 if(APPLE)
     set ( OSX_DEFAULT_ICON "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.icns" CACHE FILEPATH "" )
+    set ( IOS_LOADING_ICON "${COFFEE_DESKTOP_DIRECTORY}/common/icon_large.png" CACHE FILEPATH "" )
+    set ( IOS_DEFAULT_STORYBOARD "${COFFEE_DESKTOP_DIRECTORY}/osx/Coffee.storyboard" CACHE FILEPATH "" )
+    file ( GLOB IMAGES_TMP "${COFFEE_DESKTOP_DIRECTORY}/osx/launch_images/*.png" )
+    set ( IMAGES "${IMAGES_TMP}" CACHE FILEPATH "" )
 endif()
 
 macro( MACFRAMEWORK_PACKAGE
@@ -77,9 +81,15 @@ macro( MACAPP_PACKAGE
             get_filename_component ( file_name "${file_dir}" NAME )
             if(NOT ("${file_name}" STREQUAL ".DS_Store"))
                 list ( APPEND BUNDLE_FILES ${file} )
-                set_source_files_properties(
-                    ${file} PROPERTIES MACOSX_PACKAGE_LOCATION
-                    "${RESOURCE_DIR}/${file_dir}" )
+                if(NOT IOS)
+                    set_source_files_properties(
+                        ${file} PROPERTIES MACOSX_PACKAGE_LOCATION
+                        "${RESOURCE_DIR}/${file_dir}" )
+                else()
+                    set_source_files_properties(
+                        ${file} PROPERTIES MACOSX_PACKAGE_LOCATION
+                        "${file_dir}" )
+                endif()
             endif()
         endforeach()
     endforeach()
@@ -89,23 +99,25 @@ macro( MACAPP_PACKAGE
         message ( "Framework: ${fw}" )
     endforeach()
 
-    #    if(NOT IOS)
-    add_executable(${TARGET} MACOSX_BUNDLE
-        ${BUNDLE_FILES} ${OSX_ICON}
-        ${SOURCES}
-        )
+    if(NOT IOS)
+        add_executable(${TARGET} MACOSX_BUNDLE
+            ${BUNDLE_FILES} ${OSX_ICON}
+            ${SOURCES}
+            )
+    else()
+        add_executable(${TARGET}
+            ${BUNDLE_FILES} ${OSX_ICON}
+            ${SOURCES} ${IMAGES}
+            ${IOS_DEFAULT_STORYBOARD}
+            ${IOS_LOADING_ICON}
+            )
+    endif()
 
     if(IOS)
-        set_target_properties ( ${TARGET} PROPERTIES
-                            XCODE_PRODUCT_TYPE "com.apple.product-type.application"
-                            )
-        
         target_link_libraries ( ${TARGET}
             PUBLIC
-            ${SDL2_LIBRARY} ${SDL2_LIBRARIES}
+            CoffeeWindow_GLKit
             )
-        
-        
         set ( IOS_NAME "${TITLE}" )
         set ( IOS_IDENTIFIER "${TITLE}" )
         set ( IOS_INFO "${INFO_STRING}" )
@@ -115,24 +127,30 @@ macro( MACAPP_PACKAGE
         set ( IOS_LONGVER "${COFFEE_BUILD_STRING}" )
 
         set ( IOS_EXEC "${TARGET}" )
-        set ( IOS_LANG "English" )
-        set ( IOS_LAUNCH_IMG "Default")
-        set ( IOS_HIDE_STATUSBAR "true" )
-        set ( IOS_PRERENDER_ICON "true" )
-
-        set ( IOS_ORIENTATION "UIInterfaceOrientationLandscapeLeft" )
+        set ( IOS_LANG "en" )
 
         set ( IOS_PLIST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_Info.plist.in" )
 
         configure_file (
             "${COFFEE_DESKTOP_DIRECTORY}/osx/ios/Info.plist.xml"
             "${IOS_PLIST_FILE}"
+            @ONLY
             )
 
         set_target_properties ( ${TARGET} PROPERTIES
+            MACOSX_BUNDLE YES
             MACOSX_BUNDLE_INFO_PLIST "${IOS_PLIST_FILE}"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+            XCODE_ATTRIBUTE_PRODUCT_NAME "${TARGET}"
+            XCODE_ATTRIBUTE_BUNDLE_IDENTIFIER "me.birchtree.${TARGET}.Debug"
+            XCODE_ATTRIBUTE_TARGET_DEVICE_FAMILY "1,2"
+            XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES
+            XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES "NO"
+            RESOURCE "${BUNDLE_FILES};${IOS_DEFAULT_STORYBOARD};${ICONS};${IMAGES}"
             )
-    endif()
+        
+            #XCODE_PRODUCT_TYPE "com.apple.product-type.application"
+    else()
 
     # Lots of properties!
     set_target_properties(${TARGET} PROPERTIES
@@ -147,6 +165,7 @@ macro( MACAPP_PACKAGE
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${COFFEE_VERSION_CODE}"
         MACOSX_BUNDLE_LONG_VERSION_STRING "${COFFEE_BUILD_STRING}"
         )
+    endif()
 
     if(IOS)
         install(
@@ -165,27 +184,4 @@ macro( MACAPP_PACKAGE
             ${CMAKE_PACKAGED_OUTPUT_PREFIX}/apple-osx
             )
     endif()
-    #    else()
-    #        set ( APP_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TITLE}.app" )
-
-
-
-    #        add_executable ( ${TARGET} ${SOURCES} )
-
-    #        add_custom_command (
-    #            TARGET "${TARGET}"
-    #            POST_BUILD
-    #            COMMAND "${CMAKE_COMMAND}" -E make_directory "${APP_DIR}"
-    #            )
-    #        add_custom_command (
-    #            TARGET "${TARGET}"
-    #            POST_BUILD
-    #            COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:${TARGET}>" "${APP_DIR}/${TITLE}"
-    #            )
-    #        configure_file (
-    #            "${COFFEE_DESKTOP_DIRECTORY}/osx/ios/Info.plist.xml"
-    #            "${APP_DIR}/Info.plist"
-    #            @ONLY
-    #            )
-    #    endif()
 endmacro()

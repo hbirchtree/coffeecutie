@@ -10,10 +10,13 @@
 #include <coffee/sdl2/windowing/csdl2_window.h>
 #include <coffee/windowing/windowing/x11/x11_window.h>
 #include <coffee/windowing/windowing/dispmanx/dispmanx_window.h>
+#include <coffee/windowing/windowing/glkit/glk_window.h>
 
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 
 #include <coffee/windowing/binding/glad/gleamrenderer.h>
+
+#include <coffee/core/base/renderer_loader.h>
 
 namespace Coffee{
 namespace SDL2{
@@ -27,6 +30,9 @@ class CSDL2Renderer :
         #if defined(COFFEE_USE_SDL_GL) && defined(COFFEE_USE_SDL_WINDOW)
         public SDL2Window,
         public SDL2GLRenderer,
+        #elif defined(COFFEE_USE_APPLE_GLKIT) && defined(COFFEE_USE_MAEMO_EGL)
+        public GLKWindow,
+        public EGLRenderer,
         #elif defined(COFFEE_RASPBERRY_DMX)
         public DispmanXWindow,
         public EGLRenderer,
@@ -98,64 +104,6 @@ public:
     }
 #endif
 };
-
-template<typename Renderer> STATICINLINE
-bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* err)
-{
-#if !defined(COFFEE_ANDROID)
-    do{
-#if !defined(COFFEE_ONLY_GLES20)
-        if(properties.gl.flags & (GLProperties::Flags::GLES))
-        {
-            properties.gl.version.major = 3;
-            properties.gl.version.minor = 2;
-        }else
-        {
-            properties.gl.version.major = 4;
-            properties.gl.version.minor = 5;
-        }
-
-        if(renderer->init(properties,err))
-            break;
-
-        if(properties.gl.flags & (GLProperties::Flags::GLES))
-        {
-            properties.gl.version.major = 3;
-            properties.gl.version.minor = 1;
-        }else
-        {
-            properties.gl.version.minor = 3;
-        }
-
-        if(renderer->init(properties,err))
-            break;
-
-        if(properties.gl.flags & (GLProperties::Flags::GLES))
-        {
-            properties.gl.version.major = 3;
-            properties.gl.version.minor = 0;
-        }else
-        {
-            properties.gl.version.major = 3;
-        }
-        if(renderer->init(properties,err))
-            break;
-#endif
-        if(properties.gl.flags & (GLProperties::Flags::GLES))
-        {
-            properties.gl.version.major = 2;
-
-            if(renderer->init(properties,err))
-                break;
-        }
-
-        return false;
-    } while(false);
-#else
-    renderer->init(properties, err);
-#endif
-    return true;
-}
 
 }
 }

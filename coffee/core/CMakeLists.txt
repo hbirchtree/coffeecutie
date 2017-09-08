@@ -57,6 +57,8 @@ set ( CoffeeCore_SRCS
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
+    private/base/eventapplication_wrapper.cpp
+
     private/plat/memory/string_ops.cpp
 
     # Compression / data storage
@@ -68,6 +70,9 @@ set ( CoffeeCore_SRCS
 
     # Unit testing
     private/unit_tests/framework.cpp
+
+    # Task queues, for easier time scheduling
+    private/task_queue/task.cpp
 
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
@@ -83,7 +88,7 @@ if( ANDROID )
 endif()
 
 # SDL power-management
-if(NOT POWERPC AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+if(NOT POWERPC AND NOT IOS AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
     set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp

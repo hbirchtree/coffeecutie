@@ -96,6 +96,7 @@ struct SimpleProfilerImpl
                 std::atomic_fetch_sub(&profiler_data_store->global_init,1)<2)
         {
             delete profiler_data_store;
+            profiler_data_store = nullptr;
         }
 #endif
     }
@@ -122,6 +123,9 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
+        if(!profiler_data_store)
+            return;
+
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -144,6 +148,8 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
+        if(!profiler_data_store)
+            return;
 
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
@@ -167,6 +173,9 @@ struct SimpleProfilerImpl
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
 #if !defined(NDEBUG) && !defined(COFFEE_NO_TLS)
+        if(!profiler_data_store)
+            return;
+
         uint64 ts = Time::CurrentMicroTimestamp();
 
         Lock l(profiler_data_store->data_access_mutex);
@@ -189,6 +198,9 @@ struct SimpleProfilerImpl
     STATICINLINE void AddExtraData(CString const& key, CString const& val)
     {
 #if !defined(COFFEE_DISABLE_PROFILER)
+        if(!profiler_data_store)
+            return;
+
         Lock l(profiler_data_store->data_access_mutex);
         C_UNUSED(l);
 

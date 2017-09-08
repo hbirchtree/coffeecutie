@@ -25,7 +25,7 @@ void Init()
 void Terminate()
 {
     Profiling::ExitRoutine();
-    CoffeeTerminate(false);
+    CoffeeTerminate();
 }
 
 SDL2Renderer* CreateWindow(Props const& props, CObject *p)

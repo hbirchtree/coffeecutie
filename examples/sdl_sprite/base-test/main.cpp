@@ -128,17 +128,6 @@ int32 coffee_main(int32, cstring_w*)
     CResources::FileResourcePrefix("sample_data/ctest_hud/");
     cDebug("Current directory: {0}",Env::CurrentDir());
 
-    /* Create a window host for the renderer */
-    BasicWindow test;
-    auto visual = GetDefaultVisual(2,0);
-
-    CString err;
-    RenderData data = {};
-
-    test.installEventHandler({TouchInput_1,nullptr,&test});
-    test.installEventHandler({ExitHandler_1,nullptr,&test});
-    test.installEventHandler({WindowResize_1,nullptr,&test});
-
     auto setup = [](BasicWindow& test, RenderData* data)
     {
         /* Create a sprite renderer context */
@@ -230,9 +219,25 @@ int32 coffee_main(int32, cstring_w*)
         data->rend.spritesTerminate();
     };
 
-    EventLoopData<BasicWindow, RenderData> eventData = {&test, &data, setup, loop, cleanup, 0, {}};
+    /* Create a window host for the renderer */
+    auto visual = GetDefaultVisual(2,0);
 
-    BasicWindow::execEventLoop(eventData, visual, err);
+    using ELD = EventLoopData<BasicWindow, RenderData>;
+
+    ELD *eventData = new ELD{
+        MkUq<BasicWindow>(), MkUq<RenderData>(),
+        setup, loop, cleanup,
+        0, {}};
+
+    eventData->renderer->installEventHandler({TouchInput_1,nullptr,
+                                             eventData->renderer.get()});
+    eventData->renderer->installEventHandler({ExitHandler_1,nullptr,
+                                             eventData->renderer.get()});
+    eventData->renderer->installEventHandler({WindowResize_1,nullptr,
+                                             eventData->renderer.get()});
+
+    CString err;
+    BasicWindow::execEventLoop(*eventData, visual, err);
 
     return 0;
 }

@@ -12,8 +12,12 @@
 
 const constexpr static int EGL_MIN_VERB = 5;
 
+#if defined(COFFEE_USE_APPLE_GLKIT)
+#include <CEAGL/eagl.h>
+#else
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
+#endif
 
 #define EGL_ERRORCHECK(result) \
     if(result != EGL_TRUE) \
@@ -119,7 +123,7 @@ bool egl_config_to_bits(EGLDisplay disp, EGLConfig cfg, CDContextBits& bits)
 
 #undef BITS_ASSIGN
 
-
+/* TODO: Externalize this for access from GLKWindow */
 struct EGL_Data
 {
     EGLDisplay display;
@@ -199,6 +203,10 @@ static bool egl_create_context(EGLRenderer* renderer,
 #elif defined(COFFEE_USE_WINDOWS_ANGLE)
 	m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
 												egl_win, nullptr);
+#elif defined(COFFEE_USE_APPLE_GLKIT)
+    // The display is holding information on context and views in the Objective-C code
+    m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
+                                                nullptr, nullptr);
 #endif
 
     cVerbose(8, "eglCreateWindowSurface returned: {0}", eglGetError());

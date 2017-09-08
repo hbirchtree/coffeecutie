@@ -165,6 +165,10 @@ struct GraphicsAPI
             m_depth.resize(views);
             m_scissor.resize(views);
         }
+        ViewportState():
+            ViewportState(1)
+        {
+        }
 
         bool multiview()const{return m_mview;}
         szptr viewCount()const{return m_view.size();}
