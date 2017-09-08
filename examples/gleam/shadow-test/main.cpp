@@ -103,8 +103,8 @@ int32 coffee_main(int32, cstring_w*)
     CString err;
 
     ELoop* globLoop = new ELoop{
-            new CDRenderer,
-            new SharedData,
+            MkUq<CDRenderer>(),
+            MkUq<SharedData>(),
             setup_fun, loop_fun, cleanup_fun,
             ELoop::TimeLimited, {}};
 
