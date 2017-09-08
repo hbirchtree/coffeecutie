@@ -215,7 +215,7 @@ public:
 
         auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
 
-        eventloop->loop(*eventloop->renderer, eventloop->data);
+        eventloop->loop(eventloop->r(), eventloop->d());
 
         if(eventloop->flags & ELD::TimeLimited &&
                 Time::CurrentTimestamp() > (eventloop->time.start + eventloop->time.max))
