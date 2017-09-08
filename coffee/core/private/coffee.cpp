@@ -87,6 +87,15 @@ FORCEDINLINE void PrintLicenseInfo()
 void CoffeeInit(bool profiler_init)
 {
 #ifndef COFFEE_LOWFAT
+#ifndef NDEBUG
+    Coffee::PrintingVerbosityLevel = 6;
+    DefaultPrintOutputPipe = DefaultDebugOutputPipe;
+#else
+    Coffee::PrintingVerbosityLevel = 1;
+#endif
+#endif
+
+#ifndef COFFEE_LOWFAT
     if(profiler_init)
     {
         Profiler::InitProfiler();
@@ -94,8 +103,8 @@ void CoffeeInit(bool profiler_init)
     }
 #endif
 
-    /* Allow core dump by default */
 #ifndef NDEBUG
+    /* Allow core dump by default in debug mode */
     ProcessProperty::CoreDumpEnable();
 #endif
 
@@ -111,18 +120,6 @@ void CoffeeInit(bool profiler_init)
 #ifndef COFFEE_LOWFAT
     cVerbose(1,"Verbosity level: {0}",Coffee::PrintingVerbosityLevel);
 #endif
-}
-
-int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
-{
-#ifndef COFFEE_LOWFAT
-#ifndef NDEBUG
-    Coffee::PrintingVerbosityLevel = 6;
-    DefaultPrintOutputPipe = DefaultDebugOutputPipe;
-#else
-    Coffee::PrintingVerbosityLevel = 1;
-#endif
-#endif
 
 #ifdef COFFEE_SLAP_LOWMEM
     /*
@@ -130,11 +127,10 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
      * They are unlikely to have enough memory and processing power anyway.
      *
      */
-
     if(!SysInfo::HasPAE() && !PlatformData::IsMobile())
     {
         cOutputPrint("Unsupported system, insufficient addressing space");
-        return 1;
+        Cmd::Exit(1);
     }
 #endif
 
@@ -144,7 +140,14 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
     CoffeeDefaultWindowName = "Coffee [OpenGL]";
 #endif
 
-    initargs = AppArg(argc,argv);
+    cVerbose(8,"Initializing profiler");
+    Profiler::InitProfiler();
+    Profiler::LabelThread("Main");
+}
+
+int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
+{
+    initargs = AppArg(argc, argv);
 
 #ifndef COFFEE_LOWFAT
     {
@@ -192,47 +195,38 @@ int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w*argv)
         }
     }
 
-    cVerbose(8,"Initializing profiler");
-    Profiler::InitProfiler();
-    Profiler::LabelThread("Main");
-
     Profiler::PushContext("CoffeeMain");
 
-    cVerbose(8,"Initializing Coffee library");
     CoffeeInit(false);
-    cVerbose(8,"Calling Profile()");
     Profiler::Profile("Init");
+
+    /* This is a bit more versatile than simple procedures
+     */
+    Cmd::RegisterAtExit(CoffeeTerminate);
 
     cVerbose(8,"Entering main function");
     Profiler::PushContext("main()");
 #endif
     int32 r = mainfun(argc,argv);
+
 #ifndef COFFEE_LOWFAT
     Profiler::PopContext();
     Profiler::Profile("Runtime");
-
     Profiler::PopContext();
-
-#ifndef COFFEE_CUSTOM_EVENT_HANDLING
-    cVerbose(8,"Terminating library");
-    CoffeeTerminate(false);
-    Profiler::Profile("Termination");
-
-    cVerbose(8,"Unloading profiler");
-    Profiling::ExitRoutine();
 #endif
-
-    cVerbose(8,"Successfully reached end of main()");
-#endif
-
     return r;
 }
 
-void CoffeeTerminate(bool profiler_destroy)
+void CoffeeTerminate()
 {
+    cDebug("Terminating");
+
 #ifndef COFFEE_LOWFAT
-    if(profiler_destroy)
-        Profiler::DestroyProfiler();
+#ifndef COFFEE_CUSTOM_EXIT_HANDLING
+    Profiling::ExitRoutine();
+#endif
+//    if(profiler_destroy)
+//        Profiler::DestroyProfiler();
     Cmd::ResetScreen();
 #endif
 }

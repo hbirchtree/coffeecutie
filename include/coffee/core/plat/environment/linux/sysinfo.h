@@ -71,7 +71,8 @@ struct LinuxSysInfo : SysInfoDef
     static HWDeviceInfo DeviceName();
 
 private:
-    thread_local static CString cached_cpuinfo_string;
+    static void FreeCPUInfoString();
+    static CString cached_cpuinfo_string;
 };
 
 struct LinuxPowerInfo : _SDLPowerInfo

@@ -3,6 +3,10 @@
 #include <coffee/core/CDebug>
 #include <coffee/core/base/files/cfiles.h>
 
+#if defined(COFFEE_USE_SDL_EVENT) || defined(COFFEE_USE_SDL_GL) || defined(COFFEE_USE_SDL_WINDOW)
+#include <coffee/sdl2/sdl2system.h>
+#endif
+
 namespace Coffee{
 namespace Display{
 
@@ -78,17 +82,20 @@ void CSDL2Renderer::cleanup()
 
 #if defined(COFFEE_USE_SDL_EVENT) || defined(COFFEE_USE_SDL_GL) || defined(COFFEE_USE_SDL_WINDOW)
     if(getSDL2Context()){
-#if !defined(COFFEE_USE_SDL_GL)
+#if defined(COFFEE_USE_SDL_GL)
         contextTerminate();
 #endif
-#if !defined(COFFEE_USE_SDL_EVENT)
+#if defined(COFFEE_USE_SDL_EVENT)
         inputTerminate();
 #endif
 #if defined(COFFEE_USE_SDL_WINDOW)
         windowTerminate();
+
+        Coffee::SDL2::SDL2::Deinit();
 #endif
     }else{
-        /* This happens if cleanup has happened before destruction, or if cleanup is called multiple times. Either way is fine. */
+        /* This happens if cleanup has happened before destruction,
+         *  or if cleanup is called multiple times. Either way is fine. */
         cMsg("SDL2","Already cleaned up");
     }
 #endif

@@ -24,6 +24,8 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 
         if(renderer->init(properties,err))
             break;
+        else
+            renderer->cleanup();
 
         if(properties.gl.flags & (GLProperties::Flags::GLES))
         {
@@ -36,6 +38,8 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 
         if(renderer->init(properties,err))
             break;
+        else
+            renderer->cleanup();
 
         if(properties.gl.flags & (GLProperties::Flags::GLES))
         {
@@ -47,6 +51,9 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
         }
         if(renderer->init(properties,err))
             break;
+        else
+            renderer->cleanup();
+
 #endif
         if(properties.gl.flags & (GLProperties::Flags::GLES))
         {
@@ -55,6 +62,8 @@ bool LoadHighestVersion(Renderer* renderer, CDProperties& properties, CString* e
 
             if(renderer->init(properties,err))
                 break;
+            else
+                renderer->cleanup();
         }
 
         return false;

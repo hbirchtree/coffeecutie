@@ -3,6 +3,9 @@
 #include "../../coffee_mem_macros.h"
 #include "../../types/tdef/integertypes.h"
 
+#include <thread>
+#include <functional>
+
 namespace Coffee{
 namespace Threads{
 
@@ -16,6 +19,11 @@ struct ThreadId_t
         m_id(std::this_thread::get_id())
     {
     }
+    FORCEDINLINE ThreadId_t(thread_id_t const& tid):
+        m_id(tid)
+    {
+    }
+
     FORCEDINLINE bool operator==(const ThreadId_t& thd) const
     {
         return m_id == thd.m_id;

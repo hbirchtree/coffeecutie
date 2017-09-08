@@ -4,9 +4,12 @@
 #include <coffee/core/eventprocess.h>
 
 #include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/task_queue/task.h>
 
 #include <coffee/core/base/renderer/eventapplication_wrapper.h>
 #include <coffee/core/base/renderer_loader.h>
+
+#include <coffee/core/CMD>
 
 #if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
@@ -23,8 +26,8 @@ struct EventLoopData
         TimeLimited = 0x1,
     };
 
-    Renderer* renderer;
-    ShareData* data;
+    UqPtr<Renderer> renderer;
+    UqPtr<ShareData> data;
 
     Function<void(Renderer&, ShareData*)> setup;
     Function<void(Renderer&, ShareData*)> loop;
@@ -39,6 +42,9 @@ struct EventLoopData
             Timestamp max;
         } time;
     };
+
+    FORCEDINLINE Renderer& r() {return *renderer.get();}
+    FORCEDINLINE ShareData* d() {return data.get();}
 };
 
 template<typename RendType, typename DataType>
@@ -194,7 +200,7 @@ public:
         { \
             EventLoopData<Renderer, Data>& evdata = *C_FCAST<EventLoopData<Renderer, Data>* >(ptr); \
             extrafun(evdata); \
-            evdata.fun(*evdata.renderer, evdata.data); \
+            evdata.fun(evdata.r(), evdata.d()); \
         } \
     }
 
@@ -225,21 +231,24 @@ public:
     template<typename Renderer, typename Data>
     struct EventExitHandler
     {
-        static EventLoopData<Renderer,Data>* ev;
+        using ELD = EventLoopData<Renderer,Data>;
+
+        static ELD* ev;
 
         static void event_exitFunc()
         {
             event_exitFunc(ev);
         }
-        static void event_exitFunc(EventLoopData<Renderer,Data>* ev)
+        static void event_exitFunc(ELD* ev)
         {
             if(!ev)
             {
                 fprintf(stderr, "Event exit handler could not be triggered");
                 return;
             }
-            (*ev->renderer).cleanup();
-            ev->cleanup(*ev->renderer, ev->data);
+            ev->cleanup(ev->r(), ev->d());
+            ev->r().cleanup();
+            delete ev;
         }
     };
 
@@ -252,7 +261,7 @@ public:
         static cstring suspend_str = "Suspend handler";
         static cstring resume_str = "Resume handler";
 
-        Renderer& r = *ev.renderer;
+        Renderer& r = ev.r();
 
         /* Because MSVC++ sucks, I can't use a struct initializer list for this :( */
 		EventHandlerD suspend_data = {};
@@ -267,15 +276,10 @@ public:
         r.installEventHandler(resume_data);
 
 
-        if(!LoadHighestVersion(ev.renderer, visual, &err))
+        if(!LoadHighestVersion(&ev.r(), visual, &err))
         {
             return -1;
         }
-
-//        if(!(*ev.renderer).init(visual, &err))
-//        {
-//            return -1;
-//        }
 
         ev.time.start = Time::CurrentTimestamp();
         
@@ -305,7 +309,7 @@ public:
         }
 #else
         // On desktop and etc, we are always ready for setup
-        ev.setup(*ev.renderer, ev.data);
+        ev.setup(ev.r(), ev.d());
 #endif
 
 
@@ -314,9 +318,11 @@ public:
             regardless of outside events
            Android might want something better
          */
+
+        RuntimeQueue* rt_queue = RuntimeQueue::GetCurrentQueue();
         while(!ev.renderer->closeFlag())
         {
-            ev.loop(*ev.renderer, ev.data);
+            ev.loop(ev.r(), ev.d());
 
             if(ev.flags & ELD::TimeLimited &&
                     Time::CurrentTimestamp() > (ev.time.start + ev.time.max))
@@ -324,16 +330,20 @@ public:
                 auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);
             }
+
+            rt_queue->executeTasks();
         }
 #endif
 
+        using EH = EventExitHandler<Renderer, Data>;
+
 #if defined(COFFEE_EMSCRIPTEN)
         // Emscripten will exit after main()
-        EventExitHandler<Renderer, Data>::ev = &ev;
-        atexit(EventExitHandler<Renderer, Data>::event_exitFunc);
+        EH::ev = &ev;
+        Cmd::RegisterAtExit(EH::event_exitFunc);
 #else
         // All others exit here
-        EventExitHandler<Renderer, Data>::event_exitFunc(&ev);
+        EH::event_exitFunc(&ev);
 #endif
 
         return 0;

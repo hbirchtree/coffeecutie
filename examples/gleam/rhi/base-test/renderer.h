@@ -40,6 +40,8 @@ struct RendererState
     RuntimeState r_state;
 
     RuntimeQueue* rt_queue;
+
+    uint32 frameCount;
     
     struct RGraphicsData{
         // GLEAM data
@@ -444,11 +446,75 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     Profiler::PopContext();
 }
 
+void LogicLoop(CDRenderer& renderer, RendererState* d)
+{
+    auto& g = d->g_data;
+
+    /*
+     * Events are always late for the drawcall.
+     * The best we can do is update the state as often as possible.
+     * Or we could maximize the time of each iteration for VSYNC,
+     *  polling once to begin with and also later.
+     *
+     * Example:
+     * poll();
+     * ...
+     * upload();
+     * process();
+     * ...
+     * millisleep(15);
+     * poll();
+     * draw();
+     *
+     */
+
+    renderer.pollEvents();
+
+    auto& base_transform = g.base_transform;
+    auto& floor_transform = g.floor_transform;
+    auto& camera = g.camera;
+
+    auto& tprevious = g.tprevious;
+    auto& tdelta = g.tdelta;
+    auto& tbase = g.tbase;
+
+    auto& time_value = g.time_value;
+
+    auto& object_matrices = g.object_matrices;
+
+    /* Define frame data */
+    base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 2.);
+    base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 2.);
+
+    //      camera.position.z() = -tprevious;
+
+    time_value = C_CAST<scalar>(CMath::sin(tprevious) + (CMath::pi / 4.));
+
+    floor_transform.rotation.y() = C_CAST<scalar>(CMath::sin(tprevious));
+    floor_transform.rotation = normalize_quat(floor_transform.rotation);
+
+    camera.position.x() -= 0.1;
+    object_matrices[0] = GenPerspective(camera) * GenTransform(camera) *
+    GenTransform(base_transform);
+    object_matrices[2] = GenPerspective(camera) * GenTransform(camera) *
+    GenTransform(floor_transform);
+
+    camera.position.x() += 0.2;
+    object_matrices[1] = GenPerspective(camera) * GenTransform(camera) *
+    GenTransform(base_transform);
+    object_matrices[3] = GenPerspective(camera) * GenTransform(camera) *
+    GenTransform(floor_transform);
+
+    camera.position.x() -= 0.1;
+
+    tdelta = tbase + renderer.contextTime() - tprevious;
+    tprevious = tbase + renderer.contextTime();
+
+    d->r_state.time_base = tprevious;
+}
+
 void RendererLoop(CDRenderer& renderer, RendererState* d)
 {
-    if(renderer.contextTime() >= 5.0)
-        renderer.applyCloseFlag();
-    
     auto& g = d->g_data;
     
     bool do_debugging = d->r_state.debug_enabled && PlatformData::IsDebug();
@@ -479,46 +545,7 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
      * draw();
      *
      */
-    
-    renderer.pollEvents();
-    
-    auto& base_transform = g.base_transform;
-    auto& floor_transform = g.floor_transform;
-    auto& camera = g.camera;
-    
-    auto& tprevious = g.tprevious;
-    auto& tdelta = g.tdelta;
-    auto& tbase = g.tbase;
-    
-    auto& time_value = g.time_value;
-    
-    auto& object_matrices = g.object_matrices;
-    
-    /* Define frame data */
-    base_transform.position.x() = C_CAST<scalar>(CMath::sin(tprevious) * 2.);
-    base_transform.position.y() = C_CAST<scalar>(CMath::cos(tprevious) * 2.);
-    
-    //      camera.position.z() = -tprevious;
-    
-    time_value = C_CAST<scalar>(CMath::sin(tprevious) + (CMath::pi / 4.));
-    
-    floor_transform.rotation.y() = C_CAST<scalar>(CMath::sin(tprevious));
-    floor_transform.rotation = normalize_quat(floor_transform.rotation);
-    
-    camera.position.x() -= 0.1;
-    object_matrices[0] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(base_transform);
-    object_matrices[2] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(floor_transform);
-    
-    camera.position.x() += 0.2;
-    object_matrices[1] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(base_transform);
-    object_matrices[3] = GenPerspective(camera) * GenTransform(camera) *
-    GenTransform(floor_transform);
-    
-    camera.position.x() -= 0.1;
-    
+
     /*
      * In APIs such as GL4.3+, this will apply vertex and fragment states
      * separately.
@@ -561,17 +588,9 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         g.buffer_debug->end();
     }
     
-//    frame_counter.update(Time::CurrentMicroTimestamp()/1000);
-    
     renderer.swapBuffers();
-
-    d->rt_queue->executeTasks();
     
-    tdelta = tbase + renderer.contextTime() - tprevious;
-    tprevious = tbase + renderer.contextTime();
-    
-    d->r_state.time_base = tprevious;
-//    d->r_state.debug_enabled = do_debugging;
+    d->frameCount++;
 }
 
 void RendererCleanup(CDRenderer& renderer, RendererState* d)
@@ -582,46 +601,76 @@ void RendererCleanup(CDRenderer& renderer, RendererState* d)
 
 //    PNG::Save(m_framebuffer, GLM::DefaultFramebuffer().size(), "test.png");
 
+    auto& g = d->g_data;
+
+    g.vertbuf->dealloc();
+    g.vertdesc.dealloc();
+    g.v_shader.dealloc();
+    g.f_shader.dealloc();
+    g.eye_pip.dealloc();
+    g.eyesamp.dealloc();
+
+    delete g.buffer_debug;
+    g.buffer_debug = nullptr;
+
+    delete g.o_query;
+    g.o_query = nullptr;
+
+    delete g.vertbuf;
+    g.vertbuf = nullptr;
+
+    delete g.eyetex;
+    g.eyetex = nullptr;
+
+    g.render_target = nullptr;
+
+    g.loader = nullptr;
+    GLM::UnloadAPI();
+
     cDebug("Saving time: {0}", d->r_state.time_base);
     Store::SaveMemory(&d->r_state, sizeof(d->r_state), 0);
 }
 
-//void CDRenderer::frame_count(uint32 f, c_cptr)
-//{
-//    cDebug("Swaps/s: {0}",f);
+void frame_count(RendererState* d)
+{
+    cDebug("Swaps/s: {0}", d->frameCount);
 
-//    if(m_query)
-//    {
-//        cDebug("GPU Driver: {0}", fun.GetDriver());
-//        cDebug("GPU Devices: {0}", fun.GetNumGpus());
-//        for(GpuInfo::GpuView e : GpuInfo::GpuQueryView(fun))
-//        {
-//            cDebug("GPU Model: {0}", e.model());
+    d->frameCount = 0;
 
-//            auto temp = e.temp();
-//            cDebug("Temperature: {0} // {1}", temp.current, temp.max);
+    if(d->gq_data.haveGpuQuery)
+    {
+        auto fun = d->gq_data.fun;
+        cDebug("GPU Driver: {0}", fun.GetDriver());
+        cDebug("GPU Devices: {0}", fun.GetNumGpus());
+        for(GpuInfo::GpuView e : GpuInfo::GpuQueryView(fun))
+        {
+            cDebug("GPU Model: {0}", e.model());
 
-//            auto mem = e.mem();
-//            cDebug("Memory use: tot={0}, used={1}, free={2}", mem.total, mem.used, mem.free);
-//            cDebug("Memory used by this application: {0}", e.memUsage(ProcessProperty::Pid()));
+            auto temp = e.temp();
+            cDebug("Temperature: {0} // {1}", temp.current, temp.max);
 
-//            auto clk = e.clock(GpuInfo::Clock::Graphics);
-//            cDebug("Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
-//            clk = e.clock(GpuInfo::Clock::Memory);
-//            cDebug("Memory limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
-//            clk = e.clock(GpuInfo::Clock::VideoDecode);
-//            cDebug("Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            auto mem = e.mem();
+            cDebug("Memory use: tot={0}, used={1}, free={2}", mem.total, mem.used, mem.free);
+            cDebug("Memory used by this application: {0}", e.memUsage(ProcessProperty::Pid()));
 
-//            auto bus = e.bus();
-//            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
+            auto clk = e.clock(GpuInfo::Clock::Graphics);
+            cDebug("Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            clk = e.clock(GpuInfo::Clock::Memory);
+            cDebug("Memory limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            clk = e.clock(GpuInfo::Clock::VideoDecode);
+            cDebug("Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
 
-//            auto util = e.usage();
-//            cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
-//                   util.gpu, util.mem, util.decoder, util.encoder);
+            auto bus = e.bus();
+            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
 
-//            cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
-//        }
-//    }
+            auto util = e.usage();
+            cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
+                   util.gpu, util.mem, util.decoder, util.encoder);
 
-//    cDebug("Memory: {0}", ProcessProperty::Mem(ProcessProperty::Pid()));
-//}
+            cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));
+        }
+    }
+
+    cDebug("Memory: {0}", ProcessProperty::Mem(ProcessProperty::Pid()));
+}
+

@@ -44,15 +44,15 @@ int32 coffee_main(int32, cstring_w*)
     props.gl.flags |= GLProperties::GLDebug;
     
     EDATA* loop = new EDATA{
-        new CDRenderer,
-        new RendererState,
+        MkUq<CDRenderer>(),
+        MkUq<RendererState>(),
         SetupRendering,
         RendererLoop,
         RendererCleanup,
         0, {}
         };
     
-    auto renderer = loop->renderer;
+    auto renderer = loop->renderer.get();
     
     /* Install some standard event handlers */
     renderer->installEventHandler({EventHandlers::EscapeCloseWindow<CDRenderer>,
@@ -71,13 +71,23 @@ int32 coffee_main(int32, cstring_w*)
     loop->data->rt_queue = RuntimeQueue::CreateNewQueue("MainQueue");
 
     RuntimeQueue::Queue({
-                            [](){
-                                cDebug("Hello from RQ!");
+                            [&](){
+                                frame_count(loop->data.get());
                             },
                             {},
                             std::chrono::seconds(1),
                             RuntimeTask::Periodic,
                             0,
+                        });
+
+    RuntimeQueue::Queue({
+                           [&](){
+                                LogicLoop(*loop->renderer.get(), loop->data.get());
+                            },
+                            {},
+                            std::chrono::milliseconds(10),
+                            RuntimeTask::Periodic,
+                            0
                         });
 
     CString err;
