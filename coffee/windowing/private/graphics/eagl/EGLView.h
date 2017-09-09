@@ -18,9 +18,7 @@
 
 @interface EGLView : NSObject {
     
-    AppDelegate* mAppDelegate;
-    EAGLContext* mContext;
-    GLKView* mView;
+    
     
 }
     + (EGLView*) createView;
@@ -29,8 +27,12 @@
 
     - (bool) createView;
 
+    - (void) dealloc;
+
     - (AppDelegate*) getApp;
     - (EAGLContext*) getContext;
     - (GLKView*) getView;
 
 @end
+
+extern EGLView* current_view;

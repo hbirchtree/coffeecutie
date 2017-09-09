@@ -27,6 +27,9 @@ class EGLRenderer : public GLApplication
 #endif
 
     UqPtr<EGL_Data> m_eglData;
+    
+    EGL_GL_Context* mContext;
+    
 public:
     EGLRenderer();
     virtual ~EGLRenderer();

@@ -36,6 +36,24 @@ extern void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
 // ... And we only need to link to a valid library for it.
 extern void* coffee_event_handling_data;
 
+enum CfGeneralEventType
+{
+    CfNullEvent,
+    CfResizeEvent = 1,
+    CfGestureEvent,
+    CfTouchEvent,
+};
+struct CfGeneralEvent
+{
+    enum CfGeneralEventType type;
+    uint32_t pad;
+};
+
+struct CfResizeEventData
+{
+    uint32_t w, h;
+};
+
 enum CfSensorType
 {
     CfSensor_Accel = 0x1,
@@ -112,5 +130,30 @@ struct CfMessageDisplay
 };
 
 #ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+namespace Coffee{
+namespace Display{
+class EventApplication;
+}
+
+namespace CfAdaptors{
+
+using namespace Display;
+
+struct CfAdaptor
+{
+    CfGeneralEventType type;
+    void(*func)(EventApplication*, int event, void*, void*, void*);
+};
+
+extern void CfResizeHandler(EventApplication* app, int event,
+                     void* p1, void* p2, void* p3);
+
+
+
+}
 }
 #endif

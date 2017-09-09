@@ -7,6 +7,8 @@
 //
 
 #import "AppDelegate.h"
+#import "../../graphics/eagl/EGLView.h"
+
 #import <CoreMotion/CoreMotion.h>
 
 // This is where all the foreign stuff comes from
@@ -49,11 +51,18 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
     CoffeeForeignSignalHandle = HandleForeignSignals;
     CoffeeForeignSignalHandleNA = HandleForeignSignalsNA;
     
+    if(self.window)
+    {
+        [self.window dealloc];
+    }
+    
     self.window = [[UIWindow alloc] init];
     self.window.backgroundColor = [UIColor redColor];
     
     // Call the Coffee entrypoint, it will set up a bunch of things
     deref_main_c(apple_entry_point, 0, NULL);
+    
+    CoffeeEventHandleCall(CoffeeHandle_Setup);
 
     if(self.window.rootViewController == nil)
     {
@@ -72,6 +81,8 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
     
     CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+    
+    [current_view dealloc];
 }
 
 
@@ -91,6 +102,20 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     CoffeeEventHandleCall(CoffeeHandle_Setup);
+    
+    struct CfGeneralEvent ev = {
+        .type = CfResizeEvent,
+        .pad = 0,
+    };
+    
+    CGSize screenRes = [[UIScreen mainScreen] bounds].size;
+    
+    struct CfResizeEventData evdata = {
+        .w = screenRes.width,
+        .h = screenRes.height,
+    };
+    
+    CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, &evdata, NULL);
 }
 
 
@@ -211,13 +236,29 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3)
         case CoffeeForeign_GetWinSize:
         {
             int* winSize = (int*)ptr1;
-            CGSize size = [[UIScreen mainScreen] bounds].size;
+            // nativeBounds returns the portrait resolution...
+            CGSize size = [[UIScreen mainScreen] nativeBounds].size;
+            
+            UIInterfaceOrientation currOri = [[UIApplication sharedApplication] statusBarOrientation];
+            // So we have to transpose it when running in landscape mode
+            // We cannot use UIDevice's orientation, because it is undefined
+            //  at load-time
+            if(UIInterfaceOrientationIsLandscape(currOri))
+            {
+                CGFloat width = size.width;
+                size.width = size.height;
+                size.height = width;
+            }
+            
+            // ... and then we just fill the C++-side buffers.
             winSize[0] = size.width;
             winSize[1] = size.height;
             break;
         }
         case CoffeeForeign_ActivateMotion:
         {
+            // Make sensor initialization explicit, for power consumption
+        
             printf("Request to activate motion device");
             if(!app_motionManager)
                 app_motionManager = [CMMotionManager alloc];

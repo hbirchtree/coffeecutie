@@ -407,6 +407,8 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
 
     if(!egl_create_context(this, m_eglData.get(), err))
         return false;
+    
+    mContext = new EGL_GL_Context(*this);
 
     if(!glContext()->acquireContext())
         return false;
@@ -437,6 +439,9 @@ void EGLRenderer::contextTerminate()
         eglDestroyContext(m_eglData->display, m_eglData->context);
 
     eglTerminate(m_eglData->display);
+    
+    delete mContext;
+    mContext = nullptr;
 
     m_eglData.reset(nullptr);
 }
@@ -506,8 +511,7 @@ CGL::CGL_Context *EGLRenderer::glContext()
     EGL_VERIFYCONTEXT()
             return nullptr;
 
-    static EGL_GL_Context ctxt(*this);
-    return &ctxt;
+    return mContext;
 }
 
 CGL::CGL_ScopedContext EGLRenderer::scopedContext()

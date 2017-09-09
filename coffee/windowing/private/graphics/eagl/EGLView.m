@@ -3,16 +3,26 @@
 
 extern void* appdelegate_ptr;
 
-
+EGLView* current_view = NULL;
 
 extern int(*apple_entry_point)(int, char**);
 extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 
-@implementation EGLView
+@implementation EGLView {
+    AppDelegate* mAppDelegate;
+    EAGLContext* mContext;
+    GLKView* mView;
+}
 
 + (EGLView*) createView
 {
-    return [[EGLView alloc] init];
+    if(current_view)
+    {
+        [current_view dealloc];
+    }
+
+    current_view = [[EGLView alloc] init];
+    return current_view;
 }
 
 - (bool) createContext:(uint32_t)contextVer
@@ -31,10 +41,6 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 
 - (bool) createView
 {
-    // Remove previous root viewcontroller
-    if(self->mAppDelegate.window.rootViewController)
-        [self->mAppDelegate.window.rootViewController release];
-    
     GLKView* view = [[GLKView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
@@ -43,9 +49,13 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
     view.context = self->mContext;
     view.delegate = self->mAppDelegate;
     
-    GLKViewController* vc = [[GLKViewController alloc]
-     initWithNibName: nil
-     bundle:nil];
+    self->mView = view;
+    
+    GLKViewController* vc = nil;
+    
+    vc = [[GLKViewController alloc]
+          initWithNibName: nil
+          bundle:nil];
     
     vc.view = view;
     vc.preferredFramesPerSecond = 60;
@@ -53,9 +63,21 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
     vc.delegate = self->mAppDelegate;
     
     self->mAppDelegate.window.rootViewController = vc;
-    
-    self->mView = view;
+
     return true;
+}
+
+- (void) dealloc
+{
+    GLKViewController* vc = (GLKViewController*)self->mAppDelegate.window.rootViewController;
+    
+    vc.view = nil;
+    
+    current_view = nil;
+    
+    self->mAppDelegate.window.rootViewController = [[UIViewController alloc] init];
+    
+    [super dealloc];
 }
 
 - (AppDelegate*) getApp

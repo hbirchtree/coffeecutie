@@ -42,30 +42,54 @@ struct EventLoopData
             Timestamp max;
         } time;
     };
+    
+#if defined(COFFEE_USE_APPLE_GLKIT)
+    CDProperties visual;
+#endif
 
     FORCEDINLINE Renderer& r() {return *renderer.get();}
     FORCEDINLINE ShareData* d() {return data.get();}
 };
 
+namespace CfEventFunctions {
 template<typename RendType, typename DataType>
 void WrapEventFunction(void* data, int event)
 {
     using ELD = EventLoopData<RendType,DataType>;
     
+    static int CurrentState;
+    
     ELD* edata = C_FCAST<ELD*>(data);
 
     switch(event)
     {
+        case CoffeeHandle_IsForeground:
         case CoffeeHandle_Setup:
-        edata->setup(*edata->renderer, edata->data);
+        if(CurrentState == 0)
+        {
+            if(LoadHighestVersion(&edata->r(), edata->visual, nullptr))
+            {
+                edata->setup(edata->r(), edata->d());
+                CurrentState = 1;
+            }
+        }
         break;
         
         case CoffeeHandle_Loop:
-        edata->loop(*edata->renderer, edata->data);
+        if(CurrentState == 1)
+            edata->loop(edata->r(), edata->d());
+        RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;
         
+        case CoffeeHandle_TransBackground:
         case CoffeeHandle_Cleanup:
-        edata->cleanup(*edata->renderer, edata->data);
+        if(CurrentState == 1)
+        {
+            CurrentState = 0;
+            edata->cleanup(edata->r(), edata->d());
+            
+            edata->r().cleanup();
+        }
         break;
         
         default:
@@ -73,6 +97,42 @@ void WrapEventFunction(void* data, int event)
     }
 }
 
+template<typename RendType, typename DataType>
+void WrapEventFunctionNA(void* data, int event, void* p1, void* p2, void* p3)
+{
+    using ELD = EventLoopData<RendType,DataType>;
+    
+    static const constexpr CfAdaptors::CfAdaptor EventHandlingVector[10] = {
+        {},
+        {CfResizeEvent, CfAdaptors::CfResizeHandler},
+    };
+    
+    ELD* edata = C_FCAST<ELD*>(data);
+    
+    switch(event)
+    {
+        case CoffeeHandle_GeneralEvent:
+        {
+            struct CfGeneralEvent* g = C_FCAST<CfGeneralEvent*>(p1);
+            
+            auto func = EventHandlingVector[g->type].func;
+            
+            if(!func)
+            {
+                fprintf(stderr, "Hit NULL event handler!\n");
+                return;
+            }
+            
+            EventHandlingVector[g->type].func(&edata->r(), event,
+                                              p1, p2, p3);
+            
+            break;
+        }
+        default:
+        break;
+    }
+}
+}
 
 class EventApplication : public InputApplication
 {
@@ -274,25 +334,28 @@ public:
 
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
-
-
-        if(!LoadHighestVersion(&ev.r(), visual, &err))
-        {
-            return -1;
-        }
-
-        ev.time.start = Time::CurrentTimestamp();
         
 #if defined(COFFEE_USE_APPLE_GLKIT)
         /* Under GLKit, the entry point for setup, update and cleanup
          *  reside in AppDelegate.m
          * Lifecycle is manageed by UIKit in this case
          */
+        
+        ev.visual = visual;
+        
         coffee_event_handling_data = &ev;
-        CoffeeEventHandle = WrapEventFunction<Renderer, Data>;
+        CoffeeEventHandle = CfEventFunctions::WrapEventFunction<Renderer, Data>;
+        CoffeeEventHandleNA = CfEventFunctions::WrapEventFunctionNA<Renderer, Data>;
         
         return 0;
+        
 #else
+        if(!LoadHighestVersion(&ev.r(), visual, &err))
+        {
+            return -1;
+        }
+
+        ev.time.start = Time::CurrentTimestamp();
 
 #if defined(COFFEE_EMSCRIPTEN)
         // Under emscripten, only the loop function is used later

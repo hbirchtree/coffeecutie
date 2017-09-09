@@ -10,8 +10,12 @@ namespace RHI{
 namespace GLEAM{
 
 static cstring m_shader_vertex_passthrough = {
+#if !defined(COFFEE_APPLE)
     "#version 300 es\n"
     "precision lowp float;\n"
+#else
+    "#version 330\n"
+#endif
     "layout(location=0) in vec3 pos;\n"
     "layout(location=1) in vec2 tex;\n"
     ""
@@ -24,8 +28,12 @@ static cstring m_shader_vertex_passthrough = {
     "}\n"
 };
 static cstring m_shader_fragment_passthrough = {
+#if !defined(COFFEE_APPLE)
     "#version 300 es\n"
     "precision lowp float;\n"
+#else
+    "#version 330\n"
+#endif
     "uniform sampler2D tex;\n"
     "in vec2 tex_out;\n"
     "layout(location=0) out vec4 out_col;\n"

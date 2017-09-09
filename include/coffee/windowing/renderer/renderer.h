@@ -67,7 +67,9 @@ public:
 protected:
     CSDL2Renderer(CObject* parent);
 
-#if !defined(COFFEE_USE_SDL_EVENT) && !defined(COFFEE_USE_MAEMO_X11)
+#if !defined(COFFEE_USE_SDL_EVENT) && \
+    !defined(COFFEE_USE_MAEMO_X11) && \
+    !defined(COFFEE_USE_APPLE_GLKIT)
     // InputApplication interface
 public:
     virtual bool inputPreInit(CString *) {return true;}
@@ -94,14 +96,6 @@ public:
 public:
     virtual void injectEvent(const CIEvent &, c_cptr) {}
     virtual void injectEvent(const CDEvent &, c_cptr) {}
-    virtual bigscalar contextTime() const
-    {
-        static u64 start_time = 0;
-        if(start_time == 0)
-            start_time = Time::CurrentTimestamp<std::chrono::microseconds>();
-
-        return bigscalar(Time::CurrentTimestamp<std::chrono::microseconds>() - start_time) * 1_us;
-    }
 #endif
 };
 
