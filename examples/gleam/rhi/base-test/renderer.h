@@ -130,8 +130,10 @@ public:
     
 };
 
-void KeyEventHandler(CDRenderer* r, const CIEvent& e, c_cptr data)
+void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
 {
+    RendererState* rdata = C_FCAST<RendererState*>(r);
+
     if(e.type == CIEvent::Keyboard)
     {
         auto kev = C_CAST<CIKeyEvent const*>(data);
@@ -146,10 +148,33 @@ void KeyEventHandler(CDRenderer* r, const CIEvent& e, c_cptr data)
 //                setWindowPosition({0,0});
         }
     }
+    
+    if(e.type == CIEvent::TouchTap)
+    {
+        cDebug("Success!");
+    }
+    
+    if(e.type == CIEvent::TouchRotate)
+    {
+        CITouchRotateEvent* rev = C_FCAST<CITouchRotateEvent*>(data);
+        
+        Quatf rotation = Quatf(1.f, 0.f, rev->radians * 0.05f, 0.f);
+        
+        rdata->g_data.camera.rotation =
+                    normalize_quat(rotation * rdata->g_data.camera.rotation);
+    }
+    
+    if(e.type == CIEvent::TouchPinch)
+    {
+        CITouchPinchEvent* pev = C_FCAST<CITouchPinchEvent*>(data);
+        
+        rdata->g_data.camera.position.z() += (pev->factor - 1.f);
+    }
 }
 
-void DisplayEventHandler()
+void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
 {
+    RendererState* rdata = C_FCAST<RendererState*>(r);
 //    if(e.type == CDEvent::Resize)
 //    {
 //        auto rev = C_CAST<Display::CDResizeEvent const*>(data);
@@ -298,7 +323,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Pipeline bind");
     
     /* Uploading textures */
-    g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1, GLM::TextureDMABuffered);
+    g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1,
+                              GLM::TextureDMABuffered
+                              | GLM::TextureArrayPerInstance);
     auto& eyetex = *g.eyetex;
     
     eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
@@ -406,6 +433,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     
     auto& camera = g.camera;
+    
+    camera = CGCamera();
     
     camera.aspect = 1.6f;
     camera.fieldOfView = 85.f;

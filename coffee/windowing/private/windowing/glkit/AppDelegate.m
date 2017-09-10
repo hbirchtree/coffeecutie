@@ -37,6 +37,16 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 void HandleForeignSignals(int event);
 void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
 
+void DispatchGeneralEvent(uint32_t type, void* data)
+{
+    struct CfGeneralEvent ev = {
+        .type = type,
+        .pad = 0,
+    };
+    
+    CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, data, NULL);
+}
+
 @interface AppDelegate ()
 
 @end
@@ -70,19 +80,54 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
         exit(0);
     }
     
+    UITapGestureRecognizer* tapRecog = [[UITapGestureRecognizer alloc]
+                                        initWithTarget:self
+                                        action:@selector(handleTap:)];
+    
+    UIPinchGestureRecognizer* pinchRecog = [[UIPinchGestureRecognizer alloc]
+                                        initWithTarget:self
+                                        action:@selector(handlePinch:)];
+    
+    UISwipeGestureRecognizer* swipeRecog = [[UISwipeGestureRecognizer alloc]
+                                        initWithTarget:self
+                                        action:@selector(handleSwipe:)];
+    
+    UIPanGestureRecognizer* panRecog = [[UIPanGestureRecognizer alloc]
+                                            initWithTarget:self
+                                            action:@selector(handlePan:)];
+    
+    UIRotationGestureRecognizer* rotRecog = [[UIRotationGestureRecognizer alloc]
+                                            initWithTarget:self
+                                            action:@selector(handleRotation:)];
+    
+    UIView* vc_view = self.window.rootViewController.view;
+    
+    [vc_view addGestureRecognizer: tapRecog];
+    [vc_view addGestureRecognizer: pinchRecog];
+    [vc_view addGestureRecognizer: swipeRecog];
+    [vc_view addGestureRecognizer: panRecog];
+    [vc_view addGestureRecognizer: rotRecog];
+    
     [self.window makeKeyAndVisible];
     
     return YES;
 }
 
 
+- (void)applicationDidReceiveMemoryWarning:(UIApplication *)application
+{
+    CoffeeEventHandleCall(CoffeeHandle_LowMem);
+    
+    NSLog(@"Low memory warning!");
+}
+
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
     // Use this method to pause ongoing tasks, disable timers, and invalidate graphics rendering callbacks. Games should use this method to pause the game.
     
-    CoffeeEventHandleCall(CoffeeHandle_Cleanup);
+    CoffeeEventHandleCall(CoffeeHandle_TransBackground);
     
-    [current_view dealloc];
+    CoffeeEventHandleCall(CoffeeHandle_Cleanup);
 }
 
 
@@ -103,19 +148,16 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     CoffeeEventHandleCall(CoffeeHandle_Setup);
     
-    struct CfGeneralEvent ev = {
-        .type = CfResizeEvent,
-        .pad = 0,
-    };
+    CoffeeEventHandleCall(CoffeeHandle_IsForeground);
     
-    CGSize screenRes = [[UIScreen mainScreen] bounds].size;
+    CGSize screenRes = [[UIScreen mainScreen] nativeBounds].size;
     
     struct CfResizeEventData evdata = {
         .w = screenRes.width,
         .h = screenRes.height,
     };
     
-    CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent, &ev, &evdata, NULL);
+    DispatchGeneralEvent(CfResizeEvent, &evdata);
 }
 
 
@@ -132,6 +174,93 @@ void HandleForeignSignalsNA(int event, void* ptr1, void* ptr2, void* ptr3);
 - (void)glkViewControllerUpdate:(GLKViewController *)controller
 {
     // NOOP
+}
+
+- (void)handleTap: (UITapGestureRecognizer*) recog
+{
+    CGPoint point = [recog locationInView: self.window.rootViewController.view];
+
+    struct CfTouchEventData ev = {};
+    
+    ev.type =  CfTouchTap;
+    
+    ev.event.tap.x = point.x;
+    ev.event.tap.y = point.y;
+    
+    DispatchGeneralEvent(CfTouchEvent, &ev);
+}
+
+- (void)handlePinch: (UIPinchGestureRecognizer*) recog
+{
+    CGPoint point = [recog locationInView: self.window.rootViewController.view];
+
+    struct CfTouchEventData ev = {};
+    
+    ev.type = CfTouchPinch;
+    
+    ev.event.pinch.x = point.x;
+    ev.event.pinch.y = point.y;
+    
+    ev.event.pinch.factor = recog.scale;
+    
+    DispatchGeneralEvent(CfTouchEvent, &ev);
+}
+
+- (void)handleSwipe: (UISwipeGestureRecognizer*) recog
+{
+//    CGPoint point = [recog locationInView: self.window.rootViewController.view];
+//
+//    struct CfTouchEventData ev = {};
+//    
+//    ev.type =  CfTouchPan;
+//    
+//    ev.event.tap.x = point.x;
+//    ev.event.tap.y = point.y;
+//    
+//    DispatchGeneralEvent(CfTouchEvent, &ev);
+}
+
+- (void)handlePan: (UIPanGestureRecognizer*) recog
+{
+    UIView* targetView = self.window.rootViewController.view;
+
+    CGPoint point = [recog locationInView: targetView];
+    
+    CGPoint translation = [recog translationInView: targetView];
+    CGPoint velocity = [recog velocityInView: targetView];
+
+    struct CfTouchEventData ev = {};
+    
+    ev.type =  CfTouchPan;
+    
+    ev.event.pan.ox = point.x;
+    ev.event.pan.oy = point.y;
+    
+    ev.event.pan.dx = translation.x;
+    ev.event.pan.dy = translation.y;
+    
+    ev.event.pan.vx = velocity.x;
+    ev.event.pan.vy = velocity.y;
+    
+    ev.event.pan.fingerCount = recog.numberOfTouches;
+    
+    DispatchGeneralEvent(CfTouchEvent, &ev);
+}
+
+- (void)handleRotation: (UIRotationGestureRecognizer*) recog
+{
+        CGPoint point = [recog locationInView: self.window.rootViewController.view];
+
+    struct CfTouchEventData ev = {};
+    
+    ev.type = CfTouchRotate;
+    
+    ev.event.rotate.x = point.x;
+    ev.event.rotate.y = point.y;
+    
+    ev.event.rotate.radians = recog.rotation;
+    
+    DispatchGeneralEvent(CfTouchEvent, &ev);
 }
 
 // TODO: Add handlers for touch events and key events

@@ -41,7 +41,8 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 
 - (bool) createView
 {
-    GLKView* view = [[GLKView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    GLKView* view = [[GLKView alloc] initWithFrame:
+                            [[UIScreen mainScreen] bounds]];
     
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
     view.drawableStencilFormat = GLKViewDrawableStencilFormat8;
@@ -69,13 +70,15 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 
 - (void) dealloc
 {
-    GLKViewController* vc = (GLKViewController*)self->mAppDelegate.window.rootViewController;
+    GLKViewController* vc = (GLKViewController*)self->mAppDelegate
+                                    .window.rootViewController;
     
     vc.view = nil;
     
     current_view = nil;
     
-    self->mAppDelegate.window.rootViewController = [[UIViewController alloc] init];
+    self->mAppDelegate.window.rootViewController = \
+                                        [[UIViewController alloc] init];
     
     [super dealloc];
 }
@@ -94,11 +97,5 @@ extern int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
 {
     return self->mView;
 }
-
-/*
-self->mView = [[GLKView alloc] initWithFrame:[[UIScreen mainScreen] bounds] context: self->mContext];
-    
-mView.delegate = self;
-*/
 
 @end

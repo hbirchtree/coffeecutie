@@ -9,10 +9,14 @@
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate, GLKViewDelegate, GLKViewControllerDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, GLKViewDelegate, GLKViewControllerDelegate, UIGestureRecognizerDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
+- (void)handleTap: (UITapGestureRecognizer*) recog;
+
+- (void)handleSwipe: (UISwipeGestureRecognizer*) recog;
+
+- (void)handleSwipe: (UISwipeGestureRecognizer*) recog;
 
 @end
-

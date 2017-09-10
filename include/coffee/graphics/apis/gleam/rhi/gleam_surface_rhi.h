@@ -45,11 +45,7 @@ protected:
     CSize m_size;
 };
 
-#if !defined(COFFEE_ONLY_GLES20)
 struct GLEAM_Surface3D_Base : GLEAM_Surface
-        #else
-struct GLEAM_Surface3D_Base : GraphicsAPI::Surface
-        #endif
 {
     friend struct GLEAM_Sampler3D;
 
@@ -67,9 +63,6 @@ struct GLEAM_Surface3D_Base : GraphicsAPI::Surface
 
 protected:
     Texture m_type;
-#if defined(COFFEE_ONLY_GLES20)
-    Vector<CGhnd> m_handles;
-#endif
 };
 
 struct GLEAM_Surface3D : GLEAM_Surface3D_Base

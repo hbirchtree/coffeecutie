@@ -40,15 +40,53 @@ enum CfGeneralEventType
 {
     CfNullEvent,
     CfResizeEvent = 1,
-    CfGestureEvent,
+    
     CfTouchEvent,
 };
+
+enum CfTouchType
+{
+    CfTouchTap,
+    CfTouchPan,
+    CfTouchPinch,
+    CfTouchRotate,
+};
+    
 struct CfGeneralEvent
 {
-    enum CfGeneralEventType type;
-    uint32_t pad;
+        enum CfGeneralEventType type;
+        uint32_t pad;
 };
+    
+struct CfTouchEventData
+{
+    enum CfTouchType type;
 
+    union {
+        struct CfTouchTapEventData
+        {
+            uint32_t x, y;
+        } tap;
+        struct CfTouchPanEventData
+        {
+            uint32_t ox, oy;
+            uint32_t dx, dy;
+            uint32_t vx, vy;
+            uint32_t fingerCount;
+        } pan;
+        struct CfTouchPinchEventData
+        {
+            uint32_t x, y;
+            float factor;
+        } pinch;
+        struct CfTouchRotateEventData
+        {
+            uint32_t x, y;
+            float radians;
+        } rotate;
+    } event;
+};
+    
 struct CfResizeEventData
 {
     uint32_t w, h;
@@ -152,7 +190,8 @@ struct CfAdaptor
 extern void CfResizeHandler(EventApplication* app, int event,
                      void* p1, void* p2, void* p3);
 
-
+extern void CfTouchHandler(EventApplication* app, int event,
+                           void* p1, void* p2, void* p3);
 
 }
 }

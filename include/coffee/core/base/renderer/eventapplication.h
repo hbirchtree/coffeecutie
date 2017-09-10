@@ -64,6 +64,22 @@ void WrapEventFunction(void* data, int event)
     switch(event)
     {
         case CoffeeHandle_IsForeground:
+        {
+            break;
+        }
+        case CoffeeHandle_TransForeground:
+        {
+            break;
+        }
+        case CoffeeHandle_IsBackground:
+        {
+            break;
+        }
+        case CoffeeHandle_TransBackground:
+        {
+            break;
+        }
+        
         case CoffeeHandle_Setup:
         if(CurrentState == 0)
         {
@@ -81,7 +97,6 @@ void WrapEventFunction(void* data, int event)
         RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;
         
-        case CoffeeHandle_TransBackground:
         case CoffeeHandle_Cleanup:
         if(CurrentState == 1)
         {
@@ -105,6 +120,7 @@ void WrapEventFunctionNA(void* data, int event, void* p1, void* p2, void* p3)
     static const constexpr CfAdaptors::CfAdaptor EventHandlingVector[10] = {
         {},
         {CfResizeEvent, CfAdaptors::CfResizeHandler},
+        {CfTouchEvent, CfAdaptors::CfTouchHandler},
     };
     
     ELD* edata = C_FCAST<ELD*>(data);
@@ -393,8 +409,9 @@ public:
                 auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
                 r.injectEvent(qevent, nullptr);
             }
-
-            rt_queue->executeTasks();
+            
+            if(rt_queue)
+                rt_queue->executeTasks();
         }
 #endif
 

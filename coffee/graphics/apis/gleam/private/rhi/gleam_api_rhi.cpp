@@ -715,7 +715,12 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
         {
             auto hnd = pipeline.m_handle;
             auto loc = glGetUniformLocation(hnd, "InstanceID");
-
+            
+            auto loc_all = glGetUniformLocation(hnd, "InstanceCount");
+            
+            if(loc_all != -1)
+                    glUniform1i(loc_all, i.instances());
+            
             for(uint32 j=0;j<i.instances();j++)
             {
                 if(loc != -1)

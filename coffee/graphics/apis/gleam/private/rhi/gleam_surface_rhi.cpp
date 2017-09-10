@@ -155,20 +155,23 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
 }
 
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
-    #if !defined(COFFEE_ONLY_GLES20)
+#if !defined(COFFEE_ONLY_GLES20)
     GLEAM_Surface(t,fmt,mips,texflags),
-    #else
-    GraphicsAPI::Surface(fmt,mips,texflags),
-    #endif
+#else
+    GLEAM_Surface(Texture::T2D,fmt,mips,texflags),
+#endif
     m_size(0,0,0),
-    #if defined(COFFEE_ONLY_GLES20)
+#if defined(COFFEE_ONLY_GLES20)
     m_type(Texture::T2D)
-  #else
+#else
     m_type(t)
-  #endif
+#endif
 {
     C_USED(t);
 }
+
+#define TEX_SQUARE_GRID_SIZE(depth) \
+    C_CAST<u32>(CMath::ceil(CMath::sqrt(depth)))
 
 void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
 {
@@ -190,16 +193,13 @@ void GLEAM_Surface3D_Base::allocate(CSize3 size, PixelComponents c)
                             msz.width,msz.height,msz.depth);
     }
 #else
-    u32 len = msz.depth;
-    m_handles.resize(len);
-    CGL33::TexAlloc(len, m_handles.data());
-
-    for(CGhnd& h : m_handles)
-    {
-        CGL33::TexBind(m_type, h);
-        CGL33::TexImage2D(m_type, 0, m_pixfmt, msz.width, msz.height,
-                          0, c, BitFormat::UByte, nullptr);
-    }
+    CGL33::TexBind(m_type, m_handle);
+    
+    u32 square_size = TEX_SQUARE_GRID_SIZE(size.depth);
+    
+    CGL33::TexImage2D(m_type, 0, m_pixfmt,
+                      square_size * msz.width, square_size * msz.height,
+                      0, c, BitFormat::UByte, nullptr);
 #endif
 }
 
@@ -252,20 +252,25 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
     if(GL_DEBUG_MODE)
         upload_info(comp,mip,size.depth);
 #else
-    if(msz.depth + mof.z > m_handles.size())
+    // Packs all 2D textures into one 2D texture atlas, limited size
+    
+    CGL33::TexBind(m_type, m_handle);
+    
+    u32 g_size = TEX_SQUARE_GRID_SIZE(m_size.depth);
+    
+    for(u32 i=0;i < C_FCAST<u32>(size.depth); i++)
     {
-        cWarning("Invalid texture upload: Got max {0}, actual max is {1}",
-                 size.depth + offset.z, m_handles.size());
-    }
-
-    for(u32 i=0;i < C_FCAST<u32>(size.depth);i++)
-    {
-        CGL33::TexBind(m_type, m_handles[C_FCAST<u32>(offset.z) + i]);
-        CGL33::TexSubImage2D(m_type, mip, offset.x, offset.y,
-                             msz.width, msz.height, comp, fmt, data);
-
-        cWarning("Generating mipmaps");
-        CGL33::TexGenMipmap(m_type);
+        auto mofi = mof;
+        
+        auto x_coord = (mof.z + i) % g_size;
+        auto y_coord = (mof.z + i) / g_size;
+        
+        mofi.x += m_size.width * x_coord;
+        mofi.y += m_size.height * y_coord;
+        
+        CGL33::TexSubImage2D(m_type, mip,
+                             mofi.x, mofi.y, msz.width, msz.height,
+                             comp, fmt, data);
     }
 #endif
 }
@@ -404,12 +409,8 @@ void GLEAM_Sampler2DArray::bind(uint32 i)
     CGL33::SamplerBind(i,m_handle);
     CGL33::TexBind(m_surface->m_type,m_surface->m_handle);
 #else
-    uint32 bind = 0;
-    for(CGhnd& h : m_surface->m_handles)
-    {
-        CGL33::TexActive(i + bind++);
-        CGL33::TexBind(m_surface->m_type, h);
-    }
+    CGL33::TexActive(i);
+    CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
 #endif
 }
 
@@ -421,7 +422,8 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
     h.texture = m_surface->m_handle;
     h.m_sampler = m_handle;
 #else
-    h.texture = m_surface->m_handles[0];
+    CGL33::TexGenMipmap(m_surface->m_type);
+    h.texture = m_surface->m_handle;
 #endif
 
     return h;

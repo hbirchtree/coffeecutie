@@ -39,8 +39,15 @@ struct
 
         TouchTap, /*!< Touch event, motion and etc. */
         TouchMotion, /*!< Touch event, motion and etc. */
-        MultiTouch, /*!< Multi-touch events using several fingers*/
-        Gesture,/*!< Multi-touch events using several fingers*/
+        TouchPan, /*!< Multi-touch events using several fingers*/
+        TouchPinch, /*!< Two-finger pinch */
+        TouchRotate, /*!< Two-finger rotation */
+        
+        
+        /* Deprecated, not really good descriptions */
+        /* These originate from SDL */
+        MultiTouch,
+        Gesture,
     };
     EvTs ts = 0; /*!< Event timestamp*/
     EventType type = NoneType; /*!< Event type*/
@@ -368,6 +375,8 @@ struct CITouchMotionEvent
 struct CIMTouchMotionEvent
 {
     CPointF origin;
+    CPointF translation;
+    CPointF velocity;
     union
     {
         struct{
@@ -390,6 +399,18 @@ struct CIGestureEvent
         };
         uint64 evdata;
     };
+};
+
+struct CITouchPinchEvent
+{
+    CPointF origin;
+    scalar factor;
+};
+
+struct CITouchRotateEvent
+{
+    CPointF origin;
+    scalar radians;
 };
 
 C_FLAGS(CIKeyEvent::KeyModifiers,uint16);

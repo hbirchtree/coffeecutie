@@ -23,7 +23,8 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}",\
+                 StrUtil::hexify(error)); \
         if(err) \
             *err = cast_pod<>(error); \
         return false; \
@@ -33,7 +34,8 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}",\
+                 StrUtil::hexify(error)); \
         return false; \
     }
 
@@ -41,7 +43,8 @@ const constexpr static int EGL_MIN_VERB = 5;
     if(result != EGL_TRUE) \
     { \
         EGLint error = eglGetError(); \
-        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}", StrUtil::hexify(error)); \
+        cVerbose(EGL_MIN_VERB, "@" #result ": " "EGL error: {0}",\
+                 StrUtil::hexify(error)); \
     }
 
 #define EGL_NULLCHECK(result, error_text) \
@@ -73,7 +76,8 @@ namespace Display{
 
 #define EGL_PRINT_VALUE(property) \
     EGL_ERRORCHECK_N(eglGetConfigAttrib(disp, cfg, property, &prop)); \
-    cVerbose(EGL_MIN_VERB, "Config {0}: EGL property" #property ": {1}", EGL_PRINT(cfg), prop);
+    cVerbose(EGL_MIN_VERB, "Config {0}: EGL property" #property ": {1}",\
+             EGL_PRINT(cfg), prop);
 
 bool egl_config_to_bits(EGLDisplay disp, EGLConfig cfg, CDContextBits& bits)
 {
@@ -144,8 +148,10 @@ static bool egl_create_context(EGLRenderer* renderer,
             EGL_NONE,
         };
 
-        m_eglData->context = eglCreateContext(m_eglData->display, m_eglData->config,
-                                              EGL_NO_CONTEXT, &config_preferred[0]);
+        m_eglData->context = eglCreateContext(m_eglData->display,
+                                              m_eglData->config,
+                                              EGL_NO_CONTEXT,
+                                              &config_preferred[0]);
 
         EGL_NULLCHECK(m_eglData->context, "Failed to create EGL context");
     }
@@ -154,7 +160,8 @@ static bool egl_create_context(EGLRenderer* renderer,
     /* And now we perform voodoo-magic.
      * We need a valid X window manager handle for our window.
      * Where do we get it?
-     * We ask the other side of the class that we are part of. This requires traversing the class hierarchy up and down. It's really weird.
+     * We ask the other side of the class that we are part of. This
+     *  requires traversing the class hierarchy up and down. It's really weird.
      */
     ::Display* x_disp = nullptr;
     ::Window x_win = 0;
@@ -180,45 +187,55 @@ static bool egl_create_context(EGLRenderer* renderer,
 	egl_win = (EGLNativeWindowType)win->wininfo.winrt.window;
 #endif
     delete win;
-
+    
 #if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
-    cVerbose(8, "X11 display connection from SDL: {0}", EGL_PRINT(x_disp));
-    cVerbose(8, "X11 display connection from EGL: {0}", EGL_PRINT(eglGetDisplay(x_disp)));
+    cVerbose(8, "X11 display connection from SDL: {0}",
+             EGL_PRINT(x_disp));
+    cVerbose(8, "X11 display connection from EGL: {0}",
+             EGL_PRINT(eglGetDisplay(x_disp)));
     cVerbose(8, "X11 window handle: {0}", EGL_PRINT(x_win));
 #elif defined(COFFEE_RASPBERRY_DMX)
     cVerbose(8, "DISPMANX window handle: {0}", EGL_PRINT(dmx_win.element));
 #elif defined(COFFEE_USE_WINDOWS_ANGLE)
-	cVerbose(8, "Windows HWND: {0}", EGL_PRINT(egl_win));
+    cVerbose(8, "Windows HWND: {0}", EGL_PRINT(egl_win));
 #endif
     cVerbose(8, "Config for surface: {0}", EGL_PRINT(m_eglData->config));
-
+    
     cVerbose(8, "Calling eglCreateWindowSurface...");
-
+    
 #if defined(SDL_VIDEO_DRIVER_X11) || defined(COFFEE_USE_MAEMO_X11)
-    m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
+    m_eglData->surface = eglCreateWindowSurface(m_eglData->display,
+                                                m_eglData->config,
                                                 (EGLNativeWindowType)x_win, nullptr);
 #elif defined(COFFEE_RASPBERRY_DMX)
-    m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
+    m_eglData->surface = eglCreateWindowSurface(m_eglData->display,
+                                                m_eglData->config,
                                                 &dmx_win, nullptr);
 #elif defined(COFFEE_USE_WINDOWS_ANGLE)
-	m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
-												egl_win, nullptr);
+    m_eglData->surface = eglCreateWindowSurface(m_eglData->display,
+                                                m_eglData->config,
+                                                egl_win, nullptr);
 #elif defined(COFFEE_USE_APPLE_GLKIT)
     // The display is holding information on context and views in the Objective-C code
-    m_eglData->surface = eglCreateWindowSurface(m_eglData->display, m_eglData->config,
+    m_eglData->surface = eglCreateWindowSurface(m_eglData->display,
+                                                m_eglData->config,
                                                 nullptr, nullptr);
 #endif
-
+    
     cVerbose(8, "eglCreateWindowSurface returned: {0}", eglGetError());
     EGL_NULLCHECK(m_eglData->surface, "Failed to create surface");
 
     cVerbose(8, "Null check succeeded");
-
-    cVerbose(8, "EGL vendor: {0}", eglQueryString(m_eglData->display, EGL_VENDOR));
-    cVerbose(8, "EGL extensions: {0}", eglQueryString(m_eglData->display, EGL_EXTENSIONS));
-    cVerbose(8, "EGL version: {0}", eglQueryString(m_eglData->display, EGL_VERSION));
-    cVerbose(8, "EGL client APIs: {0}", eglQueryString(m_eglData->display, EGL_CLIENT_APIS));
-
+    
+    cVerbose(8, "EGL vendor: {0}",
+             eglQueryString(m_eglData->display, EGL_VENDOR));
+    cVerbose(8, "EGL extensions: {0}",
+             eglQueryString(m_eglData->display, EGL_EXTENSIONS));
+    cVerbose(8, "EGL version: {0}",
+             eglQueryString(m_eglData->display, EGL_VERSION));
+    cVerbose(8, "EGL client APIs: {0}",
+             eglQueryString(m_eglData->display, EGL_CLIENT_APIS));
+    
     return true;
 }
 
@@ -236,7 +253,8 @@ public:
 
     virtual bool acquireContext()
     {
-        EGL_ERRORCHECK_N(eglMakeCurrent(data.display, data.surface, data.surface, data.context));
+        EGL_ERRORCHECK_N(eglMakeCurrent(data.display, data.surface,
+                                        data.surface, data.context));
         new (&m_threadId) ThreadId;
         return true;
     }
@@ -268,7 +286,8 @@ public:
 
     virtual bool acquireContext()
     {
-        EGL_ERRORCHECK_N(eglMakeCurrent(data.display, data.surface, data.surface, data.context));
+        EGL_ERRORCHECK_N(eglMakeCurrent(data.display, data.surface,
+                                        data.surface, data.context));
         new (&m_threadId) ThreadId;
         return true;
     }
@@ -370,7 +389,8 @@ bool EGLRenderer::contextPostInit(const GLProperties &props, CString *err)
             EGL_NONE
         };
 
-        eglChooseConfig(m_eglData->display, &config_preferred[0], nullptr, 0, &config_num);
+        eglChooseConfig(m_eglData->display, &config_preferred[0],
+                        nullptr, 0, &config_num);
 
         cVerbose(5, "Number of FB configs: {0}", config_num);
         if(config_num < 1)
@@ -451,7 +471,8 @@ void EGLRenderer::swapBuffers()
     EGL_VERIFYCONTEXT()
         return;
 
-    EGL_ERRORCHECK_NOBOOL(eglSwapBuffers(m_eglData->display, m_eglData->surface));
+    EGL_ERRORCHECK_NOBOOL(eglSwapBuffers(m_eglData->display,
+                                         m_eglData->surface));
 }
 
 CSize EGLRenderer::framebufferSize() const
@@ -461,8 +482,12 @@ CSize EGLRenderer::framebufferSize() const
     EGL_VERIFYCONTEXT()
         return size;
 
-    EGL_ERRORCHECK_NOBOOL(eglQuerySurface(m_eglData->display, m_eglData->surface, EGL_WIDTH, &size.w));
-    EGL_ERRORCHECK_NOBOOL(eglQuerySurface(m_eglData->display, m_eglData->surface, EGL_HEIGHT, &size.h));
+    EGL_ERRORCHECK_NOBOOL(eglQuerySurface(m_eglData->display,
+                                          m_eglData->surface,
+                                          EGL_WIDTH, &size.w));
+    EGL_ERRORCHECK_NOBOOL(eglQuerySurface(m_eglData->display,
+                                          m_eglData->surface,
+                                          EGL_HEIGHT, &size.h));
 
     return size;
 }
@@ -479,8 +504,10 @@ void EGLRenderer::setSwapInterval(const int &i)
 
     EGLint max_swap = 0;
     EGLint min_swap = 0;
-    eglGetConfigAttrib(m_eglData->display, m_eglData->config, EGL_MAX_SWAP_INTERVAL, &max_swap);
-    eglGetConfigAttrib(m_eglData->display, m_eglData->config, EGL_MIN_SWAP_INTERVAL, &min_swap);
+    eglGetConfigAttrib(m_eglData->display, m_eglData->config,
+                       EGL_MAX_SWAP_INTERVAL, &max_swap);
+    eglGetConfigAttrib(m_eglData->display, m_eglData->config,
+                       EGL_MIN_SWAP_INTERVAL, &min_swap);
     if(i < min_swap || i > max_swap)
     {
         cWarning("Invalid swap interval, limits: [{0}, {1}], got {2}",
