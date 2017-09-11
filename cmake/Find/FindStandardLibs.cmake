@@ -23,18 +23,20 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT ANDROID)
     endif()
 endif()
 
-if(SDL_POWER_PLUGIN_ENABLED OR ANDROID OR WIN_UWP)
-    # We use SDL2 for some platform functionality, like power info
-    # On Android, it is also used to read assets and
-    #  acquiring device info.
-    find_package(SDL2 REQUIRED)
-    if(SDL2_INCLUDE_DIR)
-        list ( APPEND CORE_INCLUDE_DIR
-            $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
-            $<INSTALL_INTERFACE:include/SDL2>
-            )
+if(COFFEE_BUILD_SDL2)
+    if(SDL_POWER_PLUGIN_ENABLED OR ANDROID OR WIN_UWP)
+        # We use SDL2 for some platform functionality, like power info
+        # On Android, it is also used to read assets and
+        #  acquiring device info.
+        find_package(SDL2 REQUIRED)
+        if(SDL2_INCLUDE_DIR)
+            list ( APPEND CORE_INCLUDE_DIR
+                $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+                $<INSTALL_INTERFACE:include/SDL2>
+                )
+        endif()
+        #    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
     endif()
-#    list ( APPEND CORE_EXTRA_LIBRARIES ${SDL2_LIBRARY} )
 endif()
 
 if(APPLE)
@@ -71,10 +73,15 @@ if(ANDROID)
 #        GLESv1_CM
         GLESv2
         EGL
-
-        ${SDL2_LIBRARY}
-        ${SDL2_LIBRARIES}
         )
+
+    if(COFFEE_BUILD_SDL2)
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            SDL2
+            ${SDL2_LIBRARIES}
+            )
+    endif()
+
     list ( APPEND CORE_INCLUDE_DIR
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/bindings/android/include>
         )

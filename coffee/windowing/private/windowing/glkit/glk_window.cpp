@@ -172,6 +172,55 @@ void GLKWindow::windowTerminate()
 {
 }
 
+void GLKWindow::injectEvent(CIEvent const& e, c_cptr data)
+{
+    eventHandle(e, data);
+}
+
+void GLKWindow::injectEvent(CDEvent const& e, c_cptr data)
+{
+    eventHandle(e, data);
+}
+
+void GLKWindow::eventHandleD(const CDEvent& e, c_cptr d)
+{
+    eventHandle(e, d);
+}
+void GLKWindow::eventHandleI(const CIEvent& e, c_cptr d)
+{
+    eventHandle(e, d);
+}
+    
+void GLKWindow::eventHandle(const CIHapticEvent&, c_cptr)
+{
+    
+}
+void GLKWindow::eventHandle(const CDEvent& e, c_cptr d)
+{
+    for(EventHandlerD const& eh : m_eventhandlers_windw)
+    {
+        eh.func(eh.user_ptr, e, d);
+    }
+}
+void GLKWindow::eventHandle(const CIEvent& e, c_cptr d)
+{
+    for(EventHandlerI const& eh : m_eventhandlers_input)
+    {
+        eh.func(eh.user_ptr, e, d);
+    }
+}
+
+bool GLKWindow::installEventHandler(EventHandlerD eh)
+{
+    m_eventhandlers_windw.push_back(eh);
+    return true;
+}
+bool GLKWindow::installEventHandler(EventHandlerI eh)
+{
+    m_eventhandlers_input.push_back(eh);
+    return true;
+}
+
 }
 }
 

@@ -119,8 +119,6 @@ struct RendererState
 class CDRenderer : public CSDL2Renderer {
 public:
 
-    static void frame_count(uint32 f, c_cptr);
-
 private:
 
 public:
@@ -132,8 +130,10 @@ public:
     
 };
 
-void KeyEventHandler(CDRenderer* r, const CIEvent& e, c_cptr data)
+void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
 {
+    RendererState* rdata = C_FCAST<RendererState*>(r);
+
     if(e.type == CIEvent::Keyboard)
     {
         auto kev = C_CAST<CIKeyEvent const*>(data);
@@ -148,10 +148,33 @@ void KeyEventHandler(CDRenderer* r, const CIEvent& e, c_cptr data)
 //                setWindowPosition({0,0});
         }
     }
+    
+    if(e.type == CIEvent::TouchTap)
+    {
+        cDebug("Success!");
+    }
+    
+    if(e.type == CIEvent::TouchRotate)
+    {
+        CITouchRotateEvent* rev = C_FCAST<CITouchRotateEvent*>(data);
+        
+        Quatf rotation = Quatf(1.f, 0.f, rev->radians * 0.05f, 0.f);
+        
+        rdata->g_data.camera.rotation =
+                    normalize_quat(rotation * rdata->g_data.camera.rotation);
+    }
+    
+    if(e.type == CIEvent::TouchPinch)
+    {
+        CITouchPinchEvent* pev = C_FCAST<CITouchPinchEvent*>(data);
+        
+        rdata->g_data.camera.position.z() += (pev->factor - 1.f);
+    }
 }
 
-void DisplayEventHandler()
+void DisplayEventHandler(void* r, const CIEvent& e, c_cptr data)
 {
+    RendererState* rdata = C_FCAST<RendererState*>(r);
 //    if(e.type == CDEvent::Resize)
 //    {
 //        auto rev = C_CAST<Display::CDResizeEvent const*>(data);
@@ -242,7 +265,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     auto& eye_pip = g.eye_pip;
     
     /* Compiling shaders and assemble a graphics pipeline */
-    {
+    
+    do{
         const constexpr cstring shader_files[] = {
             "vr/vshader.glsl", "vr/fshader.glsl",
             "vr/vshader_es.glsl", "vr/fshader_es.glsl",
@@ -260,7 +284,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         if (!CResources::FileMap(v_rsc) || !CResources::FileMap(f_rsc)) {
             cWarning("Failed to map resources: {0}, {1}", v_rsc.resource(),
                      f_rsc.resource());
-            return;
+            break;
         }
         
         Bytes v_shader_code = FileGetDescriptor(v_rsc);
@@ -274,12 +298,12 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             cVerbose("Shaders attached");
             if (!eye_pip.assemble()) {
                 cWarning("Invalid pipeline");
-                return;
+                break;
             }
             cVerbose("GPU pipeline assembled");
         } else {
             cWarning("Shader compilation failed");
-            return;
+            break;
         }
         v_shader.dealloc();
         f_shader.dealloc();
@@ -288,7 +312,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         
         GLM::PRF::QRY_PIPDMP dumper(eye_pip);
         dumper.dump("hello.prg");
-    }
+    } while(false);
     cVerbose("Compiled shaders");
     
     /*
@@ -299,7 +323,9 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     cVerbose("Pipeline bind");
     
     /* Uploading textures */
-    g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1, GLM::TextureDMABuffered);
+    g.eyetex = new GLM::S_2DA(PixelFormat::RGBA8, 1,
+                              GLM::TextureDMABuffered
+                              | GLM::TextureArrayPerInstance);
     auto& eyetex = *g.eyetex;
     
     eyetex.allocate({1024, 1024, 4}, PixCmp::RGBA);
@@ -407,6 +433,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     
     auto& camera = g.camera;
+    
+    camera = CGCamera();
     
     camera.aspect = 1.6f;
     camera.fieldOfView = 85.f;

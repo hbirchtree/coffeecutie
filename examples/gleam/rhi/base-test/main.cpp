@@ -26,7 +26,7 @@ int32 coffee_main(int32, cstring_w*)
 {
     /* Set a prefix from which resources are fetched */
     CResources::FileResourcePrefix("sample_data/eye-demo/");
-//    SetPrintingVerbosity(8);
+    SetPrintingVerbosity(8);
 //    GotoApplicationDir();
 
     /*Moving on to regular rendering*/
@@ -67,11 +67,14 @@ int32 coffee_main(int32, cstring_w*)
 //                                   nullptr, renderer});
     renderer->installEventHandler({StandardInput::StandardCamera<CGCamera>,
                                    nullptr, &loop->data->g_data.camera});
+    
+    renderer->installEventHandler({KeyEventHandler, nullptr,
+                                   loop->data.get()});
 
     loop->data->rt_queue = RuntimeQueue::CreateNewQueue("MainQueue");
 
     RuntimeQueue::Queue({
-                            [&](){
+                            [loop](){
                                 frame_count(loop->data.get());
                             },
                             {},
@@ -81,7 +84,7 @@ int32 coffee_main(int32, cstring_w*)
                         });
 
     RuntimeQueue::Queue({
-                           [&](){
+                           [loop](){
                                 LogicLoop(*loop->renderer.get(), loop->data.get());
                             },
                             {},

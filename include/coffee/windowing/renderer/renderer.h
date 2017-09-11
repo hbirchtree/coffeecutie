@@ -11,6 +11,7 @@
 #include <coffee/windowing/windowing/x11/x11_window.h>
 #include <coffee/windowing/windowing/dispmanx/dispmanx_window.h>
 #include <coffee/windowing/windowing/glkit/glk_window.h>
+#include <coffee/windowing/windowing/ndkwindow/ndk_window.h>
 
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 
@@ -32,6 +33,9 @@ class CSDL2Renderer :
         public SDL2GLRenderer,
         #elif defined(COFFEE_USE_APPLE_GLKIT) && defined(COFFEE_USE_MAEMO_EGL)
         public GLKWindow,
+        public EGLRenderer,
+        #elif defined(COFFEE_USE_ANDROID_NATIVEWIN) && defined(COFFEE_USE_MAEMO_EGL)
+        public NDKWindow,
         public EGLRenderer,
         #elif defined(COFFEE_RASPBERRY_DMX)
         public DispmanXWindow,
@@ -67,7 +71,9 @@ public:
 protected:
     CSDL2Renderer(CObject* parent);
 
-#if !defined(COFFEE_USE_SDL_EVENT) && !defined(COFFEE_USE_MAEMO_X11)
+#if !defined(COFFEE_USE_SDL_EVENT) && \
+    !defined(COFFEE_USE_MAEMO_X11) && \
+    !defined(COFFEE_USE_APPLE_GLKIT)
     // InputApplication interface
 public:
     virtual bool inputPreInit(CString *) {return true;}
@@ -94,14 +100,6 @@ public:
 public:
     virtual void injectEvent(const CIEvent &, c_cptr) {}
     virtual void injectEvent(const CDEvent &, c_cptr) {}
-    virtual bigscalar contextTime() const
-    {
-        static u64 start_time = 0;
-        if(start_time == 0)
-            start_time = Time::CurrentTimestamp<std::chrono::microseconds>();
-
-        return bigscalar(Time::CurrentTimestamp<std::chrono::microseconds>() - start_time) * 1_us;
-    }
 #endif
 };
 

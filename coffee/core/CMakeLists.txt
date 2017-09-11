@@ -88,7 +88,13 @@ if( ANDROID )
 endif()
 
 # SDL power-management
-if(NOT POWERPC AND NOT IOS AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+if(COFFEE_BUILD_SDL2
+        AND NOT POWERPC
+        AND NOT IOS
+        AND (ANDROID
+            OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux"
+            OR APPLE
+            OR WIN32))
     set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
@@ -192,12 +198,17 @@ find_package ( RapidJson REQUIRED )
 find_package ( TinyXML2 REQUIRED )
 
 target_include_directories ( CoffeeCore
-    PUBLIC
+    SYSTEM PUBLIC
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
+    )
+
+target_include_directories ( CoffeeCore
+    PUBLIC
     $<INSTALL_INTERFACE:include/>
     $<INSTALL_INTERFACE:include/tinyxml2/>
     ${STANDARDLIBS_INCLUDE_DIR}
+#    /home/havard/.local/android-ndk-r13b/platforms/android-24/arch-arm64/usr/include
     )
 
 if(COFFEE_BUILD_SWIG_BINDING)

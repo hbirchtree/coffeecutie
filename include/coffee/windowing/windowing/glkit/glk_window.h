@@ -19,6 +19,9 @@ class GLKWindow :
 protected:
     CDProperties m_properties;
     
+    Vector<EventHandlerI> m_eventhandlers_input;
+    Vector<EventHandlerD> m_eventhandlers_windw;
+    
 public:
     GLKWindow();
     virtual ~GLKWindow();
@@ -44,7 +47,7 @@ public:
     void setScreensaverMode(bool m);
     CString windowLibrary() const;
 
-protected:
+
     bool windowPreInit(const CDProperties &, CString *err);
     bool windowInit(const CDProperties &props, CString * err);
     bool windowPostInit(const CDProperties &, CString *);
@@ -56,15 +59,18 @@ protected:
     bool inputPostInit(CString*){return true;}
     void inputTerminate(){}
     
-    void eventHandleD(const CDEvent&, c_cptr){}
-    void eventHandleI(const CIEvent&, c_cptr){}
+    void eventHandleD(const CDEvent& e, c_cptr d);
+    void eventHandleI(const CIEvent& e, c_cptr d);
     
-    void eventHandle(const CIHapticEvent&, c_cptr){}
-    void eventHandle(const CDEvent&, c_cptr){}
-    void eventHandle(const CIEvent&, c_cptr){}
+    void eventHandle(const CIHapticEvent& e, c_cptr d);
+    void eventHandle(const CDEvent& e, c_cptr d);
+    void eventHandle(const CIEvent& e, c_cptr d);
     
-    void injectEvent(CIEvent const&, c_cptr) {}
-    void injectEvent(CDEvent const&, c_cptr) {}
+    void injectEvent(CIEvent const& e, c_cptr d);
+    void injectEvent(CDEvent const& e, c_cptr d);
+    
+    bool installEventHandler(EventHandlerD eh);
+    bool installEventHandler(EventHandlerI eh);
     
     bool isMouseGrabbed() const {return true;}
     void setMouseGrabbing(bool){}
@@ -79,8 +85,6 @@ protected:
     bool textInputMode() const {return false;}
     
     void setTextInputMode(bool){}
-    
-    bigscalar contextTime() const {return 0.0;}
     
     CIControllerState getControllerState(uint16) {return {};}
 };

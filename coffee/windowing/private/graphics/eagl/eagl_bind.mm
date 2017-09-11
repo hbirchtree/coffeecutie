@@ -43,7 +43,7 @@ EGLboolean eglQuerySurface(EGLDisplay display, EGLSurface surface,
 
 const char* eglQueryString(EGLDisplay display, EGLint attr)
 {
-    EGLView* view = (EGLView*)display;
+    //EGLView* view = (EGLView*)display;
     switch(attr)
     {
     case EGL_VENDOR:
@@ -193,6 +193,7 @@ EGLSurface eglCreateWindowSurface(EGLDisplay display, EGLConfig cfg,
     {
         EGLView* view = (EGLView*)display;
         [view createView];
+        
         return [view getView];
     }
     return EGL_NO_SURFACE;
@@ -201,12 +202,10 @@ EGLSurface eglCreateWindowSurface(EGLDisplay display, EGLConfig cfg,
 
 EGLboolean eglSwapBuffers(EGLDisplay display, EGLSurface surface)
 {
+    // Swapping is done outside our control
+
     if(display)
-    {
-        EGLView* view = (EGLView*)display;
-        // Do something to swap the buffers
         return EGL_TRUE;
-    }
     return EGL_FALSE;
 }
 
@@ -227,15 +226,26 @@ EGLboolean eglMakeCurrent(EGLDisplay display, EGLSurface surfaceDraw,
 }
 
 
-void eglDestroySurface(EGLDisplay display, EGLSurface surface)
+void eglDestroySurface(EGLDisplay, EGLSurface)
 {
 }
-void eglDestroyContext(EGLDisplay display, EGLContext context)
+void eglDestroyContext(EGLDisplay, EGLContext)
 {
 }
 
 EGLboolean eglTerminate(EGLDisplay display)
 {
+    EGLView* view = (EGLView*)display;
+    
+    if([EAGLContext currentContext])
+    {
+        EAGLContext* ctx = [EAGLContext currentContext];
+        [EAGLContext setCurrentContext:nil];
+        [ctx dealloc];
+    }
+    
+    [view dealloc];
+    
     return EGL_TRUE;
 }
 

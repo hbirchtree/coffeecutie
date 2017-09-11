@@ -46,7 +46,7 @@ endif()
 #
 
 # Examples of CAudio API through OpenAL and Coffee audio abstraction layer
-if(COFFEE_BUILD_OPENAL AND COFFEE_BUILD_GLEAM)
+if(COFFEE_BUILD_OPENAL AND COFFEE_BUILD_GLEAM AND COFFEE_BUILD_SDL2)
     if(NOT APPLE)    
         add_subdirectory (audio/caudio-test)
     endif()

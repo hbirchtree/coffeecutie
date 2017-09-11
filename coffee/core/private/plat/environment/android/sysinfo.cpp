@@ -2,10 +2,11 @@
 
 #include <coffee/core/CDebug>
 
-#if defined(ANDROID_DONT_USE_SDL2)
+#include <jni.h>
+
+#if !defined(COFFEE_USE_SDL2)
 #include <coffee/android/android_main.h>
 #else
-#include <jni.h>
 #include <SDL_system.h>
 #endif
 
@@ -15,7 +16,7 @@ namespace Android{
 
 JNIEnv* jni_getEnv()
 {
-#if !defined(ANDROID_DONT_USE_SDL2)
+#if defined(COFFEE_USE_SDL2)
     cVerbose(7, "SDL_AndroidGetJNIEnv: {0}", c_cptr(SDL_AndroidGetJNIEnv));
     return C_CAST<JNIEnv*>(SDL_AndroidGetJNIEnv());
 #else
@@ -55,6 +56,7 @@ CString jni_getString(cstring cname, cstring field)
 
         return output;
     }while(false);
+
     return "";
 }
 

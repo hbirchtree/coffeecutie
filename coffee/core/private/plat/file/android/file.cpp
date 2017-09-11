@@ -4,11 +4,12 @@
 #include "../file_abstraction.h"
 
 
-#if !defined(ANDROID_DONT_USE_SDL2)
+#if defined(COFFEE_USE_SDL2)
 #include <android/asset_manager_jni.h>
 #include <SDL_system.h>
 #else
 #include <android/asset_manager.h>
+#include <coffee/android/android_main.h>
 #endif
 
 namespace Coffee{
@@ -17,7 +18,9 @@ namespace Android{
 
 static AAssetManager* m_android_asset_manager = nullptr;
 
-#if !defined(ANDROID_DONT_USE_SDL2)
+#if defined(COFFEE_USE_SDL2)
+#pragma error WHAT THE FUK
+
 jobject and_get_app_context(JNIEnv* env, jobject activity)
 {
     jmethodID methodApp = env->GetMethodID(env->GetObjectClass(activity),
@@ -75,7 +78,7 @@ AAssetManager* and_asset_manager()
 {
     if(!m_android_asset_manager)
     {
-#if !defined(ANDROID_DONT_USE_SDL2)
+#if defined(COFFEE_USE_SDL2)
         cVerbose(6,"Acquiring JNI environment from SDL");
         JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
         cVerbose(6,"Acquiring Android activity from SDL");
@@ -91,7 +94,14 @@ AAssetManager* and_asset_manager()
         cVerbose(6,"Acquired AAssetManager* ptr: {0}",
                  (c_cptr const&)m_android_asset_manager);
 #else
-        m_android_asset_manager = Coffee_GetAssetManager();
+        AndroidForeignCommand cmd;
+
+        cmd.type = Android_QueryAssetManager;
+
+        CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                    &cmd, nullptr,  nullptr);
+
+        m_android_asset_manager = C_FCAST<AAssetManager*>(cmd.data.ptr);
 #endif
     }
 
@@ -121,9 +131,9 @@ CString AndroidFileFun::NativePath(cstring fn)
 
     CString prefix;
 
+#if defined(COFFEE_USE_SDL2)
     cVerbose(6,"ExternalStorageState() function pointer: {0}",(uint64)SDL_AndroidGetExternalStorageState);
 
-#if !defined(ANDROID_DONT_USE_SDL2)
     if(SDL_AndroidGetExternalStorageState() == 0 ||
             !(SDL_AndroidGetExternalStorageState()&SDL_ANDROID_EXTERNAL_STORAGE_READ))
     {
@@ -138,7 +148,14 @@ CString AndroidFileFun::NativePath(cstring fn)
 
     cVerbose(6,"Storage prefix: {0}",prefix);
 #else
-    prefix = Coffee_GetExternalDataPath();
+    AndroidForeignCommand  cmd;
+
+    cmd.type = Android_QueryExternalDataPath;
+
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr, nullptr);
+
+    prefix = cmd.store_string;
 #endif
 
     if(prefix.size()==0)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,62 @@ extern void(*CoffeeEventHandleNA)(void*, int, void*, void*, void*);
 // This is done such that the Coffee code does not need extra spice to work
 // ... And we only need to link to a valid library for it.
 extern void* coffee_event_handling_data;
+
+enum CfGeneralEventType
+{
+    CfNullEvent,
+    CfResizeEvent = 1,
+    
+    CfTouchEvent,
+};
+
+enum CfTouchType
+{
+    CfTouchTap,
+    CfTouchPan,
+    CfTouchPinch,
+    CfTouchRotate,
+};
+    
+struct CfGeneralEvent
+{
+        enum CfGeneralEventType type;
+        uint32_t pad;
+};
+    
+struct CfTouchEventData
+{
+    enum CfTouchType type;
+
+    union {
+        struct CfTouchTapEventData
+        {
+            uint32_t x, y;
+        } tap;
+        struct CfTouchPanEventData
+        {
+            uint32_t ox, oy;
+            uint32_t dx, dy;
+            uint32_t vx, vy;
+            uint32_t fingerCount;
+        } pan;
+        struct CfTouchPinchEventData
+        {
+            uint32_t x, y;
+            float factor;
+        } pinch;
+        struct CfTouchRotateEventData
+        {
+            uint32_t x, y;
+            float radians;
+        } rotate;
+    } event;
+};
+    
+struct CfResizeEventData
+{
+    uint32_t w, h;
+};
 
 enum CfSensorType
 {
@@ -87,6 +144,8 @@ enum CoffeeForeignSignal
     CoffeeForeign_GetWinSize,
     
     CoffeeForeign_ActivateMotion,
+
+    CoffeeForeign_RequestPlatformData, /* Platform-specific data requests */
 };
 
 // Same rules, except from Coffee to foreign code
@@ -112,5 +171,31 @@ struct CfMessageDisplay
 };
 
 #ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+namespace Coffee{
+namespace Display{
+class EventApplication;
+}
+
+namespace CfAdaptors{
+
+using namespace Display;
+
+struct CfAdaptor
+{
+    CfGeneralEventType type;
+    void(*func)(EventApplication*, int event, void*, void*, void*);
+};
+
+extern void CfResizeHandler(EventApplication* app, int event,
+                     void* p1, void* p2, void* p3);
+
+extern void CfTouchHandler(EventApplication* app, int event,
+                           void* p1, void* p2, void* p3);
+
+}
 }
 #endif

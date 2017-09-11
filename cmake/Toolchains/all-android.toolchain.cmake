@@ -57,7 +57,7 @@ retrieve_env(ANDROID_ARM_NEON)
 retrieve_env(ANDROID_DISABLE_FORMAT_STRING_CHECKS)
 retrieve_env(ANDROID_CPP_FEATURES)
 
-message("PROPS: ${ANDROID_NDK} ${ANDROID_STL} ${ANDROID_TOOLCHAIN} ${ANDROID_ABI} ${ANDROID_PLATFORM}")
+message("PROPS: ${ANDROID_NDK} ${ANDROID_STL} ${ANDROID_TOOLCHAIN} ${ANDROID_ABI} ${ANDROID_PLATFORM} ${ANDROID_CPP_FEATURES}")
 
 # Android NDK revision
 file(READ "${ANDROID_NDK}/source.properties" ANDROID_NDK_SOURCE_PROPERTIES)
@@ -355,8 +355,9 @@ list(APPEND ANDROID_COMPILER_FLAGS
         -fstack-protector-strong
         -no-canonical-prefixes)
 list(APPEND ANDROID_COMPILER_FLAGS_CXX
-        -fno-exceptions
-        -fno-rtti)
+#        -fno-exceptions
+#        -fno-rtti
+        )
 list(APPEND ANDROID_LINKER_FLAGS
         -Wl,--build-id
         -Wl,--warn-shared-textrel

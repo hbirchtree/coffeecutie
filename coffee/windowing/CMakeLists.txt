@@ -18,6 +18,10 @@ set ( GLKit_SRCS
     private/windowing/glkit/glk_window.cpp
     )
 
+set ( NDKWindow_SRCS
+    private/windowing/ndkwindow/ndk_window.cpp
+    )
+
 if(APPLE AND IOS)
     list ( APPEND GLKit_SRCS
         private/graphics/eagl/eagl_bind.mm
@@ -45,6 +49,7 @@ set ( RENDERER_LIBS
     CoffeeWindow_X11
     CoffeeWindow_DMX
     CoffeeWindow_GLKit
+    CoffeeWindow_NDKWindow
 
     CoffeeContext_GLX
     CoffeeContext_EGL
@@ -91,6 +96,10 @@ coffee_add_library ( CoffeeWindow_GLKit "${GLKit_SRCS}" ""
     "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/glkit"
     )
 
+coffee_add_library ( CoffeeWindow_NDKWindow "${NDKWindow_SRCS}" ""
+    "${CMAKE_SOURCE_DIR}/include/coffee/windowing/windowing/ndkwindow"
+    )
+
 coffee_add_library ( CoffeeRenderer_Default "${Renderer_SRCS}"
     "${RENDERER_LIBS}"
     "${CMAKE_SOURCE_DIR}/include/coffee/windowing/renderer"
@@ -100,6 +109,10 @@ target_link_libraries( CoffeeContext_EGL
 	PRIVATE
 	CoffeeCore
 	)
+target_link_libraries( CoffeeWindow_NDKWindow
+        PRIVATE
+        CoffeeCore
+        )
 
 if(NOT EMSCRIPTEN AND COFFEE_BUILD_SDL2)
     find_package(SDL2 REQUIRED)

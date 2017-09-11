@@ -4,7 +4,7 @@
 #include "../../types/tdef/fntypes.h"
 #include "../../coffee_version.h"
 
-#if (defined(COFFEE_ANDROID) && !defined(ANDROID_DONT_USE_SDL2))
+#if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2))
 #include <jni.h>
 #endif
 
@@ -32,6 +32,9 @@ extern int deref_main(Coffee::CoffeeMainWithArgs mainfun, int argc, char** argv)
 // This is loaded from AppDelegate.m in CoffeeWindow_GLKit
 #define COFFEE_APPLICATION_MAIN(mainfun) \
     Coffee::CoffeeMainWithArgs apple_entry_point = mainfun;
+#elif defined(COFFEE_ANDROID)
+#define COFFEE_APPLICATION_MAIN(mainfun) \
+    Coffee::CoffeeMainWithArgs android_entry_point = mainfun;
 #endif
 
 #else
