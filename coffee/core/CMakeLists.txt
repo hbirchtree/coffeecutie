@@ -88,7 +88,13 @@ if( ANDROID )
 endif()
 
 # SDL power-management
-if(NOT POWERPC AND NOT IOS AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+if(COFFEE_BUILD_SDL2
+        AND NOT POWERPC
+        AND NOT IOS
+        AND (ANDROID
+            OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux"
+            OR APPLE
+            OR WIN32))
     set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
