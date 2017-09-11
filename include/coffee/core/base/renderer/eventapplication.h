@@ -43,7 +43,7 @@ struct EventLoopData
         } time;
     };
     
-#if defined(COFFEE_USE_APPLE_GLKIT)
+#if defined(COFFEE_USE_APPLE_GLKIT) || defined(COFFEE_USE_ANDROID_NATIVEWIN)
     CDProperties visual;
 #endif
 
@@ -183,10 +183,10 @@ public:
      */
     virtual void pollEvents()
     {
-        if(!EventProcess(5))
-        {
-            m_closeFlag = true;
-        }
+//        if(!EventProcess(5))
+//        {
+//            m_closeFlag = true;
+//        }
     }
 
     /*!
@@ -351,7 +351,7 @@ public:
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
         
-#if defined(COFFEE_USE_APPLE_GLKIT)
+#if defined(COFFEE_USE_APPLE_GLKIT) || defined(COFFEE_USE_ANDROID_NATIVEWIN)
         /* Under GLKit, the entry point for setup, update and cleanup
          *  reside in AppDelegate.m
          * Lifecycle is manageed by UIKit in this case

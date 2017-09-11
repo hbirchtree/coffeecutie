@@ -10,23 +10,6 @@ set ( ANDROID_GLUE_SOURCES
 list ( APPEND ANDROID_GLUE_INCLUDE_DIR ${ANDROID_SOURCES_ANDROID}/cpufeatures )
 list ( APPEND ANDROID_GLUE_SOURCES ${ANDROID_SOURCES_ANDROID}/cpufeatures/cpu-features.c )
 
-# Fuck you, CMake
-#find_path ( ANDROID_GLUE_INCLUDE_DIR_TMP
-#    NAMES
-#    android_native_app_glue.h
-
-#    PATHS
-#    ${ANDROID_NDK}/sources/android/native_app_glue
-#    )
-
-#find_file ( ANDROID_GLUE_SOURCES_TMP
-#    NAMES
-#    android_native_app_glue.c
-
-#    PATHS
-#    ${ANDROID_NDK}/sources/android/native_app_glue
-#    )
-
 if(ANDROID_GLUE_INCLUDE_DIR_TMP)
     set ( ANDROID_GLUE_INCLUDE_DIR
             ${ANDROID_GLUE_INCLUDE_DIR_TMP}

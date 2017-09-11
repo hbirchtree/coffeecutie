@@ -21,17 +21,22 @@
  * COFFEE_SLAP_LOWMEM - if system is x86 and does not PAE, give up
  * COFFEE_NO_FUTURES - std::future does not exist
  * COFFEE_USE_POSIX_BASENAME - using POSIX basename() or a custom implementation
- * COFFEE_DISABLE_SRGB_SUPPORT - deny sRGB framebuffers, some platforms shouldn't check for it
+ * COFFEE_DISABLE_SRGB_SUPPORT - deny sRGB framebuffers, some platforms
+ *  shouldn't check for it
  * COFFEE_USE_IMMERSIVE_VIEW - use fullscreen at all times
- * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL does not exist on a platform
+ * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL
+ *  does not exist on a platform
  * COFFEE_NO_HUGETLB - disable non-standard HUGE_TLB flag for file mapping
  * COFFEE_NO_RUSAGE_THREAD - disable rusage statistics per-thread
  *
- * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support setting thread names
- * COFFEE_NO_PTHREAD_GETNAME_NP - platforms that do not support getting thread names
+ * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support setting
+ *  thread names
+ * COFFEE_NO_PTHREAD_GETNAME_NP - platforms that do not support getting
+ *  thread names
  *
  * Graphics quirks:
- * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them. Android, Maemo, RPi and Apple do this
+ * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them.
+ *  Android, Maemo, RPi and Apple do this
  * COFFEE_LINKED_GLES30 - GLES 3.0 linked headers
  * COFFEE_LINKED_GLES31 - GLES 3.1 linked headers
  * COFFEE_LINKED_GLES32 - GLES 3.2 linked headers
@@ -42,26 +47,34 @@
  * COFFEE_USE_SDL_EVENT - use SDL for event handling (joysticks, input, etc.)
  * COFFEE_USE_SDL_WINDOW - use SDL for creating a window
  *
- * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite fast, only ~100 EGL calls as opposed to SDL's thousands
- * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window with minimal functionality
- * COFFEE_RASPBERRY_DMX - uses a tiny loader for DISPMANX, takes the entire screen on Raspberry Pi devices for application
- * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with resizes that may crash some devices (N900)
+ * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite
+ *  fast, only ~100 EGL calls as opposed to SDL's thousands
+ * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window
+ *  with minimal functionality
+ * COFFEE_RASPBERRY_DMX - uses a tiny loader for DISPMANX, takes the
+ *  entire screen on Raspberry Pi devices for application
+ * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with
+ *  resizes that may crash some devices (N900)
  * COFFEE_ALWAYS_VSYNC - for devices which force VSYNC
  *
- * COFFEE_STUBBED_ENVIRONMENT - stubs environment functions, because they are impossible to fulfull
+ * COFFEE_STUBBED_ENVIRONMENT - stubs environment functions, because they
+ *  are impossible to fulfull
  * COFFEE_STUBBED_PROCESS - stubs process functions, same reason as above
  * COFFEE_STUBBED_STACKTRACE - stubs stacktracing
  * COFFEE_STUBBED_CFILE - stubs FILE functionality
  * COFFEE_STUBBED_DYNLOADER - stubs dynamic library loading
  *
  * COFFEE_NO_EXECVPE - platforms that do not support execvpe
- * COFFEE_NO_SYSTEM_CMD - disables system() code, either if it does not exist or for security
+ * COFFEE_NO_SYSTEM_CMD - disables system() code, either if it does not
+ *  exist or for security
  *
- * COFFEE_PLATFORM_OUTPUT_FORMAT - platforms that do logging in a special way, less processing
+ * COFFEE_PLATFORM_OUTPUT_FORMAT - platforms that do logging in a special way,
+ *  less processing
  *
  * COFFEE_NO_TLS - disallowing thread-local storage
  *
- * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms with isolation
+ * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms
+ *  with isolation
  *
  * COFFEE_LOWFAT - disable or remove a lot of code, reduces library size a lot
  * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
@@ -73,9 +86,11 @@
  * COFFEE_INJECTS_EVENTS_EXTERNALLY - whether it is necessary to allow an
  *      external library to inject events into the program's event loop
  *
- * COFFEE_LOWFAT - disable tons of features for size, most of these changes are not noticeable for end-user applications with GUIs
+ * COFFEE_LOWFAT - disable tons of features for size, most of these changes
+ *  are not noticeable for end-user applications with GUIs
  *
- * COFFEE_USE_CHRONOTIME - use std::chrono in place of system-provided time facilities
+ * COFFEE_USE_CHRONOTIME - use std::chrono in place of system-provided
+ *  time facilities
  *
  */
 
@@ -112,11 +127,11 @@
 #define COFFEE_USE_UNWIND
 #endif
 
-#if defined(COFFEE_ANDROID) \
+#if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2)) \
     || defined(COFFEE_WINDOWS_UWP) \
     || defined(COFFEE_NACL)
 #define COFFEE_SDL_MAIN
-#elif defined(COFFEE_APPLE_MOBILE)
+#elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
 #define COFFEE_CUSTOM_MAIN
 #define COFFEE_CUSTOM_EXIT_HANDLING
 #define COFFEE_INJECTS_EVENTS_EXTERNALLY
@@ -194,6 +209,11 @@
 #if defined(COFFEE_WINDOWS) && defined(COFFEE_GLES20_MODE)
 #define COFFEE_USE_MAEMO_EGL
 #define COFFEE_USE_WINDOWS_ANGLE
+#endif
+
+#if defined(COFFEE_ANDROID) && !defined(COFFEE_USE_SDL2)
+#define COFFEE_USE_ANDROID_NATIVEWIN
+#define COFFEE_USE_MAEMO_EGL
 #endif
 
 #if defined(COFFEE_APPLE_MOBILE)

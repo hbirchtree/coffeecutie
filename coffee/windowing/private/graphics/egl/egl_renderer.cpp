@@ -10,6 +10,12 @@
 
 #include <iostream>
 
+#if defined(COFFEE_USE_ANDROID_NATIVEWIN)
+// We retrieve the Android window handle from here
+#include <coffee/android/android_main.h>
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#endif
+
 const constexpr static int EGL_MIN_VERB = 5;
 
 #if defined(COFFEE_USE_APPLE_GLKIT)
@@ -220,6 +226,18 @@ static bool egl_create_context(EGLRenderer* renderer,
     m_eglData->surface = eglCreateWindowSurface(m_eglData->display,
                                                 m_eglData->config,
                                                 nullptr, nullptr);
+#elif defined(COFFEE_USE_ANDROID_NATIVEWIN)
+    AndroidForeignCommand cmd;
+
+    cmd.type = Android_QueryNativeWindow;
+
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr, nullptr);
+
+    m_eglData->surface = eglCreateWindowSurface(
+                m_eglData->display, m_eglData->config,
+                (EGLNativeWindowType)cmd.data.ptr,
+                nullptr);
 #endif
     
     cVerbose(8, "eglCreateWindowSurface returned: {0}", eglGetError());

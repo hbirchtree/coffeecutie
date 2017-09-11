@@ -11,6 +11,7 @@
 #include <coffee/windowing/windowing/x11/x11_window.h>
 #include <coffee/windowing/windowing/dispmanx/dispmanx_window.h>
 #include <coffee/windowing/windowing/glkit/glk_window.h>
+#include <coffee/windowing/windowing/ndkwindow/ndk_window.h>
 
 #include <coffee/sdl2/input/csdl2_eventhandler.h>
 
@@ -32,6 +33,9 @@ class CSDL2Renderer :
         public SDL2GLRenderer,
         #elif defined(COFFEE_USE_APPLE_GLKIT) && defined(COFFEE_USE_MAEMO_EGL)
         public GLKWindow,
+        public EGLRenderer,
+        #elif defined(COFFEE_USE_ANDROID_NATIVEWIN) && defined(COFFEE_USE_MAEMO_EGL)
+        public NDKWindow,
         public EGLRenderer,
         #elif defined(COFFEE_RASPBERRY_DMX)
         public DispmanXWindow,

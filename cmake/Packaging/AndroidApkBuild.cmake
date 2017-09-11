@@ -1,7 +1,11 @@
 if(ANDROID)
     find_package ( CfAndroidMain )
     find_package ( AndroidToolkit )
-    find_package ( SDL2main REQUIRED )
+
+    if(COFFEE_BUILD_SDL2)
+        find_package ( SDL2main REQUIRED )
+        message (STATUS "Main File: ${SDL2_ANDROID_MAIN_FILE}" )
+    endif()
 
     include ( InkscapeResize )
     include ( PermissionList )
@@ -27,11 +31,7 @@ if(ANDROID)
 
     set ( ANDROID_BUILD_OUTPUT "${COFFEE_DEPLOY_DIRECTORY}/android-apk" )
 
-    message ( "-- Main File: ${SDL2_ANDROID_MAIN_FILE}" )
-
     set ( ANDROID_BUILD_APK ON )
-
-    set ( ANDROID_USE_SDL2_LAUNCH ON )
 
     set ( ANDROID_USE_GRADLE ON )
 
@@ -215,7 +215,7 @@ macro(APK_GENERATE_PROJECT
     # Some necessary files for APK generation
     #
 
-    if(ANDROID_USE_SDL2_LAUNCH)
+    if(COFFEE_BUILD_SDL2)
         # Insert details into files
         configure_file (
             "${ANDROID_PROJECT_CONFIG_DIR}/sdl2/AndroidManifest.xml.in"
@@ -343,7 +343,7 @@ macro(APK_PACKAGE_EXT
     set ( ANDROID_PACKAGE_NAME ${Pkg_Name} )
 
     # For SDL2-enabled programs
-    if(ANDROID_USE_SDL2_LAUNCH)
+    if(COFFEE_BUILD_SDL2)
         set ( ANDROID_STARTUP_ACTIVITY "CoffeeActivity" )
     else()
         set ( ANDROID_STARTUP_ACTIVITY "NativeActivity" )
@@ -473,7 +473,7 @@ macro(APK_PACKAGE_EXT
     #
     # Debugging/deployment options
     #
-    if(ANDROID_USE_SDL2_LAUNCH)
+    if(COFFEE_BUILD_SDL2)
         set ( ANDROID_AM_START_INTENT
             "${ANDROID_PACKAGE_NAME}" )
         set ( ANDROID_AM_START_ACTIVITY
@@ -588,15 +588,24 @@ macro(ANDROIDAPK_PACKAGE
         ICON_ASSET )
 
 
-    if(ANDROID_USE_SDL2_LAUNCH)
+    if(COFFEE_BUILD_SDL2)
         add_library(${TARGET} SHARED ${SOURCES} )
     else()
-        add_library(${TARGET} SHARED ${SOURCES}
-            ${CMAKE_SOURCE_DIR}/coffee/core/private/plat/graphics/eglinit.cpp )
+        add_library(${TARGET} SHARED ${SOURCES} )
+
+        get_property ( TARGET_LINK_FLAGS TARGET ${TARGET}
+            PROPERTY LINK_FLAGS )
+
+        set_property ( TARGET ${TARGET}
+            PROPERTY LINK_FLAGS ${TARGET_LINK_FLAGS}
+                                    -U=ANativeActivity_onCreate
+            )
 
         target_link_libraries ( ${TARGET}
-            AndroidCore
+            PUBLIC
             EGL
+            CoffeeCore
+            AndroidCore
             )
     endif()
 

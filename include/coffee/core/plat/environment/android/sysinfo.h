@@ -6,7 +6,7 @@
 
 #include "../sysinfo_def.h"
 
-#if !defined(ANDROID_DONT_USE_SDL2)
+#if defined(COFFEE_USE_SDL2)
 #include "../sdlpowerinfo.h"
 #endif
 
@@ -21,7 +21,7 @@ struct AndroidSysInfo : SysInfoDef
 };
 
 
-#if !defined(ANDROID_DONT_USE_SDL2)
+#if defined(COFFEE_USE_SDL2)
 struct AndroidPowerInfo : _SDLPowerInfo
 {
 };

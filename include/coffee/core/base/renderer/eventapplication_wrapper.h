@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -143,6 +144,8 @@ enum CoffeeForeignSignal
     CoffeeForeign_GetWinSize,
     
     CoffeeForeign_ActivateMotion,
+
+    CoffeeForeign_RequestPlatformData, /* Platform-specific data requests */
 };
 
 // Same rules, except from Coffee to foreign code
