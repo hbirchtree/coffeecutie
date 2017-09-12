@@ -1,5 +1,6 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CDebug>
+#include <coffee/core/plat/plat_environment.h>
 #include <coffee/graphics/common/query/gpu_query.h>
 
 using namespace Coffee;

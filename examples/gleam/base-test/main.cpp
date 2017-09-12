@@ -3,8 +3,6 @@
 
 #include <coffee/CGraphics>
 #include <coffee/windowing/renderer/renderer.h>
-#include <coffee/sdl2/CSDL2Dialog>
-#include <coffee/sdl2/CSDL2System>
 
 #include <coffee/graphics/apis/CGLeam>
 
@@ -365,10 +363,6 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 {
     CResources::FileResourcePrefix("sample_data/eye-demo/");
 
-    /*Required for SDL2 applications*/
-    SubsystemWrapper<SDL2::SDL2> sdl2;
-    C_UNUSED(sdl2);
-
     /*Moving on to regular rendering*/
     Profiler::PushContext("Root");
 
@@ -383,7 +377,7 @@ int32 coffee_main(int32 argc, cstring_w* argv)
 
     if(!renderer->init(props,&err))
     {
-        SDL2Dialog::ErrorMessage("Initialization Error",err.c_str());
+//        SDL2Dialog::ErrorMessage("Initialization Error",err.c_str());
         cDebug("Initialization error: {0}",err);
         return 1;
     }

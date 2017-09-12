@@ -605,11 +605,6 @@ out_of_switch:
 
 void X11Window::pollEvents()
 {
-    if(!EventProcess(5))
-    {
-        m_closeFlag = true;
-    }
-
     processX11Events(this);
 }
 
