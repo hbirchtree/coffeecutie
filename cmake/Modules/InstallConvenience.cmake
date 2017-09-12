@@ -19,6 +19,13 @@ macro(COFFEE_BUNDLE_INCLUDES )
     endforeach()
 endmacro()
 
+macro(COFFEE_BUNDLE_HEADER)
+    install (
+        FILES ${ARGN}
+        DESTINATION include/
+        )
+endmacro()
+
 macro(COFFEE_BUNDLE_LIBRARY )
     foreach( LIBRARY ${ARGN} )
         if(IS_DIRECTORY "${LIBRARY}")
