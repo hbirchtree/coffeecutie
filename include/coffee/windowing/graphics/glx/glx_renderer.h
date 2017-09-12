@@ -11,8 +11,7 @@ namespace Display{
 struct GLX_Data;
 
 class GLXRenderer :
-        public GLApplication,
-        public CObject
+        public GLApplication
 {
     GLX_Data* m_gxData;
 

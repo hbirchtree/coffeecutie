@@ -94,7 +94,8 @@ void WrapEventFunction(void* data, int event)
         case CoffeeHandle_Loop:
         if(CurrentState == 1)
             edata->loop(edata->r(), edata->d());
-        RuntimeQueue::GetCurrentQueue()->executeTasks();
+        if(RuntimeQueue::GetCurrentQueue())
+            RuntimeQueue::GetCurrentQueue()->executeTasks();
         break;
         
         case CoffeeHandle_Cleanup:
