@@ -15,7 +15,7 @@
 #include <android/log.h>
 #endif
 
-#ifdef __EMSCRIPTEN__
+#ifdef COFFEE_EMSCRIPTEN
 #include <emscripten.h>
 #endif
 
@@ -62,11 +62,18 @@ struct BasicTerm : CmdDef
 #else
         fprintf(DefaultPrintOutputPipe, printf_fmt, code);
 #endif
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
         emscripten_force_exit(code);
 #else
         exit(code);
 #endif
+    }
+
+    STATICINLINE void RegisterAtExit(void(*efun)())
+    {
+        if(atexit(efun) != 0)
+            fprintf(DefaultDebugOutputPipe,
+                    "Failed to register atexit() function\n");
     }
 };
 

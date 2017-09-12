@@ -10,6 +10,8 @@
 namespace Coffee{
 namespace Display{
 
+class GLKWindow;
+
 struct EGL_Data;
 
 struct EGL_GL_Context;
@@ -19,8 +21,15 @@ class EGLRenderer : public GLApplication
 {
     friend struct EGL_GL_Context;
     friend struct EGL_GL_WorkerContext;
+    
+#if defined(COFFEE_USE_APPLE_GLKIT)
+    friend class GLKWindow;
+#endif
 
     UqPtr<EGL_Data> m_eglData;
+    
+    EGL_GL_Context* mContext;
+    
 public:
     EGLRenderer();
     virtual ~EGLRenderer();

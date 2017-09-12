@@ -47,12 +47,11 @@ endif()
 # GLES uses SDL for function loading
 # This is only necessary for the core library
 if(ANDROID)
-#    if(ANDROID_USE_SDL2_LAUNCH)
-        message("-- Building Android project with SDL2 bindings")
-#    else()
-#        message("-- Building Android project with native_app_glue bindings")
-#        add_definitions("-DANDROID_DONT_USE_SDL2")
-#    endif()
+    if(COFFEE_BUILD_SDL2)
+        message(STATUS "Building Android project with SDL2 bindings")
+    else()
+        message(STATUS "Building Android project with NDK bindings")
+    endif()
 
     add_definitions ( "-DANDROID_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}" )
 endif()
@@ -67,7 +66,11 @@ endif()
 
 if(COFFEE_BUILD_SDL2)
     add_definitions("-DCOFFEE_USE_SDL2=1")
-else()
+elseif(ANDROID)
+    # Will be running on  Android NDK bindings
+elseif(APPLE)
+    # It will just use GLKit
+elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT EMSCRIPTEN AND NOT NACL AND NOT ANDROID)
     add_definitions( -DCOFFEE_LINUX_LIGHTWEIGHT_WM )
 endif()
 

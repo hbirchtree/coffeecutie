@@ -5,7 +5,6 @@ if(DBUS_FOUND)
         private/dbus-proc.cpp
         )
 
-
     coffee_add_library (
         CfDBusModule
         "${DBUS_SRCS}"

@@ -30,10 +30,19 @@ int deref_main(CoffeeMainWithArgs mainfun, int argc, char** argv)
 #elif defined(COFFEE_ANDROID)
     Profiler::ResetPointers();
     Sensor::Android::Android_InitSensors();
+
+    atexit(Sensor::Android::Android_DestroySensors);
 #endif
     int stat = Coffee::CoffeeMain(mainfun,argc,argv);
-#if defined(COFFEE_ANDROID)
-    Sensor::Android::Android_DestroySensors();
-#endif
+
+#ifndef COFFEE_CUSTOM_EXIT_HANDLING
+    exit(0);
+#else
     return stat;
+#endif
+}
+
+extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv)
+{
+    return deref_main(mainfun, argc, argv);
 }

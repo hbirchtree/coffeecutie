@@ -22,7 +22,7 @@ set ( CoffeeSDL2Audio_SRCS
 find_package ( SDL2 REQUIRED )
 
 set ( LIBS
-    ${SDL2_LIBRARY}
+    SDL2
     ${SDL2_LIBRARIES}
     )
 
@@ -36,9 +36,15 @@ target_link_libraries ( CoffeeSDL2
 
 target_include_directories ( CoffeeSDL2
     PRIVATE
-    $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${STANDARDLIBS_INCLUDE_DIR}>
     )
+
+if(SDL2_INCLUDE_DIR)
+    target_include_directories ( CoffeeSDL2
+        PRIVATE
+        $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
+        )
+endif()
 
 coffee_bundle_includes( ${SDL2_INCLUDE_DIR} )
 coffee_bundle_library( ${SDL2_LIBRARY} )

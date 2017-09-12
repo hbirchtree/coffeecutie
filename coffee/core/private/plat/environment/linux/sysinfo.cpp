@@ -9,7 +9,7 @@ namespace Coffee{
 namespace Environment{
 namespace Linux{
 
-thread_local CString LinuxSysInfo::cached_cpuinfo_string;
+CString LinuxSysInfo::cached_cpuinfo_string;
 
 using DirFun = CResources::DirFun;
 
@@ -84,6 +84,12 @@ CString get_kern_arch()
 
 PlatformData::DeviceType get_device_variant()
 {
+#if defined(COFFEE_MAEMO)
+    return PlatformData::DevicePhone;
+#elif defined(COFFEE_RASPBERRYPI)
+    return PlatformData::DeviceIOT;
+#endif
+
     CString input = CResources::Linux::LinuxFileFun::sys_read(
                 "/sys/class/dmi/id/chassis_type");
 
@@ -108,6 +114,11 @@ CString LinuxSysInfo::GetSystemVersion()
     return tmp;
 }
 
+void  LinuxSysInfo::FreeCPUInfoString()
+{
+    cached_cpuinfo_string.resize(0);
+}
+
 CString LinuxSysInfo::CPUInfoString(bool force)
 {
     /* We don't want to read it tons of times */
@@ -119,6 +130,7 @@ CString LinuxSysInfo::CPUInfoString(bool force)
     CString data = CResources::Linux::LinuxFileFun::sys_read("/proc/cpuinfo");
 
     cached_cpuinfo_string = data;
+    atexit(FreeCPUInfoString);
 
     return data;
 }

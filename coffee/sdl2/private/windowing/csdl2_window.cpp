@@ -80,8 +80,8 @@ bool SDL2Window::windowPostInit(const CDProperties& p, CString *)
     }
 
     /* Show window if requested */
-    if(p.flags&CDProperties::Visible)
-        showWindow();
+//    if(p.flags&CDProperties::Visible)
+//        showWindow();
 
     /* Set windowed fullscreen if requested */
     if(p.flags&CDProperties::Windowed)

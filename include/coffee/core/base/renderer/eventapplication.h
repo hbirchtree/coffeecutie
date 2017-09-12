@@ -4,8 +4,14 @@
 #include <coffee/core/eventprocess.h>
 
 #include <coffee/core/plat/plat_timing.h>
+#include <coffee/core/task_queue/task.h>
 
-#if defined(__EMSCRIPTEN__)
+#include <coffee/core/base/renderer/eventapplication_wrapper.h>
+#include <coffee/core/base/renderer_loader.h>
+
+#include <coffee/core/CMD>
+
+#if defined(COFFEE_EMSCRIPTEN)
 #include <emscripten.h>
 #endif
 
@@ -20,8 +26,8 @@ struct EventLoopData
         TimeLimited = 0x1,
     };
 
-    Renderer* renderer;
-    ShareData* data;
+    UqPtr<Renderer> renderer;
+    UqPtr<ShareData> data;
 
     Function<void(Renderer&, ShareData*)> setup;
     Function<void(Renderer&, ShareData*)> loop;
@@ -36,9 +42,114 @@ struct EventLoopData
             Timestamp max;
         } time;
     };
+    
+#if defined(COFFEE_USE_APPLE_GLKIT) || defined(COFFEE_USE_ANDROID_NATIVEWIN)
+    CDProperties visual;
+#endif
+
+    FORCEDINLINE Renderer& r() {return *renderer.get();}
+    FORCEDINLINE ShareData* d() {return data.get();}
 };
 
+namespace CfEventFunctions {
+template<typename RendType, typename DataType>
+void WrapEventFunction(void* data, int event)
+{
+    using ELD = EventLoopData<RendType,DataType>;
+    
+    static int CurrentState;
+    
+    ELD* edata = C_FCAST<ELD*>(data);
 
+    switch(event)
+    {
+        case CoffeeHandle_IsForeground:
+        {
+            break;
+        }
+        case CoffeeHandle_TransForeground:
+        {
+            break;
+        }
+        case CoffeeHandle_IsBackground:
+        {
+            break;
+        }
+        case CoffeeHandle_TransBackground:
+        {
+            break;
+        }
+        
+        case CoffeeHandle_Setup:
+        if(CurrentState == 0)
+        {
+            if(LoadHighestVersion(&edata->r(), edata->visual, nullptr))
+            {
+                edata->setup(edata->r(), edata->d());
+                CurrentState = 1;
+            }
+        }
+        break;
+        
+        case CoffeeHandle_Loop:
+        if(CurrentState == 1)
+            edata->loop(edata->r(), edata->d());
+        if(RuntimeQueue::GetCurrentQueue())
+            RuntimeQueue::GetCurrentQueue()->executeTasks();
+        break;
+        
+        case CoffeeHandle_Cleanup:
+        if(CurrentState == 1)
+        {
+            CurrentState = 0;
+            edata->cleanup(edata->r(), edata->d());
+            
+            edata->r().cleanup();
+        }
+        break;
+        
+        default:
+        break;
+    }
+}
+
+template<typename RendType, typename DataType>
+void WrapEventFunctionNA(void* data, int event, void* p1, void* p2, void* p3)
+{
+    using ELD = EventLoopData<RendType,DataType>;
+    
+    static const constexpr CfAdaptors::CfAdaptor EventHandlingVector[10] = {
+        {},
+        {CfResizeEvent, CfAdaptors::CfResizeHandler},
+        {CfTouchEvent, CfAdaptors::CfTouchHandler},
+    };
+    
+    ELD* edata = C_FCAST<ELD*>(data);
+    
+    switch(event)
+    {
+        case CoffeeHandle_GeneralEvent:
+        {
+            struct CfGeneralEvent* g = C_FCAST<CfGeneralEvent*>(p1);
+            
+            auto func = EventHandlingVector[g->type].func;
+            
+            if(!func)
+            {
+                fprintf(stderr, "Hit NULL event handler!\n");
+                return;
+            }
+            
+            EventHandlingVector[g->type].func(&edata->r(), event,
+                                              p1, p2, p3);
+            
+            break;
+        }
+        default:
+        break;
+    }
+}
+}
 
 class EventApplication : public InputApplication
 {
@@ -73,10 +184,10 @@ public:
      */
     virtual void pollEvents()
     {
-        if(!EventProcess(5))
-        {
-            m_closeFlag = true;
-        }
+//        if(!EventProcess(5))
+//        {
+//            m_closeFlag = true;
+//        }
     }
 
     /*!
@@ -146,14 +257,14 @@ public:
     template<typename Renderer, typename Data>
     STATICINLINE void resumeExtra(EventLoopData<Renderer, Data>&)
     {
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
         emscripten_resume_main_loop();
 #endif
     }
     template<typename Renderer, typename Data>
     STATICINLINE void suspendExtra(EventLoopData<Renderer, Data>&)
     {
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
         emscripten_pause_main_loop();
 #endif
     }
@@ -166,25 +277,57 @@ public:
         { \
             EventLoopData<Renderer, Data>& evdata = *C_FCAST<EventLoopData<Renderer, Data>* >(ptr); \
             extrafun(evdata); \
-            evdata.fun(*evdata.renderer, evdata.data); \
+            evdata.fun(evdata.r(), evdata.d()); \
         } \
     }
 
     SUSPRESUME_FUN(resumeFunction, IsForeground, setup, resumeExtra)
     SUSPRESUME_FUN(suspendFunction, IsBackground, cleanup, suspendExtra)
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
     template<typename R, typename D>
     static void emscripten_looper(void* arg)
     {
+        using ELD = EventLoopData<R, D>;
+
         auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
 
-        eventloop->loop(*eventloop->renderer, eventloop->data);
-    }
+        eventloop->loop(eventloop->r(), eventloop->d());
 
+        if(eventloop->flags & ELD::TimeLimited &&
+                Time::CurrentTimestamp() > (eventloop->time.start + eventloop->time.max))
+        {
+            auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
+            eventloop->renderer->injectEvent(qevent, nullptr);
+        }
+    }
 #endif
 
 #undef SUSPRESUME_FUN
+
+    template<typename Renderer, typename Data>
+    struct EventExitHandler
+    {
+        using ELD = EventLoopData<Renderer,Data>;
+
+        static ELD* ev;
+
+        static void event_exitFunc()
+        {
+            event_exitFunc(ev);
+        }
+        static void event_exitFunc(ELD* ev)
+        {
+            if(!ev)
+            {
+                fprintf(stderr, "Event exit handler could not be triggered");
+                return;
+            }
+            ev->cleanup(ev->r(), ev->d());
+            ev->r().cleanup();
+            delete ev;
+        }
+    };
 
     template<typename Renderer, typename Data>
     static int32 execEventLoop(EventLoopData<Renderer,Data>& ev,
@@ -195,7 +338,7 @@ public:
         static cstring suspend_str = "Suspend handler";
         static cstring resume_str = "Resume handler";
 
-        Renderer& r = *ev.renderer;
+        Renderer& r = ev.r();
 
         /* Because MSVC++ sucks, I can't use a struct initializer list for this :( */
 		EventHandlerD suspend_data = {};
@@ -208,42 +351,84 @@ public:
 
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
-
-
-#if defined(__EMSCRIPTEN__)
-        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>, &ev, 0, 0);
-#endif
-
-        if(!(*ev.renderer).init(visual, &err))
+        
+#if defined(COFFEE_USE_APPLE_GLKIT) || defined(COFFEE_USE_ANDROID_NATIVEWIN)
+        /* Under GLKit, the entry point for setup, update and cleanup
+         *  reside in AppDelegate.m
+         * Lifecycle is manageed by UIKit in this case
+         */
+        
+        ev.visual = visual;
+        
+        coffee_event_handling_data = &ev;
+        CoffeeEventHandle = CfEventFunctions::WrapEventFunction<Renderer, Data>;
+        CoffeeEventHandleNA = CfEventFunctions::WrapEventFunctionNA<Renderer, Data>;
+        
+        return 0;
+        
+#else
+        if(!LoadHighestVersion(&ev.r(), visual, &err))
         {
             return -1;
         }
 
         ev.time.start = Time::CurrentTimestamp();
 
-#if !defined(COFFEE_ANDROID)
-        r.injectEvent(CDEvent{0, CDEvent::IsForeground}, nullptr);
-#else
-        ev.setup(*ev.renderer, ev.data);
+#if defined(COFFEE_EMSCRIPTEN)
+        // Under emscripten, only the loop function is used later
+        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
+                                     &ev, 0, 1);
 #endif
 
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(COFFEE_ANDROID)
+        // Android awaits a foreground event, as it may not be there when started.
+        {
+            auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
+            r.injectEvent(fevent, nullptr);
+        }
+#else
+        // On desktop and etc, we are always ready for setup
+        ev.setup(ev.r(), ev.d());
+#endif
+
+
+#if !defined(COFFEE_EMSCRIPTEN)
+        /* In this case, event processing happens in a tight loop that happens
+            regardless of outside events
+           Android might want something better
+         */
+
+        RuntimeQueue* rt_queue = RuntimeQueue::GetCurrentQueue();
         while(!ev.renderer->closeFlag())
         {
-            ev.loop(*ev.renderer, ev.data);
+            ev.loop(ev.r(), ev.d());
 
             if(ev.flags & ELD::TimeLimited &&
                     Time::CurrentTimestamp() > (ev.time.start + ev.time.max))
             {
-                r.injectEvent(CIEvent::Create(0, CIEvent::QuitSign), nullptr);
+                auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
+                r.injectEvent(qevent, nullptr);
             }
+            
+            if(rt_queue)
+                rt_queue->executeTasks();
         }
 #endif
 
-        (*ev.renderer).cleanup();
-        ev.cleanup(*ev.renderer, ev.data);
+        using EH = EventExitHandler<Renderer, Data>;
+
+#if defined(COFFEE_EMSCRIPTEN)
+        // Emscripten will exit after main()
+        EH::ev = &ev;
+        Cmd::RegisterAtExit(EH::event_exitFunc);
+#else
+        // All others exit here
+        EH::event_exitFunc(&ev);
+#endif
+
         return 0;
+#endif
     }
 
     void exec()

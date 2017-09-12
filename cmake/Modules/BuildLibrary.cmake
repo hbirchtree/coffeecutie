@@ -16,6 +16,27 @@ macro( GENERATE_FINDSCRIPT )
     get_property( LIBRARY_DEFINITIONS GLOBAL PROPERTY CF_LIBRARY_DEFINITIONS )
     get_property( INC_DIRS_ GLOBAL PROPERTY CF_INCLUDE_DIRS )
 
+    get_property( COMP_DEFS_RAW DIRECTORY . PROPERTY COMPILE_DEFINITIONS )
+
+    set ( CONFIG_H "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Def.h" )
+    file ( WRITE "${CONFIG_H}" "#pragma once\n\n" )
+    foreach ( DEF ${COMP_DEFS_RAW} )
+        if( "${DEF}" MATCHES "^.*=.*$" )
+            string ( REGEX REPLACE
+                "^(.*)=(.*)$" "\\1 \\2"
+                DEF "${DEF}"
+                )
+        endif()
+        file ( APPEND "${CONFIG_H}"
+            "#define ${DEF}\n\n"
+            )
+    endforeach()
+
+    install (
+        FILES ${CONFIG_H}
+        DESTINATION include
+        )
+
     foreach(LIBRARY ${LIBRARY_DEFINITIONS})
         get_property ( LIB_INCLUDES TARGET ${LIBRARY} PROPERTY INCLUDE_DIRECTORIES )
         foreach(INC_PATH ${LIB_INCLUDES})
@@ -26,53 +47,28 @@ macro( GENERATE_FINDSCRIPT )
     set ( CONF_INCLUDE_DIRS "" )
     # Create a client-reproducible form of the incude directories for deploy
     foreach ( INC ${INC_DIRS} )
-        string ( REGEX REPLACE "^\\$\<BUILD_INTERFACE:(.*)\>$" "\\1" INC "${INC}" )
-        string ( REGEX REPLACE "^${CMAKE_SOURCE_DIR}/libs/.*$" "\${COFFEE_ROOT_DIR}/include"
+        if( "${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
+            continue()
+        endif()
+        string ( REGEX REPLACE "^.*INSTALL_INTERFACE:(.*)\>+$" "\${COFFEE_ROOT_DIR}/\\1"
             INC_
             "${INC}"
             )
-        string ( REPLACE "${CMAKE_SOURCE_DIR}/internal/include" "\${COFFEE_ROOT_DIR}/include"
-            INC_
-            "${INC_}"
-            )
-        string ( REPLACE "${CMAKE_SOURCE_DIR}/include" "\${COFFEE_ROOT_DIR}/include"
-            INC_
-            "${INC_}"
-            )
+        string ( REPLACE ">" "" INC_ "${INC_}" )
         if(IS_ABSOLUTE "${INC_}")
             continue()
         endif()
-        set ( INSTALL_DIRS "${INC};${INSTALL_DIRS}" )
         set ( CONF_INCLUDE_DIRS "${INC_};${CONF_INCLUDE_DIRS}" )
     endforeach()
 
     # Dedupe it, because it's a lot
-    list( REMOVE_DUPLICATES INSTALL_DIRS )
     list( REMOVE_DUPLICATES CONF_INCLUDE_DIRS )
-
-    foreach(DIR ${INSTALL_DIRS})
-        if("${DIR}" MATCHES ".*include$")
-            # This is what we can do with normal libraries...
-            install (
-                DIRECTORY ${DIR}
-                DESTINATION .
-#                FILES_MATCHING REGEX "^.*\.(h|hpp|inl|ipp)$"
-                )
-        else()
-            # And this is what pain we must endure for badly packaged libraries
-            install (
-                DIRECTORY ${DIR}
-                DESTINATION include/
-                FILES_MATCHING REGEX "^.*\.(h|hpp|inl|ipp)$"
-                )
-        endif()
-    endforeach()
 
     export ( PACKAGE ${PROJECT_NAME} )
 
     export (
         TARGETS ${LIBRARY_DEFINITIONS}
-        NAMESPACE ${PROJECT_NAME}::
+#        NAMESPACE ${PROJECT_NAME}::
         FILE "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
         )
 
@@ -96,13 +92,12 @@ macro( GENERATE_FINDSCRIPT )
 
     install (
         EXPORT ${PROJECT_NAME}
-        NAMESPACE ${PROJECT_NAME}::
+#        NAMESPACE ${PROJECT_NAME}::
         DESTINATION share
         )
 endmacro()
 
 macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
-    add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
     file ( GLOB_RECURSE ${TARGET}_HEADERS
 #        ${HEADER_DIR}/*.h
 #        ${HEADER_DIR}/*.hpp
@@ -134,6 +129,10 @@ macro(COFFEE_ADD_ELIBRARY TARGET LINKOPT SOURCES LIBRARIES HEADER_DIR)
     target_link_libraries(${TARGET}
         PUBLIC
         ${LIBRARIES}
+        )
+    target_compile_definitions ( ${TARGET}
+        PRIVATE
+        -DCOFFEE_APPLICATION_LIBRARY
         )
 
     file ( WRITE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${TARGET}.link" "${LIBRARIES}" )
@@ -178,7 +177,6 @@ macro(COFFEE_ADD_FRAMEWORK
             )
         source_group ( "${TARGET}_headers" FILES ${ALL_HEADERS} )
 
-        add_definitions( -DCOFFEE_APPLICATION_LIBRARY )
         MACFRAMEWORK_PACKAGE(
             "${TARGET}" "${LINKOPT}"
             "${VERSION_CODE}" "${COPYRIGHT}" "${COMPANY}"
@@ -187,6 +185,10 @@ macro(COFFEE_ADD_FRAMEWORK
         target_link_libraries(${TARGET}
             PUBLIC
             ${LIBRARIES}
+            )
+        target_compile_definitions ( ${TARGET}
+            PRIVATE
+            -DCOFFEE_APPLICATION_LIBRARY
             )
 
         if(ALL_HEADERS)

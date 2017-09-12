@@ -21,17 +21,22 @@
  * COFFEE_SLAP_LOWMEM - if system is x86 and does not PAE, give up
  * COFFEE_NO_FUTURES - std::future does not exist
  * COFFEE_USE_POSIX_BASENAME - using POSIX basename() or a custom implementation
- * COFFEE_DISABLE_SRGB_SUPPORT - deny sRGB framebuffers, some platforms shouldn't check for it
+ * COFFEE_DISABLE_SRGB_SUPPORT - deny sRGB framebuffers, some platforms
+ *  shouldn't check for it
  * COFFEE_USE_IMMERSIVE_VIEW - use fullscreen at all times
- * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL does not exist on a platform
+ * ASIO_USE_SSL - whether to disable ASIO's SSL support, useful if SSL
+ *  does not exist on a platform
  * COFFEE_NO_HUGETLB - disable non-standard HUGE_TLB flag for file mapping
  * COFFEE_NO_RUSAGE_THREAD - disable rusage statistics per-thread
  *
- * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support setting thread names
- * COFFEE_NO_PTHREAD_GETNAME_NP - platforms that do not support getting thread names
+ * COFFEE_NO_PTHREAD_SETNAME_NP - platforms that do not support setting
+ *  thread names
+ * COFFEE_NO_PTHREAD_GETNAME_NP - platforms that do not support getting
+ *  thread names
  *
  * Graphics quirks:
- * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them. Android, Maemo, RPi and Apple do this
+ * COFFEE_LINKED_GLES - disables dynamic loading of GLES symbols, links them.
+ *  Android, Maemo, RPi and Apple do this
  * COFFEE_LINKED_GLES30 - GLES 3.0 linked headers
  * COFFEE_LINKED_GLES31 - GLES 3.1 linked headers
  * COFFEE_LINKED_GLES32 - GLES 3.2 linked headers
@@ -42,35 +47,50 @@
  * COFFEE_USE_SDL_EVENT - use SDL for event handling (joysticks, input, etc.)
  * COFFEE_USE_SDL_WINDOW - use SDL for creating a window
  *
- * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite fast, only ~100 EGL calls as opposed to SDL's thousands
- * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window with minimal functionality
- * COFFEE_RASPBERRY_DMX - uses a tiny loader for DISPMANX, takes the entire screen on Raspberry Pi devices for application
- * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with resizes that may crash some devices (N900)
+ * COFFEE_USE_MAEMO_EGL - uses a piece of EGL to load a GL context, quite
+ *  fast, only ~100 EGL calls as opposed to SDL's thousands
+ * COFFEE_USE_MAEMO_X11 - uses a tiny loader for X11, creates a window
+ *  with minimal functionality
+ * COFFEE_RASPBERRY_DMX - uses a tiny loader for DISPMANX, takes the
+ *  entire screen on Raspberry Pi devices for application
+ * COFFEE_FRAGILE_FRAMEBUFFER - make windowing system more careful with
+ *  resizes that may crash some devices (N900)
  * COFFEE_ALWAYS_VSYNC - for devices which force VSYNC
  *
- * COFFEE_STUBBED_ENVIRONMENT - stubs environment functions, because they are impossible to fulfull
+ * COFFEE_STUBBED_ENVIRONMENT - stubs environment functions, because they
+ *  are impossible to fulfull
  * COFFEE_STUBBED_PROCESS - stubs process functions, same reason as above
  * COFFEE_STUBBED_STACKTRACE - stubs stacktracing
  * COFFEE_STUBBED_CFILE - stubs FILE functionality
  * COFFEE_STUBBED_DYNLOADER - stubs dynamic library loading
  *
  * COFFEE_NO_EXECVPE - platforms that do not support execvpe
- * COFFEE_NO_SYSTEM_CMD - disables system() code, either if it does not exist or for security
+ * COFFEE_NO_SYSTEM_CMD - disables system() code, either if it does not
+ *  exist or for security
  *
- * COFFEE_PLATFORM_OUTPUT_FORMAT - platforms that do logging in a special way, less processing
+ * COFFEE_PLATFORM_OUTPUT_FORMAT - platforms that do logging in a special way,
+ *  less processing
  *
  * COFFEE_NO_TLS - disallowing thread-local storage
  *
- * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms with isolation
+ * COFFEE_DISABLE_PROFILER - disable the profiler, useful for platforms
+ *  with isolation
  *
  * COFFEE_LOWFAT - disable or remove a lot of code, reduces library size a lot
  * COFFEE_LOADABLE_LIBRARY - remove some features which require static linkage
  *
  * COFFEE_SDL_MAIN - use SDL_main on start, allowing SDL to create its state
+ * COFFEE_CUSTOM_MAIN - use a magical main entry point somewhere else
+ * COFFEE_CUSTOM_EXIT_HANDLING - use magical event handling, exiting main()
  *
- * COFFEE_LOWFAT - disable tons of features for size, most of these changes are not noticeable for end-user applications with GUIs
+ * COFFEE_INJECTS_EVENTS_EXTERNALLY - whether it is necessary to allow an
+ *      external library to inject events into the program's event loop
  *
- * COFFEE_USE_CHRONOTIME - use std::chrono in place of system-provided time facilities
+ * COFFEE_LOWFAT - disable tons of features for size, most of these changes
+ *  are not noticeable for end-user applications with GUIs
+ *
+ * COFFEE_USE_CHRONOTIME - use std::chrono in place of system-provided
+ *  time facilities
  *
  */
 
@@ -107,13 +127,14 @@
 #define COFFEE_USE_UNWIND
 #endif
 
-#if defined(COFFEE_ANDROID) \
+#if (defined(COFFEE_ANDROID) && defined(COFFEE_USE_SDL2)) \
     || defined(COFFEE_WINDOWS_UWP) \
-    || defined(COFFEE_NACL) \
-    || defined(COFFEE_APPLE_MOBILE)
-
+    || defined(COFFEE_NACL)
 #define COFFEE_SDL_MAIN
-
+#elif defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_ANDROID)
+#define COFFEE_CUSTOM_MAIN
+#define COFFEE_CUSTOM_EXIT_HANDLING
+#define COFFEE_INJECTS_EVENTS_EXTERNALLY
 #endif
 
 /* Terminal size: useless on Android */
@@ -150,7 +171,7 @@
 #endif
 
 /* thread_local workarounds */
-#if defined(COFFEE_APPLE_MOBILE)
+#if defined(COFFEE_APPLE_MOBILE) || defined(COFFEE_EMSCRIPTEN)
 #define thread_local
 #elif defined(COFFEE_APPLE)
 #define thread_local __thread
@@ -190,6 +211,16 @@
 #define COFFEE_USE_WINDOWS_ANGLE
 #endif
 
+#if defined(COFFEE_ANDROID) && !defined(COFFEE_USE_SDL2)
+#define COFFEE_USE_ANDROID_NATIVEWIN
+#define COFFEE_USE_MAEMO_EGL
+#endif
+
+#if defined(COFFEE_APPLE_MOBILE)
+#define COFFEE_USE_APPLE_GLKIT
+#define COFFEE_USE_MAEMO_EGL
+#endif
+
 #if defined(COFFEE_LINUX_LIGHTWEIGHT_WM) || defined(COFFEE_MAEMO)
 // This is the super-fast X11 combination, SDL2 can't even be compared to this
 // The window is guaranteed to show within 500ms
@@ -206,7 +237,7 @@
 #define COFFEE_USE_MAEMO_EGL
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
 #define COFFEE_NO_EXECVPE
 #endif
@@ -215,7 +246,7 @@
 #define COFFEE_USE_EXECVPE
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) || defined(COFFEE_MAEMO)
 #define COFFEE_NO_PTHREAD_SETNAME_NP
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
@@ -224,15 +255,15 @@
 #define COFFEE_NO_PTHREAD_GETNAME_NP
 #endif
 
-#if defined(__EMSCRIPTEN__)
+#if defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_NO_TLS
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)
 #define COFFEE_PLATFORM_OUTPUT_FORMAT
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL)
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL)
 #define COFFEE_STUBBED_SYSINFO
 #define COFFEE_STUBBED_ENVIRONMENT
 #define COFFEE_STUBBED_PROCESS
@@ -241,14 +272,13 @@
 #define COFFEE_STUBBED_DYNLOADER
 #endif
 
-#if defined(__EMSCRIPTEN__) || defined(COFFEE_NACL) \
+#if defined(COFFEE_EMSCRIPTEN) || defined(COFFEE_NACL) \
     || defined(COFFEE_ANDROID) || defined(COFFEE_WINDOWS_UWP)
 #define COFFEE_NO_SYSTEM_CMD
 #endif
 
 #if !defined(COFFEE_RASPBERRY_DMX) && \
     !defined(COFFEE_USE_LINUX_GLX) && \
-    !defined(COFFEE_USE_WINDOWS_ANGLE) && \
     !defined(COFFEE_USE_MAEMO_EGL) && \
     !defined(COFFEE_USE_MAEMO_X11) && \
     defined(COFFEE_USE_SDL2)
@@ -262,7 +292,9 @@
 #define COFFEE_USE_SDL_WINDOW
 #endif
 
-#if !defined(COFFEE_RASPBERRY_DMX) && defined(COFFEE_USE_SDL2)
+#if !defined(COFFEE_RASPBERRY_DMX) && \
+    !defined(COFFEE_USE_MAEMO_X11) && \
+    defined(COFFEE_USE_SDL2)
 #define COFFEE_USE_SDL_EVENT
 #endif
 

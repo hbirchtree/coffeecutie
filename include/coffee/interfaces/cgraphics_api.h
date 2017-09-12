@@ -36,6 +36,8 @@ struct GraphicsAPI
     {
         TextureDMABuffered = 1, /*!< Use DMA transfer for texture if available on hardware */
         TextureAutoMipmapped, /*!< Generate automatic mipmaps on texture */
+        
+        TextureArrayPerInstance, /* Intrinsic for GLES 2.0, telling GLM to put use one texture from the array on one instance */
     };
     enum AttributeFlags
     {
@@ -164,6 +166,10 @@ struct GraphicsAPI
             m_view.resize(views);
             m_depth.resize(views);
             m_scissor.resize(views);
+        }
+        ViewportState():
+            ViewportState(1)
+        {
         }
 
         bool multiview()const{return m_mview;}

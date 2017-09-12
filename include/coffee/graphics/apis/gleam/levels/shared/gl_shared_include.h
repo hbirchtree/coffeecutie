@@ -22,25 +22,29 @@
 
 #ifdef COFFEE_GLEAM_DESKTOP
 
+// Desktop GL functions, up to OpenGL 4.5
 #include <glad/glad.h>
 #include <glad/KHR/khrplatform.h>
 
 #else
 
-
 #if defined(COFFEE_LINKED_GLES)
 
 #if defined(COFFEE_WINDOWS)
-#define GL_GLEXT_PROTOTYPES // I believe ANGLE could choke on a glass of water.
+// I believe ANGLE could choke on a glass of water.
+#define GL_GLEXT_PROTOTYPES
 #endif
 
 #if defined(COFFEE_APPLE)
+// Apple loads the functions from a framework
 #include <OpenGLES/ES2/gl.h>
 #include <OpenGLES/ES2/glext.h>
 #else
-#include <GLES2/gl2.h>
-#endif
 
+// Standard headers for GLES functions
+#include <GLES2/gl2.h>
+
+// GLES3.x is optional
 #if defined(COFFEE_LINKED_GLES30)
 #include <GLES3/gl3.h>
 #endif
@@ -50,7 +54,11 @@
 #if defined(COFFEE_LINKED_GLES32)
 #include <GLES3/gl32.h>
 #endif
+
+#endif
+
 #else
+// Runtime-loaded OpenGL functions
 #include <glad_es/glad.h>
 #include <glad_es/KHR/khrplatform.h>
 #endif

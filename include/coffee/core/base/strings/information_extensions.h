@@ -28,6 +28,8 @@ extern CString to_string(Display::CGLVersion const& arg);
 
 extern CString to_string(Display::CDContextBits const& arg);
 
+extern CString to_string(Display::CDMonitor const& arg);
+
 template<typename T>
 inline CString to_string(_cbasic_point_2d<T> v)
 {

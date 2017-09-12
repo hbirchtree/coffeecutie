@@ -57,6 +57,8 @@ set ( CoffeeCore_SRCS
     private/plat/environment/argument_parse.cpp
     private/plat/environment/shared_func.cpp
 
+    private/base/eventapplication_wrapper.cpp
+
     private/plat/memory/string_ops.cpp
 
     # Compression / data storage
@@ -68,6 +70,9 @@ set ( CoffeeCore_SRCS
 
     # Unit testing
     private/unit_tests/framework.cpp
+
+    # Task queues, for easier time scheduling
+    private/task_queue/task.cpp
 
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
@@ -83,7 +88,13 @@ if( ANDROID )
 endif()
 
 # SDL power-management
-if(NOT POWERPC AND (ANDROID_USE_SDL2_LAUNCH OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE OR WIN32))
+if(COFFEE_BUILD_SDL2
+        AND NOT POWERPC
+        AND NOT IOS
+        AND (ANDROID
+            OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux"
+            OR APPLE
+            OR WIN32))
     set ( SDL_POWER_PLUGIN_ENABLED ON )
     list ( APPEND CoffeeCore_SRCS
 	private/plat/environment/sdlpowerinfo.cpp
@@ -187,17 +198,18 @@ find_package ( RapidJson REQUIRED )
 find_package ( TinyXML2 REQUIRED )
 
 target_include_directories ( CoffeeCore
-    PUBLIC
+    SYSTEM PUBLIC
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
     )
 
-foreach(INC ${STANDARDLIBS_INCLUDE_DIR})
-    target_include_directories ( CoffeeCore
-        PUBLIC
-        $<BUILD_INTERFACE:${INC}>
-        )
-endforeach()
+target_include_directories ( CoffeeCore
+    PUBLIC
+    $<INSTALL_INTERFACE:include/>
+    $<INSTALL_INTERFACE:include/tinyxml2/>
+    ${STANDARDLIBS_INCLUDE_DIR}
+#    /home/havard/.local/android-ndk-r13b/platforms/android-24/arch-arm64/usr/include
+    )
 
 if(COFFEE_BUILD_SWIG_BINDING)
     add_definitions ( -DCOFFEE_LOADABLE_LIBRARY )
@@ -211,26 +223,15 @@ if(COFFEE_BUILD_SWIG_BINDING)
         PUBLIC
         $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${TINYXML2_INCLUDE_DIR}>
-        )
+        $<INSTALL_INTERFACE:include/>
+        $<INSTALL_INTERFACE:include/tinyxml2/>
 
-    foreach(INC ${STANDARDLIBS_INCLUDE_DIR})
-        target_include_directories ( CoffeeCore
-            PUBLIC
-            $<BUILD_INTERFACE:${INC}>
-            )
-    endforeach()
+        ${STANDARDLIBS_INCLUDE_DIR}
+        )
 endif()
 
-#install(
-#    EXPORT ${PROJECT_NAME}
-
-#    DIRECTORY
-#    ${CMAKE_SOURCE_DIR}/libs/tinyxml2
-#    ${CMAKE_SOURCE_DIR}/libs/rapidjson/include/rapidjson
-
-
-#    DESTINATION include
-#    )
-
-# If PCH is supported, this will be used
-#CREATE_PCH_FILES(CoffeeCore "${CoffeeCore_PCH}")
+coffee_bundle_includes (
+    ${STANDARDLIBS_INCLUDE_DIR}
+    ${RAPIDJSON_INCLUDE_DIR}
+    ${TINYXML2_INCLUDE_DIR}
+    )

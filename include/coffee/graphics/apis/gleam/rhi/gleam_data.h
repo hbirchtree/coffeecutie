@@ -8,6 +8,11 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+struct InstanceDataDeleter
+{
+    void operator()(GLEAM_Instance_Data* p);
+};
+
 struct GLEAM_DataStore
 {
     ~GLEAM_DataStore()
@@ -15,7 +20,7 @@ struct GLEAM_DataStore
         fprintf(stderr, "I'M DYING BLARGH\n");
     }
 
-    GLEAM_Instance_Data* inst_data;
+    UqPtr<GLEAM_Instance_Data, InstanceDataDeleter> inst_data;
     GLEAM_API::FB_T DefaultFramebuffer;
 
     APILevel CURR_API = GL_Nothing;

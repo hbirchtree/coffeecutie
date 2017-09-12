@@ -64,8 +64,8 @@ using MultiMap = std::multimap<T1,T2>;
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
 
-template<typename T>
-using UqPtr = std::unique_ptr<T>;
+template<typename T,class Deleter = std::default_delete<T>>
+using UqPtr = std::unique_ptr<T,Deleter>;
 
 template<typename T>
 using Complex = std::complex<T>;
@@ -82,5 +82,22 @@ template<typename Tag, typename T>
 using Iterator = std::iterator<Tag,T>;
 
 using ForwardIteratorTag = std::forward_iterator_tag;
+
+template<typename T, typename... Args>
+/*!
+ * \brief A lot of our platforms only support C++11. std::make_unique is
+ *      C++14 only. This is a helper function.
+ * \param a
+ * \return
+ */
+inline UqPtr<T> MkUq(Args... a)
+{
+    return UqPtr<T>(new T(a...));
+}
+template<typename T, class Deleter, typename... Args>
+inline UqPtr<T,Deleter> MkUqDST(Args... a)
+{
+    return UqPtr<T, Deleter>(new T(a...));
+}
 
 }

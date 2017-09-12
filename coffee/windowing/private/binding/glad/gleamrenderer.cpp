@@ -6,7 +6,9 @@
 #include <coffee/graphics/apis/gleam/gleam.h>
 #include <coffee/core/CProfiling>
 
-#if defined(COFFEE_USE_MAEMO_EGL)
+#if defined(COFFEE_USE_APPLE_GLKIT)
+#include <CEAGL/eagl.h>
+#elif defined(COFFEE_USE_MAEMO_EGL)
 #include <EGL/egl.h>
 #elif defined(COFFEE_USE_LINUX_GLX)
 #define __gl_h_

@@ -27,6 +27,16 @@ inline CString to_string(const CharT* const& v)
     return out;
 }
 
+inline CString to_string(char* v)
+{
+    CString out;
+    if(v)
+        out = v;
+    else
+        out = "0x0";
+    return out;
+}
+
 template<typename T,
           typename std::enable_if<std::is_same<T, std::nullptr_t>::value,
                                   bool>::type* = nullptr>

@@ -2,7 +2,7 @@
 
 #ifdef COFFEE_ANDROID
 
-#ifndef ANDROID_DONT_USE_SDL2
+#ifdef COFFEE_USE_SDL2
 #include <SDL_system.h>
 #else
 #include <coffee/android/android_main.h>
@@ -14,14 +14,21 @@ namespace Android{
 
 CString AndroidEnv::GetUserData(cstring,cstring)
 {
-#ifndef ANDROID_DONT_USE_SDL2
+#ifdef COFFEE_USE_SDL2
     auto path = SDL_AndroidGetInternalStoragePath();
     if(path)
         return path;
     else
         return {};
 #else
-    return Coffee_GetDataPath();
+    AndroidForeignCommand cmd;
+
+    cmd.type = Android_QueryDataPath;
+
+    CoffeeForeignSignalHandleNA(CoffeeForeign_RequestPlatformData,
+                                &cmd, nullptr, nullptr);
+
+    return cmd.store_string;
 #endif
 }
 

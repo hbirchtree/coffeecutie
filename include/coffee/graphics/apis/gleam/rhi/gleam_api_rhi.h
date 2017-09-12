@@ -104,6 +104,7 @@ public:
     static void GetDefaultProperties(Display::CDProperties& properties);
 
     static bool LoadAPI(DataStore store, bool debug = false);
+    static bool UnloadAPI();
 
     static API_CONTEXT GetLoadAPI();
 

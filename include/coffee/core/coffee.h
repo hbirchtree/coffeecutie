@@ -21,7 +21,7 @@ extern int32 CoffeeMain(CoffeeMainWithArgs mainfun, int32 argc, cstring_w *argv)
  */
 extern void CoffeeInit(bool profiler_init = true);
 
-extern void CoffeeTerminate(bool profiler_destroy = true);
+extern void CoffeeTerminate();
 
 extern void GotoApplicationDir();
 
