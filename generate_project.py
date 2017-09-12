@@ -109,7 +109,7 @@ def main():
                      ],
                      constant_files={
                          'cmake': [
-                             'Find', 'Find_Android', 'Find_Windows',
+                             'Find', 'Find_Windows',
                              'Modules', 'Packaging', 'Preload',
                              'Toolchains'
                          ],
