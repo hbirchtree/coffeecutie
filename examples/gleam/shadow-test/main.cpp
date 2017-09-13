@@ -35,7 +35,7 @@ public:
         CSDL2Renderer::eventHandleI(e,data);
 
         EventHandlers::EscapeCloseWindow(this,e,data);
-        EventHandlers::ExitOnQuitSignal(this, e, data);
+        EventHandlers::ExitOnQuitSignal<CDRenderer>(this, e, data);
 
         cDebug("Event: {0}", C_CAST<uint32>(e.type));
     }

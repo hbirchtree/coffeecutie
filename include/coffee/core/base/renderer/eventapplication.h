@@ -381,16 +381,16 @@ public:
 #endif
 
 
-#if !defined(COFFEE_ANDROID)
-        // Android awaits a foreground event, as it may not be there when started.
-        {
-            auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
-            r.injectEvent(fevent, nullptr);
-        }
-#else
+//#if defined(COFFEE_ANDROID)
+//        // Android awaits a foreground event, as it may not be there when started.
+//        {
+//            auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
+//            r.injectEvent(fevent, nullptr);
+//        }
+//#else
         // On desktop and etc, we are always ready for setup
         ev.setup(ev.r(), ev.d());
-#endif
+//#endif
 
 
 #if !defined(COFFEE_EMSCRIPTEN)

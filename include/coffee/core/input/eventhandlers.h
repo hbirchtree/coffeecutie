@@ -23,8 +23,9 @@ FORCEDINLINE void ResizeWindowUniversal(const CDEvent& e, c_cptr data)
 }
 
 template<typename T>
-FORCEDINLINE void ExitOnQuitSignal(T* r, const CIEvent& e, c_cptr)
+FORCEDINLINE void ExitOnQuitSignal(void* rp, const CIEvent& e, c_cptr)
 {
+    T* r = C_FCAST<T*>(rp);
     if(e.type == CIEvent::QuitSign)
         r->closeWindow();
 }

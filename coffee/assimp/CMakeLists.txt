@@ -7,7 +7,7 @@ set ( CoffeeAssimp_SRCS
 
 coffee_add_library (
     CoffeeAssimp "${CoffeeAssimp_SRCS}"
-    "${ASSIMP_LIBRARIES}"
+    "Assimp"
     "${CMAKE_SOURCE_DIR}/include/coffee/assimp" )
 
 coffee_bundle_includes ( ${ASSIMP_INCLUDE_DIR} )

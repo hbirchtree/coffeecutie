@@ -592,6 +592,13 @@ void X11Window::processX11Events(InputApplication *eh)
             eh->eventHandle(base_i, nullptr);
             goto out_of_switch;
         }
+        case UnmapNotify:
+        {
+            base_i.type = CIEvent::QuitSign;
+            eh->eventHandle(base_i, nullptr);
+            this->applyCloseFlag();
+            goto out_of_switch;
+        }
         default:
             cVerbose(5, "X11:Unhandled event: {0}", xev.type);
             goto out_of_switch;
