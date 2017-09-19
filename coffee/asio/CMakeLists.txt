@@ -18,9 +18,15 @@ coffee_add_library ( CoffeeASIO "${CoffeeASIO_SRCS}" "${LIBS}"
 target_include_directories ( CoffeeASIO
     PUBLIC
     $<BUILD_INTERFACE:${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include>
-    $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
 
     $<INSTALL_INTERFACE:include/>
     )
+
+if(COFFEE_BUILD_OPENSSL)
+    target_include_directories ( CoffeeASIO
+        PUBLIC
+        $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR}>
+        )
+endif()
 
 coffee_bundle_includes ( "${COFFEE_EXT_LIBRARY_DIR}/asio/asio/include" )

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# This script should be run in the source directory. 
-# It will automatically create a multi_build directory in there.
+# This script should be run in the source directory. It will automatically 
+#  create a multi_build directory in there.
 #
 # Usage:
 #  ../quick-build.sh (target name)
@@ -27,16 +27,17 @@
 #
 # NODEPS=1          -- Do not download dependencies.
 #
-# LOCALLIB=...      -- Use a local library directory for build
-#                   --  should be a product of another
-#                   --  quick-build.sh run.
+# LOCALLIB=...      -- Use a local library directory for build should be a
+#                   --  product of another quick-build.sh run.
 #
-# CONFIGURATION=... -- Set build configuration, typically
-#                   --  Debug or Release
+# CONFIGURATION=... -- Set build configuration, typically Debug or Release
 #
-# CMAKE_TARGET=...  -- Override CMake build target.
-#                   -- Does not work for all builds, 
-#                   --  such as Android and Emscripten.
+# CMAKE_TARGET=...  -- Override CMake build target. Does not work for all
+#                   --  builds, such as Android and Emscripten.
+#
+# GITHUB_TOKEN=...  -- Use OAuth2 token to access Github when downloading
+#                   --  dependencies. Without this, you are limited to
+#                   --  60 requests.
 # 
 
 function build_info()
