@@ -152,6 +152,13 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
     case APP_CMD_INIT_WINDOW:
     {
         CoffeeEventHandleCall(CoffeeHandle_Setup);
+
+        ANativeActivity_setWindowFlags(app->activity,
+                                       AWINDOW_FLAG_FULLSCREEN|
+                                       AWINDOW_FLAG_KEEP_SCREEN_ON,
+                                       AWINDOW_FLAG_FULLSCREEN|
+                                       AWINDOW_FLAG_KEEP_SCREEN_ON);
+
         /* Intentional fallthrough, we need to push a resize event */
     }
     case APP_CMD_WINDOW_RESIZED:
@@ -237,6 +244,16 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
         {
         case Android_QueryAPI:
             out->data.scalarI64 = coffee_app->activity->sdkVersion;
+            break;
+
+        case Android_QueryDataPath:
+            out->store_string = coffee_app->activity->internalDataPath;
+            break;
+        case Android_QueryExternalDataPath:
+            out->store_string = coffee_app->activity->externalDataPath;
+            break;
+        case Android_QueryObbPath:
+            out->store_string = coffee_app->activity->obbPath;
             break;
 
         case Android_QueryNativeWindow:

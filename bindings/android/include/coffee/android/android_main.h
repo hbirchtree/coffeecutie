@@ -86,6 +86,7 @@ enum FCmdType
     /* Filesystem queries */
     Android_QueryDataPath,
     Android_QueryExternalDataPath,
+    Android_QueryObbPath,
 };
 
 struct AndroidForeignCommand
