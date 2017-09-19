@@ -24,6 +24,7 @@ struct AndroidInternalState
 AndroidInternalState* app_internal_state = nullptr;
 
 struct android_app* coffee_app = nullptr;
+static JNIEnv* coffee_jni_env;
 
 extern CoffeeMainWithArgs android_entry_point;
 
@@ -63,6 +64,11 @@ javavar Coffee_JavaGetStaticMember(cstring clss, cstring var, cstring type)
     return _var;
 }
 
+JNIEnv* JNIPP::GetJNI()
+{
+    return coffee_jni_env;
+}
+
 static void AndroidHandleAppCmd(struct android_app* app, int32_t event);
 
 static int32_t AndroidHandleInputCmd(struct android_app* app,
@@ -72,6 +78,9 @@ static void AndroidForeignSignalHandle(int evtype);
 
 static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
                                          void* p3);
+
+static char AndroidWindowType[] = "android.view.Window";
+static char AndroidViewType[] = "android.view.View";
 
 void android_main(struct android_app* state)
 {
@@ -98,6 +107,64 @@ void android_main(struct android_app* state)
     deref_main_c(android_entry_point, 0, nullptr);
 
 //    cDebug("Board name: {0}", CJ_GetStatic<CString>("/android/os/Build", "BOARD"));
+
+//    state->activity->vm->AttachCurrentThread(
+//            &coffee_jni_env, NULL);
+
+//    auto build = "android.os.Build"_jclass;
+
+//    auto var = build[FieldAs<JavaString>("BOARD"_jfield)].value();
+//    cDebug("Board name: {0}", var);
+
+//    var = build[FieldAs<JavaString>("BRAND"_jfield)].value();
+//    cDebug("Brand: {0}", var);
+
+//    var = build[FieldAs<JavaString>("PRODUCT"_jfield)].value();
+//    cDebug("Product: {0}", var);
+
+    //        coffee_jni_env = app->activity->env;
+
+    //        app->activity->vm->AttachCurrentThread(
+    //                &coffee_jni_env, NULL);
+
+    //        using AndroidWindow_t = JavaClass<AndroidWindowType, jobject, JObject<jobject>>;
+    //        using AndroidView_t = JavaClass<AndroidViewType, jobject, JObject<jobject>>;
+
+    //        auto windowMethod = "getWindow"_jmethod.returns<AndroidWindow_t>();
+    //        auto getDecorViewMethod = "getDecorView"_jmethod.returns<AndroidView_t>();
+    //        auto setSystemUiVisibilityMethod = "setSystemUiVisibility"_jmethod.with<int>().returns<void>();
+    //        auto nativeActivity = "android.app.NativeActivity"_jclass;
+    //        auto windowClass = "android.view.Window"_jclass;
+    //        auto viewClass = "android.view.View"_jclass;
+
+    //        auto nativeInstance = nativeActivity(app->activity->clazz);
+
+    //        auto windowInstance = windowClass(nativeInstance
+    //                                          [std::move(windowMethod)]({}).l);
+    //        auto decorView = viewClass(windowInstance
+    //                                   [std::move(getDecorViewMethod)]({}).l);
+
+    //        auto immersiveStickyFlag =
+    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_IMMERSIVE_STICKY"_jfield)];
+    //        auto fullscreenFlag =
+    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_FULLSCREEN"_jfield)];
+    //        auto hideNavBarFlag =
+    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_HIDE_NAVIGATION"_jfield)];
+    //        auto lowProfileFlag =
+    //        viewClass[FieldAs<int>("SYSTEM_UI_FLAG_LOW_PROFILE"_jfield)];
+
+    //        jvalue uiFlags = {
+    //                .i = immersiveStickyFlag
+    //            |fullscreenFlag
+    //            |hideNavBarFlag
+    //            |lowProfileFlag,
+    //        };
+
+    //        decorView[std::move(setSystemUiVisibilityMethod)]({
+    //                                                                  uiFlags
+    //                                                          });
+
+    cDebug("Thread: {0}", ThreadId().hash());
 
     while(1)
     {
