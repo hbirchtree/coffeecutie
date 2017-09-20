@@ -172,6 +172,7 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 
         CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent,
                                 &gev, &rev, nullptr);
+
         break;
     }
 
@@ -213,8 +214,51 @@ void AndroidHandleAppCmd(struct android_app* app, int32_t event)
 int32_t AndroidHandleInputCmd(struct android_app* app,
                               struct AInputEvent* event)
 {
-    cDebug("Input: {0}", event);
-    return 0;
+    switch(AInputEvent_getType(event))
+    {
+    case AINPUT_EVENT_TYPE_KEY:
+    {
+        auto action = AKeyEvent_getAction(event);
+        auto keyCode = AKeyEvent_getKeyCode(event);
+
+        auto flags = AKeyEvent_getFlags(event);
+
+        /* Just drop fake inputs, what use could they be? */
+        if(!(flags & AKEY_EVENT_FLAG_FROM_SYSTEM))
+            break;
+
+        /* TODO: Handle soft keyboard inputs specifically */
+        if(flags & AKEY_EVENT_FLAG_SOFT_KEYBOARD)
+        {
+            break;
+        }
+
+        if(flags & AKEY_EVENT_FLAG_VIRTUAL_HARD_KEY)
+            cDebug("Virtual hard key");
+
+        //cDebug("Key event action: {0}:{1}:{2}", action, keyCode, flags);
+
+        break;
+    }
+    case AINPUT_EVENT_TYPE_MOTION:
+    {
+        int32_t actionPointerIndex = AMotionEvent_getAction(event);
+
+        uint8_t action = actionPointerIndex & AMOTION_EVENT_ACTION_MASK;
+        uint8_t pointerIdx = (actionPointerIndex & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
+
+
+
+        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action, 0, 0);
+        break;
+    }
+    default:
+    {
+        return 0;
+    }
+    }
+
+    return 1;
 }
 
 static void AndroidForeignSignalHandle(int evtype)

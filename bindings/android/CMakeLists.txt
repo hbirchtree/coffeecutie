@@ -25,9 +25,14 @@ coffee_add_library ( AndroidCore
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
     )
 
-coffee_bundle_includes( ${CMAKE_CURRENT_SOURCE_DIR}/include )
+# Suppress all those annoying double messages
+set_source_files_properties (
+    ${ANDROID_GLUE_SOURCES}
+    PROPERTIES
+    COMPILE_DEFINITIONS "NDEBUG"
+    )
 
-message ( "${ANDROID_GLUE_INCLUDE_DIR}" )
+coffee_bundle_includes( ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 target_link_libraries ( AndroidCore
     PRIVATE
@@ -39,3 +44,4 @@ target_include_directories ( AndroidCore
     ${ANDROID_GLUE_INCLUDE_DIR}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
+

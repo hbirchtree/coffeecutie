@@ -1,5 +1,7 @@
 #!/bin/bash
 
+umask 002
+
 SOURCE_DIR="$PWD"
 BUILD_DIR="$SOURCE_DIR/multi_build"
 
@@ -109,11 +111,13 @@ function build_standalone()
     done
 
     [ -z $CONFIGURATION ] && export CONFIGURATION=Debug
+    [ -z $CMAKE_TARGET ] && export CMAKE_TARGET=install
 
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
-        -e COFFEE_DIR="$COFFEE_DIR" $@
+        -e COFFEE_DIR="$COFFEE_DIR" $@ \
+        -e CMAKE_TARGET="$CMAKE_TARGET"
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
