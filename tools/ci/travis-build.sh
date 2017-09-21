@@ -110,14 +110,13 @@ function build_standalone()
 
     [ -z $CONFIGURATION ] && export CONFIGURATION=Debug
     [ -z $CMAKE_TARGET ] && export CMAKE_TARGET=install
-    [ ! -z $TRAVIS ] && export USER_OPTS="-u root"
+    [ ! -z $TRAVIS ] && chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
 
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
         -e COFFEE_DIR="$COFFEE_DIR" $@ \
-        -e CMAKE_TARGET="$CMAKE_TARGET" \
-        -e DOCKER_USER_OPT="$USER_OPTS"
+        -e CMAKE_TARGET="$CMAKE_TARGET"
 
     # We want to exit if the Make process fails horribly
     # Should also signify to Travis/CI that something went wrong
@@ -151,7 +150,7 @@ function main()
     build_standalone "$1"
 
     [ ! -z $NODEPLOY ] && exit 0
-    [ ! -z $TRAVIS ] && sudo chown -R $(whoami) ${BUILD_DIR}
+    #[ ! -z $TRAVIS ] && sudo chown -R $(whoami) ${BUILD_DIR}
 
     tar -zcvf "$LIB_ARCHIVE" -C ${BUILD_DIR} \
             --exclude=build/*/bin \
