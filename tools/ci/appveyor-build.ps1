@@ -41,7 +41,7 @@ ForEach($dep in $env:DEPENDENCIES -split ";") {
 }
 
 $Args = ("-DCOFFEE_BUILD_OPENSSL=OFF","-DCOFFEE_BUILD_OPENAL=OFF",`
-         "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON")
+         "-DSKIP_HIGHMEM_TESTS=ON","-DSKIP_LINKAGE_TEST=ON", "-DCOFFEE_ROOT_DIR=$env:BUILD_DIR\libraries")
 
 . $env:SOURCE_DIR\$env:MAKEFILE_DIR\Makefile.windows.ps1 `
     -CMakeBin $env:CMAKE_BIN -Standalone
