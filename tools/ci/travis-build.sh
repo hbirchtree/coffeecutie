@@ -1,5 +1,7 @@
 #!/bin/bash
 
+umask 000
+
 SOURCE_DIR="$PWD"
 BUILD_DIR="$SOURCE_DIR/multi_build"
 

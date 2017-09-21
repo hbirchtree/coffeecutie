@@ -54,7 +54,7 @@ automation-data:
 	cp -ru "coffeecutie-automation-tools-master" $(AUTOMATION_DIR) && \
 	rm -r master.tar.gz coffeecutie-automation-tools-master
 
-multi-config:
+multi-config: multi-prepare
 	$(DOCKER) run --rm \
 		-v $(SOURCE_DIR):$(DOCK_SRC):ro \
 		-v $(OUTPUT_DIR)/build-$(BUILD_NAME):$(DOCK_BUILD):rw \
