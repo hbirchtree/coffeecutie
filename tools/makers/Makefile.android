@@ -8,6 +8,7 @@ DOCK_SRC:=/home/coffee/project
 DOCK_BUILD:=/home/coffee/build
 DOCK_META:=/home/coffee/meta
 DOCK_OUT:=/home/coffee/build/out
+DOCKER_USER_OPT := 
 
 DOCKER := docker
 DOCKER_CONTAINER := hbirch/coffeecutie:android
@@ -42,6 +43,7 @@ android-permission-config: android-build-docker android-mkdir
 		-v $(BUILD_DIR)/build-android/meta:$(DOCK_META):rw \
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_USER_OPT) \
 		--workdir $(DOCK_BUILD) \
 		-u root \
 		$(DOCKER_CONTAINER) \
@@ -52,6 +54,7 @@ android-get-config: android-permission-config
 	$(DOCKER) run --rm \
 		-v $(META_DIR):$(DOCK_META):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_USER_OPT) \
 		--workdir $(DOCK_BUILD) \
 		$(DOCKER_CONTAINER) \
 			git clone \
@@ -64,6 +67,7 @@ android-config: android-get-config
 		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_USER_OPT) \
 		--workdir $(DOCK_BUILD) \
 		$(DOCKER_CONTAINER) \
 			cmake $(DOCK_META)/android \
@@ -76,6 +80,7 @@ android: android-config
 		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_USER_OPT) \
 		--workdir $(DOCK_BUILD) \
 		$(DOCKER_CONTAINER) \
 			cmake --build $(DOCK_BUILD)
@@ -87,6 +92,7 @@ android.target: android-config android-permission-config
 		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
 		-v $(BUILD_DIR)/build/android:$(DOCK_OUT):rw \
 		$(DOCKER_EXTRA_OPTIONS) \
+		$(DOCKER_USER_OPT) \
 		--workdir $(DOCK_BUILD) \
 		$(DOCKER_CONTAINER) \
 			cmake --build $(DOCK_BUILD) --target $(TARGET)
