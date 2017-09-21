@@ -110,6 +110,9 @@ CString WinFileFun::NativePath(cstring fn)
 		//CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
 		CString conc_path = asset_path;
 		conc_path = Mem::CStrReplace(conc_path, "/", "\\");
+#if !defined(COFFEE_WINDOWS_UWP)
+		conc_path = ":/" + conc_path;
+#endif
 		return conc_path;
 	}
     return fn;
