@@ -330,7 +330,6 @@ def travis_gen_config(build_info, srcDir):
     return {
         'language': 'cpp',
         'dist': 'trusty',
-        'group': 'deprecated-2017Q2',
         'sudo': 'required',
         'services': ['docker'],
         'notifications': {
