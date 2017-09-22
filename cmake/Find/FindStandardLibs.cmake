@@ -29,7 +29,7 @@ if(COFFEE_BUILD_SDL2)
         # On Android, it is also used to read assets and
         #  acquiring device info.
         find_package(SDL2 REQUIRED)
-        if(SDL2_INCLUDE_DIR)
+        if(SDL2_INCLUDE_DIR AND NOT APPLE)
             list ( APPEND CORE_INCLUDE_DIR
                 $<BUILD_INTERFACE:${SDL2_INCLUDE_DIR}>
                 $<INSTALL_INTERFACE:include/SDL2>
