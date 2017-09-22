@@ -31,7 +31,6 @@ env:
   - BUILDVARIANT=ios.x86_64
   - BUILDVARIANT=osx
   - BUILDVARIANT=coverage
-#group: deprecated-2017Q2
 language: cpp
 matrix:
   allow_failures:
