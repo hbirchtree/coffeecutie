@@ -7,11 +7,13 @@ if($env:SAME_BUILD_DIR) {
 }
 
 $DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$env:BUILDVARIANT.zip"
+$DEPLOY_ASSET_BIN = "$env:APPVEYOR_BUILD_FOLDER\binaries_$env:BUILDVARIANT.zip"
 
 # First, compress the compiled files
 $PrevWd = $Pwd
 cd "$BuildDir\out"
-7z a $DEPLOY_ASSET "*"
+7z a $DEPLOY_ASSET "*" -xr!bin -xr!packaged
+7z a $DEPLOY_ASSET_BIN "*" -xr!share -xr!lib -xr!include
 cd $PrevWd
 
 # Next, we need to find the target tag and release
@@ -62,9 +64,11 @@ try{
     $DEPLOY_TARGET = $env:APPVEYOR_REPO_NAME+":"+$TARGET_TAG
     $FILEPATH = ([System.IO.Path]::GetDirectoryName($DEPLOY_ASSET))
     $FILENAME = ([System.IO.Path]::GetFileName($DEPLOY_ASSET))
+	$FILENAME_BIN = ([System.IO.Path]::GetFileName($DEPLOY_ASSET_BIN))
     cd $FILEPATH
     echo " * Deploying $DEPLOY_ASSET to $TARGET_TAG"
     github_api push asset $DEPLOY_TARGET $FILENAME
+	github_api push asset $DEPLOY_TARGET_BIN $FILENAME_BIN
 }
 catch {
     echo $_.Exception.Message
