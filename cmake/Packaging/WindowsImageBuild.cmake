@@ -6,16 +6,18 @@ macro(WINPE_PACKAGE
         ICON_ASSET )
 
     if(COFFEE_BUILD_ANGLE)
-        find_package ( ANGLE REQUIRED )
+
     endif()
 
     set ( INCLUDED_LIBS "" )
     # Locate necessary binary files
     set ( BASE_LIBS )
     if(COFFEE_BUILD_SDL2)
+        find_package ( SDL2 REQUIRED )
         list ( APPEND BASE_LIBS SDL2 )
     endif()
     if(COFFEE_BUILD_ANGLE)
+        find_package ( ANGLE REQUIRED )
         list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
     endif()
     foreach(lib_target ${BASE_LIBS})
@@ -135,10 +137,10 @@ macro(WINPE_PACKAGE
         ${SOURCES}
         ${WINDOWS_BASE_RESOURCE}
         ${RESOURCE_DESCRIPTOR}
-		#${RESOURCE_HEADER}
+        #${RESOURCE_HEADER}
         ${MANIFEST_FILE}
         ${INCLUDED_LIBS}
-		${RESOURCE_FILES}
+        ${RESOURCE_FILES}
         )
 
     if(WIN_UWP)
