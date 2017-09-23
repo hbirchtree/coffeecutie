@@ -9,6 +9,9 @@ if($env:SAME_BUILD_DIR) {
 $DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$env:BUILDVARIANT.zip"
 $DEPLOY_ASSET_BIN = "$env:APPVEYOR_BUILD_FOLDER\binaries_$env:BUILDVARIANT.zip"
 
+rm $DEPLOY_ASSET
+rm $DEPLOY_ASSET_BIN
+
 # First, compress the compiled files
 $PrevWd = $Pwd
 cd "$BuildDir\out"
