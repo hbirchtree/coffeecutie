@@ -10,7 +10,7 @@ $DEPLOY_ASSET = "$env:APPVEYOR_BUILD_FOLDER\libraries_$env:BUILDVARIANT.zip"
 $DEPLOY_ASSET_BIN = "$env:APPVEYOR_BUILD_FOLDER\binaries_$env:BUILDVARIANT.zip"
 
 rm $DEPLOY_ASSET
-rm $DEPLOY_ASSET_BIN
+#rm $DEPLOY_ASSET_BIN
 
 # First, compress the compiled files
 $PrevWd = $Pwd
@@ -67,11 +67,14 @@ try{
     $DEPLOY_TARGET = $env:APPVEYOR_REPO_NAME+":"+$TARGET_TAG
     $FILEPATH = ([System.IO.Path]::GetDirectoryName($DEPLOY_ASSET))
     $FILENAME = ([System.IO.Path]::GetFileName($DEPLOY_ASSET))
-	$FILENAME_BIN = ([System.IO.Path]::GetFileName($DEPLOY_ASSET_BIN))
+    $FILENAME_BIN = ([System.IO.Path]::GetFileName($DEPLOY_ASSET_BIN))
     cd $FILEPATH
     echo " * Deploying $DEPLOY_ASSET to $TARGET_TAG"
     github_api push asset $DEPLOY_TARGET $FILENAME
-	github_api push asset $DEPLOY_TARGET_BIN $FILENAME_BIN
+    echo " * Deploying $DEPLOY_ASSET_BIN to $TARGET_TAG"
+    github_api push asset $DEPLOY_TARGET $FILENAME_BIN
+
+    echo " * Deployment complete"
 }
 catch {
     echo $_.Exception.Message
