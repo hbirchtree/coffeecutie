@@ -5,7 +5,7 @@ A C++ game engine/rendering engine written in a very C-influenced way.
 
 |Travis CI  |Appveyor CI | Codecov.io |
 |:----------|:-----------|:-----------|
-[![Build Status](https://travis-ci.org/hbirchtree/coffeecutie.svg?branch=master)](https://travis-ci.org/hbirchtree/coffeecutie)|[![Build status](https://ci.appveyor.com/api/projects/status/nt47us32mp6cc0fa/branch/master?svg=true)](https://ci.appveyor.com/project/hbirchtree/coffeecutie/branch/master)|[![codecov](https://codecov.io/gh/hbirchtree/coffeecutie/branch/master/graph/badge.svg)](https://codecov.io/gh/hbirchtree/coffeecutie)|
+[![Build Status](https://travis-ci.org/hbirchtree/coffeecutie.svg?branch=testing)](https://travis-ci.org/hbirchtree/coffeecutie)|[![Build status](https://ci.appveyor.com/api/projects/status/nt47us32mp6cc0fa/branch/master?svg=true)](https://ci.appveyor.com/project/hbirchtree/coffeecutie/branch/testing)|[![codecov](https://codecov.io/gh/hbirchtree/coffeecutie/branch/testing/graph/badge.svg)](https://codecov.io/gh/hbirchtree/coffeecutie)|
 
 # What is this?
 Game engine with platform support for Linux, OS X, Windows, Android
