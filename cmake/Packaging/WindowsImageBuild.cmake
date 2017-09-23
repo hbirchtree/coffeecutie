@@ -19,7 +19,7 @@ macro(WINPE_PACKAGE
         list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
     endif()
     foreach(lib_target ${BASE_LIBS})
-        get_property ( lib ${lib_target} IMPORTED_LOCATION )
+        get_target_property ( lib ${lib_target} IMPORTED_LOCATION )
         get_filename_component ( LIB_BASE "${lib}" NAME_WE )
         get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
 
