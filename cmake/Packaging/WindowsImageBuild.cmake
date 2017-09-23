@@ -11,7 +11,15 @@ macro(WINPE_PACKAGE
 
     set ( INCLUDED_LIBS "" )
     # Locate necessary binary files
-    foreach(lib ${ANGLE_LIBRARIES};${SDL2_LIBRARY})
+    set ( BASE_LIBS )
+    if(COFFEE_BUILD_SDL2)
+        list ( APPEND BASE_LIBS SDL2 )
+    endif()
+    if(COFFEE_BUILD_ANGLE)
+        list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
+    endif()
+    foreach(lib_target ${BASE_LIBS})
+        get_property ( lib ${lib_target} IMPORTED_LOCATION )
         get_filename_component ( LIB_BASE "${lib}" NAME_WE )
         get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
 

@@ -140,11 +140,8 @@ if(WIN32)
 	if(COFFEE_BUILD_ANGLE)
 		find_package( ANGLE REQUIRED )
 		list ( APPEND CORE_EXTRA_LIBRARIES
-			${ANGLE_LIBRARIES}
-			)
-		list ( APPEND CORE_INCLUDE_DIR
-			${ANGLE_INCLUDE_DIR}
-			)
+                        AngleEGL AngleGLESv2
+                        )
 	endif()
 endif()
 

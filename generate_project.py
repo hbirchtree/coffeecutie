@@ -126,6 +126,7 @@ def main():
                          'cmake/Templates/Config*.cmake.in': 'cmake/Templates',
                          'buildinfo.py': None,
                          'quick-build.sh': None,
+                         'quick-build.ps1': None,
                          'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
                      },
                      configurable_files={
