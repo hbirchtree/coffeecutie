@@ -411,19 +411,19 @@ endif()
 # STL specific flags.
 if(ANDROID_STL STREQUAL system)
         set(ANDROID_STL_PREFIX gnu-libstdc++/4.9)
-        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/system/include>")
+        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES_TMP
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/system/include>)
 elseif(ANDROID_STL MATCHES "^stlport_")
         set(ANDROID_STL_PREFIX stlport)
-        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/stlport>"
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/gabi++/include>")
+        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES_TMP
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/stlport>
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/gabi++/include>)
 elseif(ANDROID_STL MATCHES "^gnustl_")
         set(ANDROID_STL_PREFIX gnu-libstdc++/4.9)
-        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include>"
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/include>"
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include/backward>")
+        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES_TMP
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include>
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/include>
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include/backward>)
 elseif(ANDROID_STL MATCHES "^c\\+\\+_")
         set(ANDROID_STL_PREFIX llvm-libc++)
         if(ANDROID_ABI MATCHES "^armeabi")
@@ -439,29 +439,29 @@ elseif(ANDROID_STL MATCHES "^c\\+\\+_")
                 list(APPEND ANDROID_COMPILER_FLAGS_CXX
                         -fno-strict-aliasing)
         endif()
-        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include>"
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/android/support/include>"
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}abi/include>")
+        set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES_TMP
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include>
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/android/support/include>
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}abi/include>)
 endif()
 set(ANDROID_CXX_STANDARD_LIBRARIES)
 foreach(library ${ANDROID_STL_STATIC_LIBRARIES})
         list(APPEND ANDROID_CXX_STANDARD_LIBRARIES
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.a>")
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.a>)
 endforeach()
 foreach(library ${ANDROID_STL_SHARED_LIBRARIES})
         list(APPEND ANDROID_CXX_STANDARD_LIBRARIES
-                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.so>")
+                $<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.so>)
 endforeach()
 if(ANDROID_ABI STREQUAL armeabi AND NOT ANDROID_STL MATCHES "^(none|system)$")
         list(APPEND ANDROID_CXX_STANDARD_LIBRARIES
                 -latomic)
 endif()
 set(CMAKE_C_STANDARD_LIBRARIES_INIT "-lm")
-set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "${CMAKE_C_STANDARD_LIBRARIES_INIT}")
+set(CMAKE_CXX_STANDARD_LIBRARIES_INIT_TMP "${CMAKE_C_STANDARD_LIBRARIES_INIT}")
 if(ANDROID_CXX_STANDARD_LIBRARIES)
         string(REPLACE ";" "\" \"" ANDROID_CXX_STANDARD_LIBRARIES "\"${ANDROID_CXX_STANDARD_LIBRARIES}\"")
-        set(CMAKE_CXX_STANDARD_LIBRARIES_INIT "${CMAKE_CXX_STANDARD_LIBRARIES_INIT} ${ANDROID_CXX_STANDARD_LIBRARIES}")
+        set(CMAKE_CXX_STANDARD_LIBRARIES_INIT_TMP "${CMAKE_CXX_STANDARD_LIBRARIES_INIT_TMP} ${ANDROID_CXX_STANDARD_LIBRARIES}")
 endif()
 
 # Configuration specific flags.
@@ -653,8 +653,8 @@ if("${ANDROID_STL}" STREQUAL "gnustl_static")
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 endif()
 
-include_directories ( SYSTEM "${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES}" )
-LINK_LIBRARIES( "${CMAKE_CXX_STANDARD_LIBRARIES_INIT};${CMAKE_C_STANDARD_LIBRARIES_INIT}" )
+include_directories ( SYSTEM "${CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES_TMP}" )
+LINK_LIBRARIES( "${CMAKE_CXX_STANDARD_LIBRARIES_INIT_TMP};${CMAKE_C_STANDARD_LIBRARIES_INIT}" )
 
 set ( CMAKE_FIND_ROOT_PATH
     "${CMAKE_FIND_ROOT_PATH};${COFFEE_ROOT_DIR};${NATIVE_LIBRARY_DIR};${CMAKE_SOURCE_DIR}/libs"
