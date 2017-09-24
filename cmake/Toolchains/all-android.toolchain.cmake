@@ -412,18 +412,18 @@ endif()
 if(ANDROID_STL STREQUAL system)
         set(ANDROID_STL_PREFIX gnu-libstdc++/4.9)
         set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "${ANDROID_NDK}/sources/cxx-stl/system/include")
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/system/include>")
 elseif(ANDROID_STL MATCHES "^stlport_")
         set(ANDROID_STL_PREFIX stlport)
         set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/stlport"
-                "${ANDROID_NDK}/sources/cxx-stl/gabi++/include")
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/stlport>"
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/gabi++/include>")
 elseif(ANDROID_STL MATCHES "^gnustl_")
         set(ANDROID_STL_PREFIX gnu-libstdc++/4.9)
         set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include"
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/include"
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include/backward")
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include>"
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/include>"
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include/backward>")
 elseif(ANDROID_STL MATCHES "^c\\+\\+_")
         set(ANDROID_STL_PREFIX llvm-libc++)
         if(ANDROID_ABI MATCHES "^armeabi")
@@ -440,18 +440,18 @@ elseif(ANDROID_STL MATCHES "^c\\+\\+_")
                         -fno-strict-aliasing)
         endif()
         set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include"
-                "${ANDROID_NDK}/sources/android/support/include"
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}abi/include")
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/include>"
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/android/support/include>"
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}abi/include>")
 endif()
 set(ANDROID_CXX_STANDARD_LIBRARIES)
 foreach(library ${ANDROID_STL_STATIC_LIBRARIES})
         list(APPEND ANDROID_CXX_STANDARD_LIBRARIES
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.a")
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.a>")
 endforeach()
 foreach(library ${ANDROID_STL_SHARED_LIBRARIES})
         list(APPEND ANDROID_CXX_STANDARD_LIBRARIES
-                "${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.so")
+                "$<BUILD_INTERFACE:${ANDROID_NDK}/sources/cxx-stl/${ANDROID_STL_PREFIX}/libs/${ANDROID_ABI}/lib${library}.so>")
 endforeach()
 if(ANDROID_ABI STREQUAL armeabi AND NOT ANDROID_STL MATCHES "^(none|system)$")
         list(APPEND ANDROID_CXX_STANDARD_LIBRARIES

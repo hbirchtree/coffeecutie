@@ -33,7 +33,7 @@ target_include_directories ( CoffeeAudio
     )
 
 coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}"
-    "CoffeeAudio;${OPENAL_LIBRARY}"
+    "CoffeeAudio;OpenAL"
     "${CMAKE_SOURCE_DIR}/include/coffee/audio/openal"
     )
 
