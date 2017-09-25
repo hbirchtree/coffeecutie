@@ -402,7 +402,8 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
     {
         GLC::DepthMask(dstate.mask());
 
-        GLC::DepthFunc((ValueComparison)dstate.fun());
+        if(dstate.fun())
+            GLC::DepthFunc(C_CAST<ValueComparison>(dstate.fun()));
 
         if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
         {
