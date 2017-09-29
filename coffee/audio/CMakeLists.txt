@@ -33,12 +33,26 @@ target_include_directories ( CoffeeAudio
     )
 
 coffee_add_library ( CoffeeOpenAL "${CoffeeOpenAL_SRCS}"
-    "CoffeeAudio;OpenAL"
+    "CoffeeAudio"
     "${CMAKE_SOURCE_DIR}/include/coffee/audio/openal"
     )
 
-target_include_directories ( CoffeeOpenAL
-    SYSTEM
-    PRIVATE
-    ${OPENAL_INCLUDE_DIR}
-    )
+if(NOT APPLE)
+    target_link_libraries ( CoffeeOpenAL
+        PRIVATE
+        OpenAL
+        )
+else()
+    target_link_libraries ( CoffeeOpenAL
+        PRIVATE
+        "-framework OpenAL"
+        )
+endif()
+
+if(NOT APPLE)
+    target_include_directories ( CoffeeOpenAL
+        SYSTEM
+        PRIVATE
+        ${OPENAL_INCLUDE_DIR}
+        )
+endif()

@@ -16,10 +16,6 @@ if(ANDROID)
         )
 endif()
 
-#set ( OPENAL_INCLUDE_DIR CACHE PATH "OpenAL include directory" )
-#set ( OPENAL_LIBRARY CACHE FILEPATH "OpenAL library file" )
-#set ( OPENAL_EFX_LIBRARY CACHE FILEPATH "OpenAL EFX library file" )
-
 find_path ( OPENAL_INCLUDE_DIR
     al.h
     alc.h
@@ -64,8 +60,6 @@ find_library ( OPENAL_EFX_LIBRARY_TMP
     ${OPENAL_SEARCH_PATHS}
     )
 
-# TODO: Add check for whether libraries are symbolic links, and dereference them
-
 if(OPENAL_INCLUDE_DIR)
     set ( OPENAL_INCLUDE_DIR "${OPENAL_INCLUDE_DIR}" CACHE PATH "OpenAL include directory" )
 endif()
@@ -76,6 +70,11 @@ if(OPENAL_EFX_LIBRARY_TMP)
     set ( OPENAL_EFX_LIBRARY "${OPENAL_EFX_LIBRARY_TMP}" CACHE FILEPATH "OpenAL EFX library file" )
 endif()
 
+#
+# NOTE: Linking to this library on OSX and iOS is bad.
+# It will attempt to link (statically/dynamically) into a directory.
+# Don't try to link this on OSX and iOS.
+#
 if(NOT TARGET OpenAL)
     add_library ( OpenAL SHARED IMPORTED )
 

@@ -50,7 +50,7 @@ if(APPLE)
         "-framework CoreFoundation"
         "-framework CoreGraphics"
         "-framework Foundation"
-        "-framework OpenAL"
+#        "-framework OpenAL"
         "-framework QuartzCore"
         )
     if(IOS)
