@@ -169,11 +169,17 @@ void RuntimeQueue::executeTasks()
         /* If this task has to be run in the future,
          *  all proceeding tasks will do as well */
         if(task.time > currTime)
+        {
+            i++;
             break;
+        }
 
         /* Skip dead tasks, clean it up later */
         if(!mTasksAlive[i])
+        {
+            i++;
             continue;
+        }
 
         /* In this case we will let it run */
         task.task();
@@ -183,7 +189,7 @@ void RuntimeQueue::executeTasks()
             mTasksAlive[i] = false;
         else if(task.flags & RuntimeTask::Periodic)
         {
-            task.time += task.interval;
+            task.time = RuntimeTask::clock::now() + task.interval;
         }else{
             ABORTEVERYTHINGGOGOGO();
         }
