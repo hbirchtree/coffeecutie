@@ -49,10 +49,9 @@ else()
         )
 endif()
 
-if(NOT APPLE)
-    target_include_directories ( CoffeeOpenAL
-        SYSTEM
-        PRIVATE
-        ${OPENAL_INCLUDE_DIR}
-        )
-endif()
+target_include_directories ( CoffeeOpenAL
+    SYSTEM
+    PRIVATE
+    ${OPENAL_INCLUDE_DIR}
+    )
+

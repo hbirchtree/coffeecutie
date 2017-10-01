@@ -52,7 +52,7 @@ enum class ProfilingTerm
 
 enum class TexType
 {
-    None, T2D, T3D, Cube
+    None, T2D, T2A, T3D, Cube
 };
 
 namespace ShaderTypes

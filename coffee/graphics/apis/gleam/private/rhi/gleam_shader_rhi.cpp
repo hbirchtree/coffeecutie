@@ -162,8 +162,14 @@ void GLEAM_Pipeline::dealloc()
 bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
                                           GLEAM_UniformValue *data)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(!(value.m_flags & ShaderTypes::Uniform_v))
+        return false;
+
     uint32 idx = value.m_idx;
     data->flags = value.m_flags;
     m_uniforms[idx] = {data,value.stages};
@@ -173,8 +179,40 @@ bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
 bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
                                           const GLEAM_SamplerHandle *sampler)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(!(value.m_flags & Sampler_v))
+        return false;
+
+    Texture samplerType = Texture::T2D;
+
+    switch(value.m_flags & SizeMask_f)
+    {
+    case S2:
+        samplerType = Texture::T2D;
+        break;
+    case S3:
+        samplerType = Texture::T3D;
+        break;
+    case S2A:
+        samplerType = Texture::T2DArray;
+        break;
+    case SCubeA:
+        samplerType = Texture::CubemapArray;
+        break;
+    case SCube:
+        samplerType = Texture::Cubemap;
+        break;
+    default:
+        return false;
+    }
+
+    if(samplerType != sampler->m_type)
+        return false;
+
     uint32 idx = value.m_idx;
     m_samplers[idx] = {sampler,value.stages};
     return true;
@@ -184,8 +222,14 @@ bool GLEAM_ShaderUniformState::setUBuffer(const GLEAM_UniformDescriptor &value,
                                           const GLEAM_UniformBuffer *buf,
                                           GLEAM_BufferSection const& sec)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(!(value.m_flags & ShaderTypes::UniBuf_t))
+        return false;
+
     uint32 idx = value.m_idx;
     m_ubuffers[idx] = {sec,buf,value.stages};
     return true;
@@ -195,8 +239,14 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
                                           const GLEAM_ShaderBuffer *buf,
                                           GLEAM_BufferSection const& sec)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(!(value.m_flags & ShaderTypes::ShSBuf_t))
+        return false;
+
     uint32 idx = value.m_idx;
     m_sbuffers[idx] = {sec,buf,value.stages};
     return true;
