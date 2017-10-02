@@ -194,6 +194,7 @@ bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
     case S2:
         samplerType = Texture::T2D;
         break;
+#if !defined(COFFEE_ONLY_GLES20)
     case S3:
         samplerType = Texture::T3D;
         break;
@@ -203,6 +204,7 @@ bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
     case SCubeA:
         samplerType = Texture::CubemapArray;
         break;
+#endif
     case SCube:
         samplerType = Texture::Cubemap;
         break;
