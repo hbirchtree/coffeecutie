@@ -167,7 +167,12 @@ bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
 
-    if(!(value.m_flags & ShaderTypes::Uniform_v))
+    cDebug("FF: {0}", u32(ShaderTypes::Uniform_v));
+    cDebug("AA: {0}", value.m_flags & ShaderTypes::Uniform_v);
+
+    if(value.m_flags & ShaderTypes::Uniform_v)
+        (void)0x0;
+    else
         return false;
 
     uint32 idx = value.m_idx;
@@ -184,7 +189,9 @@ bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
 
-    if(!(value.m_flags & Sampler_v))
+    if(value.m_flags & ShaderTypes::Sampler_v)
+        (void)0x0;
+    else
         return false;
 
     Texture samplerType = Texture::T2D;
@@ -229,7 +236,9 @@ bool GLEAM_ShaderUniformState::setUBuffer(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
 
-    if(!(value.m_flags & ShaderTypes::UniBuf_t))
+    if(value.m_flags & ShaderTypes::UniBuf_t)
+        (void)0x0;
+    else
         return false;
 
     uint32 idx = value.m_idx;
@@ -246,7 +255,9 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
     if(value.m_idx<0)
         return false;
 
-    if(!(value.m_flags & ShaderTypes::ShSBuf_t))
+    if(value.m_flags & ShaderTypes::ShSBuf_t)
+        (void)0x0;
+    else
         return false;
 
     uint32 idx = value.m_idx;
