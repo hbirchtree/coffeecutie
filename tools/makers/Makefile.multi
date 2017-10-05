@@ -1,5 +1,5 @@
 DOCKER:=docker
-CMAKE:=cmake
+CMAKE := cmake
 
 OUTPUT_DIR:=$(PWD)
 SOURCE_DIR:=$(PWD)/..
@@ -25,17 +25,17 @@ CMAKE_TARGET:=install
 CMAKE_SECOND_TARGET:=CoverageTest
 BUILD_TYPE:=Debug
 
-BUILD_NAME:=ubuntu
-DOCKER_CONFIG:=ubuntu
-PRELOAD:=linux-generic.cmake
-TOOLCHAIN:=linux-generic_linux.toolchain.cmake
-BUILDER_NAME:=ubuntu-native
+BUILD_NAME :=  ubuntu
+DOCKER_CONFIG := ubuntu
+PRELOAD := linux-generic.cmake
+TOOLCHAIN := linux-generic_linux.toolchain.cmake
+BUILDER_NAME := ubuntu-native
 
 PRELOAD_FILE=$(DOCK_PRLDS)/$(PRELOAD)
 
 DOCKER_CONTAINER=hbirch/coffeecutie:$(DOCKER_CONFIG)
 
-EXTRA_OPTIONS:=-DGENERATE_PROGRAMS=OFF
+EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF -DCOFFEE_BUILD_ASSIMP=ON
 
 all: multi
 

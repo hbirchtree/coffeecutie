@@ -1,12 +1,12 @@
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
+BUILD_DIR := $(PWD)
+
 TARGET := armv7a_neon_latest
 
 COFFEE_DIR := 
 DOCK_COFFEE_DIR := /home/coffee/library
 
-BUILD_DIR:=$(PWD)
-SOURCE_DIR:=$(PWD)/..
 AUTOMATION_DIR:=$(BUILD_DIR)/automation
 AUTO_DIR:=$(AUTOMATION_DIR)/builders
 
@@ -17,8 +17,19 @@ TOOLCHAIN_FILE := all-android.toolchain.cmake
 PRELOAD_DIR := $(COMPILE_DIR)/build-android/preloads
 EXTRA_OPTIONS := -DCOFFEE_ROOT_DIR=$(DOCK_COFFEE_DIR)
 
-DOCK_PRLD_DIR := /home/coffee/preload
 DOCK_BLD_DIR := /home/coffee/build
+
+RUNNER := Makefile.multi
+
+ifeq ($(RUNNER),Makefile.multi)
+	# Run using Docker
+	CMAKE_NATIVE_LIB_DIR := $(DOCK_BLD_DIR)/Coffee_NativeLibs
+	DOCK_PRLD_DIR := /home/coffee/preload
+else
+	# Run natively
+	CMAKE_NATIVE_LIB_DIR := $(BUILD_DIR)/native-libs
+	DOCK_PRLD_DIR := $(PRELOAD_DIR)
+endif
 
 all: android
 
@@ -35,17 +46,15 @@ android-gen-preloads:
 		-e BUILD_DIR=$(COMPILE_DIR)
 
 android: android-gen-preloads android-get-nativelibs
-	@make -f $(ROOT_DIR)/Makefile.multi multi.twostage \
+	@make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
 		-e CMAKE_SECOND_TARGET=AndroidPackage \
 		-e BUILD_NAME=android-$(TARGET) \
 		-e BUILDER_NAME=android-builder \
 		-e DOCKER_CONFIG=android \
-                -e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DCOFFEE_BUILD_SDL2=OFF -DNATIVE_LIBRARY_DIR=$(DOCK_BLD_DIR)/Coffee_NativeLibs/Android" \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DCOFFEE_BUILD_SDL2=OFF -DNATIVE_LIBRARY_DIR=$(CMAKE_NATIVE_LIB_DIR)/Android" \
 		-e CMAKE_GEN="Ninja" \
 		-e PRELOAD_FILE=$(DOCK_PRLD_DIR)/$(TARGET).cmake \
 		-e TOOLCHAIN=$(TOOLCHAIN_FILE) \
-		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e AUTOMATION_DIR=$(AUTOMATION_DIR) \
 		-e AUTO_DIR=$(AUTO_DIR) \
-		-e BUILD_DIR=$(BUILD_DIR) \
 		-e DOCKER_EXTRA_OPTIONS="-v $(PRELOAD_DIR):$(DOCK_PRLD_DIR):ro -v $(BUILD_DIR)/native-libs:$(DOCK_BLD_DIR)/Coffee_NativeLibs:ro -v $(COFFEE_DIR)/android-$(TARGET):$(DOCK_COFFEE_DIR):ro"
