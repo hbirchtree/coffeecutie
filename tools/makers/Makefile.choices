@@ -115,7 +115,7 @@ emscripten-asmjs: native-lib-root
 		-e TOOLCHAIN=js-emscripten.toolchain.cmake \
 		-e PRELOAD=js-emscripten.cmake \
 		-e CMAKE_GEN="Unix\ Makefiles" \
-		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):$(CMAKE_NATIVE_LIB_DIR):ro -e EMSCRIPTEN=/emscripten/master" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):$(CMAKE_NATIVE_LIB_DIR):ro -e EMSCRIPTEN=$(EMSCRIPTEN_SDK)/emscripten/master" \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=$(CMAKE_NATIVE_LIB_DIR)/Emscripten -DEMSCRIPTEN_ROOT_PATH=$(EMSCRIPTEN_SDK)/emscripten/master"
 
 # Compiles for Emscripten using WebAssembly
