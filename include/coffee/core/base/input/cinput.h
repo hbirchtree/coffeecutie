@@ -238,21 +238,26 @@ struct CIControllerState
     union{
         uint16 d;
         struct{
+            /* Buttons on right */
             bool a:1;
             bool b:1;
             bool x:1;
             bool y:1;
 
+            /* Middle buttons */
             bool back:1;
             bool guide:1;
             bool start:1;
 
+            /* Stick buttons */
             bool s_l:1;
             bool s_r:1;
 
+            /* Bumper buttons */
             bool b_l:1;
             bool b_r:1;
 
+            /* D-pad buttons */
             bool p_up:1;
             bool p_down:1;
             bool p_left:1;
