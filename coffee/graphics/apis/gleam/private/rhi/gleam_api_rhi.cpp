@@ -337,6 +337,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
             GLC::Disable(Feature::Blend);
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_2_0
              || GL_CURR_API==GLES_3_2)
     {
         if(bstate.blend())
@@ -347,7 +348,9 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 
     if(bstate.blend())
     {
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
+        if(GL_CURR_API==GL_3_3
+                || GL_CURR_API==GLES_2_0
+                || GL_CURR_API==GLES_3_0)
         {
             if(bstate.additive())
             {
@@ -388,6 +391,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
         }
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_2_0
              || GL_CURR_API==GLES_3_2)
     {
         if(dstate.testDepth())

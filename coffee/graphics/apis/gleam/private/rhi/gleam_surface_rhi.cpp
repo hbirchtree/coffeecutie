@@ -375,7 +375,12 @@ GLEAM_SamplerHandle GLEAM_Sampler2D::handle()
     /* TODO: Add bindless */
     h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
+#if !defined(COFFEE_ONLY_GLES20)
     h.m_sampler = m_handle;
+#else
+    CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
+    CGL33::TexGenMipmap(m_surface->m_type);
+#endif
 
     return h;
 }
@@ -393,11 +398,14 @@ void GLEAM_Sampler3D::bind(uint32 i)
 GLEAM_SamplerHandle GLEAM_Sampler3D::handle()
 {
     GLEAM_SamplerHandle h = {};
-#if !defined(COFFEE_ONLY_GLES20)
-    /* TODO: Add bindless */
     h.m_type = m_surface->m_type;
     h.texture = m_surface->m_handle;
+#if !defined(COFFEE_ONLY_GLES20)
+    /* TODO: Add bindless */
     h.m_sampler = m_surface->m_handle;
+#else
+    CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
+    CGL33::TexGenMipmap(m_surface->m_type);
 #endif
     return h;
 }
@@ -418,12 +426,12 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 {
     GLEAM_SamplerHandle h = {};
     h.m_type = m_surface->m_type;
-#if !defined(COFFEE_ONLY_GLES20)
     h.texture = m_surface->m_handle;
+#if !defined(COFFEE_ONLY_GLES20)
     h.m_sampler = m_handle;
 #else
+    CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
     CGL33::TexGenMipmap(m_surface->m_type);
-    h.texture = m_surface->m_handle;
 #endif
 
     return h;
