@@ -386,5 +386,6 @@ class StepCorrectPythonScriptPaths(ProjectStep):
         for f in glob('%s/*.py' % ProjectStep.get_target_dir()):
             file_data = open(f).read()
             file_data = file_data.replace('tools.python.', '')
+            file_data = file_data.replace('tools/python', '')
             with open(f, mode='w') as fh:
                 fh.write(file_data)

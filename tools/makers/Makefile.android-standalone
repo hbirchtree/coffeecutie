@@ -57,4 +57,4 @@ android: android-gen-preloads android-get-nativelibs
 		-e TOOLCHAIN=$(TOOLCHAIN_FILE) \
 		-e AUTOMATION_DIR=$(AUTOMATION_DIR) \
 		-e AUTO_DIR=$(AUTO_DIR) \
-		-e DOCKER_EXTRA_OPTIONS="-v $(PRELOAD_DIR):$(DOCK_PRLD_DIR):ro -v $(BUILD_DIR)/native-libs:$(DOCK_BLD_DIR)/Coffee_NativeLibs:ro -v $(COFFEE_DIR)/android-$(TARGET):$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(PRELOAD_DIR):$(DOCK_PRLD_DIR):ro -v $(BUILD_DIR)/native-libs:$(DOCK_BLD_DIR)/Coffee_NativeLibs:ro -v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
