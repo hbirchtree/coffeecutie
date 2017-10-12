@@ -1,10 +1,12 @@
 from os.path import curdir
 from collections import namedtuple
-from os.path import isfile
+from os.path import isfile, isdir, dirname
 from subprocess import Popen, PIPE
 
 local_yml_filespec = '.local.yml'
 build_yml_filespec = '.build.yml'
+
+ProcessResult = namedtuple('ProcessResult', 'code, stdout, stderr')
 
 
 def configure_string(src_text, variables):
@@ -14,32 +16,11 @@ def configure_string(src_text, variables):
     return src_text
 
 
-def configure_file(src_file, trg_file, variables, _verbose=False, _dry_run=False):
-    if isfile(trg_file):
-        if _verbose:
-            print('Skipping configuration of %s, it already exists' % trg_file)
-        return
-
-    for var in variables:
-        assert ( type(variables[var]) == str )
-    src_text = None
-    if src_file is not None:
-        with open(src_file, 'r') as src_fd:
-            src_text = src_fd.read()
-            src_text = configure_string(src_text, variables)
-
-    if _dry_run or _verbose:
-        print('Writing file %s:' % trg_file)
-        print(src_text)
-        if _dry_run:
-            return
-
-    with open(trg_file, 'w') as trg_fd:
-        if src_text is not None:
-            trg_fd.write(src_text)
-
-
-ProcessResult = namedtuple('ProcessResult', 'code, stdout, stderr')
+def try_get_key(d, k, v):
+    try:
+        return d[k]
+    except KeyError:
+        return v
 
 
 def run_command(program, args, workdir=curdir, dry_run=True, verbose=False):
@@ -85,3 +66,32 @@ def run_command(program, args, workdir=curdir, dry_run=True, verbose=False):
         exit(1)
 
     return ProcessResult(proc.returncode, stdout.decode(), stderr.decode())
+
+
+def configure_file(src_file, trg_file, variables, _verbose=False, _dry_run=False):
+    if isfile(trg_file):
+        if _verbose:
+            print('Skipping configuration of %s, it already exists' % trg_file)
+        return
+
+    for var in variables:
+        assert ( type(variables[var]) == str )
+    src_text = None
+    if src_file is not None:
+        with open(src_file, 'r') as src_fd:
+            src_text = src_fd.read()
+            src_text = configure_string(src_text, variables)
+
+    if _dry_run or _verbose:
+        print('Writing file %s:' % trg_file)
+        print(src_text)
+        if _dry_run:
+            return
+    
+    if not isdir(dirname(trg_file)):
+        run_command("mkdir", [dirname(trg_file)], dry_run=False)
+
+    with open(trg_file, 'w') as trg_fd:
+        if src_text is not None:
+            trg_fd.write(src_text)
+

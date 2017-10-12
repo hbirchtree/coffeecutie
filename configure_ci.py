@@ -94,13 +94,6 @@ def git_get_origin(srcDir):
         raise RuntimeError('Failed to parse')
 
 
-def try_get_key(d, k, v): # d=dictionary, k=key, v=default val
-    try:
-        return d[k]
-    except KeyError:
-        return v
-
-
 def create_env_matrix(current, build_info):
     def get_targets(d1, d2, out, prefix):
         def zip_lists(v1, v2, out, prefix):

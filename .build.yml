@@ -1,51 +1,54 @@
 allow_fail:
-  - env: BUILDVARIANT=maemo.armel
-  - env: BUILDVARIANT=uwp.amd64
-  - env: BUILDVARIANT=uwp.arm
-  - env: BUILDVARIANT=coverage
-  - env: BUILDVARIANT=raspberry.armhf
-name: Coffee
-display_name: Coffeecutie
-platforms:
-    emscripten:
-      - asmjs
-      - wasm
-    ubuntu:
-      - amd64
-      - i686
-      - armhf
-    fedora:
-      - amd64
-    steam:
-      - amd64
-    android:
-      - armv7a
-      - armv8a
-      - armv7a.kitkat
-    maemo:
-      - armel
-    raspberry:
-      - armhf
-    osx:
-      - osx
-      - ios.x86_64
-    windows:
-      - win32
-      - uwp
-
-coverage: true
-
+- env: BUILDVARIANT=maemo.armel
+- env: BUILDVARIANT=uwp.amd64
+- env: BUILDVARIANT=uwp.arm
+- env: BUILDVARIANT=coverage
+- env: BUILDVARIANT=raspberry.armhf
 branches:
-  - name: master
-    build: true
-    deploy: true
-  - name: /^testing.*$/
-    build: true
-  - name: /^feature.*$/
-    build: true
-
+- build: true
+  deploy: true
+  name: master
+- build: true
+  name: /^testing.*$/
+- build: true
+  name: /^feature.*$/
+coverage: true
+display_name: Coffeecutie
+makefile_location: tools/makers
+name: Coffee
+platforms:
+  android:
+  - armv7a
+  - armv8a
+  - armv7a.kitkat
+  emscripten:
+  - asmjs
+  - wasm
+  fedora:
+  - amd64
+  maemo:
+  - armel
+  osx:
+  - osx
+  - ios.x86_64
+  raspberry:
+  - armhf
+  steam:
+  - amd64
+  ubuntu:
+  - amd64
+  - i686
+  - armhf
+  windows:
+  - win32
+  - uwp
+script_location: tools/ci
 secrets:
   appveyor: 6ME8msH/BDLiEde9wCb9+GQRN4rcAzyu1Vx/wP5yHejedO3vPlrOXHiWqhjNqXrQ
-makefile_location: tools/makers
 template_location: cmake/Templates
-script_location: tools/ci
+version:
+  hotfix: 0
+  major: 2
+  minor: 1
+  patch: 0
+  release: 1

@@ -298,6 +298,13 @@ class StepUpdateBuildInfo(ProjectStep):
 
             structure['name'] = _struct.name
             structure['display_name'] = _struct.display_name
+            structure['version'] = {
+                     "major": 0,
+                     "minor": 0,
+                     "release": 1,
+                     "patch": 0,
+                     "hotfix": 0,
+                }
 
         config_files = configure_ci.generate_config_files(self.ci_services,
                                                           deepcopy(structure),

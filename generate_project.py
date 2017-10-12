@@ -125,6 +125,8 @@ def main():
                          'cmake/Templates/reconfig.py': 'rebuild.py',
                          'cmake/Templates/Config*.cmake.in': 'cmake/Templates',
                          'buildinfo.py': None,
+                         'version.py': None,
+                         'git-gen-release.sh': None,
                          'quick-build.sh': None,
                          'quick-build.ps1': None,
                          'tools/ci/get_matching_release.py': 'ci/travis-helper.py',
