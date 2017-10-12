@@ -4,7 +4,7 @@ WDIR="$(dirname $0)"
 
 function gitw()
 {
-	[ ! -z $DRYRUN ] && echo git $@ && return
+	[ ! -z $DRYRUN ] && echo git $@ && return 0
 	git $@
 }
 
@@ -18,7 +18,6 @@ function die()
 
 RELEASE_NAME="$($WDIR/version.py $1)"
 
-gitw tag "automated-release-$RELEASE_NAME"
-
-gitw push
-gitw push --tags
+gitw tag "$RELEASE_NAME" && \
+	gitw push && \
+	gitw push --tags

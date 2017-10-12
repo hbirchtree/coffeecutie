@@ -60,6 +60,15 @@ if __name__ == '__main__':
     version_cfg[args.increment_type] = 1 +  try_get_key(version_cfg,
                                                         args.increment_type,
                                                         0)
+    
+    found_type = False
+    for i in range(len(version_vars)):
+        if found_type:
+            version_cfg[version_vars[i]] = 0
+            continue
+        if version_vars[i] == args.increment_type:
+            found_type = True
+            continue
 
     print(version_prefix + print_version(version_cfg))
 
