@@ -13,7 +13,14 @@ function build_info() {
 
 $env:SCRIPT_DIR = (build_info script_location)
 $env:MAKEFILE_DIR = (build_info makefile_location)
-$env:DEPENDENCIES = (build_info dependencies)
+$DEPENDENCIES_ARRAY = (build_info dependencies)
+
+$env:DEPENDENCIES = ""
+foreach($dep in $DEPENDENCIES_ARRAY) {
+    $env:DEPENDENCIES = "${env:DEPENDENCIES};$dep"
+}
+
+echo "-- Dependencies: $env:DEPENDENCIES"
 
 echo "-- Building $env:BUILDVARIANT in $env:CONFIGURATION mode"
 
