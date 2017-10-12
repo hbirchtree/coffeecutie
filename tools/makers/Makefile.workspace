@@ -1,0 +1,57 @@
+CMAKE := cmake
+
+BUILD_DIR := $(PWD)
+SOURCE_DIR := $(PWD)/..
+
+EXTRA_OPTIONS := -DGENERATE_PROGRAMS=OFF -DCOFFEE_BUILD_ASSIMP=ON
+
+CMAKE_TOOLS:=$(SOURCE_DIR)/cmake/Toolchains
+CMAKE_PRLDS:=$(SOURCE_DIR)/cmake/Preload
+
+BUILD_NAME :=  ubuntu
+PRELOAD := linux-generic.cmake
+TOOLCHAIN := linux-generic_linux.toolchain.cmake
+BUILDER_NAME := ubuntu-native
+
+CMAKE_SRC_DIR:=$(SOURCE_DIR)
+CMAKE_BLD_DIR:=$(BUILD_DIR)/build-$(BUILD_NAME)
+CMAKE_OUT_DIR:=$(BUILD_DIR)/build/$(BUILD_NAME)
+
+CMAKE_GEN:=Ninja
+CMAKE_TARGET:=install
+CMAKE_SECOND_TARGET:=CoverageTest
+BUILD_TYPE:=Debug
+
+PRELOAD_FILE=$(CMAKE_PRLDS)/$(PRELOAD)
+
+all: multi
+
+multi-mk-build:
+	mkdir -p $(BUILD_DIR)/build-$(BUILD_NAME)/out
+	
+multi-mk-output:
+	mkdir -p $(BUILD_DIR)/build/$(BUILD_NAME)
+
+multi-prepare: multi-mk-build multi-mk-output
+
+multi-config: multi-prepare
+	sh -c "cd $(CMAKE_BLD_DIR) && \
+		$(CMAKE) $(CMAKE_SRC_DIR) \
+			-G$(CMAKE_GEN) \
+			-C$(PRELOAD_FILE) \
+			-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLS)/$(TOOLCHAIN) \
+			-DCMAKE_INSTALL_PREFIX=$(CMAKE_OUT_DIR) \
+			-DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
+			$(EXTRA_OPTIONS)"
+
+multi: multi-config
+	$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_TARGET)
+
+multi.twostage: multi-config
+	sh -c '$(CMAKE) --build $(CMAKE_BLD_DIR) --target all && \
+		$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1 && \
+		$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_TARGET)'
+
+multi.make8: multi-config
+	$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_TARGET) -- -j8"
+

@@ -37,7 +37,7 @@ struct RuntimeTask
     TaskFlags flags;
     u32 _pad;
 
-    bool operator<(RuntimeTask const& other) const
+    FORCEDINLINE bool operator<(RuntimeTask const& other) const
     {
         return time < other.time;
     }
@@ -58,6 +58,31 @@ public:
      */
     static u64 Queue(RuntimeTask&& task);
     static u64 Queue(ThreadId const& targetThread, RuntimeTask&& task);
+
+    STATICINLINE u64 QueueShot(RuntimeQueue* q,
+                               RuntimeTask::Duration time,
+                               Function<void()>&& task)
+    {
+        return Queue(q->threadId(),
+                     RuntimeTask::CreateTask(
+                         std::move(task),
+                         RuntimeTask::SingleShot,
+                         RuntimeTask::clock::now() + time
+                         ));
+    }
+
+    STATICINLINE u64 QueuePeriodic(RuntimeQueue* q,
+                                   RuntimeTask::Duration time,
+                                   Function<void()>&& task)
+    {
+        return Queue(q->threadId(), {
+                         task,
+                         {},
+                         time,
+                         RuntimeTask::Periodic,
+                         0,
+                     });
+    }
 
     static bool CancelTask(u64 taskId);
     static bool CancelTask(ThreadId const& targetThread, u64 taskId);

@@ -337,6 +337,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
             GLC::Disable(Feature::Blend);
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_2_0
              || GL_CURR_API==GLES_3_2)
     {
         if(bstate.blend())
@@ -347,7 +348,9 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 
     if(bstate.blend())
     {
-        if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_3_0 || GL_CURR_API==GLES_2_0)
+        if(GL_CURR_API==GL_3_3
+                || GL_CURR_API==GLES_2_0
+                || GL_CURR_API==GLES_3_0)
         {
             if(bstate.additive())
             {
@@ -388,6 +391,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
         }
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
+             || GL_CURR_API==GLES_2_0
              || GL_CURR_API==GLES_3_2)
     {
         if(dstate.testDepth())
@@ -402,7 +406,8 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
     {
         GLC::DepthMask(dstate.mask());
 
-        GLC::DepthFunc((ValueComparison)dstate.fun());
+        if(dstate.fun())
+            GLC::DepthFunc(C_CAST<ValueComparison>(dstate.fun()));
 
         if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
         {
@@ -456,7 +461,7 @@ void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformfv(prog,idx,arr_size,data);
+        CGL43::Uniformfv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
     else
 #endif
         CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
@@ -468,7 +473,7 @@ void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformfv(prog,idx,arr_size,false,data);
+        CGL43::Uniformfv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),false,data);
     else
 #endif
         CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),false,data);
@@ -480,7 +485,7 @@ void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
     if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformiv(prog,idx,arr_size,data);
+        CGL43::Uniformiv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
     else
 #endif
         CGL33::Uniformiv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
@@ -491,9 +496,9 @@ template<typename T>
 void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
 {
     if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformuiv(prog,idx,arr_size,data);
+        CGL43::Uniformuiv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
     else
-        CGL33::Uniformuiv(idx,arr_size,data);
+        CGL33::Uniformuiv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 #endif
 
@@ -533,44 +538,111 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
         uint32 const& idx = u.first;
         uint32 const& fgs = u.second.value->flags;
 
-        if(fgs == (Mat_d|S2|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf2*)db->data,db->size);
-        else if(fgs == (Mat_d|S3|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf3*)db->data,db->size);
-        else if(fgs == (Mat_d|S4|Scalar_t))
-            SetUniform_wrapf_m(prog,idx,(Matf4*)db->data,db->size);
+        using Matf2_t = sdt_uniff<Mat_d|S2>;
+        using Matf3_t = sdt_uniff<Mat_d|S3>;
+        using Matf4_t = sdt_uniff<Mat_d|S4>;
 
-        else if(fgs == (Vec_d|S2|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf2*)db->data,db->size);
-        else if(fgs == (Vec_d|S3|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf3*)db->data,db->size);
-        else if(fgs == (Vec_d|S4|Scalar_t))
-            SetUniform_wrapf(prog,idx,(Vecf4*)db->data,db->size);
+        using Vecf2_t = sdt_uniff<Vec_d|S2>;
+        using Vecf3_t = sdt_uniff<Vec_d|S3>;
+        using Vecf4_t = sdt_uniff<Vec_d|S4>;
 
-        else if(fgs == (Vec_d|S2|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci2*)db->data,db->size);
-        else if(fgs == (Vec_d|S3|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci3*)db->data,db->size);
-        else if(fgs == (Vec_d|S4|Int_t))
-            SetUniform_wrapi(prog,idx,(Veci4*)db->data,db->size);
+        using Veci2_t = sdt_unifi<Vec_d|S2>;
+        using Veci3_t = sdt_unifi<Vec_d|S3>;
+        using Veci4_t = sdt_unifi<Vec_d|S4>;
+
+        using Vecu2_t = sdt_unifu<Vec_d|S2>;
+        using Vecu3_t = sdt_unifu<Vec_d|S3>;
+        using Vecu4_t = sdt_unifu<Vec_d|S4>;
+
+        using Valuef_t = sdt_uniff<S1>;
+        using Valuei_t = sdt_unifi<S1>;
+        using Valueu_t = sdt_unifu<S1>;
+
+        union {
+            c_cptr data;
+
+            Matf2* m2;
+            Matf3* m3;
+            Matf4* m4;
+
+            Vecf2* v2;
+            Vecf3* v3;
+            Vecf4* v4;
+
+            Veci2* vi2;
+            Veci3* vi3;
+            Veci4* vi4;
+
+            Vecui2* vu2;
+            Vecui3* vu3;
+            Vecui4* vu4;
+
+            scalar* s;
+            i32* i;
+            u32* u;
+        } ptr;
+
+        ptr.data = db->data;
+
+        switch(fgs)
+        {
+        case Matf2_t::value:
+            SetUniform_wrapf_m(prog,idx,ptr.m2,db->size);
+            break;
+        case Matf3_t::value:
+            SetUniform_wrapf_m(prog,idx,ptr.m3,db->size);
+            break;
+        case Matf4_t::value:
+            SetUniform_wrapf_m(prog,idx,ptr.m4,db->size);
+            break;
+
+        case Vecf2_t::value:
+            SetUniform_wrapf(prog,idx,ptr.v2,db->size);
+            break;
+        case Vecf3_t::value:
+            SetUniform_wrapf(prog,idx,ptr.v3,db->size);
+            break;
+        case Vecf4_t::value:
+            SetUniform_wrapf(prog,idx,ptr.v4,db->size);
+            break;
+
+        case Veci2_t::value:
+            SetUniform_wrapi(prog,idx,ptr.vi2,db->size);
+            break;
+        case Veci3_t::value:
+            SetUniform_wrapi(prog,idx,ptr.vi3,db->size);
+            break;
+        case Veci4_t::value:
+            SetUniform_wrapi(prog,idx,ptr.vi4,db->size);
+            break;
 
 #if !defined(COFFEE_ONLY_GLES20)
-        else if(fgs == (Vec_d|S2|UInt_t))
-            SetUniform_wrapui(prog,idx,(Vecui2*)db->data,db->size/sizeof(Vecui2));
-        else if(fgs == (Vec_d|S3|UInt_t))
-            SetUniform_wrapui(prog,idx,(Vecui3*)db->data,db->size/sizeof(Vecui3));
-        else if(fgs == (Vec_d|S4|UInt_t))
-            SetUniform_wrapui(prog,idx,(Vecui4*)db->data,db->size/sizeof(Vecui4));
+        case Vecu2_t::value:
+            SetUniform_wrapui(prog,idx,ptr.vu2,db->size);
+            break;
+        case Vecu3_t::value:
+            SetUniform_wrapui(prog,idx,ptr.vu3,db->size);
+            break;
+        case Vecu4_t::value:
+            SetUniform_wrapui(prog,idx,ptr.vu4,db->size);
+            break;
 #endif
 
-        else if(fgs==Scalar_t)
-            SetUniform_wrapf(prog,idx,(scalar*)db->data,db->size/sizeof(scalar));
-        else if(fgs==Int_t)
-            SetUniform_wrapi(prog,idx,(int32*)db->data,db->size/sizeof(int32));
+        case Valuef_t::value:
+            SetUniform_wrapf(prog,idx,ptr.s,db->size);
+            break;
+        case Valuei_t::value:
+            SetUniform_wrapi(prog,idx,ptr.i,db->size);
+            break;
 #if !defined(COFFEE_ONLY_GLES20)
-        else if(fgs==UInt_t)
-            SetUniform_wrapui(prog,idx,(uint32*)db->data,db->size/sizeof(uint32));
+        case Valueu_t::value:
+            SetUniform_wrapui(prog,idx,ptr.u,db->size);
+            break;
 #endif
+        default:
+            cWarning("Unhandled uniform type: {0}", fgs);
+            break;
+        }
     }
 
     for(auto s : ustate.m_samplers)

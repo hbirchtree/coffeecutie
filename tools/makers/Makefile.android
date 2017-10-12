@@ -1,8 +1,8 @@
 ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
-BUILD_DIR:=$(PWD)
-SOURCE_DIR:=$(PWD)/..
-AUTO_DIR:=$(SOURCE_DIR)/tools/automation/builders
+BUILD_DIR ?= $(PWD)
+SOURCE_DIR ?= $(PWD)/..
+AUTO_DIR ?= $(SOURCE_DIR)/tools/automation/builders
 
 DOCK_SRC:=/home/coffee/project
 DOCK_BUILD:=/home/coffee/build
@@ -20,6 +20,8 @@ META_DIR := $(BUILD_DIR)/build-android/meta
 
 TARGET := all
 
+RUNNER ?= Makefile.multi
+
 all: android
 
 android-mkdir:
@@ -29,7 +31,8 @@ android-mkdir:
 		$(BUILD_DIR)/build/android
 
 android-get-automation:
-	@make -f $(ROOT_DIR)/Makefile.multi automation-data
+	true
+	#@make -f $(ROOT_DIR)/Makefile.multi automation-data
 
 android-build-docker: #android-get-automation
 	true
@@ -49,6 +52,7 @@ android-permission-config: android-build-docker android-mkdir
 		$(DOCKER_CONTAINER) \
 			chown -R coffee:coffee $(DOCK_BUILD) $(DOCK_META)
 
+ifeq ($(RUNNER),Makefile.multi)
 android-get-config: android-permission-config
 	[ -d $(BUILD_DIR)/build-android/meta/.git ] || \
 	$(DOCKER) run --rm \
@@ -60,8 +64,16 @@ android-get-config: android-permission-config
 			git clone \
 			"https://github.com/hbirchtree/coffeecutie-meta.git" \
 			$(DOCK_META)
+else
+android-get-config:
+	[ -d $(BUILD_DIR)/build-android/meta/.git ] || \
+	git clone \
+		"https://github.com/hbirchtree/coffeecutie-meta.git" \
+		$(META_DIR)
+endif
 
 android-config: android-get-config
+ifeq ($(RUNNER),Makefile.multi)
 	$(DOCKER) run --rm \
 		-v $(BUILD_DIR)/build-android/meta:$(DOCK_META):rw \
 		-v $(BUILD_DIR)/build-android/:$(DOCK_BUILD):rw \
@@ -72,6 +84,13 @@ android-config: android-get-config
 		$(DOCKER_CONTAINER) \
 			cmake $(DOCK_META)/android \
 				-DSOURCE_DIR=$(DOCK_SRC)
+else
+	cd $(BUILD_DIR)/build-android && \
+	cmake $(META_DIR)/android \
+		-DSOURCE_DIR=$(SOURCE_DIR) \
+		-DANDROID_NDK=$(ANDROID_NDK) \
+		-DANDROID_SDK=$(ANDROID_SDK)
+endif
 
 android: android-config
 	$(DOCKER) run --rm \

@@ -8,18 +8,103 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+#if defined(COFFEE_ONLY_GLES20)
+static const constexpr cstring GLES20_COMPAT_VS = {
+    "#define in attribute\n"
+    "#define out varying\n"
+};
+
+static const constexpr cstring GLES20_COMPAT_FS = {
+    "#define in varying\n"
+    "#define OutColor gl_FragColor\n"
+    "#define sampler2DArray sampler2D\n"
+    "#define sampler3DArray sampler3D\n"
+
+    "vec4 texture(sampler2D sampler, vec2 texCoord)"
+    "{"
+    "   return texture2D(sampler, texCoord.xy);"
+    "}"
+    "vec4 texture(sampler2D sampler, vec3 texCoord)"
+    "{"
+    "   return texture2D(sampler, texCoord.xy);"
+    "}"
+};
+#endif
+
 bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
-        int32 slen = data.size;
+        int32 slen = C_FCAST<i32>(data.size);
         CGL33::ShaderAlloc(1,stage,&m_handle);
 		if (m_handle == 0)
 		{
 			cWarning("Failed to allocate shader handle..?");
 			return false;
 		}
-        CGL33::ShaderSource(m_handle,1,&slen,(cstring*)&data.data);
+
+        u32 numSources = 1;
+        cstring* shaderSrc = (cstring*)(&data.data);
+
+        i32* shaderLens = &slen;
+
+#if defined(COFFEE_ONLY_GLES20)
+        if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
+            return false;
+
+        Vector<cstring> shaderSrcVec = {};
+        Vector<i32> shaderSrcLens = {};
+
+        cstring originalShader = C_FCAST<cstring>(data.data);
+
+        /* Desktop GL does not require a precision specifier */
+        shaderSrcVec.push_back("precision mediump float;\n");
+
+        /* OpenGL GLSL ES 1.00 does not have a #version directive,
+         *  remove it */
+        if(StrFind(originalShader, "#version "))
+            originalShader = StrFind(originalShader, "\n") + 1;
+
+        /* TODO: If a line has layout(...), remove it, GLSL 1.00
+         *  does not support that */
+
+        /* TODO: Provide better support for sampler2DArray, creating
+         *  extra uniforms for grid size and etc. This will allow us
+         *  to sample a sampler2D as if it were a sampler2DArray, all
+         *  with the same code. */
+
+        /* TODO: Using the sampler2DArray code, do the same for sampler3D.
+         * This will require special care when providing the user with
+         *  texture size limits. We may calculate the max size of a 3D
+         *  texture based on 2D texture size. Most likely, this will be
+         *  2048x2048 split into 128x or 256x pieces, or maybe smaller. */
+
+        /* We add a compatibility shim for vertex and fragment shaders.
+         * This does some basic conversion, such as swapping "in" and
+         *  "out" with the approriate 1.00 equivalents (attribute and
+         *  varying) */
+        if(stage == ShaderStage::Vertex)
+            shaderSrcVec.push_back(GLES20_COMPAT_VS);
+        else
+            shaderSrcVec.push_back(GLES20_COMPAT_FS);
+
+        shaderSrcLens.reserve(shaderSrcVec.size() + 1);
+        for(cstring fragment : shaderSrcVec)
+        {
+            shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
+        }
+
+        shaderSrcVec.push_back(originalShader);
+        shaderSrcLens.push_back(slen);
+
+        shaderLens = shaderSrcLens.data();
+        shaderSrc = shaderSrcVec.data();
+        numSources = C_FCAST<u32>(shaderSrcVec.size());
+#endif
+
+        CGL33::ShaderSource(m_handle,numSources,
+                            shaderLens,
+                            shaderSrc);
         bool stat = CGL33::ShaderCompile(m_handle);
 
         if(GL_DEBUG_MODE && !stat)
@@ -36,7 +121,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
-        cstring str = (cstring)data.data;
+        cstring str = (cstring)(data.data);
         m_handle = CGL43::ProgramCreate(stage,1,&str);
 
         if(GL_DEBUG_MODE && m_handle == 0)
@@ -162,8 +247,16 @@ void GLEAM_Pipeline::dealloc()
 bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
                                           GLEAM_UniformValue *data)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(value.m_flags & ShaderTypes::Uniform_v)
+        (void)0x0;
+    else
+        return false;
+
     uint32 idx = value.m_idx;
     data->flags = value.m_flags;
     m_uniforms[idx] = {data,value.stages};
@@ -173,8 +266,41 @@ bool GLEAM_ShaderUniformState::setUniform(const GLEAM_UniformDescriptor &value,
 bool GLEAM_ShaderUniformState::setSampler(const GLEAM_UniformDescriptor &value,
                                           const GLEAM_SamplerHandle *sampler)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if((value.m_flags & ShaderTypes::Sampler_v) != 0)
+        (void)0x0;
+    else
+        return false;
+
+    Texture samplerType = Texture::T2D;
+
+    switch(value.m_flags & SizeMask_f)
+    {
+    case S2:
+        samplerType = Texture::T2D;
+        break;
+#if !defined(COFFEE_ONLY_GLES20)
+    case S3:
+        samplerType = Texture::T3D;
+        break;
+    case S2A:
+        samplerType = Texture::T2DArray;
+        break;
+    case SCubeA:
+        samplerType = Texture::CubemapArray;
+        break;
+#endif
+    case SCube:
+        samplerType = Texture::Cubemap;
+        break;
+    default:
+        return false;
+    }
+
     uint32 idx = value.m_idx;
     m_samplers[idx] = {sampler,value.stages};
     return true;
@@ -184,8 +310,16 @@ bool GLEAM_ShaderUniformState::setUBuffer(const GLEAM_UniformDescriptor &value,
                                           const GLEAM_UniformBuffer *buf,
                                           GLEAM_BufferSection const& sec)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(value.m_flags & ShaderTypes::UniBuf_t)
+        (void)0x0;
+    else
+        return false;
+
     uint32 idx = value.m_idx;
     m_ubuffers[idx] = {sec,buf,value.stages};
     return true;
@@ -195,8 +329,16 @@ bool GLEAM_ShaderUniformState::setSBuffer(const GLEAM_UniformDescriptor &value,
                                           const GLEAM_ShaderBuffer *buf,
                                           GLEAM_BufferSection const& sec)
 {
+    using namespace ShaderTypes;
+
     if(value.m_idx<0)
         return false;
+
+    if(value.m_flags & ShaderTypes::ShSBuf_t)
+        (void)0x0;
+    else
+        return false;
+
     uint32 idx = value.m_idx;
     m_sbuffers[idx] = {sec,buf,value.stages};
     return true;

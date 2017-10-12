@@ -20,9 +20,9 @@ int32 coffee_main(int32, cstring_w*)
         /* Testing HTTP transport, will return the HTML document */
         ProfContext __m("example.com");
 
-        TCP::SSLSocket cn(net_context);
+        TCP::Socket cn;
         tim.start();
-        cn.connect("example.com","https");
+        cn.connect("example.com","http");
 
         Profiler::Profile("Connect to host");
 
@@ -36,7 +36,7 @@ int32 coffee_main(int32, cstring_w*)
         Profiler::Profile("Generate request");
 
         cn.flush();
-        cn.pull();
+//        cn.pull();
 
         Profiler::Profile("Flushing socket");
 

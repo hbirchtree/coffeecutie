@@ -94,9 +94,9 @@ template<typename Camera>
  * \param lookSensitivityY
  */
 void ControllerCamera(Camera& cam, CIControllerState const& state,
-                      i16 deadzone, scalar moveSensitivity,
-                      scalar lookSensitivityX,
-                      scalar lookSensitivityY)
+                      i16 deadzone = 6000, scalar moveSensitivity = 0.3f,
+                      scalar lookSensitivityX = 0.02f,
+                      scalar lookSensitivityY = -0.02f)
 {
     Vecf3& position = cam.position;
     Quatf& rotation = cam.rotation;

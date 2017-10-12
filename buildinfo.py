@@ -1,19 +1,22 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+from __future__ import print_function
 
-from sys import stderr
-
+from sys import stderr, version_info, path
+from os import getcwd
 from yaml import load, dump
+from os.path import dirname, realpath, isfile
+from argparse import ArgumentParser
 
-from tools.python.common import build_yml_filespec
+if version_info[0] == 3:
+    from tools.python.common import build_yml_filespec
+else:
+    path.append("%s/tools/python/" % (realpath(dirname(__file__))))
+    from common import build_yml_filespec
 
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader, Dumper
-
-from os.path import dirname, realpath, isfile
-
-from argparse import ArgumentParser
 
 if __name__ == '__main__':
     args = ArgumentParser('BuildInfo')
@@ -41,7 +44,7 @@ if __name__ == '__main__':
     if isfile(build_config):
         config = read_yaml_file(build_config)
     else:
-        print('Failed to locate build configuration file, exiting', file=stderr)
+        eprint('Failed to locate build configuration file, exiting', file=stderr)
         exit(1)
 
     values = config

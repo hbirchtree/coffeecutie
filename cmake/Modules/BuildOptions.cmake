@@ -80,7 +80,7 @@ if(COFFEE_BUILD_GLES_20)
     message (STATUS "Enabling GLES 2.0 mode" )
     add_definitions(
         "-DCOFFEE_GLES20_MODE"
-        "-DCOFFEE_LINUX_LIGHTWEIGHT_WM"
+#        "-DCOFFEE_LINUX_LIGHTWEIGHT_WM"
         )
 endif()
 if(NOT COFFEE_BUILD_GLES)

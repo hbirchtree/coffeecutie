@@ -116,6 +116,41 @@ u64 RuntimeQueue::Queue(ThreadId const& targetThread, RuntimeTask &&task)
     }
 }
 
+/*!
+ * \brief We can look, but we cannot touch. This is used to
+ *  inspect RuntimeTasks as an observer. Only the controlling
+ *  thread may actually modify them.
+ * \param ids
+ * \param tasks
+ * \param taskId
+ * \return
+ */
+static RuntimeTask const* GetTask(Vector<u64> const& ids,
+                                  Vector<RuntimeTask> const& tasks,
+                                  u64 taskId,
+                                  szptr* idx = nullptr)
+{
+    /* Locate the task in our vector */
+    szptr i;
+    bool found = false;
+    for(i = 0; i<ids.size(); i++)
+    {
+        if(ids[i] == taskId)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if(!found)
+        return nullptr;
+
+    if(idx)
+        *idx = i;
+
+    return &tasks[i];
+}
+
 bool RuntimeQueue::CancelTask(u64 taskId)
 {
     return CancelTask(ThreadId(), taskId);
@@ -127,21 +162,53 @@ bool RuntimeQueue::CancelTask(const ThreadId &targetThread, u64 taskId)
 
     auto q_it = queues.find(targetThread.hash());
 
-    if(q_it != queues.end())
-    {
-        auto& queue = (*q_it).second;
-    }
-    return false;
+    if(q_it == queues.end())
+        return false;
+
+    auto& queue = (*q_it).second;
+
+    RuntimeTask const* task = nullptr;
+    szptr idx = 0;
+
+    if(!(task = GetTask(queue.mTaskIndices, queue.mTasks,  taskId)))
+        return false;
+
+    Lock __(queue.mTasksLock);
+
+    queue.mTasksAlive[idx] = false;
+
+    return true;
 }
 
 void RuntimeQueue::AwaitTask(u64 taskId)
 {
-
+    AwaitTask(ThreadId(), taskId);
 }
 
 void RuntimeQueue::AwaitTask(const ThreadId &targetThread, u64 taskId)
 {
+    auto queue = queues.find(targetThread.hash());
 
+    /* If thread has no queue, return */
+    if(queue == queues.end())
+        return;
+
+    auto const& queueRef = queue->second;
+
+    RuntimeTask const* task = nullptr;
+
+    if(!(task = GetTask(queueRef.mTaskIndices, queueRef.mTasks, taskId)))
+        return;
+
+    /* We cannot reliably await periodic tasks */
+    if(task->flags & RuntimeTask::Periodic)
+        return;
+
+    /* Do not await a past event */
+    if(RuntimeTask::clock::now() > task->time)
+        return;
+
+    CurrentThread::sleep_until(task->time);
 }
 
 void RuntimeQueue::TerminateThreads()
@@ -169,11 +236,17 @@ void RuntimeQueue::executeTasks()
         /* If this task has to be run in the future,
          *  all proceeding tasks will do as well */
         if(task.time > currTime)
+        {
+            i++;
             break;
+        }
 
         /* Skip dead tasks, clean it up later */
         if(!mTasksAlive[i])
+        {
+            i++;
             continue;
+        }
 
         /* In this case we will let it run */
         task.task();
@@ -183,7 +256,7 @@ void RuntimeQueue::executeTasks()
             mTasksAlive[i] = false;
         else if(task.flags & RuntimeTask::Periodic)
         {
-            task.time += task.interval;
+            task.time = RuntimeTask::clock::now() + task.interval;
         }else{
             ABORTEVERYTHINGGOGOGO();
         }
@@ -200,7 +273,12 @@ RuntimeTask::Duration RuntimeQueue::timeTillNext(RuntimeTask::Duration fallback)
     if(mTasks.size() == 0)
         return fallback;
     else
-        return mTasks[0].time - current;
+    {
+        if(mTasks[0].time < current)
+            return std::chrono::milliseconds(0);
+        else
+            return mTasks[0].time - current;
+    }
 }
 
 CString RuntimeQueue::name()

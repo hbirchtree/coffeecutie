@@ -29,6 +29,9 @@ protected:
     {
     }
 public:
+
+    C_DELETE_COPY_CONSTRUCTOR(CDRendererBase);
+
     virtual ~CDRendererBase()
     {
     }

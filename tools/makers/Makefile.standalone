@@ -4,16 +4,69 @@ BUILD_DIR:=$(PWD)
 SOURCE_DIR:=$(PWD)/..
 
 COFFEE_DIR := 
-DOCK_COFFEE_DIR := /home/coffee/library
+ifeq ($(RUNNER),Makefile.workspace)
+	DOCK_COFFEE_DIR := $(COFFEE_DIR)
+else
+	DOCK_COFFEE_DIR := /home/coffee/library
+endif
 
 CHOICES := $(ROOT_DIR)/Makefile.choices
 AND_STAND := $(ROOT_DIR)/Makefile.android-standalone
 
 AUTOMATION_DIR := $(BUILD_DIR)/automation
 
+ifeq ($(MAKECMDGOALS),android.armv8a)
+COFFEE_VARIANT := android-arm64_nougat
+endif
+ifeq ($(MAKECMDGOALS),android.armv7a)
+COFFEE_VARIANT := android-armv7a_neon_latest
+endif
+ifeq ($(MAKECMDGOALS),android.armv7a.kitkat)
+COFFEE_VARIANT := android-armv7a_neon_kk
+endif
+ifeq ($(MAKECMDGOALS),ubuntu.amd64)
+COFFEE_VARIANT := ubuntu
+endif
+ifeq ($(MAKECMDGOALS),ubuntu.amd64.gles20)
+COFFEE_VARIANT := ubuntu-amd64-gles20
+endif
+ifeq ($(MAKECMDGOALS),coverage)
+COFFEE_VARIANT := coverage
+endif
+ifeq ($(MAKECMDGOALS),ubuntu.i686)
+COFFEE_VARIANT := ubuntu-i686
+endif
+ifeq ($(MAKECMDGOALS),ubuntu.i686.gles)
+COFFEE_VARIANT := ubuntu-i686
+endif
+ifeq ($(MAKECMDGOALS),ubuntu.i686.gles20)
+COFFEE_VARIANT := ubuntu-i686
+endif
+ifeq ($(MAKECMDGOALS),fedora.amd64)
+COFFEE_VARIANT := fedora
+endif
+ifeq ($(MAKECMDGOALS),steam.amd64)
+COFFEE_VARIANT := steam
+endif
+ifeq ($(MAKECMDGOALS),emscripten.asmjs)
+COFFEE_VARIANT := emscripten-asmjs
+endif
+ifeq ($(MAKECMDGOALS),emscripten.wasm)
+COFFEE_VARIANT := emscripten-wasm
+endif
+ifeq ($(MAKECMDGOALS),maemo.armel)
+COFFEE_VARIANT := maemo
+endif
+ifeq ($(MAKECMDGOALS),raspberry.armhf)
+COFFEE_VARIANT := raspberry
+endif
+
 EXTRA_OPTIONS := 
-EXTRA_OPTIONS_C := $(EXTRA_OPTIONS) -DCOFFEE_ROOT_DIR=$(DOCK_COFFEE_DIR)
+EXTRA_OPTIONS_C := $(EXTRA_OPTIONS) -DCOFFEE_ROOT_DIR=$(DOCK_COFFEE_DIR)/$(COFFEE_VARIANT)
 DOCKER_EXTRA_OPTIONS := -v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro
+
+all:
+	@true
 
 android.armv8a:
 	@make -f $(AND_STAND) \
@@ -41,74 +94,81 @@ ubuntu.amd64:
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
+		
+ubuntu.amd64.gles20:
+	@make -f $(CHOICES) ubuntu-amd64-gles20 \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 coverage:
 	@make -f $(CHOICES) coverage \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/coverage:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 ubuntu.i686:
 	@make -f $(CHOICES) ubuntu-i686 \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu-i686:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 ubuntu.i686.gles:
 	@make -f $(CHOICES) ubuntu-i686-gles \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu-i686-gles:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 ubuntu.i686.gles20:
 	@make -f $(CHOICES) ubuntu-i686-gles20 \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/ubuntu-i686-gles20:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 fedora.amd64:
 	@make -f $(CHOICES) fedora-amd64 \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/fedora:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 steam.amd64:
 	@make -f $(CHOICES) steam-amd64 \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/steam:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 emscripten.asmjs:
 	@make -f $(CHOICES) emscripten-asmjs \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/emscripten-asmjs:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 emscripten.wasm:
 	@make -f $(CHOICES) emscripten-wasm \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/emscripten-wasm:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"
 
 maemo.armel:
 	@make -f $(CHOICES) maemo-armel \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-                -e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/maemo:/maemo/$(DOCK_COFFEE_DIR):ro"
+                -e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):/maemo/$(DOCK_COFFEE_DIR):ro"
 
 raspberry.armhf:
 	@make -f $(CHOICES) raspberry-armhf \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
-		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR)/raspberry:$(DOCK_COFFEE_DIR):ro"
+		-e DOCKER_EXTRA_OPTIONS="-v $(COFFEE_DIR):$(DOCK_COFFEE_DIR):ro"

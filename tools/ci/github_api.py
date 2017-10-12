@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 from collections import namedtuple
 from argparse import ArgumentParser
 import requests
@@ -26,7 +26,8 @@ class GithubRequestData:
 
 
 def printerr(s):
-    print(s, file=stderr)
+    #print(s, file=stderr)
+    pass
 
 
 def rest_request(url, headers, data, form=None, rtype=REQUEST_GET):
