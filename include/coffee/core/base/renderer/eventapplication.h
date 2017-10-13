@@ -42,10 +42,8 @@ struct EventLoopData
             Timestamp max;
         } time;
     };
-    
-#if defined(COFFEE_USE_APPLE_GLKIT) || defined(COFFEE_USE_ANDROID_NATIVEWIN)
+
     CDProperties visual;
-#endif
 
     FORCEDINLINE Renderer& r() {return *renderer.get();}
     FORCEDINLINE ShareData* d() {return data.get();}
@@ -184,21 +182,19 @@ public:
      */
     virtual void pollEvents()
     {
-//        if(!EventProcess(5))
-//        {
-//            m_closeFlag = true;
-//        }
     }
 
     /*!
-     * \brief Allow installation of event handlers without implementing the class
+     * \brief Allow installation of event handlers without
+     *  implementing the class
      */
     virtual bool installEventHandler(EventHandlerI)
     {
         return false;
     }
     /*!
-     * \brief Allow installation of event handlers without implementing the class
+     * \brief Allow installation of event handlers without
+     *  implementing the class
      */
     virtual bool installEventHandler(EventHandlerD)
     {
@@ -219,7 +215,8 @@ public:
     }
 
     /*!
-     * \brief Get current context time, can be returned by the context or the system
+     * \brief Get current context time, can be returned by the
+     *  context or the system
      * \return Current context time
      */
     virtual bigscalar contextTime() const
@@ -284,25 +281,6 @@ public:
     SUSPRESUME_FUN(resumeFunction, IsForeground, setup, resumeExtra)
     SUSPRESUME_FUN(suspendFunction, IsBackground, cleanup, suspendExtra)
 
-#if defined(COFFEE_EMSCRIPTEN)
-    template<typename R, typename D>
-    static void emscripten_looper(void* arg)
-    {
-        using ELD = EventLoopData<R, D>;
-
-        auto eventloop = C_FCAST< EventLoopData<R,D>* >(arg);
-
-        eventloop->loop(eventloop->r(), eventloop->d());
-
-        if(eventloop->flags & ELD::TimeLimited &&
-                Time::CurrentTimestamp() > (eventloop->time.start + eventloop->time.max))
-        {
-            auto qevent = CIEvent::Create(0, CIEvent::QuitSign);
-            eventloop->renderer->injectEvent(qevent, nullptr);
-        }
-    }
-#endif
-
 #undef SUSPRESUME_FUN
 
     template<typename Renderer, typename Data>
@@ -351,54 +329,66 @@ public:
 
         r.installEventHandler(suspend_data);
         r.installEventHandler(resume_data);
+
+        /* This data is used in order to reload the event loop while running.
+         * This is useful if you want to reload the entire user-part of
+         *  the program.
+         * In order for this to work, the setup and cleanup steps must
+         *  be written properly without memory leaks.
+         * This behavior is vital for the iOS and Android ports.
+         */
+
+        using namespace CfEventFunctions;
+
+        ev.visual = visual;
+        coffee_event_handling_data = &ev;
+        CoffeeEventHandle = WrapEventFunction<Renderer, Data>;
+        CoffeeEventHandleNA = WrapEventFunctionNA<Renderer, Data>;
+
+        using EH = EventExitHandler<Renderer, Data>;
+
+#if defined(COFFEE_EMSCRIPTEN)
+        /* Under emscripten, only the loop function is used later */
+        emscripten_set_main_loop_arg([](void* data){
+            CoffeeEventHandle(data, CoffeeHandle_Setup);
+            CoffeeEventHandle(data, CoffeeHandle_Loop);
+        }, &ev, 0, 1);
+#endif
         
-#if defined(COFFEE_USE_APPLE_GLKIT) || defined(COFFEE_USE_ANDROID_NATIVEWIN)
+#if defined(COFFEE_USE_APPLE_GLKIT) || \
+    defined(COFFEE_USE_ANDROID_NATIVEWIN) || \
+    defined(COFFEE_EMSCRIPTEN)
         /* Under GLKit, the entry point for setup, update and cleanup
          *  reside in AppDelegate.m
          * Lifecycle is manageed by UIKit in this case
          */
-        
-        ev.visual = visual;
-        
-        coffee_event_handling_data = &ev;
-        CoffeeEventHandle = CfEventFunctions::WrapEventFunction<Renderer, Data>;
-        CoffeeEventHandleNA = CfEventFunctions::WrapEventFunctionNA<Renderer, Data>;
-        
+        /* The same behavior is used with Android, where an external
+         *  event loop handles events.
+         */
+        /* This is where Emscripten jumps off to Javascript land,
+         *  with setTimeout and stuff */
         return 0;
-        
 #else
+
+        /* By default, try to load the highest GL version */
         if(!LoadHighestVersion(&ev.r(), visual, &err))
         {
             return -1;
         }
 
+        /* For timed runs, set the starting time */
         ev.time.start = Time::CurrentTimestamp();
 
-#if defined(COFFEE_EMSCRIPTEN)
-        // Under emscripten, only the loop function is used later
-        emscripten_set_main_loop_arg(emscripten_looper<Renderer,Data>,
-                                     &ev, 0, 1);
-#endif
-
-
-//#if defined(COFFEE_ANDROID)
-//        // Android awaits a foreground event, as it may not be there when started.
-//        {
-//            auto fevent = CDEvent::Create(0, CDEvent::IsForeground);
-//            r.injectEvent(fevent, nullptr);
-//        }
-//#else
-        // On desktop and etc, we are always ready for setup
+        /* Pump a setup event to get everything started */
         ev.setup(ev.r(), ev.d());
-//#endif
 
-
-#if !defined(COFFEE_EMSCRIPTEN)
-        /* In this case, event processing happens in a tight loop that happens
-            regardless of outside events
-           Android might want something better
+        /* In this case, event processing happens in a tight
+         *  loop that happens regardless of outside events.
+         * On platforms with their own event loops, this does not work.
          */
 
+        /* We retrieve the current thread's RuntimeQueue if it exists,
+         *  and process it regularly. */
         RuntimeQueue* rt_queue = RuntimeQueue::GetCurrentQueue();
         while(!ev.renderer->closeFlag())
         {
@@ -414,18 +404,8 @@ public:
             if(rt_queue)
                 rt_queue->executeTasks();
         }
-#endif
 
-        using EH = EventExitHandler<Renderer, Data>;
-
-#if defined(COFFEE_EMSCRIPTEN)
-        // Emscripten will exit after main()
-        EH::ev = &ev;
-        Cmd::RegisterAtExit(EH::event_exitFunc);
-#else
-        // All others exit here
         EH::event_exitFunc(&ev);
-#endif
 
         return 0;
 #endif

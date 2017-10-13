@@ -46,14 +46,6 @@ void emscripten_callback_error(void* arg)
     cDebug("Failed to do something with file :(");
     *status = -1;
 }
-
-void emscripten_eventloop(void* arg)
-{
-    int32* status = C_FCAST<int32*>(arg);
-    cDebug("Event loop! ({0})", *status);
-    if(*status != 0)
-        emscripten_cancel_main_loop();
-}
 #endif
 
 szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
@@ -73,11 +65,6 @@ szptr RestoreMemory(c_ptr data_ptr, szptr *data_size, uint16 slot)
                               &data_status,
                               emscripten_callback_load,
                               emscripten_callback_error);
-
-    emscripten_set_main_loop_arg(emscripten_eventloop, &data_status.status, -1, 0);
-    emscripten_resume_main_loop();
-
-    emscripten_cancel_main_loop();
 
     return *data_size;
 #else
@@ -132,11 +119,6 @@ szptr SaveMemory(c_cptr data_ptr, szptr data_size, uint16 slot)
                                &status,
                                emscripten_callback_store,
                                emscripten_callback_error);
-
-    emscripten_set_main_loop_arg(emscripten_eventloop, &status, -1, 0);
-    emscripten_resume_main_loop();
-
-    emscripten_cancel_main_loop();
 
     return data_size;
 #else
