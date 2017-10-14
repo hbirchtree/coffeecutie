@@ -20,6 +20,20 @@ struct GLEAM_Shader : GraphicsAPI::Shader
     {
     }
 
+    /*!
+     * \brief Compiles a shader for the given stage, setting the handle
+     *  to the object and returning status on success.
+     * On OpenGL ES 2.0, this function will attempt to transform a
+     *  GLSL 3.30 shader into functioning GLSL ES 1.00 using a set
+     *  of substitutions, adding a couple of functions
+     *  (texture => texture2D, texture2DArray => wrapper around texture2D)
+     * This will work for simple shaders, but advanced shaders will still
+     *  need a rewrite to work on this.
+     *
+     * \param stage Which shader stage to compile
+     * \param data A container with GLSL source code, null-terminated
+     * \return true upon success
+     */
     bool compile(ShaderStage stage, Bytes const& data);
     void dealloc();
 
@@ -128,9 +142,10 @@ struct GLEAM_PipelineDumper : GraphicsProfiler::PipelineDumper<GLEAM_Pipeline>
     void dump(cstring out);
 };
 
-extern void GetShaderUniforms(GLEAM_Pipeline const& pipeline,
-                              Vector<GLEAM_UniformDescriptor>* uniforms,
-                              Vector<GLEAM_ProgramParameter> *params);
+extern void GetShaderUniforms(
+        GLEAM_Pipeline const& pipeline,
+        C_OPTIONAL Vector<GLEAM_UniformDescriptor>* uniforms,
+        C_OPTIONAL Vector<GLEAM_ProgramParameter> *params);
 
 }
 }

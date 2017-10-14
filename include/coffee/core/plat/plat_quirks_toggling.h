@@ -179,6 +179,8 @@
 
 #if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO)
 #define COFFEE_LINKED_GLES
+#define thread_local
+#define COFFEE_LOWFAT
 #endif
 
 #if defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_ANDROID)

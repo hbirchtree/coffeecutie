@@ -43,7 +43,7 @@ static cstring m_shader_fragment_passthrough = {
     "    out_col.rgb = pow(comp.rgb,vec3(1.0/2.2));\n"
     "    out_col.a = comp.a;\n"
     #else
-    "    out_col = texture(tex,tex_out);\n"
+    "    OutColor = texture(tex,tex_out);\n"
 #endif
     "}\n"
 };

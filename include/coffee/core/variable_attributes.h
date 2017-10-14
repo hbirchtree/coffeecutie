@@ -24,7 +24,7 @@
 #define C_DEPRECATED [[deprecated]]
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 #else
-#if defined(COFFEE_GCC) || defined(COFFEE_CLANG)
+#if (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) && !defined(COFFEE_MAEMO)
 #define C_DEPRECATED __attribute__((deprecated))
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 #elif defined(COFFEE_MSVC)
@@ -43,3 +43,5 @@
 #else
 #define C_HAS_INCLUDE(header) 0
 #endif
+
+#define C_OPTIONAL

@@ -7,6 +7,8 @@ namespace Coffee{
 namespace RHI{
 namespace GLEAM{
 
+using Lim = CGL_Shared_Limits;
+
 static void vao_apply_buffer(Vector<GLEAM_VertAttribute> const& m_attributes,
                              uint32 binding, GLEAM_ArrayBuffer&)
 {

@@ -231,6 +231,64 @@ bool CGL_Shared_Debug::CompressedFormatSupport(Texture, PixelFormat t)
     return supp == GL_TRUE;
 }
 
+using L = CGL_Shared_Limits;
+
+static Map<u32, GLuint> limit_map = {
+    /* Baseline OpenGL ES 2.0 limits */
+    {L::Vertex_Attribs, GL_MAX_VERTEX_ATTRIBS},
+
+    {L::Tex_Size2D, GL_MAX_TEXTURE_SIZE},
+
+    {L::Vertex_Base + L::ImageUnits,GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS},
+    {L::Vertex_Base + L::UniformVectors,GL_MAX_VERTEX_UNIFORM_VECTORS},
+
+    {L::Fragment_Base + L::UniformVectors,GL_MAX_FRAGMENT_UNIFORM_VECTORS},
+
+    {L::Total_Base + L::ImageUnits, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS},
+
+    #if defined(COFFEE_ONLY_GLES20)
+    {L::Vertex_Base + L::Outputs, GL_MAX_VARYING_VECTORS},
+    {L::Fragment_Base + L::Inputs, GL_MAX_VARYING_VECTORS},
+    #endif
+
+
+    {L::FBO_RendBufSize, GL_MAX_RENDERBUFFER_SIZE},
+
+    {L::Tex_Size2D, GL_MAX_TEXTURE_SIZE},
+    {L::Tex_SizeCube, GL_MAX_CUBE_MAP_TEXTURE_SIZE},
+
+    /* Extended OpenGL 3.3+ limits */
+    /* ... */
+};
+
+static Map<u32, GLuint> limit_map_2d =  {
+    {L::View_Dimensions, GL_MAX_VIEWPORT_DIMS},
+};
+
+using DBG = CGL_Shared_Debug;
+
+i32 CGL_Shared_Limits::Max(u32 v)
+{
+    GLuint pname = limit_map[v];
+
+    if(pname == 0)
+        return 0;
+
+    return DBG::GetInteger(pname);
+}
+
+_cbasic_size_2d<i32> CGL_Shared_Limits::MaxSize(u32 v)
+{
+    _cbasic_size_2d<i32> size;
+
+    GLuint pname = limit_map_2d[v];
+
+    if(pname != 0)
+        DBG::GetIntegerv(pname, &size.w);
+
+    return size;
+}
+
 }
 }
 

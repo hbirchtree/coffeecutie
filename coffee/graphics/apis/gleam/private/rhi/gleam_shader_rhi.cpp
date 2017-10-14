@@ -65,9 +65,6 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         if(StrFind(originalShader, "#version "))
             originalShader = StrFind(originalShader, "\n") + 1;
 
-        /* TODO: If a line has layout(...), remove it, GLSL 1.00
-         *  does not support that */
-
         /* TODO: Provide better support for sampler2DArray, creating
          *  extra uniforms for grid size and etc. This will allow us
          *  to sample a sampler2D as if it were a sampler2DArray, all
@@ -83,6 +80,25 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
          * This does some basic conversion, such as swapping "in" and
          *  "out" with the approriate 1.00 equivalents (attribute and
          *  varying) */
+
+        CString transformedShader = originalShader;
+
+        /* Remove the output declaration from modern GLSL */
+        transformedShader = CStrReplace(transformedShader,
+                                        "out vec4 OutColor;", "");
+
+        /* If a line has layout(...), remove it, GLSL 1.00
+         *  does not support that */
+        {
+            CString::size_type it;
+            while((it = transformedShader.find("layout")) != CString::npos)
+            {
+                auto endPos = transformedShader.find(')', it);
+                if(endPos != CString::npos)
+                    transformedShader.erase(it, endPos + 1 - it);
+            }
+        }
+
         if(stage == ShaderStage::Vertex)
             shaderSrcVec.push_back(GLES20_COMPAT_VS);
         else
@@ -94,8 +110,11 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
             shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
         }
 
-        shaderSrcVec.push_back(originalShader);
-        shaderSrcLens.push_back(slen);
+        shaderSrcVec.push_back(transformedShader.c_str());
+        shaderSrcLens.push_back(transformedShader.size());
+
+        for(cstring sh : shaderSrcVec)
+            cVerbose(10, "Compiling shader fragment:\n{0}", sh);
 
         shaderLens = shaderSrcLens.data();
         shaderSrc = shaderSrcVec.data();
@@ -366,6 +385,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
         CGhnd prog = pipeline.m_handle;
 
         /* Get typical uniforms */
+        if(uniforms)
         {
             uint32 num_uniforms;
             CGL33::UnifValInfo* unifs;
@@ -390,6 +410,7 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
             }
             delete[] unifs;
         }
+
         /* Get uniforms buffers */
         {
         }
