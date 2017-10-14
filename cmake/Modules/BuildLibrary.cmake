@@ -47,18 +47,16 @@ macro( GENERATE_FINDSCRIPT )
     set ( CONF_INCLUDE_DIRS "" )
     # Create a client-reproducible form of the incude directories for deploy
     foreach ( INC ${INC_DIRS} )
-        if( "${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
-            continue()
+        if(NOT "${INC}" MATCHES ".*BUILD_INTERFACE:.*" )
+            string ( REGEX REPLACE "^.*INSTALL_INTERFACE:(.*)\>+$" "\${COFFEE_ROOT_DIR}/\\1"
+                INC_
+                "${INC}"
+                )
+            string ( REPLACE ">" "" INC_ "${INC_}" )
+            if(NOT IS_ABSOLUTE "${INC_}")
+                set ( CONF_INCLUDE_DIRS "${INC_};${CONF_INCLUDE_DIRS}" )
+            endif()
         endif()
-        string ( REGEX REPLACE "^.*INSTALL_INTERFACE:(.*)\>+$" "\${COFFEE_ROOT_DIR}/\\1"
-            INC_
-            "${INC}"
-            )
-        string ( REPLACE ">" "" INC_ "${INC_}" )
-        if(IS_ABSOLUTE "${INC_}")
-            continue()
-        endif()
-        set ( CONF_INCLUDE_DIRS "${INC_};${CONF_INCLUDE_DIRS}" )
     endforeach()
 
     # Dedupe it, because it's a lot

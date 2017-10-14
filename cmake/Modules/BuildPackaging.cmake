@@ -74,8 +74,18 @@ function(COFFEE_ADD_APPLICATION_LONGERER
                 )
         else()
             set_target_properties( ${TARGET} PROPERTIES
-              RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
-            )
+                RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
+                )
+            set ( RSC_FLAGS "" )
+            foreach (RSC ${BUNDLE_RSRCS})
+                set ( RSC_FLAGS "--preload-file ${RSC}@/sample_data/eye-demo/ ${RSC_FLAGS}" )
+            endforeach()
+
+            set_target_properties ( ${TARGET}
+                PROPERTIES
+                LINK_FLAGS "${RSC_FLAGS}"
+                )
+
             install(
                 DIRECTORY
                 ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET}.bundle
