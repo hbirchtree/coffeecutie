@@ -36,7 +36,7 @@ static cstring m_shader_fragment_passthrough = {
 #endif
     "uniform sampler2D tex;\n"
     "in vec2 tex_out;\n"
-    "layout(location=0) out vec4 out_col;\n"
+    "layout(location=0) out vec4 OutColor;\n"
     "void main(){\n"
 #if !defined(COFFEE_ANDROID) && 0
     "    vec4 comp = texture(tex,tex_out);\n"

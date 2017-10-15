@@ -35,6 +35,7 @@ set ( CoffeeCore_SRCS
     private/base/cdebug.cpp
     private/base/cdisplay.cpp
     private/base/cfiles.cpp
+    private/base/url.cpp
     private/base/cobject.cpp
     private/base/cregex.cpp
     private/base/debugprinter.cpp

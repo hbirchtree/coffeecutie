@@ -1,5 +1,4 @@
-#ifndef CFILES_H
-#define CFILES_H
+#pragma once
 
 #include "../../types/edef/enumfun.h"
 #include "../../types/tdef/stltypes.h"
@@ -8,6 +7,9 @@
 #include "../../types/cdef/memtypes.h"
 
 namespace Coffee{
+
+struct Url;
+
 namespace CResources{
 
 /*!
@@ -37,6 +39,7 @@ public:
     Resource(cstring rsrc = nullptr,
              bool absolute = false,
              ResourceAccess acc = ResourceAccess::None);
+    Resource(Url const& url);
     Resource(cstring rsrc,
              ResourceAccess acc);
     Resource(Resource &&rsc);
@@ -59,13 +62,6 @@ public:
 };
 
 C_FLAGS(Resource::FileFlags,int);
-
-/*!
- * \brief Easy redirection of all resources in the application. :)
- * \param prefix
- * \return
- */
-extern void FileResourcePrefix(cstring prefix);
 
 extern bool FileExists(const Resource& resc);
 
@@ -149,4 +145,3 @@ extern CString to_string(CResources::Resource const& r);
 }
 }
 
-#endif // CFILES_H

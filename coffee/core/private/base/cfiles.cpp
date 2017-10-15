@@ -4,49 +4,10 @@
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/CDebug>
 
-#include "../plat/file/file_abstraction.h"
+#include <coffee/core/base/files/url.h>
 
 namespace Coffee{
 namespace CResources{
-
-static CString _coffee_resource_prefix = "./";
-
-CString DereferencePath(cstring suffix, ResourceAccess storageMask)
-{
-    //We will NOT try to add any '/' in there.
-    cVerbose(9, "Dereferencing resource path");
-    if(feval(storageMask&ResourceAccess::SpecifyStorage))
-    {
-        CString asset_fn = CString(AssetApi::AssetPrefix)+suffix;
-
-        if(feval(storageMask&ResourceAccess::ConfigFile))
-        {
-#if defined(COFFEE_APPLE_MOBILE)
-            return FileFun::NativePath(asset_fn.c_str(),
-                                       storageMask&ResourceAccess::StorageMask);
-#else
-            cVerbose(9, "Detected configuration file flag");
-            CString cfgDir = Env::GetUserData(nullptr,nullptr);
-            cVerbose(9, "Using configuration directory: {0}", cfgDir);
-            if(!DirFun::MkDir(cfgDir.c_str(), true))
-                return {};
-            return Env::ConcatPath(cfgDir.c_str(),suffix);
-#endif
-        }
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE) || defined(COFFEE_LINUX) || defined(COFFEE_WINDOWS)
-        else if(feval(storageMask,ResourceAccess::AssetFile)
-                && FileFun::VerifyAsset(asset_fn.c_str()))
-            return asset_fn.c_str();
-#endif
-        else if(feval(storageMask,ResourceAccess::TemporaryFile))
-            return FileFun::NativePath(suffix,ResourceAccess::TemporaryFile);
-    }
-#if defined(COFFEE_ANDROID)
-    return suffix;
-#else
-    return _coffee_resource_prefix+suffix;
-#endif
-}
 
 struct Resource::ResourceData
 {
@@ -61,16 +22,21 @@ Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
     size(0),
     flags(Undefined)
 {
-    if(absolute)
-        m_resource = rsrc;
-    else{
-        m_resource = DereferencePath(rsrc,acc&ResourceAccess::StorageMask);
-    }
+    m_resource = *MkUrl(rsrc,acc & ResourceAccess::StorageMask);
 }
 
 Resource::Resource(cstring rsrc, ResourceAccess acc):
     Resource(rsrc,false,acc)
 {
+}
+
+Resource::Resource(const Url &url):
+    m_platform_data(new ResourceData),
+    data(nullptr),
+    size(0),
+    flags(Undefined)
+{
+    m_resource = *url;
 }
 
 Resource::Resource(Resource &&rsc)
@@ -101,11 +67,6 @@ cstring Resource::resource() const
 bool Resource::valid() const
 {
     return !m_resource.empty();
-}
-
-void FileResourcePrefix(cstring prefix)
-{
-    _coffee_resource_prefix = prefix;
 }
 
 bool FileExists(const Resource &resc)

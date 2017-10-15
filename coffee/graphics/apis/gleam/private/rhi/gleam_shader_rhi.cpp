@@ -28,6 +28,28 @@ static const constexpr cstring GLES20_COMPAT_FS = {
     "{"
     "   return texture2D(sampler, texCoord.xy);"
     "}"
+
+    "vec4 texture2DArray_Internal(sampler2D tex, vec3 coord, float gridSize)"
+    "{"
+    "    float squareSize = gridSize;"
+    "    int iSquareSize = int(squareSize);"
+    "    float fSquareSize = 1.0 / squareSize;"
+
+    "    float gridY = float(int(coord.z) / iSquareSize) * fSquareSize;"
+    "    float gridX = (coord.z - gridY * squareSize) * fSquareSize;"
+
+    "    vec2 baseCoord = vec2(gridX * fSquareSize, gridY * fSquareSize);"
+
+    "    coord.xy = coord.xy * vec2(0.5, 0.5)"
+    "            * vec2(fSquareSize, fSquareSize)"
+    "            + vec2(0.25)"
+    "            + vec2(gridX, gridY);"
+
+    "    return texture2D(tex, coord.xy);"
+    "}\n"
+
+    "#define texture2DArray(texUnit, texCoord) "
+    "texture2DArray_Internal(texUnit, texCoord, texUnit ## _gridSize)\n"
 };
 #endif
 
@@ -48,12 +70,13 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
         i32* shaderLens = &slen;
 
+        Vector<cstring> shaderSrcVec = {};
+        Vector<i32> shaderSrcLens = {};
+
 #if defined(COFFEE_ONLY_GLES20)
         if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
             return false;
 
-        Vector<cstring> shaderSrcVec = {};
-        Vector<i32> shaderSrcLens = {};
 
         cstring originalShader = C_FCAST<cstring>(data.data);
 
@@ -63,7 +86,11 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         /* OpenGL GLSL ES 1.00 does not have a #version directive,
          *  remove it */
         if(StrFind(originalShader, "#version "))
+        {
+            slen -= (StrFind(originalShader, "\n") + 1)
+                    - StrFind(originalShader, "#version ");
             originalShader = StrFind(originalShader, "\n") + 1;
+        }
 
         /* TODO: Provide better support for sampler2DArray, creating
          *  extra uniforms for grid size and etc. This will allow us
@@ -81,7 +108,11 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
          *  "out" with the approriate 1.00 equivalents (attribute and
          *  varying) */
 
-        CString transformedShader = originalShader;
+        CString transformedShader;
+        /* Because the originalShader may not be null-terminated, we do
+         *  an insertion with the given length. */
+        transformedShader.insert(0, originalShader,
+                                 C_FCAST<CString::size_type>(slen));
 
         /* Remove the output declaration from modern GLSL */
         transformedShader = CStrReplace(transformedShader,
@@ -104,22 +135,51 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         else
             shaderSrcVec.push_back(GLES20_COMPAT_FS);
 
+        for(cstring sh : shaderSrcVec)
+            cVerbose(10, "Compiling shader fragment:\n{0}", sh);
+
+#else
+        /* Before adding more snippets, we need to move the
+         *  #version directive */
+        cstring versionDirective = nullptr;
+        i32 directiveLen = 0;
+        if(StrFind(*shaderSrc, "#version "))
+        {
+            directiveLen = (StrFind(*shaderSrc, "\n") + 1)
+                    - StrFind(*shaderSrc, "#version ");
+            versionDirective = *shaderSrc;
+            *shaderSrc = StrFind(*shaderSrc, "\n") + 1;
+        }
+
+        /* For compatibility, remove usages of texture2DArray() in
+         *  favor of texture(). texture2DArray() was never put into
+         *  the standard. */
+        shaderSrcVec.push_back("#define texture2DArray texture\n");
+#endif
+
         shaderSrcLens.reserve(shaderSrcVec.size() + 1);
         for(cstring fragment : shaderSrcVec)
         {
             shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
         }
 
+#if defined(COFFEE_ONLY_GLES20)
         shaderSrcVec.push_back(transformedShader.c_str());
         shaderSrcLens.push_back(transformedShader.size());
+#else
+        if(versionDirective)
+        {
+            shaderSrcVec.insert(shaderSrcVec.begin(), versionDirective);
+            shaderSrcLens.insert(shaderSrcLens.begin(), directiveLen);
+        }
 
-        for(cstring sh : shaderSrcVec)
-            cVerbose(10, "Compiling shader fragment:\n{0}", sh);
+        shaderSrcVec.push_back(*shaderSrc);
+        shaderSrcLens.push_back(slen);
+#endif
 
         shaderLens = shaderSrcLens.data();
         shaderSrc = shaderSrcVec.data();
         numSources = C_FCAST<u32>(shaderSrcVec.size());
-#endif
 
         CGL33::ShaderSource(m_handle,numSources,
                             shaderLens,

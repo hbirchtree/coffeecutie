@@ -40,9 +40,9 @@ HANDLE WinFileApi::GetFileHandle(cstring fn, ResourceAccess acc)
 {
     FileAccess f = GetAccess(acc);
 #ifdef COFFEE_WINDOWS_UWP
-	CWString fn_w = StrUtil::convertformat<wbyte_t>(CString(fn));
-	return CreateFile2(&fn_w[0], f.open, f.share, f.create,nullptr);
-	return INVALID_HANDLE_VALUE;
+    CWString fn_w = StrUtil::convertformat<wbyte_t>(CString(fn));
+    return CreateFile2(&fn_w[0], f.open, f.share, f.create,nullptr);
+    return INVALID_HANDLE_VALUE;
 #else
     return CreateFile(fn, f.open, f.share, nullptr, f.create, f.attr, nullptr);
 #endif
@@ -101,20 +101,20 @@ DWORD WinFileApi::GetMappingViewFlags(ResourceAccess acc)
 
 CString WinFileFun::NativePath(cstring fn)
 {
-	if (fn[0] == ':')
-	{
-		//auto path = ::Windows::ApplicationModel::Package::Current->InstalledLocation->Path->Data();
-		//CString appdir = StrUtil::convertformat<char, wchar_t>(path);
-		//CString appdir = Env::ApplicationDir();
-		cstring asset_path = AssetApi::GetAsset(fn);
-		//CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
-		CString conc_path = asset_path;
-		conc_path = Mem::CStrReplace(conc_path, "/", "\\");
+    if (fn[0] == ':')
+    {
+        //auto path = ::Windows::ApplicationModel::Package::Current->InstalledLocation->Path->Data();
+        //CString appdir = StrUtil::convertformat<char, wchar_t>(path);
+        //CString appdir = Env::ApplicationDir();
+        cstring asset_path = AssetApi::GetAsset(fn);
+        //CString conc_path = Env::ConcatPath(appdir.c_str(), asset_path);
+        CString conc_path = asset_path;
+        conc_path = Mem::CStrReplace(conc_path, "/", "\\");
 #if !defined(COFFEE_WINDOWS_UWP)
-		conc_path = ":/" + conc_path;
+        conc_path = ":/" + conc_path;
 #endif
-		return conc_path;
-	}
+        return conc_path;
+    }
     return fn;
 }
 
@@ -148,14 +148,14 @@ HRSRC open_rsc(cstring fn)
 #if !defined(COFFEE_WINDOWS_UWP)
     return FindResourceEx(nullptr, coffee_rsc_tag, wrap.c_str(), 1033);
 #else
-	return 0;
+    return 0;
 #endif
 }
 
 bool WinFileFun::VerifyAsset(cstring fn)
 {
 #if defined(COFFEE_WINDOWS_UWP)
-	return true;
+    return true;
 #else
     return open_rsc(fn);
 #endif
@@ -244,7 +244,7 @@ CByteData WinFileFun::Read(FileHandle * h, uint64 size, bool)
         return d;
     }else
     {
-		CByteData d = {};
+        CByteData d = {};
 
 #ifndef COFFEE_WINDOWS_UWP
         HGLOBAL lsrc = LoadResource(nullptr, h->rsrc);
@@ -290,7 +290,7 @@ bool WinFileFun::Exists(cstring fn)
     if (VerifyAsset(fn))
         return true;
 
-	HANDLE fh = INVALID_HANDLE_VALUE;
+    HANDLE fh = INVALID_HANDLE_VALUE;
 #ifndef COFFEE_WINDOWS_UWP
     fh = CreateFile(fn, 0, 0, nullptr, OPEN_EXISTING, 0, nullptr);
 #endif
@@ -318,7 +318,7 @@ szptr WinFileFun::Size(WinFileFun::FileHandle* fh)
 #ifndef COFFEE_WINDOWS_UWP
     return SizeofResource(nullptr, fh->rsrc);
 #else
-	return 0;
+    return 0;
 #endif
 }
 szptr WinFileFun::Size(cstring fn)
@@ -327,20 +327,20 @@ szptr WinFileFun::Size(cstring fn)
     if (VerifyAsset(fn))
     {
         HRSRC rsc_h = open_rsc(fn);
-		DWORD sz = 0;
-		sz = SizeofResource(nullptr, rsc_h);
+        DWORD sz = 0;
+        sz = SizeofResource(nullptr, rsc_h);
         return sz;
     }else
 #endif
-	{
+    {
         LARGE_INTEGER e;
-		HANDLE f = INVALID_HANDLE_VALUE;
+        HANDLE f = INVALID_HANDLE_VALUE;
 #ifndef COFFEE_WINDOWS_UWP
-		f = CreateFile(fn, GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
+        f = CreateFile(fn, GENERIC_READ, 0, nullptr, OPEN_ALWAYS, 0, nullptr);
 #else
-		CWString wname = Mem::StrUtil::convertformat<wchar_t, char>(fn);
-		f = CreateFile2(wname.c_str(), GENERIC_READ, 0, OPEN_ALWAYS, nullptr);
-		CString err = win_strerror(GetLastError());
+        CWString wname = Mem::StrUtil::convertformat<wchar_t, char>(fn);
+        f = CreateFile2(wname.c_str(), GENERIC_READ, 0, OPEN_ALWAYS, nullptr);
+        CString err = win_strerror(GetLastError());
 #endif
         if (f != INVALID_HANDLE_VALUE)
         {
@@ -359,7 +359,7 @@ bool WinFileFun::Touch(NodeType t, cstring n)
     {
     case NodeType::File:
     {
-		HANDLE f = INVALID_HANDLE_VALUE;
+        HANDLE f = INVALID_HANDLE_VALUE;
 #ifndef COFFEE_WINDOWS_UWP
         f = CreateFile(n,0,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
 #endif
@@ -380,9 +380,9 @@ bool WinFileFun::Touch(NodeType t, cstring n)
 bool WinFileFun::Rm(cstring fn)
 {
 #ifdef COFFEE_WINDOWS_UWP
-	CWString fn_w = StrUtil::convertformat<wbyte_t>(CString(fn));
-	//return DeleteFile(&fn_w[0]);
-	return false;
+    CWString fn_w = StrUtil::convertformat<wbyte_t>(CString(fn));
+    //return DeleteFile(&fn_w[0]);
+    return false;
 #else
     return DeleteFile(fn);
 #endif
@@ -442,11 +442,11 @@ WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr of
     LARGE_INTEGER offsize_;
     offsize_.QuadPart = offsize;
 
-	HANDLE mh = nullptr;
+    HANDLE mh = nullptr;
 #ifndef COFFEE_WINDOWS_UWP
-	mh = CreateFileMapping(fh, nullptr, profl, offsize_.HighPart, offsize_.LowPart, nullptr);
+    mh = CreateFileMapping(fh, nullptr, profl, offsize_.HighPart, offsize_.LowPart, nullptr);
 #else
-	//mh = CreateFIleMappingFromApp(fh,nullptr,profl,offsize,nullptr);
+    //mh = CreateFIleMappingFromApp(fh,nullptr,profl,offsize,nullptr);
 #endif
 
     if (!mh)
@@ -461,11 +461,11 @@ WinFileFun::FileMapping WinFileFun::Map(cstring fn, ResourceAccess acc, szptr of
     LARGE_INTEGER off_;
     off_.QuadPart = off;
 
-	void* ptr = nullptr;
+    void* ptr = nullptr;
 #ifndef COFFEE_WINDOWS_UWP
-	ptr = MapViewOfFile(mh, view_fl, off_.HighPart, off_.LowPart, size);
+    ptr = MapViewOfFile(mh, view_fl, off_.HighPart, off_.LowPart, size);
 #else
-	//ptr = MapViewOfFileFromApp(mh,view_fl,off_.QuadPart,size);
+    //ptr = MapViewOfFileFromApp(mh,view_fl,off_.QuadPart,size);
 #endif
 
     if (!ptr)
@@ -513,7 +513,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(szptr size, ResourceAccess acc)
 #ifndef COFFEE_WINDOWS_UWP
     b.mapping = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, fl1, s.HighPart, s.LowPart, nullptr);
 #else
-	b.mapping = nullptr;
+    b.mapping = nullptr;
 #endif
 
     if (!b.mapping)
@@ -527,7 +527,7 @@ WinFileFun::ScratchBuf WinFileFun::ScratchBuffer(szptr size, ResourceAccess acc)
 #ifndef COFFEE_WINDOWS_UWP
     b.ptr = MapViewOfFile(b.mapping, fl2, 0, 0, size);
 #else
-	b.ptr = nullptr;
+    b.ptr = nullptr;
 #endif
 
     if (!b.ptr)

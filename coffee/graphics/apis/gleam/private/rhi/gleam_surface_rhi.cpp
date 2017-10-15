@@ -154,6 +154,11 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         upload_info(comp,mip,1);
 }
 
+CSize Coffee::RHI::GLEAM::GLEAM_Surface2D::texSize() const
+{
+    return m_size;
+}
+
 GLEAM_Surface3D_Base::GLEAM_Surface3D_Base(Texture t, PixelFormat fmt, uint32 mips, uint32 texflags):
 #if !defined(COFFEE_ONLY_GLES20)
     GLEAM_Surface(t,fmt,mips,texflags),
@@ -273,6 +278,11 @@ void GLEAM_Surface3D_Base::upload(BitFormat fmt, PixelComponents comp,
                              comp, fmt, data);
     }
 #endif
+}
+
+CSize3 GLEAM_Surface3D_Base::texSize() const
+{
+    return m_size;
 }
 
 void GLEAM_Sampler::alloc()
@@ -432,6 +442,7 @@ GLEAM_SamplerHandle GLEAM_Sampler2DArray::handle()
 #else
     CGL33::TexBind(m_surface->m_type, m_surface->m_handle);
     CGL33::TexGenMipmap(m_surface->m_type);
+    h.arraySize = m_surface->m_size.depth;
 #endif
 
     return h;

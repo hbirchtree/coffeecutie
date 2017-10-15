@@ -1,11 +1,14 @@
 #include <coffee/CGraphics>
-#include <coffee/CSDL2>
+#include <coffee/core/base/files/url.h>
 #include <coffee/core/CFiles>
+#include <coffee/CSDL2>
 #include <coffee/core/CProfiling>
 #include <coffee/graphics/apis/CGLeamRHI>
 #include <coffee/image/cimage.h>
 #include <coffee/core/base/types/counter.h>
 #include <coffee/core/CDebug>
+
+#include <coffee/asio/net_resource.h>
 
 #include <coffee/core/platform_data.h>
 #include <coffee/core/coffee_saving.h>
@@ -64,10 +67,12 @@ struct RendererState
 
         GLM::UNIFVAL transforms = {};
         GLM::UNIFVAL timeval = {};
+        GLM::UNIFVAL texture_size = {};
         GLM::UNIFSMP textures_array = {};
 
         Bytes transform_data = {};
         Bytes time_data = {};
+        Bytes texsize_data = {};
         
         // Graphics data
         CGCamera camera;
@@ -347,6 +352,28 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
         CStbImageLib::ImageFree(&img);
         CResources::FileUnmap(rsc);
     }
+
+    {
+        ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
+
+        Net::Resource rsc(ctx, "https://i.imgur.com/nQdOmCJ.png"_web);
+
+        if(rsc.fetch())
+        {
+            auto imdata = rsc.data();
+
+            CStbImageLib::CStbImage img;
+            CStbImageLib::LoadData(&img, BytesConst(imdata.data,
+                                                    imdata.size, 0));
+
+            eyetex.upload(BitFormat::UByte, PixCmp::RGBA,
+                          {img.size.w, img.size.h, 1},
+                          img.data, {0, 0, 0});
+        }else{
+            cWarning("Failed to retrieve spicy meme");
+        }
+    }
+
     Profiler::Profile("Texture loading");
     cVerbose("Uploading textures");
     
@@ -377,6 +404,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     
     g.transforms.data = &transform_data;
     g.timeval.data = &time_data;
+    g.texture_size.data = &g.texsize_data;
     
     /* We create some pipeline state, such as blending and viewport state */
     auto& viewportstate = g.viewportstate;
@@ -421,6 +449,8 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
             unifstate.setSampler(u, &g.textures_array);
         else if (u.m_name == "mx")
             unifstate.setUniform(u, &g.timeval);
+        else if (u.m_name == "texdata_gridSize")
+            unifstate.setUniform(u, &g.texture_size);
         else
             cVerbose(4,"Unhandled uniform value: {0}", u.m_name);
     }
@@ -590,6 +620,9 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
         GLM::SetRasterizerState(g.rasterstate_poly);
         GLM::SetDepthState(g.deptstate);
     }
+
+    scalar texSize = i32(CMath::sqrt(g.eyetex->texSize().depth));
+    g.texsize_data = Bytes::Create(texSize);
     
     GLM::PipelineState pstate = {
         {ShaderStage::Vertex, g.unifstate},
@@ -675,24 +708,33 @@ void frame_count(RendererState* d)
             cDebug("GPU Model: {0}", e.model());
 
             auto temp = e.temp();
-            cDebug("Temperature: {0} // {1}", temp.current, temp.max);
+            cDebug("Temperature: {0} // {1}",
+                   temp.current, temp.max);
 
             auto mem = e.mem();
-            cDebug("Memory use: tot={0}, used={1}, free={2}", mem.total, mem.used, mem.free);
-            cDebug("Memory used by this application: {0}", e.memUsage(ProcessProperty::Pid()));
+            cDebug("Memory use: tot={0}, used={1}, free={2}",
+                   mem.total, mem.used, mem.free);
+            cDebug("Memory used by this application: {0}",
+                   e.memUsage(ProcessProperty::Pid()));
 
             auto clk = e.clock(GpuInfo::Clock::Graphics);
-            cDebug("Clock limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            cDebug("Clock limits: {0} / {1} / {2}",
+                   clk.current, clk.min, clk.max);
             clk = e.clock(GpuInfo::Clock::Memory);
-            cDebug("Memory limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            cDebug("Memory limits: {0} / {1} / {2}",
+                   clk.current, clk.min, clk.max);
             clk = e.clock(GpuInfo::Clock::VideoDecode);
-            cDebug("Video limits: {0} / {1} / {2}", clk.current, clk.min, clk.max);
+            cDebug("Video limits: {0} / {1} / {2}",
+                   clk.current, clk.min, clk.max);
 
             auto bus = e.bus();
-            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s", bus.rx, bus.tx);
+            cDebug("Bus information: rx:{0} KB/s tx:{1} KB/s",
+                   bus.rx, bus.tx);
 
             auto util = e.usage();
-            cDebug("GPU usage: GPU={0}%, MEM={1}%, DECODER={2}%, ENCODER={3}%",
+            cDebug("GPU usage: GPU={0}%,"
+                   " MEM={1}%, DECODER={2}%,"
+                   " ENCODER={3}%",
                    util.gpu, util.mem, util.decoder, util.encoder);
 
             cDebug("Power mode: {0}", C_CAST<uint32>(e.pMode()));

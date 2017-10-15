@@ -71,6 +71,23 @@ enum class ResourceAccess
 };
 C_FLAGS(ResourceAccess,uint32);
 
+enum class HTTPAccess
+{
+    None = 0x0,
+
+    Secure = 0x1, /* Whether to use SSL */
+
+    GET = 0x2, /*  */
+    POST = 0x4, /*  */
+    PUT = 0x8, /*  */
+
+    DefaultAccess = GET|Secure,
+
+    SecurityMask = Secure,
+    RequestMask = GET|POST|PUT,
+};
+C_FLAGS(HTTPAccess, u32);
+
 enum class BitFormat : uint8
 {
     Byte, ByteR,

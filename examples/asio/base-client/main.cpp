@@ -5,6 +5,7 @@
 #include <coffee/core/CApplication>
 #include <coffee/core/CProfiling>
 #include <coffee/core/profiler/profiling-export.h>
+#include <coffee/asio/net_resource.h>
 
 #include <coffee/core/CMD>
 
@@ -54,7 +55,42 @@ int32 coffee_main(int32, cstring_w*)
         Profiler::Profile("Receive response");
     }
 
-    if(/* DISABLES CODE */false){
+    {
+//        CString host = "i.imgur.com";
+
+//        TCP::SSLSocket con(net_context);
+//        con.connect(host.c_str(), "https");
+
+//        REST::Request req;
+//        HTTP::InitializeRequest(req);
+
+//        req.resource = "/nQdOmCJ.png";
+//        req.reqtype = "GET";
+//        req.mimeType.clear();
+
+//        req.header.insert({"Accept", "*/*"});
+
+//        HTTP::GenerateRequest(con, host, req);
+
+//        con.flush();
+//        con.pull();
+
+//        HTTP::Response resp;
+
+//        if(!HTTP::ExtractResponse(con, &resp))
+//            cWarning("I FAILED!");
+        Url testUrl = "https://i.imgur.com/nQdOmCJ.png"_web;
+        Net::Resource testRsc(net_context, testUrl);
+
+        if(testRsc.fetch())
+        {
+            cDebug("Success!");
+            Bytes data = testRsc.data();
+            cDebug("Data size: {0} {1}", data.size, data.data[0]);
+        }
+    }
+
+    if(/* DISABLES CODE */(false)){
         ProfContext __m2("Asynchronous request");
 
         CString host = "api.twitch.tv";

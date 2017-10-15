@@ -14,6 +14,12 @@ namespace CStbImageLib{
 
 bool LoadData(CStbImage *target, const Resource *src, PixelComponents comp)
 {
+    return LoadData(target, FileGetDescriptor(*src), comp);
+}
+
+bool LoadData(CStbImage *target, BytesConst const& src,
+              PixelComponents comp)
+{
     int scomp = STBI_rgb_alpha;
 
     switch(comp)
@@ -35,7 +41,7 @@ bool LoadData(CStbImage *target, const Resource *src, PixelComponents comp)
     }
 
     target->data = stbi_load_from_memory(
-                (const byte_t*)src->data,src->size,
+                (const byte_t*)src.data,src.size,
                 &target->size.w,&target->size.h,
                 &target->bpp,scomp);
     return target->data != nullptr;

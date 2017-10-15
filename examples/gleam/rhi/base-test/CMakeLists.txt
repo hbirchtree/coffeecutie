@@ -11,6 +11,7 @@ set ( LIBS
     CoffeeGLeamRHI
     CoffeeRenderer_Default
     CoffeeCore
+    CoffeeASIO
     )
 
 coffee_add_application_long ( GLeamBaseTest_RHI "GLeam Basic RHI" "main.cpp;renderer.h" "${LIBS}" "" "${USERDATA}" )
