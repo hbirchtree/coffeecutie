@@ -12,7 +12,7 @@ bool ExtractUrlComponents(CString const& url,
 {
     auto patt = Regex::Compile("([A-Za-z]+)://([A-Za-z0-9-\\.]+)/(.*)");
 
-    auto matches = Regex::Match(patt, {url}, true);
+    auto matches = Regex::Match(patt, url, true);
 
     if(matches.size() == 4)
     {
