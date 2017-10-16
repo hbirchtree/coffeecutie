@@ -356,7 +356,7 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
     {
         ASIO::AsioContext ctx = ASIO::ASIO_Client::InitService();
 
-        Net::Resource rsc(ctx, "https://i.imgur.com/nQdOmCJ.png"_web);
+        Net::Resource rsc(ctx, "http://i.imgur.com/nQdOmCJ.png"_http);
 
         if(rsc.fetch())
         {

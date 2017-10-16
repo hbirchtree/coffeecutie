@@ -29,7 +29,6 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
     m_resource(*url),
     m_access(url.netflags)
 {
-
     CString urlS = *url;
 
     CString protocol, resource;
@@ -54,6 +53,9 @@ Resource::Resource(ASIO::AsioContext ctxt, const Url &url):
         normal = MkUq<TCP::Socket>();
 
         normal->connect(m_host, protocol);
+
+        if(normal->bad())
+            return;
     }
 
     HTTP::InitializeRequest(m_request);
@@ -81,7 +83,7 @@ cstring Resource::resource() const
 
 bool Resource::isRequestReady() const
 {
-    return m_request.resource.size() > 0;
+    return m_request.resource.size() > 0 && m_host.size() > 0;
 }
 
 bool Resource::isResponseReady() const
@@ -91,6 +93,9 @@ bool Resource::isResponseReady() const
 
 bool Resource::fetch()
 {
+    if(!isRequestReady())
+        return false;
+
 #if defined(ASIO_USE_SSL)
     bool secure = (m_access & HTTPAccess::Secure) != HTTPAccess::None;
 

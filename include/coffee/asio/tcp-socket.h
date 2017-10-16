@@ -57,6 +57,10 @@ struct TCPSocketImpl : ASIO_Client
         {
             asio::ip::tcp::resolver::query q(h,p);
             auto it = context->resolver.resolve(q);
+            decltype(it) end;
+
+            if(it != end)
+                return;
 
             asio::connect(socket.next_layer(), it);
 

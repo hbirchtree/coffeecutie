@@ -5,7 +5,7 @@ namespace RegexImplementation{
 
 Vector<StdRegexImpl::RegMatch> StdRegexImpl::Match(const StdRegexImpl::Pattern &rgx, const Vector<CString> &data, bool capture)
 {
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) || 1
     std::smatch mch;
 
     Vector<RegMatch> matches;
@@ -31,7 +31,7 @@ Vector<StdRegexImpl::RegMatch> StdRegexImpl::Match(const StdRegexImpl::Pattern &
 
 Vector<StdRegexImpl::RegMatch> StdRegexImpl::Match(const StdRegexImpl::Pattern &rgx, const CString &data, bool capture)
 {
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) || 1
     std::smatch mch;
     Vector<RegMatch> matches;
     if(std::regex_match(data,mch,rgx)){

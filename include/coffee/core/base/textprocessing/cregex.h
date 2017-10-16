@@ -1,7 +1,7 @@
 #ifndef CREGEX_H
 #define CREGEX_H
 
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) || 1
 #include <regex>
 #endif
 
@@ -40,7 +40,7 @@ struct StdRegexImpl : RegexDef
         uint8 padding[7];
     };
 
-#if !defined(COFFEE_ANDROID)
+#if !defined(COFFEE_ANDROID) || 1
     using Pattern = std::regex;
 #else
     using Pattern = std::string;

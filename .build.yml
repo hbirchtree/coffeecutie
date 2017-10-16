@@ -50,6 +50,6 @@ version:
   hotfix: 0
   major: 4
   minor: 2
-  patch: 4
-  release: 5
+  patch: 0
+  release: 6
 versionprefix: automated-release-

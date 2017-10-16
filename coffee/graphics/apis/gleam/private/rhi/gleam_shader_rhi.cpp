@@ -10,15 +10,21 @@ namespace GLEAM{
 
 #if defined(COFFEE_ONLY_GLES20)
 static const constexpr cstring GLES20_COMPAT_VS = {
-    "#define in attribute\n"
+    "\n#define in attribute\n"
     "#define out varying\n"
 };
 
 static const constexpr cstring GLES20_COMPAT_FS = {
-    "#define in varying\n"
+    "#define in varying\r\n"
     "#define OutColor gl_FragColor\n"
     "#define sampler2DArray sampler2D\n"
     "#define sampler3DArray sampler3D\n"
+
+    "#define texture2DArray(texUnit, texCoord) "
+    "texture2DArray_Internal(texUnit, texCoord, texdata_gridSize)\n"
+//    "texture2DArray_Internal(texUnit, texCoord, texUnit ## _gridSize)\n"
+
+    "precision mediump float;\n"
 
     "vec4 texture(sampler2D sampler, vec2 texCoord)"
     "{"
@@ -47,9 +53,6 @@ static const constexpr cstring GLES20_COMPAT_FS = {
 
     "    return texture2D(tex, coord.xy);"
     "}\n"
-
-    "#define texture2DArray(texUnit, texCoord) "
-    "texture2DArray_Internal(texUnit, texCoord, texUnit ## _gridSize)\n"
 };
 #endif
 
@@ -81,7 +84,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         cstring originalShader = C_FCAST<cstring>(data.data);
 
         /* Desktop GL does not require a precision specifier */
-        shaderSrcVec.push_back("precision mediump float;\n");
+//        shaderSrcVec.push_back();
 
         /* OpenGL GLSL ES 1.00 does not have a #version directive,
          *  remove it */
