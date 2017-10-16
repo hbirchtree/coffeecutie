@@ -14,7 +14,7 @@ if __name__ == '__main__':
                       default=dirname(realpath(__file__)))
 
     args.add_argument('increment_type', type=str,
-                      choices=version_vars,
+                      choices=['none'] + version_vars,
                       help='which part of version to increment',
                       default='release')
 
@@ -57,22 +57,24 @@ if __name__ == '__main__':
             version_cfg[k] = 0
         version_cfg['release'] = 1
 
-    version_cfg[args.increment_type] = 1 +  try_get_key(version_cfg,
-                                                        args.increment_type,
-                                                        0)
-    
-    found_type = False
-    for i in range(len(version_vars)):
-        if found_type:
-            version_cfg[version_vars[i]] = 0
-            continue
-        if version_vars[i] == args.increment_type:
-            found_type = True
-            continue
+    if args.increment_type != 'none':
+        version_cfg[args.increment_type] = 1 +  try_get_key(version_cfg,
+                                                            args.increment_type,
+                                                            0)
+
+        found_type = False
+        for i in range(len(version_vars)):
+            if found_type:
+                version_cfg[version_vars[i]] = 0
+                continue
+            if version_vars[i] == args.increment_type and args.increment_type:
+                found_type = True
+                continue
+
+        config['version'] = version_cfg
+        config['versionprefix'] = version_prefix
+
+        save_yaml_file(build_config, config)
 
     print(version_prefix + print_version(version_cfg))
 
-    config['version'] = version_cfg
-    config['versionprefix'] = version_prefix
-
-    save_yaml_file(build_config, config)

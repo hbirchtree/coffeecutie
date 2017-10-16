@@ -398,7 +398,7 @@ def jenkins_gen_config(build_info, src_dir):
         'OSX_TARGETS': mk_groovy_list(osx_targets),
         'WINDOWS_TARGETS': mk_groovy_list(windows_targets),
 
-        'DEPENDENCIES': deps,
+        'DEPENDENCIES': deps.replace(";", "%"),
         'DEPENDENCIES_NIX': deps.replace(";", "%"),
         'REPO_URL': repo_url,
 
