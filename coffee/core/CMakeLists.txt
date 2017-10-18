@@ -155,11 +155,11 @@ if(WIN32)
 #		PROPERTIES
 #		COMPILE_FLAGS "/ZW"
 #		)
-	if(NOT WIN_UWP)
+        if(NOT WIN_UWP AND NOT MINGW64)
 		list ( APPEND CoffeeCore_SRCS
 			private/plat/environment/windows/windows_startup.cpp
 			)
-	else()
+        elseif(WIN_UWP)
 		list ( APPEND CoffeeCore_SRCS
 			private/plat/environment/windows/windows_startup_uwp.cpp
 			)

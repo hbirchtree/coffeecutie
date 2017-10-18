@@ -4,10 +4,11 @@
 #define _WIN32_WINNT 0x0600
 
 #include <iostream>
-#include <WbemIdl.h>
+#include <string>
+
+#include <wbemidl.h>
 #include <comdef.h>
 #include <objbase.h>
-#include <string>
 
 using std::wcout;
 using std::cout;

@@ -12,21 +12,25 @@ macro(WINPE_PACKAGE
     set ( INCLUDED_LIBS "" )
     # Locate necessary binary files
     set ( BASE_LIBS )
-    if(COFFEE_BUILD_SDL2)
-        find_package ( SDL2 REQUIRED )
-        list ( APPEND BASE_LIBS SDL2 )
-    endif()
-    if(COFFEE_BUILD_ANGLE)
-        find_package ( ANGLE REQUIRED )
-        list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
-    endif()
-    foreach(lib_target ${BASE_LIBS})
-        get_target_property ( lib ${lib_target} IMPORTED_LOCATION )
-        get_filename_component ( LIB_BASE "${lib}" NAME_WE )
-        get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
+    if(NOT MINGW64)
+        if(COFFEE_BUILD_SDL2)
+            find_package ( SDL2 REQUIRED )
+            list ( APPEND BASE_LIBS SDL2 )
+        endif()
+        if(COFFEE_BUILD_ANGLE)
+            find_package ( ANGLE REQUIRED )
+            list ( APPEND BASE_LIBS AngleEGL AngleGLESv2 )
+        endif()
+        foreach(lib_target ${BASE_LIBS})
+            get_target_property ( lib ${lib_target} IMPORTED_LOCATION )
+            get_filename_component ( LIB_BASE "${lib}" NAME_WE )
+            get_filename_component ( LIB_DIR "${lib}" DIRECTORY )
 
-        set ( INCLUDED_LIBS "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll" )
-    endforeach()
+            set ( INCLUDED_LIBS
+                "${INCLUDED_LIBS};${LIB_DIR}/${LIB_BASE}.dll"
+                )
+        endforeach()
+    endif()
 
     set ( WINDOWS_DIST_COMPANY "${COMPANY}" )
 
@@ -48,7 +52,12 @@ macro(WINPE_PACKAGE
     set ( RESOURCE_DESCRIPTOR ${CMAKE_CURRENT_BINARY_DIR}/custom_data.rc )
     set ( RESOURCE_HEADER ${CMAKE_CURRENT_BINARY_DIR}/custom_data.c )
 
-    file ( WRITE "${RESOURCE_DESCRIPTOR}" "// Automatically generated resource file by Coffee \r\n" )
+    set ( LINESHIFT "\r\n" )
+
+    if(MINGW64)
+        set ( LINESHIFT "\r\n" )
+    endif()
+
 
     set ( RESC_NUM "0" )
 
@@ -57,7 +66,13 @@ macro(WINPE_PACKAGE
     # Clear resource header
     file ( WRITE "${RESOURCE_HEADER}"       "" )
 
-	set ( RESOURCE_FILES "" )
+    file ( WRITE "${RESOURCE_DESCRIPTOR}"
+        "// Automatically generated resource file by Coffee ${LINESHIFT}"
+        )
+
+    set ( RESOURCE_FILES "" )
+
+    set ( RESOURCES ${RESOURCES};${COFFEE_DESKTOP_DIRECTORY}/windows )
 
     foreach(durr ${RESOURCES})
         file(GLOB_RECURSE TMP ${durr}/* )
@@ -71,39 +86,44 @@ macro(WINPE_PACKAGE
             string(TOLOWER "${file_name}" file_name_lower)
 
             if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
-				if(NOT WIN_UWP)
-					# On Win32, package it into the .exe file
+                if(NOT WIN_UWP)
+                    # On Win32, package it into the .exe file
 
-					# If there is a directory path, append a "_" for it to be correct
-					# This is disgusting.
-					if(file_dir)
-						set( file_dir "${file_dir}/" )
-					endif()
-					# Set virtual filename
-					set ( virt_fname "${file_dir}${file_name}" )
-					string ( REPLACE "_" "___" virt_fname "${virt_fname}" )
-					string ( REPLACE "/" "_" virt_fname "${virt_fname}" )
-					string ( REPLACE "\\" "_" virt_fname "${virt_fname}" )
-					# Insert the file with directory path and filename into the .rc file
-					file (
-						APPEND "${RESOURCE_DESCRIPTOR}"
-						"\"${virt_fname}\" CF_RES \"${file_full}\" \r\n"
-						)
-				else()
-					list ( APPEND RESOURCE_FILES "${file_full}" )
-				endif()
-			endif()
+                    # If there is a directory path, append a "_" for
+                    #  it to be correct
+                    # This is disgusting.
+                    if(file_dir)
+                        set( file_dir "${file_dir}/" )
+                    endif()
+                    # Set virtual filename
+                    set ( virt_fname "${file_dir}${file_name}" )
+                    string ( REPLACE "_" "___" virt_fname "${virt_fname}" )
+                    string ( REPLACE "/" "_" virt_fname "${virt_fname}" )
+                    string ( REPLACE "\\" "_" virt_fname "${virt_fname}" )
+                    # Insert the file with directory path and filename
+                    #  into the .rc file
+                    file (
+                        APPEND "${RESOURCE_DESCRIPTOR}"
+                        "\"${virt_fname}\" CF_RES \"${file_full}\" ${LINESHIFT}"
+                        )
+                else()
+                    list ( APPEND RESOURCE_FILES "${file_full}" )
+                endif()
+            endif()
             # Increment resource number, inserted into .rc file
             math ( EXPR RESC_NUM "${RESC_NUM} + 1" )
         endforeach()
     endforeach()
 
-    # We add an application manifest to get on the good side with Windows 8.1+
+    # We add an application manifest to get on the good side
+    #  with Windows 8.1+
     set ( WINDOWS_DESKTOP_DIR "${COFFEE_DESKTOP_DIRECTORY}/windows" )
 
-    set ( WINDOWS_BASE_SOURCE_RESOURCE "${WINDOWS_DESKTOP_DIR}/winresources.rc" )
+    set ( WINDOWS_BASE_SOURCE_RESOURCE
+        "${WINDOWS_DESKTOP_DIR}/winresources.rc" )
     set ( WINDOWS_BASE_RESOURCE "winresource.rc" )
-    set ( MANIFEST_SOURCE_FILE "${WINDOWS_DESKTOP_DIR}/template.manifest.in" )
+    set ( MANIFEST_SOURCE_FILE
+        "${WINDOWS_DESKTOP_DIR}/template.manifest.in" )
     set ( MANIFEST_FILE "${TARGET}.exe.manifest" )
 
     configure_file (
@@ -131,6 +151,10 @@ macro(WINPE_PACKAGE
         set ( OPTIONS WIN32 )
     endif()
 
+    if(RESC_NUM STREQUAL "0")
+        set ( RESOURCE_DESCRIPTOR )
+    endif()
+
     add_executable(${TARGET}
         ${OPTIONS}
         ${SDL2_MAIN_C_FILE}
@@ -153,7 +177,8 @@ macro(WINPE_PACKAGE
             $<BUILD_INTERFACE:${ANGLE_INCLUDE_DIR}>
             )
 
-        # I need these seeds for mye research, Morty, gotta stuff it waaay up there, Morty.
+        # I need these seeds for mye research, Morty, gotta stuff
+        #  it waaay up there, Morty.
         target_link_libraries ( ${TARGET}
             PUBLIC
 
@@ -203,41 +228,42 @@ macro(WINPE_PACKAGE
             ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.dir/SplashScreen.png
             )
 
-		foreach(durr ${RESOURCES})
-			file(GLOB_RECURSE TMP ${durr}/* )
-			foreach(file_full ${TMP})
-				# First, get a relative filename
-				# This is used to describe structure
-				file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
-				get_filename_component ( file_dir "${file_dir}" DIRECTORY )
-				get_filename_component ( file_name "${file_full}" NAME )
-				# We get a lower-case version to compare with other filenames
-				string(TOLOWER "${file_name}" file_name_lower)
+        foreach(durr ${RESOURCES})
+            file(GLOB_RECURSE TMP ${durr}/* )
+            foreach(file_full ${TMP})
+                # First, get a relative filename
+                # This is used to describe structure
+                file ( RELATIVE_PATH file_dir ${durr} ${file_full} )
+                get_filename_component ( file_dir "${file_dir}" DIRECTORY )
+                get_filename_component ( file_name "${file_full}" NAME )
+                # We get a lower-case version to compare
+                #  with other filenames
+                string(TOLOWER "${file_name}" file_name_lower)
 
-				if(NOT file_dir)
-					set ( file_dir "." )
-				endif()
+                if(NOT file_dir)
+                    set ( file_dir "." )
+                endif()
 
-				if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
-					# On UWP, mark it as a .appx content file
-					set_source_files_properties( "${file_full}"
-						PROPERTIES
-						VS_DEPLOYMENT_CONTENT 1
-						VS_DEPLOYMENT_LOCATION "${file_dir}"
-						)
-				endif()
-			endforeach()
-		endforeach()
-
-		foreach(var ${INCLUDED_LIBS})
-			set_source_files_properties( "${var}"
-				PROPERTIES
-				VS_DEPLOYMENT_CONTENT 1
-				VS_DEPLOYMENT_LOCATION "."
-				)
+                if(NOT ("${file_name_lower}" STREQUAL "thumbs.db"))
+                    # On UWP, mark it as a .appx content file
+                    set_source_files_properties( "${file_full}"
+                        PROPERTIES
+                        VS_DEPLOYMENT_CONTENT 1
+                        VS_DEPLOYMENT_LOCATION "${file_dir}"
+                        )
+                endif()
+            endforeach()
         endforeach()
 
-		
+        foreach(var ${INCLUDED_LIBS})
+            set_source_files_properties( "${var}"
+                PROPERTIES
+                VS_DEPLOYMENT_CONTENT 1
+                VS_DEPLOYMENT_LOCATION "."
+                )
+        endforeach()
+
+
     endif()
 
     set_target_properties ( ${TARGET}

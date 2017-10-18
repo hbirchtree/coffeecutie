@@ -130,6 +130,15 @@ emscripten-wasm: native-lib-root
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):$(CMAKE_NATIVE_LIB_DIR):ro -e EMSCRIPTEN=$(EMSCRIPTEN_SDK)/emscripten/master" \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=$(CMAKE_NATIVE_LIB_DIR)/Emscripten -DEMSCRIPTEN_ROOT_PATH=$(EMSCRIPTEN_SDK)/emscripten/master"
 
+mingw-w64: native-lib-root
+	@make -f $(ROOT_DIR)/$(RUNNER) \
+		-e BUILD_NAME=mingw-w64 \
+		-e DOCKER_CONFIG=mingw64 \
+		-e PRELOAD=windows-mingw64.cmake \
+		-e TOOLCHAIN=windows-mingw64_linux.toolchain.cmake \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIBRARY_DIR=$(CMAKE_NATIVE_LIB_DIR)/MinGW" \
+		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):$(CMAKE_NATIVE_LIB_DIR):ro"
+
 # Compiles for Raspberry Pi armhf/ARMv6
 raspberry-armhf: $(RASPBERRY_SYSROOT) native-lib-root 
 	@make -f $(ROOT_DIR)/$(RUNNER) \
