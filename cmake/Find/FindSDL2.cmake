@@ -86,9 +86,6 @@ if(NOT WIN_UWP)
 		)
 endif()
 
-message( "${SDL2_SEARCH_PATHS}" )
-message ( "${CMAKE_LIBRARY_ARCHITECTURE}" )
-
 #if(NOT EMSCRIPTEN)
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
     HINTS

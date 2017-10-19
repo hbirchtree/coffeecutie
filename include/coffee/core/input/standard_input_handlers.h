@@ -10,6 +10,61 @@ namespace StandardInput{
 
 using namespace CInput;
 
+template<typename InputRegister, const CIEvent::EventType EventType>
+/*!
+ * \brief By default, event handlers only receive state changes.
+ */
+bool StandardKeyRegister(InputRegister& keyRegister,
+                         const CIEvent& e, c_cptr data)
+{
+    if(e.type != EventType)
+        return false;
+
+    switch(e.type)
+    {
+    case CIEvent::Keyboard:
+    {
+        auto const& ev = *C_FCAST<CIKeyEvent const*>(data);
+
+        bool pressed = ev.mod & CIKeyEvent::PressedModifier;
+
+        auto v = keyRegister[ev.key];
+        keyRegister[ev.key] = pressed | (v ^ (v & 0x1));
+        break;
+    }
+    case CIEvent::MouseButton:
+    {
+        auto const& ev = *C_FCAST<CIMouseButtonEvent const*>(data);
+
+        bool pressed = ev.mod & CIMouseButtonEvent::Pressed;
+
+        auto v = keyRegister[ev.btn];
+        keyRegister[ev.btn] = pressed | (v ^ (v & 0x1));
+
+        break;
+    }
+    }
+
+    return true;
+}
+
+template<const CIEvent::EventType EventType,
+         typename  KeyType = u16, typename StorageType = u16>
+/*!
+ * \brief StandardKeyRegisterKB is a key register for input devices, suitable to be hooked up with installEventHandler().
+ * \param reg
+ * \param e
+ * \param data
+ */
+void StandardKeyRegisterKB(void* reg, const CIEvent& e, c_cptr data)
+{
+    using RegisterType = Map<KeyType, StorageType>;
+
+    auto& regRef = *C_FCAST<RegisterType*>(reg);
+
+    StandardKeyRegister<RegisterType, EventType>(regRef, e,  data);
+}
+
 template<typename Camera>
 /*!
  * \brief Perform standard camera operations
