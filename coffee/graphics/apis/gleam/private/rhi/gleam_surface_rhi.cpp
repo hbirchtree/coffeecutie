@@ -72,12 +72,17 @@ GLEAM_Surface2D::GLEAM_Surface2D(PixelFormat fmt,uint32 mips,uint32 texflags):
 
 void GLEAM_Surface2D::allocate(CSize size, PixelComponents c)
 {
+    auto bitformat = BitFormat::UByte;
+
+    if(m_pixfmt == PixFmt::Depth24Stencil8)
+        bitformat = BitFormat::UInt24_8;
+
     CGL33::TexBind(m_type,m_handle);
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         CGL33::TexImage2D(Texture::T2D,0,m_pixfmt,
                           size.w,size.h,0,c,
-                          BitFormat::UByte,nullptr);
+                          bitformat,nullptr);
     }
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)

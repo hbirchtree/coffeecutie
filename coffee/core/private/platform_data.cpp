@@ -18,8 +18,17 @@ extern PlatformData::DeviceType get_device_variant();
 
 PlatformData::DeviceType PlatformData::DeviceVariant()
 {
-#if defined(COFFEE_LINUX)
+#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)
+    /* TODO: Add difference between tablet and phone */
+    return DevicePhone;
+#elif defined(COFFEE_LINUX)
     return DeviceUnknown;
+#elif defined(COFFEE_RASPBERRY)
+    return DeviceIOT;
+#elif defined(COFFEE_MAEMO)
+    return DevicePhone;
+#elif defined(COFFEE_EMSCRIPTEN)
+    return DeviceIOT;
 #else
     return DeviceUnknown;
 #endif
@@ -33,6 +42,8 @@ PlatformData::Platform PlatformData::PlatformVariant()
     return PlatformLinux;
 #elif defined(COFFEE_WINDOWS)
     return PlatformWindows;
+#elif defined(COFFEE_APPLE_MOBILE)
+    return PlatformMacIOS;
 #elif defined(COFFEE_APPLE)
     return PlatformMac;
 #endif
@@ -40,6 +51,9 @@ PlatformData::Platform PlatformData::PlatformVariant()
 
 scalar PlatformData::DeviceDPI()
 {
+    /* TODO: Add DPI fetch for Android and iOS */
+    /* Also, add DPI fetching for OS X and Linux */
+    /* DPI in Windows is a lie */
     return 1.f;
 }
 
@@ -73,10 +87,10 @@ CString PlatformData::SystemDisplayString()
 
 bool PlatformData::IsMobile()
 {
-#if !defined(COFFEE_ANDROID) && !defined(COFFEE_IOS)
-    return false;
-#else
+#if defined(COFFEE_ANDROID) || defined(COFFEE_IOS)
     return true;
+#else
+    return false;
 #endif
 }
 
