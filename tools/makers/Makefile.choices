@@ -169,6 +169,7 @@ maemo-armel: native-lib-root
 		-e CMAKE_BLD_DIR="/home/coffee/build" \
 		-e CMAKE_OUT_DIR="/home/coffee/build/out" \
 		-e CMAKE_GEN="Unix\ Makefiles" \
+		-e BUILD_TYPE=Release \
 		\
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS) -DNATIVE_LIB_ROOT=$(CMAKE_NATIVE_LIB_DIR)/Maemo5" \
 		-e DOCKER_EXTRA_OPTIONS="$(DOCKER_EXTRA_OPTIONS) -v $(NATIVE_LIB_ROOT):/maemo$(CMAKE_NATIVE_LIB_DIR):ro" \
