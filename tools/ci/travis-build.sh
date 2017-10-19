@@ -114,6 +114,8 @@ function build_standalone()
     [ -z $CMAKE_TARGET ] && export CMAKE_TARGET=install
     [ ! -z $TRAVIS ] && sudo chmod -R 777 "$SOURCE_DIR" "$COFFEE_DIR" "$BUILD_DIR"
 
+    [ $BUILDVARIANT = "maemo.armel" ] && export CONFIGURATION=Release
+
     make -f "$CI_DIR/$MAKEFILE" \
         -e SOURCE_DIR="$SOURCE_DIR" \
         -e BUILD_TYPE="$CONFIGURATION" \
