@@ -941,8 +941,10 @@ inline CGenum to_enum(BitFormat f)
 #endif
     case BitFormat::Scalar_32:
         return GL_FLOAT;
+#if !defined(COFFEE_ONLY_GLES20)
     case BitFormat::UInt24_8:
         return GL_UNSIGNED_INT_24_8;
+#endif
     default:
         return GL_NONE;
     }
