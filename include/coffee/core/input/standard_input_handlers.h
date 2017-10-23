@@ -12,11 +12,19 @@ using namespace CInput;
 
 template<typename InputRegister, const CIEvent::EventType EventType>
 /*!
- * \brief By default, event handlers only receive state changes.
+ * \brief By default, event handlers only receive state changes. This function captures the state of keyboard and mouse clicks into a register which allows random access to keys.
+ * \param keyRegister A std::map-like structure with operator[]
+ * \param e
+ * \param data
+ * \return true when an event was found
  */
 bool StandardKeyRegister(InputRegister& keyRegister,
                          const CIEvent& e, c_cptr data)
 {
+    static_assert(EventType == CIEvent::Keyboard ||
+                  EventType == CIEvent::MouseButton,
+                  "Invalid template argument for function");
+
     if(e.type != EventType)
         return false;
 
@@ -25,6 +33,9 @@ bool StandardKeyRegister(InputRegister& keyRegister,
     case CIEvent::Keyboard:
     {
         auto const& ev = *C_FCAST<CIKeyEvent const*>(data);
+
+        if(ev.mod & CIKeyEvent::RepeatedModifier)
+            break;
 
         bool pressed = ev.mod & CIKeyEvent::PressedModifier;
 
@@ -43,6 +54,8 @@ bool StandardKeyRegister(InputRegister& keyRegister,
 
         break;
     }
+    default:
+        return false;
     }
 
     return true;
@@ -56,13 +69,74 @@ template<const CIEvent::EventType EventType,
  * \param e
  * \param data
  */
-void StandardKeyRegisterKB(void* reg, const CIEvent& e, c_cptr data)
+void StandardKeyRegisterImpl(void* reg, const CIEvent& e, c_cptr data)
 {
     using RegisterType = Map<KeyType, StorageType>;
 
     auto& regRef = *C_FCAST<RegisterType*>(reg);
 
     StandardKeyRegister<RegisterType, EventType>(regRef, e,  data);
+}
+
+template<typename Camera>
+/*!
+ * \brief Camera movement dependent on a fixed update cycle
+ * \param c
+ * \param reg
+ * \return true when Camera reference is updated
+ */
+bool StandardCameraMoveInput(Camera& c, Map<u16, u16>& reg)
+{
+    using Reg = Map<u16, u16>;
+
+    static Set<u16> keys = {
+        CK_w, CK_s, CK_a, CK_d, CK_q, CK_e
+    };
+
+    Reg::const_iterator it = std::find_if(reg.begin(), reg.end(),
+                 [](Pair<const u16,u16>& p) {
+        return keys.find(p.first) != keys.end();
+    });
+
+    if(it == reg.end())
+        return false;
+
+    auto camDirection = quaternion_to_direction<CameraDirection::Forward>(c.rotation);
+    const auto camUp = Vecf3(0, 1.f, 0);
+    auto camRight = cross(camUp, camDirection);
+    scalar acceleration = 5.f;
+
+    if(reg[CK_LShift] & 0x1)
+        acceleration = 10.f;
+
+    while(it != reg.end())
+    {
+        if((*it).second & 0x1)
+            switch((*it).first)
+            {
+            case CK_w:
+                c.position -= camDirection * 0.05f * acceleration;
+                break;
+            case CK_s:
+                c.position += camDirection * 0.05f * acceleration;
+                break;
+            case CK_a:
+                c.position -= camRight * 0.05f * acceleration;
+                break;
+            case CK_d:
+                c.position += camRight * 0.05f * acceleration;
+                break;
+            case CK_q:
+                c.position.y() += 0.05f * acceleration;
+                break;
+            case CK_e:
+                c.position.y() -= 0.05f * acceleration;
+                break;
+            }
+        it++;
+    }
+
+    return true;
 }
 
 template<typename Camera>
@@ -80,45 +154,8 @@ void StandardCamera(void* r, const CIEvent& e, c_cptr data)
 {
     Camera& camera = *C_CAST<Camera*>(r);
 
-    auto camDirection = quaternion_to_direction<CameraDirection::Forward>(camera.rotation);
-    const auto camUp = Vecf3(0, 1.f, 0);
-    auto camRight = cross(camUp, camDirection);
-
     switch(e.type)
     {
-    case CIEvent::Keyboard:
-    {
-        auto kev = C_CAST<CIKeyEvent const*>(data);
-        scalar acceleration = 1.0;
-
-        if(kev->mod & CIKeyEvent::LShiftModifier)
-            acceleration = 15;
-
-        switch(kev->key)
-        {
-        case CK_w:
-            camera.position -= camDirection * 0.05f * acceleration;
-            break;
-        case CK_s:
-            camera.position += camDirection * 0.05f * acceleration;
-            break;
-        case CK_a:
-            camera.position -= camRight * 0.05f * acceleration;
-            break;
-        case CK_d:
-            camera.position += camRight * 0.05f * acceleration;
-            break;
-        case CK_q:
-            camera.position.y() += 0.05f * acceleration;
-            break;
-        case CK_e:
-            camera.position.y() -= 0.05f * acceleration;
-            break;
-        default:
-            break;
-        }
-        break;
-    }
     case CIEvent::MouseMove:
     {
         auto ev = C_CAST<const CIMouseMoveEvent*>(data);

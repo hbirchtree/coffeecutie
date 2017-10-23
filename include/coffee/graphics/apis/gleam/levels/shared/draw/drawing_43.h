@@ -85,9 +85,9 @@ struct CGL_Drawing_43
      * \param bi Index of first instance to draw
      */
     STATICINLINE void DrawElementsInstancedBaseVertexBaseInstance(
-            DrwMd c,uint32 ec,TypeEnum d,uint64 off,uint32 ic,int32 bv,uint32 bi)
-    {glDrawElementsInstancedBaseVertexBaseInstance(to_enum(c),ec,to_enum(d),
-                                                   (c_cptr)off,ic,bv,bi);}
+            DrwMd c,u32 ec,TypeEnum d,u64 off,u32 ic,i32 bv,u32 bi)
+    {glDrawElementsInstancedBaseVertexBaseInstance(
+                    to_enum(c),ec,to_enum(d),(c_cptr)off,ic,bv,bi);}
     /*!
      * \brief DrawArraysInstancedBaseInstance
      * \param p Primitive type

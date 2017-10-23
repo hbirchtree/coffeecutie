@@ -93,41 +93,140 @@ struct GLEAM_API : GraphicsAPI
 
     using PSTATE = PipelineState;
 
+    struct CommandBuffer
+    {
+        V_DESC& vertices;
+        PSTATE& state;
+
+        struct Command
+        {
+            D_CALL call;
+            D_DATA data;
+        };
+
+        Vector<Command> commands;
+    };
+
+    struct OptimizedDraw
+    {
+        Vector<CommandBuffer> cmdBufs;
+
+#if !defined(COFFEE_ONLY_GLES20)
+        struct IndirectCall
+        {
+            u32 count;
+            u32 instanceCount;
+            u32 firstIndex;
+            u32 baseVertex;
+            u32 baseInstance;
+        };
+
+        struct MultiDrawData
+        {
+
+            Vector<i32> counts;
+            Vector<i64> offsets;
+            Vector<i32> baseVertex;
+
+            Vector<IndirectCall> indirectCalls;
+
+            TypeEnum etype;
+            D_CALL dc;
+        };
+
+        Map<CommandBuffer*, MultiDrawData> multiDrawData;
+#endif
+    };
+
+    using OPT_DRAW = OptimizedDraw;
+
+    struct RenderPass
+    {
+        PIP& pipeline;
+        FB_T* framebuffer;
+
+        BLNDSTATE& blend;
+        RASTSTATE& raster;
+        DEPTSTATE& depth;
+
+        struct DrawCall
+        {
+            V_DESC& vertices;
+            PSTATE& state;
+            D_CALL d_call;
+            D_DATA d_data;
+        };
+
+        Vector<DrawCall> draws;
+    };
+
     /* "Loose" functions */
 public:
     /* Dump the framebuffer pixels to a buffer, might be asynchronous */
-    static void DumpFramebuffer(FB_T& fb, PixelComponents c, TypeEnum dt,
-                                Vector<byte_t>& storage);
+    static void DumpFramebuffer(
+            FB_T& fb,
+            PixelComponents c,
+            TypeEnum dt,
+            Vector<byte_t>& storage);
 
-    static void GetDefaultVersion(int32& major, int32& minor);
+    static void GetDefaultVersion(
+            int32& major,
+            int32& minor);
 
-    static void GetDefaultProperties(Display::CDProperties& properties);
+    static void GetDefaultProperties(
+            Display::CDProperties& properties);
 
-    static bool LoadAPI(DataStore store, bool debug = false);
+    static bool LoadAPI(
+            DataStore store,
+            bool debug = false);
     static bool UnloadAPI();
 
     static API_CONTEXT GetLoadAPI();
 
     /* i specifies view index for indexed views, 0 for  */
-    static void SetRasterizerState(RASTSTATE const& rstate, uint32 i = 0);
-    static void SetViewportState(VIEWSTATE const& vstate, uint32 i = 0);
-    static void SetBlendState(BLNDSTATE const& bstate, uint32 i = 0);
-    static void SetDepthState(DEPTSTATE const& dstate, uint32 i = 0);
-    static void SetStencilState(STENSTATE const& sstate, uint32 i = 0);
+    static void SetRasterizerState(
+            RASTSTATE const& rstate,
+            uint32 i = 0);
+    static void SetViewportState(
+            VIEWSTATE const& vstate,
+            uint32 i = 0);
+    static void SetBlendState(
+            BLNDSTATE const& bstate,
+            uint32 i = 0);
+    static void SetDepthState(
+            DEPTSTATE const& dstate,
+            uint32 i = 0);
+    static void SetStencilState(
+            STENSTATE const& sstate,
+            uint32 i = 0);
 
-    static void GetShaderUniformState(PIP const& pipeline,
-                                      Vector<UNIFDESC>* uniforms,
-                                      Vector<PPARAM>* params = nullptr)
+    static void GetShaderUniformState(
+            PIP const& pipeline,
+            Vector<UNIFDESC>* uniforms,
+            Vector<PPARAM>* params = nullptr)
     {
         GLEAM::GetShaderUniforms(pipeline,uniforms,params);
     }
 
-    static void SetTessellatorState(TSLRSTATE const& tstate);
-    static void SetPixelProcessState(PIXLSTATE const& pstate, bool unpack = true);
-    static void SetShaderUniformState(const PIP &pipeline, ShaderStage const& stage,
-                                      USTATE const& ustate);
+    static void SetTessellatorState(
+            TSLRSTATE const& tstate);
+    static void SetPixelProcessState(
+            PIXLSTATE const& pstate,
+            bool unpack = true);
+    static void SetShaderUniformState(
+            const PIP &pipeline,
+            ShaderStage const& stage,
+            USTATE const& ustate);
 
     static void PreDrawCleanup();
+
+    static void OptimizeRenderPass(
+            RenderPass& rpass,
+            OPT_DRAW &buffer);
+
+    static void MultiDraw(
+            PIP const& pipeline,
+            OPT_DRAW const& draws);
 
     static void Draw(
             PIP const& pipeline,

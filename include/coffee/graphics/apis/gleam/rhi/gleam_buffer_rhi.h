@@ -90,6 +90,16 @@ struct GLEAM_PixelBuffer : GLEAM_VBuffer
     void setState(bool pack);
 };
 
+struct GLEAM_IndirectBuffer : GLEAM_VBuffer
+{
+    GLEAM_IndirectBuffer():
+        GLEAM_VBuffer(BufType::DrawcallData,
+                      ResourceAccess::ReadOnly,
+                      0)
+    {
+    }
+};
+
 }
 }
 }

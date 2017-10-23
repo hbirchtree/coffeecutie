@@ -465,6 +465,12 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
                 desc.m_flags = 0;
 
                 desc.m_name = v.name;
+
+                /* Some GLSL compilers (*cough* NVIDIA *cough*) add '[0]'
+                 *  to array uniforms. */
+                if(desc.m_name.find('[') != CString::npos)
+                    desc.m_name.resize(desc.m_name.find('['));
+
                 desc.m_idx = CGL33::ProgramUnifGetLoc(prog,desc.m_name.c_str());
                 desc.stages = ShaderStage::All;
                 desc.m_flags = to_enum_shtype(v.type);

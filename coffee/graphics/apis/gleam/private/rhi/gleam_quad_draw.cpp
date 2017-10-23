@@ -89,6 +89,11 @@ void GLEAM_Quad_Drawer::cleanup()
 {
 }
 
+const GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc() const
+{
+    return m_desc;
+}
+
 bool GLEAM_Quad_Drawer::compile_shaders()
 {
     bool status = true;

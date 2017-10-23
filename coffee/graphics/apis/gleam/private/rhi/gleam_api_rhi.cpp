@@ -708,6 +708,326 @@ void GLEAM_API::PreDrawCleanup()
     CGL::CGL_ES2Compatibility::ShaderReleaseCompiler();
 }
 
+void GLEAM_API::OptimizeRenderPass(
+        GLEAM_API::RenderPass &rpass,
+        GLEAM_API::OPT_DRAW& buffer)
+{
+    Map<V_DESC*, Vector<RenderPass::DrawCall*>> vert_sort;
+    auto& cmdBufs = buffer.cmdBufs;
+
+    for(auto& call : rpass.draws)
+    {
+        vert_sort[&call.vertices].push_back(&call);
+    }
+
+    for(auto& group : vert_sort)
+    {
+        Map<PSTATE*, Vector<RenderPass::DrawCall*>> ustate_sort;
+
+        for(auto& call : group.second)
+        {
+            ustate_sort[&call->state].push_back(call);
+        }
+
+        cmdBufs.reserve(cmdBufs.size() + ustate_sort.size());
+
+        for(auto& ustate_group : ustate_sort)
+        {
+            cmdBufs.push_back({*group.first, *ustate_group.first, {}});
+            auto& cmd_buf = cmdBufs.back();
+
+            cmd_buf.commands.reserve(ustate_group.second.size());
+
+            for(auto& call : ustate_group.second)
+                cmd_buf.commands.push_back({
+                                               call->d_call,
+                                               call->d_data
+                                           });
+        }
+    }
+
+#if !defined(COFFEE_ONLY_GLES20)
+    auto& mdData = buffer.multiDrawData;
+
+    for(auto& buffer : cmdBufs)
+    {
+        auto& data = mdData[&buffer];
+
+        /* TODO: Add functionality to determine whether we are
+         *  using Indirect or not */
+
+        data.counts.reserve(buffer.commands.size());
+        data.offsets.reserve(buffer.commands.size());
+        data.baseVertex.reserve(buffer.commands.size());
+        data.indirectCalls.reserve(buffer.commands.size());
+
+        for(auto& cmd : buffer.commands)
+        {
+            data.counts.push_back(cmd.data.elements());
+            data.offsets.push_back(0);
+            data.baseVertex.push_back(cmd.data.vertexOffset());
+
+            data.indirectCalls.push_back(
+            {
+                            cmd.data.elements(),
+                            cmd.data.instances(),
+                            cmd.data.indexOffset(),
+                            C_FCAST<u32>(cmd.data.vertexOffset()),
+                            cmd.data.instanceOffset()
+                        });
+
+            data.etype = cmd.data.elementType();
+            data.dc = cmd.call;
+        }
+    }
+#endif
+}
+
+/*!
+ * \brief The internal drawing function, making the assumption that
+ *  all state is ready.
+ * \param mode The primitive drawing mode
+ * \param d Drawcall information
+ * \param i Drawcall data, offsets and etc.
+ * \return true if drawcall was possible on the current API
+ */
+static bool InternalDraw(
+        CGhnd pipelineHandle,
+        DrwMd const& mode,
+        GLEAM_API::DrawCall const& d,
+        GLEAM_API::DrawInstanceData const& i)
+{
+    if(d.indexed())
+    {
+        szptr elsize = 4;
+        if(i.elementType()==TypeEnum::UShort)
+            elsize = 2;
+        if(i.elementType()==TypeEnum::UInt)
+            elsize = 4;
+
+        if(d.instanced())
+        {
+            /* TODO: Implement the disabled drawcalls using other means */
+#ifdef COFFEE_GLEAM_DESKTOP
+            if(GL_CURR_API==GL_4_3
+                    && i.instanceOffset()>0
+                    && i.vertexOffset()!=0)
+
+                CGL43::DrawElementsInstancedBaseVertexBaseInstance(
+                            mode,i.elements(),i.elementType(),
+                            i.indexOffset()*elsize,i.instances(),
+                            i.vertexOffset(),i.instanceOffset());
+
+            else if(GL_CURR_API==GL_4_3 && i.instanceOffset()>0)
+
+                CGL43::DrawElementsInstancedBaseInstance(
+                            mode,
+                            i.elements(),i.elementType(),
+                            i.indexOffset()*elsize,i.instanceOffset(),
+                            i.instances());
+
+            else if(i.vertexOffset() > 0)
+
+                CGL33::DrawElementInstancedBaseVertex(
+                            mode,
+                            i.elements(), i.elementType(),
+                            i.indexOffset()*elsize, i.instances(),
+                            i.vertexOffset());
+
+            else
+#endif
+#if !defined(COFFEE_ONLY_GLES20)
+                CGL33::DrawElementsInstanced(
+                            mode,i.elements(),i.elementType(),
+                            i.indexOffset()*elsize,i.instances());
+#else
+                CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                    i.indexOffset()*elsize);
+#endif
+        }else{
+#if !defined(COFFEE_ONLY_GLES20)
+            if(i.vertexOffset() > 0)
+                CGL33::DrawElementsBaseVertex(
+                            mode, i.elements(), i.elementType(),
+                            i.indexOffset()*elsize, i.vertexOffset());
+            else
+#endif
+                CGL33::DrawElements(mode,i.elements(),i.elementType(),
+                                    i.indexOffset()*elsize);
+        }
+
+    }else{
+#if !defined(COFFEE_ONLY_GLES20)
+        if(d.instanced())
+            CGL33::DrawArraysInstanced(mode,i.vertexOffset(),
+                                       i.vertices(),i.instances());
+        else
+#else
+        if(d.instanced())
+        {
+            auto hnd = pipelineHandle;
+            auto loc = glGetUniformLocation(hnd, "InstanceID");
+
+            auto loc_all = glGetUniformLocation(hnd, "InstanceCount");
+
+            if(loc_all != -1)
+                    glUniform1i(loc_all, i.instances());
+
+            for(uint32 j=0;j<i.instances();j++)
+            {
+                if(loc != -1)
+                    glUniform1i(loc, C_CAST<i32>(j));
+                CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
+            }
+        }else
+#endif
+            CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
+    }
+
+    return true;
+}
+
+#if !defined(COFFEE_ONLY_GLES20)
+bool InternalMultiDraw(
+        GLEAM_API::OptimizedDraw::MultiDrawData const& data)
+{
+    static CGhnd indirectBuf;
+
+
+    using IndirectCall = GLEAM_API::OptimizedDraw::IndirectCall;
+
+    if(data.dc.instanced())
+    {
+        if(indirectBuf == 0)
+            glGenBuffers(1, &indirectBuf);
+
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuf);
+        glBufferData(
+                    GL_DRAW_INDIRECT_BUFFER,
+                    data.indirectCalls.size() * sizeof(IndirectCall),
+                    data.indirectCalls.data(), GL_STATIC_DRAW);
+
+//        szptr elsize = 4;
+//        if(data.etype==TypeEnum::UShort)
+//            elsize = 2;
+//        if(data.etype==TypeEnum::UInt)
+//            elsize = 4;
+
+//        for(auto i : Range(data.indirectCalls.size()))
+//        {
+//            auto& dc = data.indirectCalls[i];
+//            CGL43::DrawElementsInstancedBaseVertexBaseInstance(
+//            {
+//                            Prim::Triangle, PrimCre::Explicit
+//                        },
+//                        dc.count,
+//                        data.etype,
+//                        dc.firstIndex * elsize,
+//                        dc.instanceCount,
+//                        dc.baseVertex,
+//                        dc.baseInstance
+//                        );
+//        }
+
+        CGL43::DrawMultiElementsIndirect(
+        {
+                        Prim::Triangle, PrimCre::Explicit
+                    }, data.etype,
+                    (c_cptr)0,
+                    data.indirectCalls.size(),
+                    sizeof(IndirectCall)
+                    );
+    }
+    else
+
+        CGL33::DrawMultiElementsBaseVertex(
+                    GL_TRIANGLES, data.counts.data(), data.etype,
+                    data.offsets.data(),
+                    data.counts.size(), data.baseVertex.data());
+
+    return true;
+}
+#endif
+
+void GLEAM_API::MultiDraw(
+        const GLEAM_API::PIP &pipeline,
+        const GLEAM_API::OPT_DRAW &draws)
+{
+    if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
+    {
+        cVerbose(12, "- Pipeline:{0}", pipeline.m_handle);
+        for(auto& cmd : draws.cmdBufs)
+        {
+            cVerbose(12, "-- Vertices:{0} + UState:{1}",
+                     &cmd.vertices, &cmd.state);
+            for(auto& call : cmd.commands)
+            {
+                cVerbose(12, "--- Draw call:{0}", &call);
+            }
+        }
+    }
+
+    pipeline.bind();
+
+    i32 instanceID_loc = glGetUniformLocation(pipeline.m_handle,
+                                              "InstanceID");
+    i32 instanceID_val = 0;
+
+    V_DESC* p_vertices = nullptr;
+    PSTATE* p_state = nullptr;
+
+#if !defined(COFFEE_ONLY_GLES20)
+    if(draws.multiDrawData.size())
+    {
+        for(auto& mdData : draws.multiDrawData)
+        {
+            auto& buffer = *mdData.first;
+
+            if(&buffer.vertices != p_vertices)
+            {
+                buffer.vertices.bind();
+                p_vertices = &buffer.vertices;
+            }
+
+            if(&buffer.state != p_state)
+            {
+                for(auto const& s : buffer.state)
+                    SetShaderUniformState(pipeline, s.first, s.second);
+                p_state = &buffer.state;
+            }
+
+            InternalMultiDraw(mdData.second);
+        }
+    }else
+#endif
+        for(auto& buffer : draws.cmdBufs)
+        {
+            if(&buffer.vertices != p_vertices)
+            {
+                buffer.vertices.bind();
+                p_vertices = &buffer.vertices;
+            }
+
+            if(&buffer.state != p_state)
+            {
+                for(auto const& s : buffer.state)
+                    SetShaderUniformState(pipeline, s.first, s.second);
+                p_state = &buffer.state;
+            }
+
+            for(auto& cmd : buffer.commands)
+            {
+                glUniform1i(instanceID_loc, instanceID_val);
+                InternalDraw(pipeline.m_handle, {
+                                 Prim::Triangle, PrimCre::Explicit
+                             }, cmd.call, cmd.data);
+                instanceID_val ++;
+            }
+        }
+
+    pipeline.unbind();
+}
+
 void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
                      PipelineState const& ustate,
                      V_DESC& vertices,
@@ -730,79 +1050,7 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 
     vertices.bind();
 
-    if(d.indexed())
-    {
-        szptr elsize = 4;
-        if(i.elementType()==TypeEnum::UShort)
-            elsize = 2;
-        if(i.elementType()==TypeEnum::UInt)
-            elsize = 4;
-
-        if(d.instanced())
-        {
-            /* TODO: Implement the disabled drawcalls using other means */
-#ifdef COFFEE_GLEAM_DESKTOP
-            if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0&&i.vertexOffset()!=0)
-
-                CGL43::DrawElementsInstancedBaseVertexBaseInstance(
-                            mode,i.elements(),i.elementType(),
-                            i.indexOffset()*elsize,i.instances(),
-                            i.vertexOffset(),i.instanceOffset());
-
-            else if(GL_CURR_API==GL_4_3&&i.instanceOffset()>0)
-
-                CGL43::DrawElementsInstancedBaseInstance(
-                            mode,
-                            i.elements(),i.elementType(),
-                            i.indexOffset()*elsize,i.instanceOffset(),
-                            i.instances());
-
-            else
-#endif
-#if !defined(COFFEE_ONLY_GLES20)
-                CGL33::DrawElementsInstanced(mode,i.elements(),i.elementType(),
-                                             i.indexOffset()*elsize,i.instances());
-#else
-                CGL33::DrawElements(mode,i.elements(),i.elementType(),
-                                    i.indexOffset()*elsize);
-#endif
-        }else{
-#if !defined(COFFEE_ONLY_GLES20)
-            if(i.vertexOffset()>0)
-                CGL33::DrawElementsBaseVertex(mode, i.elements(), i.elementType(),
-                                              i.indexOffset()*elsize, i.vertexOffset());
-            else
-#endif
-                CGL33::DrawElements(mode,i.elements(),i.elementType(),
-                                    i.indexOffset()*elsize);
-        }
-
-    }else{
-#if !defined(COFFEE_ONLY_GLES20)
-        if(d.instanced())
-            CGL33::DrawArraysInstanced(mode,i.vertexOffset(),i.vertices(),i.instances());
-        else
-#else
-        if(d.instanced())
-        {
-            auto hnd = pipeline.m_handle;
-            auto loc = glGetUniformLocation(hnd, "InstanceID");
-            
-            auto loc_all = glGetUniformLocation(hnd, "InstanceCount");
-            
-            if(loc_all != -1)
-                    glUniform1i(loc_all, i.instances());
-            
-            for(uint32 j=0;j<i.instances();j++)
-            {
-                if(loc != -1)
-                    glUniform1i(loc, C_CAST<i32>(j));
-                CGL33::DrawArrays(mode, i.vertexOffset(), i.vertices());
-            }
-        }else
-#endif
-            CGL33::DrawArrays(mode,i.vertexOffset(),i.vertices());
-    }
+    InternalDraw(pipeline.m_handle, mode, d, i);
 
     if(query)
         query->end();
