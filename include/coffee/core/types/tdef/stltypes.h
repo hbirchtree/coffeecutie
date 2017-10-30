@@ -21,27 +21,10 @@
 
 namespace Coffee{
 
-template<typename T>
-using stl_allocator = std::allocator<T>;
+using CString   = std::string; /*!< Typical string object */
+using CWString   = std::wstring; /*!< Typical string object suited for interfaces */
 
-template<typename T>
-using stl_map_compare = std::less<T>;
-
-template<typename T>
-using stl_set_compare = std::less<T>;
-
-using stl_traits    = std::char_traits<char>;
-using stl_traits_w    = std::char_traits<wchar_t>;
-
-using CString    = std::basic_string<char, stl_traits, stl_allocator<char>>;
-/*!< Typical string object */
-using CWString   = std::basic_string<wchar_t,
-                                     stl_traits_w,
-                                     stl_allocator<wchar_t>>;
-/*!< Typical string object suited for interfaces */
-
-using CStdFault = std::runtime_error;
-/*!< Exception to be thrown by default */
+using CStdFault = std::runtime_error; /*!< Exception to be thrown by default */
 
 using Mutex = std::mutex;
 using Lock  = std::lock_guard<Mutex>;
@@ -65,23 +48,18 @@ template<typename T>
 using Queue = std::queue<T>;
 
 template<typename T>
-using LinkList = std::list<T, stl_allocator<T>>;
+using LinkList = std::list<T>;
 template<typename T>
-using List = std::list<T, stl_allocator<T>>;
+using List = std::list<T>;
 
 template<typename T>
-using Vector = std::vector<T, stl_allocator<T>>;
+using Vector = std::vector<T>;
 
 template<typename T1, typename T2>
-using Pair = std::pair<T1,T2>;
+using Map = std::map<T1,T2>;
 
 template<typename T1, typename T2>
-using Map = std::map<T1,T2, stl_map_compare<T1>,
-                     stl_allocator<Pair<T1,T2>> >;
-
-template<typename T1, typename T2>
-using MultiMap = std::multimap<T1,T2, stl_map_compare<T1>,
-                               stl_allocator<Pair<T1,T2>> >;
+using MultiMap = std::multimap<T1,T2>;
 
 template<typename T>
 using ShPtr = std::shared_ptr<T>;
@@ -93,8 +71,10 @@ template<typename T>
 using Complex = std::complex<T>;
 
 template<typename T>
-using Set = std::set<T, stl_set_compare<T>,
-                     stl_allocator<T> >;
+using Set = std::set<T>;
+
+template<typename T1, typename T2>
+using Pair = std::pair<T1,T2>;
 
 using ByteVector = Vector<uint8_t>;
 
@@ -120,15 +100,13 @@ inline UqPtr<T,Deleter> MkUqDST(Args... a)
     return UqPtr<T, Deleter>(new T(a...));
 }
 
-template<typename T = size_t>
-struct Range : Vector<T>
+struct Range : Vector<size_t>
 {
-    /* TODO: Make this class lazy using iterators */
-    Range(T len) : Vector<T>()
+    Range(size_t len) : Vector<size_t>()
     {
-        this->reserve(len);
+        reserve(len);
         for(size_t i = 0; i<len; i++)
-            this->push_back(i);
+            push_back(i);
     }
 };
 
