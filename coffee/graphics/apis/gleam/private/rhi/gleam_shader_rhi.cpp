@@ -12,6 +12,9 @@ namespace GLEAM{
 static const constexpr cstring GLES20_COMPAT_VS = {
     "\n#define in attribute\n"
     "#define out varying\n"
+    "#define gl_InstanceID InstanceID\n"
+
+    "uniform int InstanceID;\n"
 };
 
 static const constexpr cstring GLES20_COMPAT_FS = {
@@ -19,6 +22,7 @@ static const constexpr cstring GLES20_COMPAT_FS = {
     "#define OutColor gl_FragColor\n"
     "#define sampler2DArray sampler2D\n"
     "#define sampler3DArray sampler3D\n"
+    "#define gl_InstanceID InstanceID\n"
 
     "#define texture2DArray(texUnit, texCoord) "
     "texture2DArray_Internal(texUnit, texCoord, texdata_gridSize)\n"
@@ -53,8 +57,32 @@ static const constexpr cstring GLES20_COMPAT_FS = {
 
     "    return texture2D(tex, coord.xy);"
     "}\n"
+
+    "uniform int InstanceID;\n"
 };
 #endif
+
+STATICINLINE CString StringExtractLine(CString& shader, cstring query)
+{
+    if(shader.find(query) != CString::npos)
+    {
+        auto startIdx = shader.find(query);
+        auto endIdx = shader.find("\n");
+        if(endIdx != CString::npos)
+        {
+            endIdx++;
+
+            CString versionDirective = {};
+            versionDirective.insert(0,
+                                    &shader[startIdx],
+                                    endIdx - startIdx);
+            shader.erase(startIdx, endIdx);
+
+            return versionDirective;
+        }
+    }
+    return {};
+}
 
 bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 {
@@ -76,6 +104,20 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
         Vector<cstring> shaderSrcVec = {};
         Vector<i32> shaderSrcLens = {};
 
+        /* TODO: Move #extension directives */
+        CString transformedShader;
+        /* Because the originalShader may not be null-terminated, we do
+         *  an insertion with the given length. */
+        transformedShader.insert(0, *shaderSrc,
+                                 C_FCAST<CString::size_type>(slen));
+
+        /* Before adding more snippets, we need to move the
+         *  #version directive */
+        CString versionDirective = {};
+        if((versionDirective = StringExtractLine(transformedShader,
+                                                 "#version ")).size())
+            shaderSrcVec.push_back(versionDirective.c_str());
+
 #if defined(COFFEE_ONLY_GLES20)
         if(stage != ShaderStage::Vertex && stage != ShaderStage::Fragment)
             return false;
@@ -88,12 +130,7 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
         /* OpenGL GLSL ES 1.00 does not have a #version directive,
          *  remove it */
-        if(StrFind(originalShader, "#version "))
-        {
-            slen -= (StrFind(originalShader, "\n") + 1)
-                    - StrFind(originalShader, "#version ");
-            originalShader = StrFind(originalShader, "\n") + 1;
-        }
+        shaderSrcVec.pop_back();
 
         /* TODO: Provide better support for sampler2DArray, creating
          *  extra uniforms for grid size and etc. This will allow us
@@ -111,11 +148,6 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
          *  "out" with the approriate 1.00 equivalents (attribute and
          *  varying) */
 
-        CString transformedShader;
-        /* Because the originalShader may not be null-terminated, we do
-         *  an insertion with the given length. */
-        transformedShader.insert(0, originalShader,
-                                 C_FCAST<CString::size_type>(slen));
 
         /* Remove the output declaration from modern GLSL */
         transformedShader = CStrReplace(transformedShader,
@@ -142,23 +174,49 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
             cVerbose(10, "Compiling shader fragment:\n{0}", sh);
 
 #else
-        /* Before adding more snippets, we need to move the
-         *  #version directive */
-        cstring versionDirective = nullptr;
-        i32 directiveLen = 0;
-        if(StrFind(*shaderSrc, "#version "))
-        {
-            directiveLen = (StrFind(*shaderSrc, "\n") + 1)
-                    - StrFind(*shaderSrc, "#version ");
-            versionDirective = *shaderSrc;
-            *shaderSrc = StrFind(*shaderSrc, "\n") + 1;
-        }
 
         /* For compatibility, remove usages of texture2DArray() in
          *  favor of texture(). texture2DArray() was never put into
          *  the standard. */
-        shaderSrcVec.push_back("#define texture2DArray texture\n");
+        shaderSrcVec.push_back(
+                    "#define texture2DArray texture\n"
+                    );
+
+        if(stage != ShaderStage::Vertex)
+            shaderSrcVec.push_back(
+                        "#define gl_InstanceID InstanceID\n"
+                        "flat in int InstanceID;\n"
+                        );
+        else
+            shaderSrcVec.push_back(
+                        "flat out int InstanceID;\n"
+                        );
 #endif
+
+        Vector<CString> extensionDirectives = {};
+        CString extensionDirective = {};
+        while((extensionDirective = StringExtractLine(transformedShader,
+                                                     "#extension ")).size())
+            extensionDirectives.push_back(extensionDirective);
+
+        /* #extension directives must be inserted after #version */
+        auto extPos =
+        #if !defined(COFFEE_ONLY_GLES20)
+                std::find(shaderSrcVec.begin(),
+                          shaderSrcVec.end(),
+                          versionDirective.c_str());
+        #else
+              shaderSrcVec.begin();
+        #endif
+
+        if(extPos == shaderSrcVec.end() || versionDirective.size() == 0)
+            extPos = shaderSrcVec.begin();
+        else
+            extPos++;
+
+        for(auto& ext : extensionDirectives)
+            shaderSrcVec.insert(extPos,
+                                ext.c_str());
 
         shaderSrcLens.reserve(shaderSrcVec.size() + 1);
         for(cstring fragment : shaderSrcVec)
@@ -166,19 +224,8 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
             shaderSrcLens.push_back(C_FCAST<i32>(StrLen(fragment)));
         }
 
-#if defined(COFFEE_ONLY_GLES20)
         shaderSrcVec.push_back(transformedShader.c_str());
         shaderSrcLens.push_back(transformedShader.size());
-#else
-        if(versionDirective)
-        {
-            shaderSrcVec.insert(shaderSrcVec.begin(), versionDirective);
-            shaderSrcLens.insert(shaderSrcLens.begin(), directiveLen);
-        }
-
-        shaderSrcVec.push_back(*shaderSrc);
-        shaderSrcLens.push_back(slen);
-#endif
 
         shaderLens = shaderSrcLens.data();
         shaderSrc = shaderSrcVec.data();
@@ -443,7 +490,8 @@ void GetShaderUniforms(const GLEAM_Pipeline &pipeline,
     if(GL_CURR_API==GL_3_3 || GL_CURR_API==GLES_2_0
             || GL_CURR_API == GLES_3_0 || GL_CURR_API == GLES_3_2)
     {
-        /* Does not differentiate between shader stages and their uniforms */
+        /* Does not differentiate between shader stages and
+         *  their uniforms */
         /* GL 4.3+ do not work with this */
         CGhnd prog = pipeline.m_handle;
 

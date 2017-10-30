@@ -89,7 +89,7 @@ void GLEAM_Quad_Drawer::cleanup()
 {
 }
 
-const GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc() const
+GLEAM_VertDescriptor &GLEAM_Quad_Drawer::vertDesc()
 {
     return m_desc;
 }

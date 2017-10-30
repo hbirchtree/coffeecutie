@@ -218,22 +218,54 @@ public:
             ShaderStage const& stage,
             USTATE const& ustate);
 
+    /*!
+     * \brief Perform any possible work that removes memory allocations made related to setting up drawing pipelines and similar.
+     */
     static void PreDrawCleanup();
 
+    /*!
+     * \brief Optimize a render pass into a buffer which may be consumed by MultiDraw(). Will attempt to maximize use of instancing and glMultiDraw* functionality, and also minimize state changes between draw calls (eg. swapping less textures and uniforms).
+     * \param rpass A pre-defined render pass by the user code
+     * \param buffer An output structure which is ready to be drawn in an optimized fashion.
+     */
     static void OptimizeRenderPass(
             RenderPass& rpass,
             OPT_DRAW &buffer);
 
+    /*!
+     * \brief Providing data output by OptimizeRenderPass(), use this function to perform the best possible combination of drawcalls.
+     * \param pipeline The pipeline with which the drawcalls are to be rendered with. This method cannot optimize between different pipeline usages.
+     * \param draws The drawcalls to be rendered
+     */
     static void MultiDraw(
             PIP const& pipeline,
             OPT_DRAW const& draws);
 
+    /*!
+     * \brief Draw objects with the provided data. Will mostly map to a single drawcall.
+     * \param pipeline
+     * \param ustate
+     * \param vertices
+     * \param d
+     * \param i
+     * \param query
+     */
     static void Draw(
             PIP const& pipeline,
             PSTATE const& ustate,
             V_DESC& vertices,
             D_CALL const& d,D_DATA const& i,
             Q_OCC* query = nullptr);
+
+    /*!
+     * \brief As Draw(), except it can be drawn depending on an occlusion query output by a Draw() step with occlusion query capture.
+     * \param pipeline
+     * \param ustate
+     * \param vertices
+     * \param d
+     * \param i
+     * \param c
+     */
     static void DrawConditional(
             PIP const& pipeline,
             PSTATE const& ustate,

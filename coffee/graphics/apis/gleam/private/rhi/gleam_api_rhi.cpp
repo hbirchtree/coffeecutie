@@ -720,6 +720,8 @@ void GLEAM_API::OptimizeRenderPass(
         vert_sort[&call.vertices].push_back(&call);
     }
 
+    /* TODO: Add step to de-duplicate D_DATA into instancing */
+
     for(auto& group : vert_sort)
     {
         Map<PSTATE*, Vector<RenderPass::DrawCall*>> ustate_sort;
@@ -893,11 +895,14 @@ bool InternalMultiDraw(
 {
     static CGhnd indirectBuf;
 
-
     using IndirectCall = GLEAM_API::OptimizedDraw::IndirectCall;
+
+    /* TODO: Add more MultiDraw* support */
 
     if(data.dc.instanced())
     {
+
+        /* TODO: Implement this using the buffer type */
         if(indirectBuf == 0)
             glGenBuffers(1, &indirectBuf);
 
@@ -906,6 +911,8 @@ bool InternalMultiDraw(
                     GL_DRAW_INDIRECT_BUFFER,
                     data.indirectCalls.size() * sizeof(IndirectCall),
                     data.indirectCalls.data(), GL_STATIC_DRAW);
+
+        /* TODO: Implement fallbacks using the pseudo-implementations */
 
 //        szptr elsize = 4;
 //        if(data.etype==TypeEnum::UShort)
@@ -935,7 +942,7 @@ bool InternalMultiDraw(
                     }, data.etype,
                     (c_cptr)0,
                     data.indirectCalls.size(),
-                    sizeof(IndirectCall)
+                    sizeof(data.indirectCalls[0])
                     );
     }
     else
@@ -953,6 +960,8 @@ void GLEAM_API::MultiDraw(
         const GLEAM_API::PIP &pipeline,
         const GLEAM_API::OPT_DRAW &draws)
 {
+    /* In debug mode, display the entire draw call.
+     *  This is the true verbose mode. */
     if(GL_DEBUG_MODE && PrintingVerbosityLevel >= 12)
     {
         cVerbose(12, "- Pipeline:{0}", pipeline.m_handle);
@@ -967,16 +976,27 @@ void GLEAM_API::MultiDraw(
         }
     }
 
+    /* The important limiting factor is the speed of
+     *  binding new shader pipelines. */
     pipeline.bind();
 
+    /* If using a platform without instancing, cheat by using a
+     *  uniform in its place. Preprocessor macros will handle the rest. */
     i32 instanceID_loc = glGetUniformLocation(pipeline.m_handle,
                                               "InstanceID");
     i32 instanceID_val = 0;
 
+    /* TODO: Add fallback support for gl_DrawID */
+
+    /* We will use these to allow use of existing state.
+     * We will treat program uniform state as atomic,
+     *  because it can be a lot to compare */
     V_DESC* p_vertices = nullptr;
     PSTATE* p_state = nullptr;
 
 #if !defined(COFFEE_ONLY_GLES20)
+    /* We assume that, if no multiDrawData is available,
+     *  we can't use it */
     if(draws.multiDrawData.size())
     {
         for(auto& mdData : draws.multiDrawData)
@@ -1000,6 +1020,9 @@ void GLEAM_API::MultiDraw(
         }
     }else
 #endif
+        /* This method minimizes the amount of state changes only,
+         *  draw calls are still a couple, but it's faster than
+         *  multiple calls to Draw() */
         for(auto& buffer : draws.cmdBufs)
         {
             if(&buffer.vertices != p_vertices)
@@ -1060,7 +1083,8 @@ void GLEAM_API::Draw(const GLEAM_Pipeline &pipeline,
 }
 
 void GLEAM_API::DrawConditional(const GLEAM_Pipeline &pipeline,
-                                const PipelineState &ustate, V_DESC &vertices,
+                                const PipelineState &ustate,
+                                V_DESC &vertices,
                                 const DrawCall &d,
                                 const DrawInstanceData &i,
                                 OccludeQuery &c)
