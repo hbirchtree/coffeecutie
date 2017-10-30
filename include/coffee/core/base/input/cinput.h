@@ -1,5 +1,4 @@
-#ifndef CINPUT_H
-#define CINPUT_H
+#pragma once
 
 #include "../../types/composite_types.h"
 #include "../../types/vector_types.h"
@@ -425,7 +424,4 @@ C_FLAGS(CIMouseButtonEvent::MouseButton,uint8);
 }
 }
 
-
-
-#endif // CINPUT_H
 

@@ -193,8 +193,10 @@ void ControllerCamera(Camera& cam, CIControllerState const& state,
     Vecf3& position = cam.position;
     Quatf& rotation = cam.rotation;
 
-    const auto forward = quaternion_to_direction<CameraDirection::Forward>(rotation);
-    const auto right = quaternion_to_direction<CameraDirection::Right>(rotation);
+    const auto forward =
+            quaternion_to_direction<CameraDirection::Forward>(rotation);
+    const auto right =
+            quaternion_to_direction<CameraDirection::Right>(rotation);
 
     position += forward * FilterJoystickInput(state.axes.e.l_y,
                                               deadzone,
