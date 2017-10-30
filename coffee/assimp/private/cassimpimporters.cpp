@@ -202,6 +202,7 @@ FORCEDINLINE Node* create_scene_node(aiNode* node, Node* parent, LinkList<Node>&
         parent->addChild(&n_node);
     n_node.setObjectName(node->mName.C_Str());
     n_node.transform = transpose(convert_aiMatrix(node->mTransformation));
+    n_node.flags = 0;
 
     if(node->mNumMeshes > 0)
         n_node.mesh = C_CAST<i32>(node->mMeshes[0]);
