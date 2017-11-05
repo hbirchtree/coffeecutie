@@ -190,7 +190,7 @@
 #define COFFEE_ONLY_GLES20
 #endif
 
-#if defined(COFFEE_ANDROID) || defined(COFFEE_APPLE_MOBILE)\
+#if defined(COFFEE_APPLE_MOBILE)\
     || defined(COFFEE_GLES20_MODE) || defined(COFFEE_EMSCRIPTEN)
 #define COFFEE_LINKED_GLES
 #define COFFEE_ONLY_GLES20

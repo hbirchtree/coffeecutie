@@ -113,6 +113,8 @@ namespace ShaderTypes
         SCube = 1 << 27,
         SCubeA = 1 << 28,
 
+        Depth = 1 << 29,
+
         SizeMask_f = 0xFFFF0000,
     };
 

@@ -31,7 +31,7 @@
 #define C_DEPRECATED_S(reason) [[deprecated(reason)]]
 
 #elif (defined(COFFEE_GCC) || defined(COFFEE_CLANG)) \
-    && !defined(COFFEE_MAEMO)
+    && !defined(COFFEE_MAEMO) && 0
 #define C_DEPRECATED __attribute__((deprecated))
 #define C_DEPRECATED_S(reason) C_DEPRECATED
 

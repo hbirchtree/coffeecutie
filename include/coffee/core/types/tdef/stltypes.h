@@ -100,13 +100,14 @@ inline UqPtr<T,Deleter> MkUqDST(Args... a)
     return UqPtr<T, Deleter>(new T(a...));
 }
 
-struct Range : Vector<size_t>
+template<typename T = size_t>
+struct Range : Vector<T>
 {
-    Range(size_t len) : Vector<size_t>()
+    Range(T len) : Vector<T>()
     {
-        reserve(len);
-        for(size_t i = 0; i<len; i++)
-            push_back(i);
+        this->reserve(len);
+        for(T i = 0; i<len; i++)
+            this->push_back(i);
     }
 };
 
