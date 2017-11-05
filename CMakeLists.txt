@@ -129,6 +129,8 @@ link_directories(
     ${CMAKE_BINARY_DIR}/libs/lib/
     )
 
+add_custom_target ( NULL )
+
 if(COFFEE_GENERATE_LIBRARIES)
     generate_findscript()
 endif()
