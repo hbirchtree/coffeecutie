@@ -75,12 +75,26 @@ android.armv8a:
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
 		-e TARGET=arm64_nougat
 
+android.armv8a.gles3:
+	@make -f $(AND_STAND) \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
+		-e TARGET=arm64_nougat_gles3
+
 android.armv7a:
 	@make -f $(AND_STAND) \
 		-e COFFEE_DIR=$(COFFEE_DIR) \
 		-e SOURCE_DIR=$(SOURCE_DIR) \
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
 		-e TARGET=armv7a_neon_latest
+
+android.armv7a.gles3:
+	@make -f $(AND_STAND) \
+	        -e COFFEE_DIR=$(COFFEE_DIR) \
+	        -e SOURCE_DIR=$(SOURCE_DIR) \
+	        -e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
+	        -e TARGET=armv7a_nougat_gles3
 
 android.armv7a.kitkat:
 	@make -f $(AND_STAND) \

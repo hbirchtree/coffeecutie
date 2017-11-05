@@ -19,6 +19,8 @@ EXTRA_OPTIONS := -DCOFFEE_ROOT_DIR=$(DOCK_COFFEE_DIR)
 
 DOCK_BLD_DIR := /home/coffee/build
 
+CMAKE_SECOND_TARGET := AndroidPackage
+
 RUNNER := Makefile.multi
 
 ifeq ($(RUNNER),Makefile.multi)
@@ -47,7 +49,7 @@ android-gen-preloads:
 
 android: android-gen-preloads android-get-nativelibs
 	@make -f $(ROOT_DIR)/$(RUNNER) multi.twostage \
-		-e CMAKE_SECOND_TARGET=AndroidPackage \
+		-e CMAKE_SECOND_TARGET=$(CMAKE_SECOND_TARGET) \
 		-e BUILD_NAME=android-$(TARGET) \
 		-e BUILDER_NAME=android-builder \
 		-e DOCKER_CONFIG=android \

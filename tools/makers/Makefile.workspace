@@ -20,6 +20,7 @@ CMAKE_OUT_DIR:=$(BUILD_DIR)/build/$(BUILD_NAME)
 CMAKE_GEN:=Ninja
 CMAKE_TARGET:=install
 CMAKE_SECOND_TARGET:=CoverageTest
+CMAKE_ALL_TARGET := all
 BUILD_TYPE:=Debug
 
 PRELOAD_FILE=$(CMAKE_PRLDS)/$(PRELOAD)
@@ -48,7 +49,7 @@ multi: multi-config
 	$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_TARGET)
 
 multi.twostage: multi-config
-	sh -c '$(CMAKE) --build $(CMAKE_BLD_DIR) --target all && \
+	sh -c '$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_ALL_TARGET) && \
 		$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_SECOND_TARGET) -- -j1 && \
 		$(CMAKE) --build $(CMAKE_BLD_DIR) --target $(CMAKE_TARGET)'
 
