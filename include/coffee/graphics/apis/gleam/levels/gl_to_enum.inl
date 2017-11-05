@@ -941,9 +941,13 @@ inline CGenum to_enum(BitFormat f)
 #endif
     case BitFormat::Scalar_32:
         return GL_FLOAT;
-#if !defined(COFFEE_ONLY_GLES20)
     case BitFormat::UInt24_8:
+#if !defined(COFFEE_ONLY_GLES20)
         return GL_UNSIGNED_INT_24_8;
+#else
+        /* In order to keep compatibility, we fall back to normal format,
+         *  and OpenGL ES 2.0 does not support depth+stencil formats. */
+        return GL_UNSIGNED_BYTE;
 #endif
     default:
         return GL_NONE;
@@ -1195,6 +1199,21 @@ inline uint32 to_enum_shtype(CGenum f)
 
     switch(f)
     {
+#if !defined(COFFEE_ONLY_GLES20)
+    /* Depth buffer samplers */
+    case GL_SAMPLER_2D_SHADOW:
+        return sdt_sampf<S2|Depth>::value;
+    case GL_SAMPLER_2D_ARRAY_SHADOW:
+        return sdt_sampf<S2|Depth>::value;
+    case GL_SAMPLER_CUBE_SHADOW:
+        return sdt_sampf<SCube|Depth>::value;
+#endif
+#ifdef COFFEE_GLEAM_DESKTOP
+    case GL_SAMPLER_CUBE_MAP_ARRAY_SHADOW:
+        return sdt_sampf<SCubeA|Depth>::value;
+#endif
+
+    /* Normal samplers */
     case GL_SAMPLER_2D:
         return sdt_sampf<S2>::value;
     case GL_SAMPLER_CUBE:

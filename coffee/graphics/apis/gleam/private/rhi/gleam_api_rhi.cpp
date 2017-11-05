@@ -19,7 +19,7 @@ namespace GLEAM{
 
 using GLC = CGL_Implementation;
 
-void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, TypeEnum dt, Vector<byte_t> &storage)
+void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, BitFmt dt, Vector<byte_t> &storage)
 {
     auto size = fb.size();
     if(size.area() <= 0)
@@ -34,7 +34,7 @@ void GLEAM_API::DumpFramebuffer(GLEAM_API::FB_T &fb, PixelComponents c, TypeEnum
 void GLEAM_API::GetDefaultVersion(int32 &major, int32 &minor)
 {
 #if defined(COFFEE_GLEAM_DESKTOP)
-    major = 3; minor = 3;
+    major = 4; minor = 5;
 #elif defined(COFFEE_ONLY_GLES20)
     major = 2; minor = 0;
 #else
@@ -137,7 +137,7 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
     if(ver>=ver45&& /* DISABLES CODE */ (false))
         /* Unimplemented both on CGL level and here */
         store->CURR_API = GL_4_5;
-    else if(ver>=ver43 && /* DISABLES CODE */ (false))
+    else if(ver>=ver43)
         store->CURR_API = GL_4_3;
     else if(ver>=ver33)
         store->CURR_API = GL_3_3;
@@ -271,7 +271,7 @@ void GLEAM_API::SetTessellatorState(const TSLRSTATE& tstate)
 void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 {
     C_USED(i);
-#ifdef COFFEE_GLEAM_DESKTOP
+#if defined(COFFEE_GLEAM_DESKTOP)
     if(vstate.multiview())
     {
         if(CGL43::ViewportArraySupported())
@@ -304,6 +304,16 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             CGL33::Enable(Feature::ClipDist,0);
         }
     }else
+#elif !defined(COFFEE_ONLY_GLES20)
+    if(vstate.multiview())
+    {
+        /* Find some way to emulate multiview on GLES 3.0+ */
+    }else
+#else
+    if(vstate.multiview())
+    {
+        /* We're screwed. Throw the framebuffer on the floor, quick. */
+    }else
 #endif
     {
         if(vstate.m_view.size() > 0)
@@ -327,7 +337,7 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
 
 void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 {
-    if(GL_CURR_API==GLES_3_0 || GL_CURR_API == GLES_2_0)
+    if(GL_CURR_API==GLES_2_0 || GL_CURR_API == GLES_3_0)
     {
         if(bstate.blend())
         {
@@ -380,7 +390,7 @@ void GLEAM_API::SetBlendState(const BLNDSTATE& bstate, uint32 i)
 
 void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
 {
-    if(GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
     {
         if(dstate.testDepth())
             GLC::Enable(Feature::DepthTest);
@@ -391,7 +401,6 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
         }
     }else if(GL_CURR_API==GL_3_3
              || GL_CURR_API==GL_4_3
-             || GL_CURR_API==GLES_2_0
              || GL_CURR_API==GLES_3_2)
     {
         if(dstate.testDepth())
@@ -409,6 +418,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
         if(dstate.fun())
             GLC::DepthFunc(C_CAST<ValueComparison>(dstate.fun()));
 
+#if defined(COFFEE_GLEAM_DESKTOP)
         if(GL_CURR_API==GL_3_3 || GL_CURR_API==GL_4_3)
         {
             if(dstate.clampDepth())
@@ -416,6 +426,7 @@ void GLEAM_API::SetDepthState(const DEPTSTATE& dstate, uint32 i)
             else
                 GLC::Disable(Feature::DepthClamp,i);
         }
+#endif
         /*TODO: Implement clamping*/
     }
 
@@ -456,55 +467,68 @@ void GLEAM_API::SetPixelProcessState(const PIXLSTATE& pstate, bool unpack)
 }
 
 template<typename T>
-void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapf(CGhnd prog, uint32 idx, const T* data,
+                      szptr arr_size)
 {
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformfv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformfv(prog,C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
     else
 #endif
-        CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+        CGL33::Uniformfv(C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
 template<typename T>
-void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapf_m(CGhnd prog, uint32 idx, const T* data,
+                        szptr arr_size)
 {
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformfv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),false,data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformfv(prog,C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),false,data);
     else
 #endif
-        CGL33::Uniformfv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),false,data);
+        CGL33::Uniformfv(C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),false,data);
 }
 
 template<typename T>
-void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapi(CGhnd prog, uint32 idx, const T* data,
+                      szptr arr_size)
 {
     C_USED(prog);
 #if !defined(COFFEE_ONLY_GLES20)
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformiv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformiv(prog,C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
     else
 #endif
-        CGL33::Uniformiv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+        CGL33::Uniformiv(C_CAST<i32>(idx),
+                         C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 
 #if !defined(COFFEE_ONLY_GLES20)
 template<typename T>
-void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data, szptr arr_size)
+void SetUniform_wrapui(CGhnd prog, uint32 idx, const T* data,
+                       szptr arr_size)
 {
-    if(GL_CURR_API == GL_4_3)
-        CGL43::Uniformuiv(prog,C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+    if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
+        CGL43::Uniformuiv(prog,C_CAST<i32>(idx),
+                          C_CAST<i32>(arr_size / sizeof(T)),data);
     else
-        CGL33::Uniformuiv(C_CAST<i32>(idx),C_CAST<i32>(arr_size / sizeof(T)),data);
+        CGL33::Uniformuiv(C_CAST<i32>(idx),
+                          C_CAST<i32>(arr_size / sizeof(T)),data);
 }
 #endif
 
-void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
-                                      ShaderStage const& stage,
-                                      const GLEAM_ShaderUniformState &ustate)
+void GLEAM_API::SetShaderUniformState(
+        const GLEAM_Pipeline &pipeline,
+        ShaderStage const& stage,
+        const GLEAM_ShaderUniformState &ustate)
 {
     using namespace ShaderTypes;
 
@@ -512,7 +536,8 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
 
     CGhnd prog = 0;
 
-    if(GL_CURR_API==GL_3_3  || GL_CURR_API==GLES_2_0 || GL_CURR_API==GLES_3_0)
+    if(GL_CURR_API==GL_3_3  || GL_CURR_API==GLES_2_0
+            || GL_CURR_API==GLES_3_0)
         prog = pipeline.m_handle;
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
@@ -660,16 +685,17 @@ void GLEAM_API::SetShaderUniformState(const GLEAM_Pipeline &pipeline,
             CGL33::TexBind(handle->m_type,handle->texture);
 #if !defined(COFFEE_ONLY_GLES20)
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
-            if(GL_CURR_API != GL_4_3)
+
+#if !defined(COFFEE_ONLY_GLES20)
+            if(GL_CURR_API == GL_4_3 && GL_CURR_API == GLES_3_2)
             {
+                CGL43::Uniformi(prog,s.first,handle->m_unit);
+                /* Set texture handle in shader */
+            }else
 #endif
+            {
                 /* Set texture handle in shader */
                 CGL33::Uniformi(s.first,handle->m_unit);
-#if !defined(COFFEE_ONLY_GLES20)
-            }
-            else{
-                /* Set texture handle in shader */
-                CGL43::Uniformi(prog,s.first,handle->m_unit);
             }
 #endif
         }
@@ -889,7 +915,7 @@ static bool InternalDraw(
     return true;
 }
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if defined(COFFEE_GLEAM_DESKTOP)
 bool InternalMultiDraw(
         GLEAM_API::OptimizedDraw::MultiDrawData const& data)
 {
@@ -994,7 +1020,7 @@ void GLEAM_API::MultiDraw(
     V_DESC* p_vertices = nullptr;
     PSTATE* p_state = nullptr;
 
-#if !defined(COFFEE_ONLY_GLES20)
+#if defined(COFFEE_GLEAM_DESKTOP)
     /* We assume that, if no multiDrawData is available,
      *  we can't use it */
     if(draws.multiDrawData.size())
@@ -1120,6 +1146,33 @@ APILevel GLEAM_API::Level()
 namespace Strings{
 cstring to_string(RHI::GLEAM::APILevel lev)
 {
+    using LEV = RHI::GLEAM::APILevel;
+
+#if defined(COFFEE_GLEAM_DESKTOP)
+    switch(lev)
+    {
+    case LEV::GL_3_3:
+        return "Desktop GL 3.3";
+    case LEV::GL_4_3:
+        return "Desktop GL 4.3";
+    case LEV::GL_4_5:
+        return "Desktop GL 4.5";
+    default:
+        break;
+    }
+#else
+    switch(lev)
+    {
+    case LEV::GLES_2_0:
+        return "GL ES 2.0";
+    case LEV::GLES_3_0:
+        return "GL ES 3.0";
+    case LEV::GLES_3_2:
+        return "GL ES 3.2";
+    default:
+        break;
+    }
+#endif
     return "?";
 }
 }

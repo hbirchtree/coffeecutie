@@ -158,44 +158,60 @@ enum class Feature
 {
     Blend,
 
+#if defined(COFFEE_GLEAM_DESKTOP)
     ClipDist,
+#endif
     Culling,
 
     DebugOutput,
     DebugOutputSync,
 
+#if defined(COFFEE_GLEAM_DESKTOP)
     DepthClamp,
+#endif
     DepthTest,
     Dither,
 
     FramebufferSRGB,
 
+#if defined(COFFEE_GLEAM_DESKTOP)
     LineSmooth,
     PolygonSmooth,
+#endif
 
+#if defined(COFFEE_GLEAM_DESKTOP)
     PrimitiveRestart,
+#endif
     PrimitiveRestartFixedIdx,
 
     SampleAlphaToCoverage,
-    SampleAlphaToOne,
     SampleCoverage,
-    SampleShading,
     SampleMask,
+#if defined(COFFEE_GLEAM_DESKTOP)
+    SampleAlphaToOne,
+    SampleShading,
+#endif
 
     RasterizerDiscard,
 
     ScissorTest,
     StencilTest,
 
+#if defined(COFFEE_GLEAM_DESKTOP)
     PointSize,
+#endif
 
     SeamlessCubemap,
 
+#if defined(COFFEE_GLEAM_DESKTOP)
     Multisample,
+#endif
 
     PolygonOffsetFill,
+#if defined(COFFEE_GLEAM_DESKTOP)
     PolygonOffsetPoint,
     PolygonOffsetLine,
+#endif
 };
 
 enum class BufType
@@ -257,7 +273,7 @@ enum class Texture
 #else
     T2DArray = GL_TEXTURE_2D_ARRAY,
 #endif
-#ifdef COFFEE_GLEAM_DESKTOP
+#if !defined(COFFEE_ONLY_GLES20)
     CubemapArray = GL_TEXTURE_CUBE_MAP_ARRAY,
 #endif
 

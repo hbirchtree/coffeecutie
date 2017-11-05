@@ -166,7 +166,7 @@ public:
     static void DumpFramebuffer(
             FB_T& fb,
             PixelComponents c,
-            TypeEnum dt,
+            BitFmt dt,
             Vector<byte_t>& storage);
 
     static void GetDefaultVersion(
