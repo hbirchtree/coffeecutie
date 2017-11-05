@@ -122,6 +122,10 @@ macro(APK_BUILD TARGET_NAME
     if(ANDROID_USE_GRADLE)
         add_custom_command( TARGET ${TARGET_NAME}
             POST_BUILD
+            COMMAND chmod +x ${BUILD_DIR}/gradlew
+            )
+        add_custom_command( TARGET ${TARGET_NAME}
+            POST_BUILD
             COMMAND ${BUILD_DIR}/gradlew assemble
             WORKING_DIRECTORY ${BUILD_DIR}
             )

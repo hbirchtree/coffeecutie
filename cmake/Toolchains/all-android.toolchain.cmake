@@ -44,7 +44,7 @@
 # WHAT THE FUCK IS GOING ON? WHY IS THE CACHE RESET?
 macro(RETRIEVE_ENV VAR)
     if(NOT ${VAR})
-        set ( ${VAR} "$ENV{${VAR}}" )
+        set ( ${VAR} "$ENV{${VAR}}" CACHE STRING "" )
     endif()
 endmacro()
 

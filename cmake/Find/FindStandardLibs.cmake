@@ -75,9 +75,19 @@ if(ANDROID)
         log android
         # OpenGL ES
         #        GLESv1_CM
-        GLESv2
+#        GLESv2
         EGL
         )
+
+    if(COFFEE_BUILD_GLES_20)
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            GLESv2
+            )
+    else()
+        list ( APPEND CORE_EXTRA_LIBRARIES
+            GLESv3
+            )
+    endif()
 
     if(COFFEE_BUILD_SDL2)
         list ( APPEND CORE_EXTRA_LIBRARIES
