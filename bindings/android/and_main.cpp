@@ -303,8 +303,14 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
         case Android_QueryNativeWindow:
             out->data.ptr = coffee_app->window;
             break;
+        case Android_QueryActivity:
+            out->data.ptr = coffee_app->activity->clazz;
+            break;
         case Android_QueryAssetManager:
             out->data.ptr = coffee_app->activity->assetManager;
+            break;
+        case Android_QueryApp:
+            out->data.ptr = coffee_app;
             break;
 
         default:

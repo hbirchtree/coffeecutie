@@ -82,6 +82,8 @@ enum FCmdType
     /* System-level functionality */
     Android_QueryNativeWindow,
     Android_QueryAssetManager,
+    Android_QueryActivity,
+    Android_QueryApp,
 
     /* Filesystem queries */
     Android_QueryDataPath,
