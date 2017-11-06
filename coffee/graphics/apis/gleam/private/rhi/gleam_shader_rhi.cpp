@@ -16,6 +16,8 @@ static const constexpr cstring GLES20_COMPAT_VS = {
     "#define out varying\n"
     "#define gl_InstanceID InstanceID\n"
 
+    "precision highp int;\n"
+
     "uniform int InstanceID;\n"
 };
 
@@ -31,6 +33,7 @@ static const constexpr cstring GLES20_COMPAT_FS = {
 //    "texture2DArray_Internal(texUnit, texCoord, texUnit ## _gridSize)\n"
 
     "precision mediump float;\n"
+    "precision highp int;\n"
 
     "vec4 texture(sampler2D sampler, vec2 texCoord)"
     "{"
@@ -52,9 +55,8 @@ static const constexpr cstring GLES20_COMPAT_FS = {
 
     "    vec2 baseCoord = vec2(gridX * fSquareSize, gridY * fSquareSize);"
 
-    "    coord.xy = coord.xy * vec2(0.5, 0.5)"
+    "    coord.xy = coord.xy"
     "            * vec2(fSquareSize, fSquareSize)"
-    "            + vec2(0.25)"
     "            + vec2(gridX, gridY);"
 
     "    return texture2D(tex, coord.xy);"
@@ -261,8 +263,12 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 #if !defined(COFFEE_ONLY_GLES20)
     else if(GL_CURR_API==GL_4_3 || GL_CURR_API==GLES_3_2)
     {
-        cstring str = (cstring)(data.data);
-        m_handle = CGL43::ProgramCreate(stage,1,&str);
+        CString shader_str;
+        shader_str.insert(0, C_FCAST<cstring>(data.data), data.size);
+
+        cstring shader_cstr = shader_str.c_str();
+
+        m_handle = CGL43::ProgramCreate(stage,1,&shader_cstr);
 
         if(GL_DEBUG_MODE && m_handle == 0)
         {

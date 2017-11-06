@@ -51,8 +51,8 @@ protected:
     virtual void windowTerminate();
 
 public:
-    virtual void injectEvent(const CIEvent &, c_cptr);
-    virtual void injectEvent(const CDEvent &, c_cptr);
+    virtual void injectEvent(const CIEvent &ev, c_cptr data);
+    virtual void injectEvent(const CDEvent &ev, c_cptr data);
 
 public:
     virtual CDWindow *window();

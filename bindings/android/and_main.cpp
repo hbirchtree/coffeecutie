@@ -7,8 +7,12 @@
 #include <android/native_activity.h>
 #include <android/looper.h>
 #include <android/window.h>
+#include <gestureDetector.h>
+
 
 using namespace Coffee;
+
+static const constexpr u8 INPUT_VERB = 11;
 
 enum AndroidAppState
 {
@@ -16,12 +20,34 @@ enum AndroidAppState
     AndroidApp_Visible,
 };
 
+struct AndroidSensorData
+{
+    ASensorManager* manager;
+    const ASensor* accelerometer;
+    const ASensor* gyroscope;
+    ASensorEventQueue* eventQueue;
+};
+
+struct CoffeeAndroidUserData
+{
+    AndroidSensorData sensors;
+};
+
+struct InputDetectors
+{
+    ndk_helper::TapDetector tap;
+    ndk_helper::DoubletapDetector double_tap;
+    ndk_helper::PinchDetector pinch;
+    ndk_helper::DragDetector drag;
+};
+
 struct AndroidInternalState
 {
+    InputDetectors input;
     AndroidAppState currentState;
 };
 
-AndroidInternalState* app_internal_state = nullptr;
+static AndroidInternalState* app_internal_state = nullptr;
 
 struct android_app* coffee_app = nullptr;
 
@@ -36,19 +62,6 @@ void(*CoffeeForeignSignalHandle)(int);
 void(*CoffeeForeignSignalHandleNA)(int, void*, void*, void*);
 
 extern "C" int deref_main_c(int(*mainfun)(int, char**), int argc, char** argv);
-
-struct AndroidSensorData
-{
-    ASensorManager* manager;
-    const ASensor* accelerometer;
-    const ASensor* gyroscope;
-    ASensorEventQueue* eventQueue;
-};
-
-struct CoffeeAndroidUserData
-{
-    AndroidSensorData sensors;
-};
 
 javavar Coffee_JavaGetStaticMember(cstring clss, cstring var, cstring type)
 {
@@ -236,7 +249,7 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
         if(flags & AKEY_EVENT_FLAG_VIRTUAL_HARD_KEY)
             cDebug("Virtual hard key");
 
-        //cDebug("Key event action: {0}:{1}:{2}", action, keyCode, flags);
+        cDebug("Key event action: {0}:{1}:{2}", action, keyCode, flags);
 
         break;
     }
@@ -245,11 +258,144 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
         int32_t actionPointerIndex = AMotionEvent_getAction(event);
 
         uint8_t action = actionPointerIndex & AMOTION_EVENT_ACTION_MASK;
-        uint8_t pointerIdx = (actionPointerIndex & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
+        uint8_t pointerIdx =
+                (actionPointerIndex &
+                 AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> 8;
 
+        auto& input_data = app_internal_state->input;
 
+        auto& tap = input_data.tap;
+        auto& dubtap = input_data.double_tap;
+        auto& drag = input_data.drag;
+        auto& pinch = input_data.pinch;
 
-        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action, 0, 0);
+        auto flag = ndk_helper::GESTURE_STATE_START;
+        u32 dflg;
+
+        CfGeneralEvent gev = {};
+        gev.type = CfTouchEvent;
+
+        CfTouchEventData tev = {};
+        tev.type = CfTouch_None;
+
+        auto tapCoord = CPointF{
+            AMotionEvent_getAxisValue(event, 0, pointerIdx),
+            AMotionEvent_getAxisValue(event, 1, pointerIdx)
+        }.convert<u32>();
+
+        if(dubtap.Detect(event) & flag)
+        {
+
+            cVerbose(INPUT_VERB, "Double tap: {0}",
+                   tapCoord
+                   );
+
+            tev.type = CfTouchType::CfTouchTap;
+
+            tev.event.tap.x = tapCoord.x;
+            tev.event.tap.y = tapCoord.y;
+            tev.event.tap.doubleTap = 1;
+        }else
+        if(tap.Detect(event) & flag)
+        {
+            AMotionEvent_getAxisValue(event, 1, pointerIdx);
+
+            cVerbose(INPUT_VERB, "Tap: {0},{1}",
+                   AMotionEvent_getAxisValue(event, 0, pointerIdx),
+                   AMotionEvent_getAxisValue(event, 1, pointerIdx));
+
+            tev.type = CfTouchType::CfTouchTap;
+
+            tev.event.tap.x = tapCoord.x;
+            tev.event.tap.y = tapCoord.y;
+            tev.event.tap.doubleTap = 0;
+        }else
+        if((dflg = (pinch.Detect(event)
+                & (flag|ndk_helper::GESTURE_STATE_MOVE))))
+        {
+            ndk_helper::Vec2 p1, p2;
+
+            static Vecf4 initial_points;
+
+            Vecf4 points;
+
+            if(!pinch.GetPointers(p1, p2))
+                break;
+
+            p1.Value(points.x(), points.y());
+            p2.Value(points.z(), points.w());
+
+            if(dflg == ndk_helper::GESTURE_STATE_START)
+                initial_points = points;
+
+            cVerbose(INPUT_VERB, "Pinch: {0} ({1})", points,
+                   AMotionEvent_getHistorySize(event));
+
+            CPointF pinch_point = {
+                (points.x() + points.z()) / 2.f,
+                (points.y() + points.w()) / 2.f
+            };
+
+            tev.type = CfTouchType::CfTouchPinch;
+            tev.event.pinch.x = C_CAST<u32>(pinch_point.x);
+            tev.event.pinch.y = C_CAST<u32>(pinch_point.y);
+
+            if(dflg == ndk_helper::GESTURE_STATE_START)
+                tev.event.pinch.factor = 1.f;
+            else
+            {
+                Vecf2 v1 = {points.x(), points.y()};
+                Vecf2 v2 = {points.z(), points.w()};
+
+                Vecf2 v1_i = {initial_points.x(), initial_points.y()};
+                Vecf2 v2_i = {initial_points.z(), initial_points.w()};
+
+                auto dist1 = length(v1 - v2);
+                auto dist2 = length(v1_i - v2_i);
+
+                if(dist2 == 0.f)
+                    dist2 = 0.01f;
+
+                tev.event.pinch.factor = { dist1 / dist2 };
+
+                /* TODO: Allow this process to emit rotation gestures */
+                /* TODO: Allow this to fall over into a drag gesture? */
+            }
+
+        }else
+        if((dflg = (drag.Detect(event)
+                    & (flag|ndk_helper::GESTURE_STATE_MOVE))))
+        {
+            ndk_helper::Vec2 p;
+            Vecf2 point;
+
+            static Vecf2 initial_point;
+
+            drag.GetPointer(p);
+            p.Value(point.x(), point.y());
+
+            if(dflg == ndk_helper::GESTURE_STATE_START)
+                initial_point = {};
+
+            cVerbose(INPUT_VERB, "Drag: {0} -> {1}", initial_point, point);
+
+            tev.type = CfTouchType::CfTouchPan;
+            tev.event.pan.ox = C_CAST<u32>(point.x());
+            tev.event.pan.oy = C_CAST<u32>(point.y());
+            tev.event.pan.dx = C_CAST<i32>(initial_point.x() - point.x());
+            tev.event.pan.dy = C_CAST<i32>(initial_point.y() - point.y());
+            tev.event.pan.fingerCount = 1;
+
+            initial_point = point;
+        }
+
+        if(tev.type != CfTouch_None)
+        {
+            CoffeeEventHandleNACall(CoffeeHandle_GeneralEvent,
+                                    &gev, &tev, nullptr);
+        }
+
+//        cDebug("Motion event: {0}:{1} @ {2},{3}", pointerIdx, action, 0, 0);
         break;
     }
     default:

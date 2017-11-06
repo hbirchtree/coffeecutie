@@ -15,6 +15,7 @@ set ( AndroidCore_SRCS
 if(NOT ANDROID_USE_SDL2_LAUNCH)
     list (APPEND AndroidCore_SRCS
         ${ANDROID_GLUE_SOURCES} ${COFFEE_ANDROID_MAIN}
+        ${NDK_HELPER_SOURCES}
         android_wrapperfun.cpp
         android_assets.cpp
         )
@@ -42,6 +43,6 @@ target_link_libraries ( AndroidCore
 target_include_directories ( AndroidCore
     PRIVATE
     ${ANDROID_GLUE_INCLUDE_DIR}
+    ${NDK_HELPER_INCLUDE_DIR}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
-

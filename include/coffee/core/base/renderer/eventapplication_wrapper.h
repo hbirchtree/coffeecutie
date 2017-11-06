@@ -47,6 +47,7 @@ enum CfGeneralEventType
 
 enum CfTouchType
 {
+    CfTouch_None,
     CfTouchTap,
     CfTouchPan,
     CfTouchPinch,
@@ -67,12 +68,14 @@ struct CfTouchEventData
         struct CfTouchTapEventData
         {
             uint32_t x, y;
+            uint8_t doubleTap;
+            uint32_t pad:24;
         } tap;
         struct CfTouchPanEventData
         {
             uint32_t ox, oy;
-            uint32_t dx, dy;
-            uint32_t vx, vy;
+            int32_t dx, dy;
+            int32_t vx, vy;
             uint32_t fingerCount;
         } pan;
         struct CfTouchPinchEventData

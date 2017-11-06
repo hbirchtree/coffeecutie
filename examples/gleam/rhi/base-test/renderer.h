@@ -109,6 +109,7 @@ struct RendererState
         GLM::STENSTATE stenstate = {};
         
         GLM::USTATE unifstate = {};
+        GLM::USTATE unifstate_f = {};
         
         // Texture information
         bool did_apply_state = false;
@@ -157,11 +158,19 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
     if(e.type == CIEvent::TouchTap)
     {
         cDebug("Success!");
+        rdata->g_data.camera.position = {0.f, 0.f, -15.f};
+    }
+
+    if(e.type == CIEvent::TouchPan)
+    {
+        auto pev = C_FCAST<CIMTouchMotionEvent*>(data);
+        rdata->g_data.camera.position.x() = pev->origin.x / 1920.f;
+        rdata->g_data.camera.position.y() = pev->origin.y / 1200.f;
     }
     
     if(e.type == CIEvent::TouchRotate)
     {
-        CITouchRotateEvent* rev = C_FCAST<CITouchRotateEvent*>(data);
+        auto rev = C_FCAST<CITouchRotateEvent*>(data);
         
         Quatf rotation = Quatf(1.f, 0.f, rev->radians * 0.05f, 0.f);
         
@@ -173,7 +182,7 @@ void KeyEventHandler(void* r, const CIEvent& e, c_cptr data)
     {
         CITouchPinchEvent* pev = C_FCAST<CITouchPinchEvent*>(data);
         
-        rdata->g_data.camera.position.z() += (pev->factor - 1.f);
+        rdata->g_data.camera.position.z() += (-pev->factor + 1.f) / 100.f;
     }
 }
 
@@ -437,29 +446,29 @@ void SetupRendering(CDRenderer& renderer, RendererState* d)
      */
     Vector<GLM::UNIFDESC> unifs;
     GLM::GetShaderUniformState(eye_pip, &unifs);
-    auto& unifstate = g.unifstate;
+    auto& unifstate_v = g.unifstate;
+    auto& unifstate_f = g.unifstate_f;
     /* We assign CPU-side values to GPU-side values */
     for (GLM::UNIFDESC const &u : unifs) {
-        if (u.m_name == "transform[0]" || u.m_name == "transform")
+        if (u.m_name == "transform")
         {
-            unifstate.setUniform(u, &g.transforms);
+            unifstate_v.setUniform(u, &g.transforms);
             cVerbose(4, "Array size: {0}", u.m_arrSize);
         }
         else if (u.m_name == "texdata")
-            unifstate.setSampler(u, &g.textures_array);
+            unifstate_f.setSampler(u, &g.textures_array);
         else if (u.m_name == "mx")
-            unifstate.setUniform(u, &g.timeval);
+            unifstate_f.setUniform(u, &g.timeval);
         else if (u.m_name == "texdata_gridSize")
-            unifstate.setUniform(u, &g.texture_size);
+            unifstate_f.setUniform(u, &g.texture_size);
         else
             cVerbose(4,"Unhandled uniform value: {0}", u.m_name);
     }
     
     cVerbose("Acquire and set shader uniforms");
     
-
-    
-    /* Specifying the uniform data, such as camera matrices and transforms */
+    /* Specifying the uniform data, such as camera matrices
+     *  and transforms */
     
     
     auto& camera = g.camera;
@@ -626,7 +635,7 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
     
     GLM::PipelineState pstate = {
         {ShaderStage::Vertex, g.unifstate},
-        {ShaderStage::Fragment, g.unifstate}
+        {ShaderStage::Fragment, g.unifstate_f}
     };
     
     /*
@@ -637,10 +646,10 @@ void RendererLoop(CDRenderer& renderer, RendererState* d)
      *  because this has a lot of benefits to efficiency.
      */
     
-    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata, g.o_query);
+    GLM::Draw(g.eye_pip, pstate, g.vertdesc, g.call, g.instdata);
     
-    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
-                         g.call, g.instdata, *g.o_query);
+//    GLM::DrawConditional(g.eye_pip, pstate, g.vertdesc,
+//                         g.call, g.instdata, *g.o_query);
     
     if(d->r_state.debug_enabled)
     {

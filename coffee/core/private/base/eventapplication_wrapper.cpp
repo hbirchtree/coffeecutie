@@ -80,7 +80,6 @@ void CfTouchHandler(EventApplication* app, int event,
             tap.pos.x = evdata->event.tap.x;
             tap.pos.y = evdata->event.tap.y;
             
-            
             break;
         }
         case CfTouchPan:
