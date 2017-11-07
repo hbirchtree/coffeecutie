@@ -279,13 +279,12 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
         tev.type = CfTouch_None;
 
         auto tapCoord = CPointF{
-            AMotionEvent_getAxisValue(event, 0, pointerIdx),
-            AMotionEvent_getAxisValue(event, 1, pointerIdx)
+            AMotionEvent_getX(event, pointerIdx),
+            AMotionEvent_getY(event, pointerIdx)
         }.convert<u32>();
 
         if(dubtap.Detect(event) & flag)
         {
-
             cVerbose(INPUT_VERB, "Double tap: {0}",
                    tapCoord
                    );
@@ -298,11 +297,9 @@ int32_t AndroidHandleInputCmd(struct android_app* app,
         }else
         if(tap.Detect(event) & flag)
         {
-            AMotionEvent_getAxisValue(event, 1, pointerIdx);
-
             cVerbose(INPUT_VERB, "Tap: {0},{1}",
-                   AMotionEvent_getAxisValue(event, 0, pointerIdx),
-                   AMotionEvent_getAxisValue(event, 1, pointerIdx));
+                   AMotionEvent_getX(event, pointerIdx),
+                   AMotionEvent_getY(event, pointerIdx));
 
             tev.type = CfTouchType::CfTouchTap;
 
@@ -442,9 +439,11 @@ static void AndroidForeignSignalHandleNA(int evtype, void* p1, void* p2,
         case Android_QueryExternalDataPath:
             out->store_string = coffee_app->activity->externalDataPath;
             break;
+#if ANDROID_API_LEVEL >= 13
         case Android_QueryObbPath:
             out->store_string = coffee_app->activity->obbPath;
             break;
+#endif
 
         case Android_QueryNativeWindow:
             out->data.ptr = coffee_app->window;

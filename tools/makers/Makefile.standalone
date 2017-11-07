@@ -89,6 +89,13 @@ android.armv7a:
 		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
 		-e TARGET=armv7a_neon_latest
 
+android.armv7a.gingerbread:
+	@make -f $(AND_STAND) \
+		-e COFFEE_DIR=$(COFFEE_DIR) \
+		-e SOURCE_DIR=$(SOURCE_DIR) \
+		-e EXTRA_OPTIONS="$(EXTRA_OPTIONS_C)" \
+		-e TARGET=armv7a_old
+
 android.armv7a.gles3:
 	@make -f $(AND_STAND) \
 	        -e COFFEE_DIR=$(COFFEE_DIR) \
