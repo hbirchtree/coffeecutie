@@ -45,7 +45,7 @@ struct PosixApi
 
 struct PosixFileMod_def : CommonFileFun
 {
-    static bool ErrnoCheck(cstring ref = nullptr);
+    static bool ErrnoCheck(cstring ref = nullptr, int fd = -1);
 
     static NodeType Stat(cstring fn);
 
@@ -153,7 +153,7 @@ struct PosixFileFun_def : PosixFileMod_def
             i += write(f_h->fd,
                        &(C_CAST<byte_t*>(d.data)[i]),
                        chnk);
-            if(ErrnoCheck() && it != 0)
+            if(ErrnoCheck(nullptr, f_h->fd) && it != 0)
                 break;
             it++;
         }

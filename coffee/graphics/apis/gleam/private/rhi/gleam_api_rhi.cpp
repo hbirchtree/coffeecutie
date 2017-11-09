@@ -107,6 +107,8 @@ bool GLEAM_API::LoadAPI(DataStore store, bool debug)
         cVerbose(7, "Creating PBO storage, {0} units", num_pbos);
 
         CGhnd* bufs = new CGhnd[num_pbos];
+        for (auto i : Range<>(num_pbos))
+            bufs[i] = 0;
         CGL33::BufAlloc(num_pbos,bufs);
 
         store->inst_data->pboQueue.buffers.reserve(num_pbos);
@@ -297,6 +299,9 @@ void GLEAM_API::SetViewportState(const VIEWSTATE& vstate, uint32 i)
             delete[] varr;
 
         CGL33::Enable(Feature::ClipDist,0);
+        CGL33::Enable(Feature::ClipDist,1);
+        CGL33::Enable(Feature::ClipDist,2);
+        CGL33::Enable(Feature::ClipDist,3);
 
         }else if(CGL33::ClipDistanceSupported())
         {

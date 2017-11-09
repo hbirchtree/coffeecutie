@@ -1,6 +1,7 @@
 #include <coffee/core/plat/file/unix/file.h>
 
 #include <stdlib.h>
+#include <fcntl.h>
 
 namespace Coffee{
 namespace CResources{
@@ -301,10 +302,25 @@ bool Posix::PosixDirFun::ChDir(cstring dir)
     return true;
 }
 
-bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref)
+bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
 {
-    if(errno!=0)
+    if(errno != 0)
     {
+        char path[PATH_MAX] = {};
+        char fd_path[128] = {};
+#if defined(COFFEE_LINUX)
+        if(fd >= 0)
+        {
+            snprintf(fd_path, 128, "/proc/self/fd/%d", fd);
+            auto size = readlink(fd_path, path, PATH_MAX);
+            if(size != 0)
+                ref = path;
+        }
+#else
+        if(!ref && fcntl(fd, F_GETPATH, path) != -1)
+            ref = path;
+#endif
+
         fprintf(stderr,"ERROR:%s: %s\n",ref,strerror(errno));
         errno = 0;
         return true;
