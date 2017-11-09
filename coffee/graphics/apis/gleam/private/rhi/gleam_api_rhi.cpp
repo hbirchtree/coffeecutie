@@ -687,7 +687,7 @@ void GLEAM_API::SetShaderUniformState(
             CGL33::SamplerBind(handle->m_unit,handle->m_sampler);
 
 #if !defined(COFFEE_ONLY_GLES20)
-            if(GL_CURR_API == GL_4_3 && GL_CURR_API == GLES_3_2)
+            if(GL_CURR_API == GL_4_3 || GL_CURR_API == GLES_3_2)
             {
                 CGL43::Uniformi(prog,s.first,handle->m_unit);
                 /* Set texture handle in shader */

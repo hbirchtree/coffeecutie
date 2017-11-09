@@ -268,9 +268,13 @@ bool GLEAM_Shader::compile(ShaderStage stage, const Bytes &data)
 
         cstring shader_cstr = shader_str.c_str();
 
+        m_handle = 0;
         m_handle = CGL43::ProgramCreate(stage,1,&shader_cstr);
 
-        if(GL_DEBUG_MODE && m_handle == 0)
+        i32 link_state = 0;
+        CGL43::ProgramGetiv(m_handle, GL_LINK_STATUS, &link_state);
+
+        if(GL_DEBUG_MODE && (m_handle == 0 || !link_state))
         {
             CString log = CGL43::ProgramGetLog(m_handle);
             cWarning("Shader program compilation error: {0}",log);
@@ -331,6 +335,15 @@ bool GLEAM_Pipeline::attach(const GLEAM_Shader &shader,
     }
 #endif
     return false;
+}
+
+GLEAM_Shader& GLEAM_Pipeline::storeShader(GLEAM_Shader &&shader)
+{
+    m_ownedPrograms.push_back({});
+
+    m_ownedPrograms.back() = shader;
+
+    return m_ownedPrograms.back();
 }
 
 bool GLEAM_Pipeline::assemble()

@@ -139,8 +139,8 @@ void GLEAM_Quad_Drawer::create_vbo_data()
 
     m_desc.alloc();
 
-    GLEAM_VertAttribute pos;
-    GLEAM_VertAttribute tex;
+    GLEAM_VertAttribute pos = {};
+    GLEAM_VertAttribute tex = {};
 
     pos.m_idx = 0;
     tex.m_idx = 1;
@@ -148,8 +148,8 @@ void GLEAM_Quad_Drawer::create_vbo_data()
     pos.m_size = 3;
     tex.m_size = 2;
 
-    pos.m_stride = tex.m_stride = sizeof(scalar) * 5;
-    tex.m_off = sizeof(scalar) * 3;
+    pos.m_stride = tex.m_stride = sizeof(Vecf3) + sizeof(Vecf2);
+    tex.m_off = sizeof(Vecf3);
 
     m_desc.addAttribute(pos);
     m_desc.addAttribute(tex);

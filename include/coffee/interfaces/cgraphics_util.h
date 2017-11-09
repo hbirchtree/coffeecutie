@@ -56,9 +56,12 @@ FORCEDINLINE bool LoadPipeline(typename GFX::PIP& pip,
     if(!LoadShader<GFX>(frag, std::move(frag_file), ShaderStage::Fragment))
         return false;
 
-    if(!pip.attach(vert, ShaderStage::Vertex))
+    auto& vert_ref = pip.storeShader(std::move(vert));
+    auto& frag_ref = pip.storeShader(std::move(frag));
+
+    if(!pip.attach(vert_ref, ShaderStage::Vertex))
         return false;
-    if(!pip.attach(frag, ShaderStage::Fragment))
+    if(!pip.attach(frag_ref, ShaderStage::Fragment))
         return false;
 
     bool status = pip.assemble();

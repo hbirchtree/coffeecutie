@@ -131,7 +131,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
         if(m_size.area()==0)
         {
             m_size = size;
-            CGL33::TexImage2D(m_type,m_mips,m_pixfmt,msz.w,msz.h,0,comp,fmt,data_ptr);
+//            CGL33::TexImage2D(m_type,m_mips,m_pixfmt,msz.w,msz.h,0,comp,fmt,data_ptr);
         }else{
             CGL33::TexSubImage2D(m_type,mip,offset.x,offset.y,
                                  msz.w,msz.h,comp,fmt,data_ptr);
@@ -146,7 +146,7 @@ void GLEAM_Surface2D::upload(BitFormat fmt, PixelComponents comp,
     {
         CGL43::TexBind(m_type,m_handle);
 
-        CGL43::TexStorage2D(m_type,m_mips,m_pixfmt,size.w,size.h);
+//        CGL43::TexStorage2D(m_type,m_mips,m_pixfmt,size.w,size.h);
         CGL43::TexSubImage2D(m_type,mip,offset.x,offset.y,
                              size.w,size.h,comp,fmt,data_ptr);
 

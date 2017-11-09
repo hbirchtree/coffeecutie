@@ -76,6 +76,7 @@ struct GLEAM_Pipeline : GraphicsAPI::Pipeline
     }
 
     bool attach(GLEAM_Shader const&shader, ShaderStage const& stages);
+    GLEAM_Shader &storeShader(GLEAM_Shader&& shader);
 
     bool assemble();
 
@@ -93,6 +94,7 @@ protected:
     };
 
     Vector<shader_cntainer> m_programs;
+    LinkList<GLEAM_Shader> m_ownedPrograms;
 };
 
 struct GLEAM_ProgramParameter : GraphicsAPI::ProgramParameter

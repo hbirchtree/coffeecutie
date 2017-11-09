@@ -96,9 +96,10 @@ void GLEAM_VertDescriptor::bindBuffer(uint32 binding, GLEAM_ArrayBuffer &buf)
         for(GLEAM_VertAttribute const& attr : m_attributes)
             if(binding == attr.bufferAssociation())
             {
-                CGL43::VAOBindVertexBuffer(binding,buf.m_handle,
-                                           attr.bufferOffset(),
-                                           attr.stride());
+                CGL43::VAOBindVertexBuffer(
+                            binding,buf.m_handle,
+                            attr.bufferOffset(),
+                            attr.stride());
                 CGL43::VAOAttribBinding(attr.index(),binding);
                 if(attr.instanced())
                     CGL43::VAOBindingDivisor(attr.index(),1);
