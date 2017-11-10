@@ -213,12 +213,16 @@ target_include_directories ( CoffeeCore
     )
 
 if(COFFEE_BUILD_SWIG_BINDING)
-    add_definitions ( -DCOFFEE_LOADABLE_LIBRARY )
+
 
     coffee_add_elibrary ( CoffeeCoreLoadable SHARED
         "${CoffeeCore_SRCS}"
         "${STANDARDLIBS_LIBRARIES}"
         "${CMAKE_SOURCE_DIR}/include/coffee/core"
+        )
+    target_compile_definitions ( CoffeeCoreLoadable
+        PRIVATE
+        -DCOFFEE_LOADABLE_LIBRARY
         )
     target_include_directories ( CoffeeCoreLoadable
         PUBLIC
