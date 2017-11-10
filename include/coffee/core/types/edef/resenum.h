@@ -22,7 +22,7 @@ enum class TypeEnum : uint8
     Scalar, BigScalar,
 };
 
-enum class ResourceAccess
+enum class ResourceAccess : u32
 {
     None = 0x0,
 
@@ -62,12 +62,14 @@ enum class ResourceAccess
     TemporaryFile = 0x20000, /* Stored in a temporary directory that is expected to be wiped, system-specific result */
     CachedFile    = 0x40000, /* Stored, but could be wiped at any time */
 
+    SystemFile    = 0x80000,
+
     /* Masks */
     LockingMask = ExclusiveLocking|SharedLocking,
     AccessMask  = ReadWrite|Append|Executable,
     CreateMask  = NewFile|Discard,
     CachingMask = NoCache|GreedyCache|Persistent|Streaming|Virtual|HugeFile,
-    StorageMask = SpecifyStorage|AssetFile|ConfigFile|TemporaryFile|CachedFile,
+    StorageMask = SpecifyStorage|AssetFile|ConfigFile|TemporaryFile|CachedFile|SystemFile,
 };
 C_FLAGS(ResourceAccess,uint32);
 

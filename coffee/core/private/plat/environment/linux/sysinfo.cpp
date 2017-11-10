@@ -172,7 +172,12 @@ SysInfoDef::NetStatusFlags LinuxSysInfo::NetStatus()
     static const constexpr cstring net_path = "/sys/class/net/";
 
     DirFun::DirList list;
-    DirFun::Ls(net_path, list);
+
+    DirFun::Ls(MkUrl(net_path,
+                     ResourceAccess::SpecifyStorage
+                     |ResourceAccess::SystemFile),
+               list);
+
     bool has_loopback = false;
     for(DirFun::DirItem_t const& dir : list)
     {
@@ -375,18 +380,17 @@ PowerInfoDef::Temp LinuxPowerInfo::CpuTemperature()
     Temp out = {};
 
     DirFun::DirList lst;
-    CString tmp,tmp2;
-    if(DirFun::Ls(thermal_class,lst))
+    Path tmp,tmp2;
+    if(DirFun::Ls(MkUrl(thermal_class), lst))
     {
         for(auto e : lst)
             if(e.name != "." && e.name != "..")
             {
-                tmp = Env_::ConcatPath(thermal_class,e.name.c_str());
-                tmp2 = Env_::ConcatPath(tmp.c_str(),"temp");
+                tmp = ((tmp + thermal_class) + e.name.c_str()) + "temp";
 
-                if(FileFun::Exists(tmp2.c_str()))
+                if(FileFun::Exists(Url() + tmp))
                 {
-                    CString temp = FileFun::sys_read(tmp2.c_str());
+                    CString temp = FileFun::sys_read(tmp.internUrl.c_str());
                     out.current = cast_string<scalar>(temp) / 1000;
                     break;
                 }

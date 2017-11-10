@@ -1,5 +1,7 @@
 #include <coffee/core/profiler/profiling-export.h>
 
+#include <coffee/core/base/files/url.h>
+
 #include <coffee/core/CProfiling>
 #include <coffee/core/CDebug>
 #include <coffee/core/CFiles>
@@ -10,6 +12,7 @@
 
 #include <coffee/core/plat/plat_file.h>
 #include <coffee/core/plat/plat_quirks_toggling.h>
+
 
 namespace Coffee{
 namespace Profiling{
@@ -291,26 +294,33 @@ void ExportProfilerData(CString& target)
     target.insert(0, printer.CStr(), C_CAST<szptr>(printer.CStrSize()));
 }
 
-void ExportStringToFile(const CString &data, cstring outfile)
+void ExportStringToFile(const CString &data, const Url &outfile)
 {
 #ifdef COFFEE_LOWFAT
     return;
 #endif
 
     /* TODO: Create structure to describe log directory */
-#if defined(COFFEE_ANDROID)
-    const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
-#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
-    const constexpr cstring logtemplate = "/tmp/{0}_profile.xml";
-#else
-    cstring logtemplate = outfile;
-#endif
+    auto targetUrl = outfile;
 
-    CString log_name = cStringFormat(
-                logtemplate,
-                ApplicationData().application_name);
+    targetUrl.flags |=
+            ResourceAccess::SpecifyStorage
+            |ResourceAccess::TemporaryFile;
+
+//#if defined(COFFEE_ANDROID)
+//    const constexpr cstring logtemplate = "/data/local/tmp/{0}_profile.xml";
+//#elif defined(COFFEE_RASPBERRYPI) || defined(COFFEE_MAEMO) || defined(COFFEE_APPLE)
+//    const constexpr cstring logtemplate = "/tmp/{0}_profile.xml";
+//#else
+//    cstring logtemplate = outfile;
+//#endif
+
+//    CString log_name = cStringFormat(
+//                logtemplate,
+//                ApplicationData().application_name);
+
     cVerbose(6,"Creating filename");
-    CResources::Resource out(log_name.c_str(),true);
+    CResources::Resource out(targetUrl);
     out.data = C_CCAST<c_ptr>(C_FCAST<c_cptr>(data.c_str()));
     /* -1 because we don't want the null-terminator */
     out.size = C_CAST<szptr>(data.size() - 1);
@@ -331,18 +341,18 @@ void ExitRoutine()
         {
             constexpr cstring log_fmt = "{0}-profile.xml";
         
-            CString log_name = Env::ExecutableName();
-            log_name = Env::BaseName(log_name.c_str());
-            log_name = CStrReplace(log_name,".exe","");
-            log_name = cStringFormat(log_fmt, log_name);
-            CString c_file = FileFun::CanonicalName(log_name.c_str());
-            if(c_file.size() == 0)
-                c_file = cStringFormat(log_fmt, Env::ExecutableName());
-            cVerbose(6, "Saving profiler data to: {0}", c_file);
+            auto log_name = (Path{Env::ExecutableName()}
+                    .fileBasename()
+                    .removeExt() + "-profile")
+                    .addExtension("xml");
+
+            auto log_url = MkUrl(log_name.internUrl.c_str());
+
+            cVerbose(6, "Saving profiler data to: {0}", log_url);
 
             CString target_log;
-            Profiling::ExportProfilerData(/*log_name.c_str(),argc,argv*/ target_log);
-            Profiling::ExportStringToFile(target_log, log_name.c_str());
+            Profiling::ExportProfilerData(target_log);
+            Profiling::ExportStringToFile(target_log, log_url);
         }
     }
     /* ... and always destroy the profiler */

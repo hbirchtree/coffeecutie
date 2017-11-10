@@ -234,7 +234,7 @@ void CoffeeTerminate()
 void GotoApplicationDir()
 {
     CString dir = Env::ApplicationDir();
-    DirFun::ChDir(dir.c_str());
+    DirFun::ChDir(MkUrl(dir.c_str()));
 }
 
 void InstallDefaultSigHandlers()

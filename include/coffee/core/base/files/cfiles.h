@@ -99,7 +99,7 @@ extern void FileCommitTextmode(const Resource& resc, bool append = false);
  * \param recursive Whether or not to create non-existent parent directories. Equal to the "-p" option for mkdir.
  * \return True if process succeeded
  */
-extern bool FileMkdir(cstring dirname, bool recursive);
+extern bool FileMkdir(const Url &dirname, bool recursive);
 
 }
 

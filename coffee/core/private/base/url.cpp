@@ -28,6 +28,13 @@ Resource Url::rsc() const
     return CResources::Resource(*this);
 }
 
+Url &Url::operator+(const Path &path)
+{
+    internUrl = Env::ConcatPath(internUrl.c_str(),
+                                path.internUrl.c_str());
+    return *this;
+}
+
 static CString _coffee_resource_prefix = "./";
 
 STATICINLINE CString DereferencePath(cstring suffix,
@@ -49,7 +56,7 @@ STATICINLINE CString DereferencePath(cstring suffix,
             cVerbose(9, "Detected configuration file flag");
             CString cfgDir = Env::GetUserData(nullptr,nullptr);
             cVerbose(9, "Using configuration directory: {0}", cfgDir);
-            if(!DirFun::MkDir(cfgDir.c_str(), true))
+            if(!DirFun::MkDir(MkUrl(cfgDir.c_str()), true))
                 return {};
             return Env::ConcatPath(cfgDir.c_str(),suffix);
 #endif
@@ -61,7 +68,12 @@ STATICINLINE CString DereferencePath(cstring suffix,
             return asset_fn.c_str();
 #endif
         else if(feval(storageMask,ResourceAccess::TemporaryFile))
-            return FileFun::NativePath(suffix,ResourceAccess::TemporaryFile);
+            return
+                    FileFun::NativePath(
+                        suffix,ResourceAccess::TemporaryFile);
+        else if(feval(storageMask,ResourceAccess::SystemFile))
+            return FileFun::NativePath(
+                        suffix, ResourceAccess::SystemFile);
     }
 #if defined(COFFEE_ANDROID)
     return suffix;
@@ -72,7 +84,8 @@ STATICINLINE CString DereferencePath(cstring suffix,
 
 CString Url::DereferenceLocalPath() const
 {
-    return DereferencePath(internUrl, flags & ResourceAccess::StorageMask);
+    return DereferencePath(internUrl.c_str(),
+                           flags & ResourceAccess::StorageMask);
 }
 
 void CResources::FileResourcePrefix(cstring prefix)
@@ -80,4 +93,47 @@ void CResources::FileResourcePrefix(cstring prefix)
     _coffee_resource_prefix = prefix;
 }
 
+Path Path::removeExt()
+{
+    auto it = internUrl.rfind(".");
+    if(it != CString::npos)
+        return {};
+    return {internUrl.substr(0, it)};
+}
+
+Path Path::addExtension(cstring ext)
+{
+    return {internUrl + ext};
+}
+
+Path Path::fileBasename()
+{
+    return {DirFun::Basename(internUrl.c_str())};
+}
+
+Path Path::operator+(cstring component)
+{
+    internUrl += component;
+    return *this;
+}
+
+Path Path::operator+(const Path &path)
+{
+    return {Env::ConcatPath(internUrl.c_str(),
+                            path.internUrl.c_str())};
+}
+
+namespace Strings{
+CString to_string(const Path &path)
+{
+    return "path(" + path.internUrl + ")";
+}
+
+CString to_string(const Url &url)
+{
+    return "url(" + url.internUrl + ","
+            + cast_pod(C_FCAST<u32>(url.flags))
+            + ")";
+}
+}
 }

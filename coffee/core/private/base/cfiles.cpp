@@ -13,16 +13,12 @@ struct Resource::ResourceData
 {
     FileFun::FileMapping m_mapping;
     FileFun::FileHandle* m_handle;
+    Url m_url;
 };
 
 Resource::Resource(cstring rsrc, bool absolute, ResourceAccess acc):
-    m_resource(),
-    m_platform_data(new ResourceData),
-    data(nullptr),
-    size(0),
-    flags(Undefined)
+    Resource(MkUrl(rsrc, acc & ResourceAccess::StorageMask))
 {
-    m_resource = *MkUrl(rsrc,acc & ResourceAccess::StorageMask);
 }
 
 Resource::Resource(cstring rsrc, ResourceAccess acc):
@@ -31,12 +27,13 @@ Resource::Resource(cstring rsrc, ResourceAccess acc):
 }
 
 Resource::Resource(const Url &url):
+    m_resource(*url),
     m_platform_data(new ResourceData),
     data(nullptr),
     size(0),
     flags(Undefined)
 {
-    m_resource = *url;
+    m_platform_data->m_url = url;
 }
 
 Resource::Resource(Resource &&rsc)
@@ -72,15 +69,15 @@ bool Resource::valid() const
 bool FileExists(const Resource &resc)
 {
     CString native_fn = FileFun::NativePath(resc.resource());
-    return FileFun::Exists(native_fn.c_str());
+    return FileFun::Exists(MkUrl(native_fn.c_str()));
 }
 
 bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 {
-    CString native_fn = FileFun::NativePath(resc.resource());
-    cVerbose(6,"Native file path: {0}->{1}",resc.resource(),native_fn);
-    resc.size = FileFun::Size(native_fn.c_str());
+//    CString native_fn = FileFun::NativePath(resc.resource());
+//    cVerbose(6,"Native file path: {0}->{1}",resc.resource(),native_fn);
 
+    resc.size = FileFun::Size(resc.m_platform_data->m_url);
     resc.size = CMath::max(resc.size, size);
 
     if(resc.size == 0)
@@ -88,7 +85,7 @@ bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 
     int err = 0;
     resc.m_platform_data->m_mapping = FileFun::Map(
-				native_fn.c_str(),
+                resc.m_platform_data->m_url,
                 acc,
                 0,resc.size,
                 &err);
@@ -101,7 +98,8 @@ bool FileMap(Resource &resc, ResourceAccess acc, szptr size)
 #else
 		CString error = win_strerror(err);
 #endif
-        cWarning("Failed to map file {2}:{0}: {1}",err,error,resc.resource());
+        cWarning("Failed to map file {2}:{0}: {1}",
+                 err,error,resc.resource());
         resc.size = 0;
         return false;
     }
@@ -143,7 +141,9 @@ void FileFree(Resource &resc)
 bool FilePull(Resource &resc, bool textmode, bool)
 {
 	CString native_fn = FileFun::NativePath(resc.resource());
-    FileFun::FileHandle *fp = FileFun::Open(native_fn.c_str(),ResourceAccess::ReadOnly);
+    FileFun::FileHandle *fp =
+            FileFun::Open(MkUrl(native_fn.c_str()),
+                          ResourceAccess::ReadOnly);
 
     if(!fp){
         cWarning("Failed to read file: {0}",resc.resource());
@@ -172,7 +172,7 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
         dflags |= ResourceAccess::NewFile;
 
     FileFun::FileHandle *fp = FileFun::Open(
-                native_fn.c_str(),
+                MkUrl(native_fn.c_str()),
                 (append) ?
                     ResourceAccess::Append|dflags|acc
                   : dflags|acc);
@@ -189,7 +189,7 @@ bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
     return stat;
 }
 
-bool FileMkdir(cstring dirname, bool recursive)
+bool FileMkdir(Url const& dirname, bool recursive)
 {
     return DirFun::MkDir(dirname,recursive);
 }
