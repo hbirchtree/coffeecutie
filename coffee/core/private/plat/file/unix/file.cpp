@@ -341,7 +341,7 @@ bool Posix::PosixFileMod_def::ErrnoCheck(cstring ref, int fd)
             if(size != 0)
                 ref = path;
         }
-#else
+#elif defined(COFFEE_APPLE)
         if(!ref && fcntl(fd, F_GETPATH, path) != -1)
             ref = path;
 #endif
