@@ -15,9 +15,9 @@ namespace Windows {
 struct WinDirFun : CResources::DirFunDef
 {
     /*TODO: Implement Windows directory functions*/
-    static bool MkDir(cstring dname, bool parent);
+    static bool MkDir(Url const& dname, bool parent);
 
-    STATICINLINE bool RmDir(cstring)
+    STATICINLINE bool RmDir(Url const&)
     {
         return false;
     }
@@ -60,7 +60,7 @@ struct WinFileApi
 
     static FileAccess GetAccess(ResourceAccess acc);
 
-    static HANDLE GetFileHandle(cstring fn, ResourceAccess acc);
+    static HANDLE GetFileHandle(Url const& fn, ResourceAccess acc);
     static DWORD GetMappingFlags(ResourceAccess acc);
     static DWORD GetMappingViewFlags(ResourceAccess acc);
 };
@@ -86,9 +86,9 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     static szptr Size(FileHandle* fh);
     static szptr Size(Url const& fn);
 
-    static bool Touch(NodeType, cstring);
-    static bool Rm(cstring fn);
-    static NodeType Stat(cstring);
+    static bool Touch(NodeType, Url const&);
+    static bool Rm(Url const& fn);
+    static NodeType Stat(Url const& fn);
 
     static FileMapping Map(Url const& fn, ResourceAccess acc,
                            szptr off, szptr size, int* err);
