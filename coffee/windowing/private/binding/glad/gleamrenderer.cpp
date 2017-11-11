@@ -173,11 +173,35 @@ bool GLeamRenderer::bindingPostInit(const GLProperties& p, CString *err)
     }
 
     cDebug("Rendering device info: {0}",GL::Debug::Renderer());
+
     if(feval(p.flags&GLProperties::GLCoreProfile))
-        cDebug("OpenGL core profile version: {0}",GL::Debug::ContextVersion());
+        cDebug("OpenGL core profile version: {0}",
+               GL::Debug::ContextVersion());
     else
-        cDebug("OpenGL (non-core) version: {0}",GL::Debug::ContextVersion());
-    cDebug("OpenGL GLSL version: {0}",GL::Debug::ShaderLanguageVersion());
+        cDebug("OpenGL (non-core) version: {0}",
+               GL::Debug::ContextVersion());
+
+    cDebug("OpenGL GLSL version: {0}",
+           GL::Debug::ShaderLanguageVersion());
+
+    if(PlatformData::IsDebug())
+    {
+        Profiler::AddExtraData(
+                    "gl:renderer",
+                    Strings::to_string(GL::Debug::Renderer()));
+        Profiler::AddExtraData(
+                    "gl:version",
+                    Strings::to_string(GL::Debug::ContextVersion()));
+        Profiler::AddExtraData(
+                    "gl:glsl_version",
+                    Strings::to_string(
+                        GL::Debug::ShaderLanguageVersion()));
+        Profiler::AddExtraData(
+                    "gl:extensions",
+                    GL::Debug::s_ExtensionList);
+
+        /* TODO: Add GL limits to extra data */
+    }
 
     if(GL::DebuggingSupported())
     {

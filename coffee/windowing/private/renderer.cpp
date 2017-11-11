@@ -57,7 +57,7 @@ bool CSDL2Renderer::init(const CDProperties &props,CString* err)
              ))
             break;
 
-        Profiler::AddExtraData("window_library", windowLibrary());
+        Profiler::AddExtraData("window:library", windowLibrary());
 
         return true;
     } while(false);
