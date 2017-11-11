@@ -47,8 +47,9 @@ struct CFILEFun_def : CommonFileFun
 {
     using FileMapping = FILEApi::FileMapping;
 
-    STATICINLINE FH* Open(cstring fn, ResourceAccess ac)
+    STATICINLINE FH* Open(Url const& fn, ResourceAccess ac)
     {
+        auto url = *fn;
         FH* fh = new FH;
 
         cstring mode = nullptr;
@@ -70,7 +71,7 @@ struct CFILEFun_def : CommonFileFun
         else if(feval(ac&(ResourceAccess::ReadWrite)))
             mode = "rb+";
 
-        CString fn_native = NativePath(fn);
+        CString fn_native = NativePath(url.c_str());
         fh->handle = fopen(fn_native.c_str(),mode);
 
         if(!fh->handle)
@@ -119,7 +120,7 @@ struct CFILEFun_def : CommonFileFun
         return wsize==d.size;
     }
 
-    STATICINLINE szptr Size(cstring fn)
+    STATICINLINE szptr Size(Url const& fn)
     {
         FH* f = Open(fn, ResourceAccess::ReadOnly);
         if(f)
@@ -147,7 +148,7 @@ struct CFILEFun_def : CommonFileFun
      * \param err
      * \return
      */
-    STATICINLINE FileMapping Map(cstring fname, ResourceAccess access,
+    STATICINLINE FileMapping Map(Url const& fname, ResourceAccess access,
                                  szptr size, szptr offset, int*)
     {
         FileMapping map;
@@ -176,7 +177,7 @@ struct CFILEFun_def : CommonFileFun
 
         return true;
     }
-    STATICINLINE bool Exists(cstring fn)
+    STATICINLINE bool Exists(Url const& fn)
     {
         FH* f = Open(fn, ResourceAccess::ReadOnly);
         if(f)

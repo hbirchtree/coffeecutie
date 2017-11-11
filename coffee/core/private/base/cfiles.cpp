@@ -140,9 +140,8 @@ void FileFree(Resource &resc)
 
 bool FilePull(Resource &resc, bool textmode, bool)
 {
-	CString native_fn = FileFun::NativePath(resc.resource());
     FileFun::FileHandle *fp =
-            FileFun::Open(MkUrl(native_fn.c_str()),
+            FileFun::Open(resc.m_platform_data->m_url,
                           ResourceAccess::ReadOnly);
 
     if(!fp){
@@ -156,6 +155,9 @@ bool FilePull(Resource &resc, bool textmode, bool)
     if(!FileFun::Close(fp))
         cWarning("Failed to close file: {0}",resc.resource());
 
+    if(!resc.data)
+        return false;
+
     resc.flags = resc.flags|Resource::FileIO;
 
     return true;
@@ -164,15 +166,15 @@ bool FilePull(Resource &resc, bool textmode, bool)
 bool FileCommit(Resource &resc, bool append, ResourceAccess acc)
 {
     cVerbose(7,"Entered FileCommit");
-    CString native_fn = FileFun::NativePath(resc.resource());
-    cVerbose(7,"Got native path: {0}",native_fn);
+//    CString native_fn = FileFun::NativePath(resc.resource());
+//    cVerbose(7,"Got native path: {0}",native_fn);
     ResourceAccess dflags = ResourceAccess::WriteOnly;
 
 //    if(!FileFun::Exists(native_fn.c_str()))
         dflags |= ResourceAccess::NewFile;
 
     FileFun::FileHandle *fp = FileFun::Open(
-                MkUrl(native_fn.c_str()),
+                resc.m_platform_data->m_url,
                 (append) ?
                     ResourceAccess::Append|dflags|acc
                   : dflags|acc);

@@ -46,6 +46,7 @@ function(COFFEE_ADD_TEST TARGET TITLE SOURCES LIBRARIES )
 
     target_link_libraries ( ${TARGET}
         ${LIBRARIES}
+        CoffeeTesting
         )
 
     target_enable_cxx11(${TARGET})

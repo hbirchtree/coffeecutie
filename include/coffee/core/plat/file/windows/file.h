@@ -75,22 +75,23 @@ struct WinFileFun : CResources::CFILEFun_def<WinFileApi::FileHandle>
     static CString NativePath(cstring fn,ResourceAccess storage);
     static bool VerifyAsset(cstring fn);
 
-    static FileHandle* Open(cstring fn, ResourceAccess acc);
+    static FileHandle* Open(Url const& fn, ResourceAccess acc);
     static bool Close(FileHandle* fh);
 
-    static bool Exists(cstring fn);
+    static bool Exists(Url const& fn);
 
     static CByteData Read(FileHandle* h, uint64 size, bool nterminate);
     static bool Write(FileHandle* fh, CByteData const& d, bool);
 
     static szptr Size(FileHandle* fh);
-    static szptr Size(cstring fn);
+    static szptr Size(Url const& fn);
 
     static bool Touch(NodeType, cstring);
     static bool Rm(cstring fn);
     static NodeType Stat(cstring);
 
-    static FileMapping Map(cstring fn, ResourceAccess acc, szptr off, szptr size, int* err);
+    static FileMapping Map(Url const& fn, ResourceAccess acc,
+                           szptr off, szptr size, int* err);
     static bool Unmap(FileMapping* fp);
     static ScratchBuf ScratchBuffer(szptr size, ResourceAccess acc);
     static void ScratchUnmap(ScratchBuf* buf);

@@ -11,6 +11,8 @@ namespace Linux{
 
 CString LinuxSysInfo::cached_cpuinfo_string;
 
+static const constexpr cstring invalid_info_string = "To Be Filled By O.E.M.";
+
 using DirFun = CResources::DirFun;
 
 /* More paths to inspect:
@@ -345,7 +347,7 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
     static const cstring prod_name = "/sys/class/dmi/id/product_name";
 
     static const cstring str_gen = "Generic";
-    static const cstring str_lin = "Linux";
+    static const cstring str_lin = "Device";
 
     /* Assumes the following format for lsb-release:
      *
@@ -365,9 +367,9 @@ HWDeviceInfo LinuxSysInfo::DeviceName()
         prod_src = prod_ver;
     CString product = CResources::Linux::LinuxFileFun::sys_read(prod_ver);
 
-    if(manufac.size() > 0)
+    if(manufac.size() > 0 && manufac != invalid_info_string)
         manf = manufac.c_str();
-    if(product.size() > 0)
+    if(product.size() > 0 && manufac != invalid_info_string)
         prod = product.c_str();
 
     return HWDeviceInfo(manf, prod, get_kern_name() + (" " + get_kern_ver()));

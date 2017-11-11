@@ -1,11 +1,15 @@
+#include <coffee/core/CFiles>
 #include <coffee/core/CUnitTesting>
 
-#include <coffee/core/CFiles>
 
 using namespace Coffee;
 
-const constexpr cstring link_test = "symlink.txt";
-const constexpr cstring target_test = "target.txt";
+const Url link_test = MkUrl("symlink.txt",
+                            ResourceAccess::SpecifyStorage
+                            |ResourceAccess::TemporaryFile);
+const Url target_test = MkUrl("target.txt",
+                              ResourceAccess::SpecifyStorage
+                              |ResourceAccess::TemporaryFile);
 
 bool link_create_test()
 {
@@ -25,6 +29,7 @@ bool link_create_test()
     /* Verify that links are deletable */
     status = status && FileFun::Rm(link_test);
     FileFun::Rm(target_test);
+    FileFun::Rm(link_test);
 
     return status;
 }
@@ -52,7 +57,9 @@ bool link_dereference_test()
     if(!FileFun::Ln(target_test,link_test))
         status =  false;
 
-    if(status && FileFun::DereferenceLink(link_test) != target_test)
+    auto gotPath = FileFun::DereferenceLink(link_test);
+
+    if(status && gotPath != *target_test)
         status = false;
 
     /* Symlinks are verified deletable from last test */
@@ -63,20 +70,19 @@ bool link_dereference_test()
 
 bool link_canonical_test()
 {
-    CString target_path = Env::CurrentDir();
-    target_path = Env::ConcatPath(target_path.c_str(),target_test);
-
     bool status = true;
 
     FileFun::Touch(FileFun::File,target_test);
     if(!FileFun::Ln(target_test,link_test))
         status =  false;
 
-    if(status && FileFun::CanonicalName(link_test) != target_path)
+    auto gotPath = FileFun::CanonicalName(link_test);
+
+    if(status && gotPath != *target_test)
     {
         cWarning("Canonical name test:\n {0} != {1}",
                  FileFun::CanonicalName(link_test),
-                 target_path);
+                 target_test);
         status = false;
     }
 

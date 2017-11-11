@@ -5,14 +5,21 @@ using namespace Coffee;
 
 bool readwrite_file()
 {
-    CResources::Resource testfile("test.ini");
+    auto testFile = MkUrl("test.ini",
+                          ResourceAccess::SpecifyStorage
+                          |ResourceAccess::TemporaryFile);
+    auto testFileDupe = MkUrl("test.ini.ini",
+                              ResourceAccess::SpecifyStorage
+                              |ResourceAccess::TemporaryFile);
+
+    CResources::Resource testfile(testFile);
     CResources::FileMap(testfile);
     Profiler::Profile("Mapping time");
 
     INI::Document doc2 = INI::Read(testfile);
     Profiler::Profile("Reading time");
 
-    CResources::Resource rsc("test.ini.ini");
+    CResources::Resource rsc(testFileDupe);
     INI::Write(doc2,rsc);
     CResources::FileCommit(rsc);
     CResources::FileFree(rsc);
@@ -29,6 +36,10 @@ bool readwrite_file()
  */
 bool write_file()
 {
+    Url testfile = MkUrl("testoutfile.ini",
+                         ResourceAccess::SpecifyStorage
+                         |ResourceAccess::TemporaryFile);
+
     INI::Document doc;
 
     INI::Section t1 = doc.newSection();
@@ -47,7 +58,7 @@ bool write_file()
 
     Profiler::Profile("Creating and setting values");
 
-    CResources::Resource rsc("testoutfile.ini");
+    CResources::Resource rsc(testfile);
     Profiler::Profile("File object");
     INI::Write(doc,rsc);
     Profiler::Profile("Writing object to file");
@@ -56,7 +67,7 @@ bool write_file()
     CResources::FileFree(rsc);
     Profiler::Profile("Free'ing file");
 
-    return CResources::FileFun::Exists("testoutfile.ini");
+    return CResources::FileFun::Exists(testfile);
 }
 
 const constexpr CoffeeTest::Test _tests[2] = {

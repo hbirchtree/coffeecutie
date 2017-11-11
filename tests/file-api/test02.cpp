@@ -3,7 +3,9 @@
 
 using namespace Coffee;
 
-const cstring small_map_test = "file_map_small.bin";
+const Url small_map_test = MkUrl("file_map_small.bin",
+                                 ResourceAccess::SpecifyStorage
+                                 |ResourceAccess::TemporaryFile);
 
 byte_t sample_storage[Unit_kB*100] = {
     "I'M THE TRASHMAN!\n"

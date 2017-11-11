@@ -3,7 +3,9 @@
 
 using namespace Coffee;
 
-const cstring testfile = "fileapi_testfile.txt";
+const Url testfile = MkUrl("fileapi_testfile.txt",
+                           ResourceAccess::SpecifyStorage
+                           |ResourceAccess::AssetFile);
 
 using File = FileFun;
 
@@ -31,9 +33,7 @@ bool check_literal_constructor()
 
 bool check_move_constructor()
 {
-    Resource r1 = Resource(testfile,
-                           ResourceAccess::SpecifyStorage|
-                           ResourceAccess::AssetFile);
+    Resource r1 = Resource(testfile);
 
     bool status = true;
 

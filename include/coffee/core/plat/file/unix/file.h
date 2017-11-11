@@ -108,10 +108,13 @@ struct PosixFileFun_def : PosixFileMod_def
         if(f_size <= sz && f_size != -1)
             sz = f_size;
 
-        szptr szp = C_CAST<szptr>(sz);
+        szptr szp = C_CAST<szptr>(sz) + ((nullterm) ? 1 : 0);
 
-        data.data = C_CAST<byte_t*>(Calloc(4,szp));
+        data.data = C_CAST<byte_t*>(Calloc(1,szp));
         data.size = szp + nullterm;
+
+        if(!data.data)
+            return {};
 
         szptr i = 0;
         szptr chnk = 0;

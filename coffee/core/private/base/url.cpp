@@ -28,10 +28,11 @@ Resource Url::rsc() const
     return CResources::Resource(*this);
 }
 
-Url &Url::operator+(const Path &path)
+Url Url::operator+(const Path &path) const
 {
-    internUrl = Env::ConcatPath(internUrl.c_str(),
-                                path.internUrl.c_str());
+    Url cpy = *this;
+    cpy.internUrl = Env::ConcatPath(internUrl.c_str(),
+                                    path.internUrl.c_str());
     return *this;
 }
 
@@ -103,12 +104,17 @@ Path Path::removeExt()
 
 Path Path::addExtension(cstring ext)
 {
-    return {internUrl + ext};
+    return {(internUrl + ".") + ext};
 }
 
 Path Path::fileBasename()
 {
     return {DirFun::Basename(internUrl.c_str())};
+}
+
+Path Path::dirname()
+{
+    return {Env::DirName(internUrl.c_str())};
 }
 
 Path Path::operator+(cstring component)
@@ -123,6 +129,12 @@ Path Path::operator+(const Path &path)
                             path.internUrl.c_str())};
 }
 
+Path &Path::operator=(const Url &url)
+{
+    internUrl = url.internUrl;
+    return *this;
+}
+
 namespace Strings{
 CString to_string(const Path &path)
 {
@@ -132,7 +144,7 @@ CString to_string(const Path &path)
 CString to_string(const Url &url)
 {
     return "url(" + url.internUrl + ","
-            + cast_pod(C_FCAST<u32>(url.flags))
+            + StrUtil::pointerify(C_FCAST<u32>(url.flags))
             + ")";
 }
 }

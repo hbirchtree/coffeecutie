@@ -51,7 +51,7 @@ set ( CoffeeCore_SRCS
     private/profiler/profiling-export.cpp
 
     # Isolation of platform libraries
-    private/plat/environment_wall.cpp
+    #private/plat/environment_wall.cpp
 
     # Internal platform layer
     private/plat/environment/application_start.cpp
@@ -60,23 +60,37 @@ set ( CoffeeCore_SRCS
 
     private/base/eventapplication_wrapper.cpp
 
+    private/plat/file/file_common.cpp
+
     private/plat/memory/string_ops.cpp
 
     # Compression / data storage
     private/datastorage/compression/libz.cpp
-    private/datastorage/text/ini/ciniparser.cpp
 
     # Storage stuff, may be externalized
     private/coffee_saving.cpp
 
-    # Unit testing
-    private/unit_tests/framework.cpp
-
     # Task queues, for easier time scheduling
     private/task_queue/task.cpp
+    )
 
+set ( CoffeeXML_SRCS
     # We slap tinyXML2 in here, just cause
     ${CMAKE_SOURCE_DIR}/libs/tinyxml2/tinyxml2.cpp
+
+    )
+
+set ( CoffeeJSON_SRCS
+    # There's nothing here...
+    )
+
+set ( CoffeeINI_SRCS
+    private/datastorage/text/ini/ciniparser.cpp
+    )
+
+set ( CoffeeTesting_SRCS
+    # Unit testing
+    private/unit_tests/framework.cpp
     )
 
 # Platform-specific code, put it here
@@ -105,7 +119,6 @@ endif()
 # Android-specific code
 if(ANDROID)
     list ( APPEND CoffeeCore_SRCS
-        ${CMAKE_SOURCE_DIR}/bindings/android/static.cpp
         private/plat/file/android/file.cpp
         private/plat/environment/android/environment.cpp
         private/plat/environment/android/sysinfo.cpp
@@ -189,10 +202,27 @@ endif()
 
 find_package ( StandardLibs REQUIRED )
 
+coffee_add_library ( CoffeeXML
+    "${CoffeeXML_SRCS}"
+    ""
+    ""
+    )
+
 coffee_add_library ( CoffeeCore
     "${CoffeeCore_SRCS}"
-    "${STANDARDLIBS_LIBRARIES}"
+    "${STANDARDLIBS_LIBRARIES};CoffeeXML"
     "${CMAKE_SOURCE_DIR}/include/coffee/core"
+    )
+
+coffee_add_library ( CoffeeINI
+    "${CoffeeINI_SRCS}"
+    ""
+    ""
+    )
+coffee_add_library ( CoffeeTesting
+    "${CoffeeTesting_SRCS}"
+    "CoffeeCore"
+    "${CMAKE_SOURCE_DIR}/include/coffee/core/unit_tests"
     )
 
 find_package ( RapidJson REQUIRED )
@@ -209,7 +239,6 @@ target_include_directories ( CoffeeCore
     $<INSTALL_INTERFACE:include/>
     $<INSTALL_INTERFACE:include/tinyxml2/>
     ${STANDARDLIBS_INCLUDE_DIR}
-#    /home/havard/.local/android-ndk-r13b/platforms/android-24/arch-arm64/usr/include
     )
 
 if(COFFEE_BUILD_SWIG_BINDING)

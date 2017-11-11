@@ -3,11 +3,15 @@
 
 using namespace Coffee;
 
-const cstring testfile = "fileapi_testfile.txt";
+const Url testfile = MkUrl("fileapi_testfile.txt",
+                           ResourceAccess::SpecifyStorage
+                           |ResourceAccess::TemporaryFile);
+const Url writetest = MkUrl("file_write_large.bin",
+                            ResourceAccess::SpecifyStorage
+                            |ResourceAccess::TemporaryFile);
 
 using File = FileFun;
 
-const cstring writetest = "file_write_large.bin";
 byte_t write_data[100] = {
     "I'M THE TRASHMAN. I THROW GARBAGE ALL OVER THE RING, AND THEN I START EATING GARBAGE.\n"
 };
@@ -35,7 +39,9 @@ bool filewrite_test()
 
     dynamic_store = rsc.data;
 
-    bool stat = FileCommit(rsc,false, ResourceAccess::WriteOnly | ResourceAccess::Discard);
+    bool stat = FileCommit(rsc,false,
+                           ResourceAccess::WriteOnly
+                           |ResourceAccess::Discard);
     Profiler::Profile("Writing 5GB of data to disk");
 
     return stat;

@@ -127,9 +127,13 @@ void LabelThread(const char* name)
 }
 void Save(const char* outfile)
 {
+    auto url = MkUrl(outfile,
+                     ResourceAccess::SpecifyStorage
+                     |ResourceAccess::SystemFile);
+
     CString log_data;
     Profiling::ExportProfilerData(log_data);
-    Profiling::ExportStringToFile(log_data, outfile);
+    Profiling::ExportStringToFile(log_data, url);
 }
 void PrintData()
 {

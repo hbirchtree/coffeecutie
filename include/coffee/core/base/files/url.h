@@ -19,6 +19,8 @@ struct Resource;
 
 }
 
+struct Url;
+
 struct Path
 {
     CString internUrl;
@@ -27,12 +29,16 @@ struct Path
     Path addExtension(cstring ext);
     Path fileBasename();
 
+    Path dirname();
+
     Path operator+(cstring component);
     FORCEDINLINE Path operator+(CString const& component)
     {
         return *this + component.c_str();
     }
     Path operator+(Path const& path);
+
+    Path& operator=(Url const& url);
 };
 
 struct Url
@@ -58,11 +64,17 @@ struct Url
 
     CResources::Resource rsc() const;
 
-    Url& operator+(Path const& path);
+    Url operator+(Path const& path) const;
 
     FORCEDINLINE Url& operator+=(Path const& path)
     {
-        return *this + path;
+        *this = *this + path;
+        return *this;
+    }
+
+    operator Path()
+    {
+        return {internUrl};
     }
 
 private:
